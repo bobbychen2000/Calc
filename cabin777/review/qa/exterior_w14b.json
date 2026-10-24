@@ -1,0 +1,220 @@
+{
+ "area": "exterior",
+ "rater": "B geometry",
+ "build": "w14 = f5575d0",
+ "score": 7.9,
+ "details": [
+  {
+   "detail": "Planform, raked tip, cruise bending",
+   "score": 7.5,
+   "note": "Unchanged and still right. The LE sweep, rake and tip lift in w19A, w30K and c_wing_panel match KN41 and _7331.",
+   "refs": [
+    "r14/w19A.png",
+    "r14/w30K.png",
+    "ref/web/exterior/a5_kn_ANA77W_TheRoom_41.jpg"
+   ]
+  },
+  {
+   "detail": "Surface detail: value, panel tone, seams, fastener rows, slat band, gear stripe, placards, grime",
+   "score": 7.8,
+   "note": "The flap streaks are fixed. In w26K they are now soft, short, tapering smudges, about 2 per canoe, at low contrast (z_w26K_r13_r14.png); they no longer read as ruled walkway bars. If anything they are now barely visible. The near-far value in w19A is unchanged: near flap 163/161, far skin 169/172, against KN41's 194 -> 146. That one belongs to the lighting owner and is not scored here.",
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/befcfc7c-26eb-511e-bccb-dea0e8e11491/scratchpad/ratB14/z_w26K_r13_r14.png",
+    "/tmp/claude-0/-home-user-Calc/befcfc7c-26eb-511e-bccb-dea0e8e11491/scratchpad/ratB14/z_w19A_r13_r14.png"
+   ]
+  },
+  {
+   "detail": "Control-surface lines (spoilers, flaperon, aileron)",
+   "score": 8.1,
+   "note": "Unchanged. The gap taper still holds at 2-3 px in w19A, and the hierarchy is correct.",
+   "refs": [
+    "r14/w19A.png"
+   ]
+  },
+  {
+   "detail": "Flap-track fairings (canoes)",
+   "score": 8.4,
+   "note": "The K-side flank is fixed. In w26K at x=600, the crown is L221 (y 305), then the flank runs 159 / 101 / 89 (y 320 / 340 / 350) against the 178 skin, which puts the mid-flank at 0.57 (r13: 0.94). That is within the photo range (_7250 near pod 0.53-0.54, _7331 0.38-0.43). w30K column x=480: flank 125 -> 96 against the 176 skin, so 0.55-0.71 (r13: 0.85-0.99). On the A side, w19A (470,350) / (515,240) read 115 / 102 against the 163 flap, so 0.70 / 0.63 (r13: 0.81 / 0.76; KN41 0.72-0.77): now a touch dark, but in the right order. The tails close round in c_canoe_side, so the duck-bill is gone. What remains: (a) the far pods are as dark as the near one (w26K pod 2 at (650,275) L88 and pod 3 at (700,230) L91), whereas _7250's second pod is 0.72 of the skin; (b) the flank is a single dark tone with a hard crease under a thin bright crown, where _7331 shows a broad lit upper flank (214-228) and then the drop.",
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/befcfc7c-26eb-511e-bccb-dea0e8e11491/scratchpad/ratB14/canoes_26K_r13_r14_7250.png",
+    "/tmp/claude-0/-home-user-Calc/befcfc7c-26eb-511e-bccb-dea0e8e11491/scratchpad/ratB14/z_w30K_r13_r14.png",
+    "/tmp/claude-0/-home-user-Calc/befcfc7c-26eb-511e-bccb-dea0e8e11491/scratchpad/ratB14/z_c_canoe_side_r13_r14.png",
+    "ref/web/exterior/b_alv_ANA77W_PY_IMG_7331-2-scaled.jpeg"
+   ]
+  },
+  {
+   "detail": "Pylon",
+   "score": 7.4,
+   "note": "The forward fairing is no longer a spear. It has a blunt, rounded nose (w13A, c_nacelle_left). It still starts at lathe x 1.4, right on the inlet split (x 1.3). In s13A and w13A it reads as a horn or peaked gable reaching forward to the split. In LALF _137 the hump starts about 25 % of the way along the fan cowl (lathe x about 1.75), rises as a dome, and is narrower.",
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/befcfc7c-26eb-511e-bccb-dea0e8e11491/scratchpad/ratB14/z_pylon_w13A_r13_r14.png",
+    "/tmp/claude-0/-home-user-Calc/befcfc7c-26eb-511e-bccb-dea0e8e11491/scratchpad/ratB14/z_rest.png",
+    "ref/web/exterior/b_lalf_ANA77W_11A_137.jpg"
+   ]
+  },
+  {
+   "detail": "Nacelle geometry (cowl, lip, splits, strake, access panel)",
+   "score": 7.3,
+   "note": "The access panel is now a stadium, which is correct. But the second panel 0.56 m below is drawn at the same weight: a 0.012 tube in #a3a8ad against #959aa0. In w11A, w11K, s13A and c_nacelle_left the pair reads as a twin '8' glyph. LALF _136 / _137 and knav _9 each show one prominent round panel, so this is a step back in what the eye sees. The cowl, lip, splits and strake are unchanged and correct.",
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/befcfc7c-26eb-511e-bccb-dea0e8e11491/scratchpad/ratB14/z_w11A_r13_r14.png",
+    "/tmp/claude-0/-home-user-Calc/befcfc7c-26eb-511e-bccb-dea0e8e11491/scratchpad/ratB14/z_c_nacelle_left_r13_r14.png",
+    "ref/web/exterior/b5_knav_ANA77W_7A_GE90_takeoff_9.jpg",
+    "ref/web/exterior/b_lalf_ANA77W_11A_136.jpg"
+   ]
+  },
+  {
+   "detail": "Nacelle colour / materials (incl. GE monogram)",
+   "score": 7.9,
+   "note": "Unchanged. The w11K sunlit cowl is 206 / 201 / 173, still slightly hot against knav _9's peak of 187. The monogram is correct (c_ge_inboard_left).",
+   "refs": [
+    "r14/w11K.png",
+    "/tmp/claude-0/-home-user-Calc/befcfc7c-26eb-511e-bccb-dea0e8e11491/scratchpad/ratB14/z_ge_inboard_r13_r14.png"
+   ]
+  },
+  {
+   "detail": "Inlet / fan / spinner",
+   "score": 7.8,
+   "note": "The void is fixed. The w11K liner went 32/30/23 -> 62/55/51 at (330,400) / (340,450) / (350,520), against a knav _9 liner of 48-54. In w11A, (595,420) went 8 -> 25 and (600,380) 9 -> 25 (LALF _136, overcast: 31-87), so the 11A throat is still on the dark side. In c_nacelle_left, (650,400) went 25 -> 55 and (640,250) 8 -> 16, and the liner now grades. The joint rings render as broken, dotted hairlines (see Artefacts). The blades still do not read from these angles, which the camera geometry may make unavoidable.",
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/befcfc7c-26eb-511e-bccb-dea0e8e11491/scratchpad/ratB14/z_inlet_c_r13_r14.png",
+    "/tmp/claude-0/-home-user-Calc/befcfc7c-26eb-511e-bccb-dea0e8e11491/scratchpad/ratB14/z_w11A_r13_r14.png",
+    "ref/web/exterior/b5_knav_ANA77W_7A_GE90_takeoff_9.jpg"
+   ]
+  },
+  {
+   "detail": "Livery / registration JA795A",
+   "score": 7.7,
+   "note": "Unchanged and correct, in inverted reading in w26K / w30K, as in _7250 / _7331.",
+   "refs": [
+    "r14/w26K.png",
+    "r14/w30K.png"
+   ]
+  },
+  {
+   "detail": "Nav lights and static dischargers",
+   "score": 7.2,
+   "note": "Unchanged: the red tip light in n19A and the discharger comb in w19A.",
+   "refs": [
+    "r14/n19A.png"
+   ]
+  },
+  {
+   "detail": "Artefacts",
+   "score": 7.6,
+   "note": "There is no z-fighting, floating part or gap. New: the three inlet joint rings (gTube r 0.006 m, l.387) break into dotted or dashed hairlines in c_nacelle_left and w11K. This is the same failure the access-panel tube had at 9 mm in w6. The aliasing on the long hairlines in w26K is unchanged (lighting/AA).",
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/befcfc7c-26eb-511e-bccb-dea0e8e11491/scratchpad/ratB14/z_inlet_c_r13_r14.png"
+   ]
+  }
+ ],
+ "previous": [
+  {
+   "issue": "B w13 medium / A w13 medium: canoe K-side flank 0.82-0.94 of the skin",
+   "status": "FIXED. w26K mid-flank 170 -> 101 (0.94 -> 0.57 of the skin), low 147 -> 89; w30K 0.85-0.99 -> 0.55-0.71. Photos: _7250 0.54, _7331 0.38-0.43."
+  },
+  {
+   "issue": "B w13 medium: inlet a black void",
+   "status": "FIXED (mostly). w11K liner 30 -> 55 (knav 48-54); c_nacelle_left (650,400) 25 -> 55; w11A 8 -> 25 (LALF 31-87, still slightly dark). Blades still unreadable."
+  },
+  {
+   "issue": "B w13 medium: wing near-far value reversed (w19A)",
+   "status": "NOT FIXED, as expected (lighting owner). Pixels identical: 163/161 near vs 169/172 far."
+  },
+  {
+   "issue": "B w13 low: flap streaks ruled stripes",
+   "status": "FIXED. Soft, tapered, low contrast (z_w26K_r13_r14.png)."
+  },
+  {
+   "issue": "B w13 low: pylon nose a wedge",
+   "status": "PARTLY FIXED. The nose is rounded and blunt, but it starts at the inlet split (x 1.4) and peaks like a gable; _137 starts about x 1.75 as a dome."
+  },
+  {
+   "issue": "B w13 low: access panel shape",
+   "status": "FIXED shape (stadium), but REGRESSED in read: the second panel is equal weight and reads as a twin '8'."
+  },
+  {
+   "issue": "B w13 low / A w13 low: canoe tip faceted / duck-bill",
+   "status": "FIXED. Round closed tails in c_canoe_side."
+  },
+  {
+   "issue": "B w13 medium: sunlit K cowl still slightly hot",
+   "status": "Unchanged (206/201/173 vs knav peak 187); low."
+  }
+ ],
+ "issues": [
+  {
+   "severity": "low",
+   "detail": "access panel twin",
+   "problem": "The second outline 0.56 m below the main panel has the same tube width as the main panel and almost its tone, so the pair reads as an '8' or two equal hatches. The photos show one panel.",
+   "evidence": [
+    "/tmp/claude-0/-home-user-Calc/befcfc7c-26eb-511e-bccb-dea0e8e11491/scratchpad/ratB14/z_w11A_r13_r14.png",
+    "r14/w11K.png",
+    "ref/web/exterior/b_lalf_ANA77W_11A_136.jpg",
+    "ref/web/exterior/b5_knav_ANA77W_7A_GE90_takeoff_9.jpg"
+   ],
+   "fix": "l.413: drop the second entry. If it is kept, make it barely visible: { c: '#adb1b5' } (about 2 % under the cowl), tube 0.007 in place of 0.012, and offset 0.70 m in place of 0.56 so it does not stack under the first."
+  },
+  {
+   "severity": "low",
+   "detail": "pylon fairing nose position",
+   "problem": "The hump nose sits on the inlet split (lathe x 1.4) and peaks like a gable. In s13A and w13A it reads as a horn reaching to the split. In _137 the dome starts about a quarter of the way along the fan cowl.",
+   "evidence": [
+    "/tmp/claude-0/-home-user-Calc/befcfc7c-26eb-511e-bccb-dea0e8e11491/scratchpad/ratB14/z_pylon_w13A_r13_r14.png",
+    "/tmp/claude-0/-home-user-Calc/befcfc7c-26eb-511e-bccb-dea0e8e11491/scratchpad/ratB14/z_rest.png",
+    "ref/web/exterior/b_lalf_ANA77W_11A_137.jpg"
+   ],
+   "fix": "l.447: lerp(1.4, 10.6, ...) -> lerp(1.75, 10.6, ...), and move the smooth() starts at l.450 and l.456 from 1.4 to 1.75. l.456: nose width lerp(0.35, 1, smooth(1.75, 2.6, x)). l.457: r = Math.min(w * 0.45, (top - bot) * 0.45) for the first 3 sections, so the nose is a dome rather than a ridge."
+  },
+  {
+   "severity": "low",
+   "detail": "inlet joint rings alias",
+   "problem": "The 6 mm tubes (l.387) break into dotted or dashed lines at window distance.",
+   "evidence": [
+    "/tmp/claude-0/-home-user-Calc/befcfc7c-26eb-511e-bccb-dea0e8e11491/scratchpad/ratB14/z_inlet_c_r13_r14.png"
+   ],
+   "fix": "l.387: tube 0.006 -> 0.014, colour #2a2d31 -> #383c41 (lower contrast, so it stays continuous), 72 segments in place of 37. Alternatively bake the rings as a darkening band into the l.383 shadeVerts (multiply by 1 - 0.25 * bump(depth, x_k, 0.03))."
+  },
+  {
+   "severity": "low",
+   "detail": "canoe far-pod value and flank form",
+   "problem": "All pods sit at the same dark value: w26K near 101, pod 2 88, pod 3 91. In _7250 the second pod is 0.72 of the skin. The flank is a single tone under a thin bright crown, where _7331 shows a broad lit upper flank and then the drop.",
+   "evidence": [
+    "/tmp/claude-0/-home-user-Calc/befcfc7c-26eb-511e-bccb-dea0e8e11491/scratchpad/ratB14/canoes_26K_r13_r14_7250.png",
+    "ref/web/exterior/b_alv_ANA77W_PY_IMG_7331-2-scaled.jpeg"
+   ],
+   "fix": "l.476: raise the top threshold so more of the upper flank stays lit: n[1] > 0.45 -> n[1] > 0.2, and change smooth(-0.9, -0.2, ...) to smooth(-0.9, 0.2, ...). Aerial lift for the outboard pods: multiply by lerp(1, 1.18, smooth(10, 20, Math.abs(p[0]))), or leave the far-pod haze to the lighting fog."
+  },
+  {
+   "severity": "medium",
+   "detail": "wing near-far value (owner: lighting, not scored)",
+   "problem": "This is unchanged. In w19A the far skin is 6-9 L brighter than the near flap, where KN41 falls 25 %.",
+   "evidence": [
+    "r14/w19A.png (600,440) 163, (720,220) 172"
+   ],
+   "fix": "04_shaders.js exterior branch: scale specEnv by clamp(luma(v_col) / luma(matBase), 0.6, 1.1)."
+  }
+ ],
+ "worth_0_3": [
+  {
+   "item": "Drop or fade the second access panel",
+   "gain": "nacelle geometry 7.3 -> 7.7"
+  },
+  {
+   "item": "Pylon nose moved aft to x 1.75 as a dome",
+   "gain": "pylon 7.4 -> 7.8"
+  },
+  {
+   "item": "Wider, softer joint rings",
+   "gain": "artefacts / inlet +0.2"
+  },
+  {
+   "item": "Lighting specEnv albedo scaling",
+   "gain": "surface detail +0.4 (not this file)"
+  }
+ ],
+ "questions": [
+  "Is there a photo that shows the second (lower) inlet-cowl panel on an ANA GE90? None of _136, _137 or knav _9 shows it clearly. If there is none, removing it is the evidence-based choice."
+ ],
+ "photos": []
+}
