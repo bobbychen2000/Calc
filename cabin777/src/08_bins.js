@@ -342,6 +342,11 @@ function placardXF(group, z) {
   return out;
 }
 
+// placard uv inset 3 px into its atlas rect: the mips pulled the neighbouring cells in as a plate outline (w6a)
+function placardUV(name) {
+  const r = ATL.rects[name], d = 3 / ATL.canvas.width;
+  return (k, g) => [r[0] + d + g.u[k * 2] * (r[2] - r[0] - 2 * d), r[1] + d + (1 - g.u[k * 2 + 1]) * (r[3] - r[1] - 2 * d)];
+}
 function buildBins(gl, layout) {
   const zones = layout.zones.filter((z) => z.type === 'seat');
   const side = [], center = [], seamO = [], seamC = [];
@@ -396,7 +401,7 @@ function buildBins(gl, layout) {
     groups.forEach((gr, i) => {
       const name = `row${row}_${i}`;
       if (!gr.length || !ATL.rects[name]) return;
-      for (const m of placardXF(i, z)) D.add(gQuad(PLACARD[0], PLACARD[1]), m, i === 1 ? { ...MAT.decal, e: BINMAT.doorC.eFn([0, 2.19, 0]) } : MAT.decal, atlasUV(name));
+      for (const m of placardXF(i, z)) D.add(gQuad(PLACARD[0], PLACARD[1]), m, i === 1 ? { ...MAT.decal, e: BINMAT.doorC.eFn([0, 2.19, 0]) } : MAT.decal, placardUV(name));
     });
   }
   meshes.placards = gl.mesh(D.build(), { name: 'placards', layer: 'upper', castShadow: false });
@@ -421,6 +426,6 @@ function ceilingSlice() {
     B.addBuilt(psuModule(4), psuXF(0, z));
     for (const x of [-SIGN_POD_X, SIGN_POD_X]) B.addBuilt(signPodModule(), psuXF(x, z + 0.12));
   }
-  for (const [g, name] of [[0, 'row31_0'], [1, 'row31_1'], [2, 'row31_2']]) if (ATL.rects[name]) for (const m of placardXF(g, 0.1)) B.add(gQuad(PLACARD[0], PLACARD[1]), m, MAT.decal, atlasUV(name));
+  for (const [g, name] of [[0, 'row31_0'], [1, 'row31_1'], [2, 'row31_2']]) if (ATL.rects[name]) for (const m of placardXF(g, 0.1)) B.add(gQuad(PLACARD[0], PLACARD[1]), m, MAT.decal, placardUV(name));
   return B.build();
 }
