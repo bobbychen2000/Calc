@@ -119,8 +119,8 @@ def synth_py_back(ratio, seed=7):
             seg = np.clip(np.minimum(u, ln - u) / 1.5, 0, 1) * (u < ln)
             dark = np.maximum(dark, band[:, None] * seg[None, :] * rng.uniform(0.7, 1.0) * ddim[r, c])
     blob = _blur_wrap(rng.normal(0, 1, (S, S)), 12); blob /= blob.std()
-    lite *= np.exp(0.35 * blob - 0.06)              # w8 (B): mottled light patches (py_37305)
-    out = (1 + 1.9 * lite) * (1 - 0.7 * dark)      # w7: light ~2.9x, dark ~0.3x the ground (local skew ~0, A + B)
+    lite *= np.exp(0.2 * blob - 0.02)               # w8 (B): mottled light patches (py_37305); w9 (A): softer
+    out = (1 + 1.9 * lite) * (1 - 0.76 * dark)     # w7: light ~2.9x, dark ~0.3x the ground (local skew ~0, A + B)
     # brick patches on a 2-col x 2-row lattice (block std/mean ~0.15, py_37305), crisp edges softened 0.5 px
     blk = np.exp(rng.normal(0, 0.15, (rows // 2, cols // 2)))
     blk = _blur_wrap(blk[(np.arange(S) // (2 * ph)).astype(int)][:, (np.arange(S) // (2 * cw)).astype(int)], 0.5)
@@ -146,7 +146,7 @@ def synth_py_confetti(ratio, seed=11):
             yc = (r + 0.5) * S / 9 + rng.uniform(-1, 1); ln = np.clip(rng.normal(40, 10), 20, 60)
             u = (xx - c * S / 4 - (S / 8) * (r % 2) - rng.uniform(-10, 10)) % S
             m = np.clip((5 - np.abs((yy - yc + S / 2) % S - S / 2)) / 1.5, 0, 1) * np.clip(np.minimum(u, ln - u) / 2, 0, 1) * (u < ln)
-            out *= 1 - 0.6 * rng.uniform(0.6, 1.0) * m   # w8 (B): deeper weave
+            out *= 1 - 0.75 * rng.uniform(0.6, 1.0) * m   # w8/w9 (B): deeper weave (dark share 0.15-0.31 in py_37302 / 37305)
     pts = []
     while len(pts) < 20:                          # w5 (A + B): fewer, more varied chips (polka dots before)
         p = rng.uniform(0, S, 2)
@@ -160,7 +160,7 @@ def synth_py_confetti(ratio, seed=11):
         # polygonal chip: facets from a k-gon, pointed tip at th=0, shallow notch at th=pi (sakura petal)
         poly = (np.cos(np.pi / k) / np.cos((th + ph0) % (2 * np.pi / k) - np.pi / k)) ** 1.0   # sharp facets
         prof = req * poly * (1 + 0.18 * np.cos(th)) * (1 - 0.22 * np.exp(-((np.abs(th) - np.pi) / 0.25) ** 2))
-        out += 5.5 * np.clip(rng.normal(1, 0.15), 0.7, 1.3) * np.clip((prof - rr) / 1.0, 0, 1)
+        out += 6.5 * np.clip(rng.normal(1, 0.15), 0.7, 1.3) * np.clip((prof - rr) / 1.0, 0, 1)
     for cy, cx in rng.uniform(0, S, (60, 2)):
         rr = np.hypot((yy - cy + S / 2) % S - S / 2, (xx - cx + S / 2) % S - S / 2)
         out += rng.uniform(0.3, 0.6) * np.clip((rng.uniform(2, 5) - rr) / 1.0, 0, 1)

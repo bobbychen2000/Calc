@@ -1,0 +1,108 @@
+{
+ "area": "py",
+ "rater": "B",
+ "round": "w9",
+ "commit": "91d6ceb",
+ "score": 8.0,
+ "summary": "A clear step up from w8 (7.4). The headrest now has the right composition: the navy flap is the dominant panel with the wing pads beside it (visible flap / headrest 0.59 in b3 head-on and 0.63 in q14, against 0.60-0.70 in py_37301 / 37302). The gooseneck matches san_26 / py_37305: silver root bullet, a slim smooth arm down the flank and a near-vertical head with a forward lens. The shell top is one soft arch, and the corduroy beat is mostly gone. It is not yet 8.5, for four reasons. (1) The wing pads sink into the side bolsters, leaving a jagged saw-tooth intersection that shows even at cabin distance in q14. (2) The wing petal cloth is still about half the photo contrast. (3) From behind, the shell rim above the screen is about twice the photo height. (4) Close up, the back cloth is still a regular brick barcode, and at distance it is about 60 % as crisp as py_37301.",
+ "calibration": [
+  {"issue": "w8a medium / w8b HIGH: wings in front of the flap, flap reads as a narrow strip (I-beam)", "status": "fixed. Flap / headrest-with-wings width: b3 head-on 215/365 = 0.59, q14 centre seat 0.63, against py_37301 0.60-0.65 and py_37302 0.63-0.70. Head-on flap h/w is 205/215 = 0.95, against 37301 ~0.95-1.0. In q13 the foreground flap still reads tall (h/w ~1.5), mostly because of the view pitch: the second-row flaps are 1.15 against the photo's 0.72-0.97."},
+  {"issue": "w8a medium: gooseneck stowed pose (35 deg head, thick arm across the wing)", "status": "fixed. The arm is r 6.5 mm on a smooth 10-point Bezier along the flank edge. The head hangs near-vertical, outboard of the wing, with a forward lens and a dark end ring. From behind (q13b) the horizontal silver root bullet, the round button and the hanging head all match san_26 (x150-320). Minor: the heads render nearly white rather than brushed silver."},
+  {"issue": "w8a medium / w8b low: back cloth reads as corduroy rows / regular barcode", "status": "mostly fixed at cabin distance. Vertical high-pass autocorrelation (4 px box) at lags 4/5: q14 +0.12/+0.17 (w8 +0.29/+0.28) and q13 +0.22/+0.11 (w8 +0.32), against py_37301 within +-0.14. The tile row-profile autocorrelation dropped from 0.91 to 0.52 at lag 12. Not fixed close up: b10 has ac -0.61 at lag 4 and +0.35 at lag 8, so it is still an even brick barcode against py_37305's mottled tweed. Crispness is unchanged: gx/gy is q14 13/19 against 37301 22/32."},
+  {"issue": "w8a low: console lid gap to the cup nose / trim shelf", "status": "fixed. The lid now reaches z -0.465 and overlaps the nose (-0.5425..-0.4475). The trim no longer overhangs. The nose is still a thin 22 mm slab over the body (p5), which is acceptable."},
+  {"issue": "w8a low / w7a low: literature pocket flat panel, mesh not at the bottom", "status": "partly fixed. The smile-shaped lip and the full-width bottom net are in (b7, b11, p2). The net is a straight flat band. In san_26 the net follows the bucket's curved bottom, and its top edge is the smile."},
+  {"issue": "w8a low / w8b low: flap hem royal, mid-height seam line", "status": "fixed. It is one sheet with no lit seam (b3, b4). The hem matches the flap hue."},
+  {"issue": "w8a low / w7b low: no hourglass lumbar seams", "status": "added but artefacted. They are 1.8 mm navy tubes that read as hairline cracks. In b10 and b6 they dip in and out of the cloth: the lower ends are broken off, leaving a separate stub near y 0.08."},
+  {"issue": "w8a low / w8b medium: wing petal cloth low contrast", "status": "partly fixed. Wing luminance spread (p90-p10)/p50: q14 0.40 (w8 0.23), q13 foreground 0.53 (w8 0.35-0.38), against py_37301 0.91, py_37302 foreground 1.06 and py_37305 1.01. Dark share is 0.03-0.04 against 0.15-0.31."},
+  {"issue": "w8a low / w8b medium: shell top faceted chamfer / crease", "status": "fixed. 15 sections give one continuous soft arch (q13b, b1, b13), like py_37304."},
+  {"issue": "w8b medium: wing domes + navy over-top show above the rim from behind at standing height", "status": "not fixed at standing height. In b1 (eye 1.65, 1.0 m behind) and b13, both wing domes and the navy over-top band still show over the upper corners. At seated height (q13b) only a ~3 px sliver shows at the right seat's top-left corner. Downgraded to low: san_13 shows the side fabric and a wing beside the shell from a raised viewpoint, so some of it is real."},
+  {"issue": "w8b low: gooseneck hose kinks", "status": "fixed (smooth Bezier)."},
+  {"issue": "handed off: blank placards, sun diamond on the 26A back", "status": "still present, not scored against PY."}
+ ],
+ "details": [
+  {"detail": "back + cushion shape (bolsters, neck step, bucket)", "score": 8.0, "refs": ["py_37301", "py_37303", "py_37302"]},
+  {"detail": "back fabric (dash grid: tone, scale, crispness)", "score": 7.5, "refs": ["py_37301 (#8490a7, spread 0.69, gx/gy 22/32) vs q14 (#697284, 0.62, 13/19)", "py_37305 close-up (mottled) vs b10 (regular rows)"]},
+  {"detail": "headrest + wings layout (flap beside / over the pads)", "score": 8.0, "refs": ["py_37301", "py_37302", "py_37305", "b3: flap / headrest 0.59"]},
+  {"detail": "wing pad junction with the back bolsters", "score": 6.0, "refs": ["py_37305 (clean rounded pad bottom with a shadow crease)", "b4 / b9 / b12 / p4 / q14 (jagged intersection)"]},
+  {"detail": "wing petal fabric contrast", "score": 6.5, "refs": ["py_37302 foreground spread 1.06", "py_37305 1.01", "q13 0.53", "q14 0.40"]},
+  {"detail": "navy flap (colour, sheet, hem, over-top, rolled edges)", "score": 8.0, "refs": ["py_37302 foreground #303e6d vs q13 #28355e", "rolled-edge tabs show at the foot corners (b4, b9)"]},
+  {"detail": "shell flanks + rear face (colour, arch, rim height)", "score": 7.5, "refs": ["py_37304 rim / bezel 0.18", "san_26 0.16", "q13b 0.32-0.34", "shell / bezel width 1.22 vs 1.165"]},
+  {"detail": "screen + frame + placards (placards blank, handed off)", "score": 8.0, "refs": ["py_37304", "san_26"]},
+  {"detail": "literature pocket", "score": 7.5, "refs": ["san_26", "san_20", "b11", "b7"]},
+  {"detail": "console (front face, sockets, triangles, tab, lid + nose)", "score": 7.5, "refs": ["py_37301 front face #52668d (sat 0.27) vs q14 #545c6c (0.12)", "py_37303 lid"]},
+  {"detail": "window armrest", "score": 8.0, "refs": ["py_37301 left seat", "py_37303"]},
+  {"detail": "aisle shroud", "score": 8.0, "refs": ["py_37301", "py_37303", "san_13"]},
+  {"detail": "leg rest + roller", "score": 7.5, "refs": ["py_37301", "py_37303"]},
+  {"detail": "footrest", "score": 7.5, "refs": ["san_20"]},
+  {"detail": "bottle bin", "score": 8.0, "refs": ["san_17", "san_20"]},
+  {"detail": "legs", "score": 7.5, "refs": ["san_20", "san_13"]},
+  {"detail": "gooseneck light", "score": 8.0, "refs": ["san_26", "py_37305", "py_37301"]},
+  {"detail": "lumbar welts", "score": 6.0, "refs": ["py_37301 (seams as soft shading)", "b10 / b6 (hairline navy lines, broken)"]}
+ ],
+ "issues": [
+  {
+   "severity": "medium",
+   "issue": "The wing pads sink into the tops of the side bolsters. Where the petal-tile pad meets the dash-tile bolster, the boundary is a jagged saw-tooth ('mountain range') edge. The pad and the bolster also read as one continuous block, with no crease under the pad. In py_37305 / 37301 each pad has a clean rounded bottom sitting on the back, with a shadow crease under it.",
+   "evidence": "b4_flap_seam (x 20-220 and 600-900, y 100-200), b9_wing_rim (600-850, 150-300), b12_flank_goose (100-300, 80-160), p4 (195-260, 265-300), and visible at cabin res in q14 centre seat (crop c14h, x 140-250, y 215-245). Code: bolster loft BX at x +-0.185, z -0.03, with sections up to SEC(0.76, 0.07, 0.09) / SEC(0.82, 0.05, 0.06). Wing WX at x +-0.175, z -0.04, bottom section SEC(0.655, 0.06, 0.05). The two lofts overlap over y 0.655-0.82.",
+   "fix": "src/09b_py.js bolster loop: end the bolster below the pad. Replace the last two sections with SEC(0.62, 0.10, 0.13, -0.016, 0.045), SEC(0.68, 0.085, 0.10, -0.01, 0.038), SEC(0.71, 0.05, 0.05, -0.004, 0.02), so the bolster tops out at 0.71 under the pad bottom. Then move the pad 1 cm forward so its rounded bottom sits proud of the back: WX z -0.04 -> -0.05, and the bottom section SEC(0.655, 0.06, 0.05) -> SEC(0.648, 0.07, 0.06, 0, 0.028). Add a dark crease strip under each pad: gBox(0.10, 0.006, 0.004) at M4.mul(WX, M4.trs(0, 0.652, -0.055)), { c: '#3a4050', r: 0.95 }. Check b4 / b9 for a clean edge."
+  },
+  {
+   "severity": "medium",
+   "issue": "From behind, the shell rim above the screen is about twice the photo height, so the seat back reads top-heavy. In py_37304 and san_26 the grey rim above the bezel is ~16-18 % of the bezel height.",
+   "evidence": "q13b left seat: frame top y 228, shell top y 158, bezel 230-445 -> rim 0.32-0.34 of the bezel height. py_37304: rim 75 px over a 420 px bezel = 0.18. san_26: 50/320 = 0.16. Code: screen centre on(0.755), bezel 0.263 (top 0.887), frame 0.29 (top 0.90), shell arch top 0.967, so the rim is ~8 cm above the bezel against ~4.5 cm.",
+   "fix": "src/09b_py.js: raise the screen assembly 3 cm: scr = on(0.785, 0) (was 0.755). Move the placards on(0.60, ...) -> on(0.63, ...), and the literature bucket py0 0.38 -> 0.40, so the gaps stay as in py_37304. Keep the shell top at 0.967, because it must still hide the headrest at 0.905. The bezel top then reaches 0.917 and the rim is ~0.05 (0.19 of the bezel height). Make sure the frame (top 0.93) stays inside the rear face at that height, since the shell width there is 0.455-0.475."
+  },
+  {
+   "severity": "medium",
+   "issue": "The wing petal cloth is still about half the photo contrast. The pads read as soft blue-grey with sparse small white ovals, not py_37302 / 37305's bright irregular petals on a dark mottled ground.",
+   "evidence": "Wing luminance spread (p90-p10)/p50 and dark share (<0.75x median): q14 0.40 / 0.03, q13 foreground 0.53 / 0.04, against py_37301 0.91 / 0.31, py_37302 foreground 1.06 / 0.31, py_37305 1.01 / 0.15. The photo petals are also irregular flakes (py_37305), not ovals.",
+   "fix": "test/make_swatches.py synth_py_confetti: darken the ground by multiplying the weave term by (1 - 0.7*dark) (was ~0.6). Make petals irregular polygons: 5-7 random vertices, radius 2.5-5 px with +-35 % per-vertex jitter. Raise petal brightness so the tile p90/p50 is ~1.7 and p10/p50 ~0.6. Keep the tile mean, so SEATMAT.pyWing '#6e7484' still sets the colour. Target: q13 foreground wing spread >= 0.85, dark share >= 0.15."
+  },
+  {
+   "severity": "low",
+   "issue": "Back cloth close up: still an even brick barcode (equal dashes in straight rows). At distance it is softer than the photo (~60 % of the gradient energy), so it reads as smeared horizontal streaks rather than a crisp mosaic.",
+   "evidence": "b10 vertical ac -0.61 at lag 4, +0.35 at lag 8. q14 gx/gy 13/19 against py_37301 22/32 (the same as w8). py_37305 close up shows irregular mottled light streaks of varying length.",
+   "fix": "make_swatches.py synth_py_back: add a low-frequency light-streak layer, horizontal blobs sigma_x 18 px and sigma_y 3 px at amplitude 0.3, multiplying the light dashes only. Increase dash-length variance N(19,7) -> lognormal (median 16, sigma 0.45). If the SwiftShader blur is mip selection, set LOD bias -0.5 for LAYER.pyFleck in 03_tex.js LAYER_PARAMS (shared, one line)."
+  },
+  {
+   "severity": "low",
+   "issue": "The rolled flap edges (two 0.024 strips at 35 deg) show as separate navy tabs. They poke out below and beside the flap foot corners instead of reading as the sheet's edge curling onto the wing rims.",
+   "evidence": "b9 (x 520-535, y 320-380), b4 (195-215, 210-260 and 620-635, 205-245), q13 foreground flap bottom-left corner (c13h 145-160, 380-410). Code: strips are 0.26 tall at y 0.772 (0.642-0.902) and z -0.068, against the flap foot at ~0.635 hung 1.5 deg forward.",
+   "fix": "src/09b_py.js: strip height 0.26 -> 0.24 at y 0.782 (0.662-0.902), so they end 2.5 cm above the foot. Move them 2 mm back, z -0.068 -> -0.066, and reduce the angle 35 -> 28 deg so their outer edge stays behind the pad face."
+  },
+  {
+   "severity": "low",
+   "issue": "The hourglass lumbar welts render as 1.8 mm navy hairlines that dip in and out of the cloth (broken lower ends). In py_37301 the hourglass reads as soft seam shading, not dark lines.",
+   "evidence": "b10 (x 330-350 and 545-580, y 80-560; the lower stub at 565,550 is detached), b6 top-left. Colour #4a5266 renders navy against the grey cloth.",
+   "fix": "src/09b_py.js: tube r 0.0018 -> 0.003, colour '#4a5266' -> '#5c6476' (closer to the cloth, so it reads as a seam shadow). Offset the points so they ride 2 mm above the loft surface everywhere: z values [-0.085,-0.075,-0.063,-0.058] -> [-0.104,-0.112,-0.112,-0.098]. Back face z at those heights = SEC z - d/2; verify with the SEC table. Add a 4th lower point at y 0.04 so the welt runs to the cushion."
+  },
+  {
+   "severity": "low",
+   "issue": "The console body is neutral grey. In py_37301 the console front and side are a distinct blue slate.",
+   "evidence": "Console front face: q14 #545c6c (HLS sat 0.12) against py_37301 #52668d (sat 0.27).",
+   "fix": "src/09_seats.js SEATMAT.pyArm c '#525a6c' -> '#4f5c7c' (shared, one line). It also tints the cubby plates and roller, which matches py_37301."
+  },
+  {
+   "severity": "low",
+   "issue": "The literature-pocket net is a straight flat band. In san_26 it follows the curved bucket bottom, and its top edge forms the smile.",
+   "evidence": "b11 / b7 / p2 against san_26 (x 480-720, y 730-800).",
+   "fix": "src/09b_py.js: replace gBox(0.37, 0.06, 0.003) with a gLoft of 3 sections following the bucket loft at y 0.02-0.07 (z from the bucket SEC offsets + 0.003), so the mesh wraps the bucket bulge. Raise its top-edge stitch at the ends by 0.012 (a smile)."
+  },
+  {
+   "severity": "low",
+   "issue": "From a standing eye behind the row, both wing domes and the navy over-top band still show over the shell's upper corners.",
+   "evidence": "b1_rear_stand (x 120-180 and 380-440, y 60-90), b13. The seated view q13b is clean, apart from a ~3 px sliver.",
+   "fix": "Optional: wing top sections 0.892 / 0.902 -> 0.885 / 0.893, and over-top piece y 0.898 -> 0.893. Or widen the shell top sections [0.95,0.05,0.43] -> 0.45 and [0.958,0.035,0.38] -> 0.41."
+  },
+  {
+   "severity": "low (handed off)",
+   "issue": "Blank placards (integration atlas) and the sun diamond on the 26A back (lighting). Overall PY luminance is ~20 % below the photos (q14 back L50 114 against py_37301 150), which is in the lighting loop.",
+   "evidence": "q13b, q14",
+   "fix": "Not PY."
+  }
+ ],
+ "questions": [
+  "Still open from w8a: py_37302's foreground seat shows the petal/confetti cloth over the whole centre of the back (crop x 520-680, y 440-560), while 37301 / 37303 show the dash grid. Is row 25 (bulkhead) dressed differently? SANspotter (seat 26G) does not show row 25 from the front.",
+  "Should the stowed gooseneck head be brushed silver (py_37305 has strong highlights) rather than the near-white matte it renders as in the studio? Under cabin light (q14) it reads light grey, which is acceptable."
+ ]
+}

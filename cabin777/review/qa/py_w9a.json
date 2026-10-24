@@ -1,0 +1,92 @@
+{
+ "area": "py",
+ "rater": "A",
+ "round": "w9",
+ "commit": "91d6ceb",
+ "score": 7.8,
+ "summary": "This is a real step up from w8 (7.5). The flap now lies over the wing rims and reads as the dominant navy panel (flap / headrest-with-wings 0.55-0.59 in q13/q14, against 0.60-0.63 in py_37301/37302). The shell top is a continuous soft arch and no fabric shows above the rim from behind. The corduroy beat is gone: the vertical autocorrelation second peak went from 0.19 to 0.02 on q14 and from 0.23 to 0.06 on q13. The gooseneck is slim and smooth, and the lid meets the nose. Fabric colour matches the official photos within lighting: hue 220 against 218-222, saturation 0.20-0.21 against 0.21-0.35. It is not yet 'clearly the same product' because the headrest still differs from ANA's in the photos' most recognisable detail. ANA's wings are short, round, puffy EARS that stand well proud and end with a shadow above the backrest. Ours are tall flat strips that run straight down into the shoulder bolsters. The flap also reads too tall (rendered h/w 1.25-1.30 against 0.94-0.98), with rolled bar ends at the top and bottom like a scroll. The two stowed lamp heads hang parallel and touching, so they read as one grey plate, not two splayed silver cylinders.",
+ "calibration": [
+  {"issue": "w8a medium / w8b high: wings in front of the flap, flap a narrow strip in a channel", "status": "fixed. Flap / headrest-with-wings is 0.59 (q13 front seat) and about 0.53 (q14, oblique), against 0.63 (py_37301) and 0.71 (py_37302). The flap edges lie over the wing rims."},
+  {"issue": "w8a medium: gooseneck hangs at 35 deg with a thick arm across the wing", "status": "mostly fixed. The arm is r 0.0065 and runs down the flank as a smooth Bezier. NEW: the two adjacent heads hang vertical, parallel and 1.4 cm apart, so in q14 they read as one flat grey plate. In py_37305 they splay at about 30-40 deg from vertical, with the hoses looped out from the shell (see issues)."},
+  {"issue": "w8a medium: back cloth reads as horizontal corduroy (periodic rows)", "status": "fixed. Mean vertical ACF second/third peaks went 0.38/0.19/0.09 -> 0.23/0.02/0.00 (q14) and 0.30/0.23/0.03 -> 0.25/0.06/0.00 (q13). py_37301 is 0.26/0.23/0.18 (more brick regularity than us, fine)."},
+  {"issue": "w8a low: gap between cup nose and lid, trim shelf", "status": "fixed (p1, p8: one continuous lid to the cup nose)."},
+  {"issue": "w8a low (w7a): literature pocket flat panel with mid slot", "status": "mostly fixed. It has a smile lip and a bottom net (p2, p6). The pocket front is still flat and shallow-looking compared with san_20's bulging bucket (low)."},
+  {"issue": "w8a low / w8b low: flap hem royal + mid-height seam", "status": "seam fixed. The hem is still more saturated than the body (#1c295c against #23305c at q13 x 280), and the rolled bottom edge reads as a separate bar (see issues)."},
+  {"issue": "w8a low: no hourglass lumbar seams", "status": "fixed (p1, p8 welts visible). They are slightly too dark/crisp as single lines (low)."},
+  {"issue": "w8a low / w8b medium: wing petals low contrast", "status": "fixed (bright cream petals on a darker ground, q13 foreground and head_cmp)."},
+  {"issue": "w8a low / w8b medium: shell top chamfered / crease", "status": "fixed (q13b: continuous arch, matches py_37304's silhouette)."},
+  {"issue": "w8b medium: wing domes / navy over-top visible above the rim from behind", "status": "fixed (q13b, p2: grey rim is the top outline)."},
+  {"issue": "w8b low: gooseneck kinks / plain head", "status": "fixed (10-point Bezier, end ring, forward lens)."},
+  {"issue": "w8b low: back tile reads as a regular LED barcode", "status": "partly fixed. The rows are irregular now, but the mottled patches render as soft cloudy smudges, and gradient energy is 13/20 against py_37301's 20/31 (35 % softer). Some of that is SwiftShader filtering (handed off)."}
+ ],
+ "details": [
+  {"detail": "back + cushion fabric (dash grid colour, scale, contrast)", "score": 7.8, "refs": "py_37301 back #8d9bb2 sat 0.22, std/mean 0.24; py_37302 #6a7a9f sat 0.35; q14 #6e7789 sat 0.21 std/mean 0.23; q13 #737c8e. Hue matches. The ~20 % darker level is the queued lighting regression (integration 56bb5c7), not PY."},
+  {"detail": "headrest wings (shape, proudness, fabric)", "score": 6.5, "refs": "py_37301 / 37302 / 37305: round puffy ears with a dome top and bottom, about 4-5 cm proud of the flap, a distinct shadow under each. Render: tall flat strips continuous with the shoulder bolsters (head_cmp, p4)."},
+  {"detail": "navy flap", "score": 7.5, "refs": "Colour #25315c-#344169 against py_37302 #2b396b (ok). Visible h/w 1.25-1.30 in q13/q14 against 0.94-0.98 in py_37301/37302. Rolled bar ends top and bottom (scroll look). Real: a flat sheet with soft edges."},
+  {"detail": "shell (sides, arch, rear face)", "score": 8.5, "refs": "py_37304 rear #42474f-#454d57 vs q13b #424853; top #596067 vs #5d6675; arch silhouette matches"},
+  {"detail": "screen + frame + placards", "score": 8.0, "refs": "py_37304 / san_26 bezel proportions ok; placards blank (handed off)"},
+  {"detail": "literature pocket", "score": 7.3, "refs": "san_20 / san_26: deep bulging bucket, thick grey smile lip, mesh bottom. Render: lip and mesh right, front reads flat."},
+  {"detail": "console (front face, sockets, life-vest tab, lid, cup nose, side plaques)", "score": 7.8, "refs": "py_37301: front pockets, sockets and red tab match. The seat-facing side lacks the large dark recessed panel with a vertical lit button strip and the silver tray-latch bar."},
+  {"detail": "window armrest", "score": 8.0, "refs": "py_37301 left seat: slim slate arm with light top and white letter square; matches"},
+  {"detail": "aisle shroud", "score": 8.0, "refs": "py_37301 #6c7c93 / py_37303; q13 #616b7a, silver strip + recessed panel present"},
+  {"detail": "leg rest + roller", "score": 7.8, "refs": "py_37301: fluted dark roller and hanging rest present; roller a bit thin and flush compared with the chunky proud bar in the photo"},
+  {"detail": "footrest", "score": 8.0, "refs": "san_20: two ribbed black pads, silver arms; matches"},
+  {"detail": "bottle bin", "score": 8.0, "refs": "san_17 / san_20: two-cell silver cup block on dark housing, placard; matches"},
+  {"detail": "legs", "score": 7.8, "refs": "san_05 / san_20; aluminium grey frames ok"},
+  {"detail": "gooseneck light", "score": 7.0, "refs": "py_37305: two silver heads hanging splayed about 30-40 deg, hoses looping out from the shell side. Render: two vertical heads touching side by side, reading as one plate (q14). From behind (q13b) the root bullets + heads read as chunky light canisters."}
+ ],
+ "issues": [
+  {
+   "severity": "medium",
+   "issue": "The headrest wings are tall flat strips continuous with the shoulder bolsters, not ANA's round puffy ears. In py_37301 / 37302 / 37305 each wing is a short pillow with a domed top and a domed bottom. It stands about 4-5 cm proud of the flap face and has a visible shadow line under it, where the backrest continues behind. In q13/q14 our wing runs straight down into the bolster (the shoulder flare at y 0.62-0.82 merges with it), and its top is squared off.",
+   "evidence": "head_cmp: py_37301 / 37302 (left) against q14 / q13 (right). py_37302 near seat: the wing is about 0.70 of the flap height with a round bottom end above the flecked back. Render: the wing column continues to about y 0.45 of the back as one light strip.",
+   "fix": "src/09b_py.js wing loop: WX = M4.trs(s*0.178, 0, -0.052, -s*14*DEG) (z -0.04 -> -0.052 so the outer pad stands proud). Sections: SEC(0.665,0.05,0.05,0,0.024), SEC(0.68,0.095,0.11,0,0.05), SEC(0.71,0.11,0.13,0,0.06), SEC(0.85,0.11,0.13,0,0.06), SEC(0.885,0.095,0.11,0,0.05), SEC(0.905,0.06,0.07,0,0.03), SEC(0.912,0.03,0.03,0,0.014) (round dome top and bottom, depth 0.11 -> 0.13). Bolster loop: end the bolsters below the wings so a shadow gap shows. Replace the last two sections SEC(0.76,0.07,0.09,..) and SEC(0.82,0.05,0.06,..) with SEC(0.66,0.08,0.10,-0.01,0.035), SEC(0.70,0.05,0.06,0,0.024)."
+  },
+  {
+   "severity": "medium",
+   "issue": "The navy flap reads too tall, and it has bar-like rolled ends at the top and bottom (scroll look). Its visible h/w is 1.25-1.30 in q13/q14. In py_37301 it is 0.94 and in py_37302 (similar high camera) 0.98. The over-top piece and the 35-deg rolled side strips poke out at the top corners, and the hem band shows as a separate, more saturated strip (#1c295c against the body's #23305c).",
+   "evidence": "head_cmp crops. Measured flap boxes: py_37301 97 x 91 px, py_37302 240 x 235 (crop px); q14 180 x 225; q13 200 x 265.",
+   "fix": "src/09b_py.js: flap gRBox(0.28, 0.27, ...) -> gRBox(0.29, 0.225, 0.005, 0.004, 1) at M4.trs(0, -0.1125, 0) (bottom 0.68, was 0.635). Side rolls gRBox(0.024, 0.26, ...) at y 0.772 -> gRBox(0.02, 0.215, ...) at y 0.792, x s*0.152, angle 25 deg, so they no longer stick out above the fold. Over-top piece width 0.27 -> 0.26. Hem: gBox(0.274, 0.022) -> gBox(0.284, 0.014) at FL trs(0, -0.218, -0.0032), colour '#2a3560' (matches the body after the leather layer), and drop the topstitch line or make it '#2f3a62'."
+  },
+  {
+   "severity": "medium",
+   "issue": "The stowed gooseneck heads of adjacent seats hang exactly vertical, parallel and 1.4 cm apart, so in q14 they read as one flat light-grey plate with two black dots. In py_37305 each hose loops out from the shell side and its silver head hangs splayed about 30-40 deg off vertical, tip forward and down. The two heads are clearly separate, about 1.5 head diameters apart. From behind (q13b) the root bullets and heads read as chunky light canisters.",
+   "evidence": "gn_q14 crop (q14 x 380-560, y 140-300); py_37305; san_26 left edge (hose loops out about 8 cm before dropping).",
+   "fix": "src/09b_py.js gooseneck: C = [[0.24, 0.84, zr(0.84)-0.065], [0.275, 0.80, -0.03], [0.285, 0.72, -0.10], [0.262, 0.675, -0.125]] (the hose bows about 4 cm out and comes forward). Head: hd = M4.mul(BH, M4.trs(sd*0.255, 0.635, -0.14, 0, 32*DEG, sd*12*DEG)), so it tilts forward/down and the two heads splay apart. Check the rotation order against M4.trs (yaw, pitch, roll); the goal is the lens end lower and forward. Head colour { c: '#b4b8bd', r: 0.2, m: 0.95 } so it reads as polished chrome, not matte light grey. Root bullet gCyl(0.015, 0.018, 0.06) -> gCyl(0.012, 0.015, 0.05)."
+  },
+  {
+   "severity": "low",
+   "issue": "The back fabric's mottled light patches render as soft cloudy smudges, and the dash grid is about 35 % softer than the photo. The near seat in q14 (right edge) shows large blocky white rectangles. The grain is crisper and more brick-like in py_37301.",
+   "evidence": "q14 26A back: gradient 13.1/20.0 against py_37301 20.1/31.0; light>1.25x median 0.164 against 0.135; dark<0.75x 0.117 against 0.170.",
+   "fix": "test/make_swatches.py synth_py_back: halve the blob-noise amplitude (0.35 -> 0.18) and raise the dark-dash weight so the dark share reaches about 0.16 (dash darkness x1.15). Keep the tile mean by lifting the ground 2 %. The gradient deficit beyond that is SwiftShader filtering (handed off)."
+  },
+  {
+   "severity": "low",
+   "issue": "The seat-facing side of the console lacks the large dark recessed panel that carries the vertical strip of lit control buttons and the silver tray-latch bar (py_37301, the side facing the aisle seat).",
+   "evidence": "console_cmp: py_37301 side panel #404861, about 0.30 x 0.20 with a vertical button strip at its front; render: plain pyArm side with a small silver plaque.",
+   "fix": "src/09b_py.js console side loop: add gRBox(0.003, 0.17, 0.30, 0.02, 1) at M4.trs(fx, 0.52, -0.33) in { c: '#3c4358', r: 0.5, l: LAYER.plastic }, a vertical strip gRBox(0.003, 0.12, 0.022, 0.006, 1) at (fx + s*0.0015, 0.53, -0.47) in SEATMAT.black with 4 tiny gBox(0.002, 0.008, 0.008) '#6f8fd6' buttons at y 0.50-0.56, and the latch bar gBox(0.003, 0.008, 0.12) pyTrim at (fx, 0.47, -0.31)."
+  },
+  {
+   "severity": "low",
+   "issue": "The literature pocket front reads flat and shallow. san_20 / san_26 show a bucket bulging about 5 cm aft, with a visibly dark mouth and items inside.",
+   "evidence": "p2 / p6 against san_20 / san_26.",
+   "fix": "src/09b_py.js pocket loft: depths 0.045/0.052/0.034 -> 0.06/0.07/0.045 (z offsets / 2). Make the mouth shadow gBox(0.34, 0.006, 0.006) -> gBox(0.35, 0.014, 0.01) in '#1e2024'."
+  },
+  {
+   "severity": "low",
+   "issue": "The leg-rest roller reads thin and flush. In py_37301 it is a chunky dark fluted bar standing clearly proud of the skirt and leg rest, with dark end caps.",
+   "evidence": "console_cmp left: the roller is about 6 cm in diameter, proud about 2 cm.",
+   "fix": "src/09b_py.js: roller gCyl(0.028 -> 0.032) at z -0.555 -> -0.562; add end caps gCyl(0.034, 0.034, 0.012) in '#2e3239' at x0 +- 0.205."
+  },
+  {
+   "severity": "low (handed off)",
+   "issue": "Blank placards (integration atlas), the hard sun diamond on the 26A back (lighting), and the overall ~20 % darker fabric level against py_37301 (lighting regression queued by integration 56bb5c7).",
+   "evidence": "q14, q13b",
+   "fix": "Not PY."
+  }
+ ],
+ "questions": [
+  "py_37301 (aisle seat) shows the back as a blocky brick dash grid with few light flecks. py_37302 (near seat) shows mostly sparse cream flecks on the back too. Are these two lighting renditions of the same cloth, or do the back panels differ? We currently follow 37301 for the back and 37302 for the wings.",
+  "Should the stowed gooseneck heads splay (py_37305), or is that photo a deployed pose? san_26 also shows the hose looped out from the shell side, so I scored the splay as the stowed state."
+ ]
+}

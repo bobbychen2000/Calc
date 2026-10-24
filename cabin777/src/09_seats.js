@@ -65,7 +65,7 @@ const SEATMAT = {
   pyCover: { c: '#343f60', r: 0.45, l: LAYER.leather },   // navy satin leatherette, fine pebble grain; #34406e rendered royal blue (ACES) vs py_37302 #2f3c6c
   pyWing: { c: photoBase('#6e7484', 'py_confetti'), r: 0.9, l: LAYER.pyConfetti },   // w6: wing / back ~0.9-1.0 (py_37301 / 37305, A + B) [D]
   pyShell: { c: '#6a7079', r: 0.42, l: LAYER.plastic },   // w6: darker, shroud py_37303 #4b525a (A + B) [D]
-  pyArm: { c: '#525a6c', r: 0.45, l: LAYER.plastic },   // w6: console / back ~0.5 (py_37301 #505d7f, A + B) [D]
+  pyArm: { c: '#4f5a76', r: 0.45, l: LAYER.plastic },   // w6: console / back ~0.5 (py_37301 #505d7f, A + B) [D]
   pyArmPad: { c: '#8a919c', r: 0.4, l: LAYER.plastic },   // ANA generation: light blue-grey console lid with a groove (py_37303 / 37301)
   pyBin: { c: '#b8bcc0', r: 0.3, m: 0.85, l: LAYER.brushed },
   pyBay: { c: '#4a4c50', r: 0.6, l: LAYER.plastic },
