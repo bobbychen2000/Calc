@@ -35,7 +35,7 @@ const PHOTO_GAIN = {
   20: 0.7,
   21: 0.5,
   23: 1.0,
-  27: 0.3,   // exterior w8: tile stored at SD 0.12 -> ~3.6 % grime mottle (KN41 / 7250 flap panels 3-5 %) [D]
+  27: 0.22,   // exterior w9: x0.75, read as even brushed banding at 0.3 (A w9); exterior w8: tile stored at SD 0.12 -> ~3.6 % grime mottle (KN41 / 7250 flap panels 3-5 %) [D]
 };
 // swatches stored as ratio / ENC instead of ratio / 2 (test/make_swatches.py ENC): the Y ticks are ~10x the navy ground
 // in linear light and clipped away at 2x. photoBase() lifts the material colour by ENC/2 to compensate.

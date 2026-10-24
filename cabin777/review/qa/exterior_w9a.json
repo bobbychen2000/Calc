@@ -1,0 +1,91 @@
+{
+ "area": "exterior",
+ "rater": "A skeptic",
+ "build": "w9 = head 764d796 (w8 fixes), renders /tmp/claude-0/a1e20d29-972a-5952-b92a-3befff9d861e/scratchpad/r9 (r7 for comparison). Crops in /tmp/claude-0/a1e20d29-972a-5952-b92a-3befff9d861e/scratchpad/ratA9",
+ "score": 7.3,
+ "details": {
+  "wing planform / raked tip / bending": 7.5,
+  "wing surface detail (seams, fastener rows, panel tone, gear stripe, slat band, placards, grime)": 7.0,
+  "control surfaces & gaps (slats, spoilers, flaps, flaperon, aileron)": 7.5,
+  "canoes (flap-track fairings)": 6.5,
+  "pylon": 7.0,
+  "nacelle shape (cowl, lip, splits, strake, access panel)": 7.5,
+  "nacelle colour / materials (incl. GE logo)": 7.5,
+  "inlet / fan / spinner": 7.0,
+  "livery / registration JA795A": 7.5,
+  "lights & static dischargers": 7.0,
+  "artefacts": 7.0
+ },
+ "previous": [
+  {"issue": "[w8 A medium / B low] GE monogram drawn as block 'GE' in a ring", "status": "FIXED. c_ge_inboard_left now shows a ring with curled swashes inside it and a small separate 'GE' wordmark beside it. This matches the layout in knav 7A _9 (crop ratA9/../knav9_ge.png, 255-335 x 845-870). One residue: the strokes are thick raised tubes that catch light like relief, where the real mark is flat paint. Low."},
+  {"issue": "[w8 A medium] canoes read as near-black teeth from the A side (w19A)", "status": "PARTLY FIXED. The flanks in w19A moved from #373b43-#3a4049 (L 58-63) to #434954-#464e5b (L 72-77). Against skin #9aa4b1 (L 162) that is a ratio of 0.45. KN41 canoes are #8596b2 / #798da8 on skin #b9c1ce, about 0.75. They still read as charcoal sawteeth (ratA9/w19A_r9.png)."},
+  {"issue": "[w8 A low / B low] canoe tail: tip at the top of the pod, blunt end", "status": "MOSTLY FIXED. topAt now falls 0.28 m to the tip and the floors shrink with the section, so the point drops toward mid-depth (c_canoe_side, w26K). In c_canoe_side the nearest canoe still ends in a small vertical cut face at (420,395-410), about 15 px against about 80 px of depth. Low."},
+  {"issue": "[w8 A low] the 45 % splice kinks at the Yehudi break; the skin is CG-clean", "status": "Splice: FIXED in code (straight m0 -> m1). The bowed seam visible in w17A is pixel-identical to r7: x = 570/588/600/607/613 at y = 250/300/400/450/500 in both builds. It is therefore surface projection, not the old kink, and is no longer scored. Grime: PARTLY FIXED. The new streak layer lifts the residual SD on flat skin from 1.0 % to 2.3 % (w17K 200-460 x 400-520). The photos measure 4.6-5.1 % (KN41 530-700 x 500-640: 5.1 %, p5 -7.5 / p95 +5.7; KN46: 4.6 %, -12 / +7). The render's distribution is symmetric (p5 -2.2 / p95 +3.3), so it reads as even brushed banding across the whole wing rather than darker local grime."},
+  {"issue": "[w8 A low / B low] placards pink-red dashes", "status": "FIXED. w17A (466,318) #a49aa7 has r-b of about 0, as in the KN41 placard #988797. w26K (568,227) #bcb4bc. They now read as faint marks."},
+  {"issue": "[w8 B medium] registration strokes 20 % of glyph height (comb-like in w17K)", "status": "PARTLY FIXED. The strokes are thinner. From 17K the six glyphs are still compressed spanwise into stacked chordwise bars (ratA9/w17K_r9.png). Much of that is physical foreshortening at this grazing angle. KN41 sees the same lettering at a similar angle and keeps the letters legible, at about 3:1 compression. Low."},
+  {"issue": "[w8 gap #1] wing too dark, near-far gradient reversed", "status": "FIXED (mostly). Near skin: w17K 161 -> 185, w19A (620,500) 126 -> 152, w26K 161 -> 175, all within or near the 175-195 target. In w19A the near skin (152) is still slightly darker than the far skin (162); KN41 runs 195 -> 147. Low."},
+  {"issue": "[w8 lighting, not scored] blue underwing at sunset, black wing at night", "status": "Night: FIXED. The n19A wing reads as dark navy with visible spoiler and flap lines. Sunset: NOT FIXED. In the s13A left pane the underside of the wing is still saturated royal blue."}
+ ],
+ "issues": [
+  {
+   "severity": "medium",
+   "detail": "canoes (flap-track fairings): tone inverted in K-side views, too dark in A-side views",
+   "problem": "In every ANA photo of a canoe seen from above (7250, 7282, KN46, KN41), the upper part of the pod is the bright facet and the lower flank is darker. In w26K the order is reversed. The upper flank under the TE is mid grey (#8b8e8e at (620,280), #b0b4b6 at (640,310)), and a broad bright keel band at (600,340) #d4dade (L 217) is brighter than the wing skin (L 175). Each canoe therefore reads as a grey sock sitting on a white second fairing (ratA9/w26K_r9.png). The baked 0.45 belly term is overwhelmed by u_extBounce (0.69). Meanwhile, on the A side (w19A) the flanks fall to L 72-77, 0.45 of the skin against about 0.75 in KN41. The canoe has no consistent tone: a white keel in one view, charcoal teeth in another.",
+   "evidence": [
+    "/tmp/claude-0/a1e20d29-972a-5952-b92a-3befff9d861e/scratchpad/ratA9/w26K_r9.png",
+    "/tmp/claude-0/a1e20d29-972a-5952-b92a-3befff9d861e/scratchpad/ratA9/w19A_r9.png",
+    "ref/web/exterior/b_alv_ANA77W_PY_IMG_7282-2-scaled.jpeg (canoes over the cloud deck: lit top, darker belly)",
+    "ref/web/exterior/a5_kn_ANA77W_TheRoom_46.jpg (580-640, 360-450: canoes light, lower edge darker)",
+    "ref/web/exterior/a5_kn_ANA77W_TheRoom_41.jpg (860,325) #8596b2, skin (300,450) #b9c1ce"
+   ],
+   "fix": "11_exterior.js line 436: bake a monotonic top-to-belly ramp that does not fight the bounce: shadeVerts(B, vC, vN, (p, n) => n[1] > 0.3 ? 1 : n[1] > -0.4 ? 0.85 : lerp(0.85, 0.3, smooth(-0.4, -0.9, n[1]))). The flank sits near 0.85, which lifts w19A toward about 0.7 of the skin. The belly at 0.3 times the bounce lands below the flank. If the keel is still brighter than the flank, the lighting owner should scale u_extBounce by smoothstep(0.0, -0.6, N.y) * 0.6 for exterior materials with n.y < -0.5 (04_shaders.js:157), since the cloud deck cannot out-light the direct-sun flank."
+  },
+  {
+   "severity": "medium",
+   "detail": "wing surface: grime layer amplitude and character",
+   "problem": "The new streak texture is visible, but it is a uniform fine banding at the same strength everywhere (w17A, w19A, c_wing_panel), so it reads as brushed aluminium rather than wear. Residual SD is 2.3 % with a symmetric distribution (p5 -2.2 / p95 +3.3). The photos show 4.6-5.1 % with a dark skew (KN46 p5 -12 / p95 +7). The darkening there is localised: hinge lines, fastener heads (KN41 (490,830)), the flap TE and the exhaust-washed inboard flap (7250 (40-500, 620-900): 7.1 %). Across most of the fixed skin the photos are cleaner than the render's banding.",
+   "evidence": [
+    "/tmp/claude-0/a1e20d29-972a-5952-b92a-3befff9d861e/scratchpad/ratA9/w17A_r9.png",
+    "/tmp/claude-0/a1e20d29-972a-5952-b92a-3befff9d861e/scratchpad/r9/c_wing_panel.png",
+    "ref/web/exterior/a5_kn_ANA77W_TheRoom_41.jpg",
+    "ref/web/exterior/b_alv_ANA77W_PY_IMG_7250-2-scaled.jpeg"
+   ],
+   "fix": "Lower the streak contrast of the global layer, LAYER_PARAMS for xSkin about x0.6 (shared 03_tex.js, one line). Move the darkening into localised per-vertex terms in the paintVerts loop: f *= 1 - 0.08 * smooth(0.35, 0, Math.abs(cx - hingeCx)) at the spoiler and flap hinge lines, and -10 % (not -6 %) on seg 2 for sp 8-11.8. In make_swatches x_skin, skew the tile dark: ground 1.0, sparse streak clusters at -8 to -14 % covering about 15 %, nothing above +3 %."
+  },
+  {
+   "severity": "low",
+   "detail": "canoes: vertical streaks on the flanks",
+   "problem": "The canoes use `paint`, which now carries the triplanar grime layer. On the near-vertical flanks the triplanar projection samples the tile's other axis, so the streaks run vertically down the pod (visible as a curtain pattern in w26K and c_canoe_side). Real streaks on fairings run fore-aft with the flow.",
+   "evidence": ["/tmp/claude-0/a1e20d29-972a-5952-b92a-3befff9d861e/scratchpad/ratA9/w26K_r9.png", "/tmp/claude-0/a1e20d29-972a-5952-b92a-3befff9d861e/scratchpad/r9/c_canoe_side.png"],
+   "fix": "11_exterior.js line ~349: B.add(gLoft(secs, 3), ..., { ...paint, l: 0 }). Do the same for the pylon aft fairing loft at line ~430, which also uses `paint` on side-facing normals."
+  },
+  {
+   "severity": "low",
+   "detail": "inlet / fan / spinner",
+   "problem": "Unchanged. In c_nacelle_left the fan is a dark void with only the spinner tip showing. knav 7A _9 (480-540, 620-700) shows a bright silver spinner with the black spiral mark and a readable ring of wide-chord blades.",
+   "evidence": ["/tmp/claude-0/a1e20d29-972a-5952-b92a-3befff9d861e/scratchpad/r9/c_nacelle_left.png", "ref/web/exterior/b5_knav_ANA77W_7A_GE90_takeoff_9.jpg"],
+   "fix": "Raise the spinner albedo to about #b8bcc2 with metal 0.6, and set the fan blade disc to #3a3e44 instead of near-black, so the blade edges separate against the liner."
+  },
+  {
+   "severity": "low",
+   "detail": "GE monogram relief",
+   "problem": "The swirl roundel and wordmark are now right in layout. They are drawn as raised tubes, though, which catch a highlight on one side and cast a dark edge on the other, so they read as embossed. The real mark is flat navy paint.",
+   "evidence": ["/tmp/claude-0/a1e20d29-972a-5952-b92a-3befff9d861e/scratchpad/r9/c_ge_inboard_left.png", "ref/web/exterior/b5_knav_ANA77W_7A_GE90_takeoff_9.jpg"],
+   "fix": "Halve the tube radius offset from the cowl, or flatten the tubes (scale the normal axis by 0.2), and set roughness 0.95 on the mark."
+  },
+  {
+   "severity": "low",
+   "detail": "(owner: lighting) not scored",
+   "problem": "In s13A the underwing (left pane) is still saturated royal blue. In w19A the near skin (152) is still a little darker than the far skin (162); the photos run brighter near.",
+   "evidence": ["/tmp/claude-0/a1e20d29-972a-5952-b92a-3befff9d861e/scratchpad/r9/s13A.png", "/tmp/claude-0/a1e20d29-972a-5952-b92a-3befff9d861e/scratchpad/r9/w19A.png"],
+   "fix": "For the lighting worker: desaturate the sunset skyTop contribution on down-facing exterior normals."
+  }
+ ],
+ "questionsForUser": [],
+ "photos": [
+  {"path": "ref/web/exterior/b_alv_ANA77W_PY_IMG_7282-2-scaled.jpeg", "seat": "26K (JA795A)", "what": "canoes over the cloud deck: lit top, darker belly (no bright keel)"},
+  {"path": "ref/web/exterior/a5_kn_ANA77W_TheRoom_46.jpg", "seat": "THE Room right window", "what": "canoe tone from above; dark-skewed grime stats"},
+  {"path": "ref/web/exterior/a5_kn_ANA77W_TheRoom_41.jpg", "seat": "THE Room right window", "what": "canoe/skin ratio 0.75, placard colour, residual SD 5.1 %"},
+  {"path": "ref/web/exterior/b5_knav_ANA77W_7A_GE90_takeoff_9.jpg", "seat": "7A", "what": "GE wordmark + swirl roundel (now matched), spinner/fan readability"}
+ ]
+}

@@ -346,6 +346,7 @@ def x_skin():
     # chordwise streaks: box blur along the rows (flow), as in the 7250 flap grime [D]
     k = 28
     r = sum(np.roll(r, d, 0) for d in range(-k // 2, k // 2 + 1)) / (k + 1)
+    r = np.where(r > 1, 1 + (r - 1) * 0.5, r)   # w9: skew dark - grime darkens, it does not lighten (photos skew dark, A w9)
     r = r / r.mean()
     # the sunlit 7250 flap is near clipping (SD 0.6 %), so the tile stores the pattern stretched to SD 0.12; 03_tex.js
     # PHOTO_GAIN[27] sets the rendered strength (0.12 x gain) [D]

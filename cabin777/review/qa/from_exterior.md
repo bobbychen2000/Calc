@@ -59,3 +59,15 @@ The ANA ones are seat-confirmed: `lalf_ANA77W_NH212_136/137` (11A) and `alv_ANA7
    lower `light` on my side if you prefer.
 10. **Sun-side cowl still clips (medium, repeat of 6).** w11K cowl #dadfe2 flat across the lit face.
 11. **Window reveals / lining royal blue in day views (low, shell + lighting).** Noted by rater B in every day view at cruise mood.
+
+## Wave 3b (w8-w9 raters; to lighting)
+
+12. **Cloud bounce over-lights down-facing exterior faces (medium).** In w26K the canoe bellies render #cbd0d3, brighter than
+    their flank (#b4b8b9) and the wing skin, which reads as an upside-down pod. In _7250 / _7282 / KN46 the top is bright and
+    the belly darker. Exterior now bakes the belly at 0.18 of the paint, and the band still shows. A matte canoe changed nothing, so
+    the band is the sunlit outboard flank (the day sun sits low on the right in 26K) or the bounce. **Fix:** in the exterior
+    branch (`04_shaders.js` ~l.157), scale `u_extBounce` by about 0.5 for N.y < -0.3, e.g.
+    `amb *= mix(1.0, 0.5, smoothstep(-0.3, -0.9, N.y))`.
+13. **Shade-side canoes near-black from the A side (medium, repeat).** In w19A the flanks of the left-wing canoes, facing away
+    from the sun, sit at about 0.47 of the skin (luma 72 vs 152). KN41 shows about 0.75. A slightly stronger sky ambient on
+    vertical exterior faces (N.y ~ 0) would fix both views. The bake cannot, because it is the same on both wings.

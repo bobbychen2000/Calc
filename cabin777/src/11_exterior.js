@@ -123,7 +123,7 @@ function wingGeo(side) {
       if (V3.cross(e1, e2)[0] * dir > 0) g.i.push(c0, a, b); else g.i.push(c0, b, a);
     }
   }
-  return { g, stations, pid };
+  return { g, stations, pid, NP };
 }
 
 // recolour vertices [v0, end) of a Builder where fn(p, uv) returns a material
@@ -233,7 +233,7 @@ function buildExterior(gl) {
   const E = WING.eng;
   for (const side of [-1, 1]) {
     const v0 = B.vcount;
-    const { g, stations, pid } = wingGeo(side);
+    const { g, stations, pid, NP } = wingGeo(side);
     B.add(g, null, paint);
     // bare-metal slat nose band ~0.045 chord (0.022 read as a hairline; ANA 11A _137 shows a broad bright LE) [V photo, A width].
     // w8: each spoiler / flap / flaperon / aileron panel a flat tone of its own, 0.86-0.96 of the fixed skin and bluer, and
@@ -245,10 +245,12 @@ function buildExterior(gl) {
       const q = pid[k - v0], seg = q & 3, cx = B.u[k * 2], sp = B.u[k * 2 + 1];
       if (cx < 0.045) { setVert(B, k, metal); continue; }
       const br = wingBreaks(clamp(sp, WING.s0, 32.4)), mov = (seg === 1 && br[0] !== null) || (seg === 2 && br[1] !== null);
-      if (!mov) continue;
-      // grime along the flap / aileron TE (-7 %) and the exhaust-washed flaps behind the engine (-6 %): 7250 / KN41 [V, A amount]
-      const h = hsh(q), f = (seg === 1 ? 0.92 : 0.89) * (1 + 0.14 * (h - 0.5)) * (seg === 2 && cx > 0.99 ? 0.93 : 1) * (seg === 2 && sp > 8 && sp < 11.8 ? 0.94 : 1), tint = [f * 0.97, f * 0.985, f * 1.03];
-      for (let c = 0; c < 3; c++) B.c[k * 4 + c] = Math.round(clamp(B.c[k * 4 + c] * tint[c], 0, 255));
+      const ramp = lerp(1.07, 0.93, clamp((sp - 6) / 22, 0, 1));   // w9: near skin brighter than far (KN41 194 near -> 145 far; w19A ran reversed, B w9) [V]
+      if (!mov) { for (let c = 0; c < 3; c++) B.c[k * 4 + c] = Math.round(clamp(B.c[k * 4 + c] * ramp, 0, 255)); continue; }
+      // grime along the flap / aileron TE (-7 %), the hinge rows (-7 %, w9) and the exhaust-washed flaps behind the engine (-10 %):
+      // 7250 / KN41 [V, A amount]
+      const h = hsh(q), f = (seg === 1 ? 0.92 : 0.89) * (1 + 0.14 * (h - 0.5)) * (seg === 2 && cx > 0.99 ? 0.93 : 1) * (seg === 2 && sp > 8 && sp < 11.8 ? 0.90 : 1) * ([3, 4, 6].includes((k - v0) % NP) ? 0.93 : 1), tint = [f * 0.97, f * 0.985, f * 1.03];
+      for (let c = 0; c < 3; c++) B.c[k * 4 + c] = Math.round(clamp(B.c[k * 4 + c] * tint[c] * ramp, 0, 255));
       const tl = 0.026 * (hsh(q + 101) - 0.5), ny = B.n[k * 3 + 1], nz = B.n[k * 3 + 2];
       B.n[k * 3 + 1] = ny * Math.cos(tl) - nz * Math.sin(tl); B.n[k * 3 + 2] = ny * Math.sin(tl) + nz * Math.cos(tl);
     }
@@ -287,7 +289,7 @@ function buildExterior(gl) {
     const riv = { c: '#56595d', r: 0.75, m: 0.05 };   // w5: just under the paint; lighter read as white paint lines [V ZGriff-63]
     for (const fc of [0.12, 0.62]) {
       const xa = (q) => lef(q) + fc * (pwl(WING.te, q) - lef(q));
-      for (const [a, b] of fc > 0.5 ? [[4.0, 11.3], [21.5, 29.5]] : [[4.0, 29.5]]) wingLine(B, side, spanPath(a, b, xa, Math.ceil((b - a) / 1.5)), riv, 0.016);   // no rear row under the spoiler hinge line
+      for (const [a, b] of fc > 0.5 ? [[4.0, 11.3], [21.5, 29.5]] : [[4.0, 29.5]]) wingLine(B, side, spanPath(a, b, (q) => lerp(xa(a), xa(b), (q - a) / (b - a)), Math.ceil((b - a) / 1.5)), riv, 0.016);   // w9: straight between the ends (bowed at the TE break, B w9)   // no rear row under the spoiler hinge line
     }
     // w5: row of small dark access-panel / slat-track heads ~0.35 m behind the slat line every ~1.6 m, inboard of s 17.5 where they alias into a fringe (TPG ZGriff-63, Sam Chui _37) [V, A size]
     for (let s = 12.4; s < 17.5; s += 1.6) { const x = lef(s) + 0.66 + 0.35; wingLine(B, side, [[s - 0.04, x], [s + 0.04, x]], { c: '#3a3f46', r: 0.8 }, 0.07); }
@@ -343,8 +345,8 @@ function buildExterior(gl) {
         const fw = xn < xT ? lerp(0.82, 1, smooth(x0, xT, xn)) : 1;   // slight nose-to-TE swell [A]
         secs.push(sec(xn, t < 0.22 ? rise : fw * lerp(1, 0.16, Math.pow(tail(xn), 0.9)), t < 0.22 ? rise : fw * lerp(1, 0.09, tail(xn))));
       }
-      for (const u of [0.7]) { const e = Math.sqrt(1 - u * u); secs.push(sec(x1 + u * RE, 0.16 * e, 0.09 * e)); }   // w8: one cap section, tip ~0.09 of the depth (B w8)   // w7: straight keel closing to a small rounded point (both raters, _7250) [V]
-      B.add(gLoft(secs, 3), M4.trs(0, 0, 0, 0, Math.PI / 2), paint);
+      for (const u of [0.6, 0.95]) { const e = Math.sqrt(1 - u * u); secs.push(sec(x1 + u * RE, 0.16 * e, 0.09 * e)); }   // w8: tip ~0.09 of the depth (B w8); w9: two cap sections close to a point (one left a nub)   // w7: straight keel closing to a small rounded point (both raters, _7250) [V]
+      B.add(gLoft(secs, 3), M4.trs(0, 0, 0, 0, Math.PI / 2), { ...paint, l: 0 });   // w9: no grime layer (it streaked vertically on the flanks, A w9)
     }
     // GE90-115B nacelle
     const vN = B.vcount;
@@ -386,7 +388,7 @@ function buildExterior(gl) {
       B.add(gTube(ring, 0.012, 4, false), rot, { c: '#959aa0', r: 0.6 }); }   // w6: 9 mm broke into dots
     // GE monogram low on the inboard fan cowl (~1.7 m aft, ~50 deg below the horizontal, just aft of the first split): dark ring + script swashes, ~0.45 m [V ANA
     // 77W IQCFQpV_T1A (HND), eX2WMn0xe48 (JFK), knav 7A _9; A size / drawing]
-    { const ge = { c: '#2a2f3a', r: 0.6 }, xc = 1.7, ac = -50 * DEG, Rg = cowlR(xc), at = (u, v) => cowlP(xc + u, ac + v / Rg, 0.008);
+    { const ge = { c: '#2a2f3a', r: 0.6 }, xc = 1.7, ac = -50 * DEG, Rg = cowlR(xc), at = (u, v) => cowlP(xc + u, ac + v / Rg, -0.012);   // w9: half-sunk strokes read as paint, not embossed tubes (A w9)
       const circ = Array.from({ length: 25 }, (_, k) => { const a = (k / 24) * Math.PI * 2; return at(Math.cos(a) * 0.24, Math.sin(a) * 0.24); });
       B.add(gTube(circ, 0.026, 4, false), rot, ge);
       // w8: the GE monogram, not block letters: script G and E inside the ring, four curled rim swashes, and a small block "GE"
@@ -427,13 +429,13 @@ function buildExterior(gl) {
     // fairing over the cowl in cowl white, strut under the wing in wing grey [V ANA 11A _137 / JA797A EGLL]
     const kLE = secs.findIndex((q) => q.y - WING.dz >= leE);
     B.add(gLoft(secs.slice(0, kLE + 1), 8, [true, false]), M4.trs(0, 0, 0, 0, Math.PI / 2), cowl);
-    B.add(gLoft(secs.slice(kLE), 4, [false, true]), M4.trs(0, 0, 0, 0, Math.PI / 2), paint);
+    B.add(gLoft(secs.slice(kLE), 4, [false, true]), M4.trs(0, 0, 0, 0, Math.PI / 2), { ...paint, l: 0 });
     // baked occlusion (the exterior pass has no shadow map): canoe and pylon undersides -25 %, nacelle lower half
     // down to x0.7, lower wing skin in the canoe / pylon footprint -25 % [A; shading seen in Boeing_777_(4139974954)_(2)
     // and the p97zMaCMWRg GE90 wing view, nacelle half in shadow]
     // canoe / pylon flank fills (w1-w3) dropped in w5: the exterior pass now has the cloud-deck bounce (u_extBounce,
     // lighting r3). Canoe bellies -35 % (belly #59636c vs flank #d3d6d3 in ANA 26K _7331) [V]
-    shadeVerts(B, vC, vN, (p, n) => lerp(lerp(0.72, 0.45, smooth(-0.3, -0.8, n[1])), 1, smooth(0.3, 0.5, n[1])));   // belly 0.45: the cloud bounce lit it into a bright keel band (w8)   // w8: lit top facet steps to a flank ~0.7 (_7250 / KN41 ~0.55-0.7); the w7 grade ran the vertical flank near-black (A w8)   // w6: flank grades lit top -> keel (#e0e8ea -> #788186 in _7250) [V]
+    shadeVerts(B, vC, vN, (p, n) => 0.18 + 0.57 * smooth(-0.9, 0.0, n[1]) + 0.25 * smooth(0.1, 0.4, n[1]));   // w9: monotonic top 1 / flank 0.75 / belly 0.18 (w26K belly #cbd0d3 over a #b4b8b9 flank at 0.3); the cloud bounce still lit a keel band brighter than the skin in w26K (A w9)   // w8: lit top facet steps to a flank ~0.7 (_7250 / KN41 ~0.55-0.7); the w7 grade ran the vertical flank near-black (A w8)   // w6: flank grades lit top -> keel (#e0e8ea -> #788186 in _7250) [V]
     // w2: visible flank falls ~0.6 from top to lower cowl (#8d96a6 -> #556171 in ANA 11A _136) [V]: f = 0.62 + 0.38 * ((n.y+1)/2)^1.3
     shadeVerts(B, vN, vP, (p, n) => 0.55 + 0.45 * Math.pow((n[1] + 1) / 2, 1.6));
     shadeVerts(B, vP, B.vcount, (p, n) => 1 - 0.25 * Math.max(0, -n[1]));
