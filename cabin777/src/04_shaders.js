@@ -2,6 +2,9 @@
 // GLSL programs
 // ------------------------------------------------------------------
 const SH = {};
+// QA r3 (integration): material flag, added to a material's layer (e.g. `l: LAYER.none + SHEEN`): a grazing sheen lobe
+// for satin leatherette (mainFS). The layer byte keeps the detail layer in its low 7 bits (layers < 128)
+const SHEEN = 128;
 
 SH.mainVS = `
 precision highp float;
@@ -33,13 +36,13 @@ uniform float u_lowGain; uniform vec3 u_monFill; uniform float u_cove; uniform f
 uniform vec4 u_extPtP[2]; uniform vec3 u_extPtC[2];
 uniform vec4 u_spotP[8]; uniform vec4 u_spotT[8]; uniform vec3 u_spotCol;
 uniform vec4 u_stripP[8]; uniform vec4 u_stripA[8]; uniform vec3 u_stripCol;
-uniform vec4 u_scrP[6]; uniform vec4 u_scrN[6]; uniform vec3 u_scrCol; uniform float u_fillLift; uniform vec3 u_lensCore;
+uniform vec4 u_scrP[6]; uniform vec4 u_scrN[6]; uniform vec3 u_scrCol; uniform float u_fillLift; uniform vec3 u_lensCore; uniform float u_vaultFloor;
 uniform sampler3D u_ao; uniform vec3 u_aoMin; uniform vec3 u_aoSize;
 uniform sampler2DArray u_detail; uniform vec4 u_layer[${N_LAYERS}]; uniform sampler2DArray u_photo; uniform float u_photoOn;
 uniform sampler2D u_atlas; uniform float u_screenStep; uniform float u_emisGain; uniform float u_screenGain;
 uniform sampler2D u_win; uniform vec2 u_winZ;
 uniform float u_R; uniform float u_yc; uniform vec2 u_winY;
-uniform float u_exposure; uniform float u_exterior; uniform float u_fill;
+uniform float u_exposure; uniform float u_exterior; uniform float u_fill; uniform float u_sheen;
 uniform vec3 u_skyTop; uniform vec3 u_skyBot;
 uniform float u_detailOn;
 out vec4 o;
@@ -62,12 +65,13 @@ vec3 tone(vec3 c, float k){
 }
 
 // QA r3: 3x3 hardware-PCF taps at 1 texel (was 4 at 0.7): softer sun-patch edges, no stair steps [V: omaat_f57 / f58]
+// QA r3 (integration): taps 2 texels apart, penumbrae several cm wide [V: omaat_f57 / f58; q14 rhombus on 26B, from_py 9]
 float shadowF(vec3 wp, vec3 n){
   vec3 p = (u_shadowMat * vec4(wp + n*0.028, 1.0)).xyz * 0.5 + 0.5;
   // outside the camera slice the shadow map holds no casters: no sun there (windowT only gates by window z)
   if (p.x < 0.0 || p.x > 1.0 || p.y < 0.0 || p.y > 1.0 || p.z > 1.0) return 0.0;
   float z = p.z - 0.0004;
-  vec2 t = u_shadowTexel;
+  vec2 t = u_shadowTexel * 2.0;
   float s = 0.0;
   for (int i = -1; i <= 1; i++) for (int j = -1; j <= 1; j++) s += texture(u_shadow, vec3(p.xy + vec2(float(i), float(j))*t, z));
   return s / 9.0;
@@ -100,7 +104,10 @@ vec3 windowT(vec3 wp){
   float dzn = (hit.x < 0.0 ? zr.r : zr.g) * 4.0;
   float dyn = (hit.y + u_yc - u_winY.x) / u_winY.y;
   float q = dzn*dzn*dzn*dzn + dyn*dyn*dyn*dyn;
-  return (1.0 - smoothstep(0.75, 1.1, q)) * texture(u_win, vec2(zt, hit.x < 0.0 ? WL : WR)).rgb;
+  // QA r3 (integration): gate 0.75-1.1 -> 0.5-1.35 (same half-transmission edge, ~2.4x the penumbra): on a slanted seat
+  // back the gate projected to a hard-edged sheared quad, 1.54x the fabric [V: q14 26B back L212 on fabric L138 vs
+  // py_37301 / 37303 no patch; omaat_f57 / f58 penumbrae several cm] (from_py 5 / 6 / 9)
+  return (1.0 - smoothstep(0.5, 1.35, q)) * texture(u_win, vec2(zt, hit.x < 0.0 ? WL : WR)).rgb;
 }
 // lo = 1 for surfaces below ~1.5 m: QA r1 (light) the cool window light reaching seat level is half desaturated, it
 // left a blue cast on the charcoal shells (h216-218 s0.14-0.20 vs c_27312 shell back #5c626a, dark side #4e4f55,
@@ -144,6 +151,8 @@ void main(){
   vec3 base = toLin(v_col.rgb) * v_tint.rgb;
   float rough = v_mat.r, metal = v_mat.g;
   int layer = int(v_mat.b * 255.0 + 0.5);
+  float sheen = layer >= ${SHEEN} ? 1.0 : 0.0;   // SHEEN flag (top bit of the layer byte)
+  if (layer >= ${SHEEN}) layer -= ${SHEEN};
   float emis = v_mat.a;
   vec3 N = normalize(v_nrm);
   if (!gl_FrontFacing) N = -N;
@@ -171,7 +180,13 @@ void main(){
     // brightest thing in the frame, while its light on the wall (u_sideLed x u_sideWall) keeps the amber [V: ucr_the-room-
     // cabin lens #fefed6, ff_door-gap #fefeb6 beside the PSU band #603b1d]
     vec3 lc = u_exterior > 0.5 ? u_led : v_wpos.y < 2.0 ? u_sideLed + u_lensCore : mix(u_vault, u_led, smoothstep(0.3, 0.85, emis));
-    emissive = lc * emis * 6.0;
+    // QA r3 (light): the dim vault wash (y >= 2 m, e < 0.3) takes at least u_vaultFloor (amber moods 0.10): the THE Room
+    // vault between the bins (07b eFn 0.02-0.08) read dark brown under a pale seat level, while every amber photo shows
+    // the cove-washed ceiling as the brightest warm surface [V: ucr_the-room-cabin aisle ceiling #cc9957 / #cb9b53 L161
+    // s0.58, ff_seat-with-door-closed #d6ae72 L179 vs d_room_dining #663918-#714826 L67-81]; the door domes (e 0.06-0.2)
+    // already matched (q21 #d09748 vs ucr #c89552) and barely move [D]
+    float ev = u_exterior < 0.5 && v_wpos.y >= 2.0 && emis < 0.3 ? max(emis, u_vaultFloor) : emis;
+    emissive = lc * ev * 6.0;
     base *= 0.3;
   } else if (layer > 0 && u_detailOn > 0.5) {
     vec4 P = u_layer[layer];
@@ -193,8 +208,13 @@ void main(){
       // the Y tick-stitch columns and the ash grain washed out at row distance [V: q15 column CV 0.06-0.08 vs y_47300
       // 0.24 (from_econ w17); THE Room ash grain 0.017-0.032 vs c_27316 0.10-0.16 (from_room w13a)]. Not on layer 16
       // (y_tick), which speckled at row distance with it (q15 bright 0.12-0.14 vs y_47300 0.083; from_econ w23)
-      float PL = float(layer - 16), mb = layer == 16 ? 0.0 : -0.5;
+      // QA r3 (light): beyond ~3 m the bias fades out and the tile contrast eases halfway to the tile mean (its 1x1 mip,
+      // so the mean colour holds): the far economy rows read as white snow [V: q16 rows 3+ p90 / p50 2.2, bright 0.28-0.31
+      // vs y_47301 1.61 / 0.13] (from_econ w27); the q15 rows (2-4 m) keep theirs [D]
+      float far = smoothstep(3.0, 7.0, length(u_camPos - v_wpos));
+      float PL = float(layer - 16), mb = layer == 16 ? 0.0 : -0.5 * (1.0 - far);
       vec3 c = texture(u_photo, vec3(q.zy, PL), mb).rgb*w.x + texture(u_photo, vec3(q.xz, PL), mb).rgb*w.y + texture(u_photo, vec3(q.xy, PL), mb).rgb*w.z;
+      if (far > 0.0) c = mix(c, textureLod(u_photo, vec3(0.5, 0.5, PL), 8.0).rgb, 0.5 * far);
       base *= mix(vec3(1.0), c * 2.0, P.z);
     }
     rough = clamp(rough * (1.0 + (t.a - 0.5) * 2.0 * P.w), 0.04, 1.0);
@@ -247,18 +267,27 @@ void main(){
     // QA r2 (integration): only in the seat zones (sz, the LUT zone row): in the galleys the floor lifted the upper
     // compartments from 1.8 to 2.0 m into a white band over grey lower banks [V: sans_38 even mid-grey upper row;
     // from_monuments w9b / w13-15 m01, m09, m12, q19]
+    // QA r3 (integration): floor 0.85 -> 0.72, so the bin doors keep a top-to-lip gradient instead of a flat white slab
+    // [V: bin / vault 0.73-0.87 in c_27312, y_47301, sany_10 vs 1.15-1.2 in q06 / q16; bin high-pass std 16-38 vs 0.2-1.3]
     sz = texture(u_win, vec2((v_wpos.z - u_winZ.x)/(u_winZ.y - u_winZ.x), WZ)).b;
-    ao = max(ao, 0.85 * smoothstep(1.8, 2.0, v_wpos.y) * sz);
+    ao = max(ao, 0.72 * smoothstep(1.8, 2.0, v_wpos.y) * sz);
     // QA r3: up-facing floor (fl) takes the AO 2.5 cm above the carpet as well, so the seat bases / monument toes
     // leave a contact line [V: c_27312 dark line along every monument base]
     float fl = step(0.7, N.y) * (1.0 - smoothstep(0.02, 0.15, v_wpos.y));
     // QA r2 (integration): aoPk = the pocket AO for the floor / underside terms below: on the carpet the larger of the
     // AO here and 0.35 m up, which stays low under a seat pan but opens up in an aisle next to a bulkhead or curtain
     // (the plain AO darkened the q13 PY aisle to < 30 vs py_37302 charcoal carpet ~L45-60) [D]
+    // QA r3 (integration): on the carpet the AO is the mean of 4 taps +-0.17 m in x / z (5 cm up), so the volume's
+    // cell-sized sweep wedges blur out, and only the 2.5 cm contact sample stays sharp, at half weight (the contact line
+    // at each shell / seat base) [V: kn_room_1 aisle centre L34, shell-base edge L33; omaatJ_oj_r31 dark base line ~20 px
+    // at 1200 px, edges 0.85-0.9x the centre]; the pocket AO also takes this mean [D]
     float aoPk = ao;
     if (fl > 0.5) {
-      ao = min(ao, texture(u_ao, (v_wpos + N*0.025 - u_aoMin) / u_aoSize).r);
-      aoPk = max(ao, texture(u_ao, (v_wpos + vec3(0.0, 0.35, 0.0) - u_aoMin) / u_aoSize).r);
+      vec3 pb = v_wpos + vec3(0.0, 0.05, 0.0) - u_aoMin;
+      float aoB = 0.25 * (texture(u_ao, (pb + vec3(0.17, 0.0, 0.0)) / u_aoSize).r + texture(u_ao, (pb - vec3(0.17, 0.0, 0.0)) / u_aoSize).r
+                        + texture(u_ao, (pb + vec3(0.0, 0.0, 0.17)) / u_aoSize).r + texture(u_ao, (pb - vec3(0.0, 0.0, 0.17)) / u_aoSize).r);
+      ao = min(aoB, mix(texture(u_ao, (v_wpos + N*0.025 - u_aoMin) / u_aoSize).r, 1.0, 0.5));
+      aoPk = max(aoB, texture(u_ao, (v_wpos + vec3(0.0, 0.35, 0.0) - u_aoMin) / u_aoSize).r);
     }
     float up = clamp(N.y*0.5 + 0.5, 0.0, 1.0);
     float down = clamp(-N.y, 0.0, 1.0);
@@ -333,11 +362,9 @@ void main(){
     // QA r3: the aisle floor took nearly the full hemisphere and read as a bright flat strip; carpet sits in a 1.3 m
     // trench of shells and sees the ceiling through a slot [V: c_27312 aisle #312828-#423b39, darker at the bases]
     hemi *= lt * mix(1.0, 0.55, fl); bounce *= lt * mix(1.0, 0.6, fl);
-    // QA r2 (integration): carpet under the seat pans / between the seat legs loses most of its bounce too (the
-    // occluded floor read L35-50 against < 30 in the photos) [V: y_47300 bottom band < 30 20 % vs q15 3.2 %]
-    // (only where the volume reads occluded: probe ao 0.00-0.01 under a seat pan, 0.11-0.24 along the seat-block edge,
-    // 0.46-0.52 in the aisle, so the ramp is 0.02-0.28: the aisle keeps its level, the block edge half of it [D])
-    bounce *= mix(1.0, 0.6, fl * (1.0 - smoothstep(0.02, 0.28, aoPk)));
+    // (QA r3 (integration): the r2 extra bounce cut on occluded carpet, x0.6 below aoPk 0.28, is gone: stacked with the
+    // floor pocket term below it crushed the Y / PY legroom to L5-15 [V: q17 between rows L14 p10 5 vs y_47303 L39 p10 26;
+    // sany_13 floor / seat back 0.27-0.52 vs q17 0.18])
     // QA r3: unoccluded share of the hemisphere (u_aoTune.x, was 0.15) and a bounce gain (u_aoTune.y), AO_TUNE in
     // 12_scene.js: vertical faces between the seats read 2-3x too dark against the lit tops (charcoal shells #191b1f
     // vs c_27312 #394049-#414755, ash ends #848078 vs #bdbaab)
@@ -367,8 +394,13 @@ void main(){
     // vs q13 14.6 %; c_27312 < 30 18.4 % vs q06 12.7 %; frame p5 y_47300 21 vs q15 40] (from_econ w14)
     // The raters' AO ramp 0.08-0.55 (floor 0.25) also took ~30 % off the open aisle carpet (ao ~0.46-0.52) and crushed
     // q16 / q13 to p5 10 / 8 (y_47301 21, py_37302 25): ramp 0.02-0.28 (the probe values above), floor 0.3 [D renders r2a-f]
-    float crevF = (1.0 - mix(0.3, 1.0, smoothstep(0.02, 0.28, aoPk))) * (1.0 - smoothstep(0.30, 0.50, v_wpos.y))
-                * max(fl, step(0.3, down)) * (1.0 - wallProx*facingIn);
+    // QA r3 (light + integration): on the carpet (fl) the floor is 0.5 and the ramp 0.0-0.12 of the blurred pocket AO, so
+    // only the carpet under a seat pan (ao 0.00-0.01) takes it, not the aisle edge beside a 1.3 m shell (0.11-0.24), and
+    // the Y / PY legroom keeps half its light [V: q06 row 520 aisle edges 0.26x the centre vs omaatJ_oj_r31 / r37
+    // 0.85-0.9x, c_27312 0.75x; q17 between rows L14 vs y_47303 L39; q13 PY carpet p10 14 vs py_37302 32]; down-facing
+    // undersides keep the r2 ramp 0.02-0.28 and floor 0.3 [D renders r3]
+    float crevF = (1.0 - mix(fl > 0.5 ? 0.5 : 0.3, 1.0, fl > 0.5 ? smoothstep(0.0, 0.12, aoPk) : smoothstep(0.02, 0.28, aoPk)))
+                * (1.0 - smoothstep(0.30, 0.50, v_wpos.y)) * max(fl, step(0.3, down)) * (1.0 - wallProx*facingIn);
     amb *= 1.0 - crevF;
     // reading lights (night): warm cone from the lamp lens to the seat, 0.35 m pool [V: tlfl_IMG_9377 pools on the bed]
     for (int i = 0; i < 8; i++) {
@@ -399,12 +431,15 @@ void main(){
     // q20 #050505; ml_DSC_1945 console top #3b3e6e under the safety video]; 0.05 m2 softening of the 1/r2 [A]. The
     // emitting point is the screen-disc point (radius 0.85 sqrt(A / pi)) nearest the receiver, so the console under the
     // screen and the housing beside it see its near edge, not its centre (a representative-point area light) [D]
+    // QA r3 (light): not above ~1.5 m: the spill reached the bin doors and the upper cabin read grey-cool [V: ucr_room-
+    // night-lighting outboard bins #2f271e L40 h31, centre bins #0d0909 vs q20 #3d3f44 L63 h221 / #434448 L68]
+    float scrH = 1.0 - smoothstep(1.4, 1.7, v_wpos.y);
     for (int i = 0; i < 6; i++) {
-      if (u_scrP[i].w <= 0.0) continue;
+      if (u_scrP[i].w <= 0.0 || scrH <= 0.0) continue;
       vec3 sn = u_scrN[i].xyz, sq = v_wpos - u_scrP[i].xyz; sq -= sn * dot(sq, sn);
       float sl = length(sq), rd = 0.85 * sqrt(u_scrP[i].w / 3.14159);
       vec3 d = u_scrP[i].xyz + sq * min(1.0, rd / max(sl, 1e-4)) - v_wpos; float r2 = dot(d, d); vec3 l = d * inversesqrt(r2);
-      amb += u_scrCol * u_scrP[i].w * max(dot(N, l), 0.0) * max(dot(sn, -l), 0.0) / (3.14159 * (r2 + 0.05));
+      amb += u_scrCol * scrH * u_scrP[i].w * max(dot(N, l), 0.0) * max(dot(sn, -l), 0.0) / (3.14159 * (r2 + 0.05));
     }
   }
   vec3 L = u_sunDir;
@@ -436,6 +471,11 @@ void main(){
                               : envInside(R, 1.0 - smoothstep(1.3, 1.7, v_wpos.y)) * (0.25 + 0.75*ao) * lt;
   vec3 Fe = F0 + (max(vec3(1.0 - rough), F0) - F0) * pow(1.0 - NdV, 5.0);
   vec3 specEnv = env * Fe * (1.0 - rough*0.8);
+  // QA r3 (integration): sheen lobe for SHEEN materials (satin leatherette headrest covers): the white cabin reflected
+  // at grazing angles, (1 - N.V)^3, which roughness alone cannot give without mirroring the ceiling head-on [V: y_47306
+  // cover navy head-on, silver-grey at grazing L86-134; y_47303 flaps #69779d L119 / #879cc6 L155 vs q17 #465079 L82 /
+  // #414c73 L77; y_47301 L67-74 vs q16 L33-50] (from_econ w14 / w19 / w23 / w27, from_integration_cam); gain [D]
+  if (sheen > 0.0) specEnv += env * pow(1.0 - NdV, 3.0) * u_sheen;   // env: the cabin (AO, seat-level tint) or studio fill
   // QA r2 (integration): on the exterior the sky reflection follows the baked albedo (luminance / the wing's #636466 =
   // 0.39, clamped 0.5-1; metals keep theirs), so the near-to-far albedo ramp of 11_exterior also ramps the grazing
   // reflection that out-lit the near flap [V: KN41 near skin L196 -> far 129-145 vs w19A near L163 / far L173]

@@ -33,7 +33,7 @@ const MOODS = {
   // #7d89be, belt #858897; was c03 #5c6ae5 / q16 #2334e1 (s0.84)] (lighting + integration r1). sideLed hue between the
   // raters' two fits (h~232) [D]; bandCut 0.8 kept: the suggested 0.55 washed the band to #9896d6 (L156 s0.30), 0.75
   // with the new tone read L127-157 s0.39-0.47 (c16) [D renders]
-  boarding: { label: 'Boarding', hemiTop: [0.97, 0.99, 1.03], hemiBot: [0.36, 0.37, 0.40], wash: [0.25, 0.26, 0.28], led: [1.0, 0.98, 0.92], sideLed: [0.42, 0.46, 0.55], bandCut: 0.15, k: 1.05, exposure: 1.38, toe: 1 },
+  boarding: { label: 'Boarding', hemiTop: [0.97, 0.99, 1.03], hemiBot: [0.36, 0.37, 0.40], wash: [0.25, 0.26, 0.28], led: [1.0, 0.98, 0.92], sideLed: [0.48, 0.53, 0.66], bandCut: 0.15, k: 1.05, exposure: 1.38, toe: 1 },
   // QA r2 (light): cruise sideLow 0.10 -> 0.30, the lavender wash reaches the window belt in THE Suite (the reveals by
   // the glass stay near-white through mainFS nearPane) [V: ml_DSC_1939-1 wall column y45 #6e9bfc (B-R +141), y150
   // #7a89be, belt y240 #888db0 (+40) vs cF03 belt #cccccf (+3)]
@@ -81,7 +81,7 @@ const MOODS = {
   // dining_room ash at L84 and lowTint [1.0, 1.5, 2.6] read s0.4-0.5 against ucr's foreground ash #9a6330 s0.69, so
   // lowGain 1.4 (the photos are auto-exposed: seat level ~0.7-0.85 of the ceiling, the render 0.55) with lowTint [1.0,
   // 1.42, 2.3]; vault x0.9 (q21 door dome L164 s0.64 vs ucr #c89552 L156)
-  dining: { label: 'Dining', hemiTop: [0.62, 0.30, 0.11], hemiBot: [0.15, 0.07, 0.025], wash: [0.30, 0.14, 0.05], led: [0.55, 0.042, 0.009], sideLed: [1.25, 0.10, 0.02], sideLow: 0.65, sideWall: [0.4, 2.8, 7.0], bandCut: 0.3, vault: [0.36, 0.135, 0.04], lowTint: [1.0, 1.42, 2.3], lowGain: 1.4, fillLift: 0.15, lensCore: [0, 0.55, 0.15], scrSpill: 0.5, k: 0.9, exposure: 1.3, strips: true },
+  dining: { label: 'Dining', hemiTop: [0.62, 0.30, 0.11], hemiBot: [0.15, 0.07, 0.025], wash: [0.30, 0.14, 0.05], led: [0.55, 0.042, 0.009], sideLed: [1.25, 0.10, 0.02], sideLow: 0.65, sideWall: [0.5, 1.5, 2.5], bandCut: 0.3, vault: [0.36, 0.135, 0.04], vaultFloor: 0.10, lowTint: [1.0, 1.08, 1.2], lowGain: 0.8, fillLift: 0.15, lensCore: [0, 0.55, 0.15], scrSpill: 0.5, k: 0.9, exposure: 1.3, strips: true },
   // night, QA r2: THE Room in service at night is near-black and neutral-warm; the light comes from the IFE screens, the
   // warm strip under each screen, small white reading lamps and amber PSU lamps [V: ucr_room-night-lighting ceiling
   // #1e1915, sidewall #24211c, bins #322a1f, PSU lamp #9e5e38, strip #ffeb97, mean RGB 39/34/33]. The blue night refs
@@ -101,11 +101,11 @@ const MOODS = {
   // as the photo (wall L25-43 vs #494f67 L80, ceiling L39 vs #474647 L71) [D: renders r1b]
   // QA r2 (light): the IFE screens light their surround (scrSpill 1, mainFS u_scrP) [V: ml_IMG_20200208_1919534 THE Suite
   // housing #251e1e, ucr_room-night-lighting near wall #302218]; emisGain 0.55 = the r2 night sign level
-  sleep: { label: 'Night', hemiTop: [0.030, 0.027, 0.024], hemiBot: [0.010, 0.009, 0.008], wash: [0.012, 0.010, 0.008], led: [0.050, 0.042, 0.034], sideLed: [0.018, 0.021, 0.032], sideLow: 0.6, vault: [0.050, 0.043, 0.035], monFill: [0.060, 0.055, 0.047], cove: 0.35, k: 1, exposure: 2.5, readingLights: true, strips: true, screenGain: 0.6, scrSpill: 1, emisGain: 0.55 },
+  sleep: { label: 'Night', hemiTop: [0.030, 0.027, 0.024], hemiBot: [0.010, 0.009, 0.008], wash: [0.012, 0.010, 0.008], led: [0.030, 0.025, 0.020], sideLed: [0.018, 0.021, 0.032], sideLow: 0.6, vault: [0.050, 0.043, 0.035], monFill: [0.060, 0.055, 0.047], cove: 0.35, k: 1, exposure: 2.5, readingLights: true, strips: true, screenGain: 0.6, scrSpill: 1, emisGain: 0.55 },
   // QA r1 (light): sunrise follows dining at seat level (sideWall = hemiTop share, sideLow 0.5). QA r2: as dining, the
   // fill lift off the PSU band (fillLift 0.15), the saturated vault, the pale lens core, lowGain 0.6 -> 1.4 and lowTint
   // [1.0, 1.3, 1.6] -> [1.0, 1.4, 1.95] [A: no ANA sunrise photo; dining's sources and levels]
-  wake: { label: 'Sunrise', hemiTop: [0.62, 0.30, 0.16], hemiBot: [0.15, 0.07, 0.035], wash: [0.30, 0.14, 0.07], led: [0.55, 0.05, 0.03], sideLed: [1.2, 0.11, 0.06], sideLow: 0.5, sideWall: [0.42, 2.25, 2.2], bandCut: 0.3, vault: [0.36, 0.135, 0.04], lowTint: [1.0, 1.4, 1.95], lowGain: 1.4, fillLift: 0.15, lensCore: [0, 0.55, 0.15], k: 0.9, exposure: 1.3 },
+  wake: { label: 'Sunrise', hemiTop: [0.62, 0.30, 0.16], hemiBot: [0.15, 0.07, 0.035], wash: [0.30, 0.14, 0.07], led: [0.55, 0.05, 0.03], sideLed: [1.2, 0.11, 0.06], sideLow: 0.5, sideWall: [0.42, 2.25, 2.2], bandCut: 0.3, vault: [0.36, 0.135, 0.04], vaultFloor: 0.10, lowTint: [1.0, 1.08, 1.2], lowGain: 0.8, fillLift: 0.15, lensCore: [0, 0.55, 0.15], k: 0.9, exposure: 1.3 },
 };
 // winExp: the view behind the glass at interior exposure; cabin photos show day windows near-white with a glowing
 // reveal (tlfl_IMG_9217 / 9518, pane ~#eef3f8) [V]; eases back to 1 when the eye is at the window (looking out)
@@ -133,10 +133,14 @@ const SKIES = {
 // py_37301]: hemi = unoccluded share of the hemisphere fill (was 0.15), bounce = interreflection gain, emitLens /
 // emitCtr = sky value of the air under the outboard bins (sidewall lens band) and under the centre bins, kAttF = voxel
 // attenuation inside THE Suite zone (1.35 elsewhere), fLift = share of the AO lifted toward 1 inside the suites (shader)
-const AO_TUNE = { hemi: 0.22, bounce: 1.0, emitLens: 0.45, emitCtr: 0.35, kAttF: 0.8, fLift: 0.35 };
+// QA r3 (integration): azim / slope = sweep azimuths and cells sideways per layer (was 8 / 1), floorBlur = layers that
+// take two extra i / k blur passes (computeAO)
+const AO_TUNE = { hemi: 0.22, bounce: 1.0, emitLens: 0.45, emitCtr: 0.35, kAttF: 0.8, fLift: 0.35, azim: 16, slope: 0.5, floorBlur: 5 };
 // QA r1 (light): cove = gain of the two cove LED line lights in the interior specular (mainFS coveSpec) [D: rim
 // highlight ~1.3x the face on THE Room shell caps (c_27312), armrest p99 >= 240 (y_47303)]
-const LIGHT_TUNE = { cove: 1.0 };
+// QA r3 (integration): sheen = gain of the grazing sheen lobe on SHEEN materials (mainFS) [D: q17 / q16 flaps against
+// y_47303 / y_47301, q15 head-on unchanged]
+const LIGHT_TUNE = { cove: 1.0, sheen: 0.84 };
 // Shade states per window: 0 open, 1 half (manual) / sheer (electric), 2 closed (manual) / blackout (electric)
 const SHADE_STATE = {
   label: (w, lv) => (w.electric ? ['open', 'sheer blind', 'blackout'] : ['open', 'half down', 'closed'])[lv],
@@ -171,7 +175,7 @@ class Scene {
       glow: gl.program(SH.glowVS, SH.glowFS),
     };
     this.emptyVAO = gl.gl.createVertexArray();
-    gl.use(this.progs.main); gl.set('u_fillLift', 1);   // the studio may draw before the first cabin frame
+    gl.use(this.progs.main); gl.set('u_fillLift', 1); gl.set('u_sheen', LIGHT_TUNE.sheen);   // the studio may draw before the first cabin frame
     this.buildGlows();
     const sm = this.shell.meshes;
     this.opaque = [
@@ -277,17 +281,30 @@ class Scene {
       }
     }
     const acc = new Float32Array(nx * ny * nz);
+    // QA r3 (integration): AO_TUNE.azim sweep azimuths (was 8 at 45 deg, one cell sideways per layer) stepping
+    // AO_TUNE.slope cells sideways per layer, read bilinearly. The 8 diagonal sweeps let every 1.15-1.3 m THE Room shell
+    // throw a 1.0-1.3 m wedge across the 0.55 m aisle, periodic at each seat pair [V: q06 aisle p10 20, 34 % < 30 vs
+    // c_27312 p10 41, 5.5 %; kn_room_1 no stain beyond the contact line]; vertical share 0.28 kept [D]
     const dirs = [[0, 0, 0.28]];
-    for (const [ox, oz] of [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]]) dirs.push([ox, oz, 0.09]);
+    for (let a = 0; a < AO_TUNE.azim; a++) {
+      const t = (a + 0.5) * 2 * Math.PI / AO_TUNE.azim;
+      dirs.push([Math.cos(t) * AO_TUNE.slope, Math.sin(t) * AO_TUNE.slope, 0.72 / AO_TUNE.azim]);
+    }
     const layerA = new Float32Array(nx * nz), layerB = new Float32Array(nx * nz);
     for (const [ox, oz, wgt] of dirs) {
       let prev = layerA, cur = layerB;
       prev.fill(1);
+      const fx = Math.floor(ox), fz = Math.floor(oz), tx = ox - fx, tz = oz - fz;
+      const w00 = (1 - tx) * (1 - tz), w10 = tx * (1 - tz), w01 = (1 - tx) * tz, w11 = tx * tz;
+      // visibility one layer up at (pi, pk): outside the wall 0, past the cabin ends open
+      const vAt = (pi, pk) => (pi < 0 || pi >= nx ? 0 : pk < 0 || pk >= nz ? 1 : prev[pk * nx + pi]);
       for (let j = ny - 1; j >= 0; j--) {
         for (let k = 0; k < nz; k++) for (let i = 0; i < nx; i++) {
-          const pi = i + ox, pk = k + oz;
-          let V;
-          if (pi < 0 || pi >= nx) V = 0; else if (pk < 0 || pk >= nz) V = 1; else V = prev[pk * nx + pi];
+          const pi = i + fx, pk = k + fz;
+          let V = w00 * vAt(pi, pk);
+          if (w10) V += w10 * vAt(pi + 1, pk);
+          if (w01) V += w01 * vAt(pi, pk + 1);
+          if (w11) V += w11 * vAt(pi + 1, pk + 1);
           const q = idx(i, j, k);
           if (emit[q] > V) V = emit[q];
           acc[q] += wgt * V;
@@ -299,10 +316,13 @@ class Scene {
     // QA r3: three separable [1/4, 1/2, 1/4] passes (i, j, k) smooth the 9-direction sweep's V-shaped wedges on flat
     // walls (q19 closet faces vs py_37302 uniform bulkhead); solid cells (walls, bins, monuments) are not averaged in,
     // so the faces next to them do not darken [D]
-    const tmp = new Float32Array(acc.length);
-    for (const [di, n, stride] of [[0, nx, 1], [1, ny, nx], [2, nz, nx * ny]]) {
+    // QA r3 (integration): two more i / k passes on the lowest AO_TUNE.floorBlur layers (y < 0.42 m), where the carpet
+    // and the seat bases read the volume: the 3-tap blur is one cell wide, the shell wedges ~6 [D]
+    const tmp = new Float32Array(acc.length), nb = AO_TUNE.floorBlur;
+    const passes = [[0, nx, 1, ny], [1, ny, nx, ny], [2, nz, nx * ny, ny], [0, nx, 1, nb], [2, nz, nx * ny, nb], [0, nx, 1, nb], [2, nz, nx * ny, nb]];
+    for (const [di, n, stride, jn] of passes) {
       tmp.set(acc);
-      for (let k = 0; k < nz; k++) for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) {
+      for (let k = 0; k < nz; k++) for (let j = 0; j < jn; j++) for (let i = 0; i < nx; i++) {
         const q = idx(i, j, k);
         if (solid[q]) continue;
         const c = di === 0 ? i : di === 1 ? j : k;
@@ -606,7 +626,7 @@ class Scene {
     const fz = this.layout.zones.find((zn) => zn.cls === 'F');
     G.set('u_fZone', fz ? [fz.z0, fz.z1, AO_TUNE.fLift] : [0, 0, 0]);
     G.set('u_bandCut', mood.bandCut ?? 0.65); G.set('u_sideLow', mood.sideLow ?? 0.4); G.set('u_sideWall', mood.sideWall || [1, 1, 1]);
-    G.set('u_lowGain', mood.lowGain ?? 1); G.set('u_monFill', mood.monFill || [0, 0, 0]); G.set('u_cove', LIGHT_TUNE.cove * (mood.cove ?? 1));
+    G.set('u_lowGain', mood.lowGain ?? 1); G.set('u_monFill', mood.monFill || [0, 0, 0]); G.set('u_cove', LIGHT_TUNE.cove * (mood.cove ?? 1)); G.set('u_sheen', LIGHT_TUNE.sheen);
     G.set('u_toe', mood.toe ?? 0);
     G.set('u_extBounce', [0, 0, 0]);
     // reading-light pools: the 8 lit lamps nearest the eye [A: count, a phone-sized loop]
@@ -637,7 +657,7 @@ class Scene {
     }
     G.set('u_scrP', scp); G.set('u_scrN', scn);
     G.set('u_scrCol', [0.30, 0.40, 0.55].map((v) => v * 2.7 * (mood.screenGain || 0.8) * spill));
-    G.set('u_fillLift', mood.fillLift ?? 1); G.set('u_lensCore', mood.lensCore || [0, 0, 0]);
+    G.set('u_fillLift', mood.fillLift ?? 1); G.set('u_lensCore', mood.lensCore || [0, 0, 0]); G.set('u_vaultFloor', mood.vaultFloor || 0);
     G.set('u_winGlow', winGlow);
     G.tex('u_ao', 1, this.ao.tex, gl.TEXTURE_3D);
     G.set('u_aoMin', this.ao.min);
@@ -687,7 +707,7 @@ class Scene {
       G.draw(this.ext.mesh);
       G.set('u_extBounce', [0, 0, 0]); G.set('u_extPtP', new Float32Array(8));   // the studio (same program) keeps its plain fill
     }
-    G.set('u_toe', 0); G.set('u_fillLift', 1);   // ... and its plain tone and fill lift (14_studio renders through the same program)
+    G.set('u_toe', 0); G.set('u_fillLift', 1); G.set('u_vaultFloor', 0);   // ... and its plain tone, fill lift and vault (14_studio renders through the same program)
     gl.depthFunc(gl.LEQUAL);
     gl.depthMask(false);
     const S = this.progs.sky;
