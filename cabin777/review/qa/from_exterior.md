@@ -65,3 +65,9 @@ The ANA ones are seat-confirmed: `lalf_ANA77W_NH212_136/137` (11A) and `alv_ANA7
 12-13. **Withdrawn (w10).** The bright canoe keel band and the charcoal shade-side flanks were an exterior bug: since w8 the canoe
     lofts were inside out (a zero-size first ring defeats gLoft's orientation check, found by rater A w10). Fixed in 11_exterior.js.
     Nothing is needed from lighting.
+
+14. **Grazing sky reflection reverses the wing's near-to-far gradient (medium, w11 rater B).** In w19A the near flap is L161 and the
+    far skin L178. In KN41 the near skin is brightest (196) and the far skin falls to 129-145. Exterior already ramps the albedo
+    1.12 -> 0.80 and raised the roughness to 0.72, but the far skin seen at grazing reflects `u_skyTop*1.2` regardless of the baked
+    colour. **Fix:** in the exterior branch scale `specEnv` by the baked/base colour ratio (or by `v_col` luminance), and reflect
+    the deeper zenith blue for R.y > 0.3.

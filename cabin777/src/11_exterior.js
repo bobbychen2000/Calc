@@ -226,7 +226,7 @@ function buildExterior(gl) {
   const core = { c: '#8e9398', r: 0.34, m: 0.7 };
   const plug = { c: '#6e6b67', r: 0.4, m: 0.6 };
   const dark = { c: '#141619', r: 0.55, m: 0.3 };
-  const blade = { c: '#2b2e33', r: 0.35, m: 0.6 };
+  const blade = { c: '#4a4e55', r: 0.35, m: 0.6 };   // w11: #2b2e33 read as a void behind the lip (B w11; blade ring visible in IQCFQpV_T1A) [V]
   const spin = { c: '#16181b', r: 0.22, m: 0.2 };
   const white = { c: '#f2f2f2', r: 0.3 };
   const lights = [];
@@ -245,12 +245,12 @@ function buildExterior(gl) {
       const q = pid[k - v0], seg = q & 3, cx = B.u[k * 2], sp = B.u[k * 2 + 1];
       if (cx < 0.045) { setVert(B, k, metal); continue; }
       const br = wingBreaks(clamp(sp, WING.s0, 32.4)), mov = (seg === 1 && br[0] !== null) || (seg === 2 && br[1] !== null);
-      const ramp = lerp(1.10, 0.86, clamp((sp - 6) / 18, 0, 1));   // w10: 1.07 -> 0.93 over 22 m stayed reversed (B w10)
+      const ramp = lerp(1.12, 0.80, clamp((sp - 6) / 16, 0, 1));   // w10: 1.07 -> 0.93 over 22 m stayed reversed (B w10)
         // w9: near skin brighter than far (KN41 194 near -> 145 far; w19A ran reversed, B w9) [V]
       if (!mov) { for (let c = 0; c < 3; c++) B.c[k * 4 + c] = Math.round(clamp(B.c[k * 4 + c] * ramp, 0, 255)); continue; }
       // grime along the flap / aileron TE (-7 %), the hinge rows (-7 %, w9) and the exhaust-washed flaps behind the engine (-10 %):
       // 7250 / KN41 [V, A amount]
-      const h = hsh(q), f = (seg === 1 ? 0.92 : 0.93) *   // w10: flaps 0.89 -> 0.93, the stacked factors (~0.73) cancelled the near-far ramp (A w10)
+      const h = hsh(q), f = (seg === 1 ? 0.92 : 0.95) *   // w10: flaps 0.89 -> 0.93, the stacked factors (~0.73) cancelled the near-far ramp (A w10)
         (1 + 0.14 * (h - 0.5)) * (seg === 2 && cx > 0.99 ? 0.93 : 1) * (seg === 2 && sp > 8 && sp < 11.8 ? 0.96 : 1) * ([3, 4, 6].includes((k - v0) % NP) ? 0.93 : 1), tint = [f * 0.97, f * 0.985, f * 1.03];
       for (let c = 0; c < 3; c++) B.c[k * 4 + c] = Math.round(clamp(B.c[k * 4 + c] * tint[c] * ramp, 0, 255));
       const tl = 0.026 * (hsh(q + 101) - 0.5), ny = B.n[k * 3 + 1], nz = B.n[k * 3 + 2];
@@ -362,7 +362,7 @@ function buildExterior(gl) {
     // #56606a in _136) [V]
     B.add(nac.lip, rot, { c: '#a9a9a8', r: 0.34, m: 0.45 }); B.add(nac.cowl, rot, cowl); B.add(nac.nozIn, rot, dark);
     const vIn = B.vcount; B.add(nac.inlet, rot, { c: '#7e7f80', r: 0.65, m: 0.05 });   // w6: neutral, the metallic liner mirrored the blue sky
-    shadeVerts(B, vIn, B.vcount, (p) => 1 - 0.6 * smooth(0.2, 1.3, p[2] - E.x0 - WING.dz));   // lit inner lip -> dark toward the fan (knav 7A _9) [V]
+    shadeVerts(B, vIn, B.vcount, (p) => 1 - 0.45 * smooth(0.2, 1.3, p[2] - E.x0 - WING.dz));   // lit inner lip -> dark toward the fan (knav 7A _9) [V]
     B.add(nac.core, rot, core); B.add(nac.coreIn, rot, dark); B.add(nac.plug, rot, plug); B.add(nac.spinner, rot, spin);
     for (const [x, r] of [[1.3, 2.075], [3.15, 2.055]]) B.add(gCyl(r + 0.002, r + 0.002, 0.018, 48, false), M4.mul(rot, M4.trs(0, x, 0)), seam);   // cowl splits [A photo]
     // inboard nacelle strake (vortex chine): 1.3 x 0.26 m plate standing radially out of the fan cowl 25 deg above the
@@ -404,7 +404,8 @@ function buildExterior(gl) {
         [...arc(-0.055, 0, 0.095, 50, 320, 14), [-0.02, -0.02], [-0.07, -0.02]],              // script G
         [...arc(0.075, 0.042, 0.045, 30, 270, 8), ...arc(0.075, -0.045, 0.048, 90, 335, 8)],   // script E (two bowls)
       ];
-      for (let k = 0; k < 4; k++) strokes.push(Array.from({ length: 9 }, (_, j) => { const t = j / 8, r = 0.24 * (1 - 0.42 * t), a = (k * 90 + 25) * DEG + 1.9 * t; return [Math.cos(a) * r, Math.sin(a) * r]; }));   // rim swashes curling inward
+      for (let k = 0; k < 4; k++) strokes.push(Array.from({ length: 9 }, (_, j) => { const t = j / 8, r = 0.27 - 0.13 * t,   // w11: start outside the ring and curl in through it (B w11)
+        a = (k * 90 + 25) * DEG + 1.9 * t; return [Math.cos(a) * r, Math.sin(a) * r]; }));   // rim swashes curling inward
       const wm = [[[0.0, 0.09], [-0.06, 0.12], [-0.12, 0.06], [-0.12, -0.06], [-0.06, -0.12], [0.0, -0.09], [0.0, -0.01], [-0.05, -0.01]], [[0.13, 0.12], [0.04, 0.12], [0.04, -0.12], [0.13, -0.12]], [[0.04, 0.0], [0.11, 0.0]]];
       for (const st of wm) strokes.push(st.map(([u, v]) => [-0.46 + u * 0.45, v * 0.45]));
       for (const st of strokes) B.add(gTube(st.map(([u, v]) => at(u * side, v)), st[0][0] > -0.3 ? 0.022 : 0.012, 4, false), rot, ge); }
