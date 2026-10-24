@@ -469,17 +469,18 @@ def s_pleat():
     beat into moire on the 3rd-7th windows; w12a also measured its close-up contrast at cv 0.14 vs 0.33 on omaat_room24).
     07_shell.js shadePanelGeo: 31 pleats over the 0.445 m opening, closed blackout valleys at world y = 0.795846 + k * 0.0144755
     (measured in the page, the same at every window) [D]. The tile holds 8 periods (0.115804 m) on its v axis (world y
-    in the triplanar x / z projections), phase-locked to those valleys: a dark valley line ~25 % of the period at ~x0.45 in sRGB
-    (x0.2 linear; omaat_room24 crisp dark valley lines, sRGB cv 0.33) [V: contrast; A: width], a faint lit crest and a fine fabric grain."""
+    in the triplanar x / z projections), phase-locked to those valleys: a ramp from the lit crest down to a
+    valley at ~x0.55 in sRGB (omaat_room24, sRGB cv 0.33-0.35) [V: contrast; A: profile], a faint lit crest and a fine fabric grain."""
     n = 256; period = 0.0144755; size = 8 * period; y0 = 0.795846
     i = np.arange(n)[:, None] + 0.5
     ph = ((i / n * size - y0) / period) % 1.0                       # 0 at a valley
-    d = np.minimum(ph, 1 - ph)                                      # distance to the nearest valley, in periods
-    valley = np.exp(-0.5 * (d / 0.075) ** 2)                        # ~25 % of the period above half depth
-    crest = np.exp(-0.5 * ((d - 0.5) / 0.12) ** 2)
+    # w13a: a narrow notch read as grooves on flat slats; omaat_room24 alternates lit and shaded faces ~50/50 -> a ramp:
+    # quick rise out of the valley (20 %), lit crest, then a long shaded fall (55 %) back into the next valley [V: profile]
+    rise = np.clip(ph / 0.2, 0, 1); fall = np.clip((ph - 0.45) / 0.55, 0, 1)
+    f = np.where(ph < 0.2, rise * rise * (3 - 2 * rise), 1 - fall ** 1.3)
     rng = np.random.default_rng(5)
     grain = _blur_wrap(rng.standard_normal((n, n)), 0.8)
-    r = (1 - 0.8 * valley + 0.05 * crest) * (1 + 0.025 * grain / grain.std())
+    r = (0.27 + 0.73 * f) * (1 + 0.025 * grain / grain.std())       # valley ~x0.55 of the crest in sRGB
     r = np.broadcast_to(r, (n, n)) / r.mean()
     print('s_pleat cv', round(float(r.std()), 3), 'valley/crest', round(float(r.min() / r.max()), 3))
     out = np.clip(np.repeat(r[:, :, None], 3, 2) / 2, 0, 1)

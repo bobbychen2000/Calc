@@ -15,7 +15,7 @@ const MAT = {
   dado: { c: '#5c6069', r: 0.6, l: LAYER.plastic },             // QA w3: dado/wall 0.25 vs ~0.36; w5: rendered 0.52, photos 0.40-0.49 (py_37301/37303) [V]
   // louvre slats a little darker than the panel over a dark plenum: the grille field reads darker than the dado
   // (py_37303 grille #2e3643 vs dado #455162; QA w1: slats and panel rendered the same) [V]
-  grille: { c: '#63666d', r: 0.55 },                           // QA w5: follows the darker dado
+  grille: { c: '#80838b', r: 0.5 },                            // QA w5: follows the darker dado; w13b: louvres near invisible (cv 0.02 vs 0.45 py_37303) -> lit slats
   ceiling: { c: '#f1f0ec', r: 0.75, l: LAYER.plastic },
   bin: { c: '#e6e4df', r: 0.42, l: LAYER.plastic },
   binDoor: { c: '#eeede9', r: 0.34, l: LAYER.plastic },
@@ -125,7 +125,7 @@ const REC_Y = { ...REC, hw: 0.222, top: 0.565, bot: -0.49, rTop: 0.15, rBot: 0.1
 const WMAT = {
   lining: { c: '#99948b', r: 0.5 },           // grey tunnel lining round the pane; QA w5/w6: rendered 0.62-0.86 of the bezel, tt_window 0.58-0.64 [V]
   seam: { c: '#b3b1ac', r: 0.6 },                               // sidewall panel joint, every second window
-  grilleBack: { c: '#43474f', r: 0.8 },                         // QA w3: grille/panel 0.57-0.69 vs ~0.85 (py_37303)                         // plenum behind the louvres, keeps their depth [A]
+  grilleBack: { c: '#2a2d33', r: 0.8 },                         // w13b: darker slots between the lit slats                         // QA w3: grille/panel 0.57-0.69 vs ~0.85 (py_37303)                         // plenum behind the louvres, keeps their depth [A]
   // QA w2: the grille is a cut-out in the dado panel; its rounded edge is a low lip at or below the panel tone, not a
   // light bezel (py_37303 crop: no light frame; py_37301's lighter rim is a reflection) [V]
   grilleFrame: { c: '#5d6067', r: 0.5 },
@@ -645,9 +645,11 @@ function buildShell(gl, layout) {
       const c = CAB.doors[di];
       // w9: FORWARD of centre (from_monuments w7: real photos lalf_133 / lalf_134 of door 2L from the galley passage show the
       // window forward of the grip; the face-on frame had been read mirrored) [V]
-      const cellW = 0.50, wz = c - 0.30;   // 0.30 clears the housing rim (w9b)
-      // QA w12b: glass aspect 0.42 vs ~0.50 (lalf_134) -> reveal 0.23 wide [V: ratio]
-      const dp = windowCellPattern(cellW, 0.23, 0.46, 0.055, 0.98, null, [[...WALL.bottomRows, 0.62], 1.36]);
+      const cellW = 0.54, wz = c - 0.30;   // 0.30 clears the housing rim (w9b)
+      // QA w12b: glass aspect 0.42 vs ~0.50 (lalf_134); w13a: still ~15 % narrow, 20 % short and low against the red
+      // handle arc on the same door; w13b: ~0.75 of lalf_133's size, bottom down to the assist bar -> reveal 0.26 x 0.58
+      // on the same centre (w13a asked for higher, w13b lower) [V: ratios]
+      const dp = windowCellPattern(cellW, 0.26, 0.58, 0.06, 0.98, null, [[...WALL.bottomRows, 0.62], 1.36]);
       const topRows = [1.36, 1.60, 1.80, 2.02];
       windowCell(g, side, wz, dp, topRows);
       // deep reveal necking to the glass over 9 cm, then a dark seal rim; the sky shows past it
@@ -656,10 +658,13 @@ function buildShell(gl, layout) {
       shell.add(ringLoft([[hr, 0], [sc(0.93, 0.95), 0.015], [sc(0.72, 0.72), 0.09]], dmap, dh), null, MAT.door);
       shell.add(ringLoft([[sc(0.72, 0.72), 0.09], [sc(0.68, 0.69), 0.092]], dmap, dh), null, WMAT.doorSeal);  // QA w12b: light rim, no dark ring (lalf_134)
       // glass: the cabin pane mapped into the seal (0.136 x 0.317 m) as extra glass instances (QA w4 / w5 low: no glass)
-      const S = M4.trs(0, 0, 0, 0, 0, 0, (0.68 * 0.23) / W.w, (0.69 * 0.46) / W.h, 1);
+      const S = M4.trs(0, 0, 0, 0, 0, 0, (0.68 * 0.26) / W.w, (0.69 * 0.58) / W.h, 1);
       doorGlass[side > 0 ? 'R' : 'L'].push(M4.mul(M4.trs(0, 0, wz), M4.mul(windowFrame(side, 0.093, dp.vc - W.yc), M4.mul(S, M4.invert(windowFrame(side, 0.106))))));
-      // cream shade tab inside the top of the glass (lalf_134) [A: size]
-      shell.add(gRBox(0.10, 0.02, 0.01, 0.004, 1), M4.mul(M4.trs(0, 0, wz), windowFrame(side, 0.08, dp.vc - W.yc + 0.69 * 0.46 / 2 - 0.012)), MAT.door);
+      // the window's own cream shade, pulled ~0.13 m down, with a dark finger slot at its hem (lalf_133 / 134; w13a / b:
+      // was a thin 20 mm bar) [V: tone; A: size]
+      const tabF = M4.mul(M4.trs(0, 0, wz), windowFrame(side, 0.087, dp.vc - W.yc + 0.69 * 0.58 / 2 - 0.065));
+      shell.add(gRBox(0.185, 0.13, 0.006, 0.004, 1), tabF, MAT.door);
+      shell.add(gBox(0.05, 0.008, 0.004), M4.mul(tabF, M4.trs(0, -0.05, -0.003)), MAT.darkPlastic);
       const vset = [...new Set([...dp.rows.slice(0, -1), ...dp.sideV.map((v) => v + dp.vc), ...topRows.slice(1)].map((v) => +v.toFixed(5)))].sort((a, b) => a - b);
       if (wz - cellW / 2 - zn.z0 > 1e-3) wallGrid(g, side, [zn.z0, wz - cellW / 2], vset);
       if (zn.z1 - (wz + cellW / 2) > 1e-3) wallGrid(g, side, [wz + cellW / 2, zn.z1], vset);
