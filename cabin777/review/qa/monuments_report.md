@@ -265,3 +265,76 @@ so there is no geometry headroom left.
 
 Contact sheet: `monuments_before_after_w3b.jpg` (w9 against w12, own renders only; it also includes the lighting
 session's concurrent changes).
+
+## Wave 3c (2026-10-24): confirm and polish, rounds w13-w15
+
+The wave stopped at its 3-round cap at **A 8.4 / B 8.4** (mean 8.4, from 8.1 at the w13 baseline). The 8.5 target was
+not quite reached. No high or medium issue is left; neither rater lists a change worth +0.3 (`gapWorth03` empty).
+
+| round | rater A | rater B | mean | files |
+|---|---|---|---|---|
+| w13 (head 25ae23e: the w12 final plus the grey bar glassware) | 8.1 | 8.1 | 8.1 | `monuments_w13a/b.json` |
+| w14 (74e228b + 2c1eb9d) | 8.3 | 8.3 | 8.3 | `monuments_w14a/b.json` |
+| w15 (3368ba0) | 8.4 | 8.4 | 8.4 | `monuments_w15a/b.json` |
+
+**w15 detail scores (A / B):**
+
+| Detail | A | B |
+|---|---|---|
+| Bar | 8.2 | 8.4 |
+| Welcome galley | 8.5 | 8.4 |
+| Door-2 ash wall | 8.2 | 8.2 |
+| F front + flight-deck door | 8.3 | 8.3 |
+| Lavs | 7.8 | 8.0 |
+| F/J | 8.4 | 8.3 |
+| J/PY | 8.2 | 8.2 |
+| Door 4 | 8.5 | 8.5 |
+| Door 5 | 8.2 | 8.3 |
+| Inserts | 8.4 | 8.4 |
+| Curtains | 8.4 | 8.4 |
+| Jump seats + linings | 8.3 | 8.3 |
+
+**Triangles:** 145.0k -> 122.2k. Parts under 10 cm with bevels of 12 mm or less (latches, paddles, handles, tabs) are
+now plain boxes (`gRBoxM`): a 1-segment `gRBox` costs 108 triangles against 12, and the bevel is sub-pixel from the
+aisle. That freed 31k triangles, which paid for the galley frames.
+
+### What changed
+- **Galley realism** (the w12 gap item, sansY_44): every insert and compartment sits in a riveted aluminium perimeter
+  frame (`aluFrame`, from `insertGap`). Riveted channel posts stand between the carts, with recessed grip slots and
+  white M-number tags.
+- **Brewer pots:** one 12-segment lathe with the polish baked per vertex (cos-azimuth), so there are no facet stripes
+  (same triangle count). The cheeks are brighter steel.
+- **Welcome cabinet** (w12a medium):
+  - 0.62 m wide, abutting the monitor; the housing head reaches the monitor top and carries the cream tag.
+  - The smoked interior is neutral, not plum (omaat_room_32).
+  - A silver thumb-latch on a lens-shaped bulge.
+- **Door-2 ash wall:** one flap per ~0.8 m ash panel, with a seam between the panels. Warm brushed-silver frames with
+  rounded corners, and two red tabs on a silver plate (lalf_133).
+- **Flight-deck door:** the kick panel is ~12 % of the door, with a wider hinge jamb and a larger lock housing.
+- **Curtains:** the J (`curtainC`) and F/J (`curtainF`) curtains are cool navy-charcoal (c_27312, omaat_room_36).
+  They were warm brown.
+- **Bar:**
+  - The bottles have a glass highlight.
+  - The tumblers are smaller and open, with rims.
+  - A flat edge band replaces the tube fence (samchui_render_11).
+  - The arming arc is crimson `#c42a48`, between lalf_133 and lalf_134.
+- **J lav doors** use the finer `ashDoor` layer.
+
+### Rated, not done (all low)
+- **Welcome latch:** reads as a vertical rectangle; the photos show a horizontal oval.
+- **Welcome glass:** no reflection streak.
+- **Welcome head:** 6-8 cm short of the photo's head height (A).
+- **Ash-wall frames:** still flat strokes with no highlight; the red tabs are too bright (lalf_133 #66201a) and should
+  straddle the top rail.
+- **Fine ash elsewhere:** the bar doors and the door-2 ash wall are still on the coarser `ashGrain` layer.
+- **Bar:** the tumbler bodies are opaque, with only a half rim visible, and the counter has no bright nosing band.
+- **Galley frames:** low contrast against the faces (partly the lighting fog); the pull handles are flat slots.
+- **Door-1 dark wood:** streak aliasing (handed to lighting). The raters read its hue as mauve against omaatF_2, but
+  tpa_IMG_0260 [V] supports it, so the colour is kept.
+- **Carry-overs:** the jump-seat straps (rods), the PY bassinet bar, and the matte brewer pots.
+
+### Hand-offs
+`from_monuments.md` (wave 3c) covers the upper-bank fog over the new frames, the q19 blow-out and the dark-wood
+aliasing. There are no new questions.
+
+Contact sheet: `monuments_before_after_w3c.jpg` (own renders, w13 against w15, same cameras).

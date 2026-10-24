@@ -50,3 +50,15 @@ moves the rendered value by only a few levels.
   light or the work light hitting faces that look down the aisle.
 - **Suggested fix:** clamp the crevice term for faces in recessed monument bays, or give monument recesses a floor of
   about 0.6 on ambient.
+
+## Wave 3c (w13-w15)
+
+### To lighting (`src/04_shaders.js` / `src/12_scene.js`)
+Noted by both raters in all three rounds; not scored against monuments.
+- **Galley upper compartments still fogged (m01, m09, m12):** the white wash over the top half of the upper banks
+  persists (see wave 3b above). It now also flattens the new aluminium insert frames (w15b: frames read close to the
+  face tone).
+- **q19 rear galley blows out:** the current q19 camera shows the galley ceiling panel and upper faces near white.
+- **Door-1 dark wood streak aliasing (q01, m19):** `LAYER.fWood` on the large door-1 side walls smears into radial
+  streaks at grazing angles (w14a, w15b). Probably mip / filtering of the fWood tile; worth a lower-frequency or
+  pre-filtered sample at grazing angles.
