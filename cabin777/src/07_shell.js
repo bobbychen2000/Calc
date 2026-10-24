@@ -37,7 +37,7 @@ const MAT = {
   // door / galley floors: dark mottled stone-look grey vinyl (sans_09 door-2 galley #666268 / #585353; QA w1 rendered
   // #a0a5ad, ~1.13x the albedo) [V]
   vinyl: { c: '#5a585c', r: 0.55, l: LAYER.vinyl },
-  doorCarpet: { c: '#57504a', r: 0.95, l: LAYER.fabric },        // QA w6: less red (h ~30)
+  doorCarpet: { c: '#5a5045', r: 0.95, l: LAYER.fabric },        // QA w6: less red (h ~30)
   // QA r2: no aisle path strips are visible in any ANA photo (y_47301, y_47304, py_37301/02, c_27312), so none are
   // modelled; Y instead shows glossy royal-blue seat-track covers along each seat-leg line [V: y_47304 #2965bd, y_47301]
   trackCover: { c: '#2965bd', r: 0.35 },
@@ -54,15 +54,15 @@ const MAT = {
   exitGlow: { c: '#ffffff', r: 0.5, l: LAYER.atlasGlow, e: 0.8 },
   decal: { c: '#ffffff', r: 0.6, l: LAYER.atlasLit },
   wallEnd: { c: '#e4e2dc', r: 0.5 },
-  shade: { c: '#e2e0da', r: 0.5, l: LAYER.plastic },           // manual PY/Y shade [A: colour]
+  shade: { c: '#cbc6bb', r: 0.5, l: LAYER.plastic },           // manual PY/Y shade [A: colour]
   // its bottom grip: a cream band about the bezel colour (sp_py_24 #c7c0ab, underside #9c957a; QA w1: read as a thin
   // grey line) [V]
-  shadeRail: { c: '#d6d0c2', r: 0.4 },
+  shadeRail: { c: '#c4bdac', r: 0.4 },                           // QA w6: stowed band rendered at the bezel tone; y_47303 0.45-0.75
   // translucent pleated sheer: backlit glow raised 0.32 -> 0.5 (QA r1: read as an opaque slab; kn_36 / gstp_23 show it glowing)
   sheer: { c: '#e6e1d6', r: 0.9, l: LAYER.fabric, e: 0.5 },
   // opaque pleated blackout: light warm grey, clearly darker than the bezel when closed (omaat Room-24 shade #787367
   // vs bezel #bdb4a9 = 0.64; QA w1 0.87) [V]
-  blackout: { c: '#837d73', r: 0.85, l: LAYER.fabric },          // QA w2-w5: 0.81 -> 0.76 of the bezel, target 0.62-0.64; w6 #79736a overshot to 0.42 (room24 0.54)
+  blackout: { c: '#8a8479', r: 0.85, l: LAYER.fabric },          // QA w2-w5: 0.81 -> 0.76 of the bezel, target 0.62-0.64; w6 #79736a overshot to 0.41-0.53 in the cabin (room24 0.62, room38 0.74)
   shadeBtn: { c: '#d9d6cf', r: 0.35 },
 };
 
@@ -120,7 +120,7 @@ const REC = { hw: 0.195, top: 0.46, bot: -0.33, rTop: 0.15, rBot: 0.075, depth: 
 // QA w5: tub/bezel width 1.5-1.6 (y_47303 pane-scaled tub ~0.46 m, sp_py14; was 1.24) -> hw 0.222 [V: ratio; D]
 const REC_Y = { ...REC, hw: 0.222, top: 0.565, bot: -0.49, rTop: 0.15, rBot: 0.12, ext: 0.055 };
 const WMAT = {
-  lining: { c: '#8f8a81', r: 0.5 },           // grey tunnel lining round the pane; QA w5/w6: rendered 0.86 of the bezel, tt_window 0.58-0.64 [V]
+  lining: { c: '#99948b', r: 0.5 },           // grey tunnel lining round the pane; QA w5/w6: rendered 0.62-0.86 of the bezel, tt_window 0.58-0.64 [V]
   seam: { c: '#b3b1ac', r: 0.6 },                               // sidewall panel joint, every second window
   grilleBack: { c: '#43474f', r: 0.8 },                         // QA w3: grille/panel 0.57-0.69 vs ~0.85 (py_37303)                         // plenum behind the louvres, keeps their depth [A]
   // QA w2: the grille is a cut-out in the dado panel; its rounded edge is a low lip at or below the panel tone, not a
@@ -311,13 +311,18 @@ function windowParts(side, pat) {
   // bezel, DSC_1920 0.74, tt_window, sp_py14); w4 graded the other way (darkest at the recess top) [V]. QA w6: x0.60 albedo
   // rendered 0.90-0.93 of the wall against the reveal glow (04_shaders), photos 0.65-0.78 -> x0.45 [A: albedo]
   const oTop = W.holeH / 2 + 0.01;
-  const tubShade = (y) => { const d = y - vc; return d < oTop ? lerp(1, 0.45, clamp((d - 0.04) / (oTop - 0.04), 0, 1)) : lerp(0.45, 1, clamp((d - oTop) / (rec.top - 0.03 - oTop), 0, 1) ** 0.7); };
+  const fl = rec === REC_Y ? 0.42 : 0.55, d0 = rec === REC_Y ? 0.02 : 0.04;   // QA w6: PY/Y 0.88 on screen vs sp_py14 0.66; F/J 0.79 vs 0.74
+  const tubShade = (y) => { const d = y - vc; return d < oTop ? lerp(1, fl, clamp((d - d0) / (oTop - d0), 0, 1)) : lerp(fl, 1, clamp((d - oTop) / (rec.top - 0.03 - oTop), 0, 1) ** 0.7); };
   // lining: x1 at the mouth to x0.78 at the pane by depth (tt_window inner end darker) [V: tone; A: split]
   const liningShade = (y, i, n) => [1, 0.95, 0.78][Math.floor((i * 3) / n)];
   const parts = [
     [lip, MAT.reveal, tubShade],
     [sill, MAT.reveal, tubShade],
-    [ringLoft([[scl(open, 1.085), D], [scl(open, 1.02), D + 0.007], [scl(open, 0.992), D + 0.026]], map, hint), MAT.reveal, tubShade],
+    ...(rec === REC_Y
+      // QA w6: PY/Y bezel is a crisp raised frame ring with a dark outline (y_47303, sp_py24 ~0.035 m) [V: look; A: 3 mm]
+      ? [[ringLoft([[scl(open, 1.085), D], [scl(open, 1.082), D - 0.003]], map, hint), WMAT.seam],
+        [ringLoft([[scl(open, 1.082), D - 0.003], [scl(open, 1.03), D - 0.002], [scl(open, 1.0), D + 0.009], [scl(open, 0.992), D + 0.026]], map, hint), MAT.reveal]]
+      : [[ringLoft([[scl(open, 1.085), D], [scl(open, 1.02), D + 0.007], [scl(open, 0.992), D + 0.026]], map, hint), MAT.reveal, tubShade]]),
     // lining: straight shade channel (both shades run here), then necks down to the pane
     // QA w6: thin dark shade-channel gap at the lining mouth (tt_window), then the lining graded darker toward the pane
     [ringLoft([[scl(open, 0.992), D + 0.026], [scl(open, 0.989), D + 0.030]], map, hint), WMAT.seal],
@@ -358,7 +363,7 @@ function windowParts(side, pat) {
   const rb = raw(); qg = rb;
   for (let k = 0; k < 8; k++) {                                 // vertical ribs, recessed behind the slat edges and slat-
     const z = lerp(-ghw + 0.03, ghw - 0.03, k / 7);             // toned (QA w1: read as white bars) [V: py_37301 8 ribs]
-    quad(gm(z - 0.002, v0 - 0.004, 0.003), gm(z + 0.002, v0 - 0.004, 0.003), gm(z + 0.002, v1 + 0.004, 0.003), gm(z - 0.002, v1 + 0.004, 0.003));  // QA w6: behind the slats
+    quad(gm(z - 0.002, v0 - 0.004, 0.0022), gm(z + 0.002, v0 - 0.004, 0.0022), gm(z + 0.002, v1 + 0.004, 0.0022), gm(z - 0.002, v1 + 0.004, 0.0022));  // QA w6: behind the slats
   }
   grille.push([faceTo(rb, ghint), WMAT.rib]);
   // placard mid-pier, ~70 x 18 mm in the gap between the grilles, a little above their centre (py_37303) [V: position]
@@ -410,7 +415,7 @@ function shadePanelGeo(kind) {
     // pleat stripes baked into vertex colour on the valley rows. QA w1: x0.86 read as a plain slab; omaat Room-24
     // valley/crest ~0.46 in the photo (part of that is the shading the zig-zag already gives), so x0.72 blackout,
     // x0.84 for the backlit sheer [V: contrast; A: split]; QA w3: blackout 0.76 with the darker albedo (moire)
-    const geo = B.build(), kf = kind === 'sheer' ? 0.84 : 0.68;   // QA w5: pleat cv 0.07 vs 0.23 (omaat Room-24)
+    const geo = B.build(), kf = kind === 'sheer' ? 0.84 : 0.72;   // QA w5: pleat cv 0.07 vs 0.23 (omaat Room-24); w6 0.68 too dark
     for (let k = 0; k < geo.col.length / 4; k++) if (((k >> 2) & 1) === 0) for (let c = 0; c < 3; c++) geo.col[k * 4 + c] = Math.round(geo.col[k * 4 + c] * kf);
     return geo;
   }
@@ -419,8 +424,8 @@ function shadePanelGeo(kind) {
 function shadeRailGeo(kind) {
   const B = new Builder();
   if (kind === 'manual') {
-    B.add(gRBox(SHADE.w, 0.026, 0.018, 0.008, 1), M4.trs(0, 0, 0.008), MAT.shadeRail);                 // grip (sp_py_24)
-    B.add(gRBox(0.09, 0.007, 0.006, 0.003, 1), M4.trs(0, -0.013, 0.012), { c: '#bdb6a5', r: 0.45 }); // finger scoop, underside
+    B.add(gRBox(SHADE.w, 0.030, 0.024, 0.008, 1), M4.trs(0, 0, 0.011), MAT.shadeRail);                 // grip (sp_py_24)
+    B.add(gRBox(0.09, 0.007, 0.006, 0.003, 1), M4.trs(0, -0.015, 0.015), { c: '#8a8473', r: 0.45 }); // finger scoop, underside
   } else B.add(gRBox(SHADE.w, 0.011, 0.009, 0.004, 1), M4.trs(0, 0, 0.004), kind === 'sheer' ? { c: '#b3aea5', r: 0.4 } : { c: '#bab6ad', r: 0.4 });
   return B.build();
 }
