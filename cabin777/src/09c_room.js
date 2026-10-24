@@ -295,14 +295,14 @@ const DUVET_FOLDS = [[-0.10, -0.30, 35, 0.60, 0.04, 0.05], [0.12, 0.05, -30, 0.5
   [0.22, 0.42, -45, 0.30, 0.02, 0.03], [-0.15, 0.55, 20, 0.25, 0.016, 0.03]];
 // bounds(z) -> [xl, xr, mr]: cloth edges and the mattress edge it rolls over (xr > mr); z0..z1 in unit coordinates, head
 // at z0 (hd = 1) or z1 (hd = -1); folds placed about (xc, zc). Height 0 = the cloth's top resting on the mattress.
-function duvetSheet(bounds, z0, z1, hd, xc, nu = 30, nv = 54) {
+function duvetSheet(bounds, z0, z1, hd, xc, foldK = 1, nu = 36, nv = 64) {
   const rho = 0.025, t = 0.02, zc = (z0 + z1) / 2, k = (z1 - z0) / 1.23;
   const fold = (x, z, xl, mr) => {
     let f = 0;
     for (const [cx, cz, a, len, A, sg] of DUVET_FOLDS) {
       const c = Math.cos(a * DEG), sn = Math.sin(a * DEG), dx = x - xc - cx, dz = (z - zc) - hd * cz * k;
       const par = dx * sn + dz * c, per = dx * c - dz * sn;
-      f += 0.5 * A * Math.exp(-((per / sg) ** 2)) * Math.exp(-((par / (len / 2)) ** 4));   // w9a: folds halved so the quilt reads
+      f += 0.5 * foldK * A * Math.exp(-((per / sg) ** 2)) * Math.exp(-((par / (len / 2)) ** 4));   // w9a: folds halved so the quilt reads
     }
     const zh = hd > 0 ? z - z0 : z1 - z;   // turned-down head fold: a doubled band with a soft roll at its edge
     f += 0.012 * (1 - smooth(0.11, 0.15, zh)) + 0.008 * Math.exp(-(((zh - 0.135) / 0.018) ** 2));
@@ -353,7 +353,7 @@ function footwellEdges(x0, x1, zm, zf, wall, z, inset) {
 // narrowing past the table into the footwell) [V]/[D]
 const MAT_TOP = 0.054;   // mattress top above ROOM.bed
 function roomBed(B, part) {
-  const y = ROOM.bed, M = SEATMAT.mattress, mat = (x0, x1, z0, z1) => B.add(gLoft(cushionSecs(x1 - x0, z1 - z0, 0.05, -0.02, { edge: 0.02, r: 0.02, crown: 0.004 }), 3), M4.trs((x0 + x1) / 2, y + 0.02, (z0 + z1) / 2), M);
+  const y = ROOM.bed, M = SEATMAT.mattress, mat = (x0, x1, z0, z1, dy = 0) => B.add(gLoft(cushionSecs(x1 - x0, z1 - z0, 0.05, -0.02, { edge: 0.02, r: 0.02, crown: 0.004 }), 3), M4.trs((x0 + x1) / 2, y + 0.02 + dy, (z0 + z1) / 2), M);
   const fw = part === 'O' ? [-0.505, -0.03, MON.zO, 0.585, -1] : [0.0, 0.44, MON.zE, -0.585, 1];
   planSlab(B, footwellPlan(fw[0], fw[1], fw[2], fw[3], fw[4], 0.022), 0.44, y + MAT_TOP - 0.44, M);
   let bounds, z0, z1, hd, xc;
@@ -367,14 +367,14 @@ function roomBed(B, part) {
     };
     z0 = -0.875; z1 = 0.55; hd = 1; xc = -0.12;
   } else {
-    mat(-0.035, 0.495, MON.zE - 0.02, 0.66); mat(-0.118, 0.495, 0.62, 1.28);   // w8b: full seat width aft of the table (r10) [D]
+    mat(-0.035, 0.495, MON.zE - 0.02, 0.63); mat(-0.118, 0.495, 0.62, 1.28, -0.002);   // w8b: full seat width aft of the table (r10) [D]
     bounds = (z) => {
       const [fl, fr] = footwellEdges(fw[0], fw[1], fw[2], fw[3], 1, z, 0.02), b = 1 - smooth(MON.zE - 0.04, MON.zE + 0.04, z);
       return [lerp(0.02, fl, b), lerp(0.47, fr, b), lerp(0.49, fr + 0.01, b)];
     };
     z0 = -0.535; z1 = 0.86; hd = -1; xc = 0.22;
   }
-  for (const g of duvetSheet(bounds, z0, z1, hd, xc)) B.add(g, M4.trs(0, y + MAT_TOP + 0.02, 0), SEATMAT.duvet);
+  for (const g of duvetSheet(bounds, z0, z1, hd, xc, part === 'O' ? 0.35 : 1)) B.add(g, M4.trs(0, y + MAT_TOP + 0.02, 0), SEATMAT.duvet);
 }
 function roomPart(part, opts = {}) {
   const B = new Builder();
@@ -420,7 +420,7 @@ function roomPart(part, opts = {}) {
     ashFrameX(B, 0.565, 0.04, 0.10, wall, ez0, ez1);
     // shared aisle-end cap: mid grey, a little darker than the plaques, oval finger recess between them (c_27314)
     B.add(gRBox(0.10, 0.02, ez1 - ez0 + 0.006, 0.006, 1), M4.trs(0.54, wall + 0.01, ezc), { c: '#86837e', r: 0.28, m: 0.35, l: LAYER.brushed });   // QA w3: slight metallic sheen (tpg_78)
-    if (!lod) B.add(gCyl(1, 1, 1, 16), M4.trs(0.545, wall + 0.0205, ezc, 0, 0, 0, 0.0175, 0.003, 0.035), SEATMAT.jShellIn);   // QA w3: was a black hole
+    if (!lod) B.add(gCyl(1, 1, 1, 16), M4.trs(0.545, wall + 0.0205, (MON.zO + MON.zE) / 2, 0, 0, 0, 0.0175, 0.003, 0.035), SEATMAT.jShellIn);   // QA w3: was a black hole
     // E's footwell under the table + monument (aisle column), mouth under E's monitor
     // QA w2: both footwell mouths sit square under their monitors, ~0.475 wide from the column-side frame edge, split by a
     // thin 0.05 pillar (tpg_53: opening under the monitor, 0.475 m) [D]
@@ -433,10 +433,13 @@ function roomPart(part, opts = {}) {
     B.add(gRBox(0.03, MON.bot, MON.zE - MON.zO, 0.01, 1), M4.trs(-0.015, MON.bot / 2, (MON.zO + MON.zE) / 2), shell);
     // w9a/b: the top reads as an O housing and an E housing split by a slim spine with a metal top rail running inboard
     // from the aisle-end cap between the seat plaques (c_27313 / 27314) [V]: dark grooves either side of a 0.03 spine [D]
-    const mz = (MON.zO + MON.zE) / 2;
-    for (const gz of [-0.025, 0.025]) B.add(gBox(1.12, 0.004, 0.014), M4.trs(-0.02, MON.top + 0.0005, mz + gz), SEATMAT.jVoid);
-    B.add(gRBox(1.13, 0.05, 0.028, 0.008, 1), M4.trs(-0.02, MON.top + 0.025, mz), shell);
-    B.add(gRBox(1.134, 0.008, 0.032, 0.004, 1), M4.trs(-0.02, MON.top + 0.054, mz), SEATMAT.jPanelEdge);
+    const mz = (MON.zO + MON.zE) / 2, MX = { c: '#9aa0a7', r: 0.3, m: 0.6, l: LAYER.brushed };   // c_27313 top metal #969b9e [V]
+    // w10b: the spine stops at the aisle cap (x 0.49) so it meets the cap between the two plaques, no stub over them
+    for (const gz of [-0.023, 0.023]) B.add(gBox(1.06, 0.004, 0.010), M4.trs(-0.05, MON.top + 0.0005, mz + gz), SEATMAT.jVoid);
+    B.add(gRBox(1.075, 0.04, 0.028, 0.008, 1), M4.trs(-0.0475, MON.top + 0.02, mz), shell);
+    B.add(gRBox(1.079, 0.006, 0.032, 0.003, 1), M4.trs(-0.0475, MON.top + 0.043, mz), MX);
+    // w10a: light grey-metal edges along the housing tops on both faces (c_27313 / 27315) [V]
+    for (const ez of [MON.zO + 0.008, MON.zE - 0.008]) B.add(gBox(1.10, 0.004, 0.016), M4.trs(-0.035, MON.top + 0.0005, ez), MX);
     // O's face: monitor (outer column) + O's cabinet (aisle column)
     roomMonitor(B, -0.20, MON.zO, -1, 1);
     roomCabinet(B, 0.275, MON.zO, -1);

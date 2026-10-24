@@ -267,7 +267,7 @@ function buildSeats(gl, layout) {
     let p, plate;
     // QA r2: neutral grey rounded squares slightly lighter than the cap (c_27314 cap #878787)
     // room QA w2: dark glass tiles with blue-lit numbers (ff_ana-the-room-seat-17e-and-17f, c_27313 cyan '17E' / '18D')
-    if (s.kind === 'room') { p = localToWorld(s, [0.545, ROOM.wall + 0.0205, s.odd ? -0.50 : -0.06]); plate = '#2c2f35'; }
+    if (s.kind === 'room') { p = localToWorld(s, [0.545, ROOM.wall + 0.0205, s.odd ? -0.175 : 0.0]); plate = '#2c2f35'; }   // room w10b: either side of the monument spine (c_27313)
     else { const hx = (s.pos === 'center' ? 1.10 : 1.24) / 2; p = localToWorld(s, [hx - 0.08, 1.24 + 0.0625, -0.80]); plate = '#6f675c'; }   // suite: flush pill slot a shade darker than the cap (omaat_f9 / f7)
     const face = s.mir ? -1 : 1;             // text top points away from the aisle
     const room = s.kind === 'room';
