@@ -90,10 +90,20 @@ function paintBinDecals(A, layout) {
   const g = A.canvas.getContext('2d'), S = A.canvas.width;
   const rect = (name) => { const r = A.rects[name]; return r && [r[0] * S, r[1] * S, (r[2] - r[0]) * S, (r[3] - r[1]) * S]; };
   const INK = '#3a3f47';
-  const seatIcon = (x, y, s) => {      // side-view seat glyph: reclined back + cushion + leg, thick strokes (w8b: outline
-    g.strokeStyle = INK; g.lineWidth = s * 0.2; g.lineCap = 'round'; g.lineJoin = 'round';   // boxes, w9b: blocks read as dashes)
-    g.beginPath(); g.moveTo(x + s * 0.12, y - s * 0.5); g.lineTo(x + s * 0.28, y + s * 0.14); g.lineTo(x + s * 0.9, y + s * 0.14);
-    g.moveTo(x + s * 0.5, y + s * 0.14); g.lineTo(x + s * 0.5, y + s * 0.5); g.stroke();
+  // c120 '17' crop [V]: row number, a seat glyph in a thin rounded frame, then a solid person figure (w10a/w10b:
+  // three bare seat strokes read as inverted Ys); ink #3a3f47, frame ~1.6 px, glyphs ~0.8 of the numeral height [A]
+  const seatBox = (x, y, s) => {
+    g.strokeStyle = INK; g.lineCap = 'round'; g.lineJoin = 'round';
+    g.lineWidth = s * 0.09; g.beginPath(); g.roundRect(x, y - s * 0.55, s * 0.95, s * 1.1, s * 0.14); g.stroke();
+    g.lineWidth = s * 0.17; g.beginPath();
+    g.moveTo(x + s * 0.24, y - s * 0.32); g.lineTo(x + s * 0.34, y + s * 0.14); g.lineTo(x + s * 0.74, y + s * 0.14);
+    g.moveTo(x + s * 0.52, y + s * 0.14); g.lineTo(x + s * 0.52, y + s * 0.36); g.stroke();
+  };
+  const person = (x, y, s) => {
+    g.fillStyle = INK;
+    g.beginPath(); g.arc(x + s * 0.3, y - s * 0.4, s * 0.14, 0, Math.PI * 2); g.fill();
+    g.beginPath(); g.roundRect(x + s * 0.1, y - s * 0.22, s * 0.4, s * 0.42, s * 0.1); g.fill();
+    g.fillRect(x + s * 0.14, y + s * 0.12, s * 0.13, s * 0.44); g.fillRect(x + s * 0.33, y + s * 0.12, s * 0.13, s * 0.44);
   };
   const rows = [...new Set(layout.seats.map((s) => s.row))];
   for (const r of rows) for (let i = 0; i < 3; i++) {
@@ -107,11 +117,11 @@ function paintBinDecals(A, layout) {
     g.save(); g.translate(x, y); g.scale(sx, 1);
     const W = w / sx;                         // virtual width before the quad stretch
     g.fillStyle = INK; g.textAlign = 'left'; g.textBaseline = 'middle'; g.font = '700 22px "Helvetica Neue", Helvetica, Arial, sans-serif';
-    const tw = g.measureText(String(r)).width, ic = 16, gap = 2;
-    const total = tw + 6 + Math.min(n, 3) * (ic + gap);
+    const tw = g.measureText(String(r)).width, ic = 20;
+    const total = tw + 5 + (n ? ic * 0.95 + 3 + ic * 0.6 : 0);
     let cx = (W - total) / 2;
-    g.fillText(String(r), cx, h / 2 + 1); cx += tw + 6;
-    for (let k = 0; k < Math.min(n, 3); k++) { seatIcon(cx, h / 2, ic); cx += ic + gap; }
+    g.fillText(String(r), cx, h / 2 + 1); cx += tw + 5;
+    if (n) { seatBox(cx, h / 2, ic); person(cx + ic * 0.95 + 3, h / 2, ic); }
     g.restore();
   }
   const q = rect('psuSigns');
