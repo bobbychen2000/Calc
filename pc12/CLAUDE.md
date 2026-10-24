@@ -2179,3 +2179,37 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   116-124 / 220-234; judges' r2 7 / 12 / 49 / 113), the windows mirrored in the outboard leaf.
   Budget: interior 944,996 of 951,000 (cabin_interior 37,148 with the walnut split, seat_pax1 / 2 39,488, pax3-6 40,212
   of 40.6k).  Build: 2,814,991 triangles / 49.91 MB, light tier 2,374,604 / 41.96 MB.  Verified: fit_check FIT OK (138 ok, no open row; 25 the armrests vs the pedestal unchanged in result; 26 builds its pairs in 20k-triangle slabs -- the same pairs, 40k ran out of memory beside a viewer run), consistency_2d3d 157 / 157 (the exec headrest top 9.4 mm of 10), drawing.master L6 / L6B rev O (L6 25 texts crossed by lines as at rev N), drawing.sheet + drawing.verify (SVGs unchanged, the same dimension table); the FULL viewer_test after a container restart at load 8-25 (two other worktrees' browsers beside it) through a harness wrapper with longer waits (SHOT_TIMEOUT 900 s, navigations 300 s: a plain run's prop-blur screenshot timed out at 240 s; no check changed) 235 / 236 -- the one failure [FD-L9] at its 300 s wait: Auto's start-up calibration had given SwiftShader the 16-pass still refinement this time, whose passes alone took ~350 s; re-measured with the refinement forced on (?quality=high) the page idled at 44 Hz after 367 s with no render requested once the passes were done, so the row's wait is now 600 s (viewer_test comment), `--only fdlook` 14 / 14 with it ([FD-L9] idle after 68 s at 37 Hz; Auto gave no refinement there); in the full run [CAB1] the seat backs p50 201 / 199, sd 14.9 / 16.2, low-pass 10.6 / 12.6, high-pass 6.9 / 7.7, the headliner centre sd 11.4; [T4] cabin_fwd 190 / club 198 / fd_cabin 77, [T4b] 202; [T14] the walnut 40 at cabin_fwd (<= 90), overhead 41-48, bezels 27-42; [FD-L2] carpet 15 / consoles 7 / titanium 88; [FD-L3] glareshield 60 (lip 72 / underside 44); [FD-L4] yoke 212; [FD-L5] sheepskin (118, 120, 140); [FD-L6] p10 11, p50 71, bands 29 / 48 / 13 %; [FD-L10] hp4 skew +0.37, p10 98, sd4 12.3; [FD-L10b] cush_close -0.37 / -0.32, seats_aft -0.55 / -0.37; [FD-L11] knee boxes 12 / 15, console face 24.5; [Y1b] spread 22, body 0.23, pads / body 1.38; [Y1c] lunes / body 1.65; [Y1d] insert / cover 0.94; [Y1e] far 0.85 / near 0.38, band 55; [CRA1-01] sill 115 / 115.  web/package.py verify OK (meshopt 18.15 + 15.62 MB), the Artifact bundle 122.2 MB in 2 publishes (58.8 + 63.4 MB), artifact_test 70 / 70 (the bundle's viewer files are the committed ones; no viewer or GLB file changed after it).  Before / after sheets (judges' r2 renders | fix r2, P1046404 / 05 / 08): out/tmp/all8_fix_r2/cmp/cmp_*.jpg, cmp2/cmp_*.jpg (gitignored: they embed the photos).
+- All-lens fix r3 = cabin track (2026-10-24; track 1 of the three parallel sessions after the migration, branch
+  claude/pc12-cabin-r3 from e3d0a17; cabin 7.8 shipped with major CAB3-01 "the executive seats read as flat panels on a
+  boxy base").  No L6 / L6B table changed (builder detail and the viewer; the runner table ended as shipped).  Judges
+  4 rounds: 7.6 (r1: separately puffed panels read as tiles) -> 7.0 (r2: over-flattened, a board with drawn outlines;
+  the runner as planks) -> lead's method from then on: every candidate A/B-judged against the shipped baseline
+  (e3d0a17 rendered from its own worktree, same cameras) beside the photos, judges given the baseline renders and the
+  previous findings -> 7.9 -> 8.0 PASS (no blocker / major).  EXEC SEAT (`seats.cabin_seat`): the back's panels all
+  lifted by ONE shell crown (`EXEC_SHELL` h 12 mm at the centreline, the bolsters' rise 18 mm + 10 over the shoulders
+  over e 0.40-0.85 of the half-width) -- continuous form across every seam, the seams narrow dips where the panels'
+  small edge rounds overlap (`EXEC_SEAM` gap -3 mm, radii 5-8 mm); the centre panel narrows as a U (`EXEC_V_EASE` 1.7);
+  the lumbar its own panel on the same shell and sink (a crease, not a step); the panels' foot at 15 mm (the slab's
+  front had shown as a black slot); the headrest winged (`EXEC_HEAD` wing 16 mm over its outer quarters), corners r 75,
+  two full-height vertical seams tapering in (the horizontal welt gone); the cushion crowned 22 mm over 140 mm with a 55
+  mm front roll, its side panels 12 mm under the drawn top and ending 60 mm short of the front (they had framed it as a
+  tray / bulbous corner blocks), no front welt; the forward-facing seats' base box mid grey `seat_shell_grey` (the aft
+  pair keep the anthracite), a framed life-vest drawer on every base (`EXEC_DRAWER`), light-grey lap belts
+  `belt_grey`.  VIEWER (`materials.js`): CABIN_FORM class 3 for the seats' dark trim (`seat_shell_dark` /
+  `seat_shell_grey`: gain 1.3, occlusion power 0.8 -- under the leather's power 2 and floor-level x 0.55 the bases were
+  a black void, sRGB ~10 against the backs' 200 at cabin_fwd_406; now ~0.2 of the backs, P1046406 0.23); the leather a
+  satin 0.62, warmer, x 0.93; the walnut's grain in a frame along the vertical / station with fine dark pore lines
+  (`grain.lines` [380 / m, 0.30, 0.30, 3.5]: the r2 figure was isotropic 6.7 mm blobs on the divider -- smeared); the
+  runner bands carry the field's pinstripe (lookdev `stripes` on carpet_orange / light / grey) and a cut pile (the
+  `leather` patch, 280 / m, +-15 %), the light bands near-white, the field nearer black with a stronger pinstripe; the
+  cabin sun on the leather / carpet x 0.2 (`sunIn`: through the deep reveals the low sun from ahead landed as thin white
+  blades).  LINING DOORS (`cabin._flush_door`): the O2 / access / PULL doors' gap 2.5 -> 1.5 mm in a mid-grey
+  `lining_gap` (the dark psu_panel ring drew heavy black outlines).  CARGO-DOOR WINDOW: its bezel (`interior._window_bezel`
+  depth / into) runs down the whole reveal as a slight funnel, its far edge 8 mm into the opening -- the inner panel's
+  hole wall and the door slab's lay within 0.5 mm of the old 4 mm strip and tied in a dotted dark hairline (ray-cast:
+  two lining surfaces 0.1 mm apart along the line; not the glass).  `ledge_panel` neutral grey.  Open (reported, not
+  done): the window shade cassettes (INT8-07, an L6 reveal-profile change), the PSU pods / O2 doors a little small, the
+  runner bands' crisp edges, the ledge-top lids.  Note: a fresh container has no out/tmp/yoke_mesh_cache -- the first
+  build re-meshes the yokes (~24 min) to 43,008 triangles each (42,868 committed before), printed OVER the 43k cap
+  (track 3 raises the cap; the lead reconciles at the merge).  Tools (scratch, not committed): a look-dev pose harness
+  over viewer_test's helpers, a baseline worktree of e3d0a17 rendered with its own viewer.
