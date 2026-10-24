@@ -45,7 +45,7 @@ const BINMAT = {
   bandC: { c: '#dcdcda', r: 0.5, l: LAYER.plastic, e: 0.08 },   // w6a: channel 154-163 vs 190-209 in y_47300   // channel ~0.76 of the door in y_47300 (w3b) [V]
   housingC: { c: '#bfc0bf', r: 0.5, l: LAYER.plastic, e: 0.05 },   // centre PSU housings: bandC x0.86 (not baked by shadeUpper; w5 render read white) [D]
   signPod: { c: '#2a2e34', r: 0.45 },
-  seam: { c: '#a7abb0', r: 0.8 },   // thin mid-grey hairline, not a black arc (c_th1, b_sany_y22 [V])
+  seam: { c: '#c3c6ca', r: 0.8, e: 0.08 },   // soft light joint, not a dark hairline (c120, c_th1, b_sany_y22 [V]; w8a: 0.59x read hard)
   lipGap: { c: '#4a4f56', r: 0.8 },
   lipLine: { c: '#9ea2a7', r: 0.8 },   // door/band junction: thin mid-grey line (b_lalf_c26, c120; w5a/w5b: a 12 mm #4a4f56 slot read black) [V]
   lip: { c: '#e2e2df', r: 0.36, l: LAYER.plastic },
@@ -65,7 +65,7 @@ const BINMAT = {
   rail: { c: '#e8e8e5', r: 0.36, l: LAYER.plastic },
   groove: { c: '#9aa0a6', r: 0.7 },
   joint: { c: '#dcdedf', r: 0.7 },
-  riser: { c: '#c4c6c9', r: 0.7 },   // w7a: #a9acb0 read as dark pinstripes (y_47301 ~200 on 235)   // shingle step face (w5b) [A]
+  riser: { c: '#d2d3d4', r: 0.7, l: LAYER.plastic, e: 0.14 },   // lit edge-on, so self-lifted to ~0.85x the band (y_47301; w7a/w8a/w8b pinstripes)   // w7a: #a9acb0 read as dark pinstripes (y_47301 ~200 on 235)   // shingle step face (w5b) [A]
   psuBox: { c: '#e6e6e3', r: 0.4, l: LAYER.plastic },
   pod: { c: '#eceae6', r: 0.4, l: LAYER.plastic },
   bezelDark: { c: '#8a9096', r: 0.4 },
@@ -87,9 +87,10 @@ function paintBinDecals(A, layout) {
   const g = A.canvas.getContext('2d'), S = A.canvas.width;
   const rect = (name) => { const r = A.rects[name]; return r && [r[0] * S, r[1] * S, (r[2] - r[0]) * S, (r[3] - r[1]) * S]; };
   const INK = '#3a3f47';
-  const seatIcon = (x, y, s, bg) => {      // seat pictogram (plan view): rounded square outline, thick backrest edge
-    g.fillStyle = INK; g.beginPath(); g.roundRect(x, y - s * 0.5, s, s, s * 0.25); g.fill();
-    g.fillStyle = bg; g.beginPath(); g.roundRect(x + s * 0.16, y - s * 0.5 + s * 0.36, s * 0.68, s * 0.48, s * 0.12); g.fill();
+  const seatIcon = (x, y, s) => {      // seat pictogram drawn solid: backrest bar over a cushion (w8b: the outline form
+    g.fillStyle = INK;                    // read as empty boxes once scaled down)
+    g.beginPath(); g.roundRect(x, y - s * 0.5, s, s * 0.34, s * 0.12); g.fill();
+    g.beginPath(); g.roundRect(x + s * 0.1, y - s * 0.5 + s * 0.46, s * 0.8, s * 0.54, s * 0.14); g.fill();
   };
   const rows = [...new Set(layout.seats.map((s) => s.row))];
   for (const r of rows) for (let i = 0; i < 3; i++) {
@@ -107,7 +108,7 @@ function paintBinDecals(A, layout) {
     const total = tw + 6 + Math.min(n, 4) * (ic + gap);
     let cx = (W - total) / 2;
     g.fillText(String(r), cx, h / 2 + 1); cx += tw + 6;
-    for (let k = 0; k < Math.min(n, 4); k++) { seatIcon(cx, h / 2, ic, bg); cx += ic + gap; }
+    for (let k = 0; k < Math.min(n, 4); k++) { seatIcon(cx, h / 2, ic); cx += ic + gap; }
     g.restore();
   }
   const q = rect('psuSigns');
@@ -162,9 +163,10 @@ const padM = (x, y, z) => M4.trs(x, y, z, 0, Math.PI / 2);
 // recessed stadium latch (light rim, dark well, lever paddle in its lower half) as in c_th1 / b_sany_y22 [V shape];
 // rim set 1 mm into the door skin so it reads recessed, not proud (no photo shows a raised latch) [A]
 function addLatch(B, M) {
-  B.add(gPlate(0.14, 0.05, 0.025, 0.006), M4.mul(M, M4.trs(0, 0, -0.001)), BINMAT.bezel);
-  B.add(gPlate(0.114, 0.028, 0.014, 0.004), M4.mul(M, M4.trs(0, 0.002, 0.0007)), BINMAT.recess);
-  B.add(gPlate(0.1, 0.011, 0.0055, 0.004, 4), M4.mul(M, M4.trs(0, -0.0055, 0.0019)), BINMAT.paddle);
+  // ~2:1 with a visible handle (c120, y_47301; w8a: a 2.8:1 pill) [V ratio, A size]
+  B.add(gPlate(0.12, 0.06, 0.03, 0.006), M4.mul(M, M4.trs(0, 0, -0.001)), BINMAT.bezel);
+  B.add(gPlate(0.096, 0.038, 0.019, 0.004), M4.mul(M, M4.trs(0, 0.002, 0.0007)), BINMAT.recess);
+  B.add(gPlate(0.08, 0.014, 0.007, 0.004, 4), M4.mul(M, M4.trs(0, -0.0065, 0.0019)), BINMAT.paddle);
 }
 // shell around a face polyline, offset along its outward normal (outward = toward the aisle; inward = +1 for the
 // outboard door, -1 for the centre bin) so wrapped-under door segments keep their thickness
@@ -258,7 +260,8 @@ function centerBinModule() {
 // seams between neighbouring modules (instanced at the joints only, so no dark outline at the run ends)
 function binSeams(which) {
   const B = new Builder();
-  if (which === 'C') for (const s of [-1, 1]) doorSeam(B, CBIN_DOOR, s, -1);
+  // centre: plus a raised cap over the crest rail at each joint (c120 [V]; 30 mm, 3 mm proud [A])
+  if (which === 'C') for (const s of [-1, 1]) { doorSeam(B, CBIN_DOOR, s, -1); B.add(gExtrude(faceShell(CBIN_DOOR.filter((p) => p[1] > 2.16 && p[1] < 2.25), s, -1, 0.011, 0.001), 0.03, 45), null, BINMAT.rail); }
   else doorSeam(B, OBIN_DOOR_S, which === 'R' ? 1 : -1, 1);
   return B.build();
 }

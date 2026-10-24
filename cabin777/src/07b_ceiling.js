@@ -21,7 +21,7 @@ function vaultAt(t) {
 }
 const VAULT = (() => {
   const pts = [[1.70, 2.236], [1.668, 2.244]];
-  const N = 26;
+  const N = 48;   // w8b: finer arc, smoother falloff
   for (let k = 0; k <= N; k++) { const [x, y] = vaultAt(k / N); pts.push([x, y]); }
   pts.push([0.722, 2.268], [0.70, 2.262]);
   return pts;
@@ -88,7 +88,7 @@ const CEILMAT = {
   emergBase: { c: '#eceae6', r: 0.5, l: LAYER.plastic, e: 0.06 },
   // per-panel raised panel: lit by the same cove wash as the vault around it (sany_10/11 show it barely darker) [A e]
   bezel: { c: '#e6e4df', r: 0.7, l: LAYER.plastic },   // vault tone (c120 speaker 188 on a 188 vault; w6a/w6b: a bright plank)
-  bezelIn: { c: '#cfcdc9', r: 0.7, l: LAYER.grille },   // perforated pocket a little darker than the vault (c120); baked with the vault since w7 [V look, A tone]
+  bezelIn: { c: '#dedcd7', r: 0.7, l: LAYER.grille },   // perforated pocket a little darker than the vault (c120); baked with the vault since w7 [V look, A tone]
   flat: { c: '#efeeea', r: 0.72, l: LAYER.plastic },
   lightPanel: { c: '#fffaf0', r: 0.5, e: 0.45 },
   // narrow warm fore-aft light strip along the edge of the flat door-area panel (up_F_Forward-Look [V shape, colour])
@@ -125,7 +125,7 @@ function vaultStrip(t, side, z0, z1, width, off) {
 }
 // rounded rectangle (w across the aisle along the arc, d along the cabin, corner radius r) conforming to the vault,
 // offset off below it: a flat box would sink into the arch at its ends
-function vaultPanel(tc, side, zc, w, d, r, off, n = 10) {
+function vaultPanel(tc, side, zc, w, d, r, off, n = 10, bow = 0) {
   const e = 0.01, a = vaultAt(tc - e), b = vaultAt(tc + e), dsdt = Math.hypot(b[0] - a[0], b[1] - a[1]) / (2 * e);
   const g = raw();
   // columns concentrated in the rounded ends (n/2 per corner, sine-spaced) so the ends read round, not octagonal
@@ -136,7 +136,8 @@ function vaultPanel(tc, side, zc, w, d, r, off, n = 10) {
   for (let k = 0; k <= n; k++) {
     const u = us[k], [x, y, nx, ny] = vaultAt(tc + u / dsdt);
     const q = Math.max(0, Math.abs(u) - (w / 2 - r)), h = d / 2 - r + Math.sqrt(Math.max(0, r * r - q * q));
-    for (const z of [zc - h, zc + h]) { g.p.push((x + nx * off) * side, y + ny * off, z); g.n.push(nx * side, ny, 0); g.u.push(k / n, z); }
+    const b = bow * (1 - Math.pow(2 * k / n - 1, 2));
+    for (const z of [zc - h + b, zc + h + b]) { g.p.push((x + nx * off) * side, y + ny * off, z); g.n.push(nx * side, ny, 0); g.u.push(k / n, z); }
   }
   for (let k = 0; k < n; k++) { const q = k * 2; g.i.push(q, q + 1, q + 3, q, q + 3, q + 2); }
   return fixWinding(g);
@@ -242,9 +243,9 @@ function buildCeilings(upper, layout) {
         // shape]; 0.34 x 0.10 m [A]; t 0.70 clears the crest rib, w6b) and a small dark-windowed fitting with a lens near mid-vault (the emergency light)
         for (let k = 0; k < mods.length - 1; k++) {
           const zc = (mods[k] + mods[k + 1]) / 2;
-          upper.add(vaultPanel(0.70, side, zc, 0.34, 0.10, 0.025, 0.0015, 12), null, CEILMAT.bezel);   // outer ring in vault tone (c120 ~1.06x; w7a)
-          upper.add(vaultPanel(0.70, side, zc, 0.332, 0.092, 0.022, 0.003, 12), null, CEILMAT.bezel);
-          upper.add(vaultPanel(0.70, side, zc, 0.312, 0.074, 0.014, 0.0036, 12), null, CEILMAT.bezelIn);
+          upper.add(vaultPanel(0.70, side, zc, 0.34, 0.10, 0.025, 0.0015, 12, 0.03), null, CEILMAT.bezel);   // outer ring in vault tone (c120 ~1.06x; w7a)
+          upper.add(vaultPanel(0.70, side, zc, 0.332, 0.092, 0.022, 0.003, 12, 0.03), null, CEILMAT.bezel);
+          upper.add(vaultPanel(0.70, side, zc, 0.312, 0.074, 0.014, 0.0036, 12, 0.03), null, CEILMAT.bezelIn);
           upper.add(gRBox(0.07, 0.008, 0.04, 0.005, 1), vaultXF(0.45, side, zc + 0.25, 0.003), CEILMAT.emergBase);
           upper.add(gRBox(0.05, 0.004, 0.022, 0.004, 1), vaultXF(0.45, side, zc + 0.25, 0.0068), CEILMAT.emerg);
         }
@@ -275,7 +276,9 @@ function buildCeilings(upper, layout) {
       // and the door dome (w2b v3 leak)
       for (const side of [-1, 1]) {
         const poly = [...VAULT.map(([x, y]) => [x * side, y]), [0, 2.27], [0, 2.62], [VAULT[0][0] * side, 2.62]];   // over the centre-bin crest too (w3b sliver)
-        for (const z of [z0 - 0.006, z1 + 0.006]) upper.add(gExtrude(poly, 0.01), M4.trs(0, 0, z), CEILMAT.flat);
+        // closures facing the dark door-3 soffit take its colour (w8b: white arch round the tray in v3)
+        const bar = (q) => q && q.type === 'door' && q.door === 2;
+        for (const [z, q] of [[z0 - 0.006, zones[zi - 1]], [z1 + 0.006, zones[zi + 1]]]) upper.add(gExtrude(poly, 0.01), M4.trs(0, 0, z), bar(q) ? CEILMAT.barSoffit : CEILMAT.flat);
       }
     } else if (zn.type === 'door') {
       const zc = (z0 + z1) / 2;
@@ -304,7 +307,7 @@ function buildCeilings(upper, layout) {
         upper.add(gBox(0.16, 0.006, 0.14), M4.trs(0.9, TY - 0.004, zc), CEILMAT.barFrame);   // louvre: light slats on a dark ground
         for (let k = 0; k < 5; k++) upper.add(gBox(0.13, 0.008, 0.012), M4.trs(0.9, TY - 0.008, zc - 0.05 + k * 0.025), { c: '#ece9e3', r: 0.5 });
         upper.add(gBox(0.17, 0.004, 0.11), M4.trs(1.15, TY - 0.005, zc), { c: '#9a9188', r: 0.5 });   // speaker beside the louvre (c133): dark face, light rim 2 mm proud
-        upper.add(gBox(0.15, 0.004, 0.09), M4.trs(1.15, TY - 0.0075, zc), { c: '#2a2624', r: 0.6 });
+        upper.add(gBox(0.15, 0.004, 0.09), M4.trs(1.15, TY - 0.0075, zc), { c: '#4a4441', r: 0.6, l: LAYER.grille });   // ~0.8x the soffit (c133; w8a: black hole)
       } else {
         // entry lights: two narrow fore-aft strips along the edges of the flat centre panel (up_F_Forward-Look [V];
         // 70 mm wide, x = ±0.55 [A])

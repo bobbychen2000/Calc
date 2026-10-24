@@ -1,0 +1,75 @@
+{
+ "area": "ceiling",
+ "rater": "B",
+ "round": 8,
+ "score": 8.5,
+ "previousStatus": {
+  "fixed": [
+   "w7b medium, cove diffuser band hidden behind the vault: FIXED. r8v/v6 row 300 now reads 249 for 12 samples running right up to the grille frame (200), with no 204 grey step (r7v: 249 x3 then 204 x3). The lit field is about 3x the grille width, as in c120. The 4 arc-following facets plus the eFn 0.85 branch at xg + w/2 work.",
+   "w7b low, door-3 soffit fittings: FIXED. r8v/v3 shows the louvre and a dark rimmed speaker side by side at mid-tray, plus 3 downlights in the gap between the bin ends. The other 7 of the 10 are hidden by the bin ends from this eye point, which is plausible for c133's narrower bar-walkway view.",
+   "w7b low / w7a low, vault speaker rim: FIXED as a rim. The bright drawn outline (235 on 190) is gone; the rim now follows the baked vault. (The face tone and shape are a new low issue, below.)",
+   "w7a medium, joint ribs: FIXED. They are soft light ridges that stop at the grille frame and sweep forward into the crest rib, with the same orientation as c120 (v1 looking forward, v6 looking aft).",
+   "w7a low, outboard bin door seam: FIXED. It is a smooth Catmull-Rom curve in v4, v5 and v11.",
+   "w7a low, grille louvre tone: FIXED. It reads as light slots in a white frame (v1, v6, v2)."
+  ],
+  "notFixed": [
+   "w7a low, outboard PSU step lines: PARTLY. From below (v4) they are hairlines (fine), but at a grazing angle in J/F (r8v/v8 column 150) every riser is a 5-6 px band at 147 on 210 (0.70). c26 shows the steps at about 0.85-0.95 contrast."
+  ],
+  "regressed": [],
+  "partlyFixed": [
+   "w7b low, centre-bin door tone: PARTLY. r8v/v5 column 400 now runs 213 -> 204 (r7v 202 -> 188), so it is lighter and has a small lift toward the crest. y_47300 still reads lighter lower on the door, but this is now within lighting tolerance."
+  ]
+ },
+ "details": [
+  {"detail": "Aisle vault panels, joint ribs and crest rib", "score": 8.7, "refs": ["b_lalf_c120", "b_lalf_c119", "b_sany_y22"]},
+  {"detail": "Cove band + slotted grille", "score": 8.7, "refs": ["b_lalf_c120", "b_lalf_c119", "rb_omaat_room37"]},
+  {"detail": "Vault light falloff and smoothness", "score": 8.2, "refs": ["b_lalf_c119", "b_lalf_c120"]},
+  {"detail": "Vault fittings (speaker, emergency light)", "score": 7.9, "refs": ["b_lalf_c120"]},
+  {"detail": "Outboard bins: doors, latches, lip, top placards, seams", "score": 8.7, "refs": ["b_sany_y22", "b_lalf_c120", "y_47301"]},
+  {"detail": "Centre bins: doors, crest rail + placard, PSU channel", "score": 8.5, "refs": ["y_47300", "b_sany_y22", "b_lalf_c120"]},
+  {"detail": "Outboard PSU band (stepped strips, housings, sign windows)", "score": 8.4, "refs": ["b_lalf_c26", "rb_omaat_room23", "y_47301"]},
+  {"detail": "EXIT signs", "score": 8.4, "refs": ["b_lalf_c133", "b_lalf_c134"]},
+  {"detail": "Door-3 bar cross-aisle soffit", "score": 8.4, "refs": ["b_lalf_c133", "b_lalf_c134"]},
+  {"detail": "Other door / monument ceilings", "score": 7.9, "refs": ["y_47301", "b_lalf_c120"]}
+ ],
+ "issues": [
+  {
+   "severity": "low",
+   "detail": "Vault speaker: shape and face tone",
+   "problem": "The fitting is a straight rounded rectangle with a uniformly grey face. In c120 the vault fitting is a gently curved (bowed) rounded slot, about 3.5:1, whose face is the same tone as the vault (186-193 on a 186-195 vault). It is drawn only by a thin shadow on one long edge and a highlight on the other. After the last tweak, the model face is 0.87 of the vault in v6 (141-147 on 165), but still about 0.67 in the older renders v8, v11, v2 and v7 (110 on 165), where it reads as a dark slot.",
+   "evidence": "r8v/v6 row 248: 147..140 against a 165 vault. r8v/v8 row 60: 108-118 against 165. Crops: raterB8/c120_crop.png against raterB8/v6_crop.png.",
+   "fix": "07b_ceiling.js: set CEILMAT.bezelIn.c to the vault colour (#e6e4df; it is baked with the vault anyway), so the pocket reads only by its 3.6 mm depth and shadow. Give the fitting a bow: in vaultPanel, or as a post-pass on the three speaker meshes, offset z by +0.03*(1-(2u-1)^2) along the long side, so the centre sits aft of the ends as in c120. Re-render v8, v11, v2 and v7 to confirm."
+  },
+  {
+   "severity": "low",
+   "detail": "Vault shading terraces (streaks)",
+   "problem": "Across the vault the tone runs in plateaus and ramps instead of a smooth falloff, so faint fore-aft streaks show along the vault. They are clearest in v2, v7 and v6.",
+   "evidence": "r8v/v6 row 150, every 4 px: 181,180,180,180 | 178,176,174 | 173 x6 | 172..165 | 165-164 x10. c120 is smooth, 186-195 with no banding.",
+   "fix": "The normals are smooth (gSweep) and the bake is per vertex, so the steps most likely come from the AO volume's trilinear grid or the shadow-map filter (a lighting/integration item: raise AO-volume resolution over y 2.2-2.6, or blur the AO lookup). On the ceiling side, raise VAULT N from 26 to 48 in 07b_ceiling.js so the bake and eFn have more samples; the cost is small."
+  },
+  {
+   "severity": "low",
+   "detail": "Outboard PSU shingle risers at a grazing angle",
+   "problem": "In the J and F cabins, seen from the aisle at a low angle, every shingle riser reads as a 5-6 px mid-grey stripe (0.70 contrast), giving a venetian-blind look. In c26 the steps are soft, with 0.85-0.95 contrast.",
+   "evidence": "r8v/v8 column 150, rows 255-260 and 304-309: 147 on 210.",
+   "fix": "07b_ceiling.js / 08_bins.js PSU band: lighten the riser colour toward the band (for example 0.92x the band instead of the current darker step colour), or give the riser a small emissive (e 0.05) so it does not fall into shadow at grazing angles. Keep the 5 mm height."
+  },
+  {
+   "severity": "low",
+   "detail": "Placard icons",
+   "problem": "In the close-ups, the row-placard icons beside '35' draw as small empty boxes ('35 □□□□'). c120 shows readable seat/person pictograms ('17 [seat icons]').",
+   "evidence": "r8p/v12 and v13 at about (290,137).",
+   "fix": "06_atlas.js is not a ceiling file. Ask the atlas owner to draw the seat-letter/person pictogram glyphs in the placard cell at 2x and size, or drop the icons to a single pictogram that survives the mips."
+  },
+  {
+   "severity": "low",
+   "detail": "Door-3 dome edges around the dark soffit",
+   "problem": "In v3 the white dome profile still shows as curved white arcs at the upper left and right of the dark tray, between the tray and the bin ends. c133/c134 show the dark soffit running flat to the monument walls.",
+   "evidence": "r8v/v3 around (300-380, 60-90) and (640-690, 80-110).",
+   "fix": "07b_ceiling.js door zone 2: extend the flat barSoffit box (currently 3.1 m wide at y 2.43) to the dome width (about 2 x 1.70 m), or apply CEILMAT.barSoffit to the header closures and the dome ends at z0 and z1 of that zone."
+  }
+ ],
+ "questionsForUser": [
+  "Is the bowed vault fitting in c120 a speaker or a handhold or recess? If the user has a close-up of an ANA 777-300ER vault fitting, it would settle its shape and face finish."
+ ]
+}

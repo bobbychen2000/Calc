@@ -1,0 +1,97 @@
+{
+  "area": "ceiling",
+  "rater": "A",
+  "round": 8,
+  "score": 8.1,
+  "renders": "scratchpad r8/, r8v/ (v1 and v6 include the e5266cc speaker-pocket tweak; the others are one change older), r8p/, r8st/ (head e5266cc)",
+  "previousStatus": {
+    "fixed": [
+      "w7a/w7b cove band width: v6 row 60 now shows 249 across about 84 px running straight into the grille frame, with no 204 strip. The lit field is about 4x the grille, against about 3x in c120",
+      "w7a joint ribs: v6 col 470 has the rib at 189 on a 179 vault (1.06x) with a 165 shadow lip. c120 col 760 gives 1.03-1.06x. The ribs now start at the grille frame and no longer cross the cove (v1, v6, v8)",
+      "w7a grille tone: it reads as a light louvre (v6 row 60: 156-235, mean about 197). c120's grille shows bright bars over darker slots",
+      "w7a/w7b vault speaker rim: there is no bright outline any more. v6 col 530 gives rim 170 / vault 164 (1.04x)",
+      "w5a/w6a/w7a outboard door seam kink: the seams are smooth arcs in v1, v6, v10, v11 and v13",
+      "w7a/w7b door-3 soffit: the tone matches (v3 84/73/71 against c133 86/75/73), the tray, louvre and speaker are beside each other, and the downlights are spread across the soffit (only 3 of the 10 fall inside the v3 frustum)",
+      "w7a vault falloff (kept): 197 by the grille falls to 148 at the crest on a 249 band, 0.79 to 0.59 of the band. c120 gives 0.83 to 0.58"
+    ],
+    "notFixed": [
+      "w7a outboard PSU band step lines: these are still hard 1 px pinstripes. v8 col 150 gives 145-147 on a 209-210 band (0.69x) and v4 row 300 gives 128-141 on 209. The riser colour went to #c4c6c9, but the step face points fore/aft at a grazing angle to the light, so its colour barely matters. y_47301 / c26 show about 0.85x soft steps",
+      "w7b centre-bin door tone: still flat. v5 col 400 gives 203-206 over the whole door, with no lift toward the crest",
+      "w6a/w7a door 1/2/4/5 cross-aisle ceilings: still not verifiable. q01 has the same framing between two monument walls"
+    ],
+    "regressed": []
+  },
+  "details": [
+    { "detail": "aisle vault panels (shape, tone, falloff)", "score": 8.4, "refs": ["b_lalf_c120", "b_lalf_c119", "b_sany_y22"] },
+    { "detail": "joint ribs + crest rib", "score": 8.4, "refs": ["b_lalf_c120"] },
+    { "detail": "cove light band + slotted grille", "score": 8.5, "refs": ["b_lalf_c120", "b_lalf_c119", "b_sany_y22"] },
+    { "detail": "vault fittings (speaker, emergency light)", "score": 7.7, "refs": ["b_lalf_c120", "b_lalf_c119"] },
+    { "detail": "outboard bins (doors, latches, rail, placards, seams)", "score": 8.1, "refs": ["y_47301", "b_lalf_c120", "py_37302"] },
+    { "detail": "centre bins (doors, crest rail + placard, PSU channel)", "score": 7.9, "refs": ["y_47300", "b_lalf_c120", "b_sany_y22"] },
+    { "detail": "outboard PSU band (steps, housings, sign windows)", "score": 7.5, "refs": ["b_lalf_c26", "y_47301"] },
+    { "detail": "EXIT signs", "score": 8.0, "refs": ["b_sany_y22", "b_lalf_c133"] },
+    { "detail": "door-3 bar soffit", "score": 8.3, "refs": ["b_lalf_c133", "b_lalf_c134"] },
+    { "detail": "door 1/2/4/5 + monument ceilings", "score": 6.5, "refs": [] }
+  ],
+  "issues": [
+    {
+      "severity": "medium",
+      "detail": "Outboard PSU band shingle steps",
+      "problem": "Every shingle joint still renders as a hard dark 1 px line, so the band reads as planks or a venetian blind (v4, v8 left, v9, q16 top left). In the photos the joints are soft, low-contrast steps. The riser colour change had almost no effect, because the step face is lit at grazing incidence.",
+      "evidence": "v8 col 150: 145-147 on 209-210 (0.69x). v4 row 300: 128/141 on 209. w7a gave 150 on 225-235, so the change barely moved it. y_47301 top left is about 200 on 235 (0.85x), and the c26 band steps are faint.",
+      "fix": "08_bins.js BINMAT.riser: make it self-lit like the band, { c: '#d2d3d4', r: 0.7, l: LAYER.plastic, e: 0.14 }. Or, in the step-face gBox at line 207, override the normals to the band normal (0,-1,0 in the band frame) so the riser shades like the band. Target 0.85-0.9x the band."
+    },
+    {
+      "severity": "low",
+      "detail": "Bin door module seams (centre and outboard)",
+      "problem": "The seams read as hard dark hairlines with a light partner line. In c120 the joints show as soft light beads/ridges with a faint shadow (outboard, right crop) or as chunky rail joints (centre bin, left crop), not as dark cuts.",
+      "evidence": "v5 row 200: 120 on 205 (0.59x). v6 col 760: 127 then 171 on 210. In the c120 top-right crop the seam is a light ridge about 1.03x.",
+      "fix": "08_bins.js BINMAT.seam: { c: '#c3c6ca', r: 0.8, e: 0.08 } (target about 0.85x). Keep the seam piece 2 mm proud so its lit edge forms the bead."
+    },
+    {
+      "severity": "low",
+      "detail": "Vault speaker face",
+      "problem": "After the e5266cc tweak the speaker reads as a flat grey bar sunk in the vault. c120's vault fitting reads as a same-tone rounded rectangle drawn mostly by a thin shadow outline and a dark crescent along one long edge. In v11/v2, which predate the tweak, the bar is darker still.",
+      "evidence": "v6 col 530: face 143-144 on a 164 vault (0.87x). c120 col 770 through the fitting: 184-198 on about 190 (0.97x), with one darker 184-186 run along the edge.",
+      "fix": "07b_ceiling.js CEILMAT.bezelIn c '#cfcdc9' -> '#dedcd7' (about 0.93x after the bake). Optionally add a 6 mm '#b8b6b1' strip along the aft long edge of the pocket (vaultPanel at t 0.70 + 0.012, h 0.006) for c120's shadow crescent."
+    },
+    {
+      "severity": "low",
+      "detail": "Outboard bin latch proportion",
+      "problem": "The latch is a long 2.8:1 pill. The c120 latches (centre bin at 430,305 and outboard bin) and the y_47301 latches are about 2:1 rounded recesses with a visible handle.",
+      "evidence": "v4: latch about 75x25 px, near face-on. c120 top-left crop: about 60x30 px. y_47301 at (415,28): about 2:1.",
+      "fix": "08_bins.js addLatch: rim gPlate(0.14, 0.05, ...) -> gPlate(0.12, 0.06, 0.028, 0.006), recess 0.114x0.028 -> 0.096x0.038, paddle 0.1x0.011 -> 0.08x0.014."
+    },
+    {
+      "severity": "low",
+      "detail": "Door-3 soffit speaker",
+      "problem": "The speaker beside the louvre reads as a black hole. In c133 it is a dark-grey perforated grille only slightly darker than the soffit, with a lighter rim.",
+      "evidence": "v3 (480,188): 29/26/27 on an 84/73/71 soffit (0.35x). c133 speaker around (590,205): about 69/58/53 on 86/75/73 (0.8x).",
+      "fix": "07b_ceiling.js line 307: face { c: '#2a2624', r: 0.6 } -> { c: '#4a4441', r: 0.6, l: LAYER.grille }."
+    },
+    {
+      "severity": "low",
+      "detail": "Centre-bin crest rail joints",
+      "problem": "The crest rail is one continuous plain strip (v12). In c120 (top-left crop, at 300,150 and 590,310) the rail is segmented per module, with a distinct raised joint cap/step where modules meet, and a dark shadow groove separates it from the vault.",
+      "evidence": "r8p v12 against the c120 top-left crop.",
+      "fix": "08_bins.js centre-bin rail: at each seamC joint, add a 30 mm-long gRBox cap 3 mm proud of the rail in BINMAT.rail, with a 2 mm lipLine-coloured gap on each side. Instance it with the seamC transforms."
+    },
+    {
+      "severity": "low",
+      "detail": "Vault shading plateaus (note for lighting)",
+      "problem": "In the steep views (v1, v2) the vault shows faint fore-aft streaks. Its tone steps in flat plateaus joined by short ramps instead of grading smoothly. c120 grades continuously.",
+      "evidence": "v2 row 120: 164 x11 samples, ramp, 173 x10, ramp, 180 x5, then a smooth climb. c120 row 120 shows a continuous gradient.",
+      "fix": "Probably the AO volume or the shadow-map sampling (lighting team, 12_scene.js / 04_shaders.js). From the ceiling side, raise the VAULT N from 26 to 48 in 07b_ceiling.js to rule out vertex interpolation of the baked falloff."
+    },
+    {
+      "severity": "low",
+      "detail": "Door 1/2/4/5 cross-aisle ceilings",
+      "problem": "These are still unverified. q01 shows only a sliver of ceiling above the curtain between two monument walls.",
+      "evidence": "q01_door1",
+      "fix": "test/qa.js q01 (integrator): walk(-0.6, 1.62, 5.4, Math.PI+0.12, 0.25), plus a door-2 view from inside the cross aisle. Fetch a real door-2 cross-aisle photo of the 212-seat aircraft before modelling further."
+    }
+  ],
+  "questionsForUser": [
+    "Do you have a photo of a door-1 or door-2 cross-aisle ceiling (between THE Suite and THE Room) on the 212-seat 777-300ER? The entry-light strips and downlights there are still approximated."
+  ]
+}
