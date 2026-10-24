@@ -134,3 +134,16 @@ Wave 2 stopped on usage limits on 2026-09-24 and its sessions are archived. Ever
 - **Hand-offs.** Pull before every round and read the new `from_*.md` items, because the lighting loop keeps landing changes.
 - **Budget.** At most 6 rounds; stop early if two rounds in a row gain less than 0.2. The triangle budget is unchanged: at most +25 % over your area's count at the start of wave 3.
 - **Finish.** Update your `<area>_report.md` with the wave-3 rounds, your before/after sheet and your questions.
+
+### Plateau breaker (wave 3b)
+
+This applies when an area stops below 8.5 under the plateau rule. More rounds of small fixes won't close that gap.
+1. **Gap analysis first.** Next to the two raters, run a third subagent, the gap analyst. It gets the renders, the photos and your last two ratings and answers one question: what are the 3–5 changes that would most raise this area toward 8.5?
+   - Order them by visual impact: silhouette and proportion, value and tone structure, material response, surface texture realism (grime, wear, panel lines, weave), and missing parts.
+   - For each, give the evidence, the expected score gain and the cheapest way to get it.
+2. **Big-ticket work.** Implement the top items even when that means a larger rework:
+   - re-model a part from scratch off measured photos;
+   - add photo-derived detail tiles through `test/make_swatches.py` for wear, grime, panel lines or weave;
+   - add a new detail layer.
+   The triangle budget still applies. Small nits wait.
+3. **Stop rule.** At most 4 rounds. Stop when two rounds in a row gain less than 0.2 *and* the gap list holds nothing still worth +0.3.
