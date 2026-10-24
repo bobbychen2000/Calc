@@ -1,0 +1,214 @@
+{
+ "area": "room",
+ "rater": "B-geometry",
+ "round": 11,
+ "score": 8.2,
+ "summary": "The w10b high issue is fixed. The spine now ends at the aisle cap's inner face: the spine runs to x 0.49 and the rail to 0.4915, 4 mm below the cap top at 1.14. The plaques flank the finger recess, so the order on the cap is 17E, recess/spine, 18D, as in c_27313 (own renders v2/v4/v5). The rail is now light brushed metal, and both housing tops carry the light metal edge strips from c_27313/15, so the w10a medium is fixed too. What remains: (1) Proportion of the aisle-end cap. In c_27313 the spine Ts into the cap at its exact centre, with the plaques at the two ends. Ours meets the cap at about 80 % of its length (the cap runs z -0.58..0.035, the spine is at -0.0875), so the 0.37 m over the door pocket is an empty slab and the plaque group is bunched at the E end. (2) The O comforter still reads as crumpled satin with no visible quilting: r9 differs from w10s in only 4.8 % of pixels. (3) The ash grain measurement did not move with gain 3.4 (q06 0.053 vs 0.051, q10 0.065 vs 0.064; photos 0.09-0.16). (4) The cap is too light against the ash (0.92 luma ratio vs 0.58 in c_27313), and the plaque tiles are near-black where the photos show grey tiles. Clearly the same product from the aisle (q06, q09, q10), with several small visible mismatches up close.",
+ "photos_collected": [],
+ "own_renders": [
+  "/tmp/claude-0/w11b/v2_cap_top.png",
+  "/tmp/claude-0/w11b/v3_spine_junction.png",
+  "/tmp/claude-0/w11b/v4_photo_angle.png",
+  "/tmp/claude-0/w11b/v5_under_cap.png",
+  "/tmp/claude-0/w11b/r5zoom.png",
+  "/tmp/claude-0/w11b/c13crop.png",
+  "/tmp/claude-0/w11b/c15plaque.png"
+ ],
+ "prior_issues": [
+  {
+   "detail": "w10b HIGH: the spine runs over the aisle cap and across the 18D plaque",
+   "status": "fixed",
+   "evidence": "09c lines 438-440: the grooves end at x 0.48, the spine at 0.49 and the rail at 0.4915. The cap spans x 0.49-0.59 with its top at 1.14; the rail top is 1.136, so the rail butts the cap's inner face with no stub on top. v2_cap_top/v4 show both plaques unobstructed."
+  },
+  {
+   "detail": "w10b medium: the spine meets the cap about 20 % along, not between centred plaques",
+   "status": "partly fixed",
+   "evidence": "The plaques now sit either side of the spine at local z -0.175 / 0.0 (09_seats.js ~270), and the order 17E, recess, 18D matches c_27313. But the spine is still at z -0.0875 on a cap spanning -0.58..0.035, i.e. 80 % of the way along from the O end (v2: cap 20-580 px, recess 465 px). In c_27313 (crop c13crop.png) the spine Ts in at the cap's centre and the plaques sit at its two ends."
+  },
+  {
+   "detail": "w10b medium: the spine rail is darker than the housings",
+   "status": "fixed",
+   "evidence": "Line 436 MX = #9aa0a7, r 0.3, m 0.6, brushed. It reads as a light rail in v3/v5/r5."
+  },
+  {
+   "detail": "w10b medium: the O comforter is crumpled satin and its quilting is not visible",
+   "status": "not fixed",
+   "evidence": "foldK 0.35 and nu/nv 36x64 are in (lines 298, 377), but r9 differs from w10s/r9 in only 4.81 % of pixels. The diagonal crumple ridges and the head roll still dominate, and no stitch line is visible across the O sheet. r10 (E) shows the grid."
+  },
+  {
+   "detail": "w10b low: ash grain weak",
+   "status": "not fixed",
+   "evidence": "PHOTO_GAIN 19 = 3.4, yet the high-pass/mean measure is unchanged: q06 post 0.053 (w10 0.051), q10 0.065 (w10 0.064). Photos: c_27312 post 0.16, table 0.114; c_27315 table 0.089. The gain seems to saturate or be dominated by the base layer."
+  },
+  {
+   "detail": "w10b low (lighting): cool cast",
+   "status": "not fixed (lighting area)",
+   "evidence": "q06 shell (83,91,104) b-r +21 vs c_27312 (77,81,87) +10."
+  },
+  {
+   "detail": "w10a medium: housing tops uniform charcoal, no light metal edges",
+   "status": "fixed",
+   "evidence": "Line 442 adds 1.10 x 0.016 MX strips at MON.zO+0.008 / MON.zE-0.008. They are visible as light bands in v3, v5 and r5."
+  },
+  {
+   "detail": "w10a low: O quilting buried",
+   "status": "not fixed",
+   "evidence": "See the O comforter item above (r9)."
+  },
+  {
+   "detail": "w10a low: pillow jacquard soft plus pattern",
+   "status": "not fixed (not attempted)",
+   "evidence": "r9/r10 pillow pattern unchanged."
+  },
+  {
+   "detail": "w10a low: pillow too light under studio light",
+   "status": "not fixed (not attempted)",
+   "evidence": "r7 unchanged (0.33 % px diff)."
+  },
+  {
+   "detail": "w10a low: mattress pad neutral white",
+   "status": "not fixed (not attempted)",
+   "evidence": "r9 pad still near-white."
+  },
+  {
+   "detail": "w10a low: mattress pieces overlap with coplanar tops",
+   "status": "fixed for E, not for O",
+   "evidence": "Line 370 E: pieces end/start at 0.63/0.62 with the second dropped 2 mm (non-coplanar). Line 361 O: mat(..., -1.28, -0.62) and mat(..., -0.64, MON.zO-0.005) still overlap over z -0.64..-0.62 (x -0.475..-0.032) with coplanar tops. Mostly hidden under the comforter."
+  },
+  {
+   "detail": "w10a low: comforter has no jacquard check",
+   "status": "not fixed (not attempted)",
+   "evidence": "r9/r10 plain satin."
+  }
+ ],
+ "details": [
+  {
+   "detail": "Overall nested-pair layout, shells, monitors, cabinets (aisle views)",
+   "score": 8.5,
+   "refs": [
+    "c_27312",
+    "c_27315",
+    "q06",
+    "q10"
+   ]
+  },
+  {
+   "detail": "Monument top: O/E housings, spine and rail, light top edges",
+   "score": 8.3,
+   "refs": [
+    "c_27313",
+    "c_27314",
+    "v3",
+    "v5",
+    "r5"
+   ]
+  },
+  {
+   "detail": "Aisle-end cap: proportion, spine junction, plaques, colour",
+   "score": 7.4,
+   "refs": [
+    "c_27313 (c13crop)",
+    "c_27315 (c15plaque)",
+    "v2",
+    "v4"
+   ]
+  },
+  {
+   "detail": "Seat sofa, slate headrest flap",
+   "score": 8.3,
+   "refs": [
+    "c_27315",
+    "q08"
+   ]
+  },
+  {
+   "detail": "E bed: mattress and quilted comforter",
+   "score": 8.2,
+   "refs": [
+    "tpg_72",
+    "r10"
+   ]
+  },
+  {
+   "detail": "O bed comforter",
+   "score": 7.0,
+   "refs": [
+    "tpg_72",
+    "r9"
+   ]
+  },
+  {
+   "detail": "Ash finish (grain, warmth)",
+   "score": 7.3,
+   "refs": [
+    "c_27312",
+    "c_27315",
+    "c_27316",
+    "q06",
+    "q07",
+    "q10"
+   ]
+  }
+ ],
+ "issues": [
+  {
+   "severity": "medium",
+   "detail": "The spine meets the aisle cap at 80 % of its length; in c_27313 it Ts into the cap centre with the plaques at the two ends",
+   "problem": "The cap and ash post span z -0.58..0.035 (09c line 417, ez0/ez1). The spine is at mz = -0.0875, and both plaques are packed within 0.2 m of the E end (v2_cap_top: cap 20-580 px, plaques 388/545, recess 465). The O end of the cap is a 0.37 m blank slab. In c_27313 the cap reads 17E at the left end, spine fillet at the centre, recess just right of it, 18D at the right end. The spine also butts the cap with a plain end, where the photo shows a flared T fillet.",
+   "evidence": "/tmp/claude-0/w11b/v2_cap_top.png vs /tmp/claude-0/w11b/c13crop.png (c_27313 crop 280-660 x 250-460: cap 70-670, spine 370, recess 475, plaques ~125 and ~610).",
+   "fix": "Cheapest step, keeping the monument: 09_seats.js ~line 270 (shared, one line): put the plaques at the cap ends, s.odd ? -0.53 : -0.005, so the composition is plaque / blank / spine+recess / plaque. 09c line 423: move the recess to z mz + 0.045 so it sits between the spine and the E plaque, as in the photo. Add a fillet where the spine meets the cap, e.g. B.add(gRBox(0.05, 0.03, 0.07, 0.012, 1), M4.trs(0.47, MON.top + 0.035, mz), shell), a short flared block. Proper fix (owner's call; see questions): make the aisle-end post symmetric about the monument split."
+  },
+  {
+   "severity": "medium",
+   "detail": "The O comforter still shows no quilting and remains crumpled satin",
+   "problem": "foldK 0.35 barely changed r9 (4.8 % px). The head roll (0.012 + 0.008 bump) and the remaining fold ridges still beat the 2 cm stitch dip. With gx = x - xc + 0.07 at xc -0.12, the stitch lines fall at x \u2248 -0.40, -0.07 and 0.26, at the sheet edges or under the pillow, so no interior line crosses the visible O sheet.",
+   "evidence": "/tmp/claude-0/w11s/r9_bedO_close.png vs /tmp/claude-0/w10s/r9_bedO_close.png; tpg_72 shows clear ~0.3 m box quilting across the comforter.",
+   "fix": "09c line 307: phase the grid per part, e.g. gx = x - xc + (hd > 0 ? -0.05 : 0.07), so that an O stitch line runs at x \u2248 -0.17, mid-sheet. Deepen the dip for O: pass a qK param, 0.024 - 0.020*qK*exp(...) with qK 1.3, and widen the dip (dq/0.03). Drop the O foldK to 0.2."
+  },
+  {
+   "severity": "low",
+   "detail": "Ash grain unchanged despite PHOTO_GAIN 19 = 3.4",
+   "problem": "The high-pass/mean measure is 0.053 (q06 post) and 0.065 (q10), the same as w10 (0.051/0.064). Photos are 0.09-0.16. The ash also renders neutral (169,168,166) where c_27312 is warm greige (164,153,138); c_27315 is neutral, so warmth varies between photos.",
+   "evidence": "PIL crops: q06 (190-275, 345-430) and (100-250, 470-540); c_27312 (370-420, 260-330) and (360-420, 350-420).",
+   "fix": "Check that layer 19's swatch is not clipped (photoBase/ENC). A gain change from 3.0 to 3.4 should have moved the measure by about 13 %, and it moved by 3 %. If it is clipped, lower SEATMAT.ash to '#d2c9bb' (shared, one line) so the grain has headroom, and keep the gain at 3.4."
+  },
+  {
+   "severity": "low",
+   "detail": "The aisle cap is too light against the ash post, and too warm",
+   "problem": "The render cap is (165,164,161) against ash 180 (ratio 0.92). In c_27313 the cap is (133,134,134) against ash 229 (ratio 0.58), a cool mid grey.",
+   "evidence": "v2_cap_top (80-340, 140-185) vs c_27313 (390-500, 392-410).",
+   "fix": "09c line 422: cap c '#86837e' -> '#6c6e71' (keep r 0.28, m 0.35, brushed)."
+  },
+  {
+   "severity": "low",
+   "detail": "The plaque tiles are near-black navy; the photos show grey tiles",
+   "problem": "The plate is '#2c2f35'. In c_27315 the 14D tile is a mid-grey rounded square with a dark outline and a white numeral. In c_27313 it is a grey tile with a cyan numeral.",
+   "evidence": "/tmp/claude-0/w11b/c15plaque.png, c13crop.png vs v2/v4.",
+   "fix": "09_seats.js ~line 270 (shared, one line): room plate '#2c2f35' -> '#5c6066'. Keep the cyan glyph."
+  },
+  {
+   "severity": "low",
+   "detail": "The spine rail rides over the centreline divider fins at the monument's inboard end",
+   "problem": "The spine and rail run to x -0.585/-0.587. The divider fin tops (roomDivider line 566, top 1.111) are lower than the spine top (1.13-1.136), so in r5 the light rail visibly crosses over the fin rail band.",
+   "evidence": "/tmp/claude-0/w11b/r5zoom.png (r5 280-440 x 100-160).",
+   "fix": "09c line 439/440: end the spine 3 cm short of the inboard face (length 1.045, centre x -0.0325), or slope its last 4 cm down to MON.top."
+  },
+  {
+   "severity": "low",
+   "detail": "O mattress pieces still overlap with coplanar tops",
+   "problem": "Line 361: z -0.64..-0.62 is covered twice at the same height.",
+   "evidence": "09c line 361.",
+   "fix": "mat(-0.475, -0.032, -0.64, MON.zO - 0.005, -0.002), matching the E treatment."
+  },
+  {
+   "severity": "low",
+   "detail": "(lighting, not scored) cool cast on shells",
+   "problem": "q06 shell b-r +21 vs c_27312 +10.",
+   "evidence": "PIL samples.",
+   "fix": "Lighting owner."
+  }
+ ],
+ "questions": [
+  "c_27313 shows the O/E split (spine) at the centre of the aisle-end post. Ours puts the whole door-pocket length on the O side of the split. Is the door pocket / monument z split measured, or may the room owner re-centre the post on the monument (affects 09c ez0/ez1 and the door parking)?"
+ ]
+}

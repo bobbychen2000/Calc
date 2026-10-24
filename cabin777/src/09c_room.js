@@ -309,7 +309,8 @@ function duvetSheet(bounds, z0, z1, hd, xc, foldK = 1, nu = 36, nv = 64) {
     const zh = hd > 0 ? z - z0 : z1 - z;   // turned-down head fold: a doubled band with a soft roll at its edge
     f += 0.012 * (1 - smooth(0.11, 0.15, zh)) + 0.008 * Math.exp(-(((zh - 0.135) / 0.018) ** 2));
     // w8a: a quilted comforter - lofted ~1.5 cm away from its edges, stitched on a ~0.33 m grid (tpg_70 / 72) [V]
-    const e = smooth(0, 0.09, Math.min(x - xl, mr - x) + 0.01), q = 0.33, gx = x - xc + 0.07, gz = z - z0 - 0.02;
+    const e = smooth(0, 0.09, Math.min(x - xl, mr - x) + 0.01), q = 0.33, gx = x - xc + (hd > 0 ? 0.02 : 0.07),   // w11b: O grid phased so a seam crosses the sheet
+      gz = z - z0 - 0.02;
     const dq = Math.min(Math.abs(gx - q * Math.round(gx / q)), Math.abs(gz - q * Math.round(gz / q)));
     return f * smooth(0, 0.05, Math.min(x - xl, mr - x) + 0.01) + e * (0.024 - 0.020 * Math.exp(-((dq / 0.024) ** 2)));
   };
@@ -421,7 +422,7 @@ function roomPart(part, opts = {}) {
     B.add(gRBox(0.045, 0.10, ez1 - ez0, 0.01, 1), M4.trs(0.565, 0.05, ezc), shell);
     ashFrameX(B, 0.565, 0.04, 0.10, wall, ez0, ez1);
     // shared aisle-end cap: mid grey, a little darker than the plaques, oval finger recess between them (c_27314)
-    B.add(gRBox(0.10, 0.02, ez1 - ez0 + 0.006, 0.006, 1), M4.trs(0.54, wall + 0.01, ezc), { c: '#86837e', r: 0.28, m: 0.35, l: LAYER.brushed });   // QA w3: slight metallic sheen (tpg_78)
+    B.add(gRBox(0.10, 0.02, ez1 - ez0 + 0.006, 0.006, 1), M4.trs(0.54, wall + 0.01, ezc), { c: '#6c6e71', r: 0.28, m: 0.35, l: LAYER.brushed });   // QA w3: slight metallic sheen (tpg_78); w11b: cap/ash 0.58 (c_27313), was 0.92
     if (!lod) B.add(gCyl(1, 1, 1, 16), M4.trs(0.545, wall + 0.0205, (MON.zO + MON.zE) / 2, 0, 0, 0, 0.0175, 0.003, 0.035), SEATMAT.jShellIn);   // QA w3: was a black hole
     // E's footwell under the table + monument (aisle column), mouth under E's monitor
     // QA w2: both footwell mouths sit square under their monitors, ~0.475 wide from the column-side frame edge, split by a
@@ -437,9 +438,9 @@ function roomPart(part, opts = {}) {
     // from the aisle-end cap between the seat plaques (c_27313 / 27314) [V]: dark grooves either side of a 0.03 spine [D]
     const mz = (MON.zO + MON.zE) / 2, MX = { c: '#9aa0a7', r: 0.3, m: 0.6, l: LAYER.brushed };   // c_27313 top metal #969b9e [V]
     // w10b: the spine stops at the aisle cap (x 0.49) so it meets the cap between the two plaques, no stub over them
-    for (const gz of [-0.023, 0.023]) B.add(gBox(1.06, 0.004, 0.010), M4.trs(-0.05, MON.top + 0.0005, mz + gz), SEATMAT.jVoid);
-    B.add(gRBox(1.075, 0.04, 0.028, 0.008, 1), M4.trs(-0.0475, MON.top + 0.02, mz), shell);
-    B.add(gRBox(1.079, 0.006, 0.032, 0.003, 1), M4.trs(-0.0475, MON.top + 0.043, mz), MX);
+    for (const gz of [-0.023, 0.023]) B.add(gBox(1.03, 0.004, 0.010), M4.trs(-0.035, MON.top + 0.0005, mz + gz), SEATMAT.jVoid);
+    B.add(gRBox(1.045, 0.04, 0.028, 0.008, 1), M4.trs(-0.0325, MON.top + 0.02, mz), shell);   // w11b: clear of the centreline fins inboard
+    B.add(gRBox(1.049, 0.006, 0.032, 0.003, 1), M4.trs(-0.0325, MON.top + 0.043, mz), MX);
     // w10a: light grey-metal edges along the housing tops on both faces (c_27313 / 27315) [V]
     for (const ez of [MON.zO + 0.008, MON.zE - 0.008]) B.add(gBox(1.10, 0.004, 0.016), M4.trs(-0.035, MON.top + 0.0005, ez), MX);
     // O's face: monitor (outer column) + O's cabinet (aisle column)

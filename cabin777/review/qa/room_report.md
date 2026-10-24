@@ -80,3 +80,62 @@ The handset was also finished after w4: a dark ring pad at one end, 4 coloured k
 ## Files
 - Ratings: `review/qa/room_w2a.json`, `room_w2b.json`, `room_w3a.json`, `room_w3b.json`, `room_w4a.json`, `room_w4b.json`
 - Contact sheet: `review/qa/room_before_after.jpg`
+
+## Wave 3 (2026-10-24): w7-w11
+
+| round | rater A (skeptic) | rater B (geometry) | main changes rated |
+|---|---|---|---|
+| w6 (start) | 7.0 | 7.6 | - |
+| w7 | 7.4 | 7.6 | boarding bundle restored (e431338) |
+| w8 | 7.7 | 7.9 | bed rebuilt, pillows, divider fins, monitor frame |
+| w9 | 7.9 | 8.1 | quilted comforter, bed pillows, flange, bezel borders |
+| w10 | 8.0 | 8.1 | pillow check, monument spine (B: high - over the 18D plaque) |
+| w11 | 8.1 | 8.2 | spine stops at the cap, metal edges, O quilt |
+
+Stopped by the brief's rule: two rounds in a row gained less than 0.2 (w10 +0.1/+0.0, w11 +0.1/+0.1). There was no
+high-severity issue left in w11. Target 8.5 not reached. The w11 fixes (belt, plaques, cap tone, fabric/flap tone, spine
+ends, O quilt phase) are committed but not rated.
+
+**What changed**
+- **Boarding bundle** (`roomBundle`), restored after e45db15 / 2bf64d9 removed it by mistake. A folded white pad with the
+  blue duvet on top, in plastic, sits at the cushion front; the blue pillow rests on it, the white pillow stands behind
+  toward the aisle, and a navy slipper pouch lies beside it (tpg_31, tpg_42, omaat_room_15).
+- **Bed** (`roomBed`, `duvetSheet`).
+  - The w6 mattress was one rectangle that ran through the side-table wall and into the neighbour's legroom. It now
+    follows the seat, narrows beside the table and runs into the footwell wedge.
+  - The duvet is a draped height-field cloth with soft folds, a box quilt on a ~0.33 m grid, a turned-down head and an
+    aisle edge that rolls over the mattress (tpg_70/72/75).
+  - The pillows are propped at 42/22 deg.
+- **Pillows.** Plump, equal-size pillows; blue ~2.3 cm two-tone check with a grey flange that follows the outline.
+- **Seat.** Piping round the back pad; the teal belt and buckle are visible again (they were buried in the tilted cushion).
+- **Monument.**
+  - The monitor frame runs up to the cabinet top, with borders 5.3 / 4.7 cm (tpg_53).
+  - The top is split into O and E housings by a slim spine with a brushed-metal rail, with light metal top edges
+    (c_27313/14).
+  - The plaques sit at the cap ends; the cap is darker.
+- **Centre divider.** Two slim charcoal fins with metal tops (c_27314), replacing the broad ash wall.
+- **Triangles** (near pair O + E + divider): 19,264 → 22,980 (+19 %, budget +25 %). The bed variants are 15.4k (O) and
+  12.9k (E), for the occupied seat only. The far LOD is unchanged.
+
+**Shared-file edits** (each named in its commit)
+- `09_seats.js`: SEATMAT `pillowBlue`, `mattress`, `jFabric`, `jHead`; the room plaque z and tile colour; `UNITS.roomBedE`.
+- `03_tex.js`: `PHOTO_GAIN[19]` (ash grain, 2.0 → 3.4, also used by monuments' barAsh, noted in from_room.md) and
+  `LAYER_PARAMS[9]` (pillow check, room only).
+
+**Hand-offs** (from_room.md)
+- Lighting: move the mood strip under the monitor from y 0.642 to y 0.580; the sill now spans 0.583-0.667.
+- Monuments: FYI, the ash-grain gain changed.
+
+**Still open** (w11a/b, medium unless marked)
+- The spine meets the cap at 80 % of its length; in c_27313 it is at the centre. Fixing this means a deeper O housing
+  (see questions_room.md).
+- The O comforter's quilt is still weak in the high top view.
+- Fabric and shells read cool. This is mostly lighting (rater notes for the integrator).
+- Low:
+  - the pillow and comforter jacquard are soft;
+  - the ash grain still reads 0.6-0.8x the photos by B's measure (A: within range);
+  - the pad renders near-white under the studio light.
+
+**Sources added this wave:** TPG (Zach Griff 2020) b_tpg_1..93 and OMAAT a_omaat_room_10..31 / a_omaat_777j_* in
+`ref/web/room/` (gitignored). Ratings: `room_w7a.json` … `room_w11b.json`. Before/after: `room_before_after.jpg`
+(left: w7 renders, w8 for the beds; right: final).

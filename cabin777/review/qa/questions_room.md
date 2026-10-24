@@ -26,3 +26,9 @@ The user asked for judgement calls rather than questions. Rule applied: real in-
     The model uses ~0.85 (pillowBlue #4c5594) in both the seat and bed modes.
 11. **Monitor wall (w7a).** The frame now runs up level with the cabinet top (tpg_53). The sill stays at the same height,
     so the lighting strip under it (12_scene.js, y 0.642) still lines up.
+12. **Spine position on the aisle cap (w10b/w11a/b).** In c_27313 the monument spine meets the aisle-end cap at its centre,
+    with a plaque at each end. In the model the cap runs from the O seat's door edge to the monument end, and the spine
+    (the O/E split of the monument) meets it 80 % along. Centring it means making the O housing deeper, which shortens O's
+    footwell. It is left as is, with the plaques moved to the cap ends. Say if the deeper housing is wanted.
+13. **Slipper colour (w8a).** tpg_66 / 67 show light grey slippers and omaat_room_15 a navy pouch. The model keeps navy,
+    after the most recent photo.
