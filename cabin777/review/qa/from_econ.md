@@ -30,3 +30,8 @@
   `walk(0, 1.25, 46.05, Math.PI, -0.12)`. q17_econBacks does not match the y_47303 viewpoint either (y_47303 is a side view
   of the window block from the aisle at ~1.6 m looking left / down).
 - **w6 to lighting, low:** from the seat the hood still reads a little dark: q18 L 174 vs y_47305 192 / sans 15 ~230.
+- **w10 to lighting, HIGH (regression from 282136c / 9f2d20e):** the lighting snapshot commits darkened the whole economy
+  block. Same econ code (e735ea3) rendered before and after them, same crops: q15 fabric L50 55 -> 35 and 45 -> 28
+  (y_47300 46-99), q18 seated-view hood L50 166 -> 114 (y_47305 178-198). q17's view of the backs and the studio renders
+  are unchanged, so it is the in-cabin occlusion / non-up-facing weighting or the crevice term in `04_shaders.js`, hitting
+  the dense 3-4-3 seat block (econ_w10b issue 1). Please fix in the lighting code; econ will not re-tune SEATMAT to it.
