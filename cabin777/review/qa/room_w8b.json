@@ -1,0 +1,228 @@
+{
+ "area": "room",
+ "rater": "B-geometry",
+ "round": 8,
+ "score": 7.9,
+ "summary": "Every w7 high and medium issue is fixed or mostly fixed. The blue pillow now renders #3f4d9f (q08), 0.87x the back fabric, against tpg_42 #3a53a7 and omaat_room_15 at 0.86x. The pillows are domed two-half lofts that read plump in r7, r9 and q09. The white pillow is the same size as the blue, stands behind it and shows about 7 cm on the aisle side and top, as in omaat_room_15. The E pillows are now square to the seat. The duvet is a draped height field: its folds show as soft shading in r9/r10, the head box is gone, and it narrows past the side table into the footwell as in tpg_72. A Python port of duvetSheet gives a peak cloth top of 0.544 m, under MON.bot 0.555 and the footwell roofs at 0.56, so it does not intersect anything. What remains is mostly detail and proportion. (1) The E mattress (x -0.035..0.495) is narrower than the E seat cushion (x -0.12..0.52), so a 9 cm grey strip of seat fabric shows between the console and the mattress (r10). (2) The duvet has no quilting seams and straight cut edges, where tpg_72 shows a box-quilted comforter with a rumpled diagonal foot. (3) The pillow flange reads as a lavender card under the pillow (r7), because jPillowBack is #595b7e violet-grey; the real flange is warm grey-taupe (omaat_room_15 ~#b0a69d lit). (4) Both white pillows poke 1.5-3.5 cm into the aisle armrest. (5) The monitor bezel's bottom border is now 8 cm against a 5 cm top; tpg_53 measures about 5.3 / 4.7 cm. (6) From above, the central monument is still a flat 0.245 m charcoal block, where c_27313 shows a slim spine with a metal top rail flanked by separate housings. Shell, ash, seat sofa, header band, flap, footwells, tables and controls are unchanged and still match. Score 7.9, up 0.3 from w7: the pillow set is now right and the bed reads as a bed.",
+ "photos_collected": [],
+ "photos_used": [
+  "ref/web/room/a_omaat_room_15.jpg (pillow, flange, bundle)",
+  "ref/web/room/b_tpg_42.jpg (pillow tone)",
+  "ref/web/room/b_tpg_72.jpg (bed, duvet quilting, mattress tone)",
+  "ref/web/room/b_tpg_53.jpg (monitor frame borders)",
+  "ref/ana/c_27312..27316 (layout, ash, shell, monument top)"
+ ],
+ "prior_issues": [
+  {
+   "detail": "w7a medium: blue pillow pale periwinkle, brighter than the sofa; no grey flange",
+   "status": "fixed (flange colour still wrong, see issues)",
+   "evidence": "q08 pillow #3f4d9f L80 vs back fabric L92 (0.87x); tpg_42 #3a53a7, omaat_room_15 pillow/back 0.86x. q09 pillow #354190. A flange gRBox(0.456,0.008,0.356) now exists in roomPillow, but it is jPillowBack #595b7e (violet) and renders the same tone as the pillow in r7 (#92a0da vs #909edd)."
+  },
+  {
+   "detail": "w7a medium: bed duvet a stiff flat slab",
+   "status": "fixed (mostly)",
+   "evidence": "duvetSheet() height field with 8 Gaussian folds, a head turn-down bump and an aisle roll. r9/r10 show soft folds and the duvet narrowing past the table into the footwell (tpg_72). Still missing: quilting seams and an irregular foot edge (see issues)."
+  },
+  {
+   "detail": "w7b medium: white pillow frames the blue one on three sides",
+   "status": "fixed",
+   "evidence": "Both pillows are 0.44 x 0.34. White O at (0.16, 0.70, -1.00) tilt -72 deg, blue at (0.09, 0.665, -0.81) tilt -60 deg, so the white shows only above and to the aisle side (r7, q09), as in omaat_room_15 and tpg_42."
+  },
+  {
+   "detail": "w7b medium: E pillows yawed 14-17 deg",
+   "status": "fixed",
+   "evidence": "Line 507/508 inner ry is now -0.03 / -0.02. They read square in r3 and r8."
+  },
+  {
+   "detail": "w7b medium: pillows are square-walled slabs",
+   "status": "fixed",
+   "evidence": "roomPillow lofts two mirrored cushionSecs(0.44, 0.34, 0.05, 0, {edge 0.035, r 0.05, crown 0.012}) halves into a 0.10+ domed pillow with a pinched seam. They read plump in r7, r9 and q09."
+  },
+  {
+   "detail": "w7b medium: duvet wrinkles invisible, head strip a sharp box",
+   "status": "fixed",
+   "evidence": "The head strip box is gone; the turn-down is a 1.2 cm step with a roll in the height field. The folds are 2-4 cm with sigma 3-5 cm and show in r9/r10 under flat studio light."
+  },
+  {
+   "detail": "w7a low: charcoal strip above the monitor",
+   "status": "fixed, but overshot downward",
+   "evidence": "Bezel 0.645..1.075 against cabinet top 1.09. The display is still centred at 0.875, so the borders are top 0.050 and bottom 0.080; tpg_53 measures 43 px / 38 px on a 480 px frame (0.053 / 0.047 m)."
+  },
+  {
+   "detail": "w7a low: centre divider a broad flat spine",
+   "status": "partly fixed",
+   "evidence": "roomDivider now has two 18 mm fins with jPanelEdge tops (r5 shows a double line). However, the c_27313 'two fins with a gap' are on the monitor monument between the O and E seats, which is still a solid 1.13 x 0.245 flat-topped block (see issues)."
+  },
+  {
+   "detail": "w7a/b low: slipper pack a glossy azure brick",
+   "status": "fixed",
+   "evidence": "Navy #262c4a pouch r0.55 with a white sole edge (r7, r3), as in omaat_room_15."
+  },
+  {
+   "detail": "w7a low: bundle 0.15 m behind the cushion front",
+   "status": "fixed",
+   "evidence": "Bundle at z -0.80 (front edge -0.645); the cushion front is at -0.63."
+  }
+ ],
+ "details": [
+  {
+   "detail": "Nested-pair layout, footwells, side tables, monument proportions",
+   "score": 8.0,
+   "refs": [
+    "c_27313",
+    "c_27314",
+    "c_27316",
+    "tpg_53"
+   ]
+  },
+  {
+   "detail": "Seat sofa: back pad with piping, grooves, header band, flap, apron, belt",
+   "score": 8.3,
+   "refs": [
+    "c_27315",
+    "omaat_room_15",
+    "tpg_42"
+   ]
+  },
+  {
+   "detail": "Blue pillow: tone, check pattern, plump shape",
+   "score": 8.2,
+   "refs": [
+    "omaat_room_15",
+    "tpg_42",
+    "c_27303"
+   ]
+  },
+  {
+   "detail": "Pillow flange (colour, form)",
+   "score": 6.5,
+   "refs": [
+    "omaat_room_15",
+    "tpg_72"
+   ]
+  },
+  {
+   "detail": "White pillow position (behind, aisle side) and armrest clearance",
+   "score": 7.6,
+   "refs": [
+    "omaat_room_15",
+    "tpg_42"
+   ]
+  },
+  {
+   "detail": "Boarding bundle + slipper pouch",
+   "score": 7.8,
+   "refs": [
+    "omaat_room_15",
+    "tpg_42"
+   ]
+  },
+  {
+   "detail": "Monitor frame, sill, drawer, cabinet door",
+   "score": 7.8,
+   "refs": [
+    "tpg_53",
+    "c_27316"
+   ]
+  },
+  {
+   "detail": "Ash and shell tone (q06 ash #b4b1ab-#c5c2bd vs c_27312 #bdb7a4 / #968f8d, slightly cool)",
+   "score": 7.8,
+   "refs": [
+    "c_27312",
+    "c_27314"
+   ]
+  },
+  {
+   "detail": "Bed mode: mattress plan following the seat, table and footwell",
+   "score": 7.3,
+   "refs": [
+    "tpg_72",
+    "fb_a96b7a65"
+   ]
+  },
+  {
+   "detail": "Bed mode: duvet drape, quilting, edges",
+   "score": 7.0,
+   "refs": [
+    "tpg_72",
+    "tpg_74",
+    "tpg_75"
+   ]
+  },
+  {
+   "detail": "Centre divider / monument top seen from above",
+   "score": 7.0,
+   "refs": [
+    "c_27313",
+    "c_27314"
+   ]
+  }
+ ],
+ "issues": [
+  {
+   "severity": "medium",
+   "detail": "E bed mattress is narrower than the E seat, leaving a ~9 cm strip of grey seat fabric between the console and the mattress",
+   "problem": "In roomBed('E'), mat(-0.035, 0.495, MON.zE - 0.02, 1.28) is one rectangle along the whole bed. The E seat cushion (roomSeatCore w 0.64 at x 0.20) spans x -0.12..0.52, and beside the seat (z > 0.62) the E console face is at x -0.13. The mattress only needs to stay at -0.035 beside E's own table (z < 0.62, band wall at x -0.042..-0.062). r10 shows the uncovered fabric strip (#afabb2, L173) between the console and the white pad. tpg_72 shows the pad running wall to wall beside the seat.",
+   "evidence": "r10_bedE_close (crop 200-260, 190-300); 09c_room.js roomBed E branch and roomPart E console gRBox(0.45, CON.top, ...) at x -0.355.",
+   "fix": "09c_room.js roomBed E branch: replace mat(-0.035, 0.495, MON.zE - 0.02, 1.28) with mat(-0.035, 0.495, MON.zE - 0.02, 0.64) and mat(-0.118, 0.495, 0.62, 1.28). In bounds(), make the outer cloth edge follow it: xl = lerp(lerp(0.02, -0.07, smooth(0.60, 0.68, z)), fl, b), so the white pad still shows about 5 cm at the outer side."
+  },
+  {
+   "severity": "medium",
+   "detail": "Duvet has no quilting and straight cut edges",
+   "problem": "tpg_72 shows a box-quilted comforter (stitched channels on a ~0.30-0.35 m grid, puffed between them) with a rumpled diagonal foot edge and the white pad showing as a wedge. duvetSheet() is a smooth satin sheet whose u/v borders are straight lines (z0/z1 constant), so the foot reads as a ruler-cut edge (r9) and the surface reads as a plain sheet.",
+   "evidence": "r9_bedO_close, r10_bedE_close vs b_tpg_72.jpg",
+   "fix": "09c_room.js duvetSheet fold(): before the edge fade, add quilting dips on a 0.32 x 0.34 grid: const qx = Math.cos(Math.PI * (x - xl) / 0.32), qz = Math.cos(Math.PI * (z - z0) / 0.34); f += 0.008 - 0.012 * (Math.exp(-((qx / 0.12) ** 2)) + Math.exp(-((qz / 0.12) ** 2))). That gives ~1 cm stitched channels with puffs between them. Raise nu 22 -> 32 and nv 40 -> 60 so the channels resolve. For the foot, skew the last 15 % of rows in at(): z = lerp(z0, z1, v) - hd * Math.max(0, (v - 0.85) / 0.15) * 0.12 * (u - 0.3). The foot edge then runs diagonally, ~12 cm longer on the aisle side, as in tpg_72."
+  },
+  {
+   "severity": "medium",
+   "detail": "Pillow flange reads as a lavender card under the pillow",
+   "problem": "jPillowBack is #595b7e (violet-grey, L~93), almost the pillow's own tone, so the 1.8 cm rim renders #92a0da beside the pillow's #909edd (r7) and looks like a flat tray. In omaat_room_15 and tpg_72 the flange is a warm grey-taupe band (#b0a69d lit, about 1.3x the pillow), clearly different from the blue. It is also a rigid 8 mm box with 4.5 cm corner radii, while the real one is a soft fabric edge.",
+   "evidence": "r7_seatO_close crop; omaat_room_15 (720,475) #b0a69d; tpg_72 bottom edge of the blue pillow",
+   "fix": "09c_room.js line 18: jPillowBack c '#595b7e' -> '#8c857d' (r 0.75, LAYER.fabric). Line 274 (roomPillow): gRBox(0.456, 0.008, 0.356, 0.045, 1) -> gRBox(0.47, 0.005, 0.37, 0.02, 1) so it is a thinner 2.5 cm band with tighter corners, matching the flange width in omaat_room_15 (~25 px on a 330 px pillow)."
+  },
+  {
+   "severity": "low",
+   "detail": "White pillows clip into the aisle armrest",
+   "problem": "The O white pillow is centred at x 0.16, 0.44 wide, so its edge is at x 0.38. The aisle armrest wall starts at ax0 = 0.345, so 3.5 cm of pillow is inside it from y 0.54 to 0.66 (r7: the right edge vanishes into the ledge). The E white pillow at x 0.29 reaches 0.51 against the armrest at 0.495 (1.5 cm).",
+   "evidence": "roomPart O line 'roomPillow(B, M4.mul(M4.trs(0.16, 0.70, -1.00, Math.PI) ...' and E 'M4.trs(0.29, 0.70, 1.00)'; r7",
+   "fix": "O: M4.trs(0.16, 0.70, -1.00, Math.PI) -> M4.trs(0.115, 0.70, -1.00, Math.PI). E: M4.trs(0.29, 0.70, 1.00) -> M4.trs(0.265, 0.70, 1.00). Both keep a 4-6 cm aisle-side offset from the blue pillow."
+  },
+  {
+   "severity": "low",
+   "detail": "Monitor frame bottom border is now thicker than the top",
+   "problem": "The w7 raise made the bezel gRBox(0.595, 0.43) at y 0.86 (0.645..1.075) while the display stayed at 0.875 (0.7255..1.0245): top border 0.050 m, bottom 0.080 m, aspect 1.38. tpg_53 square-on: frame 480 x 328 px (aspect 1.46), top 43 px (0.053 m), bottom 38 px (0.047 m), with a ~0.02 m charcoal gap above the silver sill.",
+   "evidence": "roomMonitor; b_tpg_53.jpg measured frame x 172-652, y 142-470, display y 185-432",
+   "fix": "roomMonitor: bezel gRBox(0.595, 0.43, ...) at y 0.86 -> gRBox(0.595, 0.405, 0.03, 0.015, 1) at y 0.8725; display gQuad at y 0.875 -> 0.8725; sill y 0.60 -> 0.625 so its top (0.667) sits 0.003 below the frame bottom (0.67). The footwell roof at 0.57 still clears the sill bottom (0.583)."
+  },
+  {
+   "severity": "low",
+   "detail": "Monitor monument top is a flat 0.245 m charcoal block seen from above",
+   "problem": "c_27313 (crop 330-640 x 60-420) shows the monument between O and E from above as a slim charcoal spine (~3-4 cm) with a light grey-metal top rail running from the aisle cap inward, flanked by separate housings with dark gaps between. The model's monument body is gRBox(1.13, MON.top - MON.bot, 0.245) with a uniform flat charcoal top, which reads as a broad bar in q09, q10 and r5. The w7 two-fin change went on roomDivider (the centreline wall), not on this monument.",
+   "evidence": "c_27313 / c_27314 centre vs q09_centrePair (x 530-640), r5_centre_aisle (x 300-390)",
+   "fix": "roomPart O, monument body: lower the full-depth gRBox top to MON.top - 0.03 (height MON.top - 0.03 - MON.bot). On top of it add a centre spine gRBox(1.13, 0.05, 0.035, 0.008, 1) at (-0.02, MON.top - 0.005, (MON.zO + MON.zE) / 2), shell, with a gRBox(1.13, 0.008, 0.04, 0.003, 1) jPanelEdge rail at y MON.top + 0.022. Add two 0.07-deep face housings gRBox(1.13, 0.03, 0.07, 0.008, 1) at z MON.zO + 0.035 and MON.zE - 0.035, y MON.top - 0.015, which leaves ~3 cm dark gaps (jCavity) either side of the spine. Re-check the cabinet top (1.09) against the housings."
+  },
+  {
+   "severity": "low",
+   "detail": "Mattress pad is neutral white; the photo pad is warm cream",
+   "problem": "SEATMAT.mattress #f0efea renders #f0eeec in r9. tpg_72 pad #dfd3c0 (b - r -31). Against the warm pad the duvet contrast also comes out slightly low: duvet/pad L 0.67 vs 0.60 in the photo.",
+   "evidence": "r9 (300,250); b_tpg_72 (200-300, 560-700)",
+   "fix": "09_seats.js (shared, one key): SEATMAT.mattress c '#f0efea' -> '#e8e1d2'."
+  },
+  {
+   "severity": "low",
+   "detail": "Small hidden overlaps in bed mode",
+   "problem": "(a) O mattress piece 2 mat(-0.475, -0.012, -0.64, MON.zO + 0.02) runs 2 cm into the footwell pillar (x -0.03..0, z -0.21..0.035). (b) The O footwell slabs (roomFootwell and the bed slab to z 0.608) pass through E's table end wall (planBand z 0.588..0.608) and its side wall at x -0.042..-0.062 near the mouth. (c) The E seat cushion and back (x to 0.52) run 2.5 cm into the aisle armrest (x 0.495). None of these is visible in the current views.",
+   "evidence": "geometry read from roomBed / roomPart / roomSeatCore extents",
+   "fix": "(a) MON.zO + 0.02 -> MON.zO - 0.005. (b) roomFootwell(B, -0.505, -0.03, MON.zO, 0.62, -1) zf 0.62 -> 0.585, and the matching fw[3] in roomBed. (c) E: roomSeatCore width 0.64 at x 0.20 -> x 0.185."
+  },
+  {
+   "severity": "low",
+   "detail": "(lighting area, not scored) Ash and charcoal read slightly cool in the cabin",
+   "problem": "q06 ash #b4b1ab-#c5c2bd (b - r -9..-13) against c_27312 ash #bdb7a4 / #857867 (b - r -25..-30); shell #525a67 against #5f646d.",
+   "evidence": "q06_roomMain vs c_27312",
+   "fix": "Lighting owner: warm the cabin ambient or the cove term. No geometry change."
+  }
+ ],
+ "questions": []
+}

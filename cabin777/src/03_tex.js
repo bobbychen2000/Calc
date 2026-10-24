@@ -30,7 +30,7 @@ let PHOTO_PIX = null;
 const PHOTO_GAIN = {
   17: 1.0,   // PY: synthesised ANA dash-grid tile (make_swatches synth_py_back), contrast measured on py_37305 [D]
   18: 0.5,
-  19: 2.0,
+  19: 3.0,   // room w8a: grain rendered 1.9-2.6 % vs 8.7-16 % (c_27316, tpg_53); x2 read streaky -> x1.5 [D]
   20: 0.7,
   21: 0.5,
   23: 1.0,

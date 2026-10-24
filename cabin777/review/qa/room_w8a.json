@@ -1,0 +1,276 @@
+{
+ "area": "room",
+ "rater": "A-skeptic",
+ "round": 8,
+ "score": 7.7,
+ "summary": "Real progress in seat mode. The blue pillow now reads royal blue in the cabin (q08 #4956a4 vs tpg_42 #3a53a7; pillow/back fabric 1.03 in q08 and 0.76 in q09, was 1.34; photos 0.56-0.84). The white pillow stands behind and offset toward the aisle, showing on the top and aisle side only, as in omaat_room_15. The E pillows are square, the bundle sits at the cushion front, the slipper pack is a navy pouch, the monitor frame reaches the cabinet top (tpg_53), and the centre divider is two slim charcoal fins. What still breaks the photo match: (1) The pillow 'flange' is a separate flat plate with square corners in lilac (jPillowBack gRBox, r 0.045 clamped by its 8 mm thickness) behind a round-cornered cushion. In r7, r9 and r10 it reads as a cushion lying on a tray. omaat_room_15 shows a pillowcase whose grey flange (#a8a5b0 lit, #676880 shade) is continuous with a near-square-cornered pillow. (2) Bed mode is better than w7, but the duvet still reads as a thin T-shaped cut sheet: straight edges, sharp right-angle corners at the table notch, about 2 cm thick, no quilting (r9 close-up). tpg_70 and tpg_72 show a thick quilted comforter on a ~0.3 m stitched grid, with irregular soft edges and a visible check jacquard. (3) The ash grain is still about a quarter of the photo contrast: high-pass SD is 1.9-2.6% in q07 against 8.7% on the c_27316 cabinet door and 12-16% on the c_27316 and tpg_53 tables. Close up it reads as white plaster. (4) In bed mode the white pillow stands almost upright (-68 deg) and reads as a white headboard; in tpg_70 and tpg_72 it is propped low with the blue one lying on it. Lighting (not scored): the charcoal and fabric parts carry a blue cast (q10 back fabric #636a76 vs c_27315 #605d6b).",
+ "photos_collected": [],
+ "prior_issues": [
+  {
+   "detail": "w7a medium: blue pillow pale periwinkle, brighter than the sofa",
+   "status": "fixed (cabin views); studio still lavender under flat light",
+   "evidence": "q08 pillow #4956a4 L89 / back fabric L86 = 1.03; q09 #374391 L70 / 92 = 0.76 (was 1.34). Photos: tpg_42 #3a53a7 at 0.56, omaat_room_15 #666996 at 0.84. pillowBlue is now #4c5594. Studio r7 #93a0dc against back #9d98a0 = 1.05 (flat light). The jacquard check is still coarse and low-contrast: see the new low issue."
+  },
+  {
+   "detail": "w7a medium / w7b medium: bed duvet a stiff flat slab, wrinkles invisible, head strip a sharp box",
+   "status": "partly fixed",
+   "evidence": "duvetSheet is now a height field with eight Gaussian folds, a soft turned-down head and a rolled aisle edge. Soft diagonal shading shows in r9 and r10, and the box head strip is gone. In the r9 close-up, however, the cloth is about 2 cm thick with straight edges and square corners, it follows the T-shaped bounds exactly, and it has no quilting. tpg_70 and tpg_72 show a puffy quilted comforter with irregular edges. A new medium issue below covers this."
+  },
+  {
+   "detail": "w7b medium: white pillow frames the blue one on three sides",
+   "status": "fixed",
+   "evidence": "Both pillows are now 0.44 x 0.34. The white one is at x 0.16 against the blue at 0.09 (O), 7 cm toward the aisle and higher (0.70 vs 0.665). In r7 the white shows as a band above and down the aisle side only, which matches omaat_room_15 and tpg_42."
+  },
+  {
+   "detail": "w7b medium: E pillows yawed 14-17 deg",
+   "status": "fixed",
+   "evidence": "E pillows are now at ry -0.03 / -0.02, and they read square in r3 and q10."
+  },
+  {
+   "detail": "w7b medium: pillows are square-walled slabs",
+   "status": "partly fixed",
+   "evidence": "roomPillow is now a double loft, cushionSecs(0.44, 0.34, 0.05, 0, {edge 0.035, r 0.05, crown 0.012}), and it reads plump. But the flange is a separate gRBox(0.456, 0.008, 0.356, 0.045): its corner radius is clamped by the 8 mm thickness, so it renders as a square-cornered lilac plate under round 5 cm corners (r7, r9 close-ups). A new medium issue below covers this."
+  },
+  {
+   "detail": "w7a low: white pillow level with the blue one",
+   "status": "fixed",
+   "evidence": "In r7 and q08 the white top stands about 8 cm above the blue."
+  },
+  {
+   "detail": "w7a/w7b low: slipper pack an azure brick",
+   "status": "fixed (mostly)",
+   "evidence": "It is now a navy #262c4a pouch with a white sole edge. It is still a hard slab that reads like a passport or booklet (r7 lower left of the pillow)."
+  },
+  {
+   "detail": "w7a low: bundle 0.15 m behind the cushion front",
+   "status": "fixed",
+   "evidence": "roomBundle is at z -0.80 (O) and 0.80 (E), its front within about 2 cm of the cushion nose, as in omaat_room_15 and tpg_66."
+  },
+  {
+   "detail": "w7a low: charcoal strip above the monitor",
+   "status": "fixed",
+   "evidence": "MON.top is 1.09. In q07 the bezel top is about 10 px below the cabinet cap; tpg_53 shows the same."
+  },
+  {
+   "detail": "w7a low: centre divider a broad flat spine",
+   "status": "fixed (divider); see the new low issue for the monument top",
+   "evidence": "roomDivider is now two 18 mm fins at x +/-0.024 with jPanelEdge tops (r4, r5). In q09 the broad beam that remains is the monument top (1.13 x 0.245) running across both columns."
+  },
+  {
+   "detail": "w7a low: ash grain at half the photo contrast",
+   "status": "not fixed",
+   "evidence": "High-pass SD (6 px blur): q07 table 1.9%, q07 wall 2.6%, q09 ash 4.2%. Photos: c_27316 door 8.7%, c_27316 table 12.1%, tpg_53 table 16.0%, c_27316 wall 4.9%."
+  },
+  {
+   "detail": "w7b low: blue pillow leans 30 deg back",
+   "status": "not changed",
+   "evidence": "Still -60 deg (30 deg from vertical). It now rests on the bundle and leans on the white pillow, which is plausible against omaat_room_15 (about 25-30 deg)."
+  },
+  {
+   "detail": "w7b low: far-row flap and band pale blue in q06",
+   "status": "not fixed (lighting)",
+   "evidence": "q10 flap #5b626f, band #616873, back fabric #636a76: neutral-to-blue against c_27315 fabric #605d6b. The cast comes from the lighting."
+  }
+ ],
+ "details": [
+  {
+   "detail": "Nested-pair layout, footwells, side tables, monitor monument",
+   "score": 8.2,
+   "refs": [
+    "c_27312",
+    "c_27313",
+    "c_27316",
+    "b_tpg_53"
+   ]
+  },
+  {
+   "detail": "Seat fabric tone vs shell and ash",
+   "score": 8.0,
+   "refs": [
+    "c_27315",
+    "c_27313"
+   ]
+  },
+  {
+   "detail": "Header band and reading lamps",
+   "score": 8.3,
+   "refs": [
+    "b_tpg_42",
+    "c_27315"
+   ]
+  },
+  {
+   "detail": "Headrest flap (shape, tab, tone)",
+   "score": 7.8,
+   "refs": [
+    "a_omaat_room_15",
+    "c_27315"
+   ]
+  },
+  {
+   "detail": "Back and cushion upholstery (channels, piping, apron, belt)",
+   "score": 7.8,
+   "refs": [
+    "c_27315",
+    "b_tpg_42"
+   ]
+  },
+  {
+   "detail": "Shell and cap tone (blue cast from lighting)",
+   "score": 7.0,
+   "refs": [
+    "c_27315",
+    "c_27312"
+   ]
+  },
+  {
+   "detail": "Ash colour",
+   "score": 7.8,
+   "refs": [
+    "c_27316",
+    "c_27314"
+   ]
+  },
+  {
+   "detail": "Ash grain contrast",
+   "score": 6.8,
+   "refs": [
+    "c_27316",
+    "b_tpg_53"
+   ]
+  },
+  {
+   "detail": "Blue pillow: tone and pose",
+   "score": 7.8,
+   "refs": [
+    "b_tpg_42",
+    "a_omaat_room_15"
+   ]
+  },
+  {
+   "detail": "Blue pillow: flange and check pattern",
+   "score": 6.0,
+   "refs": [
+    "a_omaat_room_15"
+   ]
+  },
+  {
+   "detail": "White pillow, seat mode",
+   "score": 7.8,
+   "refs": [
+    "a_omaat_room_15",
+    "b_tpg_66"
+   ]
+  },
+  {
+   "detail": "Boarding bundle and slipper pouch",
+   "score": 7.6,
+   "refs": [
+    "a_omaat_room_15",
+    "b_tpg_42",
+    "b_tpg_66"
+   ]
+  },
+  {
+   "detail": "Monitor, bezel, sill, drawer, cubby",
+   "score": 8.2,
+   "refs": [
+    "b_tpg_53",
+    "c_27316"
+   ]
+  },
+  {
+   "detail": "Footwell and ottoman",
+   "score": 7.8,
+   "refs": [
+    "c_27316",
+    "b_tpg_53"
+   ]
+  },
+  {
+   "detail": "Centre divider fins and monument top",
+   "score": 7.3,
+   "refs": [
+    "c_27313",
+    "c_27314"
+   ]
+  },
+  {
+   "detail": "Bed: mattress pad plan (follows the seat, narrows past the table, into the footwell)",
+   "score": 8.0,
+   "refs": [
+    "b_tpg_68",
+    "b_tpg_72"
+   ]
+  },
+  {
+   "detail": "Bed: duvet (shape, thickness, quilting) and bed pillows",
+   "score": 5.8,
+   "refs": [
+    "b_tpg_70",
+    "b_tpg_72"
+   ]
+  }
+ ],
+ "issues": [
+  {
+   "severity": "medium",
+   "detail": "Pillow flange is a square-cornered lilac plate under a round-cornered cushion, so the pillow reads as a cushion on a tray",
+   "problem": "roomPillow adds the flange as gRBox(0.456, 0.008, 0.356, 0.045, 1) in jPillowBack #595b7e. With 8 mm thickness the 0.045 radius is clamped, so the plate has square corners, while the cushion loft has r 0.05 rounded corners. In r7, r9 and r10 the lilac plate shows as a separate rectangle around and under the pillow. In omaat_room_15 the pillow is a pillowcase with near-square corners and a ~2-3 cm flat flange continuous with the body, in neutral grey (#a8a5b0 lit, #676880 shade), lighter than the blue. It is not lilac.",
+   "evidence": "r7 crop: the plate corners stick out about 3 cm beyond the cushion's rounded corners. r9: the plate is visible below the bed pillow. omaat_room_15 crop (600-1000, 400-800): grey flange running along the top and right edges with tight corners.",
+   "fix": "09c_room.js roomPillow: make body and flange share one outline. Body: cushionSecs(0.42, 0.32, 0.05, 0, { edge: 0.04, r: 0.025, crown: 0.014 }), with corner r 0.05 -> 0.025. Flange: replace the gRBox with B.add(gLoft(cushionSecs(0.46, 0.36, 0.006, -0.006, { edge: 0.003, r: 0.03 }), 2), xf, SEATMAT.jPillowBack). jPillowBack (09c local) c '#595b7e' -> '#85848c' (neutral grey, r 0.75)."
+  },
+  {
+   "severity": "medium",
+   "detail": "Bed duvet reads as a thin cut sheet: straight edges, square corners at the table notch, no quilting, no jacquard",
+   "problem": "duvetSheet maps a regular u,v grid onto bounds(z), so the outline is exactly the plan bounds: a straight head edge, a straight outer edge, and a right-angle step where the bed narrows beside the table (smooth(-0.68, -0.60)). The cloth is only t = 0.02 thick, the fold field has no quilt stitching, and SEATMAT.duvet uses LAYER.fabric (plain). tpg_70 and tpg_72 show a thick, puffy comforter with a stitched grid of about 0.30-0.35 m, irregular sagging edges that cross the table notch diagonally, and the same check jacquard as the pillow.",
+   "evidence": "r9 close-up: T-shaped flat blue sheet with crisp 90-degree corners and a uniform 2 cm edge. tpg_72: diagonal edges, quilt channels about 1/3 of the bed width apart, and duvet colour #6f7cd9 with a visible check.",
+   "fix": "09c_room.js duvetSheet: (a) puffiness: add f += 0.022 * smooth(0, 0.07, Math.min(x - xl, mr - x, zh, (hd > 0 ? z1 - z : z - z0))) so the cloth domes about 2 cm away from its edges, and t 0.02 -> 0.012 for the skirt. (b) quilting: in rotated cloth coordinates (q1 = x*cos(8deg) + z*sin(8deg), q2 = -x*sin + z*cos), f -= 0.012 * (Math.exp(-((q1 - 0.33*Math.round(q1/0.33))/0.012)**2) + Math.exp(-((q2 - 0.33*Math.round(q2/0.33))/0.012)**2)). Raise nu/nv 22/40 -> 40/72 so the grooves resolve. (c) irregular outline: in at(), xl += 0.03*Math.sin(5.3*z + 0.7), xr += 0.025*Math.sin(4.1*z + 2.0), and the head/foot z edges get + 0.03*Math.sin(9*u). Widen the table-notch blend from smooth(-0.68, -0.60) to smooth(-0.80, -0.50) so the edge runs diagonally under the table, as in tpg_72. (d) 09_seats.js (shared, one key): duvet l: LAYER.fabric -> LAYER.yagasuri."
+  },
+  {
+   "severity": "medium",
+   "detail": "Ash grain contrast still about a quarter of the photos'; up close the ash reads as white plaster (carried over)",
+   "problem": "The ash layer's relief is too faint. q07, which is paired with c_27316, shows near-uniform pale panels where the official photo shows bold grey-brown streaks.",
+   "evidence": "High-pass SD: q07 table 1.9%, q07 ash wall 2.6%, q09 ash 4.2%, against c_27316 cabinet door 8.7%, c_27316 table 12.1%, tpg_53 table 16.0%.",
+   "fix": "03_tex.js (shared, one key): LAYER_PARAMS for LAYER.ashGrain, contrast x3 (keep the mean). Re-check that the SEATMAT.ash mean '#dcd5c8' is unchanged. Not in 09c_room.js."
+  },
+  {
+   "severity": "low",
+   "detail": "Bed-mode white pillow stands almost upright and reads as a white headboard",
+   "problem": "O bed: white pillow at ROOM.bed + 0.22 with a -68 deg tilt; blue at -38 deg. In r9 and r6 the white one is a tall curved block above the blue one. In tpg_70 and tpg_72 the white pillow is propped low, about 35-45 deg, against the back shell, and the blue one lies nearly flat on it.",
+   "evidence": "r9 (white pillow face about 1.6x the blue's projected height); tpg_72, tpg_70.",
+   "fix": "09c_room.js roomPart O bed: white M4.trs(SX - 0.10, ROOM.bed + 0.22, -1.16, PI) x tilt -68 -> M4.trs(SX - 0.10, ROOM.bed + 0.15, -1.10, PI) x tilt -42 DEG. Blue: y +0.17 -> +0.12, z -1.01 -> -0.94, tilt -38 -> -22 DEG. E mirrored: white (0.26, ROOM.bed + 0.15, 1.10) at -42, blue (0.20, ROOM.bed + 0.12, 0.94) at -22."
+  },
+  {
+   "severity": "low",
+   "detail": "Pillow check jacquard is coarse and faint",
+   "problem": "The real pillow has a bold ichimatsu checkerboard of about 1.5 cm squares in two clearly different blues. The render shows about 4-5 cm blotchy squares at low contrast (r7 crop).",
+   "evidence": "omaat_room_15 crop: about 25 squares across the 0.44 m pillow. r7: about 9.",
+   "fix": "Shared 03_tex.js LAYER_PARAMS for yagasuri: frequency x2.5 and contrast x1.5. Alternatively, in 09c_room.js, multiply the UV scale of the roomPillow loft by 2.5 if gLoft accepts a uv scale."
+  },
+  {
+   "severity": "low",
+   "detail": "Monument top reads as one wide charcoal beam across both columns (q09)",
+   "problem": "The monitor monument body gRBox(1.13, ..., 0.245) has one flat top across both columns, so in q09 a broad beam crosses the centre pair, with the new fins dwarfed beside it. In c_27313 and c_27314 the centre spine splits two separate dark monument boxes, and the fins with silver top edges rise flush with them.",
+   "evidence": "q09 crop: the beam is about 75 px wide against a 0.55 m table at about 200 px, so about 0.2 m. c_27313 crop shows a narrow slit and spine between two boxes.",
+   "fix": "09c_room.js roomPart: split the monument into two bodies with a 0.05 gap at x of the centre spine (one per column), with a SEATMAT.jVoid strip in the gap, and give each top a 0.01 jPanelEdge lip. [A]: verify the spine x against c_27313 before cutting."
+  },
+  {
+   "severity": "low",
+   "detail": "Slipper pouch is a hard booklet-like slab",
+   "problem": "gRBox(0.11, 0.022, 0.19, 0.01) plus a white strip reads as a passport. The real one (omaat_room_15) is a soft pouch in a crinkled clear bag. tpg_66 and tpg_67 show light grey slippers loose instead.",
+   "evidence": "r7, q09 (lower left of the pillow).",
+   "fix": "09c_room.js roomBundle: pouch as gLoft(cushionSecs(0.11, 0.19, 0.02, -0.008, { edge: 0.015, r: 0.03, crown: 0.006 }), 2), plus a glossy film gRBox(0.125, 0.026, 0.205, 0.012, 1) { c: '#d8dce2', r: 0.12 } offset 0.01 toward the pillow."
+  },
+  {
+   "severity": "low",
+   "detail": "(lighting, not scored) Blue cast on fabric and charcoal",
+   "problem": "Back fabric renders neutral-blue where the photos show violet-brown.",
+   "evidence": "q10 back fabric #636a76 vs c_27315 #605d6b; flap #5b626f vs #717c8d.",
+   "fix": "For the lighting worker: warm the J-zone ambient. Do not compensate in SEATMAT."
+  }
+ ],
+ "questions": [
+  "tpg_66/67 show light grey slippers while omaat_room_15 shows a navy pouch; both are real. Keep navy (more recent OMAAT) or switch?"
+ ]
+}
