@@ -1,0 +1,74 @@
+{
+  "area": "ceiling",
+  "rater": "B",
+  "round": 6,
+  "score": 8.2,
+  "previousStatus": {
+    "fixed": [
+      "w5b medium: cove band too narrow from the aisle. FIXED. v6 row 300 now reads band 247 (about 24 px) plus 227 (about 24 px) against a grille of about 16 px, about 3x the grille as in c120 and rb_omaat_room37.",
+      "w5b low / w5a medium: black slot between the outboard bin lip and the PSU band. FIXED. v4 and v9 show a rounded mid-grey lip with no dark stripe.",
+      "w5b low / w5a low: flat PSU band. FIXED. v4 and v9 show shingled strips with step lines and raised light/gasper and sign housings, close to c26 and rb_omaat_room23.",
+      "w5b low / w5a medium: vault joints were flat hairlines with no crest rib. FIXED. v1, v6, v7 and v10 show raised light ribs that turn on a radius into a fore-aft crest rib along the centre bin, giving the tiled panels of c120 (the curve runs the right way in both look directions).",
+      "w5b low / w5a low: grey speaker insert. FIXED. It is now near white (see the new speaker issue below).",
+      "w5a high: white door-3 bar ceiling. FIXED in substance. v3 shows a dark bronze tray (86,75,73) with downlights, louvre and EXIT sign; r5v measured 219 here. Shape and fittings are still off (issue 1).",
+      "w5a medium: centre PSU channel. FIXED. There is one dished housing with 4 sockets and a stepped channel (studio f_cbin, q15)."
+    ],
+    "notFixed": [
+      "w5b medium: vault too bright next to the grille. PARTIAL. v6 now runs 224 -> 194 against a 247 band (0.91 -> 0.79). r5 ran 0.96 -> 0.87. c120 runs 0.64-0.78 and c119 0.56-0.78, so the first vault pixel is still near band level.",
+      "w5b low: centre-bin door is a constant grey. NOT FIXED. v5 column 400 reads 201 -> 188 -> 193, the same pixel values as r5v, so there is no lighter crest."
+    ],
+    "regressed": []
+  },
+  "details": [
+    {"detail": "Aisle vault panels, joint ribs and crest rib", "score": 8.6, "refs": ["b_lalf_c120", "b_lalf_c119", "b_sany_y22"]},
+    {"detail": "Cove band + slotted grille", "score": 8.3, "refs": ["b_lalf_c120", "b_lalf_c119", "rb_omaat_room37"]},
+    {"detail": "Vault light falloff (geometry/material side)", "score": 7.6, "refs": ["b_lalf_c119", "b_lalf_c120"]},
+    {"detail": "Vault fittings (speaker, small sign slot)", "score": 7.6, "refs": ["b_lalf_c120"]},
+    {"detail": "Outboard bins: doors, latches, lip, top placards, seams", "score": 8.4, "refs": ["b_sany_y22", "b_lalf_c120", "y_47301"]},
+    {"detail": "Centre bins: doors, crest rail + placard, PSU channel", "score": 8.0, "refs": ["y_47300", "b_sany_y22", "b_lalf_c120"]},
+    {"detail": "Outboard PSU band (stepped strips, housings, sign windows)", "score": 8.5, "refs": ["b_lalf_c26", "rb_omaat_room23", "y_47301"]},
+    {"detail": "EXIT signs", "score": 8.3, "refs": ["b_lalf_c133", "b_lalf_c134"]},
+    {"detail": "Door-3 bar cross-aisle tray", "score": 6.9, "refs": ["b_lalf_c133", "b_lalf_c134"]},
+    {"detail": "Other door / monument ceilings", "score": 7.8, "refs": ["y_47301", "b_lalf_c120"]}
+  ],
+  "issues": [
+    {
+      "severity": "medium",
+      "detail": "Door-3 bar cross-aisle tray",
+      "problem": "The tray reads as an arch-shaped dark patch set into the white door dome. The real ceiling is a flat, rectangular dark-bronze soffit across the whole bar walkway, with a thin lighter edge trim, two rows of 3-4 downlights (6-8 visible), a louvre and a separate speaker grille. Only one column of 2 downlights shows. The light barFrame sits 4 mm ABOVE the tray, so it is never seen. The speaker grille (#3e3835 on #5c524d) is invisible.",
+      "evidence": "r6v/v3_door3Aft: the dark field is bounded by the white dome sweep and the fascia arch, and only 2 downlights show (x 510-520). In b_lalf_c133 and c134 the dark soffit runs wall to wall with a crisp straight edge and lighter trim, and 6 downlights are visible.",
+      "fix": "07b_ceiling.js zone.type==='door' && zn.door===2: (a) sweep the DOME for this zone with a dark soffit material instead of CEILMAT.vault, e.g. CEILMAT.barSoffit = { c: '#4f4743', r: 0.4 } and no eFn, so the surround matches the tray. (b) Make the frame visible: replace the gBox at TY + 0.004 with 4 edge strips BELOW the tray. Use gBox(3.0, 0.008, 0.02) at z = zc ± len/2 and gBox(0.02, 0.008, len) at x = ±1.5, all at TY - 0.004, in CEILMAT.barFrame (or '#a49a90'). (c) Put the downlights where the dome leaves the tray visible (|x| < 1.7) and visible past the bin ends: x in [-0.9, -0.3, 0.3, 0.9] at z = zc ± len*0.3. (d) Speaker grille: c '#2a2624' with a light gRBox rim (0.17 x 0.11, '#8c847c'), 2 mm proud."
+    },
+    {
+      "severity": "medium",
+      "detail": "Vault falloff next to the grille",
+      "problem": "This is improved but still too flat. The vault starts at 0.91 of the band right next to the grille and ends at 0.79 at the crest rib. The photos show 0.78-0.83 at the grille, falling to 0.56-0.64.",
+      "evidence": "r6v/v6 row 120: band 247, vault 224 at x 400, then 194 near the crest. c119: 0.83 -> 0.58. c120: about 0.78 -> 0.64.",
+      "fix": "07b_ceiling.js vault baked factor: lerp(0.92, 0.74, ...) -> lerp(0.85, 0.66, ...). Halve the inboard eFn term again (0.03 + 0.04 * exp(-(xg-ax)/0.25)). Leave CEILMAT.cove as it is, so the grille stays the edge of the light."
+    },
+    {
+      "severity": "low",
+      "detail": "Vault speaker fitting",
+      "problem": "The speaker reads as a flat bright plank, about 250 against a 215 vault. Its centre-bin end butts into or onto the crest rib (v6, v8, v1). In c120 the speaker sits about 0.1 m clear of the crest rib, as a rounded rectangle with a visible rim and a slightly sunken face.",
+      "evidence": "r6v/v6: the pill spans x 500-615 at y 255 and the crest rib is at about x 617. r6v/v8: the pill at the top right overlaps the crest rib. Studio d_up/h_trough: it reads as a stick.",
+      "fix": "07b_ceiling.js line ~246: move the speaker from t 0.78 to t 0.70. Give the inset a negative offset so it sits recessed (vaultPanel(0.70, ..., 0.312, 0.074, 0.014, -0.001, 12)). Set CEILMAT.bezel e 0.12 -> 0.06 so the rim is no brighter than the vault, and set bezelIn c '#e2e1dd'."
+    },
+    {
+      "severity": "low",
+      "detail": "Centre-bin door tone",
+      "problem": "The door is still a near-constant grey of 188-201 with no lighter crest toward the vault. y_47300 shows the doors close to vault white at the top, grading darker toward the wrap. This is unchanged since w4.",
+      "evidence": "r5v and r6v v5_yCbin column 400 give identical values (201, 196, ..., 188, ..., 193).",
+      "fix": "08_bins.js centerBinModule: on BINMAT.doorC add eFn: (p) => 0.06 + 0.10 * clamp((p[1] - 1.9) / 0.35, 0, 1). Or in shadeUpper, lift the factor for |ny| < 0.5 faces near the crest (y > 2.15) by 1.06."
+    },
+    {
+      "severity": "low",
+      "detail": "Cove band tone",
+      "problem": "From the aisle the band shows two steps: a 247 strip at the bin crest and a 227 strip next to the grille. In c120 the diffuser is one bright field right up to the grille frame.",
+      "evidence": "r6v/v6 row 300: 247, 247, 247, 227, 227, 227, then the grille.",
+      "fix": "07b_ceiling.js cove strip: split vaultStrip(tm, ...) into 3 sub-strips across c0..c1, each with its own facet normal, or set CEILMAT.cove e 0.30 -> 0.36 so the steeper inner part also saturates. Check that the troughRim (w + 0.024) does not overlap the inner cove edge at t 0.265 vs grille t 0.29 - 0.034."
+    }
+  ],
+  "questionsForUser": [
+    "Is the cross-aisle ceiling at door 3 (the self-service bar) dark bronze across the whole walkway, door dome included, or only as a recessed tray with a light ceiling around it? c133 and c134 suggest the whole soffit is dark."
+  ]
+}

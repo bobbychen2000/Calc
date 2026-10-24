@@ -41,7 +41,7 @@ const TILT_O = Math.atan2(1.795 - 1.60, 2.845 - 1.53);
 // c_27312 / y_47301, channel #bebec0..#cacaca in y_47300 [V samples]); the outboard doors already matched [D].
 const BINMAT = {
   door: { c: '#e3e5e8', r: 0.34, l: LAYER.plastic },
-  doorC: { c: '#e3e5e8', r: 0.34, l: LAYER.plastic, e: 0.10 },   // + 0.84 shading floor: y_47300 door 245 -> 190 (w3a)   // w2a: q15 #abafb6 vs y_47300 #dddddb
+  doorC: { c: '#e3e5e8', r: 0.34, l: LAYER.plastic, e: 0.10, eFn: (p) => 0.06 + 0.10 * clamp((p[1] - 1.9) / 0.35, 0, 1) },   // w6b: lighter toward the crest (c120, y_47301) [V look]   // + 0.84 shading floor: y_47300 door 245 -> 190 (w3a)   // w2a: q15 #abafb6 vs y_47300 #dddddb
   bandC: { c: '#d4d4d2', r: 0.5, l: LAYER.plastic, e: 0.05 },   // channel ~0.76 of the door in y_47300 (w3b) [V]
   housingC: { c: '#b6b7b6', r: 0.5, l: LAYER.plastic, e: 0.05 },   // centre PSU housings: bandC x0.86 (not baked by shadeUpper; w5 render read white) [D]
   signPod: { c: '#2a2e34', r: 0.45 },
@@ -396,7 +396,7 @@ function buildBins(gl, layout) {
     groups.forEach((gr, i) => {
       const name = `row${row}_${i}`;
       if (!gr.length || !ATL.rects[name]) return;
-      for (const m of placardXF(i, z)) D.add(gQuad(PLACARD[0], PLACARD[1]), m, i === 1 ? { ...MAT.decal, e: BINMAT.doorC.e } : MAT.decal, atlasUV(name));
+      for (const m of placardXF(i, z)) D.add(gQuad(PLACARD[0], PLACARD[1]), m, i === 1 ? { ...MAT.decal, e: BINMAT.doorC.eFn([0, 2.19, 0]) } : MAT.decal, atlasUV(name));
     });
   }
   meshes.placards = gl.mesh(D.build(), { name: 'placards', layer: 'upper', castShadow: false });
