@@ -11,7 +11,7 @@ function pySeat(B, x0, lod, opts = {}) {
   const [hy, hz] = PY.hinge;
   // w11 (gap): ANA alternates two trims - A dash-weave back + cushion with petal ears, B petal back + cushion with dash ears;
   // the centre block's aisle seats D / G carry B (py_37302 foreground, san_12 26G vs 26F); both window-pair seats are A (py_37301) [V]
-  const F = opts.trim ? SEATMAT.pyWing : SEATMAT.pyFabric, WG = opts.trim ? SEATMAT.pyWingB : SEATMAT.pyWing;
+  const F = opts.trim ? SEATMAT.pyWing : SEATMAT.pyFabric, WG = opts.trim ? SEATMAT.pyWingB : SEATMAT.pyEar;
   const BH = M4.trs(x0, hy, hz, 0, PY.back);
   B.add(gLoft(cushionSecs(0.415, 0.50, 0.115, -0.06, { edge: 0.04, r: 0.035, crown: 0.012 }), lod ? 3 : 4), M4.trs(x0, 0.425, -0.30, 0, 3 * DEG), F);
   B.add(gRBox(0.415, 0.05, 0.48, 0.012, 1), M4.trs(x0, 0.335, -0.29), { c: '#3a3f4a', r: 0.5, l: LAYER.plastic });   // w10 (A): dark pan frame (py_37304, san_26)
@@ -103,27 +103,28 @@ function pySeat(B, x0, lod, opts = {}) {
     // ANA py_37304: bezel 0.376 x 0.263 set ~1 cm proud into the shell with a thin dark gap, framed by the shell rim
     // (~5 cm above it, 18 % of the bezel height) - no separate housing; placards 0.12 x 0.021, 1.7 cm under it [D]
     B.add(gRBox(0.405, 0.29, 0.014, 0.008, 1), scr(0.006), { c: '#3a3d42', r: 0.45, l: LAYER.plastic });   // w5: ~2 cm dark-grey frame (san_26) [D]
-    B.add(gRBox(0.376, 0.263, 0.012, 0.008, 1), scr(0.016), { c: '#222429', r: 0.22 });   // w12 (B): bezel #282932 in py_37304, not black
+    B.add(gRBox(0.376, 0.263, 0.012, 0.008, 1), scr(0.016), { c: '#2a2c33', r: 0.4 });   // w12 (B): bezel #282932 in py_37304, not black; w13 (B): r 0.4 (gloss read black)
     B.add(gQuad(0.345, 0.194), scr(0.0235), SEATMAT.screen, atlasUV('screen'));
     for (const sx of [-0.113, 0.113]) B.add(gQuad(0.12, 0.022), on(0.63, 0.0115, sx), { c: '#e8e8e6', r: 0.6 });
   }
   {   // (row 25 backs too: seen from row 26)
     // w5 (A + B): moulded literature bucket right under the placards (san_20 / san_26, b_gf_a380): slim rim at the mouth,
     // the bucket bulging ~5 cm aft toward its rounded bottom, black mesh band across its lower front [D]
-    const py0 = 0.35;
+    const py0 = 0.27;   // w13 (A + B): lower, ~0.3 of plain shell under it was too much (san_26, b_san_20, san_14) [D]
     // w11 (B, san_26 / b_san_20 at ~1100 px/m): a dark recess under the placards; in it an open tray pocket whose grey front
     // rises at the sides and dips in a deep smile, contents showing above it, mesh across the lower bulge [D]
     // w12 (A): recess ~0.62 of the frame width (0.255) running down to ~2 cm above the shell's lower edge; the tray fills
     // its lower third (rim dip at ~30 % of the recess height), the mesh band follows the smile; a pale safety card [D]
-    B.add(gRBox(0.255, 0.25, 0.003, 0.02, 1), on(py0 + 0.12, 0.0105), { c: '#3a3d43', r: 0.6, l: LAYER.plastic });
-    const BK = M4.mul(BH, M4.trs(0, py0, zr(py0 + 0.06) + 0.011));
+    B.add(gRBox(0.255, 0.31, 0.003, 0.02, 1), on(py0 + 0.155, 0.0105), { c: '#3a3d43', r: 0.6, l: LAYER.plastic });
+    B.add(gBox(0.21, 0.09, 0.006), on(py0 + 0.215, 0.014), { c: '#4a4e55', r: 0.55, l: LAYER.plastic });   // w13 (A): rear holder plate behind the tray (san_26)
+    const BK = M4.mul(BH, M4.trs(0, py0 + 0.005, zr(py0 + 0.06) + 0.011));
     // tray front lofted across x so its grey top edge follows the smile (sections = columns, w = front height) [D]
     const rimY = (x) => 0.07 + 0.045 * ((x / 0.112) ** 2) ** 1.5, XS = [-0.112, -0.09, -0.055, 0, 0.055, 0.09, 0.112];
     B.add(gLoft(XS.map((x) => SEC(x, rimY(x), 0.045, 0.0225, 0.012, rimY(x) / 2)), 3), M4.mul(BK, M4.trs(0, 0, 0, 0, 0, Math.PI / 2)), PYREAR);
     B.add(gTube(XS.map((x) => M4.point(BK, [x * 0.985, rimY(x), 0.043])), 0.005, 6), null, PYREAR);   // smile rim
     B.add(gLoft(XS.slice(1, -1).map((x) => SEC(x, 0.035, 0.003, 0.0465, 0.001, rimY(x) - 0.03)), 1, [false, false]), M4.mul(BK, M4.trs(0, 0, 0, 0, 0, Math.PI / 2)),
       { c: '#25282c', r: 0.9, l: LAYER.grille });   // mesh band following the smile (san_26)
-    B.add(gQuad(0.085, 0.09), M4.mul(BK, M4.trs(0.03, 0.095, 0.014, -8 * DEG)), { c: '#aeada8', r: 0.7 });   // safety card in the mouth (san_26, b_san_20)
+    B.add(gQuad(0.16, 0.07), M4.mul(BK, M4.trs(0, 0.10, 0.016, -6 * DEG)), { c: '#b4b3ae', r: 0.7 });   // w13 (A + B): wide leaflet, centred   // safety card in the mouth (san_26, b_san_20)
   }
   if (!opts.noScreen) {
     // gooseneck reading light: leaves the shell side at headrest height, arcs down + forward to a brushed-aluminium

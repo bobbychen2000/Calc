@@ -61,9 +61,10 @@ const SEATMAT = {
   // shells / wall 0.38-0.42 (san_03 71-82 / 189, py_37303) [D]
   // ANA official look (user decision): wall-balanced consensus of py_37301-05 (wall = #e8e8e8): back #7f8490, wing #848899,
   // flap #3c4770 (B/R ~1.8 sRGB), shell #75808c, console #6c7684; all blue-grey (B > G >= R) [D]
-  pyFabric: { c: photoBase('#7e8593', 'py_back'), r: 0.9, l: LAYER.pyFleck },   // w6: steel grey-blue, saturation ~0.2 (py_37301 / 37303 / 37305 0.15-0.21, A + B) [D]
+  pyFabric: { c: photoBase('#7b8498', 'py_back'), r: 0.9, l: LAYER.pyFleck },   // w6: steel grey-blue, saturation ~0.2 (py_37301 / 37303 / 37305 0.15-0.21, A + B); w13 (A + B): cushion S 0.10-0.12 vs 0.17-0.18 -> #7b8498 [D]
   pyCover: { c: '#343f60', r: 0.45, l: LAYER.plastic },   // navy satin leatherette, fine pebble grain; #34406e rendered royal blue (ACES) vs py_37302 #2f3c6c; w11 (A + B): leather grain 2-4x the photo -> plastic (fine, faint)
   pyWing: { c: photoBase('#6d7588', 'py_confetti'), r: 0.9, l: LAYER.pyConfetti },   // w6: wing / back ~0.9-1.0 (py_37301 / 37305, A + B); w12 (A): bluer petal ground (trim-B back #697ba1 on the real seat) [D]
+  pyEar: { c: photoBase('#666b7c', 'py_ear'), r: 0.9, l: LAYER.pyEar },   // w13 (A): trim-A ears on their own notched-chip tile, charcoal ground S ~0.2 (py_37305) [D]
   pyWingB: { c: photoBase('#626876', 'py_back'), r: 0.9, l: LAYER.pyFleck },   // w11 (gap): trim B ears in the dash weave (py_37305 right seat, san_12) [D]
   pyShell: { c: '#6a7079', r: 0.42, l: LAYER.plastic },   // w6: darker, shroud py_37303 #4b525a (A + B) [D]
   pyArm: { c: '#545b6e', r: 0.45, l: LAYER.plastic },   // w6: console / back ~0.5 (py_37301 #505d7f, A + B); w11 (B): less blue, py_37303 / 37306 slate [D]

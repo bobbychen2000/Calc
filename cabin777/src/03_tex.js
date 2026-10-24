@@ -2,8 +2,8 @@
 // Procedural textures (generated at load; no external image assets)
 //  Detail layers are RGBA: RG = tangent normal (xy), B = albedo mod, A = roughness mod
 // ------------------------------------------------------------------
-const LAYER = { none: 0, fabric: 1, leather: 2, carpet: 3, plastic: 4, brushed: 5, marble: 6, vinyl: 7, grille: 8, yagasuri: 9, wood: 10, yMosaic: 11, atlasLit: 14, atlasGlow: 15, yJacq: 16, pyFleck: 17, tweed: 18, ashGrain: 19, fWood: 20, fTweed: 21, yCarpet: 22, pyConfetti: 23, yDiamond: 24, yFleck: 25, yMosaicP: 26, xSkin: 27, gAlu: 28, jPillow: 29, ashDoor: 30 };
-const N_LAYERS = 31;
+const LAYER = { none: 0, fabric: 1, leather: 2, carpet: 3, plastic: 4, brushed: 5, marble: 6, vinyl: 7, grille: 8, yagasuri: 9, wood: 10, yMosaic: 11, atlasLit: 14, atlasGlow: 15, yJacq: 16, pyFleck: 17, tweed: 18, ashGrain: 19, fWood: 20, fTweed: 21, yCarpet: 22, pyConfetti: 23, yDiamond: 24, yFleck: 25, yMosaicP: 26, xSkin: 27, gAlu: 28, jPillow: 29, ashDoor: 30, pyEar: 31 };
+const N_LAYERS = 32;
 // layers >= 16 take their pattern from a photo swatch when PHOTO_TEX is embedded (build.py), else procedural
 const PHOTO_LAYERS = {
   16: 'y_tick',
@@ -21,6 +21,7 @@ const PHOTO_LAYERS = {
   28: 'g_alu',     // monuments w9: satin galley-insert wear / smudge mottle (sansY_44 oven, sans_38 cart)
   30: 'j_ash',     // room w14a: same ash tile at a lower gain for the near-plain aisle doors (c_27312 / 27314)
   29: 'j_pillow',  // room w12: THE Room pillow + comforter check jacquard (kn_17, tpg_46)
+  31: 'py_ear',    // py w13: PY trim-A headrest ears, notched sakura chips (py_37305); 23 stays the trim-B back slivers
 };
 let PHOTO_PIX = null;
 // photo pattern strength per layer (1 = as photographed). QA r1 (relative luminance SD measured on the photos):
@@ -38,6 +39,7 @@ const PHOTO_GAIN = {
   20: 0.7,
   21: 0.5,
   23: 1.0,
+  31: 1.0,   // py w13: ear chips ~6x the ground (py_37305) [D]
   28: 0.3,    // monuments w9: tile SD 0.10 -> ~3 % smudge mottle (sans_38 cart 4.8 %, sansY_44 oven ~10 %; 0.5 read as stains) [D]
   30: 0.5,   // room w15a/b: doors still 0.84-0.92 of the cabinet luma in q06 (c_27312 0.6), dash streaks at aisle distance; room w14a/b: aisle doors near-plain cream, the grain only faint (c_27312 (209,207,198), c_27314) [D]
   29: 0.4,   // room w13a: read as hard gingham at 0.55 -> -30 %; room w12: kn_17 close-up +-25 % linear, but tpg_81 / tpg_46 at seat distance read about half that [D]
@@ -54,6 +56,7 @@ const PHOTO_ENC = {
   y_mosaic: 5,
   py_back: 4,
   py_confetti: 6,
+  py_ear: 6,
 };
 function photoBase(hex, name) {
   const k = (typeof PHOTO_TEX !== 'undefined' && PHOTO_TEX && PHOTO_TEX[name] && PHOTO_ENC[name]) ? PHOTO_ENC[name] / 2 : 1;
@@ -82,6 +85,7 @@ const LAYER_PARAMS = {
   28: [5.5, 0.02, 0.5, 0.3],     // monuments w9: 0.18 m satin galley-metal wear tile, near-flat normal, smudges a little rougher
   30: [3.1, 0.04, 1.0, 0.1],    // room w14a: ash door veneer (j_ash tile), flatter than layer 19
   29: [6.6, 0.12, 1.0, 0.15],   // room w12: pillow / comforter check jacquard (0.152 m tile), soft weave relief
+  31: [14, 0.3, 0.8, 0.15],     // py w13: ear chips (0.07 m tile), as 23
 };
 
 function hash2(ix, iy, seed) {
@@ -257,7 +261,7 @@ function buildDetailLayers(S = 256) {
     const a = vnoise(u * 3, (v + w) * 160, 160, 122), b = vnoise(u * 6, (v + w) * 64, 64, 123);
     return clamp(0.5 + 0.55 * (a - 0.5) + 0.3 * (b - 0.5), 0, 1);
   }, () => 0.5, 0.2);
-  L[20] = L[10]; L[21] = L[18]; L[22] = L[3]; L[23] = L[17]; L[24] = L[16]; L[25] = L[16]; L[26] = L[11]; L[29] = L[9]; L[30] = L[19];
+  L[20] = L[10]; L[21] = L[18]; L[22] = L[3]; L[23] = L[17]; L[24] = L[16]; L[25] = L[16]; L[26] = L[11]; L[29] = L[9]; L[30] = L[19]; L[31] = L[17];
   // photo swatches: tile scale from the swatch's physical size; normal + roughness from its luminance
   if (PHOTO_PIX) for (const [k, name] of Object.entries(PHOTO_LAYERS)) {
     const px = PHOTO_PIX[name]; if (!px) continue;

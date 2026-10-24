@@ -29,6 +29,8 @@ SW = {
     # 611 px/m = 0.074 m) [D] - both are MONO so the material colour sets charcoal / cobalt
     # w11: 0.09 m (petals ~5-11 mm, ~1 cm on the trim-B backs in py_37302 / san_12) [D]
     'py_confetti': ('py_37305', (238, 140, 328, 230), 0.09),
+    # w13 (A): the ears' own tile - notched sakura chips over tiny specks (py_37305 left ear, ~1000 px/m) [D]
+    'py_ear':      ('py_37305', (238, 140, 328, 230), 0.07),
     # c_27302 seat back 0.64 m ~ 330 px -> 126 px = 0.24 m, but that is a rendering that coarsens the weave; the real
     # in-cabin photos (c_27315, omaat_room_13) read as a fine uniform weave -> tile shrunk to 0.14 (2-3 mm dots) [A]
     'j_tweed':     ('c_27302', (112, 172, 238, 298), 0.14),
@@ -55,11 +57,11 @@ SW = {
 # QA r2: Y 5 (was 8), see 03_tex.js PHOTO_ENC; py_back 4: its white dashes are ~4.6x the charcoal ground in linear light
 # (py_37301 luminance p10 / p90 100 / 201) and were clipped at 1.5x, which left the dark gaps dominant (pattern read
 # inverted); py_confetti 6: white flakes ~220 on a 55-65 ground (py_37305, ~17x linear)
-ENC = {'y_tick': 5, 'y_diamond': 5, 'y_fleck': 5, 'y_mosaic': 5, 'py_back': 4, 'py_confetti': 6}       # default 2 (= ratio x 0.5)
+ENC = {'y_tick': 5, 'y_diamond': 5, 'y_fleck': 5, 'y_mosaic': 5, 'py_back': 4, 'py_confetti': 6, 'py_ear': 6}       # default 2 (= ratio x 0.5)
 # grey-pattern materials: keep only the luminance pattern (the per-channel ratio of these phone photos is JPEG chroma
 # noise and lilac / green casts); the model's material colour sets the hue
 MONO = {'f_wood', 'f_tweed', 'j_ash', 'py_back',   # py_back: neutral grey weave (QA r1, wall-balanced py_37305)
-        'j_tweed', 'py_confetti', 'j_pillow'}                  # QA r2: chroma of these was a green / purple JPEG cast
+        'j_tweed', 'py_confetti', 'j_pillow', 'py_ear'}                  # QA r2: chroma of these was a green / purple JPEG cast
 # high-pass radius of the lighting / blotch removal (default 40 px on the 256 px tile); py_back: the swatch's low-frequency
 # dark blotches dominated the fine white dashes at seat distance (py_37301 / 37305 read as even dashes on charcoal)
 HP = {'py_back': 20, 'j_ash': 60}   # room w12: j_ash keeps its 1-4 cm veneer bands
@@ -102,15 +104,15 @@ def synth_py_back(ratio, seed=7):
     y = np.arange(S)[:, None] + 0.5; x = np.arange(S)[None, :] + 0.5
     lite = np.zeros((S, S)); dark = np.zeros((S, S))
     # w8 (A): each row its own pitch N(ph, 0.18 ph), renormalised to the tile (no corduroy beat at cabin distance)
-    hr = np.clip(rng.normal(1, 0.18, rows), 0.6, 1.4); hr *= S / hr.sum(); yr = np.cumsum(hr) - hr / 2
+    hr = np.clip(rng.normal(1, 0.08, rows), 0.8, 1.2); hr *= S / hr.sum(); yr = np.cumsum(hr) - hr / 2   # w13 (B): steadier rows (py_37301 / 37303)
     for r in range(rows):
         for c in range(cols):
             yc = yr[r] + rng.uniform(-0.12, 0.12) * ph
-            ln = np.clip(rng.normal(19, 7), 8, 32)          # w8 (B): more varied lengths
+            ln = np.clip(rng.normal(21, 4), 12, 30)          # w8 (B): more varied lengths; w13 (B): more even (TV-static read)
             x0 = c * cw + (cw - ln) / 2 + (cw / 4) * (r % 2) + rng.uniform(-6, 6)
             u = (x[0] - x0) % S
             seg = np.clip(np.minimum(u, ln - u) / 3.0, 0, 1) * (u < ln)   # w11 (A + B): tapered ends (hard bricks)
-            band = np.clip((3.6 - np.abs(((y[:, 0] - yc + S / 2) % S) - S / 2)) / 1.3, 0, 1)   # w11: ~4.5 mm cells, soft edges (w12 B: 2.0 -> 1.3)
+            band = np.clip((3.6 - np.abs(((y[:, 0] - yc + S / 2) % S) - S / 2)) / 0.9, 0, 1)   # w11: ~4.5 mm cells, soft edges (w12 B: 2.0 -> 1.3, w13 B: 0.9)
             lite = np.maximum(lite, band[:, None] * seg[None, :] * np.clip(rng.normal(1, 0.25), 0.5, 1.5) * dim[r, c])
             # w6 (A + B): the navy-slate dash set (py_37301 / 37305 dark-dash cover 7-32 %); w7: on its own band between
             # the light rows so the two sets interlock into a mosaic (A + B)
@@ -133,8 +135,9 @@ def synth_py_back(ratio, seed=7):
             xs += fl + rng.uniform(1.2, 2.2)
         thr = np.maximum(thr, pr[:, None] * ln[None, :]); yl += rng.uniform(2.7, 3.3)
     thr = _blur_wrap(thr, 0.45)
-    lite *= 0.7 + 0.55 * thr; dark *= 0.85 + 0.25 * thr   # w12 (A + B): the w11 threads overshot into a melange
-    out = (1 + 1.9 * lite) * (1 - 0.7 * dark)     # w7: light ~2.9x, dark ~0.3x the ground; w12 (A + B): back std / float cover to py_37301 / 37305
+    lite *= 0.88 + 0.22 * thr;   # w13 (B): flatter blocks
+    dark *= 0.85 + 0.25 * thr   # w12 (A + B): the w11 threads overshot into a melange
+    out = (1 + 2.1 * lite) * (1 - 0.7 * dark)     # w7: light ~2.9x, dark ~0.3x the ground; w12 (A + B): back std / float cover to py_37301 / 37305
     out *= 0.88 + 0.24 * thr                       # w11: the ground is woven too (threads read between the blocks, py_37305)
     # brick patches on a 2-col x 2-row lattice (block std/mean ~0.15, py_37305), crisp edges softened 0.5 px
     blk = np.exp(rng.normal(0, 0.18, (rows // 2, cols // 2)))
@@ -146,7 +149,7 @@ def synth_py_back(ratio, seed=7):
     return np.repeat(out[:, :, None], 3, 2)
 
 
-def synth_py_confetti(ratio, seed=11):
+def synth_py_confetti(ratio, seed=11, ear=False):
     """PY headrest wings, ANA official (py_37305 left wing, ~1000 px/m) [D]: sakura-petal chips, equivalent diameter p50
     6.5 mm (p25 5.4, p90 8.8), elongation 1.2-1.9, 5-7 jittered sides with one pointed end / a shallow notch, ~14 per
     0.07 m tile (2.2-3.7 per 10 cm^2), 9-12 % of the area, blue-noise spaced >= 12 mm; ~60 small specks 1-3 mm only
@@ -158,20 +161,22 @@ def synth_py_confetti(ratio, seed=11):
     # san_12 trim-B back) [D]
     mo = _blur_wrap(rng.normal(0, 1, (S, S)), 2.5); out *= np.exp(0.12 * mo / mo.std())
     pts = []
-    while len(pts) < 36:                          # w5 (A + B): varied chips; w11 (gap): 32 smaller ones (san_12 / py_37305)
+    while len(pts) < (18 if ear else 50):   # w13: ear 18 chunky chips (A, py_37305 ~40 per ear); back 50 (B, py_37302 cover 0.09)                          # w5 (A + B): varied chips; w11 (gap): 32 smaller ones (san_12 / py_37305)
         p = rng.uniform(0, S, 2)
-        if all(min(abs(p[0] - q[0]), S - abs(p[0] - q[0])) ** 2 + min(abs(p[1] - q[1]), S - abs(p[1] - q[1])) ** 2 > 20 ** 2 for q in pts): pts.append(p)
+        if all(min(abs(p[0] - q[0]), S - abs(p[0] - q[0])) ** 2 + min(abs(p[1] - q[1]), S - abs(p[1] - q[1])) ** 2 > (30 if ear else 16) ** 2 for q in pts): pts.append(p)
     for cy, cx in pts:
         dy = (yy - cy + S / 2) % S - S / 2; dx = (xx - cx + S / 2) % S - S / 2
-        a = rng.uniform(0, 2 * np.pi); e = rng.uniform(1.8, 3.2); req = np.clip(rng.normal(5.5, 1.8), 3, 8.5)   # w12 (B): 2-3:1 slivers (py_37302, san_12)
+        a = rng.uniform(0, 2 * np.pi); e = rng.uniform(1.1, 1.9) if ear else rng.uniform(1.8, 3.2)   # w12 (B): 2-3:1 slivers on the trim-B back (py_37302, san_12)
+        req = np.clip(rng.normal(10, 3), 5, 15) if ear else np.clip(rng.normal(5.5, 1.8), 3, 8.5)   # w13 (A): ear chips chunky, mixed size (py_37305)
         u = dx * np.cos(a) + dy * np.sin(a); v = -dx * np.sin(a) + dy * np.cos(a)
         th = np.arctan2(v * e, u); rr = np.hypot(u / np.sqrt(e), v * np.sqrt(e))
         k = rng.integers(5, 8); ph0 = rng.uniform(0, 6)
         # polygonal chip: facets from a k-gon, pointed tip at th=0, shallow notch at th=pi (sakura petal)
         poly = (np.cos(np.pi / k) / np.cos((th + ph0) % (2 * np.pi / k) - np.pi / k)) ** 1.0   # sharp facets
-        prof = req * poly * (1 + 0.18 * np.cos(th)) * (1 - 0.22 * np.exp(-((np.abs(th) - np.pi) / 0.25) ** 2))
-        out += 5.5 * np.clip(rng.normal(1, 0.15), 0.7, 1.3) * np.clip((prof - rr) / 0.6, 0, 1)   # w11: crisper corners
-    for cy, cx in rng.uniform(0, S, (60, 2)):
+        nd = 0.35 if ear and rng.random() < 0.4 else 0.22   # w13 (A): deep notch on ~40 % of the ear chips
+        prof = req * poly * (1 + 0.18 * np.cos(th)) * (1 - nd * np.exp(-((np.abs(th) - np.pi) / 0.25) ** 2))
+        out += (4.2 if ear else 4.8) * np.clip(rng.normal(1, 0.15), 0.7, 1.3) * np.clip((prof - rr) / 0.6, 0, 1)   # w11: crisper corners
+    for cy, cx in rng.uniform(0, S, (140 if ear else 60, 2)):   # w13 (A): dense tiny specks on the ear
         rr = np.hypot((yy - cy + S / 2) % S - S / 2, (xx - cx + S / 2) % S - S / 2)
         out += rng.uniform(0.3, 0.6) * np.clip((rng.uniform(2, 5) - rr) / 1.0, 0, 1)
     for cy, cx in rng.uniform(0, S, (0, 2)):       # w12 (B): round mid-size specks dropped (read as snow)
@@ -227,7 +232,7 @@ def synth_j_pillow(ratio):
     return np.repeat(r[:, :, None], 3, 2)
 
 
-SYNTH = {'py_back': synth_py_back, 'py_confetti': synth_py_confetti, 'y_tick': synth_y_tick, 'j_pillow': synth_j_pillow}
+SYNTH = {'py_back': synth_py_back, 'py_confetti': synth_py_confetti, 'py_ear': lambda r: synth_py_confetti(r, ear=True), 'y_tick': synth_y_tick, 'j_pillow': synth_j_pillow}
 
 
 def tileable(a):
