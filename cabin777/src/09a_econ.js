@@ -47,7 +47,7 @@ function econCrownLoft(secs, segC, crownAt) {
 }
 const ECON_PAN = { ...SEATMAT.yFabric, c: photoBase('#535b7d', 'y_tick') };   // w27 (w26b-4): B/R 1.61-1.67 vs 1.74-1.81 -> a touch bluer; w26 (w25a-5 / w25b-2): L69-74 vs 77-91, still blue; w25 (w24b-4): tick pans B/R 2.17 vs ~1.8 -> less blue
 // w25 (w24a-1 / w24b-3): the diamond pan read as a bold field of light stars head-on (L99-101 vs 74 in y_47300) -> darker
-const ECON_PAN_B = { ...SEATMAT.yFabricB, c: photoBase('#4e5676', 'y_diamond'), l: LAYER.yDiamondPan };   // w27 (w26a-1 / w26b-1): own layer at 0.45 gain (stars bright 0.21 vs 0.09); w26b: B/R 1.61 grey -> #4e5676; w26 (w25a-1 / w25b-1): B/R 2.27-2.41 vs 1.81
+const ECON_PAN_B = { ...SEATMAT.yFabricB, c: photoBase('#414862', 'y_diamond'), l: LAYER.yDiamondPan };   // w28 (w27a-1 / w27b-1, high): photoBase lifts for the full-gain tile mean (2c = 0.4); at gain g the mean is 1 - 0.6 g, so the pan rendered ~1.8x too light (L107 vs 74) -> #4e5676 x (1 / (1 - 0.6 x 0.8)) / 2.5 x 0.88 in linear = #414862 (gain 0.8); w27 (w26a-1 / w26b-1): own layer at 0.45 gain (stars bright 0.21 vs 0.09); w26b: B/R 1.61 grey -> #4e5676; w26 (w25a-1 / w25b-1): B/R 2.27-2.41 vs 1.81
 function econSeat(B, x0, lod, opts = {}) {
   const [hy, hz] = ECON.hinge;
   const F = opts.fab || SEATMAT.yFabric;

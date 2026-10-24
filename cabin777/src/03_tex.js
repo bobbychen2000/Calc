@@ -46,7 +46,7 @@ const PHOTO_GAIN = {
   28: 0.3,    // monuments w9: tile SD 0.10 -> ~3 % smudge mottle (sans_38 cart 4.8 %, sansY_44 oven ~10 %; 0.5 read as stains) [D]
   33: 1.1,   // monuments w18 (w17a): grain SD 3.3 at layer 30's 0.5 vs 6.5-9.8 in samchui_render_11 / lalf_133 -> ~2.2x [D]
   30: 0.5,   // room w15a/b: doors still 0.84-0.92 of the cabinet luma in q06 (c_27312 0.6), dash streaks at aisle distance; room w14a/b: aisle doors near-plain cream, the grain only faint (c_27312 (209,207,198), c_27314) [D]
-  34: 0.45,  // econ w27 (w26a-1 / w26b-1): pan stars bright 0.21 vs 0.09, p90/50 1.72 vs 1.37 in y_47300 [D]
+  34: 0.8,   // econ w28 (w27a-1 / w27b-1): 0.45 left the lattice flat (p90/50 1.15 vs 1.37); 0.65 still 1.23; econ w27 (w26a-1 / w26b-1): pan stars bright 0.21 vs 0.09, p90/50 1.72 vs 1.37 in y_47300 [D]
   29: 0.4,   // room w13a: read as hard gingham at 0.55 -> -30 %; room w12: kn_17 close-up +-25 % linear, but tpg_81 / tpg_46 at seat distance read about half that [D]
   27: 0.22,   // exterior w9: x0.75, read as even brushed banding at 0.3 (A w9); exterior w8: tile stored at SD 0.12 -> ~3.6 % grime mottle (KN41 / 7250 flap panels 3-5 %) [D]
 };
@@ -92,7 +92,7 @@ const LAYER_PARAMS = {
   32: [8.6353, 0.12, 1.0, 0.1],  // shell w12: s_pleat (0.115804 m = 8 pleats; scale comes from sizes.json)
   33: [3.1, 0.05, 1.1, 0.12],   // monuments w18: monument ash (j_ash tile), as 30 at a higher gain
   29: [6.6, 0.12, 1.0, 0.15],   // room w12: pillow / comforter check jacquard (0.152 m tile), soft weave relief
-  34: [5.5, 0.12, 0.45, 0.15],  // econ w27: diamond pan (y_diamond tile), as 24 at a lower gain
+  34: [5.5, 0.12, 0.8, 0.15],  // econ w27: diamond pan (y_diamond tile), as 24 at a lower gain (w28: 0.8)
   31: [14, 0.3, 0.8, 0.15],     // py w13: ear chips (0.07 m tile), as 23
 };
 
