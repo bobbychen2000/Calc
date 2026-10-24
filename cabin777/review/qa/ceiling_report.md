@@ -98,3 +98,79 @@
 3. **Door-area ceilings.** Do you have any photo of a door-area (cross-aisle) ceiling?
 4. **Centre-bin underside.** Is there a straight-up photo of it, to confirm the channel/bin width ratio?
 5. **Ceiling gaspers over THE Room.** Should the centre-bin PSUs over THE Room middle seats keep gaspers? b_frugal_c_vents shows gaspers on the seat shell; thrifty shows overhead gaspers on the outboard band.
+
+## Wave 3 (2026-10-24)
+
+- **Start point:** w4 (A 7.2 / B 7.8). Six rounds, w5 to w10, which is the wave-3 cap.
+- **Result:** A 8.4 / B 8.7, mean 8.55. No high or medium issue is open.
+  - Rater B has met the 8.5 bar since w8. Rater A finished 0.1 short, with low issues only.
+- **Rating files:** `ceiling_w{5..10}{a,b}.json`. Both raters were calibrated against their previous two files each round.
+
+| Round | Rater A | Rater B | Mean |
+|---|---|---|---|
+| w5 (fresh, current head) | 7.0 | 7.9 | 7.45 |
+| w6 | 7.6 | 8.2 | 7.9 |
+| w7 | 7.9 | 8.3 | 8.1 |
+| w8 | 8.1 | 8.5 | 8.3 |
+| w9 | 8.3 | 8.6 | 8.45 |
+| w10 | 8.4 | 8.7 | 8.55 |
+
+- **No regression rounds.** The w5 drop of 0.05 is below the 0.3 guard, and no round scored below the previous one.
+- **Triangles:** 414k → 488k instanced (+18 %; budget +25 %).
+  - Most of the growth is in the shingled PSU strips, the PSU housings and the vault ribs.
+  - Everything is still instanced per bin module or per PSU, except the ribs and the door-3 soffit, which are in the one `upper` mesh.
+- **Before/after sheet:** `ceiling_before_after.jpg`, w5 against w10, own renders only, 169 KB.
+
+### What changed (wave 3), by evidence
+
+1. **Door-3 bar cross-aisle soffit** (w5a high).
+   - The first real photos of a door-area ceiling, b_lalf_c133/c134 (liveandletsfly THE Room review), show a dark bronze ceiling, not the white dome.
+   - The model now has a flat dark soffit from wall to wall (#4f4743) at y 2.43, and a #5c524d tray at y 2.40 with a mid-tone trim.
+   - Fittings: 10 downlights, a louvre and a rimmed speaker grille.
+   - The zone-end closures next to it are dark too, out over the cove, grille and bin-crest ends. That fixed the "white arcs" reported four times.
+   - Only door 3 has the soffit, because no photo shows doors 1, 2, 4 or 5 (see the questions).
+2. **Vault tone.**
+   - The colour is #e6e4df. A baked falloff runs from x0.85 at the grille to x0.66 at the centre-bin crease, with a low eFn.
+   - It is applied after the ribs and fittings, so they follow it.
+   - Measured result: 0.79 → 0.59 of the cove band (c119/c120: 0.83 → 0.58).
+3. **Raised joint ribs.**
+   - Each rib has a light face (about 1.06x the vault) and an aft shadow lip. It starts at the grille frame and turns forward on R 0.3 m into a fore-aft crest rib along the centre bin (b_lalf_c120).
+   - The vault arc is sampled at N 48.
+4. **Cove band.**
+   - The grille moved to t 0.29, with 3 segments per panel and backlit light slots.
+   - The diffuser is 4 facets that follow the arc. A single flat chord sank behind the vault and read only 1–1.5x the grille; the facets read about 3–4x, as in c120 and rb_omaat_room37.
+5. **PSU band.**
+   - Shingled transverse strips, 8 per module, with a 5 mm self-lit step (y_47301 ribs, b_lalf_c26, rb_omaat_room23).
+   - The light/gasper and sign units are raised housings.
+   - The black lip slot became a thin mid-grey line.
+6. **Economy centre PSU.**
+   - One raised dished housing with 4 dark sockets, plus the sign pill on its own panel (b_sany_y22).
+   - The channel is 6 stepped panels.
+   - Tones lifted about 15 % to y_47300.
+7. **Centre bin.**
+   - A crest rail carries the placard, with 55 mm joint caps and gap lines and a dark groove against the vault (c120).
+   - The door eFn ramps from y 1.75 toward the crest.
+8. **Outboard bin.**
+   - The latch is about 2:1 with a handle (c120, y_47301).
+   - The skin and seam follow the Catmull-Rom curve, so the seam no longer kinks.
+   - Seams are soft light beads.
+   - Placard UVs are inset 3 px, which removed the plate outline. Seat pictograms are side-view glyphs.
+9. **Vault speaker.** Gently bowed, at t 0.70, in vault tone with a lighter smooth face.
+
+### Open (all low)
+
+- **Crest-rail groove.** It is still faint, even after the move to x 0.724.
+- **Vault speaker.** It needs a crisp shadow edge on the side away from the cove (c120).
+- **Row-placard pictograms.** c120 seems to show a boxed seat-letter panel and a standing person, not seat glyphs. A clear placard photo would settle it.
+- **Seams and shingle joints at QA distance.** Rater A finds them now a little too soft against y_47301, after w8 softened them on close-up evidence. The two pull in opposite directions; a 2–3 mm darker core is the suggested compromise.
+- **Vault fore-aft streaks.**
+  - They also show in the studio render (`d_up`), so not only the AO volume causes them.
+  - Rater B's suggestion: analytic arc normals, with the falloff as a function of t instead of |x|.
+- **Doors 1, 2, 4 and 5.** Their cross-aisle ceilings are unverified, and the q01 camera still cannot show them (integration owns `test/qa.js`; the camera is in `from_ceiling.md`).
+- **Lighting.** w9a found that the crevice term darkened the strip under the outboard bins. The note is in `from_ceiling.md`, and the lighting work in r10 has mostly fixed it.
+
+### Sources added in wave 3 (`ref/web/ceiling/`, gitignored)
+
+- **liveandletsfly ANA 777-300ER THE Room review:** images 3–6, 11–13, 20, 26, 27, 119, 120, 124, 133, 134.
+- **SANspotter economy:** y10–y52.
+- **OMAAT THE Room:** 23, 31, 37.

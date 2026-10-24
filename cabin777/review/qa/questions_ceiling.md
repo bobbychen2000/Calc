@@ -10,3 +10,9 @@
 
 6. **Door-area ceilings.** The first real photos of a door-area ceiling (b_lalf_c133/c134, at the door-3 bar) show a dark bronze tray with round downlights, a louvred vent and a speaker. The model now uses that tray at door 3 only. Doors 1, 2, 4 and 5 keep the light dome. Is the dark tray used at every door cross aisle, or only at the bar?
 7. **Economy centre PSU** (replaces question 2). b_sany_y22 shows one raised dished housing with 4 dark sockets, then a smoked sign pill and stepped channel panels. The model now follows it. Does anyone have a photo showing a separate gasper row there?
+
+## Wave 3 (w6-w10)
+
+8. **Row placards.** c120 seems to show the row number, then a boxed seat-letter panel, then a standing-person pictogram. The model draws the row number and one side-view seat glyph per seat. Is there a clear close-up of an ANA 777 row placard?
+9. **Cove grille slats.** Are they lit white, as c120 suggests? The model now uses light backlit slots.
+10. **Vault fitting.** Is the bowed rounded rectangle on each vault panel in c120 a speaker or a recess? A close-up would settle its face finish.
