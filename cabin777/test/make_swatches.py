@@ -80,11 +80,11 @@ def synth_py_back(ratio, seed=7):
     and a few slightly lighter ones; dash ~2.6x the ground ((p90-p10)/p50 0.39-0.51 on py_37301, w5 rater B); fine
     weave grain [D]"""
     rng = np.random.default_rng(seed)
-    rows, cols = 24, 8
+    rows, cols = 20, 8                             # w7: rows 8.2 mm (py_37305 8.15 mm), wide enough to survive the mip
     ph, cw = S / rows, S / cols
     dim = np.ones((rows, cols)); ddim = np.ones((rows, cols))
     dom = rng.random((rows, cols))                 # w6: ~30 % dark-dominant cells (light x0.4), ~15 % light-dominant (dark x0.3)
-    dim[dom < 0.3] = 0.4; ddim[dom > 0.85] = 0.3
+    dim[dom < 0.36] = 0.35; ddim[dom > 0.88] = 0.4   # w7 (B): more dark-dominant cells
     for _ in range(16):                            # darker cells
         r0, c0 = rng.integers(0, rows), rng.integers(0, cols)
         v = rng.uniform(0.5, 0.7)
@@ -102,17 +102,19 @@ def synth_py_back(ratio, seed=7):
             x0 = c * cw + (cw - ln) / 2 + (cw / 4) * (r % 2) + rng.uniform(-6, 6)
             u = (x[0] - x0) % S
             seg = np.clip(np.minimum(u, ln - u) / 1.5, 0, 1) * (u < ln)
-            band = np.clip((2.4 - np.abs(((y[:, 0] - yc + S / 2) % S) - S / 2)) / 1.2, 0, 1)   # ~4.8 px = 3 mm, 0.45 of the pitch
+            band = np.clip((3.0 - np.abs(((y[:, 0] - yc + S / 2) % S) - S / 2)) / 1.0, 0, 1)   # w7: fat cells ~6 px = 3.8 mm
             lite = np.maximum(lite, band[:, None] * seg[None, :] * np.clip(rng.normal(1, 0.25), 0.5, 1.5) * dim[r, c])
-            # w6 (A + B): the navy-slate dash set between the light ones (py_37301 / 37305 dark-dash cover 7-32 %)
-            ln = np.clip(rng.normal(16, 4), 8, 24)
+            # w6 (A + B): the navy-slate dash set (py_37301 / 37305 dark-dash cover 7-32 %); w7: on its own band between
+            # the light rows so the two sets interlock into a mosaic (A + B)
+            band = np.clip((2.8 - np.abs(((y[:, 0] - yc - ph / 2 + S / 2) % S) - S / 2)) / 1.0, 0, 1)
+            ln = np.clip(rng.normal(19, 4), 10, 28)
             u = (x[0] - (x0 + cw / 2 + rng.uniform(-6, 6))) % S
             seg = np.clip(np.minimum(u, ln - u) / 1.5, 0, 1) * (u < ln)
             dark = np.maximum(dark, band[:, None] * seg[None, :] * rng.uniform(0.7, 1.0) * ddim[r, c])
-    out = (1 + 2.8 * lite) * (1 - 0.45 * dark)     # three-tone: light dashes ~3x, dark ~0.55x the ground
-    # brick patches on a 2-col x 3-row lattice (block std/mean ~0.17, py_37305), hard edges softened 1 px
-    blk = np.exp(rng.normal(0, 0.22, (rows // 3, cols // 2)))
-    blk = _blur_wrap(np.kron(blk, np.ones((int(3 * ph), int(2 * cw))))[:S, :S], 1.0)
+    out = (1 + 1.9 * lite) * (1 - 0.7 * dark)      # w7: light ~2.9x, dark ~0.3x the ground (local skew ~0, A + B)
+    # brick patches on a 2-col x 2-row lattice (block std/mean ~0.15, py_37305), crisp edges softened 0.5 px
+    blk = np.exp(rng.normal(0, 0.15, (rows // 2, cols // 2)))
+    blk = _blur_wrap(blk[(np.arange(S) // (2 * ph)).astype(int)][:, (np.arange(S) // (2 * cw)).astype(int)], 0.5)
     out *= blk
     mot = _blur_wrap(ratio.mean(2), 24); mot = (mot - mot.mean()) / (mot.std() + 1e-6)
     out *= np.exp(0.05 * mot)                      # very weak low-frequency term only
@@ -128,6 +130,14 @@ def synth_py_confetti(ratio, seed=11):
     rng = np.random.default_rng(seed)
     out = np.ones((S, S))
     yy, xx = np.mgrid[0:S, 0:S] + 0.5
+    # w7 (A): the wing ground carries the back's dark dash weave under the petals (py_37305; local p5 ~-35 %), rows
+    # ~7.8 mm (9 per 0.07 m tile), 4 dashes per row
+    for r in range(9):
+        for c in range(4):
+            yc = (r + 0.5) * S / 9 + rng.uniform(-1, 1); ln = np.clip(rng.normal(40, 10), 20, 60)
+            u = (xx - c * S / 4 - (S / 8) * (r % 2) - rng.uniform(-10, 10)) % S
+            m = np.clip((5 - np.abs((yy - yc + S / 2) % S - S / 2)) / 1.5, 0, 1) * np.clip(np.minimum(u, ln - u) / 2, 0, 1) * (u < ln)
+            out *= 1 - 0.4 * rng.uniform(0.6, 1.0) * m
     pts = []
     while len(pts) < 14:                          # w5 (A + B): fewer, more varied chips (polka dots before)
         p = rng.uniform(0, S, 2)

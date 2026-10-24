@@ -1,0 +1,208 @@
+{
+ "area": "py",
+ "rater": "A",
+ "round": "w7",
+ "commit": "9d9a406",
+ "score": 7.0,
+ "calibration": [
+  {
+   "issue": "w6a HIGH: back fabric two-tone periwinkle denim, no navy dashes",
+   "status": "partly fixed. Hue and saturation are fixed: q14 back hue 221 / sat 0.25 against py_37301 218 / 0.21; q13 mid rows 221 / 0.24 against py_37302 mid 220 / 0.17. (p90-p10)/p50 is fixed: 0.60 against 0.60. The navy dash set exists, but it is too weak after mip filtering. Pixels below 0.75x the median: q14 0.07, q13 mid 0.14, against py_37301 0.16, py_37303 0.29 and py_37302 mid 0.33. Local p5 is -28 against -44 to -71. Local skew is 0.8-1.0 against -0.8 to +0.3, so light flecks still dominate. Gradient energy is 12/17 against 20/31. Seen side by side, the cloth reads as soft snowy flecks with cloudy patches, not ANA's crisp grey mosaic."
+  },
+  {
+   "issue": "w6a MED: wings flat pale pillows with low contrast",
+   "status": "partly fixed. The ground is fixed: wing/back luminance is 1.04 (q14) and 1.13 (q13 fg), against 0.89-1.09, and hue is 221-223. Contrast is NOT fixed: 0.35-0.42 against py_37301 0.83, py_37302 1.00 and py_37303 0.65. Dark pixels are 0.00-0.03 against 0.26-0.32, because the ground under the petals is uniform."
+  },
+  {
+   "issue": "w6a MED: shell top chamfered + ~9 % too wide",
+   "status": "fixed. q13b shows a soft arched top with rounded corners. At the screen the code gives a shell of 0.465-0.47 against a bezel of 0.376 (ratio 1.24, was 1.40). The light rim outside the dark frame is about 3.2 cm, the same as py_37304's 3.3 cm."
+  },
+  {
+   "issue": "w6a MED: aisle shroud / flanks too pale, no sweep line or handle",
+   "status": "partly fixed. The silver strip and the handle recess now exist in the code. The colour is NOT fixed: q13 shroud #6c7482 L118, shroud/back 0.98, against py_37303 #4b525a, shroud/back 0.46, and py_37301 0.77. The shroud still reads as the palest grey object in the PY cabin."
+  },
+  {
+   "issue": "w6a LOW: pocket mesh a black slot",
+   "status": "partly fixed. The mesh is now #2a2d31 net with a dark recess (p6). The bucket still reads as a flat panel with a thin line rim. san_20's thick, curved, forward-bulging lip over a full-width coarse net is missing."
+  },
+  {
+   "issue": "w6a LOW: placards blank / flap rigid / silver bin housing",
+   "status": "placards are handed off (integration atlas). The bin is fixed (dark housing, silver cups). The flap has been split and curled, but this has introduced a visible mid crease and a protruding hem shelf, so the flap now reads as an I-beam (see issues)."
+  },
+  {
+   "issue": "w6a LOW: beige legs",
+   "status": "fixed (#9a9ea4 brushed)."
+  },
+  {
+   "issue": "w6b HIGH: one-tone sparse dashes, skew 1.2, block std 0.07",
+   "status": "partly fixed. Block std/mean is fixed: 0.108 (q14) and 0.154 (q13 fg), against 0.114 (py_37301). Skew is still 0.99 (q14) and 0.92 (q13 fg), against 0.02 (py_37301) and 0.25 (py_37303); the target was below 0.3."
+  },
+  {
+   "issue": "w6b MED: console body too light (console/back 0.98)",
+   "status": "fixed. q14 console face #374056, console/back 0.58, against py_37301 0.53-0.60."
+  },
+  {
+   "issue": "w6b MED: shell 1.29-1.40x bezel",
+   "status": "partly fixed. The code gives 1.24 against 1.14-1.17. This is acceptable given the dark frame."
+  },
+  {
+   "issue": "w6b MED: wing ground lavender / pale",
+   "status": "fixed (hue 221-223, ratio ~1.0)."
+  },
+  {
+   "issue": "w6b MED: no lumbar seams / neck step",
+   "status": "partly fixed. The headrest is 0.37 against a 0.45 back, so the neck step is right (1.22 against 1.21). The curved seam strip was not added, and the bolster sweep barely reads in q14."
+  },
+  {
+   "issue": "w6b LOW: fabric hue too violet",
+   "status": "fixed (221 against 218-221). The flap hue is 228-229 against 222-225, still slightly violet."
+  },
+  {
+   "issue": "w6b LOW: shroud lighter than fabric",
+   "status": "not fixed (see the w6a MED shroud entry)."
+  },
+  {
+   "issue": "w6b LOW: crown texture stretched",
+   "status": "partly fixed. The top section is now 0.935 / 0.31, but q13b still shows a band of enlarged blobs along the crown above the shell."
+  },
+  {
+   "issue": "w6b LOW: mesh slot, no recess",
+   "status": "fixed."
+  },
+  {
+   "issue": "w6b LOW: leg-rest bar light",
+   "status": "fixed by the darker pyArm."
+  }
+ ],
+ "details": [
+  {
+   "detail": "back + cushion fabric",
+   "score": 6.5,
+   "refs": "py_37301 back #93a1b9, C 0.60, dark 0.16, skew 0.02, g 20/31; py_37303 back dark 0.29; q14 #68738a, C 0.60, dark 0.07, skew 0.99, g 12/17; lag-1 vertical autocorrelation 0.49 (render) against 0.18 (photo) = rows blurred together"
+  },
+  {
+   "detail": "fabric colour",
+   "score": 7.5,
+   "refs": "hue 221 / sat 0.24-0.25 against 218-220 / 0.17-0.21"
+  },
+  {
+   "detail": "headrest wings (shape + fabric)",
+   "score": 6,
+   "refs": "py_37302 fg: rounded-rectangle pads spanning ~95 % of the flap height, top flush with the headrest top; model: egg/bean shapes 0.68-0.895 (81 % of the flap 0.64-0.905), top ~1 cm below; contrast 0.35-0.42 against 0.65-1.0"
+  },
+  {
+   "detail": "navy flap",
+   "score": 6.5,
+   "refs": "colour OK (q13 #27315b against py_37302 #273769). Geometry: the over-top bar and the hem shelf protrude, plus a crease mid-height, which reads as an I-beam or spool (q13, cmp crops). py_37302 / 37305 show a smooth sheet with soft corners and a flush stitched hem"
+  },
+  {
+   "detail": "shell incl. rear face",
+   "score": 7.5,
+   "refs": "py_37304 rear rim #464d55 against q13b #464c54 (exact); arched top OK; fabric crown band visible over the top from standing height"
+  },
+  {
+   "detail": "screen + frame + placards",
+   "score": 7.5,
+   "refs": "py_37304 / san_26 proportions OK; placards blank (handed off)"
+  },
+  {
+   "detail": "literature pocket",
+   "score": 6,
+   "refs": "san_20 / san_26: thick curved grey lip bulging aft, coarse hex net below it across the full width; p6: flat panel, thin line rim, mesh band"
+  },
+  {
+   "detail": "consoles (face, sockets, tab, lid, cup nose, plaques)",
+   "score": 7.5,
+   "refs": "py_37301 / 37303; console face/back 0.58 OK"
+  },
+  {
+   "detail": "window armrest",
+   "score": 7.5,
+   "refs": "py_37301 left, q14"
+  },
+  {
+   "detail": "aisle shroud",
+   "score": 5.5,
+   "refs": "py_37303 panel #4b525a (0.46 of back) against q13 #6c7482 (0.98)"
+  },
+  {
+   "detail": "leg rest + roller",
+   "score": 7,
+   "refs": "py_37301"
+  },
+  {
+   "detail": "footrest",
+   "score": 7.5,
+   "refs": "san_20"
+  },
+  {
+   "detail": "bottle bin",
+   "score": 7.5,
+   "refs": "san_20"
+  },
+  {
+   "detail": "legs",
+   "score": 7,
+   "refs": "san_20"
+  },
+  {
+   "detail": "gooseneck light",
+   "score": 7.5,
+   "refs": "py_37305, py_37301"
+  }
+ ],
+ "issues": [
+  {
+   "severity": "high",
+   "issue": "The back fabric still reads as soft white snow-flecks on blue with cloudy patches, not ANA's crisp grey tweed mosaic. The light dashes dominate, the navy dashes almost vanish at cabin distance, and the rows blur together. This is the largest surface in every PY view.",
+   "evidence": "q14 back against py_37301: dark fraction (<0.75x the median) 0.07 against 0.16 (py_37303 0.29, py_37302 mid 0.33); local p5/p95 -28/+50 against -49/+51; skew 0.99 against 0.02; gradient energy 12/17 against 20/31; lag-1 vertical autocorrelation 0.49 against 0.18, so the 6.8 mm rows (about 2.3 px at this distance) are mip-blurred into blobs. q13 mid rows: dark 0.14 against 0.33, skew 0.55 against -0.80.",
+   "fix": "test/make_swatches.py synth_py_back: (1) Balance the tones: out = (1 + 1.9*lite) * (1 - 0.62*dark), down from 2.8 / 0.45, and widen the dark dash band. The dark dashes use the same 'band' as the light ones; give them their own band at yc + ph/2 (between the rows) with half-width 2.8 px, so they do not share rows with the light dashes and survive the mip. (2) Increase dark dash length N(16,4) -> N(20,4), clip 10-28. (3) Coarsen the rows so they survive minification: rows 24 -> 18 per tile (pitch 9 mm), which keeps 2 px or more per row at q14 distance; py_37305 at about 1000 px/m allows 7-9 mm. (4) Drop the 'dim[dom<0.3]=0.4' clouds to 0.6, because the blotches read as soft clouds. Targets on q14: dark fraction 0.15 or more, skew below 0.3, local p5 about -45, lag-1 vertical autocorrelation below 0.35. Integration (not PY): confirm that the anisotropic filtering in 01_gl.js:201 takes effect in the QA browser. SwiftShader may not expose it, which would explain the blur."
+  },
+  {
+   "severity": "medium",
+   "issue": "The navy flap reads as an I-beam or spool: a protruding top bar, a hem shelf that catches a bright edge line, and a step where the curled lower half meets the upper half. ANA's flap is one smooth sheet with soft corners that wraps over the top, with a flush stitched hem.",
+   "evidence": "q13 foreground and mid seats (crop cmp2): bright horizontal lines at the top and bottom, the top corners appear to flare, and the q14 flap has 'lite' 0.17 at p98/p50 2.0 from the hem edge against 0.02 in py_37301. py_37302 fg flap: clean rectangle; py_37305: flush hem.",
+   "fix": "09b_py.js: make the over-top piece the same plane depth and pull it back. gRBox(0.26, 0.008, 0.07) -> gRBox(0.252, 0.008, 0.05, 0.004, 1) at trs(0, 0.906, -0.045), so it no longer overhangs the face. Hem: put the gBox(0.256, 0.022, 0.002) flush (dz -0.0045 -> -0.0041) and colour it '#2f3866' (close to the flap) so it reads as stitching, not a shelf. Hinge the lower half at its top edge: FL rotation 6 -> 3 deg, and overlap the halves by 1 cm (lower half height 0.135 -> 0.145) so no step shows. Corner radius on both halves 0.006 -> 0.015."
+  },
+  {
+   "severity": "medium",
+   "issue": "The headrest wings have the wrong shape and texture. They are bean or egg pods that stop about 1 cm below the headrest top and cover about 80 % of the flap height, and they carry a flat ground with white petals and no dark weave. ANA's wings are rounded-rectangle pads, flush with the top, running nearly the whole flap height, with the cloth's dark/light mottle under the petals.",
+   "evidence": "py_37302 fg: the wing spans y 290-410 against the flap 285-400; model q13 fg: wing 290-380 against flap 300-430. Wing contrast 0.35-0.42 against 0.65-1.00, dark fraction 0.00-0.03 against 0.26-0.32.",
+   "fix": "09b_py.js wing loft: SEC(0.655, 0.06, 0.05, 0, 0.024), SEC(0.67, 0.105, 0.10, 0, 0.04), SEC(0.70, 0.115, 0.115, 0, 0.04), SEC(0.875, 0.115, 0.115, 0, 0.04), SEC(0.90, 0.105, 0.10, 0, 0.04), SEC(0.912, 0.06, 0.05, 0, 0.024). Corner radius 0.058 -> 0.04 gives a squarer pad; check that the shell (0.925) still hides it from behind. make_swatches synth_py_confetti: multiply the ground by a dark mottle before adding the petals, out *= (1 - 0.45*dark_dash_field), reusing synth_py_back's dark dash generator at the wing tile scale (0.07 m: about 10 rows), so local p5 is about -35 and the dark fraction about 0.2."
+  },
+  {
+   "severity": "medium",
+   "issue": "The aisle shroud is still the palest grey object in the PY cabin. On ANA's photos it is a dark slate panel.",
+   "evidence": "py_37303 shroud panel #4b525a, shroud/back 0.46; py_37301 0.77; q13 shroud #6c7482, 0.98.",
+   "fix": "09b_py.js aisle shroud: use its own material instead of pyShell, gRBox(0.05, 0.64, 0.62) with { c: '#4e545e', r: 0.42, l: LAYER.plastic }. Recessed panel '#7a828c' -> '#5c636d'; base band '#5c626c' -> '#454a52'. Keep the silver strip pyTrim."
+  },
+  {
+   "severity": "low",
+   "issue": "From behind, the literature pocket still reads as a flat panel with a thin rim. san_20 shows a thick curved grey lip bulging aft over a coarse hex net that spans the full width under it.",
+   "evidence": "p6 compared with san_20 / san_26.",
+   "fix": "09b_py.js: rim gRBox(0.39, 0.014, 0.018) -> a gTube or loft lip of radius 0.012 following a shallow smile (centre 1.5 cm lower than the ends) at the mouth, 4 cm aft of the shell. Mesh gBox(0.33, 0.055) -> 0.37 x 0.07, moved up directly under the lip (py0 + 0.13), with the bucket loft's max depth 0.052 -> 0.06."
+  },
+  {
+   "severity": "low",
+   "issue": "From the standing rear view, a band of enlarged fabric blobs shows above the shell top across the whole seat width. In san_26 / py_37304 the shell top hides the fabric.",
+   "evidence": "q13b, the strip above every shell.",
+   "fix": "09b_py.js back loft: end at SEC(0.925, 0.36, 0.06, 0.03, 0.025) (drop the 0.935 section), so the crown stays under the shell's 0.94-0.948 arch."
+  },
+  {
+   "severity": "low",
+   "issue": "The flap hue is slightly violet.",
+   "evidence": "q13 flap hue 228, q14 229, against py_37302 225 and py_37301 222.",
+   "fix": "SEATMAT.pyCover '#343c5c' -> '#323e5f'."
+  },
+  {
+   "severity": "low (lighting, handed off)",
+   "issue": "The hard sun diamond is still on the 26A back.",
+   "evidence": "q14 x 490-550, y 300-400.",
+   "fix": "Lighting area."
+  }
+ ],
+ "questions": [
+  "Does SwiftShader in the QA browser expose EXT_texture_filter_anisotropic? If not, every fine fabric tile is judged blurred, and coarser PY rows (18 per tile) are the only PY-side remedy.",
+  "py_37302's foreground wing reads as dash cloth with small flecks, while py_37301 / 37305 show petals on a mottled ground. I scored against a mottled ground with petals on it, which satisfies both."
+ ]
+}
