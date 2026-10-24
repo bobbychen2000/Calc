@@ -61,11 +61,11 @@ const SEATMAT = {
   // shells / wall 0.38-0.42 (san_03 71-82 / 189, py_37303) [D]
   // ANA official look (user decision): wall-balanced consensus of py_37301-05 (wall = #e8e8e8): back #7f8490, wing #848899,
   // flap #3c4770 (B/R ~1.8 sRGB), shell #75808c, console #6c7684; all blue-grey (B > G >= R) [D]
-  pyFabric: { c: photoBase('#787f9a', 'py_back'), r: 0.9, l: LAYER.pyFleck },   // w5: bluer + a touch darker, q13 back mean ~#6b79a0 vs py_37302 foreground back #6b7b9e [D]
+  pyFabric: { c: photoBase('#7c8496', 'py_back'), r: 0.9, l: LAYER.pyFleck },   // w6: steel grey-blue, saturation ~0.2 (py_37301 / 37303 / 37305 0.15-0.21, A + B) [D]
   pyCover: { c: '#343c5c', r: 0.45, l: LAYER.leather },   // navy satin leatherette, fine pebble grain; #34406e rendered royal blue (ACES) vs py_37302 #2f3c6c
-  pyWing: { c: photoBase('#8a8c9c', 'py_confetti'), r: 0.9, l: LAYER.pyConfetti },
-  pyShell: { c: '#7a8088', r: 0.42, l: LAYER.plastic },   // w2: rear shell / wall 0.28-0.34 rendered vs 0.4-0.6 in photos
-  pyArm: { c: '#6c7280', r: 0.45, l: LAYER.plastic },
+  pyWing: { c: photoBase('#6e7790', 'py_confetti'), r: 0.9, l: LAYER.pyConfetti },   // w6: wing / back ~0.9-1.0 (py_37301 / 37305, A + B) [D]
+  pyShell: { c: '#6a7079', r: 0.42, l: LAYER.plastic },   // w6: darker, shroud py_37303 #4b525a (A + B) [D]
+  pyArm: { c: '#525a6c', r: 0.45, l: LAYER.plastic },   // w6: console / back ~0.5 (py_37301 #505d7f, A + B) [D]
   pyArmPad: { c: '#8a919c', r: 0.4, l: LAYER.plastic },   // ANA generation: light blue-grey console lid with a groove (py_37303 / 37301)
   pyBin: { c: '#b8bcc0', r: 0.3, m: 0.85, l: LAYER.brushed },
   pyBay: { c: '#4a4c50', r: 0.6, l: LAYER.plastic },

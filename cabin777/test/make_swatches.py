@@ -82,7 +82,9 @@ def synth_py_back(ratio, seed=7):
     rng = np.random.default_rng(seed)
     rows, cols = 24, 8
     ph, cw = S / rows, S / cols
-    dim = np.ones((rows, cols))
+    dim = np.ones((rows, cols)); ddim = np.ones((rows, cols))
+    dom = rng.random((rows, cols))                 # w6: ~30 % dark-dominant cells (light x0.4), ~15 % light-dominant (dark x0.3)
+    dim[dom < 0.3] = 0.4; ddim[dom > 0.85] = 0.3
     for _ in range(16):                            # darker cells
         r0, c0 = rng.integers(0, rows), rng.integers(0, cols)
         v = rng.uniform(0.5, 0.7)
@@ -92,7 +94,7 @@ def synth_py_back(ratio, seed=7):
         for r in range(r0, r0 + rng.integers(1, 3)):
             for c in range(c0, c0 + rng.integers(1, 3)): dim[r % rows, c % cols] = 1.15
     y = np.arange(S)[:, None] + 0.5; x = np.arange(S)[None, :] + 0.5
-    lite = np.zeros((S, S))
+    lite = np.zeros((S, S)); dark = np.zeros((S, S))
     for r in range(rows):
         for c in range(cols):
             yc = (r + 0.5) * ph + rng.uniform(-0.8, 0.8)
@@ -102,7 +104,16 @@ def synth_py_back(ratio, seed=7):
             seg = np.clip(np.minimum(u, ln - u) / 1.5, 0, 1) * (u < ln)
             band = np.clip((2.4 - np.abs(((y[:, 0] - yc + S / 2) % S) - S / 2)) / 1.2, 0, 1)   # ~4.8 px = 3 mm, 0.45 of the pitch
             lite = np.maximum(lite, band[:, None] * seg[None, :] * np.clip(rng.normal(1, 0.25), 0.5, 1.5) * dim[r, c])
-    out = 1 + 2.1 * lite                           # w5: 2.6 read as a barcode (A + B)
+            # w6 (A + B): the navy-slate dash set between the light ones (py_37301 / 37305 dark-dash cover 7-32 %)
+            ln = np.clip(rng.normal(16, 4), 8, 24)
+            u = (x[0] - (x0 + cw / 2 + rng.uniform(-6, 6))) % S
+            seg = np.clip(np.minimum(u, ln - u) / 1.5, 0, 1) * (u < ln)
+            dark = np.maximum(dark, band[:, None] * seg[None, :] * rng.uniform(0.7, 1.0) * ddim[r, c])
+    out = (1 + 2.8 * lite) * (1 - 0.45 * dark)     # three-tone: light dashes ~3x, dark ~0.55x the ground
+    # brick patches on a 2-col x 3-row lattice (block std/mean ~0.17, py_37305), hard edges softened 1 px
+    blk = np.exp(rng.normal(0, 0.22, (rows // 3, cols // 2)))
+    blk = _blur_wrap(np.kron(blk, np.ones((int(3 * ph), int(2 * cw))))[:S, :S], 1.0)
+    out *= blk
     mot = _blur_wrap(ratio.mean(2), 24); mot = (mot - mot.mean()) / (mot.std() + 1e-6)
     out *= np.exp(0.05 * mot)                      # very weak low-frequency term only
     out *= np.exp(0.06 * _blur_wrap(rng.normal(0, 1, (S, S)), 0.6) / 0.3)   # fine weave grain
@@ -130,10 +141,10 @@ def synth_py_confetti(ratio, seed=11):
         # polygonal chip: facets from a k-gon, pointed tip at th=0, shallow notch at th=pi (sakura petal)
         poly = (np.cos(np.pi / k) / np.cos((th + ph0) % (2 * np.pi / k) - np.pi / k)) ** 1.0   # sharp facets
         prof = req * poly * (1 + 0.18 * np.cos(th)) * (1 - 0.22 * np.exp(-((np.abs(th) - np.pi) / 0.25) ** 2))
-        out += 3.2 * np.clip(rng.normal(1, 0.15), 0.7, 1.3) * np.clip((prof - rr) / 1.0, 0, 1)
+        out += 4.4 * np.clip(rng.normal(1, 0.15), 0.7, 1.3) * np.clip((prof - rr) / 1.0, 0, 1)
     for cy, cx in rng.uniform(0, S, (60, 2)):
         rr = np.hypot((yy - cy + S / 2) % S - S / 2, (xx - cx + S / 2) % S - S / 2)
-        out += rng.uniform(0.5, 1.0) * np.clip((rng.uniform(2, 5) - rr) / 1.0, 0, 1)
+        out += rng.uniform(0.3, 0.6) * np.clip((rng.uniform(2, 5) - rr) / 1.0, 0, 1)
     for cy, cx in rng.uniform(0, S, (30, 2)):      # w5: mid-size specks 3-6 mm (py_37305 petals 3-12 mm)
         rr = np.hypot((yy - cy + S / 2) % S - S / 2, (xx - cx + S / 2) % S - S / 2)
         out += rng.uniform(1.5, 2.5) * np.clip((rng.uniform(2, 3.5) - rr) / 1.0, 0, 1)

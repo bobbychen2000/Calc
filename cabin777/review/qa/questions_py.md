@@ -11,3 +11,13 @@
    size) carry the cloud zones?
 3. **Bulkhead row 25.** Real photos (alv_14/15, san_03, py_37303) show monitors mounted on the bulkhead wall, so the
    row-25 seats carry no seatback screen. The model matches this (`noScreen`); please confirm if you know otherwise.
+
+## Wave 3 (w5, not blocking)
+
+4. **Petal fabric on the upper back?** In py_37302 the petal fleck seems to continue from the wings onto the top of the
+   back. The model keeps the dash grid on the whole back and the petals on the wings only (py_37301 / 37305). Do you
+   know otherwise?
+5. **Gooseneck position.** The model now shows it stowed, hanging by the shell flank (py_37301 / 37303, san_26), not
+   pulled out as in the py_37305 close-up.
+6. **Literature pocket.** ANA's photos never show the lower seat back, so the model follows the 2023 SANspotter photos
+   (san_20 / san_26): a moulded bucket with a mesh band across its lower front.
