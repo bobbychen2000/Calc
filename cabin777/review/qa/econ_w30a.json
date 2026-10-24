@@ -1,0 +1,232 @@
+{
+ "area": "econ",
+ "rater": "A",
+ "round": "w30",
+ "candidate": "d26609f",
+ "lens": "Skeptic at matched physical scale. New q15 camera (1.55 m, pitch -0.26) re-matched to y_47300: back tops y 222-225 vs 231-233, pillows 425-495 vs 420-490, seat centres within 5 px, so photo and render boxes now coincide for backs / covers / pillows / pad wings; pan boxes moved to the belt-free front band (render y 550-573 vs photo 505-560, the render's belts and buckles cover the photo box) - pan numbers are therefore a little less like-for-like than the backs. st.py stats (mean RGB, Rec.709 luma L, B/R, G/R, p10/50/90, p90/p10, p90/50, coverage > 1.4x median, blob mean, hpCV sigma 3); cover extents by low-variance flood fill; armrest bright-run widths per row (arm.py) and dark-run widths across the pan joints; arm colour boxes; studio close-ups e4 / e4b vs y_47306 (tick guard) and r29s vs r30s side-by-sides. Scripts and crops in /tmp/claude-0/-home-user-Calc/1061ce54-e372-5114-b4da-a519c8133fa5/scratchpad/raterA30 (q15.py, q15_w30.json, arm.py, bx.png, zL.png / zR.png (w29 | w30 | photo), arm_cmp.png, padD.png, ghc.png, gp.png / gpp.png, s_e*.png, e7f.png, g16c.png, q16 / q17 *_cmp.jpg). q16 / q17 cameras still do not match y_47301 / y_47303 framing, so they were used only for qualitative checks.",
+ "score": 8.1,
+ "priorIssues": [
+  {
+   "issue": "w29a-1 (medium) armrests head-on 1.4x wide, plus a second white bar (the C plate) under the arm",
+   "status": "partly fixed (width fixed; the lower bar and the long arm remain)",
+   "evidence": "q15 bright-run width of the D|E / F|G arm at y 450-500: 21-26 px vs 23-25 in y_47300 (w29 27-30). Colour: arm top #afafaf L176 vs #b3afad L176 / #a9a6a3 L167 (OK; B/R 1.00 vs 0.96, a hair cool). But a second 5-7 px white run (the lower plate, L165) still runs beside the arm at y 480-545 (arm_cmp.png), and the arm itself runs down to y 520-525 where the photo's arm ends at y 485 with its pivot boss over a grey mechanism."
+  },
+  {
+   "issue": "w29a-2 (medium) diamond backs bold white stars at row distance",
+   "status": "fixed at q15 (slightly contrasty); pan now a little dark / flat",
+   "evidence": "q15 seat C back: coverage 0.111 vs 0.119 (w29 0.23), blob mean 9.3 vs 7.1 (w29 21), p90/p10 2.82 vs 2.17 (w29 3.66), L88 vs 85. Diamond pan F (front band): L67 vs 75, p90/p10 1.56 vs 1.84, coverage 0.038 vs 0.078 - but the stars still read as separate 4-point stars on a dark ground in gp.png where y_47300's pan shows cloudy light patches over a lattice. q16 near-left diamond backs visibly softer than w29 (g16c.png)."
+  },
+  {
+   "issue": "w29a-3 (medium) tick ground too light, strokes soft at row distance",
+   "status": "fixed at row distance; overshoots close up (regression, w30a-1)",
+   "evidence": "q15 back D p90/p10 3.50 vs 3.20 (w29 2.61), p10 39 vs 46, hpCV 0.41 vs 0.39; back F 3.13 vs 3.52 (w29 2.42), hpCV 0.37 vs 0.41. Tick pans (front band) 3.64 / 3.93 vs 4.52 / 4.38 (w29 2.77 / 2.81). But coverage now 0.23 / 0.19 vs 0.15 / 0.16 and blob mean 3.8 / 3.2 vs 2.3 / 2.1 (strokes chunkier), and the e4 guard broke: middle back p90/p10 7.14 vs y_47306 4.12 (w29 4.0), p10 20 vs 42."
+  },
+  {
+   "issue": "w29a-4 (medium) dark gaps between neighbouring pans",
+   "status": "partly fixed",
+   "evidence": "Dark runs (< 0.5x row median) at the pan joints in q15: y 530 D|E 10 px, F|G 10 px; y 550 D|E 12, F|G 11; y 560 E|F 14 (w29 11-23). y_47300 at the same rows: none (only a 2-3 px seam). Studio e1 / e7: pans now touch at the front, no intersection with the lower plate and no z-fighting, so the residual gap is the dark void under the arm between the bullnoses' tuck-under (0.415 base under a 0.455 top)."
+  },
+  {
+   "issue": "w29a-5 (low) pillow too blue, flat, round corners",
+   "status": "colour fixed; shape / shading not fixed",
+   "evidence": "q15 pillows D-G B/R 2.00-2.02 vs 1.98-2.03, G/R 1.21 vs 1.19, L42-45 vs 38-50 (all on target). p90/50 1.16-1.19 vs 1.24-1.73 (still flat; w29 1.15-1.21). zL / zR: outline still a rounded rectangle with straight edges; the photo's pinched edges and pointed dog-ears do not read at q15, and only a slight corner sharpening shows in e4b."
+  },
+  {
+   "issue": "w29a-6 (low) tick-back pads all one fleck tone",
+   "status": "fixed",
+   "evidence": "q15 pad wings: D (light) L124 / B/R 1.71 / p90/p10 1.48 vs y_47300 L119 / 1.75 / 1.87; F (dark fleck) L67 / 2.19 / 2.80 vs 77 / 1.99 / 3.79; E (fleck back, tick pad) L98 vs 108. padD.png at 4x: light cloudy mottle like the photo, a little blotchier. Studio e4 middle pad L110-115, B/R 1.62-1.70, coverage 0.10-0.13, but blob mean 21-34 (large white cloud patches; y_47306 pads 6.6-7.2)."
+  },
+  {
+   "issue": "w29a-7 (low) mosaic pan light and blue; fleck distance contrast 0.88x",
+   "status": "mosaic tone fixed, still blue; fleck not fixed",
+   "evidence": "G mosaic pan (front band) L81 vs 85 (w29 95), p90/50 1.41 vs 1.42, coverage 0.104 vs 0.113; B/R 1.92 vs 1.69 (w29 1.91). Fleck backs E / G p90/p10 2.65 / 2.73 vs 3.00 / 2.99 (w29 2.62 / 2.65), hpCV 0.42 / 0.44 vs 0.49: the peak 1.35 did not survive the mip chain."
+  },
+  {
+   "issue": "w29a-8 (low) cover width, foot crease, bezel dots, belts at the crease, legs",
+   "status": "not fixed",
+   "evidence": "With framing now matched, q15 covers are 79-84 x 68-72 px (h/w 0.82-0.90) vs y_47300 60-78 x 38-52 (h/w 0.60-0.74): 1.45x tall, 1.15x wide; bottoms y 310-311 vs 288-292. y_47306 / b_ss_13 do show covers hanging below the pad, so only part of this is wrong. Belts: V straps and two light buckle blocks mid-pan on every hero seat vs tucked in y_47300."
+  },
+  {
+   "issue": "w29a-L1 (lighting) covers navy off-axis / light head-on",
+   "status": "not fixed (lighting r3 pending)",
+   "evidence": "q15 covers D-G L49 / 56 / 57 / 49, B/R 1.62-1.64 vs 62 / 46 / 37 / 35, 1.61-2.01; e4 covers still navy vs silver-grey in y_47306."
+  },
+  {
+   "issue": "w29a-L2 (lighting) triplanar smear on 45 deg faces, far rows snowy",
+   "status": "not fixed",
+   "evidence": "g16c.png: the nearest q16 seats' back-top rolls and pad wings still show smeared light blotches."
+  },
+  {
+   "issue": "w29a-C1 (integration) q15 camera ~10 cm low",
+   "status": "fixed",
+   "evidence": "Back tops y 222-225 vs 231-233, pillows 425-495 vs 420-490, cover tops 240-243 vs 241-251; the photo/render boxes for backs, covers, pillows and pad wings are now the same rectangles."
+  }
+ ],
+ "details": [
+  {
+   "detail": "Fabric: tick weave",
+   "score": 8.0,
+   "refs": "q15 backs D / F p90/p10 3.50 / 3.13 vs 3.20 / 3.52, but coverage 0.23 / 0.19 vs 0.15 / 0.16, blobs 3.8 / 3.2 vs 2.3 / 2.1; pans 3.6 / 3.9 vs 4.5 / 4.4; close-up e4 p90/p10 7.1 vs 4.1, p10 20 vs 42 (too harsh)"
+  },
+  {
+   "detail": "Fabric: diamond lattice",
+   "score": 8.1,
+   "refs": "C back coverage 0.11 vs 0.12, blobs 9.3 vs 7.1, p90/p10 2.8 vs 2.2; pan L67 vs 75, p90/p10 1.56 vs 1.84, separate stars vs cloudy lattice (gp.png / gpp.png)"
+  },
+  {
+   "detail": "Fabric: petal fleck",
+   "score": 7.9,
+   "refs": "q15 E / G p90/p10 2.65 / 2.73 vs 3.0, hpCV 0.42-0.44 vs 0.49; L / coverage on target"
+  },
+  {
+   "detail": "Fabric: dash mosaic",
+   "score": 8.2,
+   "refs": "G pan L81 vs 85, p90/50 1.41 vs 1.42; B/R 1.92 vs 1.69"
+  },
+  {
+   "detail": "Fabric mix (backs, pans, pads)",
+   "score": 8.6,
+   "refs": "backs, pans and now pads in the y_47300 order: pad D light L124 vs 119, F dark fleck 67 vs 77, E 98 vs 108"
+  },
+  {
+   "detail": "Headrest pad + cover",
+   "score": 7.9,
+   "refs": "cover 1.45x tall / 1.15x wide at matched framing (68-72 vs 38-52 px); light pad close-up blobs 21-34 vs 7 (camouflage patches in e4 / q16 near-left)"
+  },
+  {
+   "detail": "Pillow",
+   "score": 8.0,
+   "refs": "colour on target (B/R 2.0 vs 2.0); p90/50 1.17 vs 1.24-1.73; rounded-rectangle outline, no pinched dog-ears at q15"
+  },
+  {
+   "detail": "Armrests",
+   "score": 8.0,
+   "refs": "width 21-26 vs 23-25 px, colour L176 vs 167-176; second white bar (lower plate) 5-7 px beside the arm to y 545; arm front at y 525 vs 485 (arm_cmp.png)"
+  },
+  {
+   "detail": "Belts",
+   "score": 8.2,
+   "refs": "V straps + light buckles mid-pan on every hero seat (y_47303 style); y_47300 tucked"
+  },
+  {
+   "detail": "Seat pan / front",
+   "score": 8.0,
+   "refs": "joint gaps 10-14 px vs none (w29 11-23); tick pan contrast 3.6-3.9 vs 4.4-4.5; no pan/plate intersection (e1, e7)"
+  },
+  {
+   "detail": "Back silhouette",
+   "score": 8.0,
+   "refs": "zL / zR: outline and width as y_47300; pad overhangs the back edge by ~12 px on seat D (padD.png) where the photo's pad sits inside it"
+  },
+  {
+   "detail": "Rear shell / hood / back top",
+   "score": 8.0,
+   "refs": "e2 / e9 unchanged"
+  },
+  {
+   "detail": "Screen / handset",
+   "score": 8.0,
+   "refs": "unchanged (no lower-bezel dots)"
+  },
+  {
+   "detail": "Tray / pocket / AC",
+   "score": 8.0,
+   "refs": "unchanged"
+  },
+  {
+   "detail": "Legs / footrest / under-seat",
+   "score": 7.5,
+   "refs": "e8 unchanged"
+  },
+  {
+   "detail": "Far-LOD rows",
+   "score": 7.8,
+   "refs": "q16 near-left diamond backs softer than w29; triplanar smear on back tops remains (lighting)"
+  }
+ ],
+ "issues": [
+  {
+   "id": "w30a-1",
+   "severity": "medium",
+   "owner": "econ",
+   "title": "Tick tile overshoots: close-up ground near-black (regression) and strokes chunkier at row distance",
+   "detail": "Fabric: tick weave",
+   "evidence": "Studio e4 middle tick back (170-400 x 330-480): p10 20 vs y_47306 42, p90/p10 7.14 vs 4.12 (w29 4.0, the w29a-3 guard was 3.8-4.2), blob mean 27 vs 13; e4b 6.3 (w29 3.7). q15: coverage 0.23 / 0.19 vs 0.15 / 0.16, blob mean 3.8 / 3.2 vs 2.3 / 2.1, back D p10 39 vs 46. Distance contrast is now right (3.5 / 3.1 vs 3.2 / 3.5), so keep the contrast and take back the darkest ground and the fatter strokes.",
+   "fix": "test/make_swatches.py tick block: l.397 floor the deepened ground, np.maximum(m - 1.25 * (m - r), 0.5 * m) instead of 0.03 (lifts only the near-black texels that set the close-up p10); l.394 rim ease 0.55 -> 0.45 (coverage back to ~0.16). Re-cut tex/tex_y_tick.png. Targets: e4 middle back p90/p10 4.0-4.6, p10 >= 35; q15 back D / F p90/p10 >= 3.0, coverage 0.15-0.18, blob mean <= 2.8; tick pans >= 3.6."
+  },
+  {
+   "id": "w30a-2",
+   "severity": "medium",
+   "owner": "econ",
+   "title": "Armrest still reads as two white bars and runs ~40 px lower than in y_47300",
+   "detail": "Armrests",
+   "evidence": "arm_cmp.png (q15 D|E at 3x): the arm bar is now the right width (21-26 vs 23-25 px) and colour (L176), but the lower C plate still shows as a parallel white bar 5-7 px wide beside the arm from y 480 to 545, and the arm top runs to y 520-525 where y_47300's arm ends at y 485 in a round pivot boss over a grey mechanism. y_47303 (side) does show the C and a long arm, so the arm length may be right; the head-on read is still not.",
+   "fix": "09a_econ.js l.311 regular-row plate: SEATMAT.arm -> a mid grey { ...SEATMAT.armPost, c: '#8e9096' } for the non-end branch (y_47300 shows grey under the arm) or pull its x 6 mm inboard of the arm centre so the bar hides it head-on; add the pivot boss at the arm nose, gCyl(0.017, 0.017, 0.05, 14) rotated about z at (xa, 0.64, -0.40) in SEATMAT.arm. Target: one bright run per arm at y 480-520 in q15."
+  },
+  {
+   "id": "w30a-3",
+   "severity": "low",
+   "owner": "econ",
+   "title": "Pan joints still dark 10-14 px",
+   "detail": "Seat pan / front",
+   "evidence": "q15 dark runs at the D|E / E|F / F|G joints y 530-560: 10-14 px (w29 11-23) vs none in y_47300 (2-3 px seam). e1 / e7 show the bullnoses touching at the top front; the void is the tuck-under below (base 0.415 under a 0.455 top) seen between them.",
+   "fix": "09a_econ.js l.72: ps[0] w 0.415 -> 0.44 and the inserted section (l.74) w 0.44 -> 0.452, so the side walls stay near-vertical; or a dark-navy fabric filler gRBox(0.03, 0.06, 0.40) between pans at each regular-row arm x (pan fabric, so it reads as the seam). Target <= 6 px."
+  },
+  {
+   "id": "w30a-4",
+   "severity": "low",
+   "owner": "econ",
+   "title": "Pillow shape and shading unchanged at q15",
+   "detail": "Pillow",
+   "evidence": "Colour fixed (B/R 2.00-2.02 vs 1.98-2.03). p90/50 1.16-1.19 vs 1.24-1.73; outline a rounded rectangle with straight edges in zL / zR, where y_47300's four pillows have concave edges between pointed dog-ears and a creased dome.",
+   "fix": "09a_econ.js pillow loft: pinch the edge midpoints, not only the corners - scale the half-width by (1 - 0.06 * cos(pi * Z)) and half-height by (1 - 0.08 * cos(pi * X)) so the edges curve inward ~4 mm; dome exponent 0.45 -> 0.35. Target q15 p90/50 >= 1.25, visible points at the four corners."
+  },
+  {
+   "id": "w30a-5",
+   "severity": "low",
+   "owner": "econ",
+   "title": "Diamond pan: separate stars on a dark ground; fleck distance contrast unchanged",
+   "detail": "Fabric: diamond lattice; Fabric: petal fleck",
+   "evidence": "Pan F front band L67 vs 75, p90/p10 1.56 vs 1.84, coverage 0.038 vs 0.078; gp.png vs gpp.png: distinct 4-point stars vs cloudy light patches. Fleck backs p90/p10 2.65-2.73 vs 3.0 (unchanged since w29).",
+   "fix": "09a_econ.js ECON_PAN_B base #414862 -> #474e6a (L +8); LAYER.yDiamondPan gain +0.1 to recover the cloud contrast. Fleck: the peak lift does not survive the mips; make_swatches.py l.410 keep 0.8 -> 0.9 (more flecks rather than brighter ones; coverage is on target, so check it stays <= 0.23)."
+  },
+  {
+   "id": "w30a-6",
+   "severity": "low",
+   "owner": "econ",
+   "title": "Carried: covers 1.45x tall at matched framing, light pad blotchy close up, mosaic B/R, belts, bezel dots",
+   "detail": "Headrest pad + cover; Fabric: dash mosaic; Belts; Screen",
+   "evidence": "q15 covers 68-72 vs 38-52 px tall (y_47306 / b_ss_13 support some overhang below the pad); e4 light pad blob mean 21-34 vs y_47306 pads 6.6-7.2; mosaic pan B/R 1.92 vs 1.69; belts mid-pan; no bezel dots.",
+   "fix": "Cover lofts (l.118-130) bottom up 2 cm; light pad: ECON_HEAD_L could use a 0.6-gain copy of the diamond layer (as layer 34 does for the pan) to halve the cloud patches; ECON_PAN_C #4d5779 -> #515878 (B/R -0.1)."
+  },
+  {
+   "id": "w30a-L1",
+   "severity": "medium",
+   "owner": "lighting",
+   "title": "Headrest covers navy off-axis / light head-on (carried, r3 pending)",
+   "detail": "Headrest pad + cover (not scored)",
+   "evidence": "q15 head-on L49-57 vs 35-62; e4 navy vs silver-grey y_47306.",
+   "fix": "As w29a-L1 (cover grazing sheen lobe)."
+  },
+  {
+   "id": "w30a-L2",
+   "severity": "low",
+   "owner": "lighting",
+   "title": "Triplanar smear on back tops / pad wings in q16 (carried)",
+   "detail": "Far-LOD rows (not scored)",
+   "evidence": "g16c.png nearest seats' back-top rolls.",
+   "fix": "As w29a-L2."
+  },
+  {
+   "id": "w30a-C1",
+   "severity": "low",
+   "owner": "integration",
+   "title": "q16 / q17 cameras do not match y_47301 / y_47303",
+   "detail": "(not scored)",
+   "evidence": "q17 render looks down from ~1 m higher and closer than y_47303 (render windows fill the top third; photo shows the full seat row in side view); q16 is further aft and lower-left than y_47301. Box-matched stats are impossible there.",
+   "fix": "test/qa.js q16 / q17: re-fit the camera to the photos as was done for q15 (match back-top rows and seat spacing)."
+  }
+ ],
+ "questionsForUser": [],
+ "extraRefsSearched": "No new downloads; used ref/ana y_47300 / 47301 / 47303 / 47306 and ref/web/econ b_ss_13 (covers hanging below the pad, pillow points)."
+}

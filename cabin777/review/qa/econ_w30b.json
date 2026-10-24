@@ -1,0 +1,272 @@
+{
+ "area": "econ",
+ "rater": "B",
+ "round": "w30",
+ "candidate": "d26609f",
+ "lens": "Geometry and proportion first at the matched q15 (row 34 D-G head-on as y_47300; the camera now 10 cm higher: back tops y~225 vs 233, cover tops 242 vs 240, pillow tops 421-423 vs 411-418, so all boxes re-matched: render seat centres 235/390/545/700, photo 247/390/543/688), then materials, colour, lighting and artefacts. Scripts in /tmp/claude-0/-home-user-Calc/1061ce54-e372-5114-b4da-a519c8133fa5/scratchpad/raterB30: m30.py (patch stats per seat D-G for back, pan, cover, pillow and pad wing: mean RGB, L, B/R, saturation, p10/50/90, p90/p10, p90/50, bright = share > 1.4x median, blobs / kpx, 15 px low-pass CV / min), prof.py (cover extents from flat runs), pil.py (pillow segmentation: size, fill, row widths at 5/50/95 %), m2.py / m4.py (studio, q16 and arm patches), plus inline tercile colour of the tick backs and joint dark-run widths. Pixel change r29 -> r30: q15 91 % (camera move), q16 15 %, q17 14 %. Crops: z_q15_3.png (r30 / r29 / photo), z_s12.png, z_s34.png, z_arm.png, z_q16_econAisle.png, z_q17_econBacks.png, z_e1_front.png, z_e4b_pillow.png, z_e7_arm.png.",
+ "score": 8.2,
+ "priorIssues": [
+  {
+   "issue": "w29b-1 (medium) headrest cover ~1.3x too tall head-on",
+   "status": "not fixed (by design, open question 21)",
+   "evidence": "prof.py q15: render covers rows 242-313 = 71 px, cols 81-82 px, H/W 0.87-0.88 on all four seats; y_47300 49-50 x 65-73 px, H/W 0.67-0.75. Width ratio 1.18x, height 1.43x at the new framing."
+  },
+  {
+   "issue": "w29b-2 / w29a-3 (medium) tick ground too light, strokes washed out",
+   "status": "largely fixed (spread); new hue offset found (w30b-2)",
+   "evidence": "q15 back D p10 57 vs 52 (r29 66), p90/p10 2.48 vs 2.90 (2.09), bright 0.142 vs 0.136 (0.091), blobs 63 vs 65 / kpx. Pans D / E p90/p10 2.80 / 3.02 vs 3.97 / 3.73 (r29 2.46 / 2.50), bright 0.167 / 0.195 vs 0.243 / 0.237, blobs 93 / 75 vs 112 / 77. Darkest 20 % of back D now 26,36,102 vs photo 23,40,88: the ground went ultramarine, not navy. Seat F back still L99 vs 78."
+  },
+  {
+   "issue": "w29b-3 / w29a-L1 (medium, lighting) covers navy off-axis, light and grey head-on",
+   "status": "not fixed",
+   "evidence": "q15 head-on covers L54.5-63.0, B/R 1.62-1.64 vs y_47300 41-69, 1.65-2.01; q16 near cover L53.7 vs y_47301 108.4; e4 cover L39.5 vs y_47306 89.8-130.6."
+  },
+  {
+   "issue": "w29b-4 (low) fleck backs repeated dark cloud",
+   "status": "not fixed",
+   "evidence": "q15 fleck backs E / G 15 px low-pass CV 0.049 / 0.056, min/mean 0.85 / 0.85 vs y_47300 0.034 / 0.029, 0.90 / 0.93 (r29 0.051 / 0.049). The dark cloud mid-back is still visible in e4b (right seat). Point stats fine: L 63.8 / 63.9 vs 69.2 / 61.7, p90/50 1.74 / 1.75 vs 1.80 / 1.79, bright 0.181 / 0.186 vs 0.186 / 0.186."
+  },
+  {
+   "issue": "w29b-5 / w29a-5 (low) pillow too blue, textureless, corners round",
+   "status": "colour fixed; texture and shape not fixed",
+   "evidence": "q15 pillows B/R 2.00-2.01 vs 1.94-2.05 (r29 2.31), L 49.7-51.1 vs 40.6-52.7. p90/50 1.12-1.15 vs 1.25-1.62, bright 0.000 vs 0.012-0.25. pil.py: fill 0.78-0.93 vs 0.53-0.70, width at 5 % of the height 88-98 px vs 7-21 px: the render still reads as a full rounded rectangle; the dog-ears / pinched corners of y_47300 do not show at q15 or in e4b."
+  },
+  {
+   "issue": "w29b-6 / w29a-7 (low) mosaic pan light and blue",
+   "status": "lightness fixed; blue worse",
+   "evidence": "q15 pan G L88.1 vs 86.8 (r29 98.2), B/R 1.94 vs 1.72 (r29 1.86), bright 0.062 vs 0.139 (render box is the pan front edge, rows 552-575, as the new camera crops the pans)."
+  },
+  {
+   "issue": "w29b-7 / w29a-2 (low / medium) diamond stars few and big",
+   "status": "brightness fixed on backs, overshot on the pan; size not fixed",
+   "evidence": "q15 pan F bright 0.006 vs 0.071, blobs 4.8 vs 12.2 / kpx, p90/50 1.23 vs 1.33 (r29 0.101 / 5.2 / 1.40): the pan stars nearly vanished at row distance and the soft big star shapes remain as low-contrast clouds. e1 diamond back bright 0.093 vs y_47302 0.128 (r29 0.155), blobs 6.6 vs 34.1 / kpx. q16 near diamond back bright 0.067, blobs 9.5."
+  },
+  {
+   "issue": "w29b-8 (low) armrests a step light",
+   "status": "fixed (tone), a hair cool",
+   "evidence": "q15 arm L153.6 (target 145-155, photo 139.9), rgb 151,152,156 B/R 1.04 vs 142,138,139 0.98."
+  },
+  {
+   "issue": "w29b-9 (medium, lighting) mid / far rows snowy",
+   "status": "not fixed",
+   "evidence": "q16 far right 21.4 vs y_47301 4.5 bright blobs / kpx, far left 14.1 vs 8.1."
+  },
+  {
+   "issue": "w29b-10 / w29a-8 (low) carried small parts (cover foot crease, pocket, legs, bezel dots, belts laid on the pans)",
+   "status": "not fixed",
+   "evidence": "e2 / e5 / e8 / e9 unchanged; q15 belts still lie across the pans where y_47300 tucks them."
+  },
+  {
+   "issue": "w29a-1 (medium) armrests head-on read as two chunky white bars",
+   "status": "partly fixed",
+   "evidence": "Arms slimmer (0.047) and the lower plate nose 3 cm back; in z_arm.png the left arm of seat D still shows the upper pad and the lower plate as two parallel white bars where y_47300 shows one slim bar over a grey pivot bracket. Right-arm visible width ~17 px both."
+  },
+  {
+   "issue": "w29a-4 (medium) dark gaps between pans",
+   "status": "partly fixed",
+   "evidence": "Longest dark run (L < 35) across the joints at q15 row 565: 7 / 13 / 6 px vs y_47300 1 / 2 / 0 px (r29 at its pan row: 7 / 22 / 4-8 px). The centre joint E/F halved but still shows."
+  },
+  {
+   "issue": "w29a-6 (low) tick-back headrest pads all one tone",
+   "status": "fixed",
+   "evidence": "Seat D pad wing L132.1, B/R 1.71, p90/50 1.18 vs y_47300 128.3 / 1.76 / 1.33 (r29 96.7); seat F dark fleck pad L69.6 vs 89.0 (a step dark, p90/50 1.69 vs 1.97)."
+  },
+  {
+   "issue": "w29a-L2 (medium, lighting) fabric smears on 45 deg faces in q16",
+   "status": "not fixed; more visible",
+   "evidence": "The light cloudy pad on the near-left tick seats in q16 now shows as a large pale smeared blob (z_q16_econAisle.png, x 110-190, y 300-480); the nearest right seat back is still a blur."
+  },
+  {
+   "issue": "w29a-C1 (low) q15 camera ~10 cm low",
+   "status": "fixed",
+   "evidence": "Back tops y~225 vs 233, cover tops 242 vs 240, pillow tops 421-423 vs 411-418, pillow bottoms 493-502 vs 488-497."
+  }
+ ],
+ "details": [
+  {
+   "detail": "Fabric: tick weave",
+   "score": 8.3,
+   "refs": "spread now near the photo (back p90/p10 2.48 vs 2.90, bright 0.142 vs 0.136; pans 2.8-3.0 vs 3.7-4.0); dark ground ultramarine 26,36,102 vs 23,40,88 and highlights grey 122,140,169 vs 126,144,193 (reads 'electric' up close, e4b); seat F back L99 vs 78"
+  },
+  {
+   "detail": "Fabric: diamond lattice",
+   "score": 8.1,
+   "refs": "pan stars nearly gone at q15 (bright 0.006 vs 0.071); stars still few and big close up (e1 6.6 vs 34 blobs / kpx) but dimmer (0.093 vs 0.128)"
+  },
+  {
+   "detail": "Fabric: petal fleck",
+   "score": 8.2,
+   "refs": "point stats on target; low-pass dark cloud unchanged (CV 0.05 vs 0.03, min 0.85 vs 0.90-0.93)"
+  },
+  {
+   "detail": "Fabric: dash mosaic",
+   "score": 8.1,
+   "refs": "L88 vs 87 fixed; B/R 1.94 vs 1.72 (bluer than w29)"
+  },
+  {
+   "detail": "Fabric mix (backs, pans, pads)",
+   "score": 8.6,
+   "refs": "pads now alternate light cloudy (D L132 vs 128) / dark fleck (F) as y_47300"
+  },
+  {
+   "detail": "Headrest pad + cover",
+   "score": 7.8,
+   "refs": "cover 71 x 82 px, H/W 0.88 vs 49 x 69, 0.71 (open question 21); head-on L55-63, B/R 1.63 (lighting)"
+  },
+  {
+   "detail": "Pillow",
+   "score": 8.3,
+   "refs": "colour fixed (B/R 2.0 vs 1.94-2.05, L 50 vs 41-53); still a full rounded rectangle (fill 0.78-0.93 vs 0.53-0.70, no dog-ears), no weave (p90/50 1.13 vs 1.25-1.6)"
+  },
+  {
+   "detail": "Armrests",
+   "score": 8.4,
+   "refs": "tone L154 vs 140 (target met), B/R 1.04 vs 0.98; slimmer but head-on still two bars on the aisle-facing arm"
+  },
+  {
+   "detail": "Belts",
+   "score": 8.2,
+   "refs": "unchanged; laid across the pans (staging)"
+  },
+  {
+   "detail": "Seat pan / front",
+   "score": 8.3,
+   "refs": "pans wider; joint dark runs 6-13 px vs 0-2; tick pans L90 / 86 vs 94 / 87, B/R 1.88 vs 1.74 / 1.80"
+  },
+  {
+   "detail": "Back silhouette",
+   "score": 8.1,
+   "refs": "framing now matched vertically; cover / pillow widths 1.0-1.18x the photo (camera a touch close or seats a touch wide, carried)"
+  },
+  {
+   "detail": "Rear shell / hood / back top",
+   "score": 8.1,
+   "refs": "unchanged (q17)"
+  },
+  {
+   "detail": "Screen / handset",
+   "score": 8.2,
+   "refs": "unchanged"
+  },
+  {
+   "detail": "Tray / pocket / AC",
+   "score": 7.8,
+   "refs": "unchanged"
+  },
+  {
+   "detail": "Legs / footrest / under-seat",
+   "score": 7.7,
+   "refs": "unchanged (e8)"
+  },
+  {
+   "detail": "Far-LOD rows",
+   "score": 7.6,
+   "refs": "q16 far 14-21 bright blobs / kpx vs 4.5-8 (lighting, carried)"
+  }
+ ],
+ "issues": [
+  {
+   "id": "w30b-1",
+   "severity": "medium",
+   "owner": "econ",
+   "title": "Headrest cover ~1.4x too tall head-on (carried five rounds; open question 21)",
+   "detail": "Headrest pad + cover",
+   "evidence": "prof.py q15 at the re-matched camera: 71 x 81-82 px, H/W 0.87-0.88 vs y_47300 49-50 x 65-73 px, H/W 0.67-0.75. It is the most repeated dark shape in q15.",
+   "fix": "As w29b-1 (shorten from the bottom ~3 cm: cover plate / hem / stitch / mark / cushion SECs +0.03, cz base (y - 0.605), far LOD box -0.03 / +0.015), pending the user's answer to question 21. Target q15 cover 54-58 px tall, H/W 0.72-0.78."
+  },
+  {
+   "id": "w30b-2",
+   "severity": "medium",
+   "owner": "econ",
+   "title": "Tick weave ground went ultramarine, strokes grey: the dominant fabric reads electric blue",
+   "detail": "Fabric: tick weave",
+   "evidence": "q15 seat D back terciles: darkest 20 % 26,36,102 vs y_47300 23,40,88 (B/G 2.8 vs 2.2; r29 38,49,109), lightest 20 % 122,140,169 vs 126,144,193 (strokes B/R 1.39 vs 1.53). Spread is now right (p90/p10 2.48 vs 2.90). Visible in e4b / z_s12 as saturated royal-blue channels between white strokes. Seat F back still L99 vs 78 (render F = D).",
+   "fix": "test/make_swatches.py y_tick: apply the sub-median 1.25x deepening to luminance and keep the chroma of the ground (or after it pull the ground's B/G toward the photo: scale B by ~0.88 and G by ~1.08 below the median), and tint the stroke rims bluer (B +8 % above p80). Re-balance photoBase('#535b7d') if L drifts > 3. Targets q15 back D dark tercile ~24,40,90, light tercile B/R >= 1.5, p90/p10 2.6-2.9."
+  },
+  {
+   "id": "w30b-3",
+   "severity": "low",
+   "owner": "econ",
+   "title": "Diamond pan stars overshot to almost none; stars still big and soft",
+   "detail": "Fabric: diamond lattice",
+   "evidence": "q15 pan F bright 0.006 vs y_47300 0.071, blobs 4.8 vs 12.2 / kpx, p90/50 1.23 vs 1.33 (r29 0.101 / 5.2 / 1.40); e1 back bright 0.093 vs y_47302 0.128, blobs 6.6 vs 34.1.",
+   "fix": "Split pan from back: let layer 34 (diamond pan) take stars at 0.9x while the backs keep 0.7x, and shrink the star scale (tile resample 0.6x or higher uv repeat for the diamond only) so stars are many and small. Targets q15 pan bright 0.05-0.08, blobs >= 10 / kpx; e1 bright 0.11-0.13, blobs >= 20 / kpx."
+  },
+  {
+   "id": "w30b-4",
+   "severity": "low",
+   "owner": "econ",
+   "title": "Pillow still a flat rounded rectangle without dog-ears or weave",
+   "detail": "Pillow",
+   "evidence": "pil.py q15: fill 0.78-0.93 vs y_47300 0.53-0.70, width at 5 % of the height 88-98 px vs 7-21 px (the photo pillow tapers to pinched corners); p90/50 1.12-1.15 vs 1.25-1.62, bright 0 vs 0.01-0.25. Colour now right (B/R 2.0, L 50).",
+   "fix": "09a_econ.js pillow: pinch the corner sections harder (pull 1 + 0.3|XZ|^3 -> 1 + 0.5|XZ|^4 at the corners and take the top / bottom edge mid-span in 1.5 cm so the outline is a cushion, not a plaque); add the weave via LAYER.yJacq or LAYER.fabric with higher albedo gain. Targets fill 0.65-0.75, p90/50 1.25-1.35."
+  },
+  {
+   "id": "w30b-5",
+   "severity": "low",
+   "owner": "econ",
+   "title": "Fleck backs keep the repeated dark cloud",
+   "detail": "Fabric: petal fleck",
+   "evidence": "q15 fleck backs E / G low-pass CV 0.049 / 0.056, min/mean 0.85 vs 0.029-0.034, 0.90-0.93 (unchanged from w29); the dark cloud sits mid-back on every fleck seat (e4b right seat).",
+   "fix": "As w29b-4 but on the low-pass itself: for y_fleck divide the tile by its 24 px Gaussian blur (normalised to the mean) before the periodic flattening. Target low-pass CV <= 0.04, min >= 0.89."
+  },
+  {
+   "id": "w30b-6",
+   "severity": "low",
+   "owner": "econ",
+   "title": "Mosaic pan bluer than w29",
+   "detail": "Fabric: dash mosaic",
+   "evidence": "q15 pan G B/R 1.94 vs y_47300 1.72 (r29 1.86); L88.1 vs 86.8 now right; bright 0.062 vs 0.139.",
+   "fix": "09a_econ.js mosaic pan base '#4d5779' -> about '#545a77' (B/R ~1.42 base; the tile adds ~1.24x). Targets B/R 1.70-1.78, L 84-90."
+  },
+  {
+   "id": "w30b-7",
+   "severity": "low",
+   "owner": "econ",
+   "title": "Residual dark gaps at the pan joints",
+   "detail": "Seat pan / front",
+   "evidence": "q15 row 565 longest dark run across joints D/E, E/F, F/G: 7 / 13 / 6 px vs y_47300 1 / 2 / 0 (r29 7 / 22 / 4-8).",
+   "fix": "Pans another 1-1.5 cm wider at the front edge only (taper), or round the pan front corners less so they meet under the arm. Target dark run <= 3 px."
+  },
+  {
+   "id": "w30b-8",
+   "severity": "low",
+   "owner": "econ",
+   "title": "Aisle-facing arm still two white bars head-on; arm a hair cool",
+   "detail": "Armrests",
+   "evidence": "z_arm.png: seat D left arm shows upper pad and lower plate as two parallel bars; y_47300 one bar over a grey pivot bracket. q15 arm rgb 151,152,156 vs 142,138,139.",
+   "fix": "Lower plate: grey '#8f8f92' instead of the arm white, or tuck it 1 cm inboard behind the pad; SEATMAT.arm '#bfbcb8' -> '#c0bbb6' (warmer)."
+  },
+  {
+   "id": "w30b-9",
+   "severity": "medium",
+   "owner": "lighting",
+   "title": "Headrest covers navy off-axis, light head-on (carried, not scored)",
+   "detail": "Lighting",
+   "evidence": "q16 near cover L53.7 vs y_47301 108.4; e4 L39.5 vs y_47306 89.8-130.6; q15 head-on L55-63, B/R 1.63 vs 41-52, 1.83-2.01.",
+   "fix": "As w29b-3: grazing sheen lobe for SEATMAT.yCover, then darker / bluer base."
+  },
+  {
+   "id": "w30b-10",
+   "severity": "medium",
+   "owner": "lighting",
+   "title": "Far rows snowy; near 45 deg faces smeared, now a pale blob on the light pads (carried, not scored)",
+   "detail": "Far-LOD rows",
+   "evidence": "q16 far right 21.4 vs 4.5, far left 14.1 vs 8.1 bright blobs / kpx; the new light cloudy pads on the near-left seats render as large pale smears in q16 (x 110-190, y 300-480).",
+   "fix": "As w29b-9 (fade the excess with distance) plus anisotropic filtering or a lower mip bias on oblique faces."
+  },
+  {
+   "id": "w30b-11",
+   "severity": "low",
+   "owner": "econ",
+   "title": "Carried small parts: cover foot crease, pocket, legs, bezel dots, belts laid on the pans",
+   "detail": "Legs / footrest / under-seat",
+   "evidence": "e2 / e5 / e8 / e9 unchanged.",
+   "fix": "As w29b-10."
+  }
+ ],
+ "questionsForUser": [
+  "Headrest cover height (open question 21): at the re-matched q15 camera y_47300 gives H/W 0.71 vs render 0.88; y_47306 head-on about 0.88. Should the matched q15 view (y_47300) decide?"
+ ],
+ "extraRefsSearched": "None new this round; ref/web/econ/ b_ss_10..19 from w29 reused (b_ss_13 covers and pillows, b_ss_18 arm moulding)."
+}
