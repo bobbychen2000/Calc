@@ -266,7 +266,9 @@ def make(name, photo, box, size, rot=0):
 #        at row distance - tick p90/p50 1.81 vs 2.27, mosaic 1.59 vs 2.14; diamond stars ~20 % too strong) [D]
 Y_PHOTO = {
     # middle seat back, chevron tick columns; cover 0.27 m = 165 px -> 611 px/m, 152 px = 0.249 m [D]
-    'y_tick':    ('y_47306', (260, 385, 412, 537), 0.249, 14, 0, 0.15, 0.95, 0.15),
+    # econ w20 (gap19): the crop's columns lean 7 deg (oblique seat) and cancelled out over a back -> rotated upright; 0.29 m
+    # (~13 mm column pitch, y_47300); floor 0.05 so the dark channels reach the photo's p10 [D]
+    'y_tick':    ('y_47306', (260, 385, 412, 537), 0.29, 14, 7, 0.15, 0.95, 0.05),
     # left seat back, harlequin diamonds; seen obliquely: cover 108 px wide (423 px/m) but 133 px tall for 0.235 m
     # (566 px/m) -> the 82 x 115 crop is stretched 1.34x in x to a square 0.203 m [D]
     'y_diamond': ('y_47306', (62, 358, 144, 473), 0.203, 30, 0, 0.3, 0.8, 0.0),
@@ -275,7 +277,7 @@ Y_PHOTO = {
     # (w15 B) and 27 % bright against 11 % -> cores only, tinted pale blue; at 0.18 m they vanished at row distance (w16 A
     # + B: 8 % vs 21 % cover in q15) -> 0.24 m; w17: round pebbles close up and too blue (B/R 2.05 vs 1.62) -> cores
     # near-neutral tint; pinching the cores (w18) lost them at row distance again -> w17 cores [D]
-    'y_fleck':   ('y_47300', (352, 308, 447, 403), 0.24, 8, 0, 0.0, 0.8, 0.3),
+    'y_fleck':   ('y_47300', (352, 308, 447, 403), 0.24, 8, 0, 0.0, 0.8, 0.15),     # w20 (gap19): floor 0.3 flattened the ground
     # right seat back below the cover: dash mosaic; cover 0.255 m = 270 px -> 1059 px/m, 135 px = 0.128 m [D]; rows
     # levelled by 3 deg (perspective tilt)
     'y_mosaic':  ('y_47306', (560, 427, 695, 562), 0.128, 14, 3, 0.3, 1.15, 0.1),
@@ -350,12 +352,19 @@ def y_photo(name):
         # w16 A: the stitch columns wash out under minification (q15 column CV 0.05-0.07 vs 0.24 in y_47300): lift the
         # photo's own column profile (mean down each column) 1.6x so the dark channels survive the mip chain [D]
         c = r.mean(2).mean(0, keepdims=True); c = c / c.mean()
-        r = r * (c ** 0.6)[..., None]                   # w18 A: 2x only over-sharpened the close-ups; the rest is mip filtering (from_econ)
+        r = r * (c ** 0.15)[..., None]                  # w20 (gap19): straight columns carry their own profile; 0.6 over-sharpened close up
     if name == 'y_fleck':
         # the 3.4 mm/px source smears each 3-5 mm fleck over ~3 px: keep only the core of the excess over the ground
         # (bright area 27 % -> ~12 %, y_47306 pad 11 %) and tint it pale blue (#9fb0e0 vs white, w15 A) [D]
         g = np.median(r.mean(2)); e = np.maximum(r - g, 0); ep = e.max()
-        r = np.minimum(r, g) + ep * (e / ep) ** 1.25 * np.array([0.95, 1.0, 1.02], np.float32)
+        r = np.minimum(r, g) + ep * (e / ep) ** 0.9 * np.array([0.95, 1.0, 1.02], np.float32)   # w20 (gap19): 1.25 thinned the flecks away at row distance
+    # w20 (gap19): the 0.5-2.5 cm band (columns, flecks, dashes) is what survives at row distance; boost it in log luminance and
+    # damp the < 1.2 mm JPEG grain (tile CV at 150 px/m: tick 0.31 vs 0.46-0.49 in y_47300, fleck 0.31 vs 0.84) [D]
+    gb, gf = {'y_tick': (1.0, 0.3), 'y_fleck': (1.2, 0.0), 'y_mosaic': (0.6, 0.2)}.get(name, (0.0, 0.0))
+    if gb or gf:
+        lg = np.log(np.maximum(r.mean(2), 1e-3)); ppm = S / size
+        b1, b2, b0 = _blur_wrap(lg, 0.005 * ppm), _blur_wrap(lg, 0.025 * ppm), _blur_wrap(lg, 0.0012 * ppm)
+        r = r * np.exp(gb * (b1 - b2) - gf * (lg - b0))[..., None]
     r /= r.reshape(-1, 3).mean(0)
     enc = ENC[name]
     lum = r.mean(2, keepdims=True); lim = enc * 0.95                # clip glints (as make())

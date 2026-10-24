@@ -108,9 +108,10 @@ function econSeat(B, x0, lod, opts = {}) {
   // w6 B: 0.255 wide (y_47300 0.23 / y_47306 0.73 of the pad); the hem hangs nearly flat (at -20 deg it read as a shelf)
   // w8 B: a soft flap, not a tablet - the plate bows ~4 mm forward mid-height, the fold is a thin strip bent over the
   // pad top, with a stitch line above the hem (y_47301, y_47306)
+  // w20 (gap19): bow cut 4 -> ~1.5 mm (the bulge mirrored the ceiling as a crinkle head-on)
   // w10 A + B: the flap hangs ~3 cm below the pad (y_47306 / sans 13: 24-29 % of the pad height), its foot tipped a
   // little forward, and rolls round the pad top in a soft radius (was a hard bevel)
-  loftAt(B, [SEC(0.575, 0.255, 0.005, -0.12, 0.002), SEC(0.61, 0.256, 0.005, -0.111, 0.002), SEC(0.655, 0.257, 0.005, -0.1015, 0.002), SEC(0.705, 0.258, 0.005, -0.1025, 0.002), SEC(0.755, 0.257, 0.005, -0.1015, 0.002), SEC(0.791, 0.255, 0.005, -0.0985, 0.002)], BH, SEATMAT.yCover, lod ? 1 : 2);
+  loftAt(B, [SEC(0.575, 0.255, 0.005, -0.12, 0.002), SEC(0.61, 0.256, 0.005, -0.111, 0.002), SEC(0.655, 0.257, 0.005, -0.1035, 0.002), SEC(0.705, 0.258, 0.005, -0.104, 0.002), SEC(0.755, 0.257, 0.005, -0.1035, 0.002), SEC(0.791, 0.255, 0.005, -0.0985, 0.002)], BH, SEATMAT.yCover, lod ? 1 : 2);
   loftAt(B, [SEC(0.789, 0.255, 0.006, -0.0985, 0.003), SEC(0.8, 0.255, 0.012, -0.094, 0.005), SEC(0.807, 0.255, 0.02, -0.086, 0.007), SEC(0.81, 0.255, 0.028, -0.073, 0.008), SEC(0.807, 0.255, 0.02, -0.06, 0.006)], BH, SEATMAT.yCover, lod ? 1 : 3);
   if (lod) return;
   // small ANA mark in the flap's lower corner (viewer's right from the front, y_47306); w5 B: a thin grey logotype, not a sticker
@@ -136,11 +137,19 @@ function econSeat(B, x0, lod, opts = {}) {
       const X = sx * (1 + 0.35 * sz * sz) * (0.92 + 0.08 * l), Z = sz * (1 + 0.35 * sx * sx) * (0.92 + 0.08 * l);   // w10 gap: smooth squircle (|t|^0.45 creased the middle)
       // w6: wider (0.39 = 0.8 of the pan, y_47300 0.81 / sans 14 0.83), bow-tie outline with pinched corners
       const pull = 1 + 0.15 * Math.abs(X * Z);                                  // w9 A: corners pulled out (y_47300)
-      g.p[k] = 0.195 * X * (1 - 0.06 * (1 - Z * Z)) * pull; g.p[k + 2] = 0.145 * Z * (1 - 0.1 * (1 - X * X) - (Z > 0 ? 0.04 * (1 - X * X) : 0)) * pull;   // w14 gap: concave top edge   // w10 B: waist eased (read as a bone)
+      g.p[k] = 0.165 * X * (1 - 0.06 * (1 - Z * Z)) * pull; g.p[k + 2] = 0.135 * Z * (1 - 0.1 * (1 - X * X) - (Z > 0 ? 0.04 * (1 - X * X) : 0)) * pull;   // w14 gap: concave top edge   // w10 B: waist eased (read as a bone)
       g.p[k + 1] = sy * (0.006 + 0.046 * Math.pow(Math.max(0, 1 - Math.pow(l, 3)), 0.6));   // thins to the seamed rim; w14 gap: ~10 cm full (p90/p10 1.3 vs 2.2-2.8 in y_47300 read as a board)
     }
     computeNormals(g);
-    B.add(g, M4.mul(BH, M4.trs(0, 0.15, -0.12, 0, -76 * DEG)), SEATMAT.yPillow);
+    // w20 (gap19): 0.33 x 0.27 (0.77 of the back, y_47300 matched view; 0.93 read as one dark strip), 4 cm higher and 4 deg
+    // more upright so its foot just meets the pan instead of sinking into the crease [D]
+    B.add(g, M4.mul(BH, M4.trs(0, 0.19, -0.115, 0, -80 * DEG)), SEATMAT.yPillow);
+    // w19 A + B: a ~4 mm piped seam round the rim (y_47300 pillows), the same outline law at l = 1 [D]
+    const rim = []; for (let i = 0; i <= 48; i++) {
+      const t = i / 48 * 2 * Math.PI, sx = Math.cos(t), sz = Math.sin(t), X = sx * (1 + 0.35 * sz * sz), Z = sz * (1 + 0.35 * sx * sx), pull = 1 + 0.15 * Math.abs(X * Z);
+      rim.push([0.165 * X * (1 - 0.06 * (1 - Z * Z)) * pull, 0, 0.135 * Z * (1 - 0.1 * (1 - X * X) - (Z > 0 ? 0.04 * (1 - X * X) : 0)) * pull]);
+    }
+    B.add(gTube(rim, 0.0035, 6, false), M4.mul(BH, M4.trs(0, 0.19, -0.115, 0, -80 * DEG)), { ...SEATMAT.yPillow, c: '#323a54' });
   }
   // life-vest pouch: dark saucer-shaped holder under the pan front with a red pull strap hanging from its rim (y_47302:
   // ~0.15-0.18 m discs under each seat) [D]
