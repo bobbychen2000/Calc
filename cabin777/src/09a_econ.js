@@ -47,14 +47,15 @@ function econCrownLoft(secs, segC, crownAt) {
 }
 const ECON_PAN = { ...SEATMAT.yFabric, c: photoBase('#535b7d', 'y_tick') };   // w27 (w26b-4): B/R 1.61-1.67 vs 1.74-1.81 -> a touch bluer; w26 (w25a-5 / w25b-2): L69-74 vs 77-91, still blue; w25 (w24b-4): tick pans B/R 2.17 vs ~1.8 -> less blue
 // w25 (w24a-1 / w24b-3): the diamond pan read as a bold field of light stars head-on (L99-101 vs 74 in y_47300) -> darker
-const ECON_PAN_B = { ...SEATMAT.yFabricB, c: photoBase('#414862', 'y_diamond'), l: LAYER.yDiamondPan };   // w28 (w27a-1 / w27b-1, high): photoBase lifts for the full-gain tile mean (2c = 0.4); at gain g the mean is 1 - 0.6 g, so the pan rendered ~1.8x too light (L107 vs 74) -> #4e5676 x (1 / (1 - 0.6 x 0.8)) / 2.5 x 0.88 in linear = #414862 (gain 0.8); w27 (w26a-1 / w26b-1): own layer at 0.45 gain (stars bright 0.21 vs 0.09); w26b: B/R 1.61 grey -> #4e5676; w26 (w25a-1 / w25b-1): B/R 2.27-2.41 vs 1.81
+const ECON_PAN_B = { ...SEATMAT.yFabricB, c: photoBase('#474e6a', 'y_diamond'), l: LAYER.yDiamondPan };   // w31 (w30a-5 / w30b-3): the 0.7x star band left separate stars on a dark ground -> L +8, layer 34 gain 0.9   // w28 (w27a-1 / w27b-1, high): photoBase lifts for the full-gain tile mean (2c = 0.4); at gain g the mean is 1 - 0.6 g, so the pan rendered ~1.8x too light (L107 vs 74) -> #4e5676 x (1 / (1 - 0.6 x 0.8)) / 2.5 x 0.88 in linear = #414862 (gain 0.8); w27 (w26a-1 / w26b-1): own layer at 0.45 gain (stars bright 0.21 vs 0.09); w26b: B/R 1.61 grey -> #4e5676; w26 (w25a-1 / w25b-1): B/R 2.27-2.41 vs 1.81
 // w30 (w29a-6): tick backs alternate a light heather pad (y_47300 seat D, L102-107, few flecks) and a dark fleck pad
 // (seat F, L57; L126 / bright share 0.06 in the matched q15 box ; a 3x crop shows a light cloudy mottle -> the diamond tile on a light base; the mosaic tile read busy, a plain weave read as plastic); every tick-back pad was one mid fleck (L75-81) [D]
-const ECON_HEAD_L = { ...SEATMAT.yFabricB, c: photoBase('#7080b0', 'y_diamond') }, ECON_HEAD_D = { ...SEATMAT.yHead, c: photoBase('#454f73', 'y_fleck') };
+const ECON_HEAD_L = { ...SEATMAT.yFabricB, c: photoBase('#63719b', 'y_diamond'), l: LAYER.yDiamondPan }, ECON_HEAD_D = { ...SEATMAT.yHead, c: photoBase('#454f73', 'y_fleck') };   // w31 (w30a-6 / w30b-10): the light pad was blotchy close up -> the pan's lower-gain layer 34, base x0.77 in linear for its brighter mean
 const econHead = (F, k = 0, rot = 0) => F === SEATMAT.yFabricB ? SEATMAT.yFabricC : F === SEATMAT.yFabricC ? SEATMAT.yFabricB : F === SEATMAT.yFabricD ? SEATMAT.yFabric
   : (((k >> 1) + rot) % 2 ? ECON_HEAD_D : ECON_HEAD_L);
 // w30 (w29b-6, w27b-6): the mosaic pan read light and blue in q15 (L98 B/R 1.86 vs y_47300 87 / 1.72) -> its own base [D]
-const ECON_PAN_C = { ...SEATMAT.yFabricC, c: photoBase('#4d5779', 'y_mosaic') };
+const ECON_PAN_C = { ...SEATMAT.yFabricC, c: photoBase('#525977', 'y_mosaic') };
+const ECON_PLATE = { ...SEATMAT.armPost, c: '#9a9b9f' };
 const econPanMat = (F) => F === SEATMAT.yFabric ? ECON_PAN : F === SEATMAT.yFabricB ? ECON_PAN_B : F === SEATMAT.yFabricC ? ECON_PAN_C : F;
 function econSeat(B, x0, lod, opts = {}) {
   const [hy, hz] = ECON.hinge;
@@ -69,9 +70,9 @@ function econSeat(B, x0, lod, opts = {}) {
   // w30 (w29a-4): dark 11-23 px gaps between neighbouring pans in q15 where y_47300's pans abut under the arms -> 2.5 cm
   // wider (edge 3 mm inside the arm's lower plate) [D]
   const ps = cushionSecs(0.455, 0.47, 0.095, -0.05, { edge: 0.05, r: 0.05, crown: 0.01 });
-  ps[0] = { ...ps[0], w: 0.415, d: 0.41, z: 0.02 };
+  ps[0] = { ...ps[0], w: 0.44, d: 0.41, z: 0.02 };   // w31 (w30a-3 / w30b-7): joints still 6-14 px dark -> straighter side walls
   ps[1] = { ...ps[1], y: ps[0].y + 0.03 };
-  ps.splice(1, 0, { ...ps[1], y: ps[0].y + 0.012, w: 0.44, d: 0.45, z: 0.008 });
+  ps.splice(1, 0, { ...ps[1], y: ps[0].y + 0.012, w: 0.452, d: 0.45, z: 0.008 });
   B.add(gLoft(ps, lod ? 3 : 4), M4.trs(x0, 0.415, -0.28, 0, 3 * DEG), PF);
   B.add(gRBox(0.39, 0.03, 0.40, 0.012, 1), M4.trs(x0, 0.35, -0.25), { c: '#7d8187', r: 0.5 });
   // back: rises above the headrest cushion to a rounded top (y_47306 all three seats, y_47301, sanspotter 13;
@@ -153,8 +154,8 @@ function econSeat(B, x0, lod, opts = {}) {
       const X = sx * (1 + 0.35 * sz * sz) * (0.92 + 0.08 * l), Z = sz * (1 + 0.35 * sx * sx) * (0.92 + 0.08 * l);   // w10 gap: smooth squircle (|t|^0.45 creased the middle)
       // w6: wider (0.39 = 0.8 of the pan, y_47300 0.81 / sans 14 0.83), bow-tie outline with pinched corners
       const pull = 1 + 0.3 * Math.pow(Math.abs(X * Z), 3);   // w27 (w26a-4): softer, the w26 1.5 power read as a bone close up; w26 (w25b-5): dog-ear corners                                  // w9 A: corners pulled out (y_47300)
-      g.p[k] = 0.165 * X * (1 - 0.03 * (1 - Z * Z)) * pull; g.p[k + 2] = 0.11 * Z * (1 - 0.05 * (1 - X * X) - (Z > 0 ? 0.02 * (1 - X * X) : 0)) * pull;   // w14 gap: concave top edge   // w10 B: waist eased (read as a bone)
-      g.p[k + 1] = sy * (0.006 + 0.054 * Math.pow(Math.max(0, 1 - Math.pow(l, 3)), 0.5));   // w30 (w29a-5 / w29b-5): fuller dome, crisper dog-ears (pull ^3 x 0.3)   // thins to the seamed rim; w14 gap: ~10 cm full (p90/p10 1.3 vs 2.2-2.8 in y_47300 read as a board)
+      g.p[k] = 0.165 * X * (1 - 0.05 * (1 - Z * Z)) * pull; g.p[k + 2] = 0.11 * Z * (1 - 0.09 * (1 - X * X) - (Z > 0 ? 0.02 * (1 - X * X) : 0)) * pull;   // w31 (w30a-4 / w30b-4): bow-tie waist on both long edges (y_47300 3x crop: ~10 % of the height)   // w14 gap: concave top edge   // w10 B: waist eased (read as a bone)
+      g.p[k + 1] = sy * (0.006 + 0.054 * Math.pow(Math.max(0, 1 - Math.pow(l, 3)), 0.42));   // w30 (w29a-5 / w29b-5): fuller dome, crisper dog-ears (pull ^3 x 0.3)   // thins to the seamed rim; w14 gap: ~10 cm full (p90/p10 1.3 vs 2.2-2.8 in y_47300 read as a board)
     }
     computeNormals(g);
     // w20 (gap19): 0.33 x 0.27 (0.77 of the back, y_47300 matched view; 0.93 read as one dark strip), 4 cm higher and 4 deg
@@ -165,7 +166,7 @@ function econSeat(B, x0, lod, opts = {}) {
     // w19 A + B: a ~4 mm piped seam round the rim (y_47300 pillows), the same outline law at l = 1 [D]
     const rim = []; for (let i = 0; i <= 48; i++) {
       const t = i / 48 * 2 * Math.PI, sx = Math.cos(t), sz = Math.sin(t), X = sx * (1 + 0.35 * sz * sz), Z = sz * (1 + 0.35 * sx * sx), pull = 1 + 0.3 * Math.pow(Math.abs(X * Z), 3);
-      rim.push([0.165 * X * (1 - 0.03 * (1 - Z * Z)) * pull, 0, 0.11 * Z * (1 - 0.05 * (1 - X * X) - (Z > 0 ? 0.02 * (1 - X * X) : 0)) * pull]);
+      rim.push([0.165 * X * (1 - 0.05 * (1 - Z * Z)) * pull, 0, 0.11 * Z * (1 - 0.09 * (1 - X * X) - (Z > 0 ? 0.02 * (1 - X * X) : 0)) * pull]);
     }
     B.add(gTube(rim, 0.0022, 6, false), M4.mul(BH, M4.trs(0, 0.155, -0.112, 0, -74 * DEG)), { ...SEATMAT.yPillow, c: '#363c55' });   // w27 (w26b-5): pillow-coloured (a darker tube still read as a rim)   // w26 (w25b-5): thinner, darker (read as a light ring)   // w20 A + B: pillow-coloured piping (a darker ring read as an outline)
   }
@@ -304,11 +305,12 @@ function econUnit(n, lod = false, opts = {}) {
       for (let i = 1; i <= 8; i++) { const t = i / 8, u = 1 - t; cp.push([0, u * u * 0.60 + 2 * u * t * 0.52 + t * t * 0.50, u * u * -0.074 + 2 * u * t * -0.08 + t * t * -0.17]); }
       const ct = gTube(cp, 0.028, 12); for (let k = 0; k < ct.p.length; k += 3) ct.p[k] *= 0.38; computeNormals(ct);   // w21 B: 2.1 cm, as the plate (3.1 cm stepped at the joint)
       B.add(ct, M4.trs(xa, 0, 0), SEATMAT.arm);
+      // w31 (w30a-2 / w30b-8): still two white bars head-on; under the arm y_47300 shows mid-grey mechanism -> grey plate [D]
       const zs = (y, z0, z1, w) => SEC(y, w, z0 - z1, (z0 + z1) / 2, 0.009);
       const end = k === 0 || k === arms.length - 1;
       // w30 (w29a-1): regular-row plate nose 3 cm further back, so the arm hides it head-on (y_47300 shows one bar) [D]
       loftAt(B, end ? [zs(0.415, -0.17, -0.31, 0.024), zs(0.425, -0.14, -0.36, 0.024), zs(0.44, -0.115, -0.39, 0.024), zs(0.46, -0.10, -0.398, 0.024), zs(0.50, -0.08, -0.40, 0.024), zs(0.525, -0.08, -0.392, 0.024), zs(0.538, -0.09, -0.37, 0.024), zs(0.543, -0.145, -0.33, 0.02)]
-        : [zs(0.48, -0.14, -0.335, 0.02), zs(0.488, -0.13, -0.353, 0.022), zs(0.51, -0.125, -0.362, 0.022), zs(0.532, -0.13, -0.353, 0.022), zs(0.54, -0.14, -0.335, 0.02)], M4.trs(xa + (end ? (k === 0 ? -0.013 : 0.013) : 0), 0, 0), SEATMAT.arm, 3);
+        : [zs(0.48, -0.14, -0.335, 0.02), zs(0.488, -0.13, -0.353, 0.022), zs(0.51, -0.125, -0.362, 0.022), zs(0.532, -0.13, -0.353, 0.022), zs(0.54, -0.14, -0.335, 0.02)], M4.trs(xa + (end ? (k === 0 ? -0.013 : 0.013) : 0), 0, 0), end ? SEATMAT.arm : ECON_PLATE, 3);
     } else {
       // front end: one continuous grey bracket from under the arm nose down past the pan, with a pivot ring at pan height;
       // the white paddle hangs from it (y_47302 / 47303; w2 B: was a ball on a stick) [D]

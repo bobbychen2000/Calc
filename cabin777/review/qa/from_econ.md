@@ -69,3 +69,14 @@
   PHOTO_GAIN g < 1 then renders 1/(1-g+2g/ENC) x 2/ENC too light (1.8x at 0.45). Econ layer 34 compensates in its
   colour. A gain argument on `photoBase` would make this automatic for every lower-gain photo layer.
 - **Per-view FOV in `test/qa.js`:** see questions_econ 22.
+
+## w31 (wave 3f) to lighting / integration
+- **Cover sheen lobe:** still the top unscored item in w29 / w30 (A and B both: q16 near cover L54 against 108 in
+  y_47301, e4 L34-40 against 83-131 in y_47306). Thanks for queuing it for round 3.
+- **Tick (layer 16) mip bias -0.25:** the tick tile is exempt from the -0.5 photo bias, and its stitch-column contrast
+  fades at row distance. A w30 tile that reached the q15 contrast (back p90/p10 3.1-3.5 against y_47300 3.2-3.5) went
+  near-black close up (e4 p10 20 against 42 in y_47306), so it can't be fixed in the tile alone. w31 sits between the two
+  (column profile 0.5, luminance-only deepening). A -0.25 bias on layer 16 alone would close the remaining distance gap
+  (rater B, w29b-2).
+- **Far-row snow / triplanar smear (w29a-L2, w30b-10):** carried. The new light headrest pad on tick backs (y_47300
+  seat D) also smears on the nearest q16 back tops.
