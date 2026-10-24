@@ -17,7 +17,7 @@ const MONMAT = {
   blueLed: { c: '#3d8bff', r: 0.4, e: 0.8 },
   amber: { c: '#ff9a3a', r: 0.4, e: 0.8 },
   red: { c: '#c62828', r: 0.5 },
-  flapTab: { c: '#8e2a1c', r: 0.25 },   // w16 (w15b): dark glossy orange-red clips (lalf_133 #66201a); #c62828 read saturated
+  flapTab: { c: '#6e2318', r: 0.25 },   // w18 (w17a/b): rendered #b23428 at #8e2a1c   // w16 (w15b): dark glossy orange-red clips (lalf_133 #66201a); #c62828 read saturated
   partition: { c: '#d0d2d4', r: 0.5, l: LAYER.plastic },
   // [V] flight-deck door + corridor walls: dark ebony wood-grain laminate with reddish streaks (tpa_IMG_0260 samples
   //     #322f2f..#43393b), white/aluminium door frame and white bolt-plate frames
@@ -34,11 +34,12 @@ const MONMAT = {
   darkWoodDoor: { c: '#3f3533', r: 0.4, l: LAYER.fWood },
   // door-3 bar / door-2 welcome galley, sampled from ANA's official bar-counter render (Jul 2019 press kit) and
   // OMAAT's in-service photos: light ash doors, dark-bronze frames, black basalt counter, black upper unit
-  barAsh: { c: '#b9a687', r: 0.5, l: LAYER.ashDoor },   // w16 (w15a/b): bar, welcome and ash-wall doors on the fine ashDoor layer too (ashGrain read coarse)
+  barAsh: { c: '#b9a687', r: 0.5, l: LAYER.monoAsh },   // w18 (w17a): own layer, grain SD ~7 (ashDoor 3.3 read plain); w16: ashGrain read coarse
   lavAsh: { c: '#b9a687', r: 0.5, l: LAYER.ashDoor },   // w14a/b: finer ash on the J lav doors (ashGrain read coarse at door scale)
   bronze: { c: '#6f5f50', r: 0.35, m: 0.55, l: LAYER.brushed },
   barPost: { c: '#9d8f7c', r: 0.35, m: 0.55, l: LAYER.brushed },     // [V] warm light grey-bronze posts (samchui_11 #8e7f6d)
-  steelBright: { c: '#d4d6d8', r: 0.25, m: 0.9, l: LAYER.brushed },  // [V] bright counter nosing (samchui_11 #c5c0b9, lalf_134)
+  steelBright: { c: '#d4d6d8', r: 0.25, m: 0.9, l: LAYER.brushed },
+  nosing: { c: '#e4e5e6', r: 0.3, m: 0.25 },   // w18 (w17a): satin bright band; the m 0.9 steel rendered L 140 vs ~235 in samchui_render_11  // [V] bright counter nosing (samchui_11 #c5c0b9, lalf_134)
   // [V] door-2 aft wall (lalf_133): flat ash with aluminium-framed stowage flaps, red latches, aluminium rails; dark warm
   //     soffit with downlights over the galley passage (lalf_133 #655b54, lalf_134 #696567 at ~0.6 of white)
   soffit: { c: '#4a423d', r: 0.35, l: LAYER.wood },
@@ -56,7 +57,7 @@ const MONMAT = {
   label: { c: '#f4f2ec', r: 0.6 },
   juice: { c: '#f0a526', r: 0.15 },
   glassHi: { c: '#d0d6d8', r: 0.1, e: 0.05 },   // w13a/b: bottle edge highlight / tumbler rims (samchui_render_11)
-  tumbler: { c: '#6a6e72', r: 0.05 },           // w16 (w15a/b): lighter grey glass (opaque, reads clear on the black counter)   // w11a: dark rocks glasses (render #383539), not paper cups
+  tumbler: { c: '#45484c', r: 0.05 },   // w18 (w17a: tin cups at #6a6e72): darker clear-glass tone, glints both sides           // w16 (w15a/b): lighter grey glass (opaque, reads clear on the black counter)   // w11a: dark rocks glasses (render #383539), not paper cups
   tumblerIn: { c: '#3e4246', r: 0.05 },
   // [V] welcome galley upper unit: dark warm charcoal with visible frames, not black (omaat_room_32 #1a1911..#3a362a,
   //     kna_31_full; w5b rendered #050507)
@@ -73,7 +74,7 @@ const MONMAT = {
   compartment: { c: '#b4b1a9', r: 0.5, m: 0.1, l: LAYER.gAlu },   // w9: upper stowage doors grey metal, ~0.8 of the wall (sans_38)
   insertSeam: { c: '#2c2b29', r: 0.7 },
   flapFrame: { c: '#aea69a', r: 0.32, m: 0.5, l: LAYER.brushed },   // w13: warm brushed silver (lalf_133 #9c9084 / #898278 under warm light; steel read blue)
-  frame: { c: '#9a968f', r: 0.3, m: 0.5, l: LAYER.brushed },   // w16 (w15b): darker than the faces so the frames read (sansY_44 frame gaps)   // w13: bright aluminium insert frames (sansY_44 frames ~1.15x the faces)
+  frame: { c: '#8a867f', r: 0.3, m: 0.5, l: LAYER.brushed },   // w18 (w17b): darker still   // w16 (w15b): darker than the faces so the frames read (sansY_44 frame gaps)   // w13: bright aluminium insert frames (sansY_44 frames ~1.15x the faces)
   rivet: { c: '#77746d', r: 0.5 },                                  // w13: rivet dots on the frames / cart posts                           // w9: ~4 mm dark gap round each insert (sans_38 / sansY_44)
   ovenLabel: { c: '#c9c77e', r: 0.5, e: 0.06 },                   // w9: yellow-green meal-label window on the ovens (sansY_44 #666338 lit)
   jug: { c: '#ffffff', r: 0.12, m: 0.5 },                             // w9: polished jug, no brushed layer (rings read as stacked cups); sansY_44 jug #605a4e
@@ -280,7 +281,8 @@ function buildBar(B, m) {
   // counter + stainless grab rail on stand-offs
   B.add(gRBoxM(w - 0.02, 0.035, BAR.set + 0.05, 0.008, 1), V(0, BAR.deck + 0.0175, (0.05 - BAR.set) / 2), MONMAT.basalt);
   // w16 (w14b-w15b, samchui_render_11): a bright flush aluminium nosing band wraps the counter's front edge, no separate rail
-  B.add(gRBoxM(w - 0.02, 0.045, 0.012, 0.004, 1), V(0, BAR.deck + 0.0125, 0.056), MONMAT.steelBright);
+  B.add(gRBoxM(w - 0.02, 0.045, 0.012, 0.004, 1), V(0, BAR.deck + 0.0125, 0.056), MONMAT.nosing);
+  for (const sx of [-1, 1]) B.add(gBox(0.012, 0.045, BAR.set + 0.05), V(sx * (w / 2 - 0.004), BAR.deck + 0.0125, (0.05 - BAR.set) / 2), MONMAT.nosing);   // w18 (w17b): wraps the ends
   // upper black unit
   const oU = -BAR.set, uw = BAR.upW, uy0 = BAR.deck + 0.035, uh = BAR.upTop - uy0;
   const up = (p) => (p - 1002) * BAR.K, uy = (p) => uy0 + (715 - p) * BAR.K;
@@ -324,7 +326,7 @@ function buildBar(B, m) {
     B.add(gLathe([[0.0285, 0.048], [0.0245, 0.008]], 12), T(0.035), MONMAT.tumblerIn);   // inner wall (top-down profile: normals inward)
     B.add(ring(0.029), T(0.085), MONMAT.glassHi);
     B.add(gCyl(0.026, 0.026, 0.008, 12), T(0.039), MONMAT.glassHi);                                           // thick base
-    B.add(gQuad(0.005, 0.034), M4.mul(T(0.062), M4.trs(-0.012, 0, 0.027)), MONMAT.glassHi);
+    for (const gx of [-0.016, 0.014]) B.add(gQuad(0.004, 0.036), M4.mul(T(0.062), M4.trs(gx, 0, 0.0255)), MONMAT.glassHi);
   }
   // ash cheeks either side of the upper unit, up to the soffit
   for (const s of [-1, 1]) B.add(gBox((w - uw) / 2 - 0.02, BAR.canopy - uy0, 0.02), V(s * (uw / 2 + (w - uw) / 4), (uy0 + BAR.canopy) / 2, oU + 0.012), MONMAT.barAsh);
@@ -427,7 +429,7 @@ function buildWelcomeGalley(B, m) {
   B.add(gBox(0.42, 0.012, 0.06), V(c0, 1.235, o + 0.04), { c: '#9c9a98', r: 0.4 });                    // white tray
   for (const sx of [-1, 1]) B.add(gBox(0.05, 0.86, 0.03), V(c0 + sx * sxo, 1.47, o + 0.085), MONMAT.welcomeChar);
   B.add(gBox(cW, 0.05, 0.03), V(c0, 1.065, o + 0.085), MONMAT.welcomeChar);
-  B.add(gBox(cW, 0.235, 0.03), V(c0, 1.8875, o + 0.085), MONMAT.welcomeChar);                       // deep top rail; w16 (w15a): head ~7 cm above the monitor top, the tag above the monitor line
+  B.add(gBox(cW, 0.22, 0.03), V(c0, 1.88, o + 0.085), MONMAT.welcomeChar);                         // deep top rail; w16 (w15a): head above the monitor top, the tag above the monitor line; w18: top at 1.99, under the recess ceiling
   const bead = { c: '#8a8380', r: 0.12, m: 0.4 };                                                     // pane bead
   for (const sx of [-1, 1]) B.add(gBox(0.008, 0.68, 0.006), V(c0 + sx * (sxo - 0.029), 1.43, o + 0.087), bead);
   for (const y of [1.094, 1.766]) B.add(gBox(cW - 0.1, 0.008, 0.006), V(c0, y, o + 0.087), bead);
@@ -437,10 +439,7 @@ function buildWelcomeGalley(B, m) {
   B.add(gPlate(0.11, 0.14, 0.02, 0.05, 5), V(c0 - sxo, 1.44, o + 0.1), MONMAT.welcomeChar);                    // D-boss
   B.add(gPlate(0.085, 0.05, 0.012, 0.024, 5), V(c0 - sxo, 1.44, o + 0.114), { c: '#c9c6bf', r: 0.3, m: 0.6 });   // oval plate
   B.add(gBox(0.012, 0.036, 0.01), V(c0 - sxo, 1.44, o + 0.122), MONMAT.bevBlack);                             // thumb-turn
-  // w16 (w15b): diagonal reflection band across the smoked pane (omaat_room_32), two pale strips
-  // (w17 self-check: wide opaque strips read as sticks / a plank over the contents; only two thin diagonal glints)
-  for (const [du, bw, c] of [[0, 0.006, '#8e8c89'], [0.035, 0.003, '#7a7876']])
-    B.add(gQuad(bw, 0.62), M4.mul(V(c0 + 0.02 + du, 1.43, o + 0.0865), M4.trs(0, 0, 0, 0, 0, -0.42)), { c, r: 0.1 });
+  // w18 (w17a medium / w17b): no glass streaks - opaque glints read as wires / sticks inside the cabinet
   B.add(gPlate(0.26, 0.07, 0.012, 0.035, 4), V(c0, 1.955, o + 0.106), { c: '#e9e2cf', r: 0.5 });          // w7: single cream oval tag
   B.add(gQuad(0.03, 0.03), V(c0 - 0.07, 1.955, o + 0.1125), { c: '#5a5650', r: 0.6 });                      // w10a: pictogram + 2 text lines (omaat_room_32)
   for (const y of [1.965, 1.945]) B.add(gQuad(0.09, 0.005), V(c0 + 0.03, y, o + 0.1125), { c: '#8d887e', r: 0.6 });
@@ -473,13 +472,11 @@ function buildAshWall(B, m) {
   for (let k = 0; k < n; k++) {
     const x = m.x0 + (w / n) * (k + 0.5);
     B.add(gPlate(pw + 0.06, 0.91, 0.025, 0.08, 5), F(x, 1.28, 0.0095), MONMAT.flapFrame);   // w16 (w15a/b): radius 0.08, proud 25 mm
-    B.add(gRBoxM(pw, 0.85, 0.012, 0.004, 1), F(x, 1.28, 0.019), MONMAT.barAsh);
-    // w16 (w15a/b, lalf_133): lit top / left outer edge, shadowed inner bottom / right edge on the polished frame
-    const L = { c: '#e8e6e0', r: 0.2, m: 0.6 }, D = { c: '#5e574e', r: 0.5 };
-    B.add(gQuad(pw - 0.06, 0.006), F(x, 1.28 + 0.452, 0.0228), L);
-    B.add(gQuad(0.006, 0.66), F(x - pw / 2 - 0.026, 1.28, 0.0228), L);
-    B.add(gQuad(pw, 0.005), F(x, 1.28 - 0.4275, 0.0228), D);
-    B.add(gQuad(0.005, 0.85), F(x + pw / 2 + 0.0025, 1.28, 0.0228), D);
+    B.add(gPlate(pw, 0.85, 0.012, 0.03, 3), F(x, 1.28, 0.019), MONMAT.barAsh);   // w18 (w17b): rounded opening corners
+    // w16 (lalf_133): a lit edge on the polished frame; w18 (w17a/b): symmetric, full length, no detached strips
+    const L = { c: '#e8e6e0', r: 0.2, m: 0.6 };
+    B.add(gQuad(pw - 0.1, 0.006), F(x, 1.28 + 0.448, 0.0228), L);
+    for (const sx of [-1, 1]) B.add(gQuad(0.006, 0.75), F(x + sx * (pw / 2 + 0.022), 1.28, 0.0228), L);
     // two dark red clips on a silver plate straddling the frame's top rail (lalf_133)
     B.add(gBox(0.08, 0.035, 0.008), F(x, 1.735, 0.025), MONMAT.flapFrame);
     for (const s2 of [-1, 1]) B.add(gBox(0.022, 0.022, 0.012), F(x + s2 * 0.018, 1.735, 0.031), MONMAT.flapTab);
