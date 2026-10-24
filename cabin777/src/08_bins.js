@@ -67,7 +67,6 @@ const BINMAT = {
   groove: { c: '#9aa0a6', r: 0.7 },
   cap: { c: '#d6d6d3', r: 0.4, l: LAYER.plastic },   // 0.92x the rail (w9b)
   capGap: { c: '#b8b8b6', r: 0.8 },
-  crestGroove: { c: '#74777c', r: 0.35, m: 0.45 },   // dark metallic channel with a specular line (c120 [V look]; w11a/w11b: #8a8c90 never read)
   joint: { c: '#dcdedf', r: 0.7 },
   riser: { c: '#d2d3d4', r: 0.7, l: LAYER.plastic, e: 0.14 },   // lit edge-on, so self-lifted to ~0.85x the band (y_47301; w7a/w8a/w8b pinstripes)   // w7a: #a9acb0 read as dark pinstripes (y_47301 ~200 on 235)   // shingle step face (w5b) [A]
   psuBox: { c: '#e6e6e3', r: 0.4, l: LAYER.plastic },
@@ -263,10 +262,8 @@ function centerBinModule() {
     addDoor(B, CBIN_DOOR, L, s, -1, BINMAT.doorC);
     addLatch(B, faceM((hx + 0.006) * s, hy, htx * s, hty, 0, s));
     // plain crease filler where the vault meets the centre-bin crest (no cove light on this edge: see 07b header)
-    // ...in the groove's dark metallic tone: light, it filled exactly where c120 shows the dark channel (w11b)
-    B.add(gBox(0.05, 0.01, L - 0.006), M4.trs(0.70 * s, 2.268, 0), BINMAT.crestGroove);
-    // dark recessed groove between the crest rail and the vault (c120 [V]; 14 mm [A]; w9a)
-    B.add(gBox(0.018, 0.004, L), M4.trs(0.724 * s, 2.258, 0), BINMAT.crestGroove);   // w10b: at 0.712 it hid under the rail
+    B.add(gBox(0.05, 0.01, L - 0.006), M4.trs(0.70 * s, 2.268, 0), BINMAT.door);
+    // (the dark crest-rail groove is drawn on the vault edge in 07b_ceiling.js: anything here hides behind the rail)
     // raised top rail along the crest, carrying the row placard (b_lalf_c120 '17' on the centre-bin top [V]; 18 mm [A])
     const [rx, ry, rtx, rty] = faceAtY(CBIN_DOOR, 2.19);
     B.add(gExtrude(faceShell(CBIN_DOOR.filter((p) => p[1] > 2.165 && p[1] < 2.245), s, -1, 0.008, 0.001), L - 0.014, 45), null, BINMAT.rail);

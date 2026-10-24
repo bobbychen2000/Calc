@@ -90,6 +90,7 @@ const CEILMAT = {
   bezel: { c: '#e6e4df', r: 0.7, l: LAYER.plastic },   // vault tone (c120 speaker 188 on a 188 vault; w6a/w6b: a bright plank)
   bezelIn: { c: '#dedcd7', r: 0.7, l: LAYER.plastic },   // smooth face (w9a: c120 shows no slats)   // perforated pocket a little darker than the vault (c120); baked with the vault since w7 [V look, A tone]
   bezelShadow: { c: '#8f8d89', r: 0.8 },
+  crestGroove: { c: '#8a8d92', r: 0.35, m: 0.25 },   // vault/crest-rail channel (c120 [V look])
   flat: { c: '#efeeea', r: 0.72, l: LAYER.plastic },
   lightPanel: { c: '#fffaf0', r: 0.5, e: 0.3 },   // w11b: a flat 251 wedge beside the door-4 dome
   // narrow warm fore-aft light strip along the edge of the flat door-area panel (up_F_Forward-Look [V shape, colour])
@@ -213,6 +214,10 @@ function buildCeilings(upper, layout) {
           const zb = mods.length > 2 ? mods[mods.length - 2] - RIB.R : z1 - 0.03;
           upper.add(vaultStrip(RIB_TEND, side, z0 + 0.03, zb, 0.014, 0.004), null, CEILMAT.rib);
           upper.add(vaultStrip(RIB_TEND + 0.012, side, z0 + 0.03, zb, 0.005, 0.0022), null, CEILMAT.ribShadow); }
+        // dark metallic channel where the vault meets the centre-bin crest rail (c120 [V]; ~15 mm along the arc [A]).
+        // Seen from the aisle the rail hides the bin face behind it, so the channel is the vault's own steep last strip
+        // (w9a-w11b: boxes in 08_bins under the vault edge never showed)
+        upper.add(vaultStrip(0.9875, side, z0 + 0.03, z1 - 0.03, 0.03, 0.0012), null, CEILMAT.crestGroove);   // t 0.99 lay on the rail-top sight line [D]
         // cove diffuser: a continuous near-white lit band between the outboard bin crest and the grille
         // 4 facets following the arc: one flat chord sank its ends behind the curved vault, so only its middle read
         // bright (w7b: lit field 1-1.5x the grille, c120 ~3x)
