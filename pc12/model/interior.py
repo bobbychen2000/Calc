@@ -163,6 +163,12 @@ CREW_SEAT = dict(
                          "cushion top and the back front (0.02 + lumbar ahead of the back line) are the fleece's "
                          "undeflected crown, the leather cushion / back front lie this far inside them (review r2 M1: "
                          "the 3-D cover sat on top of the drawn cushion, +14 mm / +32 mm)"),
+    # first-principles flight deck A6 (rev P): the cover as made -- a tanned HIDE with its wool PILE -- split out of
+    # sheepskin_t (their sum; the builders and the viewer's shell fur take the pile's depth, the hide sits on the leather)
+    sheepskin_hide=P(0.004, "[E] the skin side of a medical / seat-cover sheepskin, 3-5 mm tanned (supplier data); the "
+                            "cover's leather-side layer, glued / sewn to the cushion's leather"),
+    sheepskin_pile=P(0.030, "[M] the wool pile over the hide, undeflected: 34 mm cover (P1046408 / 10, AOPA) less the "
+                            "hide; the viewer's pile shells span its top 9 mm (the visible tufts), the rest dense wool"),
     cushion_w=P(0.46, "[M] face-on photo: two thigh-pad lobes (outboard half 0.23)"),
     cushion_in=P(0.185, "[E] inboard half-width of pan + cushion: trimmed from 0.23 so the seat clears the "
                         "nose-tunnel plinth (gear, hard) by 15 over the whole x / z travel; photos: symmetric"),
@@ -949,6 +955,13 @@ PEDESTAL = dict(
     ccd_wl=PT((0.100, 0.085), "[M] CCD palm grip width (BL) and length (fore / aft): P1046406, JTF p.18 (rev G built a "
                               "0.068-wide puck)"),
     plinth_pad=PT((0.020, 0.025), "[H] carpeted plinth over gear.NOSE_TUNNEL: wall, top gap (fit_check 11)"),
+    # first-principles flight deck A6 (rev P): the quadrant's rim and the moulding's blends as made
+    rim=PT((0.014, 0.006, 0.020, 0.003), "[M] the quadrant plate's raised gunmetal frame: width, height above the "
+                                         "plate, outer corner radius, the radius its top edge is rolled to (P1046408 / "
+                                         "09, the Pilatus throttle photo: a cast frame with a rolled, light-catching "
+                                         "top edge round the satin-black plate)"),
+    blend=PT((0.012, 0.008), "[E] the centre-stack moulding's blends: the radius along its front edges (the GRP "
+                             "moulding's R 12) and the fillet where the stack's face runs into the quadrant frame"),
 )
 SIDE_CONSOLE = dict(
     x=PT((3.640, 4.420), "[M] armrest console along each sidewall, panel cheek to the seat back (render, photos)"),
@@ -965,6 +978,55 @@ SIDE_CONSOLE = dict(
     cb_grid=PT(((12, 4), (11, 4)), "[S] breakers per row, rows: FRONT 12 x 4 (LH A-M), REAR 11 x 4 (N-Z) (NGX POH "
                                    "Fig 7-13-2, verified); each row a label strip and a lit bus band"),
 )
+# first-principles flight deck A4 (rev P): what each flight-deck part is MADE of and how it is FINISHED -- the
+# construction drives the builders' edges / gaps / fasteners / printing and the viewer's finish; every material the
+# flight deck's own meshes use belongs to one row (test/fit_fd_p.py 36).  Columns: (construction, finish, edge,
+# printing, materials).  Sources: P1046406-11 (s/n 3001), the AOPA / Pilatus cockpit photos, Garmin / IPECO data.
+FD_CONSTRUCTION = dict(
+    hood=PT(("GRP shell under one stitched leather cover", "black aniline leather, fine grain, satin",
+             "rolled lip R 9, double stitching 8 / 11.5 mm in", "none",
+             ("leather_glareshield", "leather_black", "stitch_thread", "leather_dark")),
+            "[M] P1046408-10: one continuous cover, the lip rolled under, seams stitched"),
+    fascia=PT(("moulded composite eyebrow under the lip", "warm grey satin paint",
+               "R 3 edges, 15 deg lean", "RADIO-CALL plates, BARO / WARNING / CAUTION titles",
+               ("panel_grey",)), "[M] P1046408 / brochure p.10"),
+    displays=PT(("Garmin PDU / SDU / GI 275 units in moulded bezels", "satin black bezels, AR glass",
+                 "R 2 bezel edges, corner inserts with screws", "maker's legends (none: no markings)",
+                 ("bezel_black", "display_page", "screen", "screen_white", "screen_sky", "screen_ground", "lens")),
+                "[S] Garmin G3000 PRIME; [M] P1046408"),
+    face=PT(("moulded composite panel face", "satin graphite paint", "R 2 returns into the recesses", "none",
+             ("panel_graphite", "panel_dark", "fd_cove")), "[M] P1046408 (flight deck merge: panel_graphite)"),
+    plates=PT(("2 mm aluminium sub-panels on standoffs, 2 mm gaps", "brushed, titanium-tint anodised",
+               "edges broken R 0.5, 45 deg tray chamfer", "silk-screened white legends, group frames",
+               ("panel_titanium", "tray_titanium", "panel_silver", "trim_satin", "legend_print")),
+              "[M] P1046408-10 (the plates carry white printing over every switch)"),
+    switches=PT(("rocker / push / toggle switches, knurled knobs, guarded switches", "black PA mouldings, chrome bats",
+                 "moulded R 0.6-1.5", "white index lines / legends on caps",
+                 ("grip_black", "black", "gloss_black", "rubber_black", "chrome_trim", "metal", "metal_dark",
+                  "steel", "steel_dark", "yoke_white", "light_white", "light_red", "light_amber", "annun_off_red",
+                  "annun_off_amber", "annun_off_green", "annun_green", "legend_lit", "legend_plate", "paint_red",
+                  "placard_red", "placard_red_dim", "brush_seal")),
+                "[M] P1046408-10, the Pilatus throttle photo"),
+    stack=PT(("GRP centre-stack moulding", "satin gunmetal paint", "R 12 front edges (PEDESTAL blend)", "COM titles",
+              ("stack_gunmetal", "pedestal_gunmetal")), "[M] P1046408 / 09"),
+    quadrant=PT(("3 mm aluminium plate in a cast rim (PEDESTAL rim)", "black anodised plate, gunmetal rim",
+                 "rim top rolled R 3", "silk-screened scales, detents, titles, dimmer arcs",
+                 ("pcl_pewter",)), "[M] P1046408 / 09, the Pilatus throttle photo"),
+    column=PT(("yoke column, U recess and J band", "satin dark grey", "R 4 band edges", "none",
+               ("yoke_band",)), "[M] L6Y2 detail J"),
+    lining=PT(("thermoformed lining panels, moulded glazing surround", "warm grey satin, leather sills",
+               "rolled reveal edges with a satin bead", "sill placards",
+               ("lining_flightdeck",)), "[M] P1046409 / 10"),
+    consoles=PT(("side consoles, CB panels on the lining", "black anodised CB plates, white silk-screen",
+                 "6.5 mm bezel frames", "breaker labels, row marks, placards",
+                 ("fdb_cb_legend", "fdb_cb_label", "fdb_cb_glow_yellow", "fdb_cb_glow_white", "fdb_cb_glow_green",
+                  "fdb_cb_glow_blue", "psu_panel")), "[S] NGX POH Fig 7-13-2 / 3; [M] P1046409 / 10, AOPA"),
+    floor=PT(("carpeted floor, footwell walls, foil blanket", "charcoal loop-pile carpet", "bound edges", "none",
+              ("carpet_flightdeck",)), "[M] P1046408"),
+    divider=PT(("walnut-veneered divider with curtain", "gloss lacquered walnut", "half-round aisle edges",
+                "none", ("veneer_walnut", "curtain", "fdb_visor", "fdb_hose_green")), "[M] P1046406"),
+)
+
 OVERHEAD = dict(
     x=PT((3.860, 4.070), "[S+M] overhead panel on the ceiling at the windshield top: NGX panorama S15 front edge "
                          "3.84-3.89, aft 4.07, aspect 2.30 (POH Fig 7-13-1); the P1046406 fitted camera puts this "

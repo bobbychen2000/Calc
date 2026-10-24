@@ -7,6 +7,7 @@ import numpy as np
 
 from cad import sdf2d
 from cad.mesh import Mesh, grid_surface, planar_cap
+from model import fd_print as PR
 from model.fd_kit import (_FD)  # noqa: F401
 from model.fd_panel import (z_bot)  # noqa: F401
 
@@ -93,10 +94,12 @@ def footwell_walls():
                     "panel_silver"))
         for v in (-0.0045, 0.0045):
             out.append((fu.box(0.0, v, 0.0031, (0.0115, 0.0042, 0.0006)), "black"))
-        out.append((fu.rect(-0.006, -0.0215, 0.006, -0.0200, 0.0004), "light_white"))        # '5V DC' stroke
-        # the 1-kg weight-limit placard beside it: two abstract legend rows (P1046408 / 10)
-        for v, hl in ((-0.040, 0.020), (-0.047, 0.024)):                    # centred on the cubby face
-            out.append((fu.rect(-0.012 - hl, v - 0.0009, -0.012 + hl, v + 0.0009, 0.0004), "light_white"))
+        # printed (A3): the '5V DC' caption, and the 1-kg weight-limit placard beside it in two rows (P1046408 / 10);
+        # a reading frame (right = starboard on this aft-facing face, both sides)
+        fr = FD.Fr(fu.o, [0, 1.0, 0], [0, 0, 1.0], [1.0, 0, 0])
+        out.append(PR.decal(fr, -0.009, -0.0235, 0.009, -0.0180, PR.LIFT, "words", rows=1, cap=1.4, seed=("5v", sg)))
+        out.append(PR.decal(fr, sg * 0.012 - 0.026, -0.0505, sg * 0.012 + 0.026, -0.0365, PR.LIFT, "words", rows=2,
+                            cap=1.6, seed=("1kg", sg)))
     return out
 
 

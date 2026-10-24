@@ -35,6 +35,7 @@ import numpy as np
 
 from cad.mesh import Mesh, superellipsoid, box, cylinder, revolve, disk, grid_surface, planar_cap, sweep_profile
 from model import interior as I
+from model import fd_print
 
 # =====================================================================================================================
 # materials: the values live in model/assemble.MATERIALS / EMISSIVE (and render/lookdev.py SPEC); these are the names
@@ -723,8 +724,11 @@ def _pedestal(acc):
         fp = Fr(fa.p(sg * 0.056, 0.0, 0.0080), fa.u, fa.v)
         acc.add(_extrusion(fp, body, 0.015, bevel=0.003), "paint_red")
         acc.add(_extrusion(fp, rrect_loop(0.024, 0.0095, 0.006, cx=0.0, cy=0.232), 0.017, bevel=0.004), "paint_red")
-        for v0, v1, hl in ((0.084, 0.091, 0.010), (0.097, 0.104, 0.007), (0.140, 0.146, 0.011)):
-            acc.add(fp.rect(-hl, v0, hl, v1, 0.0080), "light_white")
+        # printed on the paddle (first-principles A3): the title over two caption lines, white on the red
+        acc.add(*fd_print.decal(fp, -0.0125, 0.0820, 0.0125, 0.1070, 0.0075 + fd_print.LIFT, "words", rows=2, cap=2.2,
+                                seed=("pull", sg)))
+        acc.add(*fd_print.decal(fp, -0.0120, 0.1360, 0.0120, 0.1500, 0.0075 + fd_print.LIFT, "words", rows=1, cap=2.4,
+                                seed=("pull_t", sg)))
     acc.add(fa.se(0.0, 0.150, 0.008, (0.018, 0.070, 0.008), (0.3, 0.3), (8, 12)), "black")
     acc.add(fa.rect(-0.012, 0.185, 0.012, 0.197, 0.0170), "light_white")          # 'OPEN' flag
 
@@ -983,7 +987,8 @@ def _consoles(acc):
             acc.add(disk(ctr + [0, 0, 0.0005], [0, 0, 1.0], 0.029, n=24), "black")
         f = Fr([xa + 0.10, sg * (yi - 0.0005), zt - 0.12], [1.0, 0, 0], [0, 0, 1.0], [0, -sg, 0])
         acc.add(f.rect(-0.012, -0.006, 0.012, 0.006), "black")
-        acc.add(f.rect(-0.030, 0.020, 0.030, 0.034, 0.0002), "light_white")        # 1-kg pocket placard
+        acc.add(*fd_print.decal(f, -0.030, 0.019, 0.030, 0.035, fd_print.LIFT, "words", rows=2, cap=2.0,
+                                seed=("pocket", sg)))                        # 1-kg pocket placard, printed (A3)
         for du in (-0.026, -0.008):                                # USB-A / -C socket pair (P1046409)
             acc.add(f.rect(du - 0.007, -0.034, du + 0.007, -0.024, 0.0003), "black")
             acc.add(f.rect(du - 0.0045, -0.0305, du + 0.0045, -0.0275, 0.0006), "chrome_trim")

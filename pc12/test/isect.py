@@ -106,3 +106,35 @@ def merged(meshes, M=None):
     if not Vs:
         return np.zeros((0, 3)), np.zeros((0, 3), int)
     return np.vstack(Vs), np.vstack(Fs)
+
+
+def pt_tri_k(P, T):
+    """Exact distances of points P (n, 3) to the triangles T (n, k, 3, 3) (k candidates per point): (n,) minimum."""
+    a, b, c = T[:, :, 0], T[:, :, 1], T[:, :, 2]
+    Q = P[:, None, :]
+    ab, ac, ap = b - a, c - a, Q - a
+    d1, d2 = (ab * ap).sum(-1), (ac * ap).sum(-1)
+    bp = Q - b
+    d3, d4 = (ab * bp).sum(-1), (ac * bp).sum(-1)
+    cp = Q - c
+    d5, d6 = (ab * cp).sum(-1), (ac * cp).sum(-1)
+    va = d3 * d6 - d5 * d4
+    vb = d5 * d2 - d1 * d6
+    vc = d1 * d4 - d3 * d2
+    den = np.where(np.abs(va + vb + vc) < 1e-30, 1e-30, va + vb + vc)
+    v, w = vb / den, vc / den
+    X = a + v[..., None] * ab + w[..., None] * ac                                         # interior projection
+    # region tests (Ericson): vertices / edges
+    X = np.where(((d1 <= 0) & (d2 <= 0))[..., None], a, X)
+    X = np.where(((d3 >= 0) & (d4 <= d3))[..., None], b, X)
+    X = np.where(((d6 >= 0) & (d5 <= d6))[..., None], c, X)
+    vab = (vc <= 0) & (d1 >= 0) & (d3 <= 0)
+    tab = d1 / np.where(np.abs(d1 - d3) < 1e-30, 1e-30, d1 - d3)
+    X = np.where(vab[..., None], a + tab[..., None] * ab, X)
+    vac = (vb <= 0) & (d2 >= 0) & (d6 <= 0)
+    tac = d2 / np.where(np.abs(d2 - d6) < 1e-30, 1e-30, d2 - d6)
+    X = np.where(vac[..., None], a + tac[..., None] * ac, X)
+    vbc = (va <= 0) & ((d4 - d3) >= 0) & ((d5 - d6) >= 0)
+    tbc = (d4 - d3) / np.where(np.abs((d4 - d3) + (d5 - d6)) < 1e-30, 1e-30, (d4 - d3) + (d5 - d6))
+    X = np.where(vbc[..., None], b + tbc[..., None] * (c - b), X)
+    return np.linalg.norm(Q - X, axis=-1).min(1)

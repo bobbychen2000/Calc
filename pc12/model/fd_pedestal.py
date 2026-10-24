@@ -9,6 +9,7 @@ from cad import sdf2d
 from cad.mesh import Mesh, grid_surface, planar_cap
 from model.fd_kit import (_FD, _orient_out, _unit, knob)  # noqa: F401
 from model.fd_panel import (guarded_toggle)  # noqa: F401
+from model import fd_print as PR
 
 # =====================================================================================================================
 # centre stack + pedestal (A7)
@@ -17,7 +18,7 @@ from model.fd_panel import (guarded_toggle)  # noqa: F401
 # satin-black plate in a raised gunmetal frame, brush-sealed slots, the PCL's cylinder handle on its arm, the framed
 # trim panel), the JTF p.18 pedestal plan (the order fore -> aft, scaled to PEDESTAL x 3.73-4.15), P1046406 (the CCD).
 STACK = dict(
-    edge_r=0.012,                   # moulded radius along the stack's front edges (was 9 mm tube rails)
+    # (the moulded radius along the stack's front edges is interior.PEDESTAL blend[0] since the first-principles A6)
     horn_s=0.215,                   # the stack keeps its SDU width (PANEL stack_hw) down to here (arc length, m)
     waist=(0.312, 0.098),           # ... then narrows to the waist at the pad's foot [M: P1046408 x 830 / 1110]
     flare_s=0.330,                  # ... and flares to the quadrant's half-width (PEDESTAL hw) over the trim panel's top
@@ -35,7 +36,8 @@ STACK = dict(
     com=(0.222, 0.100, 0.0095),     # COM 1/2 VOL knobs on the horns: s, |y|, radius (research M6: dia 19, BL +/-0.10)
 )
 QUAD = dict(
-    frame=(0.014, 0.006, 0.020),    # raised gunmetal frame: width, height above the plate, outer corner radius
+    # (the raised gunmetal frame -- width, height, outer corner radius, rolled top -- is interior.PEDESTAL rim since the
+    # first-principles flight deck A6, sheet L6C)
     trim_s=(0.322, 0.383),          # framed trim panel on the stack face: arc length from / to (FD9-01; rev N: the plate
     #                                 x 3.738-3.800, behind the PCL head from the crew / cabin eyes)
     trim_hw=0.088,                  # its half-width (the stack face's flat 0.093-0.098 there)
@@ -136,7 +138,7 @@ def stack_shell():
     q = STACK
     D, s, N = _profile_stack()
     hw = stack_hw(s)
-    R = q["edge_r"]
+    R = float(I.PEDESTAL["blend"][0])                               # the moulding's front-edge radius (L6C)
     out = []
     # section across: left side end (-hw, -R) -> arc -> flat front -> arc -> (hw, -R)
     na, nf = 6, 14
@@ -229,8 +231,10 @@ def stack_shell():
         f = stack_frame(cs, sg * cy)
         out.append((knob(f.o, f.w, f.u, cr, 0.012, n=36, skirt=(cr + 0.003, 0.0025), chamfer=0.2), "grip_black"))
         out.append((f.rect(-0.0008, 0.35 * cr, 0.0008, 0.75 * cr, 0.0149), "light_white"))
-        out.append((f.rect(-0.010, cr + 0.004, 0.010, cr + 0.0055, 0.0003), "light_white"))
-        out.append((f.rect(-0.012, -cr - 0.0055, 0.012, -cr - 0.004, 0.0003), "light_white"))
+        out.append(PR.decal(f, -0.012, cr + 0.0032, 0.012, cr + 0.0068, PR.LIFT, "words", rows=1, cap=1.6,
+                            seed=("com", sg)))                         # (first-principles A3: printed) COM 1 / 2
+        out.append(PR.decal(f, -0.013, -cr - 0.0072, 0.013, -cr - 0.0032, PR.LIFT, "words", rows=1, cap=1.4,
+                            seed=("vol", sg)))                         # PUSH / VOL
     # waisted side walls: the region under the front edge, down to the plinth and back to the lower panel
     x0p, x1p, phw, pz = I.pedestal_plinth()
     E = np.c_[D[:, 0] - R * N[:, 0], D[:, 1] - R * N[:, 1]]               # the edge's inner end in the side view
@@ -315,7 +319,7 @@ def quadrant():
     hw = float(PE["hw"])
     zt = FL + float(PE["top_h"])
     out = []
-    fw, fh, fr = q["frame"]
+    fw, fh, fr, rr = (float(v) for v in PE["rim"])        # the cast rim (PEDESTAL rim, sheet L6C R-R)
     cx = 0.5 * (qx0 + qx1)
     hx = 0.5 * (qx1 - qx0)
     fp = FD.Fr([cx, 0.0, zt], [1.0, 0, 0], [0, 1.0, 0], [0, 0, 1.0])      # u = aft, v = starboard, w = up
@@ -323,8 +327,12 @@ def quadrant():
     O = FD.rrect_loop(hx, hw, fr, nc=8)
     Iin = FD.rrect_loop(hx - fw, hw - fw, max(fr - fw, 0.004), nc=8)
     rings = []
-    for t, hgt in ((0.0, 0.0), (0.0, 0.6 * fh), (0.15, fh), (0.5, fh + 0.001), (0.85, fh), (1.0, 0.6 * fh),
-                   (1.0, 0.0)):
+    # (first-principles A6) the rim's section as cast: straight walls, the top edges rolled R rr, a flat top
+    prof = [(0.0, 0.0), (0.0, fh - rr)]
+    prof += [((rr - rr * math.cos(a)) / fw, fh - rr + rr * math.sin(a)) for a in np.linspace(0.0, 0.5 * math.pi, 5)[1:]]
+    prof += [((fw - rr + rr * math.sin(a)) / fw, fh - rr + rr * math.cos(a)) for a in np.linspace(0.0, 0.5 * math.pi, 5)]
+    prof += [(1.0, 0.0)]
+    for t, hgt in prof:
         P = O + t * (Iin - O)
         rings.append(fp.p(P[:, 0], P[:, 1], hgt))
     frame = grid_surface(np.array(rings), close_v=True)
@@ -373,32 +381,28 @@ def quadrant():
             dep = top - 0.0020
             out.append((FD._extrusion(fk.moved(cu_, cv_, top - 0.5 * dep), FD.rrect_loop(hu, hv, 0.0012, nc=3), dep,
                                       bevel=0.0009, nb=2), "gloss_black"))
-            lv = 0.45 * hv
-            if horiz:
-                out.append((fk.rect(cu_ - 0.45 * hu, cv_ - 0.0006, cu_ + 0.45 * hu, cv_ + 0.0006, top + 0.0002),
-                            "light_white"))
-            else:
-                out.append((fk.rect(cu_ - 0.0006, cv_ - lv, cu_ + 0.0006, cv_ + lv, top + 0.0002), "light_white"))
+            # printed on the cap (first-principles A3: was a raised stroke; the Pilatus throttle photo / P1046408: a
+            # white word on each half)
+            out.append(PR.decal_r(fk, cu_ - 0.55 * hu, cv_ - 0.85 * hv, cu_ + 0.55 * hu, cv_ + 0.85 * hv,
+                                  top + PR.LIFT, "words", rows=1, cap=1.5, fill=0.95,
+                                  seed=("trimcap", round(yy, 3), s_)))   # DOWN / NOSE, LWD / RWD on the cap
     fk = ft.moved(0.004, y4, 0.0024)                                     # guarded FLAP INTERRUPT
     gt = FD.Fr(fk.o, fk.u, fk.v, fk.w)
     out += guarded_toggle(FD.Fr(gt.o, gt.v, -gt.u, gt.w), guard_mat="pedestal_gunmetal")
     # legend strokes on the trim panel: each item's title in two rows of word-length strokes ahead of it (fix r5
     # FID-FD4-03: one bar per item read as a bare panel; P1046408 / 09: TRIM / INTERRUPT, ALTERNATE / STAB TRIM,
     # AILERON TRIM, FLAP / INTERRUPT), the AILERON TRIM bezel's white outline with its LWD / RWD marks
-    for yy, rows in ((y1, ((0.008,), (0.017,))), (y2, ((0.017,), (0.007, 0.008))), (y3, ((0.013, 0.009),)),
-                     (y4, ((0.007,), (0.017,)))):
-        for r_, words in enumerate(rows):
-            u0 = -th + 0.0030 + 0.0042 * r_
-            tot = sum(words) + 0.0025 * (len(words) - 1)
-            v = yy - 0.5 * tot
-            for w_ in words:
-                out.append((ft.rect(u0, v, u0 + 0.0016, v + w_, 0.0028), "light_white"))
-                v += w_ + 0.0025
+    # (first-principles A3: printed on the bezel plate -- pseudo-text titles, one or two lines over each item -- instead of
+    # raised word strokes)
+    for k_, (yy, rows) in enumerate(((y1, 2), (y2, 2), (y3, 1), (y4, 2))):
+        out.append(PR.decal_r(ft, -th + 0.0018, yy - 0.019, -th + 0.0018 + 0.0036 * rows + 0.0012, yy + 0.019,
+                              0.0024 + PR.LIFT, "words", rows=rows, cap=1.3, seed=("trim", k_)))
     bw, bh = 0.026 * k5, 0.016 * k5
     oa, ob = 0.5 * bh + 0.0012, 0.5 * bw + 0.0012
     for s_ in (-1, 1):                                                   # LWD / RWD marks (the outline went, FDY r2)
-        out.append((ft.rect(0.006 + oa + 0.0020, y3 + s_ * 0.6 * ob - 0.0030, 0.006 + oa + 0.0034,
-                            y3 + s_ * 0.6 * ob + 0.0030, 0.0028), "light_white"))
+        out.append(PR.decal_r(ft, 0.006 + oa + 0.0012, y3 + s_ * 0.6 * ob - 0.0045, 0.006 + oa + 0.0042,
+                              y3 + s_ * 0.6 * ob + 0.0045, 0.0024 + PR.LIFT, "words", rows=1, cap=1.3,
+                              seed=("lwd", s_)))
     # slots with brush seals, detent ticks, the striped reverse gate
     sw = q["slot_w"]
     pcx, pcy, pch = (float(v) for v in PE["pcl"])
@@ -406,18 +410,19 @@ def quadrant():
     for (a, b), yy in ((q["pcl_slot"], pcy), (q["flap_slot"], fy)):
         out.append((_box([0.5 * (a + b), yy, zt - 0.004], (b - a, sw, 0.008)), "black"))
         out += _bristles(a, b, yy, zt, sw)
-    for xx in (pcx - 0.090, pcx - 0.072):                                # TO / MCP detent marks
-        out.append((fp.rect(xx - cx - 0.003, pcy - sw - 0.008, xx - cx + 0.003, pcy - sw - 0.002, 0.0003),
-                    "light_white"))
-    out.append((fp.rect(pcx + 0.020 - cx, pcy - sw - 0.007, pcx + 0.024 - cx, pcy - sw - 0.002, 0.0003),
-                "light_white"))                                          # IDLE
-    for k in range(6):                                                   # striped reverse gate (abstract)
-        x_ = pcx + 0.030 + 0.0055 * k
-        out.append((fp.rect(x_ - cx, pcy - sw - 0.008, x_ + 0.005 - cx, pcy - sw - 0.002, 0.0003),
-                    "paint_red" if k % 2 == 0 else "light_white"))
-    for k in range(4):                                                   # flap detents 0 / 15 / 30 / 40 (fix r3:
-        x_ = fx - 0.050 + 0.040 * k                                      # bolder, FID-FD3-07)
-        out.append((fp.rect(x_ - cx - 0.0022, fy + sw, x_ - cx + 0.0022, fy + sw + 0.009, 0.0003), "light_white"))
+    # (first-principles A3: the PCL / flap scales printed on the plate -- a tick scale along each slot, the detent
+    # titles, the striped reverse gate -- instead of raised strokes)
+    a0, b0 = q["pcl_slot"]
+    out.append(PR.decal(fp, a0 - cx + 0.004, pcy - sw - 0.0085, b0 - cx - 0.004, pcy - sw - 0.0015, PR.LIFT, "ticks",
+                        n=19, major=6, side="t"))
+    for xx, k_ in ((pcx - 0.090, 0), (pcx - 0.072, 1), (pcx + 0.020, 2)):   # TO / MCP / IDLE titles
+        out.append(PR.decal_r(fp, xx - cx - 0.0040, pcy - sw - 0.0185, xx - cx + 0.0040, pcy - sw - 0.0095, PR.LIFT,
+                              "words", rows=1, cap=1.4, fill=0.9, seed=("pcl", k_)))
+    out.append(PR.decal(fp, pcx + 0.030 - cx, pcy - sw - 0.008, pcx + 0.063 - cx, pcy - sw - 0.002, PR.LIFT,
+                        "stripes", colour="red", period=3.0))                     # striped reverse gate
+    fa0, fb0 = q["flap_slot"]
+    out.append(PR.decal(fp, fa0 - cx + 0.002, fy + sw + 0.0015, fb0 - cx - 0.002, fy + sw + 0.0090, PR.LIFT, "ticks",
+                        n=4, major=1, side="b", lw=0.6, base=False))              # flap detents 0 / 15 / 30 / 40
     # PCL: dark arm from the slot to the handle, the satin pewter paddle grip on its neck, the red flag at its root
     # (flight deck fix r5 FDO4-05 / FID-FD4-03: the turned cylinder of r2 / r3 -- 40 mm across, PEDESTAL pcl_grip's
     # height not used -- read as a can / glass jar from the seats; P1046408 / 09 through their cameras show a PADDLE:
@@ -458,25 +463,24 @@ def quadrant():
                     "paint_red" if k % 2 == 0 else "light_white"))
     # abstract legend strokes on the plate (no lettering): the POWER title by the PCL slot, the flap angle marks' labels,
     # the stabilised-propeller caution line along the plate's port edge (FDO1-07: the face read empty)
-    a0, b0 = q["pcl_slot"]
-    out.append((fp.rect(a0 - cx + 0.004, pcy + sw + 0.004, a0 - cx + 0.026, pcy + sw + 0.0065, 0.0003), "light_white"))
+    out.append(PR.decal(fp, a0 - cx + 0.004, pcy + sw + 0.003, a0 - cx + 0.030, pcy + sw + 0.0075, PR.LIFT, "words",
+                        rows=1, cap=1.8, seed="power"))                          # POWER (along the slot)
     for k in range(4):
         x_ = fx - 0.050 + 0.040 * k
-        out.append((fp.rect(x_ - cx - 0.003, fy + sw + 0.010, x_ - cx + 0.003, fy + sw + 0.0125, 0.0003),
-                    "light_white"))
-    out.append((fp.rect(a0 - cx, -hw + fw + 0.005, b0 - cx + 0.020, -hw + fw + 0.0062, 0.0003), "light_white"))
-    for k, (u0_, u1_) in enumerate(((0.0, 0.030), (0.034, 0.052), (0.056, 0.090), (0.094, 0.120))):
-        out.append((fp.rect(a0 - cx + 0.010 + u0_, -hw + fw + 0.0085, a0 - cx + 0.010 + u1_, -hw + fw + 0.0095, 0.0003),
-                    "light_white"))
+        out.append(PR.decal_r(fp, x_ - cx - 0.004, fy + sw + 0.0095, x_ - cx + 0.004, fy + sw + 0.0135, PR.LIFT, "words",
+                              rows=1, cap=1.6, fill=0.6, seed=("flap", k)))       # 0 / 15 / 30 / 40
+    # the stabilised-propeller caution placard along the plate's port edge: a framed two-line printed block
+    out.append(PR.decal(fp, a0 - cx, -hw + fw + 0.0035, b0 - cx + 0.024, -hw + fw + 0.0110, PR.LIFT, "frame", rc=0.8,
+                        lw=0.3, gap=0.0, title=False))
+    out.append(PR.decal(fp, a0 - cx + 0.002, -hw + fw + 0.0045, b0 - cx + 0.022, -hw + fw + 0.0100, PR.LIFT, "words",
+                        rows=2, cap=1.25, align="l", seed="caution"))
     # flap lever: stem + black square paddle
     out.append((_cyl([fx + 0.010, fy, zt - 0.006], [fx, fy, FL + fh_ - 0.015], 0.0045, n=10), "metal_dark"))
     out.append((_se([fx, fy, FL + fh_ - 0.010], (0.012, 0.015, 0.016), (0.3, 0.3), nu=8, nv=12), "grip_black"))
     # placard band across the quadrant (abstract strokes)
     px_ = q["placard_x"]
-    out.append((fp.rect(px_ - cx - 0.0035, -hw + fw + 0.008, px_ - cx + 0.0035, hw - fw - 0.008, 0.0003),
-                "panel_dark"))
-    out.append((fp.rect(px_ - cx - 0.0006, -hw + fw + 0.012, px_ - cx + 0.0006, hw - fw - 0.012, 0.0005),
-                "light_white"))
+    out.append(PR.decal_r(fp, px_ - cx - 0.0045, -hw + fw + 0.008, px_ - cx + 0.0045, hw - fw - 0.008, PR.LIFT, "words",
+                          rows=2, cap=1.3, seed="placard_band"))
     # lighting knobs: 5 + 2, skirted, with pointer lines and legend strokes (JTF p.18)
     kx, ky = q["knobs"]
     kx2, ky2 = q["knobs2"]
@@ -487,9 +491,13 @@ def quadrant():
             out.append((knob(f.o, f.w, f.u, r_, 0.011, n=32, flutes=16, depth=0.0004, skirt=(r_ + 0.0035, 0.0022),
                              chamfer=0.2), "grip_black"))
             out.append((f.rect(-0.85 * r_, -0.0007, -0.40 * r_, 0.0007, 0.0136), "light_white"))
-            out.append((f.rect(-r_ - 0.0125, -0.007, -r_ - 0.0112, 0.007, 0.0003), "light_white"))
-            out.append((f.rect(-r_ - 0.0102, -0.0045, -r_ - 0.0092, 0.0045, 0.0003), "light_white"))  # (fix r3: 2-line)
-            out.append((arc_scale(f, r_ + 0.0062, 0.0011, 0.0003), "light_white"))   # white arc scale (research M20)
+            # (first-principles A3) printed: the two-line title ahead of the knob, the white dimmer arc (OFF -> BRT
+            # wedge) with its ticks round it (research M20)
+            out.append(PR.decal_r(f, -r_ - 0.0135, -0.0095, -r_ - 0.0080, 0.0095, PR.LIFT, "words", rows=2, cap=1.2,
+                                  seed=("knob", round(x_, 3), round(yy, 3))))
+            Ra = r_ + 0.0075
+            out.append(PR.decal_r(f, -Ra, -Ra, Ra, Ra, PR.LIFT, "arc", R=1000 * (r_ + 0.0058), a0=-45.0, a1=225.0,
+                                  lw=0.9, ticks=5))
     out.append((FD.Fr([kx2, 0.0, zt], [1.0, 0, 0], [0, 1.0, 0], [0, 0, 1.0]).rect(-0.006, -0.032, 0.006, 0.032,
                                                                                     0.0003), "panel_dark"))
     # CCD palm grip at the aft end (PEDESTAL ccd): a black dome, its front with the scroll wheel and two keys

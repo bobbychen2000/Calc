@@ -7,6 +7,7 @@ import numpy as np
 
 from cad import sdf2d
 from cad.mesh import Mesh, grid_surface, planar_cap
+from model import fd_print as PR
 from model.fd_kit import (_FD, _fan, _orient_out, _unit, knob)  # noqa: F401
 
 # =====================================================================================================================
@@ -172,7 +173,8 @@ def gfc700(f, aw, ah):
         # raised charcoal caps 4 mm proud (FID-FD1-07: the 2.4 mm black caps vanished into the black face)
         out.append((FD._extrusion(fk.moved(c=0.0020), FD.rrect_loop(0.5 * kw, 0.5 * kh, 0.0015, nc=3), 0.0040,
                                   bevel=0.0008, nb=1), "panel_dark"))
-        out.append((fk.rect(-0.30 * kw, -0.10 * kh, 0.30 * kw, 0.10 * kh, 0.0044), "light_white"))
+        out.append(PR.decal(fk, -0.40 * kw, -0.22 * kh, 0.40 * kw, 0.22 * kh, 0.0040 + PR.LIFT, "words", rows=1,
+                            cap=1.5, fill=0.8, seed=("gfc_key", round(u, 4), round(v, 4))))   # printed key legend (A3)
     return out
 
 
@@ -200,8 +202,8 @@ def eyebrow_items(fascia_frame, zc, sg):
     f = fascia_frame(sg * 0.372, zc - 0.012)
     out.append((FD._extrusion(f.moved(c=0.0008), FD.rrect_loop(0.0145, 0.0080, 0.0012, nc=3), 0.0016, bevel=0.0004,
                               nb=1), "bezel_black"))
-    out.append((f.rect(-0.011, -0.0020, 0.011, 0.0005, 0.0020), "light_white"))                # RADIO-CALL strokes
-    out.append((f.rect(-0.008, 0.0022, 0.008, 0.0042, 0.0020), "light_white"))
+    out.append(PR.decal(f, -0.0135, -0.0068, 0.0135, 0.0068, 0.0016 + PR.LIFT, "words", rows=2, cap=1.5,
+                        seed=("radio_call", sg)))                                     # RADIO-CALL plate, printed (A3)
     if True:                                                           # round recess / photocell beside the BARO
         f = fascia_frame(sg * 0.170, zc + 0.001)                       # plate [M: P1046408, research M18]
         out.append((knob(f.o, f.w, f.u, 0.0075, 0.0020, n=28, chamfer=0.3), "bezel_black"))
@@ -283,11 +285,11 @@ def panel_plate(outline_yz, off, mat, h=0.012, wall=True, wall_mat=None):
 
 
 def screw(y, z, off, r=0.002):
-    """Pan-head screw on a plate (with its cross slot)."""
+    """A countersunk cross-recess screw flush in a plate (first-principles A2: fd_kit.flush_screw; was a pan head
+    standing 0.9 mm proud with a raised slot bar)."""
+    from model.fd_kit import flush_screw
     FD = _FD()
-    f = FD.face_frame(y, z).moved(c=off)
-    return [(knob(f.o - 0.0002 * f.w, f.w, f.u, r, 0.0009, n=12, chamfer=0.6), "steel_dark"),
-            (f.box(0.0, 0.0, 0.0009, (1.4 * r, 0.0005, 0.0003)), "black")]
+    return flush_screw(FD.face_frame(y, z).moved(c=off), 0.0, 0.0, 0.0, 0.8 * r, "csk", "steel_dark")
 
 
 def rocker_block(f, n, cap=(0.018, 0.028), pitch=0.023, pad=0.004, legend=True):
@@ -310,8 +312,14 @@ def rocker_block(f, n, cap=(0.018, 0.028), pitch=0.023, pad=0.004, legend=True):
         m = Mesh(P, np.array([[0, 1, 2], [0, 2, 3], [3, 2, 5], [3, 5, 4]]))
         out.append((FD._oriented(FD._flat(m), f.w), "grip_black"))
         if legend:
-            out.append((fk.rect(-0.28 * cw, 0.22 * ch, 0.28 * cw, 0.30 * ch, 0.0052), "light_white"))
-            out.append((fk.rect(-0.20 * cw, -0.33 * ch, 0.20 * cw, -0.25 * ch, 0.0056), "light_white"))
+            # printed on the rocking face (A3; P1046408: white words on both halves of the black caps, HEAVY / LIGHT /
+            # OFF, OPEN / CLOSED), each laid on its facet's slope
+            for k_, (vt, ct, vb, cb) in enumerate(((0.45, 0.0040, -0.02, 0.0058), (-0.02, 0.0058, -0.45, 0.0046))):
+                top_, bot_ = fk.p(0.0, vt * ch, ct), fk.p(0.0, vb * ch, cb)
+                fv = FD.Fr(0.5 * (top_ + bot_), fk.u, top_ - bot_)          # u right, v up the facet, w out
+                hl = 0.5 * float(np.linalg.norm(top_ - bot_))
+                out.append(PR.decal(fv, -0.40 * cw, -0.42 * hl, 0.40 * cw, 0.42 * hl, PR.LIFT, "words", rows=1,
+                                    cap=1.5, fill=0.9, seed=("rk", tuple(np.round(fk.o, 4)), k_)))
     return out
 
 
@@ -320,7 +328,8 @@ def push_cap(f, w=0.012, h=0.012, proud=0.003, annun="annun_off_green"):
     FD = _FD()
     out = [(FD._extrusion(f.moved(c=0.5 * proud), FD.rrect_loop(0.5 * w, 0.5 * h, 0.001, nc=3), proud, bevel=0.0006,
                           nb=1), "grip_black")]
-    out.append((f.rect(-0.32 * w, 0.12 * h, 0.32 * w, 0.30 * h, proud + 0.0004), "light_white"))
+    out.append(PR.decal(f, -0.38 * w, 0.06 * h, 0.38 * w, 0.36 * h, proud + PR.LIFT, "words", rows=1, cap=1.3,
+                        fill=0.85, seed=("cap", round(w, 4), round(h, 4), annun, tuple(np.round(f.o, 4)))))
     out.append((f.rect(-0.36 * w, -0.36 * h, 0.36 * w, -0.10 * h, proud + 0.0004), annun))
     return out
 
@@ -693,7 +702,7 @@ def lower_panel(sg):
     for du in (-0.0045, 0.0045):
         out.append((FD._extrusion(f.moved(du, 0.0, 0.003), FD.rrect_loop(0.0016, 0.0042, 0.0012, nc=2), 0.0006,
                                   bevel=0.0002, nb=1), "black"))
-    out.append((f.rect(-0.008, -0.0145, 0.008, -0.0125, 0.0001), "light_white"))
+    out.append(PR.decal(f, -0.012, -0.0170, 0.012, -0.0105, PR.LIFT, "words", rows=1, cap=1.6, seed=("usb", sg)))
     out += column_surround(sg)
     # inner sub-panel items
     if sg < 0:
@@ -701,13 +710,18 @@ def lower_panel(sg):
         for zz in (1.808, 1.752):
             f = FD.face_frame(-0.250, zz).moved(c=q["plate_off"])
             out += rocker_block(f, 3)
-            out.append((f.rect(-0.034, 0.0215, 0.034, 0.0235, 0.0004), "light_white"))
+            # printed (A3): the group's frame with its title, a caption under each switch
+            out.append(PR.decal(f, -0.041, -0.0255, 0.041, 0.0275, PR.LIFT, "frame", gap=0.62, cap=1.5, lw=0.3,
+                                rc=1.5, seed=("ice", zz)))
+            for i in range(3):
+                out.append(PR.decal(f, (i - 1) * 0.023 - 0.0105, -0.0245, (i - 1) * 0.023 + 0.0105, -0.0185,
+                                    PR.LIFT, "words", rows=1, cap=1.2, fill=0.9, seed=("ice_sw", zz, i)))
         # V-LE / V-LO placard and the landing-gear handle (wheel knob on a lever in its slot, UP at the top)
         f = FD.face_frame(-0.180, 1.808).moved(c=q["plate_off"])
         out.append((FD._extrusion(f.moved(c=0.0005), FD.rrect_loop(0.0135, 0.0085, 0.001, nc=2), 0.001, bevel=0.0003,
                                   nb=1), "bezel_black"))
-        for v in (-0.003, 0.003):
-            out.append((f.rect(-0.010, v - 0.0008, 0.010, v + 0.0008, 0.0014), "light_white"))
+        out.append(PR.decal(f, -0.0125, -0.0075, 0.0125, 0.0075, 0.0010 + PR.LIFT, "words", rows=2, cap=1.4,
+                            seed="vle_vlo"))                                         # V-LE / V-LO placard (A3)
         f = FD.face_frame(-0.160, 1.792).moved(c=q["plate_off"])
         out.append((FD._extrusion(f.moved(c=0.001), FD.rrect_loop(0.012, 0.047, 0.004, nc=3), 0.002, bevel=0.0005,
                                   nb=1), "bezel_black"))
@@ -717,7 +731,10 @@ def lower_panel(sg):
         out.append((_FD().revolve([(0.0, 0.004), (0.002, 0.016), (0.005, 0.019), (0.009, 0.019), (0.012, 0.016),
                                    (0.014, 0.004)], n=40, axis_origin=wc - 0.007 * f.u, axis_dir=f.u, ref_dir=f.w,
                                   cap_ends=True), "grip_black"))
-        out.append((f.rect(-0.004, 0.0405, 0.004, 0.0430, 0.0024), "light_white"))                # UP mark
+        out.append(PR.decal(f, -0.0085, 0.0395, 0.0085, 0.0445, 0.0020 + PR.LIFT, "words", rows=1, cap=1.8,
+                            seed="gear_up"))                                         # UP / DN on the bezel (A3)
+        out.append(PR.decal(f, -0.0085, -0.0445, 0.0085, -0.0395, 0.0020 + PR.LIFT, "words", rows=1, cap=1.8,
+                            seed="gear_dn"))
         # FEATHER INHIBIT: a guarded square push button on the yoke sub-panel
         f = FD.face_frame(-0.442, 1.758).moved(c=q["plate_off"])
         out.append((FD._extrusion(f.moved(c=0.0015), FD.rrect_loop(0.0175, 0.0200, 0.003, nc=3), 0.003, bevel=0.0006,
@@ -726,7 +743,8 @@ def lower_panel(sg):
                                   nb=1), "panel_silver"))
         out.append((FD._extrusion(f.moved(c=0.0040), FD.rrect_loop(0.0095, 0.0095, 0.0015, nc=3), 0.004, bevel=0.0007,
                                   nb=1), "grip_black"))
-        out.append((f.rect(-0.012, 0.0145, 0.012, 0.0165, 0.0034), "light_white"))
+        out.append(PR.decal(f, -0.0160, 0.0125, 0.0160, 0.0190, 0.0030 + PR.LIFT, "words", rows=1, cap=1.4,
+                            seed="feather_inh"))                                     # FEATHER INHIBIT (A3)
         # PARKING BRK: a vertical black lozenge handle on its round boss, lower left [M: P1046410]
         f = FD.face_frame(-0.637, 1.787).moved(c=q["plate_off"])
         out.append((knob(f.o, f.w, f.u, 0.0140, 0.0050, n=32, chamfer=0.3), "panel_dark"))
@@ -734,7 +752,8 @@ def lower_panel(sg):
         loz = FD._fillet(np.array([(0.0, -0.034), (0.0105, -0.012), (0.0105, 0.012), (0.0, 0.034), (-0.0105, 0.012),
                                    (-0.0105, -0.012)]), 0.007, n=4, max_seg=0.01)
         out.append((FD._extrusion(f.moved(c=0.026), loz, 0.012, bevel=0.003, nb=2), "grip_black"))
-        out.append((f.rect(-0.0012, -0.022, 0.0012, 0.022, 0.0324), "light_white"))                # legend stroke
+        out.append(PR.decal(FD.Fr(f.o, f.v, -f.u, f.w), -0.019, -0.0035, 0.019, 0.0035, 0.032 + PR.LIFT, "words",
+                            rows=1, cap=2.0, seed="park_brk"))                        # PARKING BRK on the handle (A3)
     else:
         # ACS / CPCS: two placards in the band, a row of four lit push buttons, the rockers and the guarded DUMP
         # [M: P1046409, P1046408]
@@ -742,22 +761,27 @@ def lower_panel(sg):
             f = FD.face_frame(yy, 1.851).moved(c=q["band_off"])
             out.append((FD._extrusion(f.moved(c=0.0005), FD.rrect_loop(0.0195, 0.0062, 0.001, nc=2), 0.001,
                                       bevel=0.0003, nb=1), "bezel_black"))
-            for v in (-0.0022, 0.0022):
-                out.append((f.rect(-0.015, v - 0.0006, 0.015, v + 0.0006, 0.0014), "light_white"))
+            out.append(PR.decal(f, -0.0180, -0.0052, 0.0180, 0.0052, 0.0010 + PR.LIFT, "words", rows=2, cap=1.2,
+                                seed=("acs_placard", yy)))                           # printed (A3)
         for yy, an in ((0.186, "annun_off_green"), (0.208, "annun_off_green"), (0.231, "annun_off_amber"),
                        (0.254, "annun_off_green")):                 # unlit on a parked aircraft (FID-FD1-03)
             f = FD.face_frame(yy, 1.816).moved(c=q["plate_off"])
             out.append((FD._extrusion(f.moved(c=0.001), FD.rrect_loop(0.0105, 0.0105, 0.0015, nc=3), 0.002,
                                       bevel=0.0004, nb=1), "bezel_black"))
             out += push_cap(f.moved(c=0.002), 0.017, 0.017, 0.003, an)
-            out.append((f.rect(-0.009, 0.0125, 0.009, 0.0140, 0.0004), "light_white"))
+            out.append(PR.decal(f, -0.0110, 0.0115, 0.0110, 0.0160, PR.LIFT, "words", rows=1, cap=1.3,
+                                seed=("acs_title", yy)))
         f = FD.face_frame(0.188, 1.769).moved(c=q["plate_off"])
         out += rocker_block(f, 1, cap=(0.016, 0.026), legend=True)
         f = FD.face_frame(0.223, 1.769).moved(c=q["plate_off"])
         out += rocker_block(f, 1, cap=(0.016, 0.026), legend=True)
         out += guarded_toggle(FD.face_frame(0.279, 1.769).moved(c=q["plate_off"]))
-        out.append((FD.face_frame(0.234, 1.792).moved(c=q["plate_off"]).rect(-0.050, -0.0008, 0.050, 0.0008, 0.0004),
-                    "light_white"))
+        fg = FD.face_frame(0.226, 1.769).moved(c=q["plate_off"])                    # the ACS group's frame + title
+        out.append(PR.decal(fg, -0.056, -0.0215, 0.068, 0.0255, PR.LIFT, "frame", gap=0.45, cap=1.5, lw=0.3, rc=1.5,
+                            seed="acs_frame"))
+        for k_, yy in enumerate((0.188, 0.223)):
+            out.append(PR.decal(FD.face_frame(yy, 1.769).moved(c=q["plate_off"]), -0.010, -0.0200, 0.010, -0.0160,
+                                PR.LIFT, "words", rows=1, cap=1.2, seed=("acs_sw", k_)))
         # OXYGEN lever in its vertical slot next to the stack
         f = FD.face_frame(0.162, 1.787).moved(c=q["plate_off"])
         out.append((FD._extrusion(f.moved(c=0.001), FD.rrect_loop(0.0095, 0.050, 0.004, nc=3), 0.002, bevel=0.0005,
@@ -850,15 +874,12 @@ def vspeed_placard(sg):
     # text-like rows (FID-FD1-07: the first build's full-width bars read as a louvred grille): two blocks as the AOPA
     # close-up shows them -- four rows, a gap, two rows --, each row a label of word-length strokes on the left and a
     # value on the right, 1 mm high (abstract: no lettering)
-    rng = np.random.default_rng(275 + sg)
-    for k, v in enumerate((0.0175, 0.0120, 0.0065, 0.0010, -0.0110, -0.0165)):
-        u = -0.0195
-        while True:
-            wl = float(rng.uniform(0.0025, 0.0065))
-            if u + wl > 0.0010:
-                break
-            out.append((f.rect(u, v - 0.0005, u + wl, v + 0.0005, 0.0016), "light_white"))
-            u += wl + 0.0014
-        out.append((f.rect(0.0080, v - 0.0005, 0.0080 + float(rng.uniform(0.006, 0.010)), v + 0.0005, 0.0016),
-                    "light_white"))
+    # (first-principles A3: printed -- label column left aligned, value column on the right)
+    top = 0.0012
+    out.append(PR.decal(f, -0.0205, -0.0030 + 0.0020, 0.0040, 0.0215, top + PR.LIFT, "words", rows=4, cap=1.1,
+                        align="l", fill=0.95, fill2=0.9, seed=("vs_l", sg)))
+    out.append(PR.decal(f, 0.0060, -0.0010, 0.0205, 0.0215, top + PR.LIFT, "words", rows=4, cap=1.1, align="l",
+                        fill=0.8, fill2=1.0, seed=("vs_r", sg)))
+    out.append(PR.decal(f, -0.0205, -0.0205, 0.0205, -0.0070, top + PR.LIFT, "words", rows=2, cap=1.1, align="l",
+                        fill=0.9, fill2=1.0, seed=("vs_b", sg)))
     return out

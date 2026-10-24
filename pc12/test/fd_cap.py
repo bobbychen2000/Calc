@@ -19,17 +19,17 @@ import viewer_test as VT  # noqa: E402
 
 # close-up poses (model axes: x STA aft, y BL starboard, z WL); eye / target / vertical fov
 CLOSE = {
-    "pedestal": {"eye": [4.10, 0.00, 1.78], "target": [3.72, 0.00, 1.42], "fov": 40},
-    "quadrant": {"eye": [4.02, 0.06, 1.68], "target": [3.82, 0.00, 1.40], "fov": 36},
-    "panel_l": {"eye": [4.05, -0.38, 1.85], "target": [3.45, -0.38, 1.78], "fov": 40},
-    "panel_r": {"eye": [4.05, 0.38, 1.85], "target": [3.45, 0.38, 1.78], "fov": 40},
-    "yoke_l": {"eye": [3.85, -0.34, 1.92], "target": [3.55, -0.36, 1.84], "fov": 38},
-    "hood": {"eye": [4.15, -0.30, 2.15], "target": [3.40, 0.05, 2.02], "fov": 50},
-    "overhead": {"eye": [4.30, 0.00, 1.95], "target": [3.95, 0.00, 2.55], "fov": 50},
-    "cb_left": {"eye": [4.05, -0.20, 1.95], "target": [3.95, -0.60, 1.55], "fov": 45},
-    "seats_aft": {"eye": [5.10, 0.00, 2.05], "target": [4.20, 0.00, 1.55], "fov": 50},
-    "post_l": {"eye": [4.15, -0.20, 2.05], "target": [3.55, -0.55, 2.25], "fov": 45},
-    "footwell_l": {"eye": [3.95, -0.30, 1.75], "target": [3.35, -0.36, 1.35], "fov": 50},
+    "pedestal": {"eye": [4.25, 0.00, 2.05], "target": [3.75, 0.00, 1.62], "fov": 45},
+    "quadrant": {"eye": [4.12, 0.10, 1.98], "target": [3.90, 0.00, 1.57], "fov": 40},
+    "panel_l": {"eye": [4.00, -0.38, 2.05], "target": [3.50, -0.38, 1.80], "fov": 45},
+    "panel_r": {"eye": [4.00, 0.38, 2.05], "target": [3.50, 0.38, 1.80], "fov": 45},
+    "yoke_l": {"eye": [3.95, -0.37, 2.10], "target": [3.55, -0.37, 1.88], "fov": 40},
+    "hood": {"eye": [4.15, -0.30, 2.40], "target": [3.45, 0.05, 2.12], "fov": 50},
+    "overhead": {"eye": [4.30, 0.00, 2.20], "target": [3.95, 0.00, 2.62], "fov": 55},
+    "cb_left": {"eye": [4.05, -0.15, 2.20], "target": [3.90, -0.60, 1.85], "fov": 50},
+    "seats_aft": {"eye": [5.00, 0.00, 2.15], "target": [4.25, 0.00, 1.75], "fov": 50},
+    "post_l": {"eye": [4.10, -0.25, 2.30], "target": [3.55, -0.50, 2.40], "fov": 45},
+    "footwell_l": {"eye": [3.95, -0.30, 1.95], "target": [3.40, -0.36, 1.40], "fov": 50},
 }
 DEFAULT = ["pilot", "copilot", "fd_cabin", "panel_408b", "pedestal", "quadrant", "panel_l", "yoke_l", "hood",
            "overhead", "cb_left", "seats_aft", "post_l", "footwell_l"]
@@ -51,8 +51,11 @@ async def main(a):
         ctx = await b.new_context(viewport={"width": W, "height": H}, device_scale_factor=1, reduced_motion="reduce")
         pg = await ctx.new_page()
         pg.set_default_timeout(1800000)
+        import time as _t
+        t0 = _t.time()
         await pg.goto(q, wait_until="domcontentloaded", timeout=600000)
         await pg.wait_for_function("window.__ready === true", timeout=900000)
+        print(f"ready {_t.time() - t0:.0f}s", flush=True)
         await pg.evaluate(VT.JS_HELPERS)
         V = "const V = window.viewer, T = V.tour; "
         await VT.js(pg, V + "window.T.neutral(); V.setStep('paint', {instant: true}); V.panel(false);"
@@ -67,9 +70,10 @@ async def main(a):
                 await VT.js(pg, V + "if (!T.inside) { T.enter('pilot', {motion: false}); T.finish(); } "
                                     "T.place(arg, {clamp: false}); V.advance(0.5);", cam)
             await VT.js(pg, "await window.viewer.frames(6);")
+            print(f"  posed {v} {_t.time() - t0:.0f}s", flush=True)
             # wait for the still refinement to finish
-            await VT.js(pg, "for (let i = 0; i < 400; i++) { const st = window.viewer._internals.stage; "
-                            "if (!st.picture || st.picture.a.done) break; await window.viewer.frames(1); }")
+            await VT.js(pg, "const h = document.getElementById('tourHint'); if (h) h.style.visibility = 'hidden';")
+            await VT.js(pg, f"await window.viewer.frames({int(a.ss) + 2});")
             p = out / f"{v}.png"
             await pg.screenshot(path=str(p), timeout=1800000)
             print("shot", p, flush=True)

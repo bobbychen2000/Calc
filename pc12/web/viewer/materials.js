@@ -162,6 +162,9 @@ U.cabinRefl.value.set(...CABIN_LOOK.refl);
 // occlusion darken it where the photos do)
 const CABIN_TRIM = { lining: [1, 1], leather: [0.5, 1], stitch_light: [0.5, 1], leather_crew: [0, 0.8], leather_dark: [0.6, 1],
   lav_white: [0.8, 1], toilet_white: [0.8, 1], psu_housing: [0.7, 1],
+  // the printed legends (first-principles flight deck A3: decals carrying model/fd_print.py's atlas): a silk-screened
+  // white reads ~190-220 on the plates in P1046408 / 09 -- lifted over the interior law's dark panel light
+  legend_print: [0, 1.6],
   // the crew seats' lavender-grey sheepskin (P1046408 / 09 ~90-130 in the cabin light, B > R)
   sheepskin: [0, 0.60],     // (FDY r1: 0.42 -> 0.60 for the LOCKS fleece's darker mean albedo: panel_408b ~119, P1046408 121)
   //                          (0.55 before the flight deck fix r1's soft knee / gain 27; fix r5: 0.52 -> 0.42 with the

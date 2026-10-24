@@ -236,6 +236,9 @@ MATERIALS = {
     "rubber_black":       ((0.020, 0.020, 0.022), 0.0, 0.85),
     "legend_plate":       ((0.020, 0.020, 0.022), 0.0, 0.55),
     "legend_lit":         ((0.80, 0.80, 0.78), 0.0, 0.40),
+    # first-principles flight deck A3: the printed legends -- decals on the panels carrying model/fd_print.py's atlas
+    # (base colour texture, its alpha the print's shape: ALPHA below); x the atlas' ink colours (white ink ~0.75 linear)
+    "legend_print":       ((0.90, 0.90, 0.90), 0.0, 0.50),
     "annun_amber":        ((0.60, 0.33, 0.04), 0.0, 0.30),
     "annun_red":          ((0.55, 0.04, 0.03), 0.0, 0.30),
     "annun_green":        ((0.05, 0.40, 0.12), 0.0, 0.30),
@@ -294,7 +297,10 @@ EMISSIVE = {
 # image textures (cad/glb.py GLBBuilder.texture): material -> {slot ('base' / 'emissive'): source}; 'g3000_atlas' =
 # model/g3000_pages.atlas(), the five G3000 PRIME pages in one JPEG, mapped by the UVs model/flightdeck.py gives the
 # display glass (final judge r1 R2 / I1)
-TEXTURES = {"display_page": {"emissive": "g3000_atlas"}}
+TEXTURES = {"display_page": {"emissive": "g3000_atlas"}, "legend_print": {"base": "fd_print_atlas"}}
+# alpha-blended materials (glTF alphaMode BLEND): the printed legends' decals (model/fd_print.py: the atlas' alpha is the
+# print's shape)
+ALPHA = {"legend_print"}
 LOOKDEV_JSON = __import__("pathlib").Path(__file__).resolve().parents[1] / "render" / "lookdev_materials.json"
 
 
@@ -369,14 +375,19 @@ def write_glb(parts: dict, path: str, quantize=True, meta=None, shared_grid=True
 
     def texture(src):
         if src not in tex:
-            if src != "g3000_atlas":
+            if src == "g3000_atlas":
+                from model import g3000_pages
+                tex[src] = gb.texture(src, g3000_pages.atlas()[0], "image/jpeg")
+            elif src == "fd_print_atlas":
+                from model import fd_print
+                tex[src] = gb.texture(src, fd_print.atlas(1.0 if res.RES > 1 else 0.5), "image/png")
+            else:
                 raise KeyError(f"unknown texture source {src}")
-            from model import g3000_pages
-            tex[src] = gb.texture(src, g3000_pages.atlas()[0], "image/jpeg")
         return tex[src]
     for name, spec in MATERIALS.items():
         rgba, met, rough = spec[:3]
         gb.material(name, rgba, met, rough, emissive=EMISSIVE.get(name), double_sided=True,
+                    alpha=True if name in ALPHA else None,
                     ext=spec[3] if len(spec) > 3 else None,
                     textures={k: texture(v) for k, v in TEXTURES.get(name, {}).items()} or None)
 

@@ -97,3 +97,30 @@ def knob(o, axis, ref, r, h, n=24, flutes=0, depth=0.0005, skirt=None, chamfer=0
     if cap:
         parts.append(_orient_out(_fan(G[-1], o + (z0 + h) * axis), lambda C: C - axis))
     return Mesh.merge(parts)
+
+
+# =====================================================================================================================
+# parts kit (first-principles flight deck A2): manufactured fasteners and edges
+# =====================================================================================================================
+def flush_screw(f, a, b, c=0.0, r=0.0016, kind="csk", mat="steel_dark", n=16):
+    """A countersunk ('csk': head flush, a 0.05 mm dome) or pan-head ('pan': 0.8 mm proud) cross-recess screw on the
+    face of frame f at (a, b), its seat at height c: the head a revolved profile from just under the surface, the
+    countersink's dark ring and the cross recess printed on it (fd_print).  Returns [(Mesh, material)]."""
+    from model import fd_print as PR
+    FD = _FD()
+    o = f.p(a, b, c)
+    if kind == "csk":
+        prof = [(-0.0003, 0.0), (-0.0003, r + 0.0002), (0.00005, r), (0.00012, 0.6 * r), (0.00015, 0.0)]
+        top = 0.00015
+    else:
+        prof = [(-0.0003, 0.0), (-0.0003, r), (0.0004, r), (0.0007, 0.75 * r), (0.0008, 0.0)]
+        top = 0.0008
+    out = [(FD.revolve(prof, n=n, axis_origin=o, axis_dir=f.w, ref_dir=f.u, cap_ends=False), mat)]
+    rr = 1000 * r
+    prims = (("arc", rr + 0.15, rr + 0.15, rr - 0.05, 0, 360, 0.25),
+             ("seg", rr + 0.15 - 0.55 * rr, rr + 0.15, rr + 0.15 + 0.55 * rr, rr + 0.15, 0.35),
+             ("seg", rr + 0.15, rr + 0.15 - 0.55 * rr, rr + 0.15, rr + 0.15 + 0.55 * rr, 0.35))
+    fs = FD.Fr(o, f.u, f.v, f.w)
+    out.append(PR.decal(fs, -r - 0.00015, -r - 0.00015, r + 0.00015, r + 0.00015, top * 0.9 + PR.LIFT, "vector",
+                        prims=prims, colour="black", ppm=16.0))
+    return out

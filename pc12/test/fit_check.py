@@ -1418,7 +1418,7 @@ report("PDU bezel tops visible from the design eyes (sight lines clear of the br
 # test/fit_fd_a.py (28-29: footwells, yokes vs the panel detail) and test/fit_fd_b.py (30-31: the glass vs the surround,
 # the crew seats vs the divider / console fittings), run in this namespace when present
 import pathlib as _pl  # noqa: E402
-for _fn in ("fit_fd_a.py", "fit_fd_b.py"):
+for _fn in ("fit_fd_a.py", "fit_fd_b.py", "fit_fd_p.py"):
     _fp = _pl.Path(__file__).resolve().parent / _fn
     if _fp.exists():
         exec(compile(_fp.read_text(), str(_fp), "exec"))

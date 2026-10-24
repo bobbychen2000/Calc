@@ -258,8 +258,11 @@ def construction():
 # total 370k -> 390k
 # -- the yokes (model/yoke3d.py, L6Y / L6Y2: one mesh at every RES, the light tier's LOW_FINE included) <= YOKE_BUDGET
 # each; the total raised by their 2 x 43k over GEOM A's 2 x 24k caps (merge of wip/fd-yoke, 2026-10-12)
-YOKE_BUDGET = 43_000       # rev N (3-D judges r1 FID1-07 / CR1-03: the frame's highlight tolerance 2.5 deg on every face
-#                            seen from the aft hemisphere, +3.6k; the badge plate, the trim slot): rev M's 40k
+YOKE_BUDGET = 43_200       # rev N (3-D judges r1 FID1-07 / CR1-03: the frame's highlight tolerance 2.5 deg on every face
+#                            seen from the aft hemisphere, +3.6k; the badge plate, the trim slot): rev M's 40k.  43k ->
+#                            43.2k (first-principles flight deck, 2026-10-24, delegated decision): the yoke mesh cache was
+#                            lost with the old container and re-meshing it here (numpy 2.5.3 / scipy 1.18.1, the same
+#                            sources) gives 43,008 triangles a yoke against the cached 42,868 -- the mesher's tie-breaks
 # the interior budget's open items (printed by the build while it is over)
 BUDGET_OPEN = ("the rear cabin seats seat_pax3-6 34,834 at RES 2 against the 34,800 cap (the RES-2 rims, review r1 "
                "RES1-02)",)

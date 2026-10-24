@@ -24,6 +24,7 @@ import numpy as np
 
 from cad import res
 from cad.mesh import Mesh, grid_surface, planar_cap
+from model import fd_print as PR
 
 # groups of model/flightdeck.build_flightdeck that flightdeck.build hangs on the interior_lining part (the viewer's
 # cutaway clips them with the lining): the overhead panel and its pod, the CB panels, the sidewall sills, visors and the
@@ -505,11 +506,10 @@ def glazing_mouldings():
                             continue
                         k = sm.sv[-1] / float(np.interp(u + 0.5 * w, sm.su, wcol))
                         hv = h * k
-                        mat = "placard_red_dim" if col == "red" else "legend_plate"     # (fix r2 FID-FD2-09)
-                        out.append((sm.quads([(u, vmid - 0.5 * hv, u + w, vmid + 0.5 * hv)], 0.0007), mat))
-                        R = legend_rects(u + 0.003, vmid - 0.5 * hv + 0.0025 * k, w - 0.006, hv - 0.005 * k, rng,
-                                         lines=3 if h > 0.014 else 2, fill=0.88, bar=0.22)
-                        out.append((sm.quads(R, 0.0011), "light_white"))
+                        # (first-principles A3: printed placards, one decal each; fix r2 FID-FD2-09's muted red)
+                        out.append(PR.decal_map(sm, u, vmid - 0.5 * hv, u + w, vmid + 0.5 * hv, 0.0, "plate",
+                                                colour="red_dim" if col == "red" else "plate_black", ink="white",
+                                                rows=3 if h > 0.014 else 2, cap=1.3, seed=("sill", side, u)))
     return [(m, mat) for m, mat in out if m is not None and len(m.F)]
 
 
@@ -873,7 +873,7 @@ def cb_panels(fl):
                 out.append((M.patch(u(pa), b0, u(pb), b1, pp, step=0.02), "bezel_black"))
                 rows = _row_layout(0.0, z1 - z0, nrow)
                 du = (pb - pa) / ncol
-                legends, white, strips, cells = [], [], [], []
+                legends, white, strips, cells, labels = [], [], [], [], []
                 for r, (vk, (l0, l1), (g0, g1)) in enumerate(rows):
                     if glow[r] == "blue":
                         g1 = g0 + CB["band_blue"]
@@ -885,12 +885,14 @@ def cb_panels(fl):
                         cells.append((u(pa) + 0.004, b0 + l0 - 0.0006, u(pb) - 0.004, b0 + l1 + 0.0006))
                         white += [(u(pa) + 0.004, b0 + l1 - 0.0005, u(pb) - 0.004, b0 + l1),
                                   (u(pa) + 0.004, b0 + l0, u(pb) - 0.004, b0 + l0 + 0.0005)]
+                    # (first-principles A3) the row's label cells printed: rules, dividers and a two-line pseudo-text
+                    # label per breaker, white on the dark cells / black on the light strips
+                    labels.append(PR.decal_map(M, u(pa) + 0.004, b0 + l0 - 0.0006, u(pb) - 0.004, b0 + l1 + 0.0006,
+                                               pp + (0.0006 if lab == "light" else 0.0005), "cells", ncol=ncol, rows=2,
+                                               colour="black" if lab == "light" else "white", lw=0.3,
+                                               seed=("cb", sg, round(pa, 3), r)))
                     for c in range(ncol):
                         uc = u(pa) + (c + 0.5) * du
-                        if c:
-                            white.append((u(pa) + c * du - 0.00025, b0 + l0, u(pa) + c * du + 0.00025, b0 + l1))
-                        legends += legend_rects(uc - 0.42 * du, b0 + l0 + 0.001, 0.84 * du, l1 - l0 - 0.002, rng,
-                                                lines=2, fill=0.8, bar=0.30)
                         P, Nn = M.frame(uc, b0 + vk)
                         P = P + pp * Nn
                         sw_, sh_ = CB["sleeve"]
@@ -898,18 +900,16 @@ def cb_panels(fl):
                                     CB["sleeve_mat"]))
                         out.append((cylinder(P + 0.0010 * Nn, P + (CB["head_h"] + CB["raise_"]) * Nn, CB["head_r"],
                                              n=10), "grip_black"))
-                    if pa == x0:                       # row marks: 1-4 dots on the frame's forward band
-                        dots = [(u(pa) - 0.0085 + 0.0022 * (d % 2), b0 + vk - 0.006 + 0.003 * d,
-                                 u(pa) - 0.0065 + 0.0022 * (d % 2), b0 + vk - 0.004 + 0.003 * d) for d in range(r + 1)]
-                        out.append((M.quads(dots, fp + 0.0006), "light_white"))
-                if strips:                             # light strips: dark cell dividers and legends on them
+                    if pa == x0:                       # row marks: 1-4 printed dots on the frame's forward band
+                        out.append(PR.decal_map(M, u(pa) - 0.0090, b0 + vk - 0.0070, u(pa) - 0.0040,
+                                                b0 + vk - 0.0070 + 0.0032 * (r + 1), fp, "vector",
+                                                prims=tuple(("dot", 1.4 + 2.2 * (d % 2), 1.6 + 3.2 * d, 0.6)
+                                                            for d in range(r + 1))))
+                if strips:                             # light strips under their printed labels
                     out.append((M.quads(strips, pp + 0.0006), "fdb_cb_label"))
-                    out.append((M.quads(white, pp + 0.0008), "black"))
-                    out.append((M.quads(legends, pp + 0.0009), "black"))
-                else:                                  # backlit white legends on the dark cells
+                else:                                  # the dark cells under their printed labels
                     out.append((M.quads(cells, pp + 0.0005), CB["cell_mat"]))
-                    out.append((M.quads(white, pp + 0.0008), "light_white"))
-                    out.append((M.quads(legends, pp + 0.0009), "fdb_cb_legend"))
+                out += labels
             out.append((M.patch(u(xs0) - 0.0005, b0, u(xs1) + 0.0005, b1, fp, step=0.02), "panel_dark"))
             # ledge above: stowage slot with a zip edge, satin edge strip, red placards, map light, limitations placard
             hs, dz = CB["slot"]
@@ -929,10 +929,10 @@ def cb_panels(fl):
             # (flight deck fix r1 FDO1-04: 70 / 85 mm long -- the AOPA studio photo's pair over the RH panels, ~0.1 m
             # each; the first build's 90 / 120 mm read as long red bars from the crew seats)
             for xp, w, h in ((x0 + 0.20, 0.070, 0.008), (x0 + 0.30, 0.085, 0.009)):
-                R = [(ul(xp), vl(zs - 0.5 * hs - 0.016), ul(xp + w), vl(zs - 0.5 * hs - 0.016 + h))]
-                out.append((Ml.quads(R, 0.0010), "placard_red_dim"))         # (fix r2 FID-FD2-09: muted)
-                out.append((Ml.quads(legend_rects(ul(xp) + 0.003, vl(zs - 0.5 * hs - 0.016) + 0.0012, w - 0.006,
-                                                  h - 0.0024, rng, lines=1, bar=0.5), 0.0014), "light_white"))
+                # (first-principles A3: printed placards -- a muted red plate with white pseudo-text, one decal)
+                out.append(PR.decal_map(Ml, ul(xp), vl(zs - 0.5 * hs - 0.016), ul(xp + w),
+                                        vl(zs - 0.5 * hs - 0.016 + h), 0.0, "plate", colour="red_dim", ink="white",
+                                        rows=1, cap=1.6 if h < 0.0085 else 1.8, seed=("ledge", sg, xp)))
             # map light at the slot's forward end (NGX POH 7-19-2: above the CB panels): black bezel ring, lens
             P, Nn = Ml.frame(ul(x0 + 0.012), vl(zs))
             # (black, not bezel_black: consistency_2d3d measures the CB pair's extent on bezel_black)
@@ -944,9 +944,9 @@ def cb_panels(fl):
             # operating-limitations placard, aft of the slot (black, white strokes) [M] AOPA / P1046409
             Mo = lining_map(sg, x1 - 0.06, x1 + 0.10, zs - 0.06, zs + 0.03, 0.0, step=0.01)
             uo, vo = 0.065, 0.012
-            out.append((Mo.quads([(uo, vo, uo + 0.085, vo + 0.048)], 0.0010), "legend_plate"))
-            R = legend_rects(uo + 0.005, vo + 0.004, 0.075, 0.040, rng, lines=6, fill=0.85, bar=0.30)
-            out.append((Mo.quads(R, 0.0014), "light_white"))
+            out.append(PR.decal_map(Mo, uo, vo, uo + 0.085, vo + 0.048, 0.0, "plate", colour="plate_black",
+                                    ink="white", rows=7, cap=1.5, margin=0.05, fill=0.95, fill2=0.95,
+                                    seed=("limits", sg)))                    # printed limitations placard (A3)
     return [(m, mat) for m, mat in out if m is not None and len(m.F)]
 
 
@@ -1057,6 +1057,7 @@ def _rr_loop(hx, hy, r, nc=6, ne=(10, 4)):
 
 def overhead_panel():
     from cad.mesh import cylinder, superellipsoid, box
+    from model import flightdeck as FD
     O = OVH
     f, hl, hw, slope = _ovh_frame()
     out = []
@@ -1087,41 +1088,37 @@ def overhead_panel():
         A_ = lambda fa: (fa - 0.5) * 2 * (hli - 0.004)                            # noqa: E731
         S_ = lambda fs: (fs - 0.5) * 2 * (hwi - 0.004)                            # noqa: E731
         Pp = lambda fs, fa, c=0.0: P(A_(fa), S_(fs), -O["recess"] + c)           # noqa: E731
-        lw = 0.0012
-        quads = []
+        # (first-principles A3) the plate's printing -- section frames, the bus diagram (dashed where drawn so), section
+        # titles, a two-line caption at every switch -- one decal over the whole plate: read from the seats with the
+        # text's top aft and its right to starboard (looking up, the head tipped back), in plate mm (s, a)
+        lw = 0.7                                                       # mm: a silk-screened line (was 1.2 mm strips)
+        W2, H2 = 2 * (hwi - 0.002), 2 * (hli - 0.002)                 # the print's extent (m)
+        X = lambda fs: 1000 * (S_(fs) + 0.5 * W2)                     # noqa: E731  (mm from the print's port edge)
+        Y = lambda fa: 1000 * (A_(fa) + 0.5 * H2)                     # noqa: E731  (mm from its forward edge)
+        prims = []
         for fs0, fa0, fs1, fa1, dash in O["lines"]:
-            a0, a1, s0, s1 = A_(fa0), A_(fa1), S_(fs0), S_(fs1)
+            x0_, y0_, x1_, y1_ = X(fs0), Y(fa0), X(fs1), Y(fa1)
             if dash:
-                L = math.hypot(a1 - a0, s1 - s0)
-                for t in np.arange(0.0, L, 0.006):
-                    tt0, tt1 = t / L, min(t + 0.0035, L) / L
-                    quads.append((a0 + tt0 * (a1 - a0), s0 + tt0 * (s1 - s0), a0 + tt1 * (a1 - a0), s0 + tt1 * (s1 - s0)))
+                L = math.hypot(x1_ - x0_, y1_ - y0_)
+                for t in np.arange(0.0, L, 6.0):
+                    t0_, t1_ = t / L, min(t + 3.5, L) / L
+                    prims.append(("seg", x0_ + t0_ * (x1_ - x0_), y0_ + t0_ * (y1_ - y0_), x0_ + t1_ * (x1_ - x0_),
+                                  y0_ + t1_ * (y1_ - y0_), lw))
             else:
-                quads.append((a0, s0, a1, s1))
+                prims.append(("seg", x0_, y0_, x1_, y1_, lw))
         for fs0, fa0, fs1, fa1 in O["boxes"]:
-            a0, a1, s0, s1 = A_(fa0), A_(fa1), S_(fs0), S_(fs1)
-            quads += [(a0, s0, a0, s1), (a1, s0, a1, s1), (a0, s0, a1, s0), (a0, s1, a1, s1)]
-        segs = []
-        for a0, s0, a1, s1 in quads:                                             # line segments -> thin rects (a, s)
-            d = np.array([a1 - a0, s1 - s0])
-            n = np.array([-d[1], d[0]]) / max(np.linalg.norm(d), 1e-9) * 0.5 * lw
-            segs.append([(a0 + n[0], s0 + n[1]), (a1 + n[0], s1 + n[1]), (a1 - n[0], s1 - n[1]), (a0 - n[0], s0 - n[1])])
-        rects = []
-        for fs, fa, wfr in O["titles"]:                                            # section titles: abstract bars
-            w = wfr * 2 * hwi
-            rects.append((A_(fa) - 0.0018, S_(fs) - 0.5 * w, A_(fa) + 0.0018, S_(fs) + 0.5 * w))
-        for fs, fa in O["toggles"] + O["paddles"]:                                 # switch legends: small bars
-            for da, ww in ((0.024, 0.016), (-0.020, 0.010)):
-                w = ww * float(rng.uniform(0.7, 1.2))
-                rects.append((A_(fa) + da - 0.0011, S_(fs) - 0.5 * w, A_(fa) + da + 0.0011, S_(fs) + 0.5 * w))
-        for a0, s0, a1, s1 in rects:
-            segs.append([(a0, s0), (a0, s1), (a1, s1), (a1, s0)])
-        V, F = [], []
-        for q in segs:
-            k = len(V)
-            V += [P(a, s_, -O["recess"] + 0.0006) for a, s_ in q]
-            F += [[k, k + 1, k + 2], [k, k + 2, k + 3]]
-        out.append((_orient(Mesh(np.array(V), np.array(F)), lambda C: np.broadcast_to(f.w, C.shape)), "light_white"))
+            x0_, y0_, x1_, y1_ = X(fs0), Y(fa0), X(fs1), Y(fa1)
+            prims += [("seg", x0_, y0_, x0_, y1_, lw), ("seg", x1_, y0_, x1_, y1_, lw), ("seg", x0_, y0_, x1_, y0_, lw),
+                      ("seg", x0_, y1_, x1_, y1_, lw)]
+        for k_, (fs, fa, wfr) in enumerate(O["titles"]):              # section titles (pseudo-text)
+            w = 1000 * wfr * 2 * hwi
+            prims.append(("words", X(fs) - 0.5 * w, Y(fa) - 3.0, X(fs) + 0.5 * w, Y(fa) + 3.0, 1, 2.6, ("ovt", k_)))
+        for k_, (fs, fa) in enumerate(O["toggles"] + O["paddles"]):   # switch captions: two lines aft of the switch
+            prims.append(("words", X(fs) - 11.0, Y(fa) + 13.0, X(fs) + 11.0, Y(fa) + 22.0, 2, 1.7, ("ovs", k_)))
+            prims.append(("words", X(fs) - 8.0, Y(fa) - 21.0, X(fs) + 8.0, Y(fa) - 16.0, 1, 1.6, ("ovo", k_)))
+        fr_ = FD.Fr(f.o, -f.v, f.u, f.w)
+        out.append(PR.decal(fr_, -0.5 * W2, -0.5 * H2, 0.5 * W2, 0.5 * H2, -O["recess"] + PR.LIFT, "vector",
+                            prims=tuple(prims)))
         # toggles (flight deck fix r2 FDO2-07: from the seats the first build's levers -- 17 mm straight down with a ball
         # end -- read as hex nuts with small balls lying flat): a knurled bezel ring and a chrome hex nut on the bushing,
         # a chrome BAT lever ~15 mm proud thrown fore or aft (O toggle_throw), swelling into a flattened bat
@@ -1141,7 +1138,8 @@ def overhead_panel():
             out.append((box(c + 0.0050 * f.w, (0.0155, 0.0155, 0.003), R=f.R), "black"))
             lens = "annun_off_amber" if mat == "panel_silver" else "annun_off_red"
             out.append((box(c + 0.0066 * f.w, (0.0125, 0.0125, 0.0008), R=f.R), lens))
-            out.append((box(c + 0.0071 * f.w - 0.0030 * f.u, (0.0012, 0.0080, 0.0004), R=f.R), "light_white"))
+            out.append(PR.decal(FD.Fr(c, -f.v, f.u, f.w), -0.0050, -0.0050, 0.0050, -0.0010, 0.0070 + PR.LIFT, "words",
+                                rows=1, cap=1.3, colour="white", seed=("ovsq", fs, fa)))     # printed on the lens (A3)
         for fs, fa in O["paddles"]:
             c = Pp(fs, fa)
             out.append((cylinder(c - 0.0004 * f.w, c + 0.004 * f.w, 0.0046, n=6), "metal_dark"))
