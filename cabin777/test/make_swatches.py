@@ -361,6 +361,32 @@ def x_skin():
     return 4.0
 
 
+def g_alu():
+    """monuments w9: satin galley-insert wear tile (smudges, wipe marks, soft dents) from real ANA 777-300ER galley inserts:
+    the oven door face below its handle (SANspotter economy 44, sansY_44) and a cart door (SANspotter PY 38, sans_38),
+    both clear of edges, latches and labels. Median filter drops JPEG blocks, a heavy blur removes the lighting;
+    luminance-only (the material sets the satin grey), stored at SD 0.10 so PHOTO_GAIN[28] sets the strength. Tile 0.18 m
+    [D: oven door 0.30 m wide ~ 190 px in sansY_44 -> the 70 px crop ~ 0.11 m; at 0.3 m the smudges read as stains]"""
+    srcs = [('web/monuments/sansY_44.jpg', (535, 95, 605, 165)), ('web/monuments/sans_38.jpg', (600, 700, 740, 840))]
+    acc = 0
+    for f, box in srcs:
+        im = Image.open(os.path.join(root, 'ref', f)).convert('L').crop(box).filter(ImageFilter.MedianFilter(3))
+        im = im.resize((S, S), Image.LANCZOS).filter(ImageFilter.GaussianBlur(1.5))
+        a = (np.asarray(im).astype(np.float32) / 255.0) ** 2.2
+        b = np.asarray(im.filter(ImageFilter.GaussianBlur(48))).astype(np.float32) / 255.0
+        r = np.clip(a / np.maximum(b ** 2.2, 1e-3), 0.75, 1.25)
+        r = r / r.mean()
+        acc = acc + tileable((1 + (r - 1) / r.std())[:, :, None])[:, :, 0]   # each source at unit SD, then averaged
+    r = acc / len(srcs)
+    r = np.where(r > 1, 1 + (r - 1) * 0.6, r)   # wear darkens more than it lightens (smudges, sansY_44)
+    r = r / r.mean()
+    r = 1 + (r - 1) * (0.10 / r.std())
+    print('g_alu sd', round(float(r.std()), 4), 'p5/p95', np.percentile(r, [5, 95]).round(3))
+    out = np.clip(np.repeat(r[:, :, None], 3, 2) / 2, 0, 1)
+    Image.fromarray((out * 255 + 0.5).astype(np.uint8)).save(os.path.join(root, 'tex', 'tex_g_alu.png'))
+    return 0.18
+
+
 if __name__ == '__main__':
     os.makedirs(os.path.join(root, 'tex'), exist_ok=True)
     import json, sys
@@ -372,5 +398,6 @@ if __name__ == '__main__':
     if not only or 'y_fleck' in only: sizes['y_fleck'] = y_fleck()
     if not only or 'y_mosaic' in only: sizes['y_mosaic'] = y_mosaic()
     if not only or 'x_skin' in only: sizes['x_skin'] = x_skin()
+    if not only or 'g_alu' in only: sizes['g_alu'] = g_alu()
     json.dump(sizes, open(os.path.join(root, 'tex/sizes.json'), 'w'))
     print('swatches', sizes)

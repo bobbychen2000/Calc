@@ -33,3 +33,20 @@
   c-0.20 to c+0.48, the arming window is at c+0.41, and the arrowhead is at about c-0.15. **Until the window moves to c - 0.28,
   the housing covers it.** Please flip `wz` (and anything else keyed to the aft window, e.g. the reveal glow or door-carpet
   cut-outs) to `c - 0.28` on both sides. The "forward hinge" note there should read "window forward of the handle".
+
+## Wave 3b (w9)
+
+### To lighting (`src/04_shaders.js` / `src/12_scene.js`): recessed monument faces crushed to black
+Both monument raters (w9a, w9b) and the gap analyst measured these. They are material-independent: changing the albedo
+moves the rendered value by only a few levels.
+- **Door-3 bar blind (m05, q11):** `MONMAT.blind` #3b3a3c renders #070708-#09090a, against #1c1921 in ANA's render.
+  The upper unit is set back 0.5 m under the soffit, so the AO volume / crevice term (`amb *= mix(0.4, 1.0, ...)`) seems
+  to take almost all of its ambient light.
+- **Door-2 welcome galley recess (m03, m16):** the charcoal back wall (`welcomeChar` #5e5a52) renders #191816 against
+  omaat_room_32 #3f3a2d-#343024. In the real galley a warm LED strip under the head lights the recess, so it reads lit.
+  The recess side walls and ceiling are now light grey (w9), which should help the bounce.
+- **Galley upper banks (m01, m09, m12, q19):** a bright-white fog band sits across the upper compartments at about
+  1.9-2.1 m, with the lower half grey. sans_38 shows the upper row as an even mid grey. This is probably the ceiling cove
+  light or the work light hitting faces that look down the aisle.
+- **Suggested fix:** clamp the crevice term for faces in recessed monument bays, or give monument recesses a floor of
+  about 0.6 on ambient.
