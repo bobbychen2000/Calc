@@ -19,7 +19,10 @@ Object.assign(SEATMAT, {
   jLedge: { c: '#8f959c', r: 0.3, m: 0.6, l: LAYER.brushed },   // ledge top, darker than the edge trim (c_27313 #788087-#b2bbc8) [V]
   jSill: { c: '#8e9399', r: 0.35, m: 0.4, l: LAYER.brushed },   // silver-grey sill + drawer under the monitor (tpg_53) [V]
   jLens: { c: '#55585d', r: 0.25 },   // reading-lamp lens, switched off (c_27315 / 27316 lamps read dark grey) [V]
-  jBand: { c: '#656b73', r: 0.4, l: LAYER.leather },   // w6a: header band 0.9-1.35x the fabric, a touch darker than the flap (tpg_42, c_27313) [V]
+  jBand: { c: '#656b73', r: 0.4, l: LAYER.leather },
+  // w13a: the aisle-end posts and door leaves read pale, nearly plain cream (c_27312 (205,201,190), c_27314 (226,227,223),
+  // tpg_60), the cabinets and table inlays darker greige (SEATMAT.ash) [V]
+  ashDoor: { c: '#e0d8ca', r: 0.44, l: LAYER.ashGrain },   // w6a: header band 0.9-1.35x the fabric, a touch darker than the flap (tpg_42, c_27313) [V]
 });
 const ROOM = { hx: 0.585, hz: 1.359, top: 0.66, wall: 1.12, bed: 0.43 };
 // seat itself (passenger faces -z, back at z = 0): upright or bed. Per c_27302/27315/27316: thin flat cushion and a flat
@@ -85,7 +88,7 @@ function ashFrameZ(B, pz, t, x0, x1, y0, y1) {
 function capRail(B, w, d, x, y, z) { B.add(gRBox(w + 0.006, 0.02, d + 0.006, 0.006, 1), M4.trs(x, y + 0.01, z), SEATMAT.jCap); }
 function doorEdge(B, x, z, h) {
   B.add(gRBox(0.05, h, 0.04, 0.014, 1), M4.trs(x, 0.14 + h / 2, z), SEATMAT.jShell);
-  B.add(gRBox(0.046, h - 0.06, 0.006, 0.004, 1), M4.trs(x, 0.14 + h / 2, z + 0.021), SEATMAT.ash);
+  B.add(gRBox(0.046, h - 0.06, 0.006, 0.004, 1), M4.trs(x, 0.14 + h / 2, z + 0.021), SEATMAT.ashDoor);
   B.add(gRBox(0.012, 0.16, 0.02, 0.005, 1), M4.trs(x - 0.02, 0.86, z + 0.025), SEATMAT.jBase);
   B.add(gBox(0.046, 0.004, 0.044), M4.trs(x, 0.142, z), SEATMAT.jRail);                          // silver leaf bottom edge
 }
@@ -95,7 +98,7 @@ function doorEdge(B, x, z, h) {
 function roomDoorClosed(B, z0, z1, zl) {
   const h = ROOM.wall - 0.14, zc = (z0 + z1) / 2, L = z1 - z0;
   B.add(gRBox(0.04, h, L, 0.012, 1), M4.trs(0.565, 0.14 + h / 2, zc), SEATMAT.jShell);
-  B.add(gRBox(0.006, h - 0.07, L - 0.05, 0.003, 1), M4.trs(0.585, 0.14 + h / 2, zc), SEATMAT.ash);
+  B.add(gRBox(0.006, h - 0.07, L - 0.05, 0.003, 1), M4.trs(0.585, 0.14 + h / 2, zc), SEATMAT.ashDoor);
   B.add(gBox(0.04, 0.004, L), M4.trs(0.565, 0.142, zc), SEATMAT.jRail);
   B.add(gRBox(0.012, 0.16, 0.02, 0.005, 1), M4.trs(0.537, 0.86, zl - Math.sign(zl - zc) * 0.04), SEATMAT.jBase);   // finger pull
 }
@@ -216,7 +219,7 @@ function roomControls(B, xf, side, dy = 0, hy = 0.555) {
 // ash panels in ~28 mm charcoal frames on an aisle face (x = px) below the armrest ledge, charcoal kick below
 // (c_27313 bottom row, omaat_room_10)
 function roomAisleAsh(B, px, z0, z1) {
-  B.add(gRBox(0.008, 0.52, z1 - z0 - 0.02, 0.003, 1), M4.trs(px + 0.002, 0.36, (z0 + z1) / 2), SEATMAT.ash);
+  B.add(gRBox(0.008, 0.52, z1 - z0 - 0.02, 0.003, 1), M4.trs(px + 0.002, 0.36, (z0 + z1) / 2), SEATMAT.ashDoor);
   ashFrameX(B, px + 0.002, 0.008, 0.10, 0.62, z0 + 0.005, z1 - 0.005);
 }
 // reading light in the shell corner: large black lamp in a bezel ring + small fitting below (omaat_room_13, c_27315)
@@ -273,7 +276,7 @@ const CON = { top: 0.60 };   // outer console top (c_27316 / 27303: ~0.17 above 
 // pack in its bag beside it (tpg_42 #0a4db9, tpg_31) [V] on side ps; dir = +1 when the seat faces +z (O)
 function roomBundle(B, x, z, dir, ps) {
   B.add(gRBox(0.46, 0.042, 0.31, 0.016, 1), M4.trs(x, 0.452, z), { c: '#e2ded4', r: 0.3 });
-  B.add(gRBox(0.43, 0.034, 0.28, 0.014, 1), M4.trs(x + 0.005, 0.49, z - dir * 0.012), { c: '#6470b4', r: 0.3 });
+  B.add(gRBox(0.43, 0.034, 0.28, 0.014, 1), M4.trs(x + 0.005, 0.49, z - dir * 0.012), { c: '#4f5899', r: 0.22 });   // w13a: duvet tone through the glossy film (kn_17 0.46/0.53/0.71 of the white pillow; was a pale lilac slab) [V]
   B.add(gRBox(0.452, 0.002, 0.29, 0.001, 1), M4.trs(x, 0.4735, z + dir * 0.003), { c: '#eef0f2', r: 0.15 });   // pad fold seam under the film
   // w7: slipper pack beside the bundle; w13: white slippers in clear film, a grey sole line (kn_17, tpg_76) [V]
   const P = M4.trs(x + ps * 0.29, 0.444, z + dir * 0.03, ps * 0.5);
@@ -423,7 +426,7 @@ function roomPart(part, opts = {}) {
     if (!lod) roomControls(B, M4.trs(0.33, 0, tz0 + 0.012, Math.PI), 1, -0.08, 0.568);
     // tall ash monument end at the aisle with a wide flat cap (seat plaques lie on it, c_27313) + kick
     const ez0 = -0.58, ez1 = MON.zE, ezc = (ez0 + ez1) / 2;
-    B.add(gRBox(0.04, wall, ez1 - ez0, 0.012, 1), M4.trs(0.565, wall / 2, ezc), ash);
+    B.add(gRBox(0.04, wall, ez1 - ez0, 0.012, 1), M4.trs(0.565, wall / 2, ezc), SEATMAT.ashDoor);
     B.add(gRBox(0.045, 0.10, ez1 - ez0, 0.01, 1), M4.trs(0.565, 0.05, ezc), shell);
     ashFrameX(B, 0.565, 0.04, 0.10, wall, ez0, ez1);
     // shared aisle-end cap: mid grey, a little darker than the plaques, oval finger recess between them (c_27314)
@@ -545,7 +548,7 @@ function roomPartFar(part) {
     B.add(gRBox(0.82, 0.6, 0.12, 0.04, 1), M4.mul(M4.trs(-0.075, 0.43, -1.2, Math.PI), M4.trs(0, 0.3, 0, 0, 17 * DEG)), SEATMAT.jFabric);
     B.add(gBox(0.24, top, 0.54), M4.trs(0.465, top / 2, -1.07), SEATMAT.jShell);
     B.add(gBox(0.085, CON.top, 1.065), M4.trs(-0.5425, CON.top / 2, -0.7425), SEATMAT.jShell);
-    B.add(gBox(0.04, wall, 0.655), M4.trs(0.565, wall / 2, -0.2925), SEATMAT.ash);
+    B.add(gBox(0.04, wall, 0.655), M4.trs(0.565, wall / 2, -0.2925), SEATMAT.ashDoor);
     B.add(gBox(0.55, top, 0.41), M4.trs(0.275, top / 2, -0.415), SEATMAT.jShell);
     B.add(gBox(1.13, MON.top, MON.zE - MON.zO), M4.trs(-0.02, MON.top / 2, (MON.zO + MON.zE) / 2), SEATMAT.jShell);
     B.add(gQuad(0.531, 0.299), M4.trs(-0.20, 0.8725, MON.zO - 0.002, Math.PI), SEATMAT.screen, atlasUV('screen'));

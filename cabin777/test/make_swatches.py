@@ -211,7 +211,9 @@ def synth_j_pillow(ratio):
     h = np.where((np.floor((i + j) / a) + np.floor((i - j) / a)) % 2 == 0, 1.0, -1.0)
     h = _blur_wrap(h, 1.5)                          # soft woven edges
     noise = ratio.mean(2) / ratio.mean() - 1
-    r = 1 + 0.25 * h / np.abs(h).max() + 0.4 * np.clip(noise, -0.1, 0.1)
+    # room w13a: the checks fade in and out along diagonal bands ~4 checks wide, tone-on-tone (kn_17) [V]
+    band = 0.55 + 0.45 * np.cos(2 * np.pi * (i + j) / 128) ** 2
+    r = 1 + 0.25 * band * h / np.abs(h).max() + 0.4 * np.clip(noise, -0.1, 0.1)
     return np.repeat(r[:, :, None], 3, 2)
 
 

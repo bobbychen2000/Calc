@@ -74,7 +74,7 @@ const SEATMAT = {
   // pale grey-beige ash with fine straight grain, charcoal shells with flat charcoal tops (QA r1: shell / console
   // #45484d omaat_room_16, #45454c c_27312; tops #545557 omaat_room_10), silver line only on armrest ledges + door-leaf
   // edges (c_27313 / 27300), charcoal tweed seat, slate Ultraleather headrest flap (#767a7e omaat_room_13), navy pillow
-  ash: { c: '#d4c8b4', r: 0.44, l: LAYER.ashGrain },   // room w13b: R/B -> 1.15, a touch darker (tpg_81 0.85 of the white pillow; official c_27313 is the coolest) [D]; room w12: R/B 1.05 -> ~1.12 (real photos 1.10-1.35, official c_27313 the coolest) [D]; QA w2: near-neutral pale ash (c_27313 #e7e8e4, c_27315 table #c9c6c2)
+  ash: { c: '#c8bba7', r: 0.44, l: LAYER.ashGrain },   // room w13a: cabinets / tables / inlays darker greige with crisp streaks (c_27312 cabinet, c_27316; the pale aisle-end doors are 09c ashDoor) [D]; room w13b: R/B -> 1.15, a touch darker (tpg_81 0.85 of the white pillow; official c_27313 is the coolest) [D]; room w12: R/B 1.05 -> ~1.12 (real photos 1.10-1.35, official c_27313 the coolest) [D]; QA w2: near-neutral pale ash (c_27313 #e7e8e4, c_27315 table #c9c6c2)
   ashDark: { c: '#5d6166', r: 0.34, m: 0.35, l: LAYER.brushed },
   rosewood: { c: '#4b403a', r: 0.36, l: LAYER.wood },
   // QA r3: shells rendered ~0.5x the photo luminance (q10 #292d34 vs c_27315 #4c4e60) -> lifted
@@ -272,7 +272,8 @@ function buildSeats(gl, layout) {
     const face = s.mir ? -1 : 1;             // text top points away from the aisle
     const room = s.kind === 'room';
     T.add(room ? gRBox(0.055, 0.004, 0.065, 0.012, 1) : gRBox(0.034, 0.002, 0.075, 0.012, 1), M4.trs(p[0], p[1] + (room ? 0.002 : 0.0005), p[2]), { c: plate, r: 0.45 });
-    T.add(room ? gQuad(0.058, 0.03) : gQuad(0.047, 0.025), M4.trs(p[0], p[1] + (room ? 0.0045 : 0.002), p[2], face * Math.PI / 2, -Math.PI / 2), room ? { ...tagGlow, c: '#5f9dff', e: 0.5 } : { ...tagGlow, c: '#8f9cff' }, atlasUV('tag' + s.id)); // suite: lit blue-violet (omaat_f7 '2K')
+    T.add(room ? gQuad(0.042, 0.022) : gQuad(0.047, 0.025),   // room w13a: lit window inside the grey tile (was wider than it: a navy box)
+      M4.trs(p[0], p[1] + (room ? 0.0045 : 0.002), p[2], face * Math.PI / 2, -Math.PI / 2), room ? { ...tagGlow, c: '#5f9dff', e: 0.5 } : { ...tagGlow, c: '#8f9cff' }, atlasUV('tag' + s.id)); // suite: lit blue-violet (omaat_f7 '2K')
   }
   meshes.seatTags = gl.mesh(T.build(), { name: 'seatTags', layer: 'seats', castShadow: false });
   return { meshes, groups };

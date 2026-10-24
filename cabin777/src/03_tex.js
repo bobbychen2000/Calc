@@ -38,7 +38,7 @@ const PHOTO_GAIN = {
   21: 0.5,
   23: 1.0,
   28: 0.3,    // monuments w9: tile SD 0.10 -> ~3 % smudge mottle (sans_38 cart 4.8 %, sansY_44 oven ~10 %; 0.5 read as stains) [D]
-  29: 0.55,  // room w12: kn_17 close-up +-25 % linear, but tpg_81 / tpg_46 at seat distance read about half that [D]
+  29: 0.4,   // room w13a: read as hard gingham at 0.55 -> -30 %; room w12: kn_17 close-up +-25 % linear, but tpg_81 / tpg_46 at seat distance read about half that [D]
   27: 0.22,   // exterior w9: x0.75, read as even brushed banding at 0.3 (A w9); exterior w8: tile stored at SD 0.12 -> ~3.6 % grime mottle (KN41 / 7250 flap panels 3-5 %) [D]
 };
 // swatches stored as ratio / ENC instead of ratio / 2 (test/make_swatches.py ENC): the Y ticks are ~10x the navy ground

@@ -33,3 +33,8 @@
   over-saturated (q09 white-normalised 0.25/0.31/0.68 vs tpg_46 0.41/0.43/0.73) although the studio render matches, and
   the charcoal shells read cool (q09 shells / white pillow 0.39/0.43/0.48 vs tpg_81 0.49/0.52/0.53). Both point to the
   cabin's blue fill / white balance (room gap analysis w12, raters w12a/b).
+- **To integration (04_shaders.js / 12_scene.js texture setup), room w13a medium:** in the seated close view (q07) the
+  ash grain on the cabinet and side table blurs out at grazing angles (grain contrast 0.017-0.032 against 0.10-0.16 in
+  c_27316; w12 0.033-0.045). The photo-swatch array `u_photo` (and `u_detail`) look trilinear-only. Please enable
+  `EXT_texture_filter_anisotropic` (e.g. TEXTURE_MAX_ANISOTROPY_EXT 8) on those arrays, if available; this helps every
+  photo-tiled fabric and veneer.
