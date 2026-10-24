@@ -12,7 +12,8 @@ const page0 = process.env.QA_PAGE || process.env.CABIN_PAGE || path.resolve(__di
 const PRE = `window.__S=(id)=>__app.L.seats.find(q=>q.id===id);
 window.__sit=(id,yaw,pitch)=>{const s=__S(id); __app.sit(s,{instant:true}); __app.anim=null; const e=__app.eyeFor(s); __app.cam.pos=[...e.pos]; if(yaw!==undefined){__app.cam.yaw=yaw; __app.cam.pitch=pitch;}};
 window.__rel=(id,dx,y,dz,yaw,pitch)=>{const s=__S(id); __app.setView([s.x+dx,y,s.z+dz],yaw,pitch);};
-window.__settle=()=>{const a=__app.anim; if(a&&a.to){__app.cam.pos=[...a.to.pos]; __app.cam.yaw=a.to.yaw; __app.cam.pitch=a.to.pitch;} __app.anim=null;};`;
+window.__settle=()=>{const a=__app.anim; if(a&&a.to){__app.cam.pos=[...a.to.pos]; __app.cam.yaw=a.to.yaw; __app.cam.pitch=a.to.pitch;} __app.anim=null;};
+if(!window.__pp){window.__pp=M4.perspective; M4.perspective=(f,a,n,far)=>window.__pp(f,a,window.__near||n,far);}`;   // window.__near: per-view near clip (reset after every view)
 const walk = (x, y, z, yaw, pitch) => `__app.setView([${x},${y},${z}], ${yaw}, ${pitch})`;
 // [camera expression, reference photos (ref/ana or ref/web), what the view should show]
 const VIEWS = {
@@ -58,7 +59,7 @@ const VIEWS = {
     await page.evaluate(() => __app.renderNow());
     await page.evaluate(() => __app.renderNow());
     await page.screenshot({ path: path.join(out, n + '.png'), timeout: 240000 });
-    await page.evaluate(() => { if (__app.seated) { __app.setBed(false); __app.seated = null; __app.hideSeatBar(); } __app.mode = 'walk'; __app.scene.xray = false; __app.applyMood('boarding'); __app.applySky('day'); });
+    await page.evaluate(() => { if (__app.seated) { __app.setBed(false); __app.seated = null; __app.hideSeatBar(); } __app.mode = 'walk'; __app.scene.xray = false; window.__near = 0; __app.applyMood('boarding'); __app.applySky('day'); });
     pairs[n] = { img: path.resolve(out, n + '.png'), refs: refs.map((r) => path.resolve(__dirname, '../ref/ana', r + '-lang-multi.jpg')), what };
     console.log('shot', n);
   }
