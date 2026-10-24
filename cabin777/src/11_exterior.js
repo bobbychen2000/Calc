@@ -8,7 +8,7 @@
 //   Check [D]: gross area 449.7 m2 (LE extended to CL) vs 436.8 m2 reference, c/4 sweep 31.1 deg vs 31.6 deg.
 // Colours: ANA 777-300ER photos (JA787A/791A/796A/797A, 2024-25): white cowls (GE monogram low on the inboard flank, w5 [V
 // IQCFQpV_T1A]), satin inlet lip, grey
-// core cowl, black spinner with a white swirl, grey wing with bare-metal slat noses [V].
+// core cowl, grey spinner with a white swirl (w11, knav 7A _9), grey wing with bare-metal slat noses [V].
 // ------------------------------------------------------------------
 function naca(x, t) { return 5 * t * (0.2969 * Math.sqrt(x) - 0.126 * x - 0.3516 * x * x + 0.2843 * x * x * x - 0.1036 * x * x * x * x); }
 const WING = {
@@ -226,8 +226,8 @@ function buildExterior(gl) {
   const core = { c: '#8e9398', r: 0.34, m: 0.7 };
   const plug = { c: '#6e6b67', r: 0.4, m: 0.6 };
   const dark = { c: '#141619', r: 0.55, m: 0.3 };
-  const blade = { c: '#4a4e55', r: 0.35, m: 0.6 };   // w11: #2b2e33 read as a void behind the lip (B w11; blade ring visible in IQCFQpV_T1A) [V]
-  const spin = { c: '#16181b', r: 0.22, m: 0.2 };
+  const blade = { c: '#3e4248', r: 0.35, m: 0.6 };   // w11: #2b2e33 read as a void behind the lip (A/B w11; blade ring visible in IQCFQpV_T1A) [V]
+  const spin = { c: '#8a8e94', r: 0.35, m: 0.5 };   // w11: grey, not black (knav 7A _9 spinner L90-140 with the white swirl, A w11) [V]
   const white = { c: '#f2f2f2', r: 0.3 };
   const lights = [];
   const E = WING.eng;
@@ -320,8 +320,8 @@ function buildExterior(gl) {
       });
     }
     // w10: soft grime band along the flap / aileron TE (dark TE smudges in KN41, flap TE streaks in _7250) [V, A width / tone]
-    { const tg = { c: '#66686b', r: 0.8, m: 0.03 }, teB = (q) => pwl(WING.te, q) - 0.16;
-      for (const [a, b] of [[3.2, 9.7], [11.9, 23.2], [23.4, 30.3]]) wingLine(B, side, spanPath(a, b, teB, Math.ceil((b - a) / 1.5)), tg, 0.24, 1, 0.01); }
+    { const tg = { c: '#6b6d70', r: 0.8, m: 0.03 }, teB = (q) => pwl(WING.te, q) - 0.14;   // w11: lighter, narrower (read as a hard ribbon, A w11)
+      for (const [a, b] of [[3.2, 9.7], [11.9, 23.2], [23.4, 30.3]]) wingLine(B, side, spanPath(a, b, teB, Math.ceil((b - a) / 1.5)), tg, 0.18, 1, 0.01); }
     // flaperon behind the engine (9.8-11.8) [A span], outboard flap to 23.3, aileron 23.3-29.3 [D ACAP]
     const te = (s) => pwl(WING.te, s);
     wingLine(B, side, spanPath(9.8, 11.8, (s) => te(s) - 1.15, 3), gap);
@@ -361,8 +361,9 @@ function buildExterior(gl) {
     // under the cowl [V IQCFQpV_T1A, eX2WMn0xe48, LALF _136]. Inlet liner graded dark at the lip shadow -> grey liner (#151e27 ->
     // #56606a in _136) [V]
     B.add(nac.lip, rot, { c: '#a9a9a8', r: 0.34, m: 0.45 }); B.add(nac.cowl, rot, cowl); B.add(nac.nozIn, rot, dark);
-    const vIn = B.vcount; B.add(nac.inlet, rot, { c: '#7e7f80', r: 0.65, m: 0.05 });   // w6: neutral, the metallic liner mirrored the blue sky
-    shadeVerts(B, vIn, B.vcount, (p) => 1 - 0.45 * smooth(0.2, 1.3, p[2] - E.x0 - WING.dz));   // lit inner lip -> dark toward the fan (knav 7A _9) [V]
+    const vIn = B.vcount; B.add(nac.inlet, rot, { c: '#6a6e74', r: 0.65, m: 0.05 });   // w6: neutral, the metallic liner mirrored the blue sky
+    shadeVerts(B, vIn, B.vcount, (p) => 1 - 0.7 * smooth(0.05, 1.3,   // w11: the liner was the brightest part of the inlet (L172-196, A w11); knav _9 throat dark
+      p[2] - E.x0 - WING.dz));   // lit inner lip -> dark toward the fan (knav 7A _9) [V]
     B.add(nac.core, rot, core); B.add(nac.coreIn, rot, dark); B.add(nac.plug, rot, plug); B.add(nac.spinner, rot, spin);
     for (const [x, r] of [[1.3, 2.075], [3.15, 2.055]]) B.add(gCyl(r + 0.002, r + 0.002, 0.018, 48, false), M4.mul(rot, M4.trs(0, x, 0)), seam);   // cowl splits [A photo]
     // inboard nacelle strake (vortex chine): 1.3 x 0.26 m plate standing radially out of the fan cowl 25 deg above the
@@ -441,7 +442,7 @@ function buildExterior(gl) {
     // and the p97zMaCMWRg GE90 wing view, nacelle half in shadow]
     // canoe / pylon flank fills (w1-w3) dropped in w5: the exterior pass now has the cloud-deck bounce (u_extBounce,
     // lighting r3). Canoe bellies -35 % (belly #59636c vs flank #d3d6d3 in ANA 26K _7331) [V]
-    shadeVerts(B, vC, vN, (p, n) => 0.5 + 0.3 * smooth(-0.9, -0.1, n[1]) + 0.2 * smooth(0.1, 0.4, n[1]));   // w10: top 1 / flank 0.8 / belly 0.5 (w8-w9 bright keel band and charcoal flanks were the inside-out loft, not the bake); the cloud bounce still lit a keel band brighter than the skin in w26K (A w9)   // w8: lit top facet steps to a flank ~0.7 (_7250 / KN41 ~0.55-0.7); the w7 grade ran the vertical flank near-black (A w8)   // w6: flank grades lit top -> keel (#e0e8ea -> #788186 in _7250) [V]
+    shadeVerts(B, vC, vN, (p, n) => 0.5 + 0.42 * smooth(-0.9, -0.2, n[1]) + 0.08 * smooth(0.1, 0.4, n[1]));   // w11: flank 0.92 (A-side flanks 0.52 of the skin vs KN41 0.72-0.77, A w11); w10: top 1 / flank 0.8 / belly 0.5 (w8-w9 bright keel band and charcoal flanks were the inside-out loft, not the bake); the cloud bounce still lit a keel band brighter than the skin in w26K (A w9)   // w8: lit top facet steps to a flank ~0.7 (_7250 / KN41 ~0.55-0.7); the w7 grade ran the vertical flank near-black (A w8)   // w6: flank grades lit top -> keel (#e0e8ea -> #788186 in _7250) [V]
     // w2: visible flank falls ~0.6 from top to lower cowl (#8d96a6 -> #556171 in ANA 11A _136) [V]: f = 0.62 + 0.38 * ((n.y+1)/2)^1.3
     shadeVerts(B, vN, vP, (p, n) => 0.55 + 0.45 * Math.pow((n[1] + 1) / 2, 1.6));
     shadeVerts(B, vP, B.vcount, (p, n) => 1 - 0.25 * Math.max(0, -n[1]));

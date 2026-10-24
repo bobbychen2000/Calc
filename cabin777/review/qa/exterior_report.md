@@ -117,3 +117,65 @@ YouTube window videos IQCFQpV_T1A and eX2WMn0xe48. All are in `ref/web/exterior/
 
 The before/after sheet `exterior_before_after.jpg` has the wave-3 start build in row 1 and the final build in row 2, from the
 same seats.
+
+## Wave 3b, plateau breaker (2026-10-24, w8-w11)
+
+| round | build rated | rater A | rater B | mean |
+|---|---|---|---|---|
+| w8 | e05c5e2 (wave-3 final, w7 fixes) | 7.0 | 7.3 | 7.15 |
+| w9 | 764d796 (w8 big-ticket work) | 7.3 | 7.6 | 7.45 |
+| w10 | b1dec68 (w9 fixes) | 7.0 | 7.6 | 7.3 |
+| w11 | 0629727 (w10 fixes) | 7.3 | 7.8 | 7.55 |
+| final | w11 fixes (51e3979 + this commit) | – | – | – |
+
+The loop stopped at the 4-round cap of the plateau breaker, below 8.5 for both raters and with no high-severity issue open. w11 is
+the best round so far (mean 7.55, against 6.95 at the end of wave 3). The exterior is 25,160 -> 27,136 triangles (+7.9 % in wave 3).
+
+### Gap analysis (`exterior_gap_w8.md`)
+It found three frame-wide problems, ahead of the marks the raters kept citing:
+1. The wing was too dark and too blue (0.61-0.79 of the cloud luma, against 0.65-0.96 in the ANA photos).
+2. The skin was 3-5x too uniform.
+3. The canoe section was wrong (the photos show a flat lit top facet over a darker flank).
+
+### What changed (all in `src/11_exterior.js` unless noted)
+- **Wing skin as panels.** The upper skin is built per span interval with duplicated vertices on the spoiler, flap, flaperon and
+  aileron box edges (`wingBreaks`, `WING_SPAN_BREAKS`). Each panel now has its own flat tone and a +-1.5 deg sheen tilt. Vertex
+  colour had smeared the w5-w7 jitter into gradients nobody could see.
+- **Photo grime layer.** New photo layer 27, `tex/tex_x_skin.png`, cut by `test/make_swatches.py x_skin` from the sunlit flap of
+  JA795A (alv IMG_7250). Panel lines and specks are median-filtered out, the tile is high-passed, smeared along the flow and skewed
+  dark, and it is stored at SD 0.12. `PHOTO_GAIN[27]` 0.22 renders it at about 2.6 %. Added to that: grime on the hinge rows (-7 %)
+  and the flap TE (-7 %), the flaps behind the engine darker (-4 %), and a soft TE grime band.
+- **Paint.** #76787a, r 0.72, m 0.05, replacing #636466 at r 0.5, which mirrored the sky blue. The ramp runs 1.12 near -> 0.80 far.
+- **Canoes.** Chined sections (r = min(w * 0.3, d * 0.25)), the top line falling 0.28 m to the tip, a tip that closes on a near-zero
+  ring, no grime layer, and a bake of 1 / 0.92 / 0.5 from top through flank to belly. **Bug found by rater A in w10:** from w8 on, a
+  zero-size first loft ring defeated gLoft's ring-0 orientation check, so all 8 canoes rendered inside out. That was the bright keel
+  band and the charcoal flanks of w8-w10. The fix (`rise` >= 0.06) was checked with an outward-normal probe: 290/290 vertices face out.
+- **GE monogram.** Script G and E with four rim swashes curling in through the ring, a small block "GE" wordmark aft on the left
+  engine, and strokes half-sunk so they read as paint (knav 7A _9).
+- **Inlet.** Grey spinner #8a8e94 (knav _9), blades #3e4248, and a darker graded liner, so the fan is no longer a void.
+- **Smaller items.** JA795A strokes 0.23 m at a 1.10 m pitch, muted placards, 0.02 m spoiler breaks, a straight splice and straight
+  rear fastener rows.
+
+### Shared-file edits
+- `src/03_tex.js`: N_LAYERS 28, `LAYER.xSkin`, and the `PHOTO_LAYERS`, `PHOTO_GAIN` and `LAYER_PARAMS` 27 entries.
+- `test/make_swatches.py`: `x_skin`.
+- `tex/sizes.json`.
+
+### Hand-offs to lighting (`from_exterior.md` 14)
+The grazing sky reflection (`specEnv`, `u_skyTop*1.2`) ignores the baked colour, so the far wing still renders brighter than the
+near flap in w19A (L178 against L161; KN41 runs 192 near -> 145 far). Both raters put the fix at about +0.3. Items 8-11 (sunset
+blue, beacon wash, cowl clipping) are still open. Items 12-13 were withdrawn: they were the canoe bug.
+
+### Left at the cap (each about +0.1-0.3 per the w11 raters)
+- **Canoe flanks from the A side.** They render at 0.52 of the skin against 0.72-0.77 in KN41. The w11 bake lifts them; this is
+  unrated.
+- **Pylon fairing.** It could be a little larger and crisper (ridge 0.70 m, width 1.35 m).
+- **Control-surface gaps.** About twice the photo width near the camera.
+- **Short dark streaks behind the canoes on the flaps.**
+- **Camera.** The registration sits under the shade rail in 26K and 30K.
+
+### Sources added
+The wave-3 set was re-downloaded into `ref/web/exterior/` (gitignored). The URLs are in the rating JSONs.
+
+The before/after sheet `exterior_before_after.jpg` has the wave-3b start (e05c5e2) in row 1 and the final build in row 2, from the
+same seats and studio cameras. Review cameras are in `review/qa/exterior_views.js` and `review/spec_ext.json`.

@@ -1,0 +1,97 @@
+{
+ "area": "exterior",
+ "rater": "A skeptic",
+ "build": "w11 = head 0629727 (w10 fixes), renders /tmp/claude-0/a1e20d29-972a-5952-b92a-3befff9d861e/scratchpad/r11 (r10 for comparison). Crops and the geometry probe in /tmp/claude-0/-home-user-Calc/a1e20d29-972a-5952-b92a-3befff9d861e/scratchpad/ratA11 (t.js = LAYER stub + 00_math + 02_geo + 05_layout + 11_exterior; run2.js = per-add outward-normal check of buildExterior(null))",
+ "score": 7.3,
+ "details": {
+  "wing planform / raked tip / bending": 7.5,
+  "wing surface detail (seams, fastener rows, panel tone, gear stripe, slat band, placards, grime)": 7.2,
+  "control surfaces & gaps (slats, spoilers, flaps, flaperon, aileron)": 7.5,
+  "canoes (flap-track fairings)": 7.3,
+  "pylon": 7.0,
+  "nacelle shape (cowl, lip, splits, strake, access panel)": 7.5,
+  "nacelle colour / materials (incl. GE logo)": 7.6,
+  "inlet / fan / spinner": 6.5,
+  "livery / registration JA795A": 7.5,
+  "lights & static dischargers": 7.0,
+  "artefacts": 7.0
+ },
+ "previous": [
+  {"issue": "[w10 A high] canoes inside-out (zero ring 0 defeated gLoft's orientation test)", "status": "FIXED. Probe: all 8 canoe lofts (11_exterior.js l.351) are 290/290 outward (w10: 34 out / 240 in). w26K now shows solid pods with a lit top, grey flank and a dark lower rim: upper flank (620,280) L124 -> 200, flank (600,355) L136 -> 187, lower rim (600,385) L204 -> 168, so the bright keel band is gone (ratA11/w26K_r10_vs_r11.png). c_canoe_side: top edge (600,354) L10 -> 194, flank L97 -> 128, belly rim (600,474) L175 -> 78. This matches the 7250 pods (lit top, darker lower flank). Remaining inward adds in the probe are expected: the inlet liner (l.1361, an inner surface), the spinner swirl tube (l.1412, an open spiral where the centroid test is meaningless) and the fan blades (two-sided, 220/220)."},
+  {"issue": "[w10 A medium] near flaps darker than the far fixed skin (w19A)", "status": "PARTLY FIXED. w19A near flap (600,440) L158 -> 161, (560,500) 156 -> 159; far skin (680,195) 184 -> 177, (720,220) 178 -> 175. The gap shrank from 26 to about 16, but it still runs the wrong way (KN41: near skin 192, near flap 177, far 158). As B said in w10, the rest is the albedo-independent grazing env term, which a vertex ramp cannot beat."},
+  {"issue": "[w10 A medium] wing grime even and light-skewed", "status": "NOT FIXED. w17K flat skin (200-460 x 400-520) residual SD 2.3 -> 2.4 %, p5 -0.5 / p95 +3.1 (still light-skewed). c_wing_panel SD 1.3 %, unchanged. KN41 (530-700 x 500-640) SD 3.9 %, p5 -1.2 / p95 +3.5. The new TE band (l.322) does not read as grime: it is a flat 0.24 m ribbon with crisp edges, a parallel strip a few L darker than the flap (w26K, ratA11/w26K_z.png)."},
+  {"issue": "[w10 A low] inlet: fan a dark void, spinner barely visible", "status": "NOT FIXED. c_nacelle_left: the spinner is a black nub, (620,298) L13. knav _9 shows a grey spinner, (505,655) L90 with a white swirl, standing proud of a near-black fan face. Raised to medium together with the liner tone (see issues)."},
+  {"issue": "[w10 A low] GE monogram swashes curl inside the ring", "status": "NOT FIXED (studio only). c_ge_inboard_left: the four swashes still sit inside the ring."},
+  {"issue": "[w10 B] canoe A-side flanks are charcoal teeth (w19A flank / skin 0.49)", "status": "NOT FIXED. w19A flank (470,350) L78 -> 84, (520,300) L96 -> 84, against the flap at L160, a ratio of 0.52. KN41 canoes: top (860,325) L148, flank (860,390) L138, against the near skin at L192, a ratio of 0.72-0.77. Now that the mesh faces the right way, this is a real tone or lighting gap."},
+  {"issue": "[lighting, not scored] sunset underwing royal blue", "status": "NOT FIXED. In s13A's left pane the underwing is still saturated blue-violet."}
+ ],
+ "issues": [
+  {
+   "severity": "medium",
+   "detail": "inlet / fan / spinner: liner too light, fan and spinner unreadable",
+   "problem": "In the photos the inlet is a near-black throat. A grey spinner with a white swirl and the blade ring read against it, framed by a broad satin lip (knav _9: liner L5-37, spinner L90-140). In the render the liner is the brightest part of the inlet: w11K inner wall (340,420) L172 and (345,480) L196, the same as the cowl; c_nacelle_left lower liner (650,400) L185. The fan face is a void and the spinner a black nub, because the spinner material is #16181b. So from 11A/11K the engine reads as a white tube, not a GE90 face.",
+   "evidence": [
+    "/tmp/claude-0/a1e20d29-972a-5952-b92a-3befff9d861e/scratchpad/r11/c_nacelle_left.png",
+    "/tmp/claude-0/a1e20d29-972a-5952-b92a-3befff9d861e/scratchpad/r11/w11K.png",
+    "/tmp/claude-0/-home-user-Calc/a1e20d29-972a-5952-b92a-3befff9d861e/scratchpad/ratA11/knav9_inlet.png",
+    "ref/web/exterior/b5_knav_ANA77W_7A_GE90_takeoff_9.jpg"
+   ],
+   "fix": "11_exterior.js l.229-230: spin {c:'#8a8e94', r:0.35, m:0.5} (keep the white swirl), blade #2b2e33 -> #3a3e44. l.364: inlet {c:'#5c6066', r:0.7, m:0.05} with the grade 1 - 0.8 * smooth(0.05, 0.9, depth), so the liner is dark beyond about 0.3 m inside the highlight (knav _9). Optionally widen the lip satin band (lip m 0.45 -> 0.6, r 0.3) so the bright metal ring frames the dark throat as in knav _9."
+  },
+  {
+   "severity": "medium",
+   "detail": "canoes: A-side flanks still about 0.52 of the skin (w19A)",
+   "problem": "Now that the normals are correct, w26K matches 7250 well. From 19A, though, the canoe flanks facing the camera are charcoal teeth: L84 against the flap at L160 (0.52). KN41 shows the same view at 0.72-0.77 (flank L138, top L148, near skin L192). The pods also read slightly bulbous from above, with a convex drooping keel. The KN41 pods are slimmer, with a crisp top ridge.",
+   "evidence": [
+    "/tmp/claude-0/-home-user-Calc/a1e20d29-972a-5952-b92a-3befff9d861e/scratchpad/ratA11/w19A_canoes.png",
+    "/tmp/claude-0/-home-user-Calc/a1e20d29-972a-5952-b92a-3befff9d861e/scratchpad/ratA11/kn41_canoes.png",
+    "ref/web/exterior/a5_kn_ANA77W_TheRoom_41.jpg (860,325) L148, (860,390) L138"
+   ],
+   "fix": "11_exterior.js l.443 canoe bake: lift the vertical flank to 0.92 (`0.5 + 0.42 * smooth(-0.9, -0.2, n[1]) + 0.08 * smooth(0.1, 0.4, n[1])`). The belly stays at 0.5, so w26K keeps its dark lower rim. If that is not enough, the cause is the shade-side exterior ambient: ask lighting for the cloud-deck bounce on horizontal-facing exterior normals (|n.y| < 0.3) at about 1.3x. Shape: reduce the mid-body depth ~10 % (the rd factor for t in 0.3-0.7) so the keel line is straighter."
+  },
+  {
+   "severity": "medium",
+   "detail": "wing: near-far value still reversed in w19A; grime still symmetric",
+   "problem": "In w19A the near flap is L159-161 and the far skin L175-177; in KN41 it runs 192 near to 158 far. The w10 ramp closed about 40 % of the gap; the rest is the grazing env specular, which is independent of the vertex colour. Grime is unchanged: SD 2.4 % with a light skew, against KN41 at 3.9 % with a dark tail. The new TE band is a hard-edged ribbon, not a smudge.",
+   "evidence": [
+    "/tmp/claude-0/a1e20d29-972a-5952-b92a-3befff9d861e/scratchpad/r11/w19A.png (600,440) L161, (680,195) L177",
+    "/tmp/claude-0/-home-user-Calc/a1e20d29-972a-5952-b92a-3befff9d861e/scratchpad/ratA11/w26K_z.png",
+    "ref/web/exterior/a5_kn_ANA77W_TheRoom_41.jpg"
+   ],
+   "fix": "Lighting (04_shaders.js, exterior branch): scale specEnv by mix(1, albedoLuma / 0.75, 0.6), or by the vertex AO/ramp channel, so the baked ramp also attenuates the grazing reflection. 11_exterior.js l.322: give the TE band a feathered alpha, or make it two half-width strips (0.12 m at #6e7074, then 0.12 m at #7a7c7f), so the edge steps by 3-4 L rather than one crisp line. Add 6-10 short dark chordwise streaks (0.6-1.2 m, -8 to -10 %) aft of the canoe roots on the flaps, which KN41 and 7250 both show."
+  },
+  {
+   "severity": "low",
+   "detail": "control-surface gaps about 2x too heavy near the camera",
+   "problem": "The w19A main flap/spoiler gap is 4-5 px at L39-40; the KN41 equivalent is about 3 px at 1300 wide (about 2 px at 930). It reads as an ink line.",
+   "evidence": ["/tmp/claude-0/a1e20d29-972a-5952-b92a-3befff9d861e/scratchpad/r11/w19A.png row y=400 x=561-565", "ref/web/exterior/a5_kn_ANA77W_TheRoom_41.jpg row y=700 x=766-769"],
+   "fix": "11_exterior.js `gap` wingLine width: scale it by distance (about 0.6x inboard of s 12), or lighten the core to #2a2c30."
+  },
+  {
+   "severity": "low",
+   "detail": "GE monogram swashes",
+   "problem": "Unchanged: the swashes curl inside the ring. Studio only.",
+   "evidence": ["/tmp/claude-0/a1e20d29-972a-5952-b92a-3befff9d861e/scratchpad/r11/c_ge_inboard_left.png"],
+   "fix": "l.405: r = 0.27 - 0.13 t, so the swashes start outside the ring and curl in to points."
+  },
+  {
+   "severity": "low",
+   "detail": "(owner: lighting) not scored",
+   "problem": "s13A underwing is still saturated blue-violet; 7282 dusk is grey-blue.",
+   "evidence": ["/tmp/claude-0/a1e20d29-972a-5952-b92a-3befff9d861e/scratchpad/r11/s13A.png", "ref/web/exterior/b_alv_ANA77W_PY_IMG_7282-2-scaled.jpeg"],
+   "fix": "Lighting: desaturate the sunset sky bounce on down-facing exterior normals."
+  }
+ ],
+ "worthPlus03": [
+  "Inlet: dark liner, grey spinner, readable blade ring (inlet detail about +1.0; overall about +0.3). Material-only change, low risk.",
+  "Canoe A-side flank to about 0.75 of the skin (canoes about +0.7; overall about +0.3).",
+  "Grazing env specular scaled by albedo so the near-far ramp lands in w19A (surface detail about +0.5; overall about +0.3). Lighting owner.",
+  "Not +0.3 alone: TE band feathering, flap streaks behind the canoes, gap width, GE swashes (about +0.1 each)."
+ ],
+ "questionsForUser": [],
+ "photos": [
+  {"path": "ref/web/exterior/b_alv_ANA77W_PY_IMG_7250-2-scaled.jpeg", "seat": "26K (JA795A)", "what": "canoes as solid pods, lit top, darker lower flank; w26K now matches"},
+  {"path": "ref/web/exterior/a5_kn_ANA77W_TheRoom_41.jpg", "seat": "THE Room right window", "what": "near skin 192 / near flap 177 / far 158; canoe top 148 / flank 138; grime SD 3.9 %"},
+  {"path": "ref/web/exterior/b5_knav_ANA77W_7A_GE90_takeoff_9.jpg", "seat": "7A", "what": "near-black inlet throat, grey spinner with swirl L90-140, broad satin lip"}
+ ]
+}

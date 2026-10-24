@@ -17,3 +17,11 @@
    geometry, given that no seat view shows it?
 7. **Registration darkness.** Photos range from near-black (KN41) to dark slate (_7250). The model uses near-black navy. Do you
    have a sunlit JA795A close-up?
+
+## Wave 3b
+
+8. **Wing grime level.** The skin now carries a photo-derived grime layer (from the JA795A flap, IMG_7250) at about 2.6 %, plus
+   hinge and TE darkening. The photos range from almost clean (KN46) to streaky (7250). Should it look like a recently washed or a
+   working airframe?
+9. **Spinner colour.** It is now mid grey with the white swirl (KN Aviation 7A close-up). An earlier note said black (JA796A).
+   Which matches the airframe you want shown?
