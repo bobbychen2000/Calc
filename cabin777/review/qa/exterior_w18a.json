@@ -1,0 +1,77 @@
+{
+ "area": "exterior",
+ "rater": "A skeptic",
+ "build": "w18 = 9cac06c",
+ "score": 8.0,
+ "details": {
+  "wing planform / raked tip / bending": 7.5,
+  "wing surface detail (seams, fastener rows, panel tone, gear stripe, slat band, placards, grime)": 8.0,
+  "control surfaces & gaps (slats, spoilers, flaps, flaperon, aileron)": 7.8,
+  "canoes (flap-track fairings)": 8.5,
+  "pylon": 7.6,
+  "nacelle shape (cowl, lip, splits, strake, access panel)": 7.6,
+  "nacelle colour / materials (incl. GE logo)": 7.9,
+  "inlet / fan / spinner": 7.8,
+  "livery / registration JA795A": 7.5,
+  "lights & static dischargers": 7.5,
+  "artefacts": 7.5
+ },
+ "previous": [
+  {"issue": "w17a medium: near-panel fastener strips read as pale zippers", "status": "fixed", "measure": "w19A row 500 x 662-668: strip 162-164 on flap 168 (r17 175-175 on 169, +6 L -> now -5 L); row 520 163-164 on 168-169. w26K x 510 y 274: 174 on 192-193, x 470 y 266: 173 on 189 (r17 strips lighter). Single faint dot column, no ladder (ratA18/w19A_near_zoom.png, w26K_near_zoom.png). Residual: KN41 dots 136 on 170 (0.80) vs our row 0.96, so at this range they read as a faint line rather than a dot row; acceptable."},
+  {"issue": "w17a medium: pylon fairing crease / lumpy top / aft slab / pointed nose", "status": "partly fixed", "measure": "c_nacelle_left top edge now one smooth dome (rows 47->23->23->58 over x 280-525, peak x 400-445, no kink; r17 had a plateau). w13A x 620: smooth 217 -> 153 gradient, crease gone. But w13A x 500 / 560: crown 166-173, step to a FLAT flank band 151-154 (12-14 px), then a +40 L hard edge to the cowl below (191-193). _137 x 560: highlight 168-173 grading to 82 = the cowl value (no step). From w13A / s13A the aft top line still undulates (2-3 low bumps between the strut and the dome) instead of _137's clean saddle -> rise into the strut. Nose toe is rounded now (w11A)."},
+  {"issue": "w17a low: hinge smudges read as flat grey tape", "status": "fixed", "measure": "w19A rows 464-467 x 488-496: head 127-128 on 168 (0.76) ~10 px, tail 160-164 fading over ~14 px (r17 flat 153-154 over 30+ px). Head is still a uniform rectangle (128 flat), KN41 smears are darker and irregular, minor."},
+  {"issue": "w17a low: inlet depth / fan-cowl hinge seam", "status": "hinge seam added but too dark; inlet unchanged / slightly wrong way", "measure": "Hinge line: w13A x 560/600/640/680 = 55/53/85/51 on 181-188 (0.29-0.45); w11A x 430/460 147/82 on 187-188; c_nacelle_left as dark as the splits. LALF _136 x 200 y 712: 131 on 150 (0.87); _137 x 700: 64 on 82 (0.78). So ~2-3x too much contrast, and it stops 15-20 px short of a split at each end in c_nacelle_left / w13A, so it floats. Inlet: w11A row 420 27/25/29/34/26/37/37 (r17 27/21/26/31/25/36/37), +0-4 L, fine; w11K row 450 x 350-368 82/82/79/76/72/69/65 (r17 81/67/79/75/71/67/64/60) and row 360 76->61 (r17 75->54): the fan end got 3-7 L LIGHTER, not darker (knav _9 falls to ~10-52)."},
+  {"issue": "w17a low: near-far value (lighting-owned)", "status": "not changed (lighting)", "measure": "w19A near flap 168-170, far 162-173: unchanged."},
+  {"issue": "w17a low: tip nav light blob above the LE corner at night", "status": "mostly fixed", "measure": "n19A red-dominant pixels (R-G > 60) 46 -> 13, extent 11x10 -> 6x3 px (ratA18/n19A_tip.png); still centred on the upper LE corner of the tip rather than slightly inboard/below it, but reads as a lens glow now."}
+ ],
+ "issues": [
+  {
+   "severity": "medium",
+   "detail": "fan-cowl hinge hairline as dark as the splits and floating (new w18)",
+   "problem": "The new line uses the split material (#5f646a, 8 mm tube), so it renders at 0.3-0.45 of the cowl while _136 / _137 show it at 0.78-0.87; it is the darkest long line on the nacelle in w13A / s13A / c_nacelle_left and stops short of both splits.",
+   "evidence": "w13A x 560-680 y 296-309: 51-85 on 181-188; LALF _136 131/150, _137 64/82; ratA18/w13A_zoom.png, s13A_zoom.png, c_nacelle_left_zoom.png.",
+   "fix": "src/11_exterior.js l.437: own material { c: '#9a9ea3', r: 0.8 } (or #8a9097 like the strake patch), tube radius 0.008 -> 0.004, and span lerp(1.31, 3.14) so it meets both splits (l.415 x 1.3 / 3.15). Target 0.80-0.88 of the cowl."
+  },
+  {
+   "severity": "medium",
+   "detail": "pylon fairing flank: flat dark band with a hard edge to the cowl",
+   "problem": "Crown crease is gone forward, but mid-fairing the flank renders as a uniform 151-154 band and meets the cowl at 191 with a +40 L step, so from 13A it still reads as a skirted cap sitting on the cowl. _137: the flank grades continuously into the cowl tone. The aft top line also undulates in w13A / s13A.",
+   "evidence": "w13A x 500 / 560 rows 270-290 vs _137 x 560 rows 664-700; ratA18/w13A_zoom.png, s13A_zoom.png.",
+   "fix": "l.530: fade the flank term near the base, e.g. -0.12 * smooth(0.6, 0.95, |n.x|) * smooth(0.0, 0.18, p.y - nacTop(local x)), and the -n.y term likewise, so the fairing foot takes the cowl value; l.480: soften the second hump by widening the saddle (smooth(2.7, 3.6) / smooth(3.8, 4.8)) and start hB with exponent 1.6 so the aft line is one monotonic rise into the strut."
+  },
+  {
+   "severity": "low",
+   "detail": "inlet fan end lighter at 11K",
+   "problem": "The w18 grade (l.407, smooth(0.45, 1.25), 0.75) moved the start aft, so the visible liner at 11K got 3-7 L lighter; knav _9 throat runs much darker.",
+   "evidence": "w11K row 360 x 350-356: 76/73/69/66 vs r17 74/69/65/62.",
+   "fix": "l.407: keep 0.75 but restore smooth(0.3, 1.2) (lip-end lightening at 11A came from elsewhere and is only +0-4 L), or add a fan-end floor * lerp(1, 0.7, smooth(1.0, 1.4, x))."
+  },
+  {
+   "severity": "low",
+   "detail": "fastener rows a line, not dots; smudge heads uniform",
+   "problem": "Rows now 0.96 of the panel with dots barely visible; smudge heads flat 128 rectangles.",
+   "evidence": "w19A rows 500-520; KN41 rows 0.80 with separable dots.",
+   "fix": "l.339: dot gain up a touch (03_tex.js LAYER_PARAMS xRivet) leaving the strip base at #5e6063; l.352: jitter the head width 0.04-0.06."
+  }
+ ],
+ "worthPlus03": [
+  "Hinge hairline lighter, thinner and meeting the splits (l.437): removes the only new artefact.",
+  "Pylon foot blended into the cowl value (l.530): removes the skirted-cap look from 11-13A."
+ ],
+ "questionsForUser": [
+  "A side-on photo of the GE90 pylon fairing from rows 11-13 A (not into the sun) would still settle the saddle depth."
+ ],
+ "photos": [
+  "ref/web/exterior/b_lalf_ANA77W_11A_136.jpg",
+  "ref/web/exterior/b_lalf_ANA77W_11A_137.jpg",
+  "ref/web/exterior/a5_kn_ANA77W_TheRoom_41.jpg",
+  "ref/web/exterior/b5_knav_ANA77W_7A_GE90_takeoff_9.jpg",
+  "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratA18/w19A_near_zoom.png",
+  "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratA18/w26K_near_zoom.png",
+  "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratA18/w13A_zoom.png",
+  "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratA18/s13A_zoom.png",
+  "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratA18/w11A_zoom.png",
+  "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratA18/c_nacelle_left_zoom.png",
+  "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratA18/n19A_tip.png"
+ ]
+}

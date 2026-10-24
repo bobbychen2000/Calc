@@ -51,7 +51,7 @@ const PHOTO_GAIN = {
   34: 0.8,   // econ w28 (w27a-1 / w27b-1): 0.45 left the lattice flat (p90/50 1.15 vs 1.37); 0.65 still 1.23; econ w27 (w26a-1 / w26b-1): pan stars bright 0.21 vs 0.09, p90/50 1.72 vs 1.37 in y_47300 [D]
   29: 0.4,   // room w13a: read as hard gingham at 0.55 -> -30 %; room w12: kn_17 close-up +-25 % linear, but tpg_81 / tpg_46 at seat distance read about half that [D]
   36: 0.25,   // exterior w18: 0.35 read as dirt in c_nacelle_left; tile SD 0.08 -> ~2 % mottle (_136 cowl panels 2-4 %) [D]
-  35: 2.6,   // exterior w18: hard 1 px dots at 0.58 of the panel at 4.0 (B w17, KN41 ~0.8); exterior w17: 1.0-1.8 averaged out at the near flap's ~6 mm/px (t17; 8 showed 1 px dots); dots ~0.5 of the paint (KN41 near spoiler rows) [D]
+  35: 3.2,   // exterior w19: rows 0.95 of the panel at 2.6 vs KN41 ~0.80 (A / B w18); exterior w18: hard 1 px dots at 0.58 of the panel at 4.0 (B w17, KN41 ~0.8); exterior w17: 1.0-1.8 averaged out at the near flap's ~6 mm/px (t17; 8 showed 1 px dots); dots ~0.5 of the paint (KN41 near spoiler rows) [D]
   27: 0.22,   // exterior w9: x0.75, read as even brushed banding at 0.3 (A w9); exterior w8: tile stored at SD 0.12 -> ~3.6 % grime mottle (KN41 / 7250 flap panels 3-5 %) [D]
 };
 // swatches stored as ratio / ENC instead of ratio / 2 (test/make_swatches.py ENC): the Y ticks are ~10x the navy ground
