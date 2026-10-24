@@ -516,6 +516,26 @@ def s_pleat():
     return round(size, 6)
 
 
+def x_rivet():
+    """exterior w17: fastener-row dot tile for the near-wing rows (gap analysis w16: the near flap / spoilers had no fine
+    detail, high-pass SD 0.00 vs 1.5-3.0 on KN41's panels with rows). Synthetic, like s_pleat: universal-head fasteners
+    ~8 mm across (head + crack ring) at a ~25 mm pitch [A, typical skin-splice pitch; KN41 rows ~4 px apart at ~6 mm/px], each a dark dot
+    ~0.72 of the paint in sRGB with a faint lit rim (KN41 near spoiler rows, dark dots on the sunlit grey) [D contrast].
+    The tile is 0.2 m = 8 x 8 dots; it is projected from above (triplanar), so a 50 mm strip along a swept row
+    picks up a staggered double row. Mean 1 (stored / 2), so at range the mips fade to the strip's own colour."""
+    n = 256; size = 0.2; pitch = n // 8
+    y, x = np.mgrid[0:n, 0:n] + 0.5
+    dx = (x % pitch) - pitch / 2; dy = (y % pitch) - pitch / 2; r = np.hypot(dx, dy) * size / n * 1000   # mm
+    f = 1 - 0.30 * np.clip((4.2 - r) / 1.4, 0, 1) + 0.06 * np.exp(-((r - 4.6) / 0.7) ** 2)   # t17: 6 mm dots fell to 1 px specks; ~8 mm (head + paint crack ring) [A]
+    rng = np.random.default_rng(7)
+    f = f * (1 + 0.01 * _blur_wrap(rng.standard_normal((n, n)), 1.5))
+    f = f / f.mean()
+    print('x_rivet min/mean', round(float(f.min()), 3), round(float(f.mean()), 3))
+    out = np.clip(np.repeat(f[:, :, None], 3, 2) / 2, 0, 1)
+    Image.fromarray((out * 255 + 0.5).astype(np.uint8)).save(os.path.join(root, 'tex', 'tex_x_rivet.png'))
+    return size
+
+
 if __name__ == '__main__':
     os.makedirs(os.path.join(root, 'tex'), exist_ok=True)
     import json, sys
@@ -527,5 +547,6 @@ if __name__ == '__main__':
     if not only or 'x_skin' in only: sizes['x_skin'] = x_skin()
     if not only or 'g_alu' in only: sizes['g_alu'] = g_alu()
     if not only or 's_pleat' in only: sizes['s_pleat'] = s_pleat()
+    if not only or 'x_rivet' in only: sizes['x_rivet'] = x_rivet()
     json.dump(sizes, open(os.path.join(root, 'tex/sizes.json'), 'w'))
     print('swatches', sizes)
