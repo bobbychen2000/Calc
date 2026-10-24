@@ -309,7 +309,7 @@ function monoLayoutQA(L) {
   const d1R = find('closet', 1.62, 7.40); if (d1R) d1R.back = 'F';
   // w1: charcoal curtains in both F aisles at the front wall (ffF_cabin-overview-from-aisle, tpa_IMG_0220, tpg_147)
   // w5: one loose untied drape per aisle, gathered against the centre wall (omaatF_ANA-First-Class-Suite-777-40, ml_DSC_1914)
-  for (const [a, b] of [[-1.68, -0.88], [0.82, 1.62]]) M('curtain', a, b, 7.43, 7.43, { xg: a < 0 ? b - 0.2 : a + 0.2, tone: 'F', h: 0 });
+  for (const [a, b] of [[-1.68, -0.88], [0.82, 1.62]]) M('curtain', a, b, 7.43, 7.43, { xg: a < 0 ? b - 0.26 : a + 0.26, tone: 'F', h: 0 });
   // w1: door-2 forward monuments seen from rows 5-6 are cream J laminate with wall boxes (tpg_70 / _71), curtains tied
   // back at both aisle openings; the passage between the two centre galleys has a dark soffit (lalf_133)
   for (const m of mon) if (near(m.z0, 14.86) && near(m.z1, dz[1][0])) { m.back = 'J'; if (m.welcome) m.soffitTo = dz[1][1]; }
@@ -342,8 +342,8 @@ function monoLayoutQA(L) {
   M('galley', 1.62, 2.70, pz27 + 0.14, dz[3][0], { face: 1, carts: 2, rowMonitor: 2.2, jumpX: 2.32 });
   // dark slate PY curtains in both aisles right behind row 27 (py_37302), gathered against the centre galley
   const zc4 = pz27 + ML.pyRecline - 0.07;
-  M('curtain', -1.62, -1.05, zc4, zc4, { xg: -1.10, tone: 'Y', h: 0 });
-  M('curtain', 1.07, 1.62, zc4, zc4, { xg: 1.12, tone: 'Y', h: 0 });
+  M('curtain', -1.62, -1.05, zc4, zc4, { xg: -1.29, tone: 'Y', h: 0 });      // w6: wide drapes against the galley
+  M('curtain', 1.07, 1.62, zc4, zc4, { xg: 1.31, tone: 'Y', h: 0 });
 
   // ---- door 5: drop the outboard lavs ahead of it and the transverse aft galley; fore-aft galleys + outboard lavs
   del((m) => m.kind === 'lav' && near(m.z1, dz[4][0]) && Math.abs(m.x0 + m.x1) > 2);
