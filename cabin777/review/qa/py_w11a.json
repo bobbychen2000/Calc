@@ -1,0 +1,207 @@
+{
+ "area": "py",
+ "rater": "A",
+ "round": "w11",
+ "commit": "1432360",
+ "score": 8.1,
+ "summary": "Clearly the same ZIM product. The proportions, the navy flap, the console, the leg rest and the seat-back IFE layout all match the ANA photos. The post-w10 fixes work: stowed goosenecks now hang near-vertical about 8-9 cm apart, like py_37301. The navy flap colour matches py_37302 (hue 226, L 66-70 against 56). Below 8.5 because of three medium issues. (1) Close up, both cloths read as axis-aligned pixel bricks in rows (cushion, back) and as oval dots over black dash rows (ears). In py_37306 / 37305 the cushion weave is soft diagonal and wavy, and the ears are angular sakura chips on a plain charcoal pebble ground with no dashes. (2) The IFE bezel is a thin black line, where san_26 shows a thick dark tray. (3) Seen from just behind (q13b), the seat top shows a fabric and navy over-top band that real rear views never show. Scored slightly below w10 (8.2) only because the new SANspotter close-ups were checked at full resolution; nothing regressed.",
+ "lighting_note": "q14 still has the hard sun diamond on the 26A back. In q13 the cushions are lit to near white: studio p1 cushion is #b6bbc6 at S 0.08, against #96a2b8 at S 0.19 for py_37301. The flaps and backs in q13 sit within about 10 L of py_37302. Colours were judged mostly from the studio renders, as instructed.",
+ "calibration": [
+  {
+   "issue": "w9a M: wings were flat strips continuous with the bolsters",
+   "status": "fixed. Short puffy ears with domed ends and a gap above the bolster (p4). Their cross-section is still a round sausage rather than py_37305's wide flat pillow (see issues)."
+  },
+  {
+   "issue": "w9a M: navy flap too tall, with rolled scroll ends",
+   "status": "fixed. p4 head-on h/w is about 0.86, against 0.90 for py_37301 and 1.26 for py_37305 (low camera). No scroll ends."
+  },
+  {
+   "issue": "w9a M / w10a M / w10b M: gooseneck heads plate, chopsticks or V",
+   "status": "fixed. p8 heads at x 365 / 400 on a ~240 px seat (about 8 cm), parallel and near-vertical with hoses from the shell top, as in py_37301 (about 35 px apart on a 110 px headrest). Still slightly tight in q14 because of perspective."
+  },
+  {
+   "issue": "w9b M: wing pads sinking into the bolsters with a saw-tooth seam",
+   "status": "fixed. Separate ear above a gap (p4)."
+  },
+  {
+   "issue": "w9b M: shell rim above the screen twice the photo height",
+   "status": "fixed. q13b rim above the frame is about 10 % of bezel height. But the dark bezel tray itself is now too thin (new issue)."
+  },
+  {
+   "issue": "w9b M / w10b M: wing petal cloth about half the photo contrast",
+   "status": "partly fixed. Contrast is up: p4 ear Lstd 32.7 against 34.1 for py_37305. But the petal shape and the ground are still wrong: oval dots plus a black dash row, against angular chips on a plain pebble ground."
+  },
+  {
+   "issue": "w10a L / w10b L: literature net a flat slab or ledge",
+   "status": "partly fixed. It now lies on the bulge (p2 / p6), but it is still a straight 0.37 x 0.06 black band across the middle of the bucket. In san_26 the mesh is a curved smile at the bucket's bottom lip."
+  },
+  {
+   "issue": "w10a L: periwinkle seat-pan frame bar",
+   "status": "partly fixed. Now #4f576a (p6), still slate blue at S 0.26. san_26 shows it dark neutral."
+  },
+  {
+   "issue": "w10b L: navy over-top strip and ear tops visible from behind",
+   "status": "not fixed. In q13b it now fills the foreground: a navy band plus a magnified fabric top."
+  },
+  {
+   "issue": "w10b L: console seat-side panel barely darker than the body",
+   "status": "not fixed (p1: the side panel still reads mid slate)."
+  }
+ ],
+ "details": [
+  {
+   "detail": "back + cushion shape",
+   "score": 8.5,
+   "refs": [
+    "py_37301",
+    "py_37303",
+    "/tmp/claude-0/-home-user-Calc/c6e420be-be6c-56c3-9e6e-efdc259c79f1/scratchpad/w11/p1_py2_front.png",
+    "/tmp/claude-0/-home-user-Calc/c6e420be-be6c-56c3-9e6e-efdc259c79f1/scratchpad/w11/p7_side.png"
+   ]
+  },
+  {
+   "detail": "headrest ears / flap",
+   "score": 7.8,
+   "refs": [
+    "py_37305",
+    "py_37302",
+    "/tmp/claude-0/-home-user-Calc/c6e420be-be6c-56c3-9e6e-efdc259c79f1/scratchpad/w11/p4_py_head.png"
+   ]
+  },
+  {
+   "detail": "shell incl. rear",
+   "score": 8.0,
+   "refs": [
+    "py_37304",
+    "ref/web/py/san_26.jpg",
+    "ref/web/py/san_14.jpg",
+    "/tmp/claude-0/-home-user-Calc/c6e420be-be6c-56c3-9e6e-efdc259c79f1/scratchpad/w11/p2_py2_back.png"
+   ]
+  },
+  {
+   "detail": "screen + frame + placards",
+   "score": 7.8,
+   "refs": [
+    "py_37304",
+    "ref/web/py/san_26.jpg",
+    "/tmp/claude-0/-home-user-Calc/c6e420be-be6c-56c3-9e6e-efdc259c79f1/scratchpad/w11/q13b_pyBacks.png"
+   ]
+  },
+  {
+   "detail": "literature pocket",
+   "score": 7.5,
+   "refs": [
+    "ref/web/py/san_26.jpg",
+    "/tmp/claude-0/-home-user-Calc/c6e420be-be6c-56c3-9e6e-efdc259c79f1/scratchpad/w11/p6_back_close.png"
+   ]
+  },
+  {
+   "detail": "consoles",
+   "score": 8.3,
+   "refs": [
+    "py_37301",
+    "py_37306",
+    "/tmp/claude-0/-home-user-Calc/c6e420be-be6c-56c3-9e6e-efdc259c79f1/scratchpad/w11/p5_console.png"
+   ]
+  },
+  {
+   "detail": "armrest + shroud",
+   "score": 8.3,
+   "refs": [
+    "py_37301",
+    "py_37303",
+    "/tmp/claude-0/-home-user-Calc/c6e420be-be6c-56c3-9e6e-efdc259c79f1/scratchpad/w11/p8_ana37301.png"
+   ]
+  },
+  {
+   "detail": "leg rest / footrest / legs / bottle bin",
+   "score": 8.3,
+   "refs": [
+    "py_37301",
+    "ref/web/py/san_20.jpg",
+    "/tmp/claude-0/-home-user-Calc/c6e420be-be6c-56c3-9e6e-efdc259c79f1/scratchpad/w11/p6_back_close.png"
+   ]
+  },
+  {
+   "detail": "gooseneck",
+   "score": 8.5,
+   "refs": [
+    "py_37301",
+    "py_37305",
+    "/tmp/claude-0/-home-user-Calc/c6e420be-be6c-56c3-9e6e-efdc259c79f1/scratchpad/w11/p8_ana37301.png",
+    "/tmp/claude-0/-home-user-Calc/c6e420be-be6c-56c3-9e6e-efdc259c79f1/scratchpad/w11/q14_seat26A.png"
+   ]
+  },
+  {
+   "detail": "fabrics",
+   "score": 7.5,
+   "refs": [
+    "py_37301",
+    "py_37305",
+    "py_37306",
+    "/tmp/claude-0/-home-user-Calc/c6e420be-be6c-56c3-9e6e-efdc259c79f1/scratchpad/w11/p5_console.png",
+    "/tmp/claude-0/-home-user-Calc/c6e420be-be6c-56c3-9e6e-efdc259c79f1/scratchpad/w11/p4_py_head.png"
+   ]
+  }
+ ],
+ "issues": [
+  {
+   "severity": "medium",
+   "issue": "At close range the back and cushion cloth reads as axis-aligned rectangular 'pixel bricks' (8-10 mm blocks of black, white and mid-grey) in straight rows. In the close-ups it is a soft twill with thin, slightly curved, diagonal streaks: py_37306 cushion, and the lower part of py_37305 (wavy grey-on-grey dashes, much lower white contrast). It is most visible in p5, the q13b foreground and the q14 headrest.",
+   "evidence": "cmp_ear.jpg (scratchpad): py_37306 crop (680,330)-(930,575) against p5 crop (430,120)-(640,330). The photo marks are about 1:6 strokes slanted 20-35 deg, with soft edges. In the render they are horizontal hard-edged rectangles. p1 cushion Lstd 37.8 at S 0.08, against py_37301 cushion at S 0.19.",
+   "fix": "test/make_swatches.py synth_py_back: draw the dashes as anti-aliased ellipses or strokes (height 2-3 px, length 8-20 px) with a \u00b125 deg slant that drifts slowly across the tile (sinusoidal row phase so the rows wave), and blur 0.6 px. Cut the share of pure white and pure black dashes by about 40 % so the light marks sit around L+40 over the ground. Raise the saturation of the base for the cushion (pyFabric #7e8593 -> about #7a8399, S ~0.2). No geometry needed."
+  },
+  {
+   "severity": "medium",
+   "issue": "The ear cloth (pyWing / tex_py_confetti) carries rows of black dashes under oval white dots. The real ear cloth is a plain dark charcoal pebble ground with irregular, angular sakura-chip petals (some five-lobed or notched, 3-8 mm, random rotation) and no dash rows. The ear also loft-reads as a round sausage. In py_37305 it is a broad flat-fronted pillow: about 0.13 wide, face nearly flat, corners rounded with r ~3 cm.",
+   "evidence": "cmp_ear.jpg: py_37305 crop (190,50)-(360,360) against p4 crop (160,110)-(270,290). Photo ear L mean 89, Lstd 34, no periodic rows. Render ear #5d6478, Lstd 32.7 with visible horizontal dash rows.",
+   "fix": "make_swatches.py confetti: remove the dash layer from tex_py_confetti and use a fine pebble noise (1 px, \u00b18 L) on #4e5160. Stamp petal polygons (5-7 vertices, jittered radius 0.5-1.0, random rotation, sizes 3-8 mm, about 18 % coverage) in #c8ccd4. In 09b_py.js widen the ear sections (SEC widths 0.11 -> 0.13) and flatten their front depth (0.12 -> 0.10) so it reads as a pillow. Same triangle count."
+  },
+  {
+   "severity": "medium",
+   "issue": "The IFE screen sits in a thin black frame (about 2.7 % of the screen width at the sides, 4 % at the top). Real seat backs have a thick dark grey recessed tray. The tray border is about 4-5 % at the sides, 10 % at the top (a heavy brow) and about 7 % at the bottom, and it is distinctly lighter than the black glass.",
+   "evidence": "cmp_back.jpg (scratchpad). san_26: display x 395-815, tray x 375-835, tray top band y 240-285 (45 px on a 420 px display), bottom 520-555. Tray #47413a against shell #6d6459 under warm light (ratio 0.65). py_37304: tray #282a33 against shell #4c525b. q13b: frame about 5 px sides / 8 px top on a 175 px display.",
+   "fix": "09b_py.js screen frame: enlarge the dark frame box by about +2 cm each side, +3.5 cm top and +2.5 cm bottom, and use #3c3f45 (r 0.5) so it reads as a tray and not glass. Keep the display quad size. 2 boxes, no extra triangles."
+  },
+  {
+   "severity": "medium",
+   "issue": "Seen from directly behind at a seated or near eye height (q13b foreground), the top of the seat shows a broad band of the back fabric plus a navy over-top flap strip. In py_37304, san_26 and san_14 the top of the seat from behind is the grey shell rim: fabric only peeks at the aisle-side flank, and no navy shows over the top.",
+   "evidence": "/tmp/claude-0/-home-user-Calc/c6e420be-be6c-56c3-9e6e-efdc259c79f1/scratchpad/w11/q13b_pyBacks.png lower half: navy band at y ~300-345 plus coarse fabric. ref/web/py/san_26.jpg and san_14.jpg left seat: grey shell rim over the top.",
+   "fix": "09b_py.js: drop the over-top flap box (gRBox(0.26,0.008,0.045) at y 0.898) or push it 2 cm forward and down, so that it is hidden behind the shell rim from behind. Raise the shell's top arch about 1.5 cm, or lower the backrest fabric top by the same, so the rim hides the fabric top. This frees 12 triangles."
+  },
+  {
+   "severity": "low",
+   "issue": "The literature net is still a straight flat 0.37 x 0.06 band across the mid-height of the bucket. In san_26 the mesh is a curved smile band at the bucket's bottom lip, with the open bucket mouth above it. Also, the bucket face renders about 18 % brighter than the shell, where it should be about the same or darker.",
+   "evidence": "san_26: mesh y 765-805 at the bottom of the bucket, bucket face L95 against shell L102. p2: net at mid-bucket, bucket face L163 against shell L138.",
+   "fix": "09b_py.js: move the mesh box to py0+0.005 and replace it with 3 short boxes rotated \u00b18 deg to form a smile (or use the existing tube helper with 5 points). Darken the PYREAR bucket colour by about 15 %."
+  },
+  {
+   "severity": "low",
+   "issue": "The seat-pan frame bar under the seat back is still slate blue.",
+   "evidence": "p6 (300,360) #4f576a, S 0.26. san_26 under-seat parts are dark neutral (#39342f / #463f39 under warm light).",
+   "fix": "Set that bar to SEATMAT.black or #3a3d42."
+  },
+  {
+   "severity": "low",
+   "issue": "The console seat-side panel is still not clearly a dark recessed panel.",
+   "evidence": "py_37301 seat-side panel ~#30384e against body #506287. p1 side panel mid slate.",
+   "fix": "Darken the console side panel to about #2e3446 and r 0.6."
+  },
+  {
+   "severity": "low",
+   "issue": "In studio p2 / p6 a tall grey column stands in the gap between the two shells, running from the top to the console box. No real rear view shows anything taller than the bottle bin between the shells (san_26, san_14).",
+   "evidence": "/tmp/claude-0/-home-user-Calc/c6e420be-be6c-56c3-9e6e-efdc259c79f1/scratchpad/w11/p2_py2_back.png x 210-265.",
+   "fix": "Check whether this is the shell flank of the neighbouring seat, seen through an over-wide gap, or a stray part. If it is the shell, narrow the gap or curve the flank inward, as san_26 shows."
+  },
+  {
+   "severity": "low",
+   "issue": "(Handed off) The sun diamond on the 26A back and the cushions washed to near white in q13 / q14 belong to lighting. Placards are now present (p2) and are no longer counted.",
+   "evidence": "/tmp/claude-0/-home-user-Calc/c6e420be-be6c-56c3-9e6e-efdc259c79f1/scratchpad/w11/q14_seat26A.png, /tmp/claude-0/-home-user-Calc/c6e420be-be6c-56c3-9e6e-efdc259c79f1/scratchpad/w11/q13_pyFront.png",
+   "fix": "Lighting loop."
+  }
+ ],
+ "questions": [
+  "Can you share (or point to) a sharp close-up of the PY seat-back cloth on the 212-seat 777-300ER? The model now relies on py_37305 / 37306 crops: is the cushion cloth a wavy diagonal twill as in py_37306, or the brick dash of py_37301?",
+  "Is the headrest pillow (ear) flat-faced as in py_37305, or round? No straight-on real photo of an ear was found in SANspotter 2023."
+ ]
+}
