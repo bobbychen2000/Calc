@@ -215,40 +215,64 @@ class _Canvas:
         return A
 
 
-# pseudo-glyph alphabet: strokes on a unit cell (x 0..1, y 0..1); no Latin letter or digit is spelled on purpose --
-# bars, bowls, hooks and diagonals in combinations no script uses
-_G = [
-    [((0, 0), (0, 1)), ((0, 1), (0.8, 1)), ((0, 0.5), (0.6, 0.5))],
-    [((0.1, 0), (0.1, 1)), ((0.9, 0), (0.9, 1)), ((0.1, 0.2), (0.9, 0.8))],
-    [("arc", (0.5, 0.5), 0.5, 40, 320)],
-    [((0, 1), (0.9, 1)), ((0.45, 1), (0.45, 0)), ((0.1, 0.0), (0.45, 0.0))],
-    [((0, 0), (0.45, 1)), ((0.45, 1), (0.9, 0)), ((0.25, 0.35), (0.7, 0.35)), ((0.9, 0), (0.9, 0.4))],
-    [((0, 1), (0, 0)), ((0, 0), (0.8, 0)), ((0.4, 0), (0.4, 0.6))],
-    [("arc", (0.5, 0.5), 0.5, 0, 360), ((0.5, 0.1), (0.5, 0.9))],
-    [((0, 0), (0, 1)), ((0, 1), (0.85, 0)), ((0.85, 0), (0.85, 1))],
-    [((0.45, 0), (0.45, 1)), ((0, 0.6), (0.9, 0.6))],
-    [((0, 1), (0.9, 1)), ((0.9, 1), (0, 0)), ((0, 0), (0.9, 0)), ((0.3, 0.5), (0.7, 0.5))],
-    [("arc", (0.45, 0.55), 0.45, 90, 330), ((0.8, 0.0), (0.8, 0.5))],
-    [((0, 0), (0, 1)), ((0, 0.5), (0.8, 1)), ((0.3, 0.65), (0.85, 0))],
-    [((0, 1), (0.9, 0)), ((0, 0), (0.9, 1)), ((0, 0.5), (0.25, 0.5))],
-    [((0, 0), (0, 1)), ((0, 0), (0.8, 0)), ((0, 0.5), (0.6, 0.5)), ((0.8, 0), (0.8, 0.3))],
-    [((0, 0), (0, 1)), ((0, 1), (0.85, 1)), ((0.85, 1), (0.85, 0))],
-    [((0, 1), (0, 0)), ((0, 0), (0.85, 0)), ((0.85, 0), (0.85, 1)), ((0.42, 0), (0.42, 0.75))],
-    [((0, 1), (0.85, 1)), ((0, 0.5), (0.85, 0.5)), ((0, 0), (0.85, 0)), ((0.42, 1), (0.42, 0))],
-]
-# (first-principles judge r1 FP1-04: the half-height bowls and hooks read as lowercase ascenders -- garbled text; every
-# glyph spans the full cap height, the set reads as one engraved uppercase-like face)
+# The letter set: plain sans-serif Latin CAPITALS drawn as stroke polylines on a unit cell (x 0..1 = the letter width,
+# y 0..1 = the cap height).  (Owner 2026-10-24: the first pseudo-glyphs -- bars, bowls and diagonals of no script --
+# "read Russian"; placards on the PRO are English.)  The words are random letter groups (consonant / vowel runs, never a
+# dictionary word on purpose), so the printing reads as English placards at a glance and says nothing: the no-lettering
+# rule (no logos, registrations, serials or readable text outside the live displays) holds.
+def _arc_pts(cx, cy, rx, ry, a0, a1, n=7):
+    return [(cx + rx * math.cos(math.radians(a)), cy + ry * math.sin(math.radians(a))) for a in np.linspace(a0, a1, n)]
 
 
-def _glyph(cv, x, y, h, gi, r):
-    w = 0.62 * h
-    for s in _G[gi % len(_G)]:
-        if s[0] == "arc":
-            _, c, R, a0, a1 = s
-            cv.arc((x + c[0] * w, y + c[1] * h), R * min(w, h), a0, a1, r)
-        else:
-            (p, q) = s
-            cv.seg((x + p[0] * w, y + p[1] * h), (x + q[0] * w, y + q[1] * h), r)
+_L = {
+    "A": [[(0, 0), (0.5, 1), (1, 0)], [(0.2, 0.36), (0.8, 0.36)]],
+    "B": [[(0, 0), (0, 1), (0.62, 1)] + _arc_pts(0.62, 0.76, 0.3, 0.24, 90, -90) + [(0, 0.52)],
+          [(0.66, 0.52)] + _arc_pts(0.66, 0.26, 0.32, 0.26, 90, -90) + [(0, 0)]],
+    "C": [_arc_pts(0.55, 0.5, 0.48, 0.5, 40, 320, 11)],
+    "D": [[(0, 0), (0, 1), (0.45, 1)] + _arc_pts(0.45, 0.5, 0.5, 0.5, 90, -90, 9) + [(0, 0)]],
+    "E": [[(0.9, 1), (0, 1), (0, 0), (0.9, 0)], [(0, 0.52), (0.75, 0.52)]],
+    "F": [[(0.9, 1), (0, 1), (0, 0)], [(0, 0.52), (0.75, 0.52)]],
+    "G": [_arc_pts(0.55, 0.5, 0.48, 0.5, 40, 340, 11) + [(1.0, 0.45), (0.6, 0.45)]],
+    "H": [[(0, 0), (0, 1)], [(1, 0), (1, 1)], [(0, 0.52), (1, 0.52)]],
+    "I": [[(0.5, 0), (0.5, 1)]],
+    "J": [[(0.8, 1), (0.8, 0.3)] + _arc_pts(0.42, 0.3, 0.38, 0.3, 0, -180, 7)],
+    "K": [[(0, 0), (0, 1)], [(0.95, 1), (0, 0.38)], [(0.3, 0.6), (1, 0)]],
+    "L": [[(0, 1), (0, 0), (0.85, 0)]],
+    "M": [[(0, 0), (0, 1), (0.5, 0.35), (1, 1), (1, 0)]],
+    "N": [[(0, 0), (0, 1), (1, 0), (1, 1)]],
+    "O": [_arc_pts(0.5, 0.5, 0.5, 0.5, 0, 360, 15)],
+    "P": [[(0, 0), (0, 1), (0.6, 1)] + _arc_pts(0.6, 0.73, 0.35, 0.27, 90, -90) + [(0, 0.46)]],
+    "R": [[(0, 0), (0, 1), (0.6, 1)] + _arc_pts(0.6, 0.73, 0.35, 0.27, 90, -90) + [(0, 0.46)], [(0.45, 0.46), (1, 0)]],
+    "S": [_arc_pts(0.5, 0.75, 0.45, 0.25, 15, 270, 8) + _arc_pts(0.5, 0.25, 0.45, 0.25, 90, -165, 8)],
+    "T": [[(0, 1), (1, 1)], [(0.5, 1), (0.5, 0)]],
+    "U": [[(0, 1), (0, 0.32)] + _arc_pts(0.5, 0.32, 0.5, 0.32, 180, 360, 9) + [(1, 1)]],
+    "V": [[(0, 1), (0.5, 0), (1, 1)]],
+    "W": [[(0, 1), (0.25, 0), (0.5, 0.65), (0.75, 0), (1, 1)]],
+    "X": [[(0, 1), (1, 0)], [(0, 0), (1, 1)]],
+    "Y": [[(0, 1), (0.5, 0.48), (1, 1)], [(0.5, 0.48), (0.5, 0)]],
+    "Z": [[(0, 1), (1, 1), (0, 0), (1, 0)]],
+}
+_WIDTH = {"I": 0.25, "M": 0.85, "W": 0.95, "J": 0.6, "L": 0.62, "E": 0.62, "F": 0.62}
+_CONS, _VOW = "BCDFGHKLMNPRSTVWZ", "AEIOU"
+
+
+def _word(rng, n):
+    """A random letter group of n capitals in consonant / vowel runs (reads as a word, means nothing)."""
+    out, v = [], rng.random() < 0.3
+    for _ in range(n):
+        out.append(str(rng.choice(list(_VOW if v else _CONS))))
+        v = (not v) if rng.random() < (0.9 if v else 0.6) else v
+    return "".join(out)
+
+
+def _letter(cv, x, y, h, ch, r):
+    """Draw capital ch with its foot at (x, y) mm, cap height h, stroke radius r; returns its advance (mm)."""
+    w = 0.62 * h * _WIDTH.get(ch, 1.0) / (1.0 if ch not in _WIDTH else 1.0)
+    for pl in _L[ch]:
+        P = [(x + px * w, y + py * h) for px, py in pl]
+        for a, b in zip(P[:-1], P[1:]):
+            cv.seg(a, b, r)
+    return w
 
 
 def _rng(kw, salt=0):
@@ -265,7 +289,11 @@ def _words(cv, W, H, kw):
     # P1046408 at its camera shows every one as a white mark): CAP_K x the nominal cap, as large as the box allows
     cap = min(CAP_K * cap, 0.80 * H / rows)
     r = 0.5 * float(kw.get("weight", WEIGHT)) * cap
-    pitch = 0.62 * cap + 0.32 * cap
+    hl = cap - 2 * r                                             # the letters' drawn height
+    gap, wgap = 0.24 * cap, 0.55 * cap
+
+    def wwidth(w_):
+        return sum(0.62 * hl * _WIDTH.get(c, 1.0) for c in w_) + gap * (len(w_) - 1) + 2 * r
     lead = (H - rows * cap) / (rows + 1)
     rng = _rng(kw)
     fill = float(kw.get("fill", 0.85))
@@ -273,26 +301,23 @@ def _words(cv, W, H, kw):
     for i in range(rows):
         avail = W * (fill if i == 0 else fill * float(kw.get("fill2", 0.7)))
         words, used = [], 0.0
-        while True:
-            n = int(rng.integers(2, 8))
-            ww = n * pitch
-            if used + ww > avail - 2 * r and words:
+        for _ in range(12):
+            w_ = _word(rng, int(rng.integers(2, 8)))
+            while len(w_) > 1 and used + wwidth(w_) > avail:
+                w_ = w_[:-1]
+            if (used + wwidth(w_) > avail or len(w_) < 2) and words:
                 break
-            if used + ww > avail:
-                n = max(1, int((avail - used) / pitch))
-                ww = n * pitch
-            words.append(n)
-            used += ww + 0.55 * cap
-            if used > avail:
+            words.append(w_)
+            used += wwidth(w_) + wgap
+            if used > 0.8 * avail:
                 break
-        total = sum(words) * pitch + 0.55 * cap * (len(words) - 1)
+        total = sum(wwidth(w_) for w_ in words) + wgap * (len(words) - 1)
         x = {"c": 0.5 * (W - total), "l": r + 0.2 * cap, "r": W - total - r - 0.2 * cap}[align]
         y = H - lead * (i + 1) - cap * (i + 1)
-        for n in words:
-            for _ in range(n):
-                _glyph(cv, x + r, y + r, cap - 2 * r, int(rng.integers(0, 10 ** 6)), r)
-                x += pitch
-            x += 0.55 * cap
+        for w_ in words:
+            for ch in w_:
+                x += _letter(cv, x + r, y + r, hl, ch, r) + gap
+            x += wgap - gap
 
 
 def _stamp_words(cv, x0, y0, x1, y1, kw):

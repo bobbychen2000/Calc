@@ -43,6 +43,13 @@ python3 test/fit_check.py       # interference / kinematics checks (interior + e
                                 #   door vs the skin cut-out every 0.5 % over 90-100 %, flush outside its tyre blister);
                                 #   '[open]' rows are known conflicts in the approved parameters that need an owner
                                 #   decision (they do not fail)
+python3 test/fit_fd_p.py        # first-principles flight deck 34-36 (also run by fit_check): prints on their surfaces,
+                                #   knife-edge ratchet, every flight-deck material in interior.FD_CONSTRUCTION (~30 s alone)
+python3 test/fd_dev.py --save && python3 test/fd_dev.py --out out/tmp/fp/dev.glb   # a dev GLB: the interior rebuilt +
+                                #   baked over a pickled base build (~6 min a loop; not the shipped model)
+python3 test/fd_cap.py DIR --glb ../out/tmp/fp/dev.glb [--views pilot,panel_408b,..] [--query '&fp=1']   # the
+                                #   standard flight-deck views (crew / cabin stops, Cockpit, panel_408b, 11 close-ups)
+python3 test/fd_identity.py     # hashes every flight-deck mesh (refactors must keep them byte-identical)
 python3 test/consistency_2d3d.py   # the built GLB projected / sliced against the parameter outlines of sheets L1-L6
                                 #   (L4W: wheels / tyres / nose yoke, 2 mm; L6Y: the built yokes in yoke-local mm vs the
                                 #   L6Y front / side views, cover, inserts, pads, switch axes, 1.5 mm)
