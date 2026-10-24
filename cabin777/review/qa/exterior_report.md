@@ -225,3 +225,62 @@ the window angles; the crown-to-flank step on the K-side canoes within ~4 px; ac
 
 The before/after sheet `exterior_before_after.jpg` has the wave-3c start (r12, 0c53815) in row 1 and the w15 build in row 2. The w26K
 camera differs between the rows (moved to the glass in w12).
+
+## Wave 3d (2026-10-24, w16-w19)
+
+| round | build rated | rater A | rater B | mean |
+|---|---|---|---|---|
+| w16 | 0f172d3 (wave-3c final + lighting r2, unrated "final" fixes) | 7.7 | 8.1 | 7.9 |
+| w17 | 5eaed93 (gap w16 items 1-4) | 7.8 | 8.2 | 8.0 |
+| w18 | 9cac06c (w17 fixes + cowl mottle) | 8.0 | 8.4 | 8.2 |
+| w19 | 8f452e0 (w18 fixes) | 8.1 | **8.5** | 8.3 |
+| final | w19 low fixes (this commit, unrated) | – | – | – |
+
+The loop stopped at its 4-round cap. Rater B reached 8.5 in w19; rater A is at 8.1. Neither rater found a high-severity issue in
+any round, and w19 holds only low issues. Every round gained (+0.1, +0.2, +0.1), and w19 is the best round so far (mean 8.3,
+against 7.9 in w15). Exterior triangles: 29,440 -> 29,980 (+1.8 % this wave; +19 % over the wave-3 start of 25,160, cap +25 %).
+
+The gap analysis (`exterior_gap_w16.md`) found that the lighting loop's albedo-scaled sky reflection was a no-op on the wing (its
+normaliser 0.39 sits under the #76787a paint's luma 0.47). It also found that the near-far reversal was diffuse, not specular, so
+exterior fixed it in albedo (from_exterior 17).
+
+### What changed
+All of these are in `src/11_exterior.js` unless noted.
+- **Near-far value.** The skin ramp is now 1.22 -> 0.66 over s 5-20. In w19A the near flap went 162 -> 173 and the far skin
+  169 -> 162, so the order is now right. B measured the far/near ratio at about 0.70 (KN41 0.75); A still wants more and puts the
+  remaining gap on the grazing sky specular (lighting).
+- **Fastener rows.**
+  - A new dot layer 35 (`tex/tex_x_rivet.png`, synthetic 25 mm pitch, `make_swatches.py x_rivet`) is laid on 28 mm strips along
+    the near spoiler hinges, the flap noses, mid-flap, and either side of each spoiler break.
+  - The strips carry the skin ramp and sit just under the panel, at a dot gain of 3.2.
+  - w17's 50 mm pale strips read as zippers and were fixed in w18.
+  - Next to them sit hinge-fitting smudges: a pointed dark head with a fading tail, jittered.
+- **Pylon forward fairing.**
+  - Remodelled as a low blister: dome, then a saddle, then a single rise into the strut. The flanks are tent-tapered (x0.65,
+    t^1.5) into the cowl, built from 10 loft segments.
+  - The flank shade fades out at the foot, so the foot takes the cowl's value (from 6.9-7.5 to 8.0 / 8.1).
+- **Cowl.**
+  - A weathering mottle on a new photo layer 36 (`tex/tex_x_cowl.png`, cut from LALF 11A _136, isotropic, gain 0.25).
+  - An upper fan-cowl hinge line running split to split, as a 2 cm band (final). The 5 mm tube dashed at range.
+- **Tip.** A flush nav lens with the glow inside the fairing, and 7 finer, lighter static dischargers instead of the 14-pin comb.
+- **Canoes.** The day-sun cut now applies to the flanks only, so the K-side crown stays lit (0.78 -> about 1.0 of the skin).
+- **Inlet.** The liner is graded by a pwl (lip end held for 11A, fan end darker for 11K, 66 -> 52); the access panel is lighter.
+- **Review cameras.** The w26K / w30K offsets were dropped, because `lookOut` now puts the eye at the glass. Every studio render
+  now sets `CABIN_PAGE`; the r16 studio shots came from the stale `dist/`.
+
+### Shared-file edits
+- `src/03_tex.js`: N_LAYERS 37, `LAYER.xRivet` / `xCowl`, and the `PHOTO_LAYERS`, `PHOTO_GAIN` and `LAYER_PARAMS` 35 / 36 entries.
+- `test/make_swatches.py`: `x_rivet` and `x_cowl`.
+- `tex/sizes.json`.
+
+### Left at the cap (low, from the w19 raters)
+- **Pylon dome.** It is flat-topped and has lost the shallow saddle (B). The foot still steps to the cowl by 15-28 L (the final
+  fix lifts it +8 %, unrated).
+- **Fastener dots.** They are 0.94 of the panel against about 0.80 in KN41. The dots are sub-pixel at window range, so gain alone
+  barely moves them.
+- **Far canoe pods.** On the K side they are 0.52-0.60 of the skin against 0.58-0.72 in _7250 (partly sun height, lighting).
+- **Fixed scores.** Planform 7.5 and livery 7.5 / 7.7 have not moved since wave 3b. Neither rater names a geometric defect; they are
+  A's main brake on reaching 8.5.
+
+The before/after sheet `exterior_before_after.jpg` shows the wave-3d start (r16) in row 1 and the final build in row 2. The views are
+w19A, w13A, w26K, w11A and n19A. It holds own renders only.

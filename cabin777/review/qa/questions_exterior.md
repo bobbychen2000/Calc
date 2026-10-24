@@ -34,3 +34,9 @@
 11. **Canoe shading is tuned for the day sun.** The exterior pass has no shadow map, so the canoe and nacelle bakes include a
     term for the day sun direction (az -60). At sunset the sun comes from the other side and is weak, so the effect is small,
     but say if you want the day look to change the sun position.
+
+## Wave 3d
+
+12. **Fastener-row strength.** The near flaps and spoilers now carry dotted fastener rows from a synthetic dot tile (25 mm pitch).
+    At window range they read as faint dotted lines, about 0.94 of the panel. The KN41 photo suggests about 0.80. Stronger rows
+    would read as stitching in the far views, so the default keeps them subtle. Say if you want them bolder.

@@ -350,7 +350,7 @@ function buildExterior(gl) {
       // w18: a short dark head and a narrower, lighter fading tail, jittered (flat 0.26 m rectangles read as grey tape, A / B w17)
       const smudge = (q, x0) => { const h = hsh(q * 5.3), l = 0.10 + 0.08 * h, dq = (h - 0.5) * 0.04;
         wingLine(B, side, [[q, x0 + 0.02], [q + dq * 0.15, x0 + 0.02 + l * 0.15]], { ...paint, c: '#3f4246', r: 0.9 }, 0.03 + 0.01 * h, 1, 0.014);   // w19: pointed head, darkest at the hinge (blocks, A / B w18)
-        wingLine(B, side, [[q + dq * 0.15, x0 + 0.02 + l * 0.15], [q + dq * 0.5, x0 + 0.02 + l * 0.5]], { ...paint, c: '#4a4d51', r: 0.9 }, 0.04 + 0.015 * h, 1, 0.014);
+        wingLine(B, side, [[q + dq * 0.15, x0 + 0.02 + l * 0.15], [q + dq * 0.5, x0 + 0.02 + l * 0.5]], { ...paint, c: '#55585c', r: 0.9 }, 0.035 + 0.015 * h, 1, 0.014);   // final: lighter body, no flat block (A / B w19)
         wingLine(B, side, [[q + dq * 0.5, x0 + 0.02 + l * 0.5], [q + dq, x0 + 0.02 + l * 1.3]], { ...paint, c: '#606366', r: 0.9 }, 0.025, 1, 0.014); };
       for (const q of [5.4, 7.7]) smudge(q, 38.82);
       for (const [cs] of WING.canoes) smudge(cs, cs < 9.8 ? 38.82 : cs < 11.8 ? te(cs) - 1.15 : spA(cs));
@@ -435,7 +435,7 @@ function buildExterior(gl) {
     // 3 cm black root box shimmered into a dashed line at 10+ m, so a ~10 cm baked shadow band lies on the cowl below it instead [A width]
     cowlPatch(1.85, 3.05, 24.2 * DEG, 22.2 * DEG, { c: '#8a9097', r: 0.9 });
     // w18: upper fan-cowl hinge line, a long hairline high on the inboard side between the splits (LALF _136 / _137) [V, A angle]
-    B.add(gTube(Array.from({ length: 9 }, (_, k) => cowlP(lerp(1.31, 3.14, k / 8), 62 * DEG, 0.004)), 0.005, 3, false), rot, { c: '#9a9ea3', r: 0.85 });   // w19: split colour read 0.30 of the cowl vs 0.78-0.87 in _136 / _137, and stopped short of the splits (A / B w18)
+    cowlPatch(1.31, 3.14, 62.35 * DEG, 61.65 * DEG, { c: '#8a8f95', r: 0.9 }, 8);   // final: a 2 cm band (the 5 mm tube dashed at 8-12 m, A / B w19)   // w19: split colour read 0.30 of the cowl vs 0.78-0.87 in _136 / _137, and stopped short of the splits (A / B w18)
     // access panel: near-square rounded rectangle ~0.42 x 0.40 m on the INLET cowl ~0.85 m aft of the highlight, upper inboard side, drawn as a
     // thin dark outline [V LALF ANA 11A _136, JAL IMG_3397/3371; D size]
     // w13: stadium outline (exponent 0.55, 0.24 x 0.17 m half-size) (A / B w13, LALF _137); w14: no second panel, the pair read as an '8' and LALF _136/_137, knav _9 show one (B w14)
@@ -529,7 +529,7 @@ function buildExterior(gl) {
     // to L89-103 (LALF _136 L133-148). Sunset / night light the other side or barely at all [V targets, D factor]
     shadeVerts(B, vN, vP, (p, n) => (0.55 + 0.45 * Math.pow((n[1] + 1) / 2, 1.6)) * (1 - 0.3 * smooth(0.05, 0.75, V3.dot(n, LD))));
     shadeVerts(B, vP, B.vcount, (p, n) => { const lx = Math.min(4.4, p[2] - WING.dz - E.x0), dr = Math.hypot(p[0] - E.s * Math.sign(p[0]), p[1] - E.y) - cowlR(Math.max(0, lx));
-      return 1 - (0.25 * Math.max(0, -n[1]) + 0.12 * smooth(0.6, 0.95, Math.abs(n[0]))) * smooth(0.0, 0.2, dr); });   // w19: the foot takes the cowl value (flank band met the cowl with a +40 L step, A w18)   // w12: flank shade so the ridge reads (LALF _137, A w12)
+      return Math.min(1, 1 - (0.25 * Math.max(0, -n[1]) + 0.09 * smooth(0.6, 0.95, Math.abs(n[0]))) * smooth(0.0, 0.35, dr) + 0.08 * (1 - smooth(0.0, 0.12, dr))); });   // final: foot lifted toward the cowl (+15-28 L step, A / B w19)   // w19: the foot takes the cowl value (flank band met the cowl with a +40 L step, A w18)   // w12: flank shade so the ridge reads (LALF _137, A w12)
     const foot = [...WING.canoes.map(([cs]) => cs), E.s];
     shadeVerts(B, v0, vW, (p, n) => {
       if (n[1] > -0.3) return 1;

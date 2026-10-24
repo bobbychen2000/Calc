@@ -1,0 +1,186 @@
+{
+ "area": "exterior",
+ "rater": "B geometry",
+ "build": "w19 = 8f452e0",
+ "score": 8.5,
+ "details": [
+  {
+   "detail": "Planform, raked tip, cruise bending",
+   "score": 7.5,
+   "note": "Unchanged (w19A r18/r19 diff 0.75 % px, all on surface detail). LE sweep, rake and tip lift still match KN41 / _7331.",
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/r19/w19A.png",
+    "ref/web/exterior/a5_kn_ANA77W_TheRoom_41.jpg"
+   ]
+  },
+  {
+   "detail": "Surface detail: value, panel tone, seams, fastener rows, slat band, gear stripe, placards, grime",
+   "score": 8.4,
+   "note": "Smudge heads now start as a point: darkest pixel 106-107 on 163 (0.65) at the hinge end, but the body is still a flat 127-128 block ~8 px long (z_w19A_r19). Fastener dots: w19A row 500 158 on 168 (r18 159), still 0.94 vs KN41 0.80, though they read as discrete dots now rather than a line. No ladders.",
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratB19/z_w19A_r19.png",
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratB19/z_w19A_r18.png"
+   ]
+  },
+  {
+   "detail": "Control-surface lines (spoilers, flaperon, aileron)",
+   "score": 8.1,
+   "note": "Unchanged; hierarchy and taper correct.",
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/r19/w19A.png"
+   ]
+  },
+  {
+   "detail": "Flap-track fairings (canoes)",
+   "score": 8.5,
+   "note": "Unchanged (w26K).",
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/r19/w26K.png",
+    "ref/web/exterior/b_alv_ANA77W_PY_IMG_7250-2-scaled.jpeg"
+   ]
+  },
+  {
+   "detail": "Pylon",
+   "score": 8.1,
+   "note": "Crown ripple gone: s13A top silhouette 255..240 monotonic (r18 had a 240->243->249 bump), w13A crown smooth. Flank foot step to the cowl reduced from +38-40 L to +20-28 L (w13A x 480-600: flank 161-165, cowl 185-193). New: the steeper nose (sqrt(smooth(1.65,2.3))) gives a flat-topped plateau (c_nacelle_left top row 22 constant over x 400-470) ending in a corner and a chamfered front (rows 26/29/38/48/67), where _137's dome is rounded; and with hB^1.6 the saddle has disappeared (silhouette rises monotonically from strut to dome), while _137 shows a shallow notch between dome and rise.",
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratB19/cmp_pyl_studio.png",
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratB19/z_dome_r19.png",
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratB19/z_pyl_r19.png",
+    "ref/web/exterior/b_lalf_ANA77W_11A_137.jpg"
+   ]
+  },
+  {
+   "detail": "Nacelle geometry (cowl, lip, splits, strake, access panel)",
+   "score": 8.2,
+   "note": "Hinge hairline FIXED in tone and extent: w13A minima along the line 103-167 on 173-199 (mean ~0.75 of the cowl, r18 51-131 = 0.30), meets both splits in c_nacelle_left / z_pyl_r19. The 5 mm tube is sub-pixel at 13A, so it breaks into light dashes (minima alternate 120/160 every ~6 px); at 1x this is faint and acceptable.",
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratB19/z_pyl_r19.png",
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/r19/c_nacelle_left.png",
+    "ref/web/exterior/b_lalf_ANA77W_11A_136.jpg"
+   ]
+  },
+  {
+   "detail": "Nacelle colour / materials (incl. GE monogram)",
+   "score": 8.0,
+   "note": "Unchanged; mottle subtle and plausible.",
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/r19/c_ge_inboard_left.png"
+   ]
+  },
+  {
+   "detail": "Inlet / fan / spinner",
+   "score": 8.0,
+   "note": "FIXED mostly: w11K fan end row 420 66 -> 52 (end pixel 41), row 360 63 -> 49, row 350 58 -> 51; knav _9 ~10-52, so now at the top of the photo range. w11A lip end unchanged 124-136 (held). Spinner still barely readable from seats.",
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/r19/w11K.png",
+    "ref/web/exterior/b5_knav_ANA77W_7A_GE90_takeoff_9.jpg"
+   ]
+  },
+  {
+   "detail": "Livery / registration JA795A",
+   "score": 7.7,
+   "note": "Unchanged and correct.",
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/r19/w26K.png"
+   ]
+  },
+  {
+   "detail": "Nav lights and static dischargers",
+   "score": 7.7,
+   "note": "Unchanged.",
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/r19/n19A.png"
+   ]
+  },
+  {
+   "detail": "Artefacts",
+   "score": 8.0,
+   "note": "Black aliased hinge stroke gone (now light, mildly dashed). Remaining: the pylon dome-front corner, the flat smudge body. No z-fighting, gaps or floating parts.",
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratB19/z_dome_r19.png"
+   ]
+  }
+ ],
+ "previous": [
+  {
+   "issue": "B w18 medium: fan-cowl hinge hairline too dark / aliased",
+   "status": "FIXED. 0.30 -> ~0.75 of the cowl (103-167 on 173-199), meets both splits; light dashing remains at 13A."
+  },
+  {
+   "issue": "B w18 low: inlet fan end lighter at 11K",
+   "status": "FIXED. row 420 66 -> 52, row 360 63 -> 49; lip end at 11A held."
+  },
+  {
+   "issue": "B w18 low: smudge heads hard-edged blocks",
+   "status": "PARTLY FIXED. Dark point 106 at the hinge, body still a flat 128 block."
+  },
+  {
+   "issue": "B w18 low: pylon crown ripple / soft dome front",
+   "status": "FIXED, with a REGRESSION: ripple gone and front steeper, but the dome is now flat-topped with a corner into a chamfered front, and the saddle has vanished."
+  },
+  {
+   "issue": "B w18 low: fastener dots faint",
+   "status": "PARTLY FIXED. Read as dots; contrast 0.94 (r18 0.95), KN41 0.80."
+  },
+  {
+   "issue": "A w18 medium: pylon flank flat band with hard edge to the cowl",
+   "status": "PARTLY FIXED. Step +38-40 -> +20-28 L; flank still a uniform 161-165 band."
+  }
+ ],
+ "issues": [
+  {
+   "severity": "low",
+   "detail": "pylon dome flat-topped with a corner into a chamfered front; saddle gone",
+   "problem": "c_nacelle_left top silhouette constant at row 22 over x 400-470, then 26/29/38/48/67: a plateau and a chamfer, while _137 shows a rounded dome and a shallow notch before the rise to the strut.",
+   "evidence": [
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratB19/z_dome_r19.png",
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratB19/cmp_pyl_studio.png"
+   ],
+   "fix": "src/11_exterior.js l.477: nose = Math.pow(smooth(1.65, 2.45, x), 0.6) (rounded, still steeper than w18); l.481: let hA dip a little after the crown, hA = 0.30*nose*(1 - 0.08*smooth(2.3, 2.7, x) - 0.34*smooth(2.7, 3.6, x)*(1 - smooth(4.0, 5.0, x))) and hB exponent 1.6 -> 1.9 so a shallow saddle shows before the rise."
+  },
+  {
+   "severity": "low",
+   "detail": "pylon flank still a uniform band 20-28 L below the cowl",
+   "problem": "w13A x 480-600: flank 161-165, cowl 185-193.",
+   "evidence": [
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratB19/z_pyl_r19.png"
+   ],
+   "fix": "l.532: smooth(0.0, 0.2, dr) -> smooth(0.0, 0.35, dr) and flank weight 0.12 -> 0.09."
+  },
+  {
+   "severity": "low",
+   "detail": "hinge hairline dashes at 13A",
+   "problem": "5 mm tube is sub-pixel; minima alternate 120/160 every ~6 px.",
+   "evidence": [
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratB19/z_pyl_r19.png"
+   ],
+   "fix": "l.438: replace the tube with a 2 cm cowlPatch band in #aeb2b7 (antialiases by coverage), or radius 0.005 -> 0.009 in #b4b8bd."
+  },
+  {
+   "severity": "low",
+   "detail": "smudge body flat block",
+   "problem": "Body 127-128 uniform over ~8 px with a square end.",
+   "evidence": [
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratB19/z_w19A_r19.png"
+   ],
+   "fix": "l.353: body colour '#4a4d51' -> '#55585c' and width 0.04+0.015h -> 0.035+0.02h tapering, so it grades from the dark point to the tail."
+  }
+ ],
+ "worth_0_3": [
+  {
+   "item": "Rounded dome + shallow saddle",
+   "gain": "pylon +0.3"
+  },
+  {
+   "item": "Flank fade wider",
+   "gain": "pylon +0.1"
+  },
+  {
+   "item": "Hinge as coverage band",
+   "gain": "nacelle geometry +0.1, artefacts +0.1"
+  }
+ ],
+ "questions": [],
+ "photos": []
+}

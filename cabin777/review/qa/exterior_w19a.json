@@ -1,0 +1,104 @@
+{
+ "area": "exterior",
+ "rater": "A skeptic",
+ "build": "w19 = 8f452e0",
+ "score": 8.1,
+ "details": {
+  "wing planform / raked tip / bending": 7.5,
+  "wing surface detail (seams, fastener rows, panel tone, gear stripe, slat band, placards, grime)": 8.1,
+  "control surfaces & gaps (slats, spoilers, flaperon, aileron)": 7.8,
+  "canoes (flap-track fairings)": 8.4,
+  "pylon": 8.0,
+  "nacelle shape (cowl, lip, splits, strake, access panel)": 7.9,
+  "nacelle colour / materials (incl. GE logo)": 8.0,
+  "inlet / fan / spinner": 8.0,
+  "livery / registration JA795A": 7.5,
+  "lights & static dischargers": 7.5,
+  "artefacts": 7.7
+ },
+ "previous": [
+  {
+   "issue": "w18a medium: fan-cowl hinge hairline as dark as the splits and floating",
+   "status": "fixed (residual aliasing)",
+   "measure": "w13A x 560/600/640/680/700 minima 159/139/120/160/122 on 174-191 (r18 55/53/85/51/84) = 0.65-0.88, mean ~0.77 vs LALF _136 0.87 / _137 0.78. c_nacelle_left: the line now runs split to split (ratA19/c_nacelle_left_cmp.png). Residual: per-column minima swing 120-160 (s13A 99-139 on 165), so at 1x it reads dashed rather than continuous (ratA19/w11K_z.png, s13A_cmp.png)."
+  },
+  {
+   "issue": "w18a medium: pylon flank flat dark band with a hard edge to the cowl; aft top line undulates",
+   "status": "mostly fixed",
+   "measure": "w13A x 500 flank now grades 157 -> 174 then 189 (r18 flat 151-152 then 189: step +40 -> +15); x 560 160 -> 165 -> 180 -> 192 (step +27 over 2 rows, was +38 in 1); x 620 156 -> 167 -> 195 (+28). The albedo now fades, the remaining step is the normal break at the foot. c_nacelle_left top silhouette rows x 290-530: 46,41,40,36,32,28,25,23,22,22,22,22,22,28,38,55,63 - monotonic, the r18 notch (67 -> 56 at x 500-515) is gone and the dome front is steeper. s13A still shows a shallow dip between dome and strut rise (intended saddle) and polygonal facets on the crown silhouette."
+  },
+  {
+   "issue": "w18a low: inlet fan end lighter at 11K",
+   "status": "fixed",
+   "measure": "w11K row 360 x 340-355: 71/68/63/57/52/48 (r18 76/74/71/67/65/62); row 420 to 41 (r18 51); row 450 to 54 (r18 67). knav _9 ~10-52: now at the top of that range. w11A lip end unchanged (row 420 127-138, 35 at the throat)."
+  },
+  {
+   "issue": "w18a low: fastener rows a line, not dots; smudge heads uniform",
+   "status": "smudge partly fixed; fastener dots not visibly changed",
+   "measure": "w19A smudge x 494-497 rows 465-467: new dark point 106-107 on 163 (0.65) at the hinge, but behind it the 128 block (x 488-494, 4 rows) is still a uniform rectangle. Fastener rows w19A rows 500/520 x 661-663: 158-165 on 168 (r18 159-164) - gain 3.2 changed nothing measurable at this range; KN41 0.80."
+  },
+  {
+   "issue": "w18a low: near-far value (lighting-owned)",
+   "status": "not changed (lighting)",
+   "measure": "w19A near flap 168, unchanged."
+  }
+ ],
+ "issues": [
+  {
+   "severity": "low",
+   "detail": "pylon foot still steps to the cowl by +15-28 L",
+   "problem": "Albedo fade worked but the fairing foot normals face outboard/down while the cowl below faces up, so a shading break remains at 11-13A. _137 shows a soft shadow line there, so a small step is right, but ours is still a band edge.",
+   "evidence": "w13A x 560/620 rows 285-292; ratA19/w13A_cmp.png; ref _137 x 200-480 y 670-740 (full res).",
+   "fix": "src/11_exterior.js l.479-480: flare the bottom ring outward so the last ~6 cm of the section is tangent to the cowl (bot ring at cowlR + 0.005 with its normal = cowl normal), or l.532 add + 0.08 * (1 - smooth(0.0, 0.12, dr)) to lift the foot toward the cowl value."
+  },
+  {
+   "severity": "low",
+   "detail": "hinge hairline aliases into dashes",
+   "problem": "Value right on average (0.77) but a 5 mm tube is sub-pixel at 8-12 m, so columns alternate 120 / 160; _136 shows a continuous faint seam.",
+   "evidence": "w13A x 560-700 minima 120-160; s13A 99-139; ratA19/s13A_cmp.png, w11K_z.png.",
+   "fix": "l.438: replace the tube with a cowlPatch-style band ~1.5 cm wide at 62 deg in #a4a8ad (it antialiases through the texture), or keep the tube at radius 0.008 with colour #b0b4b8 so coverage, not darkness, carries it."
+  },
+  {
+   "severity": "low",
+   "detail": "smudge body still a uniform block",
+   "problem": "New dark point at the hinge, but segment 2 (#4a4d51, width 0.04-0.055) renders as a flat 128 rectangle with square ends.",
+   "evidence": "w19A x 488-494 rows 465-468 (all 128); KN41 smears irregular.",
+   "fix": "l.353: taper segment 2 (split into two at width 0.045 -> 0.03) and lighten its colour toward the tail (#4a4d51 -> #55585c) so no flat plateau remains."
+  },
+  {
+   "severity": "low",
+   "detail": "canoes darker than JA795A",
+   "problem": "w26K canoe flank / wing top 0.52-0.60 (100-115 on 191) vs alv _7250 0.58-0.72 (127-158 on 220). Partly lighting (sun height), but the pods read charcoal rather than white-in-shade.",
+   "evidence": "w26K x 520-720; ref _7250 thumbnail x 80-430.",
+   "fix": "canoe material: raise the shade-side bake floor ~10 % (canoe shadeVerts n[1] term), check with lighting first."
+  },
+  {
+   "severity": "low",
+   "detail": "fastener dots faint (unchanged)",
+   "problem": "0.94-0.97 of the panel vs KN41 0.80.",
+   "evidence": "w19A rows 500-520 x 655-672.",
+   "fix": "03_tex.js PHOTO_GAIN 35 had no visible effect: darken the dot colour in the strip texture instead, or widen dots so they survive mip filtering."
+  }
+ ],
+ "worthPlus03": [
+  "Pylon foot tangent to the cowl (l.479-480 / l.532): removes the last band edge on the 11-13A nacelle.",
+  "Hinge line as an antialiased band (l.438): removes the dashed hairline in s13A / w11K."
+ ],
+ "questionsForUser": [
+  "A side-on photo of the GE90 pylon fairing from rows 11-13 A (not into the sun) would still settle the saddle depth and foot shading."
+ ],
+ "photos": [
+  "ref/web/exterior/b_lalf_ANA77W_11A_136.jpg",
+  "ref/web/exterior/b_lalf_ANA77W_11A_137.jpg",
+  "ref/web/exterior/a5_kn_ANA77W_TheRoom_41.jpg",
+  "ref/web/exterior/b5_knav_ANA77W_7A_GE90_takeoff_9.jpg",
+  "ref/web/exterior/b_alv_ANA77W_PY_IMG_7250-2-scaled.jpeg",
+  "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratA19/w13A_cmp.png",
+  "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratA19/s13A_cmp.png",
+  "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratA19/c_nacelle_left_cmp.png",
+  "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratA19/w11K_cmp.png",
+  "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratA19/w11K_z.png",
+  "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratA19/w19A_z.png",
+  "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratA19/w26K_z.png"
+ ]
+}
