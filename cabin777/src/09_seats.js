@@ -14,7 +14,7 @@ const SEATMAT = {
   // econ QA w1: #5468a8 rendered too pure a blue (q15 R/B 0.33, G/B 0.46 vs y_47300 0.44 / 0.58) -> greyer #6a79a8 [D]
   // econ w5 (A + B high): after the lighting r3 AO lift the tick / diamond seats rendered 1.6-2x too light (q15 L50 103 / 114
   // vs y_47300 backs 46-92); mosaic (L50 59) is the anchor, target tick ~70, diamond ~80, fleck ~55 [D]
-  yFabric: { c: photoBase('#5a6587', 'y_tick'), r: 0.9, l: LAYER.yJacq },   // w7 A: q15 L50 55 G/B 0.55 vs y_47300 68-91 / 0.62-0.66
+  yFabric: { c: photoBase('#55607f', 'y_tick'), r: 0.9, l: LAYER.yJacq },   // w7 A: q15 L50 55 G/B 0.55 vs y_47300 68-91 / 0.62-0.66; w9 B: L50 66 vs 51 at the same seat (A w8: 77 vs 78) -> between
   yFabricB: { c: photoBase('#565e82', 'y_diamond'), r: 0.9, l: LAYER.yDiamond },
   yFabricC: { c: photoBase('#56638b', 'y_mosaic'), r: 0.9, l: LAYER.yMosaicP },   // third variant: dash mosaic (y_47302 left, y_47306 right); w6 A: photo-measured dash checker tile, was blobby procedural layer 11; w7 A: q15 #1e2a62 L 41 vs y_47306 #384877 L 60 -> greyer, lighter; w8 B: q15 L50 47 vs 63-80 -> lighter
   yFabricD: { c: photoBase('#4a5679', 'y_fleck'), r: 0.9, l: LAYER.yFleck },   // econ w5: petal fleck (y_47300 seats 2 / 4, sans 14 L50 48); w6 A: G/B 0.45 vs 0.54 -> greener; w8 A + B: L50 37 vs 47-53 -> lighter
@@ -28,7 +28,7 @@ const SEATMAT = {
   yHead: { c: photoBase('#566088', 'y_fleck'), r: 0.9, l: LAYER.yFleck },
   // slate-grey leatherette cover, lighter + greyer than the fabric (y_47302 #474960-#4d526f, y_47306 #445072,
   // y_47301 #434765; QA r2 was #3e4661 -> rendered as black slabs)
-  yCover: { c: '#474c5e', r: 0.45, l: LAYER.plastic },     // econ w2: smooth leatherette; w5: q15 L 110 vs y_47300 #272d48 L 47 -> darker; w6 A: q16 cover/back 0.58 vs y_47301 0.82 -> a shade lighter; w7 A + B: R/B 0.46 vs 0.52-0.74 -> slate
+  yCover: { c: '#535b7c', r: 0.38, l: LAYER.plastic },     // econ w2: smooth leatherette; w5: q15 L 110 vs y_47300 #272d48 L 47 -> darker; w6 A: q16 cover/back 0.58 vs y_47301 0.82 -> a shade lighter; w7 A + B: R/B 0.46 vs 0.52-0.74 -> slate; w9 A: q16 L50 57-66 vs y_47301 / 47303 / 47306 67-104, covers 1.25-1.7x the backs -> lighter, satin
   yShell: { c: '#d9dbde', r: 0.42, l: LAYER.plastic },
   yShellDark: { c: '#c2c5c9', r: 0.5, l: LAYER.plastic },
   yTray: { c: '#cfd2d6', r: 0.4, l: LAYER.plastic },

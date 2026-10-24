@@ -216,47 +216,40 @@ def make(name, photo, box, size, rot=0):
 
 
 def y_diamond():
-    """econ QA w1: the Y diamond variant, synthesised on the tick weave. The old photo crop (y_47306 far-left seat, seen
-    at ~55 deg and upsampled 2x) tiled into blurry snowflakes. The real fabric (y_47306 left seat, y_47302 middle seat) is
-    the same navy tick ground with a staggered lattice of pale, stepped (ikat-like) diamonds [D].
-    econ w5 (A + B): figure and ground were inverted (light area 0.45-0.47 vs Otsu 0.10-0.15 in y_47306 / y_47302;
-    light/dark mean 1.4 vs 2.2-2.6). Now near-solid pale diamonds ~0.052 x 0.044 m with ~5 mm steps on a dominant navy
-    ground, same-row pitch ~0.087 m (y_47302 middle seat: ~4 per 0.34 m), 6 staggered rows per 0.26 m tile -> light
-    area ~0.3; ticks kept at ~30 % inside the diamonds [D]"""
+    """econ QA w1: the Y diamond variant, synthesised on the tick weave (the old photo crop tiled into snowflakes).
+    w5-w8 history: inverted figure/ground (w5), plus-shaped stars on a square grid (w6), soft holed blobs (w8).
+    econ w9 (A + B): measured on y_47306 left / y_47302 middle - crisp stepped diamonds ~0.045-0.06 m on a DOMINANT navy
+    ground (Otsu light area 0.10-0.22), high contrast (p90/p50 ~2.1, light/dark ~2.2-2.7), each figure made of short
+    horizontal light dash runs whose ends follow the 5 mm steps (serrated edges), with bright specks inside; figures sit
+    on a broken diagonal lattice (pitch 0.0867, ~35 % of sites empty). Ground: the tick tile quietened to 40 % contrast
+    and darkened ~15 % [D]"""
     t = np.asarray(Image.open(os.path.join(root, 'tex/tex_y_tick.png'))).astype(np.float32) / 255 * ENC['y_tick']
     n = S
     v, u = np.mgrid[0:n, 0:n] / n            # tile coords, 0.26 m
     rng = np.random.default_rng(7)
     m = np.zeros((n, n), np.float32)
     step = 0.005 / 0.26
-    # econ w7 A + B: a fixed small size on a square grid read as a grid of plus-shaped stars; the photos show stepped
-    # diamonds of mixed size (0.03-0.065 m) nearly touching tip to tip along both diagonals, with gaps (a broken lattice)
-    # -> diagonal lattice of pitch 0.0867 (3 x 3 + centred sites per 0.26 tile), 25 % of sites dropped, half-diagonals
-    # 0.03-0.046 m (tips ~touching on the 0.061 m diagonal) [D]
     sites = [((a + o) / 3, (b + o) / 3) for o in (0, 0.5) for a in range(3) for b in range(3)]
-    sites = [c for c in sites if rng.random() > 0.25]
+    sites = [c for c in sites if rng.random() > 0.35]
     for cu, cv in sites:
-        hd = rng.uniform(0.038, 0.05)           # minus one 5 mm ceil step -> 0.065-0.09 m figures, tips chaining (w8 A + B)
+        hd = rng.uniform(0.027, 0.035)           # minus a 5 mm ceil step -> ~0.045-0.06 m figures
         for ou in (-1, 0, 1):
             for ov in (-1, 0, 1):
-                # econ w6 (A + B): ceil, not floor - floor grew every diamond by one step (light area 0.54 vs Otsu 0.07-0.24)
+                # w6: ceil, not floor - floor grew every diamond by one step
                 du = np.ceil(np.abs(u - cu - ou) / step) * step
                 dv = np.ceil(np.abs(v - cv - ov) / step) * step
                 m = np.maximum(m, (du / (hd / 0.26) + dv / (hd * 0.87 / 0.26) <= 1).astype(np.float32))
-    # ragged ikat edges: a little value noise on the mask, then a 1 px soften
-    m = np.clip(m + (rng.random((n, n)) - 0.5) * 0.5 * (np.asarray(Image.fromarray((m * 255).astype(np.uint8)).filter(ImageFilter.MaxFilter(3)).filter(ImageFilter.FIND_EDGES)) > 0), 0, 1)
-    m = (m > 0.5).astype(np.float32)
-    m = np.asarray(Image.fromarray((m * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(0.4))).astype(np.float32)[..., None] / 255
-    m = m * (0.8 + 0.2 * _blur_wrap(rng.random((n, n)), 1.0)[..., None] / 0.5).clip(0.7, 1.0)   # w7 A: mottled ~3 mm fill
-    # w8 A: lacy, broken ikat - ~35 % of each figure punched out in ~3 mm holes, so the light area drops to ~0.15-0.2
-    hole = _blur_wrap(rng.random((n, n)), 2.0); m = m * (hole > np.percentile(hole, 35))[..., None]
-    # econ w6 B: quieter tick ground (x0.4) so the ticks don't join the figure; brighter blocks keep hi/lo ~1.9 (y_47306 / 47302)
+    # dash runs: 2 px light rows with a 1 px dark gap, each run's ends jittered +-1 px so the steps read serrated
+    rows = (np.arange(n) % 3 < 2).astype(np.float32)[:, None]
+    jit = np.roll(m, 1, 1) * np.roll(m, -1, 1) + (rng.random((n, n)) < 0.5) * m
+    m = m * rows * np.clip(jit, 0, 1)
+    m = m[..., None]
     tm = t.reshape(-1, 3).mean(0)
-    lift = np.array([2.2, 2.0, 1.6], np.float32)          # pale lavender-grey blocks (y_47302 / y_47306); w8 A: lower contrast
-    inside = lift * (0.7 + 0.3 * t / tm)
-    ratio = (tm + 0.4 * (t - tm)) * (1 - m) + inside * m
-    sp = (rng.random((n, n)) < 0.012)[..., None]           # w8 A: sparse bright specks over the whole cloth
-    ratio = np.where(sp, np.array([4.5, 4.3, 3.6], np.float32), ratio)
+    ground = 0.85 * (tm + 0.4 * (t - tm))
+    lift = np.array([3.5, 3.3, 2.6], np.float32)          # pale lavender dash runs (y_47302 / 47306)
+    ratio = ground * (1 - m) + lift * m
+    sp = ((rng.random((n, n)) < 0.18) * (m[..., 0] > 0))[..., None]    # bright specks inside the figures (~8 % of the area figures cover)
+    ratio = np.where(sp, np.array([5.0, 4.8, 4.0], np.float32), ratio)
     ratio /= ratio.reshape(-1, 3).mean(0)
     out = np.clip(ratio / ENC['y_diamond'], 0, 1)
     Image.fromarray((out * 255 + 0.5).astype(np.uint8)).save(os.path.join(root, 'tex', 'tex_y_diamond.png'))
@@ -300,35 +293,32 @@ def y_fleck():
 
 
 def y_mosaic():
-    """econ w6 (A medium): the third Y fabric was the procedural layer 11 and read as blobby camouflage. The real weave
-    (y_47306 right seat, y_47302 left seat) is horizontal pale dashes ~6-12 x 1.2 mm, dense (~35 % cover) and sparse (~8 %)
-    in alternating rectangular cells ~30 x 20 mm with jittered edges, p90/p50 ~2.1, on the navy tick ground at ~25 %
-    contrast; lift (7, 7, 5); 0.2 m tile [D]"""
+    """econ w6: the third Y fabric (was blobby procedural layer 11). econ w9 (A + B): measured on y_47306 right back /
+    y_47300 pans - axis-aligned rectangular cells ~16 x 22 mm in columns, alternate columns offset half a cell, every
+    cell filled with fine horizontal pale dashes (dense cells ~48 %, sparse ~22 % - no empty cells, which read as
+    leopard spots / diagonal chevrons), dashes 2 px (~1.6 mm), 0.4-0.9 of the cell width, a 1 px gap at the cell borders
+    so the column seams show; blob median ~0.2 cm2; near-white desaturated dashes, lift (7, 7, 6); 0.2 m tile [D]"""
     n = S; size = 0.2; mm = n / (size * 1000)
     t = np.asarray(Image.open(os.path.join(root, 'tex/tex_y_tick.png'))).astype(np.float32) / 255 * ENC['y_tick']
     ground = 0.75 + 0.25 * t / t.reshape(-1, 3).mean(0)
     rng = np.random.default_rng(5)
     m = np.zeros((n, n), np.float32)
-    # checker of cells 30 x 20 mm (0.2 m tile -> 6.67 x 10: use 7 x 10 cells, 28.6 x 20 mm) with per-cell density
-    # w7 B: a rectangular grid of cells ~25 x 18 mm (8 x 11 per 0.2 m tile)
-    NI, NJ = 8, 11
+    NI, NJ = 12, 9                                   # 12 columns of 16.7 mm, 9 rows of 22 mm per 0.2 m tile
     cw, ch = n / NI, n / NJ
-    dens = np.array([[0.42 if (i + j) % 2 else 0.06 for i in range(NI)] for j in range(NJ)]) * rng.uniform(0.8, 1.2, (NJ, NI))
-    pitch = 2.6 * mm                                   # dash rows ~2.6 mm apart (y_47306 right seat)
-    for r in range(int(n / pitch)):
-        yc = (r + 0.5) * pitch
-        x = rng.random() * 4 * mm
-        while x < n:
-            L = rng.uniform(6, 12) * mm
-            cx = (x + L / 2) % n
-            j = int(yc / ch) % NJ; i = int(cx / cw) % NI
-            if rng.random() < dens[j, i] / 0.42 * 0.75:
-                y0 = int(yc); y1 = y0 + 2                   # w8 A + B: ~1.6 mm dash (2 px) so it survives minification
-                xs = np.arange(int(x), int(x + L)) % n
-                m[max(y0, 0):min(y1, n), xs] = 1
-            x += L + rng.uniform(1.5, 4) * mm
-    m = m[..., None]                                   # w7 A: crisp, no blur
-    lift = np.array([7.0, 7.0, 6.0], np.float32)          # near-white dashes (y_47306 right seat); w8 A: desaturated
+    for i in range(NI):
+        x0 = int(round(i * cw)); x1 = int(round((i + 1) * cw))
+        for j in range(NJ):
+            y0 = (j + (0.5 if i % 2 else 0)) * ch
+            dense = 0.48 if (j + (i // 2)) % 2 == 0 else 0.22
+            dense *= rng.uniform(0.85, 1.15)
+            for r in range(int(ch // 3)):
+                yy = int(y0 + 1 + r * 3) % n
+                if rng.random() > dense / 0.5: continue
+                L = int(rng.uniform(0.4, 0.9) * (x1 - x0 - 2))
+                xa = x0 + 1 + int(rng.random() * max(1, (x1 - x0 - 2 - L)))
+                m[yy:yy + 2, xa:xa + L] = 1
+    m = m[..., None]
+    lift = np.array([7.0, 7.0, 6.0], np.float32)
     ratio = ground * (1 - m) + lift * m
     ratio /= ratio.reshape(-1, 3).mean(0)
     out = np.clip(ratio / ENC['y_mosaic'], 0, 1)
