@@ -1,0 +1,227 @@
+{
+ "area": "room",
+ "rater": "B-geometry",
+ "round": 9,
+ "score": 8.1,
+ "summary": "Rated on the committed state 02d8907, which is what the w9 and w9s renders show. The working tree already holds uncommitted w9a fixes; those were not rated. Most of the w8 geometry list is fixed. The E bed pad now runs the full seat width aft of the table (r10, no grey strip). The pillow flange is a thin warm-grey outline band, not a lilac tray (r7). The white pillows clear the aisle armrest. The bed pillows are propped at 42/22 deg instead of standing like a headboard (r6, r9). The monitor frame has even borders: q07 measures 0.057 m top and 0.043 m bottom at 609 px/m, against 0.053/0.053 in the source. The comforter is only half there. Its stitch grid shows faintly in r10 but is lost under the 2-4 cm diagonal folds in r9, so the O bed still reads as rumpled satin rather than the box-quilted comforter in tpg_72. The largest remaining geometry mismatch is the monument top in q09: one flat 0.245 m charcoal slab, where c_27313/14 show a slim lengthwise spine with a grey-metal top rail between the O-side and E-side housings. Ash grain improved (high-pass 0.039 -> 0.049) but is still about 0.5-0.7x the photos. Clearly the same product with several minor mismatches: 8.1 (w8b 7.9).",
+ "photos_collected": [],
+ "prior_issues": [
+  {
+   "detail": "w8b medium: E bed mattress narrower than the seat, grey strip between console and mattress",
+   "status": "fixed",
+   "evidence": "09c_room.js line 370 mat(-0.118, 0.495, 0.62, 1.28). In r10 the white pad runs from the console wall to the duvet beside the pillow, with no seat fabric showing."
+  },
+  {
+   "detail": "w8b medium / w8a medium: duvet has no quilting, straight cut edges, reads as a thin sheet",
+   "status": "partially fixed",
+   "evidence": "duvetSheet: e*(0.015 - 0.011*exp(-(dq/0.022)^2)) on a 0.33 m grid, plus free-edge wobble of +-2 cm. r10 shows a faint square puff grid. In r9 (O bed) the 8 DUVET_FOLDS (amplitude up to 0.04) swamp the 1.1 cm stitch dip and no grid reads. tpg_72 shows dark stitch seams on a ~0.3 m grid as the main feature of the comforter."
+  },
+  {
+   "detail": "w8b medium / w8a medium: pillow flange reads as a lavender (square-cornered) tray",
+   "status": "fixed",
+   "evidence": "roomPillow flange is now gLoft(cushionSecs(0.458, 0.358, 0.008, ...)) in jPillowBack #88847f. In r7 a thin warm-grey band follows the pillow's rounded outline, and in r8 it reads as piping edge-on."
+  },
+  {
+   "detail": "w8b low: white pillows clip into the aisle armrest",
+   "status": "fixed",
+   "evidence": "O x 0.115 (edge 0.335 < ax0 0.345); E x 0.265 (edge 0.485 < 0.495). In r7 the pillow's right edge is clear of the ledge."
+  },
+  {
+   "detail": "w8b low: monitor frame bottom border thicker than top",
+   "status": "fixed",
+   "evidence": "roomMonitor: bezel 0.405 at 0.8725, display 0.723-1.022, borders 0.053/0.053; sill top 0.667, 3 mm under the frame. q07 column x=550: frame 196-231 / display 233-415 / frame 416-441 px."
+  },
+  {
+   "detail": "w8b low / w8a low: monument top is one flat broad charcoal block",
+   "status": "not fixed",
+   "evidence": "Line 432 is unchanged in 02d8907 and q09 still shows a 0.245 m flat dark beam. The working tree adds a spine along z at x -0.02 (see issue 1 and the question): that runs across the monument, not along it as c_27313 shows."
+  },
+  {
+   "detail": "w8b low: mattress pad neutral white instead of warm cream",
+   "status": "fixed in source, not verifiable in renders",
+   "evidence": "SEATMAT.mattress #e8e1d2. The flat studio light clips it to #f4f2ef in r9 (w8 #f5f4f3), and no cabin view shows a bed. Left to lighting/exposure."
+  },
+  {
+   "detail": "w8b low: hidden overlaps in bed mode (O mattress into the footwell pillar, O footwell through E's table end wall, E seat core into the console)",
+   "status": "not fixed (in commit)",
+   "evidence": "Line 361 mat(..., MON.zO + 0.02), line 441 roomFootwell(..., 0.62, -1) and line 473 roomSeatCore at x 0.20 are unchanged. The working tree changes the O mat x1 and the footwell inset instead."
+  },
+  {
+   "detail": "w8a medium: ash grain about a quarter of the photos'",
+   "status": "partially fixed",
+   "evidence": "PHOTO_GAIN 19: 3.0. High-pass (blur 8) sd/mean on the q07 ash panel: 0.039 (w8) -> 0.049 (w9). Photos: c_27316 cabinet 0.100 and side wall 0.072, tpg_72 table 0.085."
+  },
+  {
+   "detail": "w8a low: bed white pillow stands upright like a headboard",
+   "status": "fixed",
+   "evidence": "Tilt -68 -> -42 deg. In r6 and r9 the white pillow is propped at a low angle behind the blue one."
+  },
+  {
+   "detail": "w8a low: pillow check jacquard coarse and faint",
+   "status": "not fixed (in commit)",
+   "evidence": "In r7 the checks are about 20 px at about 400 px/m, so about 5 cm, and low contrast. The working tree LAYER_PARAMS 9 now targets 2.3 cm."
+  },
+  {
+   "detail": "w8a low: slipper pouch reads as a hard booklet",
+   "status": "not fixed (in commit)",
+   "evidence": "r7: navy slab with a white strip. The working tree has a loft pouch."
+  },
+  {
+   "detail": "w8a/w8b low (lighting): cool cast on ash and fabric",
+   "status": "not fixed (lighting area)",
+   "evidence": "q07 ash #bfbcb7 (b-r -8); c_27316 cabinet #a29a9c. Studio duvet #91a0e4 (B/R 1.57) vs tpg_72 #6b78d3 (B/R 1.97)."
+  }
+ ],
+ "details": [
+  {
+   "detail": "Pair layout, nesting, bench/armrest proportions, footwells under the neighbour's table",
+   "score": 8.5,
+   "refs": [
+    "c_27313",
+    "c_27315",
+    "tpg_31",
+    "tpg_42"
+   ]
+  },
+  {
+   "detail": "Monitor, frame borders, sill and drawer, wing with lamp",
+   "score": 8.5,
+   "refs": [
+    "tpg_53",
+    "c_27316"
+   ]
+  },
+  {
+   "detail": "Monument top / centre spine seen from above",
+   "score": 6.5,
+   "refs": [
+    "c_27313",
+    "c_27314"
+   ]
+  },
+  {
+   "detail": "Side table (ash in a charcoal rim), aisle-end cap, ledge",
+   "score": 8.3,
+   "refs": [
+    "c_27313",
+    "c_27315",
+    "fb_a96b7a65"
+   ]
+  },
+  {
+   "detail": "Seat upholstery, header band, flap",
+   "score": 8.3,
+   "refs": [
+    "c_27313",
+    "c_27315",
+    "tpg_42"
+   ]
+  },
+  {
+   "detail": "Pillows (shape, flange, placement)",
+   "score": 8.3,
+   "refs": [
+    "omaat_room_15",
+    "tpg_31",
+    "tpg_42"
+   ]
+  },
+  {
+   "detail": "Bed: pad following the seat into the footwell, pillows propped",
+   "score": 8.2,
+   "refs": [
+    "tpg_72",
+    "tpg_70",
+    "fb_a96b7a65"
+   ]
+  },
+  {
+   "detail": "Comforter (quilting, drape)",
+   "score": 7.0,
+   "refs": [
+    "tpg_72",
+    "tpg_70"
+   ]
+  },
+  {
+   "detail": "Ash finish (grain contrast)",
+   "score": 7.3,
+   "refs": [
+    "c_27316",
+    "tpg_72",
+    "c_27315"
+   ]
+  },
+  {
+   "detail": "Artefacts (z-fighting, gaps, intersections)",
+   "score": 8.3,
+   "refs": [
+    "r6",
+    "r9",
+    "r10",
+    "source"
+   ]
+  }
+ ],
+ "issues": [
+  {
+   "severity": "medium",
+   "detail": "Monument top is a flat 0.245 m charcoal slab; the photos show a slim lengthwise spine with a metal rail between two housings",
+   "problem": "q09 is paired with c_27313/14, and in it the monument top is the dominant shape: a broad flat dark beam running the length of the pair. In c_27313 (crop 330-640 x 60-420), a slim spine (~3-4 cm, light grey-metal top) rises from the middle of the aisle-end cap (between the 17E and 18D plaques) and runs inboard along the monument's length, i.e. along unit x at z = (MON.zO + MON.zE)/2. On its O side is the dark monitor housing and on its E side the other housing, each with its own lighter top edge and a dark gap to the spine. The working-tree attempt puts a 0.028 spine along z at x -0.02 (a short crossbar over the column line). That does not match the photo: the labels sit either side of the spine, so it divides O's face from E's face, not the two columns.",
+   "evidence": "c_27313 / c_27314: the spine starts at the cap's finger recess between the plaques. q09 crop 420-930 x 100-575: one uniform charcoal top, about 70 px wide.",
+   "fix": "09c_room.js roomPart('O'), after line 432 (replace the working-tree z-spine): const mz = (MON.zO + MON.zE) / 2; two grooves along x: for (const dz of [-0.026, 0.026]) B.add(gBox(1.08, 0.004, 0.012), M4.trs(-0.02, MON.top + 0.0005, mz + dz), SEATMAT.jVoid); spine: B.add(gRBox(1.13, 0.04, 0.03, 0.008, 1), M4.trs(-0.02, MON.top + 0.02, mz), shell); rail: B.add(gRBox(1.13, 0.008, 0.034, 0.004, 1), M4.trs(-0.02, MON.top + 0.044, mz), SEATMAT.jPanelEdge); face lips: for (const zz of [MON.zO + 0.006, MON.zE - 0.006]) B.add(gRBox(1.13, 0.006, 0.012, 0.003, 1), M4.trs(-0.02, MON.top + 0.003, zz), SEATMAT.jPanelEdge). Let the spine meet the aisle cap: the cap top is at wall + 0.02 = 1.14 and the rail top at 1.138, so it lines up."
+  },
+  {
+   "severity": "low",
+   "detail": "Comforter quilting lost under the folds on the O bed",
+   "problem": "In r9 the stitch dip (1.1 cm, sigma 2.2 cm) is buried under DUVET_FOLDS ridges up to 4 cm, so the O comforter reads as crumpled satin. In tpg_72 the stitched grid is the main feature, with dark seams about 0.3 m apart and the folds secondary. r10 is better because fewer folds cross the E bed.",
+   "evidence": "r9 crop 250-600 x 130-440: no grid. r10: faint square puffs. The working tree already halves the folds and deepens the dip (0.024 - 0.020*exp(-(dq/0.03)^2)), which goes the right way.",
+   "fix": "duvetSheet fold(): keep the working-tree change, and narrow the seam so it reads as a line, not a trough: exp(-((dq / 0.03) ** 2)) -> exp(-((dq / 0.018) ** 2)). Check r9 shows at least two seam lines across the O bed."
+  },
+  {
+   "severity": "low",
+   "detail": "Ash grain still about 0.5-0.7x the photos",
+   "problem": "With gain 3.0 the panels still read as pale plaster with faint streaks from cabin distance (q06, q10). The photos show distinct grey-brown streaking.",
+   "evidence": "High-pass sd/mean: q07 ash panel 0.049 and table 0.043; c_27316 0.072-0.100; tpg_72 0.085.",
+   "fix": "03_tex.js (shared, one key): PHOTO_GAIN 19: 3.0 -> 4.5. Re-measure q07 (140-330 x 200-390) against 0.07-0.09 and keep the mean."
+  },
+  {
+   "severity": "low",
+   "detail": "E mattress pieces overlap by 2 cm with rounded ends at the same height",
+   "problem": "mat(-0.035, 0.495, MON.zE - 0.02, 0.64) and mat(-0.118, 0.495, 0.62, 1.28) overlap over z 0.62-0.64. Both ends are rounded by edge 0.02, so the union has a shallow crease across the pad. Where the flat tops coincide they are coplanar and can flicker. It is mostly under the duvet; about 5 cm shows beside the table.",
+   "evidence": "Source line 370. r10 shows a soft step at the table corner.",
+   "fix": "Line 370: first piece z1 0.64 -> 0.66 (the overlap is then 2 x edge, so one piece is full height everywhere), and drop it 1 mm: give mat() an optional dy and call mat(-0.035, 0.495, MON.zE - 0.02, 0.66, -0.001)."
+  },
+  {
+   "severity": "low",
+   "detail": "Pillow check jacquard and slipper pouch (from w8a) not in the rated commit",
+   "problem": "r7 checks about 5 cm and faint (photo ~1.5-2.5 cm, two-tone); the pouch is a hard slab.",
+   "evidence": "r7. The working tree already changes LAYER_PARAMS 9 and roomBundle.",
+   "fix": "Commit the working-tree changes, then confirm in r7 that a pillow width (0.44 m) holds about 18-20 checks."
+  },
+  {
+   "severity": "low",
+   "detail": "Hidden bed-mode overlaps still in the commit",
+   "problem": "(a) The O footwell runs to zf 0.62, through E's table end wall (planBand z 0.588-0.608). (b) The E seat core at x 0.20 (width 0.64) reaches x -0.12, against the E console face at -0.13 with the cushion edge radius. (c) The O mattress piece 2 runs to MON.zO + 0.02 into the footwell pillar.",
+   "evidence": "Lines 441, 361 and 473.",
+   "fix": "Line 441 roomFootwell(B, -0.505, -0.03, MON.zO, 0.62, -1) -> zf 0.585, and fw[3] for O on line 357 0.62 -> 0.585. Line 361: MON.zO + 0.02 -> MON.zO - 0.005. Line 473: roomSeatCore at x 0.20 -> 0.19."
+  },
+  {
+   "severity": "low",
+   "detail": "LOD screen height lags the near model",
+   "problem": "The far-LOD screen quads stay at y 0.875 while the near display moved to 0.8725, so the screen pops 2.5 mm at the LOD switch.",
+   "evidence": "Lines 533 and 541: gQuad(0.531, 0.299) at 0.875.",
+   "fix": "Lines 533 and 541: 0.875 -> 0.8725."
+  },
+  {
+   "severity": "low",
+   "detail": "(lighting area, not scored) Ash and duvet read cool or desaturated",
+   "problem": "In the cabin, ash renders neutral-cool; in the studio, the duvet comes out paler and less saturated than tpg_72.",
+   "evidence": "q07 ash #bfbcb7 vs c_27316 #a29a9c. r10 duvet #91a0e4 (B/R 1.57) vs tpg_72 #6b78d3 (B/R 1.97).",
+   "fix": "Lighting owner: warm the J-zone ambient. No change to SEATMAT."
+  }
+ ],
+ "questions": [
+  "The working tree (uncommitted, from w9a) adds the monument spine along z at x -0.02. c_27313 puts the spine between the 17E and 18D plaques, so it runs along x at z = (MON.zO + MON.zE)/2 and separates O's face from E's. Should the fixer switch to the x-running spine described in issue 1?"
+ ]
+}

@@ -309,7 +309,7 @@ function duvetSheet(bounds, z0, z1, hd, xc, nu = 30, nv = 54) {
     // w8a: a quilted comforter - lofted ~1.5 cm away from its edges, stitched on a ~0.33 m grid (tpg_70 / 72) [V]
     const e = smooth(0, 0.09, Math.min(x - xl, mr - x) + 0.01), q = 0.33, gx = x - xc + 0.07, gz = z - z0 - 0.02;
     const dq = Math.min(Math.abs(gx - q * Math.round(gx / q)), Math.abs(gz - q * Math.round(gz / q)));
-    return f * smooth(0, 0.05, Math.min(x - xl, mr - x) + 0.01) + e * (0.024 - 0.020 * Math.exp(-((dq / 0.03) ** 2)));
+    return f * smooth(0, 0.05, Math.min(x - xl, mr - x) + 0.01) + e * (0.024 - 0.020 * Math.exp(-((dq / 0.024) ** 2)));
   };
   const at = (u, v) => {   // u, v in [0, 1] -> point on the cloth's top
     const z = lerp(z0, z1, v), [xl0, xr, mr] = bounds(z), xl = xl0 + 0.012 * Math.sin(z * 23) + 0.008 * Math.sin(z * 41 + 1);   // irregular free edge
@@ -354,20 +354,20 @@ function footwellEdges(x0, x1, zm, zf, wall, z, inset) {
 const MAT_TOP = 0.054;   // mattress top above ROOM.bed
 function roomBed(B, part) {
   const y = ROOM.bed, M = SEATMAT.mattress, mat = (x0, x1, z0, z1) => B.add(gLoft(cushionSecs(x1 - x0, z1 - z0, 0.05, -0.02, { edge: 0.02, r: 0.02, crown: 0.004 }), 3), M4.trs((x0 + x1) / 2, y + 0.02, (z0 + z1) / 2), M);
-  const fw = part === 'O' ? [-0.505, -0.03, MON.zO, 0.62, -1] : [0.0, 0.44, MON.zE, -0.585, 1];
+  const fw = part === 'O' ? [-0.505, -0.03, MON.zO, 0.585, -1] : [0.0, 0.44, MON.zE, -0.585, 1];
   planSlab(B, footwellPlan(fw[0], fw[1], fw[2], fw[3], fw[4], 0.022), 0.44, y + MAT_TOP - 0.44, M);
   let bounds, z0, z1, hd, xc;
   if (part === 'O') {
-    mat(-0.475, 0.285, -1.28, -0.62); mat(-0.475, -0.032, -0.64, MON.zO + 0.02);
+    mat(-0.475, 0.285, -1.28, -0.62); mat(-0.475, -0.032, -0.64, MON.zO - 0.005);
     // aisle edge rolls over the mattress beside the seat; beside the table it ends at the console wall; then the footwell
     bounds = (z) => {
       const [fl, fr] = footwellEdges(fw[0], fw[1], fw[2], fw[3], -1, z, 0.02), a = smooth(-0.74, -0.60, z), b = smooth(MON.zO - 0.06, MON.zO + 0.06, z);
       const mr = lerp(lerp(0.285, -0.012, a), fr + 0.01, b);
       return [lerp(-0.415, fl, b), lerp(lerp(0.31, -0.03, a), fr, b), mr];
     };
-    z0 = -0.875; z1 = 0.57; hd = 1; xc = -0.12;
+    z0 = -0.875; z1 = 0.55; hd = 1; xc = -0.12;
   } else {
-    mat(-0.035, 0.495, MON.zE - 0.02, 0.64); mat(-0.118, 0.495, 0.62, 1.28);   // w8b: full seat width aft of the table (r10) [D]
+    mat(-0.035, 0.495, MON.zE - 0.02, 0.66); mat(-0.118, 0.495, 0.62, 1.28);   // w8b: full seat width aft of the table (r10) [D]
     bounds = (z) => {
       const [fl, fr] = footwellEdges(fw[0], fw[1], fw[2], fw[3], 1, z, 0.02), b = 1 - smooth(MON.zE - 0.04, MON.zE + 0.04, z);
       return [lerp(0.02, fl, b), lerp(0.47, fr, b), lerp(0.49, fr + 0.01, b)];
@@ -431,12 +431,12 @@ function roomPart(part, opts = {}) {
     // central monument body (both columns) + the pillar between the two footwell mouths
     B.add(gRBox(1.13, MON.top - MON.bot, MON.zE - MON.zO, 0.01, 1), M4.trs(-0.02, (MON.top + MON.bot) / 2, (MON.zO + MON.zE) / 2), shell);
     B.add(gRBox(0.03, MON.bot, MON.zE - MON.zO, 0.01, 1), M4.trs(-0.015, MON.bot / 2, (MON.zO + MON.zE) / 2), shell);
-    // w9a/b: the top reads as two housings split by a slim spine with a metal top rail (c_27313 / 27314) [V]; the monitors
-    // span the column line lower down, so only the top is split: dark grooves either side of a 0.03 spine [D]
-    const mz = (MON.zO + MON.zE) / 2, mL = MON.zE - MON.zO;
-    for (const gx of [-0.045, 0.005]) B.add(gBox(0.014, 0.004, mL + 0.002), M4.trs(gx, MON.top + 0.0005, mz), SEATMAT.jVoid);
-    B.add(gRBox(0.028, 0.05, mL + 0.01, 0.008, 1), M4.trs(-0.02, MON.top + 0.025, mz), shell);
-    B.add(gRBox(0.032, 0.008, mL + 0.014, 0.004, 1), M4.trs(-0.02, MON.top + 0.054, mz), SEATMAT.jPanelEdge);
+    // w9a/b: the top reads as an O housing and an E housing split by a slim spine with a metal top rail running inboard
+    // from the aisle-end cap between the seat plaques (c_27313 / 27314) [V]: dark grooves either side of a 0.03 spine [D]
+    const mz = (MON.zO + MON.zE) / 2;
+    for (const gz of [-0.025, 0.025]) B.add(gBox(1.12, 0.004, 0.014), M4.trs(-0.02, MON.top + 0.0005, mz + gz), SEATMAT.jVoid);
+    B.add(gRBox(1.13, 0.05, 0.028, 0.008, 1), M4.trs(-0.02, MON.top + 0.025, mz), shell);
+    B.add(gRBox(1.134, 0.008, 0.032, 0.004, 1), M4.trs(-0.02, MON.top + 0.054, mz), SEATMAT.jPanelEdge);
     // O's face: monitor (outer column) + O's cabinet (aisle column)
     roomMonitor(B, -0.20, MON.zO, -1, 1);
     roomCabinet(B, 0.275, MON.zO, -1);
@@ -444,7 +444,7 @@ function roomPart(part, opts = {}) {
     if (!lod) roomCard(B, -0.4995, 1, 0.36, -0.33);
     // O's footwell under E's console (outer column), mouth under O's monitor
     B.add(gRBox(0.52, 0.02, 0.585, 0.006, 1), M4.trs(-0.30, 0.57, 0.33), SEATMAT.jShellIn);
-    roomFootwell(B, -0.505, -0.03, MON.zO, 0.62, -1);
+    roomFootwell(B, -0.505, -0.03, MON.zO, 0.585, -1);   // w9b: ends at E's table end, not through its walls
     if (bed) {
       // the bed narrows to ~0.62 past the seat into the footwell; mattress + duvet follow the seat width (fb_a96b7a65) [A]
       roomBed(B, 'O');
@@ -536,7 +536,7 @@ function roomPartFar(part) {
     B.add(gBox(0.04, wall, 0.655), M4.trs(0.565, wall / 2, -0.2925), SEATMAT.ash);
     B.add(gBox(0.55, top, 0.41), M4.trs(0.275, top / 2, -0.415), SEATMAT.jShell);
     B.add(gBox(1.13, MON.top, MON.zE - MON.zO), M4.trs(-0.02, MON.top / 2, (MON.zO + MON.zE) / 2), SEATMAT.jShell);
-    B.add(gQuad(0.531, 0.299), M4.trs(-0.20, 0.875, MON.zO - 0.002, Math.PI), SEATMAT.screen, atlasUV('screen'));
+    B.add(gQuad(0.531, 0.299), M4.trs(-0.20, 0.8725, MON.zO - 0.002, Math.PI), SEATMAT.screen, atlasUV('screen'));
     B.add(gBox(0.34, 0.43, 0.01), M4.trs(0.275, top + 0.215, MON.zO - 0.004), SEATMAT.ash);
   } else {
     B.add(gBox(0.69, wall, 0.07), M4.trs(0.235, wall / 2, 1.31), SEATMAT.jShell);
@@ -544,7 +544,7 @@ function roomPartFar(part) {
     B.add(gRBox(0.58, 0.6, 0.12, 0.04, 1), M4.mul(M4.trs(0.2, 0.43, 1.2), M4.trs(0, 0.3, 0, 0, 17 * DEG)), SEATMAT.jFabric);
     B.add(gBox(0.45, top, 0.585), M4.trs(-0.355, top / 2, 0.3275), SEATMAT.jShell);
     B.add(gBox(0.45, CON.top, 0.68), M4.trs(-0.355, CON.top / 2, 0.96), SEATMAT.jShell);
-    B.add(gQuad(0.531, 0.299), M4.trs(0.15, 0.875, MON.zE + 0.002), SEATMAT.screen, atlasUV('screen'));
+    B.add(gQuad(0.531, 0.299), M4.trs(0.15, 0.8725, MON.zE + 0.002), SEATMAT.screen, atlasUV('screen'));
     B.add(gBox(0.34, 0.43, 0.01), M4.trs(-0.325, top + 0.215, MON.zE + 0.004), SEATMAT.ash);
   }
   return B.build();
