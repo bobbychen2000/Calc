@@ -78,9 +78,9 @@ const SEATMAT = {
   ashDark: { c: '#5d6166', r: 0.34, m: 0.35, l: LAYER.brushed },
   rosewood: { c: '#4b403a', r: 0.36, l: LAYER.wood },
   // QA r3: shells rendered ~0.5x the photo luminance (q10 #292d34 vs c_27315 #4c4e60) -> lifted
-  jShell: { c: '#595d64', r: 0.46, l: LAYER.plastic },
+  jShell: { c: '#595d64', r: 0.34, l: LAYER.plastic },   // room w12 (from_integration lighting r1): satin, sheen lines on the rounded rims (c_27312, tlfl_9217) [V]
   jShellIn: { c: '#4a4d53', r: 0.5, l: LAYER.plastic },
-  jCap: { c: '#5c6066', r: 0.45, l: LAYER.plastic },
+  jCap: { c: '#5c6066', r: 0.34, l: LAYER.plastic },   // room w12: satin as jShell [V]
   jRail: { c: '#b9bec4', r: 0.26, m: 0.7, l: LAYER.brushed },
   jVoid: { c: '#1d1617', r: 0.9 },
   jBase: { c: '#2a2b2f', r: 0.6 },
