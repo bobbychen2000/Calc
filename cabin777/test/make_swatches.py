@@ -40,8 +40,10 @@ SW = {
     # (tt_suite-door-1, c_27305 aisle-end panels) -> blurred along the grain (ALONG) and the tile shrunk to 0.14 m [A]
     'j_ash':       ('c_27305', (262, 88, 362, 188), 0.14),
     # near-black straight-grain veneer of the suite flank, real photo OMAAT f60 (doors 2 x 0.55 m ~ 1000 px -> 130 px =
-    # 0.11 m for 100 px) [D]; the grain already runs along U (horizontal)
-    'f_wood':      ('web/suite/omaat_f60.jpg', (0, 490, 100, 590), 0.11),
+    # 0.11 m for 100 px) [D]; the grain already runs along U (horizontal). suite w7: the 100 px corner crop was mostly JPEG
+    # blocks and tiled into a brick grid on the flanks -> 170 px from the evenly lit left flank (0.17 m) [D], column-normalised
+    # and blurred along the grain like j_ash (f60: long continuous dark streaks)
+    'f_wood':      ('web/suite/omaat_f60.jpg', (0, 600, 170, 770), 0.17),
     'y_carpet':    ('y_47304', (24, 384, 226, 556), 0.26),
 }
 # QA r2: Y 5 (was 8), see 03_tex.js PHOTO_ENC; py_back 4: its white dashes are ~4.6x the charcoal ground in linear light
@@ -57,9 +59,9 @@ MONO = {'f_wood', 'f_tweed', 'j_ash', 'py_back',   # py_back: neutral grey weave
 HP = {'py_back': 20}
 # straight horizontal grain: divide each column by its mean, so only the along-grain streaks remain (the c_27305 crop's
 # faint vertical light bands were amplified into a banded look by the QA r2 gain)
-COLNORM = {'j_ash'}
+COLNORM = {'j_ash', 'f_wood'}
 # along-grain (x) box blur, px on the 256 px tile: straightens wavy streaks into continuous hairlines
-ALONG = {'j_ash': 24}
+ALONG = {'j_ash': 24, 'f_wood': 24}
 
 
 def _blur_wrap(a, s):
