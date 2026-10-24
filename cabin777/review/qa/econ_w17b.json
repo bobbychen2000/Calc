@@ -1,0 +1,167 @@
+{
+ "area": "econ",
+ "rater": "B",
+ "round": "w17",
+ "lens": "Geometry and proportion first, then materials and colour, then artefacts. Fabrics judged as photo-vs-render crops at matched physical scale (17 in = 0.43 m seat back width; q15 hero backs ~210 px vs y_47300 ~130 px, render crops downsampled x0.62; q16 near seat vs y_47301 near seat ~1:1; e4 vs y_47306 ~1:1). Head b9489fe. Measurements: /tmp/claude-0/rater17B/ms.py (box mean, B/R, L p10/p50/p90, hf = std of L minus 5 px box blur, bright = fraction of L > 1.5 x median) and blob.py (connected bright blobs: count per 1000 px, median / p90 size). Crops: /tmp/claude-0/rater17B/z15.png (q15 s2/s3 vs y_47300 s2/s3), z16.png (q16 near seat vs y_47301 near seat). Lighting and QA camera placement noted, not scored.",
+ "score": 8.0,
+ "priorIssues": [
+  {
+   "issue": "w16b-1 fleck overcorrected at row distance (ground too light, flecks too faint)",
+   "status": "fixed (row distance); new close-range problem, see w17b-1",
+   "evidence": "q15 s2/s4 backs #27335d / #28355e L50 47-49 vs y_47300 s2/s4 #2d3b65 / #27355b L50 52 / 47; B/R 2.34-2.37 vs 2.25-2.32; p90/p50 1.59 vs 1.87-1.90 (was 1.34); bright 0.13 vs 0.17-0.18 (was 0.04); blobs 60/1000 px median 2 px vs 51/1000 px median 3 px. z15.png: the fleck back now reads as the same navy cloth with crisp pale flecks; flecks a touch small and pale-blue rather than white."
+  },
+  {
+   "issue": "w16b-2 / w15b-3 dash mosaic contrast low",
+   "status": "fixed",
+   "evidence": "e4 L pad mosaic p90/p50 2.05 vs y_47306 R back 2.13, bright 0.27 vs 0.27, B/R 2.11 vs 2.06, hf 31 vs 41 (was 1.67 / 0.17 / 27)."
+  },
+  {
+   "issue": "w15b-3 tick contrast (row distance part)",
+   "status": "mostly fixed, unchanged from w16",
+   "evidence": "q15 s1/s3 #455482 B/R 1.88 vs y_47300 s1 #495b8a 1.89; p10/p50 0.56 vs 0.45, p90/p50 1.45 vs 1.52, hf 28 vs 39 (w16 0.58 / 1.44): the 1.6x column lift barely moved the row-distance numbers. Close-up e4 mid 2.06 / hf 33 / bright 0.28 vs y_47306 2.21 / 49 / 0.28."
+  },
+  {
+   "issue": "w15b-2 / w16b-3 white hood side bands head-on",
+   "status": "not fixed (slightly better)",
+   "evidence": "q15 L>170 run between s1/s2 and s3/s4: 10 px at y 280-340 (12 px in w16) at ~210 px per 0.43 m = ~2 cm; y_47300 2-4 px at 130 px = ~1 cm. Hood width 0.374 helped by ~0.4 cm."
+  },
+  {
+   "issue": "w14b-1 / w16b-4 headrest cover colour and size",
+   "status": "colour fixed; size not fixed (waits on user question)",
+   "evidence": "Colour: q15 cov1 #2b3148 L50 50 vs #393e5b 63, cov2 #40465f 71 vs #272d48 47 (the bright-s3 case is gone; now within lighting scatter), q16 near #242a42 L50 38 vs y_47301 #2e3353 48, B/R 1.8 vs 1.8. Size: q15 cover height ~0.6 back widths vs ~0.4 in y_47300."
+  },
+  {
+   "issue": "w15b-4 / w16b-5 diamond ground greyish, stars soft",
+   "status": "not fixed (unchanged)",
+   "evidence": "e4 L back #4b5787 B/R 1.78 L50 82 vs y_47306 L #5268a9 B/R 2.05 L50 96; hf 6.8 vs 13.1."
+  },
+  {
+   "issue": "w15b-7 / w16b-6 armrest frame + strut, not a J sweep",
+   "status": "fixed (shape); thickness low",
+   "evidence": "e1 / e7: one swept J tube from the arm bar down to the pivot, no diagonal strut. y_47303 shows the J as a broad flat white plate (~5 cm deep); the render tube reads ~2.5 cm round."
+  },
+  {
+   "issue": "w15b-8 / w16b-8 screen bezel heavy",
+   "status": "fixed",
+   "evidence": "q18 / e5 / e9: thin dark bezel inside a light-grey sloped frame, screen recessed in the hood, close to y_47305."
+  },
+  {
+   "issue": "w15b-9 / w16b-7 side-panel fabric smear (triplanar)",
+   "status": "not fixed",
+   "evidence": "q18 left seat side and e5 right seat side: large blurred blotches; e3 diamond stars streak along the curved side."
+  }
+ ],
+ "details": [
+  {"detail": "Fabric: tick weave", "score": 8.0, "refs": "q15 s1 #455482 B/R 1.88 vs 1.89, p90/p50 1.45 vs 1.52, hf 28 vs 39; e4 mid 2.06 / 0.28 vs 2.21 / 0.28. Same cloth; stitch columns still slightly soft at row distance"},
+  {"detail": "Fabric: diamond lattice", "score": 7.5, "refs": "Unchanged: e4 L B/R 1.78 vs 2.05, hf 6.8 vs 13"},
+  {"detail": "Fabric: petal fleck", "score": 7.5, "refs": "Row distance now right (q15 L50 47-49 vs 47-52, p90/p50 1.59 vs 1.88, bright 0.13 vs 0.17). Close range (q16 near pad / back top, z16.png) the larger tile shows round pebble blobs: count 9 vs 17 per 1000 px, p90 blob 19 vs 16 px; photo flecks are thin elongated petals, more numerous"},
+  {"detail": "Fabric: dash mosaic", "score": 8.3, "refs": "e4 L pad p90/p50 2.05 vs 2.13, bright 0.27 vs 0.27, hf 31 vs 41"},
+  {"detail": "Fabric mix (backs, pans, pads)", "score": 8.0, "refs": "Hero row tick / fleck / tick / fleck matches y_47300; fleck backs now darker than tick backs as in the photo. Pad pairing differs: y_47300 s2 fleck back carries a mosaic/tick pad and s3 tick back a fleck pad; render puts fleck pads on fleck backs (z15.png). In q16 fleck pads on every seat make the mid range read speckled vs y_47301's tick-dominated field"},
+  {"detail": "Headrest pad + cover", "score": 7.5, "refs": "Cover colour OK (L50 38-71 vs 47-63, B/R 1.8); head-on cover ~0.6 back widths tall vs ~0.4 (open question)"},
+  {"detail": "Pillow", "score": 8.0, "refs": "e4b / e1 unchanged; navy puffy, face flat"},
+  {"detail": "Armrests", "score": 8.0, "refs": "e7: J sweep now; tube thinner and rounder than y_47303's flat broad plate"},
+  {"detail": "Belts", "score": 8.5, "refs": "e1 / e7 vs y_47303"},
+  {"detail": "Seat pan / front", "score": 7.8, "refs": "e7 pan tick #6676b1 B/R 1.74 L50 111 vs y_47303 pan #4a598d 1.89 L50 72: pan reads whiter / less saturated (partly studio light)"},
+  {"detail": "Back silhouette", "score": 8.0, "refs": "q15 / e4 unchanged"},
+  {"detail": "Rear shell / hood / back top", "score": 7.9, "refs": "Side band ~2 cm head-on vs ~1 cm; rear good (q17 / e2 / e9)"},
+  {"detail": "Screen / handset", "score": 8.3, "refs": "q18 / e5 vs y_47305: thin bezel, light frame, recessed"},
+  {"detail": "Tray / pocket / AC", "score": 8.0, "refs": "e2 / e6 / q17 vs y_47303"},
+  {"detail": "Legs / footrest / under-seat", "score": 7.5, "refs": "e8 unchanged"},
+  {"detail": "Far-LOD rows", "score": 7.8, "refs": "q15 / q16: consistent, no pop; fleck backs now darken far rows toward y_47300"}
+ ],
+ "issues": [
+  {
+   "id": "w17b-1",
+   "severity": "medium",
+   "title": "Fleck at close range: round pebble blobs instead of fine elongated petals (side effect of the larger tile)",
+   "detail": "Fabric: petal fleck",
+   "evidence": "q16 near pad vs y_47301 near pad (~1:1 scale, z16.png): bright blobs 9 vs 17 per 1000 px, median 7 vs 9 px, p90 19 vs 16 px; render blobs are rounded and clump into leopard spots on the pad and back top; photo flecks are thin slivers ~1:3 aspect. Close-up e4 pad blobs 12 vs 16 per 1000 px. Row distance (q15) is now right, so do not change ground level or mean fleck coverage.",
+   "fix": "make_swatches.py tex_y_fleck: keep the 0.24 m tile and ground, but split each core into 2 thinner elongated flecks (aspect ~1:3, random +-30 deg about the diagonal), so count goes up ~1.8x and blob size drops ~40 % at the same area fraction (~0.13-0.15); cap any single fleck at ~0.8 cm long."
+  },
+  {
+   "id": "w17b-2",
+   "severity": "low",
+   "title": "Headrest cover tall head-on (carried, waits on user question)",
+   "detail": "Headrest pad + cover",
+   "evidence": "q15 cover ~0.6 back widths vs ~0.4 in y_47300; y_47306 shows a longer hang.",
+   "fix": "Per the user's answer: shorten the flap ~30 % if y_47300 is the default."
+  },
+  {
+   "id": "w17b-3",
+   "severity": "low",
+   "title": "White hood side band still ~2 cm head-on (photo ~1 cm)",
+   "detail": "Rear shell / hood / back top",
+   "evidence": "q15 L>170 runs 10 px at y 280-340 between s1/s2 and s3/s4 (~210 px per 0.43 m); y_47300 2-4 px at ~130 px.",
+   "fix": "09a_econ.js: bring the fabric side panel ~1 cm further outboard at hood height or narrow the hood side wrap a further ~1 cm per side."
+  },
+  {
+   "id": "w17b-4",
+   "severity": "low",
+   "title": "Side-panel fabric smears (triplanar blend) (carried)",
+   "detail": "Fabric mix",
+   "evidence": "q18 left seat side, e5 right seat side: large blurred blotches; e3 diamond stars streak.",
+   "fix": "Sharper triplanar blend (power ~8) for seat fabric, or loft UVs on the seat sides."
+  },
+  {
+   "id": "w17b-5",
+   "severity": "low",
+   "title": "Pad pattern pairing: photo pairs fleck backs with mosaic/tick pads and tick backs with fleck pads",
+   "detail": "Fabric mix",
+   "evidence": "y_47300 s2 (fleck back) pad mosaic-tick, s3 (tick back) pad fleck; y_47301 near tick back with fleck pad. Render: fleck back with fleck pad (z15.png), and every q16 pad fleck.",
+   "fix": "09a_econ.js econFab: give fleck-back seats a mosaic pad (keep fleck pads on tick and mosaic backs)."
+  },
+  {
+   "id": "w17b-6",
+   "severity": "low",
+   "title": "Diamond ground greyish, stars soft (carried)",
+   "detail": "Fabric: diamond lattice",
+   "evidence": "e4 L #4b5787 B/R 1.78 L50 82 vs y_47306 #5268a9 2.05 / 96; hf 6.8 vs 13.1.",
+   "fix": "Diamond tile: B/R +0.2, L +10 %, star contrast +15 %."
+  },
+  {
+   "id": "w17b-7",
+   "severity": "low",
+   "title": "Armrest J tube thin and round vs the photo's broad flat plate",
+   "detail": "Armrests",
+   "evidence": "e7 tube ~2.5 cm round; y_47303 support is a flat white plate ~5 cm deep tapering to the pivot.",
+   "fix": "Sweep a flattened profile (5 x 2 cm, tapering to 3 cm at the pivot) instead of a round tube."
+  },
+  {
+   "id": "w17b-8",
+   "severity": "low",
+   "title": "Tick stitch columns still soft at row distance",
+   "detail": "Fabric: tick weave",
+   "evidence": "q15 s1 p10/p50 0.56 vs 0.45, hf 28 vs 39 (w16 0.58 / 36 -> little change from the 1.6x column lift).",
+   "fix": "Darken the channel troughs ~15 % in the tick tile (or a -0.5 mip bias on that layer)."
+  },
+  {
+   "id": "w17b-9",
+   "severity": "low",
+   "title": "Pillow face flat (carried)",
+   "detail": "Pillow",
+   "evidence": "e4b / q15 pillow faces plain.",
+   "fix": "Fine low-contrast weave + ~5 mm darker piped rim."
+  },
+  {
+   "id": "w17b-L1",
+   "severity": "medium",
+   "owner": "lighting",
+   "title": "q16 near seat fabric far too light (not scored)",
+   "detail": "Lighting",
+   "evidence": "q16 near back #4b5a8d L50 87 B/R 1.88 vs y_47301 near #222856 L50 40 B/R 2.53; q16 near pad L50 97 vs 41. Same fabrics measure right in q15 (L50 47-49), so it is exposure / light, not material.",
+   "fix": "Lighting: check fill on the aisle-facing near seats in q16 (exposure ~-1 stop locally) and the grey cast."
+  },
+  {
+   "id": "w17b-C1",
+   "severity": "info",
+   "owner": "QA cameras",
+   "title": "Camera mismatches (not scored)",
+   "evidence": "q15 eye lower and closer than y_47300 (210 vs 130 px backs); q16 looks at the row ahead, y_47301 along the aisle; q17 differs from y_47303.",
+   "fix": "Match the cameras to the photos."
+  }
+ ],
+ "questionsForUser": [
+  "Headrest cover length: y_47300 (head-on) shows the flap ending near the pad bottom; y_47306 shows it hanging well below. Which is the default? The render follows y_47306.",
+  "Are the y_47300 headrests raised? There the pads sit flush with the back tops; in y_47306 the back rises ~8 cm above the pad. The render follows y_47306."
+ ]
+}
