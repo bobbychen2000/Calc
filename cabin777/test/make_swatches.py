@@ -208,17 +208,25 @@ def y_diamond():
     rng = np.random.default_rng(7)
     m = np.zeros((n, n), np.float32)
     step = 0.005 / 0.26
-    for cu, cv in [(a + (1 / 6 if r % 2 else 0), 1 / 12 + r / 6) for r in range(6) for a in (0.0, 1 / 3, 2 / 3)]:
+    # econ w7 A + B: a fixed small size on a square grid read as a grid of plus-shaped stars; the photos show stepped
+    # diamonds of mixed size (0.03-0.065 m) nearly touching tip to tip along both diagonals, with gaps (a broken lattice)
+    # -> diagonal lattice of pitch 0.0867 (3 x 3 + centred sites per 0.26 tile), 25 % of sites dropped, half-diagonals
+    # 0.03-0.046 m (tips ~touching on the 0.061 m diagonal) [D]
+    sites = [((a + o) / 3, (b + o) / 3) for o in (0, 0.5) for a in range(3) for b in range(3)]
+    sites = [c for c in sites if rng.random() > 0.25]
+    for cu, cv in sites:
+        hd = rng.uniform(0.03, 0.046)           # minus one 5 mm ceil step -> 0.05-0.08 m figures, tips ~touching
         for ou in (-1, 0, 1):
             for ov in (-1, 0, 1):
                 # econ w6 (A + B): ceil, not floor - floor grew every diamond by one step (light area 0.54 vs Otsu 0.07-0.24)
                 du = np.ceil(np.abs(u - cu - ou) / step) * step
                 dv = np.ceil(np.abs(v - cv - ov) / step) * step
-                m = np.maximum(m, (du / (0.026 / 0.26) + dv / (0.022 / 0.26) <= 1).astype(np.float32))
+                m = np.maximum(m, (du / (hd / 0.26) + dv / (hd * 0.87 / 0.26) <= 1).astype(np.float32))
     # ragged ikat edges: a little value noise on the mask, then a 1 px soften
     m = np.clip(m + (rng.random((n, n)) - 0.5) * 0.5 * (np.asarray(Image.fromarray((m * 255).astype(np.uint8)).filter(ImageFilter.MaxFilter(3)).filter(ImageFilter.FIND_EDGES)) > 0), 0, 1)
     m = (m > 0.5).astype(np.float32)
     m = np.asarray(Image.fromarray((m * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(0.4))).astype(np.float32)[..., None] / 255
+    m = m * (0.8 + 0.2 * _blur_wrap(rng.random((n, n)), 1.0)[..., None] / 0.5).clip(0.7, 1.0)   # w7 A: mottled ~3 mm fill
     # econ w6 B: quieter tick ground (x0.4) so the ticks don't join the figure; brighter blocks keep hi/lo ~1.9 (y_47306 / 47302)
     tm = t.reshape(-1, 3).mean(0)
     lift = np.array([2.5, 2.2, 1.7], np.float32)          # pale lavender-grey blocks (y_47302 / y_47306)
@@ -243,12 +251,12 @@ def y_fleck():
     y, x = np.mgrid[0:n, 0:n].astype(np.float32)
     m = np.zeros((n, n), np.float32)
     pts = []
-    while m.mean() < 0.095:
+    while m.mean() < 0.11:
         cx, cy = rng.random(2) * n
         # evenly spread (y_47300 seat 2: flecks never clump): reject centres within 6 mm of another (w6 B: 4.5 mm still clumped) (tile-wrapped)
-        if any(min(abs(cx - px), n - abs(cx - px)) ** 2 + min(abs(cy - py), n - abs(cy - py)) ** 2 < (6 * mm) ** 2 for px, py in pts): continue
+        if any(min(abs(cx - px), n - abs(cx - px)) ** 2 + min(abs(cy - py), n - abs(cy - py)) ** 2 < (7.5 * mm) ** 2 for px, py in pts): continue
         pts.append((cx, cy))
-        a, b = rng.uniform(1.8, 3.0) * mm, rng.uniform(1.3, 2.0) * mm      # half-axes; econ w6 A: rounder petals 3.5-6 x 2.5-4 mm (y_47300 seats 2 / 4)
+        a = np.exp(rng.normal(np.log(2.9), 0.25)) * mm; b = a * rng.uniform(0.6, 0.75)      # half-axes; w6 A rounder; w7 A: larger lognormal 4.5-9 x 3-5 mm, ~0.6x the count (y_47300 seats 2 / 4)
         th = rng.random() * np.pi
         for ox in (-n, 0, n):
             for oy in (-n, 0, n):
@@ -277,8 +285,10 @@ def y_mosaic():
     rng = np.random.default_rng(5)
     m = np.zeros((n, n), np.float32)
     # checker of cells 30 x 20 mm (0.2 m tile -> 6.67 x 10: use 7 x 10 cells, 28.6 x 20 mm) with per-cell density
-    cw, ch = n / 7, n / 10
-    dens = np.array([[0.35 if (i + j) % 2 else 0.08 for i in range(7)] for j in range(10)]) * rng.uniform(0.8, 1.2, (10, 7))
+    # w7 B: a rectangular grid of cells ~25 x 18 mm (8 x 11 per 0.2 m tile)
+    NI, NJ = 8, 11
+    cw, ch = n / NI, n / NJ
+    dens = np.array([[0.30 if (i + j) % 2 else 0.07 for i in range(NI)] for j in range(NJ)]) * rng.uniform(0.8, 1.2, (NJ, NI))
     pitch = 1.6 * mm                                   # dash rows ~1.6 mm apart (y_47306 right seat)
     for r in range(int(n / pitch)):
         yc = (r + 0.5) * pitch
@@ -286,13 +296,13 @@ def y_mosaic():
         while x < n:
             L = rng.uniform(6, 12) * mm
             cx = (x + L / 2) % n
-            j = int(yc / ch) % 10; i = int((cx + rng.normal(0, 1.5 * mm)) / cw) % 7
-            if rng.random() < dens[j, i] / 0.35 * 0.55:
+            j = int(yc / ch) % NJ; i = int(cx / cw) % NI
+            if rng.random() < dens[j, i] / 0.30 * 0.55:
                 y0 = int(yc); y1 = y0 + 1                   # ~1 mm dash (1 px on the 0.2 m tile)
                 xs = np.arange(int(x), int(x + L)) % n
                 m[max(y0, 0):min(y1, n), xs] = 1
             x += L + rng.uniform(1.5, 4) * mm
-    m = np.asarray(Image.fromarray((m * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(0.5))).astype(np.float32)[..., None] / 255
+    m = m[..., None]                                   # w7 A: crisp, no blur
     lift = np.array([7.0, 7.0, 5.0], np.float32)          # near-white dashes (y_47306 right seat)
     ratio = ground * (1 - m) + lift * m
     ratio /= ratio.reshape(-1, 3).mean(0)

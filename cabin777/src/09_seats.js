@@ -14,9 +14,9 @@ const SEATMAT = {
   // econ QA w1: #5468a8 rendered too pure a blue (q15 R/B 0.33, G/B 0.46 vs y_47300 0.44 / 0.58) -> greyer #6a79a8 [D]
   // econ w5 (A + B high): after the lighting r3 AO lift the tick / diamond seats rendered 1.6-2x too light (q15 L50 103 / 114
   // vs y_47300 backs 46-92); mosaic (L50 59) is the anchor, target tick ~70, diamond ~80, fleck ~55 [D]
-  yFabric: { c: photoBase('#52597f', 'y_tick'), r: 0.9, l: LAYER.yJacq },
+  yFabric: { c: photoBase('#5a6587', 'y_tick'), r: 0.9, l: LAYER.yJacq },   // w7 A: q15 L50 55 G/B 0.55 vs y_47300 68-91 / 0.62-0.66
   yFabricB: { c: photoBase('#565e82', 'y_diamond'), r: 0.9, l: LAYER.yDiamond },
-  yFabricC: { c: photoBase('#3e4a7a', 'y_mosaic'), r: 0.9, l: LAYER.yMosaicP },   // third variant: dash mosaic (y_47302 left, y_47306 right); w6 A: photo-measured dash checker tile, was blobby procedural layer 11
+  yFabricC: { c: photoBase('#4a5576', 'y_mosaic'), r: 0.9, l: LAYER.yMosaicP },   // third variant: dash mosaic (y_47302 left, y_47306 right); w6 A: photo-measured dash checker tile, was blobby procedural layer 11; w7 A: q15 #1e2a62 L 41 vs y_47306 #384877 L 60 -> greyer, lighter
   yFabricD: { c: photoBase('#424d70', 'y_fleck'), r: 0.9, l: LAYER.yFleck },   // econ w5: petal fleck (y_47300 seats 2 / 4, sans 14 L50 48); w6 A: G/B 0.45 vs 0.54 -> greener
   // headrest cushion: sparse white confetti on cobalt, a different fabric from the back (y_47306 / 47302 wings,
   // REFERENCE777.md) - shares the luminance-only confetti swatch with the PY wings
@@ -25,15 +25,15 @@ const SEATMAT = {
   // seats: short white dashes ~6 x 2 mm, not the 11-22 mm PY confetti blobs) -> the dash mosaic layer [D]
   // econ w5: the procedural mosaic's big white dashes read as blotches on the wings (q16); the wing weave is short pale
   // dashes on navy (y_47306), i.e. the fleck swatch, one step lighter than the fleck backs (w5 B) [D]
-  yHead: { c: photoBase('#4d5479', 'y_fleck'), r: 0.9, l: LAYER.yFleck },
+  yHead: { c: photoBase('#566088', 'y_fleck'), r: 0.9, l: LAYER.yFleck },
   // slate-grey leatherette cover, lighter + greyer than the fabric (y_47302 #474960-#4d526f, y_47306 #445072,
   // y_47301 #434765; QA r2 was #3e4661 -> rendered as black slabs)
-  yCover: { c: '#3b4260', r: 0.38, l: LAYER.plastic },     // econ w2: smooth leatherette; w5: q15 L 110 vs y_47300 #272d48 L 47 -> darker; w6 A: q16 cover/back 0.58 vs y_47301 0.82 -> a shade lighter
+  yCover: { c: '#474c5e', r: 0.45, l: LAYER.plastic },     // econ w2: smooth leatherette; w5: q15 L 110 vs y_47300 #272d48 L 47 -> darker; w6 A: q16 cover/back 0.58 vs y_47301 0.82 -> a shade lighter; w7 A + B: R/B 0.46 vs 0.52-0.74 -> slate
   yShell: { c: '#d9dbde', r: 0.42, l: LAYER.plastic },
   yShellDark: { c: '#c2c5c9', r: 0.5, l: LAYER.plastic },
   yTray: { c: '#cfd2d6', r: 0.4, l: LAYER.plastic },
-  yBelt: { c: '#243a66', r: 0.9, l: LAYER.fabric },        // y_47303 #325495 / #456198 (w5 B: #3a64a6 rendered sky-cyan; w6 B: #2e4c86 rendered #588ed0 vs y_47303 #38578c)
-  yPillow: { c: '#3e4565', r: 0.9, l: LAYER.fabric },      // y_47300 (44,53,88); econ w2: #2e3860 rendered #151b3e vs photo #30395f; w6 B: #4d5579 q15 L50 59 vs 44
+  yBelt: { c: '#25466a', r: 0.9, l: LAYER.fabric },        // y_47303 #325495 / #456198 (w5 B: #3a64a6 rendered sky-cyan; w6 B: #2e4c86 rendered #588ed0 vs y_47303 #38578c; w7 A: G/B 0.47 vs 0.61 -> teal lean)
+  yPillow: { c: '#3d4763', r: 0.9, l: LAYER.fabric },      // y_47300 (44,53,88); econ w2: #2e3860 rendered #151b3e vs photo #30395f; w6 B: #4d5579 q15 L50 59 vs 44
   arm: { c: '#c4c8cd', r: 0.45, l: LAYER.plastic },       // econ QA w1: light grey, y_47303 #afb2bc / y_47302 #9fa6ab
   armPad: { c: '#b6bac0', r: 0.5, l: LAYER.plastic },
   armPost: { c: '#a9aeb4', r: 0.45, l: LAYER.plastic },    // econ w2: grey arm front bracket (y_47302 / 47303)
