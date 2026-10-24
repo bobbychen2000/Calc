@@ -170,7 +170,7 @@ Started on head 2c1eb9d, after the lighting loop's round 1 (2913db8) fixed the e
 | w16 (2e3ebfa) | 7.7 | 7.8 | 7.75 | fleck snow fixed close up, lost at distance |
 | w17 (b9489fe) | 7.9 | 8.0 | 7.95 | best round; hero row as y_47300, J arm |
 | w18 (9cf4598) | 7.9 | 8.0 | 7.95 | budget reached; fleck / cover overshot |
-| wG (295e953, confirmation) | WGA | WGB | WGM | the shipped state |
+| wG (295e953, confirmation) | 7.9 | 8.0 | 7.95 | the shipped state (level with the best rounds) |
 
 The 8.5 target was not reached; no high-severity issue is open.
 
@@ -204,7 +204,8 @@ The 8.5 target was not reached; no high-severity issue is open.
 ### Still open
 - **Tick columns at row distance** (q15 column CV ~0.08 vs 0.24): mip filtering; a mip bias / anisotropic filtering on
   the photo fabric layers is asked of lighting in `from_econ.md` (it would also cure the side-panel smear).
-- **Cover sheen**: the silver-grey grazing sheen of the leatherette needs a sheen lobe (lighting, `from_econ.md`).
+- **Cover sheen**: one flat value cannot match both head-on (wG L62 vs 37-47) and grazing (L41 vs 65-83); the silver-grey
+  grazing sheen of the leatherette needs a sheen lobe (lighting, `from_econ.md`); then the base can go back to ~#2a2f45.
 - **Fleck shape**: the 3.4 mm/px source makes round dots, not 3-5 mm petals; a frontal close-up would fix it (question 18).
 - **Diamond**: soft (2 mm/px oblique source), ground a little grey.
 - Cover hang (question 17), pans all tick (y_47300 shows some mosaic pans), pillow seam, bezel dots.
