@@ -1,0 +1,156 @@
+{
+ "area": "shell",
+ "rater": "B",
+ "round": "w11",
+ "score": 8.4,
+ "previousIssues": [
+  {
+   "issue": "[w10b medium / lighting hand-off] Dark crown on the down-facing top return of every PY/Y tub (and a thin line on F/J bowl crowns)",
+   "status": "mostly fixed (by lighting; 04_shaders l.264 itself is unchanged). The s02 nearest tub at col 710 now runs 193-202 under the lip (w10 140-143) against a pier of 233, so 0.83-0.87 (w10 0.60). ra_yWin col 650 top return is 163-203 against a pier of 232 (w10 106 / 228). q14 and b_pyClose no longer show grey 'frown' arcs. A soft band under the lip remains (132 at the lip line in ra_yWin, compared with ~143 in sp_py14). Helps."
+  },
+  {
+   "issue": "[w10a medium / w10b low] Closed blackout too dark (0.45-0.50)",
+   "status": "fixed. b_jClose shade (520-620 x 330-460) is now (147,145,138): 0.67 of the sill (220) and 0.65 of the wall (226), against omaat_room_24 at ~0.62-0.65 (w10 102,99,94). It reads as the photo's mid taupe-grey, not a dark slab. Helps."
+  },
+  {
+   "issue": "[w9b / w10b low] Blackout pleat moire at mid distance",
+   "status": "not fixed. The 5 mm zig-zag (220b46f) does not touch the cause, the per-row vertex-colour stripe (kf 0.62 on alternate rows). The 3rd-5th windows in s05 still show diagonal beat bands (rb11/s05far.png, top w10, bottom w11). They are slightly lower in contrast only because the shade is now lighter."
+  },
+  {
+   "issue": "[w10b low] Stop fittings on the wrong face and too small",
+   "status": "fixed (removed, 220b46f). The jambs are clean in b_doorWin, s06 and s07. Helps."
+  },
+  {
+   "issue": "[w10b low] PY/Y tub floor: lighter rectangular patch under the bezel",
+   "status": "not fixed, but milder. ra_yWin row 490 is 240 at the centre against 219 at the sides (0.91; w10 0.87). It is barely visible at 1x."
+  },
+  {
+   "issue": "[w9a / w10 low] Sidewall panels lack the fine woven texture",
+   "status": "not fixed. Still plain satin."
+  },
+  {
+   "issue": "[w10a low] Vinyl slightly cool",
+   "status": "not fixed. ra_door2floor walkway is (106,104,110) against sans_09 (104,99,102). Its L std fell slightly, 14.6 -> 13.0 (12 px blur 13.3 -> 11.6), from the lighter lighting. That is neutral."
+  },
+  {
+   "issue": "[w10a low] Bowls dead neutral (lighting)",
+   "status": "not fixed (lighting). b_jClose bowl s 0.009, ra_fWin s 0.005."
+  },
+  {
+   "issue": "[w10a low] Door viewing-window reveal and jamb trim simpler than lalf_133",
+   "status": "not fixed. The reveal is unchanged. Position and size still read right against lalf_133 (rb11/door_vs.png)."
+  },
+  {
+   "issue": "[OTHER AREA] Pale vertical bar behind the nearest J pane in s01",
+   "status": "not fixed. Still at s01 x ~775-800."
+  },
+  {
+   "issue": "[OTHER AREA] Sidewall window visible between the door-2 monument and the surround",
+   "status": "not fixed (monuments/integration). A window still shows next to the door-4 jamb in s07 (x ~640-700)."
+  }
+ ],
+ "details": [
+  {
+   "detail": "Sidewall panels and seams. The geometry is unchanged and clean: a joint every second window, with no gaps or z-fighting. The lower wall is now lighter and closer to the photos (ra_dadoPY lower wall 172 against w10 125). That comes from lighting and helps the read. The panels are still plain satin where tt_window shows a fine linen texture.",
+   "score": 8.2,
+   "refs": ["ref/web/shell/tt_window.jpg", "ref/web/shell/sp_py14.jpg", "/tmp/claude-0/-home-user-Calc/0ed99896-ecef-596b-9423-893865e3345b/scratchpad/rb11/c_ra_dadoPY.png"]
+  },
+  {
+   "detail": "F/J bowl. Shape is unchanged and right: short bowl, LED pill under the opening, smooth sides. The crown line is gone with the lighting change. The bowls are still neutral where the photos are cream (lighting).",
+   "score": 8.5,
+   "refs": ["ref/web/shell/omaat_room_24.jpg", "ref/web/shell/tt_window.jpg", "/tmp/claude-0/-home-user-Calc/0ed99896-ecef-596b-9423-893865e3345b/scratchpad/w11/ra_fWin.png"]
+  },
+  {
+   "detail": "PY/Y tub. The crown is bright again (0.83-0.87 of the pier). There is a soft band under the lip, and the vertex grade darkens to 0.68 at the bezel (ra_yWin col 650: 203 -> 158 against a pier of 232). sp_py14 runs 187 -> 129. Side by side (rb11/yWin_vs_py14.png) the tall arched tub and raised bezel match. The mid-hood grey is a little cloudier than the photo's smooth ramp. A mild light card remains under the bezel.",
+   "score": 8.4,
+   "refs": ["ref/web/shell/sp_py14.jpg", "/tmp/claude-0/-home-user-Calc/0ed99896-ecef-596b-9423-893865e3345b/scratchpad/rb11/yWin_vs_py14.png", "/tmp/claude-0/-home-user-Calc/0ed99896-ecef-596b-9423-893865e3345b/scratchpad/rb11/c_ra_yWin.png"]
+  },
+  {
+   "detail": "Pane, lining and seal. Unchanged and right.",
+   "score": 8.3,
+   "refs": ["ref/web/shell/tt_window.jpg", "/tmp/claude-0/-home-user-Calc/0ed99896-ecef-596b-9423-893865e3345b/scratchpad/w11/s01_jWall.png"]
+  },
+  {
+   "detail": "Electric shades. The blackout tone is now right (0.65 of the wall, warm grey), and the LED pill and crisp near pleats are right. The only remaining flaw is the mid-distance diagonal moire on the 3rd-5th windows of s05.",
+   "score": 8.5,
+   "refs": ["ref/web/shell/omaat_room_24.jpg", "/tmp/claude-0/-home-user-Calc/0ed99896-ecef-596b-9423-893865e3345b/scratchpad/rb11/c_b_jClose.png", "/tmp/claude-0/-home-user-Calc/0ed99896-ecef-596b-9423-893865e3345b/scratchpad/rb11/s05far.png"]
+  },
+  {
+   "detail": "Manual PY/Y shades. Unchanged: the stowed grip band and the half and closed states read (s08, ra_yWin).",
+   "score": 8.2,
+   "refs": ["ref/web/shell/sp_py24.jpg", "/tmp/claude-0/-home-user-Calc/0ed99896-ecef-596b-9423-893865e3345b/scratchpad/w11/s08_pyShades.png"]
+  },
+  {
+   "detail": "Dado, grilles and placards. Geometry is unchanged. They read better on the lighter lower wall.",
+   "score": 8.3,
+   "refs": ["ref/ana/py_37303-lang-multi.jpg", "/tmp/claude-0/-home-user-Calc/0ed99896-ecef-596b-9423-893865e3345b/scratchpad/w11/ra_dadoY.png"]
+  },
+  {
+   "detail": "Floors. The carpets are unchanged and fine. The vinyl cloud mottle matches sans_09 at low frequency. The fine grain is lower and the vinyl is faintly cool.",
+   "score": 8.4,
+   "refs": ["ref/web/shell/sans_09.jpg", "/tmp/claude-0/-home-user-Calc/0ed99896-ecef-596b-9423-893865e3345b/scratchpad/rb11/c_ra_door2floor.png"]
+  },
+  {
+   "detail": "Type A door surround and viewing window. The window is forward of the handle housing, at the right size and height against lalf_133. The stray tabs are gone. The surround and window reveal are still simpler than the photo's deeper, rimmed bezel.",
+   "score": 8.1,
+   "refs": ["ref/web/shell_a/lalf_133.jpg", "/tmp/claude-0/-home-user-Calc/0ed99896-ecef-596b-9423-893865e3345b/scratchpad/rb11/door_vs.png"]
+  }
+ ],
+ "issues": [
+  {
+   "severity": "low",
+   "detail": "Blackout pleat moire at mid distance persists",
+   "problem": "The pleat tone is baked into vertex colour on alternate rows (07_shell.js l.425-426, kf 0.62, 62 rows of ~6 mm), so it cannot mip-filter. It beats against the pixel grid on the 3rd-5th windows in s05. Cutting the zig-zag from 6 to 5 mm (220b46f) does not address this.",
+   "evidence": "rb11/s05far.png (top w10, bottom w11).",
+   "fix": "07_shell.js l.425: raise kf 0.62 -> 0.78 and let the 5 mm zig-zag shading carry the stripe near. Better: move the stripe into a mip-mapped detail layer (31 stripes per tile on uv.v), so distant shades average to a flat taupe. If budget allows, a far-LOD shade instance with no stripe beyond ~4 m works too."
+  },
+  {
+   "severity": "low",
+   "detail": "Soft dark band under the PY/Y tub lip and a slightly cloudy mid-hood",
+   "problem": "ra_yWin col 650: 132 at the lip line, then 200 -> 158. sp_py14 has a hairline rim and a smoother ramp. This is now minor.",
+   "evidence": "rb11/yWin_vs_py14.png.",
+   "fix": "Optional, lighting: fade the 04_shaders l.264 cut back out above dy ~0.40, as suggested in w10b. No shell change needed."
+  },
+  {
+   "severity": "low",
+   "detail": "Sidewall panels lack the fine woven texture",
+   "problem": "Plain satin. tt_window shows a fine linen texture at close range (ra_fWin, b_dadoY2).",
+   "evidence": "tt_window close-up.",
+   "fix": "MAT.wall: add detail layer 1 (fabric) at low normal strength (~0.06-0.08) with no albedo change."
+  },
+  {
+   "severity": "low",
+   "detail": "Door viewing-window reveal shallow",
+   "problem": "lalf_133 shows a deeper cream bezel with a darker inner rim. Ours is a shallow pale reveal.",
+   "evidence": "rb11/door_vs.png.",
+   "fix": "07_shell.js door cell: deepen the reveal (0.05 -> 0.07) and add a thin grey seal ring (WMAT.seal) at the glass."
+  },
+  {
+   "severity": "low",
+   "detail": "Vinyl faintly cool, fine grain low",
+   "problem": "(106,104,110) against sans_09 (104,99,102); L std 13.0 against 24.1.",
+   "fix": "Vinyl colour: R +2, B -5. Optionally raise the speckle amplitude in layer 7 a little."
+  },
+  {
+   "severity": "low",
+   "detail": "[OTHER AREA: lighting] Bowls and bezels neutral where the photos are cream",
+   "problem": "s 0.005-0.009 against omaat_room_24 s ~0.13.",
+   "fix": "Lighting (white mood colour temperature)."
+  },
+  {
+   "severity": "low",
+   "detail": "[OTHER AREA: exterior/integration] Pale vertical bar behind the nearest J pane in s01",
+   "problem": "Unchanged since w5.",
+   "fix": "Exterior / integration."
+  },
+  {
+   "severity": "low",
+   "detail": "[OTHER AREA: monuments/integration] Cabin window visible between a door-zone monument and the door surround",
+   "problem": "s07: a tub shows beside the door-4 jamb.",
+   "fix": "Monuments: close the monument face to the surround, or shell: skip windows in a monument zone next to a door."
+  }
+ ],
+ "questionsForUser": [],
+ "photosDownloaded": [],
+ "notes": "Since w10 the shell changed only in 220b46f: the jamb stop fittings were removed and the blackout zig-zag cut to 5 mm. Studio renders (win_*) are pixel-identical to w10. The cabin renders differ mainly from lighting (1582aaa and later) and from the neighbouring seat and monument work. Net effect on the shell is positive. Both w10 mediums are cleared: the blackout is at 0.65 of the wall and the PY/Y tub crowns are bright again. The stray tabs are gone. No high or medium shell issues remain. What is left is low: mid-distance pleat moire, plain satin wall, a shallow door-window reveal, a faintly cool vinyl, and lighting-side bowl neutrality. Comparisons (w10 top, w11 bottom) are in /tmp/claude-0/-home-user-Calc/0ed99896-ecef-596b-9423-893865e3345b/scratchpad/rb11/c_*.png, with zooms s05far.png, yWin_vs_py14.png and door_vs.png. Lighting not scored."
+}
