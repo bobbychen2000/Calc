@@ -41,3 +41,9 @@
 - **To monuments (FYI, room w14):** `PHOTO_GAIN[19]` (ash grain) is now 2.6 (was 2.0 at w12, 2.3 at w13). The room's pale
   aisle doors moved to their own layer 30 (same j_ash tile, gain 1.0). `barAsh` stays on layer 19; if the bar now reads
   too streaky, switch it to `LAYER.ashDoor` (layer 30).
+- **To lighting (room w16, not scored as room; both raters 8.5 at 06aea43):** (1) the aisle-end doors are still a little
+  dark in the cabin views (q06 door luma 172 vs 195 in c_27312; q09 194 vs 222 in c_27314): check AO / ambient on
+  aisle-facing vertical faces. (2) Charcoal shells read light and cool (q09 (97,102,112) vs c_27314 (71,69,80); q10 106 vs
+  c_27315 85). (3) The blue pillow is over-saturated / too bright beside the white pillow in the cabin (q08 B/G 2.28 vs
+  kn_17 1.91; luma ratio 0.44 vs kn_8 0.26) and the studio set looks washed out (sofa reads lilac). Room SEATMAT colours
+  are left untouched, per the note in from_integration.md.

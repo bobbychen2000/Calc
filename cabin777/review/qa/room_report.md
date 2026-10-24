@@ -196,3 +196,31 @@ tpg_46 O pair with bundles, tpg_60 ash close-up, tpg_79 / 81-83 beds), KN Aviati
 Live and Let's Fly (lalf_*), Turning Left for Less 2024 (tlfl_*), Sam Chui (sc_*). Ratings `room_w12a.json` ...
 `room_w15b.json`, gap analysis `room_gap_w12.json`. Before / after: `room_before_after.jpg` (w12 start vs w15);
 the wave-3 sheet is `room_before_after_w7-w11.jpg`.
+
+## Wave 3c, confirm and polish (2026-10-24): w16 - target met
+
+| round | rater A (skeptic) | rater B (geometry) | rated head / main changes |
+|---|---|---|---|
+| w16 | **8.5** | **8.5** | 06aea43: the post-w15 tweaks (ashDoor #ece7dc on layer 30 gain 0.5, ash grain 2.6 -> 2.2, near-black webbing, glossier chrome) |
+
+**THE Room meets the bar:** both calibrated raters at 8.5, no high-severity issue (`room_w16a.json`, `room_w16b.json`;
+rebuilt on the current head with the lighting loop's latest snapshot 918e366). What moved it: the door / cabinet split now
+reads in the cabin (q06 door near-plain cream, hp 0.077 -> 0.042, cabinet / door 0.92 -> 0.81, c_27312 0.73) and the
+lower grain gain removed the blotchy oak look (B's w15 medium). A withdrew the webbing complaint (c_27316 shows teal).
+
+**Post-w16 (unrated):** bff7fba rebuilds the pillows as stuffed lenses (thickness ((1-u^2)(1-v^2))^0.42, pinched corners,
+sides bowing in ~6 %, flat seam flange ring on the blue one), the low issue both raters carried since w14. Triangles
+about equal to the old bevelled pillows. A endorsed the lens shape; B (who saw the code) would pinch the corners further.
+
+**Still open (all low, w16a/b):**
+- A medium: cabinet / table ash pinstripe at about half the photos' contrast (hp 0.040-0.046 vs 0.079-0.097), the
+  1-4 cm veneer bands reading as wavy arcs, a little warm (R/B 1.24-1.27 vs 1.04-1.16 official). Suggested: re-cut
+  `tex_j_ash` with HP 60 -> 20, ALONG 6 -> 14, then gain back toward 2.6 (shared with the doors and the bar). B instead
+  rates the ash as fixed and matching (hp 0.048 vs 0.055); left as is.
+- Low: blue pillow ~20 % large vs kn_8; bundle film hidden (only a 2-3 cm lip shows; move the pillows ~6 cm aft, wider
+  glints); O comforter a crisp T (taper + edge wave); latch tongue floats ~3 cm from its stub; buckle has no highlight;
+  aisle-end lower-panel seam missing; a dotted aliasing strip along the door-leaf top edge (q10).
+- Lighting items handed to `from_room.md`.
+
+**Sources added:** kn_8, kn_17, kn_20, kn_36, kn_41, omaat_room_13, omaat_room_15 re-downloaded to `ref/web/room/`
+(gitignored).

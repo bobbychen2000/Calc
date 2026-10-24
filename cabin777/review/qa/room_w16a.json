@@ -1,0 +1,96 @@
+{
+"area": "room",
+"rater": "A-skeptic",
+"round": 16,
+"score": 8.5,
+"summary": "Round 16, rating head 06aea43. The cabin and studio renders come from the w16 build at 17:24, before bff7fba, which is a w16 in-progress pillow-lens commit and is NOT rated here; my own shots use the same build. The post-w15 tweaks work where it mattered most. (1) The aisle-end posts and door leaves now read as pale, near-plain cream in the cabin. In q06 the door (600-640 x 330-520) is (168,168,166) with hp 0.042, where w15 had (164,162,159) and hp 0.077. The cabinet/door luma ratio is 136/167 = 0.81 (w15 0.92). For c_27312, with the same boxes I use for the photo (door 440-490 x 260-420 (179,178,171), cabinet 345-420 x 340-430 (138,129,119)), it is 0.73. The dash streaks on the leaves are gone (z_q06.png); o2 shows the post in studio light as a plain cream panel in its charcoal frame, which matches c_27312 / c_27314. (2) The blotchy dark smudges in the cabinet ash are softer at gain 2.2, but the grain still reads as soft wavy cathedral arcs with low fine-scale contrast: hp 0.040-0.046 against 0.088-0.097 in c_27312 / c_27315, and warmer (R/B 1.24-1.27 against official 1.04-1.16). The real veneer is a straight, fine pinstripe (ash_cmp.png). (3) The webbing at #243440 still reads slate-teal in studio light (78,102,124). That is fine: c_27316 shows a teal belt (63,101,134) and omaat_room_15 a grey-teal one, so I withdraw my w15 low. The chrome buckle still reads as a matte grey plate without an environment to reflect, and the latch tongue floats as a pale tag about 3 cm away from its stub (o3). Still open at this head: the pillows are rigid bevelled boards (o3, r7, q09; bff7fba addresses this but is unrated); the bundle film is invisible, and only a blue strip on a white pad peeks out, where omaat_room_15 / kn_8 show a ~10 cm film-wrapped bundle front with strong glints; and the O comforter is still a crisp cross/T (r9). Lighting (not scored): the q09 shells are (97,102,112) against c_27314 (71,69,80). The q10 shells are now close (96,100,114 against 86,82,96). The studio sofa reads lilac. With the last medium from w15 mostly fixed and only low items plus the ash character left, I rate the area 8.5: clearly the same product, with minor material and soft-goods differences.",
+"photos_collected": [
+"Downloaded to ref/web/room/ (gitignored): kn_8 (centre pair with pillows + bundles, 2021), kn_20 (table ash close-up), omaat_room_13 and omaat_room_15 (bundle in film, puffy pillows, teal-grey belt). Also used ref/ana c_27312, c_27314, c_27315, c_27316, c_27300 and ref/web/room kn_17, kn_36. tpg_* files are no longer on disk."
+],
+"own_renders": [
+"/tmp/claude-0/-home-user-Calc/4db43c9e-e5cc-5ca1-ab86-b287c381eb7d/scratchpad/w16/raterA/own/o1_seatO_kn8.png (O seat from the front, kn_8 framing: pillow 0.63 of the back width, kn_8 0.53)",
+"/tmp/claude-0/-home-user-Calc/4db43c9e-e5cc-5ca1-ab86-b287c381eb7d/scratchpad/w16/raterA/own/o2_aisle_end.png (aisle-end post and door: plain cream in a charcoal frame, good; no lower seam)",
+"/tmp/claude-0/-home-user-Calc/4db43c9e-e5cc-5ca1-ab86-b287c381eb7d/scratchpad/w16/raterA/own/o3_bundle_low.png (rigid pillow board, bundle with no film, latch tongue detached from its stub)",
+"/tmp/claude-0/-home-user-Calc/4db43c9e-e5cc-5ca1-ab86-b287c381eb7d/scratchpad/w16/raterA/z_q06.png (q06 door zoom | c_27312 post | q06 cabinet)",
+"/tmp/claude-0/-home-user-Calc/4db43c9e-e5cc-5ca1-ab86-b287c381eb7d/scratchpad/w16/raterA/ash_cmp.png (q06 cab | q10 cab | q07 panel | c_27312 | c_27315 | c_27316 | kn_20)",
+"/tmp/claude-0/-home-user-Calc/4db43c9e-e5cc-5ca1-ab86-b287c381eb7d/scratchpad/w16/raterA/z_q10door.png (dotted aliasing strip along the door-leaf top edge)",
+"/tmp/claude-0/-home-user-Calc/4db43c9e-e5cc-5ca1-ab86-b287c381eb7d/scratchpad/w16/raterA/z_r7belt.png",
+"spec /tmp/claude-0/-home-user-Calc/4db43c9e-e5cc-5ca1-ab86-b287c381eb7d/scratchpad/w16/raterA/spec.json; build .../scratchpad/w16/build/test.html"
+],
+"prior_issues": [
+{"from": "w15a/w15b", "severity": "medium", "issue": "Aisle doors not separated from the cabinets in the cabin view; leaves streaky", "status": "mostly fixed", "evidence": "q06 door (168,168,166), hp 0.042 (w15 (164,162,159), hp 0.077). Cabinet (151,138,119). Luma ratio cab/door 0.81 against c_27312 0.73 (my boxes; 0.63 with w15's). The q06 and q10 zooms show plain cream with no dashes. The remaining gap is small and partly lighting."},
+{"from": "w15b", "severity": "medium", "issue": "Ash grain coarse and blotchy (weathered oak)", "status": "partly fixed", "evidence": "At gain 2.2 the dark smudges are softer, but the j_ash tile keeps its 1-4 cm bands (make_swatches HP 60), and these read as wavy arcs in the q06 / q10 cabinets (ash_cmp.png). Fine-scale hp is 0.040-0.046 against 0.088-0.097 in c_27312 / c_27315: the pinstripe is too weak and the bands too strong."},
+{"from": "w15a", "severity": "low", "issue": "Pillows rigid slabs", "status": "not fixed at 06aea43 (bff7fba in progress, unrated)", "evidence": "o3: a rounded board with a crisp flange; q09 and r7 the same. omaat_room_15 and kn_8 show puffy pillows with pinched corners."},
+{"from": "w15a/b", "severity": "low", "issue": "Bundle film invisible", "status": "not fixed", "evidence": "o3 and q08 show only a blue strip on the white pad with no glints. omaat_room_15 shows a ~10 cm film-wrapped bundle front with bright creases."},
+{"from": "w15a/b", "severity": "low", "issue": "O comforter crisp cross/T", "status": "not fixed", "evidence": "r9 / r6: the same outline as in w15."},
+{"from": "w15a", "severity": "low", "issue": "Webbing teal / buckle matte", "status": "webbing: withdrawn (photos support teal); buckle: not fixed", "evidence": "r7 webbing (78,102,124) against c_27316 (63,101,134), so the teal is right. The buckle is still a flat grey plate in r7 / o3; the latch tongue is detached from its stub."},
+{"from": "w15a/b", "severity": "low", "issue": "(lighting) pillow over-saturated, shells light slate", "status": "pillow OK against kn_8; shells partly", "evidence": "q08 pillow B/G 2.28, and kn_8 also gives 2.19, but the pillow/white-pillow luma is 0.44 against 0.26 in kn_8. q10 shell (96,100,114) against c_27315 (86,82,96) is OK; q09 (97,102,112) against c_27314 (71,69,80)."}
+],
+"details": [
+{"detail": "Overall nested-pair layout, monuments, shells, privacy walls (aisle views)", "score": 8.6, "refs": ["c_27312", "c_27314", "c_27315", "q06", "q09", "q10"]},
+{"detail": "Monument top / aisle cap / spine / plaques", "score": 8.3, "refs": ["c_27313", "c_27314", "q09", "r5"]},
+{"detail": "Aisle-end posts and door leaves", "score": 8.7, "refs": ["c_27312", "c_27314", "q06", "o2"]},
+{"detail": "Cabinet / table ash (grain character, hue)", "score": 8.0, "refs": ["c_27312", "c_27315", "c_27316", "kn_20", "ash_cmp.png"]},
+{"detail": "Seat: sofa, back channels, header band, slate flap + tab", "score": 8.3, "refs": ["c_27315", "kn_8", "omaat_room_15", "r7"]},
+{"detail": "Seat belt and buckle", "score": 8.2, "refs": ["c_27316", "omaat_room_15", "kn_17", "o3"]},
+{"detail": "Boarding bundle and pillows (upright)", "score": 7.8, "refs": ["kn_8", "kn_17", "omaat_room_15", "o1", "o3", "q09"]},
+{"detail": "E bed", "score": 8.1, "refs": ["r10"]},
+{"detail": "O bed comforter", "score": 7.8, "refs": ["r9", "r6"]},
+{"detail": "Monitor, footwell/ottoman, side-table console", "score": 8.3, "refs": ["c_27316", "q07"]}
+],
+"issues": [
+{
+"severity": "medium",
+"detail": "Cabinet / table ash: soft wavy bands and weak pinstripe, a little warm",
+"problem": "The blotches are softer at 2.2, but the tile's 1-4 cm veneer bands now dominate and read as cathedral arcs, while the fine straight pinstripe of the real ash is about half the photo contrast. The hue also leans yellow-beige against the cool greige of the official photos.",
+"evidence": "ash_cmp.png. Fine-scale hp: q06 cabinet 0.040, q10 0.046, q07 0.037; c_27312 0.097, c_27315 0.088, kn_20 0.079. R/B: q06 1.27, q10 1.24; c_27312 1.16, c_27315 1.04, c_27316 1.04, c_27314 wall 1.09 (in-flight kn_8 1.44 is under warm light).",
+"fix": "test/make_swatches.py:65 HP['j_ash'] 60 -> 20 (drop the >1.5 cm bands) and :70 ALONG['j_ash'] 6 -> 14 (straighter streaks), then re-cut tex_j_ash.png. Keep PHOTO_GAIN[19] at 2.2 or go to 2.6 once the bands are gone, so the pinstripe reaches hp ~0.07. Optionally SEATMAT.ash (09_seats.js:79) #b2a28b -> #b0a390 (R/B 1.28 -> 1.22, between official and in-flight). Layer 30 (doors) shares the tile; check the doors stay plain."
+},
+{
+"severity": "low",
+"detail": "Pillows rigid boards (at 06aea43)",
+"problem": "As w15. bff7fba's stuffed lens should fix it; it is unrated. Also the blue pillow is ~20 % large relative to the bench (0.63 of the back width in o1 against 0.53 in kn_8).",
+"evidence": "o3, o1, r7, q09 against kn_8 (450-630 x 460-590) and omaat_room_15.",
+"fix": "Keep bff7fba's gPillowLens. Consider 0.44 x 0.34 -> 0.40 x 0.30 for the blue pillow (09c roomPillow, PILLOW_GEO key), and check the lens rim does not turn into a hard seam line at q09 distance."
+},
+{
+"severity": "low",
+"detail": "Boarding bundle: no visible film; the front strip is too narrow",
+"problem": "In omaat_room_15 and kn_8 the film-wrapped duvet and pad stick out ~10 cm in front of the blue pillow with bright crinkle highlights. In the model only a 2-3 cm blue lip shows, with no glints.",
+"evidence": "o3 (360-520 x 420-520), q08, q09; omaat_room_15 (crop 280-440 x 310-440 of the 600 px resize).",
+"fix": "09c:285-286 (06aea43): move the pillows ~6 cm back, or shift roomBundle z by dir*0.06, so ~10 cm of bundle shows. Widen the glints to gBox(0.012, 0.002, 0.14-0.24), put 4-5 of them on the exposed front strip at y 0.508 in { c: '#eef0f6', r: 0.04 }, and add a film lip gRBox(0.47, 0.003, 0.012) along the front edge."
+},
+{
+"severity": "low",
+"detail": "O comforter still a crisp cross/T outline",
+"problem": "Unchanged since w15.",
+"evidence": "r9, r6.",
+"fix": "09c duvetSheet (06aea43:311-331) and the O bounds: taper xr linearly from the table corner to the foot (no step), add 0.03*sin(9z+1.3) to both edges, wob 1.0 for O, and round the outline corners (r 0.06)."
+},
+{
+"severity": "low",
+"detail": "Latch tongue detached from its webbing stub; buckle reads matte",
+"problem": "The tongue (0.32, -0.10) floats ~3 cm from its stub (0.34, -0.17), so it reads as a stray grey tag. The buckle shows no highlight.",
+"evidence": "o3 (80-165 x 370-455), z_r7belt.png.",
+"fix": "09c:73-74: put the tongue at the stub's end: M4.mul(CU, M4.trs(0.34, 0.050, -0.105, 0.3)), i.e. the stub centre + 0.065 along its axis at the same angle, and make it 0.03 x 0.045. For the buckle, a thin bright top bevel strip (gBox(0.046, 0.001, 0.004) in #f4f6f8 r 0.05) along its front edge fakes the reflection the studio cannot show."
+},
+{
+"severity": "low",
+"detail": "Aisle-end post has no lower panel seam; dotted aliasing strip on the door-leaf top edge",
+"problem": "c_27312 / c_27314 show the aisle-end ash panel split by a horizontal seam with a short lower panel (~0.15 m) above the kick. The model's post is one panel. In q10 (and faintly in q06) a dashed grey/white zipper pattern runs along the door-leaf top edge rail.",
+"evidence": "c_27314 (380-570 x 525-555 lower band); z_q06.png; z_q10door.png.",
+"fix": "09c:435-437 (06aea43): add a gBox(0.046, 0.006, ez1-ez0-0.06) charcoal seam at y 0.25 on the aisle-end panel. For the zipper, check for coplanar faces where the doorEdge ashDoor strip (09c:95, z+0.021) meets the jShell leaf and jRail; push the strip 1 mm proud, or drop the ash layer on the 6 mm edge faces."
+},
+{
+"severity": "low",
+"detail": "(lighting, not scored) shells light and blue in q09; sofa lilac in the studio; pillow luma vs the white pillow high",
+"problem": "q09 shell (97,102,112) against c_27314 (71,69,80). Blue pillow / white pillow luma 0.44 in q08 against 0.26 in kn_8.",
+"evidence": "q09, q08, r7.",
+"fix": "Lighting owner."
+}
+],
+"questions": [
+"bff7fba (pillow lens) landed after this build; should w16 be re-rated on it, or does it go into the next round?",
+"O-bed length (question 18) and the real-GPU anisotropic check (question 19) are still open."
+]
+}

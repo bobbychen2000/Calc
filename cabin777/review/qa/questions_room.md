@@ -50,3 +50,9 @@ The user asked for judgement calls rather than questions. Rule applied: real in-
     Safran / ANA seat-plan dimension would settle it. Left as is.
 19. **Real-GPU check (w15).** Please confirm on a real GPU that the ash grain no longer smears at grazing angles (q07) and
     the aisle doors do not alias (q06); the headless renderer cannot show anisotropic filtering.
+
+## Wave 3c (w16)
+20. **Belt view (w16b).** No QA or studio view shows the belt and buckle at boarding (pillows and bundle cover it), so the
+    webbing / chrome changes cannot be rated. Should a belt close-up be added to the QA views? Both raters' w16 notes on
+    the webbing differ: c_27316 (official) shows a teal belt, kn_17 near-black slate; the near-black webbing stays.
+21. **Questions 18 (O-bed length) and 19 (real-GPU anisotropic check) remain open.**

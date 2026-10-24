@@ -1,0 +1,92 @@
+{
+ "area": "room",
+ "rater": "B-geometry",
+ "round": 16,
+ "score": 8.5,
+ "summary": "Round 16 rates head 06aea43 (the post-w15 tweaks: ashDoor #ece7dc on layer 30 at gain 0.5, ash grain 2.6 -> 2.2, near-black webbing, glossier chrome). The q06 cabinet and table sample exactly as in w15 ((151,138,119) and (164,156,144)), so the cabin camera and light are comparable with the w15 renders. Geometry and proportion are unchanged from w15: the nested pair, shells, privacy walls, monitor walls, monument top, centre divider and aisle caps still read as the same product as c_27312, c_27314 and c_27315. What changed: (1) My main w15 medium issue, the blotchy weathered-oak ash, is fixed. At gain 2.2 the cabinet and table veneer is a fine, even pinstripe with a few soft bands (ash_cmp.png: q06 cabinet, q07 panel). That matches c_27312, c_27316 and c_27314 at this resolution. Cabinet hp is 0.048 in q06 (c_27312 table 0.094) and 0.040 in q07 (c_27316 0.055). Its R/B of 1.22-1.27 sits inside the real-photo range of 1.10-1.35. (2) The aisle-end doors are a little paler and plainer: q06 post 172 luminance, was 167, hp 0.085, was 0.14. The cabinet-to-door ratio is now 0.79 (was 0.84), against 0.58 in c_27312. The q09 aisle door is (195,194,192) against c_27314's (223,223,220). The rest of this gap is mostly light on the aisle faces. (3) The webbing (#243440) and the chrome (r 0.08, m 1) are in the code, but no QA or studio view shows the belt: the bundle and pillows cover it, as in my own o1. The studio has no environment, so the chrome cannot show its gloss there. With the ash fixed, what is left is soft-goods shape plus lighting: the pillows are still rigid lens slabs with a flange round the whole outline, the O comforter is still a crisp T or cross, the bundle film is still hidden, and the O bed's wide part is still short (awaiting a dimension). I score 8.5: clearly the same product, with only minor material, soft-goods and lighting differences left, and no high or geometric medium issue. Lighting (not scored): the cabin pillow is over-saturated (q08 (52,68,155), B/G 2.28, against kn_17's 1.91). The studio pillow is too light (o1 pillow/white pillow luminance 0.64 against kn_17's 0.47), so it reads cornflower blue. The shells read light slate (q10 shell 106 against c_27315's 85), and the whole studio set looks washed out.",
+ "photos_collected": [
+  "No new downloads. Used ref/ana c_27312, c_27313, c_27314, c_27315, c_27316, c_27300; ref/web/room kn_17."
+ ],
+ "own_renders": [
+  "/tmp/claude-0/-home-user-Calc/4db43c9e-e5cc-5ca1-ab86-b287c381eb7d/scratchpad/w16/raterB/own/o1_belt.png (O seat from above the cushion: the pillow and bundle cover the belt and buckle; a flange runs round the whole blue pillow)",
+  "/tmp/claude-0/-home-user-Calc/4db43c9e-e5cc-5ca1-ab86-b287c381eb7d/scratchpad/w16/raterB/own/o2_pair_side.png (side elevation, too distant to use)",
+  "/tmp/claude-0/-home-user-Calc/4db43c9e-e5cc-5ca1-ab86-b287c381eb7d/scratchpad/w16/raterB/own/o3_pillow_side.png (pillow profile: uniform-thickness rounded slabs)",
+  "/tmp/claude-0/-home-user-Calc/4db43c9e-e5cc-5ca1-ab86-b287c381eb7d/scratchpad/w16/raterB/own/o4_centre_c27313.png (centre-pair top view: the spine still meets the aisle cap near its O end)",
+  "/tmp/claude-0/-home-user-Calc/4db43c9e-e5cc-5ca1-ab86-b287c381eb7d/scratchpad/w16/raterB/ash_cmp.png (q06 cabinet | q06 aisle door | c_27312 | q07 panel | c_27316 | c_27314)",
+  "/tmp/claude-0/-home-user-Calc/4db43c9e-e5cc-5ca1-ab86-b287c381eb7d/scratchpad/w16/raterB/studio_sheet.png (r1-r10 contact sheet)",
+  "/tmp/claude-0/-home-user-Calc/4db43c9e-e5cc-5ca1-ab86-b287c381eb7d/scratchpad/w16/raterB/own_sheet.png",
+  "spec /tmp/claude-0/-home-user-Calc/4db43c9e-e5cc-5ca1-ab86-b287c381eb7d/scratchpad/w16/raterB/spec.json; sampler py/m.py"
+ ],
+ "prior_issues": [
+  {"from": "w15b", "severity": "medium", "issue": "Ash grain coarse and blotchy (weathered oak)", "status": "fixed", "evidence": "ash_cmp.png: the q06 cabinet (170-330 x 330-450) and the q07 panel (110-360 x 180-440) now show fine, even streaks with only soft low-contrast bands, the same character as the c_27312, c_27316 and c_27314 crops. Cabinet hp: q06 0.048, q07 0.040 (c_27316 0.055). The tone is unchanged at (151,138,119)."},
+  {"from": "w15b/w15a/w14a", "severity": "medium", "issue": "In the cabin the aisle-end doors read grey-cream and streaky, too close in tone to the cabinets", "status": "partly fixed", "evidence": "q06 post (605-650 x 330-500): 172 luminance, hp 0.085 (w15: 167, hp 0.14). Cabinet/door ratio 0.79 (w15 0.84); c_27312 gives 0.58 (door (197,196,190) at 195). q09 door (450-510 x 130-200) is 194, against c_27314 at 222. The streaks are mostly gone; the remaining gap in luminance is mostly light on the aisle-facing faces."},
+  {"from": "w13a/w14b/w15b", "severity": "medium", "issue": "Ash smeared in the q07 seated view at grazing angles", "status": "not judgeable in SwiftShader", "evidence": "q07 left panel (0-50 x 220-440) hp 0.007, table top (20-380 x 460-570) hp 0.028 against c_27316's table at 0.092. Still needs the real-GPU check (question 19)."},
+  {"from": "w15a", "severity": "low", "issue": "Webbing reads teal, not near-black; chrome reads matte", "status": "fixed in code, not visible", "evidence": "09c line 59 webbing #243440; CH r 0.08 m 1. No view shows the belt (o1, r7, q08, q09: under the pillow and bundle). The studio has no environment for chrome to reflect."},
+  {"from": "w14a/b, w15a/b", "severity": "low", "issue": "Pillows are rigid slabs", "status": "not fixed", "evidence": "o3_pillow_side: uniform ~12 cm lens slabs with round rims. o1: a brown flange runs round the whole outline; in kn_17 the dark gusset shows only along one side edge, and the corners pinch to thin dog-ears."},
+  {"from": "w14a/b, w15a/b", "severity": "low", "issue": "O comforter a crisp T or cross", "status": "not fixed", "evidence": "r9 is unchanged: straight-cut tongue edges and a square cross outline."},
+  {"from": "w15a/b", "severity": "low", "issue": "Bundle film invisible", "status": "not fixed", "evidence": "o1 and r7: only a thin white pad edge shows in front of the blue pillow. The blue duvet in film, which in kn_17 shows as a ~12 cm band in front of and below the pillow, cannot be seen."},
+  {"from": "w14b/w15b", "severity": "low", "issue": "O bed wide part short (0.66 m against ~0.9 m in tpg_81)", "status": "open (awaiting dimension, question 18)", "evidence": "The geometry is unchanged (r6, r9)."},
+  {"from": "w11a/b", "severity": "low", "issue": "The spine meets the aisle cap near its O end, not at the centre as in c_27313", "status": "open (decision 12)", "evidence": "o4: the spine meets the cap about 20 % from its O end."}
+ ],
+ "details": [
+  {"detail": "Overall nested-pair layout, shells, privacy walls, monitors, cabinets (aisle views)", "score": 8.5, "refs": ["c_27312", "c_27315", "q06", "q10"]},
+  {"detail": "Monument top: housings, spine and rail, aisle cap, plaques", "score": 8.4, "refs": ["c_27313", "c_27314", "r5", "o4", "q08"]},
+  {"detail": "Ash panels and table tops (tone, grain, door/cabinet split)", "score": 8.5, "refs": ["c_27312", "c_27314", "c_27316", "ash_cmp.png"]},
+  {"detail": "Seat sofa: bench, back channels, header band, slate flap; satin shell rims", "score": 8.4, "refs": ["c_27315", "kn_17", "r7"]},
+  {"detail": "Seat belt and buckle", "score": 8.4, "refs": ["kn_17", "c_27316", "o1"]},
+  {"detail": "Boarding bundle and pillows (upright)", "score": 8.1, "refs": ["kn_17", "o1", "o3", "q08", "q09"]},
+  {"detail": "E bed (mattress, quilted comforter, pillows)", "score": 8.4, "refs": ["tpg_81", "r10"]},
+  {"detail": "O bed comforter and proportions", "score": 8.2, "refs": ["tpg_81", "r6", "r9"]},
+  {"detail": "Monitor, footwell, ottoman, side-table console", "score": 8.4, "refs": ["c_27316", "q07"]},
+  {"detail": "Colour fidelity of materials (studio; cabin cast excluded)", "score": 8.5, "refs": ["kn_17", "c_27312", "c_27316", "r7", "r9"]}
+ ],
+ "issues": [
+  {
+   "severity": "medium",
+   "detail": "In the cabin views the aisle-end door panels are still too dark relative to the cabinets (mostly lighting)",
+   "problem": "The material is right: near-plain cream in the studio, and the streaks are gone in q06. In the cabin the doors render at 172-194 luminance against 195-222 in the photos, and the cabinet/door ratio is 0.79 against 0.58.",
+   "evidence": "q06 (605-650 x 330-500) 172, hp 0.085; c_27312 (450-490 x 250-420) 195; q09 (450-510 x 130-200) 194; c_27314 (340-600 x 420-520) 222.",
+   "fix": "Lighting/integration first: check the AO volume and the ambient term on the aisle-facing vertical faces (12_scene.js). Room-side, if the lighting is confirmed final: 09c line 25, ashDoor c '#ece7dc' -> '#f2eee6', r 0.36 -> 0.45. Do not touch PHOTO_GAIN[30]."
+  },
+  {
+   "severity": "low",
+   "detail": "Pillows are rigid lens slabs, with the flange round the whole outline",
+   "problem": "Real pillows (kn_17) are puffy, pinched to thin dog-ear corners, slightly creased. The dark gusset shows only on one side edge, not as a frame. The white pillow reads as a seat cushion.",
+   "evidence": "o3_pillow_side, o1, q09 (170-300 x 390-560) against kn_17.",
+   "fix": "09c roomPillow (line 337) / gPillowLens: make the thickness profile T*(1-|2u-1|^4)*(1-|2v-1|^4)^0.6 + 0.004 so the corners pinch, and add two 3 mm sine wrinkles. Replace the full-outline flange with a 1.5 cm strip along one short edge only (kn_17)."
+  },
+  {
+   "severity": "low",
+   "detail": "Boarding bundle duvet in film not visible",
+   "problem": "In kn_17 the blue duvet in clear film shows as a band about 12 cm deep in front of and below the blue pillow, with the white pad below it. In the model only the white pad edge shows.",
+   "evidence": "o1 (140-460 x 320-420), r7 against kn_17 (200-800 x 460-830).",
+   "fix": "09c roomBundle (line 281) or the upright pillow placement (lines 523-524 / 584): move the blue pillow ~6-8 cm toward the seat back (z -0.81 -> -0.75 in O seat coordinates) or tilt it 10 deg further back, so the bundle's front band shows."
+  },
+  {
+   "severity": "low",
+   "detail": "O comforter still a crisp T or cross",
+   "problem": "The tongue edges are straight cuts and the corners square; tpg_81 shows soft, irregular edges with broad loose folds.",
+   "evidence": "r9 (260-520 x 150-440) against tpg_81.",
+   "fix": "09c duvetSheet (line 355), O bed call: add a 0.03*sin(9z+1.3) + 0.02*sin(23z) wave to the tongue's x edges, round the outline corners (r 0.06), and add one or two long diagonal folds across the tongue."
+  },
+  {
+   "severity": "low",
+   "detail": "Spine meets the aisle cap near its O end (decision 12)",
+   "problem": "In c_27313 the monument spine meets the aisle-end cap at its centre, with the 17E and 18D plaques symmetric on either side.",
+   "evidence": "o4_centre_c27313 against c_27313 / c_27314.",
+   "fix": "Left as is per decision 12. If revisited, deepen the O housing in the monument-top block of 09c so the spine lands at the cap centre."
+  },
+  {
+   "severity": "low",
+   "detail": "(lighting, not scored) cabin pillow over-saturated, studio pillow too light, shells light slate, studio washed out",
+   "problem": "These are casts from the cabin and studio lighting, not material colours.",
+   "evidence": "q08 pillow (52,68,155), B/G 2.28, against kn_17 (46,69,132), 1.91. Studio o1 pillow/white pillow luminance 0.64 against kn_17's 0.47. q10 shell (560-700 x 330-420) 106 against c_27315's 85.",
+   "fix": "Lighting owner (exposure loop in 04_shaders.js / 12_scene.js). Do not retune SEATMAT."
+  }
+ ],
+ "questions": [
+  "O-bed proportions (repeat of question 18): is a Safran/ANA seat-plan dimension available for the bed length and the table length?",
+  "Real-GPU check (question 19): is the q07 grazing-angle ash smear gone with anisotropic filtering?",
+  "Should a QA view or studio shot be added that shows the belt and buckle (e.g. an E seat with the bundle moved), so that the webbing and chrome changes can be rated?"
+ ]
+}
