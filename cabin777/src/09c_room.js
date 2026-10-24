@@ -18,8 +18,8 @@ Object.assign(SEATMAT, {
   jPanelEdge: { c: '#5d6166', r: 0.34, m: 0.5, l: LAYER.brushed },
   jLedge: { c: '#8f959c', r: 0.3, m: 0.6, l: LAYER.brushed },   // ledge top, darker than the edge trim (c_27313 #788087-#b2bbc8) [V]
   jSill: { c: '#8e9399', r: 0.35, m: 0.4, l: LAYER.brushed },   // silver-grey sill + drawer under the monitor (tpg_53) [V]
-  jLens: { c: '#55585d', r: 0.25 },
-  jBand: { c: '#656b73', r: 0.4, l: LAYER.leather },   // w6a: header band 0.9-1.35x the fabric, a touch darker than the flap (tpg_42, c_27313) [V]   // reading-lamp lens, switched off (c_27315 / 27316 lamps read dark grey) [V]
+  jLens: { c: '#55585d', r: 0.25 },   // reading-lamp lens, switched off (c_27315 / 27316 lamps read dark grey) [V]
+  jBand: { c: '#656b73', r: 0.4, l: LAYER.leather },   // w6a: header band 0.9-1.35x the fabric, a touch darker than the flap (tpg_42, c_27313) [V]
 });
 const ROOM = { hx: 0.585, hz: 1.359, top: 0.66, wall: 1.12, bed: 0.43 };
 // seat itself (passenger faces -z, back at z = 0): upright or bed. Per c_27302/27315/27316: thin flat cushion and a flat
@@ -260,6 +260,16 @@ const MON = { zO: -0.21, zE: 0.035, top: 1.10, bot: 0.555 };   // QA w2: top rai
 const CON = { top: 0.60 };   // outer console top (c_27316 / 27303: ~0.17 above the cushion) [A]
 // QA w1 pillow: flat piped rectangle ~0.44 x 0.34 x 0.07, navy check jacquard face, grey-taupe reverse panel + piping
 // (c_27303, omaat_room_13) [V]
+// boarding bundle under the pillows (tpg_31 / tpg_42, w7: restored from 5a42e29): a folded white mattress pad with the
+// royal-blue duvet folded on it, a pillow's footprint, each in clear plastic - glossy, the duvet read paler through the film
+// (tpg_42 pad #d1ccbf, duvet band #6675ba vs pillow #3b55a9; layers ~0.04 each, duvet inset ~0.02) [V]; the blue slipper
+// pack in its bag beside it (tpg_42 #0a4db9, tpg_31) [V] on side ps; dir = +1 when the seat faces +z (O)
+function roomBundle(B, x, z, dir, ps) {
+  B.add(gRBox(0.46, 0.042, 0.31, 0.016, 1), M4.trs(x, 0.452, z), { c: '#e2ded4', r: 0.3 });
+  B.add(gRBox(0.43, 0.034, 0.28, 0.014, 1), M4.trs(x + 0.005, 0.49, z - dir * 0.012), { c: '#6470b4', r: 0.3 });
+  B.add(gRBox(0.452, 0.002, 0.29, 0.001, 1), M4.trs(x, 0.4735, z + dir * 0.003), { c: '#eef0f2', r: 0.15 });   // pad fold seam under the film
+  B.add(gRBox(0.09, 0.035, 0.17, 0.015, 1), M4.trs(x + ps * 0.30, 0.448, z + dir * 0.02, ps * 0.35), { c: '#1f4fb4', r: 0.3 });
+}
 function roomPillow(B, xf) {
   B.add(gLoft(cushionSecs(0.44, 0.34, 0.07, -0.035, { edge: 0.015, r: 0.02 }), 3), xf, SEATMAT.pillowBlue);
   B.add(gRBox(0.43, 0.004, 0.33, 0.015, 1), M4.mul(xf, M4.trs(0, -0.035, 0)), SEATMAT.jPillowBack);
@@ -348,8 +358,10 @@ function roomPart(part, opts = {}) {
       roomPillow(B, M4.mul(M4.trs(SX - 0.08, ROOM.bed + 0.13, -0.98), M4.trs(0, 0, 0, 0.05, 25 * DEG)));   // w6a: leaning on the white one (fb_a96b7a65) [V]
     } else {
       // white pillow leaning on the back with the blue one in front of it, toward the aisle half (tpg_31 / 42) [V]
-      B.add(gLoft(cushionSecs(0.50, 0.34, 0.10, -0.05, { edge: 0.04, r: 0.04 }), 3), M4.mul(M4.trs(0.06, 0.61, -1.10, Math.PI), M4.trs(0, 0, 0, 0.05, -74 * DEG)), SEATMAT.pillow);
-      roomPillow(B, M4.mul(M4.trs(0.08, 0.575, -1.02, Math.PI), M4.trs(0, 0, 0, 0.08, -68 * DEG)));
+      // w7: the blue pillow rests on the bundle, the white one stands behind it, its top showing (tpg_31 / 42) [V]
+      roomBundle(B, 0.07, -0.93, 1, -1);
+      B.add(gLoft(cushionSecs(0.50, 0.34, 0.10, -0.05, { edge: 0.04, r: 0.04 }), 3), M4.mul(M4.trs(0.06, 0.63, -1.10, Math.PI), M4.trs(0, 0, 0, 0.05, -74 * DEG)), SEATMAT.pillow);
+      roomPillow(B, M4.mul(M4.trs(0.08, 0.64, -0.99, Math.PI), M4.trs(0, 0, 0, 0.08, -60 * DEG)));
     }
     // outer side (window / centreline): the thin outer wall, then a console 0.085 deep with a charcoal cap along the seat
     // up to the monitor monument, red life-vest tab + stowage latch on its seat face (c_27316 left, c_27303 / 27300 window
@@ -409,8 +421,9 @@ function roomPart(part, opts = {}) {
       B.add(gLoft(cushionSecs(0.46, 0.30, 0.12, -0.06, { edge: 0.05, r: 0.05 }), 3), M4.trs(0.30, ROOM.bed + 0.08, 1.08), SEATMAT.pillow);
       roomPillow(B, M4.mul(M4.trs(0.30, ROOM.bed + 0.13, 0.98), M4.trs(0, 0, 0, -0.05, -25 * DEG)));
     } else {
-      B.add(gLoft(cushionSecs(0.48, 0.32, 0.10, -0.05, { edge: 0.04, r: 0.04 }), 3), M4.mul(M4.trs(0.04, 0.60, 1.08), M4.trs(0, 0, 0, -0.30, -72 * DEG)), SEATMAT.pillow);
-      roomPillow(B, M4.mul(M4.trs(0.10, 0.575, 1.00), M4.trs(0, 0, 0, -0.25, -70 * DEG)));
+      roomBundle(B, 0.15, 0.93, -1, 1);
+      B.add(gLoft(cushionSecs(0.48, 0.32, 0.10, -0.05, { edge: 0.04, r: 0.04 }), 3), M4.mul(M4.trs(0.10, 0.62, 1.10), M4.trs(0, 0, 0, -0.30, -72 * DEG)), SEATMAT.pillow);
+      roomPillow(B, M4.mul(M4.trs(0.15, 0.64, 0.99), M4.trs(0, 0, 0, -0.25, -60 * DEG)));
     }
     B.add(gRBox(0.025, top, 1.33, 0.01, 1), M4.trs(-0.572, top / 2, 0.69), shell);
     capRail(B, 0.025, 1.33, -0.572, top, 0.69);
