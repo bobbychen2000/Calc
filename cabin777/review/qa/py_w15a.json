@@ -1,0 +1,46 @@
+{
+  "area": "py",
+  "rater": "A",
+  "round": "w15",
+  "commit": "46a988d",
+  "score": 8.5,
+  "summary": "Up 0.1 on w14 (8.4), which puts PY at the 8.5 target with no high-severity issues. Both w14 medium issues are fixed by the post-rating swatch changes. (1) The trim-A ear chips are now pointed and notched, with a wide size spread and visible fine flecks. They no longer read as polka dots. The p4 ear crop gives cover 16.4 % (py_37305 16.9 %), ground #4a4d5b S 0.18 (photo #4e505f S 0.17), p90/p50 1.55 (1.60), hp 0.219 (0.242), and 102 of 148 blobs are under 8 px (photo 199 of 254). (2) The back weave contrast has come back down to the photo. In p8 the back gives p90/p50 1.34 (py_37301 1.28; w14 1.39), hp 0.191 (0.187; w14 0.219) and S 0.24 (0.22; w14 0.26). The ear-ground colour (a w14 low) is also fixed. Remaining differences: (a) Close up (p5, the p8 cushion, the q13b foreground) the trim-A cloth is still soft square blocks. py_37301 shows fine ribbed dashes, and the p8 cushion hp is 0.129 vs 0.182 there. (b) The pocket geometry and parts are unchanged: about 0.11 m of plain shell under the recess, a light-grey tray rim, a plain holder plate and a blank leaflet. (c) The navy flap is still dead flat (std 1.3 vs 4.6). (d) The placards are blank. (e) At cabin distance (q13) the ears read a little busier and brighter-speckled than in py_37302, where the petals barely register. The colour of the back weave blocks is right, but they are about 1.5-2x coarser than py_37301 at matched framing.",
+  "lighting_note": "Not scored. After 2913db8 the PY block in q13 still reads cobalt. The flap in q13 is #35416c against #283769 in py_37302, and the backs are S 0.30 against 0.34 at a similar luminance, so the gap is now mostly hue, not saturation. Studio p8 is close to the photo (S 0.24 vs 0.22), so most of the remaining blue cast is the cabin light or tone curve, not material. q14 still has the bright rhombus-shaped sun or specular patch on the far window seat back (around x 500, y 330), so the window sun LUT needs checking. The q13b foreground seat top is very dark between blocks (low-pocket AO may be leaking onto the fabric).",
+  "calibration": [
+    {"issue": "w14a medium / w14b medium: trim-A ear chips are hexagonal polka dots, too even, no flecks", "status": "fixed. In p4 the chips are pointed or notched, with mixed sizes and visible small flecks (/tmp/claude-0/py/w15a/w15a_crops.png, panels 1-2). The p4 ear crop gives cover 16.4 % vs 16.9 % in py_37305 (w14 23.1 %), and 102 blobs under 8 px (w14 13). The photo petals are still somewhat larger and more lobed relative to the ear, but that is minor."},
+    {"issue": "w14a medium / w14b low: trim-A back weave overshot in contrast", "status": "fixed. p8 back p90/p50 1.34 (py_37301 1.28), hp 0.191 (0.187), S 0.24 (0.22). The blocks now fill most of the row."},
+    {"issue": "w14a low: ear ground too blue", "status": "fixed. p4 ear ground #4a4d5b S 0.18; py_37305 #4e505f S 0.17."},
+    {"issue": "w14b low: trim-B petal tile shows repeating Y/asterisk clusters", "status": "fixed at q13 distance. No stamped motif is visible on the D/G backs in q13."},
+    {"issue": "w14a low: about 0.11-0.15 m of plain shell under the pocket", "status": "not fixed. 09b_py.js py0 is still 0.27, and p6 is unchanged."},
+    {"issue": "w14a low: close-range trim-A cloth reads as pixel blocks", "status": "not fixed. The p8 cushion hp is 0.129 vs 0.182 in py_37301. p5 and the q13b foreground show soft square blocks, not fine dashes."},
+    {"issue": "w14a low: navy flap dead flat", "status": "not fixed. p4 flap #273053 std 1.3 S 0.53; py_37305 #22263f std 4.6 S 0.46."},
+    {"issue": "w14a low / w14b low: pocket parts plain or too dark (tray rim, holder plate, leaflet)", "status": "not fixed. p6 shows a light-grey smile rim (PYREAR #5e636b), a plain holder plate and a blank cream leaflet."},
+    {"issue": "w14a/w14b low (handed off): placards blank", "status": "not fixed (p6, q13b)."}
+  ],
+  "details": [
+    {"detail": "back + cushion shape", "score": 8.5, "refs": "py_37301, py_37303; p1, p3, p8"},
+    {"detail": "headrest ears + flap", "score": 8.4, "refs": "py_37305 vs p4: ears now right, flap flat (w14 8.0)"},
+    {"detail": "shell incl. rear", "score": 8.3, "refs": "san_26, b_san_20 vs p2 / p6"},
+    {"detail": "screen + bezel + placards", "score": 8.4, "refs": "py_37304, san_26; q13b"},
+    {"detail": "literature pocket", "score": 8.3, "refs": "san_26 vs p6"},
+    {"detail": "consoles", "score": 8.2, "refs": "py_37301 / 37303; p5, p8"},
+    {"detail": "armrest + shroud", "score": 8.3, "refs": "py_37303, py_37301"},
+    {"detail": "leg rest / footrest / legs / bottle bin", "score": 8.2, "refs": "py_37301; p6, p8"},
+    {"detail": "gooseneck", "score": 8.5, "refs": "py_37305; p4"},
+    {"detail": "fabrics: trim A weave", "score": 8.4, "refs": "py_37301; contrast now matched, close range still blocky (w14 8.2)"},
+    {"detail": "fabrics: trim B petal (D/G)", "score": 8.5, "refs": "py_37302; q13"},
+    {"detail": "fabrics: trim A petal ears", "score": 8.6, "refs": "py_37305; /tmp/claude-0/py/w15a/w15a_crops.png (w14 7.9)"},
+    {"detail": "overall", "score": 8.5, "refs": ""}
+  ],
+  "issues": [
+    {"severity": "low", "issue": "At close range the trim-A cloth is soft square blocks that are about 1.5-2x coarser than the photo. py_37301 shows fine ribbed dash rows.", "evidence": "/tmp/claude-0/py/w15a/w15a_crops.png, panels 5-6: p8 cushion hp 0.129 vs 0.182 in py_37301. Also p5 and the q13b foreground.", "fix": "test/make_swatches.py synth_py_back: split each light band into 2 thread lines (lite *= 0.45 + 0.55 * thr) and cut the block x-jitter from (-6, 6) to (-2, 2). Alternatively, raise the pyFabric UV repeat by 1.5x in 09b_py.js and recheck the p8 back hp (target 0.18-0.19)."},
+    {"severity": "low", "issue": "About 0.11 m of plain shell is left under the pocket recess. The real rear views (b_san_20 / san_26) show only 2-5 cm.", "evidence": "p6; 09b_py.js py0 = 0.27", "fix": "src/09b_py.js: py0 0.27 -> 0.20 and recess h 0.31 -> 0.33 (centre py0 + 0.165)."},
+    {"severity": "low", "issue": "The pocket parts are plain. The smile rim and tray are light grey (san_26: charcoal). The holder plate is a rectangle with no notched corners. The leaflet is blank (san_26: purple '777-300' header).", "evidence": "p6 vs san_26", "fix": "09b_py.js: change the tray loft and smile rim material from PYREAR to { c: '#3e4248', r: 0.6, l: LAYER.plastic }. Add a 0.16 x 0.012 '#5a3f8a' quad at the top of the leaflet."},
+    {"severity": "low", "issue": "The navy flap is dead flat and slightly too saturated.", "evidence": "p4 flap #273053 std 1.3 S 0.53; py_37305 #22263f std 4.6 S 0.46.", "fix": "SEATMAT.pyCover c -> '#2a3050', and raise its plastic LAYER grain by about 1.5x (target std 4-5 in p4)."},
+    {"severity": "low", "issue": "At cabin distance the ears look slightly busier and more speckled than in py_37302.", "evidence": "q13 near-row ears vs the py_37302 foreground headrest", "fix": "make_swatches.py tex_py_ear: lower the speck gain by about 25 % (chips unchanged), or add a mip-level bias in the ear material so the specks fade at distance."},
+    {"severity": "low", "issue": "(Handed off, not scored) The placards are blank.", "evidence": "p6, q13b vs py_37304", "fix": "06_atlas.js: add a placard tile with two grey text lines."}
+  ],
+  "questions": [
+    "Should the q13 cobalt cast be handed to lighting? Studio p8 now matches py_37301 in saturation, so the remaining cabin-wide blue appears to come from the lighting pass, not the material."
+  ]
+}
