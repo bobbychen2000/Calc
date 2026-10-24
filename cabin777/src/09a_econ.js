@@ -63,8 +63,8 @@ function econSeat(B, x0, lod, opts = {}) {
   // back: rises above the headrest cushion to a rounded top (y_47306 all three seats, y_47301, sanspotter 13;
   // back length ~0.87 from the pan crease, y_47302 right seat) [D]
   B.add(econCrownLoft([SEC(0.0, 0.40, 0.07, -0.005, 0.02), SEC(0.04, 0.425, 0.09, -0.012), SEC(0.16, 0.43, 0.108, -0.024, 0.036), SEC(0.30, 0.43, 0.095, -0.014, 0.036),
-    SEC(0.46, 0.425, 0.086, -0.006, 0.034), SEC(0.58, 0.415, 0.076, 0.0, 0.03), SEC(0.70, 0.41, 0.07, 0.004, 0.028), SEC(0.818, 0.405, 0.062, 0.006, 0.026),
-    SEC(0.838, 0.395, 0.062, 0.010, 0.026), SEC(0.853, 0.37, 0.058, 0.014, 0.024), SEC(0.858, 0.334, 0.052, 0.018, 0.02), SEC(0.866, 0.30, 0.044, 0.02, 0.016), SEC(0.874, 0.25, 0.034, 0.024, 0.012)], lod ? 3 : 4, (y) => 0.012 * clamp((0.685 - y) / 0.08, 0.35, 1)), BH, F);   // w10 gap: crowned, crown eased behind the headrest; w14: the top rolls over the shell cap
+    SEC(0.46, 0.43, 0.086, -0.006, 0.034), SEC(0.58, 0.425, 0.076, 0.0, 0.03), SEC(0.70, 0.422, 0.07, 0.004, 0.028), SEC(0.818, 0.415, 0.062, 0.006, 0.026),
+    SEC(0.838, 0.403, 0.062, 0.010, 0.026), SEC(0.853, 0.37, 0.058, 0.014, 0.024), SEC(0.858, 0.334, 0.052, 0.018, 0.02), SEC(0.866, 0.30, 0.044, 0.02, 0.016), SEC(0.874, 0.25, 0.034, 0.024, 0.012)], lod ? 3 : 4, (y) => 0.012 * clamp((0.685 - y) / 0.08, 0.35, 1)), BH, F);   // w10 gap: crowned, crown eased behind the headrest; w14: the top rolls over the shell cap; w17 B: upper back 1 cm wider over the hood sides
   // w6 B: the back is ~0.44 wide at headrest height round a narrower cushion (y_47300: a margin of back fabric shows
   // round the pad); w6 A: it ends 12 mm under the shell cap (the caps were coplanar at 0.868 and z-fought) [D]
   // rear shell: a slim lower panel (tray + pockets) under a deep sculpted hood that wraps the screen and caps the top of
@@ -94,7 +94,9 @@ function econSeat(B, x0, lod, opts = {}) {
   // w9 B: fleck backs keep fleck pads (a 4x crop of y_47300 seats 2 / 4 shows fine speckle; the w8 mosaic pads were wrong)
   // w14 gap: the whole headrest 2.5 cm higher, so the back rises ~3 cm above the cover fold (y_47300 0-1 cm, y_47301 ~3,
   // y_47302 ~4; only y_47306 shows the lowered ~5.5 cm) [D]
-  const HF = F === SEATMAT.yFabricB ? SEATMAT.yFabricC : F === SEATMAT.yFabricC ? SEATMAT.yFabricB : SEATMAT.yHead;
+  // w17 B: fleck backs carry a tick pad and tick backs a fleck pad (y_47300 seats 1-4)
+  const econHead = (F) => F === SEATMAT.yFabricB ? SEATMAT.yFabricC : F === SEATMAT.yFabricC ? SEATMAT.yFabricB : F === SEATMAT.yFabricD ? SEATMAT.yFabric : SEATMAT.yHead;
+  const HF = econHead(F);
   // w7 A + B: a U-shaped pad ~0.39 wide (0.90-0.96 of the back in y_47306 / 47302, sans 13) - a centre panel behind the
   // cover and two round wing bolsters ~2 cm proud of it at both ends; 0.025 lower so the back rises ~5.5 cm above the
   // cover fold (y_47306 0.053-0.073, y_47301 ~0.06; the fold showed above the hood from behind) [D]
@@ -117,7 +119,7 @@ function econSeat(B, x0, lod, opts = {}) {
   B.add(gQuad(0.253, 0.02), M4.mul(BH, M4.trs(0, 0.586, -0.1058, Math.PI)), { c: '#454c68', r: 0.38 });   // w10 gap: darker hem
   B.add(gQuad(0.24, 0.0012), M4.mul(BH, M4.trs(0, 0.5965, -0.1061, Math.PI)), { c: '#9aa0b8', r: 0.5 });   // stitch line, light thread (w10 gap)
   // w11 B: contact darkening where the back fabric tucks into the shell sides (y_47306 dark crease) and along the strip
-  for (const sx of [-1, 1]) loftAt(B, [SEC(0.05, 0.014, 0.003, -0.048, 0.001, sx * 0.199), SEC(0.55, 0.014, 0.003, -0.043, 0.001, sx * 0.198), SEC(0.80, 0.014, 0.003, -0.032, 0.001, sx * 0.194)], BH, { c: '#283052', r: 0.95 }, 1);   // w12 A + B: soft crease, not a drawn line
+  for (const sx of [-1, 1]) loftAt(B, [SEC(0.05, 0.014, 0.003, -0.048, 0.001, sx * 0.199), SEC(0.55, 0.014, 0.003, -0.043, 0.001, sx * 0.203), SEC(0.80, 0.014, 0.003, -0.032, 0.001, sx * 0.2)], BH, { c: '#283052', r: 0.95 }, 1);   // w12 A + B: soft crease, not a drawn line
   // w9 A: a ~0.12 m centre strip in a contrasting weave runs from the pad top to the back top (headrest track cover,
   // y_47306 right / middle seats) [V]
   loftAt(B, [SEC(0.803, 0.12, 0.004, -0.0295, 0.002), SEC(0.818, 0.12, 0.004, -0.0275, 0.002), SEC(0.842, 0.115, 0.004, -0.0235, 0.002)], BH, F === SEATMAT.yFabricD ? F : { ...SEATMAT.yFabric, c: photoBase('#4b5577', 'y_tick') }, 1);   // w16 A: no tick patch on fleck backs   // w11 B: darker tick / chevron weave, not diamond (y_47306)
@@ -275,7 +277,8 @@ function econUnit(n, lod = false, opts = {}) {
     const beam = { ...SEATMAT.armPost, c: '#b4b9c2' };
     // w16 A + B: one smooth swept moulding (two straight pieces + an elbow read as an open bracket with a strut)
     const jp = []; for (let i = 0; i <= 12; i++) { const t = i / 12, u = 1 - t; jp.push([0, u * u * 0.625 + 2 * u * t * 0.505 + t * t * 0.512, u * u * -0.085 + 2 * u * t * -0.215 + t * t * -0.375]); }
-    B.add(gTube(jp, 0.021, 10), M4.trs(xa, 0, 0), beam);
+    const jt = gTube(jp, 0.028, 12); for (let k = 0; k < jt.p.length; k += 3) jt.p[k] *= 0.45; computeNormals(jt);   // w17 A: a flat ~2.5 x 5.6 cm moulding, not a round tube
+    B.add(jt, M4.trs(xa, 0, 0), beam);
     // off-white fairing hanging under the arm nose down to ~0.14 m above the floor (the white "paddles" in y_47302:
     // 0.54 -> 0.14 m at 422 px/m) [D]
     B.add(gRBox(0.03, 0.32, 0.14, 0.012, 2), M4.trs(xa, 0.30, -0.35, 0, -6 * DEG), SEATMAT.arm);
@@ -317,7 +320,7 @@ function econUnitFar(n, rot = 0) {
     B.add(gRBox(0.42, 0.86, 0.08, 0.035, 1), M4.mul(BH, M4.trs(0, 0.43, -0.005)), f);   // same mix as econUnit
     B.add(gRBox(0.446, 0.62, 0.045, 0.015, 1), M4.mul(BH, M4.trs(0, 0.25, 0.058)), SEATMAT.yShell);
     B.add(gRBox(0.40, 0.37, 0.12, 0.015, 1), M4.mul(BH, M4.trs(0, 0.665, 0.062)), SEATMAT.yShell);    // screen hood under the back top (w5; w6 0.40, tight corners; w14 gap: top 0.85, its white cap showed on every far back)
-    B.add(gRBox(0.39, 0.2, 0.11, 0.04, 1), M4.mul(BH, M4.trs(0, 0.70, -0.058)), f === SEATMAT.yFabricB ? SEATMAT.yFabricC : f === SEATMAT.yFabricC ? SEATMAT.yFabricB : SEATMAT.yHead);
+    B.add(gRBox(0.39, 0.2, 0.11, 0.04, 1), M4.mul(BH, M4.trs(0, 0.70, -0.058)), f === SEATMAT.yFabricB ? SEATMAT.yFabricC : f === SEATMAT.yFabricC ? SEATMAT.yFabricB : f === SEATMAT.yFabricD ? SEATMAT.yFabric : SEATMAT.yHead);
     B.add(gBox(0.255, 0.235, 0.01), M4.mul(BH, M4.trs(0, 0.6825, -0.11)), SEATMAT.yCover);
     B.add(gQuad(0.316, 0.205), M4.mul(BH, M4.trs(0, 0.7275, 0.1245)), SEATMAT.bezel);
     B.add(gQuad(0.294, 0.166), M4.mul(BH, M4.trs(0, 0.7275, 0.1265)), SEATMAT.screen, atlasUV('screen'));

@@ -43,3 +43,8 @@
   y_47301 / 47303. Econ set `yCover` to r 0.5.
 - **w14 to integration (`test/qa.js`), still open:** q15 / q17 / q18 do not match y_47300 / y_47303 / y_47305 (see w6),
   so the pans, pillows and the new J arm beam are never compared in-cabin.
+- **w17 to lighting (`04_shaders.js`), medium:** the Y tick stitch columns (~1.25 cm pitch) wash out under minification
+  at row distance (q15 column CV 0.06-0.08 vs 0.24 in y_47300) even with the column profile doubled in the tile. A mip
+  bias of about -0.5 to -1 (or anisotropic filtering) on the photo fabric layers 16 / 24 / 25 / 26 would keep them, and
+  would also stop the smear on the seat side panels at grazing angles (w17 A + B). The q16 near seat is also ~2x too
+  light (L50 87 vs 40 in y_47301; the same fabric measures right in q15), so it is exposure, not the material.

@@ -273,7 +273,8 @@ Y_PHOTO = {
     # y_47300 front-row seat 2 back (the only frontal, evenly lit fleck back): back 0.43 m = 127 px -> 295 px/m, 95 px =
     # 0.32 m; but at 0.32 the fleck pitch in q15 was ~1.2x the photo's, and at 0.27 the flecks read ~1.3 cm against ~0.6 cm
     # (w15 B) and 27 % bright against 11 % -> cores only, tinted pale blue; at 0.18 m they vanished at row distance (w16 A
-    # + B: 8 % vs 21 % cover in q15) -> 0.24 m, cores less pinched [D]
+    # + B: 8 % vs 21 % cover in q15) -> 0.24 m; w17: round pebbles close up and too blue (B/R 2.05 vs 1.62) -> cores
+    # pinched again, near-neutral tint [D]
     'y_fleck':   ('y_47300', (352, 308, 447, 403), 0.24, 8, 0, 0.0, 0.8, 0.3),
     # right seat back below the cover: dash mosaic; cover 0.255 m = 270 px -> 1059 px/m, 135 px = 0.128 m [D]; rows
     # levelled by 3 deg (perspective tilt)
@@ -347,14 +348,14 @@ def y_photo(name):
     if floor: r = np.sqrt(r * r + floor * floor)       # lift the darkest yarn shadows only
     if name == 'y_tick':
         # w16 A: the stitch columns wash out under minification (q15 column CV 0.05-0.07 vs 0.24 in y_47300): lift the
-        # photo's own column profile (mean down each column) 1.6x so the dark channels survive the mip chain [D]
+        # photo's own column profile (mean down each column) 1.6x (w18 2x) so the dark channels survive the mip chain [D]
         c = r.mean(2).mean(0, keepdims=True); c = c / c.mean()
-        r = r * (c ** 0.6)[..., None]
+        r = r * (c ** 1.0)[..., None]                   # w17 A: still CV 0.06-0.08 vs 0.24 -> 2x
     if name == 'y_fleck':
         # the 3.4 mm/px source smears each 3-5 mm fleck over ~3 px: keep only the core of the excess over the ground
         # (bright area 27 % -> ~12 %, y_47306 pad 11 %) and tint it pale blue (#9fb0e0 vs white, w15 A) [D]
         g = np.median(r.mean(2)); e = np.maximum(r - g, 0); ep = e.max()
-        r = np.minimum(r, g) + ep * (e / ep) ** 1.25 * np.array([0.85, 0.95, 1.1], np.float32)
+        r = np.minimum(r, g) + ep * (e / ep) ** 1.6 * np.array([0.95, 1.0, 1.02], np.float32)
     r /= r.reshape(-1, 3).mean(0)
     enc = ENC[name]
     lum = r.mean(2, keepdims=True); lim = enc * 0.95                # clip glints (as make())
