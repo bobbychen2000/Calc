@@ -118,7 +118,8 @@ function econSeat(B, x0, lod, opts = {}) {
   // w19 A: the hem, stitch and mark were quads 6-9 mm behind the plate (its foot tips forward since w10) and never showed;
   // now thin bands lofted over the plate, following its slope (plate centre z -0.12 at y 0.575 -> -0.111 at 0.61)
   const cz = (y) => -0.12 + (y - 0.575) / 0.035 * 0.009;
-  loftAt(B, [SEC(0.577, 0.253, 0.0064, cz(0.577), 0.002), SEC(0.596, 0.254, 0.0064, cz(0.596), 0.002)], BH, { c: '#2a3049', r: 0.6 }, 1);   // w20 A: dark (a light hem + stitch read as a screen chin head-on); w9 A: stitched hem band ~10 % of the cover height (y_47306)
+  loftAt(B, [SEC(0.577, 0.253, 0.0064, cz(0.577), 0.002), SEC(0.596, 0.254, 0.0064, cz(0.596), 0.002)], BH, { c: '#3a4264', r: 0.45 }, 1);   // w21 A + B: hem 1.15x the face vs 1.55-1.6 in y_47306 -> lighter, with a rolled foot; w20 A: dark (a light hem + stitch read as a screen chin head-on); w9 A: stitched hem band ~10 % of the cover height (y_47306)
+  B.add(gTube([[-0.1265, 0, 0], [0.1265, 0, 0]], 0.004, 8), M4.mul(BH, M4.trs(0, 0.577, cz(0.577) - 0.0005)), { c: '#3a4264', r: 0.45 });   // rolled foot catching the light (y_47306)
   loftAt(B, [SEC(0.5965, 0.24, 0.0072, cz(0.5965), 0.001), SEC(0.5977, 0.24, 0.0072, cz(0.5977), 0.001)], BH, { c: '#3e4562', r: 0.6 }, 1);   // stitch line, light thread (b_ss_14)
   loftAt(B, [SEC(0.5985, 0.01, 0.0068, cz(0.5985), 0.0005, -0.105), SEC(0.6025, 0.01, 0.0068, cz(0.6025), 0.0005, -0.105)], BH, { c: '#3a4058', r: 0.5 }, 1);   // small ANA mark, viewer's right (y_47306)
   // w11 B: contact darkening where the back fabric tucks into the shell sides (y_47306 dark crease) and along the strip
@@ -283,12 +284,12 @@ function econUnit(n, lod = false, opts = {}) {
       // w20 A + B: the lower member is a flat moulded plate (~2 x 6 cm; at the block ends a deep ~11 cm panel, b_ss_18
       // 1.75x the arm, y_47301), not a round rail - lofted in y, its z extent shaped into the rounded nose [D]
       const cp = [[0, 0.636, -0.078], [0, 0.60, -0.074]];
-      for (let i = 1; i <= 8; i++) { const t = i / 8, u = 1 - t; cp.push([0, u * u * 0.60 + 2 * u * t * 0.52 + t * t * 0.515, u * u * -0.074 + 2 * u * t * -0.08 + t * t * -0.15]); }
-      const ct = gTube(cp, 0.028, 12); for (let k = 0; k < ct.p.length; k += 3) ct.p[k] *= 0.55; computeNormals(ct);
+      for (let i = 1; i <= 8; i++) { const t = i / 8, u = 1 - t; cp.push([0, u * u * 0.60 + 2 * u * t * 0.52 + t * t * 0.50, u * u * -0.074 + 2 * u * t * -0.08 + t * t * -0.17]); }
+      const ct = gTube(cp, 0.028, 12); for (let k = 0; k < ct.p.length; k += 3) ct.p[k] *= 0.38; computeNormals(ct);   // w21 B: 2.1 cm, as the plate (3.1 cm stepped at the joint)
       B.add(ct, M4.trs(xa, 0, 0), SEATMAT.arm);
       const zs = (y, z0, z1, w) => SEC(y, w, z0 - z1, (z0 + z1) / 2, 0.009);
       const end = k === 0 || k === arms.length - 1;
-      loftAt(B, end ? [zs(0.415, -0.13, -0.33, 0.024), zs(0.43, -0.12, -0.375, 0.024), zs(0.46, -0.115, -0.398, 0.024), zs(0.50, -0.115, -0.40, 0.024), zs(0.525, -0.12, -0.392, 0.024), zs(0.538, -0.13, -0.37, 0.024), zs(0.543, -0.145, -0.33, 0.02)]
+      loftAt(B, end ? [zs(0.415, -0.13, -0.33, 0.024), zs(0.43, -0.12, -0.375, 0.024), zs(0.46, -0.10, -0.398, 0.024), zs(0.50, -0.08, -0.40, 0.024), zs(0.525, -0.08, -0.392, 0.024), zs(0.538, -0.09, -0.37, 0.024), zs(0.543, -0.145, -0.33, 0.02)]
         : [zs(0.48, -0.14, -0.365, 0.02), zs(0.488, -0.13, -0.383, 0.022), zs(0.51, -0.125, -0.392, 0.022), zs(0.532, -0.13, -0.383, 0.022), zs(0.54, -0.14, -0.365, 0.02)], M4.trs(xa + (end ? (k === 0 ? -0.013 : 0.013) : 0), 0, 0), SEATMAT.arm, 3);
     } else {
       // front end: one continuous grey bracket from under the arm nose down past the pan, with a pivot ring at pan height;
