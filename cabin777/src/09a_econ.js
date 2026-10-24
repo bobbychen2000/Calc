@@ -160,7 +160,7 @@ function econSeat(B, x0, lod, opts = {}) {
     B.add(gQuad(0.059, 0.026), on(0.425, 0.0183, -0.10), { c: '#9a9ea4', r: 0.5 });     // w7 A: label border
     for (const dx of [-0.016, 0, 0.016]) B.add(gQuad(0.009, 0.011), on(0.425, 0.0189, -0.10 + dx), { c: '#8e939b', r: 0.5 });   // w6 B pictograms (sans 15); w11 A + B: black squares + red read as a 3-port box -> faint grey
     // off-white mushroom coat-hook knob near the top of the hood side (sans 22) [V]; side unconfirmed (questions_econ 11)
-    B.add(gCyl(0.014, 0.011, 0.014, 14), M4.mul(on(0.79, -0.035, 0.207), M4.trs(0, 0, 0, 0, 0, Math.PI / 2)), SEATMAT.yShell);
+    B.add(gCyl(0.014, 0.011, 0.014, 14), M4.mul(on(0.70, -0.015, 0.207), M4.trs(0, 0, 0, 0, 0, Math.PI / 2)), SEATMAT.yShell);   // w13 A + B: lower / aft, out of the front view
     B.add(gCyl(0.027, 0.027, 0.004, 16), hz(0.415, 0.0185, 0.10), { c: '#b9bdc3', r: 0.45 });
     B.add(gCyl(0.02, 0.02, 0.004, 16), hz(0.415, 0.02, 0.10), { c: '#c9ccd0', r: 0.45 });
     B.add(gRBox(0.052, 0.022, 0.014, 0.004, 1), on(0.47, 0.012), { c: '#6f737a', r: 0.4 });
