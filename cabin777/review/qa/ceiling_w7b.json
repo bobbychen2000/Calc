@@ -1,0 +1,67 @@
+{
+  "area": "ceiling",
+  "rater": "B",
+  "round": 7,
+  "score": 8.3,
+  "previousStatus": {
+    "fixed": [
+      "w6b medium, vault falloff next to the grille: FIXED. r7v/v6 row 120 now runs 197 -> 153 against a 249 band (0.79 -> 0.61). r6v ran 0.91 -> 0.79. This matches c119 (0.83 -> 0.58) and c120 (0.78 -> 0.64).",
+      "w6b medium / w6a medium, door-3 bar cross-aisle: FIXED in shape. r7v/v3 shows the dome as a dark soffit wall to wall, so the white arch around the tray is gone. The tray has a straight far edge and a visible lighter trim, close to c133/c134. Fittings are still sparse (see the low issue).",
+      "w6b low, vault speaker: FIXED. It sits at t 0.70, well clear of the crest rib (v6, v8, v1), with a vault-tone rim and a darker pocket, no longer a bright plank.",
+      "w6a medium, centre channel tone: FIXED. r7v/v5 rows 300-320 rose from 167 to 182, so the channel now reads as a slightly greyer recess.",
+      "w6a low, outboard placard plate outline: FIXED. r7p/v13 shows clean '35' numerals and icons with no plate rectangle.",
+      "w6a low, centre-bin crest placard missing: FIXED. r7p/v12 shows '35' plus icons on the crest rail."
+    ],
+    "notFixed": [
+      "w6b low / w5b low, centre-bin door a constant grey: NOT FIXED. r7v/v5 column 400 still reads 202, 196, 193, 190, 189, 188 ... 194, within 1 of r5v and r6v. The doorC eFn (0.10 -> 0.18 above y 1.9) has no visible effect in this view."
+    ],
+    "regressed": [
+      "w6b low cove band tone, and the w5b medium band width marked fixed in w6: REGRESSED. In r7v/v6 row 300 the bright band is about 24 px at 249, then a 40 px strip at 204 next to the grille, the same tone as the vault start (197). r6v had 227 there. From the aisle the lit field is now only about 1-1.5x the grille width (c120 is about 3x and bright right up to the grille frame)."
+    ]
+  },
+  "details": [
+    {"detail": "Aisle vault panels, joint ribs and crest rib", "score": 8.6, "refs": ["b_lalf_c120", "b_lalf_c119", "b_sany_y22"]},
+    {"detail": "Cove band + slotted grille", "score": 7.7, "refs": ["b_lalf_c120", "b_lalf_c119", "rb_omaat_room37"]},
+    {"detail": "Vault light falloff (geometry/material side)", "score": 8.6, "refs": ["b_lalf_c119", "b_lalf_c120"]},
+    {"detail": "Vault fittings (speaker, emergency light)", "score": 8.2, "refs": ["b_lalf_c120"]},
+    {"detail": "Outboard bins: doors, latches, lip, top placards, seams", "score": 8.6, "refs": ["b_sany_y22", "b_lalf_c120", "y_47301"]},
+    {"detail": "Centre bins: doors, crest rail + placard, PSU channel", "score": 8.2, "refs": ["y_47300", "b_sany_y22", "b_lalf_c120"]},
+    {"detail": "Outboard PSU band (stepped strips, housings, sign windows)", "score": 8.5, "refs": ["b_lalf_c26", "rb_omaat_room23", "y_47301"]},
+    {"detail": "EXIT signs", "score": 8.3, "refs": ["b_lalf_c133", "b_lalf_c134"]},
+    {"detail": "Door-3 bar cross-aisle soffit", "score": 7.9, "refs": ["b_lalf_c133", "b_lalf_c134"]},
+    {"detail": "Other door / monument ceilings", "score": 7.8, "refs": ["y_47301", "b_lalf_c120"]}
+  ],
+  "issues": [
+    {
+      "severity": "medium",
+      "detail": "Cove diffuser band hidden behind the vault",
+      "problem": "Only the middle of the cove band shows bright. The inner part next to the grille, and the outer edge, show the vault surface instead, at 204, so the lit band shrinks to about 1-1.5x the grille width and gains a grey step. Cause: the cove is ONE flat strip tangent at tm = 0.1345 across t 0.004..0.265. The vault arch bends away from that tangent, so the strip's ends sit above the vault surface and the vault occludes them. The vault there has eFn 0.02-0.05 and baked x0.85, because the eFn's 0.85 branch only starts at |x| > 1.66 while the cove spans |x| 1.41-1.65. Lowering vault eFn in w6 made the occluded parts visibly grey.",
+      "evidence": "r7v/v6 row 300: 249 x3 samples, then 204 x3, then the grille. r6v had 247 then 227. Crop raterB7/cove_r7v.png against raterB7/c120_cove.png: in c120 the diffuser is one bright field up to the grille frame.",
+      "fix": "07b_ceiling.js buildCeilings, seat zone. (a) Build the cove as 4 sub-strips that follow the arc: for (let j=0;j<4;j++){ const ta=lerp(c0,c1,j/4), tb=lerp(c0,c1,(j+1)/4), A=vaultAt(ta), B=vaultAt(tb); upper.add(vaultStrip((ta+tb)/2, side, z0+0.03, z1-0.03, Math.hypot(B[0]-A[0],B[1]-A[1])+0.004, 0.0016), null, CEILMAT.cove); }. (b) As a belt-and-braces fix, change the vault eFn branch `if (ax > 1.66) return 0.85` to `if (ax > xg + TROUGH.w/2 + 0.012) return 0.85`, and skip the baked factor there (f = 1 when |x| > xg + 0.035), so any vault seen through the cove reads as cove."
+    },
+    {
+      "severity": "low",
+      "detail": "Centre-bin door tone",
+      "problem": "This is still a near-constant grey of 188-202 from below, with no lift toward the crest or the wrap. The w6 doorC eFn change made no measurable difference in this view.",
+      "evidence": "r7v/v5 column 400 matches r6v within 1 grey level on rows 0-280. y_47300 shows the centre-bin doors at 232-251 lower down.",
+      "fix": "08_bins.js: the eFn ramp starts at y 1.9 and the visible door face is mostly below about 2.0, so it barely contributes. Use eFn: (p) => 0.14 + 0.06 * clamp((p[1] - 1.75) / 0.4, 0, 1). Or raise the 0.84 shading floor in shadeUpper to 0.90 for doorC only. Check that the centre placard ground (line ~404 uses doorC.eFn([0, 2.19, 0])) still matches."
+    },
+    {
+      "severity": "low",
+      "detail": "Door-3 soffit fittings",
+      "problem": "Only 2 downlights and the louvre show in v3. c133 shows a grid of about 6 downlights plus a separate dark rectangular speaker grille beside the louvre. The speaker grille (x 0.45) cannot be found in v3.",
+      "evidence": "r7v/v3: downlights at about (580,127) and (542,230) only; the louvre at about (620,188); nothing between them. b_lalf_c133: 6 downlights, plus the speaker and louvre side by side at mid-tray.",
+      "fix": "07b_ceiling.js zone door 2: put the downlights where the gap between the bin ends exposes the tray, at x in [-0.55, 0, 0.55] and z = zc +/- len*0.3, plus zc. Move the speaker beside the louvre at the same z (x 0.45 -> 0.48, z zc), and make its rim a step lighter (#9a9188) and 2 mm proud of the tray (TY - 0.008) so it is not lost in the tray's dark."
+    },
+    {
+      "severity": "low",
+      "detail": "Vault speaker rim",
+      "problem": "From the aisle (v6, v11, b_aisle) the fitting reads as a bright drawn outline round a grey slot, more like a handle frame than c120's soft-shadowed same-tone rounded rect.",
+      "evidence": "r7v/v11 at (520,55): the rim is about 235 on a vault of about 190, with a face of about 170.",
+      "fix": "07b_ceiling.js CEILMAT.bezel: drop the emissive further (e 0.06 -> 0.02) and set c to the vault colour, so the rim follows the baked vault falloff instead of glowing. Keep the darker bezelIn pocket."
+    }
+  ],
+  "questionsForUser": [
+    "Are the cove grille slats on the ANA 777-300ER lit white (as c120 suggests, with the cove LED behind them) or mid-grey? The model keeps them mid-grey with a light frame."
+  ]
+}
