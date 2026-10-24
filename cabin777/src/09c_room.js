@@ -273,7 +273,7 @@ function roomBundle(B, x, z, dir, ps) {
   B.add(gRBox(0.452, 0.002, 0.29, 0.001, 1), M4.trs(x, 0.4735, z + dir * 0.003), { c: '#eef0f2', r: 0.15 });   // pad fold seam under the film
   // w7: slipper pack = a dark navy pouch with a white sole edge (bag film not modelled) (omaat_room_15 #4f5060, tpg_42) [V]
   const P = M4.trs(x + ps * 0.29, 0.444, z + dir * 0.03, ps * 0.5);
-  B.add(gRBox(0.11, 0.022, 0.19, 0.01, 1), P, { c: '#262c4a', r: 0.55 });
+  B.add(gLoft(cushionSecs(0.11, 0.19, 0.024, 0, { edge: 0.011, r: 0.03, crown: 0.004 }), 3), M4.mul(P, M4.trs(0, -0.011, 0)), { c: '#262c4a', r: 0.55 });   // w9a: soft pouch, not a booklet
   B.add(gRBox(0.10, 0.008, 0.05, 0.004, 1), M4.mul(P, M4.trs(0, 0.012, 0.06)), { c: '#d9d8d2', r: 0.6 });
 }
 // w7 pillows (omaat_room_15, tpg_31 / 42): plump, ~0.44 x 0.34 x 0.10; the blue one a royal-blue check jacquard with a
@@ -302,14 +302,14 @@ function duvetSheet(bounds, z0, z1, hd, xc, nu = 30, nv = 54) {
     for (const [cx, cz, a, len, A, sg] of DUVET_FOLDS) {
       const c = Math.cos(a * DEG), sn = Math.sin(a * DEG), dx = x - xc - cx, dz = (z - zc) - hd * cz * k;
       const par = dx * sn + dz * c, per = dx * c - dz * sn;
-      f += A * Math.exp(-((per / sg) ** 2)) * Math.exp(-((par / (len / 2)) ** 4));
+      f += 0.5 * A * Math.exp(-((per / sg) ** 2)) * Math.exp(-((par / (len / 2)) ** 4));   // w9a: folds halved so the quilt reads
     }
     const zh = hd > 0 ? z - z0 : z1 - z;   // turned-down head fold: a doubled band with a soft roll at its edge
     f += 0.012 * (1 - smooth(0.11, 0.15, zh)) + 0.008 * Math.exp(-(((zh - 0.135) / 0.018) ** 2));
     // w8a: a quilted comforter - lofted ~1.5 cm away from its edges, stitched on a ~0.33 m grid (tpg_70 / 72) [V]
     const e = smooth(0, 0.09, Math.min(x - xl, mr - x) + 0.01), q = 0.33, gx = x - xc + 0.07, gz = z - z0 - 0.02;
     const dq = Math.min(Math.abs(gx - q * Math.round(gx / q)), Math.abs(gz - q * Math.round(gz / q)));
-    return f * smooth(0, 0.05, Math.min(x - xl, mr - x) + 0.01) + e * (0.015 - 0.011 * Math.exp(-((dq / 0.022) ** 2)));
+    return f * smooth(0, 0.05, Math.min(x - xl, mr - x) + 0.01) + e * (0.024 - 0.020 * Math.exp(-((dq / 0.03) ** 2)));
   };
   const at = (u, v) => {   // u, v in [0, 1] -> point on the cloth's top
     const z = lerp(z0, z1, v), [xl0, xr, mr] = bounds(z), xl = xl0 + 0.012 * Math.sin(z * 23) + 0.008 * Math.sin(z * 41 + 1);   // irregular free edge
@@ -355,10 +355,10 @@ const MAT_TOP = 0.054;   // mattress top above ROOM.bed
 function roomBed(B, part) {
   const y = ROOM.bed, M = SEATMAT.mattress, mat = (x0, x1, z0, z1) => B.add(gLoft(cushionSecs(x1 - x0, z1 - z0, 0.05, -0.02, { edge: 0.02, r: 0.02, crown: 0.004 }), 3), M4.trs((x0 + x1) / 2, y + 0.02, (z0 + z1) / 2), M);
   const fw = part === 'O' ? [-0.505, -0.03, MON.zO, 0.62, -1] : [0.0, 0.44, MON.zE, -0.585, 1];
-  planSlab(B, footwellPlan(fw[0], fw[1], fw[2], fw[3], fw[4], 0.012), 0.44, y + MAT_TOP - 0.44, M);
+  planSlab(B, footwellPlan(fw[0], fw[1], fw[2], fw[3], fw[4], 0.022), 0.44, y + MAT_TOP - 0.44, M);
   let bounds, z0, z1, hd, xc;
   if (part === 'O') {
-    mat(-0.475, 0.285, -1.28, -0.62); mat(-0.475, -0.012, -0.64, MON.zO + 0.02);
+    mat(-0.475, 0.285, -1.28, -0.62); mat(-0.475, -0.032, -0.64, MON.zO + 0.02);
     // aisle edge rolls over the mattress beside the seat; beside the table it ends at the console wall; then the footwell
     bounds = (z) => {
       const [fl, fr] = footwellEdges(fw[0], fw[1], fw[2], fw[3], -1, z, 0.02), a = smooth(-0.74, -0.60, z), b = smooth(MON.zO - 0.06, MON.zO + 0.06, z);
@@ -431,6 +431,12 @@ function roomPart(part, opts = {}) {
     // central monument body (both columns) + the pillar between the two footwell mouths
     B.add(gRBox(1.13, MON.top - MON.bot, MON.zE - MON.zO, 0.01, 1), M4.trs(-0.02, (MON.top + MON.bot) / 2, (MON.zO + MON.zE) / 2), shell);
     B.add(gRBox(0.03, MON.bot, MON.zE - MON.zO, 0.01, 1), M4.trs(-0.015, MON.bot / 2, (MON.zO + MON.zE) / 2), shell);
+    // w9a/b: the top reads as two housings split by a slim spine with a metal top rail (c_27313 / 27314) [V]; the monitors
+    // span the column line lower down, so only the top is split: dark grooves either side of a 0.03 spine [D]
+    const mz = (MON.zO + MON.zE) / 2, mL = MON.zE - MON.zO;
+    for (const gx of [-0.045, 0.005]) B.add(gBox(0.014, 0.004, mL + 0.002), M4.trs(gx, MON.top + 0.0005, mz), SEATMAT.jVoid);
+    B.add(gRBox(0.028, 0.05, mL + 0.01, 0.008, 1), M4.trs(-0.02, MON.top + 0.025, mz), shell);
+    B.add(gRBox(0.032, 0.008, mL + 0.014, 0.004, 1), M4.trs(-0.02, MON.top + 0.054, mz), SEATMAT.jPanelEdge);
     // O's face: monitor (outer column) + O's cabinet (aisle column)
     roomMonitor(B, -0.20, MON.zO, -1, 1);
     roomCabinet(B, 0.275, MON.zO, -1);

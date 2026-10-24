@@ -89,7 +89,7 @@ const SEATMAT = {
   jHead: { c: '#737b85', r: 0.38, l: LAYER.leather },   // QA w2: flap is the palest part of the seat (c_27315 #768193, c_27313 #6f7b84); room w6a: ~1.3x the darker w5 fabric, neutral slate
   blueAccent: { c: '#233f7a', r: 0.5 },
   slate: { c: '#3f4246', r: 0.55, l: LAYER.marble },
-  mattress: { c: '#e8e1d2', r: 0.9, l: LAYER.fabric },   // room w8b: warm cream pad (tpg_72, omaat_room_15) [V]
+  mattress: { c: '#d9cfbc', r: 0.9, l: LAYER.fabric },   // room w8b/w9a: warm cream pad (tpg_72 #dfd3c0 in the light, omaat_room_15) [V]
   duvet: { c: '#4d57aa', r: 0.7, l: LAYER.fabric },   // room w5: satin royal blue (tpg_72 #6f7bd9, b_tpg #5863b0) [V]   // QA w2: indigo (fb_a96b7a65 #4b5789, fb_d8b6dc0d #606ea0)
   pillow: { c: '#eeede8', r: 0.9, l: LAYER.fabric },
   pillowBlue: { c: '#4c5594', r: 0.85, l: LAYER.yagasuri },   // QA w2: rendered #181e49; photos #4c5178-#737ba9 (tt_seat-1, tt_seats-center); room w7: pillow/fabric 0.66 (tpg_42) - 1.07 (omaat_room_15) -> ~0.85   // yagasuri jacquard #32355d / #3e457b (c_27302 / 27303)
