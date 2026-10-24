@@ -14,7 +14,7 @@ Object.assign(SEATMAT, {
   jBezel: { c: '#3a3c42', r: 0.35, l: LAYER.plastic },   // QA w3: rendered near-black (L 18-29 vs photos 34-45)
   jSeam: { c: '#46444b', r: 0.95 },
   jCavity: { c: '#2c2d32', r: 0.9 },   // QA w4: footwell space reads charcoal, not black (tpg_53, c_27316) [V]
-  jPillowBack: { c: '#6b665e', r: 0.8, l: LAYER.fabric },
+  jPillowBack: { c: '#595b7e', r: 0.7, l: LAYER.fabric },   // w7: grey-violet flange (omaat_room_15 #595b7e) [V]
   jPanelEdge: { c: '#5d6166', r: 0.34, m: 0.5, l: LAYER.brushed },
   jLedge: { c: '#8f959c', r: 0.3, m: 0.6, l: LAYER.brushed },   // ledge top, darker than the edge trim (c_27313 #788087-#b2bbc8) [V]
   jSill: { c: '#8e9399', r: 0.35, m: 0.4, l: LAYER.brushed },   // silver-grey sill + drawer under the monitor (tpg_53) [V]
@@ -46,6 +46,9 @@ function roomSeatCore(B, bed, lod, w = 0.64, fs = 1) {
   // QA w4: one continuous sofa - the back rolls into the cushion (fabric fillet) with soft grooves across its lower
   // half (c_27315, c_27313, tpg_31) [V]; room w5b: two, at 57 % / 80 % down (tpg_42) [V]
   for (const sy of [0.11, 0.235]) B.add(gRBox(w - 0.04, 0.008, 0.004, 0.002, 1), M4.mul(BH, M4.trs(0, sy, -0.0385)), SEATMAT.jSeam);
+  // w7: the back is a pad with a fine piped seam ~1.5 cm in from its top and sides (tpg_42, c_27313) [V]
+  B.add(gRBox(w - 0.05, 0.005, 0.005, 0.002, 1), M4.mul(BH, M4.trs(0, 0.525, -0.038)), SEATMAT.jSeam);
+  for (const s of [-1, 1]) B.add(gRBox(0.005, 0.50, 0.005, 0.002, 1), M4.mul(BH, M4.trs(s * (w / 2 - 0.025), 0.275, -0.038)), SEATMAT.jSeam);
   B.add(gRBox(w - 0.02, 0.07, 0.09, 0.03, 2), M4.trs(0, 0.445, -0.075), F);
   B.add(gBox(w - 0.04, 0.005, 0.004), M4.mul(M4.trs(0, 0.39, -0.34, 0, 2 * DEG), M4.trs(0, 0.041, -0.10, 0, Math.PI / 2)), SEATMAT.jBase);
   B.add(gRBox(0.03, 0.05, 0.012, 0.004, 1), M4.mul(BH, M4.trs(fx, 0.33, -0.05)), SEATMAT.jHead); // flap tab
@@ -145,8 +148,8 @@ function roomFootwell(B, x0, x1, zm, zf, wall) {
 // 0.21 blue-lit literature slot toward the cabinet (slotSide) [D]
 function roomMonitor(B, xm, zf, dir, slotSide) {
   const zo = (d) => zf + dir * d, ry = dir > 0 ? 0 : Math.PI;
-  B.add(gRBox(0.595, 0.405, 0.03, 0.015, 1), M4.trs(xm, 0.8475, zo(0.015)), SEATMAT.jBezel);
-  B.add(gQuad(0.531, 0.299), M4.trs(xm, 0.85, zo(0.032), ry), SEATMAT.screen, atlasUV('screen'));
+  B.add(gRBox(0.595, 0.43, 0.03, 0.015, 1), M4.trs(xm, 0.86, zo(0.015)), SEATMAT.jBezel);   // w7: frame up to 1.075, level with the cabinet (tpg_53)
+  B.add(gQuad(0.531, 0.299), M4.trs(xm, 0.875, zo(0.032), ry), SEATMAT.screen, atlasUV('screen'));
   const x0 = xm - slotSide * 0.2975, sc = x0 + slotSide * 0.245, y = 0.60;
   B.add(gRBox(0.49, 0.084, 0.03, 0.006, 1), M4.trs(sc, y, zo(0.01)), SEATMAT.jSill);
   const dx = x0 + slotSide * 0.145, lx = x0 + slotSide * 0.38;
@@ -256,7 +259,7 @@ function roomLedge(B, w, x, z, L, up = false) {
 // Central monument of a pair between z = MON.zO (O's face, looking -z at O) and MON.zE (E's face, +z): O's monitor
 // (outer column) back to back with E's cabinet, O's cabinet (aisle column) back to back with E's monitor; both footwells
 // run under it (omaat_room_14 / 16, c_27316: cabinet flush beside the monitor frame, footwell mouth under the monitor)
-const MON = { zO: -0.21, zE: 0.035, top: 1.10, bot: 0.555 };   // QA w2: top raised to clear the 0.43 cabinet
+const MON = { zO: -0.21, zE: 0.035, top: 1.09, bot: 0.555 };   // QA w2: top raised to clear the 0.43 cabinet; w7: level with the cabinet top, no charcoal strip over the monitor (tpg_53) [V]
 const CON = { top: 0.60 };   // outer console top (c_27316 / 27303: ~0.17 above the cushion) [A]
 // QA w1 pillow: flat piped rectangle ~0.44 x 0.34 x 0.07, navy check jacquard face, grey-taupe reverse panel + piping
 // (c_27303, omaat_room_13) [V]
@@ -268,24 +271,104 @@ function roomBundle(B, x, z, dir, ps) {
   B.add(gRBox(0.46, 0.042, 0.31, 0.016, 1), M4.trs(x, 0.452, z), { c: '#e2ded4', r: 0.3 });
   B.add(gRBox(0.43, 0.034, 0.28, 0.014, 1), M4.trs(x + 0.005, 0.49, z - dir * 0.012), { c: '#6470b4', r: 0.3 });
   B.add(gRBox(0.452, 0.002, 0.29, 0.001, 1), M4.trs(x, 0.4735, z + dir * 0.003), { c: '#eef0f2', r: 0.15 });   // pad fold seam under the film
-  B.add(gRBox(0.09, 0.035, 0.17, 0.015, 1), M4.trs(x + ps * 0.30, 0.448, z + dir * 0.02, ps * 0.35), { c: '#1f4fb4', r: 0.3 });
+  // w7: slipper pack = a dark navy pouch with a white sole edge (bag film not modelled) (omaat_room_15 #4f5060, tpg_42) [V]
+  const P = M4.trs(x + ps * 0.29, 0.444, z + dir * 0.03, ps * 0.5);
+  B.add(gRBox(0.11, 0.022, 0.19, 0.01, 1), P, { c: '#262c4a', r: 0.55 });
+  B.add(gRBox(0.10, 0.008, 0.05, 0.004, 1), M4.mul(P, M4.trs(0, 0.012, 0.06)), { c: '#d9d8d2', r: 0.6 });
 }
-function roomPillow(B, xf) {
-  B.add(gLoft(cushionSecs(0.44, 0.34, 0.07, -0.035, { edge: 0.015, r: 0.02 }), 3), xf, SEATMAT.pillowBlue);
-  B.add(gRBox(0.43, 0.004, 0.33, 0.015, 1), M4.mul(xf, M4.trs(0, -0.035, 0)), SEATMAT.jPillowBack);
+// w7 pillows (omaat_room_15, tpg_31 / 42): plump, ~0.44 x 0.34 x 0.10; the blue one a royal-blue check jacquard with a
+// ~15 mm grey flange round its seam [V]; the white one the same size behind it [V]
+function roomPillow(B, xf, mat = SEATMAT.pillowBlue) {
+  B.add(gLoft(cushionSecs(0.44, 0.34, 0.05, 0, { edge: 0.035, r: 0.05, crown: 0.012 }), 3), xf, mat);
+  B.add(gLoft(cushionSecs(0.44, 0.34, 0.05, 0, { edge: 0.035, r: 0.05, crown: 0.012 }), 3), M4.mul(xf, M4.trs(0, 0, 0, 0, Math.PI)), mat);
+  if (mat === SEATMAT.pillowBlue) B.add(gRBox(0.456, 0.008, 0.356, 0.045, 1), xf, SEATMAT.jPillowBack);
 }
-// QA w2 duvet: indigo comforter with a square ~0.26 m quilt grid, open over the bed from below the pillow to the foot and
-// hanging over the mattress edges (fb_a96b7a65 #4b5789, fb_d8b6dc0d #606ea0 daylight; w1's slate read of tt_bed-2 was a
-// night-light cast) [V]; white pillow + the blue one lying beside it (fb_a96b7a65) [V]
-function roomDuvet(B, x, z, w, L) {
-  // QA w4: thinner, softer comforter with flush stitch lines; w5 (A+B): narrower than the pad so the white mattress shows at
-  // the sides + foot, turned ~5 deg, wider stitch pitch and a few low wrinkle ridges (tpg_72 / 75, fb_a96b7a65) [V]/[A]
-  const W = w - 0.06, Lq = L - 0.12, y = ROOM.bed + 0.087, q = { c: '#3d4796', r: 0.8 }, T = M4.trs(x, 0, z - 0.06, 0.09);
-  B.add(gLoft(cushionSecs(W, Lq, 0.03, -0.02, { edge: 0.025, r: 0.03, crown: 0.006 }), 3), M4.mul(T, M4.trs(0, ROOM.bed + 0.07, 0)), SEATMAT.duvet);
-  for (let k = 1; k * 0.45 < Lq - 0.05; k++) B.add(gBox(W - 0.10, 0.001, 0.005), M4.mul(T, M4.trs(0, y, -Lq / 2 + k * 0.45)), q);
-  B.add(gBox(0.005, 0.001, Lq - 0.10), M4.mul(T, M4.trs(0, y, 0)), q);
-  for (const [dz, a] of [[-0.25, 0.35], [0.12, -0.28], [0.38, 0.22]]) B.add(gCyl(0.012, 0.012, W * 0.55, 8), M4.mul(T, M4.trs(0.02, y + 0.001, dz, a, 0, Math.PI / 2, 0.5, 1, 1)), SEATMAT.duvet);
-  B.add(gRBox(W - 0.02, 0.02, 0.12, 0.01, 1), M4.mul(T, M4.trs(0, y + 0.004, -Lq / 2 + 0.07)), SEATMAT.duvet);   // w6a: turned-down head strip (tpg_72) [V]
+// QA w2 duvet: indigo comforter open over the bed from below the pillow to the foot (fb_a96b7a65 #4b5789, fb_d8b6dc0d
+// #606ea0 daylight) [V]; white pillow + the blue one leaning on it (fb_a96b7a65) [V]
+// w7: a draped cloth sheet, no longer a slab with stitch lines (w6a/b: stiff slab, z-fighting stitches): a height field
+// over the mattress with soft diagonal folds 2-4 cm high, a turned-down head fold, the aisle edge rolling over the mattress
+// edge and hanging ~6 cm, the white pad showing at the outer side and the foot (tpg_72 / 74 / 75, fb_a96b7a65) [V]/[A]
+const DUVET_FOLDS = [[-0.10, -0.30, 35, 0.60, 0.04, 0.05], [0.12, 0.05, -30, 0.50, 0.034, 0.04], [-0.06, 0.32, 62, 0.45, 0.03, 0.04],
+  [0.18, -0.45, 12, 0.32, 0.024, 0.035], [-0.20, 0.0, 80, 0.38, 0.022, 0.035], [0.05, -0.12, -70, 0.28, -0.012, 0.05],
+  [0.22, 0.42, -45, 0.30, 0.02, 0.03], [-0.15, 0.55, 20, 0.25, 0.016, 0.03]];
+// bounds(z) -> [xl, xr, mr]: cloth edges and the mattress edge it rolls over (xr > mr); z0..z1 in unit coordinates, head
+// at z0 (hd = 1) or z1 (hd = -1); folds placed about (xc, zc). Height 0 = the cloth's top resting on the mattress.
+function duvetSheet(bounds, z0, z1, hd, xc, nu = 22, nv = 40) {
+  const rho = 0.025, t = 0.02, zc = (z0 + z1) / 2, k = (z1 - z0) / 1.23;
+  const fold = (x, z, xl, mr) => {
+    let f = 0;
+    for (const [cx, cz, a, len, A, sg] of DUVET_FOLDS) {
+      const c = Math.cos(a * DEG), sn = Math.sin(a * DEG), dx = x - xc - cx, dz = (z - zc) - hd * cz * k;
+      const par = dx * sn + dz * c, per = dx * c - dz * sn;
+      f += A * Math.exp(-((per / sg) ** 2)) * Math.exp(-((par / (len / 2)) ** 4));
+    }
+    const zh = hd > 0 ? z - z0 : z1 - z;   // turned-down head fold: a doubled band with a soft roll at its edge
+    f += 0.012 * (1 - smooth(0.11, 0.15, zh)) + 0.008 * Math.exp(-(((zh - 0.135) / 0.018) ** 2));
+    return f * smooth(0, 0.05, Math.min(x - xl, mr - x) + 0.01);
+  };
+  const at = (u, v) => {   // u, v in [0, 1] -> point on the cloth's top
+    const z = lerp(z0, z1, v), [xl, xr, mr] = bounds(z), xp = lerp(xl, xr, u), d = xp - mr;
+    if (d <= 0) return [xp, fold(xp, z, xl, mr), z];
+    const s = Math.min(d, rho * Math.PI / 2), th = s / rho;
+    return [mr + rho * Math.sin(th), -rho * (1 - Math.cos(th)) - (d - s), z];
+  };
+  const g = raw(), P = [];
+  for (let j = 0; j <= nv; j++) for (let i = 0; i <= nu; i++) {
+    const p = at(i / nu, j / nv); P.push(p); g.p.push(...p); g.u.push(i / nu * 1.2, j / nv * 2.2);
+  }
+  for (let j = 0; j < nv; j++) for (let i = 0; i < nu; i++) { const a = j * (nu + 1) + i, b = a + 1, c = a + nu + 1, d = c + 1; g.i.push(a, c, b, b, c, d); }
+  computeNormals(g);
+  if (g.n[((nv >> 1) * (nu + 1) + (nu >> 1)) * 3 + 1] < 0) { for (let q = 0; q < g.n.length; q++) g.n[q] = -g.n[q]; for (let q = 0; q < g.i.length; q += 3) { const m = g.i[q + 1]; g.i[q + 1] = g.i[q + 2]; g.i[q + 2] = m; } }
+  // thickness skirt round the border, down to the mattress (normals: outward in the cloth plane)
+  const S = raw(), ring = [];
+  for (let i = 0; i <= nu; i++) ring.push([i, 0, [0, 0, -1]]);
+  for (let j = 1; j <= nv; j++) ring.push([nu, j, [1, 0, 0]]);
+  for (let i = nu - 1; i >= 0; i--) ring.push([i, nv, [0, 0, 1]]);
+  for (let j = nv - 1; j >= 1; j--) ring.push([0, j, [-1, 0, 0]]);
+  ring.push(ring[0]);
+  for (let q = 0; q < ring.length - 1; q++) {
+    const b0 = S.p.length / 3;
+    for (const [i, j, nn] of [ring[q], ring[q + 1]]) {
+      const p = P[j * (nu + 1) + i], hang = p[1] < -0.01, n = hang ? [0, -1, 0] : nn, lo = hang ? 0.004 : t;   // a hanging edge: its bottom faces down
+      S.p.push(p[0], p[1], p[2], p[0], p[1] - lo, p[2]); S.n.push(...n, ...n); S.u.push(0, 0, 0, 0.02);
+    }
+    S.i.push(b0, b0 + 1, b0 + 2, b0 + 2, b0 + 1, b0 + 3);
+  }
+  fixWinding(S);
+  return [g, S];
+}
+// footwell wedge edges at z (as footwellPlan): [x at the outer wall, x at the inboard edge]
+function footwellEdges(x0, x1, zm, zf, wall, z, inset) {
+  const t = clamp((z - zm) / (zf - zm), 0, 1), w = lerp(x1 - x0, 0.30, t) + 0.04 * Math.sin(Math.PI * t) - 2 * inset;
+  return wall < 0 ? [x0 + inset, x0 + inset + w] : [x1 - inset - w, x1 - inset];
+}
+// bed: mattress pad over the seat, beside the side table and into the footwell wedge, duvet over it (w7: the w6 bed was one
+// rectangle running through the side-table wall and into the neighbour's legroom; fb_a96b7a65 / tpg_72 show the bed
+// narrowing past the table into the footwell) [V]/[D]
+const MAT_TOP = 0.054;   // mattress top above ROOM.bed
+function roomBed(B, part) {
+  const y = ROOM.bed, M = SEATMAT.mattress, mat = (x0, x1, z0, z1) => B.add(gLoft(cushionSecs(x1 - x0, z1 - z0, 0.05, -0.02, { edge: 0.02, r: 0.02, crown: 0.004 }), 3), M4.trs((x0 + x1) / 2, y + 0.02, (z0 + z1) / 2), M);
+  const fw = part === 'O' ? [-0.505, -0.03, MON.zO, 0.62, -1] : [0.0, 0.44, MON.zE, -0.585, 1];
+  planSlab(B, footwellPlan(fw[0], fw[1], fw[2], fw[3], fw[4], 0.012), 0.44, y + MAT_TOP - 0.44, M);
+  let bounds, z0, z1, hd, xc;
+  if (part === 'O') {
+    mat(-0.475, 0.285, -1.28, -0.62); mat(-0.475, -0.012, -0.64, MON.zO + 0.02);
+    // aisle edge rolls over the mattress beside the seat; beside the table it ends at the console wall; then the footwell
+    bounds = (z) => {
+      const [fl, fr] = footwellEdges(fw[0], fw[1], fw[2], fw[3], -1, z, 0.02), a = smooth(-0.68, -0.60, z), b = smooth(MON.zO - 0.04, MON.zO + 0.04, z);
+      const mr = lerp(lerp(0.285, -0.012, a), fr + 0.01, b);
+      return [lerp(-0.415, fl, b), lerp(lerp(0.31, -0.03, a), fr, b), mr];
+    };
+    z0 = -0.875; z1 = 0.57; hd = 1; xc = -0.12;
+  } else {
+    mat(-0.035, 0.495, MON.zE - 0.02, 1.28);
+    bounds = (z) => {
+      const [fl, fr] = footwellEdges(fw[0], fw[1], fw[2], fw[3], 1, z, 0.02), b = 1 - smooth(MON.zE - 0.04, MON.zE + 0.04, z);
+      return [lerp(0.02, fl, b), lerp(0.47, fr, b), lerp(0.49, fr + 0.01, b)];
+    };
+    z0 = -0.535; z1 = 0.86; hd = -1; xc = 0.22;
+  }
+  for (const g of duvetSheet(bounds, z0, z1, hd, xc)) B.add(g, M4.trs(0, y + MAT_TOP + 0.02, 0), SEATMAT.duvet);
 }
 function roomPart(part, opts = {}) {
   const B = new Builder();
@@ -352,16 +435,16 @@ function roomPart(part, opts = {}) {
     roomFootwell(B, -0.505, -0.03, MON.zO, 0.62, -1);
     if (bed) {
       // the bed narrows to ~0.62 past the seat into the footwell; mattress + duvet follow the seat width (fb_a96b7a65) [A]
-      B.add(gLoft(cushionSecs(0.76, 1.76, 0.05, -0.02, { edge: 0.02, r: 0.03, crown: 0.004 }), 3), M4.trs(SX - 0.02, ROOM.bed + 0.02, -0.40), SEATMAT.mattress);
-      roomDuvet(B, SX - 0.02, -0.20, 0.72, 1.35);
-      B.add(gLoft(cushionSecs(0.46, 0.30, 0.12, -0.06, { edge: 0.05, r: 0.05 }), 3), M4.trs(SX - 0.12, ROOM.bed + 0.08, -1.08), SEATMAT.pillow);
-      roomPillow(B, M4.mul(M4.trs(SX - 0.08, ROOM.bed + 0.13, -0.98), M4.trs(0, 0, 0, 0.05, 25 * DEG)));   // w6a: leaning on the white one (fb_a96b7a65) [V]
+      roomBed(B, 'O');
+      // w7: the white pillow stands against the back shell, the blue one leans on it (tpg_72, fb_a96b7a65) [V]
+      roomPillow(B, M4.mul(M4.trs(SX - 0.10, ROOM.bed + 0.22, -1.16, Math.PI), M4.trs(0, 0, 0, 0.06, -68 * DEG)), SEATMAT.pillow);
+      roomPillow(B, M4.mul(M4.trs(SX - 0.04, ROOM.bed + 0.17, -1.01, Math.PI), M4.trs(0, 0, 0, -0.12, -38 * DEG)));
     } else {
       // white pillow leaning on the back with the blue one in front of it, toward the aisle half (tpg_31 / 42) [V]
       // w7: the blue pillow rests on the bundle, the white one stands behind it, its top showing (tpg_31 / 42) [V]
-      roomBundle(B, 0.07, -0.93, 1, -1);
-      B.add(gLoft(cushionSecs(0.50, 0.34, 0.10, -0.05, { edge: 0.04, r: 0.04 }), 3), M4.mul(M4.trs(0.06, 0.63, -1.10, Math.PI), M4.trs(0, 0, 0, 0.05, -74 * DEG)), SEATMAT.pillow);
-      roomPillow(B, M4.mul(M4.trs(0.08, 0.64, -0.99, Math.PI), M4.trs(0, 0, 0, 0.08, -60 * DEG)));
+      roomBundle(B, 0.10, -0.80, 1, -1);   // w7: at the cushion front, toward the aisle (omaat_room_15) [V]
+      roomPillow(B, M4.mul(M4.trs(0.16, 0.70, -1.00, Math.PI), M4.trs(0, 0, 0, 0.03, -72 * DEG)), SEATMAT.pillow);
+      roomPillow(B, M4.mul(M4.trs(0.09, 0.665, -0.81, Math.PI), M4.trs(0, 0, 0, 0.02, -60 * DEG)));
     }
     // outer side (window / centreline): the thin outer wall, then a console 0.085 deep with a charcoal cap along the seat
     // up to the monitor monument, red life-vest tab + stowage latch on its seat face (c_27316 left, c_27303 / 27300 window
@@ -416,14 +499,13 @@ function roomPart(part, opts = {}) {
     if (doors) roomDoorClosed(B, MON.zE, 0.65, 0.65); else doorEdge(B, 0.56, 0.06, wall - 0.14);
     B.add(gRBox(0.05, 0.14, 0.04, 0.01, 1), M4.trs(0.56, 0.07, 0.06), shell);   // w5b: kick under the parked leaf (was a floating strip)
     if (bed) {
-      B.add(gLoft(cushionSecs(0.58, 1.80, 0.05, -0.02, { edge: 0.02, r: 0.03, crown: 0.004 }), 3), M4.trs(0.24, ROOM.bed + 0.02, 0.38), SEATMAT.mattress);
-      roomDuvet(B, 0.24, 0.20, 0.54, 1.35);
-      B.add(gLoft(cushionSecs(0.46, 0.30, 0.12, -0.06, { edge: 0.05, r: 0.05 }), 3), M4.trs(0.30, ROOM.bed + 0.08, 1.08), SEATMAT.pillow);
-      roomPillow(B, M4.mul(M4.trs(0.30, ROOM.bed + 0.13, 0.98), M4.trs(0, 0, 0, -0.05, -25 * DEG)));
+      roomBed(B, 'E');
+      roomPillow(B, M4.mul(M4.trs(0.26, ROOM.bed + 0.22, 1.16), M4.trs(0, 0, 0, -0.06, -68 * DEG)), SEATMAT.pillow);
+      roomPillow(B, M4.mul(M4.trs(0.20, ROOM.bed + 0.17, 1.01), M4.trs(0, 0, 0, 0.12, -38 * DEG)));
     } else {
-      roomBundle(B, 0.15, 0.93, -1, 1);
-      B.add(gLoft(cushionSecs(0.48, 0.32, 0.10, -0.05, { edge: 0.04, r: 0.04 }), 3), M4.mul(M4.trs(0.10, 0.62, 1.10), M4.trs(0, 0, 0, -0.30, -72 * DEG)), SEATMAT.pillow);
-      roomPillow(B, M4.mul(M4.trs(0.15, 0.64, 0.99), M4.trs(0, 0, 0, -0.25, -60 * DEG)));
+      roomBundle(B, 0.23, 0.80, -1, -1);
+      roomPillow(B, M4.mul(M4.trs(0.29, 0.70, 1.00), M4.trs(0, 0, 0, -0.03, -72 * DEG)), SEATMAT.pillow);
+      roomPillow(B, M4.mul(M4.trs(0.22, 0.665, 0.81), M4.trs(0, 0, 0, -0.02, -60 * DEG)));
     }
     B.add(gRBox(0.025, top, 1.33, 0.01, 1), M4.trs(-0.572, top / 2, 0.69), shell);
     capRail(B, 0.025, 1.33, -0.572, top, 0.69);
@@ -442,7 +524,7 @@ function roomPartFar(part) {
     B.add(gBox(0.04, wall, 0.655), M4.trs(0.565, wall / 2, -0.2925), SEATMAT.ash);
     B.add(gBox(0.55, top, 0.41), M4.trs(0.275, top / 2, -0.415), SEATMAT.jShell);
     B.add(gBox(1.13, MON.top, MON.zE - MON.zO), M4.trs(-0.02, MON.top / 2, (MON.zO + MON.zE) / 2), SEATMAT.jShell);
-    B.add(gQuad(0.531, 0.299), M4.trs(-0.20, 0.85, MON.zO - 0.002, Math.PI), SEATMAT.screen, atlasUV('screen'));
+    B.add(gQuad(0.531, 0.299), M4.trs(-0.20, 0.875, MON.zO - 0.002, Math.PI), SEATMAT.screen, atlasUV('screen'));
     B.add(gBox(0.34, 0.43, 0.01), M4.trs(0.275, top + 0.215, MON.zO - 0.004), SEATMAT.ash);
   } else {
     B.add(gBox(0.69, wall, 0.07), M4.trs(0.235, wall / 2, 1.31), SEATMAT.jShell);
@@ -450,22 +532,23 @@ function roomPartFar(part) {
     B.add(gRBox(0.58, 0.6, 0.12, 0.04, 1), M4.mul(M4.trs(0.2, 0.43, 1.2), M4.trs(0, 0.3, 0, 0, 17 * DEG)), SEATMAT.jFabric);
     B.add(gBox(0.45, top, 0.585), M4.trs(-0.355, top / 2, 0.3275), SEATMAT.jShell);
     B.add(gBox(0.45, CON.top, 0.68), M4.trs(-0.355, CON.top / 2, 0.96), SEATMAT.jShell);
-    B.add(gQuad(0.531, 0.299), M4.trs(0.15, 0.85, MON.zE + 0.002), SEATMAT.screen, atlasUV('screen'));
+    B.add(gQuad(0.531, 0.299), M4.trs(0.15, 0.875, MON.zE + 0.002), SEATMAT.screen, atlasUV('screen'));
     B.add(gBox(0.34, 0.43, 0.01), M4.trs(-0.325, top + 0.215, MON.zE + 0.004), SEATMAT.ash);
   }
   return B.build();
 }
 // centre dividers of a pair (between E/F rear-facing seats and between the D/G consoles)
 function roomDivider() {
-  // centreline wall between the E/F (D/G) seats: dark lower band with stowage + red life-vest tab, pale ash upper band,
-  // charcoal cap rail; the upper band on the aft half is the retractable privacy divider (c_27313 / c_27314)
+  // centreline wall between the E/F (D/G) seats: dark lower band to the console tops, then the privacy fins
   const B = new Builder();
   B.add(gRBox(0.05, 0.66, 2.62, 0.012, 1), M4.trs(0, 0.33, 0.0), SEATMAT.jShell);
-  B.add(gRBox(0.036, 0.40, 1.30, 0.012, 1), M4.trs(0, 0.86, -0.66), SEATMAT.ash);
-  B.add(gRBox(0.036, 0.36, 1.26, 0.012, 1), M4.trs(0, 0.84, 0.68), SEATMAT.ash);
-  for (const z of [-0.66, 0.68]) B.add(gRBox(0.06, 0.035, 1.26, 0.012, 2), M4.trs(0, 0.675, z), SEATMAT.jRail);
-  for (const z of [-1.30, -0.02, 0.06, 1.30]) B.add(gRBox(0.05, 0.40, 0.03, 0.008, 1), M4.trs(0, 0.86, z), SEATMAT.jShell);
-  B.add(gRBox(0.056, 0.02, 2.6, 0.006, 1), M4.trs(0, 1.07, 0.0), SEATMAT.jCap);
+  // w7: above the consoles the privacy divider is two slim charcoal fins with a gap, grey-metal top edges, rising to the
+  // monument tops (c_27313 / 27314; w5a / w6a: was one broad ash wall) [V]; fin height ~1.10 [D]
+  for (const sx of [-1, 1]) for (const z of [-0.66, 0.66]) {
+    B.add(gRBox(0.018, 0.44, 1.26, 0.006, 1), M4.trs(sx * 0.024, 0.88, z), SEATMAT.jShell);
+    B.add(gRBox(0.022, 0.012, 1.26, 0.005, 1), M4.trs(sx * 0.024, 1.105, z), SEATMAT.jPanelEdge);
+  }
+  for (const z of [-0.66, 0.66]) B.add(gRBox(0.07, 0.03, 1.26, 0.012, 2), M4.trs(0, 0.675, z), SEATMAT.jCap);
   // (QA w1: the stowage doors + red tabs now sit on the O units' outer consoles either side of this wall)
   return B.build();
 }

@@ -6,5 +6,7 @@
  {"name": "r5_centre_aisle", "unit": "roomCentre", "opts": {"az": 1.5708, "el": 0.75, "dist": 1.2}},
  {"name": "r6_bedO", "unit": "roomBedO", "opts": {"az": 2.0, "el": 0.6, "dist": 1.4}},
  {"name": "r7_seatO_close", "unit": "roomO", "opts": {"eye": [0.45, 1.55, -0.2], "look": [-0.25, 0.55, -1.2], "fov": 55}},
- {"name": "r8_seatE_close", "unit": "roomE", "opts": {"eye": [0.2, 1.6, 1.6], "look": [0.1, 0.6, 0.1], "fov": 60}}
+ {"name": "r8_seatE_close", "unit": "roomE", "opts": {"eye": [0.2, 1.6, 1.6], "look": [0.1, 0.6, 0.1], "fov": 60}},
+ {"name": "r9_bedO_close", "unit": "roomBedO", "opts": {"eye": [0.5, 1.95, -0.75], "look": [-0.12, 0.45, -0.45], "fov": 60}},
+ {"name": "r10_bedE_close", "unit": "roomBedE", "opts": {"eye": [0.62, 1.95, 0.85], "look": [0.18, 0.45, 0.35], "fov": 60}}
 ]}

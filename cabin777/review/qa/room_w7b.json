@@ -1,0 +1,164 @@
+{
+ "area": "room",
+ "rater": "B-geometry",
+ "round": 7,
+ "score": 7.6,
+ "summary": "The w6 colour fixes hold in the close views. With jHead #737b85 and jBand #656b73, the flap measures 1.29x the back fabric in q08, 1.09x in q09 and 1.0x in q10, and the band 1.06x in q10. All of those are inside the photo range of 0.9-1.35. The far rows in q06 still read 1.55x (flap) and 1.31x (band), with a +26 blue cast. Restoring the boarding bundle is the right decision. Its footprint, layer thicknesses and colours match tpg_42: pad 0.46 vs pillow 0.44 against 275/265 px in the photo, and the duvet layer #6470b4 against the photo's #7a7fb5. What lets it down is how the pillows are arranged on it. (1) The white pillow is 6 cm wider than the blue one and sits about 1 cm lower, so it shows as a white frame on three sides of the blue pillow (q08, r7, b1, b2). In tpg_31/42 the two pillows are the same width and the white one shows only as a band 0.06-0.08 m deep above the blue. (2) Both E pillows are yawed by -14 and -17 deg, which reads as a skewed, rolled pillow in b2 and r3. In every photo the pillows sit square to the seat. (3) Both pillows are flat slabs with vertical sides. The real pillows are plump, with a thin piped edge (a_omaat_room_13, tpg_72). Bed mode: the stitch lines are now continuous with no z-fighting, but the wrinkles still do not read, and the turned-down head strip is a square box. Shell, ash, footwells, monitor wall and nesting proportions are unchanged from w6 and still match. The score is unchanged at 7.6: the bundle adds a correct detail, and the pillow-arrangement errors take back about as much.",
+ "photos_collected": [
+  "none new: the OMAAT review URL now returns 404. The existing a_omaat_room_13 (blue and white pillows upright on the boarding bundle, side view) and tpg_31/42/72 were used."
+ ],
+ "prior_issues": [
+  {
+   "detail": "w6a medium / w6b medium: header band and headrest flap pale powder blue, 1.8-1.9x the fabric",
+   "status": "fixed (close views); partly open in q06 far rows",
+   "evidence": "Flap/back-fabric luminance: q08 115/89 = 1.29, q09 98/90 = 1.09, q10 97.5/97.8 = 1.0. Band/fabric: q10 104/98 = 1.06. Photos: c_27312 flap/fabric 0.96, band 0.88; c_27315 flap 1.18; tpg_42 0.87. q06 far rows still read flap #5f6a79 / fabric #44434d = 1.55, band 1.31, with B-R +26. Moved to low."
+  },
+  {
+   "detail": "w6a medium: bed duvet a stiff slab, wrinkles invisible, pillow flat",
+   "status": "partly fixed",
+   "evidence": "r6: the duvet is thinner (0.03 loft) and the stitch lines read. The three gCyl wrinkle ridges (line 290, r 0.012 at y+0.001, x-scale 0.5) still do not show in the flat studio light. The head strip (line 291, gRBox r 0.01) is a sharp-edged box. The blue pillow is still a square-walled slab: cushionSecs edge 0.015 (line 277). tpg_72 is heavily rumpled, and its pillow is plump."
+  },
+  {
+   "detail": "w6b medium: duvet stitch lines z-fighting with the top, wrinkles invisible",
+   "status": "stitches fixed; wrinkles not fixed",
+   "evidence": "In the r6 crop (4x) the horizontal and centre stitch lines are continuous, with no dotted breakup. No wrinkle ridge is distinguishable on the duvet top."
+  }
+ ],
+ "details": [
+  {
+   "detail": "Nested-pair layout, shell walls, wing walls, footwells, monitor wall",
+   "score": 8.0,
+   "refs": [
+    "c_27312",
+    "c_27313",
+    "c_27315",
+    "tpg_53",
+    "omaat_room_16"
+   ]
+  },
+  {
+   "detail": "Seat sofa: back pad, grooves, header band, flap position and size",
+   "score": 8.0,
+   "refs": [
+    "tpg_42",
+    "c_27312",
+    "c_27315",
+    "omaat_room_13"
+   ]
+  },
+  {
+   "detail": "Flap and band colour vs fabric",
+   "score": 7.8,
+   "refs": [
+    "c_27312",
+    "c_27315",
+    "tpg_42"
+   ]
+  },
+  {
+   "detail": "Ash panels and table (tone and frame)",
+   "score": 7.8,
+   "refs": [
+    "c_27312",
+    "c_27313",
+    "c_27315"
+   ]
+  },
+  {
+   "detail": "Boarding bundle (pad, duvet in film, slipper pack)",
+   "score": 7.5,
+   "refs": [
+    "tpg_42",
+    "tpg_31",
+    "omaat_room_13"
+   ]
+  },
+  {
+   "detail": "Pillow arrangement on the bundle (white behind blue)",
+   "score": 6.0,
+   "refs": [
+    "tpg_31",
+    "tpg_42",
+    "omaat_room_13"
+   ]
+  },
+  {
+   "detail": "Pillow shape (plump, piped edge)",
+   "score": 6.5,
+   "refs": [
+    "omaat_room_13",
+    "tpg_72",
+    "c_27303"
+   ]
+  },
+  {
+   "detail": "Bed mode duvet and pillows",
+   "score": 6.8,
+   "refs": [
+    "tpg_72",
+    "tpg_75"
+   ]
+  }
+ ],
+ "issues": [
+  {
+   "severity": "medium",
+   "detail": "White pillow frames the blue one on three sides instead of showing as a band above it",
+   "problem": "O white pillow: cushionSecs(0.50, 0.34) at (0.06, 0.63, -1.10). Blue pillow: 0.44 x 0.34 at (0.08, 0.64, -0.99). The white top ends about 1 cm above the blue (0.79 vs 0.787 + thickness), and the white is 3 cm wider each side. E (line 428): white 0.48 at x 0.10 vs blue at x 0.15, so 7 cm of white shows on the outer side. The result looks like a blue cushion mounted in a white frame.",
+   "evidence": "q08 crop: white border about 20 px on the left and about 8 px on top. Same in r7, b1 and b2. tpg_42: white is the same width as the blue (670-915 px), shows only above it (370-410 px, ~0.08 m) and does not show at the sides. tpg_31: white 200 px wide vs blue 215 px, top band 45 px over a 135 px blue.",
+   "fix": "09c_room.js line 366 (O): cushionSecs(0.50, 0.34, 0.10, -0.05, ...) -> cushionSecs(0.44, 0.42, 0.10, -0.05, { edge: 0.05, r: 0.05 }). Translation (0.06, 0.63, -1.10) -> (0.08, 0.67, -1.10), with inner ry 0.05 -> 0.08 to match the blue. The white top then reaches about 0.87, ~0.07 above the blue, and its bottom stays at ~0.47 on the cushion behind the bundle. Line 428 (E): cushionSecs(0.48, 0.32, ...) -> cushionSecs(0.44, 0.42, 0.10, -0.05, { edge: 0.05, r: 0.05 }), at (0.15, 0.66, 1.10) instead of (0.10, 0.62, 1.10). Check in b1/b2 that only a top band of white shows."
+  },
+  {
+   "severity": "medium",
+   "detail": "E-seat pillows yawed 14-17 deg, so they read skewed and rolled",
+   "problem": "Line 428: white inner ry -0.30. Line 429: blue inner ry -0.25 (-14 deg). Combined with the -60/-72 deg tilt, both pillows appear rolled about 8 deg in the seat view and diagonal in plan. The O pillows (ry 0.05/0.08) are square.",
+   "evidence": "b2_E_front: the blue pillow's top edge slopes about 8 deg and its right edge overlaps the white. r3_pair_top: the E pillow sits visibly diagonal. Every pillow in tpg_31, tpg_42 and omaat_room_13 is square to the seat back within about 3 deg.",
+   "fix": "09c_room.js line 428: M4.trs(0, 0, 0, -0.30, -72 * DEG) -> M4.trs(0, 0, 0, -0.03, -72 * DEG). Line 429: M4.trs(0, 0, 0, -0.25, -60 * DEG) -> M4.trs(0, 0, 0, -0.04, -66 * DEG)."
+  },
+  {
+   "severity": "medium",
+   "detail": "Pillows are square-walled slabs, not plump pillows with a thin piped edge",
+   "problem": "roomPillow (line 277) lofts cushionSecs(0.44, 0.34, 0.07, -0.035, { edge: 0.015, r: 0.02 }): flat bottom, about 4 cm of vertical side, tight 1.5 cm top roll. Upright on the bundle and in bed mode (r6) it reads as a foam block. The white seat-mode pillows (lines 366 and 428, edge 0.04) look the same.",
+   "evidence": "r6 crop: the blue pillow has a crisp vertical rim and a flat top. b3_O_side: a box profile. omaat_room_13: the blue pillow is about 0.10 thick at the centre, tapering to a piped edge under 1 cm with taupe piping, and the white one is the same shape. tpg_72: domed pillows.",
+   "fix": "roomPillow line 277: cushionSecs(0.44, 0.34, 0.09, -0.035, { edge: 0.07, r: 0.06, crown: 0.02 }). The near-full-height quarter round gives a domed face that thins toward a 2 cm rim. Line 278: replace the jPillowBack gRBox(0.43, 0.004, 0.33) with a 0.008-thick taupe piping ring. Either use gRBox(0.45, 0.008, 0.35, 0.02, 1) at y -0.035, so only its 5 mm rim shows past the loft, or use a sweep tube round the rim if 02_geo has one. Use { edge: 0.07, r: 0.06, crown: 0.02 } for the white pillows too, on lines 360, 366, 424 and 428."
+  },
+  {
+   "severity": "medium",
+   "detail": "Bed duvet: wrinkles still invisible and the head strip is a sharp box (carried over from w6, partly fixed)",
+   "problem": "Line 290: the ridges are gCyl r 0.012 at y + 0.001 with x-scale 0.5, so they rise only about 6 mm and are 12 mm wide; in r6 they don't show. Line 291: the head strip is gRBox(W - 0.02, 0.02, 0.12, 0.01), a hard-edged block with vertical ends. The stitch lines are fixed.",
+   "evidence": "r6 4x crop: the duvet top is uniform apart from the stitch lines, and the turned strip has a hard step and square ends. tpg_72: big soft folds 3-5 cm high across the whole duvet, and the edges drape.",
+   "fix": "Line 290: gCyl(0.025, 0.025, W * 0.6, 10) at y - 0.008, with the scale changed to (1, 0.5, 1) so it is a low, wide ridge about 5 cm wide and 1.7 cm proud. Add two more at dz -0.05 and 0.25, angles \u00b10.4. Line 291: replace gRBox with gLoft(cushionSecs(W - 0.02, 0.12, 0.022, 0, { edge: 0.02, r: 0.05, crown: 0.006 }), 3) at the same place, so the strip is rounded all round."
+  },
+  {
+   "severity": "low",
+   "detail": "Blue pillow leans about 30 deg back; real pillows stand about 15-20 deg off vertical",
+   "problem": "Line 367: rx -60 deg, so the pillow plane sits 30 deg from vertical. The white pillow is at -74 deg.",
+   "evidence": "b3_O_side: the blue pillow leans well back. In omaat_room_13 (side view) the blue pillow is nearly upright against the white.",
+   "fix": "Line 367: -60 * DEG -> -68 * DEG, and line 429 as in the yaw fix (-66 deg). Re-check that the bottom edge still rests on the bundle top at about 0.507."
+  },
+  {
+   "severity": "low",
+   "detail": "Far-row flap and band still pale blue in q06",
+   "problem": "In q06 the flap is #5f6a79 against fabric #44434d (1.55x, B-R +26) and the band is 1.31x. The close views are in range.",
+   "evidence": "q06 crop (center pair 2nd row) vs c_27312 flap #768caa / fabric #828fb0 (0.96x), band 0.88x.",
+   "fix": "09_seats.js (shared, one key): jHead c '#737b85' -> '#6d737b', which cuts B-R from +18 to +14 and lightness by about 5 %. Keep jBand at #656b73. Target in q06: flap/fabric 1.3 or less."
+  },
+  {
+   "severity": "low",
+   "detail": "Blue pillow slightly greyed (lavender) next to the photos",
+   "problem": "Rendered at #545e9b in q08 and #4b5390 in q09, chroma about 70. The photos show royal blue: tpg_42 #3b54a7 (chroma about 108) and c_27303 #272a4a in shade.",
+   "evidence": "q08 / q09 samples vs tpg_42 and tpg_72 (#7678b3 in a bright light).",
+   "fix": "09_seats.js (shared, one key): pillowBlue c '#5f6596' -> '#4f5ba3'."
+  },
+  {
+   "severity": "low",
+   "detail": "Slipper pack reads as a solid glossy azure brick",
+   "problem": "Line 274 builds it as gRBox(0.09, 0.035, 0.17) #1f4fb4, r 0.3. The real pack is a clear crinkled bag holding a darker blue pouch with white contents.",
+   "evidence": "tpg_42: the pouch is #0a4db9, about 0.07 x 0.10, inside a clear bag about 0.12 x 0.20. Its silhouette is irregular, not a brick.",
+   "fix": "Line 274: the pouch becomes gRBox(0.07, 0.03, 0.10, 0.012, 1) #163f9c, r 0.35, at the same place. Add a film shell gRBox(0.11, 0.04, 0.19, 0.02, 1) { c: '#dfe3e8', r: 0.12 } over it, offset 0.02 toward the pillow, so the clear bag extends past the pouch."
+  }
+ ],
+ "questions": [
+  "Should the E (forward-facing, aisle column) seat get the bundle at all? Every bundle photo (tpg_31, tpg_42, omaat_room_13) shows an O bench. On the narrower 0.64 E seat the 0.44 pillow takes 69 % of the width, against 52 % on O."
+ ]
+}

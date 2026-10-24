@@ -92,7 +92,7 @@ const SEATMAT = {
   mattress: { c: '#f0efea', r: 0.9, l: LAYER.fabric },
   duvet: { c: '#4d57aa', r: 0.7, l: LAYER.fabric },   // room w5: satin royal blue (tpg_72 #6f7bd9, b_tpg #5863b0) [V]   // QA w2: indigo (fb_a96b7a65 #4b5789, fb_d8b6dc0d #606ea0)
   pillow: { c: '#eeede8', r: 0.9, l: LAYER.fabric },
-  pillowBlue: { c: '#5f6596', r: 0.85, l: LAYER.yagasuri },   // QA w2: rendered #181e49; photos #4c5178-#737ba9 (tt_seat-1, tt_seats-center)   // yagasuri jacquard #32355d / #3e457b (c_27302 / 27303)
+  pillowBlue: { c: '#4c5594', r: 0.85, l: LAYER.yagasuri },   // QA w2: rendered #181e49; photos #4c5178-#737ba9 (tt_seat-1, tt_seats-center); room w7: pillow/fabric 0.66 (tpg_42) - 1.07 (omaat_room_15) -> ~0.85   // yagasuri jacquard #32355d / #3e457b (c_27302 / 27303)
   lampGlow: { c: '#ffe2b0', r: 0.4, e: 0.35 },
   moodGlow: { c: '#ffd9a0', r: 0.5, e: 0.25 },
   hole: { c: '#0b0d10', r: 1.0 },
@@ -317,6 +317,7 @@ const UNITS = {
   roomPair: () => { const B = new Builder(); B.addBuilt(roomPart('O')); B.addBuilt(roomPart('E')); return B.build(); },
   roomPairDoors: () => { const B = new Builder(); B.addBuilt(roomPart('O', { doors: 1 })); B.addBuilt(roomPart('E', { doors: 1 })); return B.build(); },
   roomBedO: () => { const B = new Builder(); B.addBuilt(roomPart('O', { bed: true })); B.addBuilt(roomPart('E')); return B.build(); },
+  roomBedE: () => { const B = new Builder(); B.addBuilt(roomPart('O')); B.addBuilt(roomPart('E', { bed: true })); return B.build(); },
   roomCentre: () => { const B = new Builder(); B.addBuilt(mirrorGeo(roomPart('O')), M4.trs(-0.585, 0, 0)); B.addBuilt(mirrorGeo(roomPart('E')), M4.trs(-0.585, 0, 0)); B.addBuilt(roomPart('O'), M4.trs(0.585, 0, 0)); B.addBuilt(roomPart('E'), M4.trs(0.585, 0, 0)); B.addBuilt(roomDivider()); return B.build(); },
   suiteW: () => suiteUnit(),
   suiteBed: () => suiteUnit({ bed: true }),
