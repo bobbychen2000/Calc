@@ -1,0 +1,105 @@
+{
+ "area": "room",
+ "rater": "B",
+ "round": 13,
+ "score": 8.3,
+ "summary": "Round 13 (clean worktree at 6d288fe, which includes 4f992d5). From the aisle the room is unchanged and still clearly the same product: q06 against c_27312, q10 against c_27315. The ash now has warm figure with long horizontal streaks where w12 had a flat linen hatch (q06 median (189,184,175), was (181,178,172)). The comforter is the main gain. It is now matte royal blue with the check jacquard and visible soft quilt boxes. The r9 diagonal ripple cluster and the pie-crust hems are gone. Studio duvet/white-pillow ratios are r9 (0.47, 0.52, 0.89) against tpg_81 white-balanced (0.46, 0.54, 1.06), close to a match. The pillow flange has gone from near white (0.89 of the white pillow) to grey (0.69; kn_17 0.45). What still holds the area below 8.5: (1) The O comforter plan is a T or cross. The wide aisle part covers only ~0.2 m beside the seat before it tapers (a = smooth(-0.80, -0.52) starts 7 cm past z0 = -0.875), so a white wedge of pad shows at the aisle between the pillows and the table corner. In tpg_81 the comforter fills the wide part of the bed to the table corner and then tapers into the footwell. (2) The buckle is still hidden. It sits at CU (0.03, -0.20), but the belt's front end is at CU (0.267, -0.203), so the buckle lands under the navy slipper pouch (o1zoom: no buckle visible). The belt is still a single flat slab with no latch half. (3) The pillows render pastel periwinkle, ~1.2x too light against tpg_81 and much lighter than kn_17. The jacquard is a uniform 45-degree harlequin; in kn_17 and tpg_81 the squares are near-aligned with the pillow edges and run in stepped diagonal bands. (4) The ash in the studio is still pale and neutral: ash/white pillow 0.94 and R/B 1.05, against tpg_81 0.85 and R/B 1.15. Its directly lit grain is weak (luma SD 2 %). Lighting (not scored): the shells read cool blue-slate in the cabin views (q06 shell (93,99,112) against c_27312 (71,64,58)).",
+ "photos_collected": [
+  "ref/web/room/kn_17.jpg (belt/buckle, pillow jacquard, flange)",
+  "ref/web/room/tpg_81.jpg (O bed comforter plan, duvet/pillow/ash tones)",
+  "ref/web/room/tpg_60.jpg (ash veneer)",
+  "ref/ana/c_27312, c_27315 (official)"
+ ],
+ "own_renders": [
+  "/tmp/claude-0/rb13/own/o1_belt_top.png + o1zoom.png (belt slab, buckle hidden under the pouch)",
+  "/tmp/claude-0/rb13/own/o2_bedO_plan.png (O comforter T/cross plan)",
+  "/tmp/claude-0/rb13/own/o3_bedE_plan.png (E bed plan)",
+  "/tmp/claude-0/rb13/own/o4_seatE_front.png",
+  "/tmp/claude-0/rb13/own/o5_pillow_close.png (45-deg harlequin check, grey flange)",
+  "/tmp/claude-0/rb13/own/o6_pair_low.png (ash privacy wall, studio key light)",
+  "/tmp/claude-0/rb13/own/o7_bedO_tpg81.png (O bed from a tpg_81-like viewpoint)",
+  "/tmp/claude-0/rb13/own/pillowcmp.png (kn_17 | tpg_81 | o5 | r9 jacquard)",
+  "/tmp/claude-0/rb13/own/ashcmp.png (c_27312 | c_27315 | tpg_60 ash)",
+  "spec /tmp/claude-0/rb13/spec.json; built from the clean worktree /tmp/claude-0/base_wt/cabin777 at 6d288fe"
+ ],
+ "prior_issues": [
+  {"from": "w12b", "severity": "medium", "issue": "O comforter: aliasing ripple cluster beside the pillow; the sheet is still a narrow tongue", "status": "ripples fixed; shape partly fixed", "evidence": "r9 (w13) shows no parallel ridges; the sheet is smooth, with soft quilt boxes. In plan (o2) the sheet now reaches the aisle beside the seat, but only as a short triangular protrusion, so it reads as a T or cross. See the new issue 1."},
+  {"from": "w12b", "severity": "medium", "issue": "Comforter free edge is a regular pie-crust scallop (E and O)", "status": "fixed", "evidence": "r9/r10/o3: the hems are straight, with a long low wave."},
+  {"from": "w12b", "severity": "medium", "issue": "Pillow flange renders almost white", "status": "fixed (mostly)", "evidence": "o5 column x 300: flange (170,166,176) against white 244, a ratio of 0.69 (w12: 0.89). In kn_17 the flange is (86-95, 75-82, 89-110) against a shaded white pillow of ~(180,190,215), a ratio of ~0.45, and warm taupe. Still slightly light and cool; low."},
+  {"from": "w12b", "severity": "low", "issue": "Buckle hidden under the slipper pouch", "status": "not fixed", "evidence": "o1zoom: the teal slab ends free at the front with no silver anywhere. The buckle at CU (0.03, 0.051, -0.20) is 0.24 m off the belt's front end, which is at CU (0.15 + 0.27*sin(-0.45), -, 0.04 - 0.27*cos(0.45)) = (0.267, -0.203). It lies under the pouch (roomBundle P = x + ps*0.29)."},
+  {"from": "w12b", "severity": "low", "issue": "Pillow jacquard: staggered bricks rather than a diamond check", "status": "changed, partly fixed", "evidence": "It is now a uniform 45-degree harlequin check (o5). kn_17 and tpg_81 show squares near-aligned with the pillow edges, in stepped diagonal bands (pillowcmp.png)."},
+  {"from": "w12b", "severity": "low", "issue": "Comforter too light relative to the white pillow", "status": "fixed", "evidence": "r9 duvet (115,128,218) against white 246: (0.47, 0.52, 0.89). tpg_81 white-balanced (0.46, 0.54, 1.06). r10 the same."},
+  {"from": "w12a", "severity": "medium", "issue": "O-bed comforter: glossy crumpled pastel tongue, no quilting or jacquard", "status": "materials fixed; plan shape remains", "evidence": "r9/o7: matte royal blue, with the check and ~0.33 m quilt boxes. The plan is still a T (new issue 1)."},
+  {"from": "w12a", "severity": "medium", "issue": "Duvet (both beds) too light, grey and glossy; no jacquard", "status": "fixed", "evidence": "See above. r 0.85, jPillow layer, colour ratios match tpg_81."},
+  {"from": "w12a", "severity": "medium", "issue": "Ash panels pale cream with about half the photo's grain contrast", "status": "partly fixed", "evidence": "q06 now shows warm horizontal figure (visual). q06 median (189,184,175), high-pass/mean 0.053; q10 0.064. Measured on the same crops: c_27312 0.18, c_27315 0.11, real tpg_81 0.054. Studio o6 ash is (231,227,221) against a white pillow of ~245 (0.94) with luma SD 2 %; tpg_81 is 0.85 with R/B 1.15."},
+  {"from": "w12a", "severity": "low", "issue": "Belt reads cyan-teal", "status": "fixed", "evidence": "o1 belt (96,128,150); belt/seat luma 0.77, against kn_17 (36,55,70)/(52,49,61) at ~0.9. The hue is in range."},
+  {"from": "w12a", "severity": "low", "issue": "Plaque glow quad paints a navy rectangle", "status": "not re-checked in detail (decision 16 stands)", "evidence": "q08: the '13K' plaque still reads as light-blue numerals on a navy tile."}
+ ],
+ "details": [
+  {"detail": "Overall nested-pair layout, shells, privacy walls, monitors, cabinets (aisle views)", "score": 8.5, "refs": ["c_27312", "c_27315", "q06", "q10"]},
+  {"detail": "Monument top: housings, spine and rail, aisle cap with flared T, plaques", "score": 8.3, "refs": ["c_27313", "c_27315", "r5", "q10"]},
+  {"detail": "Ash panels and table tops (tone, grain, frames)", "score": 7.9, "refs": ["c_27312", "c_27315", "tpg_60", "tpg_81", "q06", "o6"]},
+  {"detail": "Seat sofa: bench, back channels, header band, slate flap; satin shell rims", "score": 8.3, "refs": ["c_27315", "kn_17", "r7", "o6"]},
+  {"detail": "Seat belt and buckle", "score": 6.5, "refs": ["kn_17", "c_27315", "o1"]},
+  {"detail": "Boarding bundle and pillows (upright)", "score": 7.8, "refs": ["kn_17", "tpg_81", "o1", "o5", "r7"]},
+  {"detail": "E bed (mattress, quilted comforter, pillows)", "score": 8.5, "refs": ["tpg_81", "o3", "r10"]},
+  {"detail": "O bed comforter", "score": 7.6, "refs": ["tpg_81", "o2", "o7", "r9"]},
+  {"detail": "Monitor, footwell, ottoman, side-table console", "score": 8.3, "refs": ["c_27316", "q07"]},
+  {"detail": "Colour fidelity of materials (studio; cabin cast excluded)", "score": 8.3, "refs": ["tpg_81", "kn_17", "r9", "o5"]}
+ ],
+ "issues": [
+  {
+   "severity": "medium",
+   "detail": "O comforter plan is a T or cross: the wide aisle part is a short triangle, and a white pad wedge shows between the pillows and the table corner",
+   "problem": "In the O bounds, a = smooth(-0.80, -0.52, z) starts narrowing xr from 0.30 only 7.5 cm after the head edge (z0 = -0.875), while the mattress stays 0.76 m wide to z = -0.62. Beside the seat the sheet therefore tapers diagonally at once. In plan (o2) and from above (r9, o7) it reads as a band along the wall with a short tongue reaching toward the aisle. In tpg_81 the comforter covers ~85 % of the wide part of the bed, from the pillows' lower edge to the table corner, with only a straight strip of pad at the aisle edge. It then tapers into the footwell beside the table.",
+   "evidence": "o2_bedO_plan: the sheet is full width only between x 380 and 440 px, against a wide-part length of 135 px. tpg_81: the comforter is full width from the pillow edge (x ~620) to the table corner (x ~1050).",
+   "fix": "09c roomBed O bounds: a = smooth(-0.68, -0.57, z) (hold the full width until the mattress narrows at -0.62); xr wide 0.30 -> 0.25 so a ~3 cm strip of pad shows at the aisle edge as in tpg_81 (mr 0.285 unchanged; the roll-over then only happens where xr > mr). Optionally z0 -0.875 -> -0.90 so the head edge tucks under the blue pillow."
+  },
+  {
+   "severity": "medium",
+   "detail": "Buckle still hidden: its position does not match the belt end",
+   "problem": "The belt is gBox(0.045, 0.004, 0.54) at CU trs(0.15, 0.047, 0.04, -0.45), so its ends are at CU (0.033, 0.283) and (0.267, -0.203). The buckle is at CU (0.03, 0.051, -0.20), 0.24 m inboard of the front end and under the navy slipper pouch. kn_17 and c_27315 both show the large silver buckle in plain view at the strap's front end. kn_17 also shows the latch half (dark strap with a metal tongue) on the other side.",
+   "evidence": "o1zoom.png: the teal slab ends bare; no silver pixels near its end. kn_17: buckle (203,208,215) at the front end of the strap (36,55,70).",
+   "fix": "09c roomSeatCore line 66: buckle M4.trs(0.03, 0.051, -0.20, -0.45) -> M4.trs(0.25, 0.051, -0.17, -0.45), on the belt just behind its front end. Optional latch half: B.add(gBox(0.045, 0.004, 0.16), M4.mul(CU, M4.trs(-0.30, 0.047, 0.20, 0.35)), belt) plus a 0.035 x 0.004 x 0.045 SEATMAT.buckle tongue at its front end, outboard of the bundle."
+  },
+  {
+   "severity": "low",
+   "detail": "Pillows (seat and bed) pastel periwinkle, ~1.2x too light",
+   "problem": "Studio blue pillow over white: o5/r9 (0.60, 0.65, 0.90). tpg_81 white-balanced: (0.49, 0.54, 0.90). kn_17 shows a much deeper navy-royal (39,62,122), with the pillow about equal in luma to the charcoal seat. In the model the pillow now renders lighter than the comforter (luma 0.66 against 0.55); in tpg_81 the two are about equal.",
+   "evidence": "o5 (143,157,220), r9 pillow (147,161,221), white 246. tpg_81 pillow (120,122,182), white (243,226,203).",
+   "fix": "09_seats.js (shared, one line): pillowBlue '#4c5594' -> '#424a8c'."
+  },
+  {
+   "severity": "low",
+   "detail": "Jacquard motif is a uniform 45-degree harlequin; the photos show near-axis-aligned squares in stepped diagonal bands",
+   "problem": "In o5 the pale diamonds are crisp, uniform and stand on their points. kn_17 shows ~1.4 cm squares with their sides close to parallel to the pillow edges; alternating light and dark runs form stepped diagonal bands. tpg_81 shows the same cells as offset rectangles forming stair-steps. The tone-on-tone contrast in both is softer than the model's crisp pale squares.",
+   "evidence": "/tmp/claude-0/rb13/own/pillowcmp.png (kn_17 | tpg_81 | o5 | r9).",
+   "fix": "test/make_swatches.py j_pillow (drawn tile): draw an axis-aligned checkerboard of 1.4 cm cells and offset every other column by half a cell (stair-step), giving diagonal banding; lower the light/dark amplitude by ~30 %. Keep the 1.9 cm period from tpg_46."
+  },
+  {
+   "severity": "low",
+   "detail": "Ash still pale and neutral in direct light, with weak grain",
+   "problem": "Studio o6 privacy wall: (231,227,221), ash/white pillow 0.94, R/B 1.05, luma SD 2 %. Real tpg_81 table white-balanced: 0.85, R/B 1.15. c_27315's panel shows darker grey-brown streaks at hp/mean 0.11. In the cabin the figure is now visible and q06 hp/mean is 0.053, matching tpg_81 (0.054) but below the official photos (0.11-0.18).",
+   "evidence": "o6 crop (170-300, 80-400); ashcmp.png.",
+   "fix": "09_seats.js (shared): SEATMAT.ash '#d9cfbe' -> '#cfc2ad'. 03_tex.js (shared): PHOTO_GAIN[19] 2.0 -> 2.5."
+  },
+  {
+   "severity": "low",
+   "detail": "Pillow flange still slightly light and cool",
+   "problem": "0.69 of the white pillow with a violet bias (170,166,176). kn_17 shows a warm taupe at ~0.45.",
+   "evidence": "o5 x 300, y 56-62; kn_17 x 700-710, y 420-460.",
+   "fix": "09c line 17: jPillowBack '#5a5860' -> '#4e4847', r 0.8."
+  },
+  {
+   "severity": "low",
+   "detail": "(lighting, not scored) cool cast on the shells in the cabin views",
+   "problem": "q06 shell (93,99,112); c_27312 (71,64,58).",
+   "evidence": "q06 (120-250, 260-300) vs c_27312 (420-438, 300-420).",
+   "fix": "Lighting owner."
+  }
+ ],
+ "questions": [
+  "O-bed proportions: in tpg_81 the wide part of the bed beyond the pillows looks about 1.4 pillow-widths long before the table corner. In the model plan (o2) it is about 0.5. Part of this is the comforter (issue 1), but the table may also start too far toward the head end (mattress wide part z -1.28..-0.62, only 0.66 m). Is a plan view or seat-map dimension of the Fusio-based THE Room available to check the table length?",
+  "Slippers: decision 17 stands (navy). Two of three real photos (kn_17, tpg_76) show white slippers in film."
+ ]
+}

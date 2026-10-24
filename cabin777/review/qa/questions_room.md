@@ -42,5 +42,6 @@ The user asked for judgement calls rather than questions. Rule applied: real in-
     the pad into the footwell. The model keeps the loose comforter (decision 2). Say if the folded look is wanted.
 16. **Plaque numerals (w12a/b question).** c_27315 and kn_36 (day) read white; tlfl_9211 (2024, night) and ff_17e read
     blue-lit. Decision 5 (blue-lit) stays.
-17. **Slippers (w12b).** kn_17 and tpg_76 show white slippers in film with a pink amenity kit; omaat_room_15 a navy
-    pouch. Decision 13 (navy) stays for now; it may be a period / route difference.
+17. **Slippers (w12b / w13b).** kn_17 (2021) and tpg_76 (2020) show white slippers in clear film (with a pink amenity
+    kit); only omaat_room_15 shows a navy pouch. Two of three real photos, including the latest, win: the slipper pack is
+    now white in film (supersedes decision 13).

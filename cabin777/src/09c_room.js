@@ -14,7 +14,7 @@ Object.assign(SEATMAT, {
   jBezel: { c: '#3a3c42', r: 0.35, l: LAYER.plastic },   // QA w3: rendered near-black (L 18-29 vs photos 34-45)
   jSeam: { c: '#46444b', r: 0.95 },
   jCavity: { c: '#2c2d32', r: 0.9 },   // QA w4: footwell space reads charcoal, not black (tpg_53, c_27316) [V]
-  jPillowBack: { c: '#5a5860', r: 0.75, l: LAYER.fabric },   // w12b: dark grey-taupe piping (kn_17, tpg_81; rendered 0.89 of the white pillow); w8a/b: warm neutral grey flange (omaat_room_15, blue-cast #595b7e -> neutral) [V]
+  jPillowBack: { c: '#4e4847', r: 0.75, l: LAYER.fabric },   // w12b: dark grey-taupe piping (kn_17, tpg_81; rendered 0.89 of the white pillow); w8a/b: warm neutral grey flange (omaat_room_15, blue-cast #595b7e -> neutral) [V]
   jPanelEdge: { c: '#5d6166', r: 0.34, m: 0.5, l: LAYER.brushed },
   jLedge: { c: '#8f959c', r: 0.3, m: 0.6, l: LAYER.brushed },   // ledge top, darker than the edge trim (c_27313 #788087-#b2bbc8) [V]
   jSill: { c: '#8e9399', r: 0.35, m: 0.4, l: LAYER.brushed },   // silver-grey sill + drawer under the monitor (tpg_53) [V]
@@ -63,7 +63,8 @@ function roomSeatCore(B, bed, lod, w = 0.64, fs = 1) {
   const CU = M4.trs(0, 0.39, -0.34, 0, 2 * DEG);
   // w12: dark slate-teal webbing to the seat crease, buckle at its front end clear of the bundle (kn_17 #213342, c_27313) [V]
   B.add(gBox(0.045, 0.004, 0.54), M4.mul(CU, M4.trs(0.15, 0.047, 0.04, -0.45)), { c: '#2c4250', r: 0.8, l: LAYER.fabric });
-  B.add(gRBox(0.05, 0.012, 0.035, 0.005, 1), M4.mul(CU, M4.trs(0.03, 0.051, -0.20, -0.45)), SEATMAT.buckle);
+  B.add(gRBox(0.05, 0.012, 0.035, 0.005, 1), M4.mul(CU, M4.trs(0.25, 0.051, -0.17, -0.45)), SEATMAT.buckle);
+  B.add(gRBox(0.035, 0.008, 0.03, 0.004, 1), M4.mul(CU, M4.trs(-0.20, 0.048, 0.02, 0.6)), SEATMAT.buckle);   // w13b: latch half on the far side (kn_17) [V]
 }
 
 // charcoal frame round an ash panel (every ash face in the photos sits in a ~3 cm dark frame, c_27312-27315):
@@ -274,10 +275,10 @@ function roomBundle(B, x, z, dir, ps) {
   B.add(gRBox(0.46, 0.042, 0.31, 0.016, 1), M4.trs(x, 0.452, z), { c: '#e2ded4', r: 0.3 });
   B.add(gRBox(0.43, 0.034, 0.28, 0.014, 1), M4.trs(x + 0.005, 0.49, z - dir * 0.012), { c: '#6470b4', r: 0.3 });
   B.add(gRBox(0.452, 0.002, 0.29, 0.001, 1), M4.trs(x, 0.4735, z + dir * 0.003), { c: '#eef0f2', r: 0.15 });   // pad fold seam under the film
-  // w7: slipper pack = a dark navy pouch with a white sole edge (bag film not modelled) (omaat_room_15 #4f5060, tpg_42) [V]
+  // w7: slipper pack beside the bundle; w13: white slippers in clear film, a grey sole line (kn_17, tpg_76) [V]
   const P = M4.trs(x + ps * 0.29, 0.444, z + dir * 0.03, ps * 0.5);
-  B.add(gLoft(cushionSecs(0.11, 0.19, 0.024, 0, { edge: 0.011, r: 0.03, crown: 0.004 }), 3), M4.mul(P, M4.trs(0, -0.011, 0)), { c: '#262c4a', r: 0.55 });   // w9a: soft pouch, not a booklet
-  B.add(gRBox(0.10, 0.008, 0.05, 0.004, 1), M4.mul(P, M4.trs(0, 0.012, 0.06)), { c: '#d9d8d2', r: 0.6 });
+  B.add(gLoft(cushionSecs(0.11, 0.19, 0.024, 0, { edge: 0.011, r: 0.03, crown: 0.004 }), 3), M4.mul(P, M4.trs(0, -0.011, 0)), { c: '#dddbd5', r: 0.35 });   // w13: white slippers in clear film (kn_17 2021, tpg_76 2020; navy pouch only in omaat_room_15) [V]
+  B.add(gRBox(0.10, 0.008, 0.05, 0.004, 1), M4.mul(P, M4.trs(0, 0.012, 0.06)), { c: '#b9b6ae', r: 0.6 });
 }
 // w7 pillows (omaat_room_15, tpg_31 / 42): plump, ~0.44 x 0.34 x 0.10; the blue one a royal-blue check jacquard with a
 // ~15 mm grey flange round its seam [V]; the white one the same size behind it [V]
@@ -367,11 +368,11 @@ function roomBed(B, part) {
     mat(-0.475, 0.285, -1.28, -0.62); mat(-0.475, -0.032, -0.64, MON.zO - 0.005, -0.002);
     // aisle edge rolls over the mattress beside the seat; beside the table it ends at the console wall; then the footwell
     bounds = (z) => {
-      const [fl, fr] = footwellEdges(fw[0], fw[1], fw[2], fw[3], -1, z, 0.02), a = smooth(-0.80, -0.52, z), b = smooth(MON.zO - 0.06, MON.zO + 0.06, z);   // w12b: softer narrowing
+      const [fl, fr] = footwellEdges(fw[0], fw[1], fw[2], fw[3], -1, z, 0.02), a = smooth(-0.68, -0.57, z), b = smooth(MON.zO - 0.06, MON.zO + 0.06, z);   // w13b: wide over the whole wide bed up to the table corner (tpg_81) [V]
       const mr = lerp(lerp(0.285, -0.012, a), fr + 0.01, b);
-      return [lerp(-0.455, fl, b), lerp(lerp(0.30, -0.03, a), fr, b), mr];   // w12: laid wide over the pad (tpg_81) [V]
+      return [lerp(-0.455, fl, b), lerp(lerp(0.25, -0.03, a), fr, b), mr];   // w12: laid wide over the pad (tpg_81) [V]
     };
-    z0 = -0.875; z1 = 0.55; hd = 1; xc = -0.12;
+    z0 = -0.90; z1 = 0.55; hd = 1; xc = -0.12;
   } else {
     mat(-0.035, 0.495, MON.zE - 0.02, 0.63); mat(-0.118, 0.495, 0.62, 1.28, -0.002);   // w8b: full seat width aft of the table (r10) [D]
     bounds = (z) => {
