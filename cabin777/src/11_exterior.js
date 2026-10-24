@@ -207,12 +207,14 @@ function buildExterior(gl) {
     for (const s of [3.3, 8.2]) wingLine(B, side, chordPath(s, pwl(WING.le, s) - 0.05, pwl(WING.le, s) + 0.95), gap, 0.03);
     // spoilers: 2 inboard (37.82-38.82) + 5 outboard ahead of the outboard flap [D ACAP 9.9.1]; split of the inboard pair [A]
     const spF = (s) => pwl(WING.te, s) - lerp(1.6, 1.2, (s - 11.8) / 9.2), spA = (s) => pwl(WING.te, s) - lerp(0.75, 0.55, (s - 11.8) / 9.2);
-    wingLine(B, side, spanPath(4.5, 8.6, () => 37.82, 2), line);
+    // w5: hinge line + chordwise breaks thin and light (~10-15 % under the skin), only the spoiler TE dark [V _7250/_7331]
+    const brk = { c: '#7a7f86', r: 0.95 };
+    wingLine(B, side, spanPath(4.5, 8.6, () => 37.82, 2), brk, 0.014);
     wingLine(B, side, spanPath(3.1, 9.8, () => 38.82, 3), gap);
-    for (const s of [4.5, 6.55, 8.6]) wingLine(B, side, chordPath(s, 37.82, 38.82), line);
-    wingLine(B, side, spanPath(11.8, 21.0, spF, 8), line);
+    for (const s of [4.5, 6.55, 8.6]) wingLine(B, side, chordPath(s, 37.82, 38.82), brk, 0.014);
+    wingLine(B, side, spanPath(11.8, 21.0, spF, 8), brk, 0.014);
     wingLine(B, side, spanPath(11.8, 23.3, (s) => (s < 21 ? spA(s) : spA(21) + (s - 21) * 0.34), 10), gap);
-    for (let k = 0; k <= 5; k++) { const s = lerp(11.8, 21.0, k / 5); wingLine(B, side, chordPath(s, spF(s), spA(s)), line); }
+    for (let k = 0; k <= 5; k++) { const s = lerp(11.8, 21.0, k / 5); wingLine(B, side, chordPath(s, spF(s), spA(s)), brk, 0.014); }
     // gear-alignment (taxi camera) stripe: matte black chordwise band on the upper skin at the outboard edge of the main
     // gear, "aligned with the outboard edge of the main landing gear" [V aerospaceglobalnews / supercarblondie]; ~0.38 m
     // wide at s = 6.4 m, from ~1 m ahead of the flap TE 5.6 m forward (overhead 777-300ER agn_Boeing-777-wing-stripes-1,
@@ -233,8 +235,8 @@ function buildExterior(gl) {
       const xa = (q) => lef(q) + fc * (pwl(WING.te, q) - lef(q));
       for (const [a, b] of fc > 0.5 ? [[4.0, 11.3], [21.5, 29.5]] : [[4.0, 29.5]]) wingLine(B, side, spanPath(a, b, xa, Math.ceil((b - a) / 1.5)), riv, 0.016);   // no rear row under the spoiler hinge line
     }
-    // w5: row of small dark access-panel / slat-track heads ~0.35 m behind the slat line every ~1.6 m (TPG ZGriff-63, Sam Chui _37) [V, A size]
-    for (let s = 12.4; s < 31; s += 1.6) { const x = lef(s) + 0.66 + 0.35; wingLine(B, side, [[s - 0.04, x], [s + 0.04, x]], { c: '#3a3f46', r: 0.8 }, 0.07); }
+    // w5: row of small dark access-panel / slat-track heads ~0.35 m behind the slat line every ~1.6 m, inboard of s 22 where they alias into a fringe (TPG ZGriff-63, Sam Chui _37) [V, A size]
+    for (let s = 12.4; s < 22; s += 1.6) { const x = lef(s) + 0.66 + 0.35; wingLine(B, side, [[s - 0.04, x], [s + 0.04, x]], { c: '#3a3f46', r: 0.8 }, 0.07); }
     // right-wing registration JA795A on the upper skin [V: ANA JA795A seat-26K photos alv_*_7250/_7331/_7345, new 212-seat
     // layout, NH211 2026]: dark block capitals ~1.25 m tall at ~50 % chord (a letter-high band of skin ahead of it, bottoms just ahead of the spoilers) from s 13.5 outboard, J inboard, glyph tops toward
     // the leading edge, so it reads upright left-to-right from the aft K seats (zoomed _7345; the raters' "upside down" was
@@ -247,7 +249,7 @@ function buildExterior(gl) {
         9: [[[0.7, 0.62], [0.5, 0.46], [0.18, 0.46], [0.02, 0.62], [0.02, 0.84], [0.18, 0.98], [0.52, 0.98], [0.68, 0.84], [0.68, 0.22], [0.5, 0.02], [0.08, 0.02]]],
         5: [[[0.68, 0.98], [0.06, 0.98], [0.02, 0.55], [0.48, 0.6], [0.68, 0.42], [0.68, 0.16], [0.5, 0.02], [0.02, 0.05]]],
       };
-      const ink = { c: '#15264a', r: 0.6, m: 0 };   // w5: ANA navy, the darkest mark on the wing in sun (#03244f on #8098b1 in TPG ZGriff-63; ink/skin 0.29-0.41 in _7250/_7331) [V]
+      const ink = { c: '#0d1526', r: 0.9, m: 0 };   // w5: ANA navy, the darkest mark on the wing in sun (#03244f on #8098b1 in TPG ZGriff-63; ink/skin 0.25-0.41 in _7250/_7331); matte, so the grazing sky does not lift it to mid blue [V]
       [...'JA795A'].forEach((ch, k) => {
         const sC = 13.5 + k * 1.15, xc = lef(sC + 0.45) + 0.50 * (pwl(WING.te, sC + 0.45) - lef(sC + 0.45));
         for (const st of GL[ch]) {
@@ -296,8 +298,8 @@ function buildExterior(gl) {
     // under the cowl [V IQCFQpV_T1A, eX2WMn0xe48, LALF _136]. Inlet liner graded dark at the lip shadow -> grey liner (#151e27 ->
     // #56606a in _136) [V]
     B.add(nac.lip, rot, { c: '#a9a9a8', r: 0.34, m: 0.45 }); B.add(nac.cowl, rot, cowl); B.add(nac.nozIn, rot, dark);
-    const vIn = B.vcount; B.add(nac.inlet, rot, { c: '#5a6067', r: 0.45, m: 0.3 });
-    shadeVerts(B, vIn, B.vcount, (p) => 0.3 + 0.7 * smooth(0.1, 1.1, p[2] - E.x0 - WING.dz));
+    const vIn = B.vcount; B.add(nac.inlet, rot, { c: '#7d838a', r: 0.45, m: 0.3 });
+    shadeVerts(B, vIn, B.vcount, (p) => 1 - 0.6 * smooth(0.2, 1.3, p[2] - E.x0 - WING.dz));   // lit inner lip -> dark toward the fan (knav 7A _9) [V]
     B.add(nac.core, rot, core); B.add(nac.coreIn, rot, dark); B.add(nac.plug, rot, plug); B.add(nac.spinner, rot, spin);
     for (const [x, r] of [[1.3, 2.075], [3.15, 2.055]]) B.add(gCyl(r + 0.002, r + 0.002, 0.018, 48, false), M4.mul(rot, M4.trs(0, x, 0)), seam);   // cowl splits [A photo]
     // inboard nacelle strake (vortex chine): 1.3 x 0.26 m plate standing radially out of the fan cowl 25 deg above the
@@ -320,15 +322,15 @@ function buildExterior(gl) {
     // w5: the strake reads in photos as a lit edge over a dark shadow slot on the cowl (LALF _137, JAL IMG_3371/3428) [V]; the
     // 3 cm black root box shimmered into a dashed line at 10+ m, so a ~10 cm baked shadow band lies on the cowl below it instead [A width]
     cowlPatch(1.85, 3.05, 24.2 * DEG, 21.2 * DEG, { c: '#8a9097', r: 0.9 });
-    // access panel: rounded rectangle ~0.50 x 0.32 m on the INLET cowl ~0.85 m aft of the highlight, upper inboard side, drawn as a
+    // access panel: near-square rounded rectangle ~0.42 x 0.40 m on the INLET cowl ~0.85 m aft of the highlight, upper inboard side, drawn as a
     // thin dark outline [V LALF ANA 11A _136, JAL IMG_3397/3371; D size]
     { const ring = [];
       for (let k = 0; k <= 32; k++) { const a = (k / 32) * Math.PI * 2, c = Math.cos(a), sn = Math.sin(a);
-        ring.push(cowlP(0.85 + Math.sign(c) * Math.pow(Math.abs(c), 0.4) * 0.25, 70 * DEG + Math.sign(sn) * Math.pow(Math.abs(sn), 0.4) * 0.16 / 2.05, 0.008)); }
+        ring.push(cowlP(0.80 + Math.sign(c) * Math.pow(Math.abs(c), 0.3) * 0.21, 70 * DEG + Math.sign(sn) * Math.pow(Math.abs(sn), 0.3) * 0.20 / 2.04, 0.008)); }
       B.add(gTube(ring, 0.011, 4, false), rot, { c: '#7a8087', r: 0.6 }); }
-    // GE monogram on the lower inboard fan cowl (aft, ~35 deg below the horizontal): dark ring + script swashes, ~0.45 m [V ANA
-    // 77W IQCFQpV_T1A (HND), eX2WMn0xe48 (JFK); A size / drawing]
-    { const ge = { c: '#3e4450', r: 0.5 }, xc = 3.55, ac = -35 * DEG, Rg = cowlR(xc), at = (u, v) => cowlP(xc + u, ac + v / Rg, 0.008);
+    // GE monogram on the lower inboard fan cowl (~2 m aft, ~30 deg below the horizontal): dark ring + script swashes, ~0.45 m [V ANA
+    // 77W IQCFQpV_T1A (HND), eX2WMn0xe48 (JFK), knav 7A _9; A size / drawing]
+    { const ge = { c: '#3e4450', r: 0.5 }, xc = 2.0, ac = -30 * DEG, Rg = cowlR(xc), at = (u, v) => cowlP(xc + u, ac + v / Rg, 0.008);
       const circ = Array.from({ length: 25 }, (_, k) => { const a = (k / 24) * Math.PI * 2; return at(Math.cos(a) * 0.22, Math.sin(a) * 0.22); });
       B.add(gTube(circ, 0.014, 4, false), rot, ge);
       for (const sw of [[[-0.12, 0.08], [-0.02, 0.14], [0.08, 0.06], [-0.02, -0.12], [-0.12, -0.05], [-0.03, 0.02]], [[0.13, 0.1], [0.04, 0.1], [0.0, 0.0], [0.04, -0.1], [0.13, -0.1]], [[0.02, 0.0], [0.11, 0.0]]])
