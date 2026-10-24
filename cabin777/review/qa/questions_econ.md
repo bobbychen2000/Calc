@@ -42,3 +42,9 @@
    area. May lighting add one? [shipped: navy satin #222842 r 0.52, right head-on and too dark at an angle]
 20. (wave 3d) Cover length: is the y_47300 short cover (it ends inside the pad) the default, or the long cover that real
    photos show hanging below the pad (b_ss_13, y_47306)? [kept long, as in the real photos]
+21. (wave 3e) Headrest cover height: at the matched y_47300 camera rater B measures the cover ~25 % too tall (h/w 0.87
+   vs 0.70-0.77), while the y_47306 close-up shows it slightly too short and b_ss_13 hangs it 2-3 cm below the pad. Is
+   y_47300's short cover a showroom setting? [shortened 2 cm in w25, then kept]
+22. (wave 3e) Q16 / q17 still don't frame y_47301 / y_47303 closely: the photos use ~80 deg lenses and the app's walk
+   camera is fixed at 64 deg horizontal. Should `test/qa.js` get a per-view FOV (like `window.__near`)? That's an
+   integration call. [framed as closely as 64 deg allows]

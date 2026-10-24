@@ -60,3 +60,12 @@
   (q15 bright 0.12-0.14 vs 0.083 in y_47300; q16 row 2 0.19 vs 0.064). Econ compensated in the tile. If you can, exempt
   layer 16 (y_tick) from the bias; the fleck / mosaic layers are fine with it. The cover sheen lobe (w19 item) is still the
   largest open econ material item: covers read L34-38 at grazing angles vs 86-134 in y_47306.
+
+## w27 (wave 3e) to lighting / integration
+- **Cover sheen (carried from w19):** still both raters' top unscored item (e4 cover L34 against 83-124 in y_47306).
+- **Far-row snow in q16 (w26b-3 / w27b-3):** rows 3+ read p90/50 2.2 and bright 0.28-0.31 against 1.61 / 0.13 in
+  y_47301. Fade the -0.5 photo mip bias and the tile contrast with distance in `04_shaders.js` (~l.192).
+- **`photoBase` and layer gain:** `photoBase` lifts a colour for a full-gain tile (mean 2c = 2/ENC). A layer with
+  PHOTO_GAIN g < 1 then renders 1/(1-g+2g/ENC) x 2/ENC too light (1.8x at 0.45). Econ layer 34 compensates in its
+  colour. A gain argument on `photoBase` would make this automatic for every lower-gain photo layer.
+- **Per-view FOV in `test/qa.js`:** see questions_econ 22.

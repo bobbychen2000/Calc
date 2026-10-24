@@ -270,3 +270,64 @@ and belts, and 8.0-8.4 on most else. Both raters' lowest details are the diamond
   matched q15 alone. The camera for that is in `from_econ.md`.
 
 Before/after sheet: `econ_before_after_w3d.jpg` (own renders: w19 295e953 vs w23 066375f, q15 / q16 / arm / headrest).
+
+## Wave 3e (matched cameras, 2026-10-24)
+
+Started on 860d18f (wave 3d final, w23 A 8.0 / B 8.2 on the old cameras). Four rated rounds, the brief's cap, plus one
+measured regression fix.
+
+| round | rater A | rater B | mean | note |
+|---|---|---|---|---|
+| w24 (d433091, econ code = 066375f) | 8.0 | 7.8 | 7.9 | **new q15-q17 cameras**; the matched q15 exposed the pan order, cover and pillow proportions |
+| w25 (5146ec6) | 8.0 | 8.0 | 8.0 | pan order as y_47300, cover 2 cm shorter, pillow lower / flatter, warm arms; diamond 1.25x and fleck thinning overshot |
+| w26 (432144c) | 8.0 | 8.1 | 8.05 | **best round**; diamond 1.05x, fleck keep 0.8, tick stroke rims eased, pillow dog-ears |
+| w27 (10ffbc6) | 7.9 | 8.0 | 7.95 | diamond pans on their own layer 34; base colour not corrected for the lower gain -> pan 1.8x too light (high) |
+| w28 (ed2e6ec, unrated) | - | - | - | regression fix: layer 34 gain 0.8, base #414862; q15 diamond pan L79 / B/R 1.85 / p90/50 1.34 / bright 0.06 vs y_47300 74 / 1.81 / 1.37 / 0.08 |
+
+The old and new camera scores are not directly comparable: w24 re-rated the unchanged w23 code 0.2 lower on the matched
+q15. The 8.5 target was not reached. Shipped state: w28 (w26 plus the tick-pan colour, the pillow and the corrected
+diamond pan). Both raters' w27 numbers for everything except the diamond pan and pillow corners were at or better than
+w26.
+
+### What changed in wave 3e
+- **QA cameras (shared: `test/qa.js`).**
+  - q15 frames y_47300: row 34 D-G from (0, 1.45, 48.05), pitch -0.30, near clip 1.25, which drops row 33 cleanly.
+    Seat pitch is 162 px in the render against 154 px in the photo. The integration camera from the door-4 cross aisle
+    showed the galley monitors, so it was not used.
+  - q16 is now in the right aisle looking aft, with the triple block on the left as in y_47301.
+  - q17 is in the right aisle looking outboard at H-K, with seat-back screens on the left as in y_47303.
+  - Both q16 and q17 are still wider and closer in the photos, which were shot with ~80 deg lenses against the
+    engine's fixed 64 deg.
+- **Pans.** The econPan list is reordered (same mix), so the hero row reads tick / tick / diamond / mosaic. Diamond
+  pans use a new photo layer 34 (the y_diamond tile at 0.8 gain, shared `03_tex.js`) with base #414862. Tick pans are
+  #535b7d.
+- **Headrest cover.** The plate starts 2 cm higher and is 0.245 wide; the hem, foot, stitch, mark and far-LOD box
+  moved with it.
+- **Pillow.**
+  - Half-height 0.11, 3.5 cm lower and tipped back 6 deg, so it rests on the pan.
+  - Softer dog-ear corners, waist halved, fuller dome.
+  - Pillow-coloured 2 mm piping, `yPillow` #394260.
+- **Tiles** (`make_swatches.py`).
+  - Tick: strokes 0.72 toward the ground, with each stroke's rim eased 60 %.
+  - Fleck: Poisson-thinned with a fixed seed, ~20 % of the components dropped and filled with their local ground,
+    exponent 1.0, peak 1.25x.
+  - Diamond: lattice 1.05x.
+- **Other.** Buckle covers #9da2a9. Arms are warm light grey (`SEATMAT` arm / armPad / armPost).
+
+### Still open (w27a / w27b)
+- **Cover off-axis (lighting):** navy and 2.4-3.5x too dark at grazing angles, slightly light head-on. Both raters
+  rank it the biggest mismatch visible at thumbnail size.
+- **Far rows light and snowy in q16 (lighting):** fade the -0.5 mip bias and the photo-tile contrast with distance
+  (w26b-3 / w27b-3).
+- **Tick at row distance (A):** p90/p10 2.5 against 3.4-3.6, from soft strokes after the rim easing. A wants the rim at
+  0.65 and a deeper ground; B scores the tick at 8.4.
+- **Diamond backs at row distance:** stars bold, light-star share 0.23 against 0.12. Splitting the tile into star 0.75x
+  and weave 1.15x is the next step.
+- **Cover height:** B measures it ~25 % too tall head-on; A finds y_47300 and y_47306 in conflict (question 21).
+- **Pillow:** A says the corners are now too round; both find it too blue (B/R 2.15-2.27 against 1.97-2.05) and without
+  weave.
+- **Mosaic pan:** a step light and blue (L93 against 81).
+- **Low items, carried:** the cover foot crease, belts and the silver tongue, bezel dots, the pocket and the legs.
+
+Before/after sheet: `econ_before_after_w3e.jpg` (own renders: w24 066375f code vs w27 10ffbc6 at the matched cameras,
+q15 / q16 / e4 / e1, with the ANA photos).
