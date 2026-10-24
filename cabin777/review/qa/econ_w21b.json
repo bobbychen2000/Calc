@@ -1,0 +1,173 @@
+{
+ "area": "econ",
+ "rater": "B",
+ "round": "w21",
+ "candidate": "b0edece",
+ "lens": "Geometry and proportion first (C armrest + end panel vs b_ss_18 / y_47303 / y_47301, pillow, cover, back silhouette), then materials, colour, lighting and artefacts. Measured with PIL/numpy on r21 / s21 / a21 against r20 / s20 and the photos; the same patches and scripts as w20b (q15 fabric at x0.62 vs y_47300). Scratch: scratchpad/raterB21/ (m.py, m2.py, m3.py, e3sz.png, ss18z.png, e7z.png, q16r.png).",
+ "score": 8.2,
+ "priorIssues": [
+  {
+   "issue": "w20b-2 / w20a-1 (high) headrest cover grey glossy plate head-on, reads as a monitor",
+   "status": "fixed head-on; close / oblique still too dark (not fixed, now a sheen hand-off)",
+   "evidence": "q15 c2/c3 #2f344e / #303550 L50 59 / 60 B/R 1.66 (w20 L91 B/R 1.31) vs y_47300 c2/c3 L53 / 42 B/R 1.82 / 2.03; mean of the four covers L50 50 vs 51 - head-on now right and no longer reads as a screen. Close e4 mid / R L50 39 / 38 (w20 45 / 43) vs y_47306 129 / 86; q16 row 2 cover L51 vs y_47301 77, near cover 31 vs 59; y_47303 cover L163. Hem: e4 hem / face 1.15x (w20 1.45x) vs y_47306 1.6x - hem now almost invisible close up."
+  },
+  {
+   "issue": "w20b-1 / w20a-2 / w20a-3 tick and fleck band boost overshot",
+   "status": "partly fixed (fleck on target except saturation; tick halfway)",
+   "evidence": "q15 x0.62 tick s1/s3 bright 0.120 / 0.130 (w20 0.151 / 0.156) vs 0.083 / 0.082, p90/p50 1.54 / 1.55 (1.60) vs 1.47, p10/p50 0.53 / 0.52 vs 0.50 / 0.49 (ok), hf 22 vs 20-25 (ok). Fleck s2/s4 bright 0.173 / 0.163 (0.200 / 0.191) vs 0.153 / 0.154, p90/p50 1.78 / 1.72 vs 1.76 / 1.75 (ok), blob p90 5 vs 5 (ok), B/R 2.83 / 2.81 (3.0) vs 2.50 / 2.58 (still high). q16 row 2 tick bright 0.174 vs y_47301 0.064, p90/p50 2.18 vs 1.40 (unchanged; partly the grazing light)."
+  },
+  {
+   "issue": "w20b-3 / w20a-4 C armrest lower member a thin round tube; aisle ends need a deep panel",
+   "status": "fixed (shape), minor junction issues remain",
+   "evidence": "End panel y 0.415-0.543 (12.8 cm, 2.4x the 5.4 cm arm; b_ss_18 ~2.5-2.7x the arm side face), z -0.115 to -0.40 reaching just past the arm nose as in b_ss_18; q16 aisle ends now show broad white panels like y_47301 (q16r.png). Middle arms: flat ~2.2 cm plate, no longer a rail (e7z.png). Remaining: the sweep tube (r 0.028 x0.55 = 3.1 cm wide) is wider than the middle plate (2.2 cm) and stops at the plate's top-rear, so both junctions show a hard vertical step / notch instead of one moulding (e3sz.png, e7z.png)."
+  },
+  {
+   "issue": "w20b-L1 q16 near fabric too light / blotchy (lighting, not scored)",
+   "status": "not fixed",
+   "evidence": "q16 near-top fleck blobs median 8 px / p90 22 px vs y_47301 1 / 3 px; B/R 2.54 vs 2.22."
+  }
+ ],
+ "details": [
+  {
+   "detail": "Fabric: tick weave",
+   "score": 8.1,
+   "refs": "q15 bright 0.12-0.13 vs 0.083, p90/p50 1.54 vs 1.47 (halfway from w20); p10/p50 and hf on target"
+  },
+  {
+   "detail": "Fabric: diamond lattice",
+   "score": 7.5,
+   "refs": "unchanged; star-like light crosses on a grey-blue ground (q16r.png) vs y_47306 L (carried w19b-7)"
+  },
+  {
+   "detail": "Fabric: petal fleck",
+   "score": 7.9,
+   "refs": "q15 bright / p90 / blob size on target; B/R 2.82 vs 2.54; close (e4 R vs b_ss_14 scaled x0.53 to the same back width) blob median 8 px vs 3 px, coverage 0.18 vs 0.14 - flecks merge into clusters instead of separate slivers"
+  },
+  {
+   "detail": "Fabric: dash mosaic",
+   "score": 8.2,
+   "refs": "e4 / y_47306 R; unchanged"
+  },
+  {
+   "detail": "Fabric mix (backs, pans, pads)",
+   "score": 8.1,
+   "refs": "pairing right; whole-image speckle in q15 / q16 reduced but still above y_47300 / y_47301"
+  },
+  {
+   "detail": "Headrest pad + cover",
+   "score": 7.9,
+   "refs": "head-on navy right (L50 mean 50 vs 51, B/R 1.66-1.97 vs 1.6-2.0); oblique / close 0.45-0.65x the photo luminance; hem 1.15x vs 1.6x the face"
+  },
+  {
+   "detail": "Pillow",
+   "score": 8.4,
+   "refs": "width 0.69 of pitch vs 0.70; piping now in the pillow colour, reads as a soft edge (e4b)"
+  },
+  {
+   "detail": "Armrests",
+   "score": 8.3,
+   "refs": "C topology + deep aisle-end panel now match b_ss_18 / y_47301; sweep-to-plate / panel junction is a step, not a continuous moulding"
+  },
+  {
+   "detail": "Belts",
+   "score": 8.5,
+   "refs": "e1 / e7 vs y_47303; unchanged"
+  },
+  {
+   "detail": "Seat pan / front",
+   "score": 7.8,
+   "refs": "e7 / e1 vs y_47303 / b_ss_13; tick pans brighter-streaked than y_47303 pans"
+  },
+  {
+   "detail": "Back silhouette",
+   "score": 8.0,
+   "refs": "q15 vs y_47300 / b_ss_13; unchanged"
+  },
+  {
+   "detail": "Rear shell / hood / back top",
+   "score": 8.1,
+   "refs": "e2 / e9 / q17 diff vs s20 0.3-0.5; unchanged (w19b-5 carried)"
+  },
+  {
+   "detail": "Screen / handset",
+   "score": 8.3,
+   "refs": "q18 / e5 vs y_47305, b_ss_15; unchanged"
+  },
+  {
+   "detail": "Tray / pocket / AC",
+   "score": 7.8,
+   "refs": "e6 diff 0.22: flat black mesh strip (w19b-6 carried)"
+  },
+  {
+   "detail": "Legs / footrest / under-seat",
+   "score": 7.7,
+   "refs": "e8 diff 0.00: unchanged"
+  },
+  {
+   "detail": "Far-LOD rows",
+   "score": 7.9,
+   "refs": "q15 / q16 consistent, aisle-end panels carried to the far rows, no pop"
+  }
+ ],
+ "issues": [
+  {
+   "id": "w21b-1",
+   "severity": "medium",
+   "title": "Tick still too contrasty at row distance; fleck still too saturated",
+   "detail": "Fabric: tick weave / petal fleck",
+   "evidence": "q15 x0.62: tick bright 0.12-0.13 vs 0.083 (target 0.08-0.10), p90/p50 1.54-1.55 vs 1.47 (target 1.46-1.52); fleck B/R 2.82 vs 2.54 (target 2.45-2.65). Other stats on target.",
+   "fix": "test/make_swatches.py econ section: tick - cut the remaining 0.5-2.5 cm band boost by another ~40 % (w21 gain x0.6) and pull the grain highlight 10 % toward the ground (keep floor 0.10, crop, column lift); fleck - desaturate the ground/core: core toward #b4bcd8 and ground B/R from ~2.8 to ~2.55 (e.g. multiply the R channel of the fleck ground by 1.10 before the colour-relative normalise); re-cut tex_y_tick / tex_y_fleck and re-measure with raterB21/m.py."
+  },
+  {
+   "id": "w21b-2",
+   "severity": "medium",
+   "owner": "econ + lighting",
+   "title": "Headrest cover correct head-on but 0.45-0.65x too dark at oblique / close range; hem invisible",
+   "detail": "Headrest pad + cover",
+   "evidence": "e4 L50 38-39 vs y_47306 86-129; q16 row 2 51 vs y_47301 77, near 31 vs 59; y_47303 163. Hem / face 1.15x vs 1.6x (y_47306).",
+   "fix": "Do NOT change base colour or r again (q15 is right). Lighting owner: add a sheen / Fresnel lift for SEATMAT.yCover (e.g. a material flag sheen 0.3, colour #8a96b8, weight (1-N.V)^3 in 04_shaders.js) so grazing views reach L >= 70 while q15 c2/c3 stay <= 62. Econ: 09a_econ.js hem strip colour from the dark tone to ~1.3x the cover (#3a4264) with r 0.45 so the fold reads as in y_47306 (target hem / face 1.3-1.5x in e4) without the w20 white chin bar."
+  },
+  {
+   "id": "w21b-3",
+   "severity": "low",
+   "title": "C moulding junctions: sweep tube wider than the middle plate and ends on top of the end panel - visible step / notch",
+   "detail": "Armrests",
+   "evidence": "Sweep tube r 0.028 x0.55 = 3.1 cm wide vs middle plate 2.0-2.2 cm (e7z.png: the tube shows as a lighter column behind a hard vertical plate edge). End panel rear edge at z -0.115..-0.13 while the sweep runs at z -0.074..-0.08: a notch under the sweep between them and a vertical seam (e3sz.png); in b_ss_18 the sweep flows into the panel's rear-lower corner with a large inner radius.",
+   "fix": "09a_econ.js regular-row branch: scale the ct tube x by 0.38 (not 0.55) so it is no wider than the plate (2.1 cm); end it 2 cm inside the plate (last cp y 0.50, z -0.17). End panel: extend the rear sections to z0 -0.08 for y >= 0.47 (zs(0.50, -0.08, -0.40, 0.024), zs(0.525, -0.085, -0.392, 0.024)) and add a lower-rear fillet section zs(0.415, -0.16, -0.33) so the panel's rear edge is the sweep's continuation; optionally lift the panel bottom by ~3 cm over the last 8 cm (front z < -0.32) as in b_ss_18."
+  },
+  {
+   "id": "w21b-4",
+   "severity": "low",
+   "title": "Petal fleck close up: merged clusters instead of separate slivers",
+   "detail": "Fabric: petal fleck",
+   "evidence": "e4 R vs b_ss_14 scaled to the same back width: blob median 8 px vs 3 px, coverage 0.183 vs 0.137; aspect 1.33 vs 1.31 (round in both at this scale, so shape is less important than separation).",
+   "fix": "make_swatches.py tex_y_fleck: minimum spacing between fleck centres ~1.5x fleck length (Poisson-disc), fleck length 4-6 mm at 1:1, coverage 0.13-0.14 at the 1.5x-median threshold."
+  },
+  {
+   "id": "w21b-5",
+   "severity": "low",
+   "title": "Carried: flat black pocket strip (w19b-6), hood side band (w19b-5), diamond ground grey (w19b-7), legs unchanged",
+   "detail": "Tray / pocket / AC",
+   "evidence": "e6 / e8 / e2 diffs vs s20 0.22 / 0.00 / 0.29.",
+   "fix": "As w19b-5 / 6 / 7."
+  },
+  {
+   "id": "w21b-L1",
+   "severity": "medium",
+   "owner": "lighting",
+   "title": "q16 near fabric blotchy / tick grazing too bright (not scored)",
+   "detail": "Lighting",
+   "evidence": "q16 near-top fleck blobs median 8 / p90 22 px vs y_47301 1 / 3 px; row 2 tick p90/p50 2.18 vs 1.40.",
+   "fix": "As w20b-L1; texture part covered by w21b-1 / -4."
+  },
+  {
+   "id": "w21b-C1",
+   "severity": "info",
+   "owner": "QA cameras",
+   "title": "Camera mismatches (not scored)",
+   "evidence": "q15 closer / lower than y_47300 (cover 126 vs 68 px wide); q16 across-cabin vs y_47301 down-aisle; q17 high rear vs y_47303 window-side profile.",
+   "fix": "Carried from w20b-C1."
+  }
+ ],
+ "questionsForUser": []
+}
