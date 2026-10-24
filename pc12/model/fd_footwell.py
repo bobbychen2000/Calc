@@ -103,10 +103,10 @@ def footwell_walls():
             P = P.copy()
             P[:, 0] = FD.face_x(ay, z_bot(ay) - 0.002) - 0.004 + 0.0002      # (+ the face grid's chords)
             return P, np.broadcast_to([1.0, 0, 0], P.shape).copy()
-        out.append(PR.decal(fr, -0.009, -0.0235, 0.009, -0.0180, 0.0, "words", rows=1, cap=1.4, seed=("5v", sg),
+        out.append(PR.decal(fr, -0.009, -0.0235, 0.009, -0.0180, 0.0, "words", rows=1, cap=1.4, seed=("5v", sg), text="5V DC 3A",
                             nu=4, surf=cubby))
         out.append(PR.decal(fr, sg * 0.012 - 0.024, -0.0505, sg * 0.012 + 0.024, -0.0375, 0.0, "plate", rows=2,
-                            cap=1.5, colour="plate_black", ink="white", seed=("1kg", sg), nu=8, surf=cubby))
+                            cap=1.5, colour="plate_black", ink="white", seed=("1kg", sg), text=("MAX LOAD", "1 KG"), nu=8, surf=cubby))
         # (first-principles judge r2 R1: as bare text on the dark wall it read as a floating decal -- a placard plate)
     return out
 

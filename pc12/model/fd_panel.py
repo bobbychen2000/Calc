@@ -117,6 +117,12 @@ def fluted_knob(o, axis, ref, r, h, flutes=24, depth=0.0005, per_flute=3, chamfe
     return knob(o, axis, ref, r, h, n=flutes * per_flute, flutes=flutes, depth=depth, chamfer=chamfer)
 
 
+_GFC_KEYS = {(-0.1115, -0.0192): "AT", (-0.0809, -0.0192): "APR", (-0.0561, -0.0192): "NAV",
+             (-0.0309, -0.0192): "HDG", (0.014, -0.0192): "VS", (0.0395, -0.0192): "FLC", (0.0646, -0.0192): "ALT",
+             (0.1075, -0.0192): "L/R", (-0.0561, 0.0167): "BANK", (0.0395, 0.0167): "VNV", (0.0952, 0.0167): "AP",
+             (0.1198, 0.0167): "YD", (0.1075, -0.0012): "FD"}
+
+
 def gfc700(f, aw, ah):
     """GFC 700 on the eyebrow fascia (frame f at the fascia centre, w out of the fascia): a black body with a raised
     satin frame and four corner screws, three light dividers, dual concentric knurled knobs (speed, HDG, ALT), the
@@ -155,10 +161,11 @@ def gfc700(f, aw, ah):
         out.append((fluted_knob(c + 0.0116 * f.w, f.w, f.u, 0.5 * idm, 0.0074, flutes=18, depth=0.0004), "grip_black"))
         # (first-principles A3) the knob's printed title on the face above it (FMS / HDG / ALT, pseudo-text)
         out.append(PR.decal(f, u - 0.0105, v + 0.0125, u + 0.0105, v + 0.0175, zf + PR.LIFT, "words", rows=1, cap=1.6,
-                            seed=("gfc_knob", round(u, 4))))
+                            seed=("gfc_knob", round(u, 4)),
+                            text={-0.1115: "FMS", -0.0309: "HDG", 0.0641: "ALT"}.get(round(u, 4), "CRS")))
     for k_, (u, v) in enumerate(((q["wheel"][0], 0.0247),)):           # the VS wheel's UP / DN title
         out.append(PR.decal(f, u - 0.008, v - 0.0021, u + 0.008, v + 0.0021, zf + PR.LIFT, "words", rows=1, cap=1.4,
-                            seed=("gfc_vs", k_)))
+                            seed=("gfc_vs", k_), text="UP VS DN"))
     su_, sv_ = q["sensor"]
     out.append((knob(f.p(su_, sv_, zf - 0.0002), f.w, f.u, 0.0016, 0.0005, n=12, chamfer=0.4), "screen"))
     wu, wv, wd, ww = q["wheel"]                                        # VS thumbwheel: slot + ribbed wheel across u
@@ -180,7 +187,8 @@ def gfc700(f, aw, ah):
         out.append((FD._extrusion(fk.moved(c=0.0020), FD.rrect_loop(0.5 * kw, 0.5 * kh, 0.0015, nc=3), 0.0040,
                                   bevel=0.0008, nb=1), "panel_dark"))
         out.append(PR.decal(fk, -0.40 * kw, -0.22 * kh, 0.40 * kw, 0.22 * kh, 0.0040 + PR.LIFT, "words", rows=1,
-                            cap=1.5, fill=0.8, seed=("gfc_key", round(u, 4), round(v, 4))))   # printed key legend (A3)
+                            cap=1.5, fill=0.8, seed=("gfc_key", round(u, 4), round(v, 4)),
+                            text=_GFC_KEYS.get((round(u, 4), round(v, 4)), "AP")))   # printed key legend (A3)
     return out
 
 
@@ -209,7 +217,7 @@ def eyebrow_items(fascia_frame, zc, sg):
     out.append((FD._extrusion(f.moved(c=0.0008), FD.rrect_loop(0.0145, 0.0080, 0.0012, nc=3), 0.0016, bevel=0.0004,
                               nb=1), "bezel_black"))
     out.append(PR.decal(f, -0.0135, -0.0068, 0.0135, 0.0068, 0.0016 + PR.LIFT, "words", rows=2, cap=1.5,
-                        seed=("radio_call", sg)))                                     # RADIO-CALL plate, printed (A3)
+                        seed=("radio_call", sg), text=("RADIO", "CALL")))                                     # RADIO-CALL plate, printed (A3)
     if True:                                                           # round recess / photocell beside the BARO
         f = fascia_frame(sg * 0.170, zc + 0.001)                       # plate [M: P1046408, research M18]
         out.append((knob(f.o, f.w, f.u, 0.0075, 0.0020, n=28, chamfer=0.3), "bezel_black"))
@@ -710,7 +718,7 @@ def lower_panel(sg):
     for du in (-0.0045, 0.0045):
         out.append((FD._extrusion(f.moved(du, 0.0, 0.003), FD.rrect_loop(0.0016, 0.0042, 0.0012, nc=2), 0.0006,
                                   bevel=0.0002, nb=1), "black"))
-    out.append(PR.decal(f, -0.012, -0.0170, 0.012, -0.0105, PR.LIFT, "words", rows=1, cap=1.6, seed=("usb", sg)))
+    out.append(PR.decal(f, -0.012, -0.0170, 0.012, -0.0105, PR.LIFT, "words", rows=1, cap=1.6, seed=("usb", sg), text="USB"))
     out += column_surround(sg)
     # inner sub-panel items
     if sg < 0:
@@ -720,16 +728,17 @@ def lower_panel(sg):
             out += rocker_block(f, 3)
             # printed (A3): the group's frame with its title, a caption under each switch
             out.append(PR.decal(f, -0.038, -0.0255 if zz > 1.78 else -0.0165, 0.038, 0.0275, PR.LIFT, "frame", gap=0.62, cap=1.5, lw=0.3,
-                                rc=1.5, seed=("ice", zz)))
+                                rc=1.5, seed=("ice", zz), text="ICE PROTECTION"))
             for i in range(3 if zz > 1.78 else 0):          # (the lower block's foot lies on the plate's edge)
                 out.append(PR.decal(f, (i - 1) * 0.023 - 0.0105, -0.0245, (i - 1) * 0.023 + 0.0105, -0.0185,
-                                    PR.LIFT, "words", rows=1, cap=1.2, fill=0.9, seed=("ice_sw", zz, i)))
+                                    PR.LIFT, "words", rows=1, cap=1.2, fill=0.9, seed=("ice_sw", zz, i),
+                                    text=("LH WSHLD", "RH WSHLD", "PROBES")[i]))
         # V-LE / V-LO placard and the landing-gear handle (wheel knob on a lever in its slot, UP at the top)
         f = FD.face_frame(-0.180, 1.808).moved(c=q["plate_off"])
         out.append((FD._extrusion(f.moved(c=0.0005), FD.rrect_loop(0.0135, 0.0085, 0.001, nc=2), 0.001, bevel=0.0003,
                                   nb=1), "bezel_black"))
         out.append(PR.decal(f, -0.0125, -0.0075, 0.0125, 0.0075, 0.0010 + PR.LIFT, "words", rows=2, cap=1.4,
-                            seed="vle_vlo"))                                         # V-LE / V-LO placard (A3)
+                            seed="vle_vlo", text=("VLE 180 KIAS", "VLO 180 KIAS")))                                         # V-LE / V-LO placard (A3)
         f = FD.face_frame(-0.160, 1.792).moved(c=q["plate_off"])
         out.append((FD._extrusion(f.moved(c=0.001), FD.rrect_loop(0.012, 0.047, 0.004, nc=3), 0.002, bevel=0.0005,
                                   nb=1), "bezel_black"))
@@ -740,9 +749,9 @@ def lower_panel(sg):
                                    (0.014, 0.004)], n=40, axis_origin=wc - 0.007 * f.u, axis_dir=f.u, ref_dir=f.w,
                                   cap_ends=True), "grip_black"))
         out.append(PR.decal(f, -0.0085, 0.0395, 0.0085, 0.0445, 0.0020 + PR.LIFT, "words", rows=1, cap=1.8,
-                            seed="gear_up"))                                         # UP / DN on the bezel (A3)
+                            seed="gear_up", text="UP"))                                         # UP / DN on the bezel (A3)
         out.append(PR.decal(f, -0.0085, -0.0445, 0.0085, -0.0395, 0.0020 + PR.LIFT, "words", rows=1, cap=1.8,
-                            seed="gear_dn"))
+                            seed="gear_dn", text="DN"))
         # FEATHER INHIBIT: a guarded square push button on the yoke sub-panel
         f = FD.face_frame(-0.442, 1.758).moved(c=q["plate_off"])
         out.append((FD._extrusion(f.moved(c=0.0015), FD.rrect_loop(0.0175, 0.0200, 0.003, nc=3), 0.003, bevel=0.0006,
@@ -752,7 +761,7 @@ def lower_panel(sg):
         out.append((FD._extrusion(f.moved(c=0.0040), FD.rrect_loop(0.0095, 0.0095, 0.0015, nc=3), 0.004, bevel=0.0007,
                                   nb=1), "grip_black"))
         out.append(PR.decal(f, -0.0160, 0.0125, 0.0160, 0.0190, 0.0030 + PR.LIFT, "words", rows=1, cap=1.4,
-                            seed="feather_inh"))                                     # FEATHER INHIBIT (A3)
+                            seed="feather_inh", text="FEATHER INHIBIT"))                                     # FEATHER INHIBIT (A3)
         # PARKING BRK: a vertical black lozenge handle on its round boss, lower left [M: P1046410]
         f = FD.face_frame(-0.637, 1.787).moved(c=q["plate_off"])
         out.append((knob(f.o, f.w, f.u, 0.0140, 0.0050, n=32, chamfer=0.3), "panel_dark"))
@@ -761,7 +770,7 @@ def lower_panel(sg):
                                    (-0.0105, -0.012)]), 0.007, n=4, max_seg=0.01)
         out.append((FD._extrusion(f.moved(c=0.026), loz, 0.012, bevel=0.003, nb=2), "grip_black"))
         out.append(PR.decal(FD.Fr(f.o, f.v, -f.u, f.w), -0.019, -0.0035, 0.019, 0.0035, 0.032 + PR.LIFT, "words",
-                            rows=1, cap=2.0, seed="park_brk"))                        # PARKING BRK on the handle (A3)
+                            rows=1, cap=2.0, seed="park_brk", text="PARK BRK"))                        # PARKING BRK on the handle (A3)
     else:
         # ACS / CPCS: two placards in the band, a row of four lit push buttons, the rockers and the guarded DUMP
         # [M: P1046409, P1046408]
@@ -770,7 +779,8 @@ def lower_panel(sg):
             out.append((FD._extrusion(f.moved(c=0.0005), FD.rrect_loop(0.0195, 0.0062, 0.001, nc=2), 0.001,
                                       bevel=0.0003, nb=1), "bezel_black"))
             out.append(PR.decal(f, -0.0180, -0.0052, 0.0180, 0.0052, 0.0010 + PR.LIFT, "words", rows=2, cap=1.2,
-                                seed=("acs_placard", yy)))                           # printed (A3)
+                                seed=("acs_placard", yy),
+                                text=(("MAX DIFF", "5.75 PSI"), ("CABIN ALT", "10000 FT"))[int(yy > 0.22)]))                           # printed (A3)
         for yy, an in ((0.186, "annun_off_green"), (0.208, "annun_off_green"), (0.231, "annun_off_amber"),
                        (0.254, "annun_off_green")):                 # unlit on a parked aircraft (FID-FD1-03)
             f = FD.face_frame(yy, 1.816).moved(c=q["plate_off"])
@@ -778,7 +788,9 @@ def lower_panel(sg):
                                       bevel=0.0004, nb=1), "bezel_black"))
             out += push_cap(f.moved(c=0.002), 0.017, 0.017, 0.003, an)
             out.append(PR.decal(f, -0.0110, 0.0115, 0.0110, 0.0160, PR.LIFT, "words", rows=1, cap=1.3,
-                                seed=("acs_title", yy)))
+                                seed=("acs_title", yy),
+                                text=dict(((0.186, "BLEED"), (0.208, "PACK"), (0.231, "AUTO"), (0.254, "VENT")))
+                                .get(round(yy, 3), "ACS")))
         f = FD.face_frame(0.188, 1.769).moved(c=q["plate_off"])
         out += rocker_block(f, 1, cap=(0.016, 0.026), legend=True)
         f = FD.face_frame(0.223, 1.769).moved(c=q["plate_off"])
@@ -786,10 +798,10 @@ def lower_panel(sg):
         out += guarded_toggle(FD.face_frame(0.279, 1.769).moved(c=q["plate_off"]))
         fg = FD.face_frame(0.226, 1.769).moved(c=q["plate_off"])                    # the ACS group's frame + title
         out.append(PR.decal(fg, -0.056, -0.0215, 0.068, 0.0255, PR.LIFT, "frame", gap=0.45, cap=1.5, lw=0.3, rc=1.5,
-                            seed="acs_frame"))
+                            seed="acs_frame", text="ENVIRONMENTAL"))
         for k_, yy in enumerate((0.188, 0.223)):
             out.append(PR.decal(FD.face_frame(yy, 1.769).moved(c=q["plate_off"]), -0.010, -0.0200, 0.010, -0.0160,
-                                PR.LIFT, "words", rows=1, cap=1.2, seed=("acs_sw", k_)))
+                                PR.LIFT, "words", rows=1, cap=1.2, seed=("acs_sw", k_), text=("CPCS", "TEMP")[k_]))
         # OXYGEN lever in its vertical slot next to the stack
         f = FD.face_frame(0.162, 1.787).moved(c=q["plate_off"])
         out.append((FD._extrusion(f.moved(c=0.001), FD.rrect_loop(0.0095, 0.050, 0.004, nc=3), 0.002, bevel=0.0005,
@@ -885,9 +897,9 @@ def vspeed_placard(sg):
     # (first-principles A3: printed -- label column left aligned, value column on the right)
     top = 0.0012
     out.append(PR.decal(f, -0.0205, -0.0030 + 0.0020, 0.0040, 0.0215, top + PR.LIFT, "words", rows=4, cap=1.1,
-                        align="l", fill=0.95, fill2=0.9, seed=("vs_l", sg)))
+                        align="l", fill=0.95, fill2=0.9, seed=("vs_l", sg), text=("VMO", "VA", "VFE 15", "VFE 40")))
     out.append(PR.decal(f, 0.0060, -0.0010, 0.0205, 0.0215, top + PR.LIFT, "words", rows=4, cap=1.1, align="l",
-                        fill=0.8, fill2=1.0, seed=("vs_r", sg)))
+                        fill=0.8, fill2=1.0, seed=("vs_r", sg), text=("240", "165", "165", "130")))
     out.append(PR.decal(f, -0.0205, -0.0205, 0.0205, -0.0070, top + PR.LIFT, "words", rows=2, cap=1.1, align="l",
-                        fill=0.9, fill2=1.0, seed=("vs_b", sg)))
+                        fill=0.9, fill2=1.0, seed=("vs_b", sg), text=("MAX DEMO X-WIND 30 KT", "MANEUVERING SPEED 165 KIAS")))
     return out

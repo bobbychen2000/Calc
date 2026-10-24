@@ -401,7 +401,9 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   panel and the part cards count the tier loaded; the Artifact bundle's gzip no-WebAssembly fallback is the full model on desktops (data/pc12_glb.gz.bin) and the light
   tier on phones (data/pc12_low_glb.gz.bin, PC12_CONFIG.glbGzLow), so a host that refuses WebAssembly still shows the
   full resolution on a desktop).
-  The model carries NO markings (owner decision: no logos, registration, serials, flags or lettering).
+  The model carries NO markings (owner decision: no logos, registration, serials, flags or lettering) -- except, since
+  2026-10-24 (owner: "Real English words"), the cockpit placards: generic English switch / breaker / scale / limitation
+  text printed on the flight deck (model/fd_print.py), still no brand names; and the live display pages' labels.
 - Viewer picture quality (owner 2026-10-03 "smoother curves, edges and sharper crisper picture"; the picture side,
   `web/viewer/picture.js`, Stage.render() -> Picture; crisp review r1 fixes in r2): once nothing moves the canvas goes up
   to the screen's own pixel ratio (3 at most) within the profile's pixel budget (`stillDpr`: phones ~2.5x on Auto at

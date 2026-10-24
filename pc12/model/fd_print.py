@@ -6,9 +6,10 @@ texture atlas and carried by thin decals that lie ON the panel surface (a copy o
 `LIFT` 0.1 mm), material 'legend_print' (alpha-blended, base colour = the atlas).  They replace the floating
 light_white strips (raised 0.3-0.4 mm boxes with hard edges that shimmered and floated at the crew stops).
 
-No markings rule (owner): nothing is readable.  'Text' is drawn as PSEUDO-GLYPHS -- sans-serif-like strokes picked
-from a small segment alphabet of no script (bars, bowls, diagonals), set in words of 2-9 glyphs with word gaps --, so
-at the crew-seat distance a title reads as printing and up close as an unknown script, never as words.
+Lettering (owner 2026-10-24, "Real English words"; it relaxes the no-lettering rule for the cockpit placards only --
+still no logos, brands, registrations or serials): the text is real generic placard English (switch titles, breaker
+names, scales, limitation placards; a print's `text`, else words from VOCAB / CB_VOCAB) set in a sans-serif stroke font
+of Latin capitals, digits and a little punctuation (_L).  The first build's invented glyph set read as Cyrillic.
 
 Mechanics.  `decal(fr, u0, v0, u1, v1, c, kind, **kw)` returns (Mesh, 'legend_print'): a quad (or a grid laid onto a
 curved surface by `surf`) in the frame `fr` at height c (the surface + LIFT), its UVs into a cell of the atlas that
@@ -251,8 +252,52 @@ _L = {
     "X": [[(0, 1), (1, 0)], [(0, 0), (1, 1)]],
     "Y": [[(0, 1), (0.5, 0.48), (1, 1)], [(0.5, 0.48), (0.5, 0)]],
     "Z": [[(0, 1), (1, 1), (0, 0), (1, 0)]],
+    "Q": [_arc_pts(0.5, 0.5, 0.5, 0.5, 0, 360, 15), [(0.6, 0.25), (1.0, -0.05)]],
+    "0": [_arc_pts(0.5, 0.5, 0.45, 0.5, 0, 360, 15)],
+    "1": [[(0.2, 0.8), (0.55, 1), (0.55, 0)]],
+    "2": [_arc_pts(0.5, 0.72, 0.42, 0.28, 160, -30, 7) + [(0.05, 0), (0.95, 0)]],
+    "3": [_arc_pts(0.5, 0.75, 0.4, 0.25, 160, -90, 7) + _arc_pts(0.5, 0.26, 0.45, 0.26, 90, -160, 7)],
+    "4": [[(0.75, 0), (0.75, 1), (0, 0.3), (1, 0.3)]],
+    "5": [[(0.9, 1), (0.15, 1), (0.1, 0.55)] + _arc_pts(0.5, 0.32, 0.45, 0.32, 125, -160, 9)],
+    "6": [_arc_pts(0.5, 0.3, 0.45, 0.3, 0, 360, 11), [(0.06, 0.32), (0.25, 0.8), (0.75, 1.0)]],
+    "7": [[(0, 1), (1, 1), (0.35, 0)]],
+    "8": [_arc_pts(0.5, 0.76, 0.38, 0.24, 0, 360, 11), _arc_pts(0.5, 0.27, 0.45, 0.27, 0, 360, 11)],
+    "9": [_arc_pts(0.5, 0.7, 0.45, 0.3, 0, 360, 11), [(0.94, 0.68), (0.75, 0.2), (0.25, 0.0)]],
+    "/": [[(0.1, 0), (0.9, 1)]],
+    "-": [[(0.15, 0.5), (0.85, 0.5)]],
+    ".": [[(0.5, 0.0), (0.5, 0.02)]],
+    ":": [[(0.5, 0.15), (0.5, 0.17)], [(0.5, 0.75), (0.5, 0.77)]],
+    "%": [[(0.1, 0), (0.9, 1)], _arc_pts(0.2, 0.8, 0.15, 0.17, 0, 360, 7), _arc_pts(0.8, 0.2, 0.15, 0.17, 0, 360, 7)],
 }
-_WIDTH = {"I": 0.25, "M": 0.85, "W": 0.95, "J": 0.6, "L": 0.62, "E": 0.62, "F": 0.62}
+# real cockpit placard vocabulary (owner 2026-10-24: "Real English words" -- generic system labels, no logos, brands,
+# registrations or serials) for the prints that carry no explicit `text`
+VOCAB = ("ON OFF AUTO TEST NORM ARM MAN STBY BATT GEN EXT PWR BUS TIE FUEL PUMP BOOST IGN START NAV STROBE BEACON "
+         "TAXI LDG RECOG LOGO WING DOME CABIN PANEL FLOOD DIM BRT PRESS DUMP HEAT VENT FAN PITOT STATIC PROBE "
+         "WSHLD BOOTS INERT SEP PROP DEICE AP YD TRIM NOSE UP DN LWD RWD FLAP GEAR HORN TEST MASTER CAUT WARN "
+         "RESET OPEN CLOSE PULL PUSH SEL VOL SQ COM NAV XPDR AUDIO OXY MASK CREW PAX TEMP COLD HOT EMER LIGHTS "
+         "INST AVIONICS ESS NON HYD FIRE DET ECS BLEED FLOW HI LO").split()
+CB_VOCAB = ("PFD 1|PFD 2|MFD|GTC 1|GTC 2|AHRS 1|AHRS 2|ADC 1|ADC 2|COM 1|COM 2|NAV 1|NAV 2|XPDR 1|XPDR 2|AUDIO|AP SERVO|"
+            "TRIM|FLAP|GEAR|FUEL QTY|FUEL PUMP|BOOST|IGN|START|STBY BATT|GEN 1|GEN 2|BATT|EXT PWR|PITOT 1|PITOT 2|"
+            "PROBES|WSHLD|BOOTS|INERT SEP|PROP DEICE|STALL|NAV LT|STROBE|BEACON|TAXI LT|LDG LT|RECOG|CABIN LT|DOME|"
+            "PANEL LT|FLOOD|ECS|BLEED|PRESS|DUMP|OXY|WX RADAR|TAWS|DATALINK|ENG IND|OIL PRESS|ITT|TORQUE|NG|NP|"
+            "FIRE DET|HORN|CAUT|WARN|STBY ATT|CLOCK|USB|12V|LAV|GALLEY").split("|")
+
+
+def text_for(kw, rows, rng):
+    """The rows of a print: kw['text'] (a str or a tuple of rows) when given, else generic placard words."""
+    t = kw.get("text")
+    if t is not None:
+        t = (t,) if isinstance(t, str) else tuple(t)
+        return list(t[:rows]) + [""] * max(0, rows - len(t))
+    if kw.get("cb"):
+        return [str(rng.choice(CB_VOCAB))] + [""] * (rows - 1)
+    out = []
+    for i in range(rows):
+        n = int(rng.integers(1, 3)) if i == 0 else int(rng.integers(1, 4))
+        out.append(" ".join(str(rng.choice(VOCAB)) for _ in range(n)))
+    return out
+_WIDTH = {"I": 0.25, "M": 0.85, "W": 0.95, "J": 0.6, "L": 0.62, "E": 0.62, "F": 0.62, "1": 0.6, ".": 0.3, ":": 0.3,
+          "/": 0.6, "-": 0.6}
 _CONS, _VOW = "BCDFGHKLMNPRSTVWZ", "AEIOU"
 
 
@@ -293,31 +338,26 @@ def _words(cv, W, H, kw):
     gap, wgap = 0.24 * cap, 0.55 * cap
 
     def wwidth(w_):
-        return sum(0.62 * hl * _WIDTH.get(c, 1.0) for c in w_) + gap * (len(w_) - 1) + 2 * r
+        return (sum(0.62 * hl * _WIDTH.get(c, 1.0) + gap for c in w_ if c != " ") + wgap * w_.count(" ") - gap
+                + 2 * r)
     lead = (H - rows * cap) / (rows + 1)
     rng = _rng(kw)
     fill = float(kw.get("fill", 0.85))
     align = kw.get("align", "c")
-    for i in range(rows):
+    for i, line in enumerate(text_for(kw, rows, rng)):
+        if not line:
+            continue
         avail = W * (fill if i == 0 else fill * float(kw.get("fill2", 0.7)))
-        words, used = [], 0.0
-        for _ in range(12):
-            w_ = _word(rng, int(rng.integers(2, 8)))
-            while len(w_) > 1 and used + wwidth(w_) > avail:
-                w_ = w_[:-1]
-            if (used + wwidth(w_) > avail or len(w_) < 2) and words:
-                break
-            words.append(w_)
-            used += wwidth(w_) + wgap
-            if used > 0.8 * avail:
-                break
-        total = sum(wwidth(w_) for w_ in words) + wgap * (len(words) - 1)
+        k = min(1.0, max(0.35, avail / max(wwidth(line), 1e-6)))       # a long label is set smaller to fit
+        hk, gk, rk = hl * k, gap * k, r * max(k, 0.7)
+        total = wwidth(line) * k
         x = {"c": 0.5 * (W - total), "l": r + 0.2 * cap, "r": W - total - r - 0.2 * cap}[align]
-        y = H - lead * (i + 1) - cap * (i + 1)
-        for w_ in words:
-            for ch in w_:
-                x += _letter(cv, x + r, y + r, hl, ch, r) + gap
-            x += wgap - gap
+        y = H - lead * (i + 1) - cap * (i + 1) + 0.5 * (1 - k) * hl
+        for ch in line:
+            if ch == " ":
+                x += wgap * k
+                continue
+            x += _letter(cv, x + r, y + r, hk, ch, rk) + gk
 
 
 def _stamp_words(cv, x0, y0, x1, y1, kw):
@@ -467,7 +507,8 @@ def _draw(cell):
             elif pr[0] == "arc":
                 cv.arc(pr[1:3], pr[3], pr[4], pr[5], 0.5 * pr[6])
             elif pr[0] == "words":
-                _stamp_words(cv, *pr[1:5], dict(rows=pr[5], cap=pr[6], seed=pr[7], fill=0.95))
+                _stamp_words(cv, *pr[1:5], dict(rows=pr[5], cap=pr[6], seed=pr[7], fill=0.95,
+                                                **({"text": pr[8]} if len(pr) > 8 else {})))
     elif k == "cells":
         # a CB label strip: ncol cells (vertical rules between them, rules top and bottom), each with 1-2 rows of
         # short pseudo-words centred
@@ -482,7 +523,7 @@ def _draw(cell):
                 cv.seg((c * cw, 0), (c * cw, H), 0.5 * lw_)
         for c in range(ncol):
             sub = _Canvas(int(round(cw * ppm)), cell["h"], ppm)
-            _words(sub, cw, H, dict(kw, rows=rows, fill=0.82, fill2=0.7, seed=(kw.get("seed"), c)))
+            _words(sub, cw, H, dict(kw, rows=1, cb=True, fill=0.86, seed=(kw.get("seed"), c)))
             X0 = int(round(c * cw * cv.k))
             hh, ww = sub.a.shape
             ww = min(ww, cv.w - X0)

@@ -256,9 +256,9 @@ def stack_shell():
         out.append((knob(f.o, f.w, f.u, cr, 0.012, n=36, skirt=(cr + 0.003, 0.0025), chamfer=0.2), "grip_black"))
         out.append((f.rect(-0.0008, 0.35 * cr, 0.0008, 0.75 * cr, 0.0149), "light_white"))
         out.append(PR.decal(f, -0.012, cr + 0.0032, 0.012, cr + 0.0068, PR.LIFT, "words", rows=1, cap=1.6,
-                            seed=("com", sg)))                         # (first-principles A3: printed) COM 1 / 2
+                            seed=("com", sg), text="COM 1/2 VOL"))                         # (first-principles A3: printed) COM 1 / 2
         out.append(PR.decal(f, -0.013, -cr - 0.0072, 0.013, -cr - 0.0032, PR.LIFT, "words", rows=1, cap=1.4,
-                            seed=("vol", sg)))                         # PUSH / VOL
+                            seed=("vol", sg), text="PUSH SQ"))                         # PUSH / VOL
     # waisted side walls: the region under the front edge, down to the plinth and back to the lower panel
     x0p, x1p, phw, pz = I.pedestal_plinth()
     E = np.c_[D[:, 0] - R * N[:, 0], D[:, 1] - R * N[:, 1]]               # the edge's inner end in the side view
@@ -325,6 +325,11 @@ def _bristles(x0, x1, y, zt, w, pitch=0.0016):
     if V:
         out.append((FD._oriented(Mesh(np.array(V, float), np.array(F)), [0, 0, 1.0]), "brush_seal"))
     return out
+
+
+_KNOB_TXT = {(4.020, -0.080): ("PILOT", "PFD"), (4.020, -0.040): ("SDU", "1"), (4.020, 0.0): ("MFD",),
+             (4.020, 0.040): ("SDU", "2"), (4.020, 0.080): ("COPILOT", "PFD"), (4.054, -0.078): ("PANEL", "FLOOD"),
+             (4.054, 0.078): ("CABIN", "DOME")}
 
 
 def quadrant():
@@ -409,7 +414,8 @@ def quadrant():
             # white word on each half)
             out.append(PR.decal_r(fk, cu_ - 0.55 * hu, cv_ - 0.85 * hv, cu_ + 0.55 * hu, cv_ + 0.85 * hv,
                                   top + PR.LIFT, "words", rows=1, cap=1.5, fill=0.95,
-                                  seed=("trimcap", round(yy, 3), s_)))   # DOWN / NOSE, LWD / RWD on the cap
+                                  seed=("trimcap", round(yy, 3), s_),
+                                  text=(("LWD" if s_ < 0 else "RWD") if horiz else ("DN" if s_ < 0 else "UP"))))   # DOWN / NOSE, LWD / RWD on the cap
     fk = ft.moved(0.004, y4, 0.0024)                                     # guarded FLAP INTERRUPT
     gt = FD.Fr(fk.o, fk.u, fk.v, fk.w)
     out += guarded_toggle(FD.Fr(gt.o, gt.v, -gt.u, gt.w), guard_mat="pedestal_gunmetal")
@@ -421,13 +427,15 @@ def quadrant():
     for k_, (yy, rows) in enumerate(((y1, 2), (y2, 2), (y3, 1), (y4, 2))):
         hw_ = min(0.019, q["trim_hw"] - 0.007 - abs(yy))                  # inside the bezel's rounded corners
         out.append(PR.decal_r(ft, -th + 0.0018, yy - hw_, -th + 0.0018 + 0.0036 * rows + 0.0012, yy + hw_,
-                              0.0024 + PR.LIFT, "words", rows=rows, cap=1.3, seed=("trim", k_)))
+                              0.0024 + PR.LIFT, "words", rows=rows, cap=1.3, seed=("trim", k_),
+                              text=(("TRIM", "INTERRUPT"), ("ALTERNATE", "STAB TRIM"), ("AILERON TRIM",),
+                                    ("FLAP", "INTERRUPT"))[k_]))
     bw, bh = 0.026 * k5, 0.016 * k5
     oa, ob = 0.5 * bh + 0.0012, 0.5 * bw + 0.0012
     for s_ in (-1, 1):                                                   # LWD / RWD marks (the outline went, FDY r2)
         out.append(PR.decal_r(ft, 0.006 + oa + 0.0012, y3 + s_ * 0.6 * ob - 0.0045, 0.006 + oa + 0.0042,
                               y3 + s_ * 0.6 * ob + 0.0045, 0.0024 + PR.LIFT, "words", rows=1, cap=1.3,
-                              seed=("lwd", s_)))
+                              seed=("lwd", s_), text="LWD" if s_ < 0 else "RWD"))
     # slots with brush seals, detent ticks, the striped reverse gate
     sw = q["slot_w"]
     pcx, pcy, pch = (float(v) for v in PE["pcl"])
@@ -442,7 +450,7 @@ def quadrant():
                         n=19, major=6, side="t"))
     for xx, k_ in ((pcx - 0.090, 0), (pcx - 0.072, 1), (pcx + 0.020, 2)):   # TO / MCP / IDLE titles
         out.append(PR.decal_r(fp, xx - cx - 0.0040, pcy - sw - 0.0185, xx - cx + 0.0040, pcy - sw - 0.0095, PR.LIFT,
-                              "words", rows=1, cap=1.4, fill=0.9, seed=("pcl", k_)))
+                              "words", rows=1, cap=1.4, fill=0.9, seed=("pcl", k_), text=("MAX", "TO", "IDLE")[k_]))
     out.append(PR.decal(fp, pcx + 0.030 - cx, pcy - sw - 0.008, pcx + 0.063 - cx, pcy - sw - 0.002, PR.LIFT,
                         "stripes", colour="red", period=3.0))                     # striped reverse gate
     fa0, fb0 = q["flap_slot"]
@@ -489,16 +497,18 @@ def quadrant():
     # abstract legend strokes on the plate (no lettering): the POWER title by the PCL slot, the flap angle marks' labels,
     # the stabilised-propeller caution line along the plate's port edge (FDO1-07: the face read empty)
     out.append(PR.decal(fp, a0 - cx + 0.004, pcy + sw + 0.003, a0 - cx + 0.030, pcy + sw + 0.0075, PR.LIFT, "words",
-                        rows=1, cap=1.8, seed="power"))                          # POWER (along the slot)
+                        rows=1, cap=1.8, seed="power", text="POWER"))                          # POWER (along the slot)
     for k in range(4):
         x_ = fx - 0.050 + 0.040 * k
         out.append(PR.decal_r(fp, x_ - cx - 0.004, fy + sw + 0.0095, x_ - cx + 0.004, fy + sw + 0.0135, PR.LIFT, "words",
-                              rows=1, cap=1.6, fill=0.6, seed=("flap", k)))       # 0 / 15 / 30 / 40
+                              rows=1, cap=1.6, fill=0.6, seed=("flap", k), text=("0", "15", "30", "40")[k]))       # 0 / 15 / 30 / 40
     # the stabilised-propeller caution placard along the plate's port edge: a framed two-line printed block
     out.append(PR.decal(fp, a0 - cx, -hw + fw + 0.0035, b0 - cx + 0.024, -hw + fw + 0.0110, PR.LIFT, "frame", rc=0.8,
                         lw=0.3, gap=0.0, title=False))
     out.append(PR.decal(fp, a0 - cx + 0.002, -hw + fw + 0.0045, b0 - cx + 0.022, -hw + fw + 0.0100, PR.LIFT, "words",
-                        rows=2, cap=1.25, align="l", seed="caution"))
+                        rows=2, cap=1.25, align="l", seed="caution",
+                        text=("CAUTION: DO NOT SELECT BETA OR REVERSE IN FLIGHT",
+                              "AVOID STABILIZED OPERATION 350-950 RPM")))
     # flap lever: stem + black square paddle
     out.append((_cyl([fx + 0.010, fy, zt - 0.006], [fx, fy, FL + fh_ - 0.015], 0.0045, n=10), "metal_dark"))
     # (FIDY5-02: a satin BLACK paddle -- the panel knobs' grip_black reflection floor read it grey from the seats)
@@ -507,11 +517,12 @@ def quadrant():
     zp_ = FL + fh_ - 0.012
     out.append((_se([fx, fy, zp_], (0.006, 0.015, 0.014), (0.25, 0.25), nu=10, nv=16), "bezel_black"))
     out.append(PR.decal(FD.Fr([fx + 0.0061, fy, zp_], [0, 1.0, 0], [0, 0, 1.0]), -0.009, -0.0035, 0.009, 0.0035,
-                        PR.LIFT, "words", rows=1, cap=2.2, seed="flap_paddle"))
+                        PR.LIFT, "words", rows=1, cap=2.2, seed="flap_paddle", text="FLAP"))
     # placard band across the quadrant (abstract strokes)
     px_ = q["placard_x"]
     out.append(PR.decal_r(fp, px_ - cx - 0.0045, -hw + fw + 0.008, px_ - cx + 0.0045, hw - fw - 0.008, PR.LIFT, "words",
-                          rows=2, cap=1.3, seed="placard_band"))
+                          rows=2, cap=1.3, seed="placard_band",
+                          text=("PANEL  PFD  SDU  MFD  PFD  FLOOD", "LIGHTING")))
     # lighting knobs: 5 + 2, skirted, with pointer lines and legend strokes (JTF p.18)
     kx, ky = q["knobs"]
     kx2, ky2 = q["knobs2"]
@@ -525,7 +536,8 @@ def quadrant():
             # (first-principles A3) printed: the two-line title ahead of the knob, the white dimmer arc (OFF -> BRT
             # wedge) with its ticks round it (research M20)
             out.append(PR.decal_r(f, -r_ - 0.0135, -0.0095, -r_ - 0.0080, 0.0095, PR.LIFT, "words", rows=2, cap=1.2,
-                                  seed=("knob", round(x_, 3), round(yy, 3))))
+                                  seed=("knob", round(x_, 3), round(yy, 3)),
+                                  text=_KNOB_TXT.get((round(x_, 3), round(yy, 3)), ("DIM",))))
             Ra = r_ + 0.0075
             out.append(PR.decal_r(f, -Ra, -Ra, Ra, Ra, PR.LIFT, "arc", R=1000 * (r_ + 0.0058), a0=-45.0, a1=225.0,
                                   lw=0.9, ticks=5))

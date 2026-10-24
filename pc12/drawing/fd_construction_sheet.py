@@ -195,7 +195,8 @@ def draw(ds):
         "every L6B check on it are unchanged; the pile depth only sets where the viewer's pile shells sit.",
         "REVIEW NOTE (rev A): the rim and blend tabulate what the builders had as constants (QUAD frame 14 x 6 R 20, "
         "STACK edge_r 12) and add the rolled top R 3 and the R 8 fillet: the rim reads as a cast part.",
-        "Printing is pad / silk-screen printing of pseudo-text (no readable markings: owner rule); in 3-D a decal "
+        "Printing is pad / silk-screen printing of generic English placard text (owner 2026-10-24; no logos, brands, "
+        "registrations or serials); in 3-D a decal "
         "0.15 mm over its surface (model/fd_print.py; fit_check 34).",
         "Sources: [S] published data, [M] measured on the s/n 3001 photos, [E] engineering estimate.",
     ], title="NOTES")

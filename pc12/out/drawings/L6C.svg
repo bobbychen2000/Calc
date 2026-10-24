@@ -240,8 +240,8 @@
 <text x="389.5" y="47.8" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.6" stroke="none" fill="#1B2429">REVIEW NOTE (rev A): the rim and blend tabulate what the builders had as constants (QUAD frame 14 x 6 R 20, STACK edge_r 12) and add</text>
 <text x="389.5" y="51.4" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.6" stroke="none" fill="#1B2429">the rolled top R 3 and the R 8 fillet: the rim reads as a cast part.</text>
 <text x="384" y="56.2" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.6" stroke="none" fill="#1B2429">4.</text>
-<text x="389.5" y="56.2" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.6" stroke="none" fill="#1B2429">Printing is pad / silk-screen printing of pseudo-text (no readable markings: owner rule); in 3-D a decal 0.15 mm over its surface</text>
-<text x="389.5" y="59.8" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.6" stroke="none" fill="#1B2429">(model/fd_print.py; fit_check 34).</text>
+<text x="389.5" y="56.2" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.6" stroke="none" fill="#1B2429">Printing is pad / silk-screen printing of generic English placard text (owner 2026-10-24; no logos, brands, registrations or serials); in 3-D a decal</text>
+<text x="389.5" y="59.8" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.6" stroke="none" fill="#1B2429">0.15 mm over its surface (model/fd_print.py; fit_check 34).</text>
 <text x="384" y="64.6" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.6" stroke="none" fill="#1B2429">5.</text>
 <text x="389.5" y="64.6" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.6" stroke="none" fill="#1B2429">Sources: [S] published data, [M] measured on the s/n 3001 photos, [E] engineering estimate.</text>
 <text x="28" y="300" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.8" stroke="none" fill="#1B2429" font-weight="600">REVISIONS - PC12-L6C</text>

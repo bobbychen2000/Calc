@@ -511,7 +511,9 @@ def glazing_mouldings():
                         # (first-principles A3: printed placards, one decal each; fix r2 FID-FD2-09's muted red)
                         out.append(PR.decal_map(sm, u, vmid - 0.5 * hv, u + w, vmid + 0.5 * hv, 0.0, "plate",
                                                 colour="red_dim" if col == "red" else "plate_black", ink="white",
-                                                rows=3 if h > 0.014 else 2, cap=1.3, seed=("sill", side, u)))
+                                                rows=3 if h > 0.014 else 2, cap=1.3, seed=("sill", side, u),
+                                                text=(("EMER EXIT", "PULL HANDLE"), ("NO STEP",),
+                                                      ("MAX 10 KG", "SIDE POCKET"))[int(round(u * 100)) % 3]))
     return [(m, mat) for m, mat in out if m is not None and len(m.F)]
 
 
@@ -934,7 +936,8 @@ def cb_panels(fl):
                 # (first-principles A3: printed placards -- a muted red plate with white pseudo-text, one decal)
                 out.append(PR.decal_map(Ml, ul(xp), vl(zs - 0.5 * hs - 0.016), ul(xp + w),
                                         vl(zs - 0.5 * hs - 0.016 + h), 0.0, "plate", colour="red_dim", ink="white",
-                                        rows=1, cap=1.6 if h < 0.0085 else 1.8, seed=("ledge", sg, xp)))
+                                        rows=1, cap=1.6 if h < 0.0085 else 1.8, seed=("ledge", sg, xp),
+                                        text="NO SMOKING" if xp < x0 + 0.25 else "OXYGEN MASK INSIDE"))
             # map light at the slot's forward end (NGX POH 7-19-2: above the CB panels): black bezel ring, lens
             P, Nn = Ml.frame(ul(x0 + 0.012), vl(zs))
             # (black, not bezel_black: consistency_2d3d measures the CB pair's extent on bezel_black)
@@ -948,7 +951,11 @@ def cb_panels(fl):
             uo, vo = 0.065, 0.012
             out.append(PR.decal_map(Mo, uo, vo, uo + 0.085, vo + 0.048, 0.0, "plate", colour="plate_black",
                                     ink="white", rows=7, cap=1.5, margin=0.05, fill=0.95, fill2=0.95,
-                                    seed=("limits", sg)))                    # printed limitations placard (A3)
+                                    seed=("limits", sg),
+                                    text=("OPERATING LIMITATIONS", "THIS AIRPLANE MUST BE OPERATED IN THE",
+                                          "NORMAL CATEGORY IN COMPLIANCE WITH THE", "APPROVED AIRPLANE FLIGHT MANUAL",
+                                          "DAY / NIGHT / VFR / IFR", "FLIGHT INTO KNOWN ICING APPROVED",
+                                          "NO ACROBATIC MANEUVERS")))                    # printed limitations placard (A3)
     return [(m, mat) for m, mat in out if m is not None and len(m.F)]
 
 
@@ -1059,6 +1066,18 @@ def _rr_loop(hx, hy, r, nc=6, ne=(10, 4)):
     return np.array(out)
 
 
+# the overhead's printing (owner 2026-10-24: real English placard words): section titles in OVH titles' order, and per
+# toggle / paddle (OVH toggles, then paddles) its two-line caption aft of it and the position word ahead of it
+OVH_TITLES = ("WARNING", "ELECTRICAL", "MASTER POWER", "FUEL", "ENGINE", "EXTERIOR LIGHTS", "CABIN")
+OVH_SWITCHES = ((("FUEL", "PUMP LH"), ("AUTO",)), (("FUEL", "PUMP RH"), ("AUTO",)), (("IGNITION",), ("AUTO",)),
+                (("STBY", "BUS"), ("ON",)), (("CABIN", "BUS"), ("ON",)), (("GEN 1",), ("ON",)), (("BUS", "TIE"),
+                                                                                              ("NORM",)),
+                (("GEN 2",), ("ON",)), (("BAT 1",), ("ON",)), (("EXT", "PWR"), ("ON",)), (("BAT 2",), ("ON",)),
+                (("WING", "INSP"), ("ON",)), (("NAV",), ("ON",)), (("BEACON",), ("ON",)), (("STROBE",), ("ON",)),
+                (("TAXI",), ("ON",)), (("NO", "SMOKING"), ("ON",)), (("SEAT", "BELTS"), ("ON",)),
+                (("LANDING",), ("ON",)), (("PULSE", "RECOG"), ("ON",)))
+
+
 def overhead_panel():
     from cad.mesh import cylinder, superellipsoid, box
     from model import flightdeck as FD
@@ -1116,10 +1135,12 @@ def overhead_panel():
                       ("seg", x0_, y1_, x1_, y1_, lw)]
         for k_, (fs, fa, wfr) in enumerate(O["titles"]):              # section titles (pseudo-text)
             w = 1000 * wfr * 2 * hwi
-            prims.append(("words", X(fs) - 0.5 * w, Y(fa) - 3.0, X(fs) + 0.5 * w, Y(fa) + 3.0, 1, 2.6, ("ovt", k_)))
+            prims.append(("words", X(fs) - 0.5 * w, Y(fa) - 3.0, X(fs) + 0.5 * w, Y(fa) + 3.0, 1, 2.6, ("ovt", k_),
+                          (OVH_TITLES[k_ % len(OVH_TITLES)],)))
         for k_, (fs, fa) in enumerate(O["toggles"] + O["paddles"]):   # switch captions: two lines aft of the switch
-            prims.append(("words", X(fs) - 11.0, Y(fa) + 13.0, X(fs) + 11.0, Y(fa) + 22.0, 2, 1.7, ("ovs", k_)))
-            prims.append(("words", X(fs) - 8.0, Y(fa) - 21.0, X(fs) + 8.0, Y(fa) - 16.0, 1, 1.6, ("ovo", k_)))
+            nm = OVH_SWITCHES[k_ % len(OVH_SWITCHES)]
+            prims.append(("words", X(fs) - 11.0, Y(fa) + 13.0, X(fs) + 11.0, Y(fa) + 22.0, 2, 1.7, ("ovs", k_), nm[0]))
+            prims.append(("words", X(fs) - 8.0, Y(fa) - 21.0, X(fs) + 8.0, Y(fa) - 16.0, 1, 1.6, ("ovo", k_), nm[1]))
         fr_ = FD.Fr(f.o, -f.v, f.u, f.w)
         out.append(PR.decal(fr_, -0.5 * W2, -0.5 * H2, 0.5 * W2, 0.5 * H2, -O["recess"] + PR.LIFT, "vector",
                             prims=tuple(prims)))
@@ -1143,7 +1164,7 @@ def overhead_panel():
             lens = "annun_off_amber" if mat == "panel_silver" else "annun_off_red"
             out.append((box(c + 0.0066 * f.w, (0.0125, 0.0125, 0.0008), R=f.R), lens))
             out.append(PR.decal(FD.Fr(c, -f.v, f.u, f.w), -0.0050, -0.0050, 0.0050, -0.0010, 0.0070 + PR.LIFT, "words",
-                                rows=1, cap=1.3, colour="white", seed=("ovsq", fs, fa)))     # printed on the lens (A3)
+                                rows=1, cap=1.3, colour="white", seed=("ovsq", fs, fa), text="TEST"))     # printed on the lens (A3)
         for fs, fa in O["paddles"]:
             c = Pp(fs, fa)
             out.append((cylinder(c - 0.0004 * f.w, c + 0.004 * f.w, 0.0046, n=6), "metal_dark"))
