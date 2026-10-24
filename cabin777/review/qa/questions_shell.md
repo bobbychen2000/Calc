@@ -25,3 +25,11 @@ Still open: PY/Y shade colour (Q5, no photo of a closed shade).
    uses an off-white panel with a cream grip.
 6. **Door viewing-window jamb.** sans_09 and sp_y_45 suggest that the small door window sits near one jamb, not on the
    centre line, but they are too dark to tell whether it is the forward or the aft jamb. It is modelled centred.
+
+## Wave 3 (w6-w8)
+- **Door viewing window (raters A and B, w6-w8).** The window sits 0.28 m aft of the door centre at the window belt, from the
+  face-on ANA door-lining frame (YouTube vEERVra5lKs). No inside photo of an ANA 777-300ER L2/L4 door was found in w6-w8
+  searches; an inside photo would confirm the position and size. Default: kept as is.
+- **Door cross-aisle floors (w6a).** sans_09 / sp_py09 show grey vinyl between the door-2 galley blocks and brown carpet only in
+  the door bays. The split (vinyl inboard of |x| 1.9 m) is applied at all five doors; doors 1 and 3-5 are not photographed.
+  Default: same at every door.
