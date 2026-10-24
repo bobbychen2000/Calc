@@ -338,3 +338,75 @@ aisle. That freed 31k triangles, which paid for the galley frames.
 aliasing. There are no new questions.
 
 Contact sheet: `monuments_before_after_w3c.jpg` (own renders, w13 against w15, same cameras).
+
+## Wave 3d (2026-10-24): confirm and polish, rounds w16-w18
+
+**Monuments meet the bar: w18 is A 8.5 / B 8.6 (mean 8.55), with no high or medium issue.** That is up from 8.4 / 8.4.
+The wave stops here.
+
+| round | rater A | rater B | mean | files |
+|---|---|---|---|---|
+| w16 (head 2e3ebfa: the w15 monuments, other areas newer) | 8.4 | 8.4 | 8.4 | `monuments_w16a/b.json` |
+| w17 (3ea3f24 + e6d3072 + fed7fdc) | 8.4 | 8.5 | 8.45 | `monuments_w17a/b.json` |
+| w18 (05d4cc2) | 8.5 | 8.6 | 8.55 | `monuments_w18a/b.json` |
+
+**w18 detail scores (A / B):**
+
+| Detail | A | B |
+|---|---|---|
+| Bar | 8.6 | 8.7 |
+| Welcome galley | 8.6 | 8.5 |
+| Door-2 ash wall | 8.6 | 8.7 |
+| F front + flight-deck door | 8.3 | 8.3 |
+| Lavs | 7.8 | 8.0 |
+| F/J | 8.4 | 8.3 |
+| J/PY | 8.4 | 8.4 |
+| Door 4 | 8.6 | 8.6 |
+| Door 5 | 8.3 | 8.4 |
+| Inserts | 8.6 | 8.6 |
+| Curtains | 8.4 | 8.4 |
+| Jump seats + linings | 8.5 | 8.5 |
+
+**Triangles:** 122.2k -> 122.1k. The cap was 145k.
+
+### What changed
+- **Rounded plates (`gPlate`):** `gRBox` clamps its radius to half the depth. Thin plates therefore never got the in-plane
+  corner radius they asked for, which is why the ash-wall frames, the latch ovals and the cream tag read square. `gPlate`
+  extrudes a rounded rectangle instead. The bins worker had a `gPlate` of their own and renamed it `binPlate`.
+- **Door-2 ash wall (lalf_133):**
+  - The frames have a radius of 0.08, stand 25 mm proud and carry symmetric full-length lit edges.
+  - The flap openings have rounded corners.
+  - Two dark red clips (`#6e2318`) straddle the top rail.
+- **Welcome cabinet (omaat_room_32):**
+  - The head is about 7 cm higher, so the tag sits above the monitor line. The head stays under the recess ceiling.
+  - The latch is a horizontal oval with a vertical thumb-turn, in a round D-shaped boss.
+  - The glass-reflection strips tried in w17 read as wires or sticks (w17a, medium) and were removed (see question 11).
+- **Monument ash:** the bar, welcome-galley and ash-wall ash has its own layer 33, `monoAsh`. It uses the `j_ash` tile at
+  gain 1.1. `ashGrain` read banded, and `ashDoor` (SD 3.3) read as plain laminate; layer 33 gives SD ~5.3. This needed
+  small entries in the shared `03_tex.js`.
+- **Bar (samchui_render_11):**
+  - The counter front has a bright satin nosing band that wraps both ends, in place of the dark slab over a rail.
+  - The tumblers are dark grey glass (#3b3e42 against the render's #383539). Each has a full rim ring, an inward-facing
+    inner wall, a bright base and side glints.
+- **Galleys (sansY_44):** the insert frames are darker (#8a867f). The cart grips and compartment paddles are proud bright bars over dark recesses.
+- **Jump seats:** flat 45 mm webbing with buckles and a lap belt, where there were rods before.
+- **J/PY bulkhead:** the bassinet bar is now two flush sockets.
+- **Brewer pots:** the polish band has a wider range and a tighter highlight.
+- **Door-2 passage soffit (from_ceiling w11):** a polished steel fascia on both open edges.
+
+### Rated, not done (all low)
+- **Ash grain:** still about half the photo contrast (2.8 % against 5.8 %), with a faint repeat about every 77 px on the
+  m04 wall. Raising `PHOTO_GAIN[33]` to about 1.5 would probably add about 0.1.
+- **Welcome pane:** no glass cue. Opaque streaks read as objects, so this needs a transparent material (question 11).
+- **Bar nosing:** B reads it as flat white plastic and suggests a dark groove plus some metalness.
+- **Tumbler glints:** they sit inset from the cup edges, so they read as stripes.
+- **Insert frames:** still only a little darker than the faces.
+- **Ash-wall highlights:** the lit strips stop before the corner arcs.
+- **J lav doors:** the plainest detail (A 7.8). A suggests an occupancy indicator plate and edge trim.
+- **Door-1 dark wood:** streak aliasing. This is a lighting hand-off; the hue stays as tpa_IMG_0260 [V].
+
+### Hand-offs
+`from_monuments.md` (wave 3c) still stands. The galley upper-bank fog, the q19 blow-out and the dark-wood aliasing are all
+unchanged in w16-w18.
+
+Contact sheet: `monuments_before_after_w3d.jpg` (own renders, w16 against w18, same cameras).

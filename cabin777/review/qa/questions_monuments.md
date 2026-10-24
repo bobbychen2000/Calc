@@ -25,3 +25,6 @@ Nothing is blocked on these. Each item says what the model assumes for now.
 10. **Door-4 / door-5 galleys (wave 3b).** No photo exists of the new rear galley. The inserts there now follow the real
     ANA snack-bar galley (sans_38 / sansY_44): satin inserts, ovens with yellow-green label windows, paired brewers and
     copper turn-buttons. A photo of the door-5 galley would confirm the layout.
+11. **Welcome-galley cabinet glass (wave 3d).** Opaque reflection strips on the pane read as wires or sticks inside the
+    cabinet (w17a), so the pane again has no glass cue. A real smoked-glass look needs a blended or transparent material
+    for monuments, which belongs to the lighting side. For now the pane stays open, with the contents toned down.
