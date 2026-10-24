@@ -48,3 +48,11 @@
   bias of about -0.5 to -1 (or anisotropic filtering) on the photo fabric layers 16 / 24 / 25 / 26 would keep them, and
   would also stop the smear on the seat side panels at grazing angles (w17 A + B). The q16 near seat is also ~2x too
   light (L50 87 vs 40 in y_47301; the same fabric measures right in q15), so it is exposure, not the material.
+- **w19 (wave 3d) to integration (`test/qa.js`), medium, largest single lever left for economy (econ_gap19 notForEcon):**
+  q15 does not frame y_47300. A camera that matches it almost exactly: door-4 cross aisle (0, 1.62, 44.45), pitch -0.20,
+  near clip 1.45 m to cut the galley (fine-tune z ~44.85, clip ~1.1, pitch ~-0.16); the gap analyst's `M4.perspective`
+  override leaked into the next view, so restore it or add an app-level near-plane override. In the matched view the
+  back colours already match (tick #4b5b89 vs #4b5d8d, fleck #2e3a61 vs #2d3c67). q16 / q17 are still mismatched too.
+- **w19 to lighting (`04_shaders.js`), low:** texture LOD bias ~-0.75 on photo fabric layers 16 / 24 / 25 / 26 (row-distance
+  contrast); a sheen lobe for the leatherette cover (studio e4 L18 vs 34-52 in y_47306); in the matched view the darkest
+  fabric tones are lifted (tick back p10 28 vs 12-19 L*), partly row-to-row occlusion.
