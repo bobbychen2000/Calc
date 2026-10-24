@@ -129,7 +129,7 @@ const WMAT = {
   grilleFrame: { c: '#5d6067', r: 0.5 },
   rib: { c: '#3a3e46', r: 0.6 },                                // vertical ribs in the plenum tone: faint (py_37303; QA w4)
   label: { c: '#d6d5cf', r: 0.5 },                              // small white placards on the dado (py_37301/37303)
-  halo: { c: '#5a55ff', r: 0.3, e: 0.55 },                      // violet-blue LED ring (tt_window #716ef0; QA w5: e 0.8 read pale cyan) [V]
+  halo: { c: '#2a30ff', r: 0.3, e: 0.45 },  // violet-blue LED ring; QA w5/w9: read pale cyan / lavender (178,172,250), tt_window (67,81,240) [V]
   pin: { c: '#2a2c30', r: 0.6 },
   seal: { c: '#74767b', r: 0.5 },                              // DSC_1920 rim #8d95aa, 2-3 px [V]
 };
@@ -316,7 +316,7 @@ function windowParts(side, pat) {
   // bezel, DSC_1920 0.74, tt_window, sp_py14); w4 graded the other way (darkest at the recess top) [V]. QA w6: x0.60 albedo
   // rendered 0.90-0.93 of the wall against the reveal glow (04_shaders), photos 0.65-0.78 -> x0.45 [A: albedo]
   const oTop = W.holeH / 2 + 0.01;
-  const top1 = rec === REC_Y ? 0.9 : 1, lipF = rec === REC_Y ? 0.93 : 1, fl = rec === REC_Y ? 0.42 : 0.55, d0 = rec === REC_Y ? 0.02 : 0.04;   // QA w6: PY/Y 0.88 on screen vs sp_py14 0.66; F/J 0.79 vs 0.74
+  const top1 = rec === REC_Y ? 0.9 : 1, lipF = rec === REC_Y ? 0.93 : 1, fl = rec === REC_Y ? 0.38 : 0.55, d0 = rec === REC_Y ? 0.02 : 0.04;   // QA w6: PY/Y 0.88 on screen vs sp_py14 0.66; F/J 0.79 vs 0.74
   // QA w7: the grade fades toward the tub sides (light side walls, no grey bands down them; tt_window, sp_py14) [V: look]
   const tubShade = (y, i, n, z) => { const d = y - vc, wz = 1 - 0.55 * sstep(clamp((Math.abs(z) - 0.04) / (rec.hw - 0.04), 0, 1)); return lerp(1, tubF(d), wz); };
   const tubF = (d) => { return d < oTop ? lerp(1, fl, clamp((d - d0) / (oTop - d0), 0, 1)) : lerp(fl, top1, clamp((d - oTop) / (rec.top - 0.03 - oTop), 0, 1) ** 1.3) * (d > rec.top - 0.05 ? lipF : 1); };   // QA w8: graded over the whole upper tub, darker band under the lip (sp_py14)
@@ -639,7 +639,9 @@ function buildShell(gl, layout) {
     for (const side of [-1, 1]) {
       const g = raw();
       const c = CAB.doors[di];
-      const cellW = 0.50, wz = c + 0.28;                        // aft of centre on both sides (forward hinge) [V]
+      // w9: FORWARD of centre (from_monuments w7: real photos lalf_133 / lalf_134 of door 2L from the galley passage show the
+      // window forward of the grip; the face-on frame had been read mirrored) [V]
+      const cellW = 0.50, wz = c - 0.30;   // 0.30 clears the housing rim (w9b)
       const dp = windowCellPattern(cellW, 0.20, 0.46, 0.05, 0.98, null, [[...WALL.bottomRows, 0.62], 1.36]);
       const topRows = [1.36, 1.60, 1.80, 2.02];
       windowCell(g, side, wz, dp, topRows);
@@ -656,6 +658,11 @@ function buildShell(gl, layout) {
       if (zn.z1 - (wz + cellW / 2) > 1e-3) wallGrid(g, side, [wz + cellW / 2, zn.z1], vset);
       fixWinding(g);
       shell.add(g, null, MAT.door);
+      // QA w9: six cream stop fittings on each jamb, 0.25 m apart (fr_20220604_123806) [V: count/spacing; A: size]
+      for (const zz of [c - 0.555, c + 0.555]) for (let k = 0; k < 6; k++) {
+        const v = 0.32 + k * 0.25, [x, y, nx, ny] = wallAt(v);
+        shell.add(gBox(0.016, 0.06, 0.03), M4.trs((x + nx * 0.008) * side, y + ny * 0.008, zz, 0, 0, Math.atan2(ny, nx) * side), MAT.door);
+      }
     }
   }
 

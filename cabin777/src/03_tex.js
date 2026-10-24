@@ -59,7 +59,7 @@ function photoBase(hex, name) {
 // per-layer params: [scale (tiles per meter), normal strength, albedo strength, roughness strength]
 const LAYER_PARAMS = {
   1: [22, 0.26, 0.14, 0.18], 2: [9, 0.32, 0.14, 0.3], 3: [3.2, 0.7, 0.5, 0.2], 4: [9, 0.1, 0.04, 0.12],
-  5: [3.0, 0.1, 0.06, 0.22], 6: [1.1, 0.05, 0.9, 0.2], 7: [2.0, 0.15, 0.45, 0.2], 8: [22, 0.8, 0.9, 0.2],
+  5: [3.0, 0.1, 0.06, 0.22], 6: [1.1, 0.05, 0.9, 0.2], 7: [1.0, 0.15, 1.3, 0.2], 8: [22, 0.8, 0.9, 0.2],
   // 9 ANA J pillow check jacquard: 8 x 8 checks of 0.028 m per tile -> 4.46 tiles/m, two tones #32355d / #45508a
   //   (c_27303, omaat_room_13) -> albedo strength 0.3 [D]
   // 11 Y mosaic fabric (third Y variant, y_47302 left seat / y_47306 right seat): checker of dense / sparse short pale
@@ -174,7 +174,7 @@ function buildDetailLayers(S = 256) {
   // 7 vinyl floor: speckles
   L[7] = makeLayer(S, (u, v) => 0.5 + 0.2 * (vnoise(u * 96, v * 96, 96, 61) - 0.5), (u, v) => {
     const n1 = vnoise(u * 110, v * 110, 110, 62), n2 = vnoise(u * 70, v * 70, 70, 63);
-    return clamp(0.5 + (n1 > 0.8 ? 0.35 : 0) - (n2 > 0.84 ? 0.3 : 0) + 0.32 * (fbm(u * 3, v * 3, 3, 2, 64) - 0.5), 0, 1);  // shell w8: stone-look mottle (sans_09 std 19)
+    return clamp(0.5 + (n1 > 0.8 ? 0.08 : 0) - (n2 > 0.84 ? 0.07 : 0) + 0.45 * (fbm(u * 3, v * 3, 3, 3, 64) - 0.5), 0, 1);  // shell w8/w9: cloudy stone mottle, faint speckle (sans_09 std 19)
   }, () => 0.5, 0.5);
   // 8 grille: round perforations
   L[8] = makeLayer(S, (u, v) => {

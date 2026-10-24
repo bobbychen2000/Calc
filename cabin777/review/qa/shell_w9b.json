@@ -1,0 +1,173 @@
+{
+ "area": "shell",
+ "rater": "B",
+ "round": "w9",
+ "score": 8.1,
+ "previousIssues": [
+  {
+   "issue": "[w8b medium] Closed blackout a notch dark (0.56 of the sill)",
+   "status": "fixed. b_jClose shade (136,133,126) against a sill of (217,215,213) gives 0.61, inside the 0.62 (omaat_room_24) target band. s05 matches. The change helps."
+  },
+  {
+   "issue": "[w8a low] Blackout pleat relief about half the photo's",
+   "status": "partly fixed. The detrended stripe amplitude in b_jClose is 0.167 of the mean (w8 0.134; omaat_room_24 ~0.32). The pleats read crisper in b_jClose and s05. A side effect is the start of moire on the 3rd-6th windows in s05 (rb9/cmp/s05far_w9.png: diagonal beat bands across the pleats). Mostly helps."
+  },
+  {
+   "issue": "[w8a medium / w8b low] PY/Y upper-tub grade bunched near the bezel, no shadow under the lip",
+   "status": "fixed. ra_yWin col 650 now ramps 184 187 183 179 172 163 154 145 then holds 144-147 at the bezel (0.82 -> 0.64 of the pier 225); sp_py14 col 560 ramps 186 -> 129 (0.69). Laterally, row 200 goes 198 -> 164 -> 197 (0.83), against sp_py14 row 160 205 -> 164 -> 186 (0.80). There is a darker band under the lip (149 vs 184). b_pyClose, s02, s08 and win_close now read as a sculpted hood. The bottom ~25 % of the ramp is flat (no further darkening right above the bezel); that is minor. The change helps."
+  },
+  {
+   "issue": "[w8a low / w8b low] Faint residual smudges at the bezel's top corners",
+   "status": "fixed. Starting the side fade at |z| 0.04 moves the transition off the corners; nothing shows in ra_yWin, b_pyClose or the win_close 2x look. The change helps."
+  },
+  {
+   "issue": "[w8a low / w8b low] Galley/door vinyl lacks the stone-look cloud mottle; slight violet cast",
+   "status": "half fixed. The violet cast is gone: ra_door2floor (94,93,98), against sans_09 (104,100,106). Faint 0.3 m clouds are now visible, but the L std is only 4.5 (w8 3.8) against ~19 in sans_09. Helps a little."
+  },
+  {
+   "issue": "[w8a low / w8b low] Bowl neutral, photos cream (lighting)",
+   "status": "not fixed and unchanged (lighting mood). Not scored as geometry."
+  },
+  {
+   "issue": "[w8a low / w8b low] Door leaf / surround a plain slab",
+   "status": "not fixed in the shell. Monuments mirrored the lining furniture fore-aft (47a481b), which now hides the shell's viewing window (new high issue below)."
+  },
+  {
+   "issue": "[w8 OTHER AREA: exterior] Pale vertical bar behind the nearest J pane in s01",
+   "status": "not fixed. It is still at s01 x ~785-795 (rb9/cmp/s01_pane.png)."
+  }
+ ],
+ "details": [
+  {
+   "detail": "Sidewall panels and seams. Unchanged: smooth satin wall with a joint every second window, no gaps or z-fighting in s01, s02, s05, s09 or win_*.",
+   "score": 8.1,
+   "refs": [
+    "ref/web/shell/sp_py14.jpg",
+    "/tmp/claude-0/-home-user-Calc/0ed99896-ecef-596b-9423-893865e3345b/scratchpad/w9/s02_yWall.png"
+   ]
+  },
+  {
+   "detail": "F/J bowl. Unchanged and good. Width, short bowl and pill are right, the side walls are smooth, and the grade is darkest just above the opening.",
+   "score": 8.5,
+   "refs": [
+    "ref/web/shell/omaat_room_24.jpg",
+    "ref/web/shell/tt_window.jpg",
+    "/tmp/claude-0/-home-user-Calc/0ed99896-ecef-596b-9423-893865e3345b/scratchpad/w9/b_jClose.png"
+   ]
+  },
+  {
+   "detail": "PY/Y tub. Now an even hood ramp, 0.82 -> 0.64 of the pier (photo ~0.69), a lateral dip of 0.83 (photo 0.80) and a darker band under the lip. It matches sp_py14 closely. The lowest ~25 % above the bezel is flat rather than still darkening.",
+   "score": 8.5,
+   "refs": [
+    "ref/web/shell/sp_py14.jpg",
+    "/tmp/claude-0/-home-user-Calc/0ed99896-ecef-596b-9423-893865e3345b/scratchpad/rb9/cmp/ra_yWin.png",
+    "/tmp/claude-0/-home-user-Calc/0ed99896-ecef-596b-9423-893865e3345b/scratchpad/rb9/cmp/b_pyClose.png"
+   ]
+  },
+  {
+   "detail": "Pane, lining and seal. Unchanged. Pane size and ratio are right, and the lining is graded with a channel line. A few single-pixel bright specks show on the reveal rim at close range (s01 crop).",
+   "score": 8.2,
+   "refs": [
+    "ref/web/shell/tt_window.jpg",
+    "/tmp/claude-0/-home-user-Calc/0ed99896-ecef-596b-9423-893865e3345b/scratchpad/w9/win_close.png"
+   ]
+  },
+  {
+   "detail": "Electric shades. The blackout is now 0.61 of the sill (in range) with crisper pleats (amplitude 0.167 vs photo ~0.32). The hem meets the opening edge. The violet LED pill is right. Mild moire starts on the mid-distance windows in s05.",
+   "score": 8.4,
+   "refs": [
+    "ref/web/shell/omaat_room_24.jpg",
+    "/tmp/claude-0/-home-user-Calc/0ed99896-ecef-596b-9423-893865e3345b/scratchpad/rb9/cmp/b_jClose.png",
+    "/tmp/claude-0/-home-user-Calc/0ed99896-ecef-596b-9423-893865e3345b/scratchpad/rb9/cmp/s05far_w9.png"
+   ]
+  },
+  {
+   "detail": "Manual PY/Y shades. Unchanged. The stowed band, grip and half/closed states read (ra_yWin, s08).",
+   "score": 8.2,
+   "refs": [
+    "ref/web/shell/sp_py24.jpg",
+    "/tmp/claude-0/-home-user-Calc/0ed99896-ecef-596b-9423-893865e3345b/scratchpad/w9/s08_pyShades.png"
+   ]
+  },
+  {
+   "detail": "Dado, grilles and placards. Unchanged.",
+   "score": 8.2,
+   "refs": [
+    "ref/ana/py_37303-lang-multi.jpg",
+    "/tmp/claude-0/-home-user-Calc/0ed99896-ecef-596b-9423-893865e3345b/scratchpad/w9/win_low.png"
+   ]
+  },
+  {
+   "detail": "Floors. The carpets are unchanged and fine. The vinyl is now neutral with faint clouds, but the mottle is still about a quarter of sans_09's.",
+   "score": 8.0,
+   "refs": [
+    "ref/web/shell/sans_09.jpg",
+    "/tmp/claude-0/-home-user-Calc/0ed99896-ecef-596b-9423-893865e3345b/scratchpad/rb9/cmp/ra_door2floor.png"
+   ]
+  },
+  {
+   "detail": "Type A door surround and viewing window. REGRESSED. The monuments lining housing (now mirrored, c-0.20..c+0.48, 0.12 m proud) covers the shell's viewing window at c+0.28 on every door, so no door has a visible window (b_doorWin, s06, s07, ra_door2floor; in w8 it was clear). A scratch build with wz = c - 0.28 brings it back next to the arrowhead (rb9/fix/b_doorWin.png), but the housing's forward edge then clips ~2 cm off the reveal's aft rim (rb9/cmp/doorwin_fix_crop.png).",
+   "score": 6.3,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/0ed99896-ecef-596b-9423-893865e3345b/scratchpad/w9/b_doorWin.png",
+    "/tmp/claude-0/-home-user-Calc/0ed99896-ecef-596b-9423-893865e3345b/scratchpad/w8/b_doorWin.png",
+    "/tmp/claude-0/-home-user-Calc/0ed99896-ecef-596b-9423-893865e3345b/scratchpad/rb9/fix/b_doorWin.png",
+    "/tmp/claude-0/-home-user-Calc/0ed99896-ecef-596b-9423-893865e3345b/scratchpad/rb9/cmp/doorwin_fix_crop.png"
+   ]
+  }
+ ],
+ "issues": [
+  {
+   "severity": "high",
+   "detail": "Door viewing window hidden behind the mirrored monuments handle housing at all 10 doors",
+   "problem": "Monuments w7 (47a481b) mirrored the door-lining furniture fore-aft from lalf_133/134 and handed the shell a one-line change (from_monuments.md, 'Wave 3 (w7)'). The shell still builds the window at wz = c + 0.28, inside the housing (c-0.20..c+0.48, 0.12 m deep), so the window vanished from every door view.",
+   "evidence": "w9 b_doorWin / s06 / s07 / ra_door2floor show no window; w8 b_doorWin shows it. Scratch build with wz = c - 0.28 -> rb9/fix/b_doorWin.png, window visible forward of the housing, arrowhead pointing at it as in lalf_133.",
+   "fix": "src/07_shell.js l.642: 'wz = c + 0.28' -> 'wz = c - 0.30' (not -0.28: at -0.28 the 0.20 m reveal spans c-0.38..c-0.18 and the housing's forward end at c-0.20 clips its aft rim, rb9/cmp/doorwin_fix_crop.png; -0.30 gives c-0.40..c-0.20, flush; the door seam at c-0.535 stays clear). Update the comments at l.632-634 / l.642 to 'forward of the handle housing (lalf_133/134)'. Nothing else is keyed to the offset: doorGlass follows wz, and 04_shaders / 12_scene have no door-window literal."
+  },
+  {
+   "severity": "low",
+   "detail": "Blackout pleats start to moire at mid distance",
+   "problem": "The crisper stripe (kf 0.62) on the 62-row zig-zag beats against the pixel grid on the 3rd-6th windows in s05 (diagonal bands). Close-up relief is still below the photo (0.167 vs ~0.32), so do not simply soften it.",
+   "evidence": "rb9/cmp/s05far_w9.png vs s05far_w8.png.",
+   "fix": "Keep kf 0.62 for the near LOD; if the shade has a far instance set, use kf 0.75 there. Otherwise fade the baked stripe toward 1 with view distance in the shader via the layer roughness, or lower the zig-zag depth 6 -> 5 mm, which reduces the geometric part of the beat. Re-check win_oblique."
+  },
+  {
+   "severity": "low",
+   "detail": "Galley/door vinyl mottle still about a quarter of the photo's",
+   "problem": "Tone and hue are now right, but the L std is 4.5 against ~19 in sans_09, so the large light/dark clouds are barely visible.",
+   "evidence": "ra_door2floor (380-560, 400-550) against sans_09.",
+   "fix": "03_tex.js LAYER_PARAMS[7] albedo strength 1.3 -> 2.6 (shared file, one line, vinyl is used only by 07_shell), or raise the fbm term at l.177 from 0.32 to 0.55. Re-measure toward an L std of ~12-15."
+  },
+  {
+   "severity": "low",
+   "detail": "PY/Y hood ramp flattens over the last ~25 % above the bezel",
+   "problem": "ra_yWin col 650 holds 144-147 over the last three samples, whereas sp_py14 keeps darkening to the bezel top (143 -> 129).",
+   "evidence": "ra_yWin col 650 vs sp_py14 col 560.",
+   "fix": "Optional, l.326: for REC_Y set d0 0.02 -> 0.0 or fl 0.42 -> 0.38 so the darkest point lands right at the bezel top."
+  },
+  {
+   "severity": "low",
+   "detail": "Single-pixel bright specks on the J reveal rim",
+   "problem": "A few isolated bright pixels on the upper-right reveal rim at close range (likely specular aliasing on the 16 mm roll-in).",
+   "evidence": "rb9/cmp/s01_pane.png, top right of the bowl rim.",
+   "fix": "Raise MAT.reveal roughness slightly on the lip, or clamp specular on high-curvature normals (lighting)."
+  },
+  {
+   "severity": "low",
+   "detail": "Bowl warmth weak (lighting)",
+   "problem": "Unchanged; the white mood neutralises the warm reveal albedo.",
+   "evidence": "b_jClose bowl top.",
+   "fix": "Lighting."
+  },
+  {
+   "severity": "low",
+   "detail": "[OTHER AREA: exterior/integration] Pale vertical bar behind the nearest J pane in s01",
+   "problem": "Unchanged since w5c.",
+   "evidence": "rb9/cmp/s01_pane.png.",
+   "fix": "Exterior / integration."
+  }
+ ],
+ "questionsForUser": [],
+ "photosDownloaded": [],
+ "notes": "w9 renders are of head 36fe8fd (shell w8 fixes) plus monuments 47a481b. Comparisons (top w8, bottom w9) are in /tmp/claude-0/-home-user-Calc/0ed99896-ecef-596b-9423-893865e3345b/scratchpad/rb9/cmp/. Shell changes all help: the blackout is now in the photo tone band with crisper pleats, the PY/Y hood ramp matches sp_py14 in both directions, the corner smudges are gone, and the vinyl has lost its violet cast. The one regression is not from a shell edit: the monuments' mirrored door lining now hides the shell's viewing window on every door, pending the one-line hand-off in from_monuments.md. A scratch build (no repo edit) with the window forward confirms the fix (rb9/fix/b_doorWin.png); use c-0.30 so the reveal clears the housing. Score without that regression would be ~8.4. Lighting not scored."
+}

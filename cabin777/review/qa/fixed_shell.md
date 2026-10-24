@@ -5,3 +5,5 @@
   of the J zones at the door surrounds are capped (060714f).
 - from_suite 1: the F carpet was mauve-grey and should be a warm brown heather. **done (060714f)**. `MAT.carpetF` is a brown
   heather with B well below G, used for the F seat zones. carpetJ is unchanged.
+- from_monuments (wave 3, w7): move the door viewing window forward to the mirrored lining. **done (w9)**: `wz = c - 0.30`
+  (0.30 rather than 0.28 so the handle housing's forward rim clears the reveal; shell_w9b).

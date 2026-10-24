@@ -1,0 +1,142 @@
+{
+  "area": "shell",
+  "rater": "A",
+  "round": "w9",
+  "score": 8.0,
+  "previousIssues": [
+    {
+      "issue": "w8a M / w8b L: PY/Y upper-tub grade bunched just above the bezel, with no shadow under the lip",
+      "status": "fixed. In ra_yWin col 650 the tub now ramps evenly from 187 at the top to 144 just above the bezel (pier 225, so 0.83 -> 0.64). sp_py14 col 560 goes 186 -> 131. Horizontal profile 0.12 m above the bezel: w9 196/171/147/144/153/178 against sp_py14 tub 4 179/162/142/139/149/168/184. Both now darken in the centre and stay light at the sides. A darker lip band is present (the first ring is 146). Helps. One side effect: at aisle distance (s02, win_close tub 2) the darkening reads as a soft grey cloud in the middle of the hood rather than a moulded concave, because there is no specular sheen on the lower tub walls as in sp_py14."
+    },
+    {
+      "issue": "w8a L / w8b L: faint smudges at the bezel's top corners",
+      "status": "fixed. No corner streaks in ra_yWin, b_pyClose or the 2x crop of s02 (fade now starts at |z| 0.04). Helps."
+    },
+    {
+      "issue": "w8a L: blackout pleat relief about half the photo's / w8b M: blackout a notch dark",
+      "status": "mostly fixed. b_jClose shade (136,133,126) against the sill at 213 gives 0.62 (w8 0.57). omaat_room24 is 0.65. Detrended stripe amplitude is 0.083 (w8 0.066) against 0.117 in the photo, measured the same way. The pleat crest/valley contrast is now ~70 % of the photo's. Helps; no moire in s05 or win_oblique."
+    },
+    {
+      "issue": "w8a L / w8b L: galley/door vinyl lacks the cloudy stone mottle",
+      "status": "not fixed. ra_door2floor walkway is (98,96,102), which matches the tone (sans_09 104,99,102), and the violet cast is gone. But the L std is 6.4 against 24.1, and the low-frequency std (12 px blur) is 4.9 against 12.5. The 03_tex fbm change barely shows because LAYER_PARAMS[7] albedo strength is only 0.45 and the tile is 0.5 m, so the clouds are ~0.17 m and faint."
+    },
+    {
+      "issue": "w8a L / w8b L: door surround a plain slab, with no stop fittings",
+      "status": "not fixed. b_doorWin and s06 are unchanged. fr_20220604_123806 shows ~6 cast stop fittings per jamb on a cream frame."
+    },
+    {
+      "issue": "w8a L / w8b L: bowl/bezel neutral, photos cream",
+      "status": "not fixed (mostly lighting). b_jClose sill (215,213,212) s 0.02 against omaat_room24 bezel (181,172,158) s 0.13 and tt_window cream."
+    },
+    {
+      "issue": "[OTHER AREA] pale vertical bar behind the nearest J pane in s01",
+      "status": "not fixed. Still at s01 x ~770-800 inside the nearest pane."
+    }
+  ],
+  "details": [
+    {
+      "detail": "Sidewall panels and seams. Satin white with a joint every second window and no gaps. tt_window shows a fine woven/linen texture on the panels, while ours is plain satin.",
+      "score": 7.7,
+      "refs": ["/home/user/Calc/cabin777/ref/web/shell/tt_window.jpg", "/home/user/Calc/cabin777/ref/web/shell/sp_py14.jpg"]
+    },
+    {
+      "detail": "F/J bowl geometry: width, short bowl, pill under the opening, smooth sides. Matches ml_DSC_1920 and tt_window in shape.",
+      "score": 8.2,
+      "refs": ["/home/user/Calc/cabin777/ref/web/shell/tt_window.jpg", "/home/user/Calc/cabin777/ref/web/shell/ml_DSC_1920.jpg"]
+    },
+    {
+      "detail": "PY/Y full-height tub and raised bezel frame",
+      "score": 8.2,
+      "refs": ["/home/user/Calc/cabin777/ref/web/shell/sp_py14.jpg", "/home/user/Calc/cabin777/ref/ana/y_47303-lang-multi.jpg"]
+    },
+    {
+      "detail": "Recess tonal modelling. The PY/Y ramp and centre darkening now match sp_py14 numerically. It still reads as a grey cloud at distance, and the bowls are neutral rather than cream.",
+      "score": 7.9,
+      "refs": ["/home/user/Calc/cabin777/ref/web/shell/sp_py14.jpg"]
+    },
+    {
+      "detail": "Pane tunnel lining and seal rim",
+      "score": 7.9,
+      "refs": ["/home/user/Calc/cabin777/ref/web/shell/tt_window.jpg"]
+    },
+    {
+      "detail": "Electric shades. Blackout tone right (0.62 vs 0.65) with crisper pleats. The LED ring is pale lavender (178,172,250) where the photos show saturated blue-violet (tt_window (67,81,240), omaat_room24 (32,0,255)).",
+      "score": 8.2,
+      "refs": ["/home/user/Calc/cabin777/ref/web/shell/omaat_room24.jpg", "/home/user/Calc/cabin777/ref/web/shell/tt_window.jpg"]
+    },
+    {
+      "detail": "Manual PY/Y shades (stowed band, half, closed)",
+      "score": 8.0,
+      "refs": ["/home/user/Calc/cabin777/ref/web/shell/sp_py24.jpg"]
+    },
+    {
+      "detail": "Dado panel, air-return grilles, placards",
+      "score": 8.0,
+      "refs": ["/home/user/Calc/cabin777/ref/ana/y_47303-lang-multi.jpg", "/home/user/Calc/cabin777/ref/ana/py_37303-lang-multi.jpg"]
+    },
+    {
+      "detail": "Carpets and Y seat-track covers",
+      "score": 7.8,
+      "refs": ["/home/user/Calc/cabin777/ref/ana/y_47303-lang-multi.jpg"]
+    },
+    {
+      "detail": "Door cross-aisle / galley vinyl: tone right, no visible clouds",
+      "score": 7.3,
+      "refs": ["/home/user/Calc/cabin777/ref/web/shell/sans_09.jpg"]
+    },
+    {
+      "detail": "Type A door surround and viewing window",
+      "score": 6.9,
+      "refs": ["/home/user/Calc/cabin777/ref/web/shell/fr_20220604_123806.jpg", "/home/user/Calc/cabin777/ref/web/shell/sans_09.jpg"]
+    }
+  ],
+  "issues": [
+    {
+      "severity": "medium",
+      "detail": "Galley/door vinyl still a uniform slab",
+      "problem": "L std 6.4 vs 24.1 and low-frequency std 4.9 vs 12.5 (ra_door2floor 380-560 x 330-550 against sans_09 250-450 x 450-620). The w8 fbm change in the layer-7 generator is attenuated by LAYER_PARAMS[7] = [2.0, 0.15, 0.45, 0.2] (albedo strength 0.45) and by the 0.5 m tile, which makes the clouds ~0.17 m. The photo's clouds are 0.3-0.5 m.",
+      "fix": "03_tex.js l.62 (shared, one line): LAYER_PARAMS 7: [2.0, 0.15, 0.45, 0.2] -> [1.0, 0.15, 1.3, 0.2]. That gives a 1 m tile (clouds ~0.33 m) and ~3x the albedo modulation. Check that the speckles do not become blotchy, and keep the mean near (100,97,102)."
+    },
+    {
+      "severity": "low",
+      "detail": "Shade button LED ring pale lavender, not saturated blue-violet",
+      "problem": "The brightest ring pixels in ra_fWin are (178,172,250), s 0.31. tt_window has (67,81,240) and omaat_room24 (32,0,255), both s >= 0.7. In the photos the ring is the most saturated thing on the wall. Ours reads as a faint outline in s01, s05 and ra_fWin.",
+      "fix": "src/07_shell.js l.132: halo { c: '#5a55ff', e: 0.55 } -> { c: '#2a30ff', e: 0.45 }, so less emission clips less to white after tonemapping. Optionally widen the ring by ~30 % so it survives at 930 px."
+    },
+    {
+      "severity": "low",
+      "detail": "Door surround has no stop fittings or cream frame",
+      "problem": "Unchanged. fr_20220604_123806 shows six cast stop fittings per jamb and a cream frame.",
+      "fix": "Add 6 small blocks (0.05 x 0.035 x 0.025 m, a cream/grey latch tone) per jamb on the surround face, spaced 0.25 m from 0.3 to 1.6 m."
+    },
+    {
+      "severity": "low",
+      "detail": "PY/Y hood reads as a grey cloud at aisle distance",
+      "problem": "The numbers now match sp_py14, but the photo also shows a light specular sheen on the lower tub floor and the lower side walls. That sheen makes the darkening read as a concave hood. Ours is matte, so the grey patch floats (s02, win_close tub 2).",
+      "fix": "Optional: give the reveal a slightly lower roughness (MAT.reveal r about 0.45) so the sill and lower side walls pick up a sheen, or lift the sill rings (dv < -oTop) to 1.05."
+    },
+    {
+      "severity": "low",
+      "detail": "Sidewall panels lack the fine woven texture",
+      "problem": "tt_window shows a fine linen texture on the panels. Ours is plain satin. It is subtle at 930 px but visible in the close-ups (ra_fWin, ra_dadoY).",
+      "fix": "Give the sidewall material LAYER.fabric (or the plastic layer) at a low normal strength."
+    },
+    {
+      "severity": "low",
+      "detail": "Bowl/bezel neutral, photos cream (lighting)",
+      "problem": "s 0.02 against 0.13 in omaat_room24.",
+      "fix": "Defer to lighting."
+    },
+    {
+      "severity": "low",
+      "detail": "[OTHER AREA: exterior/integration] pale vertical bar behind the nearest J pane in s01",
+      "problem": "Unchanged since w5.",
+      "fix": "Exterior / integration."
+    }
+  ],
+  "questionsForUser": [
+    "Type A door viewing window: there is still no inside photo of an ANA 777 door lining that shows the viewing window. Can you supply one?"
+  ],
+  "photosDownloaded": [],
+  "notes": "Rated the w9 renders against w8. Top/bottom comparison sheets (w8 top, w9 bottom) are in /tmp/claude-0/-home-user-Calc/0ed99896-ecef-596b-9423-893865e3345b/scratchpad/ra9c/ (cmp_*.png, z_s02.png). Shell changes this round: an even PY/Y ramp with a lip band, side fade from 0.04, blackout #aaa498 with stripe 0.62, neutral vinyl, and the vinyl fbm in 03_tex. HELPS: the PY/Y grade now matches sp_py14 vertically and horizontally, the corner smudges are gone, and the blackout is at 0.62 with crisper pleats. NO REGRESSIONS. NOT EFFECTIVE: the vinyl mottle, because of the layer albedo strength. No extra build was needed. [OTHER AREA] notes: the q14 PY seat fabric changed a lot (py area), and the door-2 cross-aisle ceiling is still a dark flat slab (ceiling/monuments)."
+}
