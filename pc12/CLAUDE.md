@@ -2191,7 +2191,7 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   at most 20 Hz (phones 10; 2 Hz under 120 px on screen, none under 24 px / off screen), and uploaded alone
   (copyTextureToTexture, mips once per batch); parked and still nothing is drawn, uploaded or rendered ([AVX-14]).  While
   pages change the glass joins Stage.overlay (picture.js: the still without it, the glass composed over it), sampled with
-  a texture LOD bias of -log2(the still's scale) (materials.js U.avxBias, ?avxbias=) so the pages keep the still's
+  a texture LOD bias of -log2(the still's scale), capped at -0.5 (materials.js U.avxBias, ?avxbias=) so the pages keep the still's
   sharpness; picture.js restarts the still when what the overlay HOLDS changes (the glass joining / leaving the spinning
   propeller's disc: a still rendered with the glass in it had shown its old page -- the r1 'stale page').  `verify()` reads
   the GPU's copy (level 0 and 1) back against the canvases ([AVX-13]).  `avx_pages.js` the pages (PFD with SVT, HSI,

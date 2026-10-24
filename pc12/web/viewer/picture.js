@@ -903,7 +903,7 @@ export class Picture {
     R.setRenderTarget(null);
     // the display glass in the overlay: its pages sampled one mip finer per doubling of the still's scale, as sharp as
     // in the supersampled still around them (materials.js U.avxBias; avionics fix r1)
-    MU.avxBias.value = AVX_BIAS == null ? -Math.log2(Math.max(1, Math.sqrt(plan.sx * plan.sy))) : AVX_BIAS;
+    MU.avxBias.value = AVX_BIAS == null ? Math.max(-0.5, -Math.log2(Math.max(1, Math.sqrt(plan.sx * plan.sy)))) : AVX_BIAS;     // (capped: one sample a pixel on a finer mip would alias the strokes; picture judge r2)
     R.render(st.scene, cam);
     MU.avxBias.value = 0;
     R.autoClear = clear;
