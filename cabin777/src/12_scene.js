@@ -619,9 +619,10 @@ class Scene {
     }
     G.set('u_stripP', spp); G.set('u_stripA', spa);
     G.set('u_stripCol', [0.25, 0.173, 0.087]);
-    // QA r2 (light): screen spill, the 6 screens nearest the eye; colour = the mean IFE picture radiance [0.30, 0.40,
-    // 0.55] x screenGain x scrSpill (Night / Blue 1, Dining 0.5, 0 in the lit moods) [D: raters' fit to
-    // ml_IMG_20200208_1919534 / ucr_room-night-lighting]
+    // QA r2 (light): screen spill, the 6 screens nearest the eye; colour = the mean IFE picture radiance: the screen
+    // emission (SEATMAT.screen e 0.9 x 4 x screenGain, mainFS layer 13) x a mean picture of ~0.75 x [0.30, 0.40, 0.55]
+    // (cool-neutral), i.e. 2.7 x screenGain x [0.30, 0.40, 0.55], x scrSpill (Night / Blue 1, Dining 0.5, else 0)
+    // [D: the raters' hue; x1 left the nF03 housing L12 vs ml_IMG_20200208_1919534 L32]
     const scp = new Float32Array(24), scn = new Float32Array(24);
     const spill = this.xray ? 0 : mood.scrSpill || 0;
     if (spill > 0) {
@@ -629,7 +630,7 @@ class Scene {
       near.forEach(([, q], i) => { scp.set([...q.p, q.a], i * 4); scn.set([...q.n, 0], i * 4); });
     }
     G.set('u_scrP', scp); G.set('u_scrN', scn);
-    G.set('u_scrCol', [0.30, 0.40, 0.55].map((v) => v * (mood.screenGain || 0.8) * spill));
+    G.set('u_scrCol', [0.30, 0.40, 0.55].map((v) => v * 2.7 * (mood.screenGain || 0.8) * spill));
     G.set('u_fillLift', mood.fillLift ?? 1); G.set('u_lensCore', mood.lensCore || [0, 0, 0]);
     G.set('u_winGlow', winGlow);
     G.tex('u_ao', 1, this.ao.tex, gl.TEXTURE_3D);

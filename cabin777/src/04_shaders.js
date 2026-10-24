@@ -283,7 +283,13 @@ void main(){
     // reveal glow: faces within ~0.12 m of a pane pick up the window light (alpha of the window LUT = window span in z,
     // rgb = shade transmittance) [V: tlfl_IMG_9217 / 9518 glowing reveals]
     vec4 wl = texture(u_win, vec2((v_wpos.z - u_winZ.x)/(u_winZ.y - u_winZ.x), v_wpos.x < 0.0 ? WL : WR));
-    float reveal = wl.a * smoothstep(2.72, 2.84, abs(v_wpos.x)) * (1.0 - smoothstep(0.2, 0.34, abs(v_wpos.y - u_winY.x)));
+    // QA r2 (light): only faces recessed behind the lining circle (R = u_R - 0.10, 07_shell wallAt) count as the reveal:
+    // at the belt the flat lining itself stands at |x| ~2.92, so the old |x| > 2.72-2.84 test took the whole wall between
+    // the windows for reveal and nearPane kept the cruise lavender off it [V: ml_DSC_1939-1 belt between the windows
+    // #888db0 (B-R +40) vs cF03 #cccccf (+3), the tubs by the glass near-white]
+    float xLin = sqrt(max((u_R - 0.10)*(u_R - 0.10) - (v_wpos.y - u_yc)*(v_wpos.y - u_yc), 0.0));
+    float recd = smoothstep(xLin + 0.004, xLin + 0.02, abs(v_wpos.x));
+    float reveal = wl.a * recd * (1.0 - smoothstep(0.2, 0.34, abs(v_wpos.y - u_winY.x)));
     // QA r1 (light): the down-facing upper tub just above the opening keeps its shadow (0.35 of the glow): every photo
     // shows the tub darkest there, at 0.65-0.78 of the pier [V: sans_14, tt_window, sp_py14; from_shell w5]
     reveal *= mix(1.0, 0.35, smoothstep(0.20, 0.30, v_wpos.y - u_winY.x) * down);
@@ -372,11 +378,15 @@ void main(){
     // light (u_scrP xyz = centre, w = area m2; u_scrN = outward normal; u_scrCol = mean screen radiance). Every in-service
     // night photo shows the housing, console and the shell faces beside the screen lit by it [V: ml_IMG_20200208_1919534
     // (THE Suite at night) housing sides #251e1e L32, console #150d0d; ucr_room-night-lighting near wall #302218 L37 vs
-    // q20 #050505; ml_DSC_1945 console top #3b3e6e under the safety video]; 0.05 m2 softening of the 1/r2 [A]
+    // q20 #050505; ml_DSC_1945 console top #3b3e6e under the safety video]; 0.05 m2 softening of the 1/r2 [A]. The
+    // emitting point is the screen-disc point (radius 0.85 sqrt(A / pi)) nearest the receiver, so the console under the
+    // screen and the housing beside it see its near edge, not its centre (a representative-point area light) [D]
     for (int i = 0; i < 6; i++) {
       if (u_scrP[i].w <= 0.0) continue;
-      vec3 d = u_scrP[i].xyz - v_wpos; float r2 = dot(d, d); vec3 l = d * inversesqrt(r2);
-      amb += u_scrCol * u_scrP[i].w * max(dot(N, l), 0.0) * max(dot(u_scrN[i].xyz, -l), 0.0) / (3.14159 * (r2 + 0.05));
+      vec3 sn = u_scrN[i].xyz, sq = v_wpos - u_scrP[i].xyz; sq -= sn * dot(sq, sn);
+      float sl = length(sq), rd = 0.85 * sqrt(u_scrP[i].w / 3.14159);
+      vec3 d = u_scrP[i].xyz + sq * min(1.0, rd / max(sl, 1e-4)) - v_wpos; float r2 = dot(d, d); vec3 l = d * inversesqrt(r2);
+      amb += u_scrCol * u_scrP[i].w * max(dot(N, l), 0.0) * max(dot(sn, -l), 0.0) / (3.14159 * (r2 + 0.05));
     }
   }
   vec3 L = u_sunDir;
