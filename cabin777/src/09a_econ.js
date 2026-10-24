@@ -10,6 +10,36 @@ const ECON = { back: 13 * DEG, hinge: [0.47, -0.075], sp: 19 * IN };
 // fr57325 124108) -> ~40 % fleck, 20 % each of the others [D]
 const econPan = (k, n, rot) => [SEATMAT.yFabric, SEATMAT.yFabricD, SEATMAT.yFabricC, SEATMAT.yFabric, SEATMAT.yFabricB][(k * 3 + n * 5 + (rot || 0) + 2) % 5];
 const econFab = (k, n, rot) => [SEATMAT.yFabric, SEATMAT.yFabricD, SEATMAT.yFabricC, SEATMAT.yFabricD, SEATMAT.yFabricB][(k * 7 + n * 3 + (rot || 0)) % 5];
+// econ w10 gap analysis (silhouette): the back was a rounded-rectangle slab - two vertices across a dead-flat 0.43 face and
+// 2-3.6 cm corners, where y_47306 / 47300 show ~1.2 cm of crown and rolled side edges 2.6-4.4 cm wide (6-10 % of the seat
+// width) [D]. Same loft as gLoft, but each ring's front (-z) face is subdivided and crowned, and the side roll is fuller.
+function econCrownLoft(secs, segC, crownAt) {
+  const K = 8, g = { p: [], n: [], u: [], i: [] };
+  const rings = secs.map((s) => {
+    const r = Math.max(0.0005, Math.min(Math.max(s.r, 0.045), s.w / 2 - 1e-3, s.d / 2 - 1e-3));
+    const pts = rrectPts(s.w, s.d, r, segC, s.x || 0, s.z || 0), out = [], q = segC + 1, c = crownAt(s.y);
+    for (let k = 0; k < pts.length; k++) {
+      out.push(pts[k]);
+      if (k === 3 * q - 1) {           // straight front edge from corner 3 (180-270 deg) to corner 4 (270-360 deg)
+        const a = pts[k], b = pts[k + 1];
+        for (let j = 1; j < K; j++) { const t = j / K, u = 2 * t - 1; out.push([a[0] + (b[0] - a[0]) * t, a[1] - c * (1 - u * u)]); }
+      }
+    }
+    return out;
+  });
+  const n = rings[0].length;
+  for (let j = 0; j < secs.length; j++) for (let i = 0; i < n; i++) { g.p.push(rings[j][i][0], secs[j].y, rings[j][i][1]); g.n.push(0, 1, 0); g.u.push(i / n, j / (secs.length - 1)); }
+  for (let j = 0; j < secs.length - 1; j++) for (let i = 0; i < n; i++) { const a = j * n + i, b = j * n + ((i + 1) % n); g.i.push(a, b, b + n, a, b + n, a + n); }
+  computeNormals(g);
+  let dot = 0;                                              // side normals outward (as gLoft)
+  for (let i = 0; i < n; i++) { const k = i * 3; dot += g.n[k] * (g.p[k] - (secs[0].x || 0)) + g.n[k + 2] * (g.p[k + 2] - (secs[0].z || 0)); }
+  if (dot < 0) for (let k = 0; k < g.n.length; k++) g.n[k] = -g.n[k];
+  const top = secs.length - 1, c0 = g.p.length / 3, st = secs[top];
+  g.p.push(st.x || 0, st.y, st.z || 0); g.n.push(0, 1, 0); g.u.push(0.5, 0.5);
+  for (const [x, z] of rings[top]) { g.p.push(x, st.y, z); g.n.push(0, 1, 0); g.u.push(0, 0); }
+  for (let i = 0; i < n; i++) g.i.push(c0, c0 + 1 + ((i + 1) % n), c0 + 1 + i);
+  return fixWinding(g);
+}
 function econSeat(B, x0, lod, opts = {}) {
   const [hy, hz] = ECON.hinge;
   const F = opts.fab || SEATMAT.yFabric;
@@ -21,9 +51,9 @@ function econSeat(B, x0, lod, opts = {}) {
   B.add(gRBox(0.44, 0.035, 0.46, 0.012, 1), M4.trs(x0, 0.35, -0.27), SEATMAT.yShellDark);
   // back: rises ~0.05-0.065 above the headrest cushion to a rounded top (y_47306 all three seats, y_47301, sanspotter 13;
   // back length ~0.87 from the pan crease, y_47302 right seat) [D]
-  loftAt(B, [SEC(0.0, 0.40, 0.07, -0.005, 0.02), SEC(0.04, 0.425, 0.09, -0.012), SEC(0.16, 0.43, 0.108, -0.024, 0.036), SEC(0.30, 0.43, 0.095, -0.014, 0.036),
+  B.add(econCrownLoft([SEC(0.0, 0.40, 0.07, -0.005, 0.02), SEC(0.04, 0.425, 0.09, -0.012), SEC(0.16, 0.43, 0.108, -0.024, 0.036), SEC(0.30, 0.43, 0.095, -0.014, 0.036),
     SEC(0.46, 0.425, 0.086, -0.006, 0.034), SEC(0.58, 0.415, 0.076, 0.0, 0.03), SEC(0.70, 0.41, 0.07, 0.004, 0.028), SEC(0.818, 0.405, 0.062, 0.006, 0.026),
-    SEC(0.838, 0.395, 0.062, 0.010, 0.026), SEC(0.853, 0.37, 0.058, 0.014, 0.024), SEC(0.858, 0.334, 0.052, 0.018, 0.02), SEC(0.862, 0.29, 0.044, 0.02, 0.016)], BH, F, lod ? 3 : 4);
+    SEC(0.838, 0.395, 0.062, 0.010, 0.026), SEC(0.853, 0.37, 0.058, 0.014, 0.024), SEC(0.858, 0.334, 0.052, 0.018, 0.02), SEC(0.862, 0.29, 0.044, 0.02, 0.016)], lod ? 3 : 4, (y) => 0.012 * clamp((0.66 - y) / 0.08, 0.35, 1)), BH, F);   // w10 gap: crowned, crown eased behind the headrest
   // w6 B: the back is ~0.44 wide at headrest height round a narrower cushion (y_47300: a margin of back fabric shows
   // round the pad); w6 A: it ends 12 mm under the shell cap (the caps were coplanar at 0.868 and z-fought) [D]
   // rear shell: a slim lower panel (tray + pockets) under a deep sculpted hood that wraps the screen and caps the top of
@@ -61,15 +91,16 @@ function econSeat(B, x0, lod, opts = {}) {
   // w6 B: 0.255 wide (y_47300 0.23 / y_47306 0.73 of the pad); the hem hangs nearly flat (at -20 deg it read as a shelf)
   // w8 B: a soft flap, not a tablet - the plate bows ~4 mm forward mid-height, the fold is a thin strip bent over the
   // pad top, with a stitch line above the hem (y_47301, y_47306)
-  loftAt(B, [SEC(0.585, 0.255, 0.005, -0.0975, 0.002), SEC(0.63, 0.257, 0.005, -0.1005, 0.002), SEC(0.68, 0.258, 0.005, -0.1015, 0.002), SEC(0.73, 0.257, 0.005, -0.1005, 0.002), SEC(0.772, 0.255, 0.005, -0.0975, 0.002)], BH, SEATMAT.yCover, lod ? 1 : 2);
-  loftAt(B, [SEC(0.768, 0.255, 0.008, -0.096, 0.003), SEC(0.778, 0.255, 0.02, -0.088, 0.004), SEC(0.781, 0.255, 0.036, -0.074, 0.004), SEC(0.776, 0.255, 0.02, -0.058, 0.004)], BH, SEATMAT.yCover, lod ? 1 : 2);
-  B.add(gRBox(0.25, 0.03, 0.003, 0.002, 1), M4.mul(BH, M4.trs(0, 0.572, -0.0965, 0, -8 * DEG)), SEATMAT.yCover);
+  // w10 A + B: the flap hangs ~3 cm below the pad (y_47306 / sans 13: 24-29 % of the pad height), its foot tipped a
+  // little forward, and rolls round the pad top in a soft radius (was a hard bevel)
+  loftAt(B, [SEC(0.55, 0.255, 0.005, -0.1035, 0.002), SEC(0.585, 0.256, 0.005, -0.1015, 0.002), SEC(0.63, 0.257, 0.005, -0.1015, 0.002), SEC(0.68, 0.258, 0.005, -0.1025, 0.002), SEC(0.73, 0.257, 0.005, -0.1015, 0.002), SEC(0.766, 0.255, 0.005, -0.0985, 0.002)], BH, SEATMAT.yCover, lod ? 1 : 2);
+  loftAt(B, [SEC(0.764, 0.255, 0.006, -0.0985, 0.003), SEC(0.775, 0.255, 0.012, -0.094, 0.005), SEC(0.782, 0.255, 0.02, -0.086, 0.007), SEC(0.785, 0.255, 0.028, -0.073, 0.008), SEC(0.782, 0.255, 0.02, -0.06, 0.006)], BH, SEATMAT.yCover, lod ? 1 : 3);
   if (lod) return;
   // small ANA mark in the flap's lower corner (viewer's right from the front, y_47306); w5 B: a thin grey logotype, not a sticker
-  B.add(gQuad(0.014, 0.006), M4.mul(BH, M4.trs(-0.105, 0.60, -0.1005, Math.PI)), { c: '#5a6079', r: 0.45 });
+  B.add(gQuad(0.014, 0.006), M4.mul(BH, M4.trs(-0.105, 0.567, -0.1062, Math.PI)), { c: '#7a809a', r: 0.4 });
   // w9 A: a stitched hem band ~10 % of the cover height, a shade lighter and glossier (y_47306)
-  B.add(gQuad(0.253, 0.02), M4.mul(BH, M4.trs(0, 0.596, -0.1003, Math.PI)), { c: '#5d6585', r: 0.32 });
-  B.add(gQuad(0.24, 0.0012), M4.mul(BH, M4.trs(0, 0.6065, -0.1006, Math.PI)), { c: '#2c3146', r: 0.5 });   // stitch line
+  B.add(gQuad(0.253, 0.02), M4.mul(BH, M4.trs(0, 0.561, -0.1058, Math.PI)), { c: '#454c68', r: 0.38 });   // w10 gap: darker hem
+  B.add(gQuad(0.24, 0.0012), M4.mul(BH, M4.trs(0, 0.5715, -0.1061, Math.PI)), { c: '#9aa0b8', r: 0.5 });   // stitch line, light thread (w10 gap)
   // w9 A: a ~0.12 m centre strip in a contrasting weave runs from the pad top to the back top (headrest track cover,
   // y_47306 right / middle seats) [V]
   loftAt(B, [SEC(0.778, 0.12, 0.004, -0.032, 0.002), SEC(0.818, 0.12, 0.004, -0.0275, 0.002), SEC(0.842, 0.115, 0.004, -0.0235, 0.002)], BH, F === SEATMAT.yFabricB ? SEATMAT.yFabric : SEATMAT.yFabricB, 1);
@@ -81,11 +112,11 @@ function econSeat(B, x0, lod, opts = {}) {
     const g = gSphere(1, 24, 12);
     for (let k = 0; k < g.p.length; k += 3) {
       const sx = g.p[k], sy = g.p[k + 1], sz = g.p[k + 2], l = Math.hypot(sx, sz) || 1;
-      const X = Math.sign(sx) * Math.pow(Math.abs(sx / l), 0.45) * l, Z = Math.sign(sz) * Math.pow(Math.abs(sz / l), 0.45) * l;
+      const X = sx * (1 + 0.35 * sz * sz) * (0.92 + 0.08 * l), Z = sz * (1 + 0.35 * sx * sx) * (0.92 + 0.08 * l);   // w10 gap: smooth squircle (|t|^0.45 creased the middle)
       // w6: wider (0.39 = 0.8 of the pan, y_47300 0.81 / sans 14 0.83), bow-tie outline with pinched corners
       const pull = 1 + 0.15 * Math.abs(X * Z);                                  // w9 A: corners pulled out (y_47300)
-      g.p[k] = 0.195 * X * (1 - 0.18 * (1 - Z * Z)) * pull; g.p[k + 2] = 0.13 * Z * (1 - 0.18 * (1 - X * X)) * pull;
-      g.p[k + 1] = sy * (0.004 + 0.034 * Math.sqrt(Math.max(0, (1 - Math.pow(Math.abs(X), 4)) * (1 - Math.pow(Math.abs(Z), 4))))) * (1 - 0.25 * Math.exp(-(X * X + Z * Z) / 0.08));   // + centre dimple
+      g.p[k] = 0.195 * X * (1 - 0.1 * (1 - Z * Z)) * pull; g.p[k + 2] = 0.13 * Z * (1 - 0.1 * (1 - X * X)) * pull;   // w10 B: waist eased (read as a bone)
+      g.p[k + 1] = sy * (0.004 + 0.034 * Math.sqrt(Math.max(0, 1 - Math.pow(l, 4)))) * (1 - 0.12 * Math.exp(-(X * X + Z * Z) / 0.12));   // thins to the seamed rim; + centre dimple
     }
     computeNormals(g);
     B.add(g, M4.mul(BH, M4.trs(0, 0.14, -0.10, 0, -80 * DEG)), SEATMAT.yPillow);
@@ -191,7 +222,7 @@ function econSeat(B, x0, lod, opts = {}) {
   // pan from the side creases and the latch sits at mid-pan (y_47302 / 47301 / 47303) [V]
   for (const s of [-1, 1]) {
     B.add(s < 0 ? gRBox(0.05, 0.012, 0.035, 0.005, 1) : gRBox(0.05, 0.014, 0.04, 0.006, 1), M4.trs(x0 + 0.03 * s, 0.478, -0.31), s < 0 ? SEATMAT.buckle : { c: '#cfd2d6', r: 0.4 });
-    B.add(gBox(0.045, 0.004, 0.25), M4.trs(x0 + 0.115 * s, 0.474, -0.195, s * 38 * DEG), SEATMAT.yBelt);
+    B.add(gBox(0.045, 0.004, 0.25), M4.trs(x0 + 0.115 * s, 0.474, -0.195, s * 38 * DEG), s < 0 ? SEATMAT.yBelt : { ...SEATMAT.yBelt, c: '#262c48' });   // w10 B: teal tongue strap, navy buckle strap (y_47303)
   }
   // pan-front stiffener in the light-grey structure colour (y_47300 / 47302: fabric pan fronts over light-grey structure,
   // no black bar) - QA r2, was black
@@ -265,7 +296,7 @@ function econUnitFar(n, rot = 0) {
     B.add(gRBox(0.446, 0.62, 0.045, 0.015, 1), M4.mul(BH, M4.trs(0, 0.25, 0.058)), SEATMAT.yShell);
     B.add(gRBox(0.40, 0.40, 0.12, 0.015, 1), M4.mul(BH, M4.trs(0, 0.68, 0.062)), SEATMAT.yShell);    // screen hood, capping the back top (w5; w6 0.40, tight corners)
     B.add(gRBox(0.39, 0.2, 0.11, 0.04, 1), M4.mul(BH, M4.trs(0, 0.675, -0.058)), f === SEATMAT.yFabricB ? SEATMAT.yFabricC : f === SEATMAT.yFabricC ? SEATMAT.yFabricB : SEATMAT.yHead);
-    B.add(gBox(0.255, 0.225, 0.01), M4.mul(BH, M4.trs(0, 0.6625, -0.11)), SEATMAT.yCover);
+    B.add(gBox(0.255, 0.235, 0.01), M4.mul(BH, M4.trs(0, 0.6575, -0.11)), SEATMAT.yCover);
     B.add(gQuad(0.316, 0.205), M4.mul(BH, M4.trs(0, 0.7275, 0.1245)), SEATMAT.bezel);
     B.add(gQuad(0.294, 0.166), M4.mul(BH, M4.trs(0, 0.7275, 0.1265)), SEATMAT.screen, atlasUV('screen'));
   }

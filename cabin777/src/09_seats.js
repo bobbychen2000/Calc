@@ -28,7 +28,7 @@ const SEATMAT = {
   yHead: { c: photoBase('#566088', 'y_fleck'), r: 0.9, l: LAYER.yFleck },
   // slate-grey leatherette cover, lighter + greyer than the fabric (y_47302 #474960-#4d526f, y_47306 #445072,
   // y_47301 #434765; QA r2 was #3e4661 -> rendered as black slabs)
-  yCover: { c: '#535b7c', r: 0.38, l: LAYER.plastic },     // econ w2: smooth leatherette; w5: q15 L 110 vs y_47300 #272d48 L 47 -> darker; w6 A: q16 cover/back 0.58 vs y_47301 0.82 -> a shade lighter; w7 A + B: R/B 0.46 vs 0.52-0.74 -> slate; w9 A: q16 L50 57-66 vs y_47301 / 47303 / 47306 67-104, covers 1.25-1.7x the backs -> lighter, satin
+  yCover: { c: '#4c5474', r: 0.40, l: LAYER.plastic },     // econ w2: smooth leatherette; w5: q15 L 110 vs y_47300 #272d48 L 47 -> darker; w6 A: q16 cover/back 0.58 vs y_47301 0.82 -> a shade lighter; w7 A + B: R/B 0.46 vs 0.52-0.74 -> slate; w9 A: q16 L50 57-66 vs y_47301 / 47303 / 47306 67-104, covers 1.25-1.7x the backs -> lighter, satin; w10 A + B: q15 head-on 1.6-2.9x the backs vs 0.5-0.75 in y_47300 -> a shade darker; w10 gap: satin sheen (highlight/mid 1.11 vs 1.6-2.7; the leather grain layer read as hammered metal)
   yShell: { c: '#d9dbde', r: 0.42, l: LAYER.plastic },
   yShellDark: { c: '#c2c5c9', r: 0.5, l: LAYER.plastic },
   yTray: { c: '#cfd2d6', r: 0.4, l: LAYER.plastic },

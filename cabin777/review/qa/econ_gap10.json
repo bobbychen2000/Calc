@@ -1,0 +1,82 @@
+{
+ "area": "econ",
+ "role": "gap analyst",
+ "round": "w10",
+ "summary": "Score plateau 7.3 since w8. The highest-leverage gaps are structural, not parameter tweaks: (1) the backs and pans are flat-faced rounded-rectangle slabs (no crown, 1-2 cm edge rolls) where the real seats are stuffed cushions with ~4 cm rolled edges; (2) the pillow has a mesh crease from a signed pow(.,0.45) map, plus an over-pinched outline; (3) the diamond and mosaic weaves are synthetic tiles that miss the photos' macro structure (connected harlequin lattice at light fraction 0.33-0.35; 2x more, shorter, broken dashes), and the tick tile is clipped and cross-fade-doubled; (4) the cover has no leatherette response and the fleck flecks are too few, large and bright; (5) seam contact darkening and a stitch that reads. Estimated total +1.0-1.2 -> ~8.3-8.5. Triangle cost ~+60-70k (to ~1.08M); far LOD unchanged.",
+ "artifacts": [
+  "/tmp/claude-0/gap10/geo_cmp.png",
+  "/tmp/claude-0/gap10/pillow_cmp.png",
+  "/tmp/claude-0/gap10/photo_fab.png",
+  "/tmp/claude-0/gap10/tiles.png",
+  "/tmp/claude-0/gap10/q16_zoom.png",
+  "/tmp/claude-0/gap10/seams.png",
+  "/tmp/claude-0/gap10/st/",
+  "/tmp/claude-0/gap10/s/"
+ ],
+ "items": [
+  {
+   "rank": 1,
+   "title": "Seat backs and pans are flat-faced slabs with tight 2-3.6 cm corners. Re-section them as crowned upholstered cushions with ~4.5 cm rolled side bolsters and a softer pan waterfall",
+   "ladderLevel": "silhouette and proportion (cushion form / soft-goods shape)",
+   "evidence": "Code: the back (09a_econ.js l.24) and pan (cushionSecs) are gLoft rings of rrectPts (02_geo.js l.338). That shape is a rounded rectangle with STRAIGHT edges between the corner arcs, so the 0.43 m back face has exactly two vertices across it and zero lateral crown. The cushionSecs 'crown' only raises the whole top plane. Corner r is 0.02-0.036 on a 0.06-0.108 depth. Measured side-edge luminance (median of blue pixels per column, relative to the face plateau, in steps of 2 % of seat width): photo y_47306 right back 1.85/1.68/1.31/1.03; y_47300 seat 2 left 1.72/1.67/1.79/1.12, right 1.98/2.21/2.28/1.86/1.80/0.83. Studio g3_front (/tmp/claude-0/gap10/st/g3_front.png) seat 2: left 3.31/1.70/1.14/0.98, right 2.61/1.12/0.96. The photo's rolled edge catches light over 6-10 % of the width (2.6-4.4 cm). The render's catches it over only 2-4 % (0.9-1.8 cm), then drops straight onto a dead-flat plateau (studio light, so treat the width ratio of ~2.5x as indicative). Visually (/tmp/claude-0/gap10/geo_cmp.png, seams.png): in y_47302 / 47303 / 47306 and sans_13 the backs read as stuffed cushions that roll into the white shell. The render reads as printed boards with a sharp crisp outline, and this is most visible from the aisle (q16 foreground, q17) and at row distance, where every back is a flat-shaded rectangle. Neither rater has itemised it because no single crop isolates it, but it underlies their 'optically dead flat' and 'tablet' remarks.",
+   "expectedGain": "+0.3 (silhouette and shading of ~60 % of the econ pixels; lifts 'fabric mix', 'seat pan / front' and 'far rows' together)",
+   "cheapestFix": "Add a small helper in 09a_econ.js (a local section builder; no shared-file edit needed): a crowned rounded-rectangle ring with N_f = 8 extra points across the front face and 4 across the rear. Displace the front points by crown*(1-(2x/w)^2)^1.5 with crown ~0.012 m (back) and ~0.010 m (pan top). Use a side roll radius of ~0.045 at the shoulder and 0.04 at the lumbar, with depth unchanged so the shell fit is preserved. Feed it to the back loft (keep the same 12 y stations) and to the pan (replace cushionSecs for econ only, with the front-edge waterfall r 0.035 -> 0.045 and the top crowned laterally and fore-aft). Cost: back ~+260 tris, pan ~+170 tris per seat, ~+1.4k per near-LOD unit (25k -> ~26.4k). Worst case +~60-70k over 116 seats -> ~1.08M, under the 1.25M budget. Far LOD (econUnitFar) unchanged. Normals come from computeNormals, so the shading improves automatically.",
+   "risks": "The shell (RS) and headrest pad sit on the back face. Keep the crown inside the existing depth (displace the front face forward from a slightly recessed base) so the pad, cover and belt anchors do not intersect; re-run e1 / e3 / e4 studio shots. Too much crown (>1.5 cm) reads as a PY or J bolstered seat. The real Recaro back is fairly taut."
+  },
+  {
+   "rank": 2,
+   "title": "Pillow: remove the hard horizontal crease and the over-pinched bow-tie. It should be a puffy rectangle with slightly pointed corners and visible fabric",
+   "ladderLevel": "silhouette and proportion (pillow form) + shading artefact",
+   "evidence": "Code 09a_econ.js l.84: X = sign(sx)*|sx/l|^0.45*l (same for Z). An exponent <1 on a signed coordinate has infinite slope at 0, so the mesh gets a ridge along X=0 and Z=0. Render (/tmp/claude-0/gap10/pillow_cmp.png, g3_front): every pillow shows a sharp horizontal light/dark break at mid-height, which reads as a folded slab. y_47300 (all four front-row pillows, the most prominent soft good in the paired official photo) and sans_13 / 14 show smooth domes with a soft highlight, a near-rectangular outline (aspect 0.65-0.67), mildly pointed corners and a faint weave. The w9 'pull + concave + dimple' terms combined with the 0.18 edge pinch give a dog-bone outline. Rater history: A 7.0 / B 6.5 ('no pointed corners'), but the stronger visible cue is the crease.",
+   "expectedGain": "+0.15 (pillow 6.5-7 -> ~8; the front row of the paired q15 / y_47300 view)",
+   "cheapestFix": "Replace sign(t)*|t|^0.45 with a smooth squircle map that has finite slope, e.g. t*(t*t+0.02)^(-0.275)*(1.02)^0.275, or a superellipse on the outline only (r = (|x|^4+|z|^4)^(-1/4) applied to the radius). Cut the edge pinch 0.18 -> 0.08 and keep pull 0.15 so the corners still point. Keep the dimple at 0.15 rather than 0.25. Give yPillow the y_fleck-free tick ground at low gain (or LAYER.fabric at a finer scale) so it is not a flat swatch. Zero triangle change (gSphere 24x12).",
+   "risks": "Raters A and B both asked for pointed corners and a concave top edge. Keep both, only softer. Check e4b and e7."
+  },
+  {
+   "rank": 3,
+   "title": "Stop synthesising the diamond and mosaic weaves: derive both tiles from the photos (mosaic as a direct crop; diamond as a photo-traced lattice mask filled with the real tick strokes)",
+   "ladderLevel": "value and tone structure (fabric macro-pattern at row distance; ~40 % of seats carry one of these on the back or pan)",
+   "evidence": "Five rounds of oscillation on scalar targets (w5 inverted, w6 plus-stars, w7 broken lattice, w8 holed blobs, w9 crisp sparse diamonds). The two raters' own targets contradict each other: B gives light fraction 0.10-0.18 'separate diamonds'; A's crops and mine give a connected lattice. Same method on photo and tile (high-pass, 4 mm blur, Otsu; tile decoded linear -> sRGB on a photo mean; script /tmp/claude-0/gap10/s/fab.py). DIAMOND: photo y_47306L macro light fraction 0.33, p90/p10 1.81; y_47302M 0.35 / 1.82. tex_y_diamond 0.20 / 1.58. The photo figures form a CONNECTED harlequin lattice, tip to tip (~5-6 cm, diagonal pitch ~8.7 cm), with feathered edges built from the tick strokes and a pale component #98aad4 (sat 0.28). The tile has isolated crisp diamonds with ~35 % of sites empty (photo_fab.png vs tiles.png). MOSAIC (y_47306 right back at ~0.95 mm/px vs the tile at the same scale): photo 308 dashes / 100 cm2, median length 2.8 mm (p90 11.4), light fraction 0.27, in dense rows filling ~24 x 20 mm blocks. Tile 162 / 100 cm2, median 9.5 mm (p90 12.3), light 0.22. Half the dashes, all the same long length, so it reads as tidy rows of stubs (A 6.0 / B 6.0 'clumps', 'chevrons'). y_47306 right is near-frontal at ~1050 px/m with even light, which is good enough to cut directly. TICK (secondary): photo y_47306M fine p90/p50 2.15, L10 46, light fraction 0.31. tex_y_tick 1.69 / 32 / 0.43. make() clips ticks at ENC*0.95 = 4.75x (the photo ticks are ~10x the ground), and tileable()'s half-period cross-fade superimposes two tick fields over ~70 % of the tile. Together these give B's 'uniform rain, no dark channels', and the vertical-smoothed column contrast is 0.27 vs 0.35.",
+   "expectedGain": "+0.4 (diamond 5.5-6.5 -> ~7.5-8, mosaic 6 -> ~7.5-8, tick 7-7.5 -> ~8; ends the parameter ping-pong)",
+   "cheapestFix": "test/make_swatches.py only. (a) Mosaic: add SW 'y_mosaic': ('y_47306', (590, 425, 742, 577), 0.144). That is a 152 px square at ~1053 px/m, exactly 6 block widths, so the tile period matches the blocks. Use HP 20 and ENC 5, and drop y_mosaic() synthesis. For this tile, replace the cross-fade with a min-error seam (or crop so the opposite edges already match), so the block grid is not smeared. (b) Diamond: mask = high-pass of y_47306 (40, 340, 190, 540), blurred 4 mm, thresholded at its 65th percentile. Stretch x by the aspect needed to make the figures as wide as tall (check against y_47302 middle, which is near-frontal) and resample to the 0.26 m tile. Then ratio = ground*(1-m) + 2.2*tick_highpass*m, with m multiplied by the tick strokes at its edges so the outlines serrate the way the real weave does. Target macro light fraction 0.33-0.35, p90/p10 ~1.8, pale component ~#98aad4. (c) Tick: ENC['y_tick'] 5 -> 8 (keep PHOTO_ENC in 03_tex.js in step: one shared-file line). Pick a crop with matching opposite edges, or use a seam cut instead of the offset blend, so tick density is not doubled. Judge all three by side-by-side photo/tile sheets at 1:1 physical scale, not by Otsu fractions.",
+   "risks": "Photo cuts carry lighting; HP removes the gradient but can leave a faint blotch at 0.14 m repeats, so check q16 at row distance for tiling. The diamond source is only ~2.2 mm/px, so close-ups (e4b) will be soft unless the strokes come from the tick tile as proposed. The PHOTO_ENC change affects every Y fabric using tick as ground: re-check q15 L50 targets."
+  },
+  {
+   "rank": 4,
+   "title": "Material response: give the headrest cover a real leatherette satin, and let the fleck flecks sit back into the cloth (smaller, more numerous, ~15 % dimmer)",
+   "ladderLevel": "material response",
+   "evidence": "Cover: L90/L50 1.11 at q15 against 1.6 (y_47300) and 2.7 (y_47301 foreground); A and B w9 both note no sheen. yCover is r 0.38 LAYER.plastic, not leather grain. Matched cover/back luminance: q16 centre seat render 1.51 vs y_47301 1.05; q16 foreground render 0.85 vs photo 1.20. The contrast against the back flips depending on the light, which a glossier surface with a highlight along the fold would stabilise. Fleck (blobs > 1.4x the local mean at 1 mm/px): sans_14 (frontal in-service, the only high-res fleck reference) has 7250 /m2, median 12 mm2, p90/p50 1.68. tex_y_fleck has 5900 /m2, median 18 mm2, p90/p50 1.91. In q16 the fleck backs read as white snow (/tmp/claude-0/gap10/q16_zoom.png) where the photo reads as fine grey-blue speckle.",
+   "expectedGain": "+0.1 to +0.15 (headrest 7-7.5 -> 8; fleck holds at 8 up close and stops dominating at row distance)",
+   "cheapestFix": "SEATMAT.yCover (09_seats.js, one shared line): l LAYER.leather, r 0.30. Keep c '#535b7c'. make_swatches y_fleck(): half-axis lognormal centre log(2.9) -> log(2.3), spacing reject 7.5 -> 6 mm, lift (7.5, 6.8, 4.0) -> (6.2, 5.8, 3.8), keep cover ~0.11. No triangle cost.",
+   "risks": "A glossier cover can bloom under the 777 cove light (the lighting owner should confirm in q16). Fleck scored 8 from both raters, so make only the size/count change and re-measure y_47300 seats 2 / 4."
+  },
+  {
+   "rank": 5,
+   "title": "Soft-goods surface: seam / roll darkening where the fabric meets the shell, pad and centre strip, plus a stitched hem that actually reads",
+   "ladderLevel": "surface texture realism (seams, stitching)",
+   "evidence": "y_47306 (seams.png): a dark crease line where the back fabric tucks into the white shell, shadow seams on both sides of the back-top centre strip, a shadowed undercut under the pad wings, and a visible hem + stitch line on the cover. The render has hard geometric junctions with no contact darkening. The cover stitch quad sits at y 0.6065, on a 0.02 hem quad that is nearly the same tone (#5d6585 vs plate #535b7c), and is invisible at q16 / e4 (A w9a-8). The surfaces in the photos are taut, with no visible tension creases, so creases/wear are NOT worth adding.",
+   "expectedGain": "+0.1",
+   "cheapestFix": "Bake contact darkening into vertex colour: in the crowned back helper (item 1), give the ring points within 1.5 cm of the side edge and the top cap a vertex-colour multiplier of 0.75-0.85, and do the same for the centre-strip loft edges. That costs nothing extra if the Builder per-vertex colour path is used; otherwise add 2 thin dark gQuads per seam, ~8 tris each. Cover: hem quad colour '#474e6c' (a shade darker than the plate, not lighter) and a stitch row of 0.0015 m quads in '#8a90a8' at 0.598, so the stitching reads as light thread, as in y_47306.",
+   "risks": "The scene AO volume (12_scene.js) may already darken some junctions. Check that it does not double-darken in q15."
+  }
+ ],
+ "notForEcon": [
+  {
+   "owner": "lighting/integration (12_scene.js, 04_shaders.js)",
+   "issue": "q16 exposure / fill. Fabric at row distance: render light cluster #6c789e vs y_47301 #94acde, blue-pixel L50 59-60 vs 64-69, dark-pixel fraction (L<35) 0.17 vs 0.09-0.11. Back fabric chroma is low: q16 centre back #4f5673 vs photo #5572b1, foreground #475482 vs #232a57 (photo darks sat 0.63, render 0.54). The near rows match in q15 (mid rows render #49537a vs photo #47557e), so this is light falloff / shadowing along the cabin, not material colour."
+  },
+  {
+   "owner": "lighting/integration (04_shaders.js)",
+   "issue": "No cloth sheen lobe. The photo back edges are 1.7-2.3x brighter than the face over 6-10 % of the width, which is partly fabric sheen at grazing angles; a velvet/Charlie term for LAYER yJacq / yDiamond / yFleck / yMosaicP would give it. Item 1 (geometry) covers the econ side."
+  },
+  {
+   "owner": "QA camera (test/qa.js)",
+   "issue": "q15 is ~1.3 m too far forward and ~0.25 m too high against y_47300 (both raters, w8 and w9), so the pillows, pans and arms in the official front view go unjudged. q17 looks aft at the rear shells while its pair y_47303 is a side view of the seat fronts from the window side, so the back profile, armrest and pan silhouette are never compared. In q16 the photo's left block shows its white armrests (white-pixel fraction 0.236 vs render 0.076) because of a different camera height / offset."
+  },
+  {
+   "owner": "raters / QA process",
+   "issue": "The scalar targets for the diamond fabric conflict: rater B's light fraction is 0.10-0.18 on 3.3 mm/px crops, while A's crops and the gap analysis give 0.33-0.48. Judge fabric by 1:1 physical-scale photo/tile sheets (e.g. /tmp/claude-0/gap10/photo_fab.png vs tiles.png) to stop the oscillation."
+  }
+ ],
+ "baseline": "All measurements refer to the r10 head state: the committed tex/tex_y_*.png (15:50 and earlier) and the /tmp/claude-0/r10 renders. While this analysis ran (16:06-16:07), another worker left uncommitted changes to src/09a_econ.js, src/09_seats.js, test/make_swatches.py and all four tex_y_* tiles, and /tmp/claude-0/b/test.html was rebuilt. Re-check items 3 and 4 against those changes."
+}
