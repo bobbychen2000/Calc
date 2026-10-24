@@ -38,3 +38,14 @@
    '777-300' header band, san_26 / b_san_20).
 8. **Shared-file note:** PY added detail layer 31 `pyEar` in `03_tex.js` (LAYER, N_LAYERS 32, PHOTO_LAYERS / PHOTO_GAIN /
    PHOTO_ENC / LAYER_PARAMS, procedural fallback `L[31] = L[17]`), commit e3268a7. The next new layer is 32.
+
+## Wave 3c (w15, after lighting r1 2913db8)
+
+9. **To lighting, low (A + B, repeat of item 6):** q14 still shows the bright rhombus sun patch on the 26B back (around
+   x 500, y 330), and q13 still reads cobalt. Studio p8 now matches py_37301's saturation (S 0.24 vs 0.22), so most of
+   the remaining cast is cabin light or tone. B also measures q13's trim-B backs as cooler (S 0.27 vs 0.36 in py_37302).
+10. **To lighting, low (A):** on the q13b foreground seat top, the gaps between fabric blocks render very dark. The new
+   low-pocket AO / crevice term may be reaching the fabric.
+11. **To lighting, low (B):** the studio p8 back is darker than py_37301 (#667085 vs #94a2ba), while the cushion is
+   close to the photo. Check the low-face AO weight on near-vertical seat backs.
+12. **To other areas (B, from q13):** the carpet is royal blue and the curtains violet-blue, against charcoal in py_37302.

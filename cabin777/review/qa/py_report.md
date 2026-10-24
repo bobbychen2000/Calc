@@ -210,3 +210,32 @@ The last two rounds gained less than 0.2, so the stop rule applies too.
 - ANA py_37301-37306 (ref/ana).
 - SANspotter 2023 san_00-30 / b_san_* (ref/web/py, https://www.sanspotter.com/ana-777-300er-premium-economy/).
 - Before/after sheet `py_before_after.jpg`: w11 start vs w14, own renders only.
+
+## Wave 3c, confirm (w15): target met
+
+w15 rated the wave-3b post-rating fixes (46a988d), unrated until now, under the lighting loop's round 1 (2913db8). Both
+raters scored **8.5**, and neither raised a high issue, so PY meets the bar. As the brief says, no further rounds were
+run and no code was changed.
+
+| round | rater A | rater B | mean | commit |
+|---|---|---|---|---|
+| w15 (46a988d) | 8.5 | 8.5 | 8.5 | target met, no high issue |
+
+### Calibration (w14 issues)
+- **Ear chips read as polka dots** (w14 medium, A + B): fixed. In p4 there are 102-104 chips against 110 in py_37305,
+  with elongation 1.63 against 1.65 and cover 14-16 % against 16-17 %.
+- **Back weave contrast:** fixed for A and partly fixed for B. p8 gives p90/p50 1.34 against 1.26-1.28 and high-pass
+  0.19-0.20 against 0.18-0.19 (w14: 1.39 / 0.22).
+- **Ear ground too blue:** fixed. It renders #4a4d5b against #4e505f.
+- **Trim-B Y clusters:** fixed at q13 distance.
+
+### Left open (medium for B, low for A; none high)
+- **Trim-B ears** (`SEATMAT.pyWingB`) render darker than their back, at an ear/back lightness ratio of 0.84 against
+  1.0-1.3 in the photos (B, medium). B suggests `photoBase('#828a9c', 'py_back')`.
+- **Trim-A back dashes** are about 1.5-2x too long, which leaves soft coarse bricks close up (B medium, A low). B
+  suggests `synth_py_back` with cols 11 and light ln N(17, 2.5).
+- **Low items:** about 0.11 m of plain shell under the pocket (A wants `py0` 0.20), the pocket colours, the flat navy
+  flap, angular rather than five-lobed ear shards, and the busy ears at cabin distance.
+- **Handed off:** blank placards and leaflet (atlas), and the lighting items in `from_py.md` (wave 3c).
+
+Ratings: `py_w15a.json`, `py_w15b.json`. Triangles are unchanged at 194.6k.
