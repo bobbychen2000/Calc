@@ -1,0 +1,173 @@
+{
+ "area": "exterior",
+ "rater": "A skeptic",
+ "build": "r6 = after 14a153c (w5 A/B fixes); compared with /tmp/claude-0/r5. Crops and samples in /tmp/claude-0/ratA6",
+ "score": 6.8,
+ "details": {
+  "wing planform / raked tip / bending": 7.5,
+  "wing surface detail (seams, fastener rows, panel tone, gear stripe, slat band)": 6.5,
+  "control surfaces & gaps (slats, spoilers, flaps, flaperon, aileron)": 6.0,
+  "canoes (flap-track fairings)": 6.0,
+  "pylon": 7.0,
+  "nacelle shape (cowl, lip, splits, strake, access panel)": 7.0,
+  "nacelle colour / materials (incl. GE logo)": 6.5,
+  "inlet / fan / spinner": 6.5,
+  "livery / registration JA795A": 7.5,
+  "lights & static dischargers": 7.0,
+  "artefacts": 7.0
+ },
+ "previous": [
+  {
+   "issue": "[w5 A high / B medium] JA795A ink a saturated mid blue, ink/skin 0.54-0.63",
+   "status": "FIXED: the ink is now #171b25 on #b1b8c1 in w17K and #171b26 on #adb4be in w26K, a ratio of 0.15 in both. The reference range is 0.07 (KN41, #000b2f on #9cafc9) to 0.35 (_7250, #47535f on #dbe9f3), so 0.15 sits inside it. It is now the darkest mark on the wing, as in the photos."
+  },
+  {
+   "issue": "[w5 A medium] canoes are flat-sided slabs with a chisel spike",
+   "status": "PARTLY FIXED, NEW DEFECT: the spike is gone and the length behind the TE is about 2.2x the TE depth in w26K (photos 2.5-2.7x). But the 0.12 m end cap on a section about 0.25 m deep now ends in a flat, near-vertical cut face. In w26K/w30K the pods read as truncated bricks. In KN46 the end is a rounded bullet cap, and in _7250 an angled taper."
+  },
+  {
+   "issue": "[w5 A medium] wing surface a near-uniform CG grey, no placards",
+   "status": "PARTLY FIXED: the 0.15 panel jitter is just visible as tone steps in w17K/w26K. There are still no placards or stencils."
+  },
+  {
+   "issue": "[w5 A medium / B medium] inlet liner a black tube",
+   "status": "FIXED IN LUMINANCE, WRONG HUE: w11A rows 420-480 now run #2f3847 -> #455062 and #40536f -> #586e8d, about the luminance of LALF _136 (#172029 -> #505a66 / #7e8691). But the liner is sky-blue, with b-r +0x2e to +0x35, against +0x12 in _136 and about 0 in knav 7A _9."
+  },
+  {
+   "issue": "[w5 A medium / B medium] access panel too wide, too near the lip, outline too bold",
+   "status": "MOSTLY FIXED: the centre is now at about 0.3 of the split-to-lip distance (w11A: split ~490, panel 500-540, lip ~590), matching _136 (0.35). The outline #8a8f95 is faint. It still reads about 2.1:1 (40x19 px), though some of that is the viewing angle."
+  },
+  {
+   "issue": "[w5 A low] strake shadow a wide lens",
+   "status": "FIXED: it is a thin dark line under a lit edge in w13A and s13A, as in knav 7A _9."
+  },
+  {
+   "issue": "[w5 A low] slat TE line sub-pixel / dotted",
+   "status": "PARTLY FIXED (0.04 m): it is continuous in w17A/w17K but still fainter than in ZGriff-63 and _7242."
+  },
+  {
+   "issue": "[w5 A low / B low] GE monogram unverifiable / too far aft",
+   "status": "NOW VERIFIABLE, STILL WRONG: c_ge_inboard_left shows a thin outline ring with sans-serif block 'GE' letters at 2.0 m aft, about 30 deg below the horizontal. In knav 7A _9 the mark is a FILLED dark script monogram (with the swirls) sitting much lower, about 55-60 deg below the horizontal near the keel, just aft of the first split (about 1.5 m). It still shows in no passenger view."
+  },
+  {
+   "issue": "[w5 B medium] spoiler hinge line / chordwise breaks a continuous dark tile outline",
+   "status": "REGRESSED: brk #7a7f86 is LIGHTER than the paint #636466. In w19A the chordwise break at x~700 renders #a4afbd on #9099a7, and #bbbec9 on #828c9a at row 450. These are white pinstripes, the same defect the cowl splits had in w5x."
+  },
+  {
+   "issue": "[w5 B low] LE head dots alias into a fringe",
+   "status": "NOT FIXED: z17K_reg still shows a dotted fringe along the far LE above the registration."
+  }
+ ],
+ "issues": [
+  {
+   "severity": "medium",
+   "detail": "control surfaces (spoiler hinge line / chordwise breaks)",
+   "problem": "The w5 'light breaks' material is lighter than the paint. The spoiler hinge line and the chordwise breaks render as white pinstripes, most clearly in w19A, where a long bright line runs down the inboard spoiler area. Real breaks are faint DARK hairlines (_7250, _7331, KN46).",
+   "evidence": [
+    "w19A col ~700: #a4afbd on #9099a7 (row 330), #bbbec9 on #828c9a (row 450)",
+    "code: brk { c: '#7a7f86' } vs paint { c: '#636466' }",
+    "/tmp/claude-0/ratA6/cmp_w19A.png (r5 left dark, r6 right light)",
+    "ref/web/exterior/b_alv_ANA77W_PY_IMG_7250-2-scaled.jpeg",
+    "ref/web/exterior/a5_kn_ANA77W_TheRoom_46.jpg"
+   ],
+   "fix": "In the spoiler block: const brk = { c: '#4c4f53', r: 0.95, m: 0 }; (about 0.8x paint, still lighter than gap #1e2228). Keep width 0.014. Target in w19A col ~700: lum 8-15 % UNDER the surrounding skin, never above it."
+  },
+  {
+   "severity": "medium",
+   "detail": "canoes (flap-track fairings)",
+   "problem": "The tail ends in a flat near-vertical cut. The end cap is RE = 0.12 m on a last section about 0.29*0.85 = 0.25 m deep, so the three cap sections collapse into a face. From 26K/30K the pods read as truncated bricks with a chamfer. KN46 (from above and behind, cruise) shows a rounded bullet end, and _7250 an angled taper. The flanks also show little round-body gradient against the bright-top-to-dark-keel shading in KN46.",
+   "evidence": [
+    "/tmp/claude-0/ratA6/cmp_w26K.png (r6 right: square-cut ends)",
+    "/tmp/claude-0/ratA6/z26K.png",
+    "ref/web/exterior/a5_kn_ANA77W_TheRoom_46.jpg (canoes at x 840-925, y 510-650: rounded caps)",
+    "ref/web/exterior/b_alv_ANA77W_PY_IMG_7250-2-scaled.jpeg"
+   ],
+   "fix": "In the canoe loop: RE 0.12 -> 0.40. Replace the end-cap loop with for (const u of [0.3, 0.55, 0.75, 0.9, 0.98]) { const e = Math.sqrt(1 - u * u); secs.push(sec(x1 + u * RE, Math.max(0.04, 0.32 * e), Math.max(0.04, 0.30 * e))); }, so it closes as a semi-ellipsoid. Raise the section rounding to r: Math.min(w * 0.48, d * 0.46) for a round keel. Keep x1 = te + 0.30*len - RE so the overall length is unchanged."
+  },
+  {
+   "severity": "medium",
+   "detail": "nacelle colour (GE monogram)",
+   "problem": "The monogram is a generic thin outline ring with block sans-serif 'GE' at 2.0 m / -30 deg. In knav 7A _9 (ANA 77W, inboard side) it is a filled dark script GE monogram with its swirls, about 55-60 deg below the horizontal, near the bottom of the cowl, just aft of the first split.",
+   "evidence": [
+    "/tmp/claude-0/r6/c_ge_inboard_left.png",
+    "/tmp/claude-0/ratA6/p9_ge.png (crop of ref/web/exterior/b5_knav_ANA77W_7A_GE90_takeoff_9.jpg, logo at ~(300,320) right behind the split, near the keel)"
+   ],
+   "fix": "In the GE monogram block: xc 2.0 -> 1.65, ac -30 deg -> -57 deg, ring radius 0.22 -> 0.24 with tube 0.014 -> 0.03. Replace the block 'G'/'E' polylines with script swashes (three curling strokes, each an arc of r 0.06-0.10 with a tail running out to the ring), tube 0.028, so the mark reads as a filled dark disc pattern. Colour #2a2f3a."
+  },
+  {
+   "severity": "low",
+   "detail": "inlet / fan / spinner",
+   "problem": "The liner luminance is now right, but it is sky-blue (b-r +0x2e to +0x35). Real liners are near-neutral (+0x12 in _136, about 0 in knav _9). The m 0.3 mirrors the blue sky.",
+   "evidence": [
+    "w11A row 480: #40536f #4f6584 #586e8d",
+    "_136 row 960: #252d38 #3e4653 #5c6471 #7e8691; knav _9 row 650: #1e1e1c #373737 #4e4e50",
+    "/tmp/claude-0/ratA6/cmp_w11A.png"
+   ],
+   "fix": "Inlet material { c: '#7d838a', r: 0.45, m: 0.3 } -> { c: '#7e7f80', r: 0.65, m: 0.05 }. Keep the shadeVerts grading."
+  },
+  {
+   "severity": "low",
+   "detail": "wing surface detail",
+   "problem": "The skin is still clean CG. There are no red/black placards on the inboard spoilers/flaps, which KN41 and _7250 show (small red-ringed marks near the walkway at _7250 ~(285,550)). The LE head-dot/slat fringe still aliases at the far LE in w17K.",
+   "evidence": [
+    "ref/web/exterior/b_alv_ANA77W_PY_IMG_7250-2-scaled.jpeg",
+    "/tmp/claude-0/ratA6/z17K_reg.png (dotted LE fringe)"
+   ],
+   "fix": "Add 3 placards per side: wingLine(B, side, [[s-0.12,x],[s+0.12,x]], { c: '#9a2a2a', r: 0.8 }, 0.12) at s 5.0/7.5/13.0, x = spF(s) - 0.4 (inboard: 37.4). Head-dot loop: s < 22 -> s < 17."
+  },
+  {
+   "severity": "low",
+   "detail": "livery / registration JA795A",
+   "problem": "From 17K the glyphs collapse into stacked horizontal streaks (the chordwise strokes are foreshortened away) and the text is not readable. KN41, from a similar over-wing angle, stays legible because its strokes are thinner relative to the glyph height and the letters are spaced tightly.",
+   "evidence": [
+    "/tmp/claude-0/ratA6/z17K_reg.png",
+    "/tmp/claude-0/ratA6/p41_reg.png"
+   ],
+   "fix": "Stroke 0.31 -> 0.26 and pitch 1.15 -> 1.0 (sC = 13.5 + k * 1.0), u scale 0.9 -> 0.85, so the glyphs pack like the photo. Re-check that w26K still shows 'JA' clearly."
+  },
+  {
+   "severity": "low",
+   "detail": "(owner: lighting) not scored",
+   "problem": "These are lighting-owned and not counted in the score. (1) s26K: the wing is still saturated royal blue (#3a4474 skin) and the canoes deep navy. (2) n19A: the canoes are washed dark red by the belly beacon, which reads as red-painted canoes. (3) w11K: the sun-side cowl still clips to #dadfe2.",
+   "evidence": [
+    "/tmp/claude-0/r6/s26K.png",
+    "/tmp/claude-0/r6/n19A.png",
+    "/tmp/claude-0/r6/w11K.png"
+   ],
+   "fix": "For the lighting worker."
+  }
+ ],
+ "questionsForUser": [],
+ "photos": [
+  {
+   "path": "ref/web/exterior/b5_knav_ANA77W_7A_GE90_takeoff_9.jpg",
+   "url": "https://knaviation.net/wp-content/uploads/2018/05/ANA-777-300ER-Business-Class-1400px-9.jpg",
+   "seat": "7A (ANA 777-300ER)",
+   "what": "GE monogram position and style (filled script, low near the keel just aft of the first split), neutral liner tones"
+  },
+  {
+   "path": "ref/web/exterior/a5_kn_ANA77W_TheRoom_46.jpg",
+   "url": "https://knaviation.net/wp-content/uploads/2021/03/ANA-The-Room-Business-Class-46.jpg",
+   "seat": "THE Room right window, descent",
+   "what": "rounded bullet canoe ends, faint dark spoiler breaks, registration"
+  },
+  {
+   "path": "ref/web/exterior/b_alv_ANA77W_PY_IMG_7250-2-scaled.jpeg",
+   "url": "https://thealviator.com/wp-content/uploads/2026/04/IMG_7250-2-scaled.jpeg",
+   "seat": "26K (JA795A)",
+   "what": "registration contrast (0.35), canoe taper and length ratio (2.5-2.7x the TE depth)"
+  },
+  {
+   "path": "ref/web/exterior/a5_kn_ANA77W_TheRoom_41.jpg",
+   "url": "https://knaviation.net/wp-content/uploads/2021/03/ANA-The-Room-Business-Class-41.jpg",
+   "seat": "THE Room right window",
+   "what": "registration contrast 0.07 and legibility, gear stripe #0c1523"
+  },
+  {
+   "path": "ref/web/exterior/b_lalf_ANA77W_11A_136.jpg",
+   "url": "https://liveandletsfly.com/wp-content/uploads/2021/12/ANA-777-300ER-The-Room-Business-Class-Review-136.jpeg",
+   "seat": "11A",
+   "what": "inlet liner tones (#172029 -> #7e8691, near-neutral), access panel position"
+  }
+ ]
+}
