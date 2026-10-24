@@ -1,0 +1,89 @@
+{
+ "area": "exterior",
+ "rater": "A skeptic",
+ "build": "w12 head 0c53815 (exterior code = w11 fixes; lighting 2913db8). Renders /tmp/claude-0/-home-user-Calc/befcfc7c-26eb-511e-bccb-dea0e8e11491/scratchpad/r12, crops and the sampler (11x11 means, Rec.709 luma) in /tmp/claude-0/-home-user-Calc/befcfc7c-26eb-511e-bccb-dea0e8e11491/scratchpad/ratA12",
+ "score": 7.3,
+ "details": {
+  "wing planform / raked tip / bending": 7.5,
+  "wing surface detail (seams, fastener rows, panel tone, gear stripe, slat band, placards, grime)": 7.3,
+  "control surfaces & gaps (slats, spoilers, flaps, flaperon, aileron)": 7.5,
+  "canoes (flap-track fairings)": 6.8,
+  "pylon": 7.0,
+  "nacelle shape (cowl, lip, splits, strake, access panel)": 7.5,
+  "nacelle colour / materials (incl. GE logo)": 7.7,
+  "inlet / fan / spinner": 6.8,
+  "livery / registration JA795A": 7.5,
+  "lights & static dischargers": 7.0,
+  "artefacts": 7.2
+ },
+ "previous": [
+  {"issue": "[w11 A medium] inlet: liner too light, fan and spinner unreadable", "status": "PARTLY FIXED. The spinner is now grey: c_nacelle_left (620,298) L13 -> #42454b L70. The upper throat is dark: (640,250) L37, (690,200) L32. The blades are #3e4248 (l.229). But the lower liner, which faces up, is still the brightest thing inside the inlet. c_nacelle_left (650,400) #9a9da3 L157 (w11 L185). w11K (345,480) L173 (w11 L196). w11A (595,500) #8593a6 L146, a sky-blue floor. In LALF _136 (11A) the lower throat is #2e3742-#3d4550 L54-69, and in knav _9 the fan face is L1-31. The depth grade at l.365 only reaches 0.7-0.85 over the visible first 0.2-0.6 m, and it ignores the normal, so the up-facing floor still takes the sun and sky (crop ratA12/inlet_cmp.png, ratA12/w11A_vs_lalf136.png)."},
+  {"issue": "[w11 A medium] canoe A-side flanks 0.52 of the skin (w19A)", "status": "FIXED ON THE A SIDE, REGRESSED ON THE K SIDE. w19A flanks (470,350)/(520,300)/(515,240) L100 against the near flap at L161-163 give 0.61 (w11 0.52; KN41 0.72-0.77). The 0.92 flank floor at l.445 also flattened the sunlit K-side pods. w26K flanks (560,360) L189, (600,355) L188, (520,380) L190 against the skin at L186-191 give 0.98 with no grade. In w11, B had crown 217 / flank 169 / keel 98 (0.78). In _7250 the near pod's column x=300 runs top 218-228 / flank 124-127 / belly 97 (0.55 of the 230 skin), and the second pod x=1000 runs top 236 / flank 168-173 / rim 89 (0.72). _7345 shows the pod flanks as mid-grey. In w26K the pods now read as white plaster shapes."},
+  {"issue": "[w11 A medium] wing near-far value reversed in w19A; grime symmetric", "status": "NOT FIXED (gap smaller). w19A near flap (600,440) L163, (560,500) L161. Far skin (680,195) L173, (720,220) L174. The far skin is still about 11 L brighter (w11 16); KN41 runs 194 near -> 146 far. The TE band is lighter and narrower and now reads as a faint strip, not a ribbon (acceptable). The fine-scale residual (box-15 high-pass) is w17K 2.7 %, c_wing_panel 2.7 %, KN41 0.8 % on the same metric. The skin is no smoother than the photo, so grime is closed as a scoring item."},
+  {"issue": "[w11 A low] control-surface gaps ~2x too heavy", "status": "NOT FIXED (unchanged code). Not re-weighted."},
+  {"issue": "[w11 A low] GE monogram swashes inside the ring", "status": "FIXED. l.408 r = 0.27 - 0.13 t: in c_ge_inboard_left the swashes start outside the ring and hook in, reading as the GE roundel."},
+  {"issue": "[w11 lighting] sunset underwing royal blue", "status": "CLOSED (not an error). s13A underwing (150,350) #5b6183 L99, b-r +40. Dusk photo _7282 underwing (768,1100) #45546e L83, b-r +41, and (1050,950) #69738c. The hue matches the real post-sunset wing."}
+ ],
+ "issues": [
+  {
+   "severity": "high",
+   "detail": "canoes: K-side pods flat white, the same tone as the skin (regression from the w11 flank floor)",
+   "problem": "From the K side (26K / 30K, the JA795A photo seats) the four canoes are uniform pale lozenges. The crown, flank and belly are all L185-191, equal to the wing skin, with only a 1-2 px dark rim at the keel. In every K-side photo the pods are the darkest grey mass under the wing: a bright crown facet over a flank at 0.55-0.72 of the skin, with a darker belly. The tails also read as flat wide spatulas: the tail width tapers only to 0.16 (l.351) while the depth tapers to 0.09. The _7250 tails close to a sharp wedge point in both width and depth.",
+   "evidence": [
+    "/tmp/claude-0/-home-user-Calc/befcfc7c-26eb-511e-bccb-dea0e8e11491/scratchpad/ratA12/canoes_w26K_vs_7250.png",
+    "/tmp/claude-0/-home-user-Calc/befcfc7c-26eb-511e-bccb-dea0e8e11491/scratchpad/r12/w26K.png (560,360) #b9bdbf L189, (600,355) #b5bdc4 L188, skin (690,262) L189",
+    "ref/web/exterior/b_alv_ANA77W_PY_IMG_7250-2-scaled.jpeg column x=300: top L224-228, flank L124-127, belly L97; column x=1000: top 236, flank 168-173, rim 89; skin ~230",
+    "ref/web/exterior/b_alv_ANA77W_PY_IMG_7345-2-scaled.jpeg (pods visibly mid-grey under a near-white wing)"
+   ],
+   "fix": "11_exterior.js l.445: replace the normal-only bake with a normal plus height bake, so the flank grades down to the keel whichever side the sun is on: `shadeVerts(B, vC, vN, (p, n) => { const dy = wingAt(Math.abs(p[0]), p[2] - WING.dz, side, -1)[1] - p[1]; return (n[1] > 0.45 ? 1 : 0.5 + 0.4 * smooth(-0.9, -0.2, n[1])) * lerp(1, 0.66, smooth(0.06, 0.65, dy)); })`. The crown facet (n.y > 0.45) stays at 1, the upper flank is about 0.9 and the lower flank about 0.6. In w26K that gives roughly crown 215 / mid-flank 160 / lower 120, close to _7250. The A side would drop back to about 0.55. Compensate there with lighting: lighting owner, raise u_extBounce on exterior normals with |n.y| < 0.35 by about 1.25x. Do not raise the floor again. For the tail shape at l.351, taper the width to the same end as the depth: `lerp(1, 0.09, Math.pow(tail(xn), 0.9))` for rw. At l.353 use `sec(x1 + u*RE, 0.09*e, 0.09*e)` so the point is a wedge, not a spoon. At l.345, sharpen the chine: r = Math.min(w*0.18, d*0.2)."
+  },
+  {
+   "severity": "medium",
+   "detail": "inlet: the up-facing lower liner is lit pale grey / sky blue; the throat should be near-black",
+   "problem": "The 11A and 11K window views (the seats that sell the GE90 view) show the inlet as a lit grey or blue bowl. Only the upper throat is dark. In LALF _136, which is the same seat, the whole liner beyond the lip is a dark slate (L35-69), and knav _9 shows a black fan face with the grey spinner standing out. The l.365 grade is depth-only and reaches only about 0.8 at the depths you see from the window. It is also normal-blind, so the floor that faces the sun and sky (n.y > 0) keeps its direct light. The exterior pass has no shadow map, so nothing shades it.",
+   "evidence": [
+    "/tmp/claude-0/-home-user-Calc/befcfc7c-26eb-511e-bccb-dea0e8e11491/scratchpad/ratA12/w11A_vs_lalf136.png",
+    "/tmp/claude-0/-home-user-Calc/befcfc7c-26eb-511e-bccb-dea0e8e11491/scratchpad/ratA12/inlet_cmp.png",
+    "r12/w11A.png (595,500) #8593a6 L146, (590,450) #3b4860 L71; r12/w11K.png (345,480) #a7aeb6 L173; r12/c_nacelle_left.png (650,400) #9a9da3 L157",
+    "ref/web/exterior/b_lalf_ANA77W_11A_136.jpg (620,850) #2e3742 L54, (600,900) #3d4550 L69; ref/web/exterior/b5_knav_ANA77W_7A_GE90_takeoff_9.jpg (600,700) L8, (640,800) L31, spinner (505,655) #51575e L87"
+   ],
+   "fix": "11_exterior.js l.365-366: `shadeVerts(B, vIn, B.vcount, (p, n) => (1 - 0.85 * smooth(0.0, 0.55, p[2] - E.x0 - WING.dz)) * lerp(1, 0.45, smooth(0.0, 0.7, n[1])))`. Liner normals point at the axis, so the floor has n.y > 0 and gets the extra 0.45. l.364: liner #6a6e74 -> #4e5258, r 0.65 -> 0.8, so the floor stops mirroring the sky blue. l.413: make the fan-case disc the same #141619, but r 0.9, m 0. The grey spinner (l.230) then reads against it, as in knav _9."
+  },
+  {
+   "severity": "medium",
+   "detail": "wing near-far value still reversed in w19A",
+   "problem": "The near flap is L161-163 and the far fixed skin L173-174. In KN41 the near skin is L194 and the far skin L146. The own-file ramp (l.248, 1.12 -> 0.80) is spent. What remains is the grazing env term, which ignores the baked vertex colour.",
+   "evidence": ["/tmp/claude-0/-home-user-Calc/befcfc7c-26eb-511e-bccb-dea0e8e11491/scratchpad/ratA12/w19A_wing.png", "r12/w19A.png (600,440) #98a3b4 L163, (680,195) #a6adb6 L173", "ref/web/exterior/a5_kn_ANA77W_TheRoom_41.jpg (300,420) L194, (760,300) L146"],
+   "fix": "Lighting owner (04_shaders.js exterior branch): scale specEnv by the baked/base albedo ratio, clamp(luma(v_col)/luma(matBase), 0.6, 1.1), so the l.248 ramp also attenuates the far grazing reflection. In own file: none left that is safe."
+  },
+  {
+   "severity": "low",
+   "detail": "inlet access panel and lip",
+   "problem": "In LALF _136 the access panel is a stadium-shaped oval with a ring of fastener dots, and a fainter second panel sits below it. The render draws a single sharp rounded rectangle (l.393 exponent 0.3). The photo lip is a broad, evenly graded satin grey (L122 against the cowl at L133). The render lip has a bright specular band (w11A (580,360) L160).",
+   "evidence": ["/tmp/claude-0/-home-user-Calc/befcfc7c-26eb-511e-bccb-dea0e8e11491/scratchpad/ratA12/w11A_vs_lalf136.png", "ref/web/exterior/b_lalf_ANA77W_11A_136.jpg (575,750) #777a80 L122"],
+   "fix": "l.393: exponent 0.3 -> 0.55 for a stadium shape, half-size 0.21 x 0.20 -> 0.24 x 0.17. Add a second outline 0.38 m below in #a3a8ad. l.363 lip: r 0.34 -> 0.5, so the satin band loses the hot specular line."
+  },
+  {
+   "severity": "low",
+   "detail": "pylon fairing soft",
+   "problem": "In w13A and s13A the fairing over the fan cowl is a smooth white bulge with no edge. In LALF _137 it is a distinct hump with a crisp ridge line and a shadowed flank where it meets the cowl.",
+   "evidence": ["r12/w13A.png", "r12/s13A.png", "ref/web/exterior/b_lalf_ANA77W_11A_137.jpg"],
+   "fix": "l.434: corner radius r = Math.min(w*0.48, d*0.45) -> Math.min(w*0.3, d*0.3) on the forward (cowl) part. l.448: bake a flank shade for the fairing, 0.8 for |n.x| > 0.6, so the junction with the cowl reads."
+  }
+ ],
+ "worthPlus03": [
+  "Canoe normal + height bake and wedge tails (canoes 6.8 -> about 8.0; overall about +0.35). Own file, l.345/351/353/445.",
+  "Inlet floor darkened by normal plus a steeper depth grade, matte liner (inlet 6.8 -> about 7.8; overall about +0.3). Own file, l.364-366/413.",
+  "Grazing env specular scaled by albedo (surface detail about +0.5; overall about +0.2-0.3). Lighting owner.",
+  "Not +0.3 alone: access panel shape, lip satin, pylon ridge, gap width (about +0.1 each)."
+ ],
+ "questionsForUser": [],
+ "photos": [
+  {"path": "ref/web/exterior/b_alv_ANA77W_PY_IMG_7250-2-scaled.jpeg", "seat": "26K (JA795A)", "what": "canoes: bright crown, flank 0.55-0.72 of the skin, dark belly, wedge tails"},
+  {"path": "ref/web/exterior/b_alv_ANA77W_PY_IMG_7345-2-scaled.jpeg", "seat": "26K (JA795A)", "what": "mid-grey pods under a near-white wing; registration stroke weight"},
+  {"path": "ref/web/exterior/b_lalf_ANA77W_11A_136.jpg", "seat": "11A", "what": "dark slate inlet liner L35-69, stadium access panel with fasteners, broad satin lip"},
+  {"path": "ref/web/exterior/b5_knav_ANA77W_7A_GE90_takeoff_9.jpg", "seat": "7A", "what": "black fan face, grey spinner L87, GE roundel"},
+  {"path": "ref/web/exterior/a5_kn_ANA77W_TheRoom_41.jpg", "seat": "THE Room right", "what": "near 194 -> far 146 value ramp; canoe flank 0.72-0.77 of the skin"},
+  {"path": "ref/web/exterior/b_alv_ANA77W_PY_IMG_7282-2-scaled.jpeg", "seat": "26K dusk", "what": "underwing #45546e, b-r +41: the s13A blue-violet underside is correct"}
+ ]
+}
