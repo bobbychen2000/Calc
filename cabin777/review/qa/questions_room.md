@@ -32,3 +32,15 @@ The user asked for judgement calls rather than questions. Rule applied: real in-
     footwell. It is left as is, with the plaques moved to the cap ends. Say if the deeper housing is wanted.
 13. **Slipper colour (w8a).** tpg_66 / 67 show light grey slippers and omaat_room_15 a navy pouch. The model keeps navy,
     after the most recent photo.
+
+## Wave 3b (w12)
+14. **Pillow pattern (w12).** The KN Aviation 2021 close-up (kn_17) shows the blue pillow as a tone-on-tone check of
+    ~1.4 cm squares set on the diagonal; the comforter carries the same jacquard (tpg_81 / 82). Both now use one drawn
+    check tile (`tex_j_pillow.png`, period 1.9 cm measured on tpg_46). Note: tpg_72, cited in earlier ratings as the quilted
+    comforter, is a photo of the pyjamas; the real bed photos are tpg_79 / 81-83 (new TPG numbering).
+15. **Bed-mode comforter (w12a question).** lalf_3 shows it folded back across the full width; tpg_81 shows it loose over
+    the pad into the footwell. The model keeps the loose comforter (decision 2). Say if the folded look is wanted.
+16. **Plaque numerals (w12a/b question).** c_27315 and kn_36 (day) read white; tlfl_9211 (2024, night) and ff_17e read
+    blue-lit. Decision 5 (blue-lit) stays.
+17. **Slippers (w12b).** kn_17 and tpg_76 show white slippers in film with a pink amenity kit; omaat_room_15 a navy
+    pouch. Decision 13 (navy) stays for now; it may be a period / route difference.

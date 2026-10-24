@@ -23,3 +23,13 @@
 - **To monuments (FYI):** `PHOTO_GAIN[19]` (ash grain, `LAYER.ashGrain`) went from 2.0 to 3.0. Room rater w8a measured
   the grain at 1.9-2.6 % against 8.7-16 % in c_27316 / tpg_53. `barAsh` in 10_mono.js uses the same layer; check the
   door-3 bar, and give `barAsh` its own layer if it now reads too streaky.
+
+## Wave 3b (room w12)
+- **To monuments (FYI, shared ash layer):** `tex/tex_j_ash.png` is re-cut from a real 1600 px close-up of the THE Room
+  aisle-end panels (tpg_60, TPG 2020) instead of the CG render c_27305: 0.32 m tile, fine straight hairlines plus the
+  1-4 cm veneer bands. `PHOTO_GAIN[19]` went 3.4 -> 2.0 to suit it. `barAsh` (10_mono.js) uses the same layer; check the
+  door-3 bar and give it its own layer/gain if it now reads wrong.
+- **To lighting (12_scene.js / 04_shaders.js), not scored as room:** in the cabin views the blue pillow renders
+  over-saturated (q09 white-normalised 0.25/0.31/0.68 vs tpg_46 0.41/0.43/0.73) although the studio render matches, and
+  the charcoal shells read cool (q09 shells / white pillow 0.39/0.43/0.48 vs tpg_81 0.49/0.52/0.53). Both point to the
+  cabin's blue fill / white balance (room gap analysis w12, raters w12a/b).

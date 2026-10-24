@@ -2,8 +2,8 @@
 // Procedural textures (generated at load; no external image assets)
 //  Detail layers are RGBA: RG = tangent normal (xy), B = albedo mod, A = roughness mod
 // ------------------------------------------------------------------
-const LAYER = { none: 0, fabric: 1, leather: 2, carpet: 3, plastic: 4, brushed: 5, marble: 6, vinyl: 7, grille: 8, yagasuri: 9, wood: 10, yMosaic: 11, atlasLit: 14, atlasGlow: 15, yJacq: 16, pyFleck: 17, tweed: 18, ashGrain: 19, fWood: 20, fTweed: 21, yCarpet: 22, pyConfetti: 23, yDiamond: 24, yFleck: 25, yMosaicP: 26, xSkin: 27, gAlu: 28 };
-const N_LAYERS = 29;
+const LAYER = { none: 0, fabric: 1, leather: 2, carpet: 3, plastic: 4, brushed: 5, marble: 6, vinyl: 7, grille: 8, yagasuri: 9, wood: 10, yMosaic: 11, atlasLit: 14, atlasGlow: 15, yJacq: 16, pyFleck: 17, tweed: 18, ashGrain: 19, fWood: 20, fTweed: 21, yCarpet: 22, pyConfetti: 23, yDiamond: 24, yFleck: 25, yMosaicP: 26, xSkin: 27, gAlu: 28, jPillow: 29 };
+const N_LAYERS = 30;
 // layers >= 16 take their pattern from a photo swatch when PHOTO_TEX is embedded (build.py), else procedural
 const PHOTO_LAYERS = {
   16: 'y_tick',
@@ -19,6 +19,7 @@ const PHOTO_LAYERS = {
   26: 'y_mosaic',  // econ w6: Y dash-checker mosaic (replaces procedural layer 11 on the seats)
   27: 'x_skin',    // exterior w8: wing-skin grime streaks (alv IMG_7250 flap)
   28: 'g_alu',     // monuments w9: satin galley-insert wear / smudge mottle (sansY_44 oven, sans_38 cart)
+  29: 'j_pillow',  // room w12: THE Room pillow + comforter check jacquard (kn_17, tpg_46)
 };
 let PHOTO_PIX = null;
 // photo pattern strength per layer (1 = as photographed). QA r1 (relative luminance SD measured on the photos):
@@ -32,11 +33,12 @@ let PHOTO_PIX = null;
 const PHOTO_GAIN = {
   17: 1.0,   // PY: synthesised ANA dash-grid tile (make_swatches synth_py_back), contrast measured on py_37305 [D]
   18: 0.5,
-  19: 3.4,   // room w10b: 0.6-0.8x the photos at 3.0; room w8a: grain rendered 1.9-2.6 % vs 8.7-16 % (c_27316, tpg_53); x2 read streaky -> x1.5 [D]
+  19: 2.0,   // room w12: real tpg_60 tile; banding 1 cm 6-7 % in the cabin views (tpg_60 / c_27314 / tpg_81) [D]; was 3.4 on the weak c_27305 tile; room w10b: 0.6-0.8x the photos at 3.0; room w8a: grain rendered 1.9-2.6 % vs 8.7-16 % (c_27316, tpg_53); x2 read streaky -> x1.5 [D]
   20: 0.7,
   21: 0.5,
   23: 1.0,
   28: 0.3,    // monuments w9: tile SD 0.10 -> ~3 % smudge mottle (sans_38 cart 4.8 %, sansY_44 oven ~10 %; 0.5 read as stains) [D]
+  29: 0.55,  // room w12: kn_17 close-up +-25 % linear, but tpg_81 / tpg_46 at seat distance read about half that [D]
   27: 0.22,   // exterior w9: x0.75, read as even brushed banding at 0.3 (A w9); exterior w8: tile stored at SD 0.12 -> ~3.6 % grime mottle (KN41 / 7250 flap panels 3-5 %) [D]
 };
 // swatches stored as ratio / ENC instead of ratio / 2 (test/make_swatches.py ENC): the Y ticks are ~10x the navy ground
@@ -76,6 +78,7 @@ const LAYER_PARAMS = {
   26: [5.0, 0.12, 1.4, 0.15],   // econ w6: Y dash mosaic (0.2 m tile)
   27: [0.25, 0.015, 0.3, 0.35],  // exterior w8: 4 m wing-skin grime tile, near-flat normal, grime a little rougher
   28: [5.5, 0.02, 0.5, 0.3],     // monuments w9: 0.18 m satin galley-metal wear tile, near-flat normal, smudges a little rougher
+  29: [6.6, 0.12, 1.0, 0.15],   // room w12: pillow / comforter check jacquard (0.152 m tile), soft weave relief
 };
 
 function hash2(ix, iy, seed) {
@@ -251,7 +254,7 @@ function buildDetailLayers(S = 256) {
     const a = vnoise(u * 3, (v + w) * 160, 160, 122), b = vnoise(u * 6, (v + w) * 64, 64, 123);
     return clamp(0.5 + 0.55 * (a - 0.5) + 0.3 * (b - 0.5), 0, 1);
   }, () => 0.5, 0.2);
-  L[20] = L[10]; L[21] = L[18]; L[22] = L[3]; L[23] = L[17]; L[24] = L[16]; L[25] = L[16]; L[26] = L[11];
+  L[20] = L[10]; L[21] = L[18]; L[22] = L[3]; L[23] = L[17]; L[24] = L[16]; L[25] = L[16]; L[26] = L[11]; L[29] = L[9];
   // photo swatches: tile scale from the swatch's physical size; normal + roughness from its luminance
   if (PHOTO_PIX) for (const [k, name] of Object.entries(PHOTO_LAYERS)) {
     const px = PHOTO_PIX[name]; if (!px) continue;

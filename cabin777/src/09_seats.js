@@ -74,7 +74,7 @@ const SEATMAT = {
   // pale grey-beige ash with fine straight grain, charcoal shells with flat charcoal tops (QA r1: shell / console
   // #45484d omaat_room_16, #45454c c_27312; tops #545557 omaat_room_10), silver line only on armrest ledges + door-leaf
   // edges (c_27313 / 27300), charcoal tweed seat, slate Ultraleather headrest flap (#767a7e omaat_room_13), navy pillow
-  ash: { c: '#dcd5c8', r: 0.44, l: LAYER.ashGrain },   // QA w2: near-neutral pale ash (c_27313 #e7e8e4, c_27315 table #c9c6c2)
+  ash: { c: '#d9cfbe', r: 0.44, l: LAYER.ashGrain },   // room w12: R/B 1.05 -> ~1.12 (real photos 1.10-1.35, official c_27313 the coolest) [D]; QA w2: near-neutral pale ash (c_27313 #e7e8e4, c_27315 table #c9c6c2)
   ashDark: { c: '#5d6166', r: 0.34, m: 0.35, l: LAYER.brushed },
   rosewood: { c: '#4b403a', r: 0.36, l: LAYER.wood },
   // QA r3: shells rendered ~0.5x the photo luminance (q10 #292d34 vs c_27315 #4c4e60) -> lifted
@@ -86,13 +86,13 @@ const SEATMAT = {
   jBase: { c: '#2a2b2f', r: 0.6 },
   jFabric: { c: '#5c5860', r: 0.92, l: LAYER.tweed },   // uniform mid grey #5d5d62-#636164 (c_27315, omaat_room_13); QA w1: rendered #393a43 vs photo #5e5b69 -> lifted; room w5 (A+B): the lift overshot, fabric rendered 1.4x the shell, photos 0.55-0.8x (c_27313, c_27315, tpg_75) [V]; room w11a: a touch of mauve-taupe (c_27315 #605d6b) [V]
   jLeather: { c: '#5d6066', r: 0.5, l: LAYER.leather },
-  jHead: { c: '#78808a', r: 0.38, l: LAYER.leather },   // QA w2: flap is the palest part of the seat (c_27315 #768193, c_27313 #6f7b84); room w6a: ~1.3x the darker w5 fabric, neutral slate; w11a: flap read level with the fabric -> lifted
+  jHead: { c: '#747c86', r: 0.55, l: LAYER.leather },   // room w12: flap/fabric 1.7-2.4 in q10 vs 1.2-1.4 (c_27315, c_27313, tpg_46): less sheen [D];   // QA w2: flap is the palest part of the seat (c_27315 #768193, c_27313 #6f7b84); room w6a: ~1.3x the darker w5 fabric, neutral slate; w11a: flap read level with the fabric -> lifted
   blueAccent: { c: '#233f7a', r: 0.5 },
   slate: { c: '#3f4246', r: 0.55, l: LAYER.marble },
   mattress: { c: '#d2c8b4', r: 0.9, l: LAYER.fabric },   // room w8b/w9a: warm cream pad (tpg_72 #dfd3c0 in the light, omaat_room_15) [V]
-  duvet: { c: '#4d57aa', r: 0.7, l: LAYER.fabric },   // room w5: satin royal blue (tpg_72 #6f7bd9, b_tpg #5863b0) [V]   // QA w2: indigo (fb_a96b7a65 #4b5789, fb_d8b6dc0d #606ea0)
+  duvet: { c: '#3f4799', r: 0.85, l: LAYER.jPillow },   // room w12: the pillow's check jacquard, matte; duvet / white pillow ~0.5 (tpg_81 (0.42, 0.50, 1.01), lalf_3) [D] - was plain satin #4d57aa r 0.7 (rendered lighter than the pillow);   // room w5: satin royal blue (tpg_72 #6f7bd9, b_tpg #5863b0) [V]   // QA w2: indigo (fb_a96b7a65 #4b5789, fb_d8b6dc0d #606ea0)
   pillow: { c: '#eeede8', r: 0.9, l: LAYER.fabric },
-  pillowBlue: { c: '#4c5594', r: 0.85, l: LAYER.yagasuri },   // QA w2: rendered #181e49; photos #4c5178-#737ba9 (tt_seat-1, tt_seats-center); room w7: pillow/fabric 0.66 (tpg_42) - 1.07 (omaat_room_15) -> ~0.85   // yagasuri jacquard #32355d / #3e457b (c_27302 / 27303)
+  pillowBlue: { c: '#4c5594', r: 0.85, l: LAYER.jPillow },   // room w12: 45 deg check jacquard tile (kn_17, tpg_46) [D]; QA w2: rendered #181e49; photos #4c5178-#737ba9 (tt_seat-1, tt_seats-center); room w7: pillow/fabric 0.66 (tpg_42) - 1.07 (omaat_room_15) -> ~0.85   // yagasuri jacquard #32355d / #3e457b (c_27302 / 27303)
   lampGlow: { c: '#ffe2b0', r: 0.4, e: 0.35 },
   moodGlow: { c: '#ffd9a0', r: 0.5, e: 0.25 },
   hole: { c: '#0b0d10', r: 1.0 },

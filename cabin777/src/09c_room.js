@@ -14,7 +14,7 @@ Object.assign(SEATMAT, {
   jBezel: { c: '#3a3c42', r: 0.35, l: LAYER.plastic },   // QA w3: rendered near-black (L 18-29 vs photos 34-45)
   jSeam: { c: '#46444b', r: 0.95 },
   jCavity: { c: '#2c2d32', r: 0.9 },   // QA w4: footwell space reads charcoal, not black (tpg_53, c_27316) [V]
-  jPillowBack: { c: '#88847f', r: 0.7, l: LAYER.fabric },   // w8a/b: warm neutral grey flange (omaat_room_15, blue-cast #595b7e -> neutral) [V]
+  jPillowBack: { c: '#5a5860', r: 0.75, l: LAYER.fabric },   // w12b: dark grey-taupe piping (kn_17, tpg_81; rendered 0.89 of the white pillow); w8a/b: warm neutral grey flange (omaat_room_15, blue-cast #595b7e -> neutral) [V]
   jPanelEdge: { c: '#5d6166', r: 0.34, m: 0.5, l: LAYER.brushed },
   jLedge: { c: '#8f959c', r: 0.3, m: 0.6, l: LAYER.brushed },   // ledge top, darker than the edge trim (c_27313 #788087-#b2bbc8) [V]
   jSill: { c: '#8e9399', r: 0.35, m: 0.4, l: LAYER.brushed },   // silver-grey sill + drawer under the monitor (tpg_53) [V]
@@ -61,8 +61,9 @@ function roomSeatCore(B, bed, lod, w = 0.64, fs = 1) {
   // QA w4: on the half away from the pillows so it shows, diagonal with the silver buckle (tpg_31 / 42) [V]
   // w11a: in the cushion's tilted frame, just proud of its top (was buried at y 0.433 - c_27313/15/16, omaat_room_15) [V]
   const CU = M4.trs(0, 0.39, -0.34, 0, 2 * DEG);
-  B.add(gBox(0.045, 0.004, 0.46), M4.mul(CU, M4.trs(0.14, 0.047, 0, -0.5)), { c: '#30505a', r: 0.75 });   // room w5a: less cyan, longer (c_27315, tpg_31) [V]
-  B.add(gRBox(0.05, 0.012, 0.035, 0.005, 1), M4.mul(CU, M4.trs(0.06, 0.051, -0.10)), SEATMAT.buckle);
+  // w12: dark slate-teal webbing to the seat crease, buckle at its front end clear of the bundle (kn_17 #213342, c_27313) [V]
+  B.add(gBox(0.045, 0.004, 0.54), M4.mul(CU, M4.trs(0.15, 0.047, 0.04, -0.45)), { c: '#2c4250', r: 0.8, l: LAYER.fabric });
+  B.add(gRBox(0.05, 0.012, 0.035, 0.005, 1), M4.mul(CU, M4.trs(0.03, 0.051, -0.20, -0.45)), SEATMAT.buckle);
 }
 
 // charcoal frame round an ash panel (every ash face in the photos sits in a ~3 cm dark frame, c_27312-27315):
@@ -297,8 +298,9 @@ const DUVET_FOLDS = [[-0.10, -0.30, 35, 0.60, 0.04, 0.05], [0.12, 0.05, -30, 0.5
   [0.22, 0.42, -45, 0.30, 0.02, 0.03], [-0.15, 0.55, 20, 0.25, 0.016, 0.03]];
 // bounds(z) -> [xl, xr, mr]: cloth edges and the mattress edge it rolls over (xr > mr); z0..z1 in unit coordinates, head
 // at z0 (hd = 1) or z1 (hd = -1); folds placed about (xc, zc). Height 0 = the cloth's top resting on the mattress.
-function duvetSheet(bounds, z0, z1, hd, xc, foldK = 1, nu = 36, nv = 64) {
-  const rho = 0.025, t = 0.02, zc = (z0 + z1) / 2, k = (z1 - z0) / 1.23;
+function duvetSheet(bounds, z0, z1, hd, xc, foldK = 1, nu = 36, nv = 64, wob = 1, zf = null) {
+  const rho = 0.025, t = 0.035,   // w12: 3-4 cm thick edges (tpg_81) [V]
+    zc = (z0 + z1) / 2, k = (z1 - z0) / 1.23;
   const fold = (x, z, xl, mr) => {
     let f = 0;
     for (const [cx, cz, a, len, A, sg] of DUVET_FOLDS) {
@@ -306,16 +308,17 @@ function duvetSheet(bounds, z0, z1, hd, xc, foldK = 1, nu = 36, nv = 64) {
       const par = dx * sn + dz * c, per = dx * c - dz * sn;
       f += 0.5 * foldK * A * Math.exp(-((per / sg) ** 2)) * Math.exp(-((par / (len / 2)) ** 4));   // w9a: folds halved so the quilt reads
     }
+    if (zf !== null) f *= 1 - smooth(zf - 0.15, zf + 0.05, hd * (z - zf) + zf);   // w12a: no folds squeezed into the footwell taper
     const zh = hd > 0 ? z - z0 : z1 - z;   // turned-down head fold: a doubled band with a soft roll at its edge
     f += 0.012 * (1 - smooth(0.11, 0.15, zh)) + 0.008 * Math.exp(-(((zh - 0.135) / 0.018) ** 2));
     // w8a: a quilted comforter - lofted ~1.5 cm away from its edges, stitched on a ~0.33 m grid (tpg_70 / 72) [V]
     const e = smooth(0, 0.09, Math.min(x - xl, mr - x) + 0.01), q = 0.33, gx = x - xc + (hd > 0 ? 0.02 : 0.07),   // w11b: O grid phased so a seam crosses the sheet
       gz = z - z0 - 0.02;
     const dq = Math.min(Math.abs(gx - q * Math.round(gx / q)), Math.abs(gz - q * Math.round(gz / q)));
-    return f * smooth(0, 0.05, Math.min(x - xl, mr - x) + 0.01) + e * (0.024 - 0.020 * Math.exp(-((dq / 0.024) ** 2)));
+    return f * smooth(0, 0.05, Math.min(x - xl, mr - x) + 0.01) + e * (0.024 - 0.020 * Math.exp(-((dq / 0.034) ** 2)));   // w12b: dip wider than ~2 grid cells (no diagonal ripples)
   };
   const at = (u, v) => {   // u, v in [0, 1] -> point on the cloth's top
-    const z = lerp(z0, z1, v), [xl0, xr, mr] = bounds(z), xl = xl0 + 0.012 * Math.sin(z * 23) + 0.008 * Math.sin(z * 41 + 1);   // irregular free edge
+    const z = lerp(z0, z1, v), [xl0, xr, mr] = bounds(z), xl = xl0 + wob * (0.006 * Math.sin(5.5 * z + 0.7) + 0.002 * Math.sin(17 * z));   // w12: a long low wave, not a pie-crust (tpg_81) [V]
     const xp = lerp(xl, xr, u), d = xp - mr;
     if (d <= 0) return [xp, fold(xp, z, xl, mr), z];
     const s = Math.min(d, rho * Math.PI / 2), th = s / rho;
@@ -364,9 +367,9 @@ function roomBed(B, part) {
     mat(-0.475, 0.285, -1.28, -0.62); mat(-0.475, -0.032, -0.64, MON.zO - 0.005, -0.002);
     // aisle edge rolls over the mattress beside the seat; beside the table it ends at the console wall; then the footwell
     bounds = (z) => {
-      const [fl, fr] = footwellEdges(fw[0], fw[1], fw[2], fw[3], -1, z, 0.02), a = smooth(-0.74, -0.60, z), b = smooth(MON.zO - 0.06, MON.zO + 0.06, z);
+      const [fl, fr] = footwellEdges(fw[0], fw[1], fw[2], fw[3], -1, z, 0.02), a = smooth(-0.80, -0.52, z), b = smooth(MON.zO - 0.06, MON.zO + 0.06, z);   // w12b: softer narrowing
       const mr = lerp(lerp(0.285, -0.012, a), fr + 0.01, b);
-      return [lerp(-0.415, fl, b), lerp(lerp(0.31, -0.03, a), fr, b), mr];
+      return [lerp(-0.455, fl, b), lerp(lerp(0.30, -0.03, a), fr, b), mr];   // w12: laid wide over the pad (tpg_81) [V]
     };
     z0 = -0.875; z1 = 0.55; hd = 1; xc = -0.12;
   } else {
@@ -377,7 +380,8 @@ function roomBed(B, part) {
     };
     z0 = -0.535; z1 = 0.86; hd = -1; xc = 0.22;
   }
-  for (const g of duvetSheet(bounds, z0, z1, hd, xc, part === 'O' ? 0.2 : 1)) B.add(g, M4.trs(0, y + MAT_TOP + 0.02, 0), SEATMAT.duvet);
+  const O = part === 'O';
+  for (const g of duvetSheet(bounds, z0, z1, hd, xc, O ? 0.2 : 1, O ? 54 : 36, 64, O ? 0.25 : 1, O ? MON.zO : null)) B.add(g, M4.trs(0, y + MAT_TOP + 0.02, 0), SEATMAT.duvet);
 }
 function roomPart(part, opts = {}) {
   const B = new Builder();
@@ -441,6 +445,7 @@ function roomPart(part, opts = {}) {
     for (const gz of [-0.023, 0.023]) B.add(gBox(1.03, 0.004, 0.010), M4.trs(-0.035, MON.top + 0.0005, mz + gz), SEATMAT.jVoid);
     B.add(gRBox(1.045, 0.04, 0.028, 0.008, 1), M4.trs(-0.0325, MON.top + 0.02, mz), shell);   // w11b: clear of the centreline fins inboard
     B.add(gRBox(1.049, 0.006, 0.032, 0.003, 1), M4.trs(-0.0325, MON.top + 0.043, mz), MX);
+  B.add(gRBox(0.05, 0.03, 0.07, 0.012, 1), M4.trs(0.47, MON.top + 0.035, mz), shell);   // w12: flared T into the aisle cap (c_27313) [V]
     // w10a: light grey-metal edges along the housing tops on both faces (c_27313 / 27315) [V]
     for (const ez of [MON.zO + 0.008, MON.zE - 0.008]) B.add(gBox(1.10, 0.004, 0.016), M4.trs(-0.035, MON.top + 0.0005, ez), MX);
     // O's face: monitor (outer column) + O's cabinet (aisle column)

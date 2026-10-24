@@ -1,0 +1,226 @@
+{
+ "area": "room",
+ "rater": "A-skeptic",
+ "round": 12,
+ "score": 8.1,
+ "summary": "The w11 fixes are in the renders. The teal belt now shows on the cushion (r7: 671 teal pixels, w11 had 0), the plaques sit at the cap ends, the cap is darker and the spine no longer crosses the centreline fins. From the aisle (q06, q08, q10) the room is clearly the same product: nested pairs, monuments, charcoal frames round the ash, monitors and consoles. Four things keep it below 8.5. (1) The O-bed comforter is still the weakest piece. In r6 and r9 it is a pale, glossy, crumpled periwinkle tongue with no quilting or jacquard. The real comforters (tpg_79, tpg_81, lalf_3) are opaque royal or indigo, about half the luma of the white pillow, with a clear check jacquard and soft broad folds. (2) The duvet is too light and too grey in both beds: about 0.66 of the white pillow's luma in the render against about 0.5 in the photos. (3) The ash renders pale cream: (181,177,171) against (125-162) in c_27312/15/16. Its grain contrast is about half the photos': high-pass/mean 0.045-0.072 against 0.12-0.22. An uncommitted re-cut of the ash tile from tpg_60 is in the working tree but is not in these renders. (4) Smaller items: the belt is cyan-teal where the photos show slate blue; the plaque glow quad paints a navy rectangle over the grey tile; and the spine still meets the cap at 80 % of its length (owner decision 12, still in place). Lighting: the shells read cool blue-slate in the cabin views (q10 shell (66,72,84)); this is not scored here.",
+ "photos_collected": [
+  "ref/web/room/lalf_1..24.jpg (Live and Let's Fly, 2021 ANA 777-300ER The Room review, 1024 px; lalf_2/3/4 made bed with indigo quilted comforter + white/blue pillows, lalf_22 bundle in plastic, lalf_16/17 controls, lalf_23/24 cabin)",
+  "ref/web/room/tlfl_9192..9242.jpg (Turning Left for Less, Dec 2024, 1200 px; tlfl_9211 centre pair from the aisle at night: 5K plaque = grey tile with blue-lit numerals, plaques at both ends of the centre cap; tlfl_9206/9212/9217 seats with bundles; tlfl_9228/9229 monitor and open cabinet)"
+ ],
+ "prior_issues": [
+  {
+   "detail": "w11a MED: teal shoulder belt and buckle buried in the cushion",
+   "status": "fixed (colour now off, see issues)",
+   "evidence": "5556cf9 puts the belt in the cushion's tilted frame. r7 shows a teal strip on the cushion (crop 150-460 x 280-450), with 671 teal pixels, mean (88,146,161); w11 had 0. The buckle is hidden under the pillow and bundle in r7."
+  },
+  {
+   "detail": "w11a/w11b MED: O comforter is crumpled translucent satin with no visible quilting",
+   "status": "not fixed",
+   "evidence": "9ea2a15 only re-phased the quilt grid (gx offset 0.02). r9 still shows pinched vertical ridges where the sheet enters the footwell (r9 340-420 x 200-290) and a glossy pastel surface (143,158,228) with no legible seams. r6 still reads as a puddle. tpg_79 and tpg_81 show an opaque royal-blue comforter with ~0.3 m quilt boxes and a check jacquard."
+  },
+  {
+   "detail": "w11a/w11b MED: spine meets the aisle cap 80 % along it",
+   "status": "not fixed (accepted, decision 12); plaques moved to the cap ends",
+   "evidence": "09_seats.js plaques at z -0.53 / -0.005. tlfl_9211 (2024) confirms plaques at both cap ends. The spine still sits at mz -0.0875 on a z -0.58..0.035 cap."
+  },
+  {
+   "detail": "w11a MED: seat fabric blue-steel, flap not contrasting",
+   "status": "fixed",
+   "evidence": "q10 fabric (545-575 x 470-560) is (71,67,80): b-r +9, mauve-taupe like c_27315 (91,88,102), b-r +11. The flap (610-730 x 395-465) is (106,113,126), 1.5x the fabric against the photo's 1.3x (c_27315 flap (117,128,145)). The fabric is now about 20 % darker than the photo, partly from lighting."
+  },
+  {
+   "detail": "w11b LOW: aisle cap too light against the ash",
+   "status": "fixed",
+   "evidence": "Cap '#6c6e71' (9ea2a15). In r3cap it reads mid grey below the ash post."
+  },
+  {
+   "detail": "w11b LOW: plaque tiles near-black",
+   "status": "partly fixed",
+   "evidence": "The plate is now '#5c6066', but the room tag glow quad (09_seats.js line 275, 0.058 x 0.03, larger than most of the tile) draws the atlas tag background '#3a3531', tinted '#5f9dff' and emissive. So the q08 '13K' plaque (crop 680-800 x 520-575) reads as a navy rectangle with light-blue numerals in a thin grey rim. c_27315 shows a grey tile with white numerals; tlfl_9211 shows a grey tile with blue-lit numerals and no navy field."
+  },
+  {
+   "detail": "w11b LOW: spine rail rides over the centreline fins",
+   "status": "fixed",
+   "evidence": "The spine is shortened to 1.045 and centred at -0.0325 (9ea2a15). r5 shows no rail over the fin band."
+  },
+  {
+   "detail": "w11a/b LOW: O mattress pieces coplanar overlap",
+   "status": "fixed",
+   "evidence": "Second O piece has dy -0.002 (09c line ~362)."
+  },
+  {
+   "detail": "w11a/b LOW: ash grain weak, too pale",
+   "status": "not fixed in these renders (work in progress)",
+   "evidence": "q06 (190-275 x 345-430) high-pass/mean 0.068, q07 0.045 and q10 0.072, against c_27312 0.19-0.22, c_27315 0.148 and c_27316 cabinet door 0.117. The working tree has an uncommitted tex_j_ash re-cut from tpg_60 with PHOTO_GAIN 19 = 1.2, which is not in w12base."
+  },
+  {
+   "detail": "w11a LOW: mattress pad same white as the pillow",
+   "status": "partly fixed",
+   "evidence": "SEATMAT.mattress '#d2c8b4'. In r9 the pad is (233,230,227) and the white pillow (245,244,243): only a 5 % step, but tpg_81 shows a similar small step, so this is acceptable."
+  }
+ ],
+ "details": [
+  {
+   "detail": "Overall nested-pair layout, monuments, shells, privacy walls (aisle views)",
+   "score": 8.5,
+   "refs": [
+    "c_27312",
+    "c_27315",
+    "tlfl_9211",
+    "q06",
+    "q08",
+    "q10"
+   ]
+  },
+  {
+   "detail": "Monument top / aisle cap / spine / plaques",
+   "score": 7.9,
+   "refs": [
+    "c_27313",
+    "c_27314",
+    "c_27315",
+    "tlfl_9211",
+    "q08",
+    "r3",
+    "r5"
+   ]
+  },
+  {
+   "detail": "Ash panels and table tops (tone, grain)",
+   "score": 7.3,
+   "refs": [
+    "c_27312",
+    "c_27315",
+    "c_27316",
+    "tlfl_9211",
+    "q06",
+    "q07",
+    "q10"
+   ]
+  },
+  {
+   "detail": "Seat: sofa, back channels, header band, slate flap + tab",
+   "score": 8.2,
+   "refs": [
+    "c_27315",
+    "tpg_46",
+    "lalf_3",
+    "r7",
+    "q08",
+    "q10"
+   ]
+  },
+  {
+   "detail": "Seat belt and buckle",
+   "score": 7.0,
+   "refs": [
+    "c_27313",
+    "c_27315",
+    "tpg_46",
+    "r7"
+   ]
+  },
+  {
+   "detail": "Boarding bundle and pillows (upright)",
+   "score": 7.9,
+   "refs": [
+    "tpg_46",
+    "tpg_53",
+    "tlfl_9211",
+    "lalf_22",
+    "r7",
+    "q09"
+   ]
+  },
+  {
+   "detail": "E bed (mattress, quilted comforter, pillows)",
+   "score": 7.6,
+   "refs": [
+    "lalf_3",
+    "tpg_81",
+    "r10"
+   ]
+  },
+  {
+   "detail": "O bed comforter",
+   "score": 6.4,
+   "refs": [
+    "tpg_79",
+    "tpg_81",
+    "r6",
+    "r9"
+   ]
+  },
+  {
+   "detail": "Monitor, footwell/ottoman, side-table console",
+   "score": 8.2,
+   "refs": [
+    "c_27316",
+    "tlfl_9228",
+    "q07",
+    "r8"
+   ]
+  },
+  {
+   "detail": "Colour fidelity of our materials (fabric hue, flap contrast, duvet, belt)",
+   "score": 7.6,
+   "refs": [
+    "c_27315",
+    "tpg_81",
+    "lalf_3",
+    "q10",
+    "r7",
+    "r9"
+   ]
+  }
+ ],
+ "issues": [
+  {
+   "severity": "medium",
+   "detail": "O-bed comforter: glossy crumpled pastel tongue, with pinched ridges where it enters the footwell and no quilting or jacquard",
+   "problem": "r9 (340-420 x 200-290) shows tight parallel vertical ridges where the sheet narrows into the footwell wedge. The bounds() squeeze from 0.31 to fr while the DUVET_FOLDS and the head roll stay fixed, so the folds get compressed into pleats. The rest of the sheet is smooth, glossy and pastel, with no seams. tpg_79 and tpg_81 (both O beds, comforter tucked into the footwell) show an opaque comforter with ~0.3 m quilt boxes outlined by soft seams, a check jacquard over the whole surface, and 2-3 broad loose folds. In r6 the O sheet covers only the aisle half beside the seat, where tpg_81 shows it over ~85 % of the mattress width at the pillow end.",
+   "evidence": "r9 duvet (300-360 x 190-230) is (143,158,228), white pillow (245,244,243). tpg_81 duvet (700-1000 x 400-700) is (108,120,212), white pillow (242,226,203); after white balance by the pillow, the duvet is 0.45/0.53/1.04 of white against the render's 0.58/0.64/0.93.",
+   "fix": "09c_room.js roomBed O branch: (a) Fade the folds out in the footwell instead of squeezing them: in fold(), multiply f by (1 - smooth(MON.zO - 0.25, MON.zO, z)) when hd > 0, and replace the footwell part of the sheet with a gentle 1.5 cm sag. (b) Widen the O sheet at the head: bounds xl lerp(-0.415, ...) -> -0.45, so the cloth covers the outer side up to the 3 cm pad margin seen in tpg_81. (c) Drop the irregular free-edge wobble amplitude 0.012/0.008 -> 0.006/0.004. (d) Pass foldK 0.5 (not 0.2) but with A capped at 0.02 so the quilt dip (0.020) stays dominant. (e) Material: see the duvet colour issue."
+  },
+  {
+   "severity": "medium",
+   "detail": "Duvet (both beds) too light, too grey and glossy; no jacquard",
+   "problem": "In both r9 and r10 the duvet renders pastel periwinkle at ~0.66 of the white pillow's luma. Real comforters are 0.47-0.53 of white (tpg_81, lalf_3) and more saturated, with a check jacquard like the pillow's. The satin specular on the pastel colour makes the sheet read translucent.",
+   "evidence": "r10 duvet (170-240 x 320-380) is (120,134,206) and its white (226,226,229). lalf_3 duvet (300-600 x 640-740) is (103,103,142) against a white pillow of (243,217,187), which white-balances to 0.42/0.47/0.76. tpg_81 white-balances to 0.45/0.53/1.04. The model is about 1.3x too light.",
+   "fix": "09_seats.js (shared, one line): duvet { c: '#4d57aa', r: 0.7, l: LAYER.fabric } -> { c: '#3f4799', r: 0.8, l: LAYER.jPillow } (or LAYER.yagasuri if jPillow is not merged), with the UVs on duvetSheet scaled so the check repeats at ~2.5 cm (g.u.push(i/nu*1.2*12, j/nv*2.2*12) or whatever the pillow tile needs). Re-check r9 and r10 for duvet/white luma ~0.5."
+  },
+  {
+   "severity": "medium",
+   "detail": "Ash panels render pale cream with about half the photo's grain contrast",
+   "problem": "In the aisle views the privacy walls read as off-white linen, not the greige ash with visible straight streaks in the photos.",
+   "evidence": "Wall ash in q06 (200-270 x 350-430) is (181,177,171) and in q10 (410-455 x 140-230) (180,177,171). Photos: c_27312 (125,115,101), c_27315 (148,142,141) and (142,136,140), c_27316 cabinet door (162,154,156), tlfl_9211 (190,177,169) at night. Grain high-pass/mean is 0.045-0.072 in the renders against 0.117-0.218 in the photos. Table tops match better: q10 (199,197,192) against c_27315 (184,181,179).",
+   "fix": "The uncommitted tpg_60 ash tile with PHOTO_GAIN[19] = 1.2 should roughly double the grain; verify after the rebuild (target q06 hp/mean >= 0.11). Then SEATMAT.ash '#dcd5c8' -> '#cdc4b6' (shared, one line), which brings the walls to ~0.85 of the current luma and a touch warmer. Keep the tables as they are if they are a separate material."
+  },
+  {
+   "severity": "low",
+   "detail": "Belt reads cyan-teal; photos show slate blue-grey",
+   "problem": "The strap is also a flat, short bar floating on the cushion, not a strap that rises from the back/cushion seam.",
+   "evidence": "r7 belt (88,146,161) against r7 fabric (157,153,164): g-r +58. c_27315 belt (69,92,116): g-r +23, b-r +47. c_27313 (46,64,76). tpg_46 is a dark slate strap with a silver buckle.",
+   "fix": "09c_room.js roomSeatCore: belt c '#30505a' -> '#38485a' (r 0.75). Add a second segment from the seat/back fillet: B.add(gBox(0.045, 0.004, 0.12), M4.mul(CU, M4.trs(0.20, 0.045, 0.27, -0.5 - 0.5)), belt), so it emerges from the crease."
+  },
+  {
+   "severity": "low",
+   "detail": "Plaque glow quad paints a navy rectangle over the grey tile",
+   "problem": "The room tag quad (0.058 x 0.03) samples the atlas tag cell, whose background is '#3a3531', and tints it '#5f9dff' with emission 0.5. The whole quad therefore reads as a navy field, where c_27315 and tlfl_9211 show a grey tile with only the numerals lit.",
+   "evidence": "q08 crop 680-800 x 520-575 ('13K'); c_27315 crop 600-720 x 460-560 ('14D'); tlfl_9211 '5K'.",
+   "fix": "06_atlas.js line ~100: for room seats draw the tag cell background '#000000' (the glow layer then adds nothing outside the glyphs), or shrink the room quad to the glyph box (gQuad(0.040, 0.018)) and let the '#5c6066' plate show round it."
+  },
+  {
+   "severity": "low",
+   "detail": "Upright blue pillow edge reads cream/white, not the grey flange",
+   "problem": "In r7 (330-450 x 230-450) the blue pillow carries a pale cream rim. tpg_46 and tpg_81 show the flange as a mid grey-taupe (tpg_81 flange visible at the pillow's lower edge).",
+   "evidence": "r7 crop; tpg_81 (480-620 x 600-640).",
+   "fix": "Check SEATMAT.jPillowBack. If it is pale, set it near '#8f8a8c'. Also check that the flange loft (cushionSecs 0.458 x 0.358 x 0.008) is not picking up the white pillow's material through z-fighting."
+  }
+ ],
+ "questions": [
+  "lalf_3 (2021) shows the crew-made bed with the comforter folded back across the full width and both pillows side by side at the head. tpg_79 and tpg_81 show it loose and tucked into the footwell. Which bed-mode look should the model show? (The current model follows tpg_81 loosely but covers less width.)",
+  "Night photos (tlfl_9211, 2024) show blue-lit plaque numerals; ANA's daytime c_27315 shows white. Keep blue (current), or switch to white for day moods?"
+ ]
+}

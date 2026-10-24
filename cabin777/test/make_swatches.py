@@ -38,12 +38,17 @@ SW = {
     # 0.22 m) [D], above the door split (the old c_27316 crop was nearly uniform)
     # room QA w1: the 2.2 mm/px source gave 4-8 mm wavy streaks; real veneer shows long straight 1-2 mm hairlines
     # (tt_suite-door-1, c_27305 aisle-end panels) -> blurred along the grain (ALONG) and the tile shrunk to 0.14 m [A]
-    'j_ash':       ('c_27305', (262, 88, 362, 188), 0.14),
+    # room w12: re-cut from a real 1600 px close-up of the aisle-end panels (tpg_60, TPG 2020; ~0.85-0.9 mm/px on the panel,
+    # 384 px = 0.32 m [D]): fine straight hairlines (high-pass SD 3.3-4.4 % in sRGB) plus the 1-4 cm light / dark bands of
+    # real veneer (6.8 % at 1 cm on tpg_60, 7.3-7.4 % on c_27314 / tpg_81), which the old CG crop lacked (1.2 %) [D]
+    'j_ash':       ('web/room/tpg_60.jpg', (880, 270, 1264, 654), 0.32),
     # near-black straight-grain veneer of the suite flank, real photo OMAAT f60 (doors 2 x 0.55 m ~ 1000 px -> 130 px =
     # 0.11 m for 100 px) [D]; the grain already runs along U (horizontal). suite w7: the 100 px corner crop was mostly JPEG
     # blocks and tiled into a brick grid on the flanks -> 170 px from the evenly lit left flank (0.17 m) [D], column-normalised
     # and blurred along the grain like j_ash (f60: long continuous dark streaks)
     'f_wood':      ('web/suite/omaat_f60.jpg', (0, 600, 170, 770), 0.17),
+    # room w12: pillow / comforter 45-deg check jacquard, drawn at the period measured on the real photo tpg_46 (see synth_j_pillow) [D]
+    'j_pillow':    ('web/room/tpg_46.jpg', (900, 700, 1000, 800), 0.152),
     'y_carpet':    ('y_47304', (24, 384, 226, 556), 0.26),
 }
 # QA r2: Y 5 (was 8), see 03_tex.js PHOTO_ENC; py_back 4: its white dashes are ~4.6x the charcoal ground in linear light
@@ -53,15 +58,15 @@ ENC = {'y_tick': 5, 'y_diamond': 5, 'y_fleck': 5, 'y_mosaic': 5, 'py_back': 4, '
 # grey-pattern materials: keep only the luminance pattern (the per-channel ratio of these phone photos is JPEG chroma
 # noise and lilac / green casts); the model's material colour sets the hue
 MONO = {'f_wood', 'f_tweed', 'j_ash', 'py_back',   # py_back: neutral grey weave (QA r1, wall-balanced py_37305)
-        'j_tweed', 'py_confetti'}                  # QA r2: chroma of these was a green / purple JPEG cast
+        'j_tweed', 'py_confetti', 'j_pillow'}                  # QA r2: chroma of these was a green / purple JPEG cast
 # high-pass radius of the lighting / blotch removal (default 40 px on the 256 px tile); py_back: the swatch's low-frequency
 # dark blotches dominated the fine white dashes at seat distance (py_37301 / 37305 read as even dashes on charcoal)
-HP = {'py_back': 20}
+HP = {'py_back': 20, 'j_ash': 60}   # room w12: j_ash keeps its 1-4 cm veneer bands
 # straight horizontal grain: divide each column by its mean, so only the along-grain streaks remain (the c_27305 crop's
 # faint vertical light bands were amplified into a banded look by the QA r2 gain)
 COLNORM = {'j_ash', 'f_wood'}
 # along-grain (x) box blur, px on the 256 px tile: straightens wavy streaks into continuous hairlines
-ALONG = {'j_ash': 24, 'f_wood': 24}
+ALONG = {'j_ash': 6, 'f_wood': 24}   # room w12: the real tpg_60 grain is already straight -> light blur only
 
 
 def _blur_wrap(a, s):
@@ -195,7 +200,22 @@ def synth_y_tick(ratio, seed=3):
     return 1.0 * (1 - m) + lift * m
 
 
-SYNTH = {'py_back': synth_py_back, 'py_confetti': synth_py_confetti, 'y_tick': synth_y_tick}
+def synth_j_pillow(ratio):
+    """THE Room blue pillow + comforter jacquard: a tone-on-tone check of small squares set on the diagonal (kn_17, KN Aviation
+    2021 close-up; tpg_46 / tpg_81). Period along the pillow edge 12.5 px in tpg_46 (right O pillow ~295 px for 0.44 m =
+    670 px/m) = 1.9 cm [D]; sRGB high-pass p10 / p90 0.85 / 1.15 on kn_17 -> about +-25 % in linear light [D]. The photos are
+    too coarse and creased to tile directly, so the check is drawn (8 periods per 256 px tile = 0.152 m) and the photo crop's
+    own fine noise is kept on top."""
+    n = 256; i, j = np.mgrid[0:n, 0:n]
+    a = 32                                          # 45 deg check: period along x / y = 32 px = 1.9 cm
+    h = np.where((np.floor((i + j) / a) + np.floor((i - j) / a)) % 2 == 0, 1.0, -1.0)
+    h = _blur_wrap(h, 1.5)                          # soft woven edges
+    noise = ratio.mean(2) / ratio.mean() - 1
+    r = 1 + 0.25 * h / np.abs(h).max() + 0.4 * np.clip(noise, -0.1, 0.1)
+    return np.repeat(r[:, :, None], 3, 2)
+
+
+SYNTH = {'py_back': synth_py_back, 'py_confetti': synth_py_confetti, 'y_tick': synth_y_tick, 'j_pillow': synth_j_pillow}
 
 
 def tileable(a):

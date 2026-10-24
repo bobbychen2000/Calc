@@ -1,0 +1,53 @@
+{
+  "area": "room",
+  "round": "w12 gap analysis",
+  "baseline": {"A": 8.1, "B": 8.2, "target": 8.5},
+  "evidence_images": ["/tmp/claude-0/gap12/ashcmp.png", "/tmp/claude-0/gap12/proto/cmp.png", "/tmp/claude-0/gap12/proto/t60.png", "/tmp/claude-0/gap12/duvet_real.png", "/tmp/claude-0/gap12/q10crop.png", "/tmp/claude-0/gap12/fabcmp.png"],
+  "items": [
+    {
+      "rank": 1,
+      "title": "Ash veneer: re-cut j_ash from a real photo (tpg_60) with its tonal figure, larger tile, slightly warmer",
+      "category": "surface texture realism + tone",
+      "evidence": "The current tile is cut from CG render c_27305 at 2.2 mm/px, blurred along the grain by 24 px and repeats every 0.14 m. Up close (q07, 0.5 m) it reads as coarse wavy brush strokes, and from the aisle (q06/q08/q10) as a regular hatch. Tonal variation at 1 cm scale (Gaussian low-pass, gradient removed): tile 1.2 % (x3.4 gain = ~4 %); q06 back panel (188-278,342-432) 4.3 %; real tpg_60 panel (880-1480,250-850) 6.8 %, tpg_81 table (1120-1460,520-980) 7.4 %, c_27314 back wall 7.3 %. The high-pass SD already matches (q06 0.045 vs tpg_60 0.046), which is why gains 3.0 -> 3.4 changed nothing. What is missing is the 1-4 cm light/dark banding, and the repeat (4+ tiles across a 0.6 m door). A prototype tile from tpg_60 (crop 880,270,1264,654; same pipeline, HP 60, ALONG 6) gives 4.6 % at 1 cm vs 1.2 % now (/tmp/claude-0/gap12/proto/cmp.png). Tone: R/B in studio light is 1.05 (r9 184,180,175); real normalised to the white pillow is 1.13 (tpg_81 0.87/0.82/0.77) to 1.35 (tpg_46), official 1.04-1.10.",
+      "expected_gain": "+0.10 to +0.15 area (B ash sub-score 7.3 -> ~8.2, A 8.3 -> 8.6; ash shows in every QA view)",
+      "implementation": "test/make_swatches.py: 'j_ash': ('web/room/tpg_60.jpg', (880, 270, 1264, 654), 0.32) [panel ~0.85 m tall over ~970 px = 0.9 mm/px, 384 px = 0.33 m, A]; ALONG['j_ash'] 24 -> 6; HP['j_ash'] = 60; keep COLNORM and MONO. Re-run make_swatches (tex/sizes.json is updated to 0.32). src/03_tex.js PHOTO_GAIN[19] 3.4 -> 2.4 (shared, one line). src/09_seats.js SEATMAT.ash '#dcd5c8' -> '#d9cfbe' (shared, one line; studio R/B ~1.10). Verify: q06/q10 ash high-pass SD 0.045-0.06 and 1 cm low-frequency SD 0.06-0.075. No tris."
+    },
+    {
+      "rank": 2,
+      "title": "Comforter material: the pillow's jacquard, deeper royal blue, matte",
+      "category": "material response + texture (O bed and E bed)",
+      "evidence": "tpg_81 / tpg_82 (real, 2020): the comforter is the same stepped-check jacquard as the blue pillow, with fine 1-3 cm crinkles. Its high-pass SD is 0.093-0.110, against 0.057 for the pillow (crop /tmp/claude-0/gap12/duvet_real.png). Normalised to the white pillow it is (0.42,0.50,1.01), i.e. R 0.87x and B 1.15x the blue pillow. Render r9: the duvet (150,164,231)/247 = (0.61,0.66,0.94) is lighter than the render pillow (144,158,220) and is plain LAYER.fabric with r 0.7. That combination is what the raters call 'translucent satin'.",
+      "expected_gain": "+0.08 to +0.12 area (O bed 6.3/7.0 -> ~7.3/7.6; E bed 7.8/8.2 -> ~8.3/8.5)",
+      "implementation": "src/09_seats.js (shared, one line): duvet: { c: '#3e4daa', r: 0.85, l: LAYER.yagasuri }. Target in studio: r9 duvet top about (125,150,235), R 0.85-0.9x the pillow. Optional: add fine crease normals in 03_tex.js as a new layer 28 = L[9] albedo plus ridged-noise normal (strength ~0.35, ~2 cm). No tris."
+    },
+    {
+      "rank": 3,
+      "title": "O comforter silhouette: straight, thick edges and full mattress width",
+      "category": "silhouette",
+      "evidence": "In r9 the O sheet is a wavy-edged tongue, and its free edge wobbles 2 cm (0.012 sin 23z + 0.008 sin 41z in duvetSheet at()). In tpg_81 the comforter spans the mattress from below the pillow to the foot, with near-straight lofted edges ~3-4 cm thick, and white pad shows only along one side and at the foot.",
+      "expected_gain": "+0.05 to +0.08 area (A's O-bed complaint #2 in w10 and w11)",
+      "implementation": "src/09c_room.js duvetSheet: add an edgeK parameter (O 0.25, E 1) that scales the irregular-edge terms. Skirt t 0.02 -> 0.035 for both parts. roomBed O bounds: head-side xl -0.415 -> -0.455 and xr 0.31 -> 0.30, so the sheet covers the 0.76 m pad with ~2 cm margins. Same 36x64 grid, so no added tris."
+    },
+    {
+      "rank": 4,
+      "title": "Seat value structure: the flap and header are too bright against the back fabric in the cabin",
+      "category": "value/tone + material response",
+      "evidence": "q10 (/tmp/claude-0/gap12/q10crop.png): flap L 126, header band 118, back fabric 53-74, so flap/fabric is 1.7-2.4 and header/fabric 1.6-1.9. Photos: flap/back 1.27 in c_27315 (128/101), 1.2-1.4 in c_27313, 1.2-1.3 in tpg_46; header/back 1.03-1.2. Studio r7 is fine (1.32), so it is the in-cabin specular on jHead (r 0.38) and the dark fabric. w11a lifted jHead, which overshot.",
+      "expected_gain": "+0.05 to +0.08 area (A colour fidelity 7.3; seat 7.8)",
+      "implementation": "src/09_seats.js (shared): jHead r 0.38 -> 0.55 and c '#78808a' -> '#727a84'; jFabric '#5c5860' -> '#635f67' (about +8 % L). Target q10: flap/fabric <= 1.45, fabric/shell 0.85-0.95. Re-check after any lighting change (not counted as lighting gain)."
+    },
+    {
+      "rank": 5,
+      "title": "Small closers: belt tone and spine-to-cap T fillet",
+      "category": "material / missing part",
+      "evidence": "Belt/cushion ratio: render r7 (0.52,0.92,0.95), i.e. bright teal near cushion value; c_27313 (0.60,0.82,0.91), darker slate-teal; tpg_46 is near black. Fillet: w11b noted that the spine butts the cap with a plain end, while c_27313 shows a flared T fillet.",
+      "expected_gain": "+0.03 to +0.05 area",
+      "implementation": "src/09c_room.js line 64: belt c '#30505a' -> '#2c4250', r 0.75 + l: LAYER.fabric (webbing). At the spine/cap junction: B.add(gRBox(0.05, 0.03, 0.07, 0.012, 1), M4.trs(0.47, MON.top + 0.035, mz), shell) (~50 tris)."
+    }
+  ],
+  "not_counted": [
+    "Cabin cool cast: shells normalised to the pillow are (0.39,0.43,0.48) in q09 vs neutral (0.49,0.52,0.53) in tpg_81; the in-cabin blue pillow is over-saturated (q09 0.25/0.31/0.68 vs tpg_46 0.41/0.43/0.73) while studio r7 is right. This belongs to the lighting owner.",
+    "The spine at 80 % of the cap (decision 12 stands)."
+  ],
+  "expected_total": "+0.3 to +0.45 -> A ~8.45-8.55, B ~8.5-8.65"
+}
