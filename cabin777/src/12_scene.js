@@ -27,12 +27,14 @@ const MOODS = {
   // Y fabric mean L66 (y_47300) vs 56] (integration r1). Boarding lens cool white and brighter, bandCut 0.15: the band
   // from the lens to the window tops is the brightest part of the official photos' wall, slightly cool [V: y_47301
   // #f0f1f5 / #ebeaf0, y_47300 #e3e7ed / #dee3ef (B-R +5..17), c_27312 #eaedf0 vs q16 #d3d3d3, q15 #c6c7c7]
-  // Cruise band: lighter, less saturated and a little violet, ~45 % of the white hemi kept in the band (bandCut 0.55),
-  // sideLow 0.10 [V: sany_22 #5f70e4 / #666cb3 (L107-117, s0.40-0.58); sany_12 #4d62e2; tlfl_IMG_9217 lens #5c67e7, wall
-  // top #5a59b9; tlfl_IMG_9206 band #7371bd / #686ad1 (h239-241); ucr_the-room-takeoff #6f88da, upper #7d89be, belt
-  // #858897; was c03 #5c6ae5 / q16 #2334e1 (s0.84)] (lighting + integration r1; sideLed between their two fits [D])
+  // Cruise band: lighter and less saturated, fading out by the window belt (sideLow 0.10) and off the reveals next to
+  // the glass (mainFS nearPane) [V: sany_22 #5f70e4 / #666cb3 (L107-117, s0.40-0.58); sany_12 #4d62e2; tlfl_IMG_9217
+  // lens #5c67e7, wall top #5a59b9; tlfl_IMG_9206 band #7371bd / #686ad1 (h239-241); ucr_the-room-takeoff #6f88da, upper
+  // #7d89be, belt #858897; was c03 #5c6ae5 / q16 #2334e1 (s0.84)] (lighting + integration r1). sideLed hue between the
+  // raters' two fits (h~232) [D]; bandCut 0.8 kept: the suggested 0.55 washed the band to #9896d6 (L156 s0.30), 0.75
+  // with the new tone read L127-157 s0.39-0.47 (c16) [D renders]
   boarding: { label: 'Boarding', hemiTop: [0.97, 0.99, 1.03], hemiBot: [0.36, 0.37, 0.40], wash: [0.25, 0.26, 0.28], led: [1.0, 0.98, 0.92], sideLed: [0.42, 0.46, 0.55], bandCut: 0.15, k: 1.05, exposure: 1.38, toe: 1 },
-  cruise: { label: 'Cruise', hemiTop: [0.86, 0.88, 0.98], hemiBot: [0.24, 0.24, 0.28], wash: [0.25, 0.26, 0.30], led: [1.0, 0.98, 0.92], sideLed: [0.08, 0.14, 1.35], bandCut: 0.75, sideLow: 0.10, k: 0.95, exposure: 1.12, toe: 1 },
+  cruise: { label: 'Cruise', hemiTop: [0.86, 0.88, 0.98], hemiBot: [0.24, 0.24, 0.28], wash: [0.25, 0.26, 0.30], led: [1.0, 0.98, 0.92], sideLed: [0.08, 0.14, 1.35], bandCut: 0.8, sideLow: 0.10, k: 0.95, exposure: 1.12, toe: 1 },
   // dining / sunrise, QA r2: ANA's amber phase is a saturated amber LED line on the bin lens and cove, amber-washed bin
   // faces and a much darker lower cabin, not a beige high key [V: ff_door-gap lens #ffa43d (h32 s0.76), bins #955b2d /
   // #673e1e (s ~0.7)]. Sunrise uses the same levels with a pinker LED [A: no ANA sunrise photo]
