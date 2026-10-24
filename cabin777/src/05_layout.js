@@ -308,7 +308,8 @@ function monoLayoutQA(L) {
   M('galley', 0.28, 0.82, dz[0][1], 7.40, { face: -1, carts: 1, h: 2.10, back: 'F' });
   const d1R = find('closet', 1.62, 7.40); if (d1R) d1R.back = 'F';
   // w1: charcoal curtains in both F aisles at the front wall (ffF_cabin-overview-from-aisle, tpa_IMG_0220, tpg_147)
-  for (const [a, b] of [[-1.68, -0.88], [0.82, 1.62]]) for (const xg of [a + 0.09, b - 0.09]) M('curtain', a, b, 7.43, 7.43, { xg, tone: 'F', h: 0 });
+  // w5: one loose untied drape per aisle, gathered against the centre wall (omaatF_ANA-First-Class-Suite-777-40, ml_DSC_1914)
+  for (const [a, b] of [[-1.68, -0.88], [0.82, 1.62]]) M('curtain', a, b, 7.43, 7.43, { xg: a < 0 ? b - 0.2 : a + 0.2, tone: 'F', h: 0 });
   // w1: door-2 forward monuments seen from rows 5-6 are cream J laminate with wall boxes (tpg_70 / _71), curtains tied
   // back at both aisle openings; the passage between the two centre galleys has a dark soffit (lalf_133)
   for (const m of mon) if (near(m.z0, 14.86) && near(m.z1, dz[1][0])) { m.back = 'J'; if (m.welcome) m.soffitTo = dz[1][1]; }
@@ -352,8 +353,8 @@ function monoLayoutQA(L) {
   M('lav', -2.35, -1.55, dz[4][1], dz[4][1] + 1.2, { face: -1 });
   M('lav', 1.46, 2.31, dz[4][1], dz[4][1] + 1.2, { face: -1 });
   // light-grey curtains across both aisles at the end of economy (y_47300)
-  M('curtain', -1.70, -1.00, zb, zb, { xg: -1.05, tone: 'R', h: 0 });
-  M('curtain', 1.00, 1.62, zb, zb, { xg: 1.05, tone: 'R', h: 0 });
+  M('curtain', -1.70, -1.00, zb, zb, { xg: -1.20, tone: 'R', h: 0 });     // w5: wide drapes, inner edge at the centre block
+  M('curtain', 1.00, 1.62, zb, zb, { xg: 1.20, tone: 'R', h: 0 });
 
   // ---- jump seats: plain lav / closet walls and the door-5 galley end panels
   L.jumps = [[-2.2, dz[0][0], 1], [2.2, dz[0][1], -1], [-2.46, dz[1][1], -1], [2.42, dz[1][1], -1], [-2.45, dz[2][1], -1], [2.45, dz[2][1], -1],

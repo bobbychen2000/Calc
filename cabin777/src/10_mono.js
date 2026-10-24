@@ -20,7 +20,7 @@ const MONMAT = {
   partition: { c: '#d0d2d4', r: 0.5, l: LAYER.plastic },
   // [V] flight-deck door + corridor walls: dark ebony wood-grain laminate with reddish streaks (tpa_IMG_0260 samples
   //     #322f2f..#43393b), white/aluminium door frame and white bolt-plate frames
-  cockpitDoor: { c: '#3a3332', r: 0.4, l: LAYER.wood },
+  cockpitDoor: { c: '#3a3332', r: 0.4, l: LAYER.fWood },    // w5: striped ebony layer (was flat LAYER.wood, w5a/b)
   cockpitFrame: { c: '#c9ccd0', r: 0.35, m: 0.5, l: LAYER.brushed },
   plateWhite: { c: '#e9e9e6', r: 0.45, l: LAYER.plastic },
   jump: { c: '#8a8987', r: 0.6, l: LAYER.fabric },     // [V] mid-grey, ~0.55 of the door lining (lalf_133 #594c4c / #a28c79)
@@ -29,8 +29,8 @@ const MONMAT = {
   closet: { c: '#dedcd6', r: 0.45, l: LAYER.plastic },
   ash: { c: '#cdbfa6', r: 0.5, l: LAYER.wood },
   ashDark: { c: '#8a7560', r: 0.5, l: LAYER.wood },
-  darkWood: { c: '#38302e', r: 0.42, l: LAYER.wood },     // [V] F-zone ebony, as the flight-deck corridor (tpa_IMG_0260)
-  darkWoodDoor: { c: '#3f3533', r: 0.4, l: LAYER.wood },
+  darkWood: { c: '#38302e', r: 0.42, l: LAYER.fWood },     // [V] F-zone ebony, as the flight-deck corridor (tpa_IMG_0260)
+  darkWoodDoor: { c: '#3f3533', r: 0.4, l: LAYER.fWood },
   // door-3 bar / door-2 welcome galley, sampled from ANA's official bar-counter render (Jul 2019 press kit) and
   // OMAAT's in-service photos: light ash doors, dark-bronze frames, black basalt counter, black upper unit
   barAsh: { c: '#b9a687', r: 0.5, l: LAYER.ashGrain },
@@ -54,11 +54,15 @@ const MONMAT = {
   label: { c: '#f4f2ec', r: 0.6 },
   juice: { c: '#f0a526', r: 0.15 },
   tumbler: { c: '#c9d2d6', r: 0.05, m: 0.2 },
+  // [V] welcome galley upper unit: dark warm charcoal with visible frames, not black (omaat_room_32 #1a1911..#3a362a,
+  //     kna_31_full; w5b rendered #050507)
+  welcomeChar: { c: '#4a4740', r: 0.4, l: LAYER.plastic },     // #34322d still rendered ~#0a0a0a in the recess
   navyPanel: { c: '#2d2b29', r: 0.35, l: LAYER.plastic },          // [V] welcome end panel: warm charcoal (sp_09 #46433b dim; render's navy was a tint)
   // standard galley inserts (SANspotter PY snack-bar photo): aluminium ovens/trolleys, black beverage makers,
   // black work deck, red-copper turn-button latches
-  alu: { c: '#a39f99', r: 0.35, m: 0.7, l: LAYER.brushed },     // w4: warm light grey inserts (sp_09, lalf_133)
-  aluDark: { c: '#8f9194', r: 0.4, m: 0.7, l: LAYER.brushed },
+  // w5: inserts rendered #353535-#464646 in the set-back bank; omaat_room_32 ovens #928e79, lighter than the ash doors
+  alu: { c: '#c4c2bc', r: 0.4, m: 0.45, l: LAYER.brushed },
+  aluDark: { c: '#a9a8a4', r: 0.4, m: 0.5, l: LAYER.brushed },
   bevBlack: { c: '#17171a', r: 0.3 },
   copper: { c: '#8f3a2c', r: 0.3, m: 0.4 },   // [V] small red turn-buttons (sp_09); the orange blocks dominated m01/m12
   deck: { c: '#26252a', r: 0.3, l: LAYER.plastic },
@@ -71,7 +75,7 @@ const MONMAT = {
   curtainF: { c: '#57504a', r: 0.95, l: LAYER.fabric },   // w3: F front read too light (0.55 of wall vs 0.36-0.39)   // + tpg_147 #4a453a at 0.34 of white, omaatF_2 #56504b
   curtainTie: { c: '#2e2b2d', r: 0.8, l: LAYER.fabric },
   curtainY: { c: '#585c70', r: 0.9, l: LAYER.fabric },   // w4: rendered #212330 vs py_37302 #545868 (b - r ~19)
-  curtainRear: { c: '#8e8d8a', r: 0.9, l: LAYER.fabric },
+  curtainRear: { c: '#a8a7a4', r: 0.9, l: LAYER.fabric },   // w5: rendered #66676a vs y_47300 #888785..#9c9b99
   curtainC: { c: '#6b635d', r: 0.95, l: LAYER.fabric },   // w2: #5a524d still rendered #2a2523 in shade (m07)  // [V] J-cabin charcoal curtains (omaat_room_36 #302f35-#3d3c42, tpg_71 #5e5655)
   rail: { c: '#dcdbd6', r: 0.4 },
   // full-height class bulkheads (QA r1): F side of F/J = pale mottled washi print (omaatF_2 samples #c0bcb1 under warm
@@ -263,7 +267,7 @@ function buildBar(B, m) {
 // welcome monitors on navy end panels facing the aisles (ANA "new welcome monitors" render, SANspotter photo)
 function buildWelcomeGalley(B, m) {
   const w = m.x1 - m.x0, V = (u, y, o, rx) => faceUV(m, u, y, o, rx), set = 0.38, dk = 1.0;
-  monoStepBody(B, m, dk, set, MONMAT.barAsh, MONMAT.black);
+  monoStepBody(B, m, dk, set, MONMAT.barAsh, MONMAT.welcomeChar);
   const cw = w - 0.06, n = 6;
   B.add(gRBox(cw, dk - 0.02, 0.02, 0.006, 1), V(0, dk / 2, 0.006), MONMAT.bronze);
   B.add(gBox(cw, 0.07, 0.024), V(0, 0.035, 0.008), MONMAT.black);
@@ -305,18 +309,27 @@ function buildWelcomeGalley(B, m) {
   B.add(gRBox(0.92, 0.02, 0.07, 0.006, 1), V(mc, 1.39, o + 0.04), MONMAT.blackGloss);
   // two open bays under the monitor (omaat 32): the brewer stands inside the left one, the right one is empty
   for (const u of [-0.225, 0.225]) {
-    B.add(gBox(0.43, 0.34, 0.004), V(mc + u, 1.2, o + 0.002), { c: '#121115', r: 0.5 });
-    for (const sx of [-1, 1]) B.add(gBox(0.014, 0.36, 0.1), V(mc + u + sx * 0.222, 1.2, o + 0.05), MONMAT.black);
+    B.add(gBox(0.43, 0.34, 0.004), V(mc + u, 1.2, o + 0.002), { c: '#1d1c19', r: 0.5 });
+    for (const sx of [-1, 1]) B.add(gBox(0.014, 0.36, 0.1), V(mc + u + sx * 0.222, 1.2, o + 0.05), MONMAT.welcomeChar);
   }
-  B.add(gBox(0.9, 0.014, 0.1), V(mc, 1.375, o + 0.05), MONMAT.black);
+  B.add(gBox(0.9, 0.014, 0.1), V(mc, 1.375, o + 0.05), MONMAT.welcomeChar);
   B.add(gRBox(0.18, 0.24, 0.12, 0.01, 1), V(mc - 0.28, 1.17, o + 0.064), MONMAT.bevBlack);
   B.add(gCyl(0.045, 0.045, 0.1, 12), V(mc - 0.28, 1.1, o + 0.09), MONMAT.steel);
   B.add(gBox(0.04, 0.02, 0.004), V(mc - 0.25, 1.26, o + 0.126), MONMAT.green);
   // right: tall glass-door cabinet with round latch and a placard above
   const gc = w / 2 - 0.3;
-  B.add(gRBox(0.44, 0.8, 0.03, 0.01, 1), V(gc, 1.44, o + 0.02), MONMAT.blackGloss);
-  B.add(gQuad(0.34, 0.66), V(gc + 0.02, 1.44, o + 0.037), { c: '#2c3036', r: 0.05, e: 0.06 });
-  B.add(gRBox(0.08, 0.1, 0.02, 0.035, 2), V(gc - 0.17, 1.44, o + 0.045), MONMAT.aluDark);
+  // w5 (omaat_room_32, kna_31_full): smoked glass with the shelves and boxes visible behind it, charcoal stiles, a round
+  // latch boss on an oval plate at the fwd stile, white caution text block at the top
+  B.add(gBox(0.40, 0.76, 0.004), V(gc + 0.02, 1.44, o + 0.003), { c: '#2e2c29', r: 0.6 });                // interior back
+  for (const y of [1.2, 1.45, 1.7]) B.add(gBox(0.38, 0.012, 0.07), V(gc + 0.02, y, o + 0.04), { c: '#55524c', r: 0.5 });
+  for (const [u, y, bw, bh, cc] of [[-0.08, 1.27, 0.12, 0.13, '#64625d'], [0.07, 1.25, 0.14, 0.09, '#83807a'], [0.0, 1.53, 0.2, 0.15, '#55534e'], [-0.1, 1.78, 0.1, 0.15, '#6e2c28']])
+    B.add(gBox(bw, bh, 0.05), V(gc + 0.02 + u, y, o + 0.035), { c: cc, r: 0.6 });
+  for (const sx of [-1, 1]) B.add(gBox(0.05, 0.8, 0.03), V(gc + 0.02 + sx * 0.195, 1.44, o + 0.085), MONMAT.welcomeChar);
+  for (const sy of [-1, 1]) B.add(gBox(0.44, 0.05, 0.03), V(gc + 0.02, 1.44 + sy * 0.375, o + 0.085), MONMAT.welcomeChar);
+  // (no alpha in the engine: the smoked glass is implied by the dimmed interior albedos)
+  B.add(gRBox(0.09, 0.14, 0.02, 0.045, 2), V(gc - 0.17, 1.44, o + 0.105), MONMAT.welcomeChar);
+  B.add(gCyl(0.03, 0.03, 0.014, 16), M4.mul(V(gc - 0.17, 1.44, o + 0.118), M4.trs(0, 0, 0, 0, Math.PI / 2)), MONMAT.latch);
+  B.add(gQuad(0.18, 0.06), V(gc + 0.02, 1.80, o + 0.1), MONMAT.label);
   B.add(gRBox(0.3, 0.07, 0.012, 0.03, 2), V(gc, 1.92, o + 0.02), MONMAT.label);
   welcomeEnds(B, m);
 }
@@ -429,7 +442,7 @@ function buildGalley(B, m, premium) {
     }
     B.add(gRBox(uW, 0.36, 0.03, 0.01, 1), F(x, 1.86, o + 0.015), MONMAT.galleyWhite);
     B.add(gRBox(uW - 0.04, 0.32, 0.004, 0.006, 1), F(x, 1.86, o + 0.032), { c: '#c9c6bf', r: 0.45 });        // inset panel
-    B.add(gQuad(0.07, 0.03), F(x, 1.99, o + 0.0345), MONMAT.card);
+    if (k % 3 !== 2) B.add(gQuad(k % 2 ? 0.1 : 0.06, 0.03), F(x + (k % 2 ? 0.04 : -0.03), k % 4 === 1 ? 1.74 : 1.99, o + 0.0345), MONMAT.card);   // w5: varied labels
     B.add(gRBox(0.06, 0.018, 0.012, 0.006, 1), F(x, 1.72, o + 0.036), MONMAT.aluDark);                          // paddle
     for (const s of [-1, 1]) B.add(gRBox(0.016, 0.03, 0.02, 0.006, 1), F(x + s * uW * 0.3, 1.69, o + 0.04), MONMAT.copper);
   }
@@ -457,20 +470,25 @@ function curtainLoft(levels, { n = 36, hx = 0.085, hz = 0.06, amp = 0.3, lobes =
 // untied pleated panel ~0.3 m across, gathered against the panel edge. xg = bundle centre, ~0.16 m off that edge.
 // w3 sizes: tied ~0.22 m at the hem, ~0.11 m at the tie, ~0.31 m under the track; panel ~0.24 m across, ~0.09 m deep,
 // top tucked under a 0.05 m rail (both raters: the r2 panels blocked the aisles)
-let _curtainPanel = null;
-function addCurtain(B, xa, xb, z, xg, mat, tied = false) {
+// w5: 'wide' loose drape (F front, rear economy): ~0.45 m across, 13 folds, irregular hem (omaatF_40: ~0.45 m drape at
+// the F front; y_47300 rear) - its crease shading also varies with height so the folds do not read as uniform flutes
+let _curtainPanel = null, _curtainWide = null;
+function addCurtain(B, xa, xb, z, xg, mat, tied = false, wide = false) {
   if (!_curtainGeo) {
     _curtainGeo = curtainLoft([[0.02, 1.0, 0.9], [0.8, 0.9, 0.8], [1.42, 0.5], [1.55, 0.5], [1.8, 1.05, 0.9], [CURTAIN_H - 0.03, 1.4, 0.8]]);
     _curtainTie = curtainLoft([[1.44, 0.56], [1.53, 0.56]], { amp: 0.1 });
     // w4: wider gathered drape (~0.4 m at the hem, ~0.3 m under the track; py_37302 / y_47300), fuller at the hem
     _curtainPanel = curtainLoft([[0.02, 1.0, 1.1], [0.7, 0.9], [1.4, 0.82], [CURTAIN_H - 0.03, 0.72, 0.7]], { hx: 0.16, hz: 0.035, amp: 0.3, lobes: 11 });
+    _curtainWide = curtainLoft([[0.0, 1.0, 1.2], [0.06, 1.02, 1.15], [0.5, 0.94, 1.0], [1.1, 0.86, 0.9], [1.7, 0.8, 0.8], [CURTAIN_H - 0.03, 0.74, 0.7]], { n: 52, hx: 0.21, hz: 0.04, amp: 0.32, lobes: 13 });
+    for (let k = 0; k <= 52; k++) _curtainWide.p[k * 3 + 1] = 0.01 + 0.035 * Math.abs(Math.sin(k * 1.7));   // uneven hem
   }
   B.add(gBox(Math.abs(xb - xa), 0.02, 0.05), M4.trs((xa + xb) / 2, CURTAIN_H + 0.01, z), MONMAT.rail);
   const base = B.p.length / 3;
-  B.add(tied ? _curtainGeo : _curtainPanel, M4.trs(xg, 0, z), mat);
-  const lobes = tied ? 7 : 11;
+  B.add(tied ? _curtainGeo : wide ? _curtainWide : _curtainPanel, M4.trs(xg, 0, z), mat);
+  const lobes = tied ? 7 : wide ? 13 : 11;
   for (let k = base; k < B.p.length / 3; k++) {          // darker creases between the folds
-    const f = 0.62 + 0.38 * Math.max(0, Math.sin(B.u[k * 2] * Math.PI * 2 * lobes));
+    const v = B.u[k * 2 + 1], ph = wide ? 0.6 * Math.sin(v * 2.3 + 1.1) : 0;
+    const f = 0.62 + 0.38 * Math.max(0, Math.sin(B.u[k * 2] * Math.PI * 2 * lobes + ph));
     for (let c = 0; c < 3; c++) B.c[k * 4 + c] = Math.round(B.c[k * 4 + c] * f);
   }
   if (tied) B.add(_curtainTie, M4.trs(xg, 0, z), MONMAT.curtainTie);
@@ -567,7 +585,7 @@ function buildMon(B, m, layout, cls) {
     B.add(gBox(w, m.h, m.z1 - m.z0), M4.trs(cx, m.h / 2, (m.z0 + m.z1) / 2), MONMAT[m.mat] || MONMAT.laminate);
   } else if (m.kind === 'curtain') {
     // explicit curtain: M('curtain', xa, xb, z, z, { xg, tone: 'F' | 'Y' | 'C' }) - track xa..xb, gathered at xg
-    addCurtain(B, m.x0, m.x1, m.z0, m.xg ?? m.x0 + 0.13, { F: MONMAT.curtainF, C: MONMAT.curtainC, R: MONMAT.curtainRear }[m.tone] || MONMAT.curtainY, m.tone === 'C' || m.tone === 'F');
+    addCurtain(B, m.x0, m.x1, m.z0, m.xg ?? m.x0 + 0.13, { F: MONMAT.curtainF, C: MONMAT.curtainC, R: MONMAT.curtainRear }[m.tone] || MONMAT.curtainY, m.tone === 'C', m.tone === 'F' || m.tone === 'R');
   }
   if (m.back && !m.xFacing) monoBack(B, m);
   if (m.cap) B.add(gBox(w, m.cap - m.h, m.z1 - m.z0), M4.trs(cx, (m.h + m.cap) / 2, (m.z0 + m.z1) / 2), MONMAT.galleyWhite);   // closes the lit slot to the ceiling
@@ -658,7 +676,7 @@ function buildBulkhead(B, m, layout) {
     if (c === 'J' && other === 'F' && !outboard) {
       // J face of F/J (omaat_room_36): inset horizontal panel seam at ~1.45 m, two small blue placards at ~1.75 m
       B.add(gBox(w - 0.2, 0.006, 0.004), X(cx, 1.45), MONMAT.seamJ);
-      for (const u of [-0.35, 0.35]) B.add(gQuad(0.08, 0.05), M4.mul(X(cx + u, 1.75), M4.trs(0, 0, 0.001)), MONMAT.placardBlue);
+      for (const u of [-0.62, 0.62]) B.add(gQuad(0.08, 0.05), M4.mul(X(cx + u, 1.80), M4.trs(0, 0, 0.001)), MONMAT.placardBlue);   // w5b: centred over the boxes
       for (const u of [-0.62, 0.62]) litPocket(B, X(cx + u, 1.58), MONMAT.wallBox, 0.20, 0.42);   // [V] centre wall boxes (tpg_71)
     }
     if (!outboard) continue;
@@ -715,6 +733,13 @@ function buildMonuments(gl, layout, opts = {}) {
     B.add(gBox(xb - xa - 0.04, 0.035, 0.3), M4.trs((xa + xb) / 2, 1.03, zw - 0.15), MONMAT.deck);
     B.add(gRBox(0.36, 0.5, 0.02, 0.01, 1), Wf((xa + xb) / 2, 0.45, 0.01), MONMAT.alu);                    // waste flap
     B.add(gRBox(0.2, 0.03, 0.03, 0.01, 1), Wf((xa + xb) / 2, 0.66, 0.025), MONMAT.aluDark);
+    // w5b: no open box under the counter: a stack of three drawers either side of the waste flap [A]
+    for (const s of [-1, 1]) for (let r = 0; r < 3; r++) {
+      const x = (xa + xb) / 2 + s * ((xb - xa) / 2 - 0.02 - cw / 2 + 0.05), y = 0.17 + r * 0.29;
+      B.add(gRBox(cw - 0.12, 0.27, 0.02, 0.008, 1), Wf(x, y, 0.01), MONMAT.aluDark);
+      B.add(gRBox(0.12, 0.02, 0.02, 0.006, 1), Wf(x, y + 0.09, 0.025), MONMAT.bevBlack);
+      B.add(gRBox(0.016, 0.03, 0.02, 0.006, 1), Wf(x, y + 0.12, 0.022), MONMAT.copper);
+    }
   }
   // ---- class curtains, drawn open: in each aisle gap of the F/J and J/PY bulkheads (f_17313, py_37301/37302),
   //      gathered at the centre side. The PY aft-end and rear-economy curtains are explicit 'curtain' monuments.
@@ -749,32 +774,58 @@ function buildMonuments(gl, layout, opts = {}) {
         const tilt = Math.atan2(ny, Math.abs(nx));
         B.add(gBox(0.004, 0.012, 1.07), M4.trs(x, y, c, 0, 0, side > 0 ? -tilt : tilt), MAT.doorGap);
       }
-      // w3 (lalf_133 / sp_09 measured: arc ~0.46-0.6 m across): horizontal grey lever in the centre of a red painted arc
-      // (~0.5 m across, ~0.15 m tall, arrowhead at the aft end) at ~1.1 m; replaces the vertical rod + 0.2 m arc
-      const [hx, hy] = at(1.08, 0.04);
-      B.add(gRBox(0.06, 0.07, 0.22, 0.02, 1), M4.trs(hx, hy, c), MAT.handle);
-      B.add(gRBox(0.05, 0.05, 0.05, 0.02, 1), M4.trs(hx, hy, c - 0.09), MAT.handle);
+      // w5: lining furniture rebuilt from the corrected from_shell spec (ANA 777 door-lining photos yt_vEERVra5lKs /
+      // yt_R7MKjYHQ1Uk, tpg door 2L, a 777 door trainer) [V layout, A sizes +-3 cm]. Hinge forward on both sides, so
+      // "fwd" = c - dz. LF places a part on the lining: local x = out of the wall (times -side), y = up, z = aft.
+      const LF = (v, inset, dz, extra) => {
+        const [x, y] = at(v, inset), [, , nx, ny] = wallAt(v);
+        const m = M4.trs(x, y, c + dz, 0, 0, side > 0 ? -Math.atan2(ny, -nx) : Math.atan2(ny, -nx));
+        return extra ? M4.mul(m, extra) : m;
+      };
+      const Qf = M4.trs(0, 0, 0, side > 0 ? -Math.PI / 2 : Math.PI / 2), hd = 0.12, hf = hd + 0.003;
+      // handle housing: cream box across the upper middle (y 0.85-1.28, fwd end c-0.48; aft end stops at c+0.20 so the
+      // viewing-window glass at c+0.21..0.35 stays clear), oval recess at its fwd upper corner
+      B.add(gRBox(hd, 0.43, 0.68, 0.03, 2), LF(1.065, hd / 2, -0.14), MAT.door);
+      B.add(gRBox(0.006, 0.05, 0.09, 0.02, 2), LF(1.22, hf, -0.40), { c: '#8f887c', r: 0.5 });
+      // horizontal pocket with a brushed grip block (0.33 x 0.14 / 0.22 x 0.12 at c-0.26, y 0.97)
+      B.add(gQuad(0.33, 0.14), LF(0.97, hf, -0.26, Qf), { c: '#4a4641', r: 0.6 });
+      B.add(gRBox(0.035, 0.11, 0.22, 0.02, 1), LF(0.97, hf + 0.012, -0.26), MAT.handle);
+      // painted red arc, r 0.29 about (c-0.10, 0.93): from a stop bar by the grip, over the top, arrowhead on the aft side
       const arc = [];
-      for (let k = 0; k <= 16; k++) { const t = (k / 16) * Math.PI, [ax, ay] = at(1.12 + 0.15 * Math.sin(t), 0.008); arc.push([ax, ay, c + 0.25 * Math.cos(t)]); }
-      B.add(gTube(arc, 0.012, 6), null, MAT.handleRed);
-      const [ahx, ahy] = at(1.10, 0.01);
-      B.add(gRBox(0.012, 0.07, 0.05, 0.004, 1), M4.trs(ahx, ahy, c + 0.25), MAT.handleRed);   // arrowhead
-      // girt-bar assist bar with a red flag across the top of the slide bustle (~0.86 m)
-      const g0 = at(0.86, 0.13);
-      B.add(gTube([[g0[0], g0[1], c - 0.3], [g0[0], g0[1], c + 0.3]], 0.012, 8), null, MAT.handle);
-      B.add(gBox(0.01, 0.06, 0.05), M4.trs(g0[0], g0[1] + 0.04, c - 0.18), MAT.handleRed);
-      const [px, py] = at(0.95, 0.006);
-      B.add(gQuad(0.2, 0.106), M4.trs(px, py, c - 0.2, side > 0 ? -Math.PI / 2 : Math.PI / 2), MAT.decal, atlasUV('doorPlacard'));
-      // slide bustle: full-width off-white box from the floor to ~0.80 m with a ledge on top (sans_09, from_shell)
-      const [sx, sy] = at(0.41, 0.08);
-      const [, , snx, sny] = wallAt(0.41), sr = side > 0 ? -Math.atan2(sny, -snx) : Math.atan2(sny, -snx);
-      B.add(gRBox(0.16, 0.78, 0.98, 0.05, 2), M4.trs(sx, sy, c, 0, 0, sr), MAT.slide);
-      const [lx, ly] = at(0.815, 0.09);
-      B.add(gRBox(0.18, 0.03, 1.0, 0.012, 1), M4.trs(lx, ly, c, 0, 0, sr), MAT.slide);
+      for (let k = 0; k <= 20; k++) { const t = lerp(2.75, 0.32, k / 20), [ax, ay] = at(0.93 + 0.29 * Math.sin(t), hf + 0.002); arc.push([ax, ay, c - 0.10 + 0.29 * Math.cos(t)]); }
+      B.add(gTube(arc, 0.0125, 6), null, MAT.handleRed);
+      B.add(gBox(0.008, 0.095, 0.035), LF(0.93 + 0.29 * Math.sin(2.75), hf + 0.002, -0.10 + 0.29 * Math.cos(2.75) - 0.02), MAT.handleRed);   // stop bar
+      B.add(gCyl(0.032, 0.002, 0.06, 3), LF(0.93 + 0.29 * Math.sin(0.32) - 0.04, hf + 0.004, -0.10 + 0.29 * Math.cos(0.32), M4.trs(0, 0, 0, 0, 0, 0, 0.25, 1, 1)), MAT.handleRed);   // arrowhead, pointing down
+      B.add(gQuad(0.13, 0.069), LF(0.90, hf + 0.001, 0.08, Qf), MAT.decal, atlasUV('doorPlacard'));            // red "OPEN" label
+      // arming-indicator window in the upper fwd corner (0.19 x 0.27 at c-0.41, y 1.54): pictogram strip, lever with a
+      // green / red band, red flag; two placards just aft at 1.45-1.55
+      B.add(gRBox(0.012, 0.29, 0.21, 0.008, 1), LF(1.54, 0.006, -0.41), MAT.slide);
+      B.add(gQuad(0.17, 0.25), LF(1.54, 0.0125, -0.41, Qf), { c: '#26272b', r: 0.15 });
+      B.add(gQuad(0.13, 0.045), LF(1.63, 0.014, -0.41, Qf), MONMAT.cardWhite);
+      B.add(gRBox(0.012, 0.11, 0.025, 0.006, 1), LF(1.52, 0.02, -0.44), MAT.handle);
+      B.add(gQuad(0.025, 0.02), LF(1.555, 0.027, -0.44, Qf), MONMAT.green);
+      B.add(gQuad(0.025, 0.02), LF(1.535, 0.027, -0.44, Qf), MONMAT.red);
+      B.add(gQuad(0.05, 0.06), LF(1.46, 0.014, -0.37, Qf), MONMAT.red);
+      for (const y of [1.47, 1.53]) B.add(gQuad(0.09, 0.045), LF(y, 0.004, -0.23, Qf), MONMAT.cardWhite);
+      // slide bustle: ~1.0 m wide, top 0.75 m, 0.25 m deep, rounded front edge, rib at 0.40, black gauge window on top
+      B.add(gRBox(0.25, 0.75, 1.0, 0.05, 2), LF(0.375, 0.125, 0), MAT.slide);
+      B.add(gRBox(0.24, 0.05, 0.98, 0.025, 2), LF(0.735, 0.13, 0, M4.trs(0, 0, 0, 0, 0, side * 0.12)), MAT.slide);   // sloped top
+      B.add(gBox(0.012, 0.022, 1.0), LF(0.40, 0.252, 0), MAT.slide);
+      B.add(gQuad(0.10, 0.05), LF(0.765, 0.16, 0.40, M4.trs(0, 0, 0, side > 0 ? -Math.PI / 2 : Math.PI / 2, -Math.PI / 2)), { c: '#141416', r: 0.1 });
+      // assist grab bar on 0.08 m standoffs (0.51 m, c-0.50..c+0.01, y 0.70) with a red-orange strap on its fwd half
+      const g0 = at(0.70, 0.33);
+      B.add(gTube([[g0[0], g0[1], c - 0.50], [g0[0], g0[1], c + 0.01]], 0.02, 10), null, MAT.handle);
+      for (const dz of [-0.46, -0.03]) B.add(gBox(0.08, 0.02, 0.02), LF(0.70, 0.29, dz), MAT.handle);
+      B.add(gRBox(0.008, 0.14, 0.13, 0.004, 1), LF(0.62, 0.335, -0.33), { c: '#c9502c', r: 0.7, l: LAYER.fabric });
+      // jamb assist handles: 0.25 m vertical grips in dark pockets at ~1.45 m; small EXIT placard on the aft jamb at 1.05
       for (const dz of [-0.64, 0.64]) {
-        const p0 = at(0.95, 0.06), p1 = at(1.55, 0.06);
+        const p0 = at(1.325, 0.05), p1 = at(1.575, 0.05);
+        B.add(gRBox(0.01, 0.30, 0.07, 0.01, 1), LF(1.45, 0.005, dz), { c: '#5a5650', r: 0.6 });
         B.add(gTube([[p0[0], p0[1], c + dz], [p1[0], p1[1], c + dz]], 0.014, 8), null, MAT.handle);
       }
+      B.add(gQuad(0.07, 0.035), LF(1.05, 0.004, 0.64, Qf), MONMAT.cardWhite);
+      // plain upper door with a horizontal seam at ~1.73 m
+      B.add(gBox(0.004, 0.005, 1.04), LF(1.73, 0.002, 0), MAT.doorGap);
     }
   }
   // ---- Flight attendant jump seats (folded) on monument faces beside each door: only on plain lav / closet walls
