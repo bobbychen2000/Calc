@@ -1,0 +1,152 @@
+{
+  "area": "shell",
+  "rater": "A",
+  "round": "w8",
+  "score": 7.8,
+  "previousIssues": [
+    {
+      "issue": "w7a M / w7b M: fan-shaped streaks from the bezel's top corners and dark bands down the tub sides",
+      "status": "mostly fixed. The 6-ring sill loft and the lateral fade (wz) remove the drapes (cmp_ra_yWin, cmp_b_pyClose, s02, s08). Faint short vertical smudges remain where the fade crosses the bezel's top corners (ra_yWin crop x 70-90 / 340-370 at 2x; q12 right tub side). Helps."
+    },
+    {
+      "issue": "w7a M: F/J bowl side wall kinked at dv 0.12",
+      "status": "fixed. With the smoothstep ext the outline is continuous in ra_fWin, s01, s05 and b_jClose. Helps."
+    },
+    {
+      "issue": "w7a L / w7b M: closed blackout too dark (0.51-0.53 of the bezel)",
+      "status": "fixed in tone. b_jClose shade L122, rgb (126,122,114) h40, against a bezel of 215 gives 0.57. omaat_room24 is 119/197 = 0.60. Pleat stripe contrast is unchanged (new low issue). Helps."
+    },
+    {
+      "issue": "w7b L: lining strip under the closed blackout hem",
+      "status": "fixed. The hem meets the sill in b_jClose and s05."
+    },
+    {
+      "issue": "w7a L / w7b L: galley/door vinyl too dark and uniform",
+      "status": "half fixed. The tone is right: ra_door2floor walkway (96,94,103) against sans_09 (104,100,106). The mottle is not: the L std is 7.2 against 26 in sans_09, so it is still a uniform speckled slab, with a slight violet cast (s 0.09 vs 0.05). Tone helps."
+    },
+    {
+      "issue": "w7a L: PY/Y frame outline a hard blue-grey pencil line",
+      "status": "mostly fixed. It is warm and soft in ra_yWin and b_pyClose. In q12 a thin cool line still shows round the near bezel at close range, which looks like a sky/env reflection on the 3 mm face."
+    },
+    {
+      "issue": "w7a L / w7b L: bowl neutral, photos cream",
+      "status": "not visible. The reveal albedo was warmed (#ece4d5), but b_jClose sill still renders s 0.010 and ra_yWin s 0.014. omaat_room24 bezel is (197,189,183) s 0.07. The white lighting mood cancels it. Not scored as geometry."
+    },
+    {
+      "issue": "w7a/w7b L [OTHER: exterior]: pale vertical bar behind the nearest J pane in s01",
+      "status": "not fixed. Still at s01 x ~785-795 in w8."
+    }
+  ],
+  "details": [
+    {
+      "detail": "Sidewall panels and seams (joint every second window, satin white)",
+      "score": 7.6,
+      "refs": ["/home/user/Calc/cabin777/ref/web/shell/sp_py14.jpg", "/home/user/Calc/cabin777/ref/ana/y_47303-lang-multi.jpg"]
+    },
+    {
+      "detail": "F/J bowl geometry (width, short bowl, pill under the opening): clean outline now; grade 0.70 above the opening (photo 0.74)",
+      "score": 8.1,
+      "refs": ["/home/user/Calc/cabin777/ref/web/shell/tt_window.jpg", "/home/user/Calc/cabin777/ref/web/shell/omaat_room24.jpg", "/home/user/Calc/cabin777/ref/web/shell/omf_5.jpg"]
+    },
+    {
+      "detail": "PY/Y full-height tub geometry and raised bezel frame",
+      "score": 8.1,
+      "refs": ["/home/user/Calc/cabin777/ref/web/shell/sp_py14.jpg", "/home/user/Calc/cabin777/ref/web/shell/sp_py24.jpg", "/home/user/Calc/cabin777/ref/ana/py_37303-lang-multi.jpg"]
+    },
+    {
+      "detail": "Recess tonal modelling: drapes gone. The PY/Y grade is squeezed into the lowest ~40 % of the upper tub, and there is no shadow line under the lip",
+      "score": 7.3,
+      "refs": ["/home/user/Calc/cabin777/ref/web/shell/sp_py14.jpg", "/home/user/Calc/cabin777/ref/web/shell/tt_window.jpg"]
+    },
+    {
+      "detail": "Pane tunnel lining and seal rim",
+      "score": 7.8,
+      "refs": ["/home/user/Calc/cabin777/ref/web/shell/tt_window.jpg", "/home/user/Calc/cabin777/ref/web/shell/sp_py24.jpg"]
+    },
+    {
+      "detail": "Electric shades (sheer + pleated blackout, violet LED button): tone and hem right; pleat relief about half the photo's",
+      "score": 8.2,
+      "refs": ["/home/user/Calc/cabin777/ref/web/shell/omaat_room24.jpg", "/home/user/Calc/cabin777/ref/web/shell/tt_window.jpg"]
+    },
+    {
+      "detail": "Manual PY/Y shades (stowed band, half, closed)",
+      "score": 7.8,
+      "refs": ["/home/user/Calc/cabin777/ref/web/shell/sp_py24.jpg", "/home/user/Calc/cabin777/ref/ana/y_47303-lang-multi.jpg"]
+    },
+    {
+      "detail": "Dado panel, air-return grilles, placards",
+      "score": 7.9,
+      "refs": ["/home/user/Calc/cabin777/ref/ana/py_37303-lang-multi.jpg", "/home/user/Calc/cabin777/ref/ana/y_47303-lang-multi.jpg"]
+    },
+    {
+      "detail": "Carpets (F, J, PY/Y navy) and Y seat-track covers",
+      "score": 7.5,
+      "refs": ["/home/user/Calc/cabin777/ref/ana/y_47301-lang-multi.jpg", "/home/user/Calc/cabin777/ref/web/shell/omf_5.jpg"]
+    },
+    {
+      "detail": "Door cross-aisle / galley floor: tone right, mottle far too weak",
+      "score": 7.3,
+      "refs": ["/home/user/Calc/cabin777/ref/web/shell/sans_09.jpg"]
+    },
+    {
+      "detail": "Type A door surround / lining and viewing window",
+      "score": 6.8,
+      "refs": ["/home/user/Calc/cabin777/ref/web/shell/sans_09.jpg", "/home/user/Calc/cabin777/ref/web/shell/fr_20220604_123806.jpg"]
+    }
+  ],
+  "issues": [
+    {
+      "severity": "medium",
+      "detail": "PY/Y upper-tub grade compressed to just above the bezel, no shadow line under the lip",
+      "problem": "b_pyClose col 860 stays flat at 204 (0.94 of the pier) for the top ~60 % of the upper tub, then drops to 167 (0.77) just above the bezel. sp_py14 (cols 555 / 745) grades steadily over the whole upper tub, 186 -> 131 (0.70), and adds a distinct darker band (151-154 vs 186) just under the lip top, where the lip overhangs. Ours reads as a light tub with a smudge over the window rather than a sculpted hood. The cause is the ^0.7 exponent in tubF above oTop, which brightens quickly away from the opening.",
+      "fix": "src/07_shell.js l.322: change the upper branch exponent 0.7 -> 1.4 (lerp(fl,1,t**1.4)) and, for REC_Y, cap the top at 0.88 instead of 1 (lerp(fl,0.88,...)); then multiply by a lip-shadow term, e.g. *(1 - 0.12*sstep(clamp((d-(rec.top-0.07))/0.04,0,1))) applied only on the lip/sill rings (dv > rec.top-0.07), to get the darker band under the lip as in sp_py14. Keep the bottom at fl 0.42."
+    },
+    {
+      "severity": "low",
+      "detail": "Residual faint vertical smudges at the bezel's top corners",
+      "problem": "The lateral fade wz starts at |z| 0.10, which is right at the bezel's upper corners (pane half-width 0.127 plus the frame). So the centre-to-side transition lands on the corner and leaves short soft vertical streaks (ra_yWin crop, b_pyClose right window, q12 right tub side).",
+      "fix": "l.321: start the fade nearer the centre and spread it, e.g. clamp((|z|-0.04)/(rec.hw-0.02-0.04)), with strength 0.55 instead of 0.65, so the gradient is wide and lies across the tub rather than on the corners."
+    },
+    {
+      "severity": "low",
+      "detail": "Blackout pleat relief about half the photo's",
+      "problem": "The detrended stripe amplitude across the closed blackout is 0.136 of the mean in b_jClose, against 0.317 in omaat_room24. From the aisle (s05) the shade reads as a finely ribbed grey panel rather than crisp pleats with light ridges and dark valleys. The mean tone (0.57 of the bezel vs 0.60) is now right.",
+      "fix": "l.425: blackout kf 0.72 -> 0.60 and raise MAT.blackout to about '#a29c90', so the mean stays near 0.58-0.60 of the bezel while the valley/crest contrast roughly doubles. Re-check win_oblique for moire."
+    },
+    {
+      "severity": "low",
+      "detail": "Galley/door vinyl lacks the cloudy stone mottle",
+      "problem": "The tone now matches (96,94,103 vs sans_09 104,100,106), but the L std is 7.2 against 26: the photo has large light/dark clouds at about 0.2-0.4 m scale. There is also a slight violet cast (h 257, s 0.09 vs s 0.05).",
+      "fix": "l.39: vinyl '#6f6b72' -> '#6e6c70' (less violet). Add low-frequency vertex-colour jitter on the vinyl boxes at l.581 (subdivide the box top into ~0.15 m quads and multiply each vertex by 1 + 0.18*noise(x*3, z*3)), or raise the LAYER.vinyl large-scale amplitude in LAYER_PARAMS (03_tex.js shared, one line)."
+    },
+    {
+      "severity": "low",
+      "detail": "Door leaf / surround still a plain slab (shell part)",
+      "problem": "Unchanged. fr_20220604_123806 shows the jamb with stop fittings and a cream frame, and sans_09 shows a mid-height grey band across the leaf. The render's door surround is a flat white frame. Viewing-window position still not verified from inside.",
+      "fix": "Optional: add 6-8 small stop-fitting blocks (0.04 x 0.03 x 0.02 m, MAT.latch tone) per jamb on the surround in the door builder."
+    },
+    {
+      "severity": "low",
+      "detail": "Bowl/bezel neutral white in render (lighting)",
+      "problem": "The warmer reveal albedo does not show: s 0.010-0.014 against omaat_room24 s 0.07 and tt_window cream. The lighting mood is the main cause.",
+      "fix": "Defer to lighting, or reveal '#ede2cf'."
+    },
+    {
+      "severity": "low",
+      "detail": "[OTHER AREA: exterior/integration] pale vertical bar behind the nearest J pane in s01",
+      "problem": "Unchanged since w5c.",
+      "fix": "Exterior / integration worker."
+    },
+    {
+      "severity": "low",
+      "detail": "[OTHER AREA: ceiling/monuments] door-2 cross-aisle ceiling is a flat dark slab",
+      "problem": "In s06, sans_09 shows a lit curved dome over the door bay. Not scored here.",
+      "fix": "Ceiling / monuments."
+    }
+  ],
+  "questionsForUser": [
+    "Type A door viewing window: there is still no inside photo of an ANA 777 L2/L4 door lining that shows the viewing window relative to the red arming arc. Can you supply one?"
+  ],
+  "photosDownloaded": [],
+  "notes": "Rated the w8 renders in /tmp/claude-0/-home-user-Calc/0ed99896-ecef-596b-9423-893865e3345b/scratchpad/w8/ against w7. Comparison sheets (top w7, bottom w8) and zoom crops are in /tmp/claude-0/-home-user-Calc/0ed99896-ecef-596b-9423-893865e3345b/scratchpad/ra8/ (cmp_*.png, z_*.png). No extra build was needed. Studio renders barely changed (mean diff 0.5-1.7); the cabin views changed more, partly because of other workers' lighting and seat changes. HELPS: the drapes are gone, the F/J outline kink is fixed, the blackout tone is 0.57 (photo 0.60) with the hem down to the sill, the vinyl tone matches, and the PY/Y frame line is warm. NO REGRESSIONS in the shell. The remaining gap to 8.5 is the PY/Y hood grade distribution plus the lip shadow, the pleat relief, the vinyl mottle, and the door surround detail."
+}

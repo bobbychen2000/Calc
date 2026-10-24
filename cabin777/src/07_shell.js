@@ -36,7 +36,7 @@ const MAT = {
   carpetF: { c: '#56493f', r: 0.95, l: LAYER.fabric },          // QA w2: redder, h ~15 (MileLion DSC_1917 #2d2421)
   // door / galley floors: dark mottled stone-look grey vinyl (sans_09 door-2 galley #666268 / #585353; QA w1 rendered
   // #a0a5ad, ~1.13x the albedo) [V]
-  vinyl: { c: '#6f6b72', r: 0.55, l: LAYER.vinyl },                // QA w7: rendered (75,74,80) vs sans_09 (105,100,105)
+  vinyl: { c: '#6e6b6e', r: 0.55, l: LAYER.vinyl },                // QA w7: rendered (75,74,80) vs sans_09 (105,100,105)
   doorCarpet: { c: '#5a5045', r: 0.95, l: LAYER.fabric },        // QA w6: less red (h ~30)
   // QA r2: no aisle path strips are visible in any ANA photo (y_47301, y_47304, py_37301/02, c_27312), so none are
   // modelled; Y instead shows glossy royal-blue seat-track covers along each seat-leg line [V: y_47304 #2965bd, y_47301]
@@ -62,7 +62,7 @@ const MAT = {
   sheer: { c: '#e6e1d6', r: 0.9, l: LAYER.fabric, e: 0.5 },
   // opaque pleated blackout: light warm grey, clearly darker than the bezel when closed (omaat Room-24 shade #787367
   // vs bezel #bdb4a9 = 0.64; QA w1 0.87) [V]
-  blackout: { c: '#a19b8f', r: 0.85, l: LAYER.fabric },          // QA w2-w5: 0.81 -> 0.76 of the bezel, target 0.62-0.64; w6 #79736a overshot to 0.41-0.53 in the cabin (room24 0.62, room38 0.74); w7 #8a8479 0.51; w8 #958f84 0.56
+  blackout: { c: '#aaa498', r: 0.85, l: LAYER.fabric },          // QA w2-w5: 0.81 -> 0.76 of the bezel, target 0.62-0.64; w6 #79736a overshot to 0.41-0.53 in the cabin (room24 0.62, room38 0.74); w7 #8a8479 0.51; w8 #958f84 0.56, pleat contrast 0.14 vs 0.32 (room24)
   shadeBtn: { c: '#d9d6cf', r: 0.35 },
 };
 
@@ -316,10 +316,10 @@ function windowParts(side, pat) {
   // bezel, DSC_1920 0.74, tt_window, sp_py14); w4 graded the other way (darkest at the recess top) [V]. QA w6: x0.60 albedo
   // rendered 0.90-0.93 of the wall against the reveal glow (04_shaders), photos 0.65-0.78 -> x0.45 [A: albedo]
   const oTop = W.holeH / 2 + 0.01;
-  const fl = rec === REC_Y ? 0.42 : 0.55, d0 = rec === REC_Y ? 0.02 : 0.04;   // QA w6: PY/Y 0.88 on screen vs sp_py14 0.66; F/J 0.79 vs 0.74
+  const top1 = rec === REC_Y ? 0.9 : 1, lipF = rec === REC_Y ? 0.93 : 1, fl = rec === REC_Y ? 0.42 : 0.55, d0 = rec === REC_Y ? 0.02 : 0.04;   // QA w6: PY/Y 0.88 on screen vs sp_py14 0.66; F/J 0.79 vs 0.74
   // QA w7: the grade fades toward the tub sides (light side walls, no grey bands down them; tt_window, sp_py14) [V: look]
-  const tubShade = (y, i, n, z) => { const d = y - vc, wz = 1 - 0.65 * sstep(clamp((Math.abs(z) - 0.10) / (rec.hw - 0.10), 0, 1)); return lerp(1, tubF(d), wz); };
-  const tubF = (d) => { return d < oTop ? lerp(1, fl, clamp((d - d0) / (oTop - d0), 0, 1)) : lerp(fl, 1, clamp((d - oTop) / (rec.top - 0.03 - oTop), 0, 1)); };   // QA w8: even ramp (sp_py14), was **0.7
+  const tubShade = (y, i, n, z) => { const d = y - vc, wz = 1 - 0.55 * sstep(clamp((Math.abs(z) - 0.04) / (rec.hw - 0.04), 0, 1)); return lerp(1, tubF(d), wz); };
+  const tubF = (d) => { return d < oTop ? lerp(1, fl, clamp((d - d0) / (oTop - d0), 0, 1)) : lerp(fl, top1, clamp((d - oTop) / (rec.top - 0.03 - oTop), 0, 1) ** 1.3) * (d > rec.top - 0.05 ? lipF : 1); };   // QA w8: graded over the whole upper tub, darker band under the lip (sp_py14)
   // lining: x1 at the mouth to x0.78 at the pane by depth (tt_window inner end darker) [V: tone; A: split]
   const liningShade = (y, i, n) => [1, 0.95, 0.78][Math.floor((i * 3) / n)];
   const parts = [
@@ -422,7 +422,7 @@ function shadePanelGeo(kind) {
     // pleat stripes baked into vertex colour on the valley rows. QA w1: x0.86 read as a plain slab; omaat Room-24
     // valley/crest ~0.46 in the photo (part of that is the shading the zig-zag already gives), so x0.72 blackout,
     // x0.84 for the backlit sheer [V: contrast; A: split]; QA w3: blackout 0.76 with the darker albedo (moire)
-    const geo = B.build(), kf = kind === 'sheer' ? 0.84 : 0.69;   // QA w5: pleat cv 0.07 vs 0.23 (omaat Room-24); w6 0.68 too dark
+    const geo = B.build(), kf = kind === 'sheer' ? 0.84 : 0.62;   // QA w5: pleat cv 0.07 vs 0.23 (omaat Room-24); w6 0.68 too dark
     for (let k = 0; k < geo.col.length / 4; k++) if (((k >> 2) & 1) === 0) for (let c = 0; c < 3; c++) geo.col[k * 4 + c] = Math.round(geo.col[k * 4 + c] * kf);
     return geo;
   }
