@@ -71,3 +71,14 @@ The ANA ones are seat-confirmed: `lalf_ANA77W_NH212_136/137` (11A) and `alv_ANA7
     1.12 -> 0.80 and raised the roughness to 0.72, but the far skin seen at grazing reflects `u_skyTop*1.2` regardless of the baked
     colour. **Fix:** in the exterior branch scale `specEnv` by the baked/base colour ratio (or by `v_col` luminance), and reflect
     the deeper zenith blue for R.y > 0.3.
+
+## Wave 3c (w12 raters; to lighting / integration)
+
+15. **Look-out framing in the aft K seats hides the registration under the shade rail (low, camera).** In w26K / w30K the app's
+    `lookOut` (13_app.js) puts the eye 0.33 m inboard of the glass at y 1.16 with pitch ~-0.16; the shade rail then covers the
+    top of the pane and JA795A is cut off. The JA795A seat-26K photos (alv `IMG_7345`, `IMG_7250`) are taken with the camera at
+    the glass, looking ~20 deg down. **Fix:** in `lookOut`, eye `side * 2.72` and y 1.10, and lower the target 0.06 m (pitch
+    about -0.22). The exterior review cameras (`review/qa/exterior_views.js`, w26K / w30K) already apply this offset and show the
+    whole registration.
+16. **Item 14 still open (medium).** w12: near flap L163, far skin L173 (w19A). A per-vertex roughness ramp (0.72 -> 0.92
+    outboard, w12) only took ~4 L off the far skin, so the albedo-blind grazing `specEnv` term is the remaining lever.
