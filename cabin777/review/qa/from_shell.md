@@ -122,3 +122,17 @@ cameras, should be checked. q07 and q12 look fine.
   a thin dark line on the F/J bowl tops too.
 - **Fix:** fade the cut back out over 0.36-0.44 m above the window centre, e.g.
   `* mix(1.0, 0.35, down * smoothstep(0.24, 0.30, dy) * (1.0 - smoothstep(0.36, 0.44, dy)))` with dy = v_wpos.y - 1.02.
+
+## Wave 3c (w12)
+
+### To lighting: cream finishes render neutral grey-white (shell_w12a medium, w12b low)
+- Evidence: the F/J bowl renders s 0.005 (w11 0.013) and the door lining B/R 0.98, from cream albedos `MAT.reveal` #ece4d5 and
+  `MAT.door` #e4dccb. The real photos show s 0.13 (omaat_room24 bowl), s 0.23 (tt_window) and door-lining B/R 0.93 (lalf_134).
+  The shell albedos are already cream, so the neutralisation happens in the boarding light colour or in the tone map's
+  highlight desaturation.
+- Fix (lighting's call): warm the boarding / white cabin light slightly, or ease the highlight desaturation so that #ece4d5
+  lands at s 0.08-0.10. Bowls, bezels, door linings and the wall would all move toward the photos' cream.
+
+### To lighting (`04_shaders.js`, down-face reveal-glow cut): soft grey band under the PY/Y tub lip (w12a/b low)
+- Evidence: ra_yWin / s02 / s08: the crown runs at 0.55-0.61 of the pier, against ~0.85 in sp_py14 (hairline rim only).
+- Fix, as in w10b / w11b: fade the cut back out above dy ~0.40 (where the tub top meets the wall).

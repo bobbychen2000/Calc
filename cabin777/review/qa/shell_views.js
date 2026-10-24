@@ -28,7 +28,7 @@ const VIEWS = {
   b_jSheer: [`(()=>{__shade(25.15,-1,1); ${v(-2.15, 1.2, 25.15, 'Math.PI/2', -0.04)}})()`, 'THE Room window, sheer down'],
   ra_yWin: [`__rel('35A',0.95,1.42,-0.38,Math.PI/2,-0.12)`, 'economy window tub face on'],
   ra_pyWin: [`__rel('26K',-0.95,1.45,-0.5,-Math.PI/2,-0.12)`, 'PY window tub face on'],
-  b_dadoY2: [`__sit('36A',Math.PI/2+0.35,-0.75)`, 'economy dado and grilles, low'],
+  b_dadoY2: [`__rel('30A',0.25,1.15,-0.6,Math.PI/2+0.25,-0.8)`, 'economy dado and grilles, low'],
   b_doorWin: [v(-1.55, 1.45, 16.8, 'Math.PI/2', 0.05), 'door 2L viewing window, close'],
   ra_door2floor: [v(0.6, 1.62, 16.8, 'Math.PI/2', -0.8), 'door 2 cross-aisle floor: vinyl and carpet'],
   ra_jWin: [`__sit('11A',Math.PI/2-0.25,0.0)`, 'THE Room window from seat 11A'],

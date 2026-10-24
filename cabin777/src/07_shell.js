@@ -36,7 +36,7 @@ const MAT = {
   carpetF: { c: '#56493f', r: 0.95, l: LAYER.fabric },          // QA w2: redder, h ~15 (MileLion DSC_1917 #2d2421)
   // door / galley floors: dark mottled stone-look grey vinyl (sans_09 door-2 galley #666268 / #585353; QA w1 rendered
   // #a0a5ad, ~1.13x the albedo) [V]
-  vinyl: { c: '#6e6b6e', r: 0.55, l: LAYER.vinyl },                // QA w7: rendered (75,74,80) vs sans_09 (105,100,105)
+  vinyl: { c: '#6f6a69', r: 0.55, l: LAYER.vinyl },                // QA w7: rendered (75,74,80) vs sans_09 (105,100,105)
   doorCarpet: { c: '#5a5045', r: 0.95, l: LAYER.fabric },        // QA w6: less red (h ~30)
   // QA r2: no aisle path strips are visible in any ANA photo (y_47301, y_47304, py_37301/02, c_27312), so none are
   // modelled; Y instead shows glossy royal-blue seat-track covers along each seat-leg line [V: y_47304 #2965bd, y_47301]
@@ -62,7 +62,9 @@ const MAT = {
   sheer: { c: '#e6e1d6', r: 0.9, l: LAYER.fabric, e: 0.5 },
   // opaque pleated blackout: light warm grey, clearly darker than the bezel when closed (omaat Room-24 shade #787367
   // vs bezel #bdb4a9 = 0.64; QA w1 0.87) [V]
-  blackout: { c: '#aaa498', r: 0.85, l: LAYER.fabric },          // QA w2-w5: 0.81 -> 0.76 of the bezel, target 0.62-0.64; w6 #79736a overshot to 0.41-0.53 in the cabin (room24 0.62, room38 0.74); w7 #8a8479 0.51; w8 #958f84 0.56, pleat contrast 0.14 vs 0.32 (room24)
+  // shell w12: the pleat valleys come from the mip-mapped s_pleat layer (was a vertex-colour stripe: moire, cv 0.14 vs 0.33),
+  // so the albedo carries the old stripe's mean darkening (x0.81, then x0.89 to ~0.62 of the wall) [D]; w12a 0.675 of the wall vs omaat_room24 0.57, w12b warmer
+  blackout: { c: '#7e776b', r: 0.85, l: LAYER.sPleat },          // QA w2-w5: 0.81 -> 0.76 of the bezel, target 0.62-0.64; w6 #79736a overshot to 0.41-0.53 in the cabin (room24 0.62, room38 0.74); w7 #8a8479 0.51; w8 #958f84 0.56, pleat contrast 0.14 vs 0.32 (room24)
   shadeBtn: { c: '#d9d6cf', r: 0.35 },
 };
 
@@ -131,7 +133,8 @@ const WMAT = {
   label: { c: '#d6d5cf', r: 0.5 },                              // small white placards on the dado (py_37301/37303)
   halo: { c: '#2a30ff', r: 0.3, e: 0.45 },  // violet-blue LED ring; QA w5/w9: read pale cyan / lavender (178,172,250), tt_window (67,81,240) [V]
   pin: { c: '#2a2c30', r: 0.6 },
-  seal: { c: '#74767b', r: 0.5 },                              // DSC_1920 rim #8d95aa, 2-3 px [V]
+  seal: { c: '#74767b', r: 0.5 },
+  doorSeal: { c: '#bdb8ae', r: 0.5 },                          // door viewing window rim: light grey-cream (lalf_133 / 134) [V: tone]                              // DSC_1920 rim #8d95aa, 2-3 px [V]
 };
 function sdRecess(px, py, rec = REC) {
   const cy = (rec.top + rec.bot) / 2, hh = (rec.top - rec.bot) / 2;
@@ -422,7 +425,7 @@ function shadePanelGeo(kind) {
     // pleat stripes baked into vertex colour on the valley rows. QA w1: x0.86 read as a plain slab; omaat Room-24
     // valley/crest ~0.46 in the photo (part of that is the shading the zig-zag already gives), so x0.72 blackout,
     // x0.84 for the backlit sheer [V: contrast; A: split]; QA w3: blackout 0.76 with the darker albedo (moire)
-    const geo = B.build(), kf = kind === 'sheer' ? 0.84 : 0.62;   // QA w5: pleat cv 0.07 vs 0.23 (omaat Room-24); w6 0.68 too dark
+    const geo = B.build(), kf = kind === 'sheer' ? 0.84 : 1;   // shell w12: blackout stripe in layer 31 (s_pleat)   // QA w5: pleat cv 0.07 vs 0.23 (omaat Room-24); w6 0.68 too dark
     for (let k = 0; k < geo.col.length / 4; k++) if (((k >> 2) & 1) === 0) for (let c = 0; c < 3; c++) geo.col[k * 4 + c] = Math.round(geo.col[k * 4 + c] * kf);
     return geo;
   }
@@ -458,16 +461,17 @@ function shadeMats(w, f, depthOff = 0) {
 function shadeButtonGeo() {
   const B = new Builder();
   const pill = (w, h) => rrectPts(w, h, w / 2 - 1e-4, 5);
-  const ring = raw(), o = pill(0.022, 0.046), iN = pill(0.0165, 0.0405), n = o.length;
+  // QA w12: 25 x 50 mm (w12b ~28 x 52 on tt_window; w12a 0.083 x 0.126 of the pane on omaat_room24) [V: ratio]
+  const ring = raw(), o = pill(0.025, 0.050), iN = pill(0.0195, 0.0445), n = o.length;
   for (const [a, b] of o) { ring.p.push(a, b, 0.0012); ring.n.push(0, 0, 1); ring.u.push(0, 0); }
   for (const [a, b] of iN) { ring.p.push(a, b, 0.0012); ring.n.push(0, 0, 1); ring.u.push(0, 0); }
   for (let i = 0; i < n; i++) { const j = (i + 1) % n; ring.i.push(i, j, n + j, i, n + j, n + i); }
   fixWinding(ring);
   B.add(ring, null, WMAT.halo);
-  const half = rrectPts(0.0155, 0.0195, 0.0065, 4).map(([a, b]) => [a, Math.max(b, -0.0078)]);
-  B.add(gExtrude(half, 0.004), M4.trs(0, 0.0102, 0.0022), MAT.shadeBtn);
-  B.add(gExtrude(half, 0.004), M4.trs(0, -0.0102, 0.0022, 0, 0, Math.PI), MAT.shadeBtn);
-  B.add(gBox(0.0022, 0.0022, 0.001), M4.trs(0, -0.031, 0.0005), WMAT.pin);
+  const half = rrectPts(0.0175, 0.0205, 0.0075, 4).map(([a, b]) => [a, Math.max(b, -0.0078)]);
+  B.add(gExtrude(half, 0.004), M4.trs(0, 0.0109, 0.0022), MAT.shadeBtn);
+  B.add(gExtrude(half, 0.004), M4.trs(0, -0.0109, 0.0022, 0, 0, Math.PI), MAT.shadeBtn);
+  B.add(gBox(0.0022, 0.0022, 0.001), M4.trs(0, -0.033, 0.0005), WMAT.pin);
   return B.build();
 }
 
@@ -642,17 +646,20 @@ function buildShell(gl, layout) {
       // w9: FORWARD of centre (from_monuments w7: real photos lalf_133 / lalf_134 of door 2L from the galley passage show the
       // window forward of the grip; the face-on frame had been read mirrored) [V]
       const cellW = 0.50, wz = c - 0.30;   // 0.30 clears the housing rim (w9b)
-      const dp = windowCellPattern(cellW, 0.20, 0.46, 0.05, 0.98, null, [[...WALL.bottomRows, 0.62], 1.36]);
+      // QA w12b: glass aspect 0.42 vs ~0.50 (lalf_134) -> reveal 0.23 wide [V: ratio]
+      const dp = windowCellPattern(cellW, 0.23, 0.46, 0.055, 0.98, null, [[...WALL.bottomRows, 0.62], 1.36]);
       const topRows = [1.36, 1.60, 1.80, 2.02];
       windowCell(g, side, wz, dp, topRows);
       // deep reveal necking to the glass over 9 cm, then a dark seal rim; the sky shows past it
       const dmap = (dz, dv, d) => { const [x, y, nx, ny] = wallAt(dp.vc + dv); return [(x - nx * d) * side, y - ny * d, wz + dz]; };
       const hr = dp.ring.map((p) => p.h), sc = (k, kv) => hr.map(([a, b]) => [a * k, b * kv]), dh = [wallAt(dp.vc)[2] * side, wallAt(dp.vc)[3], 0];
       shell.add(ringLoft([[hr, 0], [sc(0.93, 0.95), 0.015], [sc(0.72, 0.72), 0.09]], dmap, dh), null, MAT.door);
-      shell.add(ringLoft([[sc(0.72, 0.72), 0.09], [sc(0.68, 0.69), 0.092]], dmap, dh), null, WMAT.seal);
+      shell.add(ringLoft([[sc(0.72, 0.72), 0.09], [sc(0.68, 0.69), 0.092]], dmap, dh), null, WMAT.doorSeal);  // QA w12b: light rim, no dark ring (lalf_134)
       // glass: the cabin pane mapped into the seal (0.136 x 0.317 m) as extra glass instances (QA w4 / w5 low: no glass)
-      const S = M4.trs(0, 0, 0, 0, 0, 0, (0.68 * 0.20) / W.w, (0.69 * 0.46) / W.h, 1);
+      const S = M4.trs(0, 0, 0, 0, 0, 0, (0.68 * 0.23) / W.w, (0.69 * 0.46) / W.h, 1);
       doorGlass[side > 0 ? 'R' : 'L'].push(M4.mul(M4.trs(0, 0, wz), M4.mul(windowFrame(side, 0.093, dp.vc - W.yc), M4.mul(S, M4.invert(windowFrame(side, 0.106))))));
+      // cream shade tab inside the top of the glass (lalf_134) [A: size]
+      shell.add(gRBox(0.10, 0.02, 0.01, 0.004, 1), M4.mul(M4.trs(0, 0, wz), windowFrame(side, 0.08, dp.vc - W.yc + 0.69 * 0.46 / 2 - 0.012)), MAT.door);
       const vset = [...new Set([...dp.rows.slice(0, -1), ...dp.sideV.map((v) => v + dp.vc), ...topRows.slice(1)].map((v) => +v.toFixed(5)))].sort((a, b) => a - b);
       if (wz - cellW / 2 - zn.z0 > 1e-3) wallGrid(g, side, [zn.z0, wz - cellW / 2], vset);
       if (zn.z1 - (wz + cellW / 2) > 1e-3) wallGrid(g, side, [wz + cellW / 2, zn.z1], vset);
