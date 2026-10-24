@@ -1419,7 +1419,9 @@ def _densify_top(P, o, db, b0, step):
 #              the rim drops by crown - 0.008), roll / roll_b the top / bottom edge radii, apron (how far the front
 #              apron hangs below the cushion bottom over the legrest's face, forward-facing seats) and its thickness
 #   EXEC_WELT  piping welt radius;  EXEC_STITCH pitch, dash length, dash width, inset from a panel's top-face edge
-EXEC_CUSH = dict(crown=0.022, crown_r=0.14, roll=0.055, roll_b=0.030, apron=0.024, apron_t=0.011)
+EXEC_CUSH = dict(crown=0.022, crown_r=0.14, roll=0.055, roll_b=0.030, apron=0.024, apron_t=0.011,
+                 side_dz=-0.006)   # (CAB3-01: the side panels 6 mm under the drawn top -- +4 mm they framed the 22 mm
+                                   # crowned centre as a tray, P1046404)
 EXEC_WELT = 0.003
 EXEC_STITCH = (0.0065, 0.0038, 0.0009, 0.0045)
 # all-lens review r2 CAB2-01 (P1046402 / 03 / 04 / 06 / 0405): the r1 seams were 8 mm gaps between panels rounded r 12
@@ -1650,13 +1652,13 @@ def cabin_seat(seat_id, layout=None, recline=None, raised=False, belts=True):
     for sg in (-1, 1):
         a0, a1 = (0.125, cw + 0.003) if sg > 0 else (-cw - 0.003, -0.125)
         ol = rrect(-0.045, a0, sf + 0.002, a1, 0.035, max_len=0.05)
-        crown_s = dome(0.012, 0.04)                     # (CAB3-01: 8 mm over 30)
+        crown_s = dome(0.010, 0.05)                     # (CAB3-01: 8 mm over 30)
         # (CAB2-01: the top round r 33 -> EXEC_SEAM r_side: the joint with the centre a crease, not a channel)
         rsd = EXEC_SEAM["r_side"]
         g = pillow(ol, tc - 0.002, rsd, 0.012, h=0.04, crown=crown_s)
-        geos.append(_mats(g.map(cush_map(tc, extra=0.004)), M_CAB))
+        geos.append(_mats(g.map(cush_map(tc, extra=EXEC_CUSH["side_dz"])), M_CAB))
         # (CAB3-01: no welt along the side panels' top edge -- with the front welt it framed the cushion as a tray)
-        st = _pillow_stitches(ol, tc - 0.002, rsd, crown_s, cush_map(tc, extra=0.004),
+        st = _pillow_stitches(ol, tc - 0.002, rsd, crown_s, cush_map(tc, extra=EXEC_CUSH["side_dz"]),
                               lambda a, b, sg=sg: (np.abs(b) < 0.168) & (a > -0.01), M_STITCH_EXEC)
         if st is not None:
             geos.append(st)
