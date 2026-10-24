@@ -1,0 +1,75 @@
+{
+  "area": "ceiling",
+  "rater": "B",
+  "round": 9,
+  "score": 8.6,
+  "lightingNote": "No ceiling-relevant lighting regression is visible in r9 against r8. The q16 ceiling and PSU band are a touch lighter, consistent with the exposure raise. The economy/PY seat darkening noted in from_integration.md is outside this area. Tone relationships match the r9st studio renders.",
+  "previousStatus": {
+    "fixed": [
+      "w8b low: vault speaker shape and face tone. It is now in vault tone with a slight bow and reads by its shadow edge (v2, v8, v11). In r8 it was a flat grey bar.",
+      "w8b/w8a: outboard PSU shingle risers. The venetian-blind pinstripes are gone (v4, v8 left, v3 left, q16), and the steps now read as soft, low-contrast joints as in c26.",
+      "w8a low: bin door module seams. They are now soft light beads, not dark cuts (v2, v11, v12, v13).",
+      "w8a low: outboard latch proportion. It is now about 2.2:1 with a visible handle (v4, v11, g_latch).",
+      "w8a low: door-3 soffit speaker. It is now a grey grille with a darker rim, not a black hole (v3)."
+    ],
+    "notFixed": [
+      "w8b low: vault shading terraces. Faint fore-aft streaks still show on the vault in v2, v1 and v7 after N 48, so the cause is the AO volume or shadow filter (lighting), not tessellation.",
+      "w8b low: door-3 dome edges. White curved arcs remain at the upper left (about 290-330, 60-100) and upper right (about 650-690, 80-100) of the dark tray in v3, which is pixel-identical to r8 there. The new closures facing door 3 did not reach these surfaces.",
+      "w8b low: placard icons. The icons are now solid blocks ('35 ▪▪▪▪' in v12, '35 ▪▪▪' in v13), not empty boxes, but they still read as dashes rather than c120's seat/person pictograms.",
+      "w8a low: centre-bin crest rail joint caps. They were added in 215d8bb (30 mm, 3 mm proud), but they cannot be seen in v12, v2 or v1, and the rail still reads as one continuous strip."
+    ],
+    "regressed": []
+  },
+  "details": [
+    {"detail": "Aisle vault panels, joint ribs and crest rib", "score": 8.8, "refs": ["b_lalf_c120", "b_lalf_c119", "b_sany_y22"]},
+    {"detail": "Cove band + slotted grille", "score": 8.7, "refs": ["b_lalf_c120", "b_lalf_c119", "rb_omaat_room37"]},
+    {"detail": "Vault light falloff and smoothness", "score": 8.2, "refs": ["b_lalf_c119", "b_lalf_c120"]},
+    {"detail": "Vault fittings (speaker, emergency light)", "score": 8.6, "refs": ["b_lalf_c120"]},
+    {"detail": "Outboard bins: doors, latches, lip, top placards, seams", "score": 8.8, "refs": ["b_sany_y22", "b_lalf_c120", "y_47301"]},
+    {"detail": "Centre bins: doors, crest rail + placard, PSU channel", "score": 8.5, "refs": ["y_47300", "b_sany_y22", "b_lalf_c120"]},
+    {"detail": "Outboard PSU band (stepped strips, housings, sign windows)", "score": 8.7, "refs": ["b_lalf_c26", "rb_omaat_room23", "y_47301"]},
+    {"detail": "EXIT signs", "score": 8.4, "refs": ["b_lalf_c133", "b_lalf_c134"]},
+    {"detail": "Door-3 bar cross-aisle soffit", "score": 8.4, "refs": ["b_lalf_c133", "b_lalf_c134"]},
+    {"detail": "Other door / monument ceilings", "score": 7.9, "refs": ["y_47301", "b_lalf_c120"]}
+  ],
+  "issues": [
+    {
+      "severity": "low",
+      "detail": "Door-3 dome edges around the dark soffit",
+      "problem": "Two white curved arcs still frame the dark tray at its upper left and upper right corners. These are the dome or cove sweep ends between the tray and the bin ends. c133/c134 show the dark soffit running flat to the monument walls and bin ends, with no white arch.",
+      "evidence": "r9v/v3_door3Aft.png at about (290-330, 60-100) and (650-690, 80-100), unchanged from r8v/v3",
+      "fix": "07b_ceiling.js door zone 2 (around line 296): widen the flat barSoffit gBox from 3.1 m to the full dome width (about 3.4 m, out to the outboard bin crest), or lower it 10-15 mm so it hides the sweep ends. Also give the cove/grille strip ends and the bin-top caps inside zone 2 CEILMAT.barSoffit, not flat/vault. Line 289 already switches the vault sweep. Re-render v3."
+    },
+    {
+      "severity": "low",
+      "detail": "Centre-bin crest rail joint caps not visible",
+      "problem": "The caps added in w8 (30 mm long, 3 mm proud, same tone) cannot be seen at QA resolution. The crest rail still reads as one continuous strip. In c120 each module joint shows a distinct step or cap with a shadow line.",
+      "evidence": "r9p/v12_cPlacardClose.png: the rail at y 120-145 has no break at the door seam (x 215). The cap is not visible in v1 or v2 either.",
+      "fix": "08_bins.js line 263: make the caps 50-60 mm long and 6-8 mm proud, 0.92x the rail colour, with a 1-2 mm dark gap line (#b8b8b6) on each side of the cap so the joint reads by shadow, as in c120."
+    },
+    {
+      "severity": "low",
+      "detail": "Vault shading terraces (lighting)",
+      "problem": "Faint fore-aft streaks or plateaus still show along the vault. Raising the vault N to 48 did not remove them, so they come from the AO-volume trilinear grid or the shadow-map filter. c120 grades smoothly.",
+      "evidence": "r9v/v2_jAisleSteep.png and v1_jAisleUp.png: faint lines along the vault between the cove grille and the centre-bin crest",
+      "fix": "Lighting/integration (12_scene.js / 04_shaders.js): raise the AO volume resolution over y 2.2-2.7, or apply a 3-tap blur to the AO lookup on surfaces with normal.y < -0.3. No further ceiling-side change is needed."
+    },
+    {
+      "severity": "low",
+      "detail": "Row placard pictograms",
+      "problem": "The icons are solid blocks now, but at this resolution they still read as dashes ('35 ▪▪▪▪'). c120 shows readable seat and person pictograms next to the row number.",
+      "evidence": "r9p/v12_cPlacardClose.png, r9p/v13_oPlacardClose.png",
+      "fix": "06_atlas.js (atlas owner): draw the placard cell at 2x and use one or two larger glyphs, a seat outline (backrest plus cushion, an L shape) and a standing figure (head circle plus body), at about 0.8x the digit cap height. Do not draw one small block per seat letter."
+    },
+    {
+      "severity": "low",
+      "detail": "Vault speaker reads slightly faint",
+      "problem": "The face is now in vault tone, which is correct, but the outline is very soft. In c120 the fitting carries a clear dark crescent along one long edge (the recess shadow) and a thin light rim on the other. In the r9 views it reads as a pale grey bar with almost no edge.",
+      "evidence": "r9v/v2_jAisleSteep.png at (400-505, 360-410); b_lalf_c120 at (735-820, 245-290)",
+      "fix": "07b_ceiling.js speaker: add a 3 mm darker (#bdbbb6) inner wall strip on the forward long edge only, as a shadow crescent, keeping the vault-tone face."
+    }
+  ],
+  "questionsForUser": [
+    "Do you have an in-flight photo of the door-1/2/4/5 cross-aisle ceilings on the ANA 777-300ER (new 212 layout)? Only the door-3 bar is verified (c133/c134); the others are still approximated."
+  ]
+}

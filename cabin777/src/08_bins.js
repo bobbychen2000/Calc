@@ -64,6 +64,9 @@ const BINMAT = {
   socket: { c: '#6a6e73', r: 0.5 },                           // the rest of the smoked pill (atlas ground colour)
   rail: { c: '#e8e8e5', r: 0.36, l: LAYER.plastic },
   groove: { c: '#9aa0a6', r: 0.7 },
+  cap: { c: '#d6d6d3', r: 0.4, l: LAYER.plastic },   // 0.92x the rail (w9b)
+  capGap: { c: '#b8b8b6', r: 0.8 },
+  crestGroove: { c: '#8a8c90', r: 0.5, m: 0.3 },
   joint: { c: '#dcdedf', r: 0.7 },
   riser: { c: '#d2d3d4', r: 0.7, l: LAYER.plastic, e: 0.14 },   // lit edge-on, so self-lifted to ~0.85x the band (y_47301; w7a/w8a/w8b pinstripes)   // w7a: #a9acb0 read as dark pinstripes (y_47301 ~200 on 235)   // shingle step face (w5b) [A]
   psuBox: { c: '#e6e6e3', r: 0.4, l: LAYER.plastic },
@@ -87,10 +90,10 @@ function paintBinDecals(A, layout) {
   const g = A.canvas.getContext('2d'), S = A.canvas.width;
   const rect = (name) => { const r = A.rects[name]; return r && [r[0] * S, r[1] * S, (r[2] - r[0]) * S, (r[3] - r[1]) * S]; };
   const INK = '#3a3f47';
-  const seatIcon = (x, y, s) => {      // seat pictogram drawn solid: backrest bar over a cushion (w8b: the outline form
-    g.fillStyle = INK;                    // read as empty boxes once scaled down)
-    g.beginPath(); g.roundRect(x, y - s * 0.5, s, s * 0.34, s * 0.12); g.fill();
-    g.beginPath(); g.roundRect(x + s * 0.1, y - s * 0.5 + s * 0.46, s * 0.8, s * 0.54, s * 0.14); g.fill();
+  const seatIcon = (x, y, s) => {      // side-view seat glyph: reclined back + cushion + leg, thick strokes (w8b: outline
+    g.strokeStyle = INK; g.lineWidth = s * 0.2; g.lineCap = 'round'; g.lineJoin = 'round';   // boxes, w9b: blocks read as dashes)
+    g.beginPath(); g.moveTo(x + s * 0.12, y - s * 0.5); g.lineTo(x + s * 0.28, y + s * 0.14); g.lineTo(x + s * 0.9, y + s * 0.14);
+    g.moveTo(x + s * 0.5, y + s * 0.14); g.lineTo(x + s * 0.5, y + s * 0.5); g.stroke();
   };
   const rows = [...new Set(layout.seats.map((s) => s.row))];
   for (const r of rows) for (let i = 0; i < 3; i++) {
@@ -104,11 +107,11 @@ function paintBinDecals(A, layout) {
     g.save(); g.translate(x, y); g.scale(sx, 1);
     const W = w / sx;                         // virtual width before the quad stretch
     g.fillStyle = INK; g.textAlign = 'left'; g.textBaseline = 'middle'; g.font = '700 22px "Helvetica Neue", Helvetica, Arial, sans-serif';
-    const tw = g.measureText(String(r)).width, ic = 11, gap = 3;
-    const total = tw + 6 + Math.min(n, 4) * (ic + gap);
+    const tw = g.measureText(String(r)).width, ic = 16, gap = 2;
+    const total = tw + 6 + Math.min(n, 3) * (ic + gap);
     let cx = (W - total) / 2;
     g.fillText(String(r), cx, h / 2 + 1); cx += tw + 6;
-    for (let k = 0; k < Math.min(n, 4); k++) { seatIcon(cx, h / 2, ic); cx += ic + gap; }
+    for (let k = 0; k < Math.min(n, 3); k++) { seatIcon(cx, h / 2, ic); cx += ic + gap; }
     g.restore();
   }
   const q = rect('psuSigns');
@@ -246,6 +249,8 @@ function centerBinModule() {
     addLatch(B, faceM((hx + 0.006) * s, hy, htx * s, hty, 0, s));
     // plain crease filler where the vault meets the centre-bin crest (no cove light on this edge: see 07b header)
     B.add(gBox(0.05, 0.01, L - 0.006), M4.trs(0.70 * s, 2.268, 0), BINMAT.door);
+    // dark recessed groove between the crest rail and the vault (c120 [V]; 14 mm [A]; w9a)
+    B.add(gBox(0.014, 0.004, L), M4.trs(0.712 * s, 2.2615, 0), BINMAT.crestGroove);
     // raised top rail along the crest, carrying the row placard (b_lalf_c120 '17' on the centre-bin top [V]; 18 mm [A])
     const [rx, ry, rtx, rty] = faceAtY(CBIN_DOOR, 2.19);
     B.add(gExtrude(faceShell(CBIN_DOOR.filter((p) => p[1] > 2.165 && p[1] < 2.245), s, -1, 0.008, 0.001), L - 0.014, 45), null, BINMAT.rail);
@@ -260,8 +265,14 @@ function centerBinModule() {
 // seams between neighbouring modules (instanced at the joints only, so no dark outline at the run ends)
 function binSeams(which) {
   const B = new Builder();
-  // centre: plus a raised cap over the crest rail at each joint (c120 [V]; 30 mm, 3 mm proud [A])
-  if (which === 'C') for (const s of [-1, 1]) { doorSeam(B, CBIN_DOOR, s, -1); B.add(gExtrude(faceShell(CBIN_DOOR.filter((p) => p[1] > 2.16 && p[1] < 2.25), s, -1, 0.011, 0.001), 0.03, 45), null, BINMAT.rail); }
+  // centre: plus a raised cap over the crest rail at each joint with a gap line each side (c120 [V]; 55 mm, 7 mm
+  // proud of the rail [A]; w9b: 30 mm / 3 mm could not be seen)
+  if (which === 'C') for (const s of [-1, 1]) {
+    doorSeam(B, CBIN_DOOR, s, -1);
+    const rp = CBIN_DOOR.filter((p) => p[1] > 2.16 && p[1] < 2.25);
+    B.add(gExtrude(faceShell(rp, s, -1, 0.015, 0.001), 0.055, 45), null, BINMAT.cap);
+    for (const f of [-1, 1]) B.add(gExtrude(faceShell(rp, s, -1, 0.0085, 0.001), 0.0015, 45), M4.trs(0, 0, f * 0.029), BINMAT.capGap);
+  }
   else doorSeam(B, OBIN_DOOR_S, which === 'R' ? 1 : -1, 1);
   return B.build();
 }

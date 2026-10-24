@@ -1,0 +1,97 @@
+{
+  "area": "ceiling",
+  "rater": "A",
+  "round": 9,
+  "score": 8.3,
+  "note": "This round falls between lighting snapshots 282136c/9f2d20e and the next lighting commit. The ceiling is scored on geometry, proportion, colour, materials and detail, and tone relationships are judged in r9st, which the lighting changes do not affect. Two in-cabin tone shifts come from the lighting code, not 07b/08. They are listed separately under 'lighting' and do not lower the score.",
+  "previousStatus": {
+    "fixed": [
+      "w8a medium: outboard PSU shingle steps drew as dark pinstripes. Now soft, low-contrast steps (v4: riser lines barely visible, like y_47301).",
+      "w8a low: bin door module seams were dark cuts. Now soft light beads (v9, v12, v13, e_obin).",
+      "w8a/w8b low: vault speaker face. Now a bowed slot whose face is about 0.93 of the vault tone (v2: face 160-170 on a 175 vault). A slatted face remains, see below.",
+      "w8a low: outboard latch was a 2.8:1 pill. Now about 2:1 with a dark handle (g_latch, v9).",
+      "w8a low: door-3 soffit speaker was a black hole. Now a grey face with a light rim (v3).",
+      "w8a low: centre crest rail had no joint caps. A raised cap now sits at each module joint (v12, f_cbin).",
+      "w8b low: shingle risers at a grazing angle in J/F (v8 left: no venetian blind)."
+    ],
+    "notFixed": [
+      "w8b low: row-placard pictograms. The empty boxes are now solid bars ('35 ====' in v12/v13). They still do not read as seat/person icons (c120 '17 [seat icon][person icon]').",
+      "w8b low: door-3 dome edges. White curved arcs still show at the upper left and right of the dark tray (v3, top corners).",
+      "w8a/w8b low: vault shading plateaus. Fore-aft streaks still show in v2 and v6 (lighting/AO note).",
+      "w8a low: dark shadow groove between the centre crest rail and the vault (c120 top-left). r9 still draws a light-grey line (v12).",
+      "w7a/w8a low: door 1/2/4/5 cross-aisle ceilings are still unverified."
+    ],
+    "regressed": [
+      "Lighting, not ceiling code: the downward-facing lip/handhold strip under the outboard bin door fell from L about 140 (r8 v9) to about 85 (r9 v9), and from 138 to 83 in v4. It now reads as a dark grey band along every outboard bin bottom (v1, v4, v9, v10). Studio e_obin shows the same strip light, so the cause is the new crevice term amb *= mix(0.4,1,smoothstep(.06,.5,ao)) and the lower AO weight on faces that do not look up.",
+      "Lighting, not ceiling code: at exposure 1.38 the bin doors in q06/v8 clip to near-white with almost no form shading. c120 bins carry soft blue-grey shading at 170-200."
+    ]
+  },
+  "details": [
+    {"detail": "Aisle vault panels, joint ribs, crest rib", "score": 8.4, "refs": ["b_lalf_c120", "b_sany_y22"]},
+    {"detail": "Cove light band + slotted grille", "score": 8.6, "refs": ["b_lalf_c120", "b_lalf_c26"]},
+    {"detail": "Vault fittings (speaker, emergency light)", "score": 8.2, "refs": ["b_lalf_c120"]},
+    {"detail": "Outboard bins (doors, seams, latches, top rail)", "score": 8.5, "refs": ["y_47301", "b_lalf_c120", "b_sany_y22"]},
+    {"detail": "Row placards", "score": 7.4, "refs": ["b_lalf_c120 (17 + seat/person icons)", "py_37302"]},
+    {"detail": "Centre bins (doors, crest rail + caps, PSU channel)", "score": 8.3, "refs": ["y_47300", "b_sany_y22", "b_lalf_c120"]},
+    {"detail": "Outboard PSU band (shingles, housings, sign windows)", "score": 8.5, "refs": ["y_47301", "b_lalf_c26", "rb_omaat_room23"]},
+    {"detail": "Centre PSUs", "score": 8.2, "refs": ["b_sany_y22", "b_lalf_c26"]},
+    {"detail": "EXIT signs", "score": 8.2, "refs": ["b_lalf_c133", "b_lalf_c134"]},
+    {"detail": "Door-3 bar soffit", "score": 8.0, "refs": ["b_lalf_c133", "b_lalf_c134"]},
+    {"detail": "Other door / monument ceilings", "score": 7.0, "refs": ["unverified"]}
+  ],
+  "issues": [
+    {
+      "severity": "medium",
+      "detail": "Lighting regression: dark band under the outboard bins (lighting team; ceiling is unchanged)",
+      "problem": "The downward-facing lip and handhold strip at the bottom of every outboard bin door now renders at L 80-90 against a PSU band at about 207. This draws a heavy dark-grey stripe along the whole cabin. In y_47301 the bin bottom is a thin light-grey line.",
+      "evidence": "r8v/v9 L 137-141 vs r9v/v9 L 80-88 at (400,320-340); r8v/v4 138 vs r9v/v4 83 at (500,200). r9st/e_obin shows the same strip light.",
+      "fix": "For lighting (04_shaders.js): limit the crevice term amb *= mix(0.4,1,smoothstep(.06,.5,ao)) to the dense seat block, or floor it at about 0.75 on the 'upper' layer (meshes in layer 'upper' from 08_bins.js). Do not retune BINMAT to compensate."
+    },
+    {
+      "severity": "low",
+      "detail": "Row-placard pictograms",
+      "problem": "The icons beside the row number read as 3-4 solid dashes ('35 ===='). c120 shows two distinct pictograms, a seat outline with a letter panel and a standing person. They also have a fixed count instead of n per seat.",
+      "evidence": "r9p/v12, r9p/v13; ref c120 crop (0,0,320,120).",
+      "fix": "08_bins.js paintBinDecals: draw at most 2 icons, a seat in side view (backrest at about 70 deg plus cushion, ic = 16 virtual px, stroke 2.5) and a person (head circle plus torso), instead of Math.min(n,4) seatIcon bars. Keep the stretch sx."
+    },
+    {
+      "severity": "low",
+      "detail": "Door-3 dome arcs beside the dark soffit",
+      "problem": "Curved white arcs from the door-area dome still show between the dark tray and the bin ends (third report). In c133/c134 the dark soffit runs flat to the monument walls and the bin ends.",
+      "evidence": "r9v/v3 top-left and top-right of the tray (x 300-340, 640-700, y 60-120).",
+      "fix": "07b_ceiling.js door-3 dome: skip the dome shell where the bar soffit covers it (z inside the bar footprint), or extend the dark tray plane out to |x| = the outboard bin end x, so no white dome surface remains visible above the tray edge."
+    },
+    {
+      "severity": "low",
+      "detail": "Crest-rail to vault shadow groove",
+      "problem": "c120 shows a dark (metallic-grey) shadow channel about 15 mm wide between the bin top rail with its placard and the vault. In r9 that joint is a light-grey line.",
+      "evidence": "r9p/v12 (y about 55); c120 crop (0,0,320,120).",
+      "fix": "08_bins.js crest rail: add a 12-15 mm recessed strip just above the rail, set back about 10 mm, colour #8a8c90, roughness 0.5."
+    },
+    {
+      "severity": "low",
+      "detail": "Vault speaker face slats",
+      "problem": "The speaker now matches the vault in tone and is bowed, but its face shows a coarse slat pattern. c120's vault fitting reads as a smooth face with a dark crescent on one long edge.",
+      "evidence": "r9v/v8 top centre, r9st/h_trough.",
+      "fix": "07b_ceiling.js vault speaker: drop the slat layer (or bring its amplitude below 0.03), and darken only a 6 mm strip along the forward long edge."
+    },
+    {
+      "severity": "low",
+      "detail": "Vault fore-aft streaks (lighting/AO)",
+      "problem": "The vault still steps in fore-aft plateaus instead of grading smoothly.",
+      "evidence": "r9v/v2 (right of the speaker), r9v/v6.",
+      "fix": "Either raise the AO volume resolution in x across the vault in 12_scene.js (lighting), or subdivide the vault more finely in 07b_ceiling.js (N 48 -> 72) if the streaks follow the facet normals."
+    },
+    {
+      "severity": "low",
+      "detail": "Door 1/2/4/5 cross-aisle ceilings unverified",
+      "problem": "There is no photo check yet. q01 shows only a sliver of these ceilings.",
+      "evidence": "r9/q01_door1",
+      "fix": "Add a QA view looking up at each door cross-aisle and pair it with a trip-report photo (search terms: 'ANA 777-300ER door 2 galley ceiling')."
+    }
+  ],
+  "questionsForUser": [
+    "Do you have a close photo of an ANA 777-300ER economy row placard, to confirm the pictograms next to the row number (seat-letter icons vs seat + person)?",
+    "Do you have photos of the door 1, 2, 4 or 5 cross-aisle ceilings (light domes vs flat panels)?"
+  ]
+}
