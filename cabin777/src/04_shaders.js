@@ -48,6 +48,17 @@ vec3 aces(vec3 x){ return clamp((x*(2.51*x+0.03))/(x*(2.43*x+0.59)+0.14), 0.0, 1
 // QA r3: display encode = the sRGB OETF, the inverse of toLin (was sqrt = gamma 2.0, which returned #404040 as 56 and
 // crushed every charcoal / navy / taupe by 12-15 %) [D]
 vec3 toSRGB(vec3 c){ return mix(c*12.92, 1.055*pow(c, vec3(1.0/2.4)) - 0.055, step(vec3(0.0031308), c)); }
+// QA r1 (light): tone after ACES in the white moods (k = u_toe 1), on luminance so hues hold: near-blacks (< ~0.03
+// linear, sRGB L48) go deeper and the top end (> ~0.5) follows half an S-curve, while the mid-darks (navy fabric,
+// charcoal) stay put [V: p5 / p99 / % > 235 c_27312 15 / 255 / 7.2, y_47301 28 / 254 / 9.5, c_27316 33 / 254 / 9.0
+// vs q06 40 / 238 / 1.5, q16 35 / 224 / 0.2] (integration r1; the suggested full S-curve also took ~12 % off the Y
+// fabric, which already read L56 vs 66, from_econ w10)
+vec3 tone(vec3 c, float k){
+  float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
+  float t = mix(1.0 - 0.45*k, 1.0, smoothstep(0.002, 0.03, l));
+  t *= 1.0 + 0.5*k*smoothstep(0.4, 0.75, l)*(l*(3.0 - 2.0*l) - 1.0);   // l -> l + w (l^2 (3 - 2l) - l)
+  return c * t;
+}
 
 // QA r3: 3x3 hardware-PCF taps at 1 texel (was 4 at 0.7): softer sun-patch edges, no stair steps [V: omaat_f57 / f58]
 float shadowF(vec3 wp, vec3 n){
@@ -361,10 +372,7 @@ void main(){
   vec3 col = diff * (amb + sun) + specSun + specEnv + emissive;
   col += vec3(0.30, 0.62, 1.0) * hl * (0.35 + 0.9*pow(1.0 - NdV, 2.0));
   col = aces(col * u_exposure);
-  // QA r1 (light): toe after ACES in the white moods (u_toe 1): only near-blacks (luminance < ~0.03 linear, sRGB L48)
-  // go deeper, navy fabric / charcoal mid-darks stay put [V: p5 c_27312 15, y_47301 28 vs q06 40, q16 35]
-  // (integration r1; the suggested S-curve also took 12 % off the Y fabric, which already reads L56 vs 66)
-  col *= mix(1.0 - 0.45*u_toe, 1.0, smoothstep(0.002, 0.03, dot(col, vec3(0.2126, 0.7152, 0.0722))));
+  col = tone(col, u_toe);
   o = vec4(toSRGB(col), 1.0);
 }`;
 
@@ -430,7 +438,8 @@ void main(){
     col = mix(col, u_horizon, smoothstep(-0.05, -0.02, h));
   }
   col = aces(col * u_exposure);
-  col *= mix(1.0 - 0.45*u_toe, 1.0, smoothstep(0.002, 0.03, dot(col, vec3(0.2126, 0.7152, 0.0722))));   // the mainFS toe
+  float l = dot(col, vec3(0.2126, 0.7152, 0.0722));   // the mainFS tone()
+  col *= mix(1.0 - 0.45*u_toe, 1.0, smoothstep(0.002, 0.03, l)) * (1.0 + 0.5*u_toe*smoothstep(0.4, 0.75, l)*(l*(3.0 - 2.0*l) - 1.0));
   o = vec4(mix(col*12.92, 1.055*pow(col, vec3(1.0/2.4)) - 0.055, step(vec3(0.0031308), col)), 1.0);   // sRGB, as mainFS
 }`;
 
