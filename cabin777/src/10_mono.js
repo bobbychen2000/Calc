@@ -49,11 +49,11 @@ const MONMAT = {
   downlight: { c: '#eef4ff', r: 0.3, e: 1.6 },
   fridgeLit: { c: '#2c2f36', r: 0.08, e: 0.03 },     // [V] smoked-glass door: #3a3941 (render), #3b3834 (omaat_room_32)
   latch: { c: '#7a7d82', r: 0.35, m: 0.6 },           // [V] light-grey oval fridge latch (render)
-  bottleClear: { c: '#4b5458', r: 0.04, m: 0.5 },   // w11a/b: dark see-through glass (samchui_render_11 #4b4749), white label + cap   // w10a: clear bottles lit by the shelf (were opaque grey)
+  bottleClear: { c: '#6d7477', r: 0.05 },   // w12a/b: m 0.5 rendered black (#14181b vs render #4c4849); dielectric, lighter   // w11a/b: dark see-through glass (samchui_render_11 #4b4749), white label + cap   // w10a: clear bottles lit by the shelf (were opaque grey)
   bottleBlue: { c: '#3d4f8a', r: 0.3 },              // w2: blue label on clear water bottles (the solid blue read as blobs)
   label: { c: '#f4f2ec', r: 0.6 },
   juice: { c: '#f0a526', r: 0.15 },
-  tumbler: { c: '#3c4043', r: 0.04, m: 0.5 },     // w11a: dark rocks glasses (render #383539), not paper cups
+  tumbler: { c: '#6a6a6e', r: 0.05 },           // w11a: dark rocks glasses (render #383539), not paper cups
   // [V] welcome galley upper unit: dark warm charcoal with visible frames, not black (omaat_room_32 #1a1911..#3a362a,
   //     kna_31_full; w5b rendered #050507)
   recessGrey: { c: '#d3d0ca', r: 0.45, l: LAYER.plastic },   // w9a: welcome recess side walls + ceiling (lalf_134, omaat_room_32) [V]

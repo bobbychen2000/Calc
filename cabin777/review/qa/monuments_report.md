@@ -176,3 +176,92 @@ curtains 7.5 / 7.5, jump seats + door linings 7.5 / 8 (B 6.5 in w7).
   - The faint seam in the m04 ash flap.
   - The ebony streaks are a little regular.
 - **Not yet rated:** the w8 fixes (lit cabinet pane, F drape at the wall edge, EXIT plate).
+
+## Wave 3b (2026-10-24): plateau breaker, rounds w9-w12
+
+The wave stopped at the plateau breaker's 4-round cap. The target of 8.5 was not reached; the result is 8.1 / 8.3 (mean
+8.2, from 7.75 at the w9 baseline). No high- or medium-severity issue is left on rater B's side. Rater A has one medium
+issue (welcome-cabinet size and position). Gap analysis: `monuments_gap_w9.md`.
+
+| round | rater A | rater B | mean | files |
+|---|---|---|---|---|
+| w9 (baseline on 51e3979) | 7.7 | 7.8 | 7.75 | `monuments_w9a/b.json` |
+| w10 | 8.0 | 8.0 | 8.0 | `monuments_w10a/b.json` |
+| w11 | 8.0 | 8.1 | 8.05 | `monuments_w11a/b.json` |
+| w12 | 8.1 | 8.3 | 8.2 | `monuments_w12a/b.json` |
+
+**w12 detail scores (A / B):**
+
+| Detail | A | B |
+|---|---|---|
+| Bar | 7.7 | 7.9 |
+| Welcome galley | 7.9 | 8.3 |
+| Door-2 ash wall | 8.1 | 8.1 |
+| F front + flight-deck door | 8.3 | 8.3 |
+| Lavs | 7.5 | 7.6 |
+| F/J | 8.0 | 8.0 |
+| J/PY | 8.0 | 8.0 |
+| Door 4 | 8.3 | 8.4 |
+| Door 5 | 7.9 | 8.1 |
+| Inserts | 8.2 | 8.3 |
+| Curtains | 8.2 | 8.0 |
+| Jump seats + linings | 8.2 | 8.2 |
+
+**Triangles:** 130.1k -> 145.0k (+11 % this wave). That is +24.8 % on the wave-3 start of 116.2k, against a 25 % budget,
+so there is no geometry headroom left.
+
+### What changed (big-ticket items from the gap analysis)
+- **Galley inserts, rebuilt after the only real photos of an ANA 777-300ER galley face** (SANspotter snack bar, sans_38 /
+  sansY_44). These replace the generic brushed-mirror units:
+  - Satin anodised aluminium.
+  - Grey upper compartments.
+  - Dark 4 mm gaps round every insert.
+  - Ovens with yellow-green meal-label windows, a display and a lever latch.
+  - Chunky copper-orange turn-button latches.
+  - Paired narrow brewers with squat polished pots (the polish baked per lathe wedge), a basket drawer and a caution
+    label.
+- **Photo wear tile:** new layer 28 `g_alu`, a smudge and wipe mottle cut from the sansY_44 oven and sans_38 cart faces
+  by `make_swatches.py g_alu()`. It is on every galley metal face.
+- **Door-2 welcome galley:**
+  - The recess is lined in light grey, with ash only as an outer skin.
+  - The glass cabinet reads as smoked glass. The engine has no blended glass, so there is no pane quad: the interior is
+    tinted about 0.75x mauve, with a bright pane bead and a deep top rail carrying the caution plate.
+  - The monitor is flush.
+  - The real brewer.
+  - The tag has a pictogram.
+- **Monument backs:** a J/PY panel band with joints and a satin bead (omaat_room_36). Satin edge guards on the lav and
+  closet aisle corners.
+- **Flight-deck door** (tpa_Image-2-3): brushed bolt frames, a hinge jamb, a kick panel, a chevron strip and a lock boss.
+- **Smaller fixes:**
+  - F cloud wall: horizontal strata at the photo's contrast. The hue stays warm-neutral, as sampled.
+  - Darker jump seats.
+  - Mid-grey lining grip pocket.
+  - No 2R deck stub.
+  - Bar bottles with necks and caps, rocks glasses and a near-black counter.
+  - Brushed ash-wall flap frames.
+- **After w12, unrated:** the bar bottles and tumblers are back to a dielectric mid grey (w12 A/B: at metalness 0.5 they
+  rendered black). This changes materials only.
+
+### Rated, not done
+- **Galley frames:** aluminium perimeter frames with rivets on every insert, cart grips, and posts between carts (w12a
+  gapWorth03 about +0.3; w12b about +0.15-0.2). Not done because the triangle budget is spent. It would need a texture
+  route: a frame and rivet decal in the atlas, or a trim elsewhere.
+- **Welcome-cabinet geometry** (w12a medium): in the photos the cabinet is about 0.62 m wide, abuts the monitor, and its
+  top is level with the monitor's.
+- **Small items:** brewer-pot facets, ash-wall flap spacing, the PY bassinet bar, and the jump-seat straps.
+- **Arming arc:** rater A reads lalf_134 as crimson (146,47,60). The lalf_133 close-up reads pink-magenta, so the colour
+  is kept at #b53a62. The two photos are under different light.
+
+### Hand-offs and questions
+- **Lighting** (`from_monuments.md`, wave 3b): recessed monument faces are crushed (bar blind, welcome recess), and the
+  galley upper banks show a fog band.
+- **Questions** 9-10 in `questions_monuments.md`: the cabinet glass tint, and a door-5 galley photo.
+- **Sources** (gitignored `ref/web/monuments/`, listed in its INDEX.md):
+  - SANspotter: sans_38, sansY_44, sans_09.
+  - Live and Let's Fly: lalf_133 / 134.
+  - One Mile at a Time: omaat_room_32 / 36, omaatF_2.
+  - The Points Analyst / travelnerdco: tpa_Image-2-3.
+  - KN Aviation: kn_31.
+
+Contact sheet: `monuments_before_after_w3b.jpg` (w9 against w12, own renders only; it also includes the lighting
+session's concurrent changes).
