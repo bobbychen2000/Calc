@@ -247,5 +247,147 @@ function buildLayout() {
   Wk(-1.40, -1.00, 45.3, zb + 0.05); Wk(1.00, 1.40, 45.3, zb + 0.05);  // economy aisles
   Wk(-1.20, 1.20, dz[4][0] - 0.05, dz[4][1] + 0.4);
 
-  return { seats, mon, zones, windows: winList, walk, suiteZ, roomPairs, pyZ, rowZ, doorsZ: dz, z16, z20, zb };
+  return monoLayoutQA({ seats, mon, zones, windows: winList, walk, suiteZ, roomPairs, pyZ, rowZ, doorsZ: dz, z16, z20, zb });
+}
+
+// ---- Monument layout amendments (monuments QA r2, folded in from 10_mono.js), applied to the base map at the end of
+// buildLayout. They follow the official ANA seat map (ref/web/monuments/ana_b-777-300ER-n212map.png) and move whole
+// row groups (the guard skips the pass if the door-3 bar already stands aft of door 3).
+//   door 1  [V map + tpa_IMG_0260 + reviews "two lavatories at the very front, left larger than right"]: both F lavs
+//           ahead of door 1 (left bidet lav, centre lav opening into the flight-deck corridor on the left of centre),
+//           centre galley behind the centre lav; aft of door 1 only closets + a small galley unit ahead of 1G, all
+//           full height (omaatF_2 / tpa_IMG_0220: pale washi wall up to the bins) and washi on their suite side
+//   door 2  [V map, sans_09]: galley on both sides of the cross-aisle; centre + 7K galleys and a 7A closet aft of it
+//   door 3  [V map]: row 16 sits against the cross-aisle; lavs + bar are aft of it, facing forward, then row 17
+//   door 4  [V map, py_37302]: centre galley ahead of door 4 behind row 27 (plain wall + two grey boxes on the PY side),
+//           galley (not a closet) on the right, dark PY curtains in both aisles right behind row 27, row-30 monitors
+//   door 5  [V map]: no lavs ahead of door 5; aft of it two fore-aft galleys facing a centre work aisle, a lav outboard
+//           of each, light-grey rear curtains at the end of economy (y_47300)
+// Depths [A]: door-2 aft monuments 0.85 / 0.70 m, door-3 monuments 1.05 m (lav class), PY bulkhead legroom 0.92 m (row 25
+// hinge to the J/PY wall), 0.32 m recline room behind row 27; the door-4 forward galley keeps the rest (~0.6 m).
+const MONO_LAYOUT = { d2aft: 0.85, d2side: 0.70, d3: 1.05, pyLeg: 0.92, pyRecline: 0.32 };
+function monoLayoutQA(L) {
+  const bar = L.mon.find((m) => m.kind === 'bar');
+  if (!bar || bar.face !== 1 || bar.z1 > L.doorsZ[2][0] + 0.01) return L;
+  const dz = L.doorsZ, PL = CAB.pairLen, ML = MONO_LAYOUT, mon = L.mon;
+  const near = (a, b, e = 0.02) => Math.abs(a - b) < e;
+  const del = (pred) => { for (let k = mon.length - 1; k >= 0; k--) if (pred(mon[k])) mon.splice(k, 1); };
+  const M = (kind, x0, x1, z0, z1, extra = {}) => { const m = { kind, x0, x1, z0, z1, h: extra.h ?? 2.15, ...extra }; mon.push(m); return m; };
+  const find = (kind, x0, z1) => mon.find((m) => m.kind === kind && near(m.x0, x0) && near(m.z1, z1));
+
+  // ---- row shifts: THE Room 7-16 behind the door-2 aft galleys, 17-20 behind the door-3 monuments, PY behind the wall
+  const rp = (r0) => L.roomPairs.find((p) => p.r0 === r0);
+  const s2 = dz[1][1] + ML.d2aft + 0.02 - rp(7).z0;
+  const s3 = dz[2][1] + ML.d3 + 0.02 - rp(17).z0;
+  for (const p of L.roomPairs) { const d = p.r0 >= 17 ? s3 : p.r0 >= 7 ? s2 : 0; p.z0 += d; p.zc += d; }
+  const oldZ20 = L.z20, oldZ16 = L.z16;
+  L.z16 += s2; L.z20 += s3;
+  const sPY = L.z20 + 0.10 + ML.pyLeg - L.pyZ[25];
+  for (const r of [25, 26, 27]) L.pyZ[r] += sPY;
+  for (const s of L.seats) {
+    if (s.kind === 'room') { const d = s.row >= 17 ? s3 : s.row >= 7 ? s2 : 0; s.z += d; s.uz += d; }
+    else if (s.kind === 'py') s.z += sPY;
+    if (s.id === '1A') s.notes = s.notes.map((n) => (/lavatory/.test(n) ? 'The larger First lavatory (with bidet) is just ahead of door 1 on this side' : n));
+  }
+  const pz27 = L.pyZ[27], zb = L.zb;
+
+  // ---- door 1, forward: left bidet lav (larger), flight-deck corridor, centre lav opening into it, centre + right galleys
+  const d1L = find('lav', -2.70, 4.78); if (d1L) d1L.x1 = -1.10;
+  del((m) => m.kind === 'closet' && near(m.x0, -1.30) && near(m.z1, 3.40));
+  const ck = mon.find((m) => m.kind === 'cockpit'); if (ck) { ck.x0 = -1.08; ck.x1 = -0.44; }
+  M('lav', -0.42, 0.60, 2.80, 3.45, { face: '-x' });
+  M('galley', -0.42, 0.60, 3.47, 4.78, { face: 1, carts: 2, cap: 2.24 });
+  M('skin', -0.43, -0.42, 3.45, 4.60, { h: 2.10, mat: 'darkWood' });                  // ebony corridor wall
+  const d1G = find('galley', 0.50, 4.78); if (d1G) Object.assign(d1G, { x0: 0.62, z1: 4.60, cap: 2.24 });   // map: right unit shallower
+  // ---- door 1, aft: full-height closets + a small galley unit, washi on the suite side
+  del((m) => m.kind === 'lav' && near(m.z0, dz[0][1]) && near(m.z1, 7.52));
+  del((m) => m.kind === 'closet' && m.low && near(m.z0, dz[0][1]));
+  // w2: one continuous front wall at z 7.40 (ffF / tpa_IMG_0220 / map), curtains at both edges of each aisle opening
+  M('closet', -2.70, -1.68, dz[0][1], 7.40, { face: -1, h: 2.10, back: 'F' });
+  M('closet', -0.88, 0.28, dz[0][1], 7.40, { face: -1, h: 2.10, back: 'F' });
+  M('galley', 0.28, 0.82, dz[0][1], 7.40, { face: -1, carts: 1, h: 2.10, back: 'F' });
+  const d1R = find('closet', 1.62, 7.40); if (d1R) d1R.back = 'F';
+  // w1: charcoal curtains in both F aisles at the front wall (ffF_cabin-overview-from-aisle, tpa_IMG_0220, tpg_147)
+  for (const [a, b] of [[-1.68, -0.88], [0.82, 1.62]]) for (const xg of [a + 0.09, b - 0.09]) M('curtain', a, b, 7.43, 7.43, { xg, tone: 'F', h: 0 });
+  // w1: door-2 forward monuments seen from rows 5-6 are cream J laminate with wall boxes (tpg_70 / _71), curtains tied
+  // back at both aisle openings; the passage between the two centre galleys has a dark soffit (lalf_133)
+  for (const m of mon) if (near(m.z0, 14.86) && near(m.z1, dz[1][0])) { m.back = 'J'; if (m.welcome) m.soffitTo = dz[1][1]; }
+  M('curtain', -1.62, -1.10, 14.84, 14.84, { xg: -1.46, tone: 'C', h: 0 });
+  M('curtain', 1.10, 1.62, 14.84, 14.84, { xg: 1.46, tone: 'C', h: 0 });
+
+  // ---- door 2, aft: centre galley (welcome monitors on its aisle ends), 7K galley, 7A closet; cream J backs
+  // w1: centre = flat ash wall with stowage flaps (lalf_133); 7K galley with ash lower doors (sp_09); the 7A closet door
+  // shares its face with the door-2 jump seat (lalf_133: grey jump seat on the aft monument beside the door)
+  M('galley', -0.80, 0.82, dz[1][1], dz[1][1] + ML.d2aft, { face: -1, ashWall: true, welcomeEnd: true, back: 'J' });
+  M('galley', 1.80, 2.70, dz[1][1], dz[1][1] + ML.d2side, { face: -1, carts: 2, ashDoors: true, back: 'J', jumpX: 2.42 });
+  M('closet', -2.70, -1.80, dz[1][1], dz[1][1] + ML.d2side, { face: -1, back: 'J', jumpX: -2.46 });
+  const zJ = dz[1][1] + ML.d2side - 0.05;                   // J curtains aft of the door-2 monuments (tt cabin-1)
+  M('curtain', -1.80, -0.80, zJ, zJ, { xg: -1.63, tone: 'C', h: 0 });
+  M('curtain', 0.82, 1.80, zJ, zJ, { xg: 1.63, tone: 'C', h: 0 });
+
+  // ---- door 3: lavs + bar aft of the cross-aisle, facing forward
+  for (const m of mon) if ((m.kind === 'lav' || m.kind === 'bar') && near(m.z0, oldZ16 + 0.03) && near(m.z1, dz[2][0])) {
+    m.z0 = dz[2][1]; m.z1 = dz[2][1] + ML.d3; m.face = -1; m.back = 'J';
+    if (m.kind === 'lav') m.jumpX = Math.sign(m.x0) * 2.45;          // [A] jump seat outboard of a narrowed lav door
+  }
+  // ---- J/PY bulkhead follows row 20
+  for (const m of mon) if (m.kind === 'partition' && near(m.z0, oldZ20 + 0.02)) { m.z0 += s3; m.z1 += s3; }
+
+  // ---- door 4, forward: wheelchair lav (inboard edge on the aisle line), centre galley, right galley; row-30 monitors
+  const d4L = mon.find((m) => m.kind === 'lav' && m.access);
+  if (d4L) Object.assign(d4L, { x1: -1.62, z0: pz27 + 0.14, rowMonitor: -2.33 });
+  del((m) => m.kind === 'closet' && near(m.x0, 1.62) && near(m.z1, dz[3][0]));
+  M('galley', -1.05, 1.07, pz27 + ML.pyRecline, dz[3][0], { face: 1, carts: 3, back: 'PY' });
+  M('galley', 1.62, 2.70, pz27 + 0.14, dz[3][0], { face: 1, carts: 2, rowMonitor: 2.2, jumpX: 2.32 });
+  // dark slate PY curtains in both aisles right behind row 27 (py_37302), gathered against the centre galley
+  const zc4 = pz27 + ML.pyRecline - 0.07;
+  M('curtain', -1.62, -1.05, zc4, zc4, { xg: -1.10, tone: 'Y', h: 0 });
+  M('curtain', 1.07, 1.62, zc4, zc4, { xg: 1.12, tone: 'Y', h: 0 });
+
+  // ---- door 5: drop the outboard lavs ahead of it and the transverse aft galley; fore-aft galleys + outboard lavs
+  del((m) => m.kind === 'lav' && near(m.z1, dz[4][0]) && Math.abs(m.x0 + m.x1) > 2);
+  del((m) => m.kind === 'galley' && near(m.z0, dz[4][1]) && m.x1 - m.x0 > 3);
+  M('galley', -1.52, -0.63, dz[4][1], CAB.zAft, { face: '+x', carts: 6 });
+  M('galley', 0.60, 1.46, dz[4][1], CAB.zAft, { face: '-x', carts: 6 });
+  M('lav', -2.35, -1.55, dz[4][1], dz[4][1] + 1.2, { face: -1 });
+  M('lav', 1.46, 2.31, dz[4][1], dz[4][1] + 1.2, { face: -1 });
+  // light-grey curtains across both aisles at the end of economy (y_47300)
+  M('curtain', -1.70, -1.00, zb, zb, { xg: -1.05, tone: 'R', h: 0 });
+  M('curtain', 1.00, 1.62, zb, zb, { xg: 1.05, tone: 'R', h: 0 });
+
+  // ---- jump seats: plain lav / closet walls and the door-5 galley end panels
+  L.jumps = [[-2.2, dz[0][0], 1], [2.2, dz[0][1], -1], [-2.46, dz[1][1], -1], [2.42, dz[1][1], -1], [-2.45, dz[2][1], -1], [2.45, dz[2][1], -1],
+    [2.32, dz[3][0], 1], [-1.30, dz[4][1], -1], [-0.86, dz[4][1], -1], [1.03, dz[4][1], -1]];   // map: two boxes at the left door-5 galley
+
+  // ---- zones, window classes and walkable areas re-derived with the new stations
+  const Z = (type, z0, z1, extra = {}) => ({ type, z0, z1, ...extra });
+  L.zones = [
+    Z('mono', CAB.zFront, dz[0][0]), Z('door', dz[0][0], dz[0][1], { door: 0 }), Z('mono', dz[0][1], 7.52),
+    Z('seat', 7.52, 14.86, { cls: 'F' }), Z('mono', 14.86, dz[1][0]), Z('door', dz[1][0], dz[1][1], { door: 1 }),
+    Z('mono', dz[1][1], dz[1][1] + ML.d2aft), Z('seat', dz[1][1] + ML.d2aft, dz[2][0], { cls: 'J' }),
+    Z('door', dz[2][0], dz[2][1], { door: 2 }), Z('mono', dz[2][1], dz[2][1] + ML.d3),
+    Z('seat', dz[2][1] + ML.d3, pz27 + 0.14, { cls: 'J' }), Z('mono', pz27 + 0.14, dz[3][0]),
+    Z('door', dz[3][0], dz[3][1], { door: 3 }), Z('seat', dz[3][1], zb, { cls: 'Y' }), Z('mono', zb, dz[4][0]),
+    Z('door', dz[4][0], dz[4][1], { door: 4 }), Z('mono', dz[4][1], CAB.zAft),
+  ];
+  for (const w of L.windows) {
+    w.cls = w.z < 12.0 ? 'F' : w.z < L.z20 ? 'J' : w.z < dz[3][0] ? 'PY' : 'Y';
+    w.electric = w.cls === 'F' || w.cls === 'J';
+  }
+  const walk = [], Wk = (x0, x1, z0, z1) => walk.push([x0, x1, z0, z1]);
+  for (const [a, b] of dz) Wk(-2.30, 2.30, a, b);
+  Wk(-1.06, 1.58, 4.80, dz[0][0]);                                     // galley area ahead of door 1
+  Wk(-1.06, -0.46, 2.90, 4.64);                                        // flight-deck corridor
+  Wk(-1.60, -1.12, dz[0][1], 14.9); Wk(1.12, 1.60, dz[0][1], 14.9);   // F + forward J aisles
+  for (const s of [-1, 1]) {
+    const [a, b] = s < 0 ? [-1.62, -1.17] : [1.17, 1.62];
+    Wk(a, b, dz[1][1], dz[2][0] + 0.1); Wk(a, b, dz[2][1], L.z20 + 0.1);
+    Wk(s < 0 ? -1.52 : 1.16, s < 0 ? -1.16 : 1.52, L.z20, dz[3][0]);  // PY aisles
+    Wk(s < 0 ? -1.40 : 1.00, s < 0 ? -1.00 : 1.40, 45.3, zb + 0.05);  // economy aisles
+  }
+  Wk(-1.40, 1.40, dz[3][1], 45.4);                                     // exit row + galley front
+  Wk(-1.20, 1.20, dz[4][0] - 0.05, dz[4][1]);
+  Wk(-0.58, 0.55, dz[4][1] - 0.05, CAB.zAft - 0.35);                   // aft galley work aisle
+  L.walk = walk;
+  return L;
 }
