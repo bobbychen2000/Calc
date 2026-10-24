@@ -4,9 +4,10 @@
 // system font: identical on every machine, so the screenshot tests stay stable.  The weight is the line width, so one
 // table covers bold values and regular scale numerals.
 //
-// No lettering on the model or the displays (the project's rule): every word goes through legend(), which draws an
-// abstract word-length stroke at x-height in the item's colour.  AVX_LABELS (?avxlabels=1 -- the one flag) draws the
-// text of the LEGENDS table instead (a condensed system sans, behind the flag only).
+// Words: every word goes through legend().  By default (owner decision 2026-10-24) it draws the text of the LEGENDS table
+// -- the gauge and page labels (TRQ / ITT / NG ...), in a condensed system sans, squeezed to the stroke layout's width
+// when a system font runs wider; never a brand or logo.  ?avxlabels=0 draws abstract word-length strokes at x-height
+// instead (the model's no-lettering rule, which the owner lifted for the live displays).
 
 const W = 5.2, R = W / 2, HC = 10;                 // digit width, its bowl radius, the cap height
 const P = Math.PI;
@@ -115,11 +116,13 @@ export const LEGENDS = {
   activeFpl: 'Active Flight Plan', audio: 'Audio & Radios', msgs: 'Messages', stby: 'STBY', mic: 'MIC', mon: 'MON',
   com2: 'COM2', xpdr: 'XPDR1', alt: 'ALT', guard: 'Guard/EMER', takeoffData: 'Takeoff Data', elev: 'Elevation',
   oat: 'OAT', altimeter: 'Altimeter', pa: 'Pressure Alt', da: 'Density Alt', wind: 'Wind', head: 'Head', cross: 'Cross',
-  rwy: 'Runway', toTrq: 'T/O Torque', flaps: 'Flaps', zfw: 'Fuel', vspeeds: 'V-Speeds', safeTaxi: 'SafeTaxi',
-  trkUp: 'Heading Up', options: 'Options', nyRw: 'RW24', legs: 'GERMANY', climb: 'Climb', gpu: 'GPU',
+  rwy: 'Runway', toTrq: 'T/O Torque', flaps: 'Flaps', zfw: 'Fuel', vspeeds: 'V-Speeds', safeTaxi: 'Airport',
+  trkUp: 'Heading Up', options: 'Options', nyRw: 'RW24', legs: '', climb: 'Climb', gpu: 'GPU',
+  depHdr: 'Departure', destHdr: 'Destination', destF: 'EDDH', fix1: 'ROTEK', fix2: 'ODMEK', fix3: 'KPT',
+  traffic: 'Traffic', terrain: 'Terrain', weather: 'Weather',
 };
 
-export const AVX_LABELS = { on: false };
+export const AVX_LABELS = { on: true };
 
 // a word / phrase of the pages: an abstract stroke (default) or its text (AVX_LABELS.on); x, y = the left / right
 // anchor at the baseline, size = the cap height; returns the width drawn
@@ -132,8 +135,11 @@ export function legend(ctx, id, x, y, size, color = '#eceef0', opts = {}) {
     ctx.font = `${opts.bold ? 'bold ' : ''}${(size * 1.38).toFixed(2)}px "Roboto Condensed", "Arial Narrow", "DejaVu Sans Condensed", Arial, sans-serif`;
     ctx.textAlign = align;
     ctx.textBaseline = 'alphabetic';
-    const w = ctx.measureText(text).width;
-    ctx.fillText(text, x, y);
+    // the room the layout gave the word (1.9 x the stroke layout's width): a wider system font is squeezed into it
+    const words = text.split(/\s+/).filter(Boolean), cw = size * (opts.cw || 0.5);
+    const room = 1.9 * (words.reduce((n, wd) => n + Math.max(1, wd.length) * cw, 0) + size * 0.42 * Math.max(0, words.length - 1));
+    const w = Math.min(ctx.measureText(text).width, opts.maxW || Math.max(room, size * 1.2));
+    ctx.fillText(text, x, y, w);
     ctx.restore();
     if (opts.log) opts.log.push({ w: opts.id || id, s: text, label: true });
     return w;

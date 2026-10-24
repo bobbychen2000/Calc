@@ -667,11 +667,12 @@ async function demo() {
   try {
     if (build.index !== build.n - 1) build.setStep(build.n - 1, { instant: true });
     stage.goTo('three_quarter');
-    // engine start: the propeller spools up to ground idle (~12 s, kinematics.js) while the controls are checked
+    // engine start: the propeller spools up to ground idle (~28 s, engine.js) while the controls are checked
     setProp({ rpm: PROP_RPM.idle }); await w(2.2);         // (out of feather once it turns: kinematics.js)
     setFlaps(15); await w(1.8);
     for (const [k, v, t] of [['roll', 1, 1.1], ['roll', -1, 1.4], ['roll', 0, 0.8], ['pitch', 1, 1.1], ['pitch', -1, 1.3],
       ['pitch', 0, 0.8], ['yaw', 1, 1.1], ['yaw', -1, 1.3], ['yaw', 0, 0.8]]) { setControls({ [k]: v }); await w(t); }
+    for (let i = 0; i < 40 && kin.eng.phase !== 'run'; i++) await w(0.5);     // stabilised at ground idle first
     setProp({ rpm: PROP_RPM.max }); await w(2.5);
     setGear('up'); await w(6.0);
     setFlaps(0); await w(1.6);
@@ -685,7 +686,7 @@ async function demo() {
     // shutdown: the propeller feathers and runs down; the doors open once it has (nearly) stopped
     setProp({ pitch: 62, rpm: 0 }); await w(1.5);
     stage.goTo('side');
-    for (let i = 0; i < 40 && kin.c.rpm > 60; i++) await w(0.5);
+    for (let i = 0; i < 60 && kin.c.rpm > 60; i++) await w(0.5);
     setDoor('door_airstair', 1); setDoor('door_cargo', 1); await w(3.2);
     setDoor('door_airstair', 0); setDoor('door_cargo', 0); await w(3.0);
     setFlaps(0);                                            // the propeller stays feathered, as parked

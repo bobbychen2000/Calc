@@ -17,7 +17,8 @@
 // the last upload (then the still passes supersample the pages again), and stays while the propeller's layered overlay
 // is up anyway.
 // URL: ?avx=0 the static atlas, ?avx=off black glass (master power off), ?avxres=1|2 the atlas scale, ?avxhz= the rate,
-// ?avxclock=0 dashes for the UTC clock (tests), ?avxlabels=1 the words as text (the one flag), ?avxovl=always|never.
+// ?avxclock=0 dashes for the UTC clock (tests), ?avxlabels=0 the words as abstract strokes (labels are on by
+// default: owner 2026-10-24), ?avxovl=always|never.
 import * as THREE from 'three';
 import { drawPdu, drawMfd, drawSdu, keyPdu, keyMfd, keySdu, PFD_W } from './avx_pages.js';
 import { AVX_LABELS, NUMERALS } from './avx_font.js';
@@ -29,7 +30,7 @@ export const AVX = {
   on: !['0', 'false'].includes(Q.get('avx')), off: Q.get('avx') === 'off', res: +Q.get('avxres') || 0,
   hz: +Q.get('avxhz') || 0, clock: Q.get('avxclock') !== '0', hold: 1.5, ovl: Q.get('avxovl') || '',
 };
-AVX_LABELS.on = Q.get('avxlabels') === '1';
+AVX_LABELS.on = !['0', 'false'].includes(Q.get('avxlabels'));      // owner 2026-10-24: labels on by default
 
 const ATLAS = { W: 2048, H: 1296,
   rects: { pfd_L: [0, 0, 1016, 633], mfd: [1032, 0, 2048, 633], pfd_R: [0, 649, 1016, 1282], sdu_L: [1032, 649, 1432, 1291],

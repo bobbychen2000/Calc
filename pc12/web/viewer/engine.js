@@ -20,9 +20,14 @@
 //               (40 kJ/K) with a thermostatic cooler [E: warm-up ~5 min, idle OAT + 40]
 //   electrical  two 24 V 42 Ah lead-acid; the starter from BAT2, BAT1 tied in at 10 % Ng or 10 s; generators on line at
 //               ground idle [S]; ground power 28.2 V
-//   start       fuel at 13 % Ng, light-off 0.7 s later (~16.6 % [S ~16]), the EPECS schedule 6.5 %/s slowed so the start
-//               ITT stays <= 870 C (abort predicted at 945 [S]); starter out at ground idle [S]
-//   shutdown    fuel off, Ng runs down -(0.6 + 0.16 Ng) %/s; with T1 >= 23 C a 15 s dry motoring [S POH 4-18-01]
+//   start       the starter alone to 13 % Ng in ~4.6 s, fuel, light-off 2 s later (~6.6 s, ~17 % [S ~16]), the
+//               acceleration 1.4 .. ~3.6 %/s slowed so the start ITT stays <= 870 C (abort predicted at 945 [S]); the
+//               propeller turns with the power turbine from the light-off; ground idle ~28 s [E]; starter out at
+//               ground idle [S]
+//   shutdown    fuel off, Ng runs down -(0.35 + 0.09 Ng) %/s (~32 s from idle); with T1 >= 23 C a 15 s dry motoring
+//               [S POH 4-18-01]
+//   feather     selected with the engine running: Ng to ground idle, the propeller on its power balance to the
+//               feathered-idle ~600 rpm (no governed speed, no torque spike); likewise a pitch the rating cannot turn
 // The free turbine (the propeller) waits for the light-off (Kinematics); ground idle is the POH's 64.5 % Ng, raised
 // so that the unfeathered propeller turns >= 1,000 rpm (350-900 rpm ground operation is not permitted [S]).
 
@@ -61,8 +66,11 @@ const D5 = Math.pow(2.67, 5), W_PER_SHP = 745.7;
 export const PSI_SHP = 0.015924;                // shp = 0.015924 psi Np  [D TCDS]
 export const beta42 = (pitch) => (pitch >= 0 ? 14.7 + pitch * (80 - 14.7) / 62 : 14.7 + pitch * (14.7 + 17.5) / 38);
 export const pitchOf = (beta) => (beta >= 14.7 ? (beta - 14.7) * 62 / (80 - 14.7) : (beta - 14.7) * 38 / (14.7 + 17.5));
+// past ~46 deg the static blades are stalled: with no forward speed a feathered blade meets the air at ~80 deg, a flat
+// plate across its own path -- the drag stays high to feather (why a feathered propeller turns slowly at ground idle:
+// ~600 rpm at 64.5 % Ng) [D: flat-plate post-stall, fix r1]
 const CP = [[-17.5, 0.150], [-8, 0.060], [3, 0.018], [14.7, 0.050], [25, 0.130], [32, 0.200], [40, 0.280], [46, 0.310],
-  [52, 0.200], [56.8, 0.120], [70, 0.035], [80, 0.006]];
+  [52, 0.300], [60, 0.285], [70, 0.265], [80, 0.250]];
 export function cp(b) {
   if (b <= CP[0][0]) return CP[0][1];
   for (let i = 0; i < CP.length - 1; i++) if (b <= CP[i + 1][0]) {
@@ -86,8 +94,22 @@ const pcOf = (nc) => (nc <= NGM.n0 ? 0 : NGM.pRef * Math.pow((nc - NGM.n0) / (NG
 const ncOf = (pc) => NGM.n0 + (NGM.nRef - NGM.n0) * Math.sqrt(Math.max(0, pc) / NGM.pRef);
 const F = [862.28, 0.135677, 3.08495e-5];                  // corrected ITT f(Pc) [K], fitted (proto/fit_itt.py)
 const fItt = (pc) => F[0] + F[1] * pc + F[2] * pc * pc;
-const W_I = 138.3, B_F = 0.325, K_ACC = 60;                // fuel [lb/h]; the start's acceleration heat [K] [E]
+const W_I = 138.3, B_F = 0.325, K_ACC = 60;               // fuel [lb/h]; the start's acceleration heat [K] [E]
 const START_ITT_CAP = 870;                                 // EPECS keeps the start peak under it [E; abort 945 S]
+// the start's pace (fix r1: the first model lit at 2.5 s and idled at 11.5 s; a PT6 start takes 20-40 s): the starter
+// alone toward `crank` % with `tau` s (13 % in ~4.6 s), fuel at `fuelAt`, light-off `lightDelay` s later (ignition delay
+// 2-5 s), then the acceleration `acc` [a, b] = a + b (Ng - 15) %/s (1.4 at light-off, ~3.6 near idle; the starter's
+// share falls as the turbine takes over), capped by the EPECS ITT schedule: ground idle ~25 s from the start [E]
+export const START = { crank: 19, tau: 4.0, fuelAt: 13, lightDelay: 2.0, acc: [1.4, 0.045], max: 6.5 };
+// the run-down with the fuel off: d Ng / dt = -(a0 + k Ng) %/s -- ~32 s from ground idle, ~35 s from 90 % [E]
+export const RUNDOWN = { a0: 0.35, k: 0.09 };
+// a feather selected with the engine running (the viewer's blade pitch >= FEATHER_SEL): the EPECS takes the gas
+// generator to ground idle and the governor lets go -- the propeller's speed then follows its own power balance
+// (J d w / dt = P_turbine - P_aero) down to the feathered-idle equilibrium (~600 rpm), the torque meter reading the
+// turbine's torque (no spike as the blades pass the worst pitch); the same balance carries a blade pitch the rating
+// cannot turn at the governed speed (the propeller droops instead of the torque exceeding the limit) [D, fix r1]
+export const FEATHER_SEL = 55;
+export const J_PROP = 18.0;                                 // kg m^2: the propeller + power turbine at the propeller [E]
 
 // the EPECS rating (shp) at rpm: the flat 44.3 psi, the ITT limit (850 C, 820 in reverse) or Ng 104 %
 export function ratingShp(atm, rpm = 1700, rev = false) {
@@ -149,7 +171,7 @@ export class Engine {
     Object.assign(this, { phase: 'off', ng: 0, np: 0, t: 0, fuelT: -1, lightT: -1, lit: false, comb: 0, starter: 0,
       ign: 0, light: 0, power: 0, ndot: 0, tGas: soak, itt: soak, tMetal: soak, oilT: soak, oilP: 0, ff: 0, tq: 0,
       shp: 0, dry: 0, dryDone: true, tie: false, peak: soak, startEnd: -1, limited: false, gen: false, pumps: false,
-      batV: [0, 0], batA: [0, 0], beta: 0 });
+      batV: [0, 0], batA: [0, 0], beta: 0, feather: false, ungov: false });
     this._elec(0, 0, false);
     this.timers = {};
   }
@@ -220,6 +242,12 @@ export class Engine {
 
   _ngTarget(np, pitch) {
     const a = this.atm, sq = Math.sqrt(a.theta), k = a.delta * sq;
+    if (this.feather) { this.limited = false; return ngIdleFor(a); }       // feather selected: ground idle
+    if (this.ungov) {                     // the governor short of power: the fuel control at the rating
+      const rev = pitch < -2, cap = rev ? ratingShp(a, np, true) : ratingShp(a, Math.max(np, NP_IDLE_MIN));
+      this.limited = true;
+      return Math.max(ngIdleFor(a), sq * ncOf(cap / k));
+    }
     return Math.max(ngIdleFor(a), sq * ncOf(this._demand(np, pitch) / k));
   }
   _demand(np, pitch) {
@@ -234,7 +262,19 @@ export class Engine {
     const share = 0.3 * clamp(1 - (this.ng - 13) / 40, 0, 1);                 // the starter's share of the work
     return K_ACC * (this.ng / 100) * (ndot / 6.5) * (1 - share) / (Math.pow(ncv, 1.8) * a.delta / sq);
   }
-  _crank() { return 18 - 0.06 * Math.max(0, 15 - this.oilT); }              // the starter alone; cold oil drags [E]
+  _crank() { return START.crank - 0.06 * Math.max(0, 15 - this.oilT); }    // the starter alone; cold oil drags [E]
+  // the free turbine's (the propeller's) speed through the start: it turns once the flame drives the power turbine and
+  // reaches the idle speed with the gas generator (the propeller follows with a lag: driveEngine)
+  npStart() {
+    const ngIdle = ngIdleFor(this.atm), s = clamp((this.ng - 17) / (ngIdle - 17), 0, 1);
+    return this.lit ? npIdle(this.atm) * Math.pow(s, 1.5) : 0;
+  }
+  // the turbine's shaft power (shp) at the current Ng, capped by the EPECS rating at the propeller's speed
+  gasShp(np, pitch) {
+    const a = this.atm, sq = Math.sqrt(a.theta), k = a.delta * sq;
+    const cap = pitch < -2 ? ratingShp(a, np, true) : ratingShp(a, Math.max(np, NP_IDLE_MIN));
+    return this.lit ? this.comb * Math.min(k * pcOf(this.ng / sq), cap) : 0;
+  }
 
   _step(dt, { rpmT, np, npPrev, pitch }) {
     const a = this.atm, sq = Math.sqrt(a.theta), T1 = a.oat;
@@ -251,14 +291,15 @@ export class Engine {
     const ng0 = this.ng, ngIdle = ngIdleFor(a);
     switch (this.phase) {
       case 'start': {
-        if (this.fuelT < 0 && this.ng >= 13) this.fuelT = this.t;
-        if (this.fuelT >= 0 && this.lightT < 0 && this.t - this.fuelT >= 0.7) { this.lightT = this.t; this.lit = true; this.lightN++; }
-        if (!this.lit) this.ng += (this._crank() - this.ng) * (1 - Math.exp(-dt / 1.4));
+        if (this.fuelT < 0 && this.ng >= START.fuelAt) this.fuelT = this.t;
+        if (this.fuelT >= 0 && this.lightT < 0 && this.t - this.fuelT >= START.lightDelay) { this.lightT = this.t; this.lit = true; this.lightN++; }
+        if (!this.lit) this.ng += (this._crank() - this.ng) * (1 - Math.exp(-dt / START.tau));
         else {
-          // the EPECS acceleration schedule 6.5 %/s, slowed so that the start ITT stays <= 870 C
+          // the acceleration schedule (START.acc), slowed so that the start ITT stays <= 870 C
           const base = a.theta * (fItt(0) + 60 * Math.pow(Math.max(0, ngIdle - this.ng / sq) / 48.5, 2));
-          const full = this._accK(6.5), room = START_ITT_CAP + 273.15 - base;
-          const rate = 6.5 * clamp(room / Math.max(full, 1), 0.2, 1);
+          const r0 = Math.min(START.max, START.acc[0] + START.acc[1] * Math.max(0, this.ng - 15));
+          const full = this._accK(r0), room = START_ITT_CAP + 273.15 - base;
+          const rate = r0 * clamp(room / Math.max(full, 1), 0.2, 1);
           const tgt = ngIdle + 0.5, d = tgt - this.ng, v = Math.min(Math.abs(d) * 0.9, rate) * dt;
           this.ng = Math.abs(d) <= v ? tgt : this.ng + Math.sign(d) * v;
           if (this.ng >= ngIdle - 0.5) { this.phase = 'run'; this.startEnd = this.t; }
@@ -272,13 +313,13 @@ export class Engine {
         break;
       }
       case 'rundown':
-        this.ng -= (0.6 + 0.16 * this.ng) * dt;
+        this.ng -= (RUNDOWN.a0 + RUNDOWN.k * this.ng) * dt;
         if (!this.dryDone && this.ng <= 20) { this.phase = 'dry'; this.dry = 0; }
         if (this.ng <= 0) { this.ng = 0; this.phase = 'off'; }
         break;
       case 'dry':                    // 15 s dry motoring on the starter (STARTER, CAS dry motoring), then the run-down
         this.dry += dt;
-        this.ng += (this._crank() - this.ng) * (1 - Math.exp(-dt / 1.4));
+        this.ng += (this._crank() - this.ng) * (1 - Math.exp(-dt / START.tau));
         if (this.dry >= 15) { this.phase = 'rundown'; this.dryDone = true; }
         break;
       default: this.ng = 0;
@@ -342,7 +383,9 @@ export class Engine {
   _torque(np, npPrev, pitch, dt, steady) {
     const a = this.atm, sq = Math.sqrt(a.theta), k = a.delta * sq;
     let q = 0;
-    if (this.lit && np > 1) {
+    if (this.lit && np > 1 && this.ungov && !steady) {
+      q = this.gasShp(np, pitch) / this.comb / (PSI_SHP * np);           // the power balance: the turbine's torque
+    } else if (this.lit && np > 1) {
       const aero = propShp(np, pitch, a.rho);
       const w = np * Math.PI / 30, wdot = steady ? 0 : (np - npPrev) * Math.PI / 30 / dt;
       const pAcc = Math.max(0, 8.0 * w * wdot) / W_PER_SHP;
@@ -429,13 +472,13 @@ export class Engine {
     if (T.tqHi > 20 || this.tq > 61) w.tq = true;
     // ITT: running 850-900 20 s / > 900; starting 900-1000 5 s / > 1000
     if (start) { if (tick('ittS', this.itt > 900) > 5 || this.itt > 1000) w.itt = true; T.ittR = 0; }
-    else if (on) { if (tick('ittR', this.itt > 850) > 20 || this.itt > 900) w.itt = true; else if (this.itt > 850) c.itt = true; }
+    else if (on) { if (tick('ittR', this.itt > 850.5) > 20 || this.itt > 900) w.itt = true; else if (this.itt > LIMITS.itt.amber) c.itt = true; }
     // Ng: < 60 running (caution), > 104 20 s / > 104.3
     if (this.phase === 'run' && this.ng < 60) c.ng = true;
     if (tick('ngHi', this.ng > 104) > 20 || (on && this.ng > 104.3)) w.ng = true;
     // Np: reverse over 1,650; 1,760-1,870 20 s / > 1,870; 350-900 on the ground unfeathered 15 s
     const np = this.np;
-    if (on && rev && np > LIMITS.np.rev) c.np = true;
+    if (tick('npRev', rev && np > LIMITS.np.rev) > 2) c.np = true;          // (the governor's 1-2 s settling into beta)
     if (tick('npHi', np > 1760) > 20 || (on && np > 1870)) w.np = true;
     if (tick('npBand', np > 350 && np < 900 && this.last.pitch < 60 && this.phase === 'run') > 15) c.np = true;
     // oil pressure: < 40 (0.5 s) warning, < 60 with Ng > 72 warning, 60-90 5 s caution, > 135 caution
@@ -478,7 +521,7 @@ export class Engine {
 // d rpm / dt: from rest (start) a0 + k rpm, governed k (target - rpm) rate-limited, run-down -(a0 + k rpm); before
 // the light-off the free turbine only creeps (compressor air flow) toward CREEP.rpm
 export const PROP_SPOOL = { governed: 900, start: { a0: 55, k: 0.14 }, creep: { rpm: 4, tau: 1.5 },
-  stop: { a0: 25, k: 0.12 }, gov: { k: 1.6, up: 320, down: 260 }, unfeather: 300, feathered: 60 };
+  stop: { a0: 18, k: 0.09 }, startLag: 0.8, gov: { k: 1.6, up: 320, down: 260 }, unfeather: 300, feathered: 60 };
 export function spoolRpm(rpm, target, dt) {
   const P = PROP_SPOOL, G = P.governed;
   let r;
@@ -502,9 +545,28 @@ export function driveEngine(k, dt) {
   eng.acc -= n * H;
   for (let i = 0; i < n; i++) {
     const tgt = npTarget(eng.atm, t.rpm, c.pitch), npPrev = c.rpm;
+    const running = eng.phase === 'run' && eng.lit && t.rpm >= NP_POSE_MAX;
+    eng.feather = running && t.pitch >= FEATHER_SEL;
+    if (running && !eng.feather && !eng.ungov && tgt > 0) {
+      // a blade pitch the rating cannot turn at the governed speed: the propeller droops (the power balance below)
+      const cap = c.pitch < -2 ? ratingShp(eng.atm, c.rpm, true) : ratingShp(eng.atm, Math.max(c.rpm, NP_IDLE_MIN));
+      if (propShp(c.rpm, c.pitch, eng.atm.rho) > cap * 1.01 + 2) eng.ungov = true;
+    }
+    if (eng.feather) eng.ungov = true;
+    if (!running) eng.ungov = false;
     if (tgt > c.rpm && eng.phase === 'start' && !eng.lit) {
       c.rpm = c.rpm <= P.creep.rpm ? c.rpm + (P.creep.rpm - c.rpm) * (1 - Math.exp(-H / P.creep.tau))
         : spoolRpm(c.rpm, P.creep.rpm, H);                        // a restart while running down: it keeps slowing
+    } else if (tgt > c.rpm && eng.phase === 'start') {
+      // lit: the free turbine takes the propeller up with the gas generator (eng.npStart), never down
+      const want = Math.min(tgt, eng.npStart());
+      if (want > c.rpm) c.rpm += (want - c.rpm) * (1 - Math.exp(-H / P.startLag));
+    } else if (eng.ungov) {
+      // J dw/dt = P_turbine - P_aero (the governor let go: feather selected, or the rating short of the demand)
+      const w = Math.max(c.rpm, 30) * Math.PI / 30;
+      const dP = (eng.gasShp(c.rpm, c.pitch) - propShp(c.rpm, c.pitch, eng.atm.rho)) * W_PER_SHP;
+      c.rpm = Math.max(0, c.rpm + dP / (J_PROP * w) * 30 / Math.PI * H);
+      if (!eng.feather && c.rpm >= tgt) { c.rpm = tgt; eng.ungov = false; }        // governing again
     } else if (tgt !== c.rpm) c.rpm = spoolRpm(c.rpm, tgt, H);
     if (k.unfeather && c.rpm >= P.unfeather) { t.pitch = 0; k.unfeather = false; }
     eng.tick(H, { rpmT: fuelRpm(t.rpm), np: c.rpm, npPrev, pitch: c.pitch });

@@ -549,14 +549,15 @@ function safeTaxi(P, V, world, x0) {
 
 // the active flight plan (pfd_R's inboard pane / sdu_L's body): dark keys with identifier legends, constraints
 const FPL = [
+  // (labels on: a plausible departure from EDNY runway 24 -- invented fixes, no procedure names)
   { id: 'origin', sub: 'field', alt: null, opt: true },
-  { id: 'dep', sub: 'nyRw', alt: null, cyan: true },
-  { id: 'nyRw', sub: 'legs', alt: '1367', spd: null },
-  { id: 'wpt', sub: 'legs', alt: null, active: true, dist: '3.4' },
-  { id: 'dme', sub: 'legs', alt: null, spd: '210', dist: '8.1' },
-  { id: 'rnp', sub: 'legs', alt: '5500', climb: true, dist: '15.3' },
-  { id: 'field', sub: 'legs', alt: '120', fl: true, climb: true, dist: '15.8' },
-  { id: 'arr', sub: 'nyRw', alt: '120', fl: true, dist: '219' },
+  { id: 'depHdr', sub: 'nyRw', alt: null, cyan: true },
+  { id: 'nyRw', sub: null, alt: '1367', spd: null },
+  { id: 'wpt', sub: null, alt: null, active: true, dist: '3.4' },
+  { id: 'fix1', sub: null, alt: null, spd: '210', dist: '8.1' },
+  { id: 'fix2', sub: null, alt: '5500', climb: true, dist: '15.3' },
+  { id: 'fix3', sub: null, alt: '120', fl: true, climb: true, dist: '15.8' },
+  { id: 'destHdr', sub: 'destF', alt: null, cyan: true, dist: '380' },
 ];
 function fplList(P, x, y, w, rowH, nRows, title = true) {
   const ctx = P.ctx;
@@ -576,7 +577,7 @@ function fplList(P, x, y, w, rowH, nRows, title = true) {
     if (r.active) { ctx.fillStyle = C.green; ctx.fillRect(x + 1, yy, 1.2, rowH - 1.4); }
     const col = r.active ? C.green : r.cyan ? C.cyan : C.white;
     L(P, r.id, x + 4, yy + rowH * 0.48, 2.6, col, { cw: 0.48 });
-    L(P, r.sub, x + 4, yy + rowH * 0.82, 1.5, r.active ? C.green : C.grey, { cw: 0.4 });
+    if (r.sub) L(P, r.sub, x + 4, yy + rowH * 0.82, 1.5, r.active ? C.green : C.grey, { cw: 0.4 });
     if (r.dist) N(P, 'fplDist', r.dist, x + lw - 1, yy + rowH * 0.36, 1.9, C.white, { align: 'right' });
     box(ctx, x + lw + 3, yy, rw, rowH - 1.4, { fill: C.key, stroke: C.keyEdge, r: 0.9, lw: 0.2 });
     const cx = x + lw + 3 + rw * 0.48;
@@ -777,7 +778,7 @@ function eisStrip(P, V) {
   }
   N(P, 'half', '1/2', 10.0, 79.2, 1.8, C.white, { align: 'center', spacing: 0.3 });
   L(P, 'qty', 20.5, 71.4, 1.7, C.white, { cw: 0.6 });
-  N(P, 'qty', V.qty, 50.5, 71.8, 3.9, C.white, { align: 'right' }); L(P, 'lb', 51.2, 71.8, 1.6, C.white, { cw: 0.6 });
+  N(P, 'qty', V.qty, 50.5, 71.8, 3.9, V.low ? C.amber : C.white, { align: 'right' }); L(P, 'lb', 51.2, 71.8, 1.6, C.white, { cw: 0.6 });
   L(P, 'ff', 20.5, 79.0, 1.7, C.white, { cw: 0.6 });
   N(P, 'ff', V.ff, 50.5, 79.4, 3.6, C.white, { align: 'right' }); L(P, 'lbh', 51.2, 79.4, 1.4, C.white, { cw: 0.45 });
   L(P, 'end', 20.5, 86.6, 1.7, C.white, { cw: 0.6 });
@@ -951,7 +952,7 @@ function mfdMap(P, V) {
     const route = [[x0 + 8, y0 + 75], [x0 + 70, y0 + 60], [x0 + 118, y0 + 52], [x0 + 160, y0 + 40], [x0 + 236, y0 + 22]];
     line(ctx, route, 'rgba(255,255,255,0.9)', 0.9);
     line(ctx, route, C.magenta, 0.55);
-    for (const [x, y] of route.slice(1, 4)) { box(ctx, x - 5, y - 6.5, 10, 3.6, { fill: 'rgba(0,0,0,0.75)', stroke: C.white, r: 0.4, lw: 0.2 }); L(P, 'wpt', x, y - 3.7, 2.0, C.white, { align: 'center', cw: 0.45 }); }
+    route.slice(1, 4).forEach(([x, y], i) => { box(ctx, x - 5, y - 6.5, 10, 3.6, { fill: 'rgba(0,0,0,0.75)', stroke: C.white, r: 0.4, lw: 0.2 }); L(P, ['wpt', 'field', 'fix1'][i], x, y - 3.7, 2.0, C.white, { align: 'center', cw: 0.45 }); });
     // the field: an airport symbol with its runway 06 / 24
     const fx = x0 + 118, fy = y0 + 52;
     ctx.beginPath(); ctx.arc(fx, fy, 2.6, 0, 2 * Math.PI); ctx.strokeStyle = 'rgba(60,90,200,1)'; ctx.lineWidth = 0.6; ctx.stroke();
@@ -967,7 +968,7 @@ function mfdMap(P, V) {
     L(P, 'northUp', x0 + 9.5, y0 + 14.6, 1.4, C.white, { align: 'center', cw: 0.42 });
     box(ctx, x0 + 3, y0 + H - 20, 34, 17, { fill: 'rgba(14,16,22,0.92)', stroke: C.keyEdge, r: 1.2, lw: 0.25 });
     L(P, 'status', x0 + 5, y0 + H - 15.6, 1.8, C.white);
-    for (let i = 0; i < 3; i++) { L(P, 'safeTaxi', x0 + 9, y0 + H - 11 + i * 3.4, 1.6, C.white, { cw: 0.42 }); poly(ctx, [[x0 + 5.2, y0 + H - 12.6 + i * 3.4], [x0 + 7.4, y0 + H - 12.6 + i * 3.4], [x0 + 6.3, y0 + H - 10.8 + i * 3.4]], i ? C.yellow : C.white); }
+    for (let i = 0; i < 3; i++) { L(P, ['traffic', 'terrain', 'weather'][i], x0 + 9, y0 + H - 11 + i * 3.4, 1.6, C.white, { cw: 0.42 }); poly(ctx, [[x0 + 5.2, y0 + H - 12.6 + i * 3.4], [x0 + 7.4, y0 + H - 12.6 + i * 3.4], [x0 + 6.3, y0 + H - 10.8 + i * 3.4]], i ? C.yellow : C.white); }
   }, x0, y0, W, H));
   P.blit(st, x0, y0);
   // live: the ownship at the field (rotated to the heading) and the wind barb there
@@ -1006,10 +1007,10 @@ function mfdVsd(P, V) {
   line(ctx, [[ax, yA(5000)], [x0 + W - 2, yA(5000)]], C.cyan, 0.4, [1.6, 1.2]);
   box(ctx, x0 + 3, y0 + 9.4, 10.5, 4, { fill: 'rgba(0,0,0,0.6)', stroke: null, r: 0.3 });
   N(P, 'vsdSel', '5000', x0 + 13, y0 + 12.6, 2.2, C.cyan, { align: 'right' });
-  for (const u of [0.12, 0.42, 0.88]) {
+  for (const [u, wid] of [[0.12, 'wpt'], [0.42, 'fix1'], [0.88, 'fix2']]) {
     const x = ax + u * (x0 + W - 2 - ax);
     line(ctx, [[x, top - 3], [x, bot]], 'rgba(230,235,245,0.7)', 0.3, [1.2, 1.0]);
-    L(P, 'wpt', x, top - 4, 1.8, u < 0.2 ? C.green : C.white, { align: 'center', cw: 0.45 });
+    L(P, wid, x, top - 4, 1.8, u < 0.2 ? C.green : C.white, { align: 'center', cw: 0.45 });
   }
 }
 
@@ -1026,7 +1027,7 @@ function mfdNavBar(P, V) {
     if (unit) L(P, unit, vx + 0.6, y, 1.4, C.white, { cw: 0.55 });
     x += w + (unit ? 6 : 3.5);
   };
-  L(P, 'dest', x, y, 1.7, C.white, { cw: 0.55 }); L(P, 'field', x + 6, y, 2.6, C.white, { cw: 0.5 }); x += 18;
+  L(P, 'dest', x, y, 1.7, C.white, { cw: 0.55 }); L(P, 'destF', x + 7.2, y, 2.6, C.white, { cw: 0.5 }); x += 18;
   item('dtg', '380', 'nm', 16);
   item('enr', null, null, 18, '- -:- -:- -');
   item('fod', V.fod, 'lb', 20);

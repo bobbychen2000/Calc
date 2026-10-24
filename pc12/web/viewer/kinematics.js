@@ -53,9 +53,9 @@ export function signedAngle(u, v, n) {
 // Propeller speed (PT6E-67XP free turbine driving the Hartzell 5-blade; POH NGX / PC-12 PRO): ground idle ~1,000 rpm,
 // 1,550 rpm low-speed (quiet cruise) mode, 1,700 rpm take-off / max.  Spool model (rpm / s, engine.js PROP_SPOOL /
 // spoolRpm / driveEngine), a viewer estimate of a start and shutdown: on a start the free power turbine -- and the
-// propeller -- stays still (a creep of a few rpm) until the gas generator lights off (engine.js Engine, ~2.5 s after the
-// start), then accelerates as the gas generator spools up (~11 s from the start to ground idle); the governor moves
-// between governed speeds in ~3 s; after shutdown the feathering prop runs down in ~15 s.  The commanded speed is what
+// propeller -- stays still (a creep of a few rpm) until the gas generator lights off (engine.js Engine, ~6.6 s after the
+// start), then accelerates with the gas generator (~28 s from the start to ground idle); the governor moves between
+// governed speeds in ~3 s; after shutdown the feathering prop runs down in ~20-25 s.  The commanded speed is what
 // the PCL / condition asks for: the engine holds ground idle by its power balance (>= 1,000 rpm, more on a cold day) and
 // reverse at 1,615 rpm (engine.js npTarget).
 export const PROP_RPM = { idle: 1000, cruise: 1550, max: 1700, governed: 900 };   // governed: below it, starting / running down
