@@ -70,8 +70,12 @@ const MOODS = {
   // [V: ucr lens #fefed6, ff_door-gap #fefeb6]; (4) seat level brighter and less fiery: lowGain 0.6 -> 0.9, lowTint
   // [1.0, 1.35, 2.0] -> [1.0, 1.5, 2.6] (light G/R ~0.6, B/R ~0.4 on the ash), sideWall [0.4, 2.4, 4.5] -> [0.4, 2.8, 7.0],
   // sideLow 0.5 -> 0.65 [V: ucr ash #ae7136 L122 / #895636 L95, pier #bc895e L145, reveal #b58459; ff_seat-with-door-
-  // closed ash cabinet #ab7f58 L133 vs dining_room ash #593717 L60 s0.74]; (5) screens spill at half the night level
-  dining: { label: 'Dining', hemiTop: [0.62, 0.30, 0.11], hemiBot: [0.15, 0.07, 0.025], wash: [0.30, 0.14, 0.05], led: [0.55, 0.042, 0.009], sideLed: [1.25, 0.10, 0.02], sideLow: 0.65, sideWall: [0.4, 2.8, 7.0], bandCut: 0.3, vault: [0.40, 0.15, 0.045], lowTint: [1.0, 1.5, 2.6], lowGain: 0.9, fillLift: 0.35, lensCore: [0, 0.55, 0.15], scrSpill: 0.5, k: 0.9, exposure: 1.3, strips: true },
+  // closed ash cabinet #ab7f58 L133 vs dining_room ash #593717 L60 s0.74]; (5) screens spill at half the night level.
+  // Tuned on renders [D]: the raters' fillLift 0.35 left the band at L100 (q21), so 0.15; lowGain 0.9 left the
+  // dining_room ash at L84 and lowTint [1.0, 1.5, 2.6] read s0.4-0.5 against ucr's foreground ash #9a6330 s0.69, so
+  // lowGain 1.4 (the photos are auto-exposed: seat level ~0.7-0.85 of the ceiling, the render 0.55) with lowTint [1.0,
+  // 1.42, 2.3]; vault x0.9 (q21 door dome L164 s0.64 vs ucr #c89552 L156)
+  dining: { label: 'Dining', hemiTop: [0.62, 0.30, 0.11], hemiBot: [0.15, 0.07, 0.025], wash: [0.30, 0.14, 0.05], led: [0.55, 0.042, 0.009], sideLed: [1.25, 0.10, 0.02], sideLow: 0.65, sideWall: [0.4, 2.8, 7.0], bandCut: 0.3, vault: [0.36, 0.135, 0.04], lowTint: [1.0, 1.42, 2.3], lowGain: 1.4, fillLift: 0.15, lensCore: [0, 0.55, 0.15], scrSpill: 0.5, k: 0.9, exposure: 1.3, strips: true },
   // night, QA r2: THE Room in service at night is near-black and neutral-warm; the light comes from the IFE screens, the
   // warm strip under each screen, small white reading lamps and amber PSU lamps [V: ucr_room-night-lighting ceiling
   // #1e1915, sidewall #24211c, bins #322a1f, PSU lamp #9e5e38, strip #ffeb97, mean RGB 39/34/33]. The blue night refs
@@ -93,9 +97,9 @@ const MOODS = {
   // housing #251e1e, ucr_room-night-lighting near wall #302218]; emisGain 0.55 = the r2 night sign level
   sleep: { label: 'Night', hemiTop: [0.030, 0.027, 0.024], hemiBot: [0.010, 0.009, 0.008], wash: [0.012, 0.010, 0.008], led: [0.050, 0.042, 0.034], sideLed: [0.018, 0.021, 0.032], sideLow: 0.6, vault: [0.050, 0.043, 0.035], monFill: [0.060, 0.055, 0.047], cove: 0.35, k: 1, exposure: 2.5, readingLights: true, strips: true, screenGain: 0.6, scrSpill: 1, emisGain: 0.55 },
   // QA r1 (light): sunrise follows dining at seat level (sideWall = hemiTop share, sideLow 0.5). QA r2: as dining, the
-  // fill lift off the PSU band (fillLift 0.35), the saturated vault, the pale lens core, lowGain 0.6 -> 0.9 and lowTint
-  // [1.0, 1.3, 1.6] -> [1.0, 1.45, 2.1] [A: no ANA sunrise photo; dining's sources]
-  wake: { label: 'Sunrise', hemiTop: [0.62, 0.30, 0.16], hemiBot: [0.15, 0.07, 0.035], wash: [0.30, 0.14, 0.07], led: [0.55, 0.05, 0.03], sideLed: [1.2, 0.11, 0.06], sideLow: 0.5, sideWall: [0.42, 2.25, 2.2], bandCut: 0.3, vault: [0.40, 0.15, 0.045], lowTint: [1.0, 1.45, 2.1], lowGain: 0.9, fillLift: 0.35, lensCore: [0, 0.55, 0.15], k: 0.9, exposure: 1.3 },
+  // fill lift off the PSU band (fillLift 0.15), the saturated vault, the pale lens core, lowGain 0.6 -> 1.4 and lowTint
+  // [1.0, 1.3, 1.6] -> [1.0, 1.4, 1.95] [A: no ANA sunrise photo; dining's sources and levels]
+  wake: { label: 'Sunrise', hemiTop: [0.62, 0.30, 0.16], hemiBot: [0.15, 0.07, 0.035], wash: [0.30, 0.14, 0.07], led: [0.55, 0.05, 0.03], sideLed: [1.2, 0.11, 0.06], sideLow: 0.5, sideWall: [0.42, 2.25, 2.2], bandCut: 0.3, vault: [0.36, 0.135, 0.04], lowTint: [1.0, 1.4, 1.95], lowGain: 1.4, fillLift: 0.15, lensCore: [0, 0.55, 0.15], k: 0.9, exposure: 1.3 },
 };
 // winExp: the view behind the glass at interior exposure; cabin photos show day windows near-white with a glowing
 // reveal (tlfl_IMG_9217 / 9518, pane ~#eef3f8) [V]; eases back to 1 when the eye is at the window (looking out)
