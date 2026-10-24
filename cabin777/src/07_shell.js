@@ -304,10 +304,10 @@ function windowParts(side, pat) {
   for (let i = 0; i < rr.length; i++) { const [, , wnx, wny] = wallAt(vc + rr[i][1]); lip.n.splice(i * 3, 3, wnx * side, wny, 0); }
   // sill / tub floor: near-planar, so it takes the wall normal (QA w2: smoothed normals across its long thin
   // triangles printed a light wedge at the opening's upper corner)
-  // QA w7: 5 in-between rings, so the tubShade grade no longer smears along long thin triangles (streaks fanning from
+  // QA w7: in-between rings (3 segments: budget), so the tubShade grade no longer smears along long thin triangles (streaks fanning from
   // the bezel's top corners)
   const sIn = inset(rr, 0.019), sOut = scl(open, 1.085), sR = [];
-  for (let k = 0; k <= 6; k++) { const t = k / 6; sR.push([sIn.map(([a, b], i) => [lerp(a, sOut[i][0], t), lerp(b, sOut[i][1], t)]), D, (dz, dv, d) => map(dz, dv, d * (1 + (1 - t) * ext(dv) / D))]); }
+  for (let k = 0; k <= 3; k++) { const t = k / 3; sR.push([sIn.map(([a, b], i) => [lerp(a, sOut[i][0], t), lerp(b, sOut[i][1], t)]), D, (dz, dv, d) => map(dz, dv, d * (1 + (1 - t) * ext(dv) / D))]); }
   const sill = ringLoft(sR, map, hint), sPts = sR.flatMap((r) => r[0]);
   for (let i = 0; i < sill.n.length / 3; i++) { const [, , snx, sny] = wallAt(vc + sPts[i][1]); sill.n.splice(i * 3, 3, snx * side, sny, 0); }
   // QA w4: the tub floor keeps flat normals (see above), so its upper part is darkened in vertex colour instead, x1 at
