@@ -303,7 +303,8 @@
     link('preload', U.materials, 'fetch');
     // the module graph (web/package.py checks this list against the imports)
     ['viewer/main.js', 'viewer/scene.js', 'viewer/studio.js', 'viewer/picture.js', 'viewer/model.js', 'viewer/materials.js', 'viewer/kinematics.js',
-      'viewer/propblur.js', 'viewer/sound.js', 'viewer/outside.js',
+      'viewer/propblur.js', 'viewer/sound.js', 'viewer/outside.js', 'viewer/env.js', 'viewer/engine.js', 'viewer/avionics.js',
+      'viewer/avx_pages.js', 'viewer/avx_font.js',
       'viewer/build.js', 'viewer/panels.js', 'viewer/sources.js', 'viewer/tour.js', 'viewer/tour_data.js'].forEach(function (u) { link('modulepreload', u); });
     ['build/three.module.min.js', 'examples/jsm/controls/OrbitControls.js', 'examples/jsm/environments/RoomEnvironment.js',
       'examples/jsm/loaders/GLTFLoader.js', 'examples/jsm/utils/BufferGeometryUtils.js', 'examples/jsm/libs/meshopt_decoder.module.js',
@@ -454,6 +455,7 @@
           <button type="button" data-rpm="1000" aria-pressed="false" title="Start to ground idle, about 1,000 rpm (about 12 s from rest; viewer estimate)">Idle</button>
           <button type="button" data-rpm="1550" aria-pressed="false" title="1,550 rpm: low-speed (quiet cruise) mode">1,550</button>
           <button type="button" data-rpm="1700" aria-pressed="false" title="1,700 rpm: take-off / maximum">1,700</button>
+          <button type="button" id="aTO" aria-pressed="false" title="Take-off power at 1,700 rpm: the torque the engine control allows today (flat 44.3 psi, less when hot or high; see Environment)">T/O</button>
         </div>
         <label class="slider"><span>Blade pitch</span>
           <input id="sPitch" type="range" min="-38" max="62" step="1" value="0" aria-label="Blade pitch in degrees">
@@ -469,6 +471,43 @@
           <label class="sound-vol"><span>Volume</span>
             <input id="sVolume" type="range" min="0" max="1" step="0.05" value="1" aria-label="Engine sound volume"></label>
         </div>
+
+        <!-- the day the parked aircraft sits in (viewer/env.js): through the air data and the engine model to the cockpit
+             displays (the live G3000 PRIME pages) and the engine; remembered on this device -->
+        <details class="env" id="envGroup" open>
+          <summary><h3>Environment <span class="readout" id="rEnv"></span></h3></summary>
+          <label class="slider"><span>Air temperature</span>
+            <input id="eOat" type="range" min="-40" max="50" step="1" value="22" aria-label="Outside air temperature in degrees Celsius">
+            <output id="oOat">22 °C</output></label>
+          <label class="slider"><span>Field elevation</span>
+            <input id="eElev" type="range" min="0" max="10000" step="10" value="1370" aria-label="Field elevation in feet">
+            <output id="oElev">1,370 ft</output></label>
+          <div class="slider"><span id="lQnh">Altimeter (QNH)</span>
+            <div class="stepper">
+              <button type="button" id="eQnhDn" aria-label="Altimeter setting down one step">−</button>
+              <input id="eQnh" type="range" min="948" max="1050" step="1" value="1013" aria-labelledby="lQnh">
+              <button type="button" id="eQnhUp" aria-label="Altimeter setting up one step">+</button>
+            </div>
+            <output id="oQnh">29.91 inHg</output></div>
+          <div class="seg env-unit" role="group" aria-label="Altimeter unit">
+            <button type="button" data-qunit="inHg" aria-pressed="true">inHg</button>
+            <button type="button" data-qunit="hPa" aria-pressed="false">hPa</button>
+          </div>
+          <label class="slider"><span>Wind from</span>
+            <input id="eWindDir" type="range" min="0" max="360" step="10" value="200" aria-label="Wind direction in degrees, where it blows from">
+            <output id="oWindDir">200°</output></label>
+          <label class="slider"><span>Wind speed</span>
+            <input id="eWindKt" type="range" min="0" max="50" step="1" value="6" aria-label="Wind speed in knots">
+            <output id="oWindKt">6 kt</output></label>
+          <label class="slider"><span>Fuel on board</span>
+            <input id="eFuel" type="range" min="0" max="2850" step="10" value="2170" aria-label="Fuel on board in pounds">
+            <output id="oFuel">2,170 lb</output></label>
+          <div class="row">
+            <button type="button" class="toggle" id="eGpu" aria-pressed="false" title="Ground power unit connected: the bus at 28 V, the batteries charging">Ground power</button>
+            <button type="button" id="eReset">Reset environment</button>
+          </div>
+          <p class="muted small" id="eDerived"></p>
+        </details>
 
         <h3>Landing gear <span class="readout" id="rGear"></span></h3>
         <div class="row">
@@ -594,6 +633,7 @@
         <dt>F</dt><dd>Cycle flaps 0 / 15 / 30 / 40</dd>
         <dt>P</dt><dd>Cycle propeller off / idle / 1,550 / 1,700</dd>
         <dt>M</dt><dd>Engine sound on / off</dd>
+        <dt>Animate › Environment</dt><dd>Temperature, field elevation, altimeter, wind and fuel: the cockpit displays and the engine follow them</dd>
         <dt>1 – 6</dt><dd>Camera presets (5: the cockpit, inside)</dd>
         <dt>I</dt><dd>Go inside: the interior stops</dd>
         <dt>R</dt><dd>Reset</dd>
