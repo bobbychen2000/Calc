@@ -19,3 +19,14 @@
 - **w5 note:** after the r3 AO lift (hemi 0.30) the w2-w4 lighting items above are resolved for economy: the q18 hood
   now reads L 181 vs 192 in y_47305 (econ_w5b). The economy fabrics were re-tuned to the new light, so please ping
   `from_integration.md` if the seat-zone exposure changes again.
+- **w6, done by econ in `03_tex.js` (shared, one line per key):** new photo layer 26 `LAYER.yMosaicP` ('y_mosaic',
+  `N_LAYERS` 27, `PHOTO_ENC`/`LAYER_PARAMS` 26, `L[26] = L[11]` fallback) - the Y dash-checker mosaic tile replaces the
+  procedural layer 11 on the seats. Layer 11 itself is unchanged.
+- **w6 to lighting (`04_shaders.js`), low:** the photo fabrics smear into stretched diagonal streaks on ~45 deg faces
+  (economy back-top roll, seat-back sides; q17 foreground, econ_w6b issue 10). The triplanar blend `pow(abs(N), 4)` mixes
+  two projections ~50/50 there; for photo layers (>= 16) a sharper blend, e.g. `pow(abs(N), vec3(10.0))`, would fix it.
+- **w6 to integration (`test/qa.js`), low:** q15_econFronts looks down ~24 deg from 1.62 m, while y_47300 is near level from
+  headrest height, so q15 hides the pans, pillows and armrests and over-weights the back tops (econ_w6a / w6b). Suggested
+  `walk(0, 1.25, 46.05, Math.PI, -0.12)`. q17_econBacks does not match the y_47303 viewpoint either (y_47303 is a side view
+  of the window block from the aisle at ~1.6 m looking left / down).
+- **w6 to lighting, low:** from the seat the hood still reads a little dark: q18 L 174 vs y_47305 192 / sans 15 ~230.

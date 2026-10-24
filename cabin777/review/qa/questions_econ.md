@@ -15,3 +15,9 @@
    confirm it.
 8. (w5) Belt colour again (question 3): rater A reads y_47302 / 47301 as charcoal. [still cerulean, darker #2e4c86
    after the w5 B measurement of y_47303 #325495]
+9. (w6) Fabric mix: the in-service photos (sans 12 / 13, fr57325) show mostly petal-fleck and diamond seats with few tick
+   seats; ANA's showroom photos show all four about evenly. [kept: 40 % fleck, 20 % each of tick / mosaic / diamond]
+10. (w6) Belt colour (questions 3 / 8): rater B reads in-service fr57325 124108 and y_47302 as charcoal. [still blue, darker
+   #243a66 after w6 B measured #588ed0 rendered vs y_47303 #38578c; one SEATMAT line to switch to charcoal #34373e]
+11. (w6) Coat hook: rater A sees an off-white mushroom knob on the hood side in sans 22. Which side? [not modelled yet]
+12. (w6) Headrest cover width: y_47300 ~0.6 of the cushion, sans 13 ~0.8 (wide-angle). [0.255 m = 0.72 of a 0.355 pad]

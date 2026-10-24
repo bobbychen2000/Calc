@@ -1,0 +1,314 @@
+{
+ "area": "econ",
+ "rater": "B",
+ "round": "w6",
+ "lens": "Geometry and proportion first, then materials and colour, then lighting on the seats, then artefacts. Rated the current head (cc096b3 plus the integration commits; build /tmp/claude-0/b/test.html 14:02, renders /tmp/claude-0/r6 14:03-14:08). Extra studio shots at the reference camera angles are in /tmp/claude-0/raterB6/r (f_level = y_47300 level frontal, f_302 = y_47302 3/4 view, b_sans15 = sans 15 seated rear view, h_side = headrest side, a_303 = y_47303 top view). Scale: f_level and y_47300 both give about 300 px/m from the 19 in (0.483 m) seat spacing, so widths compare directly. In-service photos (SANspotter NH107 2023 set, flight-report 57325 JA794A 2022) win on geometry; ANA photos win on colour.",
+ "score": 6.8,
+ "priorIssues": [
+  {
+   "issue": "w5a-1 / econ-w5b: no petal-fleck fabric",
+   "status": "fixed",
+   "evidence": "SEATMAT.yFabricD + tex_y_fleck, about 40 % of seats via econFab. q15 front-row fleck back: L50 37, p90/p50 2.11, 18 % bright, flecks #5a618b on #191e48 (ratio 3.0). y_47300 seat 4: L50 46, p90/p50 1.91, 15.7 % bright, #6b799f on #152349 (ratio 3.4). The statistics match. What remains is the distribution: the swatch's flecks clump, where the photo's are evenly spaced (see w6b-5)."
+  },
+  {
+   "issue": "w5a-3 / econ-w5b-1: tick and diamond seats 1.6-2x too light",
+   "status": "fixed",
+   "evidence": "q15 L50: diamond seat 69, tick seats 49/55, fleck 37. y_47300 backs: 92/52/68/46. The w5 renders had 103/114. Hue also matches: q15 R/B 0.42-0.49, G/B 0.51-0.58, against y_47300 0.43-0.53 / 0.58-0.66."
+  },
+  {
+   "issue": "w5a-6 / econ-w5b-3: headrest cover too light",
+   "status": "fixed",
+   "evidence": "q15 covers #242b49 (L 44) and #202742 (L 40). y_47300 covers #272d48 (L 46) and #1c2238 (L 35). Cover/back ratio is 0.90 in q15, 0.88 in y_47300, 0.89 in sans 13."
+  },
+  {
+   "issue": "w5a-2: fabric band over the back top seen from behind; hood narrower than the back",
+   "status": "partially fixed",
+   "evidence": "The cap rows (RS y 0.835-0.868) now roll the shell over the top. In q17 (foreground left seat), though, the fabric plus cover-fold band above the white hood is still about 0.22 of the hood width (about 50 px on 230 px). In y_47303 (left foreground seat) it is about 0.09 (10 px on 110 px), and in fr57325_20220604_124234 it is a thin rim."
+  },
+  {
+   "issue": "w5a-4 / econ-w5b-2: diamond pale area over-represented (figure and ground inverted)",
+   "status": "not fixed",
+   "evidence": "The swatch was re-cut, but the 18 diamonds per 0.26 m tile (half-diagonals 0.026/0.022) pack edge to edge, leaving only a thin navy lattice. Otsu on blurred crops: light-area 0.44 (e4), 0.47 (q15 seat 1), 0.45 (f_level); hi/lo 1.31-1.44. Photos: y_47306 left seat 0.19 / 1.90, y_47302 middle seat 0.07 / 1.99. Side by side in raterB6/diamond_cmp.png: the photo shows ragged pale blocks floating on navy, the render a navy trellis on lavender."
+  },
+  {
+   "issue": "w5a-5: belts as short strips; latch position; colour",
+   "status": "partially fixed",
+   "evidence": "Webbing now crosses the pan and the latch sits at mid-pan (e7, a_303). Colour: SEATMAT.yBelt #2e4c86 renders #588ed0 in f_level, against y_47303 #38578c (about 1.6x lighter, G/B 0.68 vs 0.62). y_47302 and fr57325 124108 show charcoal webbing (#232846 / #383d50 sampled in y_47302)."
+  },
+  {
+   "issue": "w5a-7: bezel too large for the hood",
+   "status": "not fixed",
+   "evidence": "Black frame / visible hood face: q18 414/450 = 0.92, e5 0.93. y_47305 600/705 = 0.85, sans 15 486/560 = 0.87. The model's hood width is right (0.372 against glass 0.316), but the 0.026-0.032 corner radius on the RS rows at y 0.49-0.835 curls the hood sides away, so the flat face reads about 0.31 m. The real hood face is flat with tight corners (sans 15, fr57325 124124)."
+  },
+  {
+   "issue": "w5a-8 / econ-w5b-9: pocket net a solid black slab; tray hubs poking out",
+   "status": "partially fixed",
+   "evidence": "Hubs are now inside the shell (s*0.198). The net is still an opaque dark gRBox (e6, b_sans15: a uniform #2a2c31 band). sans 20 and 23 show a see-through mesh."
+  },
+  {
+   "issue": "w5a-9 / econ-w5b-4: footrest hangers (one smooth bowed arm each, at the centreline)",
+   "status": "position fixed, shape regressed",
+   "evidence": "The hangers now sit at x0 +/- 0.035 and land on the shared joint block (matches sans 23 and y_47304). But the 4 overlapping gRBox segments read as a chain of separate rounded beads with visible notches (e8, e6). y_47304 shows one continuous, smooth, flat off-white arm per pedal."
+  },
+  {
+   "issue": "w5a-10: domed wing ends, ANA mark",
+   "status": "fixed",
+   "evidence": "SEC(0.695, 0.38, 0.10, ...) gives the domes (h_side). The mark is a thin 0.014 x 0.006 logotype (e4, q15)."
+  },
+  {
+   "issue": "w5a-11 / econ-w5b-5: pillow a bevelled slab; too small",
+   "status": "partially fixed",
+   "evidence": "Now a squashed sphere with pinched corners, but it still reads as a firm, evenly lit block (f_level, e7). Its width is 0.35 m (105 px of 145 per seat in f_level), against y_47300 115/142 of the seat spacing (0.39 m, about 0.81). It is also too light: q15 L50 59 with p90/p50 1.14, against y_47300 L50 44 with p90/p50 1.36."
+  },
+  {
+   "issue": "econ-w5b-6: armrest too thick",
+   "status": "fixed",
+   "evidence": "The 5.5 cm loft and slimmer bracket read correctly in e7 and a_303 against y_47303."
+  },
+  {
+   "issue": "econ-w5b-7: mosaic fabric too flat (p90/p50 1.67 vs 2.12)",
+   "status": "not fixed",
+   "evidence": "yFabricC is still procedural LAYER 11 at #5f6fa0; there was no change in cc096b3."
+  },
+  {
+   "issue": "econ-w5b-8: belt rendered sky-cyan",
+   "status": "partially fixed",
+   "evidence": "Base darkened, but it still renders #588ed0 in the studio (see w5a-5)."
+  }
+ ],
+ "details": [
+  {
+   "detail": "Fabric: tick",
+   "score": 7.0,
+   "refs": [
+    "/tmp/claude-0/r6/q15_econFronts.png",
+    "ref/ana/y_47300-lang-multi.jpg",
+    "ref/ana/y_47306-lang-multi.jpg"
+   ]
+  },
+  {
+   "detail": "Fabric: diamond",
+   "score": 5.5,
+   "refs": [
+    "/tmp/claude-0/raterB6/diamond_cmp.png",
+    "ref/ana/y_47306-lang-multi.jpg",
+    "ref/ana/y_47302-lang-multi.jpg",
+    "ref/web/econ/sans_ana-777-300er-economy-13.jpg"
+   ]
+  },
+  {
+   "detail": "Fabric: petal fleck",
+   "score": 7.0,
+   "refs": [
+    "/tmp/claude-0/raterB6/fleck_cmp2.png",
+    "/tmp/claude-0/raterB6/r/h_side.png",
+    "ref/ana/y_47300-lang-multi.jpg",
+    "ref/web/econ/fr57325_20220604_124108.jpg"
+   ]
+  },
+  {
+   "detail": "Fabric: mosaic",
+   "score": 6.0,
+   "refs": [
+    "ref/ana/y_47306-lang-multi.jpg (right seat)"
+   ]
+  },
+  {
+   "detail": "Fabric mix across the cabin",
+   "score": 7.5,
+   "refs": [
+    "/tmp/claude-0/r6/q15_econFronts.png",
+    "/tmp/claude-0/r6/q16_econAisle.png",
+    "ref/web/econ/sans_ana-777-300er-economy-13.jpg",
+    "ref/web/econ/sans_ana-777-300er-economy-12.jpg"
+   ]
+  },
+  {
+   "detail": "Headrest cushion and cover",
+   "score": 6.5,
+   "refs": [
+    "/tmp/claude-0/raterB6/r/f_level.png",
+    "/tmp/claude-0/raterB6/y300_heads.png",
+    "/tmp/claude-0/raterB6/q15_heads.png",
+    "/tmp/claude-0/raterB6/r/h_side.png",
+    "ref/web/econ/fr57325_20220604_124108.jpg"
+   ]
+  },
+  {
+   "detail": "Pillow",
+   "score": 6.0,
+   "refs": [
+    "/tmp/claude-0/raterB6/r/f_level.png",
+    "ref/ana/y_47300-lang-multi.jpg",
+    "ref/web/econ/sans_ana-777-300er-economy-13.jpg"
+   ]
+  },
+  {
+   "detail": "Armrests",
+   "score": 7.0,
+   "refs": [
+    "/tmp/claude-0/r6/studio/e7_arm.png",
+    "/tmp/claude-0/raterB6/r/a_303.png",
+    "ref/ana/y_47303-lang-multi.jpg",
+    "ref/ana/y_47302-lang-multi.jpg"
+   ]
+  },
+  {
+   "detail": "Belts",
+   "score": 6.0,
+   "refs": [
+    "/tmp/claude-0/raterB6/r/f_level.png",
+    "ref/ana/y_47302-lang-multi.jpg",
+    "ref/ana/y_47303-lang-multi.jpg",
+    "ref/web/econ/fr57325_20220604_124108.jpg"
+   ]
+  },
+  {
+   "detail": "Seat pan and front",
+   "score": 7.0,
+   "refs": [
+    "/tmp/claude-0/raterB6/r/f_302.png",
+    "ref/ana/y_47302-lang-multi.jpg"
+   ]
+  },
+  {
+   "detail": "Rear shell and hood",
+   "score": 6.5,
+   "refs": [
+    "/tmp/claude-0/raterB6/r/b_sans15.png",
+    "ref/web/econ/sans_ana-777-300er-economy-15.jpg",
+    "/tmp/claude-0/r6/q17_econBacks.png",
+    "ref/web/econ/fr57325_20220604_124234.jpg"
+   ]
+  },
+  {
+   "detail": "Screen and handset",
+   "score": 7.5,
+   "refs": [
+    "/tmp/claude-0/r6/q18_seat35C.png",
+    "ref/ana/y_47305-lang-multi.jpg",
+    "ref/web/econ/sans_ana-777-300er-economy-16.jpg"
+   ]
+  },
+  {
+   "detail": "Tray, pocket and AC outlet",
+   "score": 7.0,
+   "refs": [
+    "/tmp/claude-0/r6/studio/e6_lowback.png",
+    "ref/web/econ/sans_ana-777-300er-economy-20.jpg",
+    "ref/web/econ/sans_ana-777-300er-economy-21.jpg",
+    "ref/web/econ/sans_ana-777-300er-economy-23.jpg"
+   ]
+  },
+  {
+   "detail": "Legs, footrest and under-seat",
+   "score": 5.5,
+   "refs": [
+    "/tmp/claude-0/r6/studio/e8_foot.png",
+    "ref/ana/y_47304-lang-multi.jpg",
+    "ref/web/econ/sans_ana-777-300er-economy-23.jpg"
+   ]
+  },
+  {
+   "detail": "Far-LOD rows",
+   "score": 7.0,
+   "refs": [
+    "/tmp/claude-0/r6/q15_econFronts.png",
+    "/tmp/claude-0/r6/q16_econAisle.png"
+   ]
+  }
+ ],
+ "issues": [
+  {
+   "id": "w6b-1",
+   "severity": "high",
+   "title": "Diamond fabric still reads as a navy trellis on lavender (figure and ground inverted)",
+   "evidence": "Otsu light-area / hi-lo: e4 0.44 / 1.36, q15 0.47 / 1.44, f_level 0.45 / 1.31. y_47306 left seat 0.19 / 1.90, y_47302 middle seat 0.07 / 1.99. raterB6/diamond_cmp.png (photo | render | swatch). Real in-service photo sans 13 (seat by the window) shows the same sparse pale blocks on navy.",
+   "fix": "test/make_swatches.py y_diamond(): keep the 18 centres and the 5 mm steps, but shrink the half-diagonals from 0.026/0.022 to 0.019/0.016 m (light area about 0.16). Quiet the ground so the ticks don't join the figure: before mixing, set t = t.mean + 0.4 * (t - t.mean) for the (1 - m) part. Raise lift from (2.0, 1.8, 1.4) to (2.5, 2.2, 1.7) so the blocks keep hi/lo of about 1.9. Re-run make_swatches.py for y_diamond only and check Otsu on e4 (target 0.15-0.22, hi/lo 1.8-2.0)."
+  },
+  {
+   "id": "w6b-2",
+   "severity": "medium",
+   "title": "Footrest hangers render as a chain of beads",
+   "evidence": "e8_foot and e6_lowback: 4 separate rounded blocks per hanger with notches between them. y_47304 shows one smooth, flat, bowed off-white bar per pedal. sans 23 shows two smooth bars.",
+   "fix": "09a_econ.js econSeat footrest: replace the for-i gRBox loop with one loft per side, in ascending y: loftAt(B, [SEC(0.115, 0.042, 0.022, -0.012, 0.009), SEC(0.13, 0.042, 0.022, -0.03, 0.009), SEC(0.18, 0.040, 0.022, -0.064, 0.009), SEC(0.24, 0.038, 0.022, -0.088, 0.009), SEC(0.30, 0.036, 0.022, -0.10, 0.009)], M4.trs(hx, 0, 0), SEATMAT.arm, 3). The loft's per-section z gives the bow; flip the order if gLoft expects descending y."
+  },
+  {
+   "id": "w6b-3",
+   "severity": "medium",
+   "title": "Screen frame fills too much of the hood face (rounded hood sides)",
+   "evidence": "Frame / visible hood face: q18 0.92, e5 0.93. y_47305 0.85, sans 15 0.87. The hood width (0.372) is right; the corner radius makes it read narrow. In sans 15 and fr57325 124124 the hood face is flat with tight corners and a straight top edge.",
+   "fix": "09a_econ.js econSeat RS: set corner r to 0.012 on rows y 0.49, 0.53, 0.80 and 0.835 (now 0.026/0.03/0.032/0.03). Keep 0.03/0.02 on the 0.855/0.868 cap rows so the top still rolls. Mirror this in econUnitFar: the hood gRBox(0.375, 0.40, 0.12, 0.035) r becomes 0.015."
+  },
+  {
+   "id": "w6b-4",
+   "severity": "medium",
+   "title": "Headrest cushion does not read as a separate pad; cover slightly wide",
+   "evidence": "f_level row scan at cover height: cover 85 px (0.28 m), back plus wings 122 px (0.41 m), white gap of 25 px (0.083 m) between seats. y_47300 at the same scale: cover 69-73 px (0.23 m), back 138 px (0.44 m), gap 6-10 px. In y_47300 the cushion's rounded outline sits inside a visible margin of back fabric. In the render the wings run into the back edges, with no undercut. In h_side the angled hem (gRBox 0.27 x 0.04, -20 deg) reads as a shelf under the cover.",
+   "fix": "09a_econ.js econSeat: (a) back loft: widen the top sections. SEC(0.70) w 0.40 -> 0.42, SEC(0.818) 0.39 -> 0.41, SEC(0.838) 0.382 -> 0.40, SEC(0.853) 0.361 -> 0.375. (b) Headrest loft: replace the first section with an undercut, SEC(0.60, 0.33, 0.06, -0.035, 0.028) -> SEC(0.605, 0.30, 0.03, -0.02, 0.012), so there is a shadow line under the pad. (c) Cover plate, fold and hem width 0.27 -> 0.25. Hem gRBox(0.27, 0.04, 0.005, ...) at -20 deg -> gRBox(0.25, 0.03, 0.003, 0.002, 1) at -8 deg. Mirror (c) in econUnitFar (gBox 0.27 -> 0.25)."
+  },
+  {
+   "id": "w6b-5",
+   "severity": "medium",
+   "title": "Belts still too light and too cyan; colour unresolved",
+   "evidence": "f_level belt mean #588ed0 (G/B 0.68). y_47303 #38578c (G/B 0.62). y_47302 webbing #232846 / #383d50 (charcoal). fr57325 124108 (in service, JA794A) shows dark webbing beside armrest H.",
+   "fix": "09_seats.js SEATMAT.yBelt (shared, one line): '#2e4c86' r 0.8 -> '#243a66' r 0.9, about -35 % linear, to land near #38578c in the studio. If the user confirms charcoal (question 1), use '#34373e'."
+  },
+  {
+   "id": "w6b-6",
+   "severity": "low",
+   "title": "Petal flecks clump instead of being evenly spread",
+   "evidence": "raterB6/fleck_cmp2.png: y_47300 seat 4 flecks are blue-noise spaced, about 6-8 x 3 mm. tex_y_fleck uses uniform random placement, so it forms visible clusters and voids (h_side, q15 seat 4 reads as 'TV static' at row distance). Global stats already match (see priorIssues).",
+   "fix": "test/make_swatches.py y_fleck(): place flecks by Poisson-disc (dart throwing with a minimum centre spacing of about 4.5 mm on the 0.2 m tile, wrapped at the edges) at the same count (about 12 % cover). Keep the size and lift."
+  },
+  {
+   "id": "w6b-7",
+   "severity": "low",
+   "title": "Pillow too narrow, too light, too rigid",
+   "evidence": "f_level pillow 0.35 m wide (0.72 of the seat spacing), against y_47300 0.81 and sans 14 about 0.83 of the pan. q15 L50 59 against y_47300 44. The shading is uniform (p90/p50 1.14 against 1.36): no seams or sag.",
+   "fix": "09a_econ.js pillow: 0.175 * X -> 0.195 * X and 0.12 * Z -> 0.13 * Z. Lean it back: rotation -80 -> -72 deg, and move it to z -0.09. Add a sag, g.p[k+1] += -0.01 * (1 - Z * Z) * X * X, for a soft middle. 09_seats.js SEATMAT.yPillow '#4d5579' -> '#3e4565'."
+  },
+  {
+   "id": "w6b-8",
+   "severity": "low",
+   "title": "Back-top band seen from behind still about 2x the photo",
+   "evidence": "q17 foreground left seat: fabric plus fold band about 0.22 of the hood width. y_47303 left foreground seat about 0.09. fr57325 124234 shows a thin rim.",
+   "fix": "09a_econ.js RS: add a last row [0.874, 0.03, 0.07, 0.33, 0.02] (front face z -0.005) so the cap reaches over the back top, which ends at y 0.868 / z -0.002. Check that the cover fold (y 0.799) still clears it."
+  },
+  {
+   "id": "w6b-9",
+   "severity": "low",
+   "title": "Pocket net opaque; pictogram placard blank",
+   "evidence": "e6 and b_sans15 show a uniform dark band, where sans 20 and 23 show a see-through mesh. The tray placard is a plain pale quad (e5, at the tray's left), where sans 15 shows black seat-recline pictograms.",
+   "fix": "09a_econ.js: net gRBox depth 0.014 -> 0.004, colour '#2a2c31' -> '#3a3d44', with LAYER.grille kept. If the Builder supports alpha, use a gQuad with a = 0.55. Placard: add an atlas tile 'ypicto' (06_atlas.js, integrator) or two small dark quads gQuad(0.012, 0.012) inside it."
+  },
+  {
+   "id": "w6b-10",
+   "severity": "low",
+   "title": "Fabric pattern smears on 45-degree faces (back top roll, seat-back sides) - lighting/shader owner",
+   "evidence": "q17 foreground seats show stretched white streaks on the top roll. b_sans15 left seat side shows smeared diagonal streaks. The cause is the triplanar blend w = pow(abs(N), 4) in 04_shaders.js, which mixes two projections at about 50/50 on these faces.",
+   "fix": "04_shaders.js (lighting owner): for photo layers (layer >= 16), sharpen the blend, w = pow(abs(N), vec3(10.0)). Or bias the seat backs to the z projection. Econ cannot fix this locally."
+  },
+  {
+   "id": "w6b-11",
+   "severity": "low",
+   "title": "q15 camera does not match y_47300 (QA harness)",
+   "evidence": "q15 walk(0, 1.62, 46.05, pi, -0.42) looks down 24 deg. y_47300 is near level from about headrest height, so q15 exaggerates the cover and hides the pans and pillows.",
+   "fix": "test/qa.js (integrator): q15_econFronts -> walk(0, 1.25, 46.05, 'Math.PI', -0.12)."
+  }
+ ],
+ "questionsForUser": [
+  "Seat-belt webbing: in-service photos (fr57325 124108, JA794A) and ANA's y_47302 show charcoal; ANA's y_47303 shows mid blue. Is your NH7/NH8 aircraft charcoal or blue?",
+  "Headrest cover width: ANA's y_47300 shows covers about 0.6 of the cushion, while in-service sans 13 looks closer to 0.8 (wide-angle, so unreliable). Do you have a straight-on photo of an occupied-row headrest?",
+  "Fabric mix: the in-service photos (sans 12 / 13, fr57325) show mostly petal-fleck and diamond seats, with tick seats rare. Should the cabin follow ANA's showroom mix (all four patterns roughly evenly) or the in-service look?"
+ ],
+ "extraRefsSearched": [
+  "https://www.sanspotter.com/ana-777-300er-economy/ (downloaded the extra images 12, 33, 40, 41, 42, 43 into ref/web/econ; 13-30 were already present)",
+  "https://flight-report.com/en/report/57325/ana-nh5-los-angeles-lax-tokyo-nrt/ (already present: 123934, 124108, 124124, 124234, 134011, 144049)",
+  "https://www.travelcodex.com/trip-report-ana-boeing-777-economy-class-san-francisco-to-tokyo/ (2016, old 2-4-3 cabin, not used)",
+  "https://www.aerotelegraph.com/new-ana-cabin-is-supposed-to-resemble-hotels-and-living-spaces (no economy images extractable)",
+  "https://seatcompare.ai/insights/ana-777-300er-seat-selection-guide-2025 (confirms Recaro CL3710, 3-4-3, rows 30-42; no photos)",
+  "https://www.ana.co.jp/en/us/travel-information/cabin/b787-10-economy-class/ (same CL3710 product; same official images as ref/ana)",
+  "https://www.aerolopa.com/nh-773-1 (seat map only)"
+ ]
+}
