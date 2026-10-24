@@ -34,6 +34,7 @@ const MONMAT = {
   // door-3 bar / door-2 welcome galley, sampled from ANA's official bar-counter render (Jul 2019 press kit) and
   // OMAAT's in-service photos: light ash doors, dark-bronze frames, black basalt counter, black upper unit
   barAsh: { c: '#b9a687', r: 0.5, l: LAYER.ashGrain },
+  lavAsh: { c: '#b9a687', r: 0.5, l: LAYER.ashDoor },   // w14a/b: finer ash on the J lav doors (ashGrain read coarse at door scale)
   bronze: { c: '#6f5f50', r: 0.35, m: 0.55, l: LAYER.brushed },
   barPost: { c: '#9d8f7c', r: 0.35, m: 0.55, l: LAYER.brushed },     // [V] warm light grey-bronze posts (samchui_11 #8e7f6d)
   steelBright: { c: '#d4d6d8', r: 0.25, m: 0.9, l: LAYER.brushed },  // [V] bright counter nosing (samchui_11 #c5c0b9, lalf_134)
@@ -70,7 +71,7 @@ const MONMAT = {
   compartment: { c: '#b4b1a9', r: 0.5, m: 0.1, l: LAYER.gAlu },   // w9: upper stowage doors grey metal, ~0.8 of the wall (sans_38)
   insertSeam: { c: '#2c2b29', r: 0.7 },
   flapFrame: { c: '#aea69a', r: 0.32, m: 0.5, l: LAYER.brushed },   // w13: warm brushed silver (lalf_133 #9c9084 / #898278 under warm light; steel read blue)
-  frame: { c: '#cdcac3', r: 0.35, m: 0.3, l: LAYER.brushed },   // w13: bright aluminium insert frames (sansY_44 frames ~1.15x the faces)
+  frame: { c: '#b2aea6', r: 0.32, m: 0.45, l: LAYER.brushed },   // w13: bright aluminium insert frames (sansY_44 frames ~1.15x the faces)
   rivet: { c: '#77746d', r: 0.5 },                                  // w13: rivet dots on the frames / cart posts                           // w9: ~4 mm dark gap round each insert (sans_38 / sansY_44)
   ovenLabel: { c: '#c9c77e', r: 0.5, e: 0.06 },                   // w9: yellow-green meal-label window on the ovens (sansY_44 #666338 lit)
   jug: { c: '#ffffff', r: 0.12, m: 0.5 },                             // w9: polished jug, no brushed layer (rings read as stacked cups); sansY_44 jug #605a4e
@@ -84,7 +85,7 @@ const MONMAT = {
   // (py_37302 #424455), rear economy curtains light grey (y_47300 far end #888785..#9c9b99)
   // w1: the charcoal albedos rendered near-black (#202028 in m07); lifted to the photo samples (tpg_The-Room-small-cabin-
   // front_71 #5e5655, omaatF_2 #5b5650) [V]
-  curtainF: { c: '#57504a', r: 0.95, l: LAYER.fabric },   // w3: F front read too light (0.55 of wall vs 0.36-0.39)   // + tpg_147 #4a453a at 0.34 of white, omaatF_2 #56504b
+  curtainF: { c: '#585a62', r: 0.95, l: LAYER.fabric },   // w3: F front read too light (0.55 of wall vs 0.36-0.39)   // + tpg_147 #4a453a at 0.34 of white, omaatF_2 #56504b
   curtainFF: { c: '#6d6b6b', r: 0.95, l: LAYER.fabric },  // w6b: F front loose drape rendered #27231f-#332d29 vs omaatF_40 #4c4644 / #423c3b in the open
   doorArc: { c: '#c42a48', r: 0.45 },   // w13a/b: between lalf_134 (146,47,60) and lalf_133 (143,69,82); magenta read wrong   // [V] painted crimson-magenta arc + OPEN (lalf_133); MAT.handleRed read pure red
   curtainTie: { c: '#2a2c33', r: 0.8, l: LAYER.fabric },   // w13b: cool, as curtainC
@@ -303,8 +304,9 @@ function buildBar(B, m) {
   B.add(gBox(uw, 0.03, 0.012), V(0, BAR.deck + 0.05, oU + 0.12), MONMAT.steelBright);
   // tumblers on the counter (render: four at the left)
   for (const p of [490, 535, 578, 655]) {   // w13: ~15 % smaller rocks glasses with a bright rim
-    B.add(gCyl(0.03, 0.026, 0.05, 12), V(up(p), BAR.deck + 0.06, p === 655 ? -0.16 : -0.26), MONMAT.tumbler);
+    B.add(gCyl(0.03, 0.026, 0.05, 12, false), V(up(p), BAR.deck + 0.06, p === 655 ? -0.16 : -0.26), MONMAT.tumbler);
     B.add(gCyl(0.031, 0.031, 0.004, 12, false), V(up(p), BAR.deck + 0.084, p === 655 ? -0.16 : -0.26), MONMAT.glassHi);
+    B.add(gCyl(0.026, 0.026, 0.002, 12), V(up(p), BAR.deck + 0.045, p === 655 ? -0.16 : -0.26), MONMAT.blackGloss);   // w14a: inner base, not a lid
   }
   // ash cheeks either side of the upper unit, up to the soffit
   for (const s of [-1, 1]) B.add(gBox((w - uw) / 2 - 0.02, BAR.canopy - uy0, 0.02), V(s * (uw / 2 + (w - uw) / 4), (uy0 + BAR.canopy) / 2, oU + 0.012), MONMAT.barAsh);
@@ -399,25 +401,25 @@ function buildWelcomeGalley(B, m) {
   // and its top is level with the monitor's, the tag sitting above; a dark tower return shows to its right. The pane
   // reads ~1.1x the tower, not 0.8x (interior lifted); oval thumb-latch in a lens-shaped bulge of the hinge-side stile
   const c0 = mc + 0.45 + 0.03 + 0.31, cW = 0.62, sxo = cW / 2 - 0.025;
-  B.add(gBox(cW - 0.04, 0.84, 0.004), V(c0, 1.47, o + 0.003), { c: '#5c5052', r: 0.6, e: 0.02 });
-  for (const y of [1.22, 1.46, 1.70]) B.add(gBox(cW - 0.06, 0.012, 0.07), V(c0, y, o + 0.04), { c: '#7a6f71', r: 0.5 });
-  for (const [u, y, bw, bh, cc] of [[-0.12, 1.29, 0.16, 0.13, '#6a6361'], [0.1, 1.27, 0.2, 0.09, '#7e7775'], [0.0, 1.54, 0.28, 0.15, '#5c5654'],
-    [-0.15, 1.65, 0.14, 0.09, '#55504e'], [0.14, 1.53, 0.04, 0.12, '#8e8785'], [0.12, 1.645, 0.18, 0.025, '#8a8482']])
+  B.add(gBox(cW - 0.04, 0.84, 0.004), V(c0, 1.47, o + 0.003), { c: '#4c4948', r: 0.6, e: 0.02 });   // w14b: neutral smoke, not plum (omaat_room_32 #2e2c2b)
+  for (const y of [1.22, 1.46, 1.70]) B.add(gBox(cW - 0.06, 0.012, 0.07), V(c0, y, o + 0.04), { c: '#6a6766', r: 0.5 });
+  for (const [u, y, bw, bh, cc] of [[-0.12, 1.29, 0.16, 0.13, '#5a5857'], [0.1, 1.27, 0.2, 0.09, '#6b6968'], [0.0, 1.54, 0.28, 0.15, '#4e4c4b'],
+    [-0.15, 1.65, 0.14, 0.09, '#484645'], [0.14, 1.53, 0.04, 0.12, '#797776'], [0.12, 1.645, 0.18, 0.025, '#767473']])
     B.add(gBox(bw, bh, 0.05), V(c0 + u, y, o + 0.035), { c: cc, r: 0.6 });
-  B.add(gBox(0.42, 0.012, 0.06), V(c0, 1.235, o + 0.04), { c: '#b4aeac', r: 0.4 });                    // white tray
+  B.add(gBox(0.42, 0.012, 0.06), V(c0, 1.235, o + 0.04), { c: '#9c9a98', r: 0.4 });                    // white tray
   for (const sx of [-1, 1]) B.add(gBox(0.05, 0.86, 0.03), V(c0 + sx * sxo, 1.47, o + 0.085), MONMAT.welcomeChar);
   B.add(gBox(cW, 0.05, 0.03), V(c0, 1.065, o + 0.085), MONMAT.welcomeChar);
-  B.add(gBox(cW, 0.13, 0.03), V(c0, 1.835, o + 0.085), MONMAT.welcomeChar);                         // deep top rail
+  B.add(gBox(cW, 0.19, 0.03), V(c0, 1.865, o + 0.085), MONMAT.welcomeChar);                         // deep top rail, w14a: head up to the monitor top, carries the tag
   const bead = { c: '#8a8380', r: 0.12, m: 0.4 };                                                     // pane bead
   for (const sx of [-1, 1]) B.add(gBox(0.008, 0.68, 0.006), V(c0 + sx * (sxo - 0.029), 1.43, o + 0.087), bead);
   for (const y of [1.094, 1.766]) B.add(gBox(cW - 0.1, 0.008, 0.006), V(c0, y, o + 0.087), bead);
-  B.add(gQuad(0.2, 0.05), V(c0 + 0.08, 1.85, o + 0.1005), MONMAT.bevBlack);                           // caution plate on the top rail
-  for (let i = 0; i < 3; i++) B.add(gQuad(0.15 - i * 0.03, 0.005), V(c0 + 0.08 - i * 0.015, 1.865 - i * 0.013, o + 0.101), MONMAT.label);
+  B.add(gQuad(0.2, 0.05), V(c0 + 0.08, 1.81, o + 0.1005), MONMAT.bevBlack);                           // caution plate on the top rail
+  for (let i = 0; i < 3; i++) B.add(gQuad(0.15 - i * 0.03, 0.005), V(c0 + 0.08 - i * 0.015, 1.825 - i * 0.013, o + 0.101), MONMAT.label);
   B.add(gRBoxM(0.08, 0.14, 0.02, 0.04, 2), V(c0 - sxo, 1.44, o + 0.1), MONMAT.welcomeChar);                 // lens bulge
-  B.add(gRBoxM(0.035, 0.06, 0.012, 0.017, 2), V(c0 - sxo, 1.44, o + 0.112), MONMAT.latch);                  // oval thumb-latch
-  B.add(gRBoxM(0.26, 0.07, 0.012, 0.035, 2), V(c0, 1.945, o + 0.04), { c: '#e9e2cf', r: 0.5 });          // w7: single cream oval tag
-  B.add(gQuad(0.03, 0.03), V(c0 - 0.07, 1.945, o + 0.0465), { c: '#5a5650', r: 0.6 });                      // w10a: pictogram + 2 text lines (omaat_room_32)
-  for (const y of [1.955, 1.935]) B.add(gQuad(0.09, 0.005), V(c0 + 0.03, y, o + 0.0465), { c: '#8d887e', r: 0.6 });
+  B.add(gRBoxM(0.05, 0.09, 0.012, 0.025, 2), V(c0 - sxo, 1.44, o + 0.112), MONMAT.steelBright);             // oval thumb-latch, w14a: silver
+  B.add(gRBoxM(0.26, 0.07, 0.012, 0.035, 2), V(c0, 1.915, o + 0.106), { c: '#e9e2cf', r: 0.5 });          // w7: single cream oval tag
+  B.add(gQuad(0.03, 0.03), V(c0 - 0.07, 1.915, o + 0.1125), { c: '#5a5650', r: 0.6 });                      // w10a: pictogram + 2 text lines (omaat_room_32)
+  for (const y of [1.925, 1.905]) B.add(gQuad(0.09, 0.005), V(c0 + 0.03, y, o + 0.1125), { c: '#8d887e', r: 0.6 });
   welcomeEnds(B, m);
 }
 // portrait welcome monitors on navy end panels facing each aisle, with three steel rub strips at 0.3 / 0.5 / 0.7 m
@@ -446,9 +448,10 @@ function buildAshWall(B, m) {
   for (let k = 1; k < n; k++) B.add(gBox(0.006, m.h - 0.1, 0.004), F(m.x0 + (w / n) * k, (m.h - 0.1) / 2 + 0.07, 0.002), MONMAT.insertSeam);
   for (let k = 0; k < n; k++) {
     const x = m.x0 + (w / n) * (k + 0.5);
-    B.add(gRBox(pw + 0.06, 0.91, 0.012, 0.03, 2), F(x, 1.28, 0.006), MONMAT.flapFrame);
+    B.add(gRBox(pw + 0.06, 0.91, 0.016, 0.05, 2), F(x, 1.28, 0.006), MONMAT.flapFrame);   // w14a/b: rounder corners, deeper bevel
     B.add(gRBoxM(pw, 0.85, 0.012, 0.004, 1), F(x, 1.28, 0.012), MONMAT.barAsh);
-    B.add(gRBoxM(0.04, 0.025, 0.02, 0.006, 1), F(x, 1.69, 0.02), MONMAT.red);
+    B.add(gBox(0.08, 0.035, 0.008), F(x, 1.69, 0.016), MONMAT.flapFrame);   // w14a: two red tabs on a silver plate (lalf_133)
+    for (const s2 of [-1, 1]) B.add(gBox(0.022, 0.022, 0.016), F(x + s2 * 0.018, 1.69, 0.022), MONMAT.red);
   }
   for (const y of [0.35, 0.80]) B.add(gRBoxM(w - 0.12, 0.022, 0.03, 0.01, 1), F(cx, y, 0.03), MONMAT.alu);
   B.add(gBox(w - 0.02, 0.07, 0.02), F(cx, 0.035, 0.01), MONMAT.black);
@@ -618,7 +621,7 @@ function buildMon(B, m, layout, cls) {
     const J = cls === 'J', hw = MONMAT.steelDark;
     const so = Math.abs(cx) < 0.05 ? 1 : Math.sign(cx) * m.face;          // viewer-right sign of the outboard side
     const at = (u, y, o) => F(dx + u * m.face, y, o);
-    B.add(gRBoxM(dw, 1.86, 0.02, 0.01, 1), F(dx, 0.95, 0.008), cls === 'F' ? MONMAT.darkWoodDoor : J ? MONMAT.barAsh : MONMAT.lavDoor);
+    B.add(gRBoxM(dw, 1.86, 0.02, 0.01, 1), F(dx, 0.95, 0.008), cls === 'F' ? MONMAT.darkWoodDoor : J ? MONMAT.lavAsh : MONMAT.lavDoor);
     if (J) {
       // [V] omaat_ANA-Business-Class-The-Room-32 (the only in-service view of a THE Room lav): plain ash leaf, white
       // 0.04 m bi-fold seam strip, white vertical grab handle 0.04 x 0.25 m at 1.0-1.25 m, small white lock slot at
