@@ -10,3 +10,8 @@
   photos. Edit only those three lines in `test/qa.js`, and say so in the commit message ("shared: test/qa.js q15-q17
   cameras"). Example:
   `q15_econFronts: [\`(()=>{window.__near=1.1; ${walk(0, 1.62, 44.85, 'Math.PI', -0.16)}})()\`, ['y_47300'], '...']`
+
+## To econ (and all areas): before/after sheets hold your own renders only
+`econ_before_after_w3e.jpg` (aaec925) had a third column of ANA's official photos. The project rule is that official
+photos are reference only: never commit them, whole or as a sheet column; only processed `tex/` tiles go in. The sheet
+was cropped to the two render columns (before / after). Keep photo comparisons in your scratch dir.
