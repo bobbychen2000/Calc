@@ -21,3 +21,12 @@
    #243a66 after w6 B measured #588ed0 rendered vs y_47303 #38578c; one SEATMAT line to switch to charcoal #34373e]
 11. (w6) Coat hook: rater A sees an off-white mushroom knob on the hood side in sans 22. Which side? [not modelled yet]
 12. (w6) Headrest cover width: y_47300 ~0.6 of the cushion, sans 13 ~0.8 (wide-angle). [0.255 m = 0.72 of a 0.355 pad]
+13. (wave 3 final) Fabric close-ups: the four Y fabrics are synthesised from ~1 mm/px official photos. The raters' diamond
+   and mosaic targets contradicted each other from round to round. A 1:1 close-up photo of each fabric (yours, or from a
+   trip) would let `make_swatches.py` cut real tiles. [shipped: the w11-rated tiles]
+14. (wave 3) Headrest cover leatherette: slate grey-blue (y_47301 #555975, y_47306 #475273) or dark navy (head-on
+   y_47300)? [#3a4060, dark; slate at an angle is a lighting / sheen question]
+15. (wave 3) Are the headrests raised in the y_47300 hero shot (the pad top is the back top there) and lowered in
+   y_47306? [modelled lowered, back ~5.5 cm above the cover fold; head-on a ~1.5 cm white hood rim shows]
+16. (wave 3) Regular-row aisle ends: an open frame under the J armrest (y_47303) or a solid white panel (y_47301)? [solid
+   panel]

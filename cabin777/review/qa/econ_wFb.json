@@ -1,0 +1,51 @@
+{
+  "area": "econ",
+  "rater": "B",
+  "round": "wF",
+  "lens": "Geometry and proportion first, then materials and colour, then lighting on the seats, then artefacts. Calibrated against econ_w11b (7.5) and econ_w13b (7.3). Head ced028f ships the w11-rated fabric tiles plus the later non-fabric fixes. Evidence: box means, L p90/p50 and p10/p50, and B/R from /tmp/claude-0/raterBF/m.py, measured on q15/q16/q17/q18 and the studio e1-e9 renders against y_47300/01/03/05/06. Lighting and QA camera placement are noted but not scored. Note: the q15 camera sits lower and closer than y_47300's, so the near-row pillows fill the bottom of the frame. q17 is a mismatched viewpoint.",
+  "score": 7.5,
+  "details": [
+    {"detail": "Fabric: tick weave", "score": 7.5, "refs": "q15 s1/s3 vs y_47300 s1/s3: back p90/p50 1.42-1.45 vs 1.46-1.47, p10/p50 0.63-0.64 vs 0.49-0.50 (the darks are lifted, so the columns are softer); mean #3c4970 vs #37446e-#4a5c8c, B/R 1.86 vs 1.88-1.98. Close up (e4) the dashes are crisper and sparser than y_47306 M."},
+    {"detail": "Fabric: diamond lattice", "score": 7.0, "refs": "e1 s1 / e3 / q16 near-left vs y_47306 L, y_47301: the chained lattice reads correctly, but the figures are darker and more hatched than the photo's soft pale stars."},
+    {"detail": "Fabric: petal fleck", "score": 7.0, "refs": "q15 s4: p90/p50 1.72 vs 1.76 (y_47300 s4), B/R 2.19 vs 2.32, good at row distance. Near (q16 foreground, e4 pads): round white snow-blobs ~1.5-2 cm, against the photo's small elongated slivers (y_47306 pads, y_47301 near)."},
+    {"detail": "Fabric: dash mosaic", "score": 6.5, "refs": "q15 s2 / e7 pans vs y_47306 R, y_47300 s4 pan: reads as uniform heather; the brick blocks of differing density are missing (this is the w11 tile)."},
+    {"detail": "Fabric mix (backs, pans, pads)", "score": 7.5, "refs": "q15 / q16 / e1: the 6-cycle mix of tick, fleck, diamond and mosaic matches the variety in y_47300 / y_47301; the per-seat L50 is within the photo range."},
+    {"detail": "Headrest pad + cover", "score": 7.0, "refs": "Head-on (q15) cover/back luminance is 0.79 / 0.82 / 0.89 / 0.82 against 0.63 / 0.72 / 0.50 / 0.60 in y_47300 (improved from w11's 1.12-1.45). Oblique, the render cover is saturated navy (#2e365f, B/R 2.06) where the photo's is slate grey-blue leatherette (y_47301 near #555975, B/R 1.37; y_47306 R #475273, B/R 1.63). No fold-over lip, seam or logo. Pad wings and widths are good."},
+    {"detail": "Pillow", "score": 8.0, "refs": "q15 #263155 vs y_47300 #252c4c; width ~0.83 of the back vs ~0.85; plain face (the w11 button dimple is gone)."},
+    {"detail": "Armrests", "score": 7.5, "refs": "e7 / q17 vs y_47303: the shape, nose and hinge are good; the render reads a shade whiter and flatter than the photo's light grey (#b5b7bf)."},
+    {"detail": "Belts", "score": 8.5, "refs": "e1 / e7 cerulean webbing and buckles vs y_47303."},
+    {"detail": "Seat pan / front", "score": 7.5, "refs": "e1 / e7 vs y_47303 / y_47300: pans are now saturated (#44507c family); the front roll is good; aisle-end side panel solid (e3) where y_47303 shows a more open frame."},
+    {"detail": "Back silhouette", "score": 8.0, "refs": "q15 / e4 vs y_47300 / y_47306: crowned back with rolled edges; back height above the pad ~matches y_47306."},
+    {"detail": "Rear shell / hood / back top", "score": 7.5, "refs": "q17 / q18 / e9 vs y_47303 / y_47305: the shell and hood are good from behind. Head-on (q15) the near-row tops still show a thin white rim (~1 cm) where y_47300 shows fabric to the edge; the knob is no longer visible."},
+    {"detail": "Screen / handset", "score": 8.0, "refs": "q18 vs y_47305: bezel proportions and handset width are right; the screen sits proud of a flat hood face with no shallow recessed bay; the handset dock is narrower and squarer than the photo's rounded pill."},
+    {"detail": "Tray / pocket / AC", "score": 8.0, "refs": "e2 / e6 / q18 vs y_47303 and sans 15/20: tray latch, placard, mesh pocket and the power box are all present and placed correctly."},
+    {"detail": "Legs / footrest", "score": 7.5, "refs": "e8 / e2 vs y_47303: the beam, legs and footrest bars read; the legs are a little thin and pale."},
+    {"detail": "Far-LOD rows", "score": 7.5, "refs": "q15 / q16 far rows vs y_47300 / y_47301: colour and variety consistent, with no LOD pop visible."}
+  ],
+  "issues": [
+    {"id": "wFb-1", "severity": "medium", "title": "Headrest cover colour: saturated navy instead of slate leatherette; slightly bright head-on",
+     "evidence": "Oblique: the render cover is #2e365f (B/R 2.06) against y_47301 #555975 (B/R 1.37) and y_47306 #475273 (B/R 1.63). Head-on (q15): cover/back is 0.79-0.89 against 0.50-0.72 in y_47300.",
+     "fix": "SEATMAT.yCover: desaturate toward #3e4460 (B/R ~1.5) and keep r ~0.6, so the satin specular stays low head-on. Add a 6 mm fold-over lip at the top and an inset seam."},
+    {"id": "wFb-2", "severity": "medium", "title": "Dash mosaic reads as heather; the block structure is missing",
+     "evidence": "q15 s2 and e7 pans vs y_47306 R, y_47300 s4 pan: the photo shows brick blocks of 3 densities; the render shows a uniform scatter (the w11 tile, by design of the final state).",
+     "fix": "make_swatches.py y_mosaic: irregular per-block density {0.12, 0.30, 0.55}, with dashes running across block edges (no margins or seams)."},
+    {"id": "wFb-3", "severity": "low", "title": "Fleck pads and backs show round snow-blobs up close",
+     "evidence": "In the q16 foreground and on the e4 pads, the flecks are round white blobs ~1.5-2 cm; the y_47306 / y_47301 flecks are small elongated light-blue slivers. Row-distance statistics are fine (p90/p50 1.72 vs 1.76).",
+     "fix": "y_fleck: make the flecks 2.5:1 slivers ~1 cm long, tinted pale blue (#9fb3e6) rather than white."},
+    {"id": "wFb-4", "severity": "low", "title": "Diamond figures dark and hatched",
+     "evidence": "e1 s1 / q16 left vs y_47306 L: the photo's figures are pale soft stars; the render's are darker scan-hatched figures.",
+     "fix": "y_diamond: a smooth fill with a lighter figure colour (#a6bbe8 target) at the same lattice."},
+    {"id": "wFb-5", "severity": "low", "title": "Thin white rim across the near-row back tops head-on",
+     "evidence": "In the q15 near row a ~1 cm white shell edge shows across the back top; y_47300 shows fabric to the edge.",
+     "fix": "09a_econ.js: pull the hood cap rows behind the fabric crown, by about 8-10 mm."},
+    {"id": "wFb-6", "severity": "low", "title": "Screen proud of a flat hood; no recessed bay",
+     "evidence": "q18 vs y_47305: the photo screen sits in a shallow light-grey bay with a sloped margin.",
+     "fix": "Add a 6 mm sloped frame ring and set the bezel back by 4 mm."},
+    {"id": "wFb-note", "severity": "info", "title": "Not scored: camera and lighting",
+     "evidence": "q15 eye is lower and closer than y_47300's (the pillows fill the frame bottom). In q16 the near fabric is lit lighter than the photo (back #53618d vs #272c52). q17 is a different viewpoint from y_47303.",
+     "fix": "Owners: QA cameras and lighting."}
+  ],
+  "questionsForUser": [
+    "Is the headrest-cover leatherette on your flights slate grey-blue (as in y_47301 / y_47306) or dark navy (as in the head-on y_47300)? The render currently follows the darker navy."
+  ]
+}
