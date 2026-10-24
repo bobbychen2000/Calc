@@ -172,32 +172,17 @@ def synth_py_confetti(ratio, seed=11):
 
 
 def synth_y_tick(ratio, seed=3):
-    """econ w10 (A + B): the y_47306 crop is paired chevron stitches, so seat pans read as sweater knit (column-profile spread
-    0.066 vs 0.197 in y_47300, column/row ratio 1.19 vs 5.09). Redrawn from y_47306 middle seat / y_47300 seats 1 / 3
-    (~1 mm/px on the 0.26 m tile; y_47306 611 px/m) [D]: short vertical pale ticks ~2 mm wide, 4-7 mm long with 1-3 mm
-    gaps, in columns ~3.5 mm apart, grouped into vertical bands ~14 mm wide separated by ~2.5 mm navy channels; tick
-    density varies band to band (0.5-0.85), tick brightness 0.6-1.0; ticks ~8x the navy ground (linear)"""
+    """econ w10 A: the y_47306 crop lacked column structure at row distance (column spread 0.066 vs 0.197 in y_47300).
+    w11 A: the fully synthetic vertical bars with navy channels overshot ("digital rain"; matched-scale column variation
+    0.183 vs 0.051) - the real weave IS the paired slanted chevron ticks of the photo crop. So: keep the photo crop and
+    add only a soft ~15.5 mm column brightness envelope (+-22 %, jittered phase per band) [D]"""
     rng = np.random.default_rng(seed)
     n = ratio.shape[0]
-    m = np.zeros((n, n), np.float32)
-    x = 0.0
-    while x < n - 3:
-        bw = rng.uniform(12, 17); dens = rng.uniform(0.5, 0.85)
-        cx = x + 1.0
-        while cx < min(x + bw, n - 1):
-            y = rng.uniform(0, 6)
-            while y < n:
-                L = rng.integers(4, 8)
-                if rng.random() < dens:
-                    yy = (np.arange(int(y), int(y) + L)) % n
-                    b = rng.uniform(0.6, 1.0)
-                    for dx in (0, 1): m[yy, (int(cx) + dx) % n] = np.maximum(m[yy, (int(cx) + dx) % n], b * (1 if dx == 0 else 0.6))
-                y += L + rng.integers(1, 4)
-            cx += rng.uniform(3.2, 3.9)
-        x += bw + rng.uniform(2.0, 3.0)                    # navy channel
-    m = m[..., None]
-    lift = np.array([8.0, 8.0, 6.0], np.float32)
-    return 1.0 * (1 - m) + lift * m
+    x = np.arange(n, dtype=np.float32)
+    k = max(1, round(n / 15.5))                            # whole periods per 0.26 m tile (1 px ~ 1 mm) -> tileable
+    ph = 2 * np.pi * k * x / n
+    env = 1 + 0.22 * np.sin(ph + 0.6 * np.sin(2 * np.pi * 3 * x / n + rng.random() * 6.28))
+    return ratio * env[None, :, None]
 
 
 def synth_j_pillow(ratio):
@@ -288,7 +273,7 @@ def y_diamond():
     # w10 A + B: a continuous chained lattice of soft, mottled 0.06-0.08 m diamonds (no empty sites; w9's isolated
     # 0.05 m figures read as scattered polka-diamonds); the dash fill is broken ~40 % so the light area stays ~0.2-0.25
     for cu, cv in sites:
-        hd = rng.uniform(0.036, 0.044)           # minus a 5 mm ceil step -> ~0.06-0.08 m figures, tips chaining
+        hd = rng.uniform(0.034, 0.039)           # half-diagonal (minus a 5 mm ceil step) -> ~0.06-0.07 m figures; outline cover ~0.6 of the cloth
         for ou in (-1, 0, 1):
             for ov in (-1, 0, 1):
                 # w6: ceil, not floor - floor grew every diamond by one step
@@ -296,14 +281,15 @@ def y_diamond():
                 dv = np.ceil(np.abs(v - cv - ov) / step) * step
                 m = np.maximum(m, (du / (hd / 0.26) + dv / (hd * 0.87 / 0.26) <= 1).astype(np.float32))
     # dash runs: 2 px light rows with a 1 px dark gap, each run's ends jittered +-1 px so the steps read serrated
-    rows = (np.arange(n) % 3 < 2).astype(np.float32)[:, None]
-    jit = np.roll(m, 1, 1) * np.roll(m, -1, 1) + (rng.random((n, n)) < 0.5) * m
-    m = m * rows * np.clip(jit, 0, 1)
-    mot = _blur_wrap(rng.random((n, n)), 1.5); m = m * (mot > np.percentile(mot, 40))   # mottled, ragged
-    m = m[..., None]
+    # w11 B: the horizontal dash-run fill read as scanlines -> a soft mottled fill (smoothed ~2 mm noise, ~50 % kept)
+    # times the tick strokes, edges feathered over ~3 mm
+    m = np.asarray(Image.fromarray((m * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(1.0))).astype(np.float32) / 255
+    mot = _blur_wrap(rng.random((n, n)), 2.0); mot = np.clip(0.45 + 0.55 * (mot - np.percentile(mot, 30)) / (np.percentile(mot, 70) - np.percentile(mot, 30)), 0.3, 1)   # tonal mottled fill (y_47306 left: ~33-35 % light at 4 mm blur, gap10)
+    tk = t.mean(2) / t.mean()
+    m = (m * mot * np.clip(0.6 + 0.4 * tk, 0, 1.4))[..., None]
     tm = t.reshape(-1, 3).mean(0)
     ground = 0.85 * (tm + 0.4 * (t - tm))
-    lift = np.array([3.0, 2.85, 2.3], np.float32)         # pale lavender dash runs (y_47302 / 47306); w10 A: q16 light/dark 3.98 vs 1.97
+    lift = np.array([4.0, 3.8, 3.1], np.float32)          # pale lavender (y_47302 / 47306); w11 B: figure ~1.9x the ground
     ratio = ground * (1 - m) + lift * m
     sp = ((rng.random((n, n)) < 0.10) * (m[..., 0] > 0))[..., None]    # bright specks inside the figures (~8 % of the area figures cover)
     ratio = np.where(sp, np.array([5.0, 4.8, 4.0], np.float32), ratio)
@@ -321,7 +307,7 @@ def y_fleck():
     n = S; size = 0.2; mm = n / (size * 1000)
     t = np.asarray(Image.open(os.path.join(root, 'tex/tex_y_tick.png'))).astype(np.float32) / 255 * ENC['y_tick']
     t = np.asarray(Image.fromarray((np.clip(t / t.max(), 0, 1) * 255).astype(np.uint8)).resize((n, n))).astype(np.float32) / 255
-    ground = 0.75 + 0.25 * t / t.reshape(-1, 3).mean(0)
+    ground = 0.94 + 0.06 * t / t.reshape(-1, 3).mean(0)   # w11 B: plain navy, the ticks must not read between petals
     rng = np.random.default_rng(11)
     y, x = np.mgrid[0:n, 0:n].astype(np.float32)
     m = np.zeros((n, n), np.float32)
@@ -329,9 +315,9 @@ def y_fleck():
     while m.mean() < 0.11:
         cx, cy = rng.random(2) * n
         # evenly spread (y_47300 seat 2: flecks never clump): reject centres within 6 mm of another (w6 B: 4.5 mm still clumped) (tile-wrapped)
-        if any(min(abs(cx - px), n - abs(cx - px)) ** 2 + min(abs(cy - py), n - abs(cy - py)) ** 2 < (6 * mm) ** 2 for px, py in pts): continue
+        if any(min(abs(cx - px), n - abs(cx - px)) ** 2 + min(abs(cy - py), n - abs(cy - py)) ** 2 < (5 * mm) ** 2 for px, py in pts): continue
         pts.append((cx, cy))
-        a = np.exp(rng.normal(np.log(2.3), 0.25)) * mm; b = a * rng.uniform(0.6, 0.75)      # half-axes; w6 A rounder; w7 A: larger lognormal 4.5-9 x 3-5 mm, ~0.6x the count (y_47300 seats 2 / 4); w10 gap: median 2.3 mm half-axis, 6 mm spacing (render had 20 % too few, 50 % too large vs sans_14)
+        a = rng.uniform(2.2, 3.4) * mm; b = a / rng.uniform(2.2, 3.0)      # half-axes; w6 A rounder; w7 A: larger lognormal 4.5-9 x 3-5 mm, ~0.6x the count (y_47300 seats 2 / 4); w10 gap: median 2.3 mm half-axis, 6 mm spacing (render had 20 % too few, 50 % too large vs sans_14)
         th = rng.random() * np.pi
         for ox in (-n, 0, n):
             for oy in (-n, 0, n):
@@ -341,7 +327,7 @@ def y_fleck():
                 w = b * (1 - 0.45 * np.clip(pu / a, -1, 1))
                 m = np.maximum(m, ((pu / a) ** 2 + (pv / np.maximum(w, 1e-3)) ** 2 <= 1).astype(np.float32))
     m = np.asarray(Image.fromarray((m * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(0.5))).astype(np.float32)[..., None] / 255
-    lift = np.array([6.5, 5.9, 3.5], np.float32)          # w10 gap: flecks ~15 % too bright (q16 read as snow)
+    lift = np.array([7.0, 6.4, 3.9], np.float32)          # w10 gap: flecks ~15 % too bright (q16 read as snow); w11 B -10 %
     ratio = ground * (1 - m) + lift * m
     ratio /= ratio.reshape(-1, 3).mean(0)
     out = np.clip(ratio / ENC['y_fleck'], 0, 1)
@@ -350,38 +336,38 @@ def y_fleck():
 
 
 def y_mosaic():
-    """econ w6: the third Y fabric (was blobby procedural layer 11). w9: axis-aligned cells. econ w10 (A + B): strict columns
-    of equal grey dashes read as barcode stripes (light area 0.41 vs 0.31 in y_47306) -> cells ~17 x 22 mm laid as BRICKS
-    in rows (alternate rows offset half a cell), denser / sparser cells closer together (40 % / 26 %), dash lengths
-    0.25-0.9 of the cell with jittered starts, 1.5 px tall on average (1-2 px), brightness 0.55-1.0, bluish tint
-    (lift 6.0, 6.3, 6.5 -> pale blue on navy) [D]"""
+    """econ w6: third Y fabric. w9-w10: cells, bricks, short dashes. econ w11 (A + B): the defining feature is a grid of
+    brick-laid rectangular blocks ~28.6 x 18.2 mm (7 x 11 per 0.2 m tile, alternate rows offset half a block), each a
+    field of 1-px near-neutral grey-white horizontal dashes in rows ~2 mm apart, laid nearly end to end; neighbouring
+    blocks differ strongly in density, drawn irregularly from {0.12, 0.30, 0.55} (not a checker); a 1-px dark seam on
+    each block's left and top edge (y_47306 right, y_47303 near back, y_47300 seat-4 pan, sans 14 pan) [D]"""
     n = S; size = 0.2; mm = n / (size * 1000)
     t = np.asarray(Image.open(os.path.join(root, 'tex/tex_y_tick.png'))).astype(np.float32) / 255 * ENC['y_tick']
-    ground = 0.85 + 0.15 * t / t.reshape(-1, 3).mean(0)
+    ground = 0.94 + 0.06 * t / t.reshape(-1, 3).mean(0)
     rng = np.random.default_rng(5)
     m = np.zeros((n, n), np.float32)
-    NI, NJ = 12, 9                                   # cells 16.7 x 22 mm per 0.2 m tile
+    seam = np.zeros((n, n), np.float32)
+    NI, NJ = 7, 11
     cw, ch = n / NI, n / NJ
     for j in range(NJ):
         y0 = int(round(j * ch)); y1 = int(round((j + 1) * ch))
+        seam[y0 % n, :] = 1
         for i in range(NI):
             x0 = (i + (0.5 if j % 2 else 0)) * cw
-            dense = (0.40 if (i + (j // 2)) % 2 == 0 else 0.26) * rng.uniform(0.85, 1.15)
-            yy = y0 + 1
-            while yy < y1 - 1:
-                h = 1 if rng.random() < 0.5 else 2
-                # w10 gap: twice as many, much shorter dashes (y_47306: 308 per 100 cm2, median 2.8 mm vs 162 / 9.5 mm)
-                xa = x0 + 1 + rng.random() * 2
+            seam[y0:y1, int(x0) % n] = 1
+            dense = rng.choice([0.12, 0.30, 0.55]) * rng.uniform(0.85, 1.15)
+            for yy in range(y0 + 2, y1 - 1, 2):
+                xa = x0 + 2 + rng.random() * 2
                 while xa < x0 + cw - 2:
-                    L = int(np.clip(rng.lognormal(np.log(3.0 * mm), 0.4), 1, cw - 3))
-                    if rng.random() < dense / 0.45:
-                        xs = np.arange(int(xa), int(xa) + L) % n
-                        m[yy:yy + h, xs] = np.maximum(m[yy:yy + h, xs], rng.uniform(0.55, 1.0))
-                    xa += L + rng.uniform(1.0, 3.0) * mm
-                yy += h + 1 + (rng.random() < 0.3)
+                    L = int(np.clip(rng.lognormal(np.log(4.0 * mm), 0.45), 1, cw - 4))
+                    if rng.random() < dense / 0.55:
+                        xs = np.arange(int(xa), min(int(xa) + L, int(x0 + cw) - 1)) % n
+                        m[yy, xs] = rng.uniform(0.7, 1.0)
+                    xa += L + rng.uniform(0.5, 1.5) * mm
     m = m[..., None]
-    lift = np.array([6.0, 6.3, 6.5], np.float32)
+    lift = np.array([5.2, 5.4, 5.6], np.float32)              # near-neutral grey-white
     ratio = ground * (1 - m) + lift * m
+    ratio = ratio * (1 - 0.35 * seam[..., None])
     ratio /= ratio.reshape(-1, 3).mean(0)
     out = np.clip(ratio / ENC['y_mosaic'], 0, 1)
     Image.fromarray((out * 255 + 0.5).astype(np.uint8)).save(os.path.join(root, 'tex', 'tex_y_mosaic.png'))
