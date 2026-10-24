@@ -10,7 +10,7 @@ const PYREAR = { c: '#5e636b', r: 0.42, l: LAYER.plastic };   // rear face of th
 function pySeat(B, x0, lod, opts = {}) {
   const [hy, hz] = PY.hinge;
   // w11 (gap): ANA alternates two trims - A dash-weave back + cushion with petal ears, B petal back + cushion with dash ears;
-  // the aisle seats carry B (py_37302 foreground aisle seat, san_12 26G vs its neighbour 26F) [V]
+  // the centre block's aisle seats D / G carry B (py_37302 foreground, san_12 26G vs 26F); both window-pair seats are A (py_37301) [V]
   const F = opts.trim ? SEATMAT.pyWing : SEATMAT.pyFabric, WG = opts.trim ? SEATMAT.pyWingB : SEATMAT.pyWing;
   const BH = M4.trs(x0, hy, hz, 0, PY.back);
   B.add(gLoft(cushionSecs(0.415, 0.50, 0.115, -0.06, { edge: 0.04, r: 0.035, crown: 0.012 }), lod ? 3 : 4), M4.trs(x0, 0.425, -0.30, 0, 3 * DEG), F);
@@ -165,7 +165,7 @@ function pyUnit(n, lod = false, opts = {}) {
   const B = new Builder();
   const sp = PY.sp;
   const xs = []; for (let k = 0; k < n; k++) xs.push((k - (n - 1) / 2) * sp);
-  const aisle = (k) => (n === 4 ? k === 0 || k === 3 : k !== (opts.win === 0 ? 0 : n - 1));   // trim B on the aisle seats (w11)
+  const aisle = (k) => n === 4 && (k === 0 || k === 3);   // trim B on the centre block's aisle seats D / G (w11; window pairs A, py_37301)
   xs.forEach((x, k) => pySeat(B, x, lod, { ...opts, trim: aisle(k) }));
   const arms = []; for (let k = 0; k <= n; k++) arms.push((k - n / 2) * sp);
   arms.forEach((xa, k) => {
@@ -281,7 +281,7 @@ function pyUnitFar(n, opts = {}) {
   const B = new Builder();
   const sp = PY.sp;
   for (let k = 0; k < n; k++) {
-    const x0 = (k - (n - 1) / 2) * sp, FF = (n === 4 ? k === 0 || k === 3 : k !== (opts.win === 0 ? 0 : n - 1)) ? SEATMAT.pyWing : SEATMAT.pyFabric;
+    const x0 = (k - (n - 1) / 2) * sp, FF = n === 4 && (k === 0 || k === 3) ? SEATMAT.pyWing : SEATMAT.pyFabric;
     B.add(gRBox(0.48, 0.115, 0.50, 0.045, 1), M4.trs(x0, 0.425, -0.30, 0, 3 * DEG), FF);
     const BH = M4.trs(x0, PY.hinge[0], PY.hinge[1], 0, PY.back);
     B.add(gRBox(0.48, 0.68, 0.12, 0.04, 1), M4.mul(BH, M4.trs(0, 0.34, -0.02)), FF);
