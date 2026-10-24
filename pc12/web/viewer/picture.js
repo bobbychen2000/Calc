@@ -430,7 +430,7 @@ export class Picture {
     this.pool = [];            // multisampled targets (with depth textures), least recently used first, at most 2
     this.rt = null;            // the target of the last scene pass
     this.acc = [null, null];   // running-average ping-pong at the canvas resolution
-    this.a = { valid: false, k: 0, N: 0, done: true, plan: null, cam: new Float64Array(32), layered: false, rt: null, members: [] };
+    this.a = { valid: false, k: 0, N: 0, done: true, plan: null, cam: new Float64Array(32), layered: false, rt: null };
     // temporal AA: history ping-pong (canvas size), the box-filtered supersampled frame, the history's camera, the seed
     // (the still image the first moving frame continues from)
     const pose = () => ({ pos: new THREE.Vector3(), dir: new THREE.Vector3(0, 0, -1), fov: 0 });
@@ -686,12 +686,7 @@ export class Picture {
     const settled = !camMoving && !animating && this.ready && this.frame - this.lastMove >= STILL_DELAY;
     if (settled && (this.N > 0 || ovl)) {
       const layered = !!ovl;
-      // (a change in WHAT the overlay holds -- the display glass joining or leaving the propeller's disc -- restarts the
-      // still as well: the still image must hold exactly the objects the overlay does not, or a glass that left the
-      // overlay would show the page it had when the still was rendered: avionics fix r1, the stale page)
-      const memb = !!ovl && (this.a.members.length !== ovl.length || ovl.some((o, i) => o !== this.a.members[i]));
-      if (ext || !this.a.valid || this.a.layered !== layered || memb || this._camChanged()) this._restart(layered);
-      if (memb || !layered) { this.a.members.length = 0; if (ovl) for (const o of ovl) this.a.members.push(o); }
+      if (ext || !this.a.valid || this.a.layered !== layered || this._camChanged()) this._restart(layered);
       const a = this.a, refining = a.k < a.N;
       if (refining) this._refineStep(layered ? ovl : null);
       const src = this.acc[(a.k - 1) & 1];

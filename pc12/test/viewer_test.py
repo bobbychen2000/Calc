@@ -1339,7 +1339,7 @@ async def prop_blur_checks(page):
       V.setProp({rpm: 0, pitch: 62}, {instant: true}); V.advance(0.05);
       document.querySelector('[data-rpm="1000"]').click();
       let at = null;
-      for (let t = 0; t < 15 && at == null; t += 0.05) { V.advance(0.05); if (kin.t.pitch === 0) at = V.state.prop.rpm; }
+      for (let t = 0; t < 45 && at == null; t += 0.05) { V.advance(0.05); if (kin.t.pitch === 0) at = V.state.prop.rpm; }   // (a PT6 start: ~300 rpm ~20 s in)
       V.setProp({rpm: 0, pitch: 0}, {instant: true}); V.advance(0.05);
       const back = chrome ? B.still[0].mesh.quaternion.equals(B.still[0].q0) && B.still[0].mesh.position.equals(B.still[0].p0) : false;
       T.neutral(); V.panel(true);
@@ -1409,7 +1409,9 @@ async def prop_blur_checks(page):
       const pv = V.partExtras('propeller').pivot, ax = pv.axis, o = pv.origin;
       V.setCamera({pos: [o[0] + 4.2 * ax[0], o[1] + 4.2 * ax[1], o[2] + 4.2 * ax[2]], target: o, fov: 45}, {instant: true});
     """
+    # (the camera's matrices are current only once a frame has rendered with the new pose: the ring is projected after it)
     pts = await js(page, setup + r"""
+      await V.frames(2); I.stage.camera.updateMatrixWorld();
       const THREE = I.THREE, a = new THREE.Vector3().fromArray(pv.axis).normalize();
       const e1 = new THREE.Vector3(1, 0, 0).addScaledVector(a, -a.x).normalize(), e2 = new THREE.Vector3().crossVectors(a, e1);
       const out = {};

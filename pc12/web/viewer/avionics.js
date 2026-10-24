@@ -287,7 +287,10 @@ export class Avionics {
     } catch (e) { this._fail(e); return false; }
   }
 
-  // the glass in Stage.overlay (picture.js layered path) while pages change or the propeller's overlay is up
+  // the glass in Stage.overlay (picture.js layered path) while pages change or the propeller's overlay is up -- always
+  // while the propeller's is (the still under a spinning propeller is never re-rendered for a page change, so a glass
+  // left in it would show the page it had when that still was made; the glass and the disc join / leave together, and
+  // the layered flag's change restarts the still)
   overlayFor(propOverlay, now = performance.now()) {
     this._prop = !!propOverlay;
     const on = this.enabled && this.glass && !this.stage.contextLost && this._shown() && AVX.ovl !== 'never'
