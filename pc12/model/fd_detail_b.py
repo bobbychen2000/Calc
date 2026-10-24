@@ -105,7 +105,9 @@ GLAZING_TRIM = dict(
     # (flight deck fix r2b: the sill 12 -> 19 mm -- just over the seal lip the crew eyes saw the retainer band's glass-side
     #  face through the pane, ~0.3 deg of polished metal: a white line along each side window's sill from both seats)
     sw_margin=(0.019, 0.175, 0.085, 0.006, 0.035), sw_radii=(0.120, 0.105, 0.045, 0.050, 0.050),
-    wire_d=(0.009,), wire_w=0.0007,   # [E] heating bus bar inside the visible edge (P1046408 / 10): ONE per edge, 9 mm
+    # (first-principles judge r1 FP1-10: 9 mm in -- with the r5 post's 8 mm edge -- it read as a wire floating in the
+    #  glass; 4 mm in it runs along the moulding's edge as the laminate's bus bar does)
+    wire_d=(0.004,), wire_w=0.0007,   # [E] heating bus bar inside the visible edge (P1046408 / 10): ONE per edge, 9 mm
     #                        in, 0.7 mm, dark bronze (flight deck fix r2 FDO2-06 / FID-FD2-05: the two dark-metal lines
     #                        15 / 23 mm in read as stray wires / cracks across the glass from both seats)
     wire_depth=0.0070,     # 2.5 mm off the glass's inner face (fit_check 30 >= 2 mm; 22: seated within 3 mm)

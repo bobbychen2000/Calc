@@ -99,6 +99,7 @@ export const CABIN = { outside: 0.05, door: 0.45, inside: +(Q_C.get('cabIn') || 
 // window light that keeps the headliner near-white while the dark trim keeps its own albedo.
 // ?cabKey= ?cabDiff=a,b ?cabSpec=a,b ?cabFill= override them (look development).
 const Q_M = new URLSearchParams(typeof location !== 'undefined' ? location.search : '');
+const FP_LIGHT = Q_M.get('fp') === '1';   // the first-principles T-LIGHT experiment (upgradeMaterials)
 const qv = (k, d) => {
   const s = Q_M.get(k);
   if (!s) return d;
@@ -167,7 +168,7 @@ const CABIN_TRIM = { lining: [1, 1], leather: [0.5, 1], stitch_light: [0.5, 1], 
   lav_white: [0.8, 1], toilet_white: [0.8, 1], psu_housing: [0.7, 1],
   // the printed legends (first-principles flight deck A3: decals carrying model/fd_print.py's atlas): a silk-screened
   // white reads ~190-220 on the plates in P1046408 / 09 -- lifted over the interior law's dark panel light
-  legend_print: [0, 1.35],      // (judge r1 FP1-04: one tone dimmer -- 1.6 glowed on the overhead / quadrant)
+  legend_print: [0, 1.15],      // (judge r1 FP1-04: one tone dimmer -- 1.6 glowed on the overhead / quadrant)
   // the crew seats' lavender-grey sheepskin (P1046408 / 09 ~90-130 in the cabin light, B > R)
   sheepskin: [0, 0.60],     // (FDY r1: 0.42 -> 0.60 for the LOCKS fleece's darker mean albedo: panel_408b ~119, P1046408 121)
   //                          (0.55 before the flight deck fix r1's soft knee / gain 27; fix r5: 0.52 -> 0.42 with the
@@ -393,7 +394,8 @@ const PART_TRIM = {
     facing: [0.75, 2.4, -0.5, 0.5, 0.5] },
   // the side-window sills of the same leather (FDO2-03: a broad light-grey band from the seats, 86-120 in the window
   // light): a little less diffuse and sky sheen; [FD-L3] reads them at panel_408b (63 -> ~55; >= 50)
-  'interior_lining:leather_glareshield': { fill: [0, 0.8], specIn: 1.15 },
+  // (first-principles judge r2 FP2-08: the co-pilot's sunlit sill (172, 137, 140) -- P1046409 ~95-120 grey: less sun)
+  'interior_lining:leather_glareshield': { fill: [0, 0.8], specIn: 1.15, sunIn: 0.45 },
   // (fix r3: the PDU's display bezels, AFCS and GTC faces -- satin black plastic whose light in P1046408 is the cabin
   // and crew it mirrors: its bezels 37-58 along the columns between and round the displays, the model's read 24 at the
   // fitted camera, a black field round every display; its reflections x 2 read 37 there, 42 from the pilot stop
@@ -630,7 +632,7 @@ const VIEWER = {
   // brighter room light had asked for a darker, contrastier mat that read as dark blue camouflage in the cabin light)
   // (first-principles judge r1 FP1-06: the footwell carpet read navy -- B - R <= +8: a neutral charcoal loop pile)
   carpet_flightdeck: { color: [0.032, 0.030, 0.030] },
-  sheepskin: { color: [0.255, 0.205, 0.205], sheenColor: [0.35, 0.32, 0.34], sunIn: 0.45,
+  sheepskin: { color: [0.265, 0.212, 0.200], sheenColor: [0.33, 0.30, 0.29], sunIn: 0.45,
     fleece: { locks: [[100, 0.55, 1.08, 0.0024, 0.6, 1.15, 0.42, 0.9, 0.35, 0.45, 0.4],
       [200, 0.88, 1.06, 0.0006, 0.6, 0.9, 0.38, 0.9, 0.2, 0.25, 0.2]], lockShape: [0.25, 0.8, 0.3, 4.5, 0.8, 0.6],
       bump: 0.8, flat: [0.55, 0.85], lock: [15, 0.12], fibre: [900, 140, 0.05], rim: [0.5, 0.25], sheen: [0.5, 1.4] },
@@ -658,16 +660,18 @@ const VIEWER = {
     // (first-principles judge r1 FP1-02, the coral / sponge cells and terraced silhouettes within ~1 m: a taller pile
     // 10 + 1.5 mm, finer tufts 620 / 420 per m stretched 1.6 x down the faces, the clumps and partings at half, the lumps
     // +-5 %, the grazing band 0.5 / coverage edge 0.16, 20 layers; the base warmed R = G, B - R ~0 -> the cabin's cool
-    // shade gives P1046409's B - R ~+10)
-    fur: { h: [0.010, 0.0015], root: 0.34, mean: 0.84, oct: [[620, 0.45, 0.5, 0, 1.6, 0, 0.5], [420, 0.55, 0.6, 1, 1.6, 0.4, 0.5]],
+    // shade gives P1046409's B - R ~+10).  (Judge r2 FP2-01: still sponge pits / a white cotton fringe up close: the root
+    // and lowest layers 0.58 of the tips (a gap is darker pile, not a hole), the threshold's rise 0.6 (fewer drop-outs),
+    // the silhouette band flat and without its sheen lift (grazeFlat 0.9, grazeSheen 1), the base warmer: B - R ~+5)
+    fur: { h: [0.010, 0.0015], root: 0.58, mean: 0.84, oct: [[800, 0.5, 0.5, 0, 1.5, 0, 0.5], [1100, 0.5, 0.6, 1, 1.4, 0.4, 0.5]],
       // (all-lens r2 FD9-03: the grazing band wider and softer -- the outer layers thinned x graze below |n.v| grazeN,
       // the coverage edge widened there (grazeW: alpha to coverage on the multisampled canvas / targets), the layers' root
       // darkening, tilt (grazeFlat) and sheen growth up the pile (grazeSheen) flattened toward the silhouette; was 0.55 /
       // 0.25 / 0 / 0 / 0.  A per-pixel dithered coverage (dither: true) and the band at 0.55 put sparse bright tips into
       // [FD-L10]'s silhouette band at panel_408b (high-pass skew +1.1 .. +1.6; look-dev ld3 a0-a2 / u0-u2))
-      graze: 0.9, grazeN: 0.5, grazeW: 0.16, grazeFlat: 0.6, grazeSheen: 0.6,
-      t: [0.05, 0.7, 0.8], curl: [55, 0.8, 5.0], lump: [40, 0.05, 0.10], part: [[30, 0.1, 0.82, 40, 0.55, 1.3],
-        [60, 0.08, 0.85, 80, 0.55, 1.5]], fray: [1100, 0.1], ao: [0.34, 1.13, 1.8], tilt: 0.55,
+      graze: 0.9, grazeN: 0.5, grazeW: 0.16, grazeFlat: 0.9, grazeSheen: 1.0,
+      t: [0.03, 0.6, 0.8], curl: [55, 0.8, 5.0], lump: [40, 0.05, 0.10], part: [[30, 0.1, 0.82, 40, 0.55, 1.3],
+        [60, 0.08, 0.85, 80, 0.55, 1.5]], fray: [1100, 0.1], ao: [0.58, 1.08, 1.8], tilt: 0.55,
       clump: [[28, 0.0022, 1.3], [65, 0.0008, 1.3]], sheen: [0.5, 1.1], far: [2.2, 3.2] },
     sheenRoughness: 0.8 },
   // the pleated divider curtain: deep burnt orange in P1046406 (77/23/0), read tan (208/166/116) under the old cabin light
@@ -749,7 +753,8 @@ const VIEWER = {
     band: 0.18, bandLen: 0.10 } },
   // (flight deck fix r5 FDO4-05: a translucent glass jar from the quadrant view -- the probe's streaks; a solid satin
   // pewter: fewer, broader reflections, a shade warmer -- it read 116 / 124 / 140 against P1046408's 108 / 108 / 116)
-  pcl_pewter: { specIn: 0.8, roughness: 0.45, color: [0.125, 0.113, 0.106] },
+  // (first-principles judge r2 FP2-06: a matte grey lump -- satin pewter with a highlight band, P1046408 / 09)
+  pcl_pewter: { specIn: 1.4, roughness: 0.32, color: [0.125, 0.113, 0.106] },
   // (rev R, yoke judge r5 FID5-05: the J band beside the column -- in the PCL's pewter it read a light-grey thumb on the
   // yoke branch, 105-117; the photos a darker grey tube with lit rolled edges, medians 26-57, p90 109-128 at P1046408 /
   // 09 / 10.  In the merged flight deck's light the pewter read 33-37 / p90 54-56, its edges unlit; the band's own dark
@@ -1076,19 +1081,24 @@ export function upgradeMaterials(root, spec) {
       // hood's leather apart from the side-window sills of the same leather), or per 'yoke:<material>' where CABIN_TRIM
       // has a yoke-scoped entry (the yokes' own look, yoke track); the yokes' metal inserts mirror their own cabin probe
       // (YOKE_PROBE)
-      const pt = PART_TRIM[part + ':' + name];
+      // ?fp=1 (first-principles T-LIGHT experiment): the cabin light law ALONE -- no per-part / per-material hand trims
+      // (PART_TRIM, CABIN_TRIM, the footwell skip, the form classes, the yoke probes): every surface lit by the same
+      // radiometric law from its baked occlusion / window light and its own measured albedo.  Opt-in only; the shipped
+      // look keeps the trims until this wins an A/B (it did not, first-principles round 2: see pc12/CLAUDE.md)
+      const pt = FP_LIGHT ? undefined : PART_TRIM[part + ':' + name];
       const isYoke = /^yoke_/.test(part || '');
-      const yk = isYoke && CABIN_TRIM['yoke:' + name] ? 'yoke:' + name : null;
+      const yk = !FP_LIGHT && isYoke && CABIN_TRIM['yoke:' + name] ? 'yoke:' + name : null;
       const ck = pt ? part : (yk || '');
       if (!interior.has(m)) interior.set(m, new Map());
       const im = interior.get(m);
       if (!im.has(ck)) {
-        const c = clonePatched(m, { interior: true, cabinFill: (pt && pt.fill) || CABIN_TRIM[yk || name] || null, specKeep: SPEC_KEEP.has(name), reflDir: REFL_DIR.has(name),
+        const c = clonePatched(m, { interior: true, cabinFill: FP_LIGHT ? null : (pt && pt.fill) || CABIN_TRIM[yk || name] || null,
+          specKeep: SPEC_KEEP.has(name), reflDir: REFL_DIR.has(name),
           ...(pt && pt.specIn ? { specIn: pt.specIn } : {}), ...(pt && pt.sunIn ? { sunIn: pt.sunIn } : {}),
-          ...(pt && pt.facing ? { facing: pt.facing } : {}), ...(FOOT_SKIP.has(name) ? { noFoot: true } : {}),
-          ...(name in CABIN_FORM ? { form: CABIN_FORM[name] + 1 } : {}),
+          ...(pt && pt.facing ? { facing: pt.facing } : {}), ...(!FP_LIGHT && FOOT_SKIP.has(name) ? { noFoot: true } : {}),
+          ...(!FP_LIGHT && name in CABIN_FORM ? { form: CABIN_FORM[name] + 1 } : {}),
           ...(pt && pt.mirror ? { mirror: pt.mirror } : {}),
-          probe: (isYoke && YOKE_PROBE[name]) || null });
+          probe: (!FP_LIGHT && isYoke && YOKE_PROBE[name]) || null });
         if (pt && pt.roughness != null) c.roughness = pt.roughness;
         if (pt && pt.specularColor && c.specularColor) c.specularColor.copy(lin(pt.specularColor));
         if (pt && pt.specularIntensity != null) c.specularIntensity = pt.specularIntensity;
