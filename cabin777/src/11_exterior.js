@@ -231,7 +231,7 @@ function buildExterior(gl) {
   const plug = { c: '#6e6b67', r: 0.4, m: 0.6 };
   const dark = { c: '#141619', r: 0.55, m: 0.3 };
   const blade = { c: '#5a5f66', r: 0.25, m: 0.85 };   // w12: the ring still did not read against the throat (B w12)   // w11: #2b2e33 read as a void behind the lip (A/B w11; blade ring visible in IQCFQpV_T1A) [V]
-  const spin = { c: '#8a8e94', r: 0.35, m: 0.5 };   // w11: grey, not black (knav 7A _9 spinner L90-140 with the white swirl, A w11) [V]
+  const spin = { c: '#a2a6ab', r: 0.3, m: 0.5 };   // w15: lighter so the cone reads against the dark disc (A w14)   // w11: grey, not black (knav 7A _9 spinner L90-140 with the white swirl, A w11) [V]
   const white = { c: '#f2f2f2', r: 0.3 };
   const lights = [];
   const E = WING.eng;
@@ -379,12 +379,12 @@ function buildExterior(gl) {
     // under the cowl [V IQCFQpV_T1A, eX2WMn0xe48, LALF _136]. Inlet liner graded dark at the lip shadow -> grey liner (#151e27 ->
     // #56606a in _136) [V]
     B.add(nac.lip, rot, { c: '#a9a9a8', r: 0.5, m: 0.45 }); B.add(nac.cowl, rot, cowl); B.add(nac.nozIn, rot, dark);   // w12: lip r 0.34 -> 0.5, hot specular line (A w12)
-    const vIn = B.vcount; B.add(nac.inlet, rot, { c: '#4a4f55', r: 0.85, m: 0.03 });   // w13: #3e4247 overshot to a void (L8-35 vs LALF _136 L31-87, A / B w13)   // w12: #6a6e74 r 0.65 lower liner L157-173 vs LALF _136 L54-69 (A w12)   // w6: neutral, the metallic liner mirrored the blue sky
-    shadeVerts(B, vIn, B.vcount, (p, n) => (1 - 0.65 * smooth(0.12, 0.9,   // w11: the liner was the brightest part of the inlet (L172-196, A w11); knav _9 throat dark
-      p[2] - E.x0 - WING.dz)) * lerp(1, 0.6, smooth(0, 0.7, n[1])));   // w13: the w12 grade left the throat L8 behind the lip at 11A (LALF _136 L35-69, A / B w13)
+    const vIn = B.vcount; B.add(nac.inlet, rot, { c: '#585e65', r: 0.85, m: 0.03 });   // w15: the 11A throat still L9-41 vs LALF _136 L29-123 (A w14)   // w13: #3e4247 overshot to a void (L8-35 vs LALF _136 L31-87, A / B w13)   // w12: #6a6e74 r 0.65 lower liner L157-173 vs LALF _136 L54-69 (A w12)   // w6: neutral, the metallic liner mirrored the blue sky
+    shadeVerts(B, vIn, B.vcount, (p, n) => (1 - 0.55 * smooth(0.15, 1.0,   // w11: the liner was the brightest part of the inlet (L172-196, A w11); knav _9 throat dark
+      p[2] - E.x0 - WING.dz)) * lerp(1, 0.7, smooth(0, 0.7, n[1])));   // w13: the w12 grade left the throat L8 behind the lip at 11A (LALF _136 L35-69, A / B w13)
     // w13: acoustic-panel joint rings inside the inlet (dark circumferential lines in LALF _136) [V, A positions]
     for (const x of [0.35, 0.7, 1.0]) { const r = pwl([[0.15, 1.66], [0.4, 1.65], [0.75, 1.645], [1.3, 1.635]], x) - 0.006;
-      B.add(gTube(Array.from({ length: 37 }, (_, k) => { const a = (k / 36) * Math.PI * 2; return [Math.cos(a) * r, x, Math.sin(a) * r]; }), 0.006, 3, false), rot, { c: '#2a2d31', r: 0.9 }); }   // lit inner lip -> dark toward the fan (knav 7A _9) [V]; w12: the up-facing lower liner caught the sky (A w12)
+      B.add(gTube(Array.from({ length: 49 }, (_, k) => { const a = (k / 48) * Math.PI * 2; return [Math.cos(a) * r, x, Math.sin(a) * r]; }), 0.014, 3, false), rot, { c: '#383c41', r: 0.9 }); }   // w14: 6 mm dotted at window range (B w14)   // lit inner lip -> dark toward the fan (knav 7A _9) [V]; w12: the up-facing lower liner caught the sky (A w12)
     B.add(nac.core, rot, core); B.add(nac.coreIn, rot, dark); B.add(nac.plug, rot, plug); B.add(nac.spinner, rot, spin);
     for (const [x, r] of [[1.3, 2.075], [3.15, 2.055]]) B.add(gCyl(r + 0.002, r + 0.002, 0.018, 48, false), M4.mul(rot, M4.trs(0, x, 0)), seam);   // cowl splits [A photo]
     // inboard nacelle strake (vortex chine): 1.3 x 0.26 m plate standing radially out of the fan cowl 25 deg above the
@@ -409,11 +409,12 @@ function buildExterior(gl) {
     cowlPatch(1.85, 3.05, 24.2 * DEG, 22.2 * DEG, { c: '#8a9097', r: 0.9 });
     // access panel: near-square rounded rectangle ~0.42 x 0.40 m on the INLET cowl ~0.85 m aft of the highlight, upper inboard side, drawn as a
     // thin dark outline [V LALF ANA 11A _136, JAL IMG_3397/3371; D size]
-    // w13: stadium outline (exponent 0.55, 0.24 x 0.17 m half-size) plus a fainter second panel 0.56 m below (A / B w13, LALF _137)
-    for (const [ac, mt] of [[70 * DEG, { c: '#959aa0', r: 0.6 }], [70 * DEG - 0.56 / 2.04, { c: '#a3a8ad', r: 0.6 }]]) { const ring = [];
+    // w13: stadium outline (exponent 0.55, 0.24 x 0.17 m half-size) (A / B w13, LALF _137); w14: no second panel, the pair read as an '8' and LALF _136/_137, knav _9 show one (B w14)
+    for (const [ac, mt] of [[70 * DEG, { c: '#b6bbc0', r: 0.6 }]])   // w15: outline 0.53 of the cowl vs 0.88 in LALF _136 (A w14)
+      { const ring = [];
       for (let k = 0; k <= 32; k++) { const a = (k / 32) * Math.PI * 2, c = Math.cos(a), sn = Math.sin(a);
         ring.push(cowlP(0.88 + Math.sign(c) * Math.pow(Math.abs(c), 0.55) * 0.24, ac + Math.sign(sn) * Math.pow(Math.abs(sn), 0.55) * 0.17 / 2.04, 0.008)); }
-      B.add(gTube(ring, 0.012, 4, false), rot, mt); }   // w6: 9 mm broke into dots
+      B.add(gTube(ring, 0.008, 4, false), rot, mt); }   // w6: 9 mm broke into dots
     // GE monogram low on the inboard fan cowl (~1.7 m aft, ~50 deg below the horizontal, just aft of the first split): dark ring + script swashes, ~0.45 m [V ANA
     // 77W IQCFQpV_T1A (HND), eX2WMn0xe48 (JFK), knav 7A _9; A size / drawing]
     { const ge = { c: '#2a2f3a', r: 0.6 }, xc = 1.7, ac = -50 * DEG, Rg = cowlR(xc), at = (u, v) => cowlP(xc + u, ac + v / Rg, -0.012);   // w9: half-sunk strokes read as paint, not embossed tubes (A w9)
@@ -443,18 +444,18 @@ function buildExterior(gl) {
     // wing grey like the strut in the JA797A EGLL crop, V colour]
     const leE = pwl(WING.le, E.s), nacTop = (x) => E.y + pwl([[0, 1.715], [0.6, 2.02], [1.7, 2.09], [2.4, 2.09], [3.8, 1.99], [5.0, 1.5], [5.6, 1.02], [6.35, 0.84]], x);
     const secs = [];
-    for (let k = 0; k <= 20; k++) {
-      const x = lerp(1.4, 10.6, k / 20), xn = E.x0 + x;
+    for (let k = 0; k <= 24; k++) {
+      const x = lerp(1.65, 10.6, Math.pow(k / 24, 1.3)), xn = E.x0 + x, nose = Math.sqrt(smooth(1.65, 2.4, x));   // w15: denser rings in the nose, which grows from ~0 as a dome (w14 sawn-off slab, A w14)   // w14: hump starts a quarter along the fan cowl, not on the inlet split at 1.3 (horn in s13A / w13A, B w14; LALF _137)
       const wl = wingAt(E.s, Math.max(xn, leE), side, -1)[1];
-      const bot = x < 6.35 ? nacTop(x) - 0.30 : lerp(nacTop(6.35), wl - 0.05, (x - 6.35) / 4.25);
-      const ridge = nacTop(x) + lerp(0.15, 0.70, Math.pow(smooth(1.4, leE - E.x0, x), 0.55));   // w12: 0.60 -> 0.70 (B w11, LALF _137)
+      const bot = x < 6.35 ? nacTop(x) - 0.30 * lerp(0.3, 1, nose) : lerp(nacTop(6.35), wl - 0.05, (x - 6.35) / 4.25);
+      const ridge = nacTop(x) + 0.70 * Math.pow(smooth(1.65, leE - E.x0, x), 0.55) * lerp(0.35, 1, nose);   // w12: 0.60 -> 0.70 (B w11, LALF _137)
       const top = xn >= leE ? wl + 0.12 : lerp(ridge, Math.max(wl + 0.12, ridge), smooth(leE - E.x0 - 2.0, leE - E.x0, x));
       // w1: broad, low forward fairing hump (~0.9 m wide where it leaves the cowl, base sunk 0.3 m so the flanks meet the
       // curved cowl at a shallow angle) rising to ~0.6 m over the aft cowl into a saddle under the LE, not a rail
       // [V ANA 11A _137; D width from B-KQZ_074140 at 187 px/m], nose blended over 0.6 m
       const w = (x < 6.35 ? lerp(1.35, 1.05, smooth(2.0, 6.35, x))   // w12: 1.2 -> 1.35 forward (B w11)
-         : lerp(0.85, 0.40, (x - 6.35) / 4.25)) * lerp(0.35, 1, smooth(1.4, 2.4, x));   // w13: rounded hump nose, not a spear (LALF _137, A w13)
-      secs.push({ y: xn + WING.dz, x: E.s * side, z: -(top + bot) / 2, w, d: top - bot, r: Math.min(w * 0.36, (top - bot) * 0.34) });   // w12: crisper shoulders (0.48 / 0.45 read as a soft tube; _137 shows a defined ridge) [V shape, A radius]
+         : lerp(0.85, 0.40, (x - 6.35) / 4.25)) * lerp(0.12, 1, nose);   // w13: rounded hump nose, not a spear (LALF _137, A w13)
+      secs.push({ y: xn + WING.dz, x: E.s * side, z: -(top + bot) / 2, w, d: top - bot, r: k < 4 ? Math.min(w, top - bot) * 0.45 : Math.min(w * 0.36, (top - bot) * 0.34) });   // w14: domed nose sections (B w14)   // w12: crisper shoulders (0.48 / 0.45 read as a soft tube; _137 shows a defined ridge) [V shape, A radius]
     }
     // fairing over the cowl in cowl white, strut under the wing in wing grey [V ANA 11A _137 / JA797A EGLL]
     const kLE = secs.findIndex((q) => q.y - WING.dz >= leE);
@@ -472,14 +473,15 @@ function buildExterior(gl) {
     shadeVerts(B, vC, vN, (p, n) => {
       const sd = Math.sign(p[0]), dy = wingAt(Math.abs(p[0]), p[2] - WING.dz, sd, -1)[1] - p[1];
       // w13: plus the day-sun-facing term (the -x flanks of the right wing take the sun head-on, no shadow map: K-side flank 0.84-0.90
-      // of the skin vs 0.55 in _7250, A w13), top 0.93 (top/wing 1.09 vs 0.92), floor 0.40 so the keel is a band, not an outline
-      return Math.max(0.40, (n[1] > 0.45 ? 0.93 : 0.45 + 0.37 * smooth(-0.9, -0.2, n[1])) * lerp(1, 0.6, smooth(0.04, 0.5, dy)) * (1 - 0.35 * smooth(0.05, 0.6, V3.dot(n, LD))));
+      // of the skin vs 0.55 in _7250, A w13), top 0.93 (top/wing 1.09 vs 0.92), floor 0.40 so the keel is a band, not an outline; w14: broad lit upper flank
+      // (_7331) and outboard pods x1.18 (the far pods matched the near one, _7250 second pod 0.72 of the skin, B w14)
+      return Math.max(0.40, lerp(0.45 + 0.37 * smooth(-0.9, 0.2, n[1]), 0.93, smooth(0.15, 0.5, n[1])) * lerp(1, 1.18, smooth(10, 20, Math.abs(p[0]))) * lerp(1, 0.6, smooth(0.04, 0.5, dy)) * (1 - 0.35 * smooth(0.05, 0.6, V3.dot(n, LD))));
     });
     // w12: the canoe flank turned away from the day sun (az -60: the +x faces) only sees sky + deck and rendered 0.52 of the
-    // skin from the A side (w19A) vs 0.72-0.77 in KN41 (sunlit 77W, flank 138 / top 148); lift it up to 1.4x, graded down
+    // skin from the A side (w19A) vs 0.72-0.77 in KN41 (sunlit 77W, flank 138 / top 148); lift it up to 1.65x (w15: 1.4x left w19A flanks 0.55-0.70 of the flap after the w13 re-bake, A w14), graded down
     // the flank (KN41 149 -> 103, _7250 149 -> 75) so the pod keeps its lit-top / dark-keel order [V samples, A lift]
     for (let k = vC; k < vN; k++) {
-      const nx = B.n[k * 3], ny = B.n[k * 3 + 1], f = 1 + 0.4 * smooth(0.15, 0.75, nx) * smooth(-0.75, 0.0, ny) * (1 - 0.5 * smooth(-0.1, 0.4, ny));
+      const nx = B.n[k * 3], ny = B.n[k * 3 + 1], f = 1 + 0.65 * smooth(0.15, 0.75, nx) * smooth(-0.75, 0.0, ny) * (1 - 0.5 * smooth(-0.1, 0.4, ny));
       for (let c = 0; c < 3; c++) B.c[k * 4 + c] = Math.round(clamp(B.c[k * 4 + c] * f, 0, 255));
     }
     // w2: visible flank falls ~0.6 from top to lower cowl (#8d96a6 -> #556171 in ANA 11A _136) [V]: f = 0.62 + 0.38 * ((n.y+1)/2)^1.3
