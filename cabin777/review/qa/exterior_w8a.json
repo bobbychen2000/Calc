@@ -1,0 +1,94 @@
+{
+ "area": "exterior",
+ "rater": "A skeptic",
+ "build": "w8 = head e05c5e2 (w7 fixes), renders /tmp/claude-0/a1e20d29-972a-5952-b92a-3befff9d861e/scratchpad/r7. Crops and samples in /tmp/claude-0/-home-user-Calc/a1e20d29-972a-5952-b92a-3befff9d861e/scratchpad/ratA8",
+ "score": 7.0,
+ "details": {
+  "wing planform / raked tip / bending": 7.5,
+  "wing surface detail (seams, fastener rows, panel tone, gear stripe, slat band, placards)": 6.5,
+  "control surfaces & gaps (slats, spoilers, flaps, flaperon, aileron)": 7.0,
+  "canoes (flap-track fairings)": 6.5,
+  "pylon": 7.0,
+  "nacelle shape (cowl, lip, splits, strake, access panel)": 7.5,
+  "nacelle colour / materials (incl. GE logo)": 6.5,
+  "inlet / fan / spinner": 7.0,
+  "livery / registration JA795A": 7.5,
+  "lights & static dischargers": 7.0,
+  "artefacts": 7.0
+ },
+ "previous": [
+  {"issue": "[w7 A medium / B medium] canoes read as a boot or duck-bill: linear tail, then a 0.40 m cap at the same depth", "status": "FIXED (shape), with residue. RE is 0.10 and the keel now runs straight to a small rounded point (ratA8/z26K.png, r7/c_canoe_side.png), with no step and no bulb. Two things remain. (1) The top line drops only 0.03 m per m behind the TE, so the tip sits at the top of the pod. In _7250 the upper line also falls toward the tip. (2) The +0.04 depth and +0.03 width floors in sec() leave a blunt 0.10 x 0.14 m nub, which still reads as a cut end in c_canoe_side."},
+  {"issue": "[w7 A medium] GE monogram is a ring with block sans-serif 'GE'", "status": "NOT FIXED (4th round). The code comment says 'script swashes', but the polylines are still a block G, an E and a bar (c_ge_inboard_left). There is no swirl roundel and no separate wordmark. knav _9 (255-335, 845-870) shows a small 'GE' wordmark followed by the swirled script roundel."},
+  {"issue": "[w7 A low / B medium] placards read as saturated red specks or lights", "status": "MOSTLY FIXED. They are now muted: #b17a83 on skin #a7afb8 in w26K (568,227), #af767f on #a0a8b3 in w17K, and #98616c on #8c96a3 in w17A. The KN41 placard samples #988797 on #b9c1ce. The model's is still about 0x30 redder (r-b +0x2e against about 0 in KN41), so the pink dashes stay faintly noticeable in w17A. Low."},
+  {"issue": "[w7 A low / w6 B medium] movable surfaces should be a shade darker and bluer", "status": "PARTLY FIXED. w19A: fixed skin #8f99a7, spoiler #8893a5 / #828ea3, flap #727d93 (about 0.88-0.93). KN41: #b9c1ce -> spoiler #a1adb9 (0.87) -> flap #81899c / #6c7b8e (0.70 / 0.60). The step is now visible but still about half the photo's."},
+  {"issue": "[w7 A low / B low] strake reads as a bright plank; lip has the same tone as the cowl", "status": "FIXED. In c_nacelle_left the strake is a thin chine: a dark line with a lit edge, as in knav _9 (230,660). The lip now separates: w11A lip #495360-#71767d against cowl #abb7c6. LALF _136 has lip #29303a-#939fad against cowl #8890a3."},
+  {"issue": "[w7 B low] chordwise spoiler breaks alias into dashes in w19A", "status": "PARTLY FIXED. The inboard breaks are continuous at 0.022. In the outboard aileron and slat area of z19A, the thin 0.025 skin seams and fastener rows still break into dashes."},
+  {"issue": "[w7 A low, lighting] blue inlet liner, royal-blue underwing at sunset, black wing at night", "status": "NOT FIXED (lighting, not scored). w11A liner #3b4149 -> #4b5a71 (b-r +0x26). s13A underwing is still saturated blue. n19A wing is near-black."}
+ ],
+ "issues": [
+  {
+   "severity": "medium",
+   "detail": "nacelle colour (GE logo)",
+   "problem": "This is the 4th round with the same wrong glyph. The mark on the inboard cowl is a ring around block sans-serif 'G' and 'E'. On the ANA GE90 (knav 7A _9), the mark is a small 'GE' wordmark followed by the swirled GE script roundel. The roundel has curling swash strokes inside the circle, not letters. The position and size are right.",
+   "evidence": [
+    "/tmp/claude-0/a1e20d29-972a-5952-b92a-3befff9d861e/scratchpad/r7/c_ge_inboard_left.png (block 'GE' in a ring)",
+    "ref/web/exterior/b5_knav_ANA77W_7A_GE90_takeoff_9.jpg (255-335, 845-870: wordmark on the left, swirl roundel on the right)",
+    "src/11_exterior.js line ~340: the three block-letter polylines"
+   ],
+   "fix": "In the monogram block, replace the 'for (const sw of [[...G...],[...E...],[...bar...]])' loop with 4 swash strokes inside the ring: for (let k = 0; k < 4; k++) { const a0 = k * Math.PI / 2 + 0.4, pts = []; for (let t = 0; t <= 1.0001; t += 0.1) { const r = 0.20 * (1 - 0.7 * t), a = a0 + 2.4 * t; pts.push(at(Math.cos(a) * r * side, Math.sin(a) * r)); } B.add(gTube(pts, 0.02, 4, false), rot, ge); }. Then add the wordmark: the old G/E polylines scaled by 0.45 and shifted by u = -0.40 * side (forward of the ring, per knav _9), with tube radius 0.011."
+  },
+  {
+   "severity": "medium",
+   "detail": "canoes (flap-track fairings): tone seen from above",
+   "problem": "In w19A the outboard canoes behind the TE render as near-black 'shark teeth', #33353b-#3a404b against wing skin #8f99a7 (about 0.38 of the skin). From the same kind of window view in KN41, the canoes sample #8596b2 / #798da8 against skin #b9c1ce (about 0.7) and read as light pods. The baked flank grade, 0.55 + 0.45*((n.y+1)/2)^1.3 (0.73 on a vertical flank), stacks with the sun-side shading, so the inboard flanks visible from the A side go charcoal. The B side (w26K) is acceptable: lit #a3a7ab / keel #7e7f81.",
+   "evidence": [
+    "/tmp/claude-0/-home-user-Calc/a1e20d29-972a-5952-b92a-3befff9d861e/scratchpad/ratA8/z19A.png",
+    "/tmp/claude-0/a1e20d29-972a-5952-b92a-3befff9d861e/scratchpad/r7/w19A.png (500,238) #33353b, (495,275) #393f49; skin (650,300) #8f99a7",
+    "ref/web/exterior/a5_kn_ANA77W_TheRoom_41.jpg canoes (860,325) #8596b2, (860,390) #798da8; skin (300,450) #b9c1ce"
+   ],
+   "fix": "In the canoe shadeVerts (vC..vN), keep the grade only on the underside: (p, n) => n[1] >= 0 ? 1 : 0.6 + 0.4 * Math.pow(1 + n[1], 1.3). Vertical flanks then stay at 1.0 and the keel stays at about 0.6, which keeps _7250's 0.55 belly ratio. If the flank is still below 0.6 of the skin, the lighting owner should check the exterior sun/sky term on near-vertical normals (shared issue)."
+  },
+  {
+   "severity": "low",
+   "detail": "canoes (flap-track fairings): tail",
+   "problem": "The keel is now right. The upper line, though, stays at the wing lower surface minus 0.03 m per m, so the point sits at the very top of the pod. Also, d = 0.85*rd + 0.04 and w = 0.46*rw + 0.03 leave a 0.10 x 0.14 m blunt end that reads as a cut face in c_canoe_side. In _7250 (380,930) the upper line falls visibly toward a sharp tip about a third of the way down.",
+   "evidence": [
+    "/tmp/claude-0/a1e20d29-972a-5952-b92a-3befff9d861e/scratchpad/r7/c_canoe_side.png",
+    "/tmp/claude-0/-home-user-Calc/a1e20d29-972a-5952-b92a-3befff9d861e/scratchpad/ratA8/p7250.png"
+   ],
+   "fix": "topAt for xn > te: ... - 0.18 * Math.pow((xn - te(cs)) / (x1 + RE - te(cs)), 1.4) instead of 0.03 per m. In sec(), scale the floors by the size, d = 0.85 * rd + 0.04 * Math.min(1, rd * 3) and likewise w, so the end-cap sections reach about 0.03 m."
+  },
+  {
+   "severity": "low",
+   "detail": "wing surface detail",
+   "problem": "(1) The spanwise skin splice at 45 % chord follows le + 0.45*(te - le), so it kinks at the TE (Yehudi) break and draws a visibly bowed S-curve (c_wing_panel centre; w17A from (565,240) to (620,560)). Real skin splices follow the spars and are straight lines. (2) The skin is still CG-clean. KN41 shows rivet rows that read as dotted lines at (0-500, 700-860), panel tone steps, and dark grime along the flap TE. At this range the model's skin reads as one flat grey with no wear.",
+   "evidence": [
+    "/tmp/claude-0/a1e20d29-972a-5952-b92a-3befff9d861e/scratchpad/r7/c_wing_panel.png",
+    "/tmp/claude-0/a1e20d29-972a-5952-b92a-3befff9d861e/scratchpad/r7/w17A.png",
+    "ref/web/exterior/a5_kn_ANA77W_TheRoom_41.jpg"
+   ],
+   "fix": "mid = (s) => lerp(lef(4) + 0.45 * (pwl(WING.te, 4) - lef(4)), lef(29) + 0.45 * (pwl(WING.te, 29) - lef(29)), (s - 4) / 25), a straight line between the end points. In paintVerts, add TE grime: f *= uv[0] > 0.9 ? lerp(1, 0.86, (uv[0] - 0.9) / 0.1) : 1. Raise mv to [0.86, 0.88, 0.94] on flaps only (xn > tE - 0.9) to get KN41's spoiler-to-flap step."
+  },
+  {
+   "severity": "low",
+   "detail": "placards",
+   "problem": "The colour is still too saturated: r-b is +0x2e against about 0 in KN41, where the placard is a red ring around a pale field. They are faint enough now.",
+   "evidence": ["/tmp/claude-0/a1e20d29-972a-5952-b92a-3befff9d861e/scratchpad/r7/w17A.png (469,318) #98616c", "ref/web/exterior/a5_kn_ANA77W_TheRoom_41.jpg (287,553) #988797"],
+   "fix": "Change the placard colour from '#6e4446' to '#7a5e62'."
+  },
+  {
+   "severity": "low",
+   "detail": "(owner: lighting) not scored",
+   "problem": "Same as w7. The w11A inlet liner has a blue cast (b-r +0x26). The s13A underwing is saturated royal blue. In n19A the wing is near-black except for the nav point. The canoe flank darkness in w19A is probably shared with the exterior sun/sky term.",
+   "evidence": ["/tmp/claude-0/a1e20d29-972a-5952-b92a-3befff9d861e/scratchpad/r7/w11A.png", "/tmp/claude-0/a1e20d29-972a-5952-b92a-3befff9d861e/scratchpad/r7/s13A.png", "/tmp/claude-0/a1e20d29-972a-5952-b92a-3befff9d861e/scratchpad/r7/n19A.png"],
+   "fix": "For the lighting worker: scale the sky ambient by an occlusion term for inward and down-facing exterior normals."
+  }
+ ],
+ "questionsForUser": [],
+ "photos": [
+  {"path": "ref/web/exterior/b_alv_ANA77W_PY_IMG_7250-2-scaled.jpeg", "seat": "26K (JA795A)", "what": "canoe taper: upper line also falls to the tip"},
+  {"path": "ref/web/exterior/a5_kn_ANA77W_TheRoom_41.jpg", "seat": "THE Room right window", "what": "canoes light from above (~0.7 of skin), spoiler/flap tone steps, rivet rows, placard colour"},
+  {"path": "ref/web/exterior/b5_knav_ANA77W_7A_GE90_takeoff_9.jpg", "seat": "7A", "what": "GE wordmark + swirl roundel; thin strake chine"},
+  {"path": "ref/web/exterior/b_lalf_ANA77W_11A_136.jpg", "seat": "11A", "what": "lip/cowl separation, access-panel outline"}
+ ]
+}

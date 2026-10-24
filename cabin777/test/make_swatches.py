@@ -322,6 +322,36 @@ def y_mosaic():
     return size
 
 
+def x_skin():
+    """exterior w8: wing-skin weathering tile (grime mottle + chordwise streaks) from the sunlit flap panels of ANA JA795A
+    (alv IMG_7250, seat 26K, 2026: grey streaky grime on the flap; the KN Aviation 41 crops were JPEG blocks). Panel lines, rivets and JPEG blocks are removed with a median filter, the lighting with a heavy blur; the
+    tile is luminance-only (the material sets the Boeing grey). Rows = flow direction (z in the triplanar top projection),
+    so the grime is smeared along the rows like the photos' TE streaks. Tile 4 m [A: flap chord ~1.5 m spans ~95 px of the
+    7250 crop -> 4 m ~ 250 px]"""
+    srcs = [('web/exterior/b_alv_ANA77W_PY_IMG_7250-2-scaled.jpeg', (60, 842, 360, 936)),     # flap panel, clear of its edges
+            ('web/exterior/b_alv_ANA77W_PY_IMG_7250-2-scaled.jpeg', (90, 860, 330, 946))]     # same panel, offset (the spoiler crops hold seam lines)
+    acc = 0
+    for f, box in srcs:
+        im = Image.open(os.path.join(root, 'ref', f)).convert('L').crop(box).filter(ImageFilter.MedianFilter(3))
+        im = im.resize((S, S), Image.LANCZOS).filter(ImageFilter.GaussianBlur(2))
+        a = (np.asarray(im).astype(np.float32) / 255.0) ** 2.2
+        b = np.asarray(im.filter(ImageFilter.GaussianBlur(64))).astype(np.float32) / 255.0
+        r = np.clip(a / np.maximum(b ** 2.2, 1e-3), 0.8, 1.2)   # specks / glints out
+        acc = acc + tileable((r / r.mean())[:, :, None])[:, :, 0]
+    r = acc / len(srcs)
+    # chordwise streaks: box blur along the rows (flow), as in the 7250 flap grime [D]
+    k = 28
+    r = sum(np.roll(r, d, 0) for d in range(-k // 2, k // 2 + 1)) / (k + 1)
+    r = r / r.mean()
+    # the sunlit 7250 flap is near clipping (SD 0.6 %), so the tile stores the pattern stretched to SD 0.12; 03_tex.js
+    # PHOTO_GAIN[27] sets the rendered strength (0.12 x gain) [D]
+    r = 1 + (r - 1) * (0.12 / r.std())
+    print('x_skin sd', round(float(r.std()), 4), 'p5/p95', np.percentile(r, [5, 95]).round(3))
+    out = np.clip(np.repeat(r[:, :, None], 3, 2) / 2, 0, 1)
+    Image.fromarray((out * 255 + 0.5).astype(np.uint8)).save(os.path.join(root, 'tex', 'tex_x_skin.png'))
+    return 4.0
+
+
 if __name__ == '__main__':
     os.makedirs(os.path.join(root, 'tex'), exist_ok=True)
     import json, sys
@@ -332,5 +362,6 @@ if __name__ == '__main__':
     if not only or 'y_diamond' in only: sizes['y_diamond'] = y_diamond()
     if not only or 'y_fleck' in only: sizes['y_fleck'] = y_fleck()
     if not only or 'y_mosaic' in only: sizes['y_mosaic'] = y_mosaic()
+    if not only or 'x_skin' in only: sizes['x_skin'] = x_skin()
     json.dump(sizes, open(os.path.join(root, 'tex/sizes.json'), 'w'))
     print('swatches', sizes)
