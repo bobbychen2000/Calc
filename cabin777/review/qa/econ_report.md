@@ -158,3 +158,55 @@ that both raters marked fixed. The confirmation rating wF put it level with the 
 - Official ANA Y pages, `ref/ana/y_47300`-`47307`.
 - SANspotter NH7 2023 set `sans_12`-`43` and flight-report 57325 (NH5, JA794A), in `ref/web/econ/` (gitignored). The URLs
   are in the rating JSONs.
+
+## Wave 3c (fresh eyes, 2026-10-24)
+
+Started on head 2c1eb9d, after the lighting loop's round 1 (2913db8) fixed the economy-block darkening. Budget: 5 rounds.
+
+| round | rater A | rater B | mean | note |
+|---|---|---|---|---|
+| w14 (2c1eb9d, baseline under the new light) | 7.2 | 7.5 | 7.35 | econ unchanged since ced028f; gap analysis `econ_gap14.json` |
+| w15 (f9c2e2e) | 7.7 | 7.6 | 7.65 | photo-cut fabric tiles + gap14 items 1-4 |
+| w16 (2e3ebfa) | 7.7 | 7.8 | 7.75 | fleck snow fixed close up, lost at distance |
+| w17 (b9489fe) | 7.9 | 8.0 | 7.95 | best round; hero row as y_47300, J arm |
+| w18 (9cf4598) | 7.9 | 8.0 | 7.95 | budget reached; fleck / cover overshot |
+| wG (295e953, confirmation) | WGA | WGB | WGM | the shipped state |
+
+The 8.5 target was not reached; no high-severity issue is open.
+
+### What changed in wave 3c
+- **Fabrics, cut straight from the official photos** (the user's request; `make_swatches.py` `Y_PHOTO` / `y_photo()`).
+  The six re-syntheses of w5-w13 are gone. Tick, diamond and mosaic come from the y_47306 close-up (scaled from the
+  0.255 m cover), the fleck from the y_47300 front row. The processing:
+  - lighting removed by normalised convolution over fabric pixels only (no dark rims from the shell / window);
+  - seamless by a minimum-error seam cut over a 12 px overlap (image quilting), then a wrap-padded bicubic resize
+    (a plain resize left dark corner dots, a Fourier resample rang round the flecks);
+  - a second wrap blur flattens the tile-scale shading (it repeated as a grid of squares);
+  - per-tile contrast exponent / soft floor calibrated on the photo's own p10 / p50 / p90;
+  - the diamond crop is de-foreshortened (1.34x in x), the mosaic rows levelled 3 deg; tick columns lifted 1.6x
+    (minification); fleck cores kept over the ground, near-neutral tint.
+  Both raters marked the mosaic and diamond fixed in w15 (they had been at 6-6.5 since w5).
+- **Headrest** 2.5 cm higher (back ~3 cm above the fold, y_47300-47303); the back top rolls over a lowered shell cap, so
+  the white rim head-on is gone; the far-LOD hood sits under the back top (every far back had a white cap).
+- **Cover** slate #2d3248 r 0.5 (was navy #3a4060). **Pads** paired as y_47300: fleck back / tick pad, tick back /
+  fleck pad. No tick strip on fleck backs.
+- **Fabric mix**: fleck on a third of the backs; the q15 hero row reads tick / fleck / tick / fleck as y_47300.
+- **Pillow** ~10 cm full with a concave top edge. **Pan** a 5 cm bullnose tucking to a narrower base, in a grey tray set
+  5 cm back. **Arm** support one swept flat J moulding (2.5 x 5.6 cm). **Hood** 0.374 wide, upper back 1 cm wider, so
+  the white hood sides hide head-on.
+- **Triangles**: 3-seat unit 27.2k -> ~28.4k (+4 %).
+
+### Shared-file edits (each named in its commit)
+- `09_seats.js`: SEATMAT `yFabric`, `yFabricB`, `yFabricD`, `yCover`.
+- `test/make_swatches.py`: the econ section (`Y_PHOTO`, `y_photo`, `_wrap_cut`, `_wrap_resize`, `_gblur`); the old
+  `synth_y_tick` / `y_diamond` / `y_fleck` / `y_mosaic` synthesis removed. `tex/tex_y_*.png`, `tex/sizes.json` Y entries.
+
+### Still open
+- **Tick columns at row distance** (q15 column CV ~0.08 vs 0.24): mip filtering; a mip bias / anisotropic filtering on
+  the photo fabric layers is asked of lighting in `from_econ.md` (it would also cure the side-panel smear).
+- **Cover sheen**: the silver-grey grazing sheen of the leatherette needs a sheen lobe (lighting, `from_econ.md`).
+- **Fleck shape**: the 3.4 mm/px source makes round dots, not 3-5 mm petals; a frontal close-up would fix it (question 18).
+- **Diamond**: soft (2 mm/px oblique source), ground a little grey.
+- Cover hang (question 17), pans all tick (y_47300 shows some mosaic pans), pillow seam, bezel dots.
+
+Before/after sheet: `econ_before_after_w3c.jpg` (own renders: 2c1eb9d vs 295e953, with the paired ANA photos).
