@@ -87,3 +87,12 @@ this commit, but judge material albedos in the studio first.
   along ~0.6 m of the lip, flicker while walking; c_27312 / y_47300 lips are clean. **Fix:** find the strip whose end
   coincides with the door-3 zone boundary (seamR / band / lens on the outboard module ending at z ~32.0-33.3) and offset it
   1.5 mm off the body along the face normal, or shorten it 2 cm at the zone end; re-render z04 at DPR 2.
+
+## To exterior (`11_exterior.js`)
+- **Sun-side cowl still near white in day look-outs (from_exterior 10, medium) - lighting can not take it further.**
+  Evidence: x11K look-out (scratchpad render, day, extSun 0.6): cowl sun side (380-460, 330-450) #d8dde0 L220, shaded side
+  #84898e; alv_ANA77W_NH211_26K cowl #9fabb7-#a9c0ce. The same exterior sun renders the wing #b6bcc2 against the photos'
+  #c0ccd4, so a lower extSun (0.3 would put the cowl near L196) takes the wing to ~L115. **Fix in the cowl material:**
+  albedo about #8c9298 (from #a6a9ad) and/or a rougher cowl (less sun sheen), so the sun side lands near #a9c0ce while the
+  wing keeps its level. FYI, done in lighting r1: sunset skyTop [0.28, 0.34, 0.60] / extSun 0.25 (26K wing grey-blue,
+  was royal blue), the beacon only on down-facing faces (canoe flanks dark), sunset deck blue (haze / cloudLit).
