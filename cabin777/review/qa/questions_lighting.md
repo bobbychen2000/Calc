@@ -21,3 +21,8 @@
    that as an extra mood (e.g. "Night, warm")? Also: the economy night photo (sany_40, median L58) is about twice as bright
    as THE Room's (ucr, median L30); the model has one night level for the whole cabin, set between them (THE Room view
    q20 median L30). Say if economy should be brighter than business at night.
+4. **New "Blue" mood (QA r2): which photo should set its level?** ANA's full-blue phase is now a mood chip. The two
+   in-service photos of it are exposed about 2x apart: SANspotter's economy shot (sany_47, mean RGB 29/28/81, dark crown,
+   only the cove lines bright) and MileLion's THE Suite during the safety video (ml_DSC_1945, mean 81/79/111, lavender
+   walls, lit ottoman). The mood sits between them (economy view mean ~45/50/113, the suite ottoman still darker than
+   in ml_DSC_1945). Say if it should follow one of them, or if you have a photo of the blue phase in THE Room.
