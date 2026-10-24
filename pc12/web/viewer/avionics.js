@@ -310,6 +310,26 @@ export class Avionics {
     } catch (e) { this._fail(e); }
     return this.state();
   }
+  // a close-up camera on a page (glTF {pos, target, fov}): `dist` m in front of the glass along its normal (tests, judges)
+  closeup(id, dist = 0.45, fov = 30) {
+    const d = this.displays[id];
+    if (!d || !d.centre) return null;
+    const u = d.u, v = d.v;
+    let n = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]];
+    const l = Math.hypot(...n) || 1;
+    n = n.map((x) => x / l * (n[0] >= 0 ? 1 : -1));          // toward the crew (aft: + station)
+    const p = d.centre.map((c, i) => c + n[i] * dist), gl = (a) => [a[1], a[2], a[0]];
+    return { pos: gl(p), target: gl(d.centre), fov };
+  }
+  // labels as text (default) or abstract strokes (?avxlabels=0): tests, and a page that wants them off at run time
+  setLabels(on) {
+    AVX_LABELS.on = !!on;
+    for (const id of PAGES) if (this.pages[id]) this.pages[id].cache = {};      // the static layers carry legends too
+    this.redrawAll();
+    return AVX_LABELS.on;
+  }
+  // the overlay policy at run time (tests: ?avxovl=): '' (auto), 'always', 'never'
+  setOverlay(mode) { AVX.ovl = mode || ''; this.stage.needsRender = true; return AVX.ovl; }
   redrawAll() {
     if (!this.enabled) return;
     for (const id of PAGES) this.pages[id].key = null;
@@ -328,6 +348,50 @@ export class Avionics {
       labels: AVX_LABELS.on, error: this.error,
       texture: t ? { type: t.isCanvasTexture ? 'CanvasTexture' : t.type, w: t.image.width, h: t.image.height, flipY: t.flipY,
         colorSpace: t.colorSpace, mipmaps: t.generateMipmaps, anisotropy: t.anisotropy, name: t.name } : null, pages };
+  }
+  // the GPU's copy of each page against its canvas (tests: 'uploads not stale'): the live texture's level 0 (and level 1,
+  // the mip the crew stops sample) read back through a framebuffer; mean absolute difference per channel (0-255) and
+  // the share of pixels more than 24 off.  Level 1 is compared with a 2 x 2 box of the canvas (sRGB-encoded averages:
+  // the GPU filters in linear light, so a few levels are expected on edges).
+  verify() {
+    const R = this.stage.renderer, gl = R.getContext(), tex = this.live && this.live.tex;
+    if (!this.enabled || !tex || !gl.createFramebuffer) return null;
+    const p = R.properties.get(tex), wt = p && p.__webglTexture;
+    if (!wt) return null;
+    const k = this.live.scale, out = {}, fb = gl.createFramebuffer();
+    const prev = gl.getParameter(gl.FRAMEBUFFER_BINDING);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+    try {
+      for (const id of PAGES) {
+        const P = this.pages[id];
+        const x = Math.round(P.rect[0] * k), y = Math.round(P.rect[1] * k), w = P.canvas.width, h = P.canvas.height;
+        const ref = P.ctx.getImageData(0, 0, w, h).data, row = {};
+        for (const lev of [0, 1]) {
+          gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, wt, lev);
+          if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) { row['l' + lev] = null; continue; }
+          const s = 1 << lev, lw = Math.floor(w / s), lh = Math.floor(h / s), buf = new Uint8Array(lw * lh * 4);
+          gl.readPixels(Math.ceil(x / s), Math.ceil(y / s), lw, lh, gl.RGBA, gl.UNSIGNED_BYTE, buf);
+          let sum = 0, bad = 0, n = 0;
+          const ox = Math.ceil(x / s) * s - x, oy = Math.ceil(y / s) * s - y;
+          for (let j = 1; j < lh - 1; j++) for (let i = 1; i < lw - 1; i++) {
+            const q = (j * lw + i) * 4;
+            let d = 0;
+            for (let c = 0; c < 3; c++) {
+              let r = 0;
+              for (let b = 0; b < s; b++) for (let a = 0; a < s; a++) r += ref[((j * s + oy + b) * w + (i * s + ox + a)) * 4 + c];
+              d += Math.abs(buf[q + c] - r / (s * s));
+            }
+            d /= 3; sum += d; n++; if (d > 24) bad++;
+          }
+          row['l' + lev] = { mad: +(sum / Math.max(n, 1)).toFixed(2), bad: +(bad / Math.max(n, 1)).toFixed(4) };
+        }
+        out[id] = row;
+      }
+    } finally {
+      gl.bindFramebuffer(gl.FRAMEBUFFER, prev);
+      gl.deleteFramebuffer(fb);
+    }
+    return out;
   }
   rects(page, widget = null) {
     const mm = widget && WIDGETS[page] && WIDGETS[page][widget] ? WIDGETS[page][widget] : null;

@@ -1271,6 +1271,10 @@ const hooks = {
     enable: (on) => (avx ? avx.setEnabled(on) : false),
     redraw: () => { if (avx) avx.redrawAll(); return avx ? avx.state() : null; },
     config: () => ({ ...AVX }),
+    verify: () => (avx ? avx.verify() : null),
+    labels: (on) => (avx ? avx.setLabels(on) : null),
+    closeup: (p, d, f) => (avx ? avx.closeup(p, d, f) : null),
+    overlay: (m) => (avx ? avx.setOverlay(m) : null),
   },
   // interior tour: stops (model axes), enter / go / exit ({motion}: force the flights on / off), walk({f, s, u, turn},
   // sec) integrates held inputs through the walk clamp, project(p) = the walkable volume's nearest point (model axes)

@@ -116,6 +116,8 @@ export const PROFILES = {
 // ?ssframes= / ?sspx= override the accumulation length and the still pixel budget, ?movess=1|0 forces the single-pass
 // supersampling of moving / animating frames on / off, ?taa=0 / ?layer=0 switch the temporal AA / the layered prop off
 const OV = { frames: qn('ssframes'), px: qn('sspx'), moveSS: qn('movess'), taa: qn('taa'), layer: qn('layer') };
+// ?avxbias= fixes the display glass' LOD bias in the overlay (default -log2 of the still's scale; avionics fix r1)
+const AVX_BIAS = qn('avxbias');
 const PLAIN = new Set(['direct', 'move', 'rt', 'taa']);   // the paths of an unrefined frame (one plain scene render)
 const RELEASE_MS = 30000;   // a render target / accumulation / history unused for this much rendering time is released
 const CALIB_N = 3;          // start-up calibration: plain frames measured (their median is the prediction's frame time)
@@ -428,7 +430,7 @@ export class Picture {
     this.pool = [];            // multisampled targets (with depth textures), least recently used first, at most 2
     this.rt = null;            // the target of the last scene pass
     this.acc = [null, null];   // running-average ping-pong at the canvas resolution
-    this.a = { valid: false, k: 0, N: 0, done: true, plan: null, cam: new Float64Array(32), layered: false, rt: null };
+    this.a = { valid: false, k: 0, N: 0, done: true, plan: null, cam: new Float64Array(32), layered: false, rt: null, members: [] };
     // temporal AA: history ping-pong (canvas size), the box-filtered supersampled frame, the history's camera, the seed
     // (the still image the first moving frame continues from)
     const pose = () => ({ pos: new THREE.Vector3(), dir: new THREE.Vector3(0, 0, -1), fov: 0 });
@@ -684,7 +686,12 @@ export class Picture {
     const settled = !camMoving && !animating && this.ready && this.frame - this.lastMove >= STILL_DELAY;
     if (settled && (this.N > 0 || ovl)) {
       const layered = !!ovl;
-      if (ext || !this.a.valid || this.a.layered !== layered || this._camChanged()) this._restart(layered);
+      // (a change in WHAT the overlay holds -- the display glass joining or leaving the propeller's disc -- restarts the
+      // still as well: the still image must hold exactly the objects the overlay does not, or a glass that left the
+      // overlay would show the page it had when the still was rendered: avionics fix r1, the stale page)
+      const memb = !!ovl && (this.a.members.length !== ovl.length || ovl.some((o, i) => o !== this.a.members[i]));
+      if (ext || !this.a.valid || this.a.layered !== layered || memb || this._camChanged()) this._restart(layered);
+      if (memb || !layered) { this.a.members.length = 0; if (ovl) for (const o of ovl) this.a.members.push(o); }
       const a = this.a, refining = a.k < a.N;
       if (refining) this._refineStep(layered ? ovl : null);
       const src = this.acc[(a.k - 1) & 1];
@@ -894,7 +901,11 @@ export class Picture {
     cam.layers.set(OVERLAY_LAYER);
     R.autoClear = false;
     R.setRenderTarget(null);
+    // the display glass in the overlay: its pages sampled one mip finer per doubling of the still's scale, as sharp as
+    // in the supersampled still around them (materials.js U.avxBias; avionics fix r1)
+    MU.avxBias.value = AVX_BIAS == null ? -Math.log2(Math.max(1, Math.sqrt(plan.sx * plan.sy))) : AVX_BIAS;
     R.render(st.scene, cam);
+    MU.avxBias.value = 0;
     R.autoClear = clear;
     cam.layers.mask = mask;
   }

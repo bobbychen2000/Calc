@@ -32,6 +32,9 @@ export const U = {
   // the supersampling factor of the pass being rendered (picture.js _renderSS): the patches' footprints x this (CRA1-01)
   pcSS: { value: 1 },
   pcMove: { value: 0 },            // 1 on the camera-moving frames (picture.js _path; the groove AA, CRA1-02)
+  // the live display pages' texture LOD bias (avionics fix r1): picture.js sets -log2(the still's scale) while it draws
+  // the display glass in the overlay at the canvas' own resolution, so the pages keep the still's sharpness there
+  avxBias: { value: 0 },
   furSoft: { value: 0 },          // the fur shells' soft coverage on (inside: addFur's onAfterRender)
   furSeed: { value: 0 },          // the dither's per-draw offset (FD9-03: the passes / frames average it out)
   paintSweep: { value: 100 },
@@ -2323,6 +2326,15 @@ ${form && ao ? `
       fs = fs.replace('#include <opaque_fragment>', out);
       // physical: the clear-coat block rewrites outgoingLight after totalDiffuse / totalSpecular (glass has
       // no clear coat, so the output above is complete)
+    }
+    if (emisIn) {
+      // the live display pages (avionics fix r1): the emissive map sampled with U.avxBias -- 0, but -log2(the still's
+      // scale) while picture.js composes the glass over the still at the canvas' resolution (no blur while pages change)
+      sh.uniforms.uAvxBias = U.avxBias;
+      fsHead += 'uniform float uAvxBias;\n';
+      fs = fs.replace('#include <emissivemap_fragment>', `#ifdef USE_EMISSIVEMAP
+  totalEmissiveRadiance *= texture2D( emissiveMap, vEmissiveMapUv, uAvxBias ).rgb;
+#endif`);
     }
     sh.vertexShader = vs;
     // (all-lens review r1 CRA1-01) the procedural patches' band limits measure the DISPLAYED pixel: every dFdx / dFdy /
