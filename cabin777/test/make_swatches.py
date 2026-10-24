@@ -384,10 +384,14 @@ def y_photo(name):
         # photo's own column profile (mean down each column) 1.6x so the dark channels survive the mip chain [D]
         c = r.mean(2).mean(0, keepdims=True); c = c / c.mean()
         r = r * (c ** 0.15)[..., None]   # w20 (gap19): straight columns carry their own profile; 0.6 over-sharpened close up
-        m = np.median(r.mean(2)); r = np.where(r.mean(2, keepdims=True) > m, m + 0.65 * (r - m), r)   # w25 (w23a-2 / w23b-1): 0.8 -> 0.65 (q15 bright 0.12 vs 0.083; ~0.02 per 0.1)   # w21 / w22 B: strokes toward the ground (q15 bright 0.14 vs 0.083 after the -0.5 mip bias)
+        m = np.median(r.mean(2)); r = np.where(r.mean(2, keepdims=True) > m, m + 0.72 * (r - m), r)   # w26 (w25a-3): 0.65 dimmed instead of thinning -> 0.72 + edge erosion below; w25 (w23a-2 / w23b-1): 0.8 -> 0.65 (q15 bright 0.12 vs 0.083; ~0.02 per 0.1)   # w21 / w22 B: strokes toward the ground (q15 bright 0.14 vs 0.083 after the -0.5 mip bias)
+        # w26 (w25a-3 / w25b-2): strokes 1.5x the photo's coverage, blobs ~1.4x fat -> the stroke rim (above-median pixels with a
+        # sub-median 4-neighbour) eases 60 % toward the ground, cores keep their peak [D]
+        hi = r.mean(2) > m; core = hi & np.roll(hi, 1, 0) & np.roll(hi, -1, 0) & np.roll(hi, 1, 1) & np.roll(hi, -1, 1)
+        r = np.where((hi & ~core)[..., None], m + 0.4 * (r - m), r)
     if name == 'y_diamond':
         # econ w25 (w23b-2): the lattice washed out on the bluer #5f6ba0 ground (e4 bright 0.03 vs 0.11 in y_47306) -> 1.25x [D]
-        m = np.median(r.mean(2)); r = np.maximum(m + 1.25 * (r - m), 0.03)
+        m = np.median(r.mean(2)); r = np.maximum(m + 1.05 * (r - m), 0.03)   # w26 (w25a-1 / w25b-1): 1.25 overshot (e1 p90/50 1.79 vs 1.51)
     if name == 'y_fleck':
         # the 3.4 mm/px source smears each 3-5 mm fleck over ~3 px: keep only the core of the excess over the ground
         # (bright area 27 % -> ~12 %, y_47306 pad 11 %) and tint it pale blue (#9fb0e0 vs white, w15 A) [D]
@@ -395,12 +399,12 @@ def y_photo(name):
         # econ w25 (w23a-1): the tile carried ~2x the photo's flecks close up (e4 pad coverage 0.29 vs 0.13 in y_47306,
         # merged clusters) and the exponent only dimmed them: drop ~30 % of the fleck components (fixed seed, a kept fleck
         # clears the flecks touching it, so merged clusters break up) and trim the soft skirts, exponent 1.0, flecks 1.1x [D]
-        e, dm = _thin_flecks(e, ep, keep=0.7, seed=24)
+        e, dm = _thin_flecks(e, ep, keep=0.8, seed=24, trim=0.0)   # w26 (w25a-2 / w25b-3): keep 0.7 + trim read as dust at row distance
         # a dropped fleck and its dark sharpening halo become the surrounding ground (a flat g read brown) [D]
         base = np.minimum(r, g); dd = np.clip(_blur_wrap(dm, 1.5) * 2.0, 0, 1)
         out = (1 - np.clip(dd * 3, 0, 1)).astype(np.float32)        # the local ground around each dropped fleck fills it
         gl = np.stack([_blur_wrap(base[..., c] * out, 3.0) for c in range(3)], 2) / np.maximum(_blur_wrap(out, 3.0), 1e-3)[..., None]
-        r = base * (1 - dd[..., None]) + gl * dd[..., None] + 1.1 * ep * (e / ep) ** 1.0 * np.array([1.02, 1.0, 0.92], np.float32)   # w25 (w24a-2): distance flecks weak (p90/p10 2.48 vs 3.05)   # w20 A + B: fewer, less blue cores (B/R 3.0 vs 2.54); w22 B: exp 1.2 (bright 0.18 vs 0.153 after the mip bias)   # w20 (gap19): 1.25 thinned the flecks away at row distance
+        r = base * (1 - dd[..., None]) + gl * dd[..., None] + 1.25 * ep * (e / ep) ** 1.0 * np.array([1.02, 1.0, 0.92], np.float32)   # w25 (w24a-2): distance flecks weak (p90/p10 2.48 vs 3.05)   # w20 A + B: fewer, less blue cores (B/R 3.0 vs 2.54); w22 B: exp 1.2 (bright 0.18 vs 0.153 after the mip bias)   # w20 (gap19): 1.25 thinned the flecks away at row distance
     # w20 (gap19): the 0.5-2.5 cm band (columns, flecks, dashes) is what survives at row distance; boost it in log luminance and
     # damp the < 1.2 mm JPEG grain (tile CV at 150 px/m: tick 0.31 vs 0.46-0.49 in y_47300, fleck 0.31 vs 0.84) [D]
     # w20 A + B: the full boost overshot (q15 tick bright 0.15 vs 0.083, fleck 0.20 vs 0.154) -> half on tick / fleck

@@ -45,9 +45,9 @@ function econCrownLoft(secs, segC, crownAt) {
   for (let i = 0; i < n; i++) g.i.push(c0, c0 + 1 + ((i + 1) % n), c0 + 1 + i);
   return fixWinding(g);
 }
-const ECON_PAN = { ...SEATMAT.yFabric, c: photoBase('#4a5378', 'y_tick') };   // w25 (w24b-4): tick pans B/R 2.17 vs ~1.8 -> less blue
+const ECON_PAN = { ...SEATMAT.yFabric, c: photoBase('#565c78', 'y_tick') };   // w26 (w25a-5 / w25b-2): L69-74 vs 77-91, still blue; w25 (w24b-4): tick pans B/R 2.17 vs ~1.8 -> less blue
 // w25 (w24a-1 / w24b-3): the diamond pan read as a bold field of light stars head-on (L99-101 vs 74 in y_47300) -> darker
-const ECON_PAN_B = { ...SEATMAT.yFabricB, c: photoBase('#4a5482', 'y_diamond') };
+const ECON_PAN_B = { ...SEATMAT.yFabricB, c: photoBase('#50566f', 'y_diamond') };   // w26 (w25a-1 / w25b-1): B/R 2.27-2.41 vs 1.81
 function econSeat(B, x0, lod, opts = {}) {
   const [hy, hz] = ECON.hinge;
   const F = opts.fab || SEATMAT.yFabric;
@@ -143,7 +143,7 @@ function econSeat(B, x0, lod, opts = {}) {
       const sx = g.p[k + 1], sy = -g.p[k], sz = g.p[k + 2], l = Math.hypot(sx, sz) || 1;   // w11: sphere poles at the thin side tips (a pole on the face read as a tuft)
       const X = sx * (1 + 0.35 * sz * sz) * (0.92 + 0.08 * l), Z = sz * (1 + 0.35 * sx * sx) * (0.92 + 0.08 * l);   // w10 gap: smooth squircle (|t|^0.45 creased the middle)
       // w6: wider (0.39 = 0.8 of the pan, y_47300 0.81 / sans 14 0.83), bow-tie outline with pinched corners
-      const pull = 1 + 0.15 * Math.abs(X * Z);                                  // w9 A: corners pulled out (y_47300)
+      const pull = 1 + 0.3 * Math.pow(Math.abs(X * Z), 1.5);   // w26 (w25b-5): dog-ear corners                                  // w9 A: corners pulled out (y_47300)
       g.p[k] = 0.165 * X * (1 - 0.06 * (1 - Z * Z)) * pull; g.p[k + 2] = 0.11 * Z * (1 - 0.1 * (1 - X * X) - (Z > 0 ? 0.04 * (1 - X * X) : 0)) * pull;   // w14 gap: concave top edge   // w10 B: waist eased (read as a bone)
       g.p[k + 1] = sy * (0.006 + 0.046 * Math.pow(Math.max(0, 1 - Math.pow(l, 3)), 0.6));   // thins to the seamed rim; w14 gap: ~10 cm full (p90/p10 1.3 vs 2.2-2.8 in y_47300 read as a board)
     }
@@ -155,10 +155,10 @@ function econSeat(B, x0, lod, opts = {}) {
     B.add(g, M4.mul(BH, M4.trs(0, 0.155, -0.112, 0, -74 * DEG)), SEATMAT.yPillow);
     // w19 A + B: a ~4 mm piped seam round the rim (y_47300 pillows), the same outline law at l = 1 [D]
     const rim = []; for (let i = 0; i <= 48; i++) {
-      const t = i / 48 * 2 * Math.PI, sx = Math.cos(t), sz = Math.sin(t), X = sx * (1 + 0.35 * sz * sz), Z = sz * (1 + 0.35 * sx * sx), pull = 1 + 0.15 * Math.abs(X * Z);
+      const t = i / 48 * 2 * Math.PI, sx = Math.cos(t), sz = Math.sin(t), X = sx * (1 + 0.35 * sz * sz), Z = sz * (1 + 0.35 * sx * sx), pull = 1 + 0.3 * Math.pow(Math.abs(X * Z), 1.5);
       rim.push([0.165 * X * (1 - 0.06 * (1 - Z * Z)) * pull, 0, 0.11 * Z * (1 - 0.1 * (1 - X * X) - (Z > 0 ? 0.04 * (1 - X * X) : 0)) * pull]);
     }
-    B.add(gTube(rim, 0.0035, 6, false), M4.mul(BH, M4.trs(0, 0.155, -0.112, 0, -74 * DEG)), { ...SEATMAT.yPillow, c: '#343e5c' });   // w20 A + B: pillow-coloured piping (a darker ring read as an outline)
+    B.add(gTube(rim, 0.0022, 6, false), M4.mul(BH, M4.trs(0, 0.155, -0.112, 0, -74 * DEG)), { ...SEATMAT.yPillow, c: '#2e3652' });   // w26 (w25b-5): thinner, darker (read as a light ring)   // w20 A + B: pillow-coloured piping (a darker ring read as an outline)
   }
   // life-vest pouch: dark saucer-shaped holder under the pan front with a red pull strap hanging from its rim (y_47302:
   // ~0.15-0.18 m discs under each seat) [D]
