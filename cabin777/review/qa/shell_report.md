@@ -158,3 +158,41 @@ vs ~0.52 in lalf_134) with no cream bezel or shade tab; shade-button pill a litt
 knaviation THE Room (kn_room_8/16), plus the 73 wave-2 photos re-downloaded to ref/web/shell (gitignored).
 
 **Open questions:** `questions_shell.md` (wave 3): an inside photo of an ANA 777 door lining; whether the door-floor split applies at all doors.
+
+## Wave 3c (2026-10-24): w12-w14, confirm and polish
+
+| Round | Rater A | Rater B | Mean | Files |
+|---|---|---|---|---|
+| w12 (fresh, current head; shell unchanged since 220b46f) | 8.3 | 8.4 | 8.35 | shell_w12a / w12b.json |
+| w13 (23c5d63) | 8.4 | 8.5 | 8.45 | shell_w13a / w13b.json |
+| w14 (06f9c5a, final, 3-round cap) | 8.4 | 8.5 | 8.45 | shell_w14a / w14b.json |
+
+No high shell issue in any round; the one shell medium (w12a/w13a, blackout pleat character) dropped to low in w14a. Rater B
+reached 8.5 in w13 and w14, rater A stayed at 8.4, so the target (both >= 8.5) was not met within the 3-round cap.
+Review cameras are now in git (`review/qa/shell_views.js`, 18 views; the w6-w11 camera set had been lost with its scratchpad).
+Contact sheet: `shell_before_after_w12-w14.jpg` (own renders only).
+
+**What changed:**
+- **Blackout pleats** (23c5d63, 06f9c5a): the valley stripe moved from per-row vertex colour (could not filter: moire on the
+  3rd-7th windows) into a mip-mapped synthetic tile, `s_pleat` (layer 32), phase-locked to the closed-shade valleys
+  (world y 0.795846 + k 0.0144755, measured in the page). Profile: quick rise, lit crest, long shaded fall. Far shades now
+  average to flat taupe (w13b: s05 beat measure 30.5 -> 3.9). Tone 0.61 of the wall, B-R -13. [V: omaat_room24 0.57, -16]
+- **Door viewing window:** reveal 0.20 x 0.46 -> 0.26 x 0.64 (bottom 0.69, top 1.33), light rim instead of the dark seal,
+  and its own cream shade pulled ~0.13 m down with a dark finger slot. [V ratios: lalf_133 / 134 against the arm-arc box]
+- **Grilles:** lit louvres over a darker plenum (louvre cv 0.03 -> 0.14-0.21; py_37303 ~0.45), then eased a step (w14a: field
+  0.82 of the dado vs ~0.68).
+- **Small:** shade-button pill 25 x 50 mm (w13: 0.088-0.089 of the pane vs 0.084-0.094); vinyl warmer #6f6a69 (B-R -2 vs -3).
+- **Post-w14 (verified in renders, not re-rated):** finger slot made visible (it sat behind the shade face; both w14
+  raters), door shade #d8d2c6 to separate it from the lining (226 vs 227), window 0.58 -> 0.64 tall, grille #74777e.
+- **Triangles:** unchanged in practice (shade geometry the same; door shade + slot are 10 small boxes; no grille geometry
+  added), within the 648k wave-3 count.
+
+**Hand-offs to lighting (from_shell.md, wave 3c):** cream finishes render neutral (bowls s 0.005 vs 0.13-0.23, w12a-w14a
+medium); grey band under the PY/Y tub lip. Both are lighting code; the shell albedos are already cream.
+
+**Still open (all low):** pleat contrast cv 0.17 vs 0.32-0.35 in omaat_room24 (photo is a crisp two-tone 50/50 pleat; a
+flat-band tile would get closer); faint far bands from the zig-zag geometry on s05 windows 4-5; door window still ~1.25 x
+the arm-arc box vs ~1.4 (cell top 1.36 limits it); no linen weave on the sidewall (a normal-only layer needs a new shared
+layer: the fabric layer's normal strength 0.26 is shared with the seats); vinyl fine speckle about half the photo's
+(03_tex.js LAYER_PARAMS 7, shared); light card on the PY/Y tub floor; louvre pitch finer than py_37303.
+**Harness note:** studio.js's first shot can fire before the studio scene is up (w14 win_front showed the cabin); re-render it.

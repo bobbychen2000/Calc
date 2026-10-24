@@ -1,0 +1,197 @@
+{
+ "area": "shell",
+ "rater": "B",
+ "round": "w14",
+ "score": 8.5,
+ "previousIssues": [
+  {
+   "issue": "[w13b low] Door viewing window undersized; 20 mm tab is not the photo's partly drawn shade",
+   "status": "partly fixed. The window is visibly larger in s06 and b_doorWin (pixel diff confined to the window). At the s06 door plane, measured against the red arm-arc box: the reveal is now 1.11x the box height (w13 ~1.0x), against ~1.36x for the bezel in lalf_133. Its top is level with the box top, where the photo's bezel rises ~0.2 box heights above it. The width is right (glass 0.24 of the box width, photo ~0.27 allowing for bloom). A cream shade now fills the top ~0.13 m of the glass. The finger slot is NOT visible: the shade region in b_doorWin (rows 395-445, cols 535-585) has a minimum of 198 and a mean of 226, with no dark pixel. In 07_shell.js the slot box sits at local z -0.003 inside tabF. windowFrame's +Z is the inward (cabin) normal, so the 4 mm slot spans z -0.005..-0.001 and is buried behind the shade's cabin face (+0.003). The shade reads only faintly against the glass (226 against 238, 0.95), where in lalf_133 it is a distinct cream panel above the glowing glass."
+  },
+  {
+   "issue": "[w13b low] Dado air-return grille louvres almost invisible",
+   "status": "fixed (mostly). In studio win_low the louvre ripple is now 110-155 at a 3 px pitch (cv 0.144, w13 0.031; py_37303 0.45), and the vertical ribs no longer dominate. About 22 louvres per grille height, as in the photo. The grille field is 0.76 of the adjacent dado (photo ~0.66). In b_dadoY2 the louvres read as fine light lines on a near-black field (mean 20, w13 38), with 4-5 thin ribs still visible. The darker field there is seat shadow and AO [lighting], and it is now darker than the photo's grille-to-dado ratio. Rendered rb14/grille_cmp.png."
+  },
+  {
+   "issue": "[w13b low / w13a medium] Blackout pleats read as thin ruled lines on a flat crest",
+   "status": "improved, still low. b_jClose col 300 now runs valley 104-118, a ~4 px ramp up, a crest of 168-172 and a sharp drop (period 8.5 px). Dark fraction 0.42 (w13 0.37 by the same metric; omaat_room24 0.54). cv 0.170 (w13 0.167; photo 0.32). The rows now read as soft folded pleats and no longer as ruled grooves (rb14/pleat_cmp.png: w13 | w14 | room24). The profile is still not the photo's. room24 has two plateaus: a lit face ending in a bright edge line (195), then a sharp drop to a wide dark face at ~0.5 of the lit level. Ours is a ramp whose darkest part is only ~1 px wide. The mean tone is held: shade (148,144,135) is 0.61 of the wall. Far shades (s05) show the same faint residual waviness on windows 4-5 as in w13. No regression."
+  },
+  {
+   "issue": "[w13b low] Sidewall panels plain satin",
+   "status": "not fixed. The walls in s09 and ra_jWin differ from w13 only through the sky."
+  },
+  {
+   "issue": "[w13b low] Vinyl fine speckle low",
+   "status": "not fixed. ra_door2floor (330-560, 220-520) is (106,102,104) with L std 12.5, identical to w13 (sans_09 ~24)."
+  },
+  {
+   "issue": "[w13b low] PY/Y tub floor light card",
+   "status": "not fixed. ra_yWin row 475 still peaks at 240 against 217-230 at the sides."
+  },
+  {
+   "issue": "[w13b low, lighting] Dark band under the PY/Y tub lip; recess creams neutral",
+   "status": "not fixed (lighting). b_jClose bowl (223,223,222) is still dead neutral. Not scored."
+  },
+  {
+   "issue": "[w13a low] Residual faint beat bands on far closed blackouts (s05 windows 4-5)",
+   "status": "not fixed, unchanged (rb14/s05far.png). The faint waviness on mid-distance windows is the same. The new ramp stripe did not make it worse."
+  },
+  {
+   "issue": "[w13a medium, lighting] Cream finishes dead neutral",
+   "status": "not fixed (lighting). Not scored."
+  },
+  {
+   "issue": "[w13a OTHER AREA: monuments] Dark diagonal line on the galley-side panel in ra_door2floor",
+   "status": "not checkable here (monuments area; ra_door2floor diff 0.41, outside the shell floor)."
+  }
+ ],
+ "details": [
+  {
+   "detail": "Sidewall panels and seams. Unchanged: clean seams every second window, no gaps. Still plain satin where tt_window shows a fine weave.",
+   "score": 8.1,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/web/shell/tt_window.jpg",
+    "/tmp/claude-0/-home-user-Calc/749d4d84-e5c3-5607-b504-f60325623e45/scratchpad/w14/sh/s09_fWin.png",
+    "/tmp/claude-0/-home-user-Calc/749d4d84-e5c3-5607-b504-f60325623e45/scratchpad/w14/sh/s01_jWallL.png"
+   ]
+  },
+  {
+   "detail": "F/J short bowls and LED pill. Unchanged and right against omaat_room24 and tt_window. Pill 0.088 of the pane width (photo 0.094).",
+   "score": 8.6,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/web/shell/omaat_room24.jpg",
+    "/tmp/claude-0/-home-user-Calc/749d4d84-e5c3-5607-b504-f60325623e45/scratchpad/w14/sh/b_jClose.png"
+   ]
+  },
+  {
+   "detail": "PY/Y full-height tubs and raised bezel. Unchanged: tub aspect ~0.40 against ~0.42 and pane centre 0.54 against 0.54 (sp_py14). A faint light card remains on the tub floor. The lip band is lighting's.",
+   "score": 8.4,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/web/shell/sp_py14.jpg",
+    "/tmp/claude-0/-home-user-Calc/749d4d84-e5c3-5607-b504-f60325623e45/scratchpad/w14/sh/ra_yWin.png",
+    "/tmp/claude-0/-home-user-Calc/749d4d84-e5c3-5607-b504-f60325623e45/scratchpad/w14/sh/ra_pyWin.png"
+   ]
+  },
+  {
+   "detail": "Pane tunnel lining and seal. Unchanged and right.",
+   "score": 8.4,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/web/shell/tt_window.jpg",
+    "/tmp/claude-0/-home-user-Calc/749d4d84-e5c3-5607-b504-f60325623e45/scratchpad/w14/sh/ra_jWin.png"
+   ]
+  },
+  {
+   "detail": "Electric shades. The ramp stripe helped: the close-up now reads as soft folded pleats, not ruled grooves. Tone and hue are held (0.61 of the wall, B-R -13). The contrast is still about half the photo's (cv 0.17 against 0.32), and the dark face is a 1 px trough, where room24 has a wide dark plateau and a bright edge line. Far shades are clean apart from the old faint residue. The sheer is unchanged and right.",
+   "score": 8.6,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/web/shell/omaat_room24.jpg",
+    "/tmp/claude-0/-home-user-Calc/749d4d84-e5c3-5607-b504-f60325623e45/scratchpad/rb14/pleat_cmp.png",
+    "/tmp/claude-0/-home-user-Calc/749d4d84-e5c3-5607-b504-f60325623e45/scratchpad/rb14/s05far.png"
+   ]
+  },
+  {
+   "detail": "Manual PY/Y shades. Unchanged in the shell (s08 diff 0.18, sky only). The half and stowed states read right against sp_py24. Not re-checkable in the studio because w14/studio/win_front is a harness misframe: it shows the cabin interior near a curtain, not the window-unit studio (mean diff 287).",
+   "score": 8.2,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/web/shell/sp_py24.jpg",
+    "/tmp/claude-0/-home-user-Calc/749d4d84-e5c3-5607-b504-f60325623e45/scratchpad/w14/sh/s08_yShadesMix.png",
+    "/tmp/claude-0/-home-user-Calc/749d4d84-e5c3-5607-b504-f60325623e45/scratchpad/rb14/cmp_win_front.png"
+   ]
+  },
+  {
+   "detail": "Dado, grilles and placards. The louvres now read: lit slats over a dark plenum, ~22 per grille, cv 0.14 (photo 0.45), with the ribs subdued in the studio. The grille field is 0.76 of the dado (photo ~0.66). In b_dadoY2 the field under the seat is near black (20) with fine light lines, which is a little harsh, but that is mostly shadow [lighting].",
+   "score": 8.3,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/ana/py_37303-lang-multi.jpg",
+    "/tmp/claude-0/-home-user-Calc/749d4d84-e5c3-5607-b504-f60325623e45/scratchpad/rb13/photo_grille.png",
+    "/tmp/claude-0/-home-user-Calc/749d4d84-e5c3-5607-b504-f60325623e45/scratchpad/rb14/grille_cmp.png"
+   ]
+  },
+  {
+   "detail": "Floors. Unchanged: Y navy right; vinyl hue right (B-R -2) but fine speckle half the photo's (L std 12.5 against ~24).",
+   "score": 8.4,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/web/shell/sans_09.jpg",
+    "/tmp/claude-0/-home-user-Calc/749d4d84-e5c3-5607-b504-f60325623e45/scratchpad/w14/sh/ra_door2floor.png"
+   ]
+  },
+  {
+   "detail": "Type A door surround and viewing window. Larger and better proportioned: the reveal is 1.11x the arm-arc box height (photo 1.36x), and the width is right. The top still sits level with the box top, where the photo's bezel rises ~0.2 box heights above it. The new shade panel is present but faint (0.95 of the glass), and its finger slot is invisible because it is buried behind the shade face (see issues).",
+   "score": 8.1,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/web/shell/lalf_133.jpeg",
+    "/home/user/Calc/cabin777/ref/web/shell/lalf_134.jpeg",
+    "/tmp/claude-0/-home-user-Calc/749d4d84-e5c3-5607-b504-f60325623e45/scratchpad/rb14/doorwin_cmp.png",
+    "/tmp/claude-0/-home-user-Calc/749d4d84-e5c3-5607-b504-f60325623e45/scratchpad/rb14/doorwin_close.png"
+   ]
+  }
+ ],
+ "issues": [
+  {
+   "severity": "low",
+   "detail": "Door viewing-window finger slot is invisible (sign bug)",
+   "problem": "The dark slot added in 06f9c5a cannot be seen. The shade region in b_doorWin has no pixel darker than 198.",
+   "evidence": "07_shell.js: shell.add(gBox(0.05, 0.008, 0.004), M4.mul(tabF, M4.trs(0, -0.05, -0.003)), MAT.darkPlastic). windowFrame's Z is the inward (cabin) normal and the shade box spans z +-0.003, so the slot (z -0.005..-0.001) sits behind the shade's visible face. b_doorWin rows 395-445 / cols 535-585: min 198, mean 226.",
+   "fix": "Change the slot offset to M4.trs(0, -0.05, +0.0035) so it stands just proud of the shade face, or make it a recessed dark inset at +0.0031."
+  },
+  {
+   "severity": "low",
+   "detail": "Door viewing window still a little short and its top too low",
+   "problem": "The reveal is 1.11x the arm-arc box height, against 1.36x for the bezel in lalf_133, and its top is level with the box top, where the photo's bezel top is ~0.2 box heights above it. The bottom is now about right. The glass glow in the photo is bloomed, so I measured the bezel.",
+   "evidence": "rb14/doorwin_cmp.png (w13 | w14 | lalf_133). Ours: box rows 40-245 and reveal 40-268. Photo: box 105-300 and bezel 65-330 (scaled crop).",
+   "fix": "07_shell.js door cell: reveal height 0.58 -> ~0.68 with the bottom kept fixed, so the centre rises ~0.05 m. Scale the glass S and tabF to match, and check topRows[0] = 1.36 still clears the reveal top."
+  },
+  {
+   "severity": "low",
+   "detail": "Door window shade barely distinct from the glass",
+   "problem": "The shade reads 226 against glass at 238 (0.95), so it looks like a pale band, not the photo's cream panel above a glowing pane. Part of this is the sky and exposure [lighting].",
+   "evidence": "b_doorWin columns 535-585: rows 401-440 read 226, rows 443-449 read 238-240.",
+   "fix": "Give the shade a slightly warmer, darker cream than MAT.door (e.g. #d8d2c6) and a 2 mm darker hem lip, so it separates from both the lining and the glass."
+  },
+  {
+   "severity": "low",
+   "detail": "Blackout pleat profile still a ramp with a 1 px trough; contrast half the photo's",
+   "problem": "In omaat_room24 each pleat is a lit face ending in a bright edge line, then a wide dark face at ~0.5 of the lit level (dark fraction 0.54, cv 0.32). Ours rises over ~4 px to a 172 crest, drops sharply, and bottoms out for ~1 px at 104 (dark fraction 0.42, cv 0.17). It now reads as folds, so this is minor.",
+   "evidence": "rb14/pleat_cmp.png. b_jClose col 300: ...104, 127, 149, 162, 170, 172, 168, 157, 118, 112, 138...; room24: 165..195 lit, then 90 for ~35 of 55 px.",
+   "fix": "make_swatches.py s_pleat: hold the shaded face as a plateau at ~0.6 for ~45 % of the period after the drop, with a short rise and a thin bright edge (1.1) just before the drop. Keep the mean."
+  },
+  {
+   "severity": "low",
+   "detail": "Sidewall panels plain satin",
+   "problem": "There is no fine linen weave, which tt_window shows at seat distance.",
+   "evidence": "s09 / ra_jWin against tt_window.",
+   "fix": "MAT.sidewall: fabric layer, normal-only, strength ~0.06."
+  },
+  {
+   "severity": "low",
+   "detail": "Vinyl fine speckle low",
+   "problem": "L std is 12.5 against ~24 in sans_09.",
+   "evidence": "ra_door2floor rows 220-520, cols 330-560.",
+   "fix": "Shared 03_tex.js LAYER_PARAMS vinyl speckle amplitude x1.6 (one line)."
+  },
+  {
+   "severity": "low",
+   "detail": "PY/Y tub floor light card",
+   "problem": "The centre of the tub floor is 240 against 217-230 at the sides.",
+   "evidence": "ra_yWin row 475.",
+   "fix": "07_shell.js: run the tub-floor grade across the full width."
+  },
+  {
+   "severity": "low",
+   "detail": "[QA harness] studio win_front misframed",
+   "problem": "w14/studio/win_front.png shows a cabin interior view (a wood monument and a curtain), not the six-window studio unit. The manual shade states and the F/J/Y window row cannot be checked in the studio this round.",
+   "evidence": "rb14/cmp_win_front.png (top w13, bottom w14); mean diff 287.",
+   "fix": "Harness: re-render win_front with the studio scene (the camera or scene state likely leaked from a preceding view)."
+  },
+  {
+   "severity": "low",
+   "detail": "[lighting] Recess creams dead neutral; dark lip band under the PY/Y tub crown; grille field under the seat near black",
+   "problem": "Unchanged and handed to lighting. Not scored.",
+   "evidence": "b_jClose bowl (223,223,222); b_dadoY2 grille mean 20.",
+   "fix": "Lighting."
+  }
+ ],
+ "questionsForUser": [],
+ "photosDownloaded": [],
+ "notes": "w14 against w13 (commit 06f9c5a, shell only), same camera set. The shell pixel diffs are confined to the blackout pleats (b_jClose 2.8, s05 1.25, ra_jWin), the door window (b_doorWin, s06, s07) and the grilles (win_low 4.5, b_dadoY2). Other diffs are sky or seats. All three changes helped. The pleats now read as folds rather than ruled lines, with the tone held at 0.61 of the wall. The grille louvres are visible (cv 0.03 -> 0.14) and the ribs are subdued. The door window is larger with the right width and its own shade. Nothing regressed in the shell geometry, but one fix did not land: the door-window finger slot is buried behind the shade face (z sign; min pixel 198), so it does not render. The door window is also still ~20 % short at the top against lalf_133, and the shade separates only faintly from the glass. Harness problem: studio/win_front is misframed. Detail scores: 8.1 / 8.6 / 8.4 / 8.4 / 8.6 / 8.2 / 8.3 / 8.4 / 8.1. No high or medium issues. Overall 8.5, unchanged, because the gains are small and the area is now limited by the low-level items (wall weave, vinyl grain, pleat contrast, door window). Crops are in /tmp/claude-0/-home-user-Calc/749d4d84-e5c3-5607-b504-f60325623e45/scratchpad/rb14/."
+}

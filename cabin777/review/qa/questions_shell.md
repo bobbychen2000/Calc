@@ -33,3 +33,10 @@ Still open: PY/Y shade colour (Q5, no photo of a closed shade).
 - **Door cross-aisle floors (w6a).** sans_09 / sp_py09 show grey vinyl between the door-2 galley blocks and brown carpet only in
   the door bays. The split (vinyl inboard of |x| 1.9 m) is applied at all five doors; doors 1 and 3-5 are not photographed.
   Default: same at every door.
+
+## Wave 3c (w12-w14)
+- **Door viewing window size and height (w13 raters disagreed).** w13a measured it as sitting low against the red arm arc,
+  w13b / w14b as needing to reach down to the assist bar; both agree it should be larger (~1.4 x the arm-arc box in lalf_133).
+  Default: 0.26 x 0.64 m, bottom 0.69, top 1.33. A face-on inside photo of an ANA 777 L2 door would settle it.
+- **Sidewall linen weave.** A normal-only weave needs a new shared detail layer (the fabric layer's strength is shared with
+  the seats). Default: not added; plain satin.
