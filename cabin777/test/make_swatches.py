@@ -95,10 +95,12 @@ def synth_py_back(ratio, seed=7):
             for c in range(c0, c0 + rng.integers(1, 3)): dim[r % rows, c % cols] = 1.15
     y = np.arange(S)[:, None] + 0.5; x = np.arange(S)[None, :] + 0.5
     lite = np.zeros((S, S)); dark = np.zeros((S, S))
+    # w8 (A): each row its own pitch N(ph, 0.18 ph), renormalised to the tile (no corduroy beat at cabin distance)
+    hr = np.clip(rng.normal(1, 0.18, rows), 0.6, 1.4); hr *= S / hr.sum(); yr = np.cumsum(hr) - hr / 2
     for r in range(rows):
         for c in range(cols):
-            yc = (r + 0.5) * ph + rng.uniform(-0.8, 0.8)
-            ln = np.clip(rng.normal(18, 4), 9, 27)
+            yc = yr[r] + rng.uniform(-0.12, 0.12) * ph
+            ln = np.clip(rng.normal(19, 7), 8, 32)          # w8 (B): more varied lengths
             x0 = c * cw + (cw - ln) / 2 + (cw / 4) * (r % 2) + rng.uniform(-6, 6)
             u = (x[0] - x0) % S
             seg = np.clip(np.minimum(u, ln - u) / 1.5, 0, 1) * (u < ln)
@@ -106,11 +108,13 @@ def synth_py_back(ratio, seed=7):
             lite = np.maximum(lite, band[:, None] * seg[None, :] * np.clip(rng.normal(1, 0.25), 0.5, 1.5) * dim[r, c])
             # w6 (A + B): the navy-slate dash set (py_37301 / 37305 dark-dash cover 7-32 %); w7: on its own band between
             # the light rows so the two sets interlock into a mosaic (A + B)
-            band = np.clip((2.8 - np.abs(((y[:, 0] - yc - ph / 2 + S / 2) % S) - S / 2)) / 1.0, 0, 1)
+            band = np.clip((2.8 - np.abs(((y[:, 0] - yr[r] - hr[r] / 2 + S / 2) % S) - S / 2)) / 1.0, 0, 1)
             ln = np.clip(rng.normal(19, 4), 10, 28)
             u = (x[0] - (x0 + cw / 2 + rng.uniform(-6, 6))) % S
             seg = np.clip(np.minimum(u, ln - u) / 1.5, 0, 1) * (u < ln)
             dark = np.maximum(dark, band[:, None] * seg[None, :] * rng.uniform(0.7, 1.0) * ddim[r, c])
+    blob = _blur_wrap(rng.normal(0, 1, (S, S)), 12); blob /= blob.std()
+    lite *= np.exp(0.35 * blob - 0.06)              # w8 (B): mottled light patches (py_37305)
     out = (1 + 1.9 * lite) * (1 - 0.7 * dark)      # w7: light ~2.9x, dark ~0.3x the ground (local skew ~0, A + B)
     # brick patches on a 2-col x 2-row lattice (block std/mean ~0.15, py_37305), crisp edges softened 0.5 px
     blk = np.exp(rng.normal(0, 0.15, (rows // 2, cols // 2)))
@@ -137,11 +141,11 @@ def synth_py_confetti(ratio, seed=11):
             yc = (r + 0.5) * S / 9 + rng.uniform(-1, 1); ln = np.clip(rng.normal(40, 10), 20, 60)
             u = (xx - c * S / 4 - (S / 8) * (r % 2) - rng.uniform(-10, 10)) % S
             m = np.clip((5 - np.abs((yy - yc + S / 2) % S - S / 2)) / 1.5, 0, 1) * np.clip(np.minimum(u, ln - u) / 2, 0, 1) * (u < ln)
-            out *= 1 - 0.4 * rng.uniform(0.6, 1.0) * m
+            out *= 1 - 0.6 * rng.uniform(0.6, 1.0) * m   # w8 (B): deeper weave
     pts = []
-    while len(pts) < 14:                          # w5 (A + B): fewer, more varied chips (polka dots before)
+    while len(pts) < 20:                          # w5 (A + B): fewer, more varied chips (polka dots before)
         p = rng.uniform(0, S, 2)
-        if all(min(abs(p[0] - q[0]), S - abs(p[0] - q[0])) ** 2 + min(abs(p[1] - q[1]), S - abs(p[1] - q[1])) ** 2 > 38 ** 2 for q in pts): pts.append(p)
+        if all(min(abs(p[0] - q[0]), S - abs(p[0] - q[0])) ** 2 + min(abs(p[1] - q[1]), S - abs(p[1] - q[1])) ** 2 > 32 ** 2 for q in pts): pts.append(p)
     for cy, cx in pts:
         dy = (yy - cy + S / 2) % S - S / 2; dx = (xx - cx + S / 2) % S - S / 2
         a = rng.uniform(0, 2 * np.pi); e = rng.uniform(1.2, 2.4); req = np.clip(rng.normal(7, 2.5), 3.5, 10)
@@ -151,7 +155,7 @@ def synth_py_confetti(ratio, seed=11):
         # polygonal chip: facets from a k-gon, pointed tip at th=0, shallow notch at th=pi (sakura petal)
         poly = (np.cos(np.pi / k) / np.cos((th + ph0) % (2 * np.pi / k) - np.pi / k)) ** 1.0   # sharp facets
         prof = req * poly * (1 + 0.18 * np.cos(th)) * (1 - 0.22 * np.exp(-((np.abs(th) - np.pi) / 0.25) ** 2))
-        out += 4.4 * np.clip(rng.normal(1, 0.15), 0.7, 1.3) * np.clip((prof - rr) / 1.0, 0, 1)
+        out += 5.5 * np.clip(rng.normal(1, 0.15), 0.7, 1.3) * np.clip((prof - rr) / 1.0, 0, 1)
     for cy, cx in rng.uniform(0, S, (60, 2)):
         rr = np.hypot((yy - cy + S / 2) % S - S / 2, (xx - cx + S / 2) % S - S / 2)
         out += rng.uniform(0.3, 0.6) * np.clip((rng.uniform(2, 5) - rr) / 1.0, 0, 1)

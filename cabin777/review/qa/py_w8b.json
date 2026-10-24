@@ -1,0 +1,221 @@
+{
+ "area": "py",
+ "rater": "B",
+ "round": "w8",
+ "commit": "2162647",
+ "score": 7.4,
+ "calibration": [
+  {
+   "issue": "w7a HIGH: back fabric reads as white snow-flecks with cloudy patches; navy dashes vanish",
+   "status": "mostly fixed. Tone balance now matches the photos. Skew: q14 mid back +0.15, q13 foreground +0.32, against py_37301 -0.10 and py_37302 foreground +0.47 (w7: +0.64 / +0.60). Dark share (<0.75x median): 0.13 / 0.14 against 0.11 / 0.13 (w7: 0.07 / 0.11). Chroma relative to luminance matches py_37301: 28/121 = 0.23 against 38/164 = 0.23. Still open: fine-scale crispness. Gradient energy gx/gy is 12/21 against py_37301's 20/32, about 60 %, so at cabin distance the mosaic still blurs into soft rows. Close up (b4, b5) it reads as a regular LED barcode rather than py_37305's irregular mottled tweed."
+  },
+  {
+   "issue": "w7a MED: navy flap reads as an I-beam / spool",
+   "status": "not fixed. The thin sheet, flush hem and set-back top piece are in, but the I-beam remains because the wings sit IN FRONT of the flap. Wings are centred at x=+-0.145 with width 0.115 and depth 0.13, so their fronts are at about z -0.11 while the flap is at z -0.061, and they cover about 4 cm of each flap edge. The over-top piece (0.252) and the hem (0.254) show at full width above and below the wings, while only about 0.15-0.17 of the flap shows between them. Visible flap / headrest-with-wings width: b3 head-on 150/330 = 0.45; q13 foreground 0.38 (c_r13). Photos: py_37302 foreground 315/450 = 0.70, py_37301 185/310 = 0.60."
+  },
+  {
+   "issue": "w7a MED: wings wrong shape (bean pods) and texture (flat ground, no dark weave)",
+   "status": "shape fixed: rounded-rectangle pads with tops level with the headrest top (b3, p4). Texture NOT fixed. Wing luminance spread (p90-p10)/p50 is 0.23 (q14) and 0.38 (q13 foreground) against 0.67-0.79 (py_37302 foreground, py_37301). Dark share is 0.01-0.06 against 0.15-0.27. Wing / back luminance is 1.02-1.05; the photos range from 0.90 (py_37301) to 1.3 (py_37302 foreground)."
+  },
+  {
+   "issue": "w7a MED: aisle shroud palest grey object",
+   "status": "fixed within the photo range. The shroud is '#575d67': q13 shroud L106 against back L119 (0.89). The photos run from py_37303 #474e56 (dark, 0.46) to py_37302's lit aisle shroud (about 1.0), so it no longer stands out."
+  },
+  {
+   "issue": "w7b MED: back fabric dominated by its light set (white rain on camouflage)",
+   "status": "mostly fixed (same numbers as w7a HIGH). Light/dark balance and skew are now in the photo range. The residual is that the cells are soft at distance and look like regular barcode rows close up."
+  },
+  {
+   "issue": "w7b MED: fabric crown / flap top visible above the shell rim from behind at standing height",
+   "status": "partly fixed. The centre crown is now under the raised rim, and at seated height (b7, the q13b left seat) the rim forms the outline. From a standing eye (b1: 1.65 m, 1.0 m behind) the wing domes (petal fabric) and the navy over-top band (y 0.904, z -0.042, 0.252 wide) still show above both upper corners. In q13b's right foreground seat (crop c_r13b) a navy band plus a petal wing dome show across the full width behind the rim. san_13 and py_37304 show no fabric past the rim."
+  },
+  {
+   "issue": "w7b MED: gooseneck head buried in the bolster",
+   "status": "fixed. The head hangs free ahead of the bolster at wing-bottom height (p4, b4, q14), as in py_37301 and py_37305. New minor issue: the 4-point gTube shows two angular kinks (b4); the real hose is one smooth arc."
+  }
+ ],
+ "details": [
+  {
+   "detail": "back + cushion shape (bolsters, neck step, bucket form)",
+   "score": 7.5,
+   "refs": [
+    "py_37301",
+    "py_37303",
+    "py_37302"
+   ]
+  },
+  {
+   "detail": "back fabric (dash mosaic tile, tone, skew, scale)",
+   "score": 7.0,
+   "refs": [
+    "py_37301",
+    "py_37305",
+    "py_37302"
+   ]
+  },
+  {
+   "detail": "headrest + wings (layout relative to the flap)",
+   "score": 5.5,
+   "refs": [
+    "py_37302",
+    "py_37301",
+    "py_37305"
+   ]
+  },
+  {
+   "detail": "wing fabric (petal confetti, contrast)",
+   "score": 6.0,
+   "refs": [
+    "py_37302",
+    "py_37305"
+   ]
+  },
+  {
+   "detail": "navy flap (colour, sheet, hem, seam)",
+   "score": 6.5,
+   "refs": [
+    "py_37302",
+    "py_37305",
+    "py_37301"
+   ]
+  },
+  {
+   "detail": "shell flanks + rear face (colour, taper, arched top)",
+   "score": 7.5,
+   "refs": [
+    "py_37304",
+    "san_26",
+    "san_13"
+   ]
+  },
+  {
+   "detail": "screen + frame + placards (placards blank - handed off)",
+   "score": 8.0,
+   "refs": [
+    "py_37304",
+    "san_26"
+   ]
+  },
+  {
+   "detail": "literature pocket",
+   "score": 7.0,
+   "refs": [
+    "san_26",
+    "san_20"
+   ]
+  },
+  {
+   "detail": "centre console (lid, nose cups, plaque, front cubbies)",
+   "score": 7.5,
+   "refs": [
+    "py_37301",
+    "py_37303",
+    "py_37306"
+   ]
+  },
+  {
+   "detail": "window armrest",
+   "score": 7.5,
+   "refs": [
+    "py_37301",
+    "py_37303"
+   ]
+  },
+  {
+   "detail": "aisle shroud",
+   "score": 7.5,
+   "refs": [
+    "py_37303",
+    "py_37301"
+   ]
+  },
+  {
+   "detail": "leg rest + roller",
+   "score": 7.5,
+   "refs": [
+    "py_37301",
+    "py_37303"
+   ]
+  },
+  {
+   "detail": "footrest",
+   "score": 7.0,
+   "refs": [
+    "san_10",
+    "san_20"
+   ]
+  },
+  {
+   "detail": "bottle bin + cup block",
+   "score": 7.5,
+   "refs": [
+    "san_17",
+    "san_20"
+   ]
+  },
+  {
+   "detail": "legs",
+   "score": 7.5,
+   "refs": [
+    "san_05"
+   ]
+  },
+  {
+   "detail": "gooseneck light (root, hose, head)",
+   "score": 7.0,
+   "refs": [
+    "py_37305",
+    "py_37301",
+    "san_26"
+   ]
+  }
+ ],
+ "issues": [
+  {
+   "severity": "high",
+   "issue": "The headrest wings sit in front of the navy flap and cover about 4 cm of each flap edge. In every front view the flap reads as a narrow navy strip with wider top and hem bars (I-beam), and the wings dominate the headrest. In ANA's photos the flap is the dominant element, a wide navy sheet about 0.6-0.7 of the headrest-with-wings width, with the petal pads beside it.",
+   "evidence": "Visible flap / headrest-with-wings: b3 head-on 150/330 px = 0.45; q13 foreground (c_r13) 120/315 = 0.38; p4 likewise. Photos: py_37302 foreground 315/450 = 0.70; py_37301 front seat 185/310 = 0.60; py_37305 (both seats) flap clearly wider than each pad. Code: WX trs(s*0.145, 0, -0.045, -s*24deg) with a 0.115-wide, 0.13-deep pad, so the inner edges are at |x| about 0.09, in front of the flap face (z -0.061, edges at |x| 0.13).",
+   "fix": "src/09b_py.js wing loop: move the pads beside the flap instead of over it. WX = trs(s*0.188, 0, -0.035, -s*12*DEG) (was s*0.145, -0.045, 24 deg). Narrow the sections from 0.115/0.105/0.06 to 0.098/0.09/0.05 wide and 0.13 to 0.11 deep, which puts the inner edge at about |x| 0.135, just outside the 0.26 flap. Widen the flap to the measured 0.28: gRBox(0.26..) -> 0.28 for the upper sheet, the lower half 0.258 -> 0.278, the over-top piece 0.252 -> 0.27, and the hem / topstitch 0.254 / 0.24 -> 0.274 / 0.26. The pads then end at |x| about 0.235, so widen the shell top to keep them hidden from behind: ds [0.905,0.085,0.455] -> [0.905,0.085,0.48], [0.925,0.07,0.445] -> [0.925,0.07,0.475], [0.95,0.05,0.40] -> [0.95,0.05,0.44], [0.962,0.018,0.28] -> [0.962,0.018,0.31]. Also widen the headrest loft to 0.40 at 0.71-0.85 (was 0.37). Target: b3 visible flap / total about 0.6."
+  },
+  {
+   "severity": "medium",
+   "issue": "The wing petal fabric is low-contrast. The pads read as flat blue-grey pillows with sparse small flecks, not py_37302's bright cream petals on a mottled ground.",
+   "evidence": "Wing spread (p90-p10)/p50: q14 0.23, q13 foreground 0.38, against py_37302 foreground 0.67-0.79 and py_37301 0.72. Dark share: 0.01-0.06 against 0.15-0.27. Gradient: q14 7.7/9.3 against 21-26/17-21 (photos). Wing / back L: 1.02 (q14), 1.05 (q13), against 1.3 (py_37302 foreground) and 0.90 (py_37301).",
+   "fix": "test/make_swatches.py synth_py_confetti: raise the petal amplitude and density about 1.6x (petal count x1.4, petal gain such that the tile p90/p50 goes from its current value to about 1.6), and deepen the dark weave under them: out *= (1 - 0.6*dark) (was about 0.45). In src/03_tex.js LAYER_PARAMS / PHOTO_GAIN for layer 23 (py_confetti), raise the gain by about 1.5x (one-line shared edit). Lift SEATMAT.pyWing '#6e7484' -> '#7a8296', so the lit pads sit about 1.1x the back. Re-measure: q13 foreground wing spread >= 0.6, dark share >= 0.12."
+  },
+  {
+   "severity": "medium",
+   "issue": "From a standing eye behind the seat, the wing domes and the navy over-top band still show above the upper corners of the shell rim (b1 standing, q13b right foreground seat). In san_13 / py_37304 the grey rim is the top outline.",
+   "evidence": "b1_rear_stand (eye 1.65 m, 1.0 m behind): petal domes and a navy strip above both upper corners of each seat. c_r13b: navy band plus wing dome across the full width behind the near rim. Rim top section [0.962, 0.018, 0.28] is narrower than the wing tops (0.912, |x| up to 0.20).",
+   "fix": "Covered mostly by the high fix: pads 1 cm lower and further back (top sections 0.90 / 0.912 -> 0.89 / 0.90), and the shell top widened (0.95 -> 0.44 wide, 0.962 -> 0.31). Also lower the over-top piece: gRBox(0.252, 0.008, 0.05) at y 0.904 -> y 0.898, z -0.042 -> -0.048. Check b1 again at eye 1.65, 1.0 m behind."
+  },
+  {
+   "severity": "medium",
+   "issue": "The shell top reads as a flat chamfered trapezoid with a hard crease line across it (q13b, b1, b2), not san_26 / py_37304's continuous soft arch.",
+   "evidence": "c_r13b: a straight light/dark facet edge runs the full width about 2 cm below the top, and the corners are straight 45-degree cuts. The cause is the jump from ds [0.95, 0.05, 0.40] to [0.962, 0.018, 0.28] (width -0.12 and depth -0.032 over 12 mm) with a radius capped at d/2.",
+   "fix": "src/09b_py.js ds: insert intermediate sections so the arch is rounded: [0.938, 0.062, 0.435], [0.95, 0.05, 0.415], [0.958, 0.035, 0.37], [0.964, 0.02, 0.30], [0.967, 0.008, 0.20]. Raise the loftAt density for the shell from 3 to 4 (non-LOD) so the arch tessellates smoothly."
+  },
+  {
+   "severity": "low",
+   "issue": "The gooseneck hose has two visible angular kinks (4-point gTube). The real hose (py_37305) is one smooth arc, finely ribbed and matte black. The head is a plain cylinder with a flat light end cap; the real head has a darker lens ring on its end and a side lens.",
+   "evidence": "b4_flap_seam and p4: kinks at P(0.232, 0.80, -0.03) and P(0.23, 0.71, -0.10).",
+   "fix": "Sample a quadratic or cubic Bezier through the 4 control points at 10 points before gTube (e.g. const pts = [...Array(10)].map((_, i) => bez(P0, P1, P2, P3, i / 9))). Add a dark end ring on the head, gCyl(0.017, 0.017, 0.004) in #3a3d42 at hd trs(0, -0.056, 0), and a slight taper: gCyl(0.019, 0.017, 0.11)."
+  },
+  {
+   "severity": "low",
+   "issue": "A thin light seam line runs across the navy flap at mid-height, where the upper sheet ends over the curled lower half. ANA's flap is one sheet with no crease (py_37305, py_37302).",
+   "evidence": "b3_head_front and p4: a 1-px light line at y about 0.78 on every flap.",
+   "fix": "Let the upper sheet's bottom edge tuck behind the lower half: upper sheet z -0.061 -> -0.0595 (behind the FL piece at -0.062). Or drop the split and use one gRBox(0.28, 0.27, 0.005) at y 0.77 rotated 1.5 deg."
+  },
+  {
+   "severity": "low",
+   "issue": "Close up, the back tile reads as a perfectly regular LED barcode: equal horizontal dashes in straight rows. py_37305's close-up has irregular mottled light patches with dashes of varying length. At cabin distance the cells are about 60 % as crisp as the photo.",
+   "evidence": "Gradient gx/gy: q14 back 12/21 against py_37301 20/32; q13 foreground 15/22 against py_37302 foreground 22/20. Spread 0.64 against 0.52 (py_37301). Close-ups: b4, b5, b6.",
+   "fix": "make_swatches synth_py_back: jitter the row y by +-1 px per dash and the dash length N(19,4) -> N(19,7), and modulate the light-dash brightness with a low-frequency blob noise (sigma about 12 px) at amplitude 0.35, for the mottled patches. Keep the tile mean and the dark-share target 0.12-0.14."
+  }
+ ],
+ "questions": [
+  "py_37303 (3/4 from the aisle) shows the near wing folded forward and in front of the flap edge, while py_37302 / 37301 (frontal) show the flap wider than the wings. I read the wings as hinged side panels beside the flap, not overlapping it. Does the user have a frontal close-up of a PY headrest with the wings flat to confirm?",
+  "Are the stowed wing tops meant to be level with the flap fold, as in py_37301, or slightly below it? The fix above assumes about 1 cm below."
+ ]
+}

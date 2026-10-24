@@ -1,0 +1,201 @@
+{
+ "area": "py",
+ "rater": "A",
+ "round": "w8",
+ "commit": "2162647",
+ "score": 7.5,
+ "summary": "Clear progress since w7. The flap is now one thin sheet, the wings are pads rather than beans, the aisle shroud is dark, the fabric crown is hidden behind the rim, saturation is right, and the light flecks no longer dominate the back cloth. It is still not the same product at a glance, for three reasons. (1) The headrest wings sit IN FRONT of the flap and cover its edges, so the navy reads as a narrow vertical strip in a channel. In every ANA photo the flap lies over the wings and is a near-square panel. (2) The stowed goosenecks hang at about 35 deg with thick black arms crossing the wing. ANA's hang straight down along the shell flank. (3) The back cloth now reads as regular horizontal corduroy rows rather than ANA's fine irregular brick mosaic.",
+ "calibration": [
+  {
+   "issue": "w7a high / w7b medium: back fabric dominated by white flecks with cloudy patches, navy dashes vanish",
+   "status": "mostly fixed. On q14, local skew (pixel minus 12 px box blur) went from 1.10 (w7) to 0.41, against 37301 -0.06. The share of pixels below 0.75x the median went from 0.06 to 0.12, against 0.14. Above 1.25x it is 0.17, against 0.11. Block std/mean at 6/12/24 px is 0.120/0.094/0.078, against 0.114/0.101/0.073 (now in range). Remaining: still slightly light-skewed and soft (gradient energy 20/13 against 33/20). It now has a new strictly periodic row artefact, which is a new medium issue."
+  },
+  {
+   "issue": "w7a medium: navy flap reads as I-beam / spool (proud top bar, hem shelf, mid step)",
+   "status": "mostly fixed. It is a thin sheet on the headrest, with the top piece set back. Left: a visible horizontal seam line at mid-height where the two halves overlap (p4), and a hem band that renders royal (#262f68, hue 233, sat 0.63) against the flap body #2e3a64 (hue 225). Both are low."
+  },
+  {
+   "issue": "w7a medium: wings are bean/egg pods ~80 % of flap height, flat ground without dark weave",
+   "status": "shape fixed: rounded-rectangle pads with tops level with the headrest (p4, q14). Contrast is partly fixed. In q14 the wing has p10/50/90 60/123/136 and 4 % light pixels, against 37301 85/154/194 and 8 %. In q13 the foreground wing has a spread of 0.35, with 0 % dark and 7 % light, against 37302 at 1.06, 24 % dark and 27 % light. NEW problem: the wing placement now covers the flap edges (see issues)."
+  },
+  {
+   "issue": "w7a medium: aisle shroud palest grey object",
+   "status": "fixed. q13 shroud #626c7b, against 37301 #66768d and 37303 #4a5159."
+  },
+  {
+   "issue": "w7a low / w7b medium: fabric crown + flap top visible above shell rim from behind",
+   "status": "mostly fixed. In q13b only the two wing tops and a ~3 px navy sliver show over the rim, against a full fabric band in w7. On the aisle side the wing still pokes past the top-right shell corner."
+  },
+  {
+   "issue": "w7b medium: gooseneck head buried in bolster",
+   "status": "fixed (the head is free), but the stowed pose is wrong. The head hangs at a 35 deg pitch and the arm crosses in front of the wing; see issues."
+  },
+  {
+   "issue": "w7a low: literature pocket flat panel with thin rim",
+   "status": "not fixed. p2 and q13b still show a flat panel with a dark mid-height slot band and a thin rim. san_20 / san_26 show a curved bucket with a thick grey smile-shaped lip over a full-width hex mesh at the BOTTOM."
+  },
+  {
+   "issue": "w7a low / w7b low: flap hue violet, fabric/wing too saturated",
+   "status": "fixed. q14 back is sat 0.20 / hue 220, against 37301 0.19 / 219. Flap hue 226, against 222-226."
+  },
+  {
+   "issue": "w7b low: flap a rigid 8 mm board",
+   "status": "fixed (5 mm sheet, 3 deg curl)."
+  },
+  {
+   "issue": "w7b low: no curved lumbar seams",
+   "status": "not fixed. 37301 shows the hourglass seam shading clearly; q14 and p8 show none."
+  },
+  {
+   "issue": "w7b low: bottle-bin cups thin sheet walls",
+   "status": "fixed (chunky cup block with dark wells, placard on the silver front)."
+  },
+  {
+   "issue": "handed off: blank placards, sun diamond, SwiftShader filtering",
+   "status": "still present, not scored against PY."
+  }
+ ],
+ "details": [
+  {
+   "detail": "back + cushion fabric (dash grid)",
+   "score": 7,
+   "refs": "py_37301, py_37302 mid rows, py_37305. Colour, contrast and patch scale are in range. Rows are strictly periodic: the tile's row-profile autocorrelation is 0.91 at a 12.8 px lag. q14 vertical high-pass autocorrelation is +0.29 at lags 4-5 and +0.28 at lag 9, against |ac| < 0.10 on 37301, so the cloth reads as corduroy stripes."
+  },
+  {
+   "detail": "headrest wings fabric",
+   "score": 7,
+   "refs": "py_37301 / 37305: the petals are right; contrast is low in q13 (spread 0.35 against 1.06)"
+  },
+  {
+   "detail": "navy flap",
+   "score": 6.5,
+   "refs": "py_37301 / 37302 / 37305. The colour matches (#313e67 against #2e3c6c) and it is a thin sheet. But the visible flap width over the overall headrest width is 0.36-0.53 (q14 centre 65/182 px, q13 foreground 80/150), against 0.53-0.66 (37301 205/315, 37302 160/255, 37305 185/350). The wings sit in front of it; the photos show the flap over the wings. Royal hem band; mid seam line."
+  },
+  {
+   "detail": "shell incl. rear face, rim",
+   "score": 7.5,
+   "refs": "py_37304 / san_26. Shell to bezel is 1.21 against 1.175. The rim now hides the crown. The top corners are faceted 45 deg chamfers, not the smooth ~7 % radius."
+  },
+  {
+   "detail": "screen + frame + placards",
+   "score": 8,
+   "refs": "py_37304; the placards are blank (handed off)"
+  },
+  {
+   "detail": "literature pocket",
+   "score": 5.5,
+   "refs": "san_20 / san_26: the bucket lip and the bottom mesh are missing"
+  },
+  {
+   "detail": "console front face, sockets, life-vest tab, side plaques",
+   "score": 7.5,
+   "refs": "py_37301 / 37306. Pockets, triangles (top-left / top-right as in 37301), two sockets and the red tab all match. Colours: front #50648b in the photo; side #3e455f against q14 #363f55."
+  },
+  {
+   "detail": "console lid + cup nose",
+   "score": 6.5,
+   "refs": "py_37301 / 37303 show one continuous light lid from the cup end aft. The model leaves a 6 cm gap (lid z -0.39..-0.01, nose -0.54..-0.45), so the lid front shows a 4.5 cm vertical face and the 0.535 m silver trim plate sticks out as a pale shelf under the nose (p8, p1, r_cons)."
+  },
+  {
+   "detail": "window armrest",
+   "score": 7.5,
+   "refs": "py_37301 left seat; p7 shows an extra hanging block that reads as an L bracket"
+  },
+  {
+   "detail": "aisle shroud",
+   "score": 8,
+   "refs": "py_37301 / 37303"
+  },
+  {
+   "detail": "leg rest + roller",
+   "score": 7.5,
+   "refs": "py_37301 / 37306"
+  },
+  {
+   "detail": "footrest",
+   "score": 7.5,
+   "refs": "san_20"
+  },
+  {
+   "detail": "bottle bin",
+   "score": 7.5,
+   "refs": "san_20"
+  },
+  {
+   "detail": "legs",
+   "score": 7.5,
+   "refs": "san_20 / san_13"
+  },
+  {
+   "detail": "gooseneck light",
+   "score": 5.5,
+   "refs": "py_37301 (stowed: arm along the shell flank, head vertical, pointing down, lens facing forward, beside the wing, never across it). The arm is ~1/3 the head width. The model has a 35 deg pitched head, the arm crossing in front of the wing, and an arm/head ratio of 0.5."
+  }
+ ],
+ "issues": [
+  {
+   "severity": "medium",
+   "issue": "The headrest wings sit in front of the navy flap and hide its edges. The flap reads as a narrow vertical strip in a channel between two pillows. In every ANA photo the flap is a near-square panel lying OVER the inner edges of the wings, and the wings show only as half-pads beside it.",
+   "evidence": "Visible flap / headrest width: q14 0.36, q13 foreground 0.53, against py_37301 0.65, py_37302 0.63, py_37305 0.53. Visible h/w: model ~1.5, against 37301 ~0.95-1.1. Code: wings at x +-0.145, width 0.115 (inner edge 0.0875), front ~-0.11; the flap is 0.26 wide (edge 0.13) at z -0.061, so each wing covers 4.3 cm of the flap 5 cm in front of it. Crops: /tmp/claude-0/w8a/c37301_head.png against /tmp/claude-0/w8a/r14_head.png.",
+   "fix": "src/09b_py.js, wing loop: WX = M4.trs(s*0.172, 0, -0.032, -s*14*DEG) (was 0.145 / -0.045 / 24 deg). Wing loft widths 0.115 -> 0.095 and 0.105 -> 0.088 (outer edge 0.22, still inside the shell's 0.2275 half-width at 0.905). Wing depth 0.13 -> 0.10 and 0.11 -> 0.085, so the wing front sits at ~-0.082. Flap: widen 0.26 -> 0.285 for both halves and the top piece (0.252 -> 0.277). Add the wrap: for s in +-1, add gRBox(0.024, 0.265, 0.005, 0.0025, 1) at M4.mul(BH, M4.trs(s*0.15, 0.772, -0.07, -s*35*DEG)) in pyCover, so the flap edge rolls forward onto the wing fronts. Target: visible flap / headrest width >= 0.6 in q14."
+  },
+  {
+   "severity": "medium",
+   "issue": "The stowed gooseneck pose is wrong. The heads hang at about 35 deg with the thick black arm crossing in front of the headrest wing. In py_37301 the arm leaves the shell's top corner and runs down ALONG the shell flank. The head hangs vertically, pointing down, beside the wing at shoulder height, with its lens facing forward. The arm is slim, about 1/3 of the head diameter.",
+   "evidence": "/tmp/claude-0/w8a/c_gn.png (photo) against /tmp/claude-0/w8a/r14_gn.png (q14). The photo head is ~3:1 and vertical. The model head is pitched 35 deg (hd rotation), the tube is r 0.0095 against a head r of 0.019 (ratio 0.5), and the tube path P(0.23, 0.71, -0.10) -> P(0.226, 0.665, -0.135) cuts across the wing front.",
+   "fix": "src/09b_py.js: tube r 0.0095 -> 0.0065. Path [P(0.232, 0.84, zr(0.84)-0.065), P(0.236, 0.80, -0.045), P(0.236, 0.72, -0.075), P(0.234, 0.665, -0.085)]. That keeps it at the shell flank edge (half-width 0.2275), outboard of the new wing edge 0.22. Head: hd = M4.mul(BH, M4.trs(sd*0.234, 0.61, -0.088, 0, 4*DEG)), nearly vertical. Lens at M4.trs(0, -0.03, -0.0192) facing forward (-z) instead of sideways."
+  },
+  {
+   "severity": "medium",
+   "issue": "The back cloth reads as regular horizontal corduroy stripes. The tile's rows are strictly periodic, so at cabin distance they beat into visible bands. ANA's dash grid reads as a fine, irregular brick mosaic with no row striping.",
+   "evidence": "The tex/tex_py_back.png row-profile autocorrelation is 0.91 at a 12.8 px lag (20 identical-pitch rows). On q14, the vertical high-pass autocorrelation (9 px box) is +0.43/+0.29/+0.29 at lags 1/4/5 and +0.28 at lag 9. On q13 it is +0.35/+0.32 at lags 4/8. On py_37301 every lag is within +-0.11. Gradient energy (v/h) is q14 20/13 against 37301 33/20. Side by side: /tmp/claude-0/w8a/fab.png.",
+   "fix": "test/make_swatches.py synth_py_back: give each row its own pitch. Make row heights random in N(ph, 0.18*ph), renormalised so the sum is S (keeps it tileable), and set each band centre yc_r from the cumulative sum. Add a per-cell vertical jitter of the dash band of +-0.12*ph (uniform). Lower the row-to-row band contrast by adding 0.18 to the inter-row ground (out = ground*(0.82 + 0.18*u) where u is weave noise), so rows stop forming dark gutters. Target: q14 |ac| at lags 2-10 < 0.15, and local skew < 0.2."
+  },
+  {
+   "severity": "low",
+   "issue": "Console top: there is a gap between the cup nose and the lid. The lid front shows a 4.5 cm vertical face, and the full-length silver trim plate pokes out under the nose as a pale shelf. In ANA's photos it is one continuous light lid with the cups at its front end.",
+   "evidence": "p8 / p1 / /tmp/claude-0/w8a/r_cons.png against /tmp/claude-0/w8a/c_cons.png and py_37303. Code: the lid loft is depth 0.38 at z -0.2 (-0.39..-0.01). The nose is gRBox(.., 0.09) at z -0.495 (-0.54..-0.45). The trim is gBox(w+0.01, 0.008, 0.535) at y 0.618, z -0.28 (-0.5475..-0.0125).",
+   "fix": "src/09b_py.js: lid loft sections depth 0.38/0.39/0.38 -> 0.46/0.47/0.46 with z offset -0.2 -> -0.235, so it reaches -0.465 and meets the nose. Make the nose depth 0.09 -> 0.095 so they overlap. Trim gBox(w + 0.01, 0.008, 0.535) -> gBox(w + 0.004, 0.006, 0.52) at z -0.275, so it no longer overhangs the nose front."
+  },
+  {
+   "severity": "low",
+   "issue": "Literature pocket (still from w7a): a flat panel with a dark mid-height slot band. san_20 / san_26 show a curved bucket with a thick grey smile-shaped lip and a full-width coarse hex mesh along the BOTTOM.",
+   "evidence": "p2 / q13b against san_20 / san_26.",
+   "fix": "src/09b_py.js: move the mesh gBox(0.33, 0.055) -> gBox(0.37, 0.06, 0.003) at on(py0 + 0.035, 0.056). Rim gRBox(0.39, 0.014, 0.018) -> gTube through on-points (+-0.19, py0+0.20), (+-0.10, py0+0.19), (0, py0+0.185), r 0.012, PYREAR. Delete the mid 'mouth shadow' box at py0+0.177, or move it directly under the rim."
+  },
+  {
+   "severity": "low",
+   "issue": "The flap hem band renders royal blue, and a horizontal seam line shows at mid-height where the two flap halves overlap.",
+   "evidence": "q14 hem #262f68 (hue 233, sat 0.63) against the flap body #2e3a64 (hue 225), and 37301 / 37302 flap hue 222-226. p4 shows a mid line at y ~0.78.",
+   "fix": "src/09b_py.js: hem colour '#2f3866' -> '#2e3a62', topstitch '#3e4872' -> '#3c4668'. Start the lower half at the same z as the upper (-0.061, dz -0.0005 -> 0) and drop its top by 0.004, so the overlap edge is not lit."
+  },
+  {
+   "severity": "low",
+   "issue": "No hourglass lumbar seams (still from w7b). py_37301 shows two curved seams sweeping in at the waist.",
+   "evidence": "py_37301 seat C against q14 / p8.",
+   "fix": "As in w7b: for sd in +-1, add a gTube through the BH points (sd*0.15, 0.08), (sd*0.11, 0.30), (sd*0.15, 0.55) on the back face (z -0.103), r 0.0025, { c: '#56607a', r: 0.9 }."
+  },
+  {
+   "severity": "low",
+   "issue": "The headrest wing petals and ground are low-contrast in the q13 foreground view.",
+   "evidence": "q13 foreground wing p10/50/90 108/123/150 (0 % below 0.7x the median, 7 % above 1.3x), against py_37302 foreground wing 69/140/217 (24 % / 27 %).",
+   "fix": "src/03_tex.js LAYER_PARAMS for 23 (pyConfetti): raise the contrast gain ~1.4x. Or, in make_swatches.py synth_py_confetti, darken the ground dash weave by 0.15 and raise petal brightness 1.2x."
+  },
+  {
+   "severity": "low",
+   "issue": "The shell top corners are faceted 45 deg chamfers from behind. py_37304 has smooth ~7 % radius corners with near-square shoulders.",
+   "evidence": "q13b near seat top-left corner (/tmp/claude-0/w8a/rbtop.png).",
+   "fix": "src/09b_py.js shell loftAt(..., lod ? 2 : 3) -> lod ? 2 : 5 segments on the corner radius. Top widths [0.95, 0.05, 0.40] -> [0.95, 0.05, 0.42] for squarer shoulders."
+  },
+  {
+   "severity": "low (handed off)",
+   "issue": "Blank placards (integration atlas) and the sun diamond on the 26A back (lighting).",
+   "evidence": "q13b, q14",
+   "fix": "Not PY."
+  }
+ ],
+ "questions": [
+  "py_37302's foreground seat shows the confetti/petal cloth over the WHOLE upper back down to the lumbar, not only on the wings. 37301 and 37303 show the dash grid there. Is this a different cover (for example a row-25 bulkhead variant), or a photo of a seat dressed differently? If the 777 row 25 really has confetti backs, the model should carry it. Worth checking against SANspotter shots of row 25.",
+  "Should the stowed gooseneck head point straight down (py_37301), or is a slight forward tilt seen in any 777 in-flight photo? None of san_* shows the stowed pose clearly."
+ ]
+}
