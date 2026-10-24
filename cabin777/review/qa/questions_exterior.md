@@ -25,3 +25,12 @@
    working airframe?
 9. **Spinner colour.** It is now mid grey with the white swirl (KN Aviation 7A close-up). An earlier note said black (JA796A).
    Which matches the airframe you want shown?
+
+## Wave 3c
+
+10. **GE90 fan face.** Both w13 raters ask for a straight-on photo into a JA795A (or any ANA 77W) GE90 inlet, to check the blade
+    ring and liner tone. From the 11A / 11K seats the lip hides most of the blades, so the current look (#4a4f55 liner graded to
+    dark at the fan, three joint rings, grey blades with some sheen) follows LALF _136 and knav 7A _9 only.
+11. **Canoe shading is tuned for the day sun.** The exterior pass has no shadow map, so the canoe and nacelle bakes include a
+    term for the day sun direction (az -60). At sunset the sun comes from the other side and is weak, so the effect is small,
+    but say if you want the day look to change the sun position.
