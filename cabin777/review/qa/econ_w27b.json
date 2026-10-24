@@ -1,0 +1,218 @@
+{
+ "area": "econ",
+ "rater": "B",
+ "round": "w27",
+ "candidate": "10ffbc6",
+ "lens": "Geometry and proportion first at the matched q15 (row 34 D-G head-on as y_47300; ruler 0.43 m back = 140 px render / 125 px photo), then materials, colour, lighting and artefacts. Same scripts as w25/w26 (raterB25/m.py patch stats: mean RGB, L, B/R, p10/50/90, p90/50, bright = share > 1.4x median; raterB26/blob.py bright blobs at matched scale; raterB25/prof.py cover extents), plus per-view pixel-change maps w26 -> w27 (q15 4.8 %, e4b 4.7 %, e7 4.9 %, e1 2.3 %, every other view < 1 %: only the pans and pillows moved) and q15 pillow column / row profiles vs y_47300. Crops w26 | w27 [| photo]: /tmp/claude-0/-home-user-Calc/9bd9f3c4-d0cf-5926-80e2-5fc8be0f1dcf/scratchpad/raterB27/z_pans.png, z_head.png, z_e1_front.png, z_e4b_pillow.png, z_e7_arm.png. Shader/photoBase arithmetic checked in 04_shaders.js (base *= mix(1, 2c, gain)) and 03_tex.js photoBase (x ENC/2 = 2.5 in linear).",
+ "score": 8.0,
+ "priorIssues": [
+  {
+   "issue": "w26b-1 (medium) diamond pan a field of big light stars",
+   "status": "stars fixed; regressed in tone (overshot)",
+   "evidence": "q15 s3 pan: bright 0.034 vs y_47300 0.088 (w26 0.214), p90/50 1.15 vs 1.37 (w26 1.72), blobs 0.6 / kpx vs 14.9 - the lattice is now nearly gone - but L 106.9 vs 74.1 (w26 73.2) and B/R 1.65 vs 1.81. Cause: layer 34 at gain 0.45 multiplies base by mix(1, 0.4, 0.45) = 0.73 on average while photoBase still scales the colour x2.5 for a full-gain tile (mean 0.4), so the pan is ~1.8x too bright in linear. At thumbnail (z_pans.png, q15) the diamond pan is now the lightest, lavender-periwinkle slab in the row, where in y_47300 it is the darkest pan with a faint ghost lattice."
+  },
+  {
+   "issue": "w26b-2 (medium) headrest cover ~25 % too tall head-on",
+   "status": "not fixed (code untouched)",
+   "evidence": "09a_econ.js l.118 / l.121 / l.360 identical to w26; q15 prof.py s2 rows 188-269 / s3 188-257 unchanged; photo s2 / s3 49 / 54 px x 1.12."
+  },
+  {
+   "issue": "w26b-3 (medium, lighting) mid / far rows light and snowy",
+   "status": "not fixed (not scored)",
+   "evidence": "q16 0.5 % pixels changed, q17 0.9 %."
+  },
+  {
+   "issue": "w26b-4 (low) tick pans grey",
+   "status": "fixed",
+   "evidence": "q15 pan1 / pan2 B/R 1.74 / 1.78 vs 1.74 / 1.81 (w26 1.61 / 1.63), L 83.6 / 78.7 vs 87.2 / 77.1, p90/50 1.65 / 1.62 vs 1.73 / 1.74 (unchanged)."
+  },
+  {
+   "issue": "w26b-5 (low) pillow glossy flat board, light rim, dog-ears",
+   "status": "mostly fixed",
+   "evidence": "Shape: e1 / e4b / e7 now a full, domed rounded-rectangle cushion, no bone waist, no light outline (z_e4b_pillow.png); q15 column profile 56 -> 9 top-to-bottom vs photo 55 -> 13 (same top-lit gradient), size 78 x ~115 px vs photo 72 x 112 x 1.12 = 81 x 125 (a touch narrow). L 45.7 vs 44.2 (fixed, w26 50.3). Not fixed: B/R 2.27 vs 2.04 (worse, w26 2.16) and p90/50 1.15 vs 1.36 (no weave / crease texture); at thumbnail the photo pillows keep small pointed corners that the softened outline lost."
+  },
+  {
+   "issue": "w26b-6 (low) mosaic pan light and blue",
+   "status": "not fixed",
+   "evidence": "q15 pan4 L92.8, B/R 1.86, p90/50 1.54 vs 81.4 / 1.71 / 1.47 (identical)."
+  },
+  {
+   "issue": "w26b-7 (low) tick strokes a hair fine",
+   "status": "not fixed (tile untouched)",
+   "evidence": "q15 tick backs bright 0.151 / 0.163 vs 0.174 / 0.171, blobs 58 / kpx median 1 px vs 69-74 median 2."
+  },
+  {
+   "issue": "w26b-8 (low) cover foot crease, arm cap, under-armrest panels, pocket, bezel dots",
+   "status": "not fixed",
+   "evidence": "e2 / e5 / e6 / e8 / e9 0.0 % pixels changed."
+  },
+  {
+   "issue": "w26b-L1 (medium, lighting) covers navy off-axis / light head-on",
+   "status": "not fixed (not scored)",
+   "evidence": "q15 cover2 L55.3 B/R 1.65 vs 46.1 / 1.82 (identical); e4 0.0 % changed."
+  },
+  {
+   "issue": "w26a (A's diamond back at row distance, fleck close-up snow, tick distance contrast)",
+   "status": "not fixed (tiles untouched)",
+   "evidence": "q15 back patches identical to w26 to the decimal."
+  }
+ ],
+ "details": [
+  {
+   "detail": "Fabric: tick weave",
+   "score": 8.4,
+   "refs": "unchanged: q15 bright 0.15-0.16 vs 0.17, p90/50 1.48-1.50 vs 1.52, blob median 1 vs 2 px"
+  },
+  {
+   "detail": "Fabric: diamond lattice",
+   "score": 7.2,
+   "refs": "backs unchanged (e1 ok vs y_47302); q15 pan now L107 vs 74, B/R 1.65 vs 1.81, p90/50 1.15 vs 1.37, bright 0.034 vs 0.088: a light periwinkle slab instead of the darkest pan"
+  },
+  {
+   "detail": "Fabric: petal fleck",
+   "score": 8.3,
+   "refs": "unchanged: q15 bright 0.21 vs 0.20, p90/50 1.90 vs 1.89"
+  },
+  {
+   "detail": "Fabric: dash mosaic",
+   "score": 7.9,
+   "refs": "unchanged: pan L93 vs 81, B/R 1.86 vs 1.71"
+  },
+  {
+   "detail": "Fabric mix (backs, pans, pads)",
+   "score": 8.4,
+   "refs": "pattern order right; pan tone order now wrong (diamond lightest, photo darkest)"
+  },
+  {
+   "detail": "Headrest pad + cover",
+   "score": 7.8,
+   "refs": "unchanged: cover ~70 px vs 55-60 px matched; no foot crease"
+  },
+  {
+   "detail": "Pillow",
+   "score": 8.3,
+   "refs": "full domed cushion, no bone / rim, L46 vs 44, gradient matches; B/R 2.27 vs 2.04, p90/50 1.15 vs 1.36, corners now too round at thumbnail"
+  },
+  {
+   "detail": "Armrests",
+   "score": 8.5,
+   "refs": "unchanged"
+  },
+  {
+   "detail": "Belts",
+   "score": 8.2,
+   "refs": "unchanged"
+  },
+  {
+   "detail": "Seat pan / front",
+   "score": 8.2,
+   "refs": "tick pans B/R 1.74 / 1.78 vs 1.74 / 1.81, L within 3.6 (fixed)"
+  },
+  {
+   "detail": "Back silhouette",
+   "score": 8.1,
+   "refs": "unchanged"
+  },
+  {
+   "detail": "Rear shell / hood / back top",
+   "score": 8.1,
+   "refs": "unchanged (e2 / e9 0 %)"
+  },
+  {
+   "detail": "Screen / handset",
+   "score": 8.2,
+   "refs": "unchanged"
+  },
+  {
+   "detail": "Tray / pocket / AC",
+   "score": 7.8,
+   "refs": "unchanged"
+  },
+  {
+   "detail": "Legs / footrest / under-seat",
+   "score": 7.7,
+   "refs": "unchanged (e8 0 %); under-armrest panels + USB box of y_47302 still missing"
+  },
+  {
+   "detail": "Far-LOD rows",
+   "score": 7.6,
+   "refs": "unchanged (q16 0.5 %); far rows light and snowy vs y_47301"
+  }
+ ],
+ "issues": [
+  {
+   "id": "w27b-1",
+   "severity": "high",
+   "owner": "econ",
+   "title": "Diamond pan overshot: now the lightest pan (L107 vs 74), lattice almost gone",
+   "detail": "Fabric: diamond lattice",
+   "evidence": "q15 s3 pan L106.9 vs y_47300 74.1 (w26 73.2), B/R 1.65 vs 1.81, p90/50 1.15 vs 1.37, bright 0.034 vs 0.088 (z_pans.png). The shader multiplies base by mix(1, 2c, gain); the y_diamond tile is stored at ENC 5 (2c mean ~0.4) and photoBase scales the colour x2.5 assuming full gain, so at gain 0.45 the mean multiplier is 0.73 instead of 0.4: ~1.8x too bright in linear, and the relative contrast falls to ~0.25 of the full tile where ~0.5 is wanted. It is the most visible mismatch in q15 at thumbnail size.",
+   "fix": "03_tex.js (shared one-liners): PHOTO_GAIN[34] and LAYER_PARAMS[34][2] 0.45 -> 0.7 (relative star contrast 0.4g/(1-0.6g) = 0.48 of full -> p90/50 ~1.35). 09a_econ.js l.50 ECON_PAN_B colour '#4e5676' -> ~'#39415e' (linear x0.56 for the higher mean multiplier 0.58/0.73 and the L target, red x0.92 / blue x1.10 for B/R). Cleaner alternative: give photoBase a gain argument (k = 1 / mix(1, 0.4, gain) style) so the colour is gain-independent. Targets q15 s3: L 70-78, B/R 1.75-1.85, p90/50 1.32-1.42, bright 0.07-0.11, blob p90 <= 25 px; the pan must read as the darkest of the four as in y_47300."
+  },
+  {
+   "id": "w27b-2",
+   "severity": "medium",
+   "owner": "econ",
+   "title": "Headrest cover still ~25 % too tall head-on (carried from w25)",
+   "detail": "Headrest pad + cover",
+   "evidence": "q15 cover s3 rows 188-257 = 70 px vs y_47300 49-54 x 1.12 = 55-60 px; code l.118 / 121 / 360 unchanged three rounds.",
+   "fix": "As w26b-2: 09a_econ.js l.118 first section SEC(0.595, 0.245, ...) -> SEC(0.615, 0.24, 0.005, cz(0.615), 0.002), widths 0.245-0.248 -> 0.238-0.24 on l.118 / l.121; hem / stitch / mark (l.127-130) up 0.02; far LOD l.360 gBox height 0.215 -> 0.195 centred 0.01 higher; lower sections pitched ~3 deg back. Targets q15: cover 58-63 px, H/W 0.76-0.80."
+  },
+  {
+   "id": "w27b-3",
+   "severity": "medium",
+   "owner": "lighting",
+   "title": "Mid / far rows light and snowy (carried)",
+   "detail": "Far-LOD rows",
+   "evidence": "q16 rows 3+ p90/50 ~2.2 and bright ~0.3 vs y_47301 1.61 / 0.13 (unchanged, 0.5 % pixels changed).",
+   "fix": "As w26b-3: 04_shaders.js photo branch (~l.192): fade the -0.5 mip bias to 0 beyond 3 m and scale the tile excess by k = clamp(1.25 - 0.06 * dist, 0.55, 1) for layers 16 / 24 / 25 / 26 / 34. Targets q16 rows 3+ p90/50 1.55-1.75, bright 0.12-0.18; q15 near rows unchanged +-0.02."
+  },
+  {
+   "id": "w27b-4",
+   "severity": "low",
+   "owner": "econ",
+   "title": "Pillow too saturated and textureless; corners a little too round",
+   "detail": "Pillow",
+   "evidence": "q15 pillow2 B/R 2.27 vs 2.04 (w26 2.16), p90/50 1.15 vs 1.36, bright 0.018 vs 0.080; y_47300 pillows show small pointed corners at thumbnail that w27 lost (the w26 bone came from the waist, not the corners). Shape, size and gradient otherwise match.",
+   "fix": "09_seats.js SEATMAT.yPillow (shared one-liner) c '#394260' -> '#3a4160' with l: LAYER.fabric kept but a pillow-only albedo strength (or l: LAYER.yJacq at low gain) for p90/50 ~1.3; 09a_econ.js l.146 / l.158 pull 1 + 0.25|XZ|^2.5 -> 1 + 0.3|XZ|^3 (keeps the waist off, sharpens only the extreme corners). Targets q15 B/R 2.0-2.1, p90/50 1.28-1.40, L 43-47."
+  },
+  {
+   "id": "w27b-5",
+   "severity": "low",
+   "owner": "econ",
+   "title": "Mosaic pan a step light and blue (carried)",
+   "detail": "Fabric: dash mosaic",
+   "evidence": "q15 pan4 L92.8, B/R 1.86 vs 81.4 / 1.71 (unchanged since w25).",
+   "fix": "ECON_PAN_C = { ...SEATMAT.yFabricC, c: photoBase('#4f5878', 'y_mosaic') } next to l.50, used in l.58 and l.354 when PF === SEATMAT.yFabricC. Targets L 78-85, B/R 1.70-1.78."
+  },
+  {
+   "id": "w27b-6",
+   "severity": "low",
+   "owner": "econ",
+   "title": "Tick strokes a hair fine (carried)",
+   "detail": "Fabric: tick weave",
+   "evidence": "q15 tick backs bright 0.151 / 0.163 vs 0.174 / 0.171, blob median 1 vs 2 px.",
+   "fix": "test/make_swatches.py y_tick rim ease m + 0.4 (r - m) -> m + 0.55 (r - m). Targets bright 0.165-0.18, blob median 2 px."
+  },
+  {
+   "id": "w27b-7",
+   "severity": "low",
+   "owner": "econ",
+   "title": "Carried: cover foot crease, under-armrest panels + USB box, arm front cap",
+   "detail": "Legs / footrest / under-seat",
+   "evidence": "q15 no dark contact line under the cover foot (photo 26 vs face 55); y_47302 light-grey panels hanging under the armrest fronts absent in e1.",
+   "fix": "As w26b-8: 3 mm '#151a2e' band under the cover foot; per arm a 0.012 x 0.22 x 0.12 m SEATMAT.arm panel from the arm front underside to the beam carrying the USB box."
+  },
+  {
+   "id": "w27b-L1",
+   "severity": "medium",
+   "owner": "lighting",
+   "title": "Covers too dark off-axis, light head-on (carried, not scored)",
+   "detail": "Lighting",
+   "evidence": "q15 cover L55.3 vs 46.1; e4 L34.5 vs y_47306 83.7 (unchanged).",
+   "fix": "As w26b-L1: grazing sheen lobe for SEATMAT.yCover in 04_shaders.js, then yCover c '#222842' -> '#1f2440'."
+  }
+ ],
+ "questionsForUser": [],
+ "extraRefsSearched": "No new downloads: official y_47300 (q15 matched), y_47302 (e1), y_47306 (e4) decided this round; cabin777/ref/web/econ/b_ss_12..18.jpg (sanspotter ana-777-300er-economy, gitignored) present but not re-measured since only pans and pillows changed."
+}
