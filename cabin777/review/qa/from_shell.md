@@ -114,3 +114,11 @@ cameras, should be checked. q07 and q12 look fine.
   against the photos' cream 0.13).
 - **Ask:** keep closed electric shades at about 0.6 of the wall; if the darker look is intended, tell shell and the blackout
   albedo will go to about #c8c1b3.
+
+### To lighting (`src/04_shaders.js` ~l.264): the down-face reveal-glow cut darkens the PY/Y tub crowns (shell_w10b medium)
+- **Evidence:** the x0.35 cut on downward-facing faces above the window also hits the round top of the tall PY/Y tub (0.36-0.56 m
+  above the pane centre). It renders at 0.46 of the wall in q14, s02, s08 and b_pyClose, where sp_py14 / sans_14 show the crown
+  bright (~1.0 of the pier; the darkest part is just above the bezel, which the shell already grades in vertex colour). There is
+  a thin dark line on the F/J bowl tops too.
+- **Fix:** fade the cut back out over 0.36-0.44 m above the window centre, e.g.
+  `* mix(1.0, 0.35, down * smoothstep(0.24, 0.30, dy) * (1.0 - smoothstep(0.36, 0.44, dy)))` with dy = v_wpos.y - 1.02.
