@@ -7,7 +7,7 @@ const path = require('path'), fs = require('fs');
 const out = process.argv[2], W = +(process.argv[3] || 930), H = +(process.argv[4] || 575), only = process.argv.slice(5);
 const page0 = process.env.CABIN_PAGE || path.resolve(__dirname, '../../dist/test.html');
 const VIEWS = { w11A: ['11A', 'day'], w13A: ['13A', 'day'], w17A: ['17A', 'day'], w19A: ['19A', 'day'], w17K: ['17K', 'day'],
-  w26K: ['26K', 'day', [-0.06, 0.12, -0.06]], w30K: ['30K', 'day', [-0.06, 0.12, -0.06]], w11K: ['11K', 'day'], s13A: ['13A', 'sunset'], n19A: ['19A', 'night'] };
+  w26K: ['26K', 'day'], w30K: ['30K', 'day'], w11K: ['11K', 'day'], s13A: ['13A', 'sunset'], n19A: ['19A', 'night'] };
 (async () => {
   fs.mkdirSync(out, { recursive: true });
   const browser = await chromium.launch();

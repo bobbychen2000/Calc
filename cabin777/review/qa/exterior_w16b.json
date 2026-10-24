@@ -1,0 +1,222 @@
+{
+ "area": "exterior",
+ "rater": "B geometry",
+ "build": "w16 = 0f172d3",
+ "score": 8.1,
+ "details": [
+  {
+   "detail": "Planform, raked tip, cruise bending",
+   "score": 7.5,
+   "note": "Unchanged (11_exterior.js not modified since w15 final). LE sweep, rake and tip lift in w19A / w30K / c_wing_panel still match KN41 / _7331.",
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/r16/w19A.png",
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/r16/w30K.png",
+    "ref/web/exterior/a5_kn_ANA77W_TheRoom_41.jpg"
+   ]
+  },
+  {
+   "detail": "Surface detail: value, panel tone, seams, fastener rows, slat band, gear stripe, placards, grime",
+   "score": 7.8,
+   "note": "Unchanged. The lighting round-2 specEnv albedo scaling did not move the near-far value: w19A near flap (600,440) 162, far skin (720,220) 171 (r15 163 / 172; KN41 194 -> 146). Lighting owner, not scored.",
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/r16/w19A.png",
+    "ref/web/exterior/a5_kn_ANA77W_TheRoom_41.jpg"
+   ]
+  },
+  {
+   "detail": "Control-surface lines (spoilers, flaperon, aileron)",
+   "score": 8.1,
+   "note": "Unchanged, gap taper 2-3 px in w19A, hierarchy correct.",
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/r16/w19A.png"
+   ]
+  },
+  {
+   "detail": "Flap-track fairings (canoes)",
+   "score": 8.5,
+   "note": "A side holds: w19A pod rows grade 103 -> 160 (y 320) and 104 -> 151 (y 210) on the 159 flap, i.e. keel 0.65 -> lit top 1.0, KN41 0.72-0.85 mid-flank. K side near pod (w26K x=600): crown restored 194 -> 205-215 (_7250 231), then flank 131/106/97/85 on a ~172 skin (0.76/0.62/0.56/0.49; _7250 0.63/0.50). The crown-to-flank step is still abrupt (211 -> 131 inside 3 px). Far pods barely moved: (650,275) 85 -> 82, (700,230) 91 -> 93 (0.48-0.54 of the 167-176 skin; _7250 second pod 0.48-0.66 with a paler top). The smooth(9,15) x1.25 lift is in (l.478) but these flanks are dominated by the dy and sun terms.",
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratB16/z_w26K_canoes.png",
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratB16/z_w19A_canoes.png",
+    "ref/web/exterior/b_alv_ANA77W_PY_IMG_7250-2-scaled.jpeg"
+   ]
+  },
+  {
+   "detail": "Pylon",
+   "score": 7.9,
+   "note": "FIXED in the main: the w15 feather-edged wedge is gone. The fast-rising height term (l.451, 0.40*sqrt(smooth(1.65,2.15))) gives the hump a full-height, rounded front face in w13A, s13A and the new side view x_pylon_side, as in LALF _137. Residuals: the front face sits ~40 % aft along the fan cowl in x_pylon_side (split-to-split 410 -> 780 px, nose ~630; _137 ~28 %), there is only a faint wave instead of the _137 saddle behind the dome, and the w13A crown shows a slightly lumpy upper edge.",
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratB16/z_pylon_w13A_vs_137.png",
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratB16/c16/x_pylon_side.png",
+    "ref/web/exterior/b_lalf_ANA77W_11A_137.jpg"
+   ]
+  },
+  {
+   "detail": "Nacelle geometry (cowl, lip, splits, strake, access panel)",
+   "score": 7.9,
+   "note": "Access panel lighter (#c8cccf, l.413): w11A column x=518 outline 161 on 206 = 0.78 (r15 0.61; LALF _136 0.69-0.88), aspect still right. Cowl, lip, splits and strake unchanged and correct (fresh c_nacelle_left).",
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratB16/z_w11A_inlet.png",
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratB16/c16/c_nacelle_left.png",
+    "ref/web/exterior/b_lalf_ANA77W_11A_136.jpg"
+   ]
+  },
+  {
+   "detail": "Nacelle colour / materials (incl. GE monogram)",
+   "score": 7.9,
+   "note": "Monogram present and correct in a fresh studio render (c16/c_ge_inboard_left: ring, swashes, small GE wordmark low inboard aft of the split, as in knav _9). The supplied r16 c_ge_inboard_left / c_nacelle_left come from the stale repo dist/test.html (no monogram, strake or panel) - see issue 1. w11K sunlit cowl 204-206 (knav 174-187), unchanged.",
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratB16/z_stale_vs_fresh_ge.png",
+    "ref/web/exterior/b5_knav_ANA77W_7A_GE90_takeoff_9.jpg"
+   ]
+  },
+  {
+   "detail": "Inlet / fan / spinner",
+   "score": 8.0,
+   "note": "w11A throat 43/53/46 (r15 41/37/26; LALF _136 31-87), and it now matches _136 in tone and lip width (z_w11A_inlet). w11K liner now grades 118 (upper) -> 81 (lower), a depth cue the r15 78/76/75 tube lacked; knav _9 still runs much darker toward the fan. From the front (fresh x_inlet_front) the 22 swept blades, the dark fan case and the swirl spinner read like a GE90, but from the window seats the spinner never shows (camera geometry).",
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratB16/z_w11K_inlet.png",
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratB16/z_w11A_inlet.png",
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratB16/c16/x_inlet_front.png",
+    "ref/web/exterior/b5_knav_ANA77W_7A_GE90_takeoff_9.jpg"
+   ]
+  },
+  {
+   "detail": "Livery / registration JA795A",
+   "score": 7.7,
+   "note": "Unchanged and correct, inverted reading in w26K / w17K / w30K as in _7250 / _7331.",
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/r16/w26K.png",
+    "ref/web/exterior/b_alv_ANA77W_PY_IMG_7250-2-scaled.jpeg"
+   ]
+  },
+  {
+   "detail": "Nav lights and static dischargers",
+   "score": 7.2,
+   "note": "Unchanged: red tip light in n19A, discharger comb in w19A.",
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/r16/n19A.png",
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/r16/w19A.png"
+   ]
+  },
+  {
+   "detail": "Artefacts",
+   "score": 7.8,
+   "note": "No new z-fighting, gaps or floating parts; the pylon nose blends into the cowl without a seam (x_pylon_side). Long-hairline aliasing in w26K unchanged (AA). Not exterior: with the eye now at the glass, the window shade rail fills the top ~45 px of w26K / w30K.",
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/r16/w26K.png",
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratB16/c16/x_pylon_side.png"
+   ]
+  }
+ ],
+ "previous": [
+  {
+   "issue": "B w15 low: pylon nose feather-edged wedge",
+   "status": "FIXED (mostly). Full rounded front face (w13A, x_pylon_side); nose ~40 % along the fan cowl vs 28 % in _137, no saddle."
+  },
+  {
+   "issue": "A w15 low: pylon saddle / creased crown",
+   "status": "NOT FIXED. Only a faint wave behind the dome."
+  },
+  {
+   "issue": "B w15 low / A w15 low: canoe far pods and crown",
+   "status": "PARTLY FIXED. Near crown 194 -> 205-215 (photo 231). Far pods 85/91 -> 82/93, unchanged; the crown-to-flank step is still inside 3 px."
+  },
+  {
+   "issue": "B w15 low / A w15 low: inlet depth, lip shadow, spinner",
+   "status": "PARTLY FIXED. w11A throat 43-53 (LALF 31-87); w11K liner grades 118 -> 81 (r15 flat 78-75). Spinner unreadable from the seats (geometry)."
+  },
+  {
+   "issue": "A w15 low: access panel outline strong",
+   "status": "FIXED. 0.78 of the cowl (r15 0.61-0.71; _136 0.69-0.88)."
+  },
+  {
+   "issue": "A w15 low: inlet joint ring dashed",
+   "status": "FIXED / unchanged from w15: continuous hairlines in w11K and w11A."
+  },
+  {
+   "issue": "B/A w15 medium: wing near-far value (lighting owner)",
+   "status": "NOT FIXED despite the lighting r2 change: w19A 162 near / 171 far (r15 163 / 172)."
+  },
+  {
+   "issue": "B w15: sunlit K cowl hot",
+   "status": "Unchanged, 204-206 vs knav 174-187 (low)."
+  }
+ ],
+ "issues": [
+  {
+   "severity": "medium",
+   "detail": "review pipeline: stale studio renders",
+   "problem": "The supplied r16 studio close-ups (c_nacelle_left, c_ge_inboard_left, c_canoes_left, c_canoe_side, c_wing_panel) were rendered from the repo's dist/test.html (dated 14:01, 0 occurrences of 'GE monogram'), not the r16 build: they show no GE monogram, no strake, no access panel. Re-rendered with CABIN_PAGE=scratchpad/b/test.html they differ in 30-88 % of pixels and show all three. Not a model defect, but any rater using the supplied c_* images will mark a false monogram / strake regression.",
+   "evidence": [
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratB16/z_stale_vs_fresh_ge.png",
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratB16/z_stale_vs_fresh_nacelle.png"
+   ],
+   "fix": "Always run studio renders as CABIN_PAGE=<build>/test.html node test/studio.js <out> review/spec_ext.json (test/studio.js line 13 defaults to dist/test.html). Optionally make studio.js print the page path and refuse a dist/ page older than src/."
+  },
+  {
+   "severity": "medium",
+   "detail": "wing near-far value (owner: lighting, not scored)",
+   "problem": "The r2 albedo scaling of specEnv (04_shaders.js, after 'vec3 specEnv') has no effect on the wing: w19A near flap 162 / far skin 171, vs r15 163 / 172; KN41 falls 194 -> 146. clamp(luma(v_col)/0.39, 0.5, 1.0) saturates at 1 for every baked wing value at or above the #636466 reference, so only very dark verts are scaled.",
+   "evidence": [
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/r16/w19A.png (600,440) 162, (720,220) 171",
+    "ref/web/exterior/a5_kn_ANA77W_TheRoom_41.jpg"
+   ],
+   "fix": "04_shaders.js: normalise to the brightest wing albedo, not the darkest: clamp(luma(v_col) / luma(nearRootAlbedo), 0.55, 1.0) (pass the reference in a uniform), or scale specEnv by a distance term mix(1.0, 0.7, smoothstep(10.0, 40.0, length(v_wpos - u_eye))) on the exterior."
+  },
+  {
+   "severity": "low",
+   "detail": "pylon saddle and nose station",
+   "problem": "The dome front sits ~40 % aft along the fan cowl (LALF _137 ~28 %), and there is no saddle behind the dome before the rise to the strut.",
+   "evidence": [
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratB16/z_pylon_w13A_vs_137.png",
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratB16/c16/x_pylon_side.png"
+   ],
+   "fix": "l.448: start the sections at x 1.55 and nose = sqrt(smooth(1.55, 2.2, x)); l.451: ridge smooth(1.55, 2.0, x) for the 0.40 term, and add - 0.10 * Math.exp(-(((x - 3.4) / 0.55) ** 2)) for the saddle."
+  },
+  {
+   "severity": "low",
+   "detail": "canoe K side: far pods and crown step",
+   "problem": "Far pods unchanged at 82/93 (0.48-0.54 of the skin) with a dark flank from top to keel, where _7250's far pods have a pale upper flank; the near pod drops from crown 211 to flank 131 within 3 px.",
+   "evidence": [
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratB16/z_w26K_canoes.png",
+    "ref/web/exterior/b_alv_ANA77W_PY_IMG_7250-2-scaled.jpeg"
+   ],
+   "fix": "l.478: soften the depth ramp lerp(1, 0.6, smooth(0.04, 0.5, dy)) -> lerp(1, 0.65, smooth(0.10, 0.65, dy)) and the top blend smooth(0.15, 0.5, n[1]) -> smooth(0.0, 0.5, n[1]) so the upper flank is a broad lit band; keep the 0.40 floor."
+  },
+  {
+   "severity": "low",
+   "detail": "inlet depth from 11K",
+   "problem": "w11K liner 118 -> 81: the right direction, but knav _9 falls to ~10 at the fan; the inner lip-to-throat transition is still a mid-grey tube.",
+   "evidence": [
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratB16/z_w11K_inlet.png",
+    "ref/web/exterior/b5_knav_ANA77W_7A_GE90_takeoff_9.jpg"
+   ],
+   "fix": "l.383: 1 - 0.55 * smooth(0.15, 1.0, depth) -> 1 - 0.7 * smooth(0.25, 1.2, depth), lip end unchanged so the 11A throat keeps 43-53."
+  }
+ ],
+ "worth_0_3": [
+  {
+   "item": "Render studio shots from the r-build, not dist (pipeline)",
+   "gain": "rating reliability"
+  },
+  {
+   "item": "Lighting: make the specEnv albedo scale bite on the wing",
+   "gain": "surface detail +0.4"
+  },
+  {
+   "item": "Pylon nose 0.1 m forward plus a saddle",
+   "gain": "pylon 7.9 -> 8.2"
+  },
+  {
+   "item": "Softer canoe depth ramp / broader lit upper flank",
+   "gain": "canoes +0.1"
+  },
+  {
+   "item": "Deeper inlet grade toward the fan",
+   "gain": "inlet +0.1"
+  }
+ ],
+ "questions": [],
+ "photos": []
+}
