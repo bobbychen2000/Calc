@@ -1,0 +1,178 @@
+{
+ "area": "room",
+ "rater": "A-skeptic",
+ "round": 10,
+ "score": 8.0,
+ "summary": "Small gain over w9 (7.9). Fixed: the E comforter now reads as box-quilted (r10 shows a clear ~0.33 m grid; tpg_72). The pillow checks are near the right scale (~14 checks across the short side, against ~13 in omaat_room_15). The slipper pouch is a soft rounded navy shape. The O footwell stops short of E's table wall. The far-LOD screen sits at 0.8725. The monument top now splits into two housings by a spine with a metal rail: in r3 it reads as two housings, in q09 it is a 5 cm rib on a still-broad flat charcoal top. Still wrong when held against real photos: (1) In c_27313 / c_27315 the housing tops carry wide light grey-metal edges (#969b9e); the render's housing tops are uniform blue-charcoal #6f7682, so from the aisle the monument is still a dark beam. (2) The O comforter (r9) still reads as crumpled satin; its quilt line is barely visible. (3) The pillow pattern is a soft blurred houndstooth/plus, not crisp two-tone ichimatsu squares. In the studio the pillow comes out as pale periwinkle about as light as the seat (Y ratio 0.97), whereas in omaat_room_15 the pillow is clearly darker than the seat (0.76). In the cabin (q09 #384493 against seat #4a525e) the ratio is right, so this is mostly the studio light. (4) The pad still renders a neutral near-white (#f2f0eb against tpg_72 #e7dac7). (5) The E mattress overlap went from 2 cm to 4 cm, contradicting the w9b commit message. The seated pair (layout, shells, consoles, monitor wall, ash tables, plaques) is clearly the same product as c_27312/13/15/16. The remaining mismatches are soft goods and the monument-top finish.",
+ "photos_collected": [],
+ "prior_issues": [
+  {
+   "detail": "w9a med / w9b low: comforter quilting invisible, reads as crumpled satin",
+   "status": "partly fixed",
+   "evidence": "Folds are halved (0.5*A) and the stitch dip is now 0.020 with sigma 0.024. r10 (E bed) shows a clear box grid with puffed squares, as in tpg_72. In r9 (O bed) only one faint stitch cross is visible near the head (2x crop of 260-480 x 130-400); the rest is diagonal wrinkles, so the O bed still reads as satin."
+  },
+  {
+   "detail": "w9a low: mattress pad renders white, not warm cream",
+   "status": "partly fixed",
+   "evidence": "SEATMAT.mattress is now #d9cfbc. r9 pad median #f2f0eb (w9 #f4f3f0), against tpg_72 pad #e7dac7 / #f7edd7: still neutral, and the same tone as the white pillow (#f7f7f6). tpg_72's white pillow is #f1dfc9, so in the photo the pad is darker than the pillow."
+  },
+  {
+   "detail": "w9a low / w9b med: monument top one broad charcoal beam; photos show a slim spine with a metal rail between two housings",
+   "status": "partly fixed",
+   "evidence": "Lines 434-439 add two jVoid grooves, a 0.028 x 0.05 spine and a jPanelEdge rail. In r3 the top now reads as two housings split by a spine. In q09 (crop 450-760 x 90-350) it is a rib on a flat 0.245 m charcoal top (#6f7682). c_27313 has light grey-metal housing tops (#969b9e / #8c999f) either side of the spine, and c_27315 shows light edge bands around the housings. The broad dark top persists."
+  },
+  {
+   "detail": "w9a low / w9b low: pillow jacquard checks too large and low contrast",
+   "status": "partly fixed",
+   "evidence": "r7 now shows ~14 checks across the short side (omaat_room_15: ~13), so the scale is fixed. The pattern is a soft blurred plus/houndstooth with no crisp square edges and no diagonal light/dark banding (omaat_room_15 crop 600-960 x 420-800)."
+  },
+  {
+   "detail": "w9a low: slipper pouch reads as a hard booklet",
+   "status": "fixed",
+   "evidence": "Line 276 lofts it with cushionSecs (edge 0.011, r 0.03); r7 and r3 show a soft rounded navy pouch. There is no film, but at this scale that is minor."
+  },
+  {
+   "detail": "w9a low / w9b low: hidden bed overlaps (O mattress into the pillar, O footwell through E's table wall, E mattress pieces)",
+   "status": "partly fixed / regressed",
+   "evidence": "O piece 2 now ends at MON.zO-0.005 (fixed). O footwell ends at 0.585 < E table band inner face 0.588 (fixed). But the E pieces at line 371 are mat(..., MON.zE-0.02, 0.66) and mat(..., 0.62, 1.28): the overlap grew from 2 to 4 cm (git show eb7bea3 changed 0.64 to 0.66), although the commit message says they no longer overlap. O pieces 1/2 still overlap over z -0.64..-0.62. The E seat core against the console face (w9b b) is unchanged."
+  },
+  {
+   "detail": "w9b low: far-LOD screen height lags the near model",
+   "status": "fixed",
+   "evidence": "roomPartFar screen quads at y 0.8725 (lines 538 and 547), the same as roomMonitor."
+  },
+  {
+   "detail": "w9b low: ash grain still about 0.5-0.7x the photos",
+   "status": "not fixed",
+   "evidence": "Not touched. The q06 ash table is #c7c5c0 (neutral) against the c_27312 table at #aea090 (warm greige). c_27313 ash is #dfdfdd, so part of this is exposure, but the c_27312 warmth is missing."
+  },
+  {
+   "detail": "w9a/w9b (lighting, not scored): cyan/cool cast on charcoal",
+   "status": "not fixed (lighting area)",
+   "evidence": "q06 shell #535b68 / #5f6977 (b-r 21-24) against c_27312 #54585e (b-r 10)."
+  }
+ ],
+ "details": [
+  {
+   "detail": "Nested-pair layout, shells, consoles, side tables, monitor wall",
+   "score": 8.5,
+   "refs": [
+    "c_27312",
+    "c_27315",
+    "c_27316",
+    "tpg_53"
+   ]
+  },
+  {
+   "detail": "Monitor, bezel, sill, footwell mouth (q07)",
+   "score": 8.5,
+   "refs": [
+    "c_27316",
+    "tpg_53"
+   ]
+  },
+  {
+   "detail": "Centre monument top and spine (q09, r3)",
+   "score": 7.3,
+   "refs": [
+    "c_27313",
+    "c_27314",
+    "c_27315"
+   ]
+  },
+  {
+   "detail": "Ash panels (colour, grain, frames)",
+   "score": 8.0,
+   "refs": [
+    "c_27312",
+    "c_27313",
+    "c_27316"
+   ]
+  },
+  {
+   "detail": "Seat upholstery, seams, headrest flap, belt",
+   "score": 8.0,
+   "refs": [
+    "omaat_room_15",
+    "c_27315"
+   ]
+  },
+  {
+   "detail": "Seat-mode pillows and boarding bundle",
+   "score": 7.6,
+   "refs": [
+    "omaat_room_15",
+    "tpg_31",
+    "tpg_42"
+   ]
+  },
+  {
+   "detail": "Bed: mattress, comforter, pillows",
+   "score": 7.2,
+   "refs": [
+    "tpg_72",
+    "tpg_70",
+    "tpg_75"
+   ]
+  }
+ ],
+ "issues": [
+  {
+   "severity": "medium",
+   "detail": "Monument housing tops are uniform charcoal; the photos show light grey-metal edges",
+   "problem": "From the aisle (q09, q10) the monument still reads as one broad dark beam with a thin rib. In c_27313 the tops of the O and E housings either side of the spine are light metal grey (#969b9e / #8c999f against shell walls #434954), and c_27315 shows ~3-4 cm light edge bands framing each housing's back face.",
+   "evidence": "q09 top slab #6f7682, rib #777d89; c_27313 (412-438, 230-330) #969b9e and (478-500, 190-260) #8c999f; c_27315 x 190-330 y 240-560.",
+   "fix": "In roomPart('O') after line 439, add a jPanelEdge (or { c: '#9a9ea2', r: 0.3, m: 0.5, l: LAYER.brushed }) top band on each housing: for (const s of [-1, 1]) B.add(gRBox(1.13, 0.006, 0.06, 0.003, 1), M4.trs(-0.02, MON.top + 0.003, mz + s * 0.07), rail), plus a 0.012-wide edge strip on the outer top edges at MON.zO / MON.zE (gRBox(1.13, 0.012, 0.012, 0.004, 1) at z = MON.zO + 0.006 and MON.zE - 0.006). Keep the centre spine charcoal so it reads as a dark fin between two light rims."
+  },
+  {
+   "severity": "low",
+   "detail": "O comforter quilting still buried (r9)",
+   "problem": "The E bed reads as quilted, the O bed does not: the O folds [-0.10,-0.30,35,0.60,0.04] and [0.12,0.05,-30,0.50,0.034] fall across the visible O sheet, and the O grid phase (gx = x - xc + 0.07, xc -0.12) puts a stitch line close to the sheet edge, so only one interior line is visible.",
+   "evidence": "r9 crop: one faint stitch cross; r10 clear grid; tpg_72 shows the stitches as the dominant feature.",
+   "fix": "In duvetSheet, scale the folds by 0.35 instead of 0.5 (line 305), or pass a per-part fold gain (O 0.3). Set the grid phase so that two stitch lines cross the O sheet: gx = x - xc - 0.05 for hd > 0. Optionally deepen the dip to 0.024 * exp(-(dq/0.018)^2) for a crisper seam."
+  },
+  {
+   "severity": "low",
+   "detail": "Pillow jacquard is a blurred plus/houndstooth, not crisp two-tone ichimatsu",
+   "problem": "omaat_room_15 shows sharp-edged squares in two blues with a slow diagonal light/dark banding. The render's pattern has soft plus-shaped blobs, and the rim is light cream where the photo flange is mauve-grey (#b6abad).",
+   "evidence": "r7 crop 250-460 x 240-450 against omaat_room_15 crop 600-960 x 420-800.",
+   "fix": "LAYER_PARAMS 9 in 03_tex.js (shared, one line): use a hard step instead of the smooth check, e.g. checker = step(0.5, fract(u*k)) xor step(0.5, fract(v*k)) with contrast ~0.18, and add a low-frequency diagonal band sin((u+v)*k/6). In roomPillow the flange uses SEATMAT.jPillowBack; check that it renders mid mauve-grey (~#9a9295) rather than cream."
+  },
+  {
+   "severity": "low",
+   "detail": "Pillow too light and periwinkle relative to the seat under studio light",
+   "problem": "In omaat_room_15 the pillow is clearly darker than the seat fabric (luma ratio 0.76, hue violet-navy #5a5f98). In r7 it is 0.97 and periwinkle #8f9ddc. In the cabin (q09) the ratio is fine, so this may be studio exposure only.",
+   "evidence": "r7 pillow #8f9ddc against seat #a8a3ab; omaat_room_15 pillow #5a5f98 against seat #847f7f; q09 pillow #384493 against seat #4a525e.",
+   "fix": "If the pillow still reads light after lighting work, set SEATMAT.pillowBlue c to '#454c8c' (09_seats.js, shared, one line). No 09c change."
+  },
+  {
+   "severity": "low",
+   "detail": "Mattress pad renders neutral near-white",
+   "problem": "#d9cfbc renders as #f2f0eb in r9, the same tone as the white pillow, whereas tpg_72's pad is warmer and darker than its pillow.",
+   "evidence": "r9 pad #f2f0eb, white pillow #f7f7f6; tpg_72 pad #e7dac7, pillow #f1dfc9.",
+   "fix": "SEATMAT.mattress c '#cfc2aa' (shared, one line), or give the white pillow '#f1efe9' so the pad reads warmer by contrast."
+  },
+  {
+   "severity": "low",
+   "detail": "E mattress pieces overlap by 4 cm (regressed from 2 cm); O pieces overlap by 2 cm",
+   "problem": "Line 371 mat(-0.035, 0.495, MON.zE - 0.02, 0.66) and mat(-0.118, 0.495, 0.62, 1.28) overlap over z 0.62-0.66 with coplanar tops (risk of z-fight and a crease). Line 364 O pieces overlap over -0.64..-0.62. The w9b commit message says the pieces no longer overlap.",
+   "evidence": "git show eb7bea3: 0.64 -> 0.66.",
+   "fix": "E: end the first piece at 0.62 and start the second at 0.62 (butt joint), or keep the overlap and drop the second piece by 0.002 (y + 0.018) so the tops are not coplanar. O: end piece 1 at -0.64, or lower piece 2 by 0.002."
+  },
+  {
+   "severity": "low",
+   "detail": "Comforter has no jacquard check",
+   "problem": "In tpg_72 the comforter carries the same faint check jacquard as the pillow. The render's comforter is plain satin.",
+   "evidence": "tpg_72 comforter centre (500-700, 280-380) shows faint checks; r9/r10 are plain.",
+   "fix": "SEATMAT.duvet l: LAYER.pillowCheck-equivalent at half contrast (shared 09_seats.js), or in roomBed pass a duvet material { ...SEATMAT.duvet, l: <check layer> } with the UVs already emitted by duvetSheet (scale them so one check is ~2.3 cm: g.u.push(i/nu*W/0.023 ...))."
+  },
+  {
+   "severity": "low",
+   "detail": "(lighting, not scored) Blue cast on charcoal; ash tables neutral against the warm greige in c_27312",
+   "problem": "Shells b-r 21-24 against 10 in the photo; ash table #c7c5c0 against #aea090.",
+   "evidence": "q06 against c_27312.",
+   "fix": "Lighting/integration area; no 09c change."
+  }
+ ],
+ "questions": []
+}
