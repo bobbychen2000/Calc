@@ -1,0 +1,178 @@
+{
+ "area": "econ",
+ "rater": "B",
+ "round": "w22",
+ "candidate": "eac092a",
+ "lens": "Geometry and proportion first (C arm joints vs b_ss_18, rolled hem vs the cover plate), then materials, colour, lighting and artefacts. Same patches and scripts as w21b (raterB22/m.py, m2.py, m3.py = raterB21 with r21/r22, s21/s22) plus hem column profiles in e4 / q15 against y_47306 / y_47300, tile stats of tex_y_tick / tex_y_fleck at b0edece vs eac092a, and render diffs r21 -> r22. Note eac092a also carries the integration change in 04_shaders.js (photo tiles sampled at mip bias -0.5), which moves the in-cabin fabric stats independently of the econ edits. Scratch: /tmp/claude-0/-home-user-Calc/c9a2a8cb-81cb-5472-b5d8-4290c91941cc/scratchpad/raterB22/ (z_e3s_side.png, z_e7j.png, z_hem.png, z_hemends.png, z_q15hem.png, y300cov.png).",
+ "score": 8.1,
+ "priorIssues": [
+  {
+   "issue": "w21b-1 (medium) tick too contrasty at row distance; fleck too saturated",
+   "status": "fleck saturation fixed; tick not fixed in render (regressed: tile improved, but the new mip bias -0.5 more than undid it); fleck contrast now over",
+   "evidence": "Tile (BOX x0.125): tick bright 0.066 -> 0.048, p90/50 1.41 -> 1.39 (right direction). Render q15 x0.62 tick s1/s3 bright 0.140 / 0.144 (w21 0.120 / 0.130) vs y_47300 0.083 / 0.082; p90/50 1.58 / 1.58 (1.54 / 1.55) vs 1.47; hf 23-24 vs 20-25 ok. Fleck s2/s4 B/R 2.61 / 2.56 (w21 2.83 / 2.81) vs 2.50 / 2.58 - fixed; but bright 0.185 / 0.176 (0.173 / 0.163) vs 0.153 / 0.154, p90/50 1.86 / 1.81 vs 1.76 / 1.75. q16 row 2 tick bright 0.212 (w21 0.174) vs y_47301 0.064. Column CV (A's metric) s1 0.103 (w21 0.101) vs 0.173, s3 0.235 vs 0.212: the bias bought no column definition, only speckle."
+  },
+  {
+   "issue": "w21b-2 / w21a-1 (medium) headrest cover too dark oblique; hem invisible",
+   "status": "hem fixed close up; regressed head-on (light chin bar); oblique body unchanged (lighting hand-off)",
+   "evidence": "e4 hem / face 67 / 41 = 1.63x (w21 1.15x) vs y_47306 1.55-1.6x - on target. But q15 c2 / c3 rows 352-362: band L92-93 over a cover face of L59-60 = 1.56x for 9-10 px (~9 % of the cover height), with a L106 line at its top; y_47300 head-on shows no band at all - cover 50-53 down to the foot, then a dark crease (L31-40) and a 1-2 px lip at L51-78 (z_q15hem.png vs y300cov.png). The light strip under a dark plate brings back the 'screen chin' A penalised in w20. Cover body: e4 L39 / 38 vs 129 / 86, unchanged."
+  },
+  {
+   "issue": "w21b-3 (low) C moulding junctions: sweep wider than plate, notch at the end panel",
+   "status": "fixed",
+   "evidence": "Middle arms: sweep now 2.1 cm, flush with the plate, no lighter column or vertical step (z_e7j.png). Block ends: panel rear edge runs up into the sweep, the notch under the sweep is gone; reads as one moulding as in b_ss_18 (z_e3s_side.png). Remaining (A's w21a-4): panel bottom-rear corner still a ~1.5 cm round, not the ~10 cm sweep-up of b_ss_18."
+  },
+  {
+   "issue": "w21b-4 (low) fleck close up merged clusters",
+   "status": "not fixed",
+   "evidence": "e4 fleck blob median 8 px / p90 15 px (w21 8 / 17) vs b_ss_14 scaled 3 px."
+  },
+  {
+   "issue": "w21b-L1 (medium, lighting) q16 near fabric blotchy",
+   "status": "not fixed (slightly worse with the mip bias)",
+   "evidence": "q16 near-top blobs median 9 / p90 19 px vs y_47301 1 / 3 px; row 2 p90/50 2.22 vs 1.40."
+  }
+ ],
+ "details": [
+  {
+   "detail": "Fabric: tick weave",
+   "score": 7.9,
+   "refs": "q15 bright 0.14 vs 0.083, p90/50 1.58 vs 1.47 (worse than w21 through the mip bias); close-up e4 unchanged"
+  },
+  {
+   "detail": "Fabric: diamond lattice",
+   "score": 7.5,
+   "refs": "unchanged (carried w19b-7)"
+  },
+  {
+   "detail": "Fabric: petal fleck",
+   "score": 7.9,
+   "refs": "B/R now on target (2.56-2.61 vs 2.50-2.58); contrast over (bright 0.18 vs 0.153); close clusters unchanged"
+  },
+  {
+   "detail": "Fabric: dash mosaic",
+   "score": 8.2,
+   "refs": "unchanged"
+  },
+  {
+   "detail": "Fabric mix (backs, pans, pads)",
+   "score": 8.0,
+   "refs": "pairing right; whole-frame speckle in q15 / q16 up again (q16 row 2 bright 0.21 vs 0.064)"
+  },
+  {
+   "detail": "Headrest pad + cover",
+   "score": 7.7,
+   "refs": "close-up hem 1.63x vs 1.55-1.6x (fixed); head-on a 1.56x light band 9 % of the cover vs none in y_47300 (regressed); rolled-foot tube overhangs the plate's right edge ~3 px (~4 mm) in e4 and sits straight in front of the bowed plate; far LOD has no hem (returns before it), so the band appears as rows come in"
+  },
+  {
+   "detail": "Pillow",
+   "score": 8.4,
+   "refs": "unchanged"
+  },
+  {
+   "detail": "Armrests",
+   "score": 8.6,
+   "refs": "sweep / plate / end panel now one moulding (b_ss_18); only the panel's lower-rear radius is short"
+  },
+  {
+   "detail": "Belts",
+   "score": 8.5,
+   "refs": "unchanged"
+  },
+  {
+   "detail": "Seat pan / front",
+   "score": 7.8,
+   "refs": "unchanged"
+  },
+  {
+   "detail": "Back silhouette",
+   "score": 8.0,
+   "refs": "unchanged"
+  },
+  {
+   "detail": "Rear shell / hood / back top",
+   "score": 8.1,
+   "refs": "e2 / e9 diff vs s21 0.35 / 0.28: unchanged"
+  },
+  {
+   "detail": "Screen / handset",
+   "score": 8.3,
+   "refs": "e5 diff 0.39: unchanged"
+  },
+  {
+   "detail": "Tray / pocket / AC",
+   "score": 7.8,
+   "refs": "e6 diff 0.24: unchanged (w19b-6 carried)"
+  },
+  {
+   "detail": "Legs / footrest / under-seat",
+   "score": 7.7,
+   "refs": "e8 diff 0.02: unchanged"
+  },
+  {
+   "detail": "Far-LOD rows",
+   "score": 7.8,
+   "refs": "consistent apart from the hem missing on the far LOD (pop); far-row speckle up with the bias"
+  }
+ ],
+ "issues": [
+  {
+   "id": "w22b-1",
+   "severity": "medium",
+   "title": "Headrest hem: right close up, but head-on a light chin bar under the dark plate (regressed)",
+   "detail": "Headrest pad + cover",
+   "evidence": "q15 c2 / c3 band L92-93 vs face 59-60 (1.56x) over 9-10 px plus a L106 top line; y_47300 head-on has no band, only a dark crease and a 1-2 px lip (L51-78, ~1.3-1.5x). e4 hem 1.63x vs y_47306 1.55-1.6x is right, so the lift must come from the roll, not the band colour.",
+   "fix": "09a_econ.js ~line 121: hem band colour #3a4264 -> #2a3049 (q15 band / face <= 1.15); carry the close-up lift on the rolled foot instead: tube radius 0.004 -> 0.006, colour #4a5478, r 0.38 (a highlight line), so head-on it is a 1-3 px lip at 1.3-1.6x as in y_47300. Targets: q15 band / face <= 1.15 and lip <= 3 px; e4 mean of the lowest 15 px (band + foot) / face >= 1.35. Also bow the tube with the plate (3 points: ends at z +0.0025 behind the centre) and end it at x +-0.122 so it no longer overhangs the plate's right edge (~4 mm in e4). Optional: emit the band (not the tube) before the `if (lod) return` so far rows do not pop."
+  },
+  {
+   "id": "w22b-2",
+   "severity": "medium",
+   "owner": "integration + econ",
+   "title": "Y fabric contrast at row distance up again: the mip bias -0.5 undid the tile reduction",
+   "detail": "Fabric: tick weave / petal fleck",
+   "evidence": "Tile x0.125 tick bright 0.066 -> 0.048 (econ edit worked), but render q15 tick bright 0.140 / 0.144 vs 0.083 (w21 0.12-0.13), p90/50 1.58 vs 1.47; fleck bright 0.185 / 0.176 vs 0.153, p90/50 1.86 / 1.81 vs 1.76; q16 row 2 tick bright 0.212 vs 0.064. Column CV s1 0.103 vs 0.101 at w21 vs 0.173 in y_47300 - the bias did not restore the columns it was added for.",
+   "fix": "04_shaders.js photo sampling: bias -0.5 only for the ash / non-Y layers (e.g. per-layer bias from LAYER_PARAMS, 0 for y_tick / y_fleck / y_mosaic), since it gives the Y columns nothing (CV 0.10 either way). If the integrator keeps it, compensate in make_swatches.py: y_tick gb 0.3 -> 0.1 and strokes 0.9 -> 0.8 toward the ground; y_fleck core exponent 1.05 -> 1.2. Targets q15 x0.62: tick bright 0.08-0.10, p90/50 1.46-1.52; fleck bright 0.15-0.16, p90/50 1.74-1.79, B/R 2.45-2.65 (now 2.56-2.61, keep); q16 row 2 bright <= 0.12."
+  },
+  {
+   "id": "w22b-3",
+   "severity": "low",
+   "title": "Block-end panel lower-rear corner too square (carried w21a-4 remainder)",
+   "detail": "Armrests",
+   "evidence": "a22/e3s: panel bottom-rear corner a ~1.5 cm round; in b_ss_18 the lower edge sweeps up into the rear post with a ~10 cm radius and the front lip sits ~3 cm higher than the rear bottom.",
+   "fix": "09a_econ.js end-panel loft: replace the first two sections with zs(0.415, -0.17, -0.31, 0.024), zs(0.425, -0.14, -0.36, 0.024), zs(0.44, -0.115, -0.39, 0.024) (rear bottom edge rising into the sweep, ~10 cm radius) and keep the y >= 0.46 sections as they are."
+  },
+  {
+   "id": "w22b-4",
+   "severity": "low",
+   "title": "Petal fleck close up: clusters instead of separate slivers (carried w21b-4)",
+   "detail": "Fabric: petal fleck",
+   "evidence": "e4 blob median 8 / p90 15 px vs b_ss_14 3 px.",
+   "fix": "As w21b-4 (Poisson-disc spacing 1.5x fleck length, coverage 0.13-0.14 close up)."
+  },
+  {
+   "id": "w22b-5",
+   "severity": "low",
+   "title": "Carried: flat pocket strip, hood side band, diamond ground grey, legs; stray comment in make_swatches.py",
+   "detail": "Tray / pocket / AC",
+   "evidence": "e6 / e8 / e2 diffs vs s21 0.24 / 0.02 / 0.35. make_swatches.py y_tick: the old '# w20 (gap19)...' comment now trails the new stroke line.",
+   "fix": "As w19b-5 / 6 / 7; move the trailing comment back onto the c ** 0.15 line."
+  },
+  {
+   "id": "w22b-L1",
+   "severity": "medium",
+   "owner": "lighting",
+   "title": "Cover body dark at oblique views; q16 near fabric blotchy (not scored)",
+   "detail": "Lighting",
+   "evidence": "e4 cover L38-39 vs y_47306 86-129; q16 near-top blobs 9 / 19 px vs 1 / 3 px.",
+   "fix": "As w21b-2 (yCover sheen) and w20b-L1."
+  },
+  {
+   "id": "w22b-C1",
+   "severity": "info",
+   "owner": "QA cameras",
+   "title": "Camera mismatches (not scored)",
+   "evidence": "As w21b-C1: q15 closer / lower than y_47300, q16 across-cabin vs down-aisle, q17 high rear vs window-side profile.",
+   "fix": "Carried."
+  }
+ ],
+ "questionsForUser": []
+}
