@@ -376,6 +376,9 @@ def y_photo(name):
     # second flattening on the periodic tile (wrap blur): a residual shading gradient inside the crop repeats as a visible
     # grid of light / dark squares (c3 fleck / mosaic)
     r = r / np.maximum(_blur_wrap(r.mean(2), 2.5 * hp * S / (x1 - x0)), 1e-3)[..., None]
+    # w30 (w29b-4): a dark cloud repeated at the same spot on every fleck back (low-pass CV 0.055 vs 0.030-0.037) -> a
+    # tighter second flattening for the fleck [D]
+    if name == 'y_fleck': r = r / np.maximum(_blur_wrap(r.mean(2), 1.2 * hp * S / (x1 - x0)), 1e-3)[..., None]
     if sharp: r = r + sharp * (r - _blur_wrap_rgb(r, 1.5))
     r = np.maximum(r, 0.03) ** k
     if floor: r = np.sqrt(r * r + floor * floor)       # lift the darkest yarn shadows only
@@ -383,15 +386,20 @@ def y_photo(name):
         # w16 A: the stitch columns wash out under minification (q15 column CV 0.05-0.07 vs 0.24 in y_47300): lift the
         # photo's own column profile (mean down each column) 1.6x so the dark channels survive the mip chain [D]
         c = r.mean(2).mean(0, keepdims=True); c = c / c.mean()
-        r = r * (c ** 0.15)[..., None]   # w20 (gap19): straight columns carry their own profile; 0.6 over-sharpened close up
+        r = r * (c ** 0.3)[..., None]   # w30 (w29a-3 / w29b-2): 0.15 -> 0.3, the column profile is what survives the mip chain (q15 back p90/p10 2.36 vs 2.92 after the deeper ground)   # w20 (gap19): straight columns carry their own profile; 0.6 over-sharpened close up
         m = np.median(r.mean(2)); r = np.where(r.mean(2, keepdims=True) > m, m + 0.72 * (r - m), r)   # w26 (w25a-3): 0.65 dimmed instead of thinning -> 0.72 + edge erosion below; w25 (w23a-2 / w23b-1): 0.8 -> 0.65 (q15 bright 0.12 vs 0.083; ~0.02 per 0.1)   # w21 / w22 B: strokes toward the ground (q15 bright 0.14 vs 0.083 after the -0.5 mip bias)
         # w26 (w25a-3 / w25b-2): strokes 1.5x the photo's coverage, blobs ~1.4x fat -> the stroke rim (above-median pixels with a
         # sub-median 4-neighbour) eases 60 % toward the ground, cores keep their peak [D]
         hi = r.mean(2) > m; core = hi & np.roll(hi, 1, 0) & np.roll(hi, -1, 0) & np.roll(hi, 1, 1) & np.roll(hi, -1, 1)
-        r = np.where((hi & ~core)[..., None], m + 0.4 * (r - m), r)
+        r = np.where((hi & ~core)[..., None], m + 0.55 * (r - m), r)   # w30 (w29a-3 / w29b-2): 0.4 -> 0.55 (strokes a hair fine, bright 0.09 vs 0.14)
+        # w30 (w29a-3 / w29b-2): the ground was too light (q15 back p10 52-56 vs 30-46, p90/p10 2.1-2.5 vs 2.9-3.4) with the
+        # stroke cover on target -> deepen the sub-median channels only [D]
+        r = np.where((r.mean(2) < m)[..., None], np.maximum(m - 1.25 * (m - r), 0.03), r)
     if name == 'y_diamond':
         # econ w25 (w23b-2): the lattice washed out on the bluer #5f6ba0 ground (e4 bright 0.03 vs 0.11 in y_47306) -> 1.25x [D]
-        m = np.median(r.mean(2)); r = np.maximum(m + 1.05 * (r - m), 0.03)   # w26 (w25a-1 / w25b-1): 1.25 overshot (e1 p90/50 1.79 vs 1.51)
+        # w30 (w29a-2 / w29b-7): the stars read bold and few at row distance (q15 back coverage 0.23 vs 0.12, blobs 21 vs 7 px)
+        # while the weave between them was faint -> the > 4 px star band 0.7x, the fine weave 1.15x [D]
+        m = np.median(r.mean(2)); lo = _blur_wrap_rgb(r, 4); r = np.maximum(m + 0.7 * 1.05 * (lo - m) + 1.15 * (r - lo), 0.03)   # w26 (w25a-1 / w25b-1): 1.25 overshot (e1 p90/50 1.79 vs 1.51)
     if name == 'y_fleck':
         # the 3.4 mm/px source smears each 3-5 mm fleck over ~3 px: keep only the core of the excess over the ground
         # (bright area 27 % -> ~12 %, y_47306 pad 11 %) and tint it pale blue (#9fb0e0 vs white, w15 A) [D]
@@ -404,7 +412,7 @@ def y_photo(name):
         base = np.minimum(r, g); dd = np.clip(_blur_wrap(dm, 1.5) * 2.0, 0, 1)
         out = (1 - np.clip(dd * 3, 0, 1)).astype(np.float32)        # the local ground around each dropped fleck fills it
         gl = np.stack([_blur_wrap(base[..., c] * out, 3.0) for c in range(3)], 2) / np.maximum(_blur_wrap(out, 3.0), 1e-3)[..., None]
-        r = base * (1 - dd[..., None]) + gl * dd[..., None] + 1.25 * ep * (e / ep) ** 1.0 * np.array([1.02, 1.0, 0.92], np.float32)   # w25 (w24a-2): distance flecks weak (p90/p10 2.48 vs 3.05)   # w20 A + B: fewer, less blue cores (B/R 3.0 vs 2.54); w22 B: exp 1.2 (bright 0.18 vs 0.153 after the mip bias)   # w20 (gap19): 1.25 thinned the flecks away at row distance
+        r = base * (1 - dd[..., None]) + gl * dd[..., None] + 1.35 * ep * (e / ep) ** 1.0 * np.array([1.02, 1.0, 0.92], np.float32)   # w30 (w29a-7): 1.25 -> 1.35 (q15 fleck p90/p10 0.88x the photo's)   # w25 (w24a-2): distance flecks weak (p90/p10 2.48 vs 3.05)   # w20 A + B: fewer, less blue cores (B/R 3.0 vs 2.54); w22 B: exp 1.2 (bright 0.18 vs 0.153 after the mip bias)   # w20 (gap19): 1.25 thinned the flecks away at row distance
     # w20 (gap19): the 0.5-2.5 cm band (columns, flecks, dashes) is what survives at row distance; boost it in log luminance and
     # damp the < 1.2 mm JPEG grain (tile CV at 150 px/m: tick 0.31 vs 0.46-0.49 in y_47300, fleck 0.31 vs 0.84) [D]
     # w20 A + B: the full boost overshot (q15 tick bright 0.15 vs 0.083, fleck 0.20 vs 0.154) -> half on tick / fleck

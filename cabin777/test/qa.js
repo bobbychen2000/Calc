@@ -31,7 +31,7 @@ const VIEWS = {
   q12_wing: [`(()=>{const s=__S('19A'); __app.sit(s,{instant:true}); __app.lookOut(s); __settle();})()`, [], 'window view of the wing and GE90'],
   q13_pyFront: [`__rel('25C',0.35,1.75,-0.72,Math.PI+0.45,-0.3)`, ['py_37302'], 'PY cabin from the front'],
   q14_seat26A: [`__rel('26A',1.3,1.3,-0.85,Math.PI*0.7,-0.2)`, ['py_37301', 'py_37303'], 'PY window pair from the side'],
-  q15_econFronts: [`(()=>{window.__near=1.25; ${walk(0, 1.45, 48.05, 'Math.PI', -0.30)}})()`, ['y_47300'], 'economy seat fronts looking aft (econ w24: row 34 D-G framed as y_47300, row 33 behind the near clip)'],
+  q15_econFronts: [`(()=>{window.__near=1.25; ${walk(0, 1.55, 48.05, 'Math.PI', -0.26)}})()`, ['y_47300'], 'economy seat fronts looking aft (econ w24: row 34 D-G framed as y_47300, row 33 behind the near clip)'],
   q16_econAisle: [walk(1.0, 1.85, 47.3, 'Math.PI+0.42', -0.36), ['y_47301'], 'economy from the right aisle looking aft (econ w24: framed as y_47301)'],
   q17_econBacks: [walk(0.35, 1.55, 49.4, '-Math.PI/2+0.25', -0.42), ['y_47303'], 'economy H-K from the right aisle looking outboard (econ w24: framed as y_47303)'],
   q18_seat35C: [`__sit('35C',0,-0.25)`, ['y_47305'], 'seated in 35C: seatback screen'],
