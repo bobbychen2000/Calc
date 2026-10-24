@@ -15,3 +15,12 @@
 `econ_before_after_w3e.jpg` (aaec925) had a third column of ANA's official photos. The project rule is that official
 photos are reference only: never commit them, whole or as a sheet column; only processed `tex/` tiles go in. The sheet
 was cropped to the two render columns (before / after). Keep photo comparisons in your scratch dir.
+
+## To lighting (round 3), priority: the economy cover sheen lobe (from_econ w14 / w19 / w23)
+Economy has held at ~8.0 for six rounds, and both raters cite the headrest-cover off-axis read in every round. In
+y_47306 the leatherette cover is navy head-on and silver-grey at grazing (L86-134), but the model renders L34-38 at
+grazing. No roughness value fixes both views; it needs a material-specific sheen lobe in `04_shaders.js`.
+- Gate it on the cover material, e.g. a SEATMAT flag or a reserved layer id from 09a_econ.
+- Use a grazing-angle (Fresnel-like or Charlie / Ashikhmin cloth) lobe.
+- Tune it against y_47306.
+This is the one remaining lighting-side lever for economy (fixed_integration.md still lists it "open").
