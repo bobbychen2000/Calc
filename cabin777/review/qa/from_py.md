@@ -15,3 +15,15 @@
 - Row 25 faces the J/PY bulkhead, which carries wall-mounted monitors and literature pockets (real photos ref/web/py
   alv_14 / alv_15 / san_03, and ANA py_37303). The monitors are already modelled (`monitor: true`); please check them
   against alv_14 (two monitors per seat pair at about eye height, with grey pockets below).
+
+## Wave 3 (w5)
+
+3. **To integration (`src/06_atlas.js`), low:** both w5 raters mark the two white seat-back placards under the PY screen
+   as blank. Real placards (san_26, py_37304) are ~0.12 x 0.022 m, white with 2 small grey lines (JP + EN) and a pictogram
+   at the left. Please add an atlas rect `pyPlacard` (2 lines of ~#707070 text on #e8e8e6). `09b_py.js` will then use
+   `atlasUV('pyPlacard')` on the two quads at `on(0.60, 0.0115, +-0.113)` (currently plain `#e8e8e6`).
+4. **To integration (`test/qa.js`), repeat of item 2:** still no rear-facing PY view, so the screen frame, the literature
+   bucket, the footrest and the bottle bins are only rated in the studio. Suggested
+   `q13b_pyBacks: [\`__rel('26H', 0.1, 1.45, 1.25, 0.05, -0.3)\`, ['py_37304'], 'PY seat backs']` (pairs with san_26).
+5. **To lighting, low (w5 rater B):** q14 shows a hard-edged bright quadrilateral sun patch on the window-seat back;
+   please soften the window sun footprint on seats (same as the q04 item in from_integration.md).

@@ -73,40 +73,39 @@ def _blur_wrap(a, s):
 def synth_py_back(ratio, seed=7):
     """PY: redrawn crisply from ANA's official photos (user decision: ANA official look; the 2026 trip-report herringbone
     is a later fabric generation). Measured on py_37305 / 37301 (fabric research, ~980-1250 px/m) [D]:
-    horizontal light dashes in rows, pitch 8.15 mm (20 rows per 0.163 m tile), dash bands 3.5-4 mm thick; dashes sit in
-    columns (not brick bond), column pitch ~20 mm (8 per tile), dash length p50 13-15 mm (N(21, 5) px), gaps ~5 mm, ends
-    square; light fraction ~0.38; dash ~5x the ground (linear); rectangular cell-snapped dark patches (1-2 cols x 1-3
-    rows, dashes x0.3-0.5, ~7 per tile) and light patches (1-3 cols x 2-4 rows, x1.3 with gaps closed, ~5 per tile);
-    no soft blobs"""
+    horizontal light dashes in rows, rows ~6.8 mm apart (24 per 0.163 m tile; py_37305 ~7 mm), dash bands ~0.45 of the
+    row pitch with soft edges; dashes loosely in columns (~20 mm, 8 per tile) but jittered +-4 mm and every other row
+    shifted 1/4 column (py_37301-03 row-to-row correlation 0.02-0.09 vs 0.43-0.49 for a strict grid, w5 rater A);
+    dash length p50 ~11 mm (N(18, 4) px), brightness +-25 %; small darker cells (1 col x 1-2 rows, dashes x0.5-0.7)
+    and a few slightly lighter ones; dash ~2.6x the ground ((p90-p10)/p50 0.39-0.51 on py_37301, w5 rater B); fine
+    weave grain [D]"""
     rng = np.random.default_rng(seed)
-    rows, cols = 20, 8
+    rows, cols = 24, 8
     ph, cw = S / rows, S / cols
-    dim = np.ones((rows, cols)); close = np.zeros((rows, cols), bool)
-    for _ in range(10):                            # dark patches
+    dim = np.ones((rows, cols))
+    for _ in range(16):                            # darker cells
         r0, c0 = rng.integers(0, rows), rng.integers(0, cols)
-        for r in range(r0, r0 + rng.integers(1, 4)):
-            for c in range(c0, c0 + rng.integers(1, 3)): dim[r % rows, c % cols] = rng.uniform(0.2, 0.4)
-    for _ in range(5):                             # light patches
+        v = rng.uniform(0.5, 0.7)
+        for r in range(r0, r0 + rng.integers(1, 3)): dim[r % rows, c0] = v
+    for _ in range(3):                             # slightly lighter cells
         r0, c0 = rng.integers(0, rows), rng.integers(0, cols)
-        for r in range(r0, r0 + rng.integers(2, 5)):
-            for c in range(c0, c0 + rng.integers(1, 4)): dim[r % rows, c % cols] = 1.3; close[r % rows, c % cols] = True
+        for r in range(r0, r0 + rng.integers(1, 3)):
+            for c in range(c0, c0 + rng.integers(1, 3)): dim[r % rows, c % cols] = 1.15
     y = np.arange(S)[:, None] + 0.5; x = np.arange(S)[None, :] + 0.5
     lite = np.zeros((S, S))
     for r in range(rows):
-        yc = (r + 0.5) * ph
-        band = np.clip((3.2 - np.abs(((y - yc + S / 2) % S) - S / 2)) / 1.0, 0, 1)[:, 0]    # ~6.4 px = 4 mm thick
-        line = np.zeros(S)
         for c in range(cols):
-            ln = np.clip(rng.normal(21, 5), 10, 30)
-            if close[r, c]: ln = cw - rng.uniform(1.5, 3)
-            x0 = c * cw + (cw - ln) / 2 + rng.uniform(-4, 4) * (not close[r, c])
+            yc = (r + 0.5) * ph + rng.uniform(-0.8, 0.8)
+            ln = np.clip(rng.normal(18, 4), 9, 27)
+            x0 = c * cw + (cw - ln) / 2 + (cw / 4) * (r % 2) + rng.uniform(-6, 6)
             u = (x[0] - x0) % S
-            seg = np.clip(np.minimum(u, ln - u) / 1.0, 0, 1) * (u < ln)
-            line = np.maximum(line, seg * np.clip(rng.normal(1, 0.2), 0.6, 1.4) * dim[r, c])
-        lite = np.maximum(lite, band[:, None] * line[None, :])
-    out = 1 + 2.6 * lite                           # dash ~3.6x ground: 5x read as a barcode at seat distance (render vs py_37302)
+            seg = np.clip(np.minimum(u, ln - u) / 1.5, 0, 1) * (u < ln)
+            band = np.clip((2.4 - np.abs(((y[:, 0] - yc + S / 2) % S) - S / 2)) / 1.2, 0, 1)   # ~4.8 px = 3 mm, 0.45 of the pitch
+            lite = np.maximum(lite, band[:, None] * seg[None, :] * np.clip(rng.normal(1, 0.25), 0.5, 1.5) * dim[r, c])
+    out = 1 + 2.1 * lite                           # w5: 2.6 read as a barcode (A + B)
     mot = _blur_wrap(ratio.mean(2), 24); mot = (mot - mot.mean()) / (mot.std() + 1e-6)
     out *= np.exp(0.05 * mot)                      # very weak low-frequency term only
+    out *= np.exp(0.06 * _blur_wrap(rng.normal(0, 1, (S, S)), 0.6) / 0.3)   # fine weave grain
     return np.repeat(out[:, :, None], 3, 2)
 
 
@@ -119,22 +118,25 @@ def synth_py_confetti(ratio, seed=11):
     out = np.ones((S, S))
     yy, xx = np.mgrid[0:S, 0:S] + 0.5
     pts = []
-    while len(pts) < 14:
+    while len(pts) < 14:                          # w5 (A + B): fewer, more varied chips (polka dots before)
         p = rng.uniform(0, S, 2)
-        if all(min(abs(p[0] - q[0]), S - abs(p[0] - q[0])) ** 2 + min(abs(p[1] - q[1]), S - abs(p[1] - q[1])) ** 2 > 45 ** 2 for q in pts): pts.append(p)
+        if all(min(abs(p[0] - q[0]), S - abs(p[0] - q[0])) ** 2 + min(abs(p[1] - q[1]), S - abs(p[1] - q[1])) ** 2 > 38 ** 2 for q in pts): pts.append(p)
     for cy, cx in pts:
         dy = (yy - cy + S / 2) % S - S / 2; dx = (xx - cx + S / 2) % S - S / 2
-        a = rng.uniform(0, 2 * np.pi); e = rng.uniform(1.2, 1.9); req = np.clip(rng.normal(10, 2), 7, 13)
+        a = rng.uniform(0, 2 * np.pi); e = rng.uniform(1.2, 2.4); req = np.clip(rng.normal(7, 2.5), 3.5, 10)
         u = dx * np.cos(a) + dy * np.sin(a); v = -dx * np.sin(a) + dy * np.cos(a)
         th = np.arctan2(v * e, u); rr = np.hypot(u / np.sqrt(e), v * np.sqrt(e))
         k = rng.integers(5, 8); ph0 = rng.uniform(0, 6)
         # polygonal chip: facets from a k-gon, pointed tip at th=0, shallow notch at th=pi (sakura petal)
-        poly = (np.cos(np.pi / k) / np.cos((th + ph0) % (2 * np.pi / k) - np.pi / k)) ** 0.7   # softened facets
+        poly = (np.cos(np.pi / k) / np.cos((th + ph0) % (2 * np.pi / k) - np.pi / k)) ** 1.0   # sharp facets
         prof = req * poly * (1 + 0.18 * np.cos(th)) * (1 - 0.22 * np.exp(-((np.abs(th) - np.pi) / 0.25) ** 2))
-        out += 5.0 * np.clip(rng.normal(1, 0.15), 0.7, 1.3) * np.clip((prof - rr) / 1.0, 0, 1)
+        out += 3.2 * np.clip(rng.normal(1, 0.15), 0.7, 1.3) * np.clip((prof - rr) / 1.0, 0, 1)
     for cy, cx in rng.uniform(0, S, (60, 2)):
         rr = np.hypot((yy - cy + S / 2) % S - S / 2, (xx - cx + S / 2) % S - S / 2)
         out += rng.uniform(0.5, 1.0) * np.clip((rng.uniform(2, 5) - rr) / 1.0, 0, 1)
+    for cy, cx in rng.uniform(0, S, (30, 2)):      # w5: mid-size specks 3-6 mm (py_37305 petals 3-12 mm)
+        rr = np.hypot((yy - cy + S / 2) % S - S / 2, (xx - cx + S / 2) % S - S / 2)
+        out += rng.uniform(1.5, 2.5) * np.clip((rng.uniform(2, 3.5) - rr) / 1.0, 0, 1)
     out *= np.exp(0.08 * _blur_wrap(rng.normal(0, 1, (S, S)), 0.8) / 0.25)
     return np.repeat(out[:, :, None], 3, 2)
 
