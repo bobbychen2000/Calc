@@ -191,9 +191,10 @@ void main(){
     else {
       // QA r2 (integration): photo tiles sampled half a mip sharper (bias -0.5; the arrays are already 8x anisotropic):
       // the Y tick-stitch columns and the ash grain washed out at row distance [V: q15 column CV 0.06-0.08 vs y_47300
-      // 0.24 (from_econ w17); THE Room ash grain 0.017-0.032 vs c_27316 0.10-0.16 (from_room w13a)]
-      float PL = float(layer - 16);
-      vec3 c = texture(u_photo, vec3(q.zy, PL), -0.5).rgb*w.x + texture(u_photo, vec3(q.xz, PL), -0.5).rgb*w.y + texture(u_photo, vec3(q.xy, PL), -0.5).rgb*w.z;
+      // 0.24 (from_econ w17); THE Room ash grain 0.017-0.032 vs c_27316 0.10-0.16 (from_room w13a)]. Not on layer 16
+      // (y_tick), which speckled at row distance with it (q15 bright 0.12-0.14 vs y_47300 0.083; from_econ w23)
+      float PL = float(layer - 16), mb = layer == 16 ? 0.0 : -0.5;
+      vec3 c = texture(u_photo, vec3(q.zy, PL), mb).rgb*w.x + texture(u_photo, vec3(q.xz, PL), mb).rgb*w.y + texture(u_photo, vec3(q.xy, PL), mb).rgb*w.z;
       base *= mix(vec3(1.0), c * 2.0, P.z);
     }
     rough = clamp(rough * (1.0 + (t.a - 0.5) * 2.0 * P.w), 0.04, 1.0);
@@ -297,8 +298,14 @@ void main(){
     // #c7c1c0 by the pane; was c06 #6a73d6] (integration r1). QA r2: only as far as the shade lets the window light in
     // (shade row): a closed blackout took 0.75 off its lens / band light and read 0.45 of the wall, against 0.64 before
     // nearPane and 0.65 in the photo [V: omaat_room24; from_shell w10a]
-    vec2 shT = texture(u_win, vec2((v_wpos.z - u_winZ.x)/(u_winZ.y - u_winZ.x), WS)).rg;
-    float nearPane = 1.0 - 0.75*reveal*(v_wpos.x < 0.0 ? shT.r : shT.g);
+    vec2 shT2 = texture(u_win, vec2((v_wpos.z - u_winZ.x)/(u_winZ.y - u_winZ.x), WS)).rg;
+    float shT = v_wpos.x < 0.0 ? shT2.r : shT2.g;
+    float nearPane = 1.0 - 0.75*reveal*shT;
+    // QA r2 (light): the down-facing tub crown (0.32-0.62 m above the pane centre: F/J top 0.46, PY/Y 0.565 in 07_shell
+    // REC / REC_Y) sees the lit cloud deck through the pane, so it reads near the pier, not grey: the reveal glow stops at
+    // 0.34 m [V: sp_py14 / sans_14 crown ~0.85-1.0 of the pier, darkest just above the bezel; oY crown 0.69 (render);
+    // from_shell w10b / w12a]; level [D]
+    float crown = recd * wl.a * down * smoothstep(0.32, 0.42, v_wpos.y - u_winY.x) * (1.0 - smoothstep(0.58, 0.66, v_wpos.y - u_winY.x)) * shT;
     // QA r2: the sidewall band between the window tops and the bin lens is lit by the lens only; with the full hemi,
     // bounce and wash on top the blue/amber sideLed washed out to #b8c0d5. Those terms are cut inside the band and the
     // lens ramp starts lower so the colour reaches the window tops (glass top ~1.32 m), fading to white at the belt
@@ -333,7 +340,7 @@ void main(){
         + u_winGlow * wallProx * facingIn * smoothstep(0.7, 1.1, v_wpos.y) * (1.0 - smoothstep(1.5, 1.8, v_wpos.y)) * 0.5 * (1.0 - band)
         // QA r1 (light): reveal glow 1.4 -> 1.9, the reveal sides read grey at grazing angles [V: c_27312 reveal sides
         // #d7dbdf / #e2e5e8 vs q06 #b2b1af / #c7c9c9] (integration r1)
-        + u_winGlow * wl.rgb * reveal * 1.9;
+        + u_winGlow * wl.rgb * reveal * 1.9 + u_winGlow * crown * 0.7;
     // night: the galley / lav / door zones (sz = 0) keep a dim neutral fill, the galley lights and lit bulkheads at the
     // end of the dark cabin [V: ucr_room-night-lighting far galley wall #645f57; sany_40 lit galley end] (lighting r1)
     amb += u_monFill * (1.0 - sz) * mix(0.45, 1.0, up) * (0.3 + 0.7*ao);
