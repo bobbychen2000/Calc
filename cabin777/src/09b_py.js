@@ -103,25 +103,27 @@ function pySeat(B, x0, lod, opts = {}) {
     // ANA py_37304: bezel 0.376 x 0.263 set ~1 cm proud into the shell with a thin dark gap, framed by the shell rim
     // (~5 cm above it, 18 % of the bezel height) - no separate housing; placards 0.12 x 0.021, 1.7 cm under it [D]
     B.add(gRBox(0.405, 0.29, 0.014, 0.008, 1), scr(0.006), { c: '#3a3d42', r: 0.45, l: LAYER.plastic });   // w5: ~2 cm dark-grey frame (san_26) [D]
-    B.add(gRBox(0.376, 0.263, 0.012, 0.008, 1), scr(0.016), SEATMAT.bezel);
+    B.add(gRBox(0.376, 0.263, 0.012, 0.008, 1), scr(0.016), { c: '#222429', r: 0.22 });   // w12 (B): bezel #282932 in py_37304, not black
     B.add(gQuad(0.345, 0.194), scr(0.0235), SEATMAT.screen, atlasUV('screen'));
     for (const sx of [-0.113, 0.113]) B.add(gQuad(0.12, 0.022), on(0.63, 0.0115, sx), { c: '#e8e8e6', r: 0.6 });
   }
   {   // (row 25 backs too: seen from row 26)
     // w5 (A + B): moulded literature bucket right under the placards (san_20 / san_26, b_gf_a380): slim rim at the mouth,
     // the bucket bulging ~5 cm aft toward its rounded bottom, black mesh band across its lower front [D]
-    const py0 = 0.40;
-    // w11 (B, san_26 / b_san_20 at ~1100 px/m): a dark recess ~0.30 x 0.19 under the placards; in it an open tray pocket
-    // ~0.27 wide whose grey front rises at the sides (~0.145) and dips in a deep smile to ~0.08 at the centre, contents
-    // showing above it; curved black mesh over the lower ~4 cm of the bulge [D]
-    B.add(gRBox(0.31, 0.19, 0.003, 0.02, 1), on(py0 + 0.105, 0.0105), { c: '#3a3d43', r: 0.6, l: LAYER.plastic });
-    const BK = M4.mul(BH, M4.trs(0, py0, zr(py0 + 0.09) + 0.011));
+    const py0 = 0.35;
+    // w11 (B, san_26 / b_san_20 at ~1100 px/m): a dark recess under the placards; in it an open tray pocket whose grey front
+    // rises at the sides and dips in a deep smile, contents showing above it, mesh across the lower bulge [D]
+    // w12 (A): recess ~0.62 of the frame width (0.255) running down to ~2 cm above the shell's lower edge; the tray fills
+    // its lower third (rim dip at ~30 % of the recess height), the mesh band follows the smile; a pale safety card [D]
+    B.add(gRBox(0.255, 0.25, 0.003, 0.02, 1), on(py0 + 0.12, 0.0105), { c: '#3a3d43', r: 0.6, l: LAYER.plastic });
+    const BK = M4.mul(BH, M4.trs(0, py0, zr(py0 + 0.06) + 0.011));
     // tray front lofted across x so its grey top edge follows the smile (sections = columns, w = front height) [D]
-    const rimY = (x) => 0.10 + 0.045 * ((x / 0.135) ** 2) ** 1.5;
-    B.add(gLoft([-0.135, -0.11, -0.07, 0, 0.07, 0.11, 0.135].map((x) => SEC(x, rimY(x), 0.045, 0.0225, 0.012, rimY(x) / 2)), 3), M4.mul(BK, M4.trs(0, 0, 0, 0, 0, Math.PI / 2)), PYREAR);
-    B.add(gTube([-0.133, -0.1, -0.05, 0, 0.05, 0.1, 0.133].map((x) => M4.point(BK, [x, rimY(x), 0.043])), 0.005, 6), null, PYREAR);   // smile rim
-    B.add(gLoft([SEC(0.003, 0.25, 0.03, 0.015, 0.012), SEC(0.012, 0.276, 0.049, 0.0245, 0.016), SEC(0.05, 0.276, 0.049, 0.0245, 0.016)], 3, [false, false]), BK,
-      { c: '#25282c', r: 0.9, l: LAYER.grille });   // mesh wrapped on the bulge (san_26)
+    const rimY = (x) => 0.07 + 0.045 * ((x / 0.112) ** 2) ** 1.5, XS = [-0.112, -0.09, -0.055, 0, 0.055, 0.09, 0.112];
+    B.add(gLoft(XS.map((x) => SEC(x, rimY(x), 0.045, 0.0225, 0.012, rimY(x) / 2)), 3), M4.mul(BK, M4.trs(0, 0, 0, 0, 0, Math.PI / 2)), PYREAR);
+    B.add(gTube(XS.map((x) => M4.point(BK, [x * 0.985, rimY(x), 0.043])), 0.005, 6), null, PYREAR);   // smile rim
+    B.add(gLoft(XS.slice(1, -1).map((x) => SEC(x, 0.035, 0.003, 0.0465, 0.001, rimY(x) - 0.03)), 1, [false, false]), M4.mul(BK, M4.trs(0, 0, 0, 0, 0, Math.PI / 2)),
+      { c: '#25282c', r: 0.9, l: LAYER.grille });   // mesh band following the smile (san_26)
+    B.add(gQuad(0.085, 0.09), M4.mul(BK, M4.trs(0.03, 0.095, 0.014, -8 * DEG)), { c: '#aeada8', r: 0.7 });   // safety card in the mouth (san_26, b_san_20)
   }
   if (!opts.noScreen) {
     // gooseneck reading light: leaves the shell side at headrest height, arcs down + forward to a brushed-aluminium
@@ -136,7 +138,7 @@ function pySeat(B, x0, lod, opts = {}) {
     // nearly vertical beside the wing with its lens facing forward and a dark end ring (py_37301 / 37305) [D]
     const C = [[0.24, 0.84, zr(0.84) - 0.065], [0.268, 0.78, -0.04], [0.255, 0.64, -0.11], [0.236, 0.59, -0.128]];   // w10 (A + B): longer hose down to a lower head
     const bz = (t) => [0, 1, 2].map((k) => (1 - t) ** 3 * C[0][k] + 3 * (1 - t) ** 2 * t * C[1][k] + 3 * (1 - t) * t * t * C[2][k] + t ** 3 * C[3][k]);
-    B.add(gTube([...Array(10)].map((_, i) => P(...bz(i / 9))), 0.0065, 8), null, SEATMAT.black);
+    B.add(gTube([...Array(10)].map((_, i) => P(...bz(i / 9))), 0.0095, 8), null, SEATMAT.black);   // w12 (A + B): hose ~0.5 of the head diameter
     // w10 (A + B): stowed heads near-vertical, ~mid-back, ~9 cm between neighbours (py_37301 / 37302 / 37303, san_26; the w9
     // splay copied py_37305, a pulled-out pose, and crossed the neighbours' heads into a V) [D]
     const hd = M4.mul(BH, M4.trs(sd * 0.232, 0.53, -0.13, 0, 12 * DEG));
