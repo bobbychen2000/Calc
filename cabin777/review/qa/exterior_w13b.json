@@ -1,0 +1,158 @@
+{
+  "area": "exterior",
+  "rater": "B geometry",
+  "build": "w13 = e616802 (renders /tmp/claude-0/-home-user-Calc/befcfc7c-26eb-511e-bccb-dea0e8e11491/scratchpad/r13, previous round r12). Crops and the sampler (11x11 means, Rec.709 luma) are in /tmp/claude-0/-home-user-Calc/befcfc7c-26eb-511e-bccb-dea0e8e11491/scratchpad/ratB13 (s.py). Line numbers refer to src/11_exterior.js at e616802.",
+  "score": 7.8,
+  "details": [
+    {
+      "detail": "Planform, raked tip, cruise bending",
+      "score": 7.5,
+      "note": "Unchanged and still right. The LE sweep, rake and tip lift in w19A and c_wing_panel match KN41.",
+      "refs": ["r13/w19A.png", "r13/c_wing_panel.png", "ref/web/exterior/a5_kn_ANA77W_TheRoom_41.jpg"]
+    },
+    {
+      "detail": "Surface detail: value, panel tone, seams, fastener rows, slat band, gear stripe, placards, grime",
+      "score": 7.7,
+      "note": "The near-far value is still reversed in w19A. The near flap is L163/161 at (600,440)/(560,500), and the far skin is L169/172 at (680,195)/(720,220); r12 had 173/174. The l.256 roughness ramp took only 3-4 L off. KN41 runs 194 near to 146 far. The new w12 flap streaks (l.334-339) read as three hard, evenly toned ruled bars per canoe in w26K (ratB13/z26K_flaps_r12_r13.png). They look like painted walkway lines, not the soft irregular grime in _7250. In the studio view c_canoes_left they render slightly lighter than the flap, because the streak material has no xSkin layer, no panel tint and no normal tilt. There is no tiling, and the seams and fastener rows are unchanged and correct.",
+      "refs": ["r13/w19A.png", "ratB13/z26K_flaps_r12_r13.png", "ref/web/exterior/a5_kn_ANA77W_TheRoom_41.jpg", "ref/web/exterior/b_alv_ANA77W_PY_IMG_7250-2-scaled.jpeg"]
+    },
+    {
+      "detail": "Control-surface lines (spoilers, flaperon, aileron)",
+      "score": 8.1,
+      "note": "The gap taper works. The near TE gap in w19A is now 2 px: row 400 x 562-563 (r12: 4 px, 561-564), row 470 3 px (r12: 5), row 520 3 px (r12: 6). That matches KN41's ~2 px at this width. The hierarchy is unchanged and correct.",
+      "refs": ["r13/w19A.png", "ref/web/exterior/a5_kn_ANA77W_TheRoom_41.jpg"]
+    },
+    {
+      "detail": "Flap-track fairings (canoes)",
+      "score": 8.0,
+      "note": "The structure is restored on both sides. K side, w26K near pod at x=600: crown L201-223 (y 300-315), flank grading 177 -> 163 -> 148 (y 320-355), then a dark keel rim. In r12 the whole pod was a flat 189-191. A side, w19A: flank L132 at (470,350) and L124 at (515,240) against the near flap at 163, so 0.76-0.81 (r12: 0.61; KN41: 0.72-0.77), with a visible top-to-keel grade (ratB13/z19A_r12_r13.png). The sharper chine and the wedge tails read well in c_canoe_side. What remains: the K-side flank is still light. Against the 177-182 skin it is 0.94 at mid-flank and 0.82 low, where _7250 shows 0.54 on the near pod and 0.72 on the second pod (_7331: 0.41-0.51). The tip still ends on the u 0.998 ring (l.367) and shows a small faceted point in c_canoes_left (studio only).",
+      "refs": ["ratB13/w26K_r12_r13.png", "ratB13/z19A_r12_r13.png", "ratB13/canoe_tip_r12_r13.png", "r13/c_canoe_side.png", "ref/web/exterior/b_alv_ANA77W_PY_IMG_7250-2-scaled.jpeg", "ref/web/exterior/b_alv_ANA77W_PY_IMG_7331-2-scaled.jpeg"]
+    },
+    {
+      "detail": "Pylon",
+      "score": 7.3,
+      "note": "The fairing is crisper, and the flank shade reads: w13A (520,290) and (560,300) went from L171 to L155. Geometry gap: in LALF _137 the fairing over the fan cowl is a defined hump that ends forward in a blunt, rounded nose with a seam at its base. The render still ramps down to a thin wedge that blends into the cowl, because w lerps from 0.05 and the ridge from 0 over x 1.4-3.2 (l.442-446). See ratB13/pylon_w13A_r12_r13_lalf137.png.",
+      "refs": ["ratB13/pylon_w13A_r12_r13_lalf137.png", "r13/w13A.png", "ref/web/exterior/b_lalf_ANA77W_11A_137.jpg"]
+    },
+    {
+      "detail": "Nacelle geometry (cowl, lip, splits, strake, access panel)",
+      "score": 7.5,
+      "note": "The cowl, lip, splits and strake are unchanged and correct. The access panel is still a sharp rounded rectangle. LALF _136 shows a stadium oval with a fastener ring and a fainter second panel below it (A w12 low, not fixed).",
+      "refs": ["ratB13/inlet_w11A_r12_r13_lalf136.png", "r13/c_nacelle_left.png"]
+    },
+    {
+      "detail": "Nacelle colour / materials (incl. GE monogram)",
+      "score": 7.9,
+      "note": "The sunlit K cowl no longer clips. In w11K, (380,350) went from L229 to 206, (420,400) from 226 to 201, and (460,480) from 212 to 173. Row 420 now rolls off 205 -> 192 across the face (r12: a flat 222-228). That is still a little hot and flat against knav _9, which peaks at 187 and runs 169 -> 97 down to the strake. The shade side in w13A and w11A is unchanged and correct. The s13A sun hotspot on the fan cowl is gone, and the monogram is unchanged and correct.",
+      "refs": ["ratB13/w11K_r12_r13.png", "r13/c_ge_inboard_left.png", "ratB13/s13A_r12_r13.png", "ref/web/exterior/b5_knav_ANA77W_7A_GE90_takeoff_9.jpg"]
+    },
+    {
+      "detail": "Inlet / fan / spinner",
+      "score": 7.4,
+      "note": "The bright floor is gone. c_nacelle_left (650,400) went from L157 to 25, w11K inner wall (335,450) from 172 to 35 and (345,500) from 179 to 27, and w11A from 61 to 8 at (595,420). It now overshoots into a void. LALF _136 (same seat as w11A) shows a dark slate liner at L31-87 with visible acoustic panel joints and an inner-lip band, while the render throat is L6-9. The blade ring still does not read in any view; only the spinner nub (L60) shows in c_nacelle_left. The read is now a black hole rather than a fan face (ratB13/inlet_c_vs_knav9.png).",
+      "refs": ["ratB13/inlet_w11A_r12_r13_lalf136.png", "ratB13/inlet_c_vs_knav9.png", "r13/w11K.png", "ref/web/exterior/b_lalf_ANA77W_11A_136.jpg", "ref/web/exterior/b5_knav_ANA77W_7A_GE90_takeoff_9.jpg"]
+    },
+    {
+      "detail": "Livery / registration JA795A",
+      "score": 7.7,
+      "note": "With the camera at the glass, w26K shows the whole registration. It is in the same 180-degree-inverted reading as alv _7250 (ratB13/reg_26K_vs_7250.png), with the right stroke weight and spacing. The ink measures #27355c against KN41's navy #14538e/skin, and _7250 reads greyer (#57626f) under overcast. That is acceptable.",
+      "refs": ["ratB13/reg_26K_vs_7250.png", "r13/w26K.png", "r13/w30K.png", "r13/w17K.png"]
+    },
+    {
+      "detail": "Nav lights and static dischargers",
+      "score": 7.2,
+      "note": "Unchanged. The red point sits at the tip in n19A and the discharger comb shows in w19A.",
+      "refs": ["r13/n19A.png", "r13/w19A.png"]
+    },
+    {
+      "detail": "Artefacts",
+      "score": 7.7,
+      "note": "There is no z-fighting, floating part, gap or tiling. Residuals: the faceted canoe tip point (studio), the streak bars that read as ruled stripes, and stair-stepped aliasing on the long slat and spoiler hairlines in w26K (ratB13/reg_26K_vs_7250.png, top). The last is a lighting/AA matter.",
+      "refs": ["ratB13/canoe_tip_r12_r13.png", "ratB13/reg_26K_vs_7250.png"]
+    }
+  ],
+  "previous": [
+    {"issue": "B w12 medium / A w12 high: canoe K-side flanks as bright as the skin", "status": "MOSTLY FIXED. w26K x=600: r12 flat 189-191; r13 crown 201-223 / flank 177 -> 148 / keel rim. The flank is still 0.82-0.94 of the skin against 0.54-0.72 in _7250. A side 0.61 -> 0.76-0.81 (KN41 0.72-0.77), now slightly light but correct in order."},
+    {"issue": "B w12 medium / A w12 medium: inlet lower liner bright, blade ring invisible", "status": "FIXED, OVERSHOT. Liner c_nacelle_left (650,400) L157 -> 25, w11K (335,450) 172 -> 35, w11A (595,420) 61 -> 8, against LALF _136 at L31-87. The throat is now a void, and the blades still do not read."},
+    {"issue": "B w12 medium: sunlit K cowl clips (w11K)", "status": "FIXED. Peak L229 -> 206, row 420 rolls off 205 -> 192, (460,480) 212 -> 173. Target was 185-200, so it is still slightly hot and flat."},
+    {"issue": "B w12 medium / A w12 medium: wing near-far value reversed (w19A)", "status": "NOT FIXED. Near flap 163/161 against far skin 169/172 (r12 173/174). The roughness ramp is worth about 3-4 L, and the lever is now lighting's specEnv (from_exterior 14/16)."},
+    {"issue": "B w12 low: canoes deep / bulbous; flat chined flank", "status": "PARTLY FIXED. The flank grades now and the chine is sharper (l.348 r min(w 0.24, d 0.2)). The depth factor is still 0.85 (l.347), but it no longer reads bulbous in w26K."},
+    {"issue": "B w12 low / A w11 low: control-surface gaps about 2x too heavy", "status": "FIXED. w19A row 400 is 4 -> 2 px, row 470 5 -> 3, row 520 6 -> 3."},
+    {"issue": "B w12 low: canoe tip faceted cone (studio)", "status": "NOT FIXED. l.367 still ends at u 0.998, and a small faceted point remains in c_canoes_left."},
+    {"issue": "A w12 low: pylon fairing soft", "status": "PARTLY FIXED. It is crisper with a flank shade (w13A L171 -> 155), but the forward end is still a wedge rather than a blunt rounded nose."},
+    {"issue": "A w12 low: access panel shape / lip satin", "status": "Lip FIXED (no hot line; w11A lip L143, a broad satin band). Access panel NOT FIXED (rounded rectangle)."},
+    {"issue": "(camera) registration under the shade rail in w26K / w30K", "status": "FIXED in the review cameras (the whole JA795A shows). lookOut in 13_app.js is still the integrator's job (from_exterior 15)."},
+    {"issue": "(lighting) sunset underwing blue-violet", "status": "Unchanged (s13A (150,330) #616586). A closed it as matching _7282; not scored."}
+  ],
+  "issues": [
+    {
+      "severity": "medium",
+      "detail": "inlet: throat now a black void (overshoot); no liner detail; blades unreadable",
+      "problem": "The w12 grade (l.379-380: 1 - 0.85 smooth(0, 0.55, depth), times lerp(1, 0.45, smooth(0, 0.7, n.y))) on a #3e4247 r 0.85 liner sends everything beyond about 0.3 m inside the lip to L6-35. The real inlet in the same seat is a dark slate L31-87, graded, with panel joints and an inner-lip band, and the fan face behind it is near black with the spinner reading.",
+      "evidence": [
+        "ratB13/inlet_w11A_r12_r13_lalf136.png",
+        "r13/w11A.png (595,420) #06080a L8, (600,380) L9; LALF _136 (590,780) L31, (600,850) L47, (610,920) L87",
+        "r13/c_nacelle_left.png (640,250) L8, (690,200) L6, (650,400) L25; spinner (620,300) L60",
+        "r13/w11K.png (335,450) L35, (345,500) L27"
+      ],
+      "fix": "l.378: liner { c: '#4a4f55', r: 0.85, m: 0.03 }. l.379-380: soften the grade to (1 - 0.6 * smooth(0.1, 0.9, depth)) * lerp(1, 0.6, smooth(0, 0.7, n[1])), so the first 0.5 m of liner reads L40-80 and only the fan plane goes near black. Add 3-4 thin circumferential joint rings in #2a2d31 (lathe bands at 0.35 / 0.7 / 1.0 m) for the acoustic panel joints in _136. For the blades (l.233), give the leading edges some sky: m 0.85, r 0.25, or bake +30 % on the outer 15 % of the span. Target: w11A liner L40-80, c_nacelle_left (650,400) about L45."
+    },
+    {
+      "severity": "medium",
+      "detail": "canoes: K-side flank still 0.82-0.94 of the skin",
+      "problem": "The structure (crown > flank > keel) is now right, but under the day sun the sunlit (-x) flanks of the right-wing pods stay close to the skin tone. The 26K photos show the pods as the darkest grey mass under the wing. The A side now sits slightly above KN41 (0.76-0.81 against 0.72-0.77), so both sides have headroom to come down together.",
+      "evidence": [
+        "ratB13/w26K_r12_r13.png",
+        "r13/w26K.png x=600: crown y 300-315 L201-223, flank y 320 177 / y 340 170 / y 350 156 / y 355 148; skin (600,240) L182, (560,260) 176",
+        "ref/web/exterior/b_alv_ANA77W_PY_IMG_7250-2-scaled.jpeg near pod top 220-228 / flank 121-127 / belly 73-76 on a 230 skin; second pod flank 168-173",
+        "r13/w19A.png (470,350) L132, (515,240) L124 against the near flap at 163"
+      ],
+      "fix": "l.452: (n[1] > 0.45 ? 1 : 0.45 + 0.35 * smooth(-0.9, -0.2, n[1])) * lerp(1, 0.6, smooth(0.04, 0.5, dy)). The flank at n.y about 0 goes from about 0.9 to about 0.78, and the lower flank about 0.55. Expected: w26K mid-flank about 150 (0.83 -> 0.72 of the skin), lower about 120. w19A A side about 0.70 of the flap (KN41 0.72-0.77). Keep the l.455 +x lift as it is."
+    },
+    {
+      "severity": "medium",
+      "detail": "wing near-far value still reversed (w19A)",
+      "problem": "The far skin is 6-9 L brighter than the near flap; KN41 falls about 25 %. The own-file levers (albedo ramp and roughness ramp) are spent: the roughness ramp moved it 3-4 L. The remaining term is the albedo-blind grazing specEnv.",
+      "evidence": ["r13/w19A.png (600,440) L163, (560,500) L161, (680,195) L169, (720,220) L172", "ref/web/exterior/a5_kn_ANA77W_TheRoom_41.jpg near 194 -> far 146"],
+      "fix": "Lighting owner (04_shaders.js exterior branch, from_exterior 14/16): multiply specEnv by clamp(luma(v_col) / luma(matBase), 0.6, 1.1) so the l.252 albedo ramp also attenuates the grazing reflection. Nothing is left in 11_exterior.js."
+    },
+    {
+      "severity": "low",
+      "detail": "flap streaks read as ruled stripes",
+      "problem": "The three streaks per canoe (l.334-339) are uniform, constant-width, hard-edged bars. In w26K they read as painted walkway lines. In the studio they come out a touch lighter than the flap, because the strip material lacks the flap's xSkin layer, the 0.92 tint and the panel normal tilt. _7250 shows soft, irregular, low-contrast smudges.",
+      "evidence": ["ratB13/z26K_flaps_r12_r13.png", "ratB13/canoe_tip_r12_r13.png", "ref/web/exterior/b_alv_ANA77W_PY_IMG_7250-2-scaled.jpeg"],
+      "fix": "l.336: sk = { ...paint, c: '#6c6e71', r: 0.85 } (keeps the xSkin layer). Pass w as a function that tapers to 0 at the aft end (wingLine accepts w(s); make it path-index based or use 4-point paths with widths [0.6, 1, 0.8, 0.2] x w). Drop to 2 per canoe with lengths jittered by hsh(cs)."
+    },
+    {
+      "severity": "low",
+      "detail": "pylon fairing forward end is a wedge, not the blunt rounded nose",
+      "problem": "In LALF _137 the fairing over the fan cowl ends forward in a rounded nose about 0.5 m tall, with a seam along its base. The render's width (lerp(0.05, 1, smooth(1.4, 3.2, x)), l.445) and ridge (from 0) taper it into a thin ramp that dissolves into the cowl.",
+      "evidence": ["ratB13/pylon_w13A_r12_r13_lalf137.png", "ref/web/exterior/b_lalf_ANA77W_11A_137.jpg"],
+      "fix": "l.442: ridge start lerp(0.25, 0.70, ...), so the nose stands proud. l.445: width factor lerp(0.35, 1, smooth(1.4, 2.4, x)), with a cap ring at x 1.4 (gLoft caps [true, false] already). Add a wingLine-style dark seam (#7d8086, 0.015 m) along the fairing base on the cowl."
+    },
+    {
+      "severity": "low",
+      "detail": "inlet access panel shape",
+      "problem": "It is a sharp rounded rectangle. LALF _136 shows a stadium oval with a fastener ring and a fainter second panel below (A w12).",
+      "evidence": ["ratB13/inlet_w11A_r12_r13_lalf136.png"],
+      "fix": "Panel outline superellipse exponent 0.3 -> 0.55, half-size 0.24 x 0.17, plus a second faint outline 0.38 m below in #a3a8ad."
+    },
+    {
+      "severity": "low",
+      "detail": "canoe tip faceted point (studio)",
+      "problem": "This is unchanged and invisible from the window seats.",
+      "evidence": ["ratB13/canoe_tip_r12_r13.png"],
+      "fix": "l.367: u in [0.5, 0.85, 0.97] and close the loft with gLoft(secs, 3, [true, true]), or copy the second-to-last ring's normals onto the last ring."
+    }
+  ],
+  "worth_0_3": [
+    {"item": "Inlet liner eased to L40-80 with joint rings, blade LE sheen", "gain": "inlet 7.4 -> 8.0. The 11A / 11K engine face reads as a GE90 rather than a hole. About +0.1 overall."},
+    {"item": "Canoe flank bake down about 13 % on both sides", "gain": "canoes 8.0 -> 8.5. The K views match _7250 / _7331. About +0.1."},
+    {"item": "Lighting specEnv scaled by baked albedo (not this file)", "gain": "surface detail 7.7 -> 8.3. It fixes the hero-view w19A gradient. About +0.1-0.15."},
+    {"item": "Pylon nose + streak softening + access panel", "gain": "about +0.05 each."}
+  ],
+  "questions": [
+    "Is there a more frontal reference for the 11A/11K inlet (one where the fan face and spinner are visible from the window)? From the current review angles the blades are hidden behind the lip whatever their colour."
+  ],
+  "photos": []
+}
