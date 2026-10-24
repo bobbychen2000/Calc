@@ -24,7 +24,7 @@ Object.assign(SEATMAT, {
   fShell: { c: '#59534b', r: 0.45, l: LAYER.plastic }, fCap: { c: '#8f8a76', r: 0.42, l: LAYER.plastic },
   fInner: { c: '#5e5751', r: 0.5, l: LAYER.plastic },        // w9: aisle box / ottoman tray ~1.1-1.35x the shell (f_17313), rendered 1.7x [V]
   fConsole: { c: '#615a54', r: 0.45, l: LAYER.plastic },     // w9: niche / fascia / module ~0.65 of the cap (omaat_f57 module/cap 89/133; rendered 0.9) [V]
-  fFlank: { c: '#2a221d', r: 0.38, l: LAYER.fWood },          // w7: near-black straight-grain flanks beside the leaves (omaat_f60 flank/field 0.39) [V]
+  fFlank: { c: '#33291f', r: 0.38, l: LAYER.fWood },          // w7: near-black straight-grain flanks beside the leaves (omaat_f60 flank/field 0.39); w12: 0.62 in a fairer band (w12a) [V]
 });
 function suiteUnit(opts = {}) {
   const B = new Builder();
@@ -238,7 +238,7 @@ function suiteUnit(opts = {}) {
     // w10: the plinth is the leaf's olive-grey, darker than the field (omaat_f60 0.67x, up_34); closed, the zone under the meeting
     // leaves is a dark recess (f60) [V]
     const plinth = { ...SEATMAT.fDoorFrame, c: '#33312b' };
-    if (doorsShut) B.add(gBox(0.02, ly0, zo1 - zo0 + 0.02), M4.trs(hx - 0.08, ly0 / 2, zm), SEATMAT.black);   // toe-kick 0.06 back (w10a)
+    if (doorsShut) B.add(gBox(0.02, ly0, zo1 - zo0 + 0.02), M4.trs(hx - 0.08, ly0 / 2, zm), { c: '#16130f', r: 0.8 });   // w12: warm void (f60)   // toe-kick 0.06 back (w10a)
     // [z0, z1, meeting edge (-1 front, 1 aft), proud offset]
     const leaves = doorsShut ? [[zm - 0.50, zm, 1, 0.008], [zm, zm + 0.50, -1, 0.008]] : [[-L + 0.10, -L + 0.60, 1, 0], [-0.96, -0.46, -1, 0]];
     const flanks = doorsShut ? [[-L + 0.10, zm - 0.50], [zm + 0.50, -0.08]] : [[-0.46, -0.08]];
@@ -259,9 +259,9 @@ function suiteUnit(opts = {}) {
     }
     // w11: plinth faces fixed to the shell either side of the doorway, so the doorway shows floor (open) or the toe-kick (closed)
     // instead of a plinth sliding with the leaves (omaat_f60 / f58, w11b)
-    for (const [z0, z1] of [[-L + 0.10, zo0], [zo1, -0.08]]) B.add(gBox(0.004, ly0 - 0.01, z1 - z0), M4.trs(hx + 0.002, (ly0 - 0.01) / 2 + 0.005, (z0 + z1) / 2), plinth);
+    for (const [z0, z1] of [[-L + 0.10, zo0], [zo1, -0.08]]) B.add(gBox(0.004, ly0 - 0.01, z1 - z0), M4.trs(hx + 0.003, (ly0 - 0.01) / 2 + 0.005, (z0 + z1) / 2), plinth);
     // grip slots ~0.10 x 0.07 stay under the parked-leaf positions whatever the doors do (omaat_f60 / up_34) [V]
-    for (const z of [-L + 0.22, -0.58]) B.add(gBox(0.004, 0.07, 0.10), M4.trs(hx + 0.004, 0.08, z), SEATMAT.black);
+    for (const z of [-L + 0.22, -0.58]) B.add(gRBox(0.004, 0.045, 0.12, 0.002, 1), M4.trs(hx + 0.005, 0.115, z), SEATMAT.black);   // w12: wide short recess high on the plinth
     for (const [z0, z1] of flanks) {
       B.add(gBox(0.004, H - 0.015 - ly0, z1 - z0), M4.trs(hx + 0.002, (ly0 + H - 0.015) / 2, (z0 + z1) / 2), SEATMAT.fFlank);
       B.add(gBox(0.004, 0.015, z1 - z0 - 0.02), M4.trs(hx + 0.003, ly0 + 0.009, (z0 + z1) / 2), trim);
@@ -305,8 +305,9 @@ function suiteUnit(opts = {}) {
     if (!lod) {
       // w9: the turned-down diagonal corner at the head end on the aisle side shows the lighter underside (omaat_f57); the fold
       // band and crease ridges read as a slab and rods (w8 / w9a)
-      B.add(gExtrude([[xe - 0.36, -dz0 + 0.04], [xe - 0.06, -dz0 + 0.04], [xe - 0.06, -dz0 + 0.34]], 0.014), M4.trs(0, 0.531, 0, 0, -Math.PI / 2), { c: '#c4c0b8', r: 0.95, l: LAYER.fabric });
-      B.add(gRBox(0.022, 0.016, 0.42, 0.008, 2), M4.trs(xe - 0.21, 0.537, dz0 - 0.19, 135 * DEG), { c: '#dedad3', r: 0.95, l: LAYER.fabric });   // w11: greyer underside + soft fold ridge on the diagonal (f57)
+      B.add(gExtrude([[xe - 0.36, -dz0 + 0.04], [xe - 0.06, -dz0 + 0.04], [xe - 0.06, -dz0 + 0.34]], 0.006), M4.trs(0, 0.527, 0, 0, -Math.PI / 2), { c: '#f0efea', r: 0.9, l: LAYER.fabric });   // w12: bare sheet at the corner
+      B.add(gExtrude([[xe - 0.36, -dz0 + 0.04], [xe - 0.06, -dz0 + 0.34], [xe - 0.36, -dz0 + 0.34]], 0.006), M4.trs(0, 0.533, 0, 0, -Math.PI / 2), { c: '#b9b5ad', r: 0.95, l: LAYER.fabric });   // folded flap, underside up (f57, w12b)
+      B.add(gRBox(0.06, 0.012, 0.42, 0.006, 2), M4.trs(xe - 0.21, 0.528, dz0 - 0.19, 135 * DEG), duv);   // w11: greyer underside + fold on the diagonal (f57); w12: a broad low roll in the duvet colour (a thin ridge read as a label line)
       B.add(gRBox(0.014, 0.15, dl, 0.006, 1), M4.trs(xe + 0.005, 0.445, dz0 - dl / 2), duv);                                         // aisle drape
       const bz = -0.80, bx = seatX + SW / 2 - 0.21, ba = 25 * DEG;
       for (const sg of [-1, 1]) B.add(gBox(0.035, 0.004, 0.16), M4.trs(bx + sg * 0.09 * Math.cos(ba), 0.476, bz - sg * 0.09 * Math.sin(ba), Math.PI / 2 + ba), SEATMAT.black);
