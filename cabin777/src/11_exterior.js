@@ -211,7 +211,7 @@ function buildExterior(gl) {
   // F-GSQR_1 (lit wing #8c8d8f-#a3a4a8 under a #6585ab sky) and F-GSQR_2 (#aeb1b8 under a brighter sky) [V photos, D value]
   // w8: lighter and less glossy (gap analysis: ANA wing 0.65-0.96 of cloud luma in KN41/46 and 7250, rendered 0.61-0.79 and
   // b-r +30 from grazing sky gloss vs +2..+11 in KN46) [V samples, D value]; photo grime layer 27 (alv 7250 flap, make_swatches x_skin)
-  const paint = { c: '#76787a', r: 0.62, m: 0.05, l: LAYER.xSkin };
+  const paint = { c: '#76787a', r: 0.72, m: 0.05, l: LAYER.xSkin };   // w10: r 0.62 -> 0.72, the far skin's grazing sky reflection out-lit the near skin (B w10)
   const paintLow = { c: '#6d6f71', r: 0.62, m: 0.05 };
   const metal = { c: '#c3c7cc', r: 0.26, m: 0.85 };             // bare slat nose / inlet lip
   // control-surface / slat / spoiler gaps read as near-black hairlines: F-GSQR_1 row y=800 wing #a3a4a8 -> gap
@@ -245,11 +245,13 @@ function buildExterior(gl) {
       const q = pid[k - v0], seg = q & 3, cx = B.u[k * 2], sp = B.u[k * 2 + 1];
       if (cx < 0.045) { setVert(B, k, metal); continue; }
       const br = wingBreaks(clamp(sp, WING.s0, 32.4)), mov = (seg === 1 && br[0] !== null) || (seg === 2 && br[1] !== null);
-      const ramp = lerp(1.07, 0.93, clamp((sp - 6) / 22, 0, 1));   // w9: near skin brighter than far (KN41 194 near -> 145 far; w19A ran reversed, B w9) [V]
+      const ramp = lerp(1.10, 0.86, clamp((sp - 6) / 18, 0, 1));   // w10: 1.07 -> 0.93 over 22 m stayed reversed (B w10)
+        // w9: near skin brighter than far (KN41 194 near -> 145 far; w19A ran reversed, B w9) [V]
       if (!mov) { for (let c = 0; c < 3; c++) B.c[k * 4 + c] = Math.round(clamp(B.c[k * 4 + c] * ramp, 0, 255)); continue; }
       // grime along the flap / aileron TE (-7 %), the hinge rows (-7 %, w9) and the exhaust-washed flaps behind the engine (-10 %):
       // 7250 / KN41 [V, A amount]
-      const h = hsh(q), f = (seg === 1 ? 0.92 : 0.89) * (1 + 0.14 * (h - 0.5)) * (seg === 2 && cx > 0.99 ? 0.93 : 1) * (seg === 2 && sp > 8 && sp < 11.8 ? 0.90 : 1) * ([3, 4, 6].includes((k - v0) % NP) ? 0.93 : 1), tint = [f * 0.97, f * 0.985, f * 1.03];
+      const h = hsh(q), f = (seg === 1 ? 0.92 : 0.93) *   // w10: flaps 0.89 -> 0.93, the stacked factors (~0.73) cancelled the near-far ramp (A w10)
+        (1 + 0.14 * (h - 0.5)) * (seg === 2 && cx > 0.99 ? 0.93 : 1) * (seg === 2 && sp > 8 && sp < 11.8 ? 0.96 : 1) * ([3, 4, 6].includes((k - v0) % NP) ? 0.93 : 1), tint = [f * 0.97, f * 0.985, f * 1.03];
       for (let c = 0; c < 3; c++) B.c[k * 4 + c] = Math.round(clamp(B.c[k * 4 + c] * tint[c] * ramp, 0, 255));
       const tl = 0.026 * (hsh(q + 101) - 0.5), ny = B.n[k * 3 + 1], nz = B.n[k * 3 + 2];
       B.n[k * 3 + 1] = ny * Math.cos(tl) - nz * Math.sin(tl); B.n[k * 3 + 2] = ny * Math.sin(tl) + nz * Math.cos(tl);
@@ -317,6 +319,9 @@ function buildExterior(gl) {
         }
       });
     }
+    // w10: soft grime band along the flap / aileron TE (dark TE smudges in KN41, flap TE streaks in _7250) [V, A width / tone]
+    { const tg = { c: '#66686b', r: 0.8, m: 0.03 }, teB = (q) => pwl(WING.te, q) - 0.16;
+      for (const [a, b] of [[3.2, 9.7], [11.9, 23.2], [23.4, 30.3]]) wingLine(B, side, spanPath(a, b, teB, Math.ceil((b - a) / 1.5)), tg, 0.24, 1, 0.01); }
     // flaperon behind the engine (9.8-11.8) [A span], outboard flap to 23.3, aileron 23.3-29.3 [D ACAP]
     const te = (s) => pwl(WING.te, s);
     wingLine(B, side, spanPath(9.8, 11.8, (s) => te(s) - 1.15, 3), gap);
@@ -341,11 +346,11 @@ function buildExterior(gl) {
       };
       const xT = te(cs), tail = (xn) => clamp((xn - xT) / (x1 - xT), 0, 1);   // reaches the end-cap section size at x1 (no step)
       for (let k = 0; k <= 12; k++) {
-        const t = k / 12, xn = lerp(x0, x1, t), rise = Math.sin((Math.min(t, 0.22) / 0.22) * Math.PI / 2);
+        const t = k / 12, xn = lerp(x0, x1, t), rise = Math.max(0.06, Math.sin((Math.min(t, 0.22) / 0.22) * Math.PI / 2));   // w10: >0, gLoft orients the loft by ring 0 - the zero ring of w8 turned every canoe inside out (A w10 probe)
         const fw = xn < xT ? lerp(0.82, 1, smooth(x0, xT, xn)) : 1;   // slight nose-to-TE swell [A]
         secs.push(sec(xn, t < 0.22 ? rise : fw * lerp(1, 0.16, Math.pow(tail(xn), 0.9)), t < 0.22 ? rise : fw * lerp(1, 0.09, tail(xn))));
       }
-      for (const u of [0.6, 0.95]) { const e = Math.sqrt(1 - u * u); secs.push(sec(x1 + u * RE, 0.16 * e, 0.09 * e)); }   // w8: tip ~0.09 of the depth (B w8); w9: two cap sections close to a point (one left a nub)   // w7: straight keel closing to a small rounded point (both raters, _7250) [V]
+      for (const u of [0.6, 0.93, 0.998]) { const e = Math.sqrt(1 - u * u); secs.push(sec(x1 + u * RE, 0.16 * e, 0.09 * e)); }   // w8: tip ~0.09 of the depth (B w8); w9: two cap sections close to a point (one left a nub)   // w7: straight keel closing to a small rounded point (both raters, _7250) [V]
       B.add(gLoft(secs, 3), M4.trs(0, 0, 0, 0, Math.PI / 2), { ...paint, l: 0 });   // w9: no grime layer (it streaked vertically on the flanks, A w9)
     }
     // GE90-115B nacelle
@@ -435,7 +440,7 @@ function buildExterior(gl) {
     // and the p97zMaCMWRg GE90 wing view, nacelle half in shadow]
     // canoe / pylon flank fills (w1-w3) dropped in w5: the exterior pass now has the cloud-deck bounce (u_extBounce,
     // lighting r3). Canoe bellies -35 % (belly #59636c vs flank #d3d6d3 in ANA 26K _7331) [V]
-    shadeVerts(B, vC, vN, (p, n) => 0.18 + 0.57 * smooth(-0.9, 0.0, n[1]) + 0.25 * smooth(0.1, 0.4, n[1]));   // w9: monotonic top 1 / flank 0.75 / belly 0.18 (w26K belly #cbd0d3 over a #b4b8b9 flank at 0.3); the cloud bounce still lit a keel band brighter than the skin in w26K (A w9)   // w8: lit top facet steps to a flank ~0.7 (_7250 / KN41 ~0.55-0.7); the w7 grade ran the vertical flank near-black (A w8)   // w6: flank grades lit top -> keel (#e0e8ea -> #788186 in _7250) [V]
+    shadeVerts(B, vC, vN, (p, n) => 0.5 + 0.3 * smooth(-0.9, -0.1, n[1]) + 0.2 * smooth(0.1, 0.4, n[1]));   // w10: top 1 / flank 0.8 / belly 0.5 (w8-w9 bright keel band and charcoal flanks were the inside-out loft, not the bake); the cloud bounce still lit a keel band brighter than the skin in w26K (A w9)   // w8: lit top facet steps to a flank ~0.7 (_7250 / KN41 ~0.55-0.7); the w7 grade ran the vertical flank near-black (A w8)   // w6: flank grades lit top -> keel (#e0e8ea -> #788186 in _7250) [V]
     // w2: visible flank falls ~0.6 from top to lower cowl (#8d96a6 -> #556171 in ANA 11A _136) [V]: f = 0.62 + 0.38 * ((n.y+1)/2)^1.3
     shadeVerts(B, vN, vP, (p, n) => 0.55 + 0.45 * Math.pow((n[1] + 1) / 2, 1.6));
     shadeVerts(B, vP, B.vcount, (p, n) => 1 - 0.25 * Math.max(0, -n[1]));

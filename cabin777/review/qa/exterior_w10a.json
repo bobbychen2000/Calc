@@ -1,0 +1,95 @@
+{
+ "area": "exterior",
+ "rater": "A skeptic",
+ "build": "w10 = head b1dec68 (w9 fixes), renders /tmp/claude-0/a1e20d29-972a-5952-b92a-3befff9d861e/scratchpad/r10 (r9 and r7 for comparison). Crops and the geometry probe in /tmp/claude-0/a1e20d29-972a-5952-b92a-3befff9d861e/scratchpad/ratA10 and /tmp/claude-0/-home-user-Calc/a1e20d29-972a-5952-b92a-3befff9d861e/scratchpad/ratA10 (run2.js: per-add outward-normal check of buildExterior(null))",
+ "score": 7.0,
+ "details": {
+  "wing planform / raked tip / bending": 7.5,
+  "wing surface detail (seams, fastener rows, panel tone, gear stripe, slat band, placards, grime)": 7.2,
+  "control surfaces & gaps (slats, spoilers, flaps, flaperon, aileron)": 7.5,
+  "canoes (flap-track fairings)": 5.5,
+  "pylon": 7.0,
+  "nacelle shape (cowl, lip, splits, strake, access panel)": 7.5,
+  "nacelle colour / materials (incl. GE logo)": 7.6,
+  "inlet / fan / spinner": 6.8,
+  "livery / registration JA795A": 7.5,
+  "lights & static dischargers": 7.0,
+  "artefacts": 6.0
+ },
+ "previous": [
+  {"issue": "[w9 A medium] canoes: tone inverted in K-side views, too dark in A-side views", "status": "NOT FIXED, and the cause is now found: REGRESSION since w8 (764d796). The canoe lofts are inside-out (see the high issue). w26K: upper flank (620,280) #7a7d7d L124 (w9 L141, worse), keel band (600,340) #d0d7dc L213, still brighter than the wing skin (L170). w19A flanks (470,350) #484f58 L78 on skin L157, a ratio of 0.50 (w9 0.47; KN41 about 0.75). The w8 and w9 bake changes (belly 0.45, then 0.18) and the w9 lighting hand-offs 12-13 were all tuning against inverted normals."},
+  {"issue": "[w9 A medium] wing grime amplitude and character", "status": "NOT FIXED (marginal). w17K flat skin (200-460 x 400-520) residual SD 2.2 -> 2.5 %, p5 -0.5 / p95 +2.6: still symmetric and, if anything, light-skewed. The dark skew in make_swatches does not survive PHOTO_GAIN 0.22. KN41 (530-700 x 500-640): SD 5.1 %, p5 -1.1 / p95 +5.1. The hinge-row -7 % is not visible as a line in w17A/w19A/c_wing_panel. The streaks still read as even brushed banding (most visible on the flaps in w26K)."},
+  {"issue": "[w9 A low] canoes: vertical grime streaks on the flanks", "status": "FIXED. With l:0, the c_canoe_side flanks are smooth (#606263 -> #676769 down the flank)."},
+  {"issue": "[w9 A low / B low] inlet: fan a dark void, spinner barely visible", "status": "NOT FIXED. In c_nacelle_left only the spinner nub shows at (620,295). knav _9 (480-540, 620-700) shows a silver spinner cone and a blade ring."},
+  {"issue": "[w9 A low] GE monogram reads as embossed tubes", "status": "FIXED. In c_ge_inboard_left the strokes are flat dark paint with no lit edge (crop ratA10/ge.png). [B low] swashes concentric inside the ring: NOT FIXED, studio-only."},
+  {"issue": "[w9 B medium] near-far value gradient reversed in w19A", "status": "NOT FIXED, the gap widened. w19A near inboard flap (600,440) L158, (560,500) L155 against far fixed skin (680,195) L184 and (720,220) L178 (w9: 152 / 164). KN41 runs near skin 192 / near flap 171-176 / far 148-158. The w9 ramp (1.07 -> 0.93) is cancelled by the w9 extra darkening on the flaps: 0.89 x 0.90 (behind the engine) x 0.93 (hinge rows) x 0.97 red, about 0.72-0.75 of the base on the nearest flap."},
+  {"issue": "[w9 B low] canoe tip nub", "status": "FIXED geometrically. The two cap sections close to a point (c_canoe_side (415,405)). The pod is still inside-out, though."},
+  {"issue": "[w9 B low] rear-spar fastener row bows", "status": "FIXED. c_wing_panel row (400,265) -> (210,560) is straight."},
+  {"issue": "[lighting, not scored] sunset underwing royal blue", "status": "NOT FIXED. s13A left pane: the underwing is still saturated blue-violet."}
+ ],
+ "issues": [
+  {
+   "severity": "high",
+   "detail": "canoes (flap-track fairings) are inside-out: inward normals and inverted winding (regression since w8)",
+   "problem": "In w8 the section floors became `0.03 * Math.min(1, rw * 5)` / `0.04 * Math.min(1, rd * 5)`. The first canoe section (t = 0, rise = sin 0 = 0) is now a zero-size ring: all its points sit on the section centre. gLoft (02_geo.js:384-389) decides whether to flip normals and winding by summing n.(p - centre) over ring 0 only. That sum is now 0, so it never flips, and every canoe comes out inside-out. Probe (buildExterior(null), canoe lofts at 11_exterior.js:349): 240 of 274 vertices per canoe have inward normals on all 8 canoes. Example at s 8.4: vertex p.y -1.28 (bottom of the pod) has n.y +1.00 and gets the 1.0 'top' bake, while vertex p.y -0.45 (top, at the wing) has n.y -1.00 and gets the 0.18 'belly' bake. Culling is on (01_gl.js:17), so the outside faces are culled and the viewer sees the inside of the far wall. This is exactly what three rounds of tone complaints were describing. The pods read as flat grey slabs with a black top edge and a white lower rim (w26K, c_canoe_side), and as charcoal teeth from the A side (w19A). r7 (pre-w8) canoes read as solid lit pods in the same view (ratA10/w26K_r7_vs_r10.png). The photos show solid white pods with a lit top and a darker lower flank (_7250, _7282, KN46).",
+   "evidence": [
+    "/tmp/claude-0/a1e20d29-972a-5952-b92a-3befff9d861e/scratchpad/ratA10/w26K_r7_vs_r10.png",
+    "/tmp/claude-0/a1e20d29-972a-5952-b92a-3befff9d861e/scratchpad/ratA10/w26K_canoe.png",
+    "/tmp/claude-0/a1e20d29-972a-5952-b92a-3befff9d861e/scratchpad/r10/c_canoe_side.png (x=600: top edge (600,354) #090a0a, flank #606263, lower rim (600,474) #aeafb0)",
+    "/tmp/claude-0/-home-user-Calc/a1e20d29-972a-5952-b92a-3befff9d861e/scratchpad/ratA10/run2.js (output: 'line 1346 ... outward 34 inward 240 <<< INWARD' x8)",
+    "ref/web/exterior/b_alv_ANA77W_PY_IMG_7250-2-scaled.jpeg",
+    "ref/web/exterior/b_alv_ANA77W_PY_IMG_7282-2-scaled.jpeg"
+   ],
+   "fix": "11_exterior.js canoe loop (~l.343): keep ring 0 non-degenerate, e.g. `const rise = Math.max(0.06, Math.sin((Math.min(t, 0.22) / 0.22) * Math.PI / 2));`. The front cap then closes it. Belt and braces: after `B.add(gLoft(secs, 3), ...)`, check the orientation and flip normals and winding if it is inward. (Or, if the shared-file owner agrees, change gLoft's test to use the middle ring: `const j0 = secs.length >> 1` and offset k by j0 * n.) Then revert the w8/w9 tone hacks that were tuned against the inverted mesh: the bake back to about top 1 / flank 0.8 / belly 0.5, e.g. `0.5 + 0.3 * smooth(-0.8, 0, n[1]) + 0.2 * smooth(0.1, 0.4, n[1])`. Re-render w19A/w26K/c_canoe_side before retuning. Tell lighting that hand-offs 12 and 13 in from_exterior.md are probably moot (withdraw them until re-checked). Add a regression check in the studio test: every exterior gLoft add has sum(n.(p - c)) > 0."
+  },
+  {
+   "severity": "medium",
+   "detail": "wing: near flaps darker than the far fixed skin (w19A), from stacked movable-panel factors",
+   "problem": "From 19A the nearest surfaces are the inboard flap and flaperon. They render L155-158 against the far fixed skin at L176-184, so the wing still darkens toward the viewer. In KN41 the near skin is 192, the near flaps 171-176 (about 0.9 of the skin) and the far skin 148-158. The w9 ramp helps the fixed skin but the flaps now carry 0.89 x 0.90 x 0.93 (plus the 0.97 red tint), about 0.72-0.75. That is far below the 0.9 measured on the photo.",
+   "evidence": [
+    "/tmp/claude-0/a1e20d29-972a-5952-b92a-3befff9d861e/scratchpad/r10/w19A.png (600,440) L158, (560,500) L155, (680,195) L184",
+    "ref/web/exterior/a5_kn_ANA77W_TheRoom_41.jpg (300,450) L192, (620,560) L176, (640,760) L171, (760,330) L158"
+   ],
+   "fix": "11_exterior.js paint loop (~l.252): use seg 2 base 0.93 instead of 0.89, behind-engine 0.96 instead of 0.90, and the hinge-row 0.93 only on the vertices within 0.15 m of the hinge, not on the whole row index. Steepen the ramp to lerp(1.10, 0.88, ...) so the target is near flap ~0.9 of the near skin and the far skin ~0.8."
+  },
+  {
+   "severity": "medium",
+   "detail": "wing surface: grime still even, light-skewed banding",
+   "problem": "Residual SD 2.5 % on flat skin (w17K), p5 -0.5 / p95 +2.6. The photos show 4.6-5.1 % with localised dark marks at hinge lines, fastener heads and the flap TE. The x_skin dark skew does not survive at gain 0.22. The banding is most visible as brushed chordwise streaks on the flaps in w26K.",
+   "evidence": [
+    "/tmp/claude-0/a1e20d29-972a-5952-b92a-3befff9d861e/scratchpad/r10/w17K.png (200-460 x 400-520)",
+    "/tmp/claude-0/a1e20d29-972a-5952-b92a-3befff9d861e/scratchpad/ratA10/w26K_canoe.png",
+    "ref/web/exterior/a5_kn_ANA77W_TheRoom_41.jpg (530-700 x 500-640)"
+   ],
+   "fix": "Move the wear into geometry/vertex terms rather than the tile: add thin dark wingLine strips (#6a6e74, w 0.05, r 0.8) just aft of the spoiler and flap hinge lines and along the flap TE, and a few short chordwise dark streaks (0.6-1.2 m, -10 %) behind the flap-track fairings. Keep PHOTO_GAIN 27 at 0.22 or lower."
+  },
+  {
+   "severity": "low",
+   "detail": "inlet / fan / spinner",
+   "problem": "Unchanged. The fan reads as a void.",
+   "evidence": ["/tmp/claude-0/a1e20d29-972a-5952-b92a-3befff9d861e/scratchpad/r10/c_nacelle_left.png", "ref/web/exterior/b5_knav_ANA77W_7A_GE90_takeoff_9.jpg (480-540, 620-700)"],
+   "fix": "`spin` material #16181b -> #b8bcc2, m 0.6 (keep the dark spiral); `blade` #2b2e33 -> #3a3e44; `dark` fan-face disc a touch lighter so blade edges separate."
+  },
+  {
+   "severity": "low",
+   "detail": "GE monogram swashes",
+   "problem": "The swashes are concentric arcs inside the ring; the real ones break out of it as pointed curls. Studio only.",
+   "evidence": ["/tmp/claude-0/a1e20d29-972a-5952-b92a-3befff9d861e/scratchpad/ratA10/ge.png"],
+   "fix": "As B w9: start the swash radius outside the ring (r = 0.27 - 0.13 t)."
+  },
+  {
+   "severity": "low",
+   "detail": "(owner: lighting) not scored",
+   "problem": "s13A underwing is still saturated blue. Hold hand-offs 12-13 (canoe belly bounce, shade-side flanks) until the canoe normals are fixed; they were symptoms of the inside-out mesh.",
+   "evidence": ["/tmp/claude-0/a1e20d29-972a-5952-b92a-3befff9d861e/scratchpad/r10/s13A.png"],
+   "fix": "Lighting: desaturate the sunset sky bounce on down-facing exterior normals."
+  }
+ ],
+ "questionsForUser": [],
+ "photos": [
+  {"path": "ref/web/exterior/b_alv_ANA77W_PY_IMG_7250-2-scaled.jpeg", "seat": "26K (JA795A)", "what": "canoes as solid white pods, lit top, darker lower flank"},
+  {"path": "ref/web/exterior/b_alv_ANA77W_PY_IMG_7282-2-scaled.jpeg", "seat": "26K (JA795A)", "what": "dusk: canoes solid, grey-blue wing (sunset reference)"},
+  {"path": "ref/web/exterior/a5_kn_ANA77W_TheRoom_41.jpg", "seat": "THE Room right window", "what": "near skin 192 / near flaps 171-176 / far 148-158; grime SD 5.1 %"},
+  {"path": "ref/web/exterior/b5_knav_ANA77W_7A_GE90_takeoff_9.jpg", "seat": "7A", "what": "silver spinner, readable blade ring, flat GE roundel"}
+ ]
+}
