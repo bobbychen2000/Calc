@@ -188,7 +188,9 @@ const CABIN_TRIM = { lining: [1, 1], leather: [0.5, 1], stitch_light: [0.5, 1], 
   // above 1.88 (the band under the PDUs had read 114-128 against the photo's 91; half of it on the reflections): at
   // panel_408b 52 / 84 / 125, (82, 83, 93), the band 96 and the plates' foot 90 against the photo's 91 / 89)
   // (flight deck + yoke fix r4 FIDY4-06: the band under the PDUs x 0.8 -> 0.9, a little more of the plates' range)
-  panel_titanium: [0, 0.5, 0, 0, 0, 0, 1, 1.05, 0.9, 1.78, 1.88, 0.5],
+  // (first-principles judge r3 FP3-02: flat matte beige -- P1046408's plates run light under the PDUs to dark at their
+  // foot, p10 / p90 28 / 147: the near-field term turned round and stronger, x 0.72 below WL 1.76 .. x 1.18 above 1.88)
+  panel_titanium: [0, 0.56, 0, 0, 0, 0, 1, 1.05, 0.9, 1.78, 1.88, 0.5],
   // the near-black footwell carpet (P1046408 5-15)
   carpet_flightdeck: [0, 0.85],
   // the flight deck's anthracite lining -- posts, window surrounds, side walls, headliner (flight deck fix r1 FDO1-04 /
@@ -632,7 +634,7 @@ const VIEWER = {
   // brighter room light had asked for a darker, contrastier mat that read as dark blue camouflage in the cabin light)
   // (first-principles judge r1 FP1-06: the footwell carpet read navy -- B - R <= +8: a neutral charcoal loop pile)
   carpet_flightdeck: { color: [0.032, 0.030, 0.030] },
-  sheepskin: { color: [0.265, 0.212, 0.200], sheenColor: [0.33, 0.30, 0.29], sunIn: 0.45,
+  sheepskin: { color: [0.225, 0.188, 0.205], sheenColor: [0.30, 0.28, 0.30], sunIn: 0.45,
     fleece: { locks: [[100, 0.55, 1.08, 0.0024, 0.6, 1.15, 0.42, 0.9, 0.35, 0.45, 0.4],
       [200, 0.88, 1.06, 0.0006, 0.6, 0.9, 0.38, 0.9, 0.2, 0.25, 0.2]], lockShape: [0.25, 0.8, 0.3, 4.5, 0.8, 0.6],
       bump: 0.8, flat: [0.55, 0.85], lock: [15, 0.12], fibre: [900, 140, 0.05], rim: [0.5, 0.25], sheen: [0.5, 1.4] },
@@ -663,16 +665,16 @@ const VIEWER = {
     // shade gives P1046409's B - R ~+10).  (Judge r2 FP2-01: still sponge pits / a white cotton fringe up close: the root
     // and lowest layers 0.58 of the tips (a gap is darker pile, not a hole), the threshold's rise 0.6 (fewer drop-outs),
     // the silhouette band flat and without its sheen lift (grazeFlat 0.9, grazeSheen 1), the base warmer: B - R ~+5)
-    fur: { h: [0.010, 0.0015], root: 0.58, mean: 0.84, oct: [[800, 0.5, 0.5, 0, 1.5, 0, 0.5], [1100, 0.5, 0.6, 1, 1.4, 0.4, 0.5]],
+    fur: { h: [0.010, 0.0015], root: 0.58, mean: 0.84, oct: [[800, 0.5, 0.5, 0, 1.5, 0, 0.5], [1100, 0.5, 0.6, 1, 1.4, 0.4, 0.5]], soft: [0, 0],
       // (all-lens r2 FD9-03: the grazing band wider and softer -- the outer layers thinned x graze below |n.v| grazeN,
       // the coverage edge widened there (grazeW: alpha to coverage on the multisampled canvas / targets), the layers' root
       // darkening, tilt (grazeFlat) and sheen growth up the pile (grazeSheen) flattened toward the silhouette; was 0.55 /
       // 0.25 / 0 / 0 / 0.  A per-pixel dithered coverage (dither: true) and the band at 0.55 put sparse bright tips into
       // [FD-L10]'s silhouette band at panel_408b (high-pass skew +1.1 .. +1.6; look-dev ld3 a0-a2 / u0-u2))
-      graze: 0.9, grazeN: 0.5, grazeW: 0.16, grazeFlat: 0.9, grazeSheen: 1.0,
+      graze: 0.75, grazeN: 0.38, grazeW: 0.14, grazeFlat: 0.9, grazeSheen: 1.0,
       t: [0.03, 0.6, 0.8], curl: [55, 0.8, 5.0], lump: [40, 0.05, 0.10], part: [[30, 0.1, 0.82, 40, 0.55, 1.3],
-        [60, 0.08, 0.85, 80, 0.55, 1.5]], fray: [1100, 0.1], ao: [0.58, 1.08, 1.8], tilt: 0.55,
-      clump: [[28, 0.0022, 1.3], [65, 0.0008, 1.3]], sheen: [0.5, 1.1], far: [2.2, 3.2] },
+        [60, 0.08, 0.85, 80, 0.55, 1.5]], fray: [1100, 0.05], ao: [0.5, 1.08, 1.8], tilt: 0.55,
+      clump: [[28, 0.0065, 1.3], [65, 0.0022, 1.3]], sheen: [0.5, 1.1], far: [2.2, 3.2] },
     sheenRoughness: 0.8 },
   // the pleated divider curtain: deep burnt orange in P1046406 (77/23/0), read tan (208/166/116) under the old cabin light
   curtain: { color: [0.36, 0.11, 0.012] },
@@ -738,7 +740,7 @@ const VIEWER = {
   // (all-lens review r1 FD8-04: the inner sub-panel (71, 80, 94) at panel_408b -- the level right, but cool and uniform
   // against P1046408's warm (74, 71, 79) with broad bright streaks: a warmer base, R >= G >= B)
   panel_titanium: { color: [0.262, 0.236, 0.222], metalness: 0.85, roughness: 0.27, specIn: 1.9,
-    brush: { aniso: 0.75, axis: [1, 0, 0], rough: 0.05, len: 0.05, w: 0.0006, spec: 0.15, band: 0.25, bandLen: 0.6,
+    brush: { aniso: 0.75, axis: [1, 0, 0], rough: 0.05, len: 0.05, w: 0.0006, spec: 0.22, band: 0.38, bandLen: 0.6,
       bandW: 0.12, up: [0.40, 0.55, 0.32, 0.15] } },
   // (FDO3-01: the graphite face, the stack / pedestal gunmetal: a fine bead-blast grain -- isotropic, `len` 3-4 mm -- in
   // the roughness and the reflection, and a weaker band wander)
@@ -754,7 +756,7 @@ const VIEWER = {
   // (flight deck fix r5 FDO4-05: a translucent glass jar from the quadrant view -- the probe's streaks; a solid satin
   // pewter: fewer, broader reflections, a shade warmer -- it read 116 / 124 / 140 against P1046408's 108 / 108 / 116)
   // (first-principles judge r2 FP2-06: a matte grey lump -- satin pewter with a highlight band, P1046408 / 09)
-  pcl_pewter: { specIn: 1.4, roughness: 0.32, color: [0.125, 0.113, 0.106] },
+  pcl_pewter: { specIn: 1.5, roughness: 0.30, metalness: 0.8, color: [0.22, 0.21, 0.20] },
   // (rev R, yoke judge r5 FID5-05: the J band beside the column -- in the PCL's pewter it read a light-grey thumb on the
   // yoke branch, 105-117; the photos a darker grey tube with lit rolled edges, medians 26-57, p90 109-128 at P1046408 /
   // 09 / 10.  In the merged flight deck's light the pewter read 33-37 / p90 54-56, its edges unlit; the band's own dark
@@ -1329,8 +1331,10 @@ ${parts.map(([pf, pa, pw, gf = 0, gl = 0.5, st = 1], i) => {
     {
       float pcGz = smoothstep( 0.06, ${f4(q.grazeN ?? 0.25)}, abs( dot( normalize( vNormal ), normalize( vViewPosition ) ) ) );
       float pcTe = pcT + ( 1.0 - pcGz ) * t * ${f4(q.graze ?? 0.55)};
-      float pcFw = max( fwidth( pcF ), 1e-4 ) + ${f4(q.grazeW ?? 0)} * ( 1.0 - pcGz );
-      float pcSoft = uPcFurSoft * ( 1.0 - pcGz );
+      // (first-principles judge r3: head-on the hard layer contours drew the pile as crisp sponge / coral cells --
+      // q.soft [share, width]: the soft coverage edge everywhere, the width in field units head-on)
+      float pcFw = max( fwidth( pcF ), 1e-4 ) + ${f4(q.grazeW ?? 0)} * ( 1.0 - pcGz ) + ${f4((q.soft || [0, 0])[1])} * pcGz;
+      float pcSoft = uPcFurSoft * max( 1.0 - pcGz, ${f4((q.soft || [0, 0])[0])} );
       pcFurGw = pcSoft;
       float pcCov = mix( step( pcTe, pcF ), smoothstep( pcTe - pcFw, pcTe + pcFw, pcF ), pcSoft );
       if ( ${q.dither ? 'pcSoft > 0.001' : 'false'} ) {
