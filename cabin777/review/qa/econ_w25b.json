@@ -1,0 +1,231 @@
+{
+ "area": "econ",
+ "rater": "B",
+ "round": "w25",
+ "candidate": "5146ec6",
+ "lens": "Geometry and proportion first at the matched q15 (row 34 D-G head-on as y_47300; ruler: back width 140 px render vs 125 px photo = 0.43 m, so 3.07 mm/px render), then materials, colour, lighting and artefacts. Measured with /tmp/claude-0/-home-user-Calc/9bd9f3c4-d0cf-5926-80e2-5fc8be0f1dcf/scratchpad/raterB25/m.py (per-seat patches: mean RGB, L, B/R, p10/50/90, p90/50, bright = share above 1.4x the patch median), blob counts / sizes at matched scale (4-connected, threshold 1.4x median, render scaled by 125/140), column and row luminance profiles for the cover and pillow extents, arm B/R against the ceiling white balance, e1 diamond back against y_47302 / 47306, and pixel-change maps against w24base (q15 / e1 / e4b / e7 changed 25-46 %, the rear views e2 / e5 / e6 / e8 / e9 < 2 %, i.e. unchanged). Crops: z_head.png (cover + pillow, w24 | w25 | y_47300), z_pans.png, z_pan34.png, z_e1ref.png, z_q1617.png, z_closeA.png, z_closeB.png in /tmp/claude-0/-home-user-Calc/9bd9f3c4-d0cf-5926-80e2-5fc8be0f1dcf/scratchpad/raterB25/.",
+ "score": 8.0,
+ "priorIssues": [
+  {
+   "issue": "w24b-1 (medium) headrest cover too tall head-on (H/W 0.92 vs 0.70-0.77)",
+   "status": "partly fixed",
+   "evidence": "q15 s2 / s3 cover now rows 188-259 (72 px, was 79) x 83 px wide (was 86): H/W 0.87 (was 0.92), cover / back width 0.59 (target 0.56-0.59 met). Height still 0.22 m vs y_47300 49-54 px = 0.17-0.19 m (+2 cm in-flight hang allowed -> ~0.19-0.20). Bottom hangs ~7 px (~2 cm) below the pad-wing foot, inside the b_ss_13 2-3 cm band."
+  },
+  {
+   "issue": "w24b-2 (medium) pillow too tall, round and outlined",
+   "status": "proportion fixed; shape and outline not fixed",
+   "evidence": "z_head: pillow ~107 x 70 px on a 137 px back -> W 0.78, H 0.51 vs y_47300 0.79 / 0.53 (was 0.79 / 0.64) and its foot now rests on the pan. Still a rounded board: no dog-ear corners, p90/50 1.17 vs 1.36 (flatter than w24 1.23), and the piping still reads as a lighter ring in e4b / e7."
+  },
+  {
+   "issue": "w24b-3 (medium) hero-row pans permuted; diamond pan too light and loud",
+   "status": "order fixed; diamond pan darker but louder (not fixed)",
+   "evidence": "q15 pans now tick / tick / diamond / mosaic as y_47300. Diamond pan (s3) L71 (target 72-80 met) but B/R 2.27 vs 1.81, p90/50 1.90 vs 1.37, bright 0.251 vs 0.088 (w24 1.60 / 0.198): still lavender stars on a vivid blue ground (z_pan34) where the photo has a dark ghost lattice. Cause: the y_diamond contrast 1.25x in make_swatches.py l.390."
+  },
+  {
+   "issue": "w24b-4 (medium) tick ~1.5x too speckled; tick pans too blue",
+   "status": "slightly improved, not fixed",
+   "evidence": "q15 tick backs s1 / s3 bright 0.238 / 0.247 (w24 0.259 / 0.271) vs 0.17, p90/50 1.66-1.68 vs 1.52, blobs 91 / kpx (w24 89) vs 69-74 with median size 1.6 vs 2.0 px: the 0.65 stroke gain made fewer bright pixels but the strokes still break into many short fragments. Tick pans L74 / 69 vs 87 / 77 (now too dark) and B/R 1.92 / 1.97 vs 1.74 / 1.81 (still too blue)."
+  },
+  {
+   "issue": "w24b-5 (low) light buckle covers mid-pan",
+   "status": "fixed",
+   "evidence": "q15 buckle pixels L157-162 (w24 170-180), target 140-165; grey #9da2a9 cover reads as in y_47303."
+  },
+  {
+   "issue": "w24b-6 (low) armrest colour cool",
+   "status": "mostly fixed",
+   "evidence": "q15 lit arm B/R 1.004 (w24 1.061) vs y_47300 0.976 at equal ceiling white balance (1.010 vs 1.003), L179 vs 187."
+  },
+  {
+   "issue": "w24b-7 (low) hem lip / no crease, stitch, fleck clusters, pocket, legs, bezel dots",
+   "status": "fleck clusters fixed (thinned); the rest not fixed",
+   "evidence": "q15 column under the s2 cover: face 52-58, lip 65-75 and no dark crease row (y_47300 0.46x crease); e2 / e5 / e6 / e8 unchanged (< 2.6 % pixels changed). Fleck thinning removed the close-up clusters (e4) but overshot at row distance (see w25b-3)."
+  },
+  {
+   "issue": "w23a-1 / w24a-2 (medium) petal fleck at row distance",
+   "status": "regressed at row distance",
+   "evidence": "q15 fleck backs bright 0.158 / 0.163 (w24 0.208) vs 0.197 / 0.199; blobs 61 / kpx vs 52 (count about right) but median size 2.4 vs 4.0 px, p90 4.0-4.8 vs 6.0: flecks too small, so the backs read as dust rather than petals."
+  },
+  {
+   "issue": "w23b-2 (low) diamond lattice washed out close up",
+   "status": "over-corrected (regressed)",
+   "evidence": "e1 diamond back p90/50 1.79, bright 0.236, B/R 2.29 (w24 1.50 / 0.142 / 2.10) vs y_47302 1.51 / 0.15 / 2.01 and y_47306 1.57 / 0.19 / 2.09: now outside the photo range on the loud side; q16 near diamond backs read as big light star blotches where y_47301 reads near-uniform."
+  },
+  {
+   "issue": "w24b-L1 (medium, lighting) covers navy off-axis",
+   "status": "not fixed (not scored)",
+   "evidence": "q16 / q17 covers navy (z_q1617) vs silver-grey satin in y_47301 / 47303; y_47302 covers also grey."
+  },
+  {
+   "issue": "w24b-C1 (info) q16 / q17 / q18 cameras",
+   "status": "not fixed (not scored)",
+   "evidence": "unchanged since w24."
+  }
+ ],
+ "details": [
+  {
+   "detail": "Fabric: tick weave",
+   "score": 7.9,
+   "refs": "q15 bright 0.24 vs 0.17, p90/50 1.67 vs 1.52, 91 vs 70 blobs / kpx of 1.6 vs 2.0 px (fragmented strokes)"
+  },
+  {
+   "detail": "Fabric: diamond lattice",
+   "score": 7.1,
+   "refs": "e1 back p90/50 1.79 / bright 0.24 vs y_47302 1.51 / 0.15; q15 pan B/R 2.27 vs 1.81, p90/50 1.90 vs 1.37; q16 light star blotches"
+  },
+  {
+   "detail": "Fabric: petal fleck",
+   "score": 7.9,
+   "refs": "q15 bright 0.16 vs 0.20, fleck median 2.4 vs 4.0 px; close-up clusters gone"
+  },
+  {
+   "detail": "Fabric: dash mosaic",
+   "score": 7.9,
+   "refs": "q15 mosaic pan (s4) L93 vs 81, B/R 1.86 vs 1.71, p90/50 1.54 vs 1.47 - a step light and blue"
+  },
+  {
+   "detail": "Fabric mix (backs, pans, pads)",
+   "score": 8.5,
+   "refs": "backs tick / fleck / tick / fleck and pans tick / tick / diamond / mosaic both as y_47300"
+  },
+  {
+   "detail": "Headrest pad + cover",
+   "score": 7.8,
+   "refs": "cover H/W 0.87 vs 0.70-0.77, width / back 0.59 (ok), 0.22 m tall vs ~0.19 target; no foot crease"
+  },
+  {
+   "detail": "Pillow",
+   "score": 7.9,
+   "refs": "W / H of back 0.78 / 0.51 vs 0.79 / 0.53, rests on the pan; no dog-ears, flat (p90/50 1.17 vs 1.36), light piping ring"
+  },
+  {
+   "detail": "Armrests",
+   "score": 8.5,
+   "refs": "B/R 1.00 vs 0.976, L179 vs 187; silhouette matches; no round front cap"
+  },
+  {
+   "detail": "Belts",
+   "score": 8.2,
+   "refs": "buckle covers L157-162, grey; laid V as y_47303"
+  },
+  {
+   "detail": "Seat pan / front",
+   "score": 7.9,
+   "refs": "shape unchanged; tick pans too dark (L69-74 vs 77-87) and blue"
+  },
+  {
+   "detail": "Back silhouette",
+   "score": 8.1,
+   "refs": "unchanged, matches y_47300 (top-to-crease / width 1.95 vs 2.06)"
+  },
+  {
+   "detail": "Rear shell / hood / back top",
+   "score": 8.1,
+   "refs": "unchanged (e2 / e9 < 2 % pixels changed)"
+  },
+  {
+   "detail": "Screen / handset",
+   "score": 8.2,
+   "refs": "unchanged"
+  },
+  {
+   "detail": "Tray / pocket / AC",
+   "score": 7.8,
+   "refs": "unchanged"
+  },
+  {
+   "detail": "Legs / footrest / under-seat",
+   "score": 7.7,
+   "refs": "unchanged (e8 0.2 % changed)"
+  },
+  {
+   "detail": "Far-LOD rows",
+   "score": 8.0,
+   "refs": "q15 far rows: cover / pillow proportions follow the near LOD; diamond backs in q16 blotchy"
+  }
+ ],
+ "issues": [
+  {
+   "id": "w25b-1",
+   "severity": "medium",
+   "owner": "econ",
+   "title": "Diamond lattice over-contrasted by the 1.25x tile gain (backs and pan)",
+   "detail": "Fabric: diamond lattice",
+   "evidence": "e1 diamond back p90/50 1.79, bright 0.236, B/R 2.29 vs y_47302 1.51 / 0.15 / 2.01 (w24 was 1.50 / 0.142, in range). q15 diamond pan B/R 2.27, p90/50 1.90, bright 0.251 vs y_47300 1.81 / 1.37 / 0.088 - lavender stars on vivid blue (z_pan34.png) where the photo shows a dark navy-grey ghost lattice with fine horizontal weave. In q16 the near diamond backs are the loudest thing in the frame.",
+   "fix": "test/make_swatches.py l.390: m + 1.25 * (r - m) -> m + 0.95 * (r - m) (back to the w24 contrast that measured in range, slightly under). 09a_econ.js l.50 ECON_PAN_B '#4a5482' -> '#4f5474' (B/R ~1.8). Targets: e1 back p90/50 1.48-1.58, bright 0.13-0.18, B/R 2.0-2.1; q15 diamond pan L 70-78, B/R 1.75-1.9, p90/50 <= 1.5, bright <= 0.13."
+  },
+  {
+   "id": "w25b-2",
+   "severity": "medium",
+   "owner": "econ",
+   "title": "Tick strokes still fragmented and ~1.4x too bright-speckled; tick pans dark and blue",
+   "detail": "Fabric: tick weave / Seat pan",
+   "evidence": "q15 tick backs bright 0.24 vs 0.17, p90/50 1.67 vs 1.52, 91 vs 69-74 bright blobs / kpx of median 1.6 vs 2.0 px: many short broken highlights rather than fewer continuous ticks. Pans s1 / s2 L74 / 69 vs 87 / 77, B/R 1.92 / 1.97 vs 1.74 / 1.81.",
+   "fix": "make_swatches.py l.387: stroke gain 0.65 -> 0.5 and the y_tick band boost l.407 gb 0.1 -> 0.0 (the fine-band boost fragments the strokes); optionally a 1-px vertical box blur of the excess (r - m) so ticks join along the column. 09a_econ.js l.48 ECON_PAN '#4a5378' -> '#555c79'. Targets q15: back bright 0.17-0.20, p90/50 1.50-1.58, blobs 65-78 / kpx; tick pans L 76-88, B/R 1.75-1.85."
+  },
+  {
+   "id": "w25b-3",
+   "severity": "medium",
+   "owner": "econ",
+   "title": "Petal flecks too small after thinning (dust, not petals) at row distance",
+   "detail": "Fabric: petal fleck",
+   "evidence": "q15 fleck backs s2 / s4 bright 0.158 / 0.163 vs 0.197 / 0.199, p90/50 1.65 vs 1.89; blob count 61 vs 52 / kpx but median size 2.4 vs 4.0 px, p90 4.0-4.8 vs 6.0. The count is now nearly right; the size is what is missing.",
+   "fix": "make_swatches.py l.396-400: keep=0.7 -> 0.62 (count 61 -> ~54) and grow each kept fleck ~1.3x in linear size: dilate e with a 1-px wrap max-filter (or blur e at sigma 0.8 px and renormalise to ep) before the 1.1 * ep term; fleck gain 1.1 -> 1.2. Targets q15: bright 0.19-0.21, p90/50 1.80-1.90, blob median 3.5-4.5 px; e4 close-up pad coverage <= 0.16 (y_47306 0.11-0.13)."
+  },
+  {
+   "id": "w25b-4",
+   "severity": "medium",
+   "owner": "econ",
+   "title": "Headrest cover still ~2-3 cm too tall head-on",
+   "detail": "Headrest pad + cover",
+   "evidence": "q15 cover 72 x 83 px = 0.22 x 0.255 m (H/W 0.87) vs y_47300 49-54 x 65-69 px scaled = 0.17-0.19 x 0.22-0.24 m (H/W 0.70-0.77); in-flight b_ss_13 allows ~2 cm extra hang, so target ~0.195 tall. Width / back 0.59 is fine.",
+   "fix": "09a_econ.js l.118: first section SEC(0.595, ...) -> SEC(0.615, 0.24, 0.005, cz(0.615), 0.002), widths 0.245-0.248 -> 0.238-0.24 on l.118 / l.121; move the hem l.127 (0.597-0.616 -> 0.617-0.634), stitch l.129 (0.6165 -> 0.635) and mark l.130 (0.6185-0.6225 -> 0.637-0.641) up 0.02 with cz(); far LOD l.360 gBox(0.245, 0.215, 0.01) at 0.6925 -> gBox(0.238, 0.195, 0.01) at 0.7025. Targets q15: cover 60-64 px tall, H/W 0.76-0.80, hang below the pad foot 0.5-1.5 cm."
+  },
+  {
+   "id": "w25b-5",
+   "severity": "low",
+   "owner": "econ",
+   "title": "Pillow: right size now, but flat with round corners and a light piping ring",
+   "detail": "Pillow",
+   "evidence": "z_head / e4b: rounded board; y_47300 pillows have pointed dog-ear corners, slightly concave sides and a domed face with soft creases (p90/50 1.36 vs 1.17). The rim tube catches the light as a lighter outline in e4b and e7.",
+   "fix": "09a_econ.js l.146 pull 1 + 0.15 |X Z| -> 1 + 0.3 |X Z|^1.5 (same change in the rim law l.159); l.148 dome 0.046 -> 0.06 with exponent 0.6 -> 0.45; l.161 rim tube r 0.0035 -> 0.002 and colour SEATMAT.yPillow c '#2f3852' (darker than the body so it does not catch light). Targets q15: p90/50 1.30-1.40, corners protrude 1-1.5 cm beyond the side midpoints; keep W / H at 0.78 / 0.51."
+  },
+  {
+   "id": "w25b-6",
+   "severity": "low",
+   "owner": "econ",
+   "title": "Mosaic pan a step light and blue",
+   "detail": "Fabric: dash mosaic",
+   "evidence": "q15 s4 mosaic pan L93, B/R 1.86, p90/50 1.54 vs y_47300 81 / 1.71 / 1.47.",
+   "fix": "09a_econ.js next to l.50: ECON_PAN_C = { ...SEATMAT.yFabricC, c: photoBase('#4f5878', 'y_mosaic') }, used at l.58 and the far LOD l.354 when PF === yFabricC (pan only; the mosaic backs in y_47302 / 47306 stay). Target q15 L 78-85, B/R 1.7-1.8."
+  },
+  {
+   "id": "w25b-7",
+   "severity": "low",
+   "owner": "econ",
+   "title": "Carried: cover foot crease, armrest front cap, pocket, legs, bezel dots",
+   "detail": "Headrest pad + cover / Armrests / Tray / Legs",
+   "evidence": "q15 no dark crease under the cover lip (y_47300 0.46x); arm B/R 1.00 vs 0.976 and no round front cap; e2 / e6 / e8 unchanged.",
+   "fix": "As w23a-3 (3 mm '#151a2e' contact band under the foot); SEATMAT.arm '#c9c7c3' -> '#cbc7c0' (shared one-liner, B/R target 0.96-0.99); others as w19b-5 / 6."
+  },
+  {
+   "id": "w25b-L1",
+   "severity": "medium",
+   "owner": "lighting",
+   "title": "Covers navy off-axis where every oblique photo shows silver-grey satin (not scored)",
+   "detail": "Lighting",
+   "evidence": "q16 / q17 covers navy (z_q1617.png) vs y_47301 / 47303 / 47302 grey satin; head-on q15 cover L55 vs 46 is already a touch light, so only a grazing-angle sheen lobe fixes both.",
+   "fix": "As w24b-L1: cover-only Fresnel / sheen lobe; targets q17 cover L >= 110 with q15 <= 50."
+  },
+  {
+   "id": "w25b-C1",
+   "severity": "info",
+   "owner": "QA cameras",
+   "title": "q16 / q17 / q18 still not framed as their photos (not scored)",
+   "evidence": "unchanged since w24.",
+   "fix": "Re-aim as done for q15."
+  }
+ ],
+ "questionsForUser": [],
+ "extraRefsSearched": "No new downloads: re-used cabin777/ref/web/econ/b_ss_12..18.jpg (sanspotter.com ana-777-300er-economy, gitignored; b_ss_13 for the in-flight cover hang) and y_47300-47306."
+}
