@@ -1,0 +1,126 @@
+{
+ "area": "econ",
+ "rater": "B",
+ "round": "w20",
+ "candidate": "027a1f2",
+ "lens": "Geometry and proportion first (C armrest vs y_47303 / b_ss_18 / y_47301, pillow, cover, back silhouette), then materials, colour, lighting and artefacts. All numbers measured with PIL/numpy on r20 / s20 against r19 / s19 and the photos; q15 fabric stats at x0.62 to match y_47300 back size (same patches as w19b). Scratch: scratchpad/raterB20/ (cmp_*.png, e3z.png, ss18z.png, q15cov.png, fab.png, m*.py).",
+ "score": 7.9,
+ "priorIssues": [
+  {
+   "issue": "w19b-1 / w19a-1 headrest cover: hem/stitch/mark hidden; flat value - middle covers too light head-on, all covers near-black close/oblique",
+   "status": "partly fixed; head-on regressed",
+   "evidence": "Fixed: hem band (~1.5 cm lighter band), stitch line and mark now visible below the plate (hemz.png), matching y_47306 / b_ss_14. Regressed: the flatter plate (bow 4 -> 1.5 mm) at r 0.38 now mirrors the ceiling as one broad highlight on the middle covers: q15 c2/c3 #51556a / #52576c L50 91-92 B/R 1.31 vs y_47300 #282d49 / #1e253d L50 53 / 42 B/R 1.82 / 2.03 (w19: L50 68 B/R 1.54). Outer c1/c4 L50 45-46 B/R 1.82 vs 70 / 39. Not fixed: close e4 mid / R #23273c / #21253a L50 45 / 43 vs y_47306 #6a7a9e / #434f71 L50 129 / 86."
+  },
+  {
+   "issue": "w19b-2 / w19a-3 petal fleck faint, round, too many",
+   "status": "overshot (contrast now too high and too saturated); shape not fixed",
+   "evidence": "q15 s2/s4 x0.62: bright 0.200 / 0.191 vs y_47300 0.153 / 0.154 (w19 0.117 / 0.108); p90/p50 1.89 / 1.84 vs 1.76 / 1.75 (w19 1.56); p10/p50 0.72 / 0.70 vs 0.69 / 0.68 (ok); hf 13.2 vs 16.6 / 14.8 (better, w19 9.8); blob p90 7 / 6 px vs 5; B/R 3.00 / 2.93 vs 2.50 / 2.58 (w19 2.56 - now too saturated); L50 50-52 vs 55-62. Close (fab.png, e4 R vs b_ss_14): still dense round dots, roughly 2x the real count; real flecks are sparse crisp angular slivers."
+  },
+  {
+   "issue": "w19b-3 / w19a-5 armrest J diagonal instead of an open-front C",
+   "status": "partly fixed",
+   "evidence": "Topology now right: arm + rear sweep + lower element, open at the front (e3z.png, e7z.png). Proportion not: the lower element is a round tube r 0.028 (5.6 cm tall, 3.9 cm wide after x0.7) at y 0.528 ending in a sphere; in b_ss_18 / y_47303 (aisle seats) / y_47301 (near aisle ends) it is a flat-sided panel ~11-12 cm deep at the front (b_ss_18: 70 px vs arm 40 px = 1.75x the arm depth; render 23 px vs arm 25 px = 0.9x), top at cushion-top level, bottom covering the pan frame and curving up toward the rounded front. Gap arm->lower element: render ~4.4 cm, real ~4-5 cm (ok). q16 now shows thin white rods at the aisle ends where y_47301 shows broad white panels."
+  },
+  {
+   "issue": "w19b-4 / w19a-2 tick reads as rain streaks / washes out at row distance",
+   "status": "structure fixed, contrast overshot",
+   "evidence": "Columns now straight (cmp_e4_head.png). q15 s1/s3: p10/p50 0.47 / 0.46 vs 0.50 / 0.49 (fixed, w19 0.63); hf 23-24 vs 20-25 (fixed); but p90/p50 1.60 / 1.61 vs 1.47 (w19 1.39: error 0.08 -> 0.13) and bright 0.151 / 0.156 vs 0.083 / 0.082 (w19 0.035: error 0.048 -> 0.071). q16 row 2 bright 0.186 vs y_47301 0.064, p90/p50 2.18 vs 1.40. Close e4 mid p90/p50 2.00 vs y_47306 2.03 (good)."
+  },
+  {
+   "issue": "w19b-L1 q16 near fabric too light/grey (lighting)",
+   "status": "not fixed (lighting, not scored)",
+   "evidence": "q16 near-top fleck now B/R 2.64 L50 65 (vs y_47301 2.22 / 98) but blobs median 9 px / p90 22 px vs 1 / 3 px: at 1 m the flecks read as large blotches."
+  },
+  {
+   "issue": "w19a-6 / w19b-8 pillow plain, no seam",
+   "status": "fixed",
+   "evidence": "Piped seam ring present, no gaps or z-fighting (pilz.png). Width/seat pitch in q15 0.69 vs y_47300 0.70 (w19 0.82). Piping reads ~10 L darker than the face, a little like an outline; real pillows (b_ss_14, y_47300) show a soft flat edge."
+  }
+ ],
+ "details": [
+  { "detail": "Fabric: tick weave", "score": 8.0, "refs": "straight columns now; q15 p10/p50 0.47 vs 0.49 (fixed), p90/p50 1.60 vs 1.47, bright 0.15 vs 0.083 (overshoot); q16 row 2 bright 0.19 vs 0.064" },
+  { "detail": "Fabric: diamond lattice", "score": 7.5, "refs": "unchanged; e4 L vs y_47306 (carried w19b-7)" },
+  { "detail": "Fabric: petal fleck", "score": 7.6, "refs": "q15 bright 0.20 vs 0.154, p90/p50 1.87 vs 1.76, B/R 3.0 vs 2.54; close still round dots ~2x too dense" },
+  { "detail": "Fabric: dash mosaic", "score": 8.2, "refs": "e4 pads vs y_47306 R; band boost makes dashes a touch hard" },
+  { "detail": "Fabric mix (backs, pans, pads)", "score": 8.0, "refs": "pairing right; overall q15 / q16 now noisier and more saturated than y_47300 / y_47301 (whole-image speckle)" },
+  { "detail": "Headrest pad + cover", "score": 7.3, "refs": "hem / stitch / mark now visible (+); middle covers L91 B/R 1.31 head-on vs 42-53 / 1.8-2.0 (-); close L44 vs 86-129" },
+  { "detail": "Pillow", "score": 8.2, "refs": "width 0.69 of pitch vs 0.70; seam added; piping a little dark" },
+  { "detail": "Armrests", "score": 8.0, "refs": "open-front C right; lower element a 5.6 cm tube vs ~11-12 cm flat panel on aisle ends (b_ss_18, y_47303, y_47301)" },
+  { "detail": "Belts", "score": 8.5, "refs": "e1 / e7 vs y_47303" },
+  { "detail": "Seat pan / front", "score": 7.8, "refs": "e7 / e1 vs y_47303 / b_ss_13" },
+  { "detail": "Back silhouette", "score": 8.0, "refs": "q15 vs y_47300 / b_ss_13; unchanged" },
+  { "detail": "Rear shell / hood / back top", "score": 8.1, "refs": "e2 / e9 / q17; hood side band carried (w19b-5)" },
+  { "detail": "Screen / handset", "score": 8.3, "refs": "q18 / e5 vs y_47305, b_ss_15; unchanged" },
+  { "detail": "Tray / pocket / AC", "score": 7.8, "refs": "e6 unchanged: flat black mesh strip vs padded flap + bulging mesh (b_ss_23 / b_ss_21)" },
+  { "detail": "Legs / footrest / under-seat", "score": 7.7, "refs": "e8 unchanged (diff 0.35)" },
+  { "detail": "Far-LOD rows", "score": 7.8, "refs": "q15 / q16 consistent, no pop" }
+ ],
+ "issues": [
+  {
+   "id": "w20b-1",
+   "severity": "medium",
+   "title": "Y fabric band boost overshoots: tick and fleck now too contrasty (and fleck too saturated) at row distance",
+   "detail": "Fabric: tick weave / petal fleck / mix",
+   "evidence": "q15 x0.62 tick bright 0.15 vs 0.083, p90/p50 1.60 vs 1.47; fleck bright 0.20 vs 0.154, p90/p50 1.87 vs 1.76, B/R 3.0 vs 2.54, blob p90 6-7 vs 5 px; q16 row 2 tick bright 0.19 vs 0.064. w19 undershot by about the same amount; the right value is about halfway.",
+   "fix": "test/make_swatches.py econ section: scale the 0.5-2.5 cm band boost to ~0.5x its w20 gain on tick and fleck (keep the straightened 0.29 m tick crop, floor 0.05 and column lift); fleck: core colour toward #b8c3e2 (B/R <= 1.5) and ~25 % fewer flecks; re-cut tex_y_tick / tex_y_fleck. Targets at q15 x0.62: tick bright 0.08-0.10, p90/p50 1.46-1.52, p10/p50 0.48-0.52; fleck bright 0.15-0.165, p90/p50 1.74-1.80, B/R 2.45-2.65."
+  },
+  {
+   "id": "w20b-2",
+   "severity": "medium",
+   "title": "Headrest cover: flatter plate at r 0.38 mirrors the ceiling - middle covers grey and light head-on (regressed); close/oblique still near-black",
+   "detail": "Headrest pad + cover",
+   "evidence": "q15 c2/c3 L50 91-92 B/R 1.31 vs y_47300 42-53 / 1.82-2.03 (w19 68 / 1.54); e4 L50 43-45 vs y_47306 86-129.",
+   "fix": "09_seats.js SEATMAT yCover r 0.38 -> 0.48 (one line, shared) and 09a_econ.js restore the plate bow to ~3 mm so the highlight stays a narrow band; targets q15 c2/c3 L50 <= 58 with B/R >= 1.65, c1/c4 >= 50. The grazing lift (e4 >= 75, q16 row 2 >= 75) needs a Fresnel / sheen term from the lighting owner, not lower roughness - hand off rather than iterate r again (see the w5-w20 oscillation in the SEATMAT comment)."
+  },
+  {
+   "id": "w20b-3",
+   "severity": "medium",
+   "title": "C armrest lower element is a thin round tube; aisle-end seats need a deep flat-sided lower panel",
+   "detail": "Armrests",
+   "evidence": "b_ss_18 lower panel 1.75x the arm depth (~11-12 cm) with a flat side face, rounded front, bottom covering the pan frame; render 0.9x (5.6 cm tube at y 0.528 + sphere nose). y_47301 near aisle ends show broad white panels; q16 now shows rods. Middle arms: a slimmer element is acceptable (not visible in the photos).",
+   "fix": "09a_econ.js econUnit regular-row branch: for k === 0 || k === arms.length - 1 replace the straight run of the ct tube with a loftAt panel, sections SEC(y_centre, depth, width 0.025, z, r 0.01): z -0.12 -> -0.40 at y 0.44-0.50 top 0.50, depth 0.12 at the rear tapering to 0.10 at the front with the bottom edge rising ~3 cm over the last 8 cm, front end rounded r 0.045, outer face flush with the arm side (x offset o * 0.012); keep the rear sweep tube into it. Middle arms: keep the tube but drop it to y 0.51 and flatten to x0.55 so it reads as a moulding."
+  },
+  {
+   "id": "w20b-4",
+   "severity": "low",
+   "title": "Petal fleck close up: dense round dots instead of sparse angular slivers",
+   "detail": "Fabric: petal fleck",
+   "evidence": "fab.png: e4 R vs b_ss_14 - render ~2x the fleck count, dots round; real slivers 2-3:1, random angle, hard edges.",
+   "fix": "make_swatches.py tex_y_fleck: polygonal flecks (3-5 vertices, aspect 2-2.5:1, random angle), hard edges, -25 % count (same change as w20b-1)."
+  },
+  {
+   "id": "w20b-5",
+   "severity": "low",
+   "title": "Pillow piping reads as a dark outline",
+   "detail": "Pillow",
+   "evidence": "pilz.png: piping ~10 L darker than the face; b_ss_14 / y_47300 pillows show a soft same-colour edge.",
+   "fix": "09a_econ.js pillow piping: same material as the face (ECON pillow colour), radius 3 mm, no darker tint."
+  },
+  {
+   "id": "w20b-6",
+   "severity": "low",
+   "title": "Seat-back pocket still a flat black mesh strip (carried w19b-6); hood side band (carried w19b-5); diamond ground grey (carried w19b-7)",
+   "detail": "Tray / pocket / AC",
+   "evidence": "e6 diff vs s19 1.5 L mean: unchanged.",
+   "fix": "As w19b-5 / 6 / 7."
+  },
+  {
+   "id": "w20b-L1",
+   "severity": "medium",
+   "owner": "lighting",
+   "title": "q16 near fabric too light/grey; fleck blobs huge at 1 m (not scored)",
+   "detail": "Lighting",
+   "evidence": "q16 near-top fleck blobs median 9 px / p90 22 px vs y_47301 1 / 3 px; row 2 L50 102 B/R 1.95 vs 97 / 2.48.",
+   "fix": "As w19b-L1; part of the blob size is texture (w20b-1)."
+  },
+  {
+   "id": "w20b-C1",
+   "severity": "info",
+   "owner": "QA cameras",
+   "title": "Camera mismatches (not scored)",
+   "evidence": "q15 still closer/lower than y_47300 (backs 205 vs 122 px); q16 across-cabin vs y_47301 down-aisle; q17 high rear vs y_47303 window-side profile.",
+   "fix": "Carried from w19b-C1 / the 47e0e43 hand-off."
+  }
+ ],
+ "questionsForUser": []
+}
