@@ -438,8 +438,9 @@ function buildWelcomeGalley(B, m) {
   B.add(gPlate(0.085, 0.05, 0.012, 0.024, 5), V(c0 - sxo, 1.44, o + 0.114), { c: '#c9c6bf', r: 0.3, m: 0.6 });   // oval plate
   B.add(gBox(0.012, 0.036, 0.01), V(c0 - sxo, 1.44, o + 0.122), MONMAT.bevBlack);                             // thumb-turn
   // w16 (w15b): diagonal reflection band across the smoked pane (omaat_room_32), two pale strips
-  for (const [du, bw, e] of [[0, 0.07, 0.03], [0.09, 0.025, 0.02]])
-    B.add(gQuad(bw, 0.6), M4.mul(V(c0 + 0.02 + du, 1.43, o + 0.0865), M4.trs(0, 0, 0, 0, 0, -0.42)), { c: '#77736f', r: 0.08, e });
+  // (w17 self-check: #77736f + glow read as two sticks; now a broad faint band a few levels over the contents + a hairline)
+  for (const [du, bw, c] of [[0, 0.13, '#4d4b4a'], [0.1, 0.008, '#666462']])
+    B.add(gQuad(bw, 0.62), M4.mul(V(c0 + 0.02 + du, 1.43, o + 0.0865), M4.trs(0, 0, 0, 0, 0, -0.42)), { c, r: 0.1 });
   B.add(gPlate(0.26, 0.07, 0.012, 0.035, 4), V(c0, 1.955, o + 0.106), { c: '#e9e2cf', r: 0.5 });          // w7: single cream oval tag
   B.add(gQuad(0.03, 0.03), V(c0 - 0.07, 1.955, o + 0.1125), { c: '#5a5650', r: 0.6 });                      // w10a: pictogram + 2 text lines (omaat_room_32)
   for (const y of [1.965, 1.945]) B.add(gQuad(0.09, 0.005), V(c0 + 0.03, y, o + 0.1125), { c: '#8d887e', r: 0.6 });
