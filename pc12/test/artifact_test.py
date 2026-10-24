@@ -226,7 +226,7 @@ AVX_JS = """async () => { const V = window.viewer, q = (id) => document.getEleme
   const st = V.avionics.state(), np = txt('mfd', 'np'), labels = V.avionics.state().pages.mfd.text.filter((x) => x.label).map((x) => x.s);
   // the Environment knob as the UI moves it: the OAT slider -> T1 on the engine strip
   const el = q('eOat'), oat0 = txt('mfd', 't1');
-  el.value = '35'; el.dispatchEvent(new Event('input', {bubbles: true})); V.advance(3); V.avionics.flush();
+  el.value = '35'; el.dispatchEvent(new Event('input', {bubbles: true})); V.advance(10);   // (the air data's 1 s filter) V.avionics.flush();
   const oat1 = txt('mfd', 't1');
   V.env.reset({instant: true}); V.setProp({rpm: 0, pitch: 0}, {instant: true}); V.advance(0.05); V.avionics.flush(); await V.frames(1);
   const v = V.avionics.verify();

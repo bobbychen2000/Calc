@@ -2214,4 +2214,11 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   artifact_test's live-pages row per scenario; the sound / prop-spool rows retimed to the slower start (SOUND_SCRIPT:
   1,700 at 34 s, 100 s render).  Decisions (owner-delegated): the amber readouts stay reverse video (G1000 / G3000
   practice); the TRQ green arc to 40.63 kept (the recovered table); the cold-day idle Np above 1,000 kept (the power
-  balance); no generator-off CAS with the engine stopped (P1046410 shows the parked pages without them).
+  balance); no generator-off CAS with the engine stopped (P1046410 shows the parked pages without them).  Verified (1ce7fa0): avx_model_test 34 / 34;
+  the FULL viewer_test 249 / 251 (88 min) with two [PQ] rows of the picture section (Auto's calibration under load, one
+  gl.getError() 1282) -> `--only picture` 15 / 15 on a rerun; `--only avx` 16 / 16, `--only sound` 25 / 25, `--only prop`
+  28 / 28 (the prop pixel rows had projected their ring through a stale camera matrix: projected after a frame now);
+  web/package.py verify OK (meshopt 18.15 + 15.62 MB); the Artifact bundle in 2 publishes; artifact_test (76 rows: + the
+  live pages under the CSP per scenario).  Judges r3: pilot 8.0, picture 8.0 (no blocker / major).  Open (minors): the
+  close-ups a little washed out by the cover glass' reflection, a mip regeneration per upload batch at liveScale 2, the
+  phone tier soft in close-up (scale 1), CAS wording / generator amps per the real NGX unknown.
