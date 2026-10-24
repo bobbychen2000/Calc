@@ -160,7 +160,7 @@ U.cabinRefl.value.set(...CABIN_LOOK.refl);
 // (the trim with a share of the fill keeps that share of its light out of the window sky law: the cabin lining all of
 // it, T4b / T14; the flight deck's anthracite lining_flightdeck has no entry since look L5: the sky law and the baked
 // occlusion darken it where the photos do)
-const CABIN_TRIM = { lining: [1, 1], leather: [0.5, 1], stitch_light: [0.5, 1], leather_crew: [0, 0.8], leather_dark: [0.6, 1],
+const CABIN_TRIM = { lining: [1, 1], leather: [0.5, 0.93], stitch_light: [0.5, 1], leather_crew: [0, 0.8], leather_dark: [0.6, 1],
   lav_white: [0.8, 1], toilet_white: [0.8, 1], psu_housing: [0.7, 1],
   // the crew seats' lavender-grey sheepskin (P1046408 / 09 ~90-130 in the cabin light, B > R)
   sheepskin: [0, 0.60],     // (FDY r1: 0.42 -> 0.60 for the LOCKS fleece's darker mean albedo: panel_408b ~119, P1046408 121)
@@ -462,7 +462,7 @@ for (const it of (Q_M.get('partTrim') || '').split('|')) {
 // (all-lens review r3: the executive seats' anthracite base shroud, skirt and armrests a class of their own, 3 -- under
 // the leather's occlusion power 2 and floor-level x 0.55 they read as a black void, sRGB ~10 against the backs' 200 at
 // cabin_fwd_406, where P1046406 / 03 / 07 show a dark grey box with its form, ~0.25-0.35 of the backs)
-const CABIN_FORM = { lining: 0, leather: 1, leather_dark: 1, seat_back_shell: 1, seat_shell_dark: 3, stitch_light: 1,
+const CABIN_FORM = { lining: 0, leather: 1, leather_dark: 1, seat_back_shell: 1, seat_shell_dark: 3, seat_shell_grey: 3, belt_grey: 1, stitch_light: 1,
   veneer_walnut: 2 };
 const qf4 = (k, d) => { const v = qv(k, d); return v; };
 // tuned at the photo-fitted cabin_fwd_406 (P1046406) / cabin_fwd / p404 views in one look-dev page (out/tmp/all8_fix_r1/ld
@@ -694,6 +694,9 @@ const VIEWER = {
   // scattered grey dots 30-50 levels under the leather; the GLB's 0.8 x the leather -> 0.95 x: the dashes' relief and
   // the crease carry the seam up close, at a distance they melt into the leather)
   stitch_light: { color: [0.428, 0.423, 0.413] },
+  // (all-lens review r3 CAB4-04: a hard white streak across the cushion tops -- the exec leather a softer satin; with
+  // CABIN_TRIM leather x 0.93 its tone a shade down toward P1046406's seats)
+  leather: { roughness: 0.62 },
   // the titanium panel face / sub-panels / stack sit under the glareshield and the cabin roof (P1046408: the face round
   // the PDUs ~sRGB 65-70, the inner sub-panels ~130); unoccluded they read as light grey plastic (~150-170)
   // flight deck r1 LOOK (L5): no occlusion stand-in any more (the baked occlusion / window sky do it); brushed along the

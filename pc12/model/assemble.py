@@ -86,7 +86,9 @@ MATERIALS = {
                                                               sheen_rough=0.45)),
     "seat_base_black":    ((0.022, 0.022, 0.025), 0.3, 0.45),
     "harness":            ((0.069, 0.072, 0.080), 0.0, 0.80, dict(specular=0.5)),       # dark grey webbing
-    "seat_shell_dark":    ((0.064, 0.064, 0.066), 0.0, 0.55, dict(specular=0.7)),       # executive shroud, armrest
+    "seat_shell_dark":    ((0.064, 0.064, 0.066), 0.0, 0.55, dict(specular=0.7)),
+    "seat_shell_grey":    ((0.20, 0.20, 0.20), 0.0, 0.60, dict(specular=0.6)),     # fwd-facing exec base (CAB4-03)
+    "belt_grey":          ((0.36, 0.36, 0.35), 0.0, 0.75, dict(specular=0.5)),     # exec lap-belt webbing (CAB4-06)       # executive shroud, armrest
     "seat_tab_red":       ((0.45, 0.02, 0.02), 0.0, 0.40),                              # base-shroud pull tab
     # mid-grey exec back rear shell (final judge r1 I5: lighter -- 0.15 read anthracite from behind in cabin_aft_fwd)
     "seat_back_shell":    ((0.21, 0.215, 0.228), 0.0, 0.55, dict(specular=0.7)),

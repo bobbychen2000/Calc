@@ -1047,6 +1047,40 @@
    "note": "executive-seat base shroud, armrest, rear inserts",
    "srgb_hex": "#484849"
   },
+  "seat_shell_grey": {
+   "baseColorFactor": [
+    0.2,
+    0.2,
+    0.2,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.6,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 0.6,
+   "kind": "dielectric",
+   "note": "forward-facing executive seats' base box, mid grey under the light legrest (P1046404 / 05; all-lens review r3 CAB4-03)",
+   "srgb_hex": "#7C7C7C"
+  },
+  "belt_grey": {
+   "baseColorFactor": [
+    0.36,
+    0.36,
+    0.35,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.75,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 0.5,
+   "kind": "dielectric",
+   "note": "executive seats' light-grey lap-belt webbing (P1046406 / 04; CAB4-06)",
+   "srgb_hex": "#A2A2A0"
+  },
   "seat_tab_red": {
    "baseColorFactor": [
     0.45,
