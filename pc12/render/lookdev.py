@@ -645,13 +645,13 @@ SPEC.update({
     # (all-lens review r3 CAB5-02, P1046411 / 06: the runner is one woven carpet -- the ground's transverse pinstripe runs
     # through the orange and light bands too, a darker shade of each; plain, they read as painted planks)
     "carpet_orange":      dict(kind="dielectric", base=(0.69, 0.25, 0.019), rough=0.95,
-                               stripes=dict(pitch=0.012, duty=0.34, colour=(0.42, 0.14, 0.012), wobble=0.15, pile=0.35),
+                               stripes=dict(pitch=0.012, duty=0.34, colour=(0.58, 0.20, 0.016), wobble=0.15, pile=0.35),
                                note="AI Orange runner"),
     "carpet_light":       dict(kind="dielectric", base=(0.52, 0.52, 0.51), rough=0.95,
-                               stripes=dict(pitch=0.012, duty=0.34, colour=(0.32, 0.32, 0.32), wobble=0.15, pile=0.35),
+                               stripes=dict(pitch=0.012, duty=0.34, colour=(0.44, 0.44, 0.435), wobble=0.15, pile=0.35),
                                note="runner, light-grey strands (review r4 INT8-05: P1046406 / 07 / 11, not cream)"),
     "carpet_grey":        dict(kind="dielectric", base=(0.26, 0.28, 0.30), rough=0.95,
-                               stripes=dict(pitch=0.012, duty=0.34, colour=(0.15, 0.16, 0.17), wobble=0.15, pile=0.35),
+                               stripes=dict(pitch=0.012, duty=0.34, colour=(0.21, 0.23, 0.25), wobble=0.15, pile=0.35),
                                note="runner, grey"),
     "floor_panel":        dict(kind="dielectric", base=(0.20, 0.21, 0.22), metallic=0.1, rough=0.60,
                                note="floor panel edges"),

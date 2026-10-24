@@ -1422,7 +1422,7 @@ def _densify_top(P, o, db, b0, step):
 #              apron hangs below the cushion bottom over the legrest's face, forward-facing seats) and its thickness
 #   EXEC_WELT  piping welt radius;  EXEC_STITCH pitch, dash length, dash width, inset from a panel's top-face edge
 EXEC_CUSH = dict(crown=0.022, crown_r=0.14, roll=0.055, roll_b=0.030, apron=0.024, apron_t=0.011,
-                 side_dz=-0.006, side_front=0.060)   # (CAB3-01: the side panels 6 mm under the drawn top -- +4 mm they framed the 22 mm
+                 side_dz=-0.012, side_front=0.060)   # (CAB3-01: the side panels 6 mm under the drawn top -- +4 mm they framed the 22 mm
                                    # crowned centre as a tray, P1046404)
 EXEC_WELT = 0.003
 EXEC_STITCH = (0.0065, 0.0038, 0.0009, 0.0045)
@@ -1441,7 +1441,7 @@ EXEC_STITCH = (0.0065, 0.0038, 0.0009, 0.0045)
 #   EXEC_GAP    the forward-facing seats' shadow gap under the cushion roll (EXEC_SEAT legrest_gap): the dark strip
 #               in it, its set-back behind the legrest face and its depth (the face sits EXEC_SEAT legrest[2] behind
 #               the cushion front)
-EXEC_SEAM = dict(gap=-0.0010, r_centre=0.006, r_lumbar=0.005, r_bolster=0.007, r_side=0.008, sink=0.022, sink_b=0.026,
+EXEC_SEAM = dict(gap=-0.0030, r_centre=0.006, r_lumbar=0.005, r_bolster=0.007, r_side=0.008, sink=0.022, sink_b=0.026,
                  sink_l=0.020)
 EXEC_WING = dict(w=0.046, crown=0.0, crown0=0.004, rise=(0.50, 0.80))
 EXEC_HEAD = dict(r=0.036, rb=0.040, crown=0.020, crown_r=0.080, seam_r=0.0030, seam_a=0.062, seam_taper=0.80,
@@ -1457,7 +1457,7 @@ EXEC_PANEL_CROWN = dict(centre=(0.004, 0.05), lumbar=(0.005, 0.04), bolster_r=0.
 # EXEC_SHELL h at the back's centreline falling to 0 at its sides -- one convex leather shell, the seams 3-4 mm grooves.
 # CAB5-01: that read flat -- the bolsters DOMED (EXEC_WING crown0 14 + 12 mm over the shoulders, reached bolster_r
 # inside their edges): they rise out of a soft valley at the seam and roll over the back's sides, P1046402 / 04 / 06)
-EXEC_SHELL = dict(h=0.012, bolster=0.014, wing=0.010, e0=0.40, e1=0.85)
+EXEC_SHELL = dict(h=0.012, bolster=0.018, wing=0.010, e0=0.40, e1=0.85)
 EXEC_V_EASE = 1.7       # the centre panel's seams: narrow up the lumbar, flaring to the shoulders (P1046404 / 06)
 M_STITCH_EXEC = "stitch_light"          # tone-on-tone thread on the exec leather (CAB2-01; stitch_thread read black)
 
@@ -1717,7 +1717,8 @@ def cabin_seat(seat_id, layout=None, recline=None, raised=False, belts=True):
     # the centre panel crowned (a lumbar bulge; the r1 back read as a flat shield), the stitching tone-on-tone
     ks, kw = EXEC_SEAM, EXEC_WING
     gap = ks["gap"]
-    b0_, b_lum = 0.05, 0.185                                      # lumbar panel foot / top along the back [M]
+    b0_, b_lum = 0.03, 0.185                                      # panels' foot / the lumbar top along the back [M]
+    # (A/B judge r3: b0_ 0.05 -> 0.03 -- the slab's front showed as a black slot along the back's foot)
     lum_bot, lum_top = 0.064, 0.078                               # its half-widths (a trapezoid) [M]
     b80 = 0.80 * s_top
     b_v = s_top - 0.040
@@ -1759,17 +1760,13 @@ def cabin_seat(seat_id, layout=None, recline=None, raised=False, belts=True):
         return V + np.c_[np.zeros(len(V)), np.zeros(len(V)), hs_ * (1.0 - e * e) + bo]
     pmap = lambda V: fmap(shell(V) - [0, 0, ks["sink"]])         # noqa: E731
     pmap_b = lambda V: fmap(shell(V) - [0, 0, ks["sink_b"]])     # noqa: E731
-    pmap_l = lambda V: fmap(shell(V) - [0, 0, ks["sink_l"]])     # noqa: E731
-    # lumbar panel: a soft lumbar bulge (CAB2-01)
-    g = pillow(fillet([(-lum_bot, b0_ + 0.004), (lum_bot, b0_ + 0.004), (lum_top, b_lum - 0.5 * gap),
-                       (-lum_top, b_lum - 0.5 * gap)], [0.03, 0.03, 0.014, 0.014], max_len=0.04), 0.024,
-               ks["r_lumbar"], 0.006, h=0.045, crown=dome(EXEC_PANEL_CROWN["lumbar"][0], EXEC_PANEL_CROWN["lumbar"][1]),
-               n_round=2)
-    back.append(_mats(g.map(pmap_l), M_CAB))
-    # centre panel: the V from the lumbar top, then between the wings to the top
-    bs = np.r_[np.linspace(b_lum + 0.5 * gap, b80, 9), np.linspace(b80 + 0.03, b_v, 4)]
-    P = np.vstack([np.c_[vin(bs), bs], np.c_[-vin(bs[::-1]), bs[::-1]]])
-    olc = fillet(P, np.r_[0.014, np.zeros(len(bs) - 2), 0.03, 0.03, np.zeros(len(bs) - 2), 0.014], max_len=0.05)
+    # centre panel: from the back's foot -- the lumbar part one with it (all-lens review r3 A/B judge: a separate lumbar
+    # pillow read as a tile with dark gaps; P1046403 / 04 show one panel with a shallow seam across), up the V / U from
+    # the lumbar top, then between the wings to the top
+    bs = np.r_[b0_ + 0.004, np.linspace(b_lum, b80, 9), np.linspace(b80 + 0.03, b_v, 4)]
+    hb = np.where(bs < b_lum, np.interp(bs, [b0_, b_lum], [lum_bot, lum_top]), vin(bs))
+    P = np.vstack([np.c_[hb, bs], np.c_[-hb[::-1], bs[::-1]]])
+    olc = fillet(P, np.r_[0.03, np.zeros(len(bs) - 2), 0.03, 0.03, np.zeros(len(bs) - 2), 0.03], max_len=0.05)
     crc = dome(*EXEC_PANEL_CROWN["centre"])
     g = pillow(olc, 0.026, ks["r_centre"], 0.006, h=0.045, crown=crc, n_round=2)
     back.append(_mats(g.map(pmap), M_CAB))
@@ -1777,6 +1774,18 @@ def cabin_seat(seat_id, layout=None, recline=None, raised=False, belts=True):
                           lambda a, b: (b > b_lum + 0.01) & (b < b80 + 0.01), M_STITCH_EXEC)     # beside the V seams
     if st is not None:
         back.append(st)
+    # the lumbar seam: one row of tone-on-tone stitching across the centre panel at the lumbar top
+    pitch = EXEC_STITCH[0]
+    aa = np.arange(-lum_top + 0.012, lum_top - 0.012, pitch)
+    if len(aa):
+        dd = np.minimum(lum_top - np.abs(aa), 0.05)
+        A3 = np.c_[aa, np.full(len(aa), b_lum), 0.026 + crc(aa, np.full(len(aa), b_lum), dd) + 0.0003]
+        X = pmap(A3)
+        D = pmap(A3 + [1e-4, 0, 0]) - X
+        Nr = pmap(A3 + [0, 0, 1e-4]) - X
+        D /= np.linalg.norm(D, axis=1, keepdims=True)
+        Nr /= np.linalg.norm(Nr, axis=1, keepdims=True)
+        back.append(_stitches(X, D, Nr, M_STITCH_EXEC))
     # side bolsters: raised, from beside the lumbar panel up along the V seam and on to the top as the shoulder wings,
     # their crown rising by EXEC_WING crown over the upper back (rise band)
     s_r0, s_r1 = kw["rise"][0] * s_top, kw["rise"][1] * s_top
@@ -1842,10 +1851,12 @@ def cabin_seat(seat_id, layout=None, recline=None, raised=False, belts=True):
     back.append(_mats(g.map(lambda V: hmap(hwing(V) - [0, 0, 0.06])), M_CAB))
     out_ = 0.45 * kh["seam_r"]
     for sa in (-1.0, 1.0):
-        bb = np.linspace(hcen - 0.5 * hh_ + kh["r"] + 0.004, hcen + 0.5 * hh_ - kh["r"] - 0.004, 18)
+        bb = np.linspace(hcen - 0.5 * hh_ + 0.4 * kh["r"], hcen + 0.5 * hh_ - 0.4 * kh["r"], 24)   # (A/B r3: full height)
         a_ = sa * kh["seam_a"] * np.interp(bb, [bb[0], bb[-1]], [kh["seam_taper"], 1.0])     # (CAB5-01: tapering in)
         dd = np.minimum(hx_ - kh["r"] - np.abs(a_), (0.5 * hh_ - kh["r"]) - np.abs(bb - hcen))
-        cc = th_ + crh(a_, bb, np.maximum(dd, 0.0)) + out_
+        ov = np.maximum(np.abs(bb - hcen) - (0.5 * hh_ - kh["r"]), 0.0)          # onto the top / bottom rolls
+        cc = np.where(ov > 0, th_ - kh["r"] + np.sqrt(np.maximum(kh["r"] ** 2 - ov ** 2, 0.0)),
+                      th_ + crh(a_, bb, np.maximum(dd, 0.0))) + out_
         Ps = np.c_[a_, bb, cc]
         back.append(_welt(hmap(hwing(Ps) - [0, 0, 0.06]), M_CAB, r=kh["seam_r"], n=6))
     g = pillow(rrect(-0.075, hcen - 0.5 * hh_ + 0.03, 0.075, hcen + 0.01, 0.03), 0.010, 0.004, 0.003)
