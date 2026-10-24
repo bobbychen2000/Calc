@@ -17,7 +17,8 @@ if(!window.__pp){window.__pp=M4.perspective; M4.perspective=(f,a,n,far)=>window.
 const walk = (x, y, z, yaw, pitch) => `__app.setView([${x},${y},${z}], ${yaw}, ${pitch})`;
 // [camera expression, reference photos (ref/ana or ref/web), what the view should show]
 const VIEWS = {
-  q01_door1: [walk(-1.35, 1.62, 5.7, 'Math.PI+0.12', -0.08), [], 'boarding at L1: galley/lav front monuments, THE Suite ahead'],
+  // eye just inside door 1L looking across the cross-aisle (the old eye stood in the 0.6 m gap between the closets, integration r3)
+  q01_door1: [walk(-2.0, 1.62, 5.45, -1.85, -0.06), [], 'boarding at L1: door-1 cross-aisle, galley front, door 1R lining, F closets'],
   q02_suiteAisle: [`__rel('2D',1.82,1.8,-0.6,0.75,-0.55)`, ['f_17301'], 'THE Suite from the aisle, fluted shells, 43in screens'],
   q03_suite1A: [`__sit('1A',0.12,-0.2)`, ['f_17306', 'f_17300'], 'seated in 1A: screen wall, ottoman, window console'],
   q04_suite1Abed: [`(()=>{__sit('1A'); __app.toggleBed(); __settle();})()`, ['f_17304'], '1A in bed mode'],
