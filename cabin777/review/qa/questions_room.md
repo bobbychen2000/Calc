@@ -15,3 +15,14 @@ The user asked for judgement calls rather than questions. Rule applied: real in-
 7. **Closed doors (w5).** `roomPart(part, {doors: 1})` closes the sliding door (ash aisle face in a charcoal frame, top
    level with the aisle-end cap) and raises the pop-up privacy panel ~0.40 m out of the armrest ledge slot. The raised
    panel height and finish are estimated; no photo of it raised was found.
+
+## Wave 3
+8. **Boarding bundle restored (w7).** As in decision 1, from tpg_31 / tpg_42 / omaat_room_15: the blue duvet lies on top of
+   the white pad, both in plastic, at the cushion front, with the blue pillow resting on it and the white pillow behind. The
+   w6 raters asked for the white pad on top; the real photos show the blue on top, so that advice was not followed.
+9. **Bundle on the E (forward-facing) seats (w7b question).** Every bundle photo found shows an O bench. ANA sets bedding at
+   every seat, so E carries the same bundle [A]. Say if E seats should show pillows only.
+10. **Blue pillow tone (w7a question).** The photos disagree: tpg_42 shows pillow/fabric 0.66 and omaat_room_15 shows 1.07.
+    The model uses ~0.85 (pillowBlue #4c5594) in both the seat and bed modes.
+11. **Monitor wall (w7a).** The frame now runs up level with the cabinet top (tpg_53). The sill stays at the same height,
+    so the lighting strip under it (12_scene.js, y 0.642) still lines up.
