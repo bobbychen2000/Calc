@@ -96,3 +96,78 @@ this commit, but judge material albedos in the studio first.
   albedo about #8c9298 (from #a6a9ad) and/or a rougher cowl (less sun sheen), so the sun side lands near #a9c0ce while the
   wing keeps its level. FYI, done in lighting r1: sunset skyTop [0.28, 0.34, 0.60] / extSun 0.25 (26K wing grey-blue,
   was royal blue), the beacon only on down-facing faces (canoe flanks dark), sunset deck blue (haze / cloudLit).
+
+# Items from the lighting fixer (QA r2, light group; 2026-10-24)
+
+The r2 light changes (04_shaders.js / 12_scene.js / 13_app.js) are: amber moods with the small-e fill lift cut to 0.35
+(PSU band / bin doors no longer glow tan), a saturated amber vault, a pale-yellow lens core and brighter seat level; IFE
+screen spill light in Night / Blue / Dining; a new **Blue** mood (ANA's full-blue phase); a floor / underside pocket term
+(contact shadows under the seats); the AO floor above 1.8 m only in the seat zones (galley upper banks); a closed shade
+keeps the band light of the wall; photo tiles sampled at mip bias -0.5; the look-out eye at the glass. Re-check your area
+after this commit; judge albedos in the studio first.
+
+## To shell (`src/07_shell.js`) + shared `src/03_tex.js` / `test/make_swatches.py`
+- **THE Room carpet has no visible texture** (lighting r2 medium). `carpetJ` uses the procedural fabric layer 1, which
+  averages out at aisle distance, so the aisle reads as flat brown paint. Evidence: q06 aisle (500-580, 420-560) #443834,
+  high-pass std (luminance minus a 9x9 blur) 0.6; c_27312 aisle (470-550, 420-560) #3a3131, high-pass std 10.6, fine dark
+  heather with light flecks, slightly more mauve (h352 vs h14). **Fix:** `test/make_swatches.py`: cut a `j_carpet` tile
+  from ref/ana c_27312 (aisle, about 470-550 x 420-560, flattened and tileable; a closer crop from c_27315 / c_27316 if it
+  tiles better); `03_tex.js` (shared, one line per key): new photo layer `jCarpet` (PHOTO_LAYERS, PHOTO_GAIN ~1.0,
+  LAYER_PARAMS scale ~3/m); `07_shell.js`: `carpetJ: { c: '#3d3335', l: LAYER.jCarpet }`. Target: q06 aisle mean about
+  #3d3435 with high-pass std 8-11.
+
+## To room (`src/09c_room.js`, or shared `03_tex.js` LAYER_PARAMS 2)
+- **THE Room padded header band reads as hammered metal** (integration r2 medium). `SEATMAT.jBand` (LAYER.leather) shows
+  deep ~4 mm worley dimples at seat-eye distance. Evidence: cruise_seat5K (`__sit('12H', Math.PI*0.5+0.6, -0.15)`, cruise)
+  band (100-400, 260-420) high-pass(sigma 6) std / mean 0.156, facets L60-130; the c_27315 header band behind the headrest
+  is smooth with soft gradients; tlfl_IMG_9397 (THE Room console at ~0.4 m) 0.013-0.035. **Fix:** 09c_room.js l.22
+  `jBand: { c: '#656b73', r: 0.45, l: LAYER.plastic }` (satin, as jShell); or, shared, `LAYER_PARAMS[2]` [9, 0.32, 0.14,
+  0.3] -> [9, 0.12, 0.08, 0.3] (also tames jHead / fFlap / fLeather / yCover close-ups, the econ "stucco" note). Target:
+  band local contrast <= 0.04 at the cruise_seat5K camera.
+- **FYI:** the seat mood strips now take their colour in `12_scene.js` (`'#ffc860'`, the warm-yellow LED of
+  ucr_room-night-lighting #ffee94 / #fde98c instead of cream #eee3c2); `SEATMAT.moodGlow` is no longer read by any mesh,
+  so you may delete it or leave it.
+
+## To suite (`src/09d_suite.js`)
+- **The bed sheet still clips in bed mode** (integration r2 medium; repeat of the r1 note). The pad cushion and the
+  turned-down bare-sheet corner are still `'#f0efea'` and the duvet `'#d2cec6'`. Evidence: q04 sheet in shade (440-520,
+  320-380) #e1e1de L225, sun patch (600-650, 240-280) #f4f3f1 L243, 15.1 % of the frame > 235; f_17304 bed #bbbbbc L187,
+  4.3 % > 235; omaat_f59 (real THE Suite bed) #e2c9ab L204. **Fix:** bed branch, pad cushion (l.297) and bare-sheet corner
+  (l.308) `'#f0efea'` -> `'#d6d2ca'`; duvet `duv` (l.303) `'#d2cec6'` -> `'#c4c0b8'`; leave the folded flap `'#b9b5ad'`.
+  Targets: q04 sheet shade L200-205, sun patch <= L232, frame > 235 under 6 %.
+- **No dark pocket under the ottoman in the seated view** (integration r2 low). The ottoman base is a near-flush vertical
+  face, so there is no recess for the crevice / pocket terms to darken. Evidence: q03 ottoman top (380-600, 420-480) L137,
+  below (400-600, 545-572) #413c3a L61, ratio 0.45; omaat_f11 (same seated view): top (420-840, 620-720) L114, recess under
+  the plinth (400-840, 800-880) #1c1610 L23, ratio 0.20, a thin grey plinth at y 750-775. **Fix:** seat-mode ottoman:
+  shrink the base box under the cushion to a 0.03 m plinth and set the support back >= 0.12 m from the cushion front, so a
+  recess opens at floor level. The r2 floor / underside pocket term then darkens it. Target: q03 under / top ~0.25.
+
+## To monuments (`src/10_mono.js`)
+- **F front loose drapes from door 1 turned cool light grey** (integration r2 low). Evidence: q01 L5 curtain (400-470,
+  100-500) #515053 L81 h240 (the L4 render was warm dark brown); omaat_f40 drapes (20-140, 150-600) #433f3c L63 and
+  (640-740, 160-320) #423c3a L61, warm h ~25; curtainFF's own comment cites omaatF_40 #4c4644 / #423c3b. **Fix:**
+  `curtainFF: { c: '#6d6b6b' }` -> `'#5f5650'` (warm grey, same r / layer). Target: q01 curtain about #4a4440 (L65-72,
+  h15-30).
+- **FYI (from_monuments w9b / w13-15):** the white band over the galley upper compartments came from the lighting AO floor
+  (`ao >= 0.85` from 1.8 to 2.0 m), which now acts only in the seat zones; re-check m01 / m09 / m12 / q19.
+
+## To ceiling/bins (`src/08_bins.js`)
+- **Z-fight dashes on the lower lip of the right outboard bin at door 3, unchanged since r1** (integration r2 low).
+  Evidence: scratchpad/ir2/out7/w04_d3_cross.png (DPR 2, `__app.setView([2.3,1.62,32.7], Math.PI/2, -0.10)`): irregular
+  dark streaks at (1330-1600, 365-385) px, same place and shape as r1 (shots3/w04_d3_cross.png); c_27312 / y_47300 lips
+  are clean. **Fix:** find the coplanar strip (seam / band / lens) of the outboard module that ends at the door-3 zone
+  boundary (z ~32.1); offset it 1.5 mm along the face normal or end it 0.02 m short of the zone end. Re-render w04 / z04
+  at DPR 2.
+- **Bin lens size (lighting r2 medium, your call):** the lens is now lit with a pale-yellow core in the amber moods
+  (`u_lensCore`), but the 0.045 x 0.006 m box is ~1 px at 930 px. Evidence: q21 lens row y 279-281 peak #fbbd61 L196 vs
+  L175-180 above / below; the photos' brightest pixels are on the lens (ucr #fefed6, ff_door-gap #fefeb6). Suggested:
+  0.06 x 0.008 m.
+- **Reply to from_ceiling w13 (bins clip near-white at QA framing):** the outboard / centre bin doors are lifted by their
+  own small emission (`BINMAT.doorC` eFn 0.14-0.20, `band` 0.16) through mainFS's fill lift (`base * e * 3`, i.e. +42-60 %
+  of the albedo in the white moods), on top of the cabin light. Lowering that eFn is the lever if the seam cores are lost.
+
+## To exterior (`review/qa/exterior_views.js`, FYI)
+- **from_exterior 15 done in `13_app.js` lookOut:** the eye is now at `side * 2.72`, y 1.10, pitch 0.06 rad lower, for
+  every look-out. Drop the `[-0.06, 0.12, -0.06]` offsets on w26K / w30K, or they apply twice.
+- **from_exterior 14 / 16:** the exterior sky reflection now scales with the baked albedo (luminance / 0.39, clamped
+  0.5-1, metals exempt), so your near-to-far ramp also ramps the grazing reflection.

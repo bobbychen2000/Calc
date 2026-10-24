@@ -337,7 +337,11 @@ class App {
       const eye = [side * 2.60, 1.16, ez];
       const tgt = [side * 3.4, 1.02, ez + facing * 0.38];
       const dx = tgt[0] - eye[0], dz = tgt[2] - eye[2];
-      this.flyTo({ pos: eye, yaw: Math.atan2(-dx, -dz), pitch: Math.atan2(tgt[1] - eye[1], Math.hypot(dx, dz)) }, 0.9);
+      // QA r2 (integration): the eye goes to the glass (0.12 m outboard, 0.06 m lower) and looks 0.06 rad further down,
+      // so the shade rail no longer cuts the top of the pane and the JA795A registration shows from the aft K seats
+      // [V: alv IMG_7345 / IMG_7250, seat 26K, phone at the glass ~20 deg down] (from_exterior 15)
+      const pos = [side * 2.72, 1.10, ez];
+      this.flyTo({ pos, yaw: Math.atan2(-dx, -dz), pitch: Math.atan2(tgt[1] - eye[1], Math.hypot(dx, dz)) - 0.06 }, 0.9);
     } else this.flyTo({ pos: e.pos, yaw: e.yaw + (side < 0 ? 1.2 : -1.2) * (facing > 0 ? -1 : 1), pitch: -0.05 }, 0.9);
   }
   standUp() {
