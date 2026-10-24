@@ -1,0 +1,147 @@
+{
+  "area": "suite",
+  "rater": "B",
+  "round": "w11",
+  "score": 8.5,
+  "method": "Compared r_w11 (09d_suite.js at e97b5a1, 357 lines) with r_w10 crop by crop. Crops are in scratchpad/qa11b/. References: omaat_f11, f57, f58, f60 and up_34. Measurements are PIL box means and luminance column profiles, compared as ratios within one image. s3 and v3 are pixel-identical to w10.",
+  "calibration": [
+    {
+      "earlier_issue": "w10b MED / w10a MED: taupe plinth (1.24x the field) and a proud fShell block under the doorway when the doors are closed",
+      "status": "partly fixed. The colour is fixed: line 240 sets the plinth #3c3a34, and v1 now gives plinth L72 against field L86 (0.84x; f60 0.65x, w10 1.24x). The geometry is not fixed. The plinth faces are built per leaf (line 254, x + 0.001), so they slide with the leaves. Closed, they form one continuous proud plinth across the doorway: the v1 doorway reads L72, the same as the side plinths, while f60 shows a dark void at L18 there. The line-241 toe-kick 0.07 back is hidden behind them."
+    },
+    {
+      "earlier_issue": "w10a LOW: grip slots moved with the leaves and were too thin",
+      "status": "fixed. Line 262 fixes 0.10 x 0.07 slots at -L+0.22 and -0.58. In v1 and v2 they sit at the outer ends under the flanks, as in f60, and in s6 under the parked leaves, as in up_34."
+    },
+    {
+      "earlier_issue": "w10a/b MED: the turned-down duvet corner was buried; the duvet was 0.11 thick",
+      "status": "geometry fixed, but the corner barely shows. The duvet is now about 0.05 (line 303, y 0.49), and the q04 head step is much smaller. The triangle (line 307) now lies on top of the duvet, but it is a flat plate in nearly the duvet's own white: corner L234 against duvet L238 in q04. It reads only where the sun stripe crosses it, with no fold edge or crease (see issues)."
+    },
+    {
+      "earlier_issue": "w10b LOW: double line and z-fight on the centre fin top strip",
+      "status": "fixed. Lines 95-96 centre the strips on the plane. The qa11b/q02fin.png crop shows one clean taupe edge on the top and aft edges."
+    },
+    {
+      "earlier_issue": "w10a LOW: keypad lighter than its module",
+      "status": "fixed. Line 177 sets #2f2d2b. q04 keypad L83 against module L104-115 (0.76x; f57 0.83x, f58 0.89x). It is a touch dark, but acceptable."
+    },
+    {
+      "earlier_issue": "w10a LOW: the fluting had lost relief",
+      "status": "fixed. Line 19 (#47453c / #393730, no layer) gives column p90/p10 of 1.15-1.22 in v1, against 1.12-1.21 in f60 (w10: 1.07-1.11). Cap/field is 194/86 = 2.26, against 2.41 in f60."
+    },
+    {
+      "earlier_issue": "w10a/b LOW: stipple moire on the leaves at grazing angles",
+      "status": "not fixed. Dropping the layer did not remove it. q02's right-hand leaves (qa11b/q02right.png), the forward leaf in s1 and the near leaf in v5 still show a dotted, mesh-like texture instead of ribs."
+    },
+    {
+      "earlier_issue": "w10a/b LOW: flat triangular end faces on the console module",
+      "status": "not fixed. Line 173 is still a straight 0.52 extrusion, so s4 (x 520-545, y 270-300) shows the hard wedge end."
+    },
+    {
+      "earlier_issue": "w10a LOW: far LOD leaves started at 0.10 against 0.16 near",
+      "status": "fixed. Line 350 uses 0.16 + (H - 0.175) / 2. The far unit has no plinth face under the leaves (v5), which is minor."
+    },
+    {
+      "earlier_issue": "Out of scope (lighting, plaque): hard sun patches on the bed, bright ottoman tweed, large navy plaque",
+      "status": "unchanged (other owners)."
+    }
+  ],
+  "details": [
+    {
+      "detail": "Screen wall: 43-in screen, rounded wing, pier with rounded-rect mirror and lamp",
+      "score": 8.7,
+      "refs": "omaat_f11, f60, f_17313; q03, q05, s2"
+    },
+    {
+      "detail": "Centre pair: board with a single clean taupe edge, mirror, lowered and raised divider",
+      "score": 8.6,
+      "refs": "omaat_f32, f5; q02, s3, v3, v4"
+    },
+    {
+      "detail": "Shell / cap two-tone value and hue",
+      "score": 8.5,
+      "refs": "f60 cap L171 vs field L71; v1 cap L194 vs field L86"
+    },
+    {
+      "detail": "Aisle fluted leaves: field, relief, frame, LEDs, pulls",
+      "score": 8.4,
+      "refs": "omaat_f60, f58, up_34; v1 relief 1.15-1.22 (f60 1.12-1.21); moire at grazing angles"
+    },
+    {
+      "detail": "Leaf plinth / base, doors open",
+      "score": 8.4,
+      "refs": "up_34, f58; s6, s1"
+    },
+    {
+      "detail": "Leaf plinth / base, doors closed",
+      "score": 7.5,
+      "refs": "f60 doorway L18 vs plinth L46; v1 doorway L72 = plinth L72"
+    },
+    {
+      "detail": "Window console: tray, low module, keypad, handset",
+      "score": 8.3,
+      "refs": "omaat_f57, f58, up_34; q04, s4, v2"
+    },
+    {
+      "detail": "Seat in niche: back, flap, header fillets, lamps, armrest",
+      "score": 8.4,
+      "refs": "omaat_f57, f9; s4"
+    },
+    {
+      "detail": "Bed: pad, thinner duvet, corner, belt, pillows",
+      "score": 7.6,
+      "refs": "omaat_f57, f58; q04, s5, v2"
+    },
+    {
+      "detail": "Ottoman, table, aisle box",
+      "score": 8.1,
+      "refs": "omaat_f11, up_34; q03, q05"
+    },
+    {
+      "detail": "Far LOD continuity",
+      "score": 8.2,
+      "refs": "v5"
+    }
+  ],
+  "issues": [
+    {
+      "severity": "medium",
+      "issue": "With the doors closed, the plinth still runs proud and continuous across the doorway. The plinth faces belong to each leaf and slide with it, so the dark recess that f60 shows under the meeting leaves never appears. On the real suite the plinth boxes are fixed under the parked-leaf positions and flanks, and with the doors open (f58) the doorway between them is floor.",
+      "evidence": "v1 luminance column at x = 330 (doorway): L72 from y 383 to 418, identical to the flank plinth at x = 100 (L72). omaat_f60 doorway (x 420-720, y 830-880) L18 vs plinth boxes L46. Code line 254 adds the plinth face inside the leaves loop at x + 0.001, and line 241's toe-kick sits behind it at hx - 0.07.",
+      "fix": "Delete line 254 from the leaves loop. After line 262 add fixed plinth faces for both door states: for (const [z0, z1] of [[-L + 0.10, zo0], [zo1, -0.08]]) B.add(gBox(0.004, ly0 - 0.01, z1 - z0), M4.trs(hx + 0.001, (ly0 - 0.01) / 2 + 0.005, (z0 + z1) / 2), plinth); and drop the flank plinth at line 266, which this covers. Make line 241 unconditional or leave it as is: the doorway zone zo0..zo1 then shows the dark toe-kick 0.07 back when closed and floor when open. The closed leaves overhang the opening on their foot strip (line 253), as in f60."
+    },
+    {
+      "severity": "low",
+      "issue": "The turned-down duvet corner sits on top now, but it is almost invisible: a flat plate the same white as the duvet, with no fold edge. The omaat_f57 / f58 diagonal reads through a raised fold lip and a shadowed crease.",
+      "evidence": "q04: corner L234 against duvet L238 (0.98x). It shows only where the sun stripe crosses it (qa11b/r_w11_q04bed.png). f57: the fold line is a soft ridge with a shadow on the bare-sheet side.",
+      "fix": "Line 307: tint the underside a step greyer than the duvet so it separates: { c: '#c4c0b8' } (the duvet is #d2cec6, and the underside is in the fold's shade). Add a soft fold ridge along the hypotenuse. The extrude maps 2D y to z = -y, so the hypotenuse runs from (xe - 0.36, dz0 - 0.04) to (xe - 0.06, dz0 - 0.34): B.add(gRBox(0.43, 0.014, 0.022, 0.007, 1), M4.trs(xe - 0.21, 0.534, dz0 - 0.19, -Math.PI / 4), duv). Check the sign of the 45 deg yaw against the render."
+    },
+    {
+      "severity": "low",
+      "issue": "Stipple moire persists on the fluted leaves at grazing and distant views, where the field reads as perforated mesh rather than ribs. Dropping LAYER.plastic (line 19) did not remove it, so the cause is geometric: 0.005-proud flat slats with 0.006 gaps at 0.026 pitch, sampled below Nyquist and probably with shadow-map acne on the slat edges.",
+      "evidence": "qa11b/q02right.png (q02 x 700-930), s1 forward leaf (x 500-590), v5 near leaf (x 370-420).",
+      "fix": "Line 249: at distance this needs mip-filtered detail, not geometry. Replace the slat boxes with a single quad carrying a 0.026-period stripe texture (an atlasUV slot or a LAYER with mips), keeping the 0.004 groove backing on line 247. Or, cheaply, make the slats 0.0025 proud and 0.022 wide, so the gaps shrink below a pixel and shadow edges halve. Check that receiver bias in the shadow pass covers 5 mm steps (lighting owner)."
+    },
+    {
+      "severity": "low",
+      "issue": "The console module's ends are still hard vertical triangles from the straight extrusion.",
+      "evidence": "s4 x 520-545, y 270-300; v2 x 140-240, y 150-210. The f57 / f58 module ends blend into the console with radiused corners.",
+      "fix": "Line 173: shorten the extrusion to 0.46 and cap both ends with B.add(gRBox(xs1 - xo - 0.004, y0 - 0.655 + 0.012, 0.03, 0.012, 2), M4.trs((xs1 + xo + 0.004) / 2, (y0 + 0.012 + 0.655) / 2, -0.68 +/- 0.245), SEATMAT.fConsole), which gives rounded end blocks."
+    },
+    {
+      "severity": "low",
+      "issue": "The plinth is still a bit light relative to the field, and in the far LOD it is missing.",
+      "evidence": "v1 plinth/field 72/86 = 0.84 vs f60 46/71 = 0.65. In v5 the far unit's leaves float over a gap with no plinth face below 0.16.",
+      "fix": "Line 240: c '#33312b'. Line 350 area: add B.add(gBox(0.006, 0.15, L - 0.18), M4.trs(hx + 0.003, 0.08, -L / 2 - 0.0), { c: '#33312b', r: 0.5 })."
+    },
+    {
+      "severity": "low",
+      "issue": "Out of scope, noted only: hard sun patches on the bed and duvet (the duvet reads brighter than the pad, L238 vs L222), bright ottoman tweed, and the large navy 1A / 2G plaques.",
+      "evidence": "q04, q03, q02.",
+      "fix": "Lighting owner (12_scene.js / 04_shaders.js); seats owner for the plaque."
+    }
+  ],
+  "questions": [
+    "Should the leaf field be moved to a mip-mapped stripe texture to kill the grazing-angle moire? The geometric slats cannot be eased further without losing the relief the users asked for."
+  ]
+}
