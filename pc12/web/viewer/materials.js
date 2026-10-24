@@ -161,10 +161,13 @@ U.cabinRefl.value.set(...CABIN_LOOK.refl);
 // it, T4b / T14; the flight deck's anthracite lining_flightdeck has no entry since look L5: the sky law and the baked
 // occlusion darken it where the photos do)
 const CABIN_TRIM = { lining: [1, 1], leather: [0.5, 1], stitch_light: [0.5, 1], leather_crew: [0, 0.8], leather_dark: [0.6, 1],
+  // (first-principles judge r1 FP1-05: from the cabin the crew seats' backs read as uniform slate slabs; P1046406 shows
+  // the anthracite shells dark, with their highlights)
+  leather_crew_shell: [0, 0.65],
   lav_white: [0.8, 1], toilet_white: [0.8, 1], psu_housing: [0.7, 1],
   // the printed legends (first-principles flight deck A3: decals carrying model/fd_print.py's atlas): a silk-screened
   // white reads ~190-220 on the plates in P1046408 / 09 -- lifted over the interior law's dark panel light
-  legend_print: [0, 1.6],
+  legend_print: [0, 1.35],      // (judge r1 FP1-04: one tone dimmer -- 1.6 glowed on the overhead / quadrant)
   // the crew seats' lavender-grey sheepskin (P1046408 / 09 ~90-130 in the cabin light, B > R)
   sheepskin: [0, 0.60],     // (FDY r1: 0.42 -> 0.60 for the LOCKS fleece's darker mean albedo: panel_408b ~119, P1046408 121)
   //                          (0.55 before the flight deck fix r1's soft knee / gain 27; fix r5: 0.52 -> 0.42 with the
@@ -205,7 +208,7 @@ const CABIN_TRIM = { lining: [1, 1], leather: [0.5, 1], stitch_light: [0.5, 1], 
   lining_fd_reveal: [0, 0.5],
   // the eyebrow fascia (flight deck fix r2b FDO2-01: the light band over the PDUs, 126 from the crew seats and 122 at
   // panel_408b against P1046408's 96-104 and P1046410's 65-91)
-  panel_grey: [0, 0.72],
+  panel_grey: [0, 0.83],        // (first-principles judge r1 FP1-09: the fascia ~85 against P1046408's ~106)
   // the dark cove below the outer sub-panels (flight deck fix r3 FID-FD3-01: P1046408's cove ~41 at the fitted camera;
   // at x 1 it read 28)
   // (flight deck + yoke fix r4 FIDY4-01: the cove read 66 at panel_408b against P1046408's 8 under the same mask -- the
@@ -223,7 +226,7 @@ const CABIN_TRIM = { lining: [1, 1], leather: [0.5, 1], stitch_light: [0.5, 1], 
   // P1046410 / P1046409's cameras against the photos' 28 / 43 / 39 under the same masks: 0.6 -> 0.25, its reflections kept;
   // 0.33 read 52 at panel_408b)
   // (flight deck fix FDY r2: the quadrant frame still 45 at panel_408b against P1046408's 27: 0.25 -> 0.15)
-  stack_gunmetal: [0, 0.75], pedestal_gunmetal: [0, 0.15],
+  stack_gunmetal: [0, 0.55], pedestal_gunmetal: [0, 0.15],
   // the yoke (3-D judges r1 FID1-01 / CR1-06): a third entry is the material's own REFLECTION floor -- the reflections
   // keep at least this share of the studio's (its clear coat / metal shows the windshield and headliner as in the
   // photos, not the floor-facing 0.06-0.3 of the dark trim) -- and a fourth the key light's share in its specular
@@ -269,7 +272,7 @@ const CABIN_TRIM = { lining: [1, 1], leather: [0.5, 1], stitch_light: [0.5, 1], 
   // (all-lens review r1 FD8-03: up close the grips still read as slate-blue grey plastic -- 66-75 with B - R +18 from the
   // pilot's eye, a uniform 67 / 86 / 102 at the yoke close-up, where P1046410 / 09's black satin grips put their light in
   // sharp glints: the diffuse fill -25 %, the reflection floor 0.3 -> 0.22, the lobe tighter (PART_TRIM roughness 0.12))
-  yoke_nickel: [0, 1, 0, 0.35, 0, 0, 0.25], 'yoke:grip_black': [0, 0.30, 0.22, 1, 0, 25], yoke_trim_face: [0, 1.0, 0.25],
+  yoke_nickel: [0, 1, 0, 0.35, 0, 0, 0.25], 'yoke:grip_black': [0, 0.30, 0.22, 1, 0, 40], yoke_trim_face: [0, 1.0, 0.25],
   yoke_slot: [0, 0.5],
   // rev Q (3-D judges r4): the cover's groove flanks are cavities -- no fill, part of the studio's diffuse (FID4-01); the
   // column a satin dark-grey tube, its reflections floored at 0.15 of the studio's (FID4-05: ~40-50 from the pilot's eye)
@@ -428,7 +431,9 @@ const PART_TRIM = {
   // quadrant close-up, the photos satin black: a warm base and specular tint, less reflection inside)
   // (first-principles, round-3 minor: the quadrant plate read charcoal-brown; P1046408 / the Pilatus throttle photo show a
   // blue-black anodised plate)
-  'flight_deck:black': { color: [0.020, 0.023, 0.032], specIn: 0.6, specularColor: [0.85, 0.92, 1.0] },
+  // (first-principles judge r1 FP1-01: a neutral base read NAVY under the flight deck's cool shade light -- the warm base
+  // is what keeps the anodised plate charcoal; a shade less warm than fix r2's: B - R ~ +10 at the quadrant)
+  'flight_deck:black': { color: [0.036, 0.030, 0.025], specIn: 0.5, roughness: 0.62, specularColor: [1.0, 0.94, 0.85] },
   // (flight deck + yoke fix r4 FIDY4-01 / 04) the consoles' forward faces in the knees' shade (113 at panel_408b against
   // P1046408's 6; 124 in the footwell close-up against P1046409's ~31, exposed ~1.3 x darker: 0.25 -> ~22 / ~30); the
   // panel's knobs -- cool satin
@@ -623,7 +628,9 @@ const VIEWER = {
   // (tuned in the full viewer, out/tmp/fdy_fix_r1/ld c01-c03: at panel_408b luminance 112 -> ~119 with CABIN_TRIM 0.60,
   // local 9 px sd 13.8 against P1046408's 13.9, (109, 111, 129) B - R +20 against the photos' +15..+27; the lab's
   // brighter room light had asked for a darker, contrastier mat that read as dark blue camouflage in the cabin light)
-  sheepskin: { color: [0.245, 0.198, 0.212], sheenColor: [0.35, 0.32, 0.34], sunIn: 0.45,
+  // (first-principles judge r1 FP1-06: the footwell carpet read navy -- B - R <= +8: a neutral charcoal loop pile)
+  carpet_flightdeck: { color: [0.032, 0.030, 0.030] },
+  sheepskin: { color: [0.255, 0.205, 0.205], sheenColor: [0.35, 0.32, 0.34], sunIn: 0.45,
     fleece: { locks: [[100, 0.55, 1.08, 0.0024, 0.6, 1.15, 0.42, 0.9, 0.35, 0.45, 0.4],
       [200, 0.88, 1.06, 0.0006, 0.6, 0.9, 0.38, 0.9, 0.2, 0.25, 0.2]], lockShape: [0.25, 0.8, 0.3, 4.5, 0.8, 0.6],
       bump: 0.8, flat: [0.55, 0.85], lock: [15, 0.12], fibre: [900, 140, 0.05], rim: [0.5, 0.25], sheen: [0.5, 1.4] },
@@ -648,16 +655,20 @@ const VIEWER = {
     // 11.9; seats_aft -1.32 / -1.32 -> -0.56 / -0.46; quadrant -1.29 / -1.40 -> -0.47 / -0.43 -- P1046409 / 10's cushions
     // -0.50 / -0.49 and -0.31 / -0.32, sd 12.5 / 13.3; panel_408b (the judges' rows) skew +0.46 -> +0.18, p10 101 -> 99;
     // look-dev out/tmp/fdy_fix_r3/ld b00 / f02)
-    fur: { h: [0.008, 0.001], root: 0.34, mean: 0.84, oct: [[450, 0.45, 0.5, 0, 1.3, 0, 0.5], [300, 0.55, 0.6, 1, 1.3, 0.4, 0.5]],
+    // (first-principles judge r1 FP1-02, the coral / sponge cells and terraced silhouettes within ~1 m: a taller pile
+    // 10 + 1.5 mm, finer tufts 620 / 420 per m stretched 1.6 x down the faces, the clumps and partings at half, the lumps
+    // +-5 %, the grazing band 0.5 / coverage edge 0.16, 20 layers; the base warmed R = G, B - R ~0 -> the cabin's cool
+    // shade gives P1046409's B - R ~+10)
+    fur: { h: [0.010, 0.0015], root: 0.34, mean: 0.84, oct: [[620, 0.45, 0.5, 0, 1.6, 0, 0.5], [420, 0.55, 0.6, 1, 1.6, 0.4, 0.5]],
       // (all-lens r2 FD9-03: the grazing band wider and softer -- the outer layers thinned x graze below |n.v| grazeN,
       // the coverage edge widened there (grazeW: alpha to coverage on the multisampled canvas / targets), the layers' root
       // darkening, tilt (grazeFlat) and sheen growth up the pile (grazeSheen) flattened toward the silhouette; was 0.55 /
       // 0.25 / 0 / 0 / 0.  A per-pixel dithered coverage (dither: true) and the band at 0.55 put sparse bright tips into
       // [FD-L10]'s silhouette band at panel_408b (high-pass skew +1.1 .. +1.6; look-dev ld3 a0-a2 / u0-u2))
-      graze: 0.8, grazeN: 0.4, grazeW: 0.1, grazeFlat: 0.6, grazeSheen: 0.6,
-      t: [0.05, 0.75, 0.9], curl: [55, 0.8, 5.0], lump: [40, 0.10, 0.10], part: [[30, 0.2, 0.82, 40, 0.55, 1.3],
-        [60, 0.15, 0.85, 80, 0.55, 1.5]], fray: [1100, 0.1], ao: [0.34, 1.13, 1.8], tilt: 0.55,
-      clump: [[28, 0.005, 1.3], [65, 0.0018, 1.3]], sheen: [0.5, 1.1], far: [2.2, 3.2] },
+      graze: 0.9, grazeN: 0.5, grazeW: 0.16, grazeFlat: 0.6, grazeSheen: 0.6,
+      t: [0.05, 0.7, 0.8], curl: [55, 0.8, 5.0], lump: [40, 0.05, 0.10], part: [[30, 0.1, 0.82, 40, 0.55, 1.3],
+        [60, 0.08, 0.85, 80, 0.55, 1.5]], fray: [1100, 0.1], ao: [0.34, 1.13, 1.8], tilt: 0.55,
+      clump: [[28, 0.0022, 1.3], [65, 0.0008, 1.3]], sheen: [0.5, 1.1], far: [2.2, 3.2] },
     sheenRoughness: 0.8 },
   // the pleated divider curtain: deep burnt orange in P1046406 (77/23/0), read tan (208/166/116) under the old cabin light
   curtain: { color: [0.36, 0.11, 0.012] },
@@ -733,7 +744,8 @@ const VIEWER = {
     band: 0.18, bandLen: 0.10 } },
   // (first-principles flight deck, round-3 minor: from the cabin the stack read as a dark slate block -- P1046408 / 09 show
   // the moulding in the tray's light mauve satin titanium, ~100-120 against the tray's 117)
-  stack_gunmetal: { color: [0.21, 0.19, 0.195], metalness: 0.55, roughness: 0.38, specIn: 1.5, brush: { aniso: 0, axis: [1, 1, 1], rough: 0.05, len: 0.0035, w: 0.0035, spec: 0.12,
+  // (judge r1: 0.21 / CABIN_TRIM 0.75 read as pale flat plastic -- a mid mauve satin metal, the brush kept)
+  stack_gunmetal: { color: [0.16, 0.142, 0.148], metalness: 0.7, roughness: 0.32, specIn: 1.6, brush: { aniso: 0, axis: [1, 1, 1], rough: 0.05, len: 0.0035, w: 0.0035, spec: 0.12,
     band: 0.18, bandLen: 0.10 } },
   // (flight deck fix r5 FDO4-05: a translucent glass jar from the quadrant view -- the probe's streaks; a solid satin
   // pewter: fewer, broader reflections, a shade warmer -- it read 116 / 124 / 140 against P1046408's 108 / 108 / 116)
@@ -757,7 +769,7 @@ const VIEWER = {
   leather_black: { specIn: 1.3, leather: { freq: 450, dist: 0.0004, bump: 1.0, rough: 0.07 } },
   leather_dark: { leather: { freq: 700, dist: 0.00025, bump: 0.8, rough: 0.05 } },
   leather_crew: { leather: { freq: 600, dist: 0.0003, bump: 0.8, rough: 0.05 } },
-  leather_crew_shell: { leather: { freq: 600, dist: 0.0003, bump: 0.8, rough: 0.05 } },
+  leather_crew_shell: { specIn: 0.75, leather: { freq: 600, dist: 0.0003, bump: 0.8, rough: 0.05 } },
   // the crew harness webbing (flight deck fix r2 FDO2-09: flat grey ribbons): a fine woven grain in the normal and the
   // roughness (~0.7 mm)
   // (flight deck fix r3 FDO3-06: still flat grey card) a coarser, deeper weave (~1 mm) and more roughness wander

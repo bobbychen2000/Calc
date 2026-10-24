@@ -502,7 +502,12 @@ def quadrant():
     # flap lever: stem + black square paddle
     out.append((_cyl([fx + 0.010, fy, zt - 0.006], [fx, fy, FL + fh_ - 0.015], 0.0045, n=10), "metal_dark"))
     # (FIDY5-02: a satin BLACK paddle -- the panel knobs' grip_black reflection floor read it grey from the seats)
-    out.append((_se([fx, fy, FL + fh_ - 0.010], (0.012, 0.015, 0.016), (0.3, 0.3), nu=8, nv=12), "bezel_black"))
+    # (first-principles judge r1 FP1-03: a flat square paddle ~30 x 30 x 12 as P1046409, its FLAP title printed on the
+    # aft face -- the 24 x 30 x 32 block read as a cube knob)
+    zp_ = FL + fh_ - 0.012
+    out.append((_se([fx, fy, zp_], (0.006, 0.015, 0.014), (0.25, 0.25), nu=10, nv=16), "bezel_black"))
+    out.append(PR.decal(FD.Fr([fx + 0.0061, fy, zp_], [0, 1.0, 0], [0, 0, 1.0]), -0.009, -0.0035, 0.009, 0.0035,
+                        PR.LIFT, "words", rows=1, cap=2.2, seed="flap_paddle"))
     # placard band across the quadrant (abstract strokes)
     px_ = q["placard_x"]
     out.append(PR.decal_r(fp, px_ - cx - 0.0045, -hw + fw + 0.008, px_ - cx + 0.0045, hw - fw - 0.008, PR.LIFT, "words",

@@ -963,7 +963,9 @@ OVH = dict(
     pod_depth=0.026,        # [E] pod face below the crown line (the panel bezel 9 mm proud of it: OVERHEAD depth)
     pod_margin=(0.035, 0.12, 0.055),   # [M] pod beyond the panel: fwd, aft (round the eyeballs), sides
     pod_r=0.070, pod_edge=0.045,       # [E] pod corner radius, its rolled edge width
-    frame=0.012, chamfer=0.006, recess=0.006, corner_r=0.024,   # [M] bezel face width, 45 deg chamfer, plate recess
+    frame=0.009, chamfer=0.006, recess=0.006, corner_r=0.024,   # [M] bezel face width (12 -> 9: first-principles judge r1
+    #                                                              FP1-08, a thick CAD ring; P1046406 a slim frame), 45 deg
+    #                                                              chamfer, plate recess
     # items: (kind, fs, fa) fractions of the plate (port -> starboard, fwd -> aft), photo px / 1110 x 475 [M]
     toggles=((0.108, 0.437), (0.180, 0.437), (0.209, 0.158),                          # fuel LH / RH, ignition
              (0.426, 0.768), (0.569, 0.788), (0.338, 0.585), (0.428, 0.585), (0.655, 0.583),   # stby, cabin, gen 1, tie, gen 2
@@ -1220,13 +1222,21 @@ def overhead_pod():
             x = xb + 0.060
             z = float(z_pod(np.array(x), np.array(by)))
             o = np.array([x, by, z])
-            ring = revolve([(0.0008, 0.025), (0.004, 0.0245), (0.007, 0.020), (0.007, 0.0185), (0.0015, 0.017)],
-                           n=20, axis_origin=o, axis_dir=[0, 0, -1.0], cap_ends=False)
+            # (first-principles judge r1 FP1-08: the outlets read oversized -- x0.8, a louvred rim of 12 grooves)
+            k8 = 0.8
+            ring = revolve([(0.0008, k8 * 0.025), (0.004, k8 * 0.0245), (0.006, k8 * 0.0215), (0.0062, k8 * 0.0205),
+                            (0.007, k8 * 0.020), (0.007, k8 * 0.0185), (0.0015, k8 * 0.017)],
+                           n=36, axis_origin=o, axis_dir=[0, 0, -1.0], cap_ends=False)
+            ang_ = np.arctan2(ring.V[:, 1] - by, ring.V[:, 0] - x)
+            rad_ = np.hypot(ring.V[:, 1] - by, ring.V[:, 0] - x)
+            groove = 1.0 - 0.035 * (0.5 + 0.5 * np.cos(12 * ang_)) * (rad_ > k8 * 0.0195)
+            ring.V[:, 0] = x + (ring.V[:, 0] - x) * groove
+            ring.V[:, 1] = by + (ring.V[:, 1] - by) * groove
             # draped on the pod face (its aft half lies on the rim's roll-up into the headliner, up to 2 mm higher)
             ring.V[:, 2] += z_pod(ring.V[:, 0], ring.V[:, 1]) - z
             out.append((ring, "bezel_black"))
-            out.append((superellipsoid(o + [0.0, 0.0, -0.002], (0.0155, 0.0155, 0.0155), (1, 1), 8, 14), "black"))
-            out.append((revolve([(0.0, 0.0072), (0.008, 0.0068), (0.0105, 0.0045)], n=12,
+            out.append((superellipsoid(o + [0.0, 0.0, -0.002], (k8 * 0.0155,) * 3, (1, 1), 8, 14), "black"))
+            out.append((revolve([(0.0, k8 * 0.0072), (k8 * 0.008, k8 * 0.0068), (k8 * 0.0105, k8 * 0.0045)], n=12,
                                 axis_origin=o + [0, 0, -0.008], axis_dir=_unit([0.25, 0.0, -1.0]), cap_ends=True),
                         "bezel_black"))
     return out
