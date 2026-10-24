@@ -230,15 +230,6 @@ export class Model {
           base.polygonOffsetFactor = 2;
           base.polygonOffsetUnits = 8;
           ch.material = base;
-        } else if (name === 'glass_cabin') {
-          // (all-lens review r3: the cabin panes are cut 10 mm past their openings and run through the window reveals'
-          // walls; the tie along that intersection drew a dotted dark hairline round the cargo-door window from inside:
-          // the pane pushed back in depth, the wall wins the tie)
-          base = clonePatched(base);
-          base.polygonOffset = true;
-          base.polygonOffsetFactor = 1;
-          base.polygonOffsetUnits = 4;
-          ch.material = base;
         }
         const cm = rec.id in CUT_MATERIALS ? CUT_MATERIALS[rec.id] : (CUT_PREFIX.test(rec.id) ? null : undefined);
         // club tables: own material clones clipped at the ledge fascia plane (a stowed table slides into the ledge)

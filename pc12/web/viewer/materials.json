@@ -1032,9 +1032,9 @@
   },
   "seat_shell_dark": {
    "baseColorFactor": [
-    0.06,
-    0.063,
-    0.07,
+    0.064,
+    0.064,
+    0.066,
     1.0
    ],
    "metallicFactor": 0.0,
@@ -1045,7 +1045,7 @@
    "specularFactor": 0.7,
    "kind": "dielectric",
    "note": "executive-seat base shroud, armrest, rear inserts",
-   "srgb_hex": "#45474B"
+   "srgb_hex": "#484849"
   },
   "seat_tab_red": {
    "baseColorFactor": [

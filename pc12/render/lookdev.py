@@ -508,7 +508,7 @@ SPEC.update({
                                note="black-anodised seat base, pan, life-vest box"),
     "harness":            dict(kind="dielectric", base=(0.069, 0.072, 0.080), rough=0.80, spec=0.25,
                                note="dark grey harness webbing"),
-    "seat_shell_dark":    dict(kind="dielectric", base=(0.060, 0.063, 0.070), rough=0.55, spec=0.35,
+    "seat_shell_dark":    dict(kind="dielectric", base=(0.064, 0.064, 0.066), rough=0.55, spec=0.35,
                                note="executive-seat base shroud, armrest, rear inserts"),
     "seat_tab_red":       dict(kind="dielectric", base=(0.45, 0.02, 0.02), rough=0.40, note="red pull tab"),
     "seat_back_shell":    dict(kind="dielectric", base=(0.21, 0.215, 0.228), rough=0.55, spec=0.35,
