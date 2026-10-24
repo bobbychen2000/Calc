@@ -335,8 +335,9 @@ void main(){
     hemi *= lt * mix(1.0, 0.55, fl); bounce *= lt * mix(1.0, 0.6, fl);
     // QA r2 (integration): carpet under the seat pans / between the seat legs loses most of its bounce too (the
     // occluded floor read L35-50 against < 30 in the photos) [V: y_47300 bottom band < 30 20 % vs q15 3.2 %]
-    // (only where the volume reads occluded, ao < ~0.4: the open aisle keeps its level, render tuning [D])
-    bounce *= mix(1.0, 0.6, fl * (1.0 - smoothstep(0.1, 0.4, aoPk)));
+    // (only where the volume reads occluded: probe ao 0.00-0.01 under a seat pan, 0.11-0.24 along the seat-block edge,
+    // 0.46-0.52 in the aisle, so the ramp is 0.02-0.2 and the aisle / block edge keep their level [D])
+    bounce *= mix(1.0, 0.6, fl * (1.0 - smoothstep(0.02, 0.2, aoPk)));
     // QA r3: unoccluded share of the hemisphere (u_aoTune.x, was 0.15) and a bounce gain (u_aoTune.y), AO_TUNE in
     // 12_scene.js: vertical faces between the seats read 2-3x too dark against the lit tops (charcoal shells #191b1f
     // vs c_27312 #394049-#414755, ash ends #848078 vs #bdbaab)
@@ -364,9 +365,9 @@ void main(){
     // the floor (fl) and down-facing faces below 0.5 m, off the sidewall. Vertical fabric above 0.3 m is untouched
     // (from_econ w10) [V: bottom band < 30: y_47300 20.0 % vs q15 3.2 %, y_47301 11.0 % vs q16 5.0 %; < 50 py_37302 30.5 %
     // vs q13 14.6 %; c_27312 < 30 18.4 % vs q06 12.7 %; frame p5 y_47300 21 vs q15 40] (from_econ w14)
-    // The raters' AO ramp 0.08-0.55 (floor 0.25) also took ~30 % off the open aisle carpet (ao ~0.35-0.5) and crushed
-    // q16 / q13 to p5 10 / 8 (y_47301 21, py_37302 25): ramp 0.05-0.35, floor 0.3 [D renders r2a]
-    float crevF = (1.0 - mix(0.3, 1.0, smoothstep(0.05, 0.35, aoPk))) * (1.0 - smoothstep(0.30, 0.50, v_wpos.y))
+    // The raters' AO ramp 0.08-0.55 (floor 0.25) also took ~30 % off the open aisle carpet (ao ~0.46-0.52) and crushed
+    // q16 / q13 to p5 10 / 8 (y_47301 21, py_37302 25): ramp 0.02-0.2 (the probe values above), floor 0.3 [D renders r2a-d]
+    float crevF = (1.0 - mix(0.3, 1.0, smoothstep(0.02, 0.2, aoPk))) * (1.0 - smoothstep(0.30, 0.50, v_wpos.y))
                 * max(fl, step(0.3, down)) * (1.0 - wallProx*facingIn);
     amb *= 1.0 - crevF;
     // reading lights (night): warm cone from the lamp lens to the seat, 0.35 m pool [V: tlfl_IMG_9377 pools on the bed]

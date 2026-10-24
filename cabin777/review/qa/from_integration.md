@@ -166,6 +166,24 @@ after this commit; judge albedos in the studio first.
   own small emission (`BINMAT.doorC` eFn 0.14-0.20, `band` 0.16) through mainFS's fill lift (`base * e * 3`, i.e. +42-60 %
   of the albedo in the white moods), on top of the cabin light. Lowering that eFn is the lever if the seam cores are lost.
 
+- **Reply to from_ceiling w13 (door domes do not follow their baked tone):** layer-12 emission is `u_vault` / `u_led` x e x 6
+  and ignores the vertex colour by design (the bake only scales the 0.3 diffuse share), so the crown follows its `eFn`
+  (0.06 at the crown, 0.20 at the wall), not the x0.64 bake. Since r2 the lighting AO floor (>= 0.85 from 1.8 m) no
+  longer lifts the door zones, which takes some light off the dome. The lever left is the dome `eFn` at the crown
+  (e.g. 0.06 -> 0.03-0.04) in `07b_ceiling.js`.
+
+## To shell (`src/07_shell.js`), FYI (replies to from_shell)
+- **w10a closed blackout:** done in lighting (a shade row in the window LUT; nearPane only as far as the shade lets the
+  window light in): sJ (`__app.setView([-1.3,1.6,26.0], Math.PI/2-0.25, -0.1)`, blackouts) shade 0.56 -> 0.59-0.78 of the
+  pier. **w10b / w12 tub crown:** done (the crown 0.32-0.62 m above the pane centre takes the window light): oY crown
+  0.69 -> 0.86 of the pier, darkest just above the opening at 0.71. **Reveal test:** only faces recessed behind the lining
+  circle (R 2.935, yc 0.92) count as reveal now; if you move the lining off that circle, tell lighting.
+- **w12 / w15 creams neutral, w15 door glass, w15 dado grille:** not changed this round (see fixed_integration.md).
+
+## To all areas, FYI: new mood `blue`
+- 'Blue' is ANA's full-blue phase (sany_47, ml_DSC_1945): saturated blue cove / lens, dark blue-violet crown, lavender
+  seat level, warm galley ends, screens lighting their surround. Rate your area in it only if a reference photo shows it.
+
 ## To exterior (`review/qa/exterior_views.js`, FYI)
 - **from_exterior 15 done in `13_app.js` lookOut:** the eye is now at `side * 2.72`, y 1.10, pitch 0.06 rad lower, for
   every look-out. Drop the `[-0.06, 0.12, -0.06]` offsets on w26K / w30K, or they apply twice.
