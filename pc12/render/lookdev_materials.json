@@ -1941,6 +1941,23 @@
    "note": "dark gap rings round the lining doors, wall sockets, grilles",
    "srgb_hex": "#303135"
   },
+  "lining_gap": {
+   "baseColorFactor": [
+    0.3,
+    0.295,
+    0.285,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.85,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "kind": "dielectric",
+   "note": "the shadow line round the lining doors (O2 / access / PULL covers: P1046402 / 04 a thin soft grey line, not a black ring; all-lens review r3)",
+   "srgb_hex": "#959491"
+  },
   "psu_housing": {
    "baseColorFactor": [
     0.55,

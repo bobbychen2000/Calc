@@ -176,6 +176,8 @@ MATERIALS = {
     "chrome_trim":     ((0.62, 0.62, 0.61), 1.0, 0.22),
     # headliner fittings, placards
     "psu_panel":       ((0.030, 0.031, 0.035), 0.1, 0.35),
+    # the shadow line round the lining doors (all-lens review r3: the dark psu_panel ring read as a heavy black outline)
+    "lining_gap":      ((0.30, 0.295, 0.285), 0.0, 0.85),
     # PSU / reading-light pods: light satin silver-white housings (P1046402 / 06; model judging r1 INT-m4)
     "psu_housing":     ((0.55, 0.55, 0.54), 0.30, 0.35),
     "light_cove":      ((0.90, 0.90, 0.88), 0.0, 0.30),

@@ -69,9 +69,9 @@ export const U = {
   // the cabin's form light (all-lens review r1 CAB1-01; CABIN_FORM): per class [gain, occlusion power, x at no window light,
   // x at full], [x facing inboard (toward the aisle), x facing outboard (toward its own side wall), x facing down, x facing
   // up], [x at WL C.y, x at WL C.z, x at WL C.w, -]; and [the window light that counts as full, WL low, belt, ceiling]
-  cabinFormA: { value: [new THREE.Vector4(1, 0, 1, 1), new THREE.Vector4(1, 0, 1, 1), new THREE.Vector4(1, 0, 1, 1)] },
-  cabinFormB: { value: [new THREE.Vector4(1, 1, 1, 1), new THREE.Vector4(1, 1, 1, 1), new THREE.Vector4(1, 1, 1, 1)] },
-  cabinFormD: { value: [new THREE.Vector4(1, 1, 1, 0), new THREE.Vector4(1, 1, 1, 0), new THREE.Vector4(1, 1, 1, 0)] },
+  cabinFormA: { value: [new THREE.Vector4(1, 0, 1, 1), new THREE.Vector4(1, 0, 1, 1), new THREE.Vector4(1, 0, 1, 1), new THREE.Vector4(1, 0, 1, 1)] },
+  cabinFormB: { value: [new THREE.Vector4(1, 1, 1, 1), new THREE.Vector4(1, 1, 1, 1), new THREE.Vector4(1, 1, 1, 1), new THREE.Vector4(1, 1, 1, 1)] },
+  cabinFormD: { value: [new THREE.Vector4(1, 1, 1, 0), new THREE.Vector4(1, 1, 1, 0), new THREE.Vector4(1, 1, 1, 0), new THREE.Vector4(1, 1, 1, 0)] },
   cabinFormC: { value: new THREE.Vector4(0.3, 1.3, 1.95, 2.7) },
   // inside, the flight deck (flight deck fix r3): the shade's daylight colour (xyz: a luminance-neutral tint, w: its share)
   // and the satin metals' cabin reflection probe ([dark, side windows, aisle, headliner] levels, see CABIN_LOOK)
@@ -459,7 +459,10 @@ for (const it of (Q_M.get('partTrim') || '').split('|')) {
 // hi in the windows' light (the divider's daylit aft faces, P1046406 / 07), x 0.8 facing the aisle (the lavatory's
 // bi-fold doors: (69, 53, 49) at the lav close-up against P1046411's (48, 36, 36), the divider's aft faces -- facing aft
 // -- at cabin_fwd_406 (62, 48, 46) against P1046406's (62, 49, 46)))
-const CABIN_FORM = { lining: 0, leather: 1, leather_dark: 1, seat_back_shell: 1, seat_shell_dark: 1, stitch_light: 1,
+// (all-lens review r3: the executive seats' anthracite base shroud, skirt and armrests a class of their own, 3 -- under
+// the leather's occlusion power 2 and floor-level x 0.55 they read as a black void, sRGB ~10 against the backs' 200 at
+// cabin_fwd_406, where P1046406 / 03 / 07 show a dark grey box with its form, ~0.25-0.35 of the backs)
+const CABIN_FORM = { lining: 0, leather: 1, leather_dark: 1, seat_back_shell: 1, seat_shell_dark: 3, stitch_light: 1,
   veneer_walnut: 2 };
 const qf4 = (k, d) => { const v = qv(k, d); return v; };
 // tuned at the photo-fitted cabin_fwd_406 (P1046406) / cabin_fwd / p404 views in one look-dev page (out/tmp/all8_fix_r1/ld
@@ -467,9 +470,11 @@ const qf4 = (k, d) => { const v = qv(k, d); return v; };
 // welts / seams) -> ~30, the medians kept for [T4b] / [T14] (the light trim near-white: AgX's shoulder compresses the
 // spread there, so the factors run wide -- x 0.38 .. 1.55 with the window light, 0.55 .. 1 from the floor to the belt)
 CABIN_LOOK.formA = [qf4('cabFormA0', [1.82, 2.2, 0.38, 1.55]), qf4('cabFormA1', [1.5, 2.0, 0.5, 1.35]),
-  qf4('cabFormA2', [1.0, 1.0, 0.80, 1.10])];
-CABIN_LOOK.formB = [qf4('cabFormB0', [0.88, 1.05, 0.8, 1.0]), qf4('cabFormB1', [0.7, 1.2, 0.65, 1.15]), qf4('cabFormB2', [0.8, 1, 1, 1])];
-CABIN_LOOK.formD = [qf4('cabFormD0', [0.55, 1.0, 0.85, 0]), qf4('cabFormD1', [0.6, 1.0, 1.15, 0]), qf4('cabFormD2', [1, 1, 1, 0])];
+  qf4('cabFormA2', [1.0, 1.0, 0.80, 1.10]), qf4('cabFormA3', [2.4, 0.8, 0.75, 1.15])];
+CABIN_LOOK.formB = [qf4('cabFormB0', [0.88, 1.05, 0.8, 1.0]), qf4('cabFormB1', [0.7, 1.2, 0.65, 1.15]), qf4('cabFormB2', [0.8, 1, 1, 1]),
+  qf4('cabFormB3', [0.9, 1.1, 0.7, 1.1])];
+CABIN_LOOK.formD = [qf4('cabFormD0', [0.55, 1.0, 0.85, 0]), qf4('cabFormD1', [0.6, 1.0, 1.15, 0]), qf4('cabFormD2', [1, 1, 1, 0]),
+  qf4('cabFormD3', [0.8, 1.0, 1.0, 0])];
 CABIN_LOOK.formC = qf4('cabFormC', [0.3, 1.3, 1.95, 2.7]);
 U.cabinFormA.value.forEach((v, i) => v.set(...CABIN_LOOK.formA[i]));
 U.cabinFormB.value.forEach((v, i) => v.set(...CABIN_LOOK.formB[i]));
@@ -578,10 +583,15 @@ const VIEWER = {
   // 110/60/17 on a near-black navy); unoccluded, the studio washed the runner out to a pale peach (220/178/125)
   // (review r4 INT8-01: 0.45 left the runner tan, 205/155/93, under the cabin light; 0.3 and a deeper orange keep the
   // hue through AgX, ~P1046406's 147/83/22)
+  // (all-lens review r3: the runner's bands read as flat paint with a sun glint -- no pile: a cut pile, ~1.7 mm tufts in
+  // the normal and the albedo (+-20 %), the tips' faces turned from the eye a shade darker, a low sheen)
   carpet: { envMapIntensity: 0.3 },
-  carpet_orange: { color: [0.69, 0.21, 0.012], envMapIntensity: 0.3 },
-  carpet_light: { envMapIntensity: 0.3 },
-  carpet_grey: { envMapIntensity: 0.3 },
+  carpet_orange: { color: [0.69, 0.21, 0.012], envMapIntensity: 0.3, specularIntensity: 0.35, roughness: 1.0,
+    leather: { freq: 600, dist: 0.0005, bump: 1.0, rough: 0.0, albedo: 0.2, edge: 0.18 } },
+  carpet_light: { envMapIntensity: 0.3, specularIntensity: 0.35, roughness: 1.0,
+    leather: { freq: 600, dist: 0.0005, bump: 1.0, rough: 0.0, albedo: 0.2, edge: 0.18 } },
+  carpet_grey: { envMapIntensity: 0.3, specularIntensity: 0.35, roughness: 1.0,
+    leather: { freq: 600, dist: 0.0005, bump: 1.0, rough: 0.0, albedo: 0.2, edge: 0.18 } },
   // the crew seats' sheepskin: a shaggy lavender-grey pile in P1046408 / 409, read as smooth white pillows (review r4
   // INT8-04): clumpy fibre noise in its albedo and normal (fleece patch, world space ~4 mm tufts), a softer sheen
   // flight deck r1 LOOK (L6): clumps of 12-20 mm (freq 65 per m) with darker crevices between them (albedo 0.4 .. 1.1,
@@ -676,7 +686,10 @@ const VIEWER = {
   // survives the pcSS band limit at 1-3 m; the bake's occlusion and window light on it (CABIN_FORM class 2: its baked
   // window light hardly differs between the divider, the lavatory and the arch, 0.10-0.17, so one darker base serves
   // them -- between P1046406's divider and P1046411 / 02's lavatory / arch exposures)
-  veneer_walnut: { color: [0.094, 0.055, 0.042], envMapIntensity: 0.7, grain: { amp: 0.35, rough: 0.05, scale: [150, 150, 6], oct: 3 } },
+  // (all-lens review r3: smeared up close -- the grain now in a frame along the vertical / the station (the figure 150 / m
+  // across, 6 / m along) with fine dark pore lines at 520 / m: P1046411 / 02's crisp straight-grain veneer)
+  veneer_walnut: { color: [0.100, 0.059, 0.045], envMapIntensity: 0.7,
+    grain: { amp: 0.22, rough: 0.05, scale: [150, 150, 6], oct: 3, lines: [520, 0.42, 0.35, 2.5] } },
   // (all-lens r2 CAB2-01: the exec seats' tone-on-tone stitching -- at the club stop's 2-3 m its sub-pixel dashes read as
   // scattered grey dots 30-50 levels under the leather; the GLB's 0.8 x the leather -> 0.95 x: the dashes' relief and
   // the crease carry the seam up close, at a distance they melt into the leather)
@@ -1014,7 +1027,7 @@ export function upgradeMaterials(root, spec) {
         m = m.clone();
         const sv = gv.scale || sc;
         m.userData.pc12 = { ...(m.userData.pc12 || {}), grain: { scale: [sv[1], sv[2], sv[0]], oct: gv.oct ?? Math.max(1, Math.min(5, Math.round(g.detail ?? 4))),
-          amp: gv.amp ?? g.amp ?? 0.3, rough: gv.rough ?? 0 }, rest: o.matrixWorld.toArray() };
+          amp: gv.amp ?? g.amp ?? 0.3, rough: gv.rough ?? 0, lines: gv.lines }, rest: o.matrixWorld.toArray() };
       }
       if (e.render_stripes) {
         // pinstripes along the station (model x = glTF Z) of the rest pose: one clone per mesh (its rest matrix)
@@ -1733,6 +1746,23 @@ export function installPatch(mat, extra = {}) {
   vec3 pcGn = normalize( cross( dFdx( vRestP ), dFdy( vRestP ) ) );
   float pcGup = smoothstep( 0.6, 0.8, abs( pcGn.y ) );
   vec3 pcGq = mix( vRestP * vec3( ${f4(q.scale[0])}, ${f4(q.scale[1])}, ${f4(q.scale[2])} ), vRestP.zyx * vec3( ${f4(q.scale[1])}, ${f4(q.scale[0])}, ${f4(q.scale[0])} ), pcGup );
+  ${q.lines ? `{
+    // (all-lens review r3: the r2 figure was isotropic 6.7 mm blobs on the divider's aft faces and soft streaks elsewhere --
+    // smeared up close) the grain along the vertical on every wall, along the station on the tops: the noise in (across,
+    // along, depth) of that frame, stretched along the grain, plus fine dark pore LINES across it (lines [per m, depth,
+    // width, wander]) wandering with a slow noise along the grain -- crisp straight-grain walnut, faded to their mean
+    // where a line spacing is under ~2 pixels
+    vec3 pcGd = normalize( mix( vec3( 0.0, 1.0, 0.0 ), vec3( 0.0, 0.0, 1.0 ), pcGup ) - pcGn * dot( pcGn, mix( vec3( 0.0, 1.0, 0.0 ), vec3( 0.0, 0.0, 1.0 ), pcGup ) ) + 1e-5 );
+    vec3 pcGa = normalize( cross( pcGn, pcGd ) );
+    vec3 pcGl = vec3( dot( vRestP, pcGa ), dot( vRestP, pcGd ), dot( vRestP, pcGn ) );
+    pcGq = pcGl * vec3( ${f4(q.scale[0])}, ${f4(q.scale[1])}, ${f4(q.scale[0])} );
+    float pcGw0 = pcGl.x * ${f4(q.lines[0])} + ${f4(q.lines[3])} * pcFbm( pcGl * vec3( 9.0, 0.9, 9.0 ), 2, 0.0 );
+    float pcGwf = fwidth( pcGw0 );
+    float pcGln = 1.0 - smoothstep( 0.0, ${f4(q.lines[2])} + pcGwf, abs( fract( pcGw0 ) - 0.5 ) * 2.0 );
+    pcGln *= 0.55 + 0.9 * pcFbm( vec3( floor( pcGw0 ) * 0.731, pcGl.y * 3.0, 0.0 ), 1, 0.0 );
+    pcGln = mix( pcGln, ${f4(0.5 * q.lines[2])}, smoothstep( 0.25, 0.6, pcGwf ) );
+    diffuseColor.rgb *= 1.0 - ${f4(q.lines[1])} * clamp( pcGln, 0.0, 1.0 );
+  }` : ''}
   float pcGfw = length( abs( dFdx( pcGq ) ) + abs( dFdy( pcGq ) ) );
   float pcGr = clamp( ( pcFbm( pcGq, ${q.oct | 0}, pcGfw ) - 0.3 ) / 0.4, 0.0, 1.0 );
   diffuseColor.rgb *= 1.0 + ${f4(q.amp)} * ( 2.0 * pcGr - 1.0 );`)
@@ -2200,7 +2230,7 @@ vec3 pcWorm( vec3 q, float wv, float sharp ) {
     if (lining || interior) {
       for (const k of ['cabinAO', 'cabinIn', 'cabinKey', 'cabinDiff', 'cabinSpec', 'cabinFill', 'cabinOcc', 'cabinSky', 'cabinGain', 'cabinKnee', 'cabinRefl', 'cabinShade', 'cabinProbe', 'cabinProbe2', 'cabinFoot', 'cabinFormA', 'cabinFormB', 'cabinFormC', 'cabinFormD']) sh.uniforms['u' + k[0].toUpperCase() + k.slice(1)] = U[k];
       const lit = !mat.isMeshBasicMaterial;   // geometryNormal / geometryViewDir: the lit materials' lights chunks
-      fsHead += 'uniform float uCabinKnee;\nuniform float uCabinAO;\nuniform float uCabinIn;\nuniform float uCabinKey;\nuniform vec2 uCabinDiff;\nuniform vec2 uCabinSpec;\nuniform float uCabinFill;\nuniform vec3 uCabinOcc;\nuniform vec2 uCabinSky;\nuniform vec3 uCabinGain;\nuniform vec4 uCabinRefl;\nuniform vec4 uCabinShade;\nuniform vec4 uCabinProbe;\nuniform vec4 uCabinProbe2;\nuniform vec4 uCabinFoot;\nuniform vec4 uCabinFormA[3];\nuniform vec4 uCabinFormB[3];\nuniform vec4 uCabinFormD[3];\nuniform vec4 uCabinFormC;\n';
+      fsHead += 'uniform float uCabinKnee;\nuniform float uCabinAO;\nuniform float uCabinIn;\nuniform float uCabinKey;\nuniform vec2 uCabinDiff;\nuniform vec2 uCabinSpec;\nuniform float uCabinFill;\nuniform vec3 uCabinOcc;\nuniform vec2 uCabinSky;\nuniform vec3 uCabinGain;\nuniform vec4 uCabinRefl;\nuniform vec4 uCabinShade;\nuniform vec4 uCabinProbe;\nuniform vec4 uCabinProbe2;\nuniform vec4 uCabinFoot;\nuniform vec4 uCabinFormA[4];\nuniform vec4 uCabinFormB[4];\nuniform vec4 uCabinFormD[4];\nuniform vec4 uCabinFormC;\n';
       // the window sky law's weight: the light trim keeps its fill share out of it (the cabin lining: all of it)
       const skyW = cabinFill ? Math.max(0, 1 - cabinFill[0]) : 1;
       fs = fs.replace('#include <aomap_fragment>', `{

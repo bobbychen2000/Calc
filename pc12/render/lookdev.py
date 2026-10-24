@@ -652,6 +652,9 @@ SPEC.update({
     "chrome_trim":        dict(kind="metal", base=(0.62, 0.62, 0.61), rough=0.22, note="brushed rims, rods, handles"),
     "psu_panel":          dict(kind="dielectric", base=(0.030, 0.031, 0.035), metallic=0.1, rough=0.35,
                                note="dark gap rings round the lining doors, wall sockets, grilles"),
+    "lining_gap":         dict(kind="dielectric", base=(0.30, 0.295, 0.285), rough=0.85,
+                               note="the shadow line round the lining doors (O2 / access / PULL covers: P1046402 / 04 a thin "
+                                    "soft grey line, not a black ring; all-lens review r3)"),
     "psu_housing":        dict(kind="dielectric", base=(0.55, 0.55, 0.54), metallic=0.30, rough=0.35,
                                note="PSU / reading-light pods: light satin silver-white (P1046402 / 06; model "
                                     "judging r1 INT-m4)"),
