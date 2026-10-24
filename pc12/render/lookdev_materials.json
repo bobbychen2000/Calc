@@ -1812,15 +1812,15 @@
     "pitch": 0.012,
     "duty": 0.34,
     "colour": [
-     0.085,
-     0.095,
-     0.125
+     0.12,
+     0.125,
+     0.14
     ],
     "wobble": 0.15,
     "pile": 0.35
    },
    "kind": "dielectric",
-   "note": "navy carpet with light grey-blue transverse pinstripes",
+   "note": "navy carpet with light grey-blue transverse pinstripes (stronger: all-lens r3 CAB6-02, P1046406 / 07)",
    "srgb_hex": "#22283D"
   },
   "carpet_orange": {

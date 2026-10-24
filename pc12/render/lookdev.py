@@ -639,9 +639,10 @@ SPEC.update({
     # final judge r1 I3 (P1046402 / 04 / 06): a dark NAVY pile with fine light grey-blue transverse pinstripes
     # (~12 mm pitch; the render's flat near-black read as a void), the runner bands cream rather than white-grey
     "carpet":             dict(kind="dielectric", base=(0.016, 0.021, 0.046), rough=0.95,
-                               stripes=dict(pitch=0.012, duty=0.34, colour=(0.085, 0.095, 0.125), wobble=0.15,
+                               stripes=dict(pitch=0.012, duty=0.34, colour=(0.12, 0.125, 0.14), wobble=0.15,
                                             pile=0.35),
-                               note="navy carpet with light grey-blue transverse pinstripes"),
+                               note="navy carpet with light grey-blue transverse pinstripes (stronger: all-lens r3 "
+                                    "CAB6-02, P1046406 / 07)"),
     # (all-lens review r3 CAB5-02, P1046411 / 06: the runner is one woven carpet -- the ground's transverse pinstripe runs
     # through the orange and light bands too, a darker shade of each; plain, they read as painted planks)
     "carpet_orange":      dict(kind="dielectric", base=(0.69, 0.25, 0.019), rough=0.95,

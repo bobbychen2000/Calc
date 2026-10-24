@@ -585,12 +585,12 @@ const VIEWER = {
   // hue through AgX, ~P1046406's 147/83/22)
   // (all-lens review r3: the runner's bands read as flat paint -- no pile: a cut pile, ~3.5 mm tufts in
   // the normal and the albedo (+-15 %), the tips' faces turned from the eye a shade darker, a low sheen)
-  carpet: { envMapIntensity: 0.3 },
-  carpet_orange: { color: [0.69, 0.21, 0.012], envMapIntensity: 0.3, specularIntensity: 0.35, roughness: 1.0,
+  carpet: { color: [0.017, 0.019, 0.030], envMapIntensity: 0.3, sunIn: 0.4 },   // (CAB6-02: nearer black, P1046406 / 07)
+  carpet_orange: { color: [0.69, 0.21, 0.012], envMapIntensity: 0.3, specularIntensity: 0.35, roughness: 1.0, sunIn: 0.4,
     leather: { freq: 280, dist: 0.0008, bump: 1.0, rough: 0.0, albedo: 0.15, edge: 0.18 } },
-  carpet_light: { envMapIntensity: 0.3, specularIntensity: 0.35, roughness: 1.0,
+  carpet_light: { color: [0.70, 0.69, 0.66], envMapIntensity: 0.3, specularIntensity: 0.35, roughness: 1.0, sunIn: 0.4,
     leather: { freq: 280, dist: 0.0008, bump: 1.0, rough: 0.0, albedo: 0.15, edge: 0.18 } },
-  carpet_grey: { envMapIntensity: 0.3, specularIntensity: 0.35, roughness: 1.0,
+  carpet_grey: { envMapIntensity: 0.3, specularIntensity: 0.35, roughness: 1.0, sunIn: 0.4,
     leather: { freq: 280, dist: 0.0008, bump: 1.0, rough: 0.0, albedo: 0.15, edge: 0.18 } },
   // the crew seats' sheepskin: a shaggy lavender-grey pile in P1046408 / 409, read as smooth white pillows (review r4
   // INT8-04): clumpy fibre noise in its albedo and normal (fleece patch, world space ~4 mm tufts), a softer sheen
@@ -696,7 +696,9 @@ const VIEWER = {
   stitch_light: { color: [0.428, 0.423, 0.413] },
   // (all-lens review r3 CAB4-04: a hard white streak across the cushion tops -- the exec leather a softer satin; with
   // CABIN_TRIM leather x 0.93 its tone a shade down toward P1046406's seats)
-  leather: { roughness: 0.62, color: [0.462, 0.447, 0.427] },     // (CAB5-01: warmer, R > B as the photos)
+  // (CAB6-04: the low sun from ahead reaches the cabin through the deep window reveals as thin blades -- white slivers
+  // on the cushions and the floor that read as stickers; the cabin leather and runner take a third / two-fifths of it)
+  leather: { roughness: 0.62, color: [0.462, 0.447, 0.427], sunIn: 0.35 },     // (CAB5-01: warmer, R > B as the photos)
   // the titanium panel face / sub-panels / stack sit under the glareshield and the cabin roof (P1046408: the face round
   // the PDUs ~sRGB 65-70, the inner sub-panels ~130); unoccluded they read as light grey plastic (~150-170)
   // flight deck r1 LOOK (L5): no occlusion stand-in any more (the baked occlusion / window sky do it); brushed along the

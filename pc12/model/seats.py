@@ -1447,6 +1447,7 @@ EXEC_WING = dict(w=0.046, crown=0.0, crown0=0.004, rise=(0.50, 0.80))
 EXEC_HEAD = dict(r=0.036, rb=0.040, crown=0.020, crown_r=0.080, seam_r=0.0030, seam_a=0.062, seam_taper=0.80,
                  wing=0.016)
 EXEC_GAP = dict(back=0.010, depth=0.040)
+EXEC_DRAWER = dict(w=0.30, h=0.115, z=0.085, proud=0.003)   # life-vest drawer face on the shroud (CAB6-03)
 # all-lens review r3 CAB3-01 (P1046402 / 03 / 04 / 06): from 0.5-1.5 m the r2 back still read as a flat sheet with its
 # panels drawn on (bolsters 6 mm, centre 2 mm proud of the slab, crowned 7-8 mm, edge radii 6-8 mm) and the cushion as a
 # tray framed by welts: the photos' backs are sculpted -- the side bolsters / shoulder wings stand ~20 mm proud of the
@@ -1594,8 +1595,15 @@ def cabin_seat(seat_id, layout=None, recline=None, raised=False, belts=True):
     # pair's anthracite, P1046406 / 07)
     geos.append(slab(rrect(bu - bl_, th, bu, bh, 0.015), -bw, bw, 0.015,
                      M_CAB_GREY if rec["facing"] > 0 else M_CAB_DARK))
-    geos.append(cbox((bu + 0.0012, -si * 0.075, th + 0.085), (0.003, 0.042, 0.042), M_WHITE))
-    geos.append(cbox((bu + 0.0020, -si * 0.075, th + 0.083), (0.003, 0.022, 0.026), M_TAB))
+    # the life-vest drawer: a frame 3 mm proud of the shroud in the other grey, its face 1.5 mm prouder in the shroud's
+    # (cabin judge r3 CAB6-03, P1046404 / 05 / 07: a framed drawer in the plinth, its placard on it)
+    dz_ = EXEC_DRAWER
+    geos.append(cbox((bu + 0.5 * dz_["proud"] - 0.002, 0.0, th + dz_["z"]), (dz_["proud"] + 0.004, dz_["w"], dz_["h"]),
+                     M_CAB_DARK if rec["facing"] > 0 else M_CAB_GREY))
+    geos.append(cbox((bu + dz_["proud"] + 0.0005, 0.0, th + dz_["z"]), (0.002, dz_["w"] - 0.016, dz_["h"] - 0.016),
+                     M_CAB_GREY if rec["facing"] > 0 else M_CAB_DARK))
+    geos.append(cbox((bu + dz_["proud"] + 0.0028, -si * 0.075, th + 0.085), (0.003, 0.042, 0.042), M_WHITE))
+    geos.append(cbox((bu + dz_["proud"] + 0.0036, -si * 0.075, th + 0.083), (0.003, 0.022, 0.026), M_TAB))
     geos.append(rbox((bu + 0.005, 0.0, th + 0.024), (0.012, 0.030, 0.016), 0.004, M_TAB))
     for rail_bl in I.SEAT_TRACKS["bl"]:
         s = side * float(rail_bl) - float(rec["bl"])
@@ -1717,8 +1725,9 @@ def cabin_seat(seat_id, layout=None, recline=None, raised=False, belts=True):
     # the centre panel crowned (a lumbar bulge; the r1 back read as a flat shield), the stitching tone-on-tone
     ks, kw = EXEC_SEAM, EXEC_WING
     gap = ks["gap"]
-    b0_, b_lum = 0.03, 0.185                                      # panels' foot / the lumbar top along the back [M]
-    # (A/B judge r3: b0_ 0.05 -> 0.03 -- the slab's front showed as a black slot along the back's foot)
+    b0_, b_lum = 0.015, 0.185                                     # panels' foot / the lumbar top along the back [M]
+    # (A/B judge r3 / CAB6-01: b0_ 0.05 -> 0.015 -- the slab's front showed as a black slot along the back's foot, and
+    # the panels' separate rounded feet above the belt read as three stacked pads)
     lum_bot, lum_top = 0.064, 0.078                               # its half-widths (a trapezoid) [M]
     b80 = 0.80 * s_top
     b_v = s_top - 0.040
@@ -1763,10 +1772,16 @@ def cabin_seat(seat_id, layout=None, recline=None, raised=False, belts=True):
     # centre panel: from the back's foot -- the lumbar part one with it (all-lens review r3 A/B judge: a separate lumbar
     # pillow read as a tile with dark gaps; P1046403 / 04 show one panel with a shallow seam across), up the V / U from
     # the lumbar top, then between the wings to the top
-    bs = np.r_[b0_ + 0.004, np.linspace(b_lum, b80, 9), np.linspace(b80 + 0.03, b_v, 4)]
-    hb = np.where(bs < b_lum, np.interp(bs, [b0_, b_lum], [lum_bot, lum_top]), vin(bs))
-    P = np.vstack([np.c_[hb, bs], np.c_[-hb[::-1], bs[::-1]]])
-    olc = fillet(P, np.r_[0.03, np.zeros(len(bs) - 2), 0.03, 0.03, np.zeros(len(bs) - 2), 0.03], max_len=0.05)
+    # (cabin judge r3 CAB6-01: the stitched row alone vanished beyond 1 m -- P1046404 / 06 / 07 show a clear lumbar seam:
+    # the lumbar part its own panel again, on the same shell and sink as the centre panel (no step), meeting it in the
+    # same narrow crease as the V seams)
+    g = pillow(fillet([(-lum_bot, b0_ + 0.004), (lum_bot, b0_ + 0.004), (lum_top, b_lum - 0.5 * gap),
+                       (-lum_top, b_lum - 0.5 * gap)], [0.03, 0.03, 0.012, 0.012], max_len=0.04), 0.026,
+               ks["r_centre"], 0.006, h=0.045, crown=dome(*EXEC_PANEL_CROWN["lumbar"]), n_round=2)
+    back.append(_mats(g.map(pmap), M_CAB))
+    bs = np.r_[np.linspace(b_lum + 0.5 * gap, b80, 9), np.linspace(b80 + 0.03, b_v, 4)]
+    P = np.vstack([np.c_[vin(bs), bs], np.c_[-vin(bs[::-1]), bs[::-1]]])
+    olc = fillet(P, np.r_[0.012, np.zeros(len(bs) - 2), 0.03, 0.03, np.zeros(len(bs) - 2), 0.012], max_len=0.05)
     crc = dome(*EXEC_PANEL_CROWN["centre"])
     g = pillow(olc, 0.026, ks["r_centre"], 0.006, h=0.045, crown=crc, n_round=2)
     back.append(_mats(g.map(pmap), M_CAB))
@@ -1774,18 +1789,6 @@ def cabin_seat(seat_id, layout=None, recline=None, raised=False, belts=True):
                           lambda a, b: (b > b_lum + 0.01) & (b < b80 + 0.01), M_STITCH_EXEC)     # beside the V seams
     if st is not None:
         back.append(st)
-    # the lumbar seam: one row of tone-on-tone stitching across the centre panel at the lumbar top
-    pitch = EXEC_STITCH[0]
-    aa = np.arange(-lum_top + 0.012, lum_top - 0.012, pitch)
-    if len(aa):
-        dd = np.minimum(lum_top - np.abs(aa), 0.05)
-        A3 = np.c_[aa, np.full(len(aa), b_lum), 0.026 + crc(aa, np.full(len(aa), b_lum), dd) + 0.0003]
-        X = pmap(A3)
-        D = pmap(A3 + [1e-4, 0, 0]) - X
-        Nr = pmap(A3 + [0, 0, 1e-4]) - X
-        D /= np.linalg.norm(D, axis=1, keepdims=True)
-        Nr /= np.linalg.norm(Nr, axis=1, keepdims=True)
-        back.append(_stitches(X, D, Nr, M_STITCH_EXEC))
     # side bolsters: raised, from beside the lumbar panel up along the V seam and on to the top as the shoulder wings,
     # their crown rising by EXEC_WING crown over the upper back (rise band)
     s_r0, s_r1 = kw["rise"][0] * s_top, kw["rise"][1] * s_top
