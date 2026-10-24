@@ -43,17 +43,17 @@ const MONMAT = {
   basalt: { c: '#28262b', r: 0.22, l: LAYER.marble },
   black: { c: '#1b1a20', r: 0.35, l: LAYER.plastic },
   blackGloss: { c: '#0f0e13', r: 0.15 },
-  blind: { c: '#3b3a3c', r: 0.85, l: LAYER.fabric },   // w7: #1d1c22 rendered a black void                // decorative blind, pulled down (render)
+  blind: { c: '#3b3a3c', r: 0.85, l: LAYER.fabric, e: 0.05 },   // w7: #1d1c22 rendered a black void                // decorative blind, pulled down (render)
   washi: { c: '#f2f3f6', r: 0.8, l: LAYER.atlasGlow, e: 0.6 },       // neutral-white backlit washi band (render)
   washiGalley: { c: '#d4d3e0', r: 0.8, l: LAYER.atlasGlow, e: 0.45 }, // lavender-grey galley washi (welcome render)
   downlight: { c: '#eef4ff', r: 0.3, e: 1.6 },
   fridgeLit: { c: '#2c2f36', r: 0.08, e: 0.03 },     // [V] smoked-glass door: #3a3941 (render), #3b3834 (omaat_room_32)
   latch: { c: '#7a7d82', r: 0.35, m: 0.6 },           // [V] light-grey oval fridge latch (render)
-  bottleClear: { c: '#9fb2b6', r: 0.05, m: 0.3 },
+  bottleClear: { c: '#b4c2c5', r: 0.05, m: 0.1, e: 0.02 },   // w10a: clear bottles lit by the shelf (were opaque grey)
   bottleBlue: { c: '#2346c8', r: 0.5 },              // w2: blue label on clear water bottles (the solid blue read as blobs)
   label: { c: '#f4f2ec', r: 0.6 },
   juice: { c: '#f0a526', r: 0.15 },
-  tumbler: { c: '#c9d2d6', r: 0.05, m: 0.2 },
+  tumbler: { c: '#dfe6e8', r: 0.03, m: 0.1, e: 0.04 },
   // [V] welcome galley upper unit: dark warm charcoal with visible frames, not black (omaat_room_32 #1a1911..#3a362a,
   //     kna_31_full; w5b rendered #050507)
   recessGrey: { c: '#d3d0ca', r: 0.45, l: LAYER.plastic },   // w9a: welcome recess side walls + ceiling (lalf_134, omaat_room_32) [V]
@@ -69,10 +69,10 @@ const MONMAT = {
   compartment: { c: '#b4b1a9', r: 0.5, m: 0.1, l: LAYER.gAlu },   // w9: upper stowage doors grey metal, ~0.8 of the wall (sans_38)
   insertSeam: { c: '#2c2b29', r: 0.7 },                           // w9: ~4 mm dark gap round each insert (sans_38 / sansY_44)
   ovenLabel: { c: '#c9c77e', r: 0.5, e: 0.06 },                   // w9: yellow-green meal-label window on the ovens (sansY_44 #666338 lit)
-  jug: { c: '#8f8e8a', r: 0.28, m: 0.6 },                         // w9: polished jug, no brushed layer (rings read as stacked cups); sansY_44 jug #605a4e
+  jug: { c: '#a3a19c', r: 0.15, m: 0.35 },                           // w9: polished jug, no brushed layer (rings read as stacked cups); sansY_44 jug #605a4e
   brewMetal: { c: '#8e8a82', r: 0.45, m: 0.3, l: LAYER.gAlu },    // w9: brewer stainless frame (sans_38 #59544c, ~ the jug's tone) [V]
   bevBlack: { c: '#17171a', r: 0.3 },
-  copper: { c: '#9a4a2c', r: 0.3, m: 0.5 },   // w9: chunky copper-orange anodised turn-buttons (sansY_44 #59382d shaded, warm highlights)   // [V] small red turn-buttons (sp_09); the orange blocks dominated m01/m12
+  copper: { c: '#b5643a', r: 0.3, m: 0.5 },   // w9: chunky copper-orange anodised turn-buttons (sansY_44 #59382d shaded, warm highlights)   // [V] small red turn-buttons (sp_09); the orange blocks dominated m01/m12
   deck: { c: '#26252a', r: 0.3, l: LAYER.plastic },
   card: { c: '#ece7c8', r: 0.7 },
   // class curtains sampled from in-service photos: F/J charcoal from both sides (omaatF_2 #5b5650/#554f4d under warm
@@ -159,7 +159,9 @@ function monoStepBody(B, m, deckY, set, lowMat, upMat) {
 }
 function bottle(B, xf, h, r, mat, lbl = true, lblMat = MONMAT.label) {
   B.add(gCyl(r, r, h * 0.66, 10), M4.mul(xf, M4.trs(0, h * 0.33, 0)), mat);
-  B.add(gCyl(r * 0.36, r, h * 0.24, 10), M4.mul(xf, M4.trs(0, h * 0.78, 0)), mat);
+  B.add(gCyl(r * 0.4, r, h * 0.12, 10), M4.mul(xf, M4.trs(0, h * 0.72, 0)), mat);          // w10a: shoulder + slim neck + cap
+  B.add(gCyl(r * 0.3, r * 0.3, h * 0.16, 8), M4.mul(xf, M4.trs(0, h * 0.86, 0)), mat);
+  B.add(gCyl(r * 0.34, r * 0.34, h * 0.05, 8), M4.mul(xf, M4.trs(0, h * 0.965, 0)), MONMAT.label);
   if (lbl) B.add(gCyl(r * 1.04, r * 1.04, h * 0.2, 10, false), M4.mul(xf, M4.trs(0, h * 0.22, 0)), lblMat);
 }
 // round flush stainless pull (bar render), on a face
@@ -180,17 +182,21 @@ function insertGap(B, xf, w, h) { B.add(gBox(w + 0.008, h + 0.008, 0.004), xf, M
 // (green-lit key) and a dark window, metal cheeks round an open bay with a black back, a fold-out brew handle and a
 // bulbous polished jug with a black handle and lid standing on the drip tray. uW wide; P(dx, y, o) places on the face.
 function brewer(B, P, uW, y0) {
-  B.add(gRBox(uW, 0.13, 0.12, 0.01, 1), P(0, y0 + 0.165, 0.06), MONMAT.brewMetal);                     // head
-  B.add(gBox(uW - 0.03, 0.025, 0.004), P(0, y0 + 0.215, 0.121), MONMAT.bevBlack);                     // control strip
-  B.add(gBox(0.018, 0.012, 0.004), P(-uW * 0.3, y0 + 0.215, 0.124), MONMAT.green);
-  B.add(gQuad(uW * 0.5, 0.05), P(-uW * 0.05, y0 + 0.155, 0.1205), MONMAT.ovenGlass);                  // window
-  B.add(gBox(uW * 0.55, 0.012, 0.06), P(0, y0 + 0.098, 0.13), MONMAT.steel);                         // brew handle (fold-out)
+  // w10 (A/B): shallow (0.05 m) so it sits nearly flush with the ovens, polished jug with a baked highlight and reflection
+  B.add(gRBox(uW, 0.13, 0.05, 0.01, 1), P(0, y0 + 0.165, 0.025), MONMAT.brewMetal);                     // head
+  B.add(gBox(uW - 0.02, 0.025, 0.004), P(0, y0 + 0.215, 0.051), MONMAT.bevBlack);                     // control strip
+  B.add(gBox(0.014, 0.01, 0.004), P(-uW * 0.3, y0 + 0.215, 0.054), MONMAT.green);
+  B.add(gQuad(uW * 0.6, 0.05), P(0, y0 + 0.155, 0.0505), MONMAT.ovenGlass);                           // window
+  B.add(gBox(uW * 0.5, 0.012, 0.03), P(0, y0 + 0.098, 0.06), MONMAT.steel);                          // brew handle
   B.add(gBox(uW, 0.2, 0.006), P(0, y0, 0.003), MONMAT.bevBlack);                                       // bay back
-  for (const s of [-1, 1]) B.add(gBox(0.014, 0.21, 0.12), P(s * (uW / 2 - 0.007), y0, 0.06), MONMAT.brewMetal);
-  B.add(gBox(uW - 0.03, 0.01, 0.1), P(0, y0 - 0.105, 0.06), MONMAT.steelDark);                        // drip tray
-  B.add(gLathe([[0.001, 0], [0.045, 0.004], [0.06, 0.04], [0.058, 0.09], [0.04, 0.125], [0.03, 0.14], [0.001, 0.142]], 14), P(0, y0 - 0.1, 0.06), MONMAT.jug);
-  B.add(gCyl(0.032, 0.03, 0.016, 12), P(0, y0 + 0.05, 0.06), MONMAT.bevBlack);                          // lid
-  B.add(gTube([[0.04, 0.125, 0], [0.085, 0.12, 0], [0.085, 0.04, 0], [0.055, 0.02, 0]], 0.008, 6), P(0, y0 - 0.1, 0.06), MONMAT.bevBlack);   // handle
+  for (const s of [-1, 1]) B.add(gBox(0.01, 0.21, 0.05), P(s * (uW / 2 - 0.005), y0, 0.025), MONMAT.brewMetal);
+  B.add(gBox(uW - 0.02, 0.01, 0.06), P(0, y0 - 0.105, 0.035), MONMAT.steelDark);                      // drip tray
+  const r = Math.min(0.055, uW / 2 - 0.02), k = r / 0.06;
+  B.add(gLathe([[0.001, 0], [0.045 * k, 0.004], [r, 0.04], [0.058 * k, 0.09], [0.04 * k, 0.125], [0.03 * k, 0.14], [0.001, 0.142]], 10), P(0, y0 - 0.1, 0.04), MONMAT.jug);
+  B.add(gCyl(0.032 * k, 0.03 * k, 0.016, 10), P(0, y0 + 0.05, 0.04), MONMAT.bevBlack);                  // lid
+  B.add(gTube([[0.04 * k, 0.125, 0], [r + 0.025, 0.12, 0], [r + 0.025, 0.04, 0], [r - 0.005, 0.02, 0]], 0.007, 4), P(0, y0 - 0.1, 0.04), MONMAT.bevBlack);   // handle
+  B.add(gQuad(0.01, 0.06), P(-r * 0.45, y0 - 0.045, 0.04 + r * 0.9), { c: '#dcdad4', r: 0.1 });   // baked highlight (sans_38)
+  B.add(gQuad(0.016, 0.055), P(r * 0.35, y0 - 0.045, 0.04 + r * 0.93), { c: '#3a3630', r: 0.2 });           // dark reflection band
 }
 // open-top literature pocket / wall box on a face frame xf (+z out of the face): box w x h, cards sticking out of the
 // top [V py_37303: ~0.25 m wide grey pockets; y_47302: white framed pockets; omaat_room_36: shallow wall boxes]
@@ -240,7 +246,7 @@ function buildBar(B, m) {
   B.add(gBox(uw + 0.01, 0.05, 0.065), V(0, BAR.upTop - 0.025, oU + 0.034), MONMAT.blackGloss);        // fascia
   // left: blind pulled down (fine slat lines), bronze bottom rail
   box(490, 850, 210, 700, 0.012, oU + 0.066, MONMAT.blind);
-  for (let k = 1; k < 9; k++) B.add(gBox(up(850) - up(490) - 0.01, 0.003, 0.004), V((up(490) + up(850)) / 2, uy(700) + (k * (uy(210) - uy(700))) / 9, oU + 0.073), MONMAT.blackGloss);
+  for (let k = 1; k < 9; k++) B.add(gBox(up(850) - up(490) - 0.01, 0.003, 0.004), V((up(490) + up(850)) / 2, uy(700) + (k * (uy(210) - uy(700))) / 9, oU + 0.073), { c: '#4a4846', r: 0.5 });   // w10a: blind slat lines visible
   B.add(gBox(up(850) - up(490) + 0.01, 0.018, 0.02), V((up(490) + up(850)) / 2, uy(700), oU + 0.07), MONMAT.bronze);
   // monitor (screen 405 x 235 px = 0.77 x 0.45 m, ~35 in class) with bezel + shelf lip under it
   box(862, 1318, 210, 480, 0.03, oU + 0.075, SEATMAT.bezel);
@@ -252,7 +258,7 @@ function buildBar(B, m) {
   B.add(gBox(sx1 - sx0, uy(510) - uy(695), 0.01), V(sc, (uy(510) + uy(695)) / 2, oU + 0.02), { c: '#2a2a30', r: 0.5 });
   B.add(gBox(sx1 - sx0, 0.01, 0.08), V(sc, uy(690), oU + 0.07), MONMAT.blackGloss);
   B.add(gBox(sx1 - sx0, 0.025, 0.006), V(sc, uy(680), oU + 0.108), { c: '#2a2a30', r: 0.3 });   // shelf fence
-  for (let k = 0; k < 8; k++) bottle(B, V(sx0 + 0.03 + (k * (sx1 - sx0 - 0.06)) / 7, uy(690) + 0.005, oU + 0.07), k ? 0.30 : 0.2, k ? 0.036 : 0.032, k ? MONMAT.bottleClear : MONMAT.juice);
+  for (let k = 0; k < 7; k++) bottle(B, V(sx0 + 0.035 + (k * (sx1 - sx0 - 0.07)) / 6, uy(690) + 0.005, oU + 0.07), k ? 0.30 : 0.2, k ? 0.028 : 0.032, k ? MONMAT.bottleClear : MONMAT.juice);   // w10b: slimmer, spaced
   // glass-door mini-fridge: frame, lit interior, two shelves of blue bottles, round latch on a pill
   const fc = (up(1325) + up(1510)) / 2;
   box(1325, 1510, 250, 700, 0.02, oU + 0.07, MONMAT.blackGloss);
@@ -270,7 +276,7 @@ function buildBar(B, m) {
     for (const dzz of [0.12, 0.42]) B.add(gBox(0.012, 0.065, 0.012), V(sx * uw / 2, BAR.deck + 0.067, oU + dzz), MONMAT.steelBright);
   }
   // tumblers on the counter (render: four at the left)
-  for (const p of [490, 535, 578, 655]) B.add(gCyl(0.04, 0.034, 0.085, 12), V(up(p), BAR.deck + 0.078, p === 655 ? -0.16 : -0.26), MONMAT.tumbler);
+  for (const p of [490, 535, 578, 655]) B.add(gCyl(0.035, 0.03, 0.06, 12), V(up(p), BAR.deck + 0.065, p === 655 ? -0.16 : -0.26), MONMAT.tumbler);
   // ash cheeks either side of the upper unit, up to the soffit
   for (const s of [-1, 1]) B.add(gBox((w - uw) / 2 - 0.02, BAR.canopy - uy0, 0.02), V(s * (uw / 2 + (w - uw) / 4), (uy0 + BAR.canopy) / 2, oU + 0.012), MONMAT.barAsh);
   // black soffit over the bar with three downlights, framed by backlit washi bands
@@ -349,7 +355,7 @@ function buildWelcomeGalley(B, m) {
     for (const sx of [-1, 1]) B.add(gBox(0.014, 0.36, 0.1), V(mc + u + sx * 0.222, 1.2, o + 0.05), MONMAT.welcomeChar);
   }
   B.add(gBox(0.9, 0.014, 0.1), V(mc, 1.375, o + 0.05), MONMAT.welcomeChar);
-  brewer(B, (dx, y, oo) => V(mc - 0.28 + dx, y, o + oo), 0.2, 1.13);   // w9: satin brewer + polished jug (omaat_room_32)
+  brewer(B, (dx, y, oo) => V(mc - 0.28 + dx, y, o + oo), 0.18, 1.13);   // w9: satin brewer + polished jug (omaat_room_32)
   // right: tall glass-door cabinet with round latch and a placard above
   const gc = w / 2 - 0.3;
   // w5 (omaat_room_32, kna_31_full): smoked glass with the shelves and boxes visible behind it, charcoal stiles, a round
@@ -357,19 +363,24 @@ function buildWelcomeGalley(B, m) {
   // w9 (A/B w8-w9: the opaque pane + drawn shelf lines read as a panelled door): no pane quad; the lit interior, shelves
   // and contents are drawn darkened ~0.55x as seen through the smoked glass (omaat_room_32 pane p10/50/90 28/60/82, papers
   // and boxes visible), with two narrow upright sheen strips on the glass plane and the black caution plate on the top rail
-  B.add(gBox(0.40, 0.76, 0.004), V(gc + 0.02, 1.44, o + 0.003), { c: '#2a2725', r: 0.6, e: 0.04 });
-  for (const y of [1.2, 1.45, 1.7]) B.add(gBox(0.38, 0.012, 0.07), V(gc + 0.02, y, o + 0.04), { c: '#55514c', r: 0.5, e: 0.03 });
-  for (const [u, y, bw, bh, cc] of [[-0.08, 1.27, 0.12, 0.13, '#4a4744'], [0.07, 1.25, 0.14, 0.09, '#625e58'], [0.0, 1.53, 0.2, 0.15, '#4c4945'],
-    [-0.1, 1.78, 0.1, 0.15, '#45423e'], [0.09, 1.52, 0.03, 0.12, '#8a8780'], [0.1, 1.79, 0.14, 0.03, '#807c74']])
-    B.add(gBox(bw, bh, 0.05), V(gc + 0.02 + u, y, o + 0.035), { c: cc, r: 0.6, e: 0.04 });
+  // w10a: no pane quad (any opaque pane reads as a panelled door) - the lit interior at the photos' tone instead
+  // (omaat_room_32 #4e4c4b, lalf_134 #605154), a white tray (lalf_134), one faint reflection line by the hinge stile
+  B.add(gBox(0.40, 0.76, 0.004), V(gc + 0.02, 1.44, o + 0.003), { c: '#5a5450', r: 0.6, e: 0.1 });
+  for (const y of [1.2, 1.45, 1.7]) B.add(gBox(0.38, 0.012, 0.07), V(gc + 0.02, y, o + 0.04), { c: '#8a857d', r: 0.5, e: 0.08 });
+  for (const [u, y, bw, bh, cc] of [[-0.08, 1.27, 0.12, 0.13, '#77746f'], [0.07, 1.25, 0.14, 0.09, '#938f88'], [0.0, 1.53, 0.2, 0.15, '#64615c'],
+    [-0.1, 1.78, 0.1, 0.15, '#5a5752'], [0.09, 1.52, 0.03, 0.12, '#a8a49c'], [0.1, 1.79, 0.14, 0.03, '#a29e96']])
+    B.add(gBox(bw, bh, 0.05), V(gc + 0.02 + u, y, o + 0.035), { c: cc, r: 0.6, e: 0.04 });   // ~0.85x: seen through the smoked glass
+  B.add(gBox(0.3, 0.012, 0.06), V(gc + 0.02, 1.215, o + 0.04), { c: '#c9c6bf', r: 0.4, e: 0.04 });          // white tray
   for (const sx of [-1, 1]) B.add(gBox(0.05, 0.8, 0.03), V(gc + 0.02 + sx * 0.195, 1.44, o + 0.085), MONMAT.welcomeChar);
   for (const sy of [-1, 1]) B.add(gBox(0.44, 0.05, 0.03), V(gc + 0.02, 1.44 + sy * 0.375, o + 0.085), MONMAT.welcomeChar);
-  for (const [u, sw, cc] of [[-0.11, 0.06, '#6e6964'], [-0.065, 0.014, '#b3ada5'], [0.12, 0.014, '#9a948c']]) B.add(gQuad(sw, 0.68), V(gc + 0.02 + u, 1.44, o + 0.09), { c: cc, r: 0.08, m: 0.1, e: 0.03 });
-  B.add(gQuad(0.2, 0.07), V(gc + 0.06, 1.76, o + 0.1005), MONMAT.bevBlack);                               // caution plate
-  for (let i = 0; i < 3; i++) B.add(gQuad(0.15 - i * 0.03, 0.006), V(gc + 0.06 - i * 0.015, 1.78 - i * 0.017, o + 0.101), MONMAT.label);
+  B.add(gBox(0.006, 0.68, 0.002), V(gc + 0.02 + 0.155, 1.44, o + 0.09), { c: '#8e8983', r: 0.1 });         // hinge-side reflection
+  B.add(gQuad(0.2, 0.05), V(gc + 0.06, 1.815, o + 0.1005), MONMAT.bevBlack);                               // caution plate on the top rail
+  for (let i = 0; i < 3; i++) B.add(gQuad(0.15 - i * 0.03, 0.005), V(gc + 0.06 - i * 0.015, 1.83 - i * 0.013, o + 0.101), MONMAT.label);
   B.add(gCyl(0.05, 0.05, 0.016, 20), M4.mul(V(gc - 0.17, 1.44, o + 0.104), M4.trs(0, 0, 0, 0, Math.PI / 2)), MONMAT.welcomeChar);   // round boss
   B.add(gCyl(0.028, 0.028, 0.016, 16), M4.mul(V(gc - 0.17, 1.44, o + 0.118), M4.trs(0, 0, 0, 0, Math.PI / 2)), MONMAT.latch);
   B.add(gRBox(0.26, 0.07, 0.012, 0.035, 2), V(gc, 1.92, o + 0.02), { c: '#e9e2cf', r: 0.5 });          // w7: single cream oval tag
+  B.add(gQuad(0.03, 0.03), V(gc - 0.07, 1.92, o + 0.0265), { c: '#5a5650', r: 0.6 });                      // w10a: pictogram + 2 text lines (omaat_room_32)
+  for (const y of [1.93, 1.91]) B.add(gQuad(0.09, 0.005), V(gc + 0.03, y, o + 0.0265), { c: '#8d887e', r: 0.6 });
   welcomeEnds(B, m);
 }
 // portrait welcome monitors on navy end panels facing each aisle, with three steel rub strips at 0.3 / 0.5 / 0.7 m
@@ -454,7 +465,7 @@ function buildGalley(B, m, premium) {
   }
   // w6b: a jump seat on the galley face (jumpX) gets a flush full-height white panel; the deck, nosing, work light and
   // upper inserts stop either side of it instead of running behind the seat (m13, lalf_133: seat on a plain panel)
-  const jx = m.jumpX, segs = jx === undefined ? [[m.x0, m.x1]] : [[m.x0, jx - 0.27], [jx + 0.27, m.x1]].filter(([a, b]) => b - a > 0.08);
+  const jx = m.jumpX, segs = jx === undefined ? [[m.x0, m.x1]] : [[m.x0, jx - 0.27], [jx + 0.27, m.x1]].filter(([a, b]) => b - a > 0.35);   // w10a: no stub deck beside the 2R seat
   for (const [a, b] of segs) {
     const sw = b - a, sc = (a + b) / 2;
     B.add(gRBox(sw - 0.04, 0.035, set + 0.03, 0.008, 1), F(sc, dk + 0.0175, (0.03 - set) / 2), MONMAT.deck);
@@ -480,7 +491,7 @@ function buildGalley(B, m, premium) {
       B.add(gRBox(uW * 0.46, 0.035, 0.025, 0.01, 1), G(-uW * 0.08, 1.43, o + 0.05), MONMAT.aluDark);     // lever
       for (const s of [-1, 1]) turnLatch(B, F(x + s * uW * 0.3, 1.3, o + 0.04));
     } else if (t === 1) { // beverage maker: satin head + black strip, polished jug in the bay (sans_38 / sansY_44)
-      brewer(B, (dx, y, oo) => G(dx, y, o + oo), uW, 1.41);
+      for (const sx of [-1, 1]) brewer(B, (dx, y, oo) => G(sx * uW / 4 + dx, y, o + oo), uW / 2 - 0.006, 1.41);   // w10: two narrow makers per slot (sans_38)
       B.add(gBox(uW * 0.4, 0.016, 0.003), G(-uW * 0.1, 1.29, o + 0.007), MONMAT.card);                  // 'Water Filter Inside' tag
     } else {              // standard unit with recessed pull
       B.add(gRBox(uW, 0.32, 0.03, 0.01, 1), F(x, 1.47, o + 0.015), MONMAT.aluDark);
@@ -622,7 +633,10 @@ function buildMon(B, m, layout, cls) {
     B.add(gCyl(0.012, 0.012, 0.01, 10), M4.mul(P(0, 1.52, 0.03), M4.trs(0, 0, 0, 0, Math.PI / 2)), MONMAT.steel);
     B.add(gRBox(0.08, 0.14, 0.03, 0.02, 1), P(dw / 2 - 0.08, 1.02, 0.035), MONMAT.plateWhite);   // lever housing
     B.add(gRBox(0.03, 0.12, 0.03, 0.01, 1), P(dw / 2 - 0.08, 0.98, 0.055), MONMAT.steel);
-    B.add(gBox(dw, 0.05, 0.012), P(0, 0.035, 0.03), { c: '#b8962a', r: 0.5 });                   // kick plate
+    // w10a (tpa_Image-2-3): yellow / black chevron kick strip, round lock boss on a satin plate on the latch side
+    for (let i = 0; i < 10; i++) B.add(gBox(dw / 10, 0.05, 0.012), P(-dw / 2 + dw / 20 + (i * dw) / 10, 0.035, 0.03), i % 2 ? { c: '#151515', r: 0.5 } : { c: '#d8b52a', r: 0.5 });
+    B.add(gRBox(0.06, 0.16, 0.012, 0.01, 1), P(dw / 2 - 0.08, 1.30, 0.032), MONMAT.cockpitFrame);
+    B.add(gCyl(0.025, 0.025, 0.02, 14), M4.mul(P(dw / 2 - 0.08, 1.30, 0.045), M4.trs(0, 0, 0, 0, Math.PI / 2)), MONMAT.steel);
     // access keypad on the corridor's right-hand wall, just aft of the door
     B.add(gQuad(0.08, 0.1), M4.trs(m.x1 + 0.012, 1.25, m.z1 + 0.25, -Math.PI / 2), MAT.decal, atlasUV('keypad'));
   } else if (m.kind === 'partition') {
@@ -669,7 +683,7 @@ function inkWall(B, x0, x1, H, zf, f) {
   B.add(g, null, MONMAT.inkGround);
   for (let k = base; k < B.p.length / 3; k++) {
     const x = B.p[k * 3], y = B.p[k * 3 + 1];
-    const n = fbm(x / 0.5 + 40, y / 0.38 + 3, 256, 4, 23), lowY = clamp(1.15 - 0.45 * y / H, 0.5, 1);
+    const n = fbm(x / 0.9 + 40, y / 0.25 + 3, 256, 4, 23), lowY = clamp(1.15 - 0.45 * y / H, 0.5, 1);   // w10a: horizontal strata (omaatF_2)
     const t = clamp((n - 0.40) / 0.26, 0, 1) ** 1.3 * lowY;
     for (let c = 0; c < 3; c++) B.c[k * 4 + c] = Math.round(lerp(g0[c], c1[c], t));
   }
