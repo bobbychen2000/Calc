@@ -166,7 +166,8 @@ function faceM(x, y, tx, ty, z, f, off = 0) {
 }
 // flat rounded-rect / stadium plate: outline in local XY, t thick along Z (gRBox clamps its radius to half the
 // thickness, so thin plates came out square-cornered)
-const gPlate = (w, h, r, t, seg = 8) => {
+// (binPlate, not gPlate: 10_mono declares its own gPlate(w, h, d, r) - the clash stopped the page loading)
+const binPlate = (w, h, r, t, seg = 8) => {
   // drop the zero-length straight edges of a full stadium (duplicate points break the cap triangulation)
   const P = rrectPts(w, h, r, seg).filter((p, k, A) => { const q = A[(k + 1) % A.length]; return Math.hypot(p[0] - q[0], p[1] - q[1]) > 1e-6; });
   return gExtrude(P, t, 60);
@@ -177,9 +178,9 @@ const padM = (x, y, z) => M4.trs(x, y, z, 0, Math.PI / 2);
 // rim set 1 mm into the door skin so it reads recessed, not proud (no photo shows a raised latch) [A]
 function addLatch(B, M) {
   // ~2:1 with a visible handle (c120, y_47301; w8a: a 2.8:1 pill) [V ratio, A size]
-  B.add(gPlate(0.12, 0.06, 0.03, 0.006), M4.mul(M, M4.trs(0, 0, -0.001)), BINMAT.bezel);
-  B.add(gPlate(0.096, 0.038, 0.019, 0.004), M4.mul(M, M4.trs(0, 0.002, 0.0007)), BINMAT.recess);
-  B.add(gPlate(0.08, 0.014, 0.007, 0.004, 4), M4.mul(M, M4.trs(0, -0.0065, 0.0019)), BINMAT.paddle);
+  B.add(binPlate(0.12, 0.06, 0.03, 0.006), M4.mul(M, M4.trs(0, 0, -0.001)), BINMAT.bezel);
+  B.add(binPlate(0.096, 0.038, 0.019, 0.004), M4.mul(M, M4.trs(0, 0.002, 0.0007)), BINMAT.recess);
+  B.add(binPlate(0.08, 0.014, 0.007, 0.004, 4), M4.mul(M, M4.trs(0, -0.0065, 0.0019)), BINMAT.paddle);
 }
 // shell around a face polyline, offset along its outward normal (outward = toward the aisle; inward = +1 for the
 // outboard door, -1 for the centre bin) so wrapped-under door segments keep their thickness
@@ -294,8 +295,8 @@ function binSeams(which) {
 // darker floor, nothing proud but the fittings (thrifty_j_overhead-vent, b_lalf_c26, b_sany_y22 [V]; rim 3 mm [A])
 function stadiumWell(B, w, d, x, z, fl = BINMAT.well, rim = BINMAT.wellRim) {
   // hairline-thin plates (w3a: 1 mm walls drew a dark ring, so the wells read proud, not recessed)
-  B.add(gPlate(w + 0.006, d + 0.006, (d + 0.006) / 2, 0.0003), padM(x, -0.00015, z), rim);
-  B.add(gPlate(w, d, d / 2, 0.0003), padM(x, -0.00035, z), fl);
+  B.add(binPlate(w + 0.006, d + 0.006, (d + 0.006) / 2, 0.0003), padM(x, -0.00015, z), rim);
+  B.add(binPlate(w, d, d / 2, 0.0003), padM(x, -0.00035, z), fl);
 }
 function eyeball(B, x, z, r = 0.02, pod = BINMAT.pod) {   // reading light: bezel, dark socket, lens ball (b_lalf_c26 [V])
   B.add(gCyl(r, r, 0.003, 18), M4.trs(x, -0.0018, z), pod);
@@ -312,7 +313,7 @@ function gasper(B, x, z, r = 0.019) {       // gasper: bezel ring, conical nozzl
 function signWindow(B, x, z, w = 0.16, d = 0.048) {
   stadiumWell(B, w, d, x, z);
   // smoked pill, then the icon pair at the atlas rect's own 140:64 aspect (w3a: a stretched quad z-fought the well floor)
-  B.add(gPlate(w - 0.012, d - 0.012, (d - 0.012) / 2, 0.0003), padM(x, -0.0007, z), BINMAT.smokeBase);
+  B.add(binPlate(w - 0.012, d - 0.012, (d - 0.012) / 2, 0.0003), padM(x, -0.0007, z), BINMAT.smokeBase);
   const hq = d - 0.016;
   B.add(gQuad(hq * 140 / 64, hq), M4.trs(x, -0.0012, z, 0, Math.PI / 2), BINMAT.smoke, atlasUV('psuSigns'));
 }
@@ -362,7 +363,7 @@ const PSU_DROP = 0.0145;
 const psuXF = (x, z) => Math.abs(x) < 1.1 ? M4.trs(x, CBIN_Y - 0.0045 - PSU_DROP, z) : M4.trs(x, binBottomY(x) - 0.003 - PSU_DROP, z, 0, 0, -TILT_O * Math.sign(x));
 // raised housing (w across, d along z) from the module origin up into the band (b_lalf_c26: the light module and
 // the sign panel stand proud of the stepped band [V]; rounded plan corners [A r])
-const housing = (B, w, d, r, z = 0, mat = BINMAT.band) => B.add(gPlate(w, d, r, PSU_DROP + 0.002), padM(0, (PSU_DROP + 0.002) / 2, z), mat);
+const housing = (B, w, d, r, z = 0, mat = BINMAT.band) => B.add(binPlate(w, d, r, PSU_DROP + 0.002), padM(0, (PSU_DROP + 0.002) / 2, z), mat);
 // row placard on the outboard door's top rail, above the latch (py_37302, c_th1, b_sany_y22 [V])
 function placardXF(group, z) {
   const out = [];
