@@ -88,6 +88,7 @@ Sources are real in-flight photos in `ref/web/suite/` (79 files, listed in `INDE
 | w10 | 8.0 | 8.3 | `suite_w10a/b.json` |
 | w11 | 8.2 | 8.5 | `suite_w11a/b.json` |
 | w12 | 8.4 | 8.7 | `suite_w12a/b.json` (no medium or high issues from either rater) |
+| w13 (rated 0c2b6fb, wave 3c) | 8.5 | 8.7 | `suite_w13a/b.json` (no high issues; **bar met**) |
 
 - **Stopped at the 6-round cap.** B is at 8.7. A is at 8.4, 0.1 under the target, and lists only low issues. The w12 lows that were cheap and safe went into a final commit that has not been rated.
 - **The w6 regression.** The w6 rating (A 5.8) scored the 06c054c state, whose main faults came from new work:
@@ -132,7 +133,18 @@ Sources are real in-flight photos in `ref/web/suite/` (79 files, listed in `INDE
 - **Shared-file edits:** the `f_wood` entry in `test/make_swatches.py` (with `COLNORM` / `ALONG`), `tex/tex_f_wood.png` and `tex/sizes.json`.
 - **Sources:** `ref/web/suite/` was re-downloaded (145 photos plus INDEX.md, gitignored). Since w5, `omaat_fN` means the OMAAT filename number. INDEX.md maps the old w1–w4 page-order numbers.
 
+### Wave 3c (w13): bar met, loop stopped
+- w13 rated the unrated post-w12 fixes from 0c2b6fb on the head after pulling (lighting changes included): A 8.5, B 8.7, no high issues. Both raters are at or above 8.5, so the suite meets the wave-3 bar and the loop stopped. No source change in wave 3c.
+- 0c2b6fb confirmed: grip recesses (wide, short, high), flank brightness (flank/field 0.58-0.59 against f60's 0.62), warm doorway void, and the corrected duvet-fold logic (flap 0.87x the duvet). The w11 closed-door void still holds (0.23x).
+- Variants v1-v5 (doors, divider, bed and their combinations) render cleanly; the far LOD matches.
+- Renders: own studio spec (s1-s6, plus v1-v5 variant views built through `suiteUnit({doors, divider, bed})`) and qa.js q01-q05, in the session scratchpad (not tracked).
+- `ref/web/suite/` re-downloaded: 70 OMAAT photos (`omaat_fN` = OMAAT upload `ANA-First-Class-Suite-777-N.jpg`) and 15 UpgradedPoints photos (`up_*`). Some numbers cited earlier (f3, f4, f10, f47, f49) are no longer on the page.
+
 ### Still open
+- **Medium, from w13b (not blocking the bar):**
+  - The duvet corner still reads as an overlay: the duvet edge runs square round the corner, and the flap is small (legs 0.30, where in f57 the fold runs almost the full bed width). Fix: a chamfered `gExtrude` duvet slab whose edge follows the diagonal. A agrees, as a low.
+  - The wood flanks render chestnut (R/G 1.37) against f60's espresso (1.08-1.13), with short grain. Fix: `fFlank` -> about `#2f2b22` plus a longer straight-grain tile.
+- **Low, from w13:** the aisle drape top reads as a crisp ledge (q04 / s5); the grip recesses are cool blue-black (`SEATMAT.black`) rather than warm; a 1 px light tick in the plinth face at the aft leaf end (v1 x 445, s6); the ottoman lacks f11's salt-and-pepper weave.
 - **Low, from the w12 raters:**
   - Leaf moiré at grazing cabin angles. This needs a mip-mapped stripe texture or shallower slats; see the questions.
   - The console module has hard triangular end faces.
