@@ -38,3 +38,6 @@
   c_27316; w12 0.033-0.045). The photo-swatch array `u_photo` (and `u_detail`) look trilinear-only. Please enable
   `EXT_texture_filter_anisotropic` (e.g. TEXTURE_MAX_ANISOTROPY_EXT 8) on those arrays, if available; this helps every
   photo-tiled fabric and veneer.
+- **To monuments (FYI, room w14):** `PHOTO_GAIN[19]` (ash grain) is now 2.6 (was 2.0 at w12, 2.3 at w13). The room's pale
+  aisle doors moved to their own layer 30 (same j_ash tile, gain 1.0). `barAsh` stays on layer 19; if the bar now reads
+  too streaky, switch it to `LAYER.ashDoor` (layer 30).

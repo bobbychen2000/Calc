@@ -22,7 +22,7 @@ Object.assign(SEATMAT, {
   jBand: { c: '#656b73', r: 0.4, l: LAYER.leather },
   // w13a: the aisle-end posts and door leaves read pale, nearly plain cream (c_27312 (205,201,190), c_27314 (226,227,223),
   // tpg_60), the cabinets and table inlays darker greige (SEATMAT.ash) [V]
-  ashDoor: { c: '#e0d8ca', r: 0.44, l: LAYER.ashGrain },   // w6a: header band 0.9-1.35x the fabric, a touch darker than the flap (tpg_42, c_27313) [V]
+  ashDoor: { c: '#e4ddd0', r: 0.44, l: LAYER.ashDoor },   // w14a: own layer, faint grain   // w6a: header band 0.9-1.35x the fabric, a touch darker than the flap (tpg_42, c_27313) [V]
 });
 const ROOM = { hx: 0.585, hz: 1.359, top: 0.66, wall: 1.12, bed: 0.43 };
 // seat itself (passenger faces -z, back at z = 0): upright or bed. Per c_27302/27315/27316: thin flat cushion and a flat
@@ -66,8 +66,12 @@ function roomSeatCore(B, bed, lod, w = 0.64, fs = 1) {
   const CU = M4.trs(0, 0.39, -0.34, 0, 2 * DEG);
   // w12: dark slate-teal webbing to the seat crease, buckle at its front end clear of the bundle (kn_17 #213342, c_27313) [V]
   B.add(gBox(0.045, 0.004, 0.54), M4.mul(CU, M4.trs(0.15, 0.047, 0.04, -0.45)), { c: '#2c4250', r: 0.8, l: LAYER.fabric });
-  B.add(gRBox(0.05, 0.012, 0.035, 0.005, 1), M4.mul(CU, M4.trs(0.25, 0.051, -0.17, -0.45)), SEATMAT.buckle);
-  B.add(gRBox(0.035, 0.008, 0.03, 0.004, 1), M4.mul(CU, M4.trs(-0.20, 0.048, 0.02, 0.6)), SEATMAT.buckle);   // w13b: latch half on the far side (kn_17) [V]
+  // w14a: chrome buckle ~7 x 5 cm with its lift lever, the latch tongue + webbing stub on the open cushion (kn_17, tpg_46) [V]
+  const BK = M4.mul(CU, M4.trs(0.25, 0.051, -0.17, -0.45)), CH = { c: '#d4d8dc', r: 0.15, m: 0.95 };
+  B.add(gRBox(0.05, 0.014, 0.07, 0.006, 1), BK, CH);
+  B.add(gRBox(0.034, 0.006, 0.036, 0.004, 1), M4.mul(BK, M4.trs(0, 0.009, -0.008, 0, -4 * DEG)), { c: '#aeb3b8', r: 0.2, m: 0.9 });   // lift lever
+  B.add(gBox(0.045, 0.004, 0.10), M4.mul(CU, M4.trs(0.32, 0.047, -0.36, 0.3)), { c: '#2c4250', r: 0.8, l: LAYER.fabric });
+  B.add(gRBox(0.032, 0.006, 0.05, 0.003, 1), M4.mul(CU, M4.trs(0.30, 0.050, -0.29, 0.3)), CH);   // latch tongue
 }
 
 // charcoal frame round an ash panel (every ash face in the photos sits in a ~3 cm dark frame, c_27312-27315):
@@ -276,8 +280,10 @@ const CON = { top: 0.60 };   // outer console top (c_27316 / 27303: ~0.17 above 
 // pack in its bag beside it (tpg_42 #0a4db9, tpg_31) [V] on side ps; dir = +1 when the seat faces +z (O)
 function roomBundle(B, x, z, dir, ps) {
   B.add(gRBox(0.46, 0.042, 0.31, 0.016, 1), M4.trs(x, 0.452, z), { c: '#e2ded4', r: 0.3 });
-  B.add(gRBox(0.43, 0.034, 0.28, 0.014, 1), M4.trs(x + 0.005, 0.49, z - dir * 0.012), { c: '#4f5899', r: 0.22 });   // w13a: duvet tone through the glossy film (kn_17 0.46/0.53/0.71 of the white pillow; was a pale lilac slab) [V]
+  B.add(gRBox(0.43, 0.034, 0.28, 0.014, 1), M4.trs(x + 0.005, 0.49, z - dir * 0.012), { c: '#3d4688', r: 0.5 });   // w14a: matte, darker (kn_17 0.41/0.49/0.76); w13a: duvet tone through the glossy film (kn_17 0.46/0.53/0.71 of the white pillow; was a pale lilac slab) [V]
   B.add(gRBox(0.452, 0.002, 0.29, 0.001, 1), M4.trs(x, 0.4735, z + dir * 0.003), { c: '#eef0f2', r: 0.15 });   // pad fold seam under the film
+  // w14a: the clear film shows as a few glossy pale crease glints over the duvet (kn_17) [V]
+  for (const [dx, dz, a, L] of [[-0.12, -0.06, 0.5, 0.16], [0.08, 0.07, -0.3, 0.2], [0.15, -0.09, 1.1, 0.10]]) B.add(gBox(0.006, 0.0015, L), M4.trs(x + dx, 0.5075, z + dz, a), { c: '#c9cde0', r: 0.08 });
   // w7: slipper pack beside the bundle; w13: white slippers in clear film, a grey sole line (kn_17, tpg_76) [V]
   const P = M4.trs(x + ps * 0.29, 0.444, z + dir * 0.03, ps * 0.5);
   B.add(gLoft(cushionSecs(0.11, 0.19, 0.024, 0, { edge: 0.011, r: 0.03, crown: 0.004 }), 3), M4.mul(P, M4.trs(0, -0.011, 0)), { c: '#dddbd5', r: 0.35 });   // w13: white slippers in clear film (kn_17 2021, tpg_76 2020; navy pouch only in omaat_room_15) [V]
@@ -385,7 +391,7 @@ function roomBed(B, part) {
     z0 = -0.535; z1 = 0.86; hd = -1; xc = 0.22;
   }
   const O = part === 'O';
-  for (const g of duvetSheet(bounds, z0, z1, hd, xc, O ? 0.2 : 1, O ? 54 : 36, 64, O ? 0.25 : 1, O ? MON.zO : null)) B.add(g, M4.trs(0, y + MAT_TOP + 0.02, 0), SEATMAT.duvet);
+  for (const g of duvetSheet(bounds, z0, z1, hd, xc, O ? 0.45 : 1, O ? 54 : 36, 64, O ? 0.5 : 1, O ? MON.zO : null)) B.add(g, M4.trs(0, y + MAT_TOP + 0.02, 0), SEATMAT.duvet);
 }
 function roomPart(part, opts = {}) {
   const B = new Builder();
