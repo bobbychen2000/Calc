@@ -95,3 +95,42 @@ Start with a fresh two-rater round on the current head; do not reuse the w4 rati
 - **Everything else** in the `questions_*.md` files keeps its current default.
 
 **Performance budget (new).** Report your area's triangle count before and after (`__app.scene` meshes, instances × triangles), and do not grow it by more than 25 % in wave 2. Where the eye cannot see it, prefer detail in texture or normal maps over geometry.
+
+## Wave 3 (from 2026-10-24)
+
+Wave 2 stopped on usage limits on 2026-09-24 and its sessions are archived. Every area is still below 8.5, and several regressed in their last round. Wave 3 continues the same loop with the same targets and rules, plus the changes below.
+
+**Fresh container.** Nothing from earlier sessions survives except what is in git.
+- Run `python3 test/fetch_refs.py` for `ref/ana/`.
+- `ref/web/` is empty. Re-download the web photos you need; the rating JSONs and reports name most of them with their URLs.
+
+**Start here.**
+1. Read your `<area>_report.md`, your two latest ratings, `questions_<area>.md` and every `from_*.md` item addressed to you.
+2. Then run a fresh two-rater round on the current head. Number it after your last round: suite and room start at w7, econ and shell at w6, the others at w5.
+
+**Status at the start of wave 3** (A / B):
+
+| area | best round | latest round | first job |
+|---|---|---|---|
+| suite | w4 7.8 / 7.8 | w6 5.8 / 7.2 | Find what w5–w6 (06c054c, 746e91f) changed that A penalised in `suite_w6a.json`, and revert or redo it. |
+| room | w6 7.0 / 7.6 | w6 | Restore the boarding duvet bundle, `roomBundle` from 5a42e29 (see the correction at the top of `from_integration.md`). e45db15 and 2bf64d9 removed it by mistake. |
+| py | w4 6.5 / 7.0 | a1, unrated | a1 (3469e77) redid PY to follow ANA's official photos, which is the user's decision for PY. Rate it first. |
+| econ | w4 7.0 / 7.0 | w5 6.3 / 6.3 | Find what w5 (cc096b3) changed that the raters penalised, for example the fourth "petal fleck" fabric, and revert or redo it. |
+| shell | w4 7.6 / 7.7 | w5 6.6 / 7.5 | Same: check w5 (c5bc132) against `shell_w5a.json` and keep only what helped. |
+| ceiling | w4 7.2 / 7.8 | w4 | Wave 1 stopped at its cap; continue from `ceiling_w4*.json`. |
+| monuments | w4 7.2 / 7.7 | w4 | Continue from `monuments_w4*.json`. The layout amendments (`MONO_LAYOUT` / `monoLayoutQA`) now live at the end of `src/05_layout.js` (e30b981). They are yours to edit there. |
+| exterior | w4 6.1 / 7.4 | w5x 6.0 / 6.7 | Fix the w5x defects in `exterior_w5x_*.json`: registration, cowl splits, static dischargers, flap-track fairings, inlet lip, access panel, strake flicker and the GE logo. |
+
+**Changes to the loop.**
+- **Regression guard.** If a round's mean drops by 0.3 or more against your previous round, diff the two rounds' renders, find the change that hurt, and revert or redo it before you fix anything new. Never ship a round that scores below your best round.
+- **Calibrated raters.** Give both raters your previous two rating files. Each rater first marks every earlier high or medium issue as fixed, not fixed or regressed, then rates afresh.
+  - Use the same scale every round:
+    - 10: indistinguishable from the photo at this resolution
+    - 8.5: clearly the same product, with only minor material or lighting differences
+    - 7: recognisable, with several visible mismatches
+    - 5: generic
+  - Lighting is the integrator's area. Raters should still note lighting problems, but score your area on geometry, proportion, colour, materials and detail.
+- **When photos conflict.** The user left the call to us. Official ANA photos win for colours and finishes. Real in-flight photos win for geometry and for details the official shots don't show. Renderings lose to any real photo. PY follows the official photos, per the user.
+- **Hand-offs.** Pull before every round and read the new `from_*.md` items, because the lighting loop keeps landing changes.
+- **Budget.** At most 6 rounds; stop early if two rounds in a row gain less than 0.2. The triangle budget is unchanged: at most +25 % over your area's count at the start of wave 3.
+- **Finish.** Update your `<area>_report.md` with the wave-3 rounds, your before/after sheet and your questions.
