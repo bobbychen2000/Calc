@@ -109,8 +109,8 @@ export const LEGENDS = {
   alts: 'ALTS', hdg: 'HDG', dtk: 'DTK', crs: 'CRS', gs: 'GS', tas: 'TAS', sat: 'SAT', isa: 'ISA', kt: 'KT', ra: 'RA',
   baroMin: 'BARO MIN', inHg: 'IN', hPa: 'HPA', std: 'STD', pre: 'PRE', loc1: 'LOC1', loc2: 'LOC2', dme: 'DME', nm: 'NM',
   fms: 'FMS', rnp: 'RNP', cas: 'CAS', tmr: 'TMR', utc: 'UTC', ete: 'ETE', dis: 'DIS', wpt: 'NY240', vy: 'Y', vx: 'X',
-  vr: 'R', door: 'PAX + Cargo Door', flapsCas: 'Flaps', aural: 'Aural Warning Fail', dryMot: 'Dry Motoring',
-  starterCas: 'Starter Engaged', toConfig: 'Takeoff Configuration', fuelLow: 'Fuel Low', dest: 'DEST', dtg: 'DTG',
+  vr: 'R', door: 'PAX + CARGO DOOR', flapsCas: 'FLAPS', aural: 'AURAL WARN FAIL', dryMot: 'DRY MOTORING',
+  starterCas: 'STARTER', toConfig: 'TAKEOFF CONFIG', fuelLow: 'FUEL LOW', dest: 'DEST', dtg: 'DTG',
   enr: 'ENR', fod: 'FOD', endr: 'ENDR', msa: 'MSA', flt: 'FLT', tod: 'TOD', map: 'Map', northUp: 'North Up',
   autoFpl: 'Auto FPL', status: 'Status', field: 'EDNY', dep: 'DEP', arr: 'ARR', origin: 'Origin', proc: 'PROC',
   activeFpl: 'Active Flight Plan', audio: 'Audio & Radios', msgs: 'Messages', stby: 'STBY', mic: 'MIC', mon: 'MON',
@@ -120,7 +120,7 @@ export const LEGENDS = {
   trkUp: 'Heading Up', options: 'Options', nyRw: 'RW24', legs: '', climb: 'Climb', gpu: 'GPU',
   depHdr: 'Departure', destHdr: 'Destination', destF: 'EDDH', fix1: 'ROTEK', fix2: 'ODMEK', fix3: 'KPT',
   traffic: 'Traffic', terrain: 'Terrain', weather: 'Weather',
-  gpuCas: 'GPU Connected', ktR: 'KT R', ktL: 'KT L',
+  gpuCas: 'GPU', ktR: 'KT R', ktL: 'KT L',
 };
 
 export const AVX_LABELS = { on: true };

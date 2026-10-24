@@ -76,8 +76,9 @@ export function viewMfd(S) {
   const flapCol = flMoving ? 'white' : Math.abs(S.flaps - 15) < 0.05 ? 'green' : 'amber';
   const trimOk = (v, r) => Math.abs(v) <= 0.25 * r;
   const fuelQ = e.fuel.qty, ff = Math.round(e.ff);
-  const endMin = ff >= 1 ? Math.floor(fuelQ / ff * 60) : -1;
-  const pcl = S.pitch < -2 && S.rpmT > 0 ? 'rev' : S.toMode ? 'to' : S.rpmT <= 1000 ? 'idl' : null;
+  const endMin = ff >= 100 && e.phase === 'run' ? Math.floor(fuelQ / ff * 60) : -1;     // (dashes through the start)
+  const pcl = e.phase === 'off' || e.phase === 'rundown' || e.phase === 'dry' ? null
+    : S.pitch < -2 && S.rpmT > 0 ? 'rev' : S.toMode ? 'to' : S.rpmT <= 1000 ? 'idl' : null;
   return {
     pcl,
     tq: e.tq.toFixed(1), tqA: q(e.tq, 0.07), tqC: cw('tq'), bug: S.rpmT >= 1700 && run ? e.rating.toFixed(1) : null,

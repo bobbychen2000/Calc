@@ -364,7 +364,7 @@ export class Engine {
     } else {
       // unlit: the probes read the hot section cooling (its metal), the compressor's air drawing them down a share with
       // Ng (after a shutdown ~400-450 C 3 s / 10 s later, then minutes of decay: pilot judge r2)
-      this.tGas = this.tMetal - (this.tMetal - T1) * 0.35 * clamp(this.ng / 10, 0, 1);
+      this.tGas = this.tMetal - (this.tMetal - T1) * (this.lightT >= 0 || this.phase === 'off' ? 0.35 : 0.35 * clamp(this.ng / 10, 0, 1));
     }
     if (steady) { this.itt = this.tGas; this.tMetal = this.tGas; }
     else {

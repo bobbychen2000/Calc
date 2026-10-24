@@ -4468,8 +4468,8 @@ async def avx_checks(page, shots=True):
       V.setProp({rpm: 1700, pitch: 0}, {instant: true}); V.env.set({oat: 45, elev: 6000, fuelLb: 2170}, {instant: true}); V.setTakeoff({instant: true}); V.advance(15); V.avionics.flush();
       const t = V.avionics.state().pages.mfd.key;
       V.env.reset({instant: true}); V.setProp({rpm: 0, pitch: 62}, {instant: true}); V.advance(0.1); V.avionics.flush();
-      return {low: m.includes('"low":true'), cas: p.text.some((x) => x.s === 'Fuel Low'), ittAmber: t.includes('"ittC":"amber"'), itt: JSON.parse(t).itt};""")
-    check("[AVX-11] colours: fuel low (< 134 lb a side) -> QTY amber + the 'Fuel Low' caution; T/O hot and high -> ITT amber (> 820 C)",
+      return {low: m.includes('"low":true'), cas: p.text.some((x) => x.s === 'FUEL LOW'), ittAmber: t.includes('"ittC":"amber"'), itt: JSON.parse(t).itt};""")
+    check("[AVX-11] colours: fuel low (< 134 lb a side) -> QTY amber + the FUEL LOW caution; T/O hot and high -> ITT amber (> 820 C)",
           r["low"] and r["cas"] and r["ittAmber"], f"low {r['low']}, CAS {r['cas']}, ITT {r['itt']} amber {r['ittAmber']}")
     # labels off: abstract strokes, numerals only
     r = await js(page, A + "const off = V.avionics.labels(false); const s = V.avionics.state(); V.avionics.labels(true); const s2 = V.avionics.state(); return {off, numOnly: Object.values(s.pages).every((p) => p.numeralsOnly), on: s2.labels};")
