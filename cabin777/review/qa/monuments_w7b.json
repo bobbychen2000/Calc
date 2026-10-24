@@ -1,0 +1,74 @@
+{
+  "area": "monuments",
+  "rater": "B",
+  "round": 7,
+  "score": 7.8,
+  "previousIssues": [
+    {"issue": "w6a medium: welcome galley body too dark", "status": "fixed (mostly). The upper unit now renders #322f2a-#3b3733 in m03/m16 (was #22211d), and the stiles and panel reveals read. The cubby under the monitor is still #050504, but omaat_room_32 is #0d0d0b there too, so that is correct."},
+    {"issue": "w6a medium / w6b medium: welcome galley glass door reads as open black shelving", "status": "partly fixed. The interior is now lit: shelves and boxes are mid-grey in m03/m16. There is still no visible pane, sheen or reflection. The shelves read as open, with a square knob plate floating in front. The glass zone in omaat_room_32 samples #736f64 with reflections; the render shows #3b3733 behind nothing."},
+    {"issue": "w6a medium: PY aft curtains too narrow", "status": "fixed. m10/q13 now show wide pleated drapes, ~0.5 m, at both aisles. Shaded #3b3f55-#484c61 against py_37302 #4d4e5d-#515567: a little bluer and darker, which is acceptable."},
+    {"issue": "w6b medium: 2R jump seat in front of the galley counter", "status": "fixed. In m13 the deck, nosing and inserts stop either side of jumpX and the seat sits on a flush white panel. A 0.3 m deck stub remains inboard of it (x 1.80-2.15). That is plausible."}
+  ],
+  "details": [
+    {"detail": "Door-3 self-service bar (m05, m06, q11). The layout still follows ANA's 2019 render: ash doors with pulls, black basalt counter, rail, monitor, bottle shelf, fridge and backlit soffit. The left 'blind' area is a featureless #050507 void with faint lines. There is still no in-service photo.", "score": 7.5, "refs": ["/tmp/claude-0/-home-user-Calc/c9c9a868-01b2-566f-9dcd-15099ea3cc34/scratchpad/w7/m05_bar.png", "/tmp/claude-0/-home-user-Calc/c9c9a868-01b2-566f-9dcd-15099ea3cc34/scratchpad/w7/q11_bar3.png"]},
+    {"detail": "Door-2 welcome galley (m03, m16). The layout, monitor, ovens with the orange-lit control panel, silver brewer in the left cubby, ash lower doors and alu nosing all match lalf_134 and omaat_room_32. The body is lighter now. Still wrong: there is no glass pane, a square knob plate stands in for the round boss on the stile, and the placard is two white rectangles plus a red block.", "score": 8.0, "refs": ["/home/user/Calc/cabin777/ref/web/monuments/omaat_room_32.jpg", "/home/user/Calc/cabin777/ref/web/monuments/lalf_134.jpeg", "/tmp/claude-0/-home-user-Calc/c9c9a868-01b2-566f-9dcd-15099ea3cc34/scratchpad/w7/m16_welcomeObl.png"]},
+    {"detail": "Door-2 aft monuments (m04, m13). The ash wall flaps with alu frames and red latches match lalf_133, and the 2R jump seat is now on a flush panel. The m04 faint vertical seam in the middle flap's lower part remains.", "score": 8.0, "refs": ["/home/user/Calc/cabin777/ref/web/monuments/lalf_133.jpeg", "/tmp/claude-0/-home-user-Calc/c9c9a868-01b2-566f-9dcd-15099ea3cc34/scratchpad/w7/m04_d2aft.png", "/tmp/claude-0/-home-user-Calc/c9c9a868-01b2-566f-9dcd-15099ea3cc34/scratchpad/w7/m13_d2aftR.png"]},
+    {"detail": "F front wall, flight-deck door, door 1 (q01, m01, m02, m19). The ink-cloud wall, the ebony and the cockpit door with its plates and yellow kick strip are fine. The F drape is lighter now (#5d5651), but it still reads warm taupe against the cool slate pleats in omaatF_40/33. In q01 it still hangs as a free column in the middle of the passage instead of gathered against one jamb.", "score": 7.5, "refs": ["/home/user/Calc/cabin777/ref/web/monuments/omaatF_ANA-First-Class-Suite-777-40.jpg", "/home/user/Calc/cabin777/ref/web/monuments/omaatF_ANA-First-Class-Suite-777-33.jpg", "/tmp/claude-0/-home-user-Calc/c9c9a868-01b2-566f-9dcd-15099ea3cc34/scratchpad/w7/q01_door1.png"]},
+    {"detail": "Lavatory exteriors (m17, q11, m11). The ash J lavs have the white strip, grab and occupancy plate. The PY/Y lavs are white. Unchanged.", "score": 7.5, "refs": ["/tmp/claude-0/-home-user-Calc/c9c9a868-01b2-566f-9dcd-15099ea3cc34/scratchpad/w7/m17_d3jump.png"]},
+    {"detail": "F/J bulkhead, J face and J backs (m07, m14, m15). The cream walls, blue-topped wall boxes and tied charcoal curtains are clean. I could not see the 'J placards above the wall boxes' change at this resolution.", "score": 8.0, "refs": ["/tmp/claude-0/-home-user-Calc/c9c9a868-01b2-566f-9dcd-15099ea3cc34/scratchpad/w7/m07_fjJ.png", "/tmp/claude-0/-home-user-Calc/c9c9a868-01b2-566f-9dcd-15099ea3cc34/scratchpad/w7/m15_d3back.png"]},
+    {"detail": "J/PY bulkhead, PY face (m08, q13). The charcoal-framed monitors, handle and strap are right, and the curtain is tied.", "score": 8.0, "refs": ["/home/user/Calc/cabin777/ref/ana/py_37302-lang-multi.jpg", "/tmp/claude-0/-home-user-Calc/c9c9a868-01b2-566f-9dcd-15099ea3cc34/scratchpad/w7/m08_jpyPY.png"]},
+    {"detail": "Door-4 group (m09, m10, q13). The galley bank is consistent and the wide PY aft drapes now match py_37302.", "score": 8.0, "refs": ["/tmp/claude-0/-home-user-Calc/c9c9a868-01b2-566f-9dcd-15099ea3cc34/scratchpad/w7/m10_pyAft.png"]},
+    {"detail": "Rear, door 5 (m11, m12, q19). The work aisle is credible, with varied label positions on the aft wall. The layout is still seat-map-only (no photo), and the overhead is a flat white light box (lighting).", "score": 7.5, "refs": ["/tmp/claude-0/-home-user-Calc/c9c9a868-01b2-566f-9dcd-15099ea3cc34/scratchpad/w7/q19_rearGalley.png"]},
+    {"detail": "Standard galley inserts (m01, m09, m12, q19). The alu ovens, black brew heads with jugs, red latches, varied labels and the oven/chiller placard are all there.", "score": 8.0, "refs": ["/tmp/claude-0/-home-user-Calc/c9c9a868-01b2-566f-9dcd-15099ea3cc34/scratchpad/w7/m09_d4fwd.png"]},
+    {"detail": "Curtains overall. PY aft is now wide and the rear and J curtains are good. The F front drape is the weak one (warm hue, mid-passage in q01).", "score": 7.5, "refs": ["/tmp/claude-0/-home-user-Calc/c9c9a868-01b2-566f-9dcd-15099ea3cc34/scratchpad/w7/m02_fFront.png", "/tmp/claude-0/-home-user-Calc/c9c9a868-01b2-566f-9dcd-15099ea3cc34/scratchpad/w7/m10_pyAft.png"]},
+    {"detail": "Jump seats and Type A door linings (m13, m17, m18). The crimson arc (#d2bfc3 lit vs lalf_133 #a58075 lit), the grey arming window and the strap wrapped round the bar are improvements. However, the whole lining layout is mirrored fore-aft compared with the real L2 door (see the high issue).", "score": 6.5, "refs": ["/home/user/Calc/cabin777/ref/web/monuments/lalf_133.jpeg", "/home/user/Calc/cabin777/ref/web/monuments/lalf_134.jpeg", "/tmp/claude-0/-home-user-Calc/c9c9a868-01b2-566f-9dcd-15099ea3cc34/scratchpad/w7/m18_doorL2.png", "/tmp/claude-0/-home-user-Calc/c9c9a868-01b2-566f-9dcd-15099ea3cc34/scratchpad/w7/m17_d3jump.png"]}
+  ],
+  "issues": [
+    {
+      "severity": "high",
+      "detail": "Type A door lining mirrored fore-aft",
+      "problem": "The door-lining furniture is laid out the wrong way round. The viewing window (c+0.21..0.35) and the arc arrowhead are AFT and the handle grip, arming window and assist bar are FORWARD. On the real L2 door it is the opposite. In lalf_133, which looks outboard along the door-2 cross aisle (welcome galley on the right, i.e. forward; the door-2 aft ash wall with red-latch flaps on the left, i.e. aft), the viewing window is on the RIGHT (forward). The handle housing and grip are left of centre (aft). The arming-indicator window is upper LEFT (aft). The arc starts by the grip on the aft side, goes over the top and has its arrowhead pointing down on the forward side, next to the window, with OPEN under it. The assist bar runs under the handle on the aft half, with the strap near its forward (inboard-of-door-centre) end. lalf_134 (camera aft of the welcome galley looking forward-left at L2) confirms it: the window sits on the galley (forward) side of the handle. The render m18 (yaw pi/2, looking at L2) shows the window on the LEFT (aft) and the arrowhead pointing down-left. m17 (L3) shows the same mirror. Every door in the cabin is affected.",
+      "evidence": "ref/web/monuments/lalf_133.jpeg (window at x~790/1500, handle at ~650, arming window ~600,450 at upper left; door-2 aft ash wall with flaps on the left); lalf_134.jpeg (window ~280, handle ~120, galley to the right); w7/m18_doorL2.png (window ~350/800 left of handle ~450, arrowhead at left); review/qa/monuments_views.js m18 yaw = PI/2 (looking -x = L side); 05_layout.js:172 welcome galley z 14.86..dz[1][0] (forward of door 2).",
+      "fix": "In the door-lining loop of buildMonuments (10_mono.js ~l.786-838), negate every fore-aft offset dz passed to LF and every literal c+/- offset. Wrap it as a local const F = -1 and use LF(v, inset, F * dz). The handle housing goes to LF(1.065, hd/2, +0.14), the oval recess to +0.40, the grip pocket and block to +0.26, the arc centre to c + 0.10 - 0.29*cos(t) (arrowhead forward), the stop bar and arrowhead to mirrored dz, OPEN to -0.08, the arming window and its lever/flags to +0.41/+0.44/+0.37, the placards to +0.23, the assist bar to c+0.50..c-0.01 with stand-offs at +0.46/+0.03 and the strap at +0.33, and the jamb EXIT placard to -0.64. The viewing-window glass itself is cut by 07_shell.js (c+0.21..0.35): ask the shell owner to move it to c-0.35..-0.21 at the same time, or the handle housing will cover the glass. Fix the comment 'Hinge forward on both sides, so fwd = c - dz' accordingly. Apply the same to R doors (symmetric about the centreline, so the window is forward there too). If unsure for R, see the question."
+    },
+    {
+      "severity": "medium",
+      "detail": "Welcome galley glass door still has no pane",
+      "problem": "The interior is lit now, but nothing reads as glass. The shelves look open, and the knob is a square plate floating in front of nothing. In omaat_room_32 and lalf_134 a smoked, reflective pane in a charcoal frame catches the ceiling light (#736f64 streaks). Its left stile carries a round boss with an oval latch knob, which bulges into the stile at mid-height.",
+      "evidence": "omaat_room_32.jpg crop (940,300)-(1000,600) #736f64; w7/m03_welcome.png cabinet face #3b3733 with no pane; m16 the same.",
+      "fix": "In the welcome galley block of 10_mono.js (the w5 comment near l.323), add a gQuad over the cabinet opening a few mm in front of the shelves, in a low-roughness dark material (e.g. { c: '#4a4844', r: 0.05, m: 0.3 }). That catches the GGX specular from the downlights. Give it a 0.03 m charcoal frame (gRBox ring) as the door stile. Replace the square knob plate with gCyl(0.045, 0.02, 20) on the left stile, plus a small oval knob."
+    },
+    {
+      "severity": "low",
+      "detail": "Welcome galley placard",
+      "problem": "This is not fixed from w6b. Above the cabinet there are two flat white rectangles and a red block. The real one is a single cream rounded tag with a pictogram (and a small black caution placard on the door).",
+      "evidence": "lalf_134 (tag at ~960,215), omaat_room_32 (~830,95); w7/m03_welcome.png (530-640, 105-170).",
+      "fix": "In buildWelcomeGalley, replace the label pair with one gRBox(0.24, 0.06, 0.012, 0.03, 2) in '#ece6d6'. Turn the red block into a small black caution quad on the door's top rail."
+    },
+    {
+      "severity": "low",
+      "detail": "F front drape hue and position",
+      "problem": "It is lighter now, but it still reads warm taupe-brown (#5d5651 in m02, #59514d in q01). The photos show a cool slate grey with fine pleats. In q01 the drape still hangs as a column in the centre of the passage between the ebony walls. In omaatF_33/40 it is gathered against one jamb, leaving the passage open.",
+      "evidence": "omaatF_40 (20,150)-(140,600) #443f3d, visually cool grey under warm cabin light; w7/q01_door1.png centre column.",
+      "fix": "Shift MONMAT.curtainF toward a neutral-cool tone, e.g. '#5e5f63' (lower the red bias). In the F-front addCurtain call, set the gather x to the jamb (gap edge +-0.12), as is already done for the F/J tied curtains."
+    },
+    {
+      "severity": "low",
+      "detail": "Bar blind area is a black void",
+      "problem": "The left half of the door-3 bar's upper unit renders #050507, with only faint horizontal lines. The roller blind's slats and its bottom rail don't read, so it looks like a hole.",
+      "evidence": "w7/m05_bar.png (180,110)-(400,380) #050507.",
+      "fix": "In buildBar, lift the blind material to about '#1c1c1f' with r 0.4 and add a 0.02 m alu bottom rail plus a pull tab. The ANA render shows a dark blind, not a void."
+    },
+    {
+      "severity": "low",
+      "detail": "m04 seam",
+      "problem": "The faint vertical line in the lower middle ash flap persists (since w5).",
+      "evidence": "w7/m04_d2aft.png x~400, y 470-560.",
+      "fix": "In the ash-wall flap code, check for a panel split at the flap centre (two gRBox halves) and merge them into a single panel."
+    }
+  ],
+  "questionsForUser": [
+    "Door linings: the ANA L2 photos (lalf_133/134) show the viewing window forward of the handle, the arming window aft (upper) and the arrow sweeping aft to forward. Do you have a photo of an ANA 777 R-side door, to confirm that it is the same with the window forward (symmetric), before all 10 linings are mirrored?",
+    "Door-3 bar: still no in-service photo. If you have one (or a 2026 trip report showing the bar with the blind down/up), it would settle the blind and fridge layout."
+  ]
+}

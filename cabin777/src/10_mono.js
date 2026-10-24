@@ -43,7 +43,7 @@ const MONMAT = {
   basalt: { c: '#28262b', r: 0.22, l: LAYER.marble },
   black: { c: '#1b1a20', r: 0.35, l: LAYER.plastic },
   blackGloss: { c: '#0f0e13', r: 0.15 },
-  blind: { c: '#1d1c22', r: 0.85, l: LAYER.fabric },                // decorative blind, pulled down (render)
+  blind: { c: '#3b3a3c', r: 0.85, l: LAYER.fabric },   // w7: #1d1c22 rendered a black void                // decorative blind, pulled down (render)
   washi: { c: '#f2f3f6', r: 0.8, l: LAYER.atlasGlow, e: 0.6 },       // neutral-white backlit washi band (render)
   washiGalley: { c: '#d4d3e0', r: 0.8, l: LAYER.atlasGlow, e: 0.45 }, // lavender-grey galley washi (welcome render)
   downlight: { c: '#eef4ff', r: 0.3, e: 1.6 },
@@ -73,7 +73,7 @@ const MONMAT = {
   // w1: the charcoal albedos rendered near-black (#202028 in m07); lifted to the photo samples (tpg_The-Room-small-cabin-
   // front_71 #5e5655, omaatF_2 #5b5650) [V]
   curtainF: { c: '#57504a', r: 0.95, l: LAYER.fabric },   // w3: F front read too light (0.55 of wall vs 0.36-0.39)   // + tpg_147 #4a453a at 0.34 of white, omaatF_2 #56504b
-  curtainFF: { c: '#776e67', r: 0.95, l: LAYER.fabric },  // w6b: F front loose drape rendered #27231f-#332d29 vs omaatF_40 #4c4644 / #423c3b in the open
+  curtainFF: { c: '#6d6b6b', r: 0.95, l: LAYER.fabric },  // w6b: F front loose drape rendered #27231f-#332d29 vs omaatF_40 #4c4644 / #423c3b in the open
   doorArc: { c: '#b53a62', r: 0.45 },   // [V] painted crimson-magenta arc + OPEN (lalf_133); MAT.handleRed read pure red
   curtainTie: { c: '#2e2b2d', r: 0.8, l: LAYER.fabric },
   curtainY: { c: '#66697c', r: 0.9, l: LAYER.fabric },   // w4: rendered #212330 vs py_37302 #545868 (b - r ~19)
@@ -324,15 +324,17 @@ function buildWelcomeGalley(B, m) {
   // latch boss on an oval plate at the fwd stile, white caution text block at the top
   B.add(gBox(0.40, 0.76, 0.004), V(gc + 0.02, 1.44, o + 0.003), { c: '#5a5450', r: 0.6, e: 0.04 });       // w6b: lit mid-grey interior (lalf_134 #5c4e4e, omaat_room_32 #514d4c)
   for (const y of [1.2, 1.45, 1.7]) B.add(gBox(0.38, 0.012, 0.07), V(gc + 0.02, y, o + 0.04), { c: '#8a857e', r: 0.5 });
-  for (const [u, y, bw, bh, cc] of [[-0.08, 1.27, 0.12, 0.13, '#8d8a84'], [0.07, 1.25, 0.14, 0.09, '#b0aca4'], [0.0, 1.53, 0.2, 0.15, '#76736d'], [-0.1, 1.78, 0.1, 0.15, '#8a3530']])
+  for (const [u, y, bw, bh, cc] of [[-0.08, 1.27, 0.12, 0.13, '#8d8a84'], [0.07, 1.25, 0.14, 0.09, '#b0aca4'], [0.0, 1.53, 0.2, 0.15, '#76736d'], [-0.1, 1.78, 0.1, 0.15, '#6a6660']])
     B.add(gBox(bw, bh, 0.05), V(gc + 0.02 + u, y, o + 0.035), { c: cc, r: 0.6 });
   for (const sx of [-1, 1]) B.add(gBox(0.05, 0.8, 0.03), V(gc + 0.02 + sx * 0.195, 1.44, o + 0.085), MONMAT.welcomeChar);
   for (const sy of [-1, 1]) B.add(gBox(0.44, 0.05, 0.03), V(gc + 0.02, 1.44 + sy * 0.375, o + 0.085), MONMAT.welcomeChar);
-  // no alpha in the engine and reflection streaks read as rods (w6 check): the glass is implied by the stiles + dim interior
-  B.add(gRBox(0.09, 0.14, 0.02, 0.045, 2), V(gc - 0.17, 1.44, o + 0.105), MONMAT.welcomeChar);
-  B.add(gCyl(0.03, 0.03, 0.014, 16), M4.mul(V(gc - 0.17, 1.44, o + 0.118), M4.trs(0, 0, 0, 0, Math.PI / 2)), MONMAT.latch);
-  B.add(gQuad(0.18, 0.06), V(gc + 0.02, 1.80, o + 0.1), MONMAT.label);
-  B.add(gRBox(0.3, 0.07, 0.012, 0.03, 2), V(gc, 1.92, o + 0.02), MONMAT.label);
+  // w7a/b: a smoked pane with sheen in front (no alpha: shelf shadows are drawn on the pane, kna_31_full / lalf_133)
+  B.add(gQuad(0.34, 0.70), V(gc + 0.02, 1.44, o + 0.088), { c: '#5d5b56', r: 0.08, m: 0.2 });
+  for (const y of [1.2, 1.45, 1.7]) B.add(gQuad(0.34, 0.012), V(gc + 0.02, y, o + 0.0885), { c: '#3a3835', r: 0.2 });
+  B.add(gQuad(0.05, 0.66), M4.mul(V(gc - 0.04, 1.44, o + 0.0887), M4.trs(0, 0, 0, 0, 0, 0.1)), { c: '#77766f', r: 0.05, m: 0.3 });
+  B.add(gCyl(0.05, 0.05, 0.016, 20), M4.mul(V(gc - 0.17, 1.44, o + 0.104), M4.trs(0, 0, 0, 0, Math.PI / 2)), MONMAT.welcomeChar);   // round boss
+  B.add(gCyl(0.028, 0.028, 0.016, 16), M4.mul(V(gc - 0.17, 1.44, o + 0.118), M4.trs(0, 0, 0, 0, Math.PI / 2)), MONMAT.latch);
+  B.add(gRBox(0.26, 0.07, 0.012, 0.035, 2), V(gc, 1.92, o + 0.02), { c: '#e9e2cf', r: 0.5 });          // w7: single cream oval tag
   welcomeEnds(B, m);
 }
 // portrait welcome monitors on navy end panels facing each aisle, with three steel rub strips at 0.3 / 0.5 / 0.7 m
@@ -783,12 +785,17 @@ function buildMonuments(gl, layout, opts = {}) {
         const tilt = Math.atan2(ny, Math.abs(nx));
         B.add(gBox(0.004, 0.012, 1.07), M4.trs(x, y, c, 0, 0, side > 0 ? -tilt : tilt), MAT.doorGap);
       }
+      // w7: mirrored fore-aft (H = -1): lalf_133 / lalf_134 look at L2 (welcome galley forward of the passage, beside the
+      // door-2 lavs in omaat_room_32; 2L jump seat on the aft closet) and show the viewing window FORWARD of the handle
+      // housing, the arming window upper AFT and the arrowhead on the forward side. Offsets below are written in the
+      // original spec frame and multiplied by H. The shell's window (07_shell wz) must sit at c - 0.28 (from_monuments).
+      const H = -1;
       // w5: lining furniture rebuilt from the corrected from_shell spec (ANA 777 door-lining photos yt_vEERVra5lKs /
       // yt_R7MKjYHQ1Uk, tpg door 2L, a 777 door trainer) [V layout, A sizes +-3 cm]. Hinge forward on both sides, so
       // "fwd" = c - dz. LF places a part on the lining: local x = out of the wall (times -side), y = up, z = aft.
       const LF = (v, inset, dz, extra) => {
         const [x, y] = at(v, inset), [, , nx, ny] = wallAt(v);
-        const m = M4.trs(x, y, c + dz, 0, 0, side > 0 ? -Math.atan2(ny, -nx) : Math.atan2(ny, -nx));
+        const m = M4.trs(x, y, c + H * dz, 0, 0, side > 0 ? -Math.atan2(ny, -nx) : Math.atan2(ny, -nx));
         return extra ? M4.mul(m, extra) : m;
       };
       const Qf = M4.trs(0, 0, 0, side > 0 ? -Math.PI / 2 : Math.PI / 2), hd = 0.12, hf = hd + 0.003;
@@ -798,13 +805,13 @@ function buildMonuments(gl, layout, opts = {}) {
       B.add(gRBox(0.006, 0.05, 0.09, 0.02, 2), LF(1.22, hf, -0.40), { c: '#8f887c', r: 0.5 });
       // horizontal pocket with a brushed grip block (0.33 x 0.14 / 0.22 x 0.12 at c-0.26, y 0.97)
       B.add(gQuad(0.33, 0.14), LF(0.97, hf, -0.26, Qf), { c: '#4a4641', r: 0.6 });
-      B.add(gRBox(0.035, 0.11, 0.22, 0.02, 1), LF(0.97, hf + 0.012, -0.26), MAT.handle);
+      B.add(gRBox(0.035, 0.11, 0.22, 0.02, 1), LF(0.97, hf + 0.012, -0.26), MONMAT.steelBright);   // brushed silver grip (lalf_133)
       // painted red arc, r 0.29 about (c-0.10, 0.93): from a stop bar by the grip, over the top, arrowhead on the aft side
       const arc = [];
-      for (let k = 0; k <= 20; k++) { const t = lerp(2.75, 0.32, k / 20), [ax, ay] = at(0.93 + 0.29 * Math.sin(t), hf + 0.002); arc.push([ax, ay, c - 0.10 + 0.29 * Math.cos(t)]); }
+      for (let k = 0; k <= 20; k++) { const t = lerp(2.75, 0.45, k / 20), [ax, ay] = at(0.93 + 0.29 * Math.sin(t), hf + 0.002); arc.push([ax, ay, c + H * (-0.10 + 0.29 * Math.cos(t))]); }
       B.add(gTube(arc, 0.0125, 6), null, MONMAT.doorArc);
       B.add(gBox(0.008, 0.095, 0.035), LF(0.93 + 0.29 * Math.sin(2.75), hf + 0.002, -0.10 + 0.29 * Math.cos(2.75) - 0.02), MONMAT.doorArc);   // stop bar
-      B.add(gCyl(0.032, 0.002, 0.06, 3), LF(0.93 + 0.29 * Math.sin(0.32) - 0.04, hf + 0.004, -0.10 + 0.29 * Math.cos(0.32), M4.trs(0, 0, 0, 0, 0, 0, 0.25, 1, 1)), MONMAT.doorArc);   // arrowhead, pointing down
+      B.add(gCyl(0.032, 0.002, 0.06, 3), LF(0.93 + 0.29 * Math.sin(0.45) - 0.04, hf + 0.004, -0.10 + 0.29 * Math.cos(0.45), M4.trs(0, 0, 0, 0, 0, 0, 0.25, 1, 1)), MONMAT.doorArc);   // arrowhead, pointing down
       B.add(gQuad(0.13, 0.069), LF(0.90, hf + 0.001, 0.08, Qf), MAT.decal, atlasUV('doorPlacard'));            // red "OPEN" label
       // arming-indicator window in the upper fwd corner (0.19 x 0.27 at c-0.41, y 1.54): pictogram strip, lever with a
       // green / red band, red flag; two placards just aft at 1.45-1.55
@@ -823,7 +830,7 @@ function buildMonuments(gl, layout, opts = {}) {
       B.add(gQuad(0.10, 0.05), LF(0.765, 0.16, 0.40, M4.trs(0, 0, 0, side > 0 ? -Math.PI / 2 : Math.PI / 2, -Math.PI / 2)), { c: '#141416', r: 0.1 });
       // assist grab bar on 0.08 m standoffs (0.51 m, c-0.50..c+0.01, y 0.70) with a red-orange strap on its fwd half
       const g0 = at(0.70, 0.33);
-      B.add(gTube([[g0[0], g0[1], c - 0.50], [g0[0], g0[1], c + 0.01]], 0.02, 10), null, MAT.handle);
+      B.add(gTube([[g0[0], g0[1], c - H * 0.50], [g0[0], g0[1], c + H * 0.01]], 0.02, 10), null, MONMAT.steelBright);
       for (const dz of [-0.46, -0.03]) B.add(gBox(0.08, 0.02, 0.02), LF(0.70, 0.29, dz), MAT.handle);
       // w6a/b: crimson strap wrapped round the bar, its tail hanging below (lalf_133 #694755, lalf_134 #653441)
       B.add(gRBox(0.05, 0.05, 0.12, 0.012, 1), LF(0.70, 0.33, -0.33), { c: '#7a3442', r: 0.7, l: LAYER.fabric });

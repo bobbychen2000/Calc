@@ -19,3 +19,17 @@
    Suggested camera: `q19_rearGalley: [\`__app.setView([0.0, 1.62, 59.2], Math.PI, -0.15)\`, [], 'rear galley at door 5']`
    (setView, not walk()).
 4. **FYI:** the black lower half in the `44e8c06` shader snapshot is fixed at `241c41e` and later (checked in m05).
+
+## Wave 3 (w7)
+
+### To shell (`src/07_shell.js`): move the door viewing window FORWARD, `wz = c - 0.28` (one line, ~l.635)
+- **Evidence:** lalf_133.jpeg / lalf_134.jpeg (Live and Let's Fly, ANA 777-300ER door 2L, real photos; liveandletsfly.com
+  ana-777-300er-the-room-business-class-review) show the door from the galley passage. They look toward **L2**: the welcome
+  galley is on the right, forward of the passage. It sits beside the door-2 lavs (omaat_room_32: the lav door is next to the
+  galley), and the ANA map puts those lavs ahead of door 2. The 2L jump seat is on the left, on the aft closet. In those photos
+  the viewing window is on the **forward** side (right of the grip). The arming window is upper **aft**, and the arc's
+  arrowhead points down on the forward side by the window. Monument raters w7a and w7b both flagged this (w7b high).
+- **Done on the monuments side (w7):** the lining furniture in 10_mono.js is mirrored (H = -1): the housing now runs from
+  c-0.20 to c+0.48, the arming window is at c+0.41, and the arrowhead is at about c-0.15. **Until the window moves to c - 0.28,
+  the housing covers it.** Please flip `wz` (and anything else keyed to the aft window, e.g. the reveal glow or door-carpet
+  cut-outs) to `c - 0.28` on both sides. The "forward hinge" note there should read "window forward of the handle".
