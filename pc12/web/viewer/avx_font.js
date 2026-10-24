@@ -120,6 +120,7 @@ export const LEGENDS = {
   trkUp: 'Heading Up', options: 'Options', nyRw: 'RW24', legs: '', climb: 'Climb', gpu: 'GPU',
   depHdr: 'Departure', destHdr: 'Destination', destF: 'EDDH', fix1: 'ROTEK', fix2: 'ODMEK', fix3: 'KPT',
   traffic: 'Traffic', terrain: 'Terrain', weather: 'Weather',
+  gpuCas: 'GPU Connected', ktR: 'KT R', ktL: 'KT L',
 };
 
 export const AVX_LABELS = { on: true };

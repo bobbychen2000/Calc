@@ -136,6 +136,40 @@ function rig(atm, { rpm = 0, pitch = 62, run = false } = {}) {
     `Np ${sr.np.toFixed(0)}, TQ ${sr.tq.toFixed(1)}, caution frames ${caut}`);
 }
 
+// ---------------------------------------------------------------- transients (pilot judge r2): the torque WITH Ng
+{
+  const k = rig(atmOf({ oat: 15, elev: 0, qnh: 1013.25 }), { rpm: 1000, pitch: 0, run: true });
+  k.t.rpm = 1700; k.step(8);
+  const q0 = k.eng.state.tq;
+  k.t.pitch = k.eng.toPitch();
+  let t10 = -1, t90 = -1, lead = 0;
+  const q1 = 44.3;
+  k.step(15, 60, (q) => {
+    const s = q.eng.state, tt = q.time - 8;
+    if (t10 < 0 && s.tq >= q0 + 0.1 * (q1 - q0)) t10 = tt;
+    if (t90 < 0 && s.tq >= q0 + 0.9 * (q1 - q0)) t90 = tt;
+    // the torque the gas generator's Ng can make at that moment (the power map) -- never exceeded
+    const a = q.eng.atm, sq = Math.sqrt(a.theta);
+    const gas = a.delta * sq * 1200 * Math.pow(Math.max(0, (s.ng / sq - 55.75) / 42.25), 2) / (PSI_SHP * s.np);
+    lead = Math.max(lead, s.tq - gas);
+  });
+  check('T/O from 1,700 fine: the torque rises with Ng (10 -> 90 % in 2-7 s), never ahead of the power Ng makes (<= +0.5 psi)',
+    t90 - t10 >= 2 && t90 - t10 <= 7 && lead <= 0.5, `10 % at ${t10.toFixed(2)} s, 90 % at ${t90.toFixed(2)} s, lead ${lead.toFixed(2)} psi`);
+  const u = rig(atmOf(), { rpm: 1000, pitch: 0, run: true });
+  u.t.pitch = 62; u.step(12);
+  u.t.pitch = 0;
+  let ngMax = 0, tqMax = 0;
+  u.step(20, 60, (q) => { ngMax = Math.max(ngMax, q.eng.ng); tqMax = Math.max(tqMax, q.eng.state.tq); });
+  check('unfeathered at ground idle: no run-up (Ng <= 68 %, torque <= 8 psi), back to 1,000 rpm', ngMax <= 68 && tqMax <= 8 && Math.abs(u.c.rpm - 1000) < 1,
+    `Ng max ${ngMax.toFixed(1)}, TQ max ${tqMax.toFixed(1)}, Np ${u.c.rpm.toFixed(0)}`);
+  const d = rig(atmOf(), { rpm: 1000, pitch: 0, run: true });
+  d.t.rpm = 0; d.t.pitch = 62;
+  const itt = [];
+  d.step(10, 60, (q) => itt.push(q.eng.itt));
+  check('after the fuel cut-off the ITT falls with the hot section: 3 s 350-550 C, 10 s 250-500 C', itt[179] >= 350 && itt[179] <= 550 && itt[599] >= 250 && itt[599] <= 500,
+    `${itt[179].toFixed(0)} / ${itt[599].toFixed(0)} C`);
+}
+
 // ---------------------------------------------------------------- shutdown, cautions
 {
   const k = rig(atmOf(), { rpm: 1000, pitch: 0, run: true });

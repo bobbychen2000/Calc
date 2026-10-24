@@ -97,18 +97,23 @@ export function viewMfd(S) {
     elev: fmtInt(S.env.elev), cabAlt: fmtInt(q(S.adc.pa, 10)),
     fod: fuelQ - 469 >= 0 ? fmtInt(q(fuelQ - 469, 1)) : null,
     windDir: Math.round(S.env.windDir) % 360, windKt: Math.round(S.env.windKt), hdg: S.hdg,
-    clock: S.clock,
+    clock: S.clock, selAlt: selAltOf(S.env.elev), gpu: !!S.env.gpu,
   };
 }
+// the selected altitude: 5,000 ft, or the field elevation + ~2,500 ft rounded up to 500 when that is higher (hot and high)
+const selAltOf = (elev) => Math.max(5000, Math.ceil((+elev + 2500) / 500) * 500);
 
 export function viewPfd(S, side) {
   const e = S.eng, a = S.adc, v = S.env;
   const ias = a.ias >= 20 ? q(a.ias, 0.25) : null;               // below the tape's 20 kt floor: dashes
   const cas = [];
   if (S.doors.airstair > 0.01 || S.doors.cargo > 0.01) cas.push(['red', 'door']);
-  if (e.phase === 'run' && (Math.abs(S.flaps - 15) > 0.05 || Math.abs(S.trims.stab + 1) > 1.5)) cas.push(['amber', 'toConfig']);
+  // (the take-off configuration alert: power set for take-off with flaps / trim out of the take-off range -- not a standing
+  // message at idle; pilot judge r2)
+  if (e.phase === 'run' && (S.toMode || e.tq > 25) && S.pitch > -2 && (Math.abs(S.flaps - 15) > 0.05 || Math.abs(S.trims.stab + 1) > 1.5)) cas.push(['amber', 'toConfig']);
   else if (Math.abs(S.flaps - 15) > 0.05 && Math.abs(S.flaps - S.flapsT) < 0.01) cas.push(['amber', 'flapsCas']);
   if (e.fuel.low) cas.push(['amber', 'fuelLow']);
+  if (S.env.gpu) cas.push(['white', 'gpuCas']);
   if (e.phase === 'dry') cas.push(['white', 'dryMot']);
   else if (e.starter) cas.push(['white', 'starterCas']);
   const std = S.baroMode === 'std';
@@ -117,7 +122,7 @@ export function viewPfd(S, side) {
     side, alt: Math.round(a.alt), baro, unit: S.qnhUnit, std, pre: String(Math.round(v.qnh)),
     sat: Math.round(a.sat), isa: Math.round(a.sat - (15 - 1.98 * a.pa / 1000)),
     ias, tas: ias != null ? Math.round(ias / Math.sqrt(S.atm.sigma)) : 0, hdg: S.hdg,
-    mins: Math.round(v.elev + 200), cas, clock: S.clock,
+    mins: Math.round(v.elev + 200), cas, clock: S.clock, selAlt: String(selAltOf(v.elev)),
     windDir: Math.round(v.windDir) % 360, windKt: Math.round(v.windKt),
   };
 }
@@ -321,7 +326,7 @@ function pfdPage(P, V, world) {
   // selected altitude (cyan) and the boxed transition / VNAV altitude
   box(ctx, A.x0, A.y0 - 6.5, A.x1 - A.x0, 5.8, { fill: 'rgba(10,12,18,0.85)', stroke: C.tapeEdge, r: 0.6, lw: 0.2 });
   line(ctx, [[A.x0 + 1.4, A.y0 - 5.6], [A.x0 + 1.4, A.y0 - 1.6]], C.cyan, 0.7);
-  N(P, 'selAlt', '5000', A.x1 - 1.4, A.y0 - 1.9, 3.6, C.cyan, { align: 'right' });
+  N(P, 'selAlt', V.selAlt, A.x1 - 1.4, A.y0 - 1.9, 3.6, C.cyan, { align: 'right' });
   box(ctx, A.x1 + 2.0, A.y0 - 6.2, 13.5, 5.2, { fill: 'rgba(0,0,0,0.6)', stroke: C.white, r: 0.4, lw: 0.25 });
   N(P, 'vnavAlt', '5500', A.x1 + 8.75, A.y0 - 2.2, 2.8, C.white, { align: 'center' });
   // the drum: thousands + hundreds large, the last two digits on a 20 ft drum
@@ -856,6 +861,8 @@ function eisStrip(P, V) {
   // the inertial separator (open on the ground): a green status band
   box(ctx, 1.5, 152.2, 31, 3.8, { fill: C.green, stroke: null, r: 0.3 });
   L(P, 'inertSep', 17, 155.0, 1.6, '#062a0a', { align: 'center', cw: 0.42, alpha: 1 });
+  // ground power connected (the Environment knob): a white-framed GPU flag beside it
+  if (V.gpu) { box(ctx, 35, 152.2, 21, 3.8, { fill: null, stroke: C.white, r: 0.3, lw: 0.3 }); L(P, 'gpu', 45.5, 155.0, 1.6, C.white, { align: 'center', cw: 0.5 }); }
   // pressurisation: FMS ELEV (magenta: the field elevation), CAB ALT (= the pressure altitude, unpressurised), dP, rate
   box(ctx, 1, 160, 56.5, 22.5, { fill: C.box, stroke: C.boxEdge, r: 1.6, lw: 0.25 });
   L(P, 'fmsElev', 2.2, 165.0, 1.8, C.white, { cw: 0.48 });
@@ -1004,9 +1011,9 @@ function mfdVsd(P, V) {
   poly(ctx, pts, '#7f8a2c');
   line(ctx, pts.slice(1, -1), '#c9c34a', 0.35);
   line(ctx, [[ax, yA(elev)], [ax + 22, yA(elev)]], C.white, 0.3);
-  line(ctx, [[ax, yA(5000)], [x0 + W - 2, yA(5000)]], C.cyan, 0.4, [1.6, 1.2]);
+  line(ctx, [[ax, yA(V.selAlt)], [x0 + W - 2, yA(V.selAlt)]], C.cyan, 0.4, [1.6, 1.2]);
   box(ctx, x0 + 3, y0 + 9.4, 10.5, 4, { fill: 'rgba(0,0,0,0.6)', stroke: null, r: 0.3 });
-  N(P, 'vsdSel', '5000', x0 + 13, y0 + 12.6, 2.2, C.cyan, { align: 'right' });
+  N(P, 'vsdSel', String(V.selAlt), x0 + 13, y0 + 12.6, 2.2, C.cyan, { align: 'right' });
   for (const [u, wid] of [[0.12, 'wpt'], [0.42, 'fix1'], [0.88, 'fix2']]) {
     const x = ax + u * (x0 + W - 2 - ax);
     line(ctx, [[x, top - 3], [x, bot]], 'rgba(230,235,245,0.7)', 0.3, [1.2, 1.0]);
@@ -1140,7 +1147,7 @@ export function drawSdu(P, S) {
   keyBox(3.5, r0 + 2 * rh, cw2, 12.6, 'pa', V.pa, C.white, 'ft');
   keyBox(48.5, r0 + 2 * rh, cw2, 12.6, 'da', V.da, C.white, 'ft');
   keyBox(3.5, r0 + 3 * rh, cw2, 12.6, 'head', `${V.head >= 0 ? '' : '-'}${Math.abs(V.head)}`, C.white, 'kt');
-  keyBox(48.5, r0 + 3 * rh, cw2, 12.6, 'cross', `${Math.abs(V.cross)}`, C.white, 'kt');
+  keyBox(48.5, r0 + 3 * rh, cw2, 12.6, 'cross', `${Math.abs(V.cross)}`, C.white, V.cross > 0 ? 'ktR' : V.cross < 0 ? 'ktL' : 'kt');
   keyBox(3.5, r0 + 4 * rh, cw2, 12.6, 'zfw', V.fuel, C.cyan, 'lb');
   keyBox(48.5, r0 + 4 * rh, cw2, 12.6, 'rwy', '24', C.white);
   // the EPECS take-off torque of the day (engine.js ratingShp: flat 44.3 psi, less when hot or high)

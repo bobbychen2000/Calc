@@ -109,7 +109,9 @@ export const RUNDOWN = { a0: 0.35, k: 0.09 };
 // turbine's torque (no spike as the blades pass the worst pitch); the same balance carries a blade pitch the rating
 // cannot turn at the governed speed (the propeller droops instead of the torque exceeding the limit) [D, fix r1]
 export const FEATHER_SEL = 55;
-export const J_PROP = 18.0;                                 // kg m^2: the propeller + power turbine at the propeller [E]
+// the running gas generator's rate limits (%/s; first order k 0.9 below them): idle -> T/O Ng ~4.5 s, the torque with it [E]
+export const NG_RATE = { up: 8, down: 7 };
+export const J_PROP = 26.0;                                 // kg m^2: the propeller + power turbine at the propeller [E]
 
 // the EPECS rating (shp) at rpm: the flat 44.3 psi, the ITT limit (850 C, 820 in reverse) or Ng 104 %
 export function ratingShp(atm, rpm = 1700, rev = false) {
@@ -171,7 +173,7 @@ export class Engine {
     Object.assign(this, { phase: 'off', ng: 0, np: 0, t: 0, fuelT: -1, lightT: -1, lit: false, comb: 0, starter: 0,
       ign: 0, light: 0, power: 0, ndot: 0, tGas: soak, itt: soak, tMetal: soak, oilT: soak, oilP: 0, ff: 0, tq: 0,
       shp: 0, dry: 0, dryDone: true, tie: false, peak: soak, startEnd: -1, limited: false, gen: false, pumps: false,
-      batV: [0, 0], batA: [0, 0], beta: 0, feather: false, ungov: false });
+      batV: [0, 0], batA: [0, 0], beta: 0, feather: false, ungov: false, ungovF: false });
     this._elec(0, 0, false);
     this.timers = {};
   }
@@ -308,7 +310,7 @@ export class Engine {
       }
       case 'run': {
         const tgt = this._ngTarget(np, pitch);
-        const d = tgt - this.ng, v = Math.min(Math.abs(d) * 0.9, d > 0 ? 12 : 10) * dt;
+        const d = tgt - this.ng, v = Math.min(Math.abs(d) * 0.9, d > 0 ? NG_RATE.up : NG_RATE.down) * dt;
         this.ng = Math.abs(d) <= v || Math.abs(d) < 0.005 ? tgt : this.ng + Math.sign(d) * v;
         break;
       }
@@ -359,12 +361,16 @@ export class Engine {
       const lit = base + dTacc;
       const cold = this.tMetal + 273.15 - (this.tMetal - T1) * clamp(this.ng / 25, 0, 0.6);
       this.tGas = cold + this.comb * (lit - cold) - 273.15;
-    } else this.tGas = this.tMetal - (this.tMetal - T1) * clamp(this.ng / 25, 0, 0.6);
+    } else {
+      // unlit: the probes read the hot section cooling (its metal), the compressor's air drawing them down a share with
+      // Ng (after a shutdown ~400-450 C 3 s / 10 s later, then minutes of decay: pilot judge r2)
+      this.tGas = this.tMetal - (this.tMetal - T1) * 0.35 * clamp(this.ng / 10, 0, 1);
+    }
     if (steady) { this.itt = this.tGas; this.tMetal = this.tGas; }
     else {
       const d = this.tGas - this.itt;
       this.itt = Math.abs(d) < 0.02 ? this.tGas : this.itt + d * (1 - Math.exp(-dt / 0.9));
-      const tauM = this.lit ? 60 : 240 / (1 + 0.6 * this.ng);
+      const tauM = this.lit ? 60 : 30 + 200 / (1 + 0.05 * this.ng);
       const toward = this.lit ? this.tGas : a.oat + 4.5, dm = toward - this.tMetal;
       this.tMetal = Math.abs(dm) < 0.01 ? toward : this.tMetal + dm * (1 - Math.exp(-dt / tauM));
     }
@@ -383,8 +389,12 @@ export class Engine {
   _torque(np, npPrev, pitch, dt, steady) {
     const a = this.atm, sq = Math.sqrt(a.theta), k = a.delta * sq;
     let q = 0;
-    if (this.lit && np > 1 && this.ungov && !steady) {
-      q = this.gasShp(np, pitch) / this.comb / (PSI_SHP * np);           // the power balance: the turbine's torque
+    if (this.lit && np > 1 && this.phase === 'run') {
+      // running: the torque meter reads the power turbine's torque -- the power the gas generator makes at its current
+      // Ng (capped by the rating) at the propeller's speed; the governor's blade angle absorbs exactly that, so the
+      // torque rises and falls WITH Ng (idle -> T/O ~4-5 s), never ahead of it (pilot judge r2: it had followed the
+      // commanded blade pitch at once, 8.7 -> 44.3 psi in 0.75 s with Ng at 83 %)
+      q = this.gasShp(np, pitch) / this.comb / (PSI_SHP * np);
     } else if (this.lit && np > 1) {
       const aero = propShp(np, pitch, a.rho);
       const w = np * Math.PI / 30, wdot = steady ? 0 : (np - npPrev) * Math.PI / 30 / dt;
@@ -482,6 +492,7 @@ export class Engine {
     if (tick('npHi', np > 1760) > 20 || (on && np > 1870)) w.np = true;
     if (tick('npBand', np > 350 && np < 900 && this.last.pitch < 60 && this.phase === 'run') > 15) c.np = true;
     // oil pressure: < 40 (0.5 s) warning, < 60 with Ng > 72 warning, 60-90 5 s caution, > 135 caution
+    if (start && this.ng > 50 && this.oilP < 60) w.oilP = true;            // the start: below the red line past 50 % Ng
     if (this.phase === 'run') {
       if (tick('opLo', this.oilP < 40) > 0.5 || (this.oilP < 60 && this.ng > 72)) w.oilP = true;
       else if (tick('opMid', this.oilP < 90) > 5 || tick('opHi', this.oilP > 135) > 5) c.oilP = true;
@@ -552,7 +563,8 @@ export function driveEngine(k, dt) {
       const cap = c.pitch < -2 ? ratingShp(eng.atm, c.rpm, true) : ratingShp(eng.atm, Math.max(c.rpm, NP_IDLE_MIN));
       if (propShp(c.rpm, c.pitch, eng.atm.rho) > cap * 1.01 + 2) eng.ungov = true;
     }
-    if (eng.feather) eng.ungov = true;
+    if (eng.feather) { eng.ungov = true; eng.ungovF = true; }
+    else if (eng.ungovF) { eng.ungov = false; eng.ungovF = false; }       // feather deselected: the governor at idle demand
     if (!running) eng.ungov = false;
     if (tgt > c.rpm && eng.phase === 'start' && !eng.lit) {
       c.rpm = c.rpm <= P.creep.rpm ? c.rpm + (P.creep.rpm - c.rpm) * (1 - Math.exp(-H / P.creep.tau))
