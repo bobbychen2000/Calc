@@ -6,7 +6,8 @@
 //   slat breaks, spoilers, aileron and flap-track marks digitised) [V]. Stations are ACAP nose stations shifted so ACAP
 //   door 3 lands on the model's door 3; heights are above the cabin floor (ACAP floor 5.08 m above ground) [D].
 //   Check [D]: gross area 449.7 m2 (LE extended to CL) vs 436.8 m2 reference, c/4 sweep 31.1 deg vs 31.6 deg.
-// Colours: ANA 777-300ER photos (JA787A/791A/796A/797A, 2024-25): white cowls with no titles, silver inlet lip, grey
+// Colours: ANA 777-300ER photos (JA787A/791A/796A/797A, 2024-25): white cowls (GE monogram low on the inboard flank, w5 [V
+// IQCFQpV_T1A]), satin inlet lip, grey
 // core cowl, black spinner with a white swirl, grey wing with bare-metal slat noses [V].
 // ------------------------------------------------------------------
 function naca(x, t) { return 5 * t * (0.2969 * Math.sqrt(x) - 0.126 * x - 0.3516 * x * x + 0.2843 * x * x * x - 0.1036 * x * x * x * x); }
@@ -105,10 +106,12 @@ function shadeVerts(B, v0, v1, fn) {
 // thin strip lying on the wing surface along a polyline in (s, nose station) space
 function wingLine(B, side, path, mat, w = 0.035, sgn = 1, lift = 0.012) {
   const g = raw();
+  const nrm = (a, b) => { const ts = b[0] - a[0], tx = b[1] - a[1], l = Math.hypot(ts, tx) || 1; return [-tx / l, ts / l]; };
   for (let k = 0; k < path.length; k++) {
-    const a = path[Math.max(0, k - 1)], b = path[Math.min(path.length - 1, k + 1)];
-    const ts = b[0] - a[0], tx = b[1] - a[1], l = Math.hypot(ts, tx) || 1;
-    const ps = (-tx / l) * w / 2, px = (ts / l) * w / 2;
+    // mitred offset (w5): the averaged in/out normal scaled by 1/cos keeps the stroke width through glyph corners
+    const n0 = nrm(path[Math.max(0, k - 1)], path[Math.max(1, k)]), n1 = nrm(path[Math.min(path.length - 2, k)], path[Math.min(path.length - 1, k + 1)]);
+    let ns = n0[0] + n1[0], nx = n0[1] + n1[1]; const nl = Math.hypot(ns, nx) || 1; ns /= nl; nx /= nl;
+    const mi = (w / 2) / Math.max(0.55, ns * n0[0] + nx * n0[1]), ps = ns * mi, px = nx * mi;
     // lifted 12 mm off the skin: 6 mm z-fought (shimmer) at the 20-30 m window-view range [A]
     g.p.push(...wingAt(path[k][0] + ps, path[k][1] + px, side, sgn, lift), ...wingAt(path[k][0] - ps, path[k][1] - px, side, sgn, lift));
     // skin normal (finite differences) so a strip is lit like the panel it lies on, not brighter
@@ -126,10 +129,10 @@ function nacelleGeo() {
   // lathe profiles [r, x aft of the inlet highlight] along +y, rotated onto +z. Max 4.18 m (164-166 in) [V Wikipedia/GE
   // via a.net], inlet 3.43 m (135 in) [V a.net], fan 3.25 m / 22 blades [V], fan nozzle 2.96 m, core 2.1 -> 1.6 m,
   // plug to 7.28 m (engine length 7.281 m) [D ACAP side view + V Wikipedia]; lip/section shapes [A]
-  const lip = [[1.715, 0.0], [1.79, 0.035], [1.87, 0.11], [1.94, 0.26]];
+  const lip = [[1.66, 0.15], [1.69, 0.06], [1.715, 0.0], [1.79, 0.035], [1.87, 0.11], [1.94, 0.26]];   // w5: + inner lip band to 0.15 m [V lit in LALF _136]
   const cowl = [[1.94, 0.26], [2.02, 0.6], [2.07, 1.1], [2.09, 1.7], [2.09, 2.4], [2.06, 3.1], [1.99, 3.8], [1.87, 4.4], [1.70, 4.84], [1.50, 5.0]];
   const nozIn = [[1.50, 5.0], [1.44, 4.82], [1.40, 4.55]].reverse();
-  const inlet = [[1.715, 0.0], [1.695, 0.08], [1.665, 0.3], [1.645, 0.75], [1.635, 1.3]].reverse();
+  const inlet = [[1.66, 0.15], [1.65, 0.4], [1.645, 0.75], [1.635, 1.3]].reverse();
   const core = [[1.13, 4.3], [1.10, 5.0], [1.02, 5.6], [0.92, 6.1], [0.84, 6.35]];
   const coreIn = [[0.84, 6.35], [0.76, 6.3], [0.70, 6.1]].reverse();
   const plug = [[0.64, 6.1], [0.62, 6.45], [0.52, 6.8], [0.34, 7.08], [0.10, 7.25], [0.0, 7.28]];
@@ -170,13 +173,13 @@ function buildExterior(gl) {
   const metal = { c: '#c3c7cc', r: 0.26, m: 0.85 };             // bare slat nose / inlet lip
   // control-surface / slat / spoiler gaps read as near-black hairlines: F-GSQR_1 row y=800 wing #a3a4a8 -> gap
   // #232732 / #2d3447 -> wing #9ba1a1; spoiler panel seams dark too, a shade lighter [V photos, Boeing_777_(4139974954)]
-  const line = { c: '#343940', r: 0.95 };   // matte: a glossy strip mirrors the sky at grazing view [A]
+  const line = { c: '#4f545b', r: 0.95 };   // matte: a glossy strip mirrors the sky at grazing view [A]; w5: spoiler hinge + chordwise breaks ~15 % under the skin, only the TE gaps near-black (_7250/_7331, ZGriff-63) [V]
   const gap = { c: '#1e2228', r: 1.0, m: 0 };
   // ANA white fan cowl, no titles [V photos]. w2: w1 gloss mirrored the pale sky into a flat blob, darkening now baked from
   // the normal below [A]; w3: #d6d9dd clipped flat white on the sun side (white paint ~1.5x the Boeing-grey albedo, which
   // renders #b6bcc2 unclipped) [D]; w4: neutral, B-R 0x1d on the ANA 11A cowl [V]
   const cowl = { c: '#b3b4b5', r: 0.3, m: 0.1 };
-  const seam = { c: '#b9bdc2', r: 0.4 };
+  const seam = { c: '#5f646a', r: 0.7 };   // w5: splits are dark hairlines (LALF 11A _136/_137, JAL IMG_3397) [V]
   const core = { c: '#8e9398', r: 0.34, m: 0.7 };
   const plug = { c: '#6e6b67', r: 0.4, m: 0.6 };
   const dark = { c: '#141619', r: 0.55, m: 0.3 };
@@ -225,11 +228,13 @@ function buildExterior(gl) {
     for (let s = 12.6; s < 29; s += 2.4) wingLine(B, side, chordPath(s, lef(s) + 0.7, s < 21 ? pwl(WING.te, s) - lerp(1.6, 1.2, (s - 11.8) / 9.2) : pwl(WING.te, s) - 0.7), skin, 0.025);
     // fastener rows along the front and rear spars (~12 % / 62 % chord): at window range the rivets merge into a faint
     // continuous line a shade under the paint (w4: 0.3 m dashes read as road marking) [V ANA 26K _7345, F-GSQR_1; A width]
-    const riv = { c: '#6a6d72', r: 0.75, m: 0.05 };
+    const riv = { c: '#56595d', r: 0.75, m: 0.05 };   // w5: just under the paint; lighter read as white paint lines [V ZGriff-63]
     for (const fc of [0.12, 0.62]) {
       const xa = (q) => lef(q) + fc * (pwl(WING.te, q) - lef(q));
       for (const [a, b] of fc > 0.5 ? [[4.0, 11.3], [21.5, 29.5]] : [[4.0, 29.5]]) wingLine(B, side, spanPath(a, b, xa, Math.ceil((b - a) / 1.5)), riv, 0.016);   // no rear row under the spoiler hinge line
     }
+    // w5: row of small dark access-panel / slat-track heads ~0.35 m behind the slat line every ~1.6 m (TPG ZGriff-63, Sam Chui _37) [V, A size]
+    for (let s = 12.4; s < 31; s += 1.6) { const x = lef(s) + 0.66 + 0.35; wingLine(B, side, [[s - 0.04, x], [s + 0.04, x]], { c: '#3a3f46', r: 0.8 }, 0.07); }
     // right-wing registration JA795A on the upper skin [V: ANA JA795A seat-26K photos alv_*_7250/_7331/_7345, new 212-seat
     // layout, NH211 2026]: dark block capitals ~1.25 m tall at ~50 % chord (a letter-high band of skin ahead of it, bottoms just ahead of the spoilers) from s 13.5 outboard, J inboard, glyph tops toward
     // the leading edge, so it reads upright left-to-right from the aft K seats (zoomed _7345; the raters' "upside down" was
@@ -242,7 +247,7 @@ function buildExterior(gl) {
         9: [[[0.7, 0.62], [0.5, 0.46], [0.18, 0.46], [0.02, 0.62], [0.02, 0.84], [0.18, 0.98], [0.52, 0.98], [0.68, 0.84], [0.68, 0.22], [0.5, 0.02], [0.08, 0.02]]],
         5: [[[0.68, 0.98], [0.06, 0.98], [0.02, 0.55], [0.48, 0.6], [0.68, 0.42], [0.68, 0.16], [0.5, 0.02], [0.02, 0.05]]],
       };
-      const ink = { c: '#3a3e44', r: 0.85, m: 0 };   // w2: photo ink ~#4e555e under overcast, not black [V _7345]
+      const ink = { c: '#15264a', r: 0.6, m: 0 };   // w5: ANA navy, the darkest mark on the wing in sun (#03244f on #8098b1 in TPG ZGriff-63; ink/skin 0.29-0.41 in _7250/_7331) [V]
       [...'JA795A'].forEach((ch, k) => {
         const sC = 13.5 + k * 1.15, xc = lef(sC + 0.45) + 0.50 * (pwl(WING.te, sC + 0.45) - lef(sC + 0.45));
         for (const st of GL[ch]) {
@@ -258,46 +263,76 @@ function buildExterior(gl) {
     wingLine(B, side, spanPath(9.8, 11.8, (s) => te(s) - 1.15, 3), gap);
     for (const s of [9.8, 11.8]) wingLine(B, side, chordPath(s, te(s) - 1.15, te(s) + 0.02), gap, 0.03);
     wingLine(B, side, chordPath(23.3, te(23.3) - 0.62, te(23.3) + 0.02), gap, 0.03);
-    wingLine(B, side, spanPath(23.3, 29.3, (s) => te(s) - lerp(0.62, 0.40, (s - 23.3) / 6), 8), gap);
-    wingLine(B, side, chordPath(29.3, te(29.3) - 0.40, te(29.3) + 0.02), gap, 0.03);
+    // w5: aileron outboard end 29.3 -> 30.4, close to the TE kink where the rake starts (Sam Chui ANA 77W _37) [V photo over the ACAP digitisation]
+    wingLine(B, side, spanPath(23.3, 30.4, (s) => te(s) - lerp(0.62, 0.38, (s - 23.3) / 7.1), 9), gap);
+    wingLine(B, side, chordPath(30.4, te(30.4) - 0.38, te(30.4) + 0.02), gap, 0.03);
     // flap-track fairings (canoes) under the trailing edge: ~60 % of each ahead of the TE [A from HL8007 photo]. 0.46 m wide
     // x 0.85 m deep; w1: in flaps-up cruise the tail tapers to a narrow rounded end ~40 % of the max depth (ANA 26K _7329/
     // _7331; the r2 blunt tail came from a ground photo with flaps extended) [V photo, D proportions]
     const vW = B.vcount, vC = B.vcount;
     for (const [cs, len] of WING.canoes) {
-      const RE = 0.22, x1 = te(cs) + 0.4 * len - RE, x0 = x1 - len + RE, secs = [];
+      // w5: flat-sided wedges, deepest at the TE, the underside rising straight to a small pointed tail ~12 % of the depth,
+      // ~1/3 of the length behind the TE (ANA 26K _7250 / _7211, TPG ZGriff-63, Boeing_777_(4139974954)) [V shape, D ratios]
+      const RE = 0.08, x1 = te(cs) + 0.33 * len - RE, x0 = x1 - len + RE, secs = [];
       const topAt = (xn) => (xn < te(cs) ? wingAt(cs, xn, side, -1)[1] + 0.03 : wingAt(cs, te(cs), side, -1)[1] + 0.03 - (xn - te(cs)) * 0.03);
       const sec = (xn, rw, rd) => {
         const d = 0.85 * rd + 0.04, w = 0.46 * rw + 0.03;
-        return { y: xn + WING.dz, x: cs * side, z: -(topAt(xn) - d / 2), w, d, r: w * 0.48 };   // w2: rounded teardrop sections [V ANA 26K]
+        return { y: xn + WING.dz, x: cs * side, z: -(topAt(xn) - d / 2), w, d, r: Math.min(w * 0.32, d * 0.3) };   // slab sides, rounded keel
       };
+      const xT = te(cs), tail = (xn) => clamp((xn - xT) / (x1 + RE - xT), 0, 1);
       for (let k = 0; k <= 12; k++) {
-        const t = k / 12, c = Math.cos(((t - 0.22) / 0.78) * Math.PI / 2);
-        const rise = t < 0.22 ? Math.sin((t / 0.22) * Math.PI / 2) : 0;
-        secs.push(sec(lerp(x0, x1, t), t < 0.22 ? rise : lerp(0.40, 1, Math.pow(c, 0.6)), t < 0.22 ? rise : lerp(0.35, 1, Math.pow(c, 0.8))));
+        const t = k / 12, xn = lerp(x0, x1, t), rise = Math.sin((Math.min(t, 0.22) / 0.22) * Math.PI / 2);
+        const fw = xn < xT ? lerp(0.82, 1, smooth(x0, xT, xn)) : 1;   // slight nose-to-TE swell [A]
+        secs.push(sec(xn, t < 0.22 ? rise : fw * lerp(1, 0.2, tail(xn)), t < 0.22 ? rise : fw * lerp(1, 0.12, tail(xn))));
       }
-      // rounded end: quarter-ellipse over RE, closed by the loft cap
-      for (const u of [0.35, 0.62, 0.84, 0.97]) { const e = Math.sqrt(1 - u * u); secs.push(sec(x1 + u * RE, Math.max(0.2, 0.40 * e), Math.max(0.15, 0.35 * e))); }   // w3: ~8 cm rounded tip [V ANA 26K]
+      for (const u of [0.5, 0.9]) { const e = Math.sqrt(1 - u * u); secs.push(sec(x1 + u * RE, 0.2 * e + 0.04, 0.12 * e + 0.03)); }   // small pointed tail
       B.add(gLoft(secs, 3), M4.trs(0, 0, 0, 0, Math.PI / 2), paint);
     }
     // GE90-115B nacelle
     const vN = B.vcount;
     const nac = nacelleGeo();
     const rot = M4.trs(E.s * side, E.y, E.x0 + WING.dz, 0, Math.PI / 2);
-    B.add(nac.lip, rot, metal); B.add(nac.cowl, rot, cowl); B.add(nac.nozIn, rot, dark); B.add(nac.inlet, rot, { c: '#3a3e44', r: 0.6 });
+    // w5: lip in its own neutral satin (the slat metal mirrored the sky blue-silver); lit #d3cbca / shade #5a5555, a shade
+    // under the cowl [V IQCFQpV_T1A, eX2WMn0xe48, LALF _136]. Inlet liner graded dark at the lip shadow -> grey liner (#151e27 ->
+    // #56606a in _136) [V]
+    B.add(nac.lip, rot, { c: '#a9a9a8', r: 0.34, m: 0.45 }); B.add(nac.cowl, rot, cowl); B.add(nac.nozIn, rot, dark);
+    const vIn = B.vcount; B.add(nac.inlet, rot, { c: '#5a6067', r: 0.45, m: 0.3 });
+    shadeVerts(B, vIn, B.vcount, (p) => 0.3 + 0.7 * smooth(0.1, 1.1, p[2] - E.x0 - WING.dz));
     B.add(nac.core, rot, core); B.add(nac.coreIn, rot, dark); B.add(nac.plug, rot, plug); B.add(nac.spinner, rot, spin);
-    for (const [x, r] of [[1.3, 2.075], [3.15, 2.055]]) B.add(gCyl(r + 0.004, r + 0.004, 0.025, 48, false), M4.mul(rot, M4.trs(0, x, 0)), seam);   // cowl splits [A photo]
+    for (const [x, r] of [[1.3, 2.075], [3.15, 2.055]]) B.add(gCyl(r + 0.002, r + 0.002, 0.018, 48, false), M4.mul(rot, M4.trs(0, x, 0)), seam);   // cowl splits [A photo]
     // inboard nacelle strake (vortex chine): 1.3 x 0.26 m plate standing radially out of the fan cowl 25 deg above the
     // horizontal on the inboard side, centred 2.45 m aft of the highlight, inside the middle cowl panel (w2, B-KQZ_074140) [V shape: ANA 11A _136/_137, B-KQZ_074140; D size].
     // Lathe space: +y = aft, +x = world x, +z = world down, so inboard = -side on x
     const ca = Math.cos(25 * DEG), sa = Math.sin(25 * DEG);
     const stM = M4.mul(rot, M4.trs(-side * ca * 2.18, 2.45, -sa * 2.18, side < 0 ? 25 * DEG : 155 * DEG));
+    const vSk = B.vcount;
     B.add(gRBox(0.26, 1.3, 0.06, 0.02, 1), stM, cowl);                              // w3: cowl-coloured, reads by its shadow line [V]
-    B.add(gBox(0.03, 1.24, 0.07), M4.mul(stM, M4.trs(-0.115, 0, 0)), dark);           // dark root seam
-    // round access panel on the upper cowl, 2.6 m aft, 15 deg outboard of top dead centre [V B-KQZ_074140 / EVA p97zMaCMWRg; A size]
-    { const d = [side * Math.sin(15 * DEG), 0, -Math.cos(15 * DEG)], R = 2.087, e2 = [d[2], 0, -d[0]], ring = [];
-      for (let k = 0; k <= 24; k++) { const a = (k / 24) * Math.PI * 2, u = Math.cos(a) * 0.26, w = Math.sin(a) * 0.26; ring.push([d[0] * R + e2[0] * w, 2.6 + u, d[2] * R + e2[2] * w]); }
-      B.add(gTube(ring, 0.018, 4, false), rot, { c: '#8e949b', r: 0.5 }); }
+    shadeVerts(B, vSk, B.vcount, (p, n) => (n[1] < -0.2 ? 0.6 : 1));                  // w5: dark underside
+    // cowl decals in lathe space: point at axial x, angle a above the inboard horizontal (rad), dr off the skin
+    const cowlR = (x) => pwl([[0, 1.715], [0.11, 1.87], [0.26, 1.94], [0.6, 2.02], [1.1, 2.07], [1.7, 2.09], [2.4, 2.09], [3.1, 2.06], [3.8, 1.99], [4.4, 1.87]], x);
+    const cowlP = (x, a, dr = 0.006) => { const R = cowlR(x) + dr; return [-side * Math.cos(a) * R, x, -Math.sin(a) * R]; };
+    const cowlPatch = (x0, x1, a0, a1, mat, nx = 6) => {   // thin curved patch on the cowl (baked shadow), tapered to a0 at both ends
+      const g = raw();
+      for (let i = 0; i <= nx; i++) for (const a of [a0, lerp(a0, a1, Math.sin(Math.PI * Math.min(1, 0.15 + 0.85 * Math.sin(Math.PI * i / nx)) / 2))]) { const x = lerp(x0, x1, i / nx); g.p.push(...cowlP(x, a)); g.n.push(-side * Math.cos(a), 0, -Math.sin(a)); g.u.push(0, 0); }
+      for (let i = 0; i < nx; i++) { const q = i * 2; g.i.push(q, q + 1, q + 3, q, q + 3, q + 2); }
+      B.add(fixWinding(g), rot, mat);
+    };
+    // w5: the strake reads in photos as a lit edge over a dark shadow slot on the cowl (LALF _137, JAL IMG_3371/3428) [V]; the
+    // 3 cm black root box shimmered into a dashed line at 10+ m, so a ~10 cm baked shadow band lies on the cowl below it instead [A width]
+    cowlPatch(1.85, 3.05, 24.2 * DEG, 21.2 * DEG, { c: '#8a9097', r: 0.9 });
+    // access panel: rounded rectangle ~0.50 x 0.32 m on the INLET cowl ~0.85 m aft of the highlight, upper inboard side, drawn as a
+    // thin dark outline [V LALF ANA 11A _136, JAL IMG_3397/3371; D size]
+    { const ring = [];
+      for (let k = 0; k <= 32; k++) { const a = (k / 32) * Math.PI * 2, c = Math.cos(a), sn = Math.sin(a);
+        ring.push(cowlP(0.85 + Math.sign(c) * Math.pow(Math.abs(c), 0.4) * 0.25, 70 * DEG + Math.sign(sn) * Math.pow(Math.abs(sn), 0.4) * 0.16 / 2.05, 0.008)); }
+      B.add(gTube(ring, 0.011, 4, false), rot, { c: '#7a8087', r: 0.6 }); }
+    // GE monogram on the lower inboard fan cowl (aft, ~35 deg below the horizontal): dark ring + script swashes, ~0.45 m [V ANA
+    // 77W IQCFQpV_T1A (HND), eX2WMn0xe48 (JFK); A size / drawing]
+    { const ge = { c: '#3e4450', r: 0.5 }, xc = 3.55, ac = -35 * DEG, Rg = cowlR(xc), at = (u, v) => cowlP(xc + u, ac + v / Rg, 0.008);
+      const circ = Array.from({ length: 25 }, (_, k) => { const a = (k / 24) * Math.PI * 2; return at(Math.cos(a) * 0.22, Math.sin(a) * 0.22); });
+      B.add(gTube(circ, 0.014, 4, false), rot, ge);
+      for (const sw of [[[-0.12, 0.08], [-0.02, 0.14], [0.08, 0.06], [-0.02, -0.12], [-0.12, -0.05], [-0.03, 0.02]], [[0.13, 0.1], [0.04, 0.1], [0.0, 0.0], [0.04, -0.1], [0.13, -0.1]], [[0.02, 0.0], [0.11, 0.0]]])
+        B.add(gTube(sw.map(([u, v]) => at(u, v)), 0.013, 4, false), rot, ge); }
     B.add(gCyl(1.64, 1.64, 0.02, 40), M4.mul(rot, M4.trs(0, 1.62, 0)), dark);    // fan-case back face behind the blades
     B.add(fanBlades(22), rot, blade);
     const sw = [];   // white swirl on the spinner [V photo JA796A]
@@ -344,9 +379,9 @@ function buildExterior(gl) {
     const tip = stations[stations.length - 1];
     B.add(gSphere(0.07, 10, 6), M4.trs(tip.s * side, tip.y0 + 0.01, tip.le + 0.05 + WING.dz, 0, 0, 0, 1, 0.5, 1.6), { c: side < 0 ? '#c83a36' : '#3ab86a', r: 0.15, e: 2.5 });
     // w1: brighter point source (a star point with glow at dusk in ANA 26K _7282) [V]
-    lights.push({ p: [tip.s * side, tip.y0 + 0.05, tip.le + 0.1 + WING.dz], c: side < 0 ? [2.5, 0.12, 0.08] : [0.1, 2.2, 0.35], s: 1.6, blink: 0 });
-    // static dischargers on the aileron and raked-tip trailing edges (~8 per side in ANA 26K _7282) [V count, A positions]
-    for (const s of [24.0, 25.5, 27.0, 28.5, 30.2, 31.2, 31.8, 32.3]) {
+    lights.push({ p: [tip.s * side, tip.y0 + 0.05, tip.le + 0.1 + WING.dz], c: side < 0 ? [1.6, 0.05, 0.03] : [0.06, 1.4, 0.25], s: 1.0, blink: 0 });   // w5: a small point, not a white disc [A]
+    // static dischargers: ~9 along the aileron TE at ~0.75 m pitch + 5 on the raked TE, a 'comb' (Sam Chui ANA 77W _37) [V count, D pitch]
+    for (const s of [23.7, 24.45, 25.2, 25.95, 26.7, 27.45, 28.2, 28.95, 29.7, 31.15, 31.45, 31.75, 32.05, 32.3]) {
       const p = wingAt(s, pwl(WING.te, s) - 0.02, side);
       B.add(gCyl(0.008, 0.008, 0.28, 4), M4.trs(p[0], p[1] - 0.01, p[2] + 0.14, 0, Math.PI / 2), { c: '#2a2d31', r: 0.6 });
     }
