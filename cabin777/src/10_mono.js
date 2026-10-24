@@ -53,7 +53,8 @@ const MONMAT = {
   bottleBlue: { c: '#3d4f8a', r: 0.3 },              // w2: blue label on clear water bottles (the solid blue read as blobs)
   label: { c: '#f4f2ec', r: 0.6 },
   juice: { c: '#f0a526', r: 0.15 },
-  tumbler: { c: '#6a6a6e', r: 0.05 },           // w11a: dark rocks glasses (render #383539), not paper cups
+  glassHi: { c: '#d0d6d8', r: 0.1, e: 0.05 },   // w13a/b: bottle edge highlight / tumbler rims (samchui_render_11)
+  tumbler: { c: '#3a3c40', r: 0.05 },           // w11a: dark rocks glasses (render #383539), not paper cups
   // [V] welcome galley upper unit: dark warm charcoal with visible frames, not black (omaat_room_32 #1a1911..#3a362a,
   //     kna_31_full; w5b rendered #050507)
   recessGrey: { c: '#d3d0ca', r: 0.45, l: LAYER.plastic },   // w9a: welcome recess side walls + ceiling (lalf_134, omaat_room_32) [V]
@@ -85,11 +86,11 @@ const MONMAT = {
   // front_71 #5e5655, omaatF_2 #5b5650) [V]
   curtainF: { c: '#57504a', r: 0.95, l: LAYER.fabric },   // w3: F front read too light (0.55 of wall vs 0.36-0.39)   // + tpg_147 #4a453a at 0.34 of white, omaatF_2 #56504b
   curtainFF: { c: '#6d6b6b', r: 0.95, l: LAYER.fabric },  // w6b: F front loose drape rendered #27231f-#332d29 vs omaatF_40 #4c4644 / #423c3b in the open
-  doorArc: { c: '#b53a62', r: 0.45 },   // [V] painted crimson-magenta arc + OPEN (lalf_133); MAT.handleRed read pure red
-  curtainTie: { c: '#2e2b2d', r: 0.8, l: LAYER.fabric },
+  doorArc: { c: '#c42a48', r: 0.45 },   // w13a/b: between lalf_134 (146,47,60) and lalf_133 (143,69,82); magenta read wrong   // [V] painted crimson-magenta arc + OPEN (lalf_133); MAT.handleRed read pure red
+  curtainTie: { c: '#2a2c33', r: 0.8, l: LAYER.fabric },   // w13b: cool, as curtainC
   curtainY: { c: '#66697c', r: 0.9, l: LAYER.fabric },   // w4: rendered #212330 vs py_37302 #545868 (b - r ~19)
   curtainRear: { c: '#a8a7a4', r: 0.9, l: LAYER.fabric },   // w5: rendered #66676a vs y_47300 #888785..#9c9b99
-  curtainC: { c: '#6b635d', r: 0.95, l: LAYER.fabric },   // w2: #5a524d still rendered #2a2523 in shade (m07)  // [V] J-cabin charcoal curtains (omaat_room_36 #302f35-#3d3c42, tpg_71 #5e5655)
+  curtainC: { c: '#5c5f6c', r: 0.95, l: LAYER.fabric },   // w13b: cool navy-charcoal (c_27312 #5e6272, omaat_room_36 #37363b; #6b635d rendered warm brown)   // w2: #5a524d still rendered #2a2523 in shade (m07)  // [V] J-cabin charcoal curtains (omaat_room_36 #302f35-#3d3c42, tpg_71 #5e5655)
   rail: { c: '#dcdbd6', r: 0.4 },
   // full-height class bulkheads (QA r1): F side of F/J = pale mottled washi print (omaatF_2 samples #c0bcb1 under warm
   // light -> #c9cad2, atlas washi fibres multiplied in); J faces = warm cream laminate (omaat_room_36 #c7bda9; #ddd5c3
@@ -170,6 +171,7 @@ function bottle(B, xf, h, r, mat, lbl = true, lblMat = MONMAT.label) {
   B.add(gCyl(r * 0.3, r * 0.3, h * 0.16, 8), M4.mul(xf, M4.trs(0, h * 0.86, 0)), mat);
   B.add(gCyl(r * 0.34, r * 0.34, h * 0.05, 8), M4.mul(xf, M4.trs(0, h * 0.965, 0)), MONMAT.label);
   if (lbl) B.add(gCyl(r * 1.04, r * 1.04, h * 0.2, 10, false), M4.mul(xf, M4.trs(0, h * 0.22, 0)), lblMat);
+  if (mat === MONMAT.bottleClear) B.add(gQuad(0.006, h * 0.5), M4.mul(xf, M4.trs(-r * 0.45, h * 0.5, r * 0.9)), MONMAT.glassHi);   // w13: vertical glass highlight
 }
 // round flush stainless pull (bar render), on a face
 function ringPull(B, xf) {
@@ -297,14 +299,13 @@ function buildBar(B, m) {
   }
   B.add(gRBoxM(0.07, 0.11, 0.02, 0.035, 2), V(up(1362), uy(470), oU + 0.125), MONMAT.latch);          // oval latch plate
   B.add(gCyl(0.022, 0.022, 0.012, 14), M4.mul(V(up(1362), uy(470), oU + 0.136), M4.trs(0, 0, 0, 0, Math.PI / 2)), MONMAT.steel);
-  // low steel guard rail along the back of the counter and its ends, in front of the upper unit (samchui_11)
-  B.add(gBox(uw, 0.012, 0.012), V(0, BAR.deck + 0.1, oU + 0.12), MONMAT.steelBright);
-  for (const sx of [-1, 1]) {
-    B.add(gBox(0.012, 0.012, 0.3), V(sx * uw / 2, BAR.deck + 0.1, oU + 0.27), MONMAT.steelBright);
-    for (const dzz of [0.12, 0.42]) B.add(gBox(0.012, 0.065, 0.012), V(sx * uw / 2, BAR.deck + 0.067, oU + dzz), MONMAT.steelBright);
-  }
+  // w13a/b (samchui_render_11): a flat aluminium edge band at deck level along the back of the counter, not a tube fence on posts
+  B.add(gBox(uw, 0.03, 0.012), V(0, BAR.deck + 0.05, oU + 0.12), MONMAT.steelBright);
   // tumblers on the counter (render: four at the left)
-  for (const p of [490, 535, 578, 655]) B.add(gCyl(0.035, 0.03, 0.06, 12), V(up(p), BAR.deck + 0.065, p === 655 ? -0.16 : -0.26), MONMAT.tumbler);
+  for (const p of [490, 535, 578, 655]) {   // w13: ~15 % smaller rocks glasses with a bright rim
+    B.add(gCyl(0.03, 0.026, 0.05, 12), V(up(p), BAR.deck + 0.06, p === 655 ? -0.16 : -0.26), MONMAT.tumbler);
+    B.add(gCyl(0.031, 0.031, 0.004, 12, false), V(up(p), BAR.deck + 0.084, p === 655 ? -0.16 : -0.26), MONMAT.glassHi);
+  }
   // ash cheeks either side of the upper unit, up to the soffit
   for (const s of [-1, 1]) B.add(gBox((w - uw) / 2 - 0.02, BAR.canopy - uy0, 0.02), V(s * (uw / 2 + (w - uw) / 4), (uy0 + BAR.canopy) / 2, oU + 0.012), MONMAT.barAsh);
   // black soffit over the bar with three downlights, framed by backlit washi bands
