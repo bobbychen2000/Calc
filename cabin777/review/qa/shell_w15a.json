@@ -1,0 +1,39 @@
+{
+ "area": "shell",
+ "rater": "A",
+ "round": "w15",
+ "score": 8.5,
+ "previousIssues": [
+  {"issue": "w14a/w14b low: Door viewing-window finger slot invisible (buried behind the shade face)", "status": "fixed. b_doorWin: the darkest pixel in the shade region (rows 380-425, x 540-590) is 23, where w14 was 194. A crisp dark slot reads at row ~418 in b_doorWin, s06 and s07 (ra/dw_sh.png)."},
+  {"issue": "w14b low: Door window shade barely distinct from the glass / w14a: shade same tone as the lining", "status": "partly fixed. Now lining 229 / shade 222 / glass 241 (shade/glass 0.92, was 0.95). With the slot and hem it reads as a separate panel. The #d8d2c6 warmth renders neutral (222,222,221) because of the lighting's cream desaturation [lighting]."},
+  {"issue": "w14a/w14b low: Door viewing window short against the housing, top level with the box top, no gap", "status": "partly fixed. The reveal top now rises ~20 px above the housing top in b_doorWin (reveal rows 352-548, housing 372-545), so ~1.13x the housing height, where w14 was ~1.0-1.1x and lalf_133 is ~1.36-1.4x per the w14 raters (lalf_133 is not in ref/ on this machine). The reveal's left bezel is still overlapped by the handle housing, so there is no gap."},
+  {"issue": "w14a low: Grille field slightly light against the dado; louvre pitch fine", "status": "partly fixed. s07 lit grille patch mean 46.5 -> 41.0 (std 12.1 -> 9.9). b_dadoY2 under-seat field 24.0 -> 23.2 (it is shadowed). The louvre pitch and the 3+ ribs are unchanged."},
+  {"issue": "w14a/w14b low: Blackout pleat close-up amplitude about half the photo's; ramp profile with a 1 px trough", "status": "not fixed (no change this round; s05 unchanged)."},
+  {"issue": "w14a/w14b low: Sidewall panels plain satin, no linen weave", "status": "not fixed."},
+  {"issue": "w14a/w14b low: Vinyl fine speckle low (L std 12.5 vs ~24)", "status": "not fixed (ra_door2floor unchanged)."},
+  {"issue": "w14a/w14b low: PY/Y tub floor light card", "status": "not fixed. ra_pyWin row 465: centre 245 against 219-220 at the tub sides."},
+  {"issue": "w14a/w14b low: [QA harness] studio win_front misframed", "status": "not re-checkable. No studio renders were supplied this round, so manual shades were checked on s08 only."},
+  {"issue": "w14a/w14b [lighting]: neutral creams, PY/Y lip band, dark under-seat grille, weak door glass glow", "status": "not fixed (lighting's area; not scored)."}
+ ],
+ "details": [
+  {"detail": "Sidewall panels and seams. Unchanged: clean satin, seams every second window. No linen weave.", "score": 8.0, "refs": ["ref/web/shell/tt_window.jpg", "ref/ana/c_27312-lang-multi.jpg"]},
+  {"detail": "F/J short bowl and LED pill. Unchanged and right (s01, ra_jWin).", "score": 8.5, "refs": ["ref/web/shell/omaat_room24.jpg", "ref/web/shell/tt_window.jpg"]},
+  {"detail": "PY/Y full-height tub and raised bezel. Unchanged. The tub-floor light card remains (245 vs 220).", "score": 8.4, "refs": ["ref/web/shell/sp_py14.jpg", "ref/ana/py_37303-lang-multi.jpg"]},
+  {"detail": "Shades. The electric blackout and sheer and the manual PY/Y shades are unchanged. The soft corduroy pleat matches room38 at distance; close-up contrast is still about half of room24's.", "score": 8.4, "refs": ["ref/web/shell/omaat_room24.jpg", "ref/web/shell/omaat_room38.jpg", "ref/web/shell/sp_py24.jpg"]},
+  {"detail": "Dado, grilles and placards. The louvres are a touch darker in lit views (s07 46.5 -> 41.0), which closes part of the light-field gap. The pitch is still fine.", "score": 8.4, "refs": ["ref/ana/py_37303-lang-multi.jpg", "ref/ana/y_47303-lang-multi.jpg"]},
+  {"detail": "Floors (Y navy carpet, door-area grey vinyl). Unchanged. The hue is right and the vinyl speckle is low.", "score": 8.2, "refs": ["ref/web/shell/sans_09.jpg"]},
+  {"detail": "Type A door lining and viewing window. The window is taller and rises above the handle housing. The shade is now a distinct panel with a visible finger slot over a glowing pane. It is still ~15-20% short of the photo, there is no gap to the housing, and the cream renders neutral [lighting].", "score": 8.3, "refs": ["lalf_133 (per w14 raters; not present in ref/)", "ref/web/shell/sans_14.jpg"]}
+ ],
+ "issues": [
+  {"severity": "low", "detail": "Door viewing window", "problem": "Still ~1.13x the arm-arc housing height (photo ~1.36x), and the reveal's inboard bezel is overlapped by the housing with no gap.", "evidence": "b_doorWin: reveal rows 352-548 against housing 372-545. The housing's right edge (x~525) overlaps the reveal's outer left edge (x~515). See ra/dw_sh.png.", "fix": "07_shell.js door cell: lower the reveal bottom ~0.06 m toward the assist bar (height 0.64 -> ~0.70; scale the glass/shade S to match). Shift wz ~0.02 m away from the housing, or narrow the housing by 0.02."},
+  {"severity": "low", "detail": "Blackout pleat close-up", "problem": "Contrast is about half of omaat_room24's, and the profile is a ramp rather than two-tone facets.", "evidence": "Unchanged from w14 (cv ~0.17 vs ~0.32-0.35).", "fix": "test/make_swatches.py s_pleat: plateau-and-step profile, keeping the mean at 0.60 of the wall."},
+  {"severity": "low", "detail": "Sidewall weave", "problem": "Plain satin where tt_window shows a fine linen weave.", "evidence": "Unchanged.", "fix": "MAT.sidewall: fabric layer, normal-only, strength ~0.06."},
+  {"severity": "low", "detail": "Vinyl speckle", "problem": "The fine grain is low.", "evidence": "Unchanged (L std ~12.5 vs ~24 in sans_09).", "fix": "Shared 03_tex.js LAYER_PARAMS vinyl speckle amplitude x1.6 (one line)."},
+  {"severity": "low", "detail": "PY/Y tub floor light card", "problem": "The centre of the tub floor is lighter than its sides.", "evidence": "ra_pyWin row 465: 245 at the centre against 219-220 at the sides.", "fix": "07_shell.js: run the tub-floor grade across the full width."},
+  {"severity": "low", "detail": "Grille louvre pitch", "problem": "Finer than py_37303 (~22-25 vs ~16 per grille), with prominent vertical ribs.", "evidence": "s07 / b_dadoY2.", "fix": "07_shell.js grille: louvre pitch x1.5, ribs to 3."},
+  {"severity": "low", "detail": "[lighting] Neutral creams (door shade #d8d2c6 renders 222,222,221), PY/Y lip band, near-black under-seat grille", "problem": "Lighting's area; not scored.", "evidence": "b_doorWin, b_dadoY2.", "fix": "Lighting: less highlight desaturation / warmer white mood."}
+ ],
+ "questionsForUser": [],
+ "photosDownloaded": [],
+ "notes": "Only the door window/shade and the grille louvre tone changed (prev/current diffs: b_doorWin 0.34, s07 0.12, s06 0.07, b_dadoY2 0.53 mean abs, the last mostly sky). All four changes landed as intended and none regressed. There are no high or medium shell issues. lalf_133 is not on this machine, so the door proportion check relies on the w14 raters' measurements. Side-by-sides are in scratchpad/w15/ra/."
+}
