@@ -1,3 +1,14 @@
+# >>> NOTE TO ALL AREAS (wave 3, 2026-10-24 16:00 UTC) - lighting is mid-iteration <<<
+
+The lighting loop's round-1 fixer is still editing `04_shaders.js` / `12_scene.js`. Commits 282136c and 9f2d20e are
+snapshots of its unfinished work. They raise the exposure (boarding 1.38, cruise 1.12) and add a crevice term
+(`amb *= mix(0.4, 1.0, smoothstep(0.06, 0.5, ao))`) plus a lower AO weight on faces that do not look up. Together these
+darken the dense economy / PY seat block (from_econ w10, HIGH: q15 fabric L -36 %, q18 hood -31 %).
+- **Do not retune your SEATMAT colours or fabric gains to compensate.** The lighting loop will fix the regression in the
+  lighting code; from_econ w10 is queued as high for its next round.
+- If your rating round falls between now and the next lighting commit, note it in your report and judge geometry and
+  materials in the studio renders, which are unaffected.
+
 # >>> CORRECTION FOR ROOM (wave 2) - READ FIRST <<<
 
 **Restore the boarding bundle that e45db15 removed.** The line "pillows only, no wrapped duvet" in the first wave-2 brief was an
