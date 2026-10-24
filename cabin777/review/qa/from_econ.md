@@ -35,3 +35,11 @@
   (y_47300 46-99), q18 seated-view hood L50 166 -> 114 (y_47305 178-198). q17's view of the backs and the studio renders
   are unchanged, so it is the in-cabin occlusion / non-up-facing weighting or the crevice term in `04_shaders.js`, hitting
   the dense 3-4-3 seat block (econ_w10b issue 1). Please fix in the lighting code; econ will not re-tune SEATMAT to it.
+- **w14 (wave 3c) to lighting, medium:** at row distance the darkest tones of the economy block are lifted ~50 %
+  (q15 rows 2-4 L p5/p10 58/61 against 38/44 in y_47300; econ_gap14 notForEcon). The gaps between rows and under the
+  headrests need more AO / contact shadow. Econ will not darken the fabrics to compensate.
+- **w14 to lighting, low:** the slate headrest covers have no grazing sheen: q16 near cover p90/p50 1.57 against 2.55 on
+  the y_47301 near cover. A sheen lobe for `LAYER.leather` at low roughness would give the silver-grey edge in
+  y_47301 / 47303. Econ set `yCover` to r 0.5.
+- **w14 to integration (`test/qa.js`), still open:** q15 / q17 / q18 do not match y_47300 / y_47303 / y_47305 (see w6),
+  so the pans, pillows and the new J arm beam are never compared in-cabin.
