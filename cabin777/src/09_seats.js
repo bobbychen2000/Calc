@@ -16,8 +16,8 @@ const SEATMAT = {
   // vs y_47300 backs 46-92); mosaic (L50 59) is the anchor, target tick ~70, diamond ~80, fleck ~55 [D]
   yFabric: { c: photoBase('#5a6587', 'y_tick'), r: 0.9, l: LAYER.yJacq },   // w7 A: q15 L50 55 G/B 0.55 vs y_47300 68-91 / 0.62-0.66
   yFabricB: { c: photoBase('#565e82', 'y_diamond'), r: 0.9, l: LAYER.yDiamond },
-  yFabricC: { c: photoBase('#4a5576', 'y_mosaic'), r: 0.9, l: LAYER.yMosaicP },   // third variant: dash mosaic (y_47302 left, y_47306 right); w6 A: photo-measured dash checker tile, was blobby procedural layer 11; w7 A: q15 #1e2a62 L 41 vs y_47306 #384877 L 60 -> greyer, lighter
-  yFabricD: { c: photoBase('#424d70', 'y_fleck'), r: 0.9, l: LAYER.yFleck },   // econ w5: petal fleck (y_47300 seats 2 / 4, sans 14 L50 48); w6 A: G/B 0.45 vs 0.54 -> greener
+  yFabricC: { c: photoBase('#56638b', 'y_mosaic'), r: 0.9, l: LAYER.yMosaicP },   // third variant: dash mosaic (y_47302 left, y_47306 right); w6 A: photo-measured dash checker tile, was blobby procedural layer 11; w7 A: q15 #1e2a62 L 41 vs y_47306 #384877 L 60 -> greyer, lighter; w8 B: q15 L50 47 vs 63-80 -> lighter
+  yFabricD: { c: photoBase('#4a5679', 'y_fleck'), r: 0.9, l: LAYER.yFleck },   // econ w5: petal fleck (y_47300 seats 2 / 4, sans 14 L50 48); w6 A: G/B 0.45 vs 0.54 -> greener; w8 A + B: L50 37 vs 47-53 -> lighter
   // headrest cushion: sparse white confetti on cobalt, a different fabric from the back (y_47306 / 47302 wings,
   // REFERENCE777.md) - shares the luminance-only confetti swatch with the PY wings
   // (same tone-curve match: wing photo mean #334276 in y_47306 -> base #4a5a98 averages #324384) [D]
