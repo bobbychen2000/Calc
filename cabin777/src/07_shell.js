@@ -22,7 +22,7 @@ const MAT = {
   binLip: { c: '#c6c8cb', r: 0.4 },
   latch: { c: '#6a7078', r: 0.35, m: 0.4 },
   led: { c: '#ffffff', r: 0.5, l: 12, e: 1.0 },
-  reveal: { c: '#ebe6dc', r: 0.45 },                            // QA w5: warmer cream bowl (tt_window, DSC_1920)
+  reveal: { c: '#ece4d5', r: 0.45 },                            // QA w5/w7: warm cream bowl (tt_window, DSC_1920; w7 rendered s 0.006)
   // Y/PY: dark navy with cyan flecks (photo swatch y_47304); F/J: dark warm charcoal-brown (c_27313, f_17300)
   // QA r2: #2c3345 rendered #232a41 (Y) / #181c2a (PY) against photo #36445f (y_47301) / #282f41-#354156 (py_37302)
   carpet: { c: '#3d4659', r: 0.95, l: LAYER.yCarpet },  // swatch layer adds the blue; kept greyer [V: tone]
@@ -36,7 +36,7 @@ const MAT = {
   carpetF: { c: '#56493f', r: 0.95, l: LAYER.fabric },          // QA w2: redder, h ~15 (MileLion DSC_1917 #2d2421)
   // door / galley floors: dark mottled stone-look grey vinyl (sans_09 door-2 galley #666268 / #585353; QA w1 rendered
   // #a0a5ad, ~1.13x the albedo) [V]
-  vinyl: { c: '#5a585c', r: 0.55, l: LAYER.vinyl },
+  vinyl: { c: '#6f6b72', r: 0.55, l: LAYER.vinyl },                // QA w7: rendered (75,74,80) vs sans_09 (105,100,105)
   doorCarpet: { c: '#5a5045', r: 0.95, l: LAYER.fabric },        // QA w6: less red (h ~30)
   // QA r2: no aisle path strips are visible in any ANA photo (y_47301, y_47304, py_37301/02, c_27312), so none are
   // modelled; Y instead shows glossy royal-blue seat-track covers along each seat-leg line [V: y_47304 #2965bd, y_47301]
@@ -62,10 +62,11 @@ const MAT = {
   sheer: { c: '#e6e1d6', r: 0.9, l: LAYER.fabric, e: 0.5 },
   // opaque pleated blackout: light warm grey, clearly darker than the bezel when closed (omaat Room-24 shade #787367
   // vs bezel #bdb4a9 = 0.64; QA w1 0.87) [V]
-  blackout: { c: '#8a8479', r: 0.85, l: LAYER.fabric },          // QA w2-w5: 0.81 -> 0.76 of the bezel, target 0.62-0.64; w6 #79736a overshot to 0.41-0.53 in the cabin (room24 0.62, room38 0.74)
+  blackout: { c: '#958f84', r: 0.85, l: LAYER.fabric },          // QA w2-w5: 0.81 -> 0.76 of the bezel, target 0.62-0.64; w6 #79736a overshot to 0.41-0.53 in the cabin (room24 0.62, room38 0.74); w7 #8a8479 0.51
   shadeBtn: { c: '#d9d6cf', r: 0.35 },
 };
 
+const sstep = (t) => t * t * (3 - 2 * t);
 const circX = (y) => Math.sqrt(Math.max(0, CAB.R * CAB.R - (y - CAB.yc) * (y - CAB.yc)));
 // Sidewall profile: v (height) -> [x, y, nx, ny] for the RIGHT side (inward normal)
 // dado: one planar facet 0.03-0.25 m carrying the grilles, under a short ledge to the window-belt circle at 0.29 m.
@@ -287,7 +288,7 @@ function windowParts(side, pat) {
   const map = (dz, dv, d) => { const [x, y] = wallAt(vc + dv); return [(x + out[0] * d) * side, y + out[1] * d, dz]; };
   const rec = pat.rec, D = REC.depth;
   // recess rings sink by ext toward the top (0 at the opening's upper corners, full at the recess top)
-  const ext = (dv) => rec.ext * clamp((dv - 0.12) / (rec.top - 0.12), 0, 1);
+  const ext = (dv) => rec.ext * sstep(clamp((dv - 0.12) / (rec.top - 0.12), 0, 1));   // QA w7: eased (side walls kinked at dv 0.12)
   const mapE = (dz, dv, d) => map(dz, dv, d * (1 + ext(dv) / D));
   const ths = pat.ring.map((p) => p.th);
   const rr = pat.ring.map((p) => p.h);                          // identical to the wall hole ring -> watertight
@@ -303,8 +304,12 @@ function windowParts(side, pat) {
   for (let i = 0; i < rr.length; i++) { const [, , wnx, wny] = wallAt(vc + rr[i][1]); lip.n.splice(i * 3, 3, wnx * side, wny, 0); }
   // sill / tub floor: near-planar, so it takes the wall normal (QA w2: smoothed normals across its long thin
   // triangles printed a light wedge at the opening's upper corner)
-  const sill = ringLoft([[inset(rr, 0.019), D, mapE], [scl(open, 1.085), D]], map, hint);
-  for (let i = 0; i < sill.n.length / 3; i++) { const [, , snx, sny] = wallAt(vc + (i < rr.length ? rr[i][1] : open[i - rr.length][1])); sill.n.splice(i * 3, 3, snx * side, sny, 0); }
+  // QA w7: 5 in-between rings, so the tubShade grade no longer smears along long thin triangles (streaks fanning from
+  // the bezel's top corners)
+  const sIn = inset(rr, 0.019), sOut = scl(open, 1.085), sR = [];
+  for (let k = 0; k <= 6; k++) { const t = k / 6; sR.push([sIn.map(([a, b], i) => [lerp(a, sOut[i][0], t), lerp(b, sOut[i][1], t)]), D, (dz, dv, d) => map(dz, dv, d * (1 + (1 - t) * ext(dv) / D))]); }
+  const sill = ringLoft(sR, map, hint), sPts = sR.flatMap((r) => r[0]);
+  for (let i = 0; i < sill.n.length / 3; i++) { const [, , snx, sny] = wallAt(vc + sPts[i][1]); sill.n.splice(i * 3, 3, snx * side, sny, 0); }
   // QA w4: the tub floor keeps flat normals (see above), so its upper part is darkened in vertex colour instead, x1 at
   // 0.12 m above the pane centre to x0.78 at the recess top (DSC_1920 upper tub ~0.78 of the wall, sans_14 0.74-0.82) [V]
   // QA w5: the photos are darkest just above the opening and light again toward the lip (sans_14 1.0 -> 0.65 above the
@@ -312,7 +317,9 @@ function windowParts(side, pat) {
   // rendered 0.90-0.93 of the wall against the reveal glow (04_shaders), photos 0.65-0.78 -> x0.45 [A: albedo]
   const oTop = W.holeH / 2 + 0.01;
   const fl = rec === REC_Y ? 0.42 : 0.55, d0 = rec === REC_Y ? 0.02 : 0.04;   // QA w6: PY/Y 0.88 on screen vs sp_py14 0.66; F/J 0.79 vs 0.74
-  const tubShade = (y) => { const d = y - vc; return d < oTop ? lerp(1, fl, clamp((d - d0) / (oTop - d0), 0, 1)) : lerp(fl, 1, clamp((d - oTop) / (rec.top - 0.03 - oTop), 0, 1) ** 0.7); };
+  // QA w7: the grade fades toward the tub sides (light side walls, no grey bands down them; tt_window, sp_py14) [V: look]
+  const tubShade = (y, i, n, z) => { const d = y - vc, wz = 1 - 0.65 * sstep(clamp((Math.abs(z) - 0.10) / (rec.hw - 0.10), 0, 1)); return lerp(1, tubF(d), wz); };
+  const tubF = (d) => { return d < oTop ? lerp(1, fl, clamp((d - d0) / (oTop - d0), 0, 1)) : lerp(fl, 1, clamp((d - oTop) / (rec.top - 0.03 - oTop), 0, 1) ** 0.7); };
   // lining: x1 at the mouth to x0.78 at the pane by depth (tt_window inner end darker) [V: tone; A: split]
   const liningShade = (y, i, n) => [1, 0.95, 0.78][Math.floor((i * 3) / n)];
   const parts = [
@@ -320,7 +327,7 @@ function windowParts(side, pat) {
     [sill, MAT.reveal, tubShade],
     ...(rec === REC_Y
       // QA w6: PY/Y bezel is a crisp raised frame ring with a dark outline (y_47303, sp_py24 ~0.035 m) [V: look; A: 3 mm]
-      ? [[ringLoft([[scl(open, 1.085), D], [scl(open, 1.082), D - 0.003]], map, hint), WMAT.seam],
+      ? [[ringLoft([[scl(open, 1.085), D], [scl(open, 1.082), D - 0.003]], map, hint), { c: '#c4beb2', r: 0.6 }],   // QA w7: warm, not a blue-grey pencil line
         [ringLoft([[scl(open, 1.082), D - 0.003], [scl(open, 1.03), D - 0.002], [scl(open, 1.0), D + 0.009], [scl(open, 0.992), D + 0.026]], map, hint), MAT.reveal]]
       : [[ringLoft([[scl(open, 1.085), D], [scl(open, 1.02), D + 0.007], [scl(open, 0.992), D + 0.026]], map, hint), MAT.reveal, tubShade]]),
     // lining: straight shade channel (both shades run here), then necks down to the pane
@@ -385,7 +392,7 @@ function windowParts(side, pat) {
 function addPart(B, [pg, m, shade], xf) {
   const b0 = B.p.length / 3;
   B.add(pg, xf, m);
-  if (shade) for (let k = b0; k < B.p.length / 3; k++) { const f = shade(B.p[k * 3 + 1], k - b0, B.p.length / 3 - b0); for (let c = 0; c < 3; c++) B.c[k * 4 + c] = Math.round(B.c[k * 4 + c] * f); }
+  if (shade) for (let k = b0; k < B.p.length / 3; k++) { const f = shade(B.p[k * 3 + 1], k - b0, B.p.length / 3 - b0, pg.p[(k - b0) * 3 + 2]); for (let c = 0; c < 3; c++) B.c[k * 4 + c] = Math.round(B.c[k * 4 + c] * f); }
 }
 
 // Shade geometry in the window-local frame: unit panel spanning y in [-H/2, H/2]; scaled per instance by the
@@ -437,7 +444,7 @@ function shadeMats(w, f, depthOff = 0) {
   const top = SHADE.h / 2, man = !w.electric;
   // stowed manual: shade + grip hang ~30 mm across the top of the glass (sp_py24 / sp_py14 / y_47303 band 30-60 mm;
   // QA w5: at top - 0.036 the grip sat 3.5 mm under the pane top and read as lining) [V]
-  const railY = man ? lerp(top - 0.062, -top + 0.022, f) : lerp(top + 0.012, -top + 0.009, f);
+  const railY = man ? lerp(top - 0.062, -top + 0.022, f) : lerp(top + 0.012, -top - 0.004, f);
   const hgt = Math.max(top - railY, 0.0004);
   const s = hgt / SHADE.h;
   // stowed electric shade (f = 0): collapse the instance entirely. QA r2: the 0.4 mm sliver left at the top of the

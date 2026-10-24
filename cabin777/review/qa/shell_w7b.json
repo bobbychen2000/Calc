@@ -1,0 +1,191 @@
+{
+ "area": "shell",
+ "rater": "B",
+ "round": "w7",
+ "score": 8.0,
+ "previousIssues": [
+  {
+   "issue": "[w6a medium] Tunnel lining pale, so the glass looks nearly flush",
+   "status": "partly fixed. The lining is now a graded grey ring with a thin dark channel line at the mouth (ra_jWin, win_close left window, s01 crop). It reads deeper than in w6. The channel line aliases into a dotted sparkle at the top in s01 at this resolution."
+  },
+  {
+   "issue": "[w6a medium] F/J bowl grade only 0.90-0.93 of the wall",
+   "status": "fixed. In b_jClose col 565 it is 152 against a pier of 217, which is 0.70 (w6: 163/217 = 0.75). Photos give 0.74 (DSC_1920, omaat_room_24). It reads as a sculpted bowl in s01, s05 and s09."
+  },
+  {
+   "issue": "[w6a medium] The whole door-2 walkway between the galleys was brown carpet",
+   "status": "fixed. ra_door2floor now shows grey vinyl between the galley blocks (75,74,80) and a brown carpet strip only in the door bay (63,54,45, h30). This matches the layout in sans_09."
+  },
+  {
+   "issue": "[w6a medium] Red arc / arrowhead over the door viewing window (MONUMENTS)",
+   "status": "fixed by monuments. In s06, s07 and b_doorWin the arc now ends beside the slot window and does not cover it."
+  },
+  {
+   "issue": "[w6a low] Blackout 0.42 of the bezel plus a diagonal moiré streak",
+   "status": "partly fixed. It is 0.51 in the cabin (see below). No diagonal streak is visible in win_front; win_oblique still shows faint banding on the nearest blackout."
+  },
+  {
+   "issue": "[w6a low] Grille ribs lighter than the louvres",
+   "status": "fixed. The ribs are now darker than or level with the slats (win_low, b_dadoY2). They still read as a faint column grid, which is acceptable."
+  },
+  {
+   "issue": "[w6a low] Reveal not warm enough",
+   "status": "not fixed. The bowl renders neutral: b_jClose sill (216,215,215), s 0.006. omaat_room_24's bowl is cream, s ~0.12. Most of this is lighting (white mood)."
+  },
+  {
+   "issue": "[w6b medium] Closed blackout too dark (0.41-0.53)",
+   "status": "partly fixed. b_jClose and s05 shade (114,110,102) L110 against a sill of 216, which is 0.51 (w6: 0.41). The target was 0.62-0.70. The tone is now a believable warm grey, but it is still a notch darker than omaat_room_24 and room38."
+  },
+  {
+   "issue": "[w6b medium] PY/Y upper tub only 0.88 of the pier",
+   "status": "fixed. b_pyClose col 860 bottoms at 165 against a pier of 224 (0.74); s02 col 563 167/224 = 0.75 (photos 0.65-0.70). It now reads as a shaded tub in s02, s08 and q14. Side effect: radial streaks (new issue 1)."
+  },
+  {
+   "issue": "[w6b medium] Stowed manual-shade band did not read",
+   "status": "fixed. ra_yWin and the yWin crop show a cream band across the pane top with a grip and a dark shadow line beneath it. This matches sp_py24 and y_47303."
+  },
+  {
+   "issue": "[w6b low] PY/Y bezel lacks a crisp raised frame",
+   "status": "fixed. There is a raised white ring with a hairline dark outline (ra_yWin crop, b_dadoY2)."
+  },
+  {
+   "issue": "[w6b low] Grille ribs read as a column grid",
+   "status": "improved (see the w6a item above)."
+  },
+  {
+   "issue": "[w6b low] Door carpet hue 15 against 30",
+   "status": "fixed. The render is (63,54,45) h30 s0.28; the sans_09 door bay is (70,62,55) h30 s0.20."
+  },
+  {
+   "issue": "[w6b low] Door leaf one flat cream slab (MONUMENTS / shell)",
+   "status": "not fixed. It is unchanged in the shell. Monuments added an arming panel and a bar."
+  },
+  {
+   "issue": "[w6b low] Dark/light vertical strip seen through the pane in s01",
+   "status": "not fixed. It is still visible at s01 x 785-795 as a pale vertical slab behind the glass. It is not sidewall geometry; most likely exterior geometry (OTHER AREA) or the back faces of neighbouring reveals seen through the glass."
+  }
+ ],
+ "details": [
+  {
+   "detail": "Sidewall panels and seams. Smooth satin wall with a joint mid-pier every second window, as in sp_py14. No gaps or z-fighting in s01, s02, s09 or win_*. Neutral white, where the photos are slightly warm (lighting).",
+   "score": 8.0,
+   "refs": [
+    "ref/web/shell/sp_py14.jpg",
+    "/tmp/claude-0/-home-user-Calc/0ed99896-ecef-596b-9423-893865e3345b/scratchpad/w7/s02_yWall.png"
+   ]
+  },
+  {
+   "detail": "F/J bowl. Width, pill button and grade are right: it is darkest just above the opening at 0.70 (photo 0.74). It reads well in s01, s05, s09 and b_jClose. The faint radial streaks from the pane's upper corners are less visible here than in the PY/Y tubs.",
+   "score": 8.3,
+   "refs": [
+    "ref/web/shell/tt_window.jpg",
+    "ref/web/shell/omaat_room_24.jpg",
+    "/tmp/claude-0/-home-user-Calc/0ed99896-ecef-596b-9423-893865e3345b/scratchpad/w7/b_jClose.png"
+   ]
+  },
+  {
+   "detail": "PY/Y tub. Proportions are unchanged from w6 (tub 0.83 of the pitch). The upper-tub grade is now 0.74-0.75 and the raised bezel ring reads. However, the grade is drawn as fan-shaped dark streaks radiating from the bezel's top corners into the tub (ra_yWin, b_pyClose, win_close). It looks like draped cloth rather than a smooth moulding.",
+   "score": 7.6,
+   "refs": [
+    "ref/web/shell/sp_py14.jpg",
+    "ref/ana/y_47303-lang-multi.jpg",
+    "/tmp/claude-0/-home-user-Calc/0ed99896-ecef-596b-9423-893865e3345b/scratchpad/rb7/cmp/yWin_crop.png"
+   ]
+  },
+  {
+   "detail": "Pane / lining / seal. Pane 36 x 54 px at a 79.4 px pitch in win_front, which is 0.243 x 0.36 m (spec 0.254 x 0.381 with slight perspective), so the ratio is right. The lining is graded grey with a channel line.",
+   "score": 8.2,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/0ed99896-ecef-596b-9423-893865e3345b/scratchpad/w7/win_front.png",
+    "/tmp/claude-0/-home-user-Calc/0ed99896-ecef-596b-9423-893865e3345b/scratchpad/w7/win_close.png"
+   ]
+  },
+  {
+   "detail": "Electric shades. The sheer is right. The blackout is a believable warm grey with pleats, at 0.51 of the sill against 0.62-0.74 in the photos. A pale ~1.5 cm strip of lining shows below the closed blackout's bottom hem (b_jClose crop). omaat_room_24 shows pleats down to the opening edge.",
+   "score": 7.8,
+   "refs": [
+    "ref/web/shell/omaat_room_24.jpg",
+    "/tmp/claude-0/-home-user-Calc/0ed99896-ecef-596b-9423-893865e3345b/scratchpad/rb7/cmp/jshade_crop.png"
+   ]
+  },
+  {
+   "detail": "Manual shades. The stowed band now reads, with a grip and a shadow line. The half and closed states in the studio are plausible.",
+   "score": 8.2,
+   "refs": [
+    "ref/web/shell/sp_py24.jpg",
+    "/tmp/claude-0/-home-user-Calc/0ed99896-ecef-596b-9423-893865e3345b/scratchpad/w7/ra_yWin.png"
+   ]
+  },
+  {
+   "detail": "Dado and grilles. Wide, low grilles with placards, dark dado and darker ribs. These match py_37303 and y_47303.",
+   "score": 8.2,
+   "refs": [
+    "ref/ana/py_37303-lang-multi.jpg",
+    "/tmp/claude-0/-home-user-Calc/0ed99896-ecef-596b-9423-893865e3345b/scratchpad/w7/win_low.png"
+   ]
+  },
+  {
+   "detail": "Floors. Carpets are unchanged and fine. The door-2 layout is now right (vinyl walkway, carpet in the bay). The vinyl is darker and more uniform than in sans_09: (75,74,80) against (105,100,105), and the stone-look mottle is missing.",
+   "score": 7.9,
+   "refs": [
+    "ref/web/shell/sans_09.jpg",
+    "/tmp/claude-0/-home-user-Calc/0ed99896-ecef-596b-9423-893865e3345b/scratchpad/w7/ra_door2floor.png"
+   ]
+  },
+  {
+   "detail": "Type A door surround and viewing window. The slot window is no longer covered by the arc. The leaf is still a flat slab; its moulding and bustle belong to monuments.",
+   "score": 7.5,
+   "refs": [
+    "ref/web/shell/fr_20220604_123806.jpg",
+    "/tmp/claude-0/-home-user-Calc/0ed99896-ecef-596b-9423-893865e3345b/scratchpad/w7/b_doorWin.png"
+   ]
+  }
+ ],
+ "issues": [
+  {
+   "severity": "medium",
+   "detail": "Radial dark streaks in the upper tub (new with the deeper w6 grade)",
+   "problem": "The sill / tub floor is a single ring loft from the lip ring straight to the opening ring (src/07_shell.js l.300, `sill = ringLoft([[inset(rr,0.019), D, mapE], [scl(open,1.085), D]], ...)`). tubShade (l.315) is evaluated only at those two rings. The opening's top vertices sit at the darkest value (fl 0.42 / 0.55) and the lip vertices are light, so long thin triangles interpolate the colour into fan-shaped streaks from the bezel's top corners. With fl at 0.42 this is now clearly visible as draped-cloth folds. The real tub is a smooth moulding with a soft vertical gradient (sp_py14, y_47303).",
+   "evidence": "ra_yWin x 400-520 / 580-730, y 250-300 (crop: rb7/cmp/yWin_crop.png); b_pyClose right window above the bezel; win_close tall tubs; faintly in the s01 F/J bowl (crop rb7/cmp/s01_crop.png).",
+   "fix": "Loft the sill through 4-6 intermediate rings so the vertex colour sampling is dense. Both rings come from the same `ths`, so lerp pointwise: `const sr=[0,0.2,0.4,0.6,0.8,1].map(t=>[inset(rr,0.019).map((p,i)=>[lerp(p[0],scl(open,1.085)[i][0],t),lerp(p[1],scl(open,1.085)[i][1],t)]), D, mapE]); const sill=ringLoft(sr,map,hint);`. Keep the normal override loop (it then needs wallAt per ring vertex: use `vc + pt[1]` for every ring). Optionally ease the grade with smoothstep instead of the linear ramp in tubShade so that no crease forms at d = oTop."
+  },
+  {
+   "severity": "medium",
+   "detail": "Closed blackout still a notch too dark in the cabin",
+   "problem": "MAT.blackout '#8a8479' with stripe kf 0.72 renders at 0.51 of the sill in the cabin. omaat_room_24 gives 0.62 and room38 0.74. It reads as a mid-grey panel rather than the light warm-grey pleated fabric of the photos, especially in s05 at aisle distance.",
+   "evidence": "b_jClose and s05 shade (114,110,102) L110 against sill/pier 213-216 = 0.51 (w6: 0.41). omaat_room_24 (#777266 L114 against #c0b7a7 L184 = 0.62).",
+   "fix": "src/07_shell.js l.65: blackout '#8a8479' -> '#9a9488'; l.418: kf for the blackout 0.72 -> 0.76. Target in the cabin: 0.60-0.66 of the sill. Re-check that the studio win_front does not go above about 0.70."
+  },
+  {
+   "severity": "low",
+   "detail": "Lining strip visible under the closed blackout",
+   "problem": "With f = 1 the blackout's bottom rail stops at -top + 0.009 (l.440), leaving a pale sliver of lining and sill visible between the hem and the opening's lower edge. In the photos the pleats meet the bezel.",
+   "evidence": "rb7/cmp/jshade_crop.png bottom: a light band about 5 px tall at b_jClose y ~ 488-495. It was also present but darker in w6 (jshade_crop_w6.png).",
+   "fix": "l.440: for electric shades, lerp to -top - 0.004 (overlap behind the opening rim) instead of -top + 0.009, or extend the panel's bottom hem by 12 mm."
+  },
+  {
+   "severity": "low",
+   "detail": "Door/galley vinyl too dark and too uniform",
+   "problem": "MAT.vinyl '#5a585c' renders (75,74,80). The sans_09 walkway is (105,100,105), with a visible light/dark stone-look mottle at about 0.3 m scale.",
+   "evidence": "ra_door2floor (380-560, 400-550) against sans_09 (250-450, 500-620).",
+   "fix": "l.39: vinyl '#5a585c' -> '#6a666a', and raise the vinyl layer's large-scale mottle amplitude (LAYER.vinyl in 03_tex.js is a shared file: one-line LAYER_PARAMS change) or add a low-frequency vertex-colour jitter on the vinyl boxes (l.574)."
+  },
+  {
+   "severity": "low",
+   "detail": "Bowl colour neutral, photos cream",
+   "problem": "The rendered reveal and sill have s 0.006, where omaat_room_24 and tt_window show a cream bowl at s ~0.10-0.15. Lighting is the main cause, but the reveal albedo could carry a bit more warmth so that the bowl and pier differ.",
+   "evidence": "b_jClose sill (216,215,215); omaat_room_24 bezel (#dcd0bc).",
+   "fix": "l.25: reveal '#ebe6dc' -> '#ece3d2' (only if lighting keeps the white mood); otherwise defer to lighting."
+  },
+  {
+   "severity": "low",
+   "detail": "Pale vertical slab seen through the J pane [OTHER AREA?]",
+   "problem": "A pale vertical strip appears behind the glass, unchanged since w5c. It is probably exterior geometry, or the back faces of the neighbouring reveal instances seen through the glass.",
+   "evidence": "s01 x 785-795 (rb7/cmp/s01_crop.png).",
+   "fix": "Integration/exterior: render s01 with the reveal meshes hidden to identify the source. If it is the reveal backs, cull back faces on the instanced reveal meshes."
+  }
+ ],
+ "questionsForUser": [],
+ "photosDownloaded": [],
+ "notes": "The w7 renders are of head a746e65 (shell w6 fixes from both ratings), plus other workers' changes (monuments door furniture, lighting). Comparisons are in /tmp/claude-0/-home-user-Calc/0ed99896-ecef-596b-9423-893865e3345b/scratchpad/rb7/cmp/ (top = previous round, bottom = w7). Every w6 change helps: the F/J bowl and PY/Y tub grades, the stowed shade band, the bezel ring, the door floor split and the carpet hue. The blackout moved the right way but not far enough. The one regression is visual: the deeper grade exposes radial interpolation streaks in the sparsely tessellated tub floor. Studio note: in win_front the electric windows are on the LEFT and the manual PY/Y tubs on the RIGHT, the reverse of the brief's description. Lighting is not scored (white boarding mood neutralises the cream reveal)."
+}
