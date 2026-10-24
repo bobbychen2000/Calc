@@ -291,12 +291,56 @@ function roomBundle(B, x, z, dir, ps) {
 }
 // w7 pillows (omaat_room_15, tpg_31 / 42): plump, ~0.44 x 0.34 x 0.10; the blue one a royal-blue check jacquard with a
 // ~15 mm grey flange round its seam [V]; the white one the same size behind it [V]
+// w16: a stuffed lens, not a bevelled slab (w14a-w15b: "rigid cushion"): thickness ((1-u^2)(1-v^2))^0.42 so the edges
+// thin out to the seam and the corners pinch to points, the sides bowing in ~6 % between the corners (kn_17, tpg_46) [V];
+// fl > 0 adds a flat seam flange ring of that width instead
+const PILLOW_GEO = new Map();
+function gPillowLens(W, D, T, fl = 0, nu = 12, nv = 10) {
+  const g = raw(), e = (k, n) => -Math.cos(Math.PI * k / n);   // cosine spacing: dense rows at the thin edge
+  const at = (u, v, s) => [u * W / 2 * (1 - 0.06 * (1 - v * v)) * s, v * D / 2 * (1 - 0.07 * (1 - u * u)) * s];
+  if (!fl) {
+    for (const sy of [1, -1]) {
+      const b = g.p.length / 3;
+      for (let j = 0; j <= nv; j++) for (let i = 0; i <= nu; i++) {
+        const u = e(i, nu), v = e(j, nv), [x, z] = at(u, v, 1);
+        g.p.push(x, sy * T / 2 * Math.pow(Math.max(0, (1 - u * u) * (1 - v * v)), 0.42), z); g.n.push(0, sy, 0); g.u.push(0, 0);
+      }
+      for (let j = 0; j < nv; j++) for (let i = 0; i < nu; i++) {
+        const a = b + j * (nu + 1) + i, c = a + 1, d = a + nu + 2, f = a + nu + 1;
+        if (sy > 0) g.i.push(a, d, c, a, f, d); else g.i.push(a, c, d, a, d, f);
+      }
+    }
+  } else {
+    // seam ring: the outline from the 4 sides, offset outward by fl, 3 mm thick
+    const ring = [];
+    for (let i = 0; i < nu; i++) ring.push([e(i, nu), -1]);
+    for (let j = 0; j < nv; j++) ring.push([1, e(j, nv)]);
+    for (let i = nu; i > 0; i--) ring.push([e(i, nu), 1]);
+    for (let j = nv; j > 0; j--) ring.push([-1, e(j, nv)]);
+    const n = ring.length;
+    for (const sy of [1, -1]) {
+      const b = g.p.length / 3;
+      for (const [u, v] of ring) {
+        const [x, z] = at(u, v, 1), L = Math.hypot(x, z) || 1;
+        g.p.push(x - fl * 0.3 * x / L, sy * 0.0015, z - fl * 0.3 * z / L, x + fl * x / L, sy * 0.0015, z + fl * z / L);
+        g.n.push(0, sy, 0, 0, sy, 0); g.u.push(0, 0, 0, 0);
+      }
+      for (let k = 0; k < n; k++) {
+        const a = b + 2 * k, c = b + 2 * ((k + 1) % n);
+        if (sy > 0) g.i.push(a, c + 1, a + 1, a, c, c + 1); else g.i.push(a, a + 1, c + 1, a, c + 1, c);
+      }
+    }
+  }
+  computeNormals(g);
+  return fixWinding(g);
+}
 function roomPillow(B, xf, mat = SEATMAT.pillowBlue) {
-  const half = cushionSecs(0.44, 0.34, 0.05, 0, { edge: 0.035, r: 0.025, crown: 0.012 });
-  B.add(gLoft(half, 3), xf, mat);
-  B.add(gLoft(half, 3), M4.mul(xf, M4.trs(0, 0, 0, 0, Math.PI)), mat);
+  const key = 'p';
+  if (!PILLOW_GEO.has(key)) PILLOW_GEO.set(key, [gPillowLens(0.44, 0.34, 0.125), gPillowLens(0.44, 0.34, 0, 0.016)]);
+  const [lens, flange] = PILLOW_GEO.get(key);
+  B.add(lens, xf, mat);
   // w8a: the flange follows the pillow outline, neutral grey (omaat_room_15) [V]
-  if (mat === SEATMAT.pillowBlue) B.add(gLoft(cushionSecs(0.458, 0.358, 0.008, -0.004, { edge: 0.002, r: 0.03, crown: 0 }), 3), xf, SEATMAT.jPillowBack);
+  if (mat === SEATMAT.pillowBlue) B.add(flange, xf, SEATMAT.jPillowBack);
 }
 // QA w2 duvet: indigo comforter open over the bed from below the pillow to the foot (fb_a96b7a65 #4b5789, fb_d8b6dc0d
 // #606ea0 daylight) [V]; white pillow + the blue one leaning on it (fb_a96b7a65) [V]
