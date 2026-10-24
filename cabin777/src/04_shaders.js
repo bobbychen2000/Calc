@@ -368,7 +368,10 @@ void main(){
                               : envInside(R, 1.0 - smoothstep(1.3, 1.7, v_wpos.y)) * (0.25 + 0.75*ao) * lt;
   vec3 Fe = F0 + (max(vec3(1.0 - rough), F0) - F0) * pow(1.0 - NdV, 5.0);
   vec3 specEnv = env * Fe * (1.0 - rough*0.8);
-  if (u_exterior < 0.5) specEnv += coveSpec(v_wpos, N, V, R, rough, F0, NdV) * u_led * u_cove * sz * (0.25 + 0.75*ao);
+  // the cove line's colour as seen in a reflection: the cabin hemi hue at the LED level (u_led itself is set so the
+  // clipped lens reads amber, and below the clip it is near-red: red rim lines in the amber phase, d07)
+  vec3 coveC = u_hemiTop / max(max(u_hemiTop.r, u_hemiTop.g), max(u_hemiTop.b, 1e-4)) * max(max(u_led.r, u_led.g), u_led.b);
+  if (u_exterior < 0.5) specEnv += coveSpec(v_wpos, N, V, R, rough, F0, NdV) * coveC * u_cove * sz * (0.25 + 0.75*ao);
   vec3 col = diff * (amb + sun) + specSun + specEnv + emissive;
   col += vec3(0.30, 0.62, 1.0) * hl * (0.35 + 0.9*pow(1.0 - NdV, 2.0));
   col = aces(col * u_exposure);
