@@ -80,3 +80,7 @@
   (rater B, w29b-2).
 - **Far-row snow / triplanar smear (w29a-L2, w30b-10):** carried. The new light headrest pad on tick backs (y_47300
   seat D) also smears on the nearest q16 back tops.
+- **SHEEN flag on yCover (econ, f75ed94+):** the r3 snapshot (00948cd) had the lobe in `04_shaders.js` but no material
+  carried the flag, so econ set `yCover.l = LAYER.none + SHEEN` (09_seats.js, its own SEATMAT line). At `sheen` 0.84, the
+  q16 cover pixels go from L55 to L81 (y_47301 67-108). q15 head-on and e4 (~25 deg off-normal) are unchanged. If lighting
+  also sets this line, keep one copy.
