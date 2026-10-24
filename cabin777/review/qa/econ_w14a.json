@@ -1,0 +1,218 @@
+{
+ "area": "econ",
+ "rater": "A",
+ "round": "w14",
+ "lens": "Skeptic. Fabrics were compared at matched physical scale, using a 0.43 m seat width as the ruler: q15 x0.62 against y_47300, and studio e4 x0.81 against y_47306. Measured: box mean, B/R, luminance p10/p50/p90, and high-pass column CV. Official photos decide colour; in-flight photos decide geometry (no new downloads). Lighting delta check: current q15 against the ced028f q15 in econ_before_after.jpg, both at x0.43. Seat backs and covers are within dL 0.5 and dB/R 0.02, so lighting round 1 did not change the econ area. The econ source is unchanged since ced028f (rated wF A 7.2), so the score holds. Scratch files are in /tmp/claude-0/rater14A/ (st.py, q15near.png, p00near.png, fab_cmp.png, seat2.png, studio.png).",
+ "score": 7.2,
+ "priorIssues": [
+  {
+   "issue": "w13a-1 / wFa-3 mosaic: milky low-contrast speckle, not crisp whitish dash rows on navy",
+   "status": "not fixed",
+   "evidence": "Row distance (q15 seat 2 x0.62): p90/p50 1.24, p10/p50 0.75, colCV 0.029. y_47306 right: p90/p50 2.19, p10/p50 0.45. Close up (e4 right x0.81): p90/p50 1.42 vs 2.19. fab_cmp.png shows isotropic speckle; the photo has horizontal dash rows."
+  },
+  {
+   "issue": "w13a-2 tick columns vanish at row distance; close-up channels too dark",
+   "status": "not fixed",
+   "evidence": "q15 x0.62, seats 1/3: colCV 0.050/0.080 vs y_47300 0.163/0.191; p10/p50 0.60/0.61 vs 0.45/0.43. Close up (e4 mid x0.81): L68 #384369 vs y_47306 L93 #495c98; p10/p50 0.67 vs 0.56; p90/p50 1.82 vs 2.24."
+  },
+  {
+   "issue": "w13a-3 / wFa-2 white hood rim and fabric above the pad at back tops",
+   "status": "not fixed",
+   "evidence": "q15near.png: a white rim ~1.5 cm wide still crosses every near-row back top (rows 1-2). y_47300 (p00near.png) shows a fabric crown with no white."
+  },
+  {
+   "issue": "w13a-4 diamond: blotchy rounded figures, not crisp star chains",
+   "status": "not fixed",
+   "evidence": "e4 left x0.81: p90/p50 1.81 vs y_47306 left 2.19, p50 56 vs 100. fab_cmp.png: the render figures are ragged dark-edged blotches; the photo figures are large pale-periwinkle stars and diamonds in chains."
+  },
+  {
+   "issue": "w13a-5 fleck too faint at row distance",
+   "status": "largely fixed (w11 tile set)",
+   "evidence": "q15 seat 4 x0.62: p90/p50 1.75 vs y_47300 seats 2/4 1.91/1.89; B/R 2.20 vs 2.24-2.31. Close up it is now the opposite: pad p90/p50 1.99 vs y_47306 pad 1.62, and q16's near pads read as snow (see w14a-6)."
+  },
+  {
+   "issue": "wFa-1 tick/pan strokes too bright grey-white close up (digital rain)",
+   "status": "not fixed",
+   "evidence": "fab_cmp.png first pair: the render shows grey-white dash clusters with large dark navy voids. The photo shows dense, evenly filled chain-stitch columns of lavender ticks on royal blue."
+  }
+ ],
+ "details": [
+  {
+   "detail": "Fabric: tick weave",
+   "score": 6.5,
+   "refs": "y_47306 mid, y_47300 seats 1/3; blotchy dash clusters instead of continuous columns; ground navy instead of royal"
+  },
+  {
+   "detail": "Fabric: diamond lattice",
+   "score": 6.0,
+   "refs": "y_47306 left; ragged blotches, figures too dark and low-contrast"
+  },
+  {
+   "detail": "Fabric: petal fleck",
+   "score": 7.0,
+   "refs": "y_47300 seats 2/4; right at row distance, snowy and white close up (q16, e4 pads)"
+  },
+  {
+   "detail": "Fabric: dash mosaic",
+   "score": 6.0,
+   "refs": "y_47306 right; isotropic speckle, no horizontal dash rows"
+  },
+  {
+   "detail": "Fabric mix (backs, pans, pads)",
+   "score": 7.0,
+   "refs": "y_47300; hero row reads tick / mosaic+diamond pads / tick / fleck against the photo's tick / fleck / tick / fleck"
+  },
+  {
+   "detail": "Headrest pad + cover",
+   "score": 7.0,
+   "refs": "y_47306, y_47301, y_47303; size and flap right, but the cover is a flat saturated navy where the photo shows slate leatherette that goes silver-grey at grazing angles"
+  },
+  {
+   "detail": "Pillow",
+   "score": 7.5,
+   "refs": "y_47300 / e4b; right size and colour, no corner ears or seam"
+  },
+  {
+   "detail": "Armrests",
+   "score": 7.0,
+   "refs": "y_47303 / e7"
+  },
+  {
+   "detail": "Belts",
+   "score": 8.5,
+   "refs": "y_47303 / e1"
+  },
+  {
+   "detail": "Seat pan / front",
+   "score": 7.5,
+   "refs": "y_47303 / e1"
+  },
+  {
+   "detail": "Back silhouette",
+   "score": 7.0,
+   "refs": "y_47300 / q15near; white rim at the top"
+  },
+  {
+   "detail": "Rear shell / hood / back top",
+   "score": 8.0,
+   "refs": "y_47305 / q18: shell #abafb5 vs #c2c7d0, B/R 1.06 = 1.07"
+  },
+  {
+   "detail": "Screen / handset",
+   "score": 8.0,
+   "refs": "y_47305 / q18: bottom bezel now 5.6 % of screen width vs 5.9 %; no LED dots"
+  },
+  {
+   "detail": "Tray / pocket / AC",
+   "score": 7.5,
+   "refs": "e6"
+  },
+  {
+   "detail": "Legs / footrest / under-seat",
+   "score": 7.5,
+   "refs": "y_47303 / e8"
+  },
+  {
+   "detail": "Far-LOD rows",
+   "score": 7.5,
+   "refs": "y_47300 / q15 far rows"
+  }
+ ],
+ "issues": [
+  {
+   "id": "w14a-1",
+   "severity": "medium",
+   "title": "Tick weave: blotchy grey-white dash clusters with navy voids, not continuous lavender chain-stitch columns on royal",
+   "detail": "Fabric: tick weave",
+   "evidence": "fab_cmp.png pair 1 (y_47306 mid vs e4 mid, both at ~435 px/m). Close up: render L68 #384369 B/R 1.87, p10/p50 0.67; photo L93 #495c98 B/R 2.07, p10/p50 0.56, p90/p50 2.24 vs 1.82. Row distance (q15 x0.62): colCV 0.050/0.080 vs 0.163/0.191.",
+   "fix": "test/make_swatches.py y_tick: remove the low-frequency density/block mask so every column is filled. Put strokes on a fixed column pitch of ~4.5 mm, alternating chevron slant per column, with a 1.2 mm dark channel between columns (the channel carries colCV at distance). Stroke colour toward lavender (#8a9ad4 relative), ground toward royal (#2c3c84 relative; raise ground L ~25 %). In 09_seats.js yFabric (shared, one line): c toward '#4a5c98'. Targets: q15 x0.62 colCV >= 0.12, p10/p50 <= 0.50; e4 close-up p90/p50 ~2.1."
+  },
+  {
+   "id": "w14a-2",
+   "severity": "medium",
+   "title": "Dash mosaic is isotropic speckle; the photo shows horizontal whitish dash rows in density blocks",
+   "detail": "Fabric: dash mosaic",
+   "evidence": "fab_cmp.png pair 2. Close up: p90/p50 1.42 vs 2.19, p10/p50 0.65 vs 0.45. q15 seat 2 x0.62: p90/p50 1.24, p10/p50 0.75 (milky).",
+   "fix": "make_swatches.py y_mosaic: horizontal dashes with aspect 5-10:1 (length 4-14 mm, height ~1 mm) laid in rows at 2.2 mm pitch. Block density 0.35-0.7 as density only, with no outlines. Ground darker navy (x0.75); dashes near-white lavender (lift ~+40 %). Target close-up p90/p50 >= 2.0, p10/p50 <= 0.5."
+  },
+  {
+   "id": "w14a-3",
+   "severity": "medium",
+   "title": "White hood rim across every back top in front views (open since w12)",
+   "detail": "Back silhouette",
+   "evidence": "q15near.png vs p00near.png: a ~1.5 cm white band over the top of rows 1-2 backs; the photo shows a fabric crown.",
+   "fix": "09a_econ.js: wrap the back's top fabric section 1.5 cm up and 1 cm aft over the shell lip, or drop the shell's front lip 1.5 cm down and 1 cm aft so it hides behind the fabric crown head-on."
+  },
+  {
+   "id": "w14a-4",
+   "severity": "medium",
+   "title": "Headrest cover is a flat saturated navy; the photo leatherette is slate grey, dark head-on and silver-grey at grazing angles",
+   "detail": "Headrest pad + cover",
+   "evidence": "Head-on q15: L55-65 B/R 1.88-1.98, cover/back 0.74-0.89, against y_47300 L35-46 B/R 1.83-2.0, cover/back 0.54-0.77. y_47306 (lit, oblique): B/R 1.47-1.62, L83-123. y_47301 / y_47303: covers read light grey-silver from the side and above. q16/q17: covers stay navy at every angle.",
+   "fix": "09_seats.js yCover (shared, one line): c '#2a2f45' (B/R ~1.6, ~15 % darker), roughness ~0.40 with higher specular/Fresnel, so oblique views pick up the grey ceiling. Optional 3 mm lighter stitched border inset."
+  },
+  {
+   "id": "w14a-5",
+   "severity": "medium",
+   "title": "Diamond: ragged dark-edged blotches, figures too dark",
+   "detail": "Fabric: diamond lattice",
+   "evidence": "fab_cmp.png pair 3: y_47306 left p50 100, p90 219, p90/p50 2.19; e4 left p50 56, p90/p50 1.81. The photo figures are large crisp pale-periwinkle stars and diamonds in chains on mid blue.",
+   "fix": "make_swatches.py y_diamond: remove the blur, use a star metric (|du|^0.75 + |dv|^0.75 <= 1), give figures ~35 mm across in diagonal chains, raise the figure fill to pale periwinkle (lift ~3.0) and keep the ground mid royal. Target p90/p50 ~2.1."
+  },
+  {
+   "id": "w14a-6",
+   "severity": "low",
+   "title": "Fleck snowy and white close up (pads, q16 near seats)",
+   "detail": "Fabric: petal fleck",
+   "evidence": "e4 pad: p90/p50 1.99 vs y_47306 pad 1.62. q16 near pads and backs show near-white flecks; the photo's are light blue.",
+   "fix": "Tint the fleck toward light blue (#a4b4e4 relative) and cut the lift ~15 %, keeping fleck size (distance stats now match: 1.75 vs 1.89)."
+  },
+  {
+   "id": "w14a-7",
+   "severity": "low",
+   "title": "Hero-row fabric mix differs from y_47300",
+   "detail": "Fabric mix",
+   "evidence": "q15 front row: tick / mosaic back with diamond pads / tick / fleck. y_47300: tick / fleck / tick / fleck.",
+   "fix": "05_layout.js or 09_seats.js fabric assignment: alternate tick and fleck across a 3-3 or 4-block so the q15 hero row reproduces the photo."
+  },
+  {
+   "id": "w14a-8",
+   "severity": "low",
+   "title": "Pillow has no pinched corner ears or edge seam",
+   "detail": "Pillow",
+   "evidence": "y_47300 vs e4b / e1.",
+   "fix": "09a_econ.js pillow: corner pull X *= 1 + 0.12*(sx*sz)^2 with the corners tapered to 30 % thickness, plus a 4 mm darker perimeter seam."
+  },
+  {
+   "id": "w14a-9",
+   "severity": "low",
+   "title": "Screen lower bezel lacks LED / sensor dots",
+   "detail": "Screen / handset",
+   "evidence": "y_47305 shows 4-5 tiny dots on the lower bezel; q18 shows none. Bezel height now matches (5.6 % vs 5.9 %).",
+   "fix": "09a_econ.js: 4 dim 3 mm dots centred on the lower bezel."
+  },
+  {
+   "id": "w14a-10",
+   "severity": "low",
+   "owner": "lighting/integration (camera)",
+   "title": "QA cameras do not match their reference photos",
+   "detail": "q15 / q16 / q17",
+   "evidence": "q15 is ~0.3 m high and close, with no armrests or pillows in frame. q16 and q17 do not reproduce y_47301 / y_47303.",
+   "fix": "test/qa.js: lower the q15 camera ~0.3 m and move it ~1 row aft; re-aim q16/q17 to the photo viewpoints. Not scored."
+  },
+  {
+   "id": "w14a-11",
+   "severity": "low",
+   "owner": "lighting",
+   "title": "Lighting round 1 left the econ seats unchanged",
+   "detail": "lighting",
+   "evidence": "Current q15 vs the ced028f q15 at x0.43: backs dL <= 0.2, covers dL 0.1. No regression, and no gain toward the photo's brighter close-up fabric (y_47306 lit tick L93 vs studio L68; studio lighting, not cabin).",
+   "fix": "None required for econ. Information only."
+  }
+ ],
+ "questionsForUser": [
+  "Are the y_47300 headrests at their top setting? This decides whether w14a-3 raises the pad or trims the back top.",
+  "Do the ANA headrest covers look silver-grey in person (as in y_47301 / y_47303) or dark navy-slate (as in y_47300)? It decides how glossy to make the leatherette."
+ ],
+ "extraRefsSearched": "No downloads (ref/web/econ is absent in this checkout). Used ref/ana y_47300, 47301, 47303, 47305 and 47306."
+}
