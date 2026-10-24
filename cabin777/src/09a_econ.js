@@ -41,13 +41,15 @@ function econCrownLoft(secs, segC, crownAt) {
   for (let i = 0; i < n; i++) g.i.push(c0, c0 + 1 + ((i + 1) % n), c0 + 1 + i);
   return fixWinding(g);
 }
+const ECON_PAN = { ...SEATMAT.yFabric, c: photoBase('#44507c', 'y_tick') };
 function econSeat(B, x0, lod, opts = {}) {
   const [hy, hz] = ECON.hinge;
   const F = opts.fab || SEATMAT.yFabric;
   const BH = M4.trs(x0, hy, hz, 0, ECON.back);
   // pan: the diamond seats carry the diamonds on the back only, the pan is the tick weave (y_47302 middle seat) [V]
   // w7 A + B: pans mix independently of the backs (y_47300: fleck back / tick pan, tick / diamond, fleck / mosaic) [V]
-  const PF = opts.panFab || (F === SEATMAT.yFabricB ? SEATMAT.yFabric : F);
+  let PF = opts.panFab || (F === SEATMAT.yFabricB ? SEATMAT.yFabric : F);
+  if (PF === SEATMAT.yFabric) PF = ECON_PAN;   // w10-w12 A: tick pans pale / grey (B/R 1.52-1.55 vs 1.74-1.90 in y_47300 / 47303)
   B.add(gLoft(cushionSecs(0.43, 0.47, 0.095, -0.05, { edge: 0.034, r: 0.03, crown: 0.01 }), lod ? 3 : 4), M4.trs(x0, 0.415, -0.28, 0, 3 * DEG), PF);
   B.add(gRBox(0.44, 0.035, 0.46, 0.012, 1), M4.trs(x0, 0.35, -0.27), SEATMAT.yShellDark);
   // back: rises ~0.05-0.065 above the headrest cushion to a rounded top (y_47306 all three seats, y_47301, sanspotter 13;
@@ -94,7 +96,7 @@ function econSeat(B, x0, lod, opts = {}) {
   // pad top, with a stitch line above the hem (y_47301, y_47306)
   // w10 A + B: the flap hangs ~3 cm below the pad (y_47306 / sans 13: 24-29 % of the pad height), its foot tipped a
   // little forward, and rolls round the pad top in a soft radius (was a hard bevel)
-  loftAt(B, [SEC(0.55, 0.255, 0.005, -0.112, 0.002), SEC(0.585, 0.256, 0.005, -0.106, 0.002), SEC(0.63, 0.257, 0.005, -0.1015, 0.002), SEC(0.68, 0.258, 0.005, -0.1025, 0.002), SEC(0.73, 0.257, 0.005, -0.1015, 0.002), SEC(0.766, 0.255, 0.005, -0.0985, 0.002)], BH, SEATMAT.yCover, lod ? 1 : 2);
+  loftAt(B, [SEC(0.55, 0.255, 0.005, -0.12, 0.002), SEC(0.585, 0.256, 0.005, -0.111, 0.002), SEC(0.63, 0.257, 0.005, -0.1015, 0.002), SEC(0.68, 0.258, 0.005, -0.1025, 0.002), SEC(0.73, 0.257, 0.005, -0.1015, 0.002), SEC(0.766, 0.255, 0.005, -0.0985, 0.002)], BH, SEATMAT.yCover, lod ? 1 : 2);
   loftAt(B, [SEC(0.764, 0.255, 0.006, -0.0985, 0.003), SEC(0.775, 0.255, 0.012, -0.094, 0.005), SEC(0.782, 0.255, 0.02, -0.086, 0.007), SEC(0.785, 0.255, 0.028, -0.073, 0.008), SEC(0.782, 0.255, 0.02, -0.06, 0.006)], BH, SEATMAT.yCover, lod ? 1 : 3);
   if (lod) return;
   // small ANA mark in the flap's lower corner (viewer's right from the front, y_47306); w5 B: a thin grey logotype, not a sticker
@@ -103,7 +105,7 @@ function econSeat(B, x0, lod, opts = {}) {
   B.add(gQuad(0.253, 0.02), M4.mul(BH, M4.trs(0, 0.561, -0.1058, Math.PI)), { c: '#454c68', r: 0.38 });   // w10 gap: darker hem
   B.add(gQuad(0.24, 0.0012), M4.mul(BH, M4.trs(0, 0.5715, -0.1061, Math.PI)), { c: '#9aa0b8', r: 0.5 });   // stitch line, light thread (w10 gap)
   // w11 B: contact darkening where the back fabric tucks into the shell sides (y_47306 dark crease) and along the strip
-  for (const sx of [-1, 1]) loftAt(B, [SEC(0.05, 0.006, 0.003, -0.05, 0.001, sx * 0.197), SEC(0.55, 0.006, 0.003, -0.045, 0.001, sx * 0.196), SEC(0.80, 0.006, 0.003, -0.034, 0.001, sx * 0.192)], BH, { c: '#1d2238', r: 0.9 }, 1);
+  for (const sx of [-1, 1]) loftAt(B, [SEC(0.05, 0.014, 0.003, -0.048, 0.001, sx * 0.199), SEC(0.55, 0.014, 0.003, -0.043, 0.001, sx * 0.198), SEC(0.80, 0.014, 0.003, -0.032, 0.001, sx * 0.194)], BH, { c: '#283052', r: 0.95 }, 1);   // w12 A + B: soft crease, not a drawn line
   // w9 A: a ~0.12 m centre strip in a contrasting weave runs from the pad top to the back top (headrest track cover,
   // y_47306 right / middle seats) [V]
   loftAt(B, [SEC(0.778, 0.12, 0.004, -0.032, 0.002), SEC(0.818, 0.12, 0.004, -0.0275, 0.002), SEC(0.842, 0.115, 0.004, -0.0235, 0.002)], BH, { ...SEATMAT.yFabric, c: photoBase('#4b5577', 'y_tick') }, 1);   // w11 B: darker tick / chevron weave, not diamond (y_47306)
@@ -293,7 +295,7 @@ function econUnitFar(n, rot = 0) {
   for (let k = 0; k < n; k++) {
     const x0 = (k - (n - 1) / 2) * sp;
     const f = econFab(k, n, rot);
-    B.add(gRBox(0.43, 0.10, 0.47, 0.04, 1), M4.trs(x0, 0.41, -0.28, 0, 3 * DEG), econPan(k, n, rot));
+    B.add(gRBox(0.43, 0.10, 0.47, 0.04, 1), M4.trs(x0, 0.41, -0.28, 0, 3 * DEG), econPan(k, n, rot) === SEATMAT.yFabric ? ECON_PAN : econPan(k, n, rot));
     const BH = M4.trs(x0, ECON.hinge[0], ECON.hinge[1], 0, ECON.back);
     B.add(gRBox(0.42, 0.86, 0.08, 0.035, 1), M4.mul(BH, M4.trs(0, 0.43, -0.005)), f);   // same mix as econUnit
     B.add(gRBox(0.446, 0.62, 0.045, 0.015, 1), M4.mul(BH, M4.trs(0, 0.25, 0.058)), SEATMAT.yShell);

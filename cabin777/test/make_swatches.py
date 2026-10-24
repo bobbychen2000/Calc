@@ -191,8 +191,10 @@ def synth_y_tick(ratio, seed=3):
     x = np.arange(n, dtype=np.float32)
     k = max(1, round(n / 15.5))                            # whole periods per 0.26 m tile (1 px ~ 1 mm) -> tileable
     ph = 2 * np.pi * k * x / n
-    env = 1 + 0.22 * np.sin(ph + 0.6 * np.sin(2 * np.pi * 3 * x / n + rng.random() * 6.28))
-    return ratio * env[None, :, None]
+    env = 1 + 0.32 * np.sin(ph + 0.6 * np.sin(2 * np.pi * 3 * x / n + rng.random() * 6.28))
+    # w12 A + B: columns still weak at row distance (CV 0.09 vs 0.13-0.18) -> +-32 %; darks lifted (p10/p50 0.41 vs 0.62)
+    r = ratio * env[None, :, None]
+    return r + 0.25 * (r.mean() - r) * (r < r.mean())
 
 
 def synth_j_pillow(ratio):
@@ -283,7 +285,7 @@ def y_diamond():
     # w10 A + B: a continuous chained lattice of soft, mottled 0.06-0.08 m diamonds (no empty sites; w9's isolated
     # 0.05 m figures read as scattered polka-diamonds); the dash fill is broken ~40 % so the light area stays ~0.2-0.25
     for cu, cv in sites:
-        hd = rng.uniform(0.034, 0.039)           # half-diagonal (minus a 5 mm ceil step) -> ~0.06-0.07 m figures; outline cover ~0.6 of the cloth
+        hd = rng.uniform(0.035, 0.040)           # half-diagonal (minus a 5 mm ceil step) -> ~0.06-0.07 m figures; outline cover ~0.6 of the cloth
         for ou in (-1, 0, 1):
             for ov in (-1, 0, 1):
                 # w6: ceil, not floor - floor grew every diamond by one step
@@ -298,10 +300,10 @@ def y_diamond():
     tk = t.mean(2) / t.mean()
     m = (m * mot * np.clip(0.6 + 0.4 * tk, 0, 1.4))[..., None]
     tm = t.reshape(-1, 3).mean(0)
-    ground = 0.85 * (tm + 0.4 * (t - tm))
-    lift = np.array([4.0, 3.8, 3.1], np.float32)          # pale lavender (y_47302 / 47306); w11 B: figure ~1.9x the ground
+    ground = 1.15 * (tm + 0.4 * (t - tm))                 # w12 B: ground #1b2142 vs #2d4180
+    lift = np.array([2.8, 2.65, 2.25], np.float32)        # pale lavender (y_47302 / 47306); w12 A + B: light/dark 1.66-2.17 vs 1.38-1.42
     ratio = ground * (1 - m) + lift * m
-    sp = ((rng.random((n, n)) < 0.10) * (m[..., 0] > 0))[..., None]    # bright specks inside the figures (~8 % of the area figures cover)
+    sp = ((rng.random((n, n)) < 0.04) * (m[..., 0] > 0.3))[..., None]    # bright specks inside the figures (~8 % of the area figures cover)
     ratio = np.where(sp, np.array([5.0, 4.8, 4.0], np.float32), ratio)
     ratio /= ratio.reshape(-1, 3).mean(0)
     out = np.clip(ratio / ENC['y_diamond'], 0, 1)
@@ -337,7 +339,7 @@ def y_fleck():
                 w = b * (1 - 0.45 * np.clip(pu / a, -1, 1))
                 m = np.maximum(m, ((pu / a) ** 2 + (pv / np.maximum(w, 1e-3)) ** 2 <= 1).astype(np.float32))
     m = np.asarray(Image.fromarray((m * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(0.5))).astype(np.float32)[..., None] / 255
-    lift = np.array([7.0, 6.4, 3.9], np.float32)          # w10 gap: flecks ~15 % too bright (q16 read as snow); w11 B -10 %
+    lift = np.array([5.8, 5.3, 3.3], np.float32)   # w12 B: -17 %          # w10 gap: flecks ~15 % too bright (q16 read as snow); w11 B -10 %
     ratio = ground * (1 - m) + lift * m
     ratio /= ratio.reshape(-1, 3).mean(0)
     out = np.clip(ratio / ENC['y_fleck'], 0, 1)
@@ -353,7 +355,7 @@ def y_mosaic():
     each block's left and top edge (y_47306 right, y_47303 near back, y_47300 seat-4 pan, sans 14 pan) [D]"""
     n = S; size = 0.2; mm = n / (size * 1000)
     t = np.asarray(Image.open(os.path.join(root, 'tex/tex_y_tick.png'))).astype(np.float32) / 255 * ENC['y_tick']
-    ground = 0.94 + 0.06 * t / t.reshape(-1, 3).mean(0)
+    ground = 0.88 * (0.94 + 0.06 * t / t.reshape(-1, 3).mean(0))
     rng = np.random.default_rng(5)
     m = np.zeros((n, n), np.float32)
     seam = np.zeros((n, n), np.float32)
@@ -361,23 +363,23 @@ def y_mosaic():
     cw, ch = n / NI, n / NJ
     for j in range(NJ):
         y0 = int(round(j * ch)); y1 = int(round((j + 1) * ch))
-        seam[y0 % n, :] = 1
+        seam[y0 % n, :] = rng.random(n) < 0.5
         for i in range(NI):
             x0 = (i + (0.5 if j % 2 else 0)) * cw
-            seam[y0:y1, int(x0) % n] = 1
-            dense = rng.choice([0.12, 0.30, 0.55]) * rng.uniform(0.85, 1.15)
-            for yy in range(y0 + 2, y1 - 1, 2):
+            if rng.random() < 0.5: seam[y0:y1, int(x0) % n] = 1
+            dense = rng.choice([0.30, 0.45, 0.62]) * rng.uniform(0.85, 1.15)
+            for yy in range(y0 + 1, y1 - 1, 3):
                 xa = x0 + 2 + rng.random() * 2
                 while xa < x0 + cw - 2:
                     L = int(np.clip(rng.lognormal(np.log(4.0 * mm), 0.45), 1, cw - 4))
-                    if rng.random() < dense / 0.55:
+                    if rng.random() < dense / 0.62:
                         xs = np.arange(int(xa), min(int(xa) + L, int(x0 + cw) - 1)) % n
                         m[yy, xs] = rng.uniform(0.7, 1.0)
                     xa += L + rng.uniform(0.5, 1.5) * mm
     m = m[..., None]
-    lift = np.array([5.2, 5.4, 5.6], np.float32)              # near-neutral grey-white
+    lift = np.array([4.4, 4.6, 5.0], np.float32)              # near-neutral grey-white (w12 B)
     ratio = ground * (1 - m) + lift * m
-    ratio = ratio * (1 - 0.35 * seam[..., None])
+    ratio = ratio * (1 - 0.08 * seam[..., None])          # w12 A + B: blocks show as tone, not dark mortar
     ratio /= ratio.reshape(-1, 3).mean(0)
     out = np.clip(ratio / ENC['y_mosaic'], 0, 1)
     Image.fromarray((out * 255 + 0.5).astype(np.uint8)).save(os.path.join(root, 'tex', 'tex_y_mosaic.png'))
