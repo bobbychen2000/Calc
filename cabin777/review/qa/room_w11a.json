@@ -1,0 +1,241 @@
+{
+ "area": "room",
+ "rater": "A-skeptic",
+ "round": 11,
+ "score": 8.1,
+ "summary": "The w10 high issue is fixed. The spine now ends at the aisle cap (x 0.49) and meets it at the finger recess, with one plaque on each side of it. The brushed-metal spine rail and the light housing-top edges now read as they do in c_27313/14: in q09 the rail is (171,178,186) against housings at (113,119,131), and the photo has (177,186,191) against (126-156). Ash grain contrast now falls inside the photo range (0.04-0.08 against 0.03-0.09). Three things still keep the room below 8.5. (1) The O comforter is effectively unchanged: only 1.7 % of the duvet pixels in r9 differ from w10. It still reads as a crumpled translucent satin tongue, not the quilted down comforter in tpg_72. (2) The teal shoulder belt and buckle are buried in the seat cushion. The belt sits at y 0.433 and the cushion top is 0.434, so it does not show in any render, although c_27313/15/16 and omaat_room_15 all show it prominently. (3) The spine still meets the cap 80 % of the way along it from the O end. The photo shows it at the centre (0.51), so the O plaque floats 0.4 m in from the cap's O end. Seat fabric reads blue-steel rather than mauve-taupe, and the headrest flap no longer stands out from the fabric. Lighting is part of that but not all of it.",
+ "photos_collected": [],
+ "prior_issues": [
+  {
+   "detail": "w10b HIGH: spine runs over the aisle cap and covers the 18D plaque",
+   "status": "fixed",
+   "evidence": "09c_room.js: spine gRBox(1.075,...) at x -0.0475 now ends at x 0.49 (the cap's inboard edge). In r5 and r3 the spine ends at the cap's recess (r5 x~350,y~370), and in q10 (crop 150-330 x 110-250) the cap reads plaque, recess, plaque with nothing over them."
+  },
+  {
+   "detail": "w10b MED: spine meets the cap ~20 % along, not at the centre between the plaques",
+   "status": "partly fixed",
+   "evidence": "The order is now right (plaque, spine/recess, plaque; 09_seats.js plaques at z -0.175 / 0.0, recess at mz -0.0875). But the cap still runs z -0.58..0.035, so the spine sits at (mz-ez0)/(ez1-ez0) = 0.80 along it. In c_27314 (cap x 316-620, spine ~470) it sits at 0.51. In q10 the two plaques cluster at one end of the cap and the other ~40 % of the cap is blank."
+  },
+  {
+   "detail": "w10b MED: spine 'metal rail' renders darker than the housings",
+   "status": "fixed",
+   "evidence": "MX #9aa0a7 m0.6 brushed. In q09 at y 250 the rail is (171,178,186) and the housings are (113,119,131), a ratio of 1.5. In c_27314 it is (177,186,191) against (126,137,143), a ratio of 1.35. In studio r5 the rail is 197-206 against 165."
+  },
+  {
+   "detail": "w10a MED: housing tops uniform charcoal; photos show light grey-metal edges",
+   "status": "fixed",
+   "evidence": "Light MX strips at MON.zO+0.008 / MON.zE-0.008. In q09 a second light line shows at x~660, (152,160,169), and in r3 light edges show either side of the top (197,201,206). They are thin (1.6 cm), but the photo bands are only ~3-4 cm, so this is acceptable."
+  },
+  {
+   "detail": "w10b MED / w10a LOW: O comforter quilting buried, crumpled satin",
+   "status": "not fixed",
+   "evidence": "r9 w10 vs w11: only 1.7 % of pixels in the duvet region (270-450 x 150-390) change by more than 8 grey levels. The O sheet still shows big soft ridges and a wavy translucent edge, with at most one stitch line. r6 reads as a blue puddle. Halving the folds by foldK 0.35 does not help because the head-fold roll, the irregular-edge sines and the low-sun studio light dominate, and the 0.385-wide tongue past z -0.6 holds only one longitudinal stitch at x -0.19."
+  },
+  {
+   "detail": "w10a LOW: pillow jacquard blurred plus/houndstooth, cream rim",
+   "status": "not fixed",
+   "evidence": "r7 vs w10 differs on 0.33 % of pixels (cushion foot only). The pillow still shows soft plus blobs, and its rim is cream (crop r7: 140-460 x 250-480)."
+  },
+  {
+   "detail": "w10a LOW: pillow too light/periwinkle in studio",
+   "status": "not fixed",
+   "evidence": "r7 is unchanged. In the cabin (q09) it is acceptable."
+  },
+  {
+   "detail": "w10a LOW: mattress pad neutral near-white",
+   "status": "not fixed",
+   "evidence": "SEATMAT.mattress #d9cfbc is unchanged. In r9/r10 the pad renders ~#f2f0eb, the same as the white pillow."
+  },
+  {
+   "detail": "w10a LOW: E mattress pieces overlap 4 cm; O pieces 2 cm",
+   "status": "partly fixed",
+   "evidence": "E: mat(..., MON.zE-0.02, 0.63) and mat(..., 0.62, 1.28, -0.002) now overlap by 1 cm with a 2 mm step, so there is no z-fight. O: mat(-1.28,-0.62) and mat(-0.64,...) still overlap by 2 cm and are coplanar."
+  },
+  {
+   "detail": "w10a LOW: comforter has no jacquard check",
+   "status": "not fixed",
+   "evidence": "SEATMAT.duvet still uses LAYER.fabric (plain)."
+  },
+  {
+   "detail": "w10b LOW: ash grain 0.6-0.8x the photos",
+   "status": "fixed",
+   "evidence": "High-pass std/mean: q09 0.042 and 0.029, q10 0.079, q07 0.052. Photos: c_27314 0.029, c_27316 0.061 and 0.088. Close up (q07) the grain bands look slightly wavy and streaky, where c_27316 shows fine straight lines. That is low priority."
+  },
+  {
+   "detail": "w10a/b LOW (lighting): blue cast on charcoal and fabric",
+   "status": "not fixed",
+   "evidence": "q09 fabric (78,83,95), b-r +17, against c_27314 (75,73,82), b-r +7. q10 fabric (103,111,124) against c_27315 (94,89,104)."
+  }
+ ],
+ "details": [
+  {
+   "detail": "Overall nested-pair layout, monument, shells, privacy walls",
+   "score": 8.5,
+   "refs": [
+    "c_27312",
+    "c_27313",
+    "c_27314",
+    "q06",
+    "q09",
+    "q10"
+   ]
+  },
+  {
+   "detail": "Monument top: spine, rail, light housing edges, cap with plaques",
+   "score": 8.0,
+   "refs": [
+    "c_27313",
+    "c_27314",
+    "r3",
+    "r5",
+    "q10"
+   ]
+  },
+  {
+   "detail": "Ash panels and table tops (tone, grain, charcoal frames)",
+   "score": 8.3,
+   "refs": [
+    "c_27314",
+    "c_27316",
+    "q07",
+    "q09"
+   ]
+  },
+  {
+   "detail": "Seat: bench, back, header band, flap",
+   "score": 7.8,
+   "refs": [
+    "c_27315",
+    "omaat_room_15",
+    "r7",
+    "q09",
+    "q10"
+   ]
+  },
+  {
+   "detail": "Seat belt and buckle",
+   "score": 4.0,
+   "refs": [
+    "c_27315",
+    "c_27316",
+    "omaat_room_15",
+    "r7"
+   ]
+  },
+  {
+   "detail": "Boarding bundle and pillows (upright)",
+   "score": 7.8,
+   "refs": [
+    "omaat_room_15",
+    "tpg_31",
+    "tpg_42",
+    "r7"
+   ]
+  },
+  {
+   "detail": "E bed (mattress, quilted comforter, pillows)",
+   "score": 7.8,
+   "refs": [
+    "tpg_72",
+    "r10"
+   ]
+  },
+  {
+   "detail": "O bed comforter",
+   "score": 6.3,
+   "refs": [
+    "tpg_72",
+    "r6",
+    "r9"
+   ]
+  },
+  {
+   "detail": "Monitor, footwell and side-table console",
+   "score": 8.2,
+   "refs": [
+    "c_27316",
+    "omaat_room_16",
+    "q07",
+    "r8"
+   ]
+  },
+  {
+   "detail": "Colour fidelity (fabric hue, flap contrast)",
+   "score": 7.3,
+   "refs": [
+    "c_27314",
+    "c_27315",
+    "q09",
+    "q10"
+   ]
+  }
+ ],
+ "issues": [
+  {
+   "severity": "medium",
+   "detail": "Teal shoulder belt and silver buckle are invisible: buried in the seat cushion",
+   "problem": "roomSeatCore line ~62: the belt gBox(0.045,0.004,0.46) sits at y 0.433 and the buckle at 0.436. The upright cushion top is 0.39 + (-0.035+0.075) + crown 0.004 = 0.434, and the cushion is tilted 2 deg about x, so the front half of the belt is under the fabric and the rear half z-fights with it. No render (r7, q09, q10, r1, r2) shows a teal or silver pixel on the cushion. c_27315, c_27316, c_27313 and omaat_room_15 all show the teal belt lying diagonally across the cushion, with the silver buckle prominent.",
+   "evidence": "r7 teal-pixel search found 0 pixels. The r7 crop (140-460 x 250-480) shows bare grey cushion on the outer half. 02_geo.js cushionSecs puts the top at y0+h+crown.",
+   "fix": "Place the belt and buckle in the cushion's frame so they follow its tilt and sit proud of it: const CU = M4.trs(0, 0.39, -0.34, 0, 2 * DEG); B.add(gBox(0.045, 0.004, 0.46), M4.mul(CU, M4.trs(0.14, 0.047, 0, -0.5)), belt); B.add(gRBox(0.05, 0.012, 0.035, 0.005, 1), M4.mul(CU, M4.trs(0.06, 0.050, -0.10)), SEATMAT.buckle). That gives 3 mm clearance over the 0.044 crown. Optionally let the belt's rear end drop into the back/cushion fillet (a second short segment angled -30 deg about x)."
+  },
+  {
+   "severity": "medium",
+   "detail": "O comforter still reads as a crumpled translucent tongue; quilting not legible (w10 change had no visible effect)",
+   "problem": "foldK 0.35 changed only 1.7 % of r9's duvet pixels. The 0.012 + 0.008 head-fold roll, the irregular free edge (0.012 sin 23z + 0.008 sin 41z) and the rolled aisle edge give the O sheet a wavy, liquid outline (r6 looks like a puddle). Past z -0.6 it is a 0.385 m tongue with just one longitudinal stitch line (gx = x + 0.19, so x = -0.19). In tpg_72 the comforter is a thick (~4-5 cm) lofted quilt with crisp boxed channels every ~0.3 m and a few large loose folds. Its edges are straight-ish and thick, not wavy.",
+   "evidence": "r9 and r6 against b_tpg_72. Diff of w10s and w11s r9 over the duvet region: 1.7 %.",
+   "fix": "In duvetSheet for part O: (a) raise the loft and dip, e*(0.034 - 0.030*exp(-(dq/0.016)^2)), with nv 64 -> 96 over the 1.43 m so a 1.6 cm valley gets about 3 vertices; (b) set the irregular-edge amplitude to 0 for O, or drop it to 0.004; (c) shift the O grid phase so stitch lines fall at x = -0.32 and -0.12 (gx = x - xc + 0.0 with q 0.20 across the tongue, keeping 0.33 along z); (d) raise t (skirt) to 0.035 so the edge reads thick. Expect at least 15 % of duvet pixels to change; verify that r9 shows at least 2 longitudinal and 3 cross stitch lines."
+  },
+  {
+   "severity": "medium",
+   "detail": "Spine meets the cap 80 % along it (from the O end); photo has it at the cap centre",
+   "problem": "The cap is gRBox(0.10, 0.02, ez1-ez0) for z -0.58..0.035, and the spine/recess is at mz = -0.0875, which is 0.80 along it. In c_27314 the spine meets the cap at 0.51 (cap x 316-620, spine ~470), with plaque 17E near the left end and 18D near the right. In ours, both plaques sit in the last 0.21 m at the E end and ~0.4 m of the O end of the cap is blank (q10 crop).",
+   "evidence": "q10 crop 150-330 x 110-250 shows the plaques clustered at one end. c_27313 and c_27314 show them at the ends, symmetric about the spine.",
+   "fix": "Cheapest fix that keeps the layout: in 09_seats.js put the room plaques at the ends, z s.odd ? -0.48 : -0.005, so each sits ~0.06-0.1 from a cap end as in c_27314. Then add a slim charcoal 'spine stub' groove on the cap from the recess to the cap's inboard edge, or move the recess to the cap centre (z -0.27) so the order still reads plaque, recess, plaque. The faithful fix is to deepen the O-side housing so MON.zO is about -0.33 and mz moves toward the cap centre. That ripples into the O footwell and legroom, so ask the integrator first."
+  },
+  {
+   "severity": "medium",
+   "detail": "Seat fabric reads blue-steel and the flap no longer contrasts with it",
+   "problem": "In the photos the fabric is a warm mauve-taupe grey with r >= g and b only ~+8 over r: c_27314 (75,73,82), c_27315 (94,89,104), omaat_room_15 (106,101,100). The headrest flap is ~1.3x the fabric's luma: c_27314 flap (93,104,115), c_27315 (116,127,145). The cabin renders show fabric with g > r and b ~+16 over r, about as light as the flap: q09 fabric (95,101,111) against flap (89,96,110); q10 fabric (103,111,124) against flap (90,95,108). Some of this is the cool lighting, but the flap-to-fabric ratio inverting is a material problem.",
+   "evidence": "Region means sampled with PIL (see values above).",
+   "fix": "SEATMAT.jFabric '#5e5c62' -> '#5a5560' (pull green down and keep a mauve lean) and lower it ~6 %. jHead '#737b85' -> '#7a8592' so the flap/fabric luma ratio returns to ~1.25 in q09 and q10. Re-sample after the next lighting pass, so the fabric fix isn't double-counted against a cabin-wide white-balance fix."
+  },
+  {
+   "severity": "low",
+   "detail": "Pillow jacquard soft, cream rim; studio pillow periwinkle",
+   "problem": "Not changed since w10 (see prior issues). omaat_room_15 shows crisp two-tone squares (ichimatsu) in navy and royal with a mauve-grey flange (#b6abad).",
+   "evidence": "r7 crop; omaat_room_15.",
+   "fix": "In 03_tex.js (LAYER.yagasuri, shared, one line): add a sharper step, e.g. smoothstep(0.45, 0.55, checker), in place of the blurred plus. Set the jPillowBack flange to '#a9a0a4'."
+  },
+  {
+   "severity": "low",
+   "detail": "Mattress pad renders the same white as the pillow",
+   "problem": "tpg_72's pad is warmer and darker than its pillowcase. In r9 and r10 both clip at ~#f2f0eb.",
+   "evidence": "r9 and r10 against b_tpg_72.",
+   "fix": "SEATMAT.mattress '#d9cfbc' -> '#cfc4b0'."
+  },
+  {
+   "severity": "low",
+   "detail": "O mattress pieces still overlap 2 cm coplanar",
+   "problem": "mat(-0.475,0.285,-1.28,-0.62) and mat(-0.475,-0.032,-0.64,...) overlap over z -0.64..-0.62 at the same height, which risks z-fighting at grazing angles.",
+   "evidence": "09c_room.js roomBed, O branch.",
+   "fix": "Second O piece: change z0 to -0.625 and pass dy -0.002, as was done for E."
+  },
+  {
+   "severity": "low",
+   "detail": "Close-up ash grain shows wavy streak bands",
+   "problem": "In q07 the ash panel beside the monitor shows wavy, blotchy horizontal bands. c_27316 shows fine straight horizontal grain with a few long, faint darker streaks.",
+   "evidence": "q07 (130-340 x 200-400) against c_27316 (560-680 x 30-140).",
+   "fix": "In LAYER.ashGrain, lower the low-frequency warp amplitude in 03_tex.js (shared, one line) and keep the 3.4 gain."
+  },
+  {
+   "severity": "low",
+   "detail": "(not scored, integration) q07 seated camera sits too close to the monitor housing",
+   "problem": "The 11A seat view frames only the monitor and the ash panel. c_27316 shows the whole footwell or ottoman, the table and the console, which suggests the eye position is about 0.3 m further back and higher than seatEye gives for room O.",
+   "evidence": "q07 against c_27316.",
+   "fix": "In 09_seats.js seatEye for room O, move the eye ~0.25 m aft (toward the seat back) and ~0.1 m up, or widen the QA FOV for this view."
+  }
+ ],
+ "questions": [
+  "Does any real photo show the O housing depth (from the O monitor face to the spine)? c_27314 puts the spine at the cap centre, which would mean the O housing is ~0.3 m deep rather than our 0.12 m. Should the integrator accept that change to the footwell and legroom, or should only the plaques move?"
+ ]
+}

@@ -59,8 +59,10 @@ function roomSeatCore(B, bed, lod, w = 0.64, fs = 1) {
   B.add(gBox(w - 0.06, 0.004, 0.004), M4.trs(0, 0.25, -0.641), SEATMAT.jBase);                      // leg-rest seam
   // teal shoulder belt (c_27313 / 27316 show it lying on the cushion)
   // QA w4: on the half away from the pillows so it shows, diagonal with the silver buckle (tpg_31 / 42) [V]
-  B.add(gBox(0.045, 0.004, 0.46), M4.trs(0.14, 0.433, -0.34, -0.5), { c: '#30505a', r: 0.75 });   // room w5a: less cyan, longer (c_27315, tpg_31) [V]
-  B.add(gRBox(0.05, 0.012, 0.035, 0.005, 1), M4.trs(0.06, 0.436, -0.44), SEATMAT.buckle);
+  // w11a: in the cushion's tilted frame, just proud of its top (was buried at y 0.433 - c_27313/15/16, omaat_room_15) [V]
+  const CU = M4.trs(0, 0.39, -0.34, 0, 2 * DEG);
+  B.add(gBox(0.045, 0.004, 0.46), M4.mul(CU, M4.trs(0.14, 0.047, 0, -0.5)), { c: '#30505a', r: 0.75 });   // room w5a: less cyan, longer (c_27315, tpg_31) [V]
+  B.add(gRBox(0.05, 0.012, 0.035, 0.005, 1), M4.mul(CU, M4.trs(0.06, 0.051, -0.10)), SEATMAT.buckle);
 }
 
 // charcoal frame round an ash panel (every ash face in the photos sits in a ~3 cm dark frame, c_27312-27315):
@@ -358,7 +360,7 @@ function roomBed(B, part) {
   planSlab(B, footwellPlan(fw[0], fw[1], fw[2], fw[3], fw[4], 0.022), 0.44, y + MAT_TOP - 0.44, M);
   let bounds, z0, z1, hd, xc;
   if (part === 'O') {
-    mat(-0.475, 0.285, -1.28, -0.62); mat(-0.475, -0.032, -0.64, MON.zO - 0.005);
+    mat(-0.475, 0.285, -1.28, -0.62); mat(-0.475, -0.032, -0.64, MON.zO - 0.005, -0.002);
     // aisle edge rolls over the mattress beside the seat; beside the table it ends at the console wall; then the footwell
     bounds = (z) => {
       const [fl, fr] = footwellEdges(fw[0], fw[1], fw[2], fw[3], -1, z, 0.02), a = smooth(-0.74, -0.60, z), b = smooth(MON.zO - 0.06, MON.zO + 0.06, z);
@@ -374,7 +376,7 @@ function roomBed(B, part) {
     };
     z0 = -0.535; z1 = 0.86; hd = -1; xc = 0.22;
   }
-  for (const g of duvetSheet(bounds, z0, z1, hd, xc, part === 'O' ? 0.35 : 1)) B.add(g, M4.trs(0, y + MAT_TOP + 0.02, 0), SEATMAT.duvet);
+  for (const g of duvetSheet(bounds, z0, z1, hd, xc, part === 'O' ? 0.2 : 1)) B.add(g, M4.trs(0, y + MAT_TOP + 0.02, 0), SEATMAT.duvet);
 }
 function roomPart(part, opts = {}) {
   const B = new Builder();

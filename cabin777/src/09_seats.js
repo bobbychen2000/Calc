@@ -84,12 +84,12 @@ const SEATMAT = {
   jRail: { c: '#b9bec4', r: 0.26, m: 0.7, l: LAYER.brushed },
   jVoid: { c: '#1d1617', r: 0.9 },
   jBase: { c: '#2a2b2f', r: 0.6 },
-  jFabric: { c: '#5e5c62', r: 0.92, l: LAYER.tweed },   // uniform mid grey #5d5d62-#636164 (c_27315, omaat_room_13); QA w1: rendered #393a43 vs photo #5e5b69 -> lifted; room w5 (A+B): the lift overshot, fabric rendered 1.4x the shell, photos 0.55-0.8x (c_27313, c_27315, tpg_75) [V]
+  jFabric: { c: '#5c5860', r: 0.92, l: LAYER.tweed },   // uniform mid grey #5d5d62-#636164 (c_27315, omaat_room_13); QA w1: rendered #393a43 vs photo #5e5b69 -> lifted; room w5 (A+B): the lift overshot, fabric rendered 1.4x the shell, photos 0.55-0.8x (c_27313, c_27315, tpg_75) [V]; room w11a: a touch of mauve-taupe (c_27315 #605d6b) [V]
   jLeather: { c: '#5d6066', r: 0.5, l: LAYER.leather },
-  jHead: { c: '#737b85', r: 0.38, l: LAYER.leather },   // QA w2: flap is the palest part of the seat (c_27315 #768193, c_27313 #6f7b84); room w6a: ~1.3x the darker w5 fabric, neutral slate
+  jHead: { c: '#78808a', r: 0.38, l: LAYER.leather },   // QA w2: flap is the palest part of the seat (c_27315 #768193, c_27313 #6f7b84); room w6a: ~1.3x the darker w5 fabric, neutral slate; w11a: flap read level with the fabric -> lifted
   blueAccent: { c: '#233f7a', r: 0.5 },
   slate: { c: '#3f4246', r: 0.55, l: LAYER.marble },
-  mattress: { c: '#d9cfbc', r: 0.9, l: LAYER.fabric },   // room w8b/w9a: warm cream pad (tpg_72 #dfd3c0 in the light, omaat_room_15) [V]
+  mattress: { c: '#d2c8b4', r: 0.9, l: LAYER.fabric },   // room w8b/w9a: warm cream pad (tpg_72 #dfd3c0 in the light, omaat_room_15) [V]
   duvet: { c: '#4d57aa', r: 0.7, l: LAYER.fabric },   // room w5: satin royal blue (tpg_72 #6f7bd9, b_tpg #5863b0) [V]   // QA w2: indigo (fb_a96b7a65 #4b5789, fb_d8b6dc0d #606ea0)
   pillow: { c: '#eeede8', r: 0.9, l: LAYER.fabric },
   pillowBlue: { c: '#4c5594', r: 0.85, l: LAYER.yagasuri },   // QA w2: rendered #181e49; photos #4c5178-#737ba9 (tt_seat-1, tt_seats-center); room w7: pillow/fabric 0.66 (tpg_42) - 1.07 (omaat_room_15) -> ~0.85   // yagasuri jacquard #32355d / #3e457b (c_27302 / 27303)
@@ -267,7 +267,7 @@ function buildSeats(gl, layout) {
     let p, plate;
     // QA r2: neutral grey rounded squares slightly lighter than the cap (c_27314 cap #878787)
     // room QA w2: dark glass tiles with blue-lit numbers (ff_ana-the-room-seat-17e-and-17f, c_27313 cyan '17E' / '18D')
-    if (s.kind === 'room') { p = localToWorld(s, [0.545, ROOM.wall + 0.0205, s.odd ? -0.175 : 0.0]); plate = '#2c2f35'; }   // room w10b: either side of the monument spine (c_27313)
+    if (s.kind === 'room') { p = localToWorld(s, [0.545, ROOM.wall + 0.0205, s.odd ? -0.45 : 0.0]); plate = '#2c2f35'; }   // room w10b/w11a: toward the cap ends, either side of the monument spine (c_27313 / 27314)
     else { const hx = (s.pos === 'center' ? 1.10 : 1.24) / 2; p = localToWorld(s, [hx - 0.08, 1.24 + 0.0625, -0.80]); plate = '#6f675c'; }   // suite: flush pill slot a shade darker than the cap (omaat_f9 / f7)
     const face = s.mir ? -1 : 1;             // text top points away from the aisle
     const room = s.kind === 'room';
