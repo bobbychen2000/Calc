@@ -114,10 +114,12 @@ function econSeat(B, x0, lod, opts = {}) {
   loftAt(B, [SEC(0.789, 0.255, 0.006, -0.0985, 0.003), SEC(0.8, 0.255, 0.012, -0.094, 0.005), SEC(0.807, 0.255, 0.02, -0.086, 0.007), SEC(0.81, 0.255, 0.028, -0.073, 0.008), SEC(0.807, 0.255, 0.02, -0.06, 0.006)], BH, SEATMAT.yCover, lod ? 1 : 3);
   if (lod) return;
   // small ANA mark in the flap's lower corner (viewer's right from the front, y_47306); w5 B: a thin grey logotype, not a sticker
-  B.add(gQuad(0.014, 0.006), M4.mul(BH, M4.trs(-0.105, 0.592, -0.1062, Math.PI)), { c: '#7a809a', r: 0.4 });
-  // w9 A: a stitched hem band ~10 % of the cover height, a shade lighter and glossier (y_47306)
-  B.add(gQuad(0.253, 0.02), M4.mul(BH, M4.trs(0, 0.586, -0.1058, Math.PI)), { c: '#454c68', r: 0.38 });   // w10 gap: darker hem
-  B.add(gQuad(0.24, 0.0012), M4.mul(BH, M4.trs(0, 0.5965, -0.1061, Math.PI)), { c: '#9aa0b8', r: 0.5 });   // stitch line, light thread (w10 gap)
+  // w19 A: the hem, stitch and mark were quads 6-9 mm behind the plate (its foot tips forward since w10) and never showed;
+  // now thin bands lofted over the plate, following its slope (plate centre z -0.12 at y 0.575 -> -0.111 at 0.61)
+  const cz = (y) => -0.12 + (y - 0.575) / 0.035 * 0.009;
+  loftAt(B, [SEC(0.577, 0.253, 0.0064, cz(0.577), 0.002), SEC(0.596, 0.254, 0.0064, cz(0.596), 0.002)], BH, { c: '#30364f', r: 0.3 }, 1);   // w9 A: stitched hem band ~10 % of the cover height (y_47306)
+  loftAt(B, [SEC(0.5965, 0.24, 0.0072, cz(0.5965), 0.001), SEC(0.5977, 0.24, 0.0072, cz(0.5977), 0.001)], BH, { c: '#8a90a8', r: 0.5 }, 1);   // stitch line, light thread (b_ss_14)
+  loftAt(B, [SEC(0.5985, 0.014, 0.0068, cz(0.5985), 0.0005, -0.105), SEC(0.6045, 0.014, 0.0068, cz(0.6045), 0.0005, -0.105)], BH, { c: '#6a7090', r: 0.4 }, 1);   // small ANA mark, viewer's right (y_47306)
   // w11 B: contact darkening where the back fabric tucks into the shell sides (y_47306 dark crease) and along the strip
   for (const sx of [-1, 1]) loftAt(B, [SEC(0.05, 0.014, 0.003, -0.048, 0.001, sx * 0.199), SEC(0.55, 0.014, 0.003, -0.043, 0.001, sx * 0.203), SEC(0.80, 0.014, 0.003, -0.032, 0.001, sx * 0.2)], BH, { c: '#283052', r: 0.95 }, 1);   // w12 A + B: soft crease, not a drawn line
   // w9 A: a ~0.12 m centre strip in a contrasting weave runs from the pad top to the back top (headrest track cover,
@@ -264,30 +266,43 @@ function econUnit(n, lod = false, opts = {}) {
     // w5 B: a slim ~5.5 cm bar (y_47303 28 px on a 0.33 m / 160 px arm; fr57325 124108) with a drooping nose [D]
     loftAt(B, [SEC(0.625, 0.046, 0.32, -0.24, 0.016), SEC(0.64, 0.054, 0.34, -0.24, 0.024), SEC(0.668, 0.052, 0.335, -0.24, 0.024), SEC(0.68, 0.044, 0.32, -0.235, 0.018)], armTilt, SEATMAT.arm, 3);   // w11 B: nose ~2 cm down (y_47303)
     // w8 A: no separate knuckle block on the nose (the loft's rounded end carries it, y_47303)
-    // front end: one continuous grey bracket from under the arm nose down past the pan, with a pivot ring at pan height;
-    // the white paddle hangs from it (y_47302 / 47303; w2 B: was a ball on a stick) [D]
-    loftAt(B, [SEC(0.30, 0.036, 0.032, -0.37, 0.014), SEC(0.46, 0.04, 0.036, -0.385, 0.016), SEC(0.62, 0.04, 0.036, -0.395, 0.016)], M4.trs(xa, 0, 0), SEATMAT.armPost, 2);   // w5 B: slimmer
-    if (!lod) {
-      B.add(gCyl(0.02, 0.02, 0.064, 12), M4.trs(xa, 0.46, -0.39, 0, 0, Math.PI / 2), { c: '#9ea3a9', r: 0.4 });
-      B.add(gCyl(0.009, 0.009, 0.066, 8), M4.trs(xa, 0.46, -0.39, 0, 0, Math.PI / 2), { c: '#3a3e45', r: 0.4 });
-    }
     B.add(gRBox(0.05, 0.008, 0.24, 0.004, 1), M4.mul(armTilt, M4.trs(0, 0.678, -0.235)), SEATMAT.armPad);
-    // w14 gap: J-shaped support - a beam rising diagonally from the rear, then running forward ~7.5 cm under the arm into
-    // the front bracket (y_47303; the raked blade read as a box on posts) [D]
-    const beam = { ...SEATMAT.armPost, c: '#b4b9c2' };
-    // w16 A + B: one smooth swept moulding (two straight pieces + an elbow read as an open bracket with a strut)
-    const jp = []; for (let i = 0; i <= 12; i++) { const t = i / 12, u = 1 - t; jp.push([0, u * u * 0.625 + 2 * u * t * 0.505 + t * t * 0.512, u * u * -0.085 + 2 * u * t * -0.215 + t * t * -0.375]); }
-    const jt = gTube(jp, 0.028, 12); for (let k = 0; k < jt.p.length; k += 3) jt.p[k] *= 0.45; computeNormals(jt);   // w17 A: a flat ~2.5 x 5.6 cm moulding, not a round tube
-    B.add(jt, M4.trs(xa, 0, 0), beam);
-    // off-white fairing hanging under the arm nose down to ~0.14 m above the floor (the white "paddles" in y_47302:
-    // 0.54 -> 0.14 m at 422 px/m) [D]
-    B.add(gRBox(0.03, 0.32, 0.14, 0.012, 2), M4.trs(xa, 0.30, -0.35, 0, -6 * DEG), SEATMAT.arm);
-    if (k === 0 || k === arms.length - 1) {
-      // block end: sculpted off-white side panel under the armrest, tapering from the full arm length down + forward
-      // toward the front leg (y_47302 right-hand aisle seat, y_47301 aisle ends)
-      const o = k === 0 ? -1 : 1;
-      loftAt(B, [SEC(0.16, 0.018, 0.12, -0.34, 0.007), SEC(0.40, 0.018, 0.26, -0.28, 0.007), SEC(0.62, 0.018, 0.36, -0.23, 0.007)], M4.trs(xa + o * 0.012, 0, 0), SEATMAT.yShell, 2);
-      B.add(gRBox(0.02, 0.09, 0.05, 0.008, 1), M4.trs(xa + o * 0.024, 0.46, -0.40), { c: '#1d1f24', r: 0.4 });   // black button strip (y_47302)
+    if (!opts.noScreen) {
+      // w19 A + B: regular rows carry one C moulding, open at the front - the arm, a broad sweep down under its rear end and
+      // a ~5.5 cm lower bar running forward at pan-top height to a rounded nose, ~6 cm under the arm (y_47303 near / right
+      // aisle seats, sans b_ss_18); no front bracket, paddle or aisle-end panel (those are the exit-row arms, y_47302) [D]
+      const cp = [[0, 0.636, -0.078], [0, 0.60, -0.074]];
+      for (let i = 1; i <= 8; i++) { const t = i / 8, u = 1 - t; cp.push([0, u * u * 0.60 + 2 * u * t * 0.528 + t * t * 0.528, u * u * -0.074 + 2 * u * t * -0.074 + t * t * -0.15]); }
+      for (let i = 1; i <= 5; i++) cp.push([0, 0.528, -0.15 - 0.235 * i / 5]);
+      const ct = gTube(cp, 0.028, 14); for (let k = 0; k < ct.p.length; k += 3) ct.p[k] *= 0.7; computeNormals(ct);
+      B.add(ct, M4.trs(xa, 0, 0), SEATMAT.arm);
+      const nose = gSphere(1, 14, 8); for (let k = 0; k < nose.p.length; k += 3) { nose.p[k] *= 0.0196; nose.p[k + 1] *= 0.028; nose.p[k + 2] *= 0.03; }
+      computeNormals(nose); B.add(nose, M4.trs(xa, 0.528, -0.385), SEATMAT.arm);
+    } else {
+      // front end: one continuous grey bracket from under the arm nose down past the pan, with a pivot ring at pan height;
+      // the white paddle hangs from it (y_47302 / 47303; w2 B: was a ball on a stick) [D]
+      loftAt(B, [SEC(0.30, 0.036, 0.032, -0.37, 0.014), SEC(0.46, 0.04, 0.036, -0.385, 0.016), SEC(0.62, 0.04, 0.036, -0.395, 0.016)], M4.trs(xa, 0, 0), SEATMAT.armPost, 2);   // w5 B: slimmer
+      if (!lod) {
+        B.add(gCyl(0.02, 0.02, 0.064, 12), M4.trs(xa, 0.46, -0.39, 0, 0, Math.PI / 2), { c: '#9ea3a9', r: 0.4 });
+        B.add(gCyl(0.009, 0.009, 0.066, 8), M4.trs(xa, 0.46, -0.39, 0, 0, Math.PI / 2), { c: '#3a3e45', r: 0.4 });
+      }
+      // w14 gap: J-shaped support - a beam rising diagonally from the rear, then running forward ~7.5 cm under the arm into
+      // the front bracket (y_47303; the raked blade read as a box on posts) [D]
+      const beam = { ...SEATMAT.armPost, c: '#b4b9c2' };
+      // w16 A + B: one smooth swept moulding (two straight pieces + an elbow read as an open bracket with a strut)
+      const jp = []; for (let i = 0; i <= 12; i++) { const t = i / 12, u = 1 - t; jp.push([0, u * u * 0.625 + 2 * u * t * 0.505 + t * t * 0.512, u * u * -0.085 + 2 * u * t * -0.215 + t * t * -0.375]); }
+      const jt = gTube(jp, 0.028, 12); for (let k = 0; k < jt.p.length; k += 3) jt.p[k] *= 0.45; computeNormals(jt);   // w17 A: a flat ~2.5 x 5.6 cm moulding, not a round tube
+      B.add(jt, M4.trs(xa, 0, 0), beam);
+      // off-white fairing hanging under the arm nose down to ~0.14 m above the floor (the white "paddles" in y_47302:
+      // 0.54 -> 0.14 m at 422 px/m) [D]
+      B.add(gRBox(0.03, 0.32, 0.14, 0.012, 2), M4.trs(xa, 0.30, -0.35, 0, -6 * DEG), SEATMAT.arm);
+      if (k === 0 || k === arms.length - 1) {
+        // block end: sculpted off-white side panel under the armrest, tapering from the full arm length down + forward
+        // toward the front leg (y_47302 right-hand aisle seat, y_47301 aisle ends)
+        const o = k === 0 ? -1 : 1;
+        loftAt(B, [SEC(0.16, 0.018, 0.12, -0.34, 0.007), SEC(0.40, 0.018, 0.26, -0.28, 0.007), SEC(0.62, 0.018, 0.36, -0.23, 0.007)], M4.trs(xa + o * 0.012, 0, 0), SEATMAT.yShell, 2);
+        B.add(gRBox(0.02, 0.09, 0.05, 0.008, 1), M4.trs(xa + o * 0.024, 0.46, -0.40), { c: '#1d1f24', r: 0.4 });   // black button strip (y_47302)
+      }
     }
     if (!lod) B.add(gCyl(0.008, 0.008, 0.06, 10), M4.trs(xa, 0.63, -0.08, 0, 0, Math.PI / 2), SEATMAT.frame);
   });
