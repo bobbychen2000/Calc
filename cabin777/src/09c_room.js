@@ -22,7 +22,7 @@ Object.assign(SEATMAT, {
   jBand: { c: '#656b73', r: 0.4, l: LAYER.leather },
   // w13a: the aisle-end posts and door leaves read pale, nearly plain cream (c_27312 (205,201,190), c_27314 (226,227,223),
   // tpg_60), the cabinets and table inlays darker greige (SEATMAT.ash) [V]
-  ashDoor: { c: '#e4ddd0', r: 0.44, l: LAYER.ashDoor },   // w14a: own layer, faint grain   // w6a: header band 0.9-1.35x the fabric, a touch darker than the flap (tpg_42, c_27313) [V]
+  ashDoor: { c: '#ece7dc', r: 0.36, l: LAYER.ashDoor },   // w14a: own layer, faint grain   // w6a: header band 0.9-1.35x the fabric, a touch darker than the flap (tpg_42, c_27313) [V]
 });
 const ROOM = { hx: 0.585, hz: 1.359, top: 0.66, wall: 1.12, bed: 0.43 };
 // seat itself (passenger faces -z, back at z = 0): upright or bed. Per c_27302/27315/27316: thin flat cushion and a flat
@@ -64,13 +64,13 @@ function roomSeatCore(B, bed, lod, w = 0.64, fs = 1) {
   // QA w4: on the half away from the pillows so it shows, diagonal with the silver buckle (tpg_31 / 42) [V]
   // w11a: in the cushion's tilted frame, just proud of its top (was buried at y 0.433 - c_27313/15/16, omaat_room_15) [V]
   const CU = M4.trs(0, 0.39, -0.34, 0, 2 * DEG);
-  // w12: dark slate-teal webbing to the seat crease, buckle at its front end clear of the bundle (kn_17 #213342, c_27313) [V]
-  B.add(gBox(0.045, 0.004, 0.54), M4.mul(CU, M4.trs(0.15, 0.047, 0.04, -0.45)), { c: '#2c4250', r: 0.8, l: LAYER.fabric });
+  // w12/w15: near-black slate-teal webbing (kn_17 #213342) to the seat crease, buckle at its front end clear of the bundle (kn_17 #213342, c_27313) [V]
+  B.add(gBox(0.045, 0.004, 0.54), M4.mul(CU, M4.trs(0.15, 0.047, 0.04, -0.45)), { c: '#243440', r: 0.8, l: LAYER.fabric });
   // w14a: chrome buckle ~7 x 5 cm with its lift lever, the latch tongue + webbing stub on the open cushion (kn_17, tpg_46) [V]
-  const BK = M4.mul(CU, M4.trs(0.25, 0.051, -0.17, -0.45)), CH = { c: '#d4d8dc', r: 0.15, m: 0.95 };
+  const BK = M4.mul(CU, M4.trs(0.25, 0.051, -0.17, -0.45)), CH = { c: '#dde1e5', r: 0.08, m: 1 };
   B.add(gRBox(0.05, 0.014, 0.07, 0.006, 1), BK, CH);
   B.add(gRBox(0.034, 0.006, 0.036, 0.004, 1), M4.mul(BK, M4.trs(0, 0.009, -0.008, 0, -4 * DEG)), { c: '#aeb3b8', r: 0.2, m: 0.9 });   // lift lever
-  B.add(gBox(0.045, 0.004, 0.10), M4.mul(CU, M4.trs(0.34, 0.047, -0.17, 0.3)), { c: '#2c4250', r: 0.8, l: LAYER.fabric });
+  B.add(gBox(0.045, 0.004, 0.10), M4.mul(CU, M4.trs(0.34, 0.047, -0.17, 0.3)), { c: '#243440', r: 0.8, l: LAYER.fabric });
   B.add(gRBox(0.032, 0.006, 0.05, 0.003, 1), M4.mul(CU, M4.trs(0.32, 0.050, -0.10, 0.3)), CH);   // latch tongue
 }
 

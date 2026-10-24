@@ -34,12 +34,12 @@ let PHOTO_PIX = null;
 const PHOTO_GAIN = {
   17: 1.0,   // PY: synthesised ANA dash-grid tile (make_swatches synth_py_back), contrast measured on py_37305 [D]
   18: 0.5,
-  19: 2.6,   // room w14b: tables 0.041 vs c_27312 0.106 (the doors now have layer 30) [D]; room w13b: grain 0.053 vs tpg_81 0.053 / official 0.11-0.18 -> a little more [D]; room w12: real tpg_60 tile; banding 1 cm 6-7 % in the cabin views (tpg_60 / c_27314 / tpg_81) [D]; was 3.4 on the weak c_27305 tile; room w10b: 0.6-0.8x the photos at 3.0; room w8a: grain rendered 1.9-2.6 % vs 8.7-16 % (c_27316, tpg_53); x2 read streaky -> x1.5 [D]
+  19: 2.2,   // room w15b: blotchy dark bands at 2.6 (A: q07 grain 0.052 vs 0.057 at 2.6 -> between) [D]; room w14b: tables 0.041 vs c_27312 0.106 (the doors now have layer 30) [D]; room w13b: grain 0.053 vs tpg_81 0.053 / official 0.11-0.18 -> a little more [D]; room w12: real tpg_60 tile; banding 1 cm 6-7 % in the cabin views (tpg_60 / c_27314 / tpg_81) [D]; was 3.4 on the weak c_27305 tile; room w10b: 0.6-0.8x the photos at 3.0; room w8a: grain rendered 1.9-2.6 % vs 8.7-16 % (c_27316, tpg_53); x2 read streaky -> x1.5 [D]
   20: 0.7,
   21: 0.5,
   23: 1.0,
   28: 0.3,    // monuments w9: tile SD 0.10 -> ~3 % smudge mottle (sans_38 cart 4.8 %, sansY_44 oven ~10 %; 0.5 read as stains) [D]
-  30: 1.0,   // room w14a/b: aisle doors near-plain cream, the grain only faint (c_27312 (209,207,198), c_27314) [D]
+  30: 0.5,   // room w15a/b: doors still 0.84-0.92 of the cabinet luma in q06 (c_27312 0.6), dash streaks at aisle distance; room w14a/b: aisle doors near-plain cream, the grain only faint (c_27312 (209,207,198), c_27314) [D]
   29: 0.4,   // room w13a: read as hard gingham at 0.55 -> -30 %; room w12: kn_17 close-up +-25 % linear, but tpg_81 / tpg_46 at seat distance read about half that [D]
   27: 0.22,   // exterior w9: x0.75, read as even brushed banding at 0.3 (A w9); exterior w8: tile stored at SD 0.12 -> ~3.6 % grime mottle (KN41 / 7250 flap panels 3-5 %) [D]
 };
@@ -80,7 +80,7 @@ const LAYER_PARAMS = {
   26: [5.0, 0.12, 1.4, 0.15],   // econ w6: Y dash mosaic (0.2 m tile)
   27: [0.25, 0.015, 0.3, 0.35],  // exterior w8: 4 m wing-skin grime tile, near-flat normal, grime a little rougher
   28: [5.5, 0.02, 0.5, 0.3],     // monuments w9: 0.18 m satin galley-metal wear tile, near-flat normal, smudges a little rougher
-  30: [3.1, 0.08, 1.0, 0.1],    // room w14a: ash door veneer (j_ash tile), flatter than layer 19
+  30: [3.1, 0.04, 1.0, 0.1],    // room w14a: ash door veneer (j_ash tile), flatter than layer 19
   29: [6.6, 0.12, 1.0, 0.15],   // room w12: pillow / comforter check jacquard (0.152 m tile), soft weave relief
 };
 

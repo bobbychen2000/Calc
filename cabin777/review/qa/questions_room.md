@@ -45,3 +45,8 @@ The user asked for judgement calls rather than questions. Rule applied: real in-
 17. **Slippers (w12b / w13b).** kn_17 (2021) and tpg_76 (2020) show white slippers in clear film (with a pink amenity
     kit); only omaat_room_15 shows a navy pouch. Two of three real photos, including the latest, win: the slipper pack is
     now white in film (supersedes decision 13).
+18. **O bed length (w14a/b, w15a/b).** Both raters estimate the O bed's full-width part at ~0.9 m in tpg_81 against 0.66 m
+    in the model (head to the side-table corner). The table position comes from the photo-measured monument layout; a
+    Safran / ANA seat-plan dimension would settle it. Left as is.
+19. **Real-GPU check (w15).** Please confirm on a real GPU that the ash grain no longer smears at grazing angles (q07) and
+    the aisle doors do not alias (q06); the headless renderer cannot show anisotropic filtering.

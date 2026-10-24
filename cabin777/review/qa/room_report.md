@@ -139,3 +139,60 @@ ends, O quilt phase) are committed but not rated.
 **Sources added this wave:** TPG (Zach Griff 2020) b_tpg_1..93 and OMAAT a_omaat_room_10..31 / a_omaat_777j_* in
 `ref/web/room/` (gitignored). Ratings: `room_w7a.json` … `room_w11b.json`. Before/after: `room_before_after.jpg`
 (left: w7 renders, w8 for the beds; right: final).
+
+## Wave 3b, plateau breaker (2026-10-24): w12-w15
+
+| round | rater A (skeptic) | rater B (geometry) | rated head / main changes |
+|---|---|---|---|
+| w12 (start) | 8.1 | 8.2 | 4f006d2 (wave-3 final); gap analysis `room_gap_w12.json` |
+| w13 | 8.2 | 8.3 | 4f992d5 / 6d288fe: real-photo ash tile, check jacquard, comforter material + shape, satin shells |
+| w14 | 8.3 | 8.4 | e3e95f3 / 2b2f46b: O comforter to the table corner, ash door / cabinet split, banded jacquard, white slippers |
+| w15 | 8.4 | 8.4 | 63f9336 / 89fd6bb: ash doors on their own layer, chrome buckle, bundle film, darker pillow |
+
+Stopped at the 4-round cap of the plateau breaker; w13-w15 each gained +0.1, and the gap list holds nothing worth +0.3
+(the remaining medium, door vs cabinet ash contrast in the cabin view, is partly lighting). Target 8.5 not reached;
+no high-severity issue in any round. The post-w15 tweaks (ashDoor #ece7dc on PHOTO_GAIN[30] 0.5, ash grain 2.6 -> 2.2,
+near-black webbing, glossier chrome, both raters' w15 asks) are verified in my renders but not rated.
+
+**Gap analysis (w12)** ranked: (1) the ash tile came from the CG render c_27305 at 2.2 mm/px with no veneer banding;
+(2) the comforter was plain glossy satin, lighter than the pillow; (3) O comforter shape (pie-crust hem, ripples, a
+narrow tongue); (4) flap / fabric contrast 1.7-2.4 in the cabin vs 1.2-1.4; (5) belt colour and the spine T. It also found
+that tpg_72, cited for the quilted comforter in earlier rounds, is a photo of the pyjamas.
+
+**What changed**
+- **Ash.** `tex_j_ash.png` re-cut from a real 1600 px close-up of the aisle-end panels (tpg_60, 0.32 m tile, ~0.9 mm/px,
+  veneer bands kept). Aisle-end posts, door leaves and aisle panels use a pale, near-plain `ashDoor` on their own layer 30
+  (same tile, low gain); cabinets, tables and inlays a darker greige `SEATMAT.ash` #b2a28b (c_27312 / 27314 / 27316).
+- **Pillow + comforter jacquard.** New layer 29 `j_pillow`: a tone-on-tone check of ~1.4 cm squares set on the diagonal,
+  fading in diagonal bands (kn_17 close-up; period 1.9 cm measured on tpg_46).
+- **Comforter.** Matte #3f4799 (duvet / white pillow ~0.5, tpg_81), 3.5 cm edges, a long low hem wave, wider stitch dip
+  (no aliasing ripples), wide over the whole wide part of the O bed up to the table corner, no folds in the footwell taper.
+- **Seat.** Flap less glossy (r 0.55); dark grey-taupe pillow flange; pillow #3c4787 (kn_17 navy); near-black slate-teal
+  belt to the seat crease with a chrome lift-lever buckle and the latch tongue on the cushion (kn_17, tpg_46).
+- **Bundle.** Duvet at its real tone through the film with crease glints; white slippers in film (kn_17, tpg_76; question 17).
+- **Shell / monument.** Satin charcoal shells and caps (r 0.34, lighting hand-off); flared spine T into the aisle cap
+  (c_27313); plaque glow window inside its grey tile (was a navy box).
+- **Triangles.** Near pair (O + E + divider) 22,980 -> ~23,100 (+0.5 %; wave-3 total +20 % of the +25 % budget). O bed
+  variant 15.4k -> ~17.6k (occupied seat only). Far LOD unchanged.
+
+**Shared-file edits** (each named in its commit): `03_tex.js` LAYER `jPillow` 29 / `ashDoor` 30, `N_LAYERS` 31,
+`PHOTO_LAYERS` / `PHOTO_GAIN` / `LAYER_PARAMS` 29-30, `PHOTO_GAIN[19]`; `09_seats.js` SEATMAT ash / jHead / duvet /
+pillowBlue / jShell / jCap and the room plaque quad; `make_swatches.py` j_ash (tpg_60) + j_pillow (synth); tiles
+`tex_j_ash.png`, `tex_j_pillow.png`.
+
+**Hand-offs** (`from_room.md`): monuments - the ash tile and gain changed (barAsh shares layer 19; layer 30 is available
+for a plainer finish); integration - anisotropic filtering on the photo / detail arrays (q07 grazing-angle smear, q06
+door aliasing; SwiftShader cannot show it, needs a real-GPU check); lighting - cool cast on shells and the over-saturated
+pillow in the cabin views; aisle-facing faces possibly under-lit (door / cabinet luma 0.84-0.92 vs 0.6 in c_27312).
+
+**Still open (w15a/b)**
+- Medium: door vs cabinet ash contrast in the cabin views (partly lighting); B: grain blotchy at 2.6 (now 2.2, unrated).
+- Low: pillows are rigid slabs (real ones pinch to thin corners); O comforter outline still crisp; the bundle film is
+  mostly hidden under the pillow; the O bed's full-width part may be short (0.66 m vs ~0.9 m estimated from tpg_81) -
+  needs a seat-plan dimension before the side table moves (question).
+
+**Sources added this wave** (`ref/web/room/`, gitignored): TPG 2020 review re-downloaded (tpg_43..93, new numbering:
+tpg_46 O pair with bundles, tpg_60 ash close-up, tpg_79 / 81-83 beds), KN Aviation 2021 (kn_*, kn_17 bundle close-up),
+Live and Let's Fly (lalf_*), Turning Left for Less 2024 (tlfl_*), Sam Chui (sc_*). Ratings `room_w12a.json` ...
+`room_w15b.json`, gap analysis `room_gap_w12.json`. Before / after: `room_before_after.jpg` (w12 start vs w15);
+the wave-3 sheet is `room_before_after_w7-w11.jpg`.
