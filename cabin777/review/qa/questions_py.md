@@ -21,3 +21,9 @@
    pulled out as in the py_37305 close-up.
 6. **Literature pocket.** ANA's photos never show the lower seat back, so the model follows the 2023 SANspotter photos
    (san_20 / san_26): a moulded bucket with a mesh band across its lower front.
+7. **Gooseneck (resolved by evidence, w10):** every stowed view (py_37301 / 37302 / 37303, san_26) shows the heads
+   near-vertical and apart. py_37305 looks like a pulled-out pose, so the model follows the stowed views.
+8. **Flap aspect:** py_37301 / 37302 give a visible h/w of about 0.90 and py_37305 about 1.25 (perhaps a raised
+   headrest). The model sits in between (~1.0 head-on).
+9. **Back cloth in py_37301 vs py_37302:** 37301 reads as a blocky brick mosaic, 37302's foreground seat as sparse cream
+   flecks, with petals over the upper back. Is row 25 dressed differently? The model uses the 37301 / 37305 cloth everywhere.

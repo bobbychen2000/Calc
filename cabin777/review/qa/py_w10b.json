@@ -1,0 +1,53 @@
+{
+ "area": "py",
+ "rater": "B",
+ "round": "w10",
+ "commit": "3f7a731",
+ "score": 8.2,
+ "summary": "This is a clear gain over w9 (8.0). The headrest now reads as ANA's: short domed ears with a clean crease and shadow above the bolsters, and a squarer navy flap without scroll ends. The screen sits high in the shell, the literature bucket has depth, the roller is chunky and the console side has its dark panel and button strip. Three things still separate it from the photos. The two adjacent gooseneck heads intersect at their upper ends. The wing petals have about half the photo's contrast. The back cloth is a crisp black-and-white brick barcode where the photos show a soft mottle. Lighting darkening is ignored as instructed; colours were judged in the studio renders.",
+ "calibration": [
+  {"issue": "w9a medium: wings are tall flat strips continuous with the bolsters, not puffy ears", "status": "fixed. b3/b9/b16 (/tmp/claude-0/w10/b) show domed pillows standing proud of the flap, with a rounded bottom and a shadow crease over the bolster top. They still sit directly on top of same-width bolster tubes, so from above (b15) they read a little stacked; see low issue."},
+  {"issue": "w9a medium: flap too tall (h/w 1.25-1.30), rolled bar ends top/bottom, saturated hem band", "status": "fixed. Head-on (b3) h/w is 0.73 (geometry 0.225/0.29 = 0.78). In q14 the middle seat is about 0.83, against 0.92 for the near seat in py_37301. There are no scroll ends, and the hem is body-coloured. It is now slightly squat; see low issue."},
+  {"issue": "w9a medium: stowed gooseneck heads parallel and touching, read as one plate", "status": "partly fixed. The heads now tilt 32 deg lens-forward and the hoses bow out. But the 12 deg splay rotates the UPPER ends toward each other. Pivots are 0.5525 - 2*0.255 = 0.0425 apart with r 0.019, so the gap is about 4 mm before roll and negative after it. b3 and b15 show the two cylinders merged at the top in a V. See medium issue."},
+  {"issue": "w9a low: back fabric mottle soft/cloudy, dash grid softer than photo", "status": "changed, not resolved. The mottle is gone and the close-up now shows a crisp high-contrast brick barcode with black dashes (b4/b5). py_37305 shows a soft light-grey mottle with low-contrast dashes. See low issue."},
+  {"issue": "w9a low: console seat side lacks the dark recessed panel + lit button strip", "status": "fixed (b14): recessed panel, silver plaque with two sockets, and a 4-button lit strip. The panel reads mid blue-slate rather than dark."},
+  {"issue": "w9a low: literature pocket flat and shallow", "status": "fixed. The bucket bulges about 5 cm with a dark mouth (p7, b17)."},
+  {"issue": "w9a low: leg-rest roller thin and flush", "status": "fixed. It is a chunky dark bar with end caps (p8)."},
+  {"issue": "w9b medium: wing pads sink into bolsters with a saw-tooth boundary, no crease", "status": "fixed. b9/b16 show a clean rounded ear bottom with a shadow crease and no jagged texture seam."},
+  {"issue": "w9b medium: shell rim above the screen about 2x the photo, top-heavy back", "status": "fixed. In q13b the rim above the bezel is about 0.2 of the bezel height (py_37304 about 0.14-0.19)."},
+  {"issue": "w9b medium: wing petal cloth about half the photo contrast", "status": "not fixed. The ear's L p10/p90 spread is 70-106 (36) in b3, against 69-143 (74) in py_37305. Petals are still small sparse ovals, where the photo shows dense angular sakura chips."},
+  {"issue": "w9b low: back cloth even brick barcode", "status": "not fixed (see above)."},
+  {"issue": "w9b low: rolled flap edges poke out as navy tabs", "status": "fixed. b4/b9 show no separate tabs."},
+  {"issue": "w9b low: lumbar welts as dark hairlines dipping in and out", "status": "mostly fixed. They are continuous seam-shadow lines now (b4/b5), still a touch line-like."},
+  {"issue": "w9b low: console body neutral grey", "status": "fixed. pyArm is #4f5a76, blue slate (b14, p1)."},
+  {"issue": "w9b low: literature net straight flat band", "status": "not fixed. It is still a straight 0.06 band, and from the side (p7) it sticks out aft of the bucket as a black ledge."},
+  {"issue": "w9b low: wing domes and navy over-top band show over the shell corners from behind at standing height", "status": "not fixed. b1/b2/b13 show the navy strip along the shell top and petal domes at the corners. san_26 shows nothing above the shell."}
+ ],
+ "details": [
+  {"detail": "back + cushion shape / proportion", "score": 8.5, "refs": "py_37301, py_37302; p1, p3, q13"},
+  {"detail": "headrest ears / bolster junction", "score": 8.3, "refs": "py_37301, py_37305; b3, b9, b15, b16"},
+  {"detail": "navy flap", "score": 8.5, "refs": "py_37301, py_37305; b3, b4, p4 (flap HSV 0.63/0.51/0.34 vs py_37305 0.64/0.47/0.25)"},
+  {"detail": "shell incl. rear face", "score": 8.3, "refs": "py_37304, san_26; q13b, b1, b2, b17"},
+  {"detail": "screen + frame + placards (placards blank = handed off)", "score": 8.3, "refs": "py_37304, san_26; b17, q13b"},
+  {"detail": "literature pocket", "score": 7.6, "refs": "san_26, san_20; b11, b17, p7"},
+  {"detail": "consoles incl. side panel + buttons", "score": 8.3, "refs": "py_37301, py_37303; b14, p1, p8"},
+  {"detail": "window armrest + aisle shroud", "score": 8.2, "refs": "py_37301; p1, p3, q14"},
+  {"detail": "leg rest + roller + footrest + legs + bottle bin", "score": 8.2, "refs": "py_37301; p8, b1, b13"},
+  {"detail": "gooseneck light", "score": 7.4, "refs": "py_37305, san_26; b3, b5, b15, b16"},
+  {"detail": "fabrics (back dash grid, wing petals)", "score": 7.5, "refs": "py_37305, py_37301; b4, b5, b9, b3"}
+ ],
+ "issues": [
+  {"severity": "medium", "issue": "The two adjacent gooseneck heads intersect at their upper ends. The 12 deg roll swings each head's top toward the neighbour's, so the pair reads as one V-shaped block. In py_37305 the heads hang clearly apart, about 1.5 head diameters (about 5-6 cm), each on its own hose arcing forward from the shell.", "evidence": "b15_goose_top and b3_head_front (/tmp/claude-0/w10/b): the cylinders merge at the top. 09b_py.js:134 places heads at x = ±0.255 from each seat centre with seat spacing 0.5525, so the centres are 4.25 cm apart with r 0.019. Roll -sd*12deg moves each top end about 1.1 cm inward.", "fix": "Reverse the roll sign (+sd*12deg) so the tops lean apart and the lens ends hang inward, or keep it and move the pivots to x 0.235-0.24 so the centres are at least 7 cm apart. Also end the hose Bezier (C[3]) at the new head top."},
+  {"severity": "medium", "issue": "Wing petal cloth still has about half the photo contrast. The petals are small sparse ovals; py_37305/37302 show dense, angular light sakura chips on a darker mottled ground.", "evidence": "Ear L p10/p90: b3 70-106 (spread 36), py_37305 69-143 (spread 74).", "fix": "In make_swatches.py tex_py_confetti, about double the petal count and size and make them angular and irregular. Lift petal brightness and darken the ground so the spread reaches about 70 at studio exposure."},
+  {"severity": "low", "issue": "Close up, the back cloth is a crisp, high-contrast brick barcode of equal black and white dashes in straight rows. py_37305 shows a soft light-grey mottle of low-contrast pale dashes with larger darker clouds, and almost no near-black dashes.", "evidence": "b4, b5, b16 against py_37305 (back crop 520,420-700,560). Medians are similar (L spread 83 vs 83), but our dark dashes are near-black.", "fix": "In tex_py_back, raise the darkest dash value about 30 %, soften dash edges about 1 px, and bring back a large-scale (5-8 cm) light/dark cloud at low amplitude."},
+  {"severity": "low", "issue": "The literature net is still a straight flat band, and from the side it sticks out aft of the bucket as a black ledge. san_26 shows the net following the curved bucket bottom, with a smile-shaped top edge.", "evidence": "p7_side (/tmp/claude-0/w10/st, crop c_p7.png in /tmp/claude-0/w10/b), b11, b17.", "fix": "Build the net as a curved band on the bucket's loft surface (offset 2-3 mm), with its top edge dipping at the centre, and remove the flat box at 09b_py.js:116."},
+  {"severity": "low", "issue": "From behind at standing height, a navy flap over-top strip runs along the shell top, and ear petal domes show at the shell's upper corners. san_26 / py_37304 show only the grey shell.", "evidence": "b1_rear_stand, b2_rear_corner, b13_rear_stand_side.", "fix": "Raise the shell top arch 1-1.5 cm or drop the over-top piece and ear tops behind the rim."},
+  {"severity": "low", "issue": "The ears sit directly on bolster tubes of the same width, so from above the ear and bolster stack like two sausages. In py_37301/37305 the ear is wider and rounder than the bolster below, and the back narrows under it.", "evidence": "b15_goose_top, b16_ear_side.", "fix": "Widen the ear about 1 cm outboard and step the bolster top in and back about 1 cm under it."},
+  {"severity": "low", "issue": "The console seat-side panel reads mid blue-slate, barely darker than the console body. In py_37301 it is a distinctly dark recessed panel.", "evidence": "b14_console_side.", "fix": "Panel colour about 0.6x pyArm, or a 5-8 mm recess so it shades."},
+  {"severity": "low", "issue": "The flap is now slightly squat: rendered h/w is about 0.83 in q14, against 0.92 for py_37301's near seat at a similar angle.", "evidence": "q14 middle seat flap about 120x100 px; py_37301 near seat flap 98x90 px.", "fix": "Flap height 0.225 -> 0.245."},
+  {"severity": "low (handed off)", "issue": "Blank placards (integration atlas). Sun diamond on the 26A back and overall darkening in q13/q14 (lighting, mid-iteration per from_integration 56bb5c7). Not counted.", "evidence": "q14, q13b.", "fix": "n/a for PY"}
+ ],
+ "questions": [
+  "Gooseneck: in py_37305 the hoses leave the shell nearly horizontally at headrest-top height and arc forward over the gap before the heads drop. Should PY copy that silhouette (more visible hose), or keep the hose tucked along the flank as in san_26 (stowed)? I'd copy py_37305 for the seat-view and keep the head clear of the neighbour's either way."
+ ]
+}

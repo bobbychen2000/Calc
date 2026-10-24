@@ -89,3 +89,63 @@ These are in `questions_py.md`:
 1. The real seat or console width, or the seat spacing from an aeroLOPA drawing.
 2. Which fabric generation to follow, or whether to use a larger repeat.
 3. Confirm the bulkhead monitors for row 25.
+
+## Wave 3 (2026-10-24)
+
+Start: a1 (3469e77), which redid PY to follow ANA's official photos (user decision), unrated. The wave-3 cap of six rounds
+(w5-w10) was reached at **8.2 / 8.2**: the 8.5 target was **not** met, but every round gained and no high issue is left.
+
+| round | rater A | rater B | mean | fixed in |
+|---|---|---|---|---|
+| w5 (a1 as committed) | 6.4 | 6.8 | 6.6 | 19f1188 |
+| w6 | 6.6 | 7.0 | 6.8 | 9d9a406 |
+| w7 | 7.0 | 7.4 | 7.2 | 2162647 |
+| w8 | 7.5 | 7.4 | 7.45 | 91d6ceb |
+| w9 | 7.8 | 8.0 | 7.9 | 3f7a731 |
+| w10 | 8.2 | 8.2 | 8.2 | post-rating fixes (gooseneck, net, pan bar), not re-rated |
+
+w5 dropped 0.15 against w4 (6.75), less than the 0.3 regression guard. The w10 round fell inside the lighting
+mid-iteration (from_integration 56bb5c7: the PY/Y block renders ~20-35 % dark); per that note no material was retuned for
+it, and both raters judged colour in the studio renders.
+
+### What changed
+- **Back fabric** (`synth_py_back`), the high issue of w5-w7: from a crisp white barcode, via a too-soft one-tone
+  version (w5), to a three-tone mosaic. Light cells and a navy dash set on its own band between the rows, dark- and
+  light-dominant cells, 2x2-cell brick patches, rows at random pitch around 8.2 mm (no corduroy beat), varied dash lengths,
+  mild mottle and fine grain. Steel grey-blue base `#7e8593` (saturation ~0.2, py_37301/03/05). q14 against py_37301:
+  contrast 0.60-0.74 vs 0.65, dark share 0.12-0.15 vs 0.14-0.18.
+- **Headrest:** the 0.29 x 0.225 navy flap is a single sheet, its edges lying over the ears. Short, puffy, domed ears
+  sit beside it (not in front), with a gap above shortened bolsters. The narrower headrest gives a neck step. The ear tile
+  has a dark weave under brighter, angular sakura petals.
+- **Shell:** tapers to ~0.47 around the screen (shell/bezel 1.18 vs 1.14-1.17), with a continuous soft arch rim above
+  the fabric. A darker rear skin follows the shell (py_37304 #42474f). The screen sits in a 2 cm dark frame, raised so the
+  rim above it is ~0.19 of the bezel height.
+- **Rear of the seat:** a moulded literature bucket with a smile lip, a dark mouth and a net on its bulge (san_20 / 26).
+  The bottle bin has a dark housing and a chunky brushed cup block. The footrest hangs on two vertical arms. Legs are
+  aluminium grey.
+- **Console:** blue-slate body (`pyArm` `#4f5a76`). The lid runs to a flush cup nose with recessed wells. The seat
+  side has a dark recessed panel with a lit button strip.
+- **Gooseneck:** a slim 13 mm arm along the shell flank as a smooth Bezier. The chrome head hangs near-vertical at
+  mid-back, ~9 cm from the neighbour's.
+- **Other parts:** the aisle shroud has its own darker material. The leg-rest roller is chunkier, with end caps and
+  soft flutes. Seam-shadow welts run along the bolster edges.
+- **Triangles** (hi LOD, `__app.scene` seat groups): 157.8k -> 196.0k (+24 %, within the 25 % budget). The shell loft
+  density was kept at 3 to stay inside it.
+
+### Open (from w10, not done)
+- Low: the wing-petal contrast. A calls it fixed (p90/p50 1.27-1.47 vs 1.25-1.63); B still measures about half of
+  py_37305's spread.
+- Low: the flap aspect. A measures it as too tall and B as slightly squat, so it is left as is.
+- Low: the back cloth reads crisper than py_37305 close up (B), and the saturation is ~35 % below the official photos
+  (A). Retune only after the lighting loop lands.
+- Low: from a standing eye behind the row, a thin navy over-top strip and the ear tops show at the shell corners (B).
+- Handed off: blank placards (integration atlas, from_py.md item 3), a rear-facing QA view (item 4), and the sun diamond
+  on the 26A back plus the overall PY darkening (lighting).
+
+### Sources
+- ANA py_37301-37306 (ref/ana).
+- SANspotter 2023 JA793A, san_00-30 (ref/web/py, https://www.sanspotter.com/ana-777-300er-premium-economy/).
+- GourmetFlyer, ANA A380 PY: same ZIM hardware, different fabric; b_gf_a380_* (https://gourmetflyer.com/?p=5106).
+- The Alviator, Business Traveller and Flickr were blocked from the sandbox this wave, so the alv_* photos cited in
+  wave 1 were not re-checked.
+- Before/after: `py_before_after.jpg` (own renders only).
