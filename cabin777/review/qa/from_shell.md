@@ -136,3 +136,13 @@ cameras, should be checked. q07 and q12 look fine.
 ### To lighting (`04_shaders.js`, down-face reveal-glow cut): soft grey band under the PY/Y tub lip (w12a/b low)
 - Evidence: ra_yWin / s02 / s08: the crown runs at 0.55-0.61 of the pier, against ~0.85 in sp_py14 (hairline rim only).
 - Fix, as in w10b / w11b: fade the cut back out above dy ~0.40 (where the tub top meets the wall).
+
+## Wave 3d (w15)
+
+### To lighting: door viewing-window glass renders flat white, and the earlier items are still open (w15a / w15b low)
+- **Door glass:** in b_doorWin / s06 the door viewing-window glass reads a flat 240 with no sky gradient or detail. The cabin panes
+  show sky, and lalf_133 shows a bloomed but graded pane. The door glass is the cabin pane mapped into the door seal
+  (`doorGlass` instances in 07_shell.js), so it is probably the window-glow / exposure term saturating. Ask: let it keep some sky
+  gradient.
+- **Still open:** the creams render neutral (door shade #d8d2c6 lands at 222,222,221); the dado grille under the seats is near black in
+  b_dadoY2 (mean ~21); there is a grey band under the PY/Y tub lip.

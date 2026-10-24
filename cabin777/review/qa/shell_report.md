@@ -196,3 +196,27 @@ the arm-arc box vs ~1.4 (cell top 1.36 limits it); no linen weave on the sidewal
 layer: the fabric layer's normal strength 0.26 is shared with the seats); vinyl fine speckle about half the photo's
 (03_tex.js LAYER_PARAMS 7, shared); light card on the PY/Y tub floor; louvre pitch finer than py_37303.
 **Harness note:** studio.js's first shot can fire before the studio scene is up (w14 win_front showed the cabin); re-render it.
+
+## Wave 3d (2026-10-24): w15, confirm
+
+| Round | Rater A | Rater B | Mean | Files |
+|---|---|---|---|---|
+| w15 (fresh, head 7301cfe; shell = 1523626, the unrated post-w14 fixes) | 8.5 | 8.5 | 8.5 | shell_w15a / w15b.json |
+
+**The shell meets the bar:** both raters score 8.5 and there is no high or medium shell issue, so wave 3d stopped after this one round,
+with no code change. Cameras: `review/qa/shell_views.js` (18 views) plus the 22 `test/qa.js` views. The raters were also given the
+06f9c5a shell (the build w14 rated) on the current head for the four changed views.
+- **Post-w14 fixes confirmed:** the door-shade finger slot now renders (min pixel 23-135 on the shade; w14 194-198). The shade
+  separates from the lining and the glass (lining 229 / shade 222 / glass 240). The taller window now rises above the arm-arc housing.
+  The darker grille is barely measurable (helps, no regression). Door lining/window detail went from 8.0-8.1 to 8.3 in both ratings.
+- **Still open (all low):**
+  - The door window is still ~15 % short (1.13x the housing against ~1.36x in lalf_133), and the arm-arc housing overlaps its bezel with no gap (w15b). One fix would cover both: move the window ~0.03-0.04 m away from the housing and raise its top ~0.07 m. That needs the cell top (1.36) raised, and the monuments' housing position checked.
+  - Blackout pleat contrast is about half the photo's (cv 0.17 against ~0.33).
+  - No linen weave on the sidewall.
+  - The vinyl speckle is low (shared LAYER_PARAMS 7).
+  - The PY/Y tub floor has a light card.
+  - The grille louvre pitch is finer than py_37303.
+- **Triangles:** unchanged (648k wave-3 count).
+- **Harness:** the head at 3ea3f24 failed to load (`gPlate` was declared twice). 67a7fbc fixed it and made build.py reject duplicate names. lalf_133 / lalf_134 are not
+  re-downloadable from the rating files (no URL recorded), so the door proportions rest on the w13-w14 measurements.
+- **Lighting hand-offs (from_shell.md, wave 3d):** the door viewing-window glass is flat 240 with no sky detail; the creams are still neutral; the grille under the seats is near black.
