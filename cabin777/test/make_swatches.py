@@ -271,21 +271,22 @@ Y_PHOTO = {
     'y_diamond': ('y_47306', (62, 358, 144, 473), 0.203, 30, 0, 0.3, 1.0, 0.0),
     # y_47300 front-row seat 2 back (the only frontal, evenly lit fleck back): back 0.43 m = 127 px -> 295 px/m, 95 px =
     # 0.32 m; but at 0.32 the fleck pitch in q15 was ~1.2x the photo's -> 0.27 m [D]; flecks are 1-2 px in the source
-    'y_fleck':   ('y_47300', (352, 308, 447, 403), 0.27, 8, 0, 0.2, 1.0, 0.3),
+    'y_fleck':   ('y_47300', (352, 308, 447, 403), 0.27, 8, 0, 0.0, 0.8, 0.3),
     # right seat back below the cover: dash mosaic; cover 0.255 m = 270 px -> 1059 px/m, 135 px = 0.128 m [D]; rows
     # levelled by 3 deg (perspective tilt)
     'y_mosaic':  ('y_47306', (560, 427, 695, 562), 0.128, 14, 3, 0.3, 1.0, 0.1),
 }
 
 
-def _fft_resample(x, n):
-    """resample a periodic h x w image to n x n in the Fourier domain (a spatial resize treats the edges as borders and
-    left dark dots at the tile corners, c3)"""
+def _wrap_resize(x, n, pad=8):
+    """resize a periodic h x w image to n x n with bicubic on a wrap-padded copy (a plain resize treats the edges as
+    borders - dark dots at the tile corners, c3; a Fourier resample rang round the bright flecks - dark halos, w15 A)"""
     h, w = x.shape
-    F = np.fft.fftshift(np.fft.fft2(x)); G = np.zeros((n, n), complex)
-    hh, ww = min(h, n), min(w, n)
-    G[n // 2 - hh // 2:n // 2 - hh // 2 + hh, n // 2 - ww // 2:n // 2 - ww // 2 + ww] = F[h // 2 - hh // 2:h // 2 - hh // 2 + hh, w // 2 - ww // 2:w // 2 - ww // 2 + ww]
-    return np.real(np.fft.ifft2(np.fft.ifftshift(G))) * (n * n) / (h * w)
+    p = np.pad(x, pad, mode='wrap').astype(np.float32)
+    W, H = int(round((w + 2 * pad) * n / w)), int(round((h + 2 * pad) * n / h))
+    y = np.asarray(Image.fromarray(p, mode='F').resize((W, H), Image.BICUBIC))
+    oy, ox = int(round(pad * n / h)), int(round(pad * n / w))
+    return y[oy:oy + n, ox:ox + n]
 
 
 def _gblur(x, s):
@@ -334,7 +335,7 @@ def y_photo(name):
     r = P / np.maximum(low, 1e-4)[..., None]
     o = 12                                              # overlap for the seam cut (the box must leave o px of fabric right / below)
     r = _wrap_cut(r[y0 - py0:y1 - py0 + o, x0 - px0:x1 - px0 + o], o)
-    r = np.stack([_fft_resample(r[..., c], S) for c in range(3)], 2)    # exact for the wrapped tile (no edge seam)
+    r = np.stack([_wrap_resize(r[..., c], S) for c in range(3)], 2)     # wrapped tile: no edge seam
     # second flattening on the periodic tile (wrap blur): a residual shading gradient inside the crop repeats as a visible
     # grid of light / dark squares (c3 fleck / mosaic)
     r = r / np.maximum(_blur_wrap(r.mean(2), 2.5 * hp * S / (x1 - x0)), 1e-3)[..., None]
