@@ -987,7 +987,7 @@ def _consoles(acc):
             acc.add(disk(ctr + [0, 0, 0.0005], [0, 0, 1.0], 0.029, n=24), "black")
         f = Fr([xa + 0.10, sg * (yi - 0.0005), zt - 0.12], [1.0, 0, 0], [0, 0, 1.0], [0, -sg, 0])
         acc.add(f.rect(-0.012, -0.006, 0.012, 0.006), "black")
-        acc.add(*fd_print.decal(f, -0.030, 0.019, 0.030, 0.035, fd_print.LIFT, "words", rows=2, cap=2.0,
+        acc.add(*fd_print.decal(f, -0.030, 0.019, 0.030, 0.035, -0.0005 + fd_print.LIFT, "words", rows=2, cap=2.0,
                                 seed=("pocket", sg)))                        # 1-kg pocket placard, printed (A3)
         for du in (-0.026, -0.008):                                # USB-A / -C socket pair (P1046409)
             acc.add(f.rect(du - 0.007, -0.034, du + 0.007, -0.024, 0.0003), "black")

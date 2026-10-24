@@ -901,9 +901,9 @@ def cb_panels(fl):
                         out.append((cylinder(P + 0.0010 * Nn, P + (CB["head_h"] + CB["raise_"]) * Nn, CB["head_r"],
                                              n=10), "grip_black"))
                     if pa == x0:                       # row marks: 1-4 printed dots on the frame's forward band
-                        out.append(PR.decal_map(M, u(pa) - 0.0090, b0 + vk - 0.0070, u(pa) - 0.0040,
+                        out.append(PR.decal_map(M, u(pa) - 0.0056, b0 + vk - 0.0070, u(pa) - 0.0024,
                                                 b0 + vk - 0.0070 + 0.0032 * (r + 1), fp, "vector",
-                                                prims=tuple(("dot", 1.4 + 2.2 * (d % 2), 1.6 + 3.2 * d, 0.6)
+                                                prims=tuple(("dot", 1.0 + 1.2 * (d % 2), 1.6 + 3.2 * d, 0.55)
                                                             for d in range(r + 1))))
                 if strips:                             # light strips under their printed labels
                     out.append((M.quads(strips, pp + 0.0006), "fdb_cb_label"))

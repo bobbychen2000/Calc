@@ -88,9 +88,33 @@ def _profile_stack():
     qx0 = float(PE["x"][0])
     zt = FD.FL + float(PE["top_h"])
     P = np.array(st + [(qx0, zt)])
+    # (first-principles A6, sheet L6C: the moulding's sections meet in R blend[1] fillets -- the drawn polyline's kinks
+    # at the SDU foot and the pad, rounded as a moulded part is; tangent arcs, each limited to 0.45 of its edges)
+    rf = float(PE["blend"][1])
+    pts = [P[0]]
+    for k in range(1, len(P) - 1):
+        a, b, c = P[k - 1], P[k], P[k + 1]
+        d1, d2 = (a - b) / np.linalg.norm(a - b), (c - b) / np.linalg.norm(c - b)
+        ang = math.acos(float(np.clip(d1 @ d2, -1, 1)))
+        if ang > math.radians(178.0):
+            pts.append(b)
+            continue
+        t = min(rf / math.tan(0.5 * ang), 0.45 * np.linalg.norm(a - b), 0.45 * np.linalg.norm(c - b))
+        r_ = t * math.tan(0.5 * ang)
+        p0, p1 = b + d1 * t, b + d2 * t
+        bis = (d1 + d2) / np.linalg.norm(d1 + d2)
+        cen = b + bis * (r_ / math.sin(0.5 * ang))
+        a0, a1 = math.atan2(*(p0 - cen)[::-1]), math.atan2(*(p1 - cen)[::-1])
+        da = (a1 - a0 + math.pi) % (2 * math.pi) - math.pi
+        for u in np.linspace(0, 1, 7):
+            pts.append(cen + r_ * np.array([math.cos(a0 + u * da), math.sin(a0 + u * da)]))
+    pts.append(P[-1])
+    P = np.array(pts)
     dense = [P[0]]
     for a, b in zip(P[:-1], P[1:]):
-        n = max(2, int(math.ceil(np.linalg.norm(b - a) / 0.008)))
+        if np.linalg.norm(b - a) < 1e-9:
+            continue
+        n = max(1, int(math.ceil(np.linalg.norm(b - a) / 0.008)))
         dense += [a + (b - a) * t for t in np.linspace(0, 1, n + 1)[1:]]
     D = np.array(dense)
     s = np.r_[0.0, np.cumsum(np.linalg.norm(np.diff(D, axis=0), axis=1))]
@@ -395,7 +419,8 @@ def quadrant():
     # (first-principles A3: printed on the bezel plate -- pseudo-text titles, one or two lines over each item -- instead of
     # raised word strokes)
     for k_, (yy, rows) in enumerate(((y1, 2), (y2, 2), (y3, 1), (y4, 2))):
-        out.append(PR.decal_r(ft, -th + 0.0018, yy - 0.019, -th + 0.0018 + 0.0036 * rows + 0.0012, yy + 0.019,
+        hw_ = min(0.019, q["trim_hw"] - 0.007 - abs(yy))                  # inside the bezel's rounded corners
+        out.append(PR.decal_r(ft, -th + 0.0018, yy - hw_, -th + 0.0018 + 0.0036 * rows + 0.0012, yy + hw_,
                               0.0024 + PR.LIFT, "words", rows=rows, cap=1.3, seed=("trim", k_)))
     bw, bh = 0.026 * k5, 0.016 * k5
     oa, ob = 0.5 * bh + 0.0012, 0.5 * bw + 0.0012
@@ -476,7 +501,8 @@ def quadrant():
                         rows=2, cap=1.25, align="l", seed="caution"))
     # flap lever: stem + black square paddle
     out.append((_cyl([fx + 0.010, fy, zt - 0.006], [fx, fy, FL + fh_ - 0.015], 0.0045, n=10), "metal_dark"))
-    out.append((_se([fx, fy, FL + fh_ - 0.010], (0.012, 0.015, 0.016), (0.3, 0.3), nu=8, nv=12), "grip_black"))
+    # (FIDY5-02: a satin BLACK paddle -- the panel knobs' grip_black reflection floor read it grey from the seats)
+    out.append((_se([fx, fy, FL + fh_ - 0.010], (0.012, 0.015, 0.016), (0.3, 0.3), nu=8, nv=12), "bezel_black"))
     # placard band across the quadrant (abstract strokes)
     px_ = q["placard_x"]
     out.append(PR.decal_r(fp, px_ - cx - 0.0045, -hw + fw + 0.008, px_ - cx + 0.0045, hw - fw - 0.008, PR.LIFT, "words",

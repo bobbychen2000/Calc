@@ -153,6 +153,12 @@ def gfc700(f, aw, ah):
         out.append((fluted_knob(c + 0.0022 * f.w, f.w, f.u, 0.5 * od, 0.0086, flutes=24), "grip_black"))
         out.append((knob(c + 0.0108 * f.w, f.w, f.u, 0.5 * od - 0.0012, 0.0008, n=40, chamfer=0.0), "panel_silver"))
         out.append((fluted_knob(c + 0.0116 * f.w, f.w, f.u, 0.5 * idm, 0.0074, flutes=18, depth=0.0004), "grip_black"))
+        # (first-principles A3) the knob's printed title on the face above it (FMS / HDG / ALT, pseudo-text)
+        out.append(PR.decal(f, u - 0.0105, v + 0.0125, u + 0.0105, v + 0.0175, zf + PR.LIFT, "words", rows=1, cap=1.6,
+                            seed=("gfc_knob", round(u, 4))))
+    for k_, (u, v) in enumerate(((q["wheel"][0], 0.0247),)):           # the VS wheel's UP / DN title
+        out.append(PR.decal(f, u - 0.008, v - 0.0021, u + 0.008, v + 0.0021, zf + PR.LIFT, "words", rows=1, cap=1.4,
+                            seed=("gfc_vs", k_)))
     su_, sv_ = q["sensor"]
     out.append((knob(f.p(su_, sv_, zf - 0.0002), f.w, f.u, 0.0016, 0.0005, n=12, chamfer=0.4), "screen"))
     wu, wv, wd, ww = q["wheel"]                                        # VS thumbwheel: slot + ribbed wheel across u
@@ -289,7 +295,9 @@ def screw(y, z, off, r=0.002):
     standing 0.9 mm proud with a raised slot bar)."""
     from model.fd_kit import flush_screw
     FD = _FD()
-    return flush_screw(FD.face_frame(y, z).moved(c=off), 0.0, 0.0, 0.0, 0.8 * r, "csk", "steel_dark")
+    f = FD.face_frame(y, z)
+    f = FD.Fr(_face_pt(y, z, off), f.u, f.v)                      # seated on the plate's own top (its offset normal)
+    return flush_screw(f, 0.0, 0.0, 0.0, 0.8 * r, "csk", "steel_dark")
 
 
 def rocker_block(f, n, cap=(0.018, 0.028), pitch=0.023, pad=0.004, legend=True):
@@ -711,9 +719,9 @@ def lower_panel(sg):
             f = FD.face_frame(-0.250, zz).moved(c=q["plate_off"])
             out += rocker_block(f, 3)
             # printed (A3): the group's frame with its title, a caption under each switch
-            out.append(PR.decal(f, -0.041, -0.0255, 0.041, 0.0275, PR.LIFT, "frame", gap=0.62, cap=1.5, lw=0.3,
+            out.append(PR.decal(f, -0.038, -0.0255 if zz > 1.78 else -0.0165, 0.038, 0.0275, PR.LIFT, "frame", gap=0.62, cap=1.5, lw=0.3,
                                 rc=1.5, seed=("ice", zz)))
-            for i in range(3):
+            for i in range(3 if zz > 1.78 else 0):          # (the lower block's foot lies on the plate's edge)
                 out.append(PR.decal(f, (i - 1) * 0.023 - 0.0105, -0.0245, (i - 1) * 0.023 + 0.0105, -0.0185,
                                     PR.LIFT, "words", rows=1, cap=1.2, fill=0.9, seed=("ice_sw", zz, i)))
         # V-LE / V-LO placard and the landing-gear handle (wheel knob on a lever in its slot, UP at the top)

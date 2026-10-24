@@ -223,7 +223,7 @@ const CABIN_TRIM = { lining: [1, 1], leather: [0.5, 1], stitch_light: [0.5, 1], 
   // P1046410 / P1046409's cameras against the photos' 28 / 43 / 39 under the same masks: 0.6 -> 0.25, its reflections kept;
   // 0.33 read 52 at panel_408b)
   // (flight deck fix FDY r2: the quadrant frame still 45 at panel_408b against P1046408's 27: 0.25 -> 0.15)
-  stack_gunmetal: [0, 0.45], pedestal_gunmetal: [0, 0.15],
+  stack_gunmetal: [0, 0.75], pedestal_gunmetal: [0, 0.15],
   // the yoke (3-D judges r1 FID1-01 / CR1-06): a third entry is the material's own REFLECTION floor -- the reflections
   // keep at least this share of the studio's (its clear coat / metal shows the windshield and headliner as in the
   // photos, not the floor-facing 0.06-0.3 of the dark trim) -- and a fourth the key light's share in its specular
@@ -426,7 +426,9 @@ const PART_TRIM = {
   'yoke_R:yoke_leather': { specularColor: [1.0, 0.92, 0.84], specIn: 3.0 },
   // (FDY r2 FDY-O2-04: the quadrant plate and the flight deck's black parts read navy from above, B - R +26 at the
   // quadrant close-up, the photos satin black: a warm base and specular tint, less reflection inside)
-  'flight_deck:black': { color: [0.036, 0.029, 0.022], specIn: 0.5, specularColor: [1.0, 0.9, 0.75] },
+  // (first-principles, round-3 minor: the quadrant plate read charcoal-brown; P1046408 / the Pilatus throttle photo show a
+  // blue-black anodised plate)
+  'flight_deck:black': { color: [0.020, 0.023, 0.032], specIn: 0.6, specularColor: [0.85, 0.92, 1.0] },
   // (flight deck + yoke fix r4 FIDY4-01 / 04) the consoles' forward faces in the knees' shade (113 at panel_408b against
   // P1046408's 6; 124 in the footwell close-up against P1046409's ~31, exposed ~1.3 x darker: 0.25 -> ~22 / ~30); the
   // panel's knobs -- cool satin
@@ -729,7 +731,9 @@ const VIEWER = {
     band: 0.2, bandLen: 0.12 } },
   pedestal_gunmetal: { specIn: 1.5, brush: { aniso: 0, axis: [1, 1, 1], rough: 0.05, len: 0.0035, w: 0.0035, spec: 0.12,
     band: 0.18, bandLen: 0.10 } },
-  stack_gunmetal: { specIn: 1.5, brush: { aniso: 0, axis: [1, 1, 1], rough: 0.05, len: 0.0035, w: 0.0035, spec: 0.12,
+  // (first-principles flight deck, round-3 minor: from the cabin the stack read as a dark slate block -- P1046408 / 09 show
+  // the moulding in the tray's light mauve satin titanium, ~100-120 against the tray's 117)
+  stack_gunmetal: { color: [0.21, 0.19, 0.195], metalness: 0.55, roughness: 0.38, specIn: 1.5, brush: { aniso: 0, axis: [1, 1, 1], rough: 0.05, len: 0.0035, w: 0.0035, spec: 0.12,
     band: 0.18, bandLen: 0.10 } },
   // (flight deck fix r5 FDO4-05: a translucent glass jar from the quadrant view -- the probe's streaks; a solid satin
   // pewter: fewer, broader reflections, a shade warmer -- it read 116 / 124 / 140 against P1046408's 108 / 108 / 116)

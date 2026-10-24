@@ -31,6 +31,7 @@ MAT = "legend_print"
 LIFT = 0.00015               # m above the surface the decal sits on (0.15 mm: no z-fight at the 1 cm near plane, above
                               # fit_check 26's 0.1 mm coplanar band)
 PX_PER_MM = 8.0               # atlas resolution: 0.125 mm a texel (a 2 mm cap height = 16 texels)
+LIFT_MAP = 0.00025            # on a curved map (decal_map): its <= 6 mm cells' chords against the surface's own chords
 SIZE = 4096                   # atlas width (px)
 SIZE_H = 4096                 # atlas height (px; UVs are normalised: the light tier ships it at half size, atlas(0.5))
 PPM = {"frame": 4.0, "vector": 5.0, "cells": 6.0, "stripes": 5.0}   # px / mm of the large, sparse kinds
@@ -129,7 +130,7 @@ def decal_map(M, u0, v0, u1, v1, off, kind, seg=0.006, flip=False, **kw):
     nv = max(1, int(math.ceil(abs(v1 - v0) / seg)))
     s, t = np.meshgrid(np.linspace(0, 1, nu + 1), np.linspace(0, 1, nv + 1), indexing="ij")
     P, N = M.frame(u0 + s * (u1 - u0), v0 + t * (v1 - v0))
-    P = P + (off + LIFT) * N
+    P = P + (off + LIFT_MAP) * N
     # the map's (u, v) left-handed about its normal (e.g. a port wall: u aft, v up, n inboard): mirror u so the print
     # reads (its right forward there)
     du = M.frame(min(u0, u1) + 1e-3, 0.5 * (v0 + v1))[0] - M.frame(min(u0, u1), 0.5 * (v0 + v1))[0]

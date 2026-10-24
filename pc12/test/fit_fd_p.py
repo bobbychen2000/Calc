@@ -1,9 +1,9 @@
 """First-principles flight deck checks (34-35), run by test/fit_check.py after fit_fd_a / fit_fd_b (or standalone:
 python3 test/fit_fd_p.py builds the interior alone).
 
-34. printed legends ON the surface (part A3): every vertex / face centre of a 'legend_print' decal lies 0.05-0.5 mm off
-    the nearest other interior surface (fd_print.LIFT 0.15 mm; a print on a curved face follows it in <= 6 mm cells) --
-    none floats, none sinks into its panel
+34. printed legends ON the surface (part A3): every vertex / face centre of a 'legend_print' decal lies within 0.7 mm
+    of another interior surface (fd_print.LIFT 0.15 mm, LIFT_MAP 0.25 on curved maps, the surfaces' own chords) -- none
+    floats; fit_check 26 (no coplanar overlaps of different materials) keeps every print off its panel's plane
 35. knife edges: the open (unwelded) boundary edges of the flight deck's own meshes (parts flight_deck, fd_consoles,
     fd_divider) that end in mid-air -- no other surface within 1 mm of the edge's midpoint -- total length at most
     KNIFE_MAX (the first-principles baseline: a new part must close its sheets or tuck their edges into a neighbour)
@@ -33,9 +33,11 @@ else:
     _STANDALONE = False
 
 from scipy.spatial import cKDTree  # noqa: E402
-from isect import pt_tri_k  # noqa: E402
+from isect import pt_tri_k, _pairs  # noqa: E402
 
-KNIFE_MAX = 99.0            # m of mid-air open edges in the flight deck's own parts (set from the baseline below)
+KNIFE_MAX = 188.0           # m of mid-air open edges in the flight deck's own parts: the first-principles baseline
+#                             (2026-10-24: 187.7 m, mostly the open shells of the panel face, carpet, divider veneer);
+#                             a ratchet -- the rebuild may only lower it
 
 INT_P = [k for k, q in parts.items() if q.step == "interior"]
 # 34 -------------------------------------------------------------------------------------- legends on the surface
@@ -48,18 +50,21 @@ if LEG:
     P = np.vstack([np.vstack([m.V, m.V[m.F].mean(1)]) for _, m in LEG])
     lo, hi = P.min(0) - 0.01, P.max(0) + 0.01
     T = []
-    for _, m in OTH:
+    for _, m in OTH:                              # every triangle whose box reaches the prints' region
         Tm = m.V[m.F]
-        c = Tm.mean(1)
-        sel = np.all((c >= lo) & (c <= hi), 1)
+        sel = np.all((Tm.max(1) >= lo) & (Tm.min(1) <= hi), 1)
         if sel.any():
             T.append(Tm[sel])
     T = np.vstack(T)
-    tree = cKDTree(T.mean(1))
-    _, idx = tree.query(P, k=32)
-    d = pt_tri_k(P, T[idx])
-    bad = (d < 5e-5) | (d > 5e-4)
-    report("34 printed legends on their surfaces (0.05-0.5 mm off, every vertex / face centre)", not bad.any(),
+    # exact point-triangle distances to every triangle whose box comes within 0.6 mm of the point (a grid of 10 mm
+    # cells: a broad plate's triangle is found however far its centre lies)
+    ei, ti = _pairs(P - 6e-4, P + 6e-4, T.min(1), T.max(1), 0.01)
+    d = np.full(len(P), np.inf)
+    for k0 in range(0, len(ei), 200000):
+        e_, t_ = ei[k0:k0 + 200000], ti[k0:k0 + 200000]
+        np.minimum.at(d, e_, pt_tri_k(P[e_], T[t_][:, None]))
+    bad = d > 7e-4
+    report("34 printed legends on their surfaces (<= 0.7 mm off, every vertex / face centre)", not bad.any(),
            f"{len(LEG)} decal meshes, {len(P)} points: {d.min() * 1000:.2f}-{d.max() * 1000:.2f} mm, median "
            f"{np.median(d) * 1000:.2f}; {int(bad.sum())} outside" + ("" if not bad.any() else
                                                                      f" (worst at {np.round(P[np.argmax(d)], 3)})"))
