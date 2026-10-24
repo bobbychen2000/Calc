@@ -1,0 +1,139 @@
+{
+ "area": "econ",
+ "rater": "A",
+ "round": "w21",
+ "candidate": "b0edece",
+ "lens": "Skeptic, re-measured on b0edece (renders r21 / s21 / a21), diffed against r20 / s20 at the same cameras (q15 mean abs diff 4.8, e3 2.8, e7 2.6, e2 / e5 / e6 / e8 / e9 < 0.5 = unchanged). Same metrics and boxes style as w20a (st2.py / blob.py): q15 fabrics at x0.63 against y_47300 (4 backs), covers head-on q15 vs y_47300, covers oblique e4 vs y_47306, close-up fleck e4 right pad vs y_47306 mid pad and q16 near crown vs y_47301 (blob cm^2 via each image's seat width), block-end arm a21/e3s + s21/e3 vs b_ss_18 (= a_sans_18). Official photos decide colour, in-flight photos geometry. Code read: SEATMAT yCover / yPillow / yFabricB (09_seats.js 18-36), 09a_econ.js 107-123 (cover hem / stitch / mark), 283 (C moulding). Scratch: /tmp/claude-0/-home-user-Calc/c9a2a8cb-81cb-5472-b5d8-4290c91941cc/scratchpad/raterA21/ (cov.py, run15.py, cov21.png, q16near_r21.png, y301near.png, e3s_z.png, ss18z.png, q18arm.png, pil.png).",
+ "score": 7.9,
+ "priorIssues": [
+  {
+   "issue": "w20a-1 (high) head-on covers read as monitors (grey glossy plate, light stitch chin, light mark)",
+   "status": "fixed head-on; oblique not fixed; close-up hem now invisible (regressed)",
+   "evidence": "q15 middle covers #2f344f / #30354f L50 59 / 61 B/R 1.65 (w20 L91 B/R 1.32) vs y_47300 #272d48 / #1e243c L50 53 / 42 B/R 1.83 / 2.01; outer L42 B/R 1.92 vs 39-73. Stitch band L60 = cover (ratio 1.0); mark a barely visible 1-2 px tick (cov21.png). No longer reads as a screen. But oblique e4 cover L50 40 B/R 1.87 (w20 45) vs y_47306 near 86 / mid 129 B/R 1.46-1.63; e4 hem row / body 41 / 36 = 1.14 (w20 1.36) vs y_47306 lower rolled edge 116 / 75 = 1.55: the hem that catches light in the photo is gone close up. q16 near cover L29 vs y_47301 L56 (slate grey there)."
+  },
+  {
+   "issue": "w20a-2 (medium) tick too harsh, near-white grains",
+   "status": "mostly fixed; coverage still high",
+   "evidence": "q15 x0.63 s1 / s3: p90/p10 3.78 / 3.77 (w20 4.60 / 4.56) vs 3.35 / 3.54; p10/p50 0.43 / 0.45 vs 0.45 / 0.43 (fixed); fl/gr 2.56 / 2.60 (w20 2.77 / 2.84) vs 2.39 / 2.47; coverage >1.4x med 0.23 / 0.24 (w20 0.25 / 0.27) vs 0.16 / 0.17 (not fixed); colCV s1 0.089 vs 0.240 (s1 columns still wash out at the outer seat), s3 0.236 vs 0.253 (ok). e1 / e7 pans visibly calmer."
+  },
+  {
+   "issue": "w20a-3 (medium) petal fleck coarse snow close up, too much coverage, too blue at distance",
+   "status": "distance: coverage fixed, contrast now slightly under, B/R not fixed; close up: not fixed",
+   "evidence": "q15 x0.63 s2 / s4: coverage 0.24 (w20 0.28) vs 0.22 (ok); fl/gr 2.42 / 2.42 (w20 2.66) vs 2.69 / 2.72 (now under); p90/p10 2.81 / 2.76 vs 3.14; fleck B/R 1.84 / 1.85 (w20 1.84) vs 1.61 / 1.64 (unchanged despite 'less blue'). Close: e4 right pad coverage 0.30 (w20 0.32) vs y_47306 mid pad 0.13, mean blob 0.41 cm^2 (w20 0.43) vs 0.24, p90 blob 33 px vs 15; contrast 2.41 vs 2.36 (ok). q16 near crown blob 0.44 cm^2 (w20 0.46), coverage 0.27, flecks L160 near-white vs y_47301 pad blob 0.29 cm^2 coverage 0.18, flecks pale blue."
+  },
+  {
+   "issue": "w20a-4 (low) C lower member a round tube / hairpin from above",
+   "status": "fixed between seats; block-end panel added but shape simplified",
+   "evidence": "e7 / q18: flat plate under the arm, no hairpin. a21/e3s + s21/e3: block-end panel present, height / arm thickness 2.1 vs b_ss_18 2.5; gap arm-to-panel / arm thickness 1.0 vs 0.55; panel is a rounded rectangle (corner r ~1.5 cm) with a separate thin rear post, and its bottom sits at the cushion bottom. In b_ss_18 the panel's lower edge sweeps up into the rear post with a ~10-12 cm radius (one continuous C), extends ~3 cm below the pan, and its front is a rounded lip under the arm nose."
+  },
+  {
+   "issue": "w20a-5 (low) pillow piping dark outline, flat body",
+   "status": "not fixed (piping still reads dark; body unchanged)",
+   "evidence": "q15 pillow stats identical to w20 (L53 B/R 2.17, p90/p10 1.41, hpCV 0.018) vs y_47300 L41-53 B/R 1.96-2.02, p90/p10 2.29-2.63, hpCV 0.13-0.18. e1 (pil.png): the piping colour changed but the rim still reads as a dark line from its curvature / AO."
+  },
+  {
+   "issue": "wGb-3 cover tall vs pad",
+   "status": "not fixed (camera share)",
+   "evidence": "q15 cover h/w 0.88 vs y_47300 0.72; cover/pad width 0.64 vs 0.67 (ok)."
+  },
+  {
+   "issue": "w20a-6 diamond ground greyish; w20a-7 bezel dots / flat pocket",
+   "status": "not fixed",
+   "evidence": "SEATMAT.yFabricB still #626c96; e2 / e5 / e6 diff < 0.4 vs s20."
+  },
+  {
+   "issue": "w20a-8 grazing smear, camera mismatch, q16 grey fill (not scored)",
+   "status": "not fixed",
+   "evidence": "q16 still looks forward at backs while y_47301 looks aft at fronts; q18 left back still a smear."
+  }
+ ],
+ "details": [
+  {"detail": "Fabric: tick weave", "score": 7.9, "refs": "q15 p90/p10 3.78 vs 3.35-3.54, p10/p50 0.44 vs 0.44, coverage 0.23 vs 0.165, s1 colCV 0.09 vs 0.24"},
+  {"detail": "Fabric: diamond lattice", "score": 7.5, "refs": "unchanged (yFabricB #626c96)"},
+  {"detail": "Fabric: petal fleck", "score": 7.5, "refs": "distance fl/gr 2.42 vs 2.70, B/R 1.85 vs 1.62; close blob 0.41 vs 0.24 cm^2, coverage 0.30 vs 0.13"},
+  {"detail": "Fabric: dash mosaic", "score": 8.0, "refs": "e4 unchanged"},
+  {"detail": "Fabric mix (backs, pans, pads)", "score": 8.0, "refs": "q15 tick / fleck / tick / fleck as y_47300"},
+  {"detail": "Headrest pad + cover", "score": 7.4, "refs": "head-on L60 B/R 1.65 vs 42-53 / 1.8-2.0 (fixed); oblique L40 vs 86-129; close hem/body 1.14 vs 1.55"},
+  {"detail": "Pillow", "score": 7.8, "refs": "unchanged tone / texture; rim still a dark outline"},
+  {"detail": "Armrests", "score": 8.1, "refs": "flat plate between seats right; block-end panel present but a slab, not the continuous C of b_ss_18"},
+  {"detail": "Belts", "score": 8.5, "refs": "unchanged"},
+  {"detail": "Seat pan / front", "score": 7.7, "refs": "tick calmer on the pans (e1 / e7)"},
+  {"detail": "Back silhouette", "score": 8.0, "refs": "unchanged"},
+  {"detail": "Rear shell / hood / back top", "score": 8.0, "refs": "q17 / e9 unchanged"},
+  {"detail": "Screen / handset", "score": 8.0, "refs": "q18 / e5 unchanged; no lower-bezel dots"},
+  {"detail": "Tray / pocket / AC", "score": 8.0, "refs": "e6 unchanged"},
+  {"detail": "Legs / footrest / under-seat", "score": 7.5, "refs": "e8 identical"},
+  {"detail": "Far-LOD rows", "score": 7.5, "refs": "q15 / q16 far rows: speckle a touch calmer, still uniform"}
+ ],
+ "issues": [
+  {
+   "id": "w21a-1",
+   "severity": "medium",
+   "title": "Cover: oblique / close views still near-black, and the rolled hem no longer catches light",
+   "detail": "Headrest pad + cover",
+   "evidence": "e4 cover L40 B/R 1.87 vs y_47306 86 (near) / 129 (mid) B/R 1.46-1.63; e4 hem / body 1.14 (w20 1.36) vs photo lower rolled edge 1.55; q16 near cover L29 vs y_47301 56. Head-on q15 now right (L60 vs 42-53) - do not undo it.",
+   "fix": "Keep yCover #222842 r 0.52 and the dark stitch / mark. Make the hem a rolled edge instead of a colour: 09a_econ.js line 121 loft the hem band as a 3-section roll (r ~4 mm) whose bottom section's normal tilts 45-60 deg down / forward, colour #2a3049 -> cover colour #222842 r 0.45; target e4 lower-edge / body 1.4-1.5 while q15 band / cover stays <= 1.15. The body's oblique silver-slate (e4 target L75-110) still needs the cover-only grazing sheen from the w19 lighting hand-off (47e0e43) - re-raise it with integration; no roughness change can give both."
+  },
+  {
+   "id": "w21a-2",
+   "severity": "medium",
+   "title": "Petal fleck: close-up flecks 1.7x too big and 2.3x the coverage; distance flecks too blue and now slightly weak",
+   "detail": "Fabric: petal fleck",
+   "evidence": "e4 right pad coverage 0.30 vs 0.13, blob 0.41 vs 0.24 cm^2, p90 33 vs 15 px (contrast 2.41 vs 2.36 ok); q16 near crown 0.44 cm^2, near-white L160; q15 x0.63 fl/gr 2.42 vs 2.70, fleck B/R 1.85 vs 1.62, p90/p10 2.78 vs 3.14.",
+   "fix": "make_swatches.py tex_y_fleck: scale fleck radius x0.75 (area x0.6 -> 0.24 cm^2) and drop ~35 % of flecks (coverage 0.30 -> 0.15 close); raise the remaining fleck peak ~+15 % so q15 fl/gr returns to 2.6-2.7 (sparser, smaller, crisper); fleck tint toward #aab6d6 (B/R 1.5 at the core) so q15 fleck B/R reaches 1.6-1.7. Verify e4 pad coverage 0.13-0.17, q15 coverage 0.20-0.23."
+  },
+  {
+   "id": "w21a-3",
+   "severity": "low",
+   "title": "Tick: stroke coverage still ~40 % too high; outer-seat columns wash out",
+   "detail": "Fabric: tick weave",
+   "evidence": "q15 x0.63 coverage 0.23-0.24 vs 0.16-0.17, fl/gr 2.56-2.60 vs 2.39-2.47; s1 colCV 0.089 vs 0.240 (s3 0.236 vs 0.253 fine).",
+   "fix": "tex_y_tick: shorten / thin the strokes ~20 % (stroke width x0.85, length x0.9) keeping the floor 0.10 and peak; target coverage 0.17-0.19, fl/gr 2.45, p90/p10 3.4-3.6. The s1 colCV loss is grazing-angle mip blur (see w21a-8)."
+  },
+  {
+   "id": "w21a-4",
+   "severity": "low",
+   "title": "Block-end arm panel is a separate slab, not the continuous C moulding",
+   "detail": "Armrests",
+   "evidence": "a21/e3s, s21/e3 vs b_ss_18 (ss18z.png): panel height / arm thickness 2.1 vs 2.5; arm-panel gap / arm thickness 1.0 vs 0.55; small corner radii and a thin separate rear post; real lower edge sweeps up into the rear post with ~10-12 cm radius and the panel reaches ~3 cm below the pan.",
+   "fix": "09a_econ.js block-end branch near line 283: raise the panel top ~1.5 cm (gap ~2.5 cm), drop its bottom ~2.5 cm (total ~13 cm), loft its outline with a 0.10-0.12 m radius at the bottom-rear corner merging into the rear post (post width = panel thickness), and a 2.5-3 cm rounded front lip; keep the 2.2 x 6 cm plate between seats."
+  },
+  {
+   "id": "w21a-5",
+   "severity": "low",
+   "title": "Pillow flat and outlined (carried)",
+   "detail": "Pillow",
+   "evidence": "q15 stats identical to w20: p90/p10 1.41 vs 2.29-2.63, hpCV 0.018 vs 0.13-0.18; rim still a dark line in e1.",
+   "fix": "yPillow #3d4763 -> #343e5c with LAYER.fabric at ~0.3 strength or a plain-weave tile (hpCV ~0.15); soften the piping: radius 3 -> 2 mm and pull it 1 mm inside the silhouette so the rim shading does not ring the pillow; pinch the corners (dog-ears) as in y_47300."
+  },
+  {
+   "id": "w21a-6",
+   "severity": "low",
+   "title": "Cover too tall for its width head-on (carried, partly camera)",
+   "detail": "Headrest pad + cover",
+   "evidence": "q15 h/w 0.88 vs y_47300 0.72.",
+   "fix": "Once q15 matches the photo viewpoint (47e0e43 hand-off), recheck; if still > 0.78, shorten the plate drop ~1.5 cm (plate foot y 0.577 -> 0.592)."
+  },
+  {
+   "id": "w21a-7",
+   "severity": "low",
+   "title": "Diamond ground greyish; no lower-bezel dots; flat pocket (carried)",
+   "detail": "Fabric: diamond lattice / Screen / pocket",
+   "evidence": "Unchanged since w19.",
+   "fix": "SEATMAT.yFabricB #626c96 -> #5f6ba0; three 2 mm dots under the screen (y_47305); bow the pocket 1 cm."
+  },
+  {
+   "id": "w21a-8",
+   "severity": "low",
+   "owner": "lighting/integration",
+   "title": "Grazing fabric smear, cover sheen lobe, q15 / q16 cameras (not scored)",
+   "detail": "q15 / q16 / q18",
+   "evidence": "q16 looks forward at backs, y_47301 looks aft at fronts; q18 left back smear; cover needs a grazing sheen (w21a-1).",
+   "fix": "Anisotropic filtering on fabric layers; cover-only sheen; re-aim q15 / q16 per from_integration_cam.md."
+  }
+ ],
+ "questionsForUser": [
+  "Still open: the headrest covers read dark navy head-on (y_47300) but grey slate from above / at grazing (y_47301, y_47306). Is it acceptable to add a sheen term to the shader for that one material, or should we pick one look?"
+ ],
+ "extraRefsSearched": "No downloads. Used ref/ana y_47300, 47301, 47303, 47305, 47306 and ref/web/econ b_ss_18 (identical to a_sans_18)."
+}
