@@ -19,3 +19,9 @@ Nothing is blocked on these. Each item says what the model assumes for now.
    photo to confirm it?
 8. **Door-3 bar and door-5 galley in service (wave 3).** Raters searched again (TPG, LALF, KN Aviation, Sam Chui, OMAAT) and
    found only ANA's 2019 bar render. Is the bar's upper-left section a roller blind or a backlit washi panel in service?
+9. **Welcome-galley cabinet glass (wave 3b).** The engine has no blended glass for monuments, so the smoked glass door is
+   drawn with no pane: its lit contents are toned about 0.85x, with one reflection line. omaat_room_32 and lalf_134 show
+   the contents clearly through a light tint. A darker tint would need a transparent material from the lighting side.
+10. **Door-4 / door-5 galleys (wave 3b).** No photo exists of the new rear galley. The inserts there now follow the real
+    ANA snack-bar galley (sans_38 / sansY_44): satin inserts, ovens with yellow-green label windows, paired brewers and
+    copper turn-buttons. A photo of the door-5 galley would confirm the layout.
