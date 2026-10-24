@@ -3421,7 +3421,10 @@ async def picture_auto_check(page):
     s = r["s"]
     check("[PQ] Auto: measured the frame time and chose the still refinement for it (a slow software renderer: none)",
           s["mode"] == "auto" and s["adaptive"] and any(v is not None for k, v in s["cost"].items() if k != "idle") and len(s["events"]) >= 1
-          and (s["N"] == 0) == any("no still refinement" in e["what"] or "no refinement" in e["what"] for e in s["events"]),
+          # (the LATEST refinement decision: Auto gives cut passes back once plain frames fit the refresh -- 'still
+          # refinement back on' -- so a 'no refinement' event earlier in the history does not mean none now)
+          and (s["N"] == 0) == next((("no still refinement" in e["what"] or "no refinement" in e["what"])
+                                     for e in reversed(s["events"]) if "refinement" in e["what"]), False),
           f"costs {s['cost']}, vsync {s['vsync']} ms, passes {s['N']}, events {[e['what'] for e in s['events']]}")
     check("[PQ] specular anti-aliasing (normal-variance roughness) installed in three's physical shading",
           r["specAA"], "lights_physical_fragment patched" if r["specAA"] else "three's geometryRoughness still in place")
@@ -4227,7 +4230,13 @@ async def sound_checks(browser, base, out_dir: Path):
     # 7. M mutes the master gain (then the context suspends); M again restores it; the choice is stored
     await page.keyboard.press("m")
     await page.wait_for_timeout(1000)
-    m1 = await js(page, S + "return {s: S.state(), store: localStorage.getItem('pc12.viewer.sound'), pressed: document.getElementById('aSound').getAttribute('aria-pressed')};")
+    # (the suspend follows the mute on a timer: on a slow software renderer the first second can pass first -- wait for it,
+    # up to 10 s; the criteria unchanged)
+    for _ in range(18):
+        m1 = await js(page, S + "return {s: S.state(), store: localStorage.getItem('pc12.viewer.sound'), pressed: document.getElementById('aSound').getAttribute('aria-pressed')};")
+        if m1["s"]["ctx"] == "suspended":
+            break
+        await page.wait_for_timeout(500)
     await page.keyboard.press("m")
     await page.wait_for_timeout(900)
     m2 = await js(page, S + "return {s: S.sync(), store: localStorage.getItem('pc12.viewer.sound')};")
