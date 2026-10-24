@@ -56,3 +56,7 @@
 - **w19 to lighting (`04_shaders.js`), low:** texture LOD bias ~-0.75 on photo fabric layers 16 / 24 / 25 / 26 (row-distance
   contrast); a sheen lobe for the leatherette cover (studio e4 L18 vs 34-52 in y_47306); in the matched view the darkest
   fabric tones are lifted (tick back p10 28 vs 12-19 L*), partly row-to-row occlusion.
+- **w23 (wave 3d) to lighting, medium:** the -0.5 photo mip bias (thanks) made the Y tick speckle at row distance
+  (q15 bright 0.12-0.14 vs 0.083 in y_47300; q16 row 2 0.19 vs 0.064). Econ compensated in the tile. If you can, exempt
+  layer 16 (y_tick) from the bias; the fleck / mosaic layers are fine with it. The cover sheen lobe (w19 item) is still the
+  largest open econ material item: covers read L34-38 at grazing angles vs 86-134 in y_47306.

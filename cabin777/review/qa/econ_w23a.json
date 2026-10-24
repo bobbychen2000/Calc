@@ -1,0 +1,188 @@
+{
+ "area": "econ",
+ "rater": "A",
+ "round": "w23",
+ "candidate": "066375f",
+ "lens": "Skeptic, re-measured on 066375f (renders r23 / s23 / a23), diffed against r22 / s22 / a22 at the same cameras (mean abs diff q15 1.18, q16 1.01, q17 0.22, q18 0.31; e4 1.32, e4b 1.50, e1 1.07, e7 0.91, e3s 0.75, e5 0.55; e2 / e3 / e6 / e9 < 0.36; e8 0.00). Same scripts as w22a (st2.py / blob.py, copied to /tmp/claude-0/-home-user-Calc/c9a2a8cb-81cb-5472-b5d8-4290c91941cc/scratchpad/raterA23/): q15 fabrics at x0.63 vs y_47300, cover hem row profiles head-on (q15 vs y_47300) and oblique (e4 column 280-340), close fleck e4 right pad / back vs y_47306 mid pad / right back, close tick e4 middle back x0.84 vs y_47306 middle back, q16 patches vs y_47301, diamond (a23 e3s, e4 left) vs y_47306 left back, pillows q15 vs y_47300, block-end arm a22 / a23 e3s vs b_ss_18 (arm23.png). Code read: git diff eac092a..066375f of 09a_econ.js (hem l.121, foot tube l.122, end panel l.292), 09_seats.js yFabricB, make_swatches.py y_photo.",
+ "score": 8.0,
+ "priorIssues": [
+  {
+   "issue": "w22a-1 / w22b-1 (medium) cover hem a light chin band head-on; body near-black off-axis",
+   "status": "head-on fixed; oblique hem kept; body oblique not fixed (lighting hand-off)",
+   "evidence": "q15 rows under the cover (x 300-390 / 540-630): hem band now L53 = cover 52-53 (w22 82-84, 1.55x); stitch line 1 row at L83-84 (1.57x); foot lip 3 rows 63 / 95 / 60 = peak 1.8x over one row (~2 photo px at x0.63) vs y_47300 lip 1 row at 1.27-1.5x (47 / 37, 72 / 48) followed by a dark crease L21-24 (0.5x) that the render lacks (row below the lip L52-60). e4 oblique: hem 40 = body 37-40, foot 53-60 over ~6 px = 1.5x vs y_47306 1.45x: on target. Body unchanged: e4 L34 vs y_47306 86-134; q16 near cover L31 vs y_47301 65."
+  },
+  {
+   "issue": "w22a-2 / w22b tick (medium) coverage / contrast over",
+   "status": "contrast fixed at row distance; coverage and close-up partly fixed",
+   "evidence": "q15 x0.63 s1 / s3: p90/p10 3.57 / 3.58 (w22 3.90 / 3.92) vs 3.35 / 3.54 - on target; fl/gr 2.51 / 2.56 (2.62 / 2.68) vs 2.39 / 2.47; coverage 0.23 / 0.24 (0.24 / 0.26) vs 0.16 / 0.17 - still ~40 % over; s1 colCV 0.087 vs 0.240 (columns still wash out on the s1 back), s3 0.236 vs 0.253 ok. Close e4 middle back x0.84: p90/p10 4.55 (w22 4.83) vs y_47306 3.87, p10/p50 0.46 vs 0.57 (floor too dark), colCV 0.081 vs 0.112, cov 0.33 vs 0.32 ok. q16 row-2 back coverage 0.24 (w22 0.30) vs y_47301 0.09, hpCV 0.39 vs 0.23."
+  },
+  {
+   "issue": "w22a-3 / w22b-4 (medium) petal fleck close up 2x coverage, merged clusters",
+   "status": "not fixed; distance contrast regressed (overshoot of the core-exponent change)",
+   "evidence": "e4 right pad coverage 0.29 (w22 0.30) vs y_47306 mid pad 0.13; mean blob 15.4 px (/1.41 for scale = 10.9) vs 7.5, p90 36 vs 14 (x1.41 -> 20). q15 x0.63 s2 / s4: p90/p10 2.82 / 2.77 (w22 3.13 / 3.04) vs 3.14 / 3.14; fl/gr 2.45 / 2.44 (2.58 / 2.57) vs 2.69 / 2.72 - w22 was on target, exp 1.05 -> 1.2 made the distance flecks too weak while the close coverage did not move (the exponent dims cores, it does not thin them). B/R 2.17 vs 2.24-2.32 fine."
+  },
+  {
+   "issue": "w22a-4 (low) block-end panel a rounded slab",
+   "status": "partly fixed",
+   "evidence": "a23 e3s (arm23.png): lower-rear corner now sweeps up (sections 0.415-0.44 z0 -0.17 / -0.14 / -0.115), reads closer to b_ss_18. Still: arm-to-panel gap ~1 arm thickness vs ~0.4, straight top without the concave fillet into the pivot, no inset border line."
+  },
+  {
+   "issue": "w22a-5 (low) pillow flat and light",
+   "status": "not fixed (identical pixels)",
+   "evidence": "q15 x0.63 pillows L52.5 / 52.1 p90/p10 1.34 / 1.37 hpCV 0.021 / 0.024 vs y_47300 L39 / 44, p90/p10 2.33 / 1.99, hpCV 0.077 / 0.135."
+  },
+  {
+   "issue": "w22a-6 (low) diamond ground grey; bezel dots; pocket; cover tall",
+   "status": "diamond partly fixed; rest not fixed",
+   "evidence": "a23 e3s diamond back B/R 1.95 (w22 1.79), e4 left 1.91 (1.72) vs y_47306 left back 2.11; L92-93 vs 103; coverage 0.23-0.25 vs 0.16 (lattice motif lighter / bigger than the photo). q18 / e5 still no lower-bezel dots; e6 pocket unchanged."
+  },
+  {
+   "issue": "w22a-7 (low, lighting) cover sheen, aisle speckle, cameras (not scored)",
+   "status": "not fixed",
+   "evidence": "q16 row-2 coverage 0.24 vs 0.09 and hpCV 0.39 vs 0.23 (snowy at aisle distance); covers L31 vs 65 off-axis; q15 / q16 viewpoints still not y_47300 / y_47301."
+  }
+ ],
+ "details": [
+  {
+   "detail": "Fabric: tick weave",
+   "score": 8.0,
+   "refs": "q15 p90/p10 3.57 vs 3.35-3.54 (on target), coverage 0.235 vs 0.165, s1 columns washed (colCV 0.087 vs 0.24); close e4 4.55 vs 3.87, floor p10/p50 0.46 vs 0.57"
+  },
+  {
+   "detail": "Fabric: diamond lattice",
+   "score": 7.7,
+   "refs": "B/R 1.93 vs 2.11 (was 1.75); L93 vs 103; motif coverage 0.24 vs 0.16"
+  },
+  {
+   "detail": "Fabric: petal fleck",
+   "score": 7.6,
+   "refs": "distance p90/p10 2.8 vs 3.14, fl/gr 2.45 vs 2.70 (w22 on target, now under); close coverage 0.29 vs 0.13, blobs ~1.5x"
+  },
+  {
+   "detail": "Fabric: dash mosaic",
+   "score": 8.0,
+   "refs": "unchanged"
+  },
+  {
+   "detail": "Fabric mix (backs, pans, pads)",
+   "score": 8.0,
+   "refs": "q15 tick / fleck / tick / fleck as y_47300; q16 speckle ~2.5x the photo at aisle distance (part lighting mip bias)"
+  },
+  {
+   "detail": "Headrest pad + cover",
+   "score": 8.0,
+   "refs": "head-on chin band gone (hem = cover); 1-row lip 1.8x vs 1.3-1.5x and no dark crease under it; oblique hem 1.5x vs 1.45x; body oblique L34 vs 86-134 (lighting)"
+  },
+  {
+   "detail": "Pillow",
+   "score": 7.8,
+   "refs": "unchanged: L52 vs 39-44, p90/p10 1.35 vs 2.0-2.3"
+  },
+  {
+   "detail": "Armrests",
+   "score": 8.4,
+   "refs": "end-panel lower-rear corner now sweeps up; gap / top fillet / inset line still off b_ss_18"
+  },
+  {
+   "detail": "Belts",
+   "score": 8.5,
+   "refs": "unchanged"
+  },
+  {
+   "detail": "Seat pan / front",
+   "score": 7.7,
+   "refs": "e1 tick pans still read as bold white streaks next to y_47303's fine fleck on navy"
+  },
+  {
+   "detail": "Back silhouette",
+   "score": 8.0,
+   "refs": "unchanged"
+  },
+  {
+   "detail": "Rear shell / hood / back top",
+   "score": 8.0,
+   "refs": "q17 / e9 diff 0.22 / 0.35: unchanged"
+  },
+  {
+   "detail": "Screen / handset",
+   "score": 8.0,
+   "refs": "unchanged; no lower-bezel dots"
+  },
+  {
+   "detail": "Tray / pocket / AC",
+   "score": 8.0,
+   "refs": "e6 unchanged"
+  },
+  {
+   "detail": "Legs / footrest / under-seat",
+   "score": 7.5,
+   "refs": "e8 identical"
+  },
+  {
+   "detail": "Far-LOD rows",
+   "score": 7.6,
+   "refs": "q15 far rows slightly calmer with the tick change; still denser speckle than y_47300"
+  }
+ ],
+ "issues": [
+  {
+   "id": "w23a-1",
+   "severity": "medium",
+   "title": "Petal fleck: core exponent 1.2 dimmed the distance flecks without thinning them close up",
+   "detail": "Fabric: petal fleck",
+   "evidence": "q15 p90/p10 2.8 vs 3.14, fl/gr 2.45 vs 2.70 (w22 3.1 / 2.58 = on target); e4 pad coverage 0.29 vs 0.13 unchanged.",
+   "fix": "make_swatches.py y_fleck: exponent back to 1.05; instead thin the flecks - label the excess mask (e > 0.25 ep), drop ~45 % of the components at random with a fixed seed (keep components whose centre is >= 1.5x fleck length from a kept one), and shrink kept cores by a 1-px erosion at tile scale. Targets: e4 pad coverage 0.14-0.18, q15 fl/gr 2.6-2.7, p90/p10 3.0-3.2, coverage 0.20-0.23."
+  },
+  {
+   "id": "w23a-2",
+   "severity": "medium",
+   "title": "Tick: contrast right at row distance, but stroke coverage still ~40 % over and columns wash out on s1",
+   "detail": "Fabric: tick weave",
+   "evidence": "q15 coverage 0.235 vs 0.165, s1 colCV 0.087 vs 0.24; e4 p10/p50 0.46 vs 0.57, p90/p10 4.55 vs 3.87; q16 row-2 coverage 0.24 vs 0.09.",
+   "fix": "make_swatches.py y_tick: erode the above-median stroke mask by 1 px at tile resolution (or r_hi = m + (r - m) * ((r - m) / (rmax - m)) ** 0.3) so tile coverage(1.4x med) drops ~0.39 -> 0.28, and lift the floor 8 % (r = max(r, 0.55 m) blend) for p10/p50 0.52-0.55; keep band boost 0.1 and the 0.8 stroke factor. Targets: q15 coverage 0.17-0.19 with p90/p10 3.4-3.6 kept; e4 p90/p10 4.0-4.2."
+  },
+  {
+   "id": "w23a-3",
+   "severity": "low",
+   "title": "Cover foot lip one row too bright head-on, no dark crease beneath",
+   "detail": "Headrest pad + cover",
+   "evidence": "q15 lip peak L95 / 53 = 1.8x vs y_47300 1.27-1.5x; row under it L52-60 vs photo crease L21-24 (0.5x).",
+   "fix": "09a_econ.js l.122: foot colour #4a5478 -> #424b6c (r 0.38 -> 0.45); add a 3 mm contact-shadow band just below it on the pad/back (SEC(0.571..0.575, 0.25, ...), { c: '#151a2e', r: 0.95 }). Targets q15 lip <= 1.5x, crease <= 0.7x the cover; keep e4 foot 1.4-1.5x."
+  },
+  {
+   "id": "w23a-4",
+   "severity": "low",
+   "title": "Pillow flat and light (carried since w19)",
+   "detail": "Pillow",
+   "evidence": "q15 L52 vs 39-44; p90/p10 1.35 vs 2.0-2.3; hpCV 0.02 vs 0.08-0.13.",
+   "fix": "09_seats.js SEATMAT.yPillow #3d4763 -> #313a58 (shared, one line) with a fabric layer at ~0.3 strength; 3 -> 2 mm piping pulled 1 mm inside; corner dog-ears (4 corners 1.5 cm forward)."
+  },
+  {
+   "id": "w23a-5",
+   "severity": "low",
+   "title": "Block-end panel: gap, top fillet, inset line",
+   "detail": "Armrests",
+   "evidence": "arm23.png vs b_ss_18: gap ~1 arm thickness vs 0.4; straight top; no recessed border.",
+   "fix": "09a_econ.js l.292 end sections: top y 0.538 / 0.543 -> 0.552 / 0.556; add a rear-top fillet section zs(0.555, -0.075, -0.20, 0.024); 3 mm groove 2 cm inside the outline on the outer face in SEATMAT.arm darkened 15 %."
+  },
+  {
+   "id": "w23a-6",
+   "severity": "low",
+   "title": "Diamond lattice motif lighter / larger than the photo; bezel dots; pocket",
+   "detail": "Fabric: diamond lattice / Screen / pocket",
+   "evidence": "diamond coverage 0.24 vs 0.16, L93 vs 103, B/R 1.93 vs 2.11; q18 no lower-bezel dots.",
+   "fix": "yFabricB base #5f6ba0 -> #6070aa (L +8 %); make_swatches.py y_diamond motif toward ground 20 %; three 2 mm dots under the screen; pocket bow 1 cm."
+  },
+  {
+   "id": "w23a-7",
+   "severity": "low",
+   "owner": "lighting/integration",
+   "title": "Cover sheen off-axis, aisle speckle, cameras (not scored)",
+   "detail": "q15 / q16",
+   "evidence": "covers L31-34 vs 65-134 off-axis; q16 fabric hpCV 0.39 vs 0.23.",
+   "fix": "Cover-only Fresnel sheen (target e4 L >= 70 with q15 <= 62); mip bias 0 or anisotropic filtering on yJacq / yFleck at grazing angles; re-aim q15 / q16 to the photo viewpoints."
+  }
+ ],
+ "questionsForUser": [],
+ "extraRefsSearched": "none new; ref/web/econ b_ss_18 (arm), y_47300 / 47301 / 47303 / 47306"
+}

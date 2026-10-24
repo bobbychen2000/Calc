@@ -211,3 +211,62 @@ The 8.5 target was not reached; no high-severity issue is open.
 - Cover hang (question 17), pans all tick (y_47300 shows some mosaic pans), pillow seam, bezel dots.
 
 Before/after sheet: `econ_before_after_w3c.jpg` (own renders: 2c1eb9d vs 295e953, with the paired ANA photos).
+
+## Wave 3d (plateau breaker, 2026-10-24)
+
+Started on 295e953 (wave 3c final, wG A 7.9 / B 8.0). A fresh calibrated round (w19) and a gap analyst (`econ_gap19.json`),
+then four fix rounds, the brief's cap.
+
+| round | rater A | rater B | mean | note |
+|---|---|---|---|---|
+| w19 (295e953, baseline) | 7.8 | 8.0 | 7.9 | unchanged code; gap analysis `econ_gap19.json` |
+| w20 (027a1f2) | 7.7 | 7.9 | 7.8 | C arm, hidden hem fixed, re-cut tiles; the smooth r 0.38 cover read as a monitor head-on (A high), tile boost overshot |
+| w21 (b0edece) | 7.9 | 8.2 | 8.05 | cover navy satin, flat arm plate + deep end panel, boost halved |
+| w22 (eac092a) | 7.9 | 8.1 | 8.0 | light hem band read as a chin head-on; the lighting -0.5 photo mip bias landed (tick speckle) |
+| w23 (066375f) | 8.0 | 8.2 | 8.1 | **best round, shipped**; hem dark, rolled foot only; tiles compensated for the mip bias |
+
+The 8.5 target was not reached. No high-severity issue is open. Per detail at w23, B reaches 8.5 or more on armrests (8.7)
+and belts, and 8.0-8.4 on most else. Both raters' lowest details are the diamond (7.7), the fleck close up (A 7.6), the pan
+(7.7-7.8) and the legs (7.5-7.7).
+
+### What changed in wave 3d
+- **Armrests (regular rows): one C moulding, open at the front.** It is made of the arm, a 2.1 cm rear sweep and a flat
+  ~2.2 x 6 cm lower plate at pan height (y_47303, sans b_ss_18). At the block ends a deep ~11-13 cm panel has a swept-up
+  lower-rear corner. The grey front bracket, white paddle and aisle-end side panel now appear only on exit rows (y_47302
+  shows the exit / bulkhead arms). B scored the armrests 7.9 at w19 and 8.7 at w23.
+- **Headrest cover.**
+  - The hem, stitch and mark had been quads 6-9 mm *behind* the plate since w10, so they never rendered (found by A in
+    w19). They are now lofted over the plate along its slope.
+  - The hem is a dark band with a lighter rolled foot (close-up lift 1.5x, y_47306 1.45x; head-on a one-row lip).
+  - `yCover` is #222842, r 0.52, smooth (LAYER.none), with a ~2.5 mm bow. q15 middle covers measure L59, B/R 1.66
+    (y_47300: 53, 1.84). At w19 they were L68 / 1.54. The r 0.38 trial in w20 was L91 / 1.31.
+- **Pillow.** 0.33 x 0.27 (0.77 of the back, y_47300), 4 cm higher and 4 deg more upright, with a pillow-coloured piped
+  seam.
+- **Fabric tiles** (`make_swatches.py`, still cut straight from the official photos):
+  - The y_47306 tick crop leaned 7 deg (oblique seat), so its columns cancelled over a back. It is now rotated upright.
+  - The tick tile is 0.29 m (~13 mm pitch), floor 0.10, strokes pulled 20 % toward the ground.
+  - The 0.5-2.5 cm band gets a log-luminance boost (tick 0.1, fleck 0.6, mosaic 0.6), plus fine-grain damping.
+  - The fleck floor is 0.15, its cores exp 1.2 and less blue. q15 fleck B/R is 2.48-2.53 (y_47300 2.50-2.58).
+  - `yFabricD` is #444d6b and `yFabricB` is #5f6ba0.
+- **Triangles.** econ3 28,485 -> 28,891 (+1.4 %); econ4 37,208 -> 37,948 (+2.0 %); far LOD unchanged.
+
+### Shared-file edits (each named in its commit)
+- `09_seats.js`: SEATMAT `yCover`, `yFabricB`, `yFabricD`.
+- `test/make_swatches.py`: the econ section.
+- `tex/tex_y_tick.png`, `tex_y_fleck.png`, `tex_y_mosaic.png`, and `tex/sizes.json` (y_tick).
+
+### Still open (w23a / w23b)
+- **Cover off-axis** (both raters, every round): the body is L34-38 at grazing angles against 86-134 in y_47306. Only a
+  cover-only sheen lobe in the shader can make it navy head-on *and* silver-grey at an angle. Every roughness value tried
+  (0.3-0.62) trades one view for the other. This is with lighting (`from_econ.md`, w19).
+- **Tick:** strokes still cover ~0.12 bright vs 0.083 (q15). The next step is a stroke factor of 0.65, or no mip bias on
+  layer 16.
+- **Fleck close up:** merged blobs (median 8 px vs 3 px, coverage 0.29 vs 0.13). The fix is Poisson-thinning the cores
+  with a fixed seed while keeping the row-distance contrast (exp back to 1.05).
+- **Diamond:** washed out after the bluer base. Raise the lattice contrast ~1.25x.
+- **Low items:** a darker pillow with weave, the end-panel top curve and recessed border line, bezel dots, a padded
+  pocket flap, the hood side band and the legs.
+- **QA cameras** (integration): q15 / q16 do not frame y_47300 / y_47301. The gap analyst estimated +0.2-0.3 from a
+  matched q15 alone. The camera for that is in `from_econ.md`.
+
+Before/after sheet: `econ_before_after_w3d.jpg` (own renders: w19 295e953 vs w23 066375f, q15 / q16 / arm / headrest).

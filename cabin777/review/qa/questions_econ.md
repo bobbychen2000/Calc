@@ -37,3 +37,8 @@
 18. (wave 3c) Fabric tiles are now cut straight from your official photos (y_47306 tick / diamond / mosaic, y_47300
    fleck). The diamond's only usable source is the oblique left seat of y_47306 (~2 mm/px), so it is soft up close; a
    frontal close-up of a diamond seat (and of a fleck seat) would sharpen both.
+19. (wave 3d) Headrest cover sheen: the covers are navy head-on (y_47300) but silver-grey at grazing angles (y_47301 /
+   47303 / 47306). One material can't do both without a cover-only sheen term in the shader, which belongs to the lighting
+   area. May lighting add one? [shipped: navy satin #222842 r 0.52, right head-on and too dark at an angle]
+20. (wave 3d) Cover length: is the y_47300 short cover (it ends inside the pad) the default, or the long cover that real
+   photos show hanging below the pad (b_ss_13, y_47306)? [kept long, as in the real photos]
