@@ -1,0 +1,105 @@
+{
+ "area": "exterior",
+ "rater": "A skeptic",
+ "build": "w15 = ab4fea0",
+ "score": 7.8,
+ "details": {
+  "wing planform / raked tip / bending": 7.5,
+  "wing surface detail (seams, fastener rows, panel tone, gear stripe, slat band, placards, grime)": 7.4,
+  "control surfaces & gaps (slats, spoilers, flaps, flaperon, aileron)": 7.7,
+  "canoes (flap-track fairings)": 8.3,
+  "pylon": 7.5,
+  "nacelle shape (cowl, lip, splits, strake, access panel)": 7.6,
+  "nacelle colour / materials (incl. GE logo)": 7.8,
+  "inlet / fan / spinner": 7.7,
+  "livery / registration JA795A": 7.5,
+  "lights & static dischargers": 7.0,
+  "artefacts": 7.4
+ },
+ "previous": [
+  {
+   "issue": "w14a medium: pylon fairing a sawn-off slab, stub above the cowl at 11A",
+   "status": "fixed",
+   "measure": "c_nacelle_left: the r14 lit stub with a flat end face (crop at 150-650 x 0-200) is gone; in r15 the fairing nose falls to the cowl over about 60 px and blends in, with no step (ratA15/pylon_cnac_r14_r15.png). w13A row 300: r14 ended in a vertical face at x 700 (L158-204 -> sky 224); in r15 the top line slopes down into the cowl at about x 680, with no end face. The nose now sits aft of the inlet split (s13A, w13A). What remains: the fairing is still a long, straight-topped wedge with a crisp upper crease; _137 shows a lower, rounder dome with a saddle aft of it (no saddle term was added)."
+  },
+  {
+   "issue": "w14a medium: A-side canoes too dark (0.55-0.70 of the near flap)",
+   "status": "fixed",
+   "measure": "w19A r14 -> r15: (470,350) 115 -> 132, (515,240) 102 -> 129, (500,290) 91 -> 106, (525,205) 90 -> 124; the flap at (600,440) is 163 in both. The ratios went 0.55-0.70 -> 0.65-0.81, against KN41 at about 0.85 and the 125-135 target. The lit-top / dark-keel order still holds."
+  },
+  {
+   "issue": "w13a/w14a medium: wing near-far value reversed (w19A)",
+   "status": "not fixed (lighting owner, not scored here)",
+   "measure": "w19A near flap (600,440) 162.6 and (560,500) 161.2; far skin (620,250) 160.5, (680,195) 169.0, (720,220) 172.4. Identical to r14 to 0.1 L. KN41 falls 194 -> 146."
+  },
+  {
+   "issue": "w14a low: access panel outlines 4x too strong, the pair reads as twin portholes",
+   "status": "fixed (a touch strong)",
+   "measure": "The second panel has been removed (w11A, w11K, c_nacelle_left, s13A). w11A column x=520: the dip went 102 on 205 (0.50) -> 146 on 206 (0.71); LALF _136 is 0.88. It now reads as one panel, as in _136, _137 and knav _9. There are still no fastener dots."
+  },
+  {
+   "issue": "w14a low: inlet liner too dark at 11A, joint rings dotted, spinner unreadable",
+   "status": "partly fixed",
+   "measure": "w11A row 420 across the liner: r14 10 -> 37, r15 20 -> 51; points (590,450) 20 -> 36, (595,420) 25 -> 41, (600,380) 25 -> 37. LALF _136 is 34 -> 123, so the lip shadow is still about 1.7x too dark. w11K row 450: r14 74 -> 38, r15 93 -> 56; points (335,450) 60 -> 81 and (345,500) 53 -> 78. That is a touch light against knav _9's 48-54 but inside LALF's range. c_nacelle_left (650,400) 55 -> 84 and (640,250) 16 -> 29. The 14 mm rings: in w11K only one ring reads, and it is still a dashed line over its lower half (ratA15/rings_w11K_cnac_r14_r15.png). In c_nacelle_left they are now continuous hairlines. The spinner is still a small nub at the lip in c_nacelle_left, and it does not show in any window view."
+  },
+  {
+   "issue": "w14a low / w14b low: canoe crown band narrow and flank one flat tone; far pods as dark as the near one",
+   "status": "crown partly fixed; far pods not fixed",
+   "measure": "c_canoe_side: the crown now rolls into the flank with no hard two-tone. w26K column x=600: r14 217,222,223,218,205 | 136 ..., r15 203,193,188,197,171 | 132 .... The crown is about 25 L less hot (closer to the wing at 185), but the step at the crown edge is still 171 -> 132 inside 4 px. Far pods: w26K pod 2 (650,275) 88 -> 85 and pod 3 (700,230) 91 -> 91, i.e. 0.46-0.49 of the 185 skin, against _7250's second pod at 0.72. The x1.18 outboard lift acts at |x| 10-20 m and does not reach the pods seen from 26K."
+  }
+ ],
+ "issues": [
+  {
+   "severity": "medium",
+   "detail": "wing near-far value (owner: lighting, not scored)",
+   "problem": "Unchanged since r12. In w19A the far skin is 6-10 L brighter than the near flap; KN41 falls about 25 %.",
+   "evidence": ["r15/w19A.png (600,440) 163, (720,220) 172", "ref/web/exterior/a5_kn_ANA77W_TheRoom_41.jpg"],
+   "fix": "Lighting owner (04_shaders.js exterior branch): scale specEnv by clamp(luma(v_col)/luma(matBase), 0.6, 1.1)."
+  },
+  {
+   "severity": "low",
+   "detail": "canoes: far pods and crown edge (K side)",
+   "problem": "All the pods seen from 26K sit at the same dark flank value, 85-99 on a 185 skin. In _7250 the second pod is 0.72 of the skin. The crown still breaks to the flank inside about 4 px (171 -> 132), where _7331 shows a broad lit upper flank before the drop.",
+   "evidence": ["r15/w26K.png column x=600 and (650,275) 85, (700,230) 91", "ref/web/exterior/b_alv_ANA77W_PY_IMG_7250-2-scaled.jpeg", "ref/web/exterior/b_alv_ANA77W_PY_IMG_7331-2-scaled.jpeg"],
+   "fix": "l.479: start the outboard lift lower, at lerp(1, 1.25, smooth(5, 14, |p[0]|)) (the 26K pods sit inside 10 m), and soften the dy ramp for the upper flank: lerp(1, 0.6, smooth(0.08, 0.55, dy))."
+  },
+  {
+   "severity": "low",
+   "detail": "pylon fairing form",
+   "problem": "The slab is gone, but in w13A and s13A the forward fairing still reads as a long straight-topped wedge with a sharp upper crease that tapers to the cowl. LALF _137 shows a lower, rounder dome and a saddle before the strut.",
+   "evidence": ["/tmp/claude-0/-home-user-Calc/befcfc7c-26eb-511e-bccb-dea0e8e11491/scratchpad/ratA15/pylon_w13A_r14_r15_lalf137.png", "ref/web/exterior/b_lalf_ANA77W_11A_137.jpg"],
+   "fix": "l.451: add the saddle, ridge -= 0.12 * Math.exp(-((x - 4.2) / 0.6) ** 2), and raise the corner radius on k < 10 to 0.42 so the crown is round rather than creased."
+  },
+  {
+   "severity": "low",
+   "detail": "inlet",
+   "problem": "The 11A lip shadow is still about 1.7x darker than LALF _136 (20-51 against 34-123). In w11K the joint ring is still dashed over its lower half. The spinner does not read from any seat.",
+   "evidence": ["/tmp/claude-0/-home-user-Calc/befcfc7c-26eb-511e-bccb-dea0e8e11491/scratchpad/ratA15/inlet_w11A_r14_r15_lalf136.png", "/tmp/claude-0/-home-user-Calc/befcfc7c-26eb-511e-bccb-dea0e8e11491/scratchpad/ratA15/rings_w11K_cnac_r14_r15.png", "ref/web/exterior/b5_knav_ANA77W_7A_GE90_takeoff_9.jpg"],
+   "fix": "l.384: lift the lip end only, with 1 - 0.55 * smooth(0.3, 1.0, depth) (keep the fan end dark for w11K). l.386-387: bake the rings into the liner vertex colour (x 0.8 where |depth - x| < 0.03) instead of using tubes."
+  },
+  {
+   "severity": "low",
+   "detail": "access panel",
+   "problem": "There is one panel now, which is right. The outline is still a little strong (0.71 of the cowl against 0.88 in _136) and has no fastener dots.",
+   "evidence": ["r15/w11A.png column x=520 (146 on 206)", "ref/web/exterior/b_lalf_ANA77W_11A_136.jpg"],
+   "fix": "l.413: c '#c8cccf'."
+  }
+ ],
+ "worthPlus03": [
+  "The albedo-scaled grazing env (lighting owner) remains the largest lever: surface detail 7.4 -> about 7.9, about +0.1 overall.",
+  "Outboard pod lift starting at 5 m plus the softer dy ramp (l.479): canoes 8.3 -> 8.6, about +0.05.",
+  "Pylon saddle and round crown (l.451): pylon 7.5 -> 8.0, about +0.05.",
+  "Lip-end liner lift plus baked rings (l.384-387): inlet 7.7 -> 8.0 and artefacts +0.2, about +0.05. Together with the panel tone, these give about +0.25-0.3."
+ ],
+ "questionsForUser": [
+  "Is there a straight-on photo of the JA795A (or any ANA 77W) GE90 inlet from seat 11A/K that shows the spinner and fan blades? Only the takeoff shot knav _9 is available, and its lighting differs."
+ ],
+ "photos": [
+  "ref/web/exterior/b_lalf_ANA77W_11A_136.jpg",
+  "ref/web/exterior/b_lalf_ANA77W_11A_137.jpg",
+  "ref/web/exterior/a5_kn_ANA77W_TheRoom_41.jpg",
+  "ref/web/exterior/b_alv_ANA77W_PY_IMG_7250-2-scaled.jpeg",
+  "ref/web/exterior/b_alv_ANA77W_PY_IMG_7331-2-scaled.jpeg",
+  "ref/web/exterior/b5_knav_ANA77W_7A_GE90_takeoff_9.jpg"
+ ]
+}

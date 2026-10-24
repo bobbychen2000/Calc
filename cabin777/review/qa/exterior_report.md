@@ -179,3 +179,49 @@ The wave-3 set was re-downloaded into `ref/web/exterior/` (gitignored). The URLs
 
 The before/after sheet `exterior_before_after.jpg` has the wave-3b start (e05c5e2) in row 1 and the final build in row 2, from the
 same seats and studio cameras. Review cameras are in `review/qa/exterior_views.js` and `review/spec_ext.json`.
+
+## Wave 3c (2026-10-24, w12-w15)
+
+| round | build rated | rater A | rater B | mean |
+|---|---|---|---|---|
+| w12 | 0c53815 (wave-3b final, w11 fixes unrated) | 7.3 | 7.6 | 7.45 |
+| w13 | e616802 (w12 fixes) | 7.6 | 7.8 | 7.7 |
+| w14 | f5575d0 (w13 fixes) | 7.6 | 7.9 | 7.75 |
+| w15 | ab4fea0 (w14 fixes) | 7.8 | 8.0 | 7.9 |
+| final | w15 fixes (this commit, unrated) | – | – | – |
+
+The loop stopped at its 4-round cap. Neither rater reached 8.5, and neither found a high-severity issue in w13-w15. w15 is the best round so
+far (7.9, against 7.55 in w11). The w12 drop came from the unrated w11 canoe flank floor (0.92), which turned the sunlit K-side pods
+skin-white; the w12 fixes replaced it. Exterior triangles: 27,136 -> 29,440 (+8.5 % this wave; +17 % over the wave-3 start of 25,160).
+
+### What changed (all in `src/11_exterior.js`)
+- **Sun-side cowl (from_integration 10).** Cowl r 0.3 -> 0.5, plus a bake that darkens nacelle faces turned to the day sun (x0.7 at
+  full n.L). w11K sun side L227 -> L202; the 11A shade side keeps L159 / L142 (LALF _136 L133-148). A flat albedo cut was tried and
+  dropped: through the winExp 4 + ACES shoulder it needed ~0.4x linear and took the 11A shade side to L89-103.
+- **Canoes.** Baked by normal, depth below the wing's lower skin and the day-sun term, with a 1.65x lift on the sun-away (+x) flanks
+  and the outboard pods x1.25. K side (w26K) flank 0.94 -> 0.57 of the skin (_7250 0.54); A side (w19A) 0.61 -> 0.65-0.81 of the
+  flap (KN41 0.72-0.85). The crown rolls into the flank, the width tapers like the depth, and the tail rings are round.
+- **Inlet.** Liner #585e65 graded by depth and by up-facing normal (w11A L8-25 at worst in w13-w14, now 37-51), three acoustic-panel
+  joint rings, matte fan-case disc, blades with sheen, lighter spinner, rougher lip.
+- **Pylon fairing.** Ridge 0.70 m, width 1.35 m, crisper shoulders, a flank shade, and a domed nose that starts a quarter along the fan
+  cowl (x 1.65), not on the inlet split.
+- **Wing.** TE / hinge gaps taper 20 -> 35 mm from root to s 20 (near gaps 4-6 px -> 2-3 px); two short, fading streaks on the flaps
+  behind each canoe, on the skin layer; outboard roughness 0.72 -> 0.92 (it took only ~4 L off the far skin).
+- **Access panel.** A single stadium outline, lighter (a twin panel read as an "8", w14).
+- **Review cameras.** w26K / w30K put the eye at the glass, as in the alv 26K photos, so JA795A is no longer under the shade rail.
+
+### Hand-offs
+- `from_exterior.md` 15: the app's `lookOut` framing in the aft K seats (13_app.js, camera at the glass).
+- `from_exterior.md` 16 (= 14): the wing near-far value. Both raters still rate it the largest single lever (w19A near flap L163,
+  far skin L172; KN41 194 -> 146). It needs the exterior `specEnv` scaled by the baked albedo in `04_shaders.js`.
+- Item 10 is done (`fixed_exterior.md`).
+
+### Left at the cap (low, about +0.05-0.1 each per the w15 raters)
+Pylon saddle near x 3.6-4.2 (LALF _137); the inlet edge just inside the lip still ~1.7x too dark from 11A and the blades unreadable from
+the window angles; the crown-to-flank step on the K-side canoes within ~4 px; access-panel outline a little dark.
+
+### Open questions
+`questions_exterior.md` 10-11: a straight-on GE90 fan-face photo, and the day-sun-specific bakes.
+
+The before/after sheet `exterior_before_after.jpg` has the wave-3c start (r12, 0c53815) in row 1 and the w15 build in row 2. The w26K
+camera differs between the rows (moved to the glass in w12).

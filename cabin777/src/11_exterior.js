@@ -410,7 +410,7 @@ function buildExterior(gl) {
     // access panel: near-square rounded rectangle ~0.42 x 0.40 m on the INLET cowl ~0.85 m aft of the highlight, upper inboard side, drawn as a
     // thin dark outline [V LALF ANA 11A _136, JAL IMG_3397/3371; D size]
     // w13: stadium outline (exponent 0.55, 0.24 x 0.17 m half-size) (A / B w13, LALF _137); w14: no second panel, the pair read as an '8' and LALF _136/_137, knav _9 show one (B w14)
-    for (const [ac, mt] of [[70 * DEG, { c: '#b6bbc0', r: 0.6 }]])   // w15: outline 0.53 of the cowl vs 0.88 in LALF _136 (A w14)
+    for (const [ac, mt] of [[70 * DEG, { c: '#c8cccf', r: 0.6 }]])   // w15: outline 0.53 of the cowl vs 0.88 in LALF _136 (A w14)
       { const ring = [];
       for (let k = 0; k <= 32; k++) { const a = (k / 32) * Math.PI * 2, c = Math.cos(a), sn = Math.sin(a);
         ring.push(cowlP(0.88 + Math.sign(c) * Math.pow(Math.abs(c), 0.55) * 0.24, ac + Math.sign(sn) * Math.pow(Math.abs(sn), 0.55) * 0.17 / 2.04, 0.008)); }
@@ -448,13 +448,13 @@ function buildExterior(gl) {
       const x = lerp(1.65, 10.6, Math.pow(k / 24, 1.3)), xn = E.x0 + x, nose = Math.sqrt(smooth(1.65, 2.4, x));   // w15: denser rings in the nose, which grows from ~0 as a dome (w14 sawn-off slab, A w14)   // w14: hump starts a quarter along the fan cowl, not on the inlet split at 1.3 (horn in s13A / w13A, B w14; LALF _137)
       const wl = wingAt(E.s, Math.max(xn, leE), side, -1)[1];
       const bot = x < 6.35 ? nacTop(x) - 0.30 * lerp(0.3, 1, nose) : lerp(nacTop(6.35), wl - 0.05, (x - 6.35) / 4.25);
-      const ridge = nacTop(x) + 0.70 * Math.pow(smooth(1.65, leE - E.x0, x), 0.55) * lerp(0.35, 1, nose);   // w12: 0.60 -> 0.70 (B w11, LALF _137)
+      const ridge = nacTop(x) + Math.max(0.40 * Math.sqrt(smooth(1.65, 2.15, x)), 0.70 * Math.pow(smooth(1.65, leE - E.x0, x), 0.55) * lerp(0.35, 1, nose));   // final: full rounded front, not a feather edge (B w15)   // w12: 0.60 -> 0.70 (B w11, LALF _137)
       const top = xn >= leE ? wl + 0.12 : lerp(ridge, Math.max(wl + 0.12, ridge), smooth(leE - E.x0 - 2.0, leE - E.x0, x));
       // w1: broad, low forward fairing hump (~0.9 m wide where it leaves the cowl, base sunk 0.3 m so the flanks meet the
       // curved cowl at a shallow angle) rising to ~0.6 m over the aft cowl into a saddle under the LE, not a rail
       // [V ANA 11A _137; D width from B-KQZ_074140 at 187 px/m], nose blended over 0.6 m
       const w = (x < 6.35 ? lerp(1.35, 1.05, smooth(2.0, 6.35, x))   // w12: 1.2 -> 1.35 forward (B w11)
-         : lerp(0.85, 0.40, (x - 6.35) / 4.25)) * lerp(0.12, 1, nose);   // w13: rounded hump nose, not a spear (LALF _137, A w13)
+         : lerp(0.85, 0.40, (x - 6.35) / 4.25)) * lerp(0.3, 1, nose);   // w13: rounded hump nose, not a spear (LALF _137, A w13)
       secs.push({ y: xn + WING.dz, x: E.s * side, z: -(top + bot) / 2, w, d: top - bot, r: k < 4 ? Math.min(w, top - bot) * 0.45 : Math.min(w * 0.36, (top - bot) * 0.34) });   // w14: domed nose sections (B w14)   // w12: crisper shoulders (0.48 / 0.45 read as a soft tube; _137 shows a defined ridge) [V shape, A radius]
     }
     // fairing over the cowl in cowl white, strut under the wing in wing grey [V ANA 11A _137 / JA797A EGLL]
@@ -475,7 +475,7 @@ function buildExterior(gl) {
       // w13: plus the day-sun-facing term (the -x flanks of the right wing take the sun head-on, no shadow map: K-side flank 0.84-0.90
       // of the skin vs 0.55 in _7250, A w13), top 0.93 (top/wing 1.09 vs 0.92), floor 0.40 so the keel is a band, not an outline; w14: broad lit upper flank
       // (_7331) and outboard pods x1.18 (the far pods matched the near one, _7250 second pod 0.72 of the skin, B w14)
-      return Math.max(0.40, lerp(0.45 + 0.37 * smooth(-0.9, 0.2, n[1]), 0.93, smooth(0.15, 0.5, n[1])) * lerp(1, 1.18, smooth(10, 20, Math.abs(p[0]))) * lerp(1, 0.6, smooth(0.04, 0.5, dy)) * (1 - 0.35 * smooth(0.05, 0.6, V3.dot(n, LD))));
+      return Math.max(0.40, lerp(0.45 + 0.37 * smooth(-0.9, 0.2, n[1]), 0.93, smooth(0.15, 0.5, n[1])) * lerp(1, 1.25, smooth(9, 15, Math.abs(p[0])))   /* final: 10-20 missed the visible pods at s 11.1 / 14.7 (A / B w15) */ * lerp(1, 0.6, smooth(0.04, 0.5, dy)) * (1 - 0.35 * smooth(0.05, 0.6, V3.dot(n, LD))));
     });
     // w12: the canoe flank turned away from the day sun (az -60: the +x faces) only sees sky + deck and rendered 0.52 of the
     // skin from the A side (w19A) vs 0.72-0.77 in KN41 (sunlit 77W, flank 138 / top 148); lift it up to 1.65x (w15: 1.4x left w19A flanks 0.55-0.70 of the flap after the w13 re-bake, A w14), graded down
