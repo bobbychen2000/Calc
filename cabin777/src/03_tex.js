@@ -174,7 +174,7 @@ function buildDetailLayers(S = 256) {
   // 7 vinyl floor: speckles
   L[7] = makeLayer(S, (u, v) => 0.5 + 0.2 * (vnoise(u * 96, v * 96, 96, 61) - 0.5), (u, v) => {
     const n1 = vnoise(u * 110, v * 110, 110, 62), n2 = vnoise(u * 70, v * 70, 70, 63);
-    return clamp(0.5 + (n1 > 0.8 ? 0.35 : 0) - (n2 > 0.84 ? 0.3 : 0) + 0.1 * (fbm(u * 6, v * 6, 6, 2, 64) - 0.5), 0, 1);
+    return clamp(0.5 + (n1 > 0.8 ? 0.35 : 0) - (n2 > 0.84 ? 0.3 : 0) + 0.32 * (fbm(u * 3, v * 3, 3, 2, 64) - 0.5), 0, 1);  // shell w8: stone-look mottle (sans_09 std 19)
   }, () => 0.5, 0.5);
   // 8 grille: round perforations
   L[8] = makeLayer(S, (u, v) => {
