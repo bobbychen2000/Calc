@@ -108,11 +108,12 @@ def synth_py_back(ratio, seed=7):
     for r in range(rows):
         for c in range(cols):
             yc = yr[r] + rng.uniform(-0.12, 0.12) * ph
-            ln = np.clip(rng.normal(21, 4), 12, 30)          # w8 (B): more varied lengths; w13 (B): more even (TV-static read)
+            ln = np.clip(rng.normal(25, 3), 18, 30)          # w8 (B): more varied lengths; w13 (B): more even (TV-static read)
             x0 = c * cw + (cw - ln) / 2 + (cw / 4) * (r % 2) + rng.uniform(-6, 6)
             u = (x[0] - x0) % S
             seg = np.clip(np.minimum(u, ln - u) / 3.0, 0, 1) * (u < ln)   # w11 (A + B): tapered ends (hard bricks)
-            band = np.clip((3.6 - np.abs(((y[:, 0] - yc + S / 2) % S) - S / 2)) / 0.9, 0, 1)   # w11: ~4.5 mm cells, soft edges (w12 B: 2.0 -> 1.3, w13 B: 0.9)
+            band = np.clip((4.3 - np.abs(((y[:, 0] - yc + S / 2) % S) - S / 2)) / 0.9, 0, 1)   # w14 (B): blocks fill ~0.6 of the row (py_37301)
+              # w11: ~4.5 mm cells, soft edges (w12 B: 2.0 -> 1.3, w13 B: 0.9)
             lite = np.maximum(lite, band[:, None] * seg[None, :] * np.clip(rng.normal(1, 0.25), 0.5, 1.5) * dim[r, c])
             # w6 (A + B): the navy-slate dash set (py_37301 / 37305 dark-dash cover 7-32 %); w7: on its own band between
             # the light rows so the two sets interlock into a mosaic (A + B)
@@ -137,7 +138,7 @@ def synth_py_back(ratio, seed=7):
     thr = _blur_wrap(thr, 0.45)
     lite *= 0.88 + 0.22 * thr;   # w13 (B): flatter blocks
     dark *= 0.85 + 0.25 * thr   # w12 (A + B): the w11 threads overshot into a melange
-    out = (1 + 2.1 * lite) * (1 - 0.7 * dark)     # w7: light ~2.9x, dark ~0.3x the ground; w12 (A + B): back std / float cover to py_37301 / 37305
+    out = (1 + 1.75 * lite) * (1 - 0.7 * dark)     # w7: light ~2.9x, dark ~0.3x the ground; w12 (A + B): back std / float cover to py_37301 / 37305
     out *= 0.88 + 0.24 * thr                       # w11: the ground is woven too (threads read between the blocks, py_37305)
     # brick patches on a 2-col x 2-row lattice (block std/mean ~0.15, py_37305), crisp edges softened 0.5 px
     blk = np.exp(rng.normal(0, 0.18, (rows // 2, cols // 2)))
@@ -161,27 +162,29 @@ def synth_py_confetti(ratio, seed=11, ear=False):
     # san_12 trim-B back) [D]
     mo = _blur_wrap(rng.normal(0, 1, (S, S)), 2.5); out *= np.exp(0.12 * mo / mo.std())
     pts = []
-    while len(pts) < (18 if ear else 50):   # w13: ear 18 chunky chips (A, py_37305 ~40 per ear); back 50 (B, py_37302 cover 0.09)                          # w5 (A + B): varied chips; w11 (gap): 32 smaller ones (san_12 / py_37305)
+    while len(pts) < (26 if ear else 50):   # w13: ear 18 chunky chips (A, py_37305 ~40 per ear); back 50 (B, py_37302 cover 0.09)                          # w5 (A + B): varied chips; w11 (gap): 32 smaller ones (san_12 / py_37305)
         p = rng.uniform(0, S, 2)
-        if all(min(abs(p[0] - q[0]), S - abs(p[0] - q[0])) ** 2 + min(abs(p[1] - q[1]), S - abs(p[1] - q[1])) ** 2 > (30 if ear else 16) ** 2 for q in pts): pts.append(p)
+        if all(min(abs(p[0] - q[0]), S - abs(p[0] - q[0])) ** 2 + min(abs(p[1] - q[1]), S - abs(p[1] - q[1])) ** 2 > (24 if ear else 21) ** 2 for q in pts): pts.append(p)
     for cy, cx in pts:
         dy = (yy - cy + S / 2) % S - S / 2; dx = (xx - cx + S / 2) % S - S / 2
-        a = rng.uniform(0, 2 * np.pi); e = rng.uniform(1.1, 1.9) if ear else rng.uniform(1.8, 3.2)   # w12 (B): 2-3:1 slivers on the trim-B back (py_37302, san_12)
-        req = np.clip(rng.normal(10, 3), 5, 15) if ear else np.clip(rng.normal(5.5, 1.8), 3, 8.5)   # w13 (A): ear chips chunky, mixed size (py_37305)
+        a = rng.uniform(0, 2 * np.pi); e = rng.uniform(1.4, 2.2) if ear else rng.uniform(1.8, 3.2)   # w12 (B): 2-3:1 slivers on the trim-B back (py_37302, san_12)
+        req = np.clip(np.exp(rng.normal(np.log(7), 0.35)), 4, 12) if ear else np.clip(rng.normal(5.5, 1.8), 3, 8.5)   # w13 (A): ear chips chunky, mixed size (py_37305)
         u = dx * np.cos(a) + dy * np.sin(a); v = -dx * np.sin(a) + dy * np.cos(a)
         th = np.arctan2(v * e, u); rr = np.hypot(u / np.sqrt(e), v * np.sqrt(e))
-        k = rng.integers(5, 8); ph0 = rng.uniform(0, 6)
+        k = rng.integers(4, 6) if ear else rng.integers(5, 8); ph0 = rng.uniform(0, 6)
         # polygonal chip: facets from a k-gon, pointed tip at th=0, shallow notch at th=pi (sakura petal)
         poly = (np.cos(np.pi / k) / np.cos((th + ph0) % (2 * np.pi / k) - np.pi / k)) ** 1.0   # sharp facets
-        nd = 0.35 if ear and rng.random() < 0.4 else 0.22   # w13 (A): deep notch on ~40 % of the ear chips
-        prof = req * poly * (1 + 0.18 * np.cos(th)) * (1 - nd * np.exp(-((np.abs(th) - np.pi) / 0.25) ** 2))
+        nd = 0.35 if ear and rng.random() < 0.6 else 0.22   # w13 (A): deep notch on the ear chips; w14 (A + B): 60 %, wider, pointed tips
+        tip, nw = (0.35, 0.45) if ear else (0.18, 0.25)
+        prof = req * poly * (1 + tip * np.cos(th)) * (1 - nd * np.exp(-((np.abs(th) - np.pi) / nw) ** 2))
         out += (4.2 if ear else 4.8) * np.clip(rng.normal(1, 0.15), 0.7, 1.3) * np.clip((prof - rr) / 0.6, 0, 1)   # w11: crisper corners
     for cy, cx in rng.uniform(0, S, (140 if ear else 60, 2)):   # w13 (A): dense tiny specks on the ear
         rr = np.hypot((yy - cy + S / 2) % S - S / 2, (xx - cx + S / 2) % S - S / 2)
         out += rng.uniform(0.3, 0.6) * np.clip((rng.uniform(2, 5) - rr) / 1.0, 0, 1)
-    for cy, cx in rng.uniform(0, S, (0, 2)):       # w12 (B): round mid-size specks dropped (read as snow)
-        rr = np.hypot((yy - cy + S / 2) % S - S / 2, (xx - cx + S / 2) % S - S / 2)
-        out += rng.uniform(0.6, 1.0) * np.clip((rng.uniform(2, 3.5) - rr) / 1.0, 0, 1)   # w11: faint (read as snow on the trim-B backs)
+    for cy, cx in rng.uniform(0, S, (40 if ear else 0, 2)):   # w12 (B): round mid specks dropped on the back; w14 (B): 40 small bright elongated flecks on the ear
+        dy = (yy - cy + S / 2) % S - S / 2; dx = (xx - cx + S / 2) % S - S / 2; a = rng.uniform(0, np.pi); e = rng.uniform(1.3, 2.0)
+        rr = np.hypot((dx * np.cos(a) + dy * np.sin(a)) / np.sqrt(e), (-dx * np.sin(a) + dy * np.cos(a)) * np.sqrt(e))
+        out += rng.uniform(3.0, 4.0) * np.clip((rng.uniform(2, 3.5) - rr) / 0.8, 0, 1)   # w11: faint (read as snow on the trim-B backs)
     out *= np.exp(0.08 * _blur_wrap(rng.normal(0, 1, (S, S)), 0.8) / 0.25)
     return np.repeat(out[:, :, None], 3, 2)
 
@@ -232,7 +235,8 @@ def synth_j_pillow(ratio):
     return np.repeat(r[:, :, None], 3, 2)
 
 
-SYNTH = {'py_back': synth_py_back, 'py_confetti': synth_py_confetti, 'py_ear': lambda r: synth_py_confetti(r, ear=True), 'y_tick': synth_y_tick, 'j_pillow': synth_j_pillow}
+SYNTH = {'py_back': synth_py_back, 'py_confetti': lambda r: synth_py_confetti(r, seed=17),   # w14 (B): seed 17, no stamped Y clusters
+         'py_ear': lambda r: synth_py_confetti(r, ear=True), 'y_tick': synth_y_tick, 'j_pillow': synth_j_pillow}
 
 
 def tileable(a):

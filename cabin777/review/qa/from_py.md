@@ -27,3 +27,14 @@
    `q13b_pyBacks: [\`__rel('26H', 0.1, 1.45, 1.25, 0.05, -0.3)\`, ['py_37304'], 'PY seat backs']` (pairs with san_26).
 5. **To lighting, low (w5 rater B):** q14 shows a hard-edged bright quadrilateral sun patch on the window-seat back;
    please soften the window sun footprint on seats (same as the q04 item in from_integration.md).
+
+## Wave 3b (w11-w14)
+
+6. **To lighting, low (w12-w14 A + B):** q14 still shows the bright rhombus sun patch on the far window-seat back (26B),
+   and in q13 the PY cloth reads cobalt and the navy flaps royal blue. A puts that at about half exposure. The studio renders
+   (neutral) match the photos' saturation (cushion S 0.16 vs 0.18), so no PY material was retuned for it.
+7. **To integration (`src/06_atlas.js`), repeat of item 3:** the placards are still blank. Also, the new literature-pocket
+   leaflet (`09b_py.js`, `gQuad(0.16, 0.07)` in the pocket mouth) could take an atlas rect `pyCard` (white, purple
+   '777-300' header band, san_26 / b_san_20).
+8. **Shared-file note:** PY added detail layer 31 `pyEar` in `03_tex.js` (LAYER, N_LAYERS 32, PHOTO_LAYERS / PHOTO_GAIN /
+   PHOTO_ENC / LAYER_PARAMS, procedural fallback `L[31] = L[17]`), commit e3268a7. The next new layer is 32.

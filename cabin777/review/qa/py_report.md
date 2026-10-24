@@ -149,3 +149,64 @@ it, and both raters judged colour in the studio renders.
 - The Alviator, Business Traveller and Flickr were blocked from the sandbox this wave, so the alv_* photos cited in
   wave 1 were not re-checked.
 - Before/after: `py_before_after.jpg` (own renders only).
+
+## Wave 3b, plateau breaker (w11-w14)
+
+Start: 1432360 (the w10 post-rating fixes, unrated). The 4-round cap of the plateau rule was reached at **8.4 / 8.4**.
+The 8.5 target was met by rater B in w13 (8.5) but not by both in the same round. No high issue was raised in any round.
+The last two rounds gained less than 0.2, so the stop rule applies too.
+
+| round | rater A | rater B | mean | fixed in |
+|---|---|---|---|---|
+| w11 (1432360) | 8.1 | 8.3 | 8.2 | 270fdf2, 315110d (+ gap analysis `py_gap_w11.md`) |
+| w12 (315110d) | 8.2 | 8.4 | 8.3 | 99b6600 |
+| w13 (99b6600) | 8.3 | 8.5 | 8.4 | e3268a7 |
+| w14 (e3268a7) | 8.4 | 8.4 | 8.4 | post-rating fixes (ears, weave, petal spacing, colours), not re-rated |
+
+### What changed
+- **Two seat trims (gap analysis, the biggest gain).**
+  - ANA alternates two trims. Trim A has a dash-weave back and cushion with petal ears. Trim B has a petal back and
+    cushion with dash-weave ears.
+  - Evidence: py_37302's foreground seat (a centre-block aisle seat) is B, SANspotter 26G is B (san_12) and 26F is A, and
+    both seats of the py_37301 window pair are A.
+  - Model: B on the centre block's aisle seats D / G, also in the far LOD (`pyUnit` / `pyUnitFar`; questions 10).
+- **Back weave (`synth_py_back`).**
+  - The w11 "pixel bricks" are redrawn as blocks woven from fine thread floats (~1.9 mm pitch, 5-10 mm floats).
+  - The ends are tapered, the brick-patch mask is blurred, and the rows are steadier.
+  - The contrast went soft in w11, was raised in w12-w13 and slightly overshot. After w14 the light gain is 1.75, with
+    wider blocks (~0.6 of the row, py_37301).
+- **Petal fabrics.**
+  - `py_confetti` (the trim-B back, 0.09 m tile) has 50 cream-grey 2-3:1 slivers on a plain mottled ground, with no dash
+    rows and no round specks.
+  - The ears have their own tile `py_ear` on the new detail layer 31: notched, pointed, log-normal chips plus small bright
+    flecks (py_37305).
+- **Literature pocket (san_26, b_san_20).**
+  - A dark recess ~0.62 of the frame width runs down the lower back, with a rear holder plate and a wide leaflet.
+  - The open tray sits at its foot. Its grey front is lofted across x so the top edge follows a deep smile rim, and a
+    mesh band follows the smile.
+- **Smaller changes:**
+  - The navy over-top strip is removed.
+  - The ears are broader and flatter.
+  - The flap uses the faint plastic grain instead of leather, which was 2-4x the photo.
+  - The console side panel is darker, and the console a little less blue (`#545b6e`).
+  - The gooseneck hose is 19 mm.
+  - The PY bezel is `#2a2c33`.
+- **Triangles** (hi LOD, `__app.scene` seat groups): 196.0k at the wave-3b start, 194.6k at the end. Savings came from 3
+  footrest ribs instead of 5 and from the pocket boxes.
+
+### Open (from w14, low unless marked)
+- Medium (A + B): the ear chips read as polka dots. The post-rating tile adds pointed tips, wider notches, log-normal
+  sizes and bright flecks; this is not re-rated.
+- Low: the back weave contrast overshot slightly in w13-w14 (p90/p50 1.37 vs 1.25). The post-rating fix lowers the gain
+  to 1.75.
+- Low: the trim-B petal repeat showed a Y-cluster motif. The post-rating fix uses seed 17 and 21 px spacing.
+- Low: the pocket colours. B wants the holder and recess lighter, while A wants the tray rim darker; they are left as is.
+  A wants the pocket another ~7 cm lower, while B says only a few cm of shell is left; it is left as is.
+- Low: the flap is dead flat (no grain or seam), and the cushion is blocky up close (p5).
+- Handed off: blank placards and the leaflet header (atlas), the sun rhombus on 26B and the cobalt cast in q13 (lighting),
+  and the q13b camera, which sits inside the seat in front (`from_py.md` items 6-8).
+
+### Sources
+- ANA py_37301-37306 (ref/ana).
+- SANspotter 2023 san_00-30 / b_san_* (ref/web/py, https://www.sanspotter.com/ana-777-300er-premium-economy/).
+- Before/after sheet `py_before_after.jpg`: w11 start vs w14, own renders only.
