@@ -197,8 +197,10 @@ function buildExterior(gl) {
     paintVerts(B, v0, (p, uv) => {
       if (uv[0] < 0.045) return metal;
       const h = Math.sin(Math.floor(uv[1] / 2.2) * 12.9898 + Math.floor(uv[0] * 4) * 78.233) * 43758.5453, f = 1 + 0.15 * (h - Math.floor(h) - 0.5);   // w5: 0.10 -> 0.15, panel tone steps in KN Aviation 41 [V]
-      // w6: spoilers / flaps / ailerons aft of the rear spar a shade darker and bluer than the fixed skin (KN Aviation 41) [V, A amount]
-      const mv = uv[0] > 0.8 && uv[1] > 3.5 && uv[1] < 30.4 ? [0.93, 0.94, 0.97] : [1, 1, 1];
+      // w6: spoilers / flaps / ailerons a shade darker and bluer than the fixed skin (KN Aviation 41) [V, A amount]
+      const sp = uv[1], xn = p[2] - WING.dz, tE = pwl(WING.te, sp);   // w7: the real spoiler / flaperon / flap / aileron boxes
+      const x0 = sp < 4.5 || sp > 30.4 ? 1e9 : sp < 8.6 ? 37.82 : sp < 9.8 ? tE - 0.9 : sp < 11.8 ? tE - 1.15 : sp < 23.3 ? tE - lerp(1.6, 1.2, clamp((sp - 11.8) / 9.2, 0, 1)) : tE - 0.62;
+      const mv = xn > x0 ? [0.90, 0.91, 0.96] : [1, 1, 1];
       const c = hexRGB(paint.c).map((v, i) => Math.round(clamp(v * f * mv[i], 0, 255)).toString(16).padStart(2, '0'));
       return { c: '#' + c.join(''), r: paint.r, m: paint.m };
     });
@@ -213,12 +215,12 @@ function buildExterior(gl) {
     const brk = { c: '#505357', r: 0.95, m: 0 };   // w6: the lighter #7a7f86 rendered as white pinstripes (A); a shade under the paint
     wingLine(B, side, spanPath(4.5, 8.6, () => 37.82, 2), brk, 0.014);
     wingLine(B, side, spanPath(3.1, 9.8, () => 38.82, 3), gap);
-    for (const s of [4.5, 6.55, 8.6]) wingLine(B, side, chordPath(s, 37.82, 38.82), brk, 0.014);
+    for (const s of [4.5, 6.55, 8.6]) wingLine(B, side, chordPath(s, 37.82, 38.82), brk, 0.022);
     wingLine(B, side, spanPath(11.8, 21.0, spF, 8), brk, 0.014);
     wingLine(B, side, spanPath(11.8, 23.3, (s) => (s < 21 ? spA(s) : spA(21) + (s - 21) * 0.34), 10), gap);
-    for (let k = 0; k <= 5; k++) { const s = lerp(11.8, 21.0, k / 5); wingLine(B, side, chordPath(s, spF(s), spA(s)), brk, 0.014); }
+    for (let k = 0; k <= 5; k++) { const s = lerp(11.8, 21.0, k / 5); wingLine(B, side, chordPath(s, spF(s), spA(s)), brk, 0.022); }   // w7: 0.014 dashed at range
     // small red placards ahead of the spoilers (KN Aviation 41, _7250 red-ringed marks near the walkway) [V, A size / positions]
-    for (const s of [5.0, 7.5, 13.0]) { const x = (s < 9 ? 37.82 : spF(s)) - 0.4; wingLine(B, side, [[s - 0.1, x], [s + 0.1, x]], { c: '#9a2a2a', r: 0.8 }, 0.1); }
+    for (const s of [5.0, 7.5, 13.0]) { const x = (s < 9 ? 37.82 : spF(s)) - 0.4; wingLine(B, side, [[s - 0.07, x], [s + 0.07, x]], { c: '#6e4446', r: 0.9, m: 0 }, 0.06); }   // w7: faint, solid red read as lights
     // gear-alignment (taxi camera) stripe: matte black chordwise band on the upper skin at the outboard edge of the main
     // gear, "aligned with the outboard edge of the main landing gear" [V aerospaceglobalnews / supercarblondie]; ~0.38 m
     // wide at s = 6.4 m, from ~1 m ahead of the flap TE 5.6 m forward (overhead 777-300ER agn_Boeing-777-wing-stripes-1,
@@ -277,9 +279,9 @@ function buildExterior(gl) {
     // _7331; the r2 blunt tail came from a ground photo with flaps extended) [V photo, D proportions]
     const vW = B.vcount, vC = B.vcount;
     for (const [cs, len] of WING.canoes) {
-      // w5: pods deepest at the TE, the underside rising straight to a short blunt rounded tail ~30 % of the depth, ~0.3 of
+      // w5-w7: pods deepest at the TE, the underside rising straight to a small rounded point (~12 % of the depth), ~0.3 of
       // the length behind the TE (ANA 26K _7250 / _7211, TPG ZGriff-63, KN Aviation 41) [V shape, D ratios]
-      const RE = 0.40, x1 = te(cs) + 0.30 * len - RE, x0 = x1 - len + RE, secs = [];
+      const RE = 0.10, x1 = te(cs) + 0.30 * len - RE, x0 = x1 - len + RE, secs = [];
       const topAt = (xn) => (xn < te(cs) ? wingAt(cs, xn, side, -1)[1] + 0.03 : wingAt(cs, te(cs), side, -1)[1] + 0.03 - (xn - te(cs)) * 0.03);
       const sec = (xn, rw, rd) => {
         const d = 0.85 * rd + 0.04, w = 0.46 * rw + 0.03;
@@ -289,9 +291,9 @@ function buildExterior(gl) {
       for (let k = 0; k <= 12; k++) {
         const t = k / 12, xn = lerp(x0, x1, t), rise = Math.sin((Math.min(t, 0.22) / 0.22) * Math.PI / 2);
         const fw = xn < xT ? lerp(0.82, 1, smooth(x0, xT, xn)) : 1;   // slight nose-to-TE swell [A]
-        secs.push(sec(xn, t < 0.22 ? rise : fw * lerp(1, 0.3, tail(xn)), t < 0.22 ? rise : fw * lerp(1, 0.28, tail(xn))));
+        secs.push(sec(xn, t < 0.22 ? rise : fw * lerp(1, 0.16, Math.pow(tail(xn), 0.9)), t < 0.22 ? rise : fw * lerp(1, 0.12, tail(xn))));
       }
-      for (const u of [0.3, 0.55, 0.75, 0.9, 0.98]) { const e = Math.sqrt(1 - u * u); secs.push(sec(x1 + u * RE, Math.max(0.04, 0.3 * e), Math.max(0.04, 0.28 * e))); }   // w6: semi-ellipsoid bullet end (KN46, _7250) [V]
+      for (const u of [0.5, 0.85]) { const e = Math.sqrt(1 - u * u); secs.push(sec(x1 + u * RE, 0.16 * e, 0.12 * e)); }   // w7: straight keel closing to a small rounded point (both raters, _7250) [V]
       B.add(gLoft(secs, 3), M4.trs(0, 0, 0, 0, Math.PI / 2), paint);
     }
     // GE90-115B nacelle
@@ -313,7 +315,7 @@ function buildExterior(gl) {
     const stM = M4.mul(rot, M4.trs(-side * ca * 2.18, 2.45, -sa * 2.18, side < 0 ? 25 * DEG : 155 * DEG));
     const vSk = B.vcount;
     B.add(gRBox(0.26, 1.3, 0.035, 0.012, 1), stM, cowl);   // w6: thin chine (knav 7A)                              // w3: cowl-coloured, reads by its shadow line [V]
-    shadeVerts(B, vSk, B.vcount, (p, n) => (n[1] < -0.2 ? 0.6 : 1));                  // w5: dark underside
+    shadeVerts(B, vSk, B.vcount, (p, n) => (n[1] < -0.2 ? 0.6 : n[1] > 0.5 ? 0.85 : 1));   // w5: dark underside; w7: top face a shade under the cowl, only the edge catches light
     // cowl decals in lathe space: point at axial x, angle a above the inboard horizontal (rad), dr off the skin
     const cowlR = (x) => pwl([[0, 1.715], [0.11, 1.87], [0.26, 1.94], [0.6, 2.02], [1.1, 2.07], [1.7, 2.09], [2.4, 2.09], [3.1, 2.06], [3.8, 1.99], [4.4, 1.87]], x);
     const cowlP = (x, a, dr = 0.006) => { const R = cowlR(x) + dr; return [-side * Math.cos(a) * R, x, -Math.sin(a) * R]; };

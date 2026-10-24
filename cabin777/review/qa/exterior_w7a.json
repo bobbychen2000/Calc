@@ -1,0 +1,98 @@
+{
+ "area": "exterior",
+ "rater": "A skeptic",
+ "build": "r7 = after bf822af (w6 A/B fixes); compared with /tmp/claude-0/r6. Crops and samples in /tmp/claude-0/ratA7 (cmp_*.png has r6 on the left and r7 on the right)",
+ "score": 6.8,
+ "details": {
+  "wing planform / raked tip / bending": 7.5,
+  "wing surface detail (seams, fastener rows, panel tone, gear stripe, slat band, placards)": 6.5,
+  "control surfaces & gaps (slats, spoilers, flaps, flaperon, aileron)": 7.0,
+  "canoes (flap-track fairings)": 5.5,
+  "pylon": 7.0,
+  "nacelle shape (cowl, lip, splits, strake, access panel)": 7.0,
+  "nacelle colour / materials (incl. GE logo)": 6.5,
+  "inlet / fan / spinner": 7.0,
+  "livery / registration JA795A": 7.5,
+  "lights & static dischargers": 7.0,
+  "artefacts": 7.0
+ },
+ "previous": [
+  {"issue": "[w6 A medium] spoiler hinge line and chordwise breaks render as white pinstripes", "status": "FIXED: brk #505357. In w19A the breaks are now faint dark hairlines, and the TE gap is the only strong line, as in _7250/KN46."},
+  {"issue": "[w6 A medium / B medium] canoes end in a flat, square-cut face; the flank is one tone", "status": "FLANK FIXED, SHAPE REGRESSED. The flank now grades from lit top to keel (w26K #abb0b4 -> #848789 -> #4a4c4d at the keel, about 0.6x, near _7250's 0.55). But the tail profile is now a straight linear ramp: lerp(1, 0.28, tail) from the TE to x1, then a 0.40 m cap at that roughly 0.28 m depth. That leaves a kink at the TE and a second kink at x1, so every pod in w26K reads as a boot or duck-bill: a deep body with a thin flat finger sticking out aft (/tmp/claude-0/ratA7/z26K.png). In _7250 the pods are smooth convex cones that close to a point."},
+  {"issue": "[w6 A medium / B low] GE monogram: thin ring with block letters, wrong place", "status": "PARTLY FIXED: it is now bolder and low on the inboard cowl near the keel (c_ge_inboard_left), where knav 7A _9 puts it. The letters are still block sans-serif 'GE' in a ring. The real mark is the swirled script monogram, with a small separate 'GE' wordmark forward of it (knav _9 at (270-330, 855)). It still shows in no passenger view."},
+  {"issue": "[w6 A low] inlet liner sky-blue (b-r +0x2e..+0x35)", "status": "MOSTLY FIXED: the material is neutral #7e7f80, m 0.05. w11A rows 450-480 still read #455268 -> #5a6a84 (b-r +0x29), probably sky ambient (lighting). The luminance is right."},
+  {"issue": "[w6 A low] no placards; LE dot fringe", "status": "PARTLY FIXED / NEW DEFECT: the placards exist, but they render as saturated solid red dots (#ce4951 in w17K), each 0.2 x 0.1 m and isolated, so they read as small lights. The LE fringe is gone in w17K."},
+  {"issue": "[w6 A low] JA795A glyphs smear into streaks from 17K", "status": "IMPROVED: at pitch 1.05 / stroke 0.28 the letters pack tighter, and 'JA795' is semi-legible in w17K. They still smear at the grazing angle. In w26K only the 'JA7' tops show under the shade, which is a framing matter."},
+  {"issue": "[w6 B low] access-panel outline breaks into dots", "status": "FIXED: it is continuous at 0.012 in w11A/w11K."},
+  {"issue": "[w6 B low] strake reads as a thick plank", "status": "PARTLY FIXED: in w13A it is a thin chine with a lit edge (good). In c_nacelle_left it is still a bright white, square-ended slab, brighter than the cowl. In knav _9 it is a dull chine with a shadow line under it."},
+  {"issue": "[w6 B medium] movable surfaces should be a shade darker and bluer", "status": "DONE BUT INVISIBLE: the 0.93/0.94/0.97 tint does not read in w19A (#8893a4 on the fixed skin against #8993a5 aft of the hinge)."}
+ ],
+ "issues": [
+  {
+   "severity": "medium",
+   "detail": "canoes (flap-track fairings)",
+   "problem": "The pods look like a boot or duck-bill. The underside rises in a straight line from the TE to x1, at 0.28 of the depth, and then a 0.40 m cap carries that depth aft before it rounds off. That leaves a hard kink at the TE and a step at x1, so a thin flat finger sticks out behind each deep pod. The top line stays nearly flat, so the tip sits at the top of the pod instead of closing toward the centre. In _7250 (JA795A, 26K) and KN46, the pods are smooth convex cones that close to a near point.",
+   "evidence": [
+    "/tmp/claude-0/ratA7/z26K.png (all three visible pods show the stepped nub)",
+    "/tmp/claude-0/ratA7/cmp_w26K.png",
+    "ref/web/exterior/b_alv_ANA77W_PY_IMG_7250-2-scaled.jpeg (pods at (700,600) and (250,900): continuous convex taper to a point)"
+   ],
+   "fix": "In the canoe loop: RE 0.40 -> 0.14. Replace the linear tail with a convex one: const tl = (xn) => Math.pow(tail(xn), 1.7); width fw * lerp(1, 0.10, tl(xn)), depth fw * lerp(1, 0.08, tl(xn)). Make the top line fall too, so the tip closes near mid-height: topAt for xn > te returns wingAt(cs,te,side,-1)[1] + 0.03 - 0.30 * Math.pow((xn - te(cs)) / (x1 + RE - te(cs)), 1.5). End cap: for (const u of [0.5, 0.85]) { const e = Math.sqrt(1 - u * u); secs.push(sec(x1 + u * RE, 0.10 * e, 0.08 * e)); }, and drop the 0.04 Math.max floors. Keep the 0.3*len overhang and the new flank grade."
+  },
+  {
+   "severity": "medium",
+   "detail": "nacelle colour (GE logo)",
+   "problem": "The mark is still a ring with block sans-serif 'GE', centred between the splits. The ANA GE90 (knav 7A _9) carries the GE script monogram with its swirled letters, plus a small separate 'GE' wordmark just forward of it, near the keel. This is the third round with the same wrong glyph form.",
+   "evidence": [
+    "/tmp/claude-0/r7/c_ge_inboard_left.png",
+    "ref/web/exterior/b5_knav_ANA77W_7A_GE90_takeoff_9.jpg (logo at (270-335, 845-870): wordmark on the left, swirl roundel on the right)"
+   ],
+   "fix": "In the monogram block, delete the three block-letter polylines. Inside the ring, add 4 swirl strokes: for (let k = 0; k < 4; k++) { const a0 = k * Math.PI / 2; const pts = []; for (let t = 0; t <= 1; t += 0.1) { const r = 0.20 * (1 - 0.65 * t), a = a0 + 2.6 * t; pts.push(at(Math.cos(a) * r * side, Math.sin(a) * r)); } B.add(gTube(pts, 0.022, 4, false), rot, ge); }. Then add the wordmark: copy the old block 'G','E' strokes scaled by 0.5 and offset u -0.42 * side (forward of the ring), tube 0.012."
+  },
+  {
+   "severity": "low",
+   "detail": "wing surface detail (placards)",
+   "problem": "The new placards are solid saturated red rectangles (#ce4951 in w17K, a lone red dot in w19A/w26K). At window range they read as small red lights or marker dots. Real placards (KN41, _7250) are mostly white or skin-coloured fields with a thin red border or text, and they barely register at this distance.",
+   "evidence": [
+    "/tmp/claude-0/r7/w17K.png (pixels (462,320) #ce4951)",
+    "/tmp/claude-0/ratA7/z26K.png (red dot under the J)",
+    "ref/web/exterior/a5_kn_ANA77W_TheRoom_41.jpg"
+   ],
+   "fix": "Replace the filled 0.1-wide red line with a frame: wingLine(B, side, [[s-0.11,x-0.06],[s+0.11,x-0.06],[s+0.11,x+0.06],[s-0.11,x+0.06],[s-0.11,x-0.06]], { c: '#8a3434', r: 0.85, m: 0 }, 0.018). Inside it, add a pale fill line, { c: '#c9ccd0' }, 0.09 wide, drawn before the frame."
+  },
+  {
+   "severity": "low",
+   "detail": "control surfaces / panel tone",
+   "problem": "The w6 movable-surface tint (0.93/0.94/0.97) does not show: there is about 1 count of difference across the hinge in w19A. The skin still reads as one flat CG grey. KN41 shows the spoiler and flap panels visibly darker, with grime along the TE.",
+   "evidence": [
+    "w19A row 330: #8893a4 fixed skin, #8993a5 aft of the hinge line",
+    "ref/web/exterior/a5_kn_ANA77W_TheRoom_41.jpg"
+   ],
+   "fix": "In paintVerts: mv -> [0.86, 0.88, 0.93]. Add a TE grime grade: when uv[0] > 0.92, multiply by lerp(1, 0.85, (uv[0] - 0.92) / 0.08)."
+  },
+  {
+   "severity": "low",
+   "detail": "nacelle shape (strake / lip)",
+   "problem": "In the close-up the strake is still a bright, square-ended white plank, lighter than the cowl. The inlet lip has the same tone as the cowl. In knav _9 and IQCFQpV_T1A the lip reads as a distinct silver-grey metallic band, slightly darker and more specular than the painted cowl.",
+   "evidence": [
+    "/tmp/claude-0/r7/c_nacelle_left.png",
+    "ref/web/exterior/b5_knav_ANA77W_7A_GE90_takeoff_9.jpg (lip band at (450-700, 460-880))"
+   ],
+   "fix": "Taper the strake: gRBox(0.26,...) -> a gLoft with its width going 0.20 -> 0.04 over the last 30 % of its length, and give its top face a 0.85 shade. Lip material { c: '#a9a9a8', r: 0.34, m: 0.45 } -> { c: '#9a9c9e', r: 0.28, m: 0.6 } so it separates from the painted cowl."
+  },
+  {
+   "severity": "low",
+   "detail": "(owner: lighting) not scored",
+   "problem": "These are lighting-owned and not counted in the score. (1) The w11A inlet liner still reads blue (b-r +0x29) although the material is neutral, so sky ambient is entering the deep inlet. (2) s13A/s26K: the wing underside and the canoes are tinted royal blue. (3) In n19A the wing is nearly black apart from the nav light.",
+   "evidence": ["/tmp/claude-0/r7/w11A.png", "/tmp/claude-0/r7/s13A.png", "/tmp/claude-0/r7/n19A.png"],
+   "fix": "For the lighting worker: reduce the sky ambient on exterior inward-facing normals, for example with the AO term."
+  }
+ ],
+ "questionsForUser": [],
+ "photos": [
+  {"path": "ref/web/exterior/b_alv_ANA77W_PY_IMG_7250-2-scaled.jpeg", "url": "https://thealviator.com/wp-content/uploads/2026/04/IMG_7250-2-scaled.jpeg", "seat": "26K (JA795A)", "what": "canoes taper smoothly to a point; flank grade; registration"},
+  {"path": "ref/web/exterior/b5_knav_ANA77W_7A_GE90_takeoff_9.jpg", "url": "https://knaviation.net/wp-content/uploads/2018/05/ANA-777-300ER-Business-Class-1400px-9.jpg", "seat": "7A", "what": "GE swirl monogram + wordmark low near the keel; metallic lip band; thin strake chine"},
+  {"path": "ref/web/exterior/a5_kn_ANA77W_TheRoom_41.jpg", "url": "https://knaviation.net/wp-content/uploads/2021/03/ANA-The-Room-Business-Class-41.jpg", "seat": "THE Room right window", "what": "movable-surface tone contrast, placard appearance"},
+  {"path": "ref/web/exterior/a5_kn_ANA77W_TheRoom_46.jpg", "url": "https://knaviation.net/wp-content/uploads/2021/03/ANA-The-Room-Business-Class-46.jpg", "seat": "THE Room right window, descent", "what": "canoe tail shape, faint dark spoiler breaks"}
+ ]
+}
