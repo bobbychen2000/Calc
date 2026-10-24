@@ -29,6 +29,7 @@ uniform vec3 u_sunDir; uniform vec3 u_sunCol;
 uniform mat4 u_shadowMat; uniform sampler2DShadow u_shadow; uniform vec2 u_shadowTexel;
 uniform vec3 u_hemiTop; uniform vec3 u_hemiBot; uniform vec3 u_wash; uniform vec3 u_led; uniform vec3 u_sideLed; uniform vec3 u_winGlow;
 uniform vec3 u_vault; uniform vec3 u_lowTint; uniform float u_bandCut; uniform float u_sideLow; uniform vec3 u_sideWall; uniform vec3 u_extBounce; uniform vec2 u_aoTune; uniform vec3 u_fZone;
+uniform float u_lowGain; uniform vec3 u_monFill; uniform float u_cove;
 uniform vec4 u_extPtP[2]; uniform vec3 u_extPtC[2];
 uniform vec4 u_spotP[8]; uniform vec4 u_spotT[8]; uniform vec3 u_spotCol;
 uniform vec4 u_stripP[8]; uniform vec4 u_stripA[8]; uniform vec3 u_stripCol;
@@ -59,11 +60,18 @@ float shadowF(vec3 wp, vec3 n){
   for (int i = -1; i <= 1; i++) for (int j = -1; j <= 1; j++) s += texture(u_shadow, vec3(p.xy + vec2(float(i), float(j))*t, z));
   return s / 9.0;
 }
+// window LUT rows (12_scene updateWindowLUT): left / right windows (rgb = shade transmittance, a = reveal glow) and a
+// zone row (r / g = |dz| / half-width to the nearest left / right pane, /4; b = 1 where the outboard bins and their
+// lens stand, i.e. the seat zones)
+const float WL = 0.1666667, WR = 0.5, WZ = 0.8333333;
 // sun transmission through the fuselage: the ray to the sun is intersected with the skin circle and looked up in the
 // window LUT (rgb = shade transmittance, 0 between windows: the skin is opaque). QA r3: the hit must also lie within
 // the glass height, 15 in = +-0.19 m about the pane centre (u_winY = CAB.win yc, h/2: y 1.02, Boeing D6-58329-2 fig
 // 2.5.1 [V]); without it every ray in a window's z span leaked through the wall above / below the pane as dashed sun
 // stripes on the shells (q01, q14, q15)
+// QA r1 (light): the pane is a rounded rectangle, 10 x 15 in with large corner radii [V: REFERENCE777.md], so the gate
+// is one superellipse (exponent 4 [A]) in pane units instead of separate z / y edges, which cut the patches as hard
+// rectangles / parallelograms on slanted seat backs (integration r1 low, from_py 5, from_shell 3)
 vec3 windowT(vec3 wp){
   vec2 o2 = vec2(wp.x, wp.y - u_yc); vec2 d = u_sunDir.xy;
   float a = dot(d, d);
@@ -74,15 +82,49 @@ vec3 windowT(vec3 wp){
   float t = (-b + sqrt(disc)) / (2.0*a);
   float zh = wp.z + u_sunDir.z * t;
   vec2 hit = o2 + d * t;
-  float wy = 1.0 - smoothstep(u_winY.y - 0.02, u_winY.y + 0.03, abs(hit.y + u_yc - u_winY.x));
-  return wy * texture(u_win, vec2((zh - u_winZ.x)/(u_winZ.y - u_winZ.x), hit.x < 0.0 ? 0.25 : 0.75)).rgb;
+  float zt = (zh - u_winZ.x)/(u_winZ.y - u_winZ.x);
+  vec4 zr = texture(u_win, vec2(zt, WZ));
+  float dzn = (hit.x < 0.0 ? zr.r : zr.g) * 4.0;
+  float dyn = (hit.y + u_yc - u_winY.x) / u_winY.y;
+  float q = dzn*dzn*dzn*dzn + dyn*dyn*dyn*dyn;
+  return (1.0 - smoothstep(0.75, 1.1, q)) * texture(u_win, vec2(zt, hit.x < 0.0 ? WL : WR)).rgb;
 }
-vec3 envInside(vec3 R){
+// lo = 1 for surfaces below ~1.5 m: QA r1 (light) the cool window light reaching seat level is half desaturated, it
+// left a blue cast on the charcoal shells (h216-218 s0.14-0.20 vs c_27312 shell back #5c626a, dark side #4e4f55,
+// s0.08-0.13) [V]
+vec3 envInside(vec3 R, float lo){
   float up = smoothstep(-0.25, 0.75, R.y);
   vec3 e = mix(u_hemiBot*0.7, u_hemiTop*1.25, up);
   float side = (1.0 - abs(R.y)) * smoothstep(0.35, 0.95, abs(R.x));
-  e += u_winGlow * side * 0.6;
+  vec3 wg = mix(u_winGlow, vec3(dot(u_winGlow, vec3(0.2126, 0.7152, 0.0722))), 0.5*lo);
+  e += wg * side * 0.6;
   return e;
+}
+// QA r1 (light): specular from the two cove LED lines along the top inner edge of the outboard bins (x +-1.70,
+// y 2.238: 08_bins MAT.led), as line lights: the point on each line nearest the reflected ray, GGX at a widened
+// roughness. They put the soft sheen lines on the rounded shell caps, armrests and leatherette folds of the photos
+// [V: c_27312 rim highlights on the charcoal caps, tlfl_IMG_9217 streaks on the cap rails, y_47303 armrest tops p99
+// 248-251, y_47306 flap fold 2.1x the face]; level [D] from those ratios
+vec3 coveSpec(vec3 P, vec3 N, vec3 V, vec3 R, float rough, vec3 F0, float NdV){
+  vec3 s = vec3(0.0);
+  float r2 = max(rough, 0.3); float a2 = r2*r2*r2*r2;
+  float k = (r2 + 1.0)*(r2 + 1.0) / 8.0;
+  float rxy = max(length(R.xy), 0.05);
+  for (int i = 0; i < 2; i++) {
+    vec2 dxy = vec2(i == 0 ? -1.70 : 1.70, 2.238) - P.xy;
+    float lxy = length(dxy);
+    vec3 Lc = normalize(vec3(dxy, R.z / rxy * lxy));
+    float ndl = max(dot(N, Lc), 0.0);
+    if (ndl <= 0.0) continue;
+    vec3 H = normalize(Lc + V);
+    float NdH = max(dot(N, H), 0.0);
+    float dd = NdH*NdH*(a2 - 1.0) + 1.0;
+    float D = a2 / (3.14159 * dd * dd);
+    vec3 F = F0 + (1.0 - F0) * pow(1.0 - max(dot(H, V), 0.0), 5.0);
+    float G = 1.0 / ((ndl*(1.0 - k) + k) * (NdV*(1.0 - k) + k));
+    s += D * F * G * 0.25 * ndl / max(lxy, 0.4);
+  }
+  return s;
 }
 
 void main(){
@@ -117,7 +159,9 @@ void main(){
     base *= 0.3;
   } else if (layer > 0 && u_detailOn > 0.5) {
     vec4 P = u_layer[layer];
-    vec3 w = pow(abs(N), vec3(4.0)); w /= (w.x + w.y + w.z);
+    // QA r1 (light): photo layers (>= 16) blend the three projections more sharply (exponent 10, was 4): at ~45 deg the
+    // two ~50/50 projections smeared the fabric into diagonal streaks (econ back-top roll, from_econ w6) [D]
+    vec3 w = pow(abs(N), vec3(layer >= 16 ? 10.0 : 4.0)); w /= (w.x + w.y + w.z);
     vec3 q = v_wpos * P.x;
     float L = float(layer);
     vec4 tx = texture(u_detail, vec3(q.zy, L));
@@ -149,7 +193,7 @@ void main(){
   rough = max(rough, 0.12);
 
   float NdV = max(dot(N, V), 1e-3);
-  vec3 amb; float ao = 1.0;
+  vec3 amb; float ao = 1.0; float sz = 1.0; vec3 lt = vec3(1.0);
   if (u_exterior > 0.5) {
     // QA r3: the exterior sees the lit cloud deck below (u_extBounce per sky), so shaded flanks / undersides of the
     // wing, canoes and nacelle read mid-grey, not slate [V: alv_ANA77W_NH211_26K shaded flank #8090a0, belly #59636c]
@@ -157,11 +201,13 @@ void main(){
     amb = dot(u_extBounce, u_extBounce) > 0.0 ? mix(u_extBounce, u_skyTop, smoothstep(-0.6, 0.8, N.y))
                                              : mix(u_skyBot, u_skyTop, clamp(N.y*0.5 + 0.5, 0.0, 1.0));
     // exterior lights that also light the airframe (ext.lights with a 'light' gain, e.g. the belly beacon washing the
-    // lower cowl at night [V: yt_p97zMaCMWRg_EVA77W_night_beacon], from_exterior 4); blink state set per frame
+    // lower cowl at night [V: yt_p97zMaCMWRg_EVA77W_night_beacon], from_exterior 4); blink state set per frame.
+    // QA r1 (light): only faces looking down take it, so the wash stays on the cowl / wing undersides and leaves the
+    // canoe flanks dark (n19A read red-painted canoes; from_exterior 9)
     for (int i = 0; i < 2; i++) {
       if (u_extPtP[i].w < 0.5) continue;
       vec3 d = u_extPtP[i].xyz - v_wpos; float r2 = dot(d, d);
-      amb += u_extPtC[i] * max(dot(N, d * inversesqrt(r2)), 0.0) / max(r2, 0.25);
+      amb += u_extPtC[i] * max(dot(N, d * inversesqrt(r2)), 0.0) / max(r2, 0.25) * (1.0 - smoothstep(-0.5, 0.1, N.y));
     }
   } else {
     vec3 auv = (v_wpos + N*0.07 - u_aoMin) / u_aoSize;
@@ -172,6 +218,10 @@ void main(){
     float inF = smoothstep(u_fZone.x, u_fZone.x + 0.3, v_wpos.z) * (1.0 - smoothstep(u_fZone.y - 0.3, u_fZone.y, v_wpos.z))
               * (1.0 - smoothstep(1.2, 1.5, v_wpos.y)) * (1.0 - smoothstep(2.4, 2.75, abs(v_wpos.x)));
     ao = mix(ao, 1.0, u_fZone.z * inF);
+    // QA r1 (light): ceiling and bin faces above ~1.9 m stand > 0.6 m over the seat backs and are lit by the cove
+    // above, so the dense economy block may not darken them: the Y ceiling / bins read 10-15 % under the J ones and the
+    // official photos [V: y_47301 ceiling #e8e8e7 vs q16 #c2c4c7; y_47300 bins #e1e1e1 vs q15 #c5c6c7; floor 0.85 D]
+    ao = max(ao, 0.85 * smoothstep(1.8, 2.0, v_wpos.y));
     // QA r3: up-facing floor (fl) takes the AO 2.5 cm above the carpet as well, so the seat bases / monument toes
     // leave a contact line [V: c_27312 dark line along every monument base]
     float fl = step(0.7, N.y) * (1.0 - smoothstep(0.02, 0.15, v_wpos.y));
@@ -181,9 +231,15 @@ void main(){
     vec3 hemi = mix(u_hemiBot, u_hemiTop, up);
     float wallProx = smoothstep(1.7, 2.55, abs(v_wpos.x));
     float facingIn = clamp(-sign(v_wpos.x) * N.x, 0.0, 1.0);
+    // QA r1 (light): sz = 1 where an outboard bin and its lens stand (08_bins builds them in the seat zones only), from
+    // the zone row of the window LUT. The lens band, its colour and the bin overhang shade stop at the door, galley and
+    // lav zones, which stay neutral white [V: sany_10 band #525d94 under the bins while the door-3 / monument zone
+    // reads #e1e3d8 / #e8e8e4; was q21 door 4L lining #bf712c] (integration r1)
+    sz = texture(u_win, vec2((v_wpos.z - u_winZ.x)/(u_winZ.y - u_winZ.x), WZ)).b;
+    float lensW = wallProx * sz;
     // the outboard bins overhang the sidewall from ~1.6 m: the wall just below sees the lens, not the ceiling
     // (tlfl_IMG_9217 / sany_10: the band under the bins is lit blue only, the aisle side of the bins white) [D]
-    float binShade = 1.0 - 0.75 * wallProx * facingIn * smoothstep(1.15, 1.6, v_wpos.y);
+    float binShade = 1.0 - 0.75 * lensW * facingIn * smoothstep(1.15, 1.6, v_wpos.y);
     // interreflection fill: a white-lined cabin bounces the cove/ceiling light onto every face (ANA photos show
     // charcoal shells and navy fabric reading mid-tone, not black); scaled by AO so crevices stay dark. QA r1: weaker
     // on down-facing faces and towards the floor, so bin undersides / PSU band and footwells keep the shadow line and
@@ -191,13 +247,23 @@ void main(){
     // QA r2: (0.35 + 0.65 ao) / mix(0.55, 1, height) crushed vertical fabric in the dense Y seat block to navy-black
     // (#141c47 vs y_47300 seat backs #2c3a63) and THE Room ash to #7a766d (c_27312 ash #bdb6a3): AO weight halved and the
     // height falloff eased to 0.75 on faces that do not look down; undersides keep the r1 falloff [V: y_47300, c_27312]
+    // QA r1 (light): faces that do not look up (N.y < 0.3) take the bounce at AO weight 0.35 + 0.65 ao (up-facing fabric
+    // keeps the r2 lift), so the footwells / under-ottoman pockets go deep [V: c_27314 footwell #332e30 (L47) vs q09
+    // #494852 (L73); omaat_f11 under-ottoman / top 0.21 vs q03 0.46] (integration r1)
     float noDown = 1.0 - down;
-    vec3 bounce = mix(u_hemiBot, u_hemiTop, 0.62) * u_fill * (0.5 + 0.5*ao)
+    float aoW = mix(0.35 + 0.65*ao, 0.5 + 0.5*ao, smoothstep(0.2, 0.4, N.y));
+    vec3 bounce = mix(u_hemiBot, u_hemiTop, 0.62) * u_fill * aoW
                 * mix(0.45, 1.0, up) * mix(mix(0.55, 0.75, noDown), 1.0, smoothstep(0.0, 1.4, v_wpos.y));
     // reveal glow: faces within ~0.12 m of a pane pick up the window light (alpha of the window LUT = window span in z,
     // rgb = shade transmittance) [V: tlfl_IMG_9217 / 9518 glowing reveals]
-    vec4 wl = texture(u_win, vec2((v_wpos.z - u_winZ.x)/(u_winZ.y - u_winZ.x), v_wpos.x < 0.0 ? 0.25 : 0.75));
+    vec4 wl = texture(u_win, vec2((v_wpos.z - u_winZ.x)/(u_winZ.y - u_winZ.x), v_wpos.x < 0.0 ? WL : WR));
     float reveal = wl.a * smoothstep(2.72, 2.84, abs(v_wpos.x)) * (1.0 - smoothstep(0.2, 0.34, abs(v_wpos.y - u_winY.x)));
+    // QA r1 (light): the down-facing upper tub just above the opening keeps its shadow (0.35 of the glow): every photo
+    // shows the tub darkest there, at 0.65-0.78 of the pier [V: sans_14, tt_window, sp_py14; from_shell w5]
+    reveal *= mix(1.0, 0.35, smoothstep(0.20, 0.30, v_wpos.y - u_winY.x) * down);
+    // next to the glass the window light wins over the lens colour [V: tlfl_IMG_9206 reveal #e0dfdd, tlfl_IMG_9217
+    // #c7c1c0 by the pane; was c06 #6a73d6] (integration r1)
+    float nearPane = 1.0 - 0.75*reveal;
     // QA r2: the sidewall band between the window tops and the bin lens is lit by the lens only; with the full hemi,
     // bounce and wash on top the blue/amber sideLed washed out to #b8c0d5. Those terms are cut inside the band and the
     // lens ramp starts lower so the colour reaches the window tops (glass top ~1.32 m), fading to white at the belt
@@ -208,12 +274,13 @@ void main(){
     // instead of fading to white 0.3 m under the bins [V: sany_12 #556df7 at the bins, #5362e0 at the window line;
     // tlfl_IMG_9217 belt between the windows #736a88; sans-18 lavender to the floor]. u_bandCut = how much of the
     // ceiling light the band loses; both per mood (the white boarding lens needs little cut, amber stays at the lens)
-    float band = wallProx * facingIn * smoothstep(0.7, 1.2, v_wpos.y) * (1.0 - smoothstep(1.95, 2.1, v_wpos.y)) * u_bandCut;
+    float band = lensW * facingIn * smoothstep(0.7, 1.2, v_wpos.y) * (1.0 - smoothstep(1.95, 2.1, v_wpos.y)) * u_bandCut * nearPane;
     float bandW = min(1.0, band * 1.25);   // the wash is cut a little harder (r2: 0.8 vs 0.65)
-    // QA r3, amber phase: only the bins, cove and lens are amber, seat-level faces stay neutral (u_lowTint below
-    // 1.25 m, 1 above 1.95 m; 1 in the white moods) [V: ff_door-gap ash doors #afafaf / #acb1ba (s <= 0.08) under
-    // bins #945a2a]
-    vec3 lt = mix(u_lowTint, vec3(1.0), smoothstep(1.25, 1.95, v_wpos.y));
+    // amber phase: u_lowTint below 1.25 m, 1 above 1.95 m (1 in the white moods). QA r1 (light): the amber reaches seat
+    // level, warm and dimmer (u_lowGain), not neutral: the r3 basis (ff_door-gap ash #afafaf) re-sampled at 1024 px
+    // reads #b29f84 / #6b5946 (s0.25-0.34) [V: ff_seat-with-door-closed ash cabinet #ab7f58, ash top #bb9067, shell
+    // #251f17; ucr_the-room-cabin ash #ae7134 / #885635, sidewall #ba895b, bottom third L55; kn_room_35 ash #804e10]
+    lt = mix(u_lowTint * u_lowGain, vec3(1.0), smoothstep(1.25, 1.95, v_wpos.y));
     // QA r3: the aisle floor took nearly the full hemisphere and read as a bright flat strip; carpet sits in a 1.3 m
     // trench of shells and sees the ceiling through a slot [V: c_27312 aisle #312828-#423b39, darker at the bases]
     hemi *= lt * mix(1.0, 0.55, fl); bounce *= lt * mix(1.0, 0.6, fl);
@@ -222,10 +289,19 @@ void main(){
     // vs c_27312 #394049-#414755, ash ends #848078 vs #bdbaab)
     amb = (hemi * (u_aoTune.x + (1.0 - u_aoTune.x)*ao) + bounce * u_aoTune.y) * binShade * (1.0 - band)
         + u_wash * lt * wallProx * (0.35 + 0.65*facingIn) * smoothstep(0.3, 1.25, v_wpos.y) * (0.45 + 0.55*ao) * noDown * (1.0 - bandW)
-        + u_sideLed * u_sideWall * wallProx * facingIn * mix(u_sideLow, 1.0, smoothstep(0.95, 1.55, v_wpos.y)) * smoothstep(0.35, 0.8, v_wpos.y)
-                    * (1.0 - smoothstep(1.95, 2.1, v_wpos.y)) * noDown
+        + u_sideLed * u_sideWall * lensW * facingIn * mix(u_sideLow, 1.0, smoothstep(0.95, 1.55, v_wpos.y)) * smoothstep(0.35, 0.8, v_wpos.y)
+                    * (1.0 - smoothstep(1.95, 2.1, v_wpos.y)) * noDown * nearPane
         + u_winGlow * wallProx * facingIn * smoothstep(0.7, 1.1, v_wpos.y) * (1.0 - smoothstep(1.5, 1.8, v_wpos.y)) * 0.5 * (1.0 - band)
-        + u_winGlow * wl.rgb * reveal * 1.4;
+        // QA r1 (light): reveal glow 1.4 -> 1.9, the reveal sides read grey at grazing angles [V: c_27312 reveal sides
+        // #d7dbdf / #e2e5e8 vs q06 #b2b1af / #c7c9c9] (integration r1)
+        + u_winGlow * wl.rgb * reveal * 1.9;
+    // night: the galley / lav / door zones (sz = 0) keep a dim neutral fill, the galley lights and lit bulkheads at the
+    // end of the dark cabin [V: ucr_room-night-lighting far galley wall #645f57; sany_40 lit galley end] (lighting r1)
+    amb += u_monFill * (1.0 - sz) * mix(0.45, 1.0, up) * (0.3 + 0.7*ao);
+    // QA r1 (light): crevice term, only for deeply occluded points (ao < 0.5): the tonal range lacked near-blacks in the
+    // footwells, console gaps and seat undersides [V: pixels < 30: c_27312 10.2 % vs q06 2.9 %, c_27314 3.6 % vs q09
+    // 0.5 %; c_27314 footwell L47 vs q09 L73] (integration r1)
+    amb *= mix(0.4, 1.0, smoothstep(0.06, 0.5, ao));
     // reading lights (night): warm cone from the lamp lens to the seat, 0.35 m pool [V: tlfl_IMG_9377 pools on the bed]
     for (int i = 0; i < 8; i++) {
       if (u_spotP[i].w < 0.5) continue;
@@ -254,6 +330,10 @@ void main(){
     float sh = u_exterior > 0.5 ? 1.0 : shadowF(v_wpos, N);
     vec3 tr = u_exterior > 0.5 ? vec3(1.0) : windowT(v_wpos);
     sun = u_sunCol * ndl * sh * tr;
+    // QA r1 (light): interior sun soft-clipped on high-albedo faces and capped at 3, so a white sheet tops out near L235
+    // and fabric keeps its weave inside a patch [V: omaat_f59 bed #d8bfa2 L194 vs q04 patch #f9f8f7 (clipped); q14 PY
+    // patch #e0e0e4 on #787f92 fabric] (lighting / integration r1, from_suite 2)
+    if (u_exterior < 0.5) sun = min(sun / (1.0 + 0.6*max(max(base.r, base.g), base.b)), vec3(3.0));
   }
   vec3 F0 = mix(vec3(0.04), base, metal);
   vec3 diff = base * (1.0 - metal);
@@ -268,9 +348,10 @@ void main(){
   vec3 specSun = D * F * G * 0.25 * sun;
   vec3 R = reflect(-V, N);
   vec3 env = u_exterior > 0.5 ? mix(u_skyBot, u_skyTop*1.2, smoothstep(-0.2, 0.6, R.y))
-                              : envInside(R) * (0.25 + 0.75*ao) * mix(u_lowTint, vec3(1.0), smoothstep(1.25, 1.95, v_wpos.y));
+                              : envInside(R, 1.0 - smoothstep(1.3, 1.7, v_wpos.y)) * (0.25 + 0.75*ao) * lt;
   vec3 Fe = F0 + (max(vec3(1.0 - rough), F0) - F0) * pow(1.0 - NdV, 5.0);
   vec3 specEnv = env * Fe * (1.0 - rough*0.8);
+  if (u_exterior < 0.5) specEnv += coveSpec(v_wpos, N, V, R, rough, F0, NdV) * u_led * u_cove * sz * (0.25 + 0.75*ao);
   vec3 col = diff * (amb + sun) + specSun + specEnv + emissive;
   col += vec3(0.30, 0.62, 1.0) * hl * (0.35 + 0.9*pow(1.0 - NdV, 2.0));
   col = aces(col * u_exposure);
