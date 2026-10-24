@@ -1437,8 +1437,8 @@ EXEC_STITCH = (0.0065, 0.0038, 0.0009, 0.0045)
 #   EXEC_GAP    the forward-facing seats' shadow gap under the cushion roll (EXEC_SEAT legrest_gap): the dark strip
 #               in it, its set-back behind the legrest face and its depth (the face sits EXEC_SEAT legrest[2] behind
 #               the cushion front)
-EXEC_SEAM = dict(gap=0.0025, r_centre=0.011, r_lumbar=0.009, r_bolster=0.013, r_side=0.018, sink=0.021, sink_b=0.012,
-                 sink_l=0.019)
+EXEC_SEAM = dict(gap=0.0010, r_centre=0.011, r_lumbar=0.009, r_bolster=0.013, r_side=0.018, sink=0.014, sink_b=0.017,
+                 sink_l=0.013)
 EXEC_WING = dict(w=0.046, crown=0.012, crown0=0.010, rise=(0.50, 0.80))
 EXEC_HEAD = dict(r=0.036, rb=0.040, crown=0.020, crown_r=0.080, seam_r=0.0022, seam_at=0.34)
 EXEC_GAP = dict(back=0.010, depth=0.040)

@@ -470,7 +470,7 @@ const qf4 = (k, d) => { const v = qv(k, d); return v; };
 // welts / seams) -> ~30, the medians kept for [T4b] / [T14] (the light trim near-white: AgX's shoulder compresses the
 // spread there, so the factors run wide -- x 0.38 .. 1.55 with the window light, 0.55 .. 1 from the floor to the belt)
 CABIN_LOOK.formA = [qf4('cabFormA0', [1.82, 2.2, 0.38, 1.55]), qf4('cabFormA1', [1.5, 2.0, 0.5, 1.35]),
-  qf4('cabFormA2', [1.0, 1.0, 0.80, 1.10]), qf4('cabFormA3', [2.4, 0.8, 0.75, 1.15])];
+  qf4('cabFormA2', [1.0, 1.0, 0.80, 1.10]), qf4('cabFormA3', [1.6, 0.8, 0.75, 1.15])];
 CABIN_LOOK.formB = [qf4('cabFormB0', [0.88, 1.05, 0.8, 1.0]), qf4('cabFormB1', [0.7, 1.2, 0.65, 1.15]), qf4('cabFormB2', [0.8, 1, 1, 1]),
   qf4('cabFormB3', [0.9, 1.1, 0.7, 1.1])];
 CABIN_LOOK.formD = [qf4('cabFormD0', [0.55, 1.0, 0.85, 0]), qf4('cabFormD1', [0.6, 1.0, 1.15, 0]), qf4('cabFormD2', [1, 1, 1, 0]),
@@ -583,15 +583,15 @@ const VIEWER = {
   // 110/60/17 on a near-black navy); unoccluded, the studio washed the runner out to a pale peach (220/178/125)
   // (review r4 INT8-01: 0.45 left the runner tan, 205/155/93, under the cabin light; 0.3 and a deeper orange keep the
   // hue through AgX, ~P1046406's 147/83/22)
-  // (all-lens review r3: the runner's bands read as flat paint with a sun glint -- no pile: a cut pile, ~1.7 mm tufts in
+  // (all-lens review r3: the runner's bands read as flat paint -- no pile: a cut pile, ~3.5 mm tufts in
   // the normal and the albedo (+-20 %), the tips' faces turned from the eye a shade darker, a low sheen)
   carpet: { envMapIntensity: 0.3 },
   carpet_orange: { color: [0.69, 0.21, 0.012], envMapIntensity: 0.3, specularIntensity: 0.35, roughness: 1.0,
-    leather: { freq: 600, dist: 0.0005, bump: 1.0, rough: 0.0, albedo: 0.2, edge: 0.18 } },
+    leather: { freq: 280, dist: 0.0008, bump: 1.0, rough: 0.0, albedo: 0.22, edge: 0.18 } },
   carpet_light: { envMapIntensity: 0.3, specularIntensity: 0.35, roughness: 1.0,
-    leather: { freq: 600, dist: 0.0005, bump: 1.0, rough: 0.0, albedo: 0.2, edge: 0.18 } },
+    leather: { freq: 280, dist: 0.0008, bump: 1.0, rough: 0.0, albedo: 0.22, edge: 0.18 } },
   carpet_grey: { envMapIntensity: 0.3, specularIntensity: 0.35, roughness: 1.0,
-    leather: { freq: 600, dist: 0.0005, bump: 1.0, rough: 0.0, albedo: 0.2, edge: 0.18 } },
+    leather: { freq: 280, dist: 0.0008, bump: 1.0, rough: 0.0, albedo: 0.22, edge: 0.18 } },
   // the crew seats' sheepskin: a shaggy lavender-grey pile in P1046408 / 409, read as smooth white pillows (review r4
   // INT8-04): clumpy fibre noise in its albedo and normal (fleece patch, world space ~4 mm tufts), a softer sheen
   // flight deck r1 LOOK (L6): clumps of 12-20 mm (freq 65 per m) with darker crevices between them (albedo 0.4 .. 1.1,
@@ -687,9 +687,9 @@ const VIEWER = {
   // window light hardly differs between the divider, the lavatory and the arch, 0.10-0.17, so one darker base serves
   // them -- between P1046406's divider and P1046411 / 02's lavatory / arch exposures)
   // (all-lens review r3: smeared up close -- the grain now in a frame along the vertical / the station (the figure 150 / m
-  // across, 6 / m along) with fine dark pore lines at 520 / m: P1046411 / 02's crisp straight-grain veneer)
+  // across, 6 / m along) with fine dark pore lines at 380 / m: P1046411 / 02's crisp straight-grain veneer)
   veneer_walnut: { color: [0.100, 0.059, 0.045], envMapIntensity: 0.7,
-    grain: { amp: 0.22, rough: 0.05, scale: [150, 150, 6], oct: 3, lines: [520, 0.42, 0.35, 2.5] } },
+    grain: { amp: 0.22, rough: 0.05, scale: [150, 150, 6], oct: 3, lines: [380, 0.30, 0.30, 3.5] } },
   // (all-lens r2 CAB2-01: the exec seats' tone-on-tone stitching -- at the club stop's 2-3 m its sub-pixel dashes read as
   // scattered grey dots 30-50 levels under the leather; the GLB's 0.8 x the leather -> 0.95 x: the dashes' relief and
   // the crease carry the seam up close, at a distance they melt into the leather)

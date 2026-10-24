@@ -2738,11 +2738,10 @@ WINDOW_BEZEL = ((0.030, -0.0016), (0.022, 0.0016), (0.014, 0.0040), (0.0075, 0.0
 WINDOW_BEZEL_IN = 0.004
 
 
-def _window_bezel(Lv, Ov, depth=WINDOW_BEZEL_IN, into=0.0006):
+def _window_bezel(Lv, Ov):
     """(bezel strip Mesh facing the cabin, the reveal's new inner loop) for a cabin-window hole loop Lv (on the lining)
     over its OML loop Ov: WINDOW_BEZEL swept round the loop (local frame: up = from the skin opening to the hole, out =
-    the loop's outward normal in the lining's tangent plane, neighbour-smoothed); its last row `depth` down the reveal,
-    `into` the reveal wall (< 0: standing that far in front of it, into the opening)."""
+    the loop's outward normal in the lining's tangent plane, neighbour-smoothed)."""
     n_ = Lv - Ov
     n_ /= np.maximum(np.linalg.norm(n_, axis=1, keepdims=True), 1e-12)
     t_ = np.roll(Lv, -1, 0) - np.roll(Lv, 1, 0)
@@ -2756,7 +2755,7 @@ def _window_bezel(Lv, Ov, depth=WINDOW_BEZEL_IN, into=0.0006):
         d_ -= np.sum(d_ * n_, 1)[:, None] * n_
         d_ /= np.maximum(np.linalg.norm(d_, axis=1, keepdims=True), 1e-12)
     rows = [Lv + o * d_ + h * n_ for o, h in WINDOW_BEZEL]
-    L_in = Lv - depth * n_ + into * d_
+    L_in = Lv - WINDOW_BEZEL_IN * n_ + 0.0006 * d_
     rows.append(L_in)
     b = grid_surface(np.array(rows), close_v=True)
     if np.mean(np.sum(b.N[:len(Lv) * 4] * np.tile(n_, (4, 1)), 1)) < 0:

@@ -668,10 +668,7 @@ def build_door(pid, o):
             loop = _loop_near(ip, lambda x, z: window_sdf(x, z, wcx))
             if loop is not None:
                 Lo = ip.V[loop]
-                # (all-lens review r3: down the whole reveal, 0.4 mm in front of its walls -- the inner panel's hole wall
-                # met the door slab's at a hairline crack, a dark line round the window)
-                bez, _ = _window_bezel(Lo - INNER_BODY["t"] * ip.N[loop], Lo, depth=INNER_BODY["t"] + DOOR_T - 0.008,
-                                       into=-0.0004)
+                bez, _ = _window_bezel(Lo - INNER_BODY["t"] * ip.N[loop], Lo)
                 part.add(bez, "lining")
     if wcx is not None:
         wo = dict(cx=wcx, cz=WIN_CZ, hx=WIN_HX, hz=WIN_HZ, r=WIN_R)
