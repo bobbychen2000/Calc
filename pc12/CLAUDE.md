@@ -76,7 +76,10 @@ python3 test/shot.py out/x.png "f=../out/pc12.glb&cam=-9,4,-3&tgt=0,1.4,6.6&fov=
 python3 test/viewer_test.py     # viewer checks + screenshots (headless Chromium / SwiftShader, ~60-85 min, 236 checks; slower on a
                                 #   loaded machine -- rerun once on a screenshot / click timeout); [T1]-[T18] the interior tour
                                 #   (--only tour: those alone on the desktop page, ~6 min; --only prop / phone / picture / sound likewise;
-                                #   --only fdlook: [FD-L1]-[FD-L11] the flight-deck look, ~30 min)
+                                #   --only fdlook: [FD-L1]-[FD-L11] the flight-deck look, ~30 min; --only avx: [AVX-1]-[AVX-15] the
+                                #   live G3000 PRIME pages, ~20 min)
+node test/avx_model_test.mjs    # the live avionics' engine / atmosphere model (engine.js, env.js) against the POH / TCDS
+                                #   figures and the start / feather / shutdown timings (pure JS, ~2 s)
 python3 test/viewer_test.py --only sound --sound-out DIR   # the engine-sound section alone (~2 min): its checks + the
                                 #   offline renders DIR/pc12_engine_sequence.wav + spectrogram.png, pc12_sound_loudest /
                                 #   _close_idle / _steady / _pilot.wav (default out/tmp/viewer/sound)
@@ -2179,3 +2182,36 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   116-124 / 220-234; judges' r2 7 / 12 / 49 / 113), the windows mirrored in the outboard leaf.
   Budget: interior 944,996 of 951,000 (cabin_interior 37,148 with the walnut split, seat_pax1 / 2 39,488, pax3-6 40,212
   of 40.6k).  Build: 2,814,991 triangles / 49.91 MB, light tier 2,374,604 / 41.96 MB.  Verified: fit_check FIT OK (138 ok, no open row; 25 the armrests vs the pedestal unchanged in result; 26 builds its pairs in 20k-triangle slabs -- the same pairs, 40k ran out of memory beside a viewer run), consistency_2d3d 157 / 157 (the exec headrest top 9.4 mm of 10), drawing.master L6 / L6B rev O (L6 25 texts crossed by lines as at rev N), drawing.sheet + drawing.verify (SVGs unchanged, the same dimension table); the FULL viewer_test after a container restart at load 8-25 (two other worktrees' browsers beside it) through a harness wrapper with longer waits (SHOT_TIMEOUT 900 s, navigations 300 s: a plain run's prop-blur screenshot timed out at 240 s; no check changed) 235 / 236 -- the one failure [FD-L9] at its 300 s wait: Auto's start-up calibration had given SwiftShader the 16-pass still refinement this time, whose passes alone took ~350 s; re-measured with the refinement forced on (?quality=high) the page idled at 44 Hz after 367 s with no render requested once the passes were done, so the row's wait is now 600 s (viewer_test comment), `--only fdlook` 14 / 14 with it ([FD-L9] idle after 68 s at 37 Hz; Auto gave no refinement there); in the full run [CAB1] the seat backs p50 201 / 199, sd 14.9 / 16.2, low-pass 10.6 / 12.6, high-pass 6.9 / 7.7, the headliner centre sd 11.4; [T4] cabin_fwd 190 / club 198 / fd_cabin 77, [T4b] 202; [T14] the walnut 40 at cabin_fwd (<= 90), overhead 41-48, bezels 27-42; [FD-L2] carpet 15 / consoles 7 / titanium 88; [FD-L3] glareshield 60 (lip 72 / underside 44); [FD-L4] yoke 212; [FD-L5] sheepskin (118, 120, 140); [FD-L6] p10 11, p50 71, bands 29 / 48 / 13 %; [FD-L10] hp4 skew +0.37, p10 98, sd4 12.3; [FD-L10b] cush_close -0.37 / -0.32, seats_aft -0.55 / -0.37; [FD-L11] knee boxes 12 / 15, console face 24.5; [Y1b] spread 22, body 0.23, pads / body 1.38; [Y1c] lunes / body 1.65; [Y1d] insert / cover 0.94; [Y1e] far 0.85 / near 0.38, band 55; [CRA1-01] sill 115 / 115.  web/package.py verify OK (meshopt 18.15 + 15.62 MB), the Artifact bundle 122.2 MB in 2 publishes (58.8 + 63.4 MB), artifact_test 70 / 70 (the bundle's viewer files are the committed ones; no viewer or GLB file changed after it).  Before / after sheets (judges' r2 renders | fix r2, P1046404 / 05 / 08): out/tmp/all8_fix_r2/cmp/cmp_*.jpg, cmp2/cmp_*.jpg (gitignored: they embed the photos).
+- Live G3000 PRIME displays + Environment knobs (track 2, branch claude/pc12-live-avionics; owner 2026-10-18 "the actual
+  characteristics, not screenshots ... if I turn on props, you can see gauges moving", "some control knob ... to tweak the
+  environment"; owner 2026-10-24: the labels ON by default).  Viewer only, no GLB change (the GLB's static atlas stays the
+  fallback: ?avx=0, other glTF viewers, an error).  `web/viewer/avionics.js`: one CanvasTexture `g3000_live` replaces the
+  'display_page' emissive map before the materials are cloned; each page (pfd_L / pfd_R / mfd / sdu_L / sdu_R at their
+  GLB meta 'displays' rectangles) is drawn into its own canvas when its quantised view key changes (avx_pages.js view*),
+  at most 20 Hz (phones 10; 2 Hz under 120 px on screen, none under 24 px / off screen), and uploaded alone
+  (copyTextureToTexture, mips once per batch); parked and still nothing is drawn, uploaded or rendered ([AVX-14]).  While
+  pages change the glass joins Stage.overlay (picture.js: the still without it, the glass composed over it), sampled with
+  a texture LOD bias of -log2(the still's scale) (materials.js U.avxBias, ?avxbias=) so the pages keep the still's
+  sharpness; picture.js restarts the still when what the overlay HOLDS changes (the glass joining / leaving the spinning
+  propeller's disc: a still rendered with the glass in it had shown its old page -- the r1 'stale page').  `verify()` reads
+  the GPU's copy (level 0 and 1) back against the canvases ([AVX-13]).  `avx_pages.js` the pages (PFD with SVT, HSI,
+  tapes, CAS; MFD with the engine strip, map, VSD; SDU flight plan / take-off data), `avx_font.js` stroke numerals and
+  LEGENDS (labels as a condensed system sans squeezed to 1.9 x the stroke layout's room; ?avxlabels=0 abstract strokes;
+  no brand words -- 'SafeTaxi' became 'Airport'; a plausible EDNY RW24 departure with invented fixes).  `engine.js` ONE
+  engine model (the sound reads it too, kin.gg === kin.eng): PT6E-67XP + Hartzell laws inside the POH limits (ground
+  idle 64.5 % Ng / >= 1,000 rpm, T/O flat 44.3 psi to the 850 C ITT limit, reverse governed 1,615 rpm), fix r1 (pilot
+  judges r1 7.4 -> r2 7.6 -> r3 8.0): the start at a PT6's pace (`START`: 13 % Ng in ~4.6 s, light-off 2 s after the fuel
+  ~6.6 s at ~15 %, 1.4 .. 3.6 %/s, ground idle ~28 s, the propeller turning with the power turbine from the light-off),
+  the run-down ~32 s (Ng) / ~20-25 s (propeller); running, the torque meter reads the turbine's torque at the CURRENT Ng
+  (rises with Ng, idle -> T/O ~4 s; `NG_RATE` 8 / 7 %/s); feather selected with the engine running (pitch >=
+  `FEATHER_SEL` 55) = Ng to ground idle and the propeller on its power balance (`J_PROP` 26 kg m^2; the static Cp stays
+  high past the stall to feather) down to ~600 rpm, no torque spike; a pitch the rating cannot turn droops the propeller
+  at the rating; ITT amber above 820 C, the unlit ITT follows the cooling hot section; QTY amber with fuel low;
+  upper-case CAS strings (FUEL LOW, TAKEOFF CONFIG -- only with power set for take-off --, STARTER, GPU).  `env.js` the
+  ISA day of the Animate tab's Environment panel (OAT, elevation, QNH inHg / hPa, wind, fuel, ground power; localStorage
+  'pc12.viewer.env', ?oat= ?elev= ?qnh= ?wind= ?fuel= ?gpu=) through first principles to the engine and the air data;
+  a T/O button sets the day's rating.  Tests: node test/avx_model_test.mjs (34), viewer_test --only avx [AVX-1]-[AVX-15],
+  artifact_test's live-pages row per scenario; the sound / prop-spool rows retimed to the slower start (SOUND_SCRIPT:
+  1,700 at 34 s, 100 s render).  Decisions (owner-delegated): the amber readouts stay reverse video (G1000 / G3000
+  practice); the TRQ green arc to 40.63 kept (the recovered table); the cold-day idle Np above 1,000 kept (the power
+  balance); no generator-off CAS with the engine stopped (P1046410 shows the parked pages without them).
