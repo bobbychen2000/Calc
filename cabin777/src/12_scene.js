@@ -89,10 +89,11 @@ const SKIES = {
   // QA r3: dim blue-grey deck under a narrow orange horizon band, blue upper sky [V: Air_France_777-300ER_Greenland_
   // Sunrise deck #50595d-#646a67, band #d2a46d, sky #9cabaa; Emirates_77W_wing_view / alv_7282 zenith #527dc2]; dark cool
   // deck bounce and a grazing sun at 0.35 on the exterior, so the wing takes the sky colour (from_exterior 3)
-  // QA r1 (light): a dim blue deck, not flat grey (haze / cloudLit), and a greyer exterior sky fill so the wing reads
-  // grey-blue, not royal blue [V: omaat_f73 dusk deck #3d608b (s0.56), sky #346cb1, thin warm horizon band; alv_7282
-  // wing ~#6f83b7 vs s26K #3a4474] (lighting r1, from_exterior 8)
-  sunset: { label: 'Sunset', sunEl: 5, sunAz: 110, sun: [4.2, 2.2, 0.9], zenith: [0.08, 0.14, 0.42], horizon: [1.1, 0.55, 0.30], haze: [0.10, 0.15, 0.24], cloudLit: [0.08, 0.12, 0.20], cloudShade: [0.018, 0.024, 0.034], skyTop: [0.22, 0.25, 0.42], skyBot: [0.4, 0.26, 0.2], extBounce: [0.07, 0.08, 0.10], extSun: 0.35, winGlow: [0.22, 0.12, 0.08], sunVis: 1, night: 0, sheer: 0.7 },
+  // QA r1 (light): a dim blue deck, not flat grey (haze / cloudLit), and a lighter, greyer exterior sky fill with a
+  // weaker grazing sun (extSun 0.35 -> 0.25) so the wing reads grey-blue, not royal blue [V: omaat_f73 dusk deck #3d608b
+  // (s0.56), sky #346cb1, thin warm horizon band; alv_7282 wing ~#6f83b7 vs s26K #3a4474] (lighting r1, from_exterior 8;
+  // the suggested skyTop [0.22, 0.25, 0.42] rendered the 19A wing mauve-grey #615564 h287 under the red sun [D])
+  sunset: { label: 'Sunset', sunEl: 5, sunAz: 110, sun: [4.2, 2.2, 0.9], zenith: [0.08, 0.14, 0.42], horizon: [1.1, 0.55, 0.30], haze: [0.10, 0.15, 0.24], cloudLit: [0.08, 0.12, 0.20], cloudShade: [0.018, 0.024, 0.034], skyTop: [0.28, 0.34, 0.60], skyBot: [0.4, 0.26, 0.2], extBounce: [0.07, 0.08, 0.10], extSun: 0.25, winGlow: [0.22, 0.12, 0.08], sunVis: 1, night: 0, sheer: 0.7 },
   night: { label: 'Night', sunEl: 38, sunAz: -40, sun: [0.07, 0.08, 0.12], zenith: [0.004, 0.006, 0.016], horizon: [0.02, 0.028, 0.05], haze: [0.018, 0.022, 0.036], cloudLit: [0.05, 0.055, 0.07], cloudShade: [0.012, 0.014, 0.02], skyTop: [0.02, 0.025, 0.04], skyBot: [0.01, 0.01, 0.015], extBounce: [0.028, 0.030, 0.038], extSun: 1, winGlow: [0.0, 0.0, 0.0], sunVis: 0, night: 1, sheer: 0.06 },
 };
 // QA r3 ambient-occlusion tuning [D: q06 / q15 / q03 / q05 / q14 against c_27312, y_47300, omaat_f11, f_17313,
