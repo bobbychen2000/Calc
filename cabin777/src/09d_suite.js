@@ -16,7 +16,7 @@ Object.assign(SEATMAT, {
   // w7: olive taupe-grey leaves, R ~ G like the cap (omaat_f60 field #40402f, f7 #423a25 vs the warm #786b57 render); groove
   // only ~0.75x the slat face so the 15-slat field does not alias (w7b) [V hue, D contrast]
   // w8: field ~1.35x darker again (cap/field 1.7 rendered vs 2.3 in omaat_f60)
-  fFlute: { c: '#4a483f', r: 0.5, l: LAYER.plastic }, fFluteGap: { c: '#424037', r: 0.7 },   // w9: groove eased (moire, w9a/b)
+  fFlute: { c: '#47453c', r: 0.5 },   /* w10: no plastic layer (stipple moire, w10b) */ fFluteGap: { c: '#393730', r: 0.7 },   // w9: groove eased (moire, w9a/b); w10: relief back to ~1.15 (f60 1.14-1.21; w10a)
   // w8: shells about half the cap's luminance - official f_17313 shell #5c5959-#6a625e (L90-100) vs cap #bfb9b2 (L186), in-flight
   // omaat_f57 niche L70 vs cap L135; w7 rendered 0.84-1.0 (one beige mass, w8b). Neutral-warm per the official photo [V]
   // w9: caps a middle hue between the official neutral (f_17313 #bfb9b2) and the in-flight olive-khaki (f60 / f57 R-B ~40), since
@@ -90,9 +90,10 @@ function suiteUnit(opts = {}) {
     const fy0 = 0.64, fy1 = scy + 0.2775, fz0 = -L + 0.12, fz1 = -L + 0.44;
     B.add(gRBox(0.014, fy1 - fy0, fz1 - fz0, 0.003, 1), M4.trs(-hx + 0.005, (fy0 + fy1) / 2, (fz0 + fz1) / 2), SEATMAT.fWood);
     // w6: 0.018 edges (a 1 mm step shimmered); w8: square-edged strips 0.028 wide crossing the centre plane - the two halves'
-    // rounded edges met in a V-groove that aliased into a dashed seam (w7b / w8b)
-    B.add(gBox(0.028, 0.02, fz1 - fz0 + 0.01), M4.trs(-hx + 0.006, fy1 + 0.01, (fz0 + fz1) / 2 + 0.005), SEATMAT.fCap);
-    B.add(gBox(0.028, fy1 - fy0 + 0.02, 0.02), M4.trs(-hx + 0.006, (fy0 + fy1) / 2 + 0.01, fz1), SEATMAT.fCap);
+    // rounded edges met in a V-groove that aliased into a dashed seam (w7b / w8b); w10: centred on the plane so both
+    // mirrored halves coincide (offset tops z-fought, w10b)
+    B.add(gBox(0.028, 0.02, fz1 - fz0 + 0.01), M4.trs(-hx, fy1 + 0.01, (fz0 + fz1) / 2 + 0.005), SEATMAT.fCap);
+    B.add(gBox(0.028, fy1 - fy0 + 0.02, 0.02), M4.trs(-hx, (fy0 + fy1) / 2 + 0.01, fz1), SEATMAT.fCap);
   }
   // w1: the aisle pier is a wider wood face angled 45 deg (centre 55) toward the seat from the screen edge (omaat_f10: pier 188 px vs
   // screen 610 px; up_forward_look 1D), holding a tall grey-rimmed pill mirror (~0.13 x 0.44, reflective blue-grey #667fa1)
@@ -173,7 +174,7 @@ function suiteUnit(opts = {}) {
     const kx = (xs0 + xs1) / 2, kz = -0.80, ky = 0.681;
     const K = M4.trs(kx, (y0 + y1) / 2, kz, 0, 0, -ka), kt = (x, y, z, ry = 0, rx = 0) => M4.mul(K, M4.trs(x - kx, y - 0.678, z - kz, ry, rx));
     const flat = (x, y, z) => kt(x, y, z, 0, -Math.PI / 2), glyph = { c: '#d8d8d6', r: 0.4 };   // w7: no glow (white icons on a dark tile, omaat_f57)
-    B.add(gRBox(0.12, 0.006, 0.13, 0.006, 1), kt(kx, ky - 0.003, kz), { c: '#4a4642', r: 0.6 }   /* w7: a shade darker than the console (omaat_f58 keypad L96 vs console L119; w6 still rendered 1.4x) [V] */);
+    B.add(gRBox(0.12, 0.006, 0.13, 0.006, 1), kt(kx, ky - 0.003, kz), { c: '#2f2d2b', r: 0.35 }   /* w10: 0.83-0.89x the module (f57 / f58); w7: a shade darker than the console (omaat_f58 keypad L96 vs console L119; w6 still rendered 1.4x) [V] */);
     // rows run across the console (x), stacked along z; outlines drawn as thin light strokes
     const ring = (x, z, w, d) => { for (const s of [-1, 1]) { B.add(gQuad(w, 0.0015), flat(x, ky + 0.0005, z + s * d / 2), glyph); B.add(gQuad(0.0015, d), flat(x + s * w / 2, ky + 0.0005, z), glyph); } };
     for (let c = 0; c < 3; c++) ring(kx + (c - 1) * 0.034, kz - 0.045, 0.024, 0.010);                     // pill buttons
@@ -234,7 +235,10 @@ function suiteUnit(opts = {}) {
     // the plinth under each leaf (omaat_f60 / f7 / f58, up_34: plinth ~0.19 of the leaf); the 0.06 floor LED line came from
     // the renderings [V]
     const ly0 = 0.16, ly1 = H - 0.015, lh = ly1 - ly0, yc = (ly0 + ly1) / 2, trim = { c: '#d4d2cc', r: 0.25, m: 0.85 };
-    if (doorsShut) B.add(gBox(0.03, ly0, zo1 - zo0 + 0.02), M4.trs(hx - 0.007, ly0 / 2, zm), SEATMAT.fShell);
+    // w10: the plinth is the leaf's olive-grey, darker than the field (omaat_f60 0.67x, up_34); closed, the zone under the meeting
+    // leaves is a dark recess (f60) [V]
+    const plinth = { ...SEATMAT.fDoorFrame, c: '#3c3a34' };
+    if (doorsShut) B.add(gBox(0.02, ly0, zo1 - zo0 + 0.02), M4.trs(hx - 0.07, ly0 / 2, zm), SEATMAT.fConsoleLow);   // toe-kick 0.06 back (w10a)
     // [z0, z1, meeting edge (-1 front, 1 aft), proud offset]
     const leaves = doorsShut ? [[zm - 0.50, zm, 1, 0.008], [zm, zm + 0.50, -1, 0.008]] : [[-L + 0.10, -L + 0.60, 1, 0], [-0.96, -0.46, -1, 0]];
     const flanks = doorsShut ? [[-L + 0.10, zm - 0.50], [zm + 0.50, -0.08]] : [[-0.46, -0.08]];
@@ -247,16 +251,19 @@ function suiteUnit(opts = {}) {
       B.add(gRBox(0.016, lh, w1, 0.006, 1), M4.trs(x + 0.007, yc, z1 - w1 / 2), SEATMAT.fDoorFrame);
       for (const y of [ly0 + 0.0175, ly1 - 0.0175]) B.add(gRBox(0.016, 0.035, len, 0.006, 1), M4.trs(x + 0.007, y, (z0 + z1) / 2), SEATMAT.fDoorFrame);
       B.add(gBox(0.004, 0.008, len - 0.03), M4.trs(x + 0.016, ly0 + 0.012, (z0 + z1) / 2), trim);
-      B.add(gBox(0.004, 0.028, 0.12), M4.trs(x + 0.001, 0.08, me > 0 ? z0 + 0.12 : z1 - 0.12), SEATMAT.black);
+      B.add(gBox(0.004, ly0 - 0.01, len), M4.trs(x + 0.001, (ly0 - 0.01) / 2 + 0.005, (z0 + z1) / 2), plinth);
       // recessed body-colour pull with a dark pocket at the meeting edge, ~0.55 up (omaat_f60) [V]
       const pz = me > 0 ? z1 - 0.04 : z0 + 0.04;
       B.add(gRBox(0.010, 0.08, 0.022, 0.004, 1), M4.trs(x + 0.017, 0.55, pz), SEATMAT.fDoorFrame);
       B.add(gBox(0.004, 0.06, 0.014), M4.trs(x + 0.021, 0.55, pz), SEATMAT.black);
       B.add(gBox(0.003, 0.007, 0.007), M4.trs(x + 0.0165, ly1 - 0.06, me > 0 ? z0 + 0.028 : z1 - 0.028), { c: '#ff2a1a', r: 0.4, e: 0.8 });   // w7: red status LED, top outer corner (omaat_f60) [V]
     }
+    // grip slots ~0.10 x 0.07 stay under the parked-leaf positions whatever the doors do (omaat_f60 / up_34) [V]
+    for (const z of [-L + 0.22, -0.58]) B.add(gBox(0.004, 0.07, 0.10), M4.trs(hx + 0.004, 0.08, z), SEATMAT.black);
     for (const [z0, z1] of flanks) {
       B.add(gBox(0.004, H - 0.015 - ly0, z1 - z0), M4.trs(hx + 0.002, (ly0 + H - 0.015) / 2, (z0 + z1) / 2), SEATMAT.fFlank);
       B.add(gBox(0.004, 0.008, z1 - z0 - 0.02), M4.trs(hx + 0.003, ly0 + 0.006, (z0 + z1) / 2), trim);
+      B.add(gBox(0.004, ly0 - 0.01, z1 - z0), M4.trs(hx + 0.002, (ly0 - 0.01) / 2 + 0.005, (z0 + z1) / 2), plinth);
     }
   }
   // the seat: upholstered base, thin cushion, flat back leaning on the aft wall, slate headrest flap (f_17302 / 17309)
@@ -293,11 +300,11 @@ function suiteUnit(opts = {}) {
     // aisle edge and a turned-down corner - the w6 slab vanished white-on-white (w7a);
     // the seat belt lies across the bare pad between the pillows and the fold (omaat_f57) [V]
     const duv = { c: '#d2cec6', r: 0.95, l: LAYER.fabric }, dw = SW, dx = seatX - 0.01, xe = dx + dw / 2, dz0 = -0.92, dl = 1.14;
-    B.add(gLoft(cushionSecs(dw, dl, 0.065, -0.03, { edge: 0.06, r: 0.06, crown: 0.045 }), 3), M4.trs(dx, 0.50, dz0 - dl / 2), duv);
+    B.add(gLoft(cushionSecs(dw, dl, 0.05, -0.03, { edge: 0.04, r: 0.05, crown: 0.012 }), 3), M4.trs(dx, 0.49, dz0 - dl / 2), duv);   // w10: ~0.04 thick, not a second mattress (w10b)
     if (!lod) {
       // w9: the turned-down diagonal corner at the head end on the aisle side shows the lighter underside (omaat_f57); the fold
       // band and crease ridges read as a slab and rods (w8 / w9a)
-      B.add(gExtrude([[xe - 0.34, -dz0], [xe - 0.02, -dz0], [xe - 0.02, -dz0 + 0.32]], 0.022), M4.trs(0, 0.553, 0, 0, -Math.PI / 2), { c: '#e6e3dd', r: 0.95, l: LAYER.fabric });
+      B.add(gExtrude([[xe - 0.36, -dz0 + 0.04], [xe - 0.06, -dz0 + 0.04], [xe - 0.06, -dz0 + 0.34]], 0.008), M4.trs(0, 0.528, 0, 0, -Math.PI / 2), { c: '#e6e3dd', r: 0.95, l: LAYER.fabric });
       B.add(gRBox(0.014, 0.15, dl - 0.06, 0.006, 1), M4.trs(xe + 0.005, 0.445, dz0 - dl / 2), duv);                                         // aisle drape
       const bz = -0.80, bx = seatX + SW / 2 - 0.21, ba = 25 * DEG;
       for (const sg of [-1, 1]) B.add(gBox(0.035, 0.004, 0.16), M4.trs(bx + sg * 0.09 * Math.cos(ba), 0.476, bz - sg * 0.09 * Math.sin(ba), Math.PI / 2 + ba), SEATMAT.black);
@@ -340,8 +347,8 @@ function suiteFar(opts = {}) {
   B.add(gBox(0.19, 0.66, L - 0.30), M4.trs(-hx + 0.125, 0.33, -L / 2 - 0.04), SEATMAT.fConsole);
   B.add(gRBox(0.66, 0.5, 0.7, 0.04, 1), M4.trs(-hx + 0.6, 0.25, -0.45), SEATMAT.fFabric);
   B.add(gBox(0.66, 0.72, 0.08), M4.trs(-hx + 0.6, 0.78, -0.24), SEATMAT.fFabric);
-  for (const [z0, z1] of [[-L + 0.10, -L + 0.60], [-0.96, -0.46]]) B.add(gBox(0.008, H - 0.115, z1 - z0), M4.trs(hx + 0.004, 0.10 + (H - 0.115) / 2, (z0 + z1) / 2), SEATMAT.fFlute);
-  B.add(gBox(0.006, H - 0.115, 0.38), M4.trs(hx + 0.003, 0.10 + (H - 0.115) / 2, -0.27), SEATMAT.fFlank);
+  for (const [z0, z1] of [[-L + 0.10, -L + 0.60], [-0.96, -0.46]]) B.add(gBox(0.008, H - 0.175, z1 - z0), M4.trs(hx + 0.004, 0.16 + (H - 0.175) / 2, (z0 + z1) / 2), SEATMAT.fFlute);
+  B.add(gBox(0.006, H - 0.175, 0.38), M4.trs(hx + 0.003, 0.16 + (H - 0.175) / 2, -0.27), SEATMAT.fFlank);
   const scx = c ? -hx + 0.502 : -hx + 0.618;
   B.add(gBox(0.03, H - 0.645, hx - 0.045 - scx - 0.488), M4.trs(scx + 0.488 + (hx - 0.045 - scx - 0.488) / 2, (H + 0.645) / 2, -L + 0.15, Math.PI / 2), SEATMAT.fWood);   // w9: pier wood
   if (!c) B.add(gBox(0.10, H - 0.68, 0.03), M4.trs(-hx + 0.08, (H + 0.68) / 2, -L + 0.135), SEATMAT.fWood);                                                      // w9: window wing
