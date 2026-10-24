@@ -108,19 +108,19 @@ function econSeat(B, x0, lod, opts = {}) {
   // w6 B: 0.255 wide (y_47300 0.23 / y_47306 0.73 of the pad); the hem hangs nearly flat (at -20 deg it read as a shelf)
   // w8 B: a soft flap, not a tablet - the plate bows ~4 mm forward mid-height, the fold is a thin strip bent over the
   // pad top, with a stitch line above the hem (y_47301, y_47306)
-  // w20 (gap19): bow cut 4 -> ~1.5 mm (the bulge mirrored the ceiling as a crinkle head-on)
+  // w20 (gap19): bow cut 4 -> ~1.5 mm (the bulge mirrored the ceiling as a crinkle head-on); w20 B: ~2.5 mm (flat, it mirrored as one broad band)
   // w10 A + B: the flap hangs ~3 cm below the pad (y_47306 / sans 13: 24-29 % of the pad height), its foot tipped a
   // little forward, and rolls round the pad top in a soft radius (was a hard bevel)
-  loftAt(B, [SEC(0.575, 0.255, 0.005, -0.12, 0.002), SEC(0.61, 0.256, 0.005, -0.111, 0.002), SEC(0.655, 0.257, 0.005, -0.1035, 0.002), SEC(0.705, 0.258, 0.005, -0.104, 0.002), SEC(0.755, 0.257, 0.005, -0.1035, 0.002), SEC(0.791, 0.255, 0.005, -0.0985, 0.002)], BH, SEATMAT.yCover, lod ? 1 : 2);
+  loftAt(B, [SEC(0.575, 0.255, 0.005, -0.12, 0.002), SEC(0.61, 0.256, 0.005, -0.111, 0.002), SEC(0.655, 0.257, 0.005, -0.1025, 0.002), SEC(0.705, 0.258, 0.005, -0.103, 0.002), SEC(0.755, 0.257, 0.005, -0.1025, 0.002), SEC(0.791, 0.255, 0.005, -0.0985, 0.002)], BH, SEATMAT.yCover, lod ? 1 : 2);
   loftAt(B, [SEC(0.789, 0.255, 0.006, -0.0985, 0.003), SEC(0.8, 0.255, 0.012, -0.094, 0.005), SEC(0.807, 0.255, 0.02, -0.086, 0.007), SEC(0.81, 0.255, 0.028, -0.073, 0.008), SEC(0.807, 0.255, 0.02, -0.06, 0.006)], BH, SEATMAT.yCover, lod ? 1 : 3);
   if (lod) return;
   // small ANA mark in the flap's lower corner (viewer's right from the front, y_47306); w5 B: a thin grey logotype, not a sticker
   // w19 A: the hem, stitch and mark were quads 6-9 mm behind the plate (its foot tips forward since w10) and never showed;
   // now thin bands lofted over the plate, following its slope (plate centre z -0.12 at y 0.575 -> -0.111 at 0.61)
   const cz = (y) => -0.12 + (y - 0.575) / 0.035 * 0.009;
-  loftAt(B, [SEC(0.577, 0.253, 0.0064, cz(0.577), 0.002), SEC(0.596, 0.254, 0.0064, cz(0.596), 0.002)], BH, { c: '#30364f', r: 0.3 }, 1);   // w9 A: stitched hem band ~10 % of the cover height (y_47306)
-  loftAt(B, [SEC(0.5965, 0.24, 0.0072, cz(0.5965), 0.001), SEC(0.5977, 0.24, 0.0072, cz(0.5977), 0.001)], BH, { c: '#8a90a8', r: 0.5 }, 1);   // stitch line, light thread (b_ss_14)
-  loftAt(B, [SEC(0.5985, 0.014, 0.0068, cz(0.5985), 0.0005, -0.105), SEC(0.6045, 0.014, 0.0068, cz(0.6045), 0.0005, -0.105)], BH, { c: '#6a7090', r: 0.4 }, 1);   // small ANA mark, viewer's right (y_47306)
+  loftAt(B, [SEC(0.577, 0.253, 0.0064, cz(0.577), 0.002), SEC(0.596, 0.254, 0.0064, cz(0.596), 0.002)], BH, { c: '#2a3049', r: 0.6 }, 1);   // w20 A: dark (a light hem + stitch read as a screen chin head-on); w9 A: stitched hem band ~10 % of the cover height (y_47306)
+  loftAt(B, [SEC(0.5965, 0.24, 0.0072, cz(0.5965), 0.001), SEC(0.5977, 0.24, 0.0072, cz(0.5977), 0.001)], BH, { c: '#3e4562', r: 0.6 }, 1);   // stitch line, light thread (b_ss_14)
+  loftAt(B, [SEC(0.5985, 0.01, 0.0068, cz(0.5985), 0.0005, -0.105), SEC(0.6025, 0.01, 0.0068, cz(0.6025), 0.0005, -0.105)], BH, { c: '#3a4058', r: 0.5 }, 1);   // small ANA mark, viewer's right (y_47306)
   // w11 B: contact darkening where the back fabric tucks into the shell sides (y_47306 dark crease) and along the strip
   for (const sx of [-1, 1]) loftAt(B, [SEC(0.05, 0.014, 0.003, -0.048, 0.001, sx * 0.199), SEC(0.55, 0.014, 0.003, -0.043, 0.001, sx * 0.203), SEC(0.80, 0.014, 0.003, -0.032, 0.001, sx * 0.2)], BH, { c: '#283052', r: 0.95 }, 1);   // w12 A + B: soft crease, not a drawn line
   // w9 A: a ~0.12 m centre strip in a contrasting weave runs from the pad top to the back top (headrest track cover,
@@ -149,7 +149,7 @@ function econSeat(B, x0, lod, opts = {}) {
       const t = i / 48 * 2 * Math.PI, sx = Math.cos(t), sz = Math.sin(t), X = sx * (1 + 0.35 * sz * sz), Z = sz * (1 + 0.35 * sx * sx), pull = 1 + 0.15 * Math.abs(X * Z);
       rim.push([0.165 * X * (1 - 0.06 * (1 - Z * Z)) * pull, 0, 0.135 * Z * (1 - 0.1 * (1 - X * X) - (Z > 0 ? 0.04 * (1 - X * X) : 0)) * pull]);
     }
-    B.add(gTube(rim, 0.0035, 6, false), M4.mul(BH, M4.trs(0, 0.19, -0.115, 0, -80 * DEG)), { ...SEATMAT.yPillow, c: '#323a54' });
+    B.add(gTube(rim, 0.0035, 6, false), M4.mul(BH, M4.trs(0, 0.19, -0.115, 0, -80 * DEG)), { ...SEATMAT.yPillow, c: '#343e5c' });   // w20 A + B: pillow-coloured piping (a darker ring read as an outline)
   }
   // life-vest pouch: dark saucer-shaped holder under the pan front with a red pull strap hanging from its rim (y_47302:
   // ~0.15-0.18 m discs under each seat) [D]
@@ -280,13 +280,16 @@ function econUnit(n, lod = false, opts = {}) {
       // w19 A + B: regular rows carry one C moulding, open at the front - the arm, a broad sweep down under its rear end and
       // a ~5.5 cm lower bar running forward at pan-top height to a rounded nose, ~6 cm under the arm (y_47303 near / right
       // aisle seats, sans b_ss_18); no front bracket, paddle or aisle-end panel (those are the exit-row arms, y_47302) [D]
+      // w20 A + B: the lower member is a flat moulded plate (~2 x 6 cm; at the block ends a deep ~11 cm panel, b_ss_18
+      // 1.75x the arm, y_47301), not a round rail - lofted in y, its z extent shaped into the rounded nose [D]
       const cp = [[0, 0.636, -0.078], [0, 0.60, -0.074]];
-      for (let i = 1; i <= 8; i++) { const t = i / 8, u = 1 - t; cp.push([0, u * u * 0.60 + 2 * u * t * 0.528 + t * t * 0.528, u * u * -0.074 + 2 * u * t * -0.074 + t * t * -0.15]); }
-      for (let i = 1; i <= 5; i++) cp.push([0, 0.528, -0.15 - 0.235 * i / 5]);
-      const ct = gTube(cp, 0.028, 14); for (let k = 0; k < ct.p.length; k += 3) ct.p[k] *= 0.7; computeNormals(ct);
+      for (let i = 1; i <= 8; i++) { const t = i / 8, u = 1 - t; cp.push([0, u * u * 0.60 + 2 * u * t * 0.52 + t * t * 0.515, u * u * -0.074 + 2 * u * t * -0.08 + t * t * -0.15]); }
+      const ct = gTube(cp, 0.028, 12); for (let k = 0; k < ct.p.length; k += 3) ct.p[k] *= 0.55; computeNormals(ct);
       B.add(ct, M4.trs(xa, 0, 0), SEATMAT.arm);
-      const nose = gSphere(1, 14, 8); for (let k = 0; k < nose.p.length; k += 3) { nose.p[k] *= 0.0196; nose.p[k + 1] *= 0.028; nose.p[k + 2] *= 0.03; }
-      computeNormals(nose); B.add(nose, M4.trs(xa, 0.528, -0.385), SEATMAT.arm);
+      const zs = (y, z0, z1, w) => SEC(y, w, z0 - z1, (z0 + z1) / 2, 0.009);
+      const end = k === 0 || k === arms.length - 1;
+      loftAt(B, end ? [zs(0.415, -0.13, -0.33, 0.024), zs(0.43, -0.12, -0.375, 0.024), zs(0.46, -0.115, -0.398, 0.024), zs(0.50, -0.115, -0.40, 0.024), zs(0.525, -0.12, -0.392, 0.024), zs(0.538, -0.13, -0.37, 0.024), zs(0.543, -0.145, -0.33, 0.02)]
+        : [zs(0.48, -0.14, -0.365, 0.02), zs(0.488, -0.13, -0.383, 0.022), zs(0.51, -0.125, -0.392, 0.022), zs(0.532, -0.13, -0.383, 0.022), zs(0.54, -0.14, -0.365, 0.02)], M4.trs(xa + (end ? (k === 0 ? -0.013 : 0.013) : 0), 0, 0), SEATMAT.arm, 3);
     } else {
       // front end: one continuous grey bracket from under the arm nose down past the pan, with a pivot ring at pan height;
       // the white paddle hangs from it (y_47302 / 47303; w2 B: was a ball on a stick) [D]

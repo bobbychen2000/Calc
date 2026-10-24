@@ -268,7 +268,7 @@ Y_PHOTO = {
     # middle seat back, chevron tick columns; cover 0.27 m = 165 px -> 611 px/m, 152 px = 0.249 m [D]
     # econ w20 (gap19): the crop's columns lean 7 deg (oblique seat) and cancelled out over a back -> rotated upright; 0.29 m
     # (~13 mm column pitch, y_47300); floor 0.05 so the dark channels reach the photo's p10 [D]
-    'y_tick':    ('y_47306', (260, 385, 412, 537), 0.29, 14, 7, 0.15, 0.95, 0.05),
+    'y_tick':    ('y_47306', (260, 385, 412, 537), 0.29, 14, 7, 0.15, 0.95, 0.10),     # w20 A: floor 0.05 -> 0.10 (harsh close up)
     # left seat back, harlequin diamonds; seen obliquely: cover 108 px wide (423 px/m) but 133 px tall for 0.235 m
     # (566 px/m) -> the 82 x 115 crop is stretched 1.34x in x to a square 0.203 m [D]
     'y_diamond': ('y_47306', (62, 358, 144, 473), 0.203, 30, 0, 0.3, 0.8, 0.0),
@@ -357,10 +357,11 @@ def y_photo(name):
         # the 3.4 mm/px source smears each 3-5 mm fleck over ~3 px: keep only the core of the excess over the ground
         # (bright area 27 % -> ~12 %, y_47306 pad 11 %) and tint it pale blue (#9fb0e0 vs white, w15 A) [D]
         g = np.median(r.mean(2)); e = np.maximum(r - g, 0); ep = e.max()
-        r = np.minimum(r, g) + ep * (e / ep) ** 0.9 * np.array([0.95, 1.0, 1.02], np.float32)   # w20 (gap19): 1.25 thinned the flecks away at row distance
+        r = np.minimum(r, g) + ep * (e / ep) ** 1.05 * np.array([0.98, 1.0, 0.98], np.float32)   # w20 A + B: fewer, less blue cores (B/R 3.0 vs 2.54)   # w20 (gap19): 1.25 thinned the flecks away at row distance
     # w20 (gap19): the 0.5-2.5 cm band (columns, flecks, dashes) is what survives at row distance; boost it in log luminance and
     # damp the < 1.2 mm JPEG grain (tile CV at 150 px/m: tick 0.31 vs 0.46-0.49 in y_47300, fleck 0.31 vs 0.84) [D]
-    gb, gf = {'y_tick': (1.0, 0.3), 'y_fleck': (1.2, 0.0), 'y_mosaic': (0.6, 0.2)}.get(name, (0.0, 0.0))
+    # w20 A + B: the full boost overshot (q15 tick bright 0.15 vs 0.083, fleck 0.20 vs 0.154) -> half on tick / fleck
+    gb, gf = {'y_tick': (0.5, 0.3), 'y_fleck': (0.6, 0.0), 'y_mosaic': (0.6, 0.2)}.get(name, (0.0, 0.0))
     if gb or gf:
         lg = np.log(np.maximum(r.mean(2), 1e-3)); ppm = S / size
         b1, b2, b0 = _blur_wrap(lg, 0.005 * ppm), _blur_wrap(lg, 0.025 * ppm), _blur_wrap(lg, 0.0012 * ppm)
