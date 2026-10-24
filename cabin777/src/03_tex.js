@@ -2,8 +2,8 @@
 // Procedural textures (generated at load; no external image assets)
 //  Detail layers are RGBA: RG = tangent normal (xy), B = albedo mod, A = roughness mod
 // ------------------------------------------------------------------
-const LAYER = { none: 0, fabric: 1, leather: 2, carpet: 3, plastic: 4, brushed: 5, marble: 6, vinyl: 7, grille: 8, yagasuri: 9, wood: 10, yMosaic: 11, atlasLit: 14, atlasGlow: 15, yJacq: 16, pyFleck: 17, tweed: 18, ashGrain: 19, fWood: 20, fTweed: 21, yCarpet: 22, pyConfetti: 23, yDiamond: 24, yFleck: 25, yMosaicP: 26, xSkin: 27, gAlu: 28, jPillow: 29, ashDoor: 30, pyEar: 31, sPleat: 32, monoAsh: 33 };
-const N_LAYERS = 34;
+const LAYER = { none: 0, fabric: 1, leather: 2, carpet: 3, plastic: 4, brushed: 5, marble: 6, vinyl: 7, grille: 8, yagasuri: 9, wood: 10, yMosaic: 11, atlasLit: 14, atlasGlow: 15, yJacq: 16, pyFleck: 17, tweed: 18, ashGrain: 19, fWood: 20, fTweed: 21, yCarpet: 22, pyConfetti: 23, yDiamond: 24, yFleck: 25, yMosaicP: 26, xSkin: 27, gAlu: 28, jPillow: 29, ashDoor: 30, pyEar: 31, sPleat: 32, monoAsh: 33, yDiamondPan: 34 };
+const N_LAYERS = 35;
 // layers >= 16 take their pattern from a photo swatch when PHOTO_TEX is embedded (build.py), else procedural
 const PHOTO_LAYERS = {
   16: 'y_tick',
@@ -23,6 +23,7 @@ const PHOTO_LAYERS = {
   32: 's_pleat',   // shell w12: blackout pleat valley stripe, phase-locked to the closed shades (synthetic, mip-mapped)
   33: 'j_ash',     // monuments w18: bar / welcome / ash-wall ash, between layer 30 (too plain) and 19 (banded)
   29: 'j_pillow',  // room w12: THE Room pillow + comforter check jacquard (kn_17, tpg_46)
+  34: 'y_diamond', // econ w27: diamond seat pans, same tile at a lower gain (w26a-1 / w26b-1)
   31: 'py_ear',    // py w13: PY trim-A headrest ears, notched sakura chips (py_37305); 23 stays the trim-B back slivers
 };
 let PHOTO_PIX = null;
@@ -45,6 +46,7 @@ const PHOTO_GAIN = {
   28: 0.3,    // monuments w9: tile SD 0.10 -> ~3 % smudge mottle (sans_38 cart 4.8 %, sansY_44 oven ~10 %; 0.5 read as stains) [D]
   33: 1.1,   // monuments w18 (w17a): grain SD 3.3 at layer 30's 0.5 vs 6.5-9.8 in samchui_render_11 / lalf_133 -> ~2.2x [D]
   30: 0.5,   // room w15a/b: doors still 0.84-0.92 of the cabinet luma in q06 (c_27312 0.6), dash streaks at aisle distance; room w14a/b: aisle doors near-plain cream, the grain only faint (c_27312 (209,207,198), c_27314) [D]
+  34: 0.45,  // econ w27 (w26a-1 / w26b-1): pan stars bright 0.21 vs 0.09, p90/50 1.72 vs 1.37 in y_47300 [D]
   29: 0.4,   // room w13a: read as hard gingham at 0.55 -> -30 %; room w12: kn_17 close-up +-25 % linear, but tpg_81 / tpg_46 at seat distance read about half that [D]
   27: 0.22,   // exterior w9: x0.75, read as even brushed banding at 0.3 (A w9); exterior w8: tile stored at SD 0.12 -> ~3.6 % grime mottle (KN41 / 7250 flap panels 3-5 %) [D]
 };
@@ -90,6 +92,7 @@ const LAYER_PARAMS = {
   32: [8.6353, 0.12, 1.0, 0.1],  // shell w12: s_pleat (0.115804 m = 8 pleats; scale comes from sizes.json)
   33: [3.1, 0.05, 1.1, 0.12],   // monuments w18: monument ash (j_ash tile), as 30 at a higher gain
   29: [6.6, 0.12, 1.0, 0.15],   // room w12: pillow / comforter check jacquard (0.152 m tile), soft weave relief
+  34: [5.5, 0.12, 0.45, 0.15],  // econ w27: diamond pan (y_diamond tile), as 24 at a lower gain
   31: [14, 0.3, 0.8, 0.15],     // py w13: ear chips (0.07 m tile), as 23
 };
 
@@ -266,7 +269,7 @@ function buildDetailLayers(S = 256) {
     const a = vnoise(u * 3, (v + w) * 160, 160, 122), b = vnoise(u * 6, (v + w) * 64, 64, 123);
     return clamp(0.5 + 0.55 * (a - 0.5) + 0.3 * (b - 0.5), 0, 1);
   }, () => 0.5, 0.2);
-  L[20] = L[10]; L[21] = L[18]; L[22] = L[3]; L[23] = L[17]; L[24] = L[16]; L[25] = L[16]; L[26] = L[11]; L[29] = L[9]; L[30] = L[19]; L[31] = L[17]; L[33] = L[19];
+  L[20] = L[10]; L[21] = L[18]; L[22] = L[3]; L[23] = L[17]; L[24] = L[16]; L[25] = L[16]; L[26] = L[11]; L[29] = L[9]; L[30] = L[19]; L[31] = L[17]; L[33] = L[19]; L[34] = L[16];
   // photo swatches: tile scale from the swatch's physical size; normal + roughness from its luminance
   if (PHOTO_PIX) for (const [k, name] of Object.entries(PHOTO_LAYERS)) {
     const px = PHOTO_PIX[name]; if (!px) continue;
