@@ -109,3 +109,52 @@ See `questions_shell.md`:
   photo. The window is fixed in 07_shell. A corrected lining spec (handle housing, red arc, arming box, bustle, grab bar) went
   to monuments in from_shell.md.
 - **Door floors.** The cross-aisles are dark warm-brown carpet (TPG door 2L, sans_09); the galleys stay vinyl.
+
+## Wave 3 (2026-10-24): w6-w11
+
+| Round | Rater A | Rater B | Mean | Files |
+|---|---|---|---|---|
+| w5 (wave 2, rated before c5bc132) | 6.6 | 7.5 | 7.05 | shell_w5a / w5b.json |
+| w6 (c5bc132 head) | 7.0 | 7.7 | 7.35 | shell_w6a / w6b.json |
+| w7 | 7.5 | 8.0 | 7.75 | shell_w7a / w7b.json |
+| w8 | 7.8 | 8.2 | 8.0 | shell_w8a / w8b.json |
+| w9 | 8.0 | 8.1 | 8.05 | shell_w9a / w9b.json |
+| w10 | 8.2 | 8.3 | 8.25 | shell_w10a / w10b.json |
+| w11 (final, 6-round cap) | 8.3 | 8.4 | 8.35 | shell_w11a / w11b.json |
+
+No high or medium shell issue is left after w11. The target of 8.5 from both raters was not reached; the remaining items are low (below).
+Contact sheet: `shell_before_after.jpg` (w5c = the shell before c5bc132, against w11; own renders only, the cabin columns also carry the
+other areas' concurrent changes).
+
+**First job (w5 regression).** The w5 ratings were made on the shell before c5bc132's code, so c5bc132 itself was unrated. Both w6
+raters compared w5c (the pre-c5bc132 shell built with the current head) with the c5bc132 head: every change helped except a
+slightly over-dark blackout. c5bc132 was kept and the blackout eased in w6. The w4 -> w5 drop came from the w4 post-rating upper-tub
+grade, which ran the wrong way (darkest at the recess top), plus stricter raters with new photos; c5bc132 had already reversed it.
+
+**What changed (73b8696, a746e65, 593892d, b5c58b3, 36fe8fd, 42e362c, 03d7532, 220b46f):**
+- **Window tub / bowl:** the hood grade is darkest just above the bezel, rising evenly to the lip with a darker band under it (PY/Y
+  x0.38, F/J x0.55), fades toward the tub sides, and is baked on a tub floor lofted through 3 segments (no streaks). The top
+  extension is eased (no side-wall kink). PY/Y bezel is a raised frame ring with a warm outline. [V: sp_py14, sans_14, tt_window, y_47303]
+- **Pane tunnel:** darker lining graded toward the pane, with a dark shade-channel line at its mouth. [V: tt_window 0.58-0.64]
+- **Shades:** blackout tone tuned to 0.63-0.65 of the wall with crisper pleats (stripe 0.62, 5 mm zig-zag), closed hem down to the
+  sill; stowed manual shade band darker with a deeper grip and a dark finger-scoop line; saturated blue-violet LED ring. [V: omaat
+  room24/38, y_47303, sp_py24, tt_window]
+- **Floors:** door cross-aisles are grey vinyl between the galley blocks with brown carpet only in the door bays (hue 30); vinyl
+  lighter with a cloudy stone mottle (03_tex.js layer 7, shared, vinyl only). [V: sans_09 / sp_py09]
+- **Door:** viewing window moved forward to c - 0.30 to match monuments' mirrored lining (lalf_133/134). Jamb stop fittings were
+  added in w9 and removed in w10: fr_123806 turned out to be an exterior view.
+- **Triangles:** shell meshes 555k -> 648k (+17 %, budget +25 %).
+
+**Hand-offs:** to monuments (arc vs window, w6; since solved by their mirrored lining); to lighting (closed-blackout darkening,
+tub-crown darkening from the down-face reveal-glow cut; both largely resolved by 1582aaa, the crown cut should still stop at
+dy < 0.44; bowls still render neutral instead of cream).
+
+**Still open (all low):** blackout pleat moire on mid-distance windows (vertex-colour stripe; needs fewer rows or a mip-mapped
+layer); sidewall has no fine linen weave (tt_window; a normal-only layer ~0.06); door viewing window slightly narrow (aspect 0.39
+vs ~0.52 in lalf_134) with no cream bezel or shade tab; shade-button pill a little small (22x46 vs ~28x52 mm); vinyl faintly cool;
+[exterior] a pale bar behind the nearest J pane in s01; [monuments/integration] a cabin window visible beside the door-4 jamb.
+
+**Sources added in wave 3:** SANspotter sans_09 / sp_py09 (door-2 floor), lalf_133 / lalf_134 (Live and Let's Fly, door 2L),
+knaviation THE Room (kn_room_8/16), plus the 73 wave-2 photos re-downloaded to ref/web/shell (gitignored).
+
+**Open questions:** `questions_shell.md` (wave 3): an inside photo of an ANA 777 door lining; whether the door-floor split applies at all doors.
