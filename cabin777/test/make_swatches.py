@@ -323,6 +323,37 @@ def _wrap_cut(a, o):
     return cut_x(a.transpose(1, 0, 2)).transpose(1, 0, 2)
 
 
+def _thin_flecks(e, ep, keep, seed, th=0.2, trim=0.04):
+    """drop a random (fixed-seed) share of the fleck components of the excess map e (pixels over th * ep, labelled with
+    wrap-around 8-connectivity); a fleck closer to a kept one than 1.2x their summed sizes is dropped first, so
+    merged clusters thin out. Dropped components fade over a 1 px rim; kept cores lose their soft skirt (trim * ep)"""
+    n = e.shape[0]; lum = e.mean(2); mask = lum > th * ep
+    lab = -np.ones(lum.shape, int); comps = []
+    for y0, x0 in zip(*np.nonzero(mask)):
+        if lab[y0, x0] >= 0: continue
+        k = len(comps); lab[y0, x0] = k; st = [(y0, x0)]; pts = []
+        while st:
+            y, x = st.pop(); pts.append((y, x))
+            for dy in (-1, 0, 1):
+                for dx in (-1, 0, 1):
+                    yy, xx = (y + dy) % n, (x + dx) % n
+                    if mask[yy, xx] and lab[yy, xx] < 0: lab[yy, xx] = k; st.append((yy, xx))
+        comps.append(np.array(pts))
+    rng = np.random.default_rng(seed); order = rng.permutation(len(comps))
+    cen = [np.array([np.angle(np.exp(2j * np.pi * c[:, i] / n).mean()) * n / (2 * np.pi) % n for i in (0, 1)]) for c in comps]
+    size = [max(2.0, np.sqrt(len(c))) for c in comps]
+    kept, drop = [], np.zeros(len(comps), bool)
+    for k in order:
+        near = any(np.hypot(*((cen[k] - cen[j] + n / 2) % n - n / 2)) < 1.2 * (size[k] + size[j]) for j in kept)
+        if near or len(kept) >= keep * len(comps): drop[k] = True
+        else: kept.append(k)
+    dm = np.isin(lab, np.nonzero(drop)[0]).astype(np.float32)
+    dm = np.maximum(dm, _blur_wrap(dm, 0.7) * 1.5).clip(0, 1)          # 1 px soft rim round the dropped flecks
+    out = e * (1 - dm)[..., None]
+    print('flecks kept', len(kept), 'of', len(comps))
+    return np.maximum(out - trim * ep, 0) / (1 - trim), dm
+
+
 def y_photo(name):
     """cut a Y fabric tile straight from the photo: lighting removed by dividing by a blurred luminance computed on a
     padded crop (no edge bias, chroma of the pale yarns kept), resampled to 256 px, made periodic, lightly sharpened
@@ -353,12 +384,23 @@ def y_photo(name):
         # photo's own column profile (mean down each column) 1.6x so the dark channels survive the mip chain [D]
         c = r.mean(2).mean(0, keepdims=True); c = c / c.mean()
         r = r * (c ** 0.15)[..., None]   # w20 (gap19): straight columns carry their own profile; 0.6 over-sharpened close up
-        m = np.median(r.mean(2)); r = np.where(r.mean(2, keepdims=True) > m, m + 0.8 * (r - m), r)   # w21 / w22 B: strokes toward the ground (q15 bright 0.14 vs 0.083 after the -0.5 mip bias)
+        m = np.median(r.mean(2)); r = np.where(r.mean(2, keepdims=True) > m, m + 0.65 * (r - m), r)   # w25 (w23a-2 / w23b-1): 0.8 -> 0.65 (q15 bright 0.12 vs 0.083; ~0.02 per 0.1)   # w21 / w22 B: strokes toward the ground (q15 bright 0.14 vs 0.083 after the -0.5 mip bias)
+    if name == 'y_diamond':
+        # econ w25 (w23b-2): the lattice washed out on the bluer #5f6ba0 ground (e4 bright 0.03 vs 0.11 in y_47306) -> 1.25x [D]
+        m = np.median(r.mean(2)); r = np.maximum(m + 1.25 * (r - m), 0.03)
     if name == 'y_fleck':
         # the 3.4 mm/px source smears each 3-5 mm fleck over ~3 px: keep only the core of the excess over the ground
         # (bright area 27 % -> ~12 %, y_47306 pad 11 %) and tint it pale blue (#9fb0e0 vs white, w15 A) [D]
         g = np.median(r.mean(2)); e = np.maximum(r - g, 0); ep = e.max()
-        r = np.minimum(r, g) + ep * (e / ep) ** 1.2 * np.array([1.02, 1.0, 0.92], np.float32)   # w20 A + B: fewer, less blue cores (B/R 3.0 vs 2.54); w22 B: exp 1.2 (bright 0.18 vs 0.153 after the mip bias)   # w20 (gap19): 1.25 thinned the flecks away at row distance
+        # econ w25 (w23a-1): the tile carried ~2x the photo's flecks close up (e4 pad coverage 0.29 vs 0.13 in y_47306,
+        # merged clusters) and the exponent only dimmed them: drop ~30 % of the fleck components (fixed seed, a kept fleck
+        # clears the flecks touching it, so merged clusters break up) and trim the soft skirts, exponent 1.0, flecks 1.1x [D]
+        e, dm = _thin_flecks(e, ep, keep=0.7, seed=24)
+        # a dropped fleck and its dark sharpening halo become the surrounding ground (a flat g read brown) [D]
+        base = np.minimum(r, g); dd = np.clip(_blur_wrap(dm, 1.5) * 2.0, 0, 1)
+        out = (1 - np.clip(dd * 3, 0, 1)).astype(np.float32)        # the local ground around each dropped fleck fills it
+        gl = np.stack([_blur_wrap(base[..., c] * out, 3.0) for c in range(3)], 2) / np.maximum(_blur_wrap(out, 3.0), 1e-3)[..., None]
+        r = base * (1 - dd[..., None]) + gl * dd[..., None] + 1.1 * ep * (e / ep) ** 1.0 * np.array([1.02, 1.0, 0.92], np.float32)   # w25 (w24a-2): distance flecks weak (p90/p10 2.48 vs 3.05)   # w20 A + B: fewer, less blue cores (B/R 3.0 vs 2.54); w22 B: exp 1.2 (bright 0.18 vs 0.153 after the mip bias)   # w20 (gap19): 1.25 thinned the flecks away at row distance
     # w20 (gap19): the 0.5-2.5 cm band (columns, flecks, dashes) is what survives at row distance; boost it in log luminance and
     # damp the < 1.2 mm JPEG grain (tile CV at 150 px/m: tick 0.31 vs 0.46-0.49 in y_47300, fleck 0.31 vs 0.84) [D]
     # w20 A + B: the full boost overshot (q15 tick bright 0.15 vs 0.083, fleck 0.20 vs 0.154) -> half on tick / fleck

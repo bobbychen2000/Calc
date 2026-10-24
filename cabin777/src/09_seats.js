@@ -34,9 +34,9 @@ const SEATMAT = {
   yTray: { c: '#cfd2d6', r: 0.4, l: LAYER.plastic },
   yBelt: { c: '#25466a', r: 0.9, l: LAYER.fabric },        // y_47303 #325495 / #456198 (w5 B: #3a64a6 rendered sky-cyan; w6 B: #2e4c86 rendered #588ed0 vs y_47303 #38578c; w7 A: G/B 0.47 vs 0.61 -> teal lean)
   yPillow: { c: '#3d4763', r: 0.9, l: LAYER.fabric },      // y_47300 (44,53,88); econ w2: #2e3860 rendered #151b3e vs photo #30395f; w6 B: #4d5579 q15 L50 59 vs 44
-  arm: { c: '#c4c8cd', r: 0.45, l: LAYER.plastic },       // econ QA w1: light grey, y_47303 #afb2bc / y_47302 #9fa6ab
-  armPad: { c: '#b6bac0', r: 0.5, l: LAYER.plastic },
-  armPost: { c: '#a9aeb4', r: 0.45, l: LAYER.plastic },    // econ w2: grey arm front bracket (y_47302 / 47303)
+  arm: { c: '#c9c7c3', r: 0.45, l: LAYER.plastic },       // econ w25 (w24b-6): warm light grey (y_47300 B/R 0.95-0.975 vs 1.06); econ QA w1: light grey, y_47303 #afb2bc / y_47302 #9fa6ab
+  armPad: { c: '#bbbab6', r: 0.5, l: LAYER.plastic },
+  armPost: { c: '#adaca8', r: 0.45, l: LAYER.plastic },    // econ w2: grey arm front bracket (y_47302 / 47303)
   frame: { c: '#a3a8ae', r: 0.32, m: 0.85, l: LAYER.brushed },
   black: { c: '#15181c', r: 0.45 },
   port: { c: '#0b0c0e', r: 0.4 },
