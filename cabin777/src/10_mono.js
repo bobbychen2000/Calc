@@ -841,6 +841,8 @@ function buildMonuments(gl, layout, opts = {}) {
         B.add(gTube([[p0[0], p0[1], c + dz], [p1[0], p1[1], c + dz]], 0.014, 8), null, MAT.handle);
       }
       B.add(gQuad(0.07, 0.035), LF(1.05, 0.004, 0.64, Qf), MONMAT.cardWhite);
+      // w8a: cream '非常口 EXIT' plate on the upper lining above the housing (lalf_133)
+      B.add(gQuad(0.26, 0.094), LF(1.84, 0.004, 0, Qf), MAT.decal, atlasUV('exit'));
       // plain upper door with a horizontal seam at ~1.73 m
       B.add(gBox(0.004, 0.005, 1.04), LF(1.73, 0.002, 0), MAT.doorGap);
     }

@@ -14,3 +14,8 @@ Nothing is blocked on these. Each item says what the model assumes for now.
    galleys, with a lav outboard of each.
 6. **Door-3 monument depth.** The map suggests lavs about 1.5 m deep; the model uses 1.05 m. Deepening them moves rows 17-27
    about 0.5 m aft. Should the map win?
+7. **R-side door linings (wave 3).** The ANA L2 photos (lalf_133/134) show the viewing window forward of the handle housing
+   and the arming window upper aft. The model uses the same fore-aft layout on both sides. Do you have an R-side ANA 777 door
+   photo to confirm it?
+8. **Door-3 bar and door-5 galley in service (wave 3).** Raters searched again (TPG, LALF, KN Aviation, Sam Chui, OMAAT) and
+   found only ANA's 2019 bar render. Is the bar's upper-left section a roller blind or a backlit washi panel in service?
