@@ -47,3 +47,15 @@ The ANA ones are seat-confirmed: `lalf_ANA77W_NH212_136/137` (11A) and `alv_ANA7
    - Aisle panes at winExp 3 still read near-white (checked on q06 and a q16-like view), so `winExp` is unchanged.
    - Thanks for extBounce, extSun and the `light` gain. Exterior dropped its hand-baked canoe and pylon flank fills and
      now pushes the belly beacon (`light: 8`, blink 3.3).
+
+## Wave 3 (w5-w6 raters, both agree; to lighting)
+
+8. **Sunset wing saturated royal blue (medium).** In s26K the skin renders #3a4474 and the canoes are deep navy. The dusk photo
+   `alv_*_7282` shows a grey-blue wing, about #6f83b7. **Fix:** desaturate the exterior ambient at sunset, e.g. mix `u_skyTop`
+   toward its luminance by ~0.5 for the exterior draw, or lower the `SKIES.sunset.skyTop` blue to about [0.22, 0.25, 0.42].
+9. **Belly beacon paints the canoes red (low).** In n19A the canoes read as red-painted. The beacon (`light: 8` from
+   `buildExterior`) should wash mainly the lower cowl and wing underside near the body. **Fix:** attenuate the exterior point
+   light with distance squared beyond ~10 m, or cap it with `max(0, -N.y)` so the wash stays on undersides facing it. I can also
+   lower `light` on my side if you prefer.
+10. **Sun-side cowl still clips (medium, repeat of 6).** w11K cowl #dadfe2 flat across the lit face.
+11. **Window reveals / lining royal blue in day views (low, shell + lighting).** Noted by rater B in every day view at cruise mood.
