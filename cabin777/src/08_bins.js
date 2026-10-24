@@ -41,9 +41,9 @@ const TILT_O = Math.atan2(1.795 - 1.60, 2.845 - 1.53);
 // c_27312 / y_47301, channel #bebec0..#cacaca in y_47300 [V samples]); the outboard doors already matched [D].
 const BINMAT = {
   door: { c: '#e3e5e8', r: 0.34, l: LAYER.plastic },
-  doorC: { c: '#e3e5e8', r: 0.34, l: LAYER.plastic, e: 0.10, eFn: (p) => 0.06 + 0.10 * clamp((p[1] - 1.9) / 0.35, 0, 1) },   // w6b: lighter toward the crest (c120, y_47301) [V look]   // + 0.84 shading floor: y_47300 door 245 -> 190 (w3a)   // w2a: q15 #abafb6 vs y_47300 #dddddb
-  bandC: { c: '#d4d4d2', r: 0.5, l: LAYER.plastic, e: 0.05 },   // channel ~0.76 of the door in y_47300 (w3b) [V]
-  housingC: { c: '#b6b7b6', r: 0.5, l: LAYER.plastic, e: 0.05 },   // centre PSU housings: bandC x0.86 (not baked by shadeUpper; w5 render read white) [D]
+  doorC: { c: '#e3e5e8', r: 0.34, l: LAYER.plastic, e: 0.10, eFn: (p) => 0.10 + 0.08 * clamp((p[1] - 1.9) / 0.35, 0, 1) },   // w6a: doors 200-220 vs 245 in y_47300   // w6b: lighter toward the crest (c120, y_47301) [V look]   // + 0.84 shading floor: y_47300 door 245 -> 190 (w3a)   // w2a: q15 #abafb6 vs y_47300 #dddddb
+  bandC: { c: '#dcdcda', r: 0.5, l: LAYER.plastic, e: 0.08 },   // w6a: channel 154-163 vs 190-209 in y_47300   // channel ~0.76 of the door in y_47300 (w3b) [V]
+  housingC: { c: '#bfc0bf', r: 0.5, l: LAYER.plastic, e: 0.05 },   // centre PSU housings: bandC x0.86 (not baked by shadeUpper; w5 render read white) [D]
   signPod: { c: '#2a2e34', r: 0.45 },
   seam: { c: '#a7abb0', r: 0.8 },   // thin mid-grey hairline, not a black arc (c_th1, b_sany_y22 [V])
   lipGap: { c: '#4a4f56', r: 0.8 },
@@ -65,7 +65,7 @@ const BINMAT = {
   rail: { c: '#e8e8e5', r: 0.36, l: LAYER.plastic },
   groove: { c: '#9aa0a6', r: 0.7 },
   joint: { c: '#dcdedf', r: 0.7 },
-  riser: { c: '#b9bcc0', r: 0.7 },   // shingle step face (w5b) [A]
+  riser: { c: '#a9acb0', r: 0.7 },   // shingle step face (w5b) [A]
   psuBox: { c: '#e6e6e3', r: 0.4, l: LAYER.plastic },
   pod: { c: '#eceae6', r: 0.4, l: LAYER.plastic },
   bezelDark: { c: '#8a9096', r: 0.4 },
@@ -223,9 +223,9 @@ function sideBinModule(side) {
   B.add(gBox(L - 0.02, 0.003, 0.002), faceM(gx * side, gy - 0.002, gtx * side, gty, 0, -side, 0.0062), BINMAT.groove);
   // PSU band over the bin bottom, filler-panel joints ~0.27 m apart (py_37302, thrifty_j_overhead-vent [V pitch])
   // PSU band as shingled transverse filler strips, ~0.13 m pitch (8 per module: y_47301 band ribs; stepped
-  // panels in b_lalf_c26 / rb_omaat_room23 [V look, A 4 mm step]); reaches the door lip (w5b: bare underside showed)
+  // panels in b_lalf_c26 / rb_omaat_room23 [V look, A 6 mm step: 4 mm read faint, w6a]); reaches the door lip (w5b: bare underside showed)
   const bw = 1.215, bx = 2.142, by = binBottomY(bx) - 0.003;
-  shingles(B, bw, L, 8, 0.004, M4.trs(bx * side, by, 0, 0, 0, -TILT_O * side), BINMAT.band);
+  shingles(B, bw, L, 8, 0.006, M4.trs(bx * side, by, 0, 0, 0, -TILT_O * side), BINMAT.band);
   // cove LED along the top inner edge (washes the aisle panel) + sidewall wash lens under the bin
   B.add(gBox(0.05, 0.01, L - 0.03), M4.trs(1.70 * side, 2.238, 0), MAT.led);
   B.add(gBox(0.045, 0.006, L), M4.trs(2.80 * side, 1.607, 0, 0, 0, side * 0.12), { c: '#ffffff', r: 0.4, l: 12, e: 0.35 });
@@ -250,7 +250,7 @@ function centerBinModule() {
     B.add(gBox(0.007, 0.002, L), M4.trs((CBIN_DOOR[0][0] + 0.003) * s, CBIN_Y - 0.0065, 0), BINMAT.lipGap);
   }
   // channel as stepped transverse panels, ~0.18 m (b_sany_y22: a run of shingled panels aft of the PSU housing [V look, A pitch])
-  shingles(B, CBIN_BAND, L, 6, 0.004, M4.trs(0, CBIN_Y - 0.0045, 0), BINMAT.bandC);
+  shingles(B, CBIN_BAND, L, 6, 0.005, M4.trs(0, CBIN_Y - 0.0045, 0), BINMAT.bandC);
   return shadeUpper(B.build(), 0.84);   // deeper floor: the bulge keeps its form (w3b: flat 219 in the ACES shoulder)
 }
 // seams between neighbouring modules (instanced at the joints only, so no dark outline at the run ends)
@@ -329,7 +329,7 @@ function fitModules(z0, z1, nominal) {
   return out;
 }
 // (origin under the lowest shingle edge; each module carries a raised housing that fills the gap up to the band)
-const PSU_DROP = 0.0125;
+const PSU_DROP = 0.0145;
 const psuXF = (x, z) => Math.abs(x) < 1.1 ? M4.trs(x, CBIN_Y - 0.0045 - PSU_DROP, z) : M4.trs(x, binBottomY(x) - 0.003 - PSU_DROP, z, 0, 0, -TILT_O * Math.sign(x));
 // raised housing (w across, d along z) from the module origin up into the band (b_lalf_c26: the light module and
 // the sign panel stand proud of the stepped band [V]; rounded plan corners [A r])

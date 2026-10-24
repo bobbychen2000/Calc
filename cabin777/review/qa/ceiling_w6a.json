@@ -1,0 +1,112 @@
+{
+  "area": "ceiling",
+  "rater": "A",
+  "round": 6,
+  "score": 7.6,
+  "renders": "r6/, r6v/, r6st/ (head before 74a8cd0; that commit's door-3 soffit and vault-falloff changes are not rendered yet)",
+  "previousStatus": {
+    "fixed": [
+      "w5a HIGH door-3 bar cross-aisle ceiling white -> now a dark bronze tray (v3: tray 86,76,74 vs c133 78,66,62). The shape and surround are still wrong; see the new medium issue",
+      "w5a MED vault joints flat hairlines -> raised light ribs that turn forward on a large radius into a fore-aft crest rib along the centre-bin side (v1, v6, v8, h_trough). The direction and radius match c120",
+      "w5a MED black slot along the outboard bin bottom -> a thin mid-grey lip line under a rounded lip (v9, v4). No 20,23,29 stripe remains",
+      "w5a MED centre channel flat with 2 slim wells -> one raised housing with 4 dark sockets, a sign pod and stepped transverse channel panels (v5, v11), as in b_sany_y22",
+      "w5a LOW sign icon on a grey rectangle -> black smoked ground with lit icons (v4 close-up)",
+      "w5a LOW grille as a grey ladder -> the bars now glow at about 227 between 122 slots (v6). Still a little under c120's 254, which is acceptable",
+      "w5a LOW outboard PSU band flat -> shingled transverse strips with step faces, and raised rounded-rect light and sign housings (v4, e_obin). This is a partial fix: the steps read weaker than in c26",
+      "w4a MED PSU wells as grey stickers -> dished, band-coloured housings (v4 close-up)",
+      "w4a MED centre gasper polarity -> dark sockets (v5)",
+      "w4a LOW light-blue hairline -> gone"
+    ],
+    "notFixed": [
+      "w5a MED vault almost as bright as the cove band: IMPROVED but not met. v6 row 150 reads band 247, vault 228 by the grille (0.92) falling to 194 at the crest rib (0.79). Target c119/c120: 0.78-0.83 by the grille, 0.56-0.64 at the crest. 74a8cd0 (x0.85..0.66) addresses this but is not rendered",
+      "w5a LOW outboard door seam drawn as a kinked polyline: still kinked (v10 top right, 3x zoom: a sharp corner about 60 % down the seam)",
+      "w5a LOW centre-bin crest rail with placards: the rail exists only as a hairline, and no placard is visible in v11 or f_cbin, the views made to show it",
+      "w4a LOW placard plate reads as a rectangle: g_latch still shows a lighter quad with a thin outline around '31' and the seat icons",
+      "w4a LOW door-area ceilings unverified: q01_door1 still frames a curtain between two dark walls, so the door-1/2/4/5 domes cannot be rated against a photo"
+    ],
+    "regressed": [
+      "Speaker fitting overshoots: it went from a grey plate (w5) to a plank lighter than the vault (v6: 217 against 197, ratio 1.10). In c120 it is the same tone as the vault (188/188), drawn only by its recess shadow"
+    ]
+  },
+  "details": [
+    {"detail": "Aisle vault panels, joint ribs, crest rib", "score": 7.8, "refs": ["b_lalf_c120", "b_lalf_c119", "b_sany_y22"], "note": "The tile pattern now matches c120: transverse rib, large-radius turn forward, and a fore-aft crest rib. The vault is still too bright next to the grille, and the ribs are slightly too bright and too uniform (v1 rib 219 against vault 213 reads as a white line where c120 shows a light/shadow pair)."},
+    {"detail": "Cove light band and slotted grille", "score": 8.0, "refs": ["b_lalf_c120", "b_sany_y22"], "note": "Band about 1.5-2x the grille width. White bridges every module. Bars 227 against c120's 254."},
+    {"detail": "Vault fittings (speaker, emergency light)", "score": 6.8, "refs": ["b_lalf_c120"], "note": "The speaker reads as a raised bright plank. c120 shows a same-tone rounded frame with a dark inner pocket. The emergency light is fine."},
+    {"detail": "Outboard bins (doors, latches, top rail, placards, seams)", "score": 7.9, "refs": ["b_lalf_c120", "b_sany_y22", "y_47301"], "note": "The lip line is fixed. The seam is still kinked and the placard plate is still visible."},
+    {"detail": "Outboard PSU band", "score": 7.5, "refs": ["b_lalf_c26", "y_47301", "rb_omaat_room23"], "note": "The shingles and housings are there. The module steps are faint compared with c26. Joint lines show through the light-housing face (v4 close-up)."},
+    {"detail": "Centre bins and PSU channel", "score": 7.0, "refs": ["y_47300", "b_sany_y22"], "note": "q15: door about 200-220 and channel 154-163, against y_47300 door 245 and channel 190-209. The channel is 0.75 of the door where the photo shows 0.80-0.85, and the whole assembly is about 15 % dark. No crest placard is visible."},
+    {"detail": "Centre PSUs", "score": 7.6, "refs": ["b_sany_y22"], "note": "One dished housing, 4 dark sockets, then the sign pod, as in y22."},
+    {"detail": "EXIT signs", "score": 8.0, "refs": ["b_sany_y22", "b_lalf_c133"]},
+    {"detail": "Door-3 bar cross-aisle ceiling", "score": 6.3, "refs": ["b_lalf_c133", "b_lalf_c134"], "note": "Right tone, but it reads as an arch-shaped dark patch inside a white dome, with a light frame. The real soffit is a flat, rectangular, wall-to-wall dark ceiling. Only 2 of the 8 downlights and the louvre are in frame in v3. 74a8cd0 changes this but is not rendered."},
+    {"detail": "Other door / monument ceilings", "score": 6.0, "refs": [], "note": "Unverifiable: no photo, and the q01 framing is unusable."}
+  ],
+  "issues": [
+    {
+      "severity": "medium",
+      "detail": "Door-3 bar cross-aisle ceiling",
+      "problem": "The dark tray reads as an arch-shaped patch set into the white door dome, edged by a light frame (#d8d4cc). In c133/c134 the whole ceiling over the bar walkway is a flat dark-bronze soffit from the bar canopy to the opposite monument wall. The rectangular tray is inset in an equally dark frame with only a hairline reveal, and holds 2 rows of 3-4 downlights, a louvred vent and a rounded-rect speaker.",
+      "evidence": "v3: tray 86,76,74 against surround 227,227,226. c133: tray 78,66,62, frame 72,60,53, outer ceiling 97,86,79.",
+      "fix": "07b_ceiling.js door zone, door===2. 74a8cd0 already sweeps DOME with CEILMAT.barSoffit. Also: (1) set barFrame to a dark tone (c '#6a5f58', r 0.4) or replace the 3.06 m frame box with four 12 mm reveal strips; (2) keep the tray rectangular by pushing TY down to 2.36 so the dome never cuts its fore/aft edges, and stop the dome sweep at |x| < 1.55 (flat soffit gBox(3.1, 0.01, z1-z0) at TY+0.01 in barSoffit) so the far edge is a straight line; (3) re-render v3 plus a view from x=-0.5 looking aft to confirm that all 8 downlights and the speaker show. Check for z-fighting against 10_mono passageSoffit (y 2.13)."
+    },
+    {
+      "severity": "medium",
+      "detail": "Vault brightness falloff",
+      "problem": "In the rendered head the vault strip inboard of the grille is still 0.92 of the cove band and ends at only 0.79 at the crest. The photos show 0.78-0.83 next to the grille, falling to 0.56-0.64.",
+      "evidence": "v6 row 150: band 247, vault 228 -> 194. v10 row 200: 237 -> 193. c120: band 255, vault 162-200. c119: 0.83 -> 0.58.",
+      "fix": "74a8cd0 (baked x0.85..0.66, eFn 0.03+0.04*exp) should be rendered and measured first. If the strip next to the grille is still above 0.85, drop the eFn inboard glow to 0.02+0.03*exp(-(xg-ax)/0.18) and take the baked multiplier at t=TROUGH.ts[0] to 0.80. Lighting team: the band clips at 247, so the ratio measures the vault against a clipped band. Hold band emissive at about 0.36 to keep about 250."
+    },
+    {
+      "severity": "medium",
+      "detail": "Centre bins and PSU channel tone",
+      "problem": "The centre bin and channel read about 15 % darker than y_47300, and the channel is relatively too dark, so the centre unit reads as a grey trough rather than a white bin with a slightly greyer channel.",
+      "evidence": "q15 against y_47300 (same framing class): door 200-220 against 245, channel 154-163 against 190-209. Channel/door is 0.75 in the model and 0.80-0.85 in the photo.",
+      "fix": "08_bins.js BINMAT: bandC c '#d4d4d2' -> '#dcdcda' and e 0.05 -> 0.08. housingC '#b6b7b6' -> '#bfc0bf' to keep its contrast. doorC e 0.10 -> 0.14 (74a8cd0 adds a crest-lighter eFn, so check it renders first). Target in q15: door top 235-245, channel 190-200."
+    },
+    {
+      "severity": "low",
+      "detail": "Vault speaker fitting",
+      "problem": "It reads as a raised bright plank at 1.10x the vault, where c120 shows a same-tone rounded-rect frame drawn by a soft shadow, with a darker inner pocket.",
+      "evidence": "v6: 217 against 197. c120: 188 against 188.",
+      "fix": "07b_ceiling.js, speaker block near line 241: give the face the vault material (CEILMAT.vault with the panel's eFn, no extra e), cut the bezel height to 4 mm, and add an inner gRBox pocket (0.55 x 0.06 of the plate, c '#8e8c88') to give the dark slot seen in c120."
+    },
+    {
+      "severity": "low",
+      "detail": "Centre-bin crest placard",
+      "problem": "No row placard is visible on the centre-bin crest rail in v11 or f_cbin, the views made to show it. c120 shows '17' plus seat icons on the centre-bin top edge.",
+      "evidence": "v11 top strip at 2x zoom: hairline rail, no placard.",
+      "fix": "08_bins.js placardXF group 1: faceAtY(CBIN_DOOR, 2.19) puts the quad on the wrap, facing up and away. Take y 2.12 and offset 0.008 along the face normal, and check that the atlas name row31_1 exists in the build. Add a z for row 31 in the v11 camera view (z 51.6 may fall between placard rows)."
+    },
+    {
+      "severity": "low",
+      "detail": "Outboard bin door seam",
+      "problem": "The seam is still a kinked polyline with a visible corner about 60 % down the door.",
+      "evidence": "v10 top right, 3x crop (raterA6/v10seam.png).",
+      "fix": "08_bins.js doorSeam/faceShell: resample the door face polyline with a Catmull-Rom or 12-point arc before extruding the seam (the face polyline itself has only about 6 points). Or build the seam from the same smoothed profile used for the door skin."
+    },
+    {
+      "severity": "low",
+      "detail": "Outboard PSU band steps and joints",
+      "problem": "The shingle steps are faint, and the transverse joint lines continue visibly across the raised light housing. c26 shows each module as a proud panel with a rounded front lip and a clear shadow step, with no joint crossing a housing.",
+      "evidence": "v4 close-up (raterA6/v4psu.png): a faint seam runs through the housing face.",
+      "fix": "08_bins.js: skip or clip joint strips whose z lies inside a housing's z-extent (or lift housings 3 mm more so the joint is hidden). Darken BINMAT.riser '#b9bcc0' -> '#a9acb0' and make the step 6 mm so the shingles read."
+    },
+    {
+      "severity": "low",
+      "detail": "Row placard plate",
+      "problem": "The outboard placard still shows a lighter rectangle with a thin outline around the numerals.",
+      "evidence": "g_latch, 4x crop (raterA6/glatch.png).",
+      "fix": "06_atlas.js placard rects (shared, via the integrator): draw on a transparent or exact-rail-colour ground (#e8e8e5 after shading) with no stroke. Or use MAT.decal alpha so only the glyphs print."
+    },
+    {
+      "severity": "low",
+      "detail": "Door 1/2/4/5 ceilings",
+      "problem": "These are still unverifiable. q01_door1 frames a curtain between two dark monument walls.",
+      "evidence": "r6/q01_door1.png",
+      "fix": "test/qa.js q01: walk(-0.6, 1.62, 5.4, 'Math.PI+0.12', 0.25) (in the door-1 cross aisle, tilted up). Find a real door-cross-aisle photo for the new 212-seat aircraft before more modelling."
+    }
+  ],
+  "questionsForUser": [
+    "Is the dark bronze soffit only over the door-3 bar walkway, or is every door cross-aisle on the new 777-300ER trimmed dark? (The only real photos are b_lalf_c133/c134, both at the bar.)",
+    "Do you have a photo looking up at a door-1/2/4/5 cross-aisle ceiling? The light dome with fore-aft light strips there is still an approximation."
+  ]
+}

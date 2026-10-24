@@ -78,7 +78,7 @@ const CEILMAT = {
   // door-3 cross-aisle: dark bronze recessed tray with downlights, a louvre and a speaker (b_lalf_c133/c134 [V]; #5c524d sampled under warm light)
   barTray: { c: '#5c524d', r: 0.35 },
   barSoffit: { c: '#4f4743', r: 0.4 },
-  barFrame: { c: '#d8d4cc', r: 0.5, l: LAYER.plastic },
+  barFrame: { c: '#8a8079', r: 0.4 },   // tray edge: a mid-tone trim, not a white frame (c133; w6a dark, w6b light) [A]
   downlight: { c: '#fffaf0', r: 0.4, e: 0.85 },
   trough: { c: '#7d8288', r: 0.7 },   // dark slots in a white frame (sany_10/11 [V])
   troughRim: { c: '#e9e8e4', r: 0.45, l: LAYER.plastic, e: 0.2 },   // the bars glow with the cove behind them (c120 bars ~254) [V]
@@ -87,8 +87,8 @@ const CEILMAT = {
   emerg: { c: '#8e9297', r: 0.3, e: 0.05 },
   emergBase: { c: '#eceae6', r: 0.5, l: LAYER.plastic, e: 0.06 },
   // per-panel raised panel: lit by the same cove wash as the vault around it (sany_10/11 show it barely darker) [A e]
-  bezel: { c: '#f1f0ec', r: 0.7, l: LAYER.plastic, e: 0.06 },   // w6b: e 0.12 read as a bright plank on the darker vault
-  bezelIn: { c: '#e2e1dd', r: 0.7, l: LAYER.grille, e: 0.06 },   // perforated face, near the vault tone (c119, c120; w5a/w5b: #d9d9d5 read grey) [V]
+  bezel: { c: '#e6e4df', r: 0.7, l: LAYER.plastic, e: 0.03 },   // vault tone (c120 speaker 188 on a 188 vault; w6a/w6b: a bright plank)
+  bezelIn: { c: '#a9a7a3', r: 0.7, l: LAYER.grille },   // darker perforated pocket (c120 slot) [V look, A tone]   // perforated face, near the vault tone (c119, c120; w5a/w5b: #d9d9d5 read grey) [V]
   flat: { c: '#efeeea', r: 0.72, l: LAYER.plastic },
   lightPanel: { c: '#fffaf0', r: 0.5, e: 0.45 },
   // narrow warm fore-aft light strip along the edge of the flat door-area panel (up_F_Forward-Look [V shape, colour])
@@ -196,7 +196,7 @@ function buildCeilings(upper, layout) {
           const ax = Math.abs(p[0]);
           if (ax > 1.66) return 0.85;
           if (ax < 0.73) return 0.08;
-          return 0.03 + 0.04 * Math.exp(-Math.max(xg - ax, 0) / 0.25);   // well under the cove band, falling (w4a/w4b, w5b, w6b)
+          return 0.02 + 0.03 * Math.exp(-Math.max(xg - ax, 0) / 0.18);   // well under the cove band, falling (w4a/w4b, w5b, w6a/w6b)
         };
         const prof = VAULT.map(([x, y]) => [x * side, y]);
         const v0 = upper.p.length / 3;
@@ -282,6 +282,7 @@ function buildCeilings(upper, layout) {
         // along it, one louvred vent and a speaker grille (b_lalf_c133/c134 [V]; 3.0 m wide at y 2.40, lights 0.7 m
         // apart [A])
         const len = z1 - z0 - 0.08, TY = 2.40;
+        upper.add(gBox(3.1, 0.006, z1 - z0), M4.trs(0, 2.43, zc), CEILMAT.barSoffit);   // flat soffit, straight far edge (w6a)
         upper.add(gBox(3.0, 0.006, len), M4.trs(0, TY, zc), CEILMAT.barTray);
         for (const f of [-1, 1]) {   // light edge trim round the tray, just under it (w6b: a frame above the tray never showed)
           upper.add(gBox(3.0, 0.004, 0.025), M4.trs(0, TY - 0.004, zc + f * (len / 2 - 0.0125)), CEILMAT.barFrame);
