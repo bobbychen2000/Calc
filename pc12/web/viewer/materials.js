@@ -584,14 +584,14 @@ const VIEWER = {
   // (review r4 INT8-01: 0.45 left the runner tan, 205/155/93, under the cabin light; 0.3 and a deeper orange keep the
   // hue through AgX, ~P1046406's 147/83/22)
   // (all-lens review r3: the runner's bands read as flat paint -- no pile: a cut pile, ~3.5 mm tufts in
-  // the normal and the albedo (+-20 %), the tips' faces turned from the eye a shade darker, a low sheen)
+  // the normal and the albedo (+-15 %), the tips' faces turned from the eye a shade darker, a low sheen)
   carpet: { envMapIntensity: 0.3 },
   carpet_orange: { color: [0.69, 0.21, 0.012], envMapIntensity: 0.3, specularIntensity: 0.35, roughness: 1.0,
-    leather: { freq: 280, dist: 0.0008, bump: 1.0, rough: 0.0, albedo: 0.22, edge: 0.18 } },
+    leather: { freq: 280, dist: 0.0008, bump: 1.0, rough: 0.0, albedo: 0.15, edge: 0.18 } },
   carpet_light: { envMapIntensity: 0.3, specularIntensity: 0.35, roughness: 1.0,
-    leather: { freq: 280, dist: 0.0008, bump: 1.0, rough: 0.0, albedo: 0.22, edge: 0.18 } },
+    leather: { freq: 280, dist: 0.0008, bump: 1.0, rough: 0.0, albedo: 0.15, edge: 0.18 } },
   carpet_grey: { envMapIntensity: 0.3, specularIntensity: 0.35, roughness: 1.0,
-    leather: { freq: 280, dist: 0.0008, bump: 1.0, rough: 0.0, albedo: 0.22, edge: 0.18 } },
+    leather: { freq: 280, dist: 0.0008, bump: 1.0, rough: 0.0, albedo: 0.15, edge: 0.18 } },
   // the crew seats' sheepskin: a shaggy lavender-grey pile in P1046408 / 409, read as smooth white pillows (review r4
   // INT8-04): clumpy fibre noise in its albedo and normal (fleece patch, world space ~4 mm tufts), a softer sheen
   // flight deck r1 LOOK (L6): clumps of 12-20 mm (freq 65 per m) with darker crevices between them (albedo 0.4 .. 1.1,
