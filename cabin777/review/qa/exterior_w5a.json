@@ -1,0 +1,214 @@
+{
+ "area": "exterior",
+ "rater": "A skeptic",
+ "build": "r5 = after ea0e6a1 (w5 fixes); compared with /tmp/claude-0/r5base",
+ "score": 6.6,
+ "details": {
+  "wing planform / raked tip / bending": 7.5,
+  "wing surface detail (seams, fastener rows, panel tone, gear stripe, slat band)": 6.0,
+  "control surfaces & gaps (slats, spoilers, flaps, flaperon, aileron)": 7.0,
+  "canoes (flap-track fairings)": 5.5,
+  "pylon": 7.0,
+  "nacelle shape (cowl, lip, splits, strake, access panel)": 7.0,
+  "nacelle colour / materials (incl. GE logo)": 6.5,
+  "inlet / fan / spinner": 6.0,
+  "livery / registration JA795A": 6.0,
+  "lights & static dischargers": 7.0,
+  "artefacts": 7.5
+ },
+ "previous": [
+  {
+   "issue": "[w5x A high / B medium] JA795A ink neutral grey, low contrast",
+   "status": "NOT FIXED (half): hue changed to navy, but the ink is still far too light. Measured ink #5d74a3 on skin #b0b7c0 in w17K (ratio 0.63) and #46629e on #acb4bd in w26K (0.54), against 0.29-0.41 in _7250/_7331 and #2b2d30 on #b6b9bb in _7242. It now reads as a saturated mid-blue print (b-r +0x46 to +0x58), not dark navy."
+  },
+  {
+   "issue": "[A medium] glyphs read as brush/italic script",
+   "status": "PARTLY FIXED: the corners are mitred and the glyphs are cleaner in 26K. From 17K the strokes still smear into streaks, and 9/5 are hard to separate (z_w17K_r5.png)."
+  },
+  {
+   "issue": "[A medium / B medium] cowl splits render as light pinstripes",
+   "status": "FIXED: the split is now #3c4d68 on cowl #8899b0 in w13A and dark in 11A/11K/s13A."
+  },
+  {
+   "issue": "[A medium] GE monogram missing on inboard fan cowl",
+   "status": "FIXED IN CODE, UNVERIFIED: no rated view (11A/13A/s13A) shows the lower aft inboard fan cowl, so it cannot be seen anywhere."
+  },
+  {
+   "issue": "[A medium] fastener rows lighter than the paint (white lines)",
+   "status": "FIXED: there are no white spanwise lines in 17A/17K/19A."
+  },
+  {
+   "issue": "[A medium] canoes too long behind TE / [B high] round constant-depth sausages",
+   "status": "OVERCORRECTED: the tails are now about 1/3 of the length behind the TE, but the canoes have become flat-sided slabs with uniform side shading and a sharp chisel spike. They read as flat paddles in 26K and as saw-teeth in 19A. KN41, ZGriff-63 and _7250 show round-bottomed pods with a strong vertical shading gradient and a blunt, rounded taper."
+  },
+  {
+   "issue": "[A medium / B medium] too few static dischargers",
+   "status": "FIXED: a comb of ticks is visible at the tip in 19A (14 per side in code)."
+  },
+  {
+   "issue": "[A low / B low] inlet lip mirrors sky blue-silver",
+   "status": "FIXED: the lip is neutral (#9198a2 to #9b9fa0 in 11A)."
+  },
+  {
+   "issue": "[A low / B low] inlet interior a flat black hole, no inner-lip band",
+   "status": "PARTLY FIXED: there is a thin lit inner band, but the liner still runs #232e41 down to #121721, getting DARKER toward the far wall. LALF _136 goes #161f28 -> #3a424d -> #868e99, getting LIGHTER toward the far wall."
+  },
+  {
+   "issue": "[A low / B medium] access panel: round ring on fan cowl",
+   "status": "MOSTLY FIXED: it is now a rounded rectangle on the inlet cowl. Its aspect and position are still off, and its outline is too strong (see issues)."
+  },
+  {
+   "issue": "[A low / B medium] strake root box aliases into a dashed line; strake invisible",
+   "status": "FIXED: there is no dashed line in 13A, and the strake reads as a lit edge with a shadow band. The shadow band is now a wide even lens (see low issue)."
+  },
+  {
+   "issue": "[A low / B low] tip nav light a big white disc / white core",
+   "status": "FIXED: n19A shows a small red point."
+  },
+  {
+   "issue": "[B medium] spoiler breaks too dark and uniform (tile look)",
+   "status": "FIXED: the chordwise breaks are lighter and the TE gaps are dark."
+  },
+  {
+   "issue": "[B low] aileron ends 1.7 m short of the rake kink",
+   "status": "FIXED (30.4)."
+  },
+  {
+   "issue": "[A low] no NO-STEP stencils / LE head dots",
+   "status": "PARTLY: the LE dots were added. There are still no stencils; KN41 and ZGriff-63 show small red/black placards on the inboard spoiler/flap panels."
+  }
+ ],
+ "issues": [
+  {
+   "severity": "high",
+   "detail": "livery / registration JA795A",
+   "problem": "The ink now has a navy hue, but it renders as a mid-luminance saturated blue (#46629e to #5d74a3). JA795A is still a faint blue print, not the darkest mark on the wing. At sunset (s26K) the letters vanish into the blue wing because they share its hue.",
+   "evidence": [
+    "w17K ink #5d74a3 / skin #b0b7c0, lum ratio 0.63; w26K ink #46629e / skin #acb4bd, 0.54",
+    "_7242 ink #2b2d30 / skin #b6b9bb (ratio ~0.24); KN41 reg is the darkest text on the wing; w5x raters 0.29-0.41 from _7250/_7331",
+    "ref/web/exterior/b_alv_ANA77W_PY_IMG_7242-2-scaled.jpeg",
+    "ref/web/exterior/a5_kn_ANA77W_TheRoom_41.jpg",
+    "/tmp/claude-0/ratA/z_w17K_r5.png"
+   ],
+   "fix": "In 11E ink: base #15264a with r 0.6 picks up the sky/ambient term (the blue rise is the env reflection on a mid-rough dielectric). Use { c: '#070b14', r: 0.95, m: 0 } and widen the stroke 0.27 -> 0.32 so MSAA coverage does not blend it toward the skin at 17K-26K grazing angles. Target ink/skin lum <= 0.40 in w26K and w17K (re-measure crop 330..450 x 165..200 in w17K)."
+  },
+  {
+   "severity": "medium",
+   "detail": "canoes (flap-track fairings)",
+   "problem": "After w5 the canoes are flat-sided slabs (section r = min(0.32 w, 0.3 d)). Their side faces render a flat uniform #535a67 to #b0b0b0 with a sharp chisel tail, so from 19A they read as saw-teeth or spikes and from 26K as flat paddles. The real flaps-up canoes are round-bottomed pods: a lit upper flank grading to a dark rounded keel, with a blunt rounded taper, not a needle.",
+   "evidence": [
+    "/tmp/claude-0/ratA/z26K_canoe.png",
+    "/tmp/claude-0/ratA/z19A.png",
+    "ref/web/exterior/a5_kn_ANA77W_TheRoom_41.jpg (cruise, outboard canoes as short round pods)",
+    "ref/web/exterior/a_tpg_ANA77W_TheRoom_ZGriff-63.jpg",
+    "ref/web/exterior/b_alv_ANA77W_PY_IMG_7250-2-scaled.jpeg",
+    "19A: tail behind TE ~70 px vs depth ~30 px (2.3x); KN41 ~45 vs ~25 px (1.8x)"
+   ],
+   "fix": "In the canoe loop's sec(): r = Math.min(w * 0.48, d * 0.45), so the keel is round and the flanks curve. Tail: lerp(1,0.2,...) -> lerp(1,0.35,...) for width and lerp(1,0.12,...) -> lerp(1,0.3,...) for depth, and drop the 0.9 pointed end section (keep u 0.5 only), so the end is a rounded blunt cone. Shorten the overhang 0.33*len -> 0.28*len. Keep the -25 % keel occlusion so the lower half grades dark."
+  },
+  {
+   "severity": "medium",
+   "detail": "wing surface detail",
+   "problem": "The upper skin is still a near-uniform CG grey. The ANA photos show clear panel-to-panel tone steps, many visible fastener lines (chordwise rows on every spoiler/flap panel, spanwise rows), small red/black placards and grime streaks on the inboard flap/spoiler. The +-5 % panel jitter is invisible at window range. The lit inboard wing renders #8d96a4 against #b6bec9 in KN41 (partly lighting).",
+   "evidence": [
+    "/tmp/claude-0/r5/w17A.png, w19A.png",
+    "ref/web/exterior/a5_kn_ANA77W_TheRoom_41.jpg",
+    "ref/web/exterior/b_alv_ANA77W_PY_IMG_7242-2-scaled.jpeg"
+   ],
+   "fix": "paintVerts: raise the panel jitter 0.10 -> 0.16, and use the spanwise splice/chordwise butt positions (skin lines) as the panel boundaries so the tone steps coincide with the seams. Add faint riv rows (0.012 m, #5a5d61) along each spoiler and flap panel edge, 0.1 m inside the seam. Add 3-4 small placards (0.25 x 0.12 m quads, #b3262a red border) on the inboard spoilers at s 5-8."
+  },
+  {
+   "severity": "medium",
+   "detail": "inlet / fan / spinner",
+   "problem": "The inlet liner still darkens toward the far wall, so from 11A/11K the inlet is a black tube. In LALF _136 the far inner wall is lit and the liner grades lighter, from the lip shadow (#161f28) to #868e99.",
+   "evidence": [
+    "w11A row 450: #232e41 -> #121721 (darker toward far wall)",
+    "_136 row 900: #18202b -> #3a424d -> #6a727d (lighter toward far wall)",
+    "ref/web/exterior/b_lalf_ANA77W_11A_136.jpg",
+    "/tmp/claude-0/ratA/z11A.png"
+   ],
+   "fix": "The inlet shadeVerts factor depends only on depth (p[2]). Add an angular term so the inner wall facing the camera side (the outboard half for the A side, i.e. the normal pointing toward -x*side) gets x1.6. Raise the base inlet colour #5a6067 -> #6a7078 with r 0.5. Equivalent: multiply by 0.55 + 0.45*max(0, -n.x*side) as well."
+  },
+  {
+   "severity": "medium",
+   "detail": "nacelle shape (access panel)",
+   "problem": "The access panel is a wide 2.4:1 rectangle that sits almost against the lip (about 60 % of the way from the first split to the highlight), with a bold dark outline. In LALF _136/_137 it is near-square (about 1.25:1), sits about 35-42 % of the way from the split toward the lip, and its outline is a faint line barely darker than the cowl.",
+   "evidence": [
+    "11A render: panel center at ~(532-465)/(575-465) = 0.61 of split->lip; aspect ~2.5:1 in z11A",
+    "_136: split x300, panel 365-440 (center 400), lip ~600 -> 0.35; aspect ~1.25:1; _137: 0.42",
+    "outline in render ~#4a5260 on #b8c2cd (ratio ~0.45); photo outline ratio ~0.8",
+    "ref/web/exterior/b_lalf_ANA77W_11A_136.jpg",
+    "ref/web/exterior/b_lalf_ANA77W_11A_137.jpg"
+   ],
+   "fix": "In the access-panel block: size 0.50 x 0.32 -> 0.42 x 0.36 m, move its centre from ~0.85 m to ~0.80 m aft of the highlight only if the split stays at x=1.3 (i.e. place it at x = 0.15 + 0.6*(1.3-0.15)), and draw the outline with a seam-like material lightened to #8a8f95 (not the dark seam), width 0.012."
+  },
+  {
+   "severity": "low",
+   "detail": "nacelle shape (strake shadow)",
+   "problem": "The strake shadow is now a wide, evenly dark lens (about 0.25 m deep) under the plate and reads like a slot or scoop cut into the cowl. In _137 and JAL 3371 the shadow is a thin dark line that tapers aft.",
+   "evidence": [
+    "/tmp/claude-0/ratA/z13A.png",
+    "ref/web/exterior/b_lalf_ANA77W_11A_137.jpg"
+   ],
+   "fix": "Halve the shadow band depth and taper it to zero at the aft end (scale its local width by 1 - t along the strake). Fade its colour from cowl*0.55 to cowl*0.9 at the edges, not a flat fill."
+  },
+  {
+   "severity": "low",
+   "detail": "control surfaces / slat line",
+   "problem": "The slat trailing-edge line (gap, 0.03 m) is sub-pixel at 20-30 m and renders as a faint dotted line. In ZGriff-63, _7242 and KN41 it is one of the crispest dark lines on the wing, running root to tip.",
+   "evidence": [
+    "ref/web/exterior/a_tpg_ANA77W_TheRoom_ZGriff-63.jpg",
+    "ref/web/exterior/b_alv_ANA77W_PY_IMG_7242-2-scaled.jpeg",
+    "/tmp/claude-0/r5/w17A.png top right"
+   ],
+   "fix": "spanPath(11.7,31.0, le+0.66) gap width 0.03 -> 0.05, and give the inboard slat line (le+0.95) the same."
+  },
+  {
+   "severity": "low",
+   "detail": "nacelle colour / materials (GE logo)",
+   "problem": "The GE monogram added in w5 appears in none of the 11 rated views, so it cannot be checked. In IQCFQpV_T1A it sits low and aft on the inboard flank, visible from forward-of-wing seats at ground pitch.",
+   "evidence": [
+    "ref/web/exterior/a_yt_IQCFQpV_T1A_ANA77W_HND_GE90_max.jpg"
+   ],
+   "fix": "No geometry change. Add a QA close-up view (e.g. 13A pitch -0.35) to verify its position and size before the next round."
+  },
+  {
+   "severity": "low",
+   "detail": "(owner: lighting) not scored",
+   "problem": "These are lighting-owned and not counted in the score. (1) s26K/s13A: the wing renders saturated royal blue, and the cowl magenta-lilac, at sunset. (2) Shade-side cowl tint b-r +0x28 (#8899b0 in w13A); ANA _136 is closer to +0x1a. (3) The w11K sun-side cowl still clips to #dadee2 flat. (4) The lit wing is #8d96a4 in w19A against #b6bec9 in KN41.",
+   "evidence": [
+    "/tmp/claude-0/r5/s26K.png",
+    "/tmp/claude-0/r5/w13A.png",
+    "/tmp/claude-0/r5/w11K.png"
+   ],
+   "fix": "For the lighting worker."
+  }
+ ],
+ "questionsForUser": [],
+ "photos": [
+  {
+   "path": "ref/web/exterior/a5_kn_ANA77W_TheRoom_41.jpg",
+   "url": "https://knaviation.net/wp-content/uploads/2021/03/ANA-The-Room-Business-Class-41.jpg",
+   "seat": "THE Room right window, over/behind wing (cruise)",
+   "what": "JA79xA right wing in sun: dark registration, gear stripe #091525, round outboard canoes, spoiler lines, placards"
+  },
+  {
+   "path": "ref/web/exterior/a5_kn_ANA77W_TheRoom_19.jpg",
+   "url": "https://knaviation.net/wp-content/uploads/2021/03/ANA-The-Room-Business-Class-19.jpg",
+   "seat": "THE Room right window, dusk climb",
+   "what": "right wing at dusk: gear stripe, registration, panel detail, through glass reflections"
+  },
+  {
+   "path": "ref/web/exterior/a5_kn_ANA77W_TheRoom_46.jpg",
+   "url": "https://knaviation.net/wp-content/uploads/2021/03/ANA-The-Room-Business-Class-46.jpg",
+   "seat": "THE Room right window, descent",
+   "what": "right wing from above, overcast: registration, canoes as short round pods, slat line"
+  },
+  {
+   "path": "ref/web/exterior/a5_kn_ANA77W_TheRoom_47.jpg",
+   "url": "https://knaviation.net/wp-content/uploads/2021/03/ANA-The-Room-Business-Class-47.jpg",
+   "seat": "THE Room right window, landing roll",
+   "what": "spoilers deployed, flaps out, fan cowl top (not cruise; geometry reference only)"
+  }
+ ]
+}

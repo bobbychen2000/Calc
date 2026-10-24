@@ -196,12 +196,12 @@ function buildExterior(gl) {
     // +-3 % tone per skin panel (~2.2 m spanwise x chord quarters): panel-to-panel paint shade seen in the 26K photos [V, A amount]
     paintVerts(B, v0, (p, uv) => {
       if (uv[0] < 0.045) return metal;
-      const h = Math.sin(Math.floor(uv[1] / 2.2) * 12.9898 + Math.floor(uv[0] * 4) * 78.233) * 43758.5453, f = 1 + 0.10 * (h - Math.floor(h) - 0.5);
+      const h = Math.sin(Math.floor(uv[1] / 2.2) * 12.9898 + Math.floor(uv[0] * 4) * 78.233) * 43758.5453, f = 1 + 0.15 * (h - Math.floor(h) - 0.5);   // w5: 0.10 -> 0.15, panel tone steps in KN Aviation 41 [V]
       const c = hexRGB(paint.c).map((v) => Math.round(clamp(v * f, 0, 255)).toString(16).padStart(2, '0'));
       return { c: '#' + c.join(''), r: paint.r, m: paint.m };
     });
     // slats (outboard 7 + inboard 1): chord line and breaks
-    wingLine(B, side, spanPath(11.7, 31.0, (s) => pwl(WING.le, s) + 0.66, 16), gap, 0.03);
+    wingLine(B, side, spanPath(11.7, 31.0, (s) => pwl(WING.le, s) + 0.66, 16), gap, 0.04);   // w5: 0.03 read too faint
     for (const s of WING.slats) wingLine(B, side, chordPath(s, pwl(WING.le, s) - 0.05, pwl(WING.le, s) + 0.66), gap, 0.03);
     wingLine(B, side, spanPath(3.3, 8.2, (s) => pwl(WING.le, s) + 0.95, 4), gap, 0.03);
     for (const s of [3.3, 8.2]) wingLine(B, side, chordPath(s, pwl(WING.le, s) - 0.05, pwl(WING.le, s) + 0.95), gap, 0.03);
@@ -249,14 +249,14 @@ function buildExterior(gl) {
         9: [[[0.7, 0.62], [0.5, 0.46], [0.18, 0.46], [0.02, 0.62], [0.02, 0.84], [0.18, 0.98], [0.52, 0.98], [0.68, 0.84], [0.68, 0.22], [0.5, 0.02], [0.08, 0.02]]],
         5: [[[0.68, 0.98], [0.06, 0.98], [0.02, 0.55], [0.48, 0.6], [0.68, 0.42], [0.68, 0.16], [0.5, 0.02], [0.02, 0.05]]],
       };
-      const ink = { c: '#0d1526', r: 0.9, m: 0 };   // w5: ANA navy, the darkest mark on the wing in sun (#03244f on #8098b1 in TPG ZGriff-63; ink/skin 0.25-0.41 in _7250/_7331); matte, so the grazing sky does not lift it to mid blue [V]
+      const ink = { c: '#070b14', r: 0.95, m: 0 };   // w5: ANA navy, the darkest mark on the wing in sun (#03244f on #8098b1 in TPG ZGriff-63; ink/skin 0.25-0.41 in _7250/_7331); matte, so the grazing sky does not lift it to mid blue [V]
       [...'JA795A'].forEach((ch, k) => {
         const sC = 13.5 + k * 1.15, xc = lef(sC + 0.45) + 0.50 * (pwl(WING.te, sC + 0.45) - lef(sC + 0.45));
         for (const st of GL[ch]) {
           const path = [];
           for (let q = 0; q < st.length - 1; q++) for (let t = 0; t < 1; t += 0.25) path.push([lerp(st[q][0], st[q + 1][0], t), lerp(st[q][1], st[q + 1][1], t)]);
           path.push(st[st.length - 1]);
-          wingLine(B, 1, path.map(([u, v]) => [sC + u * 0.9, xc - (v - 0.5) * 1.4]), ink, 0.27, 1, 0.016);
+          wingLine(B, 1, path.map(([u, v]) => [sC + u * 0.9, xc - (v - 0.5) * 1.4]), ink, 0.31, 1, 0.016);   // w5: bolder stroke (KN Aviation 41, _7250)
         }
       });
     }
@@ -273,21 +273,21 @@ function buildExterior(gl) {
     // _7331; the r2 blunt tail came from a ground photo with flaps extended) [V photo, D proportions]
     const vW = B.vcount, vC = B.vcount;
     for (const [cs, len] of WING.canoes) {
-      // w5: flat-sided wedges, deepest at the TE, the underside rising straight to a small pointed tail ~12 % of the depth,
-      // ~1/3 of the length behind the TE (ANA 26K _7250 / _7211, TPG ZGriff-63, Boeing_777_(4139974954)) [V shape, D ratios]
-      const RE = 0.08, x1 = te(cs) + 0.33 * len - RE, x0 = x1 - len + RE, secs = [];
+      // w5: pods deepest at the TE, the underside rising straight to a short blunt rounded tail ~30 % of the depth, ~0.3 of
+      // the length behind the TE (ANA 26K _7250 / _7211, TPG ZGriff-63, KN Aviation 41) [V shape, D ratios]
+      const RE = 0.12, x1 = te(cs) + 0.30 * len - RE, x0 = x1 - len + RE, secs = [];
       const topAt = (xn) => (xn < te(cs) ? wingAt(cs, xn, side, -1)[1] + 0.03 : wingAt(cs, te(cs), side, -1)[1] + 0.03 - (xn - te(cs)) * 0.03);
       const sec = (xn, rw, rd) => {
         const d = 0.85 * rd + 0.04, w = 0.46 * rw + 0.03;
-        return { y: xn + WING.dz, x: cs * side, z: -(topAt(xn) - d / 2), w, d, r: Math.min(w * 0.32, d * 0.3) };   // slab sides, rounded keel
+        return { y: xn + WING.dz, x: cs * side, z: -(topAt(xn) - d / 2), w, d, r: Math.min(w * 0.42, d * 0.4) };   // rounded pod sections
       };
       const xT = te(cs), tail = (xn) => clamp((xn - xT) / (x1 + RE - xT), 0, 1);
       for (let k = 0; k <= 12; k++) {
         const t = k / 12, xn = lerp(x0, x1, t), rise = Math.sin((Math.min(t, 0.22) / 0.22) * Math.PI / 2);
         const fw = xn < xT ? lerp(0.82, 1, smooth(x0, xT, xn)) : 1;   // slight nose-to-TE swell [A]
-        secs.push(sec(xn, t < 0.22 ? rise : fw * lerp(1, 0.2, tail(xn)), t < 0.22 ? rise : fw * lerp(1, 0.12, tail(xn))));
+        secs.push(sec(xn, t < 0.22 ? rise : fw * lerp(1, 0.32, tail(xn)), t < 0.22 ? rise : fw * lerp(1, 0.3, tail(xn))));
       }
-      for (const u of [0.5, 0.9]) { const e = Math.sqrt(1 - u * u); secs.push(sec(x1 + u * RE, 0.2 * e + 0.04, 0.12 * e + 0.03)); }   // small pointed tail
+      for (const u of [0.45, 0.8, 0.97]) { const e = Math.sqrt(1 - u * u); secs.push(sec(x1 + u * RE, Math.max(0.12, 0.32 * e), Math.max(0.1, 0.3 * e))); }   // short blunt rounded end
       B.add(gLoft(secs, 3), M4.trs(0, 0, 0, 0, Math.PI / 2), paint);
     }
     // GE90-115B nacelle
@@ -321,20 +321,21 @@ function buildExterior(gl) {
     };
     // w5: the strake reads in photos as a lit edge over a dark shadow slot on the cowl (LALF _137, JAL IMG_3371/3428) [V]; the
     // 3 cm black root box shimmered into a dashed line at 10+ m, so a ~10 cm baked shadow band lies on the cowl below it instead [A width]
-    cowlPatch(1.85, 3.05, 24.2 * DEG, 21.2 * DEG, { c: '#8a9097', r: 0.9 });
+    cowlPatch(1.85, 3.05, 24.2 * DEG, 22.2 * DEG, { c: '#8a9097', r: 0.9 });
     // access panel: near-square rounded rectangle ~0.42 x 0.40 m on the INLET cowl ~0.85 m aft of the highlight, upper inboard side, drawn as a
     // thin dark outline [V LALF ANA 11A _136, JAL IMG_3397/3371; D size]
     { const ring = [];
       for (let k = 0; k <= 32; k++) { const a = (k / 32) * Math.PI * 2, c = Math.cos(a), sn = Math.sin(a);
-        ring.push(cowlP(0.80 + Math.sign(c) * Math.pow(Math.abs(c), 0.3) * 0.21, 70 * DEG + Math.sign(sn) * Math.pow(Math.abs(sn), 0.3) * 0.20 / 2.04, 0.008)); }
-      B.add(gTube(ring, 0.011, 4, false), rot, { c: '#7a8087', r: 0.6 }); }
+        ring.push(cowlP(0.88 + Math.sign(c) * Math.pow(Math.abs(c), 0.3) * 0.21, 70 * DEG + Math.sign(sn) * Math.pow(Math.abs(sn), 0.3) * 0.20 / 2.04, 0.008)); }
+      B.add(gTube(ring, 0.009, 4, false), rot, { c: '#8a8f95', r: 0.6 }); }
     // GE monogram on the lower inboard fan cowl (~2 m aft, ~30 deg below the horizontal): dark ring + script swashes, ~0.45 m [V ANA
     // 77W IQCFQpV_T1A (HND), eX2WMn0xe48 (JFK), knav 7A _9; A size / drawing]
     { const ge = { c: '#3e4450', r: 0.5 }, xc = 2.0, ac = -30 * DEG, Rg = cowlR(xc), at = (u, v) => cowlP(xc + u, ac + v / Rg, 0.008);
       const circ = Array.from({ length: 25 }, (_, k) => { const a = (k / 24) * Math.PI * 2; return at(Math.cos(a) * 0.22, Math.sin(a) * 0.22); });
       B.add(gTube(circ, 0.014, 4, false), rot, ge);
-      for (const sw of [[[-0.12, 0.08], [-0.02, 0.14], [0.08, 0.06], [-0.02, -0.12], [-0.12, -0.05], [-0.03, 0.02]], [[0.13, 0.1], [0.04, 0.1], [0.0, 0.0], [0.04, -0.1], [0.13, -0.1]], [[0.02, 0.0], [0.11, 0.0]]])
-        B.add(gTube(sw.map(([u, v]) => at(u, v)), 0.013, 4, false), rot, ge); }
+      // letters in reading space (u right, v up); reading-right is aft on the right engine and forward on the left one
+      for (const sw of [[[0.0, 0.09], [-0.06, 0.12], [-0.12, 0.06], [-0.12, -0.06], [-0.06, -0.12], [0.0, -0.09], [0.0, -0.01], [-0.05, -0.01]], [[0.13, 0.12], [0.04, 0.12], [0.04, -0.12], [0.13, -0.12]], [[0.04, 0.0], [0.11, 0.0]]])
+        B.add(gTube(sw.map(([u, v]) => at(u * side, v)), 0.013, 4, false), rot, ge); }
     B.add(gCyl(1.64, 1.64, 0.02, 40), M4.mul(rot, M4.trs(0, 1.62, 0)), dark);    // fan-case back face behind the blades
     B.add(fanBlades(22), rot, blade);
     const sw = [];   // white swirl on the spinner [V photo JA796A]
