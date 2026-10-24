@@ -3,8 +3,14 @@ root = os.path.dirname(os.path.abspath(__file__))
 dist = os.environ.get('CABIN_DIST') or os.path.join(root, 'dist')   # per-agent output dir for parallel work
 os.makedirs(dist, exist_ok=True)
 js = []
+decl = {}   # top-level name -> first file; all src files share one script scope, so a clash breaks the page at load
 for f in sorted(glob.glob(os.path.join(root, 'src', '*.js'))):
-    js.append('// ==== ' + os.path.basename(f) + ' ====\n' + open(f).read())
+    src = open(f).read()
+    for n in re.findall(r'^(?:async\s+)?(?:function\*?|const|let|class)\s+([A-Za-z_$][\w$]*)', src, re.M):
+        if n in decl:
+            sys.exit(f'build: top-level name {n!r} is declared in both {decl[n]} and {os.path.basename(f)}')
+        decl[n] = os.path.basename(f)
+    js.append('// ==== ' + os.path.basename(f) + ' ====\n' + src)
 # photo swatches cut from the official ANA photos (test/make_swatches.py; ref/ is gitignored). Set CABIN_NO_PHOTO=1
 # to build with the procedural layers only.
 import base64, json
