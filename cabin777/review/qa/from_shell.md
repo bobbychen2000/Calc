@@ -104,3 +104,13 @@ cameras, should be checked. q07 and q12 look fine.
   door-lining frame). The arc arrowhead is at about c + 0.25, y 1.10 (10_mono ~l.757-761), so it overlaps the window's forward edge.
 - **Fix:** end the arc forward of c + 0.15 (the corrected spec above: radius 0.29 centred at c - 0.10, top at ~1.22), so the
   arrowhead sits on the housing face, clear of the window.
+
+## Wave 3 (w10)
+
+### To lighting: the closed blackout went darker with no shell change (shell_w10a medium)
+- **Evidence:** b_jClose / s05 closed blackout 0.45 of the wall in w10 against 0.64 in w9 (omaat_room24 0.65); the blackout albedo
+  (#aaa498) and the stripe did not change between the two rounds. The lighting snapshots between them (282136c / 9f2d20e) are the
+  likely cause, perhaps the window-glow or sun term that lit the back of the shade. The bowls also render dead neutral (s 0.005-0.014
+  against the photos' cream 0.13).
+- **Ask:** keep closed electric shades at about 0.6 of the wall; if the darker look is intended, tell shell and the blackout
+  albedo will go to about #c8c1b3.

@@ -411,7 +411,7 @@ function shadePanelGeo(kind) {
     const g = raw(), n = 62, xs = [-w / 2, -0.125, 0.125, w / 2];
     const W = CAB.win, amp = (x, y) => clamp(-sdRRect(x, y, W.holeW / 2 - 0.004, W.holeH / 2, HOLE_R) / 0.03, 0, 1);
     for (let k = 0; k <= n; k++) {
-      const y = -h / 2 + (h * k) / n, zz = (k % 2) * 0.006;       // 6 mm zig-zag (QA w3: carries more of the stripe) [A]
+      const y = -h / 2 + (h * k) / n, zz = (k % 2) * 0.005;       // 5 mm zig-zag (QA w3: carries more of the stripe; w10: 6 mm moire at mid distance) [A]
       for (let c = 0; c < 4; c++) { g.p.push(xs[c], y, 0.003 + (zz - 0.003) * (c % 3 ? amp(xs[c], y) : 0)); g.n.push(0, 0, 1); g.u.push(c / 3, k / n); }
     }
     for (let k = 0; k < n; k++) for (let c = 0; c < 3; c++) { const q = k * 4 + c; g.i.push(q, q + 1, q + 5, q, q + 5, q + 4); }
@@ -658,11 +658,7 @@ function buildShell(gl, layout) {
       if (zn.z1 - (wz + cellW / 2) > 1e-3) wallGrid(g, side, [wz + cellW / 2, zn.z1], vset);
       fixWinding(g);
       shell.add(g, null, MAT.door);
-      // QA w9: six cream stop fittings on each jamb, 0.25 m apart (fr_20220604_123806) [V: count/spacing; A: size]
-      for (const zz of [c - 0.555, c + 0.555]) for (let k = 0; k < 6; k++) {
-        const v = 0.32 + k * 0.25, [x, y, nx, ny] = wallAt(v);
-        shell.add(gBox(0.016, 0.06, 0.03), M4.trs((x + nx * 0.008) * side, y + ny * 0.008, zz, 0, 0, Math.atan2(ny, nx) * side), MAT.door);
-      }
+      // (QA w10: no jamb stop fittings - fr_123806 is an open-door exterior view; lalf_133 shows none from the cabin)
     }
   }
 
