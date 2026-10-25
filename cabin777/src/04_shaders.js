@@ -174,8 +174,8 @@ vec3 coveSpec(vec3 P, vec3 N, vec3 V, vec3 R, float rough, vec3 F0, float NdV){
 // tap taking the ambient to 0.25x, so a panel 1-3 cm proud of a surface drew a detached, stair-ended band (the THE Room
 // headrest flap on all 64 seats: q10 x 650 rows 398-410 L49-57 vs 84-91 without it) and near the eye, where the 5 cm disc
 // spans 50-100 px, each tap painted a flat band tens of px wide (y_aisle_fwd curtain pleats, row 300: 13 steps > 6 L, max
-// 101 vs 9 / 53 without the AO) [V: c_27315 no band; integ8 q10_flap4x, curtain_zoom]. Now u_sTap.x = 16 taps (steps of
-// 1/16) and the disc and range capped at u_sTap.y = 16 px on screen (a surface 0.3 m from the eye no longer spreads its taps
+// 101 vs 9 / 53 without the AO) [V: c_27315 no band; integ8 q10_flap4x, curtain_zoom]. Now u_sTap.x = 12 taps (steps of
+// 1/12; the loop takes up to 16) and the disc and range capped at u_sTap.y = 16 px on screen (a surface 0.3 m from the eye no longer spreads its taps
 // over 100 px), strength 6 -> 8 for the contact lines (12_scene LIGHT_TUNE). The raters' fix (an R8 AO target with the
 // per-pixel turn and a 4 x 4 depth-aware blur) adds full-screen passes, which this run's brief rules out [D fixL10 t1-t11]
 float ssaoF(vec3 P, vec3 Nf, float kR){
@@ -184,7 +184,7 @@ float ssaoF(vec3 P, vec3 Nf, float kR){
   float rng = u_ssao.w * kR;
   float px = ruv.y * u_sRes.y;                              // disc radius in pixels
   if (px < 2.0) return 0.0;                                 // far: the disc is under ~2 px
-  float kc = u_sTap.y > 0.0 ? min(1.0, u_sTap.y / px) : 1.0; ruv *= kc; rng *= kc;   // (QA L10) screen-space cap
+  float kc = u_sTap.y > 0.0 ? min(1.0, u_sTap.y * kR / px) : 1.0; ruv *= kc; rng *= kc;   // (QA L10) screen-space cap (x kR)
   vec2 uv0 = gl_FragCoord.xy / u_sRes.xy;
   float a0 = u_sDither * 6.2832 * fract(52.9829 * fract(dot(gl_FragCoord.xy, vec2(0.06711, 0.00584)))) + 0.39;
   float occ = 0.0, nT = max(u_sTap.x, 1.0);
