@@ -39,7 +39,7 @@ uniform vec4 u_stripP[8]; uniform vec4 u_stripA[8]; uniform vec3 u_stripCol;
 uniform vec4 u_scrP[6]; uniform vec4 u_scrN[6]; uniform vec3 u_scrCol; uniform float u_fillLift; uniform vec3 u_lensCore; uniform vec2 u_vaultE;
 uniform sampler2D u_scrMask; uniform vec4 u_scrMaskR; uniform float u_scrOff; uniform vec4 u_scrOwn; uniform float u_binLo; uniform float u_monHemi;
 uniform float u_tubWash; uniform vec3 u_binLift; uniform vec3 u_hemiBotN; uniform vec3 u_washN; uniform vec2 u_tubSky; uniform float u_ctrLo; uniform float u_ctrLift;
-uniform sampler2D u_sDepth; uniform vec4 u_sRes; uniform vec4 u_sProj; uniform vec3 u_sFwd; uniform vec3 u_sRight; uniform vec3 u_sUp; uniform vec4 u_ssao; uniform float u_sDither; uniform float u_sMix; uniform float u_sAng; uniform float u_sLow; uniform float u_sIn;
+uniform sampler2D u_sDepth; uniform vec4 u_sRes; uniform vec4 u_sProj; uniform vec3 u_sFwd; uniform vec3 u_sRight; uniform vec3 u_sUp; uniform vec4 u_ssao; uniform float u_sDither; uniform float u_sMix; uniform float u_sAng; uniform float u_sLow; uniform float u_sIn; uniform vec2 u_sEase;
 uniform sampler3D u_ao; uniform vec3 u_aoMin; uniform vec3 u_aoSize; uniform sampler2D u_contact; uniform vec4 u_contactR; uniform float u_contactK;
 uniform sampler2DArray u_detail; uniform vec4 u_layer[${N_LAYERS}]; uniform sampler2DArray u_photo; uniform float u_photoOn;
 uniform sampler2D u_atlas; uniform float u_screenStep; uniform float u_emisGain; uniform float u_screenGain;
@@ -569,10 +569,10 @@ void main(){
     // (u_ssao.y = strength, 0 = off: x-ray, low quality, studio) [D]. Not on the window reveals (recd): they are lit by the
     // pane, and the lining's lip standing proud of the tub drew a dark crescent inside every tub (fixL8 ss3 / ss4), where
     // the photos show the moulding continuous and pale [V: c_27312 reveal sides #d7dbdf / #e2e5e8]. Eased out where the AO
-    // volume is already low (ao 0.4 -> 0.05: footwells, under the consoles), which the crevice terms above darken: stacked,
+    // volume is already low (ao 0.4 -> 0.05, L9: u_sEase 0.25 -> 0.02: footwells, under the consoles), which the crevice terms above darken: stacked,
     // the q09 darks fell under the photo's (p5 36 -> 25 vs c_27314 36; 0.02-0.3: 30; 0.1-0.45: 35 but the q06 / q13 lines
     // fell back to 2.7 / 0.8 %) [D fixL8 f2 / f4 / after]
-    float sW = u_sMix * (1.0 - smoothstep(1.9, 2.3, v_wpos.y)) * (1.0 - recd) * smoothstep(0.05, 0.4, ao);
+    float sW = u_sMix * (1.0 - smoothstep(1.9, 2.3, v_wpos.y)) * (1.0 - recd) * smoothstep(u_sEase.x, u_sEase.y, ao);
     if (u_ssao.y > 0.0 && sW > 0.01) {
       // QA L9 (light low): disc and range x(1 + u_sLow) = 1.5 (7.5 cm / 0.15 m) below the headrests (0.85-1.05 m) and off the sidewall:
       // the PY contact darks stayed ~1/3 of the photos' [V: thin dark-line share q13 0.91 vs py_37302 2.77 %, q14 0.58
