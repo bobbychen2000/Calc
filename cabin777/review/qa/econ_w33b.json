@@ -1,0 +1,230 @@
+{
+ "area": "econ",
+ "rater": "B",
+ "round": "w33",
+ "candidate": "2d42289",
+ "lens": "Geometry and proportion first, measured at the matched q15 (render seat centres 235/390/545/700, photo 247/390/543/688; y_47300 resized to 930x575), the new studio close-ups e10_under / e11_panedge against y_47302 (exit row, under-seat zone) and the real in-flight photos sans 13/14 and fr57325 124108/123934. Then materials, colour, lighting and artefacts. Scripts and crops in /tmp/claude-0/-home-user-Calc/7507bc7d-234c-52a3-965a-1562a4a65706/scratchpad/raterB33: m.py (patch stats, dark runs L<35 at rows 505/530/560), z_pans.png (q15 rows 400-575 above y_47300), z_farR.png / z_farP.png (far rows), z_e11.png (pan fabric zoom), p302crop.png (y_47302 under-seat crop). Lighting at the econ cameras looks the same as w32; seat-level patches read 15-25 % lighter than the photo, which is noted but not scored against econ.",
+ "score": 8.1,
+ "priorIssues": [
+  {
+   "id": "w32b-1 (medium) navy seam filler read as a raised rail",
+   "status": "fixed (reverted)",
+   "note": "No rail in e1, e7 or e11, and no end cap at the pan front corner. The cost is that the centre joints are open again; see w33b-2."
+  },
+  {
+   "id": "w32b-2 (low) tick deepening does not register at row distance",
+   "status": "not fixed",
+   "note": "No change to the tick tile this round. The hero tick pans x330-450 / y540-572 measure p90/p10 3.05 against 4.81 in the photo."
+  },
+  {
+   "id": "w32b-3 (low) diamond pan stars half the photo's contrast, ground a touch blue",
+   "status": "partly fixed, blue overcorrected",
+   "note": "q15 diamond pan x470-600 / y540-572: render L81.9, B/R 1.66, p90/p10 1.77; photo L70.0, B/R 1.87, p90/p10 1.95. Contrast is now close, but the ground is greyer than the photo and about 17 % light (part of that is the seat-level lighting lift)."
+  },
+  {
+   "id": "w32b-4 (medium) headrest cover too tall head-on (question 21)",
+   "status": "not fixed",
+   "note": "Axis flood at q15 gives covers of 81 x 61-68 px (H/W 0.74-0.84). y_47300 gives 69-71 x 49-54 px (0.71-0.77) on the three fully visible seats. The render cover is about 1.15x too wide and 1.25x too tall."
+  },
+  {
+   "id": "w32b-5 (low) outer pan joints dark; pillow without weave; light pad flat",
+   "status": "not fixed; joints regressed to the w31 state",
+   "note": "Dark runs (L<35) along q15 row 560: render 9-12 px at all three joints (x283-298, 460-472, 634-643). Photo: 2 px at 276 / 449 / 467. Pillows are still smooth rounded plaques."
+  },
+  {
+   "id": "w32b-6 (medium) seat-level exposure and off-axis / far-row issues (lighting)",
+   "status": "not fixed",
+   "note": "Pans are 17-25 % lighter than the photo (L82-93 vs 70-75). Far rows measure L131 B/R 1.32 against 115 / 1.48. The q16 near seats show magnified, smeared fabric."
+  },
+  {
+   "id": "w32b-7 (low) carried small parts (cover foot crease, pocket, legs, bezel dots, belts on pans)",
+   "status": "not fixed",
+   "note": "Unchanged. The belts still form a navy/teal V with buckles mid-pan on every q15 pan, where y_47300 tucks them away. y_47302 / 47303 do show belts laid on the pans, so this stays low."
+  },
+  {
+   "id": "w32a-1 (medium, A) seam filler proud of the pans",
+   "status": "fixed (reverted)",
+   "note": "As w32b-1."
+  },
+  {
+   "id": "w32a-2 (medium, A) tick distance contrast undershoots",
+   "status": "not fixed",
+   "note": "As w32b-2."
+  },
+  {
+   "id": "w31b-1 / w31b-8 / w31b-9 (medium, carried)",
+   "status": "not fixed",
+   "note": "These are the same issues as w32b-4 and w32b-6."
+  }
+ ],
+ "details": [
+  {
+   "detail": "Fabric: tick weave",
+   "score": 8.4,
+   "refs": "Unchanged from w32. Hero tick pans p90/p10 3.05 vs 4.81, backs still a little washed (w32b-2)."
+  },
+  {
+   "detail": "Fabric: diamond lattice",
+   "score": 8.3,
+   "refs": "Pan contrast 1.77 vs 1.95 (better), but B/R 1.66 vs 1.87, so it is now greyer than y_47300."
+  },
+  {
+   "detail": "Fabric: petal fleck",
+   "score": 8.1,
+   "refs": "e11 / z_e11: dark 1-2 cm specks with light halos sit among the light petals on the fleck pan. They read as holes; the real fabric (sans 14, y_47300 seat 2) has light petals on navy and no dark specks. See w33b-5."
+  },
+  {
+   "detail": "Fabric: dash mosaic",
+   "score": 8.4,
+   "refs": "Unchanged."
+  },
+  {
+   "detail": "Fabric mix (backs, pans, pads)",
+   "score": 8.5,
+   "refs": "Unchanged."
+  },
+  {
+   "detail": "Headrest pad + cover",
+   "score": 7.8,
+   "refs": "Cover 81 x 61-68 px vs 69-71 x 49-54 px (w32b-4)."
+  },
+  {
+   "detail": "Pillow",
+   "score": 8.2,
+   "refs": "Rounded plaques with straight edges. y_47300 / sans 13-14 show a puffed bow-tie with pointed corners and a dented centre."
+  },
+  {
+   "detail": "Armrests",
+   "score": 8.6,
+   "refs": "Unchanged. The grey plate stays mostly hidden head-on."
+  },
+  {
+   "detail": "Belts",
+   "score": 8.1,
+   "refs": "A strong V of webbing on every q15 pan where y_47300 shows none. y_47302 / 47303 do show belts laid on the pans."
+  },
+  {
+   "detail": "Seat pan / front",
+   "score": 7.8,
+   "refs": "Joints 9-12 px vs 2 px at q15 row 560. Front face ~9.5 cm vs ~7 cm in y_47302. Plan corners round off over ~5 cm against ~2-3 cm in the photo. The pans taper toward their base (w 0.44 vs 0.455), which opens a V between neighbours (w33b-1, w33b-2)."
+  },
+  {
+   "detail": "Back silhouette",
+   "score": 8.1,
+   "refs": "Unchanged."
+  },
+  {
+   "detail": "Rear shell / hood / back top",
+   "score": 8.1,
+   "refs": "Unchanged (q17 / q18 / e2 / e9)."
+  },
+  {
+   "detail": "Screen / handset",
+   "score": 8.2,
+   "refs": "Unchanged (e5, q18)."
+  },
+  {
+   "detail": "Tray / pocket / AC",
+   "score": 7.8,
+   "refs": "Unchanged (e6)."
+  },
+  {
+   "detail": "Legs / footrest / under-seat",
+   "score": 7.4,
+   "refs": "The new e10 shows the life-vest holder as an opaque black puck (0.17 m diameter, 3.5 cm thick, flat) with a 2 x 10 cm red stick hanging straight down. y_47302 shows a flat, smoky translucent shield-shaped pouch (~0.2 x 0.12 m) tilted ~30 deg nose-down, with a ~3 cm red strap ending in a blue/white clip. Legs are plain grey boxes; y_47302 shows a perforated silver channel. Footrest pedals and hangers (e8 vs y_47304) are good. Baggage bar and spreaders are OK. e10 / e11 add a 4th grey tray lip under the pan front (w33b-3, w33b-4)."
+  },
+  {
+   "detail": "Far-LOD rows",
+   "score": 7.6,
+   "refs": "q15 far rows L131 B/R 1.32 vs 115 / 1.48: lighter and greyer. Tick stripes show as high-contrast snow, where y_47300's far rows are smooth mid-blue with distinctly lighter pad ears beside each cover (w33b-6)."
+  }
+ ],
+ "issues": [
+  {
+   "id": "w33b-1",
+   "severity": "medium",
+   "owner": "econ",
+   "title": "Pan joints open again: 9-12 px dark V between pans head-on (photo 2 px)",
+   "detail": "Seat pan / front",
+   "evidence": "m.py dark runs L<35 on q15 row 560: render x283-298, 460-472, 634-643. y_47300: 2 px at x276, 449, 467. z_pans.png: the gap widens toward the pan front. In e1 / e7 the side rolls fall away from each other. Cause: cushionSecs(0.455, ..., {edge: 0.05}) insets the sides by the full 5 cm roll, and ps[0] narrows the base to 0.44. With the seat pitch at 19 in (0.483), the cushions are 2.8 cm apart at their widest and ~12 cm apart across the crowns.",
+   "fix": "09a_econ.js econSeat: keep the 5 cm bullnose at the front but give the sides a ~2 cm roll. After cushionSecs, for k >= 2 set ps[k].w = 0.465 - 2 * 0.4 * (0.455 - ps[k].w) / 2 and leave d / z as they are, so only the front rolls. Widen ps[0] / ps[1] to 0.455 / 0.465 (straight walls) so neighbouring pans touch under the arm plate (keep 3 mm clear of ECON_PLATE). Target q15 row-560 joints <= 3 px, with no proud filler."
+  },
+  {
+   "id": "w33b-2",
+   "severity": "medium",
+   "owner": "econ",
+   "title": "Pan front too thick and too round in plan (a pillow slab, not a Recaro bullnose)",
+   "detail": "Seat pan / front",
+   "evidence": "e11: the front face plus bullnose is ~95 px at ~1 mm/px (~9.5 cm), the plan corners round off over ~5-6 cm, and the corners droop. y_47302 middle / right seats (p302crop.png): the front face is ~27 px on a 180 px / 0.455 m pan (~7 cm), the corners are near-square (~2-3 cm radius), and the face is almost vertical with a tight roll at the top.",
+   "fix": "09a_econ.js: cushionSecs(0.455, 0.47, 0.095 -> 0.08, -0.05, {edge: 0.05 -> 0.035, r: 0.05 -> 0.025, crown: 0.01}). Raise the pan placement 1 cm (0.415 -> 0.425) so the top height and the belt / buckle (0.474-0.478) stay where they are."
+  },
+  {
+   "id": "w33b-3",
+   "severity": "medium",
+   "owner": "econ",
+   "title": "Life-vest holder is an opaque black puck with a red stick; the real one is a flat translucent shield with a strap and clip",
+   "detail": "Legs / footrest / under-seat",
+   "evidence": "e10: gCyl(0.085, 0.075, 0.035) at y 0.215, -12 deg, colour #535760 rendered, a solid disc. Red gBox 0.02 x 0.10 x 0.004 hangs vertically (#ad1419). y_47302 (p302crop): a smoky grey semi-transparent pouch #50-55 grey (#48413c-#555662 sampled) shaped like a rounded shield / teardrop ~0.20 x 0.12 m, ~1.5 cm thick, with a lighter rim, tilted ~30 deg nose-down under the pan centre. The red strap (#d22429) is ~3 cm wide and ~7 cm long, with a blue / white clip at its top, angled forward along the pouch face.",
+   "fix": "09a_econ.js econSeat: replace the gCyl with a flattened loft or gRBox (0.20 x 0.016 x 0.13, r 0.05, in plan a teardrop narrowing to the front) at y 0.20, z -0.33, rotated ~-30 deg about x. Use { c: '#4a4d55', r: 0.25 } with a 3 mm lighter rim tube #8a8e96. Make the strap gBox(0.03, 0.07, 0.004) laid along the pouch's front face, tipped forward (same -30 deg), with a 0.03 x 0.015 x 0.01 clip #2f5fb0 / #e8e8e8 at its top."
+  },
+  {
+   "id": "w33b-4",
+   "severity": "low",
+   "owner": "econ",
+   "title": "Under-pan stack reads as three stacked light-grey rails; legs are plain boxes",
+   "detail": "Legs / footrest / under-seat",
+   "evidence": "e10: under each pan there is a light tray lip (#7d8187 gRBox 0.39 x 0.03 at y 0.35), the stiffener (#5d6168 at 0.31 / z -0.42), the front spreader (y 0.30 / z -0.40) and the leg beam (0.31), rendered #656a74 / #414651 / #737881. In y_47302, the bullnose curls under into a dark underside (#12151b) with one light spreader behind it. The front leg there is a perforated silver channel with a row of holes; the render's legs are uniform grey boxes.",
+   "fix": "09a_econ.js: drop the tray gRBox (y 0.35) or darken it to #2a2d33 and pull it 4 cm back; it shows as a lip in e11. Move the stiffener back to z -0.38 under the front spreader. On the raked front leg (gRBox 0.035 x 0.34) add a lighter silver face (#a9adb2, m 0.6) and a column of 6-8 small dark discs (r 4 mm) for the lightening holes; use one LOD-0 mesh per leg."
+  },
+  {
+   "id": "w33b-5",
+   "severity": "low",
+   "owner": "econ",
+   "title": "Fleck fabric shows dark specks with light halos (read as holes) on pans",
+   "detail": "Fabric: petal fleck",
+   "evidence": "z_e11.png (e11 zoom): ~15-20 dark grey 1-2 cm blotches with pale rims per pan among the white petals. They are also visible in e1 / e7 on the fleck pans. sans 14 / y_47300 seat 2: light petals of varying size on navy, with no dark spots.",
+   "fix": "test/make_swatches.py y_fleck: clamp the tile's darks to the ground (e.g. L = max(L, 0.85 x median) before the band boost) or median-filter the < 0.6 x median islands, so the boost does not ring around them. Shared file: say so in the commit."
+  },
+  {
+   "id": "w33b-6",
+   "severity": "low",
+   "owner": "econ",
+   "title": "Far rows: snowy tick stripes, pad ears not distinct",
+   "detail": "Far-LOD rows",
+   "evidence": "z_farR vs z_farP: the render's far backs carry crisp, high-contrast tick stripes and fleck snow. y_47300's far rows read as smooth mid-blue, each cover flanked by clearly lighter pad ears. Patch stats: far centre L131 / B/R 1.32 vs 115 / 1.48; far left block p90/p10 3.66 vs 5.88. The render has less cover/back contrast and more texture noise.",
+   "fix": "09a_econ.js econUnitFar: give the headrest box the light pad material ECON_HEAD_L on its two ears (two gRBox 0.07 x 0.2 at x +-0.16) and the darker back fabric in the middle. Fade the fabric detail layer gain to ~0.5 on the far-LOD back (e.g. a { ...f, l: 0 } or reduced-gain variant), so the far rows read as fabric colour and not stripes."
+  },
+  {
+   "id": "w33b-7",
+   "severity": "medium",
+   "owner": "econ",
+   "title": "Headrest cover still ~1.15x wide / 1.25x tall head-on (carried, question 21)",
+   "detail": "Headrest pad + cover",
+   "evidence": "Axis flood at q15: render 81 x 61-68 px; y_47300 69-71 x 49-54 px on the three fully visible seats.",
+   "fix": "Pending question 21. Otherwise shrink the cover plate to w 0.245 -> 0.215 and move its bottom 2 cm up."
+  },
+  {
+   "id": "w33b-8",
+   "severity": "low",
+   "owner": "econ",
+   "title": "Pillows: rounded plaques, no bow-tie or dent (carried)",
+   "detail": "Pillow",
+   "evidence": "z_pans: the render pillow outline is a rounded rectangle with straight edges. y_47300 shows pointed corners with concave edges and a centre dent on all four seats.",
+   "fix": "Deepen the waist (edge concavity ~1.5 cm per side) and pull the corners out 1 cm. Add a centre dimple (move the crown vertex back 1 cm)."
+  },
+  {
+   "id": "w33b-9",
+   "severity": "medium",
+   "owner": "lighting",
+   "title": "Seat-level exposure and far-row greying (not scored for econ)",
+   "detail": "Lighting",
+   "evidence": "Pans L82-93 vs 70-75 and B/R 1.59-1.69 vs 1.80-1.87. Far rows L131 vs 115. The q16 near seats show magnified, smeared fabric.",
+   "fix": "As w31b-8 / w31b-9."
+  }
+ ],
+ "questionsForUser": [
+  "Headrest cover size (question 21): at the matched q15 the cover is ~1.15x wider and 1.25x taller than in y_47300 (a retouched photo). Real photos (sans 13, fr57325 124108) also show a large cover. Should y_47300 decide?",
+  "Belts: y_47300 tucks them out of sight, while y_47302 / 47303 and the trip reports show them laid across the pans. Which state should the hero view show?"
+ ],
+ "extraRefsSearched": "ref/web/econ/ did not exist in this container, so it was created. Another rater downloaded sanspotter 00-64 in parallel (A_ss_*). Mine are b33_ss_* (sanspotter 1024 px, duplicates of theirs) and b33_fr_* (54 photos from flight-report 57325 NH5, 2022; 20220604_124108 side view of a seat row and 123934 rows from the aisle were used). thepointsguy (2017) and pointmetotheplane (2018) show the pre-2019 cabin and were not used."
+}
