@@ -251,6 +251,7 @@ void main(){
   // PSU band #603b1d L65, ucr_the-room-cabin #6f482a L79 vs q21 #ad7c42 L131, d06 #926532]
   if (emis > 0.0 && (layer < 12 || layer > 15))
     emissive += base * emis * 3.0 * (emis < 0.2 ? min(u_hemiTop / 0.8, vec3(1.0)) * u_fillLift : vec3(u_emisGain));
+  float rough0 = rough;   // QA r4: the material roughness before the AA widening (coveRim window)
   // specular anti-aliasing: widen roughness where the normal varies across pixels
   vec3 dNdx = dFdx(N), dNdy = dFdy(N);
   float nvar = 0.25 * (dot(dNdx, dNdx) + dot(dNdy, dNdy));
@@ -546,11 +547,13 @@ void main(){
   // PY cap 0.35, jRail 0.26; the r 0.42-0.45 covers, PY / Y shells and arms keep x1: up to 0.6 lifted the q13 PY flaps
   // L72-82 -> L90-117 vs py_37302 L61-87) below ~1.5 m (seat furniture;
   // on the bin crests it clipped the q06 bins, +3.5 % px > 235; not on screens / lamps, layers 12-15: a glare spot on the
-  // q03 screen): the rounded shell, cap and
+  // q03 screen), and only where the normal turns across a pixel (nvar: rounded edges, not the flat faces, which it lifted
+  // broadly: d06 median 77 -> 83, q14 140 -> 145): the rounded shell, cap and
   // armrest edges carry thin clipped highlights in the photos [V: thin-highlight share (L > 235, 9 px clip density
   // < 0.45) c_27312 2.2 %, y_47301 2.5 %, py_37302 1.4 % vs q06 1.0 %, q16 0.6 %, q13 0.2 %] (integration r4 medium)
   if (u_exterior < 0.5) specEnv += coveSpec(v_wpos, N, V, R, rough, F0, NdV) * coveC * u_cove * sz * (0.25 + 0.75*ao)
-                                 * mix(1.0, u_coveRim, (1.0 - smoothstep(0.36, 0.40, rough)) * (1.0 - smoothstep(1.4, 1.6, v_wpos.y)) * (layer >= 12 && layer <= 15 ? 0.0 : 1.0));
+                                 * mix(1.0, u_coveRim, (1.0 - smoothstep(0.36, 0.40, rough0)) * (1.0 - smoothstep(1.4, 1.6, v_wpos.y)) * (layer >= 12 && layer <= 15 ? 0.0 : 1.0)
+                                                     * smoothstep(0.0001, 0.001, nvar));
   vec3 col = diff * (amb + sun) + specSun + specEnv + emissive;
   col += vec3(0.30, 0.62, 1.0) * hl * (0.35 + 0.9*pow(1.0 - NdV, 2.0));
   col = aces(col * u_exposure);

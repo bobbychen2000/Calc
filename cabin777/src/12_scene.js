@@ -190,11 +190,11 @@ const AO_TUNE = { hemi: 0.22, bounce: 1.0, emitLens: 0.45, emitCtr: 0.35, kAttF:
 // highlight ~1.3x the face on THE Room shell caps (c_27312), armrest p99 >= 240 (y_47303)]
 // QA r3 (integration): sheen = gain of the grazing sheen lobe on SHEEN materials (mainFS) [D: q17 / q16 flaps against
 // y_47303 / y_47301, q15 head-on unchanged]
-// QA r4: coveRim = extra gain of those line lights on satin / gloss faces (rough < ~0.5; integration r4: thin rim
+// QA r4: coveRim = extra gain of those line lights on the rounded edges of satin faces (rough <= 0.36; integration r4: thin rim
 // highlights on the shells, caps and armrests) [D: thin-highlight share q06 / q16 / q13 vs c_27312 / y_47301 /
 // py_37302]; tubWash = floor of the recessed window tub, as a share of a pier's hemi + wash (lighting r4: amber reveals
 // vs ucr_the-room-cabin) [D]; lookOut = interior exposure cut at the glass (integration r4: q12 vs ucr wing view) [D]
-const LIGHT_TUNE = { cove: 1.0, sheen: 1.35, coveRim: 2.5, tubWash: 0.7, lookOut: 0.86 };
+const LIGHT_TUNE = { cove: 1.0, sheen: 1.35, coveRim: 4.0, tubWash: 0.7, lookOut: 0.86 };
 // QA r3 (integration): floor contact map (computeAO): cell size (m; 6 m x 59 m -> 200 x 1973 texels, under the 2048
 // texture minimum), marking height above the floor and the darkening at a base (mainFS) [D]
 const CONTACT = { cell: 0.03, h: 0.2, k: 0.55 };
@@ -507,8 +507,11 @@ class Scene {
   buildScreenMask() {
     const cell = 0.04, x0 = -3.0, z0 = CAB.zFront - 1.0, nx = Math.ceil(6.0 / cell), nz = Math.ceil((CAB.zAft - CAB.zFront + 2.0) / cell);
     const m = new Uint8Array(nx * nz).fill(255);
+    // buildScreens may split a wide screen (THE Suite 0.95 m) into touching clusters: they share one group (root) and hash
+    const W = (q) => Math.sqrt(q.a * 16 / 9) / 2;
+    this.screens.forEach((q, i) => { q.g = q.g ?? q; for (const r of this.screens.slice(i + 1)) if (r.g === undefined && V3.dot(q.n, r.n) > 0.9 && V3.len(V3.sub(q.p, r.p)) < W(q) + W(r)) r.g = q.g; });
     for (const q of this.screens) {
-      const hs = Math.sin(Math.round(q.p[0] * 40) * 12.9898 + Math.round(q.p[2] * 40) * 78.233) * 43758.5453;
+      const g = q.g, hs = Math.sin(Math.round(g.p[0] * 40) * 12.9898 + Math.round(g.p[2] * 40) * 78.233) * 43758.5453;
       q.h = Math.min(0.996, hs - Math.floor(hs));
       const nh = Math.hypot(q.n[0], q.n[2]) || 1, u = [q.n[0] / nh, q.n[2] / nh], t = [-u[1], u[0]];
       const hw = Math.sqrt(q.a * 16 / 9) / 2 + 0.04, hd = Math.sqrt(q.a * 9 / 16) / 2 * Math.abs(q.n[1]) + 0.05, r = Math.hypot(hw, hd);
@@ -784,10 +787,18 @@ class Scene {
       }
     }
     G.set('u_scrOff', scrOff);
-    G.set('u_scrOwn', own ? [...own.p, (Math.hypot(Math.sqrt(own.a * 16 / 9), Math.sqrt(own.a * 9 / 16)) / 2 + 0.08) ** 2] : [0, 0, 0, 0]);   // radius: half the diagonal + 8 cm
+    // the own screen's group (all its clusters): bounding sphere = centre of the members, radius to the farthest member's
+    // corner (half the diagonal at 16:9) + 5 cm
+    let ownS = [0, 0, 0, 0];
+    if (own) {
+      const mem = this.screens.filter((q) => q.g === own.g), c = V3.scale(mem.reduce((a, q) => V3.add(a, q.p), [0, 0, 0]), 1 / mem.length);
+      const r = Math.max(...mem.map((q) => V3.len(V3.sub(q.p, c)) + Math.hypot(Math.sqrt(q.a * 16 / 9), Math.sqrt(q.a * 9 / 16)) / 2)) + 0.05;
+      ownS = [...c, r * r];
+    }
+    G.set('u_scrOwn', ownS);
     G.tex('u_scrMask', 7, this.scrMaskTex); G.set('u_scrMaskR', this.scrMaskR);
     if (spill > 0) {
-      const lit = scrOff > 0 ? this.screens.filter((q) => q === own || q.h >= scrOff) : this.screens;
+      const lit = scrOff > 0 ? this.screens.filter((q) => (own && q.g === own.g) || q.h >= scrOff) : this.screens;
       const near = lit.map((q) => [V3.len(V3.sub(q.p, cam.pos)), q]).sort((a, b) => a[0] - b[0]).slice(0, 6);
       near.forEach(([, q], i) => { scp.set([...q.p, q.a], i * 4); scn.set([...q.n, 0], i * 4); });
     }
