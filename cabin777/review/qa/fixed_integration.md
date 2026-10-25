@@ -333,3 +333,83 @@ from_* items (to lighting / integration):
 - from_ceiling (polish B vault eFn vs the night cap): done (vaultE cap 0.045, above).
 - from_shell w15 lows (door glass flat white, creams neutral, dado grille dark, band under the PY/Y tub lip): not
   changed this run.
+
+## Lighting run 2, L8 (lighting 7.3 + integration 7.6 raters; from_* items addressed to lighting / integration)
+
+Code: `04_shaders.js`, `12_scene.js`, `13_app.js` (SSAO only at the Sharp quality). The run started on b65def4. The econ
+area committed w47-w51 during the run (`09a_econ.js`), so q15 / q16 / q17 / c15 are compared with base2 (this run's
+lighting files from b65def4 on the econ tree of 9c93549), every other view with the b65def4 renders. Renders in the
+scratchpad: qa/fixL8/before, base2, final (+ final2 for the amber views after the last underside change), experiments
+ss1-ss4 / f1-f4 (SSAO), v3, t1-t4 (half size, box means); tools in qa/fixL8/tools (metrics.py target boxes, cmp.py
+frame / thirds vs photo, thindark.py, time.js, exp3.js).
+
+Regression guard (cmp.py: |model - photo| over the frame median, p5, p95, the thirds' mean L and 0.25 x their hue
+difference; lower is closer), before -> after:
+- q03 263 -> 257; q06 126 -> 120; q13 63 -> 58; q14 122 -> 113; q15 30 -> 29; q16 49 -> 43; q17 45 -> 41; blue06 85 -> 83.
+- q09 116 -> 119: p5 36 -> 34 (c_27314 36) and bottom third 114 -> 112 (photo 161, a framing mismatch), mid 106 -> 104
+  (101) and top 176 -> 175 (169) closer. Kept: the SSAO's first cut (no AO-volume easing) took p5 to 25 (score 129); the
+  easing over ao 0.4 -> 0.05 (below) holds it at 34.
+- q20 69 -> 70 (0.9 % of pixels changed, |dL| > 6), q21 190 -> 192 (median and top third +1): within noise; q21 median
+  135 against the rater's cap 138.
+- Not check views: c06 210 -> 138 (lalf_room_119), d06 63 -> 63, dd: see the amber item.
+
+Rater issues (L8):
+- lighting medium, Cruise bins at Boarding levels: done. `MOODS.cruise` hemiBot [0.24, 0.24, 0.28] -> [0.18, 0.18,
+  0.22], binLo 0.8 -> 0.45, new ctrLo 0.5 (the centre bins' doors / undersides, mainFS binK; 1 in every other mood) and
+  fillLift 0.25. The raters' fit (binLo 0.65, fillLift 0.45, no ctrLo) gave c06 bins L155 / 161 and c15 L166 (v3).
+  - c06 bins (binL / binR) L183 / 176 -> 113 / 141 (target 125-145; lalf_room_119 L98-116) under a vault at L218 (>= 190);
+    top third 178 -> 142 (<= 150); mid / bottom thirds 102 / 75 -> 97 / 73.
+  - c15 centre-bin underside (330-600, 0-60) L183 -> 131 (target 110-130), outboard bins 195 -> 167.
+- lighting medium, amber bins dark and saturated from a seat: partly. binLift acts on the bin door faces only (outboard
+  binO, centre cBin up to the bin tops at ~2.3 m; the flat undersides and PSU band keep the r4 level), at 2x the raters'
+  step: [0.055, 0.04, 0.02] -> [0.22, 0.15, 0.07] (Dining, Sunrise). Numbers in the final2 lines below.
+  - The dd boxes (seated at 12H) are mostly bin undersides seen from below, which the photos keep dark (ucr centre-bin
+    underside L87, ff PSU band L65): lifting them with the doors took the dd left box to L110 s0.62 but the PSU band to
+    L93 (cap 85; t2 x2), so the undersides stay at r4.
+- lighting medium, Boarding crowns / lens band neutral: partly.
+  - Crowns: done with a new term rather than the raters' x0.82 / tint (which moved q17 only +3 B-R: the crown mask needs
+    down-facing faces). `tubSky` [1.0, 0.6] (Boarding): the upper tub (0.30-0.66 m over the pane centre, shade open) takes
+    the day glow's hue (x the sky tint [0.92, 1.0, 1.18]) at 0.6 of its light. q17 (matched w47 camera; the raters' box
+    was on the old one) crowns (390-450, 15-55) / (520-560, 30-70) #cdcfd1 L207 +3 / #b9babd L187 +4 -> #abb4bf L180 +20 /
+    #a2a9b2 L169 +16 (y_47303 #a4a9be L170 +25; target L170-180, >= +18). The raters' sky tint on the crown window term is
+    in; their x0.82 on the crown fill was replaced by the tub term.
+  - Boarding sideLed [0.48, 0.53, 0.66] -> [0.50, 0.57, 0.78]: the q15 lens band (100-300, 132-150) stays L221 +4
+    (target >= 226, >= +12). Not met: in q15 those rows hold the PSU underside, not the band (q15 frames the bins ~15 px
+    lower than y_47300); the wall rows under it moved +3..+5 B-R.
+  - q15 bins B-R +8 -> +6 (target <= +5), centre underside +7 -> +2; q16 wall #c1c4cb (+10) -> #babec5 (+11) (stays >= +9).
+- lighting low, Blue vault: done. vault [0.025, 0.028, 0.10] -> [0.018, 0.020, 0.060] (the raters' [0.016, 0.018, 0.065]
+  read L32 s0.71). blue06 vault (430-520, 0-60) #22266c L43 s0.68 -> #1b1e56 L34 s0.68 (target L28-32, s <= 0.65; sany_47
+  #141631 L24 s0.58), frame median 29 (27-31).
+- integration medium, contact / crevice darks (screen-space AO): done, below the targets.
+  - Depth pre-pass at the canvas size (12_scene `depthTarget`, built in 12_scene since 01_gl.js is not lighting's; the
+    shadow depth program; all opaque meshes) and `ssaoF` in mainFS: 8 taps on a 5 cm disc, snapped to depth texel
+    centres, face-plane normal from the position derivatives, 6 mm + angle bias 0.25, range fade 0.05-0.10 m, strength 6,
+    x0.9 on the diffuse ambient only (spec, emissive, sun, tubRef and the local lights out), fading out above 1.9-2.3 m,
+    off on the window reveals and eased out where the AO volume is already low (ao 0.4 -> 0.05).
+  - The raters' values (half size, strength 0.7, range 0.15, no angle bias) moved q06 1.81 -> 2.00 % and q13 0.55 -> 0.58.
+    Half size drew stair-stepped bands on the bin faces; an unsnapped / unbiased disc drew dark crescents in every window
+    tub; range 0.15 left grey halos on a wall ~10 cm behind the PY headrests (fixL8 ss1-f3).
+  - Thin dark-line share (thindark.py) before -> after (photo): q06 1.81 -> 2.96 (c_27312 4.77, target 3.3), q13 0.55 ->
+    0.91 (py_37302 2.77, target 1.8), q14 0.57 -> 0.58 (py_37301 3.15), q09 1.15 -> 1.62 (c_27314 3.14, target 2.2), q03
+    0.63 -> 1.70 (f_17306 3.58), q15 3.91 -> 4.10, q16 2.85 -> 3.14 (economy within +-0.5).
+  - Frame p5: q06 31 -> 28 (target <= 22), q13 46 -> 44 (<= 38). Aisle carpet core (495-545, 420-575) L55 -> 55 (within 3).
+  - Stronger settings reached the targets (no AO easing: q06 3.46-3.76 %, q13 1.40-1.68, q09 2.58) but took q09's darks
+    under the photo (p5 25-30 vs 36, score 116 -> 122-129), so the guard keeps this level.
+  - Frame time (tools/time.js, SwiftShader, 390 x 844 css at DPR 1.5): q06 / q16 / q13 +9 / +10 / +9 % with the pass on;
+    triangles 1.59 -> 3.14 M, draw calls 37 -> 71 (the pre-pass). It runs only at the Sharp quality (`scene.ssaoOn`,
+    13_app.js): phones open on Balanced and pay nothing (questions_lighting 10).
+- integration low, Boarding seat level too cool: partly. The r4 cool shadow light (hemiBot / wash) now acts on the window
+  side only (mainFS coolW: faces within ~0.06-0.25 m of the lining facing in, the reveals, half on the outboard bin doors);
+  the rest takes hemiBotN / washN = the pre-r4 [0.36, 0.37, 0.40] / [0.25, 0.26, 0.28], also in the reflected cabin.
+  q06 seat zone (0-930, 200-400) B-R +16 -> +12 (target <= +11, c_27312 +8), p10 54 -> 51; shell tops (150-330, 250-300)
+  +23 -> +18 (<= +15); q16 wall +10 -> +11 (>= +9).
+
+from_* items (to lighting / integration):
+- from_econ wave 3k-3m (q17 cover grazing tone): tried, not changed. The sheen tint 0.3 -> 0.1 at x1.3 (econ's
+  suggestion; `LIGHT_TUNE.sheenTint` is now a key) took the near q17 cover from (147,152,183) to (174,178,195): lighter
+  but greyer (B/R 1.24 -> 1.12, G/R 1.03 -> 1.02) against y_47303's (145,165,203) (B/R 1.40, G/R 1.14); the lobe adds white,
+  not the photo's cyan (half-size t3). q15 cover E unchanged (L55).
+- from_econ (far q16 covers dark, w43b-L1): not changed. from_econ wave 3k (window phase): layout, not lighting.
+- from_econ w37-w39 (near pans), w27 (`photoBase` gain, shared 03_tex.js): not changed (carried).
+- from_shell w15 lows, from_room w16 (1) / (3), from_py 6 / 9 / 10 / 11, from_monuments w13-15, from_exterior 18 / 19:
+  not changed this run (carried).
