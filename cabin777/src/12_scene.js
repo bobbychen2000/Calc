@@ -774,7 +774,7 @@ class Scene {
     // opaque cabin, depth only, through the shadow depth program. Not in x-ray or at low quality [D]
     let ssao = !this.xray && this.q !== 'low' && LIGHT_TUNE.ssao[1] > 0;
     if (ssao) {
-      const sw = Math.max(1, w >> 1), sh = Math.max(1, h >> 1);
+      const sw = w, sh = h;
       if (!this.sDepth || this.sDepth.w !== sw || this.sDepth.h !== sh) this.sDepth = this.depthTarget(sw, sh);
       ssao = this.sDepth.ok;
     }
@@ -785,10 +785,7 @@ class Scene {
       gl.clear(gl.DEPTH_BUFFER_BIT);
       G.use(this.progs.depth);
       G.set('u_viewProj', vp);
-      // the far seat LOD (beyond ~9.5 m) is left out: the 5 cm disc is under ~1.4 half-size texels there and fades out
-      // (mainFS ssaoF), and a missing occluder only leaves its neighbours unoccluded (the taps then see the shell behind)
-      const lo = this.seatLo || (this.seatLo = new Set(Object.values(this.seatGroups).map((g) => g.lo).filter(Boolean)));
-      for (const m of this.opaque) if (!lo.has(m)) G.draw(m);
+      for (const m of this.opaque) G.draw(m);
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     }
     gl.viewport(0, 0, w, h);

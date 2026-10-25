@@ -161,8 +161,8 @@ vec3 coveSpec(vec3 P, vec3 N, vec3 V, vec3 R, float rough, vec3 F0, float NdV){
 float ssaoF(vec3 P, vec3 Nf){
   float dep = dot(P - u_camPos, u_sFwd);
   vec2 ruv = u_sProj.xy * (0.5 * u_ssao.x / max(dep, 0.05));
-  float px = ruv.y * u_sRes.w;                              // disc radius in half-size texels
-  if (px < 1.0) return 0.0;                                 // far: the disc is under a texel
+  float px = ruv.y * u_sRes.y;                              // disc radius in pixels
+  if (px < 2.0) return 0.0;                                 // far: the disc is under ~2 px
   vec2 uv0 = gl_FragCoord.xy / u_sRes.xy;
   float a0 = u_sDither * 0.7854 * (mod(gl_FragCoord.x, 2.0) + 2.0 * mod(gl_FragCoord.y, 2.0)) + 0.39;
   float occ = 0.0;
@@ -177,9 +177,9 @@ float ssaoF(vec3 P, vec3 Nf){
     vec2 nd = uv * 2.0 - 1.0;
     vec3 v = u_camPos + z * (u_sFwd + nd.x / u_sProj.x * u_sRight + nd.y / u_sProj.y * u_sUp) - P;
     float dl = length(v);
-    occ += clamp(((dot(v, Nf) - u_ssao.z) / max(dl, 1e-3) - u_sAng) / (1.0 - u_sAng), 0.0, 1.0) * (1.0 - smoothstep(0.10, u_ssao.w, dl));
+    occ += clamp(((dot(v, Nf) - u_ssao.z) / max(dl, 1e-3) - u_sAng) / (1.0 - u_sAng), 0.0, 1.0) * (1.0 - smoothstep(0.5 * u_ssao.w, u_ssao.w, dl));
   }
-  return occ * 0.125 * smoothstep(1.0, 2.0, px);
+  return occ * 0.125 * smoothstep(2.0, 4.0, px);
 }
 
 void main(){
