@@ -39,7 +39,7 @@ uniform vec4 u_stripP[8]; uniform vec4 u_stripA[8]; uniform vec3 u_stripCol;
 uniform vec4 u_scrP[6]; uniform vec4 u_scrN[6]; uniform vec3 u_scrCol; uniform float u_fillLift; uniform vec3 u_lensCore; uniform vec2 u_vaultE;
 uniform sampler2D u_scrMask; uniform vec4 u_scrMaskR; uniform float u_scrOff; uniform vec4 u_scrOwn; uniform float u_binLo; uniform float u_monHemi;
 uniform float u_tubWash; uniform vec3 u_binLift; uniform vec3 u_hemiBotN; uniform vec3 u_washN; uniform vec2 u_tubSky; uniform float u_ctrLo; uniform float u_ctrLift;
-uniform sampler2D u_sDepth; uniform vec4 u_sRes; uniform vec4 u_sProj; uniform vec3 u_sFwd; uniform vec3 u_sRight; uniform vec3 u_sUp; uniform vec4 u_ssao; uniform float u_sDither; uniform float u_sMix; uniform float u_sAng; uniform float u_sLow; uniform float u_sPow;
+uniform sampler2D u_sDepth; uniform vec4 u_sRes; uniform vec4 u_sProj; uniform vec3 u_sFwd; uniform vec3 u_sRight; uniform vec3 u_sUp; uniform vec4 u_ssao; uniform float u_sDither; uniform float u_sMix; uniform float u_sAng; uniform float u_sLow; uniform float u_sIn;
 uniform sampler3D u_ao; uniform vec3 u_aoMin; uniform vec3 u_aoSize; uniform sampler2D u_contact; uniform vec4 u_contactR; uniform float u_contactK;
 uniform sampler2DArray u_detail; uniform vec4 u_layer[${N_LAYERS}]; uniform sampler2DArray u_photo; uniform float u_photoOn;
 uniform sampler2D u_atlas; uniform float u_screenStep; uniform float u_emisGain; uniform float u_screenGain;
@@ -151,22 +151,25 @@ vec3 coveSpec(vec3 P, vec3 N, vec3 V, vec3 R, float rough, vec3 F0, float NdV){
   return s;
 }
 // QA L8 (integration): small-radius screen-space AO from a depth pre-pass (12_scene render, u_sDepth): 8 taps on a disc of
-// u_ssao.x m (0.05) at the fragment's depth, a golden-angle spiral (u_sDither 1, QA L9: turned per pixel by interleaved
-// gradient noise; 0: one fixed pattern); each tap is put back in world space (u_sProj = proj[0], [5], [10], [14]; u_sFwd /
+// u_ssao.x m (0.05) at the fragment's depth, a golden-angle spiral (one fixed pattern; u_sDither 1 turns it per pixel by
+// interleaved gradient noise, off: QA L9 below); each tap is put back in world space (u_sProj = proj[0], [5], [10], [14]; u_sFwd /
 // Right / Up = camera basis) and occludes by the angle of its point over the fragment's face plane (Nf, from the position
 // derivatives: the true triangle plane, so a flat face never self-occludes), less a 6 mm bias and an angle bias u_sAng
-// (0.25: the facets of coarse curved lofts, e.g. the window tubs, drew dark seams at 0), faded out over 0.05-0.10 m
-// (u_ssao.w; 0.15 left grey halos on a wall ~10 cm behind the PY headrests, fixL8 f2). Returns the occluded share 0-1.
+// (0.25: the facets of coarse curved lofts, e.g. the window tubs, drew dark seams at 0), faded out by the range u_ssao.w
+// (L8 0.05-0.10 m; 0.15 left grey halos on a wall ~10 cm behind the PY headrests, fixL8 f2; L9 below). Returns the occluded share 0-1.
 // The pre-pass is full size: at half size the snapped taps drew half-res stair steps on the bin faces (fixL8 f1). The 8 cm AO volume and the floor contact map cannot hold the cm-scale dark lines at shell edges,
 // cushion-to-shell gaps, panel splits and seat bases that outline every unit in the photos [V: thin dark-line share
 // q13 0.55 vs py_37302 2.77 %, q06 1.81 vs c_27312 4.77, q05 0.89 vs f_17313 2.21] (integration L8 medium) [D]
-// QA L9 (integration medium): the one fixed spiral printed each occluder 1-10 cm in front of a surface as stepped, offset
-// copies of its outline (every tap on it took the ambient to 0.25x): beside the THE Suite bulkhead monitor L145-180 -> 54-80,
-// above the THE Room headrest flap L83-103 -> 29-50, where the photos show the wall clean and a soft shade [V: omaat_f13
-// monitor surround, c_27315 flap; integ6 halo_cmp / mon_halo / q10_zoom]. Now the disc turns per pixel (interleaved
-// gradient noise) and the range weight falls from the contact point, (1 - dl / range)^2 (a part 5 cm off a 0.10 m range
-// counts 0.25 of a contact tap), strength 6 -> 4 (12_scene LIGHT_TUNE.ssao) [D fixL9]. kR scales the disc and the range
-// (QA L9, lighting low: 1.5 low in the PY / economy legroom, see mainFS)
+// QA L9 (integration medium): each occluder 1-10 cm in front of a surface printed stepped, offset copies of its outline
+// (one tap on it took the ambient to 0.25x): beside the THE Suite bulkhead monitor L145-180 -> 54-80, a detached band above
+// the THE Room headrest flap L83-103 -> 29-50, where the photos show the wall clean and a soft shade under the flap
+// [V: omaat_f13 monitor surround, c_27315 flap; integ6 halo_cmp / mon_halo / q10_zoom]. A tap now counts in full up to
+// u_sIn x the range (0.3 x 0.07 m = 2 cm: the contact / crease taps) and fades out by the range (7 cm), with strength 6:
+// a part 5 cm off a wall counts 0.14 of a contact tap (12_scene LIGHT_TUNE.ssao / ssaoIn). Tried [D fixL9 tss-tss5]: the
+// raters' (1 - dl / 0.10)^2 at strength 4 (clean, but q06 / q13 / q03 thin dark-line share 2.96 / 0.91 / 1.70 -> 1.89 /
+// 0.55 / 0.63 %) and a per-pixel disc turn (interleaved gradient noise, u_sDither 1; 0.15 / 0.3 of a turn): without a
+// blur pass (none: phone budget) it draws dot grain along every contact edge and on the cap rails. kR scales the disc and
+// the range (QA L9, lighting low: 1.5 low in the PY / economy legroom, see mainFS)
 float ssaoF(vec3 P, vec3 Nf, float kR){
   float dep = dot(P - u_camPos, u_sFwd);
   vec2 ruv = u_sProj.xy * (0.5 * u_ssao.x * kR / max(dep, 0.05));
@@ -187,7 +190,7 @@ float ssaoF(vec3 P, vec3 Nf, float kR){
     vec2 nd = uv * 2.0 - 1.0;
     vec3 v = u_camPos + z * (u_sFwd + nd.x / u_sProj.x * u_sRight + nd.y / u_sProj.y * u_sUp) - P;
     float dl = length(v);
-    occ += clamp(((dot(v, Nf) - u_ssao.z) / max(dl, 1e-3) - u_sAng) / (1.0 - u_sAng), 0.0, 1.0) * (u_sPow < 0.0 ? 1.0 - smoothstep(-u_sPow * rng, rng, dl) : pow(1.0 - clamp(dl / rng, 0.0, 1.0), u_sPow));
+    occ += clamp(((dot(v, Nf) - u_ssao.z) / max(dl, 1e-3) - u_sAng) / (1.0 - u_sAng), 0.0, 1.0) * (1.0 - smoothstep(u_sIn * rng, rng, dl));
   }
   return occ * 0.125 * smoothstep(2.0, 4.0, px);
 }
@@ -519,9 +522,10 @@ void main(){
       amb = mix(amb, skyT * (dot(amb, vec3(0.2126, 0.7152, 0.0722)) * u_tubSky.y / lSky), u_tubSky.x * crownW);
     // night: the galley / lav / door zones (sz = 0) keep a dim neutral fill, the galley lights and lit bulkheads at the
     // end of the dark cabin [V: ucr_room-night-lighting far galley wall #645f57; sany_40 lit galley end] (lighting r1)
-    // QA L9 (light): in Blue (u_monHemi < 1) not on the THE Suite front wall (fWall, above): its warm fill greyed the wall's
-    // blue [V: ml_DSC_1946 bulkhead s0.46-0.70] [D fixL9]; the night fill stays (Night keeps u_monHemi 1)
-    amb += u_monFill * (1.0 - sz) * (1.0 - fWall * step(u_monHemi, 0.999)) * mix(0.45, 1.0, up) * (0.3 + 0.7*ao);
+    // QA L9 (light): in Blue (u_monHemi < 1) half of it on the THE Suite front wall (fWall, above): the full warm fill greyed
+    // the wall's blue (with the full hemi: #524a6a L79 s0.30), none read #25265c L42 (photo L69), half #3e3a63 L62 h246 s0.42
+    // [V: ml_DSC_1946 bulkhead #4f3d71 L69 s0.46] [D fixL9 tlow]; the Night fill stays (Night keeps u_monHemi 1)
+    amb += u_monFill * (1.0 - sz) * (1.0 - 0.5 * fWall * step(u_monHemi, 0.999)) * mix(0.45, 1.0, up) * (0.3 + 0.7*ao);
     // QA r4 (light): the recessed window tub from just above the bezel to the crown (0.10-0.66 m over the pane centre),
     // where the window light is dim (sunset, closed shades: 1 - shade x the day glow share; u_tubWash is 0 outside the
     // amber moods, 12_scene MOODS tub), keeps at least

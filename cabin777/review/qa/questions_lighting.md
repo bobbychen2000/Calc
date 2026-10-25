@@ -62,3 +62,14 @@
     Boarding now gives the upper part of each window tub the sky's blue-grey (y_47303: #a4a9be, B-R +25) instead of the
     cream reveal's neutral white. It follows the official photos' cool balance (question 6). If you prefer the warmer
     in-service look, `MOODS.boarding.tubSky` in `src/12_scene.js` set to `[0, 1]` turns it off.
+
+## Lighting run 2 (raters L9, 2026-10-25)
+
+12. **Amber (Dining) phase: how saturated at seat height?** (updates question 2) The two in-service photos of THE Room in
+    the amber phase disagree below the bins. Upgraded Points' cabin photo (ucr_the-room-cabin) shows the ash panels a
+    saturated amber (s 0.61-0.72), and the model matches it now (s 0.67). Frequent Flier's two photos
+    (ff_seat-with-door-closed, ff_door-gap) show them much greyer (s 0.03-0.50), and the integration rater asks for that
+    look (s 0.45-0.52). Neutralising the seat-level light that far (`MOODS.dining.lowTint` [1.0, 1.4, 2.2] x0.7) moves the
+    sunset view away from ucr (its bottom third s 0.57 -> 0.43, ucr 0.56), so it has not been changed. Which photo should
+    set the seat level? If you prefer the greyer look, the one-line change is `lowTint: [1.0, 1.4, 2.2], lowGain: 0.7` in
+    `MOODS.dining` (and `wake`) in `src/12_scene.js`.
