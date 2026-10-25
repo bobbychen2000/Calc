@@ -44,6 +44,14 @@ is gone. No change to the far LODs or the room meshes.
 
 | area | before (last rating) | round 1 (A / B) | round 2 (A / B) |
 |---|---|---|---|
-| room | w16 8.5 / 8.5 | w17 8.5 / 8.5 | w18 pending |
-| suite | w13 8.5 / 8.7 | w14 8.6 / 8.8 | w15 pending |
-| monuments | w18 8.5 / 8.6 | w19 8.6 / 8.6 | w20 pending |
+| room | w16 8.5 / 8.5 | w17 8.5 / 8.5 | w18 8.5 / 8.5 |
+| suite | w13 8.5 / 8.7 | w14 8.6 / 8.8 | w15 8.6 / 8.9 (w16 after round 3: pending) |
+| monuments | w18 8.5 / 8.6 | w19 8.6 / 8.6 | w20 8.6 / 8.7 |
+
+## Round 3 (suite only)
+
+w15a kept the duvet corner as a medium (partly fixed): the round-2 head-band slab stood 1-2 cm proud of the lofted duvet
+with a square window-head corner, and the flap / roll were near-coplanar (dashed fold line). Fix (f7c9416): one slab flush
+with the loft's rounded edge (top 0.515), rounded window-head corner, loft from 0.25 aft, flap / roll at 0.527 / 0.531.
+A lofted window-side head band (w15a's suggestion) was tried first and read as a separate pillow with a seam; dropped.
+Room and monuments did not change after round 2, so their w18 / w20 ratings stand.

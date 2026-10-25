@@ -410,3 +410,17 @@ The wave stops here.
 unchanged in w16-w18.
 
 Contact sheet: `monuments_before_after_w3d.jpg` (own renders, w16 against w18, same cameras).
+
+## Post-wave polish (polish A, 2026-10-25): integration hand-offs - bar held
+
+Closed `from_integration.md` "F front drapes cool light grey" (third request; log: `fixed_polishA.md`).
+
+| round | rater A | rater B | change |
+|---|---|---|---|
+| w19 | 8.6 | 8.6 | `curtainFF` #6d6b6b -> #544c46 (m02 drape L100 h229 -> L76 h30; omaat_f40 L64 h20) |
+| w20 | **8.6** | **8.7** | `curtainFF` #4f4c4a near-neutral (w19a: coffee, too saturated; w19b: lavender) |
+
+- The drapes now read dark neutral charcoal (m02 #4b4b4a L75, s0.02), matching omaat_f40 white-balanced to its wall.
+  The lavender asked for in w19b came from f_17313, which is an ANA rendering; per the brief, renderings lose to real
+  photos (omaat_f40, omaatF_2).
+- The w18 lows are unchanged. Triangles unchanged.

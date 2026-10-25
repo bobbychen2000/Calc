@@ -224,3 +224,21 @@ about equal to the old bevelled pillows. A endorsed the lens shape; B (who saw t
 
 **Sources added:** kn_8, kn_17, kn_20, kn_36, kn_41, omaat_room_13, omaat_room_15 re-downloaded to `ref/web/room/`
 (gitignored).
+
+## Post-wave polish (polish A, 2026-10-25): integration hand-offs - bar held
+
+Closed the `from_integration.md` items addressed to room (log: `fixed_polishA.md`).
+
+| round | rater A | rater B | rated head / changes |
+|---|---|---|---|
+| w17 | 8.5 | 8.5 | 7744d1c: shells / caps darker (jShell #434349, jCap #4b4b50, jShellIn #3e3e43); header band on the smooth satin layer |
+| w18 | **8.5** | **8.5** | 0b28c7c: jShell #4a4b51 / jCap #4b4c51 (w17b: shaded near faces overshot dark); band colour back to #656b73 |
+
+- **Shells:** q06 near faces L96 -> L79, caps L128 -> L105 (c_27312 L53-89 / L98); ash-to-shell 1.3-1.6 -> ~2. The
+  integrator's "neutral" (s <= 0.08) was **not** taken: the official c_27312 / 27314 / 27315 shells are cool slate
+  (h~220, s0.12-0.25), and official photos win for colour. Both raters agreed. The rim sheen lines survived (rim / face 1.26).
+- **Header band:** the leather layer's dimples read as hammered metal at seat-eye range; on the plastic layer the band's
+  local contrast is 0.034 (was 0.154, target <= 0.04).
+- **Still open (low):** q09 shaded wall ~0.7-0.9x c_27314 (raters: mostly AO / lighting); band / flap 0.82 vs 0.89-1.05
+  (optional jBand #6b717c); faint plastic stipple on the band; the w16 soft-goods lows; ash pinstripe contrast.
+- Shared edits: SEATMAT jShell / jCap / jShellIn (`09_seats.js`). Triangles unchanged.
