@@ -283,8 +283,22 @@ function econSeat(B, x0, lod, opts = {}) {
   }
   // belt: silver tongue one side, light-grey plastic buckle cover the other (y_47303); w5 A: the webbing drapes across the
   // pan from the side creases and the latch sits at mid-pan (y_47302 / 47301 / 47303) [V]
-  for (const s of [-1, 1]) {
-    B.add(s < 0 ? gRBox(0.05, 0.012, 0.035, 0.005, 1) : gRBox(0.05, 0.014, 0.04, 0.006, 1), M4.trs(x0 + 0.012 * s, s < 0 ? 0.468 : 0.465, s < 0 ? -0.16 : -0.17), s < 0 ? SEATMAT.buckle : { c: '#3a3f52', r: 0.4 });   // w39 (w38b-1): still two light blocks at the pillow foot -> under its edge, navy-grey cover;   // w37 (w37a-3): the V and two light blocks still on every q15 pan -> tucked under the pillow foot, darker cover   // w36 (w35a-3): the V and light buckles below every pillow (y_47300 shows none) -> nearer the crease, shorter, a grey cover   // w25 (w24b-5): the light covers dominated the pans head-on   // w41 (w40a-5): the silver tongue tip 1 cm out from under the pillow (light px 15-25 vs y_47300 32-40)
+  // w42 (w41a-3, medium): the side views show the belts laid across the pans (y_47301 / y_47303: teal tongue strap and navy
+  // buckle strap from the rear side creases to a latch at mid-pan; teal px 80 vs 3785 in q17), while the y_47300 hero
+  // row has them tucked -> the 3-seat side blocks drape, the centre block stays tucked [V]
+  if (opts.drape) {
+    const panY = (z) => 0.47 + (-0.28 - z) * 0.0875;   // pan top (loft top 0.055 above 0.415, 5 deg, front up)
+    for (const s of [-1, 1]) {
+      const x1 = x0 + 0.2 * s, z1 = -0.12, x2 = x0 + 0.03 * s, z2 = -0.33, yaw = Math.atan2(x2 - x1, z2 - z1), L = Math.hypot(x2 - x1, z2 - z1) / 3;
+      for (let k = 0; k < 3; k++) {
+        const t = (k + 0.5) / 3, z = z1 + (z2 - z1) * t;
+        B.add(gBox(0.042, 0.004, L + 0.004), M4.trs(x1 + (x2 - x1) * t, panY(z) + 0.004, z, yaw), s < 0 ? SEATMAT.yBelt : { ...SEATMAT.yBelt, c: '#262c48' });
+      }
+    }
+    B.add(gRBox(0.045, 0.008, 0.032, 0.004, 1), M4.trs(x0 - 0.022, panY(-0.335) + 0.006, -0.335), SEATMAT.buckle);   // silver tongue
+    B.add(gRBox(0.05, 0.013, 0.042, 0.006, 1), M4.trs(x0 + 0.016, panY(-0.335) + 0.008, -0.335), { c: '#8c9096', r: 0.4 });   // light-grey buckle cover (y_47303)
+  } else for (const s of [-1, 1]) {
+    B.add(s < 0 ? gRBox(0.05, 0.012, 0.035, 0.005, 1) : gRBox(0.05, 0.014, 0.04, 0.006, 1), M4.trs(x0 + 0.012 * s, s < 0 ? 0.468 : 0.465, s < 0 ? -0.165 : -0.17), s < 0 ? SEATMAT.buckle : { c: '#3a3f52', r: 0.4 });   // w39 (w38b-1): still two light blocks at the pillow foot -> under its edge, navy-grey cover;   // w37 (w37a-3): the V and two light blocks still on every q15 pan -> tucked under the pillow foot, darker cover   // w36 (w35a-3): the V and light buckles below every pillow (y_47300 shows none) -> nearer the crease, shorter, a grey cover   // w25 (w24b-5): the light covers dominated the pans head-on   // w41 (w40a-5): the silver tongue tip out from under the pillow (light px 15-25 vs y_47300 32-40; w42 (w41a-4): 0.5 cm back, it overshot on F / G)
     B.add(gBox(0.045, 0.004, 0.06), M4.trs(x0 + 0.035 * s, 0.474, -0.175, s * 15 * DEG), s < 0 ? SEATMAT.yBelt : { ...SEATMAT.yBelt, c: '#262c48' });   // w10 B: teal tongue strap, navy buckle strap (y_47303)   // w41 (w40a-5 / w40b-4): strap stubs still read as a V beside the buckle -> shorter, flatter, under the pillow foot
   }
   // w33: the pan-front stiffener (r2 light grey, w14 shadowed) is gone - the dark tray closes the pan base and a separate
@@ -303,7 +317,7 @@ function econUnit(n, lod = false, opts = {}) {
   const B = new Builder();
   const sp = ECON.sp;
   const xs = []; for (let k = 0; k < n; k++) xs.push((k - (n - 1) / 2) * sp);
-  xs.forEach((x, k) => econSeat(B, x, lod, { ...opts, fab: econFab(k, n, opts.rot), hk: k, panFab: econPan(k, n, opts.rot) }));
+  xs.forEach((x, k) => econSeat(B, x, lod, { ...opts, fab: econFab(k, n, opts.rot), hk: k, panFab: econPan(k, n, opts.rot), drape: n === 3 }));
   const arms = []; for (let k = 0; k <= n; k++) arms.push((k - n / 2) * sp);
   arms.forEach((xa, k) => {
     const armTilt = M4.mul(M4.trs(xa, 0.66, -0.08, 0, -4 * DEG), M4.trs(0, -0.66, 0.08));
