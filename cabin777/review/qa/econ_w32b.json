@@ -1,0 +1,211 @@
+{
+ "area": "econ",
+ "rater": "B",
+ "round": "w32",
+ "candidate": "cf457a8",
+ "lens": "Geometry and proportion first at the matched q15 (camera and boxes as w30/w31: render seat centres 235/390/545/700, photo 247/390/543/688), then materials, colour, lighting and artefacts. Scripts in /tmp/claude-0/-home-user-Calc/1061ce54-e372-5114-b4da-a519c8133fa5/scratchpad/raterB32: m30.py (patch stats R32 / R31 / y_47300), prof.py (cover extents), pil.py (pillow segmentation), t.py (tick-back fifths, pan-joint dark runs L<35 at rows 560-570, arm row 490 / col 305 profiles), diff.py (pixel change). Pixel change r31 -> r32: q15 4.9 % (mean -0.9 L, concentrated in rows 460+), q16 1.3 %, q17 2.6 %; studio e1 5.3 %, e4b 8.1 %, e7 8.9 %, e4 3.3 %, others <= 1.6 %. Lighting is identical to w31 at the econ cameras, so every change measured is econ. Crops: z_q15_3.png (r31 / r32 / photo), z_e1_front.png, z_e4b_pillow.png, z_e7_arm.png, z_e3.png (r32 left / r31 right), z_fill_e1.png (seam filler close-up), z_q16_econAisle.png (r32 top / r31 bottom).",
+ "score": 8.4,
+ "priorIssues": [
+  {
+   "issue": "w31b-1 (medium) headrest cover ~1.4x too tall head-on",
+   "status": "not fixed (by design, open question 21)",
+   "evidence": "prof.py q15: 70-71 x 81-82 px, H/W 0.85-0.88 vs y_47300 49-50 x 65-73, 0.67-0.75 (identical to w31)."
+  },
+  {
+   "issue": "w31b-2 (low) diamond pan stars invisible, ground too light",
+   "status": "mostly fixed",
+   "evidence": "q15 pan F L92.8 vs 81.6 (w31 102.5; target 86-92 just met), B/R 1.94 vs 1.83 (w31 1.73; now a touch blue), bright 0.017 vs 0.071 (w31 0.000), blobs 7.7 vs 12.2 / kpx (0.5), p90/p10 1.42 vs 1.73 (1.32). z_q15_3: the soft big stars now read on the pan at row distance, as in the photo; still about half the photo's contrast."
+  },
+  {
+   "issue": "w31b-3 (low) tick strokes grey, weave washed",
+   "status": "not fixed (change does not register at q15)",
+   "evidence": "back D darkest fifth 39,51,105 L66 (w31 L68) vs photo L50; strokes 131,150,185 B/R 1.41 (1.40) vs 1.53; p90/p10 2.29 (2.22) vs 2.90, bright 0.117 (0.110) vs 0.136. Back F 2.34 vs 2.99. Pans D/E p90/p10 2.55 / 2.50 (2.42 / 2.41) vs 3.97 / 3.73. Close up (e4b) the strokes are slightly bluer and the channels a little deeper; at q15 the mip average swallows it."
+  },
+  {
+   "issue": "w31b-4 (low) centre pillows plaques, no weave",
+   "status": "mostly fixed (shape); weave not fixed",
+   "evidence": "z_q15_3 / z_e4b: all four pillows now pinch to pointed dog-ears. pil.py fill D/E/F/G 0.69 / 0.72 / 0.91 / 0.66 vs 0.53-0.70 (w31 0.62 / 0.87 / 0.95 / 0.66); F still segments as a full block (its top corners merge with the dark back behind). p90/50 1.10-1.15 vs 1.25-1.62 (unchanged; no surface texture or crease)."
+  },
+  {
+   "issue": "w31b-5 (low) arm lower plate light second bar; arm long",
+   "status": "fixed (plate); length partly",
+   "evidence": "q15 row 490 across D|E arm: plate L101-121 vs pad 207 (0.58x; w31 167-170, 0.82x); col 305 rows 488-500 L120 vs 170. One light bar head-on now, as in y_47300. e3: arm nose ~10 px (2 cm) shorter. Arm still ends ~row 480 head-on vs ~445 in the photo (the shortening is in depth, not visible head-on)."
+  },
+  {
+   "issue": "w31b-6 (low) pan joints 4-9 px dark",
+   "status": "partly fixed; new artefact (see w32b-1)",
+   "evidence": "dark runs L<35 rows 560/565/570, joints D|E, E|F, F|G: 6-4 / 2-1 / 6-5 px vs 1-2 / 2 / 0 (w31 6-4 / 4-9 / 5-4). Centre joint fixed, outer two unchanged. The filler that closes it is a raised navy rail in close-ups."
+  },
+  {
+   "issue": "w31b-7 (low) fleck back cloud; light pad flat",
+   "status": "not fixed (pad slightly darker)",
+   "evidence": "fleck backs E / G low-pass CV 0.041 / 0.043 vs 0.034 / 0.029 (unchanged). Light pad D L144 vs 128 (w31 150), B/R 1.65 vs 1.76, p90/p10 1.34 vs 1.78 (1.30), bright 0 vs 0.062."
+  },
+  {
+   "issue": "w31b-8 (medium, lighting) seat-level light up 5-23 %",
+   "status": "not fixed (lighting unchanged at econ cameras)",
+   "evidence": "pillows L60-65 vs 41-53, outer covers 68 vs 41-69, arm pad 207 vs ~170-180."
+  },
+  {
+   "issue": "w31b-9 (medium, lighting) covers off-axis, far rows snowy, q16 smear",
+   "status": "not fixed (unchanged)",
+   "evidence": "q16 1.3 % pixel change; far rows and near-left pad smear identical (z_q16_econAisle.png)."
+  },
+  {
+   "issue": "w31b-10 (low) carried small parts",
+   "status": "not fixed",
+   "evidence": "e2 / e5 / e6 / e8 / e9 0.1-0.4 % pixel change; belts still laid across the pans."
+  }
+ ],
+ "details": [
+  {
+   "detail": "Fabric: tick weave",
+   "score": 8.4,
+   "refs": "q15 unchanged within 2 L: darkest fifth L66 vs 50, strokes B/R 1.41 vs 1.53, p90/p10 2.29 vs 2.90; close-up a little bluer"
+  },
+  {
+   "detail": "Fabric: diamond lattice",
+   "score": 8.3,
+   "refs": "pan F L92.8 vs 81.6, stars visible again (bright 0.017 vs 0.071, p90/p10 1.42 vs 1.73), B/R 1.94 vs 1.83"
+  },
+  {
+   "detail": "Fabric: petal fleck",
+   "score": 8.3,
+   "refs": "unchanged; low-pass CV 0.041-0.043 vs 0.029-0.034"
+  },
+  {
+   "detail": "Fabric: dash mosaic",
+   "score": 8.4,
+   "refs": "unchanged; B/R 1.69 vs 1.72, p90/p10 2.11 vs 2.59"
+  },
+  {
+   "detail": "Fabric mix (backs, pans, pads)",
+   "score": 8.5,
+   "refs": "light pad L144 vs 128 (150), flat p90/p10 1.34 vs 1.78"
+  },
+  {
+   "detail": "Headrest pad + cover",
+   "score": 7.8,
+   "refs": "cover H/W 0.86 vs 0.71 (question 21); colour is lighting"
+  },
+  {
+   "detail": "Pillow",
+   "score": 8.5,
+   "refs": "pointed dog-ears on all four (fill 0.66-0.72 for three, F 0.91 by segmentation); no weave (p90/50 1.12 vs 1.25-1.6)"
+  },
+  {
+   "detail": "Armrests",
+   "score": 8.6,
+   "refs": "lower plate 0.58x pad (L~120 vs 207), one light bar head-on as the photo; nose 2 cm shorter; head-on length still ~35 px low"
+  },
+  {
+   "detail": "Belts",
+   "score": 8.2,
+   "refs": "unchanged; laid across the pans"
+  },
+  {
+   "detail": "Seat pan / front",
+   "score": 8.1,
+   "refs": "centre joint 1-2 px (fixed), outer 4-6 px vs 0-2; navy seam filler stands proud as a rail in close-ups (w32b-1)"
+  },
+  {
+   "detail": "Back silhouette",
+   "score": 8.1,
+   "refs": "unchanged"
+  },
+  {
+   "detail": "Rear shell / hood / back top",
+   "score": 8.1,
+   "refs": "unchanged (q17 2.6 % change, pillows/pans only)"
+  },
+  {
+   "detail": "Screen / handset",
+   "score": 8.2,
+   "refs": "unchanged"
+  },
+  {
+   "detail": "Tray / pocket / AC",
+   "score": 7.8,
+   "refs": "unchanged"
+  },
+  {
+   "detail": "Legs / footrest / under-seat",
+   "score": 7.7,
+   "refs": "unchanged (e8)"
+  },
+  {
+   "detail": "Far-LOD rows",
+   "score": 7.6,
+   "refs": "unchanged (lighting)"
+  }
+ ],
+ "issues": [
+  {
+   "id": "w32b-1",
+   "severity": "medium",
+   "owner": "econ",
+   "title": "Navy seam filler reads as a raised rail lying on the pan joint (close-up artefact)",
+   "detail": "Seat pan / front",
+   "evidence": "e1 / e7 (z_fill_e1.png): at each inner joint a ~3 cm wide navy rounded bar runs the full pan depth from under the arm to the front edge, standing above the cushion crowns with a rounded, lit end cap at the pan front corner; it reads as an added bolster, not a shadowed slot. y_47300 / ref/web/econ show only a narrow dark crease between the cushions. At q15 it is acceptable (it shows as a dark band below the arm), but in seat view and the studio it is the most visible new object.",
+   "fix": "09a_econ.js: sink the filler top 1.5-2 cm below the cushion crown (it should only be seen down inside the slot), narrow it to the slot width, stop it ~2 cm short of the pan front face and drop the end cap; use the darker seat-shadow navy (no specular) so it reads as a gap, not a part."
+  },
+  {
+   "id": "w32b-2",
+   "severity": "low",
+   "owner": "econ",
+   "title": "Tick deepening does not register at row distance",
+   "detail": "Fabric: tick weave",
+   "evidence": "q15 back D darkest fifth L66 (w31 68) vs 50, strokes B/R 1.41 vs 1.53, p90/p10 2.29 vs 2.90; pans 2.5 vs 3.7-4.0. The tile change is visible close up (e4b) only, so the lower mips flatten it.",
+   "fix": "Build the contrast into the lower mips as well (or apply the band boost after the mip chain / a sharper mip bias on layer 16 at econ); target q15 back p90/p10 >= 2.6, darkest fifth <= 58."
+  },
+  {
+   "id": "w32b-3",
+   "severity": "low",
+   "owner": "econ",
+   "title": "Diamond pan stars still half the photo's contrast; ground a touch blue",
+   "detail": "Fabric: diamond lattice",
+   "evidence": "pan F bright 0.017 vs 0.071, p90/p10 1.42 vs 1.73, B/R 1.94 vs 1.83, L92.8 vs 81.6.",
+   "fix": "Pan base slightly less blue and darker (#40475f-ish), star gain on layer 34 ~1.2x more; target bright 0.05-0.08, p90/p10 1.6-1.75, B/R 1.8-1.85."
+  },
+  {
+   "id": "w32b-4",
+   "severity": "medium",
+   "owner": "econ",
+   "title": "Headrest cover ~1.4x too tall head-on (carried; open question 21)",
+   "detail": "Headrest pad + cover",
+   "evidence": "70-71 x 81-82 px, H/W 0.85-0.88 vs 49-50 x 65-73, 0.67-0.75.",
+   "fix": "Pending question 21; target q15 cover 54-58 px tall."
+  },
+  {
+   "id": "w32b-5",
+   "severity": "low",
+   "owner": "econ",
+   "title": "Outer pan joints still 4-6 px dark; pillow has no weave; light pad flat",
+   "detail": "Pillow",
+   "evidence": "joints D|E / F|G 4-6 px vs 0-2; pillow p90/50 1.10-1.15 vs 1.25-1.62; pad D p90/p10 1.34 vs 1.78.",
+   "fix": "Apply the centre-joint treatment (minus the proud rail) to the outer joints; low-gain twill/fleck layer on the pillow; more star gain on the light pad."
+  },
+  {
+   "id": "w32b-6",
+   "severity": "medium",
+   "owner": "lighting",
+   "title": "Seat-level exposure and off-axis/far-row issues carried (not scored for econ)",
+   "detail": "Far-LOD rows",
+   "evidence": "As w31b-8 / w31b-9: pillows L60-65 vs 41-53, outer covers 68 vs 41; q16 far rows 16-20 bright blobs / kpx vs 4.5-8, near-left pad smear.",
+   "fix": "As w31b-8 / w31b-9."
+  },
+  {
+   "id": "w32b-7",
+   "severity": "low",
+   "owner": "econ",
+   "title": "Carried small parts: cover foot crease, pocket, legs, bezel dots, belts laid on the pans",
+   "detail": "Belts",
+   "evidence": "e2 / e5 / e8 / e9 unchanged.",
+   "fix": "As w29b-10."
+  }
+ ],
+ "questionsForUser": [
+  "Headrest cover height (open question 21): y_47300 H/W 0.71 vs render 0.86; should the matched q15 view decide?"
+ ],
+ "extraRefsSearched": "None new; ref/web/econ/ b_ss_10..19 reused."
+}
