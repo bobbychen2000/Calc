@@ -454,3 +454,44 @@ pad + cover 7.9 / 7.8 -> 8.4 / 8.7; armrests 7.8 / 8.6 -> 8.3 / 8.8; far rows 7.
 
 Before/after sheet: `econ_before_after_w3g.jpg` (own renders only: w33 2d42289 vs w36 eb4c09f; q15, q16, q17, e10, e11,
 e1, e4).
+
+## Wave 3h (2026-10-25): confirm and polish
+
+Started on 8b965a4 (wave 3g final plus a lighting snapshot). One fresh calibrated round (w37), then two fix rounds
+(w38-w39), the cap of three. The 8.5 bar was not reached; no high-severity issue in any round.
+
+| round | rater A | rater B | mean | note |
+|---|---|---|---|---|
+| w37 (8b965a4, baseline) | 8.2 | 8.4 | 8.3 | = w36; tick contrast up from lighting 8b965a4, pouch grey (28ea1d8) |
+| w38 (6a120ff, + lighting 9624e60) | 8.3 | 8.4 | 8.35 | pans less blue, belts under the pillow, pillow darker, far LOD keeps the photo tiles |
+| w39 (a4ad504) | 8.3 | 8.4 | 8.35 | pouch face up-forward, belt hardware under the pillow edge, pillow #363d57, fleck -10 % |
+| final (this commit) | - | - | - | w39 with the fleck darkening halved (w39a-3: it hit backs E / G, L49-50 vs 54-60) |
+
+B gives 8.5 or more to tick (8.5), diamond (8.5), mosaic (8.5), fabric mix (8.5), headrest pad + cover (8.7), armrests
+(8.8), pan / front (8.7); A to mosaic (8.5), fabric mix (8.6), pan / front (8.5). Lowest: far rows (A 7.5 / B 7.9),
+tray / pocket (7.9 / 7.8), back silhouette and rear shell (8.0 / 8.1).
+
+### What changed in wave 3h
+- **Pans:** ECON_PAN #4b537a -> #4d5472, ECON_PAN_C #444c72 -> #474e69 (B/R 1.99-2.06 -> 1.84-1.88 vs 1.74-1.82). The
+  ~10 L darkening of the near pans in w38 came from lighting 9624e60 (w38b-6) and is not compensated here.
+- **Belts:** hardware tucked under the pillow edge (y 0.465, z -0.17, x +-0.012), navy-grey buckle cover #3a3f52, straps
+  0.10 (were 0.19 at 30 deg). B: light pixels at the pillow foot 1012 vs photo 882 (w37 ~1600).
+- **Pillow:** SEATMAT.yPillow #3a4159 -> #363d57 (L48 vs 46-62).
+- **Life-vest pouch:** it now swings down-forward with its face up-forward (the w38 50 deg version was edge-on and
+  back-face culled from the high front views), 35 deg, lighter shell #767983 / core #5e6068, strap and tag on its face.
+- **Far LOD:** `econFarMat` keeps each fabric's photo tile on a base x0.92 (the flat mean colours of w36 read as plain
+  royal-blue blocks). A nearer econ LOD switch (nearK 0.45, ~4.3 m) was tried and reverted: the rows became flat blocks.
+- **Fleck:** SEATMAT.yFabricD #444d6b -> #424b68 (final; w39 #3e4662 overshot on the fleck backs).
+
+### Still open (w39a / w39b)
+- **Far rows (medium A / low B, seven rounds):** seat pixels only, L88 vs 84, p90/p10 2.57 vs 3.72, L<50 4 % vs 13 %. Part
+  of the old far-box gap was framing (our end wall above y~165 where y_47300 still shows seats). The remaining lack of
+  dark row gaps is the AO / exposure question in `from_econ.md`; both raters suggest a 1 cm dark strip under the far
+  head box as an econ-side try.
+- **Cover off-axis (medium A):** q17 L60 B/R 2.40 vs y_47303 L153 / 1.47; needs the grazing sheen (lighting).
+- **Tick back F (low A):** L90 vs 70 (A had mislabelled it as fleck through w38).
+- **Low, carried:** belt strap stubs either side of the buckle (A wants the silver tongue visible again), pillow a flat
+  plaque, pouch opaque, aisle-end member not one J bracket, black tray lip under the pan front.
+
+Before/after sheet: `econ_before_after_w3h.jpg` (own renders only: w37 8b965a4 vs w39 a4ad504; q15, q16, q17, e10, e7,
+e1).

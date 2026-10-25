@@ -102,3 +102,11 @@
   (`econFarMat`, eb4c09f). Either fade the photo-layer albedo contrast with distance (~4-8 m), or give econ groups a nearer
   switch (`nearK` ~0.5, ~5 m). Integration's call; econ's far geometry is ready for either.
 - **Cover off-axis:** q17 covers #313e73 vs y_47303 #808fb2 (rater A w36a-2); the SHEEN lobe could be stronger at grazing.
+
+## w37-w39 (wave 3h) to lighting / integration
+- **Near pans ~10 L dark after 9624e60 (w38b-6):** the lattice pan's material did not change between w37 and w38, yet
+  q15 went L79 -> 68; near pans now L64-69 vs y_47300 74-87. Econ has not compensated.
+- **Far rows:** with seat pixels only (the end wall excluded) the colour is close (L88-95 vs 84-97, B/R 1.71 vs 1.71);
+  what is left is contrast and dark row gaps (p90/p10 2.57 vs 3.72, L<50 4 % vs 13 %). A nearer econ LOD switch
+  (nearK 0.45) was tried in w38 and reverted: it doesn't help and turns the rows into flat blocks.
+- **Cover grazing sheen:** q17 cover L60 B/R 2.40 vs y_47303 L153 / 1.47 (rater A, every round).

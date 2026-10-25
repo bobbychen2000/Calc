@@ -54,3 +54,5 @@
 24. (wave 3g, w35) Re questions 21 / 23: decided on the evidence. The real head-on sans 13 near seat and y_47300 both show
    the cover ending level with the pad foot at h/w ~0.7 (ours 0.85-0.88), so its foot is now 3 cm higher. y_47306's longer
    hang is a lowered headrest. [shortened]
+25. (wave 3h, both raters) Belts: tucked away under the pillow as in the y_47300 hero shot, or laid across the pans as in
+   y_47302 / y_47303 and the trip reports? [tucked under the pillow edge, only the buckle shows]
