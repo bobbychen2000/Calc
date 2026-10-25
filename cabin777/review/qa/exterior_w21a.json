@@ -1,0 +1,86 @@
+{
+ "area": "exterior",
+ "rater": "A skeptic",
+ "build": "w21 = aa173a1",
+ "score": 8.4,
+ "details": {
+  "wing planform / raked tip / bending": 7.6,
+  "wing surface detail (seams, fastener rows, panel tone, gear stripe, slat band, placards, grime)": 8.4,
+  "control surfaces & gaps (slats, spoilers, flaperon, aileron)": 7.8,
+  "canoes (flap-track fairings)": 8.4,
+  "pylon": 8.3,
+  "nacelle shape (cowl, lip, splits, strake, access panel)": 8.1,
+  "nacelle colour / materials (incl. GE logo)": 8.0,
+  "inlet / fan / spinner": 8.0,
+  "livery / registration JA795A": 8.0,
+  "lights & static dischargers": 7.5,
+  "artefacts": 7.9
+ },
+ "previous": [
+  {
+   "issue": "w20a medium: raked tip ends in a blunt 0.55 m square tip with a straight TE",
+   "status": "fixed in geometry, not visible from the cabin",
+   "measure": "Plan-view studio render (ratA21/cmp_tip_plan.png, old build b vs b21): tip chord 73 -> 47 px at x 118, 98 -> 77 px at x 140, unchanged inboard of x 250; TE now curves forward. But w19A silhouette is identical row by row (left edge rows 123-191 and top edge x 505-595 match r20 to 1 px; top edge still flat at rows 121-122 over x 515-550). The 19A / 17A views look along the chord, so the chord change is foreshortened away. What still reads blunt in 19A is the outboard LE lying flat in the image, where KN41's LE rises into the point."
+  },
+  {
+   "issue": "w20a low: pylon flank flat plateau with a straight lower edge, no saddle",
+   "status": "partly fixed; flank re-measured against _137 and largely dropped",
+   "measure": "Dome front rounder: c_nacelle_left top silhouette x 465/480/495 = 25/31/72 (r20 22/26/57); crest 24 px flat over x 405-450 (r20 22 over 405-465). The saddle slope behind the crown is unchanged (x 405 -> 285: 24 -> 50). Flank w13A x 520 rows 262-284 is 168-171 (r20 166-171), and the step to the cowl at x 640 is 169 -> 203 (+34, r20 +31), so the shade change did not show. However, _137 x 350 (ref137_pyl.png) is also a near-flat flank, 92 -> 83 down the face, with a step to the cowl of 83 -> 103 (x1.24). Ours is x1.20, so the plateau and step match the photo. What's left is the dark crease at the foot (74 = 0.89 of the flank in _137), which ours lacks."
+  },
+  {
+   "issue": "w20a low: smudge head-to-body jump",
+   "status": "fixed",
+   "measure": "w19A x 492-498 rows 465-467: head 124 (0.76), body 133-139 (0.83), tail 146-154 (0.92) on 163. r20 was 106 / 147 (0.65 / 0.90). Now three graded steps, and it reads as a streak, not tape."
+  },
+  {
+   "issue": "w20a low: fastener dots faint",
+   "status": "partly fixed",
+   "measure": "w19A row 500/520 x 657-666: dots 149-157 on 168 (0.89-0.93); r20 158-165 (0.94-0.98). Now just separable at 1x. KN41 is 0.80."
+  }
+ ],
+ "issues": [
+  {
+   "severity": "low",
+   "detail": "raked tip still reads blunt from 19A: the outboard LE lies flat in the image",
+   "problem": "The new tip chord cannot be seen from the windows. In 19A the last ~1 m of LE runs level (rows 121-122 over x 515-550) into a corner, while KN41's LE sweeps up into a narrow point. Most likely too little upsweep or rake in elevation at the tip, not chord.",
+   "evidence": "/tmp/claude-0/-home-user-Calc/ed101a30-6aca-5998-ba16-b78251e273cb/scratchpad/ratA21/tip19_cmp.png vs /tmp/claude-0/-home-user-Calc/ed101a30-6aca-5998-ba16-b78251e273cb/scratchpad/ratA20/tip_cmp.png (KN41 half); w19A top-edge measurements above.",
+   "fix": "src/11_exterior.js l.26 crest: add + 0.12 * Math.pow(smooth(31.1, 32.4, s), 2) so the raked tip curls up ~0.12 m. Check the result against KN41 in 19A and don't exceed it. If no change can be measured in 19A, leave it and ask for a 17-20A photo."
+  },
+  {
+   "severity": "low",
+   "detail": "new raked TE is a 3-segment polyline with visible kinks",
+   "problem": "In plan or close studio views the TE breaks at s 31.6 and 32.0 (slope 0.70 -> 0.60 -> 0.50). It can't be seen from the cabin.",
+   "evidence": "/tmp/claude-0/-home-user-Calc/ed101a30-6aca-5998-ba16-b78251e273cb/scratchpad/ratA21/new/tip_plan.png",
+   "fix": "l.20 WING.te: add points [31.3, 48.20], [31.8, 48.52], [32.2, 48.75] between the existing ones."
+  },
+  {
+   "severity": "low",
+   "detail": "no dark crease at the pylon foot",
+   "problem": "_137 shows a thin dark line where the pylon flank meets the fan cowl (0.89 of the flank). Ours goes straight from 169 to 203.",
+   "evidence": "/tmp/claude-0/-home-user-Calc/ed101a30-6aca-5998-ba16-b78251e273cb/scratchpad/ratA21/w13A_cmp.png vs /tmp/claude-0/-home-user-Calc/ed101a30-6aca-5998-ba16-b78251e273cb/scratchpad/ratA21/ref137_pyl.png",
+   "fix": "Run a wingLine-style hairline (#9a9ea2, 0.02 m) along the pylon/cowl intersection, or darken shadeVerts by 0.1 * (1 - smooth(0, 0.03, dr))."
+  },
+  {
+   "severity": "low",
+   "detail": "fastener dots still lighter than KN41 (carried)",
+   "problem": "0.89-0.93 vs 0.80.",
+   "evidence": "w19A rows 500-520 x 657-666.",
+   "fix": "rivet strip c '#585a5d' -> '#4e5053' (l.340)."
+  }
+ ],
+ "worthPlus03": [],
+ "questionsForUser": [
+  "A photo looking straight out at the raked tip from rows 17-20 A (port side) would settle the tip upsweep."
+ ],
+ "photos": [
+  "ref/web/exterior/a5_kn_ANA77W_TheRoom_41.jpg",
+  "ref/web/exterior/b_lalf_ANA77W_11A_137.jpg",
+  "/tmp/claude-0/-home-user-Calc/ed101a30-6aca-5998-ba16-b78251e273cb/scratchpad/ratA21/cmp_tip_plan.png",
+  "/tmp/claude-0/-home-user-Calc/ed101a30-6aca-5998-ba16-b78251e273cb/scratchpad/ratA21/cmp_tip_aft.png",
+  "/tmp/claude-0/-home-user-Calc/ed101a30-6aca-5998-ba16-b78251e273cb/scratchpad/ratA21/tip19_cmp.png",
+  "/tmp/claude-0/-home-user-Calc/ed101a30-6aca-5998-ba16-b78251e273cb/scratchpad/ratA21/w13A_cmp.png",
+  "/tmp/claude-0/-home-user-Calc/ed101a30-6aca-5998-ba16-b78251e273cb/scratchpad/ratA21/ref137_pyl.png",
+  "/tmp/claude-0/-home-user-Calc/ed101a30-6aca-5998-ba16-b78251e273cb/scratchpad/ratA21/cmp_pyl_side.png"
+ ],
+ "notes": "Regression check against r20: wing-only differences are confined to the smudges, the fastener strips and the tip. The big diffs in w26K / w30K / w11K / s13A come from the cloud deck and sky, from the lighting snapshot d42f83c, not from the exterior; the nacelle, livery and canoes are unchanged by eye and by measurement. Static dischargers still sit on the new raked TE (plan view). Planform gets +0.1 only, because the fix is real but can't be seen in the seat views. Surface detail gets +0.2 for the smudge grading and the fasteners. Pylon gets +0.2 for the rounder dome and for the flank now matching _137. No new medium or high issues. Lighting (not scored): the sunset and day cowl tones are consistent with r20."
+}

@@ -17,13 +17,13 @@ const WING = {
   // leading / trailing edge [spanwise from CL, nose station]; LE sweep 34.2 deg to the rake, TE straight to the
   // yehudi kink at ~9-12 m then ~20 deg; raked tip from 31.1 m [D, ACAP 9.9.1]
   le: [[3.10, 26.89], [31.10, 45.93], [31.40, 46.42], [31.80, 47.22], [32.10, 47.90], [32.40, 48.50]],
-  te: [[3.10, 39.96], [8.60, 39.96], [10.0, 40.17], [11.0, 40.36], [12.0, 40.69], [20.0, 43.40], [29.5, 47.05], [31.0, 47.98], [31.6, 48.40], [32.0, 48.64], [32.40, 48.84]],
-  // w21: the raked TE curves forward into a narrow ~0.34 m tip (KN41 / _7331; the straight TE to 49.05 ended in a square 0.55 m tip, A w20) [V shape, A chord]
+  te: [[3.10, 39.96], [8.60, 39.96], [10.0, 40.17], [11.0, 40.36], [12.0, 40.69], [20.0, 43.40], [29.5, 47.05], [31.0, 47.98], [31.3, 48.17], [31.6, 48.36], [31.8, 48.47], [32.0, 48.57], [32.2, 48.65], [32.40, 48.70]],
+  // w21: the raked TE curves forward into a narrow ~0.34 m tip (KN41 / _7331; the straight TE to 49.05 ended in a square 0.55 m tip, A w20) [V shape, A chord]; w22: 6 points, no kinks, ~0.20 m tip (A / B w21)
   // upper-surface crest above the floor: ACAP front view, 5.2 deg on the ground [D], plus 1g cruise bending that lifts the
   // tip ~1.5 m (quadratic outboard of the root; the leading edge curves up to the tip in F-GSQR_1/_2 window views [V
   // shape], magnitude [A] tuned on a 17A render vs F-GSQR_2). Inboard of the nacelle it adds < 0.06 m, so the engine
   // and pylon keep the ground-static height.
-  crest: (s) => -0.02 + (s - 4) * 0.0915 + 1.5 * Math.pow(Math.max(0, s - 4) / 28.4, 2),
+  crest: (s) => -0.02 + (s - 4) * 0.0915 + 1.5 * Math.pow(Math.max(0, s - 4) / 28.4, 2) + 0.12 * Math.pow(smooth(31.1, 32.4, s), 2),   // w22: the raked tip sweeps up into its point (KN41; flat outer LE in 19A, A w21) [A]
   th: [0.155, 0.115],              // NACA thickness param root -> tip (x0.81 with the flattened lower side): ~12.6 -> 9.3 % [A]
   eng: { s: 9.61, y: -2.19, x0: 25.76 },   // nacelle axis off CL [V], axis height [D ACAP side view], inlet highlight [V]
   slats: [11.7, 13.6, 16.6, 19.6, 22.6, 25.4, 28.1, 31.0],   // 7 outboard slats (ACAP break ticks) + 1 inboard 3.3-8.2 [D]
@@ -337,7 +337,7 @@ function buildExterior(gl) {
     // whose sunlit panels show dotted rows along every spoiler / flap edge and either side of each spoiler break). 50 mm
     // strips on the x_rivet dot layer (25 mm pitch, triplanar from above), a shade under the near paint so the mips fade
     // them to a faint line at range [V KN41 / _7250 rows, A positions]
-    { const rv = { c: '#585a5d', r: 0.75, m: 0.05, l: LAYER.xRivet }, rw = 0.028, vR = B.vcount;   // w18: 0.05 m / #66686b read as pale two-column zippers 5-12 L over the panel (A / B w17)   // w21: strip a shade darker (dots 0.94 of the panel vs KN41 0.80; the tile itself is mean-1 so it fades with the mips, A w20)
+    { const rv = { c: '#4e5053', r: 0.75, m: 0.05, l: LAYER.xRivet }, rw = 0.028, vR = B.vcount;   // w18: 0.05 m / #66686b read as pale two-column zippers 5-12 L over the panel (A / B w17)   // w22: #585a5d -> #4e5053 (0.89-0.93 vs KN41 0.80, A w21)   // w21: strip a shade darker (dots 0.94 of the panel vs KN41 0.80; the tile itself is mean-1 so it fades with the mips, A w20)
       wingLine(B, side, spanPath(4.5, 8.6, () => 37.82 + 0.06, 3), rv, rw);
       wingLine(B, side, spanPath(3.2, 9.7, () => 38.82 + 0.10, 4), rv, rw);
       wingLine(B, side, spanPath(3.2, 9.7, (q) => lerp(38.82, te(q), 0.5), 4), rv, rw);
@@ -531,7 +531,7 @@ function buildExterior(gl) {
     // to L89-103 (LALF _136 L133-148). Sunset / night light the other side or barely at all [V targets, D factor]
     shadeVerts(B, vN, vP, (p, n) => (0.55 + 0.45 * Math.pow((n[1] + 1) / 2, 1.6)) * (1 - 0.3 * smooth(0.05, 0.75, V3.dot(n, LD))));
     shadeVerts(B, vP, B.vcount, (p, n) => { const lx = Math.min(4.4, p[2] - WING.dz - E.x0), dr = Math.hypot(p[0] - E.s * Math.sign(p[0]), p[1] - E.y) - cowlR(Math.max(0, lx));
-      return Math.min(1, 1 - (0.25 * Math.max(0, -n[1]) + 0.10 * smooth(0.5, 0.95, Math.abs(n[0])) * smooth(0.04, 0.45, dr)) * smooth(0.0, 0.35, dr) + 0.06 * (1 - smooth(0.0, 0.15, dr))); });   // w21: flank graded from the foot up, not a flat band (A w20)   // final: foot lifted toward the cowl (+15-28 L step, A / B w19)   // w19: the foot takes the cowl value (flank band met the cowl with a +40 L step, A w18)   // w12: flank shade so the ridge reads (LALF _137, A w12)
+      return Math.min(1, 1 - (0.25 * Math.max(0, -n[1]) + 0.10 * smooth(0.5, 0.95, Math.abs(n[0])) * smooth(0.04, 0.45, dr)) * smooth(0.0, 0.35, dr) + 0.06 * (1 - smooth(0.0, 0.15, dr)) - 0.10 * (1 - smooth(0.0, 0.03, dr))); });   // w22: a dark crease at the foot (_137 0.89 of the flank, A w21)   // w21: flank graded from the foot up, not a flat band (A w20)   // final: foot lifted toward the cowl (+15-28 L step, A / B w19)   // w19: the foot takes the cowl value (flank band met the cowl with a +40 L step, A w18)   // w12: flank shade so the ridge reads (LALF _137, A w12)
     const foot = [...WING.canoes.map(([cs]) => cs), E.s];
     shadeVerts(B, v0, vW, (p, n) => {
       if (n[1] > -0.3) return 1;
