@@ -1,0 +1,67 @@
+{
+ "area": "suite",
+ "rater": "B",
+ "round": "w16",
+ "score": 8.9,
+ "method": "Head after f7c9416 (polishA r3) rebuilt on the latest head. BEFORE r3, AFTER r5 (930x575) and the DPR 2 crops q04z_old / q04z_new2; pixel diffs (q04 6004 px > 8, all at the bed; q02 / q03 / q05 only in the ceiling) and PIL luma profiles across the seam and fold. Own studio renders from b7/test.html (/tmp/claude-0/-home-user-Calc/33316a4e-1209-5df1-8086-36d8df9d3f92/scratchpad/w3/c1_bed_doors, c2_graze, c3_band_top). References: omaat_f57, f59, f11, f_17304. Lighting noted, not scored.",
+ "calibration": [
+  {
+   "earlier_issue": "w15a MEDIUM (w15b low): head band square-edged and proud of the loft, z-fight dashes on the fold",
+   "status": "fixed. The band is flush (seam luma 204-207 at q04z_new2 y 70, no step line), the window-head corner is rounded, and the fold diagonal has no dashes at DPR 2 (old: a dotted line along the roll; new: a clean flap / roll / duvet sequence 189 -> 245 -> 214). Residues: a small notch at the window end of the seam and the loft's bullnose at the aisle edge beside the roll end (low)."
+  },
+  {
+   "earlier_issue": "w14a/b MEDIUM: wood flanks chestnut",
+   "status": "still fixed (c1)."
+  },
+  {
+   "earlier_issue": "w14b / w15b LOW: aisle drape a separate rail",
+   "status": "not fixed (c3_band_top x 580-610: a white rail standing beside the loft edge)."
+  }
+ ],
+ "changes": [
+  {
+   "change": "head band flush with the loft, rounded window-head corner, loft from 0.25 aft, flap / roll 0.527 / 0.531",
+   "verdict": "helped",
+   "numbers": "q04 changed 1.1 % of pixels (bed only). Seam step gone, no z-fighting; c1 (bed + doors closed) clean."
+  },
+  {
+   "change": "ceiling / carpet worker's changes",
+   "verdict": "neutral for the suite",
+   "numbers": "diffs confined to the ceiling band (q02 y < 13, q05 y 59-74, q03 above the screen)."
+  }
+ ],
+ "details": [
+  { "detail": "Screen wall: 43-in screen, wing, pier with mirror and lamp", "score": 8.7, "refs": "q03 / q05, unchanged" },
+  { "detail": "Centre pair: board, edge strips, divider", "score": 8.6, "refs": "q02, unchanged" },
+  { "detail": "Shell / cap two-tone", "score": 8.6, "refs": "unchanged" },
+  { "detail": "Aisle leaves", "score": 8.5, "refs": "unchanged; far-leaf moire in q02" },
+  { "detail": "Wood flanks", "score": 8.5, "refs": "c1, espresso; short grain" },
+  { "detail": "Plinth, doors open and closed", "score": 8.8, "refs": "c1 clean" },
+  { "detail": "Window console", "score": 8.2, "refs": "unchanged" },
+  { "detail": "Bed: pad, duvet, turned-down corner, drape", "score": 8.6, "refs": "q04 r5, c2, c3 vs omaat_f57 / f59: one continuous duvet with a cut corner; flat flap, drape rail, aisle bullnose" },
+  { "detail": "Ottoman and recess", "score": 8.7, "refs": "q03 / q05 vs omaat_f11" }
+ ],
+ "issues": [
+  {
+   "severity": "low",
+   "issue": "The loft's rounded head end shows as a bullnose at the aisle edge beside the roll end, and a small notch at the window end of the band / loft seam.",
+   "evidence": "c2_graze x 430-500, y 285-350; q04z_new2 x 350-360, y 42-60.",
+   "fix": "09d_suite.js: extend the band's window edge and diagonal end 0.05 aft (cover the loft's rounded corner) and lengthen the roll 0.42 -> 0.46 toward the aisle."
+  },
+  {
+   "severity": "low",
+   "issue": "Aisle drape still reads as a separate rail beside the loft from inside the suite.",
+   "evidence": "c3_band_top x 580-610, y 60-330.",
+   "fix": "Lower the drape top to y 0.47 and move it 0.01 inboard so the loft's rounded edge covers it."
+  },
+  {
+   "severity": "low",
+   "issue": "The flap is a flat grey triangle with a crisp 3 cm cut edge.",
+   "evidence": "c3_band_top.",
+   "fix": "Optional: slight crown on the flap or a shade toward the fold."
+  }
+ ],
+ "questions": [
+  "No high or medium issues. The w13 questions (flank swatch LAYER slot; 0.64 walk-in opening) are still open."
+ ]
+}

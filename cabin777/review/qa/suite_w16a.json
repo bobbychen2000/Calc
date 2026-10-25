@@ -1,0 +1,58 @@
+{
+ "area": "suite",
+ "rater": "A",
+ "round": "w16",
+ "score": 8.7,
+ "method": "Rated the head after f7c9416 (polishA round 3, rebuilt on the latest head with the ceiling / carpet changes) on r5 (930x575) against r3 (round 2), pixel diffs (>8: q02 275 px, q03 1526, q05 1298, all in the ceiling band y<75 or the ceiling above the screen; q04 6004 px, all at the bed x 373-801), the DPR 2 crops q04z_new2 / q04z_old and a 2x zoom (/tmp/claude-0/-home-user-Calc/33316a4e-1209-5df1-8086-36d8df9d3f92/scratchpad/w3_zA.png). Own studio shots from b7/test.html (/tmp/claude-0/-home-user-Calc/33316a4e-1209-5df1-8086-36d8df9d3f92/scratchpad/w3/: c1_bed_doors = suiteUnit({bed:1, doors:1}); c2_graze = low grazing view of the head band from the aisle; c3_band_top = top-down close-up of the band). References: omaat_f57, f59, f11, f_17304. Lighting noted, not scored.",
+ "calibration": [
+  {
+   "earlier_issue": "w15a MEDIUM: duvet head band a hard-edged board (square back corner, 1.3-2.5 cm step above the loft, aisle-edge bullnose, z-fight dashes along the fold roll)",
+   "status": "fixed, with low residues. The window-head corner is now rounded and the band no longer stands proud: across the slab-to-loft seam (q04z_new2 y 70, x 330-380) luma varies 204-207, i.e. no step line. The dashed fold line is gone (no dashes at DPR 2; flap 0.527 / roll 0.531 separate). Residues: a small notch where the band's square aft end meets the loft's rounded window corner (q04z_new2 x 350-360, y 42-60), and the loft's rounded head end still shows as a bullnose at the aisle edge beside the roll end (c2_graze x 430-500, y 285-350; q04 r5 x 495-540, y 405-445)."
+  },
+  {
+   "earlier_issue": "w13b / w14a / w14b MEDIUM: wood flanks chestnut instead of espresso",
+   "status": "still fixed (c1: espresso flanks, unchanged)."
+  },
+  {
+   "earlier_issue": "Variants combine cleanly",
+   "status": "yes. c1 (bed + doors closed) shows no gaps, clipping or z-fighting between the band, doors and pad."
+  }
+ ],
+ "changeVerdicts": {
+  "1 head band flush with the loft, rounded window-head corner, loft from 0.25 aft, flap / roll 0.527 / 0.531": "helped: the duvet now reads as one layer with a turned-down corner, as in omaat_f57. Small residues only (notch at the window end of the seam, aisle bullnose).",
+  "2 other worker's ceiling / carpet changes": "no effect on the suite geometry or materials (diffs confined to the ceiling)."
+ },
+ "details": [
+  { "detail": "Proportions and plan (screen wall, wing, pier, table, aisle box, ottoman, console)", "score": 8.6, "refs": "q03 / q05 vs omaat_f11, f_17313 (unchanged)" },
+  { "detail": "Shell / cap two-tone", "score": 8.5, "refs": "q02 / c1 vs omaat_f40 (unchanged)" },
+  { "detail": "Aisle leaves and plinth (open and closed)", "score": 8.6, "refs": "c1 vs f60 / f40; far-leaf moire in q02 remains" },
+  { "detail": "Wood flanks", "score": 8.2, "refs": "c1 vs f60 (hue right, grain short)" },
+  { "detail": "Console, module, keypad, handset", "score": 8.0, "refs": "q04 vs omaat_f57 (unchanged)" },
+  { "detail": "Bed (pad, duvet, fold, drape, pillows, belt)", "score": 8.5, "refs": "q04 r5 / q04z_new2 / c2 / c3 vs omaat_f57 / f_17304: continuous duvet with a cut corner; the flap is still a flat triangle with a 3 cm cut edge rather than a soft fold" },
+  { "detail": "Ottoman and footwell", "score": 8.5, "refs": "q03 / q05 vs omaat_f11 (unchanged)" },
+  { "detail": "Centre pair and variants", "score": 8.7, "refs": "c1, q02" }
+ ],
+ "issues": [
+  {
+   "severity": "low",
+   "issue": "Residual seam at the band / loft junction: a notch at the window end (square band end against the loft's rounded corner) and the loft's rounded head end showing as a bullnose at the aisle edge beside the roll end",
+   "evidence": "q04z_new2 x 350-360, y 42-60; c2_graze x 430-500, y 285-350; q04 r5 x 495-540, y 405-445.",
+   "fix": "09d_suite.js head band: extend the band's straight window edge 0.05 aft (the [xe - dw + 0.01, -dz0 + 0.31] point -> -dz0 + 0.36, with the diagonal end [xe - 0.06, -dz0 + 0.30] -> -dz0 + 0.35) so it covers the loft's rounded window-head corner, and run the roll 0.03 further toward the aisle edge (length 0.42 -> 0.46) to cover the bullnose."
+  },
+  {
+   "severity": "low",
+   "issue": "The turned-down flap is a flat grey triangle and the cut edge a crisp 3 cm board edge; omaat_f57 shows a soft, slightly crowned fold",
+   "evidence": "c3_band_top x 250-560, y 170-390.",
+   "fix": "Optional: give the flap a slight crown (gLoft over the triangle) or a gradient toward the fold."
+  },
+  {
+   "severity": "low",
+   "issue": "Carried: flank grain short, footwell back lit (L55 vs f11 L10), far-leaf moire (q02), drape a separate rail from inside",
+   "evidence": "unchanged since w15a",
+   "fix": "As w15a / w15b."
+  }
+ ],
+ "questions": [
+  "No high or medium issues remain for the suite. The bed reaches 8.5; the remaining items are low and optional."
+ ]
+}

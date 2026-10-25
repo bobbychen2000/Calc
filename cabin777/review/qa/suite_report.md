@@ -154,3 +154,20 @@ Sources are real in-flight photos in `ref/web/suite/` (79 files, listed in `INDE
   - The ottoman tweed reads beige rather than charcoal under cabin light.
   - Hard sun patches on the bed.
   - The large navy seat plaques (`09_seats.js`).
+
+### Post-wave polish (polish A, 2026-10-25): integration hand-offs - bar held
+
+Closed the `from_integration.md` items addressed to suite (log: `review/qa/fixed_polishA.md`).
+
+| round | rater A | rater B | changes |
+|---|---|---|---|
+| w14 | 8.6 | 8.8 | fShell r 0.34; bed linen pad / sheet #c2beb6, duvet #b0aca4, flap #9b978f (q04 sheet L227 -> L207, f_17304 L187, omaat_f59 ~L200-210); drape tucked; ottoman recess (0.03 plinth, warm dark floor) |
+| w15 | 8.6 | 8.9 | duvet head band cut on the diagonal down to the pad (sheet triangle overlay gone); fFlank espresso #2f2b22; plinth 0.06 forward |
+| w16 | **8.7** | **8.9** | head band flush with the loft's rounded edge, rounded window-head corner, flap / roll off coplanar |
+
+- Both carried mediums (duvet corner as overlays, chestnut flanks) are fixed. The integrator's suggested linen values
+  (#d6d2ca / #c4c0b8) still rendered L219 under the tone shoulder, hence the second step.
+- Ottoman: q03 under the tray L55 -> L27 (under / top 0.19; omaat_f11 ~0.14-0.21).
+- Variants (bed + doors + divider) combine cleanly. Triangles: under 100 added on the occupied bed unit; far LOD unchanged.
+- **Still open (low):** small notch at the head band / loft join (extend the band 0.05 aft, roll 0.42 -> 0.46); aisle
+  drape still reads as a rail (y 0.47, 0.01 inboard); flat flap triangle; the sun patches on the bed are lighting.
