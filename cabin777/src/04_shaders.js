@@ -39,6 +39,7 @@ uniform vec4 u_stripP[8]; uniform vec4 u_stripA[8]; uniform vec3 u_stripCol;
 uniform vec4 u_scrP[6]; uniform vec4 u_scrN[6]; uniform vec3 u_scrCol; uniform float u_fillLift; uniform vec3 u_lensCore; uniform vec2 u_vaultE;
 uniform sampler2D u_scrMask; uniform vec4 u_scrMaskR; uniform float u_scrOff; uniform vec4 u_scrOwn; uniform float u_binLo; uniform float u_monHemi;
 uniform float u_tubWash; uniform vec3 u_binLift;
+uniform sampler2D u_sDepth; uniform vec2 u_sRes; uniform vec4 u_sProj; uniform vec3 u_sFwd; uniform vec3 u_sRight; uniform vec3 u_sUp; uniform vec4 u_ssao; uniform float u_sDither; uniform float u_sMix;
 uniform sampler3D u_ao; uniform vec3 u_aoMin; uniform vec3 u_aoSize; uniform sampler2D u_contact; uniform vec4 u_contactR; uniform float u_contactK;
 uniform sampler2DArray u_detail; uniform vec4 u_layer[${N_LAYERS}]; uniform sampler2DArray u_photo; uniform float u_photoOn;
 uniform sampler2D u_atlas; uniform float u_screenStep; uniform float u_emisGain; uniform float u_screenGain;
@@ -149,6 +150,34 @@ vec3 coveSpec(vec3 P, vec3 N, vec3 V, vec3 R, float rough, vec3 F0, float NdV){
   }
   return s;
 }
+// QA L8 (integration): small-radius screen-space AO from a half-size depth pre-pass (12_scene render, u_sDepth): 8 taps
+// on a disc of u_ssao.x m (0.05) at the fragment's depth, golden-angle spiral turned per 2 x 2 pixel block; each tap is
+// put back in world space (u_sProj = proj[0], [5], [10], [14]; u_sFwd / Right / Up = camera basis) and occludes by the
+// height of its point over the fragment's face plane (Nf, from the position derivatives: the true triangle plane, so a
+// flat face never self-occludes), minus a 6 mm bias, faded out at the 0.10-0.15 m range check. Returns the occluded
+// share 0-1. The 8 cm AO volume and the floor contact map cannot hold the cm-scale dark lines at shell edges,
+// cushion-to-shell gaps, panel splits and seat bases that outline every unit in the photos [V: thin dark-line share
+// q13 0.55 vs py_37302 2.77 %, q06 1.81 vs c_27312 4.77, q05 0.89 vs f_17313 2.21] (integration L8 medium) [D]
+float ssaoF(vec3 P, vec3 Nf){
+  float dep = dot(P - u_camPos, u_sFwd);
+  vec2 ruv = u_sProj.xy * (0.5 * u_ssao.x / max(dep, 0.05));
+  float px = ruv.y * u_sRes.y * 0.5;                       // disc radius in half-size texels
+  if (px < 1.0) return 0.0;                                 // far: the disc is under a texel
+  vec2 uv0 = gl_FragCoord.xy / u_sRes;
+  float a0 = u_sDither * 0.7854 * (mod(gl_FragCoord.x, 2.0) + 2.0 * mod(gl_FragCoord.y, 2.0)) + 0.39;
+  float occ = 0.0;
+  for (int i = 0; i < 8; i++) {
+    float fi = float(i);
+    float an = a0 + fi * 2.39996;
+    vec2 uv = uv0 + vec2(cos(an), sin(an)) * sqrt((fi + 0.5) / 8.0) * ruv;
+    float z = u_sProj.w / (textureLod(u_sDepth, uv, 0.0).r * 2.0 - 1.0 + u_sProj.z);
+    vec2 nd = uv * 2.0 - 1.0;
+    vec3 v = u_camPos + z * (u_sFwd + nd.x / u_sProj.x * u_sRight + nd.y / u_sProj.y * u_sUp) - P;
+    float dl = length(v);
+    occ += clamp((dot(v, Nf) - u_ssao.z) / max(dl, 1e-3), 0.0, 1.0) * (1.0 - smoothstep(0.10, u_ssao.w, dl));
+  }
+  return occ * 0.125 * smoothstep(1.0, 2.0, px);
+}
 
 void main(){
   vec3 base = toLin(v_col.rgb) * v_tint.rgb;
@@ -160,6 +189,10 @@ void main(){
   vec3 N = normalize(v_nrm);
   if (!gl_FrontFacing) N = -N;
   vec3 V = normalize(u_camPos - v_wpos);
+  // face-plane normal toward the eye (QA L8 ssaoF): the plane the depth pre-pass holds, free of smoothing / detail normals
+  vec3 Nf = cross(dFdx(v_wpos), dFdy(v_wpos));
+  Nf = dot(Nf, Nf) > 1e-24 ? normalize(Nf) : N;
+  if (dot(Nf, V) < 0.0) Nf = -Nf;
   vec3 emissive = vec3(0.0);
   float hl = step(0.25, fract(v_tint.a + 0.01));
   if (layer >= 13 && layer <= 15) {
@@ -321,7 +354,16 @@ void main(){
     // show them as the bright, soft-amber layer [V: ff_seat-with-door-closed bins #b99662 L154 s0.47; ucr_the-room-cabin
     // bins from below #b3834b L138 s0.58] (lighting r4 medium). Not the whole hemiBot (the raters' fit): that lifted the
     // seat level and the door zones as well (q21 median 134 -> 142 vs ucr 86) [D]
-    vec3 hemi = mix(u_hemiBot + u_binLift * sz * smoothstep(1.55, 1.7, v_wpos.y), u_hemiTop, up);
+    // QA L8 (light): the lift acts on the bin door faces only, outboard (binO, below) and centre (cBin: |x| < ~1 m above
+    // 1.62-1.70 m, in the seat zones), at the full step (12_scene MOODS binLift): r4's lift on the whole lower hemisphere
+    // above 1.6 m stopped at 0.6 of the step because it also lifted the seat level and door zones, and moved the dd / d06
+    // bins only 3-6 L [V: ucr_the-room-cabin outboard bins #9e7240 L120 s0.59, ff_seat-with-door-closed #b99662 L154 s0.47
+    // vs dd #7e5227 L89 s0.69, d06 #8c5c2b L99 s0.69] (lighting L8 medium)
+    // QA r4 (light): binO = the outboard bin doors (08_bins OBIN_DOOR: lip x 1.53 y 1.795, bulging to x 1.47 at 2.03, crest
+    // 1.64 / 2.23), see binK below
+    float binO = smoothstep(1.30, 1.42, abs(v_wpos.x)) * smoothstep(1.62, 1.7, v_wpos.y) * (1.0 - smoothstep(2.18, 2.22, v_wpos.y)) * sz;
+    float cBin = (1.0 - smoothstep(0.95, 1.05, abs(v_wpos.x))) * smoothstep(1.62, 1.70, v_wpos.y) * sz;
+    vec3 hemi = mix(u_hemiBot + u_binLift * max(binO, cBin), u_hemiTop, up);
     float wallProx = smoothstep(1.7, 2.55, abs(v_wpos.x));
     float facingIn = clamp(-sign(v_wpos.x) * N.x, 0.0, 1.0);
     // QA r1 (light): sz = 1 where an outboard bin and its lens stand (08_bins builds them in the seat zones only), from
@@ -332,13 +374,12 @@ void main(){
     // the outboard bins overhang the sidewall from ~1.6 m: the wall just below sees the lens, not the ceiling
     // (tlfl_IMG_9217 / sany_10: the band under the bins is lit blue only, the aisle side of the bins white) [D]
     float binShade = 1.0 - 0.75 * lensW * facingIn * smoothstep(1.15, 1.6, v_wpos.y);
-    // QA r4 (light): the outboard bin doors (08_bins OBIN_DOOR: lip x 1.53 y 1.795, bulging to x 1.47 at 2.03, crest
-    // 1.64 / 2.23) are lit by the cove above them, so the lower, inboard-down part of the face sees the darker cabin
+    // QA r4 (light): the outboard bin doors (binO, above) are lit by the cove above them, so the lower, inboard-down part
+    // of the face sees the darker cabin
     // below: hemi + bounce x u_binLo there, x1 where the crest turns up (N.y 0.6). They read near-white and flat (q06
     // L211-218, p10 197, hp 1.3) where the photos run from a lit crest down to grey [V: c_27312 bins L190-199, p10 168,
     // hp 21; y_47301 #a3a9b1-#dddfe4; py_37302 L183 p10 161; lalf_room_119 bin faces 164 -> 71] (lighting r4 medium,
     // integration r4 high); per mood (1 in the amber / dark moods, whose bins the photos show cove-washed) [D]
-    float binO = smoothstep(1.30, 1.42, abs(v_wpos.x)) * smoothstep(1.62, 1.7, v_wpos.y) * (1.0 - smoothstep(2.18, 2.22, v_wpos.y)) * sz;
     float binK = 1.0 - binO * (1.0 - u_binLo) * (1.0 - smoothstep(-0.2, 0.6, N.y));
     // interreflection fill: a white-lined cabin bounces the cove/ceiling light onto every face (ANA photos show
     // charcoal shells and navy fabric reading mid-tone, not black); scaled by AO so crevices stay dark. QA r1: weaker
@@ -410,14 +451,18 @@ void main(){
     // their warm monFill [V: sany_47 galley / door end #564a4d h346 s0.14, door zone ~#776349 under the blue cove lines
     // vs bl16 #393e6f h235] (lighting r4 low); 1 elsewhere
     hemi *= mix(1.0, u_monHemi, 1.0 - sz); bounce *= mix(1.0, u_monHemi, 1.0 - sz);
-    amb = (hemi * (u_aoTune.x + (1.0 - u_aoTune.x)*ao) + bounce * u_aoTune.y) * binShade * (1.0 - band) * binK
+    // QA L8 (light): on the tub crown the cabin fill drops to 0.82 and the window term takes the sky's tint (below): the
+    // cream reveal (07_shell MAT.reveal #ece4d5) cancelled the cool day light, the crown read neutral and ~25 L light
+    // [V: y_47303 crown #a2a7bd L168 (B-R +28), #a4aac1 L171 vs q17 #bfc1c3 L193 (+4)] (lighting L8 medium); the crown is
+    // > 0 only with the shade open and a day glow [D]
+    amb = (hemi * (u_aoTune.x + (1.0 - u_aoTune.x)*ao) + bounce * u_aoTune.y) * binShade * (1.0 - band) * binK * mix(1.0, 0.82, crown)
         + u_wash * lt * wallProx * (0.35 + 0.65*facingIn) * smoothstep(0.3, 1.25, v_wpos.y) * (0.45 + 0.55*ao) * noDown * (1.0 - bandW) * mix(1.0, u_monHemi, 1.0 - sz)
         + u_sideLed * u_sideWall * lensW * facingIn * mix(u_sideLow, 1.0, smoothstep(0.95, 1.55, v_wpos.y)) * smoothstep(0.35, 0.8, v_wpos.y)
                     * (1.0 - smoothstep(1.95, 2.1, v_wpos.y)) * noDown * nearPane
         + u_winGlow * wallProx * facingIn * smoothstep(0.7, 1.1, v_wpos.y) * (1.0 - smoothstep(1.5, 1.8, v_wpos.y)) * 0.5 * (1.0 - band)
         // QA r1 (light): reveal glow 1.4 -> 1.9, the reveal sides read grey at grazing angles [V: c_27312 reveal sides
         // #d7dbdf / #e2e5e8 vs q06 #b2b1af / #c7c9c9] (integration r1)
-        + u_winGlow * wl.rgb * reveal * 1.9 + u_winGlow * crown * 1.1;
+        + u_winGlow * wl.rgb * reveal * 1.9 + u_winGlow * vec3(0.92, 1.0, 1.18) * crown * 1.1;
         // QA r4 (light): the crown takes 1.1 of the window light (was 0.7): shaded whites by the glass read neutral grey
         // where the official photos are cool blue-grey [V: y_47303 crown #a7adc2 (B-R +27) vs q17 #b2b3b3; py_37301 reveal
         // sides #9ba6bc vs q14 #bfbfc0] (lighting r4 medium; with the cooler boarding hemiBot / wash in 12_scene)
@@ -462,6 +507,10 @@ void main(){
     float crevF = (1.0 - mix(fl > 0.5 ? 0.5 : 0.3, 1.0, fl > 0.5 ? smoothstep(0.0, 0.12, aoPk) : smoothstep(0.02, 0.28, aoPk)))
                 * (1.0 - smoothstep(0.30, 0.50, v_wpos.y)) * max(fl, step(0.3, down)) * (1.0 - wallProx*facingIn);
     amb *= (1.0 - crevF) * (1.0 - u_contactK * ctc);
+    // QA L8 (integration): screen-space contact AO (ssaoF), on the diffuse ambient only: the specular, emissive, sun, tubRef
+    // and the local lights below stay out; x0.8 and fading out above 1.9-2.3 m, so the vault and cove stay clean
+    // (u_ssao.y = strength, 0 = off: x-ray, low quality, studio) [D]
+    if (u_ssao.y > 0.0) amb *= mix(1.0, max(1.0 - u_ssao.y * ssaoF(v_wpos, Nf), 0.0), u_sMix * (1.0 - smoothstep(1.9, 2.3, v_wpos.y)));
     // reading lights (night): warm cone from the lamp lens to the seat, 0.35 m pool [V: tlfl_IMG_9377 pools on the bed]
     for (int i = 0; i < 8; i++) {
       if (u_spotP[i].w < 0.5) continue;
