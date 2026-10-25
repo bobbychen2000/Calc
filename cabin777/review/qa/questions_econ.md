@@ -51,3 +51,6 @@
 23. (wave 3f) Re question 21: with q15 now matched to y_47300, both raters measure the cover 1.3-1.45x too tall head-on
    (h/w 0.85-0.88 vs 0.67-0.75) in every round. It is the largest econ mismatch left. Should the short y_47300 cover be the
    default, with the long overhang of y_47306 / b_ss_13 kept for a lowered headrest only? [kept long]
+24. (wave 3g, w35) Re questions 21 / 23: decided on the evidence. The real head-on sans 13 near seat and y_47300 both show
+   the cover ending level with the pad foot at h/w ~0.7 (ours 0.85-0.88), so its foot is now 3 cm higher. y_47306's longer
+   hang is a lowered headrest. [shortened]
