@@ -469,8 +469,8 @@ logged in fixed_integration.md ("Lighting run 2, L9").
   surface, so it has almost no crevices for the contact AO to find. py_37302 / 37301 show a dark 0.5-1 cm gap or welt at
   cushion / console, cushion front / leg rest, the shell's front rim / back fabric, the console panel splits and the seat
   foot on the carpet; those outline every PY seat. Stronger AO is not the lever: L8's stronger settings crushed q09's darks
-  under the photo, and this run's lighting L9 item (a 1.5x disc / range below 0.85 m, off the sidewall) moved q13 only a
-  little (fixed_integration.md, L9).
+  under the photo, and this run's lighting L9 item (a 1.5x disc / range below 0.85 m, off the sidewall) did not close it:
+  q13 reads 0.73 % after this run's contact-AO changes (fixed_integration.md, L9).
 - **Evidence:** PY outline darks 0.2-0.33x the photos' (thin dark-line share q13 0.91 % vs py_37302 2.77 %, q14 0.58 % vs
   py_37301 3.15 %); THE Room 0.5-0.6x.
 - **Fix (`09b_py.js` pySeat), modelled on the econ tuck crease (`09a_econ.js`, the w11 B loft with `{ c: '#283052', r: 0.95 }`):**
@@ -503,7 +503,7 @@ logged in fixed_integration.md ("Lighting run 2, L9").
 - **Problem:** the print is baked into vertex colours on a 0.1 m grid with a 0.22-wide ramp, so it renders as dark,
   colourless, blurred blobs (grey smoke stains): 2.6x the photo's contrast, almost no hue, a third of its edge detail. The
   real wall is a pale warm ground with low-contrast cumulus with crisp, speckled edges. (This run's contact-AO change took
-  the dark frame round the bulkhead monitor off this wall: f_ink_seated row 320 beside the monitor L68 -> ~155; the clouds
+  the dark frame round the bulkhead monitor off this wall: f_ink_seated row 320 beside the monitor L68 -> 156; the clouds
   themselves are the print.)
 - **Fix (`inkWall`):**
   1. Grid 0.1 -> 0.03 m: `nx = ceil((x1 - x0) / 0.03)`, `ny = ceil(H / 0.03)`.

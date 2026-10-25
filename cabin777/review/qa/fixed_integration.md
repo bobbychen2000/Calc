@@ -417,3 +417,70 @@ from_* items (to lighting / integration):
 - from_econ w37-w39 (near pans), w27 (`photoBase` gain, shared 03_tex.js): not changed (carried).
 - from_shell w15 lows, from_room w16 (1) / (3), from_py 6 / 9 / 10 / 11, from_monuments w13-15, from_exterior 18 / 19:
   not changed this run (carried).
+
+## Lighting run 2, L9 (lighting 7.6 + integration 7.6 raters; from_* items addressed to lighting / integration)
+
+Code: `04_shaders.js`, `12_scene.js` (`13_app.js` unchanged). The run started on db8e97b; no other area committed during it,
+so every view is compared with that head's renders. Renders in the scratchpad: qa/fixL9/before (db8e97b), final (first
+candidate), final2 (committed); experiments tss-tss7 (contact AO), tlow (Dining lowTint, Blue monFill); tools in
+qa/fixL9/tools (m9.py target boxes, cmp.py frame / thirds vs photo, thinmask.py lost / new thin dark lines, time2.js,
+qa_fast.js = test/qa.js with the idle loop stopped: same pixels, ~5x faster).
+
+Regression guard (cmp.py: |model - photo| over the frame median, p5, p95, the thirds' mean L and 0.25 x their hue
+difference; lower is closer), before -> after:
+- Check views: q03 257 -> 258, q06 120 -> 121, q09 119 -> 121, q13 58 -> 60, q15 29 -> 29, q16 43 -> 45, q20 70 -> 69, q21
+  192 -> 192, blue06 83 -> 82; also q14 114 -> 112, q17 41 -> 42, bl16 60 -> 61. All within +-2 (L8 treated +-2 as noise).
+  - The first candidate (the raters' contact-AO values as given) scored q06 126, q16 47, q14 117, q03 259: frames 1-3 L
+    lighter, since the ghost outlines it removes had darkened them. The AO-volume easing change below brought them back.
+- Not check views: dd 83 -> 75 (ucr); d06 68 -> 77 (kn_room_35: its top third 130 -> 138 vs 114 is the lifted centre-bin
+  doors, whose targets come from ucr and are met; see the amber item).
+
+Rater issues (L9):
+- lighting medium, amber centre-bin doors: done. New `u_ctrLift` (mainFS hemi: `u_binLift * max(binO, u_ctrLift * cBin)`),
+  `MOODS.dining` / `wake` ctrLift 3 (1 elsewhere, where binLift is 0); binLift [0.22, 0.15, 0.07] unchanged.
+  - dd centre-bin face (150-450, 20-90) #a3773f L125 s0.61 -> #b18a51 L143 s0.54 (target L140-150, s <= 0.58); dd left box
+    (0-300, 30-110) L93 -> 113 (>= 110); dd PSU band (450-600, 0-40) L78 -> 78 (<= 85); dd median 82 -> 85.
+  - d06 centre bins (0-380, 10-100) L113 -> 141 s0.52 (135-148); outboard (600-930, 10-110) L147 -> 147 (147 +-3); median
+    81 -> 81 (<= 85). q21 median 135 -> 135 (135 +-2), bins L147 -> 147.
+  - The L8 dd right-box target (125-140) is retired as asked (outboard underside / PSU field; ucr L72-78).
+- lighting low, Blue THE Suite front bulkhead: done. mainFS `fWall` (aft-facing faces from u_fZone.x - 0.8 to + 0.1: the
+  10_mono inkWall at z 7.40) keeps the full blue hemi / bounce / wash (`monK` in all three places) and half the warm
+  monFill (the full fill still greyed it: #524a6a L79 s0.30; none read #25265c L42 against the photo's L69; tlow m0 / mh).
+  - blueF03 bulkhead (420-520, 20-140) #463d49 L64 h284 s0.17 -> #3f3a64 L63 h246 s0.41 (target h240-260, s >= 0.35,
+    L55-75; ml_DSC_1946 #4f3d71 L69 s0.46); (620-690, 20-140) #393032 L51 s0.16 -> #312c49 L48 h249 s0.39.
+  - bl16 galley flanks (330-420, 230-260) s0.15 -> 0.15 (<= 0.25); door-4 box unchanged. Night keeps its fill (step on
+    u_monHemi < 1).
+- integration medium, contact-AO ghost outlines: done, by another route than the raters'. ssaoF now weights a tap
+  `1 - smoothstep(ssaoIn x range, range, dl)` (full up to 2 cm, gone at 7 cm; `LIGHT_TUNE.ssao` [0.05, 6, 0.006, 0.07],
+  `ssaoIn` 0.3), keeps the one fixed spiral (`ssaoDither` 0) and eases in over the AO volume 0.02-0.25 (`ssaoEase`, was
+  0.05-0.4). A part 5 cm off a wall now counts 0.14 of a contact tap.
+  - f_ink_seated row 320 beside the monitor (539-593) L68 -> 156 (target >= 130); row 316 L94 -> 106. q03 / q05: the
+    stepped frame round the monitor is gone (no copies; crops qa/fixL9/c_P.png, c_K2.png).
+  - q10 x 650 above the headrest flap: rows 396-408 L47 -> 58 (L8 87: 0.67x, target 0.7x: on the line); rows 378-384 73 ->
+    64 (0.70x of L8 92): a soft shade, no detached band (c_q10f.png). The 0.05-0.4 easing gave 0.77x / 0.86x but left the
+    check views 1-3 L light (above).
+  - q06 thin dark-line share 2.96 -> 2.49 % (target >= 2.8 %: not met); aisle core (495-545, 420-575) L55 -> 55. The lines
+    lost (thinmask.py, tm_q06.png) are the ghost bands under the cap rails and monitor tops, which the photos do not show.
+  - Tried and not kept [D tss-tss5]: the raters' `pow(1 - dl / 0.10, 2)` at strength 4 (clean, but q06 / q13 / q03 thin share
+    1.89 / 0.55 / 0.63 % and the frames 1-3 L lighter); `(1 - dl / 0.07)^2` x6 and x8 / 0.06 (no gain); the per-pixel disc
+    turn (interleaved gradient noise, `ssaoDither` 1, also at 0.15 / 0.3 of a turn): without a blur pass it draws dot grain
+    along every contact edge, under the monitor and on the cap rails (c_K2.png, c_P56.png). The raters' fallback, an R8 AO
+    pass with a 4 x 4 depth-aware blur, is a new full-screen pass, which this run's phone budget rules out; with it the
+    per-pixel turn could come back (the shader keeps the IGN code behind `ssaoDither`).
+- lighting low, PY contact darks: partly. `ssaoF(P, Nf, kR)` scales the disc and range by kR = 1 + `ssaoLow` (0.5) below
+  the headrests (0.85-1.05 m) and off the sidewall, as the raters gave.
+  - Thin dark-line share q13 0.91 -> 0.73 % (target >= 1.5: not met; the ghost-outline fix above took the far taps that
+    made part of it), q14 0.58 -> 0.66 % (>= 1.5: not met); q09 p5 34 -> 32 (>= 32); q15 4.10 -> 4.03, q16 3.14 -> 3.08 (+-0.5);
+    no halo on the wall behind the q13 / q14 headrests (kR is 1 there).
+  - The gap is geometry (no cm-scale gaps at the PY seat joints): handed to py / room in from_integration.md (lighting run
+    2, L9).
+- integration low, Dining seat level too saturated: not changed; question 12 in questions_lighting.md. The raters' lowTint
+  [1.0, 1.4, 2.2] (x0.8) took the dd ash leaf (190-310, 300-500) s0.67 -> 0.49 but L107 -> 121 and the q21 median 135 ->
+  141, cmp q21 194 -> 226; at x0.7 s0.50 / L112 / q21 median 137 but q21 still 194 -> 206 (bottom third s0.57 -> 0.43 vs
+  ucr 0.56); [1.0, 1.25, 1.7] s0.57, q21 212. The check view's photo (ucr_the-room-cabin, in service) has the ash at s0.61-0.72
+  (#a1662e, #8a5635), the model's s0.67 sits inside it; only the ff photos are greyer. Bins s >= 0.6 unchanged.
+
+from_* items (to lighting / integration): no new ones since L8. Carried, not changed this run: from_econ wave 3k-3m (q17
+cover grazing tone), w43b-L1 (far q16 covers), w37-w39 (near pans), w27 (`photoBase` gain); from_shell w15 lows (door
+glass, creams, dado grille, PY/Y tub lip band); from_room w16 (1) / (3); from_py 6 / 9 / 10 / 11; from_monuments w13-15;
+from_exterior 17-19; from_ceiling w13 (door domes, bins clipping at QA framing).
