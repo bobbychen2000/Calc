@@ -1,0 +1,75 @@
+{
+ "area": "econ",
+ "rater": "A",
+ "round": "w51",
+ "candidate": "f1ab8cc",
+ "lens": "Skeptic, geometry first. Work in /tmp/claude-0/-home-user-Calc/09c1193c-77e2-575a-a044-f5991e90c38d/scratchpad/raterA51. cov.py (q17 cover mask) and q15c.py (q15 smooth-region mask) are the w50a scripts unchanged, run on rD (candidate), rC (w50) and rB (w49), all on the same lighting, plus the photo. head17.png = rD | y_47303 | rC; near17.png = rD | rC at 3x; q15c2.png = rD / photo / rC; q15side.png; e*_DC.png pair studio shots sD | sC. To find the cause of the q17 result I built f1ab8cc to raterA51/build and rendered two extra studio shots of econ3: lat.png (a high, lateral front view that reproduces the q17 angle) and plan.png. Every studio and q view was diffed against w50 (threshold 24 in summed RGB).",
+ "score": 8.5,
+ "calibrationNote": "Unchanged at 8.5; detail mean 8.32 (w50 8.33). The change does what the code says: the roll fronts are now 1.9-2.9 cm behind the cover at every height. But it didn't move the q17 measurement. The near cover blob is 3801 px (w50 3980, photo 6961) with the same bbox (x633-732 y162-250 against 633-733 161-250). The lateral studio render shows why: my w50a-1 mechanism was wrong. The rolls never stood in front of the flap. The flap (now 0.21 wide, edges at +-0.105) sits in a 2.3 cm gap inside the rolls (inner faces at +-0.128), and from the q17 angle the 11 cm deep roll shows its whole front and inner flank beside the flap's edge. In y_47306 and y_47303 the flap is wider than the gap between the rolls and lies over their inner halves; its foot also hangs lower (q17 foot 250 against 299). Narrowing the cover by 1 cm moved q17 slightly the wrong way. In q15 the 1 cm lift helped the top (247-249 against 250-252; photo 241-245), but the foot rose more (287-289 against 296; photo 289-292). The head-on flap is now slightly short: h 39-43 against 46-52, h/w 0.56-0.62 against the photo's 0.60-0.74, and cover-to-headrest width 0.56 against the photo's ~0.60. These roughly cancel. Headrest 8.2 -> 8.15. Nothing else moved: e6, e7, e8, e10 and e11 are pixel-identical, and the other diffs lie only in the headrest and back-top regions.",
+ "priorIssues": [
+  {"id": "w50a-1 (medium): wing rolls fat and proud, hide the q17 cover", "status": "not fixed (geometry changed as asked; measurement unchanged; diagnosis corrected)", "note": "Code: roll fronts are now -0.1295 / -0.125 / -0.105 at y 0.69 / 0.77 / 0.802, against cover -0.158 / -0.144 / -0.1245, so they are >= 1.9 cm behind (the check's intent is met in geometry). q17 cov.py: rD 3801 px, x633-732 y162-250, centroid (672,200); rC 3980, x633-733 y161-250, (672,200); photo 6961, x663-789 y177-299, (711,231). The checks fail: area >= 5500, right edge >= 750 and centroid within 15 px. near17.png shows the same diagonal roll outline across the flap's lower aisle corner as in w50. lat.png (studio, same viewing angle) shows the flap ending cleanly at its edge with the roll beside it, not over it. The 'cut' is the roll's front and inner flank filling the gap beside a flap that is too narrow and too short, not occlusion. See w51a-1."},
+  {"id": "w50b-1 (medium, B): aisle-side roll as proud as the cover", "status": "fixed in geometry / not fixed in q17", "note": "As above: the roll is now 2-3 cm behind the flap, but the q17 cover footprint is unchanged (3801 px against 3980)."},
+  {"id": "w50b-2 (medium, B): q17 flap short and high, wider than tall", "status": "not fixed", "note": "Blob 100 x 89 (w50 101 x 90; photo 127 x 123). Foot 250 against 299, top 162 against 177. Not targeted this round."},
+  {"id": "w50b-3 (low, B): q15 cover ~10 % wide", "status": "fixed", "note": "Widths on q15c.py are 69-71 px (w50 71-75; photo 68-77)."},
+  {"id": "w50a-2 (low): 3-seat side blocks show ~15 px of back above the fold in q15", "status": "not fixed (unchanged by design)", "note": "q15side.png: the nearest side-block seats still show ~12-15 px above the fold; y_47300 shows ~4. Awaiting the user's answer on per-seat height."},
+  {"id": "w50a-3 (low): q15 centre-block cover top ~7 px low, width 71-75", "status": "partly fixed", "note": "Top 247-249 against 241-245 (w50 250-252), still 2-6 px low. Width 69-71 passes 66-72. But the foot rose to 287-289 (photo 289-292), so the flap is now 39-43 px tall against 46-52, with h/w 0.56-0.62 against 0.60-0.74. At x222 (0.56) it is now below the photo's range. See w51a-2."},
+  {"id": "w49a-1 (medium): q15 tall-screen", "status": "fixed (holds)", "note": "h/w 0.56-0.62; it now errs slightly short, not tall."},
+  {"id": "w49a-2 (medium): q17 cover placement / square rolls", "status": "partly fixed (rolls round; placement carried as w51a-1)", "note": "Rolls round and now set back. The cover is still small and high in q17."},
+  {"id": "w50a-4 (low, carried): J elbow, flat pouch, belts / plates / cap / pillows", "status": "not fixed", "note": "e3 arms, e6, e7 and e10 are pixel-identical to w50."}
+ ],
+ "details": [
+  {"detail": "Fabric: tick weave", "score": 8.2, "refs": "Unchanged."},
+  {"detail": "Fabric: diamond lattice", "score": 8.3, "refs": "Unchanged."},
+  {"detail": "Fabric: petal fleck", "score": 8.2, "refs": "Unchanged. The q17 roll still shows a large fleck front and flank."},
+  {"detail": "Fabric: dash mosaic", "score": 8.5, "refs": "Unchanged."},
+  {"detail": "Fabric mix (backs, pans, pads)", "score": 8.6, "refs": "Unchanged."},
+  {"detail": "Headrest pad + cover", "score": 8.15, "refs": "Down 0.05. Gains: the rolls are now slimmer and set back, the q15 width matches (69-71 px) and the q15 top is 3 px closer. Losses: the q15 flap is now short (h 39-43 against 46-52; h/w 0.56 at x222 against the photo's minimum of 0.60). The narrower flap widens the gap to the rolls (2.3 cm), where y_47306 / y_47303 show the flap overlapping the rolls' inner halves. The q17 cover footprint is unchanged at 55 % of the photo's, with the foot 49 px high."},
+  {"detail": "Pillow", "score": 8.35, "refs": "Unchanged."},
+  {"detail": "Armrests", "score": 8.45, "refs": "Unchanged."},
+  {"detail": "Belts", "score": 8.6, "refs": "Unchanged."},
+  {"detail": "Seat pan / front", "score": 8.5, "refs": "Unchanged."},
+  {"detail": "Back silhouette", "score": 8.2, "refs": "Unchanged. The 4-seat block back above the fold is now ~2-6 px (q15), closer to y_47300; the 3-seat blocks are as in w50 (w50a-2)."},
+  {"detail": "Rear shell / hood / back top", "score": 8.1, "refs": "Unchanged; e9 differs by 834 px only along the headrest top behind the back, and nothing new shows over the back top."},
+  {"detail": "Screen / handset", "score": 8.1, "refs": "Unchanged (the e5 diff is the headrest seen past the back edges, not the screen)."},
+  {"detail": "Tray / pocket / AC", "score": 8.35, "refs": "Unchanged (e6 identical)."},
+  {"detail": "Legs / footrest / under-seat", "score": 8.5, "refs": "Unchanged (e8, e10, e11 identical)."},
+  {"detail": "Far-LOD rows", "score": 8.1, "refs": "The far cover is 0.21 wide and the 4-seat block 1 cm higher, as the near LOD. I can't see a difference at q15 / q16 distances."}
+ ],
+ "issues": [
+  {
+   "id": "w51a-1",
+   "severity": "medium",
+   "owner": "econ",
+   "title": "q17 cover still 55 % of the photo's footprint (3801 against 6961 px; w50 3980): the flap sits in a gap between the rolls instead of lying over their inner halves, and its foot is ~49 px high. The w51 roll set-back didn't change it",
+   "detail": "Headrest pad + cover",
+   "evidence": "cov.py (above). lat.png (studio econ3, high lateral front view like q17): the flap's edge is clean, and beside it the roll's whole front and inner flank show. The roll's inner face is at |x| 0.128 (sx 0.163 - 0.035) and the flap edge at 0.105, a 2.3 cm gap (w50 1.4 cm). y_47306 (p47306.png): the flap is ~0.74 of the total headrest width, overlapping each roll by about half its visible width, and its foot hangs below the cushion. Rendered e4_head: flap / headrest ~0.59, with the cushion visible ~3-4 cm below the flap foot. q17: foot 250 against 299, top 162 against 177.",
+   "fix": "In econSeat (09a_econ.js), keep the flap width for q15 (0.21) and bring the headrest in around it. Set the roll sx +-0.163 -> +-0.128 (inner faces at ~0.093, so the flap edge lies over ~1 cm of each roll, as in y_47306), and the cushion w 0.30 -> 0.26 so it doesn't stick out past the rolls. Overall headrest ~0.33 instead of ~0.40, flap / headrest ~0.64. The roll fronts are now >= 1.9 cm behind the flap, so the overlap won't poke through. For the 3-seat drape variant only (opts.drape), lower the flap foot ~2.5 cm (CPL first row y 0.645 -> 0.62, then hem / stitch / mark via cz), so q17's foot drops ~15-20 px without touching q15 (centre block). Mirror the widths in econUnitFar.",
+   "check": "q17 cov.py: area >= 5200, bottom >= 265, centroid within 25 px of (711,231). e4_head: the flap edges lie over the rolls. q15 unchanged: widths 66-72, foot 287-292."
+  },
+  {
+   "id": "w51a-2",
+   "severity": "low",
+   "owner": "econ",
+   "title": "q15 centre-block flap now slightly short: h 39-43 against 46-52, h/w 0.56-0.62 against 0.60-0.74; top still 2-6 px low (247-249 against 241-245)",
+   "detail": "Headrest pad + cover",
+   "evidence": "q15c.py: rD x222 249-287 (0.56), x385 247-289 (0.62), x545 247-289 (0.61), x705 247-287 (0.59). Photo 244-289, 241-290, 241-292, 245-290. The 1 cm lift moved the foot (~8 px) further than the top (~3 px).",
+   "fix": "Centre block only: lower the flap foot ~1 cm (CPL first row 0.645 -> 0.635 when !opts.drape) and leave hd -0.03, so the foot returns to ~291 with the top unchanged. Or take hd back to -0.025 and accept the 2-6 px top error.",
+   "check": "q15: foot 288-293, h 45-50, h/w 0.62-0.72 at all four front seats."
+  },
+  {
+   "id": "w51a-3",
+   "severity": "low",
+   "owner": "econ",
+   "title": "Carried: w50a-2 per-block headrest height (q15 side blocks ~12-15 px of back above the fold against ~4 in y_47300), the J elbow, the flat pouch, belts / plates / cap / pillows",
+   "detail": "Back silhouette / Armrests / Tray / pocket / AC / Belts / Pillow",
+   "evidence": "q15side.png; e3 / e6 / e7 / e10 identical to w50.",
+   "fix": "As in w50a-2 and w50a-4 (w49a-3 / w49a-5 / w49a-6).",
+   "check": "As in w50a-2 and w50a-4."
+  }
+ ],
+ "questionsForUser": [
+  "Carried: should every 6-way headrest sit at the top position, use a per-seat mix, or follow the current per-block rule (3-seat blocks 4.5 cm lower, as y_47303 / y_47306)?",
+  "Carried: should the 3-seat side blocks carry lumbar pillows (y_47300 shows them; y_47301 / y_47303 don't)?"
+ ],
+ "extraRefsSearched": "No downloads. I used y_47300, y_47303 and y_47306 at 930x575, plus two extra studio renders of f1ab8cc (lat.png, plan.png) to separate occlusion from proportion in q17."
+}

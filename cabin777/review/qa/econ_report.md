@@ -729,3 +729,64 @@ scored at least 8.5 with no high-severity issue, so economy meets the bar** and 
 
 Before/after sheet: `econ_before_after_w3l.jpg`, own renders only (w48 2bd3366 vs w49 bc67a43: q17, q15, e3, e6, e4).
 Ratings: `econ_w49a.json`, `econ_w49b.json`.
+
+## Wave 3m (2026-10-25): headrest polish under a regression guard
+
+Started on db946d6 (w49 A 8.5 / B 8.65). Both raters had flagged two headrest items, both medium. One was a regression:
+the q15 head-on covers had grown tall again (h/w 0.87-0.92 vs y_47300 0.64-0.79). The other was carried: in q17 the
+cover sits high and lies back against y_47303. **Guard:** keep the change only if both raters score at least 8.5 with no
+high-severity issue, and neither drops more than 0.05 below w49. Cap: two rated rounds. Before and candidate were rendered
+on identical lighting each round, so the raters compared econ geometry only.
+
+| round | rater A | rater B | mean | note |
+|---|---|---|---|---|
+| w49 (bc67a43) | 8.5 | 8.65 | 8.58 | wave 3l |
+| w50 (58aca6d) | 8.5 | 8.6 | 8.55 | q15 regression fixed; per-block headrest height; rolls too proud in q17 |
+| w51 (f1ab8cc) | 8.5 | 8.65 | 8.58 | rolls set back, cover 0.21 wide, 4-seat headrests 1 cm higher; **kept** |
+
+Both rounds passed the guard: w50 was exactly at B's -0.05 limit, and w51 is back at the w49 scores. w51 is the shipped state.
+
+### What changed in wave 3m (headrest only, `09a_econ.js`)
+- **Cover:**
+  - the foot is 3 cm back up (CPL starts at y 0.645), and the hem, rolled foot, stitch and mark moved with it;
+  - it hangs more upright and proud, with a ~1 cm convex bow;
+  - the fold is 2.5 cm further forward;
+  - the width is 0.22 -> 0.21 (q15 now 69-73 px vs 68-77).
+- **Cushion and wing rolls:**
+  - the cushion is ~3 cm deeper in front, with its rear kept on the back, and its centre panel is narrower (0.30);
+  - the wing rolls are round in section and slimmer;
+  - in w51 the roll fronts are 1.9-2.9 cm behind the cover.
+- **Per-block headrest height (`opts.hd`, question 32):** the 6-way headrest slides on a track, and ANA's photos show it
+  at different heights by block:
+  - The y_47300 centre block shows 0-1 cm of back above the fold.
+  - The 3-seat-block photos y_47301 / y_47303 / y_47306 show 3-6 cm.
+  - So the 3-seat blocks sit 4.5 cm lower and the 4-seat block 3 cm higher. The far LOD matches.
+- **Triangles:** unchanged in kind (same loft sections, same segment counts).
+
+### Results
+- **q15 (w49a-1 / w49b-1): fixed for both raters.**
+  - h/w is now 0.56-0.67 by A's and B's masks, against 0.60-0.80 in the photo; w49 was 0.86-0.92.
+  - B has the foot at 293, inside the photo's 290-295.
+  - A finds the flap slightly short (h 39-43 vs 46-52) and the top 2-6 px low.
+- **q17 (w49a-2 / w49b-2): partly fixed.**
+  - The top is 14-16 px closer to the photo, back fabric shows above the fold as in y_47303, and the rolls are round.
+  - The flap is still ~55 % of the photo's footprint, and its foot is ~45-49 px high.
+  - Both raters now agree the rolls were never hiding it. The flap is too small and too high in that view. In y_47303 /
+    y_47306 the flap is wider than the gap between the rolls and lies over their inner halves.
+
+### Still open (w51a / w51b)
+- **q17 flap size and foot (medium, both):**
+  - A: rolls in to sx ±0.128 and cushion to 0.26 wide so the 0.21 flap overlaps them, and a 2.5 cm longer drape on the
+    3-seat blocks only;
+  - B: the same longer 3-seat drape (CPL from y 0.615).
+  - I did not do this within the cap. A longer cover on one block only is not physical unless the 3-seat cover really
+    differs, so it is question 32.
+- **q15 flap proportion (low):**
+  - A: lower the 4-seat foot ~1 cm;
+  - B: raise the 4-seat fold rather than the whole headrest.
+- **Per-block height (low, A):** the q15 side-block seats show ~12-15 px of back above the fold, against ~4 in y_47300.
+  Heights may vary seat by seat (question 32).
+- **Carried lows:** J elbow, flat pocket pouch, belts, under-arm plates, arm cap, pillows.
+
+Before/after sheet: `econ_before_after_w3m.jpg`, own renders only (w49 db946d6 vs w51 f1ab8cc, same lighting: q15,
+q17, e4_head, e3_side). Ratings: `econ_w50a.json`, `econ_w50b.json`, `econ_w51a.json`, `econ_w51b.json`.

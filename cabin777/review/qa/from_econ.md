@@ -150,3 +150,11 @@
   hanging lower. Both raters suggest re-checking the q17 resection against the back tops and screen corners before econ
   trades fold height between the two views. The q17 line is econ's; this is for integration's information.
 - **Carried:** the q17 cover grazing tone (wave 3k item) and the far q16 covers dark (w43b-L1) are unchanged.
+
+## wave 3m (w50-w51) to lighting / integration
+- **Carried, not scored:** the q17 cover's grazing tone still reads darker and more violet than the photo's silver flap
+  (w51b carried; near cover about (129,136,173) vs (145,165,203)). The far q16 right-block covers are still dark (w43b-L1).
+- **For information:** headrest heights now differ by block (econ `opts.hd`). 3-seat blocks sit 4.5 cm lower and the
+  4-seat block 3 cm higher, so the cover tops sit at different heights in q15 / q16. This is deliberate (question 32),
+  not an AO or shadow artefact.
+

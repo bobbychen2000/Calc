@@ -76,3 +76,8 @@
    shows the cover lower and larger on the back. The raters agree that one cover position cannot match both photos. Was
    the 6-way headrest set at different heights in the two shoots? [kept a compromise; w49 leans toward y_47303, and both
    raters flag the q15 h/w of 0.86-0.92 as a regression]
+32. (wave 3m, w50-w51; follows 31) Headrest height and cover length: ANA's photos put the 6-way headrest high on the
+   centre block (y_47300, 0-1 cm of back above the fold) and lower on the 3-seat blocks (y_47301 / 47303 / 47306, 3-6 cm).
+   The model now sets it per block (3-seat 4.5 cm lower, 4-seat 3 cm higher). Should it be all at the top position, a
+   per-seat mix, or per block as now? In y_47303 the flap also looks longer and wider than in y_47300 head-on. Is the
+   cover the same part on every seat? [per block; one cover for all seats]
