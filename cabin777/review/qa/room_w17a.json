@@ -1,0 +1,70 @@
+{
+"area": "room",
+"rater": "A-skeptic",
+"round": "w17",
+"score": 8.5,
+"summary": "Round w17 rates head 7744d1c (polishA: darker violet-grey jShell/jCap/jShellIn in 09_seats.js; jBand on the smooth plastic layer at #5d5e66). BEFORE = scratchpad r0, AFTER = r1, same cameras, boarding mood. (1) Shells: helped. q06 near shell side (0-120 x 380-560) (87,98,109) L96 h211 s0.20 -> (66,72,81) L71 h216 s0.19; far shell side (668-678) L65 -> L50 h235; cap tops (690-850 x 340-350) L128 -> L105 h233 s0.09. c_27312 shells: near side (10-90 x 420-500) L83 h214 s0.20, shell by the monitor (200-260 x 240-330) L50 h243 s0.17. c_27315 inner wall (470-520 x 240-300) L80 h225 s0.16, console face L76 h235 s0.20. c_27314 shell wing L98 h212 s0.20. So the official shells are cool blue-violet grey at s0.16-0.20, and the AFTER values sit inside that range in both tone and hue; BEFORE was 15-30 L too light. Ash/shell luma in q06 is now 129/50-71 = 1.8-2.6 (photos 2.2-3.0, before 1.3-1.6). The integration request for s <= 0.08 is contradicted by every official frame; its in-flight evidence (omaat r31 shell post h50 s0.16, kn_room_1) is warm cabin light / white balance, not albedo. The official-photo call is correct; I endorse the polishA value and would NOT neutralise further. Only caveat: in q09 the shells now read L47-62 against c_27314's L88-98, but c_27314 is a flash-lit top-down frame and the flap/shell ratio (model 1.5-2.0, c_27315 1.06-1.5, c_27312 1.4-2.3) is inside the photo spread; a lighting note, not a material issue. (2) Header band: the smooth plastic layer helped (the hammered-metal dimples in z_q10_band.png BEFORE are gone; AFTER hp 0.046-0.062 reads as satin, like c_27315 band hp 0.083-0.096 which includes the panel edges). The colour change hurt slightly: q08 band (480-560 x 290-330) (101,108,122) L108 h220 s0.17 -> (93,94,108) L95 h234 s0.14; q10 band L124 h217 -> L107 h231. In the photos the band matches the slate flap in hue and nearly in tone: c_27315 band L105-127 h218-221 s0.16 vs flap L119 h219 s0.19; c_27312 header L113 h218 s0.21; omaat_room_15 band/flap 0.89, omaat_room_31 1.05. Model band/flap q08: 0.82 before, 0.72 after, and the band now reads a separate mauve-grey part next to the blue-grey flap (z_q08.png). Net change for the band: smoother (+), colour (-), roughly neutral overall. Everything else is unchanged from w16 (no room geometry touched): same nested-pair layout, monuments, ash, soft goods. Prior w16 lows remain open. With the shells now closer to the official photos and only one low colour slip introduced, I keep the area at 8.5.",
+"photos_collected": [
+"Downloaded to ref/web/room/ (gitignored): omaat_room_13, omaat_room_15, omaat_room_23, omaat_room_31 (cdn.onemileatatime.com/wp-content/uploads/2020/01/ANA-Business-Class-The-Room-{13,15,23,31}.jpg). Used ref/ana c_27312, c_27313, c_27314, c_27315, c_27316."
+],
+"own_renders": [
+"No new SwiftShader renders: the five q06-q10 BEFORE/AFTER pairs show both changes at the needed range.",
+"/tmp/claude-0/-home-user-Calc/33316a4e-1209-5df1-8086-36d8df9d3f92/scratchpad/w17a/ba_q06_roomMain.png ... ba_q10_seat14D.png (before | after side by side)",
+"/tmp/claude-0/-home-user-Calc/33316a4e-1209-5df1-8086-36d8df9d3f92/scratchpad/w17a/z_q10_band.png (band zoom: dimpled -> smooth, blue-grey -> mauve-grey)",
+"/tmp/claude-0/-home-user-Calc/33316a4e-1209-5df1-8086-36d8df9d3f92/scratchpad/w17a/z_q08.png (band vs flap, sample box drawn)",
+"/tmp/claude-0/-home-user-Calc/33316a4e-1209-5df1-8086-36d8df9d3f92/scratchpad/w17a/z_q09.png",
+"/tmp/claude-0/-home-user-Calc/33316a4e-1209-5df1-8086-36d8df9d3f92/scratchpad/w17a/box27315.png, box27312.png (photo sample boxes)",
+"/tmp/claude-0/-home-user-Calc/33316a4e-1209-5df1-8086-36d8df9d3f92/scratchpad/w17a/omaat_sheet.png; sampler py/m.py (box mean, HSV hue/sat, hp = std(L - blur2)/mean)"
+],
+"prior_issues": [
+{"from": "w16a", "severity": "medium", "issue": "Cabinet / table ash pinstripe weak, bands wavy, warm", "status": "not addressed by polishA (unchanged geometry/tile); hue now fine", "evidence": "q06 cabinet (170-330 x 330-450) (135,135,129) before / (130,129,124) after, R/B 1.05, inside official 1.04-1.16 (the warm cast seen in w16 has gone with the lighting snapshot). Grain character unchanged from w16 (tile not re-cut)."},
+{"from": "w16b", "severity": "medium", "issue": "Aisle-end doors too dark relative to cabinets (mostly lighting)", "status": "unchanged", "evidence": "q06 door (600-640 x 330-520) L170 -> L167 hp 0.084 -> 0.102; cabinet/door 0.77-0.79 vs c_27312 0.58-0.73. Lighting owner."},
+{"from": "w16a/b", "severity": "low", "issue": "Pillows, bundle film, O comforter, latch tongue, aisle-end seam, door-top aliasing", "status": "not fixed (not in this pass)", "evidence": "q08/q09 soft goods identical before/after."},
+{"from": "from_integration r2", "severity": "medium", "issue": "Header band reads as hammered metal", "status": "fixed", "evidence": "z_q10_band.png: dimples gone, smooth satin, hp 0.050 -> 0.062 (q10) is now edge/sheen, not texture."},
+{"from": "from_integration r3", "severity": "medium", "issue": "Shells / caps slate, 1.3-1.6x too light", "status": "fixed", "evidence": "q06 shells L96/65 -> L71/50, caps L128 -> L105; c_27312 L50-83, caps ~L98-121."}
+],
+"details": [
+{"detail": "Overall nested-pair layout, shells, privacy walls (aisle views)", "score": 8.7, "refs": ["c_27312", "c_27315", "q06", "q10"]},
+{"detail": "Shell / cap colour and finish", "score": 8.6, "refs": ["c_27312", "c_27314", "c_27315", "q06", "q08", "q10"]},
+{"detail": "Monument top / aisle cap / spine / plaques", "score": 8.3, "refs": ["c_27313", "c_27314", "q09"]},
+{"detail": "Aisle-end posts and door leaves", "score": 8.6, "refs": ["c_27312", "q06"]},
+{"detail": "Cabinet / table ash", "score": 8.1, "refs": ["c_27312", "c_27315", "q06", "q10"]},
+{"detail": "Seat: sofa, back, header band, slate flap", "score": 8.2, "refs": ["c_27315", "c_27312", "omaat_room_15", "omaat_room_31", "q08", "q10"]},
+{"detail": "Boarding bundle and pillows", "score": 7.8, "refs": ["omaat_room_15", "q08", "q09"]},
+{"detail": "Monitor, footwell, console", "score": 8.3, "refs": ["c_27316", "q07"]}
+],
+"issues": [
+{
+"severity": "low",
+"detail": "Header band colour drifted mauve-grey and dark against the slate flap",
+"problem": "Official and in-flight photos show the padded band in the same blue-grey as the flap and within ~10 % of its tone. #5d5e66 renders more violet and darker than the flap, so the band reads as a separate shell-coloured part.",
+"evidence": "q08 band/flap 0.72 (before 0.82), band h234 s0.14 vs flap h216 s0.16; q10 band L107 h231 vs flap L115 h222. c_27315 band L105-127 h218-221 s0.16 vs flap L119 h219; c_27312 header L113 h218 s0.21; omaat_room_15 band/flap 0.89, omaat_room_31 1.05.",
+"fix": "src/09c_room.js:22 keep r 0.45 and LAYER.plastic, change c '#5d5e66' -> '#68707c' (back to the flap's hue, slightly lighter than the old #656b73 to land band/flap ~0.9). Target q08 band (480-560 x 290-330) ~L115-120 h218-222 s0.15."
+},
+{
+"severity": "low",
+"detail": "Ash grain character (carried from w16a medium, downgraded: hue now matches)",
+"problem": "Pinstripe contrast still about half the photos; veneer bands read as soft arcs.",
+"evidence": "As w16a (tile unchanged); q06 cabinet R/B now 1.05, matching c_27315/c_27316 1.04.",
+"fix": "test/make_swatches.py HP['j_ash'] 60 -> 20, ALONG['j_ash'] 6 -> 14, re-cut tex_j_ash.png (shared with doors/bar - check them)."
+},
+{
+"severity": "low",
+"detail": "Soft goods and small hardware (carried from w16)",
+"problem": "Bundle film hidden, O comforter crisp T, latch tongue floating, aisle-end lower seam missing, door-top aliasing.",
+"evidence": "q08, q09 unchanged; see room_w16a.json for boxes.",
+"fix": "As listed in room_w16a.json (09c roomBundle / duvetSheet / belt tongue / aisle-end panel)."
+},
+{
+"severity": "low",
+"detail": "(lighting, not scored) q09 shells darker than the flash-lit c_27314; aisle doors still under-lit",
+"problem": "q09 shell walls L47-62 vs c_27314 L88-98; door/cabinet split weaker than c_27312.",
+"evidence": "q09 (250-520 x 240-330) L47, (650-900 x 250-320) L62; q06 door L167 vs c_27312 ~195.",
+"fix": "Lighting owner; do not lighten jShell for it (q06/q10 now match c_27312/c_27315)."
+}
+],
+"questions": [
+"Integration asked for s <= 0.08 shells; official c_27312/c_27314/c_27315 all measure s0.16-0.20 h212-243. Rater A recommends keeping the polishA violet-grey and recording the call in from_room.md so lighting does not re-request it.",
+"O-bed length (question 18) and the real-GPU anisotropic check (question 19) are still open."
+]
+}
