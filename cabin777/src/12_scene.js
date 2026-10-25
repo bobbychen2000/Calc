@@ -114,7 +114,10 @@ const MOODS = {
   // the door zones (q21 median 134 -> 142 vs ucr 86); the full step also took d06 (frame median 77 -> 89, kn_room_35 68)
   // past the level both raters had matched, and the integration rater reads the dd bins (L101) inside the photos' L76-124,
   // so 0.6 of it [D renders fixL7] (lighting r4 medium)
-  dining: { label: 'Dining', hemiTop: [0.62, 0.30, 0.11], hemiBot: [0.21, 0.10, 0.035], binLift: [0.055, 0.04, 0.02], wash: [0.30, 0.14, 0.05], led: [0.55, 0.042, 0.009], sideLed: [1.25, 0.10, 0.02], sideLow: 0.65, sideWall: [0.6, 2.2, 4.2], bandCut: 0.2, vault: [0.32, 0.145, 0.047], vaultE: [0.14, 1], lowTint: [1.0, 1.08, 1.2], lowGain: 0.8, fillLift: 0.15, lensCore: [0, 0.55, 0.15], scrSpill: 0.5, k: 0.9, exposure: 1.3, strips: true },
+  // QA r4 (light): tub: the recessed window tub keeps LIGHT_TUNE.tubWash of a pier's light where the window light is dim
+  // (mainFS tubRef) [V: ucr_the-room-cabin reveals L124-137 vs wall L147; q21 tub #b06a35 L117 s0.70 beside a pier at L190]
+  // (lighting r4 medium)
+  dining: { label: 'Dining', hemiTop: [0.62, 0.30, 0.11], hemiBot: [0.21, 0.10, 0.035], binLift: [0.055, 0.04, 0.02], wash: [0.30, 0.14, 0.05], led: [0.55, 0.042, 0.009], sideLed: [1.25, 0.10, 0.02], sideLow: 0.65, sideWall: [0.6, 2.2, 4.2], bandCut: 0.2, vault: [0.32, 0.145, 0.047], vaultE: [0.14, 1], lowTint: [1.0, 1.08, 1.2], lowGain: 0.8, fillLift: 0.15, lensCore: [0, 0.55, 0.15], scrSpill: 0.5, tub: true, k: 0.9, exposure: 1.3, strips: true },
   // night, QA r2: THE Room in service at night is near-black and neutral-warm; the light comes from the IFE screens, the
   // warm strip under each screen, small white reading lamps and amber PSU lamps [V: ucr_room-night-lighting ceiling
   // #1e1915, sidewall #24211c, bins #322a1f, PSU lamp #9e5e38, strip #ffeb97, mean RGB 39/34/33]. The blue night refs
@@ -151,8 +154,8 @@ const MOODS = {
   // [1.0, 1.3, 1.6] -> [1.0, 1.4, 1.95] [A: no ANA sunrise photo; dining's sources and levels]
   // QA r3 (light): as dining (lowTint [1.0, 1.08, 1.2] x0.8, hemiBot x1.4, vault floor / hue, bandCut 0.2) [A: no ANA
   // sunrise photo; dining's sources]
-  // QA r4 (light): binLift as dining [A: no ANA sunrise photo; dining's sources]
-  wake: { label: 'Sunrise', hemiTop: [0.62, 0.30, 0.16], hemiBot: [0.21, 0.10, 0.05], binLift: [0.055, 0.04, 0.02], wash: [0.30, 0.14, 0.07], led: [0.55, 0.05, 0.03], sideLed: [1.2, 0.11, 0.06], sideLow: 0.5, sideWall: [0.42, 2.25, 2.2], bandCut: 0.2, vault: [0.32, 0.145, 0.047], vaultE: [0.14, 1], lowTint: [1.0, 1.08, 1.2], lowGain: 0.8, fillLift: 0.15, lensCore: [0, 0.55, 0.15], k: 0.9, exposure: 1.3 },
+  // QA r4 (light): binLift and tub as dining [A: no ANA sunrise photo; dining's sources]
+  wake: { label: 'Sunrise', hemiTop: [0.62, 0.30, 0.16], hemiBot: [0.21, 0.10, 0.05], binLift: [0.055, 0.04, 0.02], wash: [0.30, 0.14, 0.07], led: [0.55, 0.05, 0.03], sideLed: [1.2, 0.11, 0.06], sideLow: 0.5, sideWall: [0.42, 2.25, 2.2], bandCut: 0.2, vault: [0.32, 0.145, 0.047], vaultE: [0.14, 1], lowTint: [1.0, 1.08, 1.2], lowGain: 0.8, fillLift: 0.15, lensCore: [0, 0.55, 0.15], tub: true, k: 0.9, exposure: 1.3 },
 };
 // winExp: the view behind the glass at interior exposure; cabin photos show day windows near-white with a glowing
 // reveal (tlfl_IMG_9217 / 9518, pane ~#eef3f8) [V]; eases back to 1 when the eye is at the window (looking out)
@@ -191,7 +194,9 @@ const AO_TUNE = { hemi: 0.22, bounce: 1.0, emitLens: 0.45, emitCtr: 0.35, kAttF:
 // QA r3 (integration): sheen = gain of the grazing sheen lobe on SHEEN materials (mainFS) [D: q17 / q16 flaps against
 // y_47303 / y_47301, q15 head-on unchanged]
 // QA r4: tubWash = floor of the recessed window tub, as a share of a pier's hemi + wash (lighting r4: amber reveals
-// vs ucr_the-room-cabin) [D]; lookOut = interior exposure cut at the glass (integration r4: q12 vs ucr wing view) [D]
+// vs ucr_the-room-cabin) [D], in the moods with tub: true (the amber phase) only: in Night and Blue it lit the tubs
+// flat and pale beside dark piers (q20 tub pixels L28 -> 55 vs ucr_room-night-lighting L23; bl16 / blue06 / nF03 alike,
+// fixL7 after4) [D]; lookOut = interior exposure cut at the glass (integration r4: q12 vs ucr wing view) [D]
 const LIGHT_TUNE = { cove: 1.0, sheen: 1.35, tubWash: 0.7, lookOut: 0.86 };
 // QA r3 (integration): floor contact map (computeAO): cell size (m; 6 m x 59 m -> 200 x 1973 texels, under the 2048
 // texture minimum), marking height above the floor and the darkening at a base (mainFS) [D]
@@ -827,7 +832,7 @@ class Scene {
     // exposed for the view shows them mid-tone below the sky [V: ucr_ana-business-class-wing-view reveal #816242-#7d6b55
     // L104-110, sky #4bb5fb L157]; seated window views (|x| < 2.45) are untouched [D]
     G.set('u_exposure', mood.exposure * (this.xray ? 1 : 1 - LIGHT_TUNE.lookOut * clamp((Math.abs(cam.pos[0]) - 2.45) / 0.25, 0, 1)));
-    G.set('u_binLo', mood.binLo ?? 1); G.set('u_monHemi', mood.monHemi ?? 1); G.set('u_tubWash', LIGHT_TUNE.tubWash); G.set('u_binLift', (mood.binLift || [0, 0, 0]).map((v) => v * mood.k));
+    G.set('u_binLo', mood.binLo ?? 1); G.set('u_monHemi', mood.monHemi ?? 1); G.set('u_tubWash', mood.tub ? LIGHT_TUNE.tubWash : 0); G.set('u_binLift', (mood.binLift || [0, 0, 0]).map((v) => v * mood.k));
     G.set('u_fill', this.fill ?? 0.45);   // QA r1: 0.7 flattened AO and the ceiling-to-floor falloff [V: c_27312 shell gradients]
     G.set('u_exterior', 0);
     G.set('u_skyTop', sky.skyTop);
