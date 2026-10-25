@@ -40,3 +40,9 @@
 12. **Fastener-row strength.** The near flaps and spoilers now carry dotted fastener rows from a synthetic dot tile (25 mm pitch).
     At window range they read as faint dotted lines, about 0.94 of the panel. The KN41 photo suggests about 0.80. Stronger rows
     would read as stitching in the far views, so the default keeps them subtle. Say if you want them bolder.
+
+## Wave 3e
+
+13. **Raked-tip upsweep.** The tip now narrows to a ~0.20 m point and curls up 0.12 m (KN41), which departs from the ACAP tip
+    station. Both w22 raters say KN41's outer LE sweeps up over a longer span. A port-side photo from rows 17-20A looking straight out
+    at the tip (JA795A if possible) would settle how far to take it.

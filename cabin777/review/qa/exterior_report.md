@@ -284,3 +284,41 @@ All of these are in `src/11_exterior.js` unless noted.
 
 The before/after sheet `exterior_before_after.jpg` shows the wave-3d start (r16) in row 1 and the final build in row 2. The views are
 w19A, w13A, w26K, w11A and n19A. It holds own renders only.
+
+## Wave 3e (2026-10-25, w20-w22): confirm and polish
+
+| round | build rated | rater A | rater B | mean |
+|---|---|---|---|---|
+| w20 | befdc88 (wave-3d final fixes 8b29416, first rating) | 8.3 | 8.5 | 8.4 |
+| w21 | aa173a1 (w20 fixes) | 8.4 | 8.6 | 8.5 |
+| w22 | 5aac2bd (w21 fixes) | **8.5** | **8.7** | 8.6 |
+
+**The exterior meets the bar.** Both raters are at 8.5 or above in w22, neither found a high-severity issue in any round of this
+wave, and A's only medium issue (the square raked tip, w20) is fixed. Every round gained 0.1 and none regressed (the w26K / w30K /
+w11K differences between rounds are the lighting loop's cloud deck). Exterior triangles: 29,980 -> 30,004 (+19 % over the
+wave-3 start of 25,160, cap +25 %).
+
+### What changed (all in `src/11_exterior.js`, no shared files)
+- **Raked tip.** The trailing edge used to run straight to STA 49.05 and end in a square 0.55 m tip chord. It now curves forward
+  through six points into a ~0.20 m tip (KN41 / _7331 show a point). `WING.crest` lifts the last 1.3 m by up to 0.12 m so the outer
+  LE sweeps up into the tip. Note: this departs from the ACAP tip station 49.11 quoted in the header (it reads as the tip TE);
+  real photos win on geometry per the brief. Planform A 7.5 -> 7.8, B 7.5 -> 8.1.
+- **Pylon fairing.** The dome front is rounded (`pow(smooth(1.65, 2.45), 0.6)`; it was a flat top with a chamfer), with a small dip
+  after the crown and hB^2.0 for a shallow saddle. The flank shade is graded up from the foot, and a 3 cm dark crease runs at the
+  foot. A 8.1 -> 8.3; A accepts the flat flank because _137 shows the same.
+- **Smudges.** The head is lighter (#484b4f) and the body steps down in two tapers (0.76 / 0.83 / 0.92 of the panel; it used to jump
+  from 0.65 to 0.90).
+- **Fastener rows.** The strip is #4e5053, so the rows read 0.80-0.85 of the panel (KN41 0.80). w17's worry about stitching in
+  the far views did not show up in w22.
+- The w20 round also confirmed the wave-3d final fixes: the 2 cm hinge band no longer dashes (0.83-0.91 of the cowl).
+
+### Left open (low, nothing worth +0.3 per either rater)
+- **Tip upsweep.** It is still shorter than in KN41 (A: start the lift at s 29.5 and raise it to 0.20 m; B: 0.18 from s 30.8). A
+  side-on 17-20A photo would settle it (question 13).
+- **Pylon foot crease.** It reads 0.97 of the flank against 0.89 in _137 (B: `0.16 * (1 - smooth(0, 0.06, dr))`).
+- **Saddle.** It barely shows in the silhouette (B: saddle factor 0.30 -> 0.38).
+- **Unchanged scores.** Livery 7.7-8.0, lights 7.5-7.7 and nacelle colour / inlet 8.0 have not moved for several rounds.
+
+The before/after sheet `exterior_before_after.jpg` shows the wave-3e start (r20) in row 1 and the w22 build in row 2. The views
+are w19A, w13A, c_nacelle_left and w17A. Row 3 is a plan close-up of the tip, w21 against w22. It holds own renders only. Ratings
+are in `exterior_w20*.json` to `exterior_w22*.json`.
