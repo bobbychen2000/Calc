@@ -339,7 +339,7 @@ from_* items (to lighting / integration):
 Code: `04_shaders.js`, `12_scene.js`, `13_app.js` (SSAO only at the Sharp quality). The run started on b65def4. The econ
 area committed w47-w51 during the run (`09a_econ.js`), so q15 / q16 / q17 / c15 are compared with base2 (this run's
 lighting files from b65def4 on the econ tree of 9c93549), every other view with the b65def4 renders. Renders in the
-scratchpad: qa/fixL8/before, base2, final (+ final2 for the amber views after the last underside change), experiments
+scratchpad: qa/fixL8/before, base2, final (+ final2: q21 / dd / d06 after the last underside change), experiments
 ss1-ss4 / f1-f4 (SSAO), v3, t1-t4 (half size, box means); tools in qa/fixL8/tools (metrics.py target boxes, cmp.py
 frame / thirds vs photo, thindark.py, time.js, exp3.js).
 
@@ -351,7 +351,7 @@ difference; lower is closer), before -> after:
   easing over ao 0.4 -> 0.05 (below) holds it at 34.
 - q20 69 -> 70 (0.9 % of pixels changed, |dL| > 6), q21 190 -> 192 (median and top third +1): within noise; q21 median
   135 against the rater's cap 138.
-- Not check views: c06 210 -> 138 (lalf_room_119), d06 63 -> 63, dd: see the amber item.
+- Not check views: c06 210 -> 138 (lalf_room_119), dd 85 -> 83, d06 63 -> 68 (see the amber item).
 
 Rater issues (L8):
 - lighting medium, Cruise bins at Boarding levels: done. `MOODS.cruise` hemiBot [0.24, 0.24, 0.28] -> [0.18, 0.18,
@@ -362,7 +362,11 @@ Rater issues (L8):
   - c15 centre-bin underside (330-600, 0-60) L183 -> 131 (target 110-130), outboard bins 195 -> 167.
 - lighting medium, amber bins dark and saturated from a seat: partly. binLift acts on the bin door faces only (outboard
   binO, centre cBin up to the bin tops at ~2.3 m; the flat undersides and PSU band keep the r4 level), at 2x the raters'
-  step: [0.055, 0.04, 0.02] -> [0.22, 0.15, 0.07] (Dining, Sunrise). Numbers in the final2 lines below.
+  step: [0.055, 0.04, 0.02] -> [0.22, 0.15, 0.07] (Dining, Sunrise). Before -> after (final2):
+  - d06 (standing, door faces) left bins L102 s0.66 -> L113 s0.62, right L135 s0.60 -> L147 s0.56; median 81 -> 81 (cap 85).
+  - dd (seated at 12H) left box L89 s0.69 -> L93 s0.67 (target >= 110, s <= 0.62: not met), right box L110 -> 108 (target
+    125-140: not met), PSU band (450-600, 0-40) L78 -> 78 (cap 85); median 83 -> 82. cmp score dd 85 -> 83, d06 63 -> 68
+    (top third 123 -> 130 vs kn_room_35 114: the lifted bin faces); q21 median 134 -> 135 (cap 138).
   - The dd boxes (seated at 12H) are mostly bin undersides seen from below, which the photos keep dark (ucr centre-bin
     underside L87, ff PSU band L65): lifting them with the doors took the dd left box to L110 s0.62 but the PSU band to
     L93 (cap 85; t2 x2), so the undersides stay at r4.

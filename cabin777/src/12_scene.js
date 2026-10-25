@@ -139,8 +139,9 @@ const MOODS = {
   // and at 2x the raters' full step, [0.055, 0.04, 0.02] -> [0.22, 0.15, 0.07] (G/R 0.68, paler than hemiBot, so the bins
   // desaturate): restricted to the doors, the step no longer lifts the seat level or the door zones; the raters' full step
   // moved the dd left bins only L89 -> 96 [V: ucr_the-room-cabin outboard bins #9e7240 L120 s0.59; ff_seat-with-door-closed
-  // bins #b99662 L154 s0.47 vs dd #7e5227 L89 s0.69] -> dd left bins L110 s0.62, d06 median 83 (kn_room_35 68, rater cap 85),
-  // q21 median 135 (cap 138) [D renders fixL8 t2] (lighting L8 medium)
+  // bins #b99662 L154 s0.47 vs dd #7e5227 L89 s0.69] -> d06 left bins L102 s0.66 -> L113 s0.62, right L135 -> 147 s0.56,
+  // median 81 (rater cap 85); dd (seated, mostly undersides, which keep the r4 level) L89 -> 93; q21 median 135 (cap 138)
+  // [D renders fixL8 final2] (lighting L8 medium)
   dining: { label: 'Dining', hemiTop: [0.62, 0.30, 0.11], hemiBot: [0.21, 0.10, 0.035], binLift: [0.22, 0.15, 0.07], wash: [0.30, 0.14, 0.05], led: [0.55, 0.042, 0.009], sideLed: [1.25, 0.10, 0.02], sideLow: 0.65, sideWall: [0.6, 2.2, 4.2], bandCut: 0.2, vault: [0.32, 0.145, 0.047], vaultE: [0.14, 1], lowTint: [1.0, 1.08, 1.2], lowGain: 0.8, fillLift: 0.15, lensCore: [0, 0.55, 0.15], scrSpill: 0.5, tub: true, k: 0.9, exposure: 1.3, strips: true },
   // night, QA r2: THE Room in service at night is near-black and neutral-warm; the light comes from the IFE screens, the
   // warm strip under each screen, small white reading lamps and amber PSU lamps [V: ucr_room-night-lighting ceiling
