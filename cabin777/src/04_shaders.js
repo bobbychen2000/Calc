@@ -36,7 +36,7 @@ uniform float u_lowGain; uniform vec3 u_monFill; uniform float u_cove; uniform f
 uniform vec4 u_extPtP[2]; uniform vec3 u_extPtC[2];
 uniform vec4 u_spotP[8]; uniform vec4 u_spotT[8]; uniform vec3 u_spotCol;
 uniform vec4 u_stripP[8]; uniform vec4 u_stripA[8]; uniform vec3 u_stripCol;
-uniform vec4 u_scrP[6]; uniform vec4 u_scrN[6]; uniform vec3 u_scrCol; uniform float u_fillLift; uniform vec3 u_lensCore; uniform float u_vaultFloor;
+uniform vec4 u_scrP[6]; uniform vec4 u_scrN[6]; uniform vec3 u_scrCol; uniform float u_fillLift; uniform vec3 u_lensCore; uniform vec2 u_vaultE;
 uniform sampler3D u_ao; uniform vec3 u_aoMin; uniform vec3 u_aoSize;
 uniform sampler2DArray u_detail; uniform vec4 u_layer[${N_LAYERS}]; uniform sampler2DArray u_photo; uniform float u_photoOn;
 uniform sampler2D u_atlas; uniform float u_screenStep; uniform float u_emisGain; uniform float u_screenGain;
@@ -180,12 +180,15 @@ void main(){
     // brightest thing in the frame, while its light on the wall (u_sideLed x u_sideWall) keeps the amber [V: ucr_the-room-
     // cabin lens #fefed6, ff_door-gap #fefeb6 beside the PSU band #603b1d]
     vec3 lc = u_exterior > 0.5 ? u_led : v_wpos.y < 2.0 ? u_sideLed + u_lensCore : mix(u_vault, u_led, smoothstep(0.3, 0.85, emis));
-    // QA r3 (light): the dim vault wash (y >= 2 m, e < 0.3) takes at least u_vaultFloor (amber moods 0.10): the THE Room
-    // vault between the bins (07b eFn 0.02-0.08) read dark brown under a pale seat level, while every amber photo shows
-    // the cove-washed ceiling as the brightest warm surface [V: ucr_the-room-cabin aisle ceiling #cc9957 / #cb9b53 L161
-    // s0.58, ff_seat-with-door-closed #d6ae72 L179 vs d_room_dining #663918-#714826 L67-81]; the door domes (e 0.06-0.2)
-    // already matched (q21 #d09748 vs ucr #c89552) and barely move [D]
-    float ev = u_exterior < 0.5 && v_wpos.y >= 2.0 && emis < 0.3 ? max(emis, u_vaultFloor) : emis;
+    // QA r3 (light): the dim vault / cove wash (y >= 2 m, e < 0.5) is clamped to u_vaultE per mood (floor, cap).
+    // Amber floor 0.10: the THE Room vault between the bins (07b eFn 0.02-0.08) read dark brown under a pale seat level,
+    // while every amber photo shows the cove-washed ceiling as the brightest warm surface [V: ucr_the-room-cabin aisle
+    // ceiling #cc9957 / #cb9b53 L161 s0.58, ff_seat-with-door-closed #d6ae72 L179 vs d_room_dining #663918-#714826
+    // L67-81]; the door domes (e 0.06-0.2) already matched (q21 #d09748 vs ucr #c89552) and barely move. Night cap 0.12:
+    // the cove panel (07b CEILMAT.cove e 0.36) stayed the brightest surface after the screens, while the night photo's
+    // ceiling is dark throughout [V: ucr_room-night-lighting ceiling L13-55, cove panel <= #3f352f vs q20 #a39a8c L155];
+    // the mid-vault (e 0.02-0.08) keeps its level (q20 L28 vs ucr L21-27) [D]
+    float ev = u_exterior < 0.5 && v_wpos.y >= 2.0 && emis < 0.5 ? clamp(emis, u_vaultE.x, u_vaultE.y) : emis;
     emissive = lc * ev * 6.0;
     base *= 0.3;
   } else if (layer > 0 && u_detailOn > 0.5) {

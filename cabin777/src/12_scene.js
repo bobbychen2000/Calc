@@ -81,7 +81,7 @@ const MOODS = {
   // dining_room ash at L84 and lowTint [1.0, 1.5, 2.6] read s0.4-0.5 against ucr's foreground ash #9a6330 s0.69, so
   // lowGain 1.4 (the photos are auto-exposed: seat level ~0.7-0.85 of the ceiling, the render 0.55) with lowTint [1.0,
   // 1.42, 2.3]; vault x0.9 (q21 door dome L164 s0.64 vs ucr #c89552 L156)
-  dining: { label: 'Dining', hemiTop: [0.62, 0.30, 0.11], hemiBot: [0.15, 0.07, 0.025], wash: [0.30, 0.14, 0.05], led: [0.55, 0.042, 0.009], sideLed: [1.25, 0.10, 0.02], sideLow: 0.65, sideWall: [0.5, 1.5, 2.5], bandCut: 0.3, vault: [0.36, 0.135, 0.04], vaultFloor: 0.10, lowTint: [1.0, 1.08, 1.2], lowGain: 0.8, fillLift: 0.15, lensCore: [0, 0.55, 0.15], scrSpill: 0.5, k: 0.9, exposure: 1.3, strips: true },
+  dining: { label: 'Dining', hemiTop: [0.62, 0.30, 0.11], hemiBot: [0.15, 0.07, 0.025], wash: [0.30, 0.14, 0.05], led: [0.55, 0.042, 0.009], sideLed: [1.25, 0.10, 0.02], sideLow: 0.65, sideWall: [0.5, 1.5, 2.5], bandCut: 0.3, vault: [0.36, 0.135, 0.04], vaultE: [0.10, 1], lowTint: [1.0, 1.08, 1.2], lowGain: 0.8, fillLift: 0.15, lensCore: [0, 0.55, 0.15], scrSpill: 0.5, k: 0.9, exposure: 1.3, strips: true },
   // night, QA r2: THE Room in service at night is near-black and neutral-warm; the light comes from the IFE screens, the
   // warm strip under each screen, small white reading lamps and amber PSU lamps [V: ucr_room-night-lighting ceiling
   // #1e1915, sidewall #24211c, bins #322a1f, PSU lamp #9e5e38, strip #ffeb97, mean RGB 39/34/33]. The blue night refs
@@ -101,11 +101,11 @@ const MOODS = {
   // as the photo (wall L25-43 vs #494f67 L80, ceiling L39 vs #474647 L71) [D: renders r1b]
   // QA r2 (light): the IFE screens light their surround (scrSpill 1, mainFS u_scrP) [V: ml_IMG_20200208_1919534 THE Suite
   // housing #251e1e, ucr_room-night-lighting near wall #302218]; emisGain 0.55 = the r2 night sign level
-  sleep: { label: 'Night', hemiTop: [0.030, 0.027, 0.024], hemiBot: [0.010, 0.009, 0.008], wash: [0.012, 0.010, 0.008], led: [0.030, 0.025, 0.020], sideLed: [0.018, 0.021, 0.032], sideLow: 0.6, vault: [0.050, 0.043, 0.035], monFill: [0.060, 0.055, 0.047], cove: 0.35, k: 1, exposure: 2.5, readingLights: true, strips: true, screenGain: 0.6, scrSpill: 1, emisGain: 0.55 },
+  sleep: { label: 'Night', hemiTop: [0.030, 0.027, 0.024], hemiBot: [0.010, 0.009, 0.008], wash: [0.012, 0.010, 0.008], led: [0.030, 0.025, 0.020], sideLed: [0.018, 0.021, 0.032], sideLow: 0.6, vault: [0.050, 0.043, 0.035], vaultE: [0, 0.12], monFill: [0.060, 0.055, 0.047], cove: 0.35, k: 1, exposure: 2.5, readingLights: true, strips: true, screenGain: 0.6, scrSpill: 1, emisGain: 0.55 },
   // QA r1 (light): sunrise follows dining at seat level (sideWall = hemiTop share, sideLow 0.5). QA r2: as dining, the
   // fill lift off the PSU band (fillLift 0.15), the saturated vault, the pale lens core, lowGain 0.6 -> 1.4 and lowTint
   // [1.0, 1.3, 1.6] -> [1.0, 1.4, 1.95] [A: no ANA sunrise photo; dining's sources and levels]
-  wake: { label: 'Sunrise', hemiTop: [0.62, 0.30, 0.16], hemiBot: [0.15, 0.07, 0.035], wash: [0.30, 0.14, 0.07], led: [0.55, 0.05, 0.03], sideLed: [1.2, 0.11, 0.06], sideLow: 0.5, sideWall: [0.42, 2.25, 2.2], bandCut: 0.3, vault: [0.36, 0.135, 0.04], vaultFloor: 0.10, lowTint: [1.0, 1.08, 1.2], lowGain: 0.8, fillLift: 0.15, lensCore: [0, 0.55, 0.15], k: 0.9, exposure: 1.3 },
+  wake: { label: 'Sunrise', hemiTop: [0.62, 0.30, 0.16], hemiBot: [0.15, 0.07, 0.035], wash: [0.30, 0.14, 0.07], led: [0.55, 0.05, 0.03], sideLed: [1.2, 0.11, 0.06], sideLow: 0.5, sideWall: [0.42, 2.25, 2.2], bandCut: 0.3, vault: [0.36, 0.135, 0.04], vaultE: [0.10, 1], lowTint: [1.0, 1.08, 1.2], lowGain: 0.8, fillLift: 0.15, lensCore: [0, 0.55, 0.15], k: 0.9, exposure: 1.3 },
 };
 // winExp: the view behind the glass at interior exposure; cabin photos show day windows near-white with a glowing
 // reveal (tlfl_IMG_9217 / 9518, pane ~#eef3f8) [V]; eases back to 1 when the eye is at the window (looking out)
@@ -175,7 +175,7 @@ class Scene {
       glow: gl.program(SH.glowVS, SH.glowFS),
     };
     this.emptyVAO = gl.gl.createVertexArray();
-    gl.use(this.progs.main); gl.set('u_fillLift', 1); gl.set('u_sheen', LIGHT_TUNE.sheen);   // the studio may draw before the first cabin frame
+    gl.use(this.progs.main); gl.set('u_fillLift', 1); gl.set('u_sheen', LIGHT_TUNE.sheen); gl.set('u_vaultE', [0, 1]);   // the studio may draw before the first cabin frame
     this.buildGlows();
     const sm = this.shell.meshes;
     this.opaque = [
@@ -657,7 +657,7 @@ class Scene {
     }
     G.set('u_scrP', scp); G.set('u_scrN', scn);
     G.set('u_scrCol', [0.30, 0.40, 0.55].map((v) => v * 2.7 * (mood.screenGain || 0.8) * spill));
-    G.set('u_fillLift', mood.fillLift ?? 1); G.set('u_lensCore', mood.lensCore || [0, 0, 0]); G.set('u_vaultFloor', mood.vaultFloor || 0);
+    G.set('u_fillLift', mood.fillLift ?? 1); G.set('u_lensCore', mood.lensCore || [0, 0, 0]); G.set('u_vaultE', mood.vaultE || [0, 1]);
     G.set('u_winGlow', winGlow);
     G.tex('u_ao', 1, this.ao.tex, gl.TEXTURE_3D);
     G.set('u_aoMin', this.ao.min);
@@ -707,7 +707,7 @@ class Scene {
       G.draw(this.ext.mesh);
       G.set('u_extBounce', [0, 0, 0]); G.set('u_extPtP', new Float32Array(8));   // the studio (same program) keeps its plain fill
     }
-    G.set('u_toe', 0); G.set('u_fillLift', 1); G.set('u_vaultFloor', 0);   // ... and its plain tone, fill lift and vault (14_studio renders through the same program)
+    G.set('u_toe', 0); G.set('u_fillLift', 1); G.set('u_vaultE', [0, 1]);   // ... and its plain tone, fill lift and vault (14_studio renders through the same program)
     gl.depthFunc(gl.LEQUAL);
     gl.depthMask(false);
     const S = this.progs.sky;
