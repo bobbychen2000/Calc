@@ -91,10 +91,10 @@ const MOODS = {
   // s0.71; ff_seat-with-door-closed ceiling #d6ae72; kn_room_36 reveals #68411b, ash #7b4710 s0.87]. Now lowTint [1.0,
   // 1.08, 1.2] x0.8 (raters' fit), the vault wash floored at e 0.14 (mainFS u_vaultE) in a paler vault hue [0.32, 0.145,
   // 0.047] (G/R 0.45, was 0.38), hemiBot x1.4 (bin undersides), sideWall [0.6, 2.2, 4.2] / bandCut 0.2 (the wall under
-  // the lens less red). Renders r3 [D]: dd (12H) ash #8b5c2c-#90612e L99-103 s0.68, wall at the window tops L131 s0.55,
-  // bin undersides L74-83 (photo L96; the vault is out of this frame); d06 vault L140-146 s0.65 (was L68-73 s0.80), bins
-  // L153-164; q21 door dome #d0a254 s0.59 (ucr #c89552 s0.59), closed-shade pier L136-171 s0.58-0.66 (was L161-199
-  // s0.32-0.42)
+  // the lens less red). Renders r3 [D]: dd (12H) ash #8f602e L103 s0.68 (was #b89c70 L160 s0.39), wall at the window
+  // tops #b07f50 L134 s0.54, bin undersides L74-84 (photo L96; the vault is out of this frame); d06 vault L140-147 s0.64
+  // (was L68-73 s0.80), bins L152-163; q21 door dome #cd9e51 s0.60 (ucr #c89552 s0.59), closed-shade pier L139-174
+  // s0.57-0.65 (was L161-199 s0.32-0.42)
   dining: { label: 'Dining', hemiTop: [0.62, 0.30, 0.11], hemiBot: [0.21, 0.10, 0.035], wash: [0.30, 0.14, 0.05], led: [0.55, 0.042, 0.009], sideLed: [1.25, 0.10, 0.02], sideLow: 0.65, sideWall: [0.6, 2.2, 4.2], bandCut: 0.2, vault: [0.32, 0.145, 0.047], vaultE: [0.14, 1], lowTint: [1.0, 1.08, 1.2], lowGain: 0.8, fillLift: 0.15, lensCore: [0, 0.55, 0.15], scrSpill: 0.5, k: 0.9, exposure: 1.3, strips: true },
   // night, QA r2: THE Room in service at night is near-black and neutral-warm; the light comes from the IFE screens, the
   // warm strip under each screen, small white reading lamps and amber PSU lamps [V: ucr_room-night-lighting ceiling
@@ -118,8 +118,8 @@ const MOODS = {
   // QA r3 (light): led [0.050, 0.042, 0.034] -> [0.030, 0.025, 0.020] and the cove / vault wash capped at e 0.09
   // (vaultE): the cove panel over the outboard bins was the brightest surface after the screens [V: ucr_room-night-
   // lighting ceiling L13-55 throughout vs q20 panel #a39a8c L155]; with the screen spill kept below 1.5 m (mainFS) the
-  // bins are back to warm dark [V: ucr outboard bins #2f271e L40 h31]: q20 centre bins #33302c L49 h29, outboard #2b2824
-  // L40 h30, mid-vault L28, median 32 [D render r3]
+  // bins are back to warm dark [V: ucr outboard bins #2f271e L40 h31]: q20 centre bins #33302c L49 h29 (was #424448
+  // L68 h225), outboard #2a2724 L40 h30, cove panel L69 (was L117), mid-vault L28, median 32 [D render r3]
   sleep: { label: 'Night', hemiTop: [0.030, 0.027, 0.024], hemiBot: [0.010, 0.009, 0.008], wash: [0.012, 0.010, 0.008], led: [0.030, 0.025, 0.020], sideLed: [0.018, 0.021, 0.032], sideLow: 0.6, vault: [0.050, 0.043, 0.035], vaultE: [0, 0.09], monFill: [0.060, 0.055, 0.047], cove: 0.35, k: 1, exposure: 2.5, readingLights: true, strips: true, screenGain: 0.6, scrSpill: 1, emisGain: 0.55 },
   // QA r1 (light): sunrise follows dining at seat level (sideWall = hemiTop share, sideLow 0.5). QA r2: as dining, the
   // fill lift off the PSU band (fillLift 0.15), the saturated vault, the pale lens core, lowGain 0.6 -> 1.4 and lowTint
