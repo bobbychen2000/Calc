@@ -15,6 +15,7 @@ class App {
     this.touch = coarse;
     this.quality = store.get('quality', coarse ? 'balanced' : 'high');
     this.scene = new Scene(this.G, { quality: this.quality === 'low' ? 'low' : 'high' });
+    this.scene.ssaoOn = this.quality === 'high';   // QA L8: the contact-AO depth pre-pass only at Sharp (phones open on Balanced)
     this.L = this.scene.layout;
     this.mode = 'walk';
     // start: standing at door 1 looking aft toward THE Suite
@@ -500,7 +501,7 @@ class App {
     const qRow = $('#qualityRow');
     for (const [k, t] of [['low', 'Battery'], ['balanced', 'Balanced'], ['high', 'Sharp']]) {
       const b = document.createElement('button'); b.className = 'chip'; b.textContent = t; b.dataset.quality = k;
-      b.addEventListener('click', () => { this.quality = k; store.set('quality', k); this.scene.q = k === 'low' ? 'low' : 'high'; this.dynScale = 1; this.resize(); this.syncChips(); });
+      b.addEventListener('click', () => { this.quality = k; store.set('quality', k); this.scene.q = k === 'low' ? 'low' : 'high'; this.scene.ssaoOn = k === 'high'; this.dynScale = 1; this.resize(); this.syncChips(); });
       qRow.appendChild(b);
     }
     $('#cardClose').addEventListener('click', () => this.closeCard());

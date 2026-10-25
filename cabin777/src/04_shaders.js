@@ -150,12 +150,14 @@ vec3 coveSpec(vec3 P, vec3 N, vec3 V, vec3 R, float rough, vec3 F0, float NdV){
   }
   return s;
 }
-// QA L8 (integration): small-radius screen-space AO from a half-size depth pre-pass (12_scene render, u_sDepth): 8 taps
-// on a disc of u_ssao.x m (0.05) at the fragment's depth, golden-angle spiral turned per 2 x 2 pixel block; each tap is
-// put back in world space (u_sProj = proj[0], [5], [10], [14]; u_sFwd / Right / Up = camera basis) and occludes by the
-// height of its point over the fragment's face plane (Nf, from the position derivatives: the true triangle plane, so a
-// flat face never self-occludes), minus a 6 mm bias, faded out at the 0.10-0.15 m range check. Returns the occluded
-// share 0-1. The 8 cm AO volume and the floor contact map cannot hold the cm-scale dark lines at shell edges,
+// QA L8 (integration): small-radius screen-space AO from a depth pre-pass (12_scene render, u_sDepth): 8 taps on a disc of
+// u_ssao.x m (0.05) at the fragment's depth, a golden-angle spiral (u_sDither 1 turns it per 2 x 2 pixel block; 0, the
+// default: one pattern, no dot texture); each tap is put back in world space (u_sProj = proj[0], [5], [10], [14]; u_sFwd /
+// Right / Up = camera basis) and occludes by the angle of its point over the fragment's face plane (Nf, from the position
+// derivatives: the true triangle plane, so a flat face never self-occludes), less a 6 mm bias and an angle bias u_sAng
+// (0.25: the facets of coarse curved lofts, e.g. the window tubs, drew dark seams at 0), faded out over 0.05-0.10 m
+// (u_ssao.w; 0.15 left grey halos on a wall ~10 cm behind the PY headrests, fixL8 f2). Returns the occluded share 0-1.
+// The pre-pass is full size: at half size the snapped taps drew half-res stair steps on the bin faces (fixL8 f1). The 8 cm AO volume and the floor contact map cannot hold the cm-scale dark lines at shell edges,
 // cushion-to-shell gaps, panel splits and seat bases that outline every unit in the photos [V: thin dark-line share
 // q13 0.55 vs py_37302 2.77 %, q06 1.81 vs c_27312 4.77, q05 0.89 vs f_17313 2.21] (integration L8 medium) [D]
 float ssaoF(vec3 P, vec3 Nf){
@@ -386,7 +388,7 @@ void main(){
     float coolW = max((1.0 - smoothstep(0.06, 0.25, xLin - abs(v_wpos.x))) * facingIn, max(recd, 0.5 * binO));
     hBot = mix(u_hemiBotN, u_hemiBot, coolW);
     vec3 wsh = mix(u_washN, u_wash, coolW);
-    vec3 hemi = mix(hBot + u_binLift * max(binO, cBin) * (1.0 - smoothstep(0.5, 0.9, down)), u_hemiTop, up);
+    vec3 hemi = mix(hBot + u_binLift * max(binO, cBin) * (1.0 - smoothstep(0.85, 0.98, down)), u_hemiTop, up);
     // QA r1 (light): sz = 1 where an outboard bin and its lens stand (08_bins builds them in the seat zones only), from
     // the zone row of the window LUT. The lens band, its colour and the bin overhang shade stop at the door, galley and
     // lav zones, which stay neutral white [V: sany_10 band #525d94 under the bins while the door-3 / monument zone
@@ -539,8 +541,11 @@ void main(){
     // and the local lights below stay out; x0.8 and fading out above 1.9-2.3 m, so the vault and cove stay clean
     // (u_ssao.y = strength, 0 = off: x-ray, low quality, studio) [D]. Not on the window reveals (recd): they are lit by the
     // pane, and the lining's lip standing proud of the tub drew a dark crescent inside every tub (fixL8 ss3 / ss4), where
-    // the photos show the moulding continuous and pale [V: c_27312 reveal sides #d7dbdf / #e2e5e8]
-    if (u_ssao.y > 0.0 && recd < 0.99) amb *= mix(1.0, max(1.0 - u_ssao.y * ssaoF(v_wpos, Nf), 0.0), u_sMix * (1.0 - smoothstep(1.9, 2.3, v_wpos.y)) * (1.0 - recd));
+    // the photos show the moulding continuous and pale [V: c_27312 reveal sides #d7dbdf / #e2e5e8]. Eased out where the AO
+    // volume is already low (ao 0.45 -> 0.1: footwells, under the consoles), which the crevice terms above darken: stacked,
+    // the q09 darks fell under the photo's (p5 36 -> 25 vs c_27314 36) [D fixL8 f2]
+    float sW = u_sMix * (1.0 - smoothstep(1.9, 2.3, v_wpos.y)) * (1.0 - recd) * smoothstep(0.02, 0.3, ao);
+    if (u_ssao.y > 0.0 && sW > 0.01) amb *= mix(1.0, max(1.0 - u_ssao.y * ssaoF(v_wpos, Nf), 0.0), sW);
     // reading lights (night): warm cone from the lamp lens to the seat, 0.35 m pool [V: tlfl_IMG_9377 pools on the bed]
     for (int i = 0; i < 8; i++) {
       if (u_spotP[i].w < 0.5) continue;

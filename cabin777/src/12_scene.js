@@ -46,7 +46,7 @@ const MOODS = {
   // reveals and (half) the outboard bin doors (mainFS coolW); the seat level and the rest take hemiBotN / washN, the pre-r4
   // values [V: q06 seat zone B-R +16 vs c_27312 +8, shell tops +23 vs +11; q15 bins +8 vs y_47300 +0..+2; q16 wall +10 vs
   // y_47301 +14 kept] (integration L8 low, lighting L8 medium). tubSky [share, level]: the upper window tub takes the day
-  // glow's hue at 0.65 of its light (mainFS) [V: y_47303 upper tub #a4a9be L170 (B-R +25) vs q17 L188-208 (+3..+7)]. sideLed
+  // glow's hue at 0.6 of its light (mainFS) [V: y_47303 upper tub #a4a9be L170 (B-R +25) vs q17 L188-208 (+3..+7)]. sideLed
   // [0.48, 0.53, 0.66] -> [0.50, 0.57, 0.78], so the band under the lens keeps its blue after the ACES shoulder [V: y_47300
   // lens band rows 130-140 #e3eaf4 / #e2e8f5 (B-R +14..+18) vs q15 #dadbdd (+2)] (lighting L8 medium) [D renders fixL8]
   boarding: { label: 'Boarding', hemiTop: [0.97, 0.99, 1.03], hemiBot: [0.31, 0.35, 0.47], wash: [0.23, 0.255, 0.32], hemiBotN: [0.36, 0.37, 0.40], washN: [0.25, 0.26, 0.28], tubSky: [1.0, 0.6], led: [1.0, 0.98, 0.92], sideLed: [0.50, 0.57, 0.78], bandCut: 0.15, binLo: 0.8, k: 1.05, exposure: 1.38, toe: 1 },
@@ -222,8 +222,10 @@ const AO_TUNE = { hemi: 0.22, bounce: 1.0, emitLens: 0.45, emitCtr: 0.35, kAttF:
 // flat and pale beside dark piers (q20 tub pixels L28 -> 55 vs ucr_room-night-lighting L23; bl16 / blue06 / nF03 alike,
 // fixL7 after4) [D]; lookOut = interior exposure cut at the glass (integration r4: q12 vs ucr wing view) [D]
 // QA L8 (integration): ssao = [disc radius m, strength, bias m, range m] of the screen-space contact AO (mainFS ssaoF,
-// depth pre-pass in render) [D: the integration rater's values; thin dark-line share vs c_27312 / py_37302 / f_17313]
-const LIGHT_TUNE = { cove: 1.0, sheen: 1.35, sheenTint: 0.3, tubWash: 0.7, lookOut: 0.86, ssao: [0.05, 0.7, 0.006, 0.15] };
+// depth pre-pass in render), ssaoMix = its weight on the diffuse ambient, ssaoAng = angle bias, ssaoDither = per-2x2 turn
+// [D renders fixL8 ss1-f3: the integration rater's strength 0.7 / range 0.15 moved the q06 thin dark-line share only 1.81
+// -> 2.00 % (c_27312 4.77) and q13 0.55 -> 0.58 (py_37302 2.77); strength 6 / range 0.10 / mix 0.9 reach q06 ~3.5, q13 ~1.6]
+const LIGHT_TUNE = { cove: 1.0, sheen: 1.35, sheenTint: 0.3, tubWash: 0.7, lookOut: 0.86, ssao: [0.05, 6, 0.006, 0.10], ssaoMix: 0.9, ssaoAng: 0.25, ssaoDither: 0 };
 // QA r3 (integration): floor contact map (computeAO): cell size (m; 6 m x 59 m -> 200 x 1973 texels, under the 2048
 // texture minimum), marking height above the floor and the darkening at a base (mainFS) [D]
 const CONTACT = { cell: 0.03, h: 0.2, k: 0.55 };
@@ -690,8 +692,8 @@ class Scene {
     return V3.norm([Math.sin(az) * Math.cos(el), Math.sin(el), -Math.cos(az) * Math.cos(el)]);
   }
 
-  // QA L8 (integration): half-size depth target for the screen-space AO pre-pass (as GL.shadowTarget, but sampled as a
-  // plain depth texture: no compare mode, nearest; 24 bit, since 16 bit steps ~8 mm at 4 m with the 0.03 m near plane)
+  // QA L8 (integration): depth target for the screen-space AO pre-pass (as GL.shadowTarget, but sampled as a plain depth
+  // texture: no compare mode, nearest; 24 bit, since 16 bit steps ~8 mm at 4 m with the 0.03 m near plane)
   depthTarget(w, h) {
     const gl = this.gl.gl;
     if (this.sDepth) { gl.deleteTexture(this.sDepth.tex); gl.deleteFramebuffer(this.sDepth.fb); }
@@ -770,9 +772,10 @@ class Scene {
       this.lodCam = { pos: [...cam.pos], fwd: [...cam.fwd], xray: this.xray };
     }
     const vp = M4.mul(cam.proj, cam.view);
-    // QA L8 (integration): depth pre-pass at half the canvas size for the screen-space contact AO (mainFS ssaoF): the
-    // opaque cabin, depth only, through the shadow depth program. Not in x-ray or at low quality [D]
-    let ssao = !this.xray && this.q !== 'low' && LIGHT_TUNE.ssao[1] > 0;
+    // QA L8 (integration): depth pre-pass at the canvas size for the screen-space contact AO (mainFS ssaoF): the opaque
+    // cabin, depth only, through the shadow depth program (a vertex pass; the depth-only fill is cheap). Only at the Sharp
+    // quality (ssaoOn, 13_app.js: phones open on Balanced and keep their frame time); not in x-ray [D]
+    let ssao = !this.xray && this.q !== 'low' && this.ssaoOn !== false && LIGHT_TUNE.ssao[1] > 0;
     if (ssao) {
       const sw = w, sh = h;
       if (!this.sDepth || this.sDepth.w !== sw || this.sDepth.h !== sh) this.sDepth = this.depthTarget(sw, sh);
