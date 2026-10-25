@@ -1,0 +1,127 @@
+{
+ "area": "shell",
+ "rater": "A",
+ "round": "w16",
+ "score": 8.5,
+ "summary": "The J carpet is fixed. The q06 aisle now reads as a fine dark mauve-brown heather and matches the real c_27312 aisle almost exactly in colour and texture. There is no repeat, moire or stretching. Nothing else in the shell changed. The skeptic's remaining gap is the F and door cross-aisle carpets, which still use the flat procedural fabric layer that the J carpet just left, so they now stand out against J. The overall score stays 8.5; the improvement to the J carpet is offset by the F/door carpet inconsistency it exposes.",
+ "previousIssues": [
+  {
+   "id": "w14a lighting: cream finishes render dead neutral",
+   "severity": "medium",
+   "status": "not fixed (lighting; the integrator declined it in fixed_integration.md, and the shell albedos are already cream)"
+  },
+  {
+   "id": "r2/r3 THE Room carpet reads as flat brown paint",
+   "severity": "medium",
+   "status": "fixed. q06 near aisle (505-575, 440-560): high-pass std 0.43 -> 7.51, Lstd 1.9 -> 8.1, rgb (66,55,51) -> (64,54,54), R-B 15 -> 10. The c_27312 aisle (515-560, 380-470) is rgb (65,55,55), R-B 10, high-pass 4.6 (JPEG-softened)"
+  },
+  {
+   "id": "w14/w15 door viewing window short / housing overlaps bezel",
+   "severity": "low",
+   "status": "not fixed (unchanged)"
+  },
+  {
+   "id": "w14/w15 blackout pleat close-up contrast about half the photo's",
+   "severity": "low",
+   "status": "not fixed"
+  },
+  {
+   "id": "w14/w15 sidewall weave, vinyl speckle, PY/Y tub-floor light card, grille pitch",
+   "severity": "low",
+   "status": "not fixed (unchanged)"
+  }
+ ],
+ "details": [
+  {
+   "detail": "sidewall",
+   "score": 8.0,
+   "note": "Unchanged: clean satin with seams every second window and no weave (s01, s05)."
+  },
+  {
+   "detail": "window tubs/reveals",
+   "score": 8.4,
+   "note": "Unchanged. The F/J short bowl and LED pill are right. The PY/Y tub is right, but a light card remains on the tub floor."
+  },
+  {
+   "detail": "shades electric",
+   "score": 8.4,
+   "note": "Unchanged. The pleats read right at distance in s05; close-up contrast is half the photo's."
+  },
+  {
+   "detail": "shades manual",
+   "score": 8.5,
+   "note": "Unchanged. The half, closed and open states read right."
+  },
+  {
+   "detail": "dado/grilles",
+   "score": 8.3,
+   "note": "Unchanged."
+  },
+  {
+   "detail": "carpet J",
+   "score": 8.7,
+   "note": "Fine heather with light flecks, in a mauve-brown that matches c_27312 within 2 levels per channel. Row-mean autocorrelation over 3 aisle bands shows no peak above 0.25, so no tile repeat. Far-aisle high-pass is 3.0-3.9 and the near aisle is 7.9, with no moire or shimmer. Isotropic, with no streaks. Slightly more texture contrast than the JPEG photo up close (7.5 vs 4.6), which is acceptable. Little J carpet is visible in the other J views (q07, s01, s05)."
+  },
+  {
+   "detail": "carpet Y/PY",
+   "score": 8.4,
+   "note": "Unchanged navy heather (q16 aisle rgb 37,45,65, high-pass 9.6)."
+  },
+  {
+   "detail": "carpet F",
+   "score": 7.8,
+   "note": "Still the flat procedural fabric layer. q03 F floor (800-845, 515-570) has high-pass 0.53, the same flat-paint look the J carpet had. Next to the new J heather the inconsistency is visible."
+  },
+  {
+   "detail": "door surrounds/window",
+   "score": 8.3,
+   "note": "Unchanged. The viewing window is slightly short, and the housing has no gap to the bezel."
+  },
+  {
+   "detail": "vinyl",
+   "score": 8.2,
+   "note": "Unchanged grey vinyl in ra_door2floor (L101, high-pass 2.8), with low speckle. The brown door-bay carpet strip by the door is flat: high-pass 1.9 in ra_door2floor and 0.42 in s06."
+  }
+ ],
+ "issues": [
+  {
+   "id": "w16a-1",
+   "severity": "medium",
+   "detail": "carpet F and door cross-aisle carpet are still flat procedural fabric",
+   "evidence": "High-pass std (box-blur 2): q03 F floor 0.53, s06 door-bay carpet 0.42, ra_door2floor door carpet 1.89. Compare the J aisle at 7.5 and the Y aisle at 9.6, and real carpet in c_27312 / c_27315 at 4.6-6.1. Mean F rgb is (58,46,39), door (67,57,48). Hue is fine; texture is missing.",
+   "fix": "src/07_shell.js lines 36 and 40: change carpetF to { c: '#56493f', r: 0.95, l: LAYER.jCarpet } and doorCarpet to { c: '#5a5045', r: 0.95, l: LAYER.jCarpet }. The j_carpet tile is luminance-only, so the albedo keeps the hue. Re-check the means after the change: the J switch moved the mean by about 1 L. If the F carpet should be a distinct pattern, cut an 'f_carpet' tile in test/make_swatches.py from an official F photo's floor (c_2730x suite floor) the same way as j_carpet, and add layer 38 in 03_tex.js."
+  },
+  {
+   "id": "w16a-2",
+   "severity": "low",
+   "detail": "The J carpet is slightly busier than the photo up close",
+   "evidence": "q06 near aisle high-pass 7.5 vs c_27312 near-aisle 4.6 (the photo is JPEG-softened; c_27315 floor is 6.1). It does not read wrong.",
+   "fix": "Optional: LAYER_PARAMS[37] gain 1.4 -> 1.2 in src/03_tex.js (one-line shared key)."
+  },
+  {
+   "id": "w15-carry",
+   "severity": "low",
+   "detail": "Door viewing window short / housing overlap; blackout pleat contrast; sidewall weave; vinyl speckle; PY/Y tub-floor card; grille pitch",
+   "evidence": "Unchanged since w15 (see shell_w15a/b).",
+   "fix": "As in w15a."
+  },
+  {
+   "id": "lighting-carry",
+   "severity": "low",
+   "detail": "[lighting] Neutral creams, flat door glass, near-black under-seat grille",
+   "evidence": "Unchanged.",
+   "fix": "Lighting area."
+  }
+ ],
+ "refs": [
+  "ref/ana/c_27312-lang-multi.jpg",
+  "ref/ana/c_27315-lang-multi.jpg",
+  "/tmp/claude-0/-home-user-Calc/acac3bf3-e380-59da-8cd3-2870df596769/scratchpad/ra16/carpet_cmp.png",
+  "/tmp/claude-0/-home-user-Calc/acac3bf3-e380-59da-8cd3-2870df596769/scratchpad/ra16/aisle_zoom.png",
+  "/tmp/claude-0/-home-user-Calc/acac3bf3-e380-59da-8cd3-2870df596769/scratchpad/ra16/tile2x2.png"
+ ],
+ "webSearch": "OMAAT ANA 777 'The Room' review photos downloaded to ref/web/shell/dl/ (bc4, bc9-16); none showed the aisle carpet clearly, so the official real photos c_27312 / c_27315 were used for the carpet.",
+ "questionsForUser": [
+  "Is the THE Suite (F) floor carpet the same heather as THE Room, or a distinct pattern? If you have a photo of the first-class floor, it would settle whether F should reuse the j_carpet tile."
+ ]
+}

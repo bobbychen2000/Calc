@@ -1,0 +1,41 @@
+{
+  "area": "shell",
+  "rater": "B",
+  "round": "w16",
+  "score": 8.5,
+  "previousIssues": [
+    {"issue": "r2/r3 (integration, third request): THE Room carpet reads as flat brown paint", "status": "fixed. q06 aisle near field (510-570, 460-560): high-pass (5 px box) std 0.84 -> 7.84, against 6.2 in a pure-carpet patch of c_27312 (510-565, 430-540) and 5.4 in omaat_r14 (an in-flight close-up). Mean RGB 64/54/54 (L57.3, hue 360), against c_27312 near 62/52/52 (L55.3, hue 355). Before it was 65/54/50 (hue 15). The far aisle is quiet (hp5 1.8 at rows 300-330): no moire."},
+    {"issue": "w14a/w14b/w15 low: door window ~15% short, and the arm-arc housing overlaps the bezel with no gap", "status": "not fixed (07_shell.js unchanged except the carpet)"},
+    {"issue": "w14/w15 low: blackout pleat contrast about half the photo's (cv 0.168 vs 0.32-0.35)", "status": "not fixed (s05 and b_jClose unchanged)"},
+    {"issue": "w14/w15 low: grille louvre pitch fine (~22-25 vs ~16), ribs prominent", "status": "not fixed"},
+    {"issue": "w14/w15 low: vinyl speckle low (L std 10-12 vs ~24 in sans_09)", "status": "not fixed"},
+    {"issue": "w14/w15 low: sidewall plain satin, no linen weave", "status": "not fixed"},
+    {"issue": "w14/w15 low: PY/Y tub-floor light card", "status": "not fixed"},
+    {"issue": "w15 [lighting]: door glass flat 240, creams neutral, grille near black under the seat", "status": "not fixed; the integrator answered in fixed_integration.md (lighting area, not scored)"}
+  ],
+  "details": [
+    {"detail": "sidewall", "score": 8.1, "note": "Unchanged (s01, s02, s04). Seams are clean, but the panels are plain satin with no fine weave."},
+    {"detail": "window tubs/reveals", "score": 8.5, "note": "F/J short bowl and LED pill right (8.6). PY/Y full tub right, but the tub-floor light card remains (8.4)."},
+    {"detail": "shades electric", "score": 8.4, "note": "Unchanged. The pleats read right at distance (s05), but close-up contrast is about half the photo's."},
+    {"detail": "shades manual", "score": 8.5, "note": "Unchanged (s08)."},
+    {"detail": "dado/grilles", "score": 8.3, "note": "Unchanged. The louvre pitch is fine and the ribs are prominent."},
+    {"detail": "carpet J", "score": 8.5, "note": "New photo heather. It now reads as cut-pile carpet with isotropic specks at the right scale: about 1.4 tiles (0.36 m) across the ~0.5 m aisle, with no visible repeat in q06 (the low-frequency std of the render is 1.4). Mauve-brown hue and level match c_27312's near aisle. c_27312's mid aisle is warmer (hue 17-20, L47) than the render's constant hue 360, and the photo has more large-scale mottling/shading."},
+    {"detail": "carpet Y/PY", "score": 8.5, "note": "Unchanged navy, right."},
+    {"detail": "carpet F", "score": 8.4, "note": "Unchanged; not re-measured this round."},
+    {"detail": "door surrounds/window", "score": 8.3, "note": "Unchanged since w15."},
+    {"detail": "vinyl", "score": 8.0, "note": "Unchanged. The hue is right, but the speckle is about half the photo's."}
+  ],
+  "issues": [
+    {"id": "jcarpet-hue", "severity": "low", "detail": "The J carpet is uniformly mauve, while the photo warms to brown down the aisle", "evidence": "q06: mid/far aisle hue 360 (65/55/55, L58-59). c_27312 mid aisle (540-585, 330-400): 57/45/39, hue 20, L47; far (585-605, 230-270): hue 17. The near field matches (hue 355 vs 360). The source tile c_27315 is hue 331 (more purple), so this is partly the photo's lighting and white balance.", "fix": "src/07_shell.js MAT.carpetJ: nudge toward the c_27312 average, e.g. '#615553' -> '#5f5450' (B -3). Optional; keep the mauve in the near field."},
+    {"id": "jcarpet-tile-lowfreq", "severity": "low", "detail": "The tile keeps faint low-frequency bands that could show as a repeat under grazing light or in long aisle views", "evidence": "tex/tex_j_carpet.png: 16 px-smoothed column means range 119-134 and row means 121-133 (32 px block std 4.2 vs pixel std 29). A 3x3 tiling shows a faint darker vertical band per tile. It is not visible in q06 (render low-frequency std 1.4).", "fix": "test/make_swatches.py: add 'j_carpet': 20 to HP (high-pass radius 20 instead of 40) and re-cut the tile."},
+    {"id": "door-window", "severity": "low", "detail": "Carried from w15: the door window is ~15% short, and the housing overlaps the bezel", "evidence": "b_doorWin unchanged (bezel ~1.14x the housing height vs ~1.36-1.4x).", "fix": "07_shell.js door cell: window height 0.64 -> ~0.71 m, and shift it ~0.03 m away from the housing."},
+    {"id": "pleat-contrast", "severity": "low", "detail": "Carried: the blackout pleat contrast is about half the photo's", "evidence": "b_jClose cv 0.168 vs 0.32-0.35 in omaat_room24.", "fix": "make_swatches s_pleat: use a two-tone plateau-and-step profile."},
+    {"id": "grille-pitch", "severity": "low", "detail": "Carried: the grille louvres are fine (~22-25 vs ~16) and the ribs are prominent", "evidence": "b_dadoY2 unchanged.", "fix": "07_shell.js grille: set the louvre count to 16 and lower the rib contrast."},
+    {"id": "vinyl-speckle", "severity": "low", "detail": "Carried: the vinyl speckle is low", "evidence": "ra_door2floor L std ~10 vs ~24 (sans_09).", "fix": "03_tex.js LAYER_PARAMS vinyl amplitude x1.6-2."},
+    {"id": "sidewall-weave", "severity": "low", "detail": "Carried: the sidewall has no linen weave", "evidence": "s01/s02 flat.", "fix": "MAT.sidewall: normal-only fabric layer, strength ~0.06."},
+    {"id": "tub-card", "severity": "low", "detail": "Carried: the PY/Y tub floor has a light card", "evidence": "ra_pyWin tub floor 202-213 at the sides vs 230-246 at the centre.", "fix": "07_shell.js: run the tub-floor grade across the full width."}
+  ],
+  "questionsForUser": [],
+  "photosDownloaded": ["ref/web/shell/omaat_r10.jpg", "ref/web/shell/omaat_r13.jpg", "ref/web/shell/omaat_r14.jpg", "ref/web/shell/omaat_r15.jpg (OMAAT ANA 777 The Room review; r14 has a carpet close-up under warm cabin light, hp5 5.4)"],
+  "notes": "Only the J carpet changed. It is a clear gain: the flat paint now reads as heather pile matching c_27312's near-aisle grain and level, with no moire or visible repeat. It lifts carpet J to 8.5, and the floors as a group from 8.3 to ~8.4. The rest of the shell is unchanged, so the overall score holds at 8.5. There are no high or medium issues. Evidence crops and the measurement helper are in /tmp/claude-0/-home-user-Calc/acac3bf3-e380-59da-8cd3-2870df596769/scratchpad/w16b/."
+}
