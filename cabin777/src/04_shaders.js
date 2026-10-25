@@ -39,7 +39,7 @@ uniform vec4 u_stripP[8]; uniform vec4 u_stripA[8]; uniform vec3 u_stripCol;
 uniform vec4 u_scrP[6]; uniform vec4 u_scrN[6]; uniform vec3 u_scrCol; uniform float u_fillLift; uniform vec3 u_lensCore; uniform vec2 u_vaultE;
 uniform sampler2D u_scrMask; uniform vec4 u_scrMaskR; uniform float u_scrOff; uniform vec4 u_scrOwn; uniform float u_binLo; uniform float u_monHemi;
 uniform float u_tubWash; uniform vec3 u_binLift; uniform vec3 u_hemiBotN; uniform vec3 u_washN; uniform vec2 u_tubSky; uniform float u_ctrLo; uniform float u_ctrLift;
-uniform sampler2D u_sDepth; uniform vec4 u_sRes; uniform vec4 u_sProj; uniform vec3 u_sFwd; uniform vec3 u_sRight; uniform vec3 u_sUp; uniform vec4 u_ssao; uniform float u_sDither; uniform float u_sMix; uniform float u_sAng;
+uniform sampler2D u_sDepth; uniform vec4 u_sRes; uniform vec4 u_sProj; uniform vec3 u_sFwd; uniform vec3 u_sRight; uniform vec3 u_sUp; uniform vec4 u_ssao; uniform float u_sDither; uniform float u_sMix; uniform float u_sAng; uniform float u_sLow;
 uniform sampler3D u_ao; uniform vec3 u_aoMin; uniform vec3 u_aoSize; uniform sampler2D u_contact; uniform vec4 u_contactR; uniform float u_contactK;
 uniform sampler2DArray u_detail; uniform vec4 u_layer[${N_LAYERS}]; uniform sampler2DArray u_photo; uniform float u_photoOn;
 uniform sampler2D u_atlas; uniform float u_screenStep; uniform float u_emisGain; uniform float u_screenGain;
@@ -568,10 +568,10 @@ void main(){
     // fell back to 2.7 / 0.8 %) [D fixL8 f2 / f4 / after]
     float sW = u_sMix * (1.0 - smoothstep(1.9, 2.3, v_wpos.y)) * (1.0 - recd) * smoothstep(0.05, 0.4, ao);
     if (u_ssao.y > 0.0 && sW > 0.01) {
-      // QA L9 (light low): disc and range x1.5 (7.5 cm / 0.15 m) below the headrests (0.85-1.05 m) and off the sidewall:
+      // QA L9 (light low): disc and range x(1 + u_sLow) = 1.5 (7.5 cm / 0.15 m) below the headrests (0.85-1.05 m) and off the sidewall:
       // the PY contact darks stayed ~1/3 of the photos' [V: thin dark-line share q13 0.91 vs py_37302 2.77 %, q14 0.58
       // vs py_37301 3.15 %]; the L8 0.15 range drew grey halos on the wall behind the PY headrests, which keeps x1 [D fixL9]
-      float kR = 1.0 + 0.5 * (1.0 - smoothstep(0.85, 1.05, v_wpos.y)) * (1.0 - wallProx * facingIn);
+      float kR = 1.0 + u_sLow * (1.0 - smoothstep(0.85, 1.05, v_wpos.y)) * (1.0 - wallProx * facingIn);
       amb *= mix(1.0, max(1.0 - u_ssao.y * ssaoF(v_wpos, Nf, kR), 0.0), sW);
     }
     // reading lights (night): warm cone from the lamp lens to the seat, 0.35 m pool [V: tlfl_IMG_9377 pools on the bed]
