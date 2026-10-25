@@ -290,3 +290,77 @@ Re-check your area after this commit; judge albedos in the studio first.
 - **F front drapes cool light grey, third request** (integration r3 low). q01 curtain (400-470, 100-500) #515053 L81 h267
   vs omaat_f40 drapes (20-140, 150-600) #433f3c L64 h20 (warm; omaat_f2 the same). **Fix:** l.92 `curtainFF` c '#6d6b6b' ->
   '#5f5650' (same r / layer). Target: q01 curtain about #4a4440, L65-72, h15-30.
+
+# lighting run 2, L7 (lighting fixer, 2026-10-25)
+
+Raters L7 (lighting 6.8, integration 6.9) rated c0817a2; this run started on 836b636, which already holds polish B. The light
+changes of this run (`04_shaders.js` / `12_scene.js`, logged in fixed_integration.md) - re-check your area on this commit:
+- Boarding: cooler shadow light (hemiBot [0.31, 0.35, 0.47], wash [0.23, 0.255, 0.32]); the tub crown takes 1.1 of the day
+  window light (was 0.7). Shaded whites move B-R +3..+10 toward the official photos' blue-grey; lit faces and fabric hues hold.
+- Boarding / Cruise: the outboard bin doors' lower, inboard-down face takes x0.8 hemi + bounce (`binLo`, crest x1).
+- Dining / Sunrise: bins and undersides above 1.6 m in the seat zones get a warm lift (`binLift`); the recessed window tub is
+  floored in dim window light (`tubRef`: sunset, night, closed shades), over the shell's tub bake.
+- Night: cove lines warm and at half level, vault cap 0.045. Night / Blue: ~70 % of the seat screens off (per-screen hash;
+  the screen nearest the eye that faces it stays on), spill only from lit screens.
+- Blue: the door / galley / lav zones warm (monFill [0.20, 0.16, 0.10], hemi x0.4 outside the seat zones).
+- Look-out view: the interior at x0.14 exposure once the eye is past the lining.
+- SHEEN lobe: (1 - N.V)^2 (was ^3), tinted 0.3 toward the fabric hue (yCover).
+
+## To room / econ / py (`src/09_seats.js` SEATMAT, shared one-line keys): thin rim highlights (integration r4 medium)
+- **Problem:** the rounded edges of the charcoal shells, caps, cap rails, seat-back shells and armrests carry thin clipped
+  highlights in every official photo; in the model they are soft or missing.
+- **Evidence:** thin-highlight share (L > 235 with 9 px clip density < 0.45; scratchpad qa/fixL7/tools/thin.py) q06 1.03 %,
+  q16 0.64, q13 0.17, q17 0.47, q09 0.42, q15 0.52 against c_27312 2.20, y_47301 2.50, py_37302 1.47, y_47303 1.68,
+  c_27314 1.18, y_47300 1.10.
+- **Lighting tried and reverted** a gain on the two cove line lights (coveSpec) three ways: x2.5 on rough < 0.5 (q06 thin 1.29 %,
+  but the bin crests clipped, +3.5 % px > 235, and the q03 screen glared); x4 below 1.5 m on rough < 0.5 (the PY flaps,
+  pyCover r 0.45, went L72-82 -> 90-117 against py_37302 L61-87; d06 median 77 -> 83, q14 140 -> 145); x4 on rough <= 0.36 at
+  rounded edges only (no measurable change: q06 0.98 %, q09 0.45, q13 0.14; the normal-mapped jBand sparkled in dd). The
+  highlight width is set by the material roughness and the edge radii, not by the light level.
+- **Fix (integration's proposal):** `jCap`, `jRail`, the econ `arm`, `pyShell` r 0.34-0.45 -> ~0.24-0.28 (one line each), and
+  rounder cap / armrest edges where the geometry is a hard chamfer. Keep the fabrics and covers as they are. Targets: thin
+  share >= 1.1 % in q06 / q16 / q17 / q09; face means within 5 L; no sparkle on fabric.
+
+## To ceiling/bins (`src/08_bins.js`), FYI: vault / bin order (integration r4 high, lighting r4 medium)
+- Done between polish B and this run: q06 vault L235 vs the right outboard bins 218 -> 208 (c_27312 vault 236, bins 190-199);
+  q16 left bins 216 -> 203 (y_47301 189); q15 bins 220 -> 213 (y_47300 216; integration's floor 205); c06 cruise bins 192 -> 181
+  under a vault at L225.
+- Still short: the door faces are smooth (high-pass 1.6-3.4 against 6-21 in the photos), and the q06 bins sit ~10 L over
+  c_27312. The lighting factor stops at 0.8 because the raters' 0.72 took the q15 bins to L209, p10 177 (y_47300 is evenly
+  lit: L216, p10 200). Levers left are yours: the door albedo `#d6d8dc` -> `#cdd0d4` (integration exp2), or a baked
+  crest-to-lip grade on the door face.
+
+## To room (`src/09c_room.js`): recessed black toe-kick (integration r4 low)
+- **Problem:** the aisle-side kick under the ash panels (roomAisleAsh / monument end, gRBox 0.045 x 0.10 'shell') is flush, even
+  2.5 mm proud, and charcoal; the photos show a recessed black toe-kick, the deepest contact line along both aisles.
+- **Evidence:** q06 aisle profile (row 500) kick L40-48 next to the carpet at L55-59; c_27312 (row 480) kick L5-7 under each ash
+  panel with a thin light lip above; ucr_ana-business-class-aisle.jpg: a black recessed band ~0.08-0.10 m tall under every panel.
+- **Fix:** 09c_room.js l.478 (and the matching kicks under roomAisleAsh): set the kick 0.02 m back from the ash face (0.565 ->
+  0.545 on that side's normal), height 0.08, material { c: '#1c1d20', r: 0.7 }. The lighting contact map then darkens its foot.
+  Target: kick L10-25 in q06.
+
+## To room (`src/09c_room.js`): white hairline in the 11A footwell (integration r4 low)
+- **Problem:** seat mode in 11A shows a bright 1-2 px line at the joint between the footwell floor and its right side panel; it
+  flickers when the camera moves (a gap to a lit face behind, or an exposed edge).
+- **Evidence:** `__sit('11A', Math.PI, -0.75)`: pixels (597-614, 384-462) #f4f5f6 L244 on a footwell at L7-37; c_27316 and
+  ff_ana-the-room-business-class-footwell.jpg show dark, unbroken footwell edges (L6).
+- **Fix:** in the rear-facing seat's footwell builder, extend the footwell floor 0.01 m under the side panel, or drop the side
+  panel 0.005 m into the floor, so the faces overlap. Check at DPR 2 in the same view.
+
+## To monuments (`src/10_mono.js`): THE Suite ink-cloud print reads as smudges (integration r4 low)
+- **Problem:** the front-wall print is baked into vertex colours on a 0.1 m grid and renders as blurred grey smudges at seated eye
+  level, not as cloud forms.
+- **Evidence:** q03 wall std 12.5 -> 26.4 since L5 (overall contrast right: p5-p95 119-198 vs omaat_f13 92-218);
+  omaat_f40 / omaat_f13 / f_17306 show crisp scalloped cumulus edges on a pale ground.
+- **Fix:** inkWall grid 0.1 -> 0.04 m and a sharper cloud mask (t = smoothstep(0.42, 0.50, n), keeping the core '#6a665f'), or an
+  atlas canvas texture with hard scalloped edges. Target: the same p5-p95 range, edge gradients <= 3 cm.
+
+## To ceiling/bins and integration, FYI (integration r4 low): door-3 bin-lip dashes
+- Polish B (d2627ff) traced them by colour tests to the J centre PSU housings seen edge-on from the door-3 cross-aisle, not a
+  z-fight. Lighting has nothing to add (no MSAA this round). Integration: re-check on that evidence before a fifth hand-off.
+
+## To shell (`src/07_shell.js`), FYI
+- Done by polish B and checked on this run's before renders: the THE Room carpet tile (q06 aisle high-pass 5.9 vs c_27312 6.2,
+  L56 vs 49) and the sky hairline at the bin / lining junction (dd: 0 sky-blue px in (600-930, 60-210)).
+- The tub bake (x0.38-0.55 just above the bezel, `tubShade`) now meets a lighting floor in dim window light only (`tubRef` in
+  mainFS: sunset, night, closed shades); with the shades open in daylight your bake stands unchanged.

@@ -38,7 +38,7 @@ uniform vec4 u_spotP[8]; uniform vec4 u_spotT[8]; uniform vec3 u_spotCol;
 uniform vec4 u_stripP[8]; uniform vec4 u_stripA[8]; uniform vec3 u_stripCol;
 uniform vec4 u_scrP[6]; uniform vec4 u_scrN[6]; uniform vec3 u_scrCol; uniform float u_fillLift; uniform vec3 u_lensCore; uniform vec2 u_vaultE;
 uniform sampler2D u_scrMask; uniform vec4 u_scrMaskR; uniform float u_scrOff; uniform vec4 u_scrOwn; uniform float u_binLo; uniform float u_monHemi;
-uniform float u_coveRim; uniform float u_tubWash; uniform vec3 u_binLift;
+uniform float u_tubWash; uniform vec3 u_binLift;
 uniform sampler3D u_ao; uniform vec3 u_aoMin; uniform vec3 u_aoSize; uniform sampler2D u_contact; uniform vec4 u_contactR; uniform float u_contactK;
 uniform sampler2DArray u_detail; uniform vec4 u_layer[${N_LAYERS}]; uniform sampler2DArray u_photo; uniform float u_photoOn;
 uniform sampler2D u_atlas; uniform float u_screenStep; uniform float u_emisGain; uniform float u_screenGain;
@@ -251,7 +251,6 @@ void main(){
   // PSU band #603b1d L65, ucr_the-room-cabin #6f482a L79 vs q21 #ad7c42 L131, d06 #926532]
   if (emis > 0.0 && (layer < 12 || layer > 15))
     emissive += base * emis * 3.0 * (emis < 0.2 ? min(u_hemiTop / 0.8, vec3(1.0)) * u_fillLift : vec3(u_emisGain));
-  float rough0 = rough;   // QA r4: the material roughness before the AA widening (coveRim window)
   // specular anti-aliasing: widen roughness where the normal varies across pixels
   vec3 dNdx = dFdx(N), dNdy = dFdy(N);
   float nvar = 0.25 * (dot(dNdx, dNdx) + dot(dNdy, dNdy));
@@ -259,7 +258,7 @@ void main(){
   rough = max(rough, 0.12);
 
   float NdV = max(dot(N, V), 1e-3);
-  vec3 amb; float ao = 1.0; float sz = 1.0; vec3 lt = vec3(1.0);
+  vec3 amb; float ao = 1.0; float sz = 1.0; vec3 lt = vec3(1.0); vec3 tubRef = vec3(0.0);
   if (u_exterior > 0.5) {
     // QA r3: the exterior sees the lit cloud deck below (u_extBounce per sky), so shaded flanks / undersides of the
     // wing, canoes and nacelle read mid-grey, not slate [V: alv_ANA77W_NH211_26K shaded flank #8090a0, belly #59636c]
@@ -425,14 +424,17 @@ void main(){
     // night: the galley / lav / door zones (sz = 0) keep a dim neutral fill, the galley lights and lit bulkheads at the
     // end of the dark cabin [V: ucr_room-night-lighting far galley wall #645f57; sany_40 lit galley end] (lighting r1)
     amb += u_monFill * (1.0 - sz) * mix(0.45, 1.0, up) * (0.3 + 0.7*ao);
-    // QA r4 (light): the recessed window tub from just above the bezel to the crown (0.10-0.66 m over the pane centre) is
-    // floored at u_tubWash (0.7) of a pier's light (vertical hemi + wash): where the window light is dim (sunset, night,
-    // closed shades) it went burnt-orange / near-black beside a pale pier, as the deep recess has low AO and the
-    // down-facing crown no wash [V: ucr_the-room-cabin (amber, shades closed) reveals #a57449-#b28156 L124-137 vs wall
-    // #bd8b61 L147 (0.85-0.93); kn_room_35 / 36 pale cream reveals; q21 #a15a2b L102 s0.73 beside a pier at L192]
-    // (lighting r4 medium); in day light the window glow keeps the tub above the floor [D]
-    float tubB = recd * wl.a * smoothstep(0.10, 0.16, v_wpos.y - u_winY.x) * (1.0 - smoothstep(0.58, 0.66, v_wpos.y - u_winY.x));
-    amb = max(amb, (mix(u_hemiBot, u_hemiTop, 0.5) + u_wash) * lt * u_tubWash * tubB);
+    // QA r4 (light): the recessed window tub from just above the bezel to the crown (0.10-0.66 m over the pane centre),
+    // where the window light is dim (sunset, night, closed shades: 1 - shade x the day glow share), keeps at least
+    // u_tubWash (0.7) of the diffuse light of an unbaked cream face (07_shell MAT.reveal #ece4d5) under a pier's hemi + wash
+    // (tubRef, applied to the diffuse term below). 07_shell bakes the tub x0.38-0.55 darker just above the bezel against
+    // the day window glow; with the glow dim it went burnt-orange / near-black beside a pale pier [V: ucr_the-room-cabin
+    // (amber, shades closed) reveals #a57449-#b28156 L124-137 vs wall #bd8b61 L147 (0.85-0.93); kn_room_35 / 36 pale cream
+    // reveals; q21 #a15a2b L102 s0.73 beside a pier at L192] (lighting r4 medium); in day light (open shades) it is 0 and
+    // the bake stands [D]
+    float tubB = recd * wl.a * smoothstep(0.10, 0.16, v_wpos.y - u_winY.x) * (1.0 - smoothstep(0.58, 0.66, v_wpos.y - u_winY.x))
+               * (1.0 - shT * clamp(dot(u_winGlow, vec3(0.2126, 0.7152, 0.0722)) / 0.45, 0.0, 1.0));
+    tubRef = (mix(u_hemiBot, u_hemiTop, 0.5) + u_wash) * lt * u_tubWash * tubB * vec3(0.84, 0.78, 0.67);
     // QA r1 (light): crevice term for occluded low pockets: the tonal range lacked near-blacks in the footwells, console
     // gaps, under the ottomans and seats [V: pixels < 30: c_27312 10.2 % vs q06 2.9 %, c_27314 3.6 % vs q09 0.5 %;
     // c_27314 footwell L47 vs q09 L73; omaat_f11 under-ottoman / top 0.21 vs q03 0.46] (integration r1). Kept below
@@ -543,18 +545,8 @@ void main(){
   // the cove line's colour as seen in a reflection: the cabin hemi hue at the LED level (u_led itself is set so the
   // clipped lens reads amber, and below the clip it is near-red: red rim lines in the amber phase, d07)
   vec3 coveC = u_hemiTop / max(max(u_hemiTop.r, u_hemiTop.g), max(u_hemiTop.b, 1e-4)) * max(max(u_led.r, u_led.g), u_led.b);
-  // QA r4 (integration): x u_coveRim on the satin shells / caps / rails (rough <= 0.36: SEATMAT jShell / jCap / fShell 0.34,
-  // PY cap 0.35, jRail 0.26; the r 0.42-0.45 covers, PY / Y shells and arms keep x1: up to 0.6 lifted the q13 PY flaps
-  // L72-82 -> L90-117 vs py_37302 L61-87) below ~1.5 m (seat furniture;
-  // on the bin crests it clipped the q06 bins, +3.5 % px > 235; not on screens / lamps, layers 12-15: a glare spot on the
-  // q03 screen), and only where the normal turns across a pixel (nvar: rounded edges, not the flat faces, which it lifted
-  // broadly: d06 median 77 -> 83, q14 140 -> 145): the rounded shell, cap and
-  // armrest edges carry thin clipped highlights in the photos [V: thin-highlight share (L > 235, 9 px clip density
-  // < 0.45) c_27312 2.2 %, y_47301 2.5 %, py_37302 1.4 % vs q06 1.0 %, q16 0.6 %, q13 0.2 %] (integration r4 medium)
-  if (u_exterior < 0.5) specEnv += coveSpec(v_wpos, N, V, R, rough, F0, NdV) * coveC * u_cove * sz * (0.25 + 0.75*ao)
-                                 * mix(1.0, u_coveRim, (1.0 - smoothstep(0.36, 0.40, rough0)) * (1.0 - smoothstep(1.4, 1.6, v_wpos.y)) * (layer >= 12 && layer <= 15 ? 0.0 : 1.0)
-                                                     * smoothstep(0.0001, 0.001, nvar));
-  vec3 col = diff * (amb + sun) + specSun + specEnv + emissive;
+  if (u_exterior < 0.5) specEnv += coveSpec(v_wpos, N, V, R, rough, F0, NdV) * coveC * u_cove * sz * (0.25 + 0.75*ao);
+  vec3 col = max(diff * (amb + sun), tubRef) + specSun + specEnv + emissive;   // tubRef: QA r4 tub floor (above)
   col += vec3(0.30, 0.62, 1.0) * hl * (0.35 + 0.9*pow(1.0 - NdV, 2.0));
   col = aces(col * u_exposure);
   col = tone(col, u_toe);

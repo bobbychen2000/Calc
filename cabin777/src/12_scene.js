@@ -190,11 +190,9 @@ const AO_TUNE = { hemi: 0.22, bounce: 1.0, emitLens: 0.45, emitCtr: 0.35, kAttF:
 // highlight ~1.3x the face on THE Room shell caps (c_27312), armrest p99 >= 240 (y_47303)]
 // QA r3 (integration): sheen = gain of the grazing sheen lobe on SHEEN materials (mainFS) [D: q17 / q16 flaps against
 // y_47303 / y_47301, q15 head-on unchanged]
-// QA r4: coveRim = extra gain of those line lights on the rounded edges of satin faces (rough <= 0.36; integration r4: thin rim
-// highlights on the shells, caps and armrests) [D: thin-highlight share q06 / q16 / q13 vs c_27312 / y_47301 /
-// py_37302]; tubWash = floor of the recessed window tub, as a share of a pier's hemi + wash (lighting r4: amber reveals
+// QA r4: tubWash = floor of the recessed window tub, as a share of a pier's hemi + wash (lighting r4: amber reveals
 // vs ucr_the-room-cabin) [D]; lookOut = interior exposure cut at the glass (integration r4: q12 vs ucr wing view) [D]
-const LIGHT_TUNE = { cove: 1.0, sheen: 1.35, coveRim: 4.0, tubWash: 0.7, lookOut: 0.86 };
+const LIGHT_TUNE = { cove: 1.0, sheen: 1.35, tubWash: 0.7, lookOut: 0.86 };
 // QA r3 (integration): floor contact map (computeAO): cell size (m; 6 m x 59 m -> 200 x 1973 texels, under the 2048
 // texture minimum), marking height above the floor and the darkening at a base (mainFS) [D]
 const CONTACT = { cell: 0.03, h: 0.2, k: 0.55 };
@@ -233,7 +231,7 @@ class Scene {
     };
     this.emptyVAO = gl.gl.createVertexArray();
     gl.use(this.progs.main); gl.set('u_fillLift', 1); gl.set('u_sheen', LIGHT_TUNE.sheen); gl.set('u_vaultE', [0, 1]);   // the studio may draw before the first cabin frame
-    gl.set('u_binLo', 1); gl.set('u_monHemi', 1); gl.set('u_coveRim', 1);   // QA r4: neutral values for the same reason
+    gl.set('u_binLo', 1); gl.set('u_monHemi', 1);   // QA r4: neutral values for the same reason
     this.buildGlows();
     const sm = this.shell.meshes;
     this.opaque = [
@@ -829,7 +827,7 @@ class Scene {
     // exposed for the view shows them mid-tone below the sky [V: ucr_ana-business-class-wing-view reveal #816242-#7d6b55
     // L104-110, sky #4bb5fb L157]; seated window views (|x| < 2.45) are untouched [D]
     G.set('u_exposure', mood.exposure * (this.xray ? 1 : 1 - LIGHT_TUNE.lookOut * clamp((Math.abs(cam.pos[0]) - 2.45) / 0.25, 0, 1)));
-    G.set('u_binLo', mood.binLo ?? 1); G.set('u_monHemi', mood.monHemi ?? 1); G.set('u_coveRim', LIGHT_TUNE.coveRim); G.set('u_tubWash', LIGHT_TUNE.tubWash); G.set('u_binLift', (mood.binLift || [0, 0, 0]).map((v) => v * mood.k));
+    G.set('u_binLo', mood.binLo ?? 1); G.set('u_monHemi', mood.monHemi ?? 1); G.set('u_tubWash', LIGHT_TUNE.tubWash); G.set('u_binLift', (mood.binLift || [0, 0, 0]).map((v) => v * mood.k));
     G.set('u_fill', this.fill ?? 0.45);   // QA r1: 0.7 flattened AO and the ceiling-to-floor falloff [V: c_27312 shell gradients]
     G.set('u_exterior', 0);
     G.set('u_skyTop', sky.skyTop);
@@ -862,7 +860,7 @@ class Scene {
       G.set('u_extBounce', [0, 0, 0]); G.set('u_extPtP', new Float32Array(8));   // the studio (same program) keeps its plain fill
     }
     G.set('u_toe', 0); G.set('u_fillLift', 1); G.set('u_vaultE', [0, 1]);   // ... and its plain tone, fill lift and vault (14_studio renders through the same program)
-    G.set('u_scrOff', 0); G.set('u_binLo', 1); G.set('u_monHemi', 1); G.set('u_coveRim', 1); G.set('u_tubWash', 0); G.set('u_binLift', [0, 0, 0]);   // (QA r4) all screens lit, no cabin-only terms
+    G.set('u_scrOff', 0); G.set('u_binLo', 1); G.set('u_monHemi', 1); G.set('u_tubWash', 0); G.set('u_binLift', [0, 0, 0]);   // (QA r4) all screens lit, no cabin-only terms
     gl.depthFunc(gl.LEQUAL);
     gl.depthMask(false);
     const S = this.progs.sky;
