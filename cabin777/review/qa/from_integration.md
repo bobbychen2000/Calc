@@ -296,10 +296,13 @@ Re-check your area after this commit; judge albedos in the studio first.
 Raters L7 (lighting 6.8, integration 6.9) rated c0817a2; this run started on 836b636, which already holds polish B. The light
 changes of this run (`04_shaders.js` / `12_scene.js`, logged in fixed_integration.md) - re-check your area on this commit:
 - Boarding: cooler shadow light (hemiBot [0.31, 0.35, 0.47], wash [0.23, 0.255, 0.32]); the tub crown takes 1.1 of the day
-  window light (was 0.7). Shaded whites move B-R +3..+10 toward the official photos' blue-grey; lit faces and fabric hues hold.
+  window light (was 0.7). Shaded whites move B-R +2..+5 toward the official photos' blue-grey (q17 / q14 L175-195 band +19 -> +22 / +9 -> +14,
+  q16 wall +5 -> +10); lit faces and fabric hues hold.
 - Boarding / Cruise: the outboard bin doors' lower, inboard-down face takes x0.8 hemi + bounce (`binLo`, crest x1).
-- Dining / Sunrise: bins and undersides above 1.6 m in the seat zones get a warm lift (`binLift`); the recessed window tub is
-  floored in dim window light (`tubRef`: sunset, night, closed shades), over the shell's tub bake.
+- Dining / Sunrise: bins and undersides above 1.6 m in the seat zones get a warm lift (`binLift`); the recessed window tub
+  (`MAT.reveal` faces only: not the shades, the tunnel lining or the seals) keeps at least 0.7 of a pier's light where the
+  window light is dim (sunset, closed shades; `tubRef`, mood flag `tub`), over the shell's tub bake. Night and Blue keep the
+  bake as it was (the floor lit their tubs flat and pale).
 - Night: cove lines warm and at half level, vault cap 0.045. Night / Blue: ~70 % of the seat screens off (per-screen hash;
   the screen nearest the eye that faces it stays on), spill only from lit screens.
 - Blue: the door / galley / lav zones warm (monFill [0.20, 0.16, 0.10], hemi x0.4 outside the seat zones).
@@ -322,13 +325,15 @@ changes of this run (`04_shaders.js` / `12_scene.js`, logged in fixed_integratio
   share >= 1.1 % in q06 / q16 / q17 / q09; face means within 5 L; no sparkle on fabric.
 
 ## To ceiling/bins (`src/08_bins.js`), FYI: vault / bin order (integration r4 high, lighting r4 medium)
-- Done between polish B and this run: q06 vault L235 vs the right outboard bins 218 -> 208 (c_27312 vault 236, bins 190-199);
-  q16 left bins 216 -> 203 (y_47301 189); q15 bins 220 -> 213 (y_47300 216; integration's floor 205); c06 cruise bins 192 -> 181
-  under a vault at L225.
+- This run (`binLo` 0.8, boarding / cruise), box means before -> after (photo): q06 right outboard bins (600-930, 10-110)
+  L216 -> 205 (c_27312 196) under a vault at L232 (221); q16 left bins L220 -> 210 (y_47301 209); q15 bins L225 -> 218
+  (y_47300 218; p10 202 -> 189 vs 200); c06 cruise right bins L188 -> 176 under a vault at L221.
 - Still short: the door faces are smooth (high-pass 1.6-3.4 against 6-21 in the photos), and the q06 bins sit ~10 L over
   c_27312. The lighting factor stops at 0.8 because the raters' 0.72 took the q15 bins to L209, p10 177 (y_47300 is evenly
   lit: L216, p10 200). Levers left are yours: the door albedo `#d6d8dc` -> `#cdd0d4` (integration exp2), or a baked
   crest-to-lip grade on the door face.
+- Night grille (integration r4 medium, `07b_ceiling.js` troughRim): done by polish B (e 0.19). q20 grille (515-575, 0-120)
+  top-40 L114, max 131 at the start of this run; L83, max 94 (warm #5c5241) with this run's night cove cap (target <= L135).
 
 ## To room (`src/09c_room.js`): recessed black toe-kick (integration r4 low)
 - **Problem:** the aisle-side kick under the ash panels (roomAisleAsh / monument end, gRBox 0.045 x 0.10 'shell') is flush, even
@@ -362,5 +367,7 @@ changes of this run (`04_shaders.js` / `12_scene.js`, logged in fixed_integratio
 ## To shell (`src/07_shell.js`), FYI
 - Done by polish B and checked on this run's before renders: the THE Room carpet tile (q06 aisle high-pass 5.9 vs c_27312 6.2,
   L56 vs 49) and the sky hairline at the bin / lining junction (dd: 0 sky-blue px in (600-930, 60-210)).
-- The tub bake (x0.38-0.55 just above the bezel, `tubShade`) now meets a lighting floor in dim window light only (`tubRef` in
-  mainFS: sunset, night, closed shades); with the shades open in daylight your bake stands unchanged.
+- The tub bake (x0.38-0.55 just above the bezel, `tubShade`) now meets a lighting floor in the amber moods (Dining / Sunrise)
+  where the window light is dim (sunset, closed shades): `tubRef` in mainFS, on `MAT.reveal` (no layer, r 0.45) only. With
+  the shades open in daylight, and in every white, Night and Blue view, your bake stands unchanged. If you change the reveal's
+  roughness or give it a detail layer, tell lighting: the floor keys on them (04_shaders.js tubB).
