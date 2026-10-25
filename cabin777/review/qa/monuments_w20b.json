@@ -1,0 +1,88 @@
+{
+ "area": "monuments",
+ "rater": "B",
+ "round": "w20",
+ "score": 8.7,
+ "note": "Head 0b28c7c (polishA r2). Only curtainFF changed in 10_mono.js (#544c46 -> #4f4c4a). BEFORE r1/m02, q01 and r2/q03, q05; AFTER r3. q01 changed 0.01 % of pixels (no drape in view); m02 0.54 %, all on the drape. PIL box means, HLS hue / sat. The integrator's call to follow omaat_f40 (a real photo) over f_17313 (a rendering) is consistent with the brief; white-balanced to its wall, f40 is neutral, so a near-neutral charcoal is the right target. Lighting noted, not scored.",
+ "previousIssues": [
+  {
+   "issue": "w19b MEDIUM: F front drapes warm brown",
+   "status": "fixed. q05 (700,20,800,130) #3d3633 h19 s0.10 -> #383636 h351 s0.02, L56 -> 55; m02 (535,150,585,440) #4c4742 s0.08 -> #494744 s0.03, L72 unchanged. The drapes read charcoal next to the dark wood, matching f40 white-balanced. Not lavender as I asked in w19b, but that request was based on a rendering."
+  },
+  {
+   "issue": "w19a LOW: drapes slightly too warm",
+   "status": "fixed (R-B 12 -> ~5)."
+  },
+  {
+   "issue": "w18a/b LOWs (welcome glass cue, bar nosing groove, tumbler glints, ash-wall corner strips, ash grain contrast / repeat, door-1 dark wood, galley insert frames, plain J lav doors)",
+   "status": "not fixed (not in this pass)."
+  }
+ ],
+ "changes": [
+  {
+   "change": "curtainFF #544c46 -> #4f4c4a",
+   "verdict": "helped",
+   "numbers": "q05 s0.10 -> 0.02, m02 s0.08 -> 0.03 at unchanged luminance (target f40 L64, white-balanced neutral)."
+  }
+ ],
+ "details": [
+  {
+   "detail": "Door-3 self-service bar (m05, m06, q11)",
+   "score": 8.7,
+   "note": "Unchanged."
+  },
+  {
+   "detail": "Door-2 welcome galley (m03, m16, m14)",
+   "score": 8.5,
+   "note": "Unchanged."
+  },
+  {
+   "detail": "Door-2 aft ash wall (m04, m13)",
+   "score": 8.7,
+   "note": "Unchanged."
+  },
+  {
+   "detail": "F front wall, flight-deck door, door 1, F front drapes (q01, m02, q03, q05)",
+   "score": 8.6,
+   "note": "Drapes now neutral charcoal at the right depth; door-1 dark wood unchanged."
+  },
+  {
+   "detail": "Lavatory exteriors",
+   "score": 8.0,
+   "note": "Unchanged."
+  },
+  {
+   "detail": "F/J bulkhead, J face",
+   "score": 8.3,
+   "note": "Unchanged."
+  },
+  {
+   "detail": "J/PY bulkhead, PY face",
+   "score": 8.4,
+   "note": "Unchanged."
+  },
+  {
+   "detail": "Door-4 group",
+   "score": 8.6,
+   "note": "Unchanged."
+  },
+  {
+   "detail": "Rear, door 5",
+   "score": 8.4,
+   "note": "Unchanged."
+  }
+ ],
+ "issues": [
+  {
+   "severity": "low",
+   "detail": "Carried over from w18 (all low)",
+   "problem": "Welcome pane has no glass cue, bar nosing flat, tumbler glints as inset stripes, ash grain contrast about half the photo with a 77 px repeat, plain J lav doors, door-1 dark-wood streak aliasing.",
+   "evidence": "monuments_w18a/b; renders unchanged in those areas.",
+   "fix": "As w18a/b: PHOTO_GAIN[33] ~1.5 (03_tex.js, shared); lav-door indicator plate and edge trim in 10_mono.js."
+  }
+ ],
+ "questionsForUser": [],
+ "gapWorth03": [
+  "The w18 lows (J lav doors, welcome glass cue, grooved nosing, door-1 wood) are the remaining path to ~8.9."
+ ]
+}

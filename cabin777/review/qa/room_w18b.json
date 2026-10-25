@@ -1,0 +1,136 @@
+{
+ "area": "room",
+ "rater": "B",
+ "round": "w18",
+ "score": 8.5,
+ "summary": "Round-2 confirmation of head 0b28c7c (polishA r2): jShell #434349 -> #4a4b51, jCap #4b4b50 -> #4b4c51, jBand back to #656b73 on the satin plastic layer. BEFORE r1, AFTER r3, same cameras, boarding mood; PIL box means (L luminance, HLS hue / sat). Shells lift ~8-17 % in shade while keeping the slate cast: q09 privacy wall (250-520 x 240-330) L47 h235 -> L55 h229; q06 near shell (0-120 x 380-560) L71 -> L79 h214; q06 caps L105 -> L112; q09 aisle wall L100 -> L107. The near walls in q09 / q10 now read mid charcoal against c_27314 rather than black-slate. Hue stays in the official cool range (h214-235, s0.05-0.10). The change is broad but small; the overall read is unchanged at 8.5. Lighting noted, not scored.",
+ "photos_collected": [
+  "No new downloads. Used ref/ana c_27312, c_27314, c_27315 and ref/web/room omaat_room_13 / 15, kn_*."
+ ],
+ "own_renders": [
+  "/tmp/claude-0/-home-user-Calc/33316a4e-1209-5df1-8086-36d8df9d3f92/scratchpad/w2b/ba_q06_roomMain.png ... ba_q10_seat14D.png (r1 | r3 side by side). No new SwiftShader shots for the room: the five q06-q10 pairs cover the change."
+ ],
+ "prior_issues": [
+  {
+   "from": "w17b",
+   "severity": "medium",
+   "issue": "Shaded near shell faces too dark (ash / face ratio overshoot)",
+   "status": "partly fixed",
+   "evidence": "q09 wall L47 -> 55, q06 near face L71 -> 79; now ~0.75-0.9x c_27314's mid charcoal instead of 0.6-0.8x. Ash / face ratio on q09 ~2.3 (was ~2.6); photos 1.6-2.2."
+  },
+  {
+   "from": "w16a / w17a",
+   "severity": "medium",
+   "issue": "Cabinet / table ash: soft wavy bands, weak pinstripe, slightly warm",
+   "status": "not fixed (not in this pass)",
+   "evidence": "q06 / q09 ash identical apart from neighbouring shell spill."
+  },
+  {
+   "from": "w16b / w17a",
+   "severity": "medium",
+   "issue": "Aisle-end doors dark relative to the cabinets (mostly lighting)",
+   "status": "not fixed (lighting)",
+   "evidence": "q06 door area unchanged apart from the shell lift."
+  },
+  {
+   "from": "integration r2 (w17)",
+   "severity": "medium",
+   "issue": "Header band read as hammered metal",
+   "status": "fixed, holds",
+   "evidence": "q10 band smooth satin; colour #656b73 restores the blue-grey of c_27315 against the slate cap."
+  }
+ ],
+ "details": [
+  {
+   "detail": "Overall nested-pair layout, shells, privacy walls, monitors, cabinets (aisle views)",
+   "score": 8.5,
+   "refs": [
+    "c_27312",
+    "c_27315",
+    "q06",
+    "q10"
+   ]
+  },
+  {
+   "detail": "Shell / cap colour and value",
+   "score": 8.4,
+   "refs": [
+    "c_27312",
+    "c_27314",
+    "c_27315",
+    "q06",
+    "q09",
+    "q10"
+   ]
+  },
+  {
+   "detail": "Satin rim sheen lines on cap rims",
+   "score": 8.5,
+   "refs": [
+    "c_27312"
+   ]
+  },
+  {
+   "detail": "Header band behind the headrest",
+   "score": 8.5,
+   "refs": [
+    "c_27315",
+    "q10"
+   ]
+  },
+  {
+   "detail": "Monument top: housings, spine and rail, aisle cap, plaques",
+   "score": 8.4,
+   "refs": [
+    "c_27313",
+    "c_27314",
+    "q09"
+   ]
+  },
+  {
+   "detail": "Ash panels, table tops, door / cabinet split",
+   "score": 8.5,
+   "refs": [
+    "c_27312",
+    "c_27314",
+    "c_27316"
+   ]
+  },
+  {
+   "detail": "Boarding bundle, pillows, soft goods (bundle deliberate)",
+   "score": 8.1,
+   "refs": [
+    "omaat_room_15",
+    "q08",
+    "q09"
+   ]
+  },
+  {
+   "detail": "Monitor, footwell, ottoman, side-table console",
+   "score": 8.4,
+   "refs": [
+    "c_27316",
+    "q07"
+   ]
+  }
+ ],
+ "issues": [
+  {
+   "severity": "low",
+   "detail": "Near shaded shell faces still a shade dark",
+   "problem": "After the lift the near walls sit ~0.75-0.9x the photo; acceptable, mostly AO / lighting now.",
+   "evidence": "q09 (250-520 x 240-330) L55 vs c_27314 mid-charcoal privacy wall.",
+   "fix": "Lighting side (integrator): less AO on large vertical shell faces; or jShell one more small step to ~#4e4f55 if the caps stay under L118."
+  },
+  {
+   "severity": "low",
+   "detail": "Carry-overs: ash pinstripe weak, pillows rigid slabs, latch tongue, door-edge aliasing",
+   "problem": "Unchanged since w16.",
+   "evidence": "q06 / q08 / q09 identical in those areas.",
+   "fix": "As w16a/b."
+  }
+ ],
+ "questions": [
+  "None new. Earlier: O-bed seat-plan dimension and real-GPU check of the q07 grazing ash remain open."
+ ]
+}

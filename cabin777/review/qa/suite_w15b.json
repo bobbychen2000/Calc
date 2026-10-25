@@ -1,0 +1,113 @@
+{
+ "area": "suite",
+ "rater": "B",
+ "round": "w15",
+ "score": 8.9,
+ "method": "Head 0b28c7c (polishA r2). BEFORE r2 (q03-q05) / r1 (q02), AFTER r3, pixel diffs and PIL box means. Own studio renders from scratchpad/b5/test.html at DPR 2 (script /tmp/claude-0/-home-user-Calc/33316a4e-1209-5df1-8086-36d8df9d3f92/scratchpad/w2b/sv.js): b2_drape_in, b1_bed_doors (bed + doors closed + divider), b2_drape. References: omaat_f57, f59, f11, f_17304, f_17313. Lighting noted, not scored.",
+ "calibration": [
+  {
+   "earlier_issue": "w14a/b MED: turned-down duvet corner is an overlay on an intact duvet",
+   "status": "fixed. The head band is now a slab cut on the diagonal; the pad shows through the cut corner (q04, b2_drape_in), the flap and roll sit on the slab, and the rounded loft no longer runs past the fold. Remaining: a geometric, square-edged slab (see low issue)."
+  },
+  {
+   "earlier_issue": "w14a/b MED: wood flanks chestnut instead of espresso",
+   "status": "fixed. b1 flank (250-600 x 700-900) (84,70,56) R/G 1.21 -> (79,72,59) R/G 1.09, inside f60's 1.08-1.13. Grain is still short-streak (low)."
+  },
+  {
+   "earlier_issue": "w14b LOW: aisle drape a flat board / thin rail",
+   "status": "not fixed. Shortened to the loft, but b2_drape_in still shows a separate white rail standing beside the loft's rounded edge."
+  }
+ ],
+ "changes": [
+  {
+   "change": "duvet head band slab with diagonal cut, loft 0.30 aft, flap / roll raised",
+   "verdict": "helped",
+   "numbers": "q04 changed 3.8 % of pixels, all at the bed. No z-fighting of the flap (y 0.537) or roll (0.536) on the slab top (0.535) at DPR 2; a faint dotted line where the flap hypotenuse meets the roll. The slab-to-loft seam is invisible across the middle, but at the window edge the square slab stands proud of the loft's rounded edge (q04 zoom: slab far edge ~12 px beyond the loft's; b1 notch at the seam)."
+  },
+  {
+   "change": "fFlank #2f2b22",
+   "verdict": "helped",
+   "numbers": "R/G 1.21 -> 1.09."
+  },
+  {
+   "change": "ottoman plinth forward, recess floor #5e5248",
+   "verdict": "neutral to slightly helped",
+   "numbers": "q03 recess floor (380-600 x 520-570) L45 -> 51 h24, q05 (330-520 x 410-440) L24 -> 26: still a dark void (f11), now reads as a floor not a black hole."
+  },
+  {
+   "change": "variants",
+   "verdict": "clean",
+   "numbers": "b1 bed + doors closed + divider: no clipping or gaps between slab, doors and divider."
+  }
+ ],
+ "details": [
+  {
+   "detail": "Screen wall: 43-in screen, wing, pier with mirror and lamp",
+   "score": 8.7,
+   "refs": "q03 / q05, unchanged"
+  },
+  {
+   "detail": "Centre pair: board, edge strips, divider",
+   "score": 8.6,
+   "refs": "q02, unchanged"
+  },
+  {
+   "detail": "Shell / cap two-tone",
+   "score": 8.6,
+   "refs": "unchanged"
+  },
+  {
+   "detail": "Aisle leaves",
+   "score": 8.5,
+   "refs": "unchanged; far-leaf moire in q02"
+  },
+  {
+   "detail": "Wood flanks",
+   "score": 8.5,
+   "refs": "espresso now matches f60; short grain"
+  },
+  {
+   "detail": "Plinth, doors open and closed",
+   "score": 8.8,
+   "refs": "b1 clean"
+  },
+  {
+   "detail": "Window console",
+   "score": 8.2,
+   "refs": "unchanged"
+  },
+  {
+   "detail": "Bed: pad, duvet, turned-down corner, drape",
+   "score": 8.4,
+   "refs": "q04, b2_drape_in vs omaat_f57 / f59: corner now a real cut; slab geometric, drape rail"
+  },
+  {
+   "detail": "Ottoman and recess",
+   "score": 8.7,
+   "refs": "q03 / q05 vs omaat_f11"
+  }
+ ],
+ "issues": [
+  {
+   "severity": "low",
+   "issue": "The new head slab is square-edged: its window-side end stands proud of the loft's rounded edge and its head edge is a hard prism, unlike the soft folded duvet in omaat_f57.",
+   "evidence": "q04 (r3 crop 300-820 x 150-480): slab far edge beyond the loft's; b1_bed_doors notch at the seam (~x 600, y 380).",
+   "fix": "09d_suite.js:310: start the slab at xe - dw + 0.04 and add a gRBox(0.04, 0.03, 0.35, 0.015) bolster along the window edge (or bevel the profile), and round the head corners with a 0.04 arc so the slab follows the loft's edge."
+  },
+  {
+   "severity": "low",
+   "issue": "Aisle drape still reads as a separate rail beside the loft from inside the suite.",
+   "evidence": "w2b/b2_drape_in.png (560-690 x 300-650).",
+   "fix": "Lower the drape top to y 0.47 and move it 0.01 inboard so the loft's rounded edge covers it."
+  },
+  {
+   "severity": "low",
+   "issue": "The flap is still a flat grey right triangle with straight legs.",
+   "evidence": "q04 / b2_drape_in.",
+   "fix": "Optional: give the flap a slight crown (gLoft) or shade it toward the fold."
+  }
+ ],
+ "questions": [
+  "The w13 questions (flank swatch LAYER slot; 0.64 walk-in opening) are still open."
+ ]
+}
