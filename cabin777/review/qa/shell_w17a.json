@@ -1,0 +1,64 @@
+{
+ "area": "shell",
+ "rater": "A",
+ "round": "w17",
+ "score": 8.5,
+ "summary": "My w16 medium is fixed. The THE Suite floor and the door-bay mats now carry the photo heather. The q03 F floor reads as dark brown cut pile with light flecks, as in f_17300, and it no longer looks like flat paint next to the J aisle. The J aisle is a little calmer at the lower gain, and the re-cut tile has less low-frequency banding. Diffing all 7 shell views against w16 shows changes only on carpet pixels (plus sky and cloud motion in the window views), so everything else is unchanged. No high or medium issues remain. The score stays at 8.5 because the carried low-severity items (door viewing window, pleat contrast, vinyl speckle, sidewall weave, tub-floor card, grille pitch) still separate it from the photos.",
+ "renders": "w2/shell was empty when rated, so I rendered the 7 views from the w17 build (b6/test.html, carpetF/doorCarpet = LAYER.jCarpet) to scratchpad/ra17/ with review/qa/shell_views.js. The QA views are from w2/qa.",
+ "previousIssues": [
+  {"id": "w16a-1 carpet F and door cross-aisle carpet flat procedural fabric", "severity": "medium", "status": "fixed. q03 F floor (800-845, 515-570): high-pass std 0.53 -> 8.24, Lstd 3.4 -> 8.9, mean rgb (57.6,46.4,39.2) -> (56.7,45.8,38.8), so the hue is kept. ra_door2floor door mat (370-540, 108-158): high-pass 1.81 -> 4.68. q01 door-1 mat (250-370, 445-478): 3.05 -> 3.96. Reference f_17300 floor (380-520, 330-560; overhead and close): high-pass 15.7, rgb (68.8,53.8,49.0)."},
+  {"id": "w16a-2 J carpet slightly busy up close", "severity": "low", "status": "fixed. q06 near aisle (505-575, 440-560): high-pass 7.51 -> 6.44 against 4.6-6.2 in c_27312. The mean rgb is unchanged (63.9,53.6,53.6)."},
+  {"id": "w16b j_carpet tile low-frequency banding", "severity": "low", "status": "fixed. tex/tex_j_carpet.png: 32 px block std 4.2 -> 2.8, and the 16 px-smoothed column-mean range is 10.5 (was ~15). No repeat is visible in q06, q03 or ra_door2floor."},
+  {"id": "w14/w15 door viewing window short / housing overlaps bezel", "severity": "low", "status": "not fixed (s06 pixel-identical above the floor)"},
+  {"id": "w14/w15 blackout pleat close-up contrast about half the photo's", "severity": "low", "status": "not fixed"},
+  {"id": "w14/w15 sidewall weave, vinyl speckle, PY/Y tub-floor light card, grille pitch", "severity": "low", "status": "not fixed"},
+  {"id": "w14a lighting: neutral creams, flat door glass", "severity": "medium (lighting, not scored)", "status": "not fixed (lighting area)"}
+ ],
+ "details": [
+  {"detail": "sidewall", "score": 8.0, "note": "Unchanged (s01, s04). Clean satin with seams every second window, and no weave."},
+  {"detail": "window tubs/reveals", "score": 8.4, "note": "Unchanged. The F/J short bowl and LED pill are right (s09, ra_jWin). The PY/Y tub-floor card remains."},
+  {"detail": "shades electric", "score": 8.4, "note": "Unchanged. Close-up pleat contrast is about half the photo's."},
+  {"detail": "shades manual", "score": 8.5, "note": "Unchanged."},
+  {"detail": "dado/grilles", "score": 8.3, "note": "Unchanged. The louvre pitch is fine."},
+  {"detail": "carpet J", "score": 8.8, "note": "Same mauve-brown heather (q06 rgb 64,54,54 vs c_27312 65,55,55). At gain 1.2 the near-aisle high-pass is 6.4, inside the photo range of 4.6-6.2 (+0.2). The tile has less banding."},
+  {"detail": "carpet Y/PY", "score": 8.4, "note": "Unchanged navy heather."},
+  {"detail": "carpet F", "score": 8.4, "note": "Now a dark brown heather with light flecks, which matches f_17300 in character. It reads as carpet next to the suite base in q03. Residuals: the f_17300 pile is a coarser, vermiculated pebble (blob ~3-4 px at that scale) while the render is a fine uniform speckle. The render is also a step darker than f_17300's lit floor (L ~48 vs ~57, but q03 is a shaded corner). The hue matches (R-B 18 vs 20)."},
+  {"detail": "door-bay carpet", "score": 8.3, "note": "The ra_door2floor and q01 mats now show pile texture (high-pass 4.7 / 4.0) in a warm grey-brown that is distinct from the vinyl. It reads as an entry mat. It is slightly less textured than the aisle carpets because of distance and viewing angle, which is acceptable."},
+  {"detail": "door surrounds/window", "score": 8.3, "note": "Unchanged. The viewing window is slightly short, and the housing has no gap to the bezel."},
+  {"detail": "vinyl", "score": 8.2, "note": "Unchanged grey stone-look vinyl (ra_door2floor rgb 103,99,101, high-pass 2.6). The speckle is low against sans_09."}
+ ],
+ "issues": [
+  {
+   "id": "w17a-1",
+   "severity": "low",
+   "detail": "The F carpet borrows the J heather, so its grain is finer and more uniform than f_17300's coarse vermiculated pile, and its overall level is a touch dark",
+   "evidence": "f_17300 floor zoom (scratchpad/ra17_f17300z.png) shows worm-like light flecks in clusters. The q03 floor zoom (scratchpad/ra17_q03floor.png) shows fine isotropic speckle. Mean rgb: render (56.7,45.8,38.8) vs f_17300 (68.8,53.8,49.0). B is relatively low in the render (G-B 7 vs 5).",
+   "fix": "Optional. In test/make_swatches.py, cut an 'f_carpet' tile from f_17300 (crop 380-520 x 330-470, the aisle floor between 1K and the console; HP 20, luminance only, like j_carpet). Register it as a new LAYER (next free index) in 03_tex.js with PHOTO_GAIN ~1.2, and set MAT.carpetF.l to it in 07_shell.js. Independently, nudge carpetF '#56493f' -> '#5a4c44' (+B) for f_17300's slightly cooler brown."
+  },
+  {
+   "id": "w15-carry",
+   "severity": "low",
+   "detail": "Door viewing window short / housing overlap, blackout pleat contrast, sidewall weave, vinyl speckle, PY/Y tub-floor card, grille pitch",
+   "evidence": "Pixel-identical to w16 outside the floors (diffs of s01/s04/s06/s07 vs w1/shell are confined to carpet rows).",
+   "fix": "As in w15a/w16b: door window height 0.64 -> ~0.71 m with a 0.03 m gap to the housing; two-tone s_pleat profile; LAYER_PARAMS vinyl amplitude x1.6; normal-only weave on MAT.sidewall (~0.06); full-width tub-floor grade; grille louvre count 16."
+  },
+  {
+   "id": "lighting-carry",
+   "severity": "low",
+   "detail": "[lighting] Neutral creams, flat door glass, near-black under-seat grille",
+   "evidence": "Unchanged.",
+   "fix": "Lighting area."
+  }
+ ],
+ "refs": [
+  "ref/ana/f_17300-lang-multi.jpg",
+  "ref/ana/c_27312-lang-multi.jpg",
+  "/tmp/claude-0/-home-user-Calc/acac3bf3-e380-59da-8cd3-2870df596769/scratchpad/ra17/",
+  "/tmp/claude-0/-home-user-Calc/acac3bf3-e380-59da-8cd3-2870df596769/scratchpad/ra17_f17300z.png",
+  "/tmp/claude-0/-home-user-Calc/acac3bf3-e380-59da-8cd3-2870df596769/scratchpad/ra17_q03floor.png",
+  "/tmp/claude-0/-home-user-Calc/acac3bf3-e380-59da-8cd3-2870df596769/scratchpad/ra17_q01mat.png"
+ ],
+ "questionsForUser": [
+  "Should the THE Suite floor get its own tile cut from f_17300 (a coarser pebble heather), or is sharing the THE Room heather close enough?"
+ ]
+}
