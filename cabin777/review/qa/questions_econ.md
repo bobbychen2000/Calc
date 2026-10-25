@@ -63,3 +63,7 @@
    none on the side-block seats, where the belts are laid out. Are pillows on the side blocks a showroom setting?
    [kept on every seat]. Question 25 (belts) is now answered both ways: draped on the side blocks, tucked on the centre
    block.
+28. (wave 3j, w44a-2 / w44b-3, re question 27) Lumbar pillows on the 3-seat side blocks: the three official photos
+   disagree. y_47301 and y_47303 show the side-block seats bare, with the belts laid out; y_47300 shows a pillow on the
+   left side-block seat (B: not the right one). Both raters default to bare. [w44: removed from the side blocks, near and far
+   LOD; the 4-seat centre block keeps them, as in the y_47300 hero row]
