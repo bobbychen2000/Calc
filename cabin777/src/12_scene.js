@@ -36,11 +36,18 @@ const MOODS = {
   // QA r3 (light): boarding sideLed [0.42, 0.46, 0.55] -> [0.48, 0.53, 0.66]: the economy window wall was neutral and
   // ~9 % under the official photo, whose wall under the lens is the brightest, slightly cool band [V: y_47300 #e2e4eb
   // L228-231 (B-R +9..11) vs q15 #d2d3d3 L210 (B-R 0); bins already matched, L214] -> q15 L222-223 [D render r3]
-  boarding: { label: 'Boarding', hemiTop: [0.97, 0.99, 1.03], hemiBot: [0.36, 0.37, 0.40], wash: [0.25, 0.26, 0.28], led: [1.0, 0.98, 0.92], sideLed: [0.48, 0.53, 0.66], bandCut: 0.15, k: 1.05, exposure: 1.38, toe: 1 },
+  // QA r4 (light): shaded whites cool blue-grey, lit faces unchanged: hemiBot [0.36, 0.37, 0.40] -> [0.31, 0.35, 0.47], wash
+  // [0.25, 0.26, 0.28] -> [0.23, 0.255, 0.32] (with the crown x1.1 in mainFS) [V: y_47303 crown #a7adc2 (B-R +27) vs q17
+  // #b2b3b3 (+1); py_37301 reveal sides #9ba6bc / #a0abbf (+33) vs q14 #bfbfc0; y_47301 wall #c2c9db (+25) vs q16 #d3d4d5;
+  // c_27312 PSU band #c4c9cf (+11) vs q06 #e0e1e1]; binLo 0.72: the outboard bin doors' lower face (mainFS binK) [V: c_27312
+  // bins L190-199 p10 168 vs q06 L211-218 p10 197] (lighting r4 medium x2)
+  boarding: { label: 'Boarding', hemiTop: [0.97, 0.99, 1.03], hemiBot: [0.31, 0.35, 0.47], wash: [0.23, 0.255, 0.32], led: [1.0, 0.98, 0.92], sideLed: [0.48, 0.53, 0.66], bandCut: 0.15, binLo: 0.72, k: 1.05, exposure: 1.38, toe: 1 },
   // QA r2 (light): cruise sideLow 0.10 -> 0.30, the lavender wash reaches the window belt in THE Suite (the reveals by
   // the glass stay near-white through mainFS nearPane) [V: ml_DSC_1939-1 wall column y45 #6e9bfc (B-R +141), y150
   // #7a89be, belt y240 #888db0 (+40) vs cF03 belt #cccccf (+3)]
-  cruise: { label: 'Cruise', hemiTop: [0.86, 0.88, 0.98], hemiBot: [0.24, 0.24, 0.28], wash: [0.25, 0.26, 0.30], led: [1.0, 0.98, 0.92], sideLed: [0.08, 0.14, 1.35], bandCut: 0.8, sideLow: 0.30, k: 0.95, exposure: 1.12, toe: 1 },
+  // QA r4 (light): binLo 0.72 as boarding: in flight the cove-washed vault is clearly brighter than the bins [V:
+  // lalf_room_119 vault L163 vs bins L97, lalf_room_120 vault L193 vs bins L120-158; c06 vault L157 vs bins L198-203]
+  cruise: { label: 'Cruise', hemiTop: [0.86, 0.88, 0.98], hemiBot: [0.24, 0.24, 0.28], wash: [0.25, 0.26, 0.30], led: [1.0, 0.98, 0.92], sideLed: [0.08, 0.14, 1.35], bandCut: 0.8, sideLow: 0.30, binLo: 0.72, k: 0.95, exposure: 1.12, toe: 1 },
   // QA r2 (light): ANA's full-blue phase (safety video, after take-off, early night): cove LED, sidewall lens and vault
   // saturated blue-violet, the seat zone washed blue and dim, the galley ends warm (monFill), the screens lighting their
   // surround [V: sany_47 (SANspotter Y) cove #1d21bd / #2227cb s0.85, crown #181a39, seat backs #171a7a, galley #776349,
@@ -53,7 +60,10 @@ const MOODS = {
   // photos are exposed ~2x apart (sany_47 mean 29/28/81, ml_DSC_1945 81/79/111), exposure 1.7 sits between them, the
   // bin doors' fill lift at 0.4 (sany_47 dark bins under bright cove lines), seat level x1.6 (b8: Y mean 49/56/124,
   // F ottoman L26) [D renders]
-  blue: { label: 'Blue', hemiTop: [0.035, 0.04, 0.21], hemiBot: [0.008, 0.009, 0.035], wash: [0.015, 0.015, 0.07], led: [0.06, 0.08, 1.0], sideLed: [0.05, 0.06, 0.70], bandCut: 0.8, sideLow: 0.6, vault: [0.025, 0.028, 0.10], lowTint: [1.8, 1.7, 1.0], lowGain: 1.6, fillLift: 0.4, monFill: [0.06, 0.05, 0.035], cove: 0.35, k: 1, exposure: 1.7, screenGain: 0.6, scrSpill: 1, emisGain: 0.55, strips: true },
+  // QA r4 (light): the door / galley ends warm-lit, not blue: monFill [0.06, 0.05, 0.035] -> [0.20, 0.16, 0.10] and the
+  // hemi x0.4 outside the seat zones (monHemi, mainFS) [V: sany_47 galley / door end #564a4d h346 s0.14, door zone
+  // ~#776349 vs bl16 #393e6f h235]; scrOff 0.7: ~30 % of the seat screens lit [V: sany_47 ~6 of 25] (lighting r4 low x2)
+  blue: { label: 'Blue', hemiTop: [0.035, 0.04, 0.21], hemiBot: [0.008, 0.009, 0.035], wash: [0.015, 0.015, 0.07], led: [0.06, 0.08, 1.0], sideLed: [0.05, 0.06, 0.70], bandCut: 0.8, sideLow: 0.6, vault: [0.025, 0.028, 0.10], lowTint: [1.8, 1.7, 1.0], lowGain: 1.6, fillLift: 0.4, monFill: [0.20, 0.16, 0.10], monHemi: 0.4, cove: 0.35, k: 1, exposure: 1.7, screenGain: 0.6, scrSpill: 1, scrOff: 0.7, emisGain: 0.55, strips: true },
   // dining / sunrise, QA r2: ANA's amber phase is a saturated amber LED line on the bin lens and cove, amber-washed bin
   // faces and a much darker lower cabin, not a beige high key [V: ff_door-gap lens #ffa43d (h32 s0.76), bins #955b2d /
   // #673e1e (s ~0.7)]. Sunrise uses the same levels with a pinker LED [A: no ANA sunrise photo]
@@ -95,7 +105,11 @@ const MOODS = {
   // tops #b07f50 L134 s0.54, bin undersides L74-84 (photo L96; the vault is out of this frame); d06 vault L140-147 s0.64
   // (was L68-73 s0.80), bins L152-163; q21 door dome #cd9e51 s0.60 (ucr #c89552 s0.59), closed-shade pier L139-174
   // s0.57-0.65 (was L161-199 s0.32-0.42)
-  dining: { label: 'Dining', hemiTop: [0.62, 0.30, 0.11], hemiBot: [0.21, 0.10, 0.035], wash: [0.30, 0.14, 0.05], led: [0.55, 0.042, 0.009], sideLed: [1.25, 0.10, 0.02], sideLow: 0.65, sideWall: [0.6, 2.2, 4.2], bandCut: 0.2, vault: [0.32, 0.145, 0.047], vaultE: [0.14, 1], lowTint: [1.0, 1.08, 1.2], lowGain: 0.8, fillLift: 0.15, lensCore: [0, 0.55, 0.15], scrSpill: 0.5, k: 0.9, exposure: 1.3, strips: true },
+  // QA r4 (light): hemiBot [0.21, 0.10, 0.035] -> [0.30, 0.165, 0.07] (G/R 0.55): the bin faces seen from a seat read
+  // dark and over-saturated (dd #86582a L95 s0.69, d06 #835325 L90 s0.71) where the photos show them as the bright,
+  // soft-amber layer [V: ff_seat-with-door-closed bins #b99662 L154 s0.47; ucr_the-room-cabin bins from below #b3834b
+  // L138 s0.58; PSU band kept dark: ff_door-gap #603b1d L65, ucr #6f482a L79] (lighting r4 medium)
+  dining: { label: 'Dining', hemiTop: [0.62, 0.30, 0.11], hemiBot: [0.30, 0.165, 0.07], wash: [0.30, 0.14, 0.05], led: [0.55, 0.042, 0.009], sideLed: [1.25, 0.10, 0.02], sideLow: 0.65, sideWall: [0.6, 2.2, 4.2], bandCut: 0.2, vault: [0.32, 0.145, 0.047], vaultE: [0.14, 1], lowTint: [1.0, 1.08, 1.2], lowGain: 0.8, fillLift: 0.15, lensCore: [0, 0.55, 0.15], scrSpill: 0.5, k: 0.9, exposure: 1.3, strips: true },
   // night, QA r2: THE Room in service at night is near-black and neutral-warm; the light comes from the IFE screens, the
   // warm strip under each screen, small white reading lamps and amber PSU lamps [V: ucr_room-night-lighting ceiling
   // #1e1915, sidewall #24211c, bins #322a1f, PSU lamp #9e5e38, strip #ffeb97, mean RGB 39/34/33]. The blue night refs
@@ -120,13 +134,20 @@ const MOODS = {
   // lighting ceiling L13-55 throughout vs q20 panel #a39a8c L155]; with the screen spill kept below 1.5 m (mainFS) the
   // bins are back to warm dark [V: ucr outboard bins #2f271e L40 h31]: q20 centre bins #33302c L49 h29 (was #424448
   // L68 h225), outboard #2a2724 L40 h30, cove panel L69 (was L117), mid-vault L28, median 32 [D render r3]
-  sleep: { label: 'Night', hemiTop: [0.030, 0.027, 0.024], hemiBot: [0.010, 0.009, 0.008], wash: [0.012, 0.010, 0.008], led: [0.030, 0.025, 0.020], sideLed: [0.018, 0.021, 0.032], sideLow: 0.6, vault: [0.050, 0.043, 0.035], vaultE: [0, 0.09], monFill: [0.060, 0.055, 0.047], cove: 0.35, k: 1, exposure: 2.5, readingLights: true, strips: true, screenGain: 0.6, scrSpill: 1, emisGain: 0.55 },
+  // QA r4 (light): (1) the cove LED lines warm and at half level (led [0.030, 0.025, 0.020] -> [0.030, 0.021, 0.009]; mainFS
+  // caps the line's e at 0.5 when vaultE.y < 0.1) [V: sany_25 pale-yellow line core #fef2ad; ucr_room-night-lighting no lit
+  // cove line, upper band p99 58 vs q20 #dcdcda L220]; (2) vaultE cap 0.09 -> 0.045: the seat-zone vault eFn went from
+  // 0.02-0.08 to 0.06-0.13 (07b polish B), so the cap bound across the vault (vault mid L29 -> 62, above the bins L41) [V:
+  // ucr ceiling L13-55, bins ~L43] (from_ceiling polish B); (3) scrOff 0.7: ~30 % of the seat screens lit [V: sany_40
+  // < 1/3 lit; ucr only the passenger's own] (lighting r4 low)
+  sleep: { label: 'Night', hemiTop: [0.030, 0.027, 0.024], hemiBot: [0.010, 0.009, 0.008], wash: [0.012, 0.010, 0.008], led: [0.030, 0.021, 0.009], sideLed: [0.018, 0.021, 0.032], sideLow: 0.6, vault: [0.050, 0.043, 0.035], vaultE: [0, 0.045], monFill: [0.060, 0.055, 0.047], cove: 0.35, k: 1, exposure: 2.5, readingLights: true, strips: true, screenGain: 0.6, scrSpill: 1, scrOff: 0.7, emisGain: 0.55 },
   // QA r1 (light): sunrise follows dining at seat level (sideWall = hemiTop share, sideLow 0.5). QA r2: as dining, the
   // fill lift off the PSU band (fillLift 0.15), the saturated vault, the pale lens core, lowGain 0.6 -> 1.4 and lowTint
   // [1.0, 1.3, 1.6] -> [1.0, 1.4, 1.95] [A: no ANA sunrise photo; dining's sources and levels]
   // QA r3 (light): as dining (lowTint [1.0, 1.08, 1.2] x0.8, hemiBot x1.4, vault floor / hue, bandCut 0.2) [A: no ANA
   // sunrise photo; dining's sources]
-  wake: { label: 'Sunrise', hemiTop: [0.62, 0.30, 0.16], hemiBot: [0.21, 0.10, 0.05], wash: [0.30, 0.14, 0.07], led: [0.55, 0.05, 0.03], sideLed: [1.2, 0.11, 0.06], sideLow: 0.5, sideWall: [0.42, 2.25, 2.2], bandCut: 0.2, vault: [0.32, 0.145, 0.047], vaultE: [0.14, 1], lowTint: [1.0, 1.08, 1.2], lowGain: 0.8, fillLift: 0.15, lensCore: [0, 0.55, 0.15], k: 0.9, exposure: 1.3 },
+  // QA r4 (light): hemiBot as dining x [1, 1, 1.2] (its pinker B) [A: no ANA sunrise photo; dining's sources]
+  wake: { label: 'Sunrise', hemiTop: [0.62, 0.30, 0.16], hemiBot: [0.30, 0.165, 0.085], wash: [0.30, 0.14, 0.07], led: [0.55, 0.05, 0.03], sideLed: [1.2, 0.11, 0.06], sideLow: 0.5, sideWall: [0.42, 2.25, 2.2], bandCut: 0.2, vault: [0.32, 0.145, 0.047], vaultE: [0.14, 1], lowTint: [1.0, 1.08, 1.2], lowGain: 0.8, fillLift: 0.15, lensCore: [0, 0.55, 0.15], k: 0.9, exposure: 1.3 },
 };
 // winExp: the view behind the glass at interior exposure; cabin photos show day windows near-white with a glowing
 // reveal (tlfl_IMG_9217 / 9518, pane ~#eef3f8) [V]; eases back to 1 when the eye is at the window (looking out)
@@ -164,7 +185,11 @@ const AO_TUNE = { hemi: 0.22, bounce: 1.0, emitLens: 0.45, emitCtr: 0.35, kAttF:
 // highlight ~1.3x the face on THE Room shell caps (c_27312), armrest p99 >= 240 (y_47303)]
 // QA r3 (integration): sheen = gain of the grazing sheen lobe on SHEEN materials (mainFS) [D: q17 / q16 flaps against
 // y_47303 / y_47301, q15 head-on unchanged]
-const LIGHT_TUNE = { cove: 1.0, sheen: 1.35 };
+// QA r4: coveRim = extra gain of those line lights on satin / gloss faces (rough < ~0.5; integration r4: thin rim
+// highlights on the shells, caps and armrests) [D: thin-highlight share q06 / q16 / q13 vs c_27312 / y_47301 /
+// py_37302]; tubWash = cabin wash on the down-facing tub crown where the window light is dim (lighting r4: amber reveals
+// vs ucr_the-room-cabin) [D]; lookOut = interior exposure cut at the glass (integration r4: q12 vs ucr wing view) [D]
+const LIGHT_TUNE = { cove: 1.0, sheen: 1.35, coveRim: 2.5, tubWash: 0.9, lookOut: 0.8 };
 // QA r3 (integration): floor contact map (computeAO): cell size (m; 6 m x 59 m -> 200 x 1973 texels, under the 2048
 // texture minimum), marking height above the floor and the darkening at a base (mainFS) [D]
 const CONTACT = { cell: 0.03, h: 0.2, k: 0.55 };
@@ -203,6 +228,7 @@ class Scene {
     };
     this.emptyVAO = gl.gl.createVertexArray();
     gl.use(this.progs.main); gl.set('u_fillLift', 1); gl.set('u_sheen', LIGHT_TUNE.sheen); gl.set('u_vaultE', [0, 1]);   // the studio may draw before the first cabin frame
+    gl.set('u_binLo', 1); gl.set('u_monHemi', 1); gl.set('u_coveRim', 1);   // QA r4: neutral values for the same reason
     this.buildGlows();
     const sm = this.shell.meshes;
     this.opaque = [
@@ -464,6 +490,39 @@ class Scene {
     }
     this.stripMesh = gl.mesh(sb.build(), { name: 'moodStrips', castShadow: false });
     this.buildScreens();
+    this.buildScreenMask();
+  }
+
+  // QA r4 (light): per-screen on / off for the dark moods (mainFS u_scrMask): each seat screen's footprint on the floor
+  // plan (4 cm cells, R8, nearest) holds a hash of its centre in 0-0.996; texels without a screen hold 1 (always on).
+  // A mood's scrOff (0.7 in Night / Blue) switches the screens below it off, and their spill with them (render)
+  // [V: sany_40 economy at night < 1/3 of the seat-back screens lit; sany_47 blue phase ~6 of 25; ucr_room-night-lighting
+  // only the passenger's own screen]. Footprint: the screen's width (area at 16:9) + 4 cm across, its tilt depth + 5 cm
+  // along the normal [D]
+  buildScreenMask() {
+    const cell = 0.04, x0 = -3.0, z0 = CAB.zFront - 1.0, nx = Math.ceil(6.0 / cell), nz = Math.ceil((CAB.zAft - CAB.zFront + 2.0) / cell);
+    const m = new Uint8Array(nx * nz).fill(255);
+    for (const q of this.screens) {
+      const hs = Math.sin(Math.round(q.p[0] * 40) * 12.9898 + Math.round(q.p[2] * 40) * 78.233) * 43758.5453;
+      q.h = Math.min(0.996, hs - Math.floor(hs));
+      const nh = Math.hypot(q.n[0], q.n[2]) || 1, u = [q.n[0] / nh, q.n[2] / nh], t = [-u[1], u[0]];
+      const hw = Math.sqrt(q.a * 16 / 9) / 2 + 0.04, hd = Math.sqrt(q.a * 9 / 16) / 2 * Math.abs(q.n[1]) + 0.05, r = Math.hypot(hw, hd);
+      for (let k = Math.floor((q.p[2] - r - z0) / cell); k <= Math.ceil((q.p[2] + r - z0) / cell); k++) {
+        for (let i = Math.floor((q.p[0] - r - x0) / cell); i <= Math.ceil((q.p[0] + r - x0) / cell); i++) {
+          if (i < 0 || k < 0 || i >= nx || k >= nz) continue;
+          const dx = x0 + (i + 0.5) * cell - q.p[0], dz = z0 + (k + 0.5) * cell - q.p[2];
+          if (Math.abs(dx * t[0] + dz * t[1]) <= hw && Math.abs(dx * u[0] + dz * u[1]) <= hd) m[k * nx + i] = Math.round(q.h * 255);
+        }
+      }
+    }
+    const G = this.gl, gl = G.gl;
+    this.scrMaskTex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, this.scrMaskTex);
+    for (const [k, v] of [[gl.TEXTURE_MIN_FILTER, gl.NEAREST], [gl.TEXTURE_MAG_FILTER, gl.NEAREST], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D, k, v);
+    gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8, nx, nz, 0, gl.RED, gl.UNSIGNED_BYTE, m);
+    this.scrMaskR = [x0, z0, nx * cell, nz * cell];
+    G.use(this.progs.main); G.tex('u_scrMask', 7, this.scrMaskTex); G.set('u_scrMaskR', this.scrMaskR);
   }
 
   // QA r2 (light): IFE screens as area lights for the dimmed moods (mainFS u_scrP / u_scrN): the screen quads
@@ -708,8 +767,23 @@ class Scene {
     // [D: the raters' hue; x1 left the nF03 housing L12 vs ml_IMG_20200208_1919534 L32]
     const scp = new Float32Array(24), scn = new Float32Array(24);
     const spill = this.xray ? 0 : mood.scrSpill || 0;
+    // QA r4 (light): screens below mood.scrOff are off (mainFS u_scrMask), except the nearest one within 1.8 m that faces
+    // the eye (the passenger's own screen, seated or standing at the seat); only lit screens spill
+    const scrOff = this.xray ? 0 : mood.scrOff || 0;
+    let own = null;
+    if (scrOff > 0) {
+      let bd = 1.8;
+      for (const q of this.screens) {
+        const d = V3.sub(cam.pos, q.p), l = V3.len(d);
+        if (l < bd && V3.dot(d, q.n) > 0) { bd = l; own = q; }
+      }
+    }
+    G.set('u_scrOff', scrOff);
+    G.set('u_scrOwn', own ? [...own.p, (Math.sqrt(own.a * 16 / 9) / 2 + 0.06) ** 2] : [0, 0, 0, 0]);
+    G.tex('u_scrMask', 7, this.scrMaskTex); G.set('u_scrMaskR', this.scrMaskR);
     if (spill > 0) {
-      const near = this.screens.map((q) => [V3.len(V3.sub(q.p, cam.pos)), q]).sort((a, b) => a[0] - b[0]).slice(0, 6);
+      const lit = scrOff > 0 ? this.screens.filter((q) => q === own || q.h >= scrOff) : this.screens;
+      const near = lit.map((q) => [V3.len(V3.sub(q.p, cam.pos)), q]).sort((a, b) => a[0] - b[0]).slice(0, 6);
       near.forEach(([, q], i) => { scp.set([...q.p, q.a], i * 4); scn.set([...q.n, 0], i * 4); });
     }
     G.set('u_scrP', scp); G.set('u_scrN', scn);
@@ -733,7 +807,13 @@ class Scene {
     G.set('u_winZ', this.winZ);
     G.set('u_R', CAB.R + 0.10);
     G.set('u_yc', CAB.yc); G.set('u_winY', [CAB.win.yc, CAB.win.h / 2]);
-    G.set('u_exposure', mood.exposure);
+    // QA r4 (integration): looking out (eye past the lining, |x| 2.45-2.70; lookOut puts it at 2.72) the interior takes
+    // the exterior's exposure scale, x0.2: winExp eases to 1 there, and at mood.exposure the reveal and lining read
+    // brighter than the daylight sky behind the pane (q12 reveal L225-228, 61 % clipped vs sky L139) where a camera
+    // exposed for the view shows them mid-tone below the sky [V: ucr_ana-business-class-wing-view reveal #816242-#7d6b55
+    // L104-110, sky #4bb5fb L157]; seated window views (|x| < 2.45) are untouched [D]
+    G.set('u_exposure', mood.exposure * (this.xray ? 1 : 1 - LIGHT_TUNE.lookOut * clamp((Math.abs(cam.pos[0]) - 2.45) / 0.25, 0, 1)));
+    G.set('u_binLo', mood.binLo ?? 1); G.set('u_monHemi', mood.monHemi ?? 1); G.set('u_coveRim', LIGHT_TUNE.coveRim); G.set('u_tubWash', LIGHT_TUNE.tubWash);
     G.set('u_fill', this.fill ?? 0.45);   // QA r1: 0.7 flattened AO and the ceiling-to-floor falloff [V: c_27312 shell gradients]
     G.set('u_exterior', 0);
     G.set('u_skyTop', sky.skyTop);
@@ -766,6 +846,7 @@ class Scene {
       G.set('u_extBounce', [0, 0, 0]); G.set('u_extPtP', new Float32Array(8));   // the studio (same program) keeps its plain fill
     }
     G.set('u_toe', 0); G.set('u_fillLift', 1); G.set('u_vaultE', [0, 1]);   // ... and its plain tone, fill lift and vault (14_studio renders through the same program)
+    G.set('u_scrOff', 0); G.set('u_binLo', 1); G.set('u_monHemi', 1); G.set('u_coveRim', 1); G.set('u_tubWash', 0);   // (QA r4) all screens lit, no cabin-only terms
     gl.depthFunc(gl.LEQUAL);
     gl.depthMask(false);
     const S = this.progs.sky;
