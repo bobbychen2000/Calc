@@ -143,3 +143,10 @@
   than the model's frame grid (window centres off by 28-37 px; window tops and bottoms match to 1-2 px). This is either a
   row-z or a window-grid phase question in `05_layout.js`. It does not affect the seat score.
 - **Carried:** far q16 covers dark (w43b-L1).
+
+## wave 3l (w49) to lighting / integration
+- **q15 vs q17 cover-top errors have opposite signs (rater A w49a-L1):** at the current cameras the q15 cover top is ~9 px
+  low and the q17 top ~30 px high. Rater B reads it as the photo's cushion standing further forward and upright, not
+  hanging lower. Both raters suggest re-checking the q17 resection against the back tops and screen corners before econ
+  trades fold height between the two views. The q17 line is econ's; this is for integration's information.
+- **Carried:** the q17 cover grazing tone (wave 3k item) and the far q16 covers dark (w43b-L1) are unchanged.

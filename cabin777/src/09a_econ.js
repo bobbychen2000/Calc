@@ -378,7 +378,7 @@ function econUnit(n, lod = false, opts = {}) {
         // the arm nose (z ~-0.50), running back level to ~z -0.33, then rising diagonally to merge under the arm's rear
         // (gap under the arm 34-44 px vs 11-15) [D]
         const jp = [[0, 0.442, -0.49], [0, 0.435, -0.462], [0, 0.432, -0.41], [0, 0.433, -0.33], [0, 0.437, -0.27], [0, 0.448, -0.235], [0, 0.47, -0.205], [0, 0.51, -0.17], [0, 0.555, -0.13], [0, 0.595, -0.095], [0, 0.625, -0.068]];   // straight bar, a crisp elbow at z ~-0.22, a ~50 deg diagonal into the arm's rear
-        const jt = gTube(jp, 0.031, 14); for (let q = 0; q < jt.p.length; q += 3) jt.p[q] *= 0.6;   // ~6 x 3.7 cm computeNormals(jt);
+        const jt = gTube(jp, 0.031, 14); for (let q = 0; q < jt.p.length; q += 3) jt.p[q] *= 0.6; computeNormals(jt);   // ~6 x 3.7 cm
         B.add(jt, M4.trs(xa + (k === 0 ? -0.013 : 0.013), 0, 0), SEATMAT.arm);
       } else loftAt(B, [zs(0.455, -0.14, -0.295, 0.02), zs(0.463, -0.13, -0.313, 0.022), zs(0.485, -0.125, -0.322, 0.022), zs(0.507, -0.13, -0.313, 0.022), zs(0.515, -0.14, -0.295, 0.02)], M4.trs(xa, 0, 0), ECON_PLATE, 3);
     } else {

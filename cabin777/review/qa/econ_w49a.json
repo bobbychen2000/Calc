@@ -1,0 +1,224 @@
+{
+ "area": "econ",
+ "rater": "A",
+ "round": "w49",
+ "candidate": "bc67a43",
+ "lens": "Skeptic, geometry first. The w48 scripts were gone, so I rewrote them in /tmp/claude-0/-home-user-Calc/48d00459-9e05-5289-84cb-5226bfa7965a/scratchpad/raterA49: cov.py segments the q17 near headrest cover (sat<0.42, B>R+8, box 600-820 x 110-340), giving masks.png. q15c.py gives the q15 cover extents from a smooth-region mask (local sd<9, L<95) at the cover centres x 222/385/545/705. arm.py gives the white runs under the q17 aisle arm at x 500-660. The pocket stats were run inline on render box 60-120 x 385-455 against photo box 45-155 x 375-450. Crops show render | photo | w48 (r0): near17.png, head17.png, arm17.png, pocket17.png and pocketz.png. q15c.png stacks r49 / photo / r0. stA.png and stB.png put studio s49 on the left and s0 on the right. *_quad.png holds render, photo, before and a 50 % blend. My masks are not the w48 ones, so I compare r49 against r0 measured with the same script.",
+ "score": 8.5,
+ "calibrationNote": "Up 0.1 from w48 (8.4); the detail mean is 8.32 (w48 8.29). There are two real visible gains. First, the aisle-end arm now reads as one J moulding. Its front bar lands within 4 px of y_47303 (475-491 against 479-496 at x 500-560), and the 'two parallel bars' look is gone. Second, the seat pocket now reads as a light pouch holding a blue-headed card, with black-edged side meshes, instead of a black grille. There is also one visible regression in the hero head-on view: the q15 headrest covers lengthened. h/w is now 0.86-0.87 (w48 0.74; y_47300 0.64-0.73), and the cover bottom sits at y 312 against 286-289. That is the old 'tall screen' complaint from w24-w35 coming back. The q17 cover grew only modestly (area +15 % on the same mask, 80 % of the photo's). It is still ~30 px too high, and the wing rolls still read as flat blocks, not round bolsters. Camera check: arm noses and pan fronts are unchanged and agree within ~5 px.",
+ "priorIssues": [
+  {
+   "id": "w48a-1",
+   "status": "partly fixed (q17 size only; placement not fixed)",
+   "note": "Same-mask comparison (cov.py), with the photo / r49 / r0 figures in the order cover area, bbox, top, bottom, centroid. Photo: 6141 px, 120 x 114, top 177, bottom 290, centroid (714,227). r49: 4932, 109 x 100, top 147, bottom 246, centroid (686,192). r0: 4278, 101 x 92, 153, 244, (690,195). The area went from 70 % to 80 % of the photo's and the height from 92 to 100 against 114 (check >=105 fails). The cover still sits ~30 px high (top) and ~44 px high (bottom), so the centroid moved only 3 px. The fuller cushion doesn't show: head17.png still shows a squared fabric block beside the flap, where the photo has a round wing roll with a lit rim ending in a rounded foot level with the flap bottom."
+  },
+  {
+   "id": "w48a-2",
+   "status": "mostly fixed",
+   "note": "arm.py. The front bar at x 500-560 is 475-491 against the photo's 479-496 (w48 had no bar at 500, and 456-480 under the arm). The gap under the cap at x 560 is 31 px against 35 (w48 12). The run rises toward the rear: x 580 469, 600 458, 620 446 (photo 479, 477, 464; at 640 the photo is at 458 and at 660 at 451). Check 2 passes: it is >=12 px lower at x 560 than at x 640. Check 1 fails at x 600: 16 px non-white against >=30 (photo 42). The elbow sits at about x 570 against about 610 in the photo (~35-40 px, roughly 5-6 cm too far forward), and the diagonal is steeper (~31 deg on screen against ~19). The member is a thin squashed tube where the photo's is a broad moulding with a flat lit outer face (27 px tall at x 600 against 21)."
+  },
+  {
+   "id": "w48a-3",
+   "status": "partly fixed (largely)",
+   "note": "pocketz.png / e6 / e2: there is now a light-grey pouch with the card's blue header, and black-rimmed side meshes with lit strands. Box stats, r49 / photo / r0: L 77 / 75 / 74, B/R 1.26 / 1.44 / 1.16, L<70 39 % / 60 % / 55 %, L>150 8 % / 15 % / 12 %. B/R improved and the mean L now matches. Remaining: the pouch reads flat, with no dark shadowed foot under the bulge. The card's white body doesn't separate from the pouch, so only a blue stripe shows. The strands alias into speckle at 930 px. The w48 check (L 82-95, B/R >= 1.3, L>150 >= 15 %) still fails on B/R and highlights. Contrast is too low against the photo's (too few darks and too few lights)."
+  },
+  {
+   "id": "w48a-4",
+   "status": "partly fixed",
+   "note": "q15 cover top is now 253 against 242-246 (w48 258), so it is still ~9 px low. But the cover foot also went down, to 312 against 286-289 (w48 308). See w49a-1."
+  },
+  {
+   "id": "w48a-5",
+   "status": "not fixed",
+   "note": "Belt code unchanged in bc67a43."
+  },
+  {
+   "id": "w48a-6",
+   "status": "not fixed",
+   "note": "The mid-arm plates, arm cap, pillows and cover F material are unchanged (code unchanged; visually identical in arm17.png / q15c.png)."
+  },
+  {
+   "id": "w48a-L1",
+   "status": "carried",
+   "note": "The q15 cover wants to move up (top 9 px low) while the q17 cover wants to move down (top 30 px high). Its back top is still ~10 px high, so the q17 camera or back recline may be part of this. See w49a-2."
+  },
+  {
+   "id": "w48a-L2",
+   "status": "not re-measured",
+   "note": "Lighting is unchanged; the cover's grazing tone is excluded by the brief."
+  },
+  {
+   "id": "w48b-1 (B, medium)",
+   "status": "partly fixed (geometry)",
+   "note": "On my mask the q17 cover bottom is 246 against 290, so B's check (within 15 px of 282) still fails. Height is 100 (B's >= 88 passes on my mask). The tone is excluded (lighting)."
+  },
+  {
+   "id": "w48b-2 (B, medium)",
+   "status": "mostly fixed",
+   "note": "Bar starts: x 540 / 560 at 475 (photo 479, within 6), x 580 at 469 (10 px off). The gap is 31 px at x 560 but 16 at x 600 (>= 28 fails there). At x 620 the run sits higher than at x 540 (pass)."
+  },
+  {
+   "id": "w47b-5 (B, low)",
+   "status": "fixed on B's check",
+   "note": "Pocket zone mean luma is 77 against 75 (within 15)."
+  }
+ ],
+ "details": [
+  {
+   "detail": "Fabric: tick weave",
+   "score": 8.2,
+   "refs": "Unchanged."
+  },
+  {
+   "detail": "Fabric: diamond lattice",
+   "score": 8.3,
+   "refs": "Unchanged."
+  },
+  {
+   "detail": "Fabric: petal fleck",
+   "score": 8.2,
+   "refs": "Unchanged."
+  },
+  {
+   "detail": "Fabric: dash mosaic",
+   "score": 8.5,
+   "refs": "Unchanged."
+  },
+  {
+   "detail": "Fabric mix (backs, pans, pads)",
+   "score": 8.6,
+   "refs": "Unchanged."
+  },
+  {
+   "detail": "Headrest pad + cover",
+   "score": 8.1,
+   "refs": "Down 0.1. q15 cover h/w is 0.86-0.87 against 0.64-0.73 (w48 0.74); the cover spans 253-312 against 242-289, so it reads as a tall screen again (q15c.png). In q17 the area rose to 80 % of the photo's, but the cover is still ~30 px high and the wing rolls read as square blocks (head17.png). Head-on width is 69-70 against 65-67 (fine)."
+  },
+  {
+   "detail": "Pillow",
+   "score": 8.35,
+   "refs": "Unchanged."
+  },
+  {
+   "detail": "Armrests",
+   "score": 8.45,
+   "refs": "Up 0.3. The J moulding reads right in silhouette (arm17.png, e3). The front bar is within 4 px. The elbow is ~35-40 px too far forward and the diagonal steeper (x 600 gap 16 against 42). It is thinner than the photo's broad moulding. The cap and under-arm pills are unchanged."
+  },
+  {
+   "detail": "Belts",
+   "score": 8.6,
+   "refs": "Unchanged."
+  },
+  {
+   "detail": "Seat pan / front",
+   "score": 8.5,
+   "refs": "Unchanged."
+  },
+  {
+   "detail": "Back silhouette",
+   "score": 8.2,
+   "refs": "Unchanged (q17 near back top ~10 px high)."
+  },
+  {
+   "detail": "Rear shell / hood / back top",
+   "score": 8.1,
+   "refs": "Unchanged."
+  },
+  {
+   "detail": "Screen / handset",
+   "score": 8.1,
+   "refs": "Unchanged."
+  },
+  {
+   "detail": "Tray / pocket / AC",
+   "score": 8.35,
+   "refs": "Up 0.25. The pouch, card header and black-rimmed side meshes match y_47303's arrangement (pocketz.png, e6). It is flat and low in contrast: L<70 39 % against 60 %, L>150 8 % against 15 %, B/R 1.26 against 1.44. The card's white body is lost and the meshes alias."
+  },
+  {
+   "detail": "Legs / footrest / under-seat",
+   "score": 8.5,
+   "refs": "Unchanged."
+  },
+  {
+   "detail": "Far-LOD rows",
+   "score": 8.1,
+   "refs": "The far LOD got a longer tilted cover box and a two-box J end arm. Neither is distinguishable at q15 / q16 distances, so the score is unchanged."
+  }
+ ],
+ "issues": [
+  {
+   "id": "w49a-1",
+   "severity": "medium",
+   "owner": "econ",
+   "title": "Regression: q15 head-on headrest covers lengthened to h/w 0.87 (w48 0.74; y_47300 0.64-0.73), so they read as tall screens again",
+   "detail": "Headrest pad + cover",
+   "evidence": "q15c.py (smooth-region mask, cover centres x 222/385/545/705). r49 y 253-312, h 60, w 69-70. Photo y 242-289, h 43-48, w 65-67. r0 y 258-308, h 51, w 69. q15c.png. The bc67a43 drape moved the foot 1 cm lower (CPL[0] y 0.615, was 0.625) and the fold 1.5 cm higher (0.804-0.825), so the plate grew ~2.5 cm. The w35 comment in 09a_econ.js records the same complaint (0.85-0.88 against ~0.7).",
+   "fix": "In econSeat (09a_econ.js ~l.140), shorten the drape, not the stand-off. Set CPL[0] to y ~0.645 and CPL[1] to ~0.662, keeping their z (-0.149 / -0.1445) or even 1 cm more proud. Keep the fold at 0.804+ (the q15 top still wants ~+2.5 cm, i.e. 9 px). Move the hard-coded hem / foot tube / stitch / mark y values (0.617, 0.636, 0.6365, 0.6385) up by the same ~0.03, since cz() follows CPL but those y's don't. In q17, get the flap's extent from a more upright hang (foot more proud) rather than from length; that barely changes the head-on height at q15's ~13 deg down-look.",
+   "check": "q15 cover h/w 0.68-0.76 at all four front seats; top 242-250; bottom <= 296; width 64-72. e4_head shows no fabric gap opening behind the foot."
+  },
+  {
+   "id": "w49a-2",
+   "severity": "medium",
+   "owner": "econ",
+   "title": "q17 cover and cushion still not y_47303: the flap sits ~30 px high and is 80 % of the area, and the wing rolls are square blocks, not round bolsters (carried w48a-1)",
+   "detail": "Headrest pad + cover",
+   "evidence": "cov.py / masks.png / head17.png: r49 top 147, bottom 246, centroid (686,192), area 4932. Photo top 177, bottom 290, centroid (714,227), area 6141. In the photo about 25 px of cushion top shows above the flap fold, and a cylindrical wing roll (lit rim, rounded foot) flanks the flap down to its bottom. The render's wing silhouette is a flattened rounded box ending well above the flap foot. The q15 top is 9 px low while the q17 top is 30 px high, so part of the q17 offset is camera or back height (w48a-L1).",
+   "fix": "Wing rolls (loftAt sx \u00b10.163): make them rounder in section, with depth equal to width (e.g. SEC(y, 0.075, 0.075, ...)), raise the radius term to ~0.035, and extend the foot to y ~0.60 so the roll ends level with the flap foot. Push the foot sections 1-1.5 cm forward so a highlight rim forms. For the flap, see w49a-1 (upright hang). Before moving the fold further, re-check the q17 resection with the back top and screen corners as landmarks (w48a-L1).",
+   "check": "q17 near cover area >= 5500 on cov.py, bottom >= 265, centroid within 15 px of (714,227). The wing roll shows a convex lit rim in head17.png. The q15 checks in w49a-1 still hold."
+  },
+  {
+   "id": "w49a-3",
+   "severity": "low",
+   "owner": "econ",
+   "title": "Aisle-end J: elbow ~5-6 cm too far forward, diagonal too steep, member thinner than the photo's broad moulding",
+   "detail": "Armrests",
+   "evidence": "arm.py, x 580 / 600 / 620 / 640 / 660. Render 469 / 458 / 446 / merged / -. Photo 479 / 477 / 464 / 458 / 451. Gap under the cap at x 600 is 16 against 42. arm17.png: the photo's lower member keeps its bar until ~x 610 and rises ~19 deg on screen to the arm's rear beyond x 660, with a flat lit outer face ~27 px tall.",
+   "fix": "In econUnit's end branch (09a_econ.js ~l.380), move the elbow aft by 5-6 cm. jp could be [0,0.442,-0.49],[0,0.435,-0.462],[0,0.432,-0.40],[0,0.433,-0.30],[0,0.436,-0.22],[0,0.445,-0.175],[0,0.465,-0.145],[0,0.50,-0.115],[0,0.54,-0.09],[0,0.585,-0.07],[0,0.625,-0.05]. Thicken it to a radius of ~0.036 with x scale 0.55, so it is taller than it is thick. Mirror the far-LOD boxes (z -0.40 bar to -0.37; diagonal centre z -0.15, -32 deg).",
+   "check": "q17 x 600: run within 6 px of 477, gap >= 30. x 640: lower run 452-465. Front bar unchanged within 5 px."
+  },
+  {
+   "id": "w49a-4",
+   "severity": "low",
+   "owner": "econ",
+   "title": "Bug: computeNormals(jt) is swallowed by a comment on the J moulding line",
+   "detail": "Armrests",
+   "evidence": "09a_econ.js line 381: `jt.p[q] *= 0.6;   // ~6 x 3.7 cm computeNormals(jt);`. The tube keeps round-tube normals after its x is squashed to 0.6, so the flat outer face shades like a cylinder. Compare line 397, where the regular-row version calls computeNormals.",
+   "fix": "Change it to `jt.p[q] *= 0.6; computeNormals(jt);   // ~6 x 3.7 cm`.",
+   "check": "e3 / e7 J outer face shades flat, with a single highlight band along the length."
+  },
+  {
+   "id": "w49a-5",
+   "severity": "low",
+   "owner": "econ",
+   "title": "Pocket: right parts now, but the pouch reads flat and low in contrast; the card body is lost; mesh strands alias",
+   "detail": "Tray / pocket / AC",
+   "evidence": "pocketz.png, r49 / photo: L<70 39 % / 60 %, L>150 8 % / 15 %, B/R 1.26 / 1.44. The photo pouch has a deep shadow under its bulged foot, and the card's white body with its text stands out above the mouth. The render shows only a blue stripe over a pouch whose tone equals the shell's.",
+   "fix": "Add a dark crease band (#25282e, ~1.5 cm) under the pouch foot at y ~-0.08 to -0.06 and darken the pouch (#9298a1 -> ~#8a909a, lower roughness so the bulge top catches a highlight). Lift the card 2 cm higher in the mouth (card on(0.15,...)) and give the white body a few grey text bars. Replace the 2.2 mm strand quads with fewer 3 mm strands (e.g. 20 rows x 7 cols), or use an atlas mesh texture, so they don't alias to speckle.",
+   "check": "Pocket box L 72-85, L<70 >= 50 %, L>150 >= 12 %, B/R >= 1.35. The card's white body is visible above the mouth in q17."
+  },
+  {
+   "id": "w49a-6",
+   "severity": "low",
+   "owner": "econ",
+   "title": "Carried: belts (w48a-5), under-arm dark pills / neutral thick cap / q15 cover F light / flat pillows (w48a-6)",
+   "detail": "Belts / Armrests / Pillow",
+   "evidence": "Code unchanged in bc67a43.",
+   "fix": "As w48a-5 / w48a-6.",
+   "check": "As w48a-5 / w48a-6."
+  },
+  {
+   "id": "w49a-L1",
+   "severity": "low",
+   "owner": "integrator (camera)",
+   "title": "Carried w48a-L1: the q15 and q17 cover-top errors have opposite signs (q15 9 px low, q17 30 px high)",
+   "detail": "",
+   "evidence": "See w49a-2.",
+   "fix": "Add the back tops and screen corners to the q17 resection before trading the fold height between the two views.",
+   "check": "Upper landmarks within 8 px."
+  }
+ ],
+ "questionsForUser": [
+  "Carried: y_47300 shows lumbar pillows on the 3-seat side blocks, while y_47301 / y_47303 show them bare. The model follows the side views. Should the side blocks carry pillows?"
+ ],
+ "extraRefsSearched": "No downloads. I used y_47300, y_47301 and y_47303 at 930x575, with r49 / s49 against r0 / s0 (w48 geometry). The q16 camera doesn't frame y_47301, so I only checked q16 for artefacts and found none."
+}

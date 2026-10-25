@@ -681,3 +681,51 @@ was not reached: B scored w48 at 8.6 and A at 8.4. No round had a high-severity 
 
 Before/after sheet: `econ_before_after_w3k.jpg`, own renders only. It shows w46 (01d3461) against w48 (28cdd3c) for
 q15, q16, q17 (at the old camera and at the matched one), e2 and e7.
+
+## Wave 3l (2026-10-25): the last three w48 mediums
+
+Started on 2bd3366 (w48 geometry, A 8.4 / B 8.6). I fixed the three medium items from w48 against y_47303 crops at the
+landmark-matched q17 camera and checked them in studio renders, then ran one calibrated two-rater round. **Both raters
+scored at least 8.5 with no high-severity issue, so economy meets the bar** and the wave stops after one round.
+
+| round | rater A | rater B | mean | note |
+|---|---|---|---|---|
+| w48 (28cdd3c) | 8.4 | 8.6 | 8.5 | wave 3k best |
+| w49 (bc67a43) | 8.5 | 8.65 | 8.58 | J arm moulding, pocket pouch + card, larger headrest drape |
+
+### What changed in wave 3l
+- **Aisle-end arm (w48a-2 / w48b-2):** the block-end lower plate is now one swept J moulding, a gTube flattened to about
+  6 x 3.7 cm. It is a level bar at y ~0.43 whose nose stands ~8 cm ahead of the arm nose (z -0.49), then an elbow, then a
+  ~50 deg diagonal that merges under the arm's rear. In y_47303 the gap under the arm is 34-44 px; in w49 it is 27-31 px
+  (w48: 11-15). The far LOD has a matching low box plus a diagonal. Regular-row arms keep the C tube and grey plate.
+- **Pocket (w48a-3 / w47b-5):** I rebuilt it from the y_47303 left-block crop:
+  - a light-grey fabric pouch that bulges toward its foot;
+  - the safety card standing out of the mouth, with a white body and a blue header;
+  - black-edged side mesh panels with a lit grey weave.
+  - The old flap bar and the card above the flap are gone.
+- **Headrest (w48a-1 / w48b-1 / w48a-4):**
+  - the cushion is 2 cm fuller in front at mid-height;
+  - the wing rolls are 2.5 cm lower;
+  - the fold is 1.5 cm higher;
+  - the cover is a convex drape whose foot is 1 cm lower and ~1.5 cm more proud.
+  - q17 cover area went from 70 % to 80 % of the photo's (A).
+- **After rating:** the J tube's `computeNormals` call was inside a comment (w49a-4), so its flat face shaded like a
+  cylinder. Fixed after the round; it changes shading only.
+- **Triangles:** econ3 26,037 -> 25,359, econ4 38,804 -> 38,004, far3 1,788 -> 1,812 (as counted by `econUnit(...).i`).
+
+### Still open (w49a / w49b)
+- **q15 cover proportion (medium, both; regression):**
+  - head-on h/w is 0.86-0.92 vs 0.64-0.77 in y_47300; the foot is ~20-26 px low.
+  - Both raters' fix: put the foot back up (CPL[0] y ~0.645, CPL[1] ~0.662; the hem, foot tube, stitch and mark move
+    +0.03 with it) and get the q17 size from a more upright, more forward drape instead.
+- **q17 cover placement (medium, both):**
+  - it still sits ~30-47 px high and lies back, and the wing rolls read as square blocks;
+  - fix: cushion and cover ~3 cm forward, the foot-to-fold z drop 0.05 -> ~0.025, round wing sections.
+  - The two photos may show different headrest heights (question 31).
+- **Low:**
+  - the J elbow is ~5-6 cm too far forward (both raters give `jp` points in their JSON);
+  - the pouch is flat (crease bands, a cooler satin, wider mesh, fewer and thicker strands);
+  - carried: belts, under-arm plates, arm cap, q15 cover F tone, flat pillows.
+
+Before/after sheet: `econ_before_after_w3l.jpg`, own renders only (w48 2bd3366 vs w49 bc67a43: q17, q15, e3, e6, e4).
+Ratings: `econ_w49a.json`, `econ_w49b.json`.

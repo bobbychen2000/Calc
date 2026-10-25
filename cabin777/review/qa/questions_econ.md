@@ -72,3 +72,7 @@
 30. (wave 3k, w48) Back height: at the landmark-matched q17 camera the backs read ~6 cm tall. The back is now 4.5 %
    shorter (top ~1.28 m). Is there a published overall height for this Recaro seat to confirm it? [shortened on photo
    evidence]
+31. (wave 3l, w49) Headrest height: y_47300 (head-on) puts the cover close under the back top, with h/w ~0.7. y_47303 (side)
+   shows the cover lower and larger on the back. The raters agree that one cover position cannot match both photos. Was
+   the 6-way headrest set at different heights in the two shoots? [kept a compromise; w49 leans toward y_47303, and both
+   raters flag the q15 h/w of 0.86-0.92 as a regression]
