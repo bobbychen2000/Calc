@@ -51,3 +51,14 @@
    economy, the THE Room night photo none; a per-zone night LED level would allow both.
 9. **Sunset through open shades.** In q21 the panes show a blue-grey cloud deck under an amber cabin. No ANA photo of the
    amber phase with open shades at sunset was found. Is a warm orange horizon band expected in those windows?
+
+## Lighting run 2 (raters L8, 2026-10-25)
+
+10. **Contact shading on phones?** Run L8 adds a small screen-space contact shadow (the dark lines where cushions meet
+    shells, seats meet the floor and panels meet). It needs an extra depth pass, so it is on only at the **Sharp**
+    render quality; phones open on **Balanced** and keep their frame rate, without those lines. Should Balanced get it
+    too (about one more geometry pass per frame), or stay as it is?
+11. **Upper window tubs in Boarding: cool blue-grey, as in ANA's official photos?** With the shades open in daylight,
+    Boarding now gives the upper part of each window tub the sky's blue-grey (y_47303: #a4a9be, B-R +25) instead of the
+    cream reveal's neutral white. It follows the official photos' cool balance (question 6). If you prefer the warmer
+    in-service look, `MOODS.boarding.tubSky` in `src/12_scene.js` set to `[0, 1]` turns it off.

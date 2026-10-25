@@ -360,8 +360,10 @@ void main(){
     // bins from below #b3834b L138 s0.58] (lighting r4 medium). Not the whole hemiBot (the raters' fit): that lifted the
     // seat level and the door zones as well (q21 median 134 -> 142 vs ucr 86) [D]
     // QA L8 (light): the lift acts on the bin door faces only, outboard (binO, below) and centre (cBin: |x| < ~1 m above
-    // 1.62-1.70 m up to the bin tops at ~2.3 m, in the seat zones; not the undersides and PSU band, N.y < -0.5..-0.9, which
-    // the photos keep dark: ucr_the-room-cabin centre-bin underside #7a502a L87, ff_door-gap PSU band #603b1d L65), at 2x the step (12_scene MOODS binLift): r4's lift on the whole lower hemisphere
+    // 1.62-1.70 m up to the bin tops at ~2.3 m, in the seat zones), at 2x the step; the flat undersides and PSU band (N.y <
+    // -0.85..-0.98) keep the r4 level (0.25 of it), which the photos show dark [V: ucr_the-room-cabin centre-bin underside
+    // #7a502a L87, ff_door-gap PSU band #603b1d L65; dd undersides L89, PSU L78 at r4]: at the full lift the dd PSU band read
+    // L93 (cap 85), with none dd went darker than r4 (undersides L82) [D fixL8 t2 / after] (12_scene MOODS binLift): r4's lift on the whole lower hemisphere
     // above 1.6 m stopped at 0.6 of the step because it also lifted the seat level and door zones, and moved the dd / d06
     // bins only 3-6 L [V: ucr_the-room-cabin outboard bins #9e7240 L120 s0.59, ff_seat-with-door-closed #b99662 L154 s0.47
     // vs dd #7e5227 L89 s0.69, d06 #8c5c2b L99 s0.69] (lighting L8 medium)
@@ -388,7 +390,7 @@ void main(){
     float coolW = max((1.0 - smoothstep(0.06, 0.25, xLin - abs(v_wpos.x))) * facingIn, max(recd, 0.5 * binO));
     hBot = mix(u_hemiBotN, u_hemiBot, coolW);
     vec3 wsh = mix(u_washN, u_wash, coolW);
-    vec3 hemi = mix(hBot + u_binLift * max(binO, cBin) * (1.0 - smoothstep(0.85, 0.98, down)), u_hemiTop, up);
+    vec3 hemi = mix(hBot + u_binLift * max(binO, cBin) * mix(1.0, 0.25, smoothstep(0.85, 0.98, down)), u_hemiTop, up);
     // QA r1 (light): sz = 1 where an outboard bin and its lens stand (08_bins builds them in the seat zones only), from
     // the zone row of the window LUT. The lens band, its colour and the bin overhang shade stop at the door, galley and
     // lav zones, which stay neutral white [V: sany_10 band #525d94 under the bins while the door-3 / monument zone
@@ -542,9 +544,10 @@ void main(){
     // (u_ssao.y = strength, 0 = off: x-ray, low quality, studio) [D]. Not on the window reveals (recd): they are lit by the
     // pane, and the lining's lip standing proud of the tub drew a dark crescent inside every tub (fixL8 ss3 / ss4), where
     // the photos show the moulding continuous and pale [V: c_27312 reveal sides #d7dbdf / #e2e5e8]. Eased out where the AO
-    // volume is already low (ao 0.45 -> 0.1: footwells, under the consoles), which the crevice terms above darken: stacked,
-    // the q09 darks fell under the photo's (p5 36 -> 25 vs c_27314 36) [D fixL8 f2]
-    float sW = u_sMix * (1.0 - smoothstep(1.9, 2.3, v_wpos.y)) * (1.0 - recd) * smoothstep(0.02, 0.3, ao);
+    // volume is already low (ao 0.4 -> 0.05: footwells, under the consoles), which the crevice terms above darken: stacked,
+    // the q09 darks fell under the photo's (p5 36 -> 25 vs c_27314 36; 0.02-0.3: 30; 0.1-0.45: 35 but the q06 / q13 lines
+    // fell back to 2.7 / 0.8 %) [D fixL8 f2 / f4 / after]
+    float sW = u_sMix * (1.0 - smoothstep(1.9, 2.3, v_wpos.y)) * (1.0 - recd) * smoothstep(0.05, 0.4, ao);
     if (u_ssao.y > 0.0 && sW > 0.01) amb *= mix(1.0, max(1.0 - u_ssao.y * ssaoF(v_wpos, Nf), 0.0), sW);
     // reading lights (night): warm cone from the lamp lens to the seat, 0.35 m pool [V: tlfl_IMG_9377 pools on the bed]
     for (int i = 0; i < 8; i++) {
