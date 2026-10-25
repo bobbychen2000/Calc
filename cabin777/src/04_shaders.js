@@ -217,7 +217,9 @@ void main(){
       // so the mean colour holds): the far economy rows read as white snow [V: q16 rows 3+ p90 / p50 2.2, bright 0.28-0.31
       // vs y_47301 1.61 / 0.13] (from_econ w27); the q15 rows (2-4 m) keep theirs [D]
       float far = smoothstep(3.0, 7.0, length(u_camPos - v_wpos));
-      float PL = float(layer - 16), mb = layer == 16 ? 0.0 : -0.5 * (1.0 - far);
+      // QA r3 (light): layer 16 (y_tick) at -0.25: exempt, its stitch-column contrast faded at row distance, and a tile
+      // that held it went near-black close up (from_econ w31; q15 back p90 / p10 vs y_47300 3.2-3.5) [D econ]
+      float PL = float(layer - 16), mb = (layer == 16 ? -0.25 : -0.5) * (1.0 - far);
       vec3 c = texture(u_photo, vec3(q.zy, PL), mb).rgb*w.x + texture(u_photo, vec3(q.xz, PL), mb).rgb*w.y + texture(u_photo, vec3(q.xy, PL), mb).rgb*w.z;
       if (far > 0.0) c = mix(c, textureLod(u_photo, vec3(0.5, 0.5, PL), 8.0).rgb, 0.5 * far);
       base *= mix(vec3(1.0), c * 2.0, P.z);
