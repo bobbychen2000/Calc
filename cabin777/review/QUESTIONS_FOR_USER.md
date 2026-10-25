@@ -8,7 +8,7 @@ questions on 2026-09-24.
 - **[photo]** means a photo or drawing would settle it. Skip it if you have none.
 - **[check]** means a look on your own phone or GPU, which the headless renderer cannot judge.
 - Ids such as `econ Q26` are item numbers in `questions_econ.md`. The shell file has unnumbered bullets, so they are cited
-  as `shell W3.n` (under "Wave 3") and `shell W3c.n` (under "Wave 3c").
+  as `shell W3.n` (under "Wave 3"), `shell W3c.n` (under "Wave 3c") and `shell PB.n` (under "Polish B").
 
 ## If you only have a minute
 
@@ -109,7 +109,7 @@ boarding), room Q6 (THE Room seat colour), lighting Q3 (night levels) and exteri
 - **ceiling Q10 [photo] Vault fitting.** Is the bowed rounded rectangle on each vault panel in c120 a speaker or a recess?
   *Now:* a smooth vault-coloured speaker bezel with a slightly darker pocket. *Why:* it is repeated along the aisle ceiling.
 
-## Sidewall, windows and doors: 3 open
+## Sidewall, windows, doors and floors: 4 open
 
 - **shell W3.1 + W3c.1 (with monuments Q7) [photo] Door viewing window.** It sits at the window belt, about 0.3 m aft of the door
   centre, from a face-on ANA door-lining video frame. Its size is 0.26 × 0.64 m (bottom 0.69 m, top 1.33 m). The raters
@@ -117,6 +117,10 @@ boarding), room Q6 (THE Room seat colour), lighting Q3 (night levels) and exteri
   face-on photo from inside an ANA 777 L2 door (and an R door) would settle it.
 - **shell W3.2 [photo] Floors at the door cross-aisles.** The model has grey vinyl inboard and brown carpet in the door bays at
   all five doors, but only door 2 is photographed (sans_09). *Why:* it decides the floor at each door.
+- **shell PB.1 [photo] THE Suite carpet pattern.** The F floor and the door bays use THE Room's carpet tile (cut from
+  c_27315), in F's own warm brown. The official f_17300 shows sparser, larger light flecks, but it looks like a rendering.
+  *Now:* the J pattern. *Why:* the carpet covers the F aisle and the suite floors. A real in-flight photo of the THE Suite
+  floor would decide whether F gets its own tile (an f_17300 crop is ready).
 - **shell W3c.2 [call] Sidewall linen weave.** The walls are plain satin. A fine linen weave needs a new shared texture layer.
   *Now:* plain. *Why:* it shows only in close-ups of the wall. Say if it is worth adding.
 
@@ -169,7 +173,7 @@ boarding), room Q6 (THE Room seat colour), lighting Q3 (night levels) and exteri
   economy (sany_47) and MileLion's lavender THE Suite (ml_DSC_1945). *Now:* between them. *Why:* it sets the Blue mood
   everywhere. Say which photo to follow, or send one of the blue phase in THE Room.
 
-**Open per area:** suite 4, room 8, PY 2, economy 8, ceiling 7, shell 3, monuments 3, exterior 9, lighting 3 (47 in all).
+**Open per area:** suite 4, room 8, PY 2, economy 8, ceiling 7, shell 4, monuments 3, exterior 9, lighting 3 (48 in all).
 
 ## Already resolved (no answer needed)
 
