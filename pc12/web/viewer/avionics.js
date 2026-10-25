@@ -191,11 +191,10 @@ export class Avionics {
     // a texture three has not created yet, or one with a full upload pending (the constructor, a context restore,
     // filterTextures): upload the master canvas whole -- it holds every page just drawn.  copyTextureToTexture would
     // run that upload inside its first copy with generateMipmaps off, and three keys its GPU texture on generateMipmaps:
-    // a new WebGL texture without mip levels, the old one deleted while still bound ('no texture bound to target')
+    // a new single-level WebGL texture (no trilinear mips until the next full upload)
     const p = R.properties.get(tex);
     if (!p.__webglTexture || p.__version !== tex.version) {
       tex.generateMipmaps = true;
-      if (tex.version === 0) tex.needsUpdate = true;
       R.initTexture(tex);
       this.stats.uploads += list.length; this.stats.full++;
       this.stats.uploadMs += performance.now() - t0; this.lastUpload = performance.now();

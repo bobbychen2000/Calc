@@ -2273,6 +2273,7 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   unit 0, so copyTextureToTexture acted on whichever unit the last draw left active -- `Avionics._upload` makes unit 0
   active before each copy, and a texture three has not created yet / with a full upload pending is uploaded whole
   (initTexture; generateMipmaps is part of three's GPU texture key, so it is not toggled during that upload).  viewer_test
-  [AVX-16] sets up the stale-unit state, uploads, and checks gl.getError() and the WebGL console through the section (the
-  old code: 1282 and the lead's warnings).  Verified: --only avx 17 / 17, --only sound 25 / 25, --only picture 15 / 15,
+  [AVX-16] sets up the stale-unit state, uploads, and checks gl.getError() and the WebGL console (the old code: 1282 and
+  the lead's warnings), [AVX-16b] the same over the rest of the section ([AVX-14]'s frames, the screenshots' uploads
+  right after real draws; the lead's review: the row had read the console before them).  Verified: --only avx 17 / 17, --only sound 25 / 25, --only picture 15 / 15,
   avx_model_test 34 / 34, web/package.py verify OK, the Artifact bundle verify OK, artifact_test 76 / 76.

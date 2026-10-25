@@ -4545,6 +4545,7 @@ async def avx_checks(page, shots=True):
           f"getError after the start {err_start}, before / after the stale-unit upload {r['e0']} / {r['e1']} / {r['e2']}, "
           f"{r['copies']} pages copied ({r['full']} whole uploads), worst level-0 {r['worst']:.2f} / mip {r['worst1']:.2f}; "
           f"WebGL console {len(gl_msgs)}{': ' + gl_msgs[0][:160] if gl_msgs else ''}")
+    n16 = len(gl_msgs)
     # parked and still: nothing redrawn, uploaded or rendered
     r = await js(page, A + """V.setProp({rpm: 0, pitch: 62}, {instant: true}); await V.frames(4);
       await new Promise((res) => setTimeout(res, 4000));
@@ -4562,7 +4563,14 @@ async def avx_checks(page, shots=True):
         await shot(page, "avx_02_mfd_close", "const V = window.viewer; V.setProp({rpm: 1700, pitch: 0}, {instant: true}); V.advance(0.2); "
                    "V.avionics.flush(); V.setCamera(V.avionics.closeup('mfd', 0.55, 30), {instant: true});", 6)
     await js(page, "const V = window.viewer; V.setProp({rpm: 0, pitch: 62}, {instant: true}); V.env.reset({instant: true}); V.pause(false); V.setCamera('three_quarter', {instant: true});")
+    # [AVX-16] over the rest of the section: [AVX-14]'s frames and the screenshots' uploads straight after real draws
+    err_end = await js(page, "const V = window.viewer; await V.frames(2); return V._internals.stage.renderer.getContext().getError();")
+    await page.wait_for_timeout(500)
     page.remove_listener("console", on_console)
+    late = gl_msgs[n16:]
+    check("[AVX-16b] no GL error / WebGL warning through the rest of the section (the parked frames, the screenshots' "
+          "uploads right after real draws)", err_end == 0 and not late,
+          f"getError at the section's end {err_end}; WebGL console {len(late)}{': ' + late[0][:160] if late else ''}")
 
 
 # ----------------------------------------------------------------------------- main
