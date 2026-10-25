@@ -141,6 +141,9 @@ const AO_TUNE = { hemi: 0.22, bounce: 1.0, emitLens: 0.45, emitCtr: 0.35, kAttF:
 // QA r3 (integration): sheen = gain of the grazing sheen lobe on SHEEN materials (mainFS) [D: q17 / q16 flaps against
 // y_47303 / y_47301, q15 head-on unchanged]
 const LIGHT_TUNE = { cove: 1.0, sheen: 0.84 };
+// QA r3 (integration): floor contact map (computeAO): cell size (m; 6 m x 59 m -> 200 x 1973 texels, under the 2048
+// texture minimum), marking height above the floor and the darkening at a base (mainFS) [D]
+const CONTACT = { cell: 0.03, h: 0.15, k: 0.45 };
 // Shade states per window: 0 open, 1 half (manual) / sheer (electric), 2 closed (manual) / blackout (electric)
 const SHADE_STATE = {
   label: (w, lv) => (w.electric ? ['open', 'sheer blind', 'blackout'] : ['open', 'half down', 'closed'])[lv],
@@ -216,6 +219,16 @@ class Scene {
     // seats: voxelise the real instanced geometry (surface samples every ~5 cm, each adds partial occupancy) so
     // footwells, seat undersides, shell corners and console gaps get soft occlusion that matches their shapes
     const dOcc = 0.34, step2 = 0.05 * 0.05;
+    // QA r3 (integration): floor contact map, CONTACT.cell cells over the AO extent: 1 where a seat / monument / the
+    // sidewall stands on the carpet (seat surface samples below CONTACT.h), one [1/4, 1/2, 1/4] pass, read by mainFS on
+    // the carpet only. The 8 cm AO volume cannot hold the thin dark line at each shell / seat base [V: kn_room_1 aisle
+    // centre L34, shell-base edge L33 with a thin line; omaatJ_oj_r31 dark base line ~20 px at 1200 px; c_27312 a dark
+    // line along every monument base]; width / depth [D]
+    const cx = Math.round(size[0] / CONTACT.cell), cz = Math.round(size[2] / CONTACT.cell), con = new Float32Array(cx * cz);
+    const markC = (x, z) => {
+      const i = Math.floor((x - min[0]) / CONTACT.cell), k = Math.floor((z - min[2]) / CONTACT.cell);
+      if (i >= 0 && k >= 0 && i < cx && k < cz) con[k * cx + i] = 1;
+    };
     const mark = (x, y, z) => {
       const i = Math.floor((x - min[0]) / cell[0]), j = Math.floor((y - min[1]) / cell[1]), k = Math.floor((z - min[2]) / cell[2]);
       if (i < 0 || j < 0 || k < 0 || i >= nx || j >= ny || k >= nz) return;
@@ -239,7 +252,9 @@ class Scene {
       }
       for (const M of g.mats) for (let q = 0; q < samples.length; q += 3) {
         const x = samples[q], y = samples[q + 1], z = samples[q + 2];
-        mark(M[0] * x + M[4] * y + M[8] * z + M[12], M[1] * x + M[5] * y + M[9] * z + M[13], M[2] * x + M[6] * y + M[10] * z + M[14]);
+        const wx = M[0] * x + M[4] * y + M[8] * z + M[12], wy = M[1] * x + M[5] * y + M[9] * z + M[13], wz = M[2] * x + M[6] * y + M[10] * z + M[14];
+        mark(wx, wy, wz);
+        if (wy > -0.05 && wy < CONTACT.h) markC(wx, wz);   // (parked instances sit far below the floor)
       }
     }
     for (const zn of this.layout.zones) {
@@ -248,6 +263,8 @@ class Scene {
       box(-0.83, 0.83, 1.84, 2.34, zn.z0, zn.z1);
     }
     for (const m of this.layout.mon) if (m.h > 0) box(m.x0, m.x1, 0, m.h, m.z0, m.z1);
+    for (const m of this.layout.mon) if (m.h > 0) for (let z = m.z0; z <= m.z1; z += CONTACT.cell * 0.5) for (let x = m.x0; x <= m.x1; x += CONTACT.cell * 0.5) markC(x, z);
+    { const xw = wallAt(0.05)[0]; for (let k = 0; k < cz; k++) for (let i = 0; i < cx; i++) if (Math.abs(min[0] + (i + 0.5) * CONTACT.cell) > xw - CONTACT.cell) con[k * cx + i] = 1; }
     for (let j = 0; j < ny; j++) {
       const y = min[1] + (j + 0.5) * cell[1];
       const xw = wallAt(Math.min(y, 2.3))[0];
@@ -334,6 +351,22 @@ class Scene {
     const vis = new Uint8Array(nx * ny * nz);
     for (let q = 0; q < acc.length; q++) vis[q] = Math.round(clamp(acc[q], 0, 1) * 255);
     this.ao = { tex: this.gl.texture3D(vis, nx, ny, nz), min, size };
+    const ct = new Uint8Array(cx * cz), cb = new Float32Array(cx * cz);
+    for (let k = 0; k < cz; k++) for (let i = 0; i < cx; i++) {
+      const q = k * cx + i;
+      cb[q] = 0.25 * (i > 0 ? con[q - 1] : con[q]) + 0.5 * con[q] + 0.25 * (i < cx - 1 ? con[q + 1] : con[q]);
+    }
+    for (let k = 0; k < cz; k++) for (let i = 0; i < cx; i++) {
+      const q = k * cx + i;
+      ct[q] = Math.round(255 * clamp(0.25 * (k > 0 ? cb[q - cx] : cb[q]) + 0.5 * cb[q] + 0.25 * (k < cz - 1 ? cb[q + cx] : cb[q]), 0, 1));
+    }
+    const gl = this.gl.gl;
+    if (!this.contactTex) this.contactTex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, this.contactTex);
+    for (const [k, v] of [[gl.TEXTURE_MIN_FILTER, gl.LINEAR], [gl.TEXTURE_MAG_FILTER, gl.LINEAR], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D, k, v);
+    gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8, cx, cz, 0, gl.RED, gl.UNSIGNED_BYTE, ct);
+    this.contact = [min[0], min[2], cx * CONTACT.cell, cz * CONTACT.cell];
   }
 
   buildGlows() {
@@ -662,6 +695,7 @@ class Scene {
     G.tex('u_ao', 1, this.ao.tex, gl.TEXTURE_3D);
     G.set('u_aoMin', this.ao.min);
     G.set('u_aoSize', this.ao.size);
+    G.tex('u_contact', 6, this.contactTex); G.set('u_contactR', this.contact); G.set('u_contactK', CONTACT.k);
     G.tex('u_detail', 2, this.tex.detail, gl.TEXTURE_2D_ARRAY);
     G.tex('u_photo', 5, this.tex.photo, gl.TEXTURE_2D_ARRAY); G.set('u_photoOn', PHOTO_PIX ? 1 : 0);
     const lp = new Float32Array(N_LAYERS * 4);

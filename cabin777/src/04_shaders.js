@@ -37,7 +37,7 @@ uniform vec4 u_extPtP[2]; uniform vec3 u_extPtC[2];
 uniform vec4 u_spotP[8]; uniform vec4 u_spotT[8]; uniform vec3 u_spotCol;
 uniform vec4 u_stripP[8]; uniform vec4 u_stripA[8]; uniform vec3 u_stripCol;
 uniform vec4 u_scrP[6]; uniform vec4 u_scrN[6]; uniform vec3 u_scrCol; uniform float u_fillLift; uniform vec3 u_lensCore; uniform vec2 u_vaultE;
-uniform sampler3D u_ao; uniform vec3 u_aoMin; uniform vec3 u_aoSize;
+uniform sampler3D u_ao; uniform vec3 u_aoMin; uniform vec3 u_aoSize; uniform sampler2D u_contact; uniform vec4 u_contactR; uniform float u_contactK;
 uniform sampler2DArray u_detail; uniform vec4 u_layer[${N_LAYERS}]; uniform sampler2DArray u_photo; uniform float u_photoOn;
 uniform sampler2D u_atlas; uniform float u_screenStep; uniform float u_emisGain; uniform float u_screenGain;
 uniform sampler2D u_win; uniform vec2 u_winZ;
@@ -284,13 +284,16 @@ void main(){
     // cell-sized sweep wedges blur out, and only the 2.5 cm contact sample stays sharp, at half weight (the contact line
     // at each shell / seat base) [V: kn_room_1 aisle centre L34, shell-base edge L33; omaatJ_oj_r31 dark base line ~20 px
     // at 1200 px, edges 0.85-0.9x the centre]; the pocket AO also takes this mean [D]
-    float aoPk = ao;
+    float aoPk = ao, ctc = 0.0;
     if (fl > 0.5) {
       vec3 pb = v_wpos + vec3(0.0, 0.05, 0.0) - u_aoMin;
       float aoB = 0.25 * (texture(u_ao, (pb + vec3(0.17, 0.0, 0.0)) / u_aoSize).r + texture(u_ao, (pb - vec3(0.17, 0.0, 0.0)) / u_aoSize).r
                         + texture(u_ao, (pb + vec3(0.0, 0.0, 0.17)) / u_aoSize).r + texture(u_ao, (pb - vec3(0.0, 0.0, 0.17)) / u_aoSize).r);
       ao = min(aoB, mix(texture(u_ao, (v_wpos + N*0.025 - u_aoMin) / u_aoSize).r, 1.0, 0.5));
       aoPk = max(aoB, texture(u_ao, (v_wpos + vec3(0.0, 0.35, 0.0) - u_aoMin) / u_aoSize).r);
+      // the thin dark line where a seat, shell, monument or the sidewall meets the carpet (12_scene contact map, 3 cm
+      // cells; applied to amb below) [V: kn_room_1, omaatJ_oj_r31 / r37 thin base line; c_27312 monument bases]
+      ctc = texture(u_contact, (v_wpos.xz - u_contactR.xy) / u_contactR.zw).r;
     }
     float up = clamp(N.y*0.5 + 0.5, 0.0, 1.0);
     float down = clamp(-N.y, 0.0, 1.0);
@@ -404,7 +407,7 @@ void main(){
     // undersides keep the r2 ramp 0.02-0.28 and floor 0.3 [D renders r3]
     float crevF = (1.0 - mix(fl > 0.5 ? 0.5 : 0.3, 1.0, fl > 0.5 ? smoothstep(0.0, 0.12, aoPk) : smoothstep(0.02, 0.28, aoPk)))
                 * (1.0 - smoothstep(0.30, 0.50, v_wpos.y)) * max(fl, step(0.3, down)) * (1.0 - wallProx*facingIn);
-    amb *= 1.0 - crevF;
+    amb *= (1.0 - crevF) * (1.0 - u_contactK * ctc);
     // reading lights (night): warm cone from the lamp lens to the seat, 0.35 m pool [V: tlfl_IMG_9377 pools on the bed]
     for (int i = 0; i < 8; i++) {
       if (u_spotP[i].w < 0.5) continue;
