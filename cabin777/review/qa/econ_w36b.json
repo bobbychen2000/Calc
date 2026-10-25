@@ -1,0 +1,49 @@
+{
+ "area": "econ",
+ "rater": "B",
+ "round": "w36",
+ "candidate": "eb4c09f",
+ "lens": "Geometry and proportion first. raterB35/m.py re-pointed at r35 and r36 (/tmp/claude-0/-home-user-Calc/7507bc7d-234c-52a3-965a-1562a4a65706/scratchpad/raterB36/m35.py, m36.py: patch stats against y_47300 resized to 930x575, dark runs L<35 on rows 505/530/560). Cover width from L<60 runs along rows 255 / 270 (cols 320-620). Three-way q15 crops r35 / r36 / photo: /tmp/claude-0/-home-user-Calc/7507bc7d-234c-52a3-965a-1562a4a65706/scratchpad/raterB36/z_head.png, z_low.png, z_far.png, z_far3.png. Studio s35 vs s36 side by side: /tmp/claude-0/-home-user-Calc/7507bc7d-234c-52a3-965a-1562a4a65706/scratchpad/raterB36/c_e10_under.png, c_e11_panedge.png, c_e4_head.png, c_e1_front.png, c_e7_arm.png, compared with raterB33/p302crop.png (y_47302 under-seat). q16 / q17 pairs: raterB36/pair16.png, pair17.png. The r35 vs r36 diff changes 5.3 % of q15 pixels (rows 165-574), 5.1 % of q16, 7.4 % of q17 and 1.4 % of q18. The far-row patch stats barely move, because the q15 far box is mostly near-LOD rows (LOD near = 9.5 m and the camera is at z 48.05).",
+ "score": 8.4,
+ "priorIssues": [
+  {"id": "w35b-1 (medium) headrest cover ~1.17x wide head-on", "status": "fixed", "note": "Row 255 runs: x349-420 (72 px) and x508-580 (73 px), down from 81 / 81, against 68-72 px in y_47300, so about 1.03x. Height is unchanged and still right. Cover L53.8 vs 37-45: still a little light (part of that is lighting)."},
+  {"id": "w35b-2 (low) tick pans flat", "status": "not fixed", "note": "Seat 2 p90/p10 2.88 vs 4.81 (w35 3.07); seat 1 3.39 vs 5.13. Hue drifted bluer: B/R 1.99 vs 1.83."},
+  {"id": "w35b-3 (low) far rows snowy, no pad ears", "status": "not fixed (the far-LOD change does not reach these rows)", "note": "Far centre L130.7 B/R 1.33 vs 115.3 / 1.48 (w35 131.4 / 1.32); far left p90/p10 3.50 vs 5.88 (w35 3.62). In z_far3 rows 3-7 still show white tick snow: they are near LOD (< 9.5 m). Only the last 1-2 rows switch to the flat far LOD."},
+  {"id": "w35b-4 (low) pillows plaques; fleck specks haloed", "status": "not fixed", "note": "z_low / c_e11: unchanged."},
+  {"id": "w35b-5 (low) tray edge; pouch flat disc; belt V", "status": "partly fixed", "note": "Belts: the buckles moved ~4 cm back (z -0.31 -> -0.27) and the straps shortened (0.25 -> 0.19). In z_low the V is smaller and sits closer to the crease, but it is still on every pan, and the light/dark strap pair still reads. Pouch: now a dark brown bowl (core sampled #2b201d) instead of a grey ring. That is a different mismatch, not a fix (see w36b-2). The tray edge is unchanged."},
+  {"id": "w35b-6 (medium) lighting", "status": "improved (lighting, not scored)", "note": "Pans L79.5 / 76.3 / 71.1 vs 74.7 / 70.0 / 71.4 (w35 85.5 / 82.0 / 83.7). The dash pan's L now matches."},
+  {"id": "w35a-1 (medium, A) cover too wide", "status": "fixed", "note": "As w35b-1."},
+  {"id": "w35a-2 (medium, A) far rows snowy", "status": "not fixed", "note": "As w35b-3."},
+  {"id": "w35a-4 (low, A) pouch reads as a gauge", "status": "changed, not fixed", "note": "It no longer reads as a gauge, but it now reads as an opaque brown bowl."}
+ ],
+ "details": [
+  {"detail": "Fabric: tick weave", "score": 8.3, "refs": "Seat 2 pan L79.5 B/R 1.99 p90/p10 2.88 vs 74.7 / 1.83 / 4.81. L is closer, but the hue is now too blue and the pan flatter."},
+  {"detail": "Fabric: diamond lattice", "score": 8.5, "refs": "x470-600: L76.3 B/R 1.89 p90/p10 1.60 vs 70.0 / 1.87 / 1.95. The hue now matches."},
+  {"detail": "Fabric: petal fleck", "score": 8.1, "refs": "Haloed specks unchanged (c_e11)."},
+  {"detail": "Fabric: dash mosaic", "score": 8.4, "refs": "#444c72: L71.1 vs 71.4 (fixed), but B/R 2.03 vs 1.80 and mean (59,69,120) vs (58,71,106), about 14 too blue. Under the new lighting the -8 % step overshot in blue."},
+  {"detail": "Fabric mix (backs, pans, pads)", "score": 8.5, "refs": "Unchanged; the order matches y_47300."},
+  {"detail": "Headrest pad + cover", "score": 8.7, "refs": "Width 72-73 vs 68-72 px and height ~48 vs 48, so the proportion now matches y_47300. Cover L54 vs 37-45 is still slightly light. The pad ears read beside the cover in z_head."},
+  {"detail": "Pillow", "score": 8.2, "refs": "Unchanged plaques; y_47300 has a puffed bow-tie with pointed corners."},
+  {"detail": "Armrests", "score": 8.8, "refs": "Unchanged."},
+  {"detail": "Belts", "score": 8.2, "refs": "Shorter V nearer the crease with a darker grey cover (#7d828a). It still shows on every pan in q15 while y_47300 shows none (open question)."},
+  {"detail": "Seat pan / front", "score": 8.7, "refs": "Joints at row 560: 287(2), 463(4), 640(3), unchanged. The hard black tray lip still shows under each pan front (c_e11)."},
+  {"detail": "Back silhouette", "score": 8.1, "refs": "Unchanged."},
+  {"detail": "Rear shell / hood / back top", "score": 8.1, "refs": "Unchanged (q17 / q18)."},
+  {"detail": "Screen / handset", "score": 8.2, "refs": "Unchanged."},
+  {"detail": "Tray / pocket / AC", "score": 7.8, "refs": "Unchanged."},
+  {"detail": "Legs / footrest / under-seat", "score": 8.2, "refs": "The pouch is now an opaque dark-brown half-bowl (core #2b201d, rim #5a5560). y_47302 shows a smoky translucent grey shield (#43444d-#28262b) with a darker vest and a tan glint, through which the leg and rail can be seen. The box, SEB and legs are unchanged and fine."},
+  {"detail": "Far-LOD rows", "score": 7.7, "refs": "Far stats unchanged: L131 / B/R 1.33 vs 115 / 1.48, p90/p10 3.50 vs 5.88. The snow comes from near-LOD rows 3-8, so the flat far-LOD fabrics are not visible in q15."}
+ ],
+ "issues": [
+  {"id": "w36b-1", "severity": "medium", "owner": "econ (09a_econ.js) + texture (03_tex.js LAYER_PARAMS, shared)", "title": "Mid/far rows still snowy: the snow is in near-LOD rows (<9.5 m), so the far-LOD flat fabrics miss it", "evidence": "q15 far boxes: L130.7 / B/R 1.33 vs 115.3 / 1.48 and p90/p10 3.50 vs 5.88, against w35 131.4 / 1.32 / 3.62. z_far3: rows 3-8 show white tick snow and lighter backs, with no dark row gaps. The camera is at z 48.05 and LOD near is 9.5 m, so nearly every visible row is near LOD.", "fix": "Either (a) fade the photo tile contrast with distance for the econ fabrics: in the shader, mix the tile toward its mean by smoothstep(4.0, 8.0, viewDist), as a per-material flag set on ECON_PAN* / yFabric*. Or (b) cheaper: in econSeat when lod===1 (mid LOD), or in buildSeats for econ rows more than 4 m from the camera, use econFarMat() so that rows 4+ take the flat mean colours. Then re-measure the y150-200 box (target L~115, B/R ~1.48)."},
+  {"id": "w36b-2", "severity": "low", "owner": "econ (09a_econ.js)", "title": "Life-vest pouch now an opaque brown bowl rather than a smoky grey shield", "evidence": "c_e10_under: core #2b201d, rim #5a5560, and nothing shows through. y_47302 (p302crop): the shield is translucent grey #43444d, the vest inside is a darker grey with a small tan/yellow glint, and the rail and leg are visible through it.", "fix": "Outer gCyl: c '#5d6068', r 0.1, with a glass/alpha material if the Builder supports one (otherwise keep it opaque but cool grey). Inner core: c '#33343a' (cool, not brown), radius 0.07. Add a small 0.03x0.01 '#8a7350' box on the core face for the glint."},
+  {"id": "w36b-3", "severity": "low", "owner": "econ (09a_econ.js)", "title": "Dash mosaic and tick pans now too blue under the new lighting; tick pans still flat", "evidence": "Dash pan mean (59,69,120) B/R 2.03 vs (58,71,106) 1.80. Tick pan seat 2 B/R 1.99 vs 1.83, p90/p10 2.88 vs 4.81.", "fix": "ECON_PAN_C photoBase('#444c72') -> '#464d68' (same L, less blue). For ECON_PAN, desaturate the base ~6 % toward grey and raise the y_tick tile gain (LAYER_PARAMS, shared, one line) so the ground drops while the ticks stay light."},
+  {"id": "w36b-4", "severity": "low", "owner": "econ (09a_econ.js)", "title": "Pillows plain plaques; fleck specks haloed; belt V still on every pan (carried)", "evidence": "z_low against y_47300: puffed bow-tie pillows with pointed corners, and no visible belts. c_e11: haloed specks.", "fix": "Pillow: loft the outline with the corners pulled out 1.5 cm, the edge midpoints pinched 1 cm and a 5 mm centre dent. Fleck: clamp the dark end of the y_fleck swatch. Belts: if the user picks tucked, drop the straps and keep only the buckle stubs at the crease (z -0.24, y 0.47)."},
+  {"id": "w36b-5", "severity": "low", "owner": "econ (09a_econ.js)", "title": "Headrest cover slightly light; hard black tray lip under the pan fronts", "evidence": "Cover L54 vs 37-45 in y_47300 (the pan Ls are now within ~6, so the lighting no longer explains all of it). c_e11: a crisp black tray edge under every pan front, where y_47302 shows a soft cavity.", "fix": "SEATMAT.yCover c darker by ~12 % (shared, one line). Tray: gRBox depth 0.41 -> 0.39, centred 2 cm further back, r 0.6 -> 0.8."},
+  {"id": "w36b-6", "severity": "low", "owner": "lighting (12_scene.js)", "title": "Seat-level exposure (not scored for econ)", "evidence": "Pans L79.5 / 76.3 / 71.1 vs 74.7 / 70.0 / 71.4: much improved since w35 (85.5 / 82.0 / 83.7).", "fix": "None needed beyond the lighting owner's current work."}
+ ],
+ "questionsForUser": [
+  "Belts: tucked away (y_47300) or laid across the pans (y_47302 / 47303 and trip reports)?"
+ ],
+ "extraRefsSearched": "No new downloads. Used ref/ana y_47300-47305, ref/web/econ, and raterB33/p302crop.png (y_47302 under-seat)."
+}
