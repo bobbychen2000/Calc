@@ -2275,5 +2275,5 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   (initTexture; generateMipmaps is part of three's GPU texture key, so it is not toggled during that upload).  viewer_test
   [AVX-16] sets up the stale-unit state, uploads, and checks gl.getError() and the WebGL console (the old code: 1282 and
   the lead's warnings), [AVX-16b] the same over the rest of the section ([AVX-14]'s frames, the screenshots' uploads
-  right after real draws; the lead's review: the row had read the console before them).  Verified: --only avx 17 / 17, --only sound 25 / 25, --only picture 15 / 15,
+  right after real draws; the lead's review: the row had read the console before them; --only avx 18 / 18 with it).  Verified: --only avx 17 / 17, --only sound 25 / 25, --only picture 15 / 15,
   avx_model_test 34 / 34, web/package.py verify OK, the Artifact bundle verify OK, artifact_test 76 / 76.
