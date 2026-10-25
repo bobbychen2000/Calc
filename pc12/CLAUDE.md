@@ -2368,3 +2368,25 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   Verified on 5fd7515 (both tiers rebuilt: 2,803,875 / 2,363,498 triangles): fit_check FIT OK (no open row),
   consistency_2d3d 157 / 157, yoke_mesh_check OK, the FULL viewer_test 253 / 253, web/package.py verify OK, the Artifact
   bundle verify OK, artifact_test 76 / 76.
+  Merged into main at ee751b7 (the lead, 2026-10-25: second interim).  The fur-field rework below is NOT started: the
+  lead put it to the owner (now / after the usage reset / accept 8.3).
+  DESIGN NOTE -- a lock-strand fur field for the crew fleece (the last lever to 8.5 per both judges, ~+0.2):
+  * Problem: the shell fur's coverage field is isotropic value noise above a rising threshold, so its cut contours are
+    round cells -- up close a sponge / coral of dark holes, edge-on stacked florets.  Tuning (gap tone, partings, caps,
+    stretch, soft coverage) only reshaped or felted the same cells (seven rounds in the old thread, three here).
+  * Approach: replace the coverage field with LOCKS -- a jittered 2-D cell lattice in the surface's (flow, cross) frame
+    (flow = down the vertical faces / forward over the tops, as today's stretch axis), each cell carrying one lock: a
+    curved strand bundle 15-25 mm long, 3-6 mm wide, its centreline a short arc that rises with the layer height
+    (t) and curls at the tip (rotation ~ t^2); coverage = the distance to the nearest few lock centrelines below a width
+    that tapers to the tip, max over the neighbours (the top lock wins); the dark lives only BETWEEN locks and on each
+    lock's shaded flank (its own normal from the centreline frame), never as round holes; fine fibre streaks along the
+    strand; at grazing |n.v| < 0.4 the outer layers taper to the lock tips (a fringe of tips, not contour terraces).
+    Same shell machinery (furPatch / addFur, one instanced draw, 14 / 8 layers), a new `q.locks` mode beside `oct`.
+  * Lab first: the seats-only page (subset GLB + materials.js under a room light, ~30 s a try; the old
+    out/tmp/fd_fix_r5/lab tooling) to get the lock shape right on P1046409 / 10 crops, plus tools/furprev.py's numpy
+    preview of the coverage field -- no full-viewer captures until the lab reads as locks.
+  * Gate: [FD-L5] tone, [FD-L10] / [FD-L10b] structure rows (P1046408 / 09 / 10) must pass, then ONE A/B judge against
+    main at the 6 fleece-bearing views (fd_cabin, pedestal, quadrant, cb_left, seats_aft, footwell_l) and one lens judge
+    on all 15; ship only if the A/B prefers it, else keep main's fleece.
+  * Expected: 2-3 lab iterations, 1-2 viewer rounds (fdlook + 2 judges each), then the usual rebuild / full verification
+    (no GLB change unless the seats' rim geometry is touched).
