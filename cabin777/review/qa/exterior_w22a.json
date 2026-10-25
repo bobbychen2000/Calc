@@ -1,0 +1,73 @@
+{
+ "area": "exterior",
+ "rater": "A skeptic",
+ "build": "w22 = 5aac2bd",
+ "score": 8.5,
+ "details": {
+  "wing planform / raked tip / bending": 7.8,
+  "wing surface detail (seams, fastener rows, panel tone, gear stripe, slat band, placards, grime)": 8.5,
+  "control surfaces & gaps (slats, spoilers, flaperon, aileron)": 7.8,
+  "canoes (flap-track fairings)": 8.4,
+  "pylon": 8.3,
+  "nacelle shape (cowl, lip, splits, strake, access panel)": 8.1,
+  "nacelle colour / materials (incl. GE logo)": 8.0,
+  "inlet / fan / spinner": 8.0,
+  "livery / registration JA795A": 8.0,
+  "lights & static dischargers": 7.5,
+  "artefacts": 7.9
+ },
+ "previous": [
+  {
+   "issue": "w21a low: raked tip reads blunt from 19A because the outboard LE lies flat",
+   "status": "partly fixed",
+   "measure": "w19A top edge at x 515/520/525/530 is now rows 118/119/120/120. In r21 it was 121/121/121/121, so the last ~15 px of LE now rise 3 px into the point instead of running level. Left edge rows 124-196 are unchanged. Aft studio view (ratA22/cmp_tip_aft.png) shows a visible upward curl over the last ~0.5 m. KN41 still sweeps up much more, over a longer span (ratA20/tip_cmp.png), so the tip reads pointed but not yet swept up."
+  },
+  {
+   "issue": "w21a low: raked TE was a 3-segment polyline with kinks",
+   "status": "fixed",
+   "measure": "Plan view (ratA22/cmp_tip_plan.png, same spec as w21) shows the TE now a smooth convex curve into a narrow tip, with no breaks at s 31.6 / 32.0. Static dischargers are still on the TE."
+  },
+  {
+   "issue": "w21a low: no dark crease at the pylon foot",
+   "status": "partly fixed (too faint)",
+   "measure": "w13A at the flank foot (rows 279-285): x 520 is 168->164, x 560 169->165, x 600 168->164, x 640 170->166. The foot is now 0.97 of the flank; _137 is 0.89. At 1x you can just see it as a slight darkening, not as a line."
+  },
+  {
+   "issue": "w21a low: fastener dots lighter than KN41",
+   "status": "fixed",
+   "measure": "w19A row 500 x 661-666: 135-142 on 168 (0.80-0.85; r21 0.89-0.93). Row 520: 140-142 (0.83-0.85). KN41 is 0.80."
+  }
+ ],
+ "issues": [
+  {
+   "severity": "low",
+   "detail": "raked tip upsweep still well short of KN41",
+   "problem": "In 19A the outer LE now rises 3 px into the point, where KN41's LE curves up steadily over the outer ~15 % of the visible span. The curl starts too late (s > 31.1) and is too small.",
+   "evidence": "/tmp/claude-0/-home-user-Calc/ed101a30-6aca-5998-ba16-b78251e273cb/scratchpad/ratA22/tip19_cmp.png vs /tmp/claude-0/-home-user-Calc/ed101a30-6aca-5998-ba16-b78251e273cb/scratchpad/ratA20/tip_cmp.png",
+   "fix": "l.26 WING.crest: begin the lift earlier and make it larger, e.g. + 0.20 * Math.pow(smooth(29.5, 32.4, s), 1.6). Stop once the 19A LE slope over x 515-560 matches KN41."
+  },
+  {
+   "severity": "low",
+   "detail": "pylon foot crease too faint",
+   "problem": "It is 0.97 of the flank; _137 is 0.89.",
+   "evidence": "/tmp/claude-0/-home-user-Calc/ed101a30-6aca-5998-ba16-b78251e273cb/scratchpad/ratA22/w13A_cmp.png vs /tmp/claude-0/-home-user-Calc/ed101a30-6aca-5998-ba16-b78251e273cb/scratchpad/ratA21/ref137_pyl.png",
+   "fix": "Raise the crease darkening from about 0.03 to 0.10 over the same ~3 cm band."
+  }
+ ],
+ "worthPlus03": [],
+ "questionsForUser": [
+  "A photo looking straight out at the raked tip from rows 17-20 A (port side) would settle how much the tip sweeps up (carried)."
+ ],
+ "photos": [
+  "ref/web/exterior/a5_kn_ANA77W_TheRoom_41.jpg",
+  "ref/web/exterior/b_lalf_ANA77W_11A_137.jpg",
+  "/tmp/claude-0/-home-user-Calc/ed101a30-6aca-5998-ba16-b78251e273cb/scratchpad/ratA22/tip19_cmp.png",
+  "/tmp/claude-0/-home-user-Calc/ed101a30-6aca-5998-ba16-b78251e273cb/scratchpad/ratA22/cmp_tip_plan.png",
+  "/tmp/claude-0/-home-user-Calc/ed101a30-6aca-5998-ba16-b78251e273cb/scratchpad/ratA22/cmp_tip_aft.png",
+  "/tmp/claude-0/-home-user-Calc/ed101a30-6aca-5998-ba16-b78251e273cb/scratchpad/ratA22/cmp_pyl_side.png",
+  "/tmp/claude-0/-home-user-Calc/ed101a30-6aca-5998-ba16-b78251e273cb/scratchpad/ratA22/w13A_cmp.png",
+  "/tmp/claude-0/-home-user-Calc/ed101a30-6aca-5998-ba16-b78251e273cb/scratchpad/ratA22/w26K_cmp.png",
+  "/tmp/claude-0/-home-user-Calc/ed101a30-6aca-5998-ba16-b78251e273cb/scratchpad/ratA22/n19A_cmp.png"
+ ],
+ "notes": "Regression check against r21. c_nacelle_left and c_ge_inboard_left are pixel-identical. s13A differs by 23 px. The wing diffs in w19A, w17A and c_* are confined to the tip, the fastener strips and the pylon foot. The large diffs in w26K / w30K / w11K / w17K / n19A / w11A are cloud and sky only (lighting), checked side by side. No regressions. Planform +0.2: the tip rise can be measured in 19A and the TE is smooth. Surface detail +0.1: fasteners now match KN41. Pylon unchanged, because the crease is barely visible. No medium or high issues remain; two low ones are left. Lighting (not scored): unchanged in character from r21."
+}
