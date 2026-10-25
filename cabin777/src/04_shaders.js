@@ -542,13 +542,15 @@ void main(){
   // the cove line's colour as seen in a reflection: the cabin hemi hue at the LED level (u_led itself is set so the
   // clipped lens reads amber, and below the clip it is near-red: red rim lines in the amber phase, d07)
   vec3 coveC = u_hemiTop / max(max(u_hemiTop.r, u_hemiTop.g), max(u_hemiTop.b, 1e-4)) * max(max(u_led.r, u_led.g), u_led.b);
-  // QA r4 (integration): x u_coveRim on satin / gloss faces (rough < ~0.5; fabrics keep x1) below ~1.5 m (seat furniture;
+  // QA r4 (integration): x u_coveRim on the satin shells / caps / rails (rough <= 0.36: SEATMAT jShell / jCap / fShell 0.34,
+  // PY cap 0.35, jRail 0.26; the r 0.42-0.45 covers, PY / Y shells and arms keep x1: up to 0.6 lifted the q13 PY flaps
+  // L72-82 -> L90-117 vs py_37302 L61-87) below ~1.5 m (seat furniture;
   // on the bin crests it clipped the q06 bins, +3.5 % px > 235; not on screens / lamps, layers 12-15: a glare spot on the
   // q03 screen): the rounded shell, cap and
   // armrest edges carry thin clipped highlights in the photos [V: thin-highlight share (L > 235, 9 px clip density
   // < 0.45) c_27312 2.2 %, y_47301 2.5 %, py_37302 1.4 % vs q06 1.0 %, q16 0.6 %, q13 0.2 %] (integration r4 medium)
   if (u_exterior < 0.5) specEnv += coveSpec(v_wpos, N, V, R, rough, F0, NdV) * coveC * u_cove * sz * (0.25 + 0.75*ao)
-                                 * mix(1.0, u_coveRim, (1.0 - smoothstep(0.4, 0.6, rough)) * (1.0 - smoothstep(1.4, 1.6, v_wpos.y)) * (layer >= 12 && layer <= 15 ? 0.0 : 1.0));
+                                 * mix(1.0, u_coveRim, (1.0 - smoothstep(0.36, 0.40, rough)) * (1.0 - smoothstep(1.4, 1.6, v_wpos.y)) * (layer >= 12 && layer <= 15 ? 0.0 : 1.0));
   vec3 col = diff * (amb + sun) + specSun + specEnv + emissive;
   col += vec3(0.30, 0.62, 1.0) * hl * (0.35 + 0.9*pow(1.0 - NdV, 2.0));
   col = aces(col * u_exposure);

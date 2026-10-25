@@ -39,15 +39,16 @@ const MOODS = {
   // QA r4 (light): shaded whites cool blue-grey, lit faces unchanged: hemiBot [0.36, 0.37, 0.40] -> [0.31, 0.35, 0.47], wash
   // [0.25, 0.26, 0.28] -> [0.23, 0.255, 0.32] (with the crown x1.1 in mainFS) [V: y_47303 crown #a7adc2 (B-R +27) vs q17
   // #b2b3b3 (+1); py_37301 reveal sides #9ba6bc / #a0abbf (+33) vs q14 #bfbfc0; y_47301 wall #c2c9db (+25) vs q16 #d3d4d5;
-  // c_27312 PSU band #c4c9cf (+11) vs q06 #e0e1e1]; binLo 0.72: the outboard bin doors' lower face (mainFS binK) [V: c_27312
-  // bins L190-199 p10 168 vs q06 L211-218 p10 197] (lighting r4 medium x2)
-  boarding: { label: 'Boarding', hemiTop: [0.97, 0.99, 1.03], hemiBot: [0.31, 0.35, 0.47], wash: [0.23, 0.255, 0.32], led: [1.0, 0.98, 0.92], sideLed: [0.48, 0.53, 0.66], bandCut: 0.15, binLo: 0.72, k: 1.05, exposure: 1.38, toe: 1 },
+  // c_27312 PSU band #c4c9cf (+11) vs q06 #e0e1e1]; binLo 0.8: the outboard bin doors' lower face (mainFS binK) [V: c_27312
+  // bins L190-199 p10 168 vs q06 L211-218 p10 197; y_47301 L189 vs q16 L216] (lighting r4 medium x2). The raters' 0.72 also
+  // took the q15 bins under y_47300's (L220 -> 209, p10 197 -> 177 vs photo L216 p10 200), whose bins are evenly lit [D]
+  boarding: { label: 'Boarding', hemiTop: [0.97, 0.99, 1.03], hemiBot: [0.31, 0.35, 0.47], wash: [0.23, 0.255, 0.32], led: [1.0, 0.98, 0.92], sideLed: [0.48, 0.53, 0.66], bandCut: 0.15, binLo: 0.8, k: 1.05, exposure: 1.38, toe: 1 },
   // QA r2 (light): cruise sideLow 0.10 -> 0.30, the lavender wash reaches the window belt in THE Suite (the reveals by
   // the glass stay near-white through mainFS nearPane) [V: ml_DSC_1939-1 wall column y45 #6e9bfc (B-R +141), y150
   // #7a89be, belt y240 #888db0 (+40) vs cF03 belt #cccccf (+3)]
-  // QA r4 (light): binLo 0.72 as boarding: in flight the cove-washed vault is clearly brighter than the bins [V:
+  // QA r4 (light): binLo 0.8 as boarding: in flight the cove-washed vault is clearly brighter than the bins [V:
   // lalf_room_119 vault L163 vs bins L97, lalf_room_120 vault L193 vs bins L120-158; c06 vault L157 vs bins L198-203]
-  cruise: { label: 'Cruise', hemiTop: [0.86, 0.88, 0.98], hemiBot: [0.24, 0.24, 0.28], wash: [0.25, 0.26, 0.30], led: [1.0, 0.98, 0.92], sideLed: [0.08, 0.14, 1.35], bandCut: 0.8, sideLow: 0.30, binLo: 0.72, k: 0.95, exposure: 1.12, toe: 1 },
+  cruise: { label: 'Cruise', hemiTop: [0.86, 0.88, 0.98], hemiBot: [0.24, 0.24, 0.28], wash: [0.25, 0.26, 0.30], led: [1.0, 0.98, 0.92], sideLed: [0.08, 0.14, 1.35], bandCut: 0.8, sideLow: 0.30, binLo: 0.8, k: 0.95, exposure: 1.12, toe: 1 },
   // QA r2 (light): ANA's full-blue phase (safety video, after take-off, early night): cove LED, sidewall lens and vault
   // saturated blue-violet, the seat zone washed blue and dim, the galley ends warm (monFill), the screens lighting their
   // surround [V: sany_47 (SANspotter Y) cove #1d21bd / #2227cb s0.85, crown #181a39, seat backs #171a7a, galley #776349,
@@ -193,7 +194,7 @@ const AO_TUNE = { hemi: 0.22, bounce: 1.0, emitLens: 0.45, emitCtr: 0.35, kAttF:
 // highlights on the shells, caps and armrests) [D: thin-highlight share q06 / q16 / q13 vs c_27312 / y_47301 /
 // py_37302]; tubWash = floor of the recessed window tub, as a share of a pier's hemi + wash (lighting r4: amber reveals
 // vs ucr_the-room-cabin) [D]; lookOut = interior exposure cut at the glass (integration r4: q12 vs ucr wing view) [D]
-const LIGHT_TUNE = { cove: 1.0, sheen: 1.35, coveRim: 4.0, tubWash: 0.7, lookOut: 0.86 };
+const LIGHT_TUNE = { cove: 1.0, sheen: 1.35, coveRim: 2.5, tubWash: 0.7, lookOut: 0.86 };
 // QA r3 (integration): floor contact map (computeAO): cell size (m; 6 m x 59 m -> 200 x 1973 texels, under the 2048
 // texture minimum), marking height above the floor and the darkening at a base (mainFS) [D]
 const CONTACT = { cell: 0.03, h: 0.2, k: 0.55 };
