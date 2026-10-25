@@ -1,0 +1,63 @@
+{
+ "area": "exterior",
+ "rater": "B geometry",
+ "build": "w20 = befdc88 (exterior final fixes 8b29416)",
+ "score": 8.5,
+ "details": [
+  {"detail": "Planform, raked tip, cruise bending", "score": 7.5,
+   "note": "Unchanged (no planform code change since w19). LE sweep, rake and tip lift still match KN41.",
+   "refs": ["/tmp/claude-0/-home-user-Calc/ed101a30-6aca-5998-ba16-b78251e273cb/scratchpad/r20/w19A.png", "ref/web/exterior/a5_kn_ANA77W_TheRoom_41.jpg"]},
+  {"detail": "Surface detail: value, panel tone, seams, fastener rows, slat band, gear stripe, placards, grime", "score": 8.5,
+   "note": "Smudge now grades: w19A rows 465-467 head 106-107, body 146-147, tail 162-163 on 163-170 (0.65 / 0.90 / 0.99; w19 body was 127-128 = 0.78). Body is still a 7 px constant run but the step is small and reads as a fading streak. Fasteners unchanged in code.",
+   "refs": ["/tmp/claude-0/-home-user-Calc/ed101a30-6aca-5998-ba16-b78251e273cb/scratchpad/ratB20/z_w19A.png", "/tmp/claude-0/-home-user-Calc/ed101a30-6aca-5998-ba16-b78251e273cb/scratchpad/r20/w19A.png"]},
+  {"detail": "Control-surface lines (spoilers, flaperon, aileron)", "score": 8.1,
+   "note": "Unchanged; hierarchy and taper correct.",
+   "refs": ["/tmp/claude-0/-home-user-Calc/ed101a30-6aca-5998-ba16-b78251e273cb/scratchpad/r20/w19A.png"]},
+  {"detail": "Flap-track fairings (canoes)", "score": 8.5,
+   "note": "Unchanged (w26K).",
+   "refs": ["/tmp/claude-0/-home-user-Calc/ed101a30-6aca-5998-ba16-b78251e273cb/scratchpad/r20/w26K.png", "ref/web/exterior/b_alv_ANA77W_PY_IMG_7250-2-scaled.jpeg"]},
+  {"detail": "Pylon", "score": 8.1,
+   "note": "Foot step slightly smaller: w13A x 430-610 flank 164-170, cowl just below 184-198 (+16-28 L; w19 +20-28). Dome unchanged: c_nacelle_left top silhouette row 22 constant over x 415-460, then 24 at 475 and a corner/chamfer down to 53 at 490; still flat-topped vs _137's rounded dome and no saddle notch. Crown remains monotonic in s13A.",
+   "refs": ["/tmp/claude-0/-home-user-Calc/ed101a30-6aca-5998-ba16-b78251e273cb/scratchpad/ratB20/z_dome.png", "/tmp/claude-0/-home-user-Calc/ed101a30-6aca-5998-ba16-b78251e273cb/scratchpad/ratB20/z_pyl.png", "ref/web/exterior/b_lalf_ANA77W_11A_137.jpg"]},
+  {"detail": "Nacelle geometry (cowl, lip, splits, strake, access panel)", "score": 8.3,
+   "note": "Hinge band FIXED: w13A minima 152-162 on 176-187 (~0.87 of the cowl, _136/_137 0.78-0.87), alternation now +-8 L (w19 120/160, +-40), continuous split to split in z_pyl and c_nacelle_left.",
+   "refs": ["/tmp/claude-0/-home-user-Calc/ed101a30-6aca-5998-ba16-b78251e273cb/scratchpad/ratB20/z_pyl.png", "/tmp/claude-0/-home-user-Calc/ed101a30-6aca-5998-ba16-b78251e273cb/scratchpad/r20/c_nacelle_left.png", "ref/web/exterior/b_lalf_ANA77W_11A_136.jpg"]},
+  {"detail": "Nacelle colour / materials (incl. GE monogram)", "score": 8.0,
+   "note": "Unchanged.",
+   "refs": ["/tmp/claude-0/-home-user-Calc/ed101a30-6aca-5998-ba16-b78251e273cb/scratchpad/r20/c_ge_inboard_left.png"]},
+  {"detail": "Inlet / fan / spinner", "score": 8.0,
+   "note": "Held: w11K fan minima rows 350/360/420 = 38/42/41 (knav _9 ~10-52).",
+   "refs": ["/tmp/claude-0/-home-user-Calc/ed101a30-6aca-5998-ba16-b78251e273cb/scratchpad/r20/w11K.png", "ref/web/exterior/b5_knav_ANA77W_7A_GE90_takeoff_9.jpg"]},
+  {"detail": "Livery / registration JA795A", "score": 7.7,
+   "note": "Unchanged and correct.",
+   "refs": ["/tmp/claude-0/-home-user-Calc/ed101a30-6aca-5998-ba16-b78251e273cb/scratchpad/r20/w26K.png"]},
+  {"detail": "Nav lights and static dischargers", "score": 7.7,
+   "note": "Unchanged.",
+   "refs": ["/tmp/claude-0/-home-user-Calc/ed101a30-6aca-5998-ba16-b78251e273cb/scratchpad/r20/n19A.png"]},
+  {"detail": "Artefacts", "score": 8.1,
+   "note": "Hinge dashing gone. Remaining: pylon dome-front corner. No z-fighting, gaps or floating parts in any r20 view.",
+   "refs": ["/tmp/claude-0/-home-user-Calc/ed101a30-6aca-5998-ba16-b78251e273cb/scratchpad/ratB20/z_dome.png"]}
+ ],
+ "previous": [
+  {"issue": "B w19 low: pylon dome flat-topped with corner / chamfer; saddle gone", "status": "NOT FIXED (not attempted). Silhouette row 22 over x 415-460 then corner, identical to w19."},
+  {"issue": "B w19 low: pylon flank uniform band 20-28 L below the cowl", "status": "PARTLY FIXED. Step +16-28 L; flank still a uniform 164-170 band."},
+  {"issue": "B w19 low: hinge hairline dashes at 13A", "status": "FIXED. 152-162 on 176-187, alternation +-8 L."},
+  {"issue": "B w19 low: smudge body flat block", "status": "FIXED (mostly). Body 127 -> 147 on 163; grades head/body/tail 0.65/0.90/0.99."},
+  {"issue": "A w19 low: canoes darker than JA795A / fastener dots faint", "status": "Not changed this round; scores held."}
+ ],
+ "issues": [
+  {"severity": "low", "detail": "pylon dome flat-topped with a corner into a chamfered front; no saddle",
+   "problem": "c_nacelle_left top silhouette row 22 constant over x 415-460, then 24 -> 53 within 15 px; _137 shows a rounded dome and a shallow notch before the rise to the strut.",
+   "evidence": ["/tmp/claude-0/-home-user-Calc/ed101a30-6aca-5998-ba16-b78251e273cb/scratchpad/ratB20/z_dome.png", "ref/web/exterior/b_lalf_ANA77W_11A_137.jpg"],
+   "fix": "src/11_exterior.js l.477: nose = Math.pow(smooth(1.65, 2.45, x), 0.6); l.481: hA = 0.30*nose*(1 - 0.08*smooth(2.3, 2.7, x) - 0.34*smooth(2.7, 3.6, x)*(1 - smooth(4.0, 5.0, x))) and hB exponent 1.6 -> 1.9 so a shallow saddle shows."},
+  {"severity": "low", "detail": "pylon flank still a uniform band +16-28 L below the cowl",
+   "problem": "w13A x 430-610: flank 164-170, cowl 184-198.",
+   "evidence": ["/tmp/claude-0/-home-user-Calc/ed101a30-6aca-5998-ba16-b78251e273cb/scratchpad/ratB20/z_pyl.png"],
+   "fix": "l.532: flank weight 0.09 -> 0.07 and foot lift 0.08 -> 0.12 over smooth(0.0, 0.2, dr)."}
+ ],
+ "worth_0_3": [
+  {"item": "Rounded dome + shallow saddle", "gain": "pylon +0.3"}
+ ],
+ "questions": [],
+ "photos": []
+}
