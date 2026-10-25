@@ -531,3 +531,99 @@ logged in fixed_integration.md ("Lighting run 2, L9").
 - **Fix:** (1) hide the centre PSU meshes in that view (filter `scene.opaque` by mesh name) to confirm which mesh shows
   through; (2) then end that PSU / band run 0.05 m before the door-3 zone boundary (`fitModules` z1 - 0.05), or drop it 2 mm
   along its face normal. Re-render z04 at DPR 2.
+
+# lighting run 2, L10 (lighting fixer, 2026-10-25)
+
+Raters L10 (lighting 7.7, integration 7.6). The items below are other areas' files; the lighting changes of this run are
+logged in fixed_integration.md ("Lighting run 2, L10"). None of the L8 / L9 hand-offs below has landed: no commit has
+touched 09a_econ.js, 09b_py.js, 09c_room.js, 10_mono.js, 07_shell.js or 08_bins.js since L9.
+
+## To py (`src/09b_py.js`): cm-scale dark joints that outline every PY seat (integration L10 medium, carried from L9)
+- **Owner:** py (`pySeat` / `pyUnit`). **Severity:** medium.
+- **Problem:** this round's in-flight check isolates PY. THE Room and economy now sit inside the in-flight photos' thin
+  dark-line range; PY is at 0.4x of it (0.23x of the official photos). The PY back fabric, bolsters, shell, cushion, console
+  and leg rest are lofted as one closed surface, so neither the AO nor the photo-matched materials can draw the 0.5-1 cm dark
+  joints that outline every PY seat in py_37301 / 37302 and sanpy_11 / 13 / 14: cushion to console, cushion front to leg
+  rest, shell front rim to back fabric, console panel splits, seat foot on the carpet. The lighting fixer traced the
+  remaining gap to this geometry: the screen-space AO finds no crevice to darken (lighting L9 / L10).
+- **Evidence:** thin dark-line share q13 0.73 % vs py_37302 2.77 %, q14 0.67 % vs py_37301 3.15 %; q14 p5 56 vs 31; q13
+  mean 137 vs 129.
+- **Fix (`09b_py.js` pySeat), modelled on the econ tuck crease (`09a_econ.js` w11 B loft, `{ c: '#283052', r: 0.95 }`):**
+  1. After the shell loft (l.50), a dark reveal on each side where the shell's front rim meets the back fabric, e.g.
+     `for (const sd of [-1, 1]) loftAt(B, ds.filter(([y]) => y < 0.93).map(([y, d, w]) => SEC(y, 0.008, 0.012, zr(y) - d + 0.012, 0.003, sd * (w / 2 - 0.006))), BH, { c: '#1f2228', r: 0.9 }, 1);`
+  2. 1 cm dark gap strips (`gRBox` 0.012 high, `{ c: '#1c1e23', r: 0.9 }`) along the cushion sides against the console,
+     and at the cushion front / leg-rest hinge.
+  3. In `pyUnit`, a 6 mm dark split line on each console face and a 1 cm dark foot plate under each leg.
+- **Targets:** q13 / q14 thin dark-line share >= 1.6 % (>= 1.8 % for the official-photo match); q13 p5 <= 38; face means
+  within 5 L.
+
+## To econ / room / py (`src/09_seats.js` SEATMAT, shared one-line keys): streak highlights on rounded plastics (integration L10 low, carried from L8 / L9)
+- **Owners:** econ (`arm`, `armPad`), room (`jCap`), py (`pyShell`). **Severity:** low.
+- **Problem:** the rounded white plastics (econ armrests, PY shells) and the THE Room charcoal caps still have no thin
+  streak highlights; the SEATMAT roughness hand-off from L8 / L9 has not landed.
+- **Evidence:** thin-highlight share q06 0.86 % vs c_27312 2.20 %, q16 0.59 % vs y_47301 2.50 %, q15 0.61 % vs y_47300
+  1.10 %, q13 0.16 % vs py_37302 1.47 %, q09 0.41 % vs c_27314 1.18 %.
+- **Fix:** one line per key: `arm` r 0.45 -> 0.26, `armPad` r 0.50 -> 0.32 (econ); `jCap` r 0.34 -> 0.26 (room); `pyShell`
+  r 0.42 -> 0.30 (py). **Targets:** thin-highlight share >= 1.1 % in q06 / q16 / q15; q15 armrest p99 >= 238; face means
+  within 5 L.
+
+## To room / py / econ (`09c_room.js`, `09b_py.js`, `09a_econ.js`): rims that can catch the cove line (integration L10 low, downgraded from medium)
+- **Owners:** room (`capRail`, shell top edges), py (shell / arm edges), econ (shell / arm rims); shared SEATMAT keys.
+  **Severity:** low. The gap is against the official studio photos only: against in-flight photos THE Room, economy and
+  THE Suite are inside the range; PY is the only clear miss.
+- **Problem:** thin specular rim highlights on caps, shell rims and arms are 2-4x sparser than in the official photos. The
+  cap rails are a single 6 mm chamfer, so their normals never sweep through the reflection of the cove line.
+- **Fix:** (1) `09c_room.js` l.92 capRail: `gRBox(w + 0.006, 0.02, d + 0.006, 0.009, 3)`; (2) `09b_py.js`: shell and arm
+  top-edge `gRBox` radius >= 8 mm, seg 3; (3) one shared SEATMAT key: `pyShell` r 0.42 -> 0.32.
+- **Targets:** q13 thin-highlight share >= 0.45 %; q06 / q16 stay within the in-flight range; face means within 5 L.
+
+## To monuments (`src/10_mono.js`): THE Suite ink-cloud print (integration L10 medium, unchanged for six rounds)
+- **Owner:** monuments (`inkWall`; `MONMAT.inkCloud` / `inkGround`). **Severity:** medium.
+- **Problem:** the print fills the top of the hero view from every THE Suite seat (q03, q05, f_ink_seated) and is the first
+  thing seen in the in-service photos omaat_f2 / f40 / f13. It is baked into vertex colours on a 0.1 m grid with a 0.22-wide
+  ramp toward #6a665f, so it renders as soft, dark, colourless smudges (grey smoke stains): 2-3x the photos' contrast, a third
+  of their saturation and 30-40 L darker on average. The real wall is a pale warm ground with low-contrast cumulus clouds
+  with crisp, speckled edges.
+- **Fix (`inkWall`):**
+  1. Grid 0.1 -> 0.03 m: `nx = ceil((x1 - x0) / 0.03)`, `ny = ceil(H / 0.03)`.
+  2. Crisp, speckled edges: `t = smoothstep(0.44, 0.52, n + 0.10 * (fbm(x / 0.05, y / 0.05, 256, 2, 29) - 0.5)) * lowY`.
+  3. `MONMAT.inkCloud` '#6a665f' -> '#b3ad9f', about 30 L under the '#dddbd0' ground, with a slight warm hue (s ~0.10).
+  4. If the vertex count objects, bake the same field into an atlas canvas panel (like the 'washi' panel in `06_atlas.js`)
+     and map it with washiUV.
+- **Targets (f_ink_seated):** range <= 40 and mean L >= 185; h35-45, s0.07-0.13; fine >= 2; q03 top boxes range <= 45.
+
+## To shell (`src/07_shell.js`) (+ lighting): day window panes capped below white (integration L10 low)
+- **Owners:** shell (07_shell.js l.754, the glass tints); lighting for the alternative in step 2 (12_scene.js SKIES.day
+  winExp and the glass blend). **Severity:** low.
+- **Problem:** the glass pass multiplies the already display-encoded frame by the pane tint [0.93, 0.95, 0.96]
+  (`gl.blendFunc(DST_COLOR, ZERO)`), so however high winExp is a day pane can never pass #edf2f5 (237 / 242 / 245). That
+  accounts for most of the plateau at G 240-242 in the window-heavy day views (q03, q05, q14). The photos the code itself
+  cites have pure white panes (c_27316 #ffffff, y_47300 #fcfcfb); in integ8/clipmask.png the photos' panes are > 245, the
+  model's at most level with the white lining. A day frame has a third to a half of the photos' near-white share.
+- **Fix:** (1) `07_shell.js` l.754: glass tints [0.93, 0.95, 0.96] -> [0.985, 0.99, 1.0]; the pane's cool cast already
+  comes from the sky and haze. (2) Better, as a lighting follow-up once (1) lands: drop the multiply and apply the
+  transmittance inside the sky / exterior shaders before aces() (a `u_glassT` uniform set from 12_scene.js), so a bright sky
+  can still clip. (3) Leave the look-out view (q12) as it is: winExp already eases to 1 at the window.
+- **Targets:** day panes p50 >= 250 in q07 / q14 / q17; share above L250 >= 1.5 % in q06 / q15 / q16; q12 unchanged within 2 L.
+
+## To room (`src/09c_room.js`): recessed toe-kick and the 11A footwell hairline (integration L10 low, carried from L7-L9)
+- **Owner:** room. **Severity:** low.
+- **Problem:** (1) the THE Room shell base is a flush navy-grey band, not a recessed near-black toe-kick, under the aisle
+  ash panels and at the monument ends; (2) a white hairline runs along the 11A rear-facing footwell at the floor /
+  side-panel joint.
+- **Evidence:** integ7/outA/j_kick_close.png column x 560: lip L53 / 45, then a flush band at L18-24 (c_27312 bases L0-2, in
+  a recess); integ7/outB/fw_11A_footwell.png (DPR 2) box (1180-1240, 760-945): 330 px > L200, max L248, 524 px > L120.
+- **Fix:** (1) kick: at `09c_room.js` l.480 (`gRBox(0.045, 0.10, ...)` at x 0.565) and the matching kicks under
+  `roomAisleAsh` (the `ashFrameX` family), set the kick 0.02 m back from the ash face (0.565 -> 0.545 along that side's
+  normal), height 0.08, material `{ c: '#1c1d20', r: 0.7 }`; (2) footwell: make the faces overlap instead of meeting at an
+  edge: extend the footwell floor 0.01 m under the side panel, or sink the side panel 0.005 m into the floor.
+- **Targets:** kick recess L <= 15 with a contact line; 0 px > L120 in the footwell box at DPR 2.
+
+## To ceiling/bins (`src/08_bins.js`): grey fragments on the right outboard bin lip at door 3 (integration L10 low, carried from L7-L9)
+- **Owner:** ceiling/bins (the door-3 end of the outboard run, or the PSU instances there). **Severity:** low.
+- **Problem:** irregular grey fragments with PSU-like dots run along about 0.5 m of the right outboard bin lip at door 3.
+- **Evidence:** integ7/outB/z04_binlip.png (DPR 2, `__app.setView([2.3, 1.62, 32.7], Math.PI/2 - 0.45, 0.25)`): fragments at
+  about (700-900, 755-765), unchanged since L9 (0.14 % of the box changed); crops integ8/z04_cmp.png.
+- **Fix:** (1) hide the centre PSU meshes in that view (filter `scene.opaque` by mesh name) to confirm which mesh shows
+  through; (2) then end that PSU / band run 0.05 m before the door-3 zone boundary (`fitModules` z1 - 0.05), or drop it 2 mm
+  along its face normal. Re-render z04 at DPR 2. **Target:** no grey fragment on the lip.

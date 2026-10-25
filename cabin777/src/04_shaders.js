@@ -39,7 +39,7 @@ uniform vec4 u_stripP[8]; uniform vec4 u_stripA[8]; uniform vec3 u_stripCol;
 uniform vec4 u_scrP[6]; uniform vec4 u_scrN[6]; uniform vec3 u_scrCol; uniform float u_fillLift; uniform vec3 u_lensCore; uniform vec2 u_vaultE;
 uniform sampler2D u_scrMask; uniform vec4 u_scrMaskR; uniform float u_scrOff; uniform vec4 u_scrOwn; uniform float u_binLo; uniform float u_monHemi;
 uniform float u_tubWash; uniform vec3 u_binLift; uniform vec3 u_hemiBotN; uniform vec3 u_washN; uniform vec2 u_tubSky; uniform float u_ctrLo; uniform float u_ctrLift;
-uniform sampler2D u_sDepth; uniform vec4 u_sRes; uniform vec4 u_sProj; uniform vec3 u_sFwd; uniform vec3 u_sRight; uniform vec3 u_sUp; uniform vec4 u_ssao; uniform float u_sDither; uniform float u_sMix; uniform float u_sAng; uniform float u_sLow; uniform float u_sIn; uniform vec2 u_sEase; uniform vec4 u_sTap;
+uniform sampler2D u_sDepth; uniform vec4 u_sRes; uniform vec4 u_sProj; uniform vec3 u_sFwd; uniform vec3 u_sRight; uniform vec3 u_sUp; uniform vec4 u_ssao; uniform float u_sDither; uniform float u_sMix; uniform float u_sAng; uniform float u_sLow; uniform float u_sIn; uniform vec2 u_sEase; uniform vec2 u_sTap;
 uniform sampler3D u_ao; uniform vec3 u_aoMin; uniform vec3 u_aoSize; uniform sampler2D u_contact; uniform vec4 u_contactR; uniform float u_contactK;
 uniform sampler2DArray u_detail; uniform vec4 u_layer[${N_LAYERS}]; uniform sampler2DArray u_photo; uniform float u_photoOn;
 uniform sampler2D u_atlas; uniform float u_screenStep; uniform float u_emisGain; uniform float u_screenGain;
@@ -170,13 +170,21 @@ vec3 coveSpec(vec3 P, vec3 N, vec3 V, vec3 R, float rough, vec3 F0, float NdV){
 // 0.55 / 0.63 %) and a per-pixel disc turn (interleaved gradient noise, u_sDither 1; 0.15 / 0.3 of a turn): without a
 // blur pass (none: phone budget) it draws dot grain along every contact edge and on the cap rails. kR scales the disc and
 // the range (QA L9, lighting low: 1.5 low in the PY / economy legroom, see mainFS)
+// QA L10 (integration medium): with 8 fixed taps the coverage stepped in eighths as the disc crossed an occluder's edge, one
+// tap taking the ambient to 0.25x, so a panel 1-3 cm proud of a surface drew a detached, stair-ended band (the THE Room
+// headrest flap on all 64 seats: q10 x 650 rows 398-410 L49-57 vs 84-91 without it) and near the eye, where the 5 cm disc
+// spans 50-100 px, each tap painted a flat band tens of px wide (y_aisle_fwd curtain pleats, row 300: 13 steps > 6 L, max
+// 101 vs 9 / 53 without the AO) [V: c_27315 no band; integ8 q10_flap4x, curtain_zoom]. Now u_sTap.x = 16 taps (steps of
+// 1/16) and the disc and range capped at u_sTap.y = 16 px on screen (a surface 0.3 m from the eye no longer spreads its taps
+// over 100 px), strength 6 -> 8 for the contact lines (12_scene LIGHT_TUNE). The raters' fix (an R8 AO target with the
+// per-pixel turn and a 4 x 4 depth-aware blur) adds full-screen passes, which this run's brief rules out [D fixL10 t1-t11]
 float ssaoF(vec3 P, vec3 Nf, float kR){
   float dep = dot(P - u_camPos, u_sFwd);
   vec2 ruv = u_sProj.xy * (0.5 * u_ssao.x * kR / max(dep, 0.05));
   float rng = u_ssao.w * kR;
   float px = ruv.y * u_sRes.y;                              // disc radius in pixels
   if (px < 2.0) return 0.0;                                 // far: the disc is under ~2 px
-  float kc = u_sTap.y != 0.0 ? min(1.0, abs(u_sTap.y) / px) : 1.0; ruv *= kc; rng *= u_sTap.y > 0.0 ? kc : 1.0;
+  float kc = u_sTap.y > 0.0 ? min(1.0, u_sTap.y / px) : 1.0; ruv *= kc; rng *= kc;   // (QA L10) screen-space cap
   vec2 uv0 = gl_FragCoord.xy / u_sRes.xy;
   float a0 = u_sDither * 6.2832 * fract(52.9829 * fract(dot(gl_FragCoord.xy, vec2(0.06711, 0.00584)))) + 0.39;
   float occ = 0.0, nT = max(u_sTap.x, 1.0);
@@ -194,7 +202,7 @@ float ssaoF(vec3 P, vec3 Nf, float kR){
     float dl = length(v);
     occ += clamp(((dot(v, Nf) - u_ssao.z) / max(dl, 1e-3) - u_sAng) / (1.0 - u_sAng), 0.0, 1.0) * (1.0 - smoothstep(u_sIn * rng, rng, dl));
   }
-  return max(occ / nT - u_sTap.z, 0.0) * smoothstep(2.0, 4.0, px);
+  return occ / nT * smoothstep(2.0, 4.0, px);
 }
 
 void main(){
@@ -588,8 +596,7 @@ void main(){
       // QA L10 (integration medium): only aft of THE Room (z > u_sLowZ = 05_layout z20): in THE Room the wider disc drew a second,
       // darker band 3 cm above every headrest flap (q10 x 650 rows 380-384 L92-95 at L8 -> L58-66) [V: c_27315 no band]
       float kR = 1.0 + u_sLow * (1.0 - smoothstep(0.85, 1.05, v_wpos.y)) * (1.0 - wallProx * facingIn) * step(u_sLowZ, v_wpos.z);
-      float so = u_ssao.y * ssaoF(v_wpos, Nf, kR);
-      amb *= mix(1.0, u_sTap.w > 0.5 ? exp(-so) : max(1.0 - so, 0.0), sW);
+      amb *= mix(1.0, max(1.0 - u_ssao.y * ssaoF(v_wpos, Nf, kR), 0.0), sW);
     }
     // reading lights (night): warm cone from the lamp lens to the seat, 0.35 m pool [V: tlfl_IMG_9377 pools on the bed]
     for (int i = 0; i < 8; i++) {

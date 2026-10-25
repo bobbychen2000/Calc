@@ -242,7 +242,17 @@ const AO_TUNE = { hemi: 0.22, bounce: 1.0, emitLens: 0.45, emitCtr: 0.35, kAttF:
 // ssaoEase = the AO-volume range over which the contact AO eases in (mainFS sW; L8 [0.05, 0.4]): with the far taps gone the
 // frames read 1-3 L lighter than L8 (q06 p5 28 -> 31, c_27312 16); [0.02, 0.25] lets it reach the lower pockets again and
 // holds q09 p5 at 32 (c_27314 36; [0, 0.12] took it to 30) [D fixL9 tss6]
-const LIGHT_TUNE = { cove: 1.0, sheen: 1.35, sheenTint: 0.3, tubWash: 0.7, lookOut: 0.86, ssao: [0.05, 6, 0.006, 0.07], ssaoMix: 0.9, ssaoAng: 0.25, ssaoDither: 0, ssaoIn: 0.3, ssaoLow: 0.5, ssaoEase: [0.02, 0.25] };
+// QA L10 (integration medium): ssaoTaps 8 -> 16 and ssaoCap = the disc (and range) capped at 16 px on screen (mainFS ssaoF),
+// strength 6 -> 8: the stepped bands above the THE Room headrest flaps and the hard stripes on surfaces near the eye are gone
+// (q10 x 650 rows 378-410 mean L68 -> 83, rows 398-410 54 -> 76 vs 83 without the AO; y_aisle_fwd row 300 13 steps > 6 L, max
+// 101 -> 8 / 53, as without the AO) and the Suite contact lines come back (thin dark-line share q03 1.37 -> 1.48 %, q05 1.22 ->
+// 1.27, q06 2.49 -> 2.70; in-flight omaat_f2 / f5 / f11 / f13 / f40 1.79-2.85) with f_ink_seated row 320 at 139 (>= 130: no
+// monitor ghost frame). Tried [D fixL10 t1-t11]: a 12 px cap (bands gone but q03 1.08 %), the raters' ssaoIn 0.55 (q03 1.43-
+// 1.51 % but the monitor's stepped ghost frame back: f_ink row 320 114-124), an exp(-k occ) response (lines lost: q03 0.75 %),
+// a 3.5 cm disc (curtain steps 21), the range unscaled by the cap (ghosts: f_ink 108, y_aisle_fwd max step 132), a tap
+// weight by height over the face plane (f_ink 156-162 but q03 0.89-1.13 %). The per-pixel turn with a depth-aware blur would
+// smooth the rest but needs new full-screen passes (not in this run's brief; questions_lighting 13)
+const LIGHT_TUNE = { cove: 1.0, sheen: 1.35, sheenTint: 0.3, tubWash: 0.7, lookOut: 0.86, ssao: [0.05, 8, 0.006, 0.07], ssaoMix: 0.9, ssaoAng: 0.25, ssaoDither: 0, ssaoIn: 0.3, ssaoLow: 0.5, ssaoEase: [0.02, 0.25], ssaoTaps: 16, ssaoCap: 16 };
 // QA r3 (integration): floor contact map (computeAO): cell size (m; 6 m x 59 m -> 200 x 1973 texels, under the 2048
 // texture minimum), marking height above the floor and the darkening at a base (mainFS) [D]
 const CONTACT = { cell: 0.03, h: 0.2, k: 0.55 };
@@ -922,7 +932,7 @@ class Scene {
     if (ssao) {
       G.tex('u_sDepth', 8, this.sDepth.tex); G.set('u_sRes', [w, h, this.sDepth.w, this.sDepth.h]);
       G.set('u_sProj', [cam.proj[0], cam.proj[5], cam.proj[10], cam.proj[14]]);
-      G.set('u_sFwd', cam.fwd); G.set('u_sRight', cam.right); G.set('u_sUp', cam.up); G.set('u_sDither', LIGHT_TUNE.ssaoDither ?? 1); G.set('u_sMix', LIGHT_TUNE.ssaoMix ?? 0.8); G.set('u_sAng', LIGHT_TUNE.ssaoAng ?? 0.35); G.set('u_sLow', LIGHT_TUNE.ssaoLow ?? 0); G.set('u_sLowZ', this.layout.z20 ?? 0); G.set('u_sIn', LIGHT_TUNE.ssaoIn ?? 0.5); G.set('u_sEase', LIGHT_TUNE.ssaoEase || [0.05, 0.4]); G.set('u_sTap', [LIGHT_TUNE.ssaoTaps ?? 8, LIGHT_TUNE.ssaoCap ?? 0, LIGHT_TUNE.ssaoThr ?? 0, LIGHT_TUNE.ssaoExp ?? 0]);
+      G.set('u_sFwd', cam.fwd); G.set('u_sRight', cam.right); G.set('u_sUp', cam.up); G.set('u_sDither', LIGHT_TUNE.ssaoDither ?? 1); G.set('u_sMix', LIGHT_TUNE.ssaoMix ?? 0.8); G.set('u_sAng', LIGHT_TUNE.ssaoAng ?? 0.35); G.set('u_sLow', LIGHT_TUNE.ssaoLow ?? 0); G.set('u_sLowZ', this.layout.z20 ?? 0); G.set('u_sIn', LIGHT_TUNE.ssaoIn ?? 0.5); G.set('u_sEase', LIGHT_TUNE.ssaoEase || [0.05, 0.4]); G.set('u_sTap', [LIGHT_TUNE.ssaoTaps ?? 8, LIGHT_TUNE.ssaoCap ?? 0]);
     }
     G.set('u_fill', this.fill ?? 0.45);   // QA r1: 0.7 flattened AO and the ceiling-to-floor falloff [V: c_27312 shell gradients]
     G.set('u_exterior', 0);
