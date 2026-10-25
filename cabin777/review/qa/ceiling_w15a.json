@@ -1,0 +1,71 @@
+{
+  "area": "ceiling",
+  "rater": "A",
+  "round": "w15",
+  "score": 8.5,
+  "renderNote": "Rated on scratchpad w2 (head 836b636: vault fittings on the vault's own emission, shadow crescent #b4b2ae, crest channel #a9acb1 over 0.45 of the chord), compared pixel for pixel with w1 (w14) at the same cameras. Only vault-mounted fittings changed. Every door view except d2/d4 (vault seen) and v3 is identical to w14 (0 px changed in d1, d1b, d2b, d4b, d5b, v14). The darker pixels in q15-q17 are in the seat region (other areas). References: ref/ana y_47301 (rA14/y301_vault crop), c_27312, kn_room1.jpg (real). My crops are in scratchpad rA15/ (v2_crest_ba.png, q20_ba.png). Lighting is noted, not scored.",
+  "previousStatus": {
+    "W14A-1 high: vault fittings and ribs left behind by the vault lift": "fixed. Speaker: v1 column 350 rim 181-187 on a 226 vault -> 230 on 226 (1.02x). v2 column 370 176 on 229 -> 226 on 229 (0.99x). v15 row 80 face 172 / rim 177 on 226 -> 224 / 228 on 226. v8 row 85 175-181 on 228 -> 226-231 on 228. Ribs: q06 column 470 light face 184 + 157 shadow on 231 -> 229-233 with a single 193-212 shadow pixel (1.0x, hairline as in y_47301). Night q20 column 420: speaker 17 on 65 -> 63 on 65 (0.97x, the black planks are gone, see rA15/q20_ba.png). Amber q21: speaker 85-96 on 150 -> 151 on 150, with only the 107 crescent left.",
+    "W14A-2 medium: crest channel too dark (0.40 of the vault)": "fixed. v15 column 600: 14 px at 87-88 on 220 -> 10 px at 115-116 on 220 (0.53x). Re-checking y_47301 changes the target: at the vault/centre-bin junction the photo has a grey band at 162-193 (0.7-0.8x) and then a narrow near-black core (0-11, about 1-2 source px). The render's single 0.53 band averages that pair. It no longer reads as a black gap in v1 and v2.",
+    "W14A-3 low: outboard PSU band segmentation sparse/faint": "not fixed (no 08_bins change). v9 still shows about 4 faint joints per bin. kn1_top (real) shows 8-10 dark vertical joints per bin length.",
+    "W14A-4 low: vault/bin ratio low": "not fixed (lighting). q06 vault 231.9 / bins L 207.8, R 223.7 = 1.04-1.12 (photos 1.15-1.26).",
+    "w14b F1 medium (same as W14A-1)": "fixed, see above.",
+    "w14b D4 low: door-4 dome wedge": "not fixed. d4b (770,190), (770,200) and (760,215) all read 248, unchanged.",
+    "w14b D3 low: door-3 tray hairline": "unchanged (v3 changed only on the vault fittings).",
+    "regressions": "None found. The crest-rib face lost its slight over-bright: v2 left crest, 540 px at 237 -> 222, now vault tone and still separated by its shadow hairline. Acceptable."
+  },
+  "details": {
+    "vault": 8.6,
+    "cove/trough": 8.7,
+    "vault fittings": 8.5,
+    "crest channel": 8.5,
+    "bins outboard": 8.6,
+    "bins centre": 8.7,
+    "seams/lips/rails": 8.4,
+    "placards": 8.6,
+    "PSUs": 8.4,
+    "door zones": 8.1,
+    "lens": 8.6
+  },
+  "issues": [
+    {
+      "id": "W15A-1",
+      "severity": "low",
+      "detail": "The speaker now reads as a single grey slash: only the shadow crescent survives.",
+      "evidence": "The bezel and face now match the vault (good), so the only visible mark is the crescent. v8 row 85: 143 x3 px on 228 (0.63x). v2 row 140: 144-145 with 185 edges on 226 (0.64x). v15 row 80: 141 x5 on 226. At QA distance the speaker reads like a joint groove, not a fitting. In y_47301 the vault speakers are faint light-grey dashes at about 0.85-0.9x, and in c120 (w13 notes) the crescent is 129 on 176 (0.73x).",
+      "fix": "src/07b_ceiling.js CEILMAT.bezelShadow '#b4b2ae' -> '#c4c2be' (target 0.72-0.78x in day views), or put it on onVault(CEILMAT.bezelShadow, 0.6) so it tracks the moods (amber 107 on 150 = 0.71x is already right; night has no crescent issue). Optionally bezelIn face x0.92 -> x0.88 so the face reads one step darker than the rim (c120: a perforated pocket a little darker than the vault)."
+    },
+    {
+      "id": "W15A-2",
+      "severity": "low",
+      "detail": "The crest channel is a uniform mid-grey band. The photo has a grey band plus a dark core.",
+      "evidence": "v15 column 600: 10 px flat at 115-116 on a 220 vault, then the rail at 237-248. In y_47301 (rA14/y301_vault, column 400) the vault is 242, then a grey lip at 162-193, then a near-black slot at 11-40 about 1/4 of the lip width, then the bin at 249-255.",
+      "fix": "src/07b_ceiling.js crest channel block: split the groove into q(0, 0.12, 0.004) with a dark core (new CEILMAT.crestCore { c:'#4a4c50', r:0.4 }) and q(0.12, 0.45, 0.003) with crestGroove lightened to '#bfc2c6' (target lip ~0.75x and core <0.3x, 1-2 px at 800 px)."
+    },
+    {
+      "id": "W14A-3",
+      "severity": "low",
+      "detail": "The outboard PSU band segmentation is still sparse and faint (carried over).",
+      "evidence": "v9: about 4 faint diagonal joints per bin. kn_room1 (real): 8-10 dark vertical joints per bin length with oval lit units.",
+      "fix": "src/08_bins.js sideBinModule PSU band: shingles(B, bw, L, 8, ...) -> 16, and darken the gap colour to ~0.75x BINMAT.band."
+    },
+    {
+      "id": "W14A-4",
+      "severity": "low",
+      "detail": "The vault/bin ratio is still at the low end (carried over, lighting share).",
+      "evidence": "q06 vault 231.9, bins 207.8 / 223.7 (1.04-1.12). c_27312 1.2-1.26, y_47301 1.1-1.26.",
+      "fix": "Lighting: flatter bin shading. Optionally src/08_bins.js BINMAT.door '#d6d8dc' -> '#cfd2d6' now that W14A-1 is fixed."
+    },
+    {
+      "id": "D4",
+      "severity": "low",
+      "detail": "Door-4 dome/monument junction wedge (B's D4, confirmed, unchanged).",
+      "evidence": "d4b (770,190), (770,200) and (760,215) are a flat 248 against the dome at 214.",
+      "fix": "src/07b_ceiling.js CEILMAT.lightPanel e 0.3 -> 0.12, or extend the dome side band down to the monument top."
+    }
+  ],
+  "questionsForUser": [
+    "Do you have a real (non-rendered) photo looking up at the THE Room or economy aisle ceiling, where the speaker grilles and the vault/centre-bin channel are visible? It would settle the last speaker and channel contrast steps.",
+    "Any photo of the door-1, door-4 or door-5 cross-aisle ceilings on the 212-seat 777-300ER? Those domes are still approximated."
+  ]
+}
