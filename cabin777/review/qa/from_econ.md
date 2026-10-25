@@ -84,3 +84,13 @@
   carried the flag, so econ set `yCover.l = LAYER.none + SHEEN` (09_seats.js, its own SEATMAT line). At `sheen` 0.84, the
   q16 cover pixels go from L55 to L81 (y_47301 67-108). q15 head-on and e4 (~25 deg off-normal) are unchanged. If lighting
   also sets this line, keep one copy.
+
+## w34 / w35 (wave 3g) to lighting
+- **Dark gaps between mid and far rows (w34a-4, w33a-7):** in q15, 2.7 % of the pixels above the hero row are below L50,
+  against 12.5 % in y_47300. Up to 9.5 m these rows are the full-detail seats, and the under-pan zone is now near-black
+  geometry (#2c2f35 tray, dark beams, 8ee9c1c), so the remaining gap is the AO / shadow between seat rows (pans and
+  legroom under the backs in front). Please check the AO volume's occlusion strength at seat-pan height in the economy
+  zone.
+- **Seat-level lift (w34a / w34b, both raters):** foreground pans L97-108 against L78-93 in y_47300 (15-25 % light).
+  Carried from w31b-8 / w32b-6.
+- **Far-row snow:** carried (see w31).
