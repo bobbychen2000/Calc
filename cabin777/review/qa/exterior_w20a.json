@@ -1,0 +1,94 @@
+{
+ "area": "exterior",
+ "rater": "A skeptic",
+ "build": "w20 = befdc88",
+ "score": 8.3,
+ "details": {
+  "wing planform / raked tip / bending": 7.5,
+  "wing surface detail (seams, fastener rows, panel tone, gear stripe, slat band, placards, grime)": 8.2,
+  "control surfaces & gaps (slats, spoilers, flaperon, aileron)": 7.8,
+  "canoes (flap-track fairings)": 8.4,
+  "pylon": 8.1,
+  "nacelle shape (cowl, lip, splits, strake, access panel)": 8.1,
+  "nacelle colour / materials (incl. GE logo)": 8.0,
+  "inlet / fan / spinner": 8.0,
+  "livery / registration JA795A": 8.0,
+  "lights & static dischargers": 7.5,
+  "artefacts": 7.9
+ },
+ "previous": [
+  {
+   "issue": "w19a low: pylon foot steps to the cowl by +15-28 L",
+   "status": "partly fixed",
+   "measure": "w13A flank -> cowl peak: x 500 168/175/190 (+22, r19 157->189 +32), x 600 167/181/193 (+26), x 620 168/190/195 (+27, r19 +39), x 640 168->200 in one row (+32), x 660 +28. Step down ~10 L inboard, unchanged at x 640-660. Side effect: the flank is now a flat 166-168 plateau over rows 262-284 (x 520) with a straight lower edge (ratA20/w13A_z.png); _137 shows a graded flank with a soft shadow line."
+  },
+  {
+   "issue": "w19a low: hinge hairline aliases into dashes",
+   "status": "fixed",
+   "measure": "w13A minima along the line x 548-704: 152-171 on local 178-190 = 0.83-0.91 (r19 120-160 = 0.65-0.88 alternating); swing now 152-161 over x 572-680, continuous. s13A 130-147 = 0.80-0.90, continuous. Slightly fainter than _137 (0.78) but inside the _136 (0.87) range. c_nacelle_left and w11K read as one seam split to split."
+  },
+  {
+   "issue": "w19a low: smudge body uniform block",
+   "status": "partly fixed",
+   "measure": "w19A x 488-494 rows 465-467: body 146-147 on 163 (0.90, r19 128 = 0.79); head 106-107 (0.65) unchanged. Contrast down so it no longer reads as tape, but it is still a flat 7 x 3 px plateau with a hard 107 -> 147 jump from head to body."
+  },
+  {
+   "issue": "w19a low: canoes darker than JA795A",
+   "status": "not changed, re-measured as minor",
+   "measure": "w26K canoe lower flanks median 96-108 on wing top 192 (0.50-0.56); alv _7250 canoe flanks median 120-130 on 224 (0.54-0.58). Gap ~5 %, not worth a fix; dropped."
+  },
+  {
+   "issue": "w19a low: fastener dots faint",
+   "status": "not changed",
+   "measure": "w19A rows 500/520 x 650-675: panel 164-169, dots not separable from noise (same as r19); KN41 0.80."
+  }
+ ],
+ "issues": [
+  {
+   "severity": "medium",
+   "detail": "raked tip ends in a blunt 0.55 m square tip with a straight TE",
+   "problem": "This is the planform defect behind the 7.5. In KN41 the raked-tip TE curves concavely outboard of the aileron and runs into a narrow point with a slight upward curl. Ours runs straight from s 31.0 to a 0.55 m tip chord (te 49.05 - le 48.50), so the tip reads as a cut-off corner.",
+   "evidence": "w19A LE edge x 520-550 flat (rows 121,121,122 = a ~30 px tip face) before the swept LE begins; ratA20/tip_z.png and tip_cmp.png (w19A vs KN41 x 560-1020 y 210-560): KN41 tip point <= 5 px wide, TE concave.",
+   "fix": "src/11_exterior.js l.19 WING.te: replace [31.0, 47.98], [32.40, 49.05] with [31.0, 47.98], [31.6, 48.36], [32.0, 48.58], [32.40, 48.76] (concave TE, tip chord ~0.26 m); keep le. Check the static-discharger comb on the raked TE (l.545) still sits on the new TE."
+  },
+  {
+   "severity": "low",
+   "detail": "pylon flank flat plateau with a straight lower edge, no saddle",
+   "problem": "The foot lift brought the flank to a uniform 167 band, so the fairing reads as a flat slab with a ruled bottom line. The silhouette also still rises without the shallow saddle behind the dome that _137 shows (B w19).",
+   "evidence": "w13A x 520 rows 262-284 all 166-171, then +20-32 to the cowl; ratA20/w13A_z.png vs ref _137 x 200-660 y 660-745.",
+   "fix": "l.531: make the flank term vary with height (multiply the 0.09 n[0] term by smooth(0.0, 0.35, dr) only, and drop the flat +0.08 foot lift to +0.04 * (1 - smooth(0, 0.08, dr))) so the band grades. l.481: restore a shallow dip, e.g. hB exponent 1.6 -> 2.2 or hA's 0.32 saddle factor -> 0.4, so dome and rise separate."
+  },
+  {
+   "severity": "low",
+   "detail": "smudge head-to-body jump",
+   "problem": "Body lighter now, but the 0.65 head steps straight to a 0.90 plateau. KN41 smears grade.",
+   "evidence": "w19A x 488-497 rows 465-467.",
+   "fix": "l.352: lighten the head to #484b4f and shorten it to l*0.10 so head/body/tail step 0.72 / 0.88 / 0.95."
+  },
+  {
+   "severity": "low",
+   "detail": "fastener dots faint (unchanged, carried)",
+   "problem": "Below visibility at 19A, KN41 0.80.",
+   "evidence": "w19A rows 500-520 x 650-675.",
+   "fix": "darken the dot colour in the rivet strip (riv, l.300-302 and its texture), not PHOTO_GAIN."
+  }
+ ],
+ "worthPlus03": [
+  "Raked tip with concave TE and a narrow point (l.19 WING.te): the one visible planform mismatch in 17A / 19A."
+ ],
+ "questionsForUser": [
+  "A photo looking straight out at the raked tip from rows 17-20 A (port side) would settle the tip chord and TE curve."
+ ],
+ "photos": [
+  "ref/web/exterior/a5_kn_ANA77W_TheRoom_41.jpg",
+  "ref/web/exterior/b_lalf_ANA77W_11A_137.jpg",
+  "ref/web/exterior/b_lalf_ANA77W_11A_136.jpg",
+  "ref/web/exterior/b_alv_ANA77W_PY_IMG_7250-2-scaled.jpeg",
+  "ref/web/exterior/b5_knav_ANA77W_7A_GE90_takeoff_9.jpg",
+  "/tmp/claude-0/-home-user-Calc/ed101a30-6aca-5998-ba16-b78251e273cb/scratchpad/ratA20/tip_z.png",
+  "/tmp/claude-0/-home-user-Calc/ed101a30-6aca-5998-ba16-b78251e273cb/scratchpad/ratA20/tip_cmp.png",
+  "/tmp/claude-0/-home-user-Calc/ed101a30-6aca-5998-ba16-b78251e273cb/scratchpad/ratA20/w13A_z.png",
+  "/tmp/claude-0/-home-user-Calc/ed101a30-6aca-5998-ba16-b78251e273cb/scratchpad/ratA20/w30K_reg_cmp.png"
+ ],
+ "notes": "Livery raised 7.5 -> 8.0 on what is visible: the registration ink/skin is 0.30 (w30K) against 0.36 (_7250) and 0.14 (KN41, under a deep blue sky); hue matches KN41 navy; placement, orientation and glyph shapes read right in w26K / w30K. No geometric defect found, so the 7.5 held without a named defect is dropped. Lighting (not scored): the sunset s13A cowl is warm and even, consistent with the photo light."
+}

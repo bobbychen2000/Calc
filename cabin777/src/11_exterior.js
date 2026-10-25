@@ -17,7 +17,8 @@ const WING = {
   // leading / trailing edge [spanwise from CL, nose station]; LE sweep 34.2 deg to the rake, TE straight to the
   // yehudi kink at ~9-12 m then ~20 deg; raked tip from 31.1 m [D, ACAP 9.9.1]
   le: [[3.10, 26.89], [31.10, 45.93], [31.40, 46.42], [31.80, 47.22], [32.10, 47.90], [32.40, 48.50]],
-  te: [[3.10, 39.96], [8.60, 39.96], [10.0, 40.17], [11.0, 40.36], [12.0, 40.69], [20.0, 43.40], [29.5, 47.05], [31.0, 47.98], [32.40, 49.05]],
+  te: [[3.10, 39.96], [8.60, 39.96], [10.0, 40.17], [11.0, 40.36], [12.0, 40.69], [20.0, 43.40], [29.5, 47.05], [31.0, 47.98], [31.6, 48.40], [32.0, 48.64], [32.40, 48.84]],
+  // w21: the raked TE curves forward into a narrow ~0.34 m tip (KN41 / _7331; the straight TE to 49.05 ended in a square 0.55 m tip, A w20) [V shape, A chord]
   // upper-surface crest above the floor: ACAP front view, 5.2 deg on the ground [D], plus 1g cruise bending that lifts the
   // tip ~1.5 m (quadratic outboard of the root; the leading edge curves up to the tip in F-GSQR_1/_2 window views [V
   // shape], magnitude [A] tuned on a 17A render vs F-GSQR_2). Inboard of the nacelle it adds < 0.06 m, so the engine
@@ -336,7 +337,7 @@ function buildExterior(gl) {
     // whose sunlit panels show dotted rows along every spoiler / flap edge and either side of each spoiler break). 50 mm
     // strips on the x_rivet dot layer (25 mm pitch, triplanar from above), a shade under the near paint so the mips fade
     // them to a faint line at range [V KN41 / _7250 rows, A positions]
-    { const rv = { c: '#5e6063', r: 0.75, m: 0.05, l: LAYER.xRivet }, rw = 0.028, vR = B.vcount;   // w18: 0.05 m / #66686b read as pale two-column zippers 5-12 L over the panel (A / B w17)
+    { const rv = { c: '#585a5d', r: 0.75, m: 0.05, l: LAYER.xRivet }, rw = 0.028, vR = B.vcount;   // w18: 0.05 m / #66686b read as pale two-column zippers 5-12 L over the panel (A / B w17)   // w21: strip a shade darker (dots 0.94 of the panel vs KN41 0.80; the tile itself is mean-1 so it fades with the mips, A w20)
       wingLine(B, side, spanPath(4.5, 8.6, () => 37.82 + 0.06, 3), rv, rw);
       wingLine(B, side, spanPath(3.2, 9.7, () => 38.82 + 0.10, 4), rv, rw);
       wingLine(B, side, spanPath(3.2, 9.7, (q) => lerp(38.82, te(q), 0.5), 4), rv, rw);
@@ -349,8 +350,9 @@ function buildExterior(gl) {
       // spoiler / flap junction in KN41) [V, A size]
       // w18: a short dark head and a narrower, lighter fading tail, jittered (flat 0.26 m rectangles read as grey tape, A / B w17)
       const smudge = (q, x0) => { const h = hsh(q * 5.3), l = 0.10 + 0.08 * h, dq = (h - 0.5) * 0.04;
-        wingLine(B, side, [[q, x0 + 0.02], [q + dq * 0.15, x0 + 0.02 + l * 0.15]], { ...paint, c: '#3f4246', r: 0.9 }, 0.03 + 0.01 * h, 1, 0.014);   // w19: pointed head, darkest at the hinge (blocks, A / B w18)
-        wingLine(B, side, [[q + dq * 0.15, x0 + 0.02 + l * 0.15], [q + dq * 0.5, x0 + 0.02 + l * 0.5]], { ...paint, c: '#55585c', r: 0.9 }, 0.035 + 0.015 * h, 1, 0.014);   // final: lighter body, no flat block (A / B w19)
+        wingLine(B, side, [[q, x0 + 0.02], [q + dq * 0.15, x0 + 0.02 + l * 0.15]], { ...paint, c: '#484b4f', r: 0.9 }, 0.028 + 0.01 * h, 1, 0.014);   // w21: lighter head (jump to the body, A w20)   // w19: pointed head, darkest at the hinge (blocks, A / B w18)
+        wingLine(B, side, [[q + dq * 0.15, x0 + 0.02 + l * 0.15], [q + dq * 0.3, x0 + 0.02 + l * 0.3]], { ...paint, c: '#505357', r: 0.9 }, 0.035 + 0.015 * h, 1, 0.014);   // w21: body in two tapering steps (flat block, A w20)
+        wingLine(B, side, [[q + dq * 0.3, x0 + 0.02 + l * 0.3], [q + dq * 0.5, x0 + 0.02 + l * 0.5]], { ...paint, c: '#5a5d61', r: 0.9 }, 0.028 + 0.01 * h, 1, 0.014);   // final: lighter body, no flat block (A / B w19)
         wingLine(B, side, [[q + dq * 0.5, x0 + 0.02 + l * 0.5], [q + dq, x0 + 0.02 + l * 1.3]], { ...paint, c: '#606366', r: 0.9 }, 0.025, 1, 0.014); };
       for (const q of [5.4, 7.7]) smudge(q, 38.82);
       for (const [cs] of WING.canoes) smudge(cs, cs < 9.8 ? 38.82 : cs < 11.8 ? te(cs) - 1.15 : spA(cs));
@@ -474,11 +476,11 @@ function buildExterior(gl) {
     const leE = pwl(WING.le, E.s), nacTop = (x) => E.y + pwl([[0, 1.715], [0.6, 2.02], [1.7, 2.09], [2.4, 2.09], [3.8, 1.99], [5.0, 1.5], [5.6, 1.02], [6.35, 0.84]], x);
     const secs = [];
     for (let k = 0; k <= 24; k++) {
-      const x = lerp(1.65, 10.6, Math.pow(k / 24, 1.3)), xn = E.x0 + x, nose = Math.sqrt(smooth(1.65, 2.3, x));   // w19: steeper dome front (_137, B w18)   // w17: width and height grow together (A w16: blunt bulb)   // w15: denser rings in the nose, which grows from ~0 as a dome (w14 sawn-off slab, A w14)   // w14: hump starts a quarter along the fan cowl, not on the inlet split at 1.3 (horn in s13A / w13A, B w14; LALF _137)
+      const x = lerp(1.65, 10.6, Math.pow(k / 24, 1.3)), xn = E.x0 + x, nose = Math.pow(smooth(1.65, 2.45, x), 0.6);   // w21: rounded dome front (flat top + chamfer, A / B w20)   // w19: steeper dome front (_137, B w18)   // w17: width and height grow together (A w16: blunt bulb)   // w15: denser rings in the nose, which grows from ~0 as a dome (w14 sawn-off slab, A w14)   // w14: hump starts a quarter along the fan cowl, not on the inlet split at 1.3 (horn in s13A / w13A, B w14; LALF _137)
       const wl = wingAt(E.s, Math.max(xn, leE), side, -1)[1];
       // w17: a low blister on the fan cowl (crown ~0.12 of its length, LALF _137), a saddle over the aft split, then the rise to
       // the strut; soft max so the two terms do not kink (A / B w16, gap w16 item 2) [V shape, A heights]
-      const hA = 0.30 * nose * (1 - 0.32 * smooth(2.7, 3.6, x) * (1 - smooth(4.0, 5.0, x))), hB = 0.55 * Math.pow(smooth(3.8, leE - E.x0, x), 1.6);   // w19: wider saddle, one monotonic rise into the strut (ripple, A / B w18)   // w18: dome -> symmetric saddle -> rise, hB later (plateau, A w17), crown 0.30 (B w17)   // w18: dome -> symmetric saddle -> rise, hB later (plateau, A w17), crown 0.30 (B w17)
+      const hA = 0.30 * nose * (1 - 0.08 * smooth(2.3, 2.7, x) - 0.30 * smooth(2.7, 3.6, x) * (1 - smooth(4.0, 5.0, x))), hB = 0.55 * Math.pow(smooth(3.8, leE - E.x0, x), 2.0);   // w21: shallow saddle before the rise (_137, A / B w20)   // w19: wider saddle, one monotonic rise into the strut (ripple, A / B w18)   // w18: dome -> symmetric saddle -> rise, hB later (plateau, A w17), crown 0.30 (B w17)   // w18: dome -> symmetric saddle -> rise, hB later (plateau, A w17), crown 0.30 (B w17)
       const rh = 0.5 * (hA + hB + Math.sqrt((hA - hB) ** 2 + 0.003)) - 0.027 * (1 - nose), ridge = nacTop(x) + rh;
       const bot = x < 6.35 ? nacTop(x) - Math.max(0.30, rh + 0.12) * lerp(0.5, 1, nose) : lerp(nacTop(6.35), wl - 0.05, (x - 6.35) / 4.25);   // final: full rounded front, not a feather edge (B w15)   // w12: 0.60 -> 0.70 (B w11, LALF _137)
       const top = xn >= leE ? wl + 0.12 : lerp(ridge, Math.max(wl + 0.12, ridge), smooth(leE - E.x0 - 2.0, leE - E.x0, x));
@@ -529,7 +531,7 @@ function buildExterior(gl) {
     // to L89-103 (LALF _136 L133-148). Sunset / night light the other side or barely at all [V targets, D factor]
     shadeVerts(B, vN, vP, (p, n) => (0.55 + 0.45 * Math.pow((n[1] + 1) / 2, 1.6)) * (1 - 0.3 * smooth(0.05, 0.75, V3.dot(n, LD))));
     shadeVerts(B, vP, B.vcount, (p, n) => { const lx = Math.min(4.4, p[2] - WING.dz - E.x0), dr = Math.hypot(p[0] - E.s * Math.sign(p[0]), p[1] - E.y) - cowlR(Math.max(0, lx));
-      return Math.min(1, 1 - (0.25 * Math.max(0, -n[1]) + 0.09 * smooth(0.6, 0.95, Math.abs(n[0]))) * smooth(0.0, 0.35, dr) + 0.08 * (1 - smooth(0.0, 0.12, dr))); });   // final: foot lifted toward the cowl (+15-28 L step, A / B w19)   // w19: the foot takes the cowl value (flank band met the cowl with a +40 L step, A w18)   // w12: flank shade so the ridge reads (LALF _137, A w12)
+      return Math.min(1, 1 - (0.25 * Math.max(0, -n[1]) + 0.10 * smooth(0.5, 0.95, Math.abs(n[0])) * smooth(0.04, 0.45, dr)) * smooth(0.0, 0.35, dr) + 0.06 * (1 - smooth(0.0, 0.15, dr))); });   // w21: flank graded from the foot up, not a flat band (A w20)   // final: foot lifted toward the cowl (+15-28 L step, A / B w19)   // w19: the foot takes the cowl value (flank band met the cowl with a +40 L step, A w18)   // w12: flank shade so the ridge reads (LALF _137, A w12)
     const foot = [...WING.canoes.map(([cs]) => cs), E.s];
     shadeVerts(B, v0, vW, (p, n) => {
       if (n[1] > -0.3) return 1;
