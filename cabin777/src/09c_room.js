@@ -19,7 +19,7 @@ Object.assign(SEATMAT, {
   jLedge: { c: '#8f959c', r: 0.3, m: 0.6, l: LAYER.brushed },   // ledge top, darker than the edge trim (c_27313 #788087-#b2bbc8) [V]
   jSill: { c: '#8e9399', r: 0.35, m: 0.4, l: LAYER.brushed },   // silver-grey sill + drawer under the monitor (tpg_53) [V]
   jLens: { c: '#55585d', r: 0.25 },   // reading-lamp lens, switched off (c_27315 / 27316 lamps read dark grey) [V]
-  jBand: { c: '#5d5e66', r: 0.45, l: LAYER.plastic },   // polishA (from_integration r2): smooth satin padded band, the leather layer's dimples read as hammered metal at seat-eye range (c_27315) [V]
+  jBand: { c: '#656b73', r: 0.45, l: LAYER.plastic },   // polishA (from_integration r2): smooth satin padded band, the leather layer's dimples read as hammered metal at seat-eye range (c_27315); colour kept, band / flap 0.89-1.07 (w17a) [V]
   // w13a: the aisle-end posts and door leaves read pale, nearly plain cream (c_27312 (205,201,190), c_27314 (226,227,223),
   // tpg_60), the cabinets and table inlays darker greige (SEATMAT.ash) [V]
   ashDoor: { c: '#ece7dc', r: 0.36, l: LAYER.ashDoor },   // w14a: own layer, faint grain   // w6a: header band 0.9-1.35x the fabric, a touch darker than the flap (tpg_42, c_27313) [V]

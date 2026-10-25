@@ -1,0 +1,112 @@
+{
+ "area": "monuments",
+ "rater": "B",
+ "round": "w19",
+ "score": 8.6,
+ "note": "Head 7744d1c (polishA). Only curtainFF changed in 10_mono.js. BEFORE m0/m02_fFront and r0/q01, q11, q03, q05; AFTER r1/m02_fFront, q01, q11 and r2/q03, q05 (the F front drapes are also visible top right in the suite views q03 / q05, and q05 is paired with the official f_17313). q01 is pixel-identical (0.01 % of pixels); the q11 change (1.9 %) is the darker THE Room shells in the background (room commit), not monuments. Sampling with PIL box means, hue / HLS saturation. Lighting noted, not scored.",
+ "previousIssues": [
+  {
+   "issue": "w18b LOW welcome cabinet glass no cue",
+   "status": "not fixed (not in this pass)"
+  },
+  {
+   "issue": "w18b LOW bar nosing flat white",
+   "status": "not fixed"
+  },
+  {
+   "issue": "w18a/b LOW tumbler glints",
+   "status": "not fixed"
+  },
+  {
+   "issue": "w18b LOW ash-wall strips stop at the corner arcs",
+   "status": "not fixed"
+  },
+  {
+   "issue": "w18a/b LOW ash grain contrast / repeat",
+   "status": "not fixed"
+  },
+  {
+   "issue": "w18a/b LOW door-1 dark wood",
+   "status": "not fixed (q01 identical)"
+  },
+  {
+   "issue": "w18b LOW galley insert frames",
+   "status": "not fixed"
+  },
+  {
+   "issue": "w18a LOW plain J lav doors",
+   "status": "not fixed"
+  },
+  {
+   "issue": "from_integration r2/r3: F front drapes cool light grey",
+   "status": "partly fixed / partly regressed. Luminance fixed: m02 drape (520,150,615,550) L102 -> L81, drape/wall 0.51 -> 0.40 (omaat_f40 65/194 = 0.33); q05 L87 -> L56, drape/wall 0.52 -> 0.33. Hue regressed: q05 drape #575558 h279 s0.02 -> #3d3633 h19 s0.10 (visibly brown), m02 #646566 h205 -> #52504d h36. The paired official f_17313 shows these drapes lavender-grey #999aaf h236 s0.12. The integrator's omaat_f40 target (#433f3c h20) is not white-balanced: that photo's white wall is #c8c2b2 h42 s0.17, and normalising to it gives the drape ~(66,64,66), neutral to slightly cool. Both references therefore say neutral-to-cool, not warm."
+  }
+ ],
+ "changes": [
+  {
+   "change": "5 curtainFF #6d6b6b -> #544c46",
+   "verdict": "mixed: luminance helped, hue hurt; net neutral",
+   "numbers": "m02 L102 -> 81 (target ratio met), q05 h279 s0.02 -> h19 s0.10 vs f_17313 h236 s0.12"
+  }
+ ],
+ "details": [
+  {
+   "detail": "Door-3 self-service bar (m05, m06, q11)",
+   "score": 8.7,
+   "note": "Unchanged."
+  },
+  {
+   "detail": "Door-2 welcome galley (m03, m16, m14)",
+   "score": 8.5,
+   "note": "Unchanged."
+  },
+  {
+   "detail": "Door-2 aft ash wall (m04, m13)",
+   "score": 8.7,
+   "note": "Unchanged."
+  },
+  {
+   "detail": "F front wall, flight-deck door, door 1, F front drapes (q01, m02, q03, q05)",
+   "score": 8.3,
+   "note": "The drapes now sit at the right depth relative to the wall and read as heavy fabric, but they read chocolate-brown in q03 / q05 where the official f_17313 shows lavender-grey. q01 dark wood unchanged."
+  },
+  {
+   "detail": "Lavatory exteriors",
+   "score": 8.0,
+   "note": "Unchanged."
+  },
+  {
+   "detail": "F/J bulkhead, J face",
+   "score": 8.3,
+   "note": "Unchanged."
+  },
+  {
+   "detail": "J/PY bulkhead, PY face",
+   "score": 8.4,
+   "note": "Unchanged."
+  },
+  {
+   "detail": "Door-4 group",
+   "score": 8.6,
+   "note": "Unchanged."
+  },
+  {
+   "detail": "Rear, door 5",
+   "score": 8.4,
+   "note": "Unchanged."
+  }
+ ],
+ "issues": [
+  {
+   "severity": "medium",
+   "detail": "F front drapes now warm brown against the official lavender-grey (q05, q03, m02)",
+   "problem": "curtainFF #544c46 fixed the brightness but turned the drapes brown. They are prominent in the suite views, and q05 is paired with f_17313, where the same drapes are clearly cool lavender-grey. omaat_f40 white-balanced to its wall is neutral to slightly cool too.",
+   "evidence": "q05 (700,20,800,130) #3d3633 h19 s0.10 L56; f_17313 (600,20,760,130) #999aaf h236 s0.12; omaat_f40 drape #44403d vs wall #c8c2b2 (wall h42 s0.17, so the drape is cooler than the photo's white balance).",
+   "fix": "In MONMAT (10_mono.js) set curtainFF to a cool violet-grey of about the same luminance, e.g. '#56545f' (h~250, s~0.06). Aim for m02 drape ~L80 and q05 ~L60-65 with hue 230-260, s 0.04-0.08. This also matches curtainF (#585a62), which is already cool."
+  }
+ ],
+ "questionsForUser": [],
+ "gapWorth03": [
+  "Correcting the drape hue to cool violet-grey keeps the luminance gain and lifts the F front detail to about 8.5. The w18 lows (welcome glass cue, grooved nosing, single tumbler glints, door-1 wood, lav doors) remain the path to about 8.8."
+ ]
+}

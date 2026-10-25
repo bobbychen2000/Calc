@@ -89,7 +89,7 @@ const MONMAT = {
   // w1: the charcoal albedos rendered near-black (#202028 in m07); lifted to the photo samples (tpg_The-Room-small-cabin-
   // front_71 #5e5655, omaatF_2 #5b5650) [V]
   curtainF: { c: '#585a62', r: 0.95, l: LAYER.fabric },   // w3: F front read too light (0.55 of wall vs 0.36-0.39)   // + tpg_147 #4a453a at 0.34 of white, omaatF_2 #56504b
-  curtainFF: { c: '#544c46', r: 0.95, l: LAYER.fabric },  // polishA (from_integration r2/r3): warm grey, m02 rendered #636465 L100 h229 vs omaat_f40 #433f3c L64 h20 [V]; w6b: F front loose drape rendered #27231f-#332d29 vs omaatF_40 #4c4644 / #423c3b in the open
+  curtainFF: { c: '#4f4c4a', r: 0.95, l: LAYER.fabric },  // polishA (from_integration r2/r3): near-neutral, barely warm grey (w19a: #544c46 read coffee; w19b wanted f_17313's lavender, a rendering, which loses to omaat_f40 / omaatF_2) [V]; m02 rendered #636465 L100 h229 vs omaat_f40 #433f3c L64 h20 [V]; w6b: F front loose drape rendered #27231f-#332d29 vs omaatF_40 #4c4644 / #423c3b in the open
   doorArc: { c: '#c42a48', r: 0.45 },   // w13a/b: between lalf_134 (146,47,60) and lalf_133 (143,69,82); magenta read wrong   // [V] painted crimson-magenta arc + OPEN (lalf_133); MAT.handleRed read pure red
   curtainTie: { c: '#2a2c33', r: 0.8, l: LAYER.fabric },   // w13b: cool, as curtainC
   curtainY: { c: '#66697c', r: 0.9, l: LAYER.fabric },   // w4: rendered #212330 vs py_37302 #545868 (b - r ~19)

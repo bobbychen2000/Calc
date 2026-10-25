@@ -1,0 +1,75 @@
+{
+ "area": "room",
+ "rater": "B-geometry",
+ "round": "w17",
+ "score": 8.5,
+ "summary": "Round w17 rates head 7744d1c (polish A: jShell #595d64 -> #434349, jCap #5c6066 -> #4b4b50, jShellIn #4a4d53 -> #3e3e43, jBand leather -> satin plastic layer #5d5e66). The geometry and proportion are unchanged from w16 (nested pair, shells, privacy walls, monitor walls, monument top, aisle caps), so the score rests on the two colour and finish changes. (1) Darker shells: the result is mixed and slightly positive overall. The cap tops now fall inside the photo range, with the rim sheen intact (o2 rim peak / face 1.26, was 1.15; q10 caps L108 against c_27315 L124-143 and c_27312 L113-128). The cream aisle doors now stand out against darker frames, as they do in c_27312 / c_27314. The far rows of q06 (L88-97) sit in c_27312's L74-101. The near shaded vertical faces overshoot, though: q09 wall L45 against c_27314 L72-83, q10 front face L54 against c_27315 L65-84, q06 near-left L54 against c_27312 L68-89. Ash / shell-face ratios are now 2.5-4.0 (before 1.6-2.4). I measure 1.6-2.2 on the official photos' lit faces and up to 2.7 on c_27312's darkest console boxes, and 1.8-2.0 in-flight (kn_8). The hue claim is overstated. The official shells sample h207-231 (mostly ~220, s 0.10-0.25), with only the darkest bezel and console parts at h247-256. The new material (R=G<B, h240) renders h231-235, while the old one rendered h217-221. Both are within ~12 deg at low saturation, so the hue shift is barely visible. Not going neutral was the right call: the photos render at s 0.12-0.25, and #434349 has HSV s 0.08 anyway, so it also meets the integrator's limit. (2) jBand on the satin layer clearly helps. At the hand-off camera (o1, cruise) the band's local contrast falls from hp 0.154 to 0.034, against a target of <=0.04 (kn_8 band 0.024). The hammered-metal dimples are gone, leaving a faint orange-peel stipple. The band L96 h237 in q10 is close to c_27315's padded band (L106 h248). Net: same product, minor value and material differences. I stay at 8.5 with one medium issue: the shaded near faces are too dark, partly from the cabin AO.",
+ "photos_collected": [
+  "Re-downloaded to ref/web/room/: kn_ANA-The-Room-Business-Class-8.jpg (centre pair, in-flight: band L76 hp 0.024, shell faces L74-84, ash L149), omaat_ANA-Business-Class-The-Room-13.jpg, lalf_ANA-777-300ER-The-Room-Business-Class-Review-136.jpeg. kn_-16/-19/-41 turned out to be the window and wing views, not useful for room. omaat_room_13/15/23/31 were already present.",
+  "Official: ref/ana c_27312, c_27314, c_27315 (sampled with grids: /tmp/claude-0/-home-user-Calc/33316a4e-1209-5df1-8086-36d8df9d3f92/scratchpad/w17b/c_27312_grid.png, c_27314_grid.png, c_27315_grid.png)"
+ ],
+ "own_renders": [
+  "/tmp/claude-0/-home-user-Calc/33316a4e-1209-5df1-8086-36d8df9d3f92/scratchpad/w17b/before/o1_band.png and /tmp/claude-0/-home-user-Calc/33316a4e-1209-5df1-8086-36d8df9d3f92/scratchpad/w17b/after/o1_band.png (hand-off band camera __sit('12H', PI/2+0.6, -0.15), cruise); stacked: /tmp/claude-0/-home-user-Calc/33316a4e-1209-5df1-8086-36d8df9d3f92/scratchpad/w17b/ba_o1.png",
+  "/tmp/claude-0/-home-user-Calc/33316a4e-1209-5df1-8086-36d8df9d3f92/scratchpad/w17b/before/o2_rims.png and /tmp/claude-0/-home-user-Calc/33316a4e-1209-5df1-8086-36d8df9d3f92/scratchpad/w17b/after/o2_rims.png (__rel('14D',-0.45,1.5,0.75,-0.6,-0.45), boarding: near cap rims); stacked: /tmp/claude-0/-home-user-Calc/33316a4e-1209-5df1-8086-36d8df9d3f92/scratchpad/w17b/ba_o2.png",
+  "Before/after stacks of the QA views: /tmp/claude-0/-home-user-Calc/33316a4e-1209-5df1-8086-36d8df9d3f92/scratchpad/w17b/ba_q06_roomMain.png, ba_q07_seat11A.png, ba_q08_seat12H.png, ba_q09_centrePair.png, ba_q10_seat14D.png",
+  "Sampler: /tmp/claude-0/-home-user-Calc/33316a4e-1209-5df1-8086-36d8df9d3f92/scratchpad/w17b/py/m.py (mean RGB, luma, HSV h/s, hp = std(img - blur6)/mean); shot script /tmp/claude-0/-home-user-Calc/33316a4e-1209-5df1-8086-36d8df9d3f92/scratchpad/w17b/py/shots.js"
+ ],
+ "prior_issues": [
+  {"from": "w16a", "severity": "medium", "issue": "Cabinet / table ash: soft wavy bands, weak pinstripe, a little warm", "status": "not fixed (untouched in polish A; B rated the ash as matching in w16 and still does)", "evidence": "q06 cabinet (170-330 x 330-450) (130,129,123) after vs (134,134,129) before; the tile and gain are unchanged. Against the darker shells the cabinet reads a touch brighter by contrast, with no change in character."},
+  {"from": "w16b", "severity": "medium", "issue": "Aisle-end doors too dark relative to the cabinets in the cabin views (mostly lighting)", "status": "not fixed, but reads better", "evidence": "q06 post (605-650 x 330-500) L170 (w16 172); q09 door (450-510 x 130-200) L193 against c_27314 222. Because the frames are darker (q06 near shell L83 -> L54), the cream leaf now stands out of its charcoal surround the way it does in c_27312 / c_27314."},
+  {"from": "w16a/b", "severity": "low", "issue": "Pillows rigid slabs / bundle film hidden / O comforter crisp T / latch tongue floats / lower panel seam / door-edge zipper", "status": "not fixed (out of scope of polish A)", "evidence": "q08 / q09 / q10 pillow and bundle regions are pixel-identical before / after."},
+  {"from": "integration r2", "severity": "medium", "issue": "Padded header band reads as hammered metal", "status": "fixed", "evidence": "o1 band (100-400 x 260-420) hp 0.154 -> 0.034 (target <= 0.04; kn_8 band 0.024; c_27315 band 0.107 includes stitching). Lower band (20-200 x 440-560) 0.163 -> 0.028."},
+  {"from": "integration r3", "severity": "medium", "issue": "Charcoal shells / caps slate, 1.3-1.6x too light", "status": "fixed, and overshot on the shaded near faces", "evidence": "Caps: q10 L133 -> 108, q09 L151 -> 134 (photos 113-143). Near shaded faces: q09 L73 -> 45 (c_27314 72-83), q10 L85 -> 54 (c_27315 65-84), q06 L83 -> 54 (c_27312 68-89). Far rows q06 L101 -> 88 (c_27312 74-101)."}
+ ],
+ "details": [
+  {"detail": "Overall nested-pair layout, shells, privacy walls, monitors, cabinets (aisle views)", "score": 8.5, "refs": ["c_27312", "c_27315", "q06", "q10"]},
+  {"detail": "Shell / cap colour and value (after polish A)", "score": 8.2, "refs": ["c_27312", "c_27314", "c_27315", "kn_8", "q06", "q09", "q10"]},
+  {"detail": "Satin rim sheen lines on cap rims", "score": 8.5, "refs": ["c_27312", "o2_rims"]},
+  {"detail": "Header band behind the headrest (smooth satin)", "score": 8.5, "refs": ["c_27315", "kn_8", "o1_band"]},
+  {"detail": "Monument top: housings, spine and rail, aisle cap, plaques", "score": 8.4, "refs": ["c_27313", "c_27314", "q09"]},
+  {"detail": "Ash panels, table tops, door / cabinet split", "score": 8.5, "refs": ["c_27312", "c_27314", "c_27316"]},
+  {"detail": "Boarding bundle, pillows, soft goods", "score": 8.1, "refs": ["kn_8", "omaat_room_15", "q08", "q09"]},
+  {"detail": "Monitor, footwell, ottoman, side-table console", "score": 8.4, "refs": ["c_27316", "q07"]}
+ ],
+ "issues": [
+  {
+   "severity": "medium",
+   "detail": "Shaded near shell faces now too dark; the ash-to-shell value ratio overshoots",
+   "problem": "The new jShell value is right for the lit caps and the far rows, but the large near vertical faces, which sit in cabin AO and shadow, drop to ~0.6-0.8x the photos. In q09 the privacy wall reads close to black-slate instead of the mid charcoal of c_27314. The ash / face ratio is 2.5-4.0, against 1.6-2.2 on the lit faces of the official photos (up to 2.7 on c_27312's darkest console boxes) and 1.8-2.0 in kn_8.",
+   "evidence": "q09 (300-500 x 260-330) L45 vs c_27314 (220-400 x 160-178) L83 / (760-830 x 190-230) L72; q10 (410-480 x 450-540) L54 vs c_27315 (140-190 x 340-400) L65 / (460-530 x 245-285) L84; q06 (30-130 x 430-530) L54 vs c_27312 (150-240 x 400-440) L68 / (60-140 x 430-470) L89. Before: L73 / 85 / 83.",
+   "fix": "Split the difference on the face material only, and keep jCap (the cap tops and rims are in range). In src/09_seats.js:83, set jShell c '#434349' -> '#4a4b51' (about +10 %, h ~230). Leave jShellIn (line 84) as is, since its faces are the inner shadowed ones. Hand the rest to lighting: the AO and crevice term on large vertical shell faces above 0.75 m (12_scene.js). Re-measure q09 so the wall reaches L60-70 while q06 far rows stay at or below L100."
+  },
+  {
+   "severity": "low",
+   "detail": "Shell hue drifted from slate toward blue-violet",
+   "problem": "The official shells sample h207-231 (mostly ~220), and only the darkest bezel and console bits reach h247-256. The R=G<B material (h240) renders h231-235; before it rendered h217-221. The shift is barely visible at s ~0.15, but the code comment's 'violet-grey' overstates what the photos show.",
+   "evidence": "c_27312 (60-140 x 430-470) h216, (660-690 x 210-260) h221, (300-400 x 165-180) h210, (215-240 x 250-300) h253; c_27314 h207-225; c_27315 h214-229; kn_8 h210-216. After: q06 h231-235, q09 h233-234, q10 h232-234.",
+   "fix": "If you touch the value per the medium issue, also put G just above R: jShell '#4a4b51' and jCap '#4b4c51' (09_seats.js:83/85), which give h ~225-230 rendered. Correct the comment to 'cool slate-grey (h~220), darkest parts violet'."
+  },
+  {
+   "severity": "low",
+   "detail": "Faint orange-peel stipple still visible on the satin band at seat-eye range",
+   "problem": "The hammered dimples are gone, but the plastic layer's fbm stipple still shows as soft lumps across the band in o1. The real band (kn_8, c_27315) is smooth, with only soft gradients.",
+   "evidence": "o1_band after (100-400 x 260-420) hp 0.034, against kn_8 band 0.024.",
+   "fix": "Optional, room-local: give jBand no layer (src/09c_room.js:22, drop l: LAYER.plastic), or leave it as is (it is within the 0.04 target). Do not change the shared plastic layer (03_tex.js:191), which every shell uses."
+  },
+  {
+   "severity": "low",
+   "detail": "Carried from w16a/b (unchanged at this head): pillow slabs, hidden bundle film, crisp O comforter, floating latch tongue, missing lower panel seam, door-edge zipper",
+   "problem": "Out of scope for polish A; still as described in room_w16a.json / room_w16b.json.",
+   "evidence": "q08 / q09 / q10 soft-goods regions are identical before and after.",
+   "fix": "See room_w16a.json / room_w16b.json fixes."
+  },
+  {
+   "severity": "low",
+   "detail": "(lighting, not scored) heavy AO on large vertical shell faces",
+   "problem": "With the darker albedo, the cabin's AO and shadow on the near vertical faces push them below the photos, while lit caps match.",
+   "evidence": "Caps / near-face luma ratio: q10 2.0 (photo c_27315 1.7-2.0); q09 cap 134 / face 45 = 3.0 (c_27314 ~1.5-1.8).",
+   "fix": "Lighting owner: check the AO-volume weight on vertical faces at 0.75-1.2 m in 12_scene.js."
+  }
+ ],
+ "questions": [
+  "The brief quotes an ash-to-shell ratio of 2.2-3.0 for the photos; on the lit shell faces I measure 1.6-2.2 (c_27312 / c_27314 / c_27315) and 1.8-2.0 in kn_8, reaching 2.4-2.7 only against the darkest console / monitor-housing parts. Which faces was the 2.2-3.0 figure taken on?",
+  "Repeat: O-bed seat-plan dimension, and the real-GPU check of the q07 grazing ash (questions 18 / 19)."
+ ]
+}

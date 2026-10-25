@@ -1,0 +1,145 @@
+{
+ "area": "suite",
+ "rater": "B",
+ "round": "w14",
+ "score": 8.8,
+ "method": "Head 7744d1c (polishA). Compared BEFORE renders scratchpad/r0 (q02-q05) with AFTER r1/q02 and r2/q03-q05, pixel diffs (w14b/diff_q02.png, diff_q05.png) and PIL box means (L = luminance, hue / HLS saturation). Own studio renders from scratchpad/b3/test.html at DPR 2 (script w14b/studio_v.js, studio_v2.js): o1_ottoman, o2_ottoman_low, b1_bed_doors (bed + doors closed + divider), b2_drape_in, b3_drape_aisle. References: omaat_f11, f57, f59, f60, f_17304, f_17313. Lighting is noted, not scored.",
+ "calibration": [
+  {
+   "earlier_issue": "w13b MED: turned-down duvet corner is an overlay, too small",
+   "status": "not fixed (not in this pass). Geometry unchanged; the darker linen makes the tonal step clearer (flap L198 vs head sheet L214 in q04) but b2_drape_in still shows a hard-edged triangle plate with a visible thickness edge lying on an intact duvet."
+  },
+  {
+   "earlier_issue": "w13b MED: wood flanks chestnut with short noisy grain (f60 espresso long streak)",
+   "status": "not fixed. fFlank #33291f / LAYER.fWood unchanged (b1_bed_doors flanks)."
+  },
+  {
+   "earlier_issue": "w13a LOW: aisle drape reads as a rigid board / crisp ledge overshooting the duvet corner",
+   "status": "mostly fixed. In q04 the lit lip that projected past the duvet is gone; the drape now sits under the rounded duvet edge and starts at its rounded head corner (w14b/q04_drape_before_after.png; drape band L217 -> L200). From above (b2) a ~20 mm rounded rail still shows outside the duvet edge, separated by a crease line, and from the aisle (b3) it is a flat vertical 0.12 m board with a square bottom edge. No poke-through, no floating, no z-fighting."
+  },
+  {
+   "earlier_issue": "w13a/b LOW: fluted-leaf moire, wedge-ended console module, 1 px plinth tick, blue-black grip recesses, flat tweed, uniform duvet head step",
+   "status": "not fixed (out of this pass); none regressed."
+  },
+  {
+   "earlier_issue": "from_integration r1-r3: bed linen clips white in bed mode",
+   "status": "fixed. q04 head sheet L235 -> L214, flap L221 -> L198, corner sheet (sun) L246 -> L237, pixels > 235 16.5 % -> 12.5 %; omaat_f59 sheet L210, f_17304 ~L187. The pillow lavender (L221) is unchanged and now reads properly against the sheet."
+  },
+  {
+   "earlier_issue": "from_integration r2/r3: shallow lit ottoman plinth",
+   "status": "fixed. q03 under the tray (380,535,610,575) L57 -> L23 (cushion L141; ratio 0.40 -> 0.16, omaat_f11 16/118 = 0.14), hue h23 warm. q05 now shows the thin plinth line at the floor and a dark recess, as in f_17313."
+  }
+ ],
+ "changes": [
+  {
+   "change": "1 bed linen darker",
+   "verdict": "helped",
+   "numbers": "q04 sheet L235 -> 214 (f59 210), flap 221 -> 198 (0.93x the sheet), clipped fraction 16.5 % -> 12.5 %. The bed now reads as fabric with modelling instead of a white blank."
+  },
+  {
+   "change": "2 aisle drape tucked",
+   "verdict": "helped (small)",
+   "numbers": "q04 drape band L217 -> 200 and no overshoot at the head corner. No poke-through. Still a flat board from the aisle (b3) and a thin rail from above (b2)."
+  },
+  {
+   "change": "3 ottoman recess plinth + floor plate",
+   "verdict": "helped",
+   "numbers": "under-tray L57 -> 23 (f11 16). Plate y 0..0.006 over the cabin floor top at y 0 (studio floor -0.002): no z-fighting at DPR 2 (o1, o2) or in q02/q03/q05. In the studio (no local AO) the plate reads as a mid-brown floor; in the cabin it goes dark as intended. At floor level the void is open to the aisle side (studio floor visible past the right side, o2) - harmless in the cabin."
+  },
+  {
+   "change": "4 fShell r 0.45 -> 0.34",
+   "verdict": "neutral to slightly helpful",
+   "numbers": "q02 mean |diff| 1.06, 4 % of pixels, concentrated on shell rims / vertical faces as faint sheen lines (diff_q02.png); no hot spots or new artefacts."
+  }
+ ],
+ "details": [
+  {
+   "detail": "Screen wall: 43-in screen, wing, pier with mirror and lamp",
+   "score": 8.7,
+   "refs": "q03 / q05 vs omaat_f11, f_17313 (unchanged)"
+  },
+  {
+   "detail": "Centre pair: board, edge strips, divider",
+   "score": 8.6,
+   "refs": "q02 vs omaat_f5 (unchanged)"
+  },
+  {
+   "detail": "Shell / cap two-tone",
+   "score": 8.6,
+   "refs": "r 0.34 adds faint rim sheen (omaat_f2 / f5); tones unchanged"
+  },
+  {
+   "detail": "Aisle leaves",
+   "score": 8.5,
+   "refs": "unchanged; far-leaf moire in q02"
+  },
+  {
+   "detail": "Wood flanks",
+   "score": 7.9,
+   "refs": "unchanged, chestnut vs f60 espresso"
+  },
+  {
+   "detail": "Plinth, doors open and closed",
+   "score": 8.8,
+   "refs": "unchanged; b1 doors closed + bed clean"
+  },
+  {
+   "detail": "Window console",
+   "score": 8.2,
+   "refs": "wedge ends unchanged"
+  },
+  {
+   "detail": "Seat in niche",
+   "score": 8.4,
+   "refs": "unchanged"
+  },
+  {
+   "detail": "Bed: pad, duvet, fold, drape, pillows, belt",
+   "score": 8.3,
+   "refs": "q04 vs f57 / f59 / f_17304: linen tone now right; corner still an overlay; drape a board from the aisle"
+  },
+  {
+   "detail": "Ottoman, table, aisle box",
+   "score": 8.5,
+   "refs": "q03 / q05 / o1 vs f11 / f_17313: dark void and thin plinth line now match; tweed weave contrast still missing"
+  },
+  {
+   "detail": "Variants combine cleanly",
+   "score": 8.8,
+   "refs": "b1 bed + doors + divider, o1/o2, b2/b3: no z-fighting, gaps or intersections from this pass"
+  }
+ ],
+ "issues": [
+  {
+   "severity": "medium",
+   "issue": "Carry-over: the turned-down duvet corner is still overlays on an intact duvet (w13b). The darker linen makes the hard-edged triangles more legible.",
+   "evidence": "w14b/b2_drape_in.png: flap triangle with a visible thickness edge and straight hard sides on top of the unbroken duvet; q04 flap L198 / sheet L214.",
+   "fix": "As w13b: cut the duvet corner as an extruded chamfered slab (legs ~0.50), drop the bare-sheet plate so the pad shows through, mirror the flap across the diagonal."
+  },
+  {
+   "severity": "medium",
+   "issue": "Carry-over: wood flanks chestnut with short grain vs f60 espresso long streak (w13b).",
+   "evidence": "b1_bed_doors flanks; fFlank unchanged.",
+   "fix": "As w13b (hue toward olive-espresso; long-streak swatch if a LAYER slot is approved)."
+  },
+  {
+   "severity": "low",
+   "issue": "Aisle drape is a flat vertical board with a square lower edge seen from the aisle, and a separate ~20 mm rail beside the duvet from above; its head end protrudes ~15 mm past the duvet's rounded corner as a small nub.",
+   "evidence": "w14b/b3_drape_aisle.png (white 0.12 m face, crisp bottom), b2_drape_in.png (rail + crease along the aisle edge, nub at the head end).",
+   "fix": "In 09d_suite.js drape line: tilt it outward ~8 deg about z (rotation on the M4.trs) and shorten to dl - 0.09 centred on the duvet, or replace with a short lofted cushionSecs strip so the bottom edge is rounded (r ~0.02)."
+  },
+  {
+   "severity": "low",
+   "issue": "Ottoman recess open at floor level on the aisle side (studio floor visible past the side in o2); the plate reads mid-brown when lit directly (studio).",
+   "evidence": "w14b/o2_ottoman_low.png right side; o1_ottoman.png plate.",
+   "fix": "Optional: extend the plate and plinth strip to the side wall or add a 0.03 side kick; harmless in the cabin views."
+  },
+  {
+   "severity": "low",
+   "issue": "Out of scope, noted only: q04 sun lozenges remain the brightest bed feature (sun patch L236-238)."
+  }
+ ],
+ "questions": [
+  "The w13 questions (chamfered duvet slab; flank swatch LAYER slot; 0.64 walk-in opening) are still open."
+ ]
+}

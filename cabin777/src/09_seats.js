@@ -80,9 +80,9 @@ const SEATMAT = {
   ashDark: { c: '#5d6166', r: 0.34, m: 0.35, l: LAYER.brushed },
   rosewood: { c: '#4b403a', r: 0.36, l: LAYER.wood },
   // QA r3: shells rendered ~0.5x the photo luminance (q10 #292d34 vs c_27315 #4c4e60) -> lifted
-  jShell: { c: '#434349', r: 0.34, l: LAYER.plastic },   // polishA (from_integration r3): q06 shell faces L96-116 h211-217 vs c_27312 L53-63 h224-232 (official: cool violet-grey, not neutral; in-flight #41423c-#454546) -> ~0.65x, R=G<B [V]; room w12 (from_integration lighting r1): satin, sheen lines on the rounded rims (c_27312, tlfl_9217) [V]
+  jShell: { c: '#4a4b51', r: 0.34, l: LAYER.plastic },   // polishA (from_integration r3): q06 shell faces L96-116 vs c_27312 L53-89 -> darker; official shells are cool slate (h~220, s0.12-0.25; darkest bits violet), not neutral; #434349 took q09 / q10 shaded faces to L45-54 vs 65-84 (w17b) [V]; room w12 (from_integration lighting r1): satin, sheen lines on the rounded rims (c_27312, tlfl_9217) [V]
   jShellIn: { c: '#3e3e43', r: 0.5, l: LAYER.plastic },   // polishA: with jShell [V]
-  jCap: { c: '#4b4b50', r: 0.34, l: LAYER.plastic },   // polishA: with jShell (c_27312 cap tops L98 vs q06 L128) [V]; room w12: satin as jShell [V]
+  jCap: { c: '#4b4c51', r: 0.34, l: LAYER.plastic },   // polishA: with jShell (c_27312 cap tops L98 vs q06 L128) [V]; room w12: satin as jShell [V]
   jRail: { c: '#b9bec4', r: 0.26, m: 0.7, l: LAYER.brushed },
   jVoid: { c: '#1d1617', r: 0.9 },
   jBase: { c: '#2a2b2f', r: 0.6 },
