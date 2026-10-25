@@ -2337,3 +2337,17 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   OWNER DECISION (2026-10-24, relayed by the lead): "For the Deck, let's aim for 8.5" -- this track is done at a
   flight-deck lens >= 8.5 with no blocker / major and the realism A/B still preferring the rebuild; the baseline is
   merged main (two fresh judges on 82f1462 scored its flight deck 8.0, no major).
+  Final judge round on 01218cb: lens 7.5 with 3 majors (the fleece's texture and silhouette, the footwell empty), A/B
+  88 % for the rebuild.  Then (713a65b, the lead's rule: keep a look change only where an A/B against the shipped look
+  prefers it) the crew fleece went BACK to main's shipped one (materials.js sheepskin / fur, 14 layers; furPatch's
+  q.soft kept as an off option) -- none of the track's fleece candidates had won; each CB panel names a breaker once
+  (`fd_print.cb_names`); the overhead's captions and position words are placed clear of the switches, the levers' throws,
+  the squares, the titles and each other (`fd_detail_b._ovh_captions`: four position words that fit nowhere are left
+  out); the PCL a darker satin pewter (FPF-04); the footwell's foil blanket more of the fill ('flight_deck:panel_silver'
+  0.55 / specIn 0.7).  Re-judged on a dev build of it: lens 8.2, NO major (the fleece / footwell / PCL re-graded minor
+  as the shipped look), A/B 87 % (11 B, 4 ties, 0 A).  The lead's gate (2026-10-25): an interim merge into main at that
+  state; this track continues to 8.5 on top of main.  Open for 8.5 (judge FPG-01..08): the fleece shader (curly
+  locks, soft rims), the footwell's foil / linkage, the PCL, CB names unique across the paired blocks, the yoke grips
+  grey at distance, the crew seat backs featureless from the cabin, the stack flank's shading.
+  Verified on 61c6b1e (both tiers rebuilt on 713a65b: 2,803,875 / 2,363,498 triangles): fit_check FIT OK (no open row),
+  consistency_2d3d 157 / 157, yoke_mesh_check OK, the FULL viewer_test 253 / 253.
