@@ -170,7 +170,7 @@ const CABIN_TRIM = { lining: [1, 1], leather: [0.5, 1], stitch_light: [0.5, 1], 
   // white reads ~190-220 on the plates in P1046408 / 09 -- lifted over the interior law's dark panel light
   legend_print: [0, 1.15],      // (judge r1 FP1-04: one tone dimmer -- 1.6 glowed on the overhead / quadrant)
   // the crew seats' lavender-grey sheepskin (P1046408 / 09 ~90-130 in the cabin light, B > R)
-  sheepskin: [0, 0.60],     // (FDY r1: 0.42 -> 0.60 for the LOCKS fleece's darker mean albedo: panel_408b ~119, P1046408 121)
+  sheepskin: [0, 0.50],     // (FDY r1: 0.42 -> 0.60 for the LOCKS fleece's darker mean albedo: panel_408b ~119, P1046408 121)
   //                          (0.55 before the flight deck fix r1's soft knee / gain 27; fix r5: 0.52 -> 0.42 with the
   //                          curly pile -- its lighter mean albedo put panel_408b's fleece at 154-159 with the
   //                          footwell fill, P1046408 ~95-107; the fill no longer reaches it: ~110)
@@ -672,9 +672,9 @@ const VIEWER = {
       // 0.25 / 0 / 0 / 0.  A per-pixel dithered coverage (dither: true) and the band at 0.55 put sparse bright tips into
       // [FD-L10]'s silhouette band at panel_408b (high-pass skew +1.1 .. +1.6; look-dev ld3 a0-a2 / u0-u2))
       graze: 0.75, grazeN: 0.38, grazeW: 0.14, grazeFlat: 0.9, grazeSheen: 1.0,
-      t: [0.03, 0.6, 0.8], curl: [55, 0.8, 5.0], lump: [40, 0.05, 0.10], part: [[30, 0.1, 0.82, 40, 0.55, 1.3],
-        [60, 0.08, 0.85, 80, 0.55, 1.5]], fray: [1100, 0.05], ao: [0.5, 1.08, 1.8], tilt: 0.55,
-      clump: [[28, 0.0065, 1.3], [65, 0.0022, 1.3]], sheen: [0.5, 1.1], far: [2.2, 3.2] },
+      t: [0.03, 0.6, 0.8], curl: [55, 0.8, 5.0], lump: [70, 0.18, 0.10], part: [[30, 0.1, 0.82, 40, 0.55, 1.3],
+        [60, 0.08, 0.85, 80, 0.55, 1.5]], fray: [1100, 0.03], ao: [0.5, 1.08, 1.8], tilt: 0.55,
+      clump: [[22, 0.010, 1.3], [55, 0.0032, 1.3]], sheen: [0.5, 1.1], far: [2.2, 3.2] },
     sheenRoughness: 0.8 },
   // the pleated divider curtain: deep burnt orange in P1046406 (77/23/0), read tan (208/166/116) under the old cabin light
   curtain: { color: [0.36, 0.11, 0.012] },
