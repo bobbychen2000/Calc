@@ -1,0 +1,212 @@
+{
+ "area": "econ",
+ "rater": "B",
+ "round": "w35",
+ "candidate": "6df71f4",
+ "lens": "Geometry and proportion first, measured at the matched q15 against y_47300 resized to 930x575 with raterB34/m.py re-pointed at r35 (/tmp/claude-0/-home-user-Calc/7507bc7d-234c-52a3-965a-1562a4a65706/scratchpad/raterB35/m.py: patch stats, dark runs L<35 on rows 505/530/560). Cover size was measured from luminance profiles through the cover centres (cols 390 / 545, rows 225-320; rows 255 / 270, cols 320-620). Studio s34 vs s35 side by side (/tmp/claude-0/-home-user-Calc/7507bc7d-234c-52a3-965a-1562a4a65706/scratchpad/raterB35/c_e1_front, c_e4_head, c_e7_arm, c_e10_under, c_e11_panedge.png) against y_47302 (raterB33/p302crop.png). q16-q18 pairs (/tmp/claude-0/-home-user-Calc/7507bc7d-234c-52a3-965a-1562a4a65706/scratchpad/raterB35/pair16/17/18.png) and the q17 aisle-arm crop (/tmp/claude-0/-home-user-Calc/7507bc7d-234c-52a3-965a-1562a4a65706/scratchpad/raterB35/z_arm17.png). q15 crops r34 / r35 / photo: /tmp/claude-0/-home-user-Calc/7507bc7d-234c-52a3-965a-1562a4a65706/scratchpad/raterB35/z_top.png and z_low.png. The r34 vs r35 diff changes 6.9 % of q15 pixels, all in rows 168-574; the far-row stats are identical to w34, so the cover change is invisible beyond the mid rows and lighting has not moved.",
+ "score": 8.3,
+ "priorIssues": [
+  {
+   "id": "w34b-1 (medium) headrest cover ~1.15x wide / 1.25x tall head-on",
+   "status": "half fixed (height fixed, width not)",
+   "note": "Profiles through q15 seats 2/3: the cover now runs y243 to ~291 (about 48-50 px), against y240 to ~288 in y_47300, so the height matches. Width is unchanged: 80 px (x344-424) and 84 px (x504-588) in the render, against 68-72 px (x356-424, x504-572) in the photo, about 1.17x. h/w is now 0.60 vs ~0.70. The cover is also lighter: L53 vs 37-45. See w35b-1."
+  },
+  {
+   "id": "w34b-2 (low) pouch opaque black",
+   "status": "mostly fixed",
+   "note": "e10 / e11: a pale smoky rim (#7c828c) with a smaller core now reads as a grey see-through-ish shield, close to y_47302. It is still a uniform flat disc, with no vest shape or highlight inside."
+  },
+  {
+   "id": "w34b-3 (low) electronics box low and well back",
+   "status": "fixed",
+   "note": "e11 / e7: the box now hangs from the dark tray ~2.5 cm behind the pan face, tucked under the bullnose as in y_47302."
+  },
+  {
+   "id": "w34b-4 (low) one pan joint a 6 px dark run",
+   "status": "fixed",
+   "note": "q15 row 560 dark runs: 287(2), 463(4), 640(3), against 285(2)+289(2), 461(3)+467(2), 637(6) in w34; the photo has 2 px at 276 / 449 / 467. All three joints read as seams in z_low."
+  },
+  {
+   "id": "w34b-5 (low) far rows snowy stripes, no pad ears",
+   "status": "not fixed",
+   "note": "Far centre L131.4 B/R 1.32 vs 115.3 / 1.48, far left p90/p10 3.62 vs 5.88, identical to w34."
+  },
+  {
+   "id": "w34b-6 (low) SEB flat black brick",
+   "status": "fixed",
+   "note": "e10: charcoal #33363c, set back. It reads as a box with edges, no longer a hole. The pouch of the window seat sits just in front of it, which is plausible."
+  },
+  {
+   "id": "w34b-7 (low) fleck haloed specks; pillows plain plaques",
+   "status": "not fixed",
+   "note": "e11: specks unchanged. z_low: pillows are still large straight-edged plaques, where y_47300 has a puffed bow-tie with pointed corners."
+  },
+  {
+   "id": "w34b-8 (medium) seat-level exposure (lighting)",
+   "status": "not fixed (lighting, not scored)",
+   "note": "Pans L85.5 / 82.0 / 83.7 vs 74.7 / 70.0 / 71.4."
+  },
+  {
+   "id": "w34a-1 (medium, A) joints 4-8 px",
+   "status": "fixed",
+   "note": "As w34b-4: 2-4 px."
+  },
+  {
+   "id": "w34a-2 (medium, A) pans too light, flat and (dash) grey",
+   "status": "partly fixed",
+   "note": "Dash pan x620-760: B/R 1.81 vs 1.80 (w34 1.61), so the hue is fixed. L83.7 vs 71.4 (lighting). Tick contrast is still flat: p90/p10 3.07 vs 4.81 on x330-450 and 3.39 vs 5.13 on seat 1."
+  },
+  {
+   "id": "w34a-3 (low, A) belt V with buckles",
+   "status": "not fixed (open question)",
+   "note": "Unchanged in z_low."
+  },
+  {
+   "id": "w34a-5 (low, A) aisle-end plate gap",
+   "status": "mostly fixed",
+   "note": "z_arm17: the gap under the arm is now ~4-6 px, down from ~15, which is within y_47303's 2-8 px. It is still a separate white lozenge, not one J bracket into the pivot."
+  },
+  {
+   "id": "w34a-6 (low, A) pouch opaque",
+   "status": "mostly fixed",
+   "note": "As w34b-2."
+  }
+ ],
+ "details": [
+  {
+   "detail": "Fabric: tick weave",
+   "score": 8.4,
+   "refs": "Seat 1 pan L70.6 B/R 1.96 vs 78.9 / 1.77 (a touch dark and blue). Seat 2 L85.5, p90/p10 3.07 vs 74.7 / 4.81. Unchanged."
+  },
+  {
+   "detail": "Fabric: diamond lattice",
+   "score": 8.4,
+   "refs": "Pan x470-600: B/R 1.77 vs 1.87, p90/p10 1.70 vs 1.95. Unchanged."
+  },
+  {
+   "detail": "Fabric: petal fleck",
+   "score": 8.1,
+   "refs": "Haloed dark specks still on the pan face (e11)."
+  },
+  {
+   "detail": "Fabric: dash mosaic",
+   "score": 8.5,
+   "refs": "#4a5279: B/R 1.81 vs 1.80 (w34 1.61). L83.7 vs 71.4 is mostly the lighting lift."
+  },
+  {
+   "detail": "Fabric mix (backs, pans, pads)",
+   "score": 8.5,
+   "refs": "Unchanged; the order matches y_47300."
+  },
+  {
+   "detail": "Headrest pad + cover",
+   "score": 8.2,
+   "refs": "Height now 48-50 px vs 48 (fixed), with the foot level with the pad foot as in y_47300. Width 80-84 vs 68-72 px (1.17x). Cover L53 vs 37-45."
+  },
+  {
+   "detail": "Pillow",
+   "score": 8.2,
+   "refs": "Unchanged plaques."
+  },
+  {
+   "detail": "Armrests",
+   "score": 8.8,
+   "refs": "The aisle-end plate now sits ~5 px under the arm in q17, as in y_47303."
+  },
+  {
+   "detail": "Belts",
+   "score": 8.1,
+   "refs": "Unchanged (open question)."
+  },
+  {
+   "detail": "Seat pan / front",
+   "score": 8.7,
+   "refs": "Joints 2-4 px vs 2 at row 560, all three seams. The front face is 7-8 cm with a tight roll, and the pans abut under the arms in e7 / e11. Minor: a hard black tray edge shows under each pan front in e7 / e11, where y_47302 has a soft shadowed cavity."
+  },
+  {
+   "detail": "Back silhouette",
+   "score": 8.1,
+   "refs": "Unchanged."
+  },
+  {
+   "detail": "Rear shell / hood / back top",
+   "score": 8.1,
+   "refs": "Unchanged (q17 / q18)."
+  },
+  {
+   "detail": "Screen / handset",
+   "score": 8.2,
+   "refs": "Unchanged."
+  },
+  {
+   "detail": "Tray / pocket / AC",
+   "score": 7.8,
+   "refs": "Unchanged."
+  },
+  {
+   "detail": "Legs / footrest / under-seat",
+   "score": 8.3,
+   "refs": "The electronics box is tucked under the bullnose, the pouch is a pale smoky shield, the SEB is charcoal and set back, and the legs, rail and baggage bar are dark as in y_47302. Still missing: the perforated front-leg channel and any vest form inside the pouch."
+  },
+  {
+   "detail": "Far-LOD rows",
+   "score": 7.7,
+   "refs": "Stats identical to w34: L131 / B/R 1.32 vs 115 / 1.48, snowy stripes, no pad ears. The far cover change is not visible at this distance."
+  }
+ ],
+ "issues": [
+  {
+   "id": "w35b-1",
+   "severity": "medium",
+   "owner": "econ (09a_econ.js)",
+   "title": "Headrest cover height now right, but still ~1.17x too wide head-on and a little light",
+   "evidence": "q15 profiles: cover 80 / 84 px wide (x344-424, x504-588) vs 68-72 px in y_47300 (x356-424, x504-572). Height 48-50 vs ~48 px. Cover L53 vs 37-45 (part of that is the seat-level lift). h/w 0.60 vs 0.70.",
+   "fix": "In econSeat, narrow the cover plate lofts (both the SEC(0.625..0.791, 0.245..0.248, ...) and the roll-over SEC(0.789..0.81, 0.245, ...)) from 0.245-0.248 to ~0.21. Scale the hem / stitch widths (0.243/0.244 -> 0.208, 0.23 -> 0.196), the rolled-foot tube ends (+-0.117 -> +-0.10) and the ANA mark offset (-0.1 -> -0.085) to match. In econUnitFar, gBox(0.245, 0.185, 0.01) -> gBox(0.21, ...). Optionally darken SEATMAT.yCover by ~10 % (shared SEATMAT, one line)."
+  },
+  {
+   "id": "w35b-2",
+   "severity": "low",
+   "owner": "econ (09a_econ.js)",
+   "title": "Tick pans still flat (p90/p10 ~3.1-3.4 vs 4.8-5.1)",
+   "evidence": "q15 seat 1 pan p90/p10 3.39 vs 5.13; seat 2 3.07 vs 4.81. The diamond and dash pans are within 15 %.",
+   "fix": "Give ECON_PAN its own tick tile contrast, or a darker base with LAYER_PARAMS gain on the y_tick swatch (e.g. ECON_PAN c photoBase darker by ~8 % with a higher tile gain), so the light ticks stay and the ground drops. Re-measure the x330-450 / y540-572 box."
+  },
+  {
+   "id": "w35b-3",
+   "severity": "low",
+   "owner": "econ (09a_econ.js)",
+   "title": "Far rows: snowy stripes, no pad ears (carried)",
+   "evidence": "Far centre L131 B/R 1.32 vs 115 / 1.48; far left p90/p10 3.62 vs 5.88, unchanged since w33.",
+   "fix": "In econUnitFar, use a flat, bluer far material for the backs (no tick tile, or a low-gain tile; mean ~#66739a) and give the headrest box ECON_HEAD_L-coloured ear blocks 0.07 wide at +-0.16, proud of the cover, so the ears read beside the dark cover."
+  },
+  {
+   "id": "w35b-4",
+   "severity": "low",
+   "owner": "econ (09a_econ.js)",
+   "title": "Pillows are plain plaques; fleck specks read as holes (carried)",
+   "evidence": "z_low: straight-edged rounded rectangles vs y_47300's puffed bow-tie with pointed corners and a centre dent. e11: ~15 dark haloed specks per fleck pan.",
+   "fix": "Pillow: loft its outline with corner points pulled out ~1.5 cm and the edge midpoints pinched in ~1 cm, and add a 5 mm centre dent (2-3 sections with reduced thickness at the middle). Fleck: clamp the dark end of the y_fleck swatch in make_swatches (or raise its floor in LAYER_PARAMS) so the specks lose their halos."
+  },
+  {
+   "id": "w35b-5",
+   "severity": "low",
+   "owner": "econ (09a_econ.js)",
+   "title": "Hard black tray edge under the pan front; pouch a flat uniform disc; belt V (open question)",
+   "evidence": "e7 / e11: the 0.41-deep tray (#2c2f35) shows as a crisp black line under every pan front; y_47302 shows a soft dark cavity. The pouch has no vest form inside. Belts and buckles still form a V on every q15 pan.",
+   "fix": "Tray: gRBox(0.40, 0.02, 0.41) -> depth 0.39, centred at -0.25 (2 cm further back of the face), and r 0.6 -> 0.8 so it does not catch a rim light. Pouch: add an off-centre 0.045 m #6b5a48 / #55595f lump inside the rim. Belts: pending the user's answer on tucked vs laid."
+  },
+  {
+   "id": "w35b-6",
+   "severity": "medium",
+   "owner": "lighting (12_scene.js / 04_shaders.js)",
+   "title": "Seat-level exposure and far-row greying (not scored for econ)",
+   "evidence": "Pans L82-86 vs 70-75; far rows L131 vs 115, B/R 1.32 vs 1.48.",
+   "fix": "Lighting owner: the seat-level lift and the far-row haze (see 305b116)."
+  }
+ ],
+ "questionsForUser": [
+  "Headrest cover: the height now matches y_47300 and sans 13. Should the width also follow y_47300 (~0.21 m against the current 0.245)?",
+  "Belts: tucked away (y_47300) or laid across the pans (y_47302 / 47303 and trip reports)?"
+ ],
+ "extraRefsSearched": "No new downloads. Used ref/web/econ (A_ss_*, b33_fr_*) and the raterB33 crops (p302crop.png)."
+}
