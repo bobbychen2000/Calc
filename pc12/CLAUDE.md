@@ -2334,3 +2334,6 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   skew +0.55 / p10 101, [FD-L10b] cush_close -0.38 / -0.30, seats_aft -0.55 / -0.32, [FD-L11] knee boxes 12 / 14,
   console face 22.8), web/package.py verify OK (meshopt 18.64 + 15.91 MB), artifact_test 76 / 76.  Final captures:
   out/tmp/fp/final (judges' verdicts out/tmp/fp/judge/final_*.md).
+  OWNER DECISION (2026-10-24, relayed by the lead): "For the Deck, let's aim for 8.5" -- this track is done at a
+  flight-deck lens >= 8.5 with no blocker / major and the realism A/B still preferring the rebuild; the baseline is
+  merged main (two fresh judges on 82f1462 scored its flight deck 8.0, no major).
