@@ -119,7 +119,7 @@ function econSeat(B, x0, lod, opts = {}) {
   // cover and two round wing bolsters ~2 cm proud of it at both ends; 0.025 lower so the back rises ~5.5 cm above the
   // cover fold (y_47306 0.053-0.073, y_47301 ~0.06; the fold showed above the hood from behind) [D]
   loftAt(B, [SEC(0.605, 0.30, 0.03, -0.02, 0.012), SEC(0.62, 0.33, 0.085, -0.048, 0.04), SEC(0.695, 0.34, 0.09, -0.05, 0.042), SEC(0.77, 0.335, 0.088, -0.049, 0.04), SEC(0.79, 0.31, 0.065, -0.043, 0.03), SEC(0.8, 0.27, 0.04, -0.038, 0.02)], BH, HF, lod ? 3 : 4);
-  for (const sx of [-0.163, 0.163]) loftAt(B, [SEC(0.61, 0.045, 0.06, -0.035, 0.02, sx), SEC(0.625, 0.06, 0.105, -0.056, 0.029, sx), SEC(0.7, 0.066, 0.12, -0.062, 0.032, sx), SEC(0.77, 0.064, 0.115, -0.06, 0.031, sx), SEC(0.79, 0.055, 0.09, -0.052, 0.026, sx), SEC(0.802, 0.04, 0.05, -0.042, 0.018, sx)], BH, HF, lod ? 2 : 4);
+  for (const sx of [-0.163, 0.163]) loftAt(B, [SEC(0.61, 0.045, 0.05, -0.03, 0.02, sx), SEC(0.625, 0.06, 0.0875, -0.0472, 0.029, sx), SEC(0.7, 0.066, 0.1, -0.052, 0.032, sx), SEC(0.77, 0.064, 0.0958, -0.0504, 0.031, sx), SEC(0.79, 0.055, 0.075, -0.0445, 0.026, sx), SEC(0.802, 0.04, 0.0416, -0.0378, 0.018, sx)], BH, HF, lod ? 2 : 4);   // w45 (w44a-1 / w43a-3): front face ~2 cm aft, back face kept (the wings hid the q17 cover: y_47303 shows the flap in front of them)
   // slate leatherette cover lying on the cushion front, wrapped ~3 cm over its top and hanging ~2.5 cm below it (the
   // flap hangs past the cushion onto the back, y_47306 right seat) [D]
   // one piece: plate on the cushion front, a fold overlapping both it and the cushion top, a hem tucking back (w3 B)
@@ -133,8 +133,8 @@ function econSeat(B, x0, lod, opts = {}) {
   // pitch vs 0.37-0.41 in y_47300) -> 0.22 wide (sans 13 hangs a wider cover, so not the full 0.215); hem, foot, stitch, mark follow [D]
   // w44 (w43a-3 / w42a-4, medium, both raters): in the q17 / y_47303 side view the cover is a large flap standing off the
   // pad (~120 x 95 px); ours lay 2 cm behind the wing bolsters' front and showed as a 15-40 px strip -> the plate hangs
-  // forward from the fold, its foot ~1 cm proud of the wings, and 0.232 wide (head-on 0.22 matched y_47300; compromise) [V]
-  loftAt(B, [SEC(0.625, 0.232, 0.005, -0.133, 0.002), SEC(0.648, 0.233, 0.005, -0.1255, 0.002), SEC(0.665, 0.234, 0.005, -0.121, 0.002), SEC(0.71, 0.235, 0.005, -0.1155, 0.002), SEC(0.755, 0.234, 0.005, -0.109, 0.002), SEC(0.791, 0.232, 0.005, -0.0985, 0.002)], BH, SEATMAT.yCover, lod ? 1 : 2);
+  // forward from the fold, its foot ~1 cm proud of the wings, and the wing bolsters 2 cm shallower in front (w45) [V]
+  loftAt(B, [SEC(0.625, 0.22, 0.005, -0.133, 0.002), SEC(0.648, 0.221, 0.005, -0.1255, 0.002), SEC(0.665, 0.222, 0.005, -0.121, 0.002), SEC(0.71, 0.223, 0.005, -0.1155, 0.002), SEC(0.755, 0.222, 0.005, -0.109, 0.002), SEC(0.791, 0.22, 0.005, -0.0985, 0.002)], BH, SEATMAT.yCover, lod ? 1 : 2);   // w45 (w44a-1): back to 0.22 (0.232 read 77-78 px head-on vs 71-72 in y_47300)
   // w35 (question 21-23; w34b-1 / w33b-7, every round): head-on h / w 0.85-0.88 vs ~0.7 in y_47300 AND in the real head-on
   // sans 13 near seat (both end level with the pad foot) -> the plate foot 3 cm higher; hem, stitch and mark move with it [V]
   // w25 (w24b-1, matched q15): head-on h / w 0.92-0.94 vs 0.70-0.77 in y_47300, hang ~4 cm vs 2-3 cm (b_ss_13) -> the plate
@@ -145,10 +145,10 @@ function econSeat(B, x0, lod, opts = {}) {
   // w19 A: the hem, stitch and mark were quads 6-9 mm behind the plate (its foot tips forward since w10) and never showed;
   // now thin bands lofted over the plate, following its slope (plate centre z -0.12 at y 0.575 -> -0.111 at 0.61)
   const cz = (y) => -0.133 + (y - 0.625) * 0.33;   // w44: follows the plate brought forward
-  loftAt(B, [SEC(0.627, 0.23, 0.0064, cz(0.627), 0.002), SEC(0.646, 0.231, 0.0064, cz(0.646), 0.002)], BH, { c: '#2a3049', r: 0.6 }, 1);   // w22 A + B: a light band read as a screen chin head-on -> dark, the lift from the rolled foot only; w21 A + B: hem 1.15x the face vs 1.55-1.6 in y_47306 -> lighter, with a rolled foot; w20 A: dark (a light hem + stitch read as a screen chin head-on); w9 A: stitched hem band ~10 % of the cover height (y_47306)
-  B.add(gTube([[-0.11, 0, 0], [0.11, 0, 0]], 0.0045, 8), M4.mul(BH, M4.trs(0, 0.627, cz(0.627) + 0.001)), { c: '#4a5478', r: 0.38 });   // w22 B: inside the plate edge, 1 mm back (a <= 2 px lip head-on)   // rolled foot catching the light (y_47306)
-  loftAt(B, [SEC(0.6465, 0.217, 0.0072, cz(0.6465), 0.001), SEC(0.6477, 0.217, 0.0072, cz(0.6477), 0.001)], BH, { c: '#3e4562', r: 0.6 }, 1);   // stitch line, light thread (b_ss_14)
-  loftAt(B, [SEC(0.6485, 0.01, 0.0068, cz(0.6485), 0.0005, -0.094), SEC(0.6525, 0.01, 0.0068, cz(0.6525), 0.0005, -0.094)], BH, { c: '#3a4058', r: 0.5 }, 1);   // small ANA mark, viewer's right (y_47306)
+  loftAt(B, [SEC(0.627, 0.218, 0.0064, cz(0.627), 0.002), SEC(0.646, 0.219, 0.0064, cz(0.646), 0.002)], BH, { c: '#2a3049', r: 0.6 }, 1);   // w22 A + B: a light band read as a screen chin head-on -> dark, the lift from the rolled foot only; w21 A + B: hem 1.15x the face vs 1.55-1.6 in y_47306 -> lighter, with a rolled foot; w20 A: dark (a light hem + stitch read as a screen chin head-on); w9 A: stitched hem band ~10 % of the cover height (y_47306)
+  B.add(gTube([[-0.104, 0, 0], [0.104, 0, 0]], 0.0045, 8), M4.mul(BH, M4.trs(0, 0.627, cz(0.627) + 0.001)), { c: '#4a5478', r: 0.38 });   // w22 B: inside the plate edge, 1 mm back (a <= 2 px lip head-on)   // rolled foot catching the light (y_47306)
+  loftAt(B, [SEC(0.6465, 0.205, 0.0072, cz(0.6465), 0.001), SEC(0.6477, 0.205, 0.0072, cz(0.6477), 0.001)], BH, { c: '#3e4562', r: 0.6 }, 1);   // stitch line, light thread (b_ss_14)
+  loftAt(B, [SEC(0.6485, 0.01, 0.0068, cz(0.6485), 0.0005, -0.088), SEC(0.6525, 0.01, 0.0068, cz(0.6525), 0.0005, -0.088)], BH, { c: '#3a4058', r: 0.5 }, 1);   // small ANA mark, viewer's right (y_47306)
   // w11 B: contact darkening where the back fabric tucks into the shell sides (y_47306 dark crease) and along the strip
   for (const sx of [-1, 1]) loftAt(B, [SEC(0.05, 0.014, 0.003, -0.048, 0.001, sx * 0.199), SEC(0.55, 0.014, 0.003, -0.043, 0.001, sx * 0.203), SEC(0.80, 0.014, 0.003, -0.032, 0.001, sx * 0.2)], BH, { c: '#283052', r: 0.95 }, 1);   // w12 A + B: soft crease, not a drawn line
   // w9 A: a ~0.12 m centre strip in a contrasting weave runs from the pad top to the back top (headrest track cover,
@@ -298,10 +298,19 @@ function econSeat(B, x0, lod, opts = {}) {
     for (const s of [-1, 1]) {
       const x1 = x0 + 0.19 * s, z1 = -0.12, x2 = xl + 0.03 * s, z2 = zl + 0.01, yaw = Math.atan2(x2 - x1, z2 - z1), L = Math.hypot(x2 - x1, z2 - z1);
       const pitch = Math.atan2(panY(z2) - panY(z1), L);   // local +z points to the latch (front, higher)
-      B.add(gBox(0.042, 0.003, L), M4.trs((x1 + x2) / 2, (panY(z1) + panY(z2)) / 2 + 0.004, (z1 + z2) / 2, yaw, -pitch), s < 0 ? SEATMAT.yBelt : { ...SEATMAT.yBelt, c: '#262c48' });
+      B.add(gBox(0.048, 0.003, L), M4.trs((x1 + x2) / 2, (panY(z1) + panY(z2)) / 2 + 0.006, (z1 + z2) / 2, yaw, -pitch), s < 0 ? { ...SEATMAT.yBelt, c: '#3a6f9a' } : { ...SEATMAT.yBelt, c: '#353e5e' });   // w45 (w44a-3): 48 mm webbing, 6 mm proud; w45 (w44b-2): teal tongue strap G/R 1.50 vs y_47303 lit 1.79 -> own teal; navy strap L30 vs 60 -> lighter
+    }
+    // w45 (w44a-3 / w42a-3): on every second seat the free end of the buckle strap runs on to the pan front and hangs over
+    // its lip (y_47303 near seat) [V]
+    if (dx) {
+      // in the pan loft's frame: flat top to z -0.203 (y 0.055), then the 3.2 cm front roll
+      const PM = M4.trs(xl + 0.03, 0.415, -0.28, 0, 5 * DEG), m = { ...SEATMAT.yBelt, c: '#353e5e' };
+      B.add(gBox(0.048, 0.003, 0.085), M4.mul(PM, M4.trs(0, 0.0615, -0.161)), m);
+      B.add(gBox(0.048, 0.003, 0.028), M4.mul(PM, M4.trs(0, 0.0445, -0.2265, 0, -0.9)), m);   // over the roll
+      B.add(gBox(0.048, 0.03, 0.003), M4.mul(PM, M4.trs(0, 0.016, -0.2375)), m);   // hanging down the front face
     }
     B.add(gRBox(0.045, 0.008, 0.032, 0.004, 1), M4.trs(xl - 0.022, panY(zl) + 0.006, zl), SEATMAT.buckle);   // silver tongue
-    B.add(gRBox(0.05, 0.013, 0.042, 0.006, 1), M4.trs(xl + 0.016, panY(zl) + 0.008, zl), { c: '#8c9096', r: 0.4 });   // light-grey buckle cover (y_47303)
+    B.add(gRBox(0.05, 0.013, 0.042, 0.006, 1), M4.trs(xl + 0.016, panY(zl) + 0.008, zl), { c: '#aeb2b8', r: 0.35 });   // light-grey buckle cover (y_47303); w45 (w44b-5): lighter
   } else for (const s of [-1, 1]) {
     B.add(s < 0 ? gRBox(0.05, 0.012, 0.035, 0.005, 1) : gRBox(0.05, 0.014, 0.04, 0.006, 1), M4.trs(x0 + 0.012 * s, s < 0 ? 0.468 : 0.465, s < 0 ? -0.165 : -0.17), s < 0 ? SEATMAT.buckle : { c: '#3a3f52', r: 0.4 });   // w39 (w38b-1): still two light blocks at the pillow foot -> under its edge, navy-grey cover;   // w37 (w37a-3): the V and two light blocks still on every q15 pan -> tucked under the pillow foot, darker cover   // w36 (w35a-3): the V and light buckles below every pillow (y_47300 shows none) -> nearer the crease, shorter, a grey cover   // w25 (w24b-5): the light covers dominated the pans head-on   // w41 (w40a-5): the silver tongue tip out from under the pillow (light px 15-25 vs y_47300 32-40; w42 (w41a-4): 0.5 cm back, it overshot on F / G)
     B.add(gBox(0.045, 0.004, 0.06), M4.trs(x0 + 0.035 * s, 0.474, -0.175, s * 15 * DEG), s < 0 ? SEATMAT.yBelt : { ...SEATMAT.yBelt, c: '#262c48' });   // w10 B: teal tongue strap, navy buckle strap (y_47303)   // w41 (w40a-5 / w40b-4): strap stubs still read as a V beside the buckle -> shorter, flatter, under the pillow foot
@@ -420,7 +429,7 @@ function econUnitFar(n, rot = 0) {
     B.add(gRBox(0.446, 0.62, 0.045, 0.015, 1), M4.mul(BH, M4.trs(0, 0.25, 0.058)), SEATMAT.yShell);
     B.add(gRBox(0.40, 0.37, 0.12, 0.015, 1), M4.mul(BH, M4.trs(0, 0.665, 0.062)), SEATMAT.yShell);    // screen hood under the back top (w5; w6 0.40, tight corners; w14 gap: top 0.85, its white cap showed on every far back)
     B.add(gRBox(0.39, 0.2, 0.11, 0.04, 1), M4.mul(BH, M4.trs(0, 0.70, -0.058)), econFarMat(econHead(f, k, rot)));
-    B.add(gBox(0.232, 0.185, 0.01), M4.mul(BH, M4.trs(0, 0.7075, -0.116)), SEATMAT.yCover);   // w44: wider, proud, as the near LOD   // w35: foot 3 cm higher, as the near LOD
+    B.add(gBox(0.22, 0.185, 0.01), M4.mul(BH, M4.trs(0, 0.7075, -0.116)), SEATMAT.yCover);   // w44: proud, as the near LOD   // w35: foot 3 cm higher, as the near LOD
     B.add(gQuad(0.316, 0.205), M4.mul(BH, M4.trs(0, 0.7275, 0.1245)), SEATMAT.bezel);
     B.add(gQuad(0.294, 0.166), M4.mul(BH, M4.trs(0, 0.7275, 0.1265)), SEATMAT.screen, atlasUV('screen'));
     if (n !== 3) B.add(gBox(0.32, 0.07, 0.21), M4.mul(BH, M4.trs(0, 0.155, -0.10, 0, -74 * DEG)), SEATMAT.yPillow);   // w33 (gap33-5): pillow; w44: centre block only
