@@ -2216,6 +2216,18 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   build re-meshes the yokes (~24 min) to 43,008 triangles each (42,868 committed before), printed OVER the 43k cap
   (track 3 raises the cap; the lead reconciles at the merge).  Tools (scratch, not committed): a look-dev pose harness
   over viewer_test's helpers, a baseline worktree of e3d0a17 rendered with its own viewer.
+  Final sweep (fresh judges on the final state): cabin 8.0, exterior 8.0, gear 8.1, smooth 8.0, nav 8.2, prop 8.0, picture
+  8.2, sound 7.9 (exempt) -- no blocker, no major.  Open minors they list: the leather a little white / a glassy cushion
+  highlight, the chin-lip corner serration, the horn-balance S highlight, a comb highlight at the dorsal fin root, the
+  disc unchanged with rpm and no blurred-prop shadow, the desktop airstair stop's framing and the blurred apron under
+  it, TAA on the glazing at faster orbits, the phone's 1.5 moving DPR cap, the sound's fast start / quiet flight deck
+  (track 2's engine model).  Verified (both tiers, e880898 + viewer tweaks, then merged with main a35d869): fit_check
+  FIT OK (138 ok), consistency_2d3d 157 / 157, drawing.sheet + verify OK, web/package.py verify OK (meshopt 18.08 +
+  15.55 MB), the full viewer_test 234 / 236 before the merge (the two rows timing races of the harness: [sound] M
+  mutes now polls for the suspend, [PQ] Auto reads the latest refinement decision -- no criterion changed; --only sound
+  25 / 25, the PQ row 7 / 7 on its own page) and 250 / 251 after it ([PQ] no GL errors: gl.getError() 1282 after the
+  main run's context-loss section, as track 2's own full run; 0 on a fresh page), the Artifact bundle verify OK,
+  artifact_test 70 / 70 before and 76 / 76 after the merge.
 - Live G3000 PRIME displays + Environment knobs (track 2, branch claude/pc12-live-avionics; owner 2026-10-18 "the actual
   characteristics, not screenshots ... if I turn on props, you can see gauges moving", "some control knob ... to tweak the
   environment"; owner 2026-10-24: the labels ON by default).  Viewer only, no GLB change (the GLB's static atlas stays the
