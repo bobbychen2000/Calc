@@ -1,0 +1,48 @@
+{
+ "area": "econ",
+ "rater": "B",
+ "round": "w41",
+ "candidate": "b596126",
+ "lens": "Geometry and proportion first, then colour. Same windows and method as w40b. The w40 m.py was re-run with r40 vs r41 in /tmp/claude-0/-home-user-Calc/799b632d-abc8-5982-a611-3a2c97f75011/scratchpad/raterB41/, adding c.py (darkest-40 % colour per q15 headrest cover; render y 250-295, photo y 245-280) and d.py (change masks, max channel > 8). q17 is compared on the NEW camera only: r40n (w40 build) vs r41, and r41 vs y_47303. Change fractions: q15 6.3 % (the four headrest covers, the far-row covers and the belt bows), q16 7.9 %, q17 0.9 % (grazing covers barely move, as intended). In the studio: e11 8.5 %, e10 7.7 %, e7 5.2 %, e1 3.6 %, e4 1.3 % and e4b 1.1 %. e5 is bit-identical and every other unit is under 0.3 %. Fabric back, pillow and pan windows are within 0.5 L of r40, so no fabric changed.",
+ "score": 8.4,
+ "priorIssues": [
+  {"id": "w40b-1 far rows low contrast", "status": "partly fixed", "note": "Seat-pixel farA p90/p10 2.25 -> 2.51 (L 93.9 -> 92.7). farB 2.61 -> 3.10 (photo 3.21) and L 87.2 -> 84.5 (photo 92.4). The darker far covers supply the dark headrest band. L>150 is still 2.6 / 6.1 % vs photo 17.0 / 10.2 %: the light headrest tops and the row-gap strip are still missing."},
+  {"id": "w40b-2 tray lip; cover less blue", "status": "fixed (cover, q15) / partly fixed (lip)", "note": "q15 cover darkest 40 %: r40 (46-47, 51-52, 76-78) B/R 1.65, L 56-58 -> r41 (36-38, 39-41, 70-73) B/R 1.91-1.92, L 46-48, vs photo covers 2-4 (26-35, 33-41, 56-68) B/R 1.94-2.13, L 37-46. Cover 1 is now 17 L dark against the photo's 65. e11: dark px (L<45) in the pan-front band fell 5302 -> 4565 (-14 %). A thinner black edge remains under the pan."},
+  {"id": "w40b-3 pouch opaque; strap ends at rim", "status": "mostly fixed", "note": "e10 pouch window: L 125.5 -> 109.1, p90/p10 2.67 -> 3.86. Red strap pixels below the rim 0 -> 156, and the blue tag now shows. The orange fleck reads as a small applied square rather than vest showing through, which is minor."},
+  {"id": "w40b-4 navy strap V at the buckle", "status": "partly fixed", "note": "Belt-window light-grey px 650 -> 765 (photo 1015). The V is now a compact flat bow (strap stubs about 60 % as long), but two navy stubs still flank the silver tongue on every q15 pan. y_47300 shows only the metal and grey cover."},
+  {"id": "w40b-5 pillow plaque", "status": "not fixed", "note": "Pillow L 50.5 / 45.6 / 49.2 / 49.7 and p90/p10 1.46-1.57, unchanged, vs photo 2.60-5.51."},
+  {"id": "w40b-6 fleck contrast", "status": "not fixed", "note": "Backs E/G p90/p10 2.77 / 2.92 (photo 3.12 / 3.61), bit-identical to r40."},
+  {"id": "w40b-7 near pans dark (lighting)", "status": "unchanged (not scored)", "note": "Pans are L 68.6 / 68.2 / 68.2 / 64.7 vs photo 84.3 / 77.2 / 74.1 / 77.7."}
+ ],
+ "details": [
+  {"detail": "Fabric: tick weave", "score": 8.5, "refs": "Unchanged (back D 89.3 / F 86.3 vs 87.5 / 67.8)."},
+  {"detail": "Fabric: diamond lattice", "score": 8.5, "refs": "Unchanged."},
+  {"detail": "Fabric: petal fleck", "score": 8.3, "refs": "Unchanged (E/G L 54.7 / 58.5, contrast 2.77 / 2.92)."},
+  {"detail": "Fabric: dash mosaic", "score": 8.5, "refs": "Unchanged."},
+  {"detail": "Fabric mix (backs, pans, pads)", "score": 8.5, "refs": "Unchanged."},
+  {"detail": "Headrest pad + cover", "score": 8.7, "refs": "Held. q15 head-on is now matched (L 46-48 B/R 1.92 vs 37-46 / 1.94-2.13). q16 regressed: the covers went from L 42-60 to L 29-50, vs y_47301 at L 70-100 B/R 1.54-1.86 (r41 B/R 1.86-2.46). The mean gap grew from -26 to -36 L. q17 is unchanged at grazing, a narrow pale strip versus the photo's grey-blue flap (138,157,196) L130."},
+  {"detail": "Pillow", "score": 8.4, "refs": "Unchanged."},
+  {"detail": "Armrests", "score": 8.8, "refs": "Unchanged."},
+  {"detail": "Belts", "score": 8.5, "refs": "Up 0.1: light px 650 -> 765 / 1015, and the V is flattened to a bow. Navy stubs remain."},
+  {"detail": "Seat pan / front", "score": 8.8, "refs": "Up 0.1: the e11 lip dark px are down 14 %."},
+  {"detail": "Back silhouette", "score": 8.1, "refs": "Unchanged (e3 0.2 %, e6 0.02 %)."},
+  {"detail": "Rear shell / hood / back top", "score": 8.1, "refs": "Unchanged (e2 0.04 %, e9 0.02 %)."},
+  {"detail": "Screen / handset", "score": 8.2, "refs": "Bit-identical (e5 0 %)."},
+  {"detail": "Tray / pocket / AC", "score": 7.8, "refs": "Unchanged."},
+  {"detail": "Legs / footrest / under-seat", "score": 8.6, "refs": "Up 0.2: pouch contrast 2.67 -> 3.86, strap 156 px past the rim, tag visible."},
+  {"detail": "Far-LOD rows", "score": 8.1, "refs": "Up 0.2: farB contrast 2.61 -> 3.10 vs 3.21, farA 2.25 -> 2.51. The highlight share is still low."}
+ ],
+ "issues": [
+  {"id": "w41b-1", "severity": "medium", "owner": "econ (SEATMAT.yCover, 09_seats.js) + lighting (SHEEN lobe, 04_shaders.js)", "title": "Darker cover regresses the oblique q16 view", "evidence": "q16 cover L r40 42-60 -> r41 29-50 vs y_47301 70-100. B/R 1.86-2.46 vs 1.54-1.86 (too blue and too dark). Head-on q15 is now right (46-48 vs 37-46).", "fix": "Keep the head-on colour but widen the sheen so 30-60 deg views get a grey lift: lighting raises the SHEEN lobe width, or econ splits the base to '#141a40' with r 0.52 -> 0.45. Re-check q15 stays at L <= 50 and q16 rises to >= 65."},
+  {"id": "w41b-2", "severity": "low", "owner": "econ (09a_econ.js:288)", "title": "Navy strap stubs still flank the buckle (carried w40b-4)", "evidence": "Belt light px 765 vs photo 1015. Two navy stubs are visible either side of the silver tongue under every q15 pillow.", "fix": "Strap gBox y 0.474 -> 0.466 (under the pillow foot), or length 0.06 -> 0.035. Make the buckle cover '#3a3f52' -> '#8c9096' so the metal/grey block reads as in y_47300."},
+  {"id": "w41b-3", "severity": "low", "owner": "econ (09a_econ.js)", "title": "Far rows: highlight share still low (carried w40b-1)", "evidence": "farA/farB L>150 2.6 / 6.1 % vs photo 17.0 / 10.2 %. Contrast farB 3.10 vs 3.21, now close.", "fix": "In econUnitFar lift the far headrest-top tint toward '#5a6898' (the dark band is now supplied by the cover)."},
+  {"id": "w41b-4", "severity": "low", "owner": "econ (09a_econ.js)", "title": "Pillow a flat plaque (carried w40b-5)", "evidence": "Pillow p90/p10 1.46-1.57 vs photo 2.60-5.51.", "fix": "Pillow loft: corners out 1.5 cm, mid-edges pinched 1 cm, centre 1 cm thicker."},
+  {"id": "w41b-5", "severity": "low", "owner": "econ (yFabricD tile / 03_tex.js LAYER_PARAMS)", "title": "Fleck contrast low (carried w40b-6)", "evidence": "E/G p90/p10 2.77 / 2.92 vs 3.12 / 3.61.", "fix": "Raise the fleck swatch photo gain about 10 % with the same mean (#424b68)."},
+  {"id": "w41b-6", "severity": "low", "owner": "econ (09a_econ.js:76)", "title": "Residual black edge under the pan front", "evidence": "e11 dark px in the pan-front band 4565 (r40 5302).", "fix": "Tray gRBox width 0.40 -> 0.38, or colour '#2c2f35' -> '#3a3d44'."},
+  {"id": "w41b-7", "severity": "low", "owner": "lighting (12_scene.js)", "title": "Near pans 6-16 L dark (carried w40b-7; not scored for econ)", "evidence": "Pans L 64.7-68.6 vs photo 74.1-84.3.", "fix": "Lighting owner: check the low-height fill or AO at the q15 camera."}
+ ],
+ "questionsForUser": [
+  "Belts: tucked away (y_47300) or laid across the pans (y_47302 / 47303 and trip reports)? (still open; y_47303 at the new q17 camera shows light-blue webbing across every pan, while the render shows none)"
+ ],
+ "extraRefsSearched": "No downloads. Used ref/ana y_47300 (q15 windows), y_47301 (q16 covers) and y_47303 (q17 at the new camera)."
+}
