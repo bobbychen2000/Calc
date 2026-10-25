@@ -1,0 +1,179 @@
+{
+ "area": "econ",
+ "rater": "A",
+ "round": "w45",
+ "candidate": "fcab537",
+ "lens": "Skeptic, geometry first. I re-ran the w44a scripts (m.py, q17.py, d.py, w.py) unchanged with r44 -> r45 and s44 -> s45, so the numbers are comparable; all r44 numbers reproduce w44a. I added t2.py, which samples strap hue in small boxes on the actual straps, because my earlier whole-region teal mask was biased by the photo's blue fabric. Photos are y_47300 / y_47301 / y_47303 at 930x575 LANCZOS. Crops are in /tmp/claude-0/-home-user-Calc/bd010ea5-6deb-54d2-81da-591cf8fca07a/scratchpad/raterA45: cmp_q15/q16/q17 (r44 / r45 / photo), z17.png (q17 near seats, render | photo), z17head.png (q17 heads, r44 | r45 | photo), ph_strap.png / r45_strap.png, and c_e4_head / c_e3_side / c_e11_panedge / c_e2_back (s44 | s45).",
+ "score": 8.4,
+ "calibrationNote": "Up 0.05 from 8.35. The detail mean is 8.28 (w44 8.28). Net gains: the head-on cover width is back on y_47300 (73-74 px vs 71-72, was 77-78); belt presence rose about 50 % in q17 and 15 % in q16, and an alternate strap end now hangs over the pan lip; the centre pillow can be reviewed in the studio. Losses: the tongue-strap hue went from under-green (G/R 1.52) to over-cyan (G/R 2.35, against 1.81 in the photo), and the shallower wings did not reveal the cover in q17 (no row gained). Still not 8.5. q17 heads read as a thin strip beside a big wing where y_47303 shows a broad grey flap (partly a camera-angle question, w44b-1), the straps are at 43 % of the photo's pixels, and the drape is a stiff tab. Back, shell, screen, tray, legs and far LOD are unchanged.",
+ "priorIssues": [
+  {
+   "id": "w44a-1",
+   "status": "partly fixed",
+   "note": "Head-on width fixed: the q15 rows give D 74, E 73, F 73-80 and G 74-80 px, against 71-72 in y_47300 (w44 77-78). Cover E is L67 against 65 (inside 5 L). The wing silhouette in q15 is unchanged (the vertical run for D/E is 245-300 / 244-300, as in w44; G is 255-294). q17 is not fixed: rows at x 660-800, y 110-160 are 58 52 43 41 37 40, against w44's 57 52 44 46 37 47 and the photo's 60 53 61 63 77 56, so only 1 of 6 rows is >= 55 (target 5). The q17 band is L129, B/R 1.42, and the wing is L71, B/R 2.17, both unchanged. In e4_head the wing front is visibly set back, but at the q17 view (about 20-25 degrees more edge-on than y_47303, per w44b-1) the wing's side face still occludes the cover."
+  },
+  {
+   "id": "w44a-2",
+   "status": "not changed (user question)",
+   "note": "The q15 seat C box is L100 against 66, as expected under the default."
+  },
+  {
+   "id": "w44a-3",
+   "status": "partly fixed",
+   "note": "q17 teal px 1629 (target >= 1800, photo 3785) and q16 2633 (target >= 2800, photo 3771). Strap px in the near q17 region y >= 440, x 500-600 went 212 -> 253. The lip drape exists on alternate seats (e11, and the q16 near seat), but I see no bright latch on the near q17 pans: the near seat's latch is hidden behind the armrest pad at this angle. New problem: the hue overshoots (w45a-2)."
+  },
+  {
+   "id": "w44a-4",
+   "status": "not fixed",
+   "note": "q15 light px D-G 192 / 50 / 51 / 52 against 96 / 40 / 0 / 15. Cover F L56 against 44. Back F L90 against 70. Pillow E p90/p10 1.33 against 1.92. All unchanged."
+  },
+  {
+   "id": "w44a-5",
+   "status": "fixed",
+   "note": "e4c_pillow4 shows the 4-seat centre block with its piped navy pillows at close range."
+  },
+  {
+   "id": "w44a-L1",
+   "status": "not fixed (lighting)",
+   "note": "q16 covers L74 / 67 / 52 against 64 / 83 / 100. q17 grazing cover-like px are L191, B/R 1.17, against 162 / 1.37."
+  }
+ ],
+ "details": [
+  {
+   "detail": "Fabric: tick weave",
+   "score": 8.2,
+   "refs": "Unchanged: pans D/E L70/69 vs 84/75; back F L90 vs 70; back D L90 vs 98."
+  },
+  {
+   "detail": "Fabric: diamond lattice",
+   "score": 8.3,
+   "refs": "Unchanged: pan F L69, B/R 1.98, p90/p10 1.58 vs 71 / 1.85 / 1.88."
+  },
+  {
+   "detail": "Fabric: petal fleck",
+   "score": 8.2,
+   "refs": "Unchanged: backs E/G L55/63, B/R 2.20/1.95 vs 61/64, 2.24/1.89."
+  },
+  {
+   "detail": "Fabric: dash mosaic",
+   "score": 8.5,
+   "refs": "Pan G L69, B/R 1.83 vs 72 / 1.82."
+  },
+  {
+   "detail": "Fabric mix (backs, pans, pads)",
+   "score": 8.6,
+   "refs": "Order matches y_47300. Unchanged."
+  },
+  {
+   "detail": "Headrest pad + cover",
+   "score": 8.45,
+   "refs": "Head-on is fixed: the q15 cover run is 73-74 px (E 72-75, F 72-80) against 71-72 in y_47300 (w44: 77-78), and cover E is L67 against 65. The q17 side view is unchanged or slightly worse: rows y110-160 are 58 52 43 41 37 40, against 57 52 44 46 37 47 in w44 and 60 53 61 63 77 56 in the photo. The 2 cm shallower wing front is visible in e4_head but does nothing at the q17 angle. q16 covers L74 / 67 / 52 against 64 / 83 / 100."
+  },
+  {
+   "detail": "Pillow",
+   "score": 8.35,
+   "refs": "The new studio shot e4c_pillow4 shows the centre-block pillow up close: piped edge, navy, sitting at the right height. It is still a flat plaque in q15 (E p90/p10 1.33 vs 1.92, L48 vs 46). Side blocks are bare, matching y_47301 / y_47303 and contradicting y_47300 (seat C box L100 vs 66); that is a user question."
+  },
+  {
+   "detail": "Armrests",
+   "score": 8.3,
+   "refs": "Unchanged. The q17 near aisle arm is still chunkier than the slim cap in y_47303."
+  },
+  {
+   "detail": "Belts",
+   "score": 8.55,
+   "refs": "Presence is much better: q17 teal px 1076 -> 1629 (photo 3785), q16 2295 -> 2633 (photo 3771). The 48 mm straps read at grazing angles, and the alternate navy end now runs over the pan lip (e11, and q16 near seat). Hue overshoots now: q17 tongue strap #2e6da0, G/R 2.35, B/G 1.47, L96, against y_47303's straps #4177b9 / #4278b7, G/R 1.81, B/G 1.53, L111. The studio tongue is #69b9d9 (B/G 1.17), a clear cyan. In e11 the lip drape is a stiff rectangular tab with a visible seam. Correction to w44a: my w44 'on target' check used a fabric-biased mask. Measured properly, the w44 strap (G/R 1.52) was under-green, so B's w44b-2 was right on direction; w45 went about twice as far past the target."
+  },
+  {
+   "detail": "Seat pan / front",
+   "score": 8.5,
+   "refs": "Unchanged apart from the strap drape."
+  },
+  {
+   "detail": "Back silhouette",
+   "score": 8.0,
+   "refs": "Unchanged. e3 shows only the belt and wing change."
+  },
+  {
+   "detail": "Rear shell / hood / back top",
+   "score": 8.0,
+   "refs": "Unchanged. The 11.7 % diff in e2 is the moving-map screen content."
+  },
+  {
+   "detail": "Screen / handset",
+   "score": 8.0,
+   "refs": "Unchanged."
+  },
+  {
+   "detail": "Tray / pocket / AC",
+   "score": 7.9,
+   "refs": "Unchanged."
+  },
+  {
+   "detail": "Legs / footrest / under-seat",
+   "score": 8.5,
+   "refs": "Unchanged (e10 0.5 % is the strap)."
+  },
+  {
+   "detail": "Far-LOD rows",
+   "score": 8.1,
+   "refs": "Seat px L89, p10 50, L<50 share 0.101, p90/p10 2.69 vs 84 / 48 / 0.132 / 2.85; far band L96, B/R 1.70 vs 92 / 1.69. The L<50 share drifted from 0.108 to 0.101, which is within tolerance."
+  }
+ ],
+ "issues": [
+  {
+   "id": "w45a-1",
+   "severity": "medium",
+   "owner": "econ (+ integrator for the camera)",
+   "title": "Carried w44a-1: the q17 headrest cover is still a thin strip beside the wing; the shallower wing front did not help",
+   "detail": "Headrest pad + cover",
+   "evidence": "q17 rows y 110-160 are 58 52 43 41 37 40 against the photo's 60 53 61 63 77 56; w44 was 57 52 44 46 37 47. z17head.png: y_47303 shows a broad grey flap about 120 x 95 px hanging over each pad front with a narrow roll beside it. The render shows a 10-15 px pale strip and a big dotted wing face. The head-on width is now right, so the cover must not get wider.",
+   "fix": "First have the integrator check the q17 camera against y_47303. The photo is higher and more frontal, and if the camera is about 20 degrees off, geometry alone will not close this. If the camera is right, in 09a_econ.js cut the aisle-side wing's side face: reduce its lateral bulge or its forward depth by 1.5-2 cm at the outer edge rather than at the front, and let the cover's forward foot drop 2 cm lower over the pad so it reads as a flap from the side. Keep the width at 0.22 m.",
+   "check": "q17 rows y 110-160 >= 55 in at least 4 of 6; q15 head-on run stays 70-75 px."
+  },
+  {
+   "id": "w45a-2",
+   "severity": "medium",
+   "owner": "econ",
+   "title": "The tongue-strap teal now overshoots into cyan and is too dark",
+   "detail": "Belts",
+   "evidence": "t2.py, on strap pixels only: render q17 #2e6da0, G/R 2.35, B/G 1.47, L96 (w44 #426597, G/R 1.52). y_47303 near straps #4177b9 and #4278b7, G/R 1.81, B/G 1.52-1.55, L111-112, with a lit top fifth of #5894d8 / #6dade5. The studio e11 tongue is #69b9d9, B/G 1.17, a clearly cyan swimming-pool blue (c_e11_panedge.png). The lit render multiplies the base G/R by about 1.13-1.23, so the base #3a6f9a (G/R 1.91) renders at 2.35.",
+   "fix": "Tongue-strap base #3a6f9a -> about #4a74a8 (G/R 1.57, B/G 1.45, lighter), which should land near G/R 1.8 and L 105-112 in q17. Keep the navy #353e5e.",
+   "check": "q17 strap boxes G/R 1.7-1.9, B/G >= 1.45, L 103-115; studio e11 tongue B/G >= 1.35."
+  },
+  {
+   "id": "w45a-3",
+   "severity": "low",
+   "owner": "econ",
+   "title": "The pan-lip drape is a stiff flat tab with a seam, and the straps are still below half the photo's coverage",
+   "detail": "Belts",
+   "evidence": "c_e11_panedge.png: the navy end bends over the lip as a rectangular box. It looks slightly wider than the strap, with a visible seam line and a weave tile different from the strap above. In y_47303 (ph_strap.png) the straps fall in slack loops, show adjuster and buckle metal, and the tongue hangs vertically from the cushion gap. q17 teal px are 1629 against 3785.",
+   "fix": "Give the drape the same width and material as the strap above, round the bend with 2-3 segments, and end it with a small metal adjuster (#aeb2b8). w44b-5's vertical 4-5 cm tongue segment at the anchor would add the hanging teal the photo shows.",
+   "check": "q17 teal px >= 1900; no seam or tile change visible on the drape in e11."
+  },
+  {
+   "id": "w45a-4",
+   "severity": "low",
+   "owner": "econ",
+   "title": "Carried w44a-4: q15 tongue tips, cover F, tick back F, flat pillow plaque",
+   "detail": "Belts / Headrest / Fabric / Pillow",
+   "evidence": "q15 light px E/F/G 50/51/52 vs 40/0/15; cover F L56 vs 44; back F L90 vs 70; pillow E p90/p10 1.33 vs 1.92 (e4c shows the pillow with an evenly lit face and no wrinkles).",
+   "fix": "As before: tucked tongue z -0.165 -> -0.18; darken the pillow edges or add a soft centre crease; raise the gain on the back F tick tile.",
+   "check": "F <= 20 and G <= 30 light px; pillow p90/p10 >= 1.6; back F L <= 80."
+  },
+  {
+   "id": "w45a-L1",
+   "severity": "low",
+   "owner": "lighting",
+   "title": "Carried: q16 covers are unevenly lit, and the q17 cover band is too bright and neutral",
+   "detail": "",
+   "evidence": "q16 L74 / 67 / 52 vs 64 / 83 / 100; q17 band L191, B/R 1.17 vs 162 / 1.37.",
+   "fix": "As w44a-L1.",
+   "check": "q16 near L <= 70, row 2 >= 72; q17 band B/R >= 1.3."
+  }
+ ],
+ "questionsForUser": [
+  "Carried: y_47300 (the official front view) shows lumbar pillows on the 3-seat side blocks, while y_47301 and y_47303 (also official) show them bare. The model follows the two side views. Should the side blocks carry pillows?"
+ ],
+ "extraRefsSearched": "No downloads; used y_47300, y_47301 and y_47303."
+}
