@@ -39,7 +39,7 @@ uniform vec4 u_stripP[8]; uniform vec4 u_stripA[8]; uniform vec3 u_stripCol;
 uniform vec4 u_scrP[6]; uniform vec4 u_scrN[6]; uniform vec3 u_scrCol; uniform float u_fillLift; uniform vec3 u_lensCore; uniform vec2 u_vaultE;
 uniform sampler2D u_scrMask; uniform vec4 u_scrMaskR; uniform float u_scrOff; uniform vec4 u_scrOwn; uniform float u_binLo; uniform float u_monHemi;
 uniform float u_tubWash; uniform vec3 u_binLift; uniform vec3 u_hemiBotN; uniform vec3 u_washN; uniform vec2 u_tubSky; uniform float u_ctrLo; uniform float u_ctrLift;
-uniform sampler2D u_sDepth; uniform vec4 u_sRes; uniform vec4 u_sProj; uniform vec3 u_sFwd; uniform vec3 u_sRight; uniform vec3 u_sUp; uniform vec4 u_ssao; uniform float u_sDither; uniform float u_sMix; uniform float u_sAng; uniform float u_sLow; uniform float u_sIn; uniform vec2 u_sEase; uniform vec2 u_sTap;
+uniform sampler2D u_sDepth; uniform vec4 u_sRes; uniform vec4 u_sProj; uniform vec3 u_sFwd; uniform vec3 u_sRight; uniform vec3 u_sUp; uniform vec4 u_ssao; uniform float u_sDither; uniform float u_sMix; uniform float u_sAng; uniform float u_sLow; uniform float u_sIn; uniform vec2 u_sEase; uniform vec3 u_sTap;
 uniform sampler3D u_ao; uniform vec3 u_aoMin; uniform vec3 u_aoSize; uniform sampler2D u_contact; uniform vec4 u_contactR; uniform float u_contactK;
 uniform sampler2DArray u_detail; uniform vec4 u_layer[${N_LAYERS}]; uniform sampler2DArray u_photo; uniform float u_photoOn;
 uniform sampler2D u_atlas; uniform float u_screenStep; uniform float u_emisGain; uniform float u_screenGain;
@@ -184,13 +184,18 @@ float ssaoF(vec3 P, vec3 Nf, float kR){
   float rng = u_ssao.w * kR;
   float px = ruv.y * u_sRes.y;                              // disc radius in pixels
   if (px < 2.0) return 0.0;                                 // far: the disc is under ~2 px
-  float kc = u_sTap.y > 0.0 ? min(1.0, u_sTap.y * kR / px) : 1.0; ruv *= kc; rng *= kc;   // (QA L10) screen-space cap (x kR)
+  float kc = u_sTap.y > 0.0 ? pow(min(1.0, u_sTap.y * kR / px), u_sTap.z) : 1.0; ruv *= kc; rng *= kc;   // (QA L10) screen-space cap (x kR)
   vec2 uv0 = gl_FragCoord.xy / u_sRes.xy;
   float a0 = u_sDither * 6.2832 * fract(52.9829 * fract(dot(gl_FragCoord.xy, vec2(0.06711, 0.00584)))) + 0.39;
-  float occ = 0.0, nT = max(u_sTap.x, 1.0);
+  float occB = 0.0, occX = 0.0, nT = max(u_sTap.x, 1.0);
+  // (QA L10) every third tap of the spiral is an extra one, taken only where the (capped) disc spans more than 6-10 px; a
+  // smaller disc keeps the 8 others (steps there are under ~8 px), so the far cabin costs what the 8-tap AO cost [D fixL10]
+  float tX = smoothstep(6.0, 10.0, px * kc);
   for (int i = 0; i < 16; i++) {
     float fi = float(i);
     if (fi >= nT) break;
+    bool xt = mod(fi, 3.0) > 1.5;
+    if (xt && tX <= 0.0) continue;
     float an = a0 + fi * 2.39996;
     // snapped to the depth texel's centre, where the pre-pass sampled the surface: the point is then on the surface
     // itself (a sample uv off the centre with that texel's depth leaves the plane by up to half a texel at grazing angles:
@@ -200,9 +205,11 @@ float ssaoF(vec3 P, vec3 Nf, float kR){
     vec2 nd = uv * 2.0 - 1.0;
     vec3 v = u_camPos + z * (u_sFwd + nd.x / u_sProj.x * u_sRight + nd.y / u_sProj.y * u_sUp) - P;
     float dl = length(v);
-    occ += clamp(((dot(v, Nf) - u_ssao.z) / max(dl, 1e-3) - u_sAng) / (1.0 - u_sAng), 0.0, 1.0) * (1.0 - smoothstep(u_sIn * rng, rng, dl));
+    float o = clamp(((dot(v, Nf) - u_ssao.z) / max(dl, 1e-3) - u_sAng) / (1.0 - u_sAng), 0.0, 1.0) * (1.0 - smoothstep(u_sIn * rng, rng, dl));
+    if (xt) occX += o; else occB += o;
   }
-  return occ / nT * smoothstep(2.0, 4.0, px);
+  float nX = floor(nT / 3.0);
+  return mix(occB / (nT - nX), (occB + occX) / nT, tX) * smoothstep(2.0, 4.0, px);
 }
 
 void main(){
