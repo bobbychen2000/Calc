@@ -9,8 +9,8 @@ areas met the bar (room w16, suite w13, monuments w18). Each one was checked aga
 | item (batch) | verdict | change |
 |---|---|---|
 | jShell / jCap r 0.46 / 0.45 -> 0.34, satin rims (r1) | already done in room w12 | none |
-| Padded header band reads as hammered metal (r2) | supported: the c_27315 band behind the headrest is smooth satin | `jBand` LAYER.leather -> LAYER.plastic, r 0.40 -> 0.45 (09c_room.js) |
-| Charcoal shells / caps slate, 1.3-1.6x too light (r3) | darker: supported (q06 shell faces L96-116 vs c_27312 L53-63). Neutral: **not** taken. The official c_27312 / c_27315 shells are a cool violet-grey (h224-232, s0.14-0.20), and official photos win for colour; the render was slate-cyan (h211), so the hue moved toward violet rather than to neutral | `jShell` #595d64 -> #434349, `jCap` #5c6066 -> #4b4b50, `jShellIn` #4a4d53 -> #3e3e43 (shared 09_seats.js); `jBand` -> #5d5e66. q06 shell faces L96 -> L71, caps L128 -> L105 (photo L98) |
+| Padded header band reads as hammered metal (r2) | supported: the c_27315 band behind the headrest is smooth satin | `jBand` LAYER.leather -> LAYER.plastic, r 0.40 -> 0.45 (09c_room.js); band local contrast 0.154 -> 0.034 (w17b). The round-1 colour #5d5e66 read darker / more violet than the flap (w17a), so the colour is back to #656b73 |
+| Charcoal shells / caps slate, 1.3-1.6x too light (r3) | darker: supported (q06 shell faces L96-116 vs c_27312 L53-63). Neutral: **not** taken. The official c_27312 / c_27315 shells are a cool violet-grey (h224-232, s0.14-0.20), and official photos win for colour; the render was slate-cyan (h211), so the hue moved toward violet rather than to neutral | round 1: `jShell` #595d64 -> #434349, `jCap` #5c6066 -> #4b4b50, `jShellIn` #4a4d53 -> #3e3e43 (shared 09_seats.js). Round 2 (w17b medium: the shaded near faces overshot, q09 L45 vs c_27314 L72-83; the photos read cool slate h~220, violet only on the darkest bits): `jShell` #4a4b51, `jCap` #4b4c51. q06 near shell faces L96 -> L79, q09 wall L54 |
 | moodGlow no longer read (r2, FYI) | left in place (harmless one-line key) | none |
 
 ## Suite
@@ -27,3 +27,23 @@ areas met the bar (room w16, suite w13, monuments w18). Each one was checked aga
 | item (batch) | verdict | change |
 |---|---|---|
 | F front drapes cool light grey (r2, r3) | supported: omaat_f40 drapes #433f3c h20 against q01 #515053 h267 | `curtainFF` #6d6b6b -> #544c46 (10_mono.js; the integrator's #5f5650 would have stayed ~L82). m02 drape #636465 L100 h229 -> #4f4b47 L76 h30 (omaat_f40 #433f3c L64 h20) |
+
+## Round 2 (raters' carried items in the same blocks)
+
+| item | source | change |
+|---|---|---|
+| Suite duvet corner reads as overlays on an intact duvet | w13a/b, w14a/b medium | head band is a 0.035 slab whose corner is cut on the diagonal down to the pad; loft starts 0.30 aft (0.05 overlap); bare-sheet triangle removed; flap / roll on top |
+| Suite wood flanks chestnut, not espresso | w13b, w14a/b medium | `fFlank` #33291f -> #2f2b22 (omaat_f60 R/G 1.08-1.13) |
+| Ottoman recess overshoot, plinth line hidden | w14a low | plinth strip 0.06 further forward, recess floor #4a4038 -> #5e5248; q03 under / top 0.19 |
+| curtainFF coffee / lavender split | w19a low (too saturated), w19b medium (lavender, from f_17313) | near-neutral #4f4c4a (m02 #4b4b4a L75). f_17313 is a rendering; the real omaat_f40 / omaatF_2 drapes are dark warm-neutral, so lavender was not taken |
+
+Triangles: the slab and the recess plate add well under 100 triangles to the occupied bed / suite units; the sheet triangle
+is gone. No change to the far LODs or the room meshes.
+
+## Ratings
+
+| area | before (last rating) | round 1 (A / B) | round 2 (A / B) |
+|---|---|---|---|
+| room | w16 8.5 / 8.5 | w17 8.5 / 8.5 | w18 pending |
+| suite | w13 8.5 / 8.7 | w14 8.6 / 8.8 | w15 pending |
+| monuments | w18 8.5 / 8.6 | w19 8.6 / 8.6 | w20 pending |
