@@ -377,3 +377,74 @@ changes of this run (`04_shaders.js` / `12_scene.js`, logged in fixed_integratio
   against the same build in the canonical order).
 - **Fix:** add `__app.scene.setAllWindows(0)` to the per-view reset in qa.js (as `scratchpad/qa/fixL7/tools/shots.js` does),
   or keep rendering in the canonical order (q20 then q21, which reopens them).
+
+# lighting run 2, L8 (lighting fixer, 2026-10-25)
+
+Raters L8 (lighting 7.3, integration 7.6). The items below are other areas' files; the lighting changes of this run are
+logged in fixed_integration.md ("Lighting run 2, L8").
+
+## To econ (`src/09_seats.js` SEATMAT, shared one-line keys): streak highlights on the rounded white plastics (integration L8 low)
+- **Owner:** econ (with room / py for their keys). **Severity:** low.
+- **Problem:** the rounded white plastics (econ armrests, PY shells) and the THE Room charcoal caps carry no thin streak
+  highlights. Lighting tried the cove line lights three ways in L7 (`coveSpec` gains, reverted); the streak width is set by
+  the roughness, so this is a SEATMAT hand-off.
+- **Evidence:** armrest p99 192-218 against 244-254 in y_47300; thin-highlight share 0.16-0.98 % against 1.10-2.50 % across
+  the official photos.
+- **Fix:** one line per key: econ `arm` r 0.45 -> 0.26 and `armPad` r 0.50 -> 0.32; room `jCap` r 0.34 -> 0.26 (`jRail` is
+  already brushed metal at 0.26); py `pyShell` r 0.42 -> 0.30. Keep the fabrics and covers as they are. Targets: thin share
+  >= 1.1 % in q06 / q16 / q15; q15 armrest p99 >= 238; face means within 5 L.
+
+## To room / py / econ (`09c_room.js`, `09b_py.js`, `09a_econ.js` + shared SEATMAT keys): rims that can catch the cove line (integration L8 medium)
+- **Owners:** room (`09c_room.js` capRail and shell edges), py (`09b_py.js` shell / arm edges), econ (`09a_econ.js` shell /
+  arm rims); shared SEATMAT one-line keys. **Severity:** medium.
+- **Problem:** thin specular rim highlights on shells, caps and armrests are still 2-9x too sparse; furniture edges read
+  matte and the seats lose their outline. Lighting tried three cove-rim gains and reverted all of them (fixL7). The cap
+  rails are a single 6 mm chamfer (`gRBox(..., 0.006, seg 1)`), so their normals never sweep through the reflection of the
+  cove line and there is no thin specular line to raise. In the photos every rounded cap, shell rim and armrest carries one.
+- **Fix:**
+  - `09c_room.js` l.92 capRail: `gRBox(w + 0.006, 0.02, d + 0.006, 0.009, 3)`; the same for the shell top edges (r >= 8 mm,
+    seg 3).
+  - `09b_py.js` / `09a_econ.js`: the shell and arm top-edge `gRBox` radii >= 8 mm with seg 3.
+  - Shared SEATMAT keys, one line each: `jCap` r 0.34 -> 0.24, `pyShell` r 0.42 -> 0.30, `yShell` r 0.42 -> 0.30, `arm` r
+    0.45 -> 0.32. Leave the fabrics alone.
+  - If that is still short, lighting can re-try its earlier `LIGHT_TUNE.cove` x2.5 gated to rough < 0.35 (bins and
+    screens excluded): tell lighting in from_room / from_py / from_econ.
+- **Targets:** thin-highlight share >= 1.1 % in q06 / q16 / q17 / q09 and >= 0.8 % in q13; face means within 5 L.
+
+## To monuments (`src/10_mono.js`): THE Suite ink-cloud print (integration L8 medium, raised from low)
+- **Owner:** monuments (`10_mono.js` inkWall / `MONMAT.inkCloud`). **Severity:** medium (unchanged for four rounds; it
+  fills the top of the hero view from every THE Suite seat: q03, nF03, f_ink_seated).
+- **Problem:** the print is baked into vertex colours on a 0.1 m grid with a 0.22-wide ramp, so the clouds render as dark,
+  colourless, blurred blobs that read as smoke stains or dirt: 2.5x the photo's contrast, no hue, no edge detail. The real
+  wall is a pale warm ground with low-contrast cumulus whose speckled edges are crisp.
+- **Fix (`inkWall`):**
+  - Grid 0.1 -> 0.03 m: `nx = ceil((x1 - x0) / 0.03)`, `ny = ceil(H / 0.03)`.
+  - Cloud mask `t = smoothstep(0.44, 0.52, n + 0.10 * (fbm(x / 0.05, y / 0.05, 256, 2, 29) - 0.5)) * lowY`; the
+    high-frequency term gives the speckled edge.
+  - `MONMAT.inkCloud` '#6a665f' -> '#b3ad9f', about 30 L under the '#dddbd0' ground (the omaatF_2 p10 #a8a399 already cited
+    in the comment).
+  - If the vertex budget objects, bake the same field into an atlas canvas panel instead.
+- **Targets (f_ink_seated):** print range p5-p95 <= 40, hue h35-45 s0.06-0.14, fine std >= 4; q03 top band range <= 45.
+
+## To room (`src/09c_room.js`): recessed near-black toe-kick (integration L8 low, unchanged)
+- **Owner:** room (kick under the aisle ash panels and the monument ends). **Severity:** low.
+- **Problem:** the THE Room shell base is a flush navy-grey band, not a recessed near-black toe-kick.
+- **Fix:** `09c_room.js` l.480 (`gRBox(0.045, 0.10, ...)` at x 0.565) and the matching kicks under `roomAisleAsh` (l.223,
+  the `ashFrameX` family): set the kick 0.02 m back from the ash face (0.565 -> 0.545 along that side's normal), height 0.08,
+  material `{ c: '#1c1d20', r: 0.7 }`. The contact map then darkens its foot (and this run's screen-space AO its top edge).
+  Target: q06 kick L10-25.
+
+## To room (`src/09c_room.js`): white hairline in the 11A footwell (integration L8 low, unchanged)
+- **Owner:** room (rear-facing seat footwell floor / side panel). **Severity:** low.
+- **Problem:** a white 1-2 px hairline runs along the 11A footwell floor / side-panel joint.
+- **Fix:** in the rear-facing footwell builder, make the faces overlap instead of meeting at an edge: extend the footwell
+  floor 0.01 m under the side panel, or sink the side panel 0.005 m into the floor. Re-check the same view at DPR 2: 0 px >
+  L120 in that box.
+
+## To ceiling/bins (`src/08_bins.js`): grey fragments on the right outboard bin lip at door 3 (integration L8 low)
+- **Owner:** ceiling/bins (door-3 zone end of the outboard run, or the PSU instances there). **Severity:** low.
+- **Problem:** irregular grey fragments with PSU-like dots along about 0.5 m of the right outboard bin lip at door 3. Polish B
+  attributed them to the centre PSU housings seen edge-on and made no change; they are still visible.
+- **Fix:** (1) hide the centre PSU meshes in that view (filter `scene.opaque` by mesh name) to confirm which mesh pokes
+  through; (2) then end that PSU / band run 0.05 m before the door-3 zone boundary (`fitModules` z1 - 0.05), or drop it 2 mm
+  along its face normal. Re-render z04 at DPR 2.
