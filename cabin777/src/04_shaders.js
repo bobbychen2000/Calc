@@ -431,9 +431,12 @@ void main(){
     // the day window glow; with the glow dim it went burnt-orange / near-black beside a pale pier [V: ucr_the-room-cabin
     // (amber, shades closed) reveals #a57449-#b28156 L124-137 vs wall #bd8b61 L147 (0.85-0.93); kn_room_35 / 36 pale cream
     // reveals; q21 #a15a2b L102 s0.73 beside a pier at L192] (lighting r4 medium); in day light (open shades) it is 0 and
-    // the bake stands [D]
+    // the bake stands [D]. Only on the tub itself (MAT.reveal: no layer, r 0.45): the closed shades (sPleat / fabric /
+    // plastic layers), the grey tunnel lining and the seals (r 0.5) keep their own albedo; on them the cream floor
+    // painted the closed blackout out of the dd windows (fixL7 after4) [D]
     float tubB = recd * wl.a * smoothstep(0.10, 0.16, v_wpos.y - u_winY.x) * (1.0 - smoothstep(0.58, 0.66, v_wpos.y - u_winY.x))
-               * (1.0 - shT * clamp(dot(u_winGlow, vec3(0.2126, 0.7152, 0.0722)) / 0.45, 0.0, 1.0));
+               * (1.0 - shT * clamp(dot(u_winGlow, vec3(0.2126, 0.7152, 0.0722)) / 0.45, 0.0, 1.0))
+               * (layer == 0 && abs(v_mat.r - 0.45) < 0.02 ? 1.0 : 0.0);
     tubRef = (mix(u_hemiBot, u_hemiTop, 0.5) + u_wash) * lt * u_tubWash * tubB * vec3(0.84, 0.78, 0.67);
     // QA r1 (light): crevice term for occluded low pockets: the tonal range lacked near-blacks in the footwells, console
     // gaps, under the ottomans and seats [V: pixels < 30: c_27312 10.2 % vs q06 2.9 %, c_27314 3.6 % vs q09 0.5 %;
