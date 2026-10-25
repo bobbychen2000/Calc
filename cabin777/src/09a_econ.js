@@ -45,7 +45,7 @@ function econCrownLoft(secs, segC, crownAt) {
   for (let i = 0; i < n; i++) g.i.push(c0, c0 + 1 + ((i + 1) % n), c0 + 1 + i);
   return fixWinding(g);
 }
-const ECON_PAN = { ...SEATMAT.yFabric, c: photoBase('#4b537a', 'y_tick') };   // w33 (w33a-5): L92-97 vs 75-83, B/R 1.62-1.69 vs 1.75-1.82 -> darker, bluer; w27 (w26b-4): B/R 1.61-1.67 vs 1.74-1.81 -> a touch bluer; w26 (w25a-5 / w25b-2): L69-74 vs 77-91, still blue; w25 (w24b-4): tick pans B/R 2.17 vs ~1.8 -> less blue
+const ECON_PAN = { ...SEATMAT.yFabric, c: photoBase('#4d5472', 'y_tick') };   // w38 (w37a-4 / w37b-2): B/R 1.99 vs 1.74-1.82 -> less blue;   // w33 (w33a-5): L92-97 vs 75-83, B/R 1.62-1.69 vs 1.75-1.82 -> darker, bluer; w27 (w26b-4): B/R 1.61-1.67 vs 1.74-1.81 -> a touch bluer; w26 (w25a-5 / w25b-2): L69-74 vs 77-91, still blue; w25 (w24b-4): tick pans B/R 2.17 vs ~1.8 -> less blue
 // w25 (w24a-1 / w24b-3): the diamond pan read as a bold field of light stars head-on (L99-101 vs 74 in y_47300) -> darker
 const ECON_PAN_B = { ...SEATMAT.yFabricB, c: photoBase('#44496b', 'y_diamond'), l: LAYER.yDiamondPan };   // w33 (w33a / w33b): B/R 1.66-1.67 vs 1.87 -> halfway back; w32 (w31a-4 / w31b-2): washed out (L85 vs 75, stars gone) -> gain 0.9 (PHOTO_GAIN 34), base back down; w32a-3: B/R 1.95 vs 1.81 -> #464a68   // w31 (w30a-5 / w30b-3): the 0.7x star band left separate stars on a dark ground -> L +8   // w28 (w27a-1 / w27b-1, high): photoBase lifts for the full-gain tile mean (2c = 0.4); at gain g the mean is 1 - 0.6 g, so the pan rendered ~1.8x too light (L107 vs 74) -> #4e5676 x (1 / (1 - 0.6 x 0.8)) / 2.5 x 0.88 in linear = #414862 (gain 0.8); w27 (w26a-1 / w26b-1): own layer at 0.45 gain (stars bright 0.21 vs 0.09); w26b: B/R 1.61 grey -> #4e5676; w26 (w25a-1 / w25b-1): B/R 2.27-2.41 vs 1.81
 // w30 (w29a-6): tick backs alternate a light heather pad (y_47300 seat D, L102-107, few flecks) and a dark fleck pad
@@ -54,7 +54,7 @@ const ECON_HEAD_L = { ...SEATMAT.yFabricB, c: photoBase('#65739f', 'y_diamond'),
 const econHead = (F, k = 0, rot = 0) => F === SEATMAT.yFabricB ? SEATMAT.yFabricC : F === SEATMAT.yFabricC ? SEATMAT.yFabricB : F === SEATMAT.yFabricD ? SEATMAT.yFabric
   : (((k >> 1) + rot) % 2 ? ECON_HEAD_D : ECON_HEAD_L);
 // w30 (w29b-6, w27b-6): the mosaic pan read light and blue in q15 (L98 B/R 1.86 vs y_47300 87 / 1.72) -> its own base [D]
-const ECON_PAN_C = { ...SEATMAT.yFabricC, c: photoBase('#444c72', 'y_mosaic') };   // w36 (w35a-2): still the lightest pan (L103 vs 82) -> -8 %;   // w34a-2: L108 B/R 1.55 vs y_47300 82 / 1.80 (part of the gap is the lighting lift) -> darker, bluer
+const ECON_PAN_C = { ...SEATMAT.yFabricC, c: photoBase('#474e69', 'y_mosaic') };   // w38 (w37a-4 / w37b-2): B/R 2.06 vs 1.79 -> less blue;   // w36 (w35a-2): still the lightest pan (L103 vs 82) -> -8 %;   // w34a-2: L108 B/R 1.55 vs y_47300 82 / 1.80 (part of the gap is the lighting lift) -> darker, bluer
 const ECON_PLATE = { ...SEATMAT.armPost, c: '#66686e' };   // w32 (w31a-2 / w31b-5): #9a9b9f still a light second bar (L114-133 vs ~76)
 const econPanMat = (F) => F === SEATMAT.yFabric ? ECON_PAN : F === SEATMAT.yFabricB ? ECON_PAN_B : F === SEATMAT.yFabricC ? ECON_PAN_C : F;
 function econSeat(B, x0, lod, opts = {}) {
@@ -182,9 +182,9 @@ function econSeat(B, x0, lod, opts = {}) {
   // ~0.15-0.18 m discs under each seat) [D]
   // w33 (w33a-2 / gap33-4, y_47302 crop): a flat smoky see-through half-disc (~0.19 wide) hanging face-forward, tipped
   // ~25 deg nose-down (w33b-3) under the seat, the vest a darker core inside, a red strap with a blue tag folded down its face (was an opaque puck) [V]
-  B.add(gCyl(0.095, 0.095, 0.012, 14, true, 0, Math.PI), M4.trs(x0 + 0.03, 0.235, -0.36, 0, Math.PI / 2 - 25 * DEG), { c: '#5c5f68', r: 0.12 });   // final (w36a-5 / w36b-2): a brown bowl -> cool smoky grey (y_47302 #43444d), thin rim round a dark cool vest; w36 (w35a-4): a pale rim round a black core read as a gauge -> smoky, the vest showing through; w34b-2: read opaque near-black
-  B.add(gCyl(0.085, 0.085, 0.016, 12, true, 0, Math.PI), M4.trs(x0 + 0.03, 0.232, -0.36, 0, Math.PI / 2 - 25 * DEG), { c: '#3a3c44', r: 0.3 });
-  B.add(gBox(0.018, 0.075, 0.004), M4.trs(x0 + 0.035, 0.20, -0.372, 0, -25 * DEG), { c: '#c8252b', r: 0.5 });
+  B.add(gCyl(0.095, 0.095, 0.012, 14, true, 0, Math.PI), M4.trs(x0 + 0.03, 0.235, -0.36, 0, Math.PI / 2 - 50 * DEG), { c: '#767983', r: 0.12 });   // w38 (w37a-5 / w37b-3): L~40 vs y_47302 60-80, faced forward where the photo lies flatter -> lighter, 50 deg   // final (w36a-5 / w36b-2): a brown bowl -> cool smoky grey (y_47302 #43444d), thin rim round a dark cool vest; w36 (w35a-4): a pale rim round a black core read as a gauge -> smoky, the vest showing through; w34b-2: read opaque near-black
+  B.add(gCyl(0.085, 0.085, 0.016, 12, true, 0, Math.PI), M4.trs(x0 + 0.03, 0.232, -0.36, 0, Math.PI / 2 - 50 * DEG), { c: '#5e6068', r: 0.45 });   // w38 (w37a-5 / w37b-3): core (32,34,41) vs y_47302 48-60 -> lighter
+  B.add(gBox(0.018, 0.11, 0.004), M4.trs(x0 + 0.035, 0.18, -0.372, 0, -25 * DEG), { c: '#c8252b', r: 0.5 });
   B.add(gBox(0.02, 0.012, 0.005), M4.trs(x0 + 0.035, 0.225, -0.375, 0, -25 * DEG), { c: '#2f5fb0', r: 0.5 });
   if (!opts.noScreen) {
     // 13.3 in touchscreen (0.294 x 0.166) in a black glass border 0.316 x 0.205 set flush in the hood face, top ~0.03
@@ -281,8 +281,8 @@ function econSeat(B, x0, lod, opts = {}) {
   // belt: silver tongue one side, light-grey plastic buckle cover the other (y_47303); w5 A: the webbing drapes across the
   // pan from the side creases and the latch sits at mid-pan (y_47302 / 47301 / 47303) [V]
   for (const s of [-1, 1]) {
-    B.add(s < 0 ? gRBox(0.05, 0.012, 0.035, 0.005, 1) : gRBox(0.05, 0.014, 0.04, 0.006, 1), M4.trs(x0 + 0.03 * s, 0.478, -0.27), s < 0 ? SEATMAT.buckle : { c: '#7d828a', r: 0.4 });   // w36 (w35a-3): the V and light buckles below every pillow (y_47300 shows none) -> nearer the crease, shorter, a grey cover   // w25 (w24b-5): the light covers dominated the pans head-on
-    B.add(gBox(0.045, 0.004, 0.19), M4.trs(x0 + 0.105 * s, 0.476, -0.185, s * 30 * DEG), s < 0 ? SEATMAT.yBelt : { ...SEATMAT.yBelt, c: '#262c48' });   // w10 B: teal tongue strap, navy buckle strap (y_47303)
+    B.add(s < 0 ? gRBox(0.05, 0.012, 0.035, 0.005, 1) : gRBox(0.05, 0.014, 0.04, 0.006, 1), M4.trs(x0 + 0.012 * s, 0.478, -0.20), s < 0 ? SEATMAT.buckle : { c: '#5d6168', r: 0.4 });   // w37 (w37a-3): the V and two light blocks still on every q15 pan -> tucked under the pillow foot, darker cover   // w36 (w35a-3): the V and light buckles below every pillow (y_47300 shows none) -> nearer the crease, shorter, a grey cover   // w25 (w24b-5): the light covers dominated the pans head-on
+    B.add(gBox(0.045, 0.004, 0.14), M4.trs(x0 + 0.07 * s, 0.476, -0.135, s * 30 * DEG), s < 0 ? SEATMAT.yBelt : { ...SEATMAT.yBelt, c: '#262c48' });   // w10 B: teal tongue strap, navy buckle strap (y_47303)
   }
   // w33: the pan-front stiffener (r2 light grey, w14 shadowed) is gone - the dark tray closes the pan base and a separate
   // dark slab read as a bar under every pan (e10 / e11)
@@ -379,9 +379,13 @@ function econUnit(n, lod = false, opts = {}) {
 // w36 (w35a-2 / w35b-3, far rows snowy for three rounds): beyond the LOD switch the photo tiles alias into white snow; the
 // far LOD takes each fabric's mean colour (the photoBase source hex, x0.92 for the darker tile mean) on the low-contrast
 // generic weave layer [D]
-const ECON_FAR = new Map([[SEATMAT.yFabric, '#57628a'], [SEATMAT.yFabricB, '#57629a'], [SEATMAT.yFabricC, '#4f5b82'], [SEATMAT.yFabricD, '#3e4763'],
-  [ECON_PAN, '#454d72'], [ECON_PAN_B, '#3f4465'], [ECON_PAN_C, '#3f466b'], [ECON_HEAD_L, '#5d6a95'], [ECON_HEAD_D, '#3f486a']]);
-const econFarMat = (m) => ECON_FAR.has(m) ? { c: ECON_FAR.get(m), r: 0.9, l: LAYER.fabric } : m;
+// w38 (w37b-1): far box L134 B/R 1.31 vs y_47300 112 / 1.48 -> ~10 % darker, bluer
+const ECON_FAR = new Map([[SEATMAT.yFabric, '#4c5682'], [SEATMAT.yFabricB, '#4c5690'], [SEATMAT.yFabricC, '#46507a'], [SEATMAT.yFabricD, '#3e4763'],
+  [ECON_PAN, '#454d72'], [ECON_PAN_B, '#3f4465'], [ECON_PAN_C, '#3f466b'], [ECON_HEAD_L, '#52608c'], [ECON_HEAD_D, '#3f486a']]);
+// w38 (w37a-1 / w37b-1): the flat mean colours read as plain royal-blue blocks once the switch moved to ~4.3 m (the near
+// rows of y_47300 are mottled); the far LOD keeps each fabric's photo tile (the shader eases its contrast with distance)
+// on a base ~15 % darker in linear light (far box L134 vs 112) [D]
+const econFarMat = (m) => ECON_FAR.has(m) ? { ...m, c: '#' + hexRGB(m.c).map((v) => Math.round(v * 0.92).toString(16).padStart(2, '0')).join('') } : m;
 function econUnitFar(n, rot = 0) {
   const B = new Builder();
   const sp = ECON.sp;
