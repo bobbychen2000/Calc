@@ -101,7 +101,7 @@ def footwell_walls():
         def cubby(P):                                   # onto the cubby face (it follows the panel face's wrap)
             ay = np.abs(P[:, 1])
             P = P.copy()
-            P[:, 0] = FD.face_x(ay, z_bot(ay) - 0.002) - 0.004 + 0.0002      # (+ the face grid's chords)
+            P[:, 0] = FD.face_x(ay, z_bot(ay) - 0.002) - 0.004 + 0.0004      # (+ the face grid's chords)
             return P, np.broadcast_to([1.0, 0, 0], P.shape).copy()
         out.append(PR.decal(fr, -0.009, -0.0235, 0.009, -0.0180, 0.0, "words", rows=1, cap=1.4, seed=("5v", sg), text="5V DC 3A",
                             nu=4, surf=cubby))

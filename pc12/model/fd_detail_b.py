@@ -934,8 +934,10 @@ def cb_panels(fl):
             # each; the first build's 90 / 120 mm read as long red bars from the crew seats)
             for xp, w, h in ((x0 + 0.20, 0.070, 0.008), (x0 + 0.30, 0.085, 0.009)):
                 # (first-principles A3: printed placards -- a muted red plate with white pseudo-text, one decal)
+                # (a stuck-on placard: 0.4 mm over the lining map -- fit_check 22b / 26: the map's chords against the
+                # lining mesh's put a flush print within 0.1 mm of it)
                 out.append(PR.decal_map(Ml, ul(xp), vl(zs - 0.5 * hs - 0.016), ul(xp + w),
-                                        vl(zs - 0.5 * hs - 0.016 + h), 0.0, "plate", colour="red_dim", ink="white",
+                                        vl(zs - 0.5 * hs - 0.016 + h), 0.0004, "plate", colour="red_dim", ink="white",
                                         rows=1, cap=1.6 if h < 0.0085 else 1.8, seed=("ledge", sg, xp),
                                         text="NO SMOKING" if xp < x0 + 0.25 else "OXYGEN MASK INSIDE"))
             # map light at the slot's forward end (NGX POH 7-19-2: above the CB panels): black bezel ring, lens
@@ -949,7 +951,7 @@ def cb_panels(fl):
             # operating-limitations placard, aft of the slot (black, white strokes) [M] AOPA / P1046409
             Mo = lining_map(sg, x1 - 0.06, x1 + 0.10, zs - 0.06, zs + 0.03, 0.0, step=0.01)
             uo, vo = 0.065, 0.012
-            out.append(PR.decal_map(Mo, uo, vo, uo + 0.085, vo + 0.048, 0.0, "plate", colour="plate_black",
+            out.append(PR.decal_map(Mo, uo, vo, uo + 0.085, vo + 0.048, 0.0004, "plate", colour="plate_black",
                                     ink="white", rows=7, cap=1.5, margin=0.05, fill=0.95, fill2=0.95,
                                     seed=("limits", sg),
                                     text=("OPERATING LIMITATIONS", "THIS AIRPLANE MUST BE OPERATED IN THE",

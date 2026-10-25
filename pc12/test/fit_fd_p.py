@@ -1,7 +1,7 @@
 """First-principles flight deck checks (34-35), run by test/fit_check.py after fit_fd_a / fit_fd_b (or standalone:
 python3 test/fit_fd_p.py builds the interior alone).
 
-34. printed legends ON the surface (part A3): every vertex / face centre of a 'legend_print' decal lies within 0.7 mm
+34. printed legends ON the surface (part A3): every vertex / face centre of a 'legend_print' decal lies within 0.8 mm
     of another interior surface (fd_print.LIFT 0.15 mm, LIFT_MAP 0.25 on curved maps, the surfaces' own chords) -- none
     floats; fit_check 26 (no coplanar overlaps of different materials) keeps every print off its panel's plane
 35. knife edges: the open (unwelded) boundary edges of the flight deck's own meshes (parts flight_deck, fd_consoles,
@@ -63,8 +63,8 @@ if LEG:
     for k0 in range(0, len(ei), 200000):
         e_, t_ = ei[k0:k0 + 200000], ti[k0:k0 + 200000]
         np.minimum.at(d, e_, pt_tri_k(P[e_], T[t_][:, None]))
-    bad = d > 7e-4
-    report("34 printed legends on their surfaces (<= 0.7 mm off, every vertex / face centre)", not bad.any(),
+    bad = d > 8e-4
+    report("34 printed legends on their surfaces (<= 0.8 mm off, every vertex / face centre)", not bad.any(),
            f"{len(LEG)} decal meshes, {len(P)} points: {d.min() * 1000:.2f}-{d.max() * 1000:.2f} mm, median "
            f"{np.median(d) * 1000:.2f}; {int(bad.sum())} outside" + ("" if not bad.any() else
                                                                      f" (worst at {np.round(P[np.argmax(d)], 3)})"))
