@@ -472,6 +472,8 @@ Rater issues (L9):
   - Thin dark-line share q13 0.91 -> 0.73 % (target >= 1.5: not met; the ghost-outline fix above took the far taps that
     made part of it), q14 0.58 -> 0.66 % (>= 1.5: not met); q09 p5 34 -> 32 (>= 32); q15 4.10 -> 4.03, q16 3.14 -> 3.08 (+-0.5);
     no halo on the wall behind the q13 / q14 headrests (kR is 1 there).
+  - Frame time at Sharp (time2.js, SwiftShader, 930 x 575, 6 frames each, before -> after): q06 9930 -> 9714 ms (-2.2 %), q16
+    8672 -> 8732 (+0.7 %), q13 12330 -> 12496 (+1.3 %) (target within +2 %).
   - The gap is geometry (no cm-scale gaps at the PY seat joints): handed to py / room in from_integration.md (lighting run
     2, L9).
 - integration low, Dining seat level too saturated: not changed; question 12 in questions_lighting.md. The raters' lowTint
