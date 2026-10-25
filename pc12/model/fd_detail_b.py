@@ -878,6 +878,7 @@ def cb_panels(fl):
                 rows = _row_layout(0.0, z1 - z0, nrow)
                 du = (pb - pa) / ncol
                 legends, white, strips, cells, labels = [], [], [], [], []
+                names = PR.cb_names(("cb", sg, round(pa, 3)), len(rows) * ncol)    # each breaker named once a panel
                 for r, (vk, (l0, l1), (g0, g1)) in enumerate(rows):
                     if glow[r] == "blue":
                         g1 = g0 + CB["band_blue"]
@@ -894,7 +895,8 @@ def cb_panels(fl):
                     labels.append(PR.decal_map(M, u(pa) + 0.004, b0 + l0 - 0.0006, u(pb) - 0.004, b0 + l1 + 0.0006,
                                                pp + (0.0006 if lab == "light" else 0.0005), "cells", ncol=ncol, rows=2,
                                                colour="black" if lab == "light" else "white", lw=0.3,
-                                               seed=("cb", sg, round(pa, 3), r)))
+                                               seed=("cb", sg, round(pa, 3), r),
+                                               names=tuple(names[r * ncol:(r + 1) * ncol])))
                     for c in range(ncol):
                         uc = u(pa) + (c + 0.5) * du
                         P, Nn = M.frame(uc, b0 + vk)
@@ -1080,6 +1082,61 @@ OVH_SWITCHES = ((("FUEL", "PUMP LH"), ("AUTO",)), (("FUEL", "PUMP RH"), ("AUTO",
                 (("LANDING",), ("ON",)), (("PULSE", "RECOG"), ("ON",)))
 
 
+def _ovh_captions(O, X, Y, hwi):
+    """The overhead switches' captions (two lines) and position words, placed so that none overlaps another print, a
+    title, a switch's footprint or its thrown lever (first-principles judge FPF-06: 'EXT PWR' had been printed over
+    BUS TIE's position word, BAT 2 / BUS TIE ran into their switches, and the 22 mm captions overlapped on the 19 mm
+    rows).  In plate mm (x to starboard, y aft); each caption tries the side away from its lever's throw first, then
+    the other, narrowed to its row spacing; a position word that fits nowhere is left out."""
+    sw = list(O["toggles"]) + list(O["paddles"])
+    pts = [(X(fs), Y(fa)) for fs, fa in sw]
+    nt = len(O["toggles"])
+    throw = [math.copysign(1.0, O["toggle_throw"][k % len(O["toggle_throw"])]) if k < nt else 1.0
+             for k in range(len(sw))]
+    keep = []                                                   # (x0, y0, x1, y1) occupied
+    for k, (x, y) in enumerate(pts):                            # switch footprints: the bushing, the lever's throw
+        keep.append((x - 7.0, y - 7.0, x + 7.0, y + 7.0))
+        keep.append((x - 4.5, min(y, y + throw[k] * 12.0), x + 4.5, max(y, y + throw[k] * 12.0)))
+    for fs, fa, _m in O["squares"]:
+        keep.append((X(fs) - 11.0, Y(fa) - 11.0, X(fs) + 11.0, Y(fa) + 11.0))
+    for fs, fa, wfr in O["titles"]:
+        keep.append((X(fs) - 1000 * wfr * hwi, Y(fa) - 3.5, X(fs) + 1000 * wfr * hwi, Y(fa) + 3.5))
+
+    def free(b):
+        return all(b[2] <= c[0] or c[2] <= b[0] or b[3] <= c[1] or c[3] <= b[1] for c in keep)
+
+    out = []
+    for k, (x, y) in enumerate(pts):
+        nm = OVH_SWITCHES[k % len(OVH_SWITCHES)]
+        same = [abs(x2 - x) for j, (x2, y2) in enumerate(pts) if j != k and abs(y2 - y) < 12.0]
+        half = min(11.0, 0.5 * min(same) - 1.5) if same else 11.0
+        placed = None
+        for side in (-throw[k], throw[k]):
+            for h0 in (12.0, 15.0, 18.0):
+                cap = (x - half, min(y + side * h0, y + side * (h0 + 9.0)), x + half,
+                       max(y + side * h0, y + side * (h0 + 9.0)))
+                if free(cap):
+                    placed = (cap, side)
+                    break
+            if placed:
+                break
+        if placed is None:                                       # the narrowest, nearest box on the far side
+            cap = (x - half, min(y - throw[k] * 12.0, y - throw[k] * 21.0), x + half,
+                   max(y - throw[k] * 12.0, y - throw[k] * 21.0))
+            placed = (cap, -throw[k])
+        cap, side = placed
+        keep.append(cap)
+        out.append(("words", cap[0], cap[1], cap[2], cap[3], 2, 1.7 * min(1.0, half / 11.0) ** 0.5, ("ovs", k), nm[0]))
+        for h0 in (15.0, 18.0, 12.0):                             # the position word on the lever's side
+            hw_ = min(8.0, half)
+            pw = (x - hw_, min(y - side * h0, y - side * (h0 + 5.0)), x + hw_, max(y - side * h0, y - side * (h0 + 5.0)))
+            if free(pw):
+                keep.append(pw)
+                out.append(("words", pw[0], pw[1], pw[2], pw[3], 1, 1.6, ("ovo", k), nm[1]))
+                break
+    return out
+
+
 def overhead_panel():
     from cad.mesh import cylinder, superellipsoid, box
     from model import flightdeck as FD
@@ -1139,10 +1196,7 @@ def overhead_panel():
             w = 1000 * wfr * 2 * hwi
             prims.append(("words", X(fs) - 0.5 * w, Y(fa) - 3.0, X(fs) + 0.5 * w, Y(fa) + 3.0, 1, 2.6, ("ovt", k_),
                           (OVH_TITLES[k_ % len(OVH_TITLES)],)))
-        for k_, (fs, fa) in enumerate(O["toggles"] + O["paddles"]):   # switch captions: two lines aft of the switch
-            nm = OVH_SWITCHES[k_ % len(OVH_SWITCHES)]
-            prims.append(("words", X(fs) - 11.0, Y(fa) + 13.0, X(fs) + 11.0, Y(fa) + 22.0, 2, 1.7, ("ovs", k_), nm[0]))
-            prims.append(("words", X(fs) - 8.0, Y(fa) - 21.0, X(fs) + 8.0, Y(fa) - 16.0, 1, 1.6, ("ovo", k_), nm[1]))
+        prims += _ovh_captions(O, X, Y, hwi)
         fr_ = FD.Fr(f.o, -f.v, f.u, f.w)
         out.append(PR.decal(fr_, -0.5 * W2, -0.5 * H2, 0.5 * W2, 0.5 * H2, -O["recess"] + PR.LIFT, "vector",
                             prims=tuple(prims)))

@@ -170,9 +170,8 @@ async function init(gltf, matSpec) {
     const caps = stage.picture.caps;
     live = prepareLiveAtlas(gltf, { scale: liveScale({ low: stage.quality.low, software: caps.software, maxSize: caps.maxSize }) });
   } catch (e) { console.warn('live displays unavailable:', e); live = null; }
-  // the crew seats' shell fur: 8 layers on the low quality tier (phones), 20 elsewhere (materials.js FUR, ?furN=; 14 until
-  // the first-principles judge r1 FP1-02: the taller pile's layers terraced at the silhouettes from the cabin)
-  model = new Model(gltf, meta, { materials: matSpec, fur: FUR.on ? (FUR.n || (stage.quality.low ? 8 : 20)) : 0 });
+  // the crew seats' shell fur: 8 layers on the low quality tier (phones), 14 elsewhere (materials.js FUR, ?furN=)
+  model = new Model(gltf, meta, { materials: matSpec, fur: FUR.on ? (FUR.n || (stage.quality.low ? 8 : 14)) : 0 });
   // part cards: the triangle counts of the GLB this page loaded (the light tier on phones: its node extras)
   for (const b of meta.bom) { const r = model.part(b.id); if (r && r.ex.tris != null) b.tris = r.ex.tris; }
   stage.scene.add(model.root);

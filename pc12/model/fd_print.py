@@ -283,6 +283,14 @@ CB_VOCAB = ("PFD 1|PFD 2|MFD|GTC 1|GTC 2|AHRS 1|AHRS 2|ADC 1|ADC 2|COM 1|COM 2|N
             "FIRE DET|HORN|CAUT|WARN|STBY ATT|CLOCK|USB|12V|LAV|GALLEY").split("|")
 
 
+def cb_names(key, n):
+    """n breaker names for one CB panel, each used once (first-principles judge FPF-05: drawn per cell, names repeated
+    within a row); a fixed shuffle of CB_VOCAB keyed by the panel."""
+    rng = np.random.default_rng(zlib.crc32(repr(key).encode()))
+    idx = rng.permutation(len(CB_VOCAB))
+    return [CB_VOCAB[idx[i % len(idx)]] for i in range(n)]
+
+
 def text_for(kw, rows, rng):
     """The rows of a print: kw['text'] (a str or a tuple of rows) when given, else generic placard words."""
     t = kw.get("text")
@@ -523,7 +531,9 @@ def _draw(cell):
                 cv.seg((c * cw, 0), (c * cw, H), 0.5 * lw_)
         for c in range(ncol):
             sub = _Canvas(int(round(cw * ppm)), cell["h"], ppm)
-            _words(sub, cw, H, dict(kw, rows=1, cb=True, fill=0.86, seed=(kw.get("seed"), c)))
+            nm = kw.get("names")          # the breakers' own names (unique on a panel), else drawn from CB_VOCAB
+            _words(sub, cw, H, dict(kw, rows=1, cb=True, fill=0.86, seed=(kw.get("seed"), c),
+                                    **({"text": nm[c]} if nm else {})))
             X0 = int(round(c * cw * cv.k))
             hh, ww = sub.a.shape
             ww = min(ww, cv.w - X0)
