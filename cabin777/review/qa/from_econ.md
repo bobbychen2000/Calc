@@ -94,3 +94,11 @@
 - **Seat-level lift (w34a / w34b, both raters):** foreground pans L97-108 against L78-93 in y_47300 (15-25 % light).
   Carried from w31b-8 / w32b-6.
 - **Far-row snow:** carried (see w31).
+
+## w36 (wave 3g, final) to lighting / integration
+- **Mid-row snow (medium, both raters, four rounds):** the q15 / q16 mid rows (3-8 rows back) are inside the 9.5 m seat
+  LOD switch (`updateSeatLOD`, `12_scene.js` near 9.5), so they render the photo tiles, which alias to white snow (q15
+  band L98 vs 92, p90/p10 3.5 vs 5.9, B/R 1.33 vs 1.48). Econ's far LOD now carries flat per-fabric mean colours
+  (`econFarMat`, eb4c09f). Either fade the photo-layer albedo contrast with distance (~4-8 m), or give econ groups a nearer
+  switch (`nearK` ~0.5, ~5 m). Integration's call; econ's far geometry is ready for either.
+- **Cover off-axis:** q17 covers #313e73 vs y_47303 #808fb2 (rater A w36a-2); the SHEEN lobe could be stronger at grazing.

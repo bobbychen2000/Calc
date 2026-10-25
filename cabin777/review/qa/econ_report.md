@@ -397,3 +397,60 @@ was raised in any round. Shipped: w32 minus the filler (a revert to the w31-rate
   covers still short of the off-axis level (q16 L67 vs 108).
 
 Before/after sheet: `econ_before_after_w3f.jpg` (own renders only: w29 vs final; q15, q16, q17, e4, e1).
+
+## Wave 3g (2026-10-25): geometry focus (pan / front, under-seat, far rows)
+
+Started on 2d42289 (wave 3f final). Rater A had held at 8.0 for about eight rounds while the work went into the fabric
+tiles, and A's lowest w32 details were geometry. This wave ran one fresh calibrated round plus a gap analysis (w33,
+`econ_gap33.json`), then three fix rounds (w34-w36), the cap of four.
+
+| round | rater A | rater B | mean | note |
+|---|---|---|---|---|
+| w33 (2d42289, baseline) | 7.8 | 8.1 | 7.95 | under-seat and pan front measured closely for the first time; joints 8-13 px again without the filler |
+| w34 (8ee9c1c) | 8.0 | 8.2 | 8.1 | pan rebuilt (square in plan, 3 cm front roll), dark under-seat, tube legs, half-disc pouch, far LOD extras |
+| w35 (6df71f4) | 8.1 | 8.3 | 8.2 | joints closed (2-4 px vs 2), cover foot 3 cm higher (question 24), aisle-end plate under the arm |
+| w36 (eb4c09f) | 8.2 | 8.4 | 8.3 | **best round of any wave**; cover 0.22 wide (1.03x head-on), far fabrics flat, belts shorter |
+| final (this commit) | - | - | - | w36 with the pouch recoloured cool smoky grey (w36a-5 / w36b-2: the w36 brown core read as a bowl) |
+
+The 8.5 target was not reached. B gives 8.5 or more to armrests (8.8), headrest pad + cover (8.7), seat pan / front (8.7),
+diamond (8.5) and fabric mix (8.5); A to fabric mix (8.6), pan / front (8.5). No high-severity issue in any round.
+
+Detail moves w33 -> w36 (A / B): pan / front 7.6 / 7.8 -> 8.5 / 8.7; legs / under-seat 7.0 / 7.4 -> 8.3 / 8.2; headrest
+pad + cover 7.9 / 7.8 -> 8.4 / 8.7; armrests 7.8 / 8.6 -> 8.3 / 8.8; far rows 7.5 / 7.6 -> 7.5 / 7.7 (unchanged).
+
+### What changed in wave 3g
+- **Pan (gap33-2, w33a-3, w33b-1/2, w34a-1):** a custom loft replaces `cushionSecs` (5 cm roll on all four sides opened
+  a ~0.13 m V between neighbours, the dark joints). 0.478 wide, square in plan, 1.0 cm side roll, 3.2 cm front roll over a
+  near-vertical fabric face, 8.5 cm thick, bottom tuck, 5 deg. No filler. Sources: sans 13 / 18, y_47302, y_47300.
+- **Under-seat (gap33-1, w33a-1):** dark tray #2c2f35 closing the pan base, side beams and spreader tubes dark metal
+  #3a3d44, pan-front stiffener removed (y_47302 #222631 under the pan, sans 13 / 23 near-black). Baggage bar stays silver.
+- **Legs (gap33-3):** slim round silver tubes (rear post, raked front strut, floor rail) with dark track fittings
+  (y_47303 aisle feet, sans 23). Cheaper than the old boxes.
+- **Life-vest pouch (w33a-2, w33b-3):** a flat half-disc hanging face-forward, tipped 25 deg, with a red strap and blue tag;
+  final colour cool smoky grey with a dark vest core (y_47302 crop).
+- **Electronics box:** light grey #c8cacc with a dark display and blue LED, hanging from the tray just behind the pan face.
+  The under-seat SEB box is charcoal.
+- **Headrest cover (question 24):** foot 3 cm higher (h/w 0.88 -> 0.70 vs 0.72 in y_47300; the real head-on sans 13 also
+  ends it at the pad foot), then 0.245 -> 0.22 wide (both raters 1.15-1.17x -> 1.03x). Hem, foot tube, stitch, mark and
+  the far cover follow.
+- **Arms:** aisle-end lower plate ~8 cm deep (was 13) and 4.5 cm higher, so it meets the arm (3-5 px gap vs 2-8).
+- **Belts:** buckle nearer the crease, strap 0.19 at 30 deg, grey buckle cover #7d828a.
+- **Pans colour:** tick #4b537a, diamond #44496b, mosaic #444c72.
+- **Far LOD:** new pan box, dark under-pan block, baggage bar, arm plates (grey; white on block ends), box pillow, and flat
+  per-fabric mean colours on the generic weave layer (`econFarMat`).
+- **Studio:** `review/spec_econ.json` gains e10_under and e11_panedge.
+- **Triangles:** econ3 28,955 -> 28,545, econ4 38,012 -> 37,556 (the tube legs are cheaper than the boxes); far3 1,716 ->
+  1,824, far4 2,284 -> 2,416 (+6 %).
+
+### Still open (w36a / w36b)
+- **Mid / far rows snowy, no dark row gaps (medium, both, four rounds):** q15 band L98 vs 92, 2.9 % of pixels below L50 vs
+  13 %. These rows sit inside the 9.5 m LOD switch, so the flat far fabrics never reach them. Lighting / integration call:
+  fade the photo-tile contrast with distance (4-8 m), or switch econ to the far LOD from ~5 m (`from_econ.md`).
+- **Cover off-axis (medium, A):** navy in q17 (#313e73) vs silver-grey in y_47303 (#808fb2); sheen lobe strength (lighting).
+- **Pans a step blue after the lighting snapshot 69d3b46** (B/R 1.99-2.08 vs 1.74-1.87); tick pan contrast 2.9 vs 4.7.
+  The colour moved with the lighting in each of the last three rounds, so it is left until lighting settles.
+- **Low, carried:** belts still read as a V head-on (y_47303 shows webbing on the pan, y_47300 none), pillow a flat plaque,
+  fleck specks haloed, aisle-end member not one J bracket, tray / pocket.
+
+Before/after sheet: `econ_before_after_w3g.jpg` (own renders only: w33 2d42289 vs w36 eb4c09f; q15, q16, q17, e10, e11,
+e1, e4).

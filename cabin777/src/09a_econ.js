@@ -182,8 +182,8 @@ function econSeat(B, x0, lod, opts = {}) {
   // ~0.15-0.18 m discs under each seat) [D]
   // w33 (w33a-2 / gap33-4, y_47302 crop): a flat smoky see-through half-disc (~0.19 wide) hanging face-forward, tipped
   // ~25 deg nose-down (w33b-3) under the seat, the vest a darker core inside, a red strap with a blue tag folded down its face (was an opaque puck) [V]
-  B.add(gCyl(0.095, 0.095, 0.012, 14, true, 0, Math.PI), M4.trs(x0 + 0.03, 0.235, -0.36, 0, Math.PI / 2 - 25 * DEG), { c: '#5a5560', r: 0.12 });   // w36 (w35a-4): a pale rim round a black core read as a gauge -> smoky, the vest showing through; w34b-2: read opaque near-black
-  B.add(gCyl(0.08, 0.08, 0.016, 12, true, 0, Math.PI), M4.trs(x0 + 0.03, 0.232, -0.36, 0, Math.PI / 2 - 25 * DEG), { c: '#4a3b35', r: 0.4 });
+  B.add(gCyl(0.095, 0.095, 0.012, 14, true, 0, Math.PI), M4.trs(x0 + 0.03, 0.235, -0.36, 0, Math.PI / 2 - 25 * DEG), { c: '#5c5f68', r: 0.12 });   // final (w36a-5 / w36b-2): a brown bowl -> cool smoky grey (y_47302 #43444d), thin rim round a dark cool vest; w36 (w35a-4): a pale rim round a black core read as a gauge -> smoky, the vest showing through; w34b-2: read opaque near-black
+  B.add(gCyl(0.085, 0.085, 0.016, 12, true, 0, Math.PI), M4.trs(x0 + 0.03, 0.232, -0.36, 0, Math.PI / 2 - 25 * DEG), { c: '#3a3c44', r: 0.3 });
   B.add(gBox(0.018, 0.075, 0.004), M4.trs(x0 + 0.035, 0.20, -0.372, 0, -25 * DEG), { c: '#c8252b', r: 0.5 });
   B.add(gBox(0.02, 0.012, 0.005), M4.trs(x0 + 0.035, 0.225, -0.375, 0, -25 * DEG), { c: '#2f5fb0', r: 0.5 });
   if (!opts.noScreen) {
