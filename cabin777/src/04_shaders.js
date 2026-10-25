@@ -38,7 +38,7 @@ uniform vec4 u_spotP[8]; uniform vec4 u_spotT[8]; uniform vec3 u_spotCol;
 uniform vec4 u_stripP[8]; uniform vec4 u_stripA[8]; uniform vec3 u_stripCol;
 uniform vec4 u_scrP[6]; uniform vec4 u_scrN[6]; uniform vec3 u_scrCol; uniform float u_fillLift; uniform vec3 u_lensCore; uniform vec2 u_vaultE;
 uniform sampler2D u_scrMask; uniform vec4 u_scrMaskR; uniform float u_scrOff; uniform vec4 u_scrOwn; uniform float u_binLo; uniform float u_monHemi;
-uniform float u_tubWash; uniform vec3 u_binLift; uniform vec3 u_hemiBotN; uniform vec3 u_washN; uniform vec2 u_tubSky; uniform float u_ctrLo;
+uniform float u_tubWash; uniform vec3 u_binLift; uniform vec3 u_hemiBotN; uniform vec3 u_washN; uniform vec2 u_tubSky; uniform float u_ctrLo; uniform float u_ctrLift;
 uniform sampler2D u_sDepth; uniform vec4 u_sRes; uniform vec4 u_sProj; uniform vec3 u_sFwd; uniform vec3 u_sRight; uniform vec3 u_sUp; uniform vec4 u_ssao; uniform float u_sDither; uniform float u_sMix; uniform float u_sAng;
 uniform sampler3D u_ao; uniform vec3 u_aoMin; uniform vec3 u_aoSize; uniform sampler2D u_contact; uniform vec4 u_contactR; uniform float u_contactK;
 uniform sampler2DArray u_detail; uniform vec4 u_layer[${N_LAYERS}]; uniform sampler2DArray u_photo; uniform float u_photoOn;
@@ -151,8 +151,8 @@ vec3 coveSpec(vec3 P, vec3 N, vec3 V, vec3 R, float rough, vec3 F0, float NdV){
   return s;
 }
 // QA L8 (integration): small-radius screen-space AO from a depth pre-pass (12_scene render, u_sDepth): 8 taps on a disc of
-// u_ssao.x m (0.05) at the fragment's depth, a golden-angle spiral (u_sDither 1 turns it per 2 x 2 pixel block; 0, the
-// default: one pattern, no dot texture); each tap is put back in world space (u_sProj = proj[0], [5], [10], [14]; u_sFwd /
+// u_ssao.x m (0.05) at the fragment's depth, a golden-angle spiral (u_sDither 1, QA L9: turned per pixel by interleaved
+// gradient noise; 0: one fixed pattern); each tap is put back in world space (u_sProj = proj[0], [5], [10], [14]; u_sFwd /
 // Right / Up = camera basis) and occludes by the angle of its point over the fragment's face plane (Nf, from the position
 // derivatives: the true triangle plane, so a flat face never self-occludes), less a 6 mm bias and an angle bias u_sAng
 // (0.25: the facets of coarse curved lofts, e.g. the window tubs, drew dark seams at 0), faded out over 0.05-0.10 m
@@ -160,13 +160,21 @@ vec3 coveSpec(vec3 P, vec3 N, vec3 V, vec3 R, float rough, vec3 F0, float NdV){
 // The pre-pass is full size: at half size the snapped taps drew half-res stair steps on the bin faces (fixL8 f1). The 8 cm AO volume and the floor contact map cannot hold the cm-scale dark lines at shell edges,
 // cushion-to-shell gaps, panel splits and seat bases that outline every unit in the photos [V: thin dark-line share
 // q13 0.55 vs py_37302 2.77 %, q06 1.81 vs c_27312 4.77, q05 0.89 vs f_17313 2.21] (integration L8 medium) [D]
-float ssaoF(vec3 P, vec3 Nf){
+// QA L9 (integration medium): the one fixed spiral printed each occluder 1-10 cm in front of a surface as stepped, offset
+// copies of its outline (every tap on it took the ambient to 0.25x): beside the THE Suite bulkhead monitor L145-180 -> 54-80,
+// above the THE Room headrest flap L83-103 -> 29-50, where the photos show the wall clean and a soft shade [V: omaat_f13
+// monitor surround, c_27315 flap; integ6 halo_cmp / mon_halo / q10_zoom]. Now the disc turns per pixel (interleaved
+// gradient noise) and the range weight falls from the contact point, (1 - dl / range)^2 (a part 5 cm off a 0.10 m range
+// counts 0.25 of a contact tap), strength 6 -> 4 (12_scene LIGHT_TUNE.ssao) [D fixL9]. kR scales the disc and the range
+// (QA L9, lighting low: 1.5 low in the PY / economy legroom, see mainFS)
+float ssaoF(vec3 P, vec3 Nf, float kR){
   float dep = dot(P - u_camPos, u_sFwd);
-  vec2 ruv = u_sProj.xy * (0.5 * u_ssao.x / max(dep, 0.05));
+  vec2 ruv = u_sProj.xy * (0.5 * u_ssao.x * kR / max(dep, 0.05));
+  float rng = u_ssao.w * kR;
   float px = ruv.y * u_sRes.y;                              // disc radius in pixels
   if (px < 2.0) return 0.0;                                 // far: the disc is under ~2 px
   vec2 uv0 = gl_FragCoord.xy / u_sRes.xy;
-  float a0 = u_sDither * 0.7854 * (mod(gl_FragCoord.x, 2.0) + 2.0 * mod(gl_FragCoord.y, 2.0)) + 0.39;
+  float a0 = u_sDither * 6.2832 * fract(52.9829 * fract(dot(gl_FragCoord.xy, vec2(0.06711, 0.00584)))) + 0.39;
   float occ = 0.0;
   for (int i = 0; i < 8; i++) {
     float fi = float(i);
@@ -179,7 +187,7 @@ float ssaoF(vec3 P, vec3 Nf){
     vec2 nd = uv * 2.0 - 1.0;
     vec3 v = u_camPos + z * (u_sFwd + nd.x / u_sProj.x * u_sRight + nd.y / u_sProj.y * u_sUp) - P;
     float dl = length(v);
-    occ += clamp(((dot(v, Nf) - u_ssao.z) / max(dl, 1e-3) - u_sAng) / (1.0 - u_sAng), 0.0, 1.0) * (1.0 - smoothstep(0.5 * u_ssao.w, u_ssao.w, dl));
+    occ += clamp(((dot(v, Nf) - u_ssao.z) / max(dl, 1e-3) - u_sAng) / (1.0 - u_sAng), 0.0, 1.0) * pow(1.0 - clamp(dl / rng, 0.0, 1.0), 2.0);
   }
   return occ * 0.125 * smoothstep(2.0, 4.0, px);
 }
@@ -390,7 +398,12 @@ void main(){
     float coolW = max((1.0 - smoothstep(0.06, 0.25, xLin - abs(v_wpos.x))) * facingIn, max(recd, 0.5 * binO));
     hBot = mix(u_hemiBotN, u_hemiBot, coolW);
     vec3 wsh = mix(u_washN, u_wash, coolW);
-    vec3 hemi = mix(hBot + u_binLift * max(binO, cBin) * mix(1.0, 0.25, smoothstep(0.85, 0.98, down)), u_hemiTop, up);
+    // QA L9 (light): the centre bins' doors take u_ctrLift x the lift (12_scene MOODS ctrLift: 3 in Dining / Sunrise, 1
+    // elsewhere, where binLift is 0 anyway). One lift for both reached the outboard doors' photo level first: seen from a
+    // seat the centre-bin faces stayed ~30 L under it [V: ucr_the-room-cabin centre-bin doors #c79352 L154 s0.59 vs dd
+    // #a3773f L125 s0.61; d06 centre L113 vs outboard L147]; a uniform x2 took the d06 outboard doors to L161 (photos L154)
+    // [D L9rate t: x3.2 centre-only dd 144, d06 143, PSU band / outboard / q21 unchanged] (lighting L9 medium)
+    vec3 hemi = mix(hBot + u_binLift * max(binO, u_ctrLift * cBin) * mix(1.0, 0.25, smoothstep(0.85, 0.98, down)), u_hemiTop, up);
     // QA r1 (light): sz = 1 where an outboard bin and its lens stand (08_bins builds them in the seat zones only), from
     // the zone row of the window LUT. The lens band, its colour and the bin overhang shade stop at the door, galley and
     // lav zones, which stay neutral white [V: sany_10 band #525d94 under the bins while the door-3 / monument zone
@@ -474,9 +487,15 @@ void main(){
     // QA r4 (light): Blue mood (u_monHemi 0.4): the door / galley / lav zones (sz = 0) lose most of the blue hemi (and wash) and keep
     // their warm monFill [V: sany_47 galley / door end #564a4d h346 s0.14, door zone ~#776349 under the blue cove lines
     // vs bl16 #393e6f h235] (lighting r4 low); 1 elsewhere
-    hemi *= mix(1.0, u_monHemi, 1.0 - sz); bounce *= mix(1.0, u_monHemi, 1.0 - sz);
+    // QA L9 (light): except the aft-facing THE Suite front wall (10_mono inkWall at z 7.40, in the door-1 zone just ahead of
+    // u_fZone.x 7.52), which faces into the suite cabin and takes its blue light: it read neutral grey-mauve [V: ml_DSC_1946
+    // bulkhead #4f3d71 L69 s0.46 / #3c3ec5 s0.70 vs blueF03 #463d49 L64 s0.17] while the economy galley ends stay warm
+    // [V: sany_47 #73606a vs bl16 #6a6071] (lighting L9 low)
+    float fWall = step(0.5, N.z) * smoothstep(u_fZone.x - 0.8, u_fZone.x - 0.2, v_wpos.z) * (1.0 - smoothstep(u_fZone.x, u_fZone.x + 0.1, v_wpos.z));
+    float monK = mix(1.0, u_monHemi, (1.0 - sz) * (1.0 - fWall));
+    hemi *= monK; bounce *= monK;
     amb = (hemi * (u_aoTune.x + (1.0 - u_aoTune.x)*ao) + bounce * u_aoTune.y) * binShade * (1.0 - band) * binK
-        + wsh * lt * wallProx * (0.35 + 0.65*facingIn) * smoothstep(0.3, 1.25, v_wpos.y) * (0.45 + 0.55*ao) * noDown * (1.0 - bandW) * mix(1.0, u_monHemi, 1.0 - sz)
+        + wsh * lt * wallProx * (0.35 + 0.65*facingIn) * smoothstep(0.3, 1.25, v_wpos.y) * (0.45 + 0.55*ao) * noDown * (1.0 - bandW) * monK
         + u_sideLed * u_sideWall * lensW * facingIn * mix(u_sideLow, 1.0, smoothstep(0.95, 1.55, v_wpos.y)) * smoothstep(0.35, 0.8, v_wpos.y)
                     * (1.0 - smoothstep(1.95, 2.1, v_wpos.y)) * noDown * nearPane
         + u_winGlow * wallProx * facingIn * smoothstep(0.7, 1.1, v_wpos.y) * (1.0 - smoothstep(1.5, 1.8, v_wpos.y)) * 0.5 * (1.0 - band)
@@ -548,7 +567,13 @@ void main(){
     // the q09 darks fell under the photo's (p5 36 -> 25 vs c_27314 36; 0.02-0.3: 30; 0.1-0.45: 35 but the q06 / q13 lines
     // fell back to 2.7 / 0.8 %) [D fixL8 f2 / f4 / after]
     float sW = u_sMix * (1.0 - smoothstep(1.9, 2.3, v_wpos.y)) * (1.0 - recd) * smoothstep(0.05, 0.4, ao);
-    if (u_ssao.y > 0.0 && sW > 0.01) amb *= mix(1.0, max(1.0 - u_ssao.y * ssaoF(v_wpos, Nf), 0.0), sW);
+    if (u_ssao.y > 0.0 && sW > 0.01) {
+      // QA L9 (light low): disc and range x1.5 (7.5 cm / 0.15 m) below the headrests (0.85-1.05 m) and off the sidewall:
+      // the PY contact darks stayed ~1/3 of the photos' [V: thin dark-line share q13 0.91 vs py_37302 2.77 %, q14 0.58
+      // vs py_37301 3.15 %]; the L8 0.15 range drew grey halos on the wall behind the PY headrests, which keeps x1 [D fixL9]
+      float kR = 1.0 + 0.5 * (1.0 - smoothstep(0.85, 1.05, v_wpos.y)) * (1.0 - wallProx * facingIn);
+      amb *= mix(1.0, max(1.0 - u_ssao.y * ssaoF(v_wpos, Nf, kR), 0.0), sW);
+    }
     // reading lights (night): warm cone from the lamp lens to the seat, 0.35 m pool [V: tlfl_IMG_9377 pools on the bed]
     for (int i = 0; i < 8; i++) {
       if (u_spotP[i].w < 0.5) continue;
