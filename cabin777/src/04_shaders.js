@@ -38,7 +38,7 @@ uniform vec4 u_spotP[8]; uniform vec4 u_spotT[8]; uniform vec3 u_spotCol;
 uniform vec4 u_stripP[8]; uniform vec4 u_stripA[8]; uniform vec3 u_stripCol;
 uniform vec4 u_scrP[6]; uniform vec4 u_scrN[6]; uniform vec3 u_scrCol; uniform float u_fillLift; uniform vec3 u_lensCore; uniform vec2 u_vaultE;
 uniform sampler2D u_scrMask; uniform vec4 u_scrMaskR; uniform float u_scrOff; uniform vec4 u_scrOwn; uniform float u_binLo; uniform float u_monHemi;
-uniform float u_tubWash; uniform vec3 u_binLift;
+uniform float u_tubWash; uniform vec3 u_binLift; uniform vec3 u_hemiBotN; uniform vec3 u_washN;
 uniform sampler2D u_sDepth; uniform vec2 u_sRes; uniform vec4 u_sProj; uniform vec3 u_sFwd; uniform vec3 u_sRight; uniform vec3 u_sUp; uniform vec4 u_ssao; uniform float u_sDither; uniform float u_sMix;
 uniform sampler3D u_ao; uniform vec3 u_aoMin; uniform vec3 u_aoSize; uniform sampler2D u_contact; uniform vec4 u_contactR; uniform float u_contactK;
 uniform sampler2DArray u_detail; uniform vec4 u_layer[${N_LAYERS}]; uniform sampler2DArray u_photo; uniform float u_photoOn;
@@ -363,9 +363,24 @@ void main(){
     // 1.64 / 2.23), see binK below
     float binO = smoothstep(1.30, 1.42, abs(v_wpos.x)) * smoothstep(1.62, 1.7, v_wpos.y) * (1.0 - smoothstep(2.18, 2.22, v_wpos.y)) * sz;
     float cBin = (1.0 - smoothstep(0.95, 1.05, abs(v_wpos.x))) * smoothstep(1.62, 1.70, v_wpos.y) * sz;
-    vec3 hemi = mix(u_hemiBot + u_binLift * max(binO, cBin), u_hemiTop, up);
     float wallProx = smoothstep(1.7, 2.55, abs(v_wpos.x));
     float facingIn = clamp(-sign(v_wpos.x) * N.x, 0.0, 1.0);
+    // QA r2 (light): only faces recessed behind the lining circle (R = u_R - 0.10, 07_shell wallAt) count as the reveal:
+    // at the belt the flat lining itself stands at |x| ~2.92, so the old |x| > 2.72-2.84 test took the whole wall between
+    // the windows for reveal and nearPane kept the cruise lavender off it [V: ml_DSC_1939-1 belt between the windows
+    // #888db0 (B-R +40) vs cF03 #cccccf (+3), the tubs by the glass near-white]
+    float xLin = sqrt(max((u_R - 0.10)*(u_R - 0.10) - (v_wpos.y - u_yc)*(v_wpos.y - u_yc), 0.0));
+    float recd = smoothstep(xLin + 0.004, xLin + 0.02, abs(v_wpos.x));
+    // QA L8 (light): the cool shadow light of the Boarding look (r4: hemiBot / wash cooled for the shaded whites by the
+    // windows) keyed to the window side: the sidewall faces (wallProx x facingIn), the recessed reveals and tubs (recd) and
+    // half of it on the outboard bin doors (binO); the seat level and the rest take the neutral u_hemiBotN / u_washN
+    // (the pre-r4 values; = hemiBot / wash in the other moods). The r4 shift had also cooled the THE Room seat level past
+    // the photo [V: q06 seat zone B-R +11 -> +16 vs c_27312 +8, shell tops +15 -> +23 vs +11; ash door leaves -4 -> +1 vs
+    // c_27314 -4] and the economy bins [V: q15 bins B-R +8 vs y_47300 +0..+2], while the window-side whites are right
+    // (q16 wall +10 vs y_47301 +14) (integration L8 low, lighting L8 medium) [D]
+    float coolW = max(wallProx * facingIn, max(recd, 0.5 * binO));
+    vec3 hBot = mix(u_hemiBotN, u_hemiBot, coolW), wsh = mix(u_washN, u_wash, coolW);
+    vec3 hemi = mix(hBot + u_binLift * max(binO, cBin), u_hemiTop, up);
     // QA r1 (light): sz = 1 where an outboard bin and its lens stand (08_bins builds them in the seat zones only), from
     // the zone row of the window LUT. The lens band, its colour and the bin overhang shade stop at the door, galley and
     // lav zones, which stay neutral white [V: sany_10 band #525d94 under the bins while the door-3 / monument zone
@@ -394,17 +409,12 @@ void main(){
     // r2 weight: applied to all heights it darkened the dense Y block (from_econ w10: q18 hood L166 -> 114)
     float noDown = 1.0 - down;
     float aoW = mix(0.35 + 0.65*ao, 0.5 + 0.5*ao, max(smoothstep(0.2, 0.4, N.y), smoothstep(0.35, 0.75, v_wpos.y)));
-    vec3 bounce = mix(u_hemiBot, u_hemiTop, 0.62) * u_fill * aoW
+    vec3 bounce = mix(hBot, u_hemiTop, 0.62) * u_fill * aoW
                 * mix(0.45, 1.0, up) * mix(mix(0.55, 0.75, noDown), 1.0, smoothstep(0.0, 1.4, v_wpos.y));
     // reveal glow: faces within ~0.12 m of a pane pick up the window light (alpha of the window LUT = window span in z,
     // rgb = shade transmittance) [V: tlfl_IMG_9217 / 9518 glowing reveals]
     vec4 wl = texture(u_win, vec2((v_wpos.z - u_winZ.x)/(u_winZ.y - u_winZ.x), v_wpos.x < 0.0 ? WL : WR));
-    // QA r2 (light): only faces recessed behind the lining circle (R = u_R - 0.10, 07_shell wallAt) count as the reveal:
-    // at the belt the flat lining itself stands at |x| ~2.92, so the old |x| > 2.72-2.84 test took the whole wall between
-    // the windows for reveal and nearPane kept the cruise lavender off it [V: ml_DSC_1939-1 belt between the windows
-    // #888db0 (B-R +40) vs cF03 #cccccf (+3), the tubs by the glass near-white]
-    float xLin = sqrt(max((u_R - 0.10)*(u_R - 0.10) - (v_wpos.y - u_yc)*(v_wpos.y - u_yc), 0.0));
-    float recd = smoothstep(xLin + 0.004, xLin + 0.02, abs(v_wpos.x));
+    // (xLin / recd: above)
     float reveal = wl.a * recd * (1.0 - smoothstep(0.2, 0.34, abs(v_wpos.y - u_winY.x)));
     // QA r1 (light): the down-facing upper tub just above the opening keeps its shadow (0.35 of the glow): every photo
     // shows the tub darkest there, at 0.65-0.78 of the pier [V: sans_14, tt_window, sp_py14; from_shell w5]
@@ -456,7 +466,7 @@ void main(){
     // [V: y_47303 crown #a2a7bd L168 (B-R +28), #a4aac1 L171 vs q17 #bfc1c3 L193 (+4)] (lighting L8 medium); the crown is
     // > 0 only with the shade open and a day glow [D]
     amb = (hemi * (u_aoTune.x + (1.0 - u_aoTune.x)*ao) + bounce * u_aoTune.y) * binShade * (1.0 - band) * binK * mix(1.0, 0.82, crown)
-        + u_wash * lt * wallProx * (0.35 + 0.65*facingIn) * smoothstep(0.3, 1.25, v_wpos.y) * (0.45 + 0.55*ao) * noDown * (1.0 - bandW) * mix(1.0, u_monHemi, 1.0 - sz)
+        + wsh * lt * wallProx * (0.35 + 0.65*facingIn) * smoothstep(0.3, 1.25, v_wpos.y) * (0.45 + 0.55*ao) * noDown * (1.0 - bandW) * mix(1.0, u_monHemi, 1.0 - sz)
         + u_sideLed * u_sideWall * lensW * facingIn * mix(u_sideLow, 1.0, smoothstep(0.95, 1.55, v_wpos.y)) * smoothstep(0.35, 0.8, v_wpos.y)
                     * (1.0 - smoothstep(1.95, 2.1, v_wpos.y)) * noDown * nearPane
         + u_winGlow * wallProx * facingIn * smoothstep(0.7, 1.1, v_wpos.y) * (1.0 - smoothstep(1.5, 1.8, v_wpos.y)) * 0.5 * (1.0 - band)

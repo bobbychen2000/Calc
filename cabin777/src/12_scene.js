@@ -42,7 +42,7 @@ const MOODS = {
   // c_27312 PSU band #c4c9cf (+11) vs q06 #e0e1e1]; binLo 0.8: the outboard bin doors' lower face (mainFS binK) [V: c_27312
   // bins L190-199 p10 168 vs q06 L211-218 p10 197; y_47301 L189 vs q16 L216] (lighting r4 medium x2). The raters' 0.72 also
   // took the q15 bins under y_47300's (L220 -> 209, p10 197 -> 177 vs photo L216 p10 200), whose bins are evenly lit [D]
-  boarding: { label: 'Boarding', hemiTop: [0.97, 0.99, 1.03], hemiBot: [0.31, 0.35, 0.47], wash: [0.23, 0.255, 0.32], led: [1.0, 0.98, 0.92], sideLed: [0.50, 0.57, 0.78], bandCut: 0.15, binLo: 0.8, k: 1.05, exposure: 1.38, toe: 1 },
+  boarding: { label: 'Boarding', hemiTop: [0.97, 0.99, 1.03], hemiBot: [0.31, 0.35, 0.47], wash: [0.23, 0.255, 0.32], hemiBotN: [0.36, 0.37, 0.40], washN: [0.25, 0.26, 0.28], led: [1.0, 0.98, 0.92], sideLed: [0.50, 0.57, 0.78], bandCut: 0.15, binLo: 0.8, k: 1.05, exposure: 1.38, toe: 1 },
   // QA r2 (light): cruise sideLow 0.10 -> 0.30, the lavender wash reaches the window belt in THE Suite (the reveals by
   // the glass stay near-white through mainFS nearPane) [V: ml_DSC_1939-1 wall column y45 #6e9bfc (B-R +141), y150
   // #7a89be, belt y240 #888db0 (+40) vs cF03 belt #cccccf (+3)]
@@ -784,6 +784,7 @@ class Scene {
     G.set('u_hemiTop', mood.hemiTop.map((v) => v * k));
     G.set('u_hemiBot', mood.hemiBot.map((v) => v * k));
     G.set('u_wash', mood.wash);
+    G.set('u_hemiBotN', (mood.hemiBotN || mood.hemiBot).map((v) => v * k)); G.set('u_washN', mood.washN || mood.wash);   // QA L8: neutral shadow light away from the windows
     G.set('u_led', mood.led);
     G.set('u_sideLed', mood.sideLed || mood.led);
     G.set('u_vault', mood.vault || mood.led);
