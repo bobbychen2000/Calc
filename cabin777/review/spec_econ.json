@@ -8,5 +8,7 @@
  {"name": "e6_lowback", "unit": "econ3", "opts": {"eye": [0.1, 0.7, 0.8], "look": [0.0, 0.55, 0.05], "fov": 50}},
  {"name": "e7_arm", "unit": "econ3", "opts": {"eye": [0.6, 0.9, -1.0], "look": [0.25, 0.5, -0.3], "fov": 45}},
  {"name": "e9_backtop", "unit": "econ3", "opts": {"eye": [0.3, 1.45, 0.7], "look": [0.0, 1.1, 0.0], "fov": 40}},
- {"name": "e8_foot", "unit": "econ3", "opts": {"eye": [0.25, 0.55, 0.6], "look": [0.0, 0.12, 0.0], "fov": 50}}
+ {"name": "e8_foot", "unit": "econ3", "opts": {"eye": [0.25, 0.55, 0.6], "look": [0.0, 0.12, 0.0], "fov": 50}},
+ {"name": "e10_under", "unit": "econ3", "opts": {"eye": [0.15, 0.45, -1.15], "look": [0.0, 0.25, -0.2], "fov": 50}},
+ {"name": "e11_panedge", "unit": "econ3", "opts": {"eye": [0.25, 0.75, -0.95], "look": [0.0, 0.42, -0.35], "fov": 40}}
 ]}
