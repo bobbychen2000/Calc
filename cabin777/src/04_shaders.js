@@ -104,10 +104,11 @@ vec3 windowT(vec3 wp){
   float dzn = (hit.x < 0.0 ? zr.r : zr.g) * 4.0;
   float dyn = (hit.y + u_yc - u_winY.x) / u_winY.y;
   float q = dzn*dzn*dzn*dzn + dyn*dyn*dyn*dyn;
-  // QA r3 (integration): gate 0.75-1.1 -> 0.5-1.35 (same half-transmission edge, ~2.4x the penumbra): on a slanted seat
-  // back the gate projected to a hard-edged sheared quad, 1.54x the fabric [V: q14 26B back L212 on fabric L138 vs
-  // py_37301 / 37303 no patch; omaat_f57 / f58 penumbrae several cm] (from_py 5 / 6 / 9)
-  return (1.0 - smoothstep(0.5, 1.35, q)) * texture(u_win, vec2(zt, hit.x < 0.0 ? WL : WR)).rgb;
+  // QA r3 (integration): the gate ramps over 0.75-1.3 of the superellipse radius q^(1/4) (was 0.75-1.1 of q, i.e.
+  // 0.93-1.02 of the radius: a ~1 cm penumbra): on a slanted seat back the gate projected to a hard-edged sheared quad
+  // [V: q14 26B back L212 on fabric L138 with straight edges vs py_37301 / 37303 no patch; omaat_f57 / f58 penumbrae
+  // several cm] (from_py 5 / 6 / 9); width [D]
+  return (1.0 - smoothstep(0.75, 1.3, sqrt(sqrt(q)))) * texture(u_win, vec2(zt, hit.x < 0.0 ? WL : WR)).rgb;
 }
 // lo = 1 for surfaces below ~1.5 m: QA r1 (light) the cool window light reaching seat level is half desaturated, it
 // left a blue cast on the charcoal shells (h216-218 s0.14-0.20 vs c_27312 shell back #5c626a, dark side #4e4f55,
@@ -181,10 +182,11 @@ void main(){
     // cabin lens #fefed6, ff_door-gap #fefeb6 beside the PSU band #603b1d]
     vec3 lc = u_exterior > 0.5 ? u_led : v_wpos.y < 2.0 ? u_sideLed + u_lensCore : mix(u_vault, u_led, smoothstep(0.3, 0.85, emis));
     // QA r3 (light): the dim vault / cove wash (y >= 2 m, e < 0.5) is clamped to u_vaultE per mood (floor, cap).
-    // Amber floor 0.10: the THE Room vault between the bins (07b eFn 0.02-0.08) read dark brown under a pale seat level,
+    // Amber floor 0.14: the THE Room vault between the bins (07b eFn 0.02-0.08) read dark brown under a pale seat level,
     // while every amber photo shows the cove-washed ceiling as the brightest warm surface [V: ucr_the-room-cabin aisle
     // ceiling #cc9957 / #cb9b53 L161 s0.58, ff_seat-with-door-closed #d6ae72 L179 vs d_room_dining #663918-#714826
-    // L67-81]; the door domes (e 0.06-0.2) already matched (q21 #d09748 vs ucr #c89552) and barely move. Night cap 0.09:
+    // L67-81; d06 vault L68-73 s0.80 -> L140-146 s0.65 with 12_scene's paler vault hue]; the door domes (e 0.06-0.2)
+    // already matched (q21 #d09748 vs ucr #c89552) and barely move. Night cap 0.09:
     // the cove panel (07b CEILMAT.cove e 0.36) stayed the brightest surface after the screens, while the night photo's
     // ceiling is dark throughout [V: ucr_room-night-lighting ceiling L13-55, cove panel <= #3f352f vs q20 #a39a8c L155];
     // the mid-vault (e 0.02-0.08) keeps its level (q20 L28 vs ucr L21-27) [D]
@@ -281,9 +283,9 @@ void main(){
     // AO here and 0.35 m up, which stays low under a seat pan but opens up in an aisle next to a bulkhead or curtain
     // (the plain AO darkened the q13 PY aisle to < 30 vs py_37302 charcoal carpet ~L45-60) [D]
     // QA r3 (integration): on the carpet the AO is the mean of 4 taps +-0.17 m in x / z (5 cm up), so the volume's
-    // cell-sized sweep wedges blur out, and only the 2.5 cm contact sample stays sharp, at half weight (the contact line
-    // at each shell / seat base) [V: kn_room_1 aisle centre L34, shell-base edge L33; omaatJ_oj_r31 dark base line ~20 px
-    // at 1200 px, edges 0.85-0.9x the centre]; the pocket AO also takes this mean [D]
+    // cell-sized sweep wedges blur out; the 2.5 cm sample counts at half weight, and the thin line at each base comes from
+    // the contact map [V: kn_room_1 aisle centre L34, shell-base edge L33; omaatJ_oj_r31 dark base line ~20 px at 1200 px,
+    // edges 0.85-0.9x the centre; q06 aisle p10 20, 34 % < 30 vs c_27312 p10 41, 5.5 %]; the pocket AO takes this mean [D]
     float aoPk = ao, ctc = 0.0;
     if (fl > 0.5) {
       vec3 pb = v_wpos + vec3(0.0, 0.05, 0.0) - u_aoMin;
@@ -459,7 +461,8 @@ void main(){
     // capped at 2.0, so pale fabric keeps its weave inside a patch (patch <= ~1.5x the fabric) and a white sheet keeps
     // a visible edge under the ACES shoulder [V: omaat_f59 bed #d8bfa2 L194 vs q04 patch #f9f8f7 (clipped); q14 PY patch
     // #e0e0e4 on #787f92 fabric] (lighting / integration r1, from_suite 2)
-    if (u_exterior < 0.5) sun = min(sun / (1.0 + max(max(base.r, base.g), base.b)), vec3(2.0));
+    // QA r3 (integration): cap 2.0 -> 1.5, the q14 seat-back patch read 1.5x the fabric (rater target <= 1.3x) [D]
+    if (u_exterior < 0.5) sun = min(sun / (1.0 + max(max(base.r, base.g), base.b)), vec3(1.5));
   }
   vec3 F0 = mix(vec3(0.04), base, metal);
   vec3 diff = base * (1.0 - metal);

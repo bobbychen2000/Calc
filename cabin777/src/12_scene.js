@@ -33,6 +33,9 @@ const MOODS = {
   // #7d89be, belt #858897; was c03 #5c6ae5 / q16 #2334e1 (s0.84)] (lighting + integration r1). sideLed hue between the
   // raters' two fits (h~232) [D]; bandCut 0.8 kept: the suggested 0.55 washed the band to #9896d6 (L156 s0.30), 0.75
   // with the new tone read L127-157 s0.39-0.47 (c16) [D renders]
+  // QA r3 (light): boarding sideLed [0.42, 0.46, 0.55] -> [0.48, 0.53, 0.66]: the economy window wall was neutral and
+  // ~9 % under the official photo, whose wall under the lens is the brightest, slightly cool band [V: y_47300 #e2e4eb
+  // L228-231 (B-R +9..11) vs q15 #d2d3d3 L210 (B-R 0); bins already matched, L214] -> q15 L222-223 [D render r3]
   boarding: { label: 'Boarding', hemiTop: [0.97, 0.99, 1.03], hemiBot: [0.36, 0.37, 0.40], wash: [0.25, 0.26, 0.28], led: [1.0, 0.98, 0.92], sideLed: [0.48, 0.53, 0.66], bandCut: 0.15, k: 1.05, exposure: 1.38, toe: 1 },
   // QA r2 (light): cruise sideLow 0.10 -> 0.30, the lavender wash reaches the window belt in THE Suite (the reveals by
   // the glass stay near-white through mainFS nearPane) [V: ml_DSC_1939-1 wall column y45 #6e9bfc (B-R +141), y150
@@ -81,6 +84,17 @@ const MOODS = {
   // dining_room ash at L84 and lowTint [1.0, 1.5, 2.6] read s0.4-0.5 against ucr's foreground ash #9a6330 s0.69, so
   // lowGain 1.4 (the photos are auto-exposed: seat level ~0.7-0.85 of the ceiling, the render 0.55) with lowTint [1.0,
   // 1.42, 2.3]; vault x0.9 (q21 door dome L164 s0.64 vs ucr #c89552 L156)
+  // QA r3 (light, high): the amber light ordering was upside down: r2's seat-level lift (lowTint [1.0, 1.42, 2.3] x1.4,
+  // sideWall [0.4, 2.8, 7.0]) read pale cream (s0.23-0.39) under a dark brown overhead, while every photo of the phase
+  // has the cove-washed ceiling and bins brightest and seat level darker in the same amber [V: ucr_the-room-cabin vault
+  // #c69a58 L159 s0.55, bin faces #ca9754 L158, bin undersides #855a2b L96, wall #b7855a L141 s0.51, ash #a0652e L110
+  // s0.71; ff_seat-with-door-closed ceiling #d6ae72; kn_room_36 reveals #68411b, ash #7b4710 s0.87]. Now lowTint [1.0,
+  // 1.08, 1.2] x0.8 (raters' fit), the vault wash floored at e 0.14 (mainFS u_vaultE) in a paler vault hue [0.32, 0.145,
+  // 0.047] (G/R 0.45, was 0.38), hemiBot x1.4 (bin undersides), sideWall [0.6, 2.2, 4.2] / bandCut 0.2 (the wall under
+  // the lens less red). Renders r3 [D]: dd (12H) ash #8b5c2c-#90612e L99-103 s0.68, wall at the window tops L131 s0.55,
+  // bin undersides L74-83 (photo L96; the vault is out of this frame); d06 vault L140-146 s0.65 (was L68-73 s0.80), bins
+  // L153-164; q21 door dome #d0a254 s0.59 (ucr #c89552 s0.59), closed-shade pier L136-171 s0.58-0.66 (was L161-199
+  // s0.32-0.42)
   dining: { label: 'Dining', hemiTop: [0.62, 0.30, 0.11], hemiBot: [0.21, 0.10, 0.035], wash: [0.30, 0.14, 0.05], led: [0.55, 0.042, 0.009], sideLed: [1.25, 0.10, 0.02], sideLow: 0.65, sideWall: [0.6, 2.2, 4.2], bandCut: 0.2, vault: [0.32, 0.145, 0.047], vaultE: [0.14, 1], lowTint: [1.0, 1.08, 1.2], lowGain: 0.8, fillLift: 0.15, lensCore: [0, 0.55, 0.15], scrSpill: 0.5, k: 0.9, exposure: 1.3, strips: true },
   // night, QA r2: THE Room in service at night is near-black and neutral-warm; the light comes from the IFE screens, the
   // warm strip under each screen, small white reading lamps and amber PSU lamps [V: ucr_room-night-lighting ceiling
@@ -101,10 +115,17 @@ const MOODS = {
   // as the photo (wall L25-43 vs #494f67 L80, ceiling L39 vs #474647 L71) [D: renders r1b]
   // QA r2 (light): the IFE screens light their surround (scrSpill 1, mainFS u_scrP) [V: ml_IMG_20200208_1919534 THE Suite
   // housing #251e1e, ucr_room-night-lighting near wall #302218]; emisGain 0.55 = the r2 night sign level
+  // QA r3 (light): led [0.050, 0.042, 0.034] -> [0.030, 0.025, 0.020] and the cove / vault wash capped at e 0.09
+  // (vaultE): the cove panel over the outboard bins was the brightest surface after the screens [V: ucr_room-night-
+  // lighting ceiling L13-55 throughout vs q20 panel #a39a8c L155]; with the screen spill kept below 1.5 m (mainFS) the
+  // bins are back to warm dark [V: ucr outboard bins #2f271e L40 h31]: q20 centre bins #33302c L49 h29, outboard #2b2824
+  // L40 h30, mid-vault L28, median 32 [D render r3]
   sleep: { label: 'Night', hemiTop: [0.030, 0.027, 0.024], hemiBot: [0.010, 0.009, 0.008], wash: [0.012, 0.010, 0.008], led: [0.030, 0.025, 0.020], sideLed: [0.018, 0.021, 0.032], sideLow: 0.6, vault: [0.050, 0.043, 0.035], vaultE: [0, 0.09], monFill: [0.060, 0.055, 0.047], cove: 0.35, k: 1, exposure: 2.5, readingLights: true, strips: true, screenGain: 0.6, scrSpill: 1, emisGain: 0.55 },
   // QA r1 (light): sunrise follows dining at seat level (sideWall = hemiTop share, sideLow 0.5). QA r2: as dining, the
   // fill lift off the PSU band (fillLift 0.15), the saturated vault, the pale lens core, lowGain 0.6 -> 1.4 and lowTint
   // [1.0, 1.3, 1.6] -> [1.0, 1.4, 1.95] [A: no ANA sunrise photo; dining's sources and levels]
+  // QA r3 (light): as dining (lowTint [1.0, 1.08, 1.2] x0.8, hemiBot x1.4, vault floor / hue, bandCut 0.2) [A: no ANA
+  // sunrise photo; dining's sources]
   wake: { label: 'Sunrise', hemiTop: [0.62, 0.30, 0.16], hemiBot: [0.21, 0.10, 0.05], wash: [0.30, 0.14, 0.07], led: [0.55, 0.05, 0.03], sideLed: [1.2, 0.11, 0.06], sideLow: 0.5, sideWall: [0.42, 2.25, 2.2], bandCut: 0.2, vault: [0.32, 0.145, 0.047], vaultE: [0.14, 1], lowTint: [1.0, 1.08, 1.2], lowGain: 0.8, fillLift: 0.15, lensCore: [0, 0.55, 0.15], k: 0.9, exposure: 1.3 },
 };
 // winExp: the view behind the glass at interior exposure; cabin photos show day windows near-white with a glowing
