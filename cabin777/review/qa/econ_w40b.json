@@ -1,0 +1,48 @@
+{
+ "area": "econ",
+ "rater": "B",
+ "round": "w40",
+ "candidate": "3b401d3",
+ "lens": "Geometry and proportion first, then colour. The w39 scripts were gone, so they were rebuilt in /tmp/claude-0/-home-user-Calc/799b632d-abc8-5982-a611-3a2c97f75011/scratchpad/raterB40/. m.py takes per-seat back (render y 300-400, photo 290-390), pillow (430-465 / 420-460) and pan (535-572 / 525-570) boxes on q15, the four 100 x 65 pillow-foot belt windows (y 460-525) and the far boxes on seat pixels (B-R > 22). Because the windows are re-created, absolute numbers differ slightly from w39b. Every comparison below is r39 vs r40 in the same windows. d_*.png are change masks and dmap.png is the q15 + e11 change map. The r39 to r40 diff changes 11.9 % of q15, 14.1 % of q16 and 11.4 % of q17, with a max channel delta of 11-12. The change map shows that it is entirely the fleck (yFabricD) fabric: backs E/G, the far fleck seats and the fleck pans. Changed pixels are +5.8 to +5.9 L. The lighting snapshot 0804d1c moved nothing at these cameras: the tick and lattice pans and backs are bit-identical. In the studio, e11 changes 31.4 %, e4 18.0 %, e4b 18.0 %, e7 14.9 %, e1 12.1 %, e10 10.6 % and e5 7.7 %, all on fleck surfaces. The others are under 5 %.",
+ "score": 8.4,
+ "priorIssues": [
+  {"id": "w39b-1 (low) far rows low contrast", "status": "not fixed", "note": "farA seat-pixel p90/p10 2.30 -> 2.25, L 92.0 -> 93.9, L>150 2.4 -> 2.6 %. farB 2.61 -> 2.61, L 86.0 -> 87.2 (photo farB 92.4 / 3.21 / 10.2 %). The far fleck seats moved 1-2 L lighter, which slightly reduces contrast. No geometry change: the dark row gaps and the light headrest tops are still missing."},
+  {"id": "w39b-2 (low) tray lip; cover less blue", "status": "not fixed", "note": "e11: the black lip under the pan front is unchanged (the change mask covers only the fleck pan and back). The cover pixels are not in the change mask."},
+  {"id": "w39b-3 (low) pouch opaque; strap ends at rim", "status": "not fixed", "note": "e10 changes 10.6 %, all on fleck fabric. The pouch shell, core and strap pixels are unchanged."},
+  {"id": "w39b-4 (low) navy strap V either side of the buckle", "status": "not fixed", "note": "The belt-window light-grey count is 650 in both r39 and r40 (photo 1015 in these windows). The navy V is unchanged in z_low terms."},
+  {"id": "w39b-5 (low) pillow plaque shape", "status": "not fixed", "note": "e4b changes 18 %, but only the fleck back around the pillow. Pillow L is 50.6 / 45.6 / 49.3 / 49.7 (r39 50.6 / 45.0 / 49.3 / 49.1) vs photo 72.1 / 44.6 / 45.8 / 51.1. Pillow contrast is 1.46-1.57 vs photo 2.60-5.51, because the photo's pillows show creases and corner highlights. Same plaque shape."},
+  {"id": "w39b-6 (low) near pans dark (lighting)", "status": "unchanged (not scored)", "note": "Pans are bit-identical: L68.6 / 68.2 / 68.1 / 64.7 vs photo 84.3 / 77.2 / 74.1 / 77.7. The 0804d1c lighting snapshot did not touch them."},
+  {"id": "(w40 change) fleck darkening halved, yFabricD #3e4662 -> #424b68", "status": "positive (level); small contrast cost", "note": "q15 fleck backs: E L49.7 -> 54.7 (photo 58.9), G 53.6 -> 58.5 (photo 57.8). The mean error went from -6.7 to -1.8 L, and G is now within 1 L. Contrast p90/p10 fell from 2.97 / 3.02 to 2.77 / 2.92 (photo 3.12 / 3.61 in these windows), because the lift raised the dark ground more than the flecks. B/R is unchanged at 2.12 / 2.02 vs 2.24 / 2.10. The fleck back still reads a shade deeper than the tick, as in y_47300 (tick D/F at L89.7 / 86.4, unchanged)."}
+ ],
+ "details": [
+  {"detail": "Fabric: tick weave", "score": 8.5, "refs": "Bit-identical. Back F is L86.4 vs photo 67.8, the gap rater A charged to tick in w39."},
+  {"detail": "Fabric: diamond lattice", "score": 8.5, "refs": "Bit-identical."},
+  {"detail": "Fabric: petal fleck", "score": 8.3, "refs": "Up 0.1. Level now matches: E/G L54.7 / 58.5 vs 58.9 / 57.8. Contrast is 0.2-0.7 low (2.77 / 2.92 vs 3.12 / 3.61), and B/R is 0.1 low."},
+  {"detail": "Fabric: dash mosaic", "score": 8.5, "refs": "Unchanged."},
+  {"detail": "Fabric mix (backs, pans, pads)", "score": 8.5, "refs": "Unchanged. The D/E/F/G tick-fleck alternation now steps in L as the photo does: render 90 / 55 / 86 / 59 vs photo 88 / 59 / 68 / 58. F remains the outlier."},
+  {"detail": "Headrest pad + cover", "score": 8.7, "refs": "Unchanged."},
+  {"detail": "Pillow", "score": 8.4, "refs": "Unchanged. Level and hue are OK. The shape is a plaque and pillow contrast is 1.5 vs 2.6+."},
+  {"detail": "Armrests", "score": 8.8, "refs": "Unchanged."},
+  {"detail": "Belts", "score": 8.4, "refs": "Unchanged (650 light-grey px in both rounds). The navy V remains."},
+  {"detail": "Seat pan / front", "score": 8.7, "refs": "Geometry unchanged. The tray lip remains."},
+  {"detail": "Back silhouette", "score": 8.1, "refs": "Unchanged (e3 0.2 %, e6 3.2 %)."},
+  {"detail": "Rear shell / hood / back top", "score": 8.1, "refs": "Unchanged (e2 2.3 %, e9 4.3 %, fleck only)."},
+  {"detail": "Screen / handset", "score": 8.2, "refs": "Unchanged (e5 7.7 %, fleck back around it)."},
+  {"detail": "Tray / pocket / AC", "score": 7.8, "refs": "Unchanged."},
+  {"detail": "Legs / footrest / under-seat", "score": 8.4, "refs": "Unchanged. The pouch is still opaque and the strap stops at the rim."},
+  {"detail": "Far-LOD rows", "score": 7.9, "refs": "Unchanged geometry. Contrast is 2.25-2.61 vs 3.21+."}
+ ],
+ "issues": [
+  {"id": "w40b-1", "severity": "low", "owner": "econ (09a_econ.js)", "title": "Far rows: right colour, too little contrast (carried w39b-1)", "evidence": "farA p90/p10 2.25 (r39 2.30). farB 2.61 vs photo 3.21, L>150 6.1 % vs 10.2 %. The w40 fleck lift took 0.05 off farA.", "fix": "In econUnitFar add a 1 cm '#1c2236' row-gap strip under each headrest cover and across the back top, and lift the far headrest-top tint toward '#5a6898'."},
+  {"id": "w40b-2", "severity": "low", "owner": "econ (09a_econ.js)", "title": "Tray lip under the pan front; cover less blue (carried w39b-2)", "evidence": "e11: the black lip is unchanged (not in the change mask). Cover B/R 1.62 vs 1.83 (w39b).", "fix": "Tray gRBox depth 0.41 -> 0.39, set 2 cm aft, r 0.8. SEATMAT.yCover '#222842' -> '#232a4a' (shared, one line)."},
+  {"id": "w40b-3", "severity": "low", "owner": "econ (09a_econ.js:187-190)", "title": "Life-vest pouch opaque; strap ends at the rim (carried w39b-3)", "evidence": "The e10 pouch pixels are unchanged from s39.", "fix": "Strap gBox height 0.08 -> 0.12, y 0.207 -> 0.19, z -0.390 -> -0.40. Core '#5e6068' -> '#45474f' with a '#c87a2a' fleck, and shell r 0.12 -> 0.3."},
+  {"id": "w40b-4", "severity": "low", "owner": "econ (09a_econ.js:287)", "title": "Navy strap V either side of the buckle under every q15 pillow (carried w39b-4)", "evidence": "650 light-grey px in the belt windows in both rounds. The V is unchanged.", "fix": "Strap gBox length 0.10 -> 0.06 and yaw 30 -> 15 deg, or y 0.476 -> 0.468."},
+  {"id": "w40b-5", "severity": "low", "owner": "econ (09a_econ.js)", "title": "Pillow a flat plaque: shape and in-pillow contrast (carried w39b-5)", "evidence": "Pillow p90/p10 1.46-1.57 vs photo 2.60-5.51. In y_47300 the creases and pulled-out corners make the highlight and shadow spread.", "fix": "Pillow loft: corners out 1.5 cm, mid-edges pinched 1 cm, centre 1 cm thicker, so shading creates the crease contrast."},
+  {"id": "w40b-6", "severity": "low", "owner": "econ (SEATMAT.yFabricD tile / 03_tex.js LAYER_PARAMS)", "title": "Fleck contrast slightly low after the lift", "evidence": "E/G p90/p10 went from 2.97 / 3.02 to 2.77 / 2.92 vs photo 3.12 / 3.61, while L now matches (54.7 / 58.5 vs 58.9 / 57.8). B/R is 2.12 / 2.02 vs 2.24 / 2.10.", "fix": "Keep #424b68 as the mean, but raise the fleck swatch's photo gain about 10 % (lighter flecks, same ground). Optionally nudge the hue bluer to '#414b6c'. Do not darken the mean again."},
+  {"id": "w40b-7", "severity": "low", "owner": "lighting (12_scene.js)", "title": "Near pans about 10-15 L dark (carried w39b-6; not scored for econ)", "evidence": "Pans are bit-identical through 0804d1c: L64.7-68.6 vs photo 74.1-84.3.", "fix": "Lighting owner: check the low-height fill or AO at the q15 camera. Econ should not compensate."}
+ ],
+ "questionsForUser": [
+  "Belts: tucked away (y_47300) or laid across the pans (y_47302 / 47303 and trip reports)? (still open)"
+ ],
+ "extraRefsSearched": "No downloads. Used ref/ana y_47300 (q15 windows), y_47301 and y_47303 (triptychs t_q16 / t_q17)."
+}
