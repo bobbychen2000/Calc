@@ -199,7 +199,7 @@ const AO_TUNE = { hemi: 0.22, bounce: 1.0, emitLens: 0.45, emitCtr: 0.35, kAttF:
 // fixL7 after4) [D]; lookOut = interior exposure cut at the glass (integration r4: q12 vs ucr wing view) [D]
 // QA L8 (integration): ssao = [disc radius m, strength, bias m, range m] of the screen-space contact AO (mainFS ssaoF,
 // depth pre-pass in render) [D: the integration rater's values; thin dark-line share vs c_27312 / py_37302 / f_17313]
-const LIGHT_TUNE = { cove: 1.0, sheen: 1.35, tubWash: 0.7, lookOut: 0.86, ssao: [0.05, 0.7, 0.006, 0.15] };
+const LIGHT_TUNE = { cove: 1.0, sheen: 1.35, sheenTint: 0.3, tubWash: 0.7, lookOut: 0.86, ssao: [0.05, 0.7, 0.006, 0.15] };
 // QA r3 (integration): floor contact map (computeAO): cell size (m; 6 m x 59 m -> 200 x 1973 texels, under the 2048
 // texture minimum), marking height above the floor and the darkening at a base (mainFS) [D]
 const CONTACT = { cell: 0.03, h: 0.2, k: 0.55 };
@@ -237,7 +237,7 @@ class Scene {
       glow: gl.program(SH.glowVS, SH.glowFS),
     };
     this.emptyVAO = gl.gl.createVertexArray();
-    gl.use(this.progs.main); gl.set('u_fillLift', 1); gl.set('u_sheen', LIGHT_TUNE.sheen); gl.set('u_vaultE', [0, 1]);   // the studio may draw before the first cabin frame
+    gl.use(this.progs.main); gl.set('u_fillLift', 1); gl.set('u_sheen', LIGHT_TUNE.sheen); gl.set('u_sheenTint', LIGHT_TUNE.sheenTint); gl.set('u_vaultE', [0, 1]);   // the studio may draw before the first cabin frame
     gl.set('u_binLo', 1); gl.set('u_monHemi', 1);   // QA r4: neutral values for the same reason
     this.buildGlows();
     const sm = this.shell.meshes;
@@ -761,7 +761,10 @@ class Scene {
       gl.clear(gl.DEPTH_BUFFER_BIT);
       G.use(this.progs.depth);
       G.set('u_viewProj', vp);
-      for (const m of this.opaque) G.draw(m);
+      // the far seat LOD (beyond ~9.5 m) is left out: the 5 cm disc is under ~1.4 half-size texels there and fades out
+      // (mainFS ssaoF), and a missing occluder only leaves its neighbours unoccluded (the taps then see the shell behind)
+      const lo = this.seatLo || (this.seatLo = new Set(Object.values(this.seatGroups).map((g) => g.lo).filter(Boolean)));
+      for (const m of this.opaque) if (!lo.has(m)) G.draw(m);
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     }
     gl.viewport(0, 0, w, h);
@@ -793,7 +796,7 @@ class Scene {
     const fz = this.layout.zones.find((zn) => zn.cls === 'F');
     G.set('u_fZone', fz ? [fz.z0, fz.z1, AO_TUNE.fLift] : [0, 0, 0]);
     G.set('u_bandCut', mood.bandCut ?? 0.65); G.set('u_sideLow', mood.sideLow ?? 0.4); G.set('u_sideWall', mood.sideWall || [1, 1, 1]);
-    G.set('u_lowGain', mood.lowGain ?? 1); G.set('u_monFill', mood.monFill || [0, 0, 0]); G.set('u_cove', LIGHT_TUNE.cove * (mood.cove ?? 1)); G.set('u_sheen', LIGHT_TUNE.sheen);
+    G.set('u_lowGain', mood.lowGain ?? 1); G.set('u_monFill', mood.monFill || [0, 0, 0]); G.set('u_cove', LIGHT_TUNE.cove * (mood.cove ?? 1)); G.set('u_sheen', LIGHT_TUNE.sheen); G.set('u_sheenTint', LIGHT_TUNE.sheenTint);
     G.set('u_toe', mood.toe ?? 0);
     G.set('u_extBounce', [0, 0, 0]);
     // reading-light pools: the 8 lit lamps nearest the eye [A: count, a phone-sized loop]
@@ -876,7 +879,7 @@ class Scene {
     // QA L8 (integration): screen-space contact AO inputs (mainFS ssaoF); strength 0 switches it off
     G.set('u_ssao', ssao ? LIGHT_TUNE.ssao : [0, 0, 0, 0]);
     if (ssao) {
-      G.tex('u_sDepth', 8, this.sDepth.tex); G.set('u_sRes', [w, h]);
+      G.tex('u_sDepth', 8, this.sDepth.tex); G.set('u_sRes', [w, h, this.sDepth.w, this.sDepth.h]);
       G.set('u_sProj', [cam.proj[0], cam.proj[5], cam.proj[10], cam.proj[14]]);
       G.set('u_sFwd', cam.fwd); G.set('u_sRight', cam.right); G.set('u_sUp', cam.up); G.set('u_sDither', LIGHT_TUNE.ssaoDither ?? 1); G.set('u_sMix', LIGHT_TUNE.ssaoMix ?? 0.8); G.set('u_sMode', LIGHT_TUNE.ssaoMode ?? 0);
     }

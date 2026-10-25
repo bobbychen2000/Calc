@@ -39,13 +39,13 @@ uniform vec4 u_stripP[8]; uniform vec4 u_stripA[8]; uniform vec3 u_stripCol;
 uniform vec4 u_scrP[6]; uniform vec4 u_scrN[6]; uniform vec3 u_scrCol; uniform float u_fillLift; uniform vec3 u_lensCore; uniform vec2 u_vaultE;
 uniform sampler2D u_scrMask; uniform vec4 u_scrMaskR; uniform float u_scrOff; uniform vec4 u_scrOwn; uniform float u_binLo; uniform float u_monHemi;
 uniform float u_tubWash; uniform vec3 u_binLift; uniform vec3 u_hemiBotN; uniform vec3 u_washN;
-uniform sampler2D u_sDepth; uniform vec2 u_sRes; uniform vec4 u_sProj; uniform vec3 u_sFwd; uniform vec3 u_sRight; uniform vec3 u_sUp; uniform vec4 u_ssao; uniform float u_sDither; uniform float u_sMix; uniform float u_sMode;
+uniform sampler2D u_sDepth; uniform vec4 u_sRes; uniform vec4 u_sProj; uniform vec3 u_sFwd; uniform vec3 u_sRight; uniform vec3 u_sUp; uniform vec4 u_ssao; uniform float u_sDither; uniform float u_sMix; uniform float u_sMode;
 uniform sampler3D u_ao; uniform vec3 u_aoMin; uniform vec3 u_aoSize; uniform sampler2D u_contact; uniform vec4 u_contactR; uniform float u_contactK;
 uniform sampler2DArray u_detail; uniform vec4 u_layer[${N_LAYERS}]; uniform sampler2DArray u_photo; uniform float u_photoOn;
 uniform sampler2D u_atlas; uniform float u_screenStep; uniform float u_emisGain; uniform float u_screenGain;
 uniform sampler2D u_win; uniform vec2 u_winZ;
 uniform float u_R; uniform float u_yc; uniform vec2 u_winY;
-uniform float u_exposure; uniform float u_exterior; uniform float u_fill; uniform float u_sheen;
+uniform float u_exposure; uniform float u_exterior; uniform float u_fill; uniform float u_sheen; uniform float u_sheenTint;
 uniform vec3 u_skyTop; uniform vec3 u_skyBot;
 uniform float u_detailOn;
 out vec4 o;
@@ -116,9 +116,9 @@ vec3 windowT(vec3 wp){
 // lo = 1 for surfaces below ~1.5 m: QA r1 (light) the cool window light reaching seat level is half desaturated, it
 // left a blue cast on the charcoal shells (h216-218 s0.14-0.20 vs c_27312 shell back #5c626a, dark side #4e4f55,
 // s0.08-0.13) [V]
-vec3 envInside(vec3 R, float lo){
+vec3 envInside(vec3 R, float lo, vec3 hBot){
   float up = smoothstep(-0.25, 0.75, R.y);
-  vec3 e = mix(u_hemiBot*0.7, u_hemiTop*1.25, up);
+  vec3 e = mix(hBot*0.7, u_hemiTop*1.25, up);
   float side = (1.0 - abs(R.y)) * smoothstep(0.35, 0.95, abs(R.x));
   vec3 wg = mix(u_winGlow, vec3(dot(u_winGlow, vec3(0.2126, 0.7152, 0.0722))), 0.5*lo);
   e += wg * side * 0.6;
@@ -161,15 +161,18 @@ vec3 coveSpec(vec3 P, vec3 N, vec3 V, vec3 R, float rough, vec3 F0, float NdV){
 float ssaoF(vec3 P, vec3 Nf){
   float dep = dot(P - u_camPos, u_sFwd);
   vec2 ruv = u_sProj.xy * (0.5 * u_ssao.x / max(dep, 0.05));
-  float px = ruv.y * u_sRes.y * 0.5;                       // disc radius in half-size texels
+  float px = ruv.y * u_sRes.w;                              // disc radius in half-size texels
   if (px < 1.0) return 0.0;                                 // far: the disc is under a texel
-  vec2 uv0 = gl_FragCoord.xy / u_sRes;
+  vec2 uv0 = gl_FragCoord.xy / u_sRes.xy;
   float a0 = u_sDither * 0.7854 * (mod(gl_FragCoord.x, 2.0) + 2.0 * mod(gl_FragCoord.y, 2.0)) + 0.39;
   float occ = 0.0;
   for (int i = 0; i < 8; i++) {
     float fi = float(i);
     float an = a0 + fi * 2.39996;
-    vec2 uv = uv0 + vec2(cos(an), sin(an)) * sqrt((fi + 0.5) / 8.0) * ruv;
+    // snapped to the depth texel's centre, where the pre-pass sampled the surface: the point is then on the surface
+    // itself (a sample uv off the centre with that texel's depth leaves the plane by up to half a texel at grazing angles:
+    // dotted dark crescents in the far window tubs) [D]
+    vec2 uv = (floor((uv0 + vec2(cos(an), sin(an)) * sqrt((fi + 0.5) / 8.0) * ruv) * u_sRes.zw) + 0.5) / u_sRes.zw;
     float z = u_sProj.w / (textureLod(u_sDepth, uv, 0.0).r * 2.0 - 1.0 + u_sProj.z);
     vec2 nd = uv * 2.0 - 1.0;
     vec3 v = u_camPos + z * (u_sFwd + nd.x / u_sProj.x * u_sRight + nd.y / u_sProj.y * u_sUp) - P;
@@ -292,7 +295,7 @@ void main(){
   rough = max(rough, 0.12);
 
   float NdV = max(dot(N, V), 1e-3);
-  vec3 amb; float ao = 1.0; float sz = 1.0; vec3 lt = vec3(1.0); vec3 tubRef = vec3(0.0);
+  vec3 amb; float ao = 1.0; float sz = 1.0; vec3 lt = vec3(1.0); vec3 tubRef = vec3(0.0); vec3 hBot = u_hemiBot;
   if (u_exterior > 0.5) {
     // QA r3: the exterior sees the lit cloud deck below (u_extBounce per sky), so shaded flanks / undersides of the
     // wing, canoes and nacelle read mid-grey, not slate [V: alv_ANA77W_NH211_26K shaded flank #8090a0, belly #59636c]
@@ -373,14 +376,16 @@ void main(){
     float xLin = sqrt(max((u_R - 0.10)*(u_R - 0.10) - (v_wpos.y - u_yc)*(v_wpos.y - u_yc), 0.0));
     float recd = smoothstep(xLin + 0.004, xLin + 0.02, abs(v_wpos.x));
     // QA L8 (light): the cool shadow light of the Boarding look (r4: hemiBot / wash cooled for the shaded whites by the
-    // windows) keyed to the window side: the sidewall faces (wallProx x facingIn), the recessed reveals and tubs (recd) and
+    // windows) keyed to the window side: the sidewall faces (within ~0.06-0.25 m of the lining circle, facing in; not the
+    // window seats' shells, which wallProx x facingIn took as well), the recessed reveals and tubs (recd) and
     // half of it on the outboard bin doors (binO); the seat level and the rest take the neutral u_hemiBotN / u_washN
-    // (the pre-r4 values; = hemiBot / wash in the other moods). The r4 shift had also cooled the THE Room seat level past
+    // (the pre-r4 values; = hemiBot / wash in the other moods), also in the reflected cabin (envInside). The r4 shift had also cooled the THE Room seat level past
     // the photo [V: q06 seat zone B-R +11 -> +16 vs c_27312 +8, shell tops +15 -> +23 vs +11; ash door leaves -4 -> +1 vs
     // c_27314 -4] and the economy bins [V: q15 bins B-R +8 vs y_47300 +0..+2], while the window-side whites are right
     // (q16 wall +10 vs y_47301 +14) (integration L8 low, lighting L8 medium) [D]
-    float coolW = max(wallProx * facingIn, max(recd, 0.5 * binO));
-    vec3 hBot = mix(u_hemiBotN, u_hemiBot, coolW), wsh = mix(u_washN, u_wash, coolW);
+    float coolW = max((1.0 - smoothstep(0.06, 0.25, xLin - abs(v_wpos.x))) * facingIn, max(recd, 0.5 * binO));
+    hBot = mix(u_hemiBotN, u_hemiBot, coolW);
+    vec3 wsh = mix(u_washN, u_wash, coolW);
     vec3 hemi = mix(hBot + u_binLift * max(binO, cBin), u_hemiTop, up);
     // QA r1 (light): sz = 1 where an outboard bin and its lens stand (08_bins builds them in the seat zones only), from
     // the zone row of the window LUT. The lens band, its colour and the bin overhang shade stop at the door, galley and
@@ -589,7 +594,7 @@ void main(){
   vec3 specSun = D * F * G * 0.25 * sun;
   vec3 R = reflect(-V, N);
   vec3 env = u_exterior > 0.5 ? mix(u_skyBot, u_skyTop*1.2, smoothstep(-0.2, 0.6, R.y))
-                              : envInside(R, 1.0 - smoothstep(1.3, 1.7, v_wpos.y)) * (0.25 + 0.75*ao) * lt;
+                              : envInside(R, 1.0 - smoothstep(1.3, 1.7, v_wpos.y), hBot) * (0.25 + 0.75*ao) * lt;
   vec3 Fe = F0 + (max(vec3(1.0 - rough), F0) - F0) * pow(1.0 - NdV, 5.0);
   vec3 specEnv = env * Fe * (1.0 - rough*0.8);
   // QA r3 (integration): sheen lobe for SHEEN materials (satin leatherette headrest covers): the white cabin reflected
@@ -600,7 +605,7 @@ void main(){
   // the photo's 0.37), so the covers between head-on and grazing
   // lift too and the lobe is not plain white [V: y_47301 covers L64-100 vs q16 L53-58; lobe B/R 1.09 vs y_47303 1.47;
   // q15 head-on covers (40,44,81) vs y_47300 (34,41,67) held] (from_econ w40-w42 medium)
-  if (sheen > 0.0) specEnv += env * pow(1.0 - NdV, 2.0) * u_sheen * mix(vec3(1.0), base / max(max(base.r, base.g), max(base.b, 1e-3)), 0.3);
+  if (sheen > 0.0) specEnv += env * pow(1.0 - NdV, 2.0) * u_sheen * mix(vec3(1.0), base / max(max(base.r, base.g), max(base.b, 1e-3)), u_sheenTint);
   // QA r2 (integration): on the exterior the sky reflection follows the baked albedo (luminance / the wing's #636466 =
   // 0.39, clamped 0.5-1; metals keep theirs), so the near-to-far albedo ramp of 11_exterior also ramps the grazing
   // reflection that out-lit the near flap [V: KN41 near skin L196 -> far 129-145 vs w19A near L163 / far L173]
