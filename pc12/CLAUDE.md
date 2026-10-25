@@ -2268,3 +2268,11 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   live pages under the CSP per scenario).  Judges r3: pilot 8.0, picture 8.0 (no blocker / major).  Open (minors): the
   close-ups a little washed out by the cover glass' reflection, a mip regeneration per upload batch at liveScale 2, the
   phone tier soft in close-up (scale 1), CAS wording / generator amps per the real NGX unknown.
+  Follow-up (2026-10-25, the lead's 7 console warnings 'WebGL: INVALID_OPERATION: texSubImage2D / generateMipmap: no
+  texture bound to target'): three r160's state.bindTexture skips gl.activeTexture when its cache already has the atlas on
+  unit 0, so copyTextureToTexture acted on whichever unit the last draw left active -- `Avionics._upload` makes unit 0
+  active before each copy, and a texture three has not created yet / with a full upload pending is uploaded whole
+  (initTexture; generateMipmaps is part of three's GPU texture key, so it is not toggled during that upload).  viewer_test
+  [AVX-16] sets up the stale-unit state, uploads, and checks gl.getError() and the WebGL console through the section (the
+  old code: 1282 and the lead's warnings).  Verified: --only avx 17 / 17, --only sound 25 / 25, --only picture 15 / 15,
+  avx_model_test 34 / 34, web/package.py verify OK, the Artifact bundle verify OK, artifact_test 76 / 76.
