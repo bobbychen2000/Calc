@@ -155,8 +155,11 @@ const SKIES = {
 // emitCtr = sky value of the air under the outboard bins (sidewall lens band) and under the centre bins, kAttF = voxel
 // attenuation inside THE Suite zone (1.35 elsewhere), fLift = share of the AO lifted toward 1 inside the suites (shader)
 // QA r3 (integration): azim / slope = sweep azimuths and cells sideways per layer (was 8 / 1), floorBlur = layers that
-// take two extra i / k blur passes (computeAO)
-const AO_TUNE = { hemi: 0.22, bounce: 1.0, emitLens: 0.45, emitCtr: 0.35, kAttF: 0.8, fLift: 0.35, azim: 16, slope: 0.5, floorBlur: 5 };
+// take two extra i / k blur passes (computeAO). The raters' slope 0.5 (63 deg rays) also opened the economy row gaps:
+// q15 foreground pans L67 -> 75 and bottom band < 30 26 -> 20 % (y_47300 pans L78 at 0.85x the render's exposure, econ
+// w34: pans 15-25 % light); at slope 1 they hold (L68, 26.6 %) and the 16 bilinear azimuths + floor blur keep the
+// aisle clean (q06 aisle p10 51, 1 % < 30) [D renders r3s]
+const AO_TUNE = { hemi: 0.22, bounce: 1.0, emitLens: 0.45, emitCtr: 0.35, kAttF: 0.8, fLift: 0.35, azim: 16, slope: 1, floorBlur: 5 };
 // QA r1 (light): cove = gain of the two cove LED line lights in the interior specular (mainFS coveSpec) [D: rim
 // highlight ~1.3x the face on THE Room shell caps (c_27312), armrest p99 >= 240 (y_47303)]
 // QA r3 (integration): sheen = gain of the grazing sheen lobe on SHEEN materials (mainFS) [D: q17 / q16 flaps against
@@ -319,10 +322,10 @@ class Scene {
       }
     }
     const acc = new Float32Array(nx * ny * nz);
-    // QA r3 (integration): AO_TUNE.azim sweep azimuths (was 8 at 45 deg, one cell sideways per layer) stepping
-    // AO_TUNE.slope cells sideways per layer, read bilinearly. The 8 diagonal sweeps let every 1.15-1.3 m THE Room shell
-    // throw a 1.0-1.3 m wedge across the 0.55 m aisle, periodic at each seat pair [V: q06 aisle p10 20, 34 % < 30 vs
-    // c_27312 p10 41, 5.5 %; kn_room_1 no stain beyond the contact line]; vertical share 0.28 kept [D]
+    // QA r3 (integration): AO_TUNE.azim sweep azimuths (was 8: 4 axis + 4 diagonal) stepping AO_TUNE.slope cells
+    // sideways per layer, read bilinearly. Each of the 8 sweeps carried 1/8 of the oblique sky, so every 1.15-1.3 m THE
+    // Room shell threw a dark 1.0-1.3 m wedge across the 0.55 m aisle, periodic at each seat pair [V: q06 aisle p10 20,
+    // 34 % < 30 vs c_27312 p10 41, 5.5 %; kn_room_1 no stain beyond the contact line]; vertical share 0.28 kept [D]
     const dirs = [[0, 0, 0.28]];
     for (let a = 0; a < AO_TUNE.azim; a++) {
       const t = (a + 0.5) * 2 * Math.PI / AO_TUNE.azim;
