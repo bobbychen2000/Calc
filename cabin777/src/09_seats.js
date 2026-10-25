@@ -17,7 +17,7 @@ const SEATMAT = {
   yFabric: { c: photoBase('#5f6b90', 'y_tick'), r: 0.9, l: LAYER.yJacq },   // w7 A: q15 L50 55 G/B 0.55 vs y_47300 68-91 / 0.62-0.66; w9 B: L50 66 vs 51 at the same seat (A w8: 77 vs 78) -> between
   yFabricB: { c: photoBase('#5f6ba0', 'y_diamond'), r: 0.9, l: LAYER.yDiamond },   // w19-w22 A: ground greyish (B/R) -> bluer; econ w16: photo-cut tile; ground ~15 % lighter (#39436c rendered vs y_47306 #5269ab, w15 B)
   yFabricC: { c: photoBase('#56638b', 'y_mosaic'), r: 0.9, l: LAYER.yMosaicP },   // third variant: dash mosaic (y_47302 left, y_47306 right); w6 A: photo-measured dash checker tile, was blobby procedural layer 11; w7 A: q15 #1e2a62 L 41 vs y_47306 #384877 L 60 -> greyer, lighter; w8 B: q15 L50 47 vs 63-80 -> lighter
-  yFabricD: { c: photoBase('#444d6b', 'y_fleck'), r: 0.9, l: LAYER.yFleck },   // econ w5: petal fleck (y_47300 seats 2 / 4, sans 14 L50 48); w16 B: ground L50 62 vs 47 -> darker; w6 A: G/B 0.45 vs 0.54 -> greener; w8 A + B: L50 37 vs 47-53 -> lighter
+  yFabricD: { c: photoBase('#3e4662', 'y_fleck'), r: 0.9, l: LAYER.yFleck },   // econ w39 (w36a-w38a): fleck back L90-92 vs 70 for four rounds -> ~10 % darker; econ w5: petal fleck (y_47300 seats 2 / 4, sans 14 L50 48); w16 B: ground L50 62 vs 47 -> darker; w6 A: G/B 0.45 vs 0.54 -> greener; w8 A + B: L50 37 vs 47-53 -> lighter
   // headrest cushion: sparse white confetti on cobalt, a different fabric from the back (y_47306 / 47302 wings,
   // REFERENCE777.md) - shares the luminance-only confetti swatch with the PY wings
   // (same tone-curve match: wing photo mean #334276 in y_47306 -> base #4a5a98 averages #324384) [D]
@@ -33,7 +33,7 @@ const SEATMAT = {
   yShellDark: { c: '#c2c5c9', r: 0.5, l: LAYER.plastic },
   yTray: { c: '#cfd2d6', r: 0.4, l: LAYER.plastic },
   yBelt: { c: '#25466a', r: 0.9, l: LAYER.fabric },        // y_47303 #325495 / #456198 (w5 B: #3a64a6 rendered sky-cyan; w6 B: #2e4c86 rendered #588ed0 vs y_47303 #38578c; w7 A: G/B 0.47 vs 0.61 -> teal lean)
-  yPillow: { c: '#30364d', r: 0.9, l: LAYER.fabric },      // econ w38 (w37a-7): q15 L60 vs 46 -> darker; econ w30 (w29a-5 / w29b-5): B/R 2.3 vs 2.0 -> less blue; econ w27 (w26b-5): L50 vs 44 -> darker; y_47300 (44,53,88); econ w2: #2e3860 rendered #151b3e vs photo #30395f; w6 B: #4d5579 q15 L50 59 vs 44
+  yPillow: { c: '#343a52', r: 0.9, l: LAYER.fabric },      // econ w39 (w38a-5): L39 vs 46 -> between; econ w38 (w37a-7): q15 L60 vs 46 -> darker; econ w30 (w29a-5 / w29b-5): B/R 2.3 vs 2.0 -> less blue; econ w27 (w26b-5): L50 vs 44 -> darker; y_47300 (44,53,88); econ w2: #2e3860 rendered #151b3e vs photo #30395f; w6 B: #4d5579 q15 L50 59 vs 44
   arm: { c: '#bfbcb8', r: 0.45, l: LAYER.plastic },       // econ w30 (w29b-8): q15 L164 vs 140 -> a step darker; econ w25 (w24b-6): warm light grey (y_47300 B/R 0.95-0.975 vs 1.06); econ QA w1: light grey, y_47303 #afb2bc / y_47302 #9fa6ab
   armPad: { c: '#bbbab6', r: 0.5, l: LAYER.plastic },
   armPost: { c: '#adaca8', r: 0.45, l: LAYER.plastic },    // econ w2: grey arm front bracket (y_47302 / 47303)
