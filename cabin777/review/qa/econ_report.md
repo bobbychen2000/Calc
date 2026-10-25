@@ -495,3 +495,57 @@ tray / pocket (7.9 / 7.8), back silhouette and rear shell (8.0 / 8.1).
 
 Before/after sheet: `econ_before_after_w3h.jpg` (own renders only: w37 8b965a4 vs w39 a4ad504; q15, q16, q17, e10, e7,
 e1).
+
+## Wave 3i (2026-10-25): confirm and polish
+
+Started on 3b401d3 (wave 3h final), then rebased onto the lighting final state de39b01, which left the econ pans
+bit-identical. One fresh calibrated round (w40), then two fix rounds (w41-w42), the cap of three. The 8.5 bar was not
+reached; there was no high-severity issue in any round.
+
+| round | rater A | rater B | mean | note |
+|---|---|---|---|---|
+| w40 (3b401d3, baseline) | 8.3 | 8.4 | 8.35 | = w39; the halved fleck darkening matched backs E / G (L55 / 63 vs 61 / 64) |
+| w41 (b596126) | 8.3 | 8.4 | 8.35 | darker, bluer covers head-on; q17 camera re-framed; pouch, belt stubs, under-pan tray (detail means 8.24 / 8.40) |
+| w42 (f31f065) | 8.3 | 8.4 | 8.35 | belts draped on the side blocks; cover a step lighter (detail means 8.26 / 8.40) |
+| final (this commit) | - | - | - | w42 with `yBelt` desaturated #2d5c90 -> #42648f (w42a-2 / w42b-2, unrated) |
+
+The detail means rose every round, but the overall scores held. B rates belts (8.6), pan / front (8.8), under-seat
+(8.6), armrests (8.8), headrest pad + cover (8.7) and the tick / diamond / mosaic fabrics (8.5) at the bar or above. A
+rates mosaic (8.5), fabric mix (8.6) and pan / front (8.5) there. The lowest details are tray / pocket / AC (A 7.9 /
+B 7.8), back silhouette and rear shell (8.0 / 8.1) and far rows (A 7.5 -> 7.9, B 7.9 -> 8.0). Neither rater names a
+concrete defect in the tray, back silhouette or rear shell.
+
+### What changed in wave 3i
+- **q17 camera (`test/qa.js`):** walk(0.6, 1.35, 49.4, -PI/2+0.25, -0.42), was (0.35, 1.55, ...). It is the best of 81
+  cameras by luma + edge correlation against y_47303 (0.80 vs 0.71). The w36-w40 q17 "cover" box (670-700, 230-260) was
+  seat-back fabric: at grazing angles the covers already read silver-grey under the sheen lobe. A raise of the sheen
+  gain to 12 left that box unchanged.
+- **Headrest cover (SEATMAT.yCover):** #222842 -> #0f163e (w41), then #141b44 (w42), r 0.52. At w40 the q15 darkest
+  40 % read (47,52,79) B/R 1.70, against y_47300's (34,41,67) 1.97; at w42 it reads (40,44,81). The darker cover also
+  closed rater A's far-row dark-gap gap (L<50 share 0.035 -> 0.146 vs 0.132). The trade-off is q16, where covers are
+  L53-58 against y_47301's 64-100.
+- **Belts:** on the 3-seat side blocks they are draped across the pan. A teal tongue strap and a navy buckle strap run
+  from the rear side creases to a mid-pan latch with a light-grey cover, as in y_47301 / y_47303 (and the left seat of
+  y_47300). The 4-seat centre block, the y_47300 hero row, stays tucked, with shorter, flatter strap stubs.
+- **Life-vest pouch:** a darker vest core (#43454d) inside the lighter rim, so it reads see-through; satin shell
+  (r 0.3), a small vest fleck, the red strap hanging ~4 cm past the rim, and the tag proud of the face.
+- **Under-pan tray:** 2 cm further aft, matt (w40b-2). The electronics box follows.
+
+### Shared-file edits (each named in its commit)
+- `src/09_seats.js` SEATMAT.yCover (w41, w42), SEATMAT.yBelt (w42, final).
+- `test/qa.js` q17 camera line (econ's own line).
+
+### Still open (w42a / w42b)
+- **q16 cover level (medium, both):** L53-58 vs y_47301 64-100; the head-on q15 level is at its limit. It needs a wider
+  or base-tinted grazing sheen lobe (lighting, `04_shaders.js`), not a darker / lighter base (`from_econ.md`).
+- **Cover partly hidden by the headrest wing in q17 (medium, A):** 29-48 px per row vs 66-88. A wider cover (0.24)
+  would undo the head-on width match (question 26).
+- **Lumbar pillows on the side blocks hide the draped belts (medium, A):** y_47301 / y_47303 show none there, but
+  y_47300 does (question 27).
+- **Drape geometry (low, both):** three unpitched segments per strap step across the pan (e11 / e7). The latch could sit
+  further forward (z -0.40); the layout is the same V on every seat.
+- **Low, carried:** tongue tips on centre-block pans E-G (light px 50-52 vs 0-40), tick back F (L90 vs 70), pillow a
+  flat plaque, fleck contrast (2.77 / 2.92 vs 3.12 / 3.61), aisle-end lozenge, mid-row photo-tile snow (shader fade).
+
+Before/after sheet: `econ_before_after_w3i.jpg` (own renders only: w40 3b401d3 vs w42 f31f065; q15, q16, q17 at the
+w41 camera, e10, e11, e1).

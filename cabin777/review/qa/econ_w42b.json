@@ -1,0 +1,49 @@
+{
+ "area": "econ",
+ "rater": "B",
+ "round": "w42",
+ "candidate": "f31f065",
+ "lens": "Geometry and proportion first, then colour. Same windows and method as w41b: m.py, c.py and d.py re-run as r41 vs r42 in /tmp/claude-0/-home-user-Calc/799b632d-abc8-5982-a611-3a2c97f75011/scratchpad/raterB42/. Added h.py (q16 cover boxes, middle 70 % of L), t.py, b.py and b2.py (belt webbing masks, q17 right block x 470-930, y 250-575). Change fractions vs r41: q15 4.6 % (about half is the other workers' ceiling and carpet; econ changes are the covers, the side-block belts and the tucked tongues), q16 7.2 %, q17 0.73 %. In the studio: e7 4.4 %, e11 4.1 %, e1 2.3 % and e4b 2.1 % (all belts), e3 0.19 %, e10, e5 and e8 bit-identical, the rest under 0.1 %. Back, pillow and pan windows are identical to r41 to 0.1 L.",
+ "score": 8.4,
+ "priorIssues": [
+  {"id": "w41b-1", "status": "partly fixed (small)", "note": "q16 cover boxes (middle 70 % of L): r41 L 39.2 / 54.8 / 28.9 / 44.0 -> r42 42.5 / 58.2 / 32.6 / 47.1 (+3.3 L), vs y_47301 57.6 / 69.1 / 100.9. Mean gap -34 -> -31 L. B/R 1.99-2.55, still bluer than the photo's 1.72-1.98. q15 head-on darkest 40 %: (36-38, 39-41, 70-73) L 46-48 -> (39-40, 42-44, 78-80) L 49-51, vs y_47300 L 37-65 (mean 47.6) and B/R 1.73-2.13. Still matched, and B/R 1.99 is inside the photo range. q17 is unchanged: a narrow pale strip against the photo's grey-blue flap."},
+  {"id": "w41b-2", "status": "not fixed", "note": "Centre-block tucked belt: light-grey px 765 -> 725, vs photo 1015. The tongue moved 0.5 cm back, but the navy stubs and silver tongue still read under every q15 pillow, where y_47300 shows only the grey cover."},
+  {"id": "w41b-3", "status": "not fixed / slight regression", "note": "farA L>150 2.6 -> 2.7 % and farB 6.1 -> 6.1 %, vs photo 17.0 / 10.2 %. farB contrast 3.10 -> 2.91 (photo 3.21) and farA 2.51 -> 2.44. Only 1.1 % of the far window changed: the lighter covers (33,36,72) -> (36,40,81) soften the dark band."},
+  {"id": "w41b-4", "status": "not fixed", "note": "Pillow p90/p10 1.55 / 1.52 / 1.46 / 1.57, identical, vs photo 2.60-5.51."},
+  {"id": "w41b-5", "status": "not fixed", "note": "Backs E/G p90/p10 2.77 / 2.91, vs photo 3.12 / 3.61."},
+  {"id": "w41b-6", "status": "not fixed", "note": "e11 dark px (L<45) by 40-row band from y 200 is bit-identical to s41 (1120 / 6687 / 9324 / 9615 / 5461 / 1155 / 439)."},
+  {"id": "w41b-7", "status": "unchanged (lighting, not scored)", "note": "Pans L 68.6 / 68.2 / 68.2 / 64.7, vs photo 84.3 / 77.2 / 74.1 / 77.7."}
+ ],
+ "details": [
+  {"detail": "Fabric: tick weave", "score": 8.5, "refs": "Identical (back D 89.3 / F 86.3 vs 87.5 / 67.8)."},
+  {"detail": "Fabric: diamond lattice", "score": 8.5, "refs": "Identical."},
+  {"detail": "Fabric: petal fleck", "score": 8.3, "refs": "Identical (E/G L 54.7 / 58.5, contrast 2.77 / 2.91)."},
+  {"detail": "Fabric: dash mosaic", "score": 8.5, "refs": "Identical."},
+  {"detail": "Fabric mix (backs, pans, pads)", "score": 8.5, "refs": "Identical."},
+  {"detail": "Headrest pad + cover", "score": 8.7, "refs": "Held. q15 L 49-51 B/R 1.99 is still inside y_47300 (37-65 / 1.73-2.13). q16 gained only 3 L (gap -31)."},
+  {"detail": "Pillow", "score": 8.4, "refs": "Identical."},
+  {"detail": "Armrests", "score": 8.8, "refs": "Identical."},
+  {"detail": "Belts", "score": 8.6, "refs": "Up 0.1. The side blocks now drape the belts as in y_47301 / y_47303: q17 right-block webbing-mask px 90 -> 680, and the q16 saturated-belt px 26 -> 949. e7's tongue (79,166,216) is close to y_47303's lit webbing (62-91, 123-145, 191-216). Held back because the straps stair-step (w42b-1), they read saturated royal blue in shadow (w42b-2), the q17 straps are short stubs where the photo's hang over the pan front, and the centre-block stubs remain."},
+  {"detail": "Seat pan / front", "score": 8.8, "refs": "Identical (e11 dark bands bit-identical)."},
+  {"detail": "Back silhouette", "score": 8.1, "refs": "Unchanged (e3 0.19 %, belts only)."},
+  {"detail": "Rear shell / hood / back top", "score": 8.1, "refs": "Unchanged (e2 0.01 %, e9 0.01 %)."},
+  {"detail": "Screen / handset", "score": 8.2, "refs": "Bit-identical (e5 0 %)."},
+  {"detail": "Tray / pocket / AC", "score": 7.8, "refs": "Unchanged."},
+  {"detail": "Legs / footrest / under-seat", "score": 8.6, "refs": "Bit-identical (e10 and e8 0 %)."},
+  {"detail": "Far-LOD rows", "score": 8.0, "refs": "Down 0.1: farB contrast 3.10 -> 2.91 (photo 3.21) and farA 2.51 -> 2.44, from the lighter covers. The highlight share is still 2.7 / 6.1 % vs 17.0 / 10.2 %."}
+ ],
+ "issues": [
+  {"id": "w42b-1", "severity": "low", "owner": "econ (09a_econ.js:291-296)", "title": "Draped straps stair-step across the pan", "evidence": "The three gBox segments per strap are laid flat, with no pitch, at stepped panY heights. In e11 and e7 the navy buckle strap shows two visible risers (saw-tooth edges) between the rear crease and the latch. Real webbing lies smooth (y_47303).", "fix": "Give each segment a pitch of atan(0.0875) (5 deg, front up) to follow panY, e.g. M4.trs(..., yaw) composed with rotX(-atan(0.0875)) along the strap direction. Or use one pitched box per strap with L = full length. Keep the +0.004 lift."},
+  {"id": "w42b-2", "severity": "low", "owner": "econ (SEATMAT.yBelt, 09_seats.js:35; shared)", "title": "Side-block belts read saturated royal blue in the shaded head-on and aisle views", "evidence": "Webbing px in q15 / q16: (29,72,141) / (29,80,144), B/R 4.9, vs y_47300 / y_47301 side-block belts (35-65, 42-79, 61-122), B/R 1.3-1.9 (slate). The lit e7 tongue (79,166,216) is fine against y_47303 (62-91, 123-145, 191-216).", "fix": "Lower the chroma, not the lightness: yBelt '#2d5c90' -> '#3d6088' (B/R 2.2), or r 0.9 -> 0.75 so the cove sheen greys it. Re-check that q17 tongue stays G/R >= 1.6."},
+  {"id": "w42b-3", "severity": "low", "owner": "econ (09a_econ.js:291)", "title": "q17 straps are short stubs; the photo's hang over the pan front", "evidence": "q17 right-block webbing-mask px r42 680 (spread as 30-40 px stubs by the armrest), while y_47303 shows two 70-90 px straps with the buckle near the pan front edge.", "fix": "Move the latch forward: z2 -0.33 -> -0.40 and x2 0.03 -> 0.06 (mid-pan latch nearer the front). Optionally drop the buckle-side end 2 cm over the front lip."},
+  {"id": "w41b-1", "severity": "medium", "owner": "econ (SEATMAT.yCover) + lighting (SHEEN lobe, 04_shaders.js)", "title": "Carried: q16 covers 31 L dark", "evidence": "r42 42.5 / 58.2 / 32.6 / 47.1 vs y_47301 57.6 / 69.1 / 100.9. q15 has headroom to y_47300's 65 on cover 1 only.", "fix": "As in w41b: widen the SHEEN lobe (lighting) so the 30-60 deg views lift. Changing the base colour alone cannot close the gap without breaking q15."},
+  {"id": "w41b-2", "severity": "low", "owner": "econ (09a_econ.js:302)", "title": "Carried: centre-block navy stubs beside the buckle", "evidence": "Light px 725 vs photo 1015 (r41 765).", "fix": "Strap y 0.474 -> 0.466 or length 0.06 -> 0.035."},
+  {"id": "w41b-3", "severity": "low", "owner": "econ (09a_econ.js econUnitFar)", "title": "Carried: far rows low highlight share; contrast slipped", "evidence": "farB contrast 2.91 vs 3.21 (w41 3.10). L>150 2.7 / 6.1 % vs 17.0 / 10.2 %.", "fix": "Lift the far headrest-top tint toward '#5a6898'. Keep the far cover at the w41 (33,36,72) level."},
+  {"id": "w41b-4", "severity": "low", "owner": "econ (09a_econ.js)", "title": "Carried: pillow a flat plaque", "evidence": "p90/p10 1.46-1.57 vs 2.60-5.51.", "fix": "Pillow loft: corners out 1.5 cm, mid-edges pinched 1 cm, centre 1 cm thicker."},
+  {"id": "w41b-5", "severity": "low", "owner": "econ (yFabricD / 03_tex.js LAYER_PARAMS)", "title": "Carried: fleck contrast low", "evidence": "E/G 2.77 / 2.91 vs 3.12 / 3.61.", "fix": "Raise the fleck swatch gain about 10 % at the same mean."},
+  {"id": "w41b-6", "severity": "low", "owner": "econ (09a_econ.js:76)", "title": "Carried: black edge under the pan front", "evidence": "e11 dark bands identical to w41.", "fix": "Tray gRBox width 0.40 -> 0.38, or '#2c2f35' -> '#3a3d44'."},
+  {"id": "w41b-7", "severity": "low", "owner": "lighting (12_scene.js)", "title": "Carried: near pans 6-16 L dark (not scored)", "evidence": "Pans L 64.7-68.6 vs 74.1-84.3.", "fix": "Lighting owner: check the low fill or AO at the q15 camera."}
+ ],
+ "questionsForUser": [],
+ "extraRefsSearched": "No downloads. Used ref/ana y_47300 (q15 windows and side-block belt samples), y_47301 (q16 covers and belt samples) and y_47303 (q17 webbing)."
+}

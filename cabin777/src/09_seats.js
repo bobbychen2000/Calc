@@ -32,7 +32,7 @@ const SEATMAT = {
   yShell: { c: '#d9dbde', r: 0.42, l: LAYER.plastic },
   yShellDark: { c: '#c2c5c9', r: 0.5, l: LAYER.plastic },
   yTray: { c: '#cfd2d6', r: 0.4, l: LAYER.plastic },
-  yBelt: { c: '#2d5c90', r: 0.9, l: LAYER.fabric },        // econ w42 (w41a-3): the draped side-block teal straps rendered (24,54,98) top-down vs y_47303 teal webbing (85,128,198) -> lighter; y_47303 #325495 / #456198 (w5 B: #3a64a6 rendered sky-cyan; w6 B: #2e4c86 rendered #588ed0 vs y_47303 #38578c; w7 A: G/B 0.47 vs 0.61 -> teal lean)
+  yBelt: { c: '#42648f', r: 0.9, l: LAYER.fabric },        // econ final 3i (w42a-2 / w42b-2): #2d5c90 read saturated royal blue in shade (B/R 4.6-4.9 vs y_47303 webbing #4c73ae 2.29) -> between A's #4a6aa0 and B's #3d6088 (unrated); econ w42 (w41a-3): the draped side-block teal straps rendered (24,54,98) top-down vs y_47303 teal webbing (85,128,198) -> lighter; y_47303 #325495 / #456198 (w5 B: #3a64a6 rendered sky-cyan; w6 B: #2e4c86 rendered #588ed0 vs y_47303 #38578c; w7 A: G/B 0.47 vs 0.61 -> teal lean)
   yPillow: { c: '#363d57', r: 0.9, l: LAYER.fabric },      // econ w39 (w38a-5 / w38b-3): L39 vs 46-62 -> lighter; econ w38 (w37a-7): q15 L60 vs 46 -> darker; econ w30 (w29a-5 / w29b-5): B/R 2.3 vs 2.0 -> less blue; econ w27 (w26b-5): L50 vs 44 -> darker; y_47300 (44,53,88); econ w2: #2e3860 rendered #151b3e vs photo #30395f; w6 B: #4d5579 q15 L50 59 vs 44
   arm: { c: '#bfbcb8', r: 0.45, l: LAYER.plastic },       // econ w30 (w29b-8): q15 L164 vs 140 -> a step darker; econ w25 (w24b-6): warm light grey (y_47300 B/R 0.95-0.975 vs 1.06); econ QA w1: light grey, y_47303 #afb2bc / y_47302 #9fa6ab
   armPad: { c: '#bbbab6', r: 0.5, l: LAYER.plastic },

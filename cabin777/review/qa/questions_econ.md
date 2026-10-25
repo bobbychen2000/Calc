@@ -56,3 +56,10 @@
    hang is a lowered headrest. [shortened]
 25. (wave 3h, both raters) Belts: tucked away under the pillow as in the y_47300 hero shot, or laid across the pans as in
    y_47302 / y_47303 and the trip reports? [tucked under the pillow edge, only the buckle shows]
+26. (wave 3i, w41a-1) Headrest cover width: the matched head-on y_47300 gives ~0.22 m (1.03x), but in the q17 / y_47303
+   side view the headrest wing hides half our cover (29-48 px per row vs 66-88). Is the real cover wider, wrapping
+   round the wings? [kept 0.22]
+27. (wave 3i, w42a-1) Lumbar pillows: y_47300 has one on every seat, including the side blocks; y_47301 / y_47303 show
+   none on the side-block seats, where the belts are laid out. Are pillows on the side blocks a showroom setting?
+   [kept on every seat]. Question 25 (belts) is now answered both ways: draped on the side blocks, tucked on the centre
+   block.

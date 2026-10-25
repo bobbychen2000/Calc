@@ -110,3 +110,12 @@
   what is left is contrast and dark row gaps (p90/p10 2.57 vs 3.72, L<50 4 % vs 13 %). A nearer econ LOD switch
   (nearK 0.45) was tried in w38 and reverted: it doesn't help and turns the rows into flat blocks.
 - **Cover grazing sheen:** q17 cover L60 B/R 2.40 vs y_47303 L153 / 1.47 (rater A, every round).
+
+## w40-w42 (wave 3i) to lighting / integration
+- **Cover sheen at mid angles (medium, both raters, w41-w42):** q15 head-on covers now match y_47300 ((40,44,81) vs
+  (34,41,67)), and q17 grazing reads silver. In between, the q16 covers stay L53-58 against y_47301's 64-100. A gain
+  test (`LIGHT_TUNE.sheen` 1.35 -> 12) changed 7 % of q17 at grazing pixels only. A broader lobe, (1 - N.V)^2 or a
+  base-tinted lobe (rater A w41a-L1: the lobe adds plain white, B/R 1.09 vs 1.47), would lift q16 without changing q15.
+- **Mid-row snow (carried):** q15 rows 3-8 still show high-frequency white specks and tick streaks in the photo tiles,
+  where y_47300 shows soft mottle. The `far` fade in mainFS starts at 3 m and only goes halfway by 7 m.
+- **q17 camera re-framed (econ's line in `test/qa.js`):** if integration rates q17, re-derive any boxes from w41 on.
