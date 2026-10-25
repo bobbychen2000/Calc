@@ -34,7 +34,7 @@ const VIEWS = {
   q14_seat26A: [`__rel('26A',1.3,1.3,-0.85,Math.PI*0.7,-0.2)`, ['py_37301', 'py_37303'], 'PY window pair from the side'],
   q15_econFronts: [`(()=>{window.__near=1.25; ${walk(0, 1.55, 48.05, 'Math.PI', -0.26)}})()`, ['y_47300'], 'economy seat fronts looking aft (econ w24: row 34 D-G framed as y_47300, row 33 behind the near clip)'],
   q16_econAisle: [walk(1.0, 1.85, 47.3, 'Math.PI+0.42', -0.36), ['y_47301'], 'economy from the right aisle looking aft (econ w24: framed as y_47301)'],
-  q17_econBacks: [walk(0.35, 1.55, 49.4, '-Math.PI/2+0.25', -0.42), ['y_47303'], 'economy H-K from the right aisle looking outboard (econ w24: framed as y_47303)'],
+  q17_econBacks: [walk(0.6, 1.35, 49.4, '-Math.PI/2+0.25', -0.42), ['y_47303'], 'economy H-K from the right aisle looking outboard (econ w41: eye 0.25 m outboard and 0.2 m lower, best of a 80-camera search against y_47303, luma + edge correlation 0.80 vs 0.71; w24: framed as y_47303)'],
   q18_seat35C: [`__sit('35C',0,-0.25)`, ['y_47305'], 'seated in 35C: seatback screen'],
   q19_rearGalley: [walk(0.0, 1.62, 58.9, 'Math.PI', -0.08), [], 'rear galley at door 5'],
   q20_night: [`(()=>{__app.applyMood('sleep'); __app.applySky('night'); ${walk(1.15, 1.8, 24.0, 0.05, -0.2)}})()`, [], 'THE Room at night'],

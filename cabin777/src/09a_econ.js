@@ -78,7 +78,7 @@ function econSeat(B, x0, lod, opts = {}) {
   const ex = 0.01, ez = 0.032, py0 = -0.04, ph = 0.085, ps = [{ y: py0, w: 0.45, d: 0.42, z: 0.02, r: 0.02 }, { y: py0 + 0.012, w: 0.474, d: 0.456, z: 0.008, r: 0.026 }, { y: py0 + 0.03, w: 0.478, d: 0.47, r: 0.03 }];   // w34a-1 / w34b-4: joints still 4-8 px (top 0.438 on a 0.4826 pitch) -> 0.478, side roll 1.0 cm
   for (let k = 0; k <= 5; k++) { const th = k / 5 * Math.PI / 2, c = 1 - Math.cos(th); ps.push({ y: py0 + ph - ez + ez * Math.sin(th) + 0.01 * Math.sin(th) * (k === 5 ? 1 : 0.6), w: 0.478 - 2 * ex * c, d: 0.47 - 2 * ez * c, r: 0.03 + ex * c * 0.6 }); }
   B.add(gLoft(ps, lod ? 3 : 4), M4.trs(x0, 0.415, -0.28, 0, 5 * DEG), PF);
-  B.add(gRBox(0.40, 0.02, 0.41, 0.008, 1), M4.trs(x0, 0.364, -0.26), { c: '#2c2f35', r: 0.6 });
+  B.add(gRBox(0.40, 0.02, 0.39, 0.008, 1), M4.trs(x0, 0.364, -0.25), { c: '#2c2f35', r: 0.8 });   // w41 (w40b-2): 2 cm further back, matt (a hard black lip under every pan front in e11)
   // back: rises above the headrest cushion to a rounded top (y_47306 all three seats, y_47301, sanspotter 13;
   // back length ~0.87 from the pan crease, y_47302 right seat) [D]
   B.add(econCrownLoft([SEC(0.0, 0.40, 0.07, -0.005, 0.02), SEC(0.04, 0.425, 0.09, -0.012), SEC(0.16, 0.43, 0.108, -0.024, 0.036), SEC(0.30, 0.43, 0.095, -0.014, 0.036),
@@ -184,10 +184,11 @@ function econSeat(B, x0, lod, opts = {}) {
   // ~25 deg nose-down (w33b-3) under the seat, the vest a darker core inside, a red strap with a blue tag folded down its face (was an opaque puck) [V]
   // w39 (w38a-3 / w38b-2): the disc swung down-aft, its face up-aft, so the high front views (e1 / e7 / e11) saw it edge-on;
   // now it swings down-forward (rx -55 deg, the other half), face up-forward as y_47302's fan, strap and tag on its face
-  B.add(gCyl(0.095, 0.095, 0.012, 14, true, Math.PI, Math.PI), M4.trs(x0 + 0.03, 0.235, -0.36, 0, -(Math.PI / 2 - 35 * DEG)), { c: '#767983', r: 0.12 });   // w38 (w37a-5 / w37b-3): L~40 vs y_47302 60-80, faced forward where the photo lies flatter -> lighter   // final (w36a-5 / w36b-2): a brown bowl -> cool smoky grey (y_47302 #43444d), thin rim round a dark cool vest; w36 (w35a-4): a pale rim round a black core read as a gauge -> smoky, the vest showing through; w34b-2: read opaque near-black
-  B.add(gCyl(0.085, 0.085, 0.016, 12, true, Math.PI, Math.PI), M4.trs(x0 + 0.03, 0.232, -0.362, 0, -(Math.PI / 2 - 35 * DEG)), { c: '#5e6068', r: 0.45 });   // w38 (w37a-5 / w37b-3): core (32,34,41) vs y_47302 48-60 -> lighter
-  B.add(gBox(0.018, 0.08, 0.004), M4.trs(x0 + 0.035, 0.207, -0.390, 0, 35 * DEG), { c: '#c8252b', r: 0.5 });
-  B.add(gBox(0.02, 0.012, 0.005), M4.trs(x0 + 0.035, 0.232, -0.371, 0, 35 * DEG), { c: '#2f5fb0', r: 0.5 });
+  B.add(gCyl(0.095, 0.095, 0.012, 14, true, Math.PI, Math.PI), M4.trs(x0 + 0.03, 0.235, -0.36, 0, -(Math.PI / 2 - 35 * DEG)), { c: '#767983', r: 0.3 });   // w41 (w40a-8 / w40b-3): satin smoky plastic (r 0.12 read as a flat plate)   // w38 (w37a-5 / w37b-3): L~40 vs y_47302 60-80, faced forward where the photo lies flatter -> lighter   // final (w36a-5 / w36b-2): a brown bowl -> cool smoky grey (y_47302 #43444d), thin rim round a dark cool vest; w36 (w35a-4): a pale rim round a black core read as a gauge -> smoky, the vest showing through; w34b-2: read opaque near-black
+  B.add(gCyl(0.085, 0.085, 0.016, 12, true, Math.PI, Math.PI), M4.trs(x0 + 0.03, 0.232, -0.362, 0, -(Math.PI / 2 - 35 * DEG)), { c: '#43454d', r: 0.45 });   // w41 (w40a-8 / w40b-3): darker vest core inside the lighter rim, so the shell reads see-through (y_47302)   // w38 (w37a-5 / w37b-3): core (32,34,41) vs y_47302 48-60 -> lighter
+  B.add(gBox(0.018, 0.12, 0.004), M4.trs(x0 + 0.035, 0.19, -0.40, 0, 35 * DEG), { c: '#c8252b', r: 0.5 });   // w41 (w40b-3): ~4 cm of the pull strap hangs past the rim (y_47302)
+  B.add(gBox(0.02, 0.012, 0.005), M4.trs(x0 + 0.035, 0.232, -0.376, 0, 35 * DEG), { c: '#2f5fb0', r: 0.5 });   // w41 (w40a-8): proud of the face (it was buried at rim height)
+  B.add(gBox(0.018, 0.018, 0.006), M4.mul(M4.trs(x0 + 0.03, 0.232, -0.362, 0, -(Math.PI / 2 - 35 * DEG)), M4.trs(-0.025, 0, -0.045, 0.4)), { c: '#8a6238', r: 0.7 });   // w41 (w40b-3): orange vest fleck through the shell (y_47302)
   if (!opts.noScreen) {
     // 13.3 in touchscreen (0.294 x 0.166) in a black glass border 0.316 x 0.205 set flush in the hood face, top ~0.03
     // below the hood's rounded top (y_47305: 600 x 390 px at 1905 px/m, colour (29,26,38); 55 px of shell above) [D]
@@ -283,8 +284,8 @@ function econSeat(B, x0, lod, opts = {}) {
   // belt: silver tongue one side, light-grey plastic buckle cover the other (y_47303); w5 A: the webbing drapes across the
   // pan from the side creases and the latch sits at mid-pan (y_47302 / 47301 / 47303) [V]
   for (const s of [-1, 1]) {
-    B.add(s < 0 ? gRBox(0.05, 0.012, 0.035, 0.005, 1) : gRBox(0.05, 0.014, 0.04, 0.006, 1), M4.trs(x0 + 0.012 * s, 0.465, -0.17), s < 0 ? SEATMAT.buckle : { c: '#3a3f52', r: 0.4 });   // w39 (w38b-1): still two light blocks at the pillow foot -> under its edge, navy-grey cover;   // w37 (w37a-3): the V and two light blocks still on every q15 pan -> tucked under the pillow foot, darker cover   // w36 (w35a-3): the V and light buckles below every pillow (y_47300 shows none) -> nearer the crease, shorter, a grey cover   // w25 (w24b-5): the light covers dominated the pans head-on
-    B.add(gBox(0.045, 0.004, 0.10), M4.trs(x0 + 0.06 * s, 0.476, -0.155, s * 30 * DEG), s < 0 ? SEATMAT.yBelt : { ...SEATMAT.yBelt, c: '#262c48' });   // w10 B: teal tongue strap, navy buckle strap (y_47303)
+    B.add(s < 0 ? gRBox(0.05, 0.012, 0.035, 0.005, 1) : gRBox(0.05, 0.014, 0.04, 0.006, 1), M4.trs(x0 + 0.012 * s, s < 0 ? 0.468 : 0.465, s < 0 ? -0.16 : -0.17), s < 0 ? SEATMAT.buckle : { c: '#3a3f52', r: 0.4 });   // w39 (w38b-1): still two light blocks at the pillow foot -> under its edge, navy-grey cover;   // w37 (w37a-3): the V and two light blocks still on every q15 pan -> tucked under the pillow foot, darker cover   // w36 (w35a-3): the V and light buckles below every pillow (y_47300 shows none) -> nearer the crease, shorter, a grey cover   // w25 (w24b-5): the light covers dominated the pans head-on   // w41 (w40a-5): the silver tongue tip 1 cm out from under the pillow (light px 15-25 vs y_47300 32-40)
+    B.add(gBox(0.045, 0.004, 0.06), M4.trs(x0 + 0.035 * s, 0.474, -0.175, s * 15 * DEG), s < 0 ? SEATMAT.yBelt : { ...SEATMAT.yBelt, c: '#262c48' });   // w10 B: teal tongue strap, navy buckle strap (y_47303)   // w41 (w40a-5 / w40b-4): strap stubs still read as a V beside the buckle -> shorter, flatter, under the pillow foot
   }
   // w33: the pan-front stiffener (r2 light grey, w14 shadowed) is gone - the dark tray closes the pan base and a separate
   // dark slab read as a bar under every pan (e10 / e11)
@@ -292,9 +293,9 @@ function econSeat(B, x0, lod, opts = {}) {
   {
     // w34b-3: hangs from the tray just behind the pan face (it floated 3 cm low, 9 cm back)
     // w33 (gap33-4, y_47302 crop): light grey, tucked up against the pan base, dark display in its upper half, blue LED [V]
-    B.add(gRBox(0.075, 0.085, 0.05, 0.008, 1), M4.trs(x0 - 0.13, 0.315, -0.465), { c: '#c8cacc', r: 0.5, l: LAYER.plastic });
-    B.add(gQuad(0.04, 0.03), M4.trs(x0 - 0.13, 0.33, -0.4905, Math.PI), { c: '#1c1f25', r: 0.3 });
-    B.add(gQuad(0.004, 0.004), M4.trs(x0 - 0.115, 0.305, -0.4907, Math.PI), { c: '#4a90ff', r: 0.3, e: 0.8 });
+    B.add(gRBox(0.075, 0.085, 0.05, 0.008, 1), M4.trs(x0 - 0.13, 0.315, -0.455), { c: '#c8cacc', r: 0.5, l: LAYER.plastic });   // w41: 1 cm aft with the tray
+    B.add(gQuad(0.04, 0.03), M4.trs(x0 - 0.13, 0.33, -0.4805, Math.PI), { c: '#1c1f25', r: 0.3 });
+    B.add(gQuad(0.004, 0.004), M4.trs(x0 - 0.115, 0.305, -0.4807, Math.PI), { c: '#4a90ff', r: 0.3, e: 0.8 });
   }
 }
 
