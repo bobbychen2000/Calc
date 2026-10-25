@@ -1,0 +1,174 @@
+{
+ "area": "room",
+ "rater": "A-skeptic",
+ "round": "w18",
+ "score": 8.5,
+ "summary": "Round 2 of polishA, head 0b28c7c. Room changes: jShell #434349 -> #4a4b51, jCap #4b4b50 -> #4b4c51 (09_seats.js), jBand back to #656b73 with LAYER.plastic kept (09c_room.js:22). Rated from r1 (after round 1) vs r3 (head) and r0 (before polishA); 930x575 boarding. The shell lift helped: the shaded near faces moved from L45-54 to L54-63 and the hue from h234 back to h228-229, closer to the official slate (c_27312 / c_27314 / c_27315 h216-224, one face h229). q06 and q10 near faces (L63) now sit at the bottom of the photo band (L65-89); q09's privacy wall (L54) is still ~0.7x c_27314 (L72-83), which I attribute to cabin AO/shadow (lighting), not to the material, because the lit caps and far rows are in range. The header band is back on the flap's hue (h220 vs flap h216), band/flap 0.82 (r1 0.72; photos 0.89-1.05) and smooth. Soft goods, ash grain and hardware are pixel-identical. No high or medium issue remains; everything open is low.",
+ "photos_collected": [
+  "Used ref/ana c_27312, c_27314, c_27315, c_27316 and ref/web/room (omaat_room_13/15/23/31, kn_8). No new downloads."
+ ],
+ "own_renders": [
+  "No new SwiftShader shots for room: the change is material colour only, and q06-q10 show it at all needed ranges. Before/after stacks (r1 top, r3 bottom): /tmp/claude-0/-home-user-Calc/33316a4e-1209-5df1-8086-36d8df9d3f92/scratchpad/w2a/ba_q06_roomMain.png, ba_q07_seat11A.png, ba_q08_seat12H.png, ba_q09_centrePair.png, ba_q10_seat14D.png. Sampler /tmp/claude-0/-home-user-Calc/33316a4e-1209-5df1-8086-36d8df9d3f92/scratchpad/w2a/py/m.py (box mean RGB, luma, HSV, p90)."
+ ],
+ "prior_issues": [
+  {
+   "from": "w17b",
+   "severity": "medium",
+   "issue": "Shaded near shell faces too dark (ash/face ratio overshoot)",
+   "status": "mostly fixed (remaining gap is lighting)",
+   "evidence": "q09 (300-500 x 260-330) L45 -> L54 vs c_27314 (220-400 x 160-178) L83 / (760-830 x 190-230) L72; q10 (410-480 x 450-540) L54 -> L63 vs c_27315 L65 / L84; q06 (30-130 x 430-530) L54 -> L63 vs c_27312 L68 / L89. Far rows q09 (650-900 x 250-320) L62 -> L70. r0 was L73 / 85 / 83, so the new value sits between the too-light pre-polish shells and the round-1 overshoot."
+  },
+  {
+   "from": "w17b",
+   "severity": "low",
+   "issue": "Shell hue drifted blue-violet",
+   "status": "fixed",
+   "evidence": "h234-235 -> h228-229 in q06 / q09 / q10; photos h216-224 (c_27315 one face h229)."
+  },
+  {
+   "from": "w17a",
+   "severity": "low",
+   "issue": "Header band mauve-grey and darker than the flap",
+   "status": "mostly fixed",
+   "evidence": "q08 band (480-560 x 290-330) (93,94,108) L95 h234 -> (101,108,122) L107 h220; flap (530-630 x 330-370) L131 h216: band/flap 0.72 -> 0.82 (c_27315 / omaat_room_15 0.89, omaat_room_31 1.05). Still a shade dark (w17a's #68707c would land ~0.86-0.9)."
+  },
+  {
+   "from": "w17b",
+   "severity": "low",
+   "issue": "Orange-peel stipple on the satin band",
+   "status": "not changed (layer kept by decision); within the 0.04 hp target"
+  },
+  {
+   "from": "w16a / w17a",
+   "severity": "low",
+   "issue": "Ash pinstripe weak / soft arcs",
+   "status": "not fixed (tile unchanged)",
+   "evidence": "q06 cabinet (170-330 x 330-450) L131 h55, unchanged in character."
+  },
+  {
+   "from": "w16b",
+   "severity": "medium",
+   "issue": "Aisle-end doors too dark vs cabinets (lighting)",
+   "status": "not fixed (lighting owner)",
+   "evidence": "q06 door (600-640 x 330-520) L168, unchanged; it reads more cream against the darker frames than at r0."
+  },
+  {
+   "from": "w16a/b",
+   "severity": "low",
+   "issue": "Pillow slabs, hidden bundle film, crisp O comforter, floating latch tongue, aisle-end seam, door-edge zipper",
+   "status": "not fixed (pixel-identical)"
+  }
+ ],
+ "details": [
+  {
+   "detail": "Overall nested-pair layout, shells, privacy walls (aisle views)",
+   "score": 8.7,
+   "refs": [
+    "c_27312",
+    "c_27315",
+    "q06",
+    "q10"
+   ]
+  },
+  {
+   "detail": "Shell / cap colour and finish",
+   "score": 8.6,
+   "refs": [
+    "c_27312",
+    "c_27314",
+    "c_27315",
+    "q06",
+    "q09",
+    "q10"
+   ]
+  },
+  {
+   "detail": "Monument top / aisle cap / spine / plaques",
+   "score": 8.3,
+   "refs": [
+    "c_27313",
+    "c_27314",
+    "q09"
+   ]
+  },
+  {
+   "detail": "Aisle-end posts and door leaves",
+   "score": 8.5,
+   "refs": [
+    "c_27312",
+    "q06"
+   ]
+  },
+  {
+   "detail": "Cabinet / table ash",
+   "score": 8.1,
+   "refs": [
+    "c_27312",
+    "c_27315",
+    "q06",
+    "q10"
+   ]
+  },
+  {
+   "detail": "Seat: sofa, back, header band, slate flap",
+   "score": 8.4,
+   "refs": [
+    "c_27315",
+    "omaat_room_15",
+    "omaat_room_31",
+    "q08",
+    "q10"
+   ]
+  },
+  {
+   "detail": "Boarding bundle and pillows",
+   "score": 7.8,
+   "refs": [
+    "omaat_room_15",
+    "q08",
+    "q09"
+   ]
+  },
+  {
+   "detail": "Monitor, footwell, console",
+   "score": 8.3,
+   "refs": [
+    "c_27316",
+    "q07"
+   ]
+  }
+ ],
+ "issues": [
+  {
+   "severity": "low",
+   "detail": "Header band still ~10 % dark against the flap",
+   "problem": "Hue now matches; the value ratio is 0.82 against 0.89-1.05 in the photos.",
+   "evidence": "q08 band L107 vs flap L131; c_27315 band L105-127 vs flap L119.",
+   "fix": "src/09c_room.js:22 jBand c '#656b73' -> '#6b717c' (keep r 0.45, LAYER.plastic). Target q08 band ~L115, h218-222."
+  },
+  {
+   "severity": "low",
+   "detail": "(lighting, not scored) q09 privacy-wall faces L54 vs c_27314 L72-83",
+   "problem": "The material is in range on q06 / q10 and the caps; the remaining gap is AO / shadow on large vertical faces.",
+   "evidence": "q09 (300-500 x 260-330) L54.",
+   "fix": "Lighting owner (12_scene.js AO term on tall vertical faces). Do not lighten jShell further: q06 far rows would leave the c_27312 band."
+  },
+  {
+   "severity": "low",
+   "detail": "Ash pinstripe contrast (carried)",
+   "problem": "Soft arcs, about half the photos' fine contrast.",
+   "evidence": "As w16a / w17a.",
+   "fix": "test/make_swatches.py HP['j_ash'] 60 -> 20, ALONG['j_ash'] 6 -> 14; re-cut tex_j_ash.png (shared; check doors / bar)."
+  },
+  {
+   "severity": "low",
+   "detail": "Soft goods and small hardware (carried)",
+   "problem": "Pillows rigid slabs, bundle film hidden, O comforter crisp T, latch tongue floating, lower seam missing, door-top aliasing.",
+   "evidence": "q08 / q09 unchanged.",
+   "fix": "As listed in room_w16a.json / room_w16b.json (09c roomPillow, roomBundle, duvetSheet, belt tongue)."
+  }
+ ],
+ "questions": [
+  "Both round-2 room changes helped; no further room colour change is needed beyond the optional jBand step. The shell value is now limited by lighting on q09, which should be recorded in from_room.md so lighting picks it up."
+ ]
+}

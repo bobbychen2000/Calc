@@ -304,16 +304,18 @@ function suiteUnit(opts = {}) {
     // aisle edge and a turned-down corner - the w6 slab vanished white-on-white (w7a);
     // the seat belt lies across the bare pad between the pillows and the fold (omaat_f57) [V]
     const duv = { c: '#b0aca4', r: 0.95, l: LAYER.fabric }, dw = SW, dx = seatX - 0.01, xe = dx + dw / 2, dz0 = -0.92, dl = 1.14;
-    B.add(gLoft(cushionSecs(dw, dl - 0.30, 0.05, -0.03, { edge: 0.04, r: 0.05, crown: 0.012 }), 3), M4.trs(dx, 0.49, dz0 - 0.30 - (dl - 0.30) / 2), duv);   // w10: ~0.04 thick, not a second mattress (w10b)
-    // polishA (w13a/b, w14a medium): the head band is a slab whose edge follows the turned-down diagonal, so the corner is cut
-    // away to the pad (omaat_f57) instead of a sheet triangle laid over an intact duvet [V shape, A size]
-    B.add(gExtrude([[xe - dw, -dz0], [xe - 0.36, -dz0], [xe - 0.06, -dz0 + 0.30], [xe - 0.06, -dz0 + 0.35], [xe - dw, -dz0 + 0.35]], 0.035), M4.trs(0, 0.5175, 0, 0, -Math.PI / 2), duv);
+    B.add(gLoft(cushionSecs(dw, dl - 0.25, 0.05, -0.03, { edge: 0.04, r: 0.05, crown: 0.012 }), 3), M4.trs(dx, 0.49, dz0 - 0.25 - (dl - 0.25) / 2), duv);   // w10: ~0.04 thick, not a second mattress (w10b)
+    // polishA (w13a/b, w14a/b, w15a medium): the head band is cut on the turned-down diagonal down to the pad (omaat_f57) [V shape, A size]:
+    // one slab flush with the loft's rounded edge (top 0.515, not 1-2 cm proud: w15a), rounded at the window-head corner
+    const hb = [[xe - 0.36, -dz0], [xe - 0.06, -dz0 + 0.30], [xe - 0.06, -dz0 + 0.31], [xe - dw + 0.01, -dz0 + 0.31]];
+    for (let k = 0; k <= 4; k++) { const a = Math.PI / 2 * k / 4; hb.push([xe - dw + 0.06 - 0.05 * Math.cos(a), -dz0 + 0.05 - 0.05 * Math.sin(a)]); }
+    B.add(gExtrude(hb, 0.03), M4.trs(0, 0.50, 0, 0, -Math.PI / 2), duv);
     if (!lod) {
       // w9: the turned-down diagonal corner at the head end on the aisle side shows the lighter underside (omaat_f57); the fold
       // band and crease ridges read as a slab and rods (w8 / w9a)
-      B.add(gExtrude([[xe - 0.36, -dz0 + 0.04], [xe - 0.06, -dz0 + 0.34], [xe - 0.36, -dz0 + 0.34]], 0.006), M4.trs(0, 0.537, 0, 0, -Math.PI / 2), { c: '#9b978f', r: 0.95, l: LAYER.fabric });   // folded flap, underside up (f57, w12b); polishA: kept ~0.88x the darker duvet (w13a)
-      B.add(gRBox(0.06, 0.012, 0.42, 0.006, 2), M4.trs(xe - 0.21, 0.536, dz0 - 0.19, 135 * DEG), duv);   // w11: greyer underside + fold on the diagonal (f57); w12: a broad low roll in the duvet colour (a thin ridge read as a label line)
-      B.add(gRBox(0.022, 0.12, dl - 0.32, 0.010, 2), M4.trs(xe + 0.006, 0.43, dz0 - 0.30 - (dl - 0.32) / 2), duv);                              // aisle drape, tucked under the rounded duvet edge (polishA: w13a's crisp ledge)
+      B.add(gExtrude([[xe - 0.36, -dz0 + 0.04], [xe - 0.06, -dz0 + 0.34], [xe - 0.36, -dz0 + 0.34]], 0.006), M4.trs(0, 0.527, 0, 0, -Math.PI / 2), { c: '#9b978f', r: 0.95, l: LAYER.fabric });   // folded flap, underside up (f57, w12b); polishA: kept ~0.88x the darker duvet (w13a)
+      B.add(gRBox(0.06, 0.012, 0.42, 0.006, 2), M4.trs(xe - 0.21, 0.531, dz0 - 0.19, 135 * DEG), duv);   // w11: greyer underside + fold on the diagonal (f57); w12: a broad low roll in the duvet colour (a thin ridge read as a label line)
+      B.add(gRBox(0.022, 0.12, dl - 0.27, 0.010, 2), M4.trs(xe + 0.006, 0.43, dz0 - 0.25 - (dl - 0.27) / 2), duv);                              // aisle drape, tucked under the rounded duvet edge (polishA: w13a's crisp ledge)
       const bz = -0.80, bx = seatX + SW / 2 - 0.21, ba = 25 * DEG;
       for (const sg of [-1, 1]) B.add(gBox(0.035, 0.004, 0.16), M4.trs(bx + sg * 0.09 * Math.cos(ba), 0.476, bz - sg * 0.09 * Math.sin(ba), Math.PI / 2 + ba), SEATMAT.black);
       B.add(gRBox(0.05, 0.012, 0.035, 0.005, 1), M4.trs(bx, 0.48, bz), SEATMAT.buckle);

@@ -1,0 +1,105 @@
+{
+ "area": "suite",
+ "rater": "A",
+ "round": "w15",
+ "score": 8.6,
+ "method": "Rated head 0b28c7c (polishA round 2) on r3 (930x575, boarding) against r1/r2 (round 1) and r0, with pixel diffs (q02 781 px > 8, q03 2233, q04 89816, q05 3740) and zooms (/tmp/claude-0/-home-user-Calc/33316a4e-1209-5df1-8086-36d8df9d3f92/scratchpad/w2a/z_q04.png, z_q03.png, ba_q0N.png). Own studio shots from b5/test.html (/tmp/claude-0/-home-user-Calc/33316a4e-1209-5df1-8086-36d8df9d3f92/scratchpad/w2a/own/: a1_bed_doors_div = suiteUnit({bed, doors:1, divider:1}); a3_doors_aisle = suiteUnit({doors:1}) for the flanks; a4_centre_divup_bed = centre pair with divider up, bed on one side and doors closed on the other; sheet.png). Two head-band close-ups (a2, a5) missed the band (camera blocked by the leaf/cap) and are not used. Sampling: box mean RGB, luma, HSV, p90 (w2a/py/m.py). References: omaat_f57, f11, f40, f_17304, f_17313. Lighting noted, not scored.",
+ "calibration": [
+  {
+   "earlier_issue": "w13b / w14a / w14b MEDIUM: the duvet corner reads as an overlay on an intact duvet",
+   "status": "partly fixed, with new artefacts. The corner is now really cut: the pad shows in the turned-down corner and the rounded loft no longer runs square round it (z_q04.png). But the new head band is an unrounded 35 mm gExtrude board: its top (0.535) stands ~1.3 cm above the loft crown (0.522) and ~2.5 cm above the loft's rounded edges, so in q04 it shows a hard square back corner and a step where it meets the loft (q04 x 400-525, y 190-205); the loft's rounded head end shows as a bullnose at the aisle edge (x 515-535, y 410-460); and the roll (top 0.542) and the flap (top 0.540) are near-coplanar, giving a dashed line along the diagonal (x 400-535, y 295-420). The flap still reads as a flat grey triangle."
+  },
+  {
+   "earlier_issue": "w13b / w14a / w14b MEDIUM: wood flanks chestnut instead of espresso",
+   "status": "fixed for hue. a3 flanks (70-200 x 150-340) (56,49,36) R/G 1.14 h39 against f60's 1.08-1.13 (as measured by w13b). The grain is still short horizontal streaks rather than f60's long straight streak (low, needs a swatch)."
+  },
+  {
+   "earlier_issue": "w14a low: ottoman recess overshoot, plinth line hidden",
+   "status": "slightly improved. q03 below the cushion (380-640 x 545-575) L27 -> L32 warm (f11 300-850 x 790-880 L21); q05 shows a warm recess floor and the plinth step. The footwell back between tray and cushion (400-610 x 378-398) is still a lit L55 against f11's void L10 (low)."
+  },
+  {
+   "earlier_issue": "w14a/b low: drape a rigid skirt",
+   "status": "unchanged in character (now shorter, starts 0.30 aft with the loft)."
+  },
+  {
+   "earlier_issue": "Variants combine cleanly",
+   "status": "yes. a1 (bed + doors + divider up) and a4 (centre pair, divider up, bed one side, doors the other) show no gaps, z-fighting or intersections."
+  }
+ ],
+ "changeVerdicts": {
+  "1 duvet head band slab": "helped in concept (the corner is genuinely missing), hurt in finish (hard board edge, step and z-fight dashes). Net about neutral for the bed score.",
+  "2 fFlank #2f2b22": "helped: espresso R/G 1.14, no longer chestnut.",
+  "3 ottoman plinth / recess floor": "small help, mainly visible in q05; q03 almost unchanged."
+ },
+ "details": [
+  {
+   "detail": "Proportions and plan (screen wall, wing, pier, table, aisle box, ottoman, console)",
+   "score": 8.6,
+   "refs": "q03 / q05 vs omaat_f11, f_17313"
+  },
+  {
+   "detail": "Shell / cap two-tone",
+   "score": 8.5,
+   "refs": "q02 / a1 vs omaat_f40 (unchanged)"
+  },
+  {
+   "detail": "Aisle leaves and plinth (open and closed)",
+   "score": 8.6,
+   "refs": "a1 / a3 vs f60 / f40 (unchanged); far-leaf moire in q02 remains"
+  },
+  {
+   "detail": "Wood flanks",
+   "score": 8.2,
+   "refs": "a3 vs f60 (hue fixed, grain short)"
+  },
+  {
+   "detail": "Console, module, keypad, handset",
+   "score": 8.0,
+   "refs": "q04 vs omaat_f57 (unchanged)"
+  },
+  {
+   "detail": "Bed (pad, duvet, fold, drape, pillows, belt)",
+   "score": 8.2,
+   "refs": "q04 vs omaat_f57 / f_17304: corner cut right, slab edges and fold z-fight wrong"
+  },
+  {
+   "detail": "Ottoman and footwell",
+   "score": 8.5,
+   "refs": "q03 / q05 vs omaat_f11 / f_17313"
+  },
+  {
+   "detail": "Centre pair and variants",
+   "score": 8.7,
+   "refs": "a1 / a4"
+  }
+ ],
+ "issues": [
+  {
+   "severity": "medium",
+   "issue": "Duvet head band is a hard-edged board: square back corner, a ~1.3-2.5 cm step above the lofted duvet, a bullnose seam at the aisle edge and z-fight dashes along the fold roll",
+   "evidence": "q04 r3 x 400-535, y 190-460 (/tmp/claude-0/-home-user-Calc/33316a4e-1209-5df1-8086-36d8df9d3f92/scratchpad/w2a/z_q04.png bottom). omaat_f57: the duvet is one soft continuous layer; the turned-down corner is a soft fold, no step at the head band.",
+   "fix": "09d_suite.js head band (the gExtrude after line 304): (a) build the rectangular window-side part with the same profile as the duvet, B.add(gLoft(cushionSecs(dw - 0.34, 0.37, 0.05, -0.03, { edge: 0.04, r: 0.05, crown: 0.012 }), 3), M4.trs(xe - dw + (dw - 0.34) / 2, 0.49, dz0 - 0.185), duv), so its top and rounded edges match the loft; (b) keep only the diagonal wedge as gExtrude([[xe - 0.36, -dz0 + 0.02], [xe - 0.06, -dz0 + 0.30], [xe - 0.06, -dz0 + 0.35], [xe - 0.36, -dz0 + 0.35]], 0.03) at y 0.507 (top 0.522, flush with the crown); (c) start the main loft 0.25 aft instead of 0.30 so its rounded head end is buried; (d) separate the fold layers: flap y 0.537 -> 0.527, roll y 0.536 -> 0.531 (top 0.537, 3 mm above the flap). Re-check q04 for a continuous duvet top."
+  },
+  {
+   "severity": "low",
+   "issue": "Flank grain short and noisy (hue now fixed)",
+   "evidence": "a3 flanks vs f60 long straight streak.",
+   "fix": "Own straight-grain swatch from omaat_f60 x 940-1170 via test/make_swatches.py, or stretch the fWood streaks ~4x along the flank height."
+  },
+  {
+   "severity": "low",
+   "issue": "Footwell back between tray and ottoman is lit (L55) where f11 shows a black void (L10)",
+   "evidence": "q03 400-610 x 378-398 L55 vs omaat_f11 450-800 x 490-560 L10.",
+   "fix": "09d_suite.js: give the back face under the tray the warm void material { c: '#16130f', r: 0.8 } or push it 0.10 deeper; partly lighting (AO under the tray)."
+  },
+  {
+   "severity": "low",
+   "issue": "Carried: far-leaf moire (q02), console wedge ends, drape skirt, tweed contrast",
+   "evidence": "unchanged",
+   "fix": "As w13a/b and w14a/b."
+  }
+ ],
+ "questions": [
+  "The cut-corner duvet is the right construction; one more pass to round the head band and separate the fold layers should lift the bed to ~8.5. Flank and curtain changes can be closed."
+ ]
+}

@@ -1,0 +1,81 @@
+{
+ "area": "monuments",
+ "rater": "A",
+ "round": "w20",
+ "score": 8.6,
+ "note": "Rated head 0b28c7c against round 1 (r1). The only monument change is curtainFF (10_mono.js) #544c46 -> #4f4c4a. q01 is pixel-identical; m02 changes under 8 levels everywhere (drape only). m02 drape (520-610 x 120-560) went from (80,77,74) L78 h32 s0.08 to (77,77,77) L77 neutral. From the suites: q03 right edge (790-860 x 0-480) (68,63,58) s0.14 -> (66,63,60) s0.09; q05 (700-800 x 0-200) (75,68,64) s0.15 -> (71,68,67) s0.06. omaat_f40 drapes measure (68,63,61) L64 s0.10 under a warm white balance (its wall (195,189,174)); normalised to the wall the drape is neutral to faintly violet (R/G/B 0.349 / 0.333 / 0.351). Neutral is therefore the right call, and the coffee read is gone. f_17313 (lavender) is a rendering and loses to f40 per the brief. No own shots needed.",
+ "previousIssues": [
+  {
+   "issue": "w19b MEDIUM: F front drapes warm brown against the lavender-grey of f_17313",
+   "status": "fixed in the form the brief allows: no longer brown (s0.14-0.15 -> 0.01-0.09). Lavender was not taken, because f_17313 is a rendering; white-balanced omaat_f40 is neutral to faintly violet."
+  },
+  {
+   "issue": "w19a low: drapes slightly too warm (R-B 12 vs 7)",
+   "status": "fixed. m02 R-B 6 -> 0; q05 11 -> 4; q03 8 -> 6."
+  },
+  {
+   "issue": "w18a/b and w19a/b lows: ash grain contrast and 77 px repeat, welcome-pane cue, tumbler glints, nosing groove, ash-wall corner highlights, insert frames, plain J lav doors, door-1 dark wood",
+   "status": "not fixed (pixel-identical)."
+  }
+ ],
+ "changeVerdicts": {
+  "curtainFF #4f4c4a": "helped. Coffee cast removed at the same luminance; reads charcoal in q03 / q05 / m02 next to the dark wood, as in omaat_f40."
+ },
+ "details": [
+  {
+   "detail": "F front drapes (m02, q03, q05)",
+   "score": 8.7,
+   "note": "Neutral charcoal, right luminance, clean pleats; the f40 weave texture is still softer (low)."
+  },
+  {
+   "detail": "Door-3 self-service bar (m05, m06, q11)",
+   "score": 8.6,
+   "note": "Unchanged."
+  },
+  {
+   "detail": "Door-2 welcome galley (m03, m16, m14)",
+   "score": 8.5,
+   "note": "Unchanged; pane has no glass cue."
+  },
+  {
+   "detail": "Door-2 aft ash wall (m04, m13)",
+   "score": 8.6,
+   "note": "Unchanged; grain half contrast, faint repeat."
+  },
+  {
+   "detail": "F front wall, flight-deck door, door 1 (q01, m01, m02, m19)",
+   "score": 8.4,
+   "note": "q01 pixel-identical; dark-wood streak aliasing remains."
+  },
+  {
+   "detail": "Lavatory exteriors (m17, m11, m15, q11)",
+   "score": 7.8,
+   "note": "Unchanged; plain J lav doors."
+  },
+  {
+   "detail": "Galleys (m01, m09, m12)",
+   "score": 8.5,
+   "note": "Unchanged."
+  }
+ ],
+ "issues": [
+  {
+   "severity": "low",
+   "detail": "Drape weave texture soft",
+   "problem": "Colour and value now right; the cloth reads smoother than f40 (std ~16 vs 24 in w19a).",
+   "evidence": "m02 drape vs omaat_f40 (10-150 x 120-640).",
+   "fix": "Optional: stronger fabric layer amplitude on curtainFF only (a room-local material with a coarser LAYER), not the shared LAYER_PARAMS."
+  },
+  {
+   "severity": "low",
+   "detail": "Carried from w18 / w19 (all low)",
+   "problem": "Plain J lav doors, ash grain contrast and repeat, welcome pane cue, tumbler glints, nosing groove, door-1 dark-wood streaks.",
+   "evidence": "Pixel-identical to w18 / w19.",
+   "fix": "As in monuments_w18a/b: lav-door indicator plate and edge trim (10_mono.js); PHOTO_GAIN[33] ~1.5 (03_tex.js, shared)."
+  }
+ ],
+ "questionsForUser": [],
+ "gapWorth03": [
+  "Detailing the J lav doors (indicator plate, edge trim) and lifting the monument ash grain are the remaining steps toward ~8.8."
+ ]
+}
