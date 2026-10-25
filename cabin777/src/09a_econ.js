@@ -4,7 +4,7 @@
 // New materials for this product: Object.assign(SEATMAT, {...}) at the top of this file (loaded after 09_seats.js).
 // ------------------------------------------------------------------
 // ================= ECONOMY (Recaro, 17 in, 13.3 in screen, 6-way headrest, footrest) =================
-const ECON = { back: 13 * DEG, hinge: [0.47, -0.075], sp: 19 * IN };
+const ECON = { back: 13 * DEG, hinge: [0.47, -0.075], sp: 19 * IN, backS: 0.955 };   // w48 (w47b-3 / w47a-1): at the landmark-matched q17 camera the back tops and the forward row's screens sit 27-30 px (~6 cm) above y_47303 while the arms and windows match within 2-5 px; head-on q15 reads ~4 % tall for its width -> the whole back 4.5 % shorter in its own up axis (top 1.32 -> ~1.28 m) [D]
 // ANA mixes four fabric patterns seat by seat (y_47302: mosaic / diamond / ticks left to right; y_47306: diamond / ticks /
 // mosaic; y_47300 front row: tick / fleck / tick / fleck). econ w5 (A high): the petal fleck is the commonest (sans 13 / 14,
 // fr57325 124108) -> ~40 % fleck, 20 % each of the others [D]
@@ -60,7 +60,7 @@ const econPanMat = (F) => F === SEATMAT.yFabric ? ECON_PAN : F === SEATMAT.yFabr
 function econSeat(B, x0, lod, opts = {}) {
   const [hy, hz] = ECON.hinge;
   const F = opts.fab || SEATMAT.yFabric;
-  const BH = M4.trs(x0, hy, hz, 0, ECON.back);
+  const BH = M4.trs(x0, hy, hz, 0, ECON.back, 0, 1, ECON.backS);
   // pan: the diamond seats carry the diamonds on the back only, the pan is the tick weave (y_47302 middle seat) [V]
   // w7 A + B: pans mix independently of the backs (y_47300: fleck back / tick pan, tick / diamond, fleck / mosaic) [V]
   let PF = opts.panFab || (F === SEATMAT.yFabricB ? SEATMAT.yFabric : F);
@@ -259,14 +259,14 @@ function econSeat(B, x0, lod, opts = {}) {
     // (sans 23); no alpha here, so a lighter mesh tone lets the grille pattern read as holes [D]
     // w7 A + B: a dark back panel behind a lattice of thin strands, so the net reads as see-through mesh (sans 20 / 23)
     // w8 A + B: two bowed mesh pouches either side of a grey centre strap, each with a pleated grey hem (sans 20 / 22 / 23)
-    B.add(gQuad(0.31, 0.07), on(0.05, 0.011), { c: '#24262c', r: 0.9 });   // w46 (gap w46-2): mesh strands lit grey (y_47303 L180-194 highlights), backing lifted; net bowed out ~2 cm at the bottom, flap deeper
+    B.add(gQuad(0.31, 0.15), on(0.01, 0.011), { c: '#24262c', r: 0.9 });   // w46 (gap w46-2): mesh strands lit grey (y_47303 L180-194 highlights), backing lifted; net bowed out ~2 cm at the bottom, flap deeper
     for (const px of [-0.08, 0.08]) {
       // w9 A + B: a fine net (~6 mm cells, sans 20) of thin strands on quads; dark pleated hems just under the flap
-      for (let i = 0; i < 24; i++) { const u = i / 23; B.add(gQuad(0.0012, 0.068), on(0.05, 0.02 + 0.014 * Math.sin(u * Math.PI), px - 0.07 + u * 0.14), { c: '#9a9ea6', r: 0.8 }); }
-      for (let j = 0; j < 11; j++) B.add(gQuad(0.14, 0.0012), on(0.018 + j * 0.006, 0.036 - 0.0012 * j), { c: '#9a9ea6', r: 0.8 });
+      for (let i = 0; i < 24; i++) { const u = i / 23; B.add(gQuad(0.0012, 0.145), on(0.01, 0.022 + 0.02 * Math.sin(u * Math.PI), px - 0.07 + u * 0.14), { c: '#9a9ea6', r: 0.8 }); }   // w48 (w47a-3 / w47b-5): two tall bulging pouches (y_47303 70-90 px vs 11-15)
+      for (let j = 0; j < 24; j++) B.add(gQuad(0.14, 0.0012), on(-0.062 + j * 0.006, 0.042 - 0.03 * Math.pow((j - 9) / 15, 2)), { c: '#9a9ea6', r: 0.8 });
       for (let k = 0; k < 9; k++) B.add(gCyl(0.006, 0.006, 0.0165, 8), M4.mul(on(0.075, 0.024 + 0.002 * (k % 2), px - 0.066 + k * 0.0165), M4.trs(0, 0, 0, 0, 0, Math.PI / 2)), { c: '#4a4c52', r: 0.9, l: LAYER.fabric });
     }
-    B.add(gBox(0.02, 0.078, 0.004), on(0.047, 0.026), { c: '#3a3c42', r: 0.7 });   // w9 B: charcoal strap
+    B.add(gBox(0.02, 0.15, 0.004), on(0.01, 0.03), { c: '#3a3c42', r: 0.7 });   // w9 B: charcoal strap
   }
   // footrest for the passenger behind: two off-white hanger arms clamped to the rear spreader tube, carrying ribbed
   // aluminium pedals (y_47304)
@@ -304,12 +304,12 @@ function econSeat(B, x0, lod, opts = {}) {
       const L = Math.hypot(x2 - x1, z2 - z1), yaw = Math.atan2(x2 - x1, z2 - z1), y1 = panY(z1) + h1, y2 = panY(z2);
       B.add(gBox(0.048, 0.003, Math.hypot(L, y2 - y1)), M4.trs((x1 + x2) / 2, (y1 + y2) / 2 + 0.006, (z1 + z2) / 2, yaw, -Math.atan2(y2 - y1, L)), { ...SEATMAT.yBelt, c });
     };
-    const TEAL = '#4a75a5', NAVY = '#3c4668', STEEL = { c: '#93a5bf', m: 0.7, r: 0.3 };   // w46a-3: steel hardware, not white plastic
+    const TEAL = '#4a75a5', NAVY = '#353b4e', STEEL = { c: '#93a5bf', m: 0.7, r: 0.3 };   // w46a-3: steel hardware, not white plastic
     let xt, zt, xb, zb;
     if (!odd) {
-      xt = x0 + 0.165 * a; zt = -0.19; xb = x0 - 0.075 * a; zb = -0.33;
-      strap(x0 - 0.17 * a, -0.125, xt - 0.03 * a, zt + 0.005, TEAL);
-      strap(x0 + 0.20 * a, -0.13, xb + 0.03 * a, zb + 0.012, NAVY, -0.01);
+      xt = x0 + 0.13 * a; zt = -0.20; xb = x0 - 0.075 * a; zb = -0.33;
+      strap(x0 - 0.04 * a, -0.13, xt - 0.03 * a, zt + 0.005, TEAL);   // w48 (w47b-2): a short run to the tongue, not along the arm
+      strap(x0 + 0.20 * a, -0.21, xb + 0.03 * a, zb + 0.012, NAVY, -0.01);   // w48 (w47b-2): from under the arm's front half
     } else {
       xb = x0 + 0.01 * a; zb = -0.29; xt = x0 - 0.06 * a; zt = -0.25;
       strap(x0 + 0.19 * a, -0.22, xb + 0.03 * a, zb + 0.01, TEAL, -0.008);
@@ -317,7 +317,7 @@ function econSeat(B, x0, lod, opts = {}) {
       strap(x0 - 0.19 * a, -0.13, xt - 0.025 * a, zt + 0.012, NAVY);
     }
     B.add(gRBox(0.045, 0.006, 0.034, 0.004, 1), M4.trs(xt, panY(zt) + 0.007, zt, 0.6 * a), STEEL);   // steel tongue
-    B.add(gRBox(0.05, 0.013, 0.042, 0.006, 1), M4.trs(xb, panY(zb) + 0.009, zb, -0.5 * a), { c: '#b4bcc6', m: 0.35, r: 0.32 });   // light buckle cover (y_47303)
+    B.add(gRBox(0.05, 0.013, 0.042, 0.006, 1), M4.trs(xb, panY(zb) + 0.009, zb, -0.5 * a), { c: '#c4cad2', m: 0.35, r: 0.32 });   // light buckle cover (w47a-5: lighter) (y_47303)
   } else for (const s of [-1, 1]) {
     B.add(s < 0 ? gRBox(0.05, 0.012, 0.035, 0.005, 1) : gRBox(0.05, 0.014, 0.04, 0.006, 1), M4.trs(x0 + 0.012 * s, s < 0 ? 0.468 : 0.465, s < 0 ? -0.165 : -0.17), s < 0 ? SEATMAT.buckle : { c: '#3a3f52', r: 0.4 });   // w39 (w38b-1): still two light blocks at the pillow foot -> under its edge, navy-grey cover;   // w37 (w37a-3): the V and two light blocks still on every q15 pan -> tucked under the pillow foot, darker cover   // w36 (w35a-3): the V and light buckles below every pillow (y_47300 shows none) -> nearer the crease, shorter, a grey cover   // w25 (w24b-5): the light covers dominated the pans head-on   // w41 (w40a-5): the silver tongue tip out from under the pillow (light px 15-25 vs y_47300 32-40; w42 (w41a-4): 0.5 cm back, it overshot on F / G)
     B.add(gBox(0.045, 0.004, 0.06), M4.trs(x0 + 0.035 * s, 0.474, -0.175, s * 15 * DEG), s < 0 ? SEATMAT.yBelt : { ...SEATMAT.yBelt, c: '#262c48' });   // w10 B: teal tongue strap, navy buckle strap (y_47303)   // w41 (w40a-5 / w40b-4): strap stubs still read as a V beside the buckle -> shorter, flatter, under the pillow foot
@@ -361,9 +361,10 @@ function econUnit(n, lod = false, opts = {}) {
       const zs = (y, z0, z1, w) => SEC(y, w, z0 - z1, (z0 + z1) / 2, 0.009);
       const end = k === 0 || k === arms.length - 1;
       // w33 (w33a-4, y_47303 aisle seats): the end plate was ~1.55x the arm's depth head-on (41-43 px vs 26-28) -> ~8 cm deep;
-      // w34a-5: a 14-16 px gap under the arm (y_47303 2-8 px) -> 4.5 cm higher [D]
+      // w34a-5: a 14-16 px gap under the arm (y_47303 2-8 px) -> 4.5 cm higher; w48 (w47a-2): reverted - measured at the old q17
+      // camera; at the matched one the raised plate stacked as a second white bar under the arm [D]
       // w46 (gap w46-3): q17 showed four grey pills under the arms (1400 dark-grey px vs 547 in y_47303) -> 2.5 cm lower, nose 4 cm back, darker; w30 (w29a-1): regular-row plate nose 3 cm further back, so the arm hides it head-on (y_47300 shows one bar) [D]
-      loftAt(B, end ? [zs(0.507, -0.13, -0.33, 0.024), zs(0.515, -0.105, -0.375, 0.024), zs(0.53, -0.09, -0.395, 0.024), zs(0.545, -0.08, -0.40, 0.024), zs(0.57, -0.08, -0.392, 0.024), zs(0.583, -0.09, -0.37, 0.024), zs(0.588, -0.145, -0.33, 0.02)]
+      loftAt(B, end ? [zs(0.462, -0.13, -0.33, 0.024), zs(0.47, -0.105, -0.375, 0.024), zs(0.485, -0.09, -0.395, 0.024), zs(0.50, -0.08, -0.40, 0.024), zs(0.525, -0.08, -0.392, 0.024), zs(0.538, -0.09, -0.37, 0.024), zs(0.543, -0.145, -0.33, 0.02)]
         : [zs(0.455, -0.14, -0.295, 0.02), zs(0.463, -0.13, -0.313, 0.022), zs(0.485, -0.125, -0.322, 0.022), zs(0.507, -0.13, -0.313, 0.022), zs(0.515, -0.14, -0.295, 0.02)], M4.trs(xa + (end ? (k === 0 ? -0.013 : 0.013) : 0), 0, 0), end ? SEATMAT.arm : ECON_PLATE, 3);
     } else {
       // front end: one continuous grey bracket from under the arm nose down past the pan, with a pivot ring at pan height;
@@ -431,7 +432,7 @@ function econUnitFar(n, rot = 0) {
     const x0 = (k - (n - 1) / 2) * sp;
     const f = econFab(k, n, rot);
     B.add(gRBox(0.47, 0.085, 0.47, 0.03, 1), M4.trs(x0, 0.418, -0.28, 0, 5 * DEG), econFarMat(econPanMat(econPan(k, n, rot))));   // w33: the near pan (0.47, 3 cm rolls, 5 deg)
-    const BH = M4.trs(x0, ECON.hinge[0], ECON.hinge[1], 0, ECON.back);
+    const BH = M4.trs(x0, ECON.hinge[0], ECON.hinge[1], 0, ECON.back, 0, 1, ECON.backS);
     B.add(gRBox(0.42, 0.86, 0.08, 0.035, 1), M4.mul(BH, M4.trs(0, 0.43, -0.005)), econFarMat(f));   // same mix as econUnit
     B.add(gRBox(0.446, 0.62, 0.045, 0.015, 1), M4.mul(BH, M4.trs(0, 0.25, 0.058)), SEATMAT.yShell);
     B.add(gRBox(0.40, 0.37, 0.12, 0.015, 1), M4.mul(BH, M4.trs(0, 0.665, 0.062)), SEATMAT.yShell);    // screen hood under the back top (w5; w6 0.40, tight corners; w14 gap: top 0.85, its white cap showed on every far back)
