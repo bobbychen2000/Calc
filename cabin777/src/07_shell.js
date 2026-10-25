@@ -33,11 +33,11 @@ const MAT = {
   carpetJ: { c: '#615553', r: 0.95, l: LAYER.jCarpet },   // #574a4c rendered L46 h340 vs c_27312 L52 h354
   // F: its own warm brown heather (B well below G), darker than J: the open F aisle rendered carpetJ as mauve #887573
   // [V: f_17300 #423838, f_17313 footwell #2e2623, from_suite: omaat f33 / f2 / f7 aisle #5e4d32 / #5b4d3a / #4d3f31]
-  carpetF: { c: '#56493f', r: 0.95, l: LAYER.fabric },          // QA w2: redder, h ~15 (MileLion DSC_1917 #2d2421)
+  carpetF: { c: '#56493f', r: 0.95, l: LAYER.jCarpet },          // QA w2: redder, h ~15 (MileLion DSC_1917 #2d2421); polish B (w16a-1): J heather tile (f_17300 floor: dark heather, light flecks)
   // door / galley floors: dark mottled stone-look grey vinyl (sans_09 door-2 galley #666268 / #585353; QA w1 rendered
   // #a0a5ad, ~1.13x the albedo) [V]
   vinyl: { c: '#6f6a69', r: 0.55, l: LAYER.vinyl },                // QA w7: rendered (75,74,80) vs sans_09 (105,100,105)
-  doorCarpet: { c: '#5a5045', r: 0.95, l: LAYER.fabric },        // QA w6: less red (h ~30)
+  doorCarpet: { c: '#5a5045', r: 0.95, l: LAYER.jCarpet },        // QA w6: less red (h ~30); polish B (w16a-1): heather tile, was flat
   // QA r2: no aisle path strips are visible in any ANA photo (y_47301, y_47304, py_37301/02, c_27312), so none are
   // modelled; Y instead shows glossy royal-blue seat-track covers along each seat-leg line [V: y_47304 #2965bd, y_47301]
   trackCover: { c: '#2965bd', r: 0.35 },

@@ -66,7 +66,7 @@ MONO = {'f_wood', 'f_tweed', 'j_ash', 'py_back',   # py_back: neutral grey weave
         'j_tweed', 'py_confetti', 'j_pillow', 'py_ear', 'j_carpet'}                  # QA r2: chroma of these was a green / purple JPEG cast
 # high-pass radius of the lighting / blotch removal (default 40 px on the 256 px tile); py_back: the swatch's low-frequency
 # dark blotches dominated the fine white dashes at seat distance (py_37301 / 37305 read as even dashes on charcoal)
-HP = {'py_back': 20, 'j_ash': 60}   # room w12: j_ash keeps its 1-4 cm veneer bands
+HP = {'py_back': 20, 'j_ash': 60, 'j_carpet': 20}   # polish B (w16b): j_carpet kept faint light / dark bands at 40   # room w12: j_ash keeps its 1-4 cm veneer bands
 # straight horizontal grain: divide each column by its mean, so only the along-grain streaks remain (the c_27305 crop's
 # faint vertical light bands were amplified into a banded look by the QA r2 gain)
 COLNORM = {'j_ash', 'f_wood'}
