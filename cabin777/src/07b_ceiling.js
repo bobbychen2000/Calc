@@ -89,8 +89,8 @@ const CEILMAT = {
   // per-panel raised panel: lit by the same cove wash as the vault around it (sany_10/11 show it barely darker) [A e]
   bezel: { c: '#e6e4df', r: 0.7, l: LAYER.plastic },   // vault tone (c120 speaker 188 on a 188 vault; w6a/w6b: a bright plank)
   bezelIn: { c: '#dedcd7', r: 0.7, l: LAYER.plastic },   // smooth face (w9a: c120 shows no slats)   // perforated pocket a little darker than the vault (c120); baked with the vault since w7 [V look, A tone]
-  bezelShadow: { c: '#8f8d89', r: 0.8 },
-  crestGroove: { c: '#86898e', r: 0.3, m: 0.3 },
+  bezelShadow: { c: '#b4b2ae', r: 0.8 },   // polish B (w14a-1): #8f8d89 read near-black once the vault brightened (c120 129 on 176)
+  crestGroove: { c: '#a9acb1', r: 0.3, m: 0.3 },   // polish B (w14a-2): #86898e read 0.40 of the vault (v15 87 on 222; c120 ~0.75)
   crestHi: { c: '#d4d6d9', r: 0.25, m: 0.4 },   // metallic highlight along the channel's upper lip (c120 [V])   // vault/crest-rail channel (c120 [V look])
   flat: { c: '#efeeea', r: 0.72, l: LAYER.plastic },
   lightPanel: { c: '#fffaf0', r: 0.5, e: 0.3 },   // w11b: a flat 251 wedge beside the door-4 dome
@@ -212,14 +212,14 @@ function buildCeilings(upper, layout) {
         upper.add(gSweep(prof, z0, z1, { side: side > 0 ? 1 : -1, zsteps: mods.length - 1 }), null, { ...CEILMAT.vault, eFn });
         // polish B w14b F1: fittings on the vault take its own emission (cove-LED layer + eFn), so they keep the vault tone in
         // every mood once the vault eFn rose (ribs 184 / speaker 178 on a 231 vault, night speaker 17 on 65; c120 188 on 188) [V]
-        const onVault = (m, k = 1) => ({ ...m, l: 12, e: 0.05, eFn: (p) => eFn(p) * k });
+        const onVault = (m, k = 1, d = 0) => ({ ...m, l: 12, e: 0.05, eFn: (p) => eFn(p) * k + d });
         // raised joint ribs (light face + aft shadow lip) turning forward into the crest rib (c120, w5a/w5b: flat hairlines)
         for (let k = 0; k < mods.length - 1; k++) {
-          if (k) { upper.add(vaultRib(side, mods[k], 0.014, 0.004), null, onVault(CEILMAT.rib)); upper.add(vaultRib(side, mods[k], 0.005, 0.0022, 0.0085), null, CEILMAT.ribShadow); }
+          if (k) { upper.add(vaultRib(side, mods[k], 0.014, 0.004), null, onVault(CEILMAT.rib, 1, 0.01)); upper.add(vaultRib(side, mods[k], 0.005, 0.0022, 0.0085), null, CEILMAT.ribShadow); }
         }
         {   // crest rib along the centre-bin side, from the zone start to the last joint's turn
           const zb = mods.length > 2 ? mods[mods.length - 2] - RIB.R : z1 - 0.03;
-          upper.add(vaultStrip(RIB_TEND, side, z0 + 0.03, zb, 0.014, 0.004), null, onVault(CEILMAT.rib));
+          upper.add(vaultStrip(RIB_TEND, side, z0 + 0.03, zb, 0.014, 0.004), null, onVault(CEILMAT.rib, 1, 0.01));
           upper.add(vaultStrip(RIB_TEND + 0.012, side, z0 + 0.03, zb, 0.005, 0.0022), null, CEILMAT.ribShadow); }
         // dark metallic channel where the vault meets the centre-bin crest rail (c120 [V]; ~15 mm along the arc [A]).
         // Seen from the aisle the rail hides the bin face behind it, so the channel is the vault's own steep last strip
@@ -232,8 +232,9 @@ function buildCeilings(upper, layout) {
             for (const u of [u0, u1]) for (const z of [z0 + 0.03, z1 - 0.03]) {
               g.p.push((lerp(b[0], a[0], u) + nx * off) * side, lerp(b[1], a[1], u) + ny * off, z); g.n.push(nx * side, ny, 0); g.u.push(u, z); }
             g.i.push(0, 1, 3, 0, 3, 2); return fixWinding(g); };
-          upper.add(q(0, 0.65, 0.003), null, CEILMAT.crestGroove);   // 1.2 mm sank into the smoothed sweep
-          upper.add(q(0.65, 0.72, 0.003), null, CEILMAT.crestHi);
+          // polish B (w14a-2): 0.65 of the chord at #86898e read 0.40 of the brighter vault (c120 0.73-0.79) -> 0.45, lighter
+          upper.add(q(0, 0.45, 0.003), null, CEILMAT.crestGroove);   // 1.2 mm sank into the smoothed sweep
+          upper.add(q(0.45, 0.52, 0.003), null, CEILMAT.crestHi);
         }
         // cove diffuser: a continuous near-white lit band between the outboard bin crest and the grille
         // 4 facets following the arc: one flat chord sank its ends behind the curved vault, so only its middle read

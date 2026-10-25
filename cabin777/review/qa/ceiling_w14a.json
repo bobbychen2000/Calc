@@ -1,0 +1,67 @@
+{
+  "area": "ceiling",
+  "rater": "A",
+  "round": "w14",
+  "score": 8.2,
+  "renderNote": "Rated on scratchpad w1 (head d2627ff, polish B) against w1b (head without d2627ff). The ceil/ cameras are now 800x560, so the w13 pixel coordinates do not carry over; I re-measured everything. Reference photos: ref/ana c_27312, y_47300, y_47301 (official), plus the real photo ref/web/ceiling/kn_room1.jpg (knaviation.net, THE Room, ANA 777-300ER). The earlier web refs (b_lalf_c119/c120/c133, b_sany_*) are gone from this container; ref/web was empty and LALF is behind Cloudflare. Lighting is noted, not scored.",
+  "previousStatus": {
+    "w13a low: door-dome crown brighter than the aisle vault": "fixed (indirectly). The dome did not change (d1 crown mean 214, max 217), but the seat-zone vault now renders 218-228 (v1 218, q06 227), so the door zones no longer read as brighter boxes (dome/vault 0.94-0.98, was 1.2).",
+    "w13a low: door-3 white hairline on the near soffit edge": "not reproduced. v3 at 800x560 shows no 239 line where the tray frame meets the vault (column 600, y 168-186, reads 233-235 flat). The camera and resolution changed, so I can't confirm it is gone. Re-check at the old DPR-2 framing.",
+    "w13a low: crest channel heavy head-on": "regressed. v15 column 200: the channel reads 87-88 against a vault of 220-223, a ratio of 0.40 (w13: 94/164 = 0.57). The channel did not change. The vault lift made it look heavier. Same root cause as ISSUE-1.",
+    "w13a/w12a medium: door-2 slab (10_mono, handed off)": "not re-rated here (monuments area). Not in the overall score.",
+    "w13b low: door-4 monument-junction wedge": "not reproduced at the new d4b framing (flat light panel, no 248 wedge visible). Unconfirmed.",
+    "w13b low: vault terraces (lighting)": "not seen. The brighter, flatter eFn gives a near-uniform 226-232 across the vault in q06 and v5.",
+    "polishB claims": {
+      "vault brighter than bins": "done, and it matches the photos. q06 vault 227 vs outboard bins 205/216, a ratio of 1.05-1.11 (c_27312: vault 236, bins 187-197, 1.2-1.26; y_47301: vault 240, bins 190-219). The ratio is still a little low, but the direction is right.",
+      "centre-bin self-lift halved": "OK. q15 centre underside 194 (y_47300: 198), sides 199 (photo 199).",
+      "outboard door #d6d8dc": "OK, not too grey. q06 205-216 (c_27312: 187-197), q15 230 (y_47300: 219). If anything still slightly light, but a good match.",
+      "lens widened and lapped": "fixed. lens_night/lens_dining: a continuous warm strip 5-8 px wide at the near end, with a clean 117 -> 185 -> 252 ramp at the lining top and no hairline. The sky-coloured pixels in the top band (38) sit on the window side, not at the junction.",
+      "night trough grille": "fixed. q20: the grille max is 78 against a vault of 66, so the bars no longer glow white."
+    }
+  },
+  "details": {
+    "vault": 8.0,
+    "cove/trough": 8.7,
+    "bins outboard": 8.6,
+    "bins centre": 8.7,
+    "seams/lips/rails": 8.3,
+    "placards": 8.6,
+    "PSUs": 8.4,
+    "door zones": 8.1,
+    "lens": 8.6
+  },
+  "issues": [
+    {
+      "id": "W14A-1",
+      "severity": "high",
+      "detail": "Vault fittings and ribs left behind by the emissive vault lift. Every speaker, rib and crest groove now reads as a grey or black stamped-on bar.",
+      "evidence": "Polish B raised the vault eFn from 0.02-0.08 to 0.06-0.13, but bezel, bezelIn and bezelShadow have no emission, rib has e 0.02 and ribShadow has none, so they kept their old luminance. In the same column, the before/after speaker reads the same while the vault jumps: v1 column 350, before vault 175 / speaker rim 180 / slot 111; after vault 228 / speaker 180 / slot 111 (speaker/vault 1.03 -> 0.79). v5 column 490: vault 176 -> 228, speaker stays 176-181. v15 row 80: vault 226, speaker rim 177, face 172, crescent 107. v8 row 60: the rib's light face was 183 on a 173 vault (1.06x, a raised light rib) and is now 183 on 225 (0.81x), with a 167 shadow, so the ribs read as dark grooves. q06 (930 px): the speaker slashes on the vault are 186 against 231. Night q20 column 420: speaker 17-18 with a 5 px core on a 65-67 vault (0.27x), black bars on every panel. Photos: y_47301 (rA14/y301_vault crop) shows the vault speakers and joints barely distinguishable from the 240 vault, and c120 (w13: speaker 188 on a 188 vault) has the fittings at vault tone. kn_room1 shows no dark vault fittings either.",
+      "fix": "src/07b_ceiling.js, seat-zone vault loop (~l.212-275): pass the same eFn to everything that sits on the vault so it is lifted with it: `upper.add(vaultRib(...), null, { ...CEILMAT.rib, eFn })` and ribShadow, the crest-rib strips, the three vaultPanel bezel rings `{ ...CEILMAT.bezel, eFn }` / `{ ...CEILMAT.bezelIn, eFn }`, and emergBase. Keep bezelShadow and emerg without eFn, but scale them to the new tone: bezelShadow #8f8d89 -> about #b4b2ae (target crescent ~0.75x vault, c120). Then rib e = eFn + 0.01 so the rib face renders ~1.05x the vault. Targets: q06 speaker ring 220-235 on a 230 vault; night speaker >= 0.8x vault."
+    },
+    {
+      "id": "W14A-2",
+      "severity": "medium",
+      "detail": "Crest-rail channel now too dark for the brighter vault (regressed from the w13 low)",
+      "evidence": "v15 column 200: vault 220-223, channel 87-88 for 14 px, then rail 237-248, a channel/vault ratio of 0.40 (w13: 0.57). It reads as a black gap between the vault and the centre bin. In c120 (w13 notes) it is a metallic grey about a third of the rail height. v1 and v2 show it as a hard dark line along the whole run.",
+      "fix": "src/07b_ceiling.js CEILMAT.crestGroove: #86898e -> #a9acb1 (or give it eFn x 0.5), and shrink the strip from u 0-0.65 to 0-0.45 of the chord (`q(0, 0.45, 0.003)`, crestHi `q(0.45, 0.52, ...)`). Target: channel ~0.6x the vault (130-140 on a 225 vault)."
+    },
+    {
+      "id": "W14A-3",
+      "severity": "low",
+      "detail": "Outboard PSU band segmentation is sparser and fainter than in real photos",
+      "evidence": "ref/web/ceiling/kn_room1.jpg (real, THE Room): the under-bin PSU band is a run of narrow filler panels with dark vertical joints, about 8-10 per bin length, with oval lit units. y_47301 shows the same dense vertical pleating above the windows. The render's v9 band shows faint diagonal joints, about 4 per bin, and q16 shows almost no band structure.",
+      "fix": "src/08_bins.js, sideBinModule PSU band (`shingles(B, bw, L, 8, ...)` with BINMAT.band): double the segment count (8 -> 16) and darken the joint/gap colour so the joints read at 930 px (gap ~0.75x the band)."
+    },
+    {
+      "id": "W14A-4",
+      "severity": "low",
+      "detail": "Vault/bin ratio still at the low end of the photos",
+      "evidence": "q06: vault 227 / bins 205-216 = 1.05-1.11. c_27312: 236 / 187-197 = 1.2-1.26; y_47301: 240 / 190-219 = 1.1-1.26. Not worth more emission (it clips the ribs). Lighting-side bin shading would close the gap.",
+      "fix": "Lighting (not 07b): let the bin door faces take more of the hemisphere falloff. Optionally src/08_bins.js BINMAT.door #d6d8dc -> #cfd2d6 only if W14A-1 is fixed first."
+    }
+  ],
+  "questionsForUser": [
+    "Do you have an in-flight photo looking up at the THE Room or economy aisle ceiling (speaker grilles and panel joints)? It would show whether the fittings are vault-tone, as the official renderings suggest. The Live and Let's Fly close-ups used earlier are behind Cloudflare from this sandbox.",
+    "Any photo of a door-1, door-4 or door-5 cross-aisle ceiling on the 212-seat 777-300ER? Those domes are still approximated."
+  ]
+}
