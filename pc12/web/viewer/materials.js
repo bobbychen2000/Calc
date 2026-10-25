@@ -164,13 +164,13 @@ U.cabinRefl.value.set(...CABIN_LOOK.refl);
 const CABIN_TRIM = { lining: [1, 1], leather: [0.5, 1], stitch_light: [0.5, 1], leather_crew: [0, 0.8], leather_dark: [0.6, 1],
   // (first-principles judge r1 FP1-05: from the cabin the crew seats' backs read as uniform slate slabs; P1046406 shows
   // the anthracite shells dark, with their highlights)
-  leather_crew_shell: [0, 0.65],
+  leather_crew_shell: [0, 0.8],
   lav_white: [0.8, 1], toilet_white: [0.8, 1], psu_housing: [0.7, 1],
   // the printed legends (first-principles flight deck A3: decals carrying model/fd_print.py's atlas): a silk-screened
   // white reads ~190-220 on the plates in P1046408 / 09 -- lifted over the interior law's dark panel light
   legend_print: [0, 1.15],      // (judge r1 FP1-04: one tone dimmer -- 1.6 glowed on the overhead / quadrant)
   // the crew seats' lavender-grey sheepskin (P1046408 / 09 ~90-130 in the cabin light, B > R)
-  sheepskin: [0, 0.50],     // (FDY r1: 0.42 -> 0.60 for the LOCKS fleece's darker mean albedo: panel_408b ~119, P1046408 121)
+  sheepskin: [0, 0.58],     // (FDY r1: 0.42 -> 0.60 for the LOCKS fleece's darker mean albedo: panel_408b ~119, P1046408 121)
   //                          (0.55 before the flight deck fix r1's soft knee / gain 27; fix r5: 0.52 -> 0.42 with the
   //                          curly pile -- its lighter mean albedo put panel_408b's fleece at 154-159 with the
   //                          footwell fill, P1046408 ~95-107; the fill no longer reaches it: ~110)
@@ -444,7 +444,7 @@ const PART_TRIM = {
   // grip_black since this round's build -- keep the windshield's reflection on their knurled sides (a floor of 0.8 of
   // the reflections: 40 -> 59 at panel_408b, P1046408's knob tops 61-82 with B - R +30); the satin-silver trim of the
   // footwell's foil blanket and the outer plates' edge strips not a lit band in the shade (119 / 109 against ~25 / 31)
-  'fd_consoles:lining_flightdeck': { fill: [0, 0.25] },
+  'fd_consoles:lining_flightdeck': { fill: [0, 0.23] },
   'flight_deck:grip_black': { fill: [0, 1, 0.8], specIn: 2.2 },
   'flight_deck:panel_silver': { fill: [0, 0.4], specIn: 0.3 },
 };
@@ -665,16 +665,16 @@ const VIEWER = {
     // shade gives P1046409's B - R ~+10).  (Judge r2 FP2-01: still sponge pits / a white cotton fringe up close: the root
     // and lowest layers 0.58 of the tips (a gap is darker pile, not a hole), the threshold's rise 0.6 (fewer drop-outs),
     // the silhouette band flat and without its sheen lift (grazeFlat 0.9, grazeSheen 1), the base warmer: B - R ~+5)
-    fur: { h: [0.010, 0.0015], root: 0.58, mean: 0.84, oct: [[800, 0.5, 0.5, 0, 1.5, 0, 0.5], [1100, 0.5, 0.6, 1, 1.4, 0.4, 0.5]], soft: [0, 0],
+    fur: { h: [0.008, 0.001], root: 0.40, mean: 0.84, oct: [[550, 0.45, 0.5, 0, 1.3, 0, 0.5], [380, 0.55, 0.6, 1, 1.3, 0.4, 0.5]], soft: [0, 0],
       // (all-lens r2 FD9-03: the grazing band wider and softer -- the outer layers thinned x graze below |n.v| grazeN,
       // the coverage edge widened there (grazeW: alpha to coverage on the multisampled canvas / targets), the layers' root
       // darkening, tilt (grazeFlat) and sheen growth up the pile (grazeSheen) flattened toward the silhouette; was 0.55 /
       // 0.25 / 0 / 0 / 0.  A per-pixel dithered coverage (dither: true) and the band at 0.55 put sparse bright tips into
       // [FD-L10]'s silhouette band at panel_408b (high-pass skew +1.1 .. +1.6; look-dev ld3 a0-a2 / u0-u2))
-      graze: 0.75, grazeN: 0.38, grazeW: 0.14, grazeFlat: 0.9, grazeSheen: 1.0,
-      t: [0.03, 0.6, 0.8], curl: [55, 0.8, 5.0], lump: [70, 0.18, 0.10], part: [[30, 0.1, 0.82, 40, 0.55, 1.3],
-        [60, 0.08, 0.85, 80, 0.55, 1.5]], fray: [1100, 0.03], ao: [0.5, 1.08, 1.8], tilt: 0.55,
-      clump: [[22, 0.010, 1.3], [55, 0.0032, 1.3]], sheen: [0.5, 1.1], far: [2.2, 3.2] },
+      graze: 0.8, grazeN: 0.4, grazeW: 0.1, grazeFlat: 0.6, grazeSheen: 0.6,
+      t: [0.05, 0.75, 0.9], curl: [55, 0.8, 5.0], lump: [40, 0.10, 0.10], part: [[30, 0.2, 0.82, 40, 0.55, 1.3],
+        [60, 0.15, 0.85, 80, 0.55, 1.5]], fray: [1100, 0.1], ao: [0.40, 1.13, 1.8], tilt: 0.55,
+      clump: [[28, 0.005, 1.3], [65, 0.0018, 1.3]], sheen: [0.5, 1.1], far: [2.2, 3.2] },
     sheenRoughness: 0.8 },
   // the pleated divider curtain: deep burnt orange in P1046406 (77/23/0), read tan (208/166/116) under the old cabin light
   curtain: { color: [0.36, 0.11, 0.012] },

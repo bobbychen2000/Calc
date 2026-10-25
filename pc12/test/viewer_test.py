@@ -964,7 +964,9 @@ async def material_checks(page):
     dp = mats.get("display_page", {})
     glb_dp = glb_mats.get("display_page", {})
     check("materials: the G3000 PRIME pages (GLB atlas texture) stay the display glass's emissive map in the viewer",
-          len(imgs) == 1 and "emissiveTexture" in glb_dp and dp.get("tex") and all(dp["tex"])
+          # (first-principles flight deck A3: the GLB also carries the printed legends' atlas, 'fd_print_atlas' on
+          # 'legend_print' -- the G3000 atlas must still be among the images and be the display glass's map)
+          "g3000_atlas" in [i.get("name") for i in imgs] and "emissiveTexture" in glb_dp and dp.get("tex") and all(dp["tex"])
           and "flight_deck" in dp.get("parts", []),
           f"GLB images {[i.get('name') for i in imgs]}, display_page emissive map {dp.get('tex')} on {dp.get('parts')}")
     cs = mats.get("carpet", {}).get("stripes", [])
