@@ -184,7 +184,7 @@ void main(){
     // Amber floor 0.10: the THE Room vault between the bins (07b eFn 0.02-0.08) read dark brown under a pale seat level,
     // while every amber photo shows the cove-washed ceiling as the brightest warm surface [V: ucr_the-room-cabin aisle
     // ceiling #cc9957 / #cb9b53 L161 s0.58, ff_seat-with-door-closed #d6ae72 L179 vs d_room_dining #663918-#714826
-    // L67-81]; the door domes (e 0.06-0.2) already matched (q21 #d09748 vs ucr #c89552) and barely move. Night cap 0.12:
+    // L67-81]; the door domes (e 0.06-0.2) already matched (q21 #d09748 vs ucr #c89552) and barely move. Night cap 0.09:
     // the cove panel (07b CEILMAT.cove e 0.36) stayed the brightest surface after the screens, while the night photo's
     // ceiling is dark throughout [V: ucr_room-night-lighting ceiling L13-55, cove panel <= #3f352f vs q20 #a39a8c L155];
     // the mid-vault (e 0.02-0.08) keeps its level (q20 L28 vs ucr L21-27) [D]
