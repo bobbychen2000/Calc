@@ -1,0 +1,81 @@
+{
+  "area": "ceiling",
+  "rater": "B",
+  "round": "w14",
+  "score": 8.6,
+  "renderNote": "Rated on the scratchpad renders w1/qa, w1/ceil (800x560, 1x), w1/extra, and the BEFORE renders w1b/qa and w1b/ceil (head without d2627ff). The ceiling review renders are at 1x this round, so the w13 pixel coordinates (DPR 2) were re-measured at the new scale. Reference photos: ref/ana c_27312, y_47301 and y_47300. A web search (OMAAT, LALF, TPG) found no new usable ceiling photo: LALF sits behind Cloudflare, and the OMAAT J-review images are seat and food close-ups. None were kept in ref/web/ceiling.",
+  "previousStatus": {
+    "fixed": [
+      "polishB r3 medium: aisle vault darker than the bins. q06 vault box (440-540, 5-60) 195.8 -> 228.6, with column 470 at 182 -> 231. v2 vault 176.9 -> 228.9. Outboard bins in q06 L 223 -> 208 and R 225 -> 220; v2 L 229 -> 217 and R 219 -> 214. The vault/bin ratio is now 1.05-1.10, up from 0.77-0.85. The photos give 1.15-1.23: c_27312 vault 235.8 against bins 202/192, and y_47301 vault 234.9 against bins 192/194. The direction is right and most of the gap is closed.",
+      "polishB r2/r3 medium: sky hairline at the outboard lens/lining junction. lens_dining and lens_night show 0 sky-blue pixels (b > r+20 and b > g) in either outboard region (x 0-330 and 640-930, rows 0-260). The 69 remaining pixels sit in the aisle centre (EXIT and screens). A 3x crop of the right junction shows a clean cream lens band lying directly on the lining.",
+      "w13b low: door domes 1.2x brighter than the aisle vault. The vault lift resolved this. The d4b crown reads 214 against the seat-zone vault at 229-234, so a door zone no longer reads as a lighter box.",
+      "polishB FYI: night trough grille. In q20, row 60 across the grille reads bars 31-39 and slots 12-25 against the vault at 73-77, with no lamp-white bars."
+    ],
+    "partiallyFixed": [
+      "w11b-w13b low: door-3 white hairline at the tray's far edge. In v3 column 450 the vault reads 217 x9, then 229 (1 px), then the tray at 98-83. The hairline was +66 over the vault in w13 and is now +12, a side effect of the brighter vault, so it is barely perceptible. Column 350 shows the frame at 136/173/163, a mid-tone trim and no white.",
+      "w11b-w13b low: door-end clipping. The d1 column-350 ramp still reaches 243-248 near the door wall (lighting)."
+    ],
+    "notFixed": [
+      "w11b-w13b low: flat white wedge at the door-4 dome/monument junction. d4b (770,200), (780,190) and (760,215) all read 248, a flat unshaded triangle beside the galley top. The dome side band is a flat 240 slab (column 600, rows 180-280).",
+      "w8b-w13b low: vault terraces (lighting/bake, not scored). They are now mostly hidden by the near-flat 229-231 vault."
+    ],
+    "regressed": [
+      "w13b/w12b fixed -> regressed: the vault fittings and joint ribs no longer match the vault tone. The vault emission rose to 0.11 / 0.06-0.13, but CEILMAT.rib (e 0.02), bezel / bezelIn (no e), emergBase (e 0.06) and ribShadow stayed put, so every fitting is now darker than the vault around it. See issue F1."
+    ],
+    "doorThreeDashesClaim": "Consistent with fixed_polishB.md. In z04_lip (3x crop, x 300-760, y 330-400) the grey dashes lie on the centre bin's underside channel line, under the white bin bodies, and not on the outboard lip. Each is a short pill with a dark centre, which matches the PSU housings and reading-light sockets seen at a grazing angle. They are not a coplanar z-fight. At 1x they are a faint speckle and acceptable. Any walk shimmer is an AA matter."
+  },
+  "details": [
+    {"detail": "vault (panel shape, joint ribs, crest rib)", "score": 8.5, "was": 8.8, "note": "The shape is unchanged and correct. The joint ribs now read as 4-5 px grey bars: q06 column 470 at 184-188 on a 231 vault, and v2 at 176-182 on 229. y_47301 shows only hairline joints at 240-244 (see F1)."},
+    {"detail": "vault tone and falloff", "score": 8.8, "was": 8.4, "note": "Vault 229-234 against photos 235-244. It is now the brightest large surface, as in the photos. There is little cross-aisle falloff left (y_47301 dims only within the last ~15 % toward the crest, so this is acceptable)."},
+    {"detail": "cove / trough grille", "score": 8.8, "was": 8.8, "note": "Day is unchanged. At night the bars are no longer lamp-white."},
+    {"detail": "vault fittings (speaker, emergency light)", "score": 7.9, "was": 8.6, "note": "Regressed (F1). The speaker now reads as a dark plank: v2 column 370 at 176-182 inside a 229 vault (0.78x), q21 amber 89 on 151 (0.59x), and q20 night 17 on 65 (0.26x, a near-black slot). In c_27312 / c120 the speaker is the same tone as the vault."},
+    {"detail": "bins outboard (doors, latches, rail)", "score": 8.9, "was": 8.8, "note": "The #d6d8dc door is closer to the photos: q06 208/220 against c_27312 202/192 and y_47301 192/194. Shape and latches are unchanged."},
+    {"detail": "bins centre (doors, crest rail + channel, caps)", "score": 8.8, "was": 8.8, "note": "The halved self-lift reads correctly. In v8 the doors are now a touch greyer than the vault, as in y_47300."},
+    {"detail": "seams / lips / rails", "score": 8.6, "was": 8.7, "note": "Seams are still washed out at QA distance. The door-3 dashes are PSU housings (see the claim check)."},
+    {"detail": "placards", "score": 8.8, "was": 8.8, "note": "Unchanged."},
+    {"detail": "PSUs", "score": 8.7, "was": 8.7, "note": "Unchanged. The outboard PSU band and centre housings are fine."},
+    {"detail": "door zones", "score": 8.2, "was": 8.2, "note": "Door 3 tray 8.7: the hairline is reduced to +12. Door 1 8.2. Door 4 8.0: the 248 wedge remains. Door 5 8.0. The domes now read 214 against the 229 aisle vault, which is plausible. There is still no photo of these areas."},
+    {"detail": "lens (outboard bin sidewall wash lens)", "score": 8.7, "was": null, "note": "The hairline is gone in both the dining and night views. At 7 cm it is a clean band near the camera. On the far (left) side it breaks into a dotted 1-px sparkle line (sub-pixel aliasing, low)."}
+  ],
+  "issues": [
+    {
+      "id": "F1",
+      "severity": "medium",
+      "detail": "Vault fittings and joint ribs are now darker than the vault (a contrast inversion caused by the polish-B vault eFn).",
+      "evidence": "These are fixed-emission materials on an emissive vault. Day: q06 column 470, rib rows 5-8 = 157-188 and rows 60-61 = 186-207, against a 228-231 vault (before d2627ff: 184-191 against 182, i.e. matched). v2 column 370 speaker rows 133-152 = 176-182, against 229 (before: 176 against 176). Amber q21 speaker 89 on 151. Night q20 speaker 17 on 65 and ribs 17-19, so the speaker reads as black slots. Photos: y_47301 joints are hairlines at 240-244 with no bars, and c120 speaker = vault (188/188). The w7a target for the rib is about 1.1x the vault.",
+      "fix": "src/07b_ceiling.js: drive the fittings with the vault's own emission so they follow it in every mood. Inside buildCeilings, after eFn is defined, add `const onVault = (m, d = 0) => Object.assign({}, m, { e: 0.1, eFn: (p) => eFn(p) + d });` and use onVault(CEILMAT.rib, 0.01), onVault(CEILMAT.bezel), onVault(CEILMAT.bezelIn, -0.01) and onVault(CEILMAT.emergBase) in the rib / crest-rib / speaker / emergency-light upper.add calls (lines ~215, 219, 268-270, 273). Keep ribShadow / bezelShadow / emerg unlit, or give them onVault(m, -0.06) so the night shadows are not pure black. The minimal one-liner alternative is CEILMAT.rib e 0.02 -> 0.12, bezel e 0.11, bezelIn e 0.10, emergBase e 0.06 -> 0.12. Target: in q06 / v2 the speaker reads 0.97-1.03x the vault and the rib about 1.03x, with only the 1-px shadow lip darker."
+    },
+    {
+      "id": "L1",
+      "severity": "low",
+      "detail": "Vault/bin ratio still a little low (lighting share).",
+      "evidence": "q06 vault 228.6 against outboard bins 208 / 220 (1.04-1.10). c_27312 1.16-1.23, y_47301 1.21-1.22. The photo bins sit 190-202, while the render bins are 208-220.",
+      "fix": "src/08_bins.js BINMAT.door is #d6d8dc -> #cfd2d6 (q06 bins about 205/212). Only do this if it does not grey the amber/night moods. Otherwise leave the remainder to lighting (flat bin shading)."
+    },
+    {
+      "id": "D4",
+      "severity": "low",
+      "detail": "Door-4 dome/monument junction wedge (4th report).",
+      "evidence": "d4b (760-780, 190-215) is a flat 248 with no shading, against the dome at 214 and the side band at 240.",
+      "fix": "src/07b_ceiling.js CEILMAT.lightPanel e 0.3 -> 0.12 (or give it flat's tone), and/or extend the dome side band's last profile station down to the monument top so the panel is not seen edge-on."
+    },
+    {
+      "id": "D3",
+      "severity": "low",
+      "detail": "Door-3 tray far-edge hairline, now residual.",
+      "evidence": "v3 column 450: vault 217, then 1 px at 229, then tray 98. That is +12, down from +66 in w13.",
+      "fix": "Optional: give the centre-board end face (z0/z1 cap at the bar zone) CEILMAT.barFrame instead of the white flat material."
+    },
+    {
+      "id": "LN1",
+      "severity": "low",
+      "detail": "The far-side outboard lens aliases into a dotted sparkle line.",
+      "evidence": "In the lens_dining left crop (x 0-330, y 80-240, 3x), the lens at row ~205 is a broken line of 1-px highlights.",
+      "fix": "src/08_bins.js: tilt the lens a little more toward the aisle (side * 0.12 -> side * 0.25) so it is not seen at grazing incidence, or lower its e from 0.35 to 0.28."
+    }
+  ],
+  "questionsForUser": [
+    "Do you have any real (non-rendered) photo looking up at the THE Room aisle ceiling, in which the speaker grilles and panel joints are visible? It would settle how much darker than the vault they should read (the official photos show them barely distinguishable).",
+    "Do you have any photo of the door 1, 2, 4 or 5 cross-aisle ceilings? They remain approximations."
+  ]
+}

@@ -210,13 +210,16 @@ function buildCeilings(upper, layout) {
         const prof = VAULT.map(([x, y]) => [x * side, y]);
         const v0 = upper.p.length / 3;
         upper.add(gSweep(prof, z0, z1, { side: side > 0 ? 1 : -1, zsteps: mods.length - 1 }), null, { ...CEILMAT.vault, eFn });
+        // polish B w14b F1: fittings on the vault take its own emission (cove-LED layer + eFn), so they keep the vault tone in
+        // every mood once the vault eFn rose (ribs 184 / speaker 178 on a 231 vault, night speaker 17 on 65; c120 188 on 188) [V]
+        const onVault = (m, k = 1) => ({ ...m, l: 12, e: 0.05, eFn: (p) => eFn(p) * k });
         // raised joint ribs (light face + aft shadow lip) turning forward into the crest rib (c120, w5a/w5b: flat hairlines)
         for (let k = 0; k < mods.length - 1; k++) {
-          if (k) { upper.add(vaultRib(side, mods[k], 0.014, 0.004), null, CEILMAT.rib); upper.add(vaultRib(side, mods[k], 0.005, 0.0022, 0.0085), null, CEILMAT.ribShadow); }
+          if (k) { upper.add(vaultRib(side, mods[k], 0.014, 0.004), null, onVault(CEILMAT.rib)); upper.add(vaultRib(side, mods[k], 0.005, 0.0022, 0.0085), null, CEILMAT.ribShadow); }
         }
         {   // crest rib along the centre-bin side, from the zone start to the last joint's turn
           const zb = mods.length > 2 ? mods[mods.length - 2] - RIB.R : z1 - 0.03;
-          upper.add(vaultStrip(RIB_TEND, side, z0 + 0.03, zb, 0.014, 0.004), null, CEILMAT.rib);
+          upper.add(vaultStrip(RIB_TEND, side, z0 + 0.03, zb, 0.014, 0.004), null, onVault(CEILMAT.rib));
           upper.add(vaultStrip(RIB_TEND + 0.012, side, z0 + 0.03, zb, 0.005, 0.0022), null, CEILMAT.ribShadow); }
         // dark metallic channel where the vault meets the centre-bin crest rail (c120 [V]; ~15 mm along the arc [A]).
         // Seen from the aisle the rail hides the bin face behind it, so the channel is the vault's own steep last strip
@@ -265,12 +268,12 @@ function buildCeilings(upper, layout) {
         // shape]; 0.34 x 0.10 m [A]; t 0.70 clears the crest rib, w6b) and a small dark-windowed fitting with a lens near mid-vault (the emergency light)
         for (let k = 0; k < mods.length - 1; k++) {
           const zc = (mods[k] + mods[k + 1]) / 2;
-          upper.add(vaultPanel(0.70, side, zc, 0.34, 0.10, 0.025, 0.0015, 12, 0.03), null, CEILMAT.bezel);   // outer ring in vault tone (c120 ~1.06x; w7a)
-          upper.add(vaultPanel(0.70, side, zc, 0.332, 0.092, 0.022, 0.003, 12, 0.03), null, CEILMAT.bezel);
-          upper.add(vaultPanel(0.70, side, zc, 0.312, 0.074, 0.014, 0.0036, 12, 0.03), null, CEILMAT.bezelIn);
+          upper.add(vaultPanel(0.70, side, zc, 0.34, 0.10, 0.025, 0.0015, 12, 0.03), null, onVault(CEILMAT.bezel));   // outer ring in vault tone (c120 ~1.06x; w7a)
+          upper.add(vaultPanel(0.70, side, zc, 0.332, 0.092, 0.022, 0.003, 12, 0.03), null, onVault(CEILMAT.bezel));
+          upper.add(vaultPanel(0.70, side, zc, 0.312, 0.074, 0.014, 0.0036, 12, 0.03), null, onVault(CEILMAT.bezelIn, 0.92));
           // recess shadow: a dark crescent inside the rim along one long edge (c120 [V]; w8-w11: a faint pale bar)
           upper.add(vaultPanel(0.70, side, zc + 0.031, 0.30, 0.008, 0.004, 0.0039, 12, 0.03), null, CEILMAT.bezelShadow);
-          upper.add(gRBox(0.07, 0.008, 0.04, 0.005, 1), vaultXF(0.45, side, zc + 0.25, 0.003), CEILMAT.emergBase);
+          upper.add(gRBox(0.07, 0.008, 0.04, 0.005, 1), vaultXF(0.45, side, zc + 0.25, 0.003), onVault(CEILMAT.emergBase));
           upper.add(gRBox(0.05, 0.004, 0.022, 0.004, 1), vaultXF(0.45, side, zc + 0.25, 0.0068), CEILMAT.emerg);
         }
         // baked falloff x0.85 at the grille -> x0.66 at the centre-bin crease, over the vault and everything on it (ribs,
