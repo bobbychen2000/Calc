@@ -49,7 +49,7 @@ const MOODS = {
   // glow's hue at 0.65 of its light (mainFS) [V: y_47303 upper tub #a4a9be L170 (B-R +25) vs q17 L188-208 (+3..+7)]. sideLed
   // [0.48, 0.53, 0.66] -> [0.50, 0.57, 0.78], so the band under the lens keeps its blue after the ACES shoulder [V: y_47300
   // lens band rows 130-140 #e3eaf4 / #e2e8f5 (B-R +14..+18) vs q15 #dadbdd (+2)] (lighting L8 medium) [D renders fixL8]
-  boarding: { label: 'Boarding', hemiTop: [0.97, 0.99, 1.03], hemiBot: [0.31, 0.35, 0.47], wash: [0.23, 0.255, 0.32], hemiBotN: [0.36, 0.37, 0.40], washN: [0.25, 0.26, 0.28], tubSky: [0.8, 0.65], led: [1.0, 0.98, 0.92], sideLed: [0.50, 0.57, 0.78], bandCut: 0.15, binLo: 0.8, k: 1.05, exposure: 1.38, toe: 1 },
+  boarding: { label: 'Boarding', hemiTop: [0.97, 0.99, 1.03], hemiBot: [0.31, 0.35, 0.47], wash: [0.23, 0.255, 0.32], hemiBotN: [0.36, 0.37, 0.40], washN: [0.25, 0.26, 0.28], tubSky: [1.0, 0.6], led: [1.0, 0.98, 0.92], sideLed: [0.50, 0.57, 0.78], bandCut: 0.15, binLo: 0.8, k: 1.05, exposure: 1.38, toe: 1 },
   // QA r2 (light): cruise sideLow 0.10 -> 0.30, the lavender wash reaches the window belt in THE Suite (the reveals by
   // the glass stay near-white through mainFS nearPane) [V: ml_DSC_1939-1 wall column y45 #6e9bfc (B-R +141), y150
   // #7a89be, belt y240 #888db0 (+40) vs cF03 belt #cccccf (+3)]
