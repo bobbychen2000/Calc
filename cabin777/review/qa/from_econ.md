@@ -130,3 +130,16 @@
 - **Far q16 covers (low):** the L7 lobe lifted the near q16 cover to L70 (y_47301 64; don't push it further). The right
   block's covers stay at 48-57 against 102-158. The q17 grazing cover B/R is 1.19 vs 1.37. Distance or AO darkening at
   those pixels? The far LOD cover uses the same SEATMAT.yCover.
+
+## wave 3k (w46-w48) to lighting / integration / layout
+- **q17 camera (done by econ):** the q17 line is now a landmark resection on y_47303, with fovY 67.5 for that view only
+  via `window.__fovAt` (self-contained in the q17 line; no shared helper changed). Question 22 can close for q17.
+- **q17 headrest cover tone (medium, w47b-1 / w48b-1):** at the matched camera the covers read L56 and slightly violet
+  (G/R 1.06), against y_47303's silver flap at L66. Head-on in q15 they must stay dark navy (y_47300), so a darker base
+  can't fix this. The fix is in the sheen lobe for `SEATMAT.yCover`: a stronger, less hue-tinted grazing term (the L7
+  lobe tints 0.3 toward the fabric hue; for this leatherette try ~0.1 and x1.3 strength). Check: the q17 near cover is L
+  62-70 with G/R >= 1.1, and q15 cover E stays L <= 70.
+- **Window phase (low, layout):** the q17 fit puts y_47303's windows ~0.15 m further forward relative to the economy rows
+  than the model's frame grid (window centres off by 28-37 px; window tops and bottoms match to 1-2 px). This is either a
+  row-z or a window-grid phase question in `05_layout.js`. It does not affect the seat score.
+- **Carried:** far q16 covers dark (w43b-L1).

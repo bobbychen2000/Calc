@@ -595,3 +595,89 @@ There was no high-severity issue in any round. The best mean, 8.45, was set in w
 
 Before/after sheet: `econ_before_after_w3j.jpg`, own renders only: w43 a59e716 vs w45 fcab537 (q17 with the final
 colours) for q15, q16, q17, e11 and e7.
+
+## Wave 3k (2026-10-25): plateau breaker
+
+Started on 01d3461 (w45 geometry plus the unrated strap colours). w46 was a fresh calibrated two-rater round, run
+together with the gap analyst (`econ_gap_w46.md`). w47 and w48 were fix rounds, which reached the cap of three. The bar
+was not reached: B scored w48 at 8.6 and A at 8.4. No round had a high-severity issue, and w48 set the best mean, 8.5.
+
+| round | rater A | rater B | mean | note |
+|---|---|---|---|---|
+| w46 (01d3461, baseline) | 8.45 | 8.5 | 8.48 | strap colours fixed in the cabin views (both raters); geometry = w45 |
+| w47 (b65def4) | 8.4 | 8.55 | 8.48 | q17 camera matched to the photo; belts laid out as in y_47303; gap items (hood shelf, pocket, card, hood lips, under-arm plates) |
+| w48 (28cdd3c) | 8.4 | 8.6 | 8.5 | back 4.5 % shorter; aisle-end plate down 4.5 cm; tall pouches; strap placement and colours |
+
+### q17 camera, matched by landmarks
+- **Method:** I solved the camera against y_47303 by least squares on landmarks: 6 armrest noses (aisle arm, H/J, J/K
+  and wall arm of row 34; aisle arm and H/J of row 33) and 2 windows (glass centre, top and bottom). I first calibrated
+  the 3D nose points against the old render, at the known camera, to 1-2 px. A key photo cue: the window tops and bottoms
+  are horizontal lines, so the photo looks straight outboard.
+- **Old camera:** pos (0.6, 1.35, 49.4), yaw -pi/2+0.25, pitch -0.42, fovY 58.
+- **New camera:** pos (0.722, 1.543, 49.048), yaw -pi/2+0.002, pitch -0.572, fovY 67.5. The fit rms is 3.0 px; with
+  fovY fixed at 58 it is 4.2 px.
+  - The per-view FOV lives inside the q17 line only (`window.__fovAt`, matched on the camera position).
+  - A near clip of 0.45 removes the 33G back that the eye stands beside.
+  - Rater A's independent w46 camera search landed nearby: (0.6, 1.65, 49.0), yaw -pi/2+0.05, pitch -0.5.
+- **Residuals at the landmarks (render - photo, px, u/v):**
+
+  | landmark | old camera | new camera |
+  |---|---|---|
+  | row 34 aisle arm nose | -53/-5 | +0/+1 |
+  | row 34 arm H/J | +3/+5 | +1/+1 |
+  | row 34 arm J/K | +35/+8 | +1/-2 |
+  | row 34 arm K/wall | +55/+5 | +2/-10 |
+  | row 33 aisle arm nose | -52/-62 | +2/-1 |
+  | row 33 arm H/J | -16/-27 | -5/-1 |
+  | window z 48.34 (centre; top / bottom v) | +74/+1; -3 / +2 | +28/+4; +1 / +1 |
+  | window z 49.41 (centre; top / bottom v) | +101/+9; +1 / +14 | +37/+4; +2 / +1 |
+
+  The ~30 px horizontal window residual is not a camera error. With the window z left free, the fit puts the photo's
+  windows ~0.15 m further forward relative to the seat rows (48.20 / 49.22 vs 48.34 / 49.41): a row-to-window phase in
+  the layout, handed off in `from_econ.md`.
+- **Upper landmarks:** with the arms and the windows (which sit at back-top height) matched, the back tops and the
+  forward row's screens still sat 27-30 px (~6 cm at ~45 px per 0.1 m) above the photo. A camera error cannot move
+  those alone, so I shortened the back (w48). A 19 deg recline test moved them only ~2.5 cm, so I kept the back angle.
+  After w48 they are 3-14 px high (A) or 14-20 px high (B).
+
+### What changed in wave 3k
+- **Belts (w45b-1):** the straps now follow y_47303 read in seat axes. They lie unlatched across the rear half of the
+  pan, each anchored at a rear side crease. On even seats, the teal strap runs a short way to a steel tongue near the
+  aisle arm, and the navy strap runs diagonally from under the arm's front half to the buckle cover at mid-pan. Odd seats
+  use the forward-row seat's variant: the teal strap comes out of the arm gap to the buckle cover, and the navy strap
+  runs from the far crease to the tongue. Navy is #353b4e, the buckle cover is lighter, and the tongue is steel.
+- **Gap items (`econ_gap_w46.md`):**
+  - a 3 cm hood shelf over the tray replaces the 9 cm ramp;
+  - the pocket flap is deeper and the card header is blue;
+  - lit grey mesh strands make two tall pouches that bow out at the bottom (w48);
+  - a raised lip runs down each side of the screen hood;
+  - the plates under the regular-row arms are 2.5 cm lower, 4 cm shorter at the front and darker.
+- **Back 4.5 % shorter** in its own up axis (`ECON.backS`; the top went 1.32 -> ~1.28 m). This covers the near and far
+  LOD.
+- **Aisle-end arm plate down 4.5 cm.** This reverts w34a-5, which was measured at the old camera.
+- **Triangles:** econ3 25,161 -> 26,037 (+3.5 %), econ4 37,604 -> 38,804 (+3.2 %), far3 9,017 -> 9,089. All are below the
+  counts at the start of wave 3.
+- **Test file:** the q17 line in `test/qa.js`.
+
+### Still open (w48a / w48b)
+- **q17 headrest cover (medium, both):**
+  - A says it is ~25-30 % too small (84x90 px vs 106x110), with no convex head cushion.
+  - B says it is darker and more violet than the photo's silver flap (L56 vs 66), sits 30-42 px high, is 13 % short, and
+    shows a band of fabric above the fold where the photo's flap wraps over the top edge.
+  - The tone part is a view-dependent sheen (`from_econ.md`).
+  - Geometry: a taller flap that wraps further over the top, and a forward bulge on the head cushion. Keep the head-on
+    width; q15 is right at 0.22.
+- **Aisle-end arm (medium, both):** it still reads as two parallel white bars. The photo's lower member is a dogleg that
+  sweeps diagonally from below the front up to the arm's rear, with a gap of 34-44 px under the arm (ours is 11-15).
+- **Pocket (medium A / low B):** now tall enough, but it reads as a dark grille. The photo shows a light-grey pouch with
+  dark mesh at its sides, and the card shows above it.
+- **Low:**
+  - the q15 cover sits 14-19 px low since the back was shortened (A);
+  - the teal strap is ~5 L dark and sits at the arm front rather than mid-pan (B);
+  - dark plates under the arms, and a neutral, thick arm cap;
+  - q15 back F and cover F are too light;
+  - the pillows are flat;
+  - the far-LOD rows are unchanged (8.1 from both).
+
+Before/after sheet: `econ_before_after_w3k.jpg`, own renders only. It shows w46 (01d3461) against w48 (28cdd3c) for
+q15, q16, q17 (at the old camera and at the matched one), e2 and e7.

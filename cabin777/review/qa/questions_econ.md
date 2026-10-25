@@ -67,3 +67,8 @@
    disagree. y_47301 and y_47303 show the side-block seats bare, with the belts laid out; y_47300 shows a pillow on the
    left side-block seat (B: not the right one). Both raters default to bare. [w44: removed from the side blocks, near and far
    LOD; the 4-seat centre block keeps them, as in the y_47300 hero row]
+29. (wave 3k, w46b) Belt colour: y_47303 shows teal tongue straps, but y_47300's side-block straps look dark. Is teal
+   right on every seat? [kept teal everywhere; it measures right in q16 / q17]
+30. (wave 3k, w48) Back height: at the landmark-matched q17 camera the backs read ~6 cm tall. The back is now 4.5 %
+   shorter (top ~1.28 m). Is there a published overall height for this Recaro seat to confirm it? [shortened on photo
+   evidence]
