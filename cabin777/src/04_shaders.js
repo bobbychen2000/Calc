@@ -38,8 +38,8 @@ uniform vec4 u_spotP[8]; uniform vec4 u_spotT[8]; uniform vec3 u_spotCol;
 uniform vec4 u_stripP[8]; uniform vec4 u_stripA[8]; uniform vec3 u_stripCol;
 uniform vec4 u_scrP[6]; uniform vec4 u_scrN[6]; uniform vec3 u_scrCol; uniform float u_fillLift; uniform vec3 u_lensCore; uniform vec2 u_vaultE;
 uniform sampler2D u_scrMask; uniform vec4 u_scrMaskR; uniform float u_scrOff; uniform vec4 u_scrOwn; uniform float u_binLo; uniform float u_monHemi;
-uniform float u_tubWash; uniform vec3 u_binLift; uniform vec3 u_hemiBotN; uniform vec3 u_washN;
-uniform sampler2D u_sDepth; uniform vec4 u_sRes; uniform vec4 u_sProj; uniform vec3 u_sFwd; uniform vec3 u_sRight; uniform vec3 u_sUp; uniform vec4 u_ssao; uniform float u_sDither; uniform float u_sMix; uniform float u_sMode;
+uniform float u_tubWash; uniform vec3 u_binLift; uniform vec3 u_hemiBotN; uniform vec3 u_washN; uniform vec2 u_tubSky; uniform float u_ctrLo;
+uniform sampler2D u_sDepth; uniform vec4 u_sRes; uniform vec4 u_sProj; uniform vec3 u_sFwd; uniform vec3 u_sRight; uniform vec3 u_sUp; uniform vec4 u_ssao; uniform float u_sDither; uniform float u_sMix; uniform float u_sAng;
 uniform sampler3D u_ao; uniform vec3 u_aoMin; uniform vec3 u_aoSize; uniform sampler2D u_contact; uniform vec4 u_contactR; uniform float u_contactK;
 uniform sampler2DArray u_detail; uniform vec4 u_layer[${N_LAYERS}]; uniform sampler2DArray u_photo; uniform float u_photoOn;
 uniform sampler2D u_atlas; uniform float u_screenStep; uniform float u_emisGain; uniform float u_screenGain;
@@ -177,8 +177,7 @@ float ssaoF(vec3 P, vec3 Nf){
     vec2 nd = uv * 2.0 - 1.0;
     vec3 v = u_camPos + z * (u_sFwd + nd.x / u_sProj.x * u_sRight + nd.y / u_sProj.y * u_sUp) - P;
     float dl = length(v);
-    float h = dot(v, Nf) - u_ssao.z;
-    occ += clamp(u_sMode > 0.5 ? h * u_ssao.x / (dl * dl + 1e-4) : h / max(dl, 1e-3), 0.0, 1.0) * (1.0 - smoothstep(0.10, u_ssao.w, dl));
+    occ += clamp(((dot(v, Nf) - u_ssao.z) / max(dl, 1e-3) - u_sAng) / (1.0 - u_sAng), 0.0, 1.0) * (1.0 - smoothstep(0.10, u_ssao.w, dl));
   }
   return occ * 0.125 * smoothstep(1.0, 2.0, px);
 }
@@ -359,14 +358,14 @@ void main(){
     // bins from below #b3834b L138 s0.58] (lighting r4 medium). Not the whole hemiBot (the raters' fit): that lifted the
     // seat level and the door zones as well (q21 median 134 -> 142 vs ucr 86) [D]
     // QA L8 (light): the lift acts on the bin door faces only, outboard (binO, below) and centre (cBin: |x| < ~1 m above
-    // 1.62-1.70 m, in the seat zones), at the full step (12_scene MOODS binLift): r4's lift on the whole lower hemisphere
+    // 1.62-1.70 m up to the bin tops at ~2.3 m, in the seat zones), at the full step (12_scene MOODS binLift): r4's lift on the whole lower hemisphere
     // above 1.6 m stopped at 0.6 of the step because it also lifted the seat level and door zones, and moved the dd / d06
     // bins only 3-6 L [V: ucr_the-room-cabin outboard bins #9e7240 L120 s0.59, ff_seat-with-door-closed #b99662 L154 s0.47
     // vs dd #7e5227 L89 s0.69, d06 #8c5c2b L99 s0.69] (lighting L8 medium)
     // QA r4 (light): binO = the outboard bin doors (08_bins OBIN_DOOR: lip x 1.53 y 1.795, bulging to x 1.47 at 2.03, crest
     // 1.64 / 2.23), see binK below
     float binO = smoothstep(1.30, 1.42, abs(v_wpos.x)) * smoothstep(1.62, 1.7, v_wpos.y) * (1.0 - smoothstep(2.18, 2.22, v_wpos.y)) * sz;
-    float cBin = (1.0 - smoothstep(0.95, 1.05, abs(v_wpos.x))) * smoothstep(1.62, 1.70, v_wpos.y) * sz;
+    float cBin = (1.0 - smoothstep(0.95, 1.05, abs(v_wpos.x))) * smoothstep(1.62, 1.70, v_wpos.y) * (1.0 - smoothstep(2.28, 2.36, v_wpos.y)) * sz;
     float wallProx = smoothstep(1.7, 2.55, abs(v_wpos.x));
     float facingIn = clamp(-sign(v_wpos.x) * N.x, 0.0, 1.0);
     // QA r2 (light): only faces recessed behind the lining circle (R = u_R - 0.10, 07_shell wallAt) count as the reveal:
@@ -401,7 +400,11 @@ void main(){
     // L211-218, p10 197, hp 1.3) where the photos run from a lit crest down to grey [V: c_27312 bins L190-199, p10 168,
     // hp 21; y_47301 #a3a9b1-#dddfe4; py_37302 L183 p10 161; lalf_room_119 bin faces 164 -> 71] (lighting r4 medium,
     // integration r4 high); per mood (1 in the amber / dark moods, whose bins the photos show cove-washed) [D]
-    float binK = 1.0 - binO * (1.0 - u_binLo) * (1.0 - smoothstep(-0.2, 0.6, N.y));
+    // QA L8 (light): the centre bins' doors and undersides (cBin) take their own factor u_ctrLo (1 except Cruise): in flight
+    // they are the dim layer under the cove-lit vault [V: lalf_room_119 centre-bin underside #4c4e56 L79, sany_22 (cruise,
+    // economy) L68-85 vs c15 #b6b7bb L183] (lighting L8 medium); Boarding keeps them (q15 L209 vs y_47300 L195, q16 L210 vs
+    // y_47301 L209) [D]
+    float binK = 1.0 - (binO * (1.0 - u_binLo) + cBin * (1.0 - u_ctrLo)) * (1.0 - smoothstep(-0.2, 0.6, N.y));
     // interreflection fill: a white-lined cabin bounces the cove/ceiling light onto every face (ANA photos show
     // charcoal shells and navy fabric reading mid-tone, not black); scaled by AO so crevices stay dark. QA r1: weaker
     // on down-facing faces and towards the floor, so bin undersides / PSU band and footwells keep the shadow line and
@@ -467,11 +470,7 @@ void main(){
     // their warm monFill [V: sany_47 galley / door end #564a4d h346 s0.14, door zone ~#776349 under the blue cove lines
     // vs bl16 #393e6f h235] (lighting r4 low); 1 elsewhere
     hemi *= mix(1.0, u_monHemi, 1.0 - sz); bounce *= mix(1.0, u_monHemi, 1.0 - sz);
-    // QA L8 (light): on the tub crown the cabin fill drops to 0.82 and the window term takes the sky's tint (below): the
-    // cream reveal (07_shell MAT.reveal #ece4d5) cancelled the cool day light, the crown read neutral and ~25 L light
-    // [V: y_47303 crown #a2a7bd L168 (B-R +28), #a4aac1 L171 vs q17 #bfc1c3 L193 (+4)] (lighting L8 medium); the crown is
-    // > 0 only with the shade open and a day glow [D]
-    amb = (hemi * (u_aoTune.x + (1.0 - u_aoTune.x)*ao) + bounce * u_aoTune.y) * binShade * (1.0 - band) * binK * mix(1.0, 0.82, crown)
+    amb = (hemi * (u_aoTune.x + (1.0 - u_aoTune.x)*ao) + bounce * u_aoTune.y) * binShade * (1.0 - band) * binK
         + wsh * lt * wallProx * (0.35 + 0.65*facingIn) * smoothstep(0.3, 1.25, v_wpos.y) * (0.45 + 0.55*ao) * noDown * (1.0 - bandW) * mix(1.0, u_monHemi, 1.0 - sz)
         + u_sideLed * u_sideWall * lensW * facingIn * mix(u_sideLow, 1.0, smoothstep(0.95, 1.55, v_wpos.y)) * smoothstep(0.35, 0.8, v_wpos.y)
                     * (1.0 - smoothstep(1.95, 2.1, v_wpos.y)) * noDown * nearPane
@@ -481,7 +480,19 @@ void main(){
         + u_winGlow * wl.rgb * reveal * 1.9 + u_winGlow * vec3(0.92, 1.0, 1.18) * crown * 1.1;
         // QA r4 (light): the crown takes 1.1 of the window light (was 0.7): shaded whites by the glass read neutral grey
         // where the official photos are cool blue-grey [V: y_47303 crown #a7adc2 (B-R +27) vs q17 #b2b3b3; py_37301 reveal
-        // sides #9ba6bc vs q14 #bfbfc0] (lighting r4 medium; with the cooler boarding hemiBot / wash in 12_scene)
+        // sides #9ba6bc vs q14 #bfbfc0] (lighting r4 medium; with the cooler boarding hemiBot / wash in 12_scene). QA L8: in
+        // the sky's tint (x[0.92, 1.0, 1.18], the blue of the sky seen through the pane over the deck's grey)
+    // QA L8 (light): the upper tub (0.30-0.66 m over the pane centre, any facing, shade open) sees the sky through the pane
+    // and little of the cabin ceiling, so its light takes the hue of the day glow (x the sky tint above) at u_tubSky.y of its
+    // level, for a share u_tubSky.x (Boarding only; 0 elsewhere, 12_scene MOODS tubSky). The cream reveal (07_shell
+    // MAT.reveal #ece4d5) under the neutral cabin fill read neutral and ~25-35 L light; the official photos show the upper
+    // tubs a cool blue-grey [V: y_47303 upper tub / crown #a4a9be L170 (B-R +25), #a4aac0 L171 (+28) vs q17 L188-208 (+3..+7);
+    // py_37301 reveal sides #9ba6bc (+33)] (lighting L8 medium); share / level [D renders fixL8]
+    float crownW = recd * wl.a * smoothstep(0.30, 0.40, v_wpos.y - u_winY.x) * (1.0 - smoothstep(0.58, 0.66, v_wpos.y - u_winY.x)) * shT;
+    vec3 skyT = u_winGlow * vec3(0.92, 1.0, 1.18);
+    float lSky = dot(skyT, vec3(0.2126, 0.7152, 0.0722));
+    if (u_tubSky.x > 0.0 && crownW > 0.0 && lSky > 1e-4)
+      amb = mix(amb, skyT * (dot(amb, vec3(0.2126, 0.7152, 0.0722)) * u_tubSky.y / lSky), u_tubSky.x * crownW);
     // night: the galley / lav / door zones (sz = 0) keep a dim neutral fill, the galley lights and lit bulkheads at the
     // end of the dark cabin [V: ucr_room-night-lighting far galley wall #645f57; sany_40 lit galley end] (lighting r1)
     amb += u_monFill * (1.0 - sz) * mix(0.45, 1.0, up) * (0.3 + 0.7*ao);
@@ -525,8 +536,10 @@ void main(){
     amb *= (1.0 - crevF) * (1.0 - u_contactK * ctc);
     // QA L8 (integration): screen-space contact AO (ssaoF), on the diffuse ambient only: the specular, emissive, sun, tubRef
     // and the local lights below stay out; x0.8 and fading out above 1.9-2.3 m, so the vault and cove stay clean
-    // (u_ssao.y = strength, 0 = off: x-ray, low quality, studio) [D]
-    if (u_ssao.y > 0.0) amb *= mix(1.0, max(1.0 - u_ssao.y * ssaoF(v_wpos, Nf), 0.0), u_sMix * (1.0 - smoothstep(1.9, 2.3, v_wpos.y)));
+    // (u_ssao.y = strength, 0 = off: x-ray, low quality, studio) [D]. Not on the window reveals (recd): they are lit by the
+    // pane, and the lining's lip standing proud of the tub drew a dark crescent inside every tub (fixL8 ss3 / ss4), where
+    // the photos show the moulding continuous and pale [V: c_27312 reveal sides #d7dbdf / #e2e5e8]
+    if (u_ssao.y > 0.0 && recd < 0.99) amb *= mix(1.0, max(1.0 - u_ssao.y * ssaoF(v_wpos, Nf), 0.0), u_sMix * (1.0 - smoothstep(1.9, 2.3, v_wpos.y)) * (1.0 - recd));
     // reading lights (night): warm cone from the lamp lens to the seat, 0.35 m pool [V: tlfl_IMG_9377 pools on the bed]
     for (int i = 0; i < 8; i++) {
       if (u_spotP[i].w < 0.5) continue;

@@ -42,7 +42,7 @@ const MOODS = {
   // c_27312 PSU band #c4c9cf (+11) vs q06 #e0e1e1]; binLo 0.8: the outboard bin doors' lower face (mainFS binK) [V: c_27312
   // bins L190-199 p10 168 vs q06 L211-218 p10 197; y_47301 L189 vs q16 L216] (lighting r4 medium x2). The raters' 0.72 also
   // took the q15 bins under y_47300's (L220 -> 209, p10 197 -> 177 vs photo L216 p10 200), whose bins are evenly lit [D]
-  boarding: { label: 'Boarding', hemiTop: [0.97, 0.99, 1.03], hemiBot: [0.31, 0.35, 0.47], wash: [0.23, 0.255, 0.32], hemiBotN: [0.36, 0.37, 0.40], washN: [0.25, 0.26, 0.28], led: [1.0, 0.98, 0.92], sideLed: [0.50, 0.57, 0.78], bandCut: 0.15, binLo: 0.8, k: 1.05, exposure: 1.38, toe: 1 },
+  boarding: { label: 'Boarding', hemiTop: [0.97, 0.99, 1.03], hemiBot: [0.31, 0.35, 0.47], wash: [0.23, 0.255, 0.32], hemiBotN: [0.36, 0.37, 0.40], washN: [0.25, 0.26, 0.28], tubSky: [0.8, 0.65], led: [1.0, 0.98, 0.92], sideLed: [0.50, 0.57, 0.78], bandCut: 0.15, binLo: 0.8, k: 1.05, exposure: 1.38, toe: 1 },
   // QA r2 (light): cruise sideLow 0.10 -> 0.30, the lavender wash reaches the window belt in THE Suite (the reveals by
   // the glass stay near-white through mainFS nearPane) [V: ml_DSC_1939-1 wall column y45 #6e9bfc (B-R +141), y150
   // #7a89be, belt y240 #888db0 (+40) vs cF03 belt #cccccf (+3)]
@@ -238,7 +238,7 @@ class Scene {
     };
     this.emptyVAO = gl.gl.createVertexArray();
     gl.use(this.progs.main); gl.set('u_fillLift', 1); gl.set('u_sheen', LIGHT_TUNE.sheen); gl.set('u_sheenTint', LIGHT_TUNE.sheenTint); gl.set('u_vaultE', [0, 1]);   // the studio may draw before the first cabin frame
-    gl.set('u_binLo', 1); gl.set('u_monHemi', 1);   // QA r4: neutral values for the same reason
+    gl.set('u_binLo', 1); gl.set('u_ctrLo', 1); gl.set('u_monHemi', 1);   // QA r4: neutral values for the same reason
     this.buildGlows();
     const sm = this.shell.meshes;
     this.opaque = [
@@ -875,13 +875,13 @@ class Scene {
     // exposed for the view shows them mid-tone below the sky [V: ucr_ana-business-class-wing-view reveal #816242-#7d6b55
     // L104-110, sky #4bb5fb L157]; seated window views (|x| < 2.45) are untouched [D]
     G.set('u_exposure', mood.exposure * (this.xray ? 1 : 1 - LIGHT_TUNE.lookOut * clamp((Math.abs(cam.pos[0]) - 2.45) / 0.25, 0, 1)));
-    G.set('u_binLo', mood.binLo ?? 1); G.set('u_monHemi', mood.monHemi ?? 1); G.set('u_tubWash', mood.tub ? LIGHT_TUNE.tubWash : 0); G.set('u_binLift', (mood.binLift || [0, 0, 0]).map((v) => v * mood.k));
+    G.set('u_binLo', mood.binLo ?? 1); G.set('u_ctrLo', mood.ctrLo ?? 1); G.set('u_monHemi', mood.monHemi ?? 1); G.set('u_tubWash', mood.tub ? LIGHT_TUNE.tubWash : 0); G.set('u_tubSky', mood.tubSky || [0, 1]); G.set('u_binLift', (mood.binLift || [0, 0, 0]).map((v) => v * mood.k));
     // QA L8 (integration): screen-space contact AO inputs (mainFS ssaoF); strength 0 switches it off
     G.set('u_ssao', ssao ? LIGHT_TUNE.ssao : [0, 0, 0, 0]);
     if (ssao) {
       G.tex('u_sDepth', 8, this.sDepth.tex); G.set('u_sRes', [w, h, this.sDepth.w, this.sDepth.h]);
       G.set('u_sProj', [cam.proj[0], cam.proj[5], cam.proj[10], cam.proj[14]]);
-      G.set('u_sFwd', cam.fwd); G.set('u_sRight', cam.right); G.set('u_sUp', cam.up); G.set('u_sDither', LIGHT_TUNE.ssaoDither ?? 1); G.set('u_sMix', LIGHT_TUNE.ssaoMix ?? 0.8); G.set('u_sMode', LIGHT_TUNE.ssaoMode ?? 0);
+      G.set('u_sFwd', cam.fwd); G.set('u_sRight', cam.right); G.set('u_sUp', cam.up); G.set('u_sDither', LIGHT_TUNE.ssaoDither ?? 1); G.set('u_sMix', LIGHT_TUNE.ssaoMix ?? 0.8); G.set('u_sAng', LIGHT_TUNE.ssaoAng ?? 0.35);
     }
     G.set('u_fill', this.fill ?? 0.45);   // QA r1: 0.7 flattened AO and the ceiling-to-floor falloff [V: c_27312 shell gradients]
     G.set('u_exterior', 0);
@@ -915,7 +915,7 @@ class Scene {
       G.set('u_extBounce', [0, 0, 0]); G.set('u_extPtP', new Float32Array(8));   // the studio (same program) keeps its plain fill
     }
     G.set('u_toe', 0); G.set('u_fillLift', 1); G.set('u_vaultE', [0, 1]);   // ... and its plain tone, fill lift and vault (14_studio renders through the same program)
-    G.set('u_scrOff', 0); G.set('u_binLo', 1); G.set('u_monHemi', 1); G.set('u_tubWash', 0); G.set('u_binLift', [0, 0, 0]);   // (QA r4) all screens lit, no cabin-only terms
+    G.set('u_scrOff', 0); G.set('u_binLo', 1); G.set('u_ctrLo', 1); G.set('u_monHemi', 1); G.set('u_tubWash', 0); G.set('u_binLift', [0, 0, 0]); G.set('u_tubSky', [0, 1]);   // (QA r4) all screens lit, no cabin-only terms
     G.set('u_ssao', [0, 0, 0, 0]);   // (QA L8) no screen-space AO in the studio
     gl.depthFunc(gl.LEQUAL);
     gl.depthMask(false);
