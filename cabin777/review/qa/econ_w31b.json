@@ -1,0 +1,263 @@
+{
+ "area": "econ",
+ "rater": "B",
+ "round": "w31",
+ "candidate": "befdc88",
+ "lens": "Geometry and proportion first at the matched q15 (camera unchanged from w30, same boxes: render seat centres 235/390/545/700, photo 247/390/543/688), then materials, colour, lighting and artefacts. Scripts in /tmp/claude-0/-home-user-Calc/1061ce54-e372-5114-b4da-a519c8133fa5/scratchpad/raterB31: m30.py (patch stats R31 / R30 / y_47300 per seat D-G), prof.py (cover extents), pil.py (pillow segmentation), m2.py / m4.py (studio, q16, arm), diff.py (pixel change), plus inline tick-back terciles, pan-joint dark runs (rows 560-570) and arm row profiles. Pixel change r30 -> r31: q15 44.5 % (mean +4.7 L), q16 36.3 % (+4.6), q17 38.5 % (+9.1); studio e1/e4/e4b/e7 14-20 %, e2/e3/e5/e6/e8/e9 0.3-3.4 % (lighting snapshot does not apply in the studio). LIGHTING NOTE: in q15 every fabric moved up together (backs +3 to +15 %, pads +13 %, pillows +23 % with no pillow material change, arms +11 %: pad 189 -> 210), so absolute-L overshoots this round are booked to lighting (00948cd), not econ. Crops: z_q15_3.png, z_s12.png, z_s34.png, z_arm.png, z_q16_econAisle.png, z_q17_econBacks.png, z_e*.png (r31 left / r30 right).",
+ "score": 8.3,
+ "priorIssues": [
+  {
+   "issue": "w30b-1 (medium) headrest cover ~1.4x too tall head-on",
+   "status": "not fixed (by design, open question 21)",
+   "evidence": "prof.py q15: 70-71 x 81-82 px, H/W 0.85-0.88 vs y_47300 49-50 x 65-73, 0.67-0.75 (identical to w30)."
+  },
+  {
+   "issue": "w30b-2 (medium) tick ground ultramarine, strokes grey",
+   "status": "ground hue fixed; strokes still grey; spread now low",
+   "evidence": "q15 back D darkest 20 % 40,52,109 B/G 2.11 (seat F 36,47,102, 2.18) vs y_47300 22,40,88 2.17 / 14,27,69 2.49 (r30 26,36,102, 2.80). Lightest 20 % 131,150,183 B/R 1.40 vs 126,145,193 1.53 (r30 1.38). p90/p10 2.22 vs 2.90 (r30 2.48), bright 0.110 vs 0.136 (0.142); part of the lift of p10 (57 -> 68) is the lighting snapshot. Visually (z_s12, e4b) the electric royal-blue channels are gone; the cloth now reads mid-blue with grey-white strokes, a touch washed. Tick pans D/E p90/p10 2.42 / 2.41 vs 3.97 / 3.73 (r30 2.80 / 3.02): flatter. Seat F back still L102 vs 78 (render F = D)."
+  },
+  {
+   "issue": "w30b-3 (low) diamond pan stars overshot to almost none",
+   "status": "regressed (contrast); light",
+   "evidence": "q15 pan F bright 0.000 vs 0.071, blobs 0.5 vs 12.2 / kpx, p90/p10 1.32 vs 1.73 (r30 0.006 / 4.8 / 1.37); L102.5 vs 81.6 (r30 78.9: base +8 L plus lighting). z_s34 shows the big soft stars are present (as in the photo) but on a ground too light to read. q16 near diamond back bright 0.004, blobs 3.1 vs y_47302 0.128 / 34.1. e1 diamond back unchanged (0.093, 6.8 blobs)."
+  },
+  {
+   "issue": "w30b-4 (low) pillow flat rounded rectangle without dog-ears or weave",
+   "status": "partly fixed (slight waist), weave not fixed",
+   "evidence": "pil.py q15 fill D/E/F/G 0.62 / 0.87 / 0.95 / 0.66 vs y_47300 0.53-0.70 (r30 0.78-0.93); width at 5 % of height 61 / 65 / 95 / 44 px vs 7-21 (r30 88-98). The outer pillows now taper, the centre two still read as plaques; z_arm.png: waist is a few px where y_47300 pinches the corners to points. p90/50 1.10-1.14 vs 1.25-1.62 (texture still flat). L61-65 vs 41-53 now light (lighting: +23 % with no material change)."
+  },
+  {
+   "issue": "w30b-5 (low) fleck backs repeated dark cloud",
+   "status": "partly fixed",
+   "evidence": "q15 fleck backs E / G low-pass CV 0.041 / 0.043 vs y_47300 0.034 / 0.029 (r30 0.049 / 0.056), min/mean 0.87 / 0.86 vs 0.90 / 0.93 (r30 0.85 / 0.85). The cloud is still visible mid-back in e4b (right seat) and e4 but softer. Point stats on target (L66 / 73 vs 69 / 62, p90/50 1.70-1.74 vs 1.79-1.80)."
+  },
+  {
+   "issue": "w30b-6 (low) mosaic pan bluer than w29",
+   "status": "fixed (hue); light from lighting",
+   "evidence": "q15 pan G B/R 1.70 vs 1.72 (r30 1.94); L97.2 vs 86.8 (r30 88.1, lift = lighting); bright 0.047 vs 0.139, p90/p10 2.15 vs 2.59 (a little flat)."
+  },
+  {
+   "issue": "w30b-7 (low) residual dark gaps at the pan joints",
+   "status": "partly fixed",
+   "evidence": "Longest dark run (L < 35) across joints D/E, E/F, F/G at rows 560 / 565 / 570: 9-7 / 4-9 / 4-5 px vs y_47300 1-2 / 2 / 0 (r30 7-9 / 11-13 / 4-12). Centre joint 13 -> 9."
+  },
+  {
+   "issue": "w30b-8 (low) aisle-facing arm two white bars; arm a hair cool",
+   "status": "partly fixed",
+   "evidence": "q15 row 490 profile across seat D right arm: pad 210, lower plate 168-172 (ratio 0.82; r30 182 / 189 = 0.96). Plate is now visibly greyer but still a light bar ~L170 where y_47300 shows a dark grey bracket; whole arm patch L168.5 vs 139.9 (r30 154; +11 % is the lighting). Arm still runs ~40 px lower than in the photo (w30a-2). e7: plate 203 vs pad ~230, rgb neutral 204,204,206 (r30 224,222,220)."
+  },
+  {
+   "issue": "w30b-9 (medium, lighting) headrest covers navy off-axis, light head-on",
+   "status": "partly fixed off-axis; head-on worse on the outer seats (lighting)",
+   "evidence": "SHEEN flag landed: q16 near cover L66.8 vs y_47301 108.4 (r30 53.7). q15 head-on covers D/E/F/G L67.7 / 58.7 / 59.1 / 68.2, B/R 1.58-1.64 vs 68.8 / 52.3 / 42.4 / 41.0, 1.65-2.01 (r30 54.5 / 62.7 / 63.0 / 54.7): outer covers lighter, inner a hair darker, all still too grey (B/R). e4 studio 40.1 vs y_47306 89.8-130.6 (unchanged; studio has no sheen?)."
+  },
+  {
+   "issue": "w30b-10 (medium, lighting) far rows snowy; q16 smear on light pads",
+   "status": "slightly improved (right), not fixed",
+   "evidence": "q16 bright blobs / kpx far right 19.7 vs y_47301 4.5 (r30 21.4), far left 16.4 vs 8.1 (r30 14.1). The near-left light pads in q16 (x 110-190, y 300-480) still render as pale smears; the nearest right seat back is still a blur."
+  },
+  {
+   "issue": "w30b-11 (low) carried small parts",
+   "status": "not fixed",
+   "evidence": "e2 / e5 / e8 / e9 changed 0.3-3.4 % (lighting only); belts still laid across the pans in q15."
+  },
+  {
+   "issue": "w30a-1 (medium) tick tile near-black ground close up",
+   "status": "fixed",
+   "evidence": "e4b tick ground now mid blue (z_e4b_pillow.png left), no near-black channels."
+  },
+  {
+   "issue": "w30a-2 (medium) armrest two white bars, ~40 px low",
+   "status": "partly fixed (plate greyer); length not fixed",
+   "evidence": "see w30b-8."
+  },
+  {
+   "issue": "w30a-L2 / w29a-L2 (lighting) triplanar smear in q16",
+   "status": "not fixed",
+   "evidence": "see w30b-10."
+  },
+  {
+   "issue": "w30a-C1 (integration) q16 / q17 cameras do not match",
+   "status": "not fixed (out of scope)",
+   "evidence": "q16/q17 framing unchanged."
+  }
+ ],
+ "details": [
+  {
+   "detail": "Fabric: tick weave",
+   "score": 8.4,
+   "refs": "ground hue fixed (B/G 2.11-2.18 vs 2.17-2.49, no electric blue); strokes grey (B/R 1.40 vs 1.53); spread 2.22 vs 2.90 back, 2.4 vs 3.7-4.0 pans (washed); seat F back L102 vs 78"
+  },
+  {
+   "detail": "Fabric: diamond lattice",
+   "score": 7.9,
+   "refs": "pan F stars invisible at q15 (bright 0.000 vs 0.071, p90/p10 1.32 vs 1.73), ground L102 vs 82; close-up unchanged (e1 6.8 vs 34 blobs / kpx)"
+  },
+  {
+   "detail": "Fabric: petal fleck",
+   "score": 8.3,
+   "refs": "low-pass CV 0.041-0.043 vs 0.029-0.034 (r30 0.05); point stats on target"
+  },
+  {
+   "detail": "Fabric: dash mosaic",
+   "score": 8.4,
+   "refs": "B/R 1.70 vs 1.72 fixed; a little flat (p90/p10 2.15 vs 2.59)"
+  },
+  {
+   "detail": "Fabric mix (backs, pans, pads)",
+   "score": 8.5,
+   "refs": "light pad D L150 vs 128 and flat (p90/p10 1.30 vs 1.78) after the move to layer 34 + lighting; dark fleck pad F 68.5 vs 89"
+  },
+  {
+   "detail": "Headrest pad + cover",
+   "score": 7.8,
+   "refs": "cover 70 x 82 px, H/W 0.86 vs 49 x 69, 0.71 (question 21); colour is lighting"
+  },
+  {
+   "detail": "Pillow",
+   "score": 8.3,
+   "refs": "outer pillows taper (fill 0.62-0.66 vs 0.53-0.70), centre still plaques (0.87-0.95); no weave (p90/50 1.12 vs 1.25-1.6)"
+  },
+  {
+   "detail": "Armrests",
+   "score": 8.5,
+   "refs": "lower plate 0.82x pad (was 0.96x), still a light second bar head-on; arm length ~40 px low"
+  },
+  {
+   "detail": "Belts",
+   "score": 8.2,
+   "refs": "unchanged; laid across the pans"
+  },
+  {
+   "detail": "Seat pan / front",
+   "score": 8.3,
+   "refs": "joint dark runs 4-9 px vs 0-2 (r30 6-13); pans flatter and lighter (L97-103 vs 82-94; mostly lighting)"
+  },
+  {
+   "detail": "Back silhouette",
+   "score": 8.1,
+   "refs": "unchanged"
+  },
+  {
+   "detail": "Rear shell / hood / back top",
+   "score": 8.1,
+   "refs": "unchanged (q17)"
+  },
+  {
+   "detail": "Screen / handset",
+   "score": 8.2,
+   "refs": "unchanged"
+  },
+  {
+   "detail": "Tray / pocket / AC",
+   "score": 7.8,
+   "refs": "unchanged"
+  },
+  {
+   "detail": "Legs / footrest / under-seat",
+   "score": 7.7,
+   "refs": "unchanged (e8)"
+  },
+  {
+   "detail": "Far-LOD rows",
+   "score": 7.6,
+   "refs": "q16 far 16-20 bright blobs / kpx vs 4.5-8 (lighting)"
+  }
+ ],
+ "issues": [
+  {
+   "id": "w31b-1",
+   "severity": "medium",
+   "owner": "econ",
+   "title": "Headrest cover ~1.4x too tall head-on (carried six rounds; open question 21)",
+   "detail": "Headrest pad + cover",
+   "evidence": "prof.py q15: 70-71 x 81-82 px, H/W 0.85-0.88 vs y_47300 49-50 x 65-73, 0.67-0.75.",
+   "fix": "As w30b-1 pending question 21. Target q15 cover 54-58 px tall, H/W 0.72-0.78."
+  },
+  {
+   "id": "w31b-2",
+   "severity": "low",
+   "owner": "econ",
+   "title": "Diamond pan stars invisible at row distance; pan ground too light",
+   "detail": "Fabric: diamond lattice",
+   "evidence": "q15 pan F L102.5 vs 81.6, bright 0.000 vs 0.071, blobs 0.5 vs 12.2 / kpx, p90/p10 1.32 vs 1.73; z_s34 shows the soft big stars exist but blend into a light ground. About a third of the +30 % lift is the lighting snapshot, the rest the +8 L base.",
+   "fix": "09a_econ.js diamond pan base back to about L-4 of #474e6a (e.g. #42496a) and raise the pan star gain on layer 34 ~1.3x so stars reach 1.4x median. Target (under current lighting) pan F L86-92, bright 0.05-0.09, p90/p10 1.6-1.8."
+  },
+  {
+   "id": "w31b-3",
+   "severity": "low",
+   "owner": "econ",
+   "title": "Tick strokes still grey; weave now low in contrast (washed) on backs and pans",
+   "detail": "Fabric: tick weave",
+   "evidence": "q15 back D p90/p10 2.22 vs 2.90 (r30 2.48), bright 0.110 vs 0.136; strokes B/R 1.40 vs 1.53; pans D/E p90/p10 2.42 / 2.41 vs 3.97 / 3.73. Ground L of darkest fifth ~67 vs 50 (photo seat D). Hue of the ground is now right (B/G 2.11 vs 2.17). Seat F back L102 vs 78.",
+   "fix": "test/make_swatches.py y_tick: keep the luminance-only deepening but stop at 0.4x median instead of 0.5x (or band boost 0.35 -> 0.45) and tint strokes toward 126,145,193 (B *1.08). Target back D p90/p10 2.6-2.9, darkest fifth L <= 55, strokes B/R >= 1.5; pans p90/p10 >= 3.0."
+  },
+  {
+   "id": "w31b-4",
+   "severity": "low",
+   "owner": "econ",
+   "title": "Centre pillows still plaques; no weave",
+   "detail": "Pillow",
+   "evidence": "pil.py fill E/F 0.87 / 0.95 vs 0.66 / 0.70, width at 5 % of height 65 / 95 px vs 7 / 21; outer D/G now 0.62 / 0.66 (good). p90/50 1.10-1.14 vs 1.25-1.62.",
+   "fix": "Deepen the bow-tie waist (corner pull ~1.5x) so the corners read as points, and give the pillow the fleck/twill detail layer at low gain (p90/50 ~1.25)."
+  },
+  {
+   "id": "w31b-5",
+   "severity": "low",
+   "owner": "econ",
+   "title": "Armrest lower plate still a light second bar; arm long",
+   "detail": "Armrests",
+   "evidence": "q15 row 490: plate L170 vs pad 210 (0.82x); y_47300 shows a dark grey bracket (~L60-100) below one slim bar; arm runs ~40 px lower than in the photo.",
+   "fix": "Lower plate #9a9b9f -> about #6f7075, or tuck it 1 cm inboard behind the pad; shorten the arm front nose 2-3 cm."
+  },
+  {
+   "id": "w31b-6",
+   "severity": "low",
+   "owner": "econ",
+   "title": "Pan joints still 4-9 px dark",
+   "detail": "Seat pan / front",
+   "evidence": "rows 560-570: 7-9 / 4-9 / 4-5 px vs 1-2 / 2 / 0 (r30 7-9 / 11-13 / 4-12).",
+   "fix": "Another 1 cm on each pan front corner (taper), target <= 3 px."
+  },
+  {
+   "id": "w31b-7",
+   "severity": "low",
+   "owner": "econ",
+   "title": "Fleck back cloud softer but still there; light pad flat",
+   "detail": "Fabric: petal fleck",
+   "evidence": "low-pass CV 0.041 / 0.043 vs 0.029-0.034, min 0.86-0.87 vs 0.90-0.93; light pad D p90/p10 1.30 vs 1.78, bright 0 vs 0.062 (L150 vs 128, partly lighting).",
+   "fix": "As w30b-5 (divide by the 24 px blur); give layer 34 on the pad a little more star gain."
+  },
+  {
+   "id": "w31b-8",
+   "severity": "medium",
+   "owner": "lighting",
+   "title": "Seat-level light ~5-23 % up: pillows, pans, arms and outer covers now light (not scored for econ)",
+   "detail": "Fabric mix (backs, pans, pads)",
+   "evidence": "q15 r30 -> r31 with no material change: pillows L50 -> 61-65 vs 41-53, arm pad 189 -> 210 (arm patch 168.5 vs 139.9), tick pans +8-17 %, outer covers 55 -> 68 (inner 63 -> 59) vs 69 / 52 / 42 / 41. Whole frame +4.7 L.",
+   "fix": "Lighting: hold seat-level exposure at w30 or trim ~8 %; the head-on cover lobe should not lift the outer seats above the inner ones by 15 %."
+  },
+  {
+   "id": "w31b-9",
+   "severity": "medium",
+   "owner": "lighting",
+   "title": "Covers still navy off-axis (better), far rows snowy, q16 pad smear (carried)",
+   "detail": "Far-LOD rows",
+   "evidence": "q16 near cover L66.8 vs 108.4 (r30 53.7); far right 19.7 vs 4.5 and far left 16.4 vs 8.1 bright blobs / kpx; near-left light pads still pale smears in q16.",
+   "fix": "Continue the sheen lobe strength; the distance fade of the mip bias should cut far-row bright blobs to <= 8 / kpx."
+  },
+  {
+   "id": "w31b-10",
+   "severity": "low",
+   "owner": "econ",
+   "title": "Carried small parts: cover foot crease, pocket, legs, bezel dots, belts laid on the pans",
+   "detail": "Belts",
+   "evidence": "e2 / e5 / e8 / e9 unchanged (0.3-3.4 % pixel change, lighting).",
+   "fix": "As w29b-10."
+  }
+ ],
+ "questionsForUser": [
+  "Headrest cover height (open question 21): y_47300 H/W 0.71 vs render 0.86; should the matched q15 view decide?"
+ ],
+ "extraRefsSearched": "None new; ref/web/econ/ b_ss_10..19 reused."
+}
