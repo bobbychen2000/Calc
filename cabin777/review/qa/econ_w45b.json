@@ -1,0 +1,51 @@
+{
+ "area": "econ",
+ "rater": "B",
+ "round": "w45",
+ "candidate": "fcab537",
+ "lens": "Geometry and proportion first, then colour. Scripts in /tmp/claude-0/-home-user-Calc/bd010ea5-6deb-54d2-81da-591cf8fca07a/scratchpad/raterB45/ (d.py, hw.py, cov.py, c.py, m.py ported from raterB44 to r45 vs r44, plus comp.py for changed components; q17 cover band count with the w44 box x 640-740, y 60-220, sat < 0.3, 120 < max < 235). Diff b6ea6d8..fcab537 read (09a_econ.js only). Change fractions r44->r45 (max channel diff > 6): q15 3.8 %, q16 7.1 %, q17 5.1 %; studio e1 33.8 %, e2 13.3 %, e3 9.8 %, e4 8.5 %, e11 5.2 %, e4b 2.5 %, e10 0.5 %. e4c_pillow4 new (no w44 counterpart).",
+ "score": 8.5,
+ "priorIssues": [
+  {"id": "w44b-1", "status": "not fixed", "note": "q17 near cover px per 20-row band (x 640-740, y 60-220): r44 982/696/1153/979/751/535/124/44 = 5264 -> r45 981/726/1119/923/702/507/116/33 = 5107 (-3 %; check was >= 8600). Crops q17head_r44.png / q17head_r45.png are practically identical: the cover still reads as a light strip beside the near seat's aisle wing; the 2 cm shallower wing front does not change this view. The camera remains ~20-25 deg more edge-on than y_47303. In e3 (side) the plate edge now shows as a slightly wider light strip in front of the wing, which is the intended effect, just not visible at q17 scale."},
+  {"id": "w44b-2", "status": "mostly fixed (overshot on chroma)", "note": "q17 tongue strap r44 had 0 px with G/R > 1.7; r45 (46-47,109-111,160-162) G/R 2.35, B/G 1.46 (photo webbing (78-80,143-144,209-210) G/R 1.8, B/G 1.46): the hue is now right, R is ~30 low, so it reads more saturated and ~35 L darker than the photo (part lighting). Navy strap dark-half L 32.5 -> 45.8 / 44.5 ((25,30,61) -> (36,44,83)); check L 50-65 not quite met. Studio e11 / e7 tongue (142,180,216) G/R 1.27 -> (109,188,221) G/R 1.72: now reads turquoise / sky-cyan under the white studio key (B/G 1.18 vs photo 1.46)."},
+  {"id": "w44b-3", "status": "not fixed (by design; user question)", "note": "Side-block pillows stay removed; q15 left side seat still bare where y_47300 has one."},
+  {"id": "w44b-4", "status": "unchanged", "note": "q15 outer covers unchanged in tone; narrower cover removes 1-4 px of dark edge only."},
+  {"id": "w44b-5", "status": "partly fixed", "note": "Latch cover lighter (#aeb2b8) and on every second seat the buckle-strap end now runs over the pan lip and hangs down the front (e11: a navy band over the roll and a 3 cm flap; e7: a dark strip at the pan corner). But y_47303's defining look is the teal tongue strap hanging vertically from the armrest gap down the cushion side with the silver tongue / grey latch near the armrest at the pan rear (q17_ph_belts.png); the render still has a flat diagonal V meeting at a latch mid-pan forward. The over-lip piece in e11 reads as a separate rectangular patch with a hard horizontal seam rather than a draped strap."},
+  {"id": "w41b-2", "status": "not fixed", "note": "Tucked centre-block branch unchanged."},
+  {"id": "w41b-4", "status": "not fixed", "note": "New e4c_pillow4 confirms it: a rounded-corner piped plaque; y_47300 pillows are puffed with pinched mid-edges and corner tips."},
+  {"id": "w41b-5", "status": "not fixed", "note": "Fleck swatch unchanged."},
+  {"id": "w41b-6", "status": "not fixed", "note": "Tray edge under the pan front unchanged in e11."},
+  {"id": "w43b-L1", "status": "unchanged (lighting, not scored)", "note": "q16 right-block covers still dark."},
+  {"id": "regression check (q15 head-on cover / wing silhouette)", "status": "no regression; improved", "note": "hw.py median cover widths (y 235-300): r44 53/78/83/45 -> r45 49/74/76/42 vs y_47300 48/71/83/85 (outer right photo values contaminated by the window-side dark). Inner pair 74/76 vs 71/83 (mean 75 vs 77). Wing silhouettes head-on unchanged (q15heads.png); only 1-4 px dark slivers beside the cover edges became fabric. Cover top 244 / foot 300 unchanged; head-on h/w ~0.77 vs ~0.70 (unchanged since w35, not re-raised)."}
+ ],
+ "details": [
+  {"detail": "Fabric: tick weave", "score": 8.5, "refs": "Unchanged."},
+  {"detail": "Fabric: diamond lattice", "score": 8.5, "refs": "Unchanged."},
+  {"detail": "Fabric: petal fleck", "score": 8.3, "refs": "Unchanged (w41b-5)."},
+  {"detail": "Fabric: dash mosaic", "score": 8.5, "refs": "Unchanged."},
+  {"detail": "Fabric mix (backs, pans, pads)", "score": 8.5, "refs": "Unchanged."},
+  {"detail": "Headrest pad + cover", "score": 8.8, "refs": "Head-on width back on y_47300 (inner 74/76 vs 71/83); q17 strip unchanged (w44b-1). Net held."},
+  {"detail": "Pillow", "score": 8.5, "refs": "Placement unchanged; e4c shows the flat piped plaque."},
+  {"detail": "Armrests", "score": 8.8, "refs": "Unchanged."},
+  {"detail": "Belts", "score": 8.9, "refs": "Up 0.1: teal / navy now distinct webbing colours in q15 / q16 / q17, wider, lighter latch, alternate end over the pan lip. Held below 9: flat diagonal V vs y_47303's vertical hanging tongue straps by the armrest; teal over-saturated in scene (R 47 vs 78) and cyan in studio; navy still ~15 L dark; over-lip piece boxy in e11."},
+  {"detail": "Seat pan / front", "score": 8.8, "refs": "Unchanged apart from the strap end."},
+  {"detail": "Back silhouette", "score": 8.1, "refs": "Unchanged."},
+  {"detail": "Rear shell / hood / back top", "score": 8.1, "refs": "e2 13 % is the narrower cover / wing edges seen past the shell; shell unchanged."},
+  {"detail": "Screen / handset", "score": 8.2, "refs": "Unchanged."},
+  {"detail": "Tray / pocket / AC", "score": 7.8, "refs": "Unchanged."},
+  {"detail": "Legs / footrest / under-seat", "score": 8.6, "refs": "Unchanged (e10 0.5 %)."},
+  {"detail": "Far-LOD rows", "score": 8.1, "refs": "Far cover 0.22, consistent with the near LOD."}
+ ],
+ "issues": [
+  {"id": "w45b-1", "severity": "medium", "owner": "econ (09a_econ.js:291-313 drape branch)", "title": "Belt layout: flat diagonal V with a mid-pan latch vs y_47303's straps hanging by the armrest", "evidence": "y_47303 (q17_ph_belts.png): on each pan the latch (grey cover + silver tongue) sits at the rear near the armrest, the teal tongue strap hangs vertically from the armrest/cushion gap down over the pan front with slack, and the navy strap runs diagonally across the pan front. Render: both straps flat on the pan meeting at a latch ~z -0.40 mid-pan; only the navy free end (every 2nd seat) drops over the lip.", "fix": "On the draped side blocks move the latch to x0 + 0.17*s (armrest side), z -0.22, and drop the tongue strap as two boxes: a 4 cm vertical drop at the cushion side (x0 +- 0.215) then a band over the pan roll to the front face; keep the navy strap diagonal to the front. Bevel the over-lip pieces into one 3-segment curve (no hard horizontal seam).", "check": "q17 teal px on the near and right pans form a near-vertical band (bbox h/w >= 1.5) within 15 px of the armrest base; e11 over-lip strap shows no step > 2 px."},
+  {"id": "w45b-2", "severity": "low", "owner": "econ (09a_econ.js:301 strap colours)", "title": "Teal strap now over-saturated in scene and cyan in studio; navy still dark", "evidence": "q17 teal (47,111,162) G/R 2.35 vs y_47303 (78,143,209) G/R 1.8 (B/G matches at 1.46); studio e11 (109,188,221) B/G 1.18 reads turquoise; navy dark-half L 45 vs 50-65 target.", "fix": "Tongue strap '#3a6f9a' -> '#4a76a2' (R up, slightly bluer); navy '#353e5e' -> '#3c4668'.", "check": "q17 teal within +-20/channel of (78,140,205), G/R 1.7-2.0; studio e11 B/G >= 1.3; q17 navy L 50-65."},
+  {"id": "w44b-1", "severity": "medium", "owner": "econ (cover) + lighting/integration (q17 camera)", "title": "Carried: q17 headrest cover still a strip", "evidence": "5264 -> 5107 px (-3 %); crops unchanged. The wing change helped only e3.", "fix": "Integrator first: match the q17 camera height / yaw to y_47303 (higher, more frontal). If kept, econ: plate foot +1.5 cm forward and the aisle-side wing front tapered to 0 over its lower 4 cm.", "check": "q17 near cover px >= 8600; q15 inner cover widths 72-78 px."},
+  {"id": "w41b-4", "severity": "low", "owner": "econ (09a_econ.js:158-182)", "title": "Carried: pillow a flat piped plaque", "evidence": "e4c_pillow4: rounded rectangle with piping; y_47300 pillows puffed with pinched mid-edges and corner tips.", "fix": "Corners out 1.5 cm, mid-edges pinched 1 cm, centre 1 cm thicker.", "check": "q15 pillow p90/p10 >= 2.75 mean; e4c corner tips visible."},
+  {"id": "w41b-2", "severity": "low", "owner": "econ", "title": "Carried: centre-block stubs under the pillows", "evidence": "Unchanged.", "fix": "As w44b.", "check": "As w44b."},
+  {"id": "w41b-5", "severity": "low", "owner": "econ", "title": "Carried: fleck contrast low", "evidence": "Unchanged.", "fix": "Fleck swatch gain +10 %.", "check": "E/G p90/p10 >= 2.85."},
+  {"id": "w41b-6", "severity": "low", "owner": "econ", "title": "Carried: black edge under the pan front", "evidence": "Unchanged.", "fix": "As w44b.", "check": "As w44b."},
+  {"id": "w43b-L1", "severity": "low", "owner": "lighting", "title": "Carried, not scored: q16 right-block covers dark", "evidence": "Unchanged.", "fix": "Right-side window fill.", "check": "q16 (740-835, 330-400) L >= 70."}
+ ],
+ "questionsForUser": ["Side-block lumbar pillows (carried): keep them off per y_47301 / y_47303, or restore the one y_47300 shows on the left side block?"],
+ "extraRefsSearched": "No downloads. ref/ana y_47300 (q15 cover widths / silhouettes, pillows), y_47301 (q16 belts: dark draped straps), y_47303 (q17 cover flap, hanging teal tongue straps, latch position, webbing colour)."
+}

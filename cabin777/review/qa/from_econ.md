@@ -119,3 +119,14 @@
 - **Mid-row snow (carried):** q15 rows 3-8 still show high-frequency white specks and tick streaks in the photo tiles,
   where y_47300 shows soft mottle. The `far` fade in mainFS starts at 3 m and only goes halfway by 7 m.
 - **q17 camera re-framed (econ's line in `test/qa.js`):** if integration rates q17, re-derive any boxes from w41 on.
+
+## w43-w45 (wave 3j) to lighting / integration
+- **q17 camera (medium, both raters, w44-w45):** econ's q17 view looks ~20 deg more edge-on than y_47303, so the headrest
+  cover reads as a strip beside the wing: 37-58 px per row vs 53-77, box 5107 vs >= 8600 px. Two geometry changes (cover
+  foot 1.8 cm forward; wing fronts 2 cm shallower) left q17 unchanged while e3 / e4_head moved. The line is econ's, but
+  the w41 search maximised whole-frame correlation (0.80), not this flap. **Fix:** re-search the q17 walk camera with a
+  weight on the near seat's headrest box (y_47303 around 640-800 x 90-220). Or give `test/qa.js` per-view FOV (question 22)
+  so that a higher, more frontal eye still frames the row. Check: the near cover reads >= 100 x 80 px.
+- **Far q16 covers (low):** the L7 lobe lifted the near q16 cover to L70 (y_47301 64; don't push it further). The right
+  block's covers stay at 48-57 against 102-158. The q17 grazing cover B/R is 1.19 vs 1.37. Distance or AO darkening at
+  those pixels? The far LOD cover uses the same SEATMAT.yCover.

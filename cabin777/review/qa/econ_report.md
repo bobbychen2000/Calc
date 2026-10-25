@@ -549,3 +549,49 @@ concrete defect in the tray, back silhouette or rear shell.
 
 Before/after sheet: `econ_before_after_w3i.jpg` (own renders only: w40 3b401d3 vs w42 f31f065; q15, q16, q17 at the
 w41 camera, e10, e11, e1).
+
+## Wave 3j (2026-10-25): confirm and polish after lighting L7
+
+Started on a59e716 (lighting run 2, L7: SHEEN lobe (1 - N.V)^2, tinted 0.3 toward the fabric hue). One fresh calibrated
+round (w43), then two fix rounds (w44-w45), the cap of three. The bar was not reached: B scored w45 at 8.5, A at 8.4.
+There was no high-severity issue in any round. The best mean, 8.45, was set in w45.
+
+| round | rater A | rater B | mean | note |
+|---|---|---|---|---|
+| w43 (a59e716, baseline) | 8.3 | 8.4 | 8.35 | econ geometry = w42; L7 lifted the near q16 cover L53 -> 70 (y_47301 64); the far right covers stayed dark |
+| w44 (b6ea6d8) | 8.35 | 8.5 | 8.43 | side-block pillows off; one pitched strap each, latch forward; cover hung forward and 0.232 wide; yBelt #4d6890 |
+| w45 (fcab537) | 8.4 | 8.5 | 8.45 | cover back to 0.22; wing fronts 2 cm shallower; 48 mm straps, buckle-strap end over the pan lip; own teal / navy strap colours |
+| final (this commit) | - | - | - | w45 with the teal strap #3a6f9a -> #4a75a5 and the navy strap #353e5e -> #3c4668 (w45a-2 / w45b-2, both raters, unrated) |
+
+### What changed in wave 3j
+- **Side-block lumbar pillows removed** (near and far LOD; question 28). y_47301 / y_47303 show bare side-block seats with
+  the belts laid out; the 4-seat centre block (the y_47300 hero row) keeps them. q17 teal px 134 (w42) -> 1629 (w45) vs the
+  photo's 3785.
+- **Draped belts:** one pitched 48 mm strap per side, 6 mm proud (the three flat segments stair-stepped). The latch is at
+  z -0.40 with a narrower V, and every second seat's latch sits 9 cm to one side. On those seats the navy buckle-strap end
+  runs to the pan front and over the rolled lip. The tongue strap now has its own teal, the navy strap is lighter and the
+  latch cover is a lighter grey (#aeb2b8).
+- **Headrest cover:** the plate hangs forward from the top fold, foot ~1.8 cm further forward. The width went 0.22 ->
+  0.232 -> back to 0.22 (A measured 0.232 at +9 % head-on vs y_47300). The wing bolsters' front faces are 2 cm shallower.
+- **Studio:** a new `e4c_pillow4` shot of the centre block in `review/spec_econ.json` (e4b now shows a bare side block).
+- **Triangle budget:** net lower (two pillow meshes off on every side-block seat, a few boxes added).
+
+### Shared-file edits (each named in its commit)
+- `src/09_seats.js` SEATMAT.yBelt (w44).
+
+### Still open (w45a / w45b)
+- **q17 cover still reads as a strip (medium, both):** 37-58 px per row vs 53-77 (A), cover box 5107 vs >= 8600 px (B).
+  Neither the forward hang nor the shallower wing fronts moved it. Both raters put the camera first: q17 looks ~20 deg
+  more edge-on than y_47303 (`from_econ.md`, wave 3j). If the camera stays, cut the wing's side bulge and drop the cover
+  foot ~2 cm.
+- **Belt layout (medium, B):** in y_47303 the latch lies by the armrest at the rear of the pan and the teal tongue strap
+  hangs straight down the cushion front; ours is a diagonal V with a mid-pan latch. The over-lip end is a stiff tab with a
+  seam (low, both).
+- **Strap colour:** w45 overshot to cyan (A: q17 G/R 2.35 vs 1.81). The final #4a75a5 / #3c4668 is unrated.
+- **Low, carried:** pillow a flat plaque, centre-block strap stubs and tongue tips, fleck contrast, tick back F, black
+  edge under the pan front, aisle-end lozenge. The lowest details (tray / pocket / AC 7.9, back silhouette, rear shell,
+  screen 8.0 from A) still have no concrete defect named.
+- **Lighting:** the far q16 covers (B: 48-57 vs 102-158) and the q17 grazing cover tint (B/R 1.19 vs 1.37).
+
+Before/after sheet: `econ_before_after_w3j.jpg`, own renders only: w43 a59e716 vs w45 fcab537 (q17 with the final
+colours) for q15, q16, q17, e11 and e7.

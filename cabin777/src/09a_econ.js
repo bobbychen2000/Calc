@@ -298,13 +298,13 @@ function econSeat(B, x0, lod, opts = {}) {
     for (const s of [-1, 1]) {
       const x1 = x0 + 0.19 * s, z1 = -0.12, x2 = xl + 0.03 * s, z2 = zl + 0.01, yaw = Math.atan2(x2 - x1, z2 - z1), L = Math.hypot(x2 - x1, z2 - z1);
       const pitch = Math.atan2(panY(z2) - panY(z1), L);   // local +z points to the latch (front, higher)
-      B.add(gBox(0.048, 0.003, L), M4.trs((x1 + x2) / 2, (panY(z1) + panY(z2)) / 2 + 0.006, (z1 + z2) / 2, yaw, -pitch), s < 0 ? { ...SEATMAT.yBelt, c: '#3a6f9a' } : { ...SEATMAT.yBelt, c: '#353e5e' });   // w45 (w44a-3): 48 mm webbing, 6 mm proud; w45 (w44b-2): teal tongue strap G/R 1.50 vs y_47303 lit 1.79 -> own teal; navy strap L30 vs 60 -> lighter
+      B.add(gBox(0.048, 0.003, L), M4.trs((x1 + x2) / 2, (panY(z1) + panY(z2)) / 2 + 0.006, (z1 + z2) / 2, yaw, -pitch), s < 0 ? { ...SEATMAT.yBelt, c: '#4a75a5' } : { ...SEATMAT.yBelt, c: '#3c4668' });   // w45 (w44a-3): 48 mm webbing, 6 mm proud; w45 (w44b-2): teal tongue strap G/R 1.50 vs y_47303 lit 1.79 -> own teal; navy strap L30 vs 60 -> lighter; final 3j (w45a-2 / w45b-2): #3a6f9a overshot to cyan (q17 G/R 2.35 vs 1.81) -> #4a75a5, navy #353e5e L45 -> #3c4668 (unrated)
     }
     // w45 (w44a-3 / w42a-3): on every second seat the free end of the buckle strap runs on to the pan front and hangs over
     // its lip (y_47303 near seat) [V]
     if (dx) {
       // in the pan loft's frame: flat top to z -0.203 (y 0.055), then the 3.2 cm front roll
-      const PM = M4.trs(xl + 0.03, 0.415, -0.28, 0, 5 * DEG), m = { ...SEATMAT.yBelt, c: '#353e5e' };
+      const PM = M4.trs(xl + 0.03, 0.415, -0.28, 0, 5 * DEG), m = { ...SEATMAT.yBelt, c: '#3c4668' };
       B.add(gBox(0.048, 0.003, 0.085), M4.mul(PM, M4.trs(0, 0.0615, -0.161)), m);
       B.add(gBox(0.048, 0.003, 0.028), M4.mul(PM, M4.trs(0, 0.0445, -0.2265, 0, -0.9)), m);   // over the roll
       B.add(gBox(0.048, 0.03, 0.003), M4.mul(PM, M4.trs(0, 0.016, -0.2375)), m);   // hanging down the front face
