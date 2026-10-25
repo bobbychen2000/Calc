@@ -91,7 +91,7 @@ export class Avionics {
     this.low = low;
     this.enabled = !!live && !AVX.off;
     this.hz = AVX.hz || (low ? 10 : 20);
-    this.stats = { uploads: 0, draws: 0, uploadMs: 0, errors: 0, frames: 0 };
+    this.stats = { uploads: 0, full: 0, draws: 0, uploadMs: 0, errors: 0, frames: 0 };
     this.lastUpload = -1e9;
     this._prevUp = -1e9;
     this.clock = AVX.clock ? utcClock() : null;
@@ -188,9 +188,27 @@ export class Avionics {
   }
   _upload(list) {
     const R = this.stage.renderer, tex = this.live.tex, k = this.live.scale, t0 = performance.now();
+    // a texture three has not created yet, or one with a full upload pending (the constructor, a context restore,
+    // filterTextures): upload the master canvas whole -- it holds every page just drawn.  copyTextureToTexture would
+    // run that upload inside its first copy with generateMipmaps off, and three keys its GPU texture on generateMipmaps:
+    // a new WebGL texture without mip levels, the old one deleted while still bound ('no texture bound to target')
+    const p = R.properties.get(tex);
+    if (!p.__webglTexture || p.__version !== tex.version) {
+      tex.generateMipmaps = true;
+      if (tex.version === 0) tex.needsUpdate = true;
+      R.initTexture(tex);
+      this.stats.uploads += list.length; this.stats.full++;
+      this.stats.uploadMs += performance.now() - t0; this.lastUpload = performance.now();
+      return;
+    }
+    // three r160's state.bindTexture skips gl.activeTexture when its cache already has the texture on that unit, so
+    // copyTextureToTexture's texSubImage2D / generateMipmap would act on whichever unit the last draw left active
+    // ('no texture bound to target', or another texture written): make unit 0 -- the one it binds to -- active first
+    const gl = R.getContext();
     try {
       list.forEach((P, i) => {
         tex.generateMipmaps = i === list.length - 1;
+        R.state.activeTexture(gl.TEXTURE0);
         R.copyTextureToTexture(new THREE.Vector2(Math.round(P.rect[0] * k), Math.round(P.rect[1] * k)), P.texWrap, tex);
       });
     } catch (e) {

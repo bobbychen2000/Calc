@@ -76,7 +76,7 @@ python3 test/shot.py out/x.png "f=../out/pc12.glb&cam=-9,4,-3&tgt=0,1.4,6.6&fov=
 python3 test/viewer_test.py     # viewer checks + screenshots (headless Chromium / SwiftShader, ~60-85 min, 236 checks; slower on a
                                 #   loaded machine -- rerun once on a screenshot / click timeout); [T1]-[T18] the interior tour
                                 #   (--only tour: those alone on the desktop page, ~6 min; --only prop / phone / picture / sound likewise;
-                                #   --only fdlook: [FD-L1]-[FD-L11] the flight-deck look, ~30 min; --only avx: [AVX-1]-[AVX-15] the
+                                #   --only fdlook: [FD-L1]-[FD-L11] the flight-deck look, ~30 min; --only avx: [AVX-1]-[AVX-16] the
                                 #   live G3000 PRIME pages, ~20 min)
 node test/avx_model_test.mjs    # the live avionics' engine / atmosphere model (engine.js, env.js) against the POH / TCDS
                                 #   figures and the start / feather / shutdown timings (pure JS, ~2 s)
@@ -2256,7 +2256,7 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   upper-case CAS strings (FUEL LOW, TAKEOFF CONFIG -- only with power set for take-off --, STARTER, GPU).  `env.js` the
   ISA day of the Animate tab's Environment panel (OAT, elevation, QNH inHg / hPa, wind, fuel, ground power; localStorage
   'pc12.viewer.env', ?oat= ?elev= ?qnh= ?wind= ?fuel= ?gpu=) through first principles to the engine and the air data;
-  a T/O button sets the day's rating.  Tests: node test/avx_model_test.mjs (34), viewer_test --only avx [AVX-1]-[AVX-15],
+  a T/O button sets the day's rating.  Tests: node test/avx_model_test.mjs (34), viewer_test --only avx [AVX-1]-[AVX-16],
   artifact_test's live-pages row per scenario; the sound / prop-spool rows retimed to the slower start (SOUND_SCRIPT:
   1,700 at 34 s, 100 s render).  Decisions (owner-delegated): the amber readouts stay reverse video (G1000 / G3000
   practice); the TRQ green arc to 40.63 kept (the recovered table); the cold-day idle Np above 1,000 kept (the power

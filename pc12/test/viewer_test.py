@@ -73,6 +73,7 @@ import glob
 import json
 import math
 import os
+import re
 import subprocess
 import sys
 import threading
@@ -4425,6 +4426,12 @@ async def avx_checks(page, shots=True):
     the glass as sharp in the overlay as in the still, and nothing redrawn / rendered while parked."""
     print("avx checks")
     await page.evaluate(AVX_JS)
+    # WebGL's own console warnings through the whole section ([AVX-16]; e.g. 'INVALID_OPERATION: texSubImage2D: no texture
+    # bound to target' from an upload acting on a stale texture unit)
+    gl_msgs = []
+    on_console = lambda m: gl_msgs.append(m.text) if re.search(r"WebGL|GL_INVALID|INVALID_(OPERATION|VALUE|ENUM)|texture bound", m.text) else None
+    page.on("console", on_console)
+    await js(page, "window.viewer._internals.stage.renderer.getContext().getError(); return 0;")
     A = "const V = window.viewer; "
     st = await js(page, A + "V.pause(true); V.env.reset({instant: true}); V.setProp({rpm: 0, pitch: 62}, {instant: true}); V.advance(0.1); V.avionics.redraw(); return V.avionics.state();")
     tex = st.get("texture") or {}
@@ -4517,6 +4524,27 @@ async def avx_checks(page, shots=True):
           "(level 0 mean diff < 0.5) and its first mip follows (< 8)",
           worst0 < 0.5 and worst1 < 8 and r[-1]["up"] > r[0]["up"],
           f"{len(r)} read-backs, worst level-0 {worst0:.2f}, level-1 {worst1:.2f}, uploads {r[0]['up']} -> {r[-1]['up']}")
+    # the upload on a stale texture unit: three r160's state.bindTexture skips gl.activeTexture when its cache already has
+    # the atlas on unit 0, so a copy after a draw that left another (empty) unit active had hit that unit -- set up exactly
+    # that, then an upload; plus no GL error / WebGL warning through the section's start rendered frame by frame (AVX-13)
+    err_start = await js(page, "return window.viewer._internals.stage.renderer.getContext().getError();")
+    r = await js(page, A + """const R = V._internals.stage.renderer, gl = R.getContext(), tex = V.avionics.texture();
+      V.pause(true); V.setProp({rpm: 1000, pitch: 0}, {instant: true}); V.advance(0.2); V.avionics.flush(); await V.frames(2);
+      const e0 = gl.getError(), up0 = V.avionics.state().uploads;
+      R.state.bindTexture(gl.TEXTURE_2D, R.properties.get(tex).__webglTexture, gl.TEXTURE0);
+      R.state.activeTexture(gl.TEXTURE0 + 9); R.state.unbindTexture(); gl.bindTexture(gl.TEXTURE_2D, null);
+      V.setProp({rpm: 1700}, {instant: true}); V.advance(0.2); V.avionics.flush();
+      const e1 = gl.getError(), st = V.avionics.state(), v = V.avionics.verify();
+      V.setProp({rpm: 0, pitch: 62}, {instant: true}); V.advance(0.1); V.avionics.flush(); V.pause(false); await V.frames(2);
+      return {e0, e1, e2: gl.getError(), copies: st.uploads - up0, full: st.full,
+        worst: Math.max(...Object.values(v).map((p) => p.l0.mad)), worst1: Math.max(...Object.values(v).map((p) => p.l1 ? p.l1.mad : 0))};""")
+    check("[AVX-16] no GL errors / WebGL warnings: an upload made while another, empty texture unit is active lands on the "
+          "atlas (level 0 < 0.5, mip < 8) with gl.getError() 0, and none through the start rendered frame by frame ([AVX-13])",
+          err_start == 0 and r["e0"] == 0 and r["e1"] == 0 and r["e2"] == 0 and r["copies"] > 0 and r["worst"] < 0.5
+          and r["worst1"] < 8 and not gl_msgs,
+          f"getError after the start {err_start}, before / after the stale-unit upload {r['e0']} / {r['e1']} / {r['e2']}, "
+          f"{r['copies']} pages copied ({r['full']} whole uploads), worst level-0 {r['worst']:.2f} / mip {r['worst1']:.2f}; "
+          f"WebGL console {len(gl_msgs)}{': ' + gl_msgs[0][:160] if gl_msgs else ''}")
     # parked and still: nothing redrawn, uploaded or rendered
     r = await js(page, A + """V.setProp({rpm: 0, pitch: 62}, {instant: true}); await V.frames(4);
       await new Promise((res) => setTimeout(res, 4000));
@@ -4534,6 +4562,7 @@ async def avx_checks(page, shots=True):
         await shot(page, "avx_02_mfd_close", "const V = window.viewer; V.setProp({rpm: 1700, pitch: 0}, {instant: true}); V.advance(0.2); "
                    "V.avionics.flush(); V.setCamera(V.avionics.closeup('mfd', 0.55, 30), {instant: true});", 6)
     await js(page, "const V = window.viewer; V.setProp({rpm: 0, pitch: 62}, {instant: true}); V.env.reset({instant: true}); V.pause(false); V.setCamera('three_quarter', {instant: true});")
+    page.remove_listener("console", on_console)
 
 
 # ----------------------------------------------------------------------------- main
