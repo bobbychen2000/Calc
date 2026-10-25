@@ -1,0 +1,47 @@
+{
+ "area": "econ",
+ "rater": "B",
+ "round": "w39",
+ "candidate": "a4ad504",
+ "lens": "Geometry and proportion first. Scripts are in /tmp/claude-0/-home-user-Calc/34470b21-5ad4-5cec-977a-20c7657c0e01/scratchpad/raterB39/. m.py, pans.py and far.py are the w38 scripts re-pointed to r38 vs r39. belts.py counts light-grey and teal pixels in four 100 x 65 windows at the pillow foot (q15 y 460-525) and diffs the studio units. Crops in the same folder: z_low.png (y_47300 | r38 | r39, q15 low band), t_q16/q17 (photo | r38 | r39), c_e10_under.png (e10 + e7, s38 | s39), c_e1_front.png (e1 + e4b), c_e11_panedge.png (e11 + e4) and pouch39.png (y_47302 crop over e10 s39). The r38 to r39 diff changes 17.3 % of q15, 12.1 % of q16 and 5.8 % of q17. There were no lighting commits: the near pans are bit-identical (L69.0 / 67.9 / 68.1 / 64.4 in both rounds), so every change measured here is an econ change. Studio: e11 changes 42.7 %, e4b 35.2 %, e7 35.1 %, e10 21.9 %, e1 21.1 % and e4 13.0 %; the others are under 8 %.",
+ "score": 8.4,
+ "priorIssues": [
+  {"id": "w38b-1 (low) buckle blocks on every pan", "status": "fixed", "note": "Light-grey px in the four pillow-foot windows (belts.py): r39 1012 vs r38 1591, photo 882. The cover is now navy-grey and tucked under the pillow edge, and the silver tongue is about the size of the small buckle that y_47300 also shows under each pillow. Teal px stay at 0. What remains is a short navy strap V on either side of the tongue, which y_47300 does not show (see w39b-4)."},
+  {"id": "w38b-2 (low) pouch edge-on from the high front views", "status": "fixed (orientation); shell still opaque", "note": "e7 and e1 now show the fan face: a 120 x 60 px grey half-disc in e7 where r38 had a 2-3 px sliver with a floating strap. e10 and e11 show it too. Against y_47302 (pouch39.png) the read is right: a lighter smoky fan under the pan front with a red strap. There are three differences. (a) It is opaque mid-grey (shell #767983 over core #5e6068), while the photo's shell is translucent, showing a dark vest with an orange fleck through it. (b) The strap is 8 cm long and stops at the rim. In the photo it hangs about a third of its length below the rim, with the blue tag at the top. (c) From e11 it reads as a flat half-disc, where the photo's fan reads as a wider, flatter lens."},
+  {"id": "w38b-3 (low) pillow dark / plaque", "status": "fixed (level); shape not fixed", "note": "Pillow L46.9 / 48.8 / 48.3 / 48.1 (r38 37.9-39.8) vs photo 61.7 / 50.5 / 50.4 / 46.6, at B/R 2.06-2.07 vs 1.99-2.03. The pillow/pan ratio is 0.71 vs 0.66 (r38 0.58). The shape is still a plain rounded plaque (e4b). The photo pillows show pulled-out corners and pinched mid-edges, most clearly on seat 3."},
+  {"id": "w38b-4 (low) far rows low contrast", "status": "not fixed", "note": "farA L90.8 B/R 1.71 p90/p10 2.57, L>150 4.8 % (r38 92.8 / 2.54 / 5.0 %; photo 97.1 / 3.72 / 13.6 %). farB 83.2 / 2.70 vs 85.9 / 3.20. Level and hue still match. The dark row gaps and the light headrest tops are still missing."},
+  {"id": "w38b-5 (low) cover less blue; tray lip", "status": "not fixed", "note": "q15 cover box L58.2 B/R 1.62 (photo 50.8 / 1.83). The black lip under the pan front is unchanged in e11."},
+  {"id": "w38b-6 (low) near pans ~10 L dark from lighting", "status": "unchanged (not scored)", "note": "Pans are bit-identical to r38: L64-69 vs photo 74-87. No lighting commit this round."},
+  {"id": "(w39 change) fleck back ~10 % darker", "status": "neutral to positive in q15", "note": "q15 fleck backs (seats 2 and 4): L49.9 / 50.6 (r38 58.2 / 58.8) vs photo 57.9 / 52.4. The mean error went from +3.4 to -4.9 L, but contrast p90/p10 is now 2.99 / 2.92 vs 3.00 / 2.95 (r38 2.73 / 2.64). B/R is 2.12 vs 2.25-2.30. In e4 and e1 the fleck back now reads a shade deeper than the tick, as in y_47300. Rater A's L90-vs-70 view should confirm the gain there."}
+ ],
+ "details": [
+  {"detail": "Fabric: tick weave", "score": 8.5, "refs": "Unchanged (bit-identical pans)."},
+  {"detail": "Fabric: diamond lattice", "score": 8.5, "refs": "Unchanged."},
+  {"detail": "Fabric: petal fleck", "score": 8.2, "refs": "Up 0.1. Contrast now matches in q15 (p90/p10 2.92-2.99 vs 2.95-3.00). L is 50 vs 52-58, 5 L dark, and B/R is 2.12 vs 2.25-2.30."},
+  {"detail": "Fabric: dash mosaic", "score": 8.5, "refs": "Unchanged."},
+  {"detail": "Fabric mix (backs, pans, pads)", "score": 8.5, "refs": "Unchanged."},
+  {"detail": "Headrest pad + cover", "score": 8.7, "refs": "Unchanged. Cover B/R 1.62 vs 1.83."},
+  {"detail": "Pillow", "score": 8.4, "refs": "Up 0.1. L48 vs 47-62 and B/R 2.06 vs 2.0, so level and hue now match. The shape is still a plaque."},
+  {"detail": "Armrests", "score": 8.8, "refs": "Unchanged."},
+  {"detail": "Belts", "score": 8.4, "refs": "Up 0.1. Light-grey px 1012 vs photo 882 (r38 1591), so the hardware now reads as y_47300's small buckle. A short navy strap V still shows either side of it."},
+  {"detail": "Seat pan / front", "score": 8.7, "refs": "Geometry unchanged. The tray lip remains."},
+  {"detail": "Back silhouette", "score": 8.1, "refs": "Unchanged (e3 1.0 %, e6 3.3 %)."},
+  {"detail": "Rear shell / hood / back top", "score": 8.1, "refs": "Unchanged (e2 2.3 %, e9 4.1 %)."},
+  {"detail": "Screen / handset", "score": 8.2, "refs": "Unchanged (e5 7.6 %, from the fleck back around it)."},
+  {"detail": "Tray / pocket / AC", "score": 7.8, "refs": "Unchanged."},
+  {"detail": "Legs / footrest / under-seat", "score": 8.4, "refs": "Up 0.1. The pouch face now shows from e7, e1, e10 and e11, as the fan does in y_47302, so the w38 regression is gone. It is still opaque, and the strap stops at the rim instead of hanging below it."},
+  {"detail": "Far-LOD rows", "score": 7.9, "refs": "Unchanged. Level and hue match, but contrast is 2.57 vs 3.72."}
+ ],
+ "issues": [
+  {"id": "w39b-1", "severity": "low", "owner": "econ (09a_econ.js)", "title": "Far rows: right colour, too little contrast (carried w38b-4)", "evidence": "farA p90/p10 2.57 vs 3.72, L>150 4.8 % vs 13.6 %. farB 2.70 vs 3.20. This is the lowest-scoring visible detail after the tray.", "fix": "In econUnitFar add a 1 cm dark '#1c2236' strip under each headrest cover and across the back top behind it (the row gap), and lift the far headrest-top tint toward '#5a6898' so the tops catch light. Leave the LOD switch alone."},
+  {"id": "w39b-2", "severity": "low", "owner": "econ (09a_econ.js)", "title": "Hard black tray lip under the pan front; cover less blue (carried w38b-5)", "evidence": "e11 shows an unchanged black lip along every pan front. Cover B/R 1.62 vs 1.83.", "fix": "Tray gRBox depth 0.41 -> 0.39, set 2 cm aft, r 0.8. SEATMAT.yCover '#222842' -> '#232a4a' (shared, one line)."},
+  {"id": "w39b-3", "severity": "low", "owner": "econ (09a_econ.js:187-190)", "title": "Life-vest pouch opaque; strap ends at the rim", "evidence": "pouch39.png: y_47302 shows a translucent smoky shell with a dark vest and an orange fleck inside, and a red strap whose lower third hangs below the rim with the blue tag at the top. The render has an opaque mid-grey half-disc with an 8 cm strap that ends at the rim.", "fix": "Strap gBox height 0.08 -> 0.12 and centre 2 cm lower (y 0.207 -> 0.19, z -0.390 -> -0.40), so about 4 cm hangs past the rim. Core '#5e6068' -> '#45474f' with a 1 x 3 cm '#c87a2a' fleck on it, and shell r 0.12 -> 0.3 so it reads as smoky plastic over a dark vest, not a flat plate."},
+  {"id": "w39b-4", "severity": "low", "owner": "econ (09a_econ.js:287)", "title": "Short navy strap V either side of the buckle under every q15 pillow", "evidence": "z_low.png: two 10 cm straps at +/-30 deg show below each pillow. y_47300 shows only the small silver buckle.", "fix": "Strap gBox length 0.10 -> 0.06 and yaw 30 -> 15 deg, so the strap lies under the pillow foot. Or y 0.476 -> 0.468 to sink it into the crease."},
+  {"id": "w39b-5", "severity": "low", "owner": "econ (09a_econ.js)", "title": "Pillow shape still a plain plaque (carried w38b-3 shape)", "evidence": "e4b and z_low: straight edges and even rounding. y_47300 pillows have pulled-out corners and pinched mid-edges.", "fix": "Pillow loft: corners out 1.5 cm, mid-edges pinched 1 cm, centre 1 cm thicker."},
+  {"id": "w39b-6", "severity": "low", "owner": "lighting (12_scene.js)", "title": "Near pans about 10 L dark (carried w38b-6; not scored for econ)", "evidence": "Pans are bit-identical to r38: L64-69 vs photo 74-87.", "fix": "Lighting owner: check the low-height fill or AO at the q15 camera. Econ should not compensate."}
+ ],
+ "questionsForUser": [
+  "Belts: tucked away (y_47300) or laid across the pans (y_47302 / 47303 and trip reports)?"
+ ],
+ "extraRefsSearched": "No downloads. Used ref/ana y_47300, y_47301, y_47302 (pouch39 crop) and y_47303."
+}
