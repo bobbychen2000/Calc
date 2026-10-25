@@ -234,3 +234,15 @@
 - **Crest channel seen head-on** (v15). Rater A finds it slightly heavy and slate blue. It is right at aisle angles.
 - **Doors 1, 2, 4 and 5:** still no photo (questions 11 and 12). Door 2's dark soffit is 10_mono's and is handed off.
 - **Lighting:** vault fore-aft terraces, and bins near-white at QA framing.
+
+## Post-wave polish B (2026-10-25): from_integration items
+
+- Done: sky hairline at the outboard lens / lining junction (lens 9 x 0.8 cm lapping behind the lining + backing strip; zero sky
+  pixels day and night); lens size in the amber moods; aisle vault now brighter than the bins in the white moods (vault eFn
+  0.11 / 0.06-0.13, q06 194 -> 229-232, c_27312 236; `doorC` eFn 0.07-0.12; outboard door #d6d8dc), with the ribs, speaker and
+  emergency light on the vault's own emission so they follow it in every mood; crest channel #a9acb1 over 0.45 of the chord;
+  trough bars e 0.19 (no longer white at night).
+- Not a defect: the door-3 "bin-lip z-fight" is the J centre-channel PSU housings seen edge-on (three colour tests).
+- Ratings: w14 A 8.2 / B 8.6 (fittings left behind, fixed), **w15 A 8.5 / B 8.8, no high / medium: the ceiling stays at the bar.**
+- Handed to lighting: the night `vaultE` cap 0.09 now binds (night vault L29 -> ~63; from_ceiling.md).
+- Details and the open lows: `fixed_polishB.md`. Triangles +936 (~+21.4 %).

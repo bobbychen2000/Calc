@@ -40,3 +40,8 @@ Still open: PY/Y shade colour (Q5, no photo of a closed shade).
   Default: 0.26 x 0.64 m, bottom 0.69, top 1.33. A face-on inside photo of an ANA 777 L2 door would settle it.
 - **Sidewall linen weave.** A normal-only weave needs a new shared detail layer (the fabric layer's strength is shared with
   the seats). Default: not added; plain satin.
+
+## Polish B (2026-10-25)
+- **THE Suite carpet:** is it the same heather as THE Room's? The model now uses the J photo tile (from c_27315) for the F floor
+  and the door bays, with the F colour kept. f_17300 (official rendering-like photo) shows sparser, larger light flecks. A real
+  in-flight photo of the THE Suite floor would decide whether F gets its own tile (f_17300 crop 380-520 x 330-470 is ready).

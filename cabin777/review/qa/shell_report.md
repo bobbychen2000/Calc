@@ -220,3 +220,14 @@ with no code change. Cameras: `review/qa/shell_views.js` (18 views) plus the 22 
 - **Harness:** the head at 3ea3f24 failed to load (`gPlate` was declared twice). 67a7fbc fixed it and made build.py reject duplicate names. lalf_133 / lalf_134 are not
   re-downloadable from the rating files (no URL recorded), so the door proportions rest on the w13-w14 measurements.
 - **Lighting hand-offs (from_shell.md, wave 3d):** the door viewing-window glass is flat 240 with no sky detail; the creams are still neutral; the grille under the seats is near black.
+
+## Post-wave polish B (2026-10-25): from_integration items
+
+- Done: THE Room carpet texture (third request). New photo tile `j_carpet` (`test/make_swatches.py`, cut from c_27315's footwell
+  carpet: the suggested c_27312 aisle crop is too foreshortened and smeared into streaks), layer 37 (`LAYER.jCarpet`, gain 1.2),
+  `carpetJ` #615553. The F and door-bay carpets share the tile (w16a-1). q06 aisle high-pass 0.4-2.0 -> 6.4-6.7 (c_27312 6.2),
+  q03 F floor 0.5 -> 8.0 (f_17313 7.2), colours unchanged in mean.
+- Not changed: the creams / door glass / dado-grille notes (the integrator kept them in lighting; shell albedos are already cream).
+- Ratings: w16 A 8.5 / B 8.5, **w17 A 8.5 / B 8.5, no high / medium: the shell stays at the bar.** Carpet J 8.6-8.8.
+- Open (low): F carpet its own coarser tile and a slightly redder tone if the F carpet differs from J (questions_shell.md);
+  details in `fixed_polishB.md`. Triangles unchanged.

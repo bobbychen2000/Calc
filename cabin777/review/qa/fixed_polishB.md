@@ -35,3 +35,22 @@ Renders: scratchpad, own renders only (q06 / q13 / q15 / q16 / q17, seated 12H d
   in fixed_integration.md (lighting keeps the official photos' cool-neutral reveal; door glass is the cabin pane under winExp; the
   grille is AO). The shell albedos are already cream (`reveal` #ece4d5, door shade #d8d2c6); a warmer albedo to offset the light
   would break the official-photo match the shell was rated on (w15 8.5 / 8.5), and no photo value was given for the grille.
+
+## Re-rating (calibrated two-rater rounds on the pushed head)
+
+| Area | Round | Rater A | Rater B | Note |
+|---|---|---|---|---|
+| ceiling | w14 (d2627ff) | 8.2 | 8.6 | W14A-1 high / F1 medium: the vault rose, the fittings on it (ribs, speaker, emergency base) kept their old emission -> 0.78x the vault, black planks at night; W14A-2 crest channel 0.40x |
+| ceiling | w15 | 8.5 | 8.8 | fittings on the vault's cove-LED layer + eFn (ribs +0.01, speaker face x0.92), shadow crescent #b4b2ae, crest channel #a9acb1 over 0.45 of the chord. No high / medium |
+| shell | w16 (d2627ff) | 8.5 | 8.5 | J carpet fixed (high-pass 0.4-0.8 -> 7.5-7.8); w16a-1 medium: F and door-bay carpets now the only flat floors |
+| shell | w17 | 8.5 | 8.5 | carpetF / doorCarpet on the heather tile (q03 F floor std 0.5 -> 8.0-8.2, f_17313 7.2), tile re-cut HP 20 (banding 4.2 -> 2.8), gain 1.2 (q06 6.4-6.7 vs c_27312 6.2). No high / medium |
+
+The w14 drop (0.3) was the regression guard case: the change that hurt was the vault eFn lift without the fittings; fixed in w15
+rather than reverted, because both raters scored the brighter vault itself as fixed (vault / bin now brighter, as in the photos).
+
+**Left open (all low, recorded, not done):** speaker reads as its crescent only (w15a-1 / S1: bezel at vault tone; a ring 0.95x was
+suggested), crest channel two-tone core (W15A-2), PSU band joints 4 vs 8-10 per bin (W14A-3), vault / bin ratio 1.04-1.12 vs 1.15-1.23
+(lighting / optional `BINMAT.door` #cfd2d6), door-4 wedge (`lightPanel` e 0.3 -> 0.12, door zones were not in this hand-off), far-side
+lens sparkle (LN1), F carpet its own coarser tile from f_17300 and a slightly redder `carpetF` (w17a-1, fcarpet-hue / fleck; asked in
+questions_shell.md), J carpet mid-aisle hue (w16b). Out of area: F pillows render lavender in the F aisle (suite).
+Triangles: ceiling 501.8k -> 502.7k (+936, ~+21.4 % of the wave-3 start); shell unchanged.

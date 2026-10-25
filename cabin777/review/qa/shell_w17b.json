@@ -1,0 +1,47 @@
+{
+  "area": "shell",
+  "rater": "B",
+  "round": "w17",
+  "score": 8.5,
+  "previousIssues": [
+    {"issue": "w16a-1 (medium): F carpet and door cross-aisle carpet still flat procedural fabric", "status": "fixed. In the q03 F floor (800-845, 515-570), box-2 high-pass std went from 0.33 to 8.0. Mean rgb is unchanged (57,46,39, h23, L47), against the official f_17313 floor at 52,44,43 (h11, L46, hp 7.2) and c_27312 J at hp 6.2. f_17300 is a CGI render with coarse flecks (hp 15.6). In the door-2 bay strip, ra_door2floor high-pass went from 1.9 to 4.5, and in s06 from 2.1 to 5.3, with means unchanged (68,59,50, h30). The F floor now matches J and Y in grain."},
+    {"issue": "w16b jcarpet-tile-lowfreq (low): faint low-frequency bands in the tile", "status": "fixed / reduced. tex_j_carpet.png 32-px block std went from 4.24 to 2.76, 16-px-smoothed column range from 14.9 to 10.2, and row range from 11.4 to 8.1, with pixel std the same (29.4). A 3x3 tiling still shows a very faint lattice, but it is invisible in the renders: low-frequency std is 1.6 in the f_toJ long F aisle, 1.7 in q03 and 0.95 in q06."},
+    {"issue": "w16a-2 (low): J carpet slightly busier than the photo", "status": "fixed. With gain 1.2, the q06 near-aisle high-pass went from 7.84 to 6.71, against c_27312 at 6.2."},
+    {"issue": "w16b jcarpet-hue (low): J uniformly mauve, while the photo's mid aisle warms to brown", "status": "not fixed (carpetJ unchanged; q06 h0). Optional."},
+    {"issue": "w14/w15 low: door window ~15% short, and the housing overlaps the bezel", "status": "not fixed"},
+    {"issue": "w14/w15 low: blackout pleat contrast about half the photo's", "status": "not fixed"},
+    {"issue": "w14/w15 low: grille louvre pitch fine, ribs prominent", "status": "not fixed"},
+    {"issue": "w14/w15 low: vinyl speckle low", "status": "not fixed (ra_door2floor vinyl unchanged)"},
+    {"issue": "w14/w15 low: sidewall no linen weave", "status": "not fixed"},
+    {"issue": "w14/w15 low: PY/Y tub-floor light card", "status": "not fixed"},
+    {"issue": "w15 [lighting]: flat door glass, neutral creams, black under-seat grille", "status": "not fixed (lighting area, not scored)"}
+  ],
+  "details": [
+    {"detail": "sidewall", "score": 8.1, "note": "Unchanged (s01, s04). Clean seams; plain satin with no weave."},
+    {"detail": "window tubs/reveals", "score": 8.5, "note": "Unchanged. F/J short bowl and LED pill right (s09, q03); the PY/Y tub-floor card remains."},
+    {"detail": "shades electric", "score": 8.4, "note": "Unchanged. Close-up pleat contrast is about half the photo's."},
+    {"detail": "shades manual", "score": 8.5, "note": "Unchanged."},
+    {"detail": "dado/grilles", "score": 8.3, "note": "Unchanged."},
+    {"detail": "carpet J", "score": 8.6, "note": "q06 near aisle 65/54/54, hp 6.7 against c_27312 at 62/52/52, hp 6.2: now on the photo's grain. There is no repeat or moire (low-frequency std 0.95). The mid-aisle warm shift in the photo is still not reproduced."},
+    {"detail": "carpet Y/PY", "score": 8.5, "note": "Unchanged navy heather."},
+    {"detail": "carpet F", "score": 8.5, "note": "Now dark brown heather with light flecks, matching f_17313's grain (hp 8.0 vs 7.2) and level (L47 vs 46). The hue is a touch warmer/yellower (h23 vs h11-15). In the long F aisle view (f_toJ) it reads as cut pile with no visible tile repeat, and its scale suits the narrow 1-2-1 aisles. It is the same tile as J, so the two floors share grain and differ only in colour. That is consistent with f_17300 / c_27315, but f_17300 shows coarser, sparser light flecks."},
+    {"detail": "door-bay carpet", "score": 8.4, "note": "The door-2 strip now has heather (hp 4.5-5.3, previously 1.9-2.1), and its mean is unchanged (68,59,50, h30). The strip is ~0.55 m deep, so 1.5 tiles fit across it and no repeat is possible. It reads as carpet at the vinyl edge rather than a painted band."},
+    {"detail": "door surrounds/window", "score": 8.3, "note": "Unchanged (s06): the window is short and the housing has no gap to the bezel."},
+    {"detail": "vinyl", "score": 8.0, "note": "Unchanged. Hue right; speckle about half the photo's."}
+  ],
+  "issues": [
+    {"id": "fcarpet-hue", "severity": "low", "detail": "The F carpet is slightly yellower than the official F floor", "evidence": "q03 F floor 57/46/39 (h23) vs f_17313 52/44/43 (h11) and f_17300 69/54/49 (h15). The level matches (L47 vs 46).", "fix": "src/07_shell.js MAT.carpetF '#56493f' -> '#56483f' or '#554740' (pull blue up ~2, G down 1) to land at h ~15. Optional."},
+    {"id": "fcarpet-fleck", "severity": "low", "detail": "The F carpet shares J's fine heather. f_17300 shows sparser, larger light flecks on a darker ground (its hp 15.6 is a CGI render, so it is only indicative).", "evidence": "fcheck.png vs f_17300 (380-520, 320-560).", "fix": "Optional: cut an f_carpet tile from f_17300's floor in test/make_swatches.py (HP 20) and give carpetF its own layer. Only do this if the user confirms the F carpet differs from J."},
+    {"id": "jcarpet-hue", "severity": "low", "detail": "Carried: J is uniformly mauve, while the photo's mid aisle warms to brown", "evidence": "q06 h0 vs c_27312 mid aisle h17-20.", "fix": "MAT.carpetJ '#615553' -> '#5f5450'. Optional."},
+    {"id": "door-window", "severity": "low", "detail": "Carried: the door window is ~15% short, and the housing overlaps the bezel", "evidence": "s06 unchanged.", "fix": "07_shell.js door cell: window height 0.64 -> ~0.71 m, offset 0.03 m from the housing."},
+    {"id": "pleat-contrast", "severity": "low", "detail": "Carried: blackout pleat contrast is about half the photo's", "evidence": "cv 0.168 vs 0.32-0.35.", "fix": "make_swatches s_pleat: plateau-and-step profile."},
+    {"id": "grille-pitch", "severity": "low", "detail": "Carried: grille louvres too fine, ribs prominent", "evidence": "b_dadoY2 unchanged.", "fix": "Louvre count 16, lower rib contrast."},
+    {"id": "vinyl-speckle", "severity": "low", "detail": "Carried: vinyl speckle low", "evidence": "ra_door2floor vinyl L std ~10 vs ~24.", "fix": "03_tex.js LAYER_PARAMS vinyl amplitude x1.6-2."},
+    {"id": "sidewall-weave", "severity": "low", "detail": "Carried: no linen weave on the sidewall", "evidence": "s01 flat.", "fix": "MAT.sidewall normal-only fabric layer ~0.06."},
+    {"id": "tub-card", "severity": "low", "detail": "Carried: PY/Y tub-floor light card", "evidence": "ra_pyWin.", "fix": "07_shell.js: grade the tub floor across the full width."}
+  ],
+  "questionsForUser": [
+    "Is THE Suite (F) floor carpet the same heather as THE Room, or a different pattern (f_17300 suggests sparser, larger flecks)? A real cabin photo of the F floor would settle it."
+  ],
+  "notes": "The w2/shell renders failed (shell.log: viewport NaN; the w/h arguments were missing). I rebuilt HEAD (f85633e+) into scratchpad/w17b/build and rendered s01, s04, s06, s07, s09, ra_door2floor, plus extra F-floor views f_aisleAft, f_aisleDown, f_toJ and d4_floor with a scratch copy of shell_views.js. Measurements are in scratchpad/w17b/m.py. Only the carpets changed. The F and door-bay floors now match the J/Y heather, which removes the last medium issue. The low-severity carry-overs keep the overall score at 8.5, so it is not raised. Outside the shell area: the F pillows render saturated lavender in f_toJ/f_aisleAft (suite area)."
+}
