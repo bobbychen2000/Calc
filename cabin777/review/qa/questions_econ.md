@@ -48,3 +48,6 @@
 22. (wave 3e) Q16 / q17 still don't frame y_47301 / y_47303 closely: the photos use ~80 deg lenses and the app's walk
    camera is fixed at 64 deg horizontal. Should `test/qa.js` get a per-view FOV (like `window.__near`)? That's an
    integration call. [framed as closely as 64 deg allows]
+23. (wave 3f) Re question 21: with q15 now matched to y_47300, both raters measure the cover 1.3-1.45x too tall head-on
+   (h/w 0.85-0.88 vs 0.67-0.75) in every round. It is the largest econ mismatch left. Should the short y_47300 cover be the
+   default, with the long overhang of y_47306 / b_ss_13 kept for a lowered headrest only? [kept long]

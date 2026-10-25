@@ -396,8 +396,6 @@ def y_photo(name):
         # stroke cover on target -> deepen the sub-median channels only [D]
         # w31 (w30a-1 / w30b-2): per-channel it went near-black / ultramarine close up -> scale luminance only, deepening stops at 0.5 m (w32, w31a-1 / w31b-3: 0.42 m, row distance washed);
         # the row-distance contrast now comes from the 0.5-2.5 cm band boost below (tick 0.1 -> 0.35)
-        # w32 (w31b-3): strokes grey (B/R 1.3 vs >= 1.5, y_47300 strokes 126,145,193) -> the above-median blue x1.08
-        r = np.where((r.mean(2) > m)[..., None], r * np.array([1.0, 1.0, 1.08], np.float32), r)
         lu = r.mean(2, keepdims=True); r = np.where(lu < m, r * np.maximum(m - 1.25 * (m - lu), np.minimum(lu, 0.42 * m)) / np.maximum(lu, 1e-4), r)
     if name == 'y_diamond':
         # econ w25 (w23b-2): the lattice washed out on the bluer #5f6ba0 ground (e4 bright 0.03 vs 0.11 in y_47306) -> 1.25x [D]

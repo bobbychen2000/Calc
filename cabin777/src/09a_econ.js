@@ -47,7 +47,7 @@ function econCrownLoft(secs, segC, crownAt) {
 }
 const ECON_PAN = { ...SEATMAT.yFabric, c: photoBase('#535b7d', 'y_tick') };   // w27 (w26b-4): B/R 1.61-1.67 vs 1.74-1.81 -> a touch bluer; w26 (w25a-5 / w25b-2): L69-74 vs 77-91, still blue; w25 (w24b-4): tick pans B/R 2.17 vs ~1.8 -> less blue
 // w25 (w24a-1 / w24b-3): the diamond pan read as a bold field of light stars head-on (L99-101 vs 74 in y_47300) -> darker
-const ECON_PAN_B = { ...SEATMAT.yFabricB, c: photoBase('#434a6c', 'y_diamond'), l: LAYER.yDiamondPan };   // w32 (w31a-4 / w31b-2): washed out (L85 vs 75, stars gone) -> gain 0.9 (PHOTO_GAIN 34), base back down   // w31 (w30a-5 / w30b-3): the 0.7x star band left separate stars on a dark ground -> L +8   // w28 (w27a-1 / w27b-1, high): photoBase lifts for the full-gain tile mean (2c = 0.4); at gain g the mean is 1 - 0.6 g, so the pan rendered ~1.8x too light (L107 vs 74) -> #4e5676 x (1 / (1 - 0.6 x 0.8)) / 2.5 x 0.88 in linear = #414862 (gain 0.8); w27 (w26a-1 / w26b-1): own layer at 0.45 gain (stars bright 0.21 vs 0.09); w26b: B/R 1.61 grey -> #4e5676; w26 (w25a-1 / w25b-1): B/R 2.27-2.41 vs 1.81
+const ECON_PAN_B = { ...SEATMAT.yFabricB, c: photoBase('#464a68', 'y_diamond'), l: LAYER.yDiamondPan };   // w32 (w31a-4 / w31b-2): washed out (L85 vs 75, stars gone) -> gain 0.9 (PHOTO_GAIN 34), base back down; w32a-3: B/R 1.95 vs 1.81 -> #464a68   // w31 (w30a-5 / w30b-3): the 0.7x star band left separate stars on a dark ground -> L +8   // w28 (w27a-1 / w27b-1, high): photoBase lifts for the full-gain tile mean (2c = 0.4); at gain g the mean is 1 - 0.6 g, so the pan rendered ~1.8x too light (L107 vs 74) -> #4e5676 x (1 / (1 - 0.6 x 0.8)) / 2.5 x 0.88 in linear = #414862 (gain 0.8); w27 (w26a-1 / w26b-1): own layer at 0.45 gain (stars bright 0.21 vs 0.09); w26b: B/R 1.61 grey -> #4e5676; w26 (w25a-1 / w25b-1): B/R 2.27-2.41 vs 1.81
 // w30 (w29a-6): tick backs alternate a light heather pad (y_47300 seat D, L102-107, few flecks) and a dark fleck pad
 // (seat F, L57; L126 / bright share 0.06 in the matched q15 box ; a 3x crop shows a light cloudy mottle -> the diamond tile on a light base; the mosaic tile read busy, a plain weave read as plastic); every tick-back pad was one mid fleck (L75-81) [D]
 const ECON_HEAD_L = { ...SEATMAT.yFabricB, c: photoBase('#65739f', 'y_diamond'), l: LAYER.yDiamondPan }, ECON_HEAD_D = { ...SEATMAT.yHead, c: photoBase('#454f73', 'y_fleck') };   // w31 (w30a-6 / w30b-10): the light pad was blotchy close up -> the pan's lower-gain layer 34, base x0.77 in linear for its brighter mean; w32: x1.13 for gain 0.9, x0.92 (w31a-3)
@@ -55,7 +55,6 @@ const econHead = (F, k = 0, rot = 0) => F === SEATMAT.yFabricB ? SEATMAT.yFabric
   : (((k >> 1) + rot) % 2 ? ECON_HEAD_D : ECON_HEAD_L);
 // w30 (w29b-6, w27b-6): the mosaic pan read light and blue in q15 (L98 B/R 1.86 vs y_47300 87 / 1.72) -> its own base [D]
 const ECON_PAN_C = { ...SEATMAT.yFabricC, c: photoBase('#525977', 'y_mosaic') };
-const ECON_SEAM = { c: '#2c3250', r: 0.9, l: LAYER.fabric };
 const ECON_PLATE = { ...SEATMAT.armPost, c: '#66686e' };   // w32 (w31a-2 / w31b-5): #9a9b9f still a light second bar (L114-133 vs ~76)
 const econPanMat = (F) => F === SEATMAT.yFabric ? ECON_PAN : F === SEATMAT.yFabricB ? ECON_PAN_B : F === SEATMAT.yFabricC ? ECON_PAN_C : F;
 function econSeat(B, x0, lod, opts = {}) {
@@ -291,9 +290,6 @@ function econUnit(n, lod = false, opts = {}) {
   const arms = []; for (let k = 0; k <= n; k++) arms.push((k - n / 2) * sp);
   arms.forEach((xa, k) => {
     const armTilt = M4.mul(M4.trs(xa, 0.66, -0.08, 0, -4 * DEG), M4.trs(0, -0.66, 0.08));
-    // w32 (w31a-5 / w31b-6): the pans' rolled edges left a 4-14 px dark slot at every inner joint where y_47300's pans
-    // abut -> a navy fabric filler in the slot, its top 2 cm under the pan crowns [D]
-    if (k > 0 && k < n) B.add(gRBox(0.03, 0.05, 0.40, 0.012, 1), M4.trs(xa, 0.455, -0.28, 0, 3 * DEG), ECON_SEAM);
     // sculpted off-white armrest (thick, rounded, slightly drooping nose) on a rear pivot post (y_47302 / 47303)
     // w5 B: a slim ~5.5 cm bar (y_47303 28 px on a 0.33 m / 160 px arm; fr57325 124108) with a drooping nose [D]
     loftAt(B, [SEC(0.625, 0.04, 0.30, -0.23, 0.014), SEC(0.64, 0.047, 0.32, -0.23, 0.021), SEC(0.668, 0.046, 0.315, -0.23, 0.021), SEC(0.68, 0.039, 0.30, -0.225, 0.016)], armTilt, SEATMAT.arm, 3);   // w30 (w29a-1): 1.4x wide head-on (33-35 px vs 24-25 in y_47300) -> 0.054 -> 0.047 (B: 8.4, kept above A's 0.044)   // w11 B: nose ~2 cm down (y_47303)

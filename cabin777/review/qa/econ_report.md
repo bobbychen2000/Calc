@@ -331,3 +331,69 @@ w26.
 
 Before/after sheet: `econ_before_after_w3e.jpg` (own renders: w24 066375f code vs w27 10ffbc6 at the matched cameras,
 q15 / q16 / e4 / e1, with the ANA photos).
+
+## Wave 3f (2026-10-24/25)
+
+Started on 0f172d3 (econ code ed2e6ec, the unrated w28 diamond-pan fix, plus lighting round 2). One fresh calibrated round
+(w29) and three fix rounds (w30-w32), the brief's cap of four.
+
+| round | rater A | rater B | mean | note |
+|---|---|---|---|---|
+| w29 (0f172d3, baseline) | 7.9 | 8.1 | 8.0 | w28 diamond-pan fix confirmed (L80 vs 82); lighting r2 invisible at the econ cameras (q15 diff 0.08) |
+| w30 (d26609f) | 8.1 | 8.2 | 8.15 | q15 camera matched to y_47300 (back tops y225 vs 233); tick ground deepened per channel (near-black / ultramarine close up) |
+| w31 (befdc88) | 8.0 | 8.3 | 8.15 | luminance-only deepening (close-up fixed, row distance washed); cover takes lighting's SHEEN flag; lighting r3 snapshot lifts the seat level 5-10 % |
+| w32 (cf457a8) | 8.0 | 8.4 | 8.2 | **best round**; diamond stars back, one arm bar head-on, pillow dog-ears; the new pan-joint seam filler read as a navy rail (medium, both) |
+| final (this commit) | - | - | - | w32 with the filler removed (joints as rated in w31), diamond pan #464a68 (w32a-3), dead stroke-tint line dropped |
+
+The 8.5 target was not reached. B reaches 8.5 or more on armrests (8.6), pillow (8.5) and fabric mix (8.5); A's lowest
+details are tick (7.8), fleck (7.8), legs (7.5) and pan / front (7.5, the filler, now reverted). No high-severity issue
+was raised in any round. Shipped: w32 minus the filler (a revert to the w31-rated state for that one part).
+
+### What changed in wave 3f
+- **QA camera (shared: `test/qa.js` q15):** (0, 1.55, 48.05), pitch -0.26. That's 10 cm higher and flatter than wave 3e,
+  so the backs, covers, pillows and seat centres now sit within 5-10 px of y_47300 and the raters can measure the same
+  boxes.
+- **Headrest pads:** tick backs alternate a light cloudy pad (y_47300 seat D, L119-128, diamond tile on layer 34 at a
+  light base) and a dark fleck pad (seat F) by seat pair (`econHead(F, k, rot)`, shared with the far LOD).
+- **Headrest cover:** takes lighting r3's `SHEEN` flag (`yCover.l = LAYER.none + SHEEN`). q16 covers go from L55 to
+  67-81 (y_47301 67-108); head-on is unchanged.
+- **Pans:**
+  - 2.5 cm wider (0.455) with straighter side walls; the inner joints went from 11-23 px to 4-14 px.
+  - The mosaic pans get their own base `ECON_PAN_C` #525977, at B/R 1.69-1.70 vs 1.69-1.72.
+  - The diamond pans are #464a68 at layer-34 gain 0.9 (stars visible again; L75 vs 75).
+- **Armrests:** 0.054 -> 0.047 wide, now 21-26 px vs 23-25 head-on. The nose is 2 cm shorter. On regular rows the lower
+  plate is dark grey #66686e, so head-on it reads as one light bar as in y_47300. The arm is #bfbcb8.
+- **Pillow:** bow-tie waist on both long edges (0.12), corner pull 0.45 with a cube law, so the dog-ears read in e4b and
+  q15. Dome exponent 0.6, `yPillow` #3a4159 (B/R 2.0 vs 2.0).
+- **Tiles (`make_swatches.py`):**
+  - Diamond: star band (> 4 px) 0.7x, fine weave 1.15x. q15 back coverage went from 0.23 to 0.11 (photo 0.12).
+  - Fleck: tighter second flattening, peak 1.35.
+  - Tick: the w30 per-channel deepening reached the q15 contrast (3.1-3.5) but went near-black close up (e4 p90/p10 7.1).
+    The final tile deepens luminance only, down to 0.42x the median, with a column profile of 0.5, stroke rim 0.5 and band
+    boost 0.45. That gives e4 4.8-5.0 (photo 4.1) and q15 backs 2.7-2.8 (photo 3.2-3.5).
+  - The tick tile is stored greyscale, so a stroke tint has to come from the material, not the tile (w32a-2).
+- **Triangles:** econ3 28,955 and econ4 38,012, the same as at the start of the wave (the seam filler was the only
+  addition and it was removed). Far LOD is unchanged.
+
+### Shared-file edits (each named in its commit)
+- `09_seats.js`: SEATMAT `yPillow`, `arm`, `yCover` (SHEEN flag).
+- `03_tex.js`: `PHOTO_GAIN` 34 (0.9).
+- `test/make_swatches.py` econ section, `tex/tex_y_tick.png`, `tex_y_diamond.png`, `tex_y_fleck.png`.
+- `test/qa.js`: the q15 camera.
+
+### Still open (w32a / w32b)
+- **Cover height (medium, both raters, every round):** h/w 0.85-0.88 against 0.67-0.75 in y_47300; y_47306 and b_ss_13
+  hang it lower. This is question 21, and it is now the largest econ-owned mismatch.
+- **Tick at row distance:** the tile can't fix this without crushing the close-up. Lighting has been asked for a -0.25
+  mip bias on layer 16 alone (`from_econ.md`, w31). The alternative is a stroke tint in the material.
+- **Diamond stars on pans:** at about half the photo's contrast (bright 0.02-0.06 vs 0.07).
+- **Pan joints:** the outer ones are still 4-6 px dark. The next try is to widen the pans 6-8 mm per side and check the
+  plate, not to add a filler.
+- **Fleck:** distance contrast 0.9x, with a faint repeated cloud.
+- **Light pad:** coarse motif close up.
+- **Arm:** still ends ~30 px low head-on.
+- **Carried small parts:** cover foot crease, belts mid-pan, bezel dots, pocket, legs.
+- **Lighting:** seat level lifted 5-10 % by the r3 snapshot; far-row snow; triplanar smear on back tops and pads in q16;
+  covers still short of the off-axis level (q16 L67 vs 108).
+
+Before/after sheet: `econ_before_after_w3f.jpg` (own renders only: w29 vs final; q15, q16, q17, e4, e1).
