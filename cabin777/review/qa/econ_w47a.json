@@ -1,0 +1,224 @@
+{
+ "area": "econ",
+ "rater": "A",
+ "round": "w47",
+ "candidate": "b65def4",
+ "lens": "Skeptic, geometry first; measure everything. Scripts and crops are in /tmp/claude-0/-home-user-Calc/2fb1f2ef-fbd7-5fb9-b7d2-14a3db7265c8/scratchpad/raterA47. blend.py makes 50/50 blends and edge overlays of r47/q15-17 against y_47300/01/03. m2.py segments the near-headrest cover as a connected component (1.05<B/R<1.6, 75<L<190, opened) and writes covers.png. m3.py traces back tops and the fabric-to-shell edge. m4/m6.py take column white-run profiles through the near aisle arm and colour boxes (cap, belts, buckle). m1.py counts dark-neutral px (L 25-100, B/R<1.35). m7.py is the left-block pocket. w.py is the q15 head-on cover run, reused from raterA46. Before/after crops at the new camera: near17.png, arm17.png, belt17.png, left17.png and pocket17.png (render | photo | w46 geometry from r46c), plus studio_ba.png (s46 | s47). Note: the brief lists the candidate renders as S/r46/, but S/r46 holds the 09:05 w46 renders. The b65def4 renders are S/r47/ (09:27-09:29, pairs.json has the new q17 camera) and S/s47/, so I rated those. Their q15 and q17 differ from r46 and r46c only where the candidate changed.",
+ "score": 8.4,
+ "calibrationNote": "Down 0.05 from 8.45. The detail mean is 8.28 (w46 8.28). The candidate's own changes are real gains: the under-arm plates are 62 % fewer dark px, the belt layout now follows y_47303, the hood shelf is in, the card header is blue and the mesh is lit grey. The score does not rise because the re-matched q17 camera removes the excuse I gave the headrest in w46. Camera check (blend_q17.png, edges_q17.png): the low landmarks agree within about 5 px, namely the right-block arm noses, pan fronts and left-block arm noses. The upper landmarks sit consistently high: the near right back top is at y~125 against 152, and the near left screen top at 151 against 178, a +25-30 px offset. The left back's internal span (screen top to pocket bottom) is the same in both (277 vs 272 px). q15 head-on back tops also match within 3 px. So I read the +27 px as a residual camera error in vertical scale/pitch (integrator), not too-tall backs. The windows' 0.15 m phase offset is confirmed. With the camera now honest, the near headrest cover is clearly too small. It is 89 x 93 px with its top at y 140, against the photo's ~115 x 115 (mask bbox 106 x 110, area >= 5119 vs 4123) with its top at 178. Correcting the vertical-scale residual would shrink the render cover further. My w46 claim that 'with the camera fixed the headrest cover matches' (based on my c4 guess camera) is therefore retracted, and the headrest drops from 8.55 to 8.3. The new camera also exposes a double white bar at every aisle-end arm. It comes from my own w34a-5 request (+4.5 cm), which was made at the old, wrong camera.",
+ "priorIssues": [
+  {
+   "id": "w45a-1",
+   "status": "not fixed (re-opened as geometry)",
+   "note": "At the resected camera the near cover is 89 x 93 px, area 4123, top y 140 (r46c gives the same: 90 x 93, 4124). The photo's is ~115 x 115, area >= 5119 (mask holes in the highlight), top y 178. Cover rows are now a geometry measurement, not a camera artefact. See w47a-1."
+  },
+  {
+   "id": "w45a-2",
+   "status": "fixed",
+   "note": "Teal G/R 1.88 / B/G 1.49 against the photo's 1.88 / 1.53 (q17 near tongue strap). L is 113 against 134, about 15 % dark."
+  },
+  {
+   "id": "w45a-3",
+   "status": "partly fixed",
+   "note": "The drape box and seam are gone from e11, and the layout now follows y_47303: buckle cover to the upper left, navy diagonal down and right, teal from the rear crease to the tongue by the aisle arm. The webbing is still a flat untextured stripe with no twist. Navy B/G is 1.72 against 1.39 (the photo's navy is slate). The buckle cover is L188 against 222. The teal's steel tongue is hidden under the arm in q17, where the photo shows it just above the arm."
+  },
+  {
+   "id": "w45a-4",
+   "status": "not fixed",
+   "note": "q15 is unchanged: back F L101 / B/R 1.88 against 78 / 1.98; cover F L57 against 42; head-on cover runs E 73 / F 73 against 71 / 79. The pillow is still a flat rectangle."
+  },
+  {
+   "id": "w45a-L1",
+   "status": "not re-measured",
+   "note": "Lighting is unchanged."
+  },
+  {
+   "id": "w46a-1",
+   "status": "fixed (camera); my fix claim retracted",
+   "note": "The q17 camera is now resected: arm noses and pan fronts are within about 5 px. Residual: upper landmarks are +25-30 px (see w47a-L1). The near-headrest check I set (flap area 3800-4600) was calibrated on my guess camera c4 and is wrong. At the true camera the photo flap is >= 5100 px."
+  },
+  {
+   "id": "w46a-2",
+   "status": "partly fixed",
+   "note": "Dark-neutral px in the mid-arm box (470-720 x 150-380): 518, against 1356 at the w46 geometry (r46c) and 128 in the photo. Seat zone (470-930 x 150-480): 1591 against 2943 and 1185, just over my <= 1500 check. Short dark pills still show under the 2nd and 3rd row arms (arm17.png). The arm cap is still neutral: near cap #c7c8c9, B/R 1.01, against #c2c7d0, B/R 1.07. Its lit face is 24 px tall against the photo's 15 px plus a 12 px grey underside (column x 600)."
+  },
+  {
+   "id": "w46a-3",
+   "status": "partly fixed",
+   "note": "The steel tongue and buckle are in (STEEL #93a5bf, m 0.7), and the drape box is removed. Strap form is still flat (see w45a-3)."
+  },
+  {
+   "id": "w46a-4",
+   "status": "not fixed",
+   "note": "Same as w45a-4."
+  }
+ ],
+ "details": [
+  {
+   "detail": "Fabric: tick weave",
+   "score": 8.2,
+   "refs": "q15 back D L100 / B/R 1.90 against 104 / 1.88; back F 101 against 78 (unchanged). In q17 the photo's fabric is far more saturated (near back B/R 2.54 against the render's 1.76; pan 2.69-2.76 against 1.87-2.09). That conflicts with y_47300 (1.88-1.98), so I treat it as photo white balance, not a fabric error."
+  },
+  {
+   "detail": "Fabric: diamond lattice",
+   "score": 8.3,
+   "refs": "Unchanged."
+  },
+  {
+   "detail": "Fabric: petal fleck",
+   "score": 8.2,
+   "refs": "q15 E / G backs L64 / 63, B/R 2.21, against 69 / 62 and 2.25 / 2.32 (unchanged)."
+  },
+  {
+   "detail": "Fabric: dash mosaic",
+   "score": 8.5,
+   "refs": "Unchanged."
+  },
+  {
+   "detail": "Fabric mix (backs, pans, pads)",
+   "score": 8.6,
+   "refs": "Unchanged; the order matches y_47300."
+  },
+  {
+   "detail": "Headrest pad + cover",
+   "score": 8.3,
+   "refs": "q17 at the resected camera: cover 89 x 93 px, top y 140, #7b82a8 L141, against ~115 x 115, top 178, #8697bd L159 (covers.png). In y_47303 the cover drapes over a padded head cushion whose wing bulges forward to the right of and below the flap (to y~300). In the render the head zone reads flat and the pad ends at about y 235. Head-on (q15) width still matches: E 73 against 71. q15 cover F L57 against 42."
+  },
+  {
+   "detail": "Pillow",
+   "score": 8.35,
+   "refs": "Unchanged: still a flat rectangle, and the side-block question is still open."
+  },
+  {
+   "detail": "Armrests",
+   "score": 8.1,
+   "refs": "Gain: the mid-arm dark pills are 518 px against 1356 (photo 128). Loss: at the true camera, every aisle-end arm reads as two stacked white bars. Through the near arm at x 600 the render has a 416-440 cap, a 1-row gap, and a 446-470 lower pill. The photo has a 419-434 cap with a 12 px grey underside, then 30+ px of dark, then a lower member at 463-492 that slopes down toward the front (x 640: 463; x 560: 482) (arm17.png). Cap colour is B/R 1.01 against 1.07."
+  },
+  {
+   "detail": "Belts",
+   "score": 8.65,
+   "refs": "Layout now as y_47303. Teal hue matches (G/R 1.88 / 1.88); L 113 against 134. Navy is too blue (B/G 1.72 against 1.39), the buckle cover is L188 against 222, the webbing is flat and untextured, and the tongue is hidden (belt17.png)."
+  },
+  {
+   "detail": "Seat pan / front",
+   "score": 8.5,
+   "refs": "The pan fronts and noses align with y_47303 within about 5 px."
+  },
+  {
+   "detail": "Back silhouette",
+   "score": 8.0,
+   "refs": "The shell-edge slope matches (render -0.73 px/px between y 200 and 380; the photo is the same by eye). Top height is a camera residual (w47a-L1)."
+  },
+  {
+   "detail": "Rear shell / hood / back top",
+   "score": 8.1,
+   "refs": "The hood shelf now casts a band under the handset in e5 and e2. The left-block hood reads close to y_47303 (left17.png)."
+  },
+  {
+   "detail": "Screen / handset",
+   "score": 8.05,
+   "refs": "Side lips are added. The bezel and handset read correctly in left17.png."
+  },
+  {
+   "detail": "Tray / pocket / AC",
+   "score": 8.0,
+   "refs": "The blue header, deeper flap and lit-grey mesh are visible in studio_ba.png (s47). In q17 the pocket is still a thin strip: the mesh band is about 11-15 px tall on the near left back, where y_47303 shows two bulging light mesh pouches about 70-90 px tall (image y ~345-440) with the safety card standing out of them (pocket17.png)."
+  },
+  {
+   "detail": "Legs / footrest / under-seat",
+   "score": 8.5,
+   "refs": "Unchanged; they align in the blend."
+  },
+  {
+   "detail": "Far-LOD rows",
+   "score": 8.1,
+   "refs": "Unchanged."
+  }
+ ],
+ "issues": [
+  {
+   "id": "w47a-1",
+   "severity": "medium",
+   "owner": "econ",
+   "title": "At the resected q17 camera the headrest cover is ~25 % too small and sits high; the head cushion has no forward bulge",
+   "detail": "Headrest pad + cover",
+   "evidence": "covers.png / near17.png: the near cover is 89 x 93 px, area 4123, top y 140, against y_47303's ~115 x 115, area >= 5119, top 178. The photo's head cushion wing protrudes to the right of and below the flap, reaching about y 300. The render's head zone is flat, with the pad ending at about y 235. The q15 head-on cover width matches (73 vs 71 px), so the shortfall is in depth and drop, not width.",
+   "fix": "Bring the head cushion's front face forward 4-6 cm with rounded wings, so the cover drapes over a convex block. Lengthen the cover's front flap about 3-4 cm downward, keeping its head-on width. Extend the pad's lower edge about 4 cm.",
+   "check": "q17 near cover component area >= 4900 px, height >= 105 px; q15 E run 68-76."
+  },
+  {
+   "id": "w47a-2",
+   "severity": "medium",
+   "owner": "econ",
+   "title": "Aisle-end arms read as two stacked white bars; the lower member should sit ~30 px lower and slope down toward the front (revert w34a-5)",
+   "detail": "Armrests",
+   "evidence": "arm17.png, column x 600: render cap 416-440, then a lower pill 446-470 (1-row gap). y_47303: cap 419-434 plus a grey underside to 446, dark to 479, then the lower member 480-492, sloping (x 640: 463; x 560: 482). The end plate (y 0.507-0.588) was raised 4.5 cm in w34 at my request (w34a-5), measured at the old, wrong camera.",
+   "fix": "Lower the end plate about 4-5 cm (to y ~0.46-0.54) and give it a forward-down slope of about 3 cm over its length. Optionally darken its upper face to a satin grey, so the arm cap stays the single bright bar.",
+   "check": "At q17 x 600 the white runs are a cap of <= 20 px, then >= 20 px non-white, then the lower member; at x 560 the lower member is >= 12 px lower than at x 640."
+  },
+  {
+   "id": "w47a-3",
+   "severity": "medium",
+   "owner": "econ",
+   "title": "Seat-back pocket is a thin strip; y_47303 shows two large bulging mesh pouches",
+   "detail": "Tray / pocket / AC",
+   "evidence": "pocket17.png: on the near left back the render's mesh band is about 11-15 px tall under the flap. y_47303 shows two bowed light-grey mesh pouches about 70-90 px tall (y ~345-440) with the card standing out of them.",
+   "fix": "Make the mesh pouches about 15-18 cm tall from the flap down, bowed out 3-4 cm at the bottom, with the lit-grey mesh and the card top showing above.",
+   "check": "q17 near left mesh height >= 50 px."
+  },
+  {
+   "id": "w47a-4",
+   "severity": "low",
+   "owner": "econ",
+   "title": "Remaining under-arm dark pills and neutral, thick arm cap",
+   "detail": "Armrests",
+   "evidence": "Mid-arm box dark-neutral px 518 vs photo 128; seat zone 1591 vs 1185. Near cap B/R 1.01 vs 1.07; its lit face is 24 px vs 15 px.",
+   "fix": "Shorten the non-end plate to the rear 6 cm or drop it another 2 cm. Tint SEATMAT.arm about #c6ccd6 (a shared SEATMAT line). Thin the arm loft's mid sections by about 15 %.",
+   "check": "Mid-arm dark-neutral px <= 300; cap B/R 1.05-1.10."
+  },
+  {
+   "id": "w47a-5",
+   "severity": "low",
+   "owner": "econ",
+   "title": "Belt finish: navy too blue, buckle cover too dark, flat webbing, tongue hidden under the arm",
+   "detail": "Belts",
+   "evidence": "belt17.png: navy #354171 B/G 1.72 vs #35415b 1.39; buckle cover L188 vs 222; teal L113 vs 134. The photo's tongue sits visibly above the near arm.",
+   "fix": "Navy toward #39435a; buckle cover #c8d4e0; teal about 10 % lighter; end the teal strap and tongue about 3 cm inboard of the arm; add a webbing weave layer if one is available.",
+   "check": "Navy B/G 1.35-1.5; buckle L >= 205; tongue visible in q17."
+  },
+  {
+   "id": "w47a-6",
+   "severity": "low",
+   "owner": "econ",
+   "title": "Carried: q15 back F tick too light, cover F too light, pillows flat",
+   "detail": "Fabric / Headrest / Pillow",
+   "evidence": "Back F L101 vs 78; cover F L57 vs 42 (unchanged).",
+   "fix": "As w46a-4.",
+   "check": "Back F L 72-85; cover F L <= 50."
+  },
+  {
+   "id": "w47a-L1",
+   "severity": "medium",
+   "owner": "integrator (camera)",
+   "title": "q17 camera residual: upper landmarks +25-30 px while the arm noses match",
+   "detail": "",
+   "evidence": "blend_q17.png: near right back top y~125 vs 152; near left screen top 151 vs 178. The arm noses and pan fronts are within about 5 px, the left back's internal span is equal (277 vs 272), and q15 back heights match within 3 px. So this is camera vertical scale/pitch, not seat height. It is consistent with the 0.15 m window phase and with the resection using only noses at one height plus two windows.",
+   "fix": "Add upper landmarks to the resection: near back tops, left-block screen corners and the cover's top corners. Re-solve fov, pitch and eye height together.",
+   "check": "Upper landmarks within 8 px without losing the arm-nose fit."
+  },
+  {
+   "id": "w47a-L2",
+   "severity": "low",
+   "owner": "lighting",
+   "title": "Carried w45a-L1; q17 fabric is less saturated than y_47303 (photo WB conflicts with y_47300)",
+   "detail": "",
+   "evidence": "q17 near back B/R 1.76 vs 2.54; pan 1.87-2.09 vs 2.69-2.76. y_47300 agrees with the render (1.88-1.98).",
+   "fix": "No econ change. Lighting may warm the q17 grade or leave it as is.",
+   "check": "n/a"
+  }
+ ],
+ "questionsForUser": [
+  "Carried: y_47300 shows lumbar pillows on the 3-seat side blocks, while y_47301 / y_47303 show them bare. The model follows the side views. Should the side blocks carry pillows?"
+ ],
+ "extraRefsSearched": "No downloads. I used y_47300, y_47301, y_47303 and y_47305 at 930x575, the r47 / s47 candidate renders, r46c for before/after at the new q17 camera, and s46 for the studio before/after."
+}
