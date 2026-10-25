@@ -81,7 +81,7 @@ const CEILMAT = {
   barFrame: { c: '#8a8079', r: 0.4 },   // tray edge: a mid-tone trim, not a white frame (c133; w6a dark, w6b light) [A]
   downlight: { c: '#fffaf0', r: 0.4, e: 0.85 },
   trough: { c: '#9a9ea3', r: 0.7 },   // dark slots in a white frame (sany_10/11 [V])
-  troughRim: { c: '#e9e8e4', r: 0.45, l: LAYER.plastic, e: 0.2 },   // the bars glow with the cove behind them (c120 bars ~254) [V]
+  troughRim: { c: '#e9e8e4', r: 0.45, l: LAYER.plastic, e: 0.19 },   // the bars glow with the cove behind them (c120 bars ~254) [V]; polish B: 0.2 took the lamp branch, white bars at night (ucr_room-night-lighting ceiling L13-55)
   slat: { c: '#ffffff', r: 0.5, l: LAYER.atlasLit, e: 0.3 },   // stripe texture carries the slat/slot colours
   // emergency light: light frame round a grey lens slot (b_lalf_c119 [V], w2a)
   emerg: { c: '#8e9297', r: 0.3, e: 0.05 },
@@ -201,8 +201,11 @@ function buildCeilings(upper, layout) {
         const eFn = (p) => {
           const ax = Math.abs(p[0]);
           if (ax > xg + TROUGH.w / 2 + 0.012) return 0.85;   // the cove field up to the grille (w7b)
-          if (ax < 0.73) return 0.08;
-          return 0.02 + 0.03 * Math.exp(-Math.max(xg - ax, 0) / 0.18);   // well under the cove band, falling (w4a/w4b, w5b, w6a/w6b)
+          // polish B (from_integration r3): the cove-lit vault is the brightest large surface in the photos (vault / bin
+          // 1.15-1.37: c_27312, y_47301, sany_10) but rendered 0.83-0.87 of the bins -> higher, flatter falloff [V ratio]
+          // (0.14 / 0.10 + 0.10 exp(/0.35) rendered q06 vault L240, clipping the joint ribs)
+          if (ax < 0.73) return 0.11;
+          return 0.06 + 0.07 * Math.exp(-Math.max(xg - ax, 0) / 0.30);   // was 0.08 / 0.02 + 0.03 exp(/0.18) (w4a/w4b, w5b, w6a/w6b)
         };
         const prof = VAULT.map(([x, y]) => [x * side, y]);
         const v0 = upper.p.length / 3;

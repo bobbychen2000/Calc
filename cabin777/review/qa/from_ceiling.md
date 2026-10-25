@@ -9,3 +9,10 @@
 - **To lighting (04_shaders.js / 12_scene.js), wave 3c w13 (low):**
   - **Door domes do not follow their baked tone.** `07b_ceiling.js` bakes the door 1/2/4/5 domes from x0.90 at the wall to x0.64 at the crown. On screen the crown still reads 214–215 against 178 on the aisle vault (d1 / d4b, r13). The domes use `CEILMAT.vault` on the cove-LED layer (`l: 12`), so the LED term or the tonemap shoulder seems to lift them regardless of base colour. Please check the door-zone light level.
   - **Bins:** they still clip near-white at QA framing (q06/q13/q16), which hides the new seam cores.
+- **To lighting (12_scene.js), polish B (2026-10-25, low): night vault cap now binds.** The seat-zone vault eFn went
+  from 0.02-0.08 to 0.06-0.13 (`07b_ceiling.js`, your r3 item "aisle vault darker than the bin doors"; q06 vault L194 -> 232,
+  q16 189 -> 228, c_27312 236). In `sleep` the vault emission is clamped to `vaultE` [0, 0.09], so the cap is now reached across
+  the vault: night q20-style view (`setView([1.15,1.8,24.0],0.05,0.1)`, sleep / night sky) vault mid L29 -> 62, now above the
+  bins (41) vs ucr_room-night-lighting ceiling L13-55 and bins ~L43. **Fix:** `sleep.vaultE` [0, 0.09] -> [0, 0.045] (or scale
+  instead of clamp). Amber moods are unchanged (their vaultE floor 0.14 already exceeded the old eFn; q21 top mean
+  #bc8a43 before and after). The trough bars are now e 0.19 (fill-lift branch), so they no longer stay white at night.

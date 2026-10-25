@@ -49,6 +49,12 @@ SW = {
     # room w12: pillow / comforter 45-deg check jacquard, drawn at the period measured on the real photo tpg_46 (see synth_j_pillow) [D]
     'j_pillow':    ('web/room/tpg_46.jpg', (900, 700, 1000, 800), 0.152),
     'y_carpet':    ('y_47304', (24, 384, 226, 556), 0.26),
+    # polish B (from_integration r2/r3): THE Room carpet, fine dark heather with light flecks. c_27312's mid-aisle (the
+    # suggested crop) is ~4 mm/px and foreshortened ~0.4, so its specks smeared into vertical streaks when stretched to a
+    # square tile; c_27315's footwell carpet (bottom right) is seen near-overhead and closer, specks isotropic (autocorr
+    # 2 x 1 px vs 1 x 3 px) -> 120 px ~ 0.36 m (speck pitch matched to c_27312 at 255 px/m across the aisle) [D / A];
+    # luminance only (the material colour sets the mauve-brown)
+    'j_carpet':    ('c_27315', (800, 450, 920, 570), 0.36),
 }
 # QA r2: Y 5 (was 8), see 03_tex.js PHOTO_ENC; py_back 4: its white dashes are ~4.6x the charcoal ground in linear light
 # (py_37301 luminance p10 / p90 100 / 201) and were clipped at 1.5x, which left the dark gaps dominant (pattern read
@@ -57,7 +63,7 @@ ENC = {'y_tick': 5, 'y_diamond': 5, 'y_fleck': 5, 'y_mosaic': 5, 'py_back': 4, '
 # grey-pattern materials: keep only the luminance pattern (the per-channel ratio of these phone photos is JPEG chroma
 # noise and lilac / green casts); the model's material colour sets the hue
 MONO = {'f_wood', 'f_tweed', 'j_ash', 'py_back',   # py_back: neutral grey weave (QA r1, wall-balanced py_37305)
-        'j_tweed', 'py_confetti', 'j_pillow', 'py_ear'}                  # QA r2: chroma of these was a green / purple JPEG cast
+        'j_tweed', 'py_confetti', 'j_pillow', 'py_ear', 'j_carpet'}                  # QA r2: chroma of these was a green / purple JPEG cast
 # high-pass radius of the lighting / blotch removal (default 40 px on the 256 px tile); py_back: the swatch's low-frequency
 # dark blotches dominated the fine white dashes at seat distance (py_37301 / 37305 read as even dashes on charcoal)
 HP = {'py_back': 20, 'j_ash': 60}   # room w12: j_ash keeps its 1-4 cm veneer bands

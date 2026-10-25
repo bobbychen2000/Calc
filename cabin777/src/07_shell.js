@@ -28,9 +28,9 @@ const MAT = {
   carpet: { c: '#3d4659', r: 0.95, l: LAYER.yCarpet },  // swatch layer adds the blue; kept greyer [V: tone]
   // F/J: plain fine heather, no motif [V: c_27312 aisle sampled #403638 / #3e3537, #463d3b further aft, f_17313
   // footwell #312825]; QA r2: #3a3033 rendered plum #1a1517 in the aisle between the tall shells, so warmer
-  // brown-grey, raised until the q06 aisle renders near the photo; the fine fabric layer
-  // stands in for the heather (no J carpet swatch is mapped) [A: grain]
-  carpetJ: { c: '#635650', r: 0.95, l: LAYER.fabric },
+  // brown-grey, raised until the q06 aisle renders near the photo. Polish B (from_integration r2/r3, aisle flat: high-pass
+  // std 0.5 vs 11.8): heather from the j_carpet swatch (c_27315 footwell), a step darker and mauve as c_27312 (h352) [V]
+  carpetJ: { c: '#615553', r: 0.95, l: LAYER.jCarpet },   // #574a4c rendered L46 h340 vs c_27312 L52 h354
   // F: its own warm brown heather (B well below G), darker than J: the open F aisle rendered carpetJ as mauve #887573
   // [V: f_17300 #423838, f_17313 footwell #2e2623, from_suite: omaat f33 / f2 / f7 aisle #5e4d32 / #5b4d3a / #4d3f31]
   carpetF: { c: '#56493f', r: 0.95, l: LAYER.fabric },          // QA w2: redder, h ~15 (MileLion DSC_1917 #2d2421)

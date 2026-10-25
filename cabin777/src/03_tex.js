@@ -2,8 +2,8 @@
 // Procedural textures (generated at load; no external image assets)
 //  Detail layers are RGBA: RG = tangent normal (xy), B = albedo mod, A = roughness mod
 // ------------------------------------------------------------------
-const LAYER = { none: 0, fabric: 1, leather: 2, carpet: 3, plastic: 4, brushed: 5, marble: 6, vinyl: 7, grille: 8, yagasuri: 9, wood: 10, yMosaic: 11, atlasLit: 14, atlasGlow: 15, yJacq: 16, pyFleck: 17, tweed: 18, ashGrain: 19, fWood: 20, fTweed: 21, yCarpet: 22, pyConfetti: 23, yDiamond: 24, yFleck: 25, yMosaicP: 26, xSkin: 27, gAlu: 28, jPillow: 29, ashDoor: 30, pyEar: 31, sPleat: 32, monoAsh: 33, yDiamondPan: 34, xRivet: 35, xCowl: 36 };
-const N_LAYERS = 37;
+const LAYER = { none: 0, fabric: 1, leather: 2, carpet: 3, plastic: 4, brushed: 5, marble: 6, vinyl: 7, grille: 8, yagasuri: 9, wood: 10, yMosaic: 11, atlasLit: 14, atlasGlow: 15, yJacq: 16, pyFleck: 17, tweed: 18, ashGrain: 19, fWood: 20, fTweed: 21, yCarpet: 22, pyConfetti: 23, yDiamond: 24, yFleck: 25, yMosaicP: 26, xSkin: 27, gAlu: 28, jPillow: 29, ashDoor: 30, pyEar: 31, sPleat: 32, monoAsh: 33, yDiamondPan: 34, xRivet: 35, xCowl: 36, jCarpet: 37 };
+const N_LAYERS = 38;
 // layers >= 16 take their pattern from a photo swatch when PHOTO_TEX is embedded (build.py), else procedural
 const PHOTO_LAYERS = {
   16: 'y_tick',
@@ -26,6 +26,7 @@ const PHOTO_LAYERS = {
   34: 'y_diamond', // econ w27: diamond seat pans, same tile at a lower gain (w26a-1 / w26b-1)
   36: 'x_cowl',    // exterior w18: GE90 fan-cowl weathering mottle (LALF 11A _136)
   35: 'x_rivet',   // exterior w17: near-wing fastener-row dots (synthetic, 25 mm pitch)
+  37: 'j_carpet',  // shell polish B: THE Room carpet heather (c_27315 footwell)
   31: 'py_ear',    // py w13: PY trim-A headrest ears, notched sakura chips (py_37305); 23 stays the trim-B back slivers
 };
 let PHOTO_PIX = null;
@@ -52,6 +53,7 @@ const PHOTO_GAIN = {
   29: 0.4,   // room w13a: read as hard gingham at 0.55 -> -30 %; room w12: kn_17 close-up +-25 % linear, but tpg_81 / tpg_46 at seat distance read about half that [D]
   36: 0.25,   // exterior w18: 0.35 read as dirt in c_nacelle_left; tile SD 0.08 -> ~2 % mottle (_136 cowl panels 2-4 %) [D]
   35: 3.2,   // exterior w19: rows 0.95 of the panel at 2.6 vs KN41 ~0.80 (A / B w18); exterior w18: hard 1 px dots at 0.58 of the panel at 4.0 (B w17, KN41 ~0.8); exterior w17: 1.0-1.8 averaged out at the near flap's ~6 mm/px (t17; 8 showed 1 px dots); dots ~0.5 of the paint (KN41 near spoiler rows) [D]
+  37: 1.4,   // shell polish B: 1.0 rendered q06 aisle high-pass std 5.5 vs c_27312 11.9 (box-4 measure) [D]
   27: 0.22,   // exterior w9: x0.75, read as even brushed banding at 0.3 (A w9); exterior w8: tile stored at SD 0.12 -> ~3.6 % grime mottle (KN41 / 7250 flap panels 3-5 %) [D]
 };
 // swatches stored as ratio / ENC instead of ratio / 2 (test/make_swatches.py ENC): the Y ticks are ~10x the navy ground
@@ -99,6 +101,7 @@ const LAYER_PARAMS = {
   34: [5.5, 0.12, 0.8, 0.15],  // econ w27: diamond pan (y_diamond tile), as 24 at a lower gain (w28: 0.8)
   36: [0.67, 0.01, 0.35, 0.3],  // exterior w18: x_cowl 1.5 m tile, near-flat normal
   35: [5.0, 0.04, 1.0, 0.2],   // exterior w17: x_rivet 0.2 m tile, faint dimple normal
+  37: [2.8, 0.3, 1.0, 0.2],     // shell polish B: j_carpet (0.36 m tile; scale from sizes.json), soft pile relief
   31: [14, 0.3, 0.8, 0.15],     // py w13: ear chips (0.07 m tile), as 23
 };
 

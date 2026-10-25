@@ -40,8 +40,8 @@ const TILT_O = Math.atan2(1.795 - 1.60, 2.845 - 1.53);
 // the cabin where the hemisphere fill leaves them 40-90 levels darker than the photos (lower door #c3c7cb in
 // c_27312 / y_47301, channel #bebec0..#cacaca in y_47300 [V samples]); the outboard doors already matched [D].
 const BINMAT = {
-  door: { c: '#e3e5e8', r: 0.34, l: LAYER.plastic },
-  doorC: { c: '#e3e5e8', r: 0.34, l: LAYER.plastic, e: 0.10, eFn: (p) => 0.14 + 0.06 * clamp((p[1] - 1.75) / 0.4, 0, 1) },   // w6a: doors 200-220 vs 245 in y_47300; w7b: the ramp must start low on the visible face   // w6b: lighter toward the crest (c120, y_47301) [V look]   // + 0.84 shading floor: y_47300 door 245 -> 190 (w3a)   // w2a: q15 #abafb6 vs y_47300 #dddddb
+  door: { c: '#d6d8dc', r: 0.34, l: LAYER.plastic },   // polish B: #e3e5e8 rendered q06 / q16 outboard faces L221-235 vs c_27312 L190-210, y_47301 190-195 (from_integration r3) [V]
+  doorC: { c: '#e3e5e8', r: 0.34, l: LAYER.plastic, e: 0.10, eFn: (p) => 0.07 + 0.05 * clamp((p[1] - 1.75) / 0.4, 0, 1) },   // polish B: 0.14-0.20 -> 0.07-0.12, the vault reads brighter than the bins (from_integration r3)   // w6a: doors 200-220 vs 245 in y_47300; w7b: the ramp must start low on the visible face   // w6b: lighter toward the crest (c120, y_47301) [V look]   // + 0.84 shading floor: y_47300 door 245 -> 190 (w3a)   // w2a: q15 #abafb6 vs y_47300 #dddddb
   bandC: { c: '#dcdcda', r: 0.5, l: LAYER.plastic, e: 0.08 },   // w6a: channel 154-163 vs 190-209 in y_47300   // channel ~0.76 of the door in y_47300 (w3b) [V]
   housingC: { c: '#bfc0bf', r: 0.5, l: LAYER.plastic, e: 0.05 },   // centre PSU housings: bandC x0.86 (not baked by shadeUpper; w5 render read white) [D]
   signPod: { c: '#2a2e34', r: 0.45 },
@@ -257,7 +257,11 @@ function sideBinModule(side) {
   shingles(B, bw, L, 8, 0.005, M4.trs(bx * side, by, 0, 0, 0, -TILT_O * side), BINMAT.band);
   // cove LED along the top inner edge (washes the aisle panel) + sidewall wash lens under the bin
   B.add(gBox(0.05, 0.01, L - 0.03), M4.trs(1.70 * side, 2.238, 0), MAT.led);
-  B.add(gBox(0.045, 0.006, L), M4.trs(2.80 * side, 1.607, 0, 0, 0, side * 0.12), { c: '#ffffff', r: 0.4, l: 12, e: 0.35 });
+  // polish B (from_integration r2 / r3): the lens ran 3 cm short of the lining (wall top 1.60 at |x| 2.854), so the sky
+  // showed through a hairline at the junction -> 7 cm visible, lapping 2 cm behind the lining, 8 mm deep (r2: ~1 px at
+  // 930 px); the lens sits directly on the wall (ucr_the-room-cabin, ff_door-gap) [V look; A size]
+  B.add(gBox(0.09, 0.008, L), M4.trs(2.83 * side, 1.604, 0, 0, 0, side * 0.12), { c: '#ffffff', r: 0.4, l: 12, e: 0.35 });
+  B.add(gBox(0.05, 0.006, L), M4.trs(2.865 * side, 1.601, 0), MAT.bin);   // opaque backing behind the lining top
   return shadeUpper(B.build());
 }
 function centerBinModule() {
