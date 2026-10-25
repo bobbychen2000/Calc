@@ -32,14 +32,14 @@ uniform vec3 u_sunDir; uniform vec3 u_sunCol;
 uniform mat4 u_shadowMat; uniform sampler2DShadow u_shadow; uniform vec2 u_shadowTexel;
 uniform vec3 u_hemiTop; uniform vec3 u_hemiBot; uniform vec3 u_wash; uniform vec3 u_led; uniform vec3 u_sideLed; uniform vec3 u_winGlow;
 uniform vec3 u_vault; uniform vec3 u_lowTint; uniform float u_bandCut; uniform float u_sideLow; uniform vec3 u_sideWall; uniform vec3 u_extBounce; uniform vec2 u_aoTune; uniform vec3 u_fZone;
-uniform float u_lowGain; uniform vec3 u_monFill; uniform float u_cove; uniform float u_toe;
+uniform float u_lowGain; uniform vec3 u_monFill; uniform float u_cove; uniform float u_toe; uniform float u_fLow; uniform float u_sLowZ;
 uniform vec4 u_extPtP[2]; uniform vec3 u_extPtC[2];
 uniform vec4 u_spotP[8]; uniform vec4 u_spotT[8]; uniform vec3 u_spotCol;
 uniform vec4 u_stripP[8]; uniform vec4 u_stripA[8]; uniform vec3 u_stripCol;
 uniform vec4 u_scrP[6]; uniform vec4 u_scrN[6]; uniform vec3 u_scrCol; uniform float u_fillLift; uniform vec3 u_lensCore; uniform vec2 u_vaultE;
 uniform sampler2D u_scrMask; uniform vec4 u_scrMaskR; uniform float u_scrOff; uniform vec4 u_scrOwn; uniform float u_binLo; uniform float u_monHemi;
 uniform float u_tubWash; uniform vec3 u_binLift; uniform vec3 u_hemiBotN; uniform vec3 u_washN; uniform vec2 u_tubSky; uniform float u_ctrLo; uniform float u_ctrLift;
-uniform sampler2D u_sDepth; uniform vec4 u_sRes; uniform vec4 u_sProj; uniform vec3 u_sFwd; uniform vec3 u_sRight; uniform vec3 u_sUp; uniform vec4 u_ssao; uniform float u_sDither; uniform float u_sMix; uniform float u_sAng; uniform float u_sLow; uniform float u_sIn; uniform vec2 u_sEase;
+uniform sampler2D u_sDepth; uniform vec4 u_sRes; uniform vec4 u_sProj; uniform vec3 u_sFwd; uniform vec3 u_sRight; uniform vec3 u_sUp; uniform vec4 u_ssao; uniform float u_sDither; uniform float u_sMix; uniform float u_sAng; uniform float u_sLow; uniform float u_sIn; uniform vec2 u_sEase; uniform vec4 u_sTap;
 uniform sampler3D u_ao; uniform vec3 u_aoMin; uniform vec3 u_aoSize; uniform sampler2D u_contact; uniform vec4 u_contactR; uniform float u_contactK;
 uniform sampler2DArray u_detail; uniform vec4 u_layer[${N_LAYERS}]; uniform sampler2DArray u_photo; uniform float u_photoOn;
 uniform sampler2D u_atlas; uniform float u_screenStep; uniform float u_emisGain; uniform float u_screenGain;
@@ -176,23 +176,25 @@ float ssaoF(vec3 P, vec3 Nf, float kR){
   float rng = u_ssao.w * kR;
   float px = ruv.y * u_sRes.y;                              // disc radius in pixels
   if (px < 2.0) return 0.0;                                 // far: the disc is under ~2 px
+  float kc = u_sTap.y > 0.0 ? min(1.0, u_sTap.y / px) : 1.0; ruv *= kc; rng *= kc;
   vec2 uv0 = gl_FragCoord.xy / u_sRes.xy;
   float a0 = u_sDither * 6.2832 * fract(52.9829 * fract(dot(gl_FragCoord.xy, vec2(0.06711, 0.00584)))) + 0.39;
-  float occ = 0.0;
-  for (int i = 0; i < 8; i++) {
+  float occ = 0.0, nT = max(u_sTap.x, 1.0);
+  for (int i = 0; i < 16; i++) {
     float fi = float(i);
+    if (fi >= nT) break;
     float an = a0 + fi * 2.39996;
     // snapped to the depth texel's centre, where the pre-pass sampled the surface: the point is then on the surface
     // itself (a sample uv off the centre with that texel's depth leaves the plane by up to half a texel at grazing angles:
     // dotted dark crescents in the far window tubs) [D]
-    vec2 uv = (floor((uv0 + vec2(cos(an), sin(an)) * sqrt((fi + 0.5) / 8.0) * ruv) * u_sRes.zw) + 0.5) / u_sRes.zw;
+    vec2 uv = (floor((uv0 + vec2(cos(an), sin(an)) * sqrt((fi + 0.5) / nT) * ruv) * u_sRes.zw) + 0.5) / u_sRes.zw;
     float z = u_sProj.w / (textureLod(u_sDepth, uv, 0.0).r * 2.0 - 1.0 + u_sProj.z);
     vec2 nd = uv * 2.0 - 1.0;
     vec3 v = u_camPos + z * (u_sFwd + nd.x / u_sProj.x * u_sRight + nd.y / u_sProj.y * u_sUp) - P;
     float dl = length(v);
     occ += clamp(((dot(v, Nf) - u_ssao.z) / max(dl, 1e-3) - u_sAng) / (1.0 - u_sAng), 0.0, 1.0) * (1.0 - smoothstep(u_sIn * rng, rng, dl));
   }
-  return occ * 0.125 * smoothstep(2.0, 4.0, px);
+  return max(occ / nT - u_sTap.z, 0.0) * smoothstep(2.0, 4.0, px);
 }
 
 void main(){
@@ -329,8 +331,9 @@ void main(){
     // QA r3: THE Suite interior (z in u_fZone.xy, below the 1.3 m shell tops, away from the sidewall) sees the bright
     // open ceiling over the shells: AO eased toward 1 by u_fZone.z [V: f_17300, omaat_f2 / f5 open-topped suites;
     // omaat_f11 ottoman #9f8c85 vs q03 #312f2d]
-    float inF = smoothstep(u_fZone.x, u_fZone.x + 0.3, v_wpos.z) * (1.0 - smoothstep(u_fZone.y - 0.3, u_fZone.y, v_wpos.z))
-              * (1.0 - smoothstep(1.2, 1.5, v_wpos.y)) * (1.0 - smoothstep(2.4, 2.75, abs(v_wpos.x)));
+    float inFzy = smoothstep(u_fZone.x, u_fZone.x + 0.3, v_wpos.z) * (1.0 - smoothstep(u_fZone.y - 0.3, u_fZone.y, v_wpos.z))
+                * (1.0 - smoothstep(1.2, 1.5, v_wpos.y));
+    float inF = inFzy * (1.0 - smoothstep(2.4, 2.75, abs(v_wpos.x)));
     ao = mix(ao, 1.0, u_fZone.z * inF);
     // QA r1 (light): ceiling and bin faces above ~1.9 m stand > 0.6 m over the seat backs and are lit by the cove
     // above, so the dense economy block may not darken them: the Y ceiling / bins read 10-15 % under the J ones and the
@@ -478,6 +481,11 @@ void main(){
     // reads #b29f84 / #6b5946 (s0.25-0.34) [V: ff_seat-with-door-closed ash cabinet #ab7f58, ash top #bb9067, shell
     // #251f17; ucr_the-room-cabin ash #ae7134 / #885635, sidewall #ba895b, bottom third L55; kn_room_35 ash #804e10]
     lt = mix(u_lowTint * u_lowGain, vec3(1.0), smoothstep(1.25, 1.95, v_wpos.y));
+    // QA L10 (light medium): Blue: the open-topped THE Suite takes u_fLow (12_scene MOODS.blue fLow) of the seat-level light: the
+    // suite interior read 0.17-0.23 of the matched window wall, the in-flight photos 0.36-0.47, violet-grey [V: ml_DSC_1945
+    // aisle-side box #2a243c L40, table L37, pier L48 vs blueF03 L16 / 20 / 22 at window wall L96 vs 103]; the inF box with the
+    // |x| fade out to 2.75-2.95 m, so the window console takes it too (1 in the other moods: Boarding q03 box L91 vs omaat_f11 L101)
+    lt *= mix(1.0, u_fLow, inFzy * (1.0 - smoothstep(2.75, 2.95, abs(v_wpos.x))));
     // QA r3: the aisle floor took nearly the full hemisphere and read as a bright flat strip; carpet sits in a 1.3 m
     // trench of shells and sees the ceiling through a slot [V: c_27312 aisle #312828-#423b39, darker at the bases]
     hemi *= lt * mix(1.0, 0.55, fl); bounce *= lt * mix(1.0, 0.6, fl);
@@ -577,8 +585,11 @@ void main(){
       // QA L9 (light low): disc and range x(1 + u_sLow) = 1.5 (7.5 cm / 0.15 m) below the headrests (0.85-1.05 m) and off the sidewall:
       // the PY contact darks stayed ~1/3 of the photos' [V: thin dark-line share q13 0.91 vs py_37302 2.77 %, q14 0.58
       // vs py_37301 3.15 %]; the L8 0.15 range drew grey halos on the wall behind the PY headrests, which keeps x1 [D fixL9]
-      float kR = 1.0 + u_sLow * (1.0 - smoothstep(0.85, 1.05, v_wpos.y)) * (1.0 - wallProx * facingIn);
-      amb *= mix(1.0, max(1.0 - u_ssao.y * ssaoF(v_wpos, Nf, kR), 0.0), sW);
+      // QA L10 (integration medium): only aft of THE Room (z > u_sLowZ = 05_layout z20): in THE Room the wider disc drew a second,
+      // darker band 3 cm above every headrest flap (q10 x 650 rows 380-384 L92-95 at L8 -> L58-66) [V: c_27315 no band]
+      float kR = 1.0 + u_sLow * (1.0 - smoothstep(0.85, 1.05, v_wpos.y)) * (1.0 - wallProx * facingIn) * step(u_sLowZ, v_wpos.z);
+      float so = u_ssao.y * ssaoF(v_wpos, Nf, kR);
+      amb *= mix(1.0, u_sTap.w > 0.5 ? exp(-so) : max(1.0 - so, 0.0), sW);
     }
     // reading lights (night): warm cone from the lamp lens to the seat, 0.35 m pool [V: tlfl_IMG_9377 pools on the bed]
     for (int i = 0; i < 8; i++) {
@@ -632,7 +643,14 @@ void main(){
     // a visible edge under the ACES shoulder [V: omaat_f59 bed #d8bfa2 L194 vs q04 patch #f9f8f7 (clipped); q14 PY patch
     // #e0e0e4 on #787f92 fabric] (lighting / integration r1, from_suite 2)
     // QA r3 (integration): cap 2.0 -> 1.5, the q14 seat-back patch read 1.5x the fabric (rater target <= 1.3x) [D]
-    if (u_exterior < 0.5) sun = min(sun / (1.0 + max(max(base.r, base.g), base.b)), vec3(1.5));
+    // QA L10 (light medium): the cap acts on the luminance, not per channel: the low sunset sun [4.2, 2.2, 0.9] clipped R and
+    // G both to 1.5 and turned the patch on dark materials khaki-olive at its core with an orange rim (s06 shell core #84784e
+    // h47 s0.41, penumbra h24-27), where low sun on charcoal reads deep orange [V: ucr_the-room-cabin amber surfaces h28-34];
+    // the same 1.5 limit on the patch's luminance keeps its hue [D fixL10, L10rate2 lumcap]
+    if (u_exterior < 0.5) {
+      sun /= 1.0 + max(max(base.r, base.g), base.b);
+      sun *= min(1.0, 1.5 / max(dot(sun, vec3(0.2126, 0.7152, 0.0722)), 1e-4));
+    }
   }
   vec3 F0 = mix(vec3(0.04), base, metal);
   vec3 diff = base * (1.0 - metal);

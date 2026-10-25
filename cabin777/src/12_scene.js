@@ -82,7 +82,12 @@ const MOODS = {
   // and more saturated than the photo's dark crown [V: sany_47 crown (400-560, 0-150) #141631 L24 s0.58 vs blue06 (430-520,
   // 0-60) #22266c L43 s0.68; the bins and cove already matched]; the raters' [0.016, 0.018, 0.065] read L32 s0.71 [D render
   // fixL8 v3] (lighting L8 low)
-  blue: { label: 'Blue', hemiTop: [0.035, 0.04, 0.21], hemiBot: [0.008, 0.009, 0.035], wash: [0.015, 0.015, 0.07], led: [0.06, 0.08, 1.0], sideLed: [0.05, 0.06, 0.70], bandCut: 0.8, sideLow: 0.6, vault: [0.018, 0.020, 0.060], lowTint: [1.8, 1.7, 1.0], lowGain: 1.6, fillLift: 0.4, monFill: [0.20, 0.16, 0.10], monHemi: 0.4, cove: 0.35, k: 1, exposure: 1.7, screenGain: 0.6, scrSpill: 1, scrOff: 0.7, emisGain: 0.55, strips: true },
+  // QA L10 (light medium): fLow = the seat-level light inside the open-topped THE Suite (mainFS u_fLow, F zone only): the suite
+  // interior read 0.17-0.23 of the matched window wall where both MileLion photos show it at 0.36-0.47, violet-grey [V:
+  // ml_DSC_1945 aisle-side box (80-230, 330-600) #2a243c L40, table L37, aisle pier L48; ml_DSC_1946 table L40 vs blueF03
+  // L16 / 20 / 22]; 2.5 per the raters' scratch test (4.0 overshot: ottoman L97, whose top already reads ~1.2x the photos in
+  // Boarding) [D fixL10]
+  blue: { label: 'Blue', hemiTop: [0.035, 0.04, 0.21], hemiBot: [0.008, 0.009, 0.035], wash: [0.015, 0.015, 0.07], led: [0.06, 0.08, 1.0], sideLed: [0.05, 0.06, 0.70], bandCut: 0.8, sideLow: 0.6, vault: [0.018, 0.020, 0.060], lowTint: [1.8, 1.7, 1.0], lowGain: 1.6, fLow: 2.5, fillLift: 0.4, monFill: [0.20, 0.16, 0.10], monHemi: 0.4, cove: 0.35, k: 1, exposure: 1.7, screenGain: 0.6, scrSpill: 1, scrOff: 0.7, emisGain: 0.55, strips: true },
   // dining / sunrise, QA r2: ANA's amber phase is a saturated amber LED line on the bin lens and cove, amber-washed bin
   // faces and a much darker lower cabin, not a beige high key [V: ff_door-gap lens #ffa43d (h32 s0.76), bins #955b2d /
   // #673e1e (s ~0.7)]. Sunrise uses the same levels with a pinker LED [A: no ANA sunrise photo]
@@ -276,7 +281,7 @@ class Scene {
     };
     this.emptyVAO = gl.gl.createVertexArray();
     gl.use(this.progs.main); gl.set('u_fillLift', 1); gl.set('u_sheen', LIGHT_TUNE.sheen); gl.set('u_sheenTint', LIGHT_TUNE.sheenTint); gl.set('u_vaultE', [0, 1]);   // the studio may draw before the first cabin frame
-    gl.set('u_binLo', 1); gl.set('u_ctrLo', 1); gl.set('u_ctrLift', 1); gl.set('u_monHemi', 1);   // QA r4: neutral values for the same reason
+    gl.set('u_binLo', 1); gl.set('u_ctrLo', 1); gl.set('u_ctrLift', 1); gl.set('u_monHemi', 1); gl.set('u_fLow', 1);   // QA r4: neutral values for the same reason
     this.buildGlows();
     const sm = this.shell.meshes;
     this.opaque = [
@@ -832,7 +837,7 @@ class Scene {
     const fz = this.layout.zones.find((zn) => zn.cls === 'F');
     G.set('u_fZone', fz ? [fz.z0, fz.z1, AO_TUNE.fLift] : [0, 0, 0]);
     G.set('u_bandCut', mood.bandCut ?? 0.65); G.set('u_sideLow', mood.sideLow ?? 0.4); G.set('u_sideWall', mood.sideWall || [1, 1, 1]);
-    G.set('u_lowGain', mood.lowGain ?? 1); G.set('u_monFill', mood.monFill || [0, 0, 0]); G.set('u_cove', LIGHT_TUNE.cove * (mood.cove ?? 1)); G.set('u_sheen', LIGHT_TUNE.sheen); G.set('u_sheenTint', LIGHT_TUNE.sheenTint);
+    G.set('u_lowGain', mood.lowGain ?? 1); G.set('u_fLow', mood.fLow ?? 1); G.set('u_monFill', mood.monFill || [0, 0, 0]); G.set('u_cove', LIGHT_TUNE.cove * (mood.cove ?? 1)); G.set('u_sheen', LIGHT_TUNE.sheen); G.set('u_sheenTint', LIGHT_TUNE.sheenTint);
     G.set('u_toe', mood.toe ?? 0);
     G.set('u_extBounce', [0, 0, 0]);
     // reading-light pools: the 8 lit lamps nearest the eye [A: count, a phone-sized loop]
@@ -917,7 +922,7 @@ class Scene {
     if (ssao) {
       G.tex('u_sDepth', 8, this.sDepth.tex); G.set('u_sRes', [w, h, this.sDepth.w, this.sDepth.h]);
       G.set('u_sProj', [cam.proj[0], cam.proj[5], cam.proj[10], cam.proj[14]]);
-      G.set('u_sFwd', cam.fwd); G.set('u_sRight', cam.right); G.set('u_sUp', cam.up); G.set('u_sDither', LIGHT_TUNE.ssaoDither ?? 1); G.set('u_sMix', LIGHT_TUNE.ssaoMix ?? 0.8); G.set('u_sAng', LIGHT_TUNE.ssaoAng ?? 0.35); G.set('u_sLow', LIGHT_TUNE.ssaoLow ?? 0); G.set('u_sIn', LIGHT_TUNE.ssaoIn ?? 0.5); G.set('u_sEase', LIGHT_TUNE.ssaoEase || [0.05, 0.4]);
+      G.set('u_sFwd', cam.fwd); G.set('u_sRight', cam.right); G.set('u_sUp', cam.up); G.set('u_sDither', LIGHT_TUNE.ssaoDither ?? 1); G.set('u_sMix', LIGHT_TUNE.ssaoMix ?? 0.8); G.set('u_sAng', LIGHT_TUNE.ssaoAng ?? 0.35); G.set('u_sLow', LIGHT_TUNE.ssaoLow ?? 0); G.set('u_sLowZ', this.layout.z20 ?? 0); G.set('u_sIn', LIGHT_TUNE.ssaoIn ?? 0.5); G.set('u_sEase', LIGHT_TUNE.ssaoEase || [0.05, 0.4]); G.set('u_sTap', [LIGHT_TUNE.ssaoTaps ?? 8, LIGHT_TUNE.ssaoCap ?? 0, LIGHT_TUNE.ssaoThr ?? 0, LIGHT_TUNE.ssaoExp ?? 0]);
     }
     G.set('u_fill', this.fill ?? 0.45);   // QA r1: 0.7 flattened AO and the ceiling-to-floor falloff [V: c_27312 shell gradients]
     G.set('u_exterior', 0);
@@ -951,7 +956,7 @@ class Scene {
       G.set('u_extBounce', [0, 0, 0]); G.set('u_extPtP', new Float32Array(8));   // the studio (same program) keeps its plain fill
     }
     G.set('u_toe', 0); G.set('u_fillLift', 1); G.set('u_vaultE', [0, 1]);   // ... and its plain tone, fill lift and vault (14_studio renders through the same program)
-    G.set('u_scrOff', 0); G.set('u_binLo', 1); G.set('u_ctrLo', 1); G.set('u_ctrLift', 1); G.set('u_monHemi', 1); G.set('u_tubWash', 0); G.set('u_binLift', [0, 0, 0]); G.set('u_tubSky', [0, 1]);   // (QA r4) all screens lit, no cabin-only terms
+    G.set('u_scrOff', 0); G.set('u_binLo', 1); G.set('u_ctrLo', 1); G.set('u_ctrLift', 1); G.set('u_monHemi', 1); G.set('u_fLow', 1); G.set('u_tubWash', 0); G.set('u_binLift', [0, 0, 0]); G.set('u_tubSky', [0, 1]);   // (QA r4) all screens lit, no cabin-only terms
     G.set('u_ssao', [0, 0, 0, 0]);   // (QA L8) no screen-space AO in the studio
     gl.depthFunc(gl.LEQUAL);
     gl.depthMask(false);
