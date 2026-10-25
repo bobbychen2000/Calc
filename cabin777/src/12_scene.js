@@ -164,7 +164,7 @@ const AO_TUNE = { hemi: 0.22, bounce: 1.0, emitLens: 0.45, emitCtr: 0.35, kAttF:
 // highlight ~1.3x the face on THE Room shell caps (c_27312), armrest p99 >= 240 (y_47303)]
 // QA r3 (integration): sheen = gain of the grazing sheen lobe on SHEEN materials (mainFS) [D: q17 / q16 flaps against
 // y_47303 / y_47301, q15 head-on unchanged]
-const LIGHT_TUNE = { cove: 1.0, sheen: 1.15 };
+const LIGHT_TUNE = { cove: 1.0, sheen: 1.35 };
 // QA r3 (integration): floor contact map (computeAO): cell size (m; 6 m x 59 m -> 200 x 1973 texels, under the 2048
 // texture minimum), marking height above the floor and the darkening at a base (mainFS) [D]
 const CONTACT = { cell: 0.03, h: 0.2, k: 0.55 };
