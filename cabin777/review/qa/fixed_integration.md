@@ -133,3 +133,97 @@ from_* items (to lighting / integration):
 - from_py 9 / 6 (q14 rhombus sun patch, q13 cobalt): not changed this round
 - from_py 10 (q13b fabric gaps dark), 11 (studio p8 back): not changed (studio light is 14_studio.js)
 - test/qa.js camera items (from_econ, from_py, from_exterior 5): integrator / econ (from_integration_cam.md)
+
+## QA r3, light group (lighting + integration raters; from_* items addressed to lighting / integration)
+
+Code: `04_shaders.js`, `12_scene.js` in fede907. The integrator's snapshot commits 00948cd..0804d1c hold intermediate
+states; fede907 is the final one. Renders are in the scratchpad: qa/fix_light/r3 (qa.js views) and r3x (moods / extra views).
+Iterations: r3a-r3g. Tools and views: qa/fix_light/t3.
+
+Rater issues (QA r3 light / integration):
+- lighting HIGH, amber light ordering upside down (pale seat level under a dark overhead): done (fede907)
+  - Dining / Sunrise: lowTint [1.0, 1.08, 1.2] x0.8 (raters' fit) and hemiBot x1.4.
+  - The vault wash is floored at e 0.14 (`u_vaultE`), in a paler vault hue [0.32, 0.145, 0.047]; bandCut 0.2;
+    sideWall [0.6, 2.2, 4.2].
+  - dd (`__sit('12H',0.25,-0.05)`, shades closed): ash #b89c70 L160 s0.39 -> #8f602e L103 s0.68 (target L100-115,
+    s0.65-0.72); wall at the window tops #b79970 L157 s0.38 -> #b07f50 L134 s0.54; bottom third 101 -> 79 (target <= 70).
+  - d06: vault L68-73 s0.80 -> #c08d44 / #b98640, L140-147 s0.64; bins L147-160 (ucr L158).
+  - q21 closed shades: pier L161-199 s0.32-0.42 -> L139-174 s0.57-0.65; the door dome holds (#d19849 -> #cd9e51 s0.60;
+    ucr #c89552).
+  - Not met: the rater's "ceiling between the bins" box in dd is the centre-bin underside / PSU band (from 12H the bins
+    are overhead; the vault is out of frame). It reads #70431a-#7a4c23 L74-84 against the photo's undersides #855a2b
+    L96; the rater's L150-170 target is the ucr vault strip, met in d06 / q21 instead. The wall at the window tops
+    (L134 vs 140-158) is short too: sideWall / bandCut move it only 2-3 L, the band is mostly hemi / wash.
+- lighting medium + integration HIGH, aisle carpet: done (fede907)
+  - The 8-direction sweep (4 axis + 4 diagonal) is now 16 azimuths read bilinearly, still at one cell per layer. The
+    raters' half-cell slope (63 deg rays) opened the economy row gaps, so it was dropped (from_econ w34). The lowest 5
+    layers get two more i / k blur passes, and the carpet reads a 4-tap mean AO.
+  - The pocket term acts only under the seat pans (ramp 0.0-0.12, floor 0.5 on the carpet); the r2 bounce cut is gone.
+  - A 3 cm contact map adds the thin base line.
+  - q06 aisle (500-590, 370-560): p10 20 -> 51, < 30 36 % -> 1 %, mean 50 -> 60. Row 520 edges 0.26x
+    -> 0.86x (L49-53 vs 57-58) of the centre.
+  - q10 aisle < 30 30 % -> 1 %; no periodic diagonal bands in q06 / q10 / s01.
+  - computeAO: 1.1-1.35 s in headless Chromium under load, for 8, 12 or 16 azimuths alike. The azimuth count is not the
+    cost.
+  - The aisle level (60) sits over c_27312 (53.7) until shell darkens carpetJ (hand-off).
+- integration medium, Y / PY legroom carpet crushed: done (fede907, with the pocket term above). q17 between rows
+  #0a0e18 L14 p10 5 -> #131c32 L28 p10 10 (target L30-40, p10 >= 20; the box holds under-seat pixels); q13 PY carpet
+  p10 14 -> 25, right aisle edge 16-23 -> 29-41; q15 bottom band < 30 26.1 % -> 27.3 % (y_47300 24.3 % in the same box;
+  frame < 30 8.6 % vs 10.0 %, p5 22 vs 22).
+- integration HIGH, economy cover sheen: done (fede907)
+  - New `SHEEN` material flag (04_shaders.js; the top bit of the layer byte) and a (1 - N.V)^3 env lobe, gain
+    `LIGHT_TUNE.sheen` 1.35. Econ already set `yCover: l: LAYER.none + SHEEN` (befdc88).
+  - q17 flaps #465079 L81 / #414c73 L77 -> #737c9c L125 / #6e799a L122 s0.26-0.28 (target L130-150 s ~0.3; a higher
+    gain takes q16 over y_47301); q16 covers L108-112 (y_47301 67-108).
+  - q15 head-on flaps L57-80 -> L56-82 (unchanged).
+- lighting medium, night upper cabin grey-cool: done (fede907)
+  - The screen spill stops over 1.4-1.7 m; Night led x0.6; the cove / vault wash is capped at e 0.09.
+  - q20 centre bins #424448 L68 h225 -> #33302c L49 h29; outboard #3c3e44 L63 h221 -> #2a2724 L40 h30; ceiling panel
+    (520-600, 10-60) L117 -> L69; median 37 -> 32.
+- lighting low, boarding window wall: done (fede907). sideLed [0.48, 0.53, 0.66]; q15 wall #d2d3d3 L210 -> #dfdfdf
+  L222-223. Still neutral (B-R 0) where y_47300 reads B-R +9..11: the ACES shoulder desaturates it at L222.
+- integration medium, vault darker than the bins: lighting part done (fede907). The bin AO floor is 0.85 -> 0.72, but the
+  q06 / q16 bins are not AO-limited (q06 L221-223 before and after). The levers are the vault / door eFn: handed to
+  ceiling/bins.
+- integration low, q14 rhombus sun patch: partly (fede907)
+  - The pane gate ramps over 0.75-1.3 of the superellipse radius (was a ~1 cm penumbra); PCF taps 2 texels apart; the
+    sun cap is 1.5 (was 2.0).
+  - Edges are visibly soft, but the patch still reads 1.48x the fabric (L207 on L140; target <= 1.3x). A lower cap would
+    flatten every sun patch in the cabin: questions_lighting.md 5.
+- lighting low, far-row snow (from_econ w27): done (fede907). Beyond 3-7 m the photo mip bias fades out and the tile
+  contrast eases halfway to the tile mean (its 1x1 mip).
+- lighting low, armrest gloss: not met. arm r 0.30 / armPad 0.38 (scratch build) plus cove x1.3 moved q15 armrest p99 only
+  225 -> 229 (y_47300 254); LIGHT_TUNE.cove stays 1.0. The photo's streaks reflect the lit aisle vault, a broad area light
+  the env model does not hold.
+- lighting medium, lens / wall sky hairline: geometry; handed to ceiling/bins (from_integration.md).
+- lighting + integration medium, THE Room shells slate / blue: handed to room (SEATMAT jShell / jCap / jShellIn, one
+  merged neutral-darker value).
+- lighting low + integration medium, THE Room carpet texture: handed to shell again (third time).
+- integration medium, suite bed sheet; low, ottoman recess: handed to suite again (third time).
+- integration low, door-3 bin-lip z-fight: handed to ceiling/bins again (third time).
+- integration low, F drapes: handed to monuments again (third time).
+- integration low, q01 camera: done by the integrator in 7c091e4 (`test/qa.js`).
+
+from_* items (to lighting / integration):
+- from_econ w14 / w19 / w23 / w27 + from_integration_cam (cover sheen lobe): done (fede907; SHEEN flag, see above)
+- from_econ w27 / w31 (far-row snow): done (fede907). Far tick-row contrast in q16 (400-680, 130-230): p90 / p50
+  1.64 -> 1.58, bright share 0.11 -> 0.09 (y_47301 1.62 / 0.10).
+- from_econ w31 (layer 16 mip bias -0.25): done (fede907); it fades out with the others beyond 3-7 m.
+- from_econ w34 (row gaps too light, seat-level lift 15-25 %): addressed (fede907). Econ rated the r3 snapshot with the
+  63 deg AO sweep, which opened the gaps; the final sweep is back at 45 deg. q15 foreground pans (150-800, 500-575) are back
+  from L75 to L68. Frame < 30 is 8.6 % (y_47300 10.0 %), p5 22 (22). The mid-row band (y 150-235) < 50 reads 5 % against
+  17 % in y_47300; not changed further this round, pending econ's re-rating.
+- from_econ w27 (`photoBase` gain argument, shared `03_tex.js`): open. It is a function change in a shared file, not a
+  one-line key; econ already compensates in its colour.
+- from_econ w27 (per-view FOV in `test/qa.js`): integrator (questions_econ 22).
+- from_py 5 / 6 / 9 (q14 rhombus): partly (see above). from_py 6 / 9 (q13 cobalt): not changed. from_py 10 (q13b gaps
+  dark): the crevice term is unchanged on vertical fabric; not re-measured. from_py 11 (studio p8): 14_studio.js light,
+  not in this worker's files.
+- from_room w16 (2) (shells light and cool): handed to room as a neutral darker SEATMAT value. (1) aisle doors and
+  (3) pillow saturation: not changed.
+- from_ceiling q01 camera: done by the integrator (7c091e4).
+- from_ceiling w13 (bins clip): reply in from_integration.md (door eFn is the lever; AO floor 0.72 did not move them).
+- from_exterior 17 (albedo-scaled exterior reflection is a no-op): not changed; exterior says nothing more is needed.
+  18 (wing hairline aliasing, MSAA) and 19 (nav light on the upper tip, optional): not done.
+- from_monuments w13-15 (q19 blow-out, door-1 fWood streaks): not re-rated this round.
+- from_shell w15 (door glass flat white, creams neutral, dado grille dark): not changed this round.

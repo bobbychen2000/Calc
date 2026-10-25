@@ -189,3 +189,104 @@ after this commit; judge albedos in the studio first.
   every look-out. Drop the `[-0.06, 0.12, -0.06]` offsets on w26K / w30K, or they apply twice.
 - **from_exterior 14 / 16:** the exterior sky reflection now scales with the baked albedo (luminance / 0.39, clamped
   0.5-1, metals exempt), so your near-to-far ramp also ramps the grazing reflection.
+
+# Items from the lighting fixer (QA r3, light group; 2026-10-25)
+
+The r3 light changes (`04_shaders.js` / `12_scene.js`) are:
+- AO: the volume sweeps 16 azimuths read bilinearly (was 8: 4 axis + 4 diagonal), still at one cell per layer, with two
+  extra floor blur passes. The carpet reads a 4-tap mean, so the periodic diagonal wedges across the THE Room aisle are
+  gone.
+- Floor: a 3 cm contact map (thin dark line where seats, shells, monuments and the wall meet the carpet). The floor pocket
+  term now acts only under seat pans (floor 0.5), so the Y / PY legroom is no longer crushed.
+- Amber moods: seat level darker and amber, a vault floor, bin undersides lifted.
+- Night: the vault / cove wash is capped, and the screen spill stops at 1.5 m.
+- Boarding: a cooler, brighter lens wash.
+- Sun patches: a softer pane gate and wider PCF, cap 1.5.
+- Photo tiles: the far-row contrast fades with distance.
+- New material flag `SHEEN` (04_shaders.js): add it to a layer (`l: LAYER.none + SHEEN`) for a grazing sheen lobe on satin
+  leatherette (`LIGHT_TUNE.sheen` 1.35).
+
+Re-check your area after this commit; judge albedos in the studio first.
+
+## To ceiling/bins (`src/08_bins.js`)
+- **Sky shows through a hairline between the outboard-bin lens and the sidewall lining** (lighting r3 medium; lighting cannot
+  fix it). A continuous 1-2 px line runs along the lens / wall junction for the whole cabin: sky-blue under the day sky,
+  navy under the night sky (the background). It flickers while walking and is worst in the dim warm moods. Evidence:
+  scratchpad lq3/dd_tr.png (crop of d_room_dining, `__sit('12H',0.25,-0.05)`, dining, shades closed): 1863 px of
+  #5e9ccc-#73a4c7 along the junction; lq3/ddn_tr.png (night sky): no blue, the line turns navy. Real photos show a
+  continuous lens on the wall (ucr_the-room-cabin, ff_door-gap #ffa43d lens directly on the wall). **Fix:** l.260
+  `gBox(0.045, 0.006, L)` at `(2.80 * side, 1.607)` -> `gBox(0.07, 0.006, L)` at `x 2.81 * side`, so its outer edge laps
+  1-2 cm behind the lining (or shell extends the lining 2 cm up behind the lens). Check: seated in 12H, day and night skies,
+  zero sky pixels along the junction.
+- **Aisle vault darker than the bin doors in the white moods** (integration r3 medium). Lighting moved the bin AO floor
+  0.85 -> 0.72 (04_shaders.js), but at q06 / q16 the bin faces are not AO-limited (q06 bins L221-223 before and after), so
+  their brightness is the door fill lift. Evidence: q06 vault mid (480-515, 20-60) L194 and centre-bin side L181 vs bin
+  faces L219-239; q16 vault L191 vs bins L219-229. In the photos the vault is the brighter one: c_27312 aisle ceiling
+  (600-660, 5-40) L236, bins L190-210; y_47301 ceiling L225-241 vs bins L190-195; sany_10 vault L206-217 vs centre bin face
+  L173. Vault / bin ratio is 1.15-1.37 in the photos and 0.83-0.87 in the model; bin high-pass std 0.2-1.3 vs 16-38.
+  **Fix:** `07b_ceiling.js` seat-zone vault eFn `ax < 0.73 ? 0.08 : 0.02 + 0.03*exp(-max(xg-ax,0)/0.18)` ->
+  `ax < 0.73 ? 0.14 : 0.10 + 0.10*exp(-max(xg-ax,0)/0.35)`; `08_bins.js` `doorC` eFn 0.14-0.20 -> 0.07-0.12. Targets:
+  q06 / q16 vault mid L215-228; outboard bin faces L200-210 with high-pass std >= 8; q15 bins no lower than L205
+  (y_47300 L217).
+- **Door-3 bin-lip z-fight, third round** (integration r3 low). The dashes are still on the lower lip of the right outboard
+  bin. Evidence: scratchpad integ3/r2/z04_binlip.png (`__app.setView([2.3, 1.62, 32.7], Math.PI/2-0.45, 0.25)`) and
+  integ3/z04_lip.png: irregular grey / white dashes along ~0.5 m of the lip at y 370-385 px. **Fix:** offset the seam /
+  band / lens strip of the outboard module that ends at the door-3 zone boundary (z ~32.0-33.3) by 1.5 mm along the face
+  normal, or end it 2 cm short. Re-render z04 at DPR 2.
+- **Night, FYI:** the trough grille bars (`07b_ceiling.js` `CEILMAT.troughRim`, e 0.2) take the lamp branch, so they stay
+  white at night while the cove behind them is dark (q20 grille edges ~L250; ucr_room-night-lighting ceiling L13-55). At
+  e 0.19 they would follow the cabin light like the other fill-lifted parts.
+
+## To room (`src/09_seats.js` SEATMAT, shared one-line keys)
+- **THE Room charcoal shells read slate / blue-grey, 1.3-1.6x too light against the ash** (lighting r3 medium +
+  integration r3 medium; the two raters asked for darker and for more neutral, this value meets both). Evidence:
+  - q06 shell side faces (0-120, 380-560) #545e69 L93 s0.20 and (668-678, 380-560) #3e424a; cap tops (690-850, 340-350)
+    #7b808a L128. Lighting r3 leaves these unchanged.
+  - c_27312 shell sides #26272c-#3c3d4b L39-62 and caps #61697f-#6b7b95 L105-121; omaatJ_oj_r31 / r37 shells #41423c /
+    #3a3731 (L55-65).
+  - kn_room_1 shell back #454546 (s0.02); kn_cabin8 header #4a4c4d (s0.05) vs q09 #4e5460 (s0.19).
+  - Ash-to-shell ratio: 2.2-3.0 in the photos, 1.3-1.6 in the model.
+  - `jShell` '#595d64' / `jCap` '#5c6066' are themselves blue (s ~0.11), and the boarding light is cool-neutral (c_27312
+    walls), so they render s0.13-0.20.
+  **Fix:** `jShell` c '#595d64' -> '#4b4c4f', `jCap` '#5c6066' -> '#505154', `jShellIn` '#4a4d53' -> '#434446' (keep r 0.34 /
+  0.5). Targets: q06 vertical shell faces L55-75 at s <= 0.08, cap tops L105-120 with the rim sheen line still visible,
+  aisle ash L150-175 unchanged.
+
+## To econ (`src/09_seats.js` SEATMAT), FYI
+- **Cover sheen:** the lobe gain is `LIGHT_TUNE.sheen` 1.35 (was 0.84 when you took the flag in befdc88).
+  - q17 flaps (655-700, 175-235) / (860-910, 140-200): #737c9c L125 / #6e799a L122, s0.26-0.28. Before the flag they were
+    L81 / L77. y_47303 reads #69779d L119 / #879cc6 L155; the integration target is L130-150.
+  - q16 covers (190-260, 240-300) / (40-130, 350-440): L108-112, at the top of y_47301's L67-108.
+  - q15 head-on covers are unchanged (L61-83).
+  - If q16 now reads over y_47301, say so in from_econ. Lighting will not retune the gain again without a rating.
+- **w34 row gaps / seat-level lift:** your w34 rating (8ee9c1c) had the r3 snapshot's AO at 63 deg (`slope` 0.5), which
+  opened the row gaps. The final AO is back at 45 deg (16 azimuths). q15 foreground pans are back from L75 to L68
+  (box 150-800 x 500-575). The frame's < 30 share is 8.6 % against 10.0 % in y_47300, with p5 22 in both. Please re-rate
+  the row gaps on this commit.
+- **Armrest gloss** (lighting r3 low): with `arm` r 0.30 / `armPad` r 0.38 tried in a scratch build, plus the cove line
+  lights at 1.3, q15 armrest p99 moved only 225 -> 229 (y_47300 254). The photo's glossy streaks reflect the lit aisle
+  vault, a broad area light the env model does not hold. No SEATMAT change is asked for.
+
+## To shell (`src/07_shell.js`) + shared `src/03_tex.js` / `test/make_swatches.py`
+- **THE Room carpet texture, third request** (lighting r3 low + integration r3 medium). With the AO wedges gone the aisle
+  is now even (q06 aisle (500-590, 370-560) #433936 L60, p10 51, 1 % < 30) but flat: high-pass std 0.5 vs c_27312 11.8
+  (fine dark heather with light flecks), omaatJ_oj_r37 4.0. The level is also above the photo (c_27312 aisle mean 53.7), so
+  the darker albedo matters. **Fix:** `test/make_swatches.py` cuts a `j_carpet` tile from ref/ana c_27312 (aisle, about
+  470-550 x 420-560, flattened, tileable); `03_tex.js` (shared, one line per key) adds a photo layer `jCarpet`
+  (PHOTO_GAIN ~1.0, LAYER_PARAMS scale ~3/m); `07_shell.js` l.33 `carpetJ: { c: '#3d3335', l: LAYER.jCarpet }`. Target:
+  q06 aisle mean about #3d3435 (L50-55), high-pass std 4-11.
+
+## To suite (`src/09d_suite.js`)
+- **Bed sheet still clips, third request** (integration r3 medium). The sun cap is now 1.5 (was 2.0), but the patch cannot
+  read as light while the sheet sits at L227 without sun. q04 (this round's lighting): sheet in shade (440-520, 320-380)
+  #e3e2e0 L227, sun patch (600-650, 240-280) #f5f4f2 L244, 15.9 % of the frame > 235; f_17304 4.3 % > 235; omaat_f59 real bed
+  #ddc5a7 L200. **Fix:** l.297 pad cushion and l.308 bare-sheet corner '#f0efea' -> '#d6d2ca'; l.303 duvet '#d2cec6' ->
+  '#c4c0b8'; leave the folded flap '#b9b5ad'. Targets: sheet in shade L200-205, sun patch <= L232, frame > 235 under 6 %.
+- **Ottoman recess still shallow** (integration r3 low). q03 ottoman top (380-600, 420-480) L137, below (400-600, 545-572)
+  #2c2a29 L43, ratio 0.31; omaat_f11 (same seated view) top L115, recess #1c1610 L24, ratio 0.21. **Fix:** seat-mode
+  ottoman base box -> a 0.03 m plinth, support set back >= 0.12 m from the cushion front. Target under / top 0.22-0.25.
+
+## To monuments (`src/10_mono.js`)
+- **F front drapes cool light grey, third request** (integration r3 low). q01 curtain (400-470, 100-500) #515053 L81 h267
+  vs omaat_f40 drapes (20-140, 150-600) #433f3c L64 h20 (warm; omaat_f2 the same). **Fix:** l.92 `curtainFF` c '#6d6b6b' ->
+  '#5f5650' (same r / layer). Target: q01 curtain about #4a4440, L65-72, h15-30.

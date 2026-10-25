@@ -26,3 +26,10 @@
    only the cove lines bright) and MileLion's THE Suite during the safety video (ml_DSC_1945, mean 81/79/111, lavender
    walls, lit ottoman). The mood sits between them (economy view mean ~45/50/113, the suite ottoman still darker than
    in ml_DSC_1945). Say if it should follow one of them, or if you have a photo of the blue phase in THE Room.
+
+5. **Window sun patches: physical or toned down?** (QA r3) The integration rater asks for sun patches at most 1.3x the
+   fabric around them (q14 PY seat back; ANA's official PY photos py_37301 / 37303 show no patch at all). Real sun through
+   a 777 window is several times the cabin light, so a physical patch reads much brighter. QA r3 softens the edges (a ~5 cm
+   penumbra) and caps the interior sun at 1.5 (was 2.0); the q14 patch now reads 1.48x the fabric (L207 on L140). Say if you
+   would rather have the official-photo look (fainter patches, cap ~0.8: every sun patch in the cabin gets weaker) or keep
+   them physical.
