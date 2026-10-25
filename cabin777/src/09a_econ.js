@@ -54,7 +54,7 @@ const ECON_HEAD_L = { ...SEATMAT.yFabricB, c: photoBase('#65739f', 'y_diamond'),
 const econHead = (F, k = 0, rot = 0) => F === SEATMAT.yFabricB ? SEATMAT.yFabricC : F === SEATMAT.yFabricC ? SEATMAT.yFabricB : F === SEATMAT.yFabricD ? SEATMAT.yFabric
   : (((k >> 1) + rot) % 2 ? ECON_HEAD_D : ECON_HEAD_L);
 // w30 (w29b-6, w27b-6): the mosaic pan read light and blue in q15 (L98 B/R 1.86 vs y_47300 87 / 1.72) -> its own base [D]
-const ECON_PAN_C = { ...SEATMAT.yFabricC, c: photoBase('#4a5279', 'y_mosaic') };   // w34a-2: L108 B/R 1.55 vs y_47300 82 / 1.80 (part of the gap is the lighting lift) -> darker, bluer
+const ECON_PAN_C = { ...SEATMAT.yFabricC, c: photoBase('#444c72', 'y_mosaic') };   // w36 (w35a-2): still the lightest pan (L103 vs 82) -> -8 %;   // w34a-2: L108 B/R 1.55 vs y_47300 82 / 1.80 (part of the gap is the lighting lift) -> darker, bluer
 const ECON_PLATE = { ...SEATMAT.armPost, c: '#66686e' };   // w32 (w31a-2 / w31b-5): #9a9b9f still a light second bar (L114-133 vs ~76)
 const econPanMat = (F) => F === SEATMAT.yFabric ? ECON_PAN : F === SEATMAT.yFabricB ? ECON_PAN_B : F === SEATMAT.yFabricC ? ECON_PAN_C : F;
 function econSeat(B, x0, lod, opts = {}) {
@@ -129,21 +129,23 @@ function econSeat(B, x0, lod, opts = {}) {
   // w20 (gap19): bow cut 4 -> ~1.5 mm (the bulge mirrored the ceiling as a crinkle head-on); w20 B: ~2.5 mm (flat, it mirrored as one broad band)
   // w10 A + B: the flap hangs ~3 cm below the pad (y_47306 / sans 13: 24-29 % of the pad height), its foot tipped a
   // little forward, and rolls round the pad top in a soft radius (was a hard bevel)
-  loftAt(B, [SEC(0.625, 0.245, 0.005, -0.1149, 0.002), SEC(0.648, 0.246, 0.005, -0.1065, 0.002), SEC(0.665, 0.247, 0.005, -0.1022, 0.002), SEC(0.71, 0.248, 0.005, -0.103, 0.002), SEC(0.755, 0.247, 0.005, -0.1025, 0.002), SEC(0.791, 0.245, 0.005, -0.0985, 0.002)], BH, SEATMAT.yCover, lod ? 1 : 2);
+  // w36 (w35a-1 / w35b-1, both medium): with the height right the cover reads 1.15-1.17x too wide head-on (0.46 of the
+  // pitch vs 0.37-0.41 in y_47300) -> 0.22 wide (sans 13 hangs a wider cover, so not the full 0.215); hem, foot, stitch, mark follow [D]
+  loftAt(B, [SEC(0.625, 0.22, 0.005, -0.1149, 0.002), SEC(0.648, 0.221, 0.005, -0.1065, 0.002), SEC(0.665, 0.222, 0.005, -0.1022, 0.002), SEC(0.71, 0.223, 0.005, -0.103, 0.002), SEC(0.755, 0.222, 0.005, -0.1025, 0.002), SEC(0.791, 0.22, 0.005, -0.0985, 0.002)], BH, SEATMAT.yCover, lod ? 1 : 2);
   // w35 (question 21-23; w34b-1 / w33b-7, every round): head-on h / w 0.85-0.88 vs ~0.7 in y_47300 AND in the real head-on
   // sans 13 near seat (both end level with the pad foot) -> the plate foot 3 cm higher; hem, stitch and mark move with it [V]
   // w25 (w24b-1, matched q15): head-on h / w 0.92-0.94 vs 0.70-0.77 in y_47300, hang ~4 cm vs 2-3 cm (b_ss_13) -> the plate
   // starts 2 cm higher and is 0.245 wide; hem, foot, stitch and mark move up with it [D]
-  loftAt(B, [SEC(0.789, 0.245, 0.006, -0.0985, 0.003), SEC(0.8, 0.245, 0.012, -0.094, 0.005), SEC(0.807, 0.245, 0.02, -0.086, 0.007), SEC(0.81, 0.245, 0.028, -0.073, 0.008), SEC(0.807, 0.245, 0.02, -0.06, 0.006)], BH, SEATMAT.yCover, lod ? 1 : 3);
+  loftAt(B, [SEC(0.789, 0.22, 0.006, -0.0985, 0.003), SEC(0.8, 0.22, 0.012, -0.094, 0.005), SEC(0.807, 0.22, 0.02, -0.086, 0.007), SEC(0.81, 0.22, 0.028, -0.073, 0.008), SEC(0.807, 0.22, 0.02, -0.06, 0.006)], BH, SEATMAT.yCover, lod ? 1 : 3);
   if (lod) return;
   // small ANA mark in the flap's lower corner (viewer's right from the front, y_47306); w5 B: a thin grey logotype, not a sticker
   // w19 A: the hem, stitch and mark were quads 6-9 mm behind the plate (its foot tips forward since w10) and never showed;
   // now thin bands lofted over the plate, following its slope (plate centre z -0.12 at y 0.575 -> -0.111 at 0.61)
   const cz = (y) => -0.12 + (y - 0.605) / 0.035 * 0.009;
-  loftAt(B, [SEC(0.627, 0.243, 0.0064, cz(0.627), 0.002), SEC(0.646, 0.244, 0.0064, cz(0.646), 0.002)], BH, { c: '#2a3049', r: 0.6 }, 1);   // w22 A + B: a light band read as a screen chin head-on -> dark, the lift from the rolled foot only; w21 A + B: hem 1.15x the face vs 1.55-1.6 in y_47306 -> lighter, with a rolled foot; w20 A: dark (a light hem + stitch read as a screen chin head-on); w9 A: stitched hem band ~10 % of the cover height (y_47306)
-  B.add(gTube([[-0.117, 0, 0], [0.117, 0, 0]], 0.0045, 8), M4.mul(BH, M4.trs(0, 0.627, cz(0.627) + 0.001)), { c: '#4a5478', r: 0.38 });   // w22 B: inside the plate edge, 1 mm back (a <= 2 px lip head-on)   // rolled foot catching the light (y_47306)
-  loftAt(B, [SEC(0.6465, 0.23, 0.0072, cz(0.6465), 0.001), SEC(0.6477, 0.23, 0.0072, cz(0.6477), 0.001)], BH, { c: '#3e4562', r: 0.6 }, 1);   // stitch line, light thread (b_ss_14)
-  loftAt(B, [SEC(0.6485, 0.01, 0.0068, cz(0.6485), 0.0005, -0.1), SEC(0.6525, 0.01, 0.0068, cz(0.6525), 0.0005, -0.1)], BH, { c: '#3a4058', r: 0.5 }, 1);   // small ANA mark, viewer's right (y_47306)
+  loftAt(B, [SEC(0.627, 0.218, 0.0064, cz(0.627), 0.002), SEC(0.646, 0.219, 0.0064, cz(0.646), 0.002)], BH, { c: '#2a3049', r: 0.6 }, 1);   // w22 A + B: a light band read as a screen chin head-on -> dark, the lift from the rolled foot only; w21 A + B: hem 1.15x the face vs 1.55-1.6 in y_47306 -> lighter, with a rolled foot; w20 A: dark (a light hem + stitch read as a screen chin head-on); w9 A: stitched hem band ~10 % of the cover height (y_47306)
+  B.add(gTube([[-0.104, 0, 0], [0.104, 0, 0]], 0.0045, 8), M4.mul(BH, M4.trs(0, 0.627, cz(0.627) + 0.001)), { c: '#4a5478', r: 0.38 });   // w22 B: inside the plate edge, 1 mm back (a <= 2 px lip head-on)   // rolled foot catching the light (y_47306)
+  loftAt(B, [SEC(0.6465, 0.205, 0.0072, cz(0.6465), 0.001), SEC(0.6477, 0.205, 0.0072, cz(0.6477), 0.001)], BH, { c: '#3e4562', r: 0.6 }, 1);   // stitch line, light thread (b_ss_14)
+  loftAt(B, [SEC(0.6485, 0.01, 0.0068, cz(0.6485), 0.0005, -0.088), SEC(0.6525, 0.01, 0.0068, cz(0.6525), 0.0005, -0.088)], BH, { c: '#3a4058', r: 0.5 }, 1);   // small ANA mark, viewer's right (y_47306)
   // w11 B: contact darkening where the back fabric tucks into the shell sides (y_47306 dark crease) and along the strip
   for (const sx of [-1, 1]) loftAt(B, [SEC(0.05, 0.014, 0.003, -0.048, 0.001, sx * 0.199), SEC(0.55, 0.014, 0.003, -0.043, 0.001, sx * 0.203), SEC(0.80, 0.014, 0.003, -0.032, 0.001, sx * 0.2)], BH, { c: '#283052', r: 0.95 }, 1);   // w12 A + B: soft crease, not a drawn line
   // w9 A: a ~0.12 m centre strip in a contrasting weave runs from the pad top to the back top (headrest track cover,
@@ -180,8 +182,8 @@ function econSeat(B, x0, lod, opts = {}) {
   // ~0.15-0.18 m discs under each seat) [D]
   // w33 (w33a-2 / gap33-4, y_47302 crop): a flat smoky see-through half-disc (~0.19 wide) hanging face-forward, tipped
   // ~25 deg nose-down (w33b-3) under the seat, the vest a darker core inside, a red strap with a blue tag folded down its face (was an opaque puck) [V]
-  B.add(gCyl(0.095, 0.095, 0.012, 14, true, 0, Math.PI), M4.trs(x0 + 0.03, 0.235, -0.36, 0, Math.PI / 2 - 25 * DEG), { c: '#7c828c', r: 0.15 });   // w34b-2: read opaque near-black -> pale smoky rim, smaller core
-  B.add(gCyl(0.06, 0.06, 0.016, 12, true, 0, Math.PI), M4.trs(x0 + 0.03, 0.232, -0.36, 0, Math.PI / 2 - 25 * DEG), { c: '#43474f', r: 0.35 });
+  B.add(gCyl(0.095, 0.095, 0.012, 14, true, 0, Math.PI), M4.trs(x0 + 0.03, 0.235, -0.36, 0, Math.PI / 2 - 25 * DEG), { c: '#5a5560', r: 0.12 });   // w36 (w35a-4): a pale rim round a black core read as a gauge -> smoky, the vest showing through; w34b-2: read opaque near-black
+  B.add(gCyl(0.08, 0.08, 0.016, 12, true, 0, Math.PI), M4.trs(x0 + 0.03, 0.232, -0.36, 0, Math.PI / 2 - 25 * DEG), { c: '#4a3b35', r: 0.4 });
   B.add(gBox(0.018, 0.075, 0.004), M4.trs(x0 + 0.035, 0.20, -0.372, 0, -25 * DEG), { c: '#c8252b', r: 0.5 });
   B.add(gBox(0.02, 0.012, 0.005), M4.trs(x0 + 0.035, 0.225, -0.375, 0, -25 * DEG), { c: '#2f5fb0', r: 0.5 });
   if (!opts.noScreen) {
@@ -279,8 +281,8 @@ function econSeat(B, x0, lod, opts = {}) {
   // belt: silver tongue one side, light-grey plastic buckle cover the other (y_47303); w5 A: the webbing drapes across the
   // pan from the side creases and the latch sits at mid-pan (y_47302 / 47301 / 47303) [V]
   for (const s of [-1, 1]) {
-    B.add(s < 0 ? gRBox(0.05, 0.012, 0.035, 0.005, 1) : gRBox(0.05, 0.014, 0.04, 0.006, 1), M4.trs(x0 + 0.03 * s, 0.478, -0.31), s < 0 ? SEATMAT.buckle : { c: '#9da2a9', r: 0.4 });   // w25 (w24b-5): the light covers dominated the pans head-on
-    B.add(gBox(0.045, 0.004, 0.25), M4.trs(x0 + 0.115 * s, 0.474, -0.195, s * 38 * DEG), s < 0 ? SEATMAT.yBelt : { ...SEATMAT.yBelt, c: '#262c48' });   // w10 B: teal tongue strap, navy buckle strap (y_47303)
+    B.add(s < 0 ? gRBox(0.05, 0.012, 0.035, 0.005, 1) : gRBox(0.05, 0.014, 0.04, 0.006, 1), M4.trs(x0 + 0.03 * s, 0.478, -0.27), s < 0 ? SEATMAT.buckle : { c: '#7d828a', r: 0.4 });   // w36 (w35a-3): the V and light buckles below every pillow (y_47300 shows none) -> nearer the crease, shorter, a grey cover   // w25 (w24b-5): the light covers dominated the pans head-on
+    B.add(gBox(0.045, 0.004, 0.19), M4.trs(x0 + 0.105 * s, 0.476, -0.185, s * 30 * DEG), s < 0 ? SEATMAT.yBelt : { ...SEATMAT.yBelt, c: '#262c48' });   // w10 B: teal tongue strap, navy buckle strap (y_47303)
   }
   // w33: the pan-front stiffener (r2 light grey, w14 shadowed) is gone - the dark tray closes the pan base and a separate
   // dark slab read as a bar under every pan (e10 / e11)
@@ -374,19 +376,25 @@ function econUnit(n, lod = false, opts = {}) {
   }
   return B.build();
 }
+// w36 (w35a-2 / w35b-3, far rows snowy for three rounds): beyond the LOD switch the photo tiles alias into white snow; the
+// far LOD takes each fabric's mean colour (the photoBase source hex, x0.92 for the darker tile mean) on the low-contrast
+// generic weave layer [D]
+const ECON_FAR = new Map([[SEATMAT.yFabric, '#57628a'], [SEATMAT.yFabricB, '#57629a'], [SEATMAT.yFabricC, '#4f5b82'], [SEATMAT.yFabricD, '#3e4763'],
+  [ECON_PAN, '#454d72'], [ECON_PAN_B, '#3f4465'], [ECON_PAN_C, '#3f466b'], [ECON_HEAD_L, '#5d6a95'], [ECON_HEAD_D, '#3f486a']]);
+const econFarMat = (m) => ECON_FAR.has(m) ? { c: ECON_FAR.get(m), r: 0.9, l: LAYER.fabric } : m;
 function econUnitFar(n, rot = 0) {
   const B = new Builder();
   const sp = ECON.sp;
   for (let k = 0; k < n; k++) {
     const x0 = (k - (n - 1) / 2) * sp;
     const f = econFab(k, n, rot);
-    B.add(gRBox(0.47, 0.085, 0.47, 0.03, 1), M4.trs(x0, 0.418, -0.28, 0, 5 * DEG), econPanMat(econPan(k, n, rot)));   // w33: the near pan (0.47, 3 cm rolls, 5 deg)
+    B.add(gRBox(0.47, 0.085, 0.47, 0.03, 1), M4.trs(x0, 0.418, -0.28, 0, 5 * DEG), econFarMat(econPanMat(econPan(k, n, rot))));   // w33: the near pan (0.47, 3 cm rolls, 5 deg)
     const BH = M4.trs(x0, ECON.hinge[0], ECON.hinge[1], 0, ECON.back);
-    B.add(gRBox(0.42, 0.86, 0.08, 0.035, 1), M4.mul(BH, M4.trs(0, 0.43, -0.005)), f);   // same mix as econUnit
+    B.add(gRBox(0.42, 0.86, 0.08, 0.035, 1), M4.mul(BH, M4.trs(0, 0.43, -0.005)), econFarMat(f));   // same mix as econUnit
     B.add(gRBox(0.446, 0.62, 0.045, 0.015, 1), M4.mul(BH, M4.trs(0, 0.25, 0.058)), SEATMAT.yShell);
     B.add(gRBox(0.40, 0.37, 0.12, 0.015, 1), M4.mul(BH, M4.trs(0, 0.665, 0.062)), SEATMAT.yShell);    // screen hood under the back top (w5; w6 0.40, tight corners; w14 gap: top 0.85, its white cap showed on every far back)
-    B.add(gRBox(0.39, 0.2, 0.11, 0.04, 1), M4.mul(BH, M4.trs(0, 0.70, -0.058)), econHead(f, k, rot));
-    B.add(gBox(0.245, 0.185, 0.01), M4.mul(BH, M4.trs(0, 0.7075, -0.106)), SEATMAT.yCover);   // w35: foot 3 cm higher, as the near LOD
+    B.add(gRBox(0.39, 0.2, 0.11, 0.04, 1), M4.mul(BH, M4.trs(0, 0.70, -0.058)), econFarMat(econHead(f, k, rot)));
+    B.add(gBox(0.22, 0.185, 0.01), M4.mul(BH, M4.trs(0, 0.7075, -0.106)), SEATMAT.yCover);   // w35: foot 3 cm higher, as the near LOD
     B.add(gQuad(0.316, 0.205), M4.mul(BH, M4.trs(0, 0.7275, 0.1245)), SEATMAT.bezel);
     B.add(gQuad(0.294, 0.166), M4.mul(BH, M4.trs(0, 0.7275, 0.1265)), SEATMAT.screen, atlasUV('screen'));
     B.add(gBox(0.32, 0.07, 0.21), M4.mul(BH, M4.trs(0, 0.155, -0.10, 0, -74 * DEG)), SEATMAT.yPillow);   // w33 (gap33-5): pillow
