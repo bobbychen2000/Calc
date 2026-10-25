@@ -73,3 +73,14 @@
     sunset view away from ucr (its bottom third s 0.57 -> 0.43, ucr 0.56), so it has not been changed. Which photo should
     set the seat level? If you prefer the greyer look, the one-line change is `lowTint: [1.0, 1.4, 2.2], lowGain: 0.7` in
     `MOODS.dining` (and `wake`) in `src/12_scene.js`.
+
+## Lighting run 2 (raters L10, 2026-10-25)
+
+13. **A blur pass for the contact shading at Sharp?** (follows question 10) The contact shading now takes 16 samples per
+    pixel in a disc capped at 16 px on screen. That removed the stepped dark bands above the THE Room headrest flaps and
+    the hard stripes on surfaces close to the eye, and brought back some of the THE Suite contact lines. The remaining
+    gap (THE Suite thin dark-line share 1.3-1.5 % against 1.8-2.9 % in the in-flight photos) would need a wider sampling
+    window, which brings back stepped ghost copies of the bulkhead monitor's outline unless the result is smoothed. The
+    smoothing needs two extra full-screen passes (an AO target and a depth-aware blur), only at Sharp. This run's brief
+    ruled out new full-screen passes, so it has not been done. Should Sharp get those two passes (phones on Balanced
+    would still pay nothing)?
