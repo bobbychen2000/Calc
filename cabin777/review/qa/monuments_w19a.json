@@ -1,0 +1,77 @@
+{
+ "area": "monuments",
+ "rater": "A",
+ "round": "w19",
+ "score": 8.6,
+ "note": "I rated head 7744d1c against the w18 state. The only monument change is curtainFF (10_mono.js:92) #6d6b6b -> #544c46. The before / after diffs confirm that only the drapes moved: q01 is pixel-identical (no drape in view), q11 differs by 0.37 (other areas), and m02 differs by 2.55, all at the drape. I also rendered three views of my own from b3/test.html: x_fFrontR (right-aisle front drape, x 1.35, z 8.7), x_fFrontL_near (left drape close up) and m19_cockpit (scratchpad/w14a/out/, sheet_m.png). Sampling is PIL box mean / p10 / p90 / std plus hue. The F front drapes were the most visible open colour mismatch in the F cabin, and they now sit on omaat_f40 in luminance and close in hue, slightly warmer and browner than the photo. Every w18 low is carried over unchanged. Lighting is noted but not scored.",
+ "previousIssues": [
+  {
+   "issue": "w18a/b: no high or medium issues were open.",
+   "status": "n/a. All w18 lows (ash grain contrast and repeat, welcome-pane cue, tumbler glints, nosing groove, ash-wall corner highlights, insert frames, J lav doors, door-1 dark wood) are not fixed. The renders are pixel-identical outside the drapes."
+  },
+  {
+   "issue": "integration r2/r3 LOW: F front drapes are cool light grey",
+   "status": "fixed. m02 drape (535-585, 150-440) went from #605f5e L96 h10 to #4c4742 L72 h29. On the curtain alone, x_fFrontR (200-360, 20-370) is #413935 L60 h21 std 15.8 and x_fFrontL_near (490-730, 20-340) is #403935 L59. From the suites, q03 is L64 and q05 L63. omaat_f40 (20-140, 150-600) is #433f3c L64 h20 std 24.1."
+  }
+ ],
+ "details": [
+  {
+   "detail": "F front drapes (m02, q03, q05, x_fFrontR, x_fFrontL_near)",
+   "score": 8.6,
+   "note": "Luminance now matches f40 (L59-64 against L62-64). The chroma is about twice the photo's: the render's R-B is 12 (R-G 8, G-B 4) against the photo's 7 (4 / 3). Next to the dark-wood monuments it reads coffee-brown, where f40 reads charcoal. The pleats are clean, but the curtain lacks the f40 weave texture (std 16 against 24)."
+  },
+  {
+   "detail": "Door-3 self-service bar (m05, m06, q11)",
+   "score": 8.6,
+   "note": "Unchanged since w18."
+  },
+  {
+   "detail": "Door-2 welcome galley (m03, m16, m14)",
+   "score": 8.6,
+   "note": "Unchanged since w18."
+  },
+  {
+   "detail": "Door-2 aft ash wall (m04, m13)",
+   "score": 8.6,
+   "note": "Unchanged since w18. Grain is about half the photo contrast, with the 77 px repeat."
+  },
+  {
+   "detail": "F front wall, flight-deck door, door 1 (q01, m01, m19)",
+   "score": 8.4,
+   "note": "The drapes lift the F front reading in m02. q01 and m19 are unchanged; the dark-wood streak aliasing remains."
+  },
+  {
+   "detail": "Lavatory exteriors (m17, m11, m15, q11)",
+   "score": 7.8,
+   "note": "Unchanged. Plain J lav doors."
+  },
+  {
+   "detail": "Galleys (m01, m09, m12, q19)",
+   "score": 8.5,
+   "note": "Unchanged."
+  }
+ ],
+ "issues": [
+  {
+   "severity": "low",
+   "detail": "F front drapes slightly too warm / brown",
+   "problem": "Luminance is right, but the hue saturation is about 1.7x the photo's, so the drapes read as coffee-brown next to the dark wood rather than as f40's charcoal.",
+   "evidence": "x_fFrontR (200-360, 20-370) #413935: R-B 12. omaat_f40 (20-140, 150-600) #433f3c: R-B 7. m02 (535-585, 150-440) #4c4742 h29.",
+   "fix": "10_mono.js:92: curtainFF c '#544c46' -> '#504b48' (same luminance, R-B about 8)."
+  },
+  {
+   "severity": "low",
+   "detail": "Carried over from w18 (all low)",
+   "problem": "Ash grain is about half the photo contrast, with a 77 px repeat. The welcome pane has no glass cue. The tumbler glints are inset stripes. The bar nosing has no groove. The J lav doors are plain. The door-1 dark wood shows streak aliasing.",
+   "evidence": "monuments_w18a.json / w18b.json. Renders are pixel-identical in those areas.",
+   "fix": "As in w18a/b: PHOTO_GAIN[33] about 1.5 (03_tex.js, shared), and a lav-door indicator plate and edge trim in 10_mono.js."
+  }
+ ],
+ "questionsForUser": [],
+ "gapWorth03": [
+  "Cooling the drape chroma to f40's R-B 7 and detailing the J lav doors would take the area to about 8.7-8.8."
+ ],
+ "changeVerdicts": {
+  "5 curtainFF #544c46": "helped. L96-100 -> L59-75, hue h229/h10 -> h21-29, against f40 L64 h20. A slight overshoot in warmth (low)."
+ }
+}

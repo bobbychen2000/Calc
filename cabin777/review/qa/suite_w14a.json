@@ -1,0 +1,93 @@
+{
+ "area": "suite",
+ "rater": "A",
+ "round": "w14",
+ "score": 8.6,
+ "method": "I rated head 7744d1c (polishA) against r0 (before) with the after renders r1/q02 and r2/q03-q05 (930x575, boarding). I diffed each pair pixel by pixel (tile means of the L difference, maps in scratchpad/w14a/d_q02/q03/q05.png; pairs p_q0N.png). I also rendered four studio variants from b3/test.html through suiteUnit({bed, doors, divider}): v1 bed+doors closed, v2 bed seen from the aisle, v3 ottoman close-up and v4 centre pair with the divider up plus bed+doors on one side (scratchpad/w14a/out/, sheet_v.png). Sampling is PIL box mean / p10 / p90 / std of luminance plus hue (bin/samp.py). References are omaat_f11, f57, f59, f2, f5 and f40, and ANA f_17304. Lighting is noted but not scored.",
+ "calibration": [
+  {
+   "earlier_issue": "w13b MEDIUM (w13a low): the duvet corner reads as an overlay; the rounded duvet edge runs square round the corner and the flap is small",
+   "status": "not fixed. 09d_suite.js:307 is still the full lofted rectangle and 311/312 are still 0.30-leg triangles laid on top (z_q04bed.png, z_v2.png). The flap is now darker (#9b978f), so the triangle reads more clearly as a grey decal on an intact duvet."
+  },
+  {
+   "earlier_issue": "w13b MEDIUM: the wood flanks render chestnut (R/G 1.37) against f60's espresso (1.08-1.13)",
+   "status": "not fixed. fFlank at 09d_suite.js:27 is unchanged (#33291f)."
+  },
+  {
+   "earlier_issue": "integration r1-r3 MEDIUM: the bed sheet / duvet clips white in bed mode",
+   "status": "fixed for albedo. In q04 the duvet in shade (440-520, 320-380) went from L227 to L207, and (470-520, 320-400) from L223 to L202. omaat_f59 bed (400-600 x 600-800) is L208 and f_17304's duvet (270-480, 240-400) is L214, so the render now sits on the photos. The share of the bed region (x<760, y 200-460) above 235 fell from 31.8 % to 20.7 %, and the whole frame from 16.5 % to 12.5 %. The remainder is the hard-edged sun patches (L236-243, p90 244-245), which is lighting."
+  },
+  {
+   "earlier_issue": "w13a LOW: the aisle drape reads as a crisp ledge projecting past the duvet",
+   "status": "partly fixed. The ledge no longer projects; the drape now steps in under the rounded edge (z_drape.png). At column x 560 the profile is duvet L213, a dip, then a flat 10 px skirt at L186-189. From the aisle (v2, z_v2.png) it reads as a flat vertical white board with a row of speckle dots along its top, where its top face (0.43+0.06 = 0.49) is coplanar with the duvet base at 0.49."
+  }
+ ],
+ "details": [
+  {
+   "detail": "Bed mode (pad, duvet, fold, drape, pillows)",
+   "score": 8.2,
+   "refs": "q04 / v1 / v2 against omaat_f57, f59 and f_17304. The tone is now right (L202-207 against L208-214). The remaining gaps are form: a flat slab without f59's soft wrinkles or f_17304's satin stripe, a decal-like fold corner, and a rigid drape skirt."
+  },
+  {
+   "detail": "Ottoman and footwell (q03, q05, v3)",
+   "score": 8.5,
+   "refs": "q03 under/top was 55/139 = 0.40 before and is 16/139 = 0.12 now, against omaat_f11's 24/116 = 0.21. The void now reads open and dark, but it overshoots: f11 p90 under the tray is 46 against 19 here, and f11's grey plinth line (750-775, L75) is not visible in q03, because the strip sits 0.13 m back. In the studio (v3) the recess floor reads as a lit pink-tan tile (#897463 L121)."
+  },
+  {
+   "detail": "Shell finish (fShell r 0.34)",
+   "score": 8.4,
+   "refs": "q02 panel (372-558, 288-384) went from L113 / p90 153 to L116 / p90 167, and q05 (560-650, 280-380) from L112 to L114. That is a faint sheen gain with no visible rim lines yet. Neutral to slightly positive."
+  },
+  {
+   "detail": "Proportions, leaves, caps, console, centre pair",
+   "score": 8.5,
+   "refs": "Unchanged since w13 (pixel-identical outside the touched areas). The v1 / v4 variants (bed+doors, divider up with bed+doors) render cleanly, with no gaps or z-fight."
+  },
+  {
+   "detail": "Front drapes as seen from the suites (q03 right edge, q05 top)",
+   "score": 8.6,
+   "refs": "Monuments' curtainFF change: q03 (790-860, 0-480) was L80 h19 and is now L64 h27; q05 (690-780, 0-150) was L87 h303 and is now L63 h18. omaat_f40 is L62-64, h13-20. It helps the suite views."
+  }
+ ],
+ "issues": [
+  {
+   "severity": "medium",
+   "issue": "The duvet corner is still an overlay (carried over from w13b). The darker flap now makes the grey triangle more decal-like on an intact rounded duvet.",
+   "evidence": "scratchpad/w14a/z_q04bed.png: q04 x 400-540, y 270-420. The rounded duvet rim continues past the triangle. omaat_f57 shows the fold running nearly the full bed width with the duvet edge following the diagonal.",
+   "fix": "09d_suite.js:307: replace the gLoft duvet with the chamfered gExtrude slab from w13b, whose edge follows the diagonal (xe - 0.50 -> xe at -dz0 + 0.50), so the corner is really missing. Then drop the 311 bare-sheet triangle, because the pad shows through, and let 312's flap lie on the diagonal with 0.45 legs."
+  },
+  {
+   "severity": "medium",
+   "issue": "The wood flanks render chestnut rather than espresso (carried over from w13b, untouched in polishA).",
+   "evidence": "w13b: v1 flank RGB (62,45,32), R/G 1.37, against f60's 1.08-1.13.",
+   "fix": "09d_suite.js:27: fFlank c '#33291f' -> '#2f2b22'."
+  },
+  {
+   "severity": "low",
+   "issue": "The aisle drape reads as a rigid board with a speckled seam.",
+   "evidence": "scratchpad/w14a/z_v2.png (v2 x 270-430, y 290-330): a flat vertical white skirt, with dots along the top where the drape top and the duvet base are both at y 0.49. In q04, x 395-735, y 455-470 is a uniform L186-189 band.",
+   "fix": "09d_suite.js:314: centre y 0.43 -> 0.425 (top 0.485, no coplanar face), height 0.12 -> 0.09, and give it its own colour about 0.9x the duvet (e.g. '#9f9b94'), so it reads as a shaded fold rather than a lit board."
+  },
+  {
+   "severity": "low",
+   "issue": "The ottoman void overshoots dark, and f11's floor-level plinth line is missing in the seated view.",
+   "evidence": "q03 (400-600, 545-572) L16, p90 19: under/top 0.12, against omaat_f11's 0.21 (L24, p90 46) and its grey plinth band (400-840, 750-775) L75.",
+   "fix": "09d_suite.js:135: bring the strip forward (setback 0.13 -> 0.07, z -L + 0.56) so it shows as the thin grey line. 09d_suite.js:136: recess floor '#4a4038' -> '#5a4c40'. Target q03 under/top 0.18-0.22."
+  },
+  {
+   "severity": "low",
+   "issue": "Sun patches on the bed are hard-edged and still clip (lighting, not scored).",
+   "evidence": "q04 (600-650, 240-280) L236 and (420-480, 240-290) L243, p10 244: flat white lozenges with crisp edges. No such patches in f57 / f59.",
+   "fix": "Lighting: 12_scene.js / 04_shaders.js (sun cap or penumbra on pale fabric)."
+  }
+ ],
+ "questions": [
+  "Restructuring the duvet (chamfered slab) is the one change left that would lift the bed detail above 8.5. Is it in scope for a polish pass?"
+ ],
+ "changeVerdicts": {
+  "1 bed linen darker": "helped. Duvet L227 -> L207 (f59 L208, f_17304 L214); bed clip 31.8 % -> 20.7 %. The remaining clip is the sun patch (lighting).",
+  "2 drape tucked": "helped a little. The projecting lip is gone, but it still reads as a rigid skirt with a coplanar seam (low).",
+  "3 ottoman recess": "helped, with an overshoot. Under/top 0.40 -> 0.12 against f11's 0.21; the plinth line is hidden.",
+  "4 fShell r 0.34": "neutral. +2-3 L on the shell panels, p90 +14 in q02, no visible rim-line change."
+ }
+}
