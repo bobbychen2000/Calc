@@ -2351,3 +2351,20 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   grey at distance, the crew seat backs featureless from the cabin, the stack flank's shading.
   Verified on 61c6b1e (both tiers rebuilt on 713a65b: 2,803,875 / 2,363,498 triangles): fit_check FIT OK (no open row),
   consistency_2d3d 157 / 157, yoke_mesh_check OK, the FULL viewer_test 253 / 253.
+  Merged into main at 2f33f8e (the lead, 2026-10-25).  Toward 8.5 on top of it (A/B-gated against 2f33f8e, one lens + one
+  A/B judge a round): candidate 1 (8dc6578) -- each breaker named once on its console (CB_VOCAB 70 -> 112 names,
+  `fd_print.cb_names` over both blocks), the PCL paddle's ends sharper (PCL_PADDLE e_end 0.38 -> 0.30), the fleece's pile
+  cells stretched / warped along the flow (oct vertical stretch 1.3 -> 2.6, warp 0.5 / 0.6), a warmer base (0.255,
+  0.205, 0.205), the outer layers thinned fully at the silhouette (graze 1.0): lens 8.3 (no major), A/B 67 % (5 B, 10
+  ties, 0 A); a lighter-gap variant failed [FD-L10] (skew +0.85) and was not kept.  Candidate 2 (c392d30, 5fd7515) -- the
+  footwell fill 0.8 -> 1.6 on the pedals / linkage / foil only (FOOT_SKIP += carpet_flightdeck: carpet 23 -> 6, and the
+  pedestal metals tray_titanium / stack_gunmetal / pedestal_gunmetal: the tray had brightened 127 -> 142), four
+  implausible breaker names replaced: lens 8.3 (no major), A/B 70 % (6 B, 9 ties, 0 A).  NOT at 8.5: the judges' one
+  remaining lever is the fleece -- up close the shell fur's pile cells read as sponge / coral holes and its silhouettes
+  as stacked florets (FPI-01 / 02); capping the partings (`partCap`) or gating them to the upper pile (`partH`, both kept
+  in furPatch, off) changed nothing measurable: the holes are the pile field's own cells, so the cure is a new field (a
+  lock-strand shell), its own piece of work.  Then the footwell's linkage / foil (still near-black at the judges'
+  cameras), the PCL's satin band, the yoke grips grey at distance.
+  Verified on 5fd7515 (both tiers rebuilt: 2,803,875 / 2,363,498 triangles): fit_check FIT OK (no open row),
+  consistency_2d3d 157 / 157, yoke_mesh_check OK, the FULL viewer_test 253 / 253, web/package.py verify OK, the Artifact
+  bundle verify OK, artifact_test 76 / 76.
