@@ -42,13 +42,27 @@ const MOODS = {
   // c_27312 PSU band #c4c9cf (+11) vs q06 #e0e1e1]; binLo 0.8: the outboard bin doors' lower face (mainFS binK) [V: c_27312
   // bins L190-199 p10 168 vs q06 L211-218 p10 197; y_47301 L189 vs q16 L216] (lighting r4 medium x2). The raters' 0.72 also
   // took the q15 bins under y_47300's (L220 -> 209, p10 197 -> 177 vs photo L216 p10 200), whose bins are evenly lit [D]
+  // QA L8 (light + integration): the r4 cool shift kept for the window side only: hemiBot / wash act on the sidewall, the
+  // reveals and (half) the outboard bin doors (mainFS coolW); the seat level and the rest take hemiBotN / washN, the pre-r4
+  // values [V: q06 seat zone B-R +16 vs c_27312 +8, shell tops +23 vs +11; q15 bins +8 vs y_47300 +0..+2; q16 wall +10 vs
+  // y_47301 +14 kept] (integration L8 low, lighting L8 medium). tubSky [share, level]: the upper window tub takes the day
+  // glow's hue at 0.65 of its light (mainFS) [V: y_47303 upper tub #a4a9be L170 (B-R +25) vs q17 L188-208 (+3..+7)]. sideLed
+  // [0.48, 0.53, 0.66] -> [0.50, 0.57, 0.78], so the band under the lens keeps its blue after the ACES shoulder [V: y_47300
+  // lens band rows 130-140 #e3eaf4 / #e2e8f5 (B-R +14..+18) vs q15 #dadbdd (+2)] (lighting L8 medium) [D renders fixL8]
   boarding: { label: 'Boarding', hemiTop: [0.97, 0.99, 1.03], hemiBot: [0.31, 0.35, 0.47], wash: [0.23, 0.255, 0.32], hemiBotN: [0.36, 0.37, 0.40], washN: [0.25, 0.26, 0.28], tubSky: [0.8, 0.65], led: [1.0, 0.98, 0.92], sideLed: [0.50, 0.57, 0.78], bandCut: 0.15, binLo: 0.8, k: 1.05, exposure: 1.38, toe: 1 },
   // QA r2 (light): cruise sideLow 0.10 -> 0.30, the lavender wash reaches the window belt in THE Suite (the reveals by
   // the glass stay near-white through mainFS nearPane) [V: ml_DSC_1939-1 wall column y45 #6e9bfc (B-R +141), y150
   // #7a89be, belt y240 #888db0 (+40) vs cF03 belt #cccccf (+3)]
   // QA r4 (light): binLo 0.8 as boarding: in flight the cove-washed vault is clearly brighter than the bins [V:
   // lalf_room_119 vault L163 vs bins L97, lalf_room_120 vault L193 vs bins L120-158; c06 vault L157 vs bins L198-203]
-  cruise: { label: 'Cruise', hemiTop: [0.86, 0.88, 0.98], hemiBot: [0.18, 0.18, 0.22], wash: [0.25, 0.26, 0.30], led: [1.0, 0.98, 0.92], sideLed: [0.08, 0.14, 1.35], bandCut: 0.8, sideLow: 0.30, binLo: 0.65, fillLift: 0.45, k: 0.95, exposure: 1.12, toe: 1 },
+  // QA L8 (light): the bins are the dim layer under the cove-lit vault in every in-flight photo: hemiBot [0.24, 0.24, 0.28]
+  // -> [0.18, 0.18, 0.22], binLo 0.8 -> 0.45, ctrLo 0.5 (the centre bins' doors / undersides, mainFS binK) and fillLift 0.25
+  // (the bin doors' small-e lift stayed at the Boarding level) [V: lalf_room_119 outboard bins #5f7692 L116 / #5b636f L98,
+  // centre-bin underside #4c4e56 L79, vault #b7b1a2 L177; sany_22 centre-bin underside L68-85; tlfl_IMG_9217 #625c5a L94
+  // vs c06 bins L183 / 176 under a vault at L221, c15 centre-bin underside L183] (lighting L8 medium). The raters' fit
+  // (binLo 0.65, fillLift 0.45) gave c06 bins L155 / 161, c15 L166; 0.45 / 0.5 / 0.3 gave c06 L118 / 147, c15 L134 [D renders
+  // fixL8 t1]; seat-level thirds move <= 2 L
+  cruise: { label: 'Cruise', hemiTop: [0.86, 0.88, 0.98], hemiBot: [0.18, 0.18, 0.22], wash: [0.25, 0.26, 0.30], led: [1.0, 0.98, 0.92], sideLed: [0.08, 0.14, 1.35], bandCut: 0.8, sideLow: 0.30, binLo: 0.45, ctrLo: 0.5, fillLift: 0.25, k: 0.95, exposure: 1.12, toe: 1 },
   // QA r2 (light): ANA's full-blue phase (safety video, after take-off, early night): cove LED, sidewall lens and vault
   // saturated blue-violet, the seat zone washed blue and dim, the galley ends warm (monFill), the screens lighting their
   // surround [V: sany_47 (SANspotter Y) cove #1d21bd / #2227cb s0.85, crown #181a39, seat backs #171a7a, galley #776349,
@@ -64,7 +78,11 @@ const MOODS = {
   // QA r4 (light): the door / galley ends warm-lit, not blue: monFill [0.06, 0.05, 0.035] -> [0.20, 0.16, 0.10] and the
   // hemi x0.4 outside the seat zones (monHemi, mainFS) [V: sany_47 galley / door end #564a4d h346 s0.14, door zone
   // ~#776349 vs bl16 #393e6f h235]; scrOff 0.7: ~30 % of the seat screens lit [V: sany_47 ~6 of 25] (lighting r4 low x2)
-  blue: { label: 'Blue', hemiTop: [0.035, 0.04, 0.21], hemiBot: [0.008, 0.009, 0.035], wash: [0.015, 0.015, 0.07], led: [0.06, 0.08, 1.0], sideLed: [0.05, 0.06, 0.70], bandCut: 0.8, sideLow: 0.6, vault: [0.016, 0.018, 0.065], lowTint: [1.8, 1.7, 1.0], lowGain: 1.6, fillLift: 0.4, monFill: [0.20, 0.16, 0.10], monHemi: 0.4, cove: 0.35, k: 1, exposure: 1.7, screenGain: 0.6, scrSpill: 1, scrOff: 0.7, emisGain: 0.55, strips: true },
+  // QA L8 (light): vault [0.025, 0.028, 0.10] -> [0.018, 0.020, 0.060]: the vault centre between the cove lines read lighter
+  // and more saturated than the photo's dark crown [V: sany_47 crown (400-560, 0-150) #141631 L24 s0.58 vs blue06 (430-520,
+  // 0-60) #22266c L43 s0.68; the bins and cove already matched]; the raters' [0.016, 0.018, 0.065] read L32 s0.71 [D render
+  // fixL8 v3] (lighting L8 low)
+  blue: { label: 'Blue', hemiTop: [0.035, 0.04, 0.21], hemiBot: [0.008, 0.009, 0.035], wash: [0.015, 0.015, 0.07], led: [0.06, 0.08, 1.0], sideLed: [0.05, 0.06, 0.70], bandCut: 0.8, sideLow: 0.6, vault: [0.018, 0.020, 0.060], lowTint: [1.8, 1.7, 1.0], lowGain: 1.6, fillLift: 0.4, monFill: [0.20, 0.16, 0.10], monHemi: 0.4, cove: 0.35, k: 1, exposure: 1.7, screenGain: 0.6, scrSpill: 1, scrOff: 0.7, emisGain: 0.55, strips: true },
   // dining / sunrise, QA r2: ANA's amber phase is a saturated amber LED line on the bin lens and cove, amber-washed bin
   // faces and a much darker lower cabin, not a beige high key [V: ff_door-gap lens #ffa43d (h32 s0.76), bins #955b2d /
   // #673e1e (s ~0.7)]. Sunrise uses the same levels with a pinker LED [A: no ANA sunrise photo]
@@ -117,7 +135,13 @@ const MOODS = {
   // QA r4 (light): tub: the recessed window tub keeps LIGHT_TUNE.tubWash of a pier's light where the window light is dim
   // (mainFS tubRef) [V: ucr_the-room-cabin reveals L124-137 vs wall L147; q21 tub #b06a35 L117 s0.70 beside a pier at L190]
   // (lighting r4 medium)
-  dining: { label: 'Dining', hemiTop: [0.62, 0.30, 0.11], hemiBot: [0.21, 0.10, 0.035], binLift: [0.11, 0.075, 0.035], wash: [0.30, 0.14, 0.05], led: [0.55, 0.042, 0.009], sideLed: [1.25, 0.10, 0.02], sideLow: 0.65, sideWall: [0.6, 2.2, 4.2], bandCut: 0.2, vault: [0.32, 0.145, 0.047], vaultE: [0.14, 1], lowTint: [1.0, 1.08, 1.2], lowGain: 0.8, fillLift: 0.15, lensCore: [0, 0.55, 0.15], scrSpill: 0.5, tub: true, k: 0.9, exposure: 1.3, strips: true },
+  // QA L8 (light): binLift on the bin door faces only (mainFS: outboard binO and centre cBin, not the undersides / PSU band)
+  // and at 2x the raters' full step, [0.055, 0.04, 0.02] -> [0.22, 0.15, 0.07] (G/R 0.68, paler than hemiBot, so the bins
+  // desaturate): restricted to the doors, the step no longer lifts the seat level or the door zones; the raters' full step
+  // moved the dd left bins only L89 -> 96 [V: ucr_the-room-cabin outboard bins #9e7240 L120 s0.59; ff_seat-with-door-closed
+  // bins #b99662 L154 s0.47 vs dd #7e5227 L89 s0.69] -> dd left bins L110 s0.62, d06 median 83 (kn_room_35 68, rater cap 85),
+  // q21 median 135 (cap 138) [D renders fixL8 t2] (lighting L8 medium)
+  dining: { label: 'Dining', hemiTop: [0.62, 0.30, 0.11], hemiBot: [0.21, 0.10, 0.035], binLift: [0.22, 0.15, 0.07], wash: [0.30, 0.14, 0.05], led: [0.55, 0.042, 0.009], sideLed: [1.25, 0.10, 0.02], sideLow: 0.65, sideWall: [0.6, 2.2, 4.2], bandCut: 0.2, vault: [0.32, 0.145, 0.047], vaultE: [0.14, 1], lowTint: [1.0, 1.08, 1.2], lowGain: 0.8, fillLift: 0.15, lensCore: [0, 0.55, 0.15], scrSpill: 0.5, tub: true, k: 0.9, exposure: 1.3, strips: true },
   // night, QA r2: THE Room in service at night is near-black and neutral-warm; the light comes from the IFE screens, the
   // warm strip under each screen, small white reading lamps and amber PSU lamps [V: ucr_room-night-lighting ceiling
   // #1e1915, sidewall #24211c, bins #322a1f, PSU lamp #9e5e38, strip #ffeb97, mean RGB 39/34/33]. The blue night refs
@@ -154,8 +178,8 @@ const MOODS = {
   // [1.0, 1.3, 1.6] -> [1.0, 1.4, 1.95] [A: no ANA sunrise photo; dining's sources and levels]
   // QA r3 (light): as dining (lowTint [1.0, 1.08, 1.2] x0.8, hemiBot x1.4, vault floor / hue, bandCut 0.2) [A: no ANA
   // sunrise photo; dining's sources]
-  // QA r4 (light): binLift and tub as dining [A: no ANA sunrise photo; dining's sources]
-  wake: { label: 'Sunrise', hemiTop: [0.62, 0.30, 0.16], hemiBot: [0.21, 0.10, 0.05], binLift: [0.11, 0.075, 0.035], wash: [0.30, 0.14, 0.07], led: [0.55, 0.05, 0.03], sideLed: [1.2, 0.11, 0.06], sideLow: 0.5, sideWall: [0.42, 2.25, 2.2], bandCut: 0.2, vault: [0.32, 0.145, 0.047], vaultE: [0.14, 1], lowTint: [1.0, 1.08, 1.2], lowGain: 0.8, fillLift: 0.15, lensCore: [0, 0.55, 0.15], tub: true, k: 0.9, exposure: 1.3 },
+  // QA r4 (light): binLift and tub as dining [A: no ANA sunrise photo; dining's sources]. QA L8: binLift as dining
+  wake: { label: 'Sunrise', hemiTop: [0.62, 0.30, 0.16], hemiBot: [0.21, 0.10, 0.05], binLift: [0.22, 0.15, 0.07], wash: [0.30, 0.14, 0.07], led: [0.55, 0.05, 0.03], sideLed: [1.2, 0.11, 0.06], sideLow: 0.5, sideWall: [0.42, 2.25, 2.2], bandCut: 0.2, vault: [0.32, 0.145, 0.047], vaultE: [0.14, 1], lowTint: [1.0, 1.08, 1.2], lowGain: 0.8, fillLift: 0.15, lensCore: [0, 0.55, 0.15], tub: true, k: 0.9, exposure: 1.3 },
 };
 // winExp: the view behind the glass at interior exposure; cabin photos show day windows near-white with a glowing
 // reveal (tlfl_IMG_9217 / 9518, pane ~#eef3f8) [V]; eases back to 1 when the eye is at the window (looking out)

@@ -358,7 +358,8 @@ void main(){
     // bins from below #b3834b L138 s0.58] (lighting r4 medium). Not the whole hemiBot (the raters' fit): that lifted the
     // seat level and the door zones as well (q21 median 134 -> 142 vs ucr 86) [D]
     // QA L8 (light): the lift acts on the bin door faces only, outboard (binO, below) and centre (cBin: |x| < ~1 m above
-    // 1.62-1.70 m up to the bin tops at ~2.3 m, in the seat zones), at the full step (12_scene MOODS binLift): r4's lift on the whole lower hemisphere
+    // 1.62-1.70 m up to the bin tops at ~2.3 m, in the seat zones; not the undersides and PSU band, N.y < -0.5..-0.9, which
+    // the photos keep dark: ucr_the-room-cabin centre-bin underside #7a502a L87, ff_door-gap PSU band #603b1d L65), at 2x the step (12_scene MOODS binLift): r4's lift on the whole lower hemisphere
     // above 1.6 m stopped at 0.6 of the step because it also lifted the seat level and door zones, and moved the dd / d06
     // bins only 3-6 L [V: ucr_the-room-cabin outboard bins #9e7240 L120 s0.59, ff_seat-with-door-closed #b99662 L154 s0.47
     // vs dd #7e5227 L89 s0.69, d06 #8c5c2b L99 s0.69] (lighting L8 medium)
@@ -385,7 +386,7 @@ void main(){
     float coolW = max((1.0 - smoothstep(0.06, 0.25, xLin - abs(v_wpos.x))) * facingIn, max(recd, 0.5 * binO));
     hBot = mix(u_hemiBotN, u_hemiBot, coolW);
     vec3 wsh = mix(u_washN, u_wash, coolW);
-    vec3 hemi = mix(hBot + u_binLift * max(binO, cBin), u_hemiTop, up);
+    vec3 hemi = mix(hBot + u_binLift * max(binO, cBin) * (1.0 - smoothstep(0.5, 0.9, down)), u_hemiTop, up);
     // QA r1 (light): sz = 1 where an outboard bin and its lens stand (08_bins builds them in the seat zones only), from
     // the zone row of the window LUT. The lens band, its colour and the bin overhang shade stop at the door, galley and
     // lav zones, which stay neutral white [V: sany_10 band #525d94 under the bins while the door-3 / monument zone
