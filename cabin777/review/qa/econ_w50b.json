@@ -1,0 +1,203 @@
+{
+ "area": "econ",
+ "rater": "B",
+ "round": "w50",
+ "candidate": "58aca6d",
+ "lens": "Geometry and proportion first, then colour, materials and artefacts. Candidate: S/rC (q15-q17) and S/sC (studio). Before: S/rB and S/sB, which are w49 geometry (09a_econ.js from db946d6) on the same lighting. I read the db946d6..58aca6d diff of 09a_econ.js; only the headrest changed (cushion, wing rolls, CPL drape, fold, hem/stitch/mark, per-block hd, and the far-LOD head boxes). Scripts and crops are in S/raterB50. tri_q15/q16/q17 are render / photo / before stacks. cover17.png and cover17z.png are q17 near-right headrest crops. cov.py segments the q17 near cover (low-saturation blob) and writes masks.png. Inline q15 segmentation of the four front covers plus column profiles, and q17 column class profiles at the cover centre (x 672 render / 712 photo / 687 before). st1.png and st2.png pair every changed studio shot, after against before. A pixel diff of all 13 studio shots shows changes only in e1, e2 (top strip), e3, e4, e4b, e4c, e5 (top) and e9. e6, e7, e8, e10 and e11 are pixel-identical.",
+ "score": 8.6,
+ "calibrationNote": "One medium is closed and one has a new problem. q15 head-on (w49b-1) is fixed: the centre-block covers segment at y 244-301, 78 x 58, h/w 0.74. y_47300 is 239-292, h/w 0.75; w49 was 251-315, h/w 0.83-0.85. The top is 5 px low and the foot 9 px low, but the cover is now ~7 px (10 %) too wide, because the cushion came 3 cm forward and the centre block 2 cm up. q17 (w49b-2) did not improve and regressed in a new way. The near-side wing roll is now as proud as the cover (wing front z ~-0.155 vs CPL -0.152..-0.158). From the aisle-side camera it sits in front of the lower-right half of the flap, so the flap reads as a small lid above a big fleck ball. y_47303 shows the flap clearly in front of a slimmer roll; this is the w45 'wings hid the q17 cover' problem come back. The q17 cover blob went from 4869 to 3657 px (photo 4224) and from 98 to 78 px tall (photo 100). Its bottom is unchanged at ~229-240 (photo 280-283), and its top came down 14 px (148 -> 162; photo 183). The per-block height reads plausibly: q16 left-block covers now show back fabric above the fold, as y_47301 does, and the centre block stays high as in y_47300. Its effect on q17 is only the top offset. Nothing else changed; arm, pocket, legs and pan are pixel-identical in studio. Detail mean 8.51 (w49 8.52): headrest 8.5 -> 8.4, everything else unchanged. Overall 8.6 (-0.05). The q15 fix is real and shows in the hero head-on view. The q17 wing-roll occlusion is equally visible in the side hero view and breaks the flap-in-front read, and the q17 placement is still ~45-50 px high at the foot.",
+ "priorIssues": [
+  {
+   "id": "w49b-1 / w49a-1 (medium): q15 head-on cover too tall",
+   "status": "fixed",
+   "note": "Segmentation of the four front centre-block covers. Render: 344-421 x 244-301 and 508-585 x 244-301, 78 x 58, h/w 0.74. Outer two: top 253-256, h/w 0.58-0.63, because their lit fold top falls out of the dark mask. Photo: 355-425 x 239-292, 71 x 54, h/w 0.75-0.76 at all four. Before: 251-315, 77-82 x 64-66, h/w 0.79-0.85. Check results: h/w 0.74-0.82 met; foot within 8 px of 294 missed by 1 px (301 vs 292-293); width 70-75 missed (78). Residual width: w50b-3."
+  },
+  {
+   "id": "w49b-2 / w49a-2 (medium): q17 cover placement and lie",
+   "status": "not fixed; partly regressed (wing-roll occlusion)",
+   "note": "cov.py near-right blob, render / photo / before: bbox 633-732 x 162-240 (99 x 78), area 3657, centroid (673,198) / 674-753 x 183-283 (79 x 100), area 4224, centroid (709,231) / 639-754 x 148-246 (115 x 98), area 4869. At the cover-centre column the flap runs 163-229 (render, 66 px), 197-280 (photo, 83 px) and 150-228 (before, 78 px). The top is now 14-21 px high (was 34-35) and the foot still ~50 px high. The blob is wider than it is tall, so the check fails. New: the aisle-side wing roll stands as proud as the flap and covers its lower-right half (cover17z.png). In the photo the flap overlaps a slimmer roll that sits ~2-3 cm behind it. The convex bow shows as a vertical gradient on the visible part. See w50b-1 and w50b-2."
+  },
+  {
+   "id": "w49a-2 (medium A): wing rolls square blocks",
+   "status": "partly fixed / overshot",
+   "note": "e4_head: the rolls are now round in section, but they read as bulbous neck-pillow ends, deeper than the cushion and as proud as the cover. In y_47303 they are slim cylinders, set back from the flap. See w50b-1."
+  },
+  {
+   "id": "w49b-3 / w49a-3 (low): J moulding elbow",
+   "status": "not fixed (not touched)",
+   "note": "e7 and e3 lower half are pixel-identical to before."
+  },
+  {
+   "id": "w49b-4 / w49a-5 (low): flat pocket pouch",
+   "status": "not fixed (not touched)",
+   "note": "e6 is pixel-identical."
+  },
+  {
+   "id": "w49a-4 (low): computeNormals swallowed by a comment",
+   "status": "fixed (already in both db946d6 and 58aca6d)",
+   "note": "Not in this diff. Before and after share the fixed J shading."
+  },
+  {
+   "id": "w48b-3 / w47b-4 / w46b-1 / w41b-* (low)",
+   "status": "not fixed",
+   "note": "Unchanged."
+  },
+  {
+   "id": "w43b-L1 / w47b-1 tone (lighting, not scored)",
+   "status": "unchanged",
+   "note": "Near q17 cover median (137,142,175), G/R 1.04, against the photo's (146,165,203), G/R 1.13 (before (130,136,170))."
+  }
+ ],
+ "details": [
+  {
+   "detail": "Fabric: tick weave",
+   "score": 8.5,
+   "refs": "Unchanged."
+  },
+  {
+   "detail": "Fabric: diamond lattice",
+   "score": 8.5,
+   "refs": "Unchanged."
+  },
+  {
+   "detail": "Fabric: petal fleck",
+   "score": 8.3,
+   "refs": "Unchanged (w41b-5). Now very visible on the enlarged q17 wing roll, where the fleck reads coarse and has a few dark specks along the roll rim."
+  },
+  {
+   "detail": "Fabric: dash mosaic",
+   "score": 8.5,
+   "refs": "Unchanged."
+  },
+  {
+   "detail": "Fabric mix (backs, pans, pads)",
+   "score": 8.5,
+   "refs": "Unchanged."
+  },
+  {
+   "detail": "Headrest pad + cover",
+   "score": 8.4,
+   "refs": "Down 0.1. q15 is fixed (h/w 0.74 vs 0.75, top 5 px and foot 9 px low) but ~10 % wide. q16 left-block covers now show back above the fold, as y_47301 does. q17 regressed: the proud aisle-side wing roll hides the flap's lower-right half, the flap blob shrank to 78 px tall (photo 100), and the foot is still ~50 px high. e4: the rolls are bulbous."
+  },
+  {
+   "detail": "Pillow",
+   "score": 8.5,
+   "refs": "Unchanged."
+  },
+  {
+   "detail": "Armrests",
+   "score": 9.0,
+   "refs": "Unchanged."
+  },
+  {
+   "detail": "Belts",
+   "score": 9.0,
+   "refs": "Unchanged."
+  },
+  {
+   "detail": "Seat pan / front",
+   "score": 8.8,
+   "refs": "Unchanged."
+  },
+  {
+   "detail": "Back silhouette",
+   "score": 8.4,
+   "refs": "Unchanged. The lowered 3-seat-block head pad leaves the back top line itself unchanged (e9 diff is minor)."
+  },
+  {
+   "detail": "Rear shell / hood / back top",
+   "score": 8.3,
+   "refs": "Unchanged."
+  },
+  {
+   "detail": "Screen / handset",
+   "score": 8.3,
+   "refs": "Unchanged."
+  },
+  {
+   "detail": "Tray / pocket / AC",
+   "score": 8.5,
+   "refs": "Unchanged (e6 pixel-identical)."
+  },
+  {
+   "detail": "Legs / footrest / under-seat",
+   "score": 8.6,
+   "refs": "Unchanged."
+  },
+  {
+   "detail": "Far-LOD rows",
+   "score": 8.15,
+   "refs": "Unchanged in score. The far heads follow the per-block height; the q16 mid rows read consistently with the near LOD."
+  }
+ ],
+ "issues": [
+  {
+   "id": "w50b-1",
+   "severity": "medium",
+   "owner": "econ (09a_econ.js wing-roll loft, sx +-0.163)",
+   "title": "Regression: the aisle-side wing roll is now as proud as the cover and hides its lower-right half in q17 (the w45 problem come back)",
+   "evidence": "cover17z.png: in the render, a big fleck roll as wide as the flap covers its lower right from mid-height down. At x 700 the flap shows only y 180-206 before the roll takes over; in the photo the flap runs 183-290 there. Wing SEC z centre -0.0875 with depth 0.135 puts its front at ~-0.155, level with the CPL (-0.152..-0.158). In y_47303 the flap is clearly in front, and the roll is a slimmer cylinder ~2-3 cm behind the flap face, visible beside it. e4_head: the rolls read as bulbous neck-pillow ends.",
+   "fix": "In econSeat's wing-roll loftAt, move the sections ~2 cm aft and slim them: SEC z -0.0875 -> -0.072 and -0.085 -> -0.07 at y 0.69/0.77, with depth 0.135/0.13 -> 0.115/0.11. Scale the end sections the same way (y 0.605: z -0.08 -> -0.066, d 0.11 -> 0.095; y 0.802: -0.072 -> -0.06, d 0.105 -> 0.09). Keep width 0.076 and the round radius 0.038. That puts the wing front at ~-0.13, 2-2.5 cm behind the flap. Make the same change in the far LOD only if the head box depth needs it (it doesn't today).",
+   "check": "q17 cov.py: near flap visible to >= 250 along x 690-720, with no fleck roll pixels inside the flap's bbox below y 210. e4_head: the rolls sit visibly behind the flap face with a shadowed step."
+  },
+  {
+   "id": "w50b-2",
+   "severity": "medium",
+   "owner": "econ (09a_econ.js CPL drape, 3-seat blocks)",
+   "title": "q17 flap still short and high: the foot is ~50 px above y_47303's, and the blob is wider than it is tall",
+   "evidence": "At the cover-centre column the flap runs 163-229 (render) against 197-280 (photo); before was 150-228. Blob 99 x 78 against 79 x 100. Raising the foot 3 cm for q15 and lowering the 3-seat head 4.5 cm moved the top 14 px but left the foot where it was. Part of the offset is camera: the q17 back top is ~20-25 px higher than the photo's (w48a-L1). The rest is real: y_47303 and y_47306 show the 3-seat-block flap hanging ~3 cm below the cushion foot.",
+   "fix": "Give the drape blocks (opts.drape, n === 3) a longer flap than the centre block, since the q15 head-on constraint applies to the centre block only. When opts.drape is set, prepend CPL points [0.615, -0.150] and [0.628, -0.151], and use cz() for the hem, stitch and mark at the drape foot (y 0.617/0.636/0.6365/0.6385 as w49). Keep the w50 0.645 foot for the 4-seat block. Do it after w50b-1, so the extra length shows instead of hiding behind the roll.",
+   "check": "q17 near flap blob: taller than it is wide, height >= 95 px, bottom >= 265. q15 centre covers keep h/w 0.70-0.78."
+  },
+  {
+   "id": "w50b-3",
+   "severity": "low",
+   "owner": "econ (09a_econ.js CPL / fold width)",
+   "title": "q15 cover ~10 % wide after the cushion came forward (78 px vs 71)",
+   "evidence": "q15 front covers are 78 px wide against 71-72 in y_47300 (w49: 77-78; the w45 note targeted 71-72). In q17 the flap is 99 px wide against 79.",
+   "fix": "CPL SEC width 0.22/0.222 -> 0.205/0.207, and the fold 0.232 -> 0.215. Hem 0.218 -> 0.203, stitch 0.205 -> 0.19, foot tube +-0.104 -> +-0.097.",
+   "check": "q15 centre covers 70-74 px wide, h/w 0.74-0.80."
+  },
+  {
+   "id": "w49b-3",
+   "severity": "low",
+   "owner": "econ (09a_econ.js J moulding jp)",
+   "title": "Carried: J elbow ~50 px too far forward, bar thin",
+   "evidence": "Not touched in 58aca6d.",
+   "fix": "As w49b-3 / w49a-3.",
+   "check": "As w49b-3."
+  },
+  {
+   "id": "w49b-4",
+   "severity": "low",
+   "owner": "econ (09a_econ.js pocket pouch / mesh)",
+   "title": "Carried: pouch flat and dull, narrow side mesh",
+   "evidence": "e6 is pixel-identical to before.",
+   "fix": "As w49b-4.",
+   "check": "As w49b-4."
+  },
+  {
+   "id": "w48b-3 / w47b-4 / w46b-1 / w41b-4 / w41b-2 / w41b-5 / w41b-6",
+   "severity": "low",
+   "owner": "econ",
+   "title": "Carried: teal strap position and tone, q15 strap brightness, flat pillow plaque, centre stubs, fleck contrast (now prominent on the q17 roll), dark edge under the pan front",
+   "evidence": "Unchanged.",
+   "fix": "As before.",
+   "check": "As before."
+  },
+  {
+   "id": "w43b-L1 / w47b-1 tone",
+   "severity": "low",
+   "owner": "lighting",
+   "title": "Carried, not scored: q17 flap darker and more violet than the silver cover; q16 right-block covers dark",
+   "evidence": "Near flap median (137,142,175), G/R 1.04, against (146,165,203), 1.13.",
+   "fix": "View-dependent sheen / right-side fill.",
+   "check": "As before."
+  }
+ ],
+ "questionsForUser": [
+  "Headrest height per block (question 31): the candidate sets 3-seat blocks 4.5 cm lower and the 4-seat block 2 cm higher, to reconcile y_47300 with y_47301/47303/47306. It reads plausibly in q16. Do you accept a per-block difference, or should all blocks share one height?",
+  "Side-block lumbar pillows (question 28, carried): keep them off per y_47301 / y_47303, or restore the one y_47300 shows?"
+ ],
+ "extraRefsSearched": "No downloads. Used ref/ana photos at 930x575: y_47303 (q17 flap blob and columns), y_47300 (q15 cover segmentation) and y_47301 (q16 sanity check of per-block height)."
+}
