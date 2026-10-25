@@ -176,7 +176,7 @@ float ssaoF(vec3 P, vec3 Nf, float kR){
   float rng = u_ssao.w * kR;
   float px = ruv.y * u_sRes.y;                              // disc radius in pixels
   if (px < 2.0) return 0.0;                                 // far: the disc is under ~2 px
-  float kc = u_sTap.y > 0.0 ? min(1.0, u_sTap.y / px) : 1.0; ruv *= kc; rng *= kc;
+  float kc = u_sTap.y != 0.0 ? min(1.0, abs(u_sTap.y) / px) : 1.0; ruv *= kc; rng *= u_sTap.y > 0.0 ? kc : 1.0;
   vec2 uv0 = gl_FragCoord.xy / u_sRes.xy;
   float a0 = u_sDither * 6.2832 * fract(52.9829 * fract(dot(gl_FragCoord.xy, vec2(0.06711, 0.00584)))) + 0.39;
   float occ = 0.0, nT = max(u_sTap.x, 1.0);
