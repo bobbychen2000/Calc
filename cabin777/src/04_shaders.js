@@ -39,7 +39,7 @@ uniform vec4 u_stripP[8]; uniform vec4 u_stripA[8]; uniform vec3 u_stripCol;
 uniform vec4 u_scrP[6]; uniform vec4 u_scrN[6]; uniform vec3 u_scrCol; uniform float u_fillLift; uniform vec3 u_lensCore; uniform vec2 u_vaultE;
 uniform sampler2D u_scrMask; uniform vec4 u_scrMaskR; uniform float u_scrOff; uniform vec4 u_scrOwn; uniform float u_binLo; uniform float u_monHemi;
 uniform float u_tubWash; uniform vec3 u_binLift; uniform vec3 u_hemiBotN; uniform vec3 u_washN; uniform vec2 u_tubSky; uniform float u_ctrLo; uniform float u_ctrLift;
-uniform sampler2D u_sDepth; uniform vec4 u_sRes; uniform vec4 u_sProj; uniform vec3 u_sFwd; uniform vec3 u_sRight; uniform vec3 u_sUp; uniform vec4 u_ssao; uniform float u_sDither; uniform float u_sMix; uniform float u_sAng; uniform float u_sLow;
+uniform sampler2D u_sDepth; uniform vec4 u_sRes; uniform vec4 u_sProj; uniform vec3 u_sFwd; uniform vec3 u_sRight; uniform vec3 u_sUp; uniform vec4 u_ssao; uniform float u_sDither; uniform float u_sMix; uniform float u_sAng; uniform float u_sLow; uniform float u_sPow;
 uniform sampler3D u_ao; uniform vec3 u_aoMin; uniform vec3 u_aoSize; uniform sampler2D u_contact; uniform vec4 u_contactR; uniform float u_contactK;
 uniform sampler2DArray u_detail; uniform vec4 u_layer[${N_LAYERS}]; uniform sampler2DArray u_photo; uniform float u_photoOn;
 uniform sampler2D u_atlas; uniform float u_screenStep; uniform float u_emisGain; uniform float u_screenGain;
@@ -187,7 +187,7 @@ float ssaoF(vec3 P, vec3 Nf, float kR){
     vec2 nd = uv * 2.0 - 1.0;
     vec3 v = u_camPos + z * (u_sFwd + nd.x / u_sProj.x * u_sRight + nd.y / u_sProj.y * u_sUp) - P;
     float dl = length(v);
-    occ += clamp(((dot(v, Nf) - u_ssao.z) / max(dl, 1e-3) - u_sAng) / (1.0 - u_sAng), 0.0, 1.0) * pow(1.0 - clamp(dl / rng, 0.0, 1.0), 2.0);
+    occ += clamp(((dot(v, Nf) - u_ssao.z) / max(dl, 1e-3) - u_sAng) / (1.0 - u_sAng), 0.0, 1.0) * (u_sPow < 0.0 ? 1.0 - smoothstep(-u_sPow * rng, rng, dl) : pow(1.0 - clamp(dl / rng, 0.0, 1.0), u_sPow));
   }
   return occ * 0.125 * smoothstep(2.0, 4.0, px);
 }
@@ -519,7 +519,9 @@ void main(){
       amb = mix(amb, skyT * (dot(amb, vec3(0.2126, 0.7152, 0.0722)) * u_tubSky.y / lSky), u_tubSky.x * crownW);
     // night: the galley / lav / door zones (sz = 0) keep a dim neutral fill, the galley lights and lit bulkheads at the
     // end of the dark cabin [V: ucr_room-night-lighting far galley wall #645f57; sany_40 lit galley end] (lighting r1)
-    amb += u_monFill * (1.0 - sz) * mix(0.45, 1.0, up) * (0.3 + 0.7*ao);
+    // QA L9 (light): in Blue (u_monHemi < 1) not on the THE Suite front wall (fWall, above): its warm fill greyed the wall's
+    // blue [V: ml_DSC_1946 bulkhead s0.46-0.70] [D fixL9]; the night fill stays (Night keeps u_monHemi 1)
+    amb += u_monFill * (1.0 - sz) * (1.0 - fWall * step(u_monHemi, 0.999)) * mix(0.45, 1.0, up) * (0.3 + 0.7*ao);
     // QA r4 (light): the recessed window tub from just above the bezel to the crown (0.10-0.66 m over the pane centre),
     // where the window light is dim (sunset, closed shades: 1 - shade x the day glow share; u_tubWash is 0 outside the
     // amber moods, 12_scene MOODS tub), keeps at least

@@ -234,7 +234,7 @@ const AO_TUNE = { hemi: 0.22, bounce: 1.0, emitLens: 0.45, emitCtr: 0.35, kAttF:
 // per pixel (ssaoDither 1, mainFS ssaoF): the fixed disc drew stepped ghost outlines 1-10 cm behind the THE Suite monitor
 // and the THE Room headrest flaps [V: omaat_f13, c_27315] [D fixL9]. ssaoLow = the extra disc / range scale below the
 // headrests, off the sidewall (mainFS kR; lighting L9 low: PY contact darks) [D fixL9]
-const LIGHT_TUNE = { cove: 1.0, sheen: 1.35, sheenTint: 0.3, tubWash: 0.7, lookOut: 0.86, ssao: [0.05, 4, 0.006, 0.10], ssaoMix: 0.9, ssaoAng: 0.25, ssaoDither: 1, ssaoLow: 0.5 };
+const LIGHT_TUNE = { cove: 1.0, sheen: 1.35, sheenTint: 0.3, tubWash: 0.7, lookOut: 0.86, ssao: [0.05, 4, 0.006, 0.10], ssaoMix: 0.9, ssaoAng: 0.25, ssaoDither: 1, ssaoLow: 0.5, ssaoPow: 2 };
 // QA r3 (integration): floor contact map (computeAO): cell size (m; 6 m x 59 m -> 200 x 1973 texels, under the 2048
 // texture minimum), marking height above the floor and the darkening at a base (mainFS) [D]
 const CONTACT = { cell: 0.03, h: 0.2, k: 0.55 };
@@ -914,7 +914,7 @@ class Scene {
     if (ssao) {
       G.tex('u_sDepth', 8, this.sDepth.tex); G.set('u_sRes', [w, h, this.sDepth.w, this.sDepth.h]);
       G.set('u_sProj', [cam.proj[0], cam.proj[5], cam.proj[10], cam.proj[14]]);
-      G.set('u_sFwd', cam.fwd); G.set('u_sRight', cam.right); G.set('u_sUp', cam.up); G.set('u_sDither', LIGHT_TUNE.ssaoDither ?? 1); G.set('u_sMix', LIGHT_TUNE.ssaoMix ?? 0.8); G.set('u_sAng', LIGHT_TUNE.ssaoAng ?? 0.35); G.set('u_sLow', LIGHT_TUNE.ssaoLow ?? 0);
+      G.set('u_sFwd', cam.fwd); G.set('u_sRight', cam.right); G.set('u_sUp', cam.up); G.set('u_sDither', LIGHT_TUNE.ssaoDither ?? 1); G.set('u_sMix', LIGHT_TUNE.ssaoMix ?? 0.8); G.set('u_sAng', LIGHT_TUNE.ssaoAng ?? 0.35); G.set('u_sLow', LIGHT_TUNE.ssaoLow ?? 0); G.set('u_sPow', LIGHT_TUNE.ssaoPow ?? 2);
     }
     G.set('u_fill', this.fill ?? 0.45);   // QA r1: 0.7 flattened AO and the ceiling-to-floor falloff [V: c_27312 shell gradients]
     G.set('u_exterior', 0);
