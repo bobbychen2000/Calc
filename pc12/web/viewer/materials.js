@@ -142,7 +142,8 @@ export const CABIN_LOOK = { key: qv('cabKey', 0), diff: qv('cabDiff', [0.75, 1])
   // faded to their mean from roughness 0.15 to 0.30, and wherever a pixel spans more than ~1/100 of a stripe period)
   probe2: qv('cabProbe2', [2.0, 0.15, 0.30, 0]),
   // flight deck fix r5 (FDO4-04): the footwell's soft fill -- [diffuse boost, below WL (glTF Y), ahead of STA (glTF Z), -]
-  foot: qv('cabFoot', [0.8, 1.72, 3.95, 0]) };
+  // (first-principles judge FPH-03: the linkage / foil still a void at 0.8 -- the walls and knee areas stay skipped)
+  foot: qv('cabFoot', [1.6, 1.72, 3.95, 0]) };
 U.cabinShade.value.set(...CABIN_LOOK.shade);
 U.cabinProbe.value.set(...CABIN_LOOK.probe);
 U.cabinProbe2.value.set(...CABIN_LOOK.probe2);
@@ -499,7 +500,7 @@ U.cabinFormA.value.forEach((v, i) => v.set(...CABIN_LOOK.formA[i]));
 U.cabinFormB.value.forEach((v, i) => v.set(...CABIN_LOOK.formB[i]));
 U.cabinFormD.value.forEach((v, i) => v.set(...CABIN_LOOK.formD[i]));
 U.cabinFormC.value.set(...CABIN_LOOK.formC);
-const FOOT_SKIP = new Set((Q_M.get('footSkip') ?? 'lining_flightdeck,fd_cove,panel_dark').split(',').filter(Boolean));
+const FOOT_SKIP = new Set((Q_M.get('footSkip') ?? 'lining_flightdeck,fd_cove,panel_dark,carpet_flightdeck').split(',').filter(Boolean));
 // the satin / gloss trim of the flight deck keeps its reflections inside (FD-J10: the facing weights cut the titanium,
 // the gunmetal, the bezels, the black leather and the displays to flat matte); the sky law and the occlusion still apply
 // (+ the flight deck's shared detail materials (seed) and the geometry tracks' glossy ones: the annunciator / key caps,
@@ -683,7 +684,7 @@ const VIEWER = {
       // darkening, tilt (grazeFlat) and sheen growth up the pile (grazeSheen) flattened toward the silhouette; was 0.55 /
       // 0.25 / 0 / 0 / 0.  A per-pixel dithered coverage (dither: true) and the band at 0.55 put sparse bright tips into
       // [FD-L10]'s silhouette band at panel_408b (high-pass skew +1.1 .. +1.6; look-dev ld3 a0-a2 / u0-u2))
-      graze: 1.0, grazeN: 0.4, grazeW: 0.1, grazeFlat: 0.6, grazeSheen: 0.6,
+      graze: 1.0, grazeN: 0.4, partCap: 0.25, grazeW: 0.1, grazeFlat: 0.6, grazeSheen: 0.6,
       t: [0.05, 0.75, 0.9], curl: [55, 0.8, 5.0], lump: [40, 0.10, 0.10], part: [[30, 0.2, 0.82, 40, 0.55, 1.3],
         [60, 0.15, 0.85, 80, 0.55, 1.5]], fray: [1100, 0.1], ao: [0.34, 1.13, 1.8], tilt: 0.55,
       clump: [[28, 0.005, 1.3], [65, 0.0018, 1.3]], sheen: [0.5, 1.1], far: [2.2, 3.2] },
