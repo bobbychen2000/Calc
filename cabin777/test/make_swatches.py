@@ -394,9 +394,11 @@ def y_photo(name):
         r = np.where((hi & ~core)[..., None], m + 0.5 * (r - m), r)   # w31 (w30a-1): 0.55 -> 0.5 (chunky at row distance)   # w30 (w29a-3 / w29b-2): 0.4 -> 0.55 (strokes a hair fine, bright 0.09 vs 0.14)
         # w30 (w29a-3 / w29b-2): the ground was too light (q15 back p10 52-56 vs 30-46, p90/p10 2.1-2.5 vs 2.9-3.4) with the
         # stroke cover on target -> deepen the sub-median channels only [D]
-        # w31 (w30a-1 / w30b-2): per-channel it went near-black / ultramarine close up -> scale luminance only, deepening stops at 0.5 m;
+        # w31 (w30a-1 / w30b-2): per-channel it went near-black / ultramarine close up -> scale luminance only, deepening stops at 0.5 m (w32, w31a-1 / w31b-3: 0.42 m, row distance washed);
         # the row-distance contrast now comes from the 0.5-2.5 cm band boost below (tick 0.1 -> 0.35)
-        lu = r.mean(2, keepdims=True); r = np.where(lu < m, r * np.maximum(m - 1.25 * (m - lu), np.minimum(lu, 0.5 * m)) / np.maximum(lu, 1e-4), r)
+        # w32 (w31b-3): strokes grey (B/R 1.3 vs >= 1.5, y_47300 strokes 126,145,193) -> the above-median blue x1.08
+        r = np.where((r.mean(2) > m)[..., None], r * np.array([1.0, 1.0, 1.08], np.float32), r)
+        lu = r.mean(2, keepdims=True); r = np.where(lu < m, r * np.maximum(m - 1.25 * (m - lu), np.minimum(lu, 0.42 * m)) / np.maximum(lu, 1e-4), r)
     if name == 'y_diamond':
         # econ w25 (w23b-2): the lattice washed out on the bluer #5f6ba0 ground (e4 bright 0.03 vs 0.11 in y_47306) -> 1.25x [D]
         # w30 (w29a-2 / w29b-7): the stars read bold and few at row distance (q15 back coverage 0.23 vs 0.12, blobs 21 vs 7 px)
@@ -418,7 +420,7 @@ def y_photo(name):
     # w20 (gap19): the 0.5-2.5 cm band (columns, flecks, dashes) is what survives at row distance; boost it in log luminance and
     # damp the < 1.2 mm JPEG grain (tile CV at 150 px/m: tick 0.31 vs 0.46-0.49 in y_47300, fleck 0.31 vs 0.84) [D]
     # w20 A + B: the full boost overshot (q15 tick bright 0.15 vs 0.083, fleck 0.20 vs 0.154) -> half on tick / fleck
-    gb, gf = {'y_tick': (0.35, 0.3), 'y_fleck': (0.6, 0.0), 'y_mosaic': (0.6, 0.2)}.get(name, (0.0, 0.0))
+    gb, gf = {'y_tick': (0.45, 0.3), 'y_fleck': (0.6, 0.0), 'y_mosaic': (0.6, 0.2)}.get(name, (0.0, 0.0))
     if gb or gf:
         lg = np.log(np.maximum(r.mean(2), 1e-3)); ppm = S / size
         b1, b2, b0 = _blur_wrap(lg, 0.005 * ppm), _blur_wrap(lg, 0.025 * ppm), _blur_wrap(lg, 0.0012 * ppm)

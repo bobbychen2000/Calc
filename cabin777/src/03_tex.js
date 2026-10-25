@@ -48,7 +48,7 @@ const PHOTO_GAIN = {
   28: 0.3,    // monuments w9: tile SD 0.10 -> ~3 % smudge mottle (sans_38 cart 4.8 %, sansY_44 oven ~10 %; 0.5 read as stains) [D]
   33: 1.1,   // monuments w18 (w17a): grain SD 3.3 at layer 30's 0.5 vs 6.5-9.8 in samchui_render_11 / lalf_133 -> ~2.2x [D]
   30: 0.5,   // room w15a/b: doors still 0.84-0.92 of the cabinet luma in q06 (c_27312 0.6), dash streaks at aisle distance; room w14a/b: aisle doors near-plain cream, the grain only faint (c_27312 (209,207,198), c_27314) [D]
-  34: 0.8,   // econ w28 (w27a-1 / w27b-1): 0.45 left the lattice flat (p90/50 1.15 vs 1.37); 0.65 still 1.23; econ w27 (w26a-1 / w26b-1): pan stars bright 0.21 vs 0.09, p90/50 1.72 vs 1.37 in y_47300 [D]
+  34: 0.9,   // econ w32 (w31a-4 / w31b-2): the 0.7x star band (w30) left the pan washed out at 0.8; econ w28 (w27a-1 / w27b-1): 0.45 left the lattice flat (p90/50 1.15 vs 1.37); 0.65 still 1.23; econ w27 (w26a-1 / w26b-1): pan stars bright 0.21 vs 0.09, p90/50 1.72 vs 1.37 in y_47300 [D]
   29: 0.4,   // room w13a: read as hard gingham at 0.55 -> -30 %; room w12: kn_17 close-up +-25 % linear, but tpg_81 / tpg_46 at seat distance read about half that [D]
   36: 0.25,   // exterior w18: 0.35 read as dirt in c_nacelle_left; tile SD 0.08 -> ~2 % mottle (_136 cowl panels 2-4 %) [D]
   35: 3.2,   // exterior w19: rows 0.95 of the panel at 2.6 vs KN41 ~0.80 (A / B w18); exterior w18: hard 1 px dots at 0.58 of the panel at 4.0 (B w17, KN41 ~0.8); exterior w17: 1.0-1.8 averaged out at the near flap's ~6 mm/px (t17; 8 showed 1 px dots); dots ~0.5 of the paint (KN41 near spoiler rows) [D]
