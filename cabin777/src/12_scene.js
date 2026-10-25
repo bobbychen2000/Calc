@@ -932,7 +932,7 @@ class Scene {
     if (ssao) {
       G.tex('u_sDepth', 8, this.sDepth.tex); G.set('u_sRes', [w, h, this.sDepth.w, this.sDepth.h]);
       G.set('u_sProj', [cam.proj[0], cam.proj[5], cam.proj[10], cam.proj[14]]);
-      G.set('u_sFwd', cam.fwd); G.set('u_sRight', cam.right); G.set('u_sUp', cam.up); G.set('u_sDither', LIGHT_TUNE.ssaoDither ?? 1); G.set('u_sMix', LIGHT_TUNE.ssaoMix ?? 0.8); G.set('u_sAng', LIGHT_TUNE.ssaoAng ?? 0.35); G.set('u_sLow', LIGHT_TUNE.ssaoLow ?? 0); G.set('u_sLowZ', this.layout.z20 ?? 0); G.set('u_sIn', LIGHT_TUNE.ssaoIn ?? 0.5); G.set('u_sEase', LIGHT_TUNE.ssaoEase || [0.05, 0.4]); G.set('u_sTap', [LIGHT_TUNE.ssaoTaps ?? 8, LIGHT_TUNE.ssaoCap ?? 0, LIGHT_TUNE.ssaoCapK ?? 1]);
+      G.set('u_sFwd', cam.fwd); G.set('u_sRight', cam.right); G.set('u_sUp', cam.up); G.set('u_sDither', LIGHT_TUNE.ssaoDither ?? 1); G.set('u_sMix', LIGHT_TUNE.ssaoMix ?? 0.8); G.set('u_sAng', LIGHT_TUNE.ssaoAng ?? 0.35); G.set('u_sLow', LIGHT_TUNE.ssaoLow ?? 0); G.set('u_sLowZ', this.layout.z20 ?? 0); G.set('u_sIn', LIGHT_TUNE.ssaoIn ?? 0.5); G.set('u_sEase', LIGHT_TUNE.ssaoEase || [0.05, 0.4]); G.set('u_sTap', [LIGHT_TUNE.ssaoTaps ?? 8, LIGHT_TUNE.ssaoCap ?? 0]);
     }
     G.set('u_fill', this.fill ?? 0.45);   // QA r1: 0.7 flattened AO and the ceiling-to-floor falloff [V: c_27312 shell gradients]
     G.set('u_exterior', 0);

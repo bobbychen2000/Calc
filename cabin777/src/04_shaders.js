@@ -39,7 +39,7 @@ uniform vec4 u_stripP[8]; uniform vec4 u_stripA[8]; uniform vec3 u_stripCol;
 uniform vec4 u_scrP[6]; uniform vec4 u_scrN[6]; uniform vec3 u_scrCol; uniform float u_fillLift; uniform vec3 u_lensCore; uniform vec2 u_vaultE;
 uniform sampler2D u_scrMask; uniform vec4 u_scrMaskR; uniform float u_scrOff; uniform vec4 u_scrOwn; uniform float u_binLo; uniform float u_monHemi;
 uniform float u_tubWash; uniform vec3 u_binLift; uniform vec3 u_hemiBotN; uniform vec3 u_washN; uniform vec2 u_tubSky; uniform float u_ctrLo; uniform float u_ctrLift;
-uniform sampler2D u_sDepth; uniform vec4 u_sRes; uniform vec4 u_sProj; uniform vec3 u_sFwd; uniform vec3 u_sRight; uniform vec3 u_sUp; uniform vec4 u_ssao; uniform float u_sDither; uniform float u_sMix; uniform float u_sAng; uniform float u_sLow; uniform float u_sIn; uniform vec2 u_sEase; uniform vec3 u_sTap;
+uniform sampler2D u_sDepth; uniform vec4 u_sRes; uniform vec4 u_sProj; uniform vec3 u_sFwd; uniform vec3 u_sRight; uniform vec3 u_sUp; uniform vec4 u_ssao; uniform float u_sDither; uniform float u_sMix; uniform float u_sAng; uniform float u_sLow; uniform float u_sIn; uniform vec2 u_sEase; uniform vec2 u_sTap;
 uniform sampler3D u_ao; uniform vec3 u_aoMin; uniform vec3 u_aoSize; uniform sampler2D u_contact; uniform vec4 u_contactR; uniform float u_contactK;
 uniform sampler2DArray u_detail; uniform vec4 u_layer[${N_LAYERS}]; uniform sampler2DArray u_photo; uniform float u_photoOn;
 uniform sampler2D u_atlas; uniform float u_screenStep; uniform float u_emisGain; uniform float u_screenGain;
@@ -175,16 +175,23 @@ vec3 coveSpec(vec3 P, vec3 N, vec3 V, vec3 R, float rough, vec3 F0, float NdV){
 // headrest flap on all 64 seats: q10 x 650 rows 398-410 L49-57 vs 84-91 without it) and near the eye, where the 5 cm disc
 // spans 50-100 px, each tap painted a flat band tens of px wide (y_aisle_fwd curtain pleats, row 300: 13 steps > 6 L, max
 // 101 vs 9 / 53 without the AO) [V: c_27315 no band; integ8 q10_flap4x, curtain_zoom]. Now u_sTap.x = 12 taps (steps of
-// 1/12; the loop takes up to 16) and the disc and range capped at u_sTap.y = 16 px on screen (a surface 0.3 m from the eye no longer spreads its taps
-// over 100 px), strength 6 -> 8 for the contact lines (12_scene LIGHT_TUNE). The raters' fix (an R8 AO target with the
-// per-pixel turn and a 4 x 4 depth-aware blur) adds full-screen passes, which this run's brief rules out [D fixL10 t1-t11]
+// 1/12; the loop takes up to 16) and the disc and range capped at u_sTap.y = 16 px on screen (a surface 0.3 m from the eye
+// no longer spreads its taps over 100 px; aft of THE Room only above the seat backs, see below), strength 6 -> 8 for the
+// contact lines (12_scene LIGHT_TUNE). The raters' fix (an R8 AO target with the per-pixel turn and a 4 x 4 depth-aware
+// blur) adds full-screen passes, which this run's brief rules out (questions_lighting 13). Leaving every surface within
+// ~0.75 m uncapped kept the q14 seat shells' shade but brought the curtain stripes back (y_aisle_fwd 19 steps, max 117)
+// [D fixL10 t1-t19]
 float ssaoF(vec3 P, vec3 Nf, float kR){
   float dep = dot(P - u_camPos, u_sFwd);
   vec2 ruv = u_sProj.xy * (0.5 * u_ssao.x * kR / max(dep, 0.05));
   float rng = u_ssao.w * kR;
   float px = ruv.y * u_sRes.y;                              // disc radius in pixels
   if (px < 2.0) return 0.0;                                 // far: the disc is under ~2 px
-  float kc = u_sTap.y > 0.0 ? pow(min(1.0, u_sTap.y * kR / px), u_sTap.z) : 1.0; ruv *= kc; rng *= kc;   // (QA L10) screen-space cap (x kR)
+  // (QA L10) screen-space cap; aft of THE Room only above the seat backs (1.1-1.3 m): below them the PY / economy seat joints
+  // keep the full disc (their contact lines are already short of the photos'; capped, the q14 seat shells lost theirs)
+  float kc = u_sTap.y > 0.0 ? min(1.0, u_sTap.y / px) : 1.0;
+  kc = mix(1.0, kc, max(1.0 - step(u_sLowZ, P.z), smoothstep(1.1, 1.3, P.y)));
+  ruv *= kc; rng *= kc;
   vec2 uv0 = gl_FragCoord.xy / u_sRes.xy;
   float a0 = u_sDither * 6.2832 * fract(52.9829 * fract(dot(gl_FragCoord.xy, vec2(0.06711, 0.00584)))) + 0.39;
   float occB = 0.0, occX = 0.0, nT = max(u_sTap.x, 1.0);
