@@ -21,7 +21,7 @@ Object.assign(SEATMAT, {
   // omaat_f57 niche L70 vs cap L135; w7 rendered 0.84-1.0 (one beige mass, w8b). Neutral-warm per the official photo [V]
   // w9: caps a middle hue between the official neutral (f_17313 #bfb9b2) and the in-flight olive-khaki (f60 / f57 R-B ~40), since
   // every real photo agrees on a warmer cap than the w8 render (R-B 16) [D]; body a touch warmer with it
-  fShell: { c: '#59534b', r: 0.45, l: LAYER.plastic }, fCap: { c: '#8f8a76', r: 0.42, l: LAYER.plastic },
+  fShell: { c: '#59534b', r: 0.34, l: LAYER.plastic },   /* polishA (from_integration r1): satin, sheen lines on the shell rims (omaat_f2 / f5, f_17301) [V] */ fCap: { c: '#8f8a76', r: 0.42, l: LAYER.plastic },
   fInner: { c: '#5e5751', r: 0.5, l: LAYER.plastic },        // w9: aisle box / ottoman tray ~1.1-1.35x the shell (f_17313), rendered 1.7x [V]
   fConsole: { c: '#615a54', r: 0.45, l: LAYER.plastic },     // w9: niche / fascia / module ~0.65 of the cap (omaat_f57 module/cap 89/133; rendered 0.9) [V]
   fFlank: { c: '#33291f', r: 0.38, l: LAYER.fWood },          // w7: near-black straight-grain flanks beside the leaves (omaat_f60 flank/field 0.39); w12: 0.62 in a fairer band (w12a) [V]
@@ -130,7 +130,10 @@ function suiteUnit(opts = {}) {
   // pb_30) [V shape, A size]
   B.add(gRBox(ow, 0.05, 0.52, 0.01, 1), M4.trs(ox, 0.335, -L + 0.39), SEATMAT.fInner);
   B.add(gRBox(ow + 0.01, 0.035, 0.025, 0.008, 1), M4.trs(ox, 0.33, -L + 0.645), SEATMAT.fConsole);
-  B.add(gRBox(ow, 0.05, 0.40, 0.008, 1), M4.trs(ox, 0.025, -L + 0.33), SEATMAT.fInner);
+  // polishA (from_integration r2/r3): a 0.03 plinth strip set back 0.13 from the tray lip over a dark recess floor, so the void
+  // under the tray reads dark (omaat_f11: recess #1c1610 at ~0.2 of the cushion, a thin grey plinth line at the floor) [V shape, A size]
+  B.add(gRBox(ow, 0.03, 0.025, 0.006, 1), M4.trs(ox, 0.015, -L + 0.50), SEATMAT.fInner);
+  B.add(gBox(ow, 0.006, 0.36), M4.trs(ox, 0.003, -L + 0.31), SEATMAT.fConsoleLow);
   B.add(gBox(ow, 0.28, 0.01), M4.trs(ox, 0.19, -L + 0.135), SEATMAT.fConsoleLow);
   B.add(gLoft(cushionSecs(ow - 0.01, 0.52, 0.08, -0.04, { edge: 0.025, r: 0.025 }), 3), M4.trs(ox, 0.40, -L + 0.39), SEATMAT.fFabric);
   if (!lod) for (const s of [-1, 1]) B.add(gBox(0.04, 0.004, 0.2), M4.trs(ox + 0.12 * s, 0.443, -L + 0.42), SEATMAT.strap);
@@ -294,21 +297,21 @@ function suiteUnit(opts = {}) {
     // w5: white pad narrower than the tweed bed and offset to the window side, so a ~0.10 tweed margin and the black belt show on
     // the aisle side (omaat_f57) [V]
     B.add(gRBox(SW, 0.05, 1.96, 0.015, 1), M4.trs(seatX - 0.01, 0.405, -1.08), SEATMAT.fFabric);
-    B.add(gLoft(cushionSecs(SW - 0.10, 1.96, 0.06, -0.03, { edge: 0.03, r: 0.035, crown: 0.004 }), 3), M4.trs(seatX - 0.06, 0.44, -1.08), { c: '#f0efea', r: 0.9, l: LAYER.fabric });
+    B.add(gLoft(cushionSecs(SW - 0.10, 1.96, 0.06, -0.03, { edge: 0.03, r: 0.035, crown: 0.004 }), 3), M4.trs(seatX - 0.06, 0.44, -1.08), { c: '#d6d2ca', r: 0.9, l: LAYER.fabric });   // polishA: was #f0efea, clipped L225-227 in q04 vs f_17304 L187, omaat_f59 L200 (from_integration r1-r3) [V]
     B.add(gRBox(ow, 0.44, 0.9, 0.03, 1), M4.trs(ox, 0.22, -1.40), SEATMAT.fInner);
     // w6: duvet across the whole pad over the foot half, draping onto the tweed margin on the aisle side (omaat_f57 / f58 / f59)
     // [V shape, A size]; w7: lofted (~0.065 + crown, soft 0.06 edges), a shade greyer than the pad, the full bed width with a 0.14 drape over the
     // aisle edge and a turned-down corner - the w6 slab vanished white-on-white (w7a);
     // the seat belt lies across the bare pad between the pillows and the fold (omaat_f57) [V]
-    const duv = { c: '#d2cec6', r: 0.95, l: LAYER.fabric }, dw = SW, dx = seatX - 0.01, xe = dx + dw / 2, dz0 = -0.92, dl = 1.14;
+    const duv = { c: '#c4c0b8', r: 0.95, l: LAYER.fabric }, dw = SW, dx = seatX - 0.01, xe = dx + dw / 2, dz0 = -0.92, dl = 1.14;
     B.add(gLoft(cushionSecs(dw, dl, 0.05, -0.03, { edge: 0.04, r: 0.05, crown: 0.012 }), 3), M4.trs(dx, 0.49, dz0 - dl / 2), duv);   // w10: ~0.04 thick, not a second mattress (w10b)
     if (!lod) {
       // w9: the turned-down diagonal corner at the head end on the aisle side shows the lighter underside (omaat_f57); the fold
       // band and crease ridges read as a slab and rods (w8 / w9a)
-      B.add(gExtrude([[xe - 0.36, -dz0 + 0.04], [xe - 0.06, -dz0 + 0.04], [xe - 0.06, -dz0 + 0.34]], 0.006), M4.trs(0, 0.527, 0, 0, -Math.PI / 2), { c: '#f0efea', r: 0.9, l: LAYER.fabric });   // w12: bare sheet at the corner
-      B.add(gExtrude([[xe - 0.36, -dz0 + 0.04], [xe - 0.06, -dz0 + 0.34], [xe - 0.36, -dz0 + 0.34]], 0.006), M4.trs(0, 0.533, 0, 0, -Math.PI / 2), { c: '#b9b5ad', r: 0.95, l: LAYER.fabric });   // folded flap, underside up (f57, w12b)
+      B.add(gExtrude([[xe - 0.36, -dz0 + 0.04], [xe - 0.06, -dz0 + 0.04], [xe - 0.06, -dz0 + 0.34]], 0.006), M4.trs(0, 0.527, 0, 0, -Math.PI / 2), { c: '#d6d2ca', r: 0.9, l: LAYER.fabric });   // w12: bare sheet at the corner (polishA: pad tone)
+      B.add(gExtrude([[xe - 0.36, -dz0 + 0.04], [xe - 0.06, -dz0 + 0.34], [xe - 0.36, -dz0 + 0.34]], 0.006), M4.trs(0, 0.533, 0, 0, -Math.PI / 2), { c: '#aca89f', r: 0.95, l: LAYER.fabric });   // folded flap, underside up (f57, w12b); polishA: kept ~0.88x the darker duvet (w13a)
       B.add(gRBox(0.06, 0.012, 0.42, 0.006, 2), M4.trs(xe - 0.21, 0.528, dz0 - 0.19, 135 * DEG), duv);   // w11: greyer underside + fold on the diagonal (f57); w12: a broad low roll in the duvet colour (a thin ridge read as a label line)
-      B.add(gRBox(0.014, 0.15, dl, 0.006, 1), M4.trs(xe + 0.005, 0.445, dz0 - dl / 2), duv);                                         // aisle drape
+      B.add(gRBox(0.022, 0.12, dl - 0.05, 0.010, 2), M4.trs(xe + 0.006, 0.43, dz0 - dl / 2 - 0.01), duv);                              // aisle drape, tucked under the rounded duvet edge (polishA: w13a's crisp ledge)
       const bz = -0.80, bx = seatX + SW / 2 - 0.21, ba = 25 * DEG;
       for (const sg of [-1, 1]) B.add(gBox(0.035, 0.004, 0.16), M4.trs(bx + sg * 0.09 * Math.cos(ba), 0.476, bz - sg * 0.09 * Math.sin(ba), Math.PI / 2 + ba), SEATMAT.black);
       B.add(gRBox(0.05, 0.012, 0.035, 0.005, 1), M4.trs(bx, 0.48, bz), SEATMAT.buckle);
