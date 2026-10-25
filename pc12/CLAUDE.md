@@ -2286,3 +2286,51 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   the lead's warnings), [AVX-16b] the same over the rest of the section ([AVX-14]'s frames, the screenshots' uploads
   right after real draws; the lead's review: the row had read the console before them; --only avx 18 / 18 with it).  Verified: --only avx 17 / 17, --only sound 25 / 25, --only picture 15 / 15,
   avx_model_test 34 / 34, web/package.py verify OK, the Artifact bundle verify OK, artifact_test 76 / 76.
+- First-principles flight deck (track 3, 2026-10-24/25; owner 2026-10-18 "construct in first principles", 2026-10-19 "Show
+  me some printed legends!"; branch claude/pc12-fd-first-principles).  A1: `model/fd_detail_a.py` split by area into
+  `fd_kit` (frames, sections, knobs, `flush_screw`), `fd_footwell`, `fd_panel`, `fd_pedestal` (fd_detail_a re-exports
+  them; test/fd_identity.py: 173 flight-deck meshes byte-identical).  A3 PRINTED LEGENDS: `model/fd_print.py` -- one
+  RGBA atlas (4096^2, half size on the light tier; shelf-packed online, cells deduplicated) drawn from stroke fonts:
+  real generic English placard text (owner 2026-10-24 "Real English words": switch / breaker / scale / limitation
+  labels, VOCAB / CB_VOCAB for prints without their own `text`; no brands -- the first invented glyph set "read
+  Russian"), group frames with titles, tick scales, dimmer arcs, dots, chevrons, stitch strips, two-ink placards; the
+  decals (material `legend_print`, alpha-blended, assemble.TEXTURES / ALPHA; viewer CABIN_TRIM [0, 1.15]) lie 0.15 mm
+  over planar faces, 0.25 mm over curved maps (`decal_map`), stuck-on placards 0.4 mm -- they replace every floating
+  light_white strip on the panel, GFC 700 (keys / knobs), eyebrow, rocker caps, quadrant, trim panel, stack, CB panels
+  (a label per breaker), overhead (one printed plate), sills, ledge / limitations placards, pull paddles, footwell.
+  A2 csk flush screws on the plates.  A4 / A6 tables (interior.py, sheet L6C rev A "FLIGHT DECK CONSTRUCTION & FINISH",
+  drawing/fd_construction_sheet.py): FD_CONSTRUCTION (construction / finish / edges / printing / materials per part),
+  CREW_SEAT sheepskin_hide 4 + sheepskin_pile 30 (= sheepskin_t), PEDESTAL rim (14 x 6, R 20 corners, top rolled R 3:
+  the quadrant frame's cast section) and blend (R 12 front edges, R 8 fillets at the stack profile's kinks); L6 / L6B
+  unchanged.  A5 test/fit_fd_p.py (run by fit_check): 34 prints on their surfaces (<= 0.8 mm), 35 knife-edge ratchet
+  (188 m of mid-air open edges in the flight deck's own meshes), 36 every flight-deck material in FD_CONSTRUCTION.
+  Part B (judge-driven, 4 rounds of a fresh flight-deck lens judge + a realism A/B judge at 15 views -- the crew /
+  cabin stops, Cockpit, panel_408b, 10 close-ups; test/fd_cap.py, dev GLBs by test/fd_dev.py): the quadrant plate
+  charcoal (a neutral base reads navy under the cool shade light: the warm base kept), the stack a mid mauve satin
+  metal, the flap lever a flat 30 x 28 x 12 paddle with FLAP printed, the overhead bezel 12 -> 9 mm and outlets x0.8
+  with louvred rims, the windshield bus bars 4 mm inside the moulding (9 mm read as a wire in the glass), the crew
+  backs' rear seams tone-on-tone, PCL metallic pewter, the eyebrow fascia lighter, the carpet neutral, the titanium's
+  brush stronger; FLEECE (viewer, as shipped): 8 mm pile, 20 shell layers (8 on phones), 550 / 380 per m octaves, root
+  and lowest layers 0.40 (ao [0.40, 1.13, 1.8]), the clumps' lit / shaded relief (28 / 65 per m, 5 / 1.8 mm), lumps
+  +-10 %, partings 0.2 / 0.15, base (0.225, 0.188, 0.205), CABIN_TRIM 0.58 (a 160 / m curl octave read as foam, a soft
+  head-on coverage edge -- furPatch q.soft, kept as an option -- as felt: both off; taller / lighter piles failed
+  [FD-L10b]'s close-range skew); also 'fd_consoles:lining_flightdeck' fill 0.23 ([FD-L11]), leather_crew_shell [0, 0.8]
+  ([T4] fd_cabin).  Scores: the flight-deck lens 7.4 /
+  7.6 / 7.4 / 7.4 (rounds 1-4: NOT at 8 -- open majors: the fleece's close-range texture, P1046409's curly locks vs a
+  fine plush pile, and the footwell reading empty against P1046408's lit linkage, which [FD-L11]'s near-black knee
+  areas hold down); the realism A/B judge preferred the rebuild in every round (70 / 85 / 85 / 90 %, round 4: 11 views
+  B, 4 ties, none A).  T-LIGHT: `?fp=1` (materials.js FP_LIGHT) lights the interior by the cabin law alone, no per-part
+  / per-material hand trims; at panel_408b it lifted the footwell (8 -> 12), dimmed the yoke cover and flattened the
+  hood against P1046408: not shipped (the lead's rule: only if it wins the A/B).  build.YOKE_BUDGET 43k -> 43.2k (the
+  lost yoke mesh cache re-meshed here gives 43,008 triangles a yoke against 42,868).  Interior photos re-fetched:
+  P1046401-11 (Commons thumbnails, thumb.wikimedia.org: upload.wikimedia.org refused scripted fetches); the AOPA and
+  Pilatus overhead / throttle photos were not found.
+  Merged claude/pc12-modeling-migration-jcghrf at 676e0f4 (the live avionics: main.js keeps it with 20 fur layers;
+  materials.js CABIN_TRIM leather 0.93 from main + leather_crew_shell).  Both tiers rebuilt on the merge (01218cb):
+  2,803,875 triangles / 50.23 MB, light tier 2,363,498 / 42.07 MB, interior 933,880 of 951,400 (flight_deck 218,444).
+  Verified on that build: fit_check FIT OK (no open row; fit_fd_p 34-36 incl. 35 knife edges 187.3 of 188 m),
+  consistency_2d3d 157 / 157, yoke_mesh_check OK, drawing.master (L1 / L3 / L5 SVGs differ from main's committed ones by
+  main's own fuselage edits, the rest PDF timestamps: left alone), the FULL viewer_test 253 / 253 (fdlook [FD-L10]
+  skew +0.55 / p10 101, [FD-L10b] cush_close -0.38 / -0.30, seats_aft -0.55 / -0.32, [FD-L11] knee boxes 12 / 14,
+  console face 22.8), web/package.py verify OK (meshopt 18.64 + 15.91 MB), artifact_test 76 / 76.  Final captures:
+  out/tmp/fp/final (judges' verdicts out/tmp/fp/judge/final_*.md).
