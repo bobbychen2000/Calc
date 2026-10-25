@@ -425,7 +425,8 @@ void main(){
     // end of the dark cabin [V: ucr_room-night-lighting far galley wall #645f57; sany_40 lit galley end] (lighting r1)
     amb += u_monFill * (1.0 - sz) * mix(0.45, 1.0, up) * (0.3 + 0.7*ao);
     // QA r4 (light): the recessed window tub from just above the bezel to the crown (0.10-0.66 m over the pane centre),
-    // where the window light is dim (sunset, night, closed shades: 1 - shade x the day glow share), keeps at least
+    // where the window light is dim (sunset, closed shades: 1 - shade x the day glow share; u_tubWash is 0 outside the
+    // amber moods, 12_scene MOODS tub), keeps at least
     // u_tubWash (0.7) of the diffuse light of an unbaked cream face (07_shell MAT.reveal #ece4d5) under a pier's hemi + wash
     // (tubRef, applied to the diffuse term below). 07_shell bakes the tub x0.38-0.55 darker just above the bezel against
     // the day window glow; with the glow dim it went burnt-orange / near-black beside a pale pier [V: ucr_the-room-cabin

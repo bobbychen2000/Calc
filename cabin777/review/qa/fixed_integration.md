@@ -227,3 +227,109 @@ from_* items (to lighting / integration):
   18 (wing hairline aliasing, MSAA) and 19 (nav light on the upper tip, optional): not done.
 - from_monuments w13-15 (q19 blow-out, door-1 fWood streaks): not re-rated this round.
 - from_shell w15 (door glass flat white, creams neutral, dado grille dark): not changed this round.
+
+## Lighting run 2, L7 (lighting 6.8 + integration 6.9 raters; from_* items addressed to lighting / integration)
+
+Code: `04_shaders.js`, `12_scene.js` (no `13_app.js` change). The run started on 836b636 (polish B in). Snapshot commits
+a8205ea..9d197db hold intermediate states (one fixer stopped by an outage after three candidates, a second one finished).
+Renders in the scratchpad: qa/fixL7/before (836b636), after1-after5 (after5 = this commit; built into b_after5), extra mood
+shots from qa/fixL7/tools/x.json (dd, d06, c06, blue06, bl16, n16, nF03). Tools: qa/fixL7/tools (cmp.py frame / thirds vs
+photo, reg.py region boxes, mask.py stats over the changed pixels, samp.py, top.py, thin.py, crack.py).
+
+Regression guard (qa/fixL7/tools/cmp.py: |model - photo| summed over the frame median, p5, p95, the thirds' mean L and
+0.25 x the thirds' hue difference; lower is closer). Before (836b636) -> after (this commit):
+- q06 169 -> 126; q20 76 -> 69; q03 270 -> 263; q13 65 -> 63; q09 116 -> 116; blue06 101 -> 85; q14 125 -> 122;
+  q17 31 -> 31; dd 100 -> 85; bl16 176 -> 93; c06 216 -> 210; nF03 88 -> 88.
+- Up at frame level, kept on the matched regions:
+  - q15 23 -> 27: the bins (0-280 / 650-930, 0-90) L225 -> 218 against y_47300 L218, but p10 202 -> 189 (200) and B-R +4 -> +8
+    (photo 0, the rater's ceiling +8); head-on covers (59,70,108) unchanged; the mid-row flaps that changed L78 -> 94 at
+    the same pixels as y_47300's L106.
+  - q16 28 -> 37: the bins L220 -> 210 (y_47301 209), wall (0-300, 100-200) B-R +5 -> +10 (+14), covers that changed L71 -> 89
+    (y_47301 92 at the same pixels); the top third falls 196 -> 190 because the model's top third holds more bin area than the
+    photo's.
+  - q21 182 -> 186: the tubs (mid third 125 -> 127). The framing does not match ucr_the-room-cabin; the tub (620-660, 300-350)
+    L117 s0.70 -> L135 s0.67 beside a pier at L190 (0.62 -> 0.71 of the pier; photo 0.85-0.93).
+  - d06 55 -> 63 (binLift, below) and n16 180 -> 219 (screens off; the photo's economy night level is questions_lighting 8);
+    neither is in the check set.
+- Reverted: candidate 4's tub floor painted the closed blackout shades out of the dd windows (flat cream), and in Night /
+  Blue it lit the tubs flat and pale (q20 tub pixels L28 -> 55 against ucr_room-night-lighting L23 at the same pixels;
+  bl16, blue06, nF03 alike). It now acts on `MAT.reveal` only, in the amber moods only (below).
+- Harness note: `test/qa.js` views depend on their order. Night (`applyMood('sleep')`) closes every shade and the per-view
+  reset does not reopen them, so a run with q20 before q06 renders every later view with closed shades. Render in the
+  canonical order (q20 then q21, which reopens them), as every set above was.
+
+Rater issues (L7):
+- lighting medium + integration HIGH, outboard bins brighter than the vault: lighting part done.
+  - `binLo` 0.8 (Boarding, Cruise): the lower, inboard-down face of the outboard bin doors takes x0.8 hemi + bounce; the
+    crest (N.y 0.6) keeps x1.
+  - Box means, before -> after (photo): q06 right bins L216 -> 205 (c_27312 196), left 209 -> 207 (200), vault L232 (221);
+    q16 bins 220 -> 210 (209); q15 bins 225 -> 218 (218); q13 ceiling 217 -> 214 (180); c06 right bins 188 -> 176 under a vault
+    at L221.
+  - Reverted the raters' 0.72: q15 bins went to L209, p10 177 (y_47300 evenly lit: L216, p10 200).
+  - Not done: the extra Cruise x0.75 (questions_lighting 7 asks which in-flight look Cruise should follow). The vault and
+    door albedo / grade levers are ceiling/bins' (from_integration.md).
+- lighting medium, Boarding shaded whites neutral: done. hemiBot [0.36, 0.37, 0.40] -> [0.31, 0.35, 0.47], wash
+  [0.25, 0.26, 0.28] -> [0.23, 0.255, 0.32], crown term x0.7 -> x1.1 (the raters' values).
+  - The shaded whites move B-R +2..+5: q17 window band L175-195 +19 -> +22, L195-215 +4 -> +8; q14 L175-195 +9 -> +14;
+    q16 wall #cacccf (+5) -> #c1c4cb (+10) vs y_47301 #c5cad3 (+14); q06 right bins +6 -> +11 (c_27312 +10).
+  - Lit faces hold: q06 vault #e8e8e8, q15 head-on covers unchanged.
+  - Not all the way to the photos' +11..+33: the ACES shoulder desaturates near-white faces. questions_lighting 6 asks
+    whether Boarding should follow the cool official photos or the warm in-service ones.
+- lighting medium, amber window tub burnt / near-black: done.
+  - New `tubRef` in mainFS: where the window light is dim (sunset, closed shades), the recessed tub from just above the
+    bezel to the crown keeps at least 0.7 (`LIGHT_TUNE.tubWash`) of the diffuse light of an unbaked cream face under a pier's
+    hemi + wash.
+  - It acts on `MAT.reveal` faces only (no layer, r 0.45): not on the shades, the tunnel lining or the seals. It acts only
+    in the moods with `tub: true` (Dining, Sunrise).
+  - q21 tub (620-660, 300-350) #b06a35 L117 s0.70 -> #ba7e3e L135 s0.67 (target >= L125, s <= 0.6: L met, s not quite; the
+    pier is s0.46).
+  - dd crowns (820-930, 165-215) L148 -> 165, high-pass 10.2 -> 5.5; the closed blackout shades keep their pleats.
+- lighting medium, amber bins dark and over-saturated: partly. `binLift` [0.055, 0.04, 0.02] (0.6 of the raters' hemiBot
+  step) on the lower hemisphere above ~1.6 m in the seat zones only (Dining, Sunrise).
+  - dd right bins (640-930, 20-160) L106 -> 110; d06 left bins L93 s0.70 -> L102 s0.66, right 130 -> 135; q21 bins 141 -> 143.
+  - Target L135-150, s0.50-0.58: not met.
+  - The raters' full step on the whole hemiBot lifted the seat level and the door zones (q21 median 134 -> 142 vs ucr 86;
+    d06 median 77 -> 89 vs kn_room_35 68): reverted to this partial lift.
+- lighting medium + integration medium, sky hairline at the lens / lining junction: done by polish B (d2627ff). dd has 0
+  sky-blue px in (600-930, 60-210), before and after.
+- lighting low, Night cove lines neutral white: done.
+  - led [0.030, 0.025, 0.020] -> [0.030, 0.021, 0.009]; mainFS caps the line's e at 0.5 when vaultE.y < 0.1. Also the vault
+    cap 0.09 -> 0.045 (from_ceiling polish B: the raised seat-zone vault eFn bound across the vault at night).
+  - q20 cove box (500-575, 0-120) L69 -> 47; its top-40 #797065 L114 -> #5c5241 L83 (warm).
+  - q20 bottom third 43 -> 27 (ucr 33), mid third 29 -> 32 (41).
+- lighting low, every screen lit at night: done. Night / Blue `scrOff` 0.7: each seat screen holds a hash in a 4 cm
+  floor-plan mask (`buildScreenMask`) and screens under 0.7 go black. The nearest screen within 1.8 m that faces the eye
+  stays on, with all the clusters `buildScreens` split it into (THE Suite's wide screen: after3 showed it half lit in
+  nF03). Only lit screens spill.
+  - bl16 p95 167 -> 116 (sany_47 81); blue06 p95 114 -> 107; n16 p95 180 -> 76 (sany_40 136; its lit screens are ~30 %,
+    as the photo's, but the economy night level is lower than sany_40's: questions_lighting 8).
+- lighting low, Blue door / galley zone blue: partly. monFill [0.06, 0.05, 0.035] -> [0.20, 0.16, 0.10]; the hemi, bounce
+  and wash take x0.4 outside the seat zones (`monHemi`). bl16 door-4 box (600-700, 215-260) #393e6e h235 s0.48 ->
+  #414262 h238 s0.33. That is greyer, but not the warm #5a4e48-#76644c target: the box is mostly the bulkhead under the blue
+  cove and lens light. The galley end beyond it reads beige.
+- integration medium, look-out exposure inverted: done. Past the lining (|x| 2.45-2.70) the interior exposure falls to x0.14
+  (`LIGHT_TUNE.lookOut` 0.86). q12 left reveal (0-120) L228 (61 % clipped) -> L133 (target 110-140); frame clipped 19.6 % ->
+  0 %; wing box L173 -> 171. Seated window views (|x| < 2.45) are unchanged.
+- integration medium, night trough grille: done by polish B (troughRim e 0.19). q20 grille (515-575, 0-120) top-40 L114 /
+  max 131 at the start of this run -> L83 / max 94 (target <= L135).
+- integration medium, THE Room / Suite carpets: done by polish B (shell). Not a lighting item.
+- integration medium, thin rim highlights: tried and reverted, handed to room / econ / py (SEATMAT roughness) in
+  from_integration.md.
+  - Three tries on the two cove line lights (`coveRim`):
+    - x2.5 at rough < 0.5: the bin crests clipped and the q03 screen glared.
+    - x4 below 1.5 m at rough < 0.5: the PY flaps went L72-82 -> 90-117 against py_37302's 61-87.
+    - x4 at rounded edges only (nvar) at rough <= 0.36: no measurable change.
+  - Thin share now: q06 1.03 -> 0.97 %, q16 0.64 -> 0.62, q13 0.17 -> 0.16, q17 0.47 -> 0.46, q09 0.42 -> 0.41, q15
+    0.52 -> 0.52 (photos 1.10-2.50).
+- integration low (z-fight dashes, toe-kick, footwell hairline, ink clouds): other areas' files, routed in
+  from_integration.md ("lighting run 2, L7").
+
+from_* items (to lighting / integration):
+- from_econ w40-w42 (cover sheen at mid angles): done. The SHEEN lobe is (1 - N.V)^2 (was ^3), tinted 0.3 toward the
+  fabric hue (0.5 put the q16 covers at s0.57 vs the photo's 0.37).
+  - q16 covers that changed L71 -> 89 (y_47301 92 at the same pixels); q15 mid-row flaps L78 -> 94 (y_47300 106).
+  - q15 head-on covers unchanged.
+- from_econ w37-w39 (near pans dark): not changed this run.
+- from_ceiling (polish B vault eFn vs the night cap): done (vaultE cap 0.045, above).
+- from_shell w15 lows (door glass flat white, creams neutral, dado grille dark, band under the PY/Y tub lip): not
+  changed this run.

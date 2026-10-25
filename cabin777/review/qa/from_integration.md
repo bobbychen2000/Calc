@@ -371,3 +371,9 @@ changes of this run (`04_shaders.js` / `12_scene.js`, logged in fixed_integratio
   where the window light is dim (sunset, closed shades): `tubRef` in mainFS, on `MAT.reveal` (no layer, r 0.45) only. With
   the shades open in daylight, and in every white, Night and Blue view, your bake stands unchanged. If you change the reveal's
   roughness or give it a detail layer, tell lighting: the floor keys on them (04_shaders.js tubB).
+## To integration (`test/qa.js`), FYI: view order changes the renders
+- **Problem:** `applyMood('sleep')` (13_app.js) closes every shade, and qa.js's per-view reset (boarding / day) does not reopen
+  them. In a run with q20 ahead of q06, every later view renders with closed shades (q03 / q14 / q17 changed 15-17 % of pixels
+  against the same build in the canonical order).
+- **Fix:** add `__app.scene.setAllWindows(0)` to the per-view reset in qa.js (as `scratchpad/qa/fixL7/tools/shots.js` does),
+  or keep rendering in the canonical order (q20 then q21, which reopens them).
