@@ -500,7 +500,7 @@ U.cabinFormA.value.forEach((v, i) => v.set(...CABIN_LOOK.formA[i]));
 U.cabinFormB.value.forEach((v, i) => v.set(...CABIN_LOOK.formB[i]));
 U.cabinFormD.value.forEach((v, i) => v.set(...CABIN_LOOK.formD[i]));
 U.cabinFormC.value.set(...CABIN_LOOK.formC);
-const FOOT_SKIP = new Set((Q_M.get('footSkip') ?? 'lining_flightdeck,fd_cove,panel_dark,carpet_flightdeck').split(',').filter(Boolean));
+const FOOT_SKIP = new Set((Q_M.get('footSkip') ?? 'lining_flightdeck,fd_cove,panel_dark,carpet_flightdeck,tray_titanium,stack_gunmetal,pedestal_gunmetal').split(',').filter(Boolean));
 // the satin / gloss trim of the flight deck keeps its reflections inside (FD-J10: the facing weights cut the titanium,
 // the gunmetal, the bezels, the black leather and the displays to flat matte); the sky law and the occlusion still apply
 // (+ the flight deck's shared detail materials (seed) and the geometry tracks' glossy ones: the annunciator / key caps,
@@ -684,7 +684,10 @@ const VIEWER = {
       // darkening, tilt (grazeFlat) and sheen growth up the pile (grazeSheen) flattened toward the silhouette; was 0.55 /
       // 0.25 / 0 / 0 / 0.  A per-pixel dithered coverage (dither: true) and the band at 0.55 put sparse bright tips into
       // [FD-L10]'s silhouette band at panel_408b (high-pass skew +1.1 .. +1.6; look-dev ld3 a0-a2 / u0-u2))
-      graze: 1.0, grazeN: 0.4, partCap: 0.25, grazeW: 0.1, grazeFlat: 0.6, grazeSheen: 0.6,
+      graze: 1.0, grazeN: 0.4,
+      // (first-principles judges FPH-01 / FPI-01: the sponge holes are the pile field's own cells, not the partings --
+      // capping the partings (partCap) or gating them to the upper pile (partH, both kept in furPatch) changed nothing;
+      // the cure is a different field, a lock-strand shell -- open) grazeW: 0.1, grazeFlat: 0.6, grazeSheen: 0.6,
       t: [0.05, 0.75, 0.9], curl: [55, 0.8, 5.0], lump: [40, 0.10, 0.10], part: [[30, 0.2, 0.82, 40, 0.55, 1.3],
         [60, 0.15, 0.85, 80, 0.55, 1.5]], fray: [1100, 0.1], ao: [0.34, 1.13, 1.8], tilt: 0.55,
       clump: [[28, 0.005, 1.3], [65, 0.0018, 1.3]], sheen: [0.5, 1.1], far: [2.2, 3.2] },
@@ -1334,7 +1337,7 @@ ${parts.map(([pf, pa, pw, gf = 0, gl = 0.5, st = 1], i) => {
     {
       float pcP = smoothstep( ${f4(pw)}, 1.0, 1.0 - abs( 2.0 * pcNoise( vPcW * ${S} * ${f4(pf)} + ${f4(41.0 + 13.7 * i)} ) - 1.0 ) );${gf ? `
       pcP *= smoothstep( ${f4(gl)}, ${f4(gl + 0.2)}, pcNoise( vPcW * ${S} * ${f4(gf)} + ${f4(63.0 + 5.1 * i)} ) );` : ''}
-      pcT += ${f4(pa)} * pcP;
+      pcT += ${f4(pa)} * pcP${q.partH ? ` * smoothstep( ${f4(q.partH[0])}, ${f4(q.partH[1])}, t )` : ''};
     }`;
     }).join('')}
     pcT = mix( pcT, 1.5, pcFar );${q.partCap ? `
