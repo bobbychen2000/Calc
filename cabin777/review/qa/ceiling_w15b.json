@@ -1,0 +1,78 @@
+{
+  "area": "ceiling",
+  "rater": "B",
+  "round": "w15",
+  "score": 8.8,
+  "renderNote": "Rated on scratchpad w2 (head 836b636: fittings on the vault eFn, crescent #b4b2ae, crest channel #a9acb1 over 0.45 chord) against w1 (w14). I diffed every view: changes are confined to vault fittings and the crest channel (d1, d1b, d2b, d4b, d5b, v14 identical; the q03/q12/q15-q17 deltas are other areas). Crops are in scratchpad rB15/ (v2spk, v15ch, q20, q21, cmp_*). References: ref/ana c_27312 and y_47301, and ref/web/ceiling kn_* (none show the aisle vault close up).",
+  "previousStatus": {
+    "fixed": [
+      "w14b F1 medium / w14a W14A-1 high: the fittings were left behind by the vault lift. They now track the vault in all three moods. Day v2: the old speaker plank (col 249, row 54) went from 174 to 228 on a 228 vault. Day v8 near speaker col 520: bezel 230 on a 231 vault, face 226 (0.98x), crescent 144 (0.62x, 3 px). q06 col 440: the rib/speaker went from 177-183 to 224-232 on 226 (1.00-1.03x), and the ribs now read as hairlines, as in y_47301. Night q20 col 420: speaker face 63 on a 65-68 vault (0.95x, was 17 = 0.26x), slot core 9 for 2 px. It now reads as a thin dark line rather than a black plank. Amber q21: face 147 on 147 with a thin crescent. The ribs are still visible in all moods as 1-px lines (one shadow edge), so nothing has vanished.",
+      "w14a W14A-2 medium: crest channel too dark. In v15 cols 200 and 650 the channel went from 87-88 x14 px to 115-116 x11 px on a 220 vault (0.40x to 0.52x), still with a hard edge against the 237-248 rail. In v8 and v12 it now reads as a mid-grey channel line rather than a black gap."
+    ],
+    "partiallyFixed": [
+      "w11b-w14b low D3: door-3 tray far-edge hairline. v3 changed only at the fittings; the residual is still about +12 (barely perceptible)."
+    ],
+    "notFixed": [
+      "w11b-w14b low D4: door-4 dome/monument junction wedge. d4b is pixel-identical to w14 (the flat 248 triangle at 760-780, 190-215).",
+      "w14b low L1 / W14A-4: the vault/bin ratio is unchanged at 1.04-1.10 (photos 1.15-1.23). BINMAT.door is unchanged.",
+      "w14b low LN1: the far-side lens still shows dotted sparkle (lens_dining changed only at the vault fittings).",
+      "w14a low W14A-3: the outboard PSU band segmentation is unchanged (08_bins.js not touched)."
+    ],
+    "regressed": []
+  },
+  "details": [
+    {"detail": "vault shape / joint ribs / crest rib", "score": 8.8, "was": 8.5, "note": "Ribs are now hairlines at about 1.00-1.03x the vault (q06 224-232 on 226), which matches y_47301's 240-244 joints. In amber and night they keep a 1-px shadow edge, so the panel rhythm still reads. The shape is unchanged and correct."},
+    {"detail": "vault tone", "score": 8.8, "was": 8.8, "note": "Unchanged: 225-231 day, 147 amber, 63-68 night."},
+    {"detail": "cove / trough grille", "score": 8.8, "was": 8.8, "note": "Unchanged."},
+    {"detail": "vault fittings (speaker, emergency light)", "score": 8.6, "was": 7.9, "note": "The contrast inversion is gone in all moods. The speaker now reads as a vault-tone panel with a recessed slot crescent, which is the c120 look. Slight overshoot toward invisibility: at close range (v2, v8, v12) the bezel ring has no visible edge (230 on 231), so the speaker reads as a single scratch line instead of a pill-shaped fitting (see S1). The emergency light's base merges into the vault, leaving the grey lens, which is plausible."},
+    {"detail": "crest channel", "score": 8.6, "was": 8.2, "note": "0.52x the vault over 11 px. It still reads as a channel framing the rail. Slightly heavier than the 0.6x target, which is low priority."},
+    {"detail": "bins outboard", "score": 8.9, "was": 8.9, "note": "Unchanged."},
+    {"detail": "bins centre", "score": 8.8, "was": 8.8, "note": "Unchanged. In v8 the gap between the vault and the centre bin no longer reads as a black line."},
+    {"detail": "seams / lips / rails", "score": 8.6, "was": 8.6, "note": "Unchanged."},
+    {"detail": "placards", "score": 8.8, "was": 8.8, "note": "Unchanged ('34' and the icons are legible in v15)."},
+    {"detail": "PSUs", "score": 8.7, "was": 8.7, "note": "Unchanged. A's W14A-3 (band segmentation too sparse) is plausible but low."},
+    {"detail": "door zones", "score": 8.2, "was": 8.2, "note": "d1/d1b/d2b/d4b/d5b are pixel-identical to w14. The D4 wedge and the D3 residual remain."},
+    {"detail": "lens", "score": 8.7, "was": 8.7, "note": "Unchanged. The far-side sparkle (LN1) remains."}
+  ],
+  "issues": [
+    {
+      "id": "S1",
+      "severity": "low",
+      "detail": "Speaker bezel ring now invisible at close range, so the fitting reads as a single scratch line.",
+      "evidence": "v8 col 520: vault 231, bezel 230 (no edge), crescent 144 x3 px, face 226. v2 crop (rB15/v2spk.png, right) shows only a diagonal line with a ghost rectangle. In v4 the near speaker keeps a faint outline, which is the target look.",
+      "fix": "src/07b_ceiling.js: give the bezel a small negative offset so its rounded outline reads, e.g. onVault(CEILMAT.bezel, -0.008) (or bezel colour about 3 % darker), while keeping the face at x0.92. Target: bezel ring 0.95-0.97x the vault (q06 ~218 on 226), with the 1-px outline visible in v2/v8."
+    },
+    {
+      "id": "C1",
+      "severity": "low",
+      "detail": "Crest channel slightly heavier than target.",
+      "evidence": "v15: 115-116 on 220 = 0.52x (target ~0.6x, 130-140).",
+      "fix": "src/07b_ceiling.js CEILMAT.crestGroove #a9acb1 -> #b8bbc0, only if the channel still reads in q21 amber."
+    },
+    {
+      "id": "D4",
+      "severity": "low",
+      "detail": "Door-4 dome/monument junction wedge (5th report).",
+      "evidence": "d4b is unchanged: 248 flat at (760-780, 190-215).",
+      "fix": "src/07b_ceiling.js CEILMAT.lightPanel e 0.3 -> 0.12, or extend the dome side band down to the monument top."
+    },
+    {
+      "id": "L1",
+      "severity": "low",
+      "detail": "Vault/bin ratio 1.04-1.10 against the photos' 1.15-1.23.",
+      "evidence": "Unchanged from w14.",
+      "fix": "src/08_bins.js BINMAT.door #d6d8dc -> #cfd2d6 (now safe, since the fittings track the vault), or lighting-side bin falloff."
+    },
+    {
+      "id": "LN1",
+      "severity": "low",
+      "detail": "Far-side outboard lens sparkle.",
+      "evidence": "Unchanged from w14.",
+      "fix": "src/08_bins.js: lens tilt side*0.12 -> side*0.25, or e 0.35 -> 0.28."
+    }
+  ],
+  "questionsForUser": [
+    "Do you have an in-flight photo looking up at the THE Room or economy aisle ceiling that shows the speaker grilles? The model now keeps them at vault tone with a recessed slot. A real photo would settle whether the bezel outline should be visible.",
+    "Do you have any photo of the door 1, 2, 4 or 5 cross-aisle ceilings? They are still approximations."
+  ]
+}
