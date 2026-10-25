@@ -84,6 +84,10 @@ export const ANIMATION_NOTES = [
   'Propeller 1,700 rpm (1,550 rpm low-speed mode) per the build notes; the ~1,000 rpm idle is a viewer estimate',
   'Gear and door angles, retraction timing (~6 s) and brace geometry',
   'Engine sound (synthesised, follows the animation): propeller blade-passing tone 5 × rpm / 60 Hz with harmonics, '
-    + 'compressor whine at 16 × the gas-generator speed (100 % Ng = 37,468 rpm assumed), start / light-off / run-down '
+    + 'compressor whine at 16 × the gas-generator speed (100 % Ng = 37,468 rpm, TCDS), start / light-off / run-down '
     + 'timing and all levels estimated',
+  'Cockpit displays (live, numerals only): engine indications from an engine model within the POH limits (ground idle '
+    + 'Ng 64.5 %, take-off torque flat 44.3 psi to the ITT limit, start / ITT / fuel-flow / oil laws estimated), the '
+    + 'ISA atmosphere of the Environment knobs (temperature, field elevation, altimeter, wind, fuel); a viewer estimate, '
+    + 'not a certified simulation',
 ];

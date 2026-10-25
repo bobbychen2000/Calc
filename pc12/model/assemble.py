@@ -86,7 +86,9 @@ MATERIALS = {
                                                               sheen_rough=0.45)),
     "seat_base_black":    ((0.022, 0.022, 0.025), 0.3, 0.45),
     "harness":            ((0.069, 0.072, 0.080), 0.0, 0.80, dict(specular=0.5)),       # dark grey webbing
-    "seat_shell_dark":    ((0.060, 0.063, 0.070), 0.0, 0.55, dict(specular=0.7)),       # executive shroud, armrest
+    "seat_shell_dark":    ((0.064, 0.064, 0.066), 0.0, 0.55, dict(specular=0.7)),
+    "seat_shell_grey":    ((0.20, 0.20, 0.20), 0.0, 0.60, dict(specular=0.6)),     # fwd-facing exec base (CAB4-03)
+    "belt_grey":          ((0.36, 0.36, 0.35), 0.0, 0.75, dict(specular=0.5)),     # exec lap-belt webbing (CAB4-06)       # executive shroud, armrest
     "seat_tab_red":       ((0.45, 0.02, 0.02), 0.0, 0.40),                              # base-shroud pull tab
     # mid-grey exec back rear shell (final judge r1 I5: lighter -- 0.15 read anthracite from behind in cabin_aft_fwd)
     "seat_back_shell":    ((0.21, 0.215, 0.228), 0.0, 0.55, dict(specular=0.7)),
@@ -171,11 +173,13 @@ MATERIALS = {
     "floor_panel":     ((0.20, 0.21, 0.22), 0.1, 0.60),
     # side ledges: dark anthracite satin top, gloss-black fascia band, anthracite kick panels, brushed trim
     "ledge_top":       ((0.024, 0.026, 0.030), 0.0, 0.40, dict(specular=0.5)),
-    "ledge_panel":     ((0.060, 0.066, 0.078), 0.0, 0.55, dict(specular=0.5)),
+    "ledge_panel":     ((0.066, 0.066, 0.068), 0.0, 0.55, dict(specular=0.5)),     # neutral (r3 CAB5-06)
     "gloss_black":     ((0.008, 0.008, 0.010), 0.0, 0.10, dict(clearcoat=1.0, clearcoat_rough=0.06)),
     "chrome_trim":     ((0.62, 0.62, 0.61), 1.0, 0.22),
     # headliner fittings, placards
     "psu_panel":       ((0.030, 0.031, 0.035), 0.1, 0.35),
+    # the shadow line round the lining doors (all-lens review r3: the dark psu_panel ring read as a heavy black outline)
+    "lining_gap":      ((0.30, 0.295, 0.285), 0.0, 0.85),
     # PSU / reading-light pods: light satin silver-white housings (P1046402 / 06; model judging r1 INT-m4)
     "psu_housing":     ((0.55, 0.55, 0.54), 0.30, 0.35),
     "light_cove":      ((0.90, 0.90, 0.88), 0.0, 0.30),

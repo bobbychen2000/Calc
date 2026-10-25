@@ -55,7 +55,7 @@ from model import fuselage as F
 from model.assemble import MATERIALS as _MAT, EMISSIVE as _EMI     # noqa: E402
 
 OWN_MATERIALS = ("carpet", "carpet_orange", "carpet_light", "carpet_grey", "floor_panel", "ledge_top", "ledge_panel",
-                 "gloss_black", "chrome_trim", "veneer_walnut", "curtain", "psu_panel", "psu_housing", "light_cove", "light_reading",
+                 "gloss_black", "chrome_trim", "veneer_walnut", "curtain", "psu_panel", "lining_gap", "psu_housing", "light_cove", "light_reading",
                  "placard_red", "lav_white", "toilet_white", "toilet_bowl", "lav_grey", "upholstery_grey", "net")
 MATERIALS = {k: _MAT[k] for k in OWN_MATERIALS}
 EMISSIVE = {k: v for k, v in _EMI.items() if k in OWN_MATERIALS}
@@ -103,6 +103,8 @@ DETAIL = dict(
 # review r4 INT8-05 (P1046406 / 07 / 11): long, continuous stripes with angular jogs, mostly AI Orange with a few
 # light-grey (not cream) strands -- the r3 bands (0.45-1.40 m, 0.03-0.25 m navy breaks, 28 % cream) read as scattered
 # blocks; now 0.9-2.4 m with 5-60 mm breaks, the jogs (step_slope) the main discontinuity, 70 / 18 / 12 %
+# (all-lens review r3: the runner table kept as shipped -- two judges pulled its mix opposite ways; the bands carry the
+# ground's pinstripe and a cut pile in the viewer instead, CAB5-02)
 RUNNER = {"lanes": 4, "gap": 0.016, "width": (0.050, 0.085), "length": (0.90, 2.40), "break": (0.005, 0.06),
           "end_cut": (0.4, 1.0), "step_slope": 1.0,
           "mix": (("carpet_orange", 0.70), ("carpet_light", 0.18), ("carpet_grey", 0.12))}
@@ -1191,22 +1193,24 @@ def _headliner(acc, layout, o2=True):
 
 def _flush_door(acc, fw, s, lx, ly, r, lift=0.0006, notch=False):
     """A closed lining door (oxygen-mask door, exit-release cover) on the side-wall lining in frame fw (w = the wall
-    normal): a dark gap RING (psu_panel, GAP wide) standing DETAIL fit_proud in front of the lining with walls down into
+    normal): a gap RING (lining_gap, GAP wide) standing DETAIL fit_proud in front of the lining with walls down into
     it, and inside it the lining-coloured door, its face `inset` below the ring's top (a shallow-inset square: from any
-    angle the ring's near edge is not hidden by the door, so the dark outline shows on all four sides) -- or, with
+    angle the ring's near edge is not hidden by the door, so the outline shows on all four sides) -- or, with
     lift > 0 and no inset, a raised cover lift above the ring; (notch) its finger notch; everything bent onto the curved
     wall (_conform).  Review r2 C2 / F5: the old frame sat 1.5 mm proud UNDER a door 2-5 mm proud, so only its far edge
     showed.  Returns the door's face height (c)."""
-    gap, inset = 0.0025, 0.0004
+    # (all-lens review r3: the gap 2.5 -> 1.5 mm in a mid-grey lining_gap -- the dark psu_panel ring drew every door
+    # with a heavy black outline; P1046402 / 04 show a thin soft grey line)
+    gap, inset = 0.0015, 0.0004
     pr, sk = DETAIL["fit_proud"]
     top = pr + 0.0002
     Qo = _ccw(rrect2(-0.5 * lx - gap, -0.5 * ly - gap, 0.5 * lx + gap, 0.5 * ly + gap, r + gap, 4))
     Qi = _ccw(rrect2(-0.5 * lx, -0.5 * ly, 0.5 * lx, 0.5 * ly, r, 4))
-    ring = [(ring_face(fw, Qo, Qi, top), "psu_panel"),
+    ring = [(ring_face(fw, Qo, Qi, top), "lining_gap"),
             (_oriented(_strip(fw.p(Qo[:, 0], Qo[:, 1], -sk), fw.p(Qo[:, 0], Qo[:, 1], top), closed=True),
-                       lambda C: C - fw.o), "psu_panel"),
+                       lambda C: C - fw.o), "lining_gap"),
             (_oriented(_strip(fw.p(Qi[:, 0], Qi[:, 1], top), fw.p(Qi[:, 0], Qi[:, 1], -sk), closed=True),
-                       lambda C: fw.o - C), "psu_panel")]
+                       lambda C: fw.o - C), "lining_gap")]
     acc.add(_conform(ring, fw, s))
     face = top - inset if lift <= 0.001 else top + lift
     Qd = rrect2(-0.5 * lx + 0.0003, -0.5 * ly + 0.0003, 0.5 * lx - 0.0003, 0.5 * ly - 0.0003, r - 0.0003, 4)

@@ -1032,9 +1032,9 @@
   },
   "seat_shell_dark": {
    "baseColorFactor": [
-    0.06,
-    0.063,
-    0.07,
+    0.064,
+    0.064,
+    0.066,
     1.0
    ],
    "metallicFactor": 0.0,
@@ -1045,7 +1045,41 @@
    "specularFactor": 0.7,
    "kind": "dielectric",
    "note": "executive-seat base shroud, armrest, rear inserts",
-   "srgb_hex": "#45474B"
+   "srgb_hex": "#484849"
+  },
+  "seat_shell_grey": {
+   "baseColorFactor": [
+    0.2,
+    0.2,
+    0.2,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.6,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 0.6,
+   "kind": "dielectric",
+   "note": "forward-facing executive seats' base box, mid grey under the light legrest (P1046404 / 05; all-lens review r3 CAB4-03)",
+   "srgb_hex": "#7C7C7C"
+  },
+  "belt_grey": {
+   "baseColorFactor": [
+    0.36,
+    0.36,
+    0.35,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.75,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 0.5,
+   "kind": "dielectric",
+   "note": "executive seats' light-grey lap-belt webbing (P1046406 / 04; CAB4-06)",
+   "srgb_hex": "#A2A2A0"
   },
   "seat_tab_red": {
    "baseColorFactor": [
@@ -1778,15 +1812,15 @@
     "pitch": 0.012,
     "duty": 0.34,
     "colour": [
-     0.085,
-     0.095,
-     0.125
+     0.12,
+     0.125,
+     0.14
     ],
     "wobble": 0.15,
     "pile": 0.35
    },
    "kind": "dielectric",
-   "note": "navy carpet with light grey-blue transverse pinstripes",
+   "note": "navy carpet with light grey-blue transverse pinstripes (stronger: all-lens r3 CAB6-02, P1046406 / 07)",
    "srgb_hex": "#22283D"
   },
   "carpet_orange": {
@@ -1802,6 +1836,17 @@
    "clearcoatRoughnessFactor": 0.0,
    "ior": 1.5,
    "specularFactor": 1.0,
+   "render_stripes": {
+    "pitch": 0.012,
+    "duty": 0.34,
+    "colour": [
+     0.58,
+     0.2,
+     0.016
+    ],
+    "wobble": 0.15,
+    "pile": 0.35
+   },
    "kind": "dielectric",
    "note": "AI Orange runner",
    "srgb_hex": "#D88926"
@@ -1819,6 +1864,17 @@
    "clearcoatRoughnessFactor": 0.0,
    "ior": 1.5,
    "specularFactor": 1.0,
+   "render_stripes": {
+    "pitch": 0.012,
+    "duty": 0.34,
+    "colour": [
+     0.44,
+     0.44,
+     0.435
+    ],
+    "wobble": 0.15,
+    "pile": 0.35
+   },
    "kind": "dielectric",
    "note": "runner, light-grey strands (review r4 INT8-05: P1046406 / 07 / 11, not cream)",
    "srgb_hex": "#BFBFBD"
@@ -1836,6 +1892,17 @@
    "clearcoatRoughnessFactor": 0.0,
    "ior": 1.5,
    "specularFactor": 1.0,
+   "render_stripes": {
+    "pitch": 0.012,
+    "duty": 0.34,
+    "colour": [
+     0.21,
+     0.23,
+     0.25
+    ],
+    "wobble": 0.15,
+    "pile": 0.35
+   },
    "kind": "dielectric",
    "note": "runner, grey",
    "srgb_hex": "#8B9095"
@@ -1876,9 +1943,9 @@
   },
   "ledge_panel": {
    "baseColorFactor": [
-    0.06,
     0.066,
-    0.078,
+    0.066,
+    0.068,
     1.0
    ],
    "metallicFactor": 0.0,
@@ -1888,8 +1955,8 @@
    "ior": 1.5,
    "specularFactor": 0.5,
    "kind": "dielectric",
-   "note": "anthracite ledge kick panels",
-   "srgb_hex": "#45494F"
+   "note": "anthracite ledge kick panels (neutral: the slate-navy read wrong, all-lens r3 CAB5-06)",
+   "srgb_hex": "#49494A"
   },
   "gloss_black": {
    "baseColorFactor": [
@@ -1940,6 +2007,23 @@
    "kind": "dielectric",
    "note": "dark gap rings round the lining doors, wall sockets, grilles",
    "srgb_hex": "#303135"
+  },
+  "lining_gap": {
+   "baseColorFactor": [
+    0.3,
+    0.295,
+    0.285,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.85,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "kind": "dielectric",
+   "note": "the shadow line round the lining doors (O2 / access / PULL covers: P1046402 / 04 a thin soft grey line, not a black ring; all-lens review r3)",
+   "srgb_hex": "#959491"
   },
   "psu_housing": {
    "baseColorFactor": [

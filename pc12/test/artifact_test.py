@@ -18,7 +18,8 @@ every part of the file it loads is requested once, and that the studio HDRI (not
   runtime  CSP with 'wasm-unsafe-eval', but WebAssembly.instantiate rejects at run time (the boot's compile test still
            passes): the meshopt GLB fails to decode and main.js falls back to the gzip copy
 
-each at a phone (390x844, touch) and a desktop (1400x900) viewport, with screenshots in out/tmp/artifact/; each also spins
+each at a phone (390x844, touch) and a desktop (1400x900) viewport, with screenshots in out/tmp/artifact/; each checks the
+live G3000 PRIME pages (labels, numerals, the Environment panel's OAT slider, the uploads read back); each also spins
 the propeller to 1,700 rpm (the blurred disc of web/viewer/propblur.js builds and draws under the CSP) and starts the
 engine with its sound (keys M + P: the Web Audio graph of web/viewer/sound.js is made in the gesture, without errors).  The first
 desktop run also checks the host's theme choice (<html data-theme="dark|light"> over the OS setting: the panels and
@@ -169,6 +170,7 @@ async def run_one(browser, base, mode, vp, shots, theme=False):
     check(f"{name}: propeller blur disc at 1,700 rpm", b.get("visible") and b.get("fade") == 1 and pr["tris"] > 100000,
           f"fade {b.get('fade')}, sweep {b.get('sweepDeg', 0):.0f} deg, {pr['tris']} triangles drawn")
     await check_sound(page, name, errors)
+    await check_avionics(page, name, errors)
     # expected: the CSP's WebAssembly refusals (nowasm); runtime: the decoder's own rejected start-up may be logged
     # (/favicon.ico: this skeleton has no icon and Chromium ignores the page's data-URI icon link outside <head>)
     unexpected = [e for e in errors if "WebAssembly" not in e and not e.endswith("/favicon.ico]")]
@@ -193,7 +195,7 @@ async def run_one(browser, base, mode, vp, shots, theme=False):
 
 
 SOUND_JS = """async () => { const V = window.viewer;
-  V.advance(4); const s = V.sound.sync();
+  V.advance(8); const s = V.sound.sync();
   await new Promise((r) => setTimeout(r, 400)); const v = V.sound.sync();
   V.setProp({rpm: 0, pitch: 0}, {instant: true}); V.advance(0.05); V.sound.toggle(false); V.sound.sync();
   return {s, v}; }"""
@@ -216,6 +218,34 @@ async def check_sound(page, name, errors):
           and (v["values"] or {}).get("ngHz", 0) > 0 and not new,
           f"{s['created']} context ({v['ctx']}), {e['phase']} at {e['rpm']:.0f} rpm / Ng {e['ng']:.0f} %, blade pass "
           f"{t.get('bladeHz', 0):.1f} Hz, whine {t.get('whineHz', 0):.0f} Hz" + (f"; {new[:2]}" if new else ""))
+
+
+AVX_JS = """async () => { const V = window.viewer, q = (id) => document.getElementById(id);
+  const txt = (pg, id) => { const t = V.avionics.state().pages[pg].text.find((x) => x.w === id && !x.label); return t ? t.s : null; };
+  V.setProp({rpm: 1000, pitch: 0}, {instant: true}); V.advance(0.2); V.avionics.flush();
+  const st = V.avionics.state(), np = txt('mfd', 'np'), labels = V.avionics.state().pages.mfd.text.filter((x) => x.label).map((x) => x.s);
+  // the Environment knob as the UI moves it: the OAT slider -> T1 on the engine strip
+  const el = q('eOat'), oat0 = txt('mfd', 't1');
+  el.value = '35'; el.dispatchEvent(new Event('input', {bubbles: true})); V.advance(10); V.avionics.flush();   // (10 s: the air data's 1 s filter)
+  const oat1 = txt('mfd', 't1');
+  V.env.reset({instant: true}); V.setProp({rpm: 0, pitch: 0}, {instant: true}); V.advance(0.05); V.avionics.flush(); await V.frames(1);
+  const v = V.avionics.verify();
+  return {live: st.live, err: st.error, tex: st.texture && st.texture.type, np, labels, oat0, oat1,
+    mad: v ? Math.max(...Object.values(v).map((p) => p.l0.mad)) : 99}; }"""
+
+
+async def check_avionics(page, name, errors):
+    """The live G3000 PRIME pages under the host's CSP (web/viewer/avionics.js: a CanvasTexture drawn with canvas 2-D, no
+    web font, no blob / worker): live, labels on, the numerals following the engine, the Environment panel's OAT slider
+    reaching T1, the GPU's copy of the pages current."""
+    n0 = len(errors)
+    r = await page.evaluate(AVX_JS)
+    new = [x for x in errors[n0:] if not x.endswith("/favicon.ico]")]
+    check(f"{name}: live G3000 pages (labels on, NP at idle, the OAT knob on T1, uploads current), no errors",
+          r["live"] and not r["err"] and r["tex"] == "CanvasTexture" and r["np"] == "1000" and "TRQ" in r["labels"]
+          and r["oat1"] == "35" and r["oat0"] != "35" and r["mad"] < 0.5 and not new,
+          f"live {r['live']}, NP {r['np']}, T1 {r['oat0']} -> {r['oat1']}, upload diff {r['mad']:.2f}, labels {len(r['labels'])}"
+          + (f"; {new[:2]}" if new else ""))
 
 
 TOUR_JS = """async () => {

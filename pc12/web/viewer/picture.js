@@ -116,6 +116,8 @@ export const PROFILES = {
 // ?ssframes= / ?sspx= override the accumulation length and the still pixel budget, ?movess=1|0 forces the single-pass
 // supersampling of moving / animating frames on / off, ?taa=0 / ?layer=0 switch the temporal AA / the layered prop off
 const OV = { frames: qn('ssframes'), px: qn('sspx'), moveSS: qn('movess'), taa: qn('taa'), layer: qn('layer') };
+// ?avxbias= fixes the display glass' LOD bias in the overlay (default -log2 of the still's scale; avionics fix r1)
+const AVX_BIAS = qn('avxbias');
 const PLAIN = new Set(['direct', 'move', 'rt', 'taa']);   // the paths of an unrefined frame (one plain scene render)
 const RELEASE_MS = 30000;   // a render target / accumulation / history unused for this much rendering time is released
 const CALIB_N = 3;          // start-up calibration: plain frames measured (their median is the prediction's frame time)
@@ -894,7 +896,11 @@ export class Picture {
     cam.layers.set(OVERLAY_LAYER);
     R.autoClear = false;
     R.setRenderTarget(null);
+    // the display glass in the overlay: its pages sampled one mip finer per doubling of the still's scale, as sharp as
+    // in the supersampled still around them (materials.js U.avxBias; avionics fix r1)
+    MU.avxBias.value = AVX_BIAS == null ? Math.max(-0.5, -Math.log2(Math.max(1, Math.sqrt(plan.sx * plan.sy)))) : AVX_BIAS;     // (capped: one sample a pixel on a finer mip would alias the strokes; picture judge r2)
     R.render(st.scene, cam);
+    MU.avxBias.value = 0;
     R.autoClear = clear;
     cam.layers.mask = mask;
   }

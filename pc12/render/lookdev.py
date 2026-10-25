@@ -508,8 +508,13 @@ SPEC.update({
                                note="black-anodised seat base, pan, life-vest box"),
     "harness":            dict(kind="dielectric", base=(0.069, 0.072, 0.080), rough=0.80, spec=0.25,
                                note="dark grey harness webbing"),
-    "seat_shell_dark":    dict(kind="dielectric", base=(0.060, 0.063, 0.070), rough=0.55, spec=0.35,
+    "seat_shell_dark":    dict(kind="dielectric", base=(0.064, 0.064, 0.066), rough=0.55, spec=0.35,
                                note="executive-seat base shroud, armrest, rear inserts"),
+    "seat_shell_grey":    dict(kind="dielectric", base=(0.20, 0.20, 0.20), rough=0.60, spec=0.30,
+                               note="forward-facing executive seats' base box, mid grey under the light legrest "
+                                    "(P1046404 / 05; all-lens review r3 CAB4-03)"),
+    "belt_grey":          dict(kind="dielectric", base=(0.36, 0.36, 0.35), rough=0.75, spec=0.25,
+                               note="executive seats' light-grey lap-belt webbing (P1046406 / 04; CAB4-06)"),
     "seat_tab_red":       dict(kind="dielectric", base=(0.45, 0.02, 0.02), rough=0.40, note="red pull tab"),
     "seat_back_shell":    dict(kind="dielectric", base=(0.21, 0.215, 0.228), rough=0.55, spec=0.35,
                                note="executive-seat back rear shell, mid grey (cab_pro_aero25_0405, review r1 F10)"),
@@ -634,24 +639,36 @@ SPEC.update({
     # final judge r1 I3 (P1046402 / 04 / 06): a dark NAVY pile with fine light grey-blue transverse pinstripes
     # (~12 mm pitch; the render's flat near-black read as a void), the runner bands cream rather than white-grey
     "carpet":             dict(kind="dielectric", base=(0.016, 0.021, 0.046), rough=0.95,
-                               stripes=dict(pitch=0.012, duty=0.34, colour=(0.085, 0.095, 0.125), wobble=0.15,
+                               stripes=dict(pitch=0.012, duty=0.34, colour=(0.12, 0.125, 0.14), wobble=0.15,
                                             pile=0.35),
-                               note="navy carpet with light grey-blue transverse pinstripes"),
-    "carpet_orange":      dict(kind="dielectric", base=(0.69, 0.25, 0.019), rough=0.95, note="AI Orange runner"),
+                               note="navy carpet with light grey-blue transverse pinstripes (stronger: all-lens r3 "
+                                    "CAB6-02, P1046406 / 07)"),
+    # (all-lens review r3 CAB5-02, P1046411 / 06: the runner is one woven carpet -- the ground's transverse pinstripe runs
+    # through the orange and light bands too, a darker shade of each; plain, they read as painted planks)
+    "carpet_orange":      dict(kind="dielectric", base=(0.69, 0.25, 0.019), rough=0.95,
+                               stripes=dict(pitch=0.012, duty=0.34, colour=(0.58, 0.20, 0.016), wobble=0.15, pile=0.35),
+                               note="AI Orange runner"),
     "carpet_light":       dict(kind="dielectric", base=(0.52, 0.52, 0.51), rough=0.95,
+                               stripes=dict(pitch=0.012, duty=0.34, colour=(0.44, 0.44, 0.435), wobble=0.15, pile=0.35),
                                note="runner, light-grey strands (review r4 INT8-05: P1046406 / 07 / 11, not cream)"),
-    "carpet_grey":        dict(kind="dielectric", base=(0.26, 0.28, 0.30), rough=0.95, note="runner, grey"),
+    "carpet_grey":        dict(kind="dielectric", base=(0.26, 0.28, 0.30), rough=0.95,
+                               stripes=dict(pitch=0.012, duty=0.34, colour=(0.21, 0.23, 0.25), wobble=0.15, pile=0.35),
+                               note="runner, grey"),
     "floor_panel":        dict(kind="dielectric", base=(0.20, 0.21, 0.22), metallic=0.1, rough=0.60,
                                note="floor panel edges"),
     "ledge_top":          dict(kind="dielectric", base=(0.024, 0.026, 0.030), rough=0.40, spec=0.25,
                                note="anthracite ledge tops"),
-    "ledge_panel":        dict(kind="dielectric", base=(0.060, 0.066, 0.078), rough=0.55, spec=0.25,
-                               note="anthracite ledge kick panels"),
+    "ledge_panel":        dict(kind="dielectric", base=(0.066, 0.066, 0.068), rough=0.55, spec=0.25,
+                               note="anthracite ledge kick panels (neutral: the slate-navy read wrong, all-lens r3 "
+                                    "CAB5-06)"),
     "gloss_black":        dict(kind="dielectric", base=(0.008, 0.008, 0.010), rough=0.10, **_ICC,
                                note="gloss-black fascia band, table inlay"),
     "chrome_trim":        dict(kind="metal", base=(0.62, 0.62, 0.61), rough=0.22, note="brushed rims, rods, handles"),
     "psu_panel":          dict(kind="dielectric", base=(0.030, 0.031, 0.035), metallic=0.1, rough=0.35,
                                note="dark gap rings round the lining doors, wall sockets, grilles"),
+    "lining_gap":         dict(kind="dielectric", base=(0.30, 0.295, 0.285), rough=0.85,
+                               note="the shadow line round the lining doors (O2 / access / PULL covers: P1046402 / 04 a thin "
+                                    "soft grey line, not a black ring; all-lens review r3)"),
     "psu_housing":        dict(kind="dielectric", base=(0.55, 0.55, 0.54), metallic=0.30, rough=0.35,
                                note="PSU / reading-light pods: light satin silver-white (P1046402 / 06; model "
                                     "judging r1 INT-m4)"),
