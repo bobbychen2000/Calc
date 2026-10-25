@@ -878,7 +878,9 @@ def cb_panels(fl):
                 rows = _row_layout(0.0, z1 - z0, nrow)
                 du = (pb - pa) / ncol
                 legends, white, strips, cells, labels = [], [], [], [], []
-                names = PR.cb_names(("cb", sg, round(pa, 3)), len(rows) * ncol)    # each breaker named once a panel
+                # each breaker named once on its console (FPG-05: the pair's blocks had repeated each other's names)
+                n_prev = 0 if pa == x0 else grids[0][0] * grids[0][1]
+                names = PR.cb_names(("cb", sg), n_prev + len(rows) * ncol)[n_prev:]
                 for r, (vk, (l0, l1), (g0, g1)) in enumerate(rows):
                     if glow[r] == "blue":
                         g1 = g0 + CB["band_blue"]

@@ -56,7 +56,7 @@ QUAD = dict(
 # `e_end`: flat with rounded edges, section `e_sec`: a rounded oval), its width narrowing to `w_bot` of the top's at the
 # body's foot and its section to `d_bot` (from behind the photos' trapezoid, ~80 wide at the rounded top, ~56 at the
 # foot), its top tipped forward by `lean` deg; on a `neck` tall dark stem of radius `neck_r` into the forked arm
-PCL_PADDLE = dict(e_end=0.38, e_sec=0.80, w_bot=0.70, d_bot=0.72, lean=12.0, neck=0.012, neck_r=0.0095, nu=16, nv=32)
+PCL_PADDLE = dict(e_end=0.30, e_sec=0.80, w_bot=0.70, d_bot=0.72, lean=12.0, neck=0.012, neck_r=0.0095, nu=16, nv=32)
 
 
 def pcl_paddle(c, hx, hy, hz):

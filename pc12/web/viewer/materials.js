@@ -451,7 +451,7 @@ const PART_TRIM = {
   'flight_deck:grip_black': { fill: [0, 1, 0.8], specIn: 2.2 },
   // (first-principles final judge FPF-03: the footwell read empty -- P1046408 / 09 show the crinkled foil blanket lit,
   // ~40-60 at panel_408b: more of the fill and its crinkle's glints)
-  'flight_deck:panel_silver': { fill: [0, 0.55], specIn: 0.7 },
+  'flight_deck:panel_silver': { fill: [0, 0.3], specIn: 0.7 },   // (FPG-03: with the footwell fill again, ~40-60)
 };
 // ?partTrim=part:material={json}|... merges look-development overrides into PART_TRIM (as ?cabTrim for CABIN_TRIM)
 for (const it of (Q_M.get('partTrim') || '').split('|')) {
@@ -499,7 +499,7 @@ U.cabinFormA.value.forEach((v, i) => v.set(...CABIN_LOOK.formA[i]));
 U.cabinFormB.value.forEach((v, i) => v.set(...CABIN_LOOK.formB[i]));
 U.cabinFormD.value.forEach((v, i) => v.set(...CABIN_LOOK.formD[i]));
 U.cabinFormC.value.set(...CABIN_LOOK.formC);
-const FOOT_SKIP = new Set((Q_M.get('footSkip') ?? 'lining_flightdeck,fd_cove,panel_dark,panel_silver').split(',').filter(Boolean));
+const FOOT_SKIP = new Set((Q_M.get('footSkip') ?? 'lining_flightdeck,fd_cove,panel_dark').split(',').filter(Boolean));
 // the satin / gloss trim of the flight deck keeps its reflections inside (FD-J10: the facing weights cut the titanium,
 // the gunmetal, the bezels, the black leather and the displays to flat matte); the sky law and the occlusion still apply
 // (+ the flight deck's shared detail materials (seed) and the geometry tracks' glossy ones: the annunciator / key caps,
@@ -649,7 +649,7 @@ const VIEWER = {
   // brighter room light had asked for a darker, contrastier mat that read as dark blue camouflage in the cabin light)
   // (first-principles judge r1 FP1-06: the footwell carpet read navy -- B - R <= +8: a neutral charcoal loop pile)
   carpet_flightdeck: { color: [0.032, 0.030, 0.030] },
-  sheepskin: { color: [0.245, 0.198, 0.212], sheenColor: [0.35, 0.32, 0.34], sunIn: 0.45,
+  sheepskin: { color: [0.255, 0.205, 0.205], sheenColor: [0.35, 0.32, 0.33], sunIn: 0.45,
     fleece: { locks: [[100, 0.55, 1.08, 0.0024, 0.6, 1.15, 0.42, 0.9, 0.35, 0.45, 0.4],
       [200, 0.88, 1.06, 0.0006, 0.6, 0.9, 0.38, 0.9, 0.2, 0.25, 0.2]], lockShape: [0.25, 0.8, 0.3, 4.5, 0.8, 0.6],
       bump: 0.8, flat: [0.55, 0.85], lock: [15, 0.12], fibre: [900, 140, 0.05], rim: [0.5, 0.25], sheen: [0.5, 1.4] },
@@ -677,13 +677,13 @@ const VIEWER = {
     // (first-principles track: seven fleece candidates -- taller / finer piles, lighter roots, a soft head-on coverage
     // edge (furPatch q.soft, kept, off) -- all read as sponge / coral / felt to the judges; the lead's rule: the shipped
     // fleece unless an A/B prefers the change -- none did, so this is the shipped fleece)
-    fur: { h: [0.008, 0.001], root: 0.34, mean: 0.84, oct: [[450, 0.45, 0.5, 0, 1.3, 0, 0.5], [300, 0.55, 0.6, 1, 1.3, 0.4, 0.5]],
+    fur: { h: [0.008, 0.001], root: 0.34, mean: 0.84, oct: [[450, 0.45, 0.5, 0, 2.6, 0.5, 0.5], [300, 0.55, 0.6, 1, 2.6, 0.6, 0.5]],
       // (all-lens r2 FD9-03: the grazing band wider and softer -- the outer layers thinned x graze below |n.v| grazeN,
       // the coverage edge widened there (grazeW: alpha to coverage on the multisampled canvas / targets), the layers' root
       // darkening, tilt (grazeFlat) and sheen growth up the pile (grazeSheen) flattened toward the silhouette; was 0.55 /
       // 0.25 / 0 / 0 / 0.  A per-pixel dithered coverage (dither: true) and the band at 0.55 put sparse bright tips into
       // [FD-L10]'s silhouette band at panel_408b (high-pass skew +1.1 .. +1.6; look-dev ld3 a0-a2 / u0-u2))
-      graze: 0.8, grazeN: 0.4, grazeW: 0.1, grazeFlat: 0.6, grazeSheen: 0.6,
+      graze: 1.0, grazeN: 0.4, grazeW: 0.1, grazeFlat: 0.6, grazeSheen: 0.6,
       t: [0.05, 0.75, 0.9], curl: [55, 0.8, 5.0], lump: [40, 0.10, 0.10], part: [[30, 0.2, 0.82, 40, 0.55, 1.3],
         [60, 0.15, 0.85, 80, 0.55, 1.5]], fray: [1100, 0.1], ao: [0.34, 1.13, 1.8], tilt: 0.55,
       clump: [[28, 0.005, 1.3], [65, 0.0018, 1.3]], sheen: [0.5, 1.1], far: [2.2, 3.2] },
