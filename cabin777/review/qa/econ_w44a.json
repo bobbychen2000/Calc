@@ -1,0 +1,189 @@
+{
+ "area": "econ",
+ "rater": "A",
+ "round": "w44",
+ "candidate": "w44 (on 5ba3379)",
+ "lens": "Skeptic, geometry first. The w43a scripts (m.py, q17.py, d.py) were re-run unchanged with r43 -> r44 and s43 -> s44, so every number is comparable with w43a; all r43 numbers reproduce w43a exactly. Added w.py for the head-on q15 cover width (longest L<75 run per row inside each seat column, y 247-299) and the q15 left side-block lumbar box. Photos are y_47300 / y_47301 / y_47303 at 930x575 LANCZOS. Crops: cmp_q15/q16/q17 (r43 / r44 / photo stacked), c_e7_arm.png (e7 + e4_head, s43 | s44), c_e1_front.png (e1 + e4b), z17.png (q17 near seats, render | photo). All are in /tmp/claude-0/-home-user-Calc/bd010ea5-6deb-54d2-81da-591cf8fca07a/scratchpad/raterA44. Note: git shows the candidate already committed as b6ea6d8 on top of 5ba3379, with a clean working tree; I rated those renders.",
+ "score": 8.35,
+ "calibrationNote": "Up 0.05 from 8.3. The detail mean is 8.28 (w43 8.27). This round made real geometry changes for the first time since w42: q17 changed 5.3 %, q15 4.7 % and q16 6.9 %, all in the seat bands, and the studio e7 changed 23 %, e4b 21 %, e1 15 % and e4_head 8 %. The one clear win is the belts. The webbing colour is now on target: the q17 strap reads #416395-#436598, L95-97, B/R 2.25-2.28, G/R 1.51, against the photo's mean teal of L110, B/R 2.29, G/R 1.51 (w43 was L83-87, B/R 2.8, G/R 1.8). The near q17 pans are bare, as in y_47303, and the stair steps are gone. That is not enough for 8.5. q17 still has only 1076 teal px against 3785 in the photo: the straps lie flat and thin, with no drape over the front edge and no buckle seen. The q17 headrest cover still reads as a strip behind the wing, gaining only 3-6 px per row. The head-on cover is now about 9 % wider than y_47300 (78 vs 71-72 px), where w43 was +3 %. Removing the side-block pillows also costs a real match in the q15 hero view, because y_47300 shows pillows on those seats. Back, shell, screen, tray, legs and far LOD did not change (e2 0.01 %, e5 / e8 0.00 %, e6 / e9 0.04-0.05 %).",
+ "priorIssues": [
+  {
+   "id": "w43a-1",
+   "status": "fixed (with a q15 trade-off)",
+   "note": "The side-block pillows are gone in both the near and far LOD. z17.png: the near q17 pans are bare, showing both straps. q17 teal px went 765 -> 1076; the target was >= 1500 and is not met, because the straps are thin and lie flat (see w44a-3). q16 teal px went 2120 -> 2295; the target was >= 2500, also not met. The q15 centre-block pillow E is unchanged (L48, B/R 2.12). Trade-off: in y_47300 the side-block seats do have pillows. The q15 left seat C lumbar box was L73 in r43 with the pillow and is L100 in r44, a bare tick back, against L66 in the photo (w44a-2)."
+  },
+  {
+   "id": "w43a-2",
+   "status": "fixed",
+   "note": "yBelt #4d6890 r0.8. The q17 strap px are now #416395 / #426496 / #436598: L95-97, B/R 2.25-2.28, G/R 1.51-1.52. That is inside the target G/R 1.45-1.7 and within 2 L of the target L 95-115. B/R is 0.02-0.05 under the 2.3 floor, which I treat as negligible. The scene mean teal is #43689a (L99, 2.30, 1.54) against the photo's #4c73ae (L110, 2.29, 1.51). The studio e7 tongue strap is a lighter sky blue, which is acceptable under the studio's flat light."
+  },
+  {
+   "id": "w43a-3",
+   "status": "partly fixed",
+   "note": "Counts at x 660-800 for y 100-180: r43 66 51 46 39 45 32 40 43 41 -> r44 69 57 52 44 46 37 47 45 38. Over y 110-160 that is +3 to +7 px per row, but still below the photo's 60 53 61 63 77 56 and the >= 55 target in four of six rows. The wing is unchanged (L70, B/R 2.18) and is still the occluder. In the studio e4_head the cover now hangs proud as a flap, which reads better. Side effect: the head-on q15 cover width went from 73-74 px to 77-78 px, against 71-72 in y_47300 (D 71, E 71-72), breaking the old 'within 5 L / matched head-on' condition by about 6 px."
+  },
+  {
+   "id": "w43a-4",
+   "status": "mostly fixed",
+   "note": "c_e7_arm.png: each side now has one straight pitched strap with no steps at the joins, the V is narrower and runs mostly fore-aft, and the second seat's latch is offset. Still open: the strap is a rigid flat slab with no sag, and the navy end does not drape over the pan front as it does at y_47303's near seat. The near-seat strap px do not reach y >= 450 at x 520-560 (z17.png)."
+  },
+  {
+   "id": "w43a-5",
+   "status": "not fixed",
+   "note": "q15 light px D-G 192 / 50 / 51 / 52 against 96 / 40 / 0 / 15. Cover F L55 against 44. Back F L89 against 70. Pillow E p90/p10 1.33 against 1.92. All unchanged."
+  },
+  {
+   "id": "w43a-L1",
+   "status": "partly fixed (lighting / cover geometry)",
+   "note": "q16 covers L73 / 66 / 52 (r43 70 / 59 / 52) against 64 / 83 / 100. The proud cover catches more light, so row 2 gained 7 L, but the near cover went further over (+9 L) and the far right is unchanged. q17 grazing cover-like px are L190, B/R 1.17, against the photo's 162 / 1.37, essentially unchanged."
+  }
+ ],
+ "details": [
+  {
+   "detail": "Fabric: tick weave",
+   "score": 8.2,
+   "refs": "Pans D/E L70/69 vs 84/75; back F L89 vs 70; back D L90 vs 98. Unchanged."
+  },
+  {
+   "detail": "Fabric: diamond lattice",
+   "score": 8.3,
+   "refs": "Pan F L69, B/R 1.98, p90/p10 1.58 vs 71 / 1.85 / 1.88. Unchanged."
+  },
+  {
+   "detail": "Fabric: petal fleck",
+   "score": 8.2,
+   "refs": "Backs E/G L55/63, B/R 2.20/1.95 vs 61/64, 2.24/1.89. Unchanged."
+  },
+  {
+   "detail": "Fabric: dash mosaic",
+   "score": 8.5,
+   "refs": "Pan G L69, B/R 1.84 vs 72 / 1.82."
+  },
+  {
+   "detail": "Fabric mix (backs, pans, pads)",
+   "score": 8.6,
+   "refs": "Order matches y_47300. Unchanged."
+  },
+  {
+   "detail": "Headrest pad + cover",
+   "score": 8.4,
+   "refs": "The studio flap reads better, as it hangs proud. q17 rows y110-160 are 57 52 44 46 37 47 vs 60 53 61 63 77 56, still behind the wing. q15 head-on width is 77-78 px vs 71-72 (+9 %, w43 +3 %). q16 covers 73/66/52 vs 64/83/100. Net unchanged."
+  },
+  {
+   "detail": "Pillow",
+   "score": 8.3,
+   "refs": "The side blocks now match y_47301 / y_47303 and contradict y_47300 (q15 left seat C lumbar L100 vs 66). The centre-block pillow is still a flat plaque (p90/p10 1.33 vs 1.92). The studio no longer shows any pillow, because e4b is a side block."
+  },
+  {
+   "detail": "Armrests",
+   "score": 8.3,
+   "refs": "Unchanged. The q17 near aisle arm is still chunkier than y_47303's slim cap (z17.png)."
+  },
+  {
+   "detail": "Belts",
+   "score": 8.65,
+   "refs": "Colour is on target: q17 L95-97, B/R 2.28, G/R 1.51 vs photo mean L110 / 2.29 / 1.51. One pitched strap with a staggered latch, and the pans are now bare. Below 8.5+: q17 teal px 1076 vs 3785 (thin, flat, no front drape, buckle not visible); q15 tongue tips unchanged."
+  },
+  {
+   "detail": "Seat pan / front",
+   "score": 8.5,
+   "refs": "Unchanged. The e11 / e1 / e10 diffs come from the belts and the removed pillows."
+  },
+  {
+   "detail": "Back silhouette",
+   "score": 8.0,
+   "refs": "Unchanged (e2 0.01 %, e3 1.0 % is belts)."
+  },
+  {
+   "detail": "Rear shell / hood / back top",
+   "score": 8.0,
+   "refs": "Unchanged (e9 0.05 %)."
+  },
+  {
+   "detail": "Screen / handset",
+   "score": 8.0,
+   "refs": "Unchanged (e5 0.00 %)."
+  },
+  {
+   "detail": "Tray / pocket / AC",
+   "score": 7.9,
+   "refs": "Unchanged."
+  },
+  {
+   "detail": "Legs / footrest / under-seat",
+   "score": 8.5,
+   "refs": "Unchanged (e8 0.00 %)."
+  },
+  {
+   "detail": "Far-LOD rows",
+   "score": 8.1,
+   "refs": "Seat px L89, p10 50, L<50 share 0.108, p90/p10 2.70 vs 84 / 48 / 0.132 / 2.85; far band L96, B/R 1.70 vs 92 / 1.69. Losing the dark side pillows took the L<50 share from 0.118 to 0.108, slightly further from the photo, but within tolerance."
+  }
+ ],
+ "issues": [
+  {
+   "id": "w44a-1",
+   "severity": "medium",
+   "owner": "econ",
+   "title": "Carried w43a-3: the q17 cover is still mostly hidden by the headrest wing, and the head-on cover is now 9 % too wide",
+   "detail": "Headrest pad + cover",
+   "evidence": "q17 x 660-800, y 110-160: 57 52 44 46 37 47 vs y_47303 60 53 61 63 77 56. In z17.png the render's near wing (large dotted pad) fills x 260-340, where the photo's wing is a narrow roll beside a broad grey flap. q15 head-on cover run is 77-78 px vs 71-72 in y_47300; it was 73-74 in r43.",
+   "fix": "09a_econ.js: go back to the 0.22 m width (lines 137 / 142 / 423, which keeps head-on matched) and attack the occluder instead. Pull the headrest wing pads' forward face 1.5 cm aft, or thin them 1 cm in depth, so the side view sees the cover face. Keep the forward-hanging foot.",
+   "check": "q15 head-on run 70-74 px; q17 rows at y 110-160 >= 55 in at least five of six; q15 cover E within 5 L of 65."
+  },
+  {
+   "id": "w44a-2",
+   "severity": "low",
+   "owner": "econ (needs a user call)",
+   "title": "Removing the side-block pillows loses a match in the q15 hero view (y_47300 shows them)",
+   "detail": "Pillow",
+   "evidence": "q15 left seat C lumbar box (x 70-150, y 330-380): r43 L73, B/R 1.57; r44 L100, B/R 1.73; y_47300 L66, B/R 1.59. The y_47300 side seats C / H carry navy pillows upright against the back, while y_47301 and y_47303 show the side seats bare. All three are official ANA photos, so the photo-conflict rule gives no answer.",
+   "fix": "Default: keep the w44 removal, since two of three official photos agree and it unhides the belts. If the user prefers y_47300, restore the side pillows standing upright tight against the backrest, rotated about 10 degrees off vertical and with their foot about 6 cm above the pan, so they don't cover the latch area seen in q17.",
+   "check": "With the alternative: q15 seat C box L 62-72, and q17 teal px not below the r44 1076."
+  },
+  {
+   "id": "w44a-3",
+   "severity": "medium",
+   "owner": "econ",
+   "title": "The belts lie flat and thin in q17: no drape over the pan front and no visible latch, so teal px are 28 % of the photo",
+   "detail": "Belts",
+   "evidence": "q17 teal px 1076 vs 3785; q16 2295 vs 3771. In z17.png, y_47303's near seats show the bright metal latch plate at mid-pan, both straps about 5 cm wide, and the strap end hanging over the pan's front edge. The render shows two thin flat lines and no latch highlight. The strap box is 0.042 x 0.003 m and lies 4 mm above the pan.",
+   "fix": "09a_econ.js belt (about line 301): widen the webbing to 0.048 m and lift it to 6 mm proud, so it is not lost in the fabric at grazing angles. Make the side-seat latch plate a 0.05 x 0.035 m bright metal plate (#c8ccd2, r 0.3) slightly proud. On every second seat add a 6-8 cm segment pitched about 60 degrees down over the front edge from the latch.",
+   "check": "q17 teal px >= 1800; q16 >= 2800; a latch highlight (L > 180, B/R < 1.2) appears on the near q17 pans; q17 near-seat strap px reach y >= 450 at x 520-560."
+  },
+  {
+   "id": "w44a-4",
+   "severity": "low",
+   "owner": "econ",
+   "title": "Carried w43a-5: q15 tongue tips, cover F, tick back F, flat pillow plaque",
+   "detail": "Belts / Headrest / Fabric / Pillow",
+   "evidence": "q15 light px E/F/G 50/51/52 vs 40/0/15; cover F L55 vs 44; back F L89 vs 70; pillow E p90/p10 1.33 vs 1.92.",
+   "fix": "As in w43a-5: tucked tongue z -0.165 -> -0.18; pillow edge darkening / quilting; back F tick tile gain.",
+   "check": "F <= 20 and G <= 30 light px; pillow p90/p10 >= 1.6; back F L <= 80."
+  },
+  {
+   "id": "w44a-5",
+   "severity": "low",
+   "owner": "econ",
+   "title": "No studio unit shows the lumbar pillow any more",
+   "detail": "Pillow",
+   "evidence": "s44 e4b_pillow and e1_front use a 3-seat block, which is now bare (c_e1_front.png), so the centre-block pillow can only be reviewed at q15 distance.",
+   "fix": "test/studio spec, or an UNITS entry: point e4b at a 4-seat centre unit, or pass pillow:true to that studio unit.",
+   "check": "e4b shows the centre-block pillow at close range."
+  },
+  {
+   "id": "w44a-L1",
+   "severity": "low",
+   "owner": "lighting",
+   "title": "The near q16 cover is now 9 L over the photo while the far right one stays 48 L dark",
+   "detail": "",
+   "evidence": "q16 covers L73 / 66 / 52 vs 64 / 83 / 100; q17 grazing cover-like px L190, B/R 1.17 vs 162 / 1.37.",
+   "fix": "Same as w43a-L1. Make the cover sheen less view-dependent; do not raise the near cover further.",
+   "check": "q16 near L <= 70, row 2 >= 72; q17 band B/R >= 1.3."
+  }
+ ],
+ "questionsForUser": [
+  "y_47300 (the official front view) shows lumbar pillows on the 3-seat side blocks, while y_47301 and y_47303 (also official) show those seats bare. w44 follows the two side views and removes them, which un-hides the seat belts. Should the side blocks carry pillows, as in the hero shot, or stay bare?"
+ ],
+ "extraRefsSearched": "No downloads; used y_47300, y_47301 and y_47303."
+}
