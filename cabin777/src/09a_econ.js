@@ -54,7 +54,7 @@ const ECON_HEAD_L = { ...SEATMAT.yFabricB, c: photoBase('#65739f', 'y_diamond'),
 const econHead = (F, k = 0, rot = 0) => F === SEATMAT.yFabricB ? SEATMAT.yFabricC : F === SEATMAT.yFabricC ? SEATMAT.yFabricB : F === SEATMAT.yFabricD ? SEATMAT.yFabric
   : (((k >> 1) + rot) % 2 ? ECON_HEAD_D : ECON_HEAD_L);
 // w30 (w29b-6, w27b-6): the mosaic pan read light and blue in q15 (L98 B/R 1.86 vs y_47300 87 / 1.72) -> its own base [D]
-const ECON_PAN_C = { ...SEATMAT.yFabricC, c: photoBase('#525977', 'y_mosaic') };
+const ECON_PAN_C = { ...SEATMAT.yFabricC, c: photoBase('#4a5279', 'y_mosaic') };   // w34a-2: L108 B/R 1.55 vs y_47300 82 / 1.80 (part of the gap is the lighting lift) -> darker, bluer
 const ECON_PLATE = { ...SEATMAT.armPost, c: '#66686e' };   // w32 (w31a-2 / w31b-5): #9a9b9f still a light second bar (L114-133 vs ~76)
 const econPanMat = (F) => F === SEATMAT.yFabric ? ECON_PAN : F === SEATMAT.yFabricB ? ECON_PAN_B : F === SEATMAT.yFabricC ? ECON_PAN_C : F;
 function econSeat(B, x0, lod, opts = {}) {
@@ -75,10 +75,10 @@ function econSeat(B, x0, lod, opts = {}) {
   // joints, 8-13 px vs 2-3 in y_47300); sans 13 / 18 / y_47302 show a ~3.5 cm front roll over a near-vertical fabric face,
   // square in plan, the sides abutting under the arms -> 0.47 wide, side roll 1.6 cm, front roll 3.2 cm, 5 deg; w33b-2: the
   // front read ~9.5 cm thick vs ~7 in y_47302 -> 8.5 cm, bottom 1.5 cm higher, top unchanged [D]
-  const ex = 0.016, ez = 0.032, py0 = -0.04, ph = 0.085, ps = [{ y: py0, w: 0.45, d: 0.42, z: 0.02, r: 0.02 }, { y: py0 + 0.012, w: 0.466, d: 0.456, z: 0.008, r: 0.026 }, { y: py0 + 0.03, w: 0.47, d: 0.47, r: 0.03 }];
-  for (let k = 0; k <= 5; k++) { const th = k / 5 * Math.PI / 2, c = 1 - Math.cos(th); ps.push({ y: py0 + ph - ez + ez * Math.sin(th) + 0.01 * Math.sin(th) * (k === 5 ? 1 : 0.6), w: 0.47 - 2 * ex * c, d: 0.47 - 2 * ez * c, r: 0.03 + ex * c * 0.6 }); }
+  const ex = 0.01, ez = 0.032, py0 = -0.04, ph = 0.085, ps = [{ y: py0, w: 0.45, d: 0.42, z: 0.02, r: 0.02 }, { y: py0 + 0.012, w: 0.474, d: 0.456, z: 0.008, r: 0.026 }, { y: py0 + 0.03, w: 0.478, d: 0.47, r: 0.03 }];   // w34a-1 / w34b-4: joints still 4-8 px (top 0.438 on a 0.4826 pitch) -> 0.478, side roll 1.0 cm
+  for (let k = 0; k <= 5; k++) { const th = k / 5 * Math.PI / 2, c = 1 - Math.cos(th); ps.push({ y: py0 + ph - ez + ez * Math.sin(th) + 0.01 * Math.sin(th) * (k === 5 ? 1 : 0.6), w: 0.478 - 2 * ex * c, d: 0.47 - 2 * ez * c, r: 0.03 + ex * c * 0.6 }); }
   B.add(gLoft(ps, lod ? 3 : 4), M4.trs(x0, 0.415, -0.28, 0, 5 * DEG), PF);
-  B.add(gRBox(0.40, 0.02, 0.36, 0.008, 1), M4.trs(x0, 0.364, -0.235), { c: '#2c2f35', r: 0.6 });
+  B.add(gRBox(0.40, 0.02, 0.41, 0.008, 1), M4.trs(x0, 0.364, -0.26), { c: '#2c2f35', r: 0.6 });
   // back: rises above the headrest cushion to a rounded top (y_47306 all three seats, y_47301, sanspotter 13;
   // back length ~0.87 from the pan crease, y_47302 right seat) [D]
   B.add(econCrownLoft([SEC(0.0, 0.40, 0.07, -0.005, 0.02), SEC(0.04, 0.425, 0.09, -0.012), SEC(0.16, 0.43, 0.108, -0.024, 0.036), SEC(0.30, 0.43, 0.095, -0.014, 0.036),
@@ -178,8 +178,8 @@ function econSeat(B, x0, lod, opts = {}) {
   // ~0.15-0.18 m discs under each seat) [D]
   // w33 (w33a-2 / gap33-4, y_47302 crop): a flat smoky see-through half-disc (~0.19 wide) hanging face-forward, tipped
   // ~25 deg nose-down (w33b-3) under the seat, the vest a darker core inside, a red strap with a blue tag folded down its face (was an opaque puck) [V]
-  B.add(gCyl(0.095, 0.095, 0.012, 14, true, 0, Math.PI), M4.trs(x0 + 0.03, 0.235, -0.36, 0, Math.PI / 2 - 25 * DEG), { c: '#5a5f68', r: 0.18 });
-  B.add(gCyl(0.075, 0.075, 0.016, 12, true, 0, Math.PI), M4.trs(x0 + 0.03, 0.232, -0.36, 0, Math.PI / 2 - 25 * DEG), { c: '#2e3036', r: 0.5 });
+  B.add(gCyl(0.095, 0.095, 0.012, 14, true, 0, Math.PI), M4.trs(x0 + 0.03, 0.235, -0.36, 0, Math.PI / 2 - 25 * DEG), { c: '#7c828c', r: 0.15 });   // w34b-2: read opaque near-black -> pale smoky rim, smaller core
+  B.add(gCyl(0.06, 0.06, 0.016, 12, true, 0, Math.PI), M4.trs(x0 + 0.03, 0.232, -0.36, 0, Math.PI / 2 - 25 * DEG), { c: '#43474f', r: 0.35 });
   B.add(gBox(0.018, 0.075, 0.004), M4.trs(x0 + 0.035, 0.20, -0.372, 0, -25 * DEG), { c: '#c8252b', r: 0.5 });
   B.add(gBox(0.02, 0.012, 0.005), M4.trs(x0 + 0.035, 0.225, -0.375, 0, -25 * DEG), { c: '#2f5fb0', r: 0.5 });
   if (!opts.noScreen) {
@@ -284,10 +284,11 @@ function econSeat(B, x0, lod, opts = {}) {
   // dark slab read as a bar under every pan (e10 / e11)
   // white seat-electronics box under the pan front, dark face (y_47302) [D]
   {
+    // w34b-3: hangs from the tray just behind the pan face (it floated 3 cm low, 9 cm back)
     // w33 (gap33-4, y_47302 crop): light grey, tucked up against the pan base, dark display in its upper half, blue LED [V]
-    B.add(gRBox(0.075, 0.085, 0.05, 0.008, 1), M4.trs(x0 - 0.13, 0.30, -0.40), { c: '#c8cacc', r: 0.5, l: LAYER.plastic });
-    B.add(gQuad(0.04, 0.03), M4.trs(x0 - 0.13, 0.315, -0.4255, Math.PI), { c: '#1c1f25', r: 0.3 });
-    B.add(gQuad(0.004, 0.004), M4.trs(x0 - 0.115, 0.29, -0.4257, Math.PI), { c: '#4a90ff', r: 0.3, e: 0.8 });
+    B.add(gRBox(0.075, 0.085, 0.05, 0.008, 1), M4.trs(x0 - 0.13, 0.315, -0.465), { c: '#c8cacc', r: 0.5, l: LAYER.plastic });
+    B.add(gQuad(0.04, 0.03), M4.trs(x0 - 0.13, 0.33, -0.4905, Math.PI), { c: '#1c1f25', r: 0.3 });
+    B.add(gQuad(0.004, 0.004), M4.trs(x0 - 0.115, 0.305, -0.4907, Math.PI), { c: '#4a90ff', r: 0.3, e: 0.8 });
   }
 }
 
@@ -317,9 +318,10 @@ function econUnit(n, lod = false, opts = {}) {
       // w31 (w30a-2 / w30b-8): still two white bars head-on; under the arm y_47300 shows mid-grey mechanism -> grey plate [D]
       const zs = (y, z0, z1, w) => SEC(y, w, z0 - z1, (z0 + z1) / 2, 0.009);
       const end = k === 0 || k === arms.length - 1;
-      // w33 (w33a-4, y_47303 aisle seats): the end plate was ~1.55x the arm's depth head-on (41-43 px vs 26-28) -> ~8 cm deep [D]
+      // w33 (w33a-4, y_47303 aisle seats): the end plate was ~1.55x the arm's depth head-on (41-43 px vs 26-28) -> ~8 cm deep;
+      // w34a-5: a 14-16 px gap under the arm (y_47303 2-8 px) -> 4.5 cm higher [D]
       // w30 (w29a-1): regular-row plate nose 3 cm further back, so the arm hides it head-on (y_47300 shows one bar) [D]
-      loftAt(B, end ? [zs(0.462, -0.13, -0.33, 0.024), zs(0.47, -0.105, -0.375, 0.024), zs(0.485, -0.09, -0.395, 0.024), zs(0.50, -0.08, -0.40, 0.024), zs(0.525, -0.08, -0.392, 0.024), zs(0.538, -0.09, -0.37, 0.024), zs(0.543, -0.145, -0.33, 0.02)]
+      loftAt(B, end ? [zs(0.507, -0.13, -0.33, 0.024), zs(0.515, -0.105, -0.375, 0.024), zs(0.53, -0.09, -0.395, 0.024), zs(0.545, -0.08, -0.40, 0.024), zs(0.57, -0.08, -0.392, 0.024), zs(0.583, -0.09, -0.37, 0.024), zs(0.588, -0.145, -0.33, 0.02)]
         : [zs(0.48, -0.14, -0.335, 0.02), zs(0.488, -0.13, -0.353, 0.022), zs(0.51, -0.125, -0.362, 0.022), zs(0.532, -0.13, -0.353, 0.022), zs(0.54, -0.14, -0.335, 0.02)], M4.trs(xa + (end ? (k === 0 ? -0.013 : 0.013) : 0), 0, 0), end ? SEATMAT.arm : ECON_PLATE, 3);
     } else {
       // front end: one continuous grey bracket from under the arm nose down past the pan, with a pivot ring at pan height;
@@ -366,7 +368,7 @@ function econUnit(n, lod = false, opts = {}) {
   // low silver baggage bar across the front legs (y_47302)
   B.add(gCyl(0.011, 0.011, W - 0.06, 8), M4.trs(0, 0.10, -0.34, 0, 0, Math.PI / 2), SEATMAT.frame);
   if (!lod) {
-    B.add(gRBox(0.22, 0.10, 0.30, 0.012, 1), M4.trs(xs[xs.length - 1] - 0.05, 0.19, -0.22), SEATMAT.black);
+    B.add(gRBox(0.22, 0.10, 0.30, 0.012, 1), M4.trs(xs[xs.length - 1] - 0.05, 0.19, -0.18), { c: '#33363c', r: 0.5 });   // w34b-6: a flat black brick in e10 / e7 -> charcoal, 4 cm back
   }
   return B.build();
 }
