@@ -33,3 +33,21 @@
    penumbra) and caps the interior sun at 1.5 (was 2.0); the q14 patch now reads 1.48x the fabric (L207 on L140). Say if you
    would rather have the official-photo look (fainter patches, cap ~0.8: every sun patch in the cabin gets weaker) or keep
    them physical.
+
+## Lighting run 2 (raters L7, 2026-10-25)
+
+6. **Boarding colour cast: ANA's official photos or the in-service look?** ANA's official photos (y_47300 / 47301 / 47303,
+   py_37301, c_27312) show cool blue-grey shadows on the white plastics (B-R +11 to +33), and the model follows them (run 2
+   cools the shaded whites in Boarding). Photos taken on board on the ground (omaatJ_oj_r31 / r37) and in flight (lalf_119 /
+   120, kn_room_1, the omaat_f THE Suite set) are warm (R-B +10 to +23). Should Boarding keep the official photos' cool
+   balance, or move toward the warmer in-service look? (Both raters ask this.)
+7. **Cruise: which in-flight look?** Live and Let's Fly (lalf_room_119 / 120) shows a pale sky-blue band (#658cb6), a
+   warm-white vault and mid-grey bins. tlfl_IMG_9217 and sany_22 show the saturated periwinkle band (#5b5cc4-#5f70e4) that
+   the Cruise preset uses now. Should Cruise follow one of them, or should there be two presets?
+8. **Economy at night: cooler and brighter than THE Room?** (extends 3) sany_40 shows economy at night with cool grey-blue
+   bins and ceiling (#525562, L86), a blue-lit lower sidewall and a warm galley end, about 1.7x as bright as THE Room's night
+   photo (ucr). The model has one Night level for the whole cabin (economy inherits THE Room's warm-dark look). Should
+   economy get its own, cooler and brighter night level? Related: sany_40 shows faint lit cove lines along the bin tops in
+   economy, the THE Room night photo none; a per-zone night LED level would allow both.
+9. **Sunset through open shades.** In q21 the panes show a blue-grey cloud deck under an amber cabin. No ANA photo of the
+   amber phase with open shades at sunset was found. Is a warm orange horizon band expected in those windows?
