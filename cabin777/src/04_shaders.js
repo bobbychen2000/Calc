@@ -336,8 +336,8 @@ void main(){
   // c_27312 128) where the thin-highlight share already sits above the in-flight range (q06 0.92 % vs 0.06-0.57 %) [D fixL11 a1]
   float rough0 = rough;
   vec3 Ng = normalize(v_nrm); vec3 gnx = dFdx(Ng), gny = dFdy(Ng);
-  float rimW = smoothstep(0.002, 0.02, 0.25*(dot(gnx, gnx) + dot(gny, gny))) * (1.0 - smoothstep(0.45, 0.6, rough0)) * (1.0 - u_rimK.z*metal)
-             * smoothstep(u_sLowZ - 0.3, u_sLowZ + 0.3, v_wpos.z);
+  float rimW = smoothstep(0.002, 0.02, 0.25*(dot(gnx, gnx) + dot(gny, gny))) * (1.0 - smoothstep(0.45, 0.6, rough0)) * (1.0 - u_rimK.z*metal);
+  float rimZ = u_rimK.y * smoothstep(u_sLowZ - 0.3, u_sLowZ + 0.3, v_wpos.z);
   // specular anti-aliasing: widen roughness where the normal varies across pixels
   vec3 dNdx = dFdx(N), dNdy = dFdy(N);
   float nvar = 0.25 * (dot(dNdx, dNdx) + dot(dNdy, dNdy));
@@ -725,12 +725,12 @@ void main(){
   // the cove line's colour as seen in a reflection: the cabin hemi hue at the LED level (u_led itself is set so the
   // clipped lens reads amber, and below the clip it is near-red: red rim lines in the amber phase, d07)
   vec3 coveC = u_hemiTop / max(max(u_hemiTop.r, u_hemiTop.g), max(u_hemiTop.b, 1e-4)) * max(max(u_led.r, u_led.g), u_led.b);
-  // QA L11 (integration): the cove lobe on the material roughness with a small AA floor (u_rimK.y 1; 0 = the spec-AA-widened
-  // one), x(1 + u_rimK.x rimW) on the fillets, whose specular occlusion eases 0.6 of the way to 1 (a rim sees the cove line
+  // QA L11 (integration): aft of THE Room (rimZ, above) the cove lobe on the material roughness with a small AA floor (u_rimK.y 1;
+  // 0 = the spec-AA-widened one), x(1 + u_rimK.x rimW) on the fillets, whose specular occlusion eases 0.6 of the way to 1 (a rim sees the cove line
   // over the pocket the 8 cm AO volume averages it into) [V: y_47303 armrest-top streaks p99 248-251; c_27312 cap rims] [D gap3]
   if (u_exterior < 0.5) {
-    float rimO = rimW * u_rimK.y;
-    specEnv += coveSpec(v_wpos, N, V, R, mix(rough, sqrt(rough0*rough0 + min(0.5*nvar, 0.04)), u_rimK.y), F0, NdV) * coveC * u_cove * sz
+    float rimO = rimW * rimZ;
+    specEnv += coveSpec(v_wpos, N, V, R, mix(rough, sqrt(rough0*rough0 + min(0.5*nvar, 0.04)), rimZ), F0, NdV) * coveC * u_cove * sz
              * (0.25 + 0.75*mix(ao, 1.0, 0.6*rimO)) * (1.0 + u_rimK.x*rimO);
   }
   vec3 col = max(diff * (amb + sun), tubRef) + specSun + specEnv + emissive;   // tubRef: QA r4 tub floor (above)
