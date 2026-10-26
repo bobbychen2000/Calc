@@ -1,0 +1,72 @@
+{
+  "area": "ceiling",
+  "rater": "A",
+  "round": "final",
+  "score": 8.5,
+  "renderNote": "Rated on head 1430d42 (lighting run 4 L14; src/07b_ceiling.js and src/08_bins.js unchanged since the w15 ratings). Renders: /tmp/rF q01/q06/q13/q15/q16/q17 (930x575) and /tmp/rF/cv v1, v2, v3, v5, v12, v15, d1, d2, d4, d5 (800x560). d1b/d2b/d4b/d5b/v8/v9/v14 were not in this render set, so D4 and W14A-3 are checked from the views available. References: ref/ana y_47301, c_27312 (official). No new web photos were fetched: ref/web/ceiling is empty in this container and the final-round scope did not need them. My crops are in scratchpad rAf/ (ref_psu.png, q16_psu.png, c_psu.png, q06_psu.png). Sampled tones: vault 231-232 (q06 (470,30), q16 (720,30), v1/v12 (231,230,226)); bins 194-220 (q06 (200,50) 204-212, (700,60) 216-230; q16 (200,60) 194-209). Lighting is noted, not scored.",
+  "previousStatus": {
+    "W14A-1 high: vault fittings and ribs left behind by the vault lift": "fixed, still holds under the new lighting. In v1, v2, v5 and v12 the speakers and ribs read as thin grey slashes and hairlines on a 231 vault, with no dark planks. The ribs show as 1-px arcs, matching the joints in y_47301.",
+    "W14A-2 medium: crest channel too dark": "fixed, still holds. v15 shows a mid-grey channel between the vault and the rail. It does not read as a black gap in v1, v2 or v12.",
+    "w14b F1 medium (same as W14A-1)": "fixed, see above.",
+    "W15A-1 low: speaker reads as a single slash": "not fixed (no ceiling change). v2 and v12 still show only the crescent line.",
+    "W15A-2 low: crest channel uniform grey, no dark core": "not fixed (no ceiling change).",
+    "W14A-3 low: outboard PSU band segmentation sparse": "not fixed. q16 crop (rAf/q16_psu.png): the outboard band is featureless at QA distance. y_47301 (rAf/ref_psu.png) and c_27312 show a dark joint every ~20 px with oval PSU wells between them.",
+    "W14A-4 / L1 low: vault/bin ratio": "slightly better under the new lighting, still low. q06 1.05-1.12 and q16 1.17, against 1.25-1.30 in the photos (y_47301 vault 244, bins 185-202; c_27312 vault 241, bins 181-189).",
+    "D4 low: door-4 dome wedge": "not checked: d4b was not rendered this round. d4 shows no defect.",
+    "regressions": "None in the ceiling geometry, colours or materials. Lighting note: the cove-side vault strip next to the right centre bin now washes to 253 in v12 (770,200) and near white in v1/v2. That is a cove glow at its brightest; y_47301 also reads 241-255 there, so it is acceptable."
+  },
+  "details": {
+    "vault": 8.6,
+    "cove/trough": 8.6,
+    "vault fittings": 8.5,
+    "crest channel": 8.5,
+    "bins outboard": 8.5,
+    "bins centre": 8.7,
+    "seams/lips/rails": 8.4,
+    "placards": 8.6,
+    "PSUs": 8.3,
+    "door zones": 8.2,
+    "lens": 8.6
+  },
+  "issues": [
+    {
+      "id": "W14A-3",
+      "severity": "low",
+      "detail": "The outboard PSU band reads featureless in the economy aisle view. The photos show a strong rhythm of dark filler-panel joints and PSU wells (carried over).",
+      "evidence": "rAf/ref_psu.png (y_47301, row ~122): dark joints at about 136-165 on a 175-190 band, roughly every 20 source px, with oval gasper/light wells between them. c_27312 (rAf/c_psu.png) shows the same. In rAf/q16_psu.png the render band is flat 216-236 with no joints.",
+      "fix": "src/08_bins.js line 257: shingles(B, bw, L, 8, 0.005, ...) -> 16, and BINMAT.riser '#d2d3d4' -> '#c2c4c6' (target joints ~0.8x the band; w7a showed that #a9acb0 is too dark)."
+    },
+    {
+      "id": "W14A-4",
+      "severity": "low",
+      "detail": "Bins are a little too bright relative to the vault (shared with lighting).",
+      "evidence": "Render 1.05-1.17 (q06, q16) against photos 1.25-1.30 (y_47301 (300,70) 189-202 vs 244; c_27312 (400,40) 181-189 vs 241).",
+      "fix": "src/08_bins.js BINMAT.door '#d6d8dc' -> '#cdd0d5' (keeps the cool cast the photos have), or lighting-side bin falloff."
+    },
+    {
+      "id": "W15A-1",
+      "severity": "low",
+      "detail": "The speaker reads as a single grey slash with no bezel outline (carried over).",
+      "evidence": "v2 and v12: only the crescent is visible on the 231 vault.",
+      "fix": "src/07b_ceiling.js CEILMAT.bezelShadow '#b4b2ae' -> '#c4c2be' and bezel about 3 % darker than the vault, so the pill outline reads."
+    },
+    {
+      "id": "W15A-2",
+      "severity": "low",
+      "detail": "The crest channel is a uniform grey band. y_47301 has a grey lip with a narrow dark core (carried over).",
+      "evidence": "v15 channel flat mid-grey. y_47301 lip 162-193 with a 1-2 px core at 11-40.",
+      "fix": "src/07b_ceiling.js: split the groove into a dark core q(0,0.12) with '#4a4c50' and a lip q(0.12,0.45) with '#bfc2c6'."
+    },
+    {
+      "id": "D4",
+      "severity": "low",
+      "detail": "Door-4 dome/monument junction wedge (carried over; not re-rendered this round).",
+      "evidence": "Last measured in w15 d4b: a flat 248 at (760-780, 190-215).",
+      "fix": "src/07b_ceiling.js CEILMAT.lightPanel e 0.3 -> 0.12."
+    }
+  ],
+  "questionsForUser": [
+    "Do you have a real in-flight photo looking up at the economy or THE Room outboard PSU strip on the 212-seat 777-300ER? It would settle the joint pitch and contrast, the one remaining visible difference from y_47301.",
+    "Any photo of the door-1, door-4 or door-5 cross-aisle ceilings? Those domes are still approximated."
+  ]
+}
