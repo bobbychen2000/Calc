@@ -254,3 +254,16 @@
   Drop 2 mm and recess 5 mm were both built and rendered with no visible change, and the run-end fix doesn't apply.
   Crops: `polishE/`; details: `fixed_polishE.md`.
 - No ceiling change, so no w16 round: the ceiling stays at w15 A 8.5 / B 8.8.
+
+## Final confirm (2026-10-26, head 1430d42)
+
+- **Confirmed at the bar:** rater A scored 8.5 and rater B 8.7, with no high or medium issues (`ceiling_final_a.json`, `ceiling_final_b.json`). The w15 scores were A 8.5 / B 8.8.
+- **Nothing regressed.** Both raters checked every earlier high and medium issue against the new lighting (W14A-1, W14A-2, F1), and all are still fixed. `07b_ceiling.js` and `08_bins.js` are unchanged since polish B, so no code changed.
+- **Triangles:** 502,734 (bins 432,850 plus shell `upper` 69,884). This matches polish B, about +21.4 % over the wave-3 start.
+- **Open lows, carried over:**
+  - The outboard PSU band needs finer segmentation.
+  - The vault/bin brightness ratio is 1.05–1.17; the photos give about 1.2–1.45. The suggested change is `BINMAT.door` #cfd2d6.
+  - The speaker has no bezel outline.
+  - The door-4 wedge.
+  - The cove-side vault strip washes out to about 253. That is lighting, and y_47301 is 241–255 there too, so it is acceptable.
+- Not re-rendered this round: d1b/d2b/d4b/d5b, v4, v8, v9, v14 and the night/amber views.
