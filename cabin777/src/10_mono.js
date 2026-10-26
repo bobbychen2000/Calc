@@ -15,6 +15,7 @@ const MONMAT = {
   workLight: { c: '#fff6e6', r: 0.4, e: 0.8 },
   green: { c: '#35d06a', r: 0.4, e: 0.7 },
   blueLed: { c: '#3d8bff', r: 0.4, e: 0.8 },
+  greenLed: { c: '#3dff6a', r: 0.4, e: 0.8 },   // polishF: brewer-bay LED (omaat_room_32)
   amber: { c: '#ff9a3a', r: 0.4, e: 0.8 },
   red: { c: '#c62828', r: 0.5 },
   flapTab: { c: '#6e2318', r: 0.25 },   // w18 (w17a/b): rendered #b23428 at #8e2a1c   // w16 (w15b): dark glossy orange-red clips (lalf_133 #66201a); #c62828 read saturated
@@ -43,7 +44,9 @@ const MONMAT = {
   // [V] door-2 aft wall (lalf_133): flat ash with aluminium-framed stowage flaps, red latches, aluminium rails; dark warm
   //     soffit with downlights over the galley passage (lalf_133 #655b54, lalf_134 #696567 at ~0.6 of white)
   soffit: { c: '#4a423d', r: 0.35, l: LAYER.wood },
-  basalt: { c: '#1e1d21', r: 0.2, l: LAYER.marble },   // w11a: near-black gloss counter (lalf_134 #111119)
+  basalt: { c: '#1e1d21', r: 0.2, l: LAYER.marble },
+  barTop: { c: '#0e0e0f', r: 0.4, l: LAYER.marble },   // polishF (L13): bar counter near-black gloss (omaat_room_32 counter p50 37)
+  barFace: { c: '#3a3835', r: 0.4, l: LAYER.plastic },  // polishF (L13): warm charcoal carcass (omaat_room_32 L62, p10 48 / p90 88)   // w11a: near-black gloss counter (lalf_134 #111119)
   black: { c: '#1b1a20', r: 0.35, l: LAYER.plastic },
   blackGloss: { c: '#0f0e13', r: 0.15 },
   blind: { c: '#3b3a3c', r: 0.85, l: LAYER.fabric, e: 0.05 },   // w7: #1d1c22 rendered a black void                // decorative blind, pulled down (render)
@@ -279,55 +282,25 @@ function buildBar(B, m) {
     B.add(gRBoxM(px(b) - px(a) - 0.006, 0.84, 0.014, 0.004, 1), V((px(a) + px(b)) / 2, 0.5, 0.022), MONMAT.barAsh);
   for (const p of [265, 395, 1340, 1640, 1760]) ringPull(B, V(px(p), 0.71, 0.029));
   // counter + stainless grab rail on stand-offs
-  B.add(gRBoxM(w - 0.02, 0.035, BAR.set + 0.05, 0.008, 1), V(0, BAR.deck + 0.0175, (0.05 - BAR.set) / 2), MONMAT.basalt);
+  B.add(gRBoxM(w - 0.02, 0.035, BAR.set + 0.05, 0.008, 1), V(0, BAR.deck + 0.0175, (0.05 - BAR.set) / 2), MONMAT.barTop);
   // w16 (w14b-w15b, samchui_render_11): a bright flush aluminium nosing band wraps the counter's front edge, no separate rail
   B.add(gRBoxM(w - 0.02, 0.045, 0.012, 0.004, 1), V(0, BAR.deck + 0.0125, 0.056), MONMAT.nosing);
   for (const sx of [-1, 1]) B.add(gBox(0.012, 0.045, BAR.set + 0.05), V(sx * (w / 2 - 0.004), BAR.deck + 0.0125, (0.05 - BAR.set) / 2), MONMAT.nosing);   // w18 (w17b): wraps the ends
-  // upper black unit
-  const oU = -BAR.set, uw = BAR.upW, uy0 = BAR.deck + 0.035, uh = BAR.upTop - uy0;
-  const up = (p) => (p - 1002) * BAR.K, uy = (p) => uy0 + (715 - p) * BAR.K;
-  const box = (a, b, ya, yb, d, o, mat) => B.add(gRBoxM(up(b) - up(a), uy(ya) - uy(yb), d, 0.004, 1), V((up(a) + up(b)) / 2, (uy(ya) + uy(yb)) / 2, o), mat);
-  B.add(gRBoxM(uw, uh, 0.06, 0.01, 1), V(0, uy0 + uh / 2, oU + 0.03), MONMAT.black);
+  // polishF (integration L13, medium): the upper unit follows the in-service bar, not the 2019 render. omaat_room_32
+  // (NH109 JFK-HND 2020, seat 15A: "a small snack bar between the middle and rear business class cabins" = door 3),
+  // trafficnews 87790_ph18 (2019 press photo: same carcass with a black blind down over the left bay) and knaviation_31
+  // (monitor over open bays with water bottles, glass door right) show a charcoal galley face: control panel over two
+  // ovens, monitor over two open bays (brewer left), tall glass-door cabinet. Blind rolled up, no bottle shelf or tumblers [V]
+  const oU = -BAR.set, uw = BAR.upW, uy0 = BAR.deck + 0.035, uh = BAR.upTop - uy0, of = oU + 0.06;
+  B.add(gRBoxM(uw, uh, 0.06, 0.01, 1), V(0, uy0 + uh / 2, oU + 0.03), MONMAT.barFace);
   B.add(gBox(uw + 0.01, 0.05, 0.065), V(0, BAR.upTop - 0.025, oU + 0.034), MONMAT.blackGloss);        // fascia
-  // left: blind pulled down (fine slat lines), bronze bottom rail
-  box(490, 850, 210, 700, 0.012, oU + 0.066, MONMAT.blind);
-  for (let k = 1; k < 9; k++) B.add(gBox(up(850) - up(490) - 0.01, 0.003, 0.004), V((up(490) + up(850)) / 2, uy(700) + (k * (uy(210) - uy(700))) / 9, oU + 0.073), { c: '#4a4846', r: 0.5 });   // w10a: blind slat lines visible
-  B.add(gBox(up(850) - up(490) + 0.01, 0.018, 0.02), V((up(490) + up(850)) / 2, uy(700), oU + 0.07), MONMAT.bronze);
-  // monitor (screen 405 x 235 px = 0.77 x 0.45 m, ~35 in class) with bezel + shelf lip under it
-  box(862, 1318, 210, 480, 0.03, oU + 0.075, SEATMAT.bezel);
-  B.add(gQuad(up(1290) - up(885), uy(225) - uy(460)), V((up(885) + up(1290)) / 2, (uy(225) + uy(460)) / 2, oU + 0.091), SEATMAT.screen, atlasUV('screen'));
-  B.add(gRBoxM(up(1310) - up(870), 0.02, 0.07, 0.006, 1), V((up(870) + up(1310)) / 2, uy(490), oU + 0.09), MONMAT.blackGloss);
-  // closed cubby door + open bottle shelf (7 clear sake/water bottles, one juice)
-  box(865, 1060, 510, 695, 0.012, oU + 0.066, MONMAT.blackGloss);
-  const sx0 = up(1070), sx1 = up(1310), sc = (sx0 + sx1) / 2;
-  B.add(gBox(sx1 - sx0, uy(510) - uy(695), 0.01), V(sc, (uy(510) + uy(695)) / 2, oU + 0.02), { c: '#2a2a30', r: 0.5 });
-  B.add(gBox(sx1 - sx0, 0.01, 0.08), V(sc, uy(690), oU + 0.07), MONMAT.blackGloss);
-  B.add(gBox(sx1 - sx0, 0.025, 0.006), V(sc, uy(680), oU + 0.108), { c: '#2a2a30', r: 0.3 });   // shelf fence
-  for (let k = 0; k < 7; k++) bottle(B, V(sx0 + 0.035 + (k * (sx1 - sx0 - 0.07)) / 6, uy(690) + 0.005, oU + 0.07), k ? 0.30 : 0.2, k ? 0.028 : 0.032, k ? MONMAT.bottleClear : MONMAT.juice);   // w10b: slimmer, spaced
-  // glass-door mini-fridge: frame, lit interior, two shelves of blue bottles, round latch on a pill
-  const fc = (up(1325) + up(1510)) / 2;
-  box(1325, 1510, 250, 700, 0.02, oU + 0.07, MONMAT.blackGloss);
-  B.add(gQuad(up(1480) - up(1345), uy(275) - uy(670)), V((up(1345) + up(1480)) / 2, (uy(275) + uy(670)) / 2, oU + 0.081), MONMAT.fridgeLit);
-  for (const [sy, bh] of [[uy(668), 0.3], [uy(470), 0.3]]) {
-    B.add(gBox(up(1480) - up(1345), 0.008, 0.02), V(fc, sy, oU + 0.086), MONMAT.bronze);
-    for (let k = 0; k < 3; k++) bottle(B, V(up(1372) + k * 0.06, sy + 0.004, oU + 0.1), bh, 0.028, MONMAT.bottleClear, true, MONMAT.bottleBlue);
-  }
-  B.add(gPlate(0.07, 0.11, 0.02, 0.035, 4), V(up(1362), uy(470), oU + 0.125), MONMAT.latch);          // oval latch plate
-  B.add(gCyl(0.022, 0.022, 0.012, 14), M4.mul(V(up(1362), uy(470), oU + 0.136), M4.trs(0, 0, 0, 0, Math.PI / 2)), MONMAT.steel);
-  // w13a/b (samchui_render_11): a flat aluminium edge band at deck level along the back of the counter, not a tube fence on posts
+  const xL = -1.04;
+  serviceFace(B, V, xL, of);
+  B.add(gRBoxM(0.44, 0.045, 0.06, 0.012, 1), V(xL + 0.26, 1.925, of + 0.03), MONMAT.blackGloss);    // rolled-up blind (trafficnews: down)
+  B.add(gBox(0.008, 0.012, 0.004), V(xL + 0.5, 1.33, of + 0.004), MONMAT.greenLed);                 // brewer-bay status LED (omaat_room_32, knav_31)
+  for (let k = 0; k < 6; k++) bottle(B, V(xL + 0.92 + 0.08 + k * 0.058, uy0, of + 0.06), 0.2, 0.03, MONMAT.bottleClear, true, MONMAT.bottleBlue);   // water bottles (knav_31)
+  // w13a/b (samchui_render_11): a flat aluminium edge band at deck level along the back of the counter
   B.add(gBox(uw, 0.03, 0.012), V(0, BAR.deck + 0.05, oU + 0.12), MONMAT.steelBright);
-  // tumblers on the counter (render: four at the left)
-  // w16 (w15a/b): lighter grey-glass bodies with a darker inner wall, a full rim ring (a closed tube, so its back half
-  // draws too), a thick bright base and a vertical glint
-  const ring = (rr) => gTube(Array.from({ length: 13 }, (_, k) => [rr * Math.cos(k * Math.PI / 6), 0, rr * Math.sin(k * Math.PI / 6)]), 0.0022, 4, false);
-  for (const p of [490, 535, 578, 655]) {
-    const z = p === 655 ? -0.16 : -0.26, T = (y) => V(up(p), BAR.deck + y, z);
-    B.add(gCyl(0.03, 0.026, 0.05, 12, false), T(0.06), MONMAT.tumbler);
-    B.add(gLathe([[0.0285, 0.048], [0.0245, 0.008]], 12), T(0.035), MONMAT.tumblerIn);   // inner wall (top-down profile: normals inward)
-    B.add(ring(0.029), T(0.085), MONMAT.glassHi);
-    B.add(gCyl(0.026, 0.026, 0.008, 12), T(0.039), MONMAT.glassHi);                                           // thick base
-    for (const gx of [-0.016, 0.014]) B.add(gQuad(0.004, 0.036), M4.mul(T(0.062), M4.trs(gx, 0, 0.0255)), MONMAT.glassHi);
-  }
   // ash cheeks either side of the upper unit, up to the soffit
   for (const s of [-1, 1]) B.add(gBox((w - uw) / 2 - 0.02, BAR.canopy - uy0, 0.02), V(s * (uw / 2 + (w - uw) / 4), (uy0 + BAR.canopy) / 2, oU + 0.012), MONMAT.barAsh);
   // black soffit over the bar with three downlights, framed by backlit washi bands
@@ -381,8 +354,15 @@ function buildWelcomeGalley(B, m) {
   B.add(gBox(w, m.h - 2.045, 0.012), V(0, (2.045 + m.h) / 2, 0.006), MONMAT.barAsh);                                // ash head skin
   const o = -set + 0.012;
   B.add(gBox(w - 0.04, 0.05, 0.03), V(0, 1.98, o + 0.02), MONMAT.blackGloss);
+  serviceFace(B, V, -w / 2, o);
+  welcomeEnds(B, m);
+}
+// Service face shared by the door-2 welcome galley and the door-3 bar (omaat_room_32 = ANA 777 THE Room bar with its
+// blind up): control panel over two ovens, landscape welcome monitor over two open bays (brewer left), tall glass-door
+// cabinet with round latch and caution tag. xL = left edge of the face, o = face plane; heights for a 1.0 m deck.
+function serviceFace(B, V, xL, o) {
   // left column: control panel over two ovens
-  const lc = -w / 2 + 0.26;
+  const lc = xL + 0.26;
   B.add(gRBoxM(0.40, 0.2, 0.02, 0.006, 1), V(lc, 1.78, o + 0.01), MONMAT.alu);
   for (let k = 0; k < 4; k++) B.add(gCyl(0.008, 0.008, 0.01, 8), M4.mul(V(lc - 0.12 + k * 0.035, 1.76, o + 0.025), M4.trs(0, 0, 0, 0, Math.PI / 2)), k < 2 ? MONMAT.red : MONMAT.amber);
   B.add(gRBoxM(0.1, 0.03, 0.01, 0.004, 1), V(lc + 0.1, 1.76, o + 0.022), MONMAT.ovenGlass);
@@ -396,7 +376,7 @@ function buildWelcomeGalley(B, m) {
   }
   // centre: landscape welcome monitor; beverage maker + open cubby beneath it
   // [D] screen taller than the ovens beside it (omaat_ANA-Business-Class-The-Room-32: 280 vs 255 px) -> ~0.86 x 0.49 m
-  const mc = -w / 2 + 0.92;
+  const mc = xL + 0.92;
   B.add(gRBoxM(0.90, 0.54, 0.012, 0.01, 1), V(mc, 1.68, o - 0.002), SEATMAT.bezel);                  // w11: flush in the tower (omaat_room_32)
   B.add(gQuad(0.86, 0.49), V(mc, 1.68, o + 0.0045), SEATMAT.screen, atlasUV('screen'));
   B.add(gRBoxM(0.92, 0.02, 0.07, 0.006, 1), V(mc, 1.39, o + 0.04), MONMAT.blackGloss);
@@ -443,8 +423,8 @@ function buildWelcomeGalley(B, m) {
   B.add(gPlate(0.26, 0.07, 0.012, 0.035, 4), V(c0, 1.955, o + 0.106), { c: '#e9e2cf', r: 0.5 });          // w7: single cream oval tag
   B.add(gQuad(0.03, 0.03), V(c0 - 0.07, 1.955, o + 0.1125), { c: '#5a5650', r: 0.6 });                      // w10a: pictogram + 2 text lines (omaat_room_32)
   for (const y of [1.965, 1.945]) B.add(gQuad(0.09, 0.005), V(c0 + 0.03, y, o + 0.1125), { c: '#8d887e', r: 0.6 });
-  welcomeEnds(B, m);
 }
+
 // portrait welcome monitors on navy end panels facing each aisle, with three steel rub strips at 0.3 / 0.5 / 0.7 m
 // (sans_09 looks down the door-2 galley passage: the lit portrait monitor on a dark end panel at the aisle, galley
 // units on both sides; tda_welcome3 = ANA's render of the same panels)

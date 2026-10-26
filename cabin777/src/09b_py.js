@@ -7,6 +7,41 @@
 // PY w1: sp 0.5525 = 05_layout pySp (seat ids / eye points and geometry agreed only to 2-3 cm with the old 0.5715) [D]
 const PY = { back: 14 * DEG, hinge: [0.48, -0.09], sp: 0.5525 };
 const PYGAP = { c: '#1c1e23', r: 0.9 };   // polishD: cm-scale seat joints (integration L9-L11, econ tuck crease) [D]
+const PYGROOVE = { c: '#2a2e36', r: 0.9 };   // polishF: recessed seams, mid-dark (integration L13: renders ~L45-60) [D]
+// back cushion (QA r2: centre ~3 cm behind its old face between the bolsters, top blending into the headrest; w7: crown
+// under the shell rim)
+const PYBACK = [SEC(0.0, 0.42, 0.09, -0.01, 0.025), SEC(0.05, 0.44, 0.115, -0.02), SEC(0.18, 0.45, 0.13, -0.032, 0.045), SEC(0.34, 0.45, 0.10, -0.014, 0.042),
+  SEC(0.52, 0.45, 0.10, -0.009, 0.042), SEC(0.66, 0.43, 0.10, 0.004, 0.045), SEC(0.80, 0.42, 0.11, 0.015, 0.045),
+  SEC(0.89, 0.42, 0.11, 0.02, 0.045), SEC(0.905, 0.39, 0.085, 0.025, 0.035), SEC(0.918, 0.31, 0.045, 0.03, 0.02)];
+// back bolster and headrest ear sections (bolster frame: x sd 0.185, z -0.03, yaw -sd 14 deg; ear: x s 0.172, z -0.045, 12 deg)
+const PYBOL = [SEC(0.02, 0.07, 0.10, 0, 0.03), SEC(0.10, 0.085, 0.14, -0.016, 0.042), SEC(0.30, 0.07, 0.14, -0.016, 0.034), SEC(0.48, 0.10, 0.15, -0.02, 0.045),
+  SEC(0.62, 0.10, 0.13, -0.016, 0.045), SEC(0.68, 0.085, 0.10, -0.01, 0.038), SEC(0.71, 0.05, 0.05, -0.004, 0.02)];
+const PYEAR = [SEC(0.672, 0.055, 0.045, 0, 0.022), SEC(0.685, 0.11, 0.09, 0, 0.04), SEC(0.71, 0.125, 0.105, 0, 0.045), SEC(0.85, 0.125, 0.105, 0, 0.045),
+  SEC(0.88, 0.11, 0.09, 0, 0.04), SEC(0.898, 0.07, 0.06, 0, 0.028), SEC(0.905, 0.035, 0.028, 0, 0.013)];
+// section of a lofted list at height y (linear in w / d / z / r, as the loft's rings are)
+function secAt(secs, y) {
+  let i = 0;
+  while (i < secs.length - 2 && secs[i + 1].y < y) i++;
+  const a = secs[i], b = secs[i + 1], t = clamp((y - a.y) / (b.y - a.y), 0, 1), L = (k) => (a[k] || 0) + t * ((b[k] || 0) - (a[k] || 0));
+  return { y, w: L('w'), d: L('d'), z: L('z'), r: L('r'), x: L('x') };
+}
+// polishF: path where a fabric part's outer face (lofted secs under transform T, outer side sd) enters a surface whose
+// signed distance is sdf(y, x, z), walked front (-z) to back; one point per y, gaps where the face never meets it
+function seamPath(secs, T, sd, sdf, y0, y1, n) {
+  const runs = [[]];
+  for (let k = 0; k <= n; k++) {
+    const y = y0 + ((y1 - y0) * k) / n, s = secAt(secs, y);
+    const pts = rrectPts(s.w, s.d, Math.max(0.0005, Math.min(s.r, s.w / 2 - 1e-4, s.d / 2 - 1e-4)), 6, s.x, s.z)
+      .filter(([x]) => sd * (x - s.x) > 0).sort((p, q) => p[1] - q[1]).map(([x, z]) => M4.point(T, [x, y, z]));
+    let hit = null;
+    for (let i = 1; i < pts.length && !hit; i++) {
+      const fa = sdf(pts[i - 1][1], pts[i - 1][0], pts[i - 1][2]), fb = sdf(pts[i][1], pts[i][0], pts[i][2]);
+      if (fa >= 0 && fb < 0) { const t = fa / (fa - fb); hit = [0, 1, 2].map((j) => pts[i - 1][j] + t * (pts[i][j] - pts[i - 1][j])); }
+    }
+    if (hit) runs[runs.length - 1].push(hit); else if (runs[runs.length - 1].length) runs.push([]);
+  }
+  return runs.filter((r) => r.length > 2);
+}
 const PYREAR = { c: '#5e636b', r: 0.42, l: LAYER.plastic };   // rear face of the shell + literature bucket (py_37304, san_26) [D]
 function pySeat(B, x0, lod, opts = {}) {
   const [hy, hz] = PY.hinge;
@@ -18,9 +53,7 @@ function pySeat(B, x0, lod, opts = {}) {
   B.add(gRBox(0.415, 0.05, 0.48, 0.012, 1), M4.trs(x0, 0.335, -0.29), { c: '#3a3f4a', r: 0.5, l: LAYER.plastic });   // w10 (A): dark pan frame (py_37304, san_26)
   // QA r2: the centre of the back sits ~3 cm behind its old face between the bolsters (d 0.10 at y 0.34-0.52), and the top
   // blends into the headrest (overlapping sections instead of a step)
-  loftAt(B, [SEC(0.0, 0.42, 0.09, -0.01, 0.025), SEC(0.05, 0.44, 0.115, -0.02), SEC(0.18, 0.45, 0.13, -0.032, 0.045), SEC(0.34, 0.45, 0.10, -0.014, 0.042),
-    SEC(0.52, 0.45, 0.10, -0.009, 0.042), SEC(0.66, 0.43, 0.10, 0.004, 0.045), SEC(0.80, 0.42, 0.11, 0.015, 0.045),
-    SEC(0.89, 0.42, 0.11, 0.02, 0.045), SEC(0.905, 0.39, 0.085, 0.025, 0.035), SEC(0.918, 0.31, 0.045, 0.03, 0.02)]   /* w7: crown under the shell rim */, BH, F, lod ? 3 : 4);
+  loftAt(B, PYBACK, BH, F, lod ? 3 : 4);
   // ANA: the patterned back forms the rounded top of the seat level with the headrest and runs beside + behind the
   // wings (py_37301 right seat, py_37303 side view); the headrest stands ~2 cm proud of it [D]
   // sculpted side bolsters standing ~5 cm proud of the centre, narrow at the waist (~0.30 above the cushion), flaring
@@ -28,8 +61,7 @@ function pySeat(B, x0, lod, opts = {}) {
   // w6 (B): neck step under the headrest (shoulder / headrest width 1.21 in py_37301), wider shoulder flare [D]
   for (const sd of [-1, 1]) {
     const BX = M4.mul(BH, M4.trs(sd * 0.185, 0, -0.03, -sd * 14 * DEG));
-    loftAt(B, [SEC(0.02, 0.07, 0.10, 0, 0.03), SEC(0.10, 0.085, 0.14, -0.016, 0.042), SEC(0.30, 0.07, 0.14, -0.016, 0.034), SEC(0.48, 0.10, 0.15, -0.02, 0.045),
-      SEC(0.62, 0.10, 0.13, -0.016, 0.045), SEC(0.68, 0.085, 0.10, -0.01, 0.038), SEC(0.71, 0.05, 0.05, -0.004, 0.02)], BX, F, lod ? 2 : 3);   // w9 (A + B): end under the ears
+    loftAt(B, PYBOL, BX, F, lod ? 2 : 3);   // w9 (A + B): end under the ears
   }
   // w8 (B): curved hourglass seams sweeping in at the waist (py_37301), a darker welt ~2 mm proud of the back face [D]
   if (!lod) for (const sd of [-1, 1]) B.add(gTube([[0.14, 0.10, -0.088], [0.145, 0.30, -0.074], [0.125, 0.48, -0.063], [0.13, 0.60, -0.056]].map(([x, y, z]) => M4.point(BH, [sd * x, y, z])), 0.0025, 6), null, { c: '#5c6476', r: 0.95 });   // w9 (B): along the bolster edge, seam-shadow tone
@@ -49,6 +81,20 @@ function pySeat(B, x0, lod, opts = {}) {
     [0.84, 0.10, 0.475], [0.88, 0.095, 0.48], [0.905, 0.085, 0.48], [0.925, 0.07, 0.475], [0.938, 0.062, 0.455], [0.95, 0.05, 0.43],
     [0.958, 0.035, 0.38], [0.964, 0.02, 0.30], [0.967, 0.008, 0.20]];
   loftAt(B, ds.map(([y, d, w]) => SEC(y, w, d, zr(y) - d / 2 + 0.01, Math.min(d / 2 - 0.002, 0.045))), BH, SEATMAT.pyShell, lod ? 2 : 3);
+  if (!lod) {
+    // polishF (integration L13, medium): the back fabric meets the shell in a recessed joint (py_37301 / 37302, sanpy:
+    // a dark line down both sides of every seat). A 4 mm mid-dark bead centred on the line where the back cushion's
+    // outer face enters the shell surface, so only a soft sliver shows in the corner, not a strip on either face [D]
+    const dsSecs = ds.map(([sy, d, w]) => SEC(sy, w, d));
+    const shellSD = (y, x, z) => {
+      const dd = secAt(dsSecs, y), r = Math.min(dd.d / 2 - 0.002, 0.045), zc = zr(y) - dd.d / 2 + 0.01;
+      const qx = Math.abs(x) - (dd.w / 2 - r), qz = Math.abs(z - zc) - (dd.d / 2 - r);
+      return Math.hypot(Math.max(qx, 0), Math.max(qz, 0)) + Math.min(Math.max(qx, qz), 0) - r;
+    };
+    // (the bolsters and ears stop ~5 mm short of the shell; the back cushion behind them is what enters it)
+    for (const sd of [-1, 1]) for (const run of seamPath(PYBACK, M4.trs(0, 0, 0), sd, shellSD, 0.02, 0.9, 16))
+        B.add(gTube(run.map((p) => M4.point(BH, p)), 0.004, 4), null, PYGROOVE);   // 16 steps x 4 sides: ~270 tris a seat
+  }
   // 6-way headrest with wings
   loftAt(B, [SEC(0.67, 0.40, 0.085, -0.008, 0.036), SEC(0.71, 0.37, 0.092, -0.012, 0.04), SEC(0.85, 0.37, 0.092, -0.012, 0.04), SEC(0.895, 0.35, 0.075, -0.006, 0.032), SEC(0.91, 0.31, 0.05, -0.002, 0.02)], BH, F, lod ? 3 : 4);
   for (const s of [-1, 1]) {
@@ -61,8 +107,7 @@ function pySeat(B, x0, lod, opts = {}) {
     const WX = M4.mul(BH, M4.trs(s * 0.172, 0, -0.045, -s * 12 * DEG));   // pads bulge ~4 cm proud of the flap (py_37301)
     // w9 (A + B): short puffy ears with domed top and bottom ends, a gap above the bolsters (py_37301 / 37305) [D]
     // w11 (A): broader, flatter-fronted pillows (py_37305 left seat, san_14: ear wider than the bolster below, flat face) [D]
-    loftAt(B, [SEC(0.672, 0.055, 0.045, 0, 0.022), SEC(0.685, 0.11, 0.09, 0, 0.04), SEC(0.71, 0.125, 0.105, 0, 0.045), SEC(0.85, 0.125, 0.105, 0, 0.045),
-      SEC(0.88, 0.11, 0.09, 0, 0.04), SEC(0.898, 0.07, 0.06, 0, 0.028), SEC(0.905, 0.035, 0.028, 0, 0.013)], WX, WG, lod ? 2 : 3);
+    loftAt(B, PYEAR, WX, WG, lod ? 2 : 3);
   }
   // navy leatherette flap over the headrest front + top, silver trim line low on the back shell (py_37303)
   // flap ~0.28 x 0.25, hanging a little below the wing pads (py_37301 seat C: 98 x 92 px on a 158 px headrest) [D]
@@ -88,6 +133,7 @@ function pySeat(B, x0, lod, opts = {}) {
   // polishD (integration L9-L11): soft shadow band tucked behind the skirt under the cushion nose (py_37301 crease
   // L50-90, w16 A + B: a hard black line read drawn) and a dark gap under the hinge roller [D]
   B.add(gRBox(0.39, 0.024, 0.006, 0.003, 1), M4.trs(x0, 0.378, -0.543), { c: '#3a3f4c', r: 0.95 });
+  B.add(gRBox(0.39, 0.036, 0.006, 0.003, 1), M4.trs(x0, 0.384, -0.541), { c: '#4a505e', r: 0.95 });   // polishF (w17 A): lighter upper step, a graded crease [D]
   B.add(gRBox(0.39, 0.012, 0.012, 0.004, 1), M4.trs(x0, 0.272, -0.548), PYGAP);
   B.add(gRBox(0.40, 0.02, 0.05, 0.008, 1), M4.trs(x0, 0.035, -0.53), SEATMAT.pyArm);            // leg-rest foot bar
   // dark-grey hinge roller across the top of the stowed leg rest under the cushion nose, dark side links down to the
@@ -220,7 +266,7 @@ function pyUnit(n, lod = false, opts = {}) {
         // the corner, a black panel with two universal AC + USB sockets, then a lower block with the red life-vest tab
         // each cubby: a grey front plate standing ~2.5 cm proud over the lower 3/4, dark opening only above it
         for (const [y, h] of [[0.51, 0.10], [0.35, 0.10]]) {     // ANA py_37301: two equal pockets
-          B.add(gBox(w - 0.026, 0.016, 0.004), M4.trs(xa, y + h / 2 - 0.012, -0.543), { c: '#2a2c30', r: 0.8 });
+          B.add(gBox(w - 0.026, 0.016, 0.004), M4.trs(xa, y + h / 2 - 0.012, -0.543), { c: '#16181c', r: 0.9 });   // polishF (L13): cubby mouths as dark recesses [D]
           B.add(gRBox(w - 0.02, h * 0.74, 0.028, 0.007, 1), M4.trs(xa, y - h * 0.13, -0.554), SEATMAT.pyArm);
           // royal-blue right-angled triangle: top-left corner on the upper cubby, top-right on the lower (alv_09) [V]
           const up = y > 0.43;
