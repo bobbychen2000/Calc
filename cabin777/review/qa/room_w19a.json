@@ -1,0 +1,41 @@
+{
+  "area": "room",
+  "rater": "A",
+  "round": "w19",
+  "score": 8.5,
+  "summary": "Candidate polishD (src/09c_room.js only for THE Room), rated from round/room/before vs after, the same cameras. There is no regression: the calibration regions are pixel-identical (q06 door L167, q06 near shell L62, q09 wall L54, q08 band L102). (1) Toe kick: the concept, colour and recess are confirmed by c_27312 and by in-flight omaat_room_4 (downloaded to ref/web/room). The photos show a near-black base (c_27312 x430-455 y480-510 reads L2-7) set back under the aisle ash panels and monument ends. In the render the kick reads L3-30 and recessed in kick/kick3, and the grey flush band is gone. Two real-photo mismatches remain. The kick looks short: c_27312 gives ~32 px of black under ~240 px of ash on a 1.12 m end, i.e. ~0.10-0.14 m against 0.08. And in both photos a thin silver rail runs directly above the kick, with a pale lower ash panel above that on the monument end. The model has a charcoal frame rail plus a 2 cm grey shell sliver instead. (2) The 11A hairline is gone: in the fw11A crop 590-615 x 330-412 the count above L200 went 48 -> 0 (max 246 -> 128). The only residue is 2-3 isolated L75 edge speckles, which is not an artefact at this resolution. (3) The 9 mm round cap rails are visually neutral to slightly positive. Edges are softer in q10 and q06, but no thin highlight appears: the q06 cap profile is unchanged within ±8 L, while c_27314 shows a L188-251 1-2 px edge line. No z-fighting, gaps, floating parts or light leaks were found in any of the 8 views. The kick box bottom is coplanar with the floor, but it is hidden. The window pink differences in q08/q10 are sky/lighting, not room. The score holds at 8.5. The kick change is a real fidelity gain on the bases but too small to move the overall score.",
+  "photos_collected": ["ref/ana c_27312, c_27313, c_27314, c_27315", "ref/web/room omaat_room_4/6/7/13/23/37, kn_8/16/19 (cdn.onemileatatime.com/wp-content/uploads/2020/01/ANA-Business-Class-The-Room-N.jpg; knaviation.net/wp-content/uploads/2021/03/ANA-The-Room-Business-Class-N.jpg)"],
+  "calibration": [
+    {"issue": "w17b medium: shaded near shell faces too dark (lighting part)", "status": "not fixed (unchanged; lighting owner)", "evidence": "q09 wall (300-500 x 260-330) L53.9 before and after; q06 near shell (30-130 x 430-530) L62.5 = before. Photos L72-83."},
+    {"issue": "w16b medium: aisle-end doors too dark vs cabinets (lighting)", "status": "not fixed (unchanged; lighting owner)", "evidence": "q06 door (600-640 x 330-520) L167.2 vs 167.4 before; c_27312 ~195."},
+    {"issue": "w17a/w18a low: header band ~10 % dark vs flap", "status": "not fixed (unchanged)", "evidence": "q08 band (480-560 x 290-330) L102.3 = before."},
+    {"issue": "w16-w18 low: ash pinstripe contrast, soft goods / small hardware", "status": "not fixed (unchanged)", "evidence": "Ash, pillows and bundle are pixel-identical in q06/q08/q09."},
+    {"issue": "w16a low: aisle-end lower seam missing", "status": "partly addressed / still open", "evidence": "The kick now separates the base, but the silver bottom rail and pale lower panel are still absent (c_27312 crop 400-540 x 220-530; omaat_room_4 crop 520-720 x 180-600, scaled)."}
+  ],
+  "details": [
+    {"detail": "Overall nested-pair layout, shells, privacy walls (aisle views)", "score": 8.7, "refs": ["c_27312", "c_27315", "q06", "q10"]},
+    {"detail": "Shell / cap colour and finish (incl. rounded cap rails)", "score": 8.6, "refs": ["c_27314", "q06", "q09", "q10"]},
+    {"detail": "Shell bases / toe kick", "score": 8.2, "refs": ["c_27312", "omaat_room_4", "kick", "kick3"], "note": "was ~7.0 (flush grey band); now near-black and recessed, short by ~3-5 cm, missing the silver rail above"},
+    {"detail": "Monument top / aisle cap / spine / plaques", "score": 8.3, "refs": ["c_27313", "c_27314", "q09"]},
+    {"detail": "Aisle-end posts and door leaves", "score": 8.5, "refs": ["c_27312", "q06"]},
+    {"detail": "Cabinet / table ash", "score": 8.1, "refs": ["c_27312", "c_27315", "q06"]},
+    {"detail": "Seat: sofa, back, header band, slate flap", "score": 8.4, "refs": ["c_27315", "omaat_room_6", "q08"]},
+    {"detail": "Boarding bundle and pillows", "score": 7.8, "refs": ["omaat_room_6", "q08", "q09"]},
+    {"detail": "Monitor, footwell, console (11A hairline fixed)", "score": 8.4, "refs": ["c_27316", "q07", "fw11A"]}
+  ],
+  "issues": [
+    {"severity": "low", "title": "Toe kick reads a little short", "evidence": "c_27312 aisle monument end: black L2-7 from y~479 to ~512 (≈32 px) under ~240 px of ash on a 1.12 m end -> ~0.10-0.14 m. omaat_room_4 aisle housings show a similarly tall black base under the rail. Model KICK.h 0.08.", "fix": "src/09c_room.js KICK.h 0.08 -> 0.10. The housings and ashFrameX already key off KICK.h; check that roomAisleAsh y0 0.10 sits above the kick (raise it to KICK.h + 0.02 if needed)."},
+    {"severity": "low", "title": "No silver rail directly over the kick; charcoal frame + grey sliver instead", "evidence": "c_27312 (x~455-470 y~472-476 L151-248) and omaat_room_4 show a bright metal rail at the bottom edge of the ash panels, directly on the black kick. The model has a charcoal ashFrame bottom member, plus a 2 cm jShell band (0.08-0.10) under the aisle ash.", "fix": "In ashFrameX/roomAisleAsh, draw the bottom (y0) member with SEATMAT.jRail instead of jShell (add a parameter for the bottom material). Start roomAisleAsh at y0 = KICK.h so that no grey shell sliver shows between the rail and the kick."},
+    {"severity": "low", "title": "Rounded cap rails produce no visible cove highlight", "evidence": "The q06 cap profile (600-760 x 240-262) is unchanged within ±8 L; c_27314 shows a L188-251 edge line. +triangles for a near-zero visual change.", "fix": "Keep 0.009 radius but seg 2 (saves triangles), or leave as is. The highlight is a lighting/roughness question (integration), not geometry."},
+    {"severity": "low", "title": "Carried: header band ~10 % dark, ash pinstripe weak, soft goods/hardware", "evidence": "Unchanged from room_w18a.json.", "fix": "As room_w18a.json."}
+  ],
+  "questions": [
+    "Integration: is the missing cap-rail highlight a cove-light / roughness problem? The geometry now has a round edge to catch one."
+  ],
+  "before_vs_after": [
+    {"change": "Recessed near-black toe kick (0.08 tall, 2 cm back) under the aisle ash panels and monument ends", "verdict": "keep (adjust)", "reason": "Confirmed by c_27312 (base L2-7) and omaat_room_4. It replaces a wrong flush grey band with no artefacts. Adjust: height ~0.10 and a silver rail above it."},
+    {"change": "11A footwell low console block: square edges (chamfer removed)", "verdict": "keep", "reason": "The hairline went from 48 px > L200 to 0 with no new artefact (only 2-3 isolated L75 speckles)."},
+    {"change": "capRail 9 mm round edge, 3 segments", "verdict": "keep (optionally seg 2)", "reason": "Visually neutral to slightly better (softer edges in q10), no artefacts. It costs triangles but stays inside the +25 % budget."},
+    {"change": "jCap roughness 0.34 -> 0.26 (already reverted)", "verdict": "revert stands", "reason": "Agree: a +16 L flat-face lift in q09 is a colour regression."}
+  ]
+}

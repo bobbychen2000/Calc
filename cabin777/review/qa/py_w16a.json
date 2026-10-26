@@ -1,0 +1,114 @@
+{
+ "area": "py",
+ "rater": "A",
+ "round": "w16",
+ "score": 8.3,
+ "summary": "Down 0.2 from w15 (8.5). The rougher-to-glossier plastics help: shell top rims and arm caps now carry thin highlights like py_37301 / 37303, and at cabin distance (q13) the shell-to-fabric seams add outline darks that the photos have. But three of the new 'joint' parts are artefacts at the photo framings. (1) The cushion side strips (gRBox 0.012x0.012x0.46 at y 0.468) sit ON the cushion's side crown as black rods. Their rounded ends poke out past the cushion nose (p5 zoom), and on the window seat's outer side they float with nothing beside them (p8, p9). py_37301 has no such line, and its window-side cushion edge is open and light. (2) The cushion-front strip at y 0.377 is a hard 4 px line at L 8-15. In py_37301 the same crease is a soft 15-20 px shadow band at L 50-90. Before, a bright piping line was there, which was also wrong. (3) The shell shadow joint is right at q13, but in close views (q14 foreground) it renders as a 13 px pure-black slot (L 10-24) between two highlighted shell lips. In py_37303 (closest analogue) and san_13 the fabric meets the shell with only a soft 60-80 L shadow. Note: the round's after/p1_py2_front.png is a broken render (cabin corridor). My re-render of p1 from the candidate is fine.",
+ "lighting_note": "Not scored. The q13 / q14 after renders show stronger rim speculars on the shells, which matches the photos. The window-side seats still read flat-lit compared with py_37302.",
+ "calibration": [
+  {
+   "issue": "w14 medium: trim-A ear chips read as hexagonal polka dots",
+   "status": "fixed (holds)",
+   "evidence": "p4 after: unchanged from w15, with notched chips and a size spread"
+  },
+  {
+   "issue": "w14 medium: back weave contrast overshot",
+   "status": "fixed (holds)",
+   "evidence": "p8 back unchanged vs before; fabric files not in the diff"
+  },
+  {
+   "issue": "w15 low: trim-A cloth is square blocks at close range",
+   "status": "not fixed",
+   "evidence": "p5 / p8 cushion is unchanged; /tmp/claude-0/-home-user-Calc/8dfc05b3-7f0a-5878-9342-17ccab4e499d/scratchpad/raterPyA/z_p8_right.png"
+  },
+  {
+   "issue": "w15 low: ~0.11 m of plain shell under the pocket recess",
+   "status": "not fixed",
+   "evidence": "p6 is identical before and after"
+  },
+  {
+   "issue": "w15 low: pocket parts plain (grey tray rim, rectangular plate, blank leaflet)",
+   "status": "not fixed",
+   "evidence": "p6 vs ref/web/py/san_26.jpg"
+  },
+  {
+   "issue": "w15 low: navy flap dead flat",
+   "status": "not fixed",
+   "evidence": "p4 after unchanged"
+  },
+  {
+   "issue": "w15 low: ears busier than py_37302 at cabin distance",
+   "status": "not fixed",
+   "evidence": "q13 near rows"
+  },
+  {
+   "issue": "w15 low: placards blank (handed off)",
+   "status": "not fixed",
+   "evidence": "p2 / p6"
+  }
+ ],
+ "details": {
+  "back + cushion shape": 8.2,
+  "headrest ears + flap": 8.4,
+  "shell incl. rear": 8.2,
+  "screen + bezel + placards": 8.4,
+  "literature pocket": 8.3,
+  "consoles": 8.3,
+  "armrest + shroud": 8.4,
+  "leg rest / footrest / legs / bottle bin": 8.0,
+  "gooseneck": 8.5,
+  "fabrics: trim A weave": 8.4,
+  "fabrics: trim B petal (D/G)": 8.5,
+  "fabrics: trim A petal ears": 8.6,
+  "materials: plastic finish / highlights": 8.5,
+  "overall": 8.3
+ },
+ "issues": [
+  {
+   "severity": "high",
+   "title": "The cushion side 'gap' strips are black rods lying on top of the cushion edge. Their round ends stick out past the cushion nose, and on the window side they float in the air.",
+   "evidence": "/tmp/claude-0/-home-user-Calc/8dfc05b3-7f0a-5878-9342-17ccab4e499d/scratchpad/raterPyA/z_p5.png (right: the rod runs over the cushion crown and ends in a knob in front of the console), /tmp/claude-0/-home-user-Calc/8dfc05b3-7f0a-5878-9342-17ccab4e499d/scratchpad/raterPyA/z_p8_left.png, /tmp/claude-0/-home-user-Calc/8dfc05b3-7f0a-5878-9342-17ccab4e499d/scratchpad/raterPyA/z_p8_right.png, /tmp/claude-0/-home-user-Calc/8dfc05b3-7f0a-5878-9342-17ccab4e499d/scratchpad/raterPyA/st/p9_win.png (window seat outer edge). Photo: ref/ana/py_37301 cushion edges show no line; the window-side edge is open (raterPyA/ph1_left.png). The only crisp dark seam is at the shroud: py_37301 row 370 x 582 L 6, 1-2 px.",
+   "fix": "09b_py.js pySeat: delete the `for (const s of [-1, 1]) B.add(gRBox(0.012, 0.012, 0.46, ...), M4.trs(x0 + s * 0.204, 0.468, -0.30), PYGAP)` line. If a side joint is wanted, build it in pyUnit only on the console / shroud side of each seat. Make it a thin vertical plate (gBox(0.003, 0.06, 0.42)) at y about 0.41 (below the cushion crown, so the cushion overhang hides its top), z -0.29, so that it ends at least 2 cm behind the cushion nose. Never put it on the window or open side."
+  },
+  {
+   "severity": "medium",
+   "title": "The shell shadow joint is a wide pure-black slot in close views",
+   "evidence": "/tmp/claude-0/-home-user-Calc/8dfc05b3-7f0a-5878-9342-17ccab4e499d/scratchpad/raterPyA/z_q14_shell.png: q14 foreground band 13 px at L 10-24 between two lit shell lips. py_37303 foreground shell / fabric edge (raterPyA/ph3_shell.png) is a soft shadow at L 60-85, and ref/web/py/san_13.jpg likewise. At q13 distance the line is right (py_37301 seams 2-4 px at L 9-33).",
+   "fix": "09b_py.js shell reveal loft: SEC width 0.006 -> 0.003 and inset zr(y) - d + 0.032 -> + 0.04, so it sits deeper in the rounded corner and the lip hides it at oblique angles. Or give it its own colour, about #2c2f36 (r 0.9), instead of PYGAP #1c1e23."
+  },
+  {
+   "severity": "medium",
+   "title": "The cushion-front strip is a hard black pen line. The photo crease is a soft, wide shadow.",
+   "evidence": "py_37301 x 450-550 vertical profiles through the crease: a 15-25 px band at L 50-90, min about 50. p8 after x 420: a 4 px dip to L 8-15 (before: a bright 164 piping line, also wrong). See /tmp/claude-0/-home-user-Calc/8dfc05b3-7f0a-5878-9342-17ccab4e499d/scratchpad/raterPyA/z_p8_right.png and /tmp/claude-0/-home-user-Calc/8dfc05b3-7f0a-5878-9342-17ccab4e499d/scratchpad/raterPyA/ph1_cush.png.",
+   "fix": "09b_py.js pySeat: change the `gRBox(0.40, 0.012, 0.012, 0.004, 1)` at (x0, 0.377, -0.546) to a recessed shadow block about gBox(0.38, 0.03, 0.01) at z -0.535 (1 cm behind the cushion front face, so the cushion overhang frames it), coloured like the shadowed fabric (#3a404c, r 0.95), not PYGAP. Keep the 0.272 strip under the roller, which is mostly hidden. Also make sure the skirt top no longer catches the bright piping highlight seen in 'before'."
+  },
+  {
+   "severity": "low",
+   "title": "The round's after/p1_py2_front.png is a broken render that shows the cabin, not the studio unit",
+   "evidence": "/tmp/claude-0/-home-user-Calc/8dfc05b3-7f0a-5878-9342-17ccab4e499d/scratchpad/round/py/after/p1_py2_front.png vs my re-render /tmp/claude-0/-home-user-Calc/8dfc05b3-7f0a-5878-9342-17ccab4e499d/scratchpad/raterPyA/st/p1_py2_front.png (fine)",
+   "fix": "Re-run test/studio.js for p1 before the final sheet. This is not a model defect."
+  },
+  {
+   "severity": "low",
+   "title": "Carry-over: close-range cloth blocks, plain shell under the pocket, plain pocket parts, flat navy flap, blank placards",
+   "evidence": "see calibration",
+   "fix": "as in py_w15a.json"
+  }
+ ],
+ "questions": [
+  "q13 after looks shifted by about 30 px horizontally against before at the same nominal camera (the left seat columns move). Did the shared 09c_room.js change or the camera/layout move between runs? Please confirm it is the same camera before comparing metrics."
+ ],
+ "before_vs_after": {
+  "verdict": "The candidate does not beat the before renders as is: plus at q13 and in the shell highlights, minus from the close-up artefacts. With the three adjustments it should.",
+  "changes": {
+   "SEATMAT pyShell / pyArm / pyArmPad roughness down": "keep: thin rim highlights match py_37301 / 37303 and san_13",
+   "console body / nose / aisle shroud more rounded segments": "keep: softer edges catch highlights, no artefacts seen",
+   "shell front-corner shadow joint": "adjust: right at q13 but too wide and black up close (narrower, deeper, or #2c2f36)",
+   "cushion side gap strips": "revert: black rods on the cushion crown with protruding ends, floating on the window side",
+   "cushion front strip above roller (y 0.377)": "adjust: soft recessed fabric-shadow band instead of a black line",
+   "strip below roller (y 0.272)": "keep: mostly hidden, harmless",
+   "console / shroud dark foot plates": "keep: not visible as artefacts, plausible floor contact",
+   "6 mm console side split line": "keep: subtle, reads as a panel joint (py_37301 console has splits)"
+  }
+ }
+}

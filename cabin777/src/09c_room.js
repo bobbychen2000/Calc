@@ -89,7 +89,11 @@ function ashFrameZ(B, pz, t, x0, x1, y0, y1) {
 }
 // shared bits of the shell: flat charcoal cap on a wall top (shell tops read as flat charcoal, #545557-#717277 in
 // omaat_room_10 / 13; the silver line is only on armrest ledges + door-leaf edges), door leading edge with a finger pull
-function capRail(B, w, d, x, y, z) { B.add(gRBox(w + 0.006, 0.02, d + 0.006, 0.006, 1), M4.trs(x, y + 0.01, z), SEATMAT.jCap); }
+// polishD (integration L8-L11): near-black toe kick 2 cm back from the aisle faces under the ash panels and monument ends
+// (c_27312 / 27313: shell bases L0-2 in a recess, not a flush grey band) [V]; height 0.08 [A]
+const KICK = { h: 0.08, d: 0.02, m: { c: '#1c1d20', r: 0.7 } };
+// capRail: polishD 9 mm round edge, seg 3, so it catches a thin cove highlight (integration L8-L11)
+function capRail(B, w, d, x, y, z) { B.add(gRBox(w + 0.006, 0.02, d + 0.006, 0.009, 3), M4.trs(x, y + 0.01, z), SEATMAT.jCap); }
 function doorEdge(B, x, z, h) {
   B.add(gRBox(0.05, h, 0.04, 0.014, 1), M4.trs(x, 0.14 + h / 2, z), SEATMAT.jShell);
   B.add(gRBox(0.046, h - 0.06, 0.006, 0.004, 1), M4.trs(x, 0.14 + h / 2, z + 0.021), SEATMAT.ashDoor);
@@ -457,7 +461,8 @@ function roomPart(part, opts = {}) {
     roomLamp(B, 0.375, -1.225, 1);
     // narrow aisle armrest (~0.24) along the seat, LOW ledge (0.66) holding the retracted pop-up privacy panel, stowage
     // pocket on its seat-facing side (tpg_31 / 42, c_27313) [V]
-    B.add(gRBox(hx - ax0, top, az1 + 1.34, 0.02, 1), M4.trs((ax0 + hx) / 2, top / 2, (az1 - 1.34) / 2), shell);
+    B.add(gRBox(hx - ax0, top - KICK.h, az1 + 1.34, 0.02, 1), M4.trs((ax0 + hx) / 2, (top + KICK.h) / 2, (az1 - 1.34) / 2), shell);
+    B.add(gBox(hx - ax0 - KICK.d, KICK.h, az1 + 1.30), M4.trs((ax0 + hx - KICK.d) / 2, KICK.h / 2, (az1 - 1.34) / 2), KICK.m);
     roomLedge(B, hx - ax0, (ax0 + hx) / 2, (az1 - 1.34) / 2, az1 + 1.32, doors);
     roomAisleAsh(B, hx, -1.34, az1);
     if (!lod) {
@@ -476,9 +481,9 @@ function roomPart(part, opts = {}) {
     if (!lod) roomControls(B, M4.trs(0.33, 0, tz0 + 0.012, Math.PI), 1, -0.08, 0.568);
     // tall ash monument end at the aisle with a wide flat cap (seat plaques lie on it, c_27313) + kick
     const ez0 = -0.58, ez1 = MON.zE, ezc = (ez0 + ez1) / 2;
-    B.add(gRBox(0.04, wall, ez1 - ez0, 0.012, 1), M4.trs(0.565, wall / 2, ezc), SEATMAT.ashDoor);
-    B.add(gRBox(0.045, 0.10, ez1 - ez0, 0.01, 1), M4.trs(0.565, 0.05, ezc), shell);
-    ashFrameX(B, 0.565, 0.04, 0.10, wall, ez0, ez1);
+    B.add(gRBox(0.04, wall - KICK.h, ez1 - ez0, 0.012, 1), M4.trs(0.565, (wall + KICK.h) / 2, ezc), SEATMAT.ashDoor);
+    B.add(gBox(0.045, KICK.h, ez1 - ez0 - 0.02), M4.trs(0.565 - KICK.d, KICK.h / 2, ezc), KICK.m);   // polishD: recessed kick (was a flush band)
+    ashFrameX(B, 0.565, 0.04, KICK.h, wall, ez0, ez1);
     // shared aisle-end cap: mid grey, a little darker than the plaques, oval finger recess between them (c_27314)
     B.add(gRBox(0.10, 0.02, ez1 - ez0 + 0.006, 0.006, 1), M4.trs(0.54, wall + 0.01, ezc), { c: '#6c6e71', r: 0.28, m: 0.35, l: LAYER.brushed });   // QA w3: slight metallic sheen (tpg_78); w11b: cap/ash 0.58 (c_27313), was 0.92
     if (!lod) B.add(gCyl(1, 1, 1, 16), M4.trs(0.545, wall + 0.0205, (MON.zO + MON.zE) / 2, 0, 0, 0, 0.0175, 0.003, 0.035), SEATMAT.jShellIn);   // QA w3: was a black hole
@@ -532,7 +537,7 @@ function roomPart(part, opts = {}) {
     const cz0 = -1.275, cz1 = MON.zO, czc = (cz0 + cz1) / 2;
     B.add(gRBox(0.085, CON.top, cz1 - cz0, 0.01, 1), M4.trs(-0.5425, CON.top / 2, czc), shell);
     capRail(B, 0.085, cz1 - cz0, -0.5425, CON.top, czc);
-    B.add(gRBox(0.16, 0.22, cz1 - cz0 + 0.04, 0.01, 1), M4.trs(-0.505, 0.11, czc + 0.02), SEATMAT.jShellIn);
+    B.add(gBox(0.16, 0.22, cz1 - cz0 + 0.04), M4.trs(-0.505, 0.11, czc + 0.02), SEATMAT.jShellIn);   // polishD: square edges (its lit 45 deg chamfer was the white hairline down the 11A footwell mouth, integration L8-L11)
     if (!lod) {
       B.add(gRBox(0.006, 0.05, 0.02, 0.003, 1), M4.trs(-0.4985, 0.47, -0.52), { c: '#b3262a', r: 0.5 });
       B.add(gRBox(0.004, 0.14, 0.34, 0.004, 1), M4.trs(-0.499, 0.42, -0.78), SEATMAT.jShellIn);         // stowage door
@@ -548,7 +553,8 @@ function roomPart(part, opts = {}) {
     roomLamp(B, -0.07, 1.225, -1);
     roomLamp(B, 0.50, 1.225, -1);
     // narrow aisle armrest with the pop-up privacy panel retracted inside (ash edge flush in the cap)
-    B.add(gRBox(0.09, top, 0.60, 0.02, 1), M4.trs(0.54, top / 2, 0.95), shell);
+    B.add(gRBox(0.09, top - KICK.h, 0.60, 0.02, 1), M4.trs(0.54, (top + KICK.h) / 2, 0.95), shell);
+    B.add(gBox(0.09 - KICK.d, KICK.h, 0.58), M4.trs(0.54 - KICK.d / 2, KICK.h / 2, 0.95), KICK.m);
     roomLedge(B, 0.10, 0.54, 0.95, 0.60, doors);
     roomAisleAsh(B, hx, 0.65, 1.25);
     // outer column beside E: ash side table only over O's footwell (monument to z 0.62, large-radius seat-side corner),

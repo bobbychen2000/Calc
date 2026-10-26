@@ -1,0 +1,60 @@
+{
+  "area": "py",
+  "rater": "B",
+  "round": "w16",
+  "score": 8.1,
+  "summary": "Down 0.4 from w15 (8.5). There is one high-severity artefact. The lower roughness works: shells, shroud and console edges now catch thin highlights (q14 shell top L 210-214, was 167-171; q13 brightened about 1,670 px), and that should be kept. The new dark joints, though, are near-black (median L 9-14 on changed pixels) and sit in the wrong places. (1) The shell 'shadow joint' pokes through the shell's outer side face. It shows as an 8-9 px black stripe, full height, on the grey shell sides in q14, q13 and p7. In-flight san_13 and py_37303 show clean grey shell sides with a highlight rim and no stripe. (2) The cushion side strips and the cushion-front strips are crisp black rods with exposed ends. They stand proud of the fabric and run past the rounded cushion corners (p8, p5, p7). They read as drawn piping, not as the soft shadow under the cushion nose in py_37301 (p2 L 35, p10 L 47). The console highlights, foot plates and split line are neutral to good. Neither w15 medium issue (trim-B ears too dark, trim-A dashes too long) was touched. Note: after/p1_py2_front.png is the wrong frame (a cabin view of the wood partition), so p1 could not be compared.",
+  "calibration": [
+    {"issue": "w15b medium: trim-B ears (pyWingB) too dark against the back", "status": "not fixed", "evidence": "SEATMAT.pyWingB is still photoBase('#626876'). In the q13 near trim-B seat the ears are still darker than the back (z13.png)."},
+    {"issue": "w15b medium: trim-A back dashes 1.5-2x too long (coarse bricks)", "status": "not fixed", "evidence": "No swatch change in the diff. p5 / p8 cushions still show soft rectangular bricks (z8_right.png)."},
+    {"issue": "w15b low / w14b low: pocket recess / holder plate near-black", "status": "not fixed", "evidence": "src/09b_py.js:128-129 still '#3a3d43' / '#4a4e55'. p2 shows the frame round the pocket unchanged."},
+    {"issue": "w14b medium: trim-A ear chips polka dots", "status": "still fixed", "evidence": "p4 is unchanged from before."},
+    {"issue": "w15a low: about 0.11 m plain shell under the pocket", "status": "not fixed", "evidence": "p2 / p6 are the same as before."},
+    {"issue": "w15a low: navy flap dead flat", "status": "not fixed", "evidence": "p4 / q13 flap unchanged."}
+  ],
+  "details": {
+    "Back + cushion shape": 8.1,
+    "Headrest ears + navy flap": 8.4,
+    "Shell incl. rear face": 7.6,
+    "Screen + bezel + placards": 8.5,
+    "Literature pocket": 8.5,
+    "Consoles (front, sockets, cubbies, lid, cup nose, side panel)": 8.5,
+    "Window armrest + aisle shroud": 8.4,
+    "Leg rest / footrest / legs / bottle bin": 8.0,
+    "Gooseneck": 8.5,
+    "Fabrics: trim A brick weave": 8.2,
+    "Fabrics: trim A petal ears": 8.6,
+    "Fabrics: trim B petal back": 8.6,
+    "Fabrics: trim B dash ears": 7.8,
+    "Materials: plastic specular (new)": 8.6
+  },
+  "issues": [
+    {"severity": "high", "title": "The shell shadow-joint strip pokes through the shell's outer side face and shows as a full-height black stripe on the grey shell sides",
+     "evidence": "Rater crop raterPyB/z14_shell.png. In q14 row 130, x 764-772 is L 17-28; before it was L 143-155. 8,281 px darken by more than 50 L in q14 (1.55 %) and 3,251 in q13. Most of these are this stripe on the shells of the seat in front and the next seat (raterPyB/z13.png), and the stripe also runs down the shell side in p7. Geometry: the strip sits at x = w/2 - 0.005..0.011 and 1.7-2.7 cm behind the shell front plane. There the rounded corner (r 0.045) puts the shell surface at w/2 - 0.0098, so the strip stands up to about 5 mm proud of the outer surface. Refs: in-flight ref/web/py/san_13.jpg (sanspotter ana-777-300er-premium-economy-13.jpg) and py_37303 show smooth grey shell sides with a light rim and no dark band. The dark joint is only on the inner edge where the shell meets the fabric.",
+     "fix": "src/09b_py.js, polishD shell joint loft. Move the strip off the rounded corner, to where the shell front is flat and the fabric edge meets it. Use x = sd*(w/2 - Math.max(0.05, r + 0.005)), where r = Math.min(d/2 - 0.002, 0.045), or the back-fabric half-width + 0.003 if that is known. Use z centre = zr(y) - d + 0.011, so the strip only breaks the front face by about 1 mm. Filter to rows with d >= 0.06. Lighten PYGAP for this strip to '#2a2d33'. Verify that p7 and q14 show no dark pixels on the shell's outer side face. If it can't be made front-only, drop this strip (the roughness change alone gave the rim definition)."},
+    {"severity": "medium", "title": "The cushion side and front gap strips read as black rods or piping with exposed ends, not as shadow joints",
+     "evidence": "raterPyB/z8_right.png and z8_left.png. The front strip at y 0.377, z -0.546 sits in front of the cushion-nose fabric and runs past both rounded corners, with visible end caps. The side strips (0.46 long at z -0.30) stick out past the cushion front and float beside the cushion under the window arm (p7, p5 diagonal line). The new pixels are L 10-14. py_37301 under the cushion nose is p2 L 35, p10 L 47: a soft overhang shadow that grades, not a crisp 1 cm black bar. The deepest side crevice in the photo reaches L 10-14, but only inside the crevice.",
+     "fix": "src/09b_py.js pySeat polishD block. Side strips: gRBox(0.010, 0.010, 0.40) at x0 + s*0.199, y 0.455, z -0.29, so they end about 3 cm behind the cushion nose and stay below the crown. Upper front strip: width 0.40 -> 0.34, z -0.546 -> -0.530 (tucked under the cushion overhang), PYGAP colour -> '#2a2d33'. The lower front strip (y 0.272, above the roller) can stay, but at width 0.36. Re-check p8 at 3x: no strip ends visible."},
+    {"severity": "low", "title": "Still open from w15: trim-B ears too dark, trim-A dashes too long, pocket frame near-black",
+     "evidence": "See calibration. py_37302 ear/back is 1.0-1.3; the render is 0.84.",
+     "fix": "As in py_w15b.json: SEATMAT.pyWingB '#626876' -> about '#7f8698'; make_swatches synth_py_back dash ln back to about N(18, 3) with smaller gaps; 09b_py.js:128 '#3a3d43' -> '#4c5057' and :129 '#4a4e55' -> '#6a6f77'."},
+    {"severity": "low", "title": "The p1 'after' render is the wrong frame",
+     "evidence": "round/py/after/p1_py2_front.png shows a cabin view of a wood partition and curtain. The before p1 is the studio front view of the 2-seat unit.",
+     "fix": "Re-run node test/studio.js for p1 (harness, not PY code)."}
+  ],
+  "questions": [
+    "Was p1 after rendered with a different spec or a failed studio camera? It should be re-rendered before the next round."
+  ],
+  "before_vs_after": {
+    "verdict": "Overall the candidate does not beat the before renders: 8.1 against 8.5. The highlights help, but the joint artefacts are visible in both QA views. Ship with the strips adjusted, or reverted.",
+    "changes": [
+      {"change": "SEATMAT pyShell r 0.42 -> 0.30, pyArm 0.45 -> 0.38, pyArmPad 0.40 -> 0.32", "verdict": "keep", "reason": "This gives thin rim highlights on the shell tops and shroud (q14 L 210-214, was 167-171), closer to py_37303 / san_13. It is not blown out."},
+      {"change": "Shell-front dark shadow joint (loft along the shell sides)", "verdict": "revert, or adjust per the high issue", "reason": "It pokes through the outer shell face as a black stripe in q13, q14 and p7."},
+      {"change": "Cushion side gap strips (x0 +/- 0.204)", "verdict": "adjust", "reason": "They are too long and stand proud, with exposed ends, floating beside the cushion. Shorten and inset them per issue 2."},
+      {"change": "Cushion-front strips above and below the leg-rest hinge roller", "verdict": "adjust", "reason": "They read as black piping in front of the fabric. Tuck them under the overhang, narrow them, lighten to #2a2d33."},
+      {"change": "Dark 1 cm foot plates under the console and aisle shroud", "verdict": "keep", "reason": "Barely visible, and plausible as a contact shadow. No artefact seen."},
+      {"change": "6 mm split line on the console side panels", "verdict": "keep", "reason": "Subtle and in the right place; not prominent at q14 / p8."},
+      {"change": "Console body / nose / shroud rounded with more segments", "verdict": "keep", "reason": "Softer edges now catch highlights (p5 console left edge); no cost seen."}
+    ]
+  }
+}

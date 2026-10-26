@@ -1,0 +1,181 @@
+{
+ "area": "room",
+ "rater": "B",
+ "round": "w19",
+ "score": 8.5,
+ "summary": "polishD (src/09c_room.js only) is three small, local geometry fixes and all three move toward the photos with no new artefact. (1) The flush grey 10 cm shell band at the aisle bases is now a near-black 8 cm kick set 2 cm back under the aisle armrest housings and tall ash monument ends. It reads as the dark recessed plinth of c_27312 (under the monument end and side-table pedestal) and omaat_room_4 (black base under the next row's ash end). kick3 base box (330-440 x 455-495) RGB 28/27/30 -> 23/21/22. (2) The 11A footwell hairline is gone: crop (590-615 x 330-412) 48 px > L200 -> 0; > L120 137 -> 1; local speckles 130 -> 6. c_27316 shows no lit edge there either. (3) The 9 mm rounded cap rails give a soft rolled highlight instead of a single hard chamfer line (q10 / q09 / q08 caps). Box stats are neutral (q10 cap crop mean 107.6 -> 108.0, p99 unchanged), and there is no new shimmer on the far rows. The overall read is unchanged: clearly the same product with minor material and lighting differences. Holds 8.5 with no high or medium issues. Lighting noted, not scored.",
+ "photos_collected": [
+  "Re-downloaded to ref/web/room/ with an rB_ prefix: omaat The-Room-4/6/7/13/15/23/24/31, kn_8, lalf_136/137 (lalf 136/137 turned out to be wing views). Base evidence: ref/ana c_27312 (crop 300-560 x 380-575: black recessed plinths under the monument end and pedestal, with a thin bright lip at the ash bottom edge), omaat_room_4 (crop 300-1200 x 450-900: black base under the far ash end), c_27316 (footwell mouth, no lit edge)."
+ ],
+ "own_renders": [
+  "No new renders. Used the supplied before/after renders plus diff maps and 2x crops in /tmp/claude-0/-home-user-Calc/8dfc05b3-7f0a-5878-9342-17ccab4e499d/scratchpad/raterRoomB/ (k3z.png, kz.png, fwz.png, q09cap*.png, q10cap.png, q10far.png, q06aisle.png, *_diff.png)."
+ ],
+ "calibration": [
+  {
+   "issue": "w17b medium: shaded near shell faces too dark (ash/face ratio overshoot)",
+   "status": "fixed (fixed in w18, holds)",
+   "evidence": "Shell albedo is untouched in w19. q09 privacy wall and q06 near faces are pixel-identical before/after apart from the cap rails."
+  },
+  {
+   "issue": "w16a/w17a medium: cabinet / table ash soft wavy bands, weak pinstripe",
+   "status": "not fixed (out of scope, low impact at this resolution)",
+   "evidence": "Ash regions in q06 / q09 / fw11A are unchanged in the diff maps."
+  },
+  {
+   "issue": "w16b/w17a medium: aisle-end doors dark relative to the cabinets (lighting)",
+   "status": "not fixed (lighting); slightly better by context",
+   "evidence": "q06aisle: the near-black kick under the monument end replaces the grey band, so the cream leaf now sits on a dark base as in c_27312."
+  },
+  {
+   "issue": "integration r2 medium: header band reads as hammered metal",
+   "status": "fixed, holds",
+   "evidence": "q10 band unchanged since w18."
+  },
+  {
+   "issue": "integration L8-L11: shell bases a flush grey band, not a recessed black kick",
+   "status": "fixed",
+   "evidence": "kick3 / kick / q06aisle after: a dark recessed plinth with a shadowed step under the shell and ash. kick3 (330-440 x 455-495) 28 -> 22 L, (200-240 x 365-390) 44 -> 35."
+  },
+  {
+   "issue": "integration L8-L11: white hairline along the 11A footwell",
+   "status": "fixed",
+   "evidence": "fw11A (590-615 x 330-412) >L200 48 -> 0, >L120 137 -> 1."
+  },
+  {
+   "issue": "integration L8-L11: cap rail single 6 mm chamfer cannot catch a cove highlight",
+   "status": "fixed (modest)",
+   "evidence": "q10cap / q09cap: a soft rolled sheen plus a thin inner highlight line instead of a hard chamfer line. Global cap stats are neutral."
+  }
+ ],
+ "details": [
+  {
+   "detail": "Overall nested-pair layout, shells, privacy walls, monitors, cabinets (aisle views)",
+   "score": 8.5,
+   "refs": [
+    "c_27312",
+    "c_27315",
+    "q06",
+    "q10"
+   ]
+  },
+  {
+   "detail": "Shell / cap colour and value",
+   "score": 8.4,
+   "refs": [
+    "c_27312",
+    "c_27314",
+    "q06",
+    "q09",
+    "q10"
+   ]
+  },
+  {
+   "detail": "Cap rails (now 9 mm round, seg 3)",
+   "score": 8.5,
+   "refs": [
+    "c_27312",
+    "rB_kn_8",
+    "q09",
+    "q10"
+   ]
+  },
+  {
+   "detail": "Shell bases / toe kick (new)",
+   "score": 8.4,
+   "refs": [
+    "c_27312",
+    "rB_omaat_room_4",
+    "kick",
+    "kick3",
+    "q06"
+   ]
+  },
+  {
+   "detail": "Monument top: housings, spine and rail, aisle cap, plaques",
+   "score": 8.4,
+   "refs": [
+    "c_27313",
+    "c_27314",
+    "q09"
+   ]
+  },
+  {
+   "detail": "Ash panels, table tops, door / cabinet split",
+   "score": 8.5,
+   "refs": [
+    "c_27312",
+    "c_27314",
+    "c_27316"
+   ]
+  },
+  {
+   "detail": "Boarding bundle, pillows, soft goods",
+   "score": 8.1,
+   "refs": [
+    "rB_omaat_room_15",
+    "q08",
+    "q09"
+   ]
+  },
+  {
+   "detail": "Monitor, footwell, ottoman, side-table console (hairline gone)",
+   "score": 8.5,
+   "refs": [
+    "c_27316",
+    "q07",
+    "fw11A"
+   ]
+  }
+ ],
+ "issues": [
+  {
+   "severity": "low",
+   "title": "Kick has no thin bright lip where the ash panel meets the black base",
+   "evidence": "c_27312 crop (300-560 x 380-575): a thin aluminium-bright line runs along the ash bottom edge above the black plinth. In the model's kick / q06aisle the ash runs straight into the charcoal frame and then the black kick, with no lip.",
+   "fix": "Optional: in roomPart's monument end (09c_room.js, after the KICK box), add a 4 mm silver strip, e.g. B.add(gRBox(0.042, 0.004, ez1-ez0, 0.002, 1), M4.trs(0.566, KICK.h+0.002, ezc), {c:'#9a9ca0', r:0.3, m:0.6}). Only if it does not reintroduce a hairline at distance."
+  },
+  {
+   "severity": "low",
+   "title": "Aisle armrest kick is flush on the seat side",
+   "evidence": "Code: the A-part kick spans ax0..hx-KICK.d, so it is recessed on the aisle face and the z ends only. On the seat side, an 8 cm black band sits flush where the shell used to be. It is hidden by the cushion in every QA view, so this is not visible.",
+   "fix": "None needed unless a lie-flat view shows it. If it does, shrink the kick to ax0+KICK.d..hx-KICK.d (width hx-ax0-2*KICK.d, centre (ax0+hx)/2)."
+  },
+  {
+   "severity": "low",
+   "title": "Possible coplanar face on the squared 11A footwell block",
+   "evidence": "The gBox (-0.585..-0.425) shares its x=-0.585 face with the console shell (-0.5425 \u00b1 0.0425) for y 0-0.22. There was no flicker in any supplied view (fw11A speckles 6), but with the rounded box the coincident area was smaller.",
+   "fix": "Inset the block by 1 mm: gBox(0.158, 0.22, ...) at x -0.504."
+  },
+  {
+   "severity": "low",
+   "title": "Carry-overs: ash pinstripe weak, pillows rigid slabs, latch tongue, door-edge dotted aliasing on aisle ash ends",
+   "evidence": "q06aisle: the dotted light speckle along the ash end's frame edge is identical before and after.",
+   "fix": "As in w16a/b."
+  }
+ ],
+ "questions": [
+  "Should the black kick also run under the aisle-side faces of the centre (D/G) monuments' lower ash, where c_27313 shows a silver bottom rail and a dark gap? It is not checked in the supplied views."
+ ],
+ "before_vs_after": [
+  {
+   "change": "Near-black recessed toe kick (8 cm, 2 cm back) under the aisle armrests and monument ends",
+   "verdict": "keep",
+   "reason": "It matches the dark recessed plinths in c_27312 and omaat_room_4, adds no artefact and gives a visibly better base read in q06 / kick / kick3."
+  },
+  {
+   "change": "11A footwell low console block: chamfer removed (square edges)",
+   "verdict": "keep",
+   "reason": "The hairline is gone (48 px > L200 -> 0) and no new edge or flicker appears. Optional 1 mm inset against a coplanar face."
+  },
+  {
+   "change": "capRail 9 mm round edge, 3 segments",
+   "verdict": "keep",
+   "reason": "It gives a softer rolled sheen closer to the moulded caps in c_27312 / kn_8, is neutral in the box stats, and adds no far-row shimmer. The cost is part of the +12.5 % triangles, within budget."
+  },
+  {
+   "change": "SEATMAT jCap roughness 0.34 -> 0.26 (tested, reverted)",
+   "verdict": "agree with revert",
+   "reason": "It lifted the flat cap face for no highlight gain."
+  }
+ ]
+}
