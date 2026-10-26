@@ -1,0 +1,41 @@
+{
+ "area": "suite",
+ "rater": "B",
+ "round": "final",
+ "score": 8.9,
+ "method": "Confirmed src/09d_suite.js is unchanged since 623322c (git diff 623322c..HEAD touches only 04_shaders.js, 12_scene.js, 09b_py.js and 10_mono.js). Compared the w18 renders (ro/) with the head renders (rh/) for q02-q05 using the side-by-side cmp_*.png files, 2x crops of the console, ottoman, cap and aisle box (scratchpad zc_q02/q03/q05_*.png), and |dL|>8 diff masks (diff_*.png: q02 6.9 %, q03 20.3 %, q04 13.3 %, q05 12.8 %; mean dL -1.9 to -5.6). The diff mass is on the sidewall and window reveals, the window-console top and a few edge highlights. The suite surfaces are not in it. Box-mean RGB sampled on the same suite surfaces, old vs new: cap q05 190/187/172 -> 191/187/168, q04 194/192/179 -> 195/192/176, q02 180/178/168 -> 179/176/162; ottoman 148/139/130 unchanged; inner shell 92/84/79 unchanged; flank wood q03 75/73/73 unchanged; sheet 228/226/223 -> 229/226/222; leaf 109/103/99 -> 108/102/98. Sidewall q05 239/241/245 -> 206/211/225. The geometry was checked against the official pairs f_17301, f_17306, f_17304 and f_17313, with the in-flight OMAAT f5/f11/f13/f40/f60 values as cited in w17/w18. No new Playwright renders: the suite code is unchanged and the 1x renders show identical geometry. Lighting is noted below, not scored.",
+ "calibration": [
+  { "earlier_issue": "w17a MEDIUM: cap joint box square and 2 mm proud, a black blade past the rounded shell end, near-black along its length", "status": "fixed, no regression. The code is unchanged since the w18 fix. In the head q02/q05 the cap still separates from the shell as a thin warm groove with no tab (zc_q02 / zc_q05)." },
+  { "earlier_issue": "w15a MEDIUM: duvet head band square-edged / proud, z-fight dashes on the fold", "status": "fixed, no regression (q04 head: no dashes; band unchanged)." },
+  { "earlier_issue": "w13b / w14a / w14b MEDIUM: wood flanks chestnut instead of espresso", "status": "fixed, no regression (q03 flank 75/73/72, R/B 1.04; q04 flank 122/120/120)." },
+  { "earlier_issue": "w13b MEDIUM: duvet corner reads as an overlay (square edge, small flap)", "status": "fixed earlier (chamfered fold, rated fixed by w15-w18), unchanged in head q04. The low residue is the flat flap triangle, below." },
+  { "earlier_issue": "w17b LOW: cap joint corner tab", "status": "fixed (unchanged since w18)." },
+  { "earlier_issue": "w17b LOW: wardrobe wood-panel split lines as black pen outline", "status": "fixed (unchanged since w18)." },
+  { "earlier_issue": "w17b LOW: ottoman welt twice the f11 width", "status": "fixed (q03 head welt unchanged at its w18 weight)." },
+  { "earlier_issue": "w18a/w18b LOW: cap groove a touch darker / harder than the soft f40 shadow", "status": "not fixed (not addressed). Still low and invisible at 930 px." },
+  { "earlier_issue": "w16-w18 LOW carried: loft bullnose / notch at the head band, aisle drape rail, flat grey flap triangle, footwell back lit, far-leaf moire, short flank grain", "status": "not fixed (not addressed). The lighting loop has not made any of them worse." }
+ ],
+ "details": [
+  { "detail": "Plan and proportions (screen wall, footwell, ottoman, console length)", "score": 8.8, "refs": "q05 vs f_17313: same layout and heights; the console runs a little shorter and higher than in the photo" },
+  { "detail": "Screen wall: 43-in screen, wing, pier with mirror and lamp", "score": 8.7, "refs": "q03 vs f_17306" },
+  { "detail": "Shell / cap two-tone and cap joint", "score": 8.9, "refs": "q02 / q05; lit caps 3-6 levels warmer in B than at w18 (lighting), still greige" },
+  { "detail": "Centre pair, divider, aisle leaves", "score": 8.6, "refs": "q02 vs f_17301 (official render, dark shells; in-flight photos taupe, per the earlier rounds); far-leaf moire" },
+  { "detail": "Wood flanks / wardrobe wall", "score": 8.7, "refs": "unchanged" },
+  { "detail": "Window console", "score": 8.3, "refs": "q03 / q05: the wood tray is a little flatter now that the sun stripe is gone (lighting)" },
+  { "detail": "Bed", "score": 8.6, "refs": "q04 vs f_17304: flap triangle flat, drape rail" },
+  { "detail": "Ottoman, recess, aisle box, table", "score": 8.9, "refs": "q03 / q05 / q02" }
+ ],
+ "issues": [
+  { "severity": "low", "problem": "Cap groove still a touch darker and harder than the soft cap shadow in the photos up close (fine at 930 px).", "evidence": "As in w18b; the code is unchanged.", "fix": "Optional: fCapJoint #3a342e -> ~#4a433b." },
+  { "severity": "low", "problem": "Window console sits a little short and high against f_17313, where the console with the keypad and handset reads as a long, low shelf running almost to the ottoman.", "evidence": "q05 vs f_17313 (keypad at the aft end): in the model the keypad block sits at the aft end of a shorter run.", "fix": "Optional: not needed for the bar." },
+  { "severity": "low", "problem": "Carried: loft bullnose / notch at the head band, drape rail, flat flap triangle, footwell back lit, far-leaf moire, short flank grain.", "evidence": "w16a / w16b; unchanged in head q02 / q04 / q05.", "fix": "As in w16b." }
+ ],
+ "lighting": [
+  { "severity": "medium", "problem": "The sidewall and window reveals around the suite turned cool blue-grey and hazy after the lighting loop. This reads against the warm-white wall in f_17313 / f_17304.", "evidence": "q05 sidewall box (30,150)-(80,250): 239/241/245 -> 206/211/225 (R/B 0.98 -> 0.92); the q03 window wall and glass are visibly hazier in cmp_q03_suite1A.png; the q03 diff mask is concentrated there.", "owner": "lighting / shell" },
+  { "severity": "low", "problem": "Sun patches on the ottoman and bed are still hard-edged parallelograms (softer than at w18 but still blocky).", "evidence": "q03 / q05 ottoman, q04 sheet", "owner": "lighting" },
+  { "severity": "low", "problem": "The window-console wood tray lost its sun stripe and reads flatter and darker; the lit caps are 3-6 levels warmer in B.", "evidence": "zc_q03_suite1A.png; cap B 172 -> 168 (q05), 168 -> 162 (q02)", "owner": "lighting" }
+ ],
+ "questions": [
+  "No high or medium suite issues. All earlier high and medium issues are still fixed on the head, with no regression from the lighting loop. The one medium noted is lighting (the cool sidewall), outside the suite score."
+ ]
+}
