@@ -762,7 +762,8 @@ The run ended at its 5-round cap. These are the open items the L11 raters gave t
 
 ### To py / econ (`09_seats.js` SEATMAT, `09b_py.js`, `09a_econ.js`), FYI: cove rim highlights aft of THE Room
 - mainFS now draws the cove-line lobe on the material roughness (not the spec-AA-widened one), x3 on rounded fillets (rough
-  < 0.45-0.6), aft of z20 only (PY and economy). With py w17's pyShell 0.30 / pyArm 0.38 / pyArmPad 0.32 the PY rims now carry
+  < 0.45-0.6), aft of z20 only (PY and economy) and at the Sharp quality only (as the contact AO; Balanced keeps its frame
+  cost). With py w17's pyShell 0.30 / pyArm 0.38 / pyArmPad 0.32 the PY rims now carry
   streaks: thin-highlight share q13 0.24 -> 0.29 % (sanpy 0.46-0.67), q16 0.62 -> 0.67, q15 0.61 -> 0.65, q17 0.40 -> 0.44.
   The econ `arm` 0.26 / `armPad` 0.32 keys (polishD reverted them untested) would now show as streaks; worth a re-test against
   y_47303 armrest tops.

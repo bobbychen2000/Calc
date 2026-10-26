@@ -84,3 +84,10 @@
     smoothing needs two extra full-screen passes (an AO target and a depth-aware blur), only at Sharp. This run's brief
     ruled out new full-screen passes, so it has not been done. Should Sharp get those two passes (phones on Balanced
     would still pay nothing)?
+
+## Lighting run 3 (after the L11 rating, 2026-10-26)
+
+14. **Rim highlights on phones?** (follows question 10) The PY and economy seats now catch thin highlight lines from the cove
+    lights along their rounded rims and armrests, as in the photos. Like the contact shading, this costs a little per pixel
+    (about 3-4 % of the frame in the test renderer), so it is on only at the **Sharp** quality; phones open on **Balanced**
+    without it. Should Balanced get it too?

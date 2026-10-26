@@ -881,7 +881,7 @@ class Scene {
     G.set('u_bandCut', mood.bandCut ?? 0.65); G.set('u_sideLow', mood.sideLow ?? 0.4); G.set('u_sideWall', mood.sideWall || [1, 1, 1]);
     G.set('u_lowGain', mood.lowGain ?? 1); G.set('u_fLow', mood.fLow ?? 1); G.set('u_monFill', mood.monFill || [0, 0, 0]); G.set('u_cove', LIGHT_TUNE.cove * (mood.cove ?? 1)); G.set('u_sheen', LIGHT_TUNE.sheen); G.set('u_sheenTint', LIGHT_TUNE.sheenTint);
     G.set('u_toe', mood.toe ?? 0);
-    G.set('u_glassT', [1, 1, 1]); G.set('u_hueK', mood.hueK ?? 0); G.set('u_rimK', LIGHT_TUNE.rim); G.set('u_sLowZ', this.layout.z20 ?? 0);   // QA L11: pane tint only on the exterior (below), amber hue-preserving tone, cove rim lobe
+    G.set('u_glassT', [1, 1, 1]); G.set('u_hueK', mood.hueK ?? 0); G.set('u_rimK', this.q !== 'low' && this.ssaoOn !== false ? LIGHT_TUNE.rim : [0, 0, 0]); G.set('u_sLowZ', this.layout.z20 ?? 0);   // QA L11: pane tint only on the exterior (below), amber hue-preserving tone, cove rim lobe (Sharp only, as the contact AO: scene.ssaoOn, 13_app.js)
     G.set('u_extBounce', [0, 0, 0]);
     // reading-light pools: the 8 lit lamps nearest the eye [A: count, a phone-sized loop]
     const sp = new Float32Array(32), st = new Float32Array(32);

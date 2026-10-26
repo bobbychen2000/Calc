@@ -335,9 +335,13 @@ void main(){
   // white outlines on every cap edge and beaded glints along the divider rails, and lifted the q06 frame (median 165 -> 167 vs
   // c_27312 128) where the thin-highlight share already sits above the in-flight range (q06 0.92 % vs 0.06-0.57 %) [D fixL11 a1].
   // Aft, with the py w17 SEATMAT roughness: thin-highlight share q13 0.24 -> 0.29 %, q16 0.62 -> 0.67, q17 0.40 -> 0.44 [D fixL11 after]
-  float rough0 = rough;
-  vec3 Ng = normalize(v_nrm); vec3 gnx = dFdx(Ng), gny = dFdy(Ng);
-  float rimW = smoothstep(0.002, 0.02, 0.25*(dot(gnx, gnx) + dot(gny, gny))) * (1.0 - smoothstep(0.45, 0.6, rough0)) * (1.0 - u_rimK.z*metal);
+  // Sharp quality only (u_rimK.y 0 at Balanced / Battery: a uniform branch, so the derivatives stay in uniform control flow;
+  // the per-pixel cost took the Balanced frame +3-4 % in SwiftShader, whose budget is fixed) [D fixL11 time5]
+  float rough0 = rough, rimW = 0.0;
+  if (u_rimK.y > 0.0) {
+    vec3 Ng = normalize(v_nrm); vec3 gnx = dFdx(Ng), gny = dFdy(Ng);
+    rimW = smoothstep(0.002, 0.02, 0.25*(dot(gnx, gnx) + dot(gny, gny))) * (1.0 - smoothstep(0.45, 0.6, rough0)) * (1.0 - u_rimK.z*metal);
+  }
   float rimZ = u_rimK.y * smoothstep(u_sLowZ - 0.3, u_sLowZ + 0.3, v_wpos.z);
   // specular anti-aliasing: widen roughness where the normal varies across pixels
   vec3 dNdx = dFdx(N), dNdy = dFdy(N);
