@@ -40,3 +40,9 @@
 12. **Polish D (w17):** both w17 raters said the q13 framing differs from w15. The camera expression is unchanged
     (`__rel('25C', ...)`), and my before/after pair (same container, same lighting) is pixel-aligned (best shift 0, 0). Their w15 reference renders
     came from an older lighting head. No action is needed unless the q13 camera is meant to be pinned.
+
+## Polish F (w19, not blocking)
+
+13. **Seat-back to shell joint.** The model now draws a thin recessed seam where the patterned back meets the grey shell,
+    on both sides of every seat (py_37301 / 37303). If you have a close photo of a PY seat side, it would show whether the
+    fabric tucks into the shell (a shadow gap, as modelled) or sits on it with a piped edge.

@@ -257,3 +257,20 @@ Ratings: `py_w15a.json`, `py_w15b.json`. Triangles are unchanged at 194.6k.
   (B, low); the w15 lows (trim-B ears, trim-A dash length, pocket frame).
 - Triangles: py2 15.9k -> 17.1k, py4 33.0k -> 35.7k per unit mesh. Ratings `py_w16a/b.json`, `py_w17a/b.json`.
   Log: `fixed_polishD.md`.
+
+## Polish F (w18-w19): integration L13 "PY reads as clean CG"
+
+| round | rater A | rater B | result |
+|---|---|---|---|
+| w18 | 8.1 | 8.3 | seam bead 8 mm and square: a black cord on the q14 foreground seat (A high). Not kept. |
+| w19 | **8.6** | **8.5** | 3 mm round bead, sunk 1 mm, #3e434d: no high or medium new issue. Kept. |
+
+- **Kept (w19):** a recessed seam where the back fabric enters the shell, computed from the two lofts (`seamPath`,
+  `shellSD`, `secAt`; `PYBACK` / `PYBOL` / `PYEAR` are now shared section constants); darker console cubby mouths.
+  The w16 artefacts (stripe through the shell side, rods on the cushion) did not come back.
+- **Metrics:** q14 foreground seam 1-3 px at L 41-70 (py_37303 dip L 60-65). Thin darks q13 2.42 -> 2.46 %, q14
+  3.78 -> 3.86 % against 4.18 / 6.13 % in the official photos; the rest of the gap is fabric pleats and crevices.
+- **Open:** the cushion-front band is a flat stripe (A medium, carried from w17); the bead is dark in the shaded bottom
+  of q14 (low); the w15 lows (trim-B ears, trim-A dash length, pocket frame, flat flap, shell orange-peel).
+- Triangles: py2 17.7k -> 19.3k, py4 35.7k -> 38.9k per unit mesh. Ratings `py_w18a/b.json`, `py_w19a/b.json`.
+  Log: `fixed_polishF.md`.
