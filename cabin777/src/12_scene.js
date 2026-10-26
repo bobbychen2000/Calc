@@ -58,7 +58,7 @@ const MOODS = {
   // surround p50 / p75 198 / 226 -> 193 / 211 (photo 183 / 199), q05 wall 240 -> 211; L235-245 share q03 12.5 -> 4.3 %, q08
   // 10.5 -> 2.1 %; the tubs (q17 176 / 159 / 162 vs y_47303 182 / 167 / 155), the far belt (q16 p90 237) and seat level held.
   // The analysts' 0.62 (gap4 SA, ungated) and 0.55 without sideLow 0 (gap4_mat beltLV: q17 pier flat 211-213 below row 60) [D]
-  boarding: { label: 'Boarding', hemiTop: [0.97, 0.99, 1.03], hemiBot: [0.31, 0.35, 0.47], wash: [0.23, 0.255, 0.32], hemiBotN: [0.36, 0.37, 0.40], washN: [0.25, 0.26, 0.28], tubSky: [1.0, 0.6], led: [1.0, 0.98, 0.92], sideLed: [0.50, 0.57, 0.78], bandCut: 0.15, sideLow: 0, beltK: 0.55, binLo: 0.8, k: 1.05, exposure: 1.38, toe: 1 },
+  boarding: { label: 'Boarding', hemiTop: [0.97, 0.99, 1.03], hemiBot: [0.31, 0.35, 0.47], wash: [0.23, 0.255, 0.32], hemiBotN: [0.36, 0.37, 0.40], washN: [0.25, 0.26, 0.28], tubSky: [1.0, 0.6], led: [1.0, 0.98, 0.92], sideLed: [0.50, 0.57, 0.78], bandCut: 0.15, sideLow: 0, beltK: 0.62, lensLo: [1.25, 1.30], seatCool: 1, bleed: [0.86, 0.95, 1.30], tubHue: 0.8, hueW: [0.8, 0.72, 0.86], binLo: 0.8, k: 1.05, exposure: 1.38, toe: 1 },
   // QA r2 (light): cruise sideLow 0.10 -> 0.30, the lavender wash reaches the window belt in THE Suite (the reveals by
   // the glass stay near-white through mainFS nearPane) [V: ml_DSC_1939-1 wall column y45 #6e9bfc (B-R +141), y150
   // #7a89be, belt y240 #888db0 (+40) vs cF03 belt #cccccf (+3)]
@@ -81,7 +81,7 @@ const MOODS = {
   // QA L13 (integration medium, lighting run 4): beltK 0.55 as Boarding (sideLow 0.30 kept: it carries the lavender belt):
   // cF03 below-window wall (90-150, 360-460) L199 B-R +26 -> L167 +35 [V: ml_DSC_1939-1 below the windows L146-186, B-R
   // +42..+71; target <= 175] [D fixL13]
-  cruise: { label: 'Cruise', hemiTop: [0.89, 0.885, 0.87], hemiBot: [0.18, 0.18, 0.22], wash: [0.25, 0.26, 0.30], hemiBotN: [0.195, 0.19, 0.185], washN: [0.27, 0.265, 0.26], led: [1.0, 0.98, 0.92], sideLed: [0.08, 0.14, 1.35], bandCut: 0.8, sideLow: 0.30, beltK: 0.55, binLo: 0.45, ctrLo: 0.5, fillLift: 0.25, k: 0.95, exposure: 1.12, toe: 1 },
+  cruise: { label: 'Cruise', hemiTop: [0.89, 0.885, 0.87], hemiBot: [0.18, 0.18, 0.22], wash: [0.25, 0.26, 0.30], hemiBotN: [0.195, 0.19, 0.185], washN: [0.27, 0.265, 0.26], led: [1.0, 0.98, 0.92], sideLed: [0.08, 0.14, 1.35], bandCut: 0.8, sideLow: 0.30, beltK: 0.48, binLo: 0.45, ctrLo: 0.5, fillLift: 0.25, k: 0.95, exposure: 1.12, toe: 1 },
   // QA r2 (light): ANA's full-blue phase (safety video, after take-off, early night): cove LED, sidewall lens and vault
   // saturated blue-violet, the seat zone washed blue and dim, the galley ends warm (monFill), the screens lighting their
   // surround [V: sany_47 (SANspotter Y) cove #1d21bd / #2227cb s0.85, crown #181a39, seat backs #171a7a, galley #776349,
@@ -361,7 +361,7 @@ class Scene {
     this.emptyVAO = gl.gl.createVertexArray();
     gl.use(this.progs.main); gl.set('u_fillLift', 1); gl.set('u_sheen', LIGHT_TUNE.sheen); gl.set('u_sheenTint', LIGHT_TUNE.sheenTint); gl.set('u_vaultE', [0, 1]);   // the studio may draw before the first cabin frame
     gl.set('u_binLo', 1); gl.set('u_ctrLo', 1); gl.set('u_ctrLift', 1); gl.set('u_monHemi', 1); gl.set('u_fLow', 1);   // QA r4: neutral values for the same reason
-    gl.set('u_glassT', [1, 1, 1]); gl.set('u_hueK', 0); gl.set('u_rimK', [0, 0, 0]); gl.set('u_dayN', 0); gl.set('u_scrWall', 0); gl.set('u_beltK', 1);   // QA L11: no pane tint, plain ACES, no rim lobe (the studio draws with u_exterior 1)
+    gl.set('u_glassT', [1, 1, 1]); gl.set('u_hueK', 0); gl.set('u_rimK', [0, 0, 0]); gl.set('u_dayN', 0); gl.set('u_scrWall', 0); gl.set('u_beltK', 1); gl.set('u_seatCool', 0); gl.set('u_bleed', [1, 1, 1]); gl.set('u_lensLo', [0.95, 1.30]); gl.set('u_tubHue', 0); gl.set('u_hueW', [0, 0.86, 0.97]);   // QA L11: no pane tint, plain ACES, no rim lobe (the studio draws with u_exterior 1)
     this.buildGlows();
     const sm = this.shell.meshes;
     this.opaque = [
@@ -893,7 +893,7 @@ class Scene {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     const L = this.sunDir();
     const op = this.openness ?? 1;
-    const winExp = this.xray ? 1 : 1 + ((sky.winExp || 1) - 1) * (1 - clamp((Math.abs(cam.pos[0]) - 2.0) / 0.45, 0, 1));
+    const winExp = this.xray ? 1 : 1 + ((sky.winExp || 1) - 1) * (1 - clamp((Math.abs(cam.pos[0]) - 2.66) / 0.06, 0, 1));
     const winGlow = sky.winGlow.map((v) => v * (0.15 + 0.85 * op));
     const P = this.progs.main;
     G.use(P);
@@ -919,7 +919,7 @@ class Scene {
     G.set('u_bandCut', mood.bandCut ?? 0.65); G.set('u_sideLow', mood.sideLow ?? 0.4); G.set('u_sideWall', mood.sideWall || [1, 1, 1]);
     G.set('u_lowGain', mood.lowGain ?? 1); G.set('u_fLow', mood.fLow ?? 1); G.set('u_monFill', mood.monFill || [0, 0, 0]); G.set('u_cove', LIGHT_TUNE.cove * (mood.cove ?? 1)); G.set('u_sheen', LIGHT_TUNE.sheen); G.set('u_sheenTint', LIGHT_TUNE.sheenTint);
     G.set('u_toe', mood.toe ?? 0);
-    G.set('u_glassT', [1, 1, 1]); G.set('u_hueK', mood.hueK ?? 0); G.set('u_dayN', mood.dayN ?? 0); G.set('u_beltK', mood.beltK ?? 1); G.set('u_rimK', this.q !== 'low' && this.ssaoOn !== false ? LIGHT_TUNE.rim : [0, 0, 0]); G.set('u_sLowZ', this.layout.z20 ?? 0);   // QA L11: pane tint only on the exterior (below), amber hue-preserving tone, cove rim lobe (Sharp only, as the contact AO: scene.ssaoOn, 13_app.js)
+    G.set('u_glassT', [1, 1, 1]); G.set('u_hueK', mood.hueK ?? 0); G.set('u_dayN', mood.dayN ?? 0); G.set('u_beltK', mood.beltK ?? 1); G.set('u_seatCool', mood.seatCool ?? 0); G.set('u_bleed', mood.bleed || [1, 1, 1]); G.set('u_lensLo', mood.lensLo || [0.95, 1.30]); G.set('u_tubHue', mood.tubHue ?? 0); G.set('u_hueW', mood.hueW || [0, 0.86, 0.97]); G.set('u_rimK', this.q !== 'low' && this.ssaoOn !== false ? LIGHT_TUNE.rim : [0, 0, 0]); G.set('u_sLowZ', this.layout.z20 ?? 0);   // QA L11: pane tint only on the exterior (below), amber hue-preserving tone, cove rim lobe (Sharp only, as the contact AO: scene.ssaoOn, 13_app.js)
     G.set('u_extBounce', [0, 0, 0]);
     // reading-light pools: the 8 lit lamps nearest the eye [A: count, a phone-sized loop]
     const sp = new Float32Array(32), st = new Float32Array(32);
@@ -996,7 +996,12 @@ class Scene {
     // brighter than the daylight sky behind the pane (q12 reveal L225-228, 61 % clipped vs sky L139) where a camera
     // exposed for the view shows them mid-tone below the sky [V: ucr_ana-business-class-wing-view reveal #816242-#7d6b55
     // L104-110, sky #4bb5fb L157]; seated window views (|x| < 2.45) are untouched [D]
-    G.set('u_exposure', mood.exposure * (this.xray ? 1 : 1 - LIGHT_TUNE.lookOut * clamp((Math.abs(cam.pos[0]) - 2.45) / 0.25, 0, 1)));
+    // QA L14 (integration, lighting run 4): both ramps (this and winExp above) are keyed to the glass, |x| 2.66-2.72, not
+    // 2.45-2.70 / 2.0-2.45: the PY / economy window-seat eyes stand at |x| 2.61-2.655 (13_app seatEye; THE Room 2.35, THE Suite
+    // 2.235), so 24 of the 212 seats (25-27 A/K and 18 economy) rendered their seated view at x0.30-0.44 of the cabin exposure
+    // with winExp 1, and the THE Room / THE Suite window seats at winExp 2.0-3.15: the 26A tour stop read mean 87, p50 66
+    // [V: py_37301 p50 118; c_27316 near pane L255] (no seat eye lies past 2.66; the look-out eye is at 2.72) [D gapL14m seat_lo]
+    G.set('u_exposure', mood.exposure * (this.xray ? 1 : 1 - LIGHT_TUNE.lookOut * clamp((Math.abs(cam.pos[0]) - 2.66) / 0.06, 0, 1)));
     G.set('u_binLo', mood.binLo ?? 1); G.set('u_ctrLo', mood.ctrLo ?? 1); G.set('u_ctrLift', mood.ctrLift ?? 1); G.set('u_monHemi', mood.monHemi ?? 1); G.set('u_tubWash', mood.tub ? LIGHT_TUNE.tubWash : 0); G.set('u_tubSky', mood.tubSky || [0, 1]); G.set('u_binLift', (mood.binLift || [0, 0, 0]).map((v) => v * mood.k));
     // QA L8 (integration): screen-space contact AO inputs (mainFS ssaoF); strength 0 switches it off
     G.set('u_ssao', ssao ? LIGHT_TUNE.ssao : [0, 0, 0, 0]);
@@ -1038,7 +1043,7 @@ class Scene {
       G.set('u_extBounce', [0, 0, 0]); G.set('u_extPtP', new Float32Array(8)); G.set('u_glassT', [1, 1, 1]);   // the studio (same program) keeps its plain fill and no tint
     }
     G.set('u_toe', 0); G.set('u_fillLift', 1); G.set('u_vaultE', [0, 1]);   // ... and its plain tone, fill lift and vault (14_studio renders through the same program)
-    G.set('u_scrOff', 0); G.set('u_binLo', 1); G.set('u_ctrLo', 1); G.set('u_ctrLift', 1); G.set('u_monHemi', 1); G.set('u_fLow', 1); G.set('u_tubWash', 0); G.set('u_binLift', [0, 0, 0]); G.set('u_tubSky', [0, 1]); G.set('u_hueK', 0); G.set('u_dayN', 0); G.set('u_scrWall', 0); G.set('u_beltK', 1);   // (QA r4) all screens lit, no cabin-only terms
+    G.set('u_scrOff', 0); G.set('u_binLo', 1); G.set('u_ctrLo', 1); G.set('u_ctrLift', 1); G.set('u_monHemi', 1); G.set('u_fLow', 1); G.set('u_tubWash', 0); G.set('u_binLift', [0, 0, 0]); G.set('u_tubSky', [0, 1]); G.set('u_hueK', 0); G.set('u_dayN', 0); G.set('u_scrWall', 0); G.set('u_beltK', 1); G.set('u_seatCool', 0); G.set('u_bleed', [1, 1, 1]); G.set('u_lensLo', [0.95, 1.30]); G.set('u_tubHue', 0); G.set('u_hueW', [0, 0.86, 0.97]);   // (QA r4) all screens lit, no cabin-only terms
     G.set('u_ssao', [0, 0, 0, 0]);   // (QA L8) no screen-space AO in the studio
     gl.depthFunc(gl.LEQUAL);
     gl.depthMask(false);

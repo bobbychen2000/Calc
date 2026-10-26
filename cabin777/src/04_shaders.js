@@ -47,6 +47,7 @@ uniform sampler2D u_win; uniform vec2 u_winZ;
 uniform float u_R; uniform float u_yc; uniform vec2 u_winY;
 uniform float u_exposure; uniform float u_exterior; uniform float u_fill; uniform float u_sheen; uniform float u_sheenTint;
 uniform vec3 u_glassT; uniform float u_hueK; uniform vec3 u_rimK; uniform float u_dayN; uniform float u_scrWall; uniform float u_beltK;
+uniform float u_seatCool; uniform vec3 u_bleed; uniform vec2 u_lensLo; uniform float u_tubHue; uniform vec3 u_hueW;   // QA L14 (12_scene MOODS seatCool / bleed / lensLo / tubHue / hueW)
 uniform vec3 u_skyTop; uniform vec3 u_skyBot;
 uniform float u_detailOn;
 out vec4 o;
@@ -450,16 +451,15 @@ void main(){
     // (q16 wall +10 vs y_47301 +14) (integration L8 low, lighting L8 medium) [D]
     float linW = 1.0 - smoothstep(0.06, 0.25, xLin - abs(v_wpos.x));   // the flat lining band (within ~0.06-0.25 m of the circle)
     float coolW = max(linW * facingIn, max(recd, 0.5 * binO));
-    // QA L13 (integration medium, lighting run 4): hoV = the lining seen near head-on (N.V 0.3-0.6 up); at grazing a satin
-    // lining reflects the lit cabin (Fresnel), and the far wall keeps its clipped belt [V: y_47301 far belt p90 245, 26 % >
-    // L235 vs q16 L13 239 / 13 %; without the gate 226 / 4 %] (u_beltK below)
-    float hoV = smoothstep(0.3, 0.6, NdV);
-    // ... and only the near wall (within 3.0-4.2 m of the eye): the photos keep the far wall across the cabin bright at the
-    // window band [V: c_27314 far piers L236-253, y_47301 far belt p90 245] where the near pier in a seat view is a light grey
-    // [V: c_27300 L205, y_47303 237 -> 176]; ungated, q09 (far wall at ~4.3 m) piers 233-236 -> 205-215 and cmp 118 -> 125;
-    // gated, the window band holds (232-236) and cmp 121 (the lower far wall, hidden by the dividers in c_27314, keeps
-    // Boarding's sideLow 0), q06 122 -> 121; the near views (q08 / q17 / q05 / q03 / cF03) unchanged [D fixL13 r_v1]
-    hoV *= 1.0 - smoothstep(3.0, 4.2, length(u_camPos - v_wpos));
+    // QA L14 (lighting run 4, gap analysis): Boarding (u_seatCool 1, 12_scene MOODS seatCool; 0 elsewhere): the PY / economy
+    // seat level (z > u_sLowZ, below 1.2-1.5 m) takes the cool shadow light of the window side as well. The L8 key left it
+    // neutral, and the official PY / Y photos keep their light greys and whites cool, 10-20 B-R over the model at L140-200
+    // where ACES is still near linear [V: B-R by luma band 140-175 / 175-200 / 200-220: y_47305 +26 / +24 / +21 vs q18 +10 /
+    // +7 / +2; y_47303 +33 / +26 / +24 vs q17 +16 / +10 / +6; py_37301 +36 / +28 / +21 vs q14 +23 / +11 / +3]. THE Room and
+    // THE Suite keep hemiBotN (the L8 reason: q06 seat zone vs c_27312 +8) [D gapT14 WBC]
+    coolW = max(coolW, u_seatCool * step(u_sLowZ, v_wpos.z) * (1.0 - smoothstep(1.2, 1.5, v_wpos.y)));
+    // (QA L13's hoV gates, N.V 0.3-0.6 and the 3.0-4.2 m eye distance on the belt dimming below, are gone in L14: a diffuse
+    // lining may not change level as the viewer walks or turns, see u_beltK)
     hBot = mix(u_hemiBotN, u_hemiBot, coolW);
     vec3 wsh = mix(u_washN, u_wash, coolW);
     // QA L9 (light): the centre bins' doors take u_ctrLift x the lift (12_scene MOODS ctrLift: 3 in Dining / Sunrise, 1
@@ -552,6 +552,11 @@ void main(){
     // QA r3: the aisle floor took nearly the full hemisphere and read as a bright flat strip; carpet sits in a 1.3 m
     // trench of shells and sees the ceiling through a slot [V: c_27312 aisle #312828-#423b39, darker at the bases]
     hemi *= lt * mix(1.0, 0.55, fl); bounce *= lt * mix(1.0, 0.6, fl);
+    // QA L14 (lighting run 4, gap analysis): Boarding (12_scene MOODS bleed; [1, 1, 1] elsewhere): below 0.9-1.3 m in PY /
+    // economy (z > u_sLowZ), off the sidewall, the interreflected light takes the blue of the seat block it bounces off,
+    // which the AO volume's neutral bounce cannot carry [V: seat block y_47300 seat back #2f3d66, py_37302 #636d7e; armrests
+    // y_47303 B-R +14..+31 vs q17 +1] [D gapT14 WBC]
+    bounce *= mix(vec3(1.0), u_bleed, step(u_sLowZ, v_wpos.z) * (1.0 - smoothstep(0.9, 1.3, v_wpos.y)) * (1.0 - wallProx * facingIn));
     // (QA r3 (integration): the r2 extra bounce cut on occluded carpet, x0.6 below aoPk 0.28, is gone: stacked with the
     // floor pocket term below it crushed the Y / PY legroom to L5-15 [V: q17 between rows L14 p10 5 vs y_47303 L39 p10 26;
     // sany_13 floor / seat back 0.27-0.52 vs q17 0.18])
@@ -568,12 +573,16 @@ void main(){
     float fWall = step(0.5, N.z) * smoothstep(u_fZone.x - 0.8, u_fZone.x - 0.2, v_wpos.z) * (1.0 - smoothstep(u_fZone.x, u_fZone.x + 0.1, v_wpos.z));
     float monK = mix(1.0, u_monHemi, (1.0 - sz) * (1.0 - fWall));
     hemi *= monK; bounce *= monK;
+    // the bin lens's light on the sidewall (QA r2 / r3 above). QA L14 (lighting run 4): its fade-in starts at u_lensLo.x (12_scene
+    // MOODS lensLo: Boarding LENSLO_B, 0.95 elsewhere), so in Boarding the lens wash stays just under the bins and the pier falls
+    // from the lens to a light grey well above the window, as in y_47303 (pier 237 / 213 / 190 / 178 down to the window centre)
+    vec3 lensT = u_sideLed * u_sideWall * lensW * facingIn * mix(u_sideLow, 1.0, smoothstep(u_lensLo.x, 1.55, v_wpos.y)) * smoothstep(0.35, 0.8, v_wpos.y)
+               * (1.0 - smoothstep(1.95, 2.1, v_wpos.y)) * noDown * nearPane;
     amb = (hemi * (u_aoTune.x + (1.0 - u_aoTune.x)*ao) + bounce * u_aoTune.y) * binShade * (1.0 - band) * binK
         + wsh * lt * wallProx * (0.35 + 0.65*facingIn) * smoothstep(0.3, 1.25, v_wpos.y) * (0.45 + 0.55*ao) * noDown * (1.0 - bandW) * monK
-        + u_sideLed * u_sideWall * lensW * facingIn * mix(u_sideLow, 1.0, smoothstep(0.95, 1.55, v_wpos.y)) * smoothstep(0.35, 0.8, v_wpos.y)
-                    * (1.0 - smoothstep(1.95, 2.1, v_wpos.y)) * noDown * nearPane
+        + lensT
         + u_winGlow * wallProx * facingIn * smoothstep(0.7, 1.1, v_wpos.y) * (1.0 - smoothstep(1.5, 1.8, v_wpos.y))
-                    * mix(0.15, 0.5, max(recd, 1.0 - linW * hoV * step(u_beltK, 0.999))) * (1.0 - band)
+                    * mix(0.15, 0.5, max(recd, 1.0 - linW * step(u_beltK, 0.999))) * (1.0 - band)
         // QA r1 (light): reveal glow 1.4 -> 1.9, the reveal sides read grey at grazing angles [V: c_27312 reveal sides
         // #d7dbdf / #e2e5e8 vs q06 #b2b1af / #c7c9c9] (integration r1)
         + u_winGlow * wl.rgb * reveal * 1.9 + u_winGlow * vec3(0.92, 1.0, 1.18) * crown * 1.1;
@@ -596,9 +605,17 @@ void main(){
     // radiance, in the ACES shoulder (L235-245, 10-20 L per stop), so the pier read flat white and rose toward the sill
     // where the photos fall from the lens to a light grey [V: y_47303 pier 237 / 210 / 184 / 176 down to the window centre;
     // c_27300 pier L205; omaat_f8 THE Suite wall L202 vs q08 pier p50 241, q17 pier 235-241 to the sill, q05 wall L237].
-    // Not the tubs (recd: at the photo already, y_47303 182 / 167 / 155), not the seats' inboard faces (linW), not the
-    // grazing or distant far wall (hoV). 1 elsewhere, which also keeps the belt term at 0.5 [D gap4_mat r_beltLV; fixL13]
-    amb *= mix(1.0, u_beltK, linW * lensW * facingIn * smoothstep(0.55, 0.85, v_wpos.y) * (1.0 - smoothstep(1.30, 1.60, v_wpos.y)) * (1.0 - recd) * hoV);
+    // Not the tubs (recd: at the photo already, y_47303 182 / 167 / 155), not the seats' inboard faces (linW). 1 elsewhere,
+    // which also keeps the belt term at 0.5 [D gap4_mat r_beltLV; fixL13]
+    // QA L14 (integration medium, lighting run 4): the same for every viewer. L13 also gated it by N.V (0.3-0.6) and by the eye
+    // distance (3.0-4.2 m), so one pier went L202 -> 237 as the eye stepped back from 3.0 to 4.2 m and two adjacent piers in q03
+    // read 210 / 228, where the in-flight photos keep receding piers level [V: sc_room_09 piers 216-238 from ~1.5 to 5 m;
+    // omaat_f8 210 / 193-204 / 167-204; c_27312 far-left wall 146-216 vs q06 228-240]; the two official photos with a brighter
+    // far wall are dark-foreground exposures with pane halation [V: c_27314 far piers 236-253, y_47301 far belt p90 245]
+    // (question 15). And on the cabin ambient only: the lens light (lensT) is added back undimmed, since the bin overhang and
+    // the seat block occlude the cabin's light, not the strip light under the bin; the top fade starts at u_lensLo.y (MOODS
+    // lensLo; 1.30 elsewhere) [D gapT14 V62; fixL14]
+    amb = (amb - lensT) * mix(1.0, u_beltK, linW * lensW * facingIn * smoothstep(0.55, 0.85, v_wpos.y) * (1.0 - smoothstep(u_lensLo.y, 1.60, v_wpos.y)) * (1.0 - recd)) + lensT;
     if (u_dayN > 0.0) {
       // QA L13 (light low, lighting run 4): lower edge 0.6-0.9 -> 0.2-0.5 m, so the wall under an open pane stays neutral down
       // to the console, not an orange band rising from it [V: kn_room_35 / 36 below the open pane s0.00-0.03 to the console;
@@ -619,6 +636,14 @@ void main(){
     float lSky = dot(skyT, vec3(0.2126, 0.7152, 0.0722));
     if (u_tubSky.x > 0.0 && crownW > 0.0 && lSky > 1e-4)
       amb = mix(amb, skyT * (dot(amb, vec3(0.2126, 0.7152, 0.0722)) * u_tubSky.y / lSky), u_tubSky.x * crownW);
+    // QA L14 (lighting run 4, gap analysis): the rest of the recessed tub (below 0.30-0.40 m over the pane centre: sides, sill,
+    // lower tub; shade open) takes the same sky hue at its own level (hue only), a share u_tubHue (Boarding, 12_scene MOODS
+    // tubHue; 0 elsewhere): with the shades up the official photos show the whole tub cool lavender by the pane [V: y_47303
+    // lower tub L155 B-R +37 vs q17 L158 +6; py_37301 wall at the window +23..+28 vs q14 sill +1; c_27314 far band +10..+15 vs
+    // q09 +4]. shT keeps closed shades and the dimmed moods out [D gapT14 TUB]
+    float tubLow = recd * wl.a * (1.0 - smoothstep(0.30, 0.40, v_wpos.y - u_winY.x)) * shT * u_tubHue;
+    if (tubLow > 0.0 && lSky > 1e-4)
+      amb = mix(amb, skyT * (dot(amb, vec3(0.2126, 0.7152, 0.0722)) / lSky), tubLow);
     // night: the galley / lav / door zones (sz = 0) keep a dim neutral fill, the galley lights and lit bulkheads at the
     // end of the dark cabin [V: ucr_room-night-lighting far galley wall #645f57; sany_40 lit galley end] (lighting r1)
     // QA L9 (light): in Blue (u_monHemi < 1) half of it on the THE Suite front wall (fWall, above): the full warm fill greyed
@@ -819,6 +844,18 @@ void main(){
     vec3 y = xe * (la / max(Lx, 1e-5)); y /= max(1.0, max(y.r, max(y.g, y.b)));
     col = mix(col, y, u_hueK * smoothstep(0.12, 0.35, la) * (1.0 - smoothstep(0.75, 0.95, la))
                           * (1.0 - smoothstep(0.22, 0.38, xe.b / max(xe.r, 1e-5))));
+  }
+  // QA L14 (lighting run 4, gap analysis): Boarding (u_hueW.x 0.8, 12_scene MOODS hueW; 0 elsewhere): on the light greys and
+  // whites (display luma 0.30-0.55 up, out by u_hueW.y-z; linear saturation < 0.25-0.45, so the fabrics, wood and the lens band
+  // keep per-channel ACES) the tone curve is taken on the luminance and the hue kept. Per-channel ACES flattens a cool white as
+  // it nears the shoulder (linear B/R 1.22 reads B-R +14 at L160, +5 at L237; hue-kept +17..+21) where the official PY / Y
+  // photos keep the cast up to L235 [V: 220-235 band y_47303 +17, y_47305 +19, py_37301 +17 vs q17 +3, q18 -9, q14 +2]; the
+  // fade ends by display 0.86 so the 235-248 band (q15 +1, q09 +3 in the photos) is not over-cooled [D gapT14 WBC]
+  if (u_hueW.x > 0.0 && u_exterior < 0.5) {
+    float Lw = dot(xe, vec3(0.2126, 0.7152, 0.0722)); float lw = aces(vec3(Lw)).x;
+    vec3 yw = xe * (lw / max(Lw, 1e-5)); yw /= max(1.0, max(yw.r, max(yw.g, yw.b)));
+    float mxw = max(xe.r, max(xe.g, xe.b)); float sw = (mxw - min(xe.r, min(xe.g, xe.b))) / max(mxw, 1e-5);
+    col = mix(col, yw, u_hueW.x * smoothstep(0.30, 0.55, lw) * (1.0 - smoothstep(u_hueW.y, u_hueW.z, lw)) * (1.0 - smoothstep(0.25, 0.45, sw)));
   }
   col = tone(col, u_toe);
   o = vec4(toSRGB(col), 1.0);
