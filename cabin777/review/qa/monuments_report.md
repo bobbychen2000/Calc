@@ -467,3 +467,25 @@ Closed `from_integration.md` "Lighting run 3, L13 ... To monuments (medium)" (lo
   nosing is a flat white band (photo: rounded satin rail, B suggests #b8babc m 0.7), the open bays render crushed (L3 vs
   L11-12, mostly lighting), the lower ash doors L172 vs the photos' L130-161 (exposure). The door-2 welcome galley now
   shares the face; see question 12.
+
+## Final confirm (2026-10-26, head 1430d42): bar held, no code change
+
+| round | rater A | rater B | high / medium (monuments) |
+|---|---|---|---|
+| final | **8.7** | **8.8** | none / none |
+
+- Since the last rated round (w22b, 5e5e561), only `04_shaders.js` and `12_scene.js` changed: lighting runs 3-4,
+  L13-L14. The monument geometry, materials and atlas are unchanged.
+- Pixel diff of q01/q11/q13/q19 and m02/m03/m05/m06/m09/m12 against 5e5e561: 0-2.6 % of pixels change by more than
+  8 L, all of them window-belt light.
+- **Triangles:** monuments mesh 119,228, unchanged from w22b.
+- **Lighting hand-off:** rater A found one medium lighting issue, and I confirmed it. The L14 PY/Y seat-level cool light
+  tints the door-4/5 galley lower faces lavender, B-R about -3 -> +7/+8 below 1.3 m. It is not scored against monuments
+  and is routed to `from_monuments.md` ("Final confirm") with a fix.
+- **Still open (low, both raters):**
+  - the glass cabinet reads as open shelving;
+  - the control panel and oven fronts are flat plates;
+  - the bar nosing is a flat white band, not a satin rail;
+  - the right open bay is crushed (lighting);
+  - the w18-w21 lows.
+- Ratings: `monuments_final_a.json`, `monuments_final_b.json`.

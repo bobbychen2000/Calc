@@ -62,3 +62,28 @@ Noted by both raters in all three rounds; not scored against monuments.
 - **Door-1 dark wood streak aliasing (q01, m19):** `LAYER.fWood` on the large door-1 side walls smears into radial
   streaks at grazing angles (w14a, w15b). Probably mip / filtering of the fWood tile; worth a lower-frequency or
   pre-filtered sample at grazing angles.
+
+## Final confirm (head 1430d42, 2026-10-26)
+
+### To lighting (`src/04_shaders.js` / `src/12_scene.js`), medium, not scored against monuments
+- **The L14 PY/Y seat-level cool light tints the door-4 and door-5 galley lower faces lavender (q19, m12, m09).**
+  `seatC` (04_shaders.js:462) and the `u_bleed` bounce (04_shaders.js:561) are keyed only on `z > u_sLowZ` and height
+  (below 1.2-1.5 m / 0.9-1.3 m), so they also reach the white galley faces at doors 4 and 5. Each face now splits
+  at about 1.3 m: a lavender lower half and a neutral upper half.
+- **Evidence:** my own measurement of the white pixels (L>140), lower band at 60-85 % of frame height against the
+  upper band at 20-45 %, B-R:
+
+  | view | 5e5e561 lower / upper | 1430d42 lower / upper |
+  |---|---|---|
+  | q19 | -3.5 / -2.7 | +7.3 / -3.5 |
+  | m12 | -3.9 / -3.1 | +8.1 / -4.3 |
+  | m09 | -2.5 / -7.6 | +5.2 / -7.8 |
+
+  Rater A (`monuments_final_a.json`) finds 20.6 % / 24.3 % / 10.0 % of pixels shifted by more than 8 in B-R. The
+  galley whites in the official photos are neutral. The cool shift in y_47305 / py_37301 that L14 matched is measured
+  on seats, not on galleys.
+- **Concrete fix:** leave monument surfaces out of both terms. Either (a) multiply both gates by
+  `(1.0 - monoMask)`, where `monoMask` is the galley/lav material flag already baked per vertex by `Builder`, or (b) if
+  no free flag exists, zero both gates inside the monument z-bands from `MONO_LAYOUT` (door-4 galley about
+  z 43.6-45.3, door-5 galley z > 58.0) with a 0.3 m smoothstep. Target: lower and upper galley faces within 3 B-R
+  of each other, both at about -3, which is the 5e5e561 value.
