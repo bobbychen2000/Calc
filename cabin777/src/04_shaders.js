@@ -46,6 +46,7 @@ uniform sampler2D u_atlas; uniform float u_screenStep; uniform float u_emisGain;
 uniform sampler2D u_win; uniform vec2 u_winZ;
 uniform float u_R; uniform float u_yc; uniform vec2 u_winY;
 uniform float u_exposure; uniform float u_exterior; uniform float u_fill; uniform float u_sheen; uniform float u_sheenTint;
+uniform vec3 u_glassT; uniform float u_hueK; uniform vec3 u_rimK;
 uniform vec3 u_skyTop; uniform vec3 u_skyBot;
 uniform float u_detailOn;
 out vec4 o;
@@ -325,6 +326,15 @@ void main(){
   // PSU band #603b1d L65, ucr_the-room-cabin #6f482a L79 vs q21 #ad7c42 L131, d06 #926532]
   if (emis > 0.0 && (layer < 12 || layer > 15))
     emissive += base * emis * 3.0 * (emis < 0.2 ? min(u_hemiTop / 0.8, vec3(1.0)) * u_fillLift : vec3(u_emisGain));
+  // QA L11 (integration): rim weight for the cove-line lobe (coveSpec below): rimW = 1 where the geometric normal turns fast
+  // across the pixel (the 1-2 cm fillets of armrests, shell caps, shrouds and IFE housings, not the detail normals: the
+  // perturbed nvar let fabric weave trip it) on smooth-ish materials (rough < 0.45-0.6). The spec-AA widening below takes
+  // those fillets to rough ~0.5-0.6, which flattened the cove lobe ~10x, so they carried no thin streak highlight [V: y_47303
+  // 3640 px > L240 at seat level on the fillets vs q17 79; py_37302 4810 px > L235 on the shell / armrest / console rims vs
+  // q13 653] [D gap3 v_rimG2]
+  float rough0 = rough;
+  vec3 Ng = normalize(v_nrm); vec3 gnx = dFdx(Ng), gny = dFdy(Ng);
+  float rimW = smoothstep(0.002, 0.02, 0.25*(dot(gnx, gnx) + dot(gny, gny))) * (1.0 - smoothstep(0.45, 0.6, rough0)) * (1.0 - u_rimK.z*metal);
   // specular anti-aliasing: widen roughness where the normal varies across pixels
   vec3 dNdx = dFdx(N), dNdy = dFdy(N);
   float nvar = 0.25 * (dot(dNdx, dNdx) + dot(dNdy, dNdy));
@@ -508,7 +518,12 @@ void main(){
     // suite interior read 0.17-0.23 of the matched window wall, the in-flight photos 0.36-0.47, violet-grey [V: ml_DSC_1945
     // aisle-side box #2a243c L40, table L37, pier L48 vs blueF03 L16 / 20 / 22 at window wall L96 vs 103]; the inF box with the
     // |x| fade out to 2.75-2.95 m, so the window console takes it too (1 in the other moods: Boarding q03 box L91 vs omaat_f11 L101)
-    lt *= mix(1.0, u_fLow, inFzy * (1.0 - smoothstep(2.75, 2.95, abs(v_wpos.x))));
+    // QA L11 (light low): up-facing faces below 0.5-0.6 m (the ottoman top) take 0.4 of the extra gain: they already take Blue's
+    // strong blue hemiTop (hemiTop / hemiBot ~6, Boarding ~2.2), so the fLow lift doubled them while the photo keeps the Boarding
+    // ratio [V: ml_DSC_1945 ottoman under the slippers L38-50 = 0.37-0.49 of its wall (L103) vs blueF03 ottoman L81 = 0.84 of
+    // the window wall (L96); q03 0.52 vs omaat_f11 0.47]; the console and table tops (0.6-0.75 m) keep it [D L11rateL xf2]
+    lt *= mix(1.0, u_fLow, inFzy * (1.0 - smoothstep(2.75, 2.95, abs(v_wpos.x)))
+                         * (1.0 - 0.6 * smoothstep(0.6, 0.9, N.y) * (1.0 - smoothstep(0.5, 0.6, v_wpos.y))));
     // QA r3: the aisle floor took nearly the full hemisphere and read as a bright flat strip; carpet sits in a 1.3 m
     // trench of shells and sees the ceiling through a slot [V: c_27312 aisle #312828-#423b39, darker at the bases]
     hemi *= lt * mix(1.0, 0.55, fl); bounce *= lt * mix(1.0, 0.6, fl);
@@ -707,10 +722,33 @@ void main(){
   // the cove line's colour as seen in a reflection: the cabin hemi hue at the LED level (u_led itself is set so the
   // clipped lens reads amber, and below the clip it is near-red: red rim lines in the amber phase, d07)
   vec3 coveC = u_hemiTop / max(max(u_hemiTop.r, u_hemiTop.g), max(u_hemiTop.b, 1e-4)) * max(max(u_led.r, u_led.g), u_led.b);
-  if (u_exterior < 0.5) specEnv += coveSpec(v_wpos, N, V, R, rough, F0, NdV) * coveC * u_cove * sz * (0.25 + 0.75*ao);
+  // QA L11 (integration): the cove lobe on the material roughness with a small AA floor (u_rimK.y 1; 0 = the spec-AA-widened
+  // one), x(1 + u_rimK.x rimW) on the fillets, whose specular occlusion eases 0.6 of the way to 1 (a rim sees the cove line
+  // over the pocket the 8 cm AO volume averages it into) [V: y_47303 armrest-top streaks p99 248-251; c_27312 cap rims] [D gap3]
+  if (u_exterior < 0.5) {
+    float rimO = rimW * u_rimK.y;
+    specEnv += coveSpec(v_wpos, N, V, R, mix(rough, sqrt(rough0*rough0 + min(0.5*nvar, 0.04)), u_rimK.y), F0, NdV) * coveC * u_cove * sz
+             * (0.25 + 0.75*mix(ao, 1.0, 0.6*rimO)) * (1.0 + u_rimK.x*rimO);
+  }
   vec3 col = max(diff * (amb + sun), tubRef) + specSun + specEnv + emissive;   // tubRef: QA r4 tub floor (above)
   col += vec3(0.30, 0.62, 1.0) * hl * (0.35 + 0.9*pow(1.0 - NdV, 2.0));
-  col = aces(col * u_exposure);
+  // QA L11 (integration + shell): the day-pane transmittance (u_glassT: 12_scene LIGHT_TUNE.glassT on the exterior, 1 for
+  // the cabin and the studio) applies to the radiance before the tone curve, as on the sky (skyFS), not as a multiply on the
+  // display-encoded frame (the old glass pass): a pane can then clip to white, which the photos show [V: c_27316 pane
+  // #ffffff, y_47300 #fcfcfb, y_47301 pane L251 vs q16 p99 245, q07 / q03 G plateau at 240-242]
+  vec3 xe = col * u_exposure * u_glassT;
+  col = aces(xe);
+  // QA L11 (light): amber moods (u_hueK 0.6 in Dining / Sunrise): per-channel ACES turns the saturated amber yellower as it
+  // brightens (R clips first), so the cove-lit bins, ceiling and piers drift to h35-40 where the photos hold h26-34; in the
+  // upper mid-tones (display luma 0.12-0.95) the tone curve is taken on the luminance and the hue kept, a 0.6 share
+  // [V: ucr_the-room-cabin hue by luma band L60-100 / 100-150 / 150-200 h26.4 / 28.9 / 34.1 vs dd h27.8 / 34.4 / 39.9; wall
+  // h26-28 vs dd h33.5; kn_room_35 h31.7 / 31.0 vs d06 33.2 / 38.9]; below 0.12 (sRGB ~97: the seat-level ash, question 12)
+  // and in the clipped lens core (> 0.95: ucr lens #fefed6) per-channel ACES stays [D gapT pD]
+  if (u_hueK > 0.0) {
+    float Lx = dot(xe, vec3(0.2126, 0.7152, 0.0722)); float la = aces(vec3(Lx)).x;
+    vec3 y = xe * (la / max(Lx, 1e-5)); y /= max(1.0, max(y.r, max(y.g, y.b)));
+    col = mix(col, y, u_hueK * smoothstep(0.12, 0.35, la) * (1.0 - smoothstep(0.75, 0.95, la)));
+  }
   col = tone(col, u_toe);
   o = vec4(toSRGB(col), 1.0);
 }`;
@@ -736,7 +774,7 @@ precision highp float;
 in vec2 v_ndc;
 uniform mat4 u_invViewProj; uniform vec3 u_camPos; uniform vec3 u_sunDir; uniform float u_time;
 uniform vec3 u_zenith; uniform vec3 u_horizon; uniform vec3 u_haze; uniform vec3 u_sunTint; uniform float u_night; uniform float u_skyK;
-uniform vec3 u_cloudLit; uniform vec3 u_cloudShade; uniform float u_exposure; uniform float u_sunVis; uniform float u_toe;
+uniform vec3 u_cloudLit; uniform vec3 u_cloudShade; uniform float u_exposure; uniform float u_sunVis; uniform float u_toe; uniform vec3 u_glassT;
 uniform sampler2D u_cloud;
 out vec4 o;
 vec3 aces(vec3 x){ return clamp((x*(2.51*x+0.03))/(x*(2.43*x+0.59)+0.14), 0.0, 1.0); }
@@ -776,13 +814,14 @@ void main(){
     col += u_sunTint * pow(max(dot(reflect(dir, vec3(0.0, 1.0, 0.0)), u_sunDir), 0.0), 12.0) * 0.12 * cov * u_sunVis;
     col = mix(col, u_horizon, smoothstep(-0.05, -0.02, h));
   }
-  col = aces(col * u_exposure);
+  col = aces(col * u_exposure * u_glassT);   // QA L11: the pane transmittance before the tone curve (mainFS)
   float l = dot(col, vec3(0.2126, 0.7152, 0.0722));   // the mainFS tone()
   col *= mix(1.0 - 0.45*u_toe, 1.0, smoothstep(0.002, 0.03, l)) * (1.0 + 0.5*u_toe*smoothstep(0.4, 0.75, l)*(l*(3.0 - 2.0*l) - 1.0));
   o = vec4(mix(col*12.92, 1.055*pow(col, vec3(1.0/2.4)) - 0.055, step(vec3(0.0031308), col)), 1.0);   // sRGB, as mainFS
 }`;
 
-// Window glass: multiply what is behind by the pane transmittance
+// Window glass: multiply what is behind by the pane transmittance (QA L11: x-ray only; the cabin view applies
+// LIGHT_TUNE.glassT before the tone curve in mainFS / skyFS)
 SH.glassFS = `
 precision highp float;
 in vec3 v_wpos; in vec3 v_nrm; in vec2 v_uv; in vec4 v_col; in vec4 v_mat; flat in vec4 v_tint;
