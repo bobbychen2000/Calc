@@ -128,6 +128,7 @@ function buildAtlas(layout) {
     g.putImageData(img, px, py);
     put('washi', px, py, WS, WS);
   }
+  inkPanel(g, put);   // F-zone ink-cloud print (10_mono.js, monuments)
   ATL.canvas = cv;
   return ATL;
 }
