@@ -1,0 +1,36 @@
+{
+ "area": "monuments",
+ "rater": "A",
+ "round": "w22",
+ "score": 8.7,
+ "note": "I rated 541b4ef + 87fd59a (w22 ink print). Builds: /tmp/b1 (w21) and /tmp/b2 (w22). Renders: scratchpad/r1 and r2. My comparison sheets are in scratchpad/raters/monoA2/: cmp.jpg (f40 | f13 | aisle w21 | aisle w22 | seated w21 | seated w22) and wall.jpg (2x wall crops: f40, aisle w21 / w22, seated w21 / w22). I made no new renders because the machine is loaded and ink_aisle / ink_seated are already final-colour. q11 / q19 / q13 are unchanged, so I carry their scores over from w21. My measurements (PIL; p5-p95 of the channel mean): ink_aisle (320-600 x 300-410) w21 L199 range 30 h42 s0.090 B/R 0.910 -> w22 L192 range 29 h41 s0.085 B/R 0.915. ink_seated (200-470 x 215-300) w21 L197 range 36 s0.084 -> w22 L191 range 28 h42 s0.079 B/R 0.921. Photos: f13 L204 range 24 s0.114; f40 L191 range 34 s0.111. Mean luminance gradient rose about 10 % in x (0.82 -> 0.93 aisle, 0.81 -> 0.88 seated), so the edges are crisper. Result: the strata are now thinner and more numerous and break into ragged, stair-stepped fragments, which is much nearer f40's dry-brush stipple than w21's rounded blobs. Value, contrast and hue stay inside the photo band. The trade-off: the wall is now covered by fairly even, full-width horizontal bands. In f40 the bands are fewer and bigger, with large light-ground gaps between cloud masses (a low-frequency envelope), and the stipple sits inside those masses. As a result the w22 wall reads slightly busier and a touch greyer overall (L -7) than the photo. It is a net gain, small. Lighting is noted, not scored: the render's cool-neutral ceiling still makes the wall read warmer than in the photos.",
+ "previousIssues": [
+  {"issue": "w20a / w21a high or medium issues", "status": "none were open. The integration L8-L11 medium (smoke stains) was fixed in w21 and stays fixed: range 28-29 (limit <= 40), L191-192 (>= 185), h41-42, s0.079-0.085 (target 0.07-0.13)."},
+  {"issue": "w21a low: print reads beige or sand against the neutral ceiling", "status": "partly fixed. B/R 0.910 -> 0.915-0.921 and s0.090 -> 0.079-0.085. That is the agreed half-way split, and still above the photo's B/R 0.89 in absolute terms. In context the wall still reads warm against the render's neutral whites, which is mostly lighting's call."},
+  {"issue": "w21a low: cloud shapes too smooth and blobby; edges soft up close", "status": "fixed, largely. The strata are thinner and fragmented, with quantised speckle edges and a visible blocky stipple at 2x (wall.jpg rows 3 and 5). See the new low about the even banding and the missing large-scale envelope."},
+  {"issue": "w21a low: atlas mip-bleed margin (4 px pad)", "status": "fixed per the commit (pad 8 px, panel 540x220 at 474,794). Not visually verifiable at 930 px; no grey fringe is visible at the wall edges in ink_aisle / ink_seated."},
+  {"issue": "w20a low: F front drape weave soft", "status": "not fixed (unchanged)."},
+  {"issue": "w18-w20 lows: plain J lav doors, ash grain contrast / repeat, welcome-pane cue, tumbler glints, nosing groove, door-1 dark-wood streaks", "status": "not fixed (unchanged; q11 / q19 not re-rendered)."}
+ ],
+ "changeVerdicts": {
+  "strata fbm x/0.9,y/0.25 -> x/1.2,y/0.14": "keep, with a tweak. The bands are thinner and more numerous, as in f40. But the coverage is now too even, with bands across the full width at a near-regular pitch. Add a low-frequency envelope (see issues).",
+  "edge ramp 0.08 -> 0.035, speckle 0.10 -> 0.18": "keep. The crisp, ragged, stair-stepped edges read as dry-brush stipple. This was the main w21 low.",
+  "atlas pad 4 -> 8 px": "keep (no visible effect; safer mips).",
+  "inkGround #e8dbc2 / inkCloud #bfb5a2 (half-way hedge)": "keep. The saturation stays in band (0.079-0.085 against the photo's 0.11). Going cooler would undershoot the photo, as the 0.062 hedge did."
+ },
+ "details": [
+  {"detail": "F front wall ink print (q03 / q05 via ink_aisle, ink_seated)", "score": 8.7, "note": "Was 8.6. The fragmented stipple strata now match f40's texture character. The remaining gap is composition: the bands are too uniform and dense, with too little open light ground between large cloud masses, and the mean is a touch dark (L191-192 against f13's 204)."},
+  {"detail": "F front drapes", "score": 8.7, "note": "Unchanged."},
+  {"detail": "Door-3 self-service bar (q11)", "score": 8.6, "note": "Unchanged."},
+  {"detail": "Door-2 welcome galley / aft ash wall", "score": 8.5, "note": "Unchanged."},
+  {"detail": "F front wall, flight-deck door, door 1 (q01)", "score": 8.5, "note": "Unchanged apart from the print."},
+  {"detail": "Lavatory exteriors (q11)", "score": 7.8, "note": "Unchanged; plain J lav doors."},
+  {"detail": "Galleys (q19)", "score": 8.5, "note": "Unchanged."}
+ ],
+ "issues": [
+  {"severity": "low", "detail": "Strata too even: no large-scale cloud envelope", "problem": "In w22 the cloud bands run across the full wall width at a near-regular pitch with similar density, so the wall reads as a striped, slightly busy grey. In f40 / f13 there are 2-3 large cloud masses, each built from stipple strata, with broad areas of open light ground between them (the upper-right and lower-centre of f40 are mostly ground). For the same reason the mean L sits at 191-192, against f13's 204.", "evidence": "wall.jpg row 1 (f40) against rows 3 and 5 (w22). ink_seated L191 against f13 L204, f40 L191.", "fix": "In inkPanel, multiply the stratum mask by a low-frequency envelope, for example env = smoothstep(0.35, 0.65, fbm(x/2.5, y/0.6, seed2)), so that about 35-40 % of the wall is open ground. Keep the edge ramp and speckle as they are. Expect the mean L to rise about 5-8 while the range stays at 25-35."},
+  {"severity": "low", "detail": "Hue still slightly warm in context", "problem": "The absolute B/R is 0.92, against the photo's 0.89. The difference is fine; the residual warmth against the render's neutral ceiling is lighting's call.", "evidence": "ink_aisle B/R 0.915; w21a analysis.", "fix": "No monuments change. Integrator note only."},
+  {"severity": "low", "detail": "Carried over (w18-w21)", "problem": "Plain J lav doors, ash grain contrast and repeat, welcome-pane cue, tumbler glints, nosing groove, door-1 dark-wood streaks, soft drape weave.", "evidence": "Unchanged renders.", "fix": "As in monuments_w20a."}
+ ],
+ "questionsForUser": []
+}
