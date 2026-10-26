@@ -1,0 +1,65 @@
+{
+ "area": "monuments",
+ "rater": "B",
+ "round": "w22",
+ "score": 8.5,
+ "note": "w22 = 541b4ef + 87fd59a (inkPanel only: fbm x/1.2 y/0.14, edge ramp 0.035, speckle 0.18, pad 8, inkGround #e8dbc2 / inkCloud #bfb5a2). Compared r1 (w21) vs r2 (w22) ink_aisle / ink_seated (raters/monoB2/cmp_aisle.png, cmp_seated.png, zoom_aisle.png) and my own w22 re-render of b_centre / b_edgeL from /tmp/b2/test.html (raters/monoB2/after/) against my w21 shots (raters/monoB/after/) and omaat_f40 (raters/monoB2/cmp_centre.png: f40 crop | w21 | w22). q01 / q11 / q13 / q19 unchanged by these edits, scores carried. Dark fraction = share of pixels below the midpoint of the 5th-95th percentile L. Lighting noted, not scored.",
+ "previousIssues": [
+  {"issue": "w21b LOW: cloud edges soft and blurred vs crisp granular photo edges", "status": "partly fixed. Edges are sharper (zoom_aisle: transition ~3-5 px vs 10-15), but the measured fine term barely moves (b_centre mean |dx| 0.28 -> 0.32, ink_aisle 0.83 -> 0.94, ink_seated 0.60 -> 0.70; photos 2.2) and the new edges are axis-aligned stair-steps, not granular speckle."},
+  {"issue": "w21b LOW: strata fewer and taller than in omaat_f40", "status": "fixed in shape, regressed in tone structure: the bands are now thin and horizontal, but the dark cloud now covers most of the wall (see the medium issue)."},
+  {"issue": "w21a lows on the ink print (A's file)", "status": "the thinner strata / crisper edge / cooler colour requests are answered as above; the cooler colour is fine (h42 -> h41, s0.090 -> 0.085, inside the 0.06-0.14 band)."},
+  {"issue": "integration L8-L11 MEDIUM (print as grey smoke stains)", "status": "still fixed in hue and contrast (range 27-33, s0.085), but mean L dropped 199-202 -> 192-194 because of the higher cloud coverage; still >= 185."},
+  {"issue": "w19b MEDIUM: F front drapes warm brown", "status": "still fixed (unchanged)."},
+  {"issue": "w18a/b LOWs (welcome glass cue, bar nosing, tumbler glints, ash grain, J lav doors, door-1 wood, monument joint hairlines)", "status": "not fixed (not in this pass). The vertical hairline on the F front wall is still visible in zoom_aisle (x~650 of the zoom) and b_centre."}
+ ],
+ "changes": [
+  {
+   "change": "inkPanel: fbm x/0.9 y/0.25 -> x/1.2 y/0.14 (threshold 0.455 kept), edge ramp 0.08 -> 0.035, speckle 0.10 -> 0.18",
+   "verdict": "redo",
+   "evidence": "With the thinner, higher-frequency fbm the same 0.455 threshold now puts most pixels inside the cloud: dark fraction ink_aisle 51 % -> 79 %, ink_seated 31 % -> 62 %, b_centre 52 % -> 82 %; photos omaat_f40 19 %, omaat_f13 45 %. In b_centre the wall reads as an almost uniform taupe wash with a few small light rectangles, i.e. figure and ground swapped against the photo, where a light paper ground carries distinct mid-grey bands. The value-noise lattice now shows as rectangular blocks and stair-stepped edges (b_centre lower third, zoom_aisle mid band) because the x stretch is 8.6x the y scale."
+  },
+  {
+   "change": "inkGround #e9dbbf -> #e8dbc2, inkCloud #c0b5a0 -> #bfb5a2 (half of a cooler hedge)",
+   "verdict": "keep",
+   "evidence": "h41 s0.085 in both views, inside the photo band (h42 s0.11); no visible shift against the bins and ceiling."
+  },
+  {
+   "change": "atlas pad 4 -> 8 px",
+   "verdict": "keep",
+   "evidence": "No bleed at the wall edges or under the bin line in b_centre / b_edgeL."
+  }
+ ],
+ "details": [
+  {"detail": "Door-3 self-service bar", "score": 8.7, "note": "Unchanged."},
+  {"detail": "Door-2 welcome galley", "score": 8.5, "note": "Unchanged."},
+  {"detail": "Door-2 aft ash wall", "score": 8.7, "note": "Unchanged."},
+  {"detail": "F front wall / ink print (ink_aisle, ink_seated, b_centre, b_edgeL)", "score": 8.2, "note": "Strata are now the right thinness, but the print reads as a mostly dark wash with blocky light gaps rather than light paper with mid-grey cloud bands; at aisle distance it is still recognisably the ANA print, close up it is a step back from w21 (8.8)."},
+  {"detail": "Lavatory exteriors", "score": 8.0, "note": "Unchanged."},
+  {"detail": "F/J bulkhead", "score": 8.3, "note": "F face carries the same print, same regression, smaller in view."},
+  {"detail": "J/PY bulkhead", "score": 8.4, "note": "Unchanged."},
+  {"detail": "Door-4 group", "score": 8.6, "note": "Unchanged."},
+  {"detail": "Rear, door 5", "score": 8.4, "note": "Unchanged."}
+ ],
+ "issues": [
+  {
+   "severity": "medium",
+   "problem": "Ink print figure/ground inverted: the dark cloud now covers ~80 % of the wall, so it reads as a taupe wash with a few light patches instead of a light paper ground with mid-grey bands.",
+   "evidence": "Dark fraction b_centre 82 % (w21 52 %), ink_aisle 79 % (51 %), ink_seated 62 % (31 %); omaat_f40 19 %, omaat_f13 45 %. Mean L 201 -> 193. raters/monoB2/cmp_centre.png.",
+   "fix": "In inkPanel raise the threshold with the new frequencies: (n + 0.18*(sp-0.5) - 0.455) -> ~ -0.52 to -0.54, and tune until the dark fraction in b_centre / ink_aisle is 35-45 % and mean L is back to ~198-202. Keep x/1.2-ish, y/0.14 and the 0.035 ramp."
+  },
+  {
+   "severity": "low",
+   "problem": "Value-noise lattice visible: cloud edges are rectangular blocks and stair-steps rather than the photo's irregular granular fringe.",
+   "evidence": "b_centre lower third and zoom_aisle middle band: flat-topped rectangles ~0.15 m tall with horizontal / vertical edges; fine term 0.32 vs photo 2.2.",
+   "fix": "Domain-warp the coordinates before the strata fbm (x += 0.25*fbm(x/0.6, y/0.3), y += 0.05*fbm(...)), or reduce the stretch to x/0.8 and add a sheared term (y + 0.05*x); move the speckle to 2-3 cm (x/0.025) with a hash dot term so the fringe is granular, not blocky."
+  },
+  {
+   "severity": "low",
+   "problem": "Carried w18 lows: welcome pane glass cue, flat bar nosing, tumbler glints, ash grain, plain J lav doors, door-1 dark-wood streaks, vertical hairlines at the monument joints on the F front wall.",
+   "evidence": "monuments_w18a/b, w21b; renders unchanged there; hairline visible in zoom_aisle and b_centre.",
+   "fix": "As before; extend each inkWall 3 mm past an abutting neighbour to close the hairline."
+  }
+ ],
+ "questionsForUser": [],
+ "regressionGuard": "B score 8.8 -> 8.5 (-0.3): the threshold/coverage of the new fbm is the cause; recover by retuning the threshold (cheap) rather than reverting the thinner strata."
+}

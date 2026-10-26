@@ -102,8 +102,8 @@ const MONMAT = {
   bulkF: { c: '#c9cad2', r: 0.7, l: LAYER.atlasLit },
   // w1: the F walls are a soft grey-green sumi ink-cloud print on a pale ground, not paper fibres (the stretched atlas
   // washi read as marble veins): tpg_The-Suite-cabin_147 ground #c8c9c2, clouds ~#8f958a; tpg_63 #bdbca6 [V]
-  inkGround: { c: '#e8dbc2', r: 0.75, l: LAYER.atlasLit },   // polishC: paper ground x the atlas 'ink' panel (omaat_f13 h42 s0.11; was #dddbd0 plastic, rendered s0.01; w21a: a touch cooler than the cream bins, as in f40)
-  inkCloud: '#bfb5a2',   // polishC: ~30 L under the ground, warm (integration L8-L11: '#b3ad9f'; omaatF_2 p10 #a8a399); was '#6a665f'
+  inkGround: { c: '#e9dbbf', r: 0.75, l: LAYER.atlasLit },   // polishC: paper ground x the atlas 'ink' panel (omaat_f13 h42 s0.11; was #dddbd0 plastic, rendered s0.01)
+  inkCloud: '#c0b5a0',   // polishC: ~30 L under the ground, warm (integration L8-L11: '#b3ad9f'; omaatF_2 p10 #a8a399); was '#6a665f'
   bulkJ: { c: '#e6dccb', r: 0.5, l: LAYER.plastic },
   seamJ: { c: '#b3aa98', r: 0.6 },                          // [V] inset panel seam ~1.45 m (omaat_room_36)
   placardBlue: { c: '#2f5fb8', r: 0.5 },                    // [V] small blue placards ~1.75 m (omaat_room_36)
@@ -761,10 +761,10 @@ function buildMon(B, m, layout, cls) {
 // washi-print UVs across the cabin width (x) and up a wall of height H (the atlas 'washi' panel)
 // F-zone ink-cloud wall. polishC (integration L8-L11 medium): the clouds were baked into 0.1 m vertex colours, which
 // read as grey smoke stains (3x the photo's contrast, a third of its saturation). They are now an atlas panel ('ink',
-// 540 x 220 px over 5.9 x 2.5 m, ~1.1 cm / px, 8 px pad) drawn by inkPanel from 06_atlas.js: horizontal sumi strata with crisp,
+// 548 x 228 px over 5.9 x 2.5 m, ~1.1 cm / px) drawn by inkPanel from 06_atlas.js: horizontal sumi strata with crisp,
 // speckled edges and a varying wash inside, ~30 L under a warm paper ground (omaat_f13 print L208, range 23, h42 s0.11;
 // omaat_f40 / omaatF_2 strata, tpg_147) [V pattern, A scale]. The wall keeps a grid only where the sidewall bends it.
-const INK = { x0: -2.95, w: 5.9, h: 2.5, rect: [474, 794, 540, 220], pad: 8 };
+const INK = { x0: -2.95, w: 5.9, h: 2.5, rect: [470, 790, 548, 228], pad: 4 };
 function inkPanel(g, put) {
   const [px0, py0, PW, PH] = INK.rect, P = INK.pad, W = PW + 2 * P, Hh = PH + 2 * P;
   const img = g.createImageData(W, Hh), cl = hexRGB(MONMAT.inkCloud), g0 = hexRGB(MONMAT.inkGround.c);
@@ -772,8 +772,8 @@ function inkPanel(g, put) {
   for (let j = 0; j < Hh; j++) for (let i = 0; i < W; i++) {
     const x = INK.x0 + ((i - P) / PW) * INK.w, y = (1 - (j - P) / PH) * INK.h;
     const lowY = clamp(1.25 - 0.4 * y / 2.3, 0.65, 1);
-    const n = fbm(x / 1.2 + 40, y / 0.14 + 3, 256, 4, 23), sp = fbm(x / 0.04, y / 0.04, 256, 2, 29);   // w21b: 5-6 thinner strata (omaat_f40)
-    const e = clamp((n + 0.18 * (sp - 0.5) - 0.455) / 0.035, 0, 1), t = e * e * (3 - 2 * e) * lowY * clamp(0.7 + 0.6 * fbm(x / 0.3 + 7, y / 0.12, 256, 3, 31), 0, 1);
+    const n = fbm(x / 0.9 + 40, y / 0.25 + 3, 256, 4, 23), sp = fbm(x / 0.05, y / 0.05, 256, 2, 29);
+    const e = clamp((n + 0.10 * (sp - 0.5) - 0.44) / 0.08, 0, 1), t = e * e * (3 - 2 * e) * lowY * clamp(0.7 + 0.6 * fbm(x / 0.3 + 7, y / 0.12, 256, 3, 31), 0, 1);
     const grain = 1 + 0.05 * (fbm(x / 0.012, y / 0.012, 256, 1, 37) - 0.5) + 0.03 * (hash2(i, j, 41) - 0.5);
     const k = (j * W + i) * 4;
     for (let c = 0; c < 3; c++) img.data[k + c] = clamp(Math.round(255 * lerp(1, rel[c], t) * grain), 0, 255);
