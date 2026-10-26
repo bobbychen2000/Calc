@@ -904,3 +904,66 @@ The non-lighting L13 issues are routed above (lighting run 3, L13). One FYI from
 - **Fix:** No action unless the econ raters flag it. If they do, check the econ white shell / armrest albedo and roughness
   against y_47303 in the studio first.
 
+
+## Lighting run 4, L14: items for the area owners
+
+The L14 raters (lighting 8.3, integration 8.1) gave these issues to area owners. Lighting run 4 did not touch these files.
+
+### To room / econ (shared SEATMAT in `09_seats.js`) (low, carried with reduced weight): material response
+- **Problem:** Thin-highlight share: q06 0.92 vs c_27312 2.20 %, q16 0.63 vs y_47301 2.50 %, q15 0.66 %, q09 0.35 %. Real
+  in-flight economy photos measure 0.03-0.66 %. The renders sit below the official photos but at the top of the real
+  in-flight range.
+- **Evidence:** thin.py on the L14 renders (/tmp/claude-0/-home-user-Calc/b1f1e8ce-ba52-5ff4-94e9-cb27b8198a85/scratchpad/qa/L14).
+- **Fix:** No change unless a real in-flight photo shows seat-level streaks. If one does: extend the room jCap streaks
+  through the existing rim lobe (u_rimK) forward of u_sLowZ at half gain, guarded by the q06 median (<= 166).
+
+### To py (`09b_py.js`, low, carried): PY contact darks
+- **Problem:** Thin dark-line share: q13 1.00 % vs py_37302 2.77 % (dark-edge 1.12 vs 3.43 %). The lighting side is done;
+  this needs seam geometry.
+- **Fix:** 09b_py.js per the earlier 'To py' items in this file: a dark reveal at the shell rim (#1f2228, r 0.9), 1 cm gap
+  strips at the cushion sides and the leg-rest hinge, and a 6 mm shell split line. Target >= 1.8 %.
+
+### To py (`09b_py.js` pySeat, medium): the PY back cushion still reads as a flat CG panel
+- **Problem:** The photos' sculpted bolster and lumbar shading is missing (thin darks 1.00 % vs 2.8 %, back shading range 35
+  vs 54 L). py w19's seam bead is in place, but its effect is too small to measure in q13. The photos show the back cushion
+  as a shaped form: soft side bolsters with a shallow valley inboard of each, and a lumbar bulge under the headrest panel.
+  Light from above makes a bright upper back, darker lower flanks and a soft V. The model's back loft is flat across its
+  width, so the cushion gets one even shade and no crease darks. It is a shape gap, so it needs geometry, not a darker
+  texture.
+- **Fix:** 09b_py.js pySeat, back loft (the `ds` sections):
+  1. Make the section non-flat. Each side's outer 0.045 m stands 12 mm proud (a bolster crown, radius about 20 mm).
+     Inboard of it, a 6 mm wide valley sits 4 mm deep at x = +-(w / 2 - 0.05), running from the headrest panel base down to
+     the cushion.
+  2. Add a lumbar crown: the centre panel 8 mm proud between y 0.55 and 0.70 above the cushion, fading out over 60 mm.
+  3. Recess the valley line with the existing PYGROOVE material (#3e434d, r 0.9) as a 3 mm bead, the same construction as
+     the w19 seam bead (seamPath / secAt).
+  
+  Targets: q13 back-cushion blurred range >= 46 L; q13 thin-dark share >= 1.5 %; q13 p5 <= 40; face means within 5 L.
+  Review the studio unit renders first (CLAUDE.md unit-by-unit rule).
+
+### To ceiling (`08_bins.js`, low, carried): grey dashes through the outboard bin lip at door 3
+- **Problem:** Grey dashes still show through the outboard bin lip at door 3 (unchanged since L11). polishE traced them to
+  the THE Room centre PSUs (psuo2), occluded by the centre-bin door edge with too little depth margin. Its drop / recess test
+  did not change the crop. Faint at 1x.
+- **Fix:** 08_bins.js: end the psuo2 run 0.05 m short of the door-3 zone boundary (z1 - 0.05) for the rows-15/16 units, or
+  clip it with the centre-bin door's swept profile so that no PSU face lies within 5 mm of the door edge. Target: no grey
+  fragment on the lip in z04 at DPR 1 and 2.
+
+### To econ (`09a_econ.js`, shared SEATMAT econ arm / armPad, low): seat-level white plastics catch almost no edge highlights
+- **Problem:** The armrest top edges and shell rims are short of the photos' thin highlights by about 9x. The level of the
+  whites matches (q17 armrest tops 202 vs y_47303 196), but in the photos the rounded top edges of the armrests and the shell
+  rims carry thin highlights near L240-255 (q17 lower two-thirds >= L238: 0.10 vs 1.29 %; the lighting run 4 L13 FYI to econ
+  covered the same gap). The armrests' neutral cast (B-R +1 vs y_47303 +14..+31) is lighting's and is addressed in L14 (see
+  fixed_integration.md, lighting run 4 L14, item 2).
+- **Fix:** 09a_econ.js armrest / shell builders: round the armrest top edge to a 6 mm radius (currently square or 2-3 mm) so
+  it has a facet facing the cove. In SEATMAT econ arm / armPad, set r 0.38 -> 0.25 and sheen tint 0.15 toward the cabin blue.
+  If the guard allows, lighting can then enable the u_rimK cove lobe at Balanced for the econ whites only (question 14).
+  Targets: q17 seat-level thin share >= 0.5 %, q16 >= 0.6 %; armrest means within 5 L; q17 cmp <= 46.
+
+### To shell (`07_shell.js` wallSeamGeo, low): bright 1 px specks along the sidewall panel joint beside the look-out window (q12)
+- **Problem:** The panel-joint strip is 2.4 mm wide and only 0.6 mm proud of the lining, with the lining's normal. At the
+  close, grazing q12 view, the lining and the strip's edges trade depth along the joint, leaving a dotted line of lining-lit
+  pixels. It was already there in L13 (9 rows); after the pier dropped to L76 it shows in 35 rows at about +32 L.
+- **Fix:** 07_shell.js wallSeamGeo: offset the strip 1.5 mm (`nx * 0.0015`) and widen it to 3 mm, or draw the joint as a 2 mm
+  deep recessed groove in the lining (two inward faces in WMAT.seam), so that no coplanar overlap remains. Target: q12 rows
+  with specks <= 3, other wall views pixel-equal outside the joints.

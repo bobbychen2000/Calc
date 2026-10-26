@@ -102,3 +102,15 @@
     the near wall brighter than that (f_17313 behind THE Suite about L223-228, f_17304 L203-230), so the suite views sit a
     little under those two renders now. If you would rather match the official renders, the one-line change is
     `beltK: 0.55` -> `0.7` in `MOODS.boarding` (and `cruise`) in `src/12_scene.js`, or `1` to turn it off.
+
+## Lighting run 4 (after the L14 rating, 2026-10-26)
+
+16. **Question 15, revised: the far wall now follows the same rule as the near wall.** L13 dimmed the window wall only
+    within about 4 m of the eye and only where it was seen near head-on. The integration rater showed that this made the
+    wall's brightness depend on where you stand: one pier went from light grey (L202) to near-white (L237) as you stepped
+    back from 3 m to 4.2 m, and two neighbouring piers in the THE Suite seat view differed by about 20 L. A painted wall
+    does not do that, and the in-flight photos keep receding piers level (sc_room_09, omaat_f8; ANA's own c_27312 too).
+    L14 removes both gates and raises the Boarding level a little (`beltK` 0.55 -> 0.62). The cost: in two official
+    photos with dark foregrounds (c_27314 across the THE Room centre pair, y_47301 down the economy aisle) the far wall
+    reads brighter than the model now. If you prefer that look, raise `beltK` in `MOODS.boarding` (0.7, or 1 to turn the
+    dimming off) for the whole wall; a per-distance or per-angle gate would bring back the walking artefact.
