@@ -560,3 +560,91 @@ cover grazing tone), w43b-L1 (far q16 covers), w37-w39 (near pans), w27 (`photoB
 w16 (1) / (3); from_py 6 / 9 / 10 / 11; from_monuments w13-15; from_exterior 17-19; from_ceiling w13. The day-pane glass
 multiply (integration L10 low, shell + lighting) is handed to shell first in from_integration.md (lighting run 2, L10); the
 lighting half (transmittance before aces()) follows once the tint lands.
+
+## Lighting run 3, L11 (plateau breaker after the L11 rating: lighting 7.9, integration 7.7; two gap analyses + rater issues)
+
+Code: `04_shaders.js`, `12_scene.js` (`13_app.js` unchanged). Other areas committed during the run (polishC suite / monuments,
+polishD room w19 and py w17, which landed the PY SEATMAT roughness keys), so the guard compares two builds of the same tree
+that differ only in the two lighting files: qa/fixL11/before2 (this tree with 04_shaders.js / 12_scene.js from 541b4ef) and
+qa/fixL11/after. Experiments in qa/fixL11: a1 (all items, old pane tint^2.4, rim everywhere), v1 / v2 (glass with the shell
+tint, rim off / on), a2 / a3 (rim gate), w55 / w7 (day winExp 5.5 / 7), norim; tools in qa/fixL11/tools (cmp.py frame /
+thirds vs photo, m11.py / pairm.py the target boxes and hue-by-luma bands, thin.py / thindark.py, time5.js two-build frame
+time, shotsv.js renders with a runtime toggle).
+
+Regression guard (cmp.py: |model - photo| over the frame median, p5, p95, the thirds' mean L and 0.25 x their hue
+difference; lower is closer), before2 -> after:
+- Check views: q06 120 -> 121, q15 29 -> 29, q16 44 -> 44, q20 69 -> 49, q21 193 -> 193, q03 291 -> 292, q13 59 -> 60, q09
+  118 -> 118, blue06 83 -> 83; also q14 113 -> 115, q17 45 -> 43, c06 140 -> 135, dd 76 -> 72, d06 77 -> 83, nF03 94 -> 97,
+  n16 242 -> 245, bl16 61 -> 62.
+  - d06 (not a check view; kn_room_35 is a THE Room bed close-up): p95 210 -> 204 vs 215, the hue-preserving tone taking a
+    little off the brightest amber; its top third h34 -> 31 (photo 30). The amber check view q21 holds (193) with its hues
+    closer, and dd improves.
+  - q03 (f_17306 is a screen close-up): its top-third hue term moves because the day panes lose their blue (s 0.03 -> 0.01)
+    and drop out of the s > 0.08 hue mean; the luminance statistics are unchanged.
+  - nF03 / n16: hue of near-neutral thirds (s 0.24-0.31) only; frames, p5 / p95 and thirds' L unchanged.
+- Reverted on the guard: the cove rim lobe in THE Room / THE Suite (below).
+
+Items (gap analyses first, then the raters' L11 issues):
+- integration (gap 1 + 2, rater low) day panes capped below white: done. The pane transmittance applies to the sky and the
+  exterior before the tone curve (`u_glassT` in mainFS / skyFS, `LIGHT_TUNE.glassT`), and the display-space DST_COLOR glass
+  pass runs only in x-ray (one blended pass fewer). glassT = shell w18's tint [0.985, 0.99, 1.0]^2.4 = [0.964, 0.976, 1.0],
+  so every pane below the clip and the look-out view keep the shell-rated level; day winExp 4.0 -> 5.5, so the economy cloud
+  deck clips as in y_47303.
+  - Pane p50: q14 250 -> 252, q17 boxes 247 / 248 -> 252 / 253 (target >= 250; y_47303 252). Share > L250: q06 1.01 -> 1.52 %
+    (c_27312 2.44), q09 0.11 -> 1.36 (c_27314 1.71), q16 0.79 -> 1.22 (y_47301 2.74), q17 0.29 -> 1.10 (y_47303 2.82), q03 0.22
+    -> 0.97 (f_17306 2.06). p99 q09 248 -> 252, q16 248 -> 252, q17 248 -> 251. q07 share > L235 7.67 -> 8.29 % (c_27316 8.97).
+  - q12 (look-out) frame mean 124.9 -> 125.0, wing box 152 -> 152 (target within 2 L). x-ray q22 unchanged (0.0 % px).
+  - Not met: share > L235 >= 7 % in q15 / q16 (3.86 / 5.81 %; the gap there is the lit whites, not the panes); q07's near pane
+    stays blue-grey (the sky above the horizon at the eased near-window winExp), c_27316's is white.
+  - Tried [D a1]: the analysts' old tint^2.4 [0.84, 0.884, 0.906]: q12 back to its L11 level (122.4) but every sub-clip pane
+    under the shell's current level (q17 pane1 p50 248 -> 245, q07 share > L235 7.7 -> 7.4 %). winExp 7 [D w7]: q17 / q14 pane
+    p50 255 (flat), no frame gain over 5.5.
+- lighting (gap 1 #2) amber moods turn yellow as they brighten: done. `u_hueK` (mainFS): in Dining / Sunrise (MOODS hueK 0.6)
+  the tone curve is taken on the luminance with the hue kept, a 0.6 share between display luma 0.12 and 0.95.
+  - Hue by luma band L100-150 / 150-200: dd h34.0 / 39.2 -> 32.1 / 30.9, q21 32.2 / 35.8 -> 30.7 / 30.6, d06 32.9 / 38.1 ->
+    31.8 / 32.3 (ucr_the-room-cabin 29.0 / 33.7). dd wall h33 -> 29 (ucr wall 26-28), centre bins h36 -> 33; q21 ceiling h36
+    -> 32, pier #e5b87b h35 L190 -> #f5ac72 h26 L184; q21 thirds' hue top 36 -> 32 (ucr 30), mid 31 -> 29 (29).
+  - Held: medians dd 85 / 85, q21 135 / 136, d06 82 / 82; dd ash s0.68 -> 0.67 (question 12 untouched); s06 low-sun core
+    unchanged (h25). sF03 (Sunrise, no photo) p99 227 -> 211.
+- lighting (gap 1 #3, rater low) Cruise bins lavender: done. MOODS.cruise hemiTop [0.86, 0.88, 0.98] -> [0.89, 0.885, 0.87],
+  hemiBotN [0.195, 0.19, 0.185], washN [0.27, 0.265, 0.26].
+  - Bin B-R: c06 +10.4 / +12.9 -> +1.6 / +3.1, c15 +10.0 / +7.2 (centre) -> +1.8 / -2.7, c15 centre underside +8.5 -> -0.8, c16
+    +11.6 / +10.3 -> +2.5 / +1.5 (target -5..+5; six in-flight photos median ~-2). c06 band B-R +65 -> +63, L144 -> 145; seat
+    zone +13 -> +7; frame mean 104.4 -> 105.1 (lalf_room_119 104 +- 3); cF03 window wall unchanged (L166 -> 167).
+- lighting (gap 1 #4, rater low) Night window wall cool-blue: done. MOODS.sleep.sideLed [0.018, 0.021, 0.032] -> [0.022, 0.021,
+  0.020]. q20 wall B-R +14.7 -> +4.8 (target <= +6), nF03 +14.9 -> +5.7 (<= +7); means q20 33.1 -> 33.2, nF03 55.9 -> 55.9,
+  n16 28.9 -> 29.0.
+- lighting (gap 1 #5, rater low) Blue THE Suite ottoman over-lifted: done. The fLow gate takes 0.4 of the gain on up-facing
+  faces below 0.5-0.6 m (the raters' line). blueF03 ottoman L81 -> 69 (target <= 70), front strip 68 -> 58; aisle box 36,
+  table 32, console 50, window wall 96, front wall 84 unchanged; q03 unchanged by it (Blue only).
+- integration (gap 2 #3) cove-line rim highlights on rounded edges: partly (aft of THE Room, Sharp quality only). rimW
+  (mainFS) from the curvature of the geometric normal on smooth materials; the cove lobe on the material roughness and x3 on
+  those fillets (question 14: Balanced too?).
+  - Everywhere [D a1]: q06 median 165 -> 167 (c_27312 128), score 121 -> 126, white outlines on every THE Room cap edge and
+    beaded glints along the divider rails; q06 is already above its in-flight thin-highlight range (0.92 % vs 0.06-0.57 %).
+    Reverted there: the lobe now acts only aft of z20 (PY, economy), where the PY SEATMAT roughness keys landed in py w17.
+  - Thin-highlight share: q13 0.24 -> 0.29 % (sanpy 0.46-0.67), q14 0.36 -> 0.38, q15 0.61 -> 0.65, q16 0.62 -> 0.67, q17
+    0.40 -> 0.44; thin dark lines q13 1.04 -> 1.00, q14 0.76 -> 0.73.
+  - Guard, after vs the same build with the lobe off (qa/fixL11/norim): q17 45 -> 43 (bottom third 64 -> 65 vs y_47303 73), q13
+    59 -> 60, q14 114 -> 115, q16 44 -> 44: within the +-2 the earlier runs treat as noise, so kept aft. The PY target (q13
+    >= 0.45 %) is not met; polishD's econ arm / armPad roughness keys would now show (note in from_integration.md).
+- integration low, AO band and offset copies under the THE Suite bulkhead sign: not fixed. The 2 x 2-quad turn of the
+  spiral with a dFdx / dFdy quad average (no new pass) drew dot grain round the sign and along every contact edge in the gap
+  analyst's test (gap3 v_squad1, c_squad1_sign.png); the remedy stays the blur pass of question 13.
+
+Phone budget (perf2.js, 640 x 400, before2 -> after; frame tris / draw calls): mid Sharp 3,265,052 / 71 -> 3,257,612 / 69,
+Balanced 1,651,248 / 37 -> 1,643,808 / 35; econ Sharp 3,945,688 / 103 -> 3,938,248 / 101, Balanced 1,991,566 / 53 -> 1,984,126 /
+51; room Sharp 2,859,716 / 71 -> 2,852,276 / 69, Balanced 1,448,580 / 37 -> 1,441,140 / 35 (the glass pass gone). No new pass,
+no new loop. Frame time (time5.js, SwiftShader, 930 x 575, both builds alternating, median of 5 x 3 frames, ms):
+- Balanced (no contact AO), final: q03 3082 -> 3117, q06 9392 -> 9250, q13 12826 -> 12186, q16 8037 -> 8518 (mean ratio 1.00;
+  the spread between runs is +-5 %). With the rim lobe on at Balanced as well it read q03 3240 -> 3168, q06 9555 -> 9973, q13
+  12516 -> 12890, q16 8436 -> 9113 (+3-4 % in two runs), so the lobe is Sharp-only (`u_rimK` 0 at Balanced / Battery, a
+  uniform branch around its derivatives): the Balanced q13 frame is pixel-identical to before2 (max |dL| 3).
+- Sharp (contact AO + rim lobe), 3 x 3: q03 3620 -> 3710, q06 10775 -> 10365, q13 13229 -> 14222, q16 9917 -> 9127 (run under
+  load, +-8 %).
+
+from_* items (to lighting / integration): from_shell polish E (q12 exact match, near pane blue) answered by the glass item
+above (q12 holds the shell-rated level; the near-pane blue is the eased near-window winExp, open). Carried, not changed:
+from_shell w15 lows (door glass flat white: now clips at 255 with the rest; creams; dado grille; PY/Y tub lip band),
+from_econ wave 3k-3m / w43b-L1 / w37-w39 / w27, from_room w16 (1) / (3), from_py 6 / 9 / 10 / 11, from_monuments w13-15,
+from_exterior 17-19, from_ceiling w13. Notes for shell and py / econ in from_integration.md (lighting run 3, L11).
