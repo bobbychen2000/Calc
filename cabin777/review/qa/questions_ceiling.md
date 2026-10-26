@@ -21,3 +21,10 @@
 
 11. **Which door is the bar at?** b_lalf_c133/c134 show the dark tray. `07b_ceiling.js` puts it at door 3 (the bar, per the seat map), and `10_mono.js` also uses the photos for a door-2 passage soffit. Which door do these photos show?
 12. **Door 1/2/4/5 ceilings.** They were rated for the first time in w11 (A 6.5-7.0, B 7.1-7.4), but no photo of them exists yet. The model keeps the light dome and, in w12, adds panel joints, a falloff, recessed strips, downlight rings, a speaker, an emergency light and a smoke detector. c133 shows the ceiling right at the door is light with small round fittings. A photo of any of them would settle it.
+
+## Polish E (2026-10-26)
+
+13. **Centre-channel PSU depth.** The THE Room centre PSU units hang ~19 mm below the centre-bin door line, so from a cross aisle
+    the door's lower curve cuts their fittings into grey dashes (z04 at door 3, integration L7-L11). Is there a side-on photo of
+    an ANA 777 centre bin showing whether the PSU panel is flush with the door bottoms or drops below them? If flush, the
+    channel geometry (CBIN_DOOR / PSU_DROP) would be reworked, not just the units.

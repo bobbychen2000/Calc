@@ -146,3 +146,18 @@ cameras, should be checked. q07 and q12 look fine.
   gradient.
 - **Still open:** the creams render neutral (door shade #d8d2c6 lands at 222,222,221); the dado grille under the seats is near black in
   b_dadoY2 (mean ~21); there is a grey band under the PY/Y tub lip.
+
+## Polish E (2026-10-26): to lighting, after the pane tint change (shell w18)
+
+### q12 look-out exact match (optional, low)
+- The glass tint is now [0.985, 0.99, 1.0] (was [0.93, 0.95, 0.96]). The view through the pane in q12 rose by a pure ~4 %
+  (+1.7-2.8 L* on the wing; frame mean +1.0). Both w18 raters judged q12 no worse.
+- **If q12 must match the old frame exactly:** in `12_scene.js` l.828, let winExp ease to 0.955 instead of 1 at the window, e.g.
+  multiply by `1 - 0.045 * clamp((Math.abs(cam.pos[0]) - 2.0) / 0.45, 0, 1)`. Cabin views (|x| < 2.0) are untouched.
+
+### Near pane still saturated blue in seat views (low, both w18 raters)
+- In q07 the near grazing pane reads (154, 192, 230), and in ra_jWin the left pane also stays blue. In c_27316 the same window
+  is blown white. The PY/Y panes still sit slightly cool (R about 6 below B) and rarely reach 250 in all channels (0.1-16 % vs 40-89 %
+  in the photos).
+- The shell tint can't go higher (it is already about 1.0). This needs the sky / winExp side, or the u_glassT idea from L10
+  step 2: transmittance applied before aces(), so a bright day sky can clip to white.

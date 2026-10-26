@@ -246,3 +246,11 @@
 - Ratings: w14 A 8.2 / B 8.6 (fittings left behind, fixed), **w15 A 8.5 / B 8.8, no high / medium: the ceiling stays at the bar.**
 - Handed to lighting: the night `vaultE` cap 0.09 now binds (night vault L29 -> ~63; from_ceiling.md).
 - Details and the open lows: `fixed_polishB.md`. Triangles +936 (~+21.4 %).
+
+## Polish E (2026-10-26): door-3 "bin lip" dashes (integration L7-L11)
+
+- Not done, with evidence. Hiding meshes by name shows the dashes are `psuo2`, the THE Room centre-channel units of rows 15 / 16.
+  The near centre-bin door's curved lower edge cuts them in z04 (the foreground bin is the centre bin, not the outboard bin).
+  Drop 2 mm and recess 5 mm were both built and rendered with no visible change, and the run-end fix doesn't apply.
+  Crops: `polishE/`; details: `fixed_polishE.md`.
+- No ceiling change, so no w16 round: the ceiling stays at w15 A 8.5 / B 8.8.

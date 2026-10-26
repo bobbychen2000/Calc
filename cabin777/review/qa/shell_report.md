@@ -231,3 +231,11 @@ with no code change. Cameras: `review/qa/shell_views.js` (18 views) plus the 22 
 - Ratings: w16 A 8.5 / B 8.5, **w17 A 8.5 / B 8.5, no high / medium: the shell stays at the bar.** Carpet J 8.6-8.8.
 - Open (low): F carpet its own coarser tile and a slightly redder tone if the F carpet differs from J (questions_shell.md);
   details in `fixed_polishB.md`. Triangles unchanged.
+
+## Polish E (2026-10-26): pane tint (integration L10 / L11)
+
+- Done: day panes are no longer capped below white. Glass tint [0.93, 0.95, 0.96] -> [0.985, 0.99, 1.0]; q14 pane p50 G 239 -> 249,
+  now above the lining, as in c_27316 / y_47300. Only glass pixels change.
+- **w18 A 8.5 / B 8.5, no high / medium (w17 8.5 / 8.5): kept.**
+- Handed to lighting (from_shell.md): q12 exact-match compensation (optional), and the near grazing pane in q07 is still saturated
+  blue. Details: `fixed_polishE.md`. Triangles unchanged.
