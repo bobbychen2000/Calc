@@ -1,0 +1,63 @@
+{
+ "area": "py",
+ "rater": "A",
+ "round": "w18",
+ "score": 8.1,
+ "summary": "Fail against w17 (8.5). The seam bead comes back as a w16-type rod in the main paired view. In q14_seat26A, the foreground seat's back has a solid black cord along the shell's inner edge from y 180 to the bottom of the frame: 7-8 px wide at L 4-22 (L 4-5 below y 320). In py_37303 the same junction is a 2-3 px dip to L 60-65. The cause is in the code: gTube(run, 0.004, 4) is a radius, so the bead is 8 mm across (not 4 mm), square in section, and sampled at only 16 steps over 0.88 m. The chords cut across the curved shell edge and leave the cord standing proud. Further away the bead works as intended: a 1-2 px sliver in q13 (x 344-360, y 339-541), p8 (x 383-389), p7 and the mid seats in q14 (2 px at L 10-30), which is the outline dark the integration rater asked for. Change 2 (the lighter #4a505e upper step) is invisible. Luma profiles across the cushion-nose band are pixel-identical before and after in p8 (x 200 / 440) and p5 (x 150 / 500): the step is fully hidden by the cushion overhang, so the w17 medium is not fixed. Change 3 (cubby mouths L 19 -> 7 in p5) is correct but marginal. Keep it.",
+ "lighting_note": "Not scored. The bead's colour #2a2e36 renders at L 4-20 in the shaded corner, where the photo's junction is L 60-65. The shading pushes it near-black, so its colour should be lighter than the 'renders L45-60' comment assumes.",
+ "calibration": [
+  {"issue": "w16 high: black rods on the cushion sides (rounded ends standing past the nose, floating on the window side)", "status": "not regressed on the cushions; recurred as a rod on the back/shell seam in close view", "evidence": "p8 / p5 / p1: cushion sides clean, and the new darkened pixels are only 1 px slivers (p8 components 5-6 px each at x 383-389). But q14 foreground: a 7-8 px cord at L 4-22 over y 180-575, x 820-883 (raterPyA/z_q14_fg.png, q14_fg_1x.png)"},
+  {"issue": "w16 B high: black stripe through the shell's outer side face", "status": "not regressed", "evidence": "q14 foreground shell outer face: rows 150 / 250 within 1-2 L of before, and no new dark on the face itself. The bead sits on the inner edge"},
+  {"issue": "w16 medium: black slot in close views", "status": "regressed (different geometry, same read)", "evidence": "q14 row 350: before x 856-863 = L 98-87 (fabric/shell), after = 28, 4, 20, 20, 20, 21, 21, 20. A near-black slot or cord at the shell edge, nearest seat"},
+  {"issue": "w17 A medium: the cushion-front band is a flat, uniform dark stripe", "status": "not fixed (the change has no visible effect)", "evidence": "p8 column x 200 rows 310-350 and x 440 rows 395-440: luma before == after (the band is still a 3-4 px run at L 33-39). p5 x 500: an 8 px run at L 33, identical. The #4a505e step at (y 0.384, z -0.541) sits entirely behind the cushion overhang in every studio and cabin view"},
+  {"issue": "integration L13 medium: outline darks about half the photos' where the back fabric meets the shell", "status": "fixed at mid and far distance, overdone up close", "evidence": "q13 thin-dark metric 2.42 -> 2.54 % (caller), q13 bead 1-2 px; q14 mid seat x 211-257: 2 px at L 10-30 (before L 88-145)"},
+  {"issue": "w15 lows (cloth blocks up close, plain shell under the pocket, plain pocket parts, flat navy flap, busy ears, blank placards)", "status": "not fixed", "evidence": "p2 / p4 / p6 are pixel-identical or have 1-47 changed px"}
+ ],
+ "details": {
+  "back + cushion shape": 8.4,
+  "back/shell seam": 7.0,
+  "cushion front crease": 7.9,
+  "headrest ears + flap": 8.4,
+  "shell incl. rear": 8.4,
+  "screen + bezel + placards": 8.4,
+  "literature pocket": 8.3,
+  "consoles (incl. darker cubbies)": 8.6,
+  "armrest + shroud": 8.6,
+  "leg rest / footrest / legs / bottle bin": 8.1,
+  "gooseneck": 8.5,
+  "fabrics": 8.5,
+  "materials: plastic finish / highlights": 8.7,
+  "overall": 8.1
+ },
+ "issues": [
+  {
+   "severity": "high",
+   "title": "The seam bead is a black cord up close: an 8 mm square tube standing proud along the foreground shell edge in q14",
+   "evidence": "after/q14_seat26A x 820-883, y 180-575: 7-8 px wide, L 4-22 (before L 70-100 there). py_37303 junction (x 745-800, y 150-250): a 2-3 px dip to L 60-65. 09b_py.js: gTube(..., 0.004, 4), where r is a radius (02_geo.js:288), so the bead is 8 mm across, square in section, with 16 chords over 0.88 m. raterPyA/z_q14_fg.png, raterPyA/q14_fg_1x.png",
+   "fix": "In 09b_py.js, make the bead gTube(run, 0.0015, 6). Use 40 or more seamPath steps, or resample each run every 15 mm, and pull each point about 1 mm into the shell (along -grad shellSD) so the chords cannot stand proud of the curved edge. Lighten PYGROOVE to about #3a3f48 so that the corner shadow yields about L 50-65. Recheck q14 row 350: the target is ≤3 px at L ≥ 45."
+  },
+  {
+   "severity": "medium",
+   "title": "The graded crease step is fully hidden, so the cushion-front band is still a flat stripe (w17 medium carried over)",
+   "evidence": "p8 x 200 / 440 and p5 x 150 / 500 columns are pixel-identical before and after. The band is still 3-8 px at L 33.",
+   "fix": "Put the lighter step below the old band (centre y about 0.360, just under the 0.366 bottom edge, same z -0.543 or 1 mm forward), or lighten the existing band to #4a505e and add a #3a3f4c 0.012 strip at its top only. Verify the p8 x 440 profile changes."
+  },
+  {
+   "severity": "low",
+   "title": "Carry-over from w15: close-range cloth blocks, plain shell under the pocket, plain pocket parts, flat navy flap, busy ears, blank placards",
+   "evidence": "see calibration",
+   "fix": "as in py_w15a.json"
+  }
+ ],
+ "questions": [
+  "Is the q14 bead the aisle-side (sd=+1) run of the nearest seat? If it is, the seam point could be computed on the wrong side of the shell's rounded corner there (the cushion enters the shell's side, not its front). Clamping the bead to the front face, |x| < w/2 - r, would also stop it from riding round the edge."
+ ],
+ "before_vs_after": {
+  "verdict": "Do not ship as is. Keep w17 unless the bead is fixed; with the thinner, sunk bead this should reach 8.6.",
+  "changes": {
+   "shell/fabric seam bead": "rework (high): too thick and proud up close, good at distance",
+   "#4a505e upper step": "no visible effect; move it as in the issue",
+   "cubby mouths #16181c": "keep"
+  }
+ }
+}

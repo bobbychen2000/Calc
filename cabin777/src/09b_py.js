@@ -7,7 +7,7 @@
 // PY w1: sp 0.5525 = 05_layout pySp (seat ids / eye points and geometry agreed only to 2-3 cm with the old 0.5715) [D]
 const PY = { back: 14 * DEG, hinge: [0.48, -0.09], sp: 0.5525 };
 const PYGAP = { c: '#1c1e23', r: 0.9 };   // polishD: cm-scale seat joints (integration L9-L11, econ tuck crease) [D]
-const PYGROOVE = { c: '#2a2e36', r: 0.9 };   // polishF: recessed seams, mid-dark (integration L13: renders ~L45-60) [D]
+const PYGROOVE = { c: '#3e434d', r: 0.9 };   // polishF: recessed seams, mid-dark (w18 A: #2a2e36 rendered near-black in the shaded corner) [D]
 // back cushion (QA r2: centre ~3 cm behind its old face between the bolsters, top blending into the headrest; w7: crown
 // under the shell rim)
 const PYBACK = [SEC(0.0, 0.42, 0.09, -0.01, 0.025), SEC(0.05, 0.44, 0.115, -0.02), SEC(0.18, 0.45, 0.13, -0.032, 0.045), SEC(0.34, 0.45, 0.10, -0.014, 0.042),
@@ -92,8 +92,10 @@ function pySeat(B, x0, lod, opts = {}) {
       return Math.hypot(Math.max(qx, 0), Math.max(qz, 0)) + Math.min(Math.max(qx, qz), 0) - r;
     };
     // (the bolsters and ears stop ~5 mm short of the shell; the back cushion behind them is what enters it)
-    for (const sd of [-1, 1]) for (const run of seamPath(PYBACK, M4.trs(0, 0, 0), sd, shellSD, 0.02, 0.9, 16))
-        B.add(gTube(run.map((p) => M4.point(BH, p)), 0.004, 4), null, PYGROOVE);   // 16 steps x 4 sides: ~270 tris a seat
+    // w18 (A high): an 8 mm square 16-step tube stood proud of the curved rim as a black cord up close -> 3 mm round,
+    // 32 steps, sunk 1 mm into the shell, lighter tone
+    for (const sd of [-1, 1]) for (const run of seamPath(PYBACK, M4.trs(0, 0, 0), sd, shellSD, 0.02, 0.9, 32))
+        B.add(gTube(run.map(([x, y, z]) => M4.point(BH, [x, y, z + 0.001])), 0.0015, 6), null, PYGROOVE);   // ~770 tris a seat
   }
   // 6-way headrest with wings
   loftAt(B, [SEC(0.67, 0.40, 0.085, -0.008, 0.036), SEC(0.71, 0.37, 0.092, -0.012, 0.04), SEC(0.85, 0.37, 0.092, -0.012, 0.04), SEC(0.895, 0.35, 0.075, -0.006, 0.032), SEC(0.91, 0.31, 0.05, -0.002, 0.02)], BH, F, lod ? 3 : 4);
@@ -133,7 +135,6 @@ function pySeat(B, x0, lod, opts = {}) {
   // polishD (integration L9-L11): soft shadow band tucked behind the skirt under the cushion nose (py_37301 crease
   // L50-90, w16 A + B: a hard black line read drawn) and a dark gap under the hinge roller [D]
   B.add(gRBox(0.39, 0.024, 0.006, 0.003, 1), M4.trs(x0, 0.378, -0.543), { c: '#3a3f4c', r: 0.95 });
-  B.add(gRBox(0.39, 0.036, 0.006, 0.003, 1), M4.trs(x0, 0.384, -0.541), { c: '#4a505e', r: 0.95 });   // polishF (w17 A): lighter upper step, a graded crease [D]
   B.add(gRBox(0.39, 0.012, 0.012, 0.004, 1), M4.trs(x0, 0.272, -0.548), PYGAP);
   B.add(gRBox(0.40, 0.02, 0.05, 0.008, 1), M4.trs(x0, 0.035, -0.53), SEATMAT.pyArm);            // leg-rest foot bar
   // dark-grey hinge roller across the top of the stowed leg rest under the cushion nose, dark side links down to the

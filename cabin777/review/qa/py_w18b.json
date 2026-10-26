@@ -1,0 +1,60 @@
+{
+  "area": "py",
+  "rater": "B",
+  "round": "w18",
+  "score": 8.3,
+  "summary": "Down 0.2 from w17 (8.5). There is no high-severity issue, but one medium regression. The computed seam bead is in the right place: it follows the inner corner where the back fabric meets the shell, never crosses the shell's outer side, and has no exposed ends. At mid range (q14 left pair, q13 second row, p7, p1) it reads as the thin crease in py_37301 / 37302: 1-3 px wide at L 30-55. On the hero seat in the foreground of q14, though, it is an 8-9 px near-black slot (L 4-20 against shell L 110-160) over about 400 px of height. py_37303 shows only a 1-2 px dip to L 64-80 against shell L 100 at the same seam. The cause is in the code: gTube(run, 0.004, 4) takes a radius, so the bead is 8 mm across, not the stated 4 mm, and AO crushes its #2a2e36 to black in the crevice. The darker cubby mouths match the photo (py_37301 slot L 20-35, render 65 -> 43). The lighter upper nose step changes no pixel by more than 30 L in p5 / p8, so it is harmless but has no visible effect. The w15 / w17 low items are untouched.",
+  "lighting_note": "Not scored. The bead's darkness depends heavily on AO in the crevice: base #2a2e36 renders at L 4-20 on the near q14 seat, but at L 30-55 elsewhere. Any change to AO strength will move this detail.",
+  "calibration": [
+    {"issue": "w16b high: shell shadow-joint strip shows through the shell's outer side face as a black stripe", "status": "still fixed", "evidence": "No darkened pixels on any shell outer face. raterPyB/z14_right.png and z7.png show the near shell side clean grey with its rim highlight. In q14 every pixel cluster darkened by more than 30 L lies on the fabric/shell inner seam (x 811-888 and x 209-267)."},
+    {"issue": "w16b medium: cushion side and front strips read as black rods with exposed ends", "status": "still fixed", "evidence": "No rods in p5 / p8 / p7 (raterPyB/z8.png, z5.png). The new nose step produces no pixel change over 30 L in p8. The bead is a closed run along the seam with no visible caps."},
+    {"issue": "w16 close-view artefact: black slot / strip in close views", "status": "partly regressed", "evidence": "q14 hero seat at x 811-888, y 161-575: 2,686 px went from L 99 to L 20. The slot is 8-9 px wide (rows 210-370), min L 4-21, while the neighbouring shell is L 109-161. Photo py_37303 at the same seam (rows 160-200, x 745-765) shows a 1-2 px dip to L 64-80 against shell L 100. Even allowing for the q14 seat being about 2x the photo's scale, the render's slot is about 2x too wide and about 4x too contrasty. raterPyB/z14_right.png."},
+    {"issue": "integration L13 medium: outline darks about half the photos'", "status": "partly fixed", "evidence": "The thin-dark metric moved q13 2.42 -> 2.54 % and q14 3.78 -> 3.79 % (photos 4.18 / 6.13). The visible gain is the seam crease at mid range (z14_left.png, z13.png, z7.png), which is good. The q14 gain comes mostly from the over-wide near slot, not from the fabric crevices and pleats where the photos carry most of their darks."},
+    {"issue": "w17b low: cushion-nose band crisp, not graded", "status": "addressed, not visible", "evidence": "The #4a505e step at y 0.384 is in the code (09b_py.js:136). The p8 / p5 diffs show no change over 30 L at the nose. Neutral."},
+    {"issue": "w17b low: orange-peel specular on the shell at r 0.30", "status": "not fixed", "evidence": "Still visible on the q14 near shell (z14_right.png, both halves)."},
+    {"issue": "w15b medium/low: trim-B ears too dark, trim-A dashes too long, pocket frame near-black", "status": "not fixed", "evidence": "p2 and p6 have zero changed pixels. pyWingB and the swatch are unchanged."}
+  ],
+  "details": {
+    "Back + cushion shape": 8.4,
+    "Back/shell seam crease (new)": 7.8,
+    "Cushion nose / skirt / hinge roller": 8.4,
+    "Headrest ears + navy flap": 8.4,
+    "Shell incl. rear face": 8.4,
+    "Screen + bezel + placards": 8.5,
+    "Literature pocket": 8.5,
+    "Consoles (front, sockets, cubbies, lid, cup nose, side panel)": 8.7,
+    "Window armrest + aisle shroud": 8.5,
+    "Leg rest / footrest / legs / bottle bin": 8.1,
+    "Gooseneck": 8.5,
+    "Fabrics: trim A brick weave": 8.2,
+    "Fabrics: trim A petal ears": 8.6,
+    "Fabrics: trim B petal back": 8.6,
+    "Fabrics: trim B dash ears": 7.8,
+    "Materials: plastic specular": 8.5
+  },
+  "issues": [
+    {"severity": "medium",
+     "title": "The seam bead is 8 mm, not 4 mm, and reads as a near-black slot on the close seat in q14",
+     "evidence": "In src/09b_py.js:96, gTube(run..., 0.004, 4): the second argument of gTube is a radius (02_geo.js:288), so the bead is 8 mm across, and its 4-sided cross-section puts corners out to 4 mm. On the q14 foreground seat (x 811-888, y 161-575) the slot is 8-9 px wide at L 4-21. The photo seam in py_37303 is 1-2 px at L 64-80 next to shell L 100. At mid range the same bead is 1-3 px at L 30-55, which is good (q14 x 209-267, q13 x 341-363, p7 x 169-239). raterPyB/z14_right.png, z14_left.png, z13.png, z7.png.",
+     "fix": "src/09b_py.js:96. Use gTube(..., 0.002, 6), a true 4 mm round bead, so that about 1-1.5 mm shows in the corner. Lighten PYGROOVE for this bead only to about { c: '#3e434d', r: 0.9 }, because crevice AO already darkens it by 25-40 L. Check q14: on the foreground seat the slot should be 3 px or less, with min L at least 45. At mid range it should stay at L 45-65. If the q14 slot is still dark, move the centre 1 mm into the shell along the shell normal (offset each hit point by -0.001 * grad shellSD)."},
+    {"severity": "low",
+     "title": "The thin-dark deficit against the photos lies mainly in the fabric, not in the shell seam",
+     "evidence": "The metric barely moved (q14 3.78 -> 3.79 %, photo py_37301 6.13 %). In py_37301 / 37303 the extra darks are bolster-to-centre pleats, the deep crevice between cushion and back (L 10-14), and the pattern's own dark dashes. The render's pleats (q14 left, z14_left.png) are soft.",
+     "fix": "Optional, at the next pass. Deepen the back's bolster/centre pleat with a 1 cm vertex-colour darkening, about 0.8x, on the loft rows at the pleat in PYBACK. That keeps the effect graded, with no new geometry."},
+    {"severity": "low",
+     "title": "Still open: shell orange-peel at r 0.30; trim-B ears too dark; trim-A dashes too long; pocket frame near-black",
+     "evidence": "See calibration.",
+     "fix": "As in py_w17b.json."}
+  ],
+  "questions": [
+    "Was the 0.004 in gTube meant as the bead's diameter? The comment says 4 mm, but the code builds 8 mm."
+  ],
+  "before_vs_after": {
+    "verdict": "Keep the bead with the radius fix (0.002 and a lighter colour), and keep the cubbies and the nose step. As built, w18 rates just under w17 because of the q14 foreground slot.",
+    "changes": [
+      {"change": "Computed seam bead", "verdict": "keep with fix", "reason": "Right place, no artefacts on the shell face. Mid range matches the photos. In close views it is 2x too wide and too black."},
+      {"change": "Lighter upper nose step #4a505e", "verdict": "keep", "reason": "Harmless. No visible change at the QA ranges."},
+      {"change": "Cubby mouths #16181c", "verdict": "keep", "reason": "py_37301 slot mouths are L 20-35. The render went from 65 to 43, which is closer."}
+    ]
+  }
+}
