@@ -1,0 +1,59 @@
+{
+  "area": "py",
+  "rater": "B",
+  "round": "final",
+  "score": 8.5,
+  "summary": "8.5, level with w19 (B 8.5, A 8.6). No high or medium issue is open. Geometry is unchanged: all eight studio views p1-p8 are pixel-identical to w19 (0 changed px). In q13 and q14 the luminance changes (|dL| > 15) are confined to the window reveals, the sidewall and the window-lit far seat (q13: 3,479 px, 85 % at x < 300 and y 150-300; q14: far-seat back -10 L, window reveal -12 L). Silhouette, shell, headrest ears, console and the q13 row pitch read exactly as rated in w19. The w18 cord stays fixed. On the q14 near seat the bead is at the same x in every sampled row, and its min L moved by only 0-2 (rows 190-550: 51-56 at the top, 29-42 low down; w19 53-58 / 30-44). The head lighting adds a cool white balance. Fabric B-R rises from 31 to 44 at an unchanged L of 125 (q14 back), and from 35 to 47 in q13. Shell B-R rises from 20 to 27, and the q14 sidewall from 1 to 20. The official photos are cool too (py_37301 wall B-R 25-27, fabric 33-37 at L 154). So the scene now matches the photo's white balance, and scene-relative fabric blueness has dropped (fabric minus wall: w19 30, head 24, photo 10). In absolute terms, though, the fabric chroma per unit L is now 0.35 against the photo's 0.24 (w19 0.25), so the seats read slightly more periwinkle than the photo's blue-grey. That is low severity and mainly the lighting's doing. Fabric contrast is unchanged (L sd 32 against the photo's 38-54; thin-dark 1.78 % against 1.83 % in w19). The w17 / w15 low carry-overs remain, so the score stays at 8.5.",
+  "lighting_note": "Not scored. (1) The new mood has a cool white balance (sidewall B-R 1 -> 20). That matches the photos' walls (B-R 25-27), but it pushes the already blue fabric to B-R/L 0.35 against the photo's 0.24. If the lighting owner keeps the cool balance, desaturate PYFAB by about 25 % or warm it slightly to stay on the photo. (2) The bright diamond-shaped sun patch on the window-seat back in q14 (x 485-550, y 300-420, L 179) has no counterpart in py_37301 / 37303, whose seats are evenly lit. (3) Overall the render is darker than the photos (fabric L 125 against 154), so the fabric looks a step darker and lower in contrast than the photo. (4) The bead still depends on crevice AO (L 29-42 low on the q14 near seat).",
+  "calibration": [
+    {"issue": "w18 A high / B medium: the seam bead reads as a black cord or slot on the q14 foreground seat", "status": "still fixed", "evidence": "q14 x 790-900, rows 190-550 every 40: the min L is at the same x as in w19 in every row (821 ... 877). Head min L is 51/56/56/45/29/42/36/40/39/31, against w19's 53/58/56/46/30/44/38/42/41/32, a change of 0-2 L. It is still a 1-3 px crease, not a cord (cmp_q14_seat26A.png)."},
+    {"issue": "w18 A: chord kinks or a proud bead from 16 segments", "status": "still fixed", "evidence": "Geometry is identical: p1-p8 have 0 changed px, and the bead x positions are unchanged in q14."},
+    {"issue": "w16b high: shell shadow-joint strip shows through the shell's outer side face", "status": "still fixed", "evidence": "The q14 near shell face (x 700-780, y 200-500) changes by a mean of -2.9 L, with 574 of 24,000 px past 15 L. These are diffuse lighting changes, with no stripe. The face is clean in cmp_q14_seat26A.png."},
+    {"issue": "w16b medium: cushion side and front strips read as black rods with exposed ends", "status": "still fixed", "evidence": "p5, p7 and p8 are pixel-identical to w19."},
+    {"issue": "w17 A / w18 A / w19 A medium: the cushion-front band is a flat, uniform stripe (graded crease missing)", "status": "not fixed", "evidence": "p8 and p5 are pixel-identical to w19, so the band is still a 3-8 px run at L about 33. I keep it at low severity: it reads as a crisp crease at QA range, and the photo crease (L 35-90 graded) is only about 1.5x softer."},
+    {"issue": "integration L13 medium: outline darks are about half of the photos'", "status": "partly fixed (unchanged since w19)", "evidence": "Thin-dark (pixels more than 40 L below a 7 px median): q13 1.04 -> 1.03 %, q14 1.83 -> 1.78 % (w19 -> head). The lighting change neither helps nor hurts. The remaining deficit is in fabric pleats and crevices."},
+    {"issue": "w17b low: shell orange-peel specular at r 0.30", "status": "not fixed", "evidence": "It is still visible on the q14 near shell in both halves of cmp_q14_seat26A.png."},
+    {"issue": "w15b medium/low: trim-B ears too dark, trim-A dashes too long, pocket frame near-black", "status": "not fixed", "evidence": "p2 and p6 have 0 changed px against w19."}
+  ],
+  "details": {
+    "Back + cushion shape": 8.4,
+    "Back/shell seam crease": 8.5,
+    "Cushion nose / skirt / hinge roller": 8.3,
+    "Headrest ears + navy flap": 8.4,
+    "Shell incl. rear face": 8.4,
+    "Screen + bezel + placards": 8.5,
+    "Literature pocket": 8.5,
+    "Consoles (front, sockets, cubbies, lid, cup nose, side panel)": 8.7,
+    "Window armrest + aisle shroud": 8.5,
+    "Leg rest / footrest / legs / bottle bin": 8.1,
+    "Gooseneck": 8.5,
+    "Row pitch / alignment in q13": 8.6,
+    "Fabrics: trim A brick weave": 8.2,
+    "Fabrics: trim A petal ears": 8.6,
+    "Fabrics: trim B petal back": 8.5,
+    "Fabrics: trim B dash ears": 7.8,
+    "Fabric colour under head lighting": 8.2,
+    "Materials: plastic specular": 8.5
+  },
+  "issues": [
+    {"severity": "low",
+     "title": "New with the head lighting: the fabric reads slightly too blue in absolute terms",
+     "evidence": "q14 back fabric (260-400, 300-500): RGB 112/125/155, B-R 44, L 125 (w19: 115/126/146, B-R 31). q13 front back: B-R 35 -> 47. Photo py_37301 back fabric: 142/155/179, B-R 37 at L 154, so chroma/L is 0.24, against 0.35 at head. Relative to the wall it has improved (fabric minus wall B-R: w19 30, head 24, photo 10).",
+     "fix": "Owner's choice. If the cool balance stays, desaturate the PYFAB / trim mean colours by about 20-25 % in 09b_py.js, or let the lighting owner warm the fill slightly. Do not change the geometry."},
+    {"severity": "low",
+     "title": "The bead is still slightly dark in the lower third of the near q14 seat",
+     "evidence": "q14 rows 350-550: min L 29-42 against a row median of 101-110, a ratio of about 0.35. py_37303 shows a ratio of about 0.6-0.8 at the same junction. Unchanged from w19.",
+     "fix": "Optional. Lighten PYGROOVE to about #4a505b. Do not widen it."},
+    {"severity": "low",
+     "title": "Carry-over: flat cushion-front band; shell orange-peel at r 0.30; trim-B ears too dark; trim-A dashes too long; pocket frame near-black; soft fabric pleats",
+     "evidence": "See calibration. The studio views are pixel-identical to w19.",
+     "fix": "As in py_w17b.json, py_w18a.json and py_w19b.json."}
+  ],
+  "questions": [],
+  "before_vs_after": {
+    "verdict": "Head is equal to w19 for PY (8.5). The lighting change does not make PY read wrong. It matches the photos' cool white balance at the cost of slightly bluer fabric. Geometry, seams and detail are untouched.",
+    "changes": [
+      {"change": "Shader and mood lighting (cooler fill, dimmer window reveals)", "verdict": "accept for PY", "reason": "The bead stays within 2 L and the fabric contrast is unchanged. The wall white balance moves towards the photos (B-R 1 -> 20 against the photo's 25-27). The fabric goes a little too blue (low)."}
+    ]
+  }
+}

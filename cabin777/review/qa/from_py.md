@@ -49,3 +49,16 @@
 11. **To lighting, low (B):** the studio p8 back is darker than py_37301 (#667085 vs #94a2ba), while the cushion is
    close to the photo. Check the low-face AO weight on near-vertical seat backs.
 12. **To other areas (B, from q13):** the carpet is royal blue and the curtains violet-blue, against charcoal in py_37302.
+
+## Final confirm (py, on 1430d42): cool cast on PY fabric (to lighting)
+
+- **Status:** PY passes (A 8.5 / B 8.5). This item is information for the integrator, not a blocker.
+- **Evidence:** the studio views are pixel-identical to w19, yet the mean RGB of the cabin-view seat backs shifted blue at unchanged L:
+  - q14 mid seat back (x 260-400, y 300-500): 115/126/146 -> 112/125/155. B/R went from 1.27 to 1.39.
+  - q13 front seat back (x 200-330, y 420-560): B/R went from 1.36 to 1.49.
+  - The ANA photos py_37301-03 measure B/R 1.22-1.36, so the fabric now reads denim/periwinkle rather than blue-grey.
+- **Cause:** the cool PY/Y seat-level balance from L14 in `12_scene.js` / `04_shaders.js`.
+- **Suggested fix:** cut the PY/Y seat-level cool tint by about a third, aiming for fabric B/R of about 1.30 in q14.
+  - The sidewall would still keep most of its gain toward the photos: B−R went from 1 to 20 against 25-27 in the photos.
+  - Do not compensate in `SEATMAT`.
+- **Also noted (rater B, low):** a bright diamond-shaped sun patch on the q14 window-seat back.

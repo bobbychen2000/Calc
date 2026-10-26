@@ -274,3 +274,23 @@ Ratings: `py_w15a.json`, `py_w15b.json`. Triangles are unchanged at 194.6k.
   of q14 (low); the w15 lows (trim-B ears, trim-A dash length, pocket frame, flat flap, shell orange-peel).
 - Triangles: py2 17.7k -> 19.3k, py4 35.7k -> 38.9k per unit mesh. Ratings `py_w18a/b.json`, `py_w19a/b.json`.
   Log: `fixed_polishF.md`.
+
+## Final confirm (on 1430d42, after lighting runs 2-4)
+
+| round | rater A | rater B | result |
+|---|---|---|---|
+| final | **8.5** | **8.5** | no high issue: PY confirmed, no code changed |
+
+- **What changed since w19:** nothing in PY. Since w19 (b8e0734) only `04_shaders.js` and `12_scene.js` have changed.
+  - Studio views p1-p8 are pixel-identical to w19.
+  - In q13 and q14, only lighting moved: mean |dL| is 0.5 and 2.9.
+- **Calibration:** every w18/w19 high or medium issue is still fixed. Nothing regressed.
+  - Seam bead: within 0-3 L of w19.
+  - Flat cushion-front band: still open (A medium, B low).
+- **New, from lighting:** the cool white balance pushes PY fabric blue. Fabric B/R rose in both views, against 1.22-1.36 in py_37301-03:
+  - q14: 1.27 -> 1.39
+  - q13: 1.36 -> 1.49
+
+  Rater A rates this medium and rater B low. It is routed to `from_py.md` (final confirm). PY `SEATMAT` is left unchanged because the studio colours match the photos.
+- **Triangles:** unchanged from w19. py2 is 19.3k and py4 38.9k per unit mesh.
+- **Ratings:** `py_final_a.json`, `py_final_b.json`.
