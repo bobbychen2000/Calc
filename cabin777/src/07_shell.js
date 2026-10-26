@@ -750,8 +750,11 @@ function buildShell(gl, layout) {
     const mats = [...inst[key].map(({ w }) => M4.trs(0, 0, w.z)), ...doorGlass[key]];
     const rb = new Builder(); for (const pt of wp.parts) addPart(rb, pt, null);
     meshes['reveal' + key] = gl.mesh(rb.build(), { name: 'reveal' + key, instances: inst[key].filter(({ w }) => w.electric).map(({ w }) => M4.trs(0, 0, w.z)) });
+    // pane tint is a multiply on the display-encoded frame (12_scene.js glass pass), so it caps a day pane at 255 x tint:
+    // [0.93, 0.95, 0.96] held panes at G <= 242, below the white lining beside them; c_27316 / y_47300 panes are white
+    // (#ffffff / #fcfcfb) [V]. Near-neutral now; the cool cast comes from the sky / haze (integration L10 / L11)
     const gb = new Builder(); gb.add(wp.glass, null, { c: '#ffffff' });
-    meshes['glass' + key] = gl.mesh(gb.build(), { name: 'glass' + key, instances: mats, tints: mats.map(() => [0.93, 0.95, 0.96, 0]), castShadow: false });
+    meshes['glass' + key] = gl.mesh(gb.build(), { name: 'glass' + key, instances: mats, tints: mats.map(() => [0.985, 0.99, 1.0, 0]), castShadow: false });
   }
   // shade meshes: manual (PY/Y), electric sheer + blackout (F/J)
   const shadeInst = { manual: [], sheer: [], blackout: [] };

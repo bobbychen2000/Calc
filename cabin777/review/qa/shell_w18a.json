@@ -1,0 +1,69 @@
+{
+ "area": "shell",
+ "rater": "A",
+ "round": "w18",
+ "score": 8.5,
+ "summary": "The pane-tint change does what it was meant to do, and nothing else moved. In the side-on PY/Y/J/F views the day panes now sit a little above the white lining instead of below it. ra_yWin pane G p50 is 238 -> 248 against lining 241; the y_47300 panes are 251 against wall 237. The cool cast is roughly halved (R-B -12 -> -8; the photos are about -1). Cloud texture is kept: nothing clips (0 % of pixels at 254+ in every view) and high-pass detail is unchanged or slightly higher (ra_yWin 1.73 -> 1.61, s09 4.47 -> 4.84, ra_pyWin 5.78 -> 6.54). So the panes read as bright, near-white glass, not as flat blown cards. They are still not the pure #fff glare of c_27316 (G 255, saturation 1.3), but that is exposure, which belongs to lighting. q12 is not worse: the scene mean is up only 3 levels (115/123/134 -> 118/126/136), the wing and sky keep their contrast (G p95 193 -> 201, max unchanged at 238-239), and there is no washout. The before/after diffs show changes only on glass pixels (plus cloud motion). q15, s05 and ra_door2floor are pixel-identical, so there is no regression. This is a small, real gain in window-glass fidelity. It is not enough to lift the area above 8.5, because the carried low items (door viewing window, pleat contrast, vinyl speckle, sidewall weave, tub-floor card, grille pitch, F carpet grain) are untouched.",
+ "renders": "Pre-made renders, no browser launched. QA views: /tmp/w17q (before) and /tmp/w18q (after). Shell views: /tmp/w17s and /tmp/w18s. Before/after montages are in scratchpad/ra18/.",
+ "previousIssues": [
+  {"id": "w16a-1 carpet F and door cross-aisle carpet flat procedural fabric (medium)", "severity": "medium", "status": "fixed (in w17), still fixed. ra_door2floor is pixel-identical to w17 (max diff 0). q03 changes are confined to the pane bbox (114-293, 161-446)."},
+  {"id": "w17a-1 F carpet grain finer/more uniform than f_17300, a touch dark", "severity": "low", "status": "not fixed (unchanged)"},
+  {"id": "w17b fcarpet-hue / fcarpet-fleck / jcarpet-hue", "severity": "low", "status": "not fixed (unchanged)"},
+  {"id": "w14/w15 door viewing window short / housing overlaps bezel", "severity": "low", "status": "not fixed. s06 changed only 0.25 % (the door-glass pane, 482-510 x 306-354); the geometry is identical."},
+  {"id": "w14/w15 blackout pleat close-up contrast about half the photo's", "severity": "low", "status": "not fixed. s05 is pixel-identical (max diff 3)."},
+  {"id": "w14/w15 sidewall weave, vinyl speckle, PY/Y tub-floor light card, grille pitch", "severity": "low", "status": "not fixed (unchanged outside the glass)"},
+  {"id": "lighting-carry neutral creams, flat door glass, near-black under-seat grille", "severity": "low (lighting)", "status": "not fixed (lighting area). The door glass is slightly brighter (s06 pane +12 levels)."},
+  {"id": "w17 brief: day panes capped at G<=242, below the white lining (the reason for this round)", "severity": "low", "status": "fixed. G max is now 249-253 in every pane view (was 236-249), and the side-on pane medians are 246-249 against lining ~241 (ra_yWin). In y_47300 the panes are also brighter than the wall (251 vs 237)."}
+ ],
+ "details": [
+  {"detail": "sidewall", "score": 8.0, "note": "Unchanged (s01, s04 differ only inside the panes)."},
+  {"detail": "window tubs/reveals", "score": 8.4, "note": "Unchanged geometry. The pane-to-reveal ordering is now right: pane brighter than the lining, as in the photos."},
+  {"detail": "window glass / day view", "score": 8.3, "note": "New line item. Side-on panes are near-white (mean 241-245/244-247/248-252 rgb in q14/q16/q17/ra_yWin/ra_pyWin) and keep their cloud texture. They are still slightly blue (R-B ~ -7 to -8) and short of pure white, where c_27316 and y_47300 clip at 255 with saturation 1-4. In q07, the near pane at grazing angle shows deep blue sky (G 192, saturation 77), where c_27316's equivalent near window is pure white glare. That is sky and exposure (lighting), not tint."},
+  {"detail": "shades electric", "score": 8.4, "note": "Unchanged."},
+  {"detail": "shades manual", "score": 8.5, "note": "Unchanged."},
+  {"detail": "dado/grilles", "score": 8.3, "note": "Unchanged."},
+  {"detail": "carpet J", "score": 8.8, "note": "Unchanged."},
+  {"detail": "carpet Y/PY", "score": 8.4, "note": "Unchanged. ra_carpetY changed only 0.01 % (a pane corner)."},
+  {"detail": "carpet F", "score": 8.4, "note": "Unchanged."},
+  {"detail": "door-bay carpet", "score": 8.3, "note": "Unchanged (ra_door2floor identical)."},
+  {"detail": "door surrounds/window", "score": 8.3, "note": "Unchanged geometry. The viewing-window glass is a touch brighter."},
+  {"detail": "vinyl", "score": 8.2, "note": "Unchanged."}
+ ],
+ "issues": [
+  {
+   "id": "w18a-1",
+   "severity": "low",
+   "detail": "[lighting/sky] The near, grazing-angle pane in seat views (q07 11A, ra_jWin's left pane) still shows saturated blue sky. c_27316's nearest window is pure white glare. The tint change cannot fix this (it is at 0.985-1.0 already).",
+   "evidence": "q07 pane region (870-920, 40-140): w18 rgb (154,192,230), saturation 77. c_27316 pane (150-215, 70-220): (250,250,251), 90 % at 252+, saturation 1.3.",
+   "fix": "Lighting area: raise the sky/haze exposure near the horizon, or add a view-angle glare/bloom term in the glass pass for daylit panes. Not a shell change."
+  },
+  {
+   "id": "w17a-1",
+   "severity": "low",
+   "detail": "Carried: the F carpet grain is finer and more uniform than f_17300's vermiculated pile, and a touch dark",
+   "evidence": "Unchanged since w17.",
+   "fix": "As in w17a-1 (cut an f_carpet tile from f_17300, carpetF '#56493f' -> '#5a4c44')."
+  },
+  {
+   "id": "w15-carry",
+   "severity": "low",
+   "detail": "Carried: door viewing window short / housing overlap, blackout pleat contrast, sidewall weave, vinyl speckle, PY/Y tub-floor card, grille pitch",
+   "evidence": "Pixel-identical outside the glass (s05 max diff 3, ra_door2floor 0, q15 1).",
+   "fix": "As in w15a/w16b/w17a."
+  },
+  {
+   "id": "lighting-carry",
+   "severity": "low",
+   "detail": "[lighting] Neutral creams, flat door glass, near-black under-seat grille",
+   "evidence": "Unchanged.",
+   "fix": "Lighting area."
+  }
+ ],
+ "refs": [
+  "ref/ana/c_27316-lang-multi.jpg",
+  "ref/ana/y_47300-lang-multi.jpg",
+  "ref/ana/py_37301-lang-multi.jpg",
+  "/tmp/claude-0/-home-user-Calc/4a860ee1-e964-5e4b-811d-83e1653b11fa/scratchpad/ra18/"
+ ],
+ "questionsForUser": []
+}

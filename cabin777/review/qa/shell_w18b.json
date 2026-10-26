@@ -1,0 +1,51 @@
+{
+  "area": "shell",
+  "rater": "B",
+  "round": "w18",
+  "score": 8.5,
+  "previousIssues": [
+    {"issue": "w16a-1 (medium): F carpet and door cross-aisle carpet flat procedural fabric", "status": "fixed in w17, still fixed. ra_door2floor is pixel-identical w17 vs w18, and the q03 floor is unchanged (the diff bbox is confined to the panes, x114-293 y161-446)."},
+    {"issue": "w17b fcarpet-hue (low): F carpet slightly yellower than f_17313", "status": "not fixed (carpetF unchanged). Optional."},
+    {"issue": "w17b/w17a fcarpet-fleck (low): F carpet shares J's fine heather", "status": "not fixed. Still waiting on the user's answer."},
+    {"issue": "w16b jcarpet-hue (low): J uniformly mauve", "status": "not fixed. Optional."},
+    {"issue": "w14-w17 low: door window ~15% short, and the housing overlaps the bezel", "status": "not fixed (s06 geometry unchanged; only 0.25% of pixels changed, all of them in the pane)"},
+    {"issue": "w14-w17 low: blackout pleat contrast about half the photo's", "status": "not fixed (s05 identical)"},
+    {"issue": "w14-w17 low: grille louvre pitch fine, ribs prominent", "status": "not fixed (b_dadoY2 changes only in the window panes)"},
+    {"issue": "w14-w17 low: vinyl speckle low", "status": "not fixed (ra_door2floor identical)"},
+    {"issue": "w14-w17 low: no linen weave on the sidewall", "status": "not fixed"},
+    {"issue": "w14-w17 low: PY/Y tub-floor light card", "status": "not fixed"},
+    {"issue": "w15 [lighting]: flat door glass, neutral creams, black under-seat grille", "status": "door glass: now near-white (s06 pane p50 233/238/242 -> 248/250/253), which reads less like a grey flat card. Not scored (lighting area)."},
+    {"issue": "pane tint capping day panes below the lining (the w18 target)", "status": "fixed. See details: window panes."}
+  ],
+  "details": [
+    {"detail": "window panes (day)", "score": 8.6, "note": "I used the w17->w18 change mask as the pane mask. PY/Y panes went from p50 ~233/239/243 (0% near-white, min channel >= 245) to ~247/249/253, now 64-91% near-white: s08 90.8%, q16 79.1%, q14 69.0%, ra_pyWin 65.2%, q17 65.3%, ra_yWin 63.8%, s02 63.6%. Under the photos: y_47300 panes p50 249/250/250 with 59% near-white; c_27316 pane core p50 255 with 90% near-white, 89% >= 250. The panes now sit 35-40 levels above the lining ring beside them (ring p50 ~202-217), as in c_27316, where the pane is 255 and the lining 196-233. Before the change they sat only ~25 levels above it, at G<=242. The residual differences are small. The panes stay slightly cool (R-B ~ -6, while the photo is neutral, at 255/255/255), and they only rarely reach 250 in all channels (0.1-16% vs the photo's 40-89%). They are not blown or flat: pane L std rose slightly (s08 3.9->4.7, ra_yWin 5.7->6.4), so faint cloud texture survives, and the crops still read as glass. F/J panes are less white (q03 24.6% near-white, b_jClose 22.8%, s09 40.9%) because those views look out at sky. That is correct."},
+    {"detail": "look-out views (q12, ra_jWin, q07)", "score": 8.5, "note": "No regression. In q12, the pane region (38% of the frame) brightened by about +8 (p50 155/169/187 -> 164/176/195), and cloud highlights went from max 230 to 236. Contrast held (L std 33.6 -> 34.8), the sky stays deep blue at the top, and the wing reads crisper and less grey through the glass. Through the ra_jWin panes the sky is still blue and the nacelle shading is intact (p50 195/212/229 -> 213/225/241). The q07 near pane shows blue sky (p50 229/232/241, 0% near-white), whereas c_27316 is blown to 255. That is exposure and sky (lighting area), not pane tint."},
+    {"detail": "sidewall", "score": 8.1, "note": "Unchanged: clean seams, plain satin, no weave."},
+    {"detail": "window tubs/reveals", "score": 8.5, "note": "Geometry unchanged. The whiter pane improves the pane-vs-bezel value step. The PY/Y tub-floor card remains."},
+    {"detail": "shades electric", "score": 8.4, "note": "Unchanged (s05 identical)."},
+    {"detail": "shades manual", "score": 8.5, "note": "Unchanged. In s08, the open panes beside the drawn shades now read white like y_47300."},
+    {"detail": "dado/grilles", "score": 8.3, "note": "Unchanged."},
+    {"detail": "carpet J", "score": 8.6, "note": "Unchanged (q06 changes 0.96%, all in the panes)."},
+    {"detail": "carpet Y/PY", "score": 8.5, "note": "Unchanged (ra_carpetY: 0.01% changed, a sliver of window in the corner)."},
+    {"detail": "carpet F", "score": 8.5, "note": "Unchanged."},
+    {"detail": "door-bay carpet", "score": 8.4, "note": "Unchanged (ra_door2floor identical)."},
+    {"detail": "door surrounds/window", "score": 8.3, "note": "The door glass is whiter (s06 81.5% near-white, s07 72.4%). Geometry unchanged: the window is short and the housing has no gap."},
+    {"detail": "vinyl", "score": 8.0, "note": "Unchanged."}
+  ],
+  "issues": [
+    {"id": "pane-cool-cap", "severity": "low", "detail": "Day panes are now near-white but stay slightly cool and stop just short of full white. The official photos are clipped neutral 255.", "evidence": "PY/Y pane p50 ~247/249/253 and >=250-in-all-channels share 0.1-16%, vs c_27316 pane 255/255/255 (89% >= 250) and y_47300 249/250/250 (41-45% >= 250).", "fix": "Optional. Leave the tint, since the remaining cast comes from the sky/haze (lighting L10/L11). If wanted, tint [1.0, 1.0, 1.0] or a lighting-side pane exposure lift would close it. Do not go above 1.0: the change made no visible gain in flatness, and cloud texture should survive."},
+    {"id": "fcarpet-hue", "severity": "low", "detail": "Carried: the F carpet is slightly yellower than f_17313", "evidence": "q03 floor unchanged, h23 vs h11.", "fix": "MAT.carpetF '#56493f' -> '#56483f'. Optional."},
+    {"id": "fcarpet-fleck", "severity": "low", "detail": "Carried: the F carpet shares J's fine heather", "evidence": "w17b fcheck.", "fix": "Only if the user confirms the F carpet is different."},
+    {"id": "jcarpet-hue", "severity": "low", "detail": "Carried: J is uniformly mauve", "evidence": "q06 h0 vs c_27312 h17-20.", "fix": "MAT.carpetJ '#615553' -> '#5f5450'. Optional."},
+    {"id": "door-window", "severity": "low", "detail": "Carried: the door window is ~15% short, and the housing overlaps the bezel", "evidence": "s06 geometry unchanged.", "fix": "Window height 0.64 -> ~0.71 m, offset 0.03 m."},
+    {"id": "pleat-contrast", "severity": "low", "detail": "Carried: blackout pleat contrast is about half the photo's", "evidence": "s05 identical.", "fix": "make_swatches s_pleat: plateau-and-step profile."},
+    {"id": "grille-pitch", "severity": "low", "detail": "Carried: grille louvres too fine, ribs prominent", "evidence": "b_dadoY2 unchanged outside the panes.", "fix": "Louvre count 16, lower rib contrast."},
+    {"id": "vinyl-speckle", "severity": "low", "detail": "Carried: vinyl speckle low", "evidence": "ra_door2floor identical.", "fix": "LAYER_PARAMS vinyl amplitude x1.6-2."},
+    {"id": "sidewall-weave", "severity": "low", "detail": "Carried: no linen weave on the sidewall", "evidence": "s01 flat.", "fix": "Normal-only fabric layer ~0.06."},
+    {"id": "tub-card", "severity": "low", "detail": "Carried: PY/Y tub-floor light card", "evidence": "ra_pyWin.", "fix": "Grade the tub floor across the full width."}
+  ],
+  "questionsForUser": [
+    "Still open from w17: is the THE Suite floor carpet the same heather as THE Room, or a sparser, larger-fleck pattern?"
+  ],
+  "notes": "I rated from the supplied renders only (no browser). The w17->w18 diffs (scripts scratchpad/w18b/diff.py and pane.py) touch only glass pixels. q15, s05 and ra_door2floor are pixel-identical, and every changed pixel brightened, by a mean of about +11/+9/+9 over its area, slightly more in red, so the cool cast dropped. There are no changes outside the panes and no regressions anywhere. q12 is slightly better: less grey veil, contrast kept. The target is met: day panes are near-white, above the lining, like c_27316 / y_47300, and they keep faint cloud texture. That is one fix among many minor items, and the carried low-severity issues hold the area at 8.5, so I have not raised the score. Lighting note (not scored): the q07 near pane shows a saturated blue sky where c_27316 is blown white, which is an exposure/sky matter."
+}
