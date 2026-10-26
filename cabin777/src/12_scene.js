@@ -49,7 +49,16 @@ const MOODS = {
   // glow's hue at 0.6 of its light (mainFS) [V: y_47303 upper tub #a4a9be L170 (B-R +25) vs q17 L188-208 (+3..+7)]. sideLed
   // [0.48, 0.53, 0.66] -> [0.50, 0.57, 0.78], so the band under the lens keeps its blue after the ACES shoulder [V: y_47300
   // lens band rows 130-140 #e3eaf4 / #e2e8f5 (B-R +14..+18) vs q15 #dadbdd (+2)] (lighting L8 medium) [D renders fixL8]
-  boarding: { label: 'Boarding', hemiTop: [0.97, 0.99, 1.03], hemiBot: [0.31, 0.35, 0.47], wash: [0.23, 0.255, 0.32], hemiBotN: [0.36, 0.37, 0.40], washN: [0.25, 0.26, 0.28], tubSky: [1.0, 0.6], led: [1.0, 0.98, 0.92], sideLed: [0.50, 0.57, 0.78], bandCut: 0.15, binLo: 0.8, k: 1.05, exposure: 1.38, toe: 1 },
+  // QA L13 (integration medium, lighting run 4): beltK 0.55 = the ambient the flat window-belt lining keeps (mainFS u_beltK:
+  // 0.55-1.6 m, facing in, under a lens, not the tubs, seen near head-on; with it the day-belt term drops 0.5 -> 0.15 there),
+  // and sideLow 0 (was the 0.4 default): the lens light fades out over 0.95-1.55 m, so the pier falls from the lens to a
+  // light grey at the window as in the photos instead of rising flat white to the sill in the ACES shoulder [V: y_47303 pier
+  // 237 / 210 / 184 / 176 to the window centre; c_27300 pier L205; omaat_f8 THE Suite wall L202 vs q17 pier 235-241, q08
+  // pier p50 241, q05 wall L240]. Tested [D fixL13 r_vB55S]: q08 pier p50 241 -> 209, q17 pier 229 -> 191 monotonic, its
+  // surround p50 / p75 198 / 226 -> 193 / 211 (photo 183 / 199), q05 wall 240 -> 211; L235-245 share q03 12.5 -> 4.3 %, q08
+  // 10.5 -> 2.1 %; the tubs (q17 176 / 159 / 162 vs y_47303 182 / 167 / 155), the far belt (q16 p90 237) and seat level held.
+  // The analysts' 0.62 (gap4 SA, ungated) and 0.55 without sideLow 0 (gap4_mat beltLV: q17 pier flat 211-213 below row 60) [D]
+  boarding: { label: 'Boarding', hemiTop: [0.97, 0.99, 1.03], hemiBot: [0.31, 0.35, 0.47], wash: [0.23, 0.255, 0.32], hemiBotN: [0.36, 0.37, 0.40], washN: [0.25, 0.26, 0.28], tubSky: [1.0, 0.6], led: [1.0, 0.98, 0.92], sideLed: [0.50, 0.57, 0.78], bandCut: 0.15, sideLow: 0, beltK: 0.55, binLo: 0.8, k: 1.05, exposure: 1.38, toe: 1 },
   // QA r2 (light): cruise sideLow 0.10 -> 0.30, the lavender wash reaches the window belt in THE Suite (the reveals by
   // the glass stay near-white through mainFS nearPane) [V: ml_DSC_1939-1 wall column y45 #6e9bfc (B-R +141), y150
   // #7a89be, belt y240 #888db0 (+40) vs cF03 belt #cccccf (+3)]
@@ -69,7 +78,10 @@ const MOODS = {
   // outboard -12 / -10 / centre -7, lalf_room_4 -11, lalf_room_120 -7 / -27, tlfl_IMG_9217 -12 / -2; median of six ~-2]; the
   // lens band (sideLed) keeps its hue (question 7). The cove glints (mainFS coveC, from hemiTop) turn neutral-warm with it
   // [D gapT pC, L11rateL cN]
-  cruise: { label: 'Cruise', hemiTop: [0.89, 0.885, 0.87], hemiBot: [0.18, 0.18, 0.22], wash: [0.25, 0.26, 0.30], hemiBotN: [0.195, 0.19, 0.185], washN: [0.27, 0.265, 0.26], led: [1.0, 0.98, 0.92], sideLed: [0.08, 0.14, 1.35], bandCut: 0.8, sideLow: 0.30, binLo: 0.45, ctrLo: 0.5, fillLift: 0.25, k: 0.95, exposure: 1.12, toe: 1 },
+  // QA L13 (integration medium, lighting run 4): beltK 0.55 as Boarding (sideLow 0.30 kept: it carries the lavender belt):
+  // cF03 below-window wall (90-150, 360-460) L199 B-R +26 -> L167 +35 [V: ml_DSC_1939-1 below the windows L146-186, B-R
+  // +42..+71; target <= 175] [D fixL13]
+  cruise: { label: 'Cruise', hemiTop: [0.89, 0.885, 0.87], hemiBot: [0.18, 0.18, 0.22], wash: [0.25, 0.26, 0.30], hemiBotN: [0.195, 0.19, 0.185], washN: [0.27, 0.265, 0.26], led: [1.0, 0.98, 0.92], sideLed: [0.08, 0.14, 1.35], bandCut: 0.8, sideLow: 0.30, beltK: 0.55, binLo: 0.45, ctrLo: 0.5, fillLift: 0.25, k: 0.95, exposure: 1.12, toe: 1 },
   // QA r2 (light): ANA's full-blue phase (safety video, after take-off, early night): cove LED, sidewall lens and vault
   // saturated blue-violet, the seat zone washed blue and dim, the galley ends warm (monFill), the screens lighting their
   // surround [V: sany_47 (SANspotter Y) cove #1d21bd / #2227cb s0.85, crown #181a39, seat backs #171a7a, galley #776349,

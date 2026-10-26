@@ -617,7 +617,10 @@ void main(){
     // grazing far wall (hoV). 1 elsewhere, which also keeps the belt term at 0.5 [D gap4_mat r_beltLV; fixL13]
     amb *= mix(1.0, u_beltK, linW * lensW * facingIn * smoothstep(0.55, 0.85, v_wpos.y) * (1.0 - smoothstep(1.30, 1.60, v_wpos.y)) * (1.0 - recd) * hoV);
     if (u_dayN > 0.0) {
-      float dayB = max(wallProx * facingIn * smoothstep(0.6, 0.9, v_wpos.y) * (1.0 - smoothstep(1.6, 1.9, v_wpos.y)), recd)
+      // QA L13 (light low, lighting run 4): lower edge 0.6-0.9 -> 0.2-0.5 m, so the wall under an open pane stays neutral down
+      // to the console, not an orange band rising from it [V: kn_room_35 / 36 below the open pane s0.00-0.03 to the console;
+      // dF03 orange share (0-340, 250-420) after the L13 sideLow change 10.0 % -> see fixed_integration.md] [D L13rateL xpB]
+      float dayB = max(wallProx * facingIn * smoothstep(0.2, 0.5, v_wpos.y) * (1.0 - smoothstep(1.6, 1.9, v_wpos.y)), recd)
                  * shT * smoothstep(0.2, 0.45, dot(u_winGlow, vec3(0.2126, 0.7152, 0.0722)));
       amb = mix(amb, vec3(dot(amb, vec3(0.2126, 0.7152, 0.0722))), u_dayN * dayB);
     }
