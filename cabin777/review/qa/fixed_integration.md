@@ -498,12 +498,12 @@ frame time).
 
 Regression guard (cmp.py: |model - photo| over the frame median, p5, p95, the thirds' mean L and 0.25 x their hue
 difference; lower is closer), before -> after:
-- Check views: q03 258 -> 259, q06 121 -> 122, q09 121 -> 118, q13 60 -> 59, q15 29 -> 29, q16 45 -> 44, q20 69 -> 69, q21
-  193 -> 193, blue06 82 -> 83; also q14 111 -> 111, q17 42 -> 43, bl16 61 -> 61, n16 242 -> 242, nF03 88 -> 89, d06 77 -> 77,
-  dd 75 -> 76, c06 138 -> 139. All within +-1 except q09 (3 closer).
+- Check views: q03 258 -> 259, q06 121 -> 122, q09 121 -> 118, q13 60 -> 58, q15 29 -> 29, q16 45 -> 44, q20 69 -> 69, q21
+  193 -> 193, blue06 82 -> 83; also q14 111 -> 110, q17 42 -> 43, bl16 61 -> 61, n16 242 -> 242, nF03 88 -> 89, d06 77 -> 77,
+  dd 75 -> 76, c06 138 -> 139. All within +-1 or closer (q09 3, q13 2).
 - Reverted on the guard: the contact-AO cap on the PY / economy seats (below 1.1 m aft of THE Room). With it q14 read 1 L
   lighter in every statistic (111 -> 116; the near seat shell lost its shade) and its thin dark-line share fell 0.66 ->
-  0.57 %; the cap there is now off (q14 0.69 %, 111).
+  0.57 %; the cap there is now off (q14 0.76 %, 110).
 
 Rater issues (L10):
 - lighting medium, low sun on dark materials turns khaki-olive: done. mainFS sun term: the 1.5 cap now acts on the
@@ -517,7 +517,7 @@ Rater issues (L10):
   console takes it too; 1 in every other mood).
   - blueF03: aisle-side box (640-740, 380-560) L16 -> 37 (target 35-42), table (400-620, 340-400) 20 -> 32 (32-40), aisle
     pier (700-750, 160-360) 22 -> 33 (28-45), window wall 96 -> 96 (96 +-3), front wall 63 -> 63 (63 +-3); window console
-    (180-300, 440-520) 32 -> 50 (ml_DSC_1945 window console L47); frame mean 61.9 -> 69.1 (photos 75-82).
+    (180-300, 440-520) 32 -> 50 (ml_DSC_1945 window console L47); frame mean 61.9 -> 69.0 (photos 75-82).
   - Ottoman (380-600, 400-500) 56 -> 81: over the raters' <= 75 guard. The raters' own patch with the narrower |x| fade read
     78 (their fblue25), so no gain <= 2.5 meets both the table (>= 32) and the ottoman (<= 75); 2.5 is kept for the box,
     table, pier and console. The ottoman top already reads high in Boarding (L117-127 vs omaat_f11 99-103), which points at
@@ -532,19 +532,22 @@ Rater issues (L10):
      band: t2 rows 398-410 L58), except on the PY / economy seats (guard above).
   3. Not done as given: the R8 AO target with the per-pixel turn and a 4 x 4 depth-aware blur adds two full-screen passes,
      which this run's brief rules out (question 13 in questions_lighting.md). Instead, 12 taps (`ssaoTaps`; every third only
-     where the capped disc spans > 6-10 px, so the far cabin costs what the 8 taps cost) at strength 8 (was 6), window
-     `ssaoIn` kept at 0.3.
+     where the capped disc spans > 10-14 px, not on the uncapped PY / economy seats, so most of the cabin costs what the 8
+     taps cost) at strength 8 (was 6), window `ssaoIn` kept at 0.3.
   4. Targets:
      - q10 x 650 rows 378-410 mean L68 -> 82 (min 49 -> 52 at the flap's own contact line, rows 406-410 61-71; L8 69-78),
        rows 398-410 54 -> 75, rows 380-384 63 -> 86 (target >= 70); no stair at the flap end (qa/fixL10/c_final_q10.png).
      - y_aisle_fwd (-1.0, 1.65, 57.0, yaw 0, pitch -0.08) row 300, x 0-490: 13 steps > 6 L, max 101 -> 8 / 53 (without the
        AO 8 / 53; target no step > 60, count within +2) (c_final_yaf.png).
-     - Thin dark-line share: q03 1.37 -> 1.51 % (target >= 1.7: not met), q05 1.22 -> 1.30 (>= 1.55: not met), q06 2.49 ->
-       2.71 (2.4-2.7: on the line), q02 1.76 -> 1.72, q08 1.77 -> 1.89, q09 1.63 -> 1.61, q13 0.73 -> 0.89, q14 0.66 -> 0.69,
-       q15 4.03 -> 4.17, q16 3.08 -> 3.19.
-     - f_ink_seated row 320 (539-593) 156 -> 148 (target >= 130).
-     - Frame time at Sharp: see below.
-  - Tried and not kept [D fixL10 t1-t19]: 16 taps everywhere (frame time q06 / q16 / q03 +7 / +8 / +7 %); a 12 px cap
+     - Thin dark-line share: q03 1.37 -> 1.51 % (target >= 1.7: not met), q05 1.22 -> 1.26 (>= 1.55: not met), q06 2.49 ->
+       2.68 (2.4-2.7), q02 1.76 -> 1.73, q08 1.77 -> 1.85, q09 1.63 -> 1.64, q13 0.73 -> 1.01, q14 0.66 -> 0.76, q15 4.03 ->
+       4.18, q16 3.08 -> 3.24.
+     - f_ink_seated row 320 (539-593) 156 -> 147 (target >= 130).
+     - Frame time at Sharp (time4.js, SwiftShader, 930 x 575, both builds in one browser, alternating, median of 3 x 3
+       frames, before -> after): q06 9190 -> 9521 ms (+3.6 %), q16 8556 -> 8640 (+1.0 %), q13 11830 -> 12113 (+2.4 %), q03
+       3198 -> 3314 (+3.6 %) (target within +5 %). With 12 taps everywhere: +3 / +11 / +6 / +7 %.
+  - Tried and not kept [D fixL10 t1-t19]: 16 taps everywhere (frame time q06 / q16 / q03 +7 / +8 / +7 %); 12 taps
+    everywhere (q16 / q03 +11 / +7 %); a 12 px cap
     (q03 thin share 1.08 %); the raters' ssaoIn 0.55 (q03 1.43-1.51 %, but the stepped ghost frame round the bulkhead
     monitor came back: f_ink_seated row 320 114-124); an exp(-k occ) response (q03 0.75 %); a 3.5 cm disc (y_aisle_fwd 21
     steps); the range left unscaled by the cap (f_ink 108, y_aisle_fwd max step 132); a tap weight by height over the face

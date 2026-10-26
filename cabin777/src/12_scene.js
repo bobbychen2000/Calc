@@ -242,16 +242,16 @@ const AO_TUNE = { hemi: 0.22, bounce: 1.0, emitLens: 0.45, emitCtr: 0.35, kAttF:
 // ssaoEase = the AO-volume range over which the contact AO eases in (mainFS sW; L8 [0.05, 0.4]): with the far taps gone the
 // frames read 1-3 L lighter than L8 (q06 p5 28 -> 31, c_27312 16); [0.02, 0.25] lets it reach the lower pockets again and
 // holds q09 p5 at 32 (c_27314 36; [0, 0.12] took it to 30) [D fixL9 tss6]
-// QA L10 (integration medium): ssaoTaps 8 -> 12 (every third one only where the disc spans > 6-10 px, mainFS ssaoF) and
+// QA L10 (integration medium): ssaoTaps 8 -> 12 (every third one only where the capped disc spans > 10-14 px, mainFS ssaoF) and
 // ssaoCap = the disc (and range) capped at 16 px on screen (aft of THE Room only above the seat backs), strength 6 -> 8: the
 // stepped bands above the THE Room headrest flaps and the hard stripes on surfaces near the eye are gone (q10 x 650 rows
 // 378-410 mean L68 -> 82, rows 398-410 54 -> 75, 380-384 63 -> 86; L8 83-94; y_aisle_fwd row 300: 13 steps > 6 L, max 101 ->
-// 8 / 53, as without the AO) and some Suite contact lines come back (thin dark-line share q03 1.37 -> 1.51 %, q05 1.22 ->
-// 1.30, q06 2.49 -> 2.71; in-flight omaat_f2 / f5 / f11 / f13 / f40 1.79-2.85) with f_ink_seated row 320 at 148 (>= 130: no
-// monitor ghost frame). Tried [D fixL10 t1-t19]: a 12 px cap (bands gone but q03 1.08 %), the raters' ssaoIn 0.55 (q03
+// 8 / 53, as without the AO) and some contact lines come back (thin dark-line share q03 1.37 -> 1.51 %, q05 1.22 -> 1.26,
+// q06 2.49 -> 2.68, in-flight omaat_f2 / f5 / f11 / f13 / f40 1.79-2.85; q13 0.73 -> 1.01) with f_ink_seated row 320 at 147
+// (>= 130: no monitor ghost frame); frame time at Sharp +1-4 %. Tried [D fixL10 t1-t19]: a 12 px cap (bands gone but q03 1.08 %), the raters' ssaoIn 0.55 (q03
 // 1.43-1.51 % but the monitor's stepped ghost frame back: f_ink row 320 114-124), an exp(-k occ) response (lines lost: q03
 // 0.75 %), a 3.5 cm disc (curtain steps 21), the range unscaled by the cap (ghosts: f_ink 108, y_aisle_fwd max step 132), a
-// tap weight by height over the face plane (f_ink 156-162 but q03 0.89-1.13 %), 16 taps everywhere (frame time +7-8 %), the
+// tap weight by height over the face plane (f_ink 156-162 but q03 0.89-1.13 %), 12-16 taps everywhere (frame time +7-11 %), the
 // cap on the PY / economy seats as well (q14 frame 1 L lighter, its seat shells' shade gone). The per-pixel turn with a
 // depth-aware blur would smooth the rest but needs new full-screen passes (not in this run's brief; questions_lighting 13)
 const LIGHT_TUNE = { cove: 1.0, sheen: 1.35, sheenTint: 0.3, tubWash: 0.7, lookOut: 0.86, ssao: [0.05, 8, 0.006, 0.07], ssaoMix: 0.9, ssaoAng: 0.25, ssaoDither: 0, ssaoIn: 0.3, ssaoLow: 0.5, ssaoEase: [0.02, 0.25], ssaoTaps: 12, ssaoCap: 16 };
