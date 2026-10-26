@@ -1,0 +1,39 @@
+{
+ "area": "suite",
+ "rater": "B",
+ "round": "w18",
+ "score": 9.0,
+ "method": "Read git log -2 -p of 09d_suite.js (f87cd0f cap groove; 541b4ef split lines / welt). w17 (r1) vs w18 (r2) 930x575 renders q02-q05 + wardrobe stacked side by side (scratchpad/raters/suiteB2/c_*.png) and pixel diffs (|dL|>8: q02 3.1 %, q03 4.7 %, q04 0.35 %, q05 6.2 %, wardrobe 3.7 %, most of it the front-wall ink print, not suite). One own DPR 2 render set of /tmp/b2/test.html from seat 1A with the same script as w17 (suiteB/scripts/cl.js): /tmp/claude-0/-home-user-Calc/4bf95286-4075-5784-8617-507211ce8722/scratchpad/raters/suiteB2/b2/wardrobe2.png, foot2.png, console2.png, compared crop for crop with my w17 b1 set (cc_wardrobe2.png, cc_foot2.png). Luma profiles across the cap joint, wood split lines and ottoman welt. References: omaat_f40, f5, f11, f13. Lighting noted, not scored.",
+ "calibration": [
+  { "earlier_issue": "w17a MEDIUM: cap joint box square and 2 mm proud, sticks out past the rounded shell end as a black blade; near-black stripe along its length", "status": "fixed. DPR 2 wardrobe2: the groove now ends on the shell's rounded corner with no tab (cc_wardrobe2 lower, x ~145-160); luma L11-15 over 16 px -> L29-50 over 13 px (col 700, y 154-170), a warm dark brown that reads as a shadow groove under the cap. Still a little darker and crisper than the soft L110-115 shadow line in f40, see low issue." },
+  { "earlier_issue": "w17b LOW: cap joint corner tab", "status": "fixed (same change)." },
+  { "earlier_issue": "w17b LOW: wardrobe wood-panel split lines read as black pen outline", "status": "fixed. wardrobe2 col 500: L10 over 10 px -> L27 over 6 px; row 450: L9 x6 -> L25 x5. Now ~15-35 L below the wood (L41-65), a fine shadow joint as in f5 / f13. At 1x (r2/wardrobe.png) barely visible, correct." },
+  { "earlier_issue": "w17b LOW: ottoman welt twice the f11 width", "status": "fixed. r2/q03 col 500: dark run 5 px (L6-59) -> 4 px (L8-49), close to f11's 1-2 px soft line at its scale; no z-fighting." },
+  { "earlier_issue": "w15a MEDIUM: head band square-edged / proud, z-fight dashes on the fold", "status": "still fixed (q04 0.35 % diff, no dashes)." },
+  { "earlier_issue": "w14a/b MEDIUM: wood flanks chestnut", "status": "still fixed (espresso)." },
+  { "earlier_issue": "w16 LOW carried: loft bullnose / notch at the head band, aisle drape rail, flat grey flap triangle, footwell back lit, far-leaf moire, short flank grain", "status": "not fixed (not addressed; unchanged in r2)." }
+ ],
+ "changes": [
+  { "change": "cap-to-shell joint: 3 mm #3a342e groove extruded from a rounded rect r 0.021, 1 mm proud", "verdict": "keep", "evidence": "cc_wardrobe2: follows the shell corner, no blade; q02 / q05 the cap still separates from the shell like f40 / f13 but no longer as an ink stroke. A thin bright line (L192-231, 2 px at DPR 2) now sits right under the groove: the shell's top edge highlight, plausible." },
+  { "change": "wardrobe wood-panel split lines flush, 3 mm, #2e2924", "verdict": "keep", "evidence": "wardrobe2 / r2 wardrobe: the panel now looks butted to the taupe, not outlined; door reveal (fSeam) unchanged and still reads as a recess." },
+  { "change": "ottoman welt 0.014 -> 0.008", "verdict": "keep", "evidence": "q03 welt narrower, still reads as the cushion-to-tray shadow gap in f11." }
+ ],
+ "details": [
+  { "detail": "Screen wall: 43-in screen, wing, pier with mirror and lamp", "score": 8.7, "refs": "q03 / q05 unchanged" },
+  { "detail": "Centre pair: board, edge strips, divider", "score": 8.7, "refs": "q02, softer cap joints" },
+  { "detail": "Shell / cap two-tone", "score": 8.9, "refs": "groove follows the rounded shell, warm dark not black (f40 / f13)" },
+  { "detail": "Aisle leaves", "score": 8.5, "refs": "unchanged; far-leaf moire in q02" },
+  { "detail": "Wood flanks / wardrobe wall", "score": 8.7, "refs": "split lines now fine joints; flank grain still short" },
+  { "detail": "Plinth, doors", "score": 8.8, "refs": "unchanged" },
+  { "detail": "Window console", "score": 8.3, "refs": "unchanged" },
+  { "detail": "Bed", "score": 8.6, "refs": "q04 unchanged" },
+  { "detail": "Ottoman, recess, aisle box, table", "score": 8.9, "refs": "q03 / foot2: welt now f11 weight" }
+ ],
+ "issues": [
+  { "severity": "low", "problem": "Cap groove still a touch darker and harder than the soft cap shadow in the photos when seen up close (fine at 930 px).", "evidence": "suiteB2/b2/wardrobe2.png col 700 y 154-170: L29-50 over 13 px vs omaat_f40 cap line, a soft L110-115 shadow per w17a.", "fix": "Optional: fCapJoint #3a342e -> ~#4a433b, or groove 3 -> 2 mm. Not needed for the target." },
+  { "severity": "low", "problem": "Carried: loft bullnose / notch at the head band, drape rail, flat flap triangle, footwell back lit, far-leaf moire, short flank grain.", "evidence": "w16a / w16b; unchanged in r2 q02 / q04 / q05.", "fix": "As in w16b." }
+ ],
+ "questions": [
+  "No high or medium issues. All w17 high/medium and my w17 lows on these parts are fixed with no regression. The w13 questions (flank swatch LAYER slot; 0.64 walk-in opening) remain open."
+ ]
+}
