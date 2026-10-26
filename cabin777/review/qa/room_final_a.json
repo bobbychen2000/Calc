@@ -1,0 +1,50 @@
+{
+  "area": "room",
+  "rater": "A",
+  "round": "final",
+  "score": 8.5,
+  "summary": "Final confirmation of THE Room at current head (1430d42) against w19 (89168b6). The score holds at 8.5 and nothing in THE Room regressed. git diff 89168b6..HEAD shows no change to src/09c_room.js, src/03_tex.js, tex/ or the room SEATMAT keys (09_seats.js changed only pyShell/pyArm/pyArmPad). Every room-only calibration region is identical to 1 L: q06 door L167, q06 near shell L64, q06 cabinet ash L149, q09 privacy wall L56, q09 ash L172, q09 pillow L90, q08 header band L105, q10 shell L82, q10 cap L116->114, q07 cabinet ash L158. Pixel changes (11-29 % of each frame) sit in the window and sidewall belt and the far bar, which belong to lighting and monuments. One lighting side-effect lands on a room part. In q07 the window-side shell post next to the 11A monitor fell from L103 to L75 (#5d6274 -> #454854), while c_27316 has the same post at L114 (#6b6e7c). That moves it away from the photo, but it is lighting, so it is noted and not scored. The w19 lows are all still open and unchanged: kick 0.08 against ~0.10-0.14 m, no silver rail over the kick, cap rails with no highlight, header band ~10 % dark, ash pinstripe, soft goods. No w18/w19 high or medium issue has regressed. Product read: clearly the same product with minor material and lighting differences.",
+  "photos_collected": [
+    "ref/ana c_27300, c_27303, c_27312, c_27313, c_27314, c_27315, c_27316 (official). No new web photos: the in-flight set from w19 (omaat_room_*, kn_*) was not needed because the room geometry and materials are unchanged."
+  ],
+  "own_renders": [
+    "No new renders. Crops are in /tmp/claude-0/-home-user-Calc/64ebca69-19d7-5eea-b28a-9016189cea48/scratchpad/rA/ (q07post_w19.png, q07post_now.png, 2x)."
+  ],
+  "calibration": [
+    {"issue": "w17b medium: shaded near shell faces too dark (q09 privacy wall, q06 near faces)", "status": "not fixed / unchanged (lighting); no regression", "evidence": "q09 wall (300-500 x 260-330) #33353e L56 in both w19 and now. q06 near shell (30-130 x 430-530) #3c3d47 L64 in both. c_27312 near shell (30-130 x 420-480) #515965 L91. q06 and q10 sit at the bottom of the photo band, q09 below it."},
+    {"issue": "w16b medium: aisle-end doors dark relative to the cabinets (lighting)", "status": "not fixed / unchanged", "evidence": "q06 door (600-640 x 330-520) #a8a7a4 L167, the same as w19 (#a8a7a5). The photo is ~195."},
+    {"issue": "w16a/w17a medium: cabinet / table ash soft wavy bands, weak pinstripe", "status": "not fixed / unchanged (now carried as low)", "evidence": "q06 cabinet ash (200-280 x 340-440) #a39784 in both; q07 ash (150-330 x 200-400) #aca08c in both. The tex/ tile is unchanged."},
+    {"issue": "integration r2 medium: header band reads as hammered metal", "status": "fixed, holds", "evidence": "q08 band (480-560 x 290-330) #5f6674 L105 in both."},
+    {"issue": "integration L8-L11: flush grey band instead of a recessed black kick", "status": "fixed, holds", "evidence": "KICK = {h:0.08, d:0.02, c:#1c1d20} still in 09c_room.js:94. The q06 base pixels are unchanged (q06 carpet/base 500-560 x 480-560 #403636 in both)."},
+    {"issue": "integration L8-L11: white hairline in the 11A footwell", "status": "fixed, holds", "evidence": "q07 console/footwell (400-720 x 440-575) mean L76.3 -> 75.3; >L200 count 1209 -> 1090, all on the screen and labels, no new line."},
+    {"issue": "w19a low: kick short (0.08 vs ~0.10-0.14 m) and no silver rail above it", "status": "not fixed", "evidence": "KICK.h is still 0.08; ashFrame bottom is still jShell."},
+    {"issue": "w19b low: possible coplanar face on the 11A footwell block; kick flush on the seat side", "status": "not fixed, still invisible", "evidence": "No flicker or speckle in q07 (identical crop)."}
+  ],
+  "details": [
+    {"detail": "Overall nested-pair layout, shells, privacy walls (aisle views)", "score": 8.7, "refs": ["c_27312", "c_27315", "q06", "q10"], "note": "Unchanged pixels. Alternating forward/rear pairs, monitor housings, ash ends and cap lines read as c_27312."},
+    {"detail": "Shell / cap colour and finish", "score": 8.5, "refs": ["c_27314", "c_27315", "q06", "q09", "q10"], "note": "q10 cap #6b6f79 L114 vs c_27315 shell wing #747b89 L125. Hue matches, value a touch low. A faint pebble grain shows on the post and cap faces at 2x (q07 post high-pass std ~4 L); the photo faces are smoother."},
+    {"detail": "Shell bases / toe kick", "score": 8.2, "refs": ["c_27312", "q06"], "note": "As w19: dark and recessed, short, no silver rail."},
+    {"detail": "Monument top / aisle cap / spine / plaques", "score": 8.3, "refs": ["c_27313", "c_27314", "q09"]},
+    {"detail": "Aisle-end posts and door leaves", "score": 8.5, "refs": ["c_27312", "q06"]},
+    {"detail": "Cabinet / table ash", "score": 8.1, "refs": ["c_27312", "c_27315", "c_27316", "q06", "q07"], "note": "Warmer than the official photos: q07 ash #aca08c R/B 1.23 vs c_27316 #a29a9c R/B 1.04; q06 table #a59d90 R/B 1.15 vs c_27315 #c1beba R/B 1.04. It is within the in-flight range (1.10-1.35) chosen on purpose in w12/w13, so it stays low."},
+    {"detail": "Seat: sofa, back, header band, slate flap", "score": 8.4, "refs": ["c_27315", "c_27313", "q08", "q10"], "note": "q10 flap #666c7a vs c_27315 #70798a. Hue matches; ~10 % dark, which is lighting plus albedo."},
+    {"detail": "Boarding bundle and pillows", "score": 7.8, "refs": ["c_27303", "q08", "q09"], "note": "Rigid slabs; the blue pillow pattern is right."},
+    {"detail": "Monitor, footwell, console", "score": 8.4, "refs": ["c_27316", "q07"], "note": "Geometry unchanged and the hairline is still gone. Since w19, lighting has darkened the window-side post (L103 -> 75 vs photo 114); not scored here."}
+  ],
+  "issues": [
+    {"severity": "medium", "area_owner": "lighting (not scored for room)", "title": "Window-side shell post beside the 11A monitor darkened by the new window-belt lighting", "evidence": "q07 (760-850 x 180-450): w19 #5d6274 L103 -> now #454854 L75. c_27316 (280-330 x 40-160): the same post at #6b6e7c L114, visibly lit by the window. Crops are in rA/q07post_w19.png and rA/q07post_now.png. The geometry is identical, and room materials are unchanged.", "fix": "12_scene.js / 04_shaders.js (lighting run 4 L14 'view-independent window belt'): restore window fill on near-window vertical faces of the F/J shells, e.g. let the window-sun LUT or belt term reach surfaces within ~0.4 m of the sidewall, or add a small window-proximity term to J-class shells. Target q07 post L100-115 without lifting q09/q06 interior faces past the photo band."},
+    {"severity": "low", "title": "Toe kick short and no silver rail above it (carried from w19a)", "evidence": "c_27312 black base ~32 px under ~240 px of ash on a 1.12 m end (~0.10-0.14 m); 09c_room.js:94 KICK.h 0.08.", "fix": "KICK.h 0.08 -> 0.10. In ashFrameX/roomAisleAsh, draw the bottom member with SEATMAT.jRail and start roomAisleAsh at y0 = KICK.h."},
+    {"severity": "low", "title": "Ash warmer than the official photos", "evidence": "q07 #aca08c R/B 1.23 vs c_27316 #a29a9c R/B 1.04; q06 table R/B 1.15 vs c_27315 1.04. In-flight photos run 1.10-1.35.", "fix": "Optional: SEATMAT.ash #b2a28b -> #b0a492 (R/B ~1.10) to split the difference between official and in-flight. Otherwise leave as a documented choice."},
+    {"severity": "low", "title": "Faint pebble grain on shell posts and caps", "evidence": "2x crop rA/q07post_now.png: a fine leather-like grain on the post (high-pass std ~4 L at L52). The c_27316 / c_27315 shells are smooth satin plastic.", "fix": "Check that jShell/jCap use LAYER.plastic with low amplitude. If the grain comes from the 04_shaders.js detail-layer changes since w19, lower the plastic layer amplitude for jShell/jCap in LAYER_PARAMS (03_tex.js, shared one-line edit)."},
+    {"severity": "low", "title": "Carried: header band ~10 % dark, ash pinstripe weak, rigid pillows, cap rails with no highlight", "evidence": "Unchanged from room_w19a.json (q08 band L105, ash crops identical).", "fix": "As room_w19a.json."}
+  ],
+  "score_vs_w19": {
+    "dropped": false,
+    "w19": "A 8.5 / B 8.5",
+    "final": 8.5,
+    "why": "THE Room geometry, materials and textures are byte-unchanged, and every room calibration region is identical to 1 L. The only room-visible change is the lighting-driven darkening of the q07 window-side post (lighting area, reported as medium for the integrator). The sidewall and window belt are bluer (q08 wall #e4e6e9 -> #dce1ec) and the bar background changed (monuments); neither affects the room score."
+  },
+  "questions": [
+    "Lighting: was darkening the near-window J-class shell faces (q07 post L103 -> 75) intended by the L14 window-belt change? c_27316 shows that post window-lit at L114."
+  ]
+}

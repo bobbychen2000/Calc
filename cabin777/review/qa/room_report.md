@@ -256,3 +256,16 @@ w19 scored A 8.5 / B 8.5 with no high or medium issue (89168b6), so the change w
   meets the black base.
 - Triangles: roomO / roomE 12.2k / 9.6k -> 13.4k / 11.0k per unit mesh. Ratings `room_w19a/b.json`. Log:
   `fixed_polishD.md`.
+
+## Final confirm (2026-10-26): bar held on the final head
+
+| round | rater A (skeptic) | rater B (geometry) | rated head |
+|---|---|---|---|
+| final | **8.5** | **8.5** | 1430d42 (lighting run 4 L14) |
+
+- **Confirmed:** both raters score 8.5 with no high-severity issue (`room_final_a.json`, `room_final_b.json`). No code change.
+- **What changed since w19 (89168b6):** nothing in room's files. `09c_room.js`, `03_tex.js`, `tex/` and the room `SEATMAT` keys are all untouched. Room regions match w19 within 1-3 L in all five views. The pixels that did change are in the window belt and sidewall (lighting runs 2-4, cooler belt, rim lobe now aft of THE Room only) and the door-3 bar in the q07 background (monuments).
+- **Earlier high and medium issues:** none regressed. The header band, toe kick and 11A hairline fixes still hold.
+- **Still open, low:** the ash pinstripe contrast, header band ~10 % dark, kick height and silver lip, and the rigid soft goods.
+- **Lighting medium (A, not scored for room):** the q07 window-side shell post went from L103 to L75, against L114 in c_27316. Routed to `from_room.md` (final confirm).
+- **Triangles:** unchanged since w19. roomO / roomE are 13.4k / 11.0k per unit mesh.

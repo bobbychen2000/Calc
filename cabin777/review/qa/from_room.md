@@ -47,3 +47,11 @@
   c_27315 85). (3) The blue pillow is over-saturated / too bright beside the white pillow in the cabin (q08 B/G 2.28 vs
   kn_17 1.91; luma ratio 0.44 vs kn_8 0.26) and the studio set looks washed out (sofa reads lilac). Room SEATMAT colours
   are left untouched, per the note in from_integration.md.
+
+## Final confirm (2026-10-26, head 1430d42): to lighting / integration (medium, rater A, not scored for room)
+
+- **q07 (seated 11A):** the shell post on the window side of the monitor got darker, from L103 (#5d6274) at w19 to L75 (#454854) now. In the official photo c_27316 the post is window-lit at L114 (#6b6e7c).
+  - The geometry and materials are identical to w19, so the change is lighting. The likely cause is the run 4 L14 view-independent window belt in `04_shaders.js` / `12_scene.js`.
+  - Crops are in rater A's scratchpad, not tracked.
+- **Fix:** let the window fill reach J-class shell faces within about 0.4 m of the sidewall, aiming for L100-115 on that post. Guards: the q09 wall stays at about L56 and the q06 median stays at or below 166.
+- **Rater B (low):** the window belt is cooler in the room views (q08 window box 216/219/223 -> 200/209/222). Should the cool belt and tub hue apply forward of door 3?

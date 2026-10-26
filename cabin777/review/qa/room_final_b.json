@@ -1,0 +1,45 @@
+{
+ "area": "room",
+ "rater": "B",
+ "round": "final",
+ "score": 8.5,
+ "summary": "THE Room is unchanged in geometry and materials since w19: 09c_room.js and the room SEATMAT keys are untouched, and the room-only box means move by 3 L or less in every view. The visible differences come from other areas. (1) Lighting: the cove rim lobe is now gated to aft of THE Room (rimZ in 04_shaders.js), so the beaded white glints along the cap and divider rails are gone. The broad rolled highlight strip on the rails stays (q09 rail rows p90 220/191/185 -> 220/190/185; pixels > L200 in the rail rows 27/4/12 -> 26/1/9; rail high-pass std 18.7 -> 16.5). This is a small gain against the matte caps of c_27314, not a loss. (2) Sidewall and windows: the window belt is cooler and less bright (q08 window box RGB 216/219/223 -> 200/209/222; q06 sidewall 227/228/231 -> 222/225/234), which slightly lowers the share of pixels > L200 in every view. (3) Monuments: the door-3 bar background in q07 is now the in-service face. None of these touches room proportion, colour or detail, and no new artefact appears: there is no z-fighting, gap, float or moire in the 2x crops of the near caps, the aisle end and the far rows. The product still reads clearly as THE Room with minor material and lighting differences. Holds 8.5 with no high or medium issues.",
+ "photos_collected": [
+  "No new downloads. I used ref/ana c_27312, c_27314, c_27315, c_27316 and c_27300/03 (resized to 930 px for side-by-side checks), plus the in-flight photos cited in room_w19b.json (omaat_room_4/15, kn_8)."
+ ],
+ "own_renders": [
+  "No new renders. Diff maps and 2x crops from the supplied w19 / now renders are in /tmp/claude-0/-home-user-Calc/64ebca69-19d7-5eea-b28a-9016189cea48/scratchpad/rb/: *_diff.png, q09cap.png, q06aisle.png, q10far.png."
+ ],
+ "calibration": [
+  {"issue": "w17b medium: shaded near shell faces too dark", "status": "fixed, holds", "evidence": "q09 privacy wall (300-500 x 260-330) RGB 52/54/63 in both w19 and now; c_27314 privacy wall face median L50. q06 near shell 135/139/147 -> 132/136/144."},
+  {"issue": "w16a/w17a medium: ash soft wavy bands, weak pinstripe", "status": "not fixed (carried as low; texture unchanged)", "evidence": "Ash boxes: q06 table 161/154/143 -> 162/154/142, q09 178/167/150 -> 179/167/150, q07 168/157/138 -> 169/157/138. The texture and contrast are identical."},
+  {"issue": "w16b/w17a medium: aisle-end doors dark relative to the cabinets (lighting)", "status": "fixed by context in w19, holds", "evidence": "q06 monitor-end box 178/178/177 -> 178/177/175. The dark kick under the cream leaf is unchanged (kick box 72/73/82 -> 69/70/80)."},
+  {"issue": "integration r2 medium: header band reads as hammered metal", "status": "fixed, holds", "evidence": "q10 band 107/113/124 -> 105/111/122 and q08 band 102/109/122 -> 102/108/121, with no texture change in the crops."},
+  {"issue": "integration L8-L11: shell bases a flush grey band (medium)", "status": "fixed, holds", "evidence": "q06 kick region unchanged, recessed near-black plinth (q06aisle.png)."},
+  {"issue": "integration L8-L11: white hairline along the 11A footwell (medium)", "status": "fixed, holds", "evidence": "q07 foreground footwell area is pixel-equivalent to w19 (diff map shows only far-cabin and window changes)."},
+  {"issue": "integration L8-L11: cap rail cannot catch a cove highlight / w19a low: rounded rails give no cove highlight", "status": "changed by lighting (not a regression)", "evidence": "The rim lobe now acts only aft of THE Room, so the beaded edge glints are gone. The rolled strip remains (q09 rail rows p90 unchanged, glint count 43 -> 36). c_27314 shows matte caps with soft light edges (cap face L135; edge row maxima 163-250 only at a few rail lips), so the now-render is at least as close as before."},
+  {"issue": "w18a low: header band ~10 % dark against the flap", "status": "not fixed (low, unchanged)", "evidence": "q08 band L~107 against the flap as in w18a."}
+ ],
+ "details": [
+  {"detail": "Overall nested-pair layout, shells, privacy walls, monitors, cabinets (aisle views)", "score": 8.5, "refs": ["c_27312", "c_27315", "q06", "q10"]},
+  {"detail": "Shell / cap colour and value", "score": 8.5, "refs": ["c_27312", "c_27314", "q06", "q09", "q10"]},
+  {"detail": "Cap rails (rolled strip, no beaded glints now)", "score": 8.5, "refs": ["c_27314", "q09cap"]},
+  {"detail": "Shell bases / toe kick", "score": 8.4, "refs": ["c_27312", "q06aisle"]},
+  {"detail": "Monument top: housings, spine and rail, aisle cap, plaques", "score": 8.4, "refs": ["c_27313", "c_27314", "q09"]},
+  {"detail": "Ash panels, table tops, door / cabinet split", "score": 8.4, "refs": ["c_27312", "c_27314", "c_27316", "q07"]},
+  {"detail": "Boarding bundle, pillows, soft goods", "score": 8.1, "refs": ["q08", "q09"]},
+  {"detail": "Monitor, footwell, ottoman, side-table console", "score": 8.5, "refs": ["c_27316", "q07"]},
+  {"detail": "Artefacts (z-fight, gaps, floats, far-row shimmer)", "score": 8.7, "refs": ["q10far", "q09cap", "q06aisle"]}
+ ],
+ "issues": [
+  {"severity": "low", "title": "Ash pinstripe weak / soft wavy bands (carried)", "evidence": "The q07 cabinet ash (130-340 x 200-400) shows soft horizontal streaks with about half the fine-grain contrast of c_27316. Unchanged since w16.", "fix": "test/make_swatches.py HP['j_ash'] 60 -> 20, ALONG['j_ash'] 6 -> 14; re-cut tex/tex_j_ash.png (shared tile; check the doors and bar)."},
+  {"severity": "low", "title": "Header band about 10 % dark against the flap (carried)", "evidence": "q08 band 102/108/121 (L~107) against c_27315 band/flap ratio 0.89-1.05.", "fix": "src/09c_room.js jBand c '#656b73' -> '#6b7179' (one line)."},
+  {"severity": "low", "title": "No thin bright lip where the ash meets the black kick (carried from w19)", "evidence": "c_27312 (300-560 x 380-575) has a thin aluminium line at the ash bottom edge. q06aisle runs from the charcoal frame straight into the kick.", "fix": "Optional 4 mm silver strip above KICK in roomPart's monument end, as in room_w19b.json."},
+  {"severity": "low", "title": "Soft goods rigid (pillows as slabs), latch tongue, door-edge dotted aliasing (carried)", "evidence": "q08 / q09 pillows are unchanged (q09 pillow box 62/71/133 -> 61/71/133).", "fix": "As room_w16a/b."},
+  {"severity": "low", "title": "(lighting, not scored) Sidewall belt cooler in room views", "evidence": "q06 sidewall 227/228/231 -> 222/225/234 and q08 window 216/219/223 -> 200/209/222 (blue lead +7 -> +22). c_27312 / c_27300 piers read near-neutral warm-white.", "fix": "Lighting owner: check that the beltK / seatCool / tubHue cool cast from L14 is limited to PY/Y (z gate) and does not reach the F/J sidewall."}
+ ],
+ "questions": [
+  "Is the L14 cool window-belt and tub hue meant to apply forward of door 3? In the THE Room views the sidewall now leans blue (B-R +22 on the q08 window box), and the official J photos are neutral there."
+ ],
+ "score_change_vs_w19": "Unchanged at 8.5. Room code and materials are identical. The lighting change (rim lobe gated aft of THE Room) removed the beaded rail glints, which is neutral to slightly positive for the room against c_27314. The cooler window belt from lighting run 4 and the new door-3 bar face from monuments do not affect the room score."
+}
