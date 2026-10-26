@@ -28,3 +28,11 @@ Nothing is blocked on these. Each item says what the model assumes for now.
 11. **Welcome-galley cabinet glass (wave 3d).** Opaque reflection strips on the pane read as wires or sticks inside the
     cabinet (w17a), so the pane again has no glass cue. A real smoked-glass look needs a blended or transparent material
     for monuments, which belongs to the lighting side. For now the pane stays open, with the contents toned down.
+12. **Door-2 welcome galley (polish F).** The OMAAT photo the welcome galley was built from (omaat_j32) turns out to be the
+    door-3 bar (OMAAT: "between the middle and rear business class cabins"), so the bar now follows it and shares the
+    welcome galley's face. No in-service photo has been found that is shown to be the door-2 galley; LALF's 133 / 134 are
+    captioned only as "a galley divides the two business class cabins", which also fits door 3. The model keeps the
+    door-2 galley as it was (same face as the bar). Do you have a photo of the door-2 galley?
+13. **Bar left bay: blind up or down (polish F).** The 2019 press photo (Traffic News) has a black blind pulled down over
+    the left bay; OMAAT 2020 and KN Aviation show it raised with the ovens visible. The model shows it raised, rolled
+    into a black head. Raters also note the 2019 left bay is wider than the 2020 oven column; the model follows 2020.

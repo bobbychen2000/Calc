@@ -439,3 +439,31 @@ Closed `from_integration.md` "To monuments" ink-cloud print (L8-L11 medium; log:
 - **Still open (low):** strata larger and rounder than f40's dry-brush fragments (see the w22 notes in fixed_polishC.md),
   the wall's warmth against the neutral ceiling (lighting), front-wall monument joint hairlines, the w18 lows.
 
+
+## Post-wave polish (polish F, 2026-10-26): door-3 bar to the in-service face
+
+Closed `from_integration.md` "Lighting run 3, L13 ... To monuments (medium)" (log: `fixed_polishF.md`).
+
+| round | rater A | rater B | change |
+|---|---|---|---|
+| w22b | **8.7** | **8.9** | door-3 bar upper unit rebuilt to the in-service face (omaat_j32); kept, no high or medium issue |
+
+- **Location check first.** OMAAT's ANA THE Room review (NH109 JFK-HND, Jan 2020, seat 15A) places omaat_j32 in "a small
+  snack bar between the middle and rear business class cabins", which is door 3. A real 2019 Traffic News press photo
+  (trafficnews.jp/photo/87790, ph18, "bar counter with refrigeration") shows the same charcoal carcass with a black blind
+  down over the left bay, and KN Aviation (knav_31) shows the monitor over open bays with water bottles and the glass door
+  beside a lav. Real photos beat the 2019 render for geometry, so the bar follows them.
+- **Change (`buildBar`):** warm-charcoal carcass `barFace` #3a3835; the welcome galley's photo-derived face is now a
+  shared `serviceFace(B, V, xL, o)` (control panel over two ovens, monitor over two open bays with the brewer, tall
+  glass-door cabinet with latch, caution plate and tag), called at xL -1.04; blind rolled up into a black head; green
+  brewer LED; six water bottles in the right bay (knav_31); counter `barTop` #0e0e0f r 0.4; the bottle shelf, the narrow
+  fridge and the tumblers are gone. The door-2 welcome galley calls the same helper with the same numbers and is
+  pixel-identical (q01 / q19 / q13 changed px 0).
+- **Measured (q11):** upper face p10/50/90 4/30/186 -> 11/54/180 (omaat_j32 10/53/165); counter p50 79 -> 53 (photo
+  31-39); ovens L136-138 (photo 140).
+- **Triangles:** monuments mesh 119.6k -> 119.2k.
+- **Still open (low):** the glass cabinet reads as open shelving (no smoked pane; needs a transparent material, see
+  question 11), thin cabinet stiles, the control panel is a bright flat plate (photo: dark recessed switch field), the
+  nosing is a flat white band (photo: rounded satin rail, B suggests #b8babc m 0.7), the open bays render crushed (L3 vs
+  L11-12, mostly lighting), the lower ash doors L172 vs the photos' L130-161 (exposure). The door-2 welcome galley now
+  shares the face; see question 12.
