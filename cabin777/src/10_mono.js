@@ -102,8 +102,8 @@ const MONMAT = {
   bulkF: { c: '#c9cad2', r: 0.7, l: LAYER.atlasLit },
   // w1: the F walls are a soft grey-green sumi ink-cloud print on a pale ground, not paper fibres (the stretched atlas
   // washi read as marble veins): tpg_The-Suite-cabin_147 ground #c8c9c2, clouds ~#8f958a; tpg_63 #bdbca6 [V]
-  inkGround: { c: '#e6dcc8', r: 0.75, l: LAYER.atlasLit },   // polishC: paper ground x the atlas 'ink' panel (omaat_f13 h42 s0.11; was #dddbd0 plastic, rendered s0.01; w21a: a touch cooler than the cream bins, as in f40)
-  inkCloud: '#bdb5a6',   // polishC: ~30 L under the ground, warm (integration L8-L11: '#b3ad9f'; omaatF_2 p10 #a8a399); was '#6a665f'
+  inkGround: { c: '#e8dbc2', r: 0.75, l: LAYER.atlasLit },   // polishC: paper ground x the atlas 'ink' panel (omaat_f13 h42 s0.11; was #dddbd0 plastic, rendered s0.01; w21a: a touch cooler than the cream bins, as in f40)
+  inkCloud: '#bfb5a2',   // polishC: ~30 L under the ground, warm (integration L8-L11: '#b3ad9f'; omaatF_2 p10 #a8a399); was '#6a665f'
   bulkJ: { c: '#e6dccb', r: 0.5, l: LAYER.plastic },
   seamJ: { c: '#b3aa98', r: 0.6 },                          // [V] inset panel seam ~1.45 m (omaat_room_36)
   placardBlue: { c: '#2f5fb8', r: 0.5 },                    // [V] small blue placards ~1.75 m (omaat_room_36)
