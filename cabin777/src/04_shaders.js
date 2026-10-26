@@ -47,7 +47,7 @@ uniform sampler2D u_win; uniform vec2 u_winZ;
 uniform float u_R; uniform float u_yc; uniform vec2 u_winY;
 uniform float u_exposure; uniform float u_exterior; uniform float u_fill; uniform float u_sheen; uniform float u_sheenTint;
 uniform vec3 u_glassT; uniform float u_hueK; uniform vec3 u_rimK; uniform float u_dayN; uniform float u_scrWall; uniform float u_beltK;
-uniform float u_seatCool; uniform vec3 u_bleed; uniform vec2 u_lensLo; uniform float u_tubHue; uniform vec3 u_hueW;   // QA L14 (12_scene MOODS seatCool / bleed / lensLo / tubHue / hueW)
+uniform float u_seatCool; uniform vec3 u_hemiBotS; uniform vec3 u_washS; uniform vec3 u_bleed; uniform vec2 u_lensLo; uniform float u_tubHue; uniform vec3 u_hueW;   // QA L14 (12_scene MOODS seatCool / bleed / lensLo / tubHue / hueW)
 uniform vec3 u_skyTop; uniform vec3 u_skyBot;
 uniform float u_detailOn;
 out vec4 o;
@@ -456,12 +456,14 @@ void main(){
     // neutral, and the official PY / Y photos keep their light greys and whites cool, 10-20 B-R over the model at L140-200
     // where ACES is still near linear [V: B-R by luma band 140-175 / 175-200 / 200-220: y_47305 +26 / +24 / +21 vs q18 +10 /
     // +7 / +2; y_47303 +33 / +26 / +24 vs q17 +16 / +10 / +6; py_37301 +36 / +28 / +21 vs q14 +23 / +11 / +3]. THE Room and
-    // THE Suite keep hemiBotN (the L8 reason: q06 seat zone vs c_27312 +8) [D gapT14 WBC]
-    coolW = max(coolW, u_seatCool * step(u_sLowZ, v_wpos.z) * (1.0 - smoothstep(1.2, 1.5, v_wpos.y)));
+    // THE Suite keep hemiBotN (the L8 reason: q06 seat zone vs c_27312 +8). Its hue at the neutral light's level (u_hemiBotS /
+    // u_washS = hemiBot / wash scaled to the luminance of hemiBotN / washN, 12_scene): the level was fitted earlier, and at the
+    // cool light's own level (5 % lower) q18 went 169 -> 168 vs y_47305 183 [D gapT14 WBC; fixL14 t3 dC]
+    float seatC = u_seatCool * step(u_sLowZ, v_wpos.z) * (1.0 - smoothstep(1.2, 1.5, v_wpos.y)) * (1.0 - coolW);
     // (QA L13's hoV gates, N.V 0.3-0.6 and the 3.0-4.2 m eye distance on the belt dimming below, are gone in L14: a diffuse
     // lining may not change level as the viewer walks or turns, see u_beltK)
-    hBot = mix(u_hemiBotN, u_hemiBot, coolW);
-    vec3 wsh = mix(u_washN, u_wash, coolW);
+    hBot = mix(mix(u_hemiBotN, u_hemiBot, coolW), u_hemiBotS, seatC);
+    vec3 wsh = mix(mix(u_washN, u_wash, coolW), u_washS, seatC);
     // QA L9 (light): the centre bins' doors take u_ctrLift x the lift (12_scene MOODS ctrLift: 3 in Dining / Sunrise, 1
     // elsewhere, where binLift is 0 anyway). One lift for both reached the outboard doors' photo level first: seen from a
     // seat the centre-bin faces stayed ~30 L under it [V: ucr_the-room-cabin centre-bin doors #c79352 L154 s0.59 vs dd
@@ -574,7 +576,7 @@ void main(){
     float monK = mix(1.0, u_monHemi, (1.0 - sz) * (1.0 - fWall));
     hemi *= monK; bounce *= monK;
     // the bin lens's light on the sidewall (QA r2 / r3 above). QA L14 (lighting run 4): its fade-in starts at u_lensLo.x (12_scene
-    // MOODS lensLo: Boarding LENSLO_B, 0.95 elsewhere), so in Boarding the lens wash stays just under the bins and the pier falls
+    // MOODS lensLo: Boarding 1.25, 0.95 elsewhere), so in Boarding the lens wash stays just under the bins and the pier falls
     // from the lens to a light grey well above the window, as in y_47303 (pier 237 / 213 / 190 / 178 down to the window centre)
     vec3 lensT = u_sideLed * u_sideWall * lensW * facingIn * mix(u_sideLow, 1.0, smoothstep(u_lensLo.x, 1.55, v_wpos.y)) * smoothstep(0.35, 0.8, v_wpos.y)
                * (1.0 - smoothstep(1.95, 2.1, v_wpos.y)) * noDown * nearPane;

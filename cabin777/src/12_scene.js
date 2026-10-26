@@ -61,13 +61,13 @@ const MOODS = {
   // QA L14 (lighting run 4): the belt dimming is now the same for every viewer (mainFS: no N.V or eye-distance gate) and acts on
   // the cabin ambient only, so beltK 0.55 -> 0.62 and lensLo [1.25, 1.30]: the lens wash fades in from 1.25 m (was 0.95), just
   // under the bins, so the pier falls from the lens as in the photo [V: y_47303 rows 24-96 189 / 181 / 174 / 170 / 172 vs q17
-  // L14 195 / 186 / 184 / 186 / 191, L14b 193 / 180 / 172 / 173 / 182; c_27300 pier L205 vs q08 209 -> 198; c_27312 far-left
+  // L14 195 / 186 / 184 / 186 / 191 -> 193 / 180 / 172 / 173 / 182; c_27300 pier L205 vs q08 209 -> 198; c_27312 far-left
   // wall 146-216 vs q06 236 -> 210]; lensLo 1.40 overshot (q17 rows 36-60 158 / 154) [D fixL14 t1]. seatCool / bleed / hueW /
   // tubHue: the cool cast of the official PY / Y photos at seat level, through the tone curve and in the lower window tub
   // (mainFS, QA L14); bleed = the seat-block blue at unit luminance (hue only: the gap analysis's [0.86, 0.95, 1.30] took 4 %
   // off the seat level, q18 median 169 -> 167 vs y_47305 183) [V: y_47300 seat back #2f3d66; B-R by luma band 175-200 /
   // 200-220 / 220-235 y_47303 +26 / +24 / +17 vs q17 +10 / +6 / +3 -> +21 / +19 / +15] [D gapT14 WBC / TUB; fixL14 t2]
-  boarding: { label: 'Boarding', hemiTop: [0.97, 0.99, 1.03], hemiBot: [0.31, 0.35, 0.47], wash: [0.23, 0.255, 0.32], hemiBotN: [0.36, 0.37, 0.40], washN: [0.25, 0.26, 0.28], tubSky: [1.0, 0.6], led: [1.0, 0.98, 0.92], sideLed: [0.50, 0.57, 0.78], bandCut: 0.15, sideLow: 0, beltK: 0.62, lensLo: [1.25, 1.30], seatCool: 1, bleed: [0.86, 0.95, 1.30], tubHue: 0.8, hueW: [0.8, 0.72, 0.86], binLo: 0.8, k: 1.05, exposure: 1.38, toe: 1 },
+  boarding: { label: 'Boarding', hemiTop: [0.97, 0.99, 1.03], hemiBot: [0.31, 0.35, 0.47], wash: [0.23, 0.255, 0.32], hemiBotN: [0.36, 0.37, 0.40], washN: [0.25, 0.26, 0.28], tubSky: [1.0, 0.6], led: [1.0, 0.98, 0.92], sideLed: [0.50, 0.57, 0.78], bandCut: 0.15, sideLow: 0, beltK: 0.62, lensLo: [1.25, 1.30], seatCool: 1, bleed: [0.90, 0.99, 1.36], tubHue: 0.8, hueW: [0.8, 0.72, 0.86], binLo: 0.8, k: 1.05, exposure: 1.38, toe: 1 },
   // QA r2 (light): cruise sideLow 0.10 -> 0.30, the lavender wash reaches the window belt in THE Suite (the reveals by
   // the glass stay near-white through mainFS nearPane) [V: ml_DSC_1939-1 wall column y45 #6e9bfc (B-R +141), y150
   // #7a89be, belt y240 #888db0 (+40) vs cF03 belt #cccccf (+3)]
@@ -94,7 +94,7 @@ const MOODS = {
   // under the bins stays whole, so the upper wall keeps its blue [V: ml_DSC_1939-1 upper wall L153 s0.63 B-R +105 vs cF03 L109
   // +79 -> 119 +92] and the cabin light under it drops further: belt (90-150, 360-460) L167 +35 -> 149 +63 [V: L146-186, +42..+71],
   // frame median 108 -> 108 [V: 97]; at 0.48 (the analysis' estimate) the median rose to 113 [D fixL14 t2 C48 / C40 / C32]
-  cruise: { label: 'Cruise', hemiTop: [0.89, 0.885, 0.87], hemiBot: [0.18, 0.18, 0.22], wash: [0.25, 0.26, 0.30], hemiBotN: [0.195, 0.19, 0.185], washN: [0.27, 0.265, 0.26], led: [1.0, 0.98, 0.92], sideLed: [0.08, 0.14, 1.35], bandCut: 0.8, sideLow: 0.30, beltK: 0.48, binLo: 0.45, ctrLo: 0.5, fillLift: 0.25, k: 0.95, exposure: 1.12, toe: 1 },
+  cruise: { label: 'Cruise', hemiTop: [0.89, 0.885, 0.87], hemiBot: [0.18, 0.18, 0.22], wash: [0.25, 0.26, 0.30], hemiBotN: [0.195, 0.19, 0.185], washN: [0.27, 0.265, 0.26], led: [1.0, 0.98, 0.92], sideLed: [0.08, 0.14, 1.35], bandCut: 0.8, sideLow: 0.30, beltK: 0.32, binLo: 0.45, ctrLo: 0.5, fillLift: 0.25, k: 0.95, exposure: 1.12, toe: 1 },
   // QA r2 (light): ANA's full-blue phase (safety video, after take-off, early night): cove LED, sidewall lens and vault
   // saturated blue-violet, the seat zone washed blue and dim, the galley ends warm (monFill), the screens lighting their
   // surround [V: sany_47 (SANspotter Y) cove #1d21bd / #2227cb s0.85, crown #181a39, seat backs #171a7a, galley #776349,
@@ -922,6 +922,10 @@ class Scene {
     G.set('u_hemiBot', mood.hemiBot.map((v) => v * k));
     G.set('u_wash', mood.wash);
     G.set('u_hemiBotN', (mood.hemiBotN || mood.hemiBot).map((v) => v * k)); G.set('u_washN', mood.washN || mood.wash);   // QA L8: neutral shadow light away from the windows
+    // QA L14: the cool shadow light's hue at the neutral light's level, for the PY / Y seat level (mainFS seatC, MOODS seatCool)
+    const lumOf = (c) => 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+    const toLum = (c, ref) => c.map((v) => v * lumOf(ref) / Math.max(lumOf(c), 1e-6));
+    G.set('u_hemiBotS', toLum(mood.hemiBot.map((v) => v * k), (mood.hemiBotN || mood.hemiBot).map((v) => v * k))); G.set('u_washS', toLum(mood.wash, mood.washN || mood.wash));
     G.set('u_led', mood.led);
     G.set('u_sideLed', mood.sideLed || mood.led);
     G.set('u_vault', mood.vault || mood.led);
