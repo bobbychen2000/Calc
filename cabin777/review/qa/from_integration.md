@@ -831,3 +831,60 @@ These are the L12 raters' open items owned by other areas. Lighting-owned items 
   centre PSUs (psuo2), occluded only by the centre-bin door edge; no change was made.
 - **Fix:** 1. end the psuo2 run 0.05 m short of the door-3 zone boundary (z1 - 0.05), or 2. drop it 3 mm along its face normal, so
   the centre-bin door edge covers it with depth margin. Target: no grey fragment on the lip in z04 at DPR 1 and 2.
+
+## Lighting run 3, L13 (final rating of the run: lighting 8.1, integration 8.0): items for the area owners
+
+Lighting run 3 (plateau breaker) ended at its 3-round cap (L11 7.8 -> L12 7.95 -> L13 8.05). Open items the L13 raters gave to area owners:
+
+### To room / econ (shared SEATMAT in 09_seats.js) (low, lighting rater L13)
+- **Problem:** Thin-highlight share: q06 0.92 vs c_27312 2.20 %, q16 0.67 vs y_47301 2.50, q15 0.65, q09 0.36. Real in-flight economy photos: 0.03-0.66 %.
+- **Evidence:** thin.py on /tmp/claude-0/-home-user-Calc/b1f1e8ce-ba52-5ff4-94e9-cb27b8198a85/scratchpad/qa/L13/*.png; the views are pixel-identical to L12.
+- **Fix:**
+  No change unless a real in-flight photo shows seat-level streaks. If one does: the room jCap streaks via the existing rim lobe (u_rimK) extended forward of u_sLowZ at half gain, with the q06 median guard (<= 166).
+
+### To py (low, lighting rater L13)
+- **Problem:** Thin dark-line share q13 1.00 % vs py_37302 2.77 %.
+- **Evidence:** thindark.py on /tmp/claude-0/-home-user-Calc/b1f1e8ce-ba52-5ff4-94e9-cb27b8198a85/scratchpad/qa/L13/q13_pyFront.png and ref/ana/py_37302.
+- **Fix:**
+  09b_py.js per review/qa/from_integration.md 'To py': a dark reveal at the shell rim (#1f2228, r 0.9), 1 cm gap strips at the cushion sides and the leg-rest hinge, a 6 mm shell split line. Target >= 1.8 %.
+
+### To py (medium, integration rater L13)
+- **Problem:** PY seats still read as clean CG: outline darks about half of the in-flight photos, rim highlights short, the lower bands lifted
+- **Evidence:** Thin dark lines: q13 1.00 %, q14 0.72 % vs sanpy_11-18 1.67-2.63 % and py_37302 / 37301 2.77 / 3.15 %. Thin highlights: q13 0.29 %, q14 0.38 % vs sanpy 0.46-0.67 %. Lifted darks: - Frame p5: q13 44 vs 32; q14 55 vs 31. - q14 bands 4-5 mean / p10: 145 / 86 and 128 / 75 vs py_37301 118 / 36 and 89 / 30. Crop: /tmp/claude-0/-home-user-Calc/b1f1e8ce-ba52-5ff4-94e9-cb27b8198a85/scratchpad/integ11/c_py.jpg.
+- **Fix:**
+  09b_py.js pySeat. Add recessed grooves, inset 2-3 mm, material `{ c: '#2a2e36', r: 0.9 }` (it renders at L45-60):
+  1. Each side, where the back fabric meets the shell wing: a 5 mm loft along the shell's inner rim from the headrest down to the cushion, e.g.
+     `for (const sd of [-1, 1]) loftAt(B, ds.filter(([y]) => y < 0.93).map(([y, d, w]) => SEC(y, 0.005, 0.010, zr(y) - d + 0.010, 0.003, sd * (w / 2 - 0.004))), BH, PYGROOVE, 1);`
+  2. A 5 mm horizontal groove at the headrest panel's lower edge.
+  3. A 6 mm gRBox groove 2 mm under the cushion top, along its front and sides.
+  4. pyUnit: the console cubby and control openings as 8-10 mm recesses, `gBox` with `{ c: '#16181c', r: 0.9 }`.
+  5. To lower the PY darks: a crease under the cushion nose, and the leg-rest underside in the PYGAP tone.
+  
+  Targets:
+  - q13 / q14 thin dark-line share >= 1.5 %.
+  - q13 p5 <= 38; q14 bands 4-5 p10 <= 50.
+  - Face means within 5 L.
+  - q13 thin highlights >= 0.4 %.
+
+### To monuments (medium, integration rater L13)
+- **Problem:** The door-3 self-service bar follows ANA's 2019 render; an in-service photo in ref/web shows a different face (galley inserts, brewer, glass-door mini-fridge, black counter)
+- **Evidence:** Pair: /tmp/claude-0/-home-user-Calc/b1f1e8ce-ba52-5ff4-94e9-cb27b8198a85/scratchpad/integ11/p_bar.jpg (q11 | omaat_j32). Counter: q11 (130-560, 345-380) #4a4c4f p50 78 vs photo counter top p50 37. Back panel: q11 (195-300, 160-330) #1f1e21 L30, p10 29 / p90 32: flat and crushed. The photo's charcoal galley / fridge face reads L62, p10 48 / p90 88, with visible structure. Ash doors: q11 L177 vs photo L137 (photo dimmer and warmer).
+- **Fix:**
+  10_mono.js bar: rebuild the upper face to the photo, keeping the ash lower cabinets and the monitor:
+  - Left bay: two oven / chiller doors (`gRBox`, #b9bcbf, r 0.5) with small blue LED windows, vertical handle bars, and a lit control strip above (#d8d6d0 with red / amber dots).
+  - Centre: the monitor over an open, lit cubby with the coffee brewer (reuse the galley brewer insert) and a green LED.
+  - Right bay: a tall glass-door fridge, framed in #3a3835, with dark tinted glass (the glass material at 0.6 transmission), a round lever latch and a white caution placard at the top.
+  - Counter: #141414, r 0.15, with a 15 mm satin-steel nosing (#9a9ea3, m 0.6).
+  - Drop the open bottle shelves.
+  - Face colour #3a3835, so it reads near L55-65 under the current light.
+  
+  Target: rater pair q11 vs omaat_j32 with no structural mismatch, and the back face L50-70 rather than flat L30.
+
+### To ceiling (low, integration rater L13)
+- **Problem:** Grey dashes still show through the right outboard bin lip at door 3 (unchanged since L11)
+- **Evidence:** z04_binlip at head: /tmp/claude-0/-home-user-Calc/b1f1e8ce-ba52-5ff4-94e9-cb27b8198a85/scratchpad/integ11/c_z04.png (3x crop of x280-700, y330-420). It shows the same dashed fragments at x 450-520, y 375-383 as integ10/z04_zoom.png (L11 / L12).
+- **Fix:**
+  08_bins.js: end the psuo2 run 0.05 m short of the door-3 zone boundary (z1 - 0.05), or move it 3 mm along its face normal so that the centre-bin door edge covers it.
+  
+  Target: no grey fragment on the lip in z04 at DPR 1 and 2.
+
