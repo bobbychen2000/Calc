@@ -1,0 +1,43 @@
+{
+ "area": "suite",
+ "rater": "B",
+ "round": "w17",
+ "score": 8.9,
+ "method": "Working-tree diff of 09d_suite.js (polishC L11, fSeam #1d1a17). BEFORE r0 / AFTER r1 (930x575: q02-q05, wardrobe) side by side and pixel diffs (q02 4.6 %, q03 6.8 %, q05 7.6 %, wardrobe 11.5 % changed, most of it the front-wall ink print; q04 0.2 %). Own DPR 2 renders of the after build /tmp/b1/test.html from seat 1A: /tmp/claude-0/-home-user-Calc/4bf95286-4075-5784-8617-507211ce8722/scratchpad/raters/suiteB/b1/wardrobe2.png, foot2.png, console2.png (script ../scripts/cl.js). Luma profiles across the new seams vs omaat_f11 / f40, and the thin-dark-line share (thindark.py): q03 3.47 -> 3.65 %, q05 2.93 -> 3.33 %, q02 7.65 -> 7.98 % against f11 7.95, f5 7.55, f13 5.94, f2 7.87, f40 6.92 %. References: omaat_f5, f11, f13, f40. Lighting noted, not scored.",
+ "calibration": [
+  { "earlier_issue": "w15a MEDIUM: head band square-edged / proud of the loft, z-fight dashes on the fold", "status": "still fixed (q04 unchanged, 0.2 % diff, no dashes)." },
+  { "earlier_issue": "w14a/b MEDIUM: wood flanks chestnut", "status": "still fixed (espresso)." },
+  { "earlier_issue": "w16 LOW: loft bullnose beside the roll end and notch at the window end of the band seam", "status": "not fixed (not addressed this round)." },
+  { "earlier_issue": "w14b-w16b LOW: aisle drape a separate rail", "status": "not fixed (not addressed)." },
+  { "earlier_issue": "w15-w16 LOW: flap a flat grey triangle", "status": "not fixed (not addressed)." },
+  { "earlier_issue": "w16a LOW: footwell back lit / far-leaf moire / short flank grain", "status": "not fixed (unchanged)." }
+ ],
+ "changes": [
+  { "change": "5 mm dark joint under every taupe cap, 2 mm proud", "verdict": "keep, adjust", "evidence": "q02 / q05: reads as the cap's shadow line seen in f40 / f13 (cap overhang over a dark line). At DPR 2 (wardrobe2 y 150-190) it is a flat near-black band (L ~10) slightly heavier than the soft shadow in f40, and its square corner sticks out past the shell's rounded corner as a small black tab (wardrobe2 x 320-360, y 178-190).", "adjust": "Inset the joint box 1 mm (cw - 0.002, cd - 0.002) so it stays under the shell edge, or lift fSeam to ~#2a2622 for cap joints only." },
+  { "change": "dark welt between ottoman cushion and tray", "verdict": "keep", "evidence": "q03 / foot2: reads as a real welt / shadow gap like f11 (f11 has an L18 line under the cushion front). Render line ~4 px at 1x vs ~1-2 px in f11, slightly heavy but believable; no z-fighting." },
+  { "change": "lid seam on the aisle box", "verdict": "keep", "evidence": "foot2 x 1170-1450, y 515-525: a clean joint under the lid, matches the box-lid line in f11." },
+  { "change": "dark underside line behind the table's front lip", "verdict": "keep (neutral)", "evidence": "Merges with the existing black lip in q03 / foot2; adds a little depth, no artefact." },
+  { "change": "fascia / body joint line on the window console", "verdict": "keep (neutral)", "evidence": "Barely visible at 930 (q03 left console); subtle, consistent with f5 / f11 console joint." },
+  { "change": "wardrobe inner wall: 5 mm reveal round the door leaf, split lines at the wood panel edges, door wood 3 mm proud", "verdict": "keep the door reveal, adjust the panel split lines", "evidence": "wardrobe2: the reveal inside the taupe door frame reads as a real recess (f13 / f5 pocket door shows the same dark inner edge). The split lines round the big wood panel (x 380-395 vertical, y 360-395 top) are uniform pure-black 0.5 mm-proud strips, so the panel looks outlined with a pen rather than butted to the taupe; in f5 / f13 that edge is a fine shadow, darker than the wood only by ~20 L.", "adjust": "Split lines 0.005 -> 0.003 wide and flush (x xa - 0.0032) or a lighter material (~#2e2924), keep the door reveal as is." }
+ ],
+ "details": [
+  { "detail": "Screen wall: 43-in screen, wing, pier with mirror and lamp", "score": 8.7, "refs": "q03 / q05, unchanged" },
+  { "detail": "Centre pair: board, edge strips, divider", "score": 8.6, "refs": "q02, cap joints add definition" },
+  { "detail": "Shell / cap two-tone", "score": 8.7, "refs": "cap joint now separates cap and shell like f40 / f13; corner tab at DPR 2" },
+  { "detail": "Aisle leaves", "score": 8.5, "refs": "unchanged; far-leaf moire in q02" },
+  { "detail": "Wood flanks / wardrobe wall", "score": 8.5, "refs": "door reveal good; panel outline a bit drawn-on" },
+  { "detail": "Plinth, doors", "score": 8.8, "refs": "unchanged" },
+  { "detail": "Window console", "score": 8.3, "refs": "fascia joint, subtle" },
+  { "detail": "Bed", "score": 8.6, "refs": "q04 unchanged" },
+  { "detail": "Ottoman, recess, aisle box, table", "score": 8.8, "refs": "q03 / foot2 vs omaat_f11: welt, lid seam and lip line read as real joints" }
+ ],
+ "issues": [
+  { "severity": "low", "problem": "Wood-panel split lines on the wardrobe inner wall read as a black pen outline (uniform L ~9, 0.5 mm proud) rather than a fine shadow joint.", "evidence": "b1/wardrobe2.png x 380-395 (vertical) and y 360-395 (top edge); r1/wardrobe.png luma 9 over 6 px at x 561-566.", "fix": "09d_suite.js wardrobe block: split boxes 0.005 -> 0.003 in the visible dimension and at x = xa - 0.0032 (flush with the wood face), or give them a lighter seam colour (~#2e2924)." },
+  { "severity": "low", "problem": "Cap joint box has square corners 2 mm wider than the shell and pokes out past the shell's rounded corner as a small black tab.", "evidence": "b1/wardrobe2.png x 320-360, y 178-190.", "fix": "cap(): gBox(cw - 0.002, 0.005, cd - 0.002) (or a gRBox with the shell's corner radius)." },
+  { "severity": "low", "problem": "Ottoman welt about twice the width of the f11 line.", "evidence": "r1/q03 col 500 y 516-520 (4 px L6-18) vs omaat_f11 1-2 px L18.", "fix": "Optional: welt height 0.014 -> 0.008." },
+  { "severity": "low", "problem": "Carried: loft bullnose / notch at the head band, drape rail, flat flap, footwell back lit, far-leaf moire, short flank grain.", "evidence": "w16b / w16a.", "fix": "As in w16b." }
+ ],
+ "questions": [
+  "No high or medium issues. The new seams bring the thin-dark-line share to 3.3-8.0 %, close to the photos' 5.9-8.0 % (L11 item answered). The w13 questions (flank swatch LAYER slot; 0.64 walk-in opening) are still open."
+ ]
+}
