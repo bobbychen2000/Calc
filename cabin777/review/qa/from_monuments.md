@@ -83,7 +83,7 @@ Noted by both raters in all three rounds; not scored against monuments.
   galley whites in the official photos are neutral. The cool shift in y_47305 / py_37301 that L14 matched is measured
   on seats, not on galleys.
 - **Concrete fix:** leave monument surfaces out of both terms. Either (a) multiply both gates by
-  `(1.0 - monoMask)`, where `monoMask` is the galley/lav material flag already baked per vertex by `Builder`, or (b) if
-  no free flag exists, zero both gates inside the monument z-bands from `MONO_LAYOUT` (door-4 galley about
+  `(1.0 - monoMask)`, where `monoMask` is a new flag in a spare channel of the per-vertex `a_mat` (only r = rough and
+  g = metal are read at 04_shaders.js:227; I have not checked whether b/a are free), or (b) if no channel is free, zero both gates inside the monument z-bands from `MONO_LAYOUT` (door-4 galley about
   z 43.6-45.3, door-5 galley z > 58.0) with a 0.3 m smoothstep. Target: lower and upper galley faces within 3 B-R
   of each other, both at about -3, which is the 5e5e561 value.
