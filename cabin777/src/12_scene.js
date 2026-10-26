@@ -271,12 +271,15 @@ const AO_TUNE = { hemi: 0.22, bounce: 1.0, emitLens: 0.45, emitCtr: 0.35, kAttF:
 // depth-aware blur would smooth the rest but needs new full-screen passes (not in this run's brief; questions_lighting 13)
 // QA L11 (integration + shell): glassT = the day-pane transmittance, applied to the sky and the exterior before the tone curve
 // (mainFS / skyFS u_glassT) instead of the old display-space multiply pass (now x-ray only), which capped a clipped day sky at
-// 255 x tint (G 242: the most frequent pixel value in q03 / q07) [V: c_27316 pane #ffffff, y_47300 #fcfcfb, y_47301 pane L251;
-// p99 c_27312 255, y_47301 254 vs q06 247, q16 245]. Value = 07_shell's pane tint [0.93, 0.95, 0.96] (in place until shell w18)
-// raised to 2.4: below the clip the ACES + sRGB slope makes a pre-tone x t^2.4 ~ the old display x t, so the look-out view
-// (q12) and every pane below sRGB ~225 keep their level [D gap3 v_glass24, gapT pA2]. rim = the cove-line rim lobe (mainFS
-// u_rimK: gain on the fillets, 1 = lobe on the material roughness, metal cut) [D gap3 v_rimG2]
-const LIGHT_TUNE = { cove: 1.0, sheen: 1.35, sheenTint: 0.3, tubWash: 0.7, lookOut: 0.86, ssao: [0.05, 8, 0.006, 0.07], ssaoMix: 0.9, ssaoAng: 0.25, ssaoDither: 0, ssaoIn: 0.3, ssaoLow: 0.5, ssaoEase: [0.02, 0.25], ssaoTaps: 12, ssaoCap: 16, glassT: [0.840, 0.884, 0.906], rim: [2.0, 1, 0] };
+// 255 x tint (shell w18's [0.985, 0.99, 1.0]: G 252; the old [0.93, 0.95, 0.96]: G 242, the most frequent pixel value in q03 /
+// q07) [V: c_27316 pane #ffffff, y_47300 #fcfcfb, y_47301 pane L251; p99 c_27312 255, y_47301 254 vs q16 247]. Value = 07_shell's
+// pane tint (w18) raised to 2.4: below the clip the ACES + sRGB slope makes a pre-tone x t^2.4 ~ the display x t, so every pane
+// below sRGB ~225 and the look-out view keep the shell-rated level (q12 frame mean 124.9 -> 124.9, wing 152 -> 151) while a
+// bright sky clips (q14 pane p50 249 -> 253; share > L250 q09 0.18 -> 0.67 %, q14 0.45 -> 1.20 %, q16 0.77 -> 1.13 %) [D fixL11
+// v1]; the old tint^2.4 [0.84, 0.884, 0.906] also took the q12 view back to its L11 level (mean 122.4) but the sub-clip panes
+// under the shell's (q17 pane p50 248 -> 245, q07 share > L235 7.7 -> 7.4 % vs c_27316 9.0 %) [D fixL11 a1]. rim = the cove-line
+// rim lobe (mainFS u_rimK: gain on the fillets, 1 = lobe on the material roughness, metal cut) [D gap3 v_rimG2, fixL11]
+const LIGHT_TUNE = { cove: 1.0, sheen: 1.35, sheenTint: 0.3, tubWash: 0.7, lookOut: 0.86, ssao: [0.05, 8, 0.006, 0.07], ssaoMix: 0.9, ssaoAng: 0.25, ssaoDither: 0, ssaoIn: 0.3, ssaoLow: 0.5, ssaoEase: [0.02, 0.25], ssaoTaps: 12, ssaoCap: 16, glassT: [0.964, 0.976, 1.0], rim: [2.0, 1, 0] };
 // QA r3 (integration): floor contact map (computeAO): cell size (m; 6 m x 59 m -> 200 x 1973 texels, under the 2048
 // texture minimum), marking height above the floor and the darkening at a base (mainFS) [D]
 const CONTACT = { cell: 0.03, h: 0.2, k: 0.55 };
@@ -874,7 +877,7 @@ class Scene {
     G.set('u_bandCut', mood.bandCut ?? 0.65); G.set('u_sideLow', mood.sideLow ?? 0.4); G.set('u_sideWall', mood.sideWall || [1, 1, 1]);
     G.set('u_lowGain', mood.lowGain ?? 1); G.set('u_fLow', mood.fLow ?? 1); G.set('u_monFill', mood.monFill || [0, 0, 0]); G.set('u_cove', LIGHT_TUNE.cove * (mood.cove ?? 1)); G.set('u_sheen', LIGHT_TUNE.sheen); G.set('u_sheenTint', LIGHT_TUNE.sheenTint);
     G.set('u_toe', mood.toe ?? 0);
-    G.set('u_glassT', [1, 1, 1]); G.set('u_hueK', mood.hueK ?? 0); G.set('u_rimK', LIGHT_TUNE.rim);   // QA L11: pane tint only on the exterior (below), amber hue-preserving tone, cove rim lobe
+    G.set('u_glassT', [1, 1, 1]); G.set('u_hueK', mood.hueK ?? 0); G.set('u_rimK', LIGHT_TUNE.rim); G.set('u_sLowZ', this.layout.z20 ?? 0);   // QA L11: pane tint only on the exterior (below), amber hue-preserving tone, cove rim lobe
     G.set('u_extBounce', [0, 0, 0]);
     // reading-light pools: the 8 lit lamps nearest the eye [A: count, a phone-sized loop]
     const sp = new Float32Array(32), st = new Float32Array(32);
@@ -958,7 +961,7 @@ class Scene {
     if (ssao) {
       G.tex('u_sDepth', 8, this.sDepth.tex); G.set('u_sRes', [w, h, this.sDepth.w, this.sDepth.h]);
       G.set('u_sProj', [cam.proj[0], cam.proj[5], cam.proj[10], cam.proj[14]]);
-      G.set('u_sFwd', cam.fwd); G.set('u_sRight', cam.right); G.set('u_sUp', cam.up); G.set('u_sDither', LIGHT_TUNE.ssaoDither ?? 1); G.set('u_sMix', LIGHT_TUNE.ssaoMix ?? 0.8); G.set('u_sAng', LIGHT_TUNE.ssaoAng ?? 0.35); G.set('u_sLow', LIGHT_TUNE.ssaoLow ?? 0); G.set('u_sLowZ', this.layout.z20 ?? 0); G.set('u_sIn', LIGHT_TUNE.ssaoIn ?? 0.5); G.set('u_sEase', LIGHT_TUNE.ssaoEase || [0.05, 0.4]); G.set('u_sTap', [LIGHT_TUNE.ssaoTaps ?? 8, LIGHT_TUNE.ssaoCap ?? 0]);
+      G.set('u_sFwd', cam.fwd); G.set('u_sRight', cam.right); G.set('u_sUp', cam.up); G.set('u_sDither', LIGHT_TUNE.ssaoDither ?? 1); G.set('u_sMix', LIGHT_TUNE.ssaoMix ?? 0.8); G.set('u_sAng', LIGHT_TUNE.ssaoAng ?? 0.35); G.set('u_sLow', LIGHT_TUNE.ssaoLow ?? 0); G.set('u_sIn', LIGHT_TUNE.ssaoIn ?? 0.5); G.set('u_sEase', LIGHT_TUNE.ssaoEase || [0.05, 0.4]); G.set('u_sTap', [LIGHT_TUNE.ssaoTaps ?? 8, LIGHT_TUNE.ssaoCap ?? 0]);
     }
     G.set('u_fill', this.fill ?? 0.45);   // QA r1: 0.7 flattened AO and the ceiling-to-floor falloff [V: c_27312 shell gradients]
     G.set('u_exterior', 0);

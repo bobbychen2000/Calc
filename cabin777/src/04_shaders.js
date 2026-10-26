@@ -331,10 +331,13 @@ void main(){
   // perturbed nvar let fabric weave trip it) on smooth-ish materials (rough < 0.45-0.6). The spec-AA widening below takes
   // those fillets to rough ~0.5-0.6, which flattened the cove lobe ~10x, so they carried no thin streak highlight [V: y_47303
   // 3640 px > L240 at seat level on the fillets vs q17 79; py_37302 4810 px > L235 on the shell / armrest / console rims vs
-  // q13 653] [D gap3 v_rimG2]
+  // q13 653] [D gap3 v_rimG2]. Only aft of THE Room (u_sLowZ = 05_layout z20: PY and economy): in THE Room and THE Suite it drew
+  // white outlines on every cap edge and beaded glints along the divider rails, and lifted the q06 frame (median 165 -> 167 vs
+  // c_27312 128) where the thin-highlight share already sits above the in-flight range (q06 0.92 % vs 0.06-0.57 %) [D fixL11 a1]
   float rough0 = rough;
   vec3 Ng = normalize(v_nrm); vec3 gnx = dFdx(Ng), gny = dFdy(Ng);
-  float rimW = smoothstep(0.002, 0.02, 0.25*(dot(gnx, gnx) + dot(gny, gny))) * (1.0 - smoothstep(0.45, 0.6, rough0)) * (1.0 - u_rimK.z*metal);
+  float rimW = smoothstep(0.002, 0.02, 0.25*(dot(gnx, gnx) + dot(gny, gny))) * (1.0 - smoothstep(0.45, 0.6, rough0)) * (1.0 - u_rimK.z*metal)
+             * smoothstep(u_sLowZ - 0.3, u_sLowZ + 0.3, v_wpos.z);
   // specular anti-aliasing: widen roughness where the normal varies across pixels
   vec3 dNdx = dFdx(N), dNdy = dFdy(N);
   float nvar = 0.25 * (dot(dNdx, dNdx) + dot(dNdy, dNdy));
