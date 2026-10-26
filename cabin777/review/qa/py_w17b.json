@@ -1,0 +1,50 @@
+{
+  "area": "py",
+  "rater": "B",
+  "round": "w17",
+  "score": 8.5,
+  "summary": "Back to 8.5, level with w15 and above w16 (8.1). There are no high-severity issues. Both w16 artefacts are gone: the shell sides are clean grey with a thin rim highlight (q14, p7), and no rods float beside the cushion. The lower roughness on shell, console and shroud gives highlights close to py_37303. The new 24 mm #3a3f4c band under the cushion nose reads as the dark crease in py_37301, where the old render showed a lit skirt top instead (raterPyB2/z_nose.png). It is still a crisp, uniform line, not a graded shadow, but it is not black (L about 55-70 against the photo crease at 35-60) and its ends are hidden behind the skirt. The foot plates, the split line and the hinge gap are barely visible and add no artefacts. The w15 fabric and pocket items are still open and hold the score at 8.5.",
+  "calibration": [
+    {"issue": "w16b high: shell shadow-joint strip shows through the outer shell side as a black stripe", "status": "fixed", "evidence": "The strip was removed. In the q14 near shell (raterPyB2/z_shell.png: before / w16 / w17) the side is clean grey. p7 shows 26 px changed by more than 50 L, none of them on the shell."},
+    {"issue": "w16b medium: cushion side and front strips read as black rods with exposed ends", "status": "fixed", "evidence": "The side strips are gone. The front band (0.39 wide, inside the 0.41 skirt) sits behind the skirt front plane, so no ends show in p5, p8 or p1 (cmp_p5_console.png, cmp_p8_ana37301.png)."},
+    {"issue": "w15b medium: trim-B ears (pyWingB) too dark against the back", "status": "not fixed", "evidence": "SEATMAT.pyWingB is still '#626876', and the q13 ears are unchanged."},
+    {"issue": "w15b medium: trim-A back dashes too long (coarse bricks)", "status": "not fixed", "evidence": "No swatch change. The p5 and p8 cushions still show soft bricks (z_nose.png against the py_37301 crop)."},
+    {"issue": "w15b / w16b low: pocket recess and holder plate near-black", "status": "not fixed", "evidence": "The p2 pocket frame is unchanged."}
+  ],
+  "details": {
+    "Back + cushion shape": 8.4,
+    "Cushion nose / skirt / hinge roller": 8.4,
+    "Headrest ears + navy flap": 8.4,
+    "Shell incl. rear face": 8.4,
+    "Screen + bezel + placards": 8.5,
+    "Literature pocket": 8.5,
+    "Consoles (front, sockets, cubbies, lid, cup nose, side panel)": 8.6,
+    "Window armrest + aisle shroud": 8.5,
+    "Leg rest / footrest / legs / bottle bin": 8.1,
+    "Gooseneck": 8.5,
+    "Fabrics: trim A brick weave": 8.2,
+    "Fabrics: trim A petal ears": 8.6,
+    "Fabrics: trim B petal back": 8.6,
+    "Fabrics: trim B dash ears": 7.8,
+    "Materials: plastic specular": 8.5
+  },
+  "issues": [
+    {"severity": "low", "title": "The cushion-nose band has crisp edges and uniform tone where the photo has a graded crease", "evidence": "raterPyB2/z_nose.png. In py_37301 the crease under the nose grades from L 90 to L 35 over about 8 px. The render steps straight from fabric to the band at L about 60. Only noticeable at p5 / p8 range.", "fix": "Optional. In src/09b_py.js, split the band into two layers: 0.012 high at #3a3f4c (y 0.372), plus a 0.014-high #555b69 strip 1 mm forward above it (y 0.385). That fakes the gradient. Or leave it."},
+    {"severity": "low", "title": "At r 0.30 the shell's surface noise shows as orange-peel in the specular", "evidence": "The q14 near shell (z_shell.png right) shows dimpled highlights. In py_37303 the shells are smooth satin. It was present at 0.42 too, but less visible.", "fix": "Optional. Lower the LAYER.plastic bump amplitude for pyShell only, or set pyShell r to 0.33. Do not revert the roughness change."},
+    {"severity": "low", "title": "Still open from w15: trim-B ears too dark, trim-A dashes too long, pocket frame near-black", "evidence": "See calibration.", "fix": "As in py_w15b.json: pyWingB to about '#7f8698'; synth_py_back dash ln N(17, 2.5); 09b_py.js recess '#4c5057', plate '#6a6f77'."}
+  ],
+  "questions": [],
+  "before_vs_after": {
+    "verdict": "Ship w17. It matches w15 at 8.5 with better plastic definition and a plausible crease under the nose, and it has no artefacts.",
+    "changes": [
+      {"change": "Shell joint removed", "verdict": "keep", "reason": "This fixes the w16 high issue."},
+      {"change": "Cushion side strips removed", "verdict": "keep", "reason": "This fixes the w16 medium issue."},
+      {"change": "Soft 24 mm #3a3f4c band behind the skirt under the cushion nose", "verdict": "keep", "reason": "It matches the py_37301 crease better than the lit skirt top in w15. No exposed ends."},
+      {"change": "Dark gap under the hinge roller", "verdict": "keep", "reason": "Practically invisible, and harmless."},
+      {"change": "Roughness pyShell 0.30 / pyArm 0.38 / pyArmPad 0.32", "verdict": "keep", "reason": "Rim highlights like py_37303. See the low orange-peel note."},
+      {"change": "Rounder console, nose and shroud edges", "verdict": "keep", "reason": "Softer highlighted edges; no cost."},
+      {"change": "Dark foot plates under the console and shroud", "verdict": "keep", "reason": "A subtle contact shadow."},
+      {"change": "6 mm console side split line", "verdict": "keep", "reason": "Subtle and correctly placed."}
+    ]
+  }
+}

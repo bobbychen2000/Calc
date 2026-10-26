@@ -37,3 +37,6 @@
     per seat letter or random), say so; it is one line in `pyUnit`.
 11. **Literature pocket.** It now follows san_26, an open tray in a dark recess with a smile-shaped grey rim and mesh
     across the lower bulge. Is it the same on every row? Row 25 faces the bulkhead, so it has none.
+12. **Polish D (w17):** both w17 raters said the q13 framing differs from w15. The camera expression is unchanged
+    (`__rel('25C', ...)`), and my before/after pair (same container, same lighting) is pixel-aligned (best shift 0, 0). Their w15 reference renders
+    came from an older lighting head. No action is needed unless the q13 camera is meant to be pinned.

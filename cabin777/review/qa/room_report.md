@@ -242,3 +242,17 @@ Closed the `from_integration.md` items addressed to room (log: `fixed_polishA.md
 - **Still open (low):** q09 shaded wall ~0.7-0.9x c_27314 (raters: mostly AO / lighting); band / flap 0.82 vs 0.89-1.05
   (optional jBand #6b717c); faint plastic stipple on the band; the w16 soft-goods lows; ash pinstripe contrast.
 - Shared edits: SEATMAT jShell / jCap / jShellIn (`09_seats.js`). Triangles unchanged.
+
+## Polish D (w19): integration L8-L11 hand-offs
+
+w19 scored A 8.5 / B 8.5 with no high or medium issue (89168b6), so the change was kept.
+- **Toe kick:** `KICK` (0.08 tall, 2 cm back, #1c1d20) under both aisle armrest housings and the ash monument ends,
+  where the ash panel and frame now start at 0.08 (c_27312, omaat_room_4).
+- **11A hairline:** it was the lit 45° chamfer of the low console block at the footwell mouth. The block now has square
+  edges: 48 px > L200 -> 0.
+- **Cap rails:** capRail is now a 9 mm round edge with 3 segments.
+- **Tested and reverted:** shared jCap r 0.26. It added +16 L on a flat cap face in q09 and no measurable streak.
+- **Open (low):** A suggests a 0.10 kick with a thin silver rail above it. B notes there is no bright lip where the ash
+  meets the black base.
+- Triangles: roomO / roomE 12.2k / 9.6k -> 13.4k / 11.0k per unit mesh. Ratings `room_w19a/b.json`. Log:
+  `fixed_polishD.md`.

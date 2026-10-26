@@ -638,12 +638,14 @@ The run ended at its 5-round cap. These are the open items the L11 raters gave t
 - **Fix:**
   09_seats.js SEATMAT (shared, one line per key): arm r 0.45 -> 0.26, armPad 0.50 -> 0.32, jCap 0.34 -> 0.26, pyShell 0.42 -> 0.30. Targets: thin share >= 1.1 % in q06 / q16 / q15; face means within 5 L.
 
+- **polishD response:** pyShell 0.30 is kept, with pyArm 0.38 and pyArmPad 0.32 (py w17, A 8.5 / B 8.5); q13 thin highlights rose 0.16 -> 0.24 %. `arm` 0.26 and `armPad` 0.32 were reverted untested: q15 / q16 thin highlights stayed at 0.61 / 0.65 %, while the arm faces rose 2-5 L. `jCap` 0.26 was reverted: it added +16 L on a flat q09 cap face, and q06 stayed at 0.95 %. The capRail is now a 9 mm round edge with seg 3 (room w19). A streak on the econ arms and room caps needs a cove-specular change on the lighting side. See fixed_polishD.md.
 ### To py (low, lighting rater L11): Carried: PY contact darks are about a third of the photos'. The lighting side (SSAO) has moved as far as the brief allow
 - **Problem:** Thin dark-line share: q13 1.01 vs py_37302 2.77 %, q14 0.76 vs py_37301 3.15 % (L10: 0.73 / 0.67).
 - **Evidence:** thindark.py on /tmp/claude-0/-home-user-Calc/b1f1e8ce-ba52-5ff4-94e9-cb27b8198a85/scratchpad/qa/L11/q13_pyFront.png, /tmp/claude-0/-home-user-Calc/b1f1e8ce-ba52-5ff4-94e9-cb27b8198a85/scratchpad/qa/L11rateL/x/q14.png and the ref/ana photos.
 - **Fix:**
   09b_py.js pySeat / pyUnit as handed off in review/qa/from_integration.md 'To py': a dark reveal at the shell rim (#1f2228, r 0.9), 1 cm gap strips (#1c1e23) at the cushion sides and the leg-rest hinge, and a 6 mm split line on the shell. Target: q13 >= 1.8 %, q14 >= 1.8 %.
 
+- **polishD response:** see the py medium item below.
 ### To suite (medium, integration rater L11): Owner: suite (09d_suite.js suiteUnit). Lighting is secondary (04_shaders.js ssaoF).
 - **Problem:** THE Suite still reads cleaner than the in-flight photos: its thin dark outline lines are 0.55-0.85x of omaat_f2 / f5 / f11 / f13 / f40. The seat geometry carries almost no joints, so the AO has nothing to darken.
 - **Evidence:** Thin dark-line share (thindark.py), L11: - q02 1.73 %, q03 1.51 %, q05 1.26 %. - In flight: omaat_f2 2.24, f5 2.43, f11 2.85, f13 2.16, f40 1.79 %. - Official: f_17301 4.13, f_17306 3.58, f_17313 2.21 %. - q03 without the AO (integ7/outA/q03_noSSAO.png): 0.62 %. - For comparison, THE Room q06: 1.77 % without the AO, 2.68 % with it (in-flight 2.38-2.68 %). L10 -> L11 thin-line change in q03: +0.40 / -0.26 points (integ9/tdiff_L10_L11.png).
@@ -680,6 +682,7 @@ The run ended at its 5-round cap. These are the open items the L11 raters gave t
      - q13 p5 <= 38; q13 bottom-third p25 <= 55.
      - Face means within 5 L.
 
+- **polishD response:** partly done. In w16 the proposed proud strips failed: the shell-rim reveal showed as a black stripe through the rounded shell side, and the cushion side strips read as floating rods (A 8.3 / B 8.1, high issues). w17 keeps a soft band under the cushion nose, a gap under the roller, foot plates and a console split line (A 8.5 / B 8.5). Outline darks are still short (q13 2.39 -> 2.42 % on my metric). Closing that needs recessed joints cut into the geometry. See fixed_polishD.md.
 ### To monuments (medium, integration rater L11): Owner: monuments (10_mono.js inkWall, MONMAT.inkCloud / inkGround). Carried, unchanged for seven rounds.
 - **Problem:** THE Suite front-wall ink-cloud print reads as grey smoke stains: 3x the photo's contrast, a third of its saturation, and 40 L darker.
 - **Evidence:** Print box in f_ink_seated (415-670, 320-380), current head: - L167, range 76, h46 s0.04, fine 1.4. - omaat_f13: L208, range 23, h42 s0.11, fine 2.3. - q03 top boxes: range 80 / 78. Crops: integ9/ink_cmp.jpg (model | omaat_f13) and integ9/ink_q03_f40.jpg (q03 top | omaat_f40).
@@ -717,6 +720,7 @@ The run ended at its 5-round cap. These are the open items the L11 raters gave t
      - q13 >= 0.45 %.
      - Face means within 5 L.
 
+- **polishD response:** done in py w17: SEATMAT pyShell r 0.30 and rounder console / shroud edges. q13 thin highlights 0.16 -> 0.24 %, still below the 0.45 % target.
 ### To room (low, integration rater L11): Owner: room (09c_room.js). Carried from L7-L10, unchanged; no room commit since 2026-10-25 03:14.
 - **Problem:** THE Room shell bases read as a flush grey band, not a recessed black toe-kick, and a white hairline shows along the 11A footwell floor, at DPR 1 as well as DPR 2.
 - **Evidence:** Toe-kick: j_kick_close (integ9/outD) column x 560 reads lip L137-144, then a flush band at L22-23, the same as L10. c_27312 shell bases are L0-2, in a recess. Footwell: fw_11A_footwell at 1x (integ9/outD), box (590-620, 380-473): 47 px > L200, max 248. The L10 DPR 2 render, downsampled to the same box, reads 58 px > L200. Crops: integ9/fw_zoom.png.
@@ -729,6 +733,7 @@ The run ended at its 5-round cap. These are the open items the L11 raters gave t
      - Kick recess L <= 15, with a contact line.
      - 0 px > L120 in the footwell box at DPR 1 and DPR 2.
 
+- **polishD response:** done in room w19 (89168b6, A 8.5 / B 8.5). The kick is recessed 2 cm, 0.08 tall, #1c1d20. The hairline was the lit chamfer of the low console block at the footwell mouth; that block now has square edges, and the crop box went from 48 px > L200 to 0.
 ### To ceiling (low, integration rater L11): Owner: ceiling/bins (08_bins.js: the door-3 end of the outboard run, or the PSU instances there). Carried from L7-L10, u
 - **Problem:** Grey dashes poke through the right outboard bin lip and the bin door's upper edge at door 3.
 - **Evidence:** z04_binlip (__app.setView([2.3, 1.62, 32.7], Math.PI/2 - 0.45, 0.25)), 1x on the current head, crop (320-480, 360-400): the same dashed fragments as the L10 DPR 2 render (integ9/z04_zoom.png, L10 top, L11 bottom).

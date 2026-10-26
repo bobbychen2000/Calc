@@ -790,3 +790,10 @@ Both rounds passed the guard: w50 was exactly at B's -0.05 limit, and w51 is bac
 
 Before/after sheet: `econ_before_after_w3m.jpg`, own renders only (w49 db946d6 vs w51 f1ab8cc, same lighting: q15,
 q17, e4_head, e3_side). Ratings: `econ_w50a.json`, `econ_w50b.json`, `econ_w51a.json`, `econ_w51b.json`.
+
+## Polish D: shared SEATMAT streak highlights (integration L8-L11), not done
+
+I tested `arm` r 0.45 -> 0.26 and `armPad` r 0.50 -> 0.32. The armrest faces rose 2-5 L, but the thin-highlight share
+stayed at 0.61 % in q15 and 0.65 % in q16, and the crops were indistinguishable. I reverted the change before rating
+it, so econ stays at w51 (A 8.5 / B 8.65) and no w52 round was run. A thin streak needs a lighting-side change to the
+cove specular. Details are in `fixed_polishD.md`.

@@ -6,6 +6,7 @@
 // ================= PREMIUM ECONOMY (ZIM, 19 in, 15.6 in screen, leg rest + bicycle footrest) =================
 // PY w1: sp 0.5525 = 05_layout pySp (seat ids / eye points and geometry agreed only to 2-3 cm with the old 0.5715) [D]
 const PY = { back: 14 * DEG, hinge: [0.48, -0.09], sp: 0.5525 };
+const PYGAP = { c: '#1c1e23', r: 0.9 };   // polishD: cm-scale seat joints (integration L9-L11, econ tuck crease) [D]
 const PYREAR = { c: '#5e636b', r: 0.42, l: LAYER.plastic };   // rear face of the shell + literature bucket (py_37304, san_26) [D]
 function pySeat(B, x0, lod, opts = {}) {
   const [hy, hz] = PY.hinge;
@@ -84,6 +85,10 @@ function pySeat(B, x0, lod, opts = {}) {
   // ~1.5 cm proud, then the fabric leg rest hanging almost vertically to ~0.04 [D]
   B.add(gLoft([SEC(0.0, 0.40, 0.05, 0, 0.018), SEC(0.25, 0.41, 0.06, 0, 0.022)], 3), M4.trs(x0, 0.03, -0.535, 0, -2 * DEG), F);
   B.add(gRBox(0.41, 0.05, 0.025, 0.01, 1), M4.trs(x0, 0.35, -0.535), F);                           // skirt
+  // polishD (integration L9-L11): soft shadow band tucked behind the skirt under the cushion nose (py_37301 crease
+  // L50-90, w16 A + B: a hard black line read drawn) and a dark gap under the hinge roller [D]
+  B.add(gRBox(0.39, 0.024, 0.006, 0.003, 1), M4.trs(x0, 0.378, -0.543), { c: '#3a3f4c', r: 0.95 });
+  B.add(gRBox(0.39, 0.012, 0.012, 0.004, 1), M4.trs(x0, 0.272, -0.548), PYGAP);
   B.add(gRBox(0.40, 0.02, 0.05, 0.008, 1), M4.trs(x0, 0.035, -0.53), SEATMAT.pyArm);            // leg-rest foot bar
   // dark-grey hinge roller across the top of the stowed leg rest under the cushion nose, dark side links down to the
   // foot bar (py_37301, san_17) [D]
@@ -179,12 +184,14 @@ function pyUnit(n, lod = false, opts = {}) {
     if (inner) {
       // floor-standing console between seats: blue-grey body, silver trim round the top, cubbies + controls on
       // its front face, red life-vest tab at the bottom (py_37301)
-      B.add(gRBox(w, 0.62, 0.52, 0.014, 1), M4.trs(xa, 0.31, -0.28), SEATMAT.pyArm);
+      B.add(gRBox(w, 0.62, 0.52, 0.014, 2), M4.trs(xa, 0.31, -0.28), SEATMAT.pyArm);   // polishD: seg 2 so the edges catch a highlight
+      B.add(gBox(w + 0.004, 0.012, 0.50), M4.trs(xa, 0.006, -0.28), PYGAP);   // polishD: dark foot on the carpet (py_37301) [D]
+      if (!lod) for (const s of [-1, 1]) B.add(gBox(0.002, 0.006, 0.46), M4.trs(xa + s * (w / 2 + 0.0005), 0.40, -0.30), PYGAP);   // polishD: 6 mm side-panel split [D]
       // lid: light blue-grey with a groove along it (ANA py_37303 / 37301; the dark stitched lid is a later generation)
       loftAt(B, [SEC(0.62, w + 0.004, 0.46, -0.235, 0.02), SEC(0.645, w + 0.008, 0.47, -0.235, 0.025), SEC(0.665, w, 0.46, -0.235, 0.02)], M4.trs(xa, 0, 0), SEATMAT.pyArmPad, 2);   // w8 (A): reaches the nose
       // nose: short square light-grey block with two cups side by side (py_37303, alv_18) [D]
       // w5 (A + B): flush with the lid top (0.665), cups recessed as dark wells with a light rim (py_37303, san_16) [D]
-      B.add(gRBox(w + 0.004, 0.022, 0.095, 0.008, 1), M4.trs(xa, 0.654, -0.495), SEATMAT.pyArmPad);
+      B.add(gRBox(w + 0.004, 0.022, 0.095, 0.008, 2), M4.trs(xa, 0.654, -0.495), SEATMAT.pyArmPad);
       if (!lod) for (const s of [-1, 1]) {
         B.add(gCyl(0.03, 0.03, 0.002, 16), M4.trs(xa + s * 0.032, 0.6655, -0.495), { c: '#8e9195', r: 0.5 });
         B.add(gCyl(0.026, 0.026, 0.003, 16), M4.trs(xa + s * 0.032, 0.667, -0.495), { c: '#3e4248', r: 0.7 });
@@ -241,7 +248,8 @@ function pyUnit(n, lod = false, opts = {}) {
     } else {
       // aisle end: large rounded arm shroud from the floor (py_37301 / 37303)
       const o = k === 0 ? -1 : 1;
-      B.add(gRBox(0.05, 0.64, 0.62, 0.025, 2), M4.trs(xa + o * 0.01, 0.32, -0.27), { c: '#575d67', r: 0.42, l: LAYER.plastic });   // w7: shroud/back 0.46 (py_37303, A) vs 0.82 (py_37301, B) -> between [D]
+      B.add(gRBox(0.05, 0.64, 0.62, 0.025, 3), M4.trs(xa + o * 0.01, 0.32, -0.27), { c: '#575d67', r: 0.42, l: LAYER.plastic });
+      B.add(gBox(0.054, 0.012, 0.60), M4.trs(xa + o * 0.01, 0.006, -0.27), PYGAP);   // polishD: dark foot on the carpet [D]   // w7: shroud/back 0.46 (py_37303, A) vs 0.82 (py_37301, B) -> between [D]
       // dark-grey arm cap running to the shroud front, where it rounds over and turns down ~6 cm (py_37301 right seat,
       // san_13); recessed darker panel on the shroud's outer face above the silver strip (py_37303)
       const cap = { c: '#50555d', r: 0.35, l: LAYER.plastic };   // glossy charcoal cap (py_37301 right seat)

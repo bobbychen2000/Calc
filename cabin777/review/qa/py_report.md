@@ -239,3 +239,21 @@ run and no code was changed.
 - **Handed off:** blank placards and leaflet (atlas), and the lighting items in `from_py.md` (wave 3c).
 
 Ratings: `py_w15a.json`, `py_w15b.json`. Triangles are unchanged at 194.6k.
+
+## Polish D (w16-w17): integration L9-L11 hand-offs
+
+| round | rater A | rater B | result |
+|---|---|---|---|
+| w16 | 8.3 | 8.1 | high issue each: the shell-rim reveal showed as a black stripe down the shell side, and the cushion side strips read as black rods. Not kept. |
+| w17 | 8.5 | 8.5 | no high issue: kept |
+
+- **Kept (w17):** pyShell r 0.42 -> 0.30, pyArm 0.45 -> 0.38, pyArmPad 0.40 -> 0.32 (shared `09_seats.js`, PY-only keys);
+  rounder console body, nose and aisle shroud; dark foot plates under the console and shroud; a 6 mm console side split
+  line; a soft #3a3f4c band under the cushion nose; a dark gap under the hinge roller.
+- **Removed after w16:** the shell-rim reveal and the cushion side gap strips.
+- **Metrics:** q13 thin highlights 0.16 -> 0.24 % (target 0.45 %); thin darks barely moved. Outline darks remain the open
+  gap. Closing it would need real recessed joints rather than proud strips.
+- **Open:** the nose band should be a graded crease (A, medium; #4a505e, 0.036 tall); orange-peel in the shell specular
+  (B, low); the w15 lows (trim-B ears, trim-A dash length, pocket frame).
+- Triangles: py2 15.9k -> 17.1k, py4 33.0k -> 35.7k per unit mesh. Ratings `py_w16a/b.json`, `py_w17a/b.json`.
+  Log: `fixed_polishD.md`.

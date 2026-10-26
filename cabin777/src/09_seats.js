@@ -66,9 +66,9 @@ const SEATMAT = {
   pyWing: { c: photoBase('#6d7588', 'py_confetti'), r: 0.9, l: LAYER.pyConfetti },   // w6: wing / back ~0.9-1.0 (py_37301 / 37305, A + B); w12 (A): bluer petal ground (trim-B back #697ba1 on the real seat) [D]
   pyEar: { c: photoBase('#6a6c76', 'py_ear'), r: 0.9, l: LAYER.pyEar },   // w13 (A): trim-A ears on their own notched-chip tile, charcoal ground S ~0.2 (py_37305) [D]
   pyWingB: { c: photoBase('#626876', 'py_back'), r: 0.9, l: LAYER.pyFleck },   // w11 (gap): trim B ears in the dash weave (py_37305 right seat, san_12) [D]
-  pyShell: { c: '#6a7079', r: 0.42, l: LAYER.plastic },   // w6: darker, shroud py_37303 #4b525a (A + B) [D]
-  pyArm: { c: '#545b6e', r: 0.45, l: LAYER.plastic },   // w6: console / back ~0.5 (py_37301 #505d7f, A + B); w11 (B): less blue, py_37303 / 37306 slate [D]
-  pyArmPad: { c: '#8a919c', r: 0.4, l: LAYER.plastic },   // ANA generation: light blue-grey console lid with a groove (py_37303 / 37301)
+  pyShell: { c: '#6a7079', r: 0.30, l: LAYER.plastic },   // polishD (integration L10 / L11): r 0.42 -> 0.30, thin rim highlights; w6: darker, shroud py_37303 #4b525a (A + B) [D]
+  pyArm: { c: '#545b6e', r: 0.38, l: LAYER.plastic },   // polishD: r 0.45 -> 0.38, rim highlights (integration L11); w6: console / back ~0.5 (py_37301 #505d7f, A + B); w11 (B): less blue, py_37303 / 37306 slate [D]
+  pyArmPad: { c: '#8a919c', r: 0.32, l: LAYER.plastic },   // polishD: r 0.40 -> 0.32; ANA generation: light blue-grey console lid with a groove (py_37303 / 37301)
   pyBin: { c: '#b8bcc0', r: 0.3, m: 0.85, l: LAYER.brushed },
   pyBay: { c: '#4a4c50', r: 0.6, l: LAYER.plastic },
   pyTrim: { c: '#b9bec4', r: 0.28, m: 0.8, l: LAYER.brushed },

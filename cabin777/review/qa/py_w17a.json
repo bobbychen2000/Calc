@@ -1,0 +1,67 @@
+{
+ "area": "py",
+ "rater": "A",
+ "round": "w17",
+ "score": 8.5,
+ "summary": "Back to w15 level, with a small net gain from the plastics. Both w16 high/medium artefacts are gone: no black slot on the shell (q14 foreground shell is clean, with soft rim highlights like py_37303), and no side rods on the cushions (p8, p5, p1 window and console sides are open and light, as in py_37301). The lower roughness on the shell, arm and arm pad, the rounder console, nose and shroud, the foot plates and the console split line add no artefacts and look closer to py_37301 / 37303. The one weak point left is the new cushion-front band. It is no longer a pen line (L 9 in w16, L 33 now), but it is still a flat, uniform 4-5 px dark stripe. In py_37301 the crease is a 15-25 px gradient at L 50-90, so in p5 and p8 the band still reads slightly drawn. That is medium, not high. Carry-over lows are unchanged.",
+ "lighting_note": "Not scored. Shell and arm highlights in q13 / q14 are closer to the photos. The window-side seats are still flat-lit compared with py_37302.",
+ "calibration": [
+  {"issue": "w16 high: cushion side strips are black rods with protruding ends that float on the window side", "status": "fixed", "evidence": "after2 p8 / p5 / p1: no rods; cushion side edges are clean on both window and console sides (raterPyA2/s_p8r.png, cmp_p5_console.png)"},
+  {"issue": "w16 medium: shell shadow joint is a pure-black slot in close views", "status": "fixed (removed)", "evidence": "after2 q14 foreground shell: continuous plastic with a rim highlight, no slot (raterPyA2/cmp_q14_seat26A.png)"},
+  {"issue": "w16 medium: cushion-front strip is a hard black pen line", "status": "partly fixed", "evidence": "p8 x 400-450: before (w15) a bright piping line plus a dip to L 49-53; w16 a 4-5 px band at L 9; w17 a 4-5 px flat band at L 33. py_37301 crease: 15-25 px soft gradient, min about L 50. Softer, but still too dark, narrow and uniform (raterPyA2/s_p8r.png)"},
+  {"issue": "w16 low: broken after/p1 render", "status": "fixed", "evidence": "after2/p1_py2_front.png renders the studio unit correctly"},
+  {"issue": "w15 low: trim-A cloth is square blocks at close range", "status": "not fixed", "evidence": "p5 / p8 cushion texture unchanged"},
+  {"issue": "w15 low: ~0.11 m plain shell under the pocket recess", "status": "not fixed", "evidence": "p6 unchanged"},
+  {"issue": "w15 low: pocket parts plain", "status": "not fixed", "evidence": "p6 unchanged"},
+  {"issue": "w15 low: navy flap dead flat", "status": "not fixed", "evidence": "p4 unchanged"},
+  {"issue": "w15 low: ears busier than py_37302 at cabin distance", "status": "not fixed", "evidence": "q13 near rows"},
+  {"issue": "w15 low: placards blank (handed off)", "status": "not fixed", "evidence": "p2 / p6"}
+ ],
+ "details": {
+  "back + cushion shape": 8.4,
+  "cushion front crease": 7.9,
+  "headrest ears + flap": 8.4,
+  "shell incl. rear": 8.5,
+  "screen + bezel + placards": 8.4,
+  "literature pocket": 8.3,
+  "consoles": 8.5,
+  "armrest + shroud": 8.6,
+  "leg rest / footrest / legs / bottle bin": 8.1,
+  "gooseneck": 8.5,
+  "fabrics: trim A weave": 8.4,
+  "fabrics: trim B petal (D/G)": 8.5,
+  "fabrics: trim A petal ears": 8.6,
+  "materials: plastic finish / highlights": 8.7,
+  "overall": 8.5
+ },
+ "issues": [
+  {
+   "severity": "medium",
+   "title": "The cushion-front band is still a flat, uniform dark stripe. The photo crease is a wider, lighter gradient.",
+   "evidence": "p8 x 400 / 450: 4-5 px run at a constant L 33 (raterPyA2/s_p8r.png, third panel); p5 reads as a ruled line under both cushions. py_37301 crease: 15-25 px, L 50-90.",
+   "fix": "09b_py.js pySeat band at (x0, 0.378, -0.543): colour #3a3f4c -> about #4a505e, and height 0.024 -> 0.036 (centre y 0.384) so that more of it sits under the cushion overhang. Or split it into two stacked boxes (#4a505e on top, #3a3f4c below, each 0.018) to fake a gradient. Keep its z 1-2 mm behind the skirt face."
+  },
+  {
+   "severity": "low",
+   "title": "Carry-over: close-range cloth blocks, plain shell under the pocket, plain pocket parts, flat navy flap, busy ears at distance, blank placards",
+   "evidence": "see calibration",
+   "fix": "as in py_w15a.json"
+  }
+ ],
+ "questions": [
+  "q13 after2 is framed differently from before again (the seat columns shift by about 60 px). Is this the same camera? A layout change in another area could move it. Per-pixel before/after comparison at q13 is not valid until this is confirmed."
+ ],
+ "before_vs_after": {
+  "verdict": "Ship w17 over w15: equal or better everywhere, with no new artefact. The one leftover is the medium crease-band tweak.",
+  "changes": {
+   "shell shadow joint removed": "keep",
+   "cushion side strips removed": "keep",
+   "soft 24 mm #3a3f4c band behind the skirt (replaces the black line and the w15 bright piping)": "keep, then adjust: lighter and taller as in the issue",
+   "dark strip under the hinge roller (y 0.272)": "keep: mostly hidden",
+   "SEATMAT roughness pyShell 0.30 / pyArm 0.38 / pyArmPad 0.32": "keep",
+   "rounder console body / nose / aisle shroud": "keep",
+   "console / shroud dark foot plates": "keep",
+   "6 mm console side split line": "keep"
+  }
+ }
+}
