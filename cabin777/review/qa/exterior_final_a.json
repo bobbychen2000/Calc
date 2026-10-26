@@ -1,0 +1,82 @@
+{
+ "area": "exterior",
+ "rater": "A skeptic",
+ "build": "final = 1430d42",
+ "score": 8.5,
+ "details": {
+  "wing planform / raked tip / bending": 7.8,
+  "wing surface detail (seams, fastener rows, panel tone, gear stripe, slat band, placards, grime)": 8.5,
+  "control surfaces & gaps (slats, spoilers, flaperon, aileron)": 7.8,
+  "canoes (flap-track fairings)": 8.4,
+  "pylon": 8.3,
+  "nacelle shape (cowl, lip, splits, strake, access panel)": 8.1,
+  "nacelle colour / materials (incl. GE logo)": 8.0,
+  "inlet / fan / spinner": 8.0,
+  "livery / registration JA795A": 8.0,
+  "lights & static dischargers": 7.5,
+  "artefacts": 7.9
+ },
+ "previous": [
+  {
+   "issue": "w22a low: raked tip upsweep well short of KN41",
+   "status": "not fixed (unchanged)",
+   "measure": "w19A LE top-edge row at x 515/520/525/530/540/550/560 = 123/126/125/129/137/155/178 in both w22 and head (identical). 11_exterior.js is unchanged since 5aac2bd."
+  },
+  {
+   "issue": "w22a low: pylon foot crease too faint",
+   "status": "not fixed (unchanged)",
+   "measure": "w13A flank rows 270-275 vs foot min rows 279-285: x520 181.2->175.0, x560 180.8->176.3, x600 180.1->176.0 (0.97-0.98 of flank; w22 0.97; _137 0.89)."
+  },
+  {
+   "issue": "w21a low: fastener dots lighter than KN41",
+   "status": "still fixed",
+   "measure": "w19A row 500 x 661-666: 143-151 on 180 (0.79-0.84; w22 137-144 on 171, 0.80-0.84). KN41 0.80."
+  },
+  {
+   "issue": "w21a low: raked TE polyline kinks",
+   "status": "still fixed",
+   "measure": "Studio close-ups c_canoe_side, c_canoes_left, c_ge_inboard_left, c_nacelle_left pixel-identical to w22 (0 px > 6 levels); c_wing_panel 35 px differ (max 51), noise-level."
+  },
+  {
+   "issue": "w21a low: no dark crease at pylon foot",
+   "status": "partly fixed (see crease item above)",
+   "measure": "0.97 of flank, unchanged."
+  }
+ ],
+ "issues": [
+  {
+   "severity": "low",
+   "detail": "raked tip upsweep still well short of KN41 (carried)",
+   "problem": "Outer LE rises only ~3 px into the point in 19A; KN41 sweeps up steadily over the outer ~15 % of visible span.",
+   "evidence": "/tmp/claude-0/-home-user-Calc/ae8726f4-fe14-557b-8e38-484fba4e7019/scratchpad/ratA_final/w19A_old_new.png vs ref/web/exterior/a5_kn_ANA77W_TheRoom_41.jpg",
+   "fix": "11_exterior.js WING.crest: start the lift earlier and make it larger, e.g. + 0.20*pow(smooth(29.5,32.4,s),1.6)."
+  },
+  {
+   "severity": "low",
+   "detail": "pylon foot crease too faint (carried)",
+   "problem": "Foot is 0.97 of the flank; _137 shows 0.89.",
+   "evidence": "/tmp/claude-0/-home-user-Calc/ae8726f4-fe14-557b-8e38-484fba4e7019/scratchpad/ratA_final/w13A_old_new.png vs ref/web/exterior/b_lalf_ANA77W_11A_137.jpg",
+   "fix": "Raise crease darkening from ~0.03 to ~0.10 over the same ~3 cm band."
+  }
+ ],
+ "worthPlus03": [],
+ "lightingNotes": [
+  "Look-out exposure keyed to the glass lifts all exterior pixels ~+5 % uniformly vs w22 (w17K upper wing 201,207,213 -> 214,217,222; w11K cowl 196,201,204 -> 209,210,212). No clipping: 0 px with min channel >= 250 in any of the 9 day/sunset window views, max channel 238-247 (w22 249-252). Geometry and detail rows identical (fastener contrast ratio preserved).",
+  "The lift also slightly reduces the cool cast of the wing: B-R gap 12 -> 8 levels, where KN41's sunlit upper wing (187,196,209) has B-R 22. The wing now reads a touch whiter/flatter than KN41; consider ~-4 % exposure or a slightly cooler sky fill on exterior if the integrator wants a closer match. Not scored.",
+  "n19A night: exterior unchanged and readable; the cabin sidewall around it is now near-black (interior lighting, not exterior)."
+ ],
+ "questionsForUser": [
+  "A photo looking straight out at the raked tip from rows 17-20 A (port side) would settle how much the tip sweeps up (carried)."
+ ],
+ "photos": [
+  "ref/web/exterior/a5_kn_ANA77W_TheRoom_41.jpg",
+  "ref/web/exterior/b_lalf_ANA77W_11A_137.jpg",
+  "/tmp/claude-0/-home-user-Calc/ae8726f4-fe14-557b-8e38-484fba4e7019/scratchpad/ratA_final/w19A_old_new.png",
+  "/tmp/claude-0/-home-user-Calc/ae8726f4-fe14-557b-8e38-484fba4e7019/scratchpad/ratA_final/w13A_old_new.png",
+  "/tmp/claude-0/-home-user-Calc/ae8726f4-fe14-557b-8e38-484fba4e7019/scratchpad/ratA_final/w17K_old_new.png",
+  "/tmp/claude-0/-home-user-Calc/ae8726f4-fe14-557b-8e38-484fba4e7019/scratchpad/ratA_final/w11K_old_new.png",
+  "/tmp/claude-0/-home-user-Calc/ae8726f4-fe14-557b-8e38-484fba4e7019/scratchpad/ratA_final/cmp_c_nacelle_left.png",
+  "/tmp/claude-0/-home-user-Calc/ae8726f4-fe14-557b-8e38-484fba4e7019/scratchpad/ratA_final/cmp_c_wing_panel.png"
+ ],
+ "notes": "Regression check vs w22 (5aac2bd): 11_exterior.js unchanged; studio close-ups pixel-identical except 35 px noise on c_wing_panel. In-window differences in all views are a uniform exposure lift plus interior lighting outside the window; no lost detail rows, no new clipping, no colour shift beyond the slight warming noted under lighting. Score held at 8.5: no medium or high issues; two low carried issues."
+}
