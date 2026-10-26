@@ -1,0 +1,62 @@
+{
+ "area": "py",
+ "rater": "A",
+ "round": "w19",
+ "score": 8.6,
+ "summary": "Pass against w17 (8.5), with a small gain. The w18 high (the black cord) is fixed. In q14_seat26A the foreground seat's back/shell seam is now a continuous line from y 152 to the bottom of the frame. It is 1-3 px wide (4 px at most, 2.2 px on average) at L 41-70 over y 180-525, against w18's 7-8 px at L 4-22. That matches the py_37303 junction (a 2-3 px dip to L 60-65) at the right width and close to the right tone. The bead has no gaps, steps or proud chords at 2x zoom (raterPyA19/z_q14_fg.png). The mid seats in q14 and in p1, p7 and p8 show a hairline at the shell edge, which is the outline dark the integration rater asked for. In q13 the seam is fainter than in w18 and close to w17 (thin-dark 2.46 % against 2.42 %), so the mid-distance gain is small. The cubby mouths stay darker (p5, median L 19 -> 7). Keep them. The nose step was removed, and the cushion-front band is pixel-identical to w17 (p8 x 200 / 440, p5 x 150 / 500), so the w17 medium carries over. Only one new nit: the bead darkens to L 23-40 in the shaded bottom 50 px of q14 (y 540-575).",
+ "lighting_note": "Not scored. With #3e434d the bead renders at L 41-70 in the lit part of q14 and at L 23-40 in the shaded lower corner. The photo's junction stays near L 60, so the corner shadow and AO still push the bead darker than the material alone would.",
+ "calibration": [
+  {"issue": "w18 A high / B medium: the seam bead is a black cord up close (8 mm square tube, 16 chords, standing proud on the q14 foreground shell edge)", "status": "fixed", "evidence": "q14 x 818-881, y 152-575, sampled every 15 rows: 1-3 px wide (max 4, mean 2.2), L 41-70 over y 180-525 (w18: 7-8 px at L 4-22). Row 350 at 2-px sampling: w18 '4 20 21 20', w19 '50 68 81 93', w17 '87 68 81 93'. The line runs continuously from y 152 with no gaps, so there is no chord stepping. raterPyA19/z_q14_fg.png (w17 | w18 | w19)"},
+  {"issue": "w18 A medium / w17 A medium: the cushion-front band is a flat, uniform dark stripe (the graded crease step is hidden)", "status": "not fixed (the step was removed; the band is unchanged since w17)", "evidence": "p8 columns x 200 / 440 and p5 columns x 150 / 500: max |w19 - w17| = 0"},
+  {"issue": "w16 high: black rods on the cushion sides (rounded ends standing past the nose, floating on the window side)", "status": "not regressed", "evidence": "p1 / p3 / p8: the only darkening against w17 is 126-250 px of hairline along the shell edge and console (p8 crop raterPyA19/z_p8.png, p1 crop z_p1.png). No rods or ends on the cushion sides"},
+  {"issue": "w16 B high: black stripe through the shell's outer side face", "status": "not regressed", "evidence": "q14 foreground shell face (x 740-815) has no darkened pixels. All darkening in x 780-900 lies on the inner edge line"},
+  {"issue": "w16 medium: black slot in close views", "status": "fixed (the w18 regression is gone)", "evidence": "q14 row 350 seam pixel is L 50, and the nearby fabric matches w17 again"},
+  {"issue": "integration L13 medium: outline darks about half the photos' where the back fabric meets the shell", "status": "partly fixed", "evidence": "There is a visible hairline in q14 (near and mid seats, raterPyA19/z_q14_mid.png) and in p1 / p8. In q13 it is faint, close to w17 (thin-dark 2.42 / 2.54 / 2.46 % for w17 / w18 / w19, raterPyA19/z_q13.png). Overall q14 is 3.78 -> 3.86 %"},
+  {"issue": "w15 lows (cloth blocks up close, plain shell under the pocket, plain pocket parts, flat navy flap, busy ears, blank placards)", "status": "not fixed", "evidence": "p2 / p6 are pixel-identical to w17. p4 has 9 changed px"}
+ ],
+ "details": {
+  "back + cushion shape": 8.5,
+  "back/shell seam": 8.4,
+  "cushion front crease": 7.9,
+  "headrest ears + flap": 8.4,
+  "shell incl. rear": 8.5,
+  "screen + bezel + placards": 8.4,
+  "literature pocket": 8.3,
+  "consoles (incl. darker cubbies)": 8.6,
+  "armrest + shroud": 8.6,
+  "leg rest / footrest / legs / bottle bin": 8.1,
+  "gooseneck": 8.5,
+  "fabrics": 8.5,
+  "materials: plastic finish / highlights": 8.7,
+  "overall": 8.6
+ },
+ "issues": [
+  {
+   "severity": "medium",
+   "title": "The cushion-front band is still a flat, uniform dark stripe (carried over from w17; the w18 step had no effect and was removed)",
+   "evidence": "p8 x 200 / 440 and p5 x 150 / 500 are pixel-identical to w17: a 3-8 px run at L 33. The photo crease is a wider, lighter gradient.",
+   "fix": "Lighten the existing band to about #4a505e and add a 0.012 m strip of #3a3f4c at its top edge only. Or place a lighter strip just below the band's bottom edge (y about 0.360), where the cushion overhang does not hide it. Verify that the p8 x 440 profile changes."
+  },
+  {
+   "severity": "low",
+   "title": "The seam bead is too dark in the shaded lower corner of q14 and too faint in q13",
+   "evidence": "q14 y 540-575: L 23-40 (photo junction about L 60). q13: thin-dark 2.46 %, against 2.42 % in w17",
+   "fix": "Optional. Lighten the bead colour slightly towards #464b55, or reduce its AO contribution. Leave the width as it is."
+  },
+  {
+   "severity": "low",
+   "title": "Carry-over from w15: close-range cloth blocks, plain shell under the pocket, plain pocket parts, flat navy flap, busy ears, blank placards",
+   "evidence": "p2 / p6 are unchanged",
+   "fix": "as in py_w15a.json"
+  }
+ ],
+ "questions": [],
+ "before_vs_after": {
+  "verdict": "Ship w19 over w17: the seam is correct up close and adds a little at distance; nothing regressed.",
+  "changes": {
+   "seam bead 3 mm round, sunk, #3e434d": "keep (fixes the w18 high)",
+   "cubby mouths darker": "keep",
+   "nose step removed": "neutral; the crease medium stays open"
+  }
+ }
+}

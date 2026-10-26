@@ -1,0 +1,59 @@
+{
+  "area": "py",
+  "rater": "B",
+  "round": "w19",
+  "score": 8.5,
+  "summary": "8.5, up from w18 (8.3) and level with w17. No high or medium issue is left. The w18 black slot is fixed. On the q14 foreground seat the bead is now 1-2 px at L 32-58 against neighbouring shell and fabric at L 86-100 (w18: 7-9 px at L 4-23). Its path is continuous and smooth: a dark pixel is found in 423 of 425 rows, with a maximum deviation of 1.8 px from a cubic fit, so the 32 steps show no chord kinks. At mid range (q14 left pair, q13, p7, p8) it is a 1 px crease at L 38-64, or barely visible. That matches the photo: py_37303 shows a 1-2 px dip to L 60-80 against shell L 100 at the same junction (rows 180-200, x 745-760). In the lower third of the near seat the render is still a little darker than the photo (L 32-42), but it no longer reads as a cord. The w18 cubby-mouth darkening is unchanged against w18 (p5: 10 px differ). The nose-step removal is neutral (p8 and p5 change by no more than 2 px at the nose). Against w17 the bead adds a small, correct outline dark, but the metric barely moves (q14 3.78 -> 3.86 %, photo 6.13 %), and the w15 / w17 fabric, pocket and specular lows are untouched. So the score stays at 8.5, not above it.",
+  "lighting_note": "Not scored. The bead still depends on crevice AO: one #3e434d base renders at L 32-42 low on the near q14 seat and at L 50-64 higher up and at mid range. Any change to AO strength will move this detail again.",
+  "calibration": [
+    {"issue": "w18 A high / B medium: seam bead is an 8 mm square tube that reads as a black cord or slot on the q14 foreground seat", "status": "fixed", "evidence": "q14 x 790-900: per-row darkening against w17 (over 20 L) is 1-3 px at min L 32-68 in w19, against 6-9 px at min L 4-23 in w18 (rows 190-550 sampled every 30). raterPyB19/z14_right.png (w17 | w18 | w19) shows a hairline in w19 where w18 had a black cord. Code: gTube(..., 0.0015, 6), 32 steps, PYGROOVE #3e434d (09b_py.js:10, 97-98)."},
+    {"issue": "w18 A: chord kinks from 16 segments, so the bead stands proud of the curved shell edge", "status": "fixed", "evidence": "A dark pixel is found in 423 of 425 rows (y 152-574). The cubic fit of the bead path deviates by at most 1.8 px. No proud sections show in z14_right.png or z_p7_side.png."},
+    {"issue": "w16b high: shell shadow-joint strip shows through the shell's outer side face", "status": "still fixed", "evidence": "Pixels darkened by more than 30 L against w17 lie only on the two seams in q14 (x 800-899: 637 px, x 200-299: 216 px) and on small specks elsewhere (x 400-799: 61 px). None are on the shell's outer faces (z14_right.png, z_p7_side.png)."},
+    {"issue": "w16b medium: cushion side and front strips read as black rods with exposed ends", "status": "still fixed", "evidence": "No rods or caps in p5, p7 or p8. Against w17, p2, p3 and p6 have 0 changed pixels."},
+    {"issue": "w18 A medium: graded nose-crease step hidden, so the cushion-front band is a flat stripe", "status": "not fixed (step removed; neutral)", "evidence": "p8 changes by 70 px against w18, all in the seam and bead areas. The nose band is the same as w17. It is still a crisp band at L about 55-70, against the photo's graded crease at L 35-90. Low severity at QA range."},
+    {"issue": "integration L13 medium: outline darks about half of the photos'", "status": "partly fixed", "evidence": "The seam crease now reads correctly at all ranges. The thin-dark metric is q13 2.46 % / q14 3.86 % (w17 2.42 / 3.78; photos 4.18 / 6.13). The remaining deficit is in fabric pleats and crevices, not in the shell seam."},
+    {"issue": "w17b low: shell orange-peel specular at r 0.30", "status": "not fixed", "evidence": "Still visible on the q14 near shell in all three columns of z14_right.png."},
+    {"issue": "w15b medium/low: trim-B ears too dark, trim-A dashes too long, pocket frame near-black", "status": "not fixed", "evidence": "p2 and p6 have 0 changed pixels against w17."}
+  ],
+  "details": {
+    "Back + cushion shape": 8.4,
+    "Back/shell seam crease": 8.5,
+    "Cushion nose / skirt / hinge roller": 8.4,
+    "Headrest ears + navy flap": 8.4,
+    "Shell incl. rear face": 8.4,
+    "Screen + bezel + placards": 8.5,
+    "Literature pocket": 8.5,
+    "Consoles (front, sockets, cubbies, lid, cup nose, side panel)": 8.7,
+    "Window armrest + aisle shroud": 8.5,
+    "Leg rest / footrest / legs / bottle bin": 8.1,
+    "Gooseneck": 8.5,
+    "Fabrics: trim A brick weave": 8.2,
+    "Fabrics: trim A petal ears": 8.6,
+    "Fabrics: trim B petal back": 8.6,
+    "Fabrics: trim B dash ears": 7.8,
+    "Materials: plastic specular": 8.5
+  },
+  "issues": [
+    {"severity": "low",
+     "title": "The bead is still slightly too dark in the lower third of the near q14 seat",
+     "evidence": "q14 rows 370-550 (x 859-877): min L 32-42 against neighbours at L 76-94, a ratio of about 0.4. py_37303 shows a ratio of about 0.6-0.8 at the same junction (L 60-80 against 100). The upper rows (L 48-58) are fine.",
+     "fix": "Optional. Sink the centre 2 mm instead of 1 mm, or lighten PYGROOVE to about #4a505b. Do not widen it."},
+    {"severity": "low",
+     "title": "The thin-dark deficit is in the fabric (pleats, cushion-to-back crevice), not in the seams",
+     "evidence": "q14 3.86 % against photo py_37301 6.13 %. The photo darks are bolster pleats and the deep crevice between cushion and back (L 10-14).",
+     "fix": "As in py_w18b: a graded vertex-colour darkening, about 0.8x over 1 cm, at the bolster/centre pleat rows of PYBACK."},
+    {"severity": "low",
+     "title": "Carry-over: shell orange-peel at r 0.30; trim-B ears too dark; trim-A dashes too long; pocket frame near-black; crisp nose band",
+     "evidence": "See calibration.",
+     "fix": "As in py_w17b.json."}
+  ],
+  "questions": [],
+  "before_vs_after": {
+    "verdict": "Accept w19 over w17. It is at least equal (8.5), with a correct seam crease and darker cubbies, and with no artefacts. +6k triangles is acceptable.",
+    "changes": [
+      {"change": "3 mm round bead, 32 steps, sunk 1 mm, #3e434d", "verdict": "keep", "reason": "Fixes the w18 cord. It matches py_37303 at close and mid range."},
+      {"change": "Nose step removed", "verdict": "keep", "reason": "It had no visible effect."},
+      {"change": "Darker cubby mouths", "verdict": "keep", "reason": "Closer to the py_37301 slot mouths (L 20-35)."}
+    ]
+  }
+}
