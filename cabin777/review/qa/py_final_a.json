@@ -1,0 +1,69 @@
+{
+ "area": "py",
+ "rater": "A",
+ "round": "final",
+ "score": 8.5,
+ "summary": "The PY geometry and materials are unchanged since w19: all eight studio views (p1-p8) are pixel-identical to w19 (0 changed px). The w18 high, the black-cord seam bead, stays fixed. On the head q14 foreground seat the bead's per-row minimum L is within 1-3 L of w19 (row 350: w19 '31 36 40 64', head '30 35 39 63'), and the bead's width profile over y 165-575 is the same, so the shader change did not make the seam bead read too dark. Fabric contrast is unchanged (q14 mid back L sd 32.2 -> 32.1; q13 front back 27.0 -> 26.9), and so is the thin-dark detail (q13 3.95 -> 3.92 %, q14 5.84 -> 5.85 %, by my own 7-px-median metric). The one new effect is a cool colour cast from the new lighting. Mean luminance of the PY materials is unchanged (within 2 L), but B-R rises by 10-13 on the fabric, shell and console. The fabric's B/R moves from 1.27 (w19), which matched py_37301/37303 (1.25), to 1.39. So in the cabin views the cloth reads a slightly too-blue denim instead of the photo's blue-grey. This comes from lighting, not from the PY materials. The w17 cushion-front band medium is still open (p5/p8 are identical). The score is 8.5: one notch below my w19 8.6 for the fabric hue drift in q13/q14, and still at the pass line on geometry, proportion and materials.",
+ "lighting_note": "Not scored in PY, but it is the main change since w19. The head mood/shader change adds a blue cast with no change in luminance. On the q14 mid seat-back fabric (x 250-400, y 300-500) mean RGB goes from (114.5,124.8,145.1) to (110.9,124.0,154.1), B-R 30.6 -> 43.1. On the q13 front-seat fabric (x 200-340, y 420-560), B-R goes 35.3 -> 47.4. On the q14 foreground shell, 24.5 -> 33.9. On the q13 console, 24.3 -> 37.2. On the q14 window reveal, L 174 -> 163 and B-R 13 -> 21. As a ratio, fabric (B-R)/L goes 0.25 -> 0.35 against 0.23 in py_37301 (back fabric, mean (146.5,159.8,183.2)). The shell stays inside the photo range (B/R 1.37, against 1.20 for the rear shell in py_37303 and 1.38 for the arm side in py_37301). The bead still darkens to L 16-32 in the shaded bottom 35 px of q14 (photo junction about L 60), the same as w19.",
+ "calibration": [
+  {"issue": "w18 A high / w18 B medium: the seam bead is a black cord or slot up close (8 mm square tube on the q14 foreground shell edge)", "status": "fixed (holds at head)", "evidence": "q14 row 350, x 810-890 sampled every 2 px: the w19 bead pixels '31 36 40 64 74' are '30 35 39 63 72' at head. The per-row minimum L over y 165-575 (every 15 rows) is within 0-3 L of w19 (for example y 315: 50 -> 49, y 465: 23 -> 22). The dark-run width profile is identical within 1 px, so there is no widening and no new chord stepping."},
+  {"issue": "w18 A: chord kinks or a bead standing proud of the curved shell edge", "status": "fixed (holds)", "evidence": "The geometry is unchanged (studio p1-p8 have 0 changed px against w19). The q14 bead path is the same."},
+  {"issue": "w17 A / w18 A / w19 A medium: the cushion-front band is a flat, uniform dark stripe instead of the photo's graded crease", "status": "not fixed", "evidence": "p5_console and p8_ana37301 are pixel-identical to w19, so the p8 x 200 / 440 and p5 x 150 / 500 columns still show the 3-8 px run at L about 33. The photo crease is a wider, lighter gradient."},
+  {"issue": "w16 high: black rods on the cushion sides", "status": "not regressed", "evidence": "p1, p3 and p8 have 0 changed px against w19, which had no rods."},
+  {"issue": "w16 B high: black stripe through the shell's outer side face", "status": "not regressed", "evidence": "The q14 foreground shell face (x 730-800, y 300-500) has L sd 9.4 -> 9.2 and no dark run. The mean is L 105 -> 103, a hue shift only."},
+  {"issue": "integration L13 medium: outline darks about half of the photos'", "status": "partly fixed (unchanged since w19)", "evidence": "The thin-dark fraction (7-px median minus pixel above 20) is q13 3.95 -> 3.92 % and q14 5.84 -> 5.85 %, unchanged by the lighting. B19's remark stands: the remaining deficit is in fabric pleats and the cushion-back crevice."},
+  {"issue": "w19 A low: the bead is too dark in the shaded lower corner of q14", "status": "not fixed (unchanged)", "evidence": "q14 y 540-575, x 840-890, row minimum L: w19 '32 20 32 23 32 17 25', head '32 19 31 22 32 16 24'"},
+  {"issue": "w15 lows (close-range cloth blocks, plain shell under the pocket, plain pocket parts, flat navy flap, busy ears, blank placards) and w17 B (shell orange-peel, trim-B ears too dark, trim-A dashes too long, pocket frame near-black)", "status": "not fixed", "evidence": "p2, p4 and p6 have 0 changed px against w19."}
+ ],
+ "details": {
+  "back + cushion shape": 8.5,
+  "back/shell seam": 8.4,
+  "cushion front crease": 7.9,
+  "headrest ears + flap": 8.4,
+  "shell incl. rear": 8.5,
+  "screen + bezel + placards": 8.4,
+  "literature pocket": 8.3,
+  "consoles (incl. darker cubbies)": 8.6,
+  "armrest + shroud": 8.6,
+  "leg rest / footrest / legs / bottle bin": 8.1,
+  "gooseneck": 8.5,
+  "fabrics (pattern / contrast)": 8.5,
+  "fabric hue as rendered in cabin views": 8.1,
+  "materials: plastic finish / highlights": 8.6,
+  "overall": 8.5
+ },
+ "issues": [
+  {
+   "severity": "medium",
+   "title": "New: the lighting change gives the PY fabric (and the grey plastics) a blue cast, so the cloth reads denim-blue instead of the photo's blue-grey",
+   "evidence": "Fabric B/R is 1.27 at w19 and 1.39 at head, against 1.25 in py_37301/37303. B-R rises by 12.5 on the q14 mid back and by 12.1 on the q13 front back, with mean L unchanged (124.0 -> 123.5, 109.6 -> 109.7). The shell and console also gain B-R of 9-13. The material colours are unchanged, because the studio renders are identical. Visible in R/cmp_q14_seat26A.png (bottom half, mid seat back) and R/cmp_q13_pyFront.png.",
+   "fix": "Owner: lighting (04_shaders.js / 12_scene.js). Pull the cool fill or mood tint back by about one third, aiming for fabric (B-R)/L of about 0.25 in q13/q14. Do not compensate in PY's SEATMAT, because the studio colours already match the photos."
+  },
+  {
+   "severity": "medium",
+   "title": "Carry-over: the cushion-front band is still a flat, uniform dark stripe",
+   "evidence": "p5/p8 are identical to w19 and w17: a 3-8 px run at L 33, against a wider, lighter graded crease in the photo.",
+   "fix": "As in py_w19a: lighten the band to about #4a505e and add a 0.012 m strip of #3a3f4c at its top edge only. Verify that the p8 x 440 profile changes."
+  },
+  {
+   "severity": "low",
+   "title": "Carry-over: the bead is too dark in the shaded bottom corner of q14",
+   "evidence": "y 540-575, row minimum L 16-32, against a photo junction near L 60",
+   "fix": "Optional. Lighten PYGROOVE towards #464b55 or reduce its AO."
+  },
+  {
+   "severity": "low",
+   "title": "Carry-over from w15/w17: close-range cloth blocks, plain shell under the pocket, plain pocket parts, flat navy flap, busy ears, blank placards, shell orange-peel, trim-B ears too dark",
+   "evidence": "p2/p4/p6 are unchanged",
+   "fix": "as in py_w15a.json / py_w17b.json"
+  }
+ ],
+ "questions": [],
+ "before_vs_after": {
+  "verdict": "PY geometry and materials are frozen at w19 and still pass (8.5). The head lighting is neutral for the seam bead and for fabric contrast, but it pushes the fabric hue bluer than the official photos. The lighting owner should trim the cool tint. PY itself needs no change for this.",
+  "changes": {
+   "shader/mood lighting (not PY)": "seam and contrast neutral. Fabric/shell B-R +10-13 (too blue against the photos) at equal luminance. Trim it in lighting.",
+   "PY files": "no change since w19 (studio views pixel-identical)"
+  }
+ }
+}
