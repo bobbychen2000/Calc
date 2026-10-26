@@ -9,6 +9,7 @@
 // w1 (rater A, omaat_f7 / pb_20 / up_privacy_wall): dark door-leaf frames and the near-black lower console body
 Object.assign(SEATMAT, {
   fCapJoint: { c: '#3a342e', r: 0.9 },                         // polishC w17a: mid-dark cap-to-shell groove
+  fSplit: { c: '#2e2924', r: 0.9 },                            // polishC w17b: wood-panel split lines
   fSeam: { c: '#1d1a17', r: 0.9 },                              // polishC (L11): dark joints / welts / reveals (integration L11: thin dark lines 0.55-0.85x omaat_f2 / f5 / f11 / f13 / f40) [V]
   fDoorFrame: { c: '#4f4d45', r: 0.5, l: LAYER.plastic },     // w5: ~1.15x the fluted field, not a light picture frame (omaat_f60 1.17x) [V]
   fTray: { c: '#4a3d33', r: 0.35, l: LAYER.fWood },           // console tray: warm dark striped wood, omaat_f47 #4d3e2e [V]
@@ -143,7 +144,7 @@ function suiteUnit(opts = {}) {
   B.add(gBox(ow, 0.006, 0.36), M4.trs(ox, 0.003, -L + 0.31), { c: '#5e5248', r: 0.9 });   // warm dark recess floor (f11 #1c1610; fConsoleLow rendered neutral L21, #4a4038 0.12, under / top vs 0.21)
   B.add(gBox(ow, 0.28, 0.01), M4.trs(ox, 0.19, -L + 0.135), SEATMAT.fConsoleLow);
   B.add(gLoft(cushionSecs(ow - 0.01, 0.52, 0.08, -0.04, { edge: 0.025, r: 0.025 }), 3), M4.trs(ox, 0.40, -L + 0.39), SEATMAT.fFabric);
-  B.add(gRBox(ow - 0.006, 0.014, 0.526, 0.005, 1), M4.trs(ox, 0.366, -L + 0.39), SEATMAT.fSeam);   // polishC (L11): dark welt, cushion to tray (omaat_f11) [V]
+  B.add(gRBox(ow - 0.006, 0.008, 0.526, 0.003, 1), M4.trs(ox, 0.363, -L + 0.39), SEATMAT.fSeam);   // polishC (L11): dark welt, cushion to tray (omaat_f11) [V]
   if (!lod) for (const s of [-1, 1]) B.add(gBox(0.04, 0.004, 0.2), M4.trs(ox + 0.12 * s, 0.443, -L + 0.42), SEATMAT.strap);
   // outer side: low skirt (window) or full-height partition half (centre), plus the long console
   if (center) {
@@ -218,8 +219,8 @@ function suiteUnit(opts = {}) {
   B.add(gRBox(0.004, 0.48, 0.24, 0.004, 1), M4.trs(xa - 0.019, 0.89, -0.62), SEATMAT.fWood);           // closed door: wood face (f35)
   // polishC (L11): 5 mm dark reveal round the door leaf and split lines at the wood panel's edges, 1-2 mm proud (omaat_f5 / f11 / f13) [V]
   B.add(gBox(0.003, 0.49, 0.25), M4.trs(xa - 0.0165, 0.89, -0.62), SEATMAT.fSeam);
-  for (const z of [-0.13, -0.93]) B.add(gBox(0.005, H - 0.20, 0.005), M4.trs(xa - 0.004, 0.10 + (H - 0.20) / 2, z), SEATMAT.fSeam);
-  for (const y of [0.10, H - 0.10]) B.add(gBox(0.005, 0.005, 0.80), M4.trs(xa - 0.004, y, -0.53), SEATMAT.fSeam);
+  for (const z of [-0.13, -0.93]) B.add(gBox(0.006, H - 0.20, 0.003), M4.trs(xa - 0.003, 0.10 + (H - 0.20) / 2, z), SEATMAT.fSplit);   // w17b: flush, 3 mm, lighter (read as pen outline)
+  for (const y of [0.10, H - 0.10]) B.add(gBox(0.006, 0.003, 0.80), M4.trs(xa - 0.003, y, -0.53), SEATMAT.fSplit);
   if (!lod) B.add(gBox(0.003, 0.03, 0.20), M4.trs(xa - 0.0215, 0.675, -0.62), { c: '#cfcac2', r: 0.6 }); // safety label strip
   if (!lod) B.add(gRBox(0.012, 0.07, 0.03, 0.004, 1), M4.trs(xa - 0.008, 0.89, -0.785), SEATMAT.fCap);  // w6: taupe pull at the door's forward edge (omaat_f13) [V]
   if (!lod) {
