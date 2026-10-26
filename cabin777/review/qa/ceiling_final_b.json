@@ -1,0 +1,76 @@
+{
+  "area": "ceiling",
+  "rater": "B",
+  "round": "final",
+  "score": 8.7,
+  "renderNote": "Rated on the /tmp/rF renders of head 1430d42 (lighting run 4 L14; 07b_ceiling.js and 08_bins.js are unchanged since w15). Views: q01, q06, q13, q15, q16, q17 at 930x575, and cv/ v1, v2, v3, v5, v12, v15, d1, d2, d4, d5 at 800x560. The d1b/d2b/d4b/d5b/v4/v8/v14 views and the night/amber moods (q20/q21) were not in this render set, so the issues tied to those views (D3, D4, LN1) were judged from geometry-unchanged plus what is visible in d4 and v3. References: ref/ana y_47301 (vault 241-247 RGB neutral-warm, bins 168-208 cool), c_27312. No new web photos were fetched, because the geometry is unchanged and no ceiling-close in-flight photo was found in earlier rounds.",
+  "previousStatus": {
+    "fixed": [
+      "w14a W14A-1 high (fittings and ribs left behind by the vault lift): still fixed. In v1, v2 and v12 the ribs are hairlines at vault tone (vault 229-231). The speakers read as a recessed slot, not a dark plank.",
+      "w14b F1 medium (contrast inversion of fittings vs vault): still fixed in day (v2 vault 231 at (380,80), speaker panel indistinguishable from the vault apart from its slot line).",
+      "w14a W14A-2 medium (crest channel too dark): still fixed. The channel reads as a mid-grey line along the rail in v12 and v15 (rail band 224, channel line 112-125 over about 4 px at v15 row 245)."
+    ],
+    "notFixed": [
+      "w14b L1 / W14A-4 low: the vault/bin ratio is 1.05-1.11 (v1: vault 224-231, bins 203-218; v2: 231 vs 210-215). The photo y_47301 gives 1.17-1.38 (vault 241-247, bins 168-208).",
+      "w15b S1 / W15A-1 low: the speaker bezel is still invisible at close range (v12 (517,165) is 228 on a 229 vault), so only the slot line reads.",
+      "w14b D4 low: the door-4 dome/monument wedge. d4b was not rendered; the geometry is unchanged, so it is presumed not fixed.",
+      "W14A-3 low: the outboard PSU band segmentation is unchanged (q16 left, v1 left)."
+    ],
+    "regressed": []
+  },
+  "details": {
+    "vault shape / joint ribs / crest rib": 8.8,
+    "vault tone": 8.7,
+    "cove / trough grille": 8.6,
+    "vault fittings (speaker, emergency light)": 8.5,
+    "crest channel": 8.6,
+    "bins outboard": 8.9,
+    "bins centre": 8.8,
+    "seams / lips / rails / latches": 8.7,
+    "placards": 8.8,
+    "PSUs": 8.6,
+    "door-area domes and zone-end closures": 8.3,
+    "sign pods (EXIT)": 8.6
+  },
+  "issues": [
+    {
+      "id": "FB1",
+      "severity": "low",
+      "detail": "The vault still reads only slightly brighter than the bins. In the photo the bins sit clearly darker and cooler than the vault. This is a lighting share and is unchanged by L14.",
+      "evidence": "v1 (380,100) vault 231,230,226 vs bins (100,150) 207,210,216 and (650,150) 203,207,217, a ratio of 1.07-1.12. y_47301 vault (500,40) 247,247,245 vs bin faces (250,70) 196,200,208, (330,60) 168,175,185 and (100,80) 178,184,190, a ratio of 1.19-1.45. The hue direction (vault warm-neutral, bins cool) is correct.",
+      "fix": "src/08_bins.js BINMAT.door #d6d8dc -> #cfd2d6 (about -3 %). Or, on the lighting side, reduce the bin-face fill in 12_scene.js. The vault must not be lowered."
+    },
+    {
+      "id": "FB2",
+      "severity": "low",
+      "detail": "The far-side cove beside the trough grille is a broad flat 252-253 wedge with no gradient. In the photo the cove is bright but graded (236-247) and the bin top edge stays visible.",
+      "evidence": "v1 (560,60) and (600,50) 253,252,252; v2 (600,50) 253,252,252; v12 (760,200) and (780,100) 253,252,252, a flat area about 80-120 px wide. y_47301 right cove (660,40) 236,235,233.",
+      "fix": "This is lighting (not scored here): in 04_shaders.js / 12_scene.js cap the cove emissive / tonemap so the cove peak is about 245, or add a falloff across the bin crown. Geometry needs no change."
+    },
+    {
+      "id": "S1",
+      "severity": "low",
+      "detail": "The speaker bezel is invisible at close range, so the fitting reads as a single slot line (carried over).",
+      "evidence": "v12 (517,165) is 228 on a 229 vault. In v2 and v5 only the diagonal slot and a ghost rectangle read.",
+      "fix": "src/07b_ceiling.js: bezel colour about 3 % below the vault, or onVault(CEILMAT.bezel, -0.008), giving 0.95-0.97x the vault."
+    },
+    {
+      "id": "D4",
+      "severity": "low",
+      "detail": "Door-4 dome/monument junction wedge (carried over, unverified this round).",
+      "evidence": "The geometry is unchanged since w15. The d4b view is not in this render set.",
+      "fix": "src/07b_ceiling.js CEILMAT.lightPanel e 0.3 -> 0.12, or extend the dome side band down to the monument top."
+    },
+    {
+      "id": "W14A-3",
+      "severity": "low",
+      "detail": "Outboard PSU band segmentation is sparse and faint compared with y_47301, where the row of gasper/reading-light units under the outboard bins is clearly segmented (carried over).",
+      "evidence": "q16 left PSU band: a near-uniform white strip with faint lines. y_47301 left (100-330, 125-135): distinct units with dark gasper rings.",
+      "fix": "src/08_bins.js: darken the PSU unit split lines and gasper rings by about 15 % (or raise the AO for the PSU recess)."
+    }
+  ],
+  "questionsForUser": [
+    "Do you have an in-flight photo looking up at the aisle ceiling (THE Room or economy) that shows the speaker grilles? It would settle whether the bezel outline should be visible.",
+    "Do you have any photo of the door 1, 2, 4 or 5 cross-aisle ceilings? They are still approximations."
+  ]
+}
