@@ -158,3 +158,15 @@
   4-seat block 3 cm higher, so the cover tops sit at different heights in q15 / q16. This is deliberate (question 32),
   not an AO or shadow artefact.
 
+
+## Final confirm (1430d42): to lighting
+
+- **L14 blue cast at Y seat level (medium, raters A and B; does not block econ):**
+  - What the "cool PY/Y seat level" term does: blue rises 8-12 levels while red and green stay flat.
+  - Seat plastic, blue minus red:
+    - q15: +14 now, 0 at 8b1ab84, -5 in y_47300.
+    - q18: +25 now, +15 in y_47305.
+    - The q17 armrest is (189,191,204) against the photo's (185,184,191).
+  - Fabric back, blue/red: 2.22 now, 1.96 before, 1.87 in the photo. The navy pillows are (35,44,85) against the photo's (29,35,59).
+  - Fix: apply the cool term as luminance only, or weight it by saturation, so whites and greys stay near neutral; or drop the blue factor from 1.36 to about 1.25 in the econ zone. Targets: armrest blue minus red at most 6, back blue/red at most 2.0.
+- **Carried:** at a glancing angle the headrest covers read navy-violet, median (131,138,175), where the photos show a silver-grey sheen. A sheen lobe for the covers only would fix it.

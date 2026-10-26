@@ -797,3 +797,19 @@ I tested `arm` r 0.45 -> 0.26 and `armPad` r 0.50 -> 0.32. The armrest faces ros
 stayed at 0.61 % in q15 and 0.65 % in q16, and the crops were indistinguishable. I reverted the change before rating
 it, so econ stays at w51 (A 8.5 / B 8.65) and no w52 round was run. A thin streak needs a lighting-side change to the
 cove specular. Details are in `fixed_polishD.md`.
+
+## Final confirm (head 1430d42)
+
+Econ is **confirmed**: A 8.5 / B 8.6, with no high-severity econ issue in either rating (`econ_final_a.json`, `econ_final_b.json`). No code was changed.
+- **Per view (A / B):**
+  - q15 8.6 / 8.7
+  - q16 8.4 / 8.3
+  - q17 8.3 / 8.4
+  - q18 8.3 / 8.6
+  - B's studio score is 8.6.
+- **Code:** `src/09a_econ.js` is identical between w51's commit (8b1ab84, the shallow root) and 1430d42. The `09_seats.js` changes since then are PY rows only. The r0 (8b1ab84) vs rH (1430d42) renders differ only in lighting tone; no outline moved.
+- **Triangles** (`econUnit(...).idx / 3`): econ3 25,287, econ4 37,908, far3 1,812, far4 2,440.
+- **Still open:**
+  - The q17 3-seat cover is short and high (medium, both raters; question 32).
+  - The carried lows: q15 cover top, J elbow, flat pouch, belts, pillows.
+- **Lighting:** both raters flag a new medium lighting issue. L14's cool PY/Y seat level gives the econ whites and fabric a blue cast. It is handed off in `from_econ.md` under "final confirm".
