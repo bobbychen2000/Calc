@@ -1,0 +1,54 @@
+{
+ "area": "monuments",
+ "rater": "B",
+ "round": "w21",
+ "score": 8.8,
+ "note": "Uncommitted working tree on top of w20: the THE Suite ink-cloud print moved from 0.1 m vertex colours to the atlas panel 'ink' (inkPanel, 548x228 px, ~1.1 cm/px) on a warm paper ground (inkGround #e9dbbf atlasLit, inkCloud #c0b5a0); wall grid now 4 columns. BEFORE scratchpad/r0, AFTER scratchpad/r1, plus my own views b_edgeL / b_centre / b_aft in scratchpad/raters/monoB/{before,after} and the crop raters/monoB/cmp_f40_before_after.png (omaat_f40 | before | after). q11 / q19 are pixel-identical; q01 and q13 changed in one small box each (<0.01 %), consistent with the wall seen through a gap. q03 / q05 / q02 also change outside the wall, because 09d_suite.js is modified in the same working tree (suite area, not scored here). PIL box means (scratchpad/box.py), HSV hue/sat. Lighting noted, not scored.",
+ "previousIssues": [
+  {"issue": "integration L8-L11 MEDIUM: ink-cloud print reads as grey smoke stains (3x contrast, 1/3 saturation, 40 L dark)", "status": "fixed. ink_aisle print box (320,300,600,410) L170 range 101 s0.035 -> L199 range 30 h42 s0.090; ink_seated (200,220,330,300) L202 range 34 s0.090; q03 top box (410,10,530,110) range 62 s0.017 -> range 37 s0.065; close-up b_centre (60,220,840,540) L199 range 31 h42 s0.094. Photos: omaat_f13 print L204 range 24 h42 s0.114, omaat_f40 (180,180,620,340) L187 range 54 h42 s0.111. Dark / light tone split: f40 dark #aea799 / light #d6d0be (dL 40, 40 % dark), f13 dL 21 (47 % dark); after ink_aisle #c2bcad / #dcd7ca (dL 28, 51 % dark). Tone, hue, saturation and contrast now sit inside the photo range. Only the 'fine >= 2' target is missed (0.3-0.8 vs photo 2.2): see the low issue on edges."},
+  {"issue": "w19b MEDIUM: F front drapes warm brown", "status": "fixed in w20, still fixed (drapes unchanged)."},
+  {"issue": "w18a/b LOWs (welcome glass cue, bar nosing groove, tumbler glints, ash-wall corner strips, ash grain contrast / repeat, door-1 dark wood, galley insert frames, plain J lav doors)", "status": "not fixed (not in this pass; q01, q11, q19 identical)."}
+ ],
+ "changes": [
+  {
+   "change": "inkWall: vertex-colour clouds -> atlas 'ink' panel on a warm paper ground; inkGround #dddbd0 plastic -> #e9dbbf atlasLit; inkCloud #6a665f -> #c0b5a0; grid 0.1 m -> 4 columns",
+   "verdict": "keep",
+   "evidence": "The wall now reads as a pale printed paper with horizontal strata (cmp_f40_before_after.png, b_aft.png), no longer as dirty smoke. All integration targets met except edge fineness: range 30-37 (<= 40/45), L199-209 (>= 185), h42 (35-45), s0.065-0.094 (0.06-0.14). Pattern is continuous across the four monuments (UVs by absolute x; b_centre shows no seam in the print at the closet / galley joints), no atlas bleed at the wall edges or under the bin line, no visible tiling or mirroring, and no shimmer in the grazing view b_edgeL. Fewer triangles than before."
+  }
+ ],
+ "details": [
+  {"detail": "Door-3 self-service bar (m05, m06, q11)", "score": 8.7, "note": "Unchanged (q11 identical)."},
+  {"detail": "Door-2 welcome galley", "score": 8.5, "note": "Unchanged."},
+  {"detail": "Door-2 aft ash wall", "score": 8.7, "note": "Unchanged."},
+  {"detail": "F front wall / ink print, flight-deck door, door 1, F front drapes (q01, q03, q05, ink_aisle, ink_seated, b_*)", "score": 8.8, "note": "The print now matches the photos in tone, hue and contrast and reads as the same product. Remaining: edges soft rather than the photo's crisp, granular dither, and the strata are fewer and taller than in omaat_f40. Relative to the neutral white ceiling the beige reads a touch yellower than in the photos, where the bins are warmer than the wall (f40 bins h36 s0.19-0.23 vs print s0.11); that is the integrator's white-balance question, not scored. Door-1 dark wood unchanged."},
+  {"detail": "Lavatory exteriors", "score": 8.0, "note": "Unchanged."},
+  {"detail": "F/J bulkhead (F face now carries the new print, b_aft), J face", "score": 8.4, "note": "The aft F wall seen from row 1 (b_aft) now matches omaat_f13 well; J face unchanged."},
+  {"detail": "J/PY bulkhead, PY face", "score": 8.4, "note": "Unchanged."},
+  {"detail": "Door-4 group", "score": 8.6, "note": "Unchanged."},
+  {"detail": "Rear, door 5", "score": 8.4, "note": "Unchanged (q19 identical)."}
+ ],
+ "issues": [
+  {
+   "severity": "low",
+   "problem": "Cloud edges are soft and blurred where the photo's are crisp and granular (a coarse, almost pixel-dither speckle along each stratum edge).",
+   "evidence": "b_centre close-up: edge transitions span ~10-15 px with a fuzzy fringe; fine (mean |dx|) 0.28 vs omaat_f40 2.22, ink_seated 0.6 vs f13 2.15. Compare the left and right panels of cmp_f40_before_after.png.",
+   "fix": "In inkPanel, narrow the edge ramp (/0.08 -> /0.03), raise the speckle term (0.10 -> 0.18) and add a sparse 1-px dot term near the edge (hash2 threshold where 0.2 < e < 0.8). Keep the panel at ~1.1 cm/px; if it still blurs under mipmapping, use 2x vertical resolution (strata are horizontal)."
+  },
+  {
+   "severity": "low",
+   "problem": "Strata are fewer and taller than on the real wall: about 2-3 bands over the visible height vs 5-6 thinner bands in omaat_f40.",
+   "evidence": "omaat_f40 (160-630, 80-360): bands ~0.15-0.3 m tall, aspect ~8:1; b_centre / b_aft: blobs ~0.4-0.6 m tall, aspect ~3-4:1.",
+   "fix": "In inkPanel use fbm(x / 1.2 + 40, y / 0.14 + 3, ...) for n (more stretched, thinner bands) and keep the lowY fade."
+  },
+  {
+   "severity": "low",
+   "problem": "Carried w18 lows: welcome pane has no glass cue, flat bar nosing, inset-stripe tumbler glints, ash grain contrast / repeat, plain J lav doors, door-1 dark-wood streaks; vertical hairlines at the monument joints on the F front wall (b_centre x~45 and ~615, present before too).",
+   "evidence": "monuments_w18a/b; renders unchanged in those areas; b_centre before / after.",
+   "fix": "As w18a/b. The joints could be closed by extending each inkWall 0.003 m past its x0/x1 where a neighbouring monument abuts."
+  }
+ ],
+ "questionsForUser": [],
+ "gapWorth03": [
+  "Crisper, granular edges and thinner strata on the ink print (both cheap edits in inkPanel) would lift the F front wall to ~9; the w18 lows remain the rest of the path to ~8.9 overall."
+ ]
+}
