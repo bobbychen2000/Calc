@@ -94,3 +94,13 @@ The ANA ones are seat-confirmed: `lalf_ANA77W_NH212_136/137` (11A) and `alv_ANA7
     or a supersampled exterior pass fixes it; exterior already widened the strips to the limit.
 19. **Night nav light washes only down-facing faces (low).** The red/green tip light (`lights` from buildExterior, no `light` gain)
     could wash the upper raked tip faintly at night (point light within ~1.5 m). Optional.
+
+## Final confirm (2026-10-26, head 1430d42): to lighting, low, optional
+
+Exterior passes (A 8.5 / B 8.7), and the exterior itself is unchanged since w22. Both raters noted one low lighting item.
+- **Problem.** The glass-keyed look-out exposure lifts the day exterior by 5-9 levels and weakens its cool cast. The w17K near wing
+  is (214-217, 217-220, 222-225) against (187, 195, 208) in KN41, and B-R is 8 against 21. w19A (170/179/195) is within the
+  photo range.
+- **Fix if wanted.** Apply about -3 to -5 % exterior exposure, or a slightly cooler exterior fill, on day look-out views. Check
+  that w19A stays in range.
+- **Evidence.** The rating files `exterior_final_a.json` and `exterior_final_b.json` (lightingNotes).

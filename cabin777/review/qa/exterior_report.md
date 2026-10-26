@@ -322,3 +322,23 @@ wave-3 start of 25,160, cap +25 %).
 The before/after sheet `exterior_before_after.jpg` shows the wave-3e start (r20) in row 1 and the w22 build in row 2. The views
 are w19A, w13A, c_nacelle_left and w17A. Row 3 is a plan close-up of the tip, w21 against w22. It holds own renders only. Ratings
 are in `exterior_w20*.json` to `exterior_w22*.json`.
+
+## Final confirm (2026-10-26, head 1430d42)
+
+| round | build rated | rater A | rater B |
+|---|---|---|---|
+| final | 1430d42 (final lighting commit; `src/11_exterior.js` unchanged since w22 / 5aac2bd) | **8.5** | **8.7** |
+
+**Exterior is confirmed on the final head, with no code change.** Both raters are at 8.5 or above with no high or medium
+issue, the same scores as w22. Exterior triangles are still 30,004, because the file is unchanged (+19 % over the wave-3 start,
+cap +25 %).
+
+- **Geometry and detail match w22.** The five `spec_ext` studio close-ups are pixel-identical to w22; `c_wing_panel` differs
+  by noise only (35 px). In the window views the raked-tip rows (w19A), the pylon foot / flank ratio (0.97) and the fastener strip
+  (0.82-0.84 of the panel) are all the same as w22.
+- **The lighting runs only changed the exposure.** The glass-keyed look-out exposure makes the day exterior 5-9 levels brighter.
+  Nothing clips: window crops peak at 238-247. The near wing in w17K reads a little hot and less blue (B-R 8 vs about 21 in
+  KN41). This is low and passed to lighting in `from_exterior.md`; it was not scored.
+- **The w22 lows are still open, as expected:** the tip upsweep, the pylon foot crease and the saddle.
+
+Ratings are in `exterior_final_a.json` and `exterior_final_b.json`.
