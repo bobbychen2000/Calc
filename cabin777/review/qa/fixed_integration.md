@@ -728,3 +728,92 @@ from_* items (to lighting / integration): no new ones since L11. Carried, not ch
 seat views) and w15 lows (door glass, creams, dado grille, PY/Y tub lip band), from_econ wave 3k-3m / w43b-L1 / w37-w39 / w27,
 from_room w16 (1) / (3), from_py 6 / 9 / 10 / 11, from_monuments w13-15, from_exterior 17-19, from_ceiling w13. The L12 raters'
 items for room / econ / py / suite / ceiling are in from_integration.md (lighting run 3, L12).
+
+## Lighting run 4, L13 (plateau breaker after the L13 rating: lighting 8.1, integration 8.0; two gap analyses + rater issues)
+
+Code: `04_shaders.js`, `12_scene.js` (`13_app.js` unchanged). The first fixer of this run was stopped by a container restart; its
+edits went to the branch as snapshots b3fc310 / 24b65d4 / 841f2a7, and this pass validated them against its true baseline (head
+5e5e561, qa/fixL13/b_before, renders qa/fixL13/before, before2, and before3 for q01 / q02 / q10 / q19 from the same build). Final
+renders: qa/fixL13/final (qa.js check views; mood views from qa/fixL13/vm.json and view specs vv1.json / vfin.json via
+tools/shots3.js); the snapshot head without the distance gate: qa/fixL13/after2; tools in qa/fixL13/tools (cmp.py frame / thirds
+vs photo, m13.py the L13 target boxes, thin.py); sheet qa/fixL13/sheet_final.jpg (before | final | photo for q08, q17, q05, cF03,
+q21, q09). py w19 and monuments w22b landed before 5e5e561, so before and final differ only by this run.
+
+Regression guard (cmp.py: |model - photo| over the frame median, p5, p95, the thirds' mean L and 0.25 x their hue difference;
+lower is closer), before -> final:
+- Check views: q06 121 -> 121, q15 29 -> 29, q16 44 -> 43, q20 63 -> 63 (0.0 % px), q21 193 -> 178, q03 292 -> 275, q13 61 -> 60,
+  q09 118 -> 121, blue06 81 -> 81.
+- q09 +3 (kept, inside the +-3 guard): with the snapshot's ungated belt dimming it was 125, because the far window wall across the
+  cabin (~4.3 m) went from L233-236 to 205-215 against c_27314's far piers L236-253. The near-wall gate added in this pass (item 1)
+  puts that band back (232-236); what is left is the lower far wall under Boarding's sideLow 0 (p95 234 -> 231), which the
+  photo hides behind the ash dividers.
+- Also: q08 241 -> 229, q14 114 -> 110, q10 61 -> 58, q05 234 -> 236, q02 265 -> 265, cF03 154 -> 124, c06 135 -> 133, c15 267 ->
+  267, bl16 62 -> 50, blue15 68 -> 65, blueF03 168 -> 168, dF03 119 -> 117, wF03 116 -> 115, d06 76 -> 77, w06 77 -> 77, dd 75 -> 76,
+  z50 311 -> 298, nF03 / n16 unchanged (0.0 % px), q01 / q19 unchanged (0.0 % px: the door-zone linings sit outside the lens mask).
+- q17 43 -> 50, q07 76 -> 82 (kept; frame-level, matched regions closer): both are the near window wall leaving the brightest
+  pixels. q17: its p95 239 -> 230 (photo 238) is the whole rise; the photo's top-5 % pixels lie under the lens, at the panes and on
+  the white seat shells (seat level >= L238: photo 1.29 %, model 0.10 % before and after), and the model's flat-white pier rows
+  48-96 (10,931 top-5 % px vs the photo's 274) are what drop out (5,263). The pier now falls from the lens like the photo's (below).
+  q07: the near window wall (x 860-930, rows 360-520) goes 237 / 228 / 224 / 176 -> 222 / 198 / 193 / 157 against c_27316's 193 /
+  182 / 135 / 114; the mid / bottom thirds (140 / 131 vs 149 / 141) were already under the photo and had been offset by the wall.
+- q04 337 -> 351 (kept): +11 of it is the top third's circular-mean hue flipping h226 -> h2 at s0.15 (7.7 % of its pixels, the
+  shaded faces under the window, cross s > 0.08 as they darken: mean RGB 101 / 96 / 95 -> 84 / 79 / 75, B-R -6 -> -9); the rest
+  is the top third's L 153 -> 143 (photo 152, a different framing with the dark monitor and wood in it). The pier boxes (150-230 /
+  480-560, rows 0-60) go L230 / 236 -> 227 / 206, where f_17304's piers (x 560-600 / 720-760) run 225-230 at the window top down
+  to 203-216 at mid-window, so the new levels sit inside the photo's range rather than above it. The official renders keep
+  the near wall brighter than the in-flight photos do (question 15).
+- Panes still clip: L >= 250 share q14 1.26 -> 1.33 %, q08 2.91 -> 2.94, q17 1.13 -> 1.16. Thin highlights (thin.py) q06 0.92 ->
+  0.93 %, q08 0.92 -> 0.90, q16 0.67 -> 0.63, q15 0.65 -> 0.66, q09 0.36 -> 0.35, q17 0.44 -> 0.39 (head-on near wall only).
+
+Items (gap analyses first, by expected gain, then the raters' L13 issues):
+- integration medium (gap 1 #1, gap 2 #1) the window wall burns out flat white at window height in the close seat views: done,
+  in gap 2's guarded form with gap 1's sideLow 0, plus a near-wall gate. `u_beltK` (MOODS boarding / cruise 0.55; 1 elsewhere):
+  the flat lining (linW) under a lens, facing in, 0.55-1.6 m, outside the recessed tubs, seen near head-on (hoV: N.V 0.3-0.6) and
+  within 3.0-4.2 m of the eye keeps 0.55 of its ambient, and the day-belt term drops 0.5 -> 0.15 there. Boarding sideLow 0.4 -> 0:
+  the lens light fades out over 0.95-1.55 m, so the pier falls from the lens to the window as in y_47303. Cruise keeps sideLow
+  0.30 (its lavender belt).
+  - Targets: q08 pier (612-640, 100-180) p50 241 -> 209 (<= 215), column 228 / 228 / 224 / 216 / 209 / 204 / 199 from row 40
+    (non-increasing; c_27300 205), wall (450-930, 0-300) > L235 41.5 -> 16.8 % (c_27300 17.3 %); q17 pier 235-238 flat -> 229 / 228 /
+    219 / 211 / 205 / 203 / 198 / 194 / 191 (y_47303 237 / 213 / 190 / 178 / 170 / 160), surround p50 / p75 198 / 224 -> 193 / 211
+    (<= 195 / 215; photo 183 / 199), top third 185 -> 181 (>= 180), tub 177 / 162 / 164 -> 176 / 159 / 162 (y_47303 182 / 167 / 155);
+    q05 wall (30-80, 120-400) 240 -> 211 (<= 215; omaat_f8 L202), upper frame > L235 15.1 -> 3.4 %; cF03 belt (90-150, 360-460) L199
+    B-R +26 -> L167 +35 (<= 175; ml_DSC_1939-1 L146-186, +42..+71). L235-245 share q03 12.5 -> 4.2 %, q08 10.5 -> 2.3, q17 5.4 -> 1.8,
+    q05 9.9 -> 2.0, q04 10.6 -> 9.3.
+  - Held: q16 far belt (450-640, 130-160) p90 239 -> 238, > L235 13 -> 12 % (the hoV / distance gates; y_47301 245 / 26 %).
+  - Not reached: the q06 left-edge wall the rater also cited (x 0-25, rows 145-235: 228-243 -> 227-240 vs c_27312 146-216) is the
+    far left wall at ~4 m, which the distance gate leaves at its level (ungated it went to 200-227, at the cost of q09's far
+    wall); q06 frame 121 -> 121 either way.
+  - Added in this pass: the 3.0-4.2 m eye-distance gate on hoV (see the q09 guard above). Ungated (the snapshot), q09 went 118 ->
+    125 and q06 121 -> 122; gated, the near views (q08 / q17 / q05 / q03 / cF03) change by 0.02-0.97 % of pixels and keep every
+    target number above.
+- lighting medium (gap 1 #2) amber moods: the sidewall stays at full amber down to ~0.4 m: done as the rater asked. MOODS.dining
+  sideLow 0.65 -> 0, wake 0.5 -> 0.
+  - q21 column (520-545) y285..520 177 / 183 / 185 / 186 / 184 / 179 / 153 -> 177 / 182 / 183 / 165 / 151 / 135 / 119 (y520 / y285
+    0.67, target <= 0.75); wall at y440 151 under the ceiling 163 (bins 146); hue h27 -> h31 (s0.46); q21 cmp 193 -> 178.
+  - z50 under the lens L187, below the window y480 / y520 144 / 115 (0.77 / 0.61; target 0.55-0.75 at y520); z50 cmp 311 -> 298.
+  - Guards: dd window-top wall 155 -> 152 (+-5), ash 99 -> 99, frame 94.6 -> 94.3 (median 85 / 85); s06 window wall 148 -> 146 (+-5).
+- lighting low (gap 1 #3) Dining / Sunrise with open day panes: an orange band rises from the console: done (still needed after
+  the sideLow change: 10.0 % with it alone). The dayB lower edge smoothstep(0.6, 0.9) -> (0.2, 0.5).
+  - dF03 orange-bright share (0-340, 250-420) 12.9 -> 3.8 % (<= 6 %), column 250-280 y330-370 185 / 185 / 157 s0.43 -> 154 / 152 /
+    128 s0.09 (<= 0.18); dF03 wall (0-120, 40-300) L191 -> 184. Pink share dF03 0.05 -> 0.00 %, d06 0.08 -> 0.08 (<= 0.5 %); d06
+    median 82 -> 82.
+- integration detail (gap 1 #4) Blue: bin faces evenly lit, crown light and saturated: done. MOODS.blue fillLift 0.4 -> 0.25,
+  binLo / ctrLo 0.6, vault [0.018, 0.020, 0.060] -> [0.016, 0.018, 0.045].
+  - blue15 crown (340-600, 0-60) L34 -> 24 (sany_47 L25), outboard bins (0-90, 40-110) 32 -> 21 (L17), bin box 36 -> 28; frames
+    bl16 41.2 -> 37.6, blue06 38.5 -> 36.2, blue15 28.4 -> 26.2; cmp bl16 62 -> 50, blue15 68 -> 65, blue06 81 -> 81, blueF03 168 ->
+    168. The crown stays blue where sany_47's is near-neutral grey-navy (hue not closed).
+- gap 2 #2, pane reflections in satin / glossy parts at Sharp (windowR in specEnv, paneK 7): tested by the first fixer
+  (qa/fixL13/r_pane, r_pane2; build b_work), not shipped. It changed 0.9-3.9 % of the pixels by +20-30 L, mostly the IFE bezels
+  and THE Suite console: the satin bezels took grainy, beaded pane glints under the detail normal (z_pane.jpg) and, in the
+  narrowed form, stepped pane dashes (z_pane2.jpg), the look L11 a1 was rejected for; no rated surface moved toward its photo.
+- lighting low (room / econ SEATMAT) material response and py contact darks: area items, already routed (from_integration.md,
+  lighting run 3, L13). One FYI added for econ (below).
+
+Phone budget (perf2.js, 640 x 400, before -> after; frame tris / draw calls): mid Sharp 3,256,808 / 69 -> 3,256,808 / 69,
+Balanced 1,643,406 / 35 -> 1,643,406 / 35; econ Sharp 3,969,124 / 101 -> 3,969,124 / 101, Balanced 1,999,564 / 51 -> 1,999,564 /
+51; room Sharp 2,851,472 / 69 -> 2,851,472 / 69, Balanced 1,440,738 / 35 -> 1,440,738 / 35. No new pass, no loop, no texture
+tap: one uniform and a few ALU ops on interior fragments (4 smoothstep, 1 length, 2 mix, 1 step); the MOODS changes are values
+only.
+
+from_* items (to lighting / integration): no new ones since L12 (the from_* files changed only for the py w18-w19 and monuments
+w22b reports). Carried, not changed: as listed under L12.

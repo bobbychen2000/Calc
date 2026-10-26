@@ -888,3 +888,19 @@ Lighting run 3 (plateau breaker) ended at its 3-round cap (L11 7.8 -> L12 7.95 -
   
   Target: no grey fragment on the lip in z04 at DPR 1 and 2.
 
+## Lighting run 4, L13: notes for the area owners
+
+The non-lighting L13 issues are routed above (lighting run 3, L13). One FYI from this run:
+
+### To econ (`09a_econ.js`, shared SEATMAT in `09_seats.js`), FYI (low): the economy seat whites, now that the wall no longer covers for them
+- **Problem:** The q17 window wall used to read flat white (L235-241) down to the sill. Lighting run 4 brought it down to the
+  photo's falloff from the lens. That exposed a gap at seat level: in y_47303 the white seat-back shells and armrests make
+  up a share of the brightest pixels, and in the model they hardly do.
+- **Evidence:** q17 lower two-thirds (y 191-575) share >= L238: y_47303 1.29 %, model 0.10 % (before and after this run).
+  Near-seat cells (y 95-191, x 560-683 / 683-806 / 806-930): photo 142 / 159 / 139, model 135 / 145 / 114. The q17 frame cmp
+  went 43 -> 50, and all of the rise is the p95 (239 -> 230, photo 238). Renders:
+  /tmp/claude-0/-home-user-Calc/b1f1e8ce-ba52-5ff4-94e9-cb27b8198a85/scratchpad/qa/fixL13/final/q17_econBacks.png and
+  /tmp/claude-0/-home-user-Calc/b1f1e8ce-ba52-5ff4-94e9-cb27b8198a85/scratchpad/qa/fixL13/sheet_final.jpg (row 2).
+- **Fix:** No action unless the econ raters flag it. If they do, check the econ white shell / armrest albedo and roughness
+  against y_47303 in the studio first.
+

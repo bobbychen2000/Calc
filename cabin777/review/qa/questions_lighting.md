@@ -91,3 +91,14 @@
     lights along their rounded rims and armrests, as in the photos. Like the contact shading, this costs a little per pixel
     (about 3-4 % of the frame in the test renderer), so it is on only at the **Sharp** quality; phones open on **Balanced**
     without it. Should Balanced get it too?
+
+## Lighting run 4 (after the L13 rating, 2026-10-26)
+
+15. **How bright should the window wall be close up: ANA's official renders or in-flight photos?** In Boarding and Cruise,
+    the wall between and below the windows used to read flat white in every seat view. The integration rater compared it with
+    in-flight photos and ANA's own economy and THE Room seat photos (y_47303, c_27300; OMAAT's THE Suite photos), where that
+    wall is a light grey that darkens from the bin light down to the window (about L176-215). This run follows those photos
+    for the wall within about 4 m of the eye; the far wall across the cabin keeps its brightness. Some official renders keep
+    the near wall brighter than that (f_17313 behind THE Suite about L223-228, f_17304 L203-230), so the suite views sit a
+    little under those two renders now. If you would rather match the official renders, the one-line change is
+    `beltK: 0.55` -> `0.7` in `MOODS.boarding` (and `cruise`) in `src/12_scene.js`, or `1` to turn it off.

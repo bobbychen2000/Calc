@@ -454,6 +454,12 @@ void main(){
     // lining reflects the lit cabin (Fresnel), and the far wall keeps its clipped belt [V: y_47301 far belt p90 245, 26 % >
     // L235 vs q16 L13 239 / 13 %; without the gate 226 / 4 %] (u_beltK below)
     float hoV = smoothstep(0.3, 0.6, NdV);
+    // ... and only the near wall (within 3.0-4.2 m of the eye): the photos keep the far wall across the cabin bright at the
+    // window band [V: c_27314 far piers L236-253, y_47301 far belt p90 245] where the near pier in a seat view is a light grey
+    // [V: c_27300 L205, y_47303 237 -> 176]; ungated, q09 (far wall at ~4.3 m) piers 233-236 -> 205-215 and cmp 118 -> 125;
+    // gated, the window band holds (232-236) and cmp 121 (the lower far wall, hidden by the dividers in c_27314, keeps
+    // Boarding's sideLow 0), q06 122 -> 121; the near views (q08 / q17 / q05 / q03 / cF03) unchanged [D fixL13 r_v1]
+    hoV *= 1.0 - smoothstep(3.0, 4.2, length(u_camPos - v_wpos));
     hBot = mix(u_hemiBotN, u_hemiBot, coolW);
     vec3 wsh = mix(u_washN, u_wash, coolW);
     // QA L9 (light): the centre bins' doors take u_ctrLift x the lift (12_scene MOODS ctrLift: 3 in Dining / Sunrise, 1
@@ -591,7 +597,7 @@ void main(){
     // where the photos fall from the lens to a light grey [V: y_47303 pier 237 / 210 / 184 / 176 down to the window centre;
     // c_27300 pier L205; omaat_f8 THE Suite wall L202 vs q08 pier p50 241, q17 pier 235-241 to the sill, q05 wall L237].
     // Not the tubs (recd: at the photo already, y_47303 182 / 167 / 155), not the seats' inboard faces (linW), not the
-    // grazing far wall (hoV). 1 elsewhere, which also keeps the belt term at 0.5 [D gap4_mat r_beltLV; fixL13]
+    // grazing or distant far wall (hoV). 1 elsewhere, which also keeps the belt term at 0.5 [D gap4_mat r_beltLV; fixL13]
     amb *= mix(1.0, u_beltK, linW * lensW * facingIn * smoothstep(0.55, 0.85, v_wpos.y) * (1.0 - smoothstep(1.30, 1.60, v_wpos.y)) * (1.0 - recd) * hoV);
     if (u_dayN > 0.0) {
       // QA L13 (light low, lighting run 4): lower edge 0.6-0.9 -> 0.2-0.5 m, so the wall under an open pane stays neutral down
