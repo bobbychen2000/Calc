@@ -1,0 +1,66 @@
+{
+ "area": "suite",
+ "rater": "A",
+ "round": "final",
+ "score": 8.6,
+ "method": "Checked that src/09d_suite.js, 09_seats.js and 03_tex.js are unchanged from 623322c to HEAD 1430d42 (git diff --stat: only 04_shaders, 12_scene, 09b_py and 10_mono changed). Compared the w18 renders (ro/) with the head renders (rh/) at 930x575 for q02-q05. Used the side-by-side cmp_*.png images and signed luma-difference maps, saved as /tmp/claude-0/-home-user-Calc/1340cc88-268d-536d-9560-b1e2d4047e81/scratchpad/ra/d_<view>.png. Mean luma: q02 120.6->118.7, q03 146.3->140.8, q04 160.4->156.8, q05 167.7->163.8. Pixels with |dL|>8: 7 / 21 / 14 / 13 %, almost all of them sidewall, window and edge anti-aliasing. Sampled region means on suite surfaces: ottoman, shell, cap, wood, bed, console fascia. Compared them with the official refs f_17301 / 17304 / 17306 / 17313 and with 5 in-flight UpgradedPoints photos re-downloaded to cabin777/ref/web/suite/ (up_Empty, up_Doors, up_Bed-Made, up_Boarding, up_Privacy-Wall). No new Playwright renders: the suite geometry is byte-identical, so the earlier DPR 2 close-ups (w18a) still apply to geometry. Lighting is noted but not scored.",
+ "calibration": [
+  { "earlier_issue": "w17a MEDIUM: cap joint a square black blade 2 mm proud, past the rounded shell end", "status": "fixed (code unchanged since the w18 fix). No blade in q02 / q05 at 930 px." },
+  { "earlier_issue": "w15a MEDIUM: duvet head band a hard-edged board with z-fight dashes", "status": "fixed. q04 duvet region 180,178,179 -> 181,178,178; no dashes in d_q04." },
+  { "earlier_issue": "w13b / w14a / w14b MEDIUM: wood flanks chestnut instead of espresso", "status": "fixed, no regression. q03 wood wing 77,76,75 identical; q04 wood strip 108,106,107 -> 107,105,106 (neutral espresso-grey)." },
+  { "earlier_issue": "w17b LOW: wood-panel split lines read as black pen; cap joint tab; ottoman welt 2x f11", "status": "fixed (unchanged code). The ottoman is identical in q03 / q05: 149,141,131 and 143,135,126." },
+  { "earlier_issue": "w18a/b LOW: cap groove darker than the soft f40 joint shadow", "status": "not fixed (fCapJoint still #3a342e)" },
+  { "earlier_issue": "w16a/b LOW: band/loft notch, aisle bullnose, flat flap triangle, footwell back lit, far-leaf moire, drape rail, short flank grain", "status": "not fixed (not addressed)" },
+  { "earlier_issue": "regression check from the lighting loop", "status": "No suite geometry or material regression. Side effects of the lighting change: (a) the cap tops are slightly yellower (q02 cap 187,184,174 -> 187,184,169; q05 183,180,168 -> 184,180,164); (b) the console fascia in q04 is darker, 90,82,80 -> 79,72,67, which is closer to f_17304 (63,60,61): an improvement; (c) the sidewall behind the suite is darker and cooler (see the lighting notes)." }
+ ],
+ "details": [
+  { "detail": "Proportions and plan", "score": 8.6, "refs": "unchanged; f_17313 / up_Empty" },
+  { "detail": "Shell / cap two-tone", "score": 8.2, "refs": "cap value too light against the wall (issue 1)" },
+  { "detail": "Aisle leaves, plinth, wardrobe wall and door", "score": 8.7, "refs": "up_Empty / up_Doors: ribbed grey leaves and dark plinth match" },
+  { "detail": "Wood flanks", "score": 8.2, "refs": "up_Empty flank 35,30,31; grain still short" },
+  { "detail": "Console, module, keypad", "score": 8.2, "refs": "q04 fascia now closer to f_17304" },
+  { "detail": "Bed", "score": 8.5, "refs": "q04 pad 216,214,210 vs f_17304 220,222,221; duvet shade 210 vs 216" },
+  { "detail": "Ottoman, table, aisle box", "score": 8.7, "refs": "unchanged" },
+  { "detail": "Screen wall, centre pair and variants", "score": 8.7, "refs": "q02 / q03 unchanged" }
+ ],
+ "issues": [
+  {
+   "severity": "medium",
+   "problem": "The caps read as a pale cream counter instead of a mid taupe-grey. In both real daylight and in-flight photos the cap is about half the sidewall's luminance; in the model it is close to the wall's value. The hue is right: B-R is -18 here, -11 in f_17313 and -19 in up_Empty. The material #8f8a76 (L~137, 0.59 of the sidewall material) is plausible, so most of the gap is top-lit horizontal faces plus the darker sidewall. The suite's overall value still reads lighter than the product.",
+   "evidence": "Rendered cap / wall: q05 cap 184,180,164 vs sidewall 199,204,214 (0.92); q02 near cap 187,184,169. Photos: f_17313 cap top (620-700, 170-200) 102,94,91 vs sidewall 226,228,227 (0.45); up_Empty cap 115,106,96 vs wall ~230 (0.5). The shell / cap ratio is fine (q02 107 / 185 = 0.58).",
+   "fix": "Joint suite + lighting: lower fCap to about #7d7868, or cut the top-down key on horizontal suite surfaces. Re-check that the cap still separates from the shell (f40 two-tone)."
+  },
+  {
+   "severity": "low",
+   "problem": "The cap groove is still darker than the f40 joint shadow (carried from w18).",
+   "evidence": "w18a: L25-48 vs about L110-115",
+   "fix": "SEATMAT.fCapJoint '#4a433b'"
+  },
+  {
+   "severity": "low",
+   "problem": "Carried from w16: band/loft notch and aisle bullnose, flat flap triangle, short flank grain, footwell back lit, far-leaf moire, drape rail",
+   "evidence": "unchanged in q02 / q04 / q05",
+   "fix": "as w16a"
+  }
+ ],
+ "lighting_notes": [
+  {
+   "severity": "medium",
+   "problem": "The sidewall around the suites went darker and blue-cool in this lighting loop, while the photos show it neutral and bright. It also pushes the cap / wall ratio (issue 1) further from the photos.",
+   "evidence": "q03 sidewall (40-120, 100-300) 233,235,237 -> 194,197,204; q05 (20-90, 150-350) 235,237,240 -> 199,204,214 (B-R +15); q04 222,223,227 -> 193,195,200. Photos: f_17313 226,228,227 (B-R +1); f_17304 167,167,169 is neutral even when darker."
+  },
+  {
+   "severity": "low",
+   "problem": "The q03 look-out is now almost clipped and the cloud detail is gone. This roughly matches f_17313, whose windows are blown white too, so it is acceptable.",
+   "evidence": "q03 window (150-190, 180-300) 237,243,249 with luma std 7.0 -> 251,253,255 with std 2.9"
+  },
+  {
+   "severity": "low",
+   "problem": "Hard-edged sun parallelograms on the bed and the ottoman (unchanged). f_17304 and up_Bed-Made show soft, even light.",
+   "evidence": "q04 duvet sun patch 245,243,239 against shade 210,207,203, with sharp edges"
+  }
+ ],
+ "questions": [
+  "No high issues. The one medium is cap value / wall balance, which spans suite material and lighting. Should the integrator own it, given that the material is in range and the gap comes from the render?"
+ ]
+}

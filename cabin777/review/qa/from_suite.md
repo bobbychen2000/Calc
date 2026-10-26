@@ -24,3 +24,12 @@
      `c: '#8f9cff'` on LAYER.atlasGlow, but 04_shaders.js line ~92 ignores base for layers 13–15, so the text stays white.
    - Fix: in that branch, for layer 15 use `emissive = tc * base * u_emisGain * emis * 4.0` (tagGlow and exitGlow are white; the
      10_mono washi materials #f2f3f6 / #d4d3e0 would pick up their intended slight lavender tint, so check q11 after the change).
+
+## Final confirm (head 1430d42) - to lighting / integration
+Suite met the bar (A 8.6 / B 8.9). These notes from the raters are not blocking; renders and diffs are in the suite-final scratchpad and can be reproduced with `node test/qa.js <out> 930 575 q03_suite1A q05_suiteBehind`.
+1. **The sidewall around F renders cool blue-grey and darker since L7-L15.** (medium, both raters)
+   - q05: from 239/241/245 to 199/204/214 (blue 15 above red). q03: from 233/235/237 to 194/197/204. f_17313 shows a neutral 226/228/227.
+   - Because of this the suite caps read too pale against the wall: cap/wall luma 0.92, against 0.45-0.5 in f_17313 and up_Empty.
+   - Fix: neutralise the sidewall/reveal tint in the F zone (cool fill or the window-belt term in `12_scene.js`) and bring it back to about L225. If the cap/wall ratio is still above about 0.7 afterwards, tell suite: the suite-side fix is `fCap` #8f8a76 -> about #7d7868.
+2. **The window view in q03 is nearly clipped.** (low) It went from 237/243/249 to 251/253/255 and the cloud detail is gone. This is acceptable, since f_17313 is also blown out.
+3. **Sun patches on the bed and ottoman are still hard-edged parallelograms.** (low) The q04 patch is 245 against 210 shade; f_17304 shows soft light. The window-console wood tray lost its sun stripe and reads flat.

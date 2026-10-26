@@ -185,3 +185,17 @@ Closed `from_integration.md` L11 "To suite" (log: `fixed_polishC.md`).
   measure). The SSAO part of the hand-off is lighting's (04_shaders.js) and was not touched.
 - **Still open (low):** cap groove one step lighter (#4a433b) to match the soft f40 shadow; the w16 lows.
 
+
+## Final confirm (2026-10-26): bar held on the final head
+
+The suite was re-rated on head 1430d42, after lighting runs 2-4 (L7-L15). `src/09d_suite.js`, `09_seats.js` (suite entries) and `03_tex.js` are unchanged since w18 (623322c).
+
+| round | rater A | rater B | changes |
+|---|---|---|---|
+| final | **8.6** | **8.9** | none (confirm only); `suite_final_a.json`, `suite_final_b.json` |
+
+- No high issues. Every earlier high or medium issue is still fixed and none has regressed.
+- Render diffs against w18 (q02-q05) are lighting only: the sidewall and window reveals are cooler and darker, window glass is brighter, and edge AA differs. Suite surface colours moved by 0-5 levels; the caps are slightly yellower.
+- Rater A drops 0.2 for one new medium: the caps are too pale against the sidewall. Measured as cap/wall luma, the model reads 0.92 against 0.45-0.5 in f_17313 and up_Empty. Part of this is the lighting change (the wall got darker), so it was routed to lighting first in `from_suite.md`. The suite-side option (`fCap` about #7d7868) was not shipped, because the bar is met and no code changes are allowed in a confirm.
+- Triangles: window suite 12,182, centre suite 12,374, far LOD 326. This is within the wave-3 budget (start 12.2k / 12.7k / 158, +25 %; the far LOD was allowed to grow to match the near unit, see wave 3).
+- Still open (low): the cap groove is one step dark (#4a433b); the window console runs a little short and high against f_17313; and the w16 lows (head-band notch, drape rail, flat flap triangle, far-leaf moiré, short flank grain).
