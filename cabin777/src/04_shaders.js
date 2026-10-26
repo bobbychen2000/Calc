@@ -333,7 +333,8 @@ void main(){
   // 3640 px > L240 at seat level on the fillets vs q17 79; py_37302 4810 px > L235 on the shell / armrest / console rims vs
   // q13 653] [D gap3 v_rimG2]. Only aft of THE Room (u_sLowZ = 05_layout z20: PY and economy): in THE Room and THE Suite it drew
   // white outlines on every cap edge and beaded glints along the divider rails, and lifted the q06 frame (median 165 -> 167 vs
-  // c_27312 128) where the thin-highlight share already sits above the in-flight range (q06 0.92 % vs 0.06-0.57 %) [D fixL11 a1]
+  // c_27312 128) where the thin-highlight share already sits above the in-flight range (q06 0.92 % vs 0.06-0.57 %) [D fixL11 a1].
+  // Aft, with the py w17 SEATMAT roughness: thin-highlight share q13 0.24 -> 0.29 %, q16 0.62 -> 0.67, q17 0.40 -> 0.44 [D fixL11 after]
   float rough0 = rough;
   vec3 Ng = normalize(v_nrm); vec3 gnx = dFdx(Ng), gny = dFdy(Ng);
   float rimW = smoothstep(0.002, 0.02, 0.25*(dot(gnx, gnx) + dot(gny, gny))) * (1.0 - smoothstep(0.45, 0.6, rough0)) * (1.0 - u_rimK.z*metal);

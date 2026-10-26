@@ -217,7 +217,8 @@ const SKIES = {
   // (8.5) #2a4f86 (15) #1f4274 (25), between F-GSQR_1 and _2 [V photos, D fit].
   // QA L11 (integration): winExp 4.0 -> 5.5 with the pane transmittance now before the tone curve (LIGHT_TUNE.glassT): the
   // cloud deck in the economy panes still sat just under the clip [V: y_47303 pane L252 vs q17 pane boxes p50 248; share > L250
-  // q03 0.5 % vs f_17306 2.1 %] -> q17 252-253, q03 1.1 %, frame means within 0.5 L; the look-out view keeps 1 [D fixL11 w55]
+  // q03 0.2 % vs f_17306 2.1 %] -> q17 252 / 253, q03 1.0 %, frame means within 0.5 L; the look-out view keeps 1 [D fixL11 w55,
+  // after]; 7 flattened the deck to 255 with no frame gain [D w7]
   // extBounce = the lit deck seen by the exterior's undersides (0.55 x cloudLit) and extSun the exterior's sun scale
   // (the sun side of the cowl saturated at 5.2) [D: from_exterior 1 / 6; alv_ANA77W_NH211_26K cowl #9fabb7-#a9c0ce]
   day: { label: 'Day', sunEl: 30, sunAz: -60, sun: [5.2, 4.9, 4.4], zenith: [0.019, 0.05, 0.095], horizon: [0.20, 0.37, 1.0], skyK: 12, haze: [0.55, 0.66, 0.85], cloudLit: [1.25, 1.25, 1.25], cloudShade: [0.62, 0.68, 0.78], skyTop: [0.55, 0.68, 0.95], skyBot: [0.55, 0.55, 0.58], extBounce: [0.69, 0.69, 0.69], extSun: 0.6, winGlow: [0.45, 0.52, 0.62], winExp: 5.5, sunVis: 1, night: 0, sheer: 1.0 },

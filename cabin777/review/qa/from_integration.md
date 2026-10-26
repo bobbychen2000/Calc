@@ -745,3 +745,27 @@ The run ended at its 5-round cap. These are the open items the L11 raters gave t
   2. Then either end that PSU / band run 0.05 m before the door-3 zone boundary (fitModules z1 - 0.05), or drop it 2 mm along its face normal.
   3. Re-render z04 at DPR 1 and 2. Target: no grey fragment on the lip.
 
+
+## Lighting run 3, L11: notes for the area owners
+
+### To shell (`src/07_shell.js`), FYI: the pane tint now lives in `12_scene.js` LIGHT_TUNE.glassT
+- The day-pane transmittance is applied to the sky and the exterior before the tone curve (mainFS / skyFS `u_glassT`), so a
+  bright sky clips to white as in c_27316 / y_47300. The display-space glass multiply (DST_COLOR pass over glassR / glassL)
+  runs only in x-ray now, so the per-instance glass tints in 07_shell.js only colour the x-ray panes.
+- `LIGHT_TUNE.glassT` = your w18 tint [0.985, 0.99, 1.0] raised to 2.4 = [0.964, 0.976, 1.0]: below the clip every pane and the
+  look-out view (q12 frame 124.9 -> 125.0) keep the level your w18 raters judged. If you change the pane tint again, set
+  glassT to tint^2.4 (or say so here). Door viewing-window glass is in glassR / glassL, so it takes the same treatment.
+- Day `winExp` 4.0 -> 5.5 (SKIES.day): the economy cloud deck now clips (q17 pane p50 247 / 248 -> 252 / 253, y_47303 252).
+  Your w15 low (door viewing-window glass a flat white with no sky gradient) is still open: at this exposure the door glass
+  clips like the cabin panes, which is what the official photos show for the cabin panes; lalf_133's graded door pane would
+  need a separate (lower) exposure for the door glass, which lighting has not added.
+
+### To py / econ (`09_seats.js` SEATMAT, `09b_py.js`, `09a_econ.js`), FYI: cove rim highlights aft of THE Room
+- mainFS now draws the cove-line lobe on the material roughness (not the spec-AA-widened one), x3 on rounded fillets (rough
+  < 0.45-0.6), aft of z20 only (PY and economy). With py w17's pyShell 0.30 / pyArm 0.38 / pyArmPad 0.32 the PY rims now carry
+  streaks: thin-highlight share q13 0.24 -> 0.29 % (sanpy 0.46-0.67), q16 0.62 -> 0.67, q15 0.61 -> 0.65, q17 0.40 -> 0.44.
+  The econ `arm` 0.26 / `armPad` 0.32 keys (polishD reverted them untested) would now show as streaks; worth a re-test against
+  y_47303 armrest tops.
+- THE Room / THE Suite are left out: there the lobe drew white outlines on every cap edge and beaded glints along the divider
+  rails and lifted the q06 frame (median 165 -> 167 vs c_27312 128), where the thin-highlight share already sits above the
+  in-flight range. A THE Room `jCap` roughness change therefore still gets no rim lobe (polishD: +16 L on a flat q09 cap face).
