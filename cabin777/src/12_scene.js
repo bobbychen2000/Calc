@@ -167,7 +167,14 @@ const MOODS = {
   // QA L12 (light low + integration medium): dayN 0.75 = the share by which the window belt beside an open day pane turns
   // daylight-neutral (mainFS u_dayN; 0 with the shades closed and at sunset) [V: kn_room_35 / 36 open-pane surround #a49b98 /
   // #aea9a7 s0.04-0.07 vs dF03 wall #ddb298 s0.31] [D gapT3 V2]
-  dining: { label: 'Dining', hemiTop: [0.62, 0.30, 0.11], hemiBot: [0.21, 0.10, 0.035], binLift: [0.22, 0.15, 0.07], ctrLift: 3.0, wash: [0.30, 0.14, 0.05], led: [0.55, 0.042, 0.009], sideLed: [1.25, 0.10, 0.02], sideLow: 0.65, sideWall: [0.6, 2.2, 4.2], bandCut: 0.2, vault: [0.32, 0.145, 0.047], vaultE: [0.14, 1], lowTint: [1.0, 1.08, 1.2], lowGain: 0.8, fillLift: 0.15, lensCore: [0, 0.55, 0.15], scrSpill: 0.5, tub: true, k: 0.9, exposure: 1.3, strips: true, hueK: 0.6, dayN: 0.75 },
+  // QA L13 (light medium, lighting run 4): sideLow 0.65 -> 0 (Sunrise 0.5 -> 0): the lens light now fades out over 0.95-1.55 m
+  // (mainFS mix(u_sideLow, 1, ...)), so the wall falls off below the window: it ran flat at 1.0x of the wall under the lens down
+  // to ~0.4 m and was the brightest surface of q21 (L186 vs bins L146, ceiling L163) [V: ucr_ana-business-class-wing-view wall
+  // L109 -> 89 -> 63 by the console (0.58-0.82x, h31-34); sany_42 L118 -> 92 -> 82 (0.69x); ucr_the-room-cabin wall L137-147
+  // under the bins L154-158 and the vault L159]. The r2 / r3 lens level below the window carried the amber at seat level
+  // when lowTint [1.3, 2.6, 6.5] neutralised the hemi there; with lowTint [1.0, 1.08, 1.2] the hemi keeps the amber, so the
+  // falloff is a level ramp, not a hue cut (q21 h27 -> h31-32 s0.40-0.44) [D L13rateL xv, gap4 r/AM; fixL13]
+  dining: { label: 'Dining', hemiTop: [0.62, 0.30, 0.11], hemiBot: [0.21, 0.10, 0.035], binLift: [0.22, 0.15, 0.07], ctrLift: 3.0, wash: [0.30, 0.14, 0.05], led: [0.55, 0.042, 0.009], sideLed: [1.25, 0.10, 0.02], sideLow: 0, sideWall: [0.6, 2.2, 4.2], bandCut: 0.2, vault: [0.32, 0.145, 0.047], vaultE: [0.14, 1], lowTint: [1.0, 1.08, 1.2], lowGain: 0.8, fillLift: 0.15, lensCore: [0, 0.55, 0.15], scrSpill: 0.5, tub: true, k: 0.9, exposure: 1.3, strips: true, hueK: 0.6, dayN: 0.75 },
   // night, QA r2: THE Room in service at night is near-black and neutral-warm; the light comes from the IFE screens, the
   // warm strip under each screen, small white reading lamps and amber PSU lamps [V: ucr_room-night-lighting ceiling
   // #1e1915, sidewall #24211c, bins #322a1f, PSU lamp #9e5e38, strip #ffeb97, mean RGB 39/34/33]. The blue night refs
@@ -216,8 +223,8 @@ const MOODS = {
   // QA r3 (light): as dining (lowTint [1.0, 1.08, 1.2] x0.8, hemiBot x1.4, vault floor / hue, bandCut 0.2) [A: no ANA
   // sunrise photo; dining's sources]
   // QA r4 (light): binLift and tub as dining [A: no ANA sunrise photo; dining's sources]. QA L8: binLift as dining. QA L9:
-  // ctrLift as dining. QA L11: hueK as dining. QA L12: dayN as dining
-  wake: { label: 'Sunrise', hemiTop: [0.62, 0.30, 0.16], hemiBot: [0.21, 0.10, 0.05], binLift: [0.22, 0.15, 0.07], ctrLift: 3.0, wash: [0.30, 0.14, 0.07], led: [0.55, 0.05, 0.03], sideLed: [1.2, 0.11, 0.06], sideLow: 0.5, sideWall: [0.42, 2.25, 2.2], bandCut: 0.2, vault: [0.32, 0.145, 0.047], vaultE: [0.14, 1], lowTint: [1.0, 1.08, 1.2], lowGain: 0.8, fillLift: 0.15, lensCore: [0, 0.55, 0.15], tub: true, k: 0.9, exposure: 1.3, hueK: 0.6, dayN: 0.75 },
+  // ctrLift as dining. QA L11: hueK as dining. QA L12: dayN as dining. QA L13: sideLow 0.5 -> 0 as dining [A: no sunrise photo]
+  wake: { label: 'Sunrise', hemiTop: [0.62, 0.30, 0.16], hemiBot: [0.21, 0.10, 0.05], binLift: [0.22, 0.15, 0.07], ctrLift: 3.0, wash: [0.30, 0.14, 0.07], led: [0.55, 0.05, 0.03], sideLed: [1.2, 0.11, 0.06], sideLow: 0, sideWall: [0.42, 2.25, 2.2], bandCut: 0.2, vault: [0.32, 0.145, 0.047], vaultE: [0.14, 1], lowTint: [1.0, 1.08, 1.2], lowGain: 0.8, fillLift: 0.15, lensCore: [0, 0.55, 0.15], tub: true, k: 0.9, exposure: 1.3, hueK: 0.6, dayN: 0.75 },
 };
 // winExp: the view behind the glass at interior exposure; cabin photos show day windows near-white with a glowing
 // reveal (tlfl_IMG_9217 / 9518, pane ~#eef3f8) [V]; eases back to 1 when the eye is at the window (looking out)
@@ -296,7 +303,7 @@ const AO_TUNE = { hemi: 0.22, bounce: 1.0, emitLens: 0.45, emitCtr: 0.35, kAttF:
 // v1]; the old tint^2.4 [0.84, 0.884, 0.906] also took the q12 view back to its L11 level (mean 122.4) but the sub-clip panes
 // under the shell's (q17 pane p50 248 -> 245, q07 share > L235 7.7 -> 7.4 % vs c_27316 9.0 %) [D fixL11 a1]. rim = the cove-line
 // rim lobe (mainFS u_rimK: gain on the fillets, 1 = lobe on the material roughness, metal cut) [D gap3 v_rimG2, fixL11]
-const LIGHT_TUNE = { cove: 1.0, sheen: 1.35, sheenTint: 0.3, tubWash: 0.7, lookOut: 0.86, ssao: [0.05, 8, 0.006, 0.07], ssaoMix: 0.9, ssaoAng: 0.25, ssaoDither: 0, ssaoIn: 0.3, ssaoLow: 0.5, ssaoEase: [0.02, 0.25], ssaoTaps: 12, ssaoCap: 16, glassT: [0.964, 0.976, 1.0], rim: [2.0, 1, 0] };
+const LIGHT_TUNE = { cove: 1.0, sheen: 1.35, sheenTint: 0.3, tubWash: 0.7, lookOut: 0.86, ssao: [0.05, 8, 0.006, 0.07], ssaoMix: 0.9, ssaoAng: 0.25, ssaoDither: 0, ssaoIn: 0.3, ssaoLow: 0.5, ssaoEase: [0.02, 0.25], ssaoTaps: 12, ssaoCap: 16, glassT: [0.964, 0.976, 1.0], rim: [2.0, 1, 0], paneK: 0 };
 // QA r3 (integration): floor contact map (computeAO): cell size (m; 6 m x 59 m -> 200 x 1973 texels, under the 2048
 // texture minimum), marking height above the floor and the darkening at a base (mainFS) [D]
 const CONTACT = { cell: 0.03, h: 0.2, k: 0.55 };
@@ -336,7 +343,7 @@ class Scene {
     this.emptyVAO = gl.gl.createVertexArray();
     gl.use(this.progs.main); gl.set('u_fillLift', 1); gl.set('u_sheen', LIGHT_TUNE.sheen); gl.set('u_sheenTint', LIGHT_TUNE.sheenTint); gl.set('u_vaultE', [0, 1]);   // the studio may draw before the first cabin frame
     gl.set('u_binLo', 1); gl.set('u_ctrLo', 1); gl.set('u_ctrLift', 1); gl.set('u_monHemi', 1); gl.set('u_fLow', 1);   // QA r4: neutral values for the same reason
-    gl.set('u_glassT', [1, 1, 1]); gl.set('u_hueK', 0); gl.set('u_rimK', [0, 0, 0]); gl.set('u_dayN', 0); gl.set('u_scrWall', 0);   // QA L11: no pane tint, plain ACES, no rim lobe (the studio draws with u_exterior 1)
+    gl.set('u_glassT', [1, 1, 1]); gl.set('u_hueK', 0); gl.set('u_rimK', [0, 0, 0]); gl.set('u_dayN', 0); gl.set('u_scrWall', 0); gl.set('u_beltK', 1); gl.set('u_paneK', 0);   // QA L11: no pane tint, plain ACES, no rim lobe (the studio draws with u_exterior 1)
     this.buildGlows();
     const sm = this.shell.meshes;
     this.opaque = [
@@ -894,7 +901,7 @@ class Scene {
     G.set('u_bandCut', mood.bandCut ?? 0.65); G.set('u_sideLow', mood.sideLow ?? 0.4); G.set('u_sideWall', mood.sideWall || [1, 1, 1]);
     G.set('u_lowGain', mood.lowGain ?? 1); G.set('u_fLow', mood.fLow ?? 1); G.set('u_monFill', mood.monFill || [0, 0, 0]); G.set('u_cove', LIGHT_TUNE.cove * (mood.cove ?? 1)); G.set('u_sheen', LIGHT_TUNE.sheen); G.set('u_sheenTint', LIGHT_TUNE.sheenTint);
     G.set('u_toe', mood.toe ?? 0);
-    G.set('u_glassT', [1, 1, 1]); G.set('u_hueK', mood.hueK ?? 0); G.set('u_dayN', mood.dayN ?? 0); G.set('u_rimK', this.q !== 'low' && this.ssaoOn !== false ? LIGHT_TUNE.rim : [0, 0, 0]); G.set('u_sLowZ', this.layout.z20 ?? 0);   // QA L11: pane tint only on the exterior (below), amber hue-preserving tone, cove rim lobe (Sharp only, as the contact AO: scene.ssaoOn, 13_app.js)
+    G.set('u_glassT', [1, 1, 1]); G.set('u_hueK', mood.hueK ?? 0); G.set('u_dayN', mood.dayN ?? 0); G.set('u_beltK', mood.beltK ?? 1); G.set('u_paneK', LIGHT_TUNE.paneK); G.set('u_rimK', this.q !== 'low' && this.ssaoOn !== false ? LIGHT_TUNE.rim : [0, 0, 0]); G.set('u_sLowZ', this.layout.z20 ?? 0);   // QA L11: pane tint only on the exterior (below), amber hue-preserving tone, cove rim lobe (Sharp only, as the contact AO: scene.ssaoOn, 13_app.js)
     G.set('u_extBounce', [0, 0, 0]);
     // reading-light pools: the 8 lit lamps nearest the eye [A: count, a phone-sized loop]
     const sp = new Float32Array(32), st = new Float32Array(32);
@@ -1013,7 +1020,7 @@ class Scene {
       G.set('u_extBounce', [0, 0, 0]); G.set('u_extPtP', new Float32Array(8)); G.set('u_glassT', [1, 1, 1]);   // the studio (same program) keeps its plain fill and no tint
     }
     G.set('u_toe', 0); G.set('u_fillLift', 1); G.set('u_vaultE', [0, 1]);   // ... and its plain tone, fill lift and vault (14_studio renders through the same program)
-    G.set('u_scrOff', 0); G.set('u_binLo', 1); G.set('u_ctrLo', 1); G.set('u_ctrLift', 1); G.set('u_monHemi', 1); G.set('u_fLow', 1); G.set('u_tubWash', 0); G.set('u_binLift', [0, 0, 0]); G.set('u_tubSky', [0, 1]); G.set('u_hueK', 0); G.set('u_dayN', 0); G.set('u_scrWall', 0);   // (QA r4) all screens lit, no cabin-only terms
+    G.set('u_scrOff', 0); G.set('u_binLo', 1); G.set('u_ctrLo', 1); G.set('u_ctrLift', 1); G.set('u_monHemi', 1); G.set('u_fLow', 1); G.set('u_tubWash', 0); G.set('u_binLift', [0, 0, 0]); G.set('u_tubSky', [0, 1]); G.set('u_hueK', 0); G.set('u_dayN', 0); G.set('u_scrWall', 0); G.set('u_beltK', 1); G.set('u_paneK', 0);   // (QA r4) all screens lit, no cabin-only terms
     G.set('u_ssao', [0, 0, 0, 0]);   // (QA L8) no screen-space AO in the studio
     gl.depthFunc(gl.LEQUAL);
     gl.depthMask(false);
