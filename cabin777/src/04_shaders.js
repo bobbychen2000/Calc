@@ -189,15 +189,16 @@ float ssaoF(vec3 P, vec3 Nf, float kR){
   if (px < 2.0) return 0.0;                                 // far: the disc is under ~2 px
   // (QA L10) screen-space cap; aft of THE Room only above the seat backs (1.1-1.3 m): below them the PY / economy seat joints
   // keep the full disc (their contact lines are already short of the photos'; capped, the q14 seat shells lost theirs)
-  float kc = u_sTap.y > 0.0 ? min(1.0, u_sTap.y / px) : 1.0;
-  kc = mix(1.0, kc, max(1.0 - step(u_sLowZ, P.z), smoothstep(1.1, 1.3, P.y)));
+  float capW = max(1.0 - step(u_sLowZ, P.z), smoothstep(1.1, 1.3, P.y));
+  float kc = mix(1.0, u_sTap.y > 0.0 ? min(1.0, u_sTap.y / px) : 1.0, capW);
   ruv *= kc; rng *= kc;
   vec2 uv0 = gl_FragCoord.xy / u_sRes.xy;
   float a0 = u_sDither * 6.2832 * fract(52.9829 * fract(dot(gl_FragCoord.xy, vec2(0.06711, 0.00584)))) + 0.39;
   float occB = 0.0, occX = 0.0, nT = max(u_sTap.x, 1.0);
-  // (QA L10) every third tap of the spiral is an extra one, taken only where the (capped) disc spans more than 6-10 px; a
-  // smaller disc keeps the 8 others (steps there are under ~8 px), so the far cabin costs what the 8-tap AO cost [D fixL10]
-  float tX = smoothstep(6.0, 10.0, px * kc);
+  // (QA L10) every third tap of the spiral is an extra one, taken only where the capped disc spans more than 10-14 px; a
+  // smaller disc (steps there are ~1-2 px) and the uncapped PY / economy seats keep the 8 others, so most of the cabin costs
+  // what the 8-tap AO cost (12 taps everywhere: frame time +7-11 % at Sharp) [D fixL10]
+  float tX = smoothstep(10.0, 14.0, px * kc) * capW;
   for (int i = 0; i < 16; i++) {
     float fi = float(i);
     if (fi >= nT) break;

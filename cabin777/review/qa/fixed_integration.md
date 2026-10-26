@@ -486,3 +486,74 @@ from_* items (to lighting / integration): no new ones since L8. Carried, not cha
 cover grazing tone), w43b-L1 (far q16 covers), w37-w39 (near pans), w27 (`photoBase` gain); from_shell w15 lows (door
 glass, creams, dado grille, PY/Y tub lip band); from_room w16 (1) / (3); from_py 6 / 9 / 10 / 11; from_monuments w13-15;
 from_exterior 17-19; from_ceiling w13 (door domes, bins clipping at QA framing).
+
+## Lighting run 2, L10 (lighting 7.7 + integration 7.6 raters; from_* items addressed to lighting / integration)
+
+Code: `04_shaders.js`, `12_scene.js` (`13_app.js` unchanged). The run started on 8b1ab84; no other area committed during it,
+so every view is compared with that head's renders. Renders in the scratchpad: qa/fixL10/before (8b1ab84), a1 (lighting
+items + the THE Room ssaoLow gate), after (committed); contact-AO experiments t0-t19 (tune.js variants on the qa cameras);
+tools in qa/fixL10/tools (cmp.py frame / thirds vs photo, lm.py lighting target boxes, q10col.py flap column, steps.py
+y_aisle_fwd row 300, thindark8.py / thin8.py the integration rater's thin dark-line / highlight shares, time4.js two-build
+frame time).
+
+Regression guard (cmp.py: |model - photo| over the frame median, p5, p95, the thirds' mean L and 0.25 x their hue
+difference; lower is closer), before -> after:
+- Check views: q03 258 -> 259, q06 121 -> 122, q09 121 -> 118, q13 60 -> 59, q15 29 -> 29, q16 45 -> 44, q20 69 -> 69, q21
+  193 -> 193, blue06 82 -> 83; also q14 111 -> 111, q17 42 -> 43, bl16 61 -> 61, n16 242 -> 242, nF03 88 -> 89, d06 77 -> 77,
+  dd 75 -> 76, c06 138 -> 139. All within +-1 except q09 (3 closer).
+- Reverted on the guard: the contact-AO cap on the PY / economy seats (below 1.1 m aft of THE Room). With it q14 read 1 L
+  lighter in every statistic (111 -> 116; the near seat shell lost its shade) and its thin dark-line share fell 0.66 ->
+  0.57 %; the cap there is now off (q14 0.69 %, 111).
+
+Rater issues (L10):
+- lighting medium, low sun on dark materials turns khaki-olive: done. mainFS sun term: the 1.5 cap now acts on the
+  patch's luminance (sun / (1 + max albedo), then x min(1, 1.5 / L)), not per channel, as the raters gave.
+  - s06 shell patch core (80-200, 400-500, L >= 110) #84784e h47 s0.41 -> #9f7143 h30 s0.58 (target h <= 32, s >= 0.5);
+    penumbra unchanged (L 80-110 h27 -> 26, L 50-80 h24 -> 24); s06 frame mean 85.1 -> 85.2, thirds 136 / 68 / 52 unchanged.
+  - Guards: q03 frame mean 144.0 -> 144.2, q05 165.6 -> 165.6, q14 146.7 -> 146.6 (these include the contact-AO change);
+    sF03 85.8 -> 85.9; s15 60.3 -> 60.2.
+- lighting medium, Blue THE Suite interior at half the photos' level: done. `MOODS.blue.fLow` 2.5 (mainFS `u_fLow`: the
+  seat-level light x fLow inside the THE Suite zone below 1.2-1.5 m, with the |x| fade at 2.75-2.95 m so the window
+  console takes it too; 1 in every other mood).
+  - blueF03: aisle-side box (640-740, 380-560) L16 -> 37 (target 35-42), table (400-620, 340-400) 20 -> 32 (32-40), aisle
+    pier (700-750, 160-360) 22 -> 33 (28-45), window wall 96 -> 96 (96 +-3), front wall 63 -> 63 (63 +-3); window console
+    (180-300, 440-520) 32 -> 50 (ml_DSC_1945 window console L47); frame mean 61.9 -> 69.1 (photos 75-82).
+  - Ottoman (380-600, 400-500) 56 -> 81: over the raters' <= 75 guard. The raters' own patch with the narrower |x| fade read
+    78 (their fblue25), so no gain <= 2.5 meets both the table (>= 32) and the ottoman (<= 75); 2.5 is kept for the box,
+    table, pier and console. The ottoman top already reads high in Boarding (L117-127 vs omaat_f11 99-103), which points at
+    its fabric albedo rather than the light; in ml_DSC_1945 the visible ottoman fabric sits under the table (L39-48), not
+    in a comparable framing.
+  - Guards: blue06 38.45 -> 38.58 mean (the contact-AO change; score 82 -> 83), blue15 28.38 -> 28.29, bl16 41.04 -> 41.00;
+    Boarding / Cruise / Night / Amber take fLow 1 (q03, c06, nF03, n16, d06, dd within +-1 above).
+- integration medium, stepped contact-AO bands and lost THE Suite contact lines: partly.
+  1. Done: `ssaoLow` (kR) only aft of THE Room (`u_sLowZ` = 05_layout z20): the second band 3 cm above the headrest flaps is
+     gone (q10 x 650 rows 380-384 L63 -> 86).
+  2. Done: the disc and range capped at 16 px on screen (`LIGHT_TUNE.ssaoCap`; the raters gave 24 px, which left the flap
+     band: t2 rows 398-410 L58), except on the PY / economy seats (guard above).
+  3. Not done as given: the R8 AO target with the per-pixel turn and a 4 x 4 depth-aware blur adds two full-screen passes,
+     which this run's brief rules out (question 13 in questions_lighting.md). Instead, 12 taps (`ssaoTaps`; every third only
+     where the capped disc spans > 6-10 px, so the far cabin costs what the 8 taps cost) at strength 8 (was 6), window
+     `ssaoIn` kept at 0.3.
+  4. Targets:
+     - q10 x 650 rows 378-410 mean L68 -> 82 (min 49 -> 52 at the flap's own contact line, rows 406-410 61-71; L8 69-78),
+       rows 398-410 54 -> 75, rows 380-384 63 -> 86 (target >= 70); no stair at the flap end (qa/fixL10/c_final_q10.png).
+     - y_aisle_fwd (-1.0, 1.65, 57.0, yaw 0, pitch -0.08) row 300, x 0-490: 13 steps > 6 L, max 101 -> 8 / 53 (without the
+       AO 8 / 53; target no step > 60, count within +2) (c_final_yaf.png).
+     - Thin dark-line share: q03 1.37 -> 1.51 % (target >= 1.7: not met), q05 1.22 -> 1.30 (>= 1.55: not met), q06 2.49 ->
+       2.71 (2.4-2.7: on the line), q02 1.76 -> 1.72, q08 1.77 -> 1.89, q09 1.63 -> 1.61, q13 0.73 -> 0.89, q14 0.66 -> 0.69,
+       q15 4.03 -> 4.17, q16 3.08 -> 3.19.
+     - f_ink_seated row 320 (539-593) 156 -> 148 (target >= 130).
+     - Frame time at Sharp: see below.
+  - Tried and not kept [D fixL10 t1-t19]: 16 taps everywhere (frame time q06 / q16 / q03 +7 / +8 / +7 %); a 12 px cap
+    (q03 thin share 1.08 %); the raters' ssaoIn 0.55 (q03 1.43-1.51 %, but the stepped ghost frame round the bulkhead
+    monitor came back: f_ink_seated row 320 114-124); an exp(-k occ) response (q03 0.75 %); a 3.5 cm disc (y_aisle_fwd 21
+    steps); the range left unscaled by the cap (f_ink 108, y_aisle_fwd max step 132); a tap weight by height over the face
+    plane (f_ink 156-162 but q03 0.89-1.13 %); a softer cap ((cap / px)^0.5-0.7: q10 rows 398-410 61-67, y_aisle_fwd 12-16
+    steps); no cap within 0.75 m of the eye (q14 kept, but y_aisle_fwd 19 steps, max 117). The THE Suite gap needs the wider
+    window, which needs the blur pass (question 13).
+
+from_* items (to lighting / integration): no new ones since L9. Carried, not changed this run: from_econ wave 3k-3m (q17
+cover grazing tone), w43b-L1 (far q16 covers), w37-w39 (near pans), w27 (`photoBase` gain); from_shell w15 lows; from_room
+w16 (1) / (3); from_py 6 / 9 / 10 / 11; from_monuments w13-15; from_exterior 17-19; from_ceiling w13. The day-pane glass
+multiply (integration L10 low, shell + lighting) is handed to shell first in from_integration.md (lighting run 2, L10); the
+lighting half (transmittance before aces()) follows once the tint lands.
