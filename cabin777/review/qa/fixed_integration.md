@@ -817,3 +817,106 @@ only.
 
 from_* items (to lighting / integration): no new ones since L12 (the from_* files changed only for the py w18-w19 and monuments
 w22b reports). Carried, not changed: as listed under L12.
+
+## Lighting run 4, L14 (plateau breaker after the L14 rating: lighting 8.3, integration 8.1; two gap analyses + rater issues)
+
+Code: `04_shaders.js`, `12_scene.js` (`13_app.js` unchanged). Baseline head ecc7425 (build qa/fixL14/b_before, renders
+qa/fixL14/before; q10 / q01 / q19 from qa/L14, the same head); final build qa/fixL14/b_final, renders qa/fixL14/after (qa.js views
+and the vm.json / vm2.json mood and seat views via tools/shots3.js; q12 / q22 from b_final in qa/fixL14/final). Tuning renders
+t1-t6 (variants named in vt1-vt6.json), probe frames probe_before / probe_after, sheet qa/fixL14/sheet_final.jpg (before | after |
+photo). Tools in qa/fixL14/tools: cmp.py (as L13), ev14.py (target boxes + cmp), lb14.py (B-R of greys / whites by luma band),
+probe14.py (the aimed pier of the integration rater's probe), m13.py, thin.py. All paths under
+/tmp/claude-0/-home-user-Calc/b1f1e8ce-ba52-5ff4-94e9-cb27b8198a85/scratchpad/qa/fixL14.
+
+Regression guard (cmp.py: |model - photo| over the frame median, p5, p95, the thirds' mean L and 0.25 x their hue difference;
+lower is closer), before -> after:
+- Check views: q06 121 -> 120, q15 29 -> 31, q16 43 -> 43, q20 63 -> 63 (0.0 % px), q21 178 -> 177, q03 275 -> 260, q13 60 -> 59,
+  q09 121 -> 124, blue06 82 -> 81 (0.5 % px, pane content only).
+- q09 +3 and q15 +2 (kept; inside the +-3 guard used since L13, and the integration rater's q09 guard <= 126): both are the far
+  window band, which no longer keeps its clipped white once the belt dimming is the same at every distance (item 1). q09 far
+  band (300-700, 15-75) p50 230 -> 206, > L235 39 -> 25 % (c_27314 47 %), p95 231 -> 224; q15 p95 232 -> 231, top third 203 ->
+  202 (y_47300 245 / 205). beltK 0.68 / 0.74 do not move either (q15 31 / 31, q09 124 / 125; t6): the far band is set by the
+  day-belt term and the lens fade, not by beltK. Both photos are official dark-foreground exposures; the in-flight photos and
+  c_27312 keep the wall level (question 16).
+- Also: q08 229 -> 227, q17 50 -> 52, q05 236 -> 232, q14 110 -> 108, q07 82 -> 81, q04 351 -> 334, q18 67 -> 67, q02 265 -> 255,
+  q10 58 -> 48; q19 0.0 % px; q01 3.0 % px (the door-1 galley cart fronts at window height -12 L: the day-belt term's 0.15 now
+  applies to every flat wall face as L13 already did near the eye; restricting it to the seat zones (sz) restored q01 but lifted
+  the door-2 / door-4 linings 7-10 L, widening the pier / door-surround step [D t: sz]); q12 frame mean 116.4 -> 116.4 (with
+  lookOut 0.85, below), q22 x-ray 0.6 % px.
+- Moods: cF03 124 -> 119, c06 133 -> 131, c15 267 -> 267, c08 170 -> 172 (cruise at the q08 camera, paired with a Boarding photo),
+  bl16 50 -> 50, dF03 117 -> 117 (1.2 % px: item 4's brighter panes in seat 1A), d06 77 -> 77, dd 76 -> 76, nF03 121 -> 121, z50
+  297 -> 300 (2.0 % px, all in the sunset panes: two renders of the same head differ by 1.96 %, the cloud deck drifting with
+  u_time). Night, Dining, Sunrise and Blue are otherwise pixel-equal.
+- q17 +2 (kept; frame level): its top third 181 -> 177 (photo 182) because the wall now falls from the lens like the photo's,
+  rows 24-84 (full width) 195 / 186 / 184 / 186 / 191 -> 193 / 180 / 172 / 173 / 182 vs y_47303 189 / 181 / 174 / 170 / 172 (sum
+  of |row - photo| over rows 0-192: 172 -> 142); the photo's top-third mean holds only through its brighter lens band at rows 0-12
+  (236 vs 205). The pier column (475-500) now dips to 191 at row 80 and rises to 199 by the window (L13: monotonic 229 -> 191).
+- Thin highlights (thin.py): q06 0.92 -> 0.90 %, q08 0.90 -> 0.80, q16 0.63 -> 0.49, q15 0.66 -> 0.38, q09 0.35 -> 0.33, q17 0.39 ->
+  0.38. The q15 / q16 drop is the far window band's isolated clipped pier pixels (item 1 alone gives the same), not seat
+  material; both stay inside the in-flight economy range (0.03-0.66 %).
+
+Items (gap analyses first, by expected gain, then the raters' L14 issues):
+- integration medium (gap 1 #1, gap 2 #1) the window wall's level depends on where the viewer stands: done. mainFS: the N.V
+  gate (hoV) and the 3.0-4.2 m eye-distance gate are gone from the belt dimming and the day-belt term; the dimming acts on the
+  cabin ambient only (the bin lens's light, `lensT`, is added back undimmed); `u_lensLo` [fade-in start of the lens wash, top
+  of the belt fade] = MOODS lensLo (Boarding [1.25, 1.30]; [0.95, 1.30] elsewhere); Boarding beltK 0.55 -> 0.62; Cruise beltK
+  0.55 -> 0.32.
+  - Probe (camera on the normal of the z 50.21 pier, Boarding): aimed pier at 2.0 / 2.6 / 3.0 / 3.4 / 3.8 / 4.2 / 4.8 m 202 / 202
+    / 202 / 219 / 233 / 236 / 235 -> 197 / 197 / 197 / 197 / 197 / 196 / 195 (target +-6).
+  - q03 pier 1 / pier 2 (x 60-120 / 255-285, rows 60-200) 211 / 231 -> 198 / 207 (step 20 -> 9; target <= 15).
+  - q06 left-edge column (0-25, 145-235) p50 236, 53 % > L235 -> 210, 12 % (target <= 228; c_27312 146-216).
+  - Held: q08 pier p50 209 -> 198 (<= 215; c_27300 205), q17 surround p50 / p75 193 / 211 -> 189 / 207 (<= 195 / 215), q05 wall
+    211 -> 200 (<= 215; omaat_f8 202), cF03 belt 167 -> 150 (<= 175). Guards: q06 120 (<= 123), q16 43 (<= 45), q09 124 (<= 126),
+    q07 81 (<= 86); q15 31 and q17 52 against the rater's 29 / 50 (above).
+  - Cruise: with the lens light no longer dimmed, beltK 0.48 (the analysis's estimate) lifted the cF03 median 108 -> 113; 0.32
+    keeps it at 108 (photo 97) with the belt (90-150, 360-460) L167 B-R +35 -> L149 +63 (ml_DSC_1939-1 L146-186, +42..+71) and the
+    upper wall (30-90, 20-160) L109 +79 -> L119 +92 (photo L153 +105) [D t2 C48 / C40 / C32].
+  - lensLo 1.40 (the analysis's tuning note) overshot: q17 rows 36-60 158 / 154 vs y_47303 181 / 174, cmp 61 [D t1 LO140].
+  - beltK 0.68 / 0.74 tested: q08 pier 203 / 208, q05 204 / 209, q03 step 6 / 4, cmp within +-1 of 0.62; 0.62 kept (q17 rows
+    24-84 closest to the photo) [D t6].
+- lighting (gap 1 #2) Boarding PY / economy whites lose the photos' cool cast: done, level-neutral. `u_seatCool` (Boarding 1):
+  the PY / Y seat level (z > u_sLowZ, below 1.2-1.5 m) takes the hue of the cool shadow light at the neutral light's level
+  (`u_hemiBotS` / `u_washS`, scaled in 12_scene; at the cool light's own level q18 went 67 -> 70, med 169 -> 168, t3 dC);
+  `u_bleed` [0.90, 0.99, 1.36] (the analysis's [0.86, 0.95, 1.30] at unit luminance: hue only) on the bounce below 0.9-1.3 m, off
+  the wall; `u_hueW` [0.8, 0.72, 0.86]: hue-preserving tone on light greys / whites (linear saturation < 0.25-0.45, display luma
+  0.30-0.55 up, out by 0.72-0.86), interior only. B-R of greys / whites by luma band 175-200 / 200-220 / 220-235, before -> after
+  (photo):
+  - q17 +10 / +6 / +3 -> +21 / +19 / +15 (y_47303 +26 / +24 / +17); q18 +7 / +2 / -9 -> +23 / +11 / -4 (y_47305 +24 / +21 / +19);
+    q14 +11 / +3 / +2 -> +18 / +8 / +7 (py_37301 +28 / +21 / +17); q13 +9 / +2 / +1 -> +13 / +5 / +2 (py_37302 +30 / +25 / +15);
+    q16 +12 / +6 / +4 -> +18 / +13 / +11 (y_47301 +17 / +16 / +12). Econ armrests (q17 530-650, 418-436) B-R +1 -> +14 (y_47303
+    +14..+31), L202 -> 202.
+  - W is not zone-gated: in THE Room / THE Suite it moves q06 -5 / +1 / -1 -> -2 / +3 / +5 (c_27312 +7 / +7 / +7), q03 -2 / +3 / +6 ->
+    +4 / +7 / +18 (f_17306 +29 / +51 / +45; q03 cmp 276 -> 260), q07 -10 / +3 / +7 -> -8 / +6 / +12 (c_27316 +10 / +14 / +10). A
+    PY / Y-only W and tub hue (t1 Z) left those views at their item-1 level (q03 276, q05 238).
+  - Away from the photo: q15 +7 / +3 / +3 -> +14 / +8 / +8 (y_47300 +4 / +1 / +5: the one neutral PY / Y photo; the gap analysis's
+    guard <= +10 at 175-220 is missed at 175-200; half the bleed or W 0.5 gave +13, t3 N2 / N3), q08 +1 / +4 / +4 -> +8 / +10 / +16
+    (c_27300 -6 / -7 / -1, a warm official photo; q08 cmp 229 -> 227).
+- lighting (gap 1 #3) the lower window tub reads neutral: done. `u_tubHue` 0.8 (Boarding): the recessed tub below 0.30-0.40 m
+  over the pane centre (shade open) takes the sky hue at its own level. q17 lower tub (420-440, 60-80) B-R +7 -> +20 (y_47303
+  +37; its level 157 -> 143 is item 1's lens fade, photo 155); q14 lower tub (600-690, 330-400) +1 -> +18 (py_37301 +23..+28); q09
+  far band +3 -> +10 (c_27314 +10..+15). Not zone-gated (q08 wall B-R +6 -> +14, see W above).
+- integration (gap 2 #2) PY / economy window-seat eyes render at the look-out exposure: done. 12_scene render(): the winExp ease
+  and the look-out exposure cut are keyed to the glass, |x| 2.66-2.72 (were 2.0-2.45 / 2.45-2.70). Seated views (shots3 vm2.json,
+  Boarding): 26A mean 87 -> 128, p50 66 -> 118 (py_37301 p50 118); 35A forward mean 100 -> 167, p50 104 -> 184; 35A toward the
+  window 79 -> 144. q07 near pane (880-925, 95-150) L197 B-R +67 -> L240 +31 (c_27316 L255). q12 is unchanged by it (the look-out
+  eye stands at 2.72 before and after).
+- (follow-on) LIGHT_TUNE.lookOut 0.86 -> 0.85: with the gates gone the belt dimming also reaches the lining seen at grazing from
+  the look-out eye (q12 frame mean 116.4 -> 114.2, left reveal (0-120) L112 -> 100); at 0.85 the frame mean is 116.4 again, reveal
+  103 (ucr wing view L104-110), pier (120-290) 84 -> 85 [D t5].
+- lighting low (L14 rater) Boarding sideLow 0 also dims the far wall: not fixed (superseded). Its fix (`u_sideLowFar` by eye
+  distance) puts back the distance gate that the integration medium above removes; both gap analyses advise against it. The far
+  wall now follows the near wall's rule; q09 / q16 / q15 costs above; the choice is put to the user as question 16 (raise beltK
+  for the whole wall if the official-photo look is preferred).
+- lighting low (room / econ SEATMAT) material response, py contact darks, py back-cushion form (medium), ceiling dashes, econ
+  armrest highlights, shell q12 specks: area items, routed to from_integration.md (lighting run 4, L14). The econ armrests'
+  neutral cast is addressed here (item 2).
+
+Phone budget (perf2.js, 640 x 400, before -> after; frame tris / draw calls): mid Sharp 3,256,808 / 69 -> 3,256,808 / 69,
+Balanced 1,643,406 / 35 -> 1,643,406 / 35; econ Sharp 3,969,124 / 101 -> 3,969,124 / 101, Balanced 1,999,564 / 51 -> 1,999,564 /
+51; room Sharp 2,851,472 / 69 -> 2,851,472 / 69, Balanced 1,440,738 / 35 -> 1,440,738 / 35. No new pass, no loop, no texture
+tap. Per interior fragment: one length and two smoothsteps fewer (hoV), two steps, three smoothsteps and five mixes more (seat
+cool, bleed, tub hue), and the lens term computed once and reused; the hue-preserving tone is a uniform branch (Boarding only). 5 new
+uniforms (+2 derived in 12_scene).
+
+from_* items (to lighting / integration): no new ones since L13 (no commits to the from_* files since ecc7425). Carried, not
+changed: as listed under L12.
