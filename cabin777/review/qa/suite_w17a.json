@@ -1,0 +1,49 @@
+{
+ "area": "suite",
+ "rater": "A",
+ "round": "w17",
+ "score": 8.7,
+ "method": "Rated the uncommitted 09d_suite.js polishC change (fSeam #1d1a17 dark joints) on r1 vs r0 (930x575: q02, q03, q04, q05, wardrobe), pixel diffs (>8: q04 1031 px only; q02/q03/q05 diffs are mostly the monuments ink-cloud wall plus thin seam lines; wardrobe 52.6k px = cap joint, door reveal, wood-face shift) and 2-3x crops (scratchpad/raters/suiteA/c_q05_ott.png, c_q03_ott.png, c_q02a.png, c_q03_con.png, c_ward.png). Own DPR 2 renders of the after build /tmp/b1/test.html seated in 1A: /tmp/claude-0/-home-user-Calc/4bf95286-4075-5784-8617-507211ce8722/scratchpad/raters/suiteA/after/z_ottoman.png, z_console.png, z_wardrobe.png (the before DPR 2 set was cut short by machine load; r0 crops used instead). Luma sampled against omaat_f11 (cushion-to-tray line L24-31, aisle-box lid line L4) and omaat_f40 (cap-to-shell joint: soft shadow L110-115 against shell L110, no black line). References: omaat_f5, f11, f13, f40. Lighting noted, not scored.",
+ "calibration": [
+  { "earlier_issue": "w15a MEDIUM: duvet head band a hard-edged board (step, bullnose, z-fight dashes)", "status": "still fixed (q04 diff 1031 px, none on the band; w16 low residues unchanged)" },
+  { "earlier_issue": "w13b / w14a / w14b MEDIUM: wood flanks chestnut instead of espresso", "status": "still fixed (z_wardrobe: espresso wood unchanged)" },
+  { "earlier_issue": "w16a/w16b LOW: notch / bullnose at band-loft junction, flat flap triangle, drape rail", "status": "not fixed (not addressed this round; low)" },
+  { "earlier_issue": "Integration L11: thin dark outline lines 0.55-0.85x of omaat photos", "status": "partly fixed: the ottoman welt, aisle-box lid seam, table under-lip and wardrobe door reveal now match dark lines that exist in f11 / f5 / f13; at q02/q05 distance the extra lines are near-invisible, so the overall 'too clean' read improves only slightly" }
+ ],
+ "changeVerdicts": {
+  "1 5 mm dark joint under every taupe cap, 2 mm proud": "adjust. In z_wardrobe it reads as a black blade (L8-17 over ~9 px at DPR 2) rather than a shadowed joint, and at the aft end of the wardrobe wall the square 2 mm-proud box sticks out past the shell's rounded corner into air (z_wardrobe x 195-245, y 238-252, L13 against background L57-70; also c_ward.png lower half, left end). omaat_f40 shows the cap-to-shell joint as a soft shadow about the shell's shaded value (L110-115), not a black line. Fix: make it recessed (cw - 0.004, cd - 0.004, so it never overhangs the rounded shell), 3 mm tall, and a mid-dark colour (~#3a342e) so it reads as a shadow groove.",
+  "2 dark welt between ottoman cushion and tray": "keep. Reads as a real welt / shadow under the cushion edge (z_ottoman y 795-805, L7-9); f11 has a dark line there (L24-31). Could be lifted slightly (#2a2520) but not required.",
+  "3 aisle box lid seam": "keep. Thin dark line under the lid (c_q05_ott, z_ottoman); f11 lid line L4. No z-fighting seen.",
+  "4 dark underside line behind the table's front lip": "keep. Thickens the dark lip slightly (z_ottoman y 440-490), consistent with f11.",
+  "5 fascia / body joint on the window console": "keep (neutral). Barely visible at 1x or DPR 2 (z_console); no artefact.",
+  "6 wardrobe door reveal + wood panel split lines, door wood 3 mm proud": "keep. The 5 mm reveal reads as a real door gap inside the taupe frame, as around the door leaf in omaat_f5 / f13; no z-fighting at DPR 2 (z_wardrobe). The split lines at the wood panel edges are uniformly black but read as reveals, acceptable.",
+  "7 (monuments) softer ink-cloud print": "not scored. Note: in q03/q05 the front wall now reads as a beige-grey smoky mottle; f13 / f40 show pale blue-grey with distinct white cloud bands. Passed to the monuments raters."
+ },
+ "details": [
+  { "detail": "Proportions and plan", "score": 8.6, "refs": "unchanged" },
+  { "detail": "Shell / cap two-tone and cap joint", "score": 8.4, "refs": "z_wardrobe vs omaat_f40: joint too black, overhang at the rounded aft corner" },
+  { "detail": "Aisle leaves, wardrobe wall and door", "score": 8.7, "refs": "z_wardrobe vs f5 / f13: reveal now present" },
+  { "detail": "Wood flanks", "score": 8.2, "refs": "unchanged" },
+  { "detail": "Console, module, keypad", "score": 8.0, "refs": "z_console vs f5 / f57" },
+  { "detail": "Bed", "score": 8.5, "refs": "q04 unchanged" },
+  { "detail": "Ottoman, table, aisle box", "score": 8.7, "refs": "z_ottoman vs f11: welt, lid seam and lip lines now match" },
+  { "detail": "Centre pair and variants", "score": 8.7, "refs": "q02" }
+ ],
+ "issues": [
+  {
+   "severity": "medium",
+   "problem": "Cap joint artefact: the dark joint box is 2 mm proud of the shell and square, so it sticks out past the rounded shell end as a black blade at the wardrobe wall's aft corner, and along its length it reads as a near-black stripe instead of the soft shadow seen in the photos",
+   "evidence": "z_wardrobe.png (DPR 2) x 195-245, y 238-252 (overhang, L13); cap joint L8-17 at x 1000, y 168-195; scratchpad/r1/wardrobe.png x 160-200, y 85-95; omaat_f40 cap-to-shell joint L110-115 (soft shadow).",
+   "fix": "09d_suite.js cap(): B.add(gBox(cw - 0.004, 0.003, cd - 0.004), M4.trs(x, y + 0.0005, z), { c: '#3a342e', r: 0.9 }) — recessed so it never overhangs the rounded shell ends, 3 mm, mid-dark (or a gRBox with the shell's corner radius)."
+  },
+  {
+   "severity": "low",
+   "problem": "Carried: band/loft notch and aisle bullnose, flat flap triangle, flank grain short, footwell back lit, far-leaf moire, drape rail",
+   "evidence": "as w16a",
+   "fix": "as w16a"
+  }
+ ],
+ "questions": [
+  "Keep the welt, lid seam, lip line, console joint and wardrobe reveal; only the cap joint needs the recess/lighten fix. With that, the change is a net small gain; as rendered now it is neutral (8.7)."
+ ]
+}

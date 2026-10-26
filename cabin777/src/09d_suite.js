@@ -8,6 +8,7 @@
 // w = outer width. Seat sits off-centre: full-length shelf on the outer side, slim wardrobe on the aisle side.
 // w1 (rater A, omaat_f7 / pb_20 / up_privacy_wall): dark door-leaf frames and the near-black lower console body
 Object.assign(SEATMAT, {
+  fCapJoint: { c: '#3a342e', r: 0.9 },                         // polishC w17a: mid-dark cap-to-shell groove
   fSeam: { c: '#1d1a17', r: 0.9 },                              // polishC (L11): dark joints / welts / reveals (integration L11: thin dark lines 0.55-0.85x omaat_f2 / f5 / f11 / f13 / f40) [V]
   fDoorFrame: { c: '#4f4d45', r: 0.5, l: LAYER.plastic },     // w5: ~1.15x the fluted field, not a light picture frame (omaat_f60 1.17x) [V]
   fTray: { c: '#4a3d33', r: 0.35, l: LAYER.fWood },           // console tray: warm dark striped wood, omaat_f47 #4d3e2e [V]
@@ -45,8 +46,10 @@ function suiteUnit(opts = {}) {
   const xa = hx - 0.16;                       // inner face of the aisle-side wardrobe wall
   // w1: squared flat-topped taupe cap with small edge radii, ~6 mm overhang, top at H + 0.0625 (omaat_f7 / f5, pb_20; the old
   // 0.085 round bullnose read toy-like) [V shape, A size]
-  // polishC (L11): a 5 mm dark joint under each cap, 2 mm proud of the shell (omaat_f40 / f5 cap-to-shell lines) [V]
-  const cap = (cw, cd, x, y, z) => { B.add(gRBox(cw + 0.012, 0.06, cd + 0.012, 0.014, 2), M4.trs(x, y + 0.0325, z), SEATMAT.fCap); B.add(gBox(cw + 0.004, 0.005, cd + 0.004), M4.trs(x, y - 0.0005, z), SEATMAT.fSeam); };
+  // polishC (L11): a 3 mm shadow groove under each cap, 1 mm proud and rounded like the
+  // shell's r 0.02 corners so it never overhangs them (omaat_f40 / f5: a soft
+  // L110-115 shadow line, not black; w17a) [V]
+  const cap = (cw, cd, x, y, z) => { B.add(gRBox(cw + 0.012, 0.06, cd + 0.012, 0.014, 2), M4.trs(x, y + 0.0325, z), SEATMAT.fCap); B.add(gExtrude(rrectPts(cw + 0.002, cd + 0.002, 0.021, 4), 0.003), M4.trs(x, y + 0.0005, z, 0, Math.PI / 2), SEATMAT.fCapJoint); };
   // w2: reading spot (off): black eyeball in a chrome ring, dark lens - no glow in daytime photos (omaat_f9 / f1 / f5 / f46); xf faces +z
   // w3: ~0.075 across (omaat_f9 / f5) [D]
   const spot = (xf) => { B.add(gCyl(0.037, 0.037, 0.02, 16), xf, SEATMAT.fLeather); B.add(gCyl(0.029, 0.029, 0.004, 16), M4.mul(xf, M4.trs(0, 0.011, 0)), SEATMAT.lampRing); B.add(gCyl(0.018, 0.018, 0.004, 14), M4.mul(xf, M4.trs(0, 0.013, 0)), SEATMAT.lampLens); };
