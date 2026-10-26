@@ -46,7 +46,7 @@ uniform sampler2D u_atlas; uniform float u_screenStep; uniform float u_emisGain;
 uniform sampler2D u_win; uniform vec2 u_winZ;
 uniform float u_R; uniform float u_yc; uniform vec2 u_winY;
 uniform float u_exposure; uniform float u_exterior; uniform float u_fill; uniform float u_sheen; uniform float u_sheenTint;
-uniform vec3 u_glassT; uniform float u_hueK; uniform vec3 u_rimK;
+uniform vec3 u_glassT; uniform float u_hueK; uniform vec3 u_rimK; uniform float u_dayN; uniform float u_scrWall;
 uniform vec3 u_skyTop; uniform vec3 u_skyBot;
 uniform float u_detailOn;
 out vec4 o;
@@ -296,7 +296,13 @@ void main(){
     vec4 t = tx*w.x + ty*w.y + tz*w.z;
     vec2 nx = tx.xy*2.0 - 1.0, ny = ty.xy*2.0 - 1.0, nz = tz.xy*2.0 - 1.0;
     vec3 dn = vec3(0.0, nx.y, nx.x)*w.x + vec3(ny.x, 0.0, ny.y)*w.y + vec3(nz.x, nz.y, 0.0)*w.z;
-    N = normalize(N + dn * P.y);
+    // QA L12 (integration low): within ~0.3-1.2 m of the eye the procedural relief (layers < 16) on smooth materials (r < 0.45-0.6)
+    // eases to 0.35: the tile's ~5 mm dimples read as hammered metal in the close rim streak (q14 near pyShell), where moulded
+    // plastic grain is sub-mm [A; the tile repeats at the P.x scale, so its relief only resolves near the eye]; fabrics (r >= 0.6)
+    // and the photo layers keep theirs, albedo / roughness modulation untouched [D gapM nfade: q14 flat-face high-pass 1.36 ->
+    // 0.60, rim streak 0.38 %]
+    float nearK = layer < 16 ? mix(mix(0.35, 1.0, smoothstep(0.3, 1.2, length(u_camPos - v_wpos))), 1.0, smoothstep(0.45, 0.6, v_mat.r)) : 1.0;
+    N = normalize(N + dn * P.y * nearK);
     if (layer < 16 || u_photoOn < 0.5) base *= 1.0 + (t.b - 0.5) * 2.0 * P.z;
     else {
       // QA r2 (integration): photo tiles sampled half a mip sharper (bias -0.5; the arrays are already 8x anisotropic):
@@ -563,6 +569,20 @@ void main(){
         // where the official photos are cool blue-grey [V: y_47303 crown #a7adc2 (B-R +27) vs q17 #b2b3b3; py_37301 reveal
         // sides #9ba6bc vs q14 #bfbfc0] (lighting r4 medium; with the cooler boarding hemiBot / wash in 12_scene). QA L8: in
         // the sky's tint (x[0.92, 1.0, 1.18], the blue of the sky seen through the pane over the deck's grey)
+    // QA L12 (light low + integration medium): amber moods with day panes (u_dayN 0.75 in Dining / Sunrise, 12_scene MOODS):
+    // beside an open day pane the window belt is lit by the daylight, so its ambient goes u_dayN of the way to its own
+    // luminance (hue dropped, level kept): the red lens wash (sideLed x sideWall, ~h12) mixed with the cool pane glow read
+    // salmon up to the glass, where the amber-phase photos show the surround of an open pane daylight-neutral and the
+    // saturated amber only round the closed shades [V: kn_room_35 / 36 open-pane surround #a49b98 / #aea9a7 s0.04-0.07 vs dF03
+    // wall #ddb298 s0.31]. Mask: the wall band 0.6-1.9 m facing in, or the recessed reveal / tub (recd), x the shade row (shT:
+    // continuous over the 0.533 m pitch, so no pier stripes; the window LUT alpha dips to ~0.36 between windows and striped
+    // the d06 piers in the raters' rB), x the day-glow gate (luma 0.2-0.45: day 0.51 -> 1, sunset 0.14 -> 0, closed shades
+    // shT 0) [D gapT3 V2: dF03 pink share 12.3 -> 0.05 %, wall s0.31 -> 0.11; d06 4.2 -> 0.08 %; dd / q21 within 1 L]
+    if (u_dayN > 0.0) {
+      float dayB = max(wallProx * facingIn * smoothstep(0.6, 0.9, v_wpos.y) * (1.0 - smoothstep(1.6, 1.9, v_wpos.y)), recd)
+                 * shT * smoothstep(0.2, 0.45, dot(u_winGlow, vec3(0.2126, 0.7152, 0.0722)));
+      amb = mix(amb, vec3(dot(amb, vec3(0.2126, 0.7152, 0.0722))), u_dayN * dayB);
+    }
     // QA L8 (light): the upper tub (0.30-0.66 m over the pane centre, any facing, shade open) sees the sky through the pane
     // and little of the cabin ceiling, so its light takes the hue of the day glow (x the sky tint above) at u_tubSky.y of its
     // level, for a share u_tubSky.x (Boarding only; 0 elsewhere, 12_scene MOODS tubSky). The cream reveal (07_shell
@@ -627,6 +647,12 @@ void main(){
     // the q09 darks fell under the photo's (p5 36 -> 25 vs c_27314 36; 0.02-0.3: 30; 0.1-0.45: 35 but the q06 / q13 lines
     // fell back to 2.7 / 0.8 %) [D fixL8 f2 / f4 / after]
     float sW = u_sMix * (1.0 - smoothstep(1.9, 2.3, v_wpos.y)) * (1.0 - recd) * smoothstep(u_sEase.x, u_sEase.y, ao);
+    // QA L12 (integration low): none on the smooth aft-facing THE Suite front wall above 1.45-1.55 m (fWall, below the
+    // u_fZone line): the bulkhead sign (10_mono litPocket box, 5 cm proud of the wall) put the wall under it inside the
+    // 7 cm range, and the fixed spiral printed a detached band and stepped copies round the box on the pale print
+    // [V: omaat_f13 / f40 print clean round the box; q03 col 600 rows 72-77 L149-172 vs no-AO 187]; the curtains (r 0.95)
+    // keep their pleat creases (r < 0.85 only: inkGround r 0.75) [D gapM fsign2: rows 72-77 187-188, thin darks 1.71 %]
+    sW *= 1.0 - fWall * smoothstep(1.45, 1.55, v_wpos.y) * step(v_mat.r, 0.85);
     if (u_ssao.y > 0.0 && sW > 0.01) {
       // QA L9 (light low): disc and range x(1 + u_sLow) = 1.5 (7.5 cm / 0.15 m) below the headrests (0.85-1.05 m) and off the sidewall:
       // the PY contact darks stayed ~1/3 of the photos' [V: thin dark-line share q13 0.91 vs py_37302 2.77 %, q14 0.58
@@ -668,6 +694,12 @@ void main(){
     // QA r3 (light): not above ~1.5 m: the spill reached the bin doors and the upper cabin read grey-cool [V: ucr_room-
     // night-lighting outboard bins #2f271e L40 h31, centre bins #0d0909 vs q20 #3d3f44 L63 h221 / #434448 L68]
     float scrH = 1.0 - smoothstep(1.4, 1.7, v_wpos.y);
+    // QA L12 (light): u_scrWall (Night 0.5, 12_scene MOODS.sleep scrWall) of the spill off the sidewall faces: with the spill
+    // off the night window wall keeps half its level and turns warm, so the cool spill gave half the wall light and all of
+    // its cast; linear shares fitted to the two night photos 0.3 / 0.7 [V: ucr_room-night-lighting wall L47 B-R 0, near wall
+    // #302218; ml_IMG_20200208_1915537 window wall L67 B-R -15 vs q20 L67 B-R +5, nF03 L75 +6] [D gapT3 N0 / N3]
+    float sWall = 1.0 - u_scrWall * wallProx * facingIn;
+    scrH *= sWall;
     for (int i = 0; i < 6; i++) {
       if (u_scrP[i].w <= 0.0 || scrH <= 0.0) continue;
       vec3 sn = u_scrN[i].xyz, sq = v_wpos - u_scrP[i].xyz; sq -= sn * dot(sq, sn);
@@ -752,10 +784,16 @@ void main(){
   // [V: ucr_the-room-cabin hue by luma band L60-100 / 100-150 / 150-200 h26.4 / 28.9 / 34.1 vs dd h27.8 / 34.4 / 39.9; wall
   // h26-28 vs dd h33.5; kn_room_35 h31.7 / 31.0 vs d06 33.2 / 38.9]; below 0.12 (sRGB ~97: the seat-level ash, question 12)
   // and in the clipped lens core (> 0.95: ucr lens #fefed6) per-channel ACES stays [D gapT pD]
+  // QA L12 (integration medium): only on amber-lit surfaces: the share fades out as the pre-tone B/R rises past 0.22-0.38.
+  // A white face under both the red lens and the day pane (R >> G ~ B) kept its linear ratio and read salmon, where per-channel
+  // ACES had clipped R to cream [V: kn_room_35-39 / ucr_the-room-cabin pink share 0.00-0.05 % vs dF03 11.5 %; amber-lit
+  // surfaces linear B/R ~0.18, daylit whites ~0.5-0.6]; with shades closed (dd) and at sunset (q21) the hue gain holds
+  // [D integ10 outP: q21 thirds unchanged, dd L150-200 h33 (ucr h34)]
   if (u_hueK > 0.0) {
     float Lx = dot(xe, vec3(0.2126, 0.7152, 0.0722)); float la = aces(vec3(Lx)).x;
     vec3 y = xe * (la / max(Lx, 1e-5)); y /= max(1.0, max(y.r, max(y.g, y.b)));
-    col = mix(col, y, u_hueK * smoothstep(0.12, 0.35, la) * (1.0 - smoothstep(0.75, 0.95, la)));
+    col = mix(col, y, u_hueK * smoothstep(0.12, 0.35, la) * (1.0 - smoothstep(0.75, 0.95, la))
+                          * (1.0 - smoothstep(0.22, 0.38, xe.b / max(xe.r, 1e-5))));
   }
   col = tone(col, u_toe);
   o = vec4(toSRGB(col), 1.0);

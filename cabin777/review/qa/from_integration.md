@@ -770,3 +770,64 @@ The run ended at its 5-round cap. These are the open items the L11 raters gave t
 - THE Room / THE Suite are left out: there the lobe drew white outlines on every cap edge and beaded glints along the divider
   rails and lifted the q06 frame (median 165 -> 167 vs c_27312 128), where the thin-highlight share already sits above the
   in-flight range. A THE Room `jCap` roughness change therefore still gets no rim lobe (polishD: +16 L on a flat q09 cap face).
+
+## Lighting run 3, L12 (lighting 8.0 / integration 7.9 raters): items for the area owners
+
+These are the L12 raters' open items owned by other areas. Lighting-owned items are logged in fixed_integration.md
+(lighting run 3, L12).
+
+### To room / econ, shared SEATMAT keys in `09_seats.js` (low): material response (carried, reduced weight)
+- **Problem:** the thin-highlight share is under the official photos: q06 0.92 vs 2.20 %, q16 0.67 vs 2.50 %, q15 0.65 vs 1.10 %,
+  q09 0.36 vs 1.18 %. Real in-flight economy photos measure 0.03-0.66 % (sany_13 0.48, sany_18 0.66, sany_22 0.63), so the renders
+  sit at the top of the in-flight range. The PY roughness landed; econ arm / armPad and room jCap were tested and reverted.
+- **Evidence:** thin.py (L > 235 with 9 x 9 clip density < 0.45) on the L12 renders and the ref/ana and ref/web photos.
+- **Fix:** no further roughness drop unless a real in-flight photo shows streaks at seat level. If one does, lighting can extend
+  the existing rim lobe (`u_rimK`) forward of `u_sLowZ` at half gain (rimZ floor 0.5) for the room jCap streaks, checked against
+  the q06 median guard (<= 166). Nothing is needed from room / econ now.
+
+### To py (`09b_py.js`, low): PY contact darks and mid-scale form shading (carried)
+- **Problem:** thin dark-line share q13 1.00 vs py_37302 2.77 %, q14 0.73 vs py_37301 3.15 %; seat-zone mid-band contrast q13 19.6 vs
+  28.3. The lighting side (contact AO) is done; this needs seam geometry.
+- **Evidence:** thindark.py on the L12 q13 / q14 renders and the official photos.
+- **Fix:** as handed off in 'To py' above: a dark reveal at the shell rim (#1f2228, r 0.9), 1 cm gap strips (#1c1e23) at the
+  cushion sides and the leg-rest hinge, a 6 mm split line on the shell. Target q13 / q14 >= 1.8 %.
+
+### To py (`09b_py.js` pySeat / pyUnit, medium): PY seats still read as clean CG (carried from L9-L11)
+- **Problem:** the PY outline darks are about half of the in-flight photos' (q13 1.00 %, q14 0.73 % vs 1.67-1.94 %), and the w17
+  joints (foot plates, the 6 mm console split at y 0.40, the soft band under the cushion nose, the hinge-roller gap) sit where
+  the rated frames do not look. Rim highlights rose but remain short: q13 0.16 -> 0.29 %, against 0.46-0.67 % in flight.
+- **Evidence:** masks integ10/thin_py.jpg (q13 | sanpy_13, q14 | py_37301). The photos' PY outlines come from four seams the model
+  renders as smooth shading: the patterned back fabric against the grey shell wing (a vertical line both sides of every seat);
+  the headrest panel's lower edge against the back; the seat-cushion front and sides against the console and shroud; the
+  console's cubby and control openings. The raters rejected w16's proud black strips, so these should be recessed mid-dark
+  grooves like the suite's fCapJoint.
+- **Fix:** grooves inset 2-3 mm, material `{ c: '#2a2e36', r: 0.9 }` (L ~45-60 rendered):
+  1. Back fabric to shell wing, each side, a 5 mm groove loft along the shell's inner rim from the headrest to the cushion:
+     `for (const sd of [-1, 1]) loftAt(B, ds.filter(([y]) => y < 0.93).map(([y, d, w]) => SEC(y, 0.005, 0.010, zr(y) - d + 0.010, 0.003, sd * (w / 2 - 0.004))), BH, PYGROOVE, 1);`
+  2. Headrest lower edge: a 5 mm horizontal groove across the back at the blue panel's bottom.
+  3. Cushion front and side edges: a 6 mm gRBox groove 2 mm below the cushion top, against the console and shroud faces.
+  4. pyUnit console face: the cubby and control openings as 8-10 mm dark recesses (gBox, `{ c: '#16181c', r: 0.9 }`) instead of
+     flush decals.
+  Targets: q13 / q14 thin dark-line share >= 1.5 %, q13 p5 <= 38, face means within 5 L, q13 thin-highlight share >= 0.4 %
+  (shell / arm rims gRBox seg 3).
+
+### To suite (`09d_suite.js`, low): THE Suite outline darks close but short in the seated and behind views
+- **Problem:** q03 1.71 %, q05 1.48 % thin dark lines vs 1.79-2.85 % in flight; the top and middle of the frame gained nothing. The
+  polishC joints sit in the lower third, and q02 meets its target.
+- **Evidence:** integ10/thin_suite.jpg against omaat_f5 / f11. Missing: the edges of the dark striped-wood insert on the window
+  console top and its black-rimmed recess; the vertical grain / panel lines on the wood panels each side of the 43-in screen
+  (strong in omaat_f11, left of the screen); the joint between the tall aisle shell's cap and its side face, nearest the camera
+  in q05 (omaat_f5 draws it as a continuous line along the console).
+- **Fix:** 1. a 4 mm SEATMAT.fSeam rim, 1 mm below the top face, round the console-top wood insert (the QA r3 tapered insert);
+  2. 2-3 vertical fSplit lines, 3 mm wide and flush, per screen-wall wood panel, as on the wardrobe (w17b); 3. extend the cap()
+  groove (fCapJoint) along the cap's full inner length on the aisle wall (in q05 it reads only at the ends). Targets: q03 >= 1.8 %,
+  q05 >= 1.6 % thin dark lines, face means within 5 L.
+- **Note from lighting (L12):** the contact AO no longer draws on the smooth aft-facing front wall above 1.45-1.55 m (the bulkhead
+  sign's ghost band and stepped copies are gone); the curtains and everything below 1.45 m keep it, so the q03 / q05 shares above
+  are not changed by that.
+
+### To ceiling/bins (`08_bins.js`, low): grey dashes through the right outboard bin lip at door 3 (carried)
+- **Problem:** grey fragments still poke through the right outboard bin lip at door 3 (z04). polishE traced them to the THE Room
+  centre PSUs (psuo2), occluded only by the centre-bin door edge; no change was made.
+- **Fix:** 1. end the psuo2 run 0.05 m short of the door-3 zone boundary (z1 - 0.05), or 2. drop it 3 mm along its face normal, so
+  the centre-bin door edge covers it with depth margin. Target: no grey fragment on the lip in z04 at DPR 1 and 2.

@@ -648,3 +648,83 @@ above (q12 holds the shell-rated level; the near-pane blue is the eased near-win
 from_shell w15 lows (door glass flat white: now clips at 255 with the rest; creams; dado grille; PY/Y tub lip band),
 from_econ wave 3k-3m / w43b-L1 / w37-w39 / w27, from_room w16 (1) / (3), from_py 6 / 9 / 10 / 11, from_monuments w13-15,
 from_exterior 17-19, from_ceiling w13. Notes for shell and py / econ in from_integration.md (lighting run 3, L11).
+
+## Lighting run 3, L12 (plateau breaker after the L12 rating: lighting 8.0, integration 7.9; two gap analyses + rater issues)
+
+Code: `04_shaders.js`, `12_scene.js` (`13_app.js` unchanged). No other area committed during the run, so the guard compares the
+head (8ad6927, qa/fixL12/b_before) with this tree (qa/fixL12/b_after). Renders: qa/fixL12/before and qa/fixL12/after (qa.js check
+views + mood views from qa/fixL12/vm.json, gapT3/shots.js); variant qa/fixL12/var/g30 (B/R gate 0.30-0.45); tools in
+qa/fixL12/tools (cmp.py frame / thirds vs photo, m12.py the L12 target boxes, thin.py / thindark.py); crops c_amber.jpg,
+c_nightblue.jpg, c_sign_q14_q20.png.
+
+Regression guard (cmp.py: |model - photo| over the frame median, p5, p95, the thirds' mean L and 0.25 x their hue difference;
+lower is closer), before -> after:
+- Check views: q06 121 -> 121, q15 29 -> 29, q16 44 -> 44, q21 193 -> 194, q03 292 -> 292, q13 60 -> 60, q09 118 -> 118 (q06 / q15 /
+  q16 / q13 / q09 0.0 % of pixels change by more than 6 L; q03 0.4 %, the sign); blue06 83 -> 82; also q05 235 -> 234, q14 115 -> 115,
+  q10 61 -> 61, q07 76 -> 76, bl16 62 -> 62, blue15 68 -> 68, blueF03 169 -> 168, c06 135 -> 135, n16 245 -> 245, w06 78 -> 77,
+  d06 83 -> 76, dd 72 -> 75.
+- q20 49 -> 63 (kept, see the Night item): all of it is the window wall at the right edge (x 820-930, y 220-380; 3.9 % of the
+  frame, nothing else moves) and the thirds' circular-mean hue. The frame p95 86 -> 81 (photo 106) is that wall leaving the
+  brightest 5 %: in the matched box it goes L67 B-R +5 h207 -> L55 B-R -5 h41 against ucr_room-night-lighting's wall L47 B-R 0
+  (#24211c h37), i.e. 20 L over the photo -> 8 L, cool -> warm as in the photo. The mid / bottom thirds' hue (h1 -> 22, h9 -> 22;
+  photo h3 / h10) is the circular mean of a blue-screen + amber mixture, which jumps as the blue share drops; median, p5 and
+  the top and bottom thirds' L are unchanged.
+- dd 72 -> 75: its p95 201 -> 205 (and hue L150-200 31.0 -> 33.0, ucr 34.1) is one IFE screen at the bottom left (x 9-108, y
+  316-428: #59adf8 L161 -> #65c6ef L181), which the B/R gate hands back to per-channel ACES as in every other mood; the amber
+  surfaces do not move (thirds within 1 L, outboard / ash boxes identical). The same holds for sF03 (7.3 % px, the 43-in
+  screen) and s06 / q21 (0.8 / 1.3 %, screens). Narrowing the gate to 0.30-0.45 (var/g30) leaves dd at 205 and lets dF03 pink
+  back to 0.57 %, so 0.22-0.38 stays.
+- dF03 / wF03 107 -> 119 / 106 -> 116 against kn_room_35 (a THE Room bed close-up, not this composition): the mid third's
+  hue h14 -> 20 vs h4 and L120 -> 124; the matched open-pane surround is what moves (below).
+
+Items (gap analyses first, by expected gain, then the raters' L12 issues):
+- lighting low 1 + integration medium (gap 1 #1, gap 2 #1) amber moods with day panes read salmon: done, both halves.
+  (a) `u_hueK` share x (1 - smoothstep(0.22, 0.38, pre-tone B/R)): only amber-lit surfaces keep the hue-preserving tone.
+  (b) `u_dayN` (MOODS dining / wake 0.75): beside an open day pane the belt (0.6-1.9 m, facing in, or the recessed reveal /
+  tub) goes 0.75 of the way to its own luminance, masked by the shade row (continuous over the pitch: no pier stripes) and a
+  day-glow luma gate (sunset and closed shades 0).
+  - Pink bright share (L > 170, s > 0.15, h < 22): dF03 12.34 -> 0.05 %, wF03 9.42 -> 0.00, d06 4.24 -> 0.08, w06 3.50 -> 0.09, d16
+    2.92 -> 0.41 (target <= 0.5 %; kn_room_35-39 0.00-0.05).
+  - dF03 wall (0-120, 40-300) #ddb298 h22 s0.31 -> #c8bdb3 h27 s0.11 (target s <= 0.17, h >= 24; kn_room_35 / 36 #a49b98 /
+    #aea9a7 s0.04-0.07); (150-330, 60-380) h21 s0.19 -> h27 s0.08. wF03 h23 s0.25 -> h28 s0.10. d06 (870-930, 140-230) h24 s0.41
+    -> h28 s0.27 (target <= 0.30), no pier stripes (c_amber.jpg); w06 s0.32 -> 0.23.
+  - Held: dd medians 85 / 85, thirds within 1 L, hue L100-150 / 150-200 32.3 / 31.0 -> 33.5 / 33.0 (ucr 28.9 / 34.1); q21 thirds
+    and boxes unchanged (pier #d4935a h28, median 136); s06 window box h26 -> 27, median 83 / 83. Boarding / Cruise / Night / Blue
+    untouched (hueK, dayN 0; c06 0.1 % px).
+- lighting (gap 1 #2) Night window wall: done. MOODS.sleep scrCol [0.30, 0.40, 0.55] -> [0.34, 0.40, 0.47] (same luma) and
+  `u_scrWall` 0.5 (the share of screen spill the sidewall faces lose; Blue / Dining keep theirs).
+  - q20 wall (820-930, 220-380) #404245 L67 B-R +5 -> #383633 L55 B-R -5 (ucr L47 B-R 0); frame mean 33.2 -> 32.6 (ucr 35).
+  - nF03 wall (0-120, 40-300) #484a4d L75 B-R +6 -> #3d3c38 L60 -5 (ml_IMG_20200208_1915537 L67 -15); under-screen (380-620,
+    400-470) #3b3f44 B-R +9 -> #403f3d -3 (ml -3); frame mean 55.9 -> 51.0 (ml photos 53-56: 2-5 L under, as the analyst found).
+  - n16 and the Blue views unchanged by it (0.0 % px in n16).
+- lighting low 2 (gap 1 #3, gap 2 #4) Blue door / galley ends violet-grey: done. MOODS.blue monFill [0.20, 0.16, 0.10] ->
+  [0.24, 0.19, 0.11], monHemi 0.4 -> 0.1.
+  - bl16 door-4 zone (365-425, 225-260) #746a79 L110 h281 B-R +5 -> #77695a L107 h32 B-R -29 (target h25-40, B-R <= -20, L95-115;
+    sany_47 #836d4c h36 / #66574e h22); (330-420, 230-260) h274 -> h26. blue15 door-5 sides (330-365, 150-175) B-R +17 -> -5,
+    (290-300, 140-170) +15 -> -3 (target <= 0).
+  - Frames: blue15 28.4 -> 28.4, bl16 41.3 -> 41.2, blue06 38.5 -> 38.4, blueF03 69.8 -> 70.2; blueF03 front wall (420-520, 20-140)
+    L84 -> 88 (<= 90), window wall #545ab7 L96 unchanged.
+- integration low (gap 2 #2) AO band and stepped copies round the THE Suite bulkhead sign: done (not with the rater's per-quad
+  spiral turn, which drew dot grain in L11). sW x (1 - fWall x smoothstep(1.45, 1.55, y) x [r <= 0.85]): no contact AO on the
+  smooth aft-facing front wall above 1.45-1.55 m, so the box no longer prints itself on the print; the curtains (r 0.95) keep
+  their creases.
+  - q03 col 600 rows 71-78: 104 / 149 / 172 / 169 / 165 / 155 / 149 / 183 -> 172 / 188 / 187 / 187 / 187 / 187 / 187 / 190 (no-AO
+    187-191; target monotonic, >= 0.85x); row 50 x 527-535: 179-183 / 159 / 141 / 160 -> 185-187 throughout (c_sign_q14_q20.png).
+  - Thin dark lines q03 1.71 -> 1.71 % (>= 1.65), q05 1.48 -> 1.48 %; q10 flap column (x 650, rows 376-410) identical (Sharp only;
+    Balanced has no contact AO).
+- integration low (gap 2 #3) hammered orange peel in the close rim streak: done. The procedural detail normal (layers < 16) eases
+  to 0.35 within 0.3-1.2 m of the eye on smooth materials (r < 0.45-0.6); fabrics and photo layers keep theirs.
+  - q14 near pyShell (745-800, 260-440) 5 px high-pass std 1.35 -> 0.61, mean 109.6 -> 109.5; rim streak continuous, thin highlights
+    0.38 -> 0.38 %; q14 thin darks 0.73 -> 0.72 %. q07 / q09 / q13 / q06 / q15 / q16 0.0-0.1 % px.
+
+Phone budget (perf2.js, 640 x 400, before -> after; frame tris / draw calls): mid Sharp 3,257,612 / 69 -> 3,257,612 / 69,
+Balanced 1,643,808 / 35 -> 1,643,808 / 35; econ Sharp 3,938,248 / 101 -> 3,938,248 / 101, Balanced 1,984,126 / 51 -> 1,984,126 /
+51; room Sharp 2,852,276 / 69 -> 2,852,276 / 69, Balanced 1,441,140 / 35 -> 1,441,140 / 35. No new pass, no new loop (the spill
+factor sits in the existing 6-screen loop's scale; dayN / hueK are uniform branches in the amber moods). Balanced frame time
+(time5.js, SwiftShader 930 x 575, both builds alternating, median of 3 x 3 frames, ms): q03 3060 -> 3065, q06 9154 -> 9227, q13
+11606 -> 11672, q16 8047 -> 8079 (+0.2-0.8 %, inside the +-3-5 % run spread).
+
+from_* items (to lighting / integration): no new ones since L11. Carried, not changed: from_shell polish E (near pane blue in
+seat views) and w15 lows (door glass, creams, dado grille, PY/Y tub lip band), from_econ wave 3k-3m / w43b-L1 / w37-w39 / w27,
+from_room w16 (1) / (3), from_py 6 / 9 / 10 / 11, from_monuments w13-15, from_exterior 17-19, from_ceiling w13. The L12 raters'
+items for room / econ / py / suite / ceiling are in from_integration.md (lighting run 3, L12).
