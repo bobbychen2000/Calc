@@ -46,7 +46,7 @@ uniform sampler2D u_atlas; uniform float u_screenStep; uniform float u_emisGain;
 uniform sampler2D u_win; uniform vec2 u_winZ;
 uniform float u_R; uniform float u_yc; uniform vec2 u_winY;
 uniform float u_exposure; uniform float u_exterior; uniform float u_fill; uniform float u_sheen; uniform float u_sheenTint;
-uniform vec3 u_glassT; uniform float u_hueK; uniform vec3 u_rimK; uniform float u_dayN; uniform float u_scrWall; uniform float u_beltK; uniform float u_paneK;
+uniform vec3 u_glassT; uniform float u_hueK; uniform vec3 u_rimK; uniform float u_dayN; uniform float u_scrWall; uniform float u_beltK;
 uniform vec3 u_skyTop; uniform vec3 u_skyBot;
 uniform float u_detailOn;
 out vec4 o;
@@ -113,28 +113,6 @@ vec3 windowT(vec3 wp){
   // [V: q14 26B back L212 on fabric L138 with straight edges vs py_37301 / 37303 no patch; omaat_f57 / f58 penumbrae
   // several cm] (from_py 5 / 6 / 9); width [D]
   return (1.0 - smoothstep(0.75, 1.3, sqrt(sqrt(q)))) * texture(u_win, vec2(zt, hit.x < 0.0 ? WL : WR)).rgb;
-}
-// QA L13 (lighting run 4): windowT along the reflected ray d3 (the pane a glossy face mirrors): the same skin-circle hit,
-// zone / shade rows of u_win and superellipse gate, widened by the lobe's footprint on the wall (bw, in pane half-heights,
-// from the roughness w) and dimmed by its spread (1 / (1 + bw^2)) [D gap4_mat patches/pane7]
-vec3 windowR(vec3 wp, vec3 d3, float w){
-  vec2 o2 = vec2(wp.x, wp.y - u_yc); vec2 d = d3.xy;
-  float a = dot(d, d);
-  if (a < 1e-4) return vec3(0.0);
-  float b = 2.0*dot(o2, d); float c = dot(o2, o2) - u_R*u_R;
-  float disc = b*b - 4.0*a*c;
-  if (disc < 0.0) return vec3(0.0);
-  float t = (-b + sqrt(disc)) / (2.0*a);
-  float zh = wp.z + d3.z * t;
-  vec2 hit = o2 + d * t;
-  float zt = (zh - u_winZ.x)/(u_winZ.y - u_winZ.x);
-  vec4 zr = texture(u_win, vec2(zt, WZ));
-  float dzn = (hit.x < 0.0 ? zr.r : zr.g) * 4.0;
-  float dyn = (hit.y + u_yc - u_winY.x) / u_winY.y;
-  float q = dzn*dzn*dzn*dzn + dyn*dyn*dyn*dyn;
-  float bw = w * w * t * length(d3) / u_winY.y;
-  float g = (1.0 - smoothstep(0.75, 1.1 + 1.5*bw, sqrt(sqrt(q)))) / (1.0 + bw*bw);
-  return g * texture(u_win, vec2(zt, hit.x < 0.0 ? WL : WR)).rgb;
 }
 // lo = 1 for surfaces below ~1.5 m: QA r1 (light) the cool window light reaching seat level is half desaturated, it
 // left a blue cast on the charcoal shells (h216-218 s0.14-0.20 vs c_27312 shell back #5c626a, dark side #4e4f55,
@@ -378,7 +356,7 @@ void main(){
   rough = max(rough, 0.12);
 
   float NdV = max(dot(N, V), 1e-3);
-  vec3 amb; float ao = 1.0; float sz = 1.0; float binM = 0.0; vec3 lt = vec3(1.0); vec3 tubRef = vec3(0.0); vec3 hBot = u_hemiBot;
+  vec3 amb; float ao = 1.0; float sz = 1.0; vec3 lt = vec3(1.0); vec3 tubRef = vec3(0.0); vec3 hBot = u_hemiBot;
   if (u_exterior > 0.5) {
     // QA r3: the exterior sees the lit cloud deck below (u_extBounce per sky), so shaded flanks / undersides of the
     // wing, canoes and nacelle read mid-grey, not slate [V: alv_ANA77W_NH211_26K shaded flank #8090a0, belly #59636c]
@@ -454,7 +432,6 @@ void main(){
     // 1.64 / 2.23), see binK below
     float binO = smoothstep(1.30, 1.42, abs(v_wpos.x)) * smoothstep(1.62, 1.7, v_wpos.y) * (1.0 - smoothstep(2.18, 2.22, v_wpos.y)) * sz;
     float cBin = (1.0 - smoothstep(0.95, 1.05, abs(v_wpos.x))) * smoothstep(1.62, 1.70, v_wpos.y) * (1.0 - smoothstep(2.28, 2.36, v_wpos.y)) * sz;
-    binM = max(binO, cBin);   // (the pane mirror below skips the bin doors)
     float wallProx = smoothstep(1.7, 2.55, abs(v_wpos.x));
     float facingIn = clamp(-sign(v_wpos.x) * N.x, 0.0, 1.0);
     // QA r2 (light): only faces recessed behind the lining circle (R = u_R - 0.10, 07_shell wallAt) count as the reveal:
@@ -619,7 +596,8 @@ void main(){
     if (u_dayN > 0.0) {
       // QA L13 (light low, lighting run 4): lower edge 0.6-0.9 -> 0.2-0.5 m, so the wall under an open pane stays neutral down
       // to the console, not an orange band rising from it [V: kn_room_35 / 36 below the open pane s0.00-0.03 to the console;
-      // dF03 orange share (0-340, 250-420) after the L13 sideLow change 10.0 % -> see fixed_integration.md] [D L13rateL xpB]
+      // dF03 orange-bright share (0-340, 250-420; L > 140, s > 0.2, h15-40) 12.9 %, 10.0 % with the L13 Dining sideLow 0 alone,
+      // 3.8 % with this; column 250-280 y330-370 HLS s0.43 -> 0.09] [D L13rateL xpB; fixL13 r_am2]
       float dayB = max(wallProx * facingIn * smoothstep(0.2, 0.5, v_wpos.y) * (1.0 - smoothstep(1.6, 1.9, v_wpos.y)), recd)
                  * shT * smoothstep(0.2, 0.45, dot(u_winGlow, vec3(0.2126, 0.7152, 0.0722)));
       amb = mix(amb, vec3(dot(amb, vec3(0.2126, 0.7152, 0.0722))), u_dayN * dayB);
@@ -794,13 +772,6 @@ void main(){
   // the photo's 0.37), so the covers between head-on and grazing
   // lift too and the lobe is not plain white [V: y_47301 covers L64-100 vs q16 L53-58; lobe B/R 1.09 vs y_47303 1.47;
   // q15 head-on covers (40,44,81) vs y_47300 (34,41,67) held] (from_econ w40-w42 medium)
-  // QA L13 (lighting run 4): the day panes mirrored in the glossy parts (rough < 0.4: caps, table tops, shell rims), at Sharp
-  // only (u_rimK.y, as the rim lobe): the interior env holds the window light only as a broad side lobe at 0.6 winGlow, where
-  // a day pane seen from inside is ~7x winGlow (u_paneK) [V: omaatJ_oj_r22 rosewood table p90 214 / p99 241 with the windows
-  // in it; c_27300 cap rail p99 242; kn_room_10 catch-light on the shell rim]. Not on the bin doors (binM: discrete pane
-  // dashes) or the IFE glass (layer 13: white pane blocks) [D gap4_mat r_pane7; fixL13]
-  if (u_paneK > 0.0 && u_exterior < 0.5 && u_rimK.y > 0.0 && rough0 < 0.4 && layer != 13)
-    specEnv += u_winGlow * u_paneK * windowR(v_wpos, R, rough) * Fe * (1.0 - smoothstep(0.30, 0.40, rough0)) * (1.0 - binM) * (0.25 + 0.75*ao) * lt;
   if (sheen > 0.0) specEnv += env * pow(1.0 - NdV, 2.0) * u_sheen * mix(vec3(1.0), base / max(max(base.r, base.g), max(base.b, 1e-3)), u_sheenTint);
   // QA r2 (integration): on the exterior the sky reflection follows the baked albedo (luminance / the wing's #636466 =
   // 0.39, clamped 0.5-1; metals keep theirs), so the near-to-far albedo ramp of 11_exterior also ramps the grazing
