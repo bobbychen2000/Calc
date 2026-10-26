@@ -424,3 +424,18 @@ Closed `from_integration.md` "F front drapes cool light grey" (third request; lo
   The lavender asked for in w19b came from f_17313, which is an ANA rendering; per the brief, renderings lose to real
   photos (omaat_f40, omaatF_2).
 - The w18 lows are unchanged. Triangles unchanged.
+
+## Post-wave polish (polish C, 2026-10-26): ink-cloud print - bar held
+
+Closed `from_integration.md` "To monuments" ink-cloud print (L8-L11 medium; log: `fixed_polishC.md`).
+
+| round | rater A | rater B | change |
+|---|---|---|---|
+| w21 | **8.7** | **8.8** | ink clouds as an atlas panel (`inkPanel`, 'ink' rect) on a warm paper ground (`inkGround` #e9dbbf atlasLit, `inkCloud` #c0b5a0); wall grid 4 columns |
+| w22 | 8.7 | 8.5 | thinner strata, crisper edges, 8 px pad, cooler colour - **reverted** (B: dark tone over 62-82 % of the wall) |
+
+- Print box ink_aisle / ink_seated: L200 / 202, range 30 / 34, h42 s0.09 (omaat_f13 L202-208, range 23-25, h42 s0.11).
+- Triangles: the ink walls drop from a 0.1 m grid to 4 columns. `06_atlas.js` carries a one-line `inkPanel(g, put)` call.
+- **Still open (low):** strata larger and rounder than f40's dry-brush fragments (see the w22 notes in fixed_polishC.md),
+  the wall's warmth against the neutral ceiling (lighting), front-wall monument joint hairlines, the w18 lows.
+

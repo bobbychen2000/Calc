@@ -1,0 +1,46 @@
+{
+ "area": "suite",
+ "rater": "A",
+ "round": "w18",
+ "score": 8.8,
+ "method": "Compared w17 (r1) and w18 (r2) 930x575 renders (q02, q03, q04, q05, wardrobe) with pixel diffs (>8 levels): wardrobe 19.7k px = cap joint line + wood split lines only; q03/q05/q02 diffs are mostly the monuments ink wall and window sky, plus the ottoman welt; q04 1.9k px. 2x crops: /tmp/claude-0/-home-user-Calc/4bf95286-4075-5784-8617-507211ce8722/scratchpad/raters/suiteA2/c_ward_cmp.png, c_ott_cmp.png. Own DPR 2 renders of /tmp/b2/test.html seated in 1A (same cameras as w17a): /tmp/claude-0/-home-user-Calc/4bf95286-4075-5784-8617-507211ce8722/scratchpad/raters/suiteA2/z_wardrobe.png, z_ottoman.png, z_console.png, compared side by side with the w17 set (c_zward_full.png, c_zward_crop.png). Luma sampled on the cap joint: w17 min L8 (black), w18 min L25 (dark brown, L25-48 across its height). References as w17a: omaat_f5, f11, f13, f40. Lighting noted, not scored.",
+ "calibration": [
+  { "earlier_issue": "w17a MEDIUM: cap joint a black blade, square and 2 mm proud, sticking out past the rounded shell end at the wardrobe aft corner", "status": "fixed. At DPR 2 (c_zward_crop.png top) the joint now ends in a rounded corner that follows the shell, tucked under the cap overhang instead of a square black blade into air. It is dark brown (L25-48) instead of black (L8) and thinner. It is still a little darker than the soft L110-115 shadow in omaat_f40, but from a seated, below-cap view it reads as the shadowed groove under the cap lip. Low residue only." },
+  { "earlier_issue": "w15a MEDIUM: duvet head band a hard-edged board", "status": "still fixed (q04 unchanged apart from noise)" },
+  { "earlier_issue": "w13b / w14a / w14b MEDIUM: wood flanks chestnut instead of espresso", "status": "still fixed (z_wardrobe espresso wood unchanged)" },
+  { "earlier_issue": "w16a/w16b LOW: band/loft notch, aisle bullnose, flat flap triangle, drape rail", "status": "not fixed (not addressed; low)" },
+  { "earlier_issue": "Integration L11: thin dark outline lines 0.55-0.85x of omaat photos", "status": "partly fixed, as w17a: welt, lid seam, lip line, door reveal and cap groove are present and now pitched at believable values" }
+ ],
+ "changeVerdicts": {
+  "1 cap-to-shell joint: 3 mm #3a342e groove, rounded rect r 0.021, 1 mm proud": "keep. It fixes the w17a medium. The corner overhang is gone and the line reads as a shadow groove, not ink. Optional: lift it another step (~#4a433b) to get closer to the f40 shadow value. Not required.",
+  "2 wardrobe wood-panel split lines flush, 3 mm, #2e2924": "keep. In z_wardrobe and wardrobe.png the edges of the wood panels now read as fine reveals, not black strips. There is no z-fighting at DPR 2.",
+  "3 ottoman welt 0.014 -> 0.008 tall": "keep. It is a slightly finer dark line under the cushion edge (c_ott_cmp.png, z_ottoman) and still matches the f11 welt line. There is no gap or artefact."
+ },
+ "details": [
+  { "detail": "Proportions and plan", "score": 8.6, "refs": "unchanged" },
+  { "detail": "Shell / cap two-tone and cap joint", "score": 8.7, "refs": "z_wardrobe vs omaat_f40: rounded groove, no overhang; slightly dark" },
+  { "detail": "Aisle leaves, wardrobe wall and door", "score": 8.8, "refs": "z_wardrobe vs f5 / f13: split lines now subtle" },
+  { "detail": "Wood flanks", "score": 8.2, "refs": "unchanged" },
+  { "detail": "Console, module, keypad", "score": 8.0, "refs": "z_console unchanged" },
+  { "detail": "Bed", "score": 8.5, "refs": "q04 unchanged" },
+  { "detail": "Ottoman, table, aisle box", "score": 8.7, "refs": "z_ottoman vs f11" },
+  { "detail": "Centre pair and variants", "score": 8.7, "refs": "q02" }
+ ],
+ "issues": [
+  {
+   "severity": "low",
+   "problem": "The cap groove is still somewhat darker than the photo's soft joint shadow (L25-48 vs about L110-115 in f40, though the viewing angles differ)",
+   "evidence": "/tmp/claude-0/-home-user-Calc/4bf95286-4075-5784-8617-507211ce8722/scratchpad/raters/suiteA2/c_zward_crop.png; z_wardrobe.png x 1000, y 175-190",
+   "fix": "Optional: SEATMAT.fCapJoint c '#4a433b'"
+  },
+  {
+   "severity": "low",
+   "problem": "Carried from w16a: band/loft notch and aisle bullnose, flat flap triangle, flank grain short, footwell back lit, far-leaf moire, drape rail",
+   "evidence": "as w16a",
+   "fix": "as w16a"
+  }
+ ],
+ "questions": [
+  "No high or medium issues remain in the suite. The remaining gap to 9 is in the console/module detail (8.0) and the wood flanks (8.2), not in the joint lines. Would the gap analyst target those next?"
+ ]
+}

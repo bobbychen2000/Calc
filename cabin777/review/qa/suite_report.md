@@ -171,3 +171,17 @@ Closed the `from_integration.md` items addressed to suite (log: `review/qa/fixed
 - Variants (bed + doors + divider) combine cleanly. Triangles: under 100 added on the occupied bed unit; far LOD unchanged.
 - **Still open (low):** small notch at the head band / loft join (extend the band 0.05 aft, roll 0.42 -> 0.46); aisle
   drape still reads as a rail (y 0.47, 0.01 inboard); flat flap triangle; the sun patches on the bed are lighting.
+
+## Post-wave polish (polish C, 2026-10-26): integration L11 thin dark lines - bar held
+
+Closed `from_integration.md` L11 "To suite" (log: `fixed_polishC.md`).
+
+| round | rater A | rater B | changes |
+|---|---|---|---|
+| w17 | 8.7 | 8.9 | `fSeam` #1d1a17 joints: ottoman welt, aisle-box lid seam, table-lip underside, console fascia joint, wardrobe door reveal + wood-panel split lines, cap-to-shell joint |
+| w18 | **8.8** | **9.0** | cap joint as a rounded 3 mm mid-dark groove (w17a medium: black blade past the rounded shell ends); split lines flush, #2e2924; welt 0.008 |
+
+- Thin dark-line share (own black-hat measure) q03 3.47 -> 3.63 %, q05 2.93 -> 3.22 % (photos 5.9-8.0 % on the same
+  measure). The SSAO part of the hand-off is lighting's (04_shaders.js) and was not touched.
+- **Still open (low):** cap groove one step lighter (#4a433b) to match the soft f40 shadow; the w16 lows.
+

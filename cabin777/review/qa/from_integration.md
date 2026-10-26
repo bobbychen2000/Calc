@@ -665,6 +665,7 @@ The run ended at its 5-round cap. These are the open items the L11 raters gave t
      - q03 >= 1.8 %, q05 >= 1.6 %, q02 >= 2.0 % thin dark lines.
      - f_ink_seated row 320 (539-593) >= 130.
      - Face means within 5 L.
+- **Status (polish C, 2026-10-26):** items 1-4 done in `09d_suite.js` (plus a cap-to-shell groove and a console joint), rated w17 8.7 / 8.9 and w18 8.8 / 9.0, kept. Item 5 (SSAO) not done: `04_shaders.js` is lighting's. Log: `fixed_polishC.md`.
 
 ### To py (medium, integration rater L11): Owner: py (09b_py.js pySeat / pyUnit). Carried from L9 / L10, with no PY commit since 2026-10-24.
 - **Problem:** PY seats read as clean CG. Their outline darks are about half of the in-flight photos' (1.01 / 0.76 % vs 1.67-1.94 %), and PY is the only cabin outside its in-flight range.
@@ -697,6 +698,8 @@ The run ended at its 5-round cap. These are the open items the L11 raters gave t
      - h35-45, s0.07-0.13
      - fine >= 2
      - q03 top boxes range <= 45
+
+- **Status (polish C, 2026-10-26):** done via item 4 (atlas panel 'ink', `inkPanel` in `10_mono.js`, one-line hook in `06_atlas.js`); print box L200-202, range 30-34, h42 s0.09; rated w21 8.7 / 8.8, kept. Fine >= 2 not met (0.6-0.8). A second round (thinner strata) was reverted under the guard. Log: `fixed_polishC.md`.
 
 ### To shell (low, integration rater L11): Owners: shell (07_shell.js l.754 glass tints), then lighting (12_scene.js glass blend). Carried from L10, unchanged; the
 - **Problem:** Day window panes are capped below white (G <= 242) by a multiply tint in display space. They never read brighter than the white lining beside them, so a day frame has a third to a half of the photos' near-white share.
