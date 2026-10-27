@@ -1,0 +1,60 @@
+{
+  "area": "monuments",
+  "rater": "B",
+  "round": "confirm3",
+  "head": "7a2c8b9",
+  "score": 8.8,
+  "summary": "Third confirmation round, on 7a2c8b9. git diff --stat 8467f01 HEAD -- src touches only 04_shaders.js, 07_shell.js, 09_seats.js, 09b_py.js, 09d_suite.js and 12_scene.js. 10_mono.js and 05_layout.js are unchanged, so the monument geometry, materials and atlas are the same as the build I rated 8.8. Old vs new pixel diff (share of pixels with |dL|>8 / |d(B-R)|>8): 0.00/0.00 % in q01, q19, m01, m03, m05 and m12. q11 is 0.18/0.10 % and m06 0.29/0.18 %, both in a small distant patch (q11 x614-674 y181-239), not on the bar. The changes are in the PY views, all from L17/L18 pyCool/pyLvl: q13 23.3/9.4 %, m08 48.3/38.7 %, m10 31.0/17.3 % and m09 46.5/43.2 %. The intended PY changes move the monuments toward py_37302. Rear-wall whites in q13 went from L208 B-R +3 to L190 +10.5 (photo L227 +8). The right partition went from L218 +2 to L211 +10 (photo +17). The PY face of the J/PY bulkhead in m08 went from +8 to +23 (L17 note: py_37301/37303 lower whites +25..+36). One unintended side effect counts as a lighting regression: the aft-facing door-4 forward galley in m09 now takes the full PY cool share above about 1.4 m. Its upper cart bank reads blue-grey (B-R -5 -> +13, L138 -> 115) over a neutral lower bank (B-R -5..-10), which brings back the split at the work deck that 71fdda1 had fixed. That is lighting, not scored, but I raise it as a medium for the integrator. Geometry and proportion are rated afresh and unchanged: the bar keeps the in-service face, and the door-1, door-2, F wall, lav, door-4 and door-5 units are unchanged. The carried lows (flat nosing, cabinet reading as open shelving, flat control panel, crushed bay, black soffit, w18-w21 detail) remain. Score 8.8, no high or medium monument issue, one medium lighting item (not scored).",
+  "lighting_note": "Not scored. (1) MEDIUM, new regression from L17/L18: the door-4 forward galley face (m09, aft-facing, its face at about dz[3][0] = 43.7) sits inside the pyM ramp. pyM ends with smoothstep(u_pyCool.y - 0.3, u_pyCool.y), and the face and its cart doors set back from z1 sit before that end. The L18 0.4 reduction only applies to forward-facing faces (step(0.5, -N.z)), so this aft face takes pyCool 0.9 and pyLvl 0.65 above the 1.4-1.7 m gate. Measured in m09, white pixels L>110 by band: rows 2-35 % L138 B-R -5 -> L115 +13; rows 40-68 % L123 -7 -> L121 -5; rows 70-85 % unchanged (L167 -3). On the column profile of x600-740, upper cart doors run B-R +12.6..+13.1 down to y160, then -4..-10 below the deck (y280-360): a 20-point hue step and about 20 L at the work-deck line. The comment in 04_shaders.js says 'the door-4 zone and its galleys stay out (z end)', but they do not. Fix: keep aft-facing faces near the zone end out, e.g. pyM *= 1.0 - step(0.5, N.z) * smoothstep(u_pyCool.y - 1.0, u_pyCool.y - 0.7, v_wpos.z). The galley is about 0.6 m deep, and only the galley faces there are above 1.4 m and aft-facing. Alternatively, end the ramp for N.z>0.5 at the galley's z0. Target: m09 upper vs lower bank within 3 B-R, upper L back to about 138, as on 8467f01. (2) Intended PY changes look right for the monuments: q13 rear wall +10.5 (photo +8), right partition +10 (photo +17), m08 PY bulkhead face +23. The q13 rear wall now reads L190 vs photo L227, which is slightly dim but within exposure tolerance (low, optional). (3) Carried: m05 right bay crushed to L3, no local reflections on the counter, black soffit over the bar. (4) q19 and m12 (door-5 galleys) are pixel-identical to 8467f01: the 71fdda1 fix holds there.",
+  "calibration": [
+    {"issue": "Lighting medium (from_monuments 'Final confirm', fixed in confirm2): L14 seatCool/bleed tinted the door-4/5 galley lower faces lavender (q19, m12, m09)",
+     "status": "fixed in q19/m12, REGRESSED in m09 by a different mechanism (L17 pyCool on the upper bank)",
+     "evidence": "q19 and m12 have 0.00 % changed pixels vs 8467f01 (bands B-R -2/-5/-3 and -3/-5/-7 both builds). m09: upper bank B-R -5 -> +13, L138 -> 115, lower bank unchanged, so there is again a visible split at the work deck (inverted: now the upper is cool)."},
+    {"issue": "Earlier mediums (L13 bar follows the 2019 render instead of the in-service face; w22b ink-print figure/ground inverted; w19b warm F drapes)",
+     "status": "still fixed",
+     "evidence": "q11 |dL|>8 0.18 %, m05 0.00 %, m03/m01/q01 0.00 %, outside the monument faces. 10_mono.js and 05_layout.js are byte-unchanged since 8467f01."},
+    {"issue": "Did the lighting run (L17/L18) regress any monument geometry, material or atlas?",
+     "status": "no (geometry); one lighting regression (m09, above)",
+     "evidence": "The only changed monument pixels are in PY-zone faces under pyM: the q13 rear wall and partitions, the m08 bulkhead PY face and the m09 galley upper bank."},
+    {"issue": "Low: counter nosing is a flat white band", "status": "not fixed", "evidence": "m05 unchanged (0.00 % diff); p50 217 vs j32 rail 44."},
+    {"issue": "Low: the glass-door cabinet reads as open shelving", "status": "not fixed", "evidence": "m05 unchanged; 37/42/69 vs j32 about 32/61/84."},
+    {"issue": "Low: the control panel is a flat bright plate and the oven fronts are simplified", "status": "not fixed", "evidence": "m05 unchanged."},
+    {"issue": "Low: the right open bay is crushed to black", "status": "not fixed (lighting / lining)", "evidence": "m05 unchanged, p50 3."},
+    {"issue": "Low: black soffit and ash cheeks over the bar", "status": "not fixed", "evidence": "m05/m06 unchanged."},
+    {"issue": "Carried w18-w21 lows (welcome-pane glass cue, ash grain repeat, plain J lav doors, door-1 dark-wood streaks, F-wall hairlines, ink-print strata)", "status": "not fixed", "evidence": "m01, m03 and q01 are pixel-identical."}
+  ],
+  "details": {
+    "Door-3 self-service bar (q11, m05, m06)": 8.7,
+    "Door-2 welcome galley (m03)": 8.5,
+    "Door-2 aft ash wall": 8.7,
+    "F front wall / ink print, flight-deck door, door 1, F drapes (q01, m02)": 8.8,
+    "Lavatory exteriors": 8.0,
+    "F/J bulkhead": 8.4,
+    "J/PY bulkhead, PY face (q13, m08)": 8.5,
+    "Door-1 galley (m01)": 8.6,
+    "Door-4 group (m09; geometry only, lighting split not scored)": 8.6,
+    "Rear galley, door 5 (q19, m12)": 8.5
+  },
+  "issues": [
+    {"severity": "medium", "detail": "Lighting, not scored: door-4 forward galley upper bank (m09)",
+     "problem": "L17/L18 pyCool/pyLvl reaches the aft-facing door-4 galley face. The upper cart bank goes blue-grey and darker while the lower bank stays neutral, which gives a hue and level split at the work deck.",
+     "evidence": "m09 whites (L>110): upper band B-R -5 -> +13, L138 -> 115; lower band -7 -> -5, L123 -> 121; x600-740 column profile +12.6..+13.1 above y160, -4..-10 at y280-360. 46.5 % of pixels |dL|>8, all in rows 0-280. The 04_shaders.js comment says the door-4 galleys stay out, but they do not: the pyM end ramp (u_pyCool.y - 0.3 .. u_pyCool.y) does not clear a face at or just ahead of dz[3][0], and the L18 0.4 cut is for -N.z only.",
+     "fix": "04_shaders.js after pyM: pyM *= 1.0 - step(0.5, N.z) * smoothstep(u_pyCool.y - 1.0, u_pyCool.y - 0.7, v_wpos.z); (or end the +N.z ramp at the galley z0). Re-check m09 against 8467f01 (upper L138, B-R -5, within 3 B-R of the lower bank)."},
+    {"severity": "low", "detail": "Lighting, not scored: q13 PY rear wall level", "problem": "After pyLvl 0.65 the rear wall reads a little dim against the photo, though the hue now matches.",
+     "evidence": "q13 (300-580,100-175) L190 B-R +10.5 vs py_37302 (440-600,40-140) L227 +8.", "fix": "Optional: a 0.5 pyL cut on the -N.z rear-wall faces (the same mask as the L18 0.4 share), or leave it as photo exposure."},
+    {"severity": "low", "detail": "Door-3 bar nosing (m05, q11)", "problem": "The counter nosing is a flat bright-white band; in service it is a rounded satin-aluminium rail.",
+     "evidence": "m05 (100-900,512-524) p10/50/90 215/217/236; j32 rail 10/44/180.", "fix": "10_mono.js MONMAT.nosing '#b8babc' m0.7 r0.28 with a 0.025 m half-round front."},
+    {"severity": "low", "detail": "Door-3 bar cabinet (m05, q11; shared serviceFace, so also m03)", "problem": "The glass-door cabinet reads as open shelving, not smoked glass.",
+     "evidence": "m05 37/42/69 with crisp shelf lines; j32 about 32/61/84.", "fix": "Add a smoked pane (#2e2c2b, a 0.55) or darken the contents to L<=70, and widen the stiles to 0.07 m."},
+    {"severity": "low", "detail": "Door-3 bar control panel and ovens (m05)", "problem": "The control panel is a flat bright plate and the oven fronts are simplified.",
+     "evidence": "Panel 136/140/143 against j32 45/96/156.", "fix": "Inset a dark #3a3835 field carrying the lamps and toggles; add a dark dish ring behind each oven handle."},
+    {"severity": "low", "detail": "Bar canopy / bay (m05, m06, q11)", "problem": "The soffit is black, the cheeks are ash and the right bay is crushed to L3.",
+     "evidence": "j32 shows a pale lit ceiling over the unit, dark-grey carcass sides and a bay at about L11.", "fix": "Cheeks in carcass #3a3835; bay lining #2a2826 or a strip light under the monitor ledge. The soffit is a ceiling / lighting call."},
+    {"severity": "low", "detail": "Carried detail (q01, q19, m03)", "problem": "Carried w18-w21 lows: welcome-pane glass cue, ash grain repeat, plain J lav doors, door-1 wood streaks, F-wall hairlines.",
+     "evidence": "Pixel-identical renders.", "fix": "As in monuments_w21b."}
+  ],
+  "questions": [
+    "Integrator: is the door-4 forward galley (aft face, galley z0..dz[3][0]) meant to be outside pyCool, as the 04_shaders.js comment says? If so, the m09 split is a bug. If the cool light was intended there, the lower bank needs it too (gate at 0.5-0.8 m as for the J/PY bulkhead PY face) so there is no step at the work deck.",
+    "Carried: should the shared serviceFace cabinet change (smoked glass, wider stile) also apply to the door-2 welcome galley?"
+  ]
+}

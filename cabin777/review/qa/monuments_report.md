@@ -527,3 +527,40 @@ Closed `from_integration.md` "Lighting run 3, L13 ... To monuments (medium)" (lo
   - the bar soffit;
   - the w18-w21 lows.
 - Ratings: `monuments_confirm2_a.json`, `monuments_confirm2_b.json`.
+
+## Final confirm (publish) (2026-10-27, head 7a2c8b9): bar held, no code change
+
+| round | rater A | rater B | high / medium (monuments) |
+|---|---|---|---|
+| confirm3 | **8.7** | **8.8** | none / none |
+
+- Since confirm2 (8467f01), only lighting and other areas changed: `04_shaders.js`, `07_shell.js`, `09_seats.js`, `09b_py.js`,
+  `09d_suite.js` and `12_scene.js` (L17 PY white balance, L18 polish). `10_mono.js` and `05_layout.js` are unchanged, and the
+  monuments mesh is still 119,228 triangles.
+- **Diff, 8467f01 vs 7a2c8b9:**
+  - q01, q19, m01, m03, m05 and m12 are pixel-identical.
+  - q11 (0.19 %) and m06 (0.30 %) change only in the PY glimpse past the bar cheek.
+- **Intended PY changes (no issue).** Whites, B-R, old → new:
+
+  | face | 8467f01 | 7a2c8b9 | photo |
+  |---|---|---|---|
+  | q13 PY rear wall | +3 | +11 | py_37302: +8 |
+  | q13 right partition | +2 | +10 | py_37302: +17 |
+  | m08 J/PY bulkhead (PY face) | +9 | +24 | +25 to +36 |
+
+- **New medium (lighting, not scored), routed to `from_monuments.md` ("Final confirm (publish)"):** the L17/L18 PY cool
+  share reaches the set-back upper bank of the door-4 centre galley, the face that looks aft into the door-4 cross-aisle
+  (m09).
+  - The upper cart doors went from L139, B-R -5 to L110, B-R +13. The lower body is unchanged at L167, B-R -3, so the face
+    splits into two tones at the work deck.
+  - Both raters found it independently, and I confirmed the cause: `buildGalley` sets the upper bank back 0.3 m, which puts
+    its face at z 43.40. That is exactly where the pyM end ramp starts (`u_pyCool.y - 0.3`, with `u_pyCool.y` =
+    doorsZ[3][0] = 43.70).
+  - m09 is a supporting view, not one of the four QA views.
+- **Earlier mediums:** all still fixed in q19 and m12 (the L14 galley lavender), plus the L13 bar face, the ink print, the
+  warm drapes and the door-1 band.
+- **New low (lighting, optional):** the PY-facing monument whites now have the right hue but read 20-40 L darker than
+  py_37302 (q13 rear wall L190 against 218, partition 176 against 215).
+- **Carried lows:** the cabinet reads as open shelving; the control panel and ovens are flat; the white nosing; the
+  crushed bays; the soffit; the w18-w21 lows.
+- Ratings: `monuments_confirm3_a.json`, `monuments_confirm3_b.json`.

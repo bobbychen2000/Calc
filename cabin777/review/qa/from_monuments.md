@@ -88,3 +88,28 @@ Noted by both raters in all three rounds; not scored against monuments.
   z 43.6-45.3, door-5 galley z > 58.0) with a 0.3 m smoothstep. Target: lower and upper galley faces within 3 B-R
   of each other, both at about -3, which is the 5e5e561 value.
 - **Lighting final touch (71fdda1):** done (both terms x the window LUT seat-zone row sz, 0 in the galley / door zones): q19 white lower / upper B-R -4.5 / -3.6, m12 -4.8 / -6.2, m09 -2.6 / -6.6.
+
+## Final confirm (publish) (head 7a2c8b9, 2026-10-27)
+
+### To lighting (`src/04_shaders.js`), medium, not scored against monuments
+- **The L17/L18 PY cool light reaches the door-4 centre galley's upper bank (m09), on the face that looks aft into the
+  door-4 cross-aisle.**
+  - The galley (x -1.05..1.07, z 43.08-43.70, face +1) has its upper bank set back 0.3 m (`buildGalley` `set`, through
+    `monoStepBody`), so that face sits at z 43.40.
+  - `pyM`'s end ramp `1 - smoothstep(u_pyCool.y - 0.3, u_pyCool.y, z)` with `u_pyCool.y` = doorsZ[3][0] = 43.70 is still 1
+    there.
+  - The L18 0.4 cut applies only to forward-facing faces (`-N.z`), so this aft face takes the full `pyCool` 0.9 and
+    `pyLvl` 0.65.
+  - The lower body at z 43.70 gets none of it, which gives a two-tone split at the work deck. This is the same kind of
+    fault as the L14 galley-lavender medium. It contradicts the shader comment "the door-4 zone and its galleys stay out".
+- **Evidence (m09, 800×560):**
+  - 47 % of pixels have |dL|>8, all in rows 0-280.
+  - Upper cart doors: L139 → 110, B-R -5 → +13 (RGB 141,140,136 → 107,111,119).
+  - Lower panel: L167, B-R -3 (unchanged).
+  - Row bands at x150-650, y0-160: L 144/136/132/131 → 116/107/104/103, B-R -5 → +10..+12.
+  - Both raters measured it independently (`monuments_confirm3_a.json`, `_b.json`).
+- **Concrete fix:** leave aft-facing faces near the PY end out of pyM:
+  `pyM *= 1.0 - step(0.5, N.z) * smoothstep(u_pyCool.y - 1.2, u_pyCool.y - 0.9, v_wpos.z);`
+  - Within 1.2 m of 43.70, the only other aft-facing faces above 1.4 m are none: the PY seatbacks sit lower. The PY rear
+    wall faces forward and keeps its share.
+  - **Target:** m09 upper doors back to about L139 and B-R -5, within 3 B-R of the lower panel. q13 and m10 unchanged.
