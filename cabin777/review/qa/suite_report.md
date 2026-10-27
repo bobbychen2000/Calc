@@ -199,3 +199,24 @@ The suite was re-rated on head 1430d42, after lighting runs 2-4 (L7-L15). `src/0
 - Rater A drops 0.2 for one new medium: the caps are too pale against the sidewall. Measured as cap/wall luma, the model reads 0.92 against 0.45-0.5 in f_17313 and up_Empty. Part of this is the lighting change (the wall got darker), so it was routed to lighting first in `from_suite.md`. The suite-side option (`fCap` about #7d7868) was not shipped, because the bar is met and no code changes are allowed in a confirm.
 - Triangles: window suite 12,182, centre suite 12,374, far LOD 326. This is within the wave-3 budget (start 12.2k / 12.7k / 158, +25 %; the far LOD was allowed to grow to match the near unit, see wave 3).
 - Still open (low): the cap groove is one step dark (#4a433b); the window console runs a little short and high against f_17313; and the w16 lows (head-band notch, drape rail, flat flap triangle, far-leaf moiré, short flank grain).
+
+## Final confirm 2 (2026-10-27): bar held after the lighting final touch
+
+The suite was re-rated on head 8467f01, after the lighting final touch (71fdda1 to 8467f01). `src/09d_suite.js`, `09_seats.js` and `03_tex.js`
+are byte-identical to 1430d42. Between the heads only `04_shaders.js`, `12_scene.js` and `07_shell.js` changed.
+
+| round | rater A | rater B | changes |
+|---|---|---|---|
+| confirm2 | **8.6** | **8.7** | none (confirm only); `suite_confirm2_a.json`, `suite_confirm2_b.json` |
+
+- There are no high issues. Every earlier high or medium issue is still fixed, and none has regressed.
+- Renders compared with 1430d42: every sampled suite region (cap, shell, ottoman, wood, fascia, duvet) has identical mean RGB. The changed pixels, 3-14 % with |dL| > 8, are all on the sidewall, the reveals and the window.
+- Routed lighting items (`from_suite.md` "Final confirm"):
+  - Item 1, the cool and dark sidewall around F, is **fixed**: q05 222-227 neutral, q03 220-221 neutral, against f_17313 at 227/228/226.
+  - Item 2, the clipped q03 window, is not changed and is still acceptable: f_17313 is blown out too.
+  - Item 3, the hard-edged sun patches, is not changed (low).
+- Cap / wall luma is now 0.79-0.86 at the near caps. It was 0.92; the wall got brighter and the cap is unchanged. The photos read 0.42-0.48 on f_17313's shaded cap tops (0.74 lit) and 0.46 on up_Empty.
+  - Both raters keep this as a **medium**. It is above the 0.7 trigger in from_suite 1 and is suite-owned now that the wall is right.
+  - The fix is the one-line `fCap` #8f8a76 -> about #7d7868 (A) or #787463 (B). It was not shipped, because the bar is met and a confirm allows no code changes. B expects about 8.9 with the fix.
+  - Logged as question 9.
+- Still open (low): the cap groove is one step dark, the window console runs a little short and high, and the w16 lows are unchanged.

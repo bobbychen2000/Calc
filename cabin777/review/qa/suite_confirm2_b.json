@@ -1,0 +1,45 @@
+{
+ "area": "suite",
+ "rater": "B",
+ "round": "confirm2",
+ "head": "8467f01",
+ "score": 8.7,
+ "method": "git diff --stat 1430d42 8467f01 -- src/ touches only 04_shaders.js, 12_scene.js and 07_shell.js, so the suite geometry and materials (09d_suite.js, 09_seats.js, 03_tex.js) are byte-identical. Compared the 1430d42 renders (r0/) with the head renders (rh/) for q02-q05 at 930x575 using cmp_<view>.png, and sampled region-mean RGB / Rec.709 luma with PIL + numpy on the same boxes in both. Suite surfaces are pixel-identical between the heads: q05 near cap (150,480)-(500,550) 192/188/169 L187.3, aisle cap (650,280)-(720,380) 193/190/173 L189.3, far cap 172/169/153 L168.8, ottoman 144/135/126, inner shell 92/84/79, console 98/90/85 -> 99/91/85; q03 cap top (x800, y120-138) 177/174/158 L~174, cap front face (x600, y147-153) ~188/185/172, ottoman sun / shade 184/173/160 / 130/122/113, shell 94/86/81; q04 sheet 196/193/187. Only the sidewall changed: q05 wall (30,150)-(80,250) 206/211/225 L211 -> 226/227/227 L227, wall2 (200,300)-(240,380) 206/210/216 -> 221/221/221; q03 wall (20,200)-(80,300) 204/210/217 -> 221/221/221. Reference f_17313 (930x575): sidewall (20,250)-(60,400) 227/228/226 L228; shell tops (780,175)-(900,195) 115/109/104 L110 and (620,170)-(700,200) 102/94/91 L96; shell side 83/81/83; ottoman 100/93/98. The earlier up_Empty cap/wall reading (0.5) from suite_final_a is reused (ref/web/suite/ already holds up_Empty, up_Doors, up_Bed-Made). Geometry and proportion were re-checked against f_17301, f_17306, f_17304 and f_17313. They are unchanged from the 8.9 final, so the earlier DPR 2 close-ups still apply. No new Playwright renders.",
+ "calibration": [
+  { "earlier_issue": "final_a MEDIUM: caps read as a pale cream counter; cap/wall luma 0.92 vs 0.45-0.5 in f_17313 / up_Empty", "status": "not fixed (partly improved by lighting only). fCap is unchanged; the brighter neutral wall lowers the ratio: q05 near cap 187 / wall 221-227 = 0.83-0.85, aisle cap 189/227 = 0.83, far cap 169/227 = 0.74; q03 cap top 174 / wall 221 = 0.79, front face ~0.85. f_17313 is 96-110 / 228 = 0.42-0.48. This is still above the 0.7 hand-back threshold in from_suite.md, so the suite-side fCap change is now due." },
+  { "earlier_issue": "from_suite Final confirm 1 (medium, lighting): sidewall around F cool blue-grey and dark", "status": "fixed. q05 wall 206/211/225 (B-R +19) -> 226/227/227 (B-R +1), L227 vs f_17313 L228; q03 204/210/217 -> 221/221/221. The cool haze in the q03 / q05 reveals is gone." },
+  { "earlier_issue": "from_suite Final confirm 2 (low, lighting): q03 window view nearly clipped", "status": "not fixed (accepted). Glass box (150,200)-(200,300) is 247/248/250 in both heads; 63 % of the (140,180)-(210,320) pixels are >= 250 (67 % before). f_17313 is blown out too." },
+  { "earlier_issue": "from_suite Final confirm 3 (low, lighting): hard-edged sun patches on bed / ottoman", "status": "not fixed (unchanged). q04 patch L243 vs shade L208, with a 12-18 px edge ramp along row 300, still parallelogram-shaped; q03 ottoman sun / shade 175 / 123, identical to 1430d42." },
+  { "earlier_issue": "w17a MEDIUM: cap joint box square and proud, black blade", "status": "fixed, no regression (code unchanged; q02 / q05 pixel-identical on the cap)." },
+  { "earlier_issue": "w15a MEDIUM: duvet head band square-edged / z-fight dashes", "status": "fixed, no regression (q04 sheet region identical, 196/193/187)." },
+  { "earlier_issue": "w13b / w14a / w14b MEDIUM: wood flanks chestnut instead of espresso", "status": "fixed, no regression (q05 inner 92/84/79, q03 shell 94/86/81, unchanged)." },
+  { "earlier_issue": "w13b MEDIUM: duvet corner reads as overlay", "status": "fixed, no regression (q04 unchanged; flat flap triangle stays low)." },
+  { "earlier_issue": "final_b / w18a / w18b LOW: cap groove darker / harder than f40 shadow", "status": "not fixed (not addressed), still low." },
+  { "earlier_issue": "final_b LOW: window console a little short and high vs f_17313", "status": "not fixed (not addressed), still low." },
+  { "earlier_issue": "w16-w18 LOW carried: head-band notch, drape rail, flat flap triangle, footwell back lit, far-leaf moire, short flank grain", "status": "not fixed (not addressed), no regression." }
+ ],
+ "details": [
+  { "detail": "Plan and proportions (screen wall, footwell, ottoman, console length)", "score": 8.8, "refs": "q05 vs f_17313: same layout and heights; console a little short / high" },
+  { "detail": "Screen wall: 43-in screen, wing, pier with mirror and lamp", "score": 8.7, "refs": "q03 vs f_17306" },
+  { "detail": "Shell / cap two-tone and cap joint", "score": 8.3, "refs": "q02 / q05 / q03: the geometry and joint are right, but now that the wall is neutral L221-227 the cap value stands out. It reads as a pale greige counter at 0.74-0.85 of the wall, against 0.42-0.48 in f_17313" },
+  { "detail": "Centre pair, divider, aisle leaves", "score": 8.6, "refs": "q02 vs f_17301; far-leaf moire" },
+  { "detail": "Wood flanks / wardrobe wall", "score": 8.7, "refs": "unchanged" },
+  { "detail": "Window console", "score": 8.4, "refs": "q03 / q05: the tray against the neutral wall reads better than at 1430d42; still short" },
+  { "detail": "Bed", "score": 8.6, "refs": "q04 vs f_17304: flap triangle flat, drape rail" },
+  { "detail": "Ottoman, recess, aisle box, table", "score": 8.9, "refs": "q03 / q05 / q02" }
+ ],
+ "issues": [
+  { "severity": "medium", "issue": "Cap value too light against the now-neutral sidewall. The caps read as a pale cream / greige counter. In f_17313 and up_Empty they are a mid taupe-grey at about half the wall's luminance. The hue is right; the value is not.", "evidence": "q05 cap / wall 187-189 / 221-227 = 0.83-0.85 (far cap 0.74); q03 174 / 221 = 0.79. f_17313 shell tops 96-110 / 228 = 0.42-0.48; up_Empty 0.5 (final_a). The lighting fix brought the wall to L227 (f_17313 L228), so what remains is the cap material. from_suite.md hands it back to suite when the ratio is above 0.7.", "fix": "09_seats.js / 09d_suite.js fCap #8f8a76 -> about #787463 (x0.84; the ratio should land around 0.70). Going to #6c685a (x0.75) gives about 0.62. Re-check that the cap still separates from the shell two-tone in q02 (shell L~85-107) and that the cap groove (#3a342e) still reads." },
+  { "severity": "low", "issue": "Cap groove still a touch darker / harder than the soft f40 joint shadow.", "evidence": "Unchanged since w18.", "fix": "Optional: fCapJoint #3a342e -> ~#4a433b (do it together with the fCap change so the contrast stays similar)." },
+  { "severity": "low", "issue": "Window console a little short and high against f_17313.", "evidence": "q05 vs f_17313, unchanged.", "fix": "Optional." },
+  { "severity": "low", "issue": "Carried: head-band notch, drape rail, flat flap triangle, footwell back lit, far-leaf moire, short flank grain.", "evidence": "Unchanged in q02 / q04 / q05.", "fix": "As in w16b." }
+ ],
+ "lighting": [
+  { "severity": "fixed", "note": "Sidewall around F is neutral and at the right level now: q05 226/227/227 vs f_17313 227/228/226; q03 221/221/221. No new lighting problems on suite surfaces, which are pixel-identical to 1430d42." },
+  { "severity": "low", "note": "Sun patches on the q04 bed (L243 vs 208 shade, 12-18 px edge) and the q03 ottoman (175 vs 123) are still hard parallelograms; f_17304 shows soft light." },
+  { "severity": "low", "note": "q03 window view is still near-clipped (247/248/250, 63 % of pixels >= 250). Acceptable, since f_17313 is blown out too." }
+ ],
+ "questions": [
+  "Geometry and proportion still meet the bar, with no regression. The one medium is the cap value (fCap), which from_suite.md routes back to suite now that the lighting wall fix has landed. Should the suite worker make the one-line fCap change before publishing? I would expect that to take the cap detail to ~8.8 and the area to ~8.9."
+ ]
+}

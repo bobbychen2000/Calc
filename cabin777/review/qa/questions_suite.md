@@ -19,3 +19,7 @@
 6. **Doorway width.** Rater B measured the opening at about 0.64 m, against about 0.50 in the perspective photos (f60, f7). Widening the leaves to about 0.57 would close the gap. Is the 0.64 m walk-in deliberate, or should it follow the photos? Default: unchanged.
 7. **Cap hue.** The official f_17313 photo shows neutral caps; every in-flight photo shows olive-khaki. The model uses a middle hue. Default: middle.
 8. **Made-up bed.** The default shows f57's turned-down corner, not f58's rumpled sheet. Default: f57.
+
+## Final confirm 2 (none blocking; default in place)
+
+9. **Cap value.** Now that the wall is fixed, the near caps read at 0.79-0.86 of wall luma. The photos read 0.42-0.48 (shaded cap tops in f_17313, up_Empty). Both raters suggest `fCap` #8f8a76 -> about #7d7868 (one SEATMAT line). It was held back because the confirm passed and a confirm allows no code changes. Should it go in before publishing? Default: unchanged, kept as a known approximation.
