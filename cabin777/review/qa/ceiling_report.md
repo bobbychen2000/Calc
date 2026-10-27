@@ -288,7 +288,8 @@
 - **Item:** L16 integration low, grey PSU fragments on the door-3 bin lip (z04, `setView([2.3, 1.62, 32.7], PI/2 - 0.45, 0.25)`, and q11_bar3).
 - **Cause, z04:** the THE Room centre PSU units (`psuo2`, rows 15 / 16). Hiding `psuo*` removes the dashes. A material-tag
   render (housingC red, bandC green, doorC blue, lipGap magenta) shows every housing whole and the channel intact. Where a
-  unit looks cut, a nearer bin's lower edge crosses it along its silhouette at this grazing angle. That is ordinary
+  unit looks cut, the near (right) outboard bin door's lower edge crosses it along its silhouette at this grazing angle
+  (confirmed with BINMAT.door tagged cyan). That is ordinary
   occlusion: no z-fighting and nothing poking through.
 - **Cause, q11:** the dark dashes on the near outboard bin's aisle edge belong to `binL` itself (they survive tagging
   lip / lipLine / groove / seamCore / lipGap). They are the per-module door latches seen edge-on along the run.
