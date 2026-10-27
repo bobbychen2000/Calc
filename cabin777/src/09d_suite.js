@@ -24,7 +24,7 @@ Object.assign(SEATMAT, {
   // omaat_f57 niche L70 vs cap L135; w7 rendered 0.84-1.0 (one beige mass, w8b). Neutral-warm per the official photo [V]
   // w9: caps a middle hue between the official neutral (f_17313 #bfb9b2) and the in-flight olive-khaki (f60 / f57 R-B ~40), since
   // every real photo agrees on a warmer cap than the w8 render (R-B 16) [D]; body a touch warmer with it
-  fShell: { c: '#59534b', r: 0.34, l: LAYER.plastic },   /* polishA (from_integration r1): satin, sheen lines on the shell rims (omaat_f2 / f5, f_17301) [V] */ fCap: { c: '#8f8a76', r: 0.42, l: LAYER.plastic },
+  fShell: { c: '#59534b', r: 0.34, l: LAYER.plastic },   /* polishA (from_integration r1): satin, sheen lines on the shell rims (omaat_f2 / f5, f_17301) [V] */ fCap: { c: '#777369', r: 0.42, l: LAYER.plastic },
   fInner: { c: '#5e5751', r: 0.5, l: LAYER.plastic },        // w9: aisle box / ottoman tray ~1.1-1.35x the shell (f_17313), rendered 1.7x [V]
   fConsole: { c: '#615a54', r: 0.45, l: LAYER.plastic },     // w9: niche / fascia / module ~0.65 of the cap (omaat_f57 module/cap 89/133; rendered 0.9) [V]
   fFlank: { c: '#2f2b22', r: 0.38, l: LAYER.fWood },          // w7: near-black straight-grain flanks beside the leaves (omaat_f60 flank/field 0.39); w12: 0.62 in a fairer band (w12a); polishA: espresso, not chestnut (f60 R/G 1.08-1.13; w13b / w14a medium) [V]

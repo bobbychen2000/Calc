@@ -1,0 +1,41 @@
+{
+ "area": "suite",
+ "rater": "B",
+ "round": "confirm3",
+ "head": "b2147cc + fCap #777369",
+ "score": 8.8,
+ "method": "git diff against b2147cc shows one line changed: 09d_suite.js fCap #8f8a76 -> #777369. Geometry is byte-identical. Compared base/ and cand/ renders at 930x575 for q01-q05 using cmp_*.png and 2x crops of the q02 and q05 caps (crops2_*.png in the scratchpad). Measured region means and Rec.709 luma with PIL + numpy, using only the pixels whose luma changed by more than 4 between base and cand, so the means cover cap pixels only. Changed pixels: q05 25.4 %, q02 15.2 %, q04 12.3 %, q03 2.5 %, q01 0 % (the q01 suites are too far or occluded to change). Wall, shell, wood and duvet boxes are identical between base and cand. Measured f_17313 at 930x575: wall (20,250)-(60,400) L228; shaded cap tops 96-110 (0.42-0.48), B-R -11; lit near-right cap top (760,165)-(920,180) 163/159/156 L159 (0.70), B-R -7; shell side 80/73/69 L75. ref/web/suite was not present, so the up_Empty value (0.46-0.5) comes from the confirm2 files. No new Playwright renders.",
+ "calibration": [
+  { "earlier_issue": "final_a / confirm2 A+B MEDIUM: caps read as a pale cream counter; cap/wall luma 0.79-0.86 vs 0.42-0.48 shaded / 0.74 lit in the photos; cap yellower than the photos (B-R -20 vs -9)", "status": "fixed for value at the lit near caps and for hue; partly open at shaded or far caps, which is now a shading-contrast matter. Lit caps: q05 near cap 197/193/173 L192 -> 174/171/162 L171 (/227 = 0.75), q05 aisle cap L193 -> 173 (0.76), q05 side top L196 -> 178 (0.78), q02 near wing cap L188 -> 168 (/222 = 0.76), q04 1A cap L194 -> 174. f_17313 lit near cap is L159 (0.70), A measured 0.74, so the render sits within about 0.03-0.06 of the lit photo. Shaded or far caps: q05 screen cap L170 -> 151 (0.67), q05 far cap L182 -> 162 (0.71), q03 screen cap L153 -> 134 (0.61), q03 wing cap L164 -> 142 (0.64), q02 mid cap L170 -> 148 (0.67), against f_17313 shaded 0.42-0.48. The material is no longer the cause; the gap is the soft ambient fill in shade (lighting). Hue: B-R -21..-24 -> -8..-12 against f_17313 -7..-11, so the yellow cast is fixed. The caps no longer read as a cream counter." },
+  { "earlier_issue": "B confirm2 ask: the cap still separates from the shell two-tone in q02 (shell L~85-107)", "status": "holds. q02 caps L148-168 against shell side L66 and centre shell L116 (cap/shell 1.3-1.45; f_17313 lit cap / shell 159/75 = 2.1, shaded 96-110 / 75 = 1.3-1.5). q04 cap L174 vs shell side L112 (1.55). In the 2x crops the cap still reads as a distinct lighter band over the grey ribbed leaves and the taupe shell." },
+  { "earlier_issue": "B confirm2 ask: the cap groove (fCapJoint #3a342e) still reads", "status": "holds. The groove is still visible as a dark line under the cap in the q02 / q05 2x crops. Its contrast with the cap dropped slightly, which moves it a little towards the softer f40 joint shadow, so the old low issue is marginally improved but still not addressed." },
+  { "earlier_issue": "B confirm2 ask: the darker cap must not look grey or dirty against the wood and duvet", "status": "holds. Cap 174/171/162 is a warm light greige. It is not cool or muddy, and it sits between the duvet (231/228/224 L229) and the espresso wood and shell, as in f_17304 / f_17313. It does not read as a soiled white." },
+  { "earlier_issue": "B confirm2 ask: proportions and silhouette unchanged", "status": "holds. Geometry is identical, and the cap outline against the wall gains contrast (cap/wall 0.83-0.85 -> 0.75), so the long q05 near cap and the q02 wing caps read more crisply against the L221-227 wall. No silhouette change." },
+  { "earlier_issue": "w17a MEDIUM cap joint box; w15a duvet band; w13b/w14 wood flanks; w13b duvet corner", "status": "fixed, no regression (these surfaces are pixel-identical between base and cand)." },
+  { "earlier_issue": "LOW carried: cap groove harder than f40; window console short and high; head-band notch, drape rail, flat flap triangle, footwell back lit, far-leaf moire, short flank grain", "status": "not fixed (not addressed); groove marginally softer relative to the cap." },
+  { "earlier_issue": "Lighting items (sidewall fixed in confirm2; clipped q03 window; hard sun patches)", "status": "unchanged; not scored." }
+ ],
+ "details": [
+  { "detail": "Plan and proportions (screen wall, footwell, ottoman, console length)", "score": 8.8, "refs": "q05 vs f_17313; console a little short and high" },
+  { "detail": "Screen wall: 43-in screen, wing, pier with mirror and lamp", "score": 8.8, "refs": "q03 vs f_17306; the darker screen-wall cap sits better over the wood pier" },
+  { "detail": "Shell / cap two-tone and cap joint", "score": 8.7, "refs": "q02 / q05 / q04: lit caps 0.75-0.78 of the wall vs f_17313 lit 0.70; hue B-R -10 vs -7..-11; separation from the shell kept. Shaded caps are still lighter than the photo (lighting)" },
+  { "detail": "Centre pair, divider, aisle leaves", "score": 8.7, "refs": "q02 vs f_17301; the caps no longer glare over the ribbed leaves; far-leaf moire" },
+  { "detail": "Wood flanks / wardrobe wall", "score": 8.7, "refs": "unchanged" },
+  { "detail": "Window console", "score": 8.4, "refs": "unchanged; still short" },
+  { "detail": "Bed", "score": 8.6, "refs": "q04 vs f_17304; the 1A cap no longer competes with the duvet; flap triangle flat, drape rail" },
+  { "detail": "Ottoman, recess, aisle box, table", "score": 8.9, "refs": "q02 2G box top now 175/172/163, unchanged otherwise" }
+ ],
+ "issues": [
+  { "severity": "low", "issue": "Lit caps are still about 5-8 % lighter than the lit near cap in f_17313. This is a residual, not a mismatch any more.", "evidence": "q05 near / aisle / side-top 0.75 / 0.76 / 0.78 and q02 0.76, vs f_17313 lit 0.70 (A measured 0.74).", "fix": "Optional: fCap -> ~#706c62 (x0.94) would land the lit caps at about 0.71. Not needed for the bar." },
+  { "severity": "low", "issue": "Cap groove still a touch darker and harder than the soft f40 joint shadow (carried).", "evidence": "Unchanged geometry and colour; marginally less contrast now that the cap is darker.", "fix": "Optional: fCapJoint #3a342e -> ~#4a433b." },
+  { "severity": "low", "issue": "Window console a little short and high against f_17313 (carried).", "evidence": "q05 vs f_17313, unchanged.", "fix": "Optional." },
+  { "severity": "low", "issue": "Carried: head-band notch, drape rail, flat flap triangle, footwell back lit, far-leaf moire, short flank grain.", "evidence": "Unchanged in q02 / q04 / q05.", "fix": "As in w16b." }
+ ],
+ "lighting": [
+  { "severity": "low", "note": "Shaded and far caps sit at 0.61-0.71 of the wall (q03 screen cap 0.61, q05 far cap 0.71) vs 0.42-0.48 in f_17313. With the material now right at the lit caps, this residual is ambient fill in shade (too little occlusion under the overhead bins and centre monuments), not fCap." },
+  { "severity": "low", "note": "Unchanged: q04 / q03 sun patches are hard parallelograms; the q03 window is near-clipped (accepted, f_17313 is blown out too)." }
+ ],
+ "questions": [
+  "The fCap change does what confirm2 asked: the cream-counter read is gone, the hue now matches f_17313, and separation from the shell, the groove and the silhouette all hold. No medium or high issues remain on the suite side. Is the remaining shaded-cap gap (0.61-0.71 vs 0.42-0.48) worth an integrator ambient/AO pass, or should it be logged as an approximation?"
+ ]
+}

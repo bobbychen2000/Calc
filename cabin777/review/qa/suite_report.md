@@ -220,3 +220,21 @@ are byte-identical to 1430d42. Between the heads only `04_shaders.js`, `12_scene
   - The fix is the one-line `fCap` #8f8a76 -> about #7d7868 (A) or #787463 (B). It was not shipped, because the bar is met and a confirm allows no code changes. B expects about 8.9 with the fix.
   - Logged as question 9.
 - Still open (low): the cap groove is one step dark, the window console runs a little short and high, and the w16 lows are unchanged.
+
+### Cap value (confirm 3)
+
+The integrator approved trying the confirm-2 cap fix before the publish. One line in `src/09d_suite.js`: `fCap` #8f8a76 -> **#777369**.
+- Candidates: #7d7868 (A), #787463 (B), #7c786c, #777369. The first two kept the cream hue (render B-R about -17 to -20). #777369 has B-R -9 to -12, which matches f_17313's lit cap (-9). Its lit near cap renders 175,172,163, against 171,167,162 in the photo.
+- Cap / wall luma, with the same boxes before and after:
+  - q05: near top 0.84 -> 0.75, side top 0.85 -> 0.77, screen-wall cap 0.74 -> 0.65, far cap 0.80 -> 0.71.
+  - q03: screen-wall cap 0.68 -> 0.60, wing cap 0.73 -> 0.64.
+  - The lit tops are now at the photo's lit 0.74. Shaded tops (0.60-0.71) are still lighter than the photo's 0.42-0.48. Both raters put that down to the ambient occlusion in shade (lighting), not the material.
+- `fCap` is used only in `09d_suite.js`. In q01 the change is only on the far suite caps (0.0 % of pixels with |dL| > 4).
+- Two-rater round on the candidate (`suite_confirm3_a.json`, `suite_confirm3_b.json`):
+
+| round | rater A | rater B | changes |
+|---|---|---|---|
+| confirm3 | **8.8** | **8.8** | `fCap` #777369 |
+
+  - Both raters mark the cap medium **fixed**. There are no high or medium issues and no regressions. The cap still separates from the shell two-tone and the groove still reads. It reads as a warm greige, not grey or dirty, next to the duvet and the wood.
+  - Remaining lows: shaded caps are a little light (lighting); B says an optional #706c62 would bring the lit caps 5-8 % closer. The groove is a touch hard, the window console is a little short and high, and the w16 lows are carried.

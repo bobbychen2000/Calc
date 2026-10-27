@@ -23,3 +23,4 @@
 ## Final confirm 2 (none blocking; default in place)
 
 9. **Cap value.** Now that the wall is fixed, the near caps read at 0.79-0.86 of wall luma. The photos read 0.42-0.48 (shaded cap tops in f_17313, up_Empty). Both raters suggest `fCap` #8f8a76 -> about #7d7868 (one SEATMAT line). It was held back because the confirm passed and a confirm allows no code changes. Should it go in before publishing? Default: unchanged, kept as a known approximation.
+   - **Answered (confirm 3): shipped.** The integrator approved it. `fCap` is now #777369, darker and less yellow than the suggested #7d7868 / #787463, to match f_17313's lit cap hue. The lit cap / wall ratio went from 0.84 to 0.75 (photo 0.74). Raters A and B both scored 8.8 (8.6 / 8.7 before) and marked the issue fixed, with no high issues. See "Cap value (confirm 3)" in suite_report.md.
