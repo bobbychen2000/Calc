@@ -126,3 +126,12 @@
     premium economy / economy as before. If you prefer one look for the whole cabin, say which (neutral, or the economy cast);
     the switches are `hwK` and `zPY` in `src/04_shaders.js` (mainFS, after `coolW`) and `fjCool` in `MOODS.boarding`
     (`src/12_scene.js`).
+
+## Lighting L17 (PY white balance, 2026-10-27)
+
+- **17, decided by the integrator: per cabin, per the official photos; reversible.** The user was away, so the integrator
+  chose to follow each cabin's own official photos: THE Suite neutral, THE Room about half cool, premium economy and economy
+  cool. L17 adds the PY part (its bins, bulkheads and ceiling above seat level take `pyCool` 0.6 of the cool shadow light).
+  To go back to one look for the whole cabin, set `pyCool` to 0 and `fjCool` to `[0, 0, 0, 0]` in `MOODS.boarding`
+  (`src/12_scene.js`) and drop `hwK` / `zPY` in `src/04_shaders.js` (mainFS, after `coolW`). Question 16 (far window band)
+  stays as it is.

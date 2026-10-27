@@ -48,6 +48,7 @@ uniform float u_R; uniform float u_yc; uniform vec2 u_winY;
 uniform float u_exposure; uniform float u_exterior; uniform float u_fill; uniform float u_sheen; uniform float u_sheenTint;
 uniform vec3 u_glassT; uniform float u_hueK; uniform vec3 u_rimK; uniform float u_dayN; uniform float u_scrWall; uniform float u_beltK;
 uniform float u_seatCool; uniform vec3 u_hemiBotS; uniform vec3 u_washS; uniform vec3 u_bleed; uniform vec2 u_lensLo; uniform float u_tubHue; uniform vec3 u_hueW;   // QA L14 (12_scene MOODS seatCool / bleed / lensLo / tubHue / hueW)
+uniform vec3 u_pyCool;   // QA lighting L17 (12_scene MOODS pyCool / pyLvl): PY cool share above seat level, PY zone end z (05_layout doorsZ[3][0]), PY level there
 uniform vec4 u_fjCool;   // QA lighting final touch (12_scene MOODS fjCool): F-zone cool cut, F-zone belt K (0 = u_beltK), J-zone cool cut, J-shell window fill
 uniform vec3 u_skyTop; uniform vec3 u_skyBot;
 uniform float u_detailOn;
@@ -464,6 +465,23 @@ void main(){
     // (final touch, from_shell fA-1: the recess share of coolW ramps over the first 8 mm past the lining, not 4-20 mm: across the
     // 16 mm roll-in lip facingIn falls as recd rose, and coolW dipped to ~0.35 there, a warm ring between the cool wall and tub)
     float coolW = max(linW * facingIn, max(smoothstep(xLin, xLin + 0.008, abs(v_wpos.x)), 0.5 * binO)) * (1.0 - fCut - u_fjCool.z * jzS);
+    // QA lighting L17 (L16 lighting medium, integration low; integrator's decision on question 17: per cabin, per its own official
+    // photos): in PY (the zPY ramp up to the door-4 zone, u_pyCool.y) the bins, bulkheads, partitions, the rear wall and the
+    // ceiling above seat level (1.4-1.7 m up) take the hue of the cool shadow light
+    // (u_hemiBot / u_hemiBotN at equal luminance) on their whole diffuse light, a share u_pyCool.x (Boarding MOODS pyCool, 0
+    // elsewhere; applied to amb below). The seats keep the final-touch cut (seatC). Only the hemi / wash share (coolW) moved them
+    // +3..+5 B-R: the cove and LED light dominate up there [D L17 v1] [V: whites L150-250 B-R / cool share py_37302 bins +15 / 80 %,
+    // bulkhead +17 / 99 %; py_37301 +17 / 62 %; py_37303 +25 vs q13 top +4 / 36 %, bulkhead +2 / 10 %]
+    // Not keyed on sz: the PY rear wall (door-4 lav / closet faces, forward of u_pyCool.y) reads cool in py_37302 as well [V:
+    // back wall whites +8 / 80 %, right partition +17 / 99 % vs q13 +3 / +2]; the door-4 zone and its galleys stay out (z end).
+    // Forward-facing faces within the ramp (to u_sLowZ + 0.3: the J side of the J / PY bulkhead stands at z20 + 0.02, 05_layout)
+    // stay out, so the 0.6 m ramp that keeps the ceiling and bins free of a hue step at the curtain line does not reach THE
+    // Room's bulkhead face [D L17 jpB: its upper half went B-R -13 -> -5 with the gate at u_sLowZ]
+    // Level (L16 integration falloff): the same faces take u_pyCool.z of their diffuse light (Boarding MOODS pyLvl): the q13 top
+    // band (bin doors, PSU) read L213 vs py_37302 182 (bins 211 vs 183) while its seat bands match (106 / 101 vs 106 / 100)
+    float pyM = smoothstep(u_sLowZ - 0.3, u_sLowZ + 0.3, v_wpos.z) * (1.0 - smoothstep(u_pyCool.y - 0.3, u_pyCool.y, v_wpos.z))
+              * smoothstep(1.4, 1.7, v_wpos.y) * (1.0 - step(v_wpos.z, u_sLowZ + 0.3) * step(0.5, -N.z));
+    float pyW = u_pyCool.x * pyM;
     // QA lighting final touch (L15 lighting + integration medium): forward of the PY zone (zPY, the rimZ ramp) the window wall
     // (lining facing in, tub) keeps per-channel ACES: the hue-preserving white tone (u_hueW, tone block) and the lower-tub sky
     // hue (tubLow) were fitted to the PY / Y official photos and turned the F / J window wall lavender [V: window-wall whites
@@ -774,6 +792,7 @@ void main(){
       float kR = 1.0 + u_sLow * (1.0 - smoothstep(0.85, 1.05, v_wpos.y)) * (1.0 - wallProx * facingIn) * step(u_sLowZ, v_wpos.z);
       amb *= mix(1.0, max(1.0 - u_ssao.y * ssaoF(v_wpos, Nf, kR), 0.0), sW);
     }
+    if (pyW > 0.0) { vec3 cT = u_hemiBot / max(u_hemiBotN, vec3(1e-4)); amb *= mix(vec3(1.0), cT / dot(cT, vec3(0.2126, 0.7152, 0.0722)), pyW) * mix(1.0, u_pyCool.z, pyM); }   // QA L17 (pyW above)
     // reading lights (night): warm cone from the lamp lens to the seat, 0.35 m pool [V: tlfl_IMG_9377 pools on the bed]
     for (int i = 0; i < 8; i++) {
       if (u_spotP[i].w < 0.5) continue;

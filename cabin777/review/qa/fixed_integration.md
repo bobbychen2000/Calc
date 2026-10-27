@@ -980,3 +980,52 @@ Items (from the final-confirm hand-offs, then the L15 raters' mediums):
   form (area items, routed), econ headrest-cover sheen (from_econ carried; a SEATMAT / econ item), suite sun patches (from_suite 3,
   low: shadow-map softness would need a wider PCF loop, outside the phone budget), q03 pane clipping and door-glass detail (low,
   accepted trade-offs, the photos are blown too).
+
+## Lighting L17 (PY white balance)
+
+Code: `04_shaders.js`, `12_scene.js` (`13_app.js` unchanged). Baseline f6e5d34 (build b_base), final b_v7. Renders r_base / r_v7
+(16 QA views), x_base / x_v7 (Blue at the q06 camera, economy Night at z 50, and three J / PY boundary cameras jpA (PY aisle
+looking forward and up), jpB (THE Room looking aft at the PY bulkhead), jpC (PY looking at the J / PY bulkhead)), tuning
+r_v1-r_v6 and r_tA. Tools tools/meas.py / cam2.js. All under
+/tmp/claude-0/-home-user-Calc/de563dc0-055c-58e1-a550-17b6bc670c4a/scratchpad. Question 17 was decided by the integrator: per
+cabin, per the official photos; reversible (logged in questions_lighting.md).
+
+Regression guard, f6e5d34 -> final (px > 8 changed; frame mean / p5 / p50 / p95): q03 0.00 %, q05 0.23 %, q06 0.08 %, q07 0.00 %,
+q08 0.35 %, q09 0.00 %, q15 0.00 %, q16 0.15 %, q17 0.06 %, q18 0.02 %, q19 0.00 %, q20 0.00 %, q12 3.05 % / q21 1.26 % (pane clouds;
+means 117.5 -> 117.6, 125.0 -> 124.7), Blue at q06 0.05 %, economy Night 0.00 %, jpB (THE Room side) 0.97 % (PY seen past the
+curtain; the bulkhead's J face unchanged, whites -13 = -13). Changed: q13 14.5 % (mean 137.0 -> 134.7, p50 123 -> 122, p95 221 ->
+218), q14 6.2 % (144.7 -> 143.5, p95 228 -> 224), jpA 47 %, jpC 43 %. Phone budget (test/perf.js, before -> after): mid Sharp 69
+calls / 3,256,808 tris, Balanced 35 / 1,643,406; econ 101 / 3,969,124 and 51 / 1,999,564; room 69 / 2,851,472 and 35 / 1,440,738:
+identical. No new pass, loop or texture tap; one branch with ~3 smoothsteps and a vec3 mix per interior fragment. New uniform
+u_pyCool (vec3); MOODS.boarding pyCool 0.9, pyLvl 0.75.
+
+1. PY white balance (L16 lighting medium, integration low): done. mainFS pyW / pyM: in PY (the zPY ramp to the door-4 zone,
+   05_layout doorsZ[3][0] = 43.7) above 1.4-1.7 m, the whole diffuse ambient takes the hue of the cool shadow light (u_hemiBot /
+   u_hemiBotN at equal luminance), share pyCool 0.9. The rater's fix (coolW = max(coolW, 0.6 ...)) was tried first (v1): only
+   +1 / +3..+5 B-R, since the cove / LED light dominates the bins and ceiling. Whites B-R / cool share, base -> final vs photo:
+   q13 top (0-930, 0-120) +4 / 35 % -> +12 / 68 % (py_37302 bins +15 / 80 %); q13 bins (0-450, 0-70) B-R +6.2 -> +15.0 (photo
+   +12.8); right partition (690-930, 120-300) +2 / 11 % -> +11 / 63 % (photo +17 / 99 %); rear wall (300-580, 110-190) +3 -> +20
+   (photo +8 / 80 %: 12 over, it is the cream monument face); frame whites +4 / 40 % -> +13 / 72 % (photo +18 / 91 %); q14 top
+   (300-930, 0-150) +5 / 46 % -> +12 / 67 % (target ~+12; py_37301 +17 / 87 %). Seat backs unchanged: q14 B/R 1.30 = 1.30, q13
+   1.38 = 1.38 (the mask starts at 1.4 m; seatC untouched). Economy q15-q18 pixel-equal (<= 0.15 %). Not keyed on sz, so the
+   PY rear wall (door-4 lav / closet faces) cools with the cabin as in py_37302; the door-4 zone and galleys stay out (z end).
+   J / PY boundary: the 0.6 m ramp at u_sLowZ keeps the bins and ceiling free of a step; the centre ceiling panel stays at B-R
+   -4 on both sides (jpC rows 20-100); forward-facing faces within the ramp are gated out, so THE Room's face of the bulkhead
+   (z20 + 0.02) is unchanged (v4 with the gate at u_sLowZ took its upper half -13 -> -5 in jpB; fixed). On the PY face of the
+   bulkhead the cool upper part (+17 above the monitors) meets the neutral lower part (+5..+8) behind the monitor row.
+2. PY top band level (integration falloff): done, partly. Same mask, pyLvl 0.75 of the diffuse light: q13 bands 213 / 186 /
+   123 / 106 / 101 / 89 -> 208 / 178 / 123 / 106 / 101 / 89 vs py_37302 182 / 168 / 116 / 106 / 100 / 98; bins (0-450, 0-70)
+   L211 -> 204 (photo 183). No PY band drops below its photo. The rest sits on the ACES shoulder (0.88: -2 L, 0.75: -5..-8 L);
+   a larger cut would need ~0.5 of the light for one photo (py_37303 top 191, the economy bins match y_47300 at the same light),
+   so it stops here.
+3. q12 reveal overshoot (both raters, low): not changed, measured. The (0-120) box holds the neighbouring pane's cloud deck:
+   columns 0-60, rows 150-350 read L215-230 (exterior). The lining and pier in the box read L101-108 (20 px cells, rows 0-380),
+   inside the ucr 104-110 range. lookOut 0.87 -> 0.88 would put the surround (100-180, 250-350, L103) under 100, and 0.86 (the
+   rater's suggestion) raises both; the beltK lift does not reach the recessed reveal (x (1 - recd) already).
+4. Recessed tub fall-off (lighting low): not changed, measured. Along q17 rows 20-60 the tub centre reads L157-179, as in
+   y_47303 (156-179), and ~0.85 of the true pier between the windows (render 183-200, photo 183-208). The "pier edge" in the
+   L16 box (470-490) is the bright roll-in lip of the tub (L216-229, brighter than the pier), which the photo does not show
+   (its edge reads 180-185). Tried: the crown fade-in 0.32-0.42 -> 0.24-0.36 (v6: centre +3 L only, all cabins; reverted) and
+   the lens fade-in on the tub (tA: centre -12 L, lip unchanged; not kept). The lip is the shell's roll-in moulding at grazing;
+   routed as a low note (shell / lighting).
+5. Question 8 (economy Night): not changed (optional; no new in-flight evidence beyond sany_40).
