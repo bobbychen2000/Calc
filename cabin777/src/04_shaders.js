@@ -48,6 +48,7 @@ uniform float u_R; uniform float u_yc; uniform vec2 u_winY;
 uniform float u_exposure; uniform float u_exterior; uniform float u_fill; uniform float u_sheen; uniform float u_sheenTint;
 uniform vec3 u_glassT; uniform float u_hueK; uniform vec3 u_rimK; uniform float u_dayN; uniform float u_scrWall; uniform float u_beltK;
 uniform float u_seatCool; uniform vec3 u_hemiBotS; uniform vec3 u_washS; uniform vec3 u_bleed; uniform vec2 u_lensLo; uniform float u_tubHue; uniform vec3 u_hueW;   // QA L14 (12_scene MOODS seatCool / bleed / lensLo / tubHue / hueW)
+uniform vec4 u_fjCool;   // QA lighting final touch (12_scene MOODS fjCool): F-zone cool cut, F-zone belt K (0 = u_beltK), J-zone cool cut, J-shell window fill
 uniform vec3 u_skyTop; uniform vec3 u_skyBot;
 uniform float u_detailOn;
 out vec4 o;
@@ -450,7 +451,23 @@ void main(){
     // c_27314 -4] and the economy bins [V: q15 bins B-R +8 vs y_47300 +0..+2], while the window-side whites are right
     // (q16 wall +10 vs y_47301 +14) (integration L8 low, lighting L8 medium) [D]
     float linW = 1.0 - smoothstep(0.06, 0.25, xLin - abs(v_wpos.x));   // the flat lining band (within ~0.06-0.25 m of the circle)
-    float coolW = max(linW * facingIn, max(recd, 0.5 * binO));
+    // QA lighting final touch (from_suite / from_shell final confirm, medium): THE Suite (fzS: the F seat zone, u_fZone) keeps
+    // the neutral shadow light on its sidewall, reveals and bowls (Boarding u_fjCool.x 1, 12_scene MOODS fjCool), and
+    // THE Room (jzS: from the F zone's end to the PY zone, u_sLowZ) takes 2/3 of the cool wash (u_fjCool.z 0.33). The r4 / L8
+    // cool shadow light was measured on the PY / Y window side; in THE Suite it turned the wall blue-grey and the bowls cooler than
+    // the wall [V: f_17313 sidewall 226 / 228 / 227 (B-R +1), bowl neutral (+1) and lighter than the wall (238 vs 225) vs q05
+    // 206 / 211 / 225, s09_fWin bowl +22], and in THE Room it read lavender at grazing [V: c_27316 wall R-B -12, s 5.8 % vs
+    // b_jClose -23, 9.7 %; s05 wall B-R +25 beside a neutral bowl]
+    float fzS = smoothstep(u_fZone.x - 0.3, u_fZone.x, v_wpos.z) * (1.0 - smoothstep(u_fZone.y, u_fZone.y + 0.3, v_wpos.z));
+    float jzS = smoothstep(u_fZone.y, u_fZone.y + 0.6, v_wpos.z) * (1.0 - smoothstep(u_sLowZ - 0.3, u_sLowZ + 0.3, v_wpos.z));
+    float fCut = u_fjCool.x * fzS;
+    float coolW = max(linW * facingIn, max(recd, 0.5 * binO)) * (1.0 - fCut - u_fjCool.z * jzS);
+    // QA lighting final touch (from_room final confirm, medium): in THE Room (u_fjCool.w x jzS) the window-belt terms below (u_beltK
+    // dimming, the day-belt share 0.5 -> 0.15) take the lining itself only (within 3-7 cm of the circle: the lining stands on it,
+    // 07_shell wallAt), not the shell posts 8-11 cm inboard of it (linW 0.82-0.98 there [D mask render]): since L13 / L14 the
+    // window-side post beside the 11A monitor read L75 (#454854) where it was L103 at w19 and c_27316 shows it window-lit at
+    // L114 (#6b6e7c)
+    float linB = mix(linW, 1.0 - smoothstep(0.03, 0.07, xLin - abs(v_wpos.x)), u_fjCool.w * jzS);
     // QA L14 (lighting run 4, gap analysis): Boarding (u_seatCool 1, 12_scene MOODS seatCool; 0 elsewhere): the PY / economy
     // seat level (z > u_sLowZ, below 1.2-1.5 m) takes the cool shadow light of the window side as well. The L8 key left it
     // neutral, and the official PY / Y photos keep their light greys and whites cool, 10-20 B-R over the model at L140-200
@@ -459,7 +476,14 @@ void main(){
     // THE Suite keep hemiBotN (the L8 reason: q06 seat zone vs c_27312 +8). Its hue at the neutral light's level (u_hemiBotS /
     // u_washS = hemiBot / wash scaled to the luminance of hemiBotN / washN, 12_scene): the level was fitted earlier, and at the
     // cool light's own level (5 % lower) q18 went 169 -> 168 vs y_47305 183 [D gapT14 WBC; fixL14 t3 dC]
-    float seatC = u_seatCool * step(u_sLowZ, v_wpos.z) * (1.0 - smoothstep(1.2, 1.5, v_wpos.y)) * (1.0 - coolW);
+    // QA lighting final touch (from_monuments final confirm, medium): x sz (the seat-zone row of the window LUT: 0 in the door,
+    // galley and lav zones), so the white galley faces at doors 4 / 5 keep the neutral light: keyed on z and height alone it
+    // split each face at ~1.3 m into a lavender lower and a neutral upper half [V: q19 / m12 / m09 white faces lower / upper B-R
+    // -3.5 / -2.7, -3.9 / -3.1, -2.5 / -7.6 at 5e5e561 vs +7.3 / -3.5, +8.1 / -4.3, +5.2 / -7.8 at 1430d42; the galley whites in
+    // the official photos neutral]. Its share (MOODS seatCool 1 -> 0.35, with bleed) from the PY / Y final confirm: the seat
+    // level read denim / violet [V: q14 PY back B/R 1.39 vs py_37301-03 1.22-1.36; q15 back B/R 2.22 vs y_47300 1.87; q17
+    // armrest 189 / 191 / 204 vs y_47303 185 / 184 / 191]
+    float seatC = u_seatCool * step(u_sLowZ, v_wpos.z) * (1.0 - smoothstep(1.2, 1.5, v_wpos.y)) * (1.0 - coolW) * sz;
     // (QA L13's hoV gates, N.V 0.3-0.6 and the 3.0-4.2 m eye distance on the belt dimming below, are gone in L14: a diffuse
     // lining may not change level as the viewer walks or turns, see u_beltK)
     hBot = mix(mix(u_hemiBotN, u_hemiBot, coolW), u_hemiBotS, seatC);
@@ -558,7 +582,8 @@ void main(){
     // economy (z > u_sLowZ), off the sidewall, the interreflected light takes the blue of the seat block it bounces off,
     // which the AO volume's neutral bounce cannot carry [V: seat block y_47300 seat back #2f3d66, py_37302 #636d7e; armrests
     // y_47303 B-R +14..+31 vs q17 +1] [D gapT14 WBC]
-    bounce *= mix(vec3(1.0), u_bleed, step(u_sLowZ, v_wpos.z) * (1.0 - smoothstep(0.9, 1.3, v_wpos.y)) * (1.0 - wallProx * facingIn));
+    // QA lighting final touch: x sz, as seatC above (the door-4 / door-5 galley faces stay neutral) [V: q19 / m12 / m09]
+    bounce *= mix(vec3(1.0), u_bleed, step(u_sLowZ, v_wpos.z) * (1.0 - smoothstep(0.9, 1.3, v_wpos.y)) * (1.0 - wallProx * facingIn) * sz);
     // (QA r3 (integration): the r2 extra bounce cut on occluded carpet, x0.6 below aoPk 0.28, is gone: stacked with the
     // floor pocket term below it crushed the Y / PY legroom to L5-15 [V: q17 between rows L14 p10 5 vs y_47303 L39 p10 26;
     // sany_13 floor / seat back 0.27-0.52 vs q17 0.18])
@@ -584,7 +609,7 @@ void main(){
         + wsh * lt * wallProx * (0.35 + 0.65*facingIn) * smoothstep(0.3, 1.25, v_wpos.y) * (0.45 + 0.55*ao) * noDown * (1.0 - bandW) * monK
         + lensT
         + u_winGlow * wallProx * facingIn * smoothstep(0.7, 1.1, v_wpos.y) * (1.0 - smoothstep(1.5, 1.8, v_wpos.y))
-                    * mix(0.15, 0.5, max(recd, 1.0 - linW * step(u_beltK, 0.999))) * (1.0 - band)
+                    * mix(0.15, 0.5, max(recd, 1.0 - linB * step(u_beltK, 0.999))) * (1.0 - band)
         // QA r1 (light): reveal glow 1.4 -> 1.9, the reveal sides read grey at grazing angles [V: c_27312 reveal sides
         // #d7dbdf / #e2e5e8 vs q06 #b2b1af / #c7c9c9] (integration r1)
         + u_winGlow * wl.rgb * reveal * 1.9 + u_winGlow * vec3(0.92, 1.0, 1.18) * crown * 1.1;
@@ -617,7 +642,11 @@ void main(){
     // (question 15). And on the cabin ambient only: the lens light (lensT) is added back undimmed, since the bin overhang and
     // the seat block occlude the cabin's light, not the strip light under the bin; the top fade starts at u_lensLo.y (MOODS
     // lensLo; 1.30 elsewhere) [D gapT14 V62; fixL14]
-    amb = (amb - lensT) * mix(1.0, u_beltK, linW * lensW * facingIn * smoothstep(0.55, 0.85, v_wpos.y) * (1.0 - smoothstep(u_lensLo.y, 1.60, v_wpos.y)) * (1.0 - recd)) + lensT;
+    // QA lighting final touch (from_suite final confirm, medium): in THE Suite (fzS) the belt keeps u_fjCool.y of its ambient
+    // (Boarding 12_scene MOODS fjCool; 0 = u_beltK): the wall around the suites read L199-206 where f_17313 shows it at L226
+    // [V: q05 (20-90, 150-350) 199 / 204 / 214, q03 (40-120, 100-300) 194 / 197 / 204]
+    float bK = mix(u_beltK, u_fjCool.y, fzS * step(0.001, u_fjCool.y));
+    amb = (amb - lensT) * mix(1.0, bK, linB * lensW * facingIn * smoothstep(0.55, 0.85, v_wpos.y) * (1.0 - smoothstep(u_lensLo.y, 1.60, v_wpos.y)) * (1.0 - recd)) + lensT;
     if (u_dayN > 0.0) {
       // QA L13 (light low, lighting run 4): lower edge 0.6-0.9 -> 0.2-0.5 m, so the wall under an open pane stays neutral down
       // to the console, not an orange band rising from it [V: kn_room_35 / 36 below the open pane s0.00-0.03 to the console;
@@ -636,14 +665,16 @@ void main(){
     float crownW = recd * wl.a * smoothstep(0.30, 0.40, v_wpos.y - u_winY.x) * (1.0 - smoothstep(0.58, 0.66, v_wpos.y - u_winY.x)) * shT;
     vec3 skyT = u_winGlow * vec3(0.92, 1.0, 1.18);
     float lSky = dot(skyT, vec3(0.2126, 0.7152, 0.0722));
+    // QA lighting final touch (from_shell fb-1, medium): not in THE Suite (1 - fCut, above): its bowls took the PY / Y tub-sky hue
+    // [V: s09_fWin bowl B-R +9 (w18) -> +22, q03 +23 vs f_17313 bowl +1, lighter than the wall]; THE Room keeps it (bowls +5)
     if (u_tubSky.x > 0.0 && crownW > 0.0 && lSky > 1e-4)
-      amb = mix(amb, skyT * (dot(amb, vec3(0.2126, 0.7152, 0.0722)) * u_tubSky.y / lSky), u_tubSky.x * crownW);
+      amb = mix(amb, skyT * (dot(amb, vec3(0.2126, 0.7152, 0.0722)) * u_tubSky.y / lSky), u_tubSky.x * crownW * (1.0 - fCut));
     // QA L14 (lighting run 4, gap analysis): the rest of the recessed tub (below 0.30-0.40 m over the pane centre: sides, sill,
     // lower tub; shade open) takes the same sky hue at its own level (hue only), a share u_tubHue (Boarding, 12_scene MOODS
     // tubHue; 0 elsewhere): with the shades up the official photos show the whole tub cool lavender by the pane [V: y_47303
     // lower tub L155 B-R +37 vs q17 L158 +6; py_37301 wall at the window +23..+28 vs q14 sill +1; c_27314 far band +10..+15 vs
     // q09 +4]. shT keeps closed shades and the dimmed moods out [D gapT14 TUB]
-    float tubLow = recd * wl.a * (1.0 - smoothstep(0.30, 0.40, v_wpos.y - u_winY.x)) * shT * u_tubHue;
+    float tubLow = recd * wl.a * (1.0 - smoothstep(0.30, 0.40, v_wpos.y - u_winY.x)) * shT * u_tubHue * (1.0 - fCut);   // (final touch: not in THE Suite, as crownW)
     if (tubLow > 0.0 && lSky > 1e-4)
       amb = mix(amb, skyT * (dot(amb, vec3(0.2126, 0.7152, 0.0722)) / lSky), tubLow);
     // night: the galley / lav / door zones (sz = 0) keep a dim neutral fill, the galley lights and lit bulkheads at the
