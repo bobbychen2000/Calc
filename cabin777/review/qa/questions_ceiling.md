@@ -28,3 +28,10 @@
     the door's lower curve cuts their fittings into grey dashes (z04 at door 3, integration L7-L11). Is there a side-on photo of
     an ANA 777 centre bin showing whether the PSU panel is flush with the door bottoms or drops below them? If flush, the
     channel geometry (CBIN_DOOR / PSU_DROP) would be reworked, not just the units.
+
+## Confirm 3 (2026-10-27)
+
+14. **Door-3 "grey dashes" (integration L11-L16).** They are the centre-channel PSU fittings and the outboard door latches seen
+    edge-on, partly hidden by the nearer bin edges; nothing intersects (material-tag renders). c_27312 shows outboard fittings
+    the same way at a grazing angle. Unless a photo shows the centre PSUs flush with or above the bin bottoms (question 13),
+    can the integration rater retire this item rather than carry it?

@@ -282,3 +282,21 @@
   - The crest channel has no dark core.
   - The door-4 wedge was not checked, because d4b was not rendered.
   - The far-side cove is a flat 253 wedge. That is lighting, noted and not scored.
+
+## Integration lows (confirm 3, 2026-10-27)
+
+- **Item:** L16 integration low, grey PSU fragments on the door-3 bin lip (z04, `setView([2.3, 1.62, 32.7], PI/2 - 0.45, 0.25)`, and q11_bar3).
+- **Cause, z04:** the THE Room centre PSU units (`psuo2`, rows 15 / 16). Hiding `psuo*` removes the dashes. A material-tag
+  render (housingC red, bandC green, doorC blue, lipGap magenta) shows every housing whole and the channel intact. Where a
+  unit looks cut, a nearer bin's lower edge crosses it along its silhouette at this grazing angle. That is ordinary
+  occlusion: no z-fighting and nothing poking through.
+- **Cause, q11:** the dark dashes on the near outboard bin's aisle edge belong to `binL` itself (they survive tagging
+  lip / lipLine / groove / seamCore / lipGap). They are the per-module door latches seen edge-on along the run.
+- **Tested and reverted:** the 0.193 m F/J centre housings at x +-0.15 reach |x| 0.2465, 6.5 mm past the centre-door edge
+  (0.24) and through the `lipGap` strip. Moving them to +-0.135 (8 mm clear) left the z04 crop visually unchanged, so it
+  was not the cause and was not kept. The rater's "end the run 0.05 m short" fix does not apply: the units sit 0.65 m and
+  2.5 m inside the zone.
+- **Photo check:** c_27312 (official, J cabin from above) shows the outboard band fittings at a grazing angle as the same
+  short grey dashes, so the look is consistent with the photos.
+- **Result:** no code change, so no ceiling confirm-3 round (08_bins.js / 07b_ceiling.js unchanged; confirm2 A 8.5 / B 8.7
+  stands). Triangles unchanged. Proposed to the integrator: retire the item as photo-consistent (questions_ceiling.md 14).
