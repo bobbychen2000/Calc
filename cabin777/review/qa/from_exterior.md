@@ -105,3 +105,11 @@ Exterior passes (A 8.5 / B 8.7), and the exterior itself is unchanged since w22.
   that w19A stays in range.
 - **Evidence.** The rating files `exterior_final_a.json` and `exterior_final_b.json` (lightingNotes).
 - **Lighting final touch (71fdda1):** done, small: day look-out exterior exposure -4 % (SKIES.day lookExt); w17K near wing 217/219/224 -> 215/217/223 (on the tone shoulder); w19A in range.
+
+## Final confirm 2 (2026-10-27, head 8467f01): to lighting, low, optional
+
+Exterior passes (A 8.5 / B 8.7). The 71fdda1 lookExt -4 % lowered the w17K near wing only from 214/217/222 to 212/215/220, and
+B-R is still 8. KN41 measures 181/193/210 on the upper panel (B-R 30) and about 165/174/186 on the mid panels (B-R 20-22).
+- **Fix if wanted.** Use a cooler exterior fill on day look-out views (about B +6..8, R -4) instead of a further exposure cut.
+  Keep w19A (170/179/195) in range.
+- **Evidence.** The lightingNotes in `exterior_confirm2_a.json` and `exterior_confirm2_b.json`.

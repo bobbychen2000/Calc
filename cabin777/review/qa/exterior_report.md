@@ -342,3 +342,23 @@ cap +25 %).
 - **The w22 lows are still open, as expected:** the tip upsweep, the pylon foot crease and the saddle.
 
 Ratings are in `exterior_final_a.json` and `exterior_final_b.json`.
+
+## Final confirm 2 (2026-10-27, head 8467f01)
+
+| round | build rated | rater A | rater B |
+|---|---|---|---|
+| confirm2 | 8467f01 (lighting final touch; `src/11_exterior.js` unchanged since w22 / 5aac2bd) | **8.5** | **8.7** |
+
+**Exterior is confirmed on the current head, with no code change.** Both raters are at 8.5 or above with no high or medium issue,
+the same as the wave-1 final (1430d42). Triangles are still 30,004.
+
+- **Geometry and materials are unchanged.** Old and new renders of the window views were compared with 1 px edge maps; they
+  match 0.986-1.000. The w19A tip LE rows are identical, the fastener ratio is still 0.79-0.83 (KN41 0.80) and the pylon foot is
+  still 0.97 of the flank. The large whole-frame differences come from the cabin wall re-tint around the window.
+- **Routed lighting item (w17K near wing hot / not blue enough): partly fixed, brightness only.** The 4 % lookExt cut lowers the
+  near wing by about 2 levels (214/217/222 -> 212/215/220) because it sits on the tone shoulder. B-R is still 8, against 21-30
+  in KN41. w19A (170/179/195) stays in range, and nothing clips (max 238-247). Both raters say a cooler exterior fill would fix it
+  better than a further exposure cut; it stays low and optional (see `from_exterior.md`).
+- **The w22 lows are still open:** tip upsweep, pylon foot crease and nacelle saddle.
+
+Ratings are in `exterior_confirm2_a.json` and `exterior_confirm2_b.json`.

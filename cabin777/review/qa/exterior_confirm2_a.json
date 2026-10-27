@@ -1,0 +1,86 @@
+{
+ "area": "exterior",
+ "rater": "A skeptic",
+ "build": "confirm2 = 8467f01",
+ "score": 8.5,
+ "details": {
+  "wing planform / raked tip / bending": 7.8,
+  "wing surface detail (seams, fastener rows, panel tone, gear stripe, slat band, placards, grime)": 8.5,
+  "control surfaces & gaps (slats, spoilers, flaperon, aileron)": 7.8,
+  "canoes (flap-track fairings)": 8.4,
+  "pylon": 8.3,
+  "nacelle shape (cowl, lip, splits, strake, access panel)": 8.1,
+  "nacelle colour / materials (incl. GE logo)": 8.0,
+  "inlet / fan / spinner": 8.0,
+  "livery / registration JA795A": 8.0,
+  "lights & static dischargers": 7.5,
+  "artefacts": 7.9
+ },
+ "previous": [
+  {
+   "issue": "final_a low / final_b low: raked tip outer LE upsweep short of KN41",
+   "status": "not fixed (unchanged; 11_exterior.js has no diff 1430d42..8467f01)",
+   "measure": "w19A LE top-edge row at x 515/520/525/530/540/550/560 = 118/119/120/120/122/122/125 in both old_r and new (identical row for row)."
+  },
+  {
+   "issue": "final_a low / final_b low: pylon foot crease too faint",
+   "status": "not fixed (unchanged)",
+   "measure": "w13A flank rows 270-275 vs foot min rows 279-285: x520 178.9->172.0 (0.96), x560 178.3->173.7 (0.97), x600 177.4->173.3 (0.98). Old 181.2->175.0 / 180.8->176.3 / 180.1->176.0 (0.97-0.98). _137 is 0.89."
+  },
+  {
+   "issue": "final_b low: nacelle saddle behind the dome barely visible",
+   "status": "not fixed (unchanged geometry)",
+   "measure": "w13A window-crop edge map (|dx|>25): 66 of 3166 edge px differ old vs new (2 %, cloud texture and exposure), no silhouette moved."
+  },
+  {
+   "issue": "earlier fixed: fastener dots too light / raked TE kinks / tip flat face",
+   "status": "still fixed",
+   "measure": "w19A row 500 x 661-666 = 140-148 on panel 178.3 (0.79-0.83; old 143-151 on 181.3, 0.79-0.83; KN41 0.80). w19A window edge xor 78 of 4245 px."
+  },
+  {
+   "issue": "routed lighting item: w17K near wing too hot / less blue than KN41",
+   "status": "partly fixed (small): not an exterior score item",
+   "measure": "w17K median upper wing rows 240-300 x 200-520: old 214/217/222 -> new 212/215/220; rows 360-480: 218/221/225 -> 216/218/224. B-R 8 -> 8 (KN41 upper wing 187/195/208, B-R 21, measured on the downloaded KN41). The -4 % exposure cut delivers only about -2 levels because the wing sits on the tone shoulder. w19A panel 173/182/197 -> 170/179/195 (B-R 25), still in KN41's 166-187 range."
+  }
+ ],
+ "issues": [
+  {
+   "severity": "low",
+   "detail": "raked tip upsweep still short of KN41 (carried)",
+   "problem": "The outer LE rises only ~7 px over x 515-560 in w19A. KN41 sweeps up steadily over the outer ~15 % of visible span.",
+   "evidence": "/tmp/claude-0/-home-user-Calc/139e5e9e-b6cf-5161-ac06-9c9b88c14ef4/scratchpad/cmp_w19A.jpg vs /tmp/claude-0/-home-user-Calc/139e5e9e-b6cf-5161-ac06-9c9b88c14ef4/scratchpad/refA/kn41.jpg",
+   "fix": "11_exterior.js WING.crest: start the lift earlier and make it larger, e.g. + 0.20*pow(smooth(29.5,32.4,s),1.6)."
+  },
+  {
+   "severity": "low",
+   "detail": "pylon foot crease too faint (carried)",
+   "problem": "The foot is 0.96-0.98 of the flank; _137 shows 0.89.",
+   "evidence": "/tmp/claude-0/-home-user-Calc/139e5e9e-b6cf-5161-ac06-9c9b88c14ef4/scratchpad/cmp_w13A.jpg",
+   "fix": "Raise the crease darkening from ~0.03 to ~0.10 over the same ~3 cm band."
+  },
+  {
+   "severity": "low",
+   "detail": "nacelle saddle behind the dome barely visible (carried from B)",
+   "problem": "The cowl crown silhouette runs monotonic from the strut.",
+   "evidence": "/tmp/claude-0/-home-user-Calc/139e5e9e-b6cf-5161-ac06-9c9b88c14ef4/scratchpad/cmp_w11K.jpg",
+   "fix": "Saddle factor 0.30 -> 0.38 (B's suggestion)."
+  }
+ ],
+ "worthPlus03": [],
+ "lightingNotes": [
+  "The 4 % day look-out exposure cut is measurable but small: window-crop median dL -2.0 to -2.7 (w17K, w19A, w13A), p5 -3 to -9. No clipping in the 9 day/sunset views (max 238-247, 0 px with min channel >= 250). Geometry and detail are unchanged: the window edge-map xor is 1.6-2 % (cloud noise).",
+  "The routed item remains in effect: w17K near-wing upper skin is 212-216/215-218/220-224 with B-R 8, against KN41's 187/195/208 with B-R 21. Exposure alone will not recover the blue: being on the shoulder, it buys ~2 levels per 4 %. A cooler exterior sky fill or a tint (B +6..8, R -4) on the K-side near-wing would match better. It stays low and optional, and it is not scored here.",
+  "n19A night: the window crop mean is 19.29 -> 19.32, so the exterior at night is unchanged. q21_sunset is unchanged (0.1 % px differ)."
+ ],
+ "questionsForUser": [
+  "A photo looking straight out at the raked tip from rows 17-20 A (port side) would settle how much the tip sweeps up (carried)."
+ ],
+ "photos": [
+  "/tmp/claude-0/-home-user-Calc/139e5e9e-b6cf-5161-ac06-9c9b88c14ef4/scratchpad/refA/kn41.jpg",
+  "/tmp/claude-0/-home-user-Calc/139e5e9e-b6cf-5161-ac06-9c9b88c14ef4/scratchpad/cmp_w19A.jpg",
+  "/tmp/claude-0/-home-user-Calc/139e5e9e-b6cf-5161-ac06-9c9b88c14ef4/scratchpad/cmp_w17K.jpg",
+  "/tmp/claude-0/-home-user-Calc/139e5e9e-b6cf-5161-ac06-9c9b88c14ef4/scratchpad/cmp_w13A.jpg",
+  "/tmp/claude-0/-home-user-Calc/139e5e9e-b6cf-5161-ac06-9c9b88c14ef4/scratchpad/cmp_w11K.jpg"
+ ],
+ "notes": "11_exterior.js is unchanged since 5aac2bd (no diff 1430d42..8467f01). All in-window differences are a ~2-level exposure drop and cloud noise. Tip rows, fastener ratios, pylon crease ratio and the gear stripe (25/28/35 -> 23/27/33; KN41 7/17/29) are all within 1-3 levels of the old build. The score is held at 8.5: there are no high or medium issues, and the three low issues are carried."
+}
