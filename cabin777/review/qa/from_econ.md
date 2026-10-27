@@ -170,3 +170,4 @@
   - Fabric back, blue/red: 2.22 now, 1.96 before, 1.87 in the photo. The navy pillows are (35,44,85) against the photo's (29,35,59).
   - Fix: apply the cool term as luminance only, or weight it by saturation, so whites and greys stay near neutral; or drop the blue factor from 1.36 to about 1.25 in the econ zone. Targets: armrest blue minus red at most 6, back blue/red at most 2.0.
 - **Carried:** at a glancing angle the headrest covers read navy-violet, median (131,138,175), where the photos show a silver-grey sheen. A sheen lobe for the covers only would fix it.
+- **Lighting final touch (71fdda1):** done: armrests B-R q15 +14 -> +6, q17 +14 -> +5; back B/R 2.39 -> 2.13 (pre-L14 2.09), pillow 2.49 -> 2.20 (seatCool 0.35, bleed a third, bleed weighted by albedo neutrality). Headrest-cover sheen (carried) not changed: a material item.

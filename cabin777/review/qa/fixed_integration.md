@@ -920,3 +920,63 @@ uniforms (+2 derived in 12_scene).
 
 from_* items (to lighting / integration): no new ones since L13 (no commits to the from_* files since ecc7425). Carried, not
 changed: as listed under L12.
+
+## Lighting final touch (after final confirm)
+
+Code: `04_shaders.js`, `12_scene.js` (`13_app.js` unchanged). Baseline 5097e7e (git worktree, build b_base); the previous local
+fixer's unvalidated edits (snapshots 1cabf93 / 8c2f42d) were kept and validated, and four changes were added (items 9-12). Final
+build b_v4 = head 1be1348 / 71fdda1 (71fdda1 changes a comment only). Renders: r_base (5097e7e, 22 views), L16 (final, 22 views),
+x_base / x_v2 (Blue and Cruise at the q06 camera, m09 / m12, w17K / w19A, q08), tuning r_v1 / r_v3 / r_v4. Tool tools/meas.py
+(frame mean / p5 / p50 / p95, box RGB and B-R, window-wall whites L170-250 s < 0.25 B-R median and cool share). All under
+/tmp/claude-0/-home-user-Calc/d384f11a-5e9d-5573-953c-d97ecc5ea15e/scratchpad.
+
+Regression guard, 5097e7e -> final (px > 8 changed, mean L change; frame p5 / p50 / p95 within 1-3 of baseline in every view):
+- Views with no intended change: q01 0.0 %, q11 0.1 %, q20 0.1 %, q22 0.6 %, q21 1.4 % (pane clouds), Blue at q06 0.68 %, Cruise
+  at q06 0.60 % (both at mean L +0.0). q09 3.9 % / +0.3 (wall unchanged, p50 121), q10 2.9 % / +0.2, q06 3.4 % / +0.2 (median 165,
+  guard <= 166).
+- Changed views (targets below): q03 24 % / +2.7, q05 18 % / +1.6, q07 14 % / +2.2, q08 12 % / +0.8, q02 6 % / +0.6, q04 10 % /
+  +1.0 (the Suite wall neutral and lighter); q13 12 % / -0.7, q14 10 % / -0.4, q15 20 % / -0.9, q16 15 % / -0.4, q17 18 % / -0.2,
+  q18 7 % / -1.0, q19 18 % / -0.7 (the PY / Y cool cast cut; q18 median 169 unchanged); q12 61 % / +0.3 (look-out lining).
+- Phone budget (test/perf.js, before -> after): mid Sharp 69 calls / 3,256,808 tris -> same, Balanced 35 / 1,643,406 -> same; econ
+  101 / 3,969,124 and 51 / 1,999,564 -> same; room 69 / 2,851,472 and 35 / 1,440,738 -> same. No new pass, loop or texture tap;
+  per interior fragment about 10 smoothsteps / mixes and one saturation more. New uniforms: u_fjCool (vec4); SKIES.day lookExt.
+
+Items (from the final-confirm hand-offs, then the L15 raters' mediums):
+1. PY / Y seat-level cool tint too strong (from_py, from_econ, medium): done. MOODS.boarding seatCool 1 -> 0.35, bleed [0.90, 0.99,
+   1.36] -> [0.965, 0.996, 1.13] (fixer), plus the bleed weighted by albedo neutrality (item 11). q14 PY back B/R 1.39 -> 1.30
+   (target ~1.30; py_37301-03 1.22-1.36); q13 1.49 -> 1.38; q15 econ back 2.39 -> 2.13, pan 2.19 -> 1.98, pillow 2.49 -> 2.20
+   (y_47300 1.87; pre-L14 2.09: the rest is the material, not the light; SEATMAT untouched); armrests B-R q15 +14 -> +6, q17 +14 ->
+   +5 (target <= 6; y_47303 +6).
+2. seatC / u_bleed reach the door-4 / door-5 galley faces (from_monuments, medium): done (x sz). q19 white lower / upper B-R +7.2 /
+   -3.6 -> -4.5 / -3.6; m09 -2.6 / -6.6, m12 -4.8 / -6.2 on the final build (1430d42 per monuments: +5.2 / -7.8, +8.1 / -4.3).
+   Within ~3 of each other in q19 / m12; m09's upper band is the darker door-4 face (5e5e561 -7.6 too).
+3. THE Suite sidewall cool and dark, bowls take the tub-sky hue (from_suite 1, from_shell fb-1, medium): done (fjCool.x / .y
+   fixer; tubLow now zPY, item 9). q05 wall (20-90, 150-350) 199 / 204 / 214 -> 222 / 223 / 223; q03 (40-120, 100-300) 194 / 197 /
+   204 -> 219 / 220 / 221 (f_17313 226 / 228 / 227). Window-wall whites B-R q05 +20 -> 0, q03 +19 -> +1 (f_17313 +1). For suite:
+   the wall is at L220-223, so re-check the cap / wall ratio (from_suite 1: fCap if still > 0.7).
+4. q07 window-side THE Room shell post (from_room, medium): done (fixer: fjCool.w, linB / lnJ). Post (775-850, 300-430) L79 ->
+   101 (c_27316 L114; target 100-115). Guards: q09 wall unchanged (p50 121, 3.9 % px), q06 median 165 (<= 166).
+5. q12 window surround charcoal (from_shell fA-2, low): done. Look-out lifts beltK (fixer) and lookOut 0.86 -> 0.87 (item 12):
+   surround (100-180, 250-350) L70 -> 103 (ucr L104-125), reveal (0-120) 102 -> 118 (L104-110: now 8 over, was 2 under), frame
+   mean 116.5 -> 117.5.
+6. J wall lavender at grazing (from_shell fA-4 / fb-2, low): done (fixer fjCool.z 0.33 + item 10). q06 right wall whites B-R +20 /
+   79 % cool -> +7 / 61 % (c_27312 +10 / 88 %), q08 window wall (450-930, 0-200) +16 (L15) -> +7 (c_27300 -5).
+7. Day look-out exterior exposure (from_exterior, low): done, small. SKIES.day lookExt 0.04 (4 % less exterior exposure at the
+   glass). w17K near wing (220-500, 380-500) 217 / 219 / 224 -> 215 / 217 / 223 (KN41 187 / 195 / 208): the near-white wing
+   sits on the tone shoulder, so -4 % moves it 2 L; w19A in range. A stronger cut was not tried (low, optional).
+8. coolW / tub hue transition past the tub edge (from_shell fA-1, low): done (fixer: recdT 4-35 mm, coolW recess share 0-8 mm).
+9. L15 lighting + integration medium: u_hueW and tubLow not zone-gated: done. zPY (the rimZ ramp at u_sLowZ) and hwK: tubLow x
+   zPY; the hue-preserving tone x hwK = 1 on the PY / Y zones and the F / J seat zones, 0 on the THE Suite window wall, 0.5 on THE
+   Room's (item 10). Targets met: window-wall whites q05 0, q03 +1, q08 +7 (<= +7..+8); q06 +7 (integration +5..+13; lighting
+   +8..+14 missed by 1); q06 top-300 cool share 63 % (>= 55), q07 45 % (>= 45). PY / Y views unchanged by this item (zPY = 1).
+10. (tuning of 9) THE Room's window wall keeps half the tone: with none (v1) q07 top rows 39 % cool vs c_27316 53 %, q06 wall +6;
+   c_27316 wall +11 and c_27312 +10 show it cool. Question 17 (one white balance or per cabin).
+11. integration L15 low: bleed doubles the fabric blue: done. Bleed weight x (1 - smoothstep(0.2, 0.45, albedo saturation)):
+   q15 back B/R 2.20 -> 2.13, pillow 2.28 -> 2.20, pan 2.05 -> 1.98; armrests unchanged (+6 / +5).
+12. L15 lighting medium: Boarding tubs lost 10-15 L (lensLo.x 1.25 on the tub): done. The tub (recd) keeps the 0.95 m fade-in.
+   q17 tub (520-545, 50-70) L148 -> 163, (640-665) 145 -> 160 (target >= 158); pier (470-490, 50-70) 204 -> 208 (target 204 +- 3:
+   1 over); other moods pixel-equal (lensLo.x 0.95 there).
+- Not done: L15 lighting low (far window band / question 16, waits for the user), material response and PY contact darks / back
+  form (area items, routed), econ headrest-cover sheen (from_econ carried; a SEATMAT / econ item), suite sun patches (from_suite 3,
+  low: shadow-map softness would need a wider PCF loop, outside the phone budget), q03 pane clipping and door-glass detail (low,
+  accepted trade-offs, the photos are blown too).

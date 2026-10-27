@@ -104,3 +104,4 @@ Exterior passes (A 8.5 / B 8.7), and the exterior itself is unchanged since w22.
 - **Fix if wanted.** Apply about -3 to -5 % exterior exposure, or a slightly cooler exterior fill, on day look-out views. Check
   that w19A stays in range.
 - **Evidence.** The rating files `exterior_final_a.json` and `exterior_final_b.json` (lightingNotes).
+- **Lighting final touch (71fdda1):** done, small: day look-out exterior exposure -4 % (SKIES.day lookExt); w17K near wing 217/219/224 -> 215/217/223 (on the tone shoulder); w19A in range.

@@ -87,3 +87,4 @@ Noted by both raters in all three rounds; not scored against monuments.
   g = metal are read at 04_shaders.js:227; I have not checked whether b/a are free), or (b) if no channel is free, zero both gates inside the monument z-bands from `MONO_LAYOUT` (door-4 galley about
   z 43.6-45.3, door-5 galley z > 58.0) with a 0.3 m smoothstep. Target: lower and upper galley faces within 3 B-R
   of each other, both at about -3, which is the 5e5e561 value.
+- **Lighting final touch (71fdda1):** done (both terms x the window LUT seat-zone row sz, 0 in the galley / door zones): q19 white lower / upper B-R -4.5 / -3.6, m12 -4.8 / -6.2, m09 -2.6 / -6.6.

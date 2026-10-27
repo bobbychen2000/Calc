@@ -55,3 +55,4 @@
   - Crops are in rater A's scratchpad, not tracked.
 - **Fix:** let the window fill reach J-class shell faces within about 0.4 m of the sidewall, aiming for L100-115 on that post. Guards: the q09 wall stays at about L56 and the q06 median stays at or below 166.
 - **Rater B (low):** the window belt is cooler in the room views (q08 window box 216/219/223 -> 200/209/222). Should the cool belt and tub hue apply forward of door 3?
+- **Lighting final touch (71fdda1):** done: q07 post L79 -> 101; q09 unchanged, q06 median 165. Rater B low: THE Room's window wall now keeps about half the economy cool cast (q08 window wall B-R +16 -> +7); question 17 in questions_lighting.md.

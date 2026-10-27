@@ -62,3 +62,4 @@
   - The sidewall would still keep most of its gain toward the photos: B−R went from 1 to 20 against 25-27 in the photos.
   - Do not compensate in `SEATMAT`.
 - **Also noted (rater B, low):** a bright diamond-shaped sun patch on the q14 window-seat back.
+- **Lighting final touch (71fdda1):** done: q14 back B/R 1.39 -> 1.30, q13 1.49 -> 1.38; SEATMAT untouched. The sun-patch item (low) not changed.

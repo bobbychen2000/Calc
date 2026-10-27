@@ -188,3 +188,4 @@ Two items are lighting's:
   neutral bowl). Ease the cool wash about a third at grazing.
 - fb-3: the ra_jWin look-out washes out the GE90 nacelle (240/250/255), while the q07 near pane stays blue (192/203/215).
 - fb-4 (carried): door viewing-window glass is flat (217/216/214), with no sky detail.
+- **Lighting final touch (71fdda1):** fb-1 done (THE Suite bowls / wall neutral, B-R +1); fA-1 follow-up done (tub hue runs in over 4-35 mm); fA-2 done (q12 surround L70 -> 103); fA-4 / fb-2 done (q06 J wall whites B-R +20 -> +7); fA-3, fb-3, fb-4 not changed (accepted trade-offs / exterior).
