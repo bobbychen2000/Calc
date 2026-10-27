@@ -358,7 +358,7 @@ void main(){
   rough = max(rough, 0.12);
 
   float NdV = max(dot(N, V), 1e-3);
-  vec3 amb; float ao = 1.0; float sz = 1.0; vec3 lt = vec3(1.0); vec3 tubRef = vec3(0.0); vec3 hBot = u_hemiBot;
+  vec3 amb; float ao = 1.0; float sz = 1.0; float hwK = 1.0; vec3 lt = vec3(1.0); vec3 tubRef = vec3(0.0); vec3 hBot = u_hemiBot;
   if (u_exterior > 0.5) {
     // QA r3: the exterior sees the lit cloud deck below (u_extBounce per sky), so shaded flanks / undersides of the
     // wing, canoes and nacelle read mid-grey, not slate [V: alv_ANA77W_NH211_26K shaded flank #8090a0, belly #59636c]
@@ -464,6 +464,13 @@ void main(){
     // (final touch, from_shell fA-1: the recess share of coolW ramps over the first 8 mm past the lining, not 4-20 mm: across the
     // 16 mm roll-in lip facingIn falls as recd rose, and coolW dipped to ~0.35 there, a warm ring between the cool wall and tub)
     float coolW = max(linW * facingIn, max(smoothstep(xLin, xLin + 0.008, abs(v_wpos.x)), 0.5 * binO)) * (1.0 - fCut - u_fjCool.z * jzS);
+    // QA lighting final touch (L15 lighting + integration medium): forward of the PY zone (zPY, the rimZ ramp) the window wall
+    // (lining facing in, tub) keeps per-channel ACES: the hue-preserving white tone (u_hueW, tone block) and the lower-tub sky
+    // hue (tubLow) were fitted to the PY / Y official photos and turned the F / J window wall lavender [V: window-wall whites
+    // B-R q05 +15 / q03 +17 / q08 +16 vs f_17313 +3, f_17300 +1.5, c_27300 -6]; the J / F seat zones keep the W gain [V: q06
+    // top-row cool share 66 % vs c_27312 60 %]
+    float zPY = smoothstep(u_sLowZ - 0.3, u_sLowZ + 0.3, v_wpos.z);
+    hwK = mix(1.0 - max(linW * facingIn, recd), 1.0, zPY);
     // QA lighting final touch (from_room final confirm, medium): in THE Room (u_fjCool.w x jzS) the window-belt terms below (u_beltK
     // dimming, the day-belt share 0.5 -> 0.15) take the lining itself only (within 3-7 cm of the circle: the lining stands on it,
     // 07_shell wallAt), not the shell posts 8-11 cm inboard of it (linW 0.82-0.98 there [D mask render]): since L13 / L14 the
@@ -609,7 +616,10 @@ void main(){
     // keep the pre-L13 lens profile (fade-in from 0.95 m, 0.4 at the belt): L13's sideLow 0 and L14's lensLo were fitted to
     // the lining pier [V: y_47303], and with them the post beside the 11A monitor lost the lens light it had at w19
     float lnJ = u_fjCool.w * jzS * (1.0 - linB);
-    vec3 lensT = u_sideLed * u_sideWall * lensW * facingIn * mix(mix(u_sideLow, 0.4, lnJ), 1.0, smoothstep(mix(u_lensLo.x, 0.95, lnJ), 1.55, v_wpos.y)) * smoothstep(0.35, 0.8, v_wpos.y)
+    // (final touch, L15 lighting medium: the recessed tub (recd) keeps the 0.95 m fade-in as well: L14's 1.25 was fitted to the
+    // flat pier and also took the lens light off the tub faces above the pane [V: q17 tub (520-545, 50-70) L163 -> 148 vs
+    // y_47303 tub L155-170])
+    vec3 lensT = u_sideLed * u_sideWall * lensW * facingIn * mix(mix(u_sideLow, 0.4, lnJ), 1.0, smoothstep(mix(u_lensLo.x, 0.95, max(lnJ, recd)), 1.55, v_wpos.y)) * smoothstep(0.35, 0.8, v_wpos.y)
                * (1.0 - smoothstep(1.95, 2.1, v_wpos.y)) * noDown * nearPane;
     // QA lighting final touch: in THE Suite (fCut, above) the lens wash keeps its level and drops its hue, so the wall under it
     // reads neutral as in f_17313 (226 / 228 / 227, B-R +1); the cool sideLed left q05 (30-80, 150-250) at B-R +11 with the
@@ -687,7 +697,7 @@ void main(){
     // tubHue; 0 elsewhere): with the shades up the official photos show the whole tub cool lavender by the pane [V: y_47303
     // lower tub L155 B-R +37 vs q17 L158 +6; py_37301 wall at the window +23..+28 vs q14 sill +1; c_27314 far band +10..+15 vs
     // q09 +4]. shT keeps closed shades and the dimmed moods out [D gapT14 TUB]
-    float tubLow = recdT * wl.a * (1.0 - smoothstep(0.30, 0.40, v_wpos.y - u_winY.x)) * shT * u_tubHue * (1.0 - fCut);   // (final touch: not in THE Suite, as crownW)
+    float tubLow = recdT * wl.a * (1.0 - smoothstep(0.30, 0.40, v_wpos.y - u_winY.x)) * shT * u_tubHue * zPY;   // (final touch: PY / Y only, zPY above)
     if (tubLow > 0.0 && lSky > 1e-4)
       amb = mix(amb, skyT * (dot(amb, vec3(0.2126, 0.7152, 0.0722)) / lSky), tubLow);
     // night: the galley / lav / door zones (sz = 0) keep a dim neutral fill, the galley lights and lit bulkheads at the
@@ -901,7 +911,7 @@ void main(){
     float Lw = dot(xe, vec3(0.2126, 0.7152, 0.0722)); float lw = aces(vec3(Lw)).x;
     vec3 yw = xe * (lw / max(Lw, 1e-5)); yw /= max(1.0, max(yw.r, max(yw.g, yw.b)));
     float mxw = max(xe.r, max(xe.g, xe.b)); float sw = (mxw - min(xe.r, min(xe.g, xe.b))) / max(mxw, 1e-5);
-    col = mix(col, yw, u_hueW.x * smoothstep(0.30, 0.55, lw) * (1.0 - smoothstep(u_hueW.y, u_hueW.z, lw)) * (1.0 - smoothstep(0.25, 0.45, sw)));
+    col = mix(col, yw, u_hueW.x * hwK * smoothstep(0.30, 0.55, lw) * (1.0 - smoothstep(u_hueW.y, u_hueW.z, lw)) * (1.0 - smoothstep(0.25, 0.45, sw)));
   }
   col = tone(col, u_toe);
   o = vec4(toSRGB(col), 1.0);
