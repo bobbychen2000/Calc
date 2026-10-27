@@ -1,0 +1,128 @@
+{
+ "area": "integration",
+ "score": 8.1,
+ "earlier": [
+  {
+   "issue": "MEDIUM (lighting): the near-wall gate (N.V and 3.0-4.2 m eye distance) made the window wall's level depend on the camera: one pier brightened about 35 L as the eye stepped back past 3 m, and adjacent piers in q03 differed by about 20 L",
+   "status": "fixed",
+   "evidence": "Head 1430d42, built to qa/build_integration (the L15 renders match it: q07 0.00 %, q08 0.96 %, q05 0.70 % px changed). Same probe as L14 (integ13/tools/probe.js, camera on the normal of the z 50.21 pier, Boarding), aimed pier 11x11 px at d 2.0/2.6/3.0/3.4/3.8/4.2/4.8 m: L14 202/202/202/219/233/236/235 -> L15 197/197/197/197/197/196/195; B-R +12..+10 at every distance (L14 +9 -> +5). Angle series a0/a25: 197/192 (L14 202/193). Frames /tmp/claude-0/-home-user-Calc/b1f1e8ce-ba52-5ff4-94e9-cb27b8198a85/scratchpad/integ13/probe, strip /tmp/claude-0/-home-user-Calc/b1f1e8ce-ba52-5ff4-94e9-cb27b8198a85/scratchpad/integ13/strip_probe.jpg. q03 pier 1 vs pier 2 (x 60-120 vs 255-285): rows 120-140 197/203, rows 180-200 199/199 (L14 211/230, 204/226). Rows 60-80 still read 208/230, but there the farther pier is seen at a greater height, inside the bin-lens wash, so that is geometry rather than a gate (L13 had 242/241 everywhere). q06 left-edge column (0-25, 145-235): p50 236 -> 210, share > L235 53 -> 12 % (c_27312 146-216). Cost: the q09 far window band (300-700, 15-75) p50 230 -> 206 (c_27314 225, share > L235 31 % vs model 25 %). This is the trade-off put to the user as question 16."
+  },
+  {
+   "issue": "MEDIUM (py): the PY back cushion reads as a flat CG panel; the photos' sculpted bolster and lumbar shading is missing",
+   "status": "not fixed",
+   "evidence": "09b_py.js and 09_seats.js have no commits since 5e5e561 (git log 5e5e561..HEAD). Thin-dark share (integ13/tools/thindark.py): q13 1.00 % (L14 1.00), q14 0.78 % (0.79), vs py_37302 2.77 %, py_37301 3.15 %. Back-cushion shading range, 15 px box-blurred luma p10/p50/p90: q13 (190,420,340,570) 88/109/124, 36 L, and (400,300,500,420) 90/111/124, 34 L, both identical to L14; py_37302 (530,400,720,550) 90/124/144, 54 L. Lighting moved only the hue: q13 lower-third saturation 0.27 -> 0.34 (photo 0.36), seat block B-R +34 -> +42 (photo +51)."
+  }
+ ],
+ "details": [
+  {
+   "detail": "Boarding exposure and tonemapping. Three gains from L14. (1) The wall level no longer depends on the viewer (earlier issue 1). (2) The PY / Y window-seat eyes render at cabin exposure: s26A mean/p50 87/66 -> 128/118 (py_37301 p50 118); s35A p50 104 -> 184 (y_47305 183). The look-out flight still ramps its exposure over about the last 0.3 s, as before. (3) Economy whites carry the official photos' cool cast: q17 window-wall whites B-R +10.5 -> +19.9 (y_47303 +20.5); luma bands 175-200 / 200-220 / 220-235 +12/+7/+3 -> +21/+20/+15 (photo +26/+24/+17). The cost is a new hue error in THE Suite and THE Room: the same hue-preserving tone and tub hue turn their window walls lavender (issue 1). The PY / Y seat fabric is also slightly over-blue in q15 (issue 3). Frame cmp L14 -> L15: q06 121->120, q15 29->31, q16 43->43, q17 50->52, q13 60->59, q14 110->108, q09 121->124, q07 82->81, q10 58->48, q08 229->227, q05 236->232.",
+   "score": 7.9,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/b1f1e8ce-ba52-5ff4-94e9-cb27b8198a85/scratchpad/integ13/sheet_lavender.jpg",
+    "/tmp/claude-0/-home-user-Calc/b1f1e8ce-ba52-5ff4-94e9-cb27b8198a85/scratchpad/qa/fixL14/after/s26A.png",
+    "/tmp/claude-0/-home-user-Calc/b1f1e8ce-ba52-5ff4-94e9-cb27b8198a85/scratchpad/qa/fixL14/after/s35A.png",
+    "/tmp/claude-0/-home-user-Calc/b1f1e8ce-ba52-5ff4-94e9-cb27b8198a85/scratchpad/integ13/t_q17_econBacks.jpg"
+   ]
+  },
+  {
+   "detail": "Falloff ceiling -> bins -> wall -> floor. Six-band mean luma (top to bottom, 96 px each) is nearly unchanged. q06 216/196/134/118/110/81 vs c_27312 203/176/118/98/90/81, mostly framing. q17 188/167/120/93/86/44 vs y_47303 190/174/122/98/84/62. q15 214/189/90/79/72/65 vs y_47300 216/194/83/77/72/69. The q17 pier (x 475-500, 12 px rows) falls from the lens, 230/231/228/220/212/201/192, then rises 192 -> 200 toward the sill, where the photo keeps falling (low; it does not read as a band). q08 pier 229 -> 194, flat to the window (c_27300 wall 197-221). In PY the top band is too bright (q13 214, py_37302 182; q14 213, py_37301 175), but the model camera sits under the bins while the photos see the bins' dark gaps and the curtain, so this is framing.",
+   "score": 8.0,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/b1f1e8ce-ba52-5ff4-94e9-cb27b8198a85/scratchpad/qa/L15/q17_econBacks.png",
+    "/tmp/claude-0/-home-user-Calc/b1f1e8ce-ba52-5ff4-94e9-cb27b8198a85/scratchpad/qa/L15/q06_roomMain.png",
+    "/tmp/claude-0/-home-user-Calc/b1f1e8ce-ba52-5ff4-94e9-cb27b8198a85/scratchpad/integ13/c_q13top.jpg"
+   ]
+  },
+  {
+   "detail": "AO and contact shadows: unchanged; L14 touched no AO term. Thin-dark shares, model vs photo: THE Suite q02/q03/q05 2.06/1.69/1.51 % vs omaat_f2/f8 2.24/1.44 %. THE Room q06 2.75 % vs c_27312 4.77 % (the photo is sharpened) and sc_room_09 2.01 %; q10 2.73 % vs c_27315 3.33 %. Economy q15/q16/q17 4.07/3.16/4.67 % vs y_47300/01/03 5.11/4.43/5.47 %. PY q13/q14 1.00/0.78 % vs 2.77/3.15 % (the py medium).",
+   "score": 7.8,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/b1f1e8ce-ba52-5ff4-94e9-cb27b8198a85/scratchpad/integ13/tools/thindark.py"
+   ]
+  },
+  {
+   "detail": "Specular per material: unchanged. Thin clipped highlights, all / lower half: q17 0.38/0.15 % vs y_47303 1.68/1.36; q16 0.49/0.19 vs y_47301 2.50/1.90; q15 0.38/0.06 vs y_47300 1.10/0.46; q13 0.27/0.17 vs py_37302 1.47/1.01; q08 0.80/0.15 vs c_27300 1.18/0.48; q05 0.57/0.07 vs f_17313 0.76/0.30. The q15/q16 frame totals fell (0.66 -> 0.38, 0.63 -> 0.49) because the far window band lost its isolated clipped pier pixels, not because of seat material. The seat-level gap (economy whites) is the carried low econ item.",
+   "score": 7.5,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/b1f1e8ce-ba52-5ff4-94e9-cb27b8198a85/scratchpad/integ13/tools/thin.py"
+   ]
+  },
+  {
+   "detail": "Amber moods: q21 0.85 % px changed (pane cloud drift), cmp 178 -> 178. Per the fixer's renders, dd / d06 / dF03 are pixel-equal or within the sunset panes. Nothing in L14 reaches Dining / Sunrise (hueW, tubHue, seatCool and bleed are Boarding-only, and the belt gate removal is neutral there with beltK 1).",
+   "score": 8.4,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/b1f1e8ce-ba52-5ff4-94e9-cb27b8198a85/scratchpad/qa/L15/q21_sunset.png"
+   ]
+  },
+  {
+   "detail": "Night and Blue: q20 0.00 % px changed (cmp 63). Blue is unchanged per the fixer's bl16 / blue06 (cmp 50 / 81).",
+   "score": 8.1,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/b1f1e8ce-ba52-5ff4-94e9-cb27b8198a85/scratchpad/qa/L15/q20_night.png"
+   ]
+  },
+  {
+   "detail": "Whole-cabin regressions. L14 -> L15 pixel changes: q01 3.3 %, the door-1R lining's window-height band at -11 L. It is now level with the lining above and below it (column x 255: 221-229 -> 211-217 between 205-206 and 202-205), so no band. q19 0 %. q22 2.1 %, the side walls seen from above, -5 L. Walk set at head (integ13/walk: z04_binlip, jpy_aft, f_aisle_aft; the fixer's d2_cross / d4_cross / cF03 / c06 / s26A / s35A / s35Aw at b_final match head within 0.2-0.8 % px): nothing is missing, floating or intersecting. Cruise with beltK 0.32 keeps the lavender belt (cF03) without a dark band. z04 shows the F/J lavender on the far window wall (issue 1), and the door-3 bin-lip grey dashes are still there (low, ceiling).",
+   "score": 8.0,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/b1f1e8ce-ba52-5ff4-94e9-cb27b8198a85/scratchpad/integ13/walk_sheet.jpg",
+    "/tmp/claude-0/-home-user-Calc/b1f1e8ce-ba52-5ff4-94e9-cb27b8198a85/scratchpad/integ13/dL_q01_door1.png",
+    "/tmp/claude-0/-home-user-Calc/b1f1e8ce-ba52-5ff4-94e9-cb27b8198a85/scratchpad/integ13/c_z04.png",
+    "/tmp/claude-0/-home-user-Calc/b1f1e8ce-ba52-5ff4-94e9-cb27b8198a85/scratchpad/integ13/fix_ba.jpg"
+   ]
+  },
+  {
+   "detail": "Look-out and x-ray: q12 frame mean 116.4 -> 116.5 with lookOut 0.85. Left reveal (0-120) mean 112 -> 103 (ucr wing view reveal L104-110), pier (120-290) 84 -> 85. The seam specks beside the pane are unchanged: 35 rows over median + 25 (low, shell). The x-ray reads cleanly.",
+   "score": 8.2,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/b1f1e8ce-ba52-5ff4-94e9-cb27b8198a85/scratchpad/integ13/p_q12.jpg",
+    "/tmp/claude-0/-home-user-Calc/b1f1e8ce-ba52-5ff4-94e9-cb27b8198a85/scratchpad/qa/L15/q22_xray.png"
+   ]
+  }
+ ],
+ "issues": [
+  {
+   "severity": "medium",
+   "owner": "lighting",
+   "detail": "04_shaders.js mainFS, from L14: the hue-preserving tone on light greys / whites (u_hueW, about line 856-860) and the lower-tub sky hue (tubLow, about line 646) are not zone-gated, while the two other L14 cool terms are (seatC and the u_bleed term both use step(u_sLowZ, v_wpos.z)). Both were fitted to the official PY / economy photos. In THE Suite and THE Room they turn the near-white window wall and the tubs lavender, which every F/J photo contradicts. The fixer kept them ungated for the q03 cmp (276 -> 260) against f_17306. But f_17306 is a close-up of the 43-in screen: its whites are the blue-lit UI (B-R +44/+46), not the wall. The same suite seen from above, f_17300, reads +1.5.",
+   "problem": "Boarding THE Suite / THE Room window walls turned lavender in L14: near-white wall B-R +13..+19 vs -6..+3 in the photos",
+   "evidence": "Window-wall whites (L 170-250, HSV s < 0.25; integ13/tools/wallbr.py), B-R L14 -> L15 vs photo: q08 (450-930, 0-200) +6.3 -> +16.4 vs c_27300 wall-only -6.1 and c_27303 -6.6; q05 (0-300, 0-280) +5.7 -> +15.2 vs f_17313 +3.2; q03 (0-330, 0-300) +6.4 -> +17.0 vs f_17300 +1.5; q07 +6.3 -> +19.4; q02 +3.1 -> +13.5. q06 +5.6 -> +12.7 vs c_27312 +9.8 is the one F/J photo it suits. In-flight F/J whites, upper 60 % by luma band: sc_room_09 -1..-5, kn_room_1/8/9/10 -6..-22, omaat_f2/f7/f8 -14..-26. Pier box q05 (0-60, 0-150) L229, B-R +10 -> +24. dBR map (orange = bluer L14 -> L15): the change sits on the window wall and tubs, 10-13 % of the frame in q03/q05/q08 (integ13/dBR_sheet.jpg).\nAblation (same build, MOODS.boarding overridden in-page; integ13/tools/var.js + v1.json, frames in integ13/v1):\n- hueW off: q08 / q05 / q07 +8.7 / +8.0 / +13.9.\n- tubHue off: +12.0 / +11.4 / +8.1.\n- Both off: +6.0 / +5.6 / +6.5, the L14 level.\n- Economy needs them: q17 head +20.1 vs y_47303 +20.5, both off +10.4.\nSo the PY / Y target is right; the spill into F/J is the defect. cmp with both off: q08 227 -> 226, q07 81 -> 80, q05 232 -> 238 (only the top-third hue term, which f_17313's lavender-field screen sets). Sheet (L14 | L15 | both off | photo): /tmp/claude-0/-home-user-Calc/b1f1e8ce-ba52-5ff4-94e9-cb27b8198a85/scratchpad/integ13/sheet_lavender.jpg; /tmp/claude-0/-home-user-Calc/b1f1e8ce-ba52-5ff4-94e9-cb27b8198a85/scratchpad/integ13/c_q08_noWT.jpg.",
+   "fix": "04_shaders.js mainFS:\n1. Define `float zPY = smoothstep(u_sLowZ - 0.3, u_sLowZ + 0.3, v_wpos.z);` (the same ramp as rimZ at about line 352) where both uses can see it.\n2. Multiply it into the tub term: `float tubLow = recd * wl.a * (1.0 - smoothstep(0.30, 0.40, v_wpos.y - u_winY.x)) * shT * u_tubHue * zPY;`.\n3. Multiply it into the hue-preserving tone weight: `col = mix(col, yw, u_hueW.x * zPY * smoothstep(0.30, 0.55, lw) * ...)`.\nTargets:\n- Window-wall whites B-R <= +7 for q08 / q05 / q03 (L14 +6; photos -6..+3).\n- q17 / q15 / q16 / q13 / q14 / q18 pixel-equal.\n- q06 between +5 and +13.\nAlso stop scoring q03's hue against f_17306 (a screen close-up). Use f_17300's window wall for THE Suite's wall hue."
+  },
+  {
+   "severity": "medium",
+   "owner": "py",
+   "detail": "Carried from L14, unchanged (09b_py.js has no commit since 5e5e561). This is a shape gap: lighting only moved the cushion's hue. The photos show soft side bolsters with a shallow valley inboard of each, plus a lumbar bulge under the headrest panel. Top light makes a bright upper back, darker lower flanks and a soft V. The model's back loft is flat across its width.",
+   "problem": "The PY back cushion still reads as a flat CG panel (thin darks 1.00 % vs 2.77 %, back shading range 36 L vs 54 L)",
+   "evidence": "q13 thin-dark 1.00 % (L14 1.00), q14 0.78 % (0.79) vs py_37302 2.77 %, py_37301 3.15 %. Back shading range, 15 px blur p10/p50/p90: q13 (190,420,340,570) 88/109/124 (36 L) and (400,300,500,420) 90/111/124 (34 L) vs py_37302 (530,400,720,550) 90/124/144 (54 L). Side-by-side: /tmp/claude-0/-home-user-Calc/b1f1e8ce-ba52-5ff4-94e9-cb27b8198a85/scratchpad/integ13/p_q13_pyFront.jpg.",
+   "fix": "09b_py.js pySeat, back loft (the `ds` sections), as proposed at L14:\n- Each side's outer 0.045 m stands 12 mm proud (bolster crown, radius about 20 mm), with a 6 mm wide, 4 mm deep valley at x = +-(w/2 - 0.05) from the headrest panel base to the cushion.\n- A lumbar crown: the centre panel 8 mm proud between 0.55 and 0.70 m above the cushion, faded out over 0.08 m.\nTargets: q13 thin-dark >= 1.6 %, back shading range >= 45 L, tris +5 % at most."
+  },
+  {
+   "severity": "low",
+   "owner": "lighting",
+   "detail": "04_shaders.js mainFS about line 561: the L14 seat-block bounce tint u_bleed [0.90, 0.99, 1.36] multiplies every surface below 0.9-1.3 m in PY / Y, including the already-blue fabric. It doubles the fabric's blue where it was meant to cool the whites (armrests, shells).",
+   "problem": "PY / economy seat fabric is now bluer than y_47300 (seat block B-R +61 vs +50)",
+   "evidence": "q15 seat block (330-600, 300-450): L14 B-R +50 s 0.52 -> L15 +61 s 0.57; y_47300 +50 s 0.54. q15 bottom band (0-930, 450-575): +32 -> +41 vs +32; bottom-third saturation 0.44 -> 0.50 vs 0.40. With bleed [1,1,1] (integ13/v3): +53 / +34. q16 lower left (0-400, 380-575): +60 -> +68, bleed off +64. cmp unchanged either way (q15 31/31, q16 43/42).",
+   "fix": "Weight the bleed by albedo neutrality: before line 561, `vec3 bA = base; float albS = (max(bA.r, max(bA.g, bA.b)) - min(bA.r, min(bA.g, bA.b))) / max(max(bA.r, max(bA.g, bA.b)), 1e-4);`, then multiply the mix weight by `(1.0 - smoothstep(0.2, 0.45, albS))`. Targets: q15 seat block B-R <= +54 with q17 armrests (530-650, 418-436) B-R >= +12 kept. Alternatively, bleed [0.94, 0.99, 1.18]."
+  },
+  {
+   "severity": "low",
+   "owner": "ceiling",
+   "detail": "Carried, unchanged since L11: grey fragments show through the outboard bin lip at door 3.",
+   "problem": "Grey dashes still show on the outboard bin lip at door 3",
+   "evidence": "z04_binlip at head: /tmp/claude-0/-home-user-Calc/b1f1e8ce-ba52-5ff4-94e9-cb27b8198a85/scratchpad/integ13/walk/z04_binlip.png, 3x crop /tmp/claude-0/-home-user-Calc/b1f1e8ce-ba52-5ff4-94e9-cb27b8198a85/scratchpad/integ13/c_z04.png (x 420-560, y 355-400): the same dashes as integ12/c_z04.png.",
+   "fix": "08_bins.js: end the psuo2 run 0.05 m short of the door-3 zone boundary (z1 - 0.05) for the rows-15/16 units, or clip it with the centre-bin door's swept profile so that no PSU face lies within 5 mm of the door edge. Target: no grey fragment on the lip in z04 at DPR 1 and 2."
+  },
+  {
+   "severity": "low",
+   "owner": "shell",
+   "detail": "Carried, unchanged: bright 1 px specks along the sidewall panel joint beside the look-out window.",
+   "problem": "Seam specks beside the q12 window are unchanged",
+   "evidence": "q12 (x 95-145, rows 150-470), rows with a pixel over median + 25: L13 10, L14 35, L15 35 (median 71).",
+   "fix": "07_shell.js wallSeamGeo: offset the strip 1.5 mm inboard (nx * 0.0015) and widen it to 3 mm, or model the joint as a 2 mm recessed groove, so that no coplanar overlap remains. Target: <= 3 speck rows in q12."
+  }
+ ],
+ "questionsForUser": [
+  "The official economy and premium-economy photos have a cool lavender cast on the white walls and plastics, while the THE Room / THE Suite photos (ANA's own and in-flight) keep the same surfaces neutral to slightly warm. The model now applies the cool cast in all four cabins, which turns the business and first-class walls lavender. The proposed fix limits it to premium economy and economy, so each cabin matches its own photos. Is a cabin-by-cabin look acceptable, or should the whole aircraft share one white balance? If so, which one: neutral, or the economy photos' cool cast?"
+ ]
+}
