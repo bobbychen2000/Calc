@@ -1,0 +1,83 @@
+{
+  "area": "ceiling",
+  "rater": "A",
+  "round": "confirm4",
+  "score": 8.5,
+  "renderNote": "Rated on head 7a2c8b9. git diff --stat 8467f01..HEAD -- src/07b_ceiling.js src/08_bins.js is empty, so the ceiling geometry and materials are unchanged. Renders are in scratchpad new/ (q01, q06, q13, q15, q16, q17 at 930x575, and cv v1, v2, v5, d1, d5 at 800x560), compared with old/ (8467f01). I checked the stated diffs myself. In the top 80 rows, q01, q06, q15, q16 and q17 have 0 % of pixels changed by more than 8 (mean diff 0). q13 has 57.2 % changed, with a mean of -10.1/-8.7/-4.5. In the close-ups, d1 and d5 are identical above rows 300/369, and v2 differs by at most 1 above row 439. v1 and v5 do have changed pixels, but only from row 342 (v1) and row 381 (v5) down. The diff mask (scratchpad rA4_v1_yCentreFwd.png) puts them on the seat-top screen glows and the far PY bulkhead/monitor block through the curtain, not on the vault, coves, bins or PSUs. q13 bin faces, old -> new: (200,15) 217/218/222 -> 208/210/219; (450,40) 216/217/221 -> 207/209/217; bin lip (150,67) 193/195/201 -> 178/182/193. That moves the blue cast (B-R) from about +5 to +10..+15. The reference ref/ana/py_37302 bin face at (450,15) is 186/195/206 (B-R +20), and the vault at (450,40) is 225/229/232. Lighting is noted, not scored.",
+  "previousStatus": {
+    "W14A-1 / w14b F1 (high/medium): vault fittings and ribs left behind by the vault lift": "Fixed, and still holds. The vault is pixel-identical in v1, v2 and v5: the ribs are 1-px arcs and the speakers thin slots on the 231 vault.",
+    "W14A-2 (medium): crest channel too dark": "Fixed, and still holds. No ceiling change; v15 was not re-rendered, but v1 and v2 show the groove line unchanged.",
+    "W14A-3 (low): PSU band segmentation is sparse": "Not fixed, no ceiling change. q16 is pixel-identical.",
+    "W14A-4 / FB1 (low): vault/bin ratio": "Not fixed in economy and J (q06 and q16 identical; ratio 1.05-1.18 vs 1.19-1.45 in the photos). PY is slightly better: the cooler, darker bins (about 208 vs 217) widen the gap to the vault/sidewall.",
+    "W15A-1 / S1 (low): speaker bezel invisible": "Not fixed (unchanged).",
+    "W15A-2 (low): crest channel has no dark core": "Not fixed (unchanged).",
+    "FB2 (low, lighting): flat 253 cove wedge": "Unchanged. v1 and v2 are identical in the cove.",
+    "D4 (low): door-4 dome wedge": "Not verifiable: d4 and d4b were not rendered. The geometry is unchanged.",
+    "regressions": "None. The only ceiling-region change is the q13 PY white balance. It moves the bins toward the photo's cool cast and leaves the ceiling's geometry and detail unchanged."
+  },
+  "details": {
+    "vault": 8.6,
+    "cove/trough": 8.5,
+    "vault fittings": 8.5,
+    "crest channel": 8.5,
+    "bins outboard": 8.5,
+    "bins centre": 8.7,
+    "PY bins (q13)": 8.5,
+    "seams/lips/rails": 8.4,
+    "placards": 8.6,
+    "PSUs": 8.3,
+    "door zones": 8.2,
+    "lens": 8.6
+  },
+  "issues": [
+    {
+      "id": "W14A-3",
+      "severity": "low",
+      "detail": "The outboard PSU band reads almost featureless at QA distance. y_47301 shows a dark joint about every 20 px, with gasper/light wells between them (carried over).",
+      "evidence": "q16 is pixel-identical to confirm2. y_47301 rows 118-134 show repeated dark joints (min 20-41) on a 197-229 band.",
+      "fix": "src/08_bins.js: shingles count 8 -> 16 and BINMAT.riser '#d2d3d4' -> '#c2c4c6'."
+    },
+    {
+      "id": "W14A-4",
+      "severity": "low",
+      "detail": "Economy and J bins are slightly too bright against the vault. PY is now closer after the white-balance change; there the bins are still somewhat lighter and less blue than in py_37302.",
+      "evidence": "q06/q16 vault/bin ratio is 1.05-1.18 vs 1.19-1.45 in y_47301 and c_27312. q13 bin face (450,40) is 207/209/217 (B-R +10) vs py_37302 (450,15) 186/195/206 (B-R +20); framing differs, so this is indicative only.",
+      "fix": "src/08_bins.js BINMAT.door '#d6d8dc' -> '#cdd0d5', or a lighting-side bin-face fill cut. Do not lower the vault."
+    },
+    {
+      "id": "W15A-1",
+      "severity": "low",
+      "detail": "The speaker reads as a single slot; the pill bezel does not show (carried over).",
+      "evidence": "v2 is identical to confirm2, where v12 (512-522,160-170) measured 222/221/217 on the vault.",
+      "fix": "src/07b_ceiling.js: bezel about 3 % below the vault; bezelShadow '#b4b2ae' -> '#c4c2be'."
+    },
+    {
+      "id": "W15A-2",
+      "severity": "low",
+      "detail": "The crest channel is a uniform grey line with no dark core (carried over).",
+      "evidence": "v15 at confirm2: 3 px at 115-116. y_47301 has a lip of 162-193 around a core of 11-40.",
+      "fix": "src/07b_ceiling.js: split the groove into a dark core '#4a4c50' and a lip '#bfc2c6'."
+    },
+    {
+      "id": "FB2-light",
+      "severity": "low",
+      "detail": "Lighting note, not scored: the far-side cove is a flat 253 wedge with no falloff.",
+      "evidence": "v1 (560,60) and v2 (600,50) are unchanged at 253/252/252; y_47301 right cove is 236-239.",
+      "fix": "04_shaders.js / 12_scene.js: cap the cove peak at about 245."
+    },
+    {
+      "id": "D4",
+      "severity": "low",
+      "detail": "Door-4 dome/monument junction wedge (carried over; not re-rendered).",
+      "evidence": "Last measured in w15 d4b: a flat 248 at (760-780,190-215).",
+      "fix": "src/07b_ceiling.js CEILMAT.lightPanel e 0.3 -> 0.12."
+    }
+  ],
+  "highCount": 0,
+  "mediumCount": 0,
+  "summary": "The ceiling files are unchanged, and every ceiling pixel in q01/q06/q15/q16/q17, v2, d1 and d5 is identical to confirm2. The v1/v5 differences are on seat-top glows and the far PY bulkhead, not the ceiling. The only ceiling-region change is the q13 PY white balance, which makes the bins cooler and slightly darker (B-R +5 -> +10..+15, photo +20) and moves them toward py_37302, with no regression. The ceiling remains clearly the same product, with only low-severity items: PSU joint rhythm, bin/vault ratio in economy and J, speaker bezel, crest-channel core, the door-4 wedge, and the lighting cove peak.",
+  "questionsForUser": [
+    "Do you have an in-flight photo looking up at the economy or THE Room outboard PSU strip on the 212-seat 777-300ER? It would settle the joint pitch and contrast.",
+    "Any photo of the door-1, door-4 or door-5 cross-aisle ceilings? Those domes are still approximated."
+  ]
+}

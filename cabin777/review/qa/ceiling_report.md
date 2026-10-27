@@ -301,3 +301,19 @@
   short grey dashes, so the look is consistent with the photos.
 - **Result:** no code change, so no ceiling confirm-3 round (08_bins.js / 07b_ceiling.js unchanged; confirm2 A 8.5 / B 8.7
   stands). Triangles unchanged. Proposed to the integrator: retire the item as photo-consistent (questions_ceiling.md 14).
+
+## Final confirm (publish) (2026-10-27, head 7a2c8b9)
+
+- **Confirmed at the bar:** rater A 8.5, rater B 8.7, no high or medium issues (`ceiling_confirm4_a.json`, `ceiling_confirm4_b.json`). Confirm 2 was A 8.5 / B 8.7.
+- **The lighting changes since confirm 2 (PY white balance L17, the L18 polish) left the ceiling as it was, apart from the intended PY colour shift.** `07b_ceiling.js` and `08_bins.js` are unchanged since 8467f01. I diffed renders from 8467f01 (a git worktree build) against the current head:
+  - Top 80 rows of q01, q06, q15, q16 and q17: 0 % of pixels changed.
+  - Ceiling close-ups: d1, d5 and v2 are identical above the seat tops. v1 and v5 change only from rows 342 and 381 down: seat-top screen glows and the PY monitor block seen past the curtain.
+  - q13 is the only ceiling change: the top band is cooler and slightly darker (mean -10 / -9 / -4.5). The bin face went from about 217/218/222 to 208/210/219, so blue minus red rose to +10 to +16 (py_37302 is about +13 to +20). Both raters judged this a move toward the photo, not a regression.
+- **No code change and no lighting hand-off.** The earlier high and medium items (W14A-1 / F1, W14A-2) are still fixed. Triangles are unchanged (502,734).
+- **Open lows, carried over:**
+  - The outboard PSU joint rhythm is faint.
+  - The economy and J bin-to-vault brightness ratio is low; PY is now a little better.
+  - The speaker bezel outline does not read.
+  - The crest channel has no dark core.
+  - The door-4 wedge was not checked (d4b not rendered).
+  - The flat 253 cove wedge is lighting and not scored.

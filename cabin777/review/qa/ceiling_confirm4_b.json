@@ -1,0 +1,85 @@
+{
+  "area": "ceiling",
+  "rater": "B",
+  "round": "confirm4",
+  "score": 8.7,
+  "renderNote": "Rated on head 7a2c8b9. git diff 8467f01..HEAD is empty for src/07b_ceiling.js and src/08_bins.js; the src changes are 12_scene.js (PY white balance), 09d_suite.js and others outside this area. Renders: scratchpad new/ q01, q06, q13, q15, q16, q17 (930x575) and new/cv v1, v2, v5, d1, d5 (800x560), compared with old/ (8467f01). Re-measured: in the top 80 rows, q01/q06/q15/q16/q17 have 0.0 % of pixels changed by more than 8, and q13 has 57.2 %. In the close-ups the first changed row (diff >1) is v1 341, v2 445, v5 381, d1 531 and d5 385, all below the seat tops. The v1 ceiling samples reproduce exactly: vault (380,100) 231,230,226; bins (100,150) 207,210,216 and (650,150) 203,207,218; cove (560,60) 253,252,252. q13 region means (old -> new; photo py_37302): centre/right bin underside (400-900,20-60) 219,220,220 -> 212,214,217 (photo bin band 187,195,204); left bin (20-120,30-70) 194,197,202 -> 179,184,195 (photo right bin 151,155,167); bulkhead wall (300-340,130-170) 213,215,216 -> 195,199,204 (photo wall 184,188,195). d2, d4, v3, v12, v15 and the night/amber moods were not re-rendered; their geometry is unchanged.",
+  "previousStatus": {
+    "fixed": [
+      "w14a W14A-1 high (fittings and ribs left behind by the vault lift): still fixed. v1, v2 and v5 are pixel-identical to 8467f01 in the ceiling region.",
+      "w14b F1 medium (fittings vs vault contrast inversion): still fixed (v2 is unchanged above row 445).",
+      "w14a W14A-2 medium (crest channel too dark): still fixed (geometry unchanged; v1/v2 crest identical)."
+    ],
+    "notFixed": [
+      "FB1 / W14A-4 low (vault/bin ratio): unchanged in economy/J views (v1 1.07-1.12, q16 1.18). In q13 the PY bins moved toward the photo: they are cooler and darker (B-R +2 -> +5 on the centre bins, +8 -> +16 on the left bin; photo +17), but the ceiling bins are still 10-15 % brighter than py_37302.",
+      "FB2 low (flat 252-253 cove wedge, lighting): unchanged (v1 (560,60) 253,252,252).",
+      "S1 / W15A-1 low (speaker bezel invisible): unchanged (geometry unchanged).",
+      "W15A-2 low (crest channel has no dark core): unchanged.",
+      "W14A-3 low (outboard PSU band segmentation sparse): unchanged.",
+      "D4 low (door-4 dome/monument wedge): not verifiable; d4b was not rendered and the geometry is unchanged."
+    ],
+    "regressed": []
+  },
+  "details": {
+    "vault shape / joint ribs / crest rib": 8.8,
+    "vault tone": 8.7,
+    "cove / trough grille": 8.6,
+    "vault fittings (speaker, emergency light)": 8.5,
+    "crest channel": 8.6,
+    "bins outboard": 8.9,
+    "bins centre": 8.8,
+    "seams / lips / rails / latches": 8.7,
+    "placards": 8.8,
+    "PSUs": 8.6,
+    "door-area domes and zone-end closures": 8.3,
+    "sign pods (EXIT)": 8.6
+  },
+  "issues": [
+    {
+      "id": "FB1",
+      "severity": "low",
+      "detail": "The bins are only slightly darker than the vault in Y/J, and the PY bins in q13 are still a little brighter than the photo. The new PY white balance moved q13 in the right direction (cooler, about 7-15 darker), with no geometry change. This is carried over.",
+      "evidence": "v1 vault 231 vs bins 203-210 (1.07-1.12); y_47301 1.17-1.43. q13 centre bin underside 212,214,217 and left bin 179,184,195 vs py_37302 bin band 187,195,204 and 151,155,167.",
+      "fix": "src/08_bins.js BINMAT.door '#d6d8dc' -> '#cfd2d6', or reduce the bin-face fill in 12_scene.js. Do not lower the vault."
+    },
+    {
+      "id": "FB2",
+      "severity": "low",
+      "detail": "Lighting, not scored: the far-side cove beside the trough grille is a flat 253 wedge with no falloff (carried over).",
+      "evidence": "v1 (560,60) 253,252,252 (identical to confirm2); y_47301 right cove (660,40) 239,238,236.",
+      "fix": "04_shaders.js / 12_scene.js: cap the cove peak at about 240-245 or add a falloff across the bin crown."
+    },
+    {
+      "id": "S1",
+      "severity": "low",
+      "detail": "The speaker bezel is invisible at close range, so only the slot line reads (carried over).",
+      "evidence": "The geometry is unchanged. At confirm2, v12 (517,165) was 228 on a 229-231 vault; v12 was not re-rendered.",
+      "fix": "src/07b_ceiling.js: set the bezel about 3 % below the vault."
+    },
+    {
+      "id": "W14A-3",
+      "severity": "low",
+      "detail": "The outboard PSU band joints and gasper wells are faint compared with y_47301 (carried over).",
+      "evidence": "q16 is pixel-identical to confirm2 in the top 80 rows; y_47301 (100-330,120-135) shows a dark joint about every 20 px.",
+      "fix": "src/08_bins.js: shingles 8 -> 16 and BINMAT.riser '#d2d3d4' -> '#c2c4c6'."
+    },
+    {
+      "id": "D4",
+      "severity": "low",
+      "detail": "The door-4 dome/monument junction wedge is carried over and unverified.",
+      "evidence": "d4b is not in this render set; the geometry is unchanged.",
+      "fix": "src/07b_ceiling.js CEILMAT.lightPanel e 0.3 -> 0.12."
+    }
+  ],
+  "highCount": 0,
+  "mediumCount": 0,
+  "lightingNotes": [
+    "The PY white-balance change is the only ceiling-visible change. It brings the q13 bins and bulkhead closer to py_37302 in hue and level, and introduces no banding or hue break between the PY bins and the adjacent Y/J zones in the frames rendered.",
+    "The flat cove (FB2) remains the one lighting item visible on the ceiling."
+  ],
+  "summary": "The ceiling geometry is unchanged and every close-up is pixel-identical above the seat tops. The only change, the cooler PY white balance in q13, moves the PY bins toward the photo (B-R +15 vs about +17 in the photo). No regressions; only the carried-over low items remain (bin/vault ratio, cove peak, speaker bezel, PSU rhythm, door-4 wedge). The score holds at 8.7.",
+  "questionsForUser": [
+    "Do you have an in-flight photo looking up at the aisle ceiling (THE Room or economy) that shows the speaker grilles and the outboard PSU strip?",
+    "Do you have any photo of the door 1, 2, 4 or 5 cross-aisle ceilings? Those are still approximations."
+  ]
+}
