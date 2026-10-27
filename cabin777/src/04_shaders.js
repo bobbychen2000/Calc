@@ -474,7 +474,8 @@ void main(){
     // +3..+5 B-R: the cove and LED light dominate up there [D L17 v1] [V: whites L150-250 B-R / cool share py_37302 bins +15 / 80 %,
     // bulkhead +17 / 99 %; py_37301 +17 / 62 %; py_37303 +25 vs q13 top +4 / 36 %, bulkhead +2 / 10 %]
     // Not keyed on sz: the PY rear wall (door-4 lav / closet faces, forward of u_pyCool.y) reads cool in py_37302 as well [V:
-    // back wall whites +8 / 80 %, right partition +17 / 99 % vs q13 +3 / +2]; the door-4 zone and its galleys stay out (z end).
+    // back wall whites +8 / 80 %, right partition +17 / 99 % vs q13 +3 / +2]; the door-4 zone and its galleys stay out (z end;
+    // their set-back aft faces: L18b below).
     // Forward-facing faces within the ramp (to u_sLowZ + 0.3: the J side of the J / PY bulkhead stands at z20 + 0.02, 05_layout)
     // stay out, so the 0.6 m ramp that keeps the ceiling and bins free of a hue step at the curtain line does not reach THE
     // Room's bulkhead face [D L17 jpB: its upper half went B-R -13 -> -5 with the gate at u_sLowZ]
@@ -486,6 +487,11 @@ void main(){
     float pyM = smoothstep(u_sLowZ - 0.3, u_sLowZ + 0.3, v_wpos.z) * (1.0 - smoothstep(u_pyCool.y - 0.3, u_pyCool.y, v_wpos.z))
               * smoothstep(mix(1.4, 0.5, step(0.5, N.z) * step(v_wpos.z, u_sLowZ + 0.3)), mix(1.7, 0.8, step(0.5, N.z) * step(v_wpos.z, u_sLowZ + 0.3)), v_wpos.y)
               * (1.0 - step(v_wpos.z, u_sLowZ + 0.3) * step(0.5, -N.z));
+    // QA lighting L18b (monuments final confirm, medium): aft-facing faces within 1.2 m of the PY end stay out. They look into
+    // the door-4 cross-aisle, not into PY: the door-4 galleys' upper banks (set back 0.3 m, 10_mono monoStepBody, z ~43.40, so
+    // inside the 0.3 m end ramp above), the aisle curtains' aft faces and the bins' end caps. The PY rear wall faces forward
+    // and keeps its share [D L18b m09: upper cart doors L110 / B-R +13 vs the lower panel L167 / -3; 8467f01 L139 / -5]
+    pyM *= 1.0 - step(0.5, N.z) * smoothstep(u_pyCool.y - 1.2, u_pyCool.y - 0.9, v_wpos.z);
     float pyW = u_pyCool.x * pyM;
     // QA lighting L18 (both L17 raters, low): the PY rear wall (the door-4 lav / closet faces, facing forward, within 1.5 m of
     // u_pyCool.y, between the aisles: 05_layout PY aisles 1.16-1.52) takes 0.4 of it, the outboard partitions keep it: at the

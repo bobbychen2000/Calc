@@ -1081,3 +1081,37 @@ Ratings (fresh raters on r_f / x_f, all 22 views): lighting lens 8.6 (L17 8.5), 
 (`lighting_L18_lighting.json`, `lighting_L18_integration.json`); the L18 changes stay. Lows carried: PY top band L200-204 vs
 py_37302 182-183, jpA PY bin undersides +28 vs +15, PY centre ceiling cream, the q17 far cover ~20-30 L dark (econ), PY seat-back
 creases (py), THE Room 13-21 L bright, and the L17 carried lows (far window band, tub lip, thin highlights / contact darks).
+
+## Lighting L18b (door-4 galley)
+
+Code: `04_shaders.js` only (`12_scene.js`, `13_app.js` unchanged). Baseline 32694ed (build b0), final b1. Renders r0 / r1 (22 QA
+views, 930x575), m0 / m1 (`review/qa/monuments_views.js` m08 / m09 / m10 / m12, 800x560), x0 / x1 (jpA / jpB / jpC from L18 and five
+door-4 sweep cameras: s1 (-1.9, 1.62, 44.6, yaw 0.35, pitch 0.05) left lav aft face, s2 (1.9, 1.62, 44.6, -0.35, 0.05) right galley,
+s3 (0, 1.62, 45.2, 0, 0.25) centre galley face-on, s4 (-2.3, 1.62, 44.3, -1.2, 0) / s5 (2.3, 1.62, 44.3, 1.2, 0) across the
+cross-aisle). Tools diff.py / box.py in the session scratchpad.
+
+1. Door-4 galley upper bank PY-cool (monuments final confirm, medium, both raters): done. Cause: the galleys' upper banks are set
+   back 0.3 m (10_mono monoStepBody), so their aft faces sit at z ~43.40, forward of pyM's end ramp (u_pyCool.y - 0.3 .. u_pyCool.y,
+   u_pyCool.y = doorsZ[3][0] = 43.70); the L18 0.4 cut is for forward faces only, so they took pyCool 0.9 and pyLvl 0.65 while the
+   full-depth lower body at 43.70 took none. Change (the monuments' formula): `pyM *= 1.0 - step(0.5, N.z) * smoothstep(u_pyCool.y
+   - 1.2, u_pyCool.y - 0.9, v_wpos.z)`, applied to pyM so both the hue (pyW) and the level (pyL) leave. One step, one smoothstep and a
+   multiply per interior fragment.
+   - m09 (p50, whites L > 60) b0 -> b1: upper cart doors (270-400, 40-120) L110 / B-R +13 -> 139 / -5; right doors (600-740, 40-120)
+     111 / +13 -> 140 / -5; upper band (150-650, 0-160) 110 / +13 -> 139 / -5; lower inserts (100-240, 240-340) 116 / -3 -> 122 / -7;
+     below-counter panel (100-700, 400-480) 167 / -3 = 167 / -3. Upper vs lower panel 2 B-R apart (target <= 3); these are the 8467f01
+     values from monuments_confirm3_a (139 / -5, 122 / -7).
+   - Sweep (what else took the share but should not): the right door-4 galley's upper bank had the same leak (s2 (0-340, 90-330)
+     L111 / +16 -> 138 / -3; s5 / s4 its side view, 17 % / 5 % px changed); the centre galley face-on s3 (180-820, 280-380) 110 / +13
+     -> 139 / -5, its lower inserts 118 / -1 -> 123 / -7; the PY aisle curtains' aft faces at the cross-aisle edge (s1 x852-929, 3 %).
+     Clean already: the wheelchair lav's aft face (at 43.70, ramp end: s1 lav face unchanged), the door-4 linings and jump seats (aft
+     of u_pyCool.y), and the J / PY boundary (the J / PY bulkhead at u_sLowZ stands more than 2 m forward of the gate start u_pyCool.y - 1.2: jpA / jpB / jpC 0.00 %).
+   - Unchanged as required: q13 0.00 % (rear wall +10, partition +10, bins +15 stand), m10 0.00 %, m08 0.00 %, m12 0.00 %, jpA /
+     jpC 0.00 %.
+2. Regression guard, 22 QA views b0 -> b1 (px > 8 changed): q01 q02 q03 q07 q09 q10 q11 q13 q14 q15 q18 q19 q20 q22 0.00 %, q04
+   0.04 %, q06 0.03 %, q17 0.06 %, q16 0.11 %, q08 0.16 %, q05 0.27 %, q21 1.24 %, q12 3.92 %. None of the last five sees a fixed face;
+   a second b0 render of them against the first gives the same noise (q05 0.10 %, q08 0.24 %, q16 0.16 %, q21 1.13 %, q12 2.90 %; a
+   second b1 q12 3.27 %, means 119.2 / 119.5 either way): pane clouds and sun. Every QA view is equal within run-to-run noise, so the
+   L18 ratings (lighting 8.6 / integration 8.6) stand; no re-rating, and no monuments re-rate (the monument views are pixel-equal and
+   m09 is back at its 8.7-confirmed state).
+3. Phone budget (test/perf.js b0 -> b1): mid Sharp 69 calls / 3,271,848 tris, Balanced 35 / 1,650,926; econ 101 / 4,002,884 and 51 /
+   2,016,444; room 69 / 2,866,512 and 35 / 1,448,258: identical. No new uniform, pass or texture tap.

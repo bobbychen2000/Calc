@@ -113,3 +113,4 @@ Noted by both raters in all three rounds; not scored against monuments.
   - Within 1.2 m of 43.70, the only other aft-facing faces above 1.4 m are none: the PY seatbacks sit lower. The PY rear
     wall faces forward and keeps its share.
   - **Target:** m09 upper doors back to about L139 and B-R -5, within 3 B-R of the lower panel. q13 and m10 unchanged.
+- **Lighting L18b:** done (`04_shaders.js` pyM: aft-facing faces, N.z > 0.5, within 0.9-1.2 m of u_pyCool.y leave pyM, so they take neither pyCool nor pyLvl; the forward-facing PY rear wall keeps both). m09 upper cart doors L110 / B-R +13 -> L139 / -5 (both door boxes), lower inserts 116 / -3 -> 122 / -7, lower panel 167 / -3 unchanged: back to the 8467f01 values. q13, m08, m10, m12 and the 22 QA views are pixel-equal within run-to-run noise; the right door-4 galley's aft upper bank had the same leak and is fixed too (see fixed_integration.md "Lighting L18b").
