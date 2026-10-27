@@ -1,0 +1,147 @@
+{
+ "area": "integration",
+ "score": 8.5,
+ "earlier": [
+  {
+   "issue": "L16 MEDIUM (py): PY back cushion reads as a flat CG panel",
+   "status": "fixed (partly; now low)",
+   "evidence": "e67f1a9 (09b_py.js crown, bolster valleys, lumbar and baked cavity shade). q13 back shading range (3 px box blur, p10/p50/p90, box x190-340 y420-570; reproduces L16's base 88/109/125): r_base 88/109/125 = 37 L -> L17 78/110/126 = 48 L (target >= 45 met; py_37302 box x530-720 y400-550 86/124/146 = 60 L). Thin-dark proxy (luma - gauss4 < -20): q13 7.64 -> 7.82 % vs 13.11 % (60 % of the photo, target 70 %), q14 10.06 -> 10.06 % vs 13.11 %. The crop sheet /tmp/claude-0/-home-user-Calc/de563dc0-055c-58e1-a550-17b6bc670c4a/scratchpad/L17rateI/pyback.jpg shows the bolster valleys and the darker lower-inboard cavity. The overall form reads shaped now, but the photo's soft creases and lumbar fold are still flatter in the render."
+  },
+  {
+   "issue": "L16 LOW (lighting): PY whites neutral (B-R +2..+4) vs cool PY photos (+15..+26)",
+   "status": "fixed",
+   "evidence": "meas.py whites (s<0.25, L150-250, median B-R / cool share), r_base -> L17 vs photo: q13 top (0-930,0-120) +4/35 % -> +12/68 % (py_37302 +15/87 %); q13 bins (0-450,0-70) +8 -> +17 (photo +15); right partition (690-930,120-300) +2 -> +11 (photo +17); frame +4/40 % -> +13/72 % (photo +18/91 %); q14 top (300-930,0-150) +5/46 % -> +12/67 % (py_37301 +17/87 %, py_37303 +20). The fixer's numbers check out to within 1-2. The q14 sidewall pier profiles (x290, x745) are unchanged below the bins. Over: q13 rear wall (300-580,110-190) +3 -> +20 vs photo +8 (low issue below)."
+  },
+  {
+   "issue": "L16 falloff note: PY top band bright (q13 214 vs 182)",
+   "status": "partly fixed",
+   "evidence": "Six 96-px band means, q13 L17 208/178/123/105/100/88 vs py_37302 182/168/116/106/100/98 (r_base 213/186/123/106/101/89). q14 207/163/134/139/121/86 vs py_37301 174/162/138/118/88/78: framing differs below band 2. Top band still +26 L. The fixer's ACES-shoulder argument holds: py_37303's top is 191, and economy matches y_47300 under the same light (q15 214/189/90/79/72/64 vs 216/193/82/77/72/69)."
+  },
+  {
+   "issue": "L16 LOW (ceiling): grey dashes on the door-3 outboard bin lip",
+   "status": "not fixed",
+   "evidence": "git diff f6e5d34..HEAD -- src touches only 04_shaders, 09b_py, 09d_suite and 12_scene; 08_bins.js is unchanged."
+  },
+  {
+   "issue": "L16 LOW (shell): bright specks along the panel joint beside the q12 window",
+   "status": "not fixed",
+   "evidence": "q12 (95-145, rows 150-470), rows with a pixel > median + 25: r_base 28 -> L17 17 (median 103 both). The count moves with the pane clouds; 07_shell.js is unchanged. Target <= 3."
+  },
+  {
+   "issue": "L16 LOW (lighting): q12 left reveal L117 vs ucr 104-110",
+   "status": "withdrawn (measurement artefact)",
+   "evidence": "Verified the fixer's point. 20 px cells of L17 q12 columns 60-140, rows 0-400, read L98-108 on the lining and pier. The L117 box mean came from the neighbouring pane's clouds (columns 0-60, rows 160-360, L150-224). Surround (100-180,250-350) L103."
+  }
+ ],
+ "details": [
+  {
+   "detail": "Boarding white balance per cabin (question 17 as decided): THE Suite neutral, THE Room half cool, and now PY cool like economy. PY bins, partitions and the ceiling edge read the same blue-grey as py_37302 / py_37301 (q13 frame whites +13 vs +18; q14 top +12 vs +17). F/J/Y are unchanged: q06 0.11 %, q07 0.00 %, q08 0.14 %, q09 0.00 %, q15 0.00 %, q16 0.15 %, q17 0.04 %, q18 0.02 %, q19 0.00 % px > 8 changed vs r_base. Residual: the PY rear wall is over-cooled (+20 vs +8), and the PY bins seen from below in jpA read +29 (q13 bins +17, photo +15).",
+   "score": 8.6,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/de563dc0-055c-58e1-a550-17b6bc670c4a/scratchpad/L17rateI/py.jpg",
+    "/tmp/claude-0/-home-user-Calc/de563dc0-055c-58e1-a550-17b6bc670c4a/scratchpad/L17/q13_pyFront.png",
+    "/tmp/claude-0/-home-user-Calc/de563dc0-055c-58e1-a550-17b6bc670c4a/scratchpad/L17/q14_seat26A.png"
+   ]
+  },
+  {
+   "detail": "Falloff ceiling -> bins -> wall -> floor (six 96-px bands, L17 vs photo): q06 215/195/134/118/109/81 vs c_27312 202/175/118/97/90/81; q15 214/189/90/79/72/64 vs y_47300 216/193/82/77/72/69; q17 193/166/119/93/86/43 vs y_47303 190/173/122/97/85/61; q13 208/178/123/105/100/88 vs py_37302 182/168/116/106/100/98. The PY top is 5 L lower than at L16 but still the largest gap. THE Room stays 13-21 L bright in bands 1-5, as at L16.",
+   "score": 8.2,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/de563dc0-055c-58e1-a550-17b6bc670c4a/scratchpad/L17/q06_roomMain.png",
+    "/tmp/claude-0/-home-user-Calc/de563dc0-055c-58e1-a550-17b6bc670c4a/scratchpad/L17/q17_econBacks.png"
+   ]
+  },
+  {
+   "detail": "AO and contact shadows: the lighting AO terms are unchanged. Thin-dark proxy L17 vs photo: q05 6.05/6.24, q06 10.67/12.13, q08 9.10/9.08, q15 14.77/15.34, q17 14.44/14.82; PY q13 7.82/13.11 and q14 10.06/13.11 remain the gap (the PY back is now shaped, but the creases and the seat-to-seat contact are still light).",
+   "score": 7.9,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/de563dc0-055c-58e1-a550-17b6bc670c4a/scratchpad/L17rateI/m.py",
+    "/tmp/claude-0/-home-user-Calc/de563dc0-055c-58e1-a550-17b6bc670c4a/scratchpad/L17rateI/pyback.jpg"
+   ]
+  },
+  {
+   "detail": "Specular per material: no shader change for gloss. Thin-bright proxy, lower half, L17 vs photo: q13 12.06/13.56, q14 13.71/15.54, q15 19.05/19.48, q17 15.49/16.06, q05 4.28/5.30, q08 8.50/10.61, q06 12.54/9.98 (render slightly glossier in THE Room). Same as L16.",
+   "score": 7.7,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/de563dc0-055c-58e1-a550-17b6bc670c4a/scratchpad/L17rateI/m.py"
+   ]
+  },
+  {
+   "detail": "Zone boundaries at J/PY (z ~39.8). THE Room side (jpB): 2.55 % px changed, all of it the PY seen past the curtain. Bulkhead J face whites -15/-14 = unchanged; J bins +8 / +13 unchanged. The ceiling centre panel is -3..-5 on both sides (jpA 440-600, 0-300), so it has no step. The right outboard bin run steps from +10 (J, far, x510-560) to +28/+29 (PY, x590+) exactly behind the PY curtain, so the step is hidden. On the PY face of the bulkhead, however, the 1.4-1.7 m height mask draws a vertical hue ramp on one flat panel (issue 1).",
+   "score": 8.2,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/de563dc0-055c-58e1-a550-17b6bc670c4a/scratchpad/L17rateI/jp.jpg",
+    "/tmp/claude-0/-home-user-Calc/de563dc0-055c-58e1-a550-17b6bc670c4a/scratchpad/L17x/jpC.png",
+    "/tmp/claude-0/-home-user-Calc/de563dc0-055c-58e1-a550-17b6bc670c4a/scratchpad/L17x/jpA.png"
+   ]
+  },
+  {
+   "detail": "Moods at the q06 camera (Blue, Dining, Sunrise, Night, Cruise) and economy Night / Dining all read coherent. pyCool / pyLvl are set only in MOODS.boarding (12_scene.js:82), and the other moods get 0 / 1 via ?? defaults. Blue at q06 0.08 % px and economy Night 0.00 % px changed vs x_base; q20 0.00 %, q21 0.53 % (clouds).",
+   "score": 8.3,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/de563dc0-055c-58e1-a550-17b6bc670c4a/scratchpad/L17rateI/moods.jpg"
+   ]
+  },
+  {
+   "detail": "Whole-cabin regressions vs r_base: only q03 (2.33 %) and q05 (25.0 %, mean 165.9 -> 160.8) changed outside PY, and the cause is the suite commit 8ac284a (fCap #8f8a76 -> #777369; diff bbox = the near cap and the console tops, /tmp/claude-0/-home-user-Calc/de563dc0-055c-58e1-a550-17b6bc670c4a/scratchpad/L17rateI/q05.jpg), not lighting. That commit moves the cap toward f_17313's dark grey-brown. q12 3.66 % = pane clouds. No lighting regression found.",
+   "score": 8.5,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/de563dc0-055c-58e1-a550-17b6bc670c4a/scratchpad/L17rateI/q05.jpg",
+    "/tmp/claude-0/-home-user-Calc/de563dc0-055c-58e1-a550-17b6bc670c4a/scratchpad/L17/q05_suiteBehind.png"
+   ]
+  }
+ ],
+ "issues": [
+  {
+   "severity": "medium",
+   "owner": "lighting",
+   "detail": "04_shaders.js pyM's height mask (1.4-1.7 m) cools only the upper part of the PY face of the J/PY bulkhead. Above the monitor row the panel reads +19 B-R, below it +4..+7. Across one flat white panel, which is what the PY row-1 passengers face, this shows as a bluish top and a grey bottom. The fixer noted this but left it. py_37301 / py_37303 show the PY lower whites cool as well (+25..+36 in rows 150-450), so cooling the lower panel would also match the photos.",
+   "problem": "Vertical hue ramp (+19 -> +4 B-R) on the PY bulkhead face behind the monitor row",
+   "evidence": "jpC column x440-452 (gap between monitors), B-R by row: y270-330 +19, y360 +13.6, y390 +8.2, y420 +4.0, y450-570 +3.5..+7.0 at constant L203-209. jpC whites (470-700,120-320) +19 / 98 % cool vs (470-700,480-575) +5 / 38 %; jpA bulkhead (40-500,400-440) +19 vs (40-500,520-560) +6. x_base had +3 / +5 (uniform).",
+   "fix": "In pyM, drop the height gate for vertical monument faces that face the PY cabin (e.g. use (1 - smoothstep(1.4, 1.7, y)) only for |n.y| > 0.5, or lower the gate to 0.5-0.8 m for faces with n.z > 0.5 inside the PY zone). Keep the forward-facing gate that protects THE Room's face. Target: jpC column profile within +-3 B-R from y250 to y570, the bulkhead J face in jpB unchanged (-15 / -14), q13 / q14 seat backs unchanged (B/R 1.38 / 1.30)."
+  },
+  {
+   "severity": "low",
+   "owner": "lighting",
+   "detail": "Because pyM is not keyed on surface, the cream rear monument face in q13 cools past the photo, and the PY bin undersides cool more than the bin doors.",
+   "problem": "PY rear wall +20 vs py_37302 +8; jpA PY bins +29 vs q13 bins +17 / photo +15",
+   "evidence": "q13 (300-580,110-190) whites +3 -> +20 (photo +8 / 74 %). jpA right bin run x590-920 B-R +28..+29 (x_base +12..+15).",
+   "fix": "Scale pyW by ~0.6 on surfaces whose base albedo is warm (b < r) or cap the hue shift at +15 B-R; or lower pyCool 0.9 -> 0.75 and check that q13 top stays >= +10."
+  },
+  {
+   "severity": "low",
+   "owner": "lighting",
+   "detail": "The PY top band is still bright after pyLvl 0.75.",
+   "problem": "q13 top band L208 vs py_37302 182 (bins 204 vs 183)",
+   "evidence": "q13 bands 208/178/123/105/100/88 vs 182/168/116/106/100/98. py_37303 top is 191, so a band of ~190-195 would be defensible.",
+   "fix": "Optional: pyLvl 0.75 -> 0.65 with the ACES shoulder in mind; target q13 top <= 198 with no lower band under its photo."
+  },
+  {
+   "severity": "low",
+   "owner": "py",
+   "detail": "The back cushion is shaped now (range 48 L vs 60 in the photo), but the photo's fine creases and the seat-to-seat contact shade are still lighter.",
+   "problem": "PY thin-dark detail 60 % of the photo",
+   "evidence": "Thin-dark q13 7.82 % vs py_37302 13.11 %, q14 10.06 % vs py_37301 13.11 %.",
+   "fix": "Bake 2-3 soft horizontal crease lines into the back cavity shade (lumbar fold, the seat-pan junction) and a darker 15 mm contact strip where the cushion meets the shell. Target thin-dark >= 9.2 % on q13."
+  },
+  {
+   "severity": "low",
+   "owner": "ceiling",
+   "detail": "Carried since L11: grey PSU fragments through the outboard bin lip at door 3.",
+   "problem": "Grey dashes on the door-3 bin lip",
+   "evidence": "08_bins.js unchanged since f6e5d34.",
+   "fix": "End the psuo2 run 0.05 m short of the door-3 zone boundary or clip it with the bin door profile."
+  },
+  {
+   "severity": "low",
+   "owner": "shell",
+   "detail": "Bright 1 px specks along the sidewall panel joint beside the look-out window.",
+   "problem": "Seam specks beside the q12 window",
+   "evidence": "q12 (95-145,150-470) rows > median+25: 17 (r_base 28; varies with pane clouds).",
+   "fix": "07_shell.js wallSeamGeo: offset 1.5 mm inboard and widen to 3 mm, or a recessed 2 mm groove. Target <= 3 rows."
+  }
+ ],
+ "questionsForUser": [
+  "Premium economy now follows its own official photos (cool, like economy), as decided for question 17. The cool cast stops at seat height, so the PY side of the business / premium-economy partition is bluish above the screens and grey below them. Should the whole PY partition be cool (as in the PY photos), or should the cool cast be dialled back so the partition reads one neutral white?"
+ ]
+}
