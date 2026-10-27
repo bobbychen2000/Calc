@@ -1,0 +1,52 @@
+{
+  "area": "shell",
+  "rater": "B",
+  "round": "final",
+  "score": 8.5,
+  "previousIssues": [
+    {"id": "w16a-1 F carpet and door cross-aisle carpet flat procedural fabric", "severity": "medium", "status": "fixed (since w17), still fixed. ra_door2floor is pixel-identical w18 -> head (0.0 % of pixels changed > 8). The q03 F floor is unchanged in geometry and texture; only the lighting level moved."},
+    {"id": "w17b fcarpet-hue / w17a-1 F carpet grain", "severity": "low", "status": "not fixed (carpetF unchanged). Optional."},
+    {"id": "w17b fcarpet-fleck", "severity": "low", "status": "not fixed. Still waiting on the user's answer."},
+    {"id": "w16b jcarpet-hue", "severity": "low", "status": "not fixed. Optional."},
+    {"id": "door-window short / housing overlaps bezel", "severity": "low", "status": "not fixed. s06 changed only 4.9 % (far end windows and ceiling tone). The door-lining geometry is identical."},
+    {"id": "pleat-contrast", "severity": "low", "status": "not fixed. The s05/b_jClose blackout pleats have the same geometry and tile; only the level moved (-15)."},
+    {"id": "grille-pitch", "severity": "low", "status": "not fixed (b_dadoY2 grille geometry unchanged)"},
+    {"id": "vinyl-speckle", "severity": "low", "status": "not fixed (ra_door2floor identical)"},
+    {"id": "sidewall-weave", "severity": "low", "status": "not fixed"},
+    {"id": "tub-card", "severity": "low", "status": "Partly hidden. With the new tubHue the PY/Y lower tub reads cooler and less like a flat light card (ra_pyWin), but the geometry is unchanged."},
+    {"id": "w18b pane-cool-cap", "severity": "low", "status": "fixed (by lighting L11/L14). PY/Y/F panes are now near-white: s09 pane p50 239/243/250 -> 251/253/255 and q03 233/240/250 -> 252/253/255, against f_17313 pane 255/255/255. Faint cloud texture survives (q03 pane L std 17.9)."},
+    {"id": "w18a-1 [lighting] near grazing pane saturated blue (q07, ra_jWin)", "severity": "low", "status": "Partly fixed. In ra_jWin the left pane goes 187/202/231 -> 223/240/254 and the mid pane 206/221/243 -> 245/250/255, close to c_27316's glare. In q07 the near pane (870-920, 40-140) is still blue: 184/193/211 -> 192/203/215, B-R +23, against c_27316 ~250/250/251."},
+    {"id": "lighting-carry: flat door glass, neutral creams, black under-seat grille", "severity": "low", "status": "not fixed (lighting). The b_doorWin glass is flat 217/216/214 with no sky detail (w18 228/229/228)."}
+  ],
+  "details": {
+    "window size/spacing/height": {"score": 8.6, "note": "The geometry is unchanged since w18 (07_shell.js untouched since 617dd99). The 10x15 in panes sit one per 21 in bay, centred at y 1.02, and the tub proportions are as rated before."},
+    "window tubs/reveals": {"score": 8.4, "note": "Geometry unchanged. The colour now comes from the lighting (tubSky/tubHue). PY/Y upper tubs read cool grey-blue (ra_yWin tub 174/184/197 B-R +23, py_37303 tub 174/183/199 +25): a better match than w18. F tubs went blue as well (s09 bowl 191/200/213, q03 192/201/215, B-R +22/+23), while f_17313's bowl is neutral and lighter than its wall (238/239/239 vs wall 225/227/226). See the lighting issue below."},
+    "window panes (day)": {"score": 8.7, "note": "The panes are now near-white and neutral like the photos (s09 251/253/255, q03 252/253/255, py_37303 236/236/236, f_17313 255). The q07 near pane is still blue (lighting)."},
+    "sidewall/lining": {"score": 8.2, "note": "The geometry and seams are unchanged, and there is still no weave. The tone is now cooler and darker: s02 238/240/244 -> 199/204/216, b_jClose 238/240/244 -> 206/214/227. That matches c_27316 (206/210/220, B-R +14) and py_37303 (149/161/183) better, and y_47300 (232-235, +5) less well. At grazing in s05 the flat lining reaches B-R +25 (221/229/246) beside a neutral bowl (+6) and a warm rim (-3.5): a cream-on-lavender two-tone that the photos show at only about half that split (c_27316 wall +14 vs bowl +3)."},
+    "shades electric": {"score": 8.4, "note": "Geometry unchanged (s05, b_jClose, b_jSheer). The sheer reads correctly."},
+    "shades manual": {"score": 8.5, "note": "Unchanged (s08). Shade travel is correct."},
+    "dado/grilles": {"score": 8.3, "note": "Unchanged geometry. The lower dado is a touch darker and cooler in b_dadoY2. The grille pitch is still fine."},
+    "carpet J": {"score": 8.6, "note": "Unchanged."},
+    "carpet Y/PY": {"score": 8.5, "note": "Unchanged texture. ra_carpetY is slightly bluer (mean 72/82/117 -> 70/81/124), still in family with y_47301."},
+    "carpet F": {"score": 8.5, "note": "Unchanged."},
+    "door-bay carpet/vinyl": {"score": 8.2, "note": "Pixel-identical (ra_door2floor)."},
+    "door surrounds/window": {"score": 8.3, "note": "Geometry unchanged (s06, s07, b_doorWin). The window is still short and the housing still has no gap. The glass is flat (lighting)."},
+    "clashes with changed seats/monuments": {"score": 9.0, "note": "None found. PY seats (09b) in q14/s03/ra_pyWin clear the tubs and dado. The THE Room 11A console and toe kick (09c) in ra_jWin/b_jSheer sit clear of the reveal. The door-4 galley/door 4L (s07) and the door-2 galley front (s06) are unchanged against the door lining and viewing window. The F suite (09d) in q03/s09 is unchanged against the window bowl."}
+  },
+  "issues": [
+    {"id": "fb-1", "severity": "medium", "area": "lighting", "description": "THE Suite window bowls now take the PY/Y tub sky hue: blue-grey, and no lighter than the wall. In f_17313 the F bowl is neutral and lighter than the wall.", "evidence": "s09 bowl p50 210/213/219 (B-R +9) -> 191/200/213 (+22). q03 bowl 211/214/220 -> 192/201/215 (+23), with the q03 wall at 194/198/206. f_17313 bowl 238/239/239 (+1) vs wall 225/227/226 (+1); c_27316 bowl 233/234/236 (+3). The J bowls are fine (b_jClose bowl +5).", "fix": "Lighting: gate tubSky/tubHue to the PY/Y zones (its source is y_47303/py_37303), or cut it to <=0.3 in F. Not a shell change."},
+    {"id": "fb-2", "severity": "low", "area": "lighting", "description": "At grazing, the flat lining goes lavender while the reveal stays neutral and the rim warm, so the bowls read as cream inserts on a blue wall.", "evidence": "s05 wall 221/229/246 (B-R +25) vs bowl 203/205/209 (+6) and rim 189/187/186 (-3.5). s02 wall +17. The photos split by ~11 (c_27316 wall +14 / bowl +3) and y_47300's sidewall is +5.", "fix": "Lighting: ease beltK/sideLed cool at grazing, or share the lining's cast with the reveal. Optionally the shell could move MAT.reveal '#ece4d5' a hair cooler ('#eae4da'), but I would not change the shell this late."},
+    {"id": "fb-3", "severity": "low", "area": "lighting", "description": "Look-out: ra_jWin now glares like c_27316 but washes out the GE90 nacelle, while the q07 near pane is still saturated blue.", "evidence": "ra_jWin nacelle 192/220/246 -> 240/250/255 (outline nearly gone). q07 near pane 192/203/215, B-R +23.", "fix": "Lighting, optional."},
+    {"id": "fb-4", "severity": "low", "area": "lighting", "description": "Carried: the door viewing-window glass is flat, with no sky detail.", "evidence": "b_doorWin glass 217/216/214, uniform.", "fix": "Lighting, optional."},
+    {"id": "door-window", "severity": "low", "area": "shell", "description": "Carried: the door window is ~15 % short, and the housing overlaps the bezel.", "evidence": "s06/b_doorWin geometry identical to w18.", "fix": "Window height 0.64 -> ~0.71 m, offset 0.03 m."},
+    {"id": "pleat-contrast", "severity": "low", "area": "shell", "description": "Carried: blackout pleat contrast is about half the photo's.", "evidence": "s05/b_jClose unchanged tile.", "fix": "s_pleat plateau-and-step profile."},
+    {"id": "grille-pitch", "severity": "low", "area": "shell", "description": "Carried: grille louvres too fine.", "evidence": "b_dadoY2.", "fix": "Louvre count 16."},
+    {"id": "vinyl-speckle", "severity": "low", "area": "shell", "description": "Carried: vinyl speckle low.", "evidence": "ra_door2floor identical.", "fix": "Vinyl LAYER_PARAMS amplitude x1.6-2."},
+    {"id": "sidewall-weave", "severity": "low", "area": "shell", "description": "Carried: no linen weave on the sidewall.", "evidence": "s01 lining L std ~1.", "fix": "Normal-only fabric layer ~0.06."},
+    {"id": "fcarpet", "severity": "low", "area": "shell", "description": "Carried: F carpet hue/fleck.", "evidence": "Unchanged.", "fix": "Only if the user confirms the F carpet differs from J."}
+  ],
+  "questionsForUser": [
+    "Still open from w17: is the THE Suite floor carpet the same heather as THE Room, or a sparser, larger-fleck pattern?"
+  ],
+  "notes": "I rated from the supplied renders only (no browser). Scripts: scratchpad/fb/diff.py, reg.py. Side-by-side images: scratchpad/fb/sbs_*.png (w18 left, head right). I confirmed the pixel-diff summary: ra_door2floor 0 %, s06 4.9 %, the rest 20-76 %, head 1-16 levels darker and bluer. Every change traces to the lighting run (04_shaders/12_scene). The 07_shell geometry is untouched, and the seat/monument edits create no clashes with tubs, dado, door linings or the viewing window. Net effect on the shell: the panes are better (near-white, neutral), the PY/Y tub hue is better (matches py_37303), and the lining tone is closer to c_27316/py_37303. The F bowls and the grazing lining have gone cooler than the photos (fb-1, fb-2: lighting). There are no high issues and no shell medium issues, so the shell holds at 8.5, the same as w17/w18."
+}

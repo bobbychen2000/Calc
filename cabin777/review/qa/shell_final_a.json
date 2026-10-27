@@ -1,0 +1,86 @@
+{
+ "area": "shell",
+ "rater": "A",
+ "round": "final",
+ "score": 8.4,
+ "summary": "The shell code is unchanged since w18 (617dd99). Every pixel change between w18 and head comes from the lighting loop, and on balance it moves the shell toward the official photos. (1) The sidewall lining is now cool blue-grey instead of neutral white: b_jClose wall 239/241/245 (R-B -6) -> 195-215/198-222/206-238 (R-B -11 to -23); s09 239/241/244 -> 190/194/202. The official photos are cool too: c_27316 lining 195/198/207 (R-B -12) and 207/211/221 (-14), c_27312 218/222/228 (-9), y_47301 218/223/231 (-13), py_37301 lower wall 187/194/209 (-22). The darkening the caller saw (b_jClose 206->192 and similar) is this tone moving toward the photos; the creams are not going grey. (2) Day panes now reach glare: 7-37 % of pane pixels are at 254+ (b_dadoY2 37 %, q03 31 %, s09 26 %, ra_yWin 19 %), where w18 had 0 %. That fixes the old q07 complaint: the near pane is 192/203/215 against 184/193/211, and q03 / s09 panes are 252/253/254-255. The cost is cloud texture: s09 pane L std 5.1 -> 2.0, b_dadoY2 19.9 -> 14.9. This is acceptable because c_27316 / y_47300 are blown out too. (3) The Y carpet is slightly bluer: ra_carpetY 39/49/72 -> 39/49/78, q16 aisle 38/46/67 -> 37/46/72, closer to y_47301's 34/38/76. (4) Blackout pleat contrast is unchanged (s05 pleat std 59.7 -> 60.6). The one new defect: the window-bezel outer lip keeps its warm cream albedo (WMAT.reveal #ece4d5) while the cool wash now covers the lining band and the recessed tub on either side. The F/J close-ups therefore show a beige outline ring round every window. b_jClose row 280: wall 195/198/206 (R-B -11), lip 197/195/192 to 198/195/191 (R-B +5/+7). s09 row 250: wall 190/194/202, lip 181/179/178 and 190/189/187, tub 209/219/233 (R-B -24). In w18 all three were neutral (R-B -6 / +2 / -1), and the photos (c_27316 bezel R-B -1 to -7) show no warm ring. The ring is easy to see in b_jClose, b_jSheer, s09, s01, q03 and s05, and faintly in b_dadoY2 (lip 204/202/201 between tub -22 and wall -9). The tone change caused it, so it is mainly a lighting-mask issue, but the shell's warm reveal albedo is what it exposes. q12 also lost a lot of reveal brightness (tub side 121-125 -> 68-71, charcoal) under the new exposure, which is lighting. Geometry, proportions, shades, grilles, door surround and floor patterns are identical to w18, and so are the low items carried from w14-w17. Net: the colours are closer to the photos, offset by one visible new tone mismatch at the bezel lip. 8.4, a hair under the w18 8.5, with one medium item that could be cleared in either the lighting or the shell code.",
+ "renders": "Pre-made renders, no browser launched. Head: scratchpad/head (5 QA views) and scratchpad/head_s (18 shell views). w18: scratchpad/w18 and scratchpad/w18_s. Side-by-side montages (w18 left, head right): /tmp/claude-0/-home-user-Calc/e142ea31-7271-5f09-8e77-0e171b4a22f4/scratchpad/fa/m_*.jpg, script fa/mont.py.",
+ "previousIssues": [
+  {"id": "w16a-1 F carpet and door cross-aisle carpet flat procedural fabric", "severity": "medium", "status": "fixed (since w17), still fixed. ra_door2floor changed 0.0 % of pixels w18 -> head."},
+  {"id": "w18a-1 [lighting] near grazing pane in q07 saturated blue, c_27316 blown white", "severity": "low", "status": "partly fixed by lighting. The q07 near pane is 192/203/215 (was 184/193/211). F/J face-on panes now clip (q03 252/253/255, 31 % at 254+). The q07 near pane is still bluish, not the 255 of c_27316."},
+  {"id": "w17a-1 / w17b fcarpet-hue / fcarpet-fleck / jcarpet-hue", "severity": "low", "status": "not fixed (shell unchanged)"},
+  {"id": "door viewing window ~15 % short, housing overlaps bezel", "severity": "low", "status": "not fixed. s06 changed only 4.9 %, all of it lighting tone; the geometry is identical."},
+  {"id": "blackout pleat contrast about half the photo's", "severity": "low", "status": "not fixed. The pleat std held (s05 59.7 -> 60.6), so there is no regression."},
+  {"id": "sidewall weave, vinyl speckle, PY/Y tub-floor card, grille pitch", "severity": "low", "status": "not fixed (geometry and texture unchanged)"},
+  {"id": "pane-cool-cap (w18b)", "severity": "low", "status": "fixed by lighting. Panes are now 252/253/254 and partly clipped, as in c_27316 / y_47300."},
+  {"id": "lighting-carry: neutral creams, flat door glass, near-black under-seat grille", "severity": "low (lighting)", "status": "creams: changed, the lining is now cool like the photos (see the new issue for the bezel lip). Door glass: unchanged. Grille: unchanged."}
+ ],
+ "details": [
+  {"detail": "sidewall", "score": 8.3, "note": "The lining tone is now cool and close to the official photos (R-B -11 against c_27316 -12). The THE Room close-up runs a bit cooler and more saturated than the photo (b_jClose left wall 215/222/238, R-B -23 / saturation 9.7 %, against c_27316 R-B -12 / 5.8 %). There is still no weave."},
+  {"detail": "window tubs/reveals", "score": 8.1, "note": "Geometry unchanged. The new warm cream ring at the bezel lip against the cool wall and tub (issue fA-1) hurts the F/J close-ups. q12's reveal goes charcoal (68-71), which is lighting."},
+  {"detail": "window glass / day view", "score": 8.5, "note": "Glare now matches the photos better (7-37 % of pixels clipped). Cloud detail is reduced (s09 L std 5.1 -> 2.0)."},
+  {"detail": "shades electric", "score": 8.4, "note": "Unchanged geometry. The pleat contrast held (s05). The sheer (b_jSheer) reads white against the cool wall, which is plausible."},
+  {"detail": "shades manual", "score": 8.5, "note": "Unchanged (s08)."},
+  {"detail": "dado/grilles", "score": 8.3, "note": "Unchanged."},
+  {"detail": "carpet J", "score": 8.8, "note": "Unchanged."},
+  {"detail": "carpet Y/PY", "score": 8.5, "note": "Slightly bluer, closer to y_47301 (B 72 -> 78 against the photo's 76)."},
+  {"detail": "carpet F", "score": 8.4, "note": "Unchanged."},
+  {"detail": "door-bay carpet", "score": 8.3, "note": "Pixel-identical (ra_door2floor 0 %)."},
+  {"detail": "door surrounds/window", "score": 8.3, "note": "Geometry unchanged. In s07 the door 4L lining (199/201/203) and the cooled wall (196/200/207) still match in tone."},
+  {"detail": "vinyl", "score": 8.2, "note": "Unchanged."}
+ ],
+ "issues": [
+  {
+   "id": "fA-1",
+   "severity": "medium",
+   "area": "lighting",
+   "description": "The new cool lining / tub wash leaves the bezel outer lip on its warm cream albedo, so every F/J window (and, more faintly, Y/PY) gets a beige outline ring. The official photos show a uniformly cool white bezel.",
+   "evidence": "b_jClose row 280: wall x130-154 195/198/206 (R-B -11), lip x166-178 197/195/192 and 198/195/191 (R-B +5/+7). In w18 the same pixels were 239/241/245 (wall) and 227/227/227 (lip), both neutral. s09 row 250: wall 190/194/202, lip x400-404 181/179/178 and 190/189/187, tub x416+ 209/219/233 (R-B -24). b_dadoY2 row 200: tub 209/219/232, lip 204/202/201, wall 197/200/206. c_27316 bezel R-B -1 to -7, wall -7 to -14: no warm step. The ring is clearly visible in m_b_jClose, m_b_jSheer, m_s09_fWin, m_s05_jShades, m_s01_jWallL and m_q03_suite1A.",
+   "fix": "Lighting (preferred): widen the coolW mask (linW / recd in 04_shaders.js) so it covers the bezel lip, for example by extending the recd falloff about 2-3 cm past the tub edge, or by taking the cool hemiBot/wash on everything within the window cell. Shell fallback: cool WMAT.reveal '#ece4d5' -> about '#e8e6e2' (R-B ~+6 -> ~+3) so that the lip is neutral under the cool wash, then re-check against the in-flight warm-bowl references (tt_window, DSC_1920) noted in 07_shell.js."
+  },
+  {
+   "id": "fA-2",
+   "severity": "low",
+   "area": "lighting",
+   "description": "In q12, the window reveal around the wing view went from light grey to charcoal under the new exposure.",
+   "evidence": "q12 tub side (80-120, 100-400) 125/130/140 -> 69/71/77. Bezel (150-170, 300-450) 121/126/136 -> 68/71/76. The scene mean is 126.5 -> 118.8, and the sky / wing are about unchanged.",
+   "fix": "Lighting: raise the reveal glow / fill under bright exteriors (u_winGlow reveal term) so a white plastic reveal reads at ~100-130 against the exterior. Optional."
+  },
+  {
+   "id": "fA-3",
+   "severity": "low",
+   "area": "lighting",
+   "description": "Partly clipped day panes lose most of their cloud texture in the F close-ups.",
+   "evidence": "s09 pane L std 5.1 -> 2.0, with 26 % at 254+. b_dadoY2 pane 19.9 -> 14.9, with 37 % at 254+. The photos are blown out too, so this is a trade-off, not a defect.",
+   "fix": "Optional: a soft shoulder in the glass tone curve rather than a hard clip."
+  },
+  {
+   "id": "fA-4",
+   "severity": "low",
+   "area": "lighting",
+   "description": "The THE Room lining in b_jClose / b_jSheer is a little too cool and saturated (it reads faintly lavender) compared with c_27316.",
+   "evidence": "b_jClose left wall 215/222/238 (R-B -23, saturation 9.7 %) against c_27316 195/198/207 (R-B -12, saturation 5.8 %).",
+   "fix": "Lighting: trim the cool-wash blue in the F/J zone by about 40 %."
+  },
+  {
+   "id": "w15-carry",
+   "severity": "low",
+   "area": "shell",
+   "description": "Carried: door viewing window short / housing overlap, blackout pleat contrast, sidewall weave, vinyl speckle, PY/Y tub-floor card, grille pitch, F carpet grain/hue.",
+   "evidence": "Shell code unchanged since 617dd99. ra_door2floor 0 % changed; s05 pleat std 59.7 -> 60.6.",
+   "fix": "As in w15a / w16b / w17a / w18b."
+  }
+ ],
+ "refs": [
+  "ref/ana/c_27316-lang-multi.jpg",
+  "ref/ana/c_27312-lang-multi.jpg",
+  "ref/ana/py_37301-lang-multi.jpg",
+  "ref/ana/y_47301-lang-multi.jpg",
+  "ref/ana/y_47300-lang-multi.jpg",
+  "ref/ana/f_17306-lang-multi.jpg",
+  "/tmp/claude-0/-home-user-Calc/e142ea31-7271-5f09-8e77-0e171b4a22f4/scratchpad/fa/"
+ ],
+ "questionsForUser": [
+  "Still open from w17: is the THE Suite floor carpet the same heather as THE Room, or a sparser, larger-fleck pattern?"
+ ]
+}

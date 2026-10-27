@@ -161,3 +161,30 @@ cameras, should be checked. q07 and q12 look fine.
   in the photos).
 - The shell tint can't go higher (it is already about 1.0). This needs the sky / winExp side, or the u_glassT idea from L10
   step 2: transmittance applied before aces(), so a bright day sky can clip to white.
+
+## Final confirm (2026-10-27): to lighting, after lighting runs 2-4 (head 1430d42)
+
+Shell ratings on 1430d42: A 8.4 / B 8.5 (`shell_final_a/b.json`; w18 was 8.5 / 8.5 on the same 07_shell.js). Every render change
+since w18 comes from the lighting run. Most of it moved the shell toward the photos (cooler lining, near-white panes, Y carpet blue).
+Two items are lighting's:
+
+### fb-1 (medium, rater B): THE Suite bowls take the PY/Y tub-sky hue
+- s09_fWin bowl 210/213/219 (B-R +9) in w18 -> 191/200/213 (+22) on 1430d42; q03 +23. The bowl is now no lighter than the wall. In
+  f_17313 the F bowl is neutral (+1) and lighter than the wall (238 vs 225). THE Room bowls are fine (+5).
+- Fix: gate `tubLow` / `crownW`'s sky hue (`u_tubHue`, `u_tubSky`, 04_shaders.js l.639-646) to the PY/Y zones, e.g. multiply by the
+  seat-zone step already used for `seatC` (`step(u_sLowZ, v_wpos.z)`), or add an F-zone fade at z < ~13.
+- Shell can't fix this without cooling the cream reveal, which would make it worse.
+
+### fA-1 (medium, rater A): warm bezel lip against the cooled wall: fixed in shell, follow-up optional
+- The new cool wash (coolW) and tub hue cool the wall and the tub, but the 16 mm roll-in lip kept the cream reveal albedo, so every
+  F/J window got a beige outline (b_jClose lip R-B +5/+7 vs wall -11; c_27316 bezel -1..-7).
+- Shell fix: the lip now takes the wall albedo (`07_shell.js`, final confirm). Optional on your side: run the coolW / tub hue
+  transition 2-3 cm past the tub edge (`recd` smoothstep xLin+0.004..0.02), so the cooled tub and the wall blend without a step.
+
+### Low (both raters)
+- fA-2: q12 window surround round the wing view went charcoal (~121-125 -> 68-71).
+- fA-3: clipped panes lose cloud detail (s09 pane spread 5.1 -> 2.0). The photos are blown too: a trade-off.
+- fA-4 / fb-2: the J wall at grazing reads lavender (b_jClose R-B -23, s 9.7 % vs c_27316 -12, 5.8 %; s05 wall B-R +25 beside a
+  neutral bowl). Ease the cool wash about a third at grazing.
+- fb-3: the ra_jWin look-out washes out the GE90 nacelle (240/250/255), while the q07 near pane stays blue (192/203/215).
+- fb-4 (carried): door viewing-window glass is flat (217/216/214), with no sky detail.
