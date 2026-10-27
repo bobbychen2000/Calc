@@ -1,0 +1,53 @@
+{
+  "area": "shell",
+  "rater": "B",
+  "round": "confirm4",
+  "head": "7a2c8b9",
+  "score": 8.6,
+  "summary": "07_shell.js is unchanged since 87a5f4c, and every shell surface I measured is unchanged or moved within lighting tolerance. Window size, spacing, height, tubs, bezels, shades, dado, carpets and door linings are therefore unchanged in geometry and proportion. Base vs head, at more than 8 levels: q03 0 %; q07 0.00 % (one 5x10 px patch at x410-420, y115-119, in the distant aisle). q12 is 2.35 %, confined to rows 194-424 inside the pane (clouds); its surround stays 101/105/110 (L104) and its lip 63/65/66, both identical, and the joint is still clean. q14 is 1.83 %, all in rows 0-112, about 9-11 L darker on the ceiling/bin underside and the reveal tops (reveal top B-R +33 -> +34, upper wall 220/222/226 -> 218/220/223); the panes, tubs and lower wall are identical. q16 is 5.74 %, on the econ seat covers only; its pier, tub and carpet boxes are pixel-identical. The small PY darkening moves toward py_37301 (photo upper wall 180/187/201), so it is not a regression. Every earlier medium stays fixed. Only the carried lows remain, plus one lighting low that I am now logging explicitly: in the PY side view the tub reads cooler and darker than the wall (tub +28 vs wall +5), whereas in py_37301 the tub is lighter and more neutral than the wall (tub 226/231/237 +11 vs wall 176/186/205 +29). That is unchanged since base and is lighting. Score holds at 8.6.",
+  "renders": "Pre-made renders, no browser. Head 7a2c8b9: scratchpad/head (q03, q07, q12, q14, q16) and head_x2/q12_wing.png. Base 87a5f4c: scratchpad/base. Side-by-side: c_q14_seat26A.png, c_q16_econAisle.png. Scratchpad = /tmp/claude-0/-home-user-Calc/8a64b4f1-7f4d-5263-bcd4-a85da1ce4373/scratchpad. Reference thumbnails: r_py_37301.png, r_y_47301-.png, r_f_17306-.png.",
+  "previousIssues": [
+    {"id": "fb-1 (medium, lighting) THE Suite bowls take the PY/Y tub-sky hue", "severity": "medium", "status": "still fixed. In q03 the bowl is 210/210/207 (B-R -3) and the wall 220/220/219 (-1), identical in base and head (0 % diff)."},
+    {"id": "fA-1 (medium, rater A) warm cream ring at the bezel lip", "severity": "medium", "status": "still fixed. No lip pixels changed in q03, q07, q14 or q16. q12 lip 63/65/66 (+3) is identical."},
+    {"id": "w16a-1 (medium) F / door-bay carpet", "severity": "medium", "status": "still fixed. The floors are unchanged; the q16 carpet is 37/45/65 in both base and head."},
+    {"id": "L16 (low) q12 joint specks", "severity": "low", "status": "still fixed. The caller logs 0 speck rows at DPR 1 and DPR 2. The q12 diff lies entirely inside the pane (x 0-534, y 194-424, clouds), and the surround box is identical."},
+    {"id": "c3A-1 (low) q07 single dark pixel", "severity": "low", "status": "unchanged (not visible). The only q07 diff is a 5x10 px patch in the far aisle, which is not shell."},
+    {"id": "c3A-2 (low) q12 joint groove crisp", "severity": "low", "status": "unchanged (a matter of taste)."},
+    {"id": "c2A-1 / c2b-1 (low, lighting) q12 reveal slightly bright", "severity": "low", "status": "not fixed. The surround is L104 in this render set (101/105/110), which is inside the photo band of L104-110 the integrator quoted, so it now reads acceptable here."},
+    {"id": "c2A-2 / c2b-4 (low) F bowl no lighter than the wall, faintly warm", "severity": "low", "status": "not fixed (bowl 210 vs wall 220, B-R -3 vs -1). Barely visible."},
+    {"id": "fA-3 / fb-3 / fb-4 / c2b-2 (low, lighting) clipped panes, nacelle washout, flat door glass", "severity": "low", "status": "not fixed (accepted). The q14 pane is 252/253/254 in both. The door glass is not in these views."},
+    {"id": "c2b-3 (low, lighting) J wall lavender at grazing", "severity": "low", "status": "not re-measurable at grazing in this set. The q07 near wall reads 193/198/202 (+9), unchanged and close to c_27316's ~+10."},
+    {"id": "shell-carried / w15-carry", "severity": "low", "status": "not fixed (07_shell.js unchanged): door window short with the housing overlapping the bezel, pleat contrast, grille pitch, vinyl speckle, sidewall weave, PY/Y tub-floor card, F carpet hue/fleck."}
+  ],
+  "details": {
+    "window size/spacing/height": {"score": 8.6, "note": "Unchanged. q16 shows one window per bay, evenly pitched down the run. The pane sits low in a tall tub, as in y_47301. The q14 PY pane-to-tub ratio is a little small against py_37301 (carried)."},
+    "window tubs/reveals": {"score": 8.6, "note": "The geometry is unchanged, and the reveal outline reads through shading. In the PY side view the tub is cooler and darker than the wall, an inversion of the photo (lighting, see c4b-1)."},
+    "window panes (day)": {"score": 8.5, "note": "Unchanged. The panes are clipped near white (accepted)."},
+    "sidewall/lining": {"score": 8.5, "note": "Unchanged, a continuous panel with no specks. The PY upper wall is 2-3 L darker, toward the photo. Still no weave."},
+    "shades electric": {"score": 8.4, "note": "Unchanged (not prominent in this set)."},
+    "shades manual": {"score": 8.5, "note": "Unchanged (q14/q16 shade lips identical)."},
+    "dado/grilles": {"score": 8.3, "note": "Unchanged."},
+    "carpets J/Y/PY/F": {"score": 8.5, "note": "Unchanged, pixel-identical in q16."},
+    "door surrounds/window": {"score": 8.2, "note": "Not in these views; the code is unchanged."},
+    "q12 look-out reveal": {"score": 8.5, "note": "The neutral mid-grey surround at L104 sits within the photo band. The lip, roll and joint all read cleanly. The black chord band across the wing is exterior, not shell."},
+    "clashes": {"score": 9.0, "note": "None."}
+  },
+  "issues": [
+    {"id": "c4b-1", "severity": "low", "owner": "lighting", "evidence": "q14 PY side view: the tub is 168/180/196 (B-R +28, L178) against the upper wall's 218/220/223 (+5, L220). py_37301 has the tub at 226/231/237 (+11), lighter than its wall at 176/186/205 (+29). The relation is inverted, and it is unchanged since base.", "fix": "Optional: cut tubSky on the PY/Y tubs at oblique view, or lift the tub fill so it sits at or above the wall."},
+    {"id": "c4b-2", "severity": "low", "owner": "exterior", "evidence": "q12: a flat black chordwise band across the inboard wing upper surface (x 545-750, y 365-395). It is not shell, so I note it for the exterior owner.", "fix": "Check whether it is a spoiler gap or a missing panel."},
+    {"id": "c2A-2 / c2b-4", "severity": "low", "owner": "lighting", "evidence": "F bowl 210/210/207 vs wall 220/220/219.", "fix": "Optional."},
+    {"id": "shell-carried", "severity": "low", "owner": "shell", "evidence": "Unchanged: door window short with the housing overlapping the bezel, pleat contrast, grille pitch, vinyl speckle, sidewall weave, PY/Y tub-floor card, F carpet hue/fleck.", "fix": "Post-publish."}
+  ],
+  "refs": [
+    "ref/ana/py_37301-lang-multi.jpg",
+    "ref/ana/py_37303-lang-multi.jpg",
+    "ref/ana/y_47301-lang-multi.jpg",
+    "ref/ana/f_17306-lang-multi.jpg",
+    "ref/ana/f_17300-lang-multi.jpg",
+    "ref/ana/c_27316-lang-multi.jpg"
+  ],
+  "questionsForUser": [
+    "Still open from w17: is the THE Suite floor carpet the same heather as THE Room, or a sparser, larger-fleck pattern?"
+  ],
+  "notes": "There is no high or medium issue. The lighting and SEATMAT changes since 87a5f4c touch the shell only on the PY upper wall and reveal tops (-2 to -3 L in the boxes, about -9 L on the changed pixels), which moves toward the photo. The score of 8.6 meets the target."
+}

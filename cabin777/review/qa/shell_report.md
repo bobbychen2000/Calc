@@ -300,3 +300,29 @@ with no code change. Cameras: `review/qa/shell_views.js` (18 views) plus the 22 
 - **Score:** one rater, as the diff stayed under 0.5 % outside the defect: rater A **8.6** (confirm2 8.5), no high or
   medium; all earlier mediums still fixed (`shell_confirm3_a.json`). New low c3A-1: one q07 pixel 18 L darker, not visible.
 - **Triangles:** shell mesh +7.5 k (20 rows x 2 tris per edge; the 40-row first build was +15 k).
+
+## Final confirm (publish) (2026-10-27, head 7a2c8b9)
+
+| Round | Rater A | Rater B | Mean | Files |
+|---|---|---|---|---|
+| confirm4 (fresh, head 7a2c8b9; 07_shell.js unchanged since 87a5f4c) | 8.6 | 8.6 | 8.6 | shell_confirm4_a / confirm4_b.json |
+
+- **Shell confirmed for publish:** both raters 8.6, no high or medium. No code change.
+- **What changed since 87a5f4c:** lighting only (04_shaders.js, 12_scene.js: L17 PY white balance, L18) and one SEATMAT value (econ sheen).
+  Renders of 87a5f4c (git worktree) diffed against the head (> 8 levels):
+  - q03 0 %, q07 ~0.
+  - q12 2.35 %, all clouds in the pane.
+  - q14 1.83 %, rows 0-112 only: the PY upper band is about 3-4 L darker and slightly bluer, toward py_37301 / py_37303.
+  - q16 5.74 %, seat covers only; the pier, tub and carpet are pixel-identical.
+- **All earlier mediums still fixed:** fb-1, fA-1 and w16a-1.
+- **q12 seam (L16) still fixed:**
+  - DPR 1: 0 speck rows above median+25.
+  - DPR 2 (taken for the first time): 0 rows at +25, +15 and +10. The groove row-min median is L68 against the panel's L104, unchanged.
+- **Now in band:** the q12 reveal reads L104-107, inside the photo's L104-110 (c2A-1).
+- **New lows, lighting, optional and not routed as blocking:**
+  - c4A-1: the q14 PY piers are about 50 L brighter and less blue than py_37301 (L223 against L163-173). Cut the PY upper-wall wash another 5-10 L with a touch of blue.
+  - c4b-1: the q14 PY tub reads cooler and darker than the wall, while in the photo it is lighter. This was unchanged since base.
+  - c4A-2: 19 single-pixel flips on the q14 ceiling and bin edge lines; nothing visible.
+  - c4b-2 (exterior): a flat black chordwise band on the q12 inboard wing.
+- **Carried shell lows unchanged:** door window short, pleat contrast, no sidewall weave, vinyl speckle, PY/Y tub-floor card, grille pitch, F carpet grain and hue.
+- **Triangles:** unchanged.

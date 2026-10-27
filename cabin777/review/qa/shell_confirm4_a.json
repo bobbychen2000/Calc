@@ -1,0 +1,50 @@
+{
+ "area": "shell",
+ "rater": "A",
+ "round": "confirm4",
+ "head": "7a2c8b9",
+ "score": 8.6,
+ "summary": "No shell regression between 87a5f4c and 7a2c8b9. 07_shell.js is unchanged, and every pixel change is lighting or seat material. q03 is pixel-identical. q07 changes only 0.003 % of pixels (one thin line at x 410-420, y 115-119). In q12 the changes (2.35 %) all lie in the pane (clouds), and the lining boxes are identical. The reveal (x 0-120) sits at 103/107/112 and the surround at 101/105/110 in both base and head. q16 changes 5.74 %, all in the seats (econ sheen); the sidewall, bins and carpet are unchanged. The q14 PY upper-wall change is small and moves toward the photos: the top band (x 300-420, y 95-110) went from 212/219/229 (L220, B-R +17) to 207/215/226 (L216, B-R +19). The piers between the windows are unchanged (214/220/236, L223, B-R +22), as are the lower wall (190/197/209, B-R +19) and the tub (171/179/191). py_37301 and py_37303 still show a cooler, darker wall: piers 158/170/192 and 149/160/182 (B-R +33/+34, L163-173), lower wall 187/194/209 and 173/182/199. So the render is still about 50 L brighter and somewhat less blue on the piers. That is an exposure difference (lighting), not a shell regression, and the head change goes in the right direction. Speck/crack scan (a pixel more than 40 L off its 5x5 median, new in head vs base): q03 0, q07 1, q12 1, q14 19. All 19 q14 pixels are threshold flips on existing ceiling/bin edge lines (base 36-40, head 41-43), with no new feature. q16 has 456, all on seat fabric. The q12 joint box (x 95-145, y 150-470) has 0 rows above median+25/+15/+10 in head and 0 at DPR 2 (box doubled, median L104). The groove row-min median is L68 at both DPRs, the same as base. Score held at 8.6; the carried low items keep the shell below 9.",
+ "renders": "Pre-made renders, no browser launched. Scratchpad = /tmp/claude-0/-home-user-Calc/8a64b4f1-7f4d-5263-bcd4-a85da1ce4373/scratchpad. Base 87a5f4c: base/ (q03, q07, q12, q14, q16). Head 7a2c8b9: head/. DPR 2 head: head_x2/q12_wing.png. Side-by-side base|head: c_q14_seat26A.png, c_q16_econAisle.png.",
+ "previousIssues": [
+  {"id": "fb-1 (medium, lighting) THE Suite bowls take the PY/Y tub-sky hue", "severity": "medium", "status": "still fixed. q03 is pixel-identical to base (0 px > 8)."},
+  {"id": "fA-1 (medium, rater A) warm cream ring at the bezel lip", "severity": "medium", "status": "still fixed. The lining and bezel are unchanged in q03/q07/q14/q16. In q14 the tub (612-640, 150-190) is 171/179/191 in both base and head."},
+  {"id": "w16a-1 (medium) F / door-bay carpet", "severity": "medium", "status": "still fixed. Floors are unchanged: the q14 diff is confined to y < 113, and the q16 aisle carpet shows no change outside the seat edges."},
+  {"id": "L16 (low) bright specks along the q12 panel joint", "severity": "low", "status": "still fixed: 0 rows at +25/+15/+10 at DPR 1 and DPR 2. The groove row-min median is L68, unchanged."},
+  {"id": "c3A-1 (low) q07 single dark pixel at (752,163)", "severity": "low", "status": "unchanged (q07 is identical there); not visible."},
+  {"id": "c3A-2 (low) q12 joint groove crisper than the photo seams", "severity": "low", "status": "not fixed (no change; groove L68 against panel L103-104)."},
+  {"id": "c2A-1 (low, lighting) q12 reveal slightly bright", "severity": "low", "status": "effectively fixed in these renders. Reveal (x 0-120) median 103/107/112 (L107) and surround (100-180, 250-350) 101/105/110 (L105), both inside the photo's L104-110. Base is identical, so this came in before 87a5f4c."},
+  {"id": "c2A-2 (low, lighting) F bowl not lighter than the wall", "severity": "low", "status": "not fixed (q03 unchanged)."},
+  {"id": "fA-3 / fb-3 / fb-4 (low, lighting)", "severity": "low", "status": "not fixed (accepted / not in these views)."},
+  {"id": "w15-carry (low, shell)", "severity": "low", "status": "not fixed (07_shell.js unchanged)."}
+ ],
+ "details": [
+  {"detail": "sidewall", "score": 8.6, "note": "Unchanged geometry. The q14 PY upper band is 4 L darker and 2 bluer, toward py_37301/37303. The piers are still about 50 L brighter than the photos and less blue (B-R +22 vs +33); that is exposure (lighting). No weave."},
+  {"detail": "panel joints", "score": 8.5, "note": "Clean at DPR 1 and 2, with no specks. The groove is a little crisper than the photo seams."},
+  {"detail": "window tubs/reveals", "score": 8.6, "note": "Unchanged. The PY tub keeps a slight cool tint, consistent with the photos."},
+  {"detail": "window glass / day view", "score": 8.5, "note": "Only the clouds differ."},
+  {"detail": "q12 look-out lining", "score": 8.5, "note": "The reveal and surround at L105-107 now sit in the photo range, and the joint is clean."},
+  {"detail": "shades electric / manual", "score": 8.5, "note": "Unchanged."},
+  {"detail": "dado/grilles", "score": 8.3, "note": "Unchanged (q14 does not show the grille; py_37301 shows a coarser louvre)."},
+  {"detail": "carpets / door-bay floor", "score": 8.4, "note": "Unchanged."},
+  {"detail": "door surrounds/window", "score": 8.3, "note": "Not in these views; no code change."}
+ ],
+ "issues": [
+  {"id": "c4A-1", "severity": "low", "owner": "lighting", "evidence": "q14 PY piers: 214/220/236 (L223, B-R +22) against py_37301 158/170/192 (L173, +34) and py_37303 149/160/182 (L163, +33). The lower wall at 190/197/209 vs 187/194/209 / 173/182/199 is close. Bright upper wall and piers vs the photos: an exposure / wall-wash level difference, not shell material. L18 moved the top band 4 L toward the photos.", "fix": "Optional, owner lighting: a further small cut of the PY upper-wall wash (5-10 L) with a touch more blue would bring the piers closer. Do not change shell albedo."},
+  {"id": "c4A-2", "severity": "low", "owner": "lighting", "evidence": "q14: 19 single pixels on existing ceiling/bin edge lines (y 5-112) cross the 40 L speck threshold because edge contrast rose by 2-5 L. No new line or speck is visible.", "fix": "None needed."},
+  {"id": "c3A-2", "severity": "low", "owner": "shell", "evidence": "q12 joint groove at L68 against a panel at L103-104 (-36 L) at DPR 1 and DPR 2.", "fix": "Optional: lighten the groove by about 10 L."},
+  {"id": "c2A-2", "severity": "low", "owner": "lighting", "evidence": "The F bowl is no lighter than the wall (q03 unchanged).", "fix": "As in confirm2."},
+  {"id": "w15-carry", "severity": "low", "owner": "shell", "evidence": "Unchanged: door window short with the housing overlapping the bezel, pleat contrast, sidewall weave, vinyl speckle, PY/Y tub-floor card, grille pitch, F carpet grain/hue.", "fix": "Post-publish."}
+ ],
+ "refs": [
+  "ref/ana/f_17306-lang-multi.jpg",
+  "ref/ana/f_17300-lang-multi.jpg",
+  "ref/ana/c_27316-lang-multi.jpg",
+  "ref/ana/py_37301-lang-multi.jpg",
+  "ref/ana/py_37303-lang-multi.jpg",
+  "ref/ana/y_47301-lang-multi.jpg"
+ ],
+ "questionsForUser": [
+  "Still open from w17: is the THE Suite floor carpet the same heather as THE Room, or a sparser, larger-fleck pattern?"
+ ]
+}
