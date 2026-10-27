@@ -281,3 +281,22 @@ with no code change. Cameras: `review/qa/shell_views.js` (18 views) plus the 22 
   - The THE Room wall at grazing reads B-R +20 against c_27316 ~+10 (B).
 - **Carried shell lows unchanged:** door window short, pleat contrast, no sidewall weave, vinyl speckle, PY/Y tub-floor card, grille pitch,
   F carpet grain and hue. Triangles unchanged.
+
+## Integration lows (confirm 3, 2026-10-27, commit 87a5f4c)
+
+- **Item:** L16 integration low, bright 1 px specks along the sidewall panel joint beside the q12 window.
+- **Cause (found by elimination):** not the seam strip. With `wallSeamGeo` removed the specks stay, and with the seam
+  tinted red they sit beside it. Each window cell spans a full 21 in bay (hw = pitch / 2), so cell edges fall at mid-pier,
+  under the joint. The recess rings' right and left side columns carry different v rows (J: 19 / 19 at different heights,
+  e.g. -0.48114 vs -0.4912; PY/Y: 17 vs 18), and the fillers use a third set. The shared edges therefore have T-junctions,
+  which open hairline cracks on the curved lining, and the sky behind showed through.
+- **Fix:** `wallBackGeo` adds a lining-coloured (MAT.sidewall) ribbon 16 mm wide, 2 mm behind the lining, over
+  v 0.48-1.60 at every cell edge in the seat runs. No visible surface moves; the joint strip is unchanged.
+- **Speck rows** (q12 box x 95-145, y 150-470, > median + 25): DPR 1 base 13-17 -> 0 (two base renders gave 16 and 13,
+  rater A 17); DPR 2 head 0 (rater A: 0 at +10 too).
+- **Pixel diff base -> head (DPR 1, > 8 levels):** q01 0.000 %, q03 0.002 %, q06 0.003 %, q07 0.002 %, q11 0, q13 0,
+  q14 0.001 %, q15 0.002 %, q16 0.024 %, q17 0.029 %, all isolated crack pixels on other cell edges (sky specks gone there
+  too). q12 2.3 %, of which all but the joint is the animated clouds (baseline vs baseline re-render: 3.3 %).
+- **Score:** one rater, as the diff stayed under 0.5 % outside the defect: rater A **8.6** (confirm2 8.5), no high or
+  medium; all earlier mediums still fixed (`shell_confirm3_a.json`). New low c3A-1: one q07 pixel 18 L darker, not visible.
+- **Triangles:** shell mesh +7.5 k (20 rows x 2 tris per edge; the 40-row first build was +15 k).

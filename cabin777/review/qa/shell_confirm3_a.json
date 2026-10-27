@@ -1,0 +1,48 @@
+{
+ "area": "shell",
+ "rater": "A",
+ "round": "confirm3",
+ "head": "87a5f4c",
+ "score": 8.6,
+ "summary": "The backing-ribbon fix (87a5f4c) does what it claims, and I found no regression. q12 joint box (x 95-145, y 150-470, median L104): 17 rows had a pixel above median+25 in base, against 0 in head and 0 in the DPR-2 head (box doubled, median L105). At +20 the counts are 24 / 0 / 0, at +15 35 / 0 / 0 and at +10 35 / 0 / 0. The joint still reads as a joint. Its dark groove is unchanged at every sampled row: min L70-62 against a panel median of L107-95 (-37 L) at the same x in base, head and DPR-2 head, as a continuous thin dark line. Panel joints in the official photos (y_47301, py_37301) are thin, faint seams at viewing distance. A crisp groove in a 0.5 m close-up such as q12 is plausible and is no worse than before. Across the 5 views, every base-vs-head difference above 4 L lies inside window panes (animated clouds), except for isolated single pixels. Those were bright sky specks in base along other cell edges and now equal their neighbourhood: q07 x 752-756 and x 22/927 (e.g. 205/211/217 -> 197/199/204, neighbourhood 197/199/204); q14 x 568-570, y 283-326 (200/203/209 -> 184/187/194, neighbourhood equal); q16 (379,201) and (258,223); q03 (278,371). So the fix also cleaned latent specks outside q12. The only odd pixel is q07 (752,163), now 18 L darker than its neighbourhood: one pixel, invisible. No surface is missing or doubled and no new line appears. The mean signed change is about 0 in every view outside the clouds. Nothing is above low. I add +0.1 over confirm2 for the removed speck artefact. The carried low items keep the shell below 9.",
+ "renders": "Pre-made renders, no browser launched. Baseline: scratchpad/rate/base; head 87a5f4c: scratchpad/rate/head (q03, q07, q12, q14, q16); DPR 2 head: scratchpad/rate/head_x2 (q07, q12, q14). Scratchpad = /tmp/claude-0/-home-user-Calc/ef36fd96-ce40-58c8-81d2-3905c44b2860/scratchpad. Comparison images: c_q12.png (base|head), c_q12L.png (joint zoom 2x base|head), c_x2.png (DPR-2 joint zoom), d_q12.png (diff x6).",
+ "previousIssues": [
+  {"id": "fb-1 (medium, lighting) THE Suite bowls take the PY/Y tub-sky hue", "severity": "medium", "status": "still fixed. q03 shows no change outside the pane (one pixel, 278/371, was a speck)."},
+  {"id": "fA-1 (medium, rater A) warm cream ring at the bezel lip", "severity": "medium", "status": "still fixed. The visible lining is unchanged in q03/q07/q14/q16 (no diffs above 4 L outside the panes)."},
+  {"id": "w16a-1 (medium) F / door-bay carpet", "severity": "medium", "status": "still fixed (floors unchanged in all 5 views)."},
+  {"id": "L16 (low) bright specks along the panel joint beside the q12 window", "severity": "low", "status": "fixed. 17 -> 0 rows above median+25 (35 -> 0 at +10); 0 at DPR 2. The groove is unchanged at -37 L. Latent specks on other cell edges in q07, q14, q16 and q03 are also gone."},
+  {"id": "c2A-1 (low, lighting) q12 reveal slightly bright", "severity": "low", "status": "not fixed (not in these renders; lighting commit a4cda03 is excluded)."},
+  {"id": "c2A-2 (low, lighting) F bowl not lighter than the wall", "severity": "low", "status": "not fixed (unchanged)."},
+  {"id": "fA-3 / fb-3 / fb-4 (low, lighting)", "severity": "low", "status": "not fixed (accepted / not in scope)."},
+  {"id": "w15-carry (low, shell)", "severity": "low", "status": "not fixed (the visible surfaces were not changed)."}
+ ],
+ "details": [
+  {"detail": "sidewall", "score": 8.6, "note": "Unchanged in tone. The cell-edge sky specks are gone, so the lining now reads as a continuous solid panel in close-ups. Still no weave."},
+  {"detail": "panel joints", "score": 8.5, "note": "A continuous dark groove, -37 L, clean at DPR 1 and DPR 2. A little crisper than the faint seams in the photos, but plausible in a close-up."},
+  {"detail": "window tubs/reveals", "score": 8.6, "note": "Unchanged since confirm2."},
+  {"detail": "window glass / day view", "score": 8.5, "note": "Unchanged (only the clouds differ)."},
+  {"detail": "q12 look-out lining", "score": 8.4, "note": "The specks are removed. The reveal is still slightly bright (lighting)."},
+  {"detail": "shades electric / manual", "score": 8.5, "note": "Unchanged."},
+  {"detail": "dado/grilles", "score": 8.3, "note": "Unchanged."},
+  {"detail": "carpets / door-bay floor", "score": 8.4, "note": "Unchanged."},
+  {"detail": "door surrounds/window", "score": 8.3, "note": "Not in these views; the code change does not touch them."}
+ ],
+ "issues": [
+  {"id": "c3A-1", "severity": "low", "owner": "shell", "evidence": "q07 (752,163): one pixel at 177/179/183 against a neighbourhood of 195/197/202 (base 188/192/197), at the cell edge, probably where the ribbon meets the seam. One pixel, not visible.", "fix": "None needed; watch it at DPR 2 if q07 gets close-ups."},
+  {"id": "c3A-2", "severity": "low", "owner": "shell", "evidence": "The q12 joint groove is -37 L (min L62-70 against L95-107), crisper than the faint seams in y_47301 / py_37301. Real joints are dark at 0.5 m, so this is a matter of taste.", "fix": "Optional: lighten the groove by about 10 L."},
+  {"id": "c2A-1", "severity": "low", "owner": "lighting", "evidence": "q12 reveal ~L125 against the photo's L104-110 (a4cda03 is not in these renders).", "fix": "As in confirm2."},
+  {"id": "c2A-2", "severity": "low", "owner": "lighting", "evidence": "The F bowl is no lighter than the wall.", "fix": "As in confirm2."},
+  {"id": "w15-carry", "severity": "low", "owner": "shell", "evidence": "Unchanged: door window short with the housing overlapping the bezel, pleat contrast, sidewall weave, vinyl speckle, PY/Y tub-floor card, grille pitch, F carpet grain/hue.", "fix": "Post-publish."}
+ ],
+ "refs": [
+  "ref/ana/f_17306-lang-multi.jpg",
+  "ref/ana/f_17300-lang-multi.jpg",
+  "ref/ana/c_27316-lang-multi.jpg",
+  "ref/ana/py_37301-lang-multi.jpg",
+  "ref/ana/py_37303-lang-multi.jpg",
+  "ref/ana/y_47301-lang-multi.jpg"
+ ],
+ "questionsForUser": [
+  "Still open from w17: is the THE Suite floor carpet the same heather as THE Room, or a sparser, larger-fleck pattern?"
+ ]
+}
