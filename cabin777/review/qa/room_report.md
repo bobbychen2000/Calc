@@ -269,3 +269,17 @@ w19 scored A 8.5 / B 8.5 with no high or medium issue (89168b6), so the change w
 - **Still open, low:** the ash pinstripe contrast, header band ~10 % dark, kick height and silver lip, and the rigid soft goods.
 - **Lighting medium (A, not scored for room):** the q07 window-side shell post went from L103 to L75, against L114 in c_27316. Routed to `from_room.md` (final confirm).
 - **Triangles:** unchanged since w19. roomO / roomE are 13.4k / 11.0k per unit mesh.
+
+## Final confirm 2 (2026-10-27): bar held after the lighting final touch
+
+| round | rater A (skeptic) | rater B (geometry) | rated head |
+|---|---|---|---|
+| confirm2 | **8.5** | **8.5** | 8467f01 (lighting final touch) |
+
+- **Confirmed:** both raters score 8.5 with no high-severity issue (`room_confirm2_a.json`, `room_confirm2_b.json`). No code change.
+- **What changed since 1430d42:** only `04_shaders.js`, `12_scene.js` and 4 lines of `07_shell.js`. Every room-only region (q06 door / near shell / ash, q07 ash, q08 band, q09 wall, q10 shell) is identical to within 1 L. Changed pixels sit in the window belt, the tubs and the q07 post (3.5-4.4 % of q06/q09/q10, 14-16 % of q07/q08).
+- **Routed lighting items, now:**
+  - q07 window-side post beside the 11A monitor: **fixed** (A), mostly fixed (B). It went from L73 to L98 (#5c6273) against L111-114 in c_27316. A low remainder: about 12 % dark, slightly blue, and lit evenly where the photo brightens toward the window.
+  - Cool window belt in the room views (B low): **mostly fixed**. B-R q08 pier +23 -> +15, q08 tub lip +13 -> +5, q07 sidewall +9 -> +2, where the photos run -1 to +11. The q08 pier is still a touch cool (low).
+  - Guards held: q09 wall L54, q06 median 165.
+- **Unchanged (not regressed):** the w17b / w16b lighting mediums (q09 / q06 near faces dark, aisle door L167) and the room lows (kick 0.08 with no silver lip, ash warmth / pinstripe, header band ~10 % dark, rigid pillows, faint post grain).
