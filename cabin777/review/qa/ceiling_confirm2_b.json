@@ -1,0 +1,82 @@
+{
+  "area": "ceiling",
+  "rater": "B",
+  "round": "confirm2",
+  "score": 8.7,
+  "renderNote": "Rated on head 8467f01 (lighting final touch: 04_shaders.js and 12_scene.js, plus a lip-albedo change in 07_shell.js). src/07b_ceiling.js and src/08_bins.js are unchanged since 1430d42 (git diff --stat empty). Renders: scratchpad new/ q01, q06, q13, q15, q16, q17 (930x575) and new/cv v1, v2, v3, v5, v12, v15, d1, d2, d4, d5 (800x560), compared with old/ (1430d42). The diff masks in rB/diff_*.png show that every changed pixel (>8) in v1, v2, v5 and d5 lies below row 374, i.e. in the seats and sidewall, not the ceiling. In the QA views the changes are the seats, window reveals and sidewall (q16 diff starts at row 105 in the window reveals). Every ceiling sample point from the previous rating reproduces exactly: v1 vault (380,100) 231,230,226; bins (100,150) 207,210,216 and (650,150) 203,207,218; cove (560,60) 253,252,252; v12 bezel (517,165) 228,226,222; q06 vault (470,30) 231,230,226. References: ref/ana y_47301 (vault (500,40) 241,241,240; bins (250,70) 195,199,207 and (330,60) 168,175,184; cove (660,40) 239,238,236), c_27312. d1b/d2b/d4b/d5b/v8/v14 and the night/amber moods were not rendered.",
+  "previousStatus": {
+    "fixed": [
+      "w14a W14A-1 high (fittings and ribs left behind by the vault lift): still fixed. v1, v2 and v12 are pixel-identical to 1430d42 in the ceiling region; the ribs are hairlines at vault tone and the speakers read as a recessed slot.",
+      "w14b F1 medium (fittings vs vault contrast inversion): still fixed (v2 (380,80) vault 231,230,226, with only the speaker slot line reading).",
+      "w14a W14A-2 medium (crest channel too dark): still fixed. v15 and v12 show a mid-grey channel line, not a black gap."
+    ],
+    "notFixed": [
+      "FB1 / W14A-4 low (vault/bin ratio): unchanged. v1 is 1.07-1.12, q06 1.08-1.13 ((470,30) 231 vs (200,50) 207, (700,60) 221) and q16 1.18 ((720,30) 230 vs (200,60) 196), against 1.17-1.43 in y_47301.",
+      "FB2 low (flat 252-253 cove wedge, lighting): unchanged. v1 (560,60) and (600,50), v2 (600,50) and v12 (760,200) and (780,100) are all 253,252,252.",
+      "S1 / W15A-1 low (speaker bezel invisible): unchanged. v12 (517,165) is 228 on a 229-231 vault.",
+      "W15A-2 low (crest channel uniform grey, no dark core): unchanged (A's item).",
+      "W14A-3 low (outboard PSU band segmentation sparse): unchanged in the ceiling geometry. In q16 the band now shows more column variation only because the window reveals below it changed.",
+      "D4 low (door-4 dome/monument wedge): not verifiable. d4b was not rendered; d4 shows no defect and the geometry is unchanged."
+    ],
+    "regressed": []
+  },
+  "details": {
+    "vault shape / joint ribs / crest rib": 8.8,
+    "vault tone": 8.7,
+    "cove / trough grille": 8.6,
+    "vault fittings (speaker, emergency light)": 8.5,
+    "crest channel": 8.6,
+    "bins outboard": 8.9,
+    "bins centre": 8.8,
+    "seams / lips / rails / latches": 8.7,
+    "placards": 8.8,
+    "PSUs": 8.6,
+    "door-area domes and zone-end closures": 8.3,
+    "sign pods (EXIT)": 8.6
+  },
+  "issues": [
+    {
+      "id": "FB1",
+      "severity": "low",
+      "detail": "The bins are only slightly darker than the vault. In y_47301 they sit clearly darker and cooler. The hue direction is right (vault warm-neutral, bins cool). This is carried over and unchanged by the lighting final touch.",
+      "evidence": "v1 vault (380,100) 231,230,226 vs bins (100,150) 207,210,216 and (650,150) 203,207,218, a ratio of 1.07-1.12. q16 (720,30) 231,230,227 vs (200,60) 193,198,209 (1.18). y_47301 vault (500,40) 241 vs bins (250,70) 195-207 and (330,60) 168-184 (1.17-1.43).",
+      "fix": "src/08_bins.js BINMAT.door '#d6d8dc' -> '#cfd2d6' (about -3 %, keeping the cool cast), or reduce the bin-face fill in 12_scene.js. Do not lower the vault."
+    },
+    {
+      "id": "FB2",
+      "severity": "low",
+      "detail": "Lighting, not scored: the far-side cove next to the trough grille is a flat 252-253 wedge with no falloff. In the photo the cove is bright but graded.",
+      "evidence": "v1 (560,60) and (600,50), v2 (600,50), v12 (760,200) and (780,100) are all 253,252,252. y_47301 right cove (660,40) is 239,238,236.",
+      "fix": "In 04_shaders.js / 12_scene.js, cap the cove emissive or its tone shoulder so the peak is about 240-245, or add a falloff across the centre-bin crown."
+    },
+    {
+      "id": "S1",
+      "severity": "low",
+      "detail": "The speaker bezel is invisible at close range, so the fitting reads as a slot line only (carried over).",
+      "evidence": "v12 (517,165) is 228,226,222 on a 229-231 vault.",
+      "fix": "src/07b_ceiling.js: set the bezel about 3 % below the vault (onVault(CEILMAT.bezel, -0.008)) so the pill outline reads."
+    },
+    {
+      "id": "W14A-3",
+      "severity": "low",
+      "detail": "The outboard PSU band joints and gasper wells are faint against y_47301's clear unit rhythm (carried over).",
+      "evidence": "In q16 the left PSU band reads as a light strip. y_47301 left (100-330, 120-135) shows dark joints about every 20 px with gasper rings.",
+      "fix": "src/08_bins.js: shingles count 8 -> 16 and BINMAT.riser '#d2d3d4' -> '#c2c4c6' (not as dark as #a9acb0)."
+    },
+    {
+      "id": "D4",
+      "severity": "low",
+      "detail": "Door-4 dome/monument junction wedge (carried over, not re-rendered).",
+      "evidence": "The d4b view is not in this set. The geometry is unchanged since w15, when d4b (760-780, 190-215) measured a flat 248.",
+      "fix": "src/07b_ceiling.js CEILMAT.lightPanel e 0.3 -> 0.12."
+    }
+  ],
+  "lightingNotes": [
+    "The lighting final touch did not move any ceiling pixel in the cv views. The QA top-third means moved by at most +2.6 (q17), and that came from the window reveals and seat tops, not from the vault or bins.",
+    "The cove flat-white (FB2) remains the one lighting item visible on the ceiling."
+  ],
+  "questionsForUser": [
+    "Do you have an in-flight photo looking up at the aisle ceiling (THE Room or economy) that shows the speaker grilles and the outboard PSU strip?",
+    "Do you have any photo of the door 1, 2, 4 or 5 cross-aisle ceilings? Those are still approximations."
+  ]
+}

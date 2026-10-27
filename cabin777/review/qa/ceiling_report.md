@@ -267,3 +267,18 @@
   - The door-4 wedge.
   - The cove-side vault strip washes out to about 253. That is lighting, and y_47301 is 241–255 there too, so it is acceptable.
 - Not re-rendered this round: d1b/d2b/d4b/d5b, v4, v8, v9, v14 and the night/amber views.
+
+## Final confirm 2 (2026-10-27, head 8467f01)
+
+- **Confirmed at the bar:** rater A 8.5, rater B 8.7, with no high or medium issues (`ceiling_confirm2_a.json`, `ceiling_confirm2_b.json`). The wave-1 final scores were A 8.5 / B 8.7.
+- **The lighting final touch left the ceiling alone.** `07b_ceiling.js` and `08_bins.js` have not changed since 1430d42, and renders from both heads were diffed:
+  - The ceiling views (v1, v2, v5, d5) are pixel-identical above the seat tops.
+  - In the QA views, the changed pixels in the top band are the seats, the window reveals and the sidewall window tub. In q17 the top-band mean rose about 2.5, all from the window tub.
+- **No code change and no lighting hand-off.** The earlier high and medium items (W14A-1 / F1 and W14A-2) are still fixed.
+- **Open lows, carried over:**
+  - The vault/bin ratio is 1.05–1.19; the photos give 1.17–1.45.
+  - The outboard PSU joint rhythm is faint.
+  - The speaker bezel outline does not read.
+  - The crest channel has no dark core.
+  - The door-4 wedge was not checked, because d4b was not rendered.
+  - The far-side cove is a flat 253 wedge. That is lighting, noted and not scored.
