@@ -1076,3 +1076,8 @@ multiplies and a step product per interior fragment.
    8.5), B 8.65 (8.6), no high; kept.
 4. PY centre ceiling (optional): not done. Its hue reads B-R -2..-4 on both sides of the curtain (jpA 280-420) and no change was
    clearly toward py_37302 without moving the J side.
+
+Ratings (fresh raters on r_f / x_f, all 22 views): lighting lens 8.6 (L17 8.5), integration lens 8.6 (L17 8.5), no high or medium
+(`lighting_L18_lighting.json`, `lighting_L18_integration.json`); the L18 changes stay. Lows carried: PY top band L200-204 vs
+py_37302 182-183, jpA PY bin undersides +28 vs +15, PY centre ceiling cream, the q17 far cover ~20-30 L dark (econ), PY seat-back
+creases (py), THE Room 13-21 L bright, and the L17 carried lows (far window band, tub lip, thin highlights / contact darks).
