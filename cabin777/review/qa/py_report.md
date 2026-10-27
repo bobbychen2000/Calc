@@ -355,3 +355,30 @@ rater A's medium on the flat cushion-front band.
   - The band is still darker than the photo crease.
   - The w15 to w19 carry-overs remain.
 - Ratings are in `py_confirm3_a.json` and `py_confirm3_b.json`.
+
+## Final confirm (publish)
+
+Head 7a2c8b9, after lighting L17 (PY white balance) and L18 (PY rear wall, PY top band); baseline e67f1a9 (confirm 3).
+
+| round | rater A | rater B | result |
+|---|---|---|---|
+| confirm4 | **8.6** (= confirm3) | **8.7** (= confirm3) | no high or medium issue: PY confirmed, no code changed |
+
+- **What changed since e67f1a9:** nothing in PY. The studio views p1-p8 are pixel-identical. The q13 / q14 seat-back boxes are
+  byte-identical (B/R 1.383 / 1.301). Pixels with |delta| > 8: 21.2 % in q13 and 8.1 % in q14. All of them are environment
+  (bins, ceiling, rear wall, curtains, glass), above y 200 in q13 and above y 326 in q14.
+- **Context:** the cooler surround matches the photo hue: the q13 rear wall B-R went from +4 to +10.5 (py_37302 +9 to +11). The
+  fabric-to-wall luminance ratio went from 0.55 to 0.61 (photo 0.57). Both raters judge that the seats sit slightly better in
+  context.
+- **Lighting notes (not scored, not routed as a blocker):** the PY walls and top band are now about 30-35 L under the photos
+  (rear wall L 187 against 219-226). The PY fabric is still about 10-35 L darker than the photos. The q14 sun diamond is
+  unchanged at L 163.
+- **Open (all low, carried over from confirm 3):**
+  - the q13 waist-valley welt;
+  - the full-height valley shade;
+  - the p7 lumbar hump;
+  - the fleck smear;
+  - the cushion-front band;
+  - the q13 thin-dark measure (59 % of the photo);
+  - small trim items.
+- **Triangles:** unchanged. **Ratings:** `py_confirm4_a.json`, `py_confirm4_b.json`.

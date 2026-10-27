@@ -1,0 +1,45 @@
+{
+  "area": "py",
+  "rater": "B",
+  "round": "confirm4",
+  "head": "7a2c8b9",
+  "score": 8.7,
+  "summary": "8.7, the same as confirm3. No PY geometry, material or colour changed, and I checked that myself. All eight studio renders (p1-p8) are pixel-identical to st_base. In q13, every changed pixel is above y 212, and the seat-back boxes are byte-identical: (190,420,340,570) B/R 1.383, L 105.7; (260,300,400,500) B/R 1.360. The rear-row headrests at y 175-230 have zero delta. In q14 the mid back (260,300,400,500) is identical (B/R 1.301, L 119.9). The few changed pixels near the foreground shell top and headrest (y 85-107, L 181-207) are sidewall and bin behind the silhouette edge, not seat. Small correction to the brief's numbers: any-change is 31.8 % (q13) and 24.2 % (q14); at |d|>8 it is 21.2 % and 8.1 %, which matches the brief's figures. Everything I scored at confirm3 is untouched. The pitch reads the same as the 37302 rows, and so do the back height to the headrest flap, the wraparound grey shell, the wide console with the cup nose, the gooseneck, the navy flap and ears, and the legrest. The only new effect is context: the cooler and slightly darker surround makes the light-grey shells and the fabric read marginally more like the photo's cool cabin. It gets no score credit, because that is lighting. The carried-over lows below keep it under 9.",
+  "lighting_note": "Not scored. The white-balance change moves the PY surround toward the photo hue but away from its value. q13 rear wall: L 205 -> 188, B-R 4.2 -> 10.3 (py_37302 rear wall L 226, B-R 11.0). Right wall: L 205 -> 192, B-R 1.5 -> 12.2 (photo L 220, B-R 18.4). Ceiling: L 216 -> 207, B-R 4.3 -> 10.3. Whole top band (y < 110): L 212.6 -> 202.8, B-R 4.5 -> 10.5. The hue is now right, but the walls and bulkhead are about 35 L under the photo, so the cabin reads a little dim and greyer. Seat fabric against wall contrast is 106/188 = 0.56, against about 0.55-0.65 in the photo, which is fine. The q14 diamond sun patch on the window-seat back (x 485-550, y 300-420) is unchanged at L 162.7 and is still the brightest patch on any PY back. L<25 counts: q13 8934 -> 9077 (+1.6 %, all upper band, mostly darker curtain folds and bin seams) and q14 9719 -> 9725.",
+  "calibration": [
+    {"issue": "integration L16 medium (cabin-wide): the PY back cushion reads as a flat CG panel", "status": "still fixed (no change)", "evidence": "q13 back box (190,420,340,570) is byte-identical to e67f1a9 (L 105.7, B/R 1.383). q14 mid back (260,300,400,500) is identical (L 119.9, B/R 1.301). The p1/p3/p8 studios are pixel-identical, so the crown, valleys and lumbar are as in confirm3 (range 48 L). The thin-dark sub-target is still partly met: q13 is at about 59 % of the photo."},
+    {"issue": "w17-w19 / confirm2 A medium: the cushion-front band is a flat dark stripe", "status": "partly fixed, low (unchanged)", "evidence": "p5 and p8 are pixel-identical. The graded L 39-49 band is still darker than the photo crease (L 35-90)."},
+    {"issue": "w18 A high / B medium: the seam bead reads as a black cord on the q14 foreground seat", "status": "still fixed", "evidence": "The q14 foreground seat below y 110 is unchanged (0 changed px at x 790-900, y 190-550)."},
+    {"issue": "w16 high: the shell-rim reveal shows as a black stripe down the shell side", "status": "not regressed", "evidence": "q14 near shell x 730-800, y 300-500 is unchanged. The only changed px in x 690-760 are at y 85-97 (bin and sidewall behind the shell top, L 184-216) plus 1-4 px of edge AA at the window bezel."},
+    {"issue": "w16 medium/high: cushion side and front strips read as black rods", "status": "not regressed", "evidence": "q13 has zero changed px below y 212, q14 has zero changed px on the seat pans, and p5 and p8 are identical."},
+    {"issue": "integration L13 medium: outline darks are about half of the photos'", "status": "partly fixed (unchanged for PY)", "evidence": "The seat regions are identical. The +143 L<25 px in q13 lie in the upper band (lighting), not on the seats."},
+    {"issue": "confirm3 lows: q13 valley shade near full-height; lumbar hump in the p7 silhouette; welt near-black in the valley at the q13 centre seat waist (A); triplanar smear on the valley walls (A); fabric about 3 % darker (A)", "status": "not fixed (unchanged, no PY code)", "evidence": "p7 is pixel-identical, and the q13 and q14 seat boxes are identical."},
+    {"issue": "w15/w17 lows: shell orange-peel, trim-B ears too dark, trim-A dashes too long, pocket frame near-black, flat navy flap", "status": "not fixed (unchanged)", "evidence": "p2, p4 and p6 are pixel-identical."}
+  ],
+  "details": {
+    "Back + cushion shape": 8.7,
+    "Back side silhouette (p7 vs py_37303)": 8.4,
+    "Back/shell seam crease": 8.5,
+    "Hourglass welts on the shaped face": 8.6,
+    "Cushion nose / skirt / hinge roller": 8.4,
+    "Headrest ears + navy flap": 8.4,
+    "Shell incl. rear face": 8.4,
+    "Screen + bezel + placards": 8.5,
+    "Literature pocket": 8.5,
+    "Consoles": 8.7,
+    "Window armrest + aisle shroud": 8.5,
+    "Leg rest / footrest / legs / bottle bin": 8.1,
+    "Gooseneck": 8.5,
+    "Row pitch / alignment in q13": 8.6,
+    "Fabrics (trim A / B patterns)": 8.3,
+    "Fabric colour under head lighting": 8.6,
+    "Materials: plastic specular": 8.5
+  },
+  "issues": [
+    {"severity": "low", "title": "Carry-over: the valley cavity shade runs almost full height in q13 and reads slightly as a channel stripe", "evidence": "Unchanged from confirm3. q13 front-right seat valley at y 380 is L 65-67 against 112-121 on the crown. In py_37302 the flank shading is strongest at the waist.", "fix": "Taper the pyBackShade valley term above the waist (x (1 - 0.5*pySstep(0.50,0.75,y))), widen sigma 0.028 -> 0.035 and set the peak to about 0.18. Do the welt-in-valley fade from py_confirm3_a.json in the same pass."},
+    {"severity": "low", "title": "Carry-over: small lumbar hump in the p7 side silhouette", "evidence": "p7 is pixel-identical to confirm3. The front line of the back steps slightly at about y 190-200 studio px, where py_37303 is nearly straight.", "fix": "Set lumbar 0.04 -> 0.032 or lt 0.32 -> 0.38."},
+    {"severity": "low", "title": "Carry-over: q13 thin-dark proxy at about 59 % of the photo", "evidence": "The seat regions are identical to confirm3 (7.72 % against 13.11 %).", "fix": "Optional: a faint pleat or stitch detail in the swatch tile. No proud strips."},
+    {"severity": "low", "title": "Carry-over: cushion-front band darker than the photo crease; trim-B ears too dark; trim-A dashes too long; pocket frame near-black; flat flap; shell orange-peel; fabric about 3 % dark", "evidence": "The studios p2-p6 are pixel-identical to e67f1a9.", "fix": "As in py_confirm3_a.json / py_final_a.json."}
+  ],
+  "questions": []
+}
