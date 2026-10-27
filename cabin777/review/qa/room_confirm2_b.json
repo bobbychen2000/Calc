@@ -1,0 +1,43 @@
+{
+ "area": "room",
+ "rater": "B",
+ "round": "confirm2",
+ "score": 8.5,
+ "summary": "This round confirms THE Room at head 8467f01 against the confirmed head 1430d42. git diff 1430d42..HEAD -- cabin777/src cabin777/tex touches only 04_shaders.js, 12_scene.js and 4 lines of 07_shell.js. 09c_room.js, 09_seats.js, 03_tex.js and tex/ are unchanged. Every room-only calibration region is identical to within 1 L: q09 privacy wall L54.1, q06 near shell L62.4, q06 monitor-end door L167.3, q06 and q07 ash L152.9 and L161.5, q08 header band L102.2, q08 flap L109.5, q10 shell L62.3, and the q07 footwell L75.3 -> 75.7. The changed pixels are window and sidewall lighting: q07 37.8 % of the right half against 1.1 % of the left, and q08 25 % of the right against 7 % of the left. The two routed lighting items both improved. The q07 window-side post went from L73 to L98, against L111 in c_27316. The THE Room window wall is less cool: B-R went from +9..+20 to +6..+12 across the q06 and q08 sidewall boxes. Nothing regressed. There are no new artefacts on the post at 2x: the grain is unchanged and there are no seams or banding. The product still reads clearly as THE Room, with minor material and lighting differences. The open lows carried from the earlier rounds are unchanged.",
+ "calibration": [
+  {"issue": "Routed lighting (A final, medium): q07 window-side shell post beside the 11A monitor darkened (L75 vs photo L114)", "status": "fixed (mostly)", "evidence": "q07 (760-850 x 180-450): old 69/72/84 L73.0 -> now 92/98/115 L98.4. c_27316 (280-330 x 40-160, resized to 930 px): 107/110/124 L111.0. The residual gap is -13 L, and the post is slightly bluer than the photo (B-R +22 vs +17). The 2x crop (scratchpad rb_q07post.png) shows an even window-lit face with no new seam or banding."},
+  {"issue": "Routed lighting (B final, low): window belt cooler in room views / q08 window box", "status": "fixed / improved", "evidence": "q08 wall below the window (700-780 x 300-360): 170/173/179 B-R +9 -> 173/175/180 B-R +6. q08 pier (610-640 x 110-200): B-R +10 -> +8. q06 right pier (840-870 x 200-280): B-R +14 -> +9. q06 left sidewall (0-40 x 150-200): B-R +20 -> +12. q07 window reveal: B-R +22 -> +17. The official J photos read near-neutral, so the wall is closer but still slightly cool. It is low and not scored."},
+  {"issue": "w17b medium: shaded near shell faces too dark (q09 privacy wall, q06 near faces)", "status": "not fixed / unchanged (lighting); no regression", "evidence": "q09 wall (300-500 x 260-330): L54.1 at both heads. q06 near shell (30-130 x 430-530): L62.4 at both. c_27312 near shell (30-130 x 420-480): 81/89/101 L88.7."},
+  {"issue": "w16b medium: aisle-end doors dark relative to the cabinets (lighting)", "status": "unchanged; no regression", "evidence": "q06 (600-640 x 330-520): 168/167/164 L167.3 at both heads."},
+  {"issue": "w16a/w17a medium: ash soft wavy bands, weak pinstripe", "status": "not fixed (carried as low; texture unchanged)", "evidence": "q07 ash (150-330 x 200-400): 172/160/140 at both heads. q06 ash (200-280 x 340-440): 163/151/132 at both. q08 table: 168/161/150 -> 169/161/151."},
+  {"issue": "integration r2 medium: header band reads as hammered metal", "status": "fixed, holds", "evidence": "q08 band (480-560 x 290-330): 95/102/116 at both heads. The crops are identical."},
+  {"issue": "integration L8-L11: flush grey band instead of a recessed black kick", "status": "fixed, holds", "evidence": "09c_room.js is unchanged. The q06 base pixels fall outside the diff mask."},
+  {"issue": "integration L8-L11: white hairline in the 11A footwell", "status": "fixed, holds", "evidence": "q07 footwell/console (400-720 x 440-575): L75.3 -> 75.7, and only 1.1 % of the left half changed."}
+ ],
+ "details": [
+  {"detail": "Overall nested-pair layout, shells, privacy walls, monitors (aisle views)", "score": 8.6, "refs": ["c_27312", "c_27315", "q06", "q10"]},
+  {"detail": "Shell / cap colour and value", "score": 8.5, "refs": ["c_27314", "c_27315", "q06", "q09", "q10"]},
+  {"detail": "Window-side post and monitor surround (seated view)", "score": 8.4, "refs": ["c_27316", "q07"], "note": "L98 against the photo's L111, slightly blue. Up from ~8.1 at 1430d42 (lighting)."},
+  {"detail": "Shell bases / toe kick", "score": 8.3, "refs": ["c_27312", "q06"]},
+  {"detail": "Monument top, spine, aisle cap, plaques", "score": 8.4, "refs": ["c_27313", "c_27314", "q09"]},
+  {"detail": "Ash panels, table tops, door / cabinet split", "score": 8.3, "refs": ["c_27312", "c_27316", "q06", "q07"]},
+  {"detail": "Seat: sofa, back, header band, slate flap", "score": 8.4, "refs": ["c_27315", "c_27313", "q08", "q10"]},
+  {"detail": "Boarding bundle, pillows, soft goods", "score": 8.0, "refs": ["c_27303", "q08", "q09"]},
+  {"detail": "Artefacts (z-fight, gaps, floats, far-row shimmer)", "score": 8.7, "refs": ["q07 2x post crop", "q06", "q10"]}
+ ],
+ "issues": [
+  {"severity": "low", "area_owner": "lighting (not scored)", "title": "q07 window-side post still ~13 L dark and slightly blue", "evidence": "now 92/98/115 L98.4 B-R +22 vs c_27316 107/110/124 L111 B-R +17.", "fix": "Optional: raise the J post window fill by ~10 % and warm it slightly. Guard q09 wall L~54 and the q06 median."},
+  {"severity": "low", "area_owner": "lighting (not scored)", "title": "THE Room window wall still slightly cool", "evidence": "q06 left sidewall B-R +12, q08 pier +8, against near-neutral J piers in c_27312 / c_27300.", "fix": "Optional: lower the remaining cool cast forward of door 3 to ~1/4."},
+  {"severity": "low", "title": "Carried: ash pinstripe weak / soft wavy bands", "evidence": "The ash crops are identical to 1430d42.", "fix": "As room_final_b.json (make_swatches HP/ALONG for j_ash)."},
+  {"severity": "low", "title": "Carried: header band ~10 % dark against the flap; kick short with no silver lip; rigid pillows; cap rails matte with no highlight", "evidence": "q08 band L102 vs flap L109. 09c_room.js is unchanged.", "fix": "As room_final_a/b.json."}
+ ],
+ "score_vs_final": {
+  "dropped": false,
+  "final": "A 8.5 / B 8.5",
+  "confirm2": 8.5,
+  "why": "Room geometry, materials and textures are byte-unchanged, and every room-only region matches to within 1 L. Both routed lighting items moved toward the photos: the q07 post went L73 -> 98 against the photo's 111, and the window-wall B-R dropped by 3-8. Neither is enough to raise the room score, and nothing regressed. No high or medium issue is open for the room."
+ },
+ "questions": [
+  "Lighting: should the q07 post go the last ~10 L, to L105-111, and lose some of its blue (B-R +22 -> ~+17)? Or is the current value the accepted compromise with the q09 / q06 guards?"
+ ]
+}
