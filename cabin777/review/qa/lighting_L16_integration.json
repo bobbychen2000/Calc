@@ -1,0 +1,138 @@
+{
+ "area": "integration",
+ "score": 8.4,
+ "earlier": [
+  {
+   "issue": "L15 MEDIUM (lighting): u_hueW hue-preserving tone and tubLow not zone-gated; THE Suite / THE Room window walls lavender (B-R +13..+19 vs photos -6..+3)",
+   "status": "fixed",
+   "evidence": "Window-wall whites (L170-250, HSV s<0.25, median B-R; L16rateI/m.py wall()), r_base 5097e7e -> L16 vs photo: q05 (0-300,0-280) +20 -> 0 (f_17313 same box +3); q03 (0-330,0-300) +19 -> +1 (f_17300 +1); q08 (450-930,0-200) +22 -> +7 (c_27300 -5, c_27303 -7: 12 over, at the fixer's <= +7 target); q06 full frame +8 -> +6 (c_27312 +8); q07 +3 -> +2. Suite wall box q05 (20-90,150-350) L204 B-R +14.7 -> L223 B-R +1.0 vs f_17313 L227 +0.8; q03 (40-120,100-300) L197 +9.7 -> L220 +1.8. Economy kept: q17 +22 -> +17 (y_47303 +21), q16 +15 -> +15 (y_47301 +12). Zone-boundary check (my renders L16rateI/base|v4, jp_aft J->PY, fj_fwd J->door 2, jp_fwd PY->J): J wall piers read +5..+10 evenly up to the PY curtain, no hue step at u_sLowZ 39.81 or at the F zone end; sheet L16rateI/bound.jpg."
+  },
+  {
+   "issue": "L15 MEDIUM (py): PY back cushion reads as a flat CG panel",
+   "status": "not fixed",
+   "evidence": "09b_py.js / 09_seats.js: no commit since 5e5e561. q13 back shading range (7 px box blur, p10/p50/p90) (190,420,340,570) 87/109/123 = 36 L, base 88/109/123; py_37302 (530,400,720,550) 90/123/143 = 53 L. My thin-dark proxy (luma - gauss4 < -20): q13 7.64 % vs py_37302 13.11 %, q14 10.06 % vs py_37301 13.11 %, both unchanged from r_base (7.60 / 10.01)."
+  },
+  {
+   "issue": "L15 LOW (lighting): u_bleed doubles the PY / Y fabric blue (q15 seat block B-R +61 vs +50)",
+   "status": "fixed",
+   "evidence": "q15 seat block (330-600,300-450) B-R +60.8 -> +50.9 (y_47300 +49.7); bottom band (0-930,450-575) +40.7 -> +32.9 (photo +31.6); q16 lower left (0-400,380-575) +67.7 -> +61.8 (y_47301 +26.7, framing differs). q17 armrests (530-650,418-436) +14.1 -> +5.3 (fixer target <= 6; the L15 target '>= +12 kept' was superseded by from_econ's y_47303 +6)."
+  },
+  {
+   "issue": "L15 LOW (ceiling): grey dashes on the door-3 outboard bin lip",
+   "status": "not fixed",
+   "evidence": "08_bins.js has no commit since the L15 head (git log 5097e7e..HEAD touches only 04_shaders / 12_scene / 07_shell). Not re-rendered (no code change)."
+  },
+  {
+   "issue": "L15 LOW (shell): bright specks along the panel joint beside the q12 window",
+   "status": "not fixed",
+   "evidence": "q12 (95-145, rows 150-470), rows with a pixel > median + 25: r_base 35 -> L16 16 (median 71 -> 103). The drop comes from the brighter look-out surround lowering the contrast, not from a wallSeamGeo change; target <= 3."
+  },
+  {
+   "issue": "L15 earlier (lighting): near-wall gate made the window-wall level depend on the camera",
+   "status": "fixed",
+   "evidence": "Still fixed and more even: q03 pier 1 vs pier 2 (60-120 vs 255-285): rows 60-80 225/233 (L15 208/230), rows 120-140 223/224, rows 180-200 224/231. q06 left column (0-25,145-235) p50 215, share > L235 12 % (L15 210 / 12 %). q09 far window band (300-700,15-75) p50 211, share > 235 26 % (L15 206)."
+  }
+ ],
+ "details": [
+  {
+   "detail": "Boarding exposure and white balance. The cabins now keep their own photos' white balance: THE Suite neutral (q03 / q05 wall B-R +1..+2 at L220-223 vs f_17300 / f_17313 +1, L227), THE Room half cool (q06 +6 vs c_27312 +8; q08 +7 still 12 over c_27300 -5, it reads as a faint blue-grey on the far wall), economy cool (q17 +17 vs y_47303 +21). Remaining hue gap: PY whites are neutral where both PY photos are cool (issue 2). Frame p50 / means moved 1-5 L in the F/J views only (q03 bands 183/165/154 -> 188/170/158).",
+   "score": 8.4,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/d384f11a-5e9d-5573-953c-d97ecc5ea15e/scratchpad/L16rateI/s1.jpg",
+    "/tmp/claude-0/-home-user-Calc/d384f11a-5e9d-5573-953c-d97ecc5ea15e/scratchpad/L16rateI/s2.jpg",
+    "/tmp/claude-0/-home-user-Calc/d384f11a-5e9d-5573-953c-d97ecc5ea15e/scratchpad/L16rateI/c_q08.jpg"
+   ]
+  },
+  {
+   "detail": "Falloff ceiling -> bins -> wall -> floor (six 96-px bands, L16 vs photo): q06 216/196/136/118/111/83 vs c_27312 203/176/119/99/91/81; q17 193/167/121/94/85/47 vs y_47303 190/174/123/98/85/64 (tub lift: q17 tub boxes (520-545,50-70) 147 -> 163, (640-665) 145 -> 160, pier (470-490) 204 -> 208, so the bin-lens fall reads smoother); q15 214/191/92/79/72/66 vs y_47300 216/196/84/78/73/70. PY top band still bright (q13 214 vs 182), framing as at L15.",
+   "score": 8.1,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/d384f11a-5e9d-5573-953c-d97ecc5ea15e/scratchpad/L16/q17_econBacks.png",
+    "/tmp/claude-0/-home-user-Calc/d384f11a-5e9d-5573-953c-d97ecc5ea15e/scratchpad/L16/q06_roomMain.png"
+   ]
+  },
+  {
+   "detail": "AO and contact shadows unchanged (no AO term touched). Thin-dark proxy L16 vs photo: q05 6.16/6.24, q06 10.67/12.13, q08 9.09/9.08, q15 14.77/15.34, q17 14.43/14.82; PY q13 7.64/13.11, q14 10.06/13.11 (the py medium).",
+   "score": 7.8,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/d384f11a-5e9d-5573-953c-d97ecc5ea15e/scratchpad/L16rateI/m.py"
+   ]
+  },
+  {
+   "detail": "Specular per material unchanged by this pass; thin-bright proxy lower half L16 vs photo: q03 5.02/8.24, q02 5.83/8.07 (photo screens / lit trims), q13 12.02/13.53, q15 19.06/19.49, q17 15.46/16.05. Economy seat-level gloss gap stays the carried econ item.",
+   "score": 7.6,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/d384f11a-5e9d-5573-953c-d97ecc5ea15e/scratchpad/L16rateI/m.py"
+   ]
+  },
+  {
+   "detail": "Amber / night / blue moods: fjCool, hueW, tubHue are Boarding-only (12_scene MOODS). q20 0.09 % px changed vs r_base (mean L 32.6 -> 32.7), q21 1.42 % (pane clouds, mean 125.0 -> 124.6), the fixer's Blue / Cruise at the q06 camera 0.6-0.7 %.",
+   "score": 8.2,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/d384f11a-5e9d-5573-953c-d97ecc5ea15e/scratchpad/L16/q20_night.png",
+    "/tmp/claude-0/-home-user-Calc/d384f11a-5e9d-5573-953c-d97ecc5ea15e/scratchpad/L16/q21_sunset.png"
+   ]
+  },
+  {
+   "detail": "Whole-cabin regressions: q01 0.01 %, q11 0.12 %, q22 0.56 % px changed. Galley q19 lower whites +7 -> -7, upper -1 unchanged: lower faces now slightly warmer than the upper ones (6 B-R, not visible as a step at 930 px). Zone boundaries J->PY and J->door 2 show no hue step (earlier item 1). Perf unchanged (perf_base / perf_v4: 69 / 3,256,808 Sharp mid, 101 / 3,969,124 econ, identical).",
+   "score": 8.3,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/d384f11a-5e9d-5573-953c-d97ecc5ea15e/scratchpad/L16rateI/bound.jpg",
+    "/tmp/claude-0/-home-user-Calc/d384f11a-5e9d-5573-953c-d97ecc5ea15e/scratchpad/L16/q19_rearGalley.png"
+   ]
+  },
+  {
+   "detail": "Look-out and x-ray: q12 surround (100-180,250-350) L70 -> 103 (fixer ucr L104-125), left reveal (0-120) 102 -> 117 (ucr 104-110: now 7-13 over), frame mean 116.2 -> 117.3. Seam specks halved by contrast only. X-ray unchanged and clean.",
+   "score": 8.2,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/d384f11a-5e9d-5573-953c-d97ecc5ea15e/scratchpad/L16/q12_wing.png",
+    "/tmp/claude-0/-home-user-Calc/d384f11a-5e9d-5573-953c-d97ecc5ea15e/scratchpad/L16/q22_xray.png"
+   ]
+  }
+ ],
+ "issues": [
+  {
+   "severity": "medium",
+   "owner": "py",
+   "detail": "Carried from L14 / L15, unchanged: 09b_py.js pySeat back loft is flat across its width; the photos show side bolsters with a shallow valley inboard and a lumbar crown, giving a bright upper back and darker flanks.",
+   "problem": "PY back cushion still reads as a flat CG panel",
+   "evidence": "q13 back shading range 36 L vs py_37302 53 L; thin-dark proxy q13 7.64 % vs 13.11 %, q14 10.06 % vs 13.11 % (unchanged from r_base).",
+   "fix": "As proposed at L14 / L15: 12 mm proud outer bolsters (outer 0.045 m, r ~20 mm) with a 6 mm x 4 mm valley at x = +-(w/2 - 0.05), lumbar crown 8 mm between 0.55-0.70 m above the cushion. Targets: back range >= 45 L, thin-dark within 70 % of the photo, tris +5 % max."
+  },
+  {
+   "severity": "low",
+   "owner": "lighting",
+   "detail": "PY ceiling / bin / wall whites are neutral while both official PY photos show the cool cast that the economy photos have. Long-standing (r_base identical in the top bands), not caused by this pass; the seat-level cut (seatCool 0.35) also lowered the PY lower bands.",
+   "problem": "PY whites B-R +2..+4 vs py_37302 / py_37301 +15..+26",
+   "evidence": "Whites median B-R by 115-px row band, L16 vs photo: q13 +4/+2/+8/+27 vs py_37302 +15/+17/+34/+37; q14 0/+18/+13/+17 vs py_37301 +10/+26/+25/+28. Full-frame q13 +4 vs +18, q14 +4 vs +23. jp_fwd (PY looking forward at the right wall) wall piers 0..+2.",
+   "fix": "If the user keeps per-cabin white balance (question), raise the cool share on PY whites only: e.g. a PY-zone term (zPY * (1 - smoothstep(u_yZ - 0.3, u_yZ + 0.3, z))) adding ~+10 B-R to hueW / coolW on the ceiling and bins. Target q13 top two bands >= +10 with q15 / q17 pixel-equal."
+  },
+  {
+   "severity": "low",
+   "owner": "ceiling",
+   "detail": "Carried since L11: grey PSU fragments through the outboard bin lip at door 3.",
+   "problem": "Grey dashes on the door-3 bin lip",
+   "evidence": "08_bins.js unchanged since L15 (git log 5097e7e..HEAD).",
+   "fix": "08_bins.js: end the psuo2 run 0.05 m short of the door-3 zone boundary or clip it with the bin door profile. Target: no fragment in z04 at DPR 1 / 2."
+  },
+  {
+   "severity": "low",
+   "owner": "shell",
+   "detail": "Bright 1 px specks along the sidewall panel joint beside the look-out window.",
+   "problem": "Seam specks beside the q12 window (reduced by contrast only)",
+   "evidence": "q12 (95-145,150-470) rows > median+25: 35 -> 16.",
+   "fix": "07_shell.js wallSeamGeo: offset 1.5 mm inboard and widen to 3 mm, or a recessed 2 mm groove. Target <= 3 rows."
+  },
+  {
+   "severity": "low",
+   "owner": "lighting",
+   "detail": "The look-out lift (beltK lift, lookOut 0.87) overshoots on the left reveal.",
+   "problem": "q12 left reveal L117 vs the ucr wing-view reveal L104-110",
+   "evidence": "q12 (0-120, full height) mean L102 -> 117; surround (100-180,250-350) 103 is in range.",
+   "fix": "lookOut 0.87 -> 0.86 or cap the beltK lift on the reveal (recd) at 0.8; target reveal 105-112 with surround >= 100."
+  }
+ ],
+ "questionsForUser": [
+  "The model now follows each cabin's own official photos: THE Suite walls neutral, THE Room half cool, economy cool. Premium economy is the odd one: its two official photos (py_37301, py_37302) show the same cool cast as economy, but the model keeps its ceiling and bins neutral. Should premium economy be cooled to match its photos, or should the whole aircraft share one white balance?"
+ ]
+}
