@@ -259,3 +259,25 @@ with no code change. Cameras: `review/qa/shell_views.js` (18 views) plus the 22 
   nacelle in ra_jWin, flat door glass.
 - **Still open (low, shell, carried):** the door viewing window is short; blackout pleat contrast; no sidewall weave; vinyl speckle;
   the PY/Y tub-floor card; the grille pitch; the F carpet grain and hue.
+
+## Final confirm 2 (2026-10-27): after the lighting final touch
+
+| Round | Rater A | Rater B | Mean | Files |
+|---|---|---|---|---|
+| confirm2 (fresh, head 8467f01; 07_shell.js unchanged since 6c64e2b) | 8.5 | 8.6 | 8.55 | shell_confirm2_a / confirm2_b.json |
+
+- **Shell confirmed:** both raters score 8.5 or above, with no high or medium issue. No code change. Since 6c64e2b only `04_shaders.js` and
+  `12_scene.js` changed. Renders of 6c64e2b (git worktree) were diffed against the head: every change is lighting, and it moves the shell toward the photos.
+- **Routed lighting items that now read fixed:**
+  - fb-1, the THE Suite bowls' tub-sky hue: s09 bowl B-R +22 -> -3/-4, q03 +23 -> -2; f_17313 ~0.
+  - fA-1 and its follow-up, the cream lip ring: still gone (s09 lip B-R -2 against the wall's +2).
+  - fA-2, the charcoal q12 surround: L71 -> 103-104.
+  - fA-4 / fb-2, the lavender THE Room wall at grazing: B-R reduced. A reads +12 -> +7; B reads b_jClose +27 -> +20.
+- **Not fixed (accepted, low):** fA-3 clipped panes, fb-3 the washed nacelle in ra_jWin, fb-4 the flat door glass. B finds the glass now fully
+  clipped (sd 2.4 -> 1.1).
+- **New lows (lighting, optional):**
+  - The q12 reveal is about 8-15 L over the photo (L118-125 against L104-110); lookOut 0.87 -> 0.86 or cap beltK on the near reveal.
+  - THE Suite bowls are no lighter than the wall (A: 222 vs 224; f_17313 239 vs 226) and faintly warm (B-R -3).
+  - The THE Room wall at grazing reads B-R +20 against c_27316 ~+10 (B).
+- **Carried shell lows unchanged:** door window short, pleat contrast, no sidewall weave, vinyl speckle, PY/Y tub-floor card, grille pitch,
+  F carpet grain and hue. Triangles unchanged.

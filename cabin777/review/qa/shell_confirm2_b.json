@@ -1,0 +1,44 @@
+{
+  "area": "shell",
+  "rater": "B",
+  "round": "confirm2",
+  "head": "8467f01",
+  "score": 8.6,
+  "summary": "07_shell.js is unchanged since 6c64e2b, so window geometry, proportions, spacing, reveals, shades, dado, carpets and door linings are identical. The lighting final touch moved every shell surface toward the photos and broke none of them. The THE Suite bowls are now neutral and darker than the wall by the same margin as f_17313: s09 bowl 214/213/210 (B-R -4) against wall 225 (+2), and s04 bowl 210 against wall 225, vs photo bowl 211 (-1) against wall 226 (+4). That was fb-1's ask, and it keeps reveal definition through shading. The THE Room lining eased from B-R +27 to +20 in b_jClose and from +21 to +12 in the ra_jWin tub. The q12 reveal is mid-grey and neutral at L~104 (B-R +1..+9), and its edges and lip still read clearly. Being 8 L over the photo is not a shell problem. Only low items remain: the carried shell list, plus slightly more clipped door/F pane glass on the lighting side. I rate 8.6, up 0.1 because fb-1 and fb-2 are cleared with no regression.",
+  "renders": "Pre-made renders, no browser. Head: scratchpad/head and head_s. Baseline 6c64e2b: c6c and c6c_s. Montages: /tmp/claude-0/-home-user-Calc/8869c36c-9154-5ce3-a55b-30970889c164/scratchpad/mont/m_*.jpg. Measurement script: scratchpad/m.py (box median RGB, B-R, L mean/sd).",
+  "previousIssues": [
+    {"id": "fb-1 (medium, lighting) THE Suite bowls take the PY/Y tub-sky hue", "severity": "medium", "status": "fixed. s09 bowl went from 190/199/212 (+22) to 214/213/210 (-4), and the wall from 195/198/206 (+11) to 224/225/226 (+2). q03 bowl/console wall went from 191/201/214 (+23) to 217/217/215 (-2), and the wall from +12 to 224/225/225 (+1). s04 bowl went from +23 to -3. f_17313: wall 222/225/226 (+4), bowl 212/212/211 (-1), with the bowl ~15 L below the wall. Head matches with s04 bowl 210 vs wall 225."},
+    {"id": "fA-1 (medium, rater A) warm cream ring at the bezel lip", "severity": "medium", "status": "still fixed. With the wall now neutral in F, the lip no longer has a cool wall to clash with. In s09 the left lip strip reads 216/216/214 (-2) against wall +2. In b_jClose the lip/sill band stays +5 (218/220/223) against the wall's +8 strip, with no cream ring in the montages."},
+    {"id": "fA-2 (low, lighting) q12 reveal charcoal", "severity": "low", "status": "fixed, slight overshoot. The surround (100-180, 250-350) went from 69/71/76 (L71) to 101/105/110 (L104). The inner lip is now neutral: 65/72/81 (+16) -> 62/64/65 (+3), and the far-right reveal 96/104/114 -> 95/95/94. The integrator logs the reveal at L118 against a photo L104-110. Bezel, lip and roll still separate clearly by shading, so this is lighting tolerance, not a shell misread."},
+    {"id": "fA-3 (low, lighting) clipped panes lose cloud texture", "severity": "low", "status": "not fixed (accepted trade-off). The s09 pane is unchanged in level, with the bottom pane band at 245/245/245."},
+    {"id": "fA-4 / fb-2 (low, lighting) J lining lavender at grazing", "severity": "low", "status": "fixed / improved. b_jClose wall went from 197/208/224 (+27) to 206/214/226 (+20). ra_jWin tub went from 192/201/213 (+21) to 208/213/220 (+12), and its pier from +12 to +7. The s05 wall strip went from +13..+15 to +10. It is still a little cooler than c_27316's ~+10 at grazing, which is acceptable."},
+    {"id": "fb-3 (low, lighting) ra_jWin nacelle washout / q07 near pane blue", "severity": "low", "status": "not fixed (accepted). The ra_jWin look-out is unchanged at 252/253/255."},
+    {"id": "fb-4 (low, lighting) flat door viewing-window glass", "severity": "low", "status": "not fixed, marginally worse. b_doorWin glass went from 251/252/253 (sd 2.4) to 254/255/255 (sd 1.1): now fully clipped."},
+    {"id": "shell-carried (door window short / housing overlap, pleat contrast, grille pitch, vinyl speckle, sidewall weave, F carpet hue/fleck)", "severity": "low", "status": "not fixed (07_shell.js unchanged). ra_carpetY changed 23 % at -1.6 L; the montage shows only seat-light spill and a slightly less blue cast, with the carpet pattern and hue identical."}
+  ],
+  "details": {
+    "window size/spacing/height": {"score": 8.6, "note": "Geometry unchanged."},
+    "window tubs/reveals": {"score": 8.7, "note": "Up 0.2. The F bowls are now neutral and ~15 L below the wall, as in f_17313. The J and PY/Y tubs are less blue. Reveal definition is kept through shading (s04 bowl sd 13.7 is unchanged)."},
+    "window panes (day)": {"score": 8.6, "note": "Pane geometry is unchanged. Panes are a little more clipped in F and at the door (lighting)."},
+    "sidewall/lining": {"score": 8.4, "note": "Up 0.2. F is neutral (s04 225/225 B-R +1), and J at grazing is less lavender. There is still no weave."},
+    "shades electric": {"score": 8.4, "note": "Unchanged (the s05 pleat region is pixel-equal within 1 L)."},
+    "shades manual": {"score": 8.5, "note": "Unchanged."},
+    "dado/grilles": {"score": 8.3, "note": "Unchanged."},
+    "carpets J/Y/PY/F": {"score": 8.5, "note": "Unchanged material. The Y cast is cut slightly by the lighting."},
+    "door-bay carpet/vinyl": {"score": 8.2, "note": "Unchanged."},
+    "door surrounds/window": {"score": 8.2, "note": "The geometry is unchanged. The door glass is now fully clipped (lighting)."},
+    "q12 look-out reveal": {"score": 8.4, "note": "No longer charcoal. The neutral mid-grey lip and roll both read. It is ~8 L hot against the photo (lighting)."},
+    "clashes": {"score": 9.0, "note": "None."}
+  },
+  "issues": [
+    {"id": "c2b-1", "severity": "low", "owner": "lighting", "evidence": "q12 reveal L118 against photo L104-110. Surround 101/105/110 and inner lip 62/64/65, both neutral, with the edges still reading.", "fix": "Optional: lookOut 0.87 -> 0.86, or trim beltK slightly, to land the reveal at ~L110."},
+    {"id": "c2b-2", "severity": "low", "owner": "lighting", "evidence": "b_doorWin glass 254/255/255 sd 1.1 (was sd 2.4), with no sky detail. The s09 pane bottom is 245 flat.", "fix": "Optional soft shoulder in the glass tone curve (fA-3 / fb-4)."},
+    {"id": "c2b-3", "severity": "low", "owner": "lighting", "evidence": "J wall at grazing B-R +20 (b_jClose) against c_27316 ~+10. Halved since baseline.", "fix": "Optional, accepted."},
+    {"id": "c2b-4", "severity": "low", "owner": "shell", "evidence": "s04 F bowls read a touch warm (B-R -3/-4) against the neutral wall (+1/+2). The photo bowl is -1. The 3-point difference is barely visible.", "fix": "Optional; not needed for publish."},
+    {"id": "shell-carried", "severity": "low", "owner": "shell", "evidence": "Unchanged: door window short with the housing overlapping the bezel, pleat contrast, grille pitch, vinyl speckle, sidewall weave, F carpet hue/fleck.", "fix": "As in shell_final_b.json; post-publish."}
+  ],
+  "questionsForUser": [
+    "Still open from w17: is the THE Suite floor carpet the same heather as THE Room, or a sparser, larger-fleck pattern?"
+  ],
+  "notes": "There are no high or medium issues in shell or lighting for the shell area. The target (8.5) is met. Rated from the supplied renders only."
+}
