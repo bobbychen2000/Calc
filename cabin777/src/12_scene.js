@@ -353,7 +353,7 @@ const AO_TUNE = { hemi: 0.22, bounce: 1.0, emitLens: 0.45, emitCtr: 0.35, kAttF:
 // it also reaches the lining seen at grazing from the look-out eye, which L13's N.V gate had left out: q12 frame mean 116.4 ->
 // 114.2, left reveal (0-120) L112 -> 100 [V: ucr_ana-business-class-wing-view reveal L104-110]; at 0.85 the frame mean is back to
 // 116.4 and the reveal reads 103 [D fixL14 t5 LK86 / LK85 / LK84]
-const LIGHT_TUNE = { cove: 1.0, sheen: 1.35, sheenTint: 0.3, tubWash: 0.7, lookOut: 0.86, ssao: [0.05, 8, 0.006, 0.07], ssaoMix: 0.9, ssaoAng: 0.25, ssaoDither: 0, ssaoIn: 0.3, ssaoLow: 0.5, ssaoEase: [0.02, 0.25], ssaoTaps: 12, ssaoCap: 16, glassT: [0.964, 0.976, 1.0], rim: [2.0, 1, 0] };
+const LIGHT_TUNE = { cove: 1.0, sheen: 1.35, sheenTint: 0.3, tubWash: 0.7, lookOut: 0.87, ssao: [0.05, 8, 0.006, 0.07], ssaoMix: 0.9, ssaoAng: 0.25, ssaoDither: 0, ssaoIn: 0.3, ssaoLow: 0.5, ssaoEase: [0.02, 0.25], ssaoTaps: 12, ssaoCap: 16, glassT: [0.964, 0.976, 1.0], rim: [2.0, 1, 0] };
 // QA r3 (integration): floor contact map (computeAO): cell size (m; 6 m x 59 m -> 200 x 1973 texels, under the 2048
 // texture minimum), marking height above the floor and the darkening at a base (mainFS) [D]
 const CONTACT = { cell: 0.03, h: 0.2, k: 0.55 };

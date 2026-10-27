@@ -468,9 +468,11 @@ void main(){
     // (lining facing in, tub) keeps per-channel ACES: the hue-preserving white tone (u_hueW, tone block) and the lower-tub sky
     // hue (tubLow) were fitted to the PY / Y official photos and turned the F / J window wall lavender [V: window-wall whites
     // B-R q05 +15 / q03 +17 / q08 +16 vs f_17313 +3, f_17300 +1.5, c_27300 -6]; the J / F seat zones keep the W gain [V: q06
-    // top-row cool share 66 % vs c_27312 60 %]
+    // top-row cool share 66 % vs c_27312 60 %]. THE Room's window wall (jzS) keeps half of it: two of its three official photos
+    // show it cool [V: c_27316 wall (0-300) B-R +11, c_27312 (780-930, 100-330) +10 vs c_27300 -5]; with none, q07's top rows
+    // read 39 % cool vs c_27316 53 % [D touch v1]
     float zPY = smoothstep(u_sLowZ - 0.3, u_sLowZ + 0.3, v_wpos.z);
-    hwK = mix(1.0 - max(linW * facingIn, recd), 1.0, zPY);
+    hwK = mix(1.0 - max(linW * facingIn, recd) * (1.0 - 0.5 * jzS), 1.0, zPY);
     // QA lighting final touch (from_room final confirm, medium): in THE Room (u_fjCool.w x jzS) the window-belt terms below (u_beltK
     // dimming, the day-belt share 0.5 -> 0.15) take the lining itself only (within 3-7 cm of the circle: the lining stands on it,
     // 07_shell wallAt), not the shell posts 8-11 cm inboard of it (linW 0.82-0.98 there [D mask render]): since L13 / L14 the
@@ -592,7 +594,11 @@ void main(){
     // which the AO volume's neutral bounce cannot carry [V: seat block y_47300 seat back #2f3d66, py_37302 #636d7e; armrests
     // y_47303 B-R +14..+31 vs q17 +1] [D gapT14 WBC]
     // QA lighting final touch: x sz, as seatC above (the door-4 / door-5 galley faces stay neutral) [V: q19 / m12 / m09]
-    bounce *= mix(vec3(1.0), u_bleed, step(u_sLowZ, v_wpos.z) * (1.0 - smoothstep(0.9, 1.3, v_wpos.y)) * (1.0 - wallProx * facingIn) * sz);
+    // (final touch, integration L15 low): x albedo neutrality (albS: linear saturation of the base colour), so the bleed cools the
+    // whites and greys it was fitted to (armrests, shells) and not the navy fabric a second time [V: q15 back B/R 2.20 with it vs
+    // y_47300 1.87; pillows 31 / 38 / 70 vs 29 / 35 / 59]
+    float albS = (max(base.r, max(base.g, base.b)) - min(base.r, min(base.g, base.b))) / max(max(base.r, max(base.g, base.b)), 1e-4);
+    bounce *= mix(vec3(1.0), u_bleed, step(u_sLowZ, v_wpos.z) * (1.0 - smoothstep(0.9, 1.3, v_wpos.y)) * (1.0 - wallProx * facingIn) * sz * (1.0 - smoothstep(0.2, 0.45, albS)));
     // (QA r3 (integration): the r2 extra bounce cut on occluded carpet, x0.6 below aoPk 0.28, is gone: stacked with the
     // floor pocket term below it crushed the Y / PY legroom to L5-15 [V: q17 between rows L14 p10 5 vs y_47303 L39 p10 26;
     // sany_13 floor / seat back 0.27-0.52 vs q17 0.18])
