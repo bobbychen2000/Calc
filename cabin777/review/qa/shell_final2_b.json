@@ -1,0 +1,40 @@
+{
+  "area": "shell",
+  "rater": "B",
+  "round": "final2",
+  "score": 8.5,
+  "previousIssues": [
+    {"id": "fA-1 (rater A, medium) warm cream ring round every window", "severity": "medium", "status": "fixed. The lip now carries the wall's cast. b_jClose lip p50 194/194/192 (B-R -2) -> 193/196/201 (+8) beside wall +12; s05 rim 189/187/186 (-3.5) -> 186/189/195 (+9) beside wall +25; s09 rim B-R +15 -> +22. The cream band seen in the head crops is gone (scratchpad/fb/lip_cmp.png)."},
+    {"id": "fb-1 F bowl hue (lighting)", "severity": "medium", "status": "not fixed (handed to lighting, as expected). s09/q03 bowls are unchanged: the tub stays cream albedo, and the lighting tubSky makes it B-R +22/+23 against f_17313 +1."},
+    {"id": "fb-2 lavender lining vs neutral reveal at grazing (lighting)", "severity": "low", "status": "partly fixed. The lip no longer adds a warm step, so the wall -> lip split in s05 drops from 28.5 to 16 B-R. The wall itself is still +25 against the tub's +6 (lighting)."},
+    {"id": "fb-3 look-out washout / q07 blue near pane (lighting)", "severity": "low", "status": "not fixed (lighting). The q12 diffs (6.8 %, max 78) are the moving cloud deck plus the lip turning neutral. The frame geometry is unchanged."},
+    {"id": "fb-4 flat door glass (lighting)", "severity": "low", "status": "not fixed (b_doorWin max diff 9)"},
+    {"id": "door-window / pleat-contrast / grille-pitch / vinyl-speckle / sidewall-weave / fcarpet", "severity": "low", "status": "not fixed. Carried, and unchanged (ra_door2floor, s06, b_doorWin and ra_carpetY are pixel-equal within 9)."}
+  ],
+  "details": {
+    "regression check: lip/sill junction": {"score": 8.6, "note": "There is no new seam or step. At 2x in b_jClose and s05, the cooler lip blends into the cream tub through the existing roll-in shading, with no hard line where it meets the tub or sill. Changed pixels are confined to the lip band (0.2-5.9 % per view, max 12-13 levels), apart from the cloud motion in q12."},
+    "regression check: reveal outline strength": {"score": 8.5, "note": "The outline still reads, now through shading rather than hue. In s05 the lip is ~40 levels below the wall (186-195 vs 221-246), and in b_jClose it reads as a soft grey roll 2-5 levels below the wall plus the shaded inner edge. That matches c_27316 and f_17313, where the reveal edge is a soft grey roll with no cream band. It is not too weak."},
+    "window size/spacing/height": {"score": 8.6, "note": "Unchanged."},
+    "window tubs/reveals": {"score": 8.5, "note": "Up 0.1 from final. The ring no longer reads as a cream insert, and the PY/Y tub hue matches py_37303. The F bowl hue remains a lighting matter (fb-1)."},
+    "window panes (day)": {"score": 8.7, "note": "Unchanged."},
+    "sidewall/lining": {"score": 8.2, "note": "Unchanged. There is still no weave, and the grazing lavender cast belongs to lighting."},
+    "shades electric": {"score": 8.4, "note": "Unchanged."},
+    "shades manual": {"score": 8.5, "note": "Unchanged."},
+    "dado/grilles": {"score": 8.3, "note": "Unchanged. b_dadoY2 changes 3.1 %, all of it on the window lips."},
+    "carpets J/Y/PY/F": {"score": 8.5, "note": "Unchanged."},
+    "door-bay carpet/vinyl": {"score": 8.2, "note": "Pixel-identical."},
+    "door surrounds/window": {"score": 8.3, "note": "Unchanged (s06 and b_doorWin pixel-equal within 9)."},
+    "clashes": {"score": 9.0, "note": "None (the geometry is unchanged)."}
+  },
+  "issues": [
+    {"id": "fb-1", "severity": "medium", "area": "lighting", "description": "Carried: the THE Suite window bowls take the PY/Y tub-sky hue, blue-grey and no lighter than the wall.", "evidence": "s09 bowl 191/200/213 (+22), q03 192/201/215 (+23) vs f_17313 bowl 238/239/239 (+1), which is lighter than its wall at 225.", "fix": "Lighting: gate tubSky/tubHue to the PY/Y zones."},
+    {"id": "fb-2", "severity": "low", "area": "lighting", "description": "At grazing the lining is still lavender against a neutral tub; the lip step is gone.", "evidence": "s05 wall +25, lip +9, tub +6. The photo split is ~11 (c_27316).", "fix": "Lighting, optional."},
+    {"id": "fb-3", "severity": "low", "area": "lighting", "description": "Carried: ra_jWin nacelle washed out; q07 near pane still blue.", "evidence": "Unchanged.", "fix": "Lighting, optional."},
+    {"id": "fb-4", "severity": "low", "area": "lighting", "description": "Carried: flat door glass.", "evidence": "b_doorWin glass 217/216/214.", "fix": "Lighting, optional."},
+    {"id": "shell-carried", "severity": "low", "area": "shell", "description": "Carried: door window short with the housing overlapping the bezel, pleat contrast, grille pitch, vinyl speckle, sidewall weave, F carpet hue/fleck.", "evidence": "Unchanged.", "fix": "As in shell_final_b.json."}
+  ],
+  "questionsForUser": [
+    "Still open from w17: is the THE Suite floor carpet the same heather as THE Room, or a sparser, larger-fleck pattern?"
+  ],
+  "notes": "I rated from the supplied renders only (no browser). The f2 vs head diffs (scratchpad/fb/diff2.py, f2sbs_*.png, lip_cmp.png, q12cmp.png) show only lip pixels changing (max 12-13 levels), plus cloud motion in q12. ra_door2floor, s06, b_doorWin and ra_carpetY are effectively identical. The change cleanly fixes rater A's fA-1 cream ring, with no seam and no loss of reveal definition. I found no shell medium or high issues. The only medium is fb-1, which belongs to lighting. The shell holds at 8.5: the target is met, but the carried low items keep it from going higher."
+}

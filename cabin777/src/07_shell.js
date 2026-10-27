@@ -327,7 +327,9 @@ function windowParts(side, pat) {
   // lining: x1 at the mouth to x0.78 at the pane by depth (tt_window inner end darker) [V: tone; A: split]
   const liningShade = (y, i, n) => [1, 0.95, 0.78][Math.floor((i * 3) / n)];
   const parts = [
-    [lip, MAT.reveal, tubShade],
+    // final confirm (shell_final_a fA-1): the roll-in is the wall panel's own moulding, so it takes the wall albedo (reveal
+    // roughness); in cream it drew a beige ring between the cooled wall and tub (b_jClose lip R-B +5 vs wall -11, c_27316 -1..-7) [V]
+    [lip, { c: MAT.sidewall.c, r: MAT.reveal.r }, tubShade],
     [sill, MAT.reveal, tubShade],
     ...(rec === REC_Y
       // QA w6: PY/Y bezel is a crisp raised frame ring with a dark outline (y_47303, sp_py24 ~0.035 m) [V: look; A: 3 mm]

@@ -239,3 +239,23 @@ with no code change. Cameras: `review/qa/shell_views.js` (18 views) plus the 22 
 - **w18 A 8.5 / B 8.5, no high / medium (w17 8.5 / 8.5): kept.**
 - Handed to lighting (from_shell.md): q12 exact-match compensation (optional), and the near grazing pane in q07 is still saturated
   blue. Details: `fixed_polishE.md`. Triangles unchanged.
+
+## Final confirm (2026-10-27): after lighting runs 2-4
+
+| Round | Rater A | Rater B | Mean | Files |
+|---|---|---|---|---|
+| final (fresh, head 1430d42; 07_shell.js as rated in w18) | 8.4 | 8.5 | 8.45 | shell_final_a / final_b.json |
+| final2 (lip takes the wall albedo) | 8.5 | 8.5 | 8.5 | shell_final2_a / final2_b.json |
+
+- **Cause of the drop (final, A 8.4):** lighting only. The 07_shell.js renders against w18 (617dd99, rebuilt) differ only where the
+  lighting run's cool wash and tub hue act. That wash cooled the wall and the tub but not the 16 mm roll-in lip, which kept the cream reveal
+  albedo, so every window got a beige ring (fA-1, medium; b_jClose lip R-B +5 against wall -11; c_27316 bezel -1 to -7).
+- **Fix (shell):** the lip takes the sidewall albedo #e9e7e2 (reveal roughness). The tub, sill and bezel stay cream. Lip pixels only (0-7 %
+  per view; q12 includes cloud motion); no seam at the sill; the reveal outline still reads through shading.
+- **Confirmed:** both raters 8.5, with no high issue and no shell medium. Otherwise the lighting run moved the shell toward the photos
+  (cooler lining, near-white panes, Y carpet blue). Triangles: unchanged (shell meshes 660k with instances, identical before and after).
+- **Handed to lighting** (from_shell.md, final confirm): fb-1 medium, the THE Suite bowls take the PY/Y tub-sky hue (s09 B-R +22 against
+  f_17313 +1); gate tubHue / tubSky to the PY/Y zones. Lows: q12 surround charcoal, clipped panes, lavender J wall at grazing, washed
+  nacelle in ra_jWin, flat door glass.
+- **Still open (low, shell, carried):** the door viewing window is short; blackout pleat contrast; no sidewall weave; vinyl speckle;
+  the PY/Y tub-floor card; the grille pitch; the F carpet grain and hue.
