@@ -509,6 +509,19 @@ function windowStudioGeo() {
   });
   return B.build();
 }
+// backing ribbons 2 mm behind the lining, 16 mm wide, over the window-cell band (v 0.48-1.60) at each z in zs
+function wallBackGeo(side, zs) {
+  const g = raw(), n = 20, v0 = WALL.vb0 - 0.02, v1 = WALL.vTop;
+  for (const z of zs) {
+    const b = g.p.length / 3;
+    for (let k = 0; k <= n; k++) {
+      const v = v0 + ((v1 - v0) * k) / n, [x, y, nx, ny] = wallAt(v);
+      for (const dz of [-0.008, 0.008]) { g.p.push((x - nx * 0.002) * side, y - ny * 0.002, z + dz); g.n.push(nx * side, ny, 0); g.u.push(z + dz, v); }
+    }
+    for (let k = 0; k < n; k++) { const a = b + k * 2; g.i.push(a, a + 1, a + 3, a, a + 3, a + 2); }
+  }
+  return fixWinding(g);
+}
 // vertical panel joints on the sidewall (ANA photos show one every second window, mid-pier)
 function wallSeamGeo(side, zs) {
   const B = new Builder(), vs = [WALL.dadoTop, 0.58, 0.74, 0.9, 1.1, 1.3, 1.45, WALL.vTop];
@@ -612,6 +625,11 @@ function buildShell(gl, layout) {
       // panel joints mid-pier after every second window (air-return grilles + recesses are instanced with the reveals)
       const sz = hz.filter((z) => z > za && z < zb).sort((a, b) => a - b).filter((z, k) => k % 2 === 1).map((z) => z + W.pitch / 2).filter((z) => z < zb - 0.05);
       shell.addBuilt(wallSeamGeo(side, sz));
+      // lining-coloured backing behind every window-cell edge (z +- hw): the recess rings' left and right side columns carry
+      // different v rows (as do the fillers), so the shared mid-pier edge has T-junctions that crack on the curved lining and
+      // showed the sky as bright 1 px specks beside the joint (integration L16, q12)
+      const ez = [...new Set(holes.filter((h) => h.z > za && h.z < zb).flatMap((h) => [h.z - h.pat.hw, h.z + h.pat.hw]).map((z) => +z.toFixed(5)))];
+      shell.add(wallBackGeo(side, ez), null, MAT.sidewall);
     }
   }
   // upper sidewall above the bin line where there are no bins (monument zones; the door surround reaches 2.02 itself -
