@@ -1029,3 +1029,8 @@ u_pyCool (vec3); MOODS.boarding pyCool 0.9, pyLvl 0.75.
    the lens fade-in on the tub (tA: centre -12 L, lip unchanged; not kept). The lip is the shell's roll-in moulding at grazing;
    routed as a low note (shell / lighting).
 5. Question 8 (economy Night): not changed (optional; no new in-flight evidence beyond sany_40).
+6. (after the L17 rating) Integration L17 medium, the PY bulkhead-face hue ramp: done. The PY face of the J / PY bulkhead
+   (aft-facing, within the 0.3 m past u_sLowZ) takes pyW from 0.5-0.8 m, not 1.4-1.7 m. jpC column x 440-452 (rows 250-570, step
+   30) +17 19 19 16 11 6 3 3 4 5 6 -> +17 19 19 19 19 19 19 20 21 22 23; lower panel whites (470-700, 480-575) +5 / 38 % -> +23
+   (py_37301 / py_37303 lower whites +25..+36); THE Room face (jpB) -13 = -13; q13 0.00 % px changed, seat backs B/R 1.38 / 1.30
+   unchanged. Renders x_v8 / r_v8; the two L17 ratings (8.5 / 8.5) were made just before this change.

@@ -477,10 +477,14 @@ void main(){
     // Forward-facing faces within the ramp (to u_sLowZ + 0.3: the J side of the J / PY bulkhead stands at z20 + 0.02, 05_layout)
     // stay out, so the 0.6 m ramp that keeps the ceiling and bins free of a hue step at the curtain line does not reach THE
     // Room's bulkhead face [D L17 jpB: its upper half went B-R -13 -> -5 with the gate at u_sLowZ]
+    // The PY face of that bulkhead (aft-facing, within the ramp) takes it from 0.5-0.8 m, so the flat panel row 1 faces is one
+    // hue: gated at 1.4-1.7 m it read +19 above the monitor row and +4 below [D L17 integration rater, jpC; V: py_37301 / py_37303
+    // lower whites +25..+36]
     // Level (L16 integration falloff): the same faces take u_pyCool.z of their diffuse light (Boarding MOODS pyLvl): the q13 top
     // band (bin doors, PSU) read L213 vs py_37302 182 (bins 211 vs 183) while its seat bands match (106 / 101 vs 106 / 100)
     float pyM = smoothstep(u_sLowZ - 0.3, u_sLowZ + 0.3, v_wpos.z) * (1.0 - smoothstep(u_pyCool.y - 0.3, u_pyCool.y, v_wpos.z))
-              * smoothstep(1.4, 1.7, v_wpos.y) * (1.0 - step(v_wpos.z, u_sLowZ + 0.3) * step(0.5, -N.z));
+              * smoothstep(mix(1.4, 0.5, step(0.5, N.z) * step(v_wpos.z, u_sLowZ + 0.3)), mix(1.7, 0.8, step(0.5, N.z) * step(v_wpos.z, u_sLowZ + 0.3)), v_wpos.y)
+              * (1.0 - step(v_wpos.z, u_sLowZ + 0.3) * step(0.5, -N.z));
     float pyW = u_pyCool.x * pyM;
     // QA lighting final touch (L15 lighting + integration medium): forward of the PY zone (zPY, the rimZ ramp) the window wall
     // (lining facing in, tub) keeps per-channel ACES: the hue-preserving white tone (u_hueW, tone block) and the lower-tub sky
