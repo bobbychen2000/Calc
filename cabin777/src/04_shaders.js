@@ -45,7 +45,7 @@ uniform sampler2DArray u_detail; uniform vec4 u_layer[${N_LAYERS}]; uniform samp
 uniform sampler2D u_atlas; uniform float u_screenStep; uniform float u_emisGain; uniform float u_screenGain;
 uniform sampler2D u_win; uniform vec2 u_winZ;
 uniform float u_R; uniform float u_yc; uniform vec2 u_winY;
-uniform float u_exposure; uniform float u_exterior; uniform float u_fill; uniform float u_sheen; uniform float u_sheenTint;
+uniform float u_exposure; uniform float u_exterior; uniform float u_fill; uniform float u_sheen; uniform float u_sheenTint; uniform vec3 u_sheenHue;
 uniform vec3 u_glassT; uniform float u_hueK; uniform vec3 u_rimK; uniform float u_dayN; uniform float u_scrWall; uniform float u_beltK;
 uniform float u_seatCool; uniform vec3 u_hemiBotS; uniform vec3 u_washS; uniform vec3 u_bleed; uniform vec2 u_lensLo; uniform float u_tubHue; uniform vec3 u_hueW;   // QA L14 (12_scene MOODS seatCool / bleed / lensLo / tubHue / hueW)
 uniform vec3 u_pyCool;   // QA lighting L17 (12_scene MOODS pyCool / pyLvl): PY cool share above seat level, PY zone end z (05_layout doorsZ[3][0]), PY level there
@@ -360,6 +360,7 @@ void main(){
 
   float NdV = max(dot(N, V), 1e-3);
   vec3 amb; float ao = 1.0; float sz = 1.0; float hwK = 1.0; vec3 lt = vec3(1.0); vec3 tubRef = vec3(0.0); vec3 hBot = u_hemiBot;
+  float pyL = 1.0;   // QA lighting L18: the PY level (pyLvl) on the cabin specular as well (set in the interior branch, pyM)
   if (u_exterior > 0.5) {
     // QA r3: the exterior sees the lit cloud deck below (u_extBounce per sky), so shaded flanks / undersides of the
     // wing, canoes and nacelle read mid-grey, not slate [V: alv_ANA77W_NH211_26K shaded flank #8090a0, belly #59636c]
@@ -486,6 +487,12 @@ void main(){
               * smoothstep(mix(1.4, 0.5, step(0.5, N.z) * step(v_wpos.z, u_sLowZ + 0.3)), mix(1.7, 0.8, step(0.5, N.z) * step(v_wpos.z, u_sLowZ + 0.3)), v_wpos.y)
               * (1.0 - step(v_wpos.z, u_sLowZ + 0.3) * step(0.5, -N.z));
     float pyW = u_pyCool.x * pyM;
+    // QA lighting L18 (both L17 raters, low): the PY rear wall (the door-4 lav / closet faces, facing forward, within 1.5 m of
+    // u_pyCool.y, between the aisles: 05_layout PY aisles 1.16-1.52) takes 0.4 of it, the outboard partitions keep it: at the
+    // full share it read B-R +20 vs py_37302 back wall +8 (its cream albedo under the cool light) [V: py_37302 back wall whites
+    // +8 / 80 %; right partition +17] [D L18 v1 (0.5, both): back wall +12, partition +11 -> +8]
+    pyW *= mix(1.0, 0.4, step(0.5, -N.z) * step(abs(v_wpos.x), 1.2) * smoothstep(u_pyCool.y - 1.5, u_pyCool.y - 0.5, v_wpos.z));
+    pyL = mix(1.0, u_pyCool.z, pyM);
     // QA lighting final touch (L15 lighting + integration medium): forward of the PY zone (zPY, the rimZ ramp) the window wall
     // (lining facing in, tub) keeps per-channel ACES: the hue-preserving white tone (u_hueW, tone block) and the lower-tub sky
     // hue (tubLow) were fitted to the PY / Y official photos and turned the F / J window wall lavender [V: window-wall whites
@@ -796,7 +803,7 @@ void main(){
       float kR = 1.0 + u_sLow * (1.0 - smoothstep(0.85, 1.05, v_wpos.y)) * (1.0 - wallProx * facingIn) * step(u_sLowZ, v_wpos.z);
       amb *= mix(1.0, max(1.0 - u_ssao.y * ssaoF(v_wpos, Nf, kR), 0.0), sW);
     }
-    if (pyW > 0.0) { vec3 cT = u_hemiBot / max(u_hemiBotN, vec3(1e-4)); amb *= mix(vec3(1.0), cT / dot(cT, vec3(0.2126, 0.7152, 0.0722)), pyW) * mix(1.0, u_pyCool.z, pyM); }   // QA L17 (pyW above)
+    if (pyW > 0.0) { vec3 cT = u_hemiBot / max(u_hemiBotN, vec3(1e-4)); amb *= mix(vec3(1.0), cT / dot(cT, vec3(0.2126, 0.7152, 0.0722)), pyW) * pyL; }   // QA L17 (pyW above)
     // reading lights (night): warm cone from the lamp lens to the seat, 0.35 m pool [V: tlfl_IMG_9377 pools on the bed]
     for (int i = 0; i < 8; i++) {
       if (u_spotP[i].w < 0.5) continue;
@@ -888,7 +895,10 @@ void main(){
   // the photo's 0.37), so the covers between head-on and grazing
   // lift too and the lobe is not plain white [V: y_47301 covers L64-100 vs q16 L53-58; lobe B/R 1.09 vs y_47303 1.47;
   // q15 head-on covers (40,44,81) vs y_47300 (34,41,67) held] (from_econ w40-w42 medium)
-  if (sheen > 0.0) specEnv += env * pow(1.0 - NdV, 2.0) * u_sheen * mix(vec3(1.0), base / max(max(base.r, base.g), max(base.b, 1e-3)), u_sheenTint);
+  // QA lighting L18 (econ confirm 2 medium, both raters): the lobe takes a fixed steel-blue hue (u_sheenHue, LIGHT_TUNE), not
+  // the navy albedo's: normalised, the albedo tint is (0.12, 0.18, 1) and kept the grazing covers lavender [V: q17 cover G-R
+  // 7-9 vs y_47303 (133-142, 151-161, 193-198) G-R 18-19]
+  if (sheen > 0.0) specEnv += env * pow(1.0 - NdV, 2.0) * u_sheen * mix(vec3(1.0), u_sheenHue, u_sheenTint);
   // QA r2 (integration): on the exterior the sky reflection follows the baked albedo (luminance / the wing's #636466 =
   // 0.39, clamped 0.5-1; metals keep theirs), so the near-to-far albedo ramp of 11_exterior also ramps the grazing
   // reflection that out-lit the near flap [V: KN41 near skin L196 -> far 129-145 vs w19A near L163 / far L173]
@@ -905,6 +915,9 @@ void main(){
     specEnv += coveSpec(v_wpos, N, V, R, mix(rough, sqrt(rough0*rough0 + min(0.5*nvar, 0.04)), rimZ), F0, NdV) * coveC * u_cove * sz
              * (0.25 + 0.75*mix(ao, 1.0, 0.6*rimO)) * (1.0 + u_rimK.x*rimO);
   }
+  // QA lighting L18 (integration L17 low): pyLvl (0.75 -> 0.65) on the cabin reflections too: on the diffuse light alone it moved
+  // the q13 top band L208 -> 206 (py_37302 182), the bin doors' cove and cabin sheen holding it up; with this 204 [D L18 v1 / v2]
+  specEnv *= pyL;
   vec3 col = max(diff * (amb + sun), tubRef) + specSun + specEnv + emissive;   // tubRef: QA r4 tub floor (above)
   col += vec3(0.30, 0.62, 1.0) * hl * (0.35 + 0.9*pow(1.0 - NdV, 2.0));
   // QA L11 (integration + shell): the day-pane transmittance (u_glassT: 12_scene LIGHT_TUNE.glassT on the exterior, 1 for

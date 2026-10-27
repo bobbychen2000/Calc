@@ -171,3 +171,11 @@
   - Fix: apply the cool term as luminance only, or weight it by saturation, so whites and greys stay near neutral; or drop the blue factor from 1.36 to about 1.25 in the econ zone. Targets: armrest blue minus red at most 6, back blue/red at most 2.0.
 - **Carried:** at a glancing angle the headrest covers read navy-violet, median (131,138,175), where the photos show a silver-grey sheen. A sheen lobe for the covers only would fix it.
 - **Lighting final touch (71fdda1):** done: armrests B-R q15 +14 -> +6, q17 +14 -> +5; back B/R 2.39 -> 2.13 (pre-L14 2.09), pillow 2.49 -> 2.20 (seatCool 0.35, bleed a third, bleed weighted by albedo neutrality). Headrest-cover sheen (carried) not changed: a material item.
+
+## Final confirm 2: status (lighting L18)
+
+- **Headrest covers lavender at grazing (medium, both raters): fixed in lighting L18.** Steel-blue sheen lobe (sheenHue, tint 0.8,
+  gain 1.75) and `yCover` #131d3c. q17 cover G-R +6..+12 -> +14..+17 (y_47303 +13..+20), L +7..+12; q15 head-on darkest 40 %
+  (42,46,84) -> (41,47,76). Econ confirm 3: A 8.55 / B 8.65, no high (`econ_confirm3_a.json` / `_b.json`).
+- **q17 3-seat cover short and high (medium, question 32):** not lighting; still open (econ).
+- **Carried low:** grazing covers ~19-20 L darker than y_47303; q15 head-on covers a shade greyer (B/R 1.77 vs 1.92-2.03).

@@ -135,3 +135,14 @@
   To go back to one look for the whole cabin, set `pyCool` to 0 and `fjCool` to `[0, 0, 0, 0]` in `MOODS.boarding`
   (`src/12_scene.js`) and drop `hwK` / `zPY` in `src/04_shaders.js` (mainFS, after `coolW`). Question 16 (far window band)
   stays as it is.
+
+## Lighting L18 (final polish, 2026-10-27)
+
+- **18, decided by the integrator (reversible): the hue change at the J / PY curtain is acceptable.** Each cabin follows its own
+  official photos (question 17), and the curtain hides the change. To soften it, lower `pyCool` in `MOODS.boarding`
+  (`src/12_scene.js`).
+- **19, decided by the integrator (reversible): the PY side partitions and the J / PY bulkhead stay fully cool** (py_37302 +17 /
+  99 %); only the PY rear wall between the aisles is dialled back (0.4 of `pyW`, mainFS in `src/04_shaders.js`, "QA lighting L18").
+- **20. Economy headrest covers:** they now take a steel-blue sheen at grazing angles (`LIGHT_TUNE.sheenHue` / `sheenTint` /
+  `sheen` in `src/12_scene.js`, and `SEATMAT.yCover` #131d3c). If you prefer the earlier navy-violet look, set `sheen` 1.35,
+  `sheenTint` 0.3, restore the albedo tint in mainFS and `yCover` #141b44.

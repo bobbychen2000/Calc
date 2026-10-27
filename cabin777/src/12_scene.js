@@ -79,7 +79,8 @@ const MOODS = {
   // QA lighting L17: pyCool (mainFS u_pyCool.x) = the PY cool share above seat level (bins, bulkheads, ceiling), per the PY
   // official photos (integrator's decision on question 17) [V: py_37302 bins +15 / bulkhead +17 B-R, py_37301 +17 vs q13 +4 / +2];
   // pyLvl = their diffuse level [V: q13 top band L213 vs py_37302 182, bins 211 vs 183] (0.88: -2 L, 0.75: -5..-8 L) [D L17 v5 / v6]
-  boarding: { label: 'Boarding', hemiTop: [0.97, 0.99, 1.03], hemiBot: [0.31, 0.35, 0.47], wash: [0.23, 0.255, 0.32], hemiBotN: [0.36, 0.37, 0.40], washN: [0.25, 0.26, 0.28], tubSky: [1.0, 0.6], led: [1.0, 0.98, 0.92], sideLed: [0.50, 0.57, 0.78], bandCut: 0.15, sideLow: 0, beltK: 0.62, lensLo: [1.25, 1.30], seatCool: 0.35, bleed: [0.965, 0.996, 1.13], tubHue: 0.8, hueW: [0.8, 0.72, 0.86], fjCool: [1, 1, 0.33, 1], pyCool: 0.9, pyLvl: 0.75, binLo: 0.8, k: 1.05, exposure: 1.38, toe: 1 },
+  // L18 (integration L17 low): pyLvl 0.65, on the specular too (mainFS pyL): q13 top band 208 -> 204, bands 2-6 178 / 124 / 105 / 101 / 88 -> 173 / 124 / 105 / 101 / 88; 0.55 (201 / 168) lost the hue (q14 top whites B-R +10 -> +6) [D L18 v2 / v4 / v5]
+  boarding: { label: 'Boarding', hemiTop: [0.97, 0.99, 1.03], hemiBot: [0.31, 0.35, 0.47], wash: [0.23, 0.255, 0.32], hemiBotN: [0.36, 0.37, 0.40], washN: [0.25, 0.26, 0.28], tubSky: [1.0, 0.6], led: [1.0, 0.98, 0.92], sideLed: [0.50, 0.57, 0.78], bandCut: 0.15, sideLow: 0, beltK: 0.62, lensLo: [1.25, 1.30], seatCool: 0.35, bleed: [0.965, 0.996, 1.13], tubHue: 0.8, hueW: [0.8, 0.72, 0.86], fjCool: [1, 1, 0.33, 1], pyCool: 0.9, pyLvl: 0.65, binLo: 0.8, k: 1.05, exposure: 1.38, toe: 1 },
   // QA r2 (light): cruise sideLow 0.10 -> 0.30, the lavender wash reaches the window belt in THE Suite (the reveals by
   // the glass stay near-white through mainFS nearPane) [V: ml_DSC_1939-1 wall column y45 #6e9bfc (B-R +141), y150
   // #7a89be, belt y240 #888db0 (+40) vs cF03 belt #cccccf (+3)]
@@ -309,6 +310,10 @@ const AO_TUNE = { hemi: 0.22, bounce: 1.0, emitLens: 0.45, emitCtr: 0.35, kAttF:
 // highlight ~1.3x the face on THE Room shell caps (c_27312), armrest p99 >= 240 (y_47303)]
 // QA r3 (integration): sheen = gain of the grazing sheen lobe on SHEEN materials (mainFS) [D: q17 / q16 flaps against
 // y_47303 / y_47301, q15 head-on unchanged]
+// QA lighting L18 (econ confirm 2 medium): sheen 1.35 -> 1.75 (+30 %), the lobe tinted 0.8 of the way (sheenTint) to the steel blue
+// of the grazing covers (sheenHue, linear, B = 1) [V: y_47303 cover (133-142, 151-161, 193-198) -> linear (0.25, 0.33, 0.55);
+// q17 (110-123, 119-130, 160-168) G-R 7-9 vs 18-19] [D L18 v1 / v3 / v6 / v8: q17 covers G-R 6-12 -> 14-17, L +7..+12; q15
+// head-on darkest 40 % (42,46,84) -> (41,47,76) vs y_47300 (29,36,60)]
 // QA r4: tubWash = floor of the recessed window tub, as a share of a pier's hemi + wash (lighting r4: amber reveals
 // vs ucr_the-room-cabin) [D], in the moods with tub: true (the amber phase) only: in Night and Blue it lit the tubs
 // flat and pale beside dark piers (q20 tub pixels L28 -> 55 vs ucr_room-night-lighting L23; bl16 / blue06 / nF03 alike,
@@ -358,7 +363,7 @@ const AO_TUNE = { hemi: 0.22, bounce: 1.0, emitLens: 0.45, emitCtr: 0.35, kAttF:
 // it also reaches the lining seen at grazing from the look-out eye, which L13's N.V gate had left out: q12 frame mean 116.4 ->
 // 114.2, left reveal (0-120) L112 -> 100 [V: ucr_ana-business-class-wing-view reveal L104-110]; at 0.85 the frame mean is back to
 // 116.4 and the reveal reads 103 [D fixL14 t5 LK86 / LK85 / LK84]
-const LIGHT_TUNE = { cove: 1.0, sheen: 1.35, sheenTint: 0.3, tubWash: 0.7, lookOut: 0.87, ssao: [0.05, 8, 0.006, 0.07], ssaoMix: 0.9, ssaoAng: 0.25, ssaoDither: 0, ssaoIn: 0.3, ssaoLow: 0.5, ssaoEase: [0.02, 0.25], ssaoTaps: 12, ssaoCap: 16, glassT: [0.964, 0.976, 1.0], rim: [2.0, 1, 0] };
+const LIGHT_TUNE = { cove: 1.0, sheen: 1.75, sheenTint: 0.8, sheenHue: [0.55, 0.72, 1.0], tubWash: 0.7, lookOut: 0.87, ssao: [0.05, 8, 0.006, 0.07], ssaoMix: 0.9, ssaoAng: 0.25, ssaoDither: 0, ssaoIn: 0.3, ssaoLow: 0.5, ssaoEase: [0.02, 0.25], ssaoTaps: 12, ssaoCap: 16, glassT: [0.964, 0.976, 1.0], rim: [2.0, 1, 0] };
 // QA r3 (integration): floor contact map (computeAO): cell size (m; 6 m x 59 m -> 200 x 1973 texels, under the 2048
 // texture minimum), marking height above the floor and the darkening at a base (mainFS) [D]
 const CONTACT = { cell: 0.03, h: 0.2, k: 0.55 };
@@ -396,7 +401,7 @@ class Scene {
       glow: gl.program(SH.glowVS, SH.glowFS),
     };
     this.emptyVAO = gl.gl.createVertexArray();
-    gl.use(this.progs.main); gl.set('u_fillLift', 1); gl.set('u_sheen', LIGHT_TUNE.sheen); gl.set('u_sheenTint', LIGHT_TUNE.sheenTint); gl.set('u_vaultE', [0, 1]);   // the studio may draw before the first cabin frame
+    gl.use(this.progs.main); gl.set('u_fillLift', 1); gl.set('u_sheen', LIGHT_TUNE.sheen); gl.set('u_sheenTint', LIGHT_TUNE.sheenTint); gl.set('u_sheenHue', LIGHT_TUNE.sheenHue); gl.set('u_vaultE', [0, 1]);   // the studio may draw before the first cabin frame
     gl.set('u_binLo', 1); gl.set('u_ctrLo', 1); gl.set('u_ctrLift', 1); gl.set('u_monHemi', 1); gl.set('u_fLow', 1);   // QA r4: neutral values for the same reason
     gl.set('u_glassT', [1, 1, 1]); gl.set('u_hueK', 0); gl.set('u_rimK', [0, 0, 0]); gl.set('u_dayN', 0); gl.set('u_scrWall', 0); gl.set('u_beltK', 1); gl.set('u_seatCool', 0); gl.set('u_bleed', [1, 1, 1]); gl.set('u_lensLo', [0.95, 1.30]); gl.set('u_tubHue', 0); gl.set('u_hueW', [0, 0.86, 0.97]); gl.set('u_fjCool', [0, 0, 0, 0]); gl.set('u_pyCool', [0, 0, 1]);   // QA L11: no pane tint, plain ACES, no rim lobe (the studio draws with u_exterior 1)
     this.buildGlows();
@@ -959,7 +964,7 @@ class Scene {
     const fz = this.layout.zones.find((zn) => zn.cls === 'F');
     G.set('u_fZone', fz ? [fz.z0, fz.z1, AO_TUNE.fLift] : [0, 0, 0]);
     G.set('u_bandCut', mood.bandCut ?? 0.65); G.set('u_sideLow', mood.sideLow ?? 0.4); G.set('u_sideWall', mood.sideWall || [1, 1, 1]);
-    G.set('u_lowGain', mood.lowGain ?? 1); G.set('u_fLow', mood.fLow ?? 1); G.set('u_monFill', mood.monFill || [0, 0, 0]); G.set('u_cove', LIGHT_TUNE.cove * (mood.cove ?? 1)); G.set('u_sheen', LIGHT_TUNE.sheen); G.set('u_sheenTint', LIGHT_TUNE.sheenTint);
+    G.set('u_lowGain', mood.lowGain ?? 1); G.set('u_fLow', mood.fLow ?? 1); G.set('u_monFill', mood.monFill || [0, 0, 0]); G.set('u_cove', LIGHT_TUNE.cove * (mood.cove ?? 1)); G.set('u_sheen', LIGHT_TUNE.sheen); G.set('u_sheenTint', LIGHT_TUNE.sheenTint); G.set('u_sheenHue', LIGHT_TUNE.sheenHue);
     G.set('u_toe', mood.toe ?? 0);
     G.set('u_glassT', [1, 1, 1]); G.set('u_hueK', mood.hueK ?? 0); G.set('u_dayN', mood.dayN ?? 0); G.set('u_beltK', (mood.beltK ?? 1) + (1 - (mood.beltK ?? 1)) * lookK); G.set('u_seatCool', mood.seatCool ?? 0); G.set('u_bleed', mood.bleed || [1, 1, 1]); G.set('u_lensLo', mood.lensLo || [0.95, 1.30]); G.set('u_tubHue', mood.tubHue ?? 0); G.set('u_hueW', mood.hueW || [0, 0.86, 0.97]); G.set('u_fjCool', mood.fjCool || [0, 0, 0, 0]); G.set('u_pyCool', [mood.pyCool ?? 0, this.layout.doorsZ ? this.layout.doorsZ[3][0] : 0, mood.pyLvl ?? 1]); G.set('u_rimK', this.q !== 'low' && this.ssaoOn !== false ? LIGHT_TUNE.rim : [0, 0, 0]); G.set('u_sLowZ', this.layout.z20 ?? 0);   // QA L11: pane tint only on the exterior (below), amber hue-preserving tone, cove rim lobe (Sharp only, as the contact AO: scene.ssaoOn, 13_app.js)
     G.set('u_extBounce', [0, 0, 0]);

@@ -1,0 +1,33 @@
+{
+  "area": "econ",
+  "rater": "B",
+  "round": "confirm3",
+  "candidate": "L18 working tree",
+  "lens": "Geometry and proportion first, then colour, materials and artefacts. Baseline S/r_base, candidate S/r_f (q15-q18), paired ANA photos resized to 930x575. git diff (working tree): 04_shaders.js, 09_seats.js (yCover #141b44 -> #131d3c only), 12_scene.js. Pixel diff base -> candidate (summed |dRGB| > 24): q15 0.67 %, q16 2.42 %, q17 1.94 %, q18 0.01 % of the frame; the diff masks contain only headrest-cover surfaces (S/raterB_econ/*_diff.png), so no outline or other material moved. Medians / darkest 40 % measured in fixed boxes (script S/raterB_econ/m.py, box.py; stacks base / candidate / photo in S/raterB_econ/*_stack.jpg, crops *_crop.jpg). S = /tmp/claude-0/-home-user-Calc/38d851bc-54b5-5d61-9179-a6fbfe434da5/scratchpad.",
+  "prior": [
+    {"id": "w51b-1 / w51a-1 (medium): q17 3-seat flap short and high, between the rolls", "status": "not fixed", "note": "Geometry untouched; diff mask shows only tone change inside the same flap outline. Still gated on question 32."},
+    {"id": "w49b-1 / w49a-1 (medium): q15 head-on cover too tall", "status": "fixed (holds)", "note": "Outline identical."},
+    {"id": "w50b-1 / w49a-2 (medium): wing rolls", "status": "fixed (holds)", "note": "Unchanged."},
+    {"id": "w51b-2 / w51a-2 (low): q15 centre cover ~5 px low, side blocks show back above the fold", "status": "not fixed (not touched)", "note": "Same geometry."},
+    {"id": "Carried lows: J elbow, flat pouch, strap tone, pillow plaque, pan-edge, q18 side-fabric smear", "status": "not fixed (not touched)", "note": "q18 differs from base in 50 px only."},
+    {"id": "econ-c2-2 (low): yCover base short of green, too blue head-on", "status": "fixed", "note": "q15 centre covers (44,48,86) B/R 1.95 G-R +4 -> (44,49,77) B/R 1.75-1.79 G-R +5/+6; side block (57,62,98) 1.72 -> (58,65,93) 1.60 vs photo (55,60,90) 1.64. Now slightly greyer than y_47300's centre covers (B/R 1.92-2.03), see low issue."},
+    {"id": "w43b-L1 / w47b-1 (medium, lighting): grazing covers navy-violet / ~20 L dark", "status": "mostly fixed", "note": "Hue fixed: q17 near flap (114,121,160) G-R +7 -> (122,139,170) G-R +18, B/R 1.40 vs y_47303 (138,157,197) G-R +19, B/R 1.43; L +12 (target +10..+20 met). Second flap (160,166,198) G-R +6 -> (168,183,206) +15. q16 near-left covers (127,136,177) G-R +9 -> (134,151,185) +17 vs y_47301 grazing covers (105,124,161) +19 and (139,159,210) +20. Reads steel/silver-grey, no longer lavender. Residual: q17 near flap still ~20 L darker than the photo."},
+    {"id": "q16 near right backs too dark", "status": "not fixed (not touched)", "note": "Fabric unchanged."},
+    {"id": "Regression check", "status": "none", "note": "Head-on covers still dark navy: q15 centre darkest 40 % (42,46,84) -> (41-42,47,75-76) vs y_47300 (29-35,35-41,60-68); not pale or silver. Grazing covers not cyan (B-G +17..+34, G-R +15..+18, all within the photos' G-R +14..+20). q18 seated view unchanged (covers out of frame). No change outside the covers."}
+  ],
+  "scores": {
+    "q15_econFronts": 8.8,
+    "q16_econAisle": 8.45,
+    "q17_econBacks": 8.6,
+    "q18_seat35C": 8.65,
+    "score": 8.65
+  },
+  "issues": [
+    {"view": "q17_econBacks", "severity": "medium", "area": "econ", "what": "Carried w51b-1 / w51a-1: the 3-seat-block headrest flap is short and high and sits between the rolls; in y_47303 it drapes over the rolls' inner halves with its foot well down.", "evidence": "Geometry identical to base; q17_econBacks_crop.jpg.", "fix": "Gated on question 32 (as confirm 2: longer drape CPL, rolls sx +-0.128, cushion w 0.26; 09a_econ.js and econUnitFar)."},
+    {"view": "q17_econBacks / q16_econAisle", "severity": "low", "area": "lighting", "what": "Grazing covers now the right steel-grey hue but still a little dark and slightly desaturated against the photos.", "evidence": "q17 near flap (122,139,170) L144 B/R 1.40 vs y_47303 (138,157,197) L164 B/R 1.43; q16 near-left (134,151,185) B/R 1.38 vs y_47301 (139,159,210) B/R 1.51.", "fix": "Optional: sheen gain 1.75 -> ~1.9 or sheenHue B up slightly. Not blocking."},
+    {"view": "q15_econFronts", "severity": "low", "area": "econ", "what": "Head-on centre covers now a touch greyer and ~7 L lighter than y_47300's navy.", "evidence": "darkest 40 % (41,47,75) B/R 1.77 vs (29-35,35-41,60-68) B/R 1.92-2.03; side block on target (B/R 1.60 vs 1.64).", "fix": "Optional: leave; or yCover B +3. Not blocking."},
+    {"view": "q15_econFronts", "severity": "low", "area": "econ", "what": "Carried: centre cover top ~5 px low and slightly squat; side blocks show back above the fold; flat pillows.", "evidence": "Geometry unchanged.", "fix": "As w51b-2 / w51a-2."},
+    {"view": "all", "severity": "low", "area": "econ", "what": "Carried lows: J armrest elbow, flat pouch, strap tone, pillow plaque, pan-front edge, q18 side-fabric smear; q16 near right backs dark; fleck backs slightly blue.", "evidence": "Unchanged code / pixels.", "fix": "As before."}
+  ],
+  "notes": "Confirm 3: the L18 change touches only the headrest covers (diff masks). The grazing-cover lavender carried from confirm 2 is fixed in hue: G-R +18 on the q17 near flap against +19 in y_47303, B/R 1.40 against 1.43, L +12; the q16 grazing covers are steel-grey like y_47301. Head-on covers stay dark navy (no silvering, not cyan); they are now slightly greyer than y_47300's centre covers (low). Residual ~20 L darkness at grazing is now low. Scores: q15 8.8 (hold), q16 8.3 -> 8.45, q17 8.45 -> 8.6, q18 8.65 (hold); overall 8.65 (mean 8.625). No regressions. High-severity econ issues: 0; medium: 1 (q17 3-seat flap geometry, question 32)."
+}

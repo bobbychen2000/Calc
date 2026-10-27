@@ -1,0 +1,29 @@
+{
+ "area": "econ",
+ "rater": "A",
+ "round": "confirm3",
+ "candidate": "L18 working tree",
+ "lens": "Skeptic, geometry first, then measured colour. Working-tree diff: 04_shaders.js (the sheen lobe now uses mix(1, u_sheenHue, u_sheenTint) instead of the albedo-normalised tint; it also adds PY-only pyW / pyL terms gated by pyM), 12_scene.js (LIGHT_TUNE sheenHue / sheenTint / gain) and 09_seats.js (one line: yCover #141b44 -> #131d3c). Baseline r_base, candidate r_f, photos resized to 930x575. Scripts and crops are in /tmp/claude-0/-home-user-Calc/38d851bc-54b5-5d61-9179-a6fbfe434da5/scratchpad/raterA_econ. d.py makes the r_base/r_f diff masks (d_<view>.png) and the stacks (m_<view>.jpg); c.py measures box medians and makes 3x crops; q15.py measures the head-on cover percentiles. head17.jpg is the q17 near cover (base | cand | y_47303); pil15.jpg is the q15 covers (base / cand / y_47300).",
+ "prior": [
+  {"id": "w43b-L1 / w47b-1 / confirm2 lighting medium: headrest covers lavender at grazing angles", "status": "fixed", "note": "q17 near cover (650-715, 185-235): base (115,122,161) G-R 7, L133 -> cand (123,141,171) G-R 18, L145 (+12); y_47303 (138,157,196) G-R 19, L164. q17 right-block cover: (107,115,156) G-R 8 -> (114,130,164) G-R 16, L +10; photo (113,131,178) G-R 18. q17 mid cover: G-R 6 -> 15, L +11. q16 near-left covers: G-R 7 -> 18 (L +12) and 6 -> 14 (L +7); y_47301 lit covers G-R 16-20. Target met (G-R >= 14, L +10..+20 at q17). head17.jpg reads silver steel-blue, not lavender. It is not cyan: B-G is 30 against the photo's 39. What remains: the cover is ~19 L darker than y_47303 and slightly less saturated (B-R 48 vs 58). Low."},
+  {"id": "Head-on q15 covers stay dark navy (guard)", "status": "holds / slightly improved", "note": "q15 four front covers, darkest 40 %: base (40,44,81) -> cand (40,45,73); y_47300 in my boxes (29,35,57), task reference (34,41,67). The hue is now nearer the photo's slate navy (B/R 1.83 vs base 2.03, photo 1.97 / 1.97). L is unchanged. Mean (51,58,87) vs photo (40,46,72). The top 20 % (the fold lip) went (73,78,116) -> (75,85,115) against (65,72,103), a slightly greyer lip band (pil15.jpg). That is low, not a regression to pale or silver head-on. The worker reported (41,47,76); mine is (40,45,73), consistent."},
+  {"id": "w51a-1 / w51b-1 (medium): q17 3-seat headrest flap short and high", "status": "not fixed", "note": "Geometry unchanged (head17.jpg). Gated on question 32."},
+  {"id": "w49a-1 / w50a-1 geometry fixes (q15 cover height, wing rolls)", "status": "fixed (holds)", "note": "No outline changed in any diff mask."},
+  {"id": "L14 whites / back B/R / pillow hue", "status": "fixed (holds)", "note": "The diff masks touch only the cover surfaces. Whole-frame mean RGB changes by <= 0.8 per channel in q15 / q16 / q17."},
+  {"id": "Regressions r_base -> r_f", "status": "none", "note": "Pixels changed by more than 24 summed RGB: q15 0.67 % (cover lips only), q16 2.42 % (covers only), q17 1.94 % (covers only), q18 0.01 % (a 57x13 px sliver at 770-827, 92-105, mean -5). The signed delta on changed pixels is (+7,+16,+7) to (+8,+17,+9): a green-led lift, as intended. The covers did not turn cyan or over-saturated, nothing changed outside them, and the q18 seated view is effectively unchanged (no covers in frame). The PY-only pyW / pyL shader terms leave the Y-zone views untouched."}
+ ],
+ "scores": {
+  "q15_econFronts": 8.7,
+  "q16_econAisle": 8.5,
+  "q17_econBacks": 8.5,
+  "q18_seat35C": 8.4,
+  "score": 8.55
+ },
+ "issues": [
+  {"view": "q17_econBacks", "severity": "medium", "area": "econ", "what": "Carried w51a-1 / w51b-1: the near 3-seat-block flap is short and high and sits between the rolls. In y_47303 it drapes over the rolls with a low foot.", "evidence": "head17.jpg: the geometry is identical to confirm 2.", "fix": "As in confirm 2 (gated on question 32)."},
+  {"view": "q16_econAisle / q17_econBacks", "severity": "low", "area": "lighting", "what": "The grazing covers now have the right hue (G-R 14-18 vs photo 16-20) but are still ~19 L darker and a little less saturated than y_47303.", "evidence": "q17 near cover cand (123,141,171) vs y_47303 (138,157,196).", "fix": "Optional: sheen gain 1.75 -> ~2.0, or sheenHue B 1.0 with G 0.70. Re-check that the q15 lip stays dark."},
+  {"view": "q15_econFronts", "severity": "low", "area": "lighting", "what": "The head-on cover fold lip is a slightly lighter grey band than the photo, and the darkest 40 % is ~10 L above y_47300 (unchanged from confirm 2).", "evidence": "q15.py top 20 % (75,85,115) vs (65,72,103); darkest 40 % (40,45,73) vs (29,35,57).", "fix": "None needed now."},
+  {"view": "all", "severity": "low", "area": "econ", "what": "Carried lows from confirm 2: pillow tone and weave, J elbow, pouch, belt and cap details, wing-roll fleck, q18 edge-fabric smear, residual cool whites.", "evidence": "Unchanged.", "fix": "As in econ_confirm2_a.json."}
+ ],
+ "notes": "Overall 8.55, up from 8.5. The L18 change does what it set out to do and nothing else. The grazing headrest covers in q16 / q17 moved from lavender (G-R 6-8) to steel-blue grey (G-R 14-18, L +7..+12), against photo G-R 16-20. The head-on q15 covers stay dark navy and are slightly closer in hue (B/R 2.03 -> 1.83, photo 1.97), and q18 is unchanged. The worker's numbers check out (q17 G-R 14-18 vs claimed 14-17; q15 darkest 40 % (40,45,73) vs claimed (41,47,76)). The lavender medium is closed. The only medium left is the carried q17 flap geometry (question 32). There are no high-severity issues."
+}

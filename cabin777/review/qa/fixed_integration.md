@@ -1034,3 +1034,45 @@ u_pyCool (vec3); MOODS.boarding pyCool 0.9, pyLvl 0.75.
    30) +17 19 19 16 11 6 3 3 4 5 6 -> +17 19 19 19 19 19 19 20 21 22 23; lower panel whites (470-700, 480-575) +5 / 38 % -> +23
    (py_37301 / py_37303 lower whites +25..+36); THE Room face (jpB) -13 = -13; q13 0.00 % px changed, seat backs B/R 1.38 / 1.30
    unchanged. Renders x_v8 / r_v8; the two L17 ratings (8.5 / 8.5) were made just before this change.
+
+## Lighting L18 (final polish)
+
+Code: `04_shaders.js`, `12_scene.js`, one shared line `SEATMAT.yCover` in `09_seats.js` (`13_app.js` unchanged). Baseline b73b227 (build
+b_base), final b_f; tuning b_v1-b_v8. Renders r_base / r_f (22 QA views) and x_base / x_f (jpA PY aisle looking forward and up
+(1.3, 1.6, 42.6, yaw 0, pitch 0.35), jpB THE Room looking aft (1.4, 1.6, 35.5, pi, 0), jpC PY looking at the J / PY bulkhead
+(1.35, 1.6, 42.9, 0, -0.05), Blue / Dining at the q06 camera, Sunrise / Night at (1.35, 1.6, 50)). Tools tools/meas.py, dark40.py,
+cam2.js / cam3.js, all under /tmp/claude-0/-home-user-Calc/38d851bc-54b5-5d61-9179-a6fbfe434da5/scratchpad. Integrator decisions
+(user away, reversible) logged in questions_lighting.md (18, 19).
+
+Regression guard, b73b227 -> final (px > 8 changed; frame mean / p5 / p50 / p95): q03 0.01 %, q05 0.05 %, q06 0.00 %, q08 0.26 %,
+q18 0.02 %, q19 0.00 %, q20 0.00 %, q12 2.16 % (pane clouds; 117.7 = 117.7, p5 / p95 equal), Blue at q06 0.18 %, Dining 0.04 %,
+Sunrise 0.46 %, economy Night 0.09 %, jpB (THE Room side) 0.42 %. Changed: q13 6.8 % (134.1 -> 132.6, p95 219 -> 216), q14 1.9 %
+(142.1 -> 141.4), q15 2.5 % / q16 5.8 % / q17 2.3 % (covers only; means +0.3..+0.6), jpA 23 %, jpC 9 %. Phone budget
+(test/perf.js, before -> after): mid Sharp 69 calls / 3,271,848 tris, Balanced 35 / 1,650,926; econ 101 / 4,002,884 and 51 /
+2,016,444; room 69 / 2,866,512 and 35 / 1,448,258: identical. No new pass, loop or texture tap; one new uniform (u_sheenHue), two
+multiplies and a step product per interior fragment.
+
+1. PY rear wall too cool (both L17 raters, low): done. Forward-facing faces (N.z < -0.5) between the aisles (|x| < 1.2) within
+   1.5 m of the PY end (u_pyCool.y) take 0.4 of pyW. (The rater's formula, step(0.5, N.z), gates aft-facing faces; the rear wall
+   seen from PY faces forward.) q13 whites B-R base -> final vs py_37302: rear wall (300-580, 110-190) +20 -> +10 (photo +8);
+   right partition (690-930, 120-300) +11 -> +10 (box mean B-R 18.0 = 17.9; v1 without the |x| gate took it to +8, fixed); q13 top
+   (0-930, 0-120) +12 -> +11 (>= +10); q13 bins (0-450, 0-70) +17 -> +15 (photo +15); q14 top (300-930, 0-150) +12 -> +10 (py_37301
+   +17). jpA PY bins (560-900, 40-300): not fixed, +28 = +28 (q13 bins +15). pyW adds +14 there (pyCool 0 render: +14) vs +9 on
+   the q13 bin doors; two gates tried and reverted: down-facing faces x0.5 (v5: jpA +25, q13 bins +15 -> +10), and pyW cut where
+   amb is already cool (B/R 1.15-1.45 / 1.3-1.7, v6 / v7: no pixel changed). Rated as a low residual (jpA is not a QA view).
+   v4 (pyW as a mix to the cool hue at equal luminance, not a product) moved every PY white 4-6 B-R warmer (q14 top +6): reverted.
+2. PY top band (integration low): done, partly. pyLvl 0.75 -> 0.65, now also on the cabin specular (pyL; the diffuse alone gave
+   208 -> 206). q13 bands 208 / 178 / 124 / 105 / 101 / 88 -> 204 / 173 / 124 / 105 / 101 / 88 vs py_37302 182 / 168 / 116 / 106 / 100
+   / 98 (no band moved under its photo); bins (0-450, 0-70) L204 -> 200 (photo 183). The 198 target is not met: pyLvl 0.55 gave 201 /
+   168 but cost the PY white balance (q13 top whites +11 -> +7, q14 top +10 -> +6; v4 / v5), so it stops at 0.65. The rest is the
+   bright centre ceiling (L215-220, -2 L per step, the ACES shoulder). jpC bulkhead upper face (470-700, 120-320) L170 -> 165, box
+   B-R 18.4 -> 18.0 (level only, as the decision asks).
+3. Economy headrest covers lavender at grazing (econ medium): done. The sheen lobe takes a fixed steel-blue hue (LIGHT_TUNE.sheenHue
+   [0.55, 0.72, 1.0] linear, sheenTint 0.3 -> 0.8; it was the navy albedo's normalised hue (0.12, 0.18, 1)), gain 1.35 -> 1.75, and
+   SEATMAT.yCover #141b44 -> #131d3c (econ rater B's assist). q17 cover boxes (660-730, 185-220 / 600-640, 140-170 / 845-900,
+   140-170): G-R +8 / +12 / +6 -> +14 / +17 / +15, L 119 / 133 / 100 -> 129 / 140 / 112 (y_47303 matched boxes G-R +13 / +16 / +20,
+   L 135 / 142 / 151). q15 head-on darkest 40 % (four covers) (42,46,84) -> (41,47,76) vs y_47300 (29,36,60). Tried: tint 0.5 / 0.6
+   with gain 1.62 (v1 / v3: G-R 11-15), hue (0.46, 0.61, 1) at 0.8 (v6: G-R 14-17 but L +3). Econ confirm 3: A 8.55 (confirm 2
+   8.5), B 8.65 (8.6), no high; kept.
+4. PY centre ceiling (optional): not done. Its hue reads B-R -2..-4 on both sides of the curtain (jpA 280-420) and no change was
+   clearly toward py_37302 without moving the J side.
