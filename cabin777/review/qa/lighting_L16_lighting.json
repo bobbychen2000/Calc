@@ -1,0 +1,164 @@
+{
+ "area": "lighting",
+ "score": 8.4,
+ "earlier": [
+  {
+   "issue": "(L15 medium 1) Boarding: THE Suite / THE Room window walls (lining, tubs, outboard bin doors) read lavender, away from the official photos",
+   "status": "fixed",
+   "evidence": "Re-measured with tools/meas.py (whites L170-250, s<0.25, B-R median / cool share >+5), r_base -> L16: q05 window wall (0-300, 0-280) +20 / 70 % -> 0 / 3 %; q03 (0-330, 0-300) +19 / 91 % -> +1 / 9 %; q08 (450-930, 0-200) +22 / 74 % -> +7 / 61 %; q06 right wall (640-930, 150-340) +20 / 79 % -> +7 / 61 %. Photos: f_17313 left wall (0-400, 0-300) +3 / 35 %, c_27312 top rows +8 / 70 %, c_27316 +3 / 40 %, c_27300 -5 / 5 %. Suite wall (20-90, 150-350) 199/204/214 L204 -> 222/223/223 L223 (f_17313 ~226); near-window tub box (0-210, 90-390) non-clipped B-R +18.9 -> +0.5, sat 0.074 -> 0.009 vs f_17313 (90-270, 90-390) +0.7, 0.013, p50 227 vs 233. The Suite is now as neutral as the photo; THE Room sits mid-way in the J photo spread (-5..+15). Residual: q08 is still 12 B-R cooler than its own pair c_27300 (low, below)."
+  },
+  {
+   "issue": "(L15 medium 2) Boarding: recessed window tubs lost 10-15 L (lensLo.x 1.25 fade-in reached the tub)",
+   "status": "fixed",
+   "evidence": "q17 tub (520-545, 50-70) L148 -> 163, (640-665) 145 -> 160 vs y_47303 161 / 163 (L15 photo boxes); pier (470-490) 204 -> 208; tub/pier 0.72 -> 0.78 (photo 0.88-0.90, still lower: the in-tub fall-off pier-edge -> centre is 209 -> 158 L along rows 50-70, vs a near-flat photo tub, logged as low). Other moods pixel-equal at the q06 camera (my renders b_base vs b_v4: Cruise 0.60 % px > 8, mean L 103.9 = 103.9; Night 0.09 %; Sunrise 0.00 %; Dining at the economy aisle 0.00 %)."
+  },
+  {
+   "issue": "(L15 low / L14 low 1, user question 16) Boarding far window band reads light grey where the official photos are near-clipped",
+   "status": "not fixed (waits for the user)",
+   "evidence": "q09 band (300-700, 15-75) p50 206 -> 211, > L235 25.5 -> 25.7 %, B-R +9.7 -> +3.5 vs c_27314 (250-930, 5-45) p50 234, 47.2 %, +15.2. q16 band (150-600, 120-230) p90 229 -> 229, > L235 4.1 -> 4.1 % vs y_47301 (90-560, 115-200) p90 246, 23.2 %. Frame clip share (> L235) still about half the photos': q05 4.6 vs 11.0 %, q09 2.4 vs 10.7 %, q15 3.1 vs 9.2 %, q16 4.1 vs 9.8 %, q13 0.3 vs 4.4 %."
+  },
+  {
+   "issue": "(L15 low, carried) material response: few thin streak highlights on rounded plastics / THE Room caps",
+   "status": "not fixed (unchanged, routed to room / econ)",
+   "evidence": "My thin-highlight metric (L > 7x7 median + 25, L > 150, removed by a 3x3 opening; not the L15 script, so compare ratios): q06 1.57 % (base 1.57) vs c_27312 4.06 %; q08 1.02 vs 2.14 %; q09 0.98 vs 2.39 %; q17 1.49 vs 4.02 %; q16 2.29 vs 3.77 %. Renders at 40-70 % of the photos, identical to r_base."
+  },
+  {
+   "issue": "(L15 low, carried) PY contact darks about a third to a half of the photo's",
+   "status": "not fixed (unchanged, routed to py)",
+   "evidence": "Thin dark lines (L < 7x7 median - 25, thin): q13 2.75 % (base 2.74) vs py_37302 4.55 %; q14 4.32 vs py_37301 7.24 %; q13 p5 44 vs 32. Unchanged."
+  },
+  {
+   "issue": "(fixer item 1, from_py / from_econ) PY / Y seat-level cool tint too strong",
+   "status": "fixed for economy and q14; overshoots for q13's own pair",
+   "evidence": "Seat back B/R r_base -> L16: q14 (260-400, 300-500) 1.39 -> 1.30 vs py_37301 back (510-615, 210-285) 1.30, py_37303 1.22; q15 back (360-450, 300-400) 2.39 -> 2.13 vs y_47300 (360-435, 345-435) 2.21; armrests q15 +14 -> +6, q17 +14 -> +5. But q13 back (210-310, 440-550) 1.50 -> 1.38 while its pair py_37302 (530-690, 440-520) reads 1.55: the forward-looking PY photo is the bluest, and q13 moved away from it (frame B-R +26 -> +22 vs +31). See the PY white-balance issue."
+  },
+  {
+   "issue": "(fixer item 2) galley faces took the seat cool / bleed",
+   "status": "fixed",
+   "evidence": "q19 white lower / upper B-R +7.2 / -3.6 -> -4.5 / -3.6 (meas.py), mean L 160.4 both; visually the door-5 faces read neutral and continuous."
+  },
+  {
+   "issue": "(fixer items 4-5) q07 THE Room shell post and q12 look-out surround",
+   "status": "fixed",
+   "evidence": "q07 post (775-850, 300-430) L79 -> 101 (c_27316 ~114). q12 frame mean 116.5 -> 117.5, p5 65 -> 59, p95 201 -> 198; surround reads flat mid-grey, no new rings; the thin blue pane-edge line is unchanged from r_base."
+  }
+ ],
+ "details": [
+  {
+   "detail": "Boarding THE Suite: wall L223 / B-R 0 vs f_17313 ~226 / +1..+3; near-window tub neutral (+0.5 vs +0.7); cool share 3 % vs 35 % (slightly too neutral, within noise). q03 / q04 / q05 frame p50 153 / 192 / 193 against brighter-clipped photos.",
+   "score": 8.6,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/ana/f_17313-lang-multi.jpg",
+    "/home/user/Calc/cabin777/ref/ana/f_17304-lang-multi.jpg",
+    "/home/user/Calc/cabin777/ref/ana/f_17306-lang-multi.jpg"
+   ]
+  },
+  {
+   "detail": "Boarding THE Room: q06 frame mean 142.7 vs c_27312 127.6, whites +6 / 52 % vs +8 / 61 % (good); q07 top rows +4 / 45 % vs c_27316 +3..+11; q08 window wall +7 vs c_27300 -5; q09 far band B-R +3.5 vs c_27314 +15. Mid-spread of the J photos, no lavender.",
+   "score": 8.4,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/ana/c_27312-lang-multi.jpg",
+    "/home/user/Calc/cabin777/ref/ana/c_27316-lang-multi.jpg",
+    "/home/user/Calc/cabin777/ref/ana/c_27300-lang-multi.jpg",
+    "/home/user/Calc/cabin777/ref/ana/c_27314-lang-multi.jpg"
+   ]
+  },
+  {
+   "detail": "Boarding PY: levels match (q13 mean 136.8 vs 128.6, p50 123 vs 121; q14 144.7 vs 127-131), but the bins / bulkheads are neutral (+2..+5) where every forward / side PY photo is cool (+15..+25). The PY window wall itself reads +22 from the PY aisle (my zb6), so the gap is on the non-window faces.",
+   "score": 7.6,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/ana/py_37302-lang-multi.jpg",
+    "/home/user/Calc/cabin777/ref/ana/py_37301-lang-multi.jpg",
+    "/home/user/Calc/cabin777/ref/ana/py_37303-lang-multi.jpg"
+   ]
+  },
+  {
+   "detail": "Boarding economy: q15 mean / p50 118.2 / 97 vs 118.5 / 93, thirds 202/85/68 vs 205/80/71; q16 127.6 vs 127.0, whites +15 vs +12; q17 whites +17..+23 vs +20..+22, tubs at photo level; q18 whites +16 vs +18. Seat fabric B/R 2.13 vs 2.21.",
+   "score": 8.6,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/ana/y_47300-lang-multi.jpg",
+    "/home/user/Calc/cabin777/ref/ana/y_47301-lang-multi.jpg",
+    "/home/user/Calc/cabin777/ref/ana/y_47303-lang-multi.jpg",
+    "/home/user/Calc/cabin777/ref/ana/y_47305-lang-multi.jpg"
+   ]
+  },
+  {
+   "detail": "Cruise / Blue / Dining / Sunrise / Night: unchanged from r_base (my renders at the q06 camera and the economy aisle: <= 0.60 % px > 8, mean L equal). Ratings carried from L15 (8.3-8.5).",
+   "score": 8.4,
+   "refs": []
+  },
+  {
+   "detail": "Zone transitions: F / J (z ~12) and J / PY (z20 = 39.81) fall on full-width bulkheads and curtains in every walk view I rendered (zb1-zb6); no hue step is visible on a continuous wall. J aft-cabin wall +5 / 49 % (zb3) vs PY wall +22 / 83 % (zb6) — a real 17 B-R step, but hidden by the PY bulkhead.",
+   "score": 8.4,
+   "refs": []
+  },
+  {
+   "detail": "Contact AO and material response unchanged (thin darks / highlights at 40-75 % of the photos).",
+   "score": 7.0,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/ana/c_27312-lang-multi.jpg",
+    "/home/user/Calc/cabin777/ref/ana/py_37302-lang-multi.jpg"
+   ]
+  },
+  {
+   "detail": "Artefacts: no new rings, seams or acne in the 22 views; q12 look-out surround and q19 galley clean; recessed tubs still darken toward the centre (209 -> 158 L across the q17 tub).",
+   "score": 8.3,
+   "refs": []
+  }
+ ],
+ "issues": [
+  {
+   "severity": "medium",
+   "owner": "lighting",
+   "detail": "Boarding PY cabin white balance: bins, bulkhead and partition faces are neutral where the official PY photos are clearly cool",
+   "problem": "Non-window whites in PY take the neutral hemiBotN / washN (coolW = 0). The PY seat-cool cut (seatCool 0.35) also took the seat backs in q13 away from py_37302. Economy and THE Room match their photos; PY is the one cabin where every official photo reads cool and the render reads neutral. This is in r_base too (not a regression), but it is now the largest white-balance gap left.",
+   "evidence": "Whites L150-250 s<0.25, B-R median / cool share: q13 top (0-930, 0-120) +4 / 36 %, bulkhead (620-780, 130-300) +2 / 10 % vs py_37302 bins (0-450, 0-70) +15 / 80 %, left wall (0-150, 80-250) +20 / 96 %, bulkhead (700-880, 80-200) +17 / 99 %; q14 (300-930, 0-150) +5 / 47 % vs py_37301 (0-400, 0-200) +17 / 62 %; py_37303 +25, py_37306 +19 (py_37304 / 05 +6 / +1 are close-ups). Frame whites q13 +4 / 32 % vs +18 / 91 %; frame B-R q13 +22 vs +31, q14 +21 vs +29..+31. q13 seat back B/R 1.38 vs py_37302 1.55.",
+   "fix": "04_shaders.js mainFS, after coolW (line ~466): add `coolW = max(coolW, u_pyCool * zPY * (1.0 - step(u_yZ, v_wpos.z)) * smoothstep(1.4, 1.7, v_wpos.y));` with u_yZ = the PY zone end (05_layout dz[3][0], ~43.7) and MOODS.boarding pyCool ~0.6 (0 elsewhere): the PY bins / bulkheads above seat level take the cool hemiBot / wash, the seats keep the item-1 cut (q14 B/R 1.30). Target q13 top / bulkhead whites +10..+15, q14 top +12; guard q15-q18 pixel-equal, q13 seat back B/R 1.38-1.45."
+  },
+  {
+   "severity": "low",
+   "owner": "lighting",
+   "detail": "Recessed window tubs fall off toward the tub centre",
+   "problem": "The tub level is fixed, but the tub still darkens ~50 L from the pier edge to its centre, where the photos show a near-flat tub.",
+   "evidence": "q17 row profile (rows 50-70, x 495-570, step 5) 209 209 204 197 189 179 169 161 158 158 158 158 160 166 175; tub/pier 0.78 vs y_47303 / sc_room_10 0.88-0.90 (L15).",
+   "fix": "Optional: soften the recd AO / lens term inside the tub (lensT on recd) so the centre reads >= 0.85 of the pier; check q15 / q16 tubs stay <= L190."
+  },
+  {
+   "severity": "low",
+   "owner": "lighting",
+   "detail": "Carried (user question 16): far window band dimmer than the official photos",
+   "problem": "As L15; the J band also lost its coolness with the half tone (q09 +9.7 -> +3.5 vs c_27314 +15).",
+   "evidence": "q09 band p50 211 / 25.7 % > L235 vs 234 / 47.2 %; q16 p90 229 vs 246; frame clip share about half the photos' in 5 paired views.",
+   "fix": "Wait for the user's answer to question 16 / 17."
+  },
+  {
+   "severity": "low",
+   "owner": "lighting",
+   "detail": "q08 window wall cooler than its own pair",
+   "problem": "THE Room keeps half the cool tone (hwK 0.5); c_27300 / c_27303 are neutral-warm while c_27312 / c_27314 are cool, so any single setting misses one pair.",
+   "evidence": "q08 (450-930, 0-200) +7 / 61 % vs c_27300 -5 / 5 %, c_27303 -7 / 5 %; q06 +7 vs c_27312 +8 / +10.",
+   "fix": "No change until the user answers question 17 (one white balance or per cabin / per photo)."
+  },
+  {
+   "severity": "low",
+   "owner": "room / econ (SEATMAT)",
+   "detail": "Carried: material response (thin highlights)",
+   "problem": "Unchanged.",
+   "evidence": "thin highlights q06 1.57 vs 4.06 %, q17 1.49 vs 4.02 %, q09 0.98 vs 2.39 % (my metric).",
+   "fix": "As routed in from_integration.md."
+  },
+  {
+   "severity": "low",
+   "owner": "py",
+   "detail": "Carried: PY contact darks / back-cushion form",
+   "problem": "Unchanged.",
+   "evidence": "thin darks q13 2.75 vs 4.55 %, q14 4.32 vs 7.24 %; q13 p5 44 vs 32.",
+   "fix": "09b_py.js items routed in from_integration.md."
+  }
+ ],
+ "questionsForUser": [
+  "Still open (16): should the window wall follow ANA's official photos (bright, near-clipped far wall) or the in-flight photos (darker, cooler band)?",
+  "Still open (8): economy at night is ~2.5x darker than in-flight photos with no grey-blue lit crown; give economy its own brighter, cooler night level?",
+  "Still open (17): one white balance for the whole cabin, or follow each cabin's official photos? ANA's PY photos are clearly cool (+15..+25 B-R on the bins and bulkheads), economy and THE Room photos range from neutral to cool, and THE Suite's are neutral. If per cabin, PY is the one to make cooler next."
+ ]
+}
