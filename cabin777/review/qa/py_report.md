@@ -294,3 +294,20 @@ Ratings: `py_w15a.json`, `py_w15b.json`. Triangles are unchanged at 194.6k.
   Rater A rates this medium and rater B low. It is routed to `from_py.md` (final confirm). PY `SEATMAT` is left unchanged because the studio colours match the photos.
 - **Triangles:** unchanged from w19. py2 is 19.3k and py4 38.9k per unit mesh.
 - **Ratings:** `py_final_a.json`, `py_final_b.json`.
+
+## Final confirm 2 (on 8467f01, after the lighting final touch)
+
+| round | rater A | rater B | result |
+|---|---|---|---|
+| confirm2 | **8.5** | **8.6** | no high issue: PY confirmed, no code changed |
+
+- **What changed since 1430d42:** nothing in PY (only `04_shaders.js`, `12_scene.js`, `07_shell.js`). Studio views p1-p8
+  are pixel-identical to 1430d42. In q13 / q14 the seats shift only by a uniform white-balance change
+  (about +1.5 / +0.1 / −4.8 RGB); no new stripes, seams or dark artefacts (mean |dL| 0.17 / 0.48).
+- **Routed lighting items (`from_py.md` "Final confirm"):**
+  - Cool cast on PY fabric: **fixed.** q14 mid back B/R 1.39 -> 1.30 (target 1.30), q13 front back 1.49 -> 1.38
+    (photos 1.22-1.36; 0.02 above, low), at unchanged L and contrast. Shell and console moved the same way.
+  - Diamond sun patch on the q14 window-seat back: not changed (lighting, low; L 179 against 124 on the next back).
+- **Calibration:** the w18 seam-bead high and the w16 rods / shell stripe stay fixed. Open: the flat cushion-front
+  band (A medium, B low), the dark bead low in q14, and the w15 / w17 lows.
+- **Triangles:** unchanged. **Ratings:** `py_confirm2_a.json`, `py_confirm2_b.json`.

@@ -1,0 +1,64 @@
+{
+ "area": "py",
+ "rater": "A",
+ "round": "confirm2",
+ "head": "8467f01",
+ "score": 8.5,
+ "summary": "PY geometry and materials are frozen. All eight studio views p1-p8 are pixel-identical to 1430d42 (0 changed px), and 09b_py.js and the PY SEATMAT keys are untouched; only 04_shaders.js, 12_scene.js and 07_shell.js changed. The lighting final touch fixes the cool cast I had routed as a medium. q14 mid-back fabric goes from B/R 1.390 to 1.297 (B-R 43.6 -> 33.9) and q13 front-back fabric from 1.492 to 1.379, with L unchanged (124.5 -> 124.4 and 109.2 -> 109.0). That puts q14 on the 1.30 target and both views inside the photos' 1.22-1.36 band (q13 is 0.02 above it). The shell and console warm by the same amount (q14 shell 1.365 -> 1.286, q13 console 1.421 -> 1.319). Diffing old against head shows no new PY artefacts. In the seat zone (y >= 190) no pixel changes by more than 8 L except 116 px at the window-reveal top edge (x 547-607, y 190-195). The maximum column-mean dL is 0.74 and the maximum row-mean is 1.08, so there are no stripes. The L<25 dark-pixel count changes by under 2 % (8949 -> 8995). Seam-bead minima are identical within 1 L. The change is a uniform mean dRGB of (+1.5, +0.1, -4.8), a pure white-balance shift. Still open: the cushion-front band (medium, PY's own, frozen) and the low sun patch, which is unchanged. The score stays at 8.5, the pass line: the colour items now pass, and the remaining gap is the carried-over cushion crease and the low-level fabric and pocket items.",
+ "lighting_note": "Not scored. (1) The cool-cast hand-off is done: q14 fabric B/R 1.297 and q13 1.379, against the photos' 1.22-1.36. If anything, q13 could lose another ~0.03, but that is not required. (2) The diamond sun patch on the q14 window-seat back (x 485-550, y 300-420) is unchanged: L 178.7 at both heads, sd 50.8, against a mid-back L of 124. py_37301 and py_37303 show evenly lit seat backs, so it is still a low lighting item. (3) The q14 window reveals above y 182 brighten by about +17 L (2,854 px > 15 L, bbox x 283-929, y 53-182), which is the 07_shell / window-wall change and does not touch the seats. The q14 sidewall below the window also warms slightly (B-R 12.9 -> 10.8). (4) The seam bead in the shaded bottom of q14 is still L 19-32 (crevice AO), the same as before.",
+ "calibration": [
+  {"issue": "final A medium / routed to lighting (from_py.md 'Final confirm'): cool cast on the PY fabric, so it reads denim/periwinkle", "status": "fixed", "evidence": "q14 mid back x 260-400, y 300-500: RGB (111.7,125.0,155.4) -> (114.1,125.1,148.0), B/R 1.390 -> 1.297 (target ~1.30), L 124.5 -> 124.4, sd 32.4 -> 32.5. q13 front back x 200-330, y 420-560: B/R 1.492 -> 1.379, L 109.2 -> 109.0. The photos measure 1.22-1.36. The q14 fg shell (x 730-800) goes from B/R 1.365 to 1.286 and the q13 console from 1.421 to 1.319, with L unchanged."},
+  {"issue": "final B low / lighting: bright diamond sun patch on the q14 window-seat back (x 485-550, y 300-420)", "status": "not fixed (unchanged; lighting-owned, low)", "evidence": "Old against head: L mean 178.7/178.7, sd 50.7/50.8, max 249/249. Only the hue moves (B-R 31.3 -> 27.4)."},
+  {"issue": "w17-w19 A medium: the cushion-front band is a flat, uniform dark stripe instead of a graded crease", "status": "not fixed", "evidence": "p5_console and p8_ana37301 have 0 changed px against 1430d42, so it is still the 3-8 px run at L ~33."},
+  {"issue": "w18 A high / B medium: the seam bead reads as a black cord", "status": "fixed (holds)", "evidence": "q14 bead min L over x 810-900 (old/head): row 350 29/28, 465 26/26, 545 19/19, 560 32/32, 572 20/20. Geometry is identical."},
+  {"issue": "w16 high: black rods on the cushion sides; w16 B high: black stripe through the shell's outer face", "status": "not regressed", "evidence": "Studio p1-p8 have 0 changed px. On the q14 fg shell face (x 730-800, y 300-500), L sd is 9.2 -> 9.2 and the minimum is 51 -> 51."},
+  {"issue": "integration L13 medium: outline darks too weak", "status": "partly fixed (unchanged)", "evidence": "L<25 px: q14 8949 -> 8995 and q13 8195 -> 8344 (+0.5 % / +1.8 %). Contrast is unchanged (q14 back sd 32.4 -> 32.5, q13 26.9 -> 27.1)."},
+  {"issue": "new-artefact check from the lighting change (stripes, black seams, colour shifts on PY)", "status": "none found", "evidence": "Seat zone y >= 190: |dL| > 8 in only 116 px (q14, x 547-607, y 190-195, window-reveal top) and none in q13 (max 6.8). The maximum column-mean |dL| is 0.74 (q14) and 0.34 (q13), and the maximum row-mean is 1.08 / 0.20. The mean dRGB in the seat zone is (+1.5, +0.1, -4.8) for q14 and (+1.3, +0.1, -4.6) for q13, a uniform warm shift."},
+  {"issue": "w19/final low carry-overs: bead too dark in the shaded q14 corner; close-range cloth blocks; plain shell under the pocket; flat navy flap; trim-B ears too dark; shell orange-peel; pocket frame near-black", "status": "not fixed (unchanged)", "evidence": "Studio views are identical and the bead minima are identical (see above)."}
+ ],
+ "details": {
+  "back + cushion shape": 8.5,
+  "back/shell seam": 8.4,
+  "cushion front crease": 7.9,
+  "headrest ears + flap": 8.4,
+  "shell incl. rear": 8.5,
+  "screen + bezel + placards": 8.4,
+  "literature pocket": 8.3,
+  "consoles (incl. darker cubbies)": 8.6,
+  "armrest + shroud": 8.6,
+  "leg rest / footrest / legs / bottle bin": 8.1,
+  "gooseneck": 8.5,
+  "fabrics (pattern / contrast)": 8.5,
+  "fabric hue as rendered in cabin views": 8.6,
+  "materials: plastic finish / highlights": 8.6,
+  "overall": 8.5
+ },
+ "issues": [
+  {
+   "severity": "medium",
+   "title": "Carry-over (PY-owned, frozen for publish): the cushion-front band is still a flat, uniform dark stripe",
+   "evidence": "p5/p8 are pixel-identical to 1430d42 and w19: a 3-8 px run at L ~33, against the photo's wider graded crease at L 35-90. Rater B rates it low. It does not block 8.5.",
+   "fix": "Post-publish, optional: lighten the band to about #4a505e and add a 0.012 m strip of #3a3f4c at its top edge only. Check the p8 x 440 profile afterwards."
+  },
+  {
+   "severity": "low",
+   "title": "Lighting: diamond sun patch on the q14 window-seat back is unchanged",
+   "evidence": "x 485-550, y 300-420: L 178.7, against 124 on the neighbouring back. Identical to 1430d42. Not in py_37301/37303.",
+   "fix": "Owner: lighting. Soften or diffuse the window sun on the PY seat backs, or accept it as sun."
+  },
+  {
+   "severity": "low",
+   "title": "Carry-over: the bead is too dark in the shaded bottom of q14, plus the w15/w17 fabric, pocket and ear lows",
+   "evidence": "The bead minimum is L 19-32 at y 540-575, against ~60 in the photo. The studio views are unchanged.",
+   "fix": "As in py_final_a.json."
+  }
+ ],
+ "questions": [],
+ "before_vs_after": {
+  "verdict": "Head 8467f01 is equal to or better than 1430d42 for PY. The lighting final touch takes the fabric back to the photos' blue-grey (q14 B/R 1.39 -> 1.30) without changing luminance or contrast, and adds no stripes, seams or dark artefacts on the seats. PY passes at 8.5 with no high issue. Its only medium is the long-standing cushion-front crease.",
+  "changes": {
+   "lighting final touch (04_shaders.js / 12_scene.js / 07_shell.js)": "accept. A uniform warm shift on the seats (dB -4.8, dR +1.5), with fabric/shell/console B/R now inside the photo band and window reveals +17 L. The sun patch is unchanged.",
+   "PY files": "no change (studio p1-p8 have 0 changed px)"
+  }
+ }
+}
