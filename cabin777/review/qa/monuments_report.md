@@ -489,3 +489,41 @@ Closed `from_integration.md` "Lighting run 3, L13 ... To monuments (medium)" (lo
   - the right open bay is crushed (lighting);
   - the w18-w21 lows.
 - Ratings: `monuments_final_a.json`, `monuments_final_b.json`.
+
+## Final confirm 2 (2026-10-27, head 8467f01): bar held, no code change
+
+| round | rater A | rater B | high / medium (monuments) |
+|---|---|---|---|
+| confirm2 | **8.7** | **8.8** | none / none |
+
+- Since the final confirm (1430d42) only lighting changed: `04_shaders.js`, `12_scene.js` and 4 lines of `07_shell.js`
+  (lighting final touch, 71fdda1..8467f01). `10_mono.js` and `05_layout.js` are unchanged and the monuments mesh is
+  still 119,228 triangles.
+- **Diff, 1430d42 vs 8467f01:**
+  - q01, q11, m01, m03, m05 and m06: 0-0.09 % of pixels with |dL|>8 and 0-0.4 % with |d(B-R)|>8.
+  - m02 changes 1.6 % in L. That is the sidewall window reveal, which belongs to the shell.
+  - The bar elements re-measure identically.
+- **Routed lighting item ("Final confirm", galley lavender below 1.3 m): fixed, both raters.** White-pixel B-R,
+  lower / upper band:
+
+  | view | 1430d42 | 8467f01 |
+  |---|---|---|
+  | q19 | +7.3 / -3.5 | -4.5 / -3.5 |
+  | m12 | +7.8 / -6.1 | -4.8 / -6.2 |
+  | m09 | +5.4 / -6.7 | -2.5 / -6.7 |
+
+  - Luminance is unchanged in all three views.
+  - m09's gap of 4 is just over the target of 3. It is the white panel against the darker grey door-4 inserts (the
+    5e5e561 baseline gap was 5.1), not a lighting split.
+  - The J/PY partition lower half in q13 also lost its lavender: +20 -> +4 (rater A).
+- **Earlier mediums** (L13 bar face, ink-print inversion, warm drapes, door-1 belt hot band): still fixed.
+- **New low (lighting, not scored, optional):** the door-4/5 cart faces read slightly cool, B-R about -8 against -1
+  to -5 on the upper wall. They are cool-neutral, not lavender (rater A).
+- **Still open (low, carried):**
+  - the glass cabinet reads as open shelving;
+  - the control panel and oven fronts are flat plates;
+  - the bar nosing is a flat white band;
+  - the bays are crushed to L3 (lighting);
+  - the bar soffit;
+  - the w18-w21 lows.
+- Ratings: `monuments_confirm2_a.json`, `monuments_confirm2_b.json`.
