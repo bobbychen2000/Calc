@@ -42,6 +42,64 @@ function seamPath(secs, T, sd, sdf, y0, y1, n) {
   }
   return runs.filter((r) => r.length > 2);
 }
+// confirm3 (integration L15/L16 medium, A medium): the back face was a flat board (q13 shading range 36 L vs py_37302
+// 53 L). The cushion surface itself is shaped - no strips (w16): a transverse crown falling into a soft valley just
+// inboard of the bolsters, and a lumbar crown ~0.07-0.25 up the back (py_37301 right seat, py_37303 side) [D]
+const PYFORM = { crown: 0.015, cx: 0.13, vx: 0.11, vd: 0.012, vw: 0.02, lumbar: 0.04, ly: 0.15, lb: 0.09, lt: 0.32, rise: 0.03, r0: 0.12, r1: 0.18 };
+const pySstep = (a, b, v) => { const t = clamp((v - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+function pyBackDz(x, y) {   // forward offset of the back face at back-local x, y
+  const P = PYFORM, ax = Math.abs(x), fade = pySstep(0.0, 0.05, y) * (1 - pySstep(0.80, 0.885, y));
+  const cr = P.crown * Math.cos((Math.PI / 2) * Math.min(ax / P.cx, 1)) ** 2;
+  const ly = Math.cos((Math.PI / 2) * Math.min(Math.abs(y - P.ly) / (y < P.ly ? P.lb : P.lt), 1)) ** 2;   // quick rise, long fall
+  const lu = P.lumbar * ly * (0.45 + 0.55 * Math.cos((Math.PI / 2) * Math.min(ax / P.cx, 1)));
+  return fade * (cr + lu + P.rise * pySstep(P.r0, P.r1, ax) - P.vd * Math.exp(-(((ax - P.vx) / P.vw) ** 2)));
+}
+// loft of PYBACK with the front edge subdivided at fractions fr of its flat half-span (and extra rings through the
+// lumbar), displaced by pyBackDz; sides and rear stay the rounded rectangle the seam / shell code assumes
+function pyBackGeo(lod) {
+  const segC = 3, fr = lod ? [0, 0.6, 0.9] : [0, 0.28, 0.48, 0.56, 0.63, 0.7, 0.8, 0.9];
+  const ys = [...new Set([...PYBACK.map((s) => s.y), ...(lod ? [0.13] : [0.09, 0.13, 0.25, 0.42])])].sort((a, b) => a - b);
+  const secs = ys.map((y) => secAt(PYBACK, y)), g = raw(), xs = [...fr.slice(1).reverse().map((f) => -f), ...fr];
+  const rings = secs.map((s) => {
+    const r = Math.max(0.0005, Math.min(s.r, s.w / 2 - 1e-4, s.d / 2 - 1e-4)), pts = rrectPts(s.w, s.d, r, segC, s.x, s.z);
+    const hs = s.w / 2 - r, k = 3 * (segC + 1);   // front edge runs from pts[k - 1] (-x) to pts[k] (+x) at z - d / 2
+    pts.splice(k, 0, ...xs.map((f) => [s.x + f * hs, s.z - s.d / 2]));
+    return pts.map(([x, z]) => [x, z - pyBackDz(x - s.x, s.y) * clamp((s.z - z) / (s.d / 2), 0, 1) ** 2]);
+  });
+  const n = rings[0].length;
+  for (let j = 0; j < secs.length; j++) for (let i = 0; i < n; i++) { g.p.push(rings[j][i][0], secs[j].y, rings[j][i][1]); g.n.push(0, 1, 0); g.u.push(i / n, j / (secs.length - 1)); }
+  for (let j = 0; j < secs.length - 1; j++) for (let i = 0; i < n; i++) { const a = j * n + i, b = j * n + ((i + 1) % n); g.i.push(a, b + n, b, a, a + n, b + n); }
+  for (const [j, ny] of [[0, -1], [secs.length - 1, 1]]) {
+    const s = secs[j], c0 = g.p.length / 3;
+    g.p.push(s.x, s.y, s.z); g.n.push(0, ny, 0); g.u.push(0.5, 0.5);
+    for (const [x, z] of rings[j]) { g.p.push(x, s.y, z); g.n.push(0, ny, 0); g.u.push(0, 0); }
+    for (let i = 0; i < n; i++) { const a = c0 + 1 + i, b = c0 + 1 + ((i + 1) % n); if (ny > 0) g.i.push(c0, b, a); else g.i.push(c0, a, b); }
+  }
+  // smooth normals over the side faces only (caps keep their flat normals)
+  const nSide = secs.length * n, nn = new Float32Array(nSide * 3);
+  for (let t = 0; t < (secs.length - 1) * n * 6; t += 3) {
+    const [a, b, c] = [g.i[t], g.i[t + 1], g.i[t + 2]].map((v) => v * 3);
+    const u = [0, 1, 2].map((q) => g.p[b + q] - g.p[a + q]), v = [0, 1, 2].map((q) => g.p[c + q] - g.p[a + q]);
+    const f = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]];
+    for (const w of [a, b, c]) for (let q = 0; q < 3; q++) nn[w + q] += f[q];
+  }
+  for (let k = 0; k < nSide * 3; k += 3) { const l = Math.hypot(nn[k], nn[k + 1], nn[k + 2]) || 1; for (let q = 0; q < 3; q++) g.n[k + q] = nn[k + q] / l; }
+  return g;
+}
+// baked cavity shade on the shaped face (the cabin fill is a hemisphere term, so the sideways valley and bolster flank
+// barely shade on their own): darker in the valley and up the flank into the bolster, under the lumbar and low on the
+// back, a touch lighter on the upper back (py_37301 / 37302: bright upper back, dark flanks and waist) [D]
+function pyBackShade(B, g, v0) {
+  const P = PYFORM;
+  for (let k = 0; k < g.p.length / 3; k++) {
+    const nz = -g.n[k * 3 + 2];
+    if (nz < 0.3) continue;   // front face only (caps / sides / rear keep the material colour)
+    const ax = Math.abs(g.p[k * 3]), y = g.p[k * 3 + 1], w = pySstep(0.3, 0.7, nz);
+    const f = 1 - w * (0.22 * Math.exp(-(((ax - P.vx) / 0.028) ** 2)) + 0.12 * pySstep(0.12, 0.18, ax) + 0.12 * (1 - pySstep(0.03, 0.12, y))
+      - 0.05 * pySstep(0.36, 0.5, y) * (1 - pySstep(0.78, 0.86, y)));
+    for (let q = 0; q < 3; q++) B.c[(v0 + k) * 4 + q] = clamp(Math.round(B.c[(v0 + k) * 4 + q] * f), 0, 255);
+  }
+}
 const PYREAR = { c: '#5e636b', r: 0.42, l: LAYER.plastic };   // rear face of the shell + literature bucket (py_37304, san_26) [D]
 function pySeat(B, x0, lod, opts = {}) {
   const [hy, hz] = PY.hinge;
@@ -53,7 +111,8 @@ function pySeat(B, x0, lod, opts = {}) {
   B.add(gRBox(0.415, 0.05, 0.48, 0.012, 1), M4.trs(x0, 0.335, -0.29), { c: '#3a3f4a', r: 0.5, l: LAYER.plastic });   // w10 (A): dark pan frame (py_37304, san_26)
   // QA r2: the centre of the back sits ~3 cm behind its old face between the bolsters (d 0.10 at y 0.34-0.52), and the top
   // blends into the headrest (overlapping sections instead of a step)
-  loftAt(B, PYBACK, BH, F, lod ? 3 : 4);
+  const gBack = pyBackGeo(lod), vBack = B.vcount;
+  B.add(gBack, BH, F); pyBackShade(B, gBack, vBack);   // confirm3: shaped face (pyBackDz) + its baked cavity shade
   // ANA: the patterned back forms the rounded top of the seat level with the headrest and runs beside + behind the
   // wings (py_37301 right seat, py_37303 side view); the headrest stands ~2 cm proud of it [D]
   // sculpted side bolsters standing ~5 cm proud of the centre, narrow at the waist (~0.30 above the cushion), flaring
@@ -63,8 +122,9 @@ function pySeat(B, x0, lod, opts = {}) {
     const BX = M4.mul(BH, M4.trs(sd * 0.185, 0, -0.03, -sd * 14 * DEG));
     loftAt(B, PYBOL, BX, F, lod ? 2 : 3);   // w9 (A + B): end under the ears
   }
+  // (confirm3: carried forward with the shaped face)
   // w8 (B): curved hourglass seams sweeping in at the waist (py_37301), a darker welt ~2 mm proud of the back face [D]
-  if (!lod) for (const sd of [-1, 1]) B.add(gTube([[0.14, 0.10, -0.088], [0.145, 0.30, -0.074], [0.125, 0.48, -0.063], [0.13, 0.60, -0.056]].map(([x, y, z]) => M4.point(BH, [sd * x, y, z])), 0.0025, 6), null, { c: '#5c6476', r: 0.95 });   // w9 (B): along the bolster edge, seam-shadow tone
+  if (!lod) for (const sd of [-1, 1]) B.add(gTube([[0.14, 0.10, -0.088], [0.145, 0.30, -0.074], [0.125, 0.48, -0.063], [0.13, 0.60, -0.056]].map(([x, y, z]) => M4.point(BH, [sd * x, y, z - pyBackDz(x, y)])), 0.0025, 6), null, { c: '#5c6476', r: 0.95 });   // w9 (B): along the bolster edge, seam-shadow tone
   // thick rear shell that wraps round the back's sides (grey edge visible from the front)
   const zr = (y) => 0.105 + 0.014 * Math.sin(Math.PI * clamp(y / 0.84, 0, 1));
   // QA r2: the shell's rounded top rises above the headrest (to 0.97, headrest 0.91) and frames the screen from behind
@@ -134,7 +194,10 @@ function pySeat(B, x0, lod, opts = {}) {
   B.add(gRBox(0.41, 0.05, 0.025, 0.01, 1), M4.trs(x0, 0.35, -0.535), F);                           // skirt
   // polishD (integration L9-L11): soft shadow band tucked behind the skirt under the cushion nose (py_37301 crease
   // L50-90, w16 A + B: a hard black line read drawn) and a dark gap under the hinge roller [D]
-  B.add(gRBox(0.39, 0.024, 0.006, 0.003, 1), M4.trs(x0, 0.378, -0.543), { c: '#3a3f4c', r: 0.95 });
+  // confirm3 (A medium since w17: a flat uniform stripe): graded - a 36 mm band, #5a6170 at its foot to #3a3f4c under the nose (~#4a505e where it shows above the skirt) [D]
+  { const v0 = B.vcount, g = gRBox(0.39, 0.036, 0.006, 0.003, 1); B.add(g, M4.trs(x0, 0.372, -0.543), { c: '#5a6170', r: 0.95 });
+    const dk = hexRGB('#3a3f4c');   // the upper rim takes the dark tone, so the face grades from it downwards
+    for (let k = 0; k < g.p.length / 3; k++) { const t = clamp((g.p[k * 3 + 1] + 0.015) / 0.03, 0, 1); for (let q = 0; q < 3; q++) B.c[(v0 + k) * 4 + q] += Math.round(t * (dk[q] - B.c[(v0 + k) * 4 + q])); } }
   B.add(gRBox(0.39, 0.012, 0.012, 0.004, 1), M4.trs(x0, 0.272, -0.548), PYGAP);
   B.add(gRBox(0.40, 0.02, 0.05, 0.008, 1), M4.trs(x0, 0.035, -0.53), SEATMAT.pyArm);            // leg-rest foot bar
   // dark-grey hinge roller across the top of the stowed leg rest under the cushion nose, dark side links down to the

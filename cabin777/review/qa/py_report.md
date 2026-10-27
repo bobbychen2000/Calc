@@ -311,3 +311,47 @@ Ratings: `py_w15a.json`, `py_w15b.json`. Triangles are unchanged at 194.6k.
 - **Calibration:** the w18 seam-bead high and the w16 rods / shell stripe stay fixed. Open: the flat cushion-front
   band (A medium, B low), the dark bead low in q14, and the w15 / w17 lows.
 - **Triangles:** unchanged. **Ratings:** `py_confirm2_a.json`, `py_confirm2_b.json`.
+
+## Back cushion form (confirm 3)
+
+Target: the cabin-wide medium from integration rating L16 ("the PY back cushion still reads as a flat CG panel") and
+rater A's medium on the flat cushion-front band.
+
+| round | rater A | rater B | result |
+|---|---|---|---|
+| confirm3 | **8.6** (was 8.5) | **8.7** (was 8.6) | no high issue; the back reads as a cushion. Kept. |
+
+- **Changed (`09b_py.js` only; the shared `09_seats.js` is untouched):**
+  - **Back face (`pyBackGeo` / `pyBackDz`).** The back cushion's front edge is now subdivided and displaced, instead of being a flat rounded-rectangle loft. It has:
+    - a 1.5 cm transverse crown;
+    - a 1.2 cm valley at |x| 0.11 that rises 3 cm into each bolster;
+    - a 4 cm lumbar crown that rises quickly from 6 cm and falls slowly to about 0.47 m.
+
+    The sides and the rear stay the rounded rectangle that the seam bead and shell code expect, and the hourglass welts follow the new surface.
+  - **Baked cavity shade (`pyBackShade`).** This is vertex colour on the same mesh: up to 22 % darker in the valley, 12 % on the bolster flank and low on the back, and 5 % lighter on the upper back. It is needed because the cabin fill is a hemisphere term: sideways slopes alone barely shade (candidates with geometry only kept q13 at 34-35 L).
+  - No separate strips or reveals were added, so the w16 failure does not come back.
+  - **Cushion-front band.** It is now one 36 mm box whose vertex colour grades from #5a6170 at its foot to #3a3f4c under the nose. In p5 at x 150 it ramps from L 40 to 51, where it used to be a flat L 33. It adds no triangles.
+- **Metrics (baseline / candidate, same lighting head):**
+
+  | metric | baseline | candidate | photo |
+  |---|---|---|---|
+  | q13 back range (7 px box blur, p90-p10, box 190-340 x 420-570) | 37 L | 48 L | py_37302: 60 L by this method, 53 L quoted by L16 |
+  | q14 mid-back range (rater B) | 36 L | 53 L | – |
+  | thin-dark, q13 | 7.61 % | 7.72 % | 13.11 % |
+  | thin-dark, q14 | 10.05 % | 9.97 % | 13.11 % |
+
+  q14 thin-dark meets the 70 % target and q13 does not: the remaining gap is fine pleats and stitching, not flatness.
+  Matched-region colour holds the hue: q14 mid-back B/R moves from 1.297 to 1.301 (photos 1.22-1.36), and L drops by about 4 because of the cavity shade.
+- **Triangles:**
+  - py2: 19,306 -> 20,242 (+4.85 %)
+  - py4: 38,878 -> 40,750
+  - near LOD py2: 8,752 -> 9,036
+  - far LOD: unchanged at 928
+- **Open (all low):**
+  - The q13 centre-seat right welt goes near-black where it lies in the shaded valley at the waist (A).
+  - The fabric fleck smears a little on the steep valley and lumbar walls (A).
+  - The valley shade runs almost the full height of the back. Rater B suggests tapering it above the waist and widening it to 0.035.
+  - The lumbar makes a small hump in the p7 silhouette. Rater B suggests lt 0.38 or lumbar 0.032.
+  - The band is still darker than the photo crease.
+  - The w15 to w19 carry-overs remain.
+- Ratings are in `py_confirm3_a.json` and `py_confirm3_b.json`.

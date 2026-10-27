@@ -1,0 +1,68 @@
+{
+  "area": "py",
+  "rater": "B",
+  "round": "confirm3",
+  "head": "candidate on f6e5d34",
+  "score": 8.7,
+  "summary": "8.7, up from 8.6 at confirm2. Nothing is high and none of the w16 artefacts are back. The shaped back face (pyBackDz + pyBackShade) now reads as an upholstered cushion, not a flat board. You can see a transverse crown, soft valleys along the hourglass welts that rise into the bolsters, and a lumbar swell low on the back. In q14 and p8 this is close to the py_37301 right seat and the py_37302 front seat. Back shading range (7-px box blur, p10/p90, q13 box x190-340 y420-570) went from 37 to 48 L, which meets the 45 target. q14 mid back went from 36 to 53 L. The photo box measures 60 L by my method (the brief quotes 53). The thin-dark proxy barely moved: q13 7.61 -> 7.72 % (59 % of the photo's 13.11 %, target 70 %) and q14 10.05 -> 9.97 % (76 %). That is expected, because the change is low-frequency shaping. The remaining gap is fine detail (pleats, stitching), not flatness. The welts follow the new face (2 mm proud, no gaps or float). The bolsters, ears and headrest-flap junction meet the face cleanly, and I found no z-fighting or poke-through in p1/p3/p4/p8. The shell side and the seam bead are unchanged (q14 shell sd 9.2 -> 9.2; bead minima within 2 L). The cushion-front band now grades from about L 39 to 49 instead of a flat L 33, so it is partly fixed. What holds the score below 9: the valley shade is nearly full-height and fairly deep in q13, and the lumbar makes a small hump in the p7 side silhouette. The carried-over lows also remain.",
+  "lighting_note": "Not scored. (1) The diamond sun patch on the q14 window-seat back (x 485-550, y 300-420) dropped from L 178.8 to 162.7. That is only because the reshaped face turns slightly away from the sun LUT. It is still visible and still low, lighting-owned. (2) q14 L<25 pixel count rose 8889 -> 9568 (+7.7 %), almost all in the baked valleys low on the PY backs. That is acceptable and was intended, but the lighting owner should know the PY backs now carry baked vertex-colour cavity shade on top of the AO volume. (3) Fabric hue is unchanged from confirm2.",
+  "calibration": [
+    {"issue": "integration L16 medium (cabin-wide): the PY back cushion still reads as a flat CG panel", "status": "fixed (shape); thin-dark sub-target partly", "evidence": "q13 back range 37 -> 48 L (target >= 45; photo 60 by my method / 53 by the brief's). q14 mid back (x260-400, y300-500) 36 -> 53 L. In the q13 front-right seat at y 380, there was one weak dip; now the valley dips to L 65-67 against 112-121 on the crown, beside the bolster. Thin-dark proxy: q13 7.61 -> 7.72 % (59 % of photo, below the 70 % target) and q14 10.05 -> 9.97 % (76 %, meets). Visually (z3_q13, q14, p1, p3, p8) the back now reads as a sprung cushion with hourglass channels."},
+    {"issue": "w17-w19 / confirm2 A medium (B low): the cushion-front band is a flat, uniform dark stripe", "status": "partly fixed", "evidence": "p5 x150: rows y 351-359 went from a flat 33 to 39-49, grading downwards. p8 x200 y 343-346: 35/33/33/62 -> 43/44/48/73. It is still a 3-4 px darker run, against the photo's broader crease at L 35-90. Under the nose it now reads as a crease rather than a drawn line. I rate it low."},
+    {"issue": "w18 A high / B medium: the seam bead reads as a black cord on the q14 foreground seat", "status": "still fixed", "evidence": "q14 x790-900, rows 190-550 every 40, min L: 51/56/56/45/30/42/31/40/39/32 against 51/55/56/45/28/42/36/40/39/31 at baseline. The positions are identical except one row (870 -> 877)."},
+    {"issue": "w16 high: the shell-rim reveal showed as a black stripe down the shell side", "status": "not regressed", "evidence": "q14 near shell x730-800, y300-500: mean 103.2 -> 102.9, sd 9.2 -> 9.2, min 51 -> 52. p2 (back view) has only 18 px changed > 15 L. No new strips were added: the diff only touches the back loft, the welt points and the nose band."},
+    {"issue": "w16 medium/high: cushion side/front strips read as black rods", "status": "not regressed", "evidence": "p5 and p8: the cushion sides and the hinge roller are pixel-identical, and the only changes are the graded band rows. The q14/q13 seat pans are unchanged."},
+    {"issue": "integration L13 medium: outline darks about half of the photos'", "status": "partly fixed (unchanged in kind)", "evidence": "Thin-dark proxy above. q14 L<25 count went from 8889 to 9568. The darks gained are soft valley shade, not crisp outlines."},
+    {"issue": "confirm2 B low: diamond sun patch on the q14 window-seat back (lighting)", "status": "partly (incidental)", "evidence": "L 178.8 -> 162.7 at x485-550, y300-420. It is still clearly brighter than the neighbouring back."},
+    {"issue": "w15/w17 lows: shell orange-peel, trim-B ears too dark, trim-A dashes too long, pocket frame near-black, flat navy flap", "status": "not fixed (unchanged)", "evidence": "p2 and p6 show 18 / 0 changed px, and in p4 the ears and flap are unchanged (only the back face below them changes)."}
+  ],
+  "details": {
+    "Back + cushion shape": 8.7,
+    "Back side silhouette (p7 vs py_37303)": 8.4,
+    "Back/shell seam crease": 8.5,
+    "Hourglass welts on the shaped face": 8.6,
+    "Cushion nose / skirt / hinge roller": 8.4,
+    "Headrest ears + navy flap": 8.4,
+    "Shell incl. rear face": 8.4,
+    "Screen + bezel + placards": 8.5,
+    "Literature pocket": 8.5,
+    "Consoles (front, sockets, cubbies, lid, cup nose, side panel)": 8.7,
+    "Window armrest + aisle shroud": 8.5,
+    "Leg rest / footrest / legs / bottle bin": 8.1,
+    "Gooseneck": 8.5,
+    "Row pitch / alignment in q13": 8.6,
+    "Fabrics: trim A brick weave": 8.2,
+    "Fabrics: trim A petal ears": 8.6,
+    "Fabrics: trim B petal back": 8.6,
+    "Fabrics: trim B dash ears": 7.8,
+    "Fabric colour under head lighting": 8.6,
+    "Materials: plastic specular": 8.5
+  },
+  "issues": [
+    {"severity": "low",
+     "title": "The valley cavity shade runs almost full height at constant depth, so in q13 it reads slightly as a channel stripe",
+     "evidence": "q13 front-right seat (z3_q13): the right valley is a continuous dark channel from the headrest down to the cushion. At y 380 it dips to L 65-67 over ~10 px against 112-121 on the crown, and it is nearly as deep at y 320 (85 against 125). In py_37302 the flank shading is broader and softer and is strongest at the waist (the hourglass), fading on the upper back. It is not a rod (soft falloff, no hard edge), so it is not the w16 failure.",
+     "fix": "In pyBackShade, taper the 0.22 valley term above the waist, e.g. multiply it by (1 - 0.5 * pySstep(0.50, 0.75, y)). Widen its sigma 0.028 -> 0.035 and drop the peak to about 0.18, so the channel is broader and shallower."},
+    {"severity": "low",
+     "title": "The lumbar makes a small discrete hump in the side silhouette",
+     "evidence": "p7 (z_p7_side): the lumbar crown pushes the back's front line a few px past the bolster profile, with a visible change of slope above it at about y 190-200 (studio px). In py_37303 the front line of the back is nearly straight, with only a gentle convexity low down.",
+     "fix": "Either lengthen the fall (lt 0.32 -> 0.38) or trim the lumbar 0.04 -> 0.032 so the peak stays just inside the bolster face from the side. Keep the crown and the valleys."},
+    {"severity": "low",
+     "title": "The thin-dark proxy in q13 is still short of the 70 % target",
+     "evidence": "q13 7.72 % against the photo's 13.11 % (59 %). q14 meets it (9.97 %, 76 %). This metric is driven by fine fabric pleats and stitching, which the low-frequency shaping does not add.",
+     "fix": "Optional, not needed for PY's score. A faint vertical pleat or stitch line in the photo-swatch detail would add it. Do not add proud strips (w16)."},
+    {"severity": "low",
+     "title": "Carry-over: cushion-front band still a 3-4 px darker run (now graded); bead dark low in q14; shell orange-peel; trim-B ears too dark; trim-A dashes too long; pocket frame near-black",
+     "evidence": "Band L 39-49 (was 33) against the photo's 35-90 crease. The other items are unchanged (see calibration).",
+     "fix": "As in py_final_a.json / py_w17b.json. For the band, lighten the foot to about #636a7a so the grade ends nearer the skirt tone."}
+  ],
+  "questions": [],
+  "before_vs_after": {
+    "verdict": "The candidate is better than the baseline (f6e5d34 / confirm2) for PY: 8.7 against 8.6. The back reads as an upholstered cushion with the photos' hourglass channels and lumbar, the q13 back shading range now meets the target (37 -> 48 L), and the cushion-front band is graded. No w16 artefact (shell stripe, black rods) has come back, nothing pokes through or z-fights, and the welts, bolsters, ears and seam bead meet the reshaped face cleanly. Triangles rise 4.85 % (py2), well inside the +25 % budget. Accept.",
+    "changes": [
+      {"change": "Shaped back face pyBackDz (crown, valleys, bolster rise, lumbar) + welts following it", "verdict": "accept", "reason": "Solves the flat-panel read. The geometry is plausible against py_37301, py_37302 and py_37303. Small tweaks are optional (lumbar hump in p7)."},
+      {"change": "Baked cavity shade pyBackShade", "verdict": "accept, optional tune", "reason": "It supplies most of the visible shading range. The valley term is a bit deep and full-height in q13 (low), so taper it above the waist."},
+      {"change": "Graded 36 mm cushion-front band", "verdict": "accept", "reason": "Flat L 33 becomes a 39-49 grade. No new stripe, and the band no longer reads as drawn."}
+    ]
+  }
+}
