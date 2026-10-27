@@ -813,3 +813,17 @@ Econ is **confirmed**: A 8.5 / B 8.6, with no high-severity econ issue in either
   - The q17 3-seat cover is short and high (medium, both raters; question 32).
   - The carried lows: q15 cover top, J elbow, flat pouch, belts, pillows.
 - **Lighting:** both raters flag a new medium lighting issue. L14's cool PY/Y seat level gives the econ whites and fabric a blue cast. It is handed off in `from_econ.md` under "final confirm".
+
+## Final confirm 2 (head 8467f01)
+
+Econ is **confirmed** again: A 8.5 / B 8.6, the same as final confirm 1, with no high-severity econ issue in either rating (`econ_confirm2_a.json`, `econ_confirm2_b.json`). No code was changed.
+- **Per view (A / B):** q15 8.7 / 8.8, q16 8.4 / 8.3, q17 8.3 / 8.45, q18 8.4 / 8.65.
+- **Code:** `src/09a_econ.js`, `09_seats.js` and `03_tex.js` are identical between 1430d42 and 8467f01; only `04_shaders.js`, `12_scene.js` and `07_shell.js` changed. The r0 (1430d42) and rH (8467f01) renders differ by more than 24 in 1.3 % (q15), 2.4 % (q16), 5.0 % (q17) and 0.1 % (q18) of the frame. In each view the only change is a global drop of 3–5 levels in blue. No outline moved and there is no regression.
+- **Routed lighting items now fixed** (r0 → rH, then photo):
+  - **White-plastic blue cast:** armrest B−R is now about +5. q15 went from +14 to +5 (photo −5) and q17 from +13/+14 to +5 (photo +7 to +16). The q18 shroud is now +15/+16 (photo +16).
+  - **Back fabric B/R:** the q15 back went from 2.13–2.15 to 1.93–1.94 (photo 1.88–1.98), so the target of 2.0 or below is met. B reads the fleck back and the q17 near back as still slightly blue (2.59 against 2.47, 2.29 against 2.10).
+  - **Navy pillows:** the hue is fixed. The q15 pillow went from (36,44,84) to (37,44,77) against (46,54,92), but it is still about 9 L dark.
+- **Not fixed (carried, medium, lighting/material):** the headrest covers still read lavender at grazing angles. The q17 cover measures (110–123,119–130,160–168) against y_47303's (133–142,151–161,193–198), with G−R 7–9 against 18–19.
+  - Both raters put most of it on the sheen lobe. It is neutral and too weak, and needs a steel-blue tint and about +20 % grazing gain.
+  - As a small material assist, they suggest a greener `SEATMAT.yCover` (`#141b44` → `#122046` from A, `#131d3c` from B). This was not done, because the confirm passed and the rule is to change nothing in that case. It is left as an optional follow-up.
+- **Still open (econ):** the q17 3-seat cover is short and high (medium, both raters; question 32). The carried lows are unchanged.
