@@ -1,0 +1,38 @@
+{
+ "area": "lighting",
+ "score": 8.6,
+ "earlier": [
+  {"issue": "(L17 low) PY rear wall overshoots cool; partition / frame short", "status": "fixed (rear wall); partition unchanged",
+   "evidence": "meas.py r_base -> r_f: q13 rear wall (300-580,110-190) whites +20 -> +10, box L193 -> 187 (py_37302 back wall +8, L218); partition (690-930,120-300) whites +11 -> +10, box B-R 18.0 -> 17.9 (photo +17 whites, box +36); q13 top whites +12 -> +11; q14 top +12 -> +10 (py_37301 +17). Rear wall now reads cream-cool rather than lavender in the stack."},
+  {"issue": "(L17 low) PY top band brighter than py_37302", "status": "improved slightly, not met",
+   "evidence": "q13 bins (0-450,0-70) L204 -> 200 (photo 183), B-R +15.0 -> +13.7 (photo +12.8); q13 top L204 -> 200 (photo 184); frame mean 134.1 -> 132.6 (photo 128.6), p95 219 -> 216 (233)."},
+  {"issue": "(L17 low) J/PY bulkhead PY face two hues", "status": "fixed (L17 item 6, carried)",
+   "evidence": "jpC lower face (470-700,480-575) whites +8 / 100 %, box B-R +19.9, matches upper box +18.0; no seam visible in jpC."},
+  {"issue": "(L17 low) PY centre ceiling cream between cool bins", "status": "not fixed (worker: not attempted)",
+   "evidence": "jpA centre (440-560,30-250) whites -2 / 33 % = x_base; py_37302 top centre +8..+10."},
+  {"issue": "(econ medium, lighting-owned sheen) Economy headrest covers lavender at grazing", "status": "fixed (mostly)",
+   "evidence": "q17 cover boxes G-R +8/+12/+6 -> +14/+17/+15 vs y_47303 +15/+19/+20; L 119/133/100 -> 129/140/112 vs 128/119/142. Third box (845-900) still 30 L dark; B-R +47..+54 vs +54..+64."},
+  {"issue": "(carried low) far window band dimmer, tub lip, thin highlights, PY contact darks", "status": "not changed",
+   "evidence": "q06 / q09 0.00 % px changed, q08 0.26 %, so the L17 measurements stand."}
+ ],
+ "details": [
+  {"detail": "Regression guard reproduced exactly: q03 0.01, q05 0.05, q06 0.00, q08 0.26, q18 0.02, q19 0.00, q20 0.00, q12 2.16 % (clouds, mean 117.7 equal), Blue 0.18, Dining 0.04, Sunrise 0.46, econ Night 0.09, jpB 0.42 %. No regression found.", "score": 9.0, "refs": []},
+  {"detail": "Boarding THE Suite / THE Room: pixel-equal to L17.", "score": 8.55, "refs": ["/home/user/Calc/cabin777/ref/ana/f_17313-lang-multi.jpg", "/home/user/Calc/cabin777/ref/ana/c_27312-lang-multi.jpg"]},
+  {"detail": "Boarding PY: rear wall now matches the photo's mild cool (+10 vs +8). The top band is still 16-17 L over py_37302 (q14's own pair is brighter, so they bracket it). The partition hue is short of the photo (+10 vs +17 whites).", "score": 8.45, "refs": ["/home/user/Calc/cabin777/ref/ana/py_37302-lang-multi.jpg", "/home/user/Calc/cabin777/ref/ana/py_37301-lang-multi.jpg"]},
+  {"detail": "Boarding economy: the covers have a steel-blue sheen, no longer lavender, and match y_47303 on G-R in two of the three boxes. Everything else is unchanged (means +0.3..+0.6).", "score": 8.7, "refs": ["/home/user/Calc/cabin777/ref/ana/y_47303-lang-multi.jpg"]},
+  {"detail": "Moods (Blue / Dining / Sunrise / Night) visually checked, all at <= 0.46 % px change. Question 8 (economy Night level) is still open.", "score": 8.4, "refs": []},
+  {"detail": "Zone transitions: jpA PY bins whites +28 (q13 bins +15), so they read stronger-cool in the up-look camera; the centre ceiling stays cream. The jpC bulkhead is one hue.", "score": 8.3, "refs": []},
+  {"detail": "Contact AO / material response unchanged from L17.", "score": 7.0, "refs": []}
+ ],
+ "issues": [
+  {"severity": "low", "owner": "lighting", "detail": "PY top band still ~17 L brighter than py_37302", "problem": "pyLvl 0.65 stops on the ACES shoulder.", "evidence": "q13 bins L200 vs 183, top L200 vs 184.", "fix": "Accept: py_37301 is brighter, so the two PY photos bracket the render."},
+  {"severity": "low", "owner": "lighting", "detail": "PY bins over-cool in the up-look camera jpA", "problem": "pyW adds more on down-facing bin faces.", "evidence": "jpA bins (560-900,40-300) whites +28 vs q13 bins +15 and photo +15.", "fix": "Optional; not a QA view."},
+  {"severity": "low", "owner": "lighting / ceiling", "detail": "PY centre ceiling cream between cool bins", "problem": "Carried.", "evidence": "jpA centre whites -2 vs py_37302 +8.", "fix": "Optional."},
+  {"severity": "low", "owner": "econ / lighting", "detail": "One q17 cover still dark and less cyan than the photo", "problem": "The far-right cover box is under the photo.", "evidence": "q17 (845-900,140-170) L112 vs 142, B-R +48.5 vs +63.6.", "fix": "Optional, small sheen gain at grazing."},
+  {"severity": "low", "owner": "lighting", "detail": "Carried: far window band dimmer than the official photos (question 16), tub lip, thin highlights, PY contact darks", "problem": "Unchanged.", "evidence": "See lighting_L17_lighting.json; the affected views are pixel-equal.", "fix": "Per the earlier routing."}
+ ],
+ "questionsForUser": [
+  "Still open (16): should the window wall follow ANA's official photos (bright) or in-flight photos (darker, cooler)?",
+  "Still open (8): economy at night is darker than in-flight photos; brighter, cooler economy night level?"
+ ]
+}
