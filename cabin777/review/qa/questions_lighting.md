@@ -114,3 +114,15 @@
     photos with dark foregrounds (c_27314 across the THE Room centre pair, y_47301 down the economy aisle) the far wall
     reads brighter than the model now. If you prefer that look, raise `beltK` in `MOODS.boarding` (0.7, or 1 to turn the
     dimming off) for the whole wall; a per-distance or per-angle gate would bring back the walking artefact.
+
+## Lighting final touch (after the per-area final confirm, 2026-10-27)
+
+17. **One white balance for the whole aircraft, or one per cabin?** ANA's official economy and premium-economy photos give
+    the white walls and plastics a cool lavender cast (y_47303 / py_37301 whites B-R +17..+28). Its THE Suite photo keeps the
+    window wall neutral (f_17313 +1), its THE Room photos are in between (c_27316 / c_27312 window wall +10..+11, c_27300 -5),
+    and in-flight daylight photos of THE Room / THE Suite read neutral to warm (Sam Chui -4..+2, OMAAT -12..-32). L14 applied
+    the economy cast everywhere, which turned the THE Suite / THE Room walls lavender. This touch now follows each cabin's own
+    photos: THE Suite window wall neutral (q05 / q03 B-R +1..+2), THE Room's at about half the economy cast (q06 / q08 +7 / +8),
+    premium economy / economy as before. If you prefer one look for the whole cabin, say which (neutral, or the economy cast);
+    the switches are `hwK` and `zPY` in `src/04_shaders.js` (mainFS, after `coolW`) and `fjCool` in `MOODS.boarding`
+    (`src/12_scene.js`).

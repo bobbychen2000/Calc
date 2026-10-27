@@ -349,6 +349,8 @@ const AO_TUNE = { hemi: 0.22, bounce: 1.0, emitLens: 0.45, emitCtr: 0.35, kAttF:
 // exposure there [V: w17K near wing 214-217 vs KN41 187 / 195 / 208; w19A stays at 170 / 179 / 195]. lookOut 0.85 -> 0.86 (L14's
 // 0.85 made up for the belt dimming on the lining, now lifted here): at 0.85 the frame-edge reveal (0-120) read 133 [V: ucr
 // L104-110] [D touch v3 at 0.85: q12 post 70 -> 113, reveal 110 -> 133, pier (120-290) 87 -> 109, frame mean 116.5 -> 122.8]
+// Then 0.86 -> 0.87: at 0.86 the surround (100-180, 250-350) read L109 but the reveal (0-120) 122; at 0.87 103 / 118, frame mean
+// 117.6 (5097e7e: 70 / 102, 116.5) [V: ucr surround L104-125, reveal L104-110] [D final touch v1 / v4]
 // QA L14 (lighting run 4): lookOut 0.86 -> 0.85. The window-belt dimming (mainFS u_beltK) is now the same for every viewer, so
 // it also reaches the lining seen at grazing from the look-out eye, which L13's N.V gate had left out: q12 frame mean 116.4 ->
 // 114.2, left reveal (0-120) L112 -> 100 [V: ucr_ana-business-class-wing-view reveal L104-110]; at 0.85 the frame mean is back to
