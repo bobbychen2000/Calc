@@ -461,7 +461,9 @@ void main(){
     float fzS = smoothstep(u_fZone.x - 0.3, u_fZone.x, v_wpos.z) * (1.0 - smoothstep(u_fZone.y, u_fZone.y + 0.3, v_wpos.z));
     float jzS = smoothstep(u_fZone.y, u_fZone.y + 0.6, v_wpos.z) * (1.0 - smoothstep(u_sLowZ - 0.3, u_sLowZ + 0.3, v_wpos.z));
     float fCut = u_fjCool.x * fzS;
-    float coolW = max(linW * facingIn, max(recd, 0.5 * binO)) * (1.0 - fCut - u_fjCool.z * jzS);
+    // (final touch, from_shell fA-1: the recess share of coolW ramps over the first 8 mm past the lining, not 4-20 mm: across the
+    // 16 mm roll-in lip facingIn falls as recd rose, and coolW dipped to ~0.35 there, a warm ring between the cool wall and tub)
+    float coolW = max(linW * facingIn, max(smoothstep(xLin, xLin + 0.008, abs(v_wpos.x)), 0.5 * binO)) * (1.0 - fCut - u_fjCool.z * jzS);
     // QA lighting final touch (from_room final confirm, medium): in THE Room (u_fjCool.w x jzS) the window-belt terms below (u_beltK
     // dimming, the day-belt share 0.5 -> 0.15) take the lining itself only (within 3-7 cm of the circle: the lining stands on it,
     // 07_shell wallAt), not the shell posts 8-11 cm inboard of it (linW 0.82-0.98 there [D mask render]): since L13 / L14 the
@@ -603,8 +605,16 @@ void main(){
     // the bin lens's light on the sidewall (QA r2 / r3 above). QA L14 (lighting run 4): its fade-in starts at u_lensLo.x (12_scene
     // MOODS lensLo: Boarding 1.25, 0.95 elsewhere), so in Boarding the lens wash stays just under the bins and the pier falls
     // from the lens to a light grey well above the window, as in y_47303 (pier 237 / 213 / 190 / 178 down to the window centre)
-    vec3 lensT = u_sideLed * u_sideWall * lensW * facingIn * mix(u_sideLow, 1.0, smoothstep(u_lensLo.x, 1.55, v_wpos.y)) * smoothstep(0.35, 0.8, v_wpos.y)
+    // QA lighting final touch (from_room, q07): THE Room's shell posts by the wall (u_fjCool.w x jzS, off the lining: 1 - linB)
+    // keep the pre-L13 lens profile (fade-in from 0.95 m, 0.4 at the belt): L13's sideLow 0 and L14's lensLo were fitted to
+    // the lining pier [V: y_47303], and with them the post beside the 11A monitor lost the lens light it had at w19
+    float lnJ = u_fjCool.w * jzS * (1.0 - linB);
+    vec3 lensT = u_sideLed * u_sideWall * lensW * facingIn * mix(mix(u_sideLow, 0.4, lnJ), 1.0, smoothstep(mix(u_lensLo.x, 0.95, lnJ), 1.55, v_wpos.y)) * smoothstep(0.35, 0.8, v_wpos.y)
                * (1.0 - smoothstep(1.95, 2.1, v_wpos.y)) * noDown * nearPane;
+    // QA lighting final touch: in THE Suite (fCut, above) the lens wash keeps its level and drops its hue, so the wall under it
+    // reads neutral as in f_17313 (226 / 228 / 227, B-R +1); the cool sideLed left q05 (30-80, 150-250) at B-R +11 with the
+    // neutral shadow light alone [D touch v2 k100]
+    lensT = mix(lensT, vec3(dot(lensT, vec3(0.2126, 0.7152, 0.0722))), fCut);
     amb = (hemi * (u_aoTune.x + (1.0 - u_aoTune.x)*ao) + bounce * u_aoTune.y) * binShade * (1.0 - band) * binK
         + wsh * lt * wallProx * (0.35 + 0.65*facingIn) * smoothstep(0.3, 1.25, v_wpos.y) * (0.45 + 0.55*ao) * noDown * (1.0 - bandW) * monK
         + lensT
@@ -645,7 +655,7 @@ void main(){
     // QA lighting final touch (from_suite final confirm, medium): in THE Suite (fzS) the belt keeps u_fjCool.y of its ambient
     // (Boarding 12_scene MOODS fjCool; 0 = u_beltK): the wall around the suites read L199-206 where f_17313 shows it at L226
     // [V: q05 (20-90, 150-350) 199 / 204 / 214, q03 (40-120, 100-300) 194 / 197 / 204]
-    float bK = mix(u_beltK, u_fjCool.y, fzS * step(0.001, u_fjCool.y));
+    float bK = mix(u_beltK, max(u_beltK, u_fjCool.y), fzS * step(0.001, u_fjCool.y));
     amb = (amb - lensT) * mix(1.0, bK, linB * lensW * facingIn * smoothstep(0.55, 0.85, v_wpos.y) * (1.0 - smoothstep(u_lensLo.y, 1.60, v_wpos.y)) * (1.0 - recd)) + lensT;
     if (u_dayN > 0.0) {
       // QA L13 (light low, lighting run 4): lower edge 0.6-0.9 -> 0.2-0.5 m, so the wall under an open pane stays neutral down
@@ -662,7 +672,10 @@ void main(){
     // MAT.reveal #ece4d5) under the neutral cabin fill read neutral and ~25-35 L light; the official photos show the upper
     // tubs a cool blue-grey [V: y_47303 upper tub / crown #a4a9be L170 (B-R +25), #a4aac0 L171 (+28) vs q17 L188-208 (+3..+7);
     // py_37301 reveal sides #9ba6bc (+33)] (lighting L8 medium); share / level [D renders fixL8]
-    float crownW = recd * wl.a * smoothstep(0.30, 0.40, v_wpos.y - u_winY.x) * (1.0 - smoothstep(0.58, 0.66, v_wpos.y - u_winY.x)) * shT;
+    // QA lighting final touch (from_shell fA-1, low): the tub-sky hue (crownW, tubLow) runs in over ~3.5 cm past the tub edge
+    // (recdT; recd ramps over xLin + 0.4-2 cm, across the 16 mm roll-in lip), so the cooled tub blends into the wall with no step
+    float recdT = smoothstep(xLin + 0.004, xLin + 0.035, abs(v_wpos.x));
+    float crownW = recdT * wl.a * smoothstep(0.30, 0.40, v_wpos.y - u_winY.x) * (1.0 - smoothstep(0.58, 0.66, v_wpos.y - u_winY.x)) * shT;
     vec3 skyT = u_winGlow * vec3(0.92, 1.0, 1.18);
     float lSky = dot(skyT, vec3(0.2126, 0.7152, 0.0722));
     // QA lighting final touch (from_shell fb-1, medium): not in THE Suite (1 - fCut, above): its bowls took the PY / Y tub-sky hue
@@ -674,7 +687,7 @@ void main(){
     // tubHue; 0 elsewhere): with the shades up the official photos show the whole tub cool lavender by the pane [V: y_47303
     // lower tub L155 B-R +37 vs q17 L158 +6; py_37301 wall at the window +23..+28 vs q14 sill +1; c_27314 far band +10..+15 vs
     // q09 +4]. shT keeps closed shades and the dimmed moods out [D gapT14 TUB]
-    float tubLow = recd * wl.a * (1.0 - smoothstep(0.30, 0.40, v_wpos.y - u_winY.x)) * shT * u_tubHue * (1.0 - fCut);   // (final touch: not in THE Suite, as crownW)
+    float tubLow = recdT * wl.a * (1.0 - smoothstep(0.30, 0.40, v_wpos.y - u_winY.x)) * shT * u_tubHue * (1.0 - fCut);   // (final touch: not in THE Suite, as crownW)
     if (tubLow > 0.0 && lSky > 1e-4)
       amb = mix(amb, skyT * (dot(amb, vec3(0.2126, 0.7152, 0.0722)) / lSky), tubLow);
     // night: the galley / lav / door zones (sz = 0) keep a dim neutral fill, the galley lights and lit bulkheads at the

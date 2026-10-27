@@ -67,7 +67,16 @@ const MOODS = {
   // (mainFS, QA L14); bleed = the seat-block blue at unit luminance (hue only: the gap analysis's [0.86, 0.95, 1.30] took 4 %
   // off the seat level, q18 median 169 -> 167 vs y_47305 183) [V: y_47300 seat back #2f3d66; B-R by luma band 175-200 /
   // 200-220 / 220-235 y_47303 +26 / +24 / +17 vs q17 +10 / +6 / +3 -> +21 / +19 / +15] [D gapT14 WBC / TUB; fixL14 t2]
-  boarding: { label: 'Boarding', hemiTop: [0.97, 0.99, 1.03], hemiBot: [0.31, 0.35, 0.47], wash: [0.23, 0.255, 0.32], hemiBotN: [0.36, 0.37, 0.40], washN: [0.25, 0.26, 0.28], tubSky: [1.0, 0.6], led: [1.0, 0.98, 0.92], sideLed: [0.50, 0.57, 0.78], bandCut: 0.15, sideLow: 0, beltK: 0.62, lensLo: [1.25, 1.30], seatCool: 0.35, bleed: [0.965, 0.996, 1.13], tubHue: 0.8, hueW: [0.8, 0.72, 0.86], fjCool: [1, 0.8, 0.33, 1], binLo: 0.8, k: 1.05, exposure: 1.38, toe: 1 },
+  // QA lighting final touch (after the per-area final confirm on 1430d42): seatCool 1 -> 0.35 and bleed [0.90, 0.99, 1.36] ->
+  // [0.965, 0.996, 1.13] (a third of L14's hue shift): the PY / Y seat level read denim / violet and the white seat plastics
+  // blue [V: q14 PY back (260-400, 300-500) B/R 1.39 vs py_37301-03 1.22-1.36 -> 1.31; q15 back B/R 2.38 -> 2.19 (pre-L14 2.09);
+  // q17 armrests B-R +14 -> +5 (y_47303 armrest 185 / 184 / 191); q15 seat-level whites +16 -> +8 (y_47300 -3)] (from_py /
+  // from_econ final confirm, medium). fjCool (mainFS u_fjCool) = [THE Suite cool cut, THE Suite belt K, THE Room cool cut, THE
+  // Room shell-post window fill]: THE Suite keeps the neutral shadow light, no belt dimming and a neutral lens wash, and its
+  // bowls no tub-sky hue [V: f_17313 wall 226 / 228 / 227, bowl +1 and lighter than the wall vs q05 wall 199 / 204 / 214, s09
+  // bowl +26]; THE Room takes 2/3 of the cool wash [V: c_27316 wall B-R +5..+12 vs b_jClose / s05 +14]; its posts by the wall
+  // are no longer dimmed as the lining [V: c_27316 post L114-121 vs q07 L51-96] (from_suite / from_shell / from_room) [D touch]
+  boarding: { label: 'Boarding', hemiTop: [0.97, 0.99, 1.03], hemiBot: [0.31, 0.35, 0.47], wash: [0.23, 0.255, 0.32], hemiBotN: [0.36, 0.37, 0.40], washN: [0.25, 0.26, 0.28], tubSky: [1.0, 0.6], led: [1.0, 0.98, 0.92], sideLed: [0.50, 0.57, 0.78], bandCut: 0.15, sideLow: 0, beltK: 0.62, lensLo: [1.25, 1.30], seatCool: 0.35, bleed: [0.965, 0.996, 1.13], tubHue: 0.8, hueW: [0.8, 0.72, 0.86], fjCool: [1, 1, 0.33, 1], binLo: 0.8, k: 1.05, exposure: 1.38, toe: 1 },
   // QA r2 (light): cruise sideLow 0.10 -> 0.30, the lavender wash reaches the window belt in THE Suite (the reveals by
   // the glass stay near-white through mainFS nearPane) [V: ml_DSC_1939-1 wall column y45 #6e9bfc (B-R +141), y150
   // #7a89be, belt y240 #888db0 (+40) vs cF03 belt #cccccf (+3)]
@@ -272,7 +281,7 @@ const SKIES = {
   // after]; 7 flattened the deck to 255 with no frame gain [D w7]
   // extBounce = the lit deck seen by the exterior's undersides (0.55 x cloudLit) and extSun the exterior's sun scale
   // (the sun side of the cowl saturated at 5.2) [D: from_exterior 1 / 6; alv_ANA77W_NH211_26K cowl #9fabb7-#a9c0ce]
-  day: { label: 'Day', sunEl: 30, sunAz: -60, sun: [5.2, 4.9, 4.4], zenith: [0.019, 0.05, 0.095], horizon: [0.20, 0.37, 1.0], skyK: 12, haze: [0.55, 0.66, 0.85], cloudLit: [1.25, 1.25, 1.25], cloudShade: [0.62, 0.68, 0.78], skyTop: [0.55, 0.68, 0.95], skyBot: [0.55, 0.55, 0.58], extBounce: [0.69, 0.69, 0.69], extSun: 0.6, winGlow: [0.45, 0.52, 0.62], winExp: 5.5, sunVis: 1, night: 0, sheer: 1.0 },
+  day: { label: 'Day', sunEl: 30, sunAz: -60, sun: [5.2, 4.9, 4.4], zenith: [0.019, 0.05, 0.095], horizon: [0.20, 0.37, 1.0], skyK: 12, haze: [0.55, 0.66, 0.85], cloudLit: [1.25, 1.25, 1.25], cloudShade: [0.62, 0.68, 0.78], skyTop: [0.55, 0.68, 0.95], skyBot: [0.55, 0.55, 0.58], extBounce: [0.69, 0.69, 0.69], extSun: 0.6, winGlow: [0.45, 0.52, 0.62], winExp: 5.5, lookExt: 0.04, sunVis: 1, night: 0, sheer: 1.0 },
   // QA r3: dim blue-grey deck under a narrow orange horizon band, blue upper sky [V: Air_France_777-300ER_Greenland_
   // Sunrise deck #50595d-#646a67, band #d2a46d, sky #9cabaa; Emirates_77W_wing_view / alv_7282 zenith #527dc2]; dark cool
   // deck bounce and a grazing sun at 0.35 on the exterior, so the wing takes the sky colour (from_exterior 3)
@@ -334,11 +343,17 @@ const AO_TUNE = { hemi: 0.22, bounce: 1.0, emitLens: 0.45, emitCtr: 0.35, kAttF:
 // v1]; the old tint^2.4 [0.84, 0.884, 0.906] also took the q12 view back to its L11 level (mean 122.4) but the sub-clip panes
 // under the shell's (q17 pane p50 248 -> 245, q07 share > L235 7.7 -> 7.4 % vs c_27316 9.0 %) [D fixL11 a1]. rim = the cove-line
 // rim lobe (mainFS u_rimK: gain on the fillets, 1 = lobe on the material roughness, metal cut) [D gap3 v_rimG2, fixL11]
+// QA lighting final touch (from_shell fA-2, from_exterior final confirm, low): in the look-out (eye at the glass) the window-belt
+// dimming lifts to 1 (render(): u_beltK), so the lining round the pane is not charcoal [V: q12 surround (100-180, 250-350) L123
+// at L13 -> 70 vs ucr_ana-business-class-wing-view surround L104-125], and the day exterior takes SKIES.day lookExt (4 %) less
+// exposure there [V: w17K near wing 214-217 vs KN41 187 / 195 / 208; w19A stays at 170 / 179 / 195]. lookOut 0.85 -> 0.86 (L14's
+// 0.85 made up for the belt dimming on the lining, now lifted here): at 0.85 the frame-edge reveal (0-120) read 133 [V: ucr
+// L104-110] [D touch v3 at 0.85: q12 post 70 -> 113, reveal 110 -> 133, pier (120-290) 87 -> 109, frame mean 116.5 -> 122.8]
 // QA L14 (lighting run 4): lookOut 0.86 -> 0.85. The window-belt dimming (mainFS u_beltK) is now the same for every viewer, so
 // it also reaches the lining seen at grazing from the look-out eye, which L13's N.V gate had left out: q12 frame mean 116.4 ->
 // 114.2, left reveal (0-120) L112 -> 100 [V: ucr_ana-business-class-wing-view reveal L104-110]; at 0.85 the frame mean is back to
 // 116.4 and the reveal reads 103 [D fixL14 t5 LK86 / LK85 / LK84]
-const LIGHT_TUNE = { cove: 1.0, sheen: 1.35, sheenTint: 0.3, tubWash: 0.7, lookOut: 0.85, ssao: [0.05, 8, 0.006, 0.07], ssaoMix: 0.9, ssaoAng: 0.25, ssaoDither: 0, ssaoIn: 0.3, ssaoLow: 0.5, ssaoEase: [0.02, 0.25], ssaoTaps: 12, ssaoCap: 16, glassT: [0.964, 0.976, 1.0], rim: [2.0, 1, 0] };
+const LIGHT_TUNE = { cove: 1.0, sheen: 1.35, sheenTint: 0.3, tubWash: 0.7, lookOut: 0.86, ssao: [0.05, 8, 0.006, 0.07], ssaoMix: 0.9, ssaoAng: 0.25, ssaoDither: 0, ssaoIn: 0.3, ssaoLow: 0.5, ssaoEase: [0.02, 0.25], ssaoTaps: 12, ssaoCap: 16, glassT: [0.964, 0.976, 1.0], rim: [2.0, 1, 0] };
 // QA r3 (integration): floor contact map (computeAO): cell size (m; 6 m x 59 m -> 200 x 1973 texels, under the 2048
 // texture minimum), marking height above the floor and the darkening at a base (mainFS) [D]
 const CONTACT = { cell: 0.03, h: 0.2, k: 0.55 };
@@ -910,7 +925,8 @@ class Scene {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     const L = this.sunDir();
     const op = this.openness ?? 1;
-    const winExp = this.xray ? 1 : 1 + ((sky.winExp || 1) - 1) * (1 - clamp((Math.abs(cam.pos[0]) - 2.66) / 0.06, 0, 1));
+    const lookK = this.xray ? 0 : clamp((Math.abs(cam.pos[0]) - 2.66) / 0.06, 0, 1);   // the look-out share (eye at the glass)
+    const winExp = this.xray ? 1 : 1 + ((sky.winExp || 1) - 1) * (1 - lookK);
     const winGlow = sky.winGlow.map((v) => v * (0.15 + 0.85 * op));
     const P = this.progs.main;
     G.use(P);
@@ -940,7 +956,7 @@ class Scene {
     G.set('u_bandCut', mood.bandCut ?? 0.65); G.set('u_sideLow', mood.sideLow ?? 0.4); G.set('u_sideWall', mood.sideWall || [1, 1, 1]);
     G.set('u_lowGain', mood.lowGain ?? 1); G.set('u_fLow', mood.fLow ?? 1); G.set('u_monFill', mood.monFill || [0, 0, 0]); G.set('u_cove', LIGHT_TUNE.cove * (mood.cove ?? 1)); G.set('u_sheen', LIGHT_TUNE.sheen); G.set('u_sheenTint', LIGHT_TUNE.sheenTint);
     G.set('u_toe', mood.toe ?? 0);
-    G.set('u_glassT', [1, 1, 1]); G.set('u_hueK', mood.hueK ?? 0); G.set('u_dayN', mood.dayN ?? 0); G.set('u_beltK', mood.beltK ?? 1); G.set('u_seatCool', mood.seatCool ?? 0); G.set('u_bleed', mood.bleed || [1, 1, 1]); G.set('u_lensLo', mood.lensLo || [0.95, 1.30]); G.set('u_tubHue', mood.tubHue ?? 0); G.set('u_hueW', mood.hueW || [0, 0.86, 0.97]); G.set('u_fjCool', mood.fjCool || [0, 0, 0, 0]); G.set('u_rimK', this.q !== 'low' && this.ssaoOn !== false ? LIGHT_TUNE.rim : [0, 0, 0]); G.set('u_sLowZ', this.layout.z20 ?? 0);   // QA L11: pane tint only on the exterior (below), amber hue-preserving tone, cove rim lobe (Sharp only, as the contact AO: scene.ssaoOn, 13_app.js)
+    G.set('u_glassT', [1, 1, 1]); G.set('u_hueK', mood.hueK ?? 0); G.set('u_dayN', mood.dayN ?? 0); G.set('u_beltK', (mood.beltK ?? 1) + (1 - (mood.beltK ?? 1)) * lookK); G.set('u_seatCool', mood.seatCool ?? 0); G.set('u_bleed', mood.bleed || [1, 1, 1]); G.set('u_lensLo', mood.lensLo || [0.95, 1.30]); G.set('u_tubHue', mood.tubHue ?? 0); G.set('u_hueW', mood.hueW || [0, 0.86, 0.97]); G.set('u_fjCool', mood.fjCool || [0, 0, 0, 0]); G.set('u_rimK', this.q !== 'low' && this.ssaoOn !== false ? LIGHT_TUNE.rim : [0, 0, 0]); G.set('u_sLowZ', this.layout.z20 ?? 0);   // QA L11: pane tint only on the exterior (below), amber hue-preserving tone, cove rim lobe (Sharp only, as the contact AO: scene.ssaoOn, 13_app.js)
     G.set('u_extBounce', [0, 0, 0]);
     // reading-light pools: the 8 lit lamps nearest the eye [A: count, a phone-sized loop]
     const sp = new Float32Array(32), st = new Float32Array(32);
@@ -1022,7 +1038,7 @@ class Scene {
     // 2.235), so 24 of the 212 seats (25-27 A/K and 18 economy) rendered their seated view at x0.30-0.44 of the cabin exposure
     // with winExp 1, and the THE Room / THE Suite window seats at winExp 2.0-3.15: the 26A tour stop read mean 87, p50 66
     // [V: py_37301 p50 118; c_27316 near pane L255] (no seat eye lies past 2.66; the look-out eye is at 2.72) [D gapL14m seat_lo]
-    G.set('u_exposure', mood.exposure * (this.xray ? 1 : 1 - LIGHT_TUNE.lookOut * clamp((Math.abs(cam.pos[0]) - 2.66) / 0.06, 0, 1)));
+    G.set('u_exposure', mood.exposure * (1 - LIGHT_TUNE.lookOut * lookK));
     G.set('u_binLo', mood.binLo ?? 1); G.set('u_ctrLo', mood.ctrLo ?? 1); G.set('u_ctrLift', mood.ctrLift ?? 1); G.set('u_monHemi', mood.monHemi ?? 1); G.set('u_tubWash', mood.tub ? LIGHT_TUNE.tubWash : 0); G.set('u_tubSky', mood.tubSky || [0, 1]); G.set('u_binLift', (mood.binLift || [0, 0, 0]).map((v) => v * mood.k));
     // QA L8 (integration): screen-space contact AO inputs (mainFS ssaoF); strength 0 switches it off
     G.set('u_ssao', ssao ? LIGHT_TUNE.ssao : [0, 0, 0, 0]);
@@ -1046,7 +1062,7 @@ class Scene {
     if (mood.readingLights && !this.xray) G.draw(this.psuLensMesh);
     if (!this.xray) {
       G.set('u_exterior', 1);
-      G.set('u_exposure', winExp);
+      G.set('u_exposure', winExp * (1 - (sky.lookExt || 0) * lookK));   // QA lighting final touch: SKIES lookExt (above)
       // exterior: cloud-deck bounce and a lower sun (from_exterior 1 / 6: the sun side of the cowl saturated at 5.2)
       G.set('u_extBounce', sky.extBounce);
       G.set('u_sunCol', sky.sun.map((v) => v * sky.extSun));
