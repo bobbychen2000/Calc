@@ -117,5 +117,39 @@ node test/blender/export.js <out> test/blender/spec_review.json && blender -b -P
   | 1 | 5 | 3.5 | 5 | 4.5 | 4.5 | 5.5 | 4 | 4.5 | 4.5 | 4.6 |
   | 2 | 5.8 | 6.5 | 4.5 | 5 | 6.3 | 6.6 | 4.5 | 5.2 | 4.5 | 5.4 |
 
-  Round 3 is being rated. Target: every area at 8.5 or above with no high-severity issues.
-- **Still to do:** run QA rounds until the target is met, then write the before/after sheet, update the about panel's sources and approximations, and publish `dist/cabin.html`.
+  Round 3 and the later waves, polish rounds and confirms took every area to the target.
+- **Final scores (two raters, A / B).** Each area's score is its latest round in `review/qa/` (`<area>_final_a/b.json`, then `_confirm2`, `_confirm3`, `_confirm4`). None has a high-severity issue.
+
+  | Area | Round | A | B |
+  |---|---|---|---|
+  | THE Suite | confirm3 | 8.8 | 8.8 |
+  | THE Room | confirm2 | 8.5 | 8.5 |
+  | PY | confirm4 | 8.6 | 8.7 |
+  | Economy | confirm3 | 8.55 | 8.65 |
+  | Ceiling / bins | confirm4 | 8.5 | 8.7 |
+  | Shell | confirm4 | 8.6 | 8.6 |
+  | Monuments | confirm3 | 8.7 | 8.8 |
+  | Exterior | confirm2 | 8.5 | 8.7 |
+
+- **Lighting / integration (`lighting_L18_*.json`):** 8.6 / 8.6.
+  - Path: L15 8.2 / 8.1, L16 8.4 / 8.4, L17 8.5 / 8.5, L18 8.6 / 8.6.
+  - L18b (758b024) moved the door-4 galley's upper bank out of the PY cool share. All 22 QA views stayed equal within run-to-run noise, so L18 stands.
+  - Weakest sub-scores: contact AO / material response (lighting 7.0; integration AO 8.0), specular per material (8.2) and the THE Room / PY top-band falloff (8.3).
+- **Shipped build:** head 758b024. `dist/cabin.html` is 2.64 MB and loads only Google Fonts.
+- **Frame cost** (`test/perf.js`, draw calls / triangles per frame):
+
+  | Camera | Balanced | Sharp |
+  |---|---|---|
+  | mid cabin | 35 / 1.65 M | 69 / 3.27 M |
+  | economy | 51 / 2.02 M | 101 / 4.00 M |
+  | THE Room | 35 / 1.45 M | 69 / 2.87 M |
+
+  - SSAO (contact shading) and the rim highlights run only at Sharp; its extra depth pass about doubles the calls and triangles. Phones open on Balanced.
+- **Decisions taken while the user was away.** These are reversible defaults; the switches are in `review/QUESTIONS_FOR_USER.md`.
+  - Lighting Q17: one white balance per cabin, after each cabin's official photos. THE Suite is neutral, THE Room half cool, PY and economy cool.
+  - Lighting Q18: the hue change at the J / PY curtain stays (the curtain hides it).
+  - Lighting Q19: the PY side partitions and the J / PY bulkhead stay fully cool. Only the PY rear wall is dialled back.
+  - Econ Q32: the economy headrest height is set per block (3-seat blocks lower, the centre block higher), with one cover for all seats.
+- **Before / after:** `review/qa/final_before_after*.jpg` puts the first upload (eaa01ad) next to the final build for the 22 QA views (own renders only).
+- **Published** as the claude.ai artifact https://claude.ai/artifact/KKJPFBW5zXb1W3csjbqLPT.
+- **Still open:** the questions in `review/QUESTIONS_FOR_USER.md`. Each one keeps its current default until answered.
