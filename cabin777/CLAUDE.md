@@ -36,6 +36,8 @@ CABIN_DIST=/tmp/x python3 build.py                       # build somewhere else 
 node test/studio.js <out> review/spec_room.json          # studio renders of units (UNITS / STUDIO_UNITS)
 node test/qa.js <out> 930 575 [view ...]                 # the 22 QA views + <out>/pairs.json (view -> ANA reference photo)
 DPR=2 CABIN_PAGE=/tmp/x/test.html node test/qa.js ...     # 2x close-ups of another build
+node test/mobile_smoke.js [page.html]                    # phone profile (starts on Balanced): seats x Balanced / Battery / Sharp; fails on
+                                                         # any WebGL error or sky-only frame. Run before every publish (qa.js runs as a desktop, on Sharp)
 python3 test/make_swatches.py                            # re-cut the photo swatch tiles in tex/ (needs ref/)
 node test/blender/export.js <out> test/blender/spec_review.json && blender -b -P test/blender/render.py -- <out>/<unit>.json --out <out>
                                                          # optional Cycles reality-check render (apt install blender)
@@ -136,6 +138,11 @@ node test/blender/export.js <out> test/blender/spec_review.json && blender -b -P
   - L18b (758b024) moved the door-4 galley's upper bank out of the PY cool share. All 22 QA views stayed equal within run-to-run noise, so L18 stands.
   - Weakest sub-scores: contact AO / material response (lighting 7.0; integration AO 8.0), specular per material (8.2) and the THE Room / PY top-band falloff (8.3).
 - **Shipped build:** head 758b024. `dist/cabin.html` is 2.64 MB and loads only Google Fonts.
+- **Phone bug fixed after the ship (2026-10-28).** The user saw only sky on an iPhone (seat 5F).
+  - At Balanced (the phone default) and Battery, the SSAO depth sampler `u_sDepth` was never given a texture unit. It stayed on unit 0 with the shadow sampler, and WebGL2 rejected every cabin draw (`GL_INVALID_OPERATION`).
+  - Sharp, the desktop default that every QA render used, bound it, so QA never saw the bug. The bug dated from L8, which gated SSAO to Sharp.
+  - Fix (`12_scene.js`): `u_sDepth` always sits on unit 8, with a 1×1 texture when SSAO is off. Sharp renders are unchanged.
+  - `test/mobile_smoke.js` now guards it. Earlier smoke tests ignored WebGL warnings.
 - **Frame cost** (`test/perf.js`, draw calls / triangles per frame):
 
   | Camera | Balanced | Sharp |

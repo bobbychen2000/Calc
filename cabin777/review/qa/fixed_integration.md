@@ -1115,3 +1115,19 @@ cross-aisle). Tools diff.py / box.py in the session scratchpad.
    m09 is back at its 8.7-confirmed state).
 3. Phone budget (test/perf.js b0 -> b1): mid Sharp 69 calls / 3,271,848 tris, Balanced 35 / 1,650,926; econ 101 / 4,002,884 and 51 /
    2,016,444; room 69 / 2,866,512 and 35 / 1,448,258: identical. No new uniform, pass or texture tap.
+
+## Phone fix after the ship (2026-10-28): cabin not drawn at Balanced / Battery
+
+The user, on an iPhone (seat 5F, THE Room), saw only the sky. Reproduced in headless Chromium with a phone profile:
+`GL_INVALID_OPERATION: glDrawElementsInstanced: Two textures of different types use the same sampler location`
+on every cabin draw.
+
+- **Cause:** the QA L8 contact-AO sampler `u_sDepth` (sampler2D) got its texture unit (8) only inside `if (ssao)`.
+  - At Balanced (the phone default, coarse pointer) and Battery, SSAO is off, so the sampler stayed on unit 0.
+  - Unit 0 also holds `u_shadow` (sampler2DShadow). WebGL2 rejects any draw where samplers of different types share a unit, so no cabin draw ran.
+  - Sharp, the desktop default and the setting for all QA / rater renders, bound it. So the bug stayed invisible from L8 on.
+- **Fix (`12_scene.js`):** `u_sDepth` is set to unit 8 when the program is created, which also covers the studio. Every frame it binds `this.sDepth.tex` when SSAO runs, or a 1×1 texture when it is off. mainFS reads it only when `u_ssao.y > 0`.
+- **Check (`test/mobile_smoke.js`, new):** 5 seats × Balanced / Battery / Sharp at 390×844 with a phone profile.
+  - Before: 1282 (INVALID_OPERATION) and 0.0 % edge pixels (sky only) at Balanced and Battery.
+  - After: no GL error, 14-32 % edge pixels at all three levels. The Sharp values are identical to before.
+- **Why it slipped:** the earlier smoke tests listened only for console errors, and WebGL reports these as warnings. All QA renders ran as a desktop.

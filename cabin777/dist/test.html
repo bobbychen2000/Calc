@@ -9055,7 +9055,12 @@ class Scene {
       glow: gl.program(SH.glowVS, SH.glowFS),
     };
     this.emptyVAO = gl.gl.createVertexArray();
-    gl.use(this.progs.main); gl.set('u_fillLift', 1); gl.set('u_sheen', LIGHT_TUNE.sheen); gl.set('u_sheenTint', LIGHT_TUNE.sheenTint); gl.set('u_sheenHue', LIGHT_TUNE.sheenHue); gl.set('u_vaultE', [0, 1]);   // the studio may draw before the first cabin frame
+    // Bug fix (phones): u_sDepth (sampler2D) was given its unit only when SSAO ran (Sharp). At Balanced / Battery, the
+    // phone default, it stayed on unit 0 with u_shadow (sampler2DShadow), and WebGL2 rejects every draw whose samplers
+    // of different types share a unit (GL_INVALID_OPERATION), so phones drew the sky and no cabin. It now always sits on
+    // unit 8, holding this 1x1 texture when SSAO is off (mainFS reads it only when u_ssao.y > 0).
+    this.noDepthTex = gl.texture2D(new Uint8Array([255, 255, 255, 255]), { w: 1, h: 1, mip: false, nearest: true, clamp: true });
+    gl.use(this.progs.main); gl.tex('u_sDepth', 8, this.noDepthTex); gl.set('u_fillLift', 1); gl.set('u_sheen', LIGHT_TUNE.sheen); gl.set('u_sheenTint', LIGHT_TUNE.sheenTint); gl.set('u_sheenHue', LIGHT_TUNE.sheenHue); gl.set('u_vaultE', [0, 1]);   // the studio may draw before the first cabin frame
     gl.set('u_binLo', 1); gl.set('u_ctrLo', 1); gl.set('u_ctrLift', 1); gl.set('u_monHemi', 1); gl.set('u_fLow', 1);   // QA r4: neutral values for the same reason
     gl.set('u_glassT', [1, 1, 1]); gl.set('u_hueK', 0); gl.set('u_rimK', [0, 0, 0]); gl.set('u_dayN', 0); gl.set('u_scrWall', 0); gl.set('u_beltK', 1); gl.set('u_seatCool', 0); gl.set('u_bleed', [1, 1, 1]); gl.set('u_lensLo', [0.95, 1.30]); gl.set('u_tubHue', 0); gl.set('u_hueW', [0, 0.86, 0.97]); gl.set('u_fjCool', [0, 0, 0, 0]); gl.set('u_pyCool', [0, 0, 1]);   // QA L11: no pane tint, plain ACES, no rim lobe (the studio draws with u_exterior 1)
     this.buildGlows();
@@ -9706,8 +9711,9 @@ class Scene {
     G.set('u_binLo', mood.binLo ?? 1); G.set('u_ctrLo', mood.ctrLo ?? 1); G.set('u_ctrLift', mood.ctrLift ?? 1); G.set('u_monHemi', mood.monHemi ?? 1); G.set('u_tubWash', mood.tub ? LIGHT_TUNE.tubWash : 0); G.set('u_tubSky', mood.tubSky || [0, 1]); G.set('u_binLift', (mood.binLift || [0, 0, 0]).map((v) => v * mood.k));
     // QA L8 (integration): screen-space contact AO inputs (mainFS ssaoF); strength 0 switches it off
     G.set('u_ssao', ssao ? LIGHT_TUNE.ssao : [0, 0, 0, 0]);
+    G.tex('u_sDepth', 8, ssao ? this.sDepth.tex : this.noDepthTex);   // always on its own unit (see the constructor)
     if (ssao) {
-      G.tex('u_sDepth', 8, this.sDepth.tex); G.set('u_sRes', [w, h, this.sDepth.w, this.sDepth.h]);
+      G.set('u_sRes', [w, h, this.sDepth.w, this.sDepth.h]);
       G.set('u_sProj', [cam.proj[0], cam.proj[5], cam.proj[10], cam.proj[14]]);
       G.set('u_sFwd', cam.fwd); G.set('u_sRight', cam.right); G.set('u_sUp', cam.up); G.set('u_sDither', LIGHT_TUNE.ssaoDither ?? 1); G.set('u_sMix', LIGHT_TUNE.ssaoMix ?? 0.8); G.set('u_sAng', LIGHT_TUNE.ssaoAng ?? 0.35); G.set('u_sLow', LIGHT_TUNE.ssaoLow ?? 0); G.set('u_sIn', LIGHT_TUNE.ssaoIn ?? 0.5); G.set('u_sEase', LIGHT_TUNE.ssaoEase || [0.05, 0.4]); G.set('u_sTap', [LIGHT_TUNE.ssaoTaps ?? 8, LIGHT_TUNE.ssaoCap ?? 0]);
     }
