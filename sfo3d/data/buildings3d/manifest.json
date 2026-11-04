@@ -2,9 +2,9 @@
  "_about": "SFO Live 3D building assets (glTF 2.0, built with Blender from the verified 2-D sheets); one key per asset group; frame ltp-nad83-2011 (x east, y up, z south, m from the ARP); see docs/research/buildings3d.md",
  "itb": {
   "asset": "data/buildings3d/itb.glb",
-  "bytes": 6910152,
-  "built": "2026-11-04T23:15:53+00:00",
-  "git": "398e91e+dirty",
+  "bytes": 5598884,
+  "built": "2026-11-04T23:20:28+00:00",
+  "git": "40a32e3",
   "generator": "tools/blender/build_itb.py (bpy 5.0.1, Cycles CPU AO bake); geometry tools/blender/itb_geom.py",
   "reference": "2-D sheets BI-01..04 (docs/drawings/buildings/README.md), drawn by tools/buildings/draw_itb.py, imported by itb_geom.py",
   "spec": "tools/buildings/spec_itb.json (+ itb_naip_measurements.json, itb_pods.json)",
@@ -37,7 +37,7 @@
     "node": "LOD0",
     "switch_m": 0.0,
     "tris": 59036,
-    "verts": 64415,
+    "verts": 63486,
     "ao_atlas": "itb_ao_A (shared by LOD0 / LOD1 shell meshes)"
    },
    {
@@ -45,7 +45,7 @@
     "node": "LOD1",
     "switch_m": 450.0,
     "tris": 28386,
-    "verts": 32672,
+    "verts": 32653,
     "ao_atlas": "itb_ao_A (shared by LOD0 / LOD1 shell meshes)"
    },
    {
@@ -53,7 +53,7 @@
     "node": "LOD2",
     "switch_m": 1600.0,
     "tris": 3687,
-    "verts": 5805,
+    "verts": 5788,
     "ao_atlas": "itb_ao_B"
    }
   ],
@@ -90,6 +90,16 @@
     "kind": "normal map, tiling, TEXCOORD_0"
    },
    {
+    "name": "itb_c_curtain_pier",
+    "px": [
+     512,
+     512
+    ],
+    "mime": "image/png",
+    "bytes": 1549,
+    "kind": "base colour (glass + mullion caps), tiling, TEXCOORD_0"
+   },
+   {
     "name": "itb_n_membrane",
     "px": [
      512,
@@ -98,6 +108,26 @@
     "mime": "image/png",
     "bytes": 27524,
     "kind": "normal map, tiling, TEXCOORD_0"
+   },
+   {
+    "name": "itb_c_curtain_dark",
+    "px": [
+     512,
+     512
+    ],
+    "mime": "image/png",
+    "bytes": 1548,
+    "kind": "base colour (glass + mullion caps), tiling, TEXCOORD_0"
+   },
+   {
+    "name": "itb_c_curtain_tinted",
+    "px": [
+     512,
+     512
+    ],
+    "mime": "image/png",
+    "bytes": 1546,
+    "kind": "base colour (glass + mullion caps), tiling, TEXCOORD_0"
    },
    {
     "name": "itb_c_frit",
@@ -327,7 +357,7 @@
     "ior": 1.9,
     "src": "inf / unk (window bands)",
     "normal_tile": "itb_n_curtain",
-    "base_tile": null
+    "base_tile": "itb_c_curtain_dark"
    },
    "glass_tinted": {
     "rgb_srgb": [
@@ -340,7 +370,7 @@
     "ior": 1.9,
     "src": "inf (end walls, clerestory: tint unk)",
     "normal_tile": "itb_n_curtain",
-    "base_tile": null
+    "base_tile": "itb_c_curtain_tinted"
    },
    "alu_panel": {
     "rgb_srgb": [
@@ -405,7 +435,7 @@
     "ior": 1.9,
     "src": "pub BA-G \"tinted energy-efficient glazed curtain wall\"; BA-A obs photo a2; bay positions inf",
     "normal_tile": "itb_n_curtain",
-    "base_tile": null
+    "base_tile": "itb_c_curtain_pier"
    },
    "lettering": {
     "rgb_srgb": [
@@ -421,7 +451,7 @@
     "base_tile": null
    }
   },
-  "material_note": "glass: coated (IOR 1.9 -> F0 0.096, KHR_materials_ior), opaque (interior not modelled; glass_hall carries the brightness of the lit hall seen through the clear bay); no imagery is used as a texture",
+  "material_note": "glass: coated (IOR 1.9 -> F0 0.096, KHR_materials_ior), opaque (interior not modelled; glass_hall carries the brightness of the lit hall seen through the clear bay); no imagery is used as a texture. No TANGENT attribute (tiling normal maps of joints / seams; the runtime derives the tangent frame: 1.3 MB saved, validator warning MESH_PRIMITIVE_GENERATED_TANGENT_SPACE accepted)",
   "ao": {
    "A": {
     "res": 2048,
@@ -429,7 +459,7 @@
      0,
      1
     ],
-    "bake_s": 153.0,
+    "bake_s": 98.7,
     "mean": 0.658,
     "p2": 0.005,
     "samples": 48,
@@ -441,7 +471,7 @@
     "lods": [
      2
     ],
-    "bake_s": 12.7,
+    "bake_s": 5.0,
     "mean": 0.678,
     "p2": 0.002,
     "samples": 48,
@@ -1338,7 +1368,7 @@
      "src": "spec corners NW/NE/SE/SW [obs]"
     },
     {
-     "check": "roof top vs roof_line(u), max |dev| over 4383 vertices",
+     "check": "roof top vs roof_line(u), max |dev| over 4380 vertices",
      "model": 0.0,
      "drawing": 0.0,
      "dev": 0.0,
@@ -2220,8 +2250,7 @@
     "samples": 48,
     "note": "local (out/ is gitignored); comparison sheets with photo pixels stay local"
    }
-  ],
-  "renders_updated": "2026-11-04T23:17:40+00:00"
+  ]
  },
  "tower": {
   "name": "SFO air traffic control tower (2016) and base building (IBF)",
