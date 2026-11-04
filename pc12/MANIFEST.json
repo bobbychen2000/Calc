@@ -41,8 +41,8 @@
   "tool": "node cli.js",
   "method": "reorder + EXT_meshopt_compression on the build's quantisation"
  },
- "commit": "5fd1449+dirty",
- "built": "2026-11-04T17:58:03+00:00",
+ "commit": "23197ab+dirty",
+ "built": "2026-11-04T18:05:26+00:00",
  "files": {
   ".nojekyll": {
    "bytes": 0,
@@ -88,13 +88,13 @@
    "bytes": 43512,
    "sha256": "31102cfd60e13b59778aeff95a0adc6c52b7dcbd0ed66864e726adf60211318f"
   },
-  "three/LICENSE": {
+  "three/LICENSE.txt": {
    "bytes": 2397,
    "sha256": "1bd74453fdc634dea81c48de330c9d386540529430a06a34302ca8cdf675dfd1"
   },
   "three/README.txt": {
-   "bytes": 284,
-   "sha256": "c311bd7f6846a70c0bee7547581c121abab415595771e05aeeea8630c79dd24e"
+   "bytes": 288,
+   "sha256": "d5d1cff235a7c0d053481111ffbf70fd411f5250f4e53d7a2f99f18ae4ee29ae"
   },
   "three/build/three.module.min.js": {
    "bytes": 670681,
