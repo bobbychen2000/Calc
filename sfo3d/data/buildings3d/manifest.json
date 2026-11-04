@@ -1,0 +1,2934 @@
+{
+ "_about": "SFO Live 3D building assets (glTF 2.0, built with Blender from the verified 2-D sheets); one key per asset group; frame ltp-nad83-2011 (x east, y up, z south, m from the ARP); see docs/research/buildings3d.md",
+ "itb": {
+  "asset": "data/buildings3d/itb.glb",
+  "bytes": 6910152,
+  "built": "2026-11-04T23:15:53+00:00",
+  "git": "398e91e+dirty",
+  "generator": "tools/blender/build_itb.py (bpy 5.0.1, Cycles CPU AO bake); geometry tools/blender/itb_geom.py",
+  "reference": "2-D sheets BI-01..04 (docs/drawings/buildings/README.md), drawn by tools/buildings/draw_itb.py, imported by itb_geom.py",
+  "spec": "tools/buildings/spec_itb.json (+ itb_naip_measurements.json, itb_pods.json)",
+  "frame": {
+   "id": "ltp-nad83-2011",
+   "axes": "x east, y up, z south, metres from the ARP (js/geo.js)",
+   "root_node": "itb",
+   "root_translation": [
+    -1244.555,
+    3.0,
+    365.405
+   ],
+   "ground_y": 3.0,
+   "roof_frame": {
+    "centre_xz": [
+     -1244.555,
+     365.405
+    ],
+    "u_axis_xz": [
+     0.29485,
+     0.95554
+    ],
+    "heading_deg": 162.85,
+    "note": "u along the roof axis (+ towards BA-A, SSE), v across (+ ENE)"
+   }
+  },
+  "lods": [
+   {
+    "lod": 0,
+    "node": "LOD0",
+    "switch_m": 0.0,
+    "tris": 59036,
+    "verts": 64415,
+    "ao_atlas": "itb_ao_A (shared by LOD0 / LOD1 shell meshes)"
+   },
+   {
+    "lod": 1,
+    "node": "LOD1",
+    "switch_m": 450.0,
+    "tris": 28386,
+    "verts": 32672,
+    "ao_atlas": "itb_ao_A (shared by LOD0 / LOD1 shell meshes)"
+   },
+   {
+    "lod": 2,
+    "node": "LOD2",
+    "switch_m": 1600.0,
+    "tris": 3687,
+    "verts": 5805,
+    "ao_atlas": "itb_ao_B"
+   }
+  ],
+  "lod_note": "LOD nodes are siblings under the root: show exactly one (camera distance to the root >= switch_m of that LOD and < switch_m of the next). LOD1 / LOD0 share the shell meshes and atlas A; phone budget: LOD1 / LOD2.",
+  "textures": [
+   {
+    "name": "itb_n_panel",
+    "px": [
+     512,
+     512
+    ],
+    "mime": "image/png",
+    "bytes": 1915,
+    "kind": "normal map, tiling, TEXCOORD_0"
+   },
+   {
+    "name": "itb_ao_A",
+    "px": [
+     2048,
+     2048
+    ],
+    "mime": "image/png",
+    "bytes": 2058661,
+    "kind": "AO (occlusionTexture, TEXCOORD_1)"
+   },
+   {
+    "name": "itb_n_curtain",
+    "px": [
+     512,
+     512
+    ],
+    "mime": "image/png",
+    "bytes": 2236,
+    "kind": "normal map, tiling, TEXCOORD_0"
+   },
+   {
+    "name": "itb_n_membrane",
+    "px": [
+     512,
+     512
+    ],
+    "mime": "image/png",
+    "bytes": 27524,
+    "kind": "normal map, tiling, TEXCOORD_0"
+   },
+   {
+    "name": "itb_c_frit",
+    "px": [
+     256,
+     256
+    ],
+    "mime": "image/png",
+    "bytes": 718,
+    "kind": "base colour, tiling, TEXCOORD_0"
+   },
+   {
+    "name": "itb_ao_B",
+    "px": [
+     512,
+     512
+    ],
+    "mime": "image/png",
+    "bytes": 148845,
+    "kind": "AO (occlusionTexture, TEXCOORD_1)"
+   }
+  ],
+  "materials": {
+   "roof_membrane": {
+    "rgb_srgb": [
+     209,
+     210,
+     202
+    ],
+    "metallic": 0.0,
+    "roughness": 0.85,
+    "ior": 1.5,
+    "src": "obs NAIP 2024 roof colour (pre-2024-26 re-roofing; new membrane / PV not imaged) [obs, low]",
+    "normal_tile": "itb_n_membrane",
+    "base_tile": null
+   },
+   "roof_membrane_pier": {
+    "rgb_srgb": [
+     213,
+     211,
+     207
+    ],
+    "metallic": 0.0,
+    "roughness": 0.85,
+    "ior": 1.5,
+    "src": "obs NAIP 2024 pier roof colour [obs, low]",
+    "normal_tile": "itb_n_membrane",
+    "base_tile": null
+   },
+   "glass_roof": {
+    "rgb_srgb": [
+     70,
+     86,
+     96
+    ],
+    "metallic": 0.0,
+    "roughness": 0.05,
+    "ior": 1.9,
+    "src": "obs NAIP (glazed lines, lenses, tip bands); glass inf",
+    "normal_tile": null,
+    "base_tile": null
+   },
+   "glass_roof_under": {
+    "rgb_srgb": [
+     150,
+     172,
+     178
+    ],
+    "metallic": 0.0,
+    "roughness": 0.1,
+    "ior": 1.9,
+    "src": "obs photo i3 (light glazed strip in the soffit)",
+    "normal_tile": null,
+    "base_tile": null
+   },
+   "soffit": {
+    "rgb_srgb": [
+     84,
+     87,
+     91
+    ],
+    "metallic": 0.3,
+    "roughness": 0.55,
+    "ior": 1.5,
+    "src": "obs photo i3 (dark grey soffit panels); module inf",
+    "normal_tile": "itb_n_panel",
+    "base_tile": null
+   },
+   "fascia": {
+    "rgb_srgb": [
+     236,
+     237,
+     237
+    ],
+    "metallic": 0.2,
+    "roughness": 0.35,
+    "ior": 1.5,
+    "src": "obs photos i1 / i4 (white roof edge)",
+    "normal_tile": null,
+    "base_tile": null
+   },
+   "steel_white": {
+    "rgb_srgb": [
+     232,
+     233,
+     230
+    ],
+    "metallic": 0.0,
+    "roughness": 0.4,
+    "ior": 1.5,
+    "src": "obs photos i3 / i4 (white painted trusses / columns)",
+    "normal_tile": null,
+    "base_tile": null
+   },
+   "steel_grey": {
+    "rgb_srgb": [
+     96,
+     100,
+     105
+    ],
+    "metallic": 0.3,
+    "roughness": 0.5,
+    "ior": 1.5,
+    "src": "obs photo i3 (dark outriggers, hangers)",
+    "normal_tile": null,
+    "base_tile": null
+   },
+   "glass_clear": {
+    "rgb_srgb": [
+     26,
+     32,
+     36
+    ],
+    "metallic": 0.0,
+    "roughness": 0.04,
+    "ior": 1.9,
+    "src": "obs photo i4 (dark clear strip above the canopy)",
+    "normal_tile": "itb_n_curtain",
+    "base_tile": null
+   },
+   "glass_entrance": {
+    "rgb_srgb": [
+     34,
+     40,
+     44
+    ],
+    "metallic": 0.0,
+    "roughness": 0.05,
+    "ior": 1.9,
+    "src": "obs photos i3 / i4 (clear glazing under the canopy)",
+    "normal_tile": "itb_n_curtain",
+    "base_tile": null
+   },
+   "glass_frit": {
+    "rgb_srgb": [
+     214,
+     218,
+     220
+    ],
+    "metallic": 0.0,
+    "roughness": 0.22,
+    "ior": 1.9,
+    "src": "pub \"three layers of ceramic frit\"; white banded look obs photos i1 / i4; pattern inf",
+    "normal_tile": "itb_n_curtain",
+    "base_tile": "itb_c_frit"
+   },
+   "glass_hall": {
+    "rgb_srgb": [
+     118,
+     130,
+     136
+    ],
+    "metallic": 0.0,
+    "roughness": 0.06,
+    "ior": 1.9,
+    "src": "obs photos i1 / i4 (clear central bay reads light: the lit hall seen through); value inf",
+    "normal_tile": "itb_n_curtain",
+    "base_tile": null
+   },
+   "mullion": {
+    "rgb_srgb": [
+     178,
+     182,
+     186
+    ],
+    "metallic": 0.6,
+    "roughness": 0.4,
+    "ior": 1.5,
+    "src": "inf (aluminium mullion caps)",
+    "normal_tile": null,
+    "base_tile": null
+   },
+   "canopy_top": {
+    "rgb_srgb": [
+     150,
+     152,
+     150
+    ],
+    "metallic": 0.0,
+    "roughness": 0.75,
+    "ior": 1.5,
+    "src": "inf",
+    "normal_tile": null,
+    "base_tile": null
+   },
+   "concrete": {
+    "rgb_srgb": [
+     166,
+     164,
+     158
+    ],
+    "metallic": 0.0,
+    "roughness": 0.85,
+    "ior": 1.5,
+    "src": "inf (curb, podium)",
+    "normal_tile": null,
+    "base_tile": null
+   },
+   "glass_dark": {
+    "rgb_srgb": [
+     28,
+     33,
+     38
+    ],
+    "metallic": 0.0,
+    "roughness": 0.06,
+    "ior": 1.9,
+    "src": "inf / unk (window bands)",
+    "normal_tile": "itb_n_curtain",
+    "base_tile": null
+   },
+   "glass_tinted": {
+    "rgb_srgb": [
+     42,
+     56,
+     60
+    ],
+    "metallic": 0.0,
+    "roughness": 0.06,
+    "ior": 1.9,
+    "src": "inf (end walls, clerestory: tint unk)",
+    "normal_tile": "itb_n_curtain",
+    "base_tile": null
+   },
+   "alu_panel": {
+    "rgb_srgb": [
+     190,
+     193,
+     196
+    ],
+    "metallic": 0.5,
+    "roughness": 0.4,
+    "ior": 1.5,
+    "src": "pub BA-G \"metallic-finish composite aluminium panels\"; BA-A / core: same by photo a2 [inf]",
+    "normal_tile": "itb_n_panel",
+    "base_tile": null
+   },
+   "alu_panel_pod": {
+    "rgb_srgb": [
+     206,
+     208,
+     209
+    ],
+    "metallic": 0.4,
+    "roughness": 0.45,
+    "ior": 1.5,
+    "src": "obs photo a2 (light grey pods); finish inf",
+    "normal_tile": "itb_n_panel",
+    "base_tile": null
+   },
+   "coping": {
+    "rgb_srgb": [
+     200,
+     202,
+     204
+    ],
+    "metallic": 0.5,
+    "roughness": 0.4,
+    "ior": 1.5,
+    "src": "inf",
+    "normal_tile": null,
+    "base_tile": null
+   },
+   "service_dark": {
+    "rgb_srgb": [
+     78,
+     81,
+     84
+    ],
+    "metallic": 0.1,
+    "roughness": 0.7,
+    "ior": 1.5,
+    "src": "obs photo a2 (dark apron level); detail unk",
+    "normal_tile": "itb_n_panel",
+    "base_tile": null
+   },
+   "glass_pier": {
+    "rgb_srgb": [
+     36,
+     50,
+     52
+    ],
+    "metallic": 0.0,
+    "roughness": 0.05,
+    "ior": 1.9,
+    "src": "pub BA-G \"tinted energy-efficient glazed curtain wall\"; BA-A obs photo a2; bay positions inf",
+    "normal_tile": "itb_n_curtain",
+    "base_tile": null
+   },
+   "lettering": {
+    "rgb_srgb": [
+     38,
+     42,
+     46
+    ],
+    "metallic": 0.3,
+    "roughness": 0.4,
+    "ior": 1.5,
+    "src": "obs photos i1 / i3 / i4 (\"SAN FRANCISCO INTERNATIONAL\"); font inf",
+    "normal_tile": null,
+    "base_tile": null
+   }
+  },
+  "material_note": "glass: coated (IOR 1.9 -> F0 0.096, KHR_materials_ior), opaque (interior not modelled; glass_hall carries the brightness of the lit hall seen through the clear bay); no imagery is used as a texture",
+  "ao": {
+   "A": {
+    "res": 2048,
+    "lods": [
+     0,
+     1
+    ],
+    "bake_s": 153.0,
+    "mean": 0.658,
+    "p2": 0.005,
+    "samples": 48,
+    "distance_m": 10.0,
+    "ground_plane": true
+   },
+   "B": {
+    "res": 512,
+    "lods": [
+     2
+    ],
+    "bake_s": 12.7,
+    "mean": 0.678,
+    "p2": 0.002,
+    "samples": 48,
+    "distance_m": 10.0,
+    "ground_plane": true
+   }
+  },
+  "naip_colours": {
+   "hall": {
+    "rgb": [
+     209,
+     210,
+     202
+    ],
+    "n": 792,
+    "method": "NAIP 2024 median at imaged membrane points between the truss lines, |u| 35-100 (frame-model relief)"
+   },
+   "pier": {
+    "rgb": [
+     213,
+     211,
+     207
+    ],
+    "n": 1315,
+    "method": "NAIP 2024 median over the BA-A / BA-G main roofs, 4 m inside the outline, pods excluded"
+   }
+  },
+  "components": [
+   {
+    "node": "L0_hall_roof",
+    "feature": "main hall wing roof (deck, glazing, fascia, soffit)",
+    "src": "obs",
+    "spec": [
+     "roof.corners_obs",
+     "roof.length_obs",
+     "roof.width_obs",
+     "roof.axis_obs",
+     "roof.profile",
+     "roof.truss_lines_obs",
+     "roof.truss_spacing_obs",
+     "roof.lenses_obs",
+     "roof.glazed_tips_obs",
+     "roof.dof_06-035315",
+     "roof.dof_06-035316"
+    ],
+    "dims": {
+     "hall_roof": {
+      "v": [
+       252.87,
+       65.4
+      ],
+      "tag": "obs",
+      "source": "spec roof.corners_obs (NAIP 2024 frame-model relief correction)"
+     },
+     "profile": {
+      "v": "roof_line(u): notch 35.7, humps 40.08, crown 40.1, tip 34.4",
+      "tag": "obs",
+      "source": "BI-02 / spec roof.profile (NAIP eave relief, DOF-anchored [inf])"
+     },
+     "thickness": {
+      "v": 0.6,
+      "tag": "inf",
+      "source": "BI-02 top-chord line 0.6 m below the roof line; fascia depth unknown"
+     },
+     "camber": {
+      "v": "flat across v",
+      "tag": "unk",
+      "source": "cross camber unknown (BI-02 V2, BI-03 V2 draw it flat)"
+     },
+     "strips": {
+      "v": 1.5,
+      "tag": "obs",
+      "source": "glazed truss-line strips, NAIP 2024 (rough width)"
+     },
+     "lenses": {
+      "v": [
+       [
+        47.95,
+        9.53
+       ],
+       [
+        48.26,
+        9.4
+       ],
+       [
+        48.02,
+        9.65
+       ],
+       [
+        48.26,
+        9.65
+       ],
+       [
+        47.27,
+        9.4
+       ]
+      ],
+      "tag": "obs",
+      "source": "spec roof.lenses_obs (planform: pointed lens [inf])"
+     },
+     "tip_bands": {
+      "v": [
+       18.75,
+       15.75
+      ],
+      "tag": "obs",
+      "source": "spec roof.glazed_tips_obs, ending 1.6 / 3.6 m inside the fascia"
+     }
+    },
+    "lods": [
+     0,
+     1,
+     2
+    ],
+    "kind": "shell"
+   },
+   {
+    "node": "L0_hall_trusses",
+    "feature": "5 three-chord football trusses",
+    "src": "inf",
+    "spec": [
+     "roof.form",
+     "roof.truss_depth",
+     "roof.truss_lines_obs",
+     "roof.centre_section",
+     "roof.cantilever_end"
+    ],
+    "dims": {
+     "lines": {
+      "v": [
+       -24.246,
+       -12.123,
+       0.0,
+       12.123,
+       24.246
+      ],
+      "tag": "obs",
+      "source": "spec roof.truss_spacing_obs 12.12 m"
+     },
+     "depth": {
+      "v": 8.839,
+      "tag": "pub",
+      "source": "SEAONC: up to 29 ft over the supports; taper [inf] (BI-03 depth(u))"
+     },
+     "west_bottom_chord": {
+      "v": "max(BI-02 chord(u), BI-03 roof_line - depth(u))",
+      "tag": "inf",
+      "source": "BI-02 V1 / BI-03 V1; photos i3 / i4 (sweep up to the notch)"
+     },
+     "centre_chord": {
+      "v": "sagging bowstring: deck at the notches -> WH + 2 at u = 0",
+      "tag": "inf",
+      "source": "photos i3 / i4 (form); BI-03: unknown"
+     },
+     "centre_section": {
+      "v": 180,
+      "tag": "pub",
+      "source": "ft, snippet; bowstring chord form [unk] (BI-03)"
+     },
+     "panel": {
+      "v": 6.096,
+      "tag": "inf",
+      "source": "20-ft node grid offset 10 ft (columns, hangers on it)"
+     },
+     "tube_radii": {
+      "v": [
+       0.5,
+       0.32,
+       0.2
+      ],
+      "tag": "inf",
+      "source": "photos i3 / i4"
+     }
+    },
+    "lods": [
+     0,
+     1
+    ],
+    "kind": "detail"
+   },
+   {
+    "node": "L0_hall_outriggers",
+    "feature": "eave outriggers under the soffit",
+    "src": "inf",
+    "spec": [
+     "roof.form"
+    ],
+    "dims": {
+     "spacing": {
+      "v": 6.096,
+      "tag": "inf",
+      "source": "photo i3 (regular spacing)"
+     }
+    },
+    "lods": [
+     0,
+     1
+    ],
+    "kind": "detail"
+   },
+   {
+    "node": "L0_hall_columns",
+    "feature": "20 columns, west line branching into 5 members",
+    "src": "inf",
+    "spec": [
+     "roof.columns",
+     "roof.col_positions_inf",
+     "roof.rhythm_inf"
+    ],
+    "dims": {
+     "count": {
+      "v": 20,
+      "tag": "pub",
+      "source": "SEAONC"
+     },
+     "u": {
+      "v": [
+       57.9,
+       82.3
+      ],
+      "tag": "inf",
+      "source": "+-190 / +-270 ft (spec roof.col_positions_inf)"
+     },
+     "west_v": {
+      "v": -28.268,
+      "tag": "inf",
+      "source": "BI-01 / BI-03: 2.5 m in front of the wall"
+     },
+     "fan": {
+      "v": 5,
+      "tag": "obs",
+      "source": "photos i3 / i4 (post + 2 per side); geometry inf"
+     }
+    },
+    "lods": [
+     0,
+     1
+    ],
+    "kind": "detail"
+   },
+   {
+    "node": "L0_hall_west_wall",
+    "feature": "west glass wall, head closure, upper glazing",
+    "src": "inf",
+    "spec": [
+     "facade.west",
+     "level3.floor"
+    ],
+    "dims": {
+     "v": {
+      "v": -25.768,
+      "tag": "inf",
+      "source": "BI-01: middle of the band v -28.3..-23.3 (NAIP line [obs] = canopy edge / wall above)"
+     },
+     "length": {
+      "v": 214.884,
+      "tag": "pub",
+      "source": "705 ft great hall (SEAONC), centred [inf]"
+     },
+     "L3": {
+      "v": 11.5,
+      "tag": "inf",
+      "source": "level3.floor 11.5 (9.6-14.8)"
+     },
+     "head": {
+      "v": 30.8,
+      "tag": "obs",
+      "source": "photo i4: 9.3 m below the wing crest (+-1.5)"
+     },
+     "central_bay": {
+      "v": [
+       80.0,
+       2.0
+      ],
+      "tag": "obs",
+      "source": "photos i1 / i4 (+-39 / +-42 m; head +2 m tentative)"
+     },
+     "upper_glazing_v": {
+      "v": -22.376,
+      "tag": "inf",
+      "source": "photo i3: glazing behind the exposed truss"
+     }
+    },
+    "lods": [
+     0,
+     1,
+     2
+    ],
+    "kind": "shell"
+   },
+   {
+    "node": "L0_hall_canopy",
+    "feature": "curb (entrance) canopy",
+    "src": "inf",
+    "spec": [
+     "facade.west"
+    ],
+    "dims": {
+     "top": {
+      "v": 16.5,
+      "tag": "inf",
+      "source": "L3 + 5 (photos i3 / i4)"
+     },
+     "depth": {
+      "v": 5.0,
+      "tag": "inf",
+      "source": "photos"
+     },
+     "exists": {
+      "v": true,
+      "tag": "pub",
+      "source": "SEAONC \"entrance canopy\""
+     }
+    },
+    "lods": [
+     0,
+     1,
+     2
+    ],
+    "kind": "shell"
+   },
+   {
+    "node": "L0_hall_curb",
+    "feature": "departures curb sidewalk (L3)",
+    "src": "inf",
+    "spec": [
+     "level3.floor"
+    ],
+    "dims": {
+     "width": {
+      "v": 7.0,
+      "tag": "inf",
+      "source": "under the canopy + 2 m"
+     },
+     "level": {
+      "v": 11.5,
+      "tag": "inf",
+      "source": "level3.floor"
+     }
+    },
+    "lods": [
+     0,
+     1,
+     2
+    ],
+    "kind": "shell"
+   },
+   {
+    "node": "L0_hall_podium",
+    "feature": "levels 1-2 under the hall (faces only)",
+    "src": "unk",
+    "spec": [
+     "itb.levels"
+    ],
+    "dims": {
+     "levels": {
+      "v": "L1 services, L2 arrivals",
+      "tag": "pub",
+      "source": "sfgate2000"
+     },
+     "facade": {
+      "v": "concrete / glazing band",
+      "tag": "unk",
+      "source": "not dimensioned"
+     }
+    },
+    "lods": [
+     0,
+     1,
+     2
+    ],
+    "kind": "shell"
+   },
+   {
+    "node": "L0_hall_end_walls",
+    "feature": "end curtain walls (u = +-107.4)",
+    "src": "inf",
+    "spec": [
+     "facade.end_walls",
+     "hall.size_snippet"
+    ],
+    "dims": {
+     "u": {
+      "v": 107.442,
+      "tag": "inf",
+      "source": "705-ft hall centred in the roof"
+     },
+     "outline": {
+      "v": "L3 to the roof underside",
+      "tag": "unk",
+      "source": "not published"
+     }
+    },
+    "lods": [
+     0,
+     1,
+     2
+    ],
+    "kind": "shell"
+   },
+   {
+    "node": "L0_hall_east_clerestory",
+    "feature": "east clerestory above the core block",
+    "src": "inf",
+    "spec": [
+     "facade.west"
+    ],
+    "dims": {
+     "v": {
+      "v": 31.698,
+      "tag": "inf",
+      "source": "1 m inside the east eave"
+     },
+     "base": {
+      "v": 17.9,
+      "tag": "unk",
+      "source": "core block top"
+     }
+    },
+    "lods": [
+     0,
+     1,
+     2
+    ],
+    "kind": "shell"
+   },
+   {
+    "node": "L0_hall_mullions",
+    "feature": "west wall mullions / transoms",
+    "src": "obs",
+    "spec": [
+     "facade.west"
+    ],
+    "dims": {
+     "module": {
+      "v": 6.096,
+      "tag": "obs",
+      "source": "photo i4 ~6.1 m (low)"
+     },
+     "transoms": {
+      "v": 2.2,
+      "tag": "obs",
+      "source": "photo i4 (low)"
+     }
+    },
+    "lods": [
+     0
+    ],
+    "kind": "detail"
+   },
+   {
+    "node": "L0_hall_end_mullions",
+    "feature": "end wall mullions",
+    "src": "unk",
+    "spec": [
+     "facade.end_walls"
+    ],
+    "dims": {
+     "module": {
+      "v": [
+       6.096,
+       4.4
+      ],
+      "tag": "unk",
+      "source": "not published"
+     }
+    },
+    "lods": [
+     0
+    ],
+    "kind": "detail"
+   },
+   {
+    "node": "L0_hall_hangers",
+    "feature": "canopy hangers and posts",
+    "src": "obs",
+    "spec": [
+     "facade.west"
+    ],
+    "dims": {
+     "u": {
+      "v": [
+       -100.58,
+       -88.39,
+       -76.2,
+       -64.01,
+       -51.82,
+       -39.62,
+       -27.43,
+       -9.14,
+       9.14,
+       27.43,
+       39.62,
+       51.82,
+       64.01,
+       76.2,
+       88.39,
+       100.58
+      ],
+      "tag": "obs",
+      "source": "photo i4: 40-ft grid + +-30 / +-90 ft"
+     },
+     "apex": {
+      "v": 3.6,
+      "tag": "obs",
+      "source": "photo i4, rough"
+     },
+     "form": {
+      "v": "inclined pair + post",
+      "tag": "inf",
+      "source": "schematic"
+     }
+    },
+    "lods": [
+     0,
+     1
+    ],
+    "kind": "detail"
+   },
+   {
+    "node": "L0_itb_core",
+    "feature": "ITB core: east block and north / south bars",
+    "src": "unk",
+    "spec": [
+     "itb.stories",
+     "itb.levels"
+    ],
+    "dims": {
+     "outline": {
+      "v": "SFO Museum International Terminal - piers - hall",
+      "tag": "obs",
+      "source": "data/sfo_airport.json"
+     },
+     "height": {
+      "v": 17.9,
+      "tag": "unk",
+      "source": "no source; = BA-A main roof [obs] as placeholder"
+     }
+    },
+    "lods": [
+     0,
+     1,
+     2
+    ],
+    "kind": "shell"
+   },
+   {
+    "node": "L0_ba_a_body",
+    "feature": "Boarding Area A pier body",
+    "src": "obs",
+    "spec": [
+     "ba_a.height_roof",
+     "ba_a.footprint"
+    ],
+    "dims": {
+     "outline": {
+      "v": "SFO Museum Boarding Area A",
+      "tag": "obs",
+      "source": "data/sfo_airport.json"
+     },
+     "h": {
+      "v": 17.9,
+      "tag": "obs",
+      "source": "NAIP relief / shadow band, range [16.9, 18.8]"
+     },
+     "parapet": {
+      "v": 1.0,
+      "tag": "inf",
+      "source": "roof deck 1 m below the measured roof edge"
+     },
+     "glazing": {
+      "v": [
+       5.2,
+       17.2
+      ],
+      "tag": "obs",
+      "source": "photo a2 (BA-A); BA-G \"tinted glazed curtain wall\" [pub]"
+     },
+     "bays": {
+      "v": 24.0,
+      "tag": "inf",
+      "source": "centred on the bridge attach points of data/sfo_stands.json"
+     }
+    },
+    "lods": [
+     0,
+     1,
+     2
+    ],
+    "kind": "shell"
+   },
+   {
+    "node": "L0_ba_a_pods",
+    "feature": "Boarding Area A roof pods",
+    "src": "obs",
+    "spec": [
+     "ba_a.pods",
+     "ba_a.dof_pod"
+    ],
+    "dims": {
+     "outline": {
+      "v": "itb_pods.json ring_true_xz",
+      "tag": "obs",
+      "source": "NAIP 2024 trace, relief-corrected"
+     },
+     "tops": {
+      "v": [
+       23.6,
+       23.6,
+       23.3
+      ],
+      "tag": "obs",
+      "source": "NAIP WNW band (low)"
+     },
+     "dof_conflict": {
+      "v": 25.908,
+      "tag": "pub",
+      "source": "DOF 06-035352 pod-1 top 25.91 m: NAIP 22.1-25.0 (drawn 23.6)"
+     }
+    },
+    "lods": [
+     0,
+     1,
+     2
+    ],
+    "kind": "shell"
+   },
+   {
+    "node": "L0_ba_g_body",
+    "feature": "Boarding Area G pier body",
+    "src": "obs",
+    "spec": [
+     "ba_g.height_roof",
+     "ba_g.footprint",
+     "ba_g.facade"
+    ],
+    "dims": {
+     "outline": {
+      "v": "SFO Museum Boarding Area G",
+      "tag": "obs",
+      "source": "data/sfo_airport.json"
+     },
+     "h": {
+      "v": 17.0,
+      "tag": "obs",
+      "source": "NAIP relief / shadow band, range [13.0, 20.0]"
+     },
+     "parapet": {
+      "v": 1.0,
+      "tag": "inf",
+      "source": "roof deck 1 m below the measured roof edge"
+     },
+     "glazing": {
+      "v": [
+       5.2,
+       17.2
+      ],
+      "tag": "inf",
+      "source": "photo a2 (BA-A); BA-G \"tinted glazed curtain wall\" [pub]"
+     },
+     "bays": {
+      "v": 24.0,
+      "tag": "inf",
+      "source": "centred on the bridge attach points of data/sfo_stands.json"
+     }
+    },
+    "lods": [
+     0,
+     1,
+     2
+    ],
+    "kind": "shell"
+   },
+   {
+    "node": "L0_ba_g_pods",
+    "feature": "Boarding Area G roof pods",
+    "src": "obs",
+    "spec": [
+     "ba_g.pods"
+    ],
+    "dims": {
+     "outline": {
+      "v": "itb_pods.json ring_true_xz",
+      "tag": "obs",
+      "source": "NAIP 2024 trace, relief-corrected"
+     },
+     "tops": {
+      "v": [
+       22.4,
+       22.2,
+       23.2
+      ],
+      "tag": "obs",
+      "source": "NAIP WNW band (low)"
+     }
+    },
+    "lods": [
+     0,
+     1,
+     2
+    ],
+    "kind": "shell"
+   },
+   {
+    "node": "L0_ba_g_box",
+    "feature": "BA-G pod-3 end box (probable ramp-control cab)",
+    "src": "obs",
+    "spec": [
+     "ba_g.pod3_end_box"
+    ],
+    "dims": {
+     "top": {
+      "v": 32.0,
+      "tag": "obs",
+      "source": "NAIP band (30.5-33.4, low)"
+     },
+     "function": {
+      "v": "ramp-control cab",
+      "tag": "inf",
+      "source": "photo d2 + LiveATC; unconfirmed"
+     },
+     "window_band": {
+      "v": "top-2.6..top-1.2",
+      "tag": "inf",
+      "source": "photo d2 schematic"
+     }
+    },
+    "lods": [
+     0,
+     1,
+     2
+    ],
+    "kind": "shell"
+   },
+   {
+    "node": "L0_ba_g_box_antennas",
+    "feature": "antennas on the end box (schematic)",
+    "src": "inf",
+    "spec": [
+     "ba_g.pod3_end_box"
+    ],
+    "dims": {},
+    "lods": [
+     0
+    ],
+    "kind": "detail"
+   },
+   {
+    "node": "L0_hall_lettering",
+    "feature": "west-wall lettering \"SAN FRANCISCO INTERNATIONAL\"",
+    "src": "obs",
+    "spec": [
+     "facade.west"
+    ],
+    "dims": {
+     "width": {
+      "v": 66.0,
+      "tag": "obs",
+      "source": "photos i1 / i4"
+     },
+     "height": {
+      "v": 2.8,
+      "tag": "obs",
+      "source": "BI-02 V1"
+     },
+     "font": {
+      "v": "Blender built-in",
+      "tag": "inf",
+      "source": ""
+     }
+    },
+    "lods": [
+     0
+    ],
+    "kind": "detail"
+   }
+  ],
+  "inferred": [
+   "roof deck + fascia 0.6 m thick (BI-02 top-chord line); cross camber flat (unknown)",
+   "glazed truss-line strips 1.5 m wide (NAIP 2024 dark lines, rough)",
+   "lens skylights drawn as pointed lenses flush with the centre arch (NAIP shows D shapes: vaulted lens or D plan, not settled)",
+   "truss form: three-chord (2 top chords 2.4 m apart, 1 bottom chord), webs on a 20-ft node grid offset 10 ft; depth taper (BI-03); the west chord is level with the glass head (BI-02) except between the inner column line and the notch, where it follows the BI-03 taper (up to ~3.4 m above the BI-02 line; photos i3 / i4 show the sweep up to the notch: a deliberate deviation from BI-02 V1, both lines inf); centre section: a sagging bowstring chord from the deck at the notches to the clear bay head (photos i3 / i4; BI-03 draws the form as unknown); tube radii 0.50 / 0.32 / 0.20 m",
+   "eave outriggers under the soffit at every truss node (photo i3: regular spacing)",
+   "column positions +-190 / +-270 ft x 5 truss lines; west line 2.5 m in front of the glass; fan of 5 members (count obs, geometry inf); radius 0.75 m",
+   "west glass wall at the middle of its two canopy readings (v -25.8); level 3 at 11.5 m (9.6-14.8); canopy L3 + 5 m, 5 m deep; hanger form (inclined pair + post)",
+   "upper glazing behind the exposed west truss (photo i3) and a head closure; end walls from level 3 to the roof underside; east clerestory 1 m inside the east eave",
+   "departures curb sidewalk 7 m wide at level 3 with a 1.1 m upstand",
+   "pier parapet 1.0 m (roof deck below the measured roof edge); BA-G glazing top 0.7 m under its 17.0 m roof",
+   "pier gate-room glazing bays 24 m wide centred on the bridge attach points of data/sfo_stands.json; 5.2-17.2 m from photo a2 (BA-A)",
+   "BA-G end box: window band top-2.6..top-1.2, three antennas (schematic, photo d2); function ramp-control cab (unconfirmed)",
+   "materials / colours: our reading of the reference photos (no texture from imagery); roof colours sampled from NAIP 2024"
+  ],
+  "unknown": [
+   "ITB core block (east block, north / south bars incl. the AirTrain stations at ITB level 4): height 17.9 m is a PLACEHOLDER (no source; set equal to the BA-A main roof); facade a metal-panel / window-band placeholder",
+   "levels 1-2 under the hall (podium): faces only, concrete / dark band placeholder",
+   "end-wall outline and mullions, the central section bottom chord form, fascia depth, mullion module of the end walls",
+   "pier floor heights, gate-room bay positions (inferred from bridges), parapets, roof equipment (none modelled)",
+   "the 2024-26 roof (new membrane, ~1,400 kW PV): not imaged; the asset shows the NAIP 2024 roof",
+   "departures roadway beyond the 7 m curb, the arrivals roadway, the AirTrain guideway through the ITB: not part of this asset"
+  ],
+  "conflicts": [
+   {
+    "item": "roof length",
+    "model": "252.87 m (NAIP 2024, frame-model relief correction) [obs]",
+    "other": "860 ft = 262.13 m [pub SEAONC, Smith-Emery, MSC 2000]",
+    "note": "BI-01 / BI-02 draw both; the asset follows the measured roof (range 252.6-255.1 m)"
+   },
+   {
+    "item": "hall width",
+    "model": "west wall at v -25.8 (band -28.3..-23.3) [inf]; east side closed by a clerestory 1 m inside the east eave",
+    "other": "210 ft = 64.0 m [pub SEAONC] does not fit east of the wall under the 65.4-m roof",
+    "note": "BI-02 / BI-03"
+   },
+   {
+    "item": "BA-A pod 1 top",
+    "model": "23.6 m (NAIP band, 22.1-25.0) [obs, low]",
+    "other": "FAA DOF 06-035352 85 ft = 25.91 m [pub]",
+    "note": "consistent only at the upper ends; the drawings draw the NAIP value"
+   },
+   {
+    "item": "\"building height 144 ft\"",
+    "model": "not used",
+    "other": "SOM / Enclos, datum unknown [pub]",
+    "note": "BI-02"
+   },
+   {
+    "item": "roof eave at the tips",
+    "model": "34.4 m (fit held non-increasing) [obs, low]",
+    "other": "spec 34.9 (blend NAIP 34.4 / photo 35.5)",
+    "note": "drawing_note_tips (review r2-27)"
+   }
+  ],
+  "plausibility_note": "airside geometry stays inside the SFO Museum terminal / boarding-area outlines that tools/stands/check_stands.py tests every stand and bridge against; rotundas set directly at the pier facade overlap that outline by 0.3-1.8 m in the stand data itself (pre-existing, outline accuracy +-5 m: data/sfo_buildings.json footprint_accuracy) - listed in verification.plausibility.rotunda_contacts",
+  "verification": {
+   "tool": "tools/blender/verify_itb.py",
+   "report": "out/buildings3d/itb_verify.json (local)",
+   "n_checks": 91,
+   "n_fail": 0,
+   "failed": [],
+   "tolerance": "0.5 m or 2 % of the drawn value (whichever is larger) unless stated",
+   "checks": [
+    {
+     "check": "root translation x",
+     "model": -1244.555,
+     "drawing": -1244.555,
+     "dev": 0.0,
+     "tol": 0.01,
+     "ok": true,
+     "src": "roof centre (draw_itb.F, frame-model corners)"
+    },
+    {
+     "check": "root translation y (GROUND_Y)",
+     "model": 3.0,
+     "drawing": 3.0,
+     "dev": 0.0,
+     "tol": 0.001,
+     "ok": true,
+     "src": "js/geo.js GROUND_Y"
+    },
+    {
+     "check": "root translation z",
+     "model": 365.405,
+     "drawing": 365.405,
+     "dev": 0.0,
+     "tol": 0.01,
+     "ok": true,
+     "src": "roof centre"
+    },
+    {
+     "check": "roof length (u extent)",
+     "model": 252.872,
+     "drawing": 252.872,
+     "dev": 0.0,
+     "tol": 5.057440083678699,
+     "ok": true,
+     "src": "BI-01: 252.87 m (spec 252.68, range 252.6-255.1) [obs]"
+    },
+    {
+     "check": "roof width (v extent)",
+     "model": 65.397,
+     "drawing": 65.397,
+     "dev": 0.0,
+     "tol": 1.3079324906125702,
+     "ok": true,
+     "src": "BI-01: 65.4 m [obs]"
+    },
+    {
+     "check": "roof corners vs spec roof.corners_obs (max)",
+     "model": 0.001,
+     "drawing": 0.0,
+     "dev": 0.001,
+     "tol": 0.5,
+     "ok": true,
+     "src": "spec corners NW/NE/SE/SW [obs]"
+    },
+    {
+     "check": "roof top vs roof_line(u), max |dev| over 4383 vertices",
+     "model": 0.0,
+     "drawing": 0.0,
+     "dev": 0.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "BI-02 profile [obs]"
+    },
+    {
+     "check": "roof top at |u| 0 (crown 40.1)",
+     "model": 40.099,
+     "drawing": 40.1,
+     "dev": 0.001,
+     "tol": 0.802,
+     "ok": true,
+     "src": "BI-02"
+    },
+    {
+     "check": "roof top at |u| 27 (notch 35.7)",
+     "model": 35.794,
+     "drawing": 35.7,
+     "dev": 0.094,
+     "tol": 0.7140000000000001,
+     "ok": true,
+     "src": "BI-02"
+    },
+    {
+     "check": "roof top at |u| 67 (hump 40.08)",
+     "model": 40.072,
+     "drawing": 40.08,
+     "dev": 0.008,
+     "tol": 0.8016,
+     "ok": true,
+     "src": "BI-02"
+    },
+    {
+     "check": "roof top at |u| 100 (|u| 100: 36.4)",
+     "model": 36.325,
+     "drawing": 36.402,
+     "dev": 0.077,
+     "tol": 0.72805,
+     "ok": true,
+     "src": "BI-02"
+    },
+    {
+     "check": "roof top at |u| 126 (tip 34.4)",
+     "model": 34.4,
+     "drawing": 34.4,
+     "dev": 0.0,
+     "tol": 0.688,
+     "ok": true,
+     "src": "BI-02"
+    },
+    {
+     "check": "roof deck thickness (median)",
+     "model": 0.6,
+     "drawing": 0.6,
+     "dev": 0.0,
+     "tol": 0.05,
+     "ok": true,
+     "src": "inf 0.6 m"
+    },
+    {
+     "check": "north glazed tip band depth",
+     "model": 18.75,
+     "drawing": 18.75,
+     "dev": 0.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "spec 18.75 [obs]"
+    },
+    {
+     "check": "north band set-back from the fascia",
+     "model": 1.6,
+     "drawing": 1.6,
+     "dev": 0.0,
+     "tol": 0.25,
+     "ok": true,
+     "src": "spec verification 1.6 m [obs]"
+    },
+    {
+     "check": "south glazed tip band depth",
+     "model": 15.75,
+     "drawing": 15.75,
+     "dev": 0.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "spec 15.75 [obs]"
+    },
+    {
+     "check": "south band set-back from the fascia",
+     "model": 3.6,
+     "drawing": 3.6,
+     "dev": 0.0,
+     "tol": 0.25,
+     "ok": true,
+     "src": "spec verification 3.6 m [obs]"
+    },
+    {
+     "check": "truss-line glazed strips: max |v - LINES_V|",
+     "model": 0.0,
+     "drawing": 0.0,
+     "dev": 0.0,
+     "tol": 0.25,
+     "ok": true,
+     "src": "NAIP comb fit 12.12 m [obs]"
+    },
+    {
+     "check": "lens 0 length (where wider than the strip)",
+     "model": 43.9,
+     "drawing": 43.962,
+     "dev": 0.062,
+     "tol": 0.8792478443325255,
+     "ok": true,
+     "src": "lens_poly 48.0 m tip to tip [obs]"
+    },
+    {
+     "check": "lens 0 width",
+     "model": 9.529,
+     "drawing": 9.529,
+     "dev": 0.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "lens_poly [obs]"
+    },
+    {
+     "check": "lens 0 centre u",
+     "model": -1.8,
+     "drawing": -1.794,
+     "dev": 0.006,
+     "tol": 0.5,
+     "ok": true,
+     "src": "lens row 1.8 m N of the centre [obs]"
+    },
+    {
+     "check": "lens 0 planform vs lens_poly (max |width dev|)",
+     "model": 0.017,
+     "drawing": 0.0,
+     "dev": 0.017,
+     "tol": 0.1,
+     "ok": true,
+     "src": "pointed lens [inf]"
+    },
+    {
+     "check": "lens 1 length (where wider than the strip)",
+     "model": 44.15,
+     "drawing": 44.191,
+     "dev": 0.041,
+     "tol": 0.8838147783896806,
+     "ok": true,
+     "src": "lens_poly 48.3 m tip to tip [obs]"
+    },
+    {
+     "check": "lens 1 width",
+     "model": 9.405,
+     "drawing": 9.405,
+     "dev": 0.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "lens_poly [obs]"
+    },
+    {
+     "check": "lens 1 centre u",
+     "model": -1.475,
+     "drawing": -1.485,
+     "dev": 0.01,
+     "tol": 0.5,
+     "ok": true,
+     "src": "lens row 1.5 m N of the centre [obs]"
+    },
+    {
+     "check": "lens 1 planform vs lens_poly (max |width dev|)",
+     "model": 0.016,
+     "drawing": 0.0,
+     "dev": 0.016,
+     "tol": 0.1,
+     "ok": true,
+     "src": "pointed lens [inf]"
+    },
+    {
+     "check": "lens 2 length (where wider than the strip)",
+     "model": 44.05,
+     "drawing": 44.073,
+     "dev": 0.023,
+     "tol": 0.8814527959785831,
+     "ok": true,
+     "src": "lens_poly 48.0 m tip to tip [obs]"
+    },
+    {
+     "check": "lens 2 width",
+     "model": 9.652,
+     "drawing": 9.652,
+     "dev": 0.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "lens_poly [obs]"
+    },
+    {
+     "check": "lens 2 centre u",
+     "model": -1.725,
+     "drawing": -1.732,
+     "dev": 0.007,
+     "tol": 0.5,
+     "ok": true,
+     "src": "lens row 1.7 m N of the centre [obs]"
+    },
+    {
+     "check": "lens 2 planform vs lens_poly (max |width dev|)",
+     "model": 0.017,
+     "drawing": 0.0,
+     "dev": 0.017,
+     "tol": 0.1,
+     "ok": true,
+     "src": "pointed lens [inf]"
+    },
+    {
+     "check": "lens 3 length (where wider than the strip)",
+     "model": 44.25,
+     "drawing": 44.3,
+     "dev": 0.05,
+     "tol": 0.8859963670918747,
+     "ok": true,
+     "src": "lens_poly 48.3 m tip to tip [obs]"
+    },
+    {
+     "check": "lens 3 width",
+     "model": 9.652,
+     "drawing": 9.652,
+     "dev": 0.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "lens_poly [obs]"
+    },
+    {
+     "check": "lens 3 centre u",
+     "model": -1.725,
+     "drawing": -1.732,
+     "dev": 0.007,
+     "tol": 0.5,
+     "ok": true,
+     "src": "lens row 1.7 m N of the centre [obs]"
+    },
+    {
+     "check": "lens 3 planform vs lens_poly (max |width dev|)",
+     "model": 0.017,
+     "drawing": 0.0,
+     "dev": 0.017,
+     "tol": 0.1,
+     "ok": true,
+     "src": "pointed lens [inf]"
+    },
+    {
+     "check": "lens 4 length (where wider than the strip)",
+     "model": 43.25,
+     "drawing": 43.284,
+     "dev": 0.034,
+     "tol": 0.8656852444739948,
+     "ok": true,
+     "src": "lens_poly 47.3 m tip to tip [obs]"
+    },
+    {
+     "check": "lens 4 width",
+     "model": 9.405,
+     "drawing": 9.405,
+     "dev": 0.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "lens_poly [obs]"
+    },
+    {
+     "check": "lens 4 centre u",
+     "model": -2.225,
+     "drawing": -2.228,
+     "dev": 0.002,
+     "tol": 0.5,
+     "ok": true,
+     "src": "lens row 2.2 m N of the centre [obs]"
+    },
+    {
+     "check": "lens 4 planform vs lens_poly (max |width dev|)",
+     "model": 0.017,
+     "drawing": 0.0,
+     "dev": 0.017,
+     "tol": 0.1,
+     "ok": true,
+     "src": "pointed lens [inf]"
+    },
+    {
+     "check": "truss 0 bottom chord over the supports (|u| 57.9-82.3), max |dev|",
+     "model": 0.402,
+     "drawing": 0.0,
+     "dev": 0.402,
+     "tol": 0.5,
+     "ok": true,
+     "src": "BI-02 chord(u) = glass head"
+    },
+    {
+     "check": "truss 1 bottom chord over the supports (|u| 57.9-82.3), max |dev|",
+     "model": 0.001,
+     "drawing": 0.0,
+     "dev": 0.001,
+     "tol": 0.5,
+     "ok": true,
+     "src": "BI-03 roof_line - depth, 29 ft [pub]"
+    },
+    {
+     "check": "truss 2 bottom chord over the supports (|u| 57.9-82.3), max |dev|",
+     "model": 0.001,
+     "drawing": 0.0,
+     "dev": 0.001,
+     "tol": 0.5,
+     "ok": true,
+     "src": "BI-03 roof_line - depth, 29 ft [pub]"
+    },
+    {
+     "check": "truss 3 bottom chord over the supports (|u| 57.9-82.3), max |dev|",
+     "model": 0.001,
+     "drawing": 0.0,
+     "dev": 0.001,
+     "tol": 0.5,
+     "ok": true,
+     "src": "BI-03 roof_line - depth, 29 ft [pub]"
+    },
+    {
+     "check": "truss 4 bottom chord over the supports (|u| 57.9-82.3), max |dev|",
+     "model": 0.001,
+     "drawing": 0.0,
+     "dev": 0.001,
+     "tol": 0.5,
+     "ok": true,
+     "src": "BI-03 roof_line - depth, 29 ft [pub]"
+    },
+    {
+     "check": "west truss bottom chord vs max(BI-02 chord, BI-03 roof_line - depth) over the hall (max dev)",
+     "model": 0.212,
+     "drawing": 0.0,
+     "dev": 0.212,
+     "tol": 0.5,
+     "ok": true,
+     "src": "BI-02 V1 / BI-03 V1 [inf]; photos i3 / i4"
+    },
+    {
+     "check": "NOTE west chord above BI-02 chord(u) between the notch and the inner column (max)",
+     "model": 2.576,
+     "drawing": 0.0,
+     "dev": null,
+     "tol": null,
+     "ok": true,
+     "src": "deviation from BI-02 [inf] by choice: BI-03 taper + photos i3 / i4"
+    },
+    {
+     "check": "columns: count",
+     "model": 20.0,
+     "drawing": 20.0,
+     "dev": 0.0,
+     "tol": 0,
+     "ok": true,
+     "src": "SEAONC 20 [pub]"
+    },
+    {
+     "check": "columns: max |u - (+-57.9 / +-82.3)|",
+     "model": 0.022,
+     "drawing": 0.0,
+     "dev": 0.022,
+     "tol": 0.1,
+     "ok": true,
+     "src": "spec roof.col_positions_inf [inf]"
+    },
+    {
+     "check": "west columns: v",
+     "model": -28.261,
+     "drawing": -28.268,
+     "dev": 0.007,
+     "tol": 0.1,
+     "ok": true,
+     "src": "BI-01: 2.5 m in front of the wall [inf]"
+    },
+    {
+     "check": "canopy posts/hangers: count",
+     "model": 16.0,
+     "drawing": 16.0,
+     "dev": 0.0,
+     "tol": 0,
+     "ok": true,
+     "src": "BI-02 HANGER_U (40-ft grid) [obs photo i4]"
+    },
+    {
+     "check": "canopy posts: max |u - HANGER_U|",
+     "model": 0.172,
+     "drawing": 0.0,
+     "dev": 0.172,
+     "tol": 0.3,
+     "ok": true,
+     "src": "BI-02 [obs photo i4]"
+    },
+    {
+     "check": "west wall plane v (fritted bays)",
+     "model": -25.768,
+     "drawing": -25.768,
+     "dev": 0.0,
+     "tol": 0.05,
+     "ok": true,
+     "src": "BI-01 wall band middle [inf]"
+    },
+    {
+     "check": "glass-wall head (side bays)",
+     "model": 30.8,
+     "drawing": 30.8,
+     "dev": 0.0,
+     "tol": 0.616,
+     "ok": true,
+     "src": "BI-02: 30.8 [obs photo i4]"
+    },
+    {
+     "check": "glass wall foot = level 3",
+     "model": 11.5,
+     "drawing": 11.5,
+     "dev": 0.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "level3.floor 11.5 [inf]"
+    },
+    {
+     "check": "glass wall length (705-ft hall)",
+     "model": 214.884,
+     "drawing": 214.884,
+     "dev": 0.0,
+     "tol": 4.297680000000001,
+     "ok": true,
+     "src": "SEAONC 705 ft [pub]"
+    },
+    {
+     "check": "central bay head (max)",
+     "model": 32.8,
+     "drawing": 32.8,
+     "dev": 0.0,
+     "tol": 0.6559999999999999,
+     "ok": true,
+     "src": "BI-02: WH + 2 [obs photo i4, tentative]"
+    },
+    {
+     "check": "central bay half width",
+     "model": 40.0,
+     "drawing": 40.0,
+     "dev": 0.0,
+     "tol": 0.8,
+     "ok": true,
+     "src": "BI-02: +-40 m [obs photos]"
+    },
+    {
+     "check": "canopy top",
+     "model": 16.5,
+     "drawing": 16.5,
+     "dev": 0.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "BI-02: L3 + 5 [inf]"
+    },
+    {
+     "check": "canopy depth",
+     "model": 5.0,
+     "drawing": 5.0,
+     "dev": 0.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "BI-03: ~5 m [inf]"
+    },
+    {
+     "check": "lettering width",
+     "model": 66.0,
+     "drawing": 66.0,
+     "dev": 0.0,
+     "tol": 1.32,
+     "ok": true,
+     "src": "BI-02 (+-33 m) [obs photos]"
+    },
+    {
+     "check": "lettering top",
+     "model": 28.6,
+     "drawing": 28.6,
+     "dev": 0.0,
+     "tol": 0.5720000000000001,
+     "ok": true,
+     "src": "BI-02 box 25.8-28.6 [obs photos]"
+    },
+    {
+     "check": "lettering bottom",
+     "model": 25.8,
+     "drawing": 25.8,
+     "dev": 0.0,
+     "tol": 0.516,
+     "ok": true,
+     "src": "BI-02"
+    },
+    {
+     "check": "BA-A main roof (parapet top)",
+     "model": 17.9,
+     "drawing": 17.9,
+     "dev": 0.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "spec ba_a.height_roof [obs]"
+    },
+    {
+     "check": "BA-A footprint area vs SFO Museum outline",
+     "model": 13958.181,
+     "drawing": 13958.18,
+     "dev": 0.001,
+     "tol": 27.916360000000026,
+     "ok": true,
+     "src": "data/sfo_airport.json [obs]"
+    },
+    {
+     "check": "BA-A footprint outside the outline",
+     "model": 0.0,
+     "drawing": 0.0,
+     "dev": 0.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "containment"
+    },
+    {
+     "check": "pod A1 top",
+     "model": 23.6,
+     "drawing": 23.6,
+     "dev": 0.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "itb_pods.json [obs, low]"
+    },
+    {
+     "check": "pod A1 plan area vs NAIP trace",
+     "model": 1254.943,
+     "drawing": 1254.943,
+     "dev": 0.0,
+     "tol": 25.09886299999991,
+     "ok": true,
+     "src": "clipped to the body - 0.5 m"
+    },
+    {
+     "check": "pod A2 top",
+     "model": 23.6,
+     "drawing": 23.6,
+     "dev": 0.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "itb_pods.json [obs, low]"
+    },
+    {
+     "check": "pod A2 plan area vs NAIP trace",
+     "model": 1152.714,
+     "drawing": 1152.714,
+     "dev": 0.0,
+     "tol": 23.054283000000016,
+     "ok": true,
+     "src": "clipped to the body - 0.5 m"
+    },
+    {
+     "check": "pod A3 top",
+     "model": 23.3,
+     "drawing": 23.3,
+     "dev": 0.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "itb_pods.json [obs, low]"
+    },
+    {
+     "check": "pod A3 plan area vs NAIP trace",
+     "model": 1220.249,
+     "drawing": 1220.249,
+     "dev": 0.0,
+     "tol": 24.404972000000118,
+     "ok": true,
+     "src": "clipped to the body - 0.5 m"
+    },
+    {
+     "check": "BA-A pods inside the body",
+     "model": 0.0,
+     "drawing": 0.0,
+     "dev": 0.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "containment"
+    },
+    {
+     "check": "BA-G main roof (parapet top)",
+     "model": 17.0,
+     "drawing": 17.0,
+     "dev": 0.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "spec ba_g.height_roof [obs]"
+    },
+    {
+     "check": "BA-G footprint area vs SFO Museum outline",
+     "model": 17010.015,
+     "drawing": 17010.015,
+     "dev": 0.0,
+     "tol": 34.02002999999997,
+     "ok": true,
+     "src": "data/sfo_airport.json [obs]"
+    },
+    {
+     "check": "BA-G footprint outside the outline",
+     "model": 0.0,
+     "drawing": 0.0,
+     "dev": 0.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "containment"
+    },
+    {
+     "check": "pod G1 top",
+     "model": 22.4,
+     "drawing": 22.4,
+     "dev": 0.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "itb_pods.json [obs, low]"
+    },
+    {
+     "check": "pod G1 plan area vs NAIP trace",
+     "model": 1251.678,
+     "drawing": 1251.678,
+     "dev": 0.0,
+     "tol": 25.033564000000013,
+     "ok": true,
+     "src": "clipped to the body - 0.5 m"
+    },
+    {
+     "check": "pod G2 top",
+     "model": 22.2,
+     "drawing": 22.2,
+     "dev": 0.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "itb_pods.json [obs, low]"
+    },
+    {
+     "check": "pod G2 plan area vs NAIP trace",
+     "model": 1126.135,
+     "drawing": 1126.135,
+     "dev": 0.0,
+     "tol": 22.52269499999999,
+     "ok": true,
+     "src": "clipped to the body - 0.5 m"
+    },
+    {
+     "check": "pod G3 top",
+     "model": 23.2,
+     "drawing": 23.2,
+     "dev": 0.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "itb_pods.json [obs, low]"
+    },
+    {
+     "check": "pod G3 plan area vs NAIP trace",
+     "model": 1323.855,
+     "drawing": 1323.855,
+     "dev": 0.0,
+     "tol": 26.477099000000027,
+     "ok": true,
+     "src": "clipped to the body - 0.5 m"
+    },
+    {
+     "check": "BA-G pods inside the body",
+     "model": 0.0,
+     "drawing": 0.0,
+     "dev": 0.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "containment"
+    },
+    {
+     "check": "BA-G end box top",
+     "model": 32.0,
+     "drawing": 32.0,
+     "dev": 0.0,
+     "tol": 0.64,
+     "ok": true,
+     "src": "itb_pods.json 32.0 (30.5-33.4) [obs, low]"
+    },
+    {
+     "check": "BA-G end box base = pod G3 top",
+     "model": 23.2,
+     "drawing": 23.2,
+     "dev": 0.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "BI-04 V4"
+    },
+    {
+     "check": "ITB core block top",
+     "model": 17.9,
+     "drawing": 17.9,
+     "dev": 0.0,
+     "tol": 0.01,
+     "ok": true,
+     "src": "placeholder [unk]"
+    },
+    {
+     "check": "LOD0 airside footprint outside the SFO Museum outlines",
+     "model": 0.0,
+     "drawing": 0.0,
+     "dev": 0.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "outlines used by check_stands.py"
+    },
+    {
+     "check": "LOD1 airside footprint outside the SFO Museum outlines",
+     "model": 0.0,
+     "drawing": 0.0,
+     "dev": 0.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "outlines used by check_stands.py"
+    },
+    {
+     "check": "LOD2 airside footprint outside the SFO Museum outlines",
+     "model": 0.0,
+     "drawing": 0.0,
+     "dev": 0.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "outlines used by check_stands.py"
+    },
+    {
+     "check": "A / G stand envelopes: min distance to the 3-D footprint (G7)",
+     "model": 5.354,
+     "drawing": 2.0,
+     "dev": null,
+     "tol": null,
+     "ok": true,
+     "src": "check_stands.py criterion: >= 2.0 m (app planforms, all accepted types)"
+    },
+    {
+     "check": "bridge walkways (beyond 1.5 m) + rotundas overlapping the 3-D footprint (48 bridges)",
+     "model": 36.299,
+     "drawing": 0.0,
+     "dev": null,
+     "tol": null,
+     "ok": true,
+     "src": "NOTE, not introduced by the asset - pre-existing contact in the data (rotundas at the facade, outline +-5 m): max penetration 1.84 m (17 rotundas); the 3-D footprint = the SFO Museum outline the app and check_stands.py use"
+    },
+    {
+     "check": "SFO Museum taxiway polygons inside the 3-D footprint",
+     "model": 0.0,
+     "drawing": 0.0,
+     "dev": 0.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "data/sfo_airport.json taxiways"
+    },
+    {
+     "check": "truss underside over the core block (|u| > 107.4) minus core top",
+     "model": 12.65,
+     "drawing": 10.0,
+     "dev": null,
+     "tol": null,
+     "ok": true,
+     "src": "no intersection"
+    }
+   ],
+   "plausibility": {
+    "stand_min_m": 5.35,
+    "rotunda_contacts": [
+     [
+      "A2/A2L1",
+      0.38
+     ],
+     [
+      "A4/A4L1",
+      0.96
+     ],
+     [
+      "A5/A5L1",
+      1.04
+     ],
+     [
+      "A9/A9L1",
+      1.84
+     ],
+     [
+      "A10/A10L1",
+      1.68
+     ],
+     [
+      "A11/A11L1",
+      0.7
+     ],
+     [
+      "A13/A13L1",
+      1.49
+     ],
+     [
+      "G1/G1L1",
+      0.98
+     ],
+     [
+      "G2/G2L1",
+      0.6
+     ],
+     [
+      "G3/G3L1",
+      1.32
+     ],
+     [
+      "G4/G4L1",
+      1.42
+     ],
+     [
+      "G5/G5L1",
+      0.38
+     ],
+     [
+      "G6/G6L1",
+      0.55
+     ],
+     [
+      "G7/G7L1",
+      1.53
+     ],
+     [
+      "G8/G8L1",
+      1.41
+     ],
+     [
+      "G9/G9L1",
+      1.75
+     ],
+     [
+      "G10/G10L1",
+      0.33
+     ]
+    ]
+   }
+  },
+  "renders": [
+   {
+    "view": "west",
+    "file": "out/buildings3d/itb_west.png",
+    "what": "orthographic west elevation, BI-02 view 1 frame; itb_cmp_west.png overlays the BI-02 lines",
+    "samples": 48,
+    "note": "local (out/ is gitignored); comparison sheets with photo pixels stay local"
+   },
+   {
+    "view": "i4",
+    "file": "out/buildings3d/itb_i4.png",
+    "what": "landside perspective approximating photo i4 (DimiCalifornia 2005, PD); itb_cmp_i4.png side by side",
+    "samples": 24,
+    "note": "local (out/ is gitignored); comparison sheets with photo pixels stay local"
+   },
+   {
+    "view": "i3",
+    "file": "out/buildings3d/itb_i3.png",
+    "what": "curb close-up approximating photo i3 (E. K. Joseph 2017, CC BY 2.0); itb_cmp_i3.png side by side",
+    "samples": 48,
+    "note": "local (out/ is gitignored); comparison sheets with photo pixels stay local"
+   },
+   {
+    "view": "baa",
+    "file": "out/buildings3d/itb_baa.png",
+    "what": "aerial from the ESE over Boarding Area A (photo a2 direction, BI-04 view 2)",
+    "samples": 32,
+    "note": "local (out/ is gitignored); comparison sheets with photo pixels stay local"
+   },
+   {
+    "view": "bag",
+    "file": "out/buildings3d/itb_bag.png",
+    "what": "aerial from the NNE at Boarding Area G with the pod-3 end box (photo d2 direction, BI-04 view 1)",
+    "samples": 48,
+    "note": "local (out/ is gitignored); comparison sheets with photo pixels stay local"
+   },
+   {
+    "view": "plan",
+    "file": "out/buildings3d/itb_plan.png",
+    "what": "orthographic roof plan, north up (BI-01 view 2)",
+    "samples": 48,
+    "note": "local (out/ is gitignored); comparison sheets with photo pixels stay local"
+   }
+  ],
+  "renders_updated": "2026-11-04T23:17:40+00:00"
+ },
+ "tower": {
+  "name": "SFO air traffic control tower (2016) and base building (IBF)",
+  "files": {
+   "F1": "data/buildings3d/tower.glb",
+   "F2": "data/buildings3d/tower_f2.glb",
+   "F1_lod2_only": "data/buildings3d/tower_lod2.glb"
+  },
+  "default": "F1",
+  "family_decided": false,
+  "family_note": "Two self-consistent height families (docs/research/buildings_tower.md 12.3). The sheets draw both and prefer neither; F1 is the default file only because CTBUH classifies 221 ft as excluding antennae (not a survey). Settle with a surveyed ground photo, the NAIP shadow with the flight time, or an SFO / FAA elevation drawing.",
+  "bytes": {
+   "F1": 3478840,
+   "F2": 3391604,
+   "F1_lod2_only": 230020
+  },
+  "placement": {
+   "frame": "ltp-nad83-2011 (js/geo.js): x east, y up, z south, m from the ARP; ground GROUND_Y = 3.0",
+   "root_translation": [
+    -740.5,
+    3.0,
+    324.5
+   ],
+   "note": "root node \"tower\" carries the translation; geometry is local to the shaft axis at grade"
+  },
+  "anchors": {
+   "axis_world_xz": [
+    -740.5,
+    324.5
+   ],
+   "cab_centre_world_xz": [
+    -739.0,
+    323.5
+   ],
+   "cab_floor_h": 60.6,
+   "cab_eye_h": 62.2,
+   "glass_sill_h": 61.45,
+   "glass_head_h": 64.533,
+   "roof_rim_h": 67.36,
+   "flare_widest_h": 58.899,
+   "ibf_roof_h": 14.068,
+   "ibf_parapet_h": 14.768,
+   "mast_tip_max_h": 72.06,
+   "red_light": {
+    "bearing_from_cab": 225.0,
+    "h": 67.66
+   },
+   "note": "heights in m above grade (GROUND_Y); app tower camera: put the eye at cab_eye_h inside the glass ring"
+  },
+  "anchors_f2": {
+   "axis_world_xz": [
+    -740.5,
+    324.5
+   ],
+   "cab_centre_world_xz": [
+    -739.0,
+    323.5
+   ],
+   "cab_floor_h": 57.551,
+   "cab_eye_h": 59.151,
+   "glass_sill_h": 58.362,
+   "glass_head_h": 61.303,
+   "roof_rim_h": 64.0,
+   "flare_widest_h": 55.929,
+   "ibf_roof_h": 13.13,
+   "ibf_parapet_h": 13.83,
+   "mast_tip_max_h": 68.484,
+   "red_light": {
+    "bearing_from_cab": 225.0,
+    "h": 64.3
+   },
+   "note": "heights in m above grade (GROUND_Y); app tower camera: put the eye at cab_eye_h inside the glass ring"
+  },
+  "lods": [
+   {
+    "node": "LOD0",
+    "tris": 33343,
+    "tris_f2": 32276,
+    "switch_m": [
+     0,
+     350
+    ],
+    "ao_atlas": 2048,
+    "nodes": {
+     "shaft": 20710,
+     "landside": 1666,
+     "ribbon": 196,
+     "flare_deck": 4423,
+     "cab": 1728,
+     "cab_glass": 336,
+     "roof_masts": 928,
+     "ibf": 54,
+     "ibf_equipment": 10,
+     "shaft_seams": 790,
+     "ribbon_mullions": 980,
+     "deck_rails": 952,
+     "ibf_mullions": 370,
+     "ibf_rails": 200
+    }
+   },
+   {
+    "node": "LOD1",
+    "tris": 9812,
+    "tris_f2": 9522,
+    "switch_m": [
+     350,
+     1200
+    ],
+    "ao_atlas": 1024,
+    "nodes": {
+     "shaft": 6755,
+     "landside": 726,
+     "ribbon": 132,
+     "flare_deck": 1143,
+     "cab": 864,
+     "cab_glass": 48,
+     "roof_masts": 90,
+     "ibf": 54
+    }
+   },
+   {
+    "node": "LOD2",
+    "tris": 2334,
+    "tris_f2": 2200,
+    "switch_m": [
+     1200,
+     null
+    ],
+    "ao_atlas": 512,
+    "nodes": {
+     "shaft": 1345,
+     "landside": 208,
+     "ribbon": 52,
+     "flare_deck": 369,
+     "cab": 312,
+     "cab_glass": 24,
+     "ibf": 24
+    }
+   }
+  ],
+  "textures": [
+   {
+    "name": "tower_ao_L0",
+    "size": [
+     2048,
+     2048
+    ],
+    "mode": "L",
+    "bytes": 951533
+   },
+   {
+    "name": "tile_panel_tower",
+    "size": [
+     256,
+     512
+    ],
+    "mode": "RGB",
+    "bytes": 1328
+   },
+   {
+    "name": "tile_panel_ibf",
+    "size": [
+     256,
+     128
+    ],
+    "mode": "RGB",
+    "bytes": 413
+   },
+   {
+    "name": "tile_louvre",
+    "size": [
+     256,
+     256
+    ],
+    "mode": "RGB",
+    "bytes": 1605
+   },
+   {
+    "name": "tower_ao_L1",
+    "size": [
+     1024,
+     1024
+    ],
+    "mode": "L",
+    "bytes": 272523
+   },
+   {
+    "name": "tower_ao_L2",
+    "size": [
+     512,
+     512
+    ],
+    "mode": "L",
+    "bytes": 71968
+   }
+  ],
+  "texture_note": "AO atlases on TEXCOORD_1 (grey-scale PNG, sun-independent, Cycles); detail normal tiles on TEXCOORD_0 (procedural, tools/blender/tower_tex.py). KTX2 / meshopt: later (tools/engine/glb_compress.mjs).",
+  "dimensions": [
+   {
+    "key": "h_roof_top (rim)",
+    "value": 67.36,
+    "unit": "m",
+    "tag": "inf",
+    "source": "h_top_published 221 ft [pub]; family F1 puts 221 ft at the rim",
+    "drawing": "BT-02",
+    "note": "F2: 64.0 m (221 ft at the mast tips); family NOT decided"
+   },
+   {
+    "key": "d_cab_roof",
+    "value": 15.2,
+    "unit": "m",
+    "tag": "inf",
+    "source": "family F1 (measured 14.3 +-1.0 obs, EXIF 14.75 +-0.5 obs)",
+    "drawing": "BT-01/02",
+    "note": ""
+   },
+   {
+    "key": "d_cab_glass_top / bottom",
+    "value": [
+     13.074,
+     10.629
+    ],
+    "unit": "m",
+    "tag": "inf",
+    "source": "spec 12.3 / 10.0 obs at D 14.3, scaled by D_f / 14.3",
+    "drawing": "BT-02",
+    "note": ""
+   },
+   {
+    "key": "h_cab_glass_top / bottom",
+    "value": [
+     64.533,
+     61.45
+    ],
+    "unit": "m",
+    "tag": "inf",
+    "source": "rim - k D",
+    "drawing": "BT-02",
+    "note": ""
+   },
+   {
+    "key": "h_cab_floor",
+    "value": 60.6,
+    "unit": "m",
+    "tag": "inf",
+    "source": "rim - k D (spec 61.0 at the spec anchor)",
+    "drawing": "BT-03",
+    "note": ""
+   },
+   {
+    "key": "plinth ring D / height",
+    "value": [
+     10.8,
+     0.957
+    ],
+    "unit": "m",
+    "tag": "obs",
+    "source": "photo t1 (590 of 830 px)",
+    "drawing": "BT-02",
+    "note": ""
+   },
+   {
+    "key": "d_flare_max",
+    "value": 24.044,
+    "unit": "m",
+    "tag": "inf",
+    "source": "A380 ratio 1.605 / 1.015 x D = 1.58 D (spec 22.6 +-1.5 obs at D 14.3)",
+    "drawing": "BT-02",
+    "note": ""
+   },
+   {
+    "key": "h_flare_max",
+    "value": 58.899,
+    "unit": "m",
+    "tag": "inf",
+    "source": "rim - k D",
+    "drawing": "BT-02",
+    "note": ""
+   },
+   {
+    "key": "flare top shoulder",
+    "value": "rounded, rising to the plinth foot",
+    "unit": "",
+    "tag": "obs",
+    "source": "photo t1 profile fractions (stations inf)",
+    "drawing": "BT-02/03",
+    "note": ""
+   },
+   {
+    "key": "d_shaft_waist",
+    "value": 10.102,
+    "unit": "m",
+    "tag": "inf",
+    "source": "A380 ratio x D",
+    "drawing": "BT-02",
+    "note": ""
+   },
+   {
+    "key": "d_shaft_at_ibf_roof",
+    "value": 10.842,
+    "unit": "m",
+    "tag": "inf",
+    "source": "Famartin base width ratio x D",
+    "drawing": "BT-02",
+    "note": ""
+   },
+   {
+    "key": "h_ibf_roof / parapet",
+    "value": [
+     14.068,
+     14.768
+    ],
+    "unit": "m",
+    "tag": "inf",
+    "source": "rim - (3.46 D + 0.7) [photo span obs, ratio]",
+    "drawing": "BT-02",
+    "note": ""
+   },
+   {
+    "key": "ibf_footprint",
+    "value": "44.95 x 27.20 m, long axis 27.7 deg",
+    "unit": "",
+    "tag": "obs",
+    "source": "SFO Museum atc ring (CDLA-Permissive-1.0)",
+    "drawing": "BT-01",
+    "note": ""
+   },
+   {
+    "key": "ribbon height / widths",
+    "value": [
+     44.81,
+     3.2,
+     6.8
+    ],
+    "unit": "m",
+    "tag": "pub / obs low",
+    "source": "147 ft [pub]; widths T2 AirTrain photo",
+    "drawing": "BT-02",
+    "note": ""
+   },
+   {
+    "key": "ribbon facing bearing",
+    "value": 310.0,
+    "unit": "deg",
+    "tag": "inf",
+    "source": "middle of the 300-320 photo range",
+    "drawing": "BT-01/02 B",
+    "note": ""
+   },
+   {
+    "key": "upper slots",
+    "value": "9 slots, 1.4 m wide, sweep 20.0 deg, band 48.06-56.14 m",
+    "unit": "",
+    "tag": "inf",
+    "source": "photos t1/t2 (count, phase inf)",
+    "drawing": "BT-02",
+    "note": ""
+   },
+   {
+    "key": "long helical slot",
+    "value": "bearing 137.0 -> 93.0, 1.0 m wide, 22.02-40.19 m",
+    "unit": "",
+    "tag": "inf",
+    "source": "photos t1/t2",
+    "drawing": "BT-02",
+    "note": ""
+   },
+   {
+    "key": "SW wing tip (plan)",
+    "value": "254.0 deg, 14.00 m from the axis",
+    "unit": "",
+    "tag": "inf",
+    "source": "the point reproducing photos t3/t4",
+    "drawing": "BT-01",
+    "note": ""
+   },
+   {
+    "key": "NE blade tip",
+    "value": 61.693,
+    "unit": "m",
+    "tag": "obs (low)",
+    "source": "photo t4: flare deck + 1.2",
+    "drawing": "BT-02",
+    "note": ""
+   },
+   {
+    "key": "roof masts",
+    "value": "15 whips (tips up to 72.06 m) + 9 poles",
+    "unit": "",
+    "tag": "obs count / inf positions",
+    "source": "photos t2/t3 (2025)",
+    "drawing": "BT-02",
+    "note": ""
+   },
+   {
+    "key": "cab panes",
+    "value": "24 flat panes, full ring",
+    "unit": "",
+    "tag": "pub count (ENR) / inf arc",
+    "source": "ENR 24 x 6 x 11 ft",
+    "drawing": "BT-02",
+    "note": ""
+   },
+   {
+    "key": "roof garden",
+    "value": "1.7 m below the IBF roof, s >= 37.0 m / t >= 8.5 m",
+    "unit": "",
+    "tag": "obs outline / inf level",
+    "source": "NAIP 2024 vegetated pixels, lean-corrected; 2,000 sq ft [pub]",
+    "drawing": "BT-01 (note only)",
+    "note": ""
+   }
+  ],
+  "inferred": [
+   "height family: F1 (tower.glb) and F2 (tower_f2.glb) are both built; neither is preferred (buildings_tower.md 12.3); CTBUH classification favours F1 but is not a survey",
+   "every vertical station (rim - k x D), the base-building roof (rim - 3.46 D - 0.7) and the cab floor",
+   "shaft axis (-740.5, 324.5) and cab centre (-739, 323.5) +-5 m in x: NAIP lean; not surveyed",
+   "radius profile: A380-photo width ratios / 1.015 x D (PCHIP between the drawn stations)",
+   "slot count / phase (13 positions every 27.7 deg, none in 230-335), slot recess depth 0.25 m, helical joint count (68) and twist (2.6 deg per spec m)",
+   "landside plan: ribbon 1 m inside the round body, facing 310; NE blade root / tip widths; SW wing lobe shape between the BT-01 plan points; wing protrusion 0.5 m at the foot",
+   "cab glass ring 360 deg (photos show glass on both sides; the published 220 / 235 / 270 deg are view / column-free angles)",
+   "cab roof deck 0.30 m below the rim coping; inner curb r 4.75 m, 0.3 m high",
+   "mast / pole bearings and heights (+-5 deg / +-0.3 m); pole heads schematic",
+   "base-building panel module 3.0 x 1.2 m, glazing-band mullions 1.5 m, parapet 0.7 m",
+   "roof-garden level (1.7 m below the roof); rooftop unit position (photo t4, +-5 m)",
+   "all materials / finishes (colours chosen to match the reference photos; no photo pixels used)"
+  ],
+  "unknown": [
+   "what the published 221 ft measures (rim or mast tips)",
+   "blade / channel plan depth beyond the BT-01 wing-tip point; channel wall geometry",
+   "cab glazing pane phase; cab interior (floor / ceiling are dark placeholders; consoles not modelled)",
+   "core diameter, floor levels (not visible; not modelled)",
+   "airside face of the base building SW of u -12.9 (hidden in photo t2): drawn as plain panels",
+   "foot of the landside curtain-wall bay (below 9.6 m from the roof): drawn as panels",
+   "NE and SW faces of the base building (grey metal panels per the spec text)",
+   "the base building lower face on the airside (hidden by the gates in t2)"
+  ],
+  "not_modelled": [
+   "T1-T2 connector corridors (one with a 35-ft glass ceiling) [pub]: plan not in any source",
+   "the cab centre column and three landside tension columns [snippet, unverified]",
+   "the 2015 jib davit on the SW flare deck (construction-era, not in 2025 photos)",
+   "tuned mass dampers, lightning discharge system (not visible)",
+   "the Terminal 2 AirTrain station block seen beside the shaft in the photos (91 m NW; not part of this asset)"
+  ],
+  "conflicts": [
+   "F2: the 147-ft ribbon from the F2 base-building roof (13.13 m) would end at 57.94 m, above the F2 flare corner (55.93 m): drawn capped at the flare corner (42.8 m) in tower_f2.glb",
+   "slot 345.5 deg: its top corner falls on the NE blade root (the sheet lets the blade cover it); clipped 0.3 m clear of the crease in 3-D",
+   "cab glass: ENR 24 panes x 6 ft vs the ring circumference (5.6 ft per pane at the head): the 24-pane ring is kept"
+  ],
+  "node_extras": "every node: extras {src, feature, spec (spec_tower.json keys), drawing, tags}; materials: extras.src (+ led / obstruction_light flags for the app)",
+  "verification": {
+   "F1": "109/109 checks within tolerance; tris {0: 33343, 1: 9812, 2: 2334}; plausibility clear of aircraft envelopes, bridges and taxilanes; the app's T2 hall / BA-D walkway parts overlap the base-building footprint (integration: cut them)",
+   "F2": "109/109 checks within tolerance; tris {0: 32276, 1: 9522, 2: 2200}; plausibility clear of aircraft envelopes, bridges and taxilanes; the app's T2 hall / BA-D walkway parts overlap the base-building footprint (integration: cut them)",
+   "max_abs_dev_m": 0.047,
+   "gltf_validator": {
+    "F1": {
+     "validator": "2.0.0-dev.3.10",
+     "errors": 0,
+     "warnings": 0,
+     "infos": 32,
+     "hints": 0,
+     "codes": {
+      "info:UNUSED_OBJECT": 32
+     },
+     "first": [],
+     "drawCalls": 67,
+     "triangles": 45489,
+     "vertices": 39326
+    },
+    "F2": {
+     "validator": "2.0.0-dev.3.10",
+     "errors": 0,
+     "warnings": 0,
+     "infos": 32,
+     "hints": 0,
+     "codes": {
+      "info:UNUSED_OBJECT": 32
+     },
+     "first": [],
+     "drawCalls": 67,
+     "triangles": 43998,
+     "vertices": 38272
+    }
+   },
+   "file": "out/buildings3d/tower_verify.json",
+   "tolerance": "0.5 m or 2 % per dimension (deg / m2 where stated)",
+   "failures": [],
+   "plausibility": {
+    "nearest_aircraft_envelope_m": 15.6,
+    "nearest_aircraft_stand": "C3",
+    "nearest_stand_nose_m": 33.0,
+    "nearest_bridge_m": 37.2,
+    "nearest_taxi_centreline_m": 85.3,
+    "sfo_museum_overlaps_below_20m": [
+     {
+      "name": "Terminal 2",
+      "kind": "terminals",
+      "overlap_m2": 1228.3
+     },
+     {
+      "name": "Boarding Area D",
+      "kind": "boardingAreas",
+      "overlap_m2": 61.9
+     }
+    ],
+    "app_parts_over_footprint": [
+     {
+      "part": "Boarding Area D walkway",
+      "kind": "walkway",
+      "h": 10.5,
+      "overlap_m2": 66.3
+     },
+     {
+      "part": "Terminal 2",
+      "kind": "hall",
+      "h": 19.0,
+      "overlap_m2": 1123.3
+     }
+    ],
+    "plan_hull_area_m2": 1278.2,
+    "verdict": "clear of aircraft envelopes, bridges and taxilanes; the app's T2 hall / BA-D walkway parts overlap the base-building footprint (integration: cut them)"
+   }
+  },
+  "integration": {
+   "replaces": "js/live/terminals.js buildTower() + the atc branch of js/live/airport.js (procedural shaft at the footprint centroid, 7.2 m S of the inferred axis)",
+   "app_parts_over_footprint": [
+    {
+     "part": "Boarding Area D walkway",
+     "kind": "walkway",
+     "h": 10.5,
+     "overlap_m2": 66.3
+    },
+    {
+     "part": "Terminal 2",
+     "kind": "hall",
+     "h": 19.0,
+     "overlap_m2": 1123.3
+    }
+   ],
+   "action": "cut the base-building footprint (below its parapet) out of the listed app parts (data/sfo_buildings.json T2 hall h 19.0 covers 1,119 m2 of it; BA-D walkway 62 m2) or the base building disappears inside the T2 hall volume",
+   "exclusion_footprint_world": [
+    [
+     -742.5,
+     305.5
+    ],
+    [
+     -763.4,
+     345.3
+    ],
+    [
+     -739.3,
+     357.9
+    ],
+    [
+     -718.5,
+     318.1
+    ]
+   ],
+   "flare_overhang": {
+    "centre_world": [
+     -740.5,
+     324.5
+    ],
+    "radius_m": 14.02,
+    "above_h": 50.9,
+    "note": "round flare + SW wing; nothing else reaches this height"
+   },
+   "tower_camera": {
+    "eye_world": [
+     -739.0,
+     65.2,
+     323.5
+    ],
+    "note": "js/live/app.js view \"tower\" uses GROUND_Y + 62 at world.towerPos; use anchors.cab_eye_h instead; hide node cab_glass (alpha-blended) for the in-cab camera if the renderer sorts it badly"
+   },
+   "lod_files": {
+    "all": "data/buildings3d/tower.glb (LOD0-2)",
+    "phone": "data/buildings3d/tower_lod2.glb (LOD2 only)"
+   }
+  },
+  "renders": {
+   "A": {
+    "path": "out/buildings3d/tower_A.png",
+    "res": [
+     720,
+     960
+    ],
+    "samples": 64,
+    "sun": [
+     160,
+     55
+    ],
+    "ortho_m": 82.0,
+    "centre_u": -6.584,
+    "centre_h": 38.0,
+    "m_per_px": 0.08542,
+    "view_bearing": 297.7,
+    "render_s": 73.8
+   },
+   "B": {
+    "path": "out/buildings3d/tower_B.png",
+    "res": [
+     720,
+     960
+    ],
+    "samples": 64,
+    "sun": [
+     250,
+     35
+    ],
+    "ortho_m": 82.0,
+    "centre_u": 6.584,
+    "centre_h": 38.0,
+    "m_per_px": 0.08542,
+    "view_bearing": 117.69999999999999,
+    "render_s": 63.7
+   },
+   "t2": {
+    "path": "out/buildings3d/tower_t2.png",
+    "res": [
+     720,
+     960
+    ],
+    "samples": 64,
+    "sun": [
+     165,
+     62
+    ],
+    "cam_world": [
+     -527.4,
+     479.9
+    ],
+    "cam_h": 11.5,
+    "yaw": -53.32,
+    "pitch": 5.27,
+    "f_px": 3075.0,
+    "photo": "refs/cache/buildings/review_likeness/t2.jpg",
+    "photo_credit": "Famartin 2025-08-12 11:57, CC BY-SA 4.0 (reference only)",
+    "render_s": 77.7
+   },
+   "t3": {
+    "path": "out/buildings3d/tower_t3.png",
+    "res": [
+     960,
+     720
+    ],
+    "samples": 64,
+    "sun": [
+     110,
+     35
+    ],
+    "cam_world": [
+     -911.4,
+     124.4
+    ],
+    "cam_h": 11.5,
+    "yaw": 136.95,
+    "pitch": 6.94,
+    "f_px": 3209.5,
+    "photo": "refs/cache/buildings/review_likeness/t3.jpg",
+    "photo_credit": "Famartin 2025-08-12 09:12, CC BY-SA 4.0 (reference only)",
+    "render_s": 40.5
+   },
+   "t4": {
+    "path": "out/buildings3d/tower_t4.png",
+    "res": [
+     720,
+     960
+    ],
+    "samples": 64,
+    "sun": [
+     100,
+     30
+    ],
+    "cam_world": [
+     -769.2,
+     248.6
+    ],
+    "cam_h": 20.0,
+    "yaw": 157.02,
+    "pitch": 11.23,
+    "f_px": 1140.0,
+    "photo": "refs/cache/buildings/review_likeness/t4.jpg",
+    "photo_credit": "Famartin 2025-08-12 09:10, CC BY-SA 4.0 (reference only)",
+    "render_s": 77.2
+   },
+   "_compare": {
+    "overlay_A": "out/buildings3d/tower_overlay_A.png",
+    "overlay_B": "out/buildings3d/tower_overlay_B.png",
+    "compare_t2": "out/buildings3d/tower_compare_t2.jpg (local only: contains a third-party photo)",
+    "compare_t3": "out/buildings3d/tower_compare_t3.jpg (local only: contains a third-party photo)",
+    "compare_t4": "out/buildings3d/tower_compare_t4.jpg (local only: contains a third-party photo)"
+   }
+  },
+  "build": {
+   "cmd": "python3 tools/blender/build_tower.py --render",
+   "tools": [
+    "tools/blender/build_tower.py",
+    "tools/blender/tower_geom.py",
+    "tools/blender/tower_tex.py",
+    "tools/blender/tower3d_verify.py"
+   ],
+   "bpy": "5.0.1",
+   "git": "398e91e+dirty",
+   "seconds": 958.3,
+   "ao_samples": 48,
+   "date": "2026-11-04"
+  }
+ }
+}

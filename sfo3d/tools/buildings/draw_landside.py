@@ -16,6 +16,10 @@ from draw_tower import draw_dev
 LV = D.LV
 SB_TIP, SB_TIP_RNG = 27.0, (22.0, 32.0)    # Superbay cantilever tip height [inf, photo l3 ratio, low; identification unverified]
 SB_FOLD, SB_DOOR_GAP = 1.5, 3.0            # fold amplitude at the tip face [unk], door head below the tip [unk] (schematic)
+# spine-end hip facets on NAIP 2024 (roof rectified to the building frame, review backlog r1-24; 0.25 m px): the roof spans
+# b -75..+63 in that crop (138 m, centre -6 -> shifted to the drawing frame); the bright spine ends ~10 m (NNE) and ~6 m (SSW)
+# before the roof edges, where facets fall to the edge; the NNE ridge end is ~9 m wide (a -2.5..+6.3) [obs, approx]
+SB_HIP = {'nne': 10.3, 'ssw': 6.0, 'ridge_a': (-2.5, 6.3)}
 LB = D.LANDM['buildings']
 MOC = D.LANDM['moc']
 NAMES = {'central_garage': 'Central Parking Garage', 'garage_a': 'Garage A', 'garage_g': 'Garage G', 'ltp_garage_1': 'Long-Term Parking Garage 1',
@@ -254,6 +258,13 @@ def sheet_roofs(variant='vector', dev=None):
         for i in range(9):
             t = -69 + 17.25 * i
             V.line([c + sv * a0 + tv * t, c + sv * a1 + tv * t], 'obs', lw=0.35, z=3)
+    for sg, L_ in ((1, SB_HIP['nne']), (-1, SB_HIP['ssw'])):
+        e_, r_ = sg * 69.0, sg * (69.0 - L_)
+        for a_e, a_r in ((-14, SB_HIP['ridge_a'][0]), (18, SB_HIP['ridge_a'][1])):
+            V.line([c + sv * a_e + tv * e_, c + sv * a_r + tv * r_], 'obs', lw=0.5, z=3.3)
+        V.line([c + sv * SB_HIP['ridge_a'][0] + tv * r_, c + sv * SB_HIP['ridge_a'][1] + tv * r_], 'obs', lw=0.5, z=3.3)
+    V.leader(c + sv * 2 + tv * 64, 12, 18, f"spine-end hip facets: NNE ~{SB_HIP['nne']:.0f} m, SSW ~{SB_HIP['ssw']:.0f} m [obs NAIP, approx];\n"
+             'the faceted roof ends of photo l3 [obs, identification unverified]', 'obs', fs=3.6)
     V.leader(c + tv * -40, -10, 56, 'central spine 32 m (a -14..+18) along the 27.8 deg grid [obs];\nfolded cantilever roofs WNW / ESE, ~66.5 m beyond it, 8 bays\n'
              'of 17.3 m per side [obs] (Deep3DS: "50 ft structural bays" [pub],\nconflict); roof 165 m overall [obs]', 'obs', fs=3.8)
     sbL = LB['superbay']['footprint']['min_rect']
@@ -540,7 +551,7 @@ def hyatt_elev(V, x0, W):
     V.level(x0 + W + 1, H, f'+{H:.0f} parapet (40-48) [inf, low]: 13.2 floor pitches x 3.2-3.5 m (photo 7391) - NOT published', 'inf', len_mm=3, fs=3.9, u_line=x0 + W)
     V.level(x0 - 2.5, hc, f'top of the colonnade level ({GH_POD + GH_COL:.1f} pitches) +{hc:.1f} [inf]', 'inf', side='left', len_mm=3, fs=3.6, u_line=col0)
     V.level(x0 - 2.5, hp, f'podium roof ({GH_POD} pitches) +{hp:.1f} [inf]', 'inf', side='left', len_mm=3, fs=3.6, u_line=x0)
-    V.leader((x0 + pod / 2, hp / 2), -32, -9, 'podium: dark metal panels, large glazed openings,\nporte-cochere (2-3 storeys) [obs photo l4 / spec gh_plan_shape];\n'
+    V.leader((x0 + pod / 2, hp / 2), -32, -2, 'podium: dark metal panels, large glazed openings,\nporte-cochere (2-3 storeys) [obs photo l4 / spec gh_plan_shape];\n'
              'recessed colonnade level only at the south end (0.02-0.10) [obs photo l4]', 'obs', fs=3.4, ha='right')
     V.leader((x0 - 1.0, 0.86 * H), -12, 8, 'south end: light concrete pier with the vertical red sign, top ~1 m\nbelow the parapet, and the curved end bay '
              'of horizontally banded\nglass (0.00-0.05) [obs photo l4]; corner masts at 0.00 / 0.03 / 0.91 / 0.96,\n~0.8 pitch [obs photo l4]', 'obs', fs=3.4, ha='right')
@@ -638,7 +649,10 @@ def sheet_elev():
     V4.line(edge, 'inf', lw=0.9, z=2.3)
     for i in range(1, 16, 2):
         V4.line([(xw0 + 17.25 * i / 2, ht + SB_FOLD), (xw0 + 17.25 * i / 2, hs - 1.5)], 'unk', lw=0.3, z=2.2)
-    V4.line([(xw0, hs - 1.5), (xw0 + Lr, hs - 1.5)], 'pub', lw=0.6, z=2.1)
+    # spine roof behind, falling at its hipped ends (NNE = left in this view) to the tip level [plan obs NAIP, heights inf]
+    V4.line([(xw0, ht + SB_FOLD), (xw0 + SB_HIP['nne'], hs - 1.5), (xw0 + Lr - SB_HIP['ssw'], hs - 1.5), (xw0 + Lr, ht + SB_FOLD)],
+            'inf', lw=0.6, z=2.1)
+    V4.leader((xw0 + SB_HIP['nne'] / 2, (ht + hs) / 2), -3, 38, 'spine roof behind; hipped ends\n(NNE ~10 m, SSW ~6 m) [obs NAIP plan,\nheights inf]', 'inf', fs=3.4, ha='right')
     dw = 67.0
     for k in range(2):
         a = xw0 + (Lr - 2 * dw) / 2 + k * dw
@@ -647,7 +661,7 @@ def sheet_elev():
             V4.line([(xx, 0), (xx, ht - SB_DOOR_GAP)], 'unk', lw=0.2, z=2.05)
     V4.dim((xw0, 0), (xw0 + Lr, 0), -4, f'{Lr:.0f} m roof (8 x 17.25) [obs] / outline {Lo} m [obs]', 'obs', fs=3.8)
     V4.text((xw0 + Lr / 2, -9), 'SUPERBAY, WNW (door) face, looking ESE', 'pub', fs=4.6, weight='bold', bg=False, color='#000000', style='normal')
-    V4.leader((xw0 + 17.25 * 1.5, ht + SB_FOLD), -4, 12, 'folded roof: 8 bays of 17.25 m per side, each a light / shaded pair\n'
+    V4.leader((xw0 + 17.25 * 1.5, ht + SB_FOLD), -4, 24, 'folded roof: 8 bays of 17.25 m per side, each a light / shaded pair\n'
               '[obs NAIP, spec sb_roof_bays_obs]; fold amplitude drawn 1.5 m [unk];\nspine roof behind at +41.15 [pub DOF]', 'inf', fs=3.6)
     V4.leader((xw0 + Lr / 2, (ht - SB_DOOR_GAP) / 2), 22, 18, 'hangar doors on the WNW and ESE faces [obs NAIP: sunlit\n10-m ESE door band]; '
               'two door bays of ~67 m per side (four 747-size\nbays [pub]) [inf]; door head and leaf division [unk]', 'unk', fs=3.6)

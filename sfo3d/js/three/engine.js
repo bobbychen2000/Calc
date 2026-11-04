@@ -149,6 +149,11 @@ const pcfTemporal = Fn(({ depthTexture, shadowCoord, shadow, depthLayer }) => {
   return acc.mul(1 / 5);
 });
 class CSM3 extends THREE.CSMShadowNode {
+  // never disposed (review round 3): Engine.setSun switches sun.castShadow at the horizon, and three r186
+  // AnalyticLightNode disposes the shadow node on the switch-off; CSMShadowNode.dispose() removes its cascade lights from
+  // the scene and setup() never re-initialises (its camera is set), so at the next sunrise the cascades were gone, and
+  // render objects not drawn during the night reused graphs with the disposed node. Kept alive for the engine's life.
+  dispose() { }
   _init(builder) {
     super._init(builder);
     this.biasU = [];

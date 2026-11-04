@@ -69,8 +69,8 @@ Nothing in `js/` or `data/` is changed.
 | [BD-02](BD-02.svg) | **Domestic: elevations.**<br>- Pier cross-sections on a common datum, 1:500: BA-B stepped, BA-E stepped (raised centre with the tapered edge over the clerestory, lower side roofs), BA-F, BA-D head (with its drums), BA-C, BA-A control, and the app's 14.6 m.<br>- BA-F hub cut WSW–ENE through the lantern (hub roof edge 10.4–12.1 m single-epoch band; lantern rise ≤ 4.6 m) and the NW arm with its monitor (placeholders).<br>- Terminal 3 West airside field / gatehouse wall sections (field-wall window stack per the printed 10 + 2 + 10 ft chain) and the T3 level datum, 1:200, from the published CDR 95 % CD. | A1, 1:500 / 1:200 |
 | [BD-03](BD-03.svg) | **Domestic: landside (curb) elevations.**<br>- Harvey Milk T1 Center, developed along its curved face towards the central garage, 1:400: clear glass under the curb canopy, the two-tier fritted curtain wall with its irregular mullions (schematic), the signage zone, PV at the roof edge; heights above the curb [inf, photo d1].<br>- Terminal 2 entry face, 1:200: the published description only (heights unknown).<br>- Terminal 3, developed along its curved face, 1:400: the published CDR levels above L1, T3 West's ACM / fritted window wall / spandrel (CDR p.23, band proportions inf), the AirTrain-connector gap, T3 East massing (facade unknown) and its mechanical penthouse (extent and set-back from NAIP, top at R3 [inf]). | A1, 1:400 / 1:200 |
 | [BL-01](BL-01.svg) | **Landside: key plan.**<br>- Every landside building with its height summary.<br>- FAA DOF points.<br>- AirTrain guideway and stations.<br>- United MOC, from the imaged roof. | A1, 1:5000 |
-| [BL-02](BL-02.svg) | **Landside: roof plans.**<br>- Central garage (with its void), Garages A / G and the Grand Hyatt, LTP 1 / 2, MOC, RCC, CAC.<br>- Superbay, with its spine and 8 × 17.3 m roof bays (138 m against the 134.5 m outline).<br>- Minimum-rectangle dimensions, DOF points, height table.<br>Overlay: `BL-02_naip.jpg` | A1, 1:2000 |
-| [BL-03](BL-03.svg) | **Landside: principal elevations (long faces).**<br>- Massing elevations of the 10 buildings, with levels, published / DOF / inferred heights and ranges; DOF points at their projected positions.<br>- Superbay across the spine (roofs falling from the spine to ~27 m tips [inf]) and its WNW door face (8 folded bays, two ~67 m door bays); Grand Hyatt east face (podium, colonnade level, curtain wall, penthouse, masts); MOC stepped by its DOF points. | A1, 1:1000 |
+| [BL-02](BL-02.svg) | **Landside: roof plans.**<br>- Central garage (with its void), Garages A / G and the Grand Hyatt, LTP 1 / 2, MOC, RCC, CAC.<br>- Superbay, with its spine, 8 × 17.3 m roof bays (138 m against the 134.5 m outline) and the spine-end hip facets (NAIP).<br>- Garages A / G: helix drums (outline-arc fits, D 32 / 30 m), core cylinders, the end of the garage body (u ~150 m; the rest of each outline is the AirTrain guideway tail), the Garage A rooftop box (NAIP, lean-corrected).<br>- RCC: station tower at the DOF TANK point (D ~6.5 m [inf]), the west-face chord.<br>- Minimum-rectangle dimensions, DOF points, height table.<br>Overlay: `BL-02_naip.jpg` | A1, 1:2000 |
+| [BL-03](BL-03.svg) | **Landside: principal elevations (long faces).**<br>- Massing elevations of the 10 buildings, with levels, published / DOF / inferred heights and ranges; DOF points at their projected positions.<br>- Superbay across the spine (roofs falling from the spine to ~27 m tips [inf]) and its WNW door face (8 folded bays, two ~67 m door bays, the spine roof behind with hipped ends); Grand Hyatt east face (podium, south-end colonnade recess, curved end bay and sign pier, framed bay, curtain wall, penthouse, masts); MOC stepped by its DOF points.<br>- Garages A / G SSE faces: garage body (~150 m) + AirTrain guideway tail, helix drum behind the face (hidden), core cylinder, rooftop box, station and guideway at a Level-7 placeholder, deck as unknown with a range bar of every candidate; Garage A west end (drum face, AirTrain portal).<br>- Central garage: AirTrain T1 / T2 (T3 behind) stations and the ring at Level 5.<br>- RCC west (AirTrain) face: DOF roof points, station, the cylindrical stair / elevator tower at the TANK point, and a wall key (canted louvre screen over the concrete band and ribbon windows, photo l5). | A1, 1:1000 |
 | [BX-01](BX-01.svg) | **Current 3-D app vs spec.**<br>- Table of 28 items (tower rows give both families).<br>- Heights dot plot: app ×, spec ● with range bars.<br>- Tower profile overlay at 1:500 (app, family 1, family 2).<br>- ITB roof profile along its axis. | A2 |
 
 The numbers in the files:
@@ -300,13 +300,22 @@ not drawn. Both self-consistent families are drawn, and neither is preferred:
 **Observed.**
 - LTP 1 parapet 16.5 m, by shadow.
 - CAC shadow 17.4–19.2 m.
-- Garage A / G helix drum tops 39.6 / 37.6 m (low).
+- Garage A / G helix drum tops 39.6 / 37.6 m (low). The drums are the rounded west ends (outline-arc fits D 32 / 30 m); NAIP images
+  their top ring with the same east lean as the deck edges, so the ring is level with the deck, not a tower above it (photo a2:
+  the banded parapet runs over the rounded end; only a ~13 m core cylinder and square stair / elevator boxes stand above).
+- Garage A / G outlines (281.8 / 282.3 m): the garage body ends at u ~150 m; the remaining ~130 m is a 9.1-m tail that
+  coincides with the AirTrain guideway polygon to the ITB station.
 - Superbay spine 32 m and 8 × 17.3 m roof bays. This conflicts with the published 50-ft bays. The roof runs 138 m along
   the spine against the 134.5 m outline: 1.75 m per end of overhang [inf] or outline error [unk].
 - Grand Hyatt east face (photo l4 = 7391, Gregory Varnum 2019, CC BY-SA 4.0): dark metal podium under the south ~47 %,
   a recessed colonnade level, the glass slab with one spandrel per floor, a dark stepped penthouse at 0.52–0.74 of the
   face, four corner masts. The spec's "taller straight block at the north end" is not visible there [conflict].
 - MOC imaged roofs (relief not removed).
+- Grand Hyatt (photo l4): the colonnade recess is only at the south end (0.02–0.10 of the face); a light concrete sign pier and a
+  curved, horizontally banded end bay at the south end; a framed bay at 0.62–0.84 up to one floor below the parapet.
+- RCC west wall (photo l5): ribbon windows, a board-formed concrete band and a canted screen of horizontal metal blades
+  (louvres); the free-standing perforated-metal station tower.
+- Superbay spine-end hip facets, NNE ~10 m and SSW ~6 m (NAIP, approximate).
 
 **Inferred.**
 - Grand Hyatt ~44 m (40–48). Not published. Its levels drawn as 13.2 pitches of 3.33 m (podium 3.2, colonnade 1, slab 9).
@@ -315,8 +324,10 @@ not drawn. Both self-consistent families are drawn, and neither is preferred:
 - CAC 64 ft.
 
 **Unknown.**
-- The Garage A / G roof decks. The drawn 25 m lower end of their band is what remains of the disputed "25–30 m"
-  AirTrain-photo reading; the upper end is the drum top.
+- The Garage A / G roof decks: drawn dotted at the drum-ring value; candidates 24.4–28.0 m (8 rises × 3.05–3.5 m, an
+  assumption), 25–30 m (photo reading, disputed), 35.7 / 34.7 m (NAIP 2-D roof shift; G not a clear maximum), 39.6 / 37.6 m
+  (drum ring). The Level-7 AirTrain height (placeholder 6/8 of the deck line).
+- The RCC station platform level and the station tower diameter (~6.5 m, inferred from l5).
 - The Hyatt height.
 - What the published 81 ft / 66 ft measure.
 - The MOC section heights and identities.

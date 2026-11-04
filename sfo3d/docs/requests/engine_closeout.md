@@ -4,6 +4,15 @@ From: owner of `live3.html`, `js/three/**`, `vendor/**`, `tools/build3/**`, `too
 `docs/research/engine_impl.md`, `package.json` devDependencies. What changed on this side is in
 `docs/research/engine_impl.md` §4.7. Below: what needs another track's files. Nothing here blocks live3.html.
 
+## 0. Lead: commit state and the phone artifact
+
+The WIP snapshot 0e92158 caught this track mid-way (the two start-up fixes, chevrons, denoise, glass, tiers). The
+working tree has the rest: persistent shadow nodes (`engine.js CSM3.dispose`, `flood.js MastSpot`), the spot share at
+the field's clamped height (`flood.js spotShare`), the branchless light-sprite clamp (`lights.js`), and the docs. Commit
+them together: 0e92158 alone crashes after a night -> day -> night switch and draws no aircraft nav lights. The phone
+test artifact is built from a commit (`git archive`), and the published one carries the start-up crash: rebuild it after
+the commit with `sh tools/build3/phone_artifact.sh`. `tools/blender/` (untracked) was not created by this track.
+
 ## 1. Lead / repository owner: Playwright version in `package.json` (minor)
 
 `package.json` pins `"playwright": "1.56"`, and `package-lock.json` locks it. The harness only works with 1.63.0,
@@ -55,10 +64,27 @@ today (read side by side on 4 Nov 2026: no differences), but any change on the o
   why it matters: a renderer exception inside `new Scene(...)` left the app's loading overlay up for good. live3 now
   shows its own message (`renderer3.js fatal()`), and no longer blames the browser for code errors.
 
-## 6. Owner of `js/shaders/sprites.js` (old renderer, informational)
+## 6. `js/live/app.js` (real-time track): the 'dusk' light preset is a clock time (minor)
+
+`lightDate()` maps 'day' / 'dusk' / 'night' to fixed local times (13:00 / 19:45 / 22:30, as "PDT" = UTC-7) on today's
+date. On 4 Nov 2026 19:45 is ~1.7 h after sunset (sunset ~17:05 PST): the 'dusk' preset rendered as full night in both
+renderers (live3 `debugInfo().eKeyLux` 20 = floods only; 26 Sep it gave 31.8 lx with the twilight sky). Please define
+the presets by solar elevation (e.g. dusk = -4.5 deg, the value the round-1 checks used), so QA and users get dusk
+all year; the UTC-7 offset is also wrong in winter (PST = UTC-8).
+
+## 7. `js/live/gates.js` (bridges / GSE track): tank truck under the UAL B39M wingtip at D10 (please check)
+
+In live3 renders of the snapshot at the close-up `ac:a12a82,38,-,6` (D10), a fuel tank truck stands under the
+starboard wingtip / split-tip device (`out/engine_r3/run1/r3_day_ac8.png`, `r3_day_ac_orbit.png`); it was not there
+in the reviewer's frame (vehicles follow the gate timeline). From these angles the clearance cannot be judged: please
+run the GSE hull test against the wing and tip device (B39M span with split tips) for that placement.
+
+## 8. Owner of `js/shaders/sprites.js` (old renderer, informational)
 
 Round-3 reviewer: live.html draws a green glow at the near wingtip of a parked aircraft at 38 m in daylight, live3
 does not. A position light by day is a small coloured lens, not a glow: 14 CFR 25.1391 asks 40 cd forward (recalled,
 not re-checked here); through a lens of ~0.01 m² that is ~4,000 cd/m², below sunlit white paint (~100 klx x 0.8 / pi
 ~ 25,000 cd/m²). A visible halo in sunlight is therefore not physical; consider capping the old sprite's day halo.
-(live3's own finding: see engine_impl.md §4.7 for what the wingtip probe showed.)
+live3's own nav lights were missing for a different reason (every 2.2-12 px sprite was dropped by a branch in its
+TSL vertex code, day and night; fixed, engine_impl.md §4.7 #8). They now draw as small coloured points with live3's
+capped halo (0.5 in exposed units).

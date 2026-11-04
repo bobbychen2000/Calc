@@ -39,13 +39,17 @@ export class Sprites {
     const vI = varying(float(0), 'vSprI'), vZ = varying(float(0), 'vSprZ'), vTol = varying(float(0), 'vSprTol');
     m.positionNode = Fn(() => {
       const p = iP.xyz, size = iP.w; const toC = cameraPosition.sub(p); const d = length(toC); const tc = toC.div(max(d, 1e-3));
-      const I = iC.w.mul(mix(float(0.5), float(1.0), night)).mul(lampK).toVar(); // lamp units (tsl/common.js)
-      If(iD.w.greaterThan(0.0), () => { const c = max(dot(normalize(iD.xyz), tc), 0.0); I.mulAssign(pow(c, iD.w).mul(0.97).add(c.mul(0.03))); });
-      If(iD.w.lessThan(-0.5), () => { I.mulAssign(smoothstep(60.0, 150.0, d)); }); // marker
-      const pxSize = size.div(d.mul(this.fovScale)); const s = size.toVar();
-      If(pxSize.lessThan(2.2), () => { const k = float(2.2).div(max(pxSize, 1e-4)); s.mulAssign(k); I.divAssign(k.mul(k)); })
-        .ElseIf(pxSize.greaterThan(12.0), () => { s.mulAssign(float(12.0).div(pxSize)); });
-      s.mulAssign(1.6); I.divAssign(1.6 * 1.6 * 0.35);
+      // branchless (review round 3): with the If / ElseIf size clamp, every sprite between 2.2 and 12 px (neither branch:
+      // e.g. an aircraft nav light at 40 m, any light within ~100 m) was not drawn at all in the WebGL 2 backend;
+      // only the sub-2.2 px ones were (observed: js/three/dev/envtest.html?sprites=1, row of lights at 20 m: 0 lit pixels,
+      // at 175 m: 101; in the app a test sprite 12 m in front of the camera: nothing in the light pass). Same math:
+      const cl = max(dot(normalize(iD.xyz), tc), 0.0);
+      const lobe = select(iD.w.greaterThan(0.0), pow(cl, max(iD.w, 1e-3)).mul(0.97).add(cl.mul(0.03)), float(1.0));
+      const mk = select(iD.w.lessThan(-0.5), smoothstep(60.0, 150.0, d), float(1.0)); // marker fade
+      const pxSize = max(size.div(d.mul(this.fovScale)), 1e-4);
+      const kUp = max(float(2.2).div(pxSize), 1.0), kDown = min(float(12.0).div(pxSize), 1.0); // >= 2.2 px (energy kept), <= 12 px
+      const s = size.mul(kUp).mul(kDown).mul(1.6);
+      const I = iC.w.mul(mix(float(0.5), float(1.0), night)).mul(lampK).mul(lobe).mul(mk).div(kUp.mul(kUp)).div(1.6 * 1.6 * 0.35); // lamp units (tsl/common.js)
       vI.assign(I);
       const c = p.add(tc.mul(min(2.0, d.mul(0.05))));
       vZ.assign(cameraViewMatrix.mul(vec4(c, 1.0)).z); vTol.assign(d.mul(0.01).add(0.5));

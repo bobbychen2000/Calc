@@ -266,6 +266,57 @@ The numbers quoted in the code comments for them (e.g. the round-2 grade) are of
 | Ground / signs / markings | far city lights as sparse point-like clusters; water body colour fix (envNode also drives the diffuse irradiance); canvas sign atlases released once the MSDF font is in; red-box corner miter fix (`ground.js`, `signs.js`, `markings.js`) |
 | Start-up UI | progress overlay until the first frame (bake, compile, first frame took minutes on llvmpipe with a black canvas) |
 
+### 4.7 Review round 3 (4 Nov 2026): findings, fixes, evidence
+
+Setup: headless Chromium 1.63 on llvmpipe (`SOFTGL=1`, `LP_NUM_THREADS=3`), 960x540, snapshot + mock relay, tier high
+unless named; other agents loaded the 4 CPUs (load 4-8). Jobs: `tools/build3/job_round3.mjs` (default set, `VERIFY2=1`,
+`SHORT=1`). Outputs in `out/engine_r3/`: `run1/` (full set, the run in which the shadow-switch crash below was found),
+`v2/` (re-check after the later fixes), `low/` (low tier), `navdiag/`. "Before" = the reviewer's copy with the two
+start-up workarounds (`out/engine_rev/patched/`, `night/`), "old" = live.html (`out/engine_rev/old_*`).
+Grain = standard deviation of luminance minus its Gaussian blur (sigma 2 px) in fixed boxes of the close-up
+(`ac:a12a82,38,-,6`): fuselage above the wing root (285,283)-(345,300), shaded apron by the main gear (380,346)-(419,378),
+sunlit apron (120,440)-(300,470) as the texture reference. (The reviewer's 15.4 / 9.4 used other boxes; same direction.)
+
+| # | Finding | Root cause | Fix (file) | Evidence (Observed) |
+|---|---|---|---|---|
+| 1 | live3 cannot start (critical) | `FloodLight` / `MastSpot` wrote `this.scale = 1`: `Object3D.scale` is a non-writable Vector3 | field renamed `level` (`flood.js`, `engine.js setFloodSpots`) | ready in 256 s (run1) / 247 s (v2) / 188 s (low), 0 console errors; HEAD: TypeError at `new FloodLight` |
+| 2 | start-up race (critical) | `attachWorld` (inside the app's synchronous `new Scene`) used `engine.flood`, created in the async `init()` | `FloodLight` created in the `Engine` constructor, added to the scene in `init()`; `attachWorld` errors now shown (`engine.js`, `renderer3.js`) | the flood field is set at 5-7 s, before init resolves (logs), every run |
+| 3 | blast-pad chevrons 15.0 / 29.7 m | not ported from the WebGL2 shader | first apex 17.0 m, pitch 30.48 m (`ground.js`), = `js/shaders/ground.js` | code (NAIP 2024 peaks 16.6-17.3 m, AC 150/5340-1M Fig. A-9) |
+| 4 | night: hard 100 m polygons by the spot masts | three r186 `ShadowNode.updateShadow` replaces a shadow-camera mask with only bit 0 by the main camera's (which has `MAST_LAYER`): the masts were in the spot shadow maps and the 16-sided head ring (r 1.25 m, 0.25 m under the spot) shadowed everything beyond ~79 deg from nadir | spot shadow cameras see layer 0 + an unused marker layer (`flood.js SPOT_SHADOW_LAYER`); spot share evaluated at the field's clamped receiver height (a bright arc at 140-151 m appeared once the polygon was gone: the field's 2 m layer is cut at 140 m, the spot at the true ground height at 151 m) | `run1/r3_night_gate_B20.png` vs `engine_rev/night/new_night_gate.png`: polygon gone; `v2/night_spot_diff.png` (spots on - off): only cast shadows and per-face N.L, no arc (the arc is in `run1/night_spot_diff.png`); shadow masks [9, 9] |
+| 4b | (found here) crash after a shadow switch | three r186 disposes a light's shadow node when `castShadow` goes false; render objects not drawn meanwhile reuse the old graph at the next switch-on (`shadowMap` null); `CSMShadowNode.dispose()` removes its cascade lights for good | spot shadow node given as `shadow.shadowNode` and never disposed (`flood.js`); `CSM3.dispose()` a no-op (`engine.js`) | run1: TypeError `reading 'depthTexture'` after spots off -> on; v2: 0 errors through spots off -> on, day -> night -> day -> night, sun shadows present after the second sunrise (`v2/r3_day2_ac8.png`) |
+| 5 | AO / shadow grain on the hero close-up | half-res GTAO with no spatial filter (its 5x5 rotation tile left as 2 px blobs), 12 of the 24 noise patterns reachable, CAS amplifying the residue | `AODenoiseNode` (5x5 plane-distance-weighted box at the AO resolution), all 24 (rotation, offset) pairs, CAS noise gate (range < 0.01 not sharpened) (`engine.js`) | grain wing root old 1.50 / before 2.63 / after 0.88 (8 frames), 0.87 (32), 0.86 (v2); shaded apron 0.50 / 2.07 / 0.78; sunlit texture 4.33 / 4.42 / 4.33 (detail kept); orbit at 3 deg/frame: no visible grain (`run1/r3_day_ac_orbit.png`) |
+| 6 | curtain wall reads matte khaki | the concourse behind the pane was the ALBEDO, lit by the full sun and sky (linear ~0.11, warm) | pane albedo 0, the hall as emission lit by its own illuminance (5 % daylight factor + 200 lx lamps by day; inferred), x T x (1 - F); facade own-shadow term for downward reflections (`objects.js`, `renderer3.js interiorE / shadeK`) | pane old (24,28,35) / before (59,58,54) / after (49,47,41): -17 % luminance, no matte panelling; still warm, see below |
+| 7 | `engine_impl.md` stale | round 2 never documented or run | this file: status, §1, §3, §4.6, §4.7, §5, §6 | — |
+| 8 | aircraft nav lights missing (day AND night) | not the day dimming and not the occlusion test: every light sprite between 2.2 and 12 px on screen (neither branch of the `If` / `ElseIf` size clamp) was never rasterised in the WebGL 2 backend; only sub-2.2 px sprites (distant airfield lights) drew. Found with a light-pass readback: green nav light and a test sprite 12 m in front of the camera = 0 in the light pass, with the occlusion test on and off; `envtest.html?sprites=1`, row of lights at 20 m: 0 lit px, at 175 m: 101 | the size / intensity clamp, lobe and marker fade written branchless with the same math (`lights.js`); `SFO.R.sprites.depthOn` QA switch | envtest after: 386 lit px at 20 m (was 0), 440 at 175 m (was 101); in-app (low tier, `out/engine_r3/navdiag/`): light pass at the green nav light 23.6 by day (x exposure 0.36) and 0.216 at night (x 452), test sprite 23.2, identical with the occlusion test on and off (not occluded); green light at the wingtip in `navdiag_depth1.png` / `navdiag_night.png` |
+| 9 | quality parity | no ultra tier; 0.8 not a resolution step | `QUALITY3.ultra` (from the app's 4096 shadow map), steps 1 / 0.85 / 0.8 / 0.72 / ... (`engine.js`, `renderer3.js`) | code |
+| 10 | fatal message blames the browser | one message for every init failure | browser wording only when neither WebGPU nor WebGL 2 exists (probe), else "an error in the app" + detail; `attachWorld` errors shown (`renderer3.js`) | code |
+| 12 | garage-roof cars alias into a speckled disk | 2878 sub-pixel boxes | own car material: every car part fades to the mean car colour from 300 to 900 m (`objects.js CAR_FADE`, `renderer3.js carMat`) | the speckled disk at the terminal core is gone in `run1/r3_day_overview.png` (overview p1/p50/p99.5 before 88/158/198, after 88/158/197) |
+| — | `?cas=` ignored | parsed, never applied | applied in `resize()` (`renderer3.js`) | code |
+| — | stale `perf_phone.js` reference | — | comments fixed; `perf.js` marked parked (owner deferred phone work) | `grep` |
+
+Luminance p1 / p50 / p99.5 (old -> before -> after): close-up 29/153/224 -> 25/171/226 -> 19/168/226; gate B20
+27/170/212 -> 48/181/233 -> 41/181/233; overview 69/135/176 -> 88/158/198 -> 88/158/197. Draw calls (after, high):
+overview 532, gate 537, close-up 586, night gate 346 (spots on) / 261 (off); low tier: gate 271, close-up 395, night
+gate 186. Texture memory 976-1152 MB high, 532-548 MB low; `retainedImageMB` 0.
+
+Not resolved / rejected, with the evidence:
+- **Pane colour** (finding 6): after the fix the pane is mostly the coated glass's Fresnel reflection. From this
+  elevated view (camera ~53 m up, pitch 24 deg) a vertical pane keeps the ray's downward slope and reflects the apron
+  ~18 m in front of it, not the sky: the reviewer's "sky reflections" are not what this view shows. The reflected apron
+  is sunlit here (the pier's own shadow reaches ~13-17 m at the 45 deg sun of the snapshot, so the own-shadow term stays
+  off). The remaining warmth is the IBL's lower hemisphere, which is the whole-airfield mean albedo (0.30, 0.27, 0.21:
+  grass and sand) where the pane reflects concrete (the bake's 0.38, 0.37, 0.345). Changing the IBL ground changes every
+  object's ambient from below and the flood bounce, so it was not done without a full re-verification: next round
+  (paved-area mean for the IBL ground, or local reflections).
+- **Dusk** was not checked: the app's 'dusk' preset is a clock time (19:45 "PDT", js/live/app.js `lightDate`), which on
+  4 Nov is ~1.7 h after sunset; the dusk render is night (eKeyLux 20). Request in `docs/requests/engine_closeout.md`.
+- **Overview "lake"** (finding 13): the world has no water there (`js/world/terrain.js`, read); live.html's blue patch is
+  not data-driven. Routed to the terrain / old-renderer owners (closeout §2).
+- **Seawall foam** (finding 11) and the **replicas** (finding 15): parity today; shared items routed (closeout §3-4).
+- **Playwright pin** (finding 14): not changed, `package-lock.json` would go out of sync and npm may not run here
+  (closeout §1).
+- WebGPU backend: still no adapter in this sandbox.
+
 ## 5. Quality tiers (`engine.js QUALITY3`)
 
 | Tier | Chosen for | Shadows | AO | AA | Bloom | Bakes (m/texel) | Max image texture |

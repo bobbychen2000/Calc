@@ -45,7 +45,7 @@
 import { THREE, TSL } from './lib.js';
 import { MAST_H } from '../live/items.js';
 import { GROUND_Y } from '../geo.js';
-const { Fn, texture, texture3D, uniform, vec2, vec3, vec4, float, max, min, abs, length, normalize, dot, sqrt, positionWorld, normalWorld, cameraViewMatrix, step, smoothstep, clamp, select } = TSL;
+const { Fn, texture, texture3D, uniform, vec2, vec3, vec4, float, max, min, abs, length, normalize, dot, sqrt, positionWorld, normalWorld, cameraViewMatrix, step, smoothstep, clamp, select, shadow } = TSL;
 
 export const E_STAND = 0.62;      // scene irradiance units for the ICAO 20 lux stand average (see renderer3 nightExposure)
 export const FLOOD_COLOR = [1.0, 0.93, 0.84]; // ~4000 K LED (colour of the SFO luminaires not verified: inferred)
@@ -145,6 +145,15 @@ export class FloodLight extends THREE.Light {
   }
 }
 const NL = FIELD_LAYERS.length, H0 = FIELD_LAYERS[0], H1 = FIELD_LAYERS[NL - 1];
+// The spot masts' share, evaluated exactly as the field is sampled (review round 3): at the receiver height clamped to
+// the field's layers (a ground receiver reads the 2 m layer) and with the same fade below the lamps. Evaluated at the
+// true ground height instead, the spot reached ~151 m where the field's 2 m layer is cut at 140 m: the residual
+// clamped at 0 there and a bright arc ~140-150 m from each spot mast appeared (spots on - off difference image).
+const spotShare = (m, level) => {
+  const P = positionWorld; const hgt = P.y.sub(GROUND_Y);
+  const Pc = vec3(P.x, clamp(hgt, H0, H1).add(GROUND_Y), P.z);
+  return mastEnode(Pc, m, level).mul(float(1.0).sub(smoothstep(LAMP_H - 4.0, LAMP_H - 0.5, hgt)));
+};
 export class FloodLightNode extends THREE.AnalyticLightNode {
   static get type() { return 'FloodLightNode'; }
   constructor(light = null) {
@@ -173,7 +182,7 @@ export class FloodLightNode extends THREE.AnalyticLightNode {
   // field minus the spot masts' share (they are drawn as shadow-casting MastSpot lights)
   residual() {
     const { f, g } = this.fields(); let Ev = f.xyz, S = f.w;
-    for (let k = 0; k < this.spotUs.length; k++) { const e = mastEnode(positionWorld, this.spotUs[k], this.scaleU.mul(this.spotOnU[k])); Ev = Ev.sub(e.xyz); S = S.sub(e.w); }
+    for (let k = 0; k < this.spotUs.length; k++) { const e = spotShare(this.spotUs[k], this.scaleU.mul(this.spotOnU[k])); Ev = Ev.sub(e.xyz); S = S.sub(e.w); }
     return { Ev: vec3(Ev.x, max(Ev.y, 0.0), Ev.z), S: max(S, 0.0), g };
   }
   setupDirect() {
@@ -208,6 +217,13 @@ export class MastSpot extends THREE.SpotLight {
     // sides, 0.25 m under the spot origin) then shadowed everything beyond ~79 deg from nadir: a 16-sided hard-edged
     // dark region ~130 m across around each spot mast at night.)
     this.shadow.camera.layers.set(0); this.shadow.camera.layers.enable(SPOT_SHADOW_LAYER);
+    // a persistent shadow node (review round 3: crash). js/three/engine.js setFloodSpots switches castShadow with the
+    // lamps; three r186 AnalyticLightNode then DISPOSES the light's shadow node (shadowMap = null) on the switch-off, but
+    // render objects not drawn while it was off keep their compiled "shadows on" graph and reuse it at the next switch-on
+    // (same cache key), so ShadowNode.updateShadow read shadowMap.depthTexture of null (observed: night -> spots off ->
+    // spots on -> another view; in the app, the second dusk of a session or a day/night toggle in the UI). The node is
+    // now given as light.shadow.shadowNode and never disposed: its 2048^2 depth map stays allocated by day.
+    const sn = shadow(this, this.shadow); sn.dispose = () => { }; this.shadow.shadowNode = sn;
   }
   setMast(x, z, ax, az) { this.mast.set(x, z, ax, az); this.position.set(x, GROUND_Y + LAMP_H, z); this.target.position.set(x + ax * 0.01, GROUND_Y, z + az * 0.01); this.updateMatrixWorld(); this.target.updateMatrixWorld(); }
 }
@@ -216,7 +232,7 @@ export class MastSpotNode extends THREE.SpotLightNode {
   constructor(light = null) { super(light); this.mastU = uniform(new THREE.Vector4(1e6, 1e6, 1, 0)); this.scaleU = uniform(1); }
   update(frame) { super.update(frame); if (this.light) { this.mastU.value.copy(this.light.mast); this.scaleU.value = this.light.level; } }
   setupDirect() {
-    const e = mastEnode(positionWorld, this.mastU, this.scaleU); const E = e.xyz.add(vec3(0.0, 1e-7, 0.0));
+    const e = spotShare(this.mastU, this.scaleU); const E = e.xyz.add(vec3(0.0, 1e-7, 0.0));
     return { lightDirection: normalize(cameraViewMatrix.mul(vec4(E, 0.0)).xyz), lightColor: this.colorNode.mul(length(E)) };
   }
 }

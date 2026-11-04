@@ -6983,8 +6983,14 @@
   "rec/adsbfi_20261104_22.jsonl.gz": {
    "class": "local",
    "why": "adsb.fi terms: personal non-commercial use, not to be licensed on",
-   "bytes": 5637891,
-   "sha256": "28111617093be332b19b347cf34048d7c0dbcc3107c1e2361cfb24f60ccecbf3"
+   "bytes": 18734753,
+   "sha256": "3a9f7de657e886b3b46327b35b875c06b050c519c4e56f1b8551c5f026f424fa"
+  },
+  "rec/adsbfi_20261104_23.jsonl.gz": {
+   "class": "local",
+   "why": "adsb.fi terms: personal non-commercial use, not to be licensed on",
+   "bytes": 6555998,
+   "sha256": "9eca74de76c906c0273160ee7bdbeab8c7599275894eba7a34143dc91efdf1a3"
   },
   "rec/adsblol_20261104_17.jsonl.gz": {
    "class": "pack",
@@ -7019,14 +7025,20 @@
   "rec/adsblol_20261104_22.jsonl.gz": {
    "class": "pack",
    "why": "ODbL (adsb.lol); trimmed copy in rec_pack/",
-   "bytes": 1579194,
-   "sha256": "6c873af675fc58626e47c9a09ae54d25f4758da4f7f9cb9f2a1d7afd657b306d"
+   "bytes": 5469408,
+   "sha256": "a4e2a668202c09a54d9fee0b73d7a242b4c47f8b04ac3dc65fcc89842776d410"
+  },
+  "rec/adsblol_20261104_23.jsonl.gz": {
+   "class": "pack",
+   "why": "ODbL (adsb.lol); trimmed copy in rec_pack/",
+   "bytes": 1884470,
+   "sha256": "9ed398e2ea5cbc6667cdf0807e13254863131eb9fb58d39ab34ed2c12702f8e7"
   },
   "rec/recorder.log": {
    "class": "local",
    "why": "recorder state",
-   "bytes": 9705,
-   "sha256": "1c814d4d5a784b0da76ae01a7a4fe479608e5a2a6dae2938b05f623b54371b7c"
+   "bytes": 11755,
+   "sha256": "a5ba614974bcb24dd5742ca31220eb005d2f84c2517f31ba3cc357a627fed693"
   },
   "rec/recorder.pid": {
    "class": "local",
