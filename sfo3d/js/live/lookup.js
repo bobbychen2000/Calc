@@ -24,9 +24,20 @@ export function airlineInfo(icao) {
   const [name, iata] = s.split('|'); return { icao, name, iata: iata || null };
 }
 // callsign "UAL1234" -> airline + flight number "UA 1234"
-export function parseCallsign(cs) {
+// Ground vehicles (ADS-B emitter category C1-C7: surface emergency / service vehicles and obstacles, the type codes SERV /
+// GRND / TWR, or a track js/live/traffic.js already flagged as a vehicle) carry no airline: their callsigns are the
+// operator's own unit names. Review 4 Nov 2026: SFO airfield operations vehicles (N3xxQX, type SERV, callsigns OPS12 /
+// OPS16) were parsed as the airline Jet-Ops ('OPS').
+export function isVehicle(info) {
+  if (!info) return false;
+  if (info === true || info.vehicle) return true;
+  const cat = info.category || null, t = info.icao || info.type || null;
+  return !!((cat && /^C[1-7]$/.test(cat)) || (t && ['SERV', 'GRND', 'TWR'].includes(t)));
+}
+export function parseCallsign(cs, info = null) {
   if (!cs) return { callsign: null, airline: null, number: null, display: null };
   cs = cs.trim().toUpperCase();
+  if (isVehicle(info)) return { callsign: cs, airline: null, number: null, display: cs, vehicle: true, label: 'Airfield vehicle' };
   const m = /^([A-Z]{3})(\d[0-9A-Z]{0,4})$/.exec(cs);
   if (m) {
     const al = airlineInfo(m[1]);
