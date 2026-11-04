@@ -425,3 +425,151 @@ python3 tools/buildings/build_spec_itb.py        # -> tools/buildings/spec_itb.j
 - **Other files:**
   - Cached source pages: `refs/cache/buildings/itb/`.
   - Pole, pier and roof crops used for the by-eye picks: `out/buildings/itb/`.
+
+---------------------------------------------------------------------------------------------------------------------
+
+## Verification
+
+Adversarial fact-check, 4 Nov 2026. I re-fetched every cited source I could reach and tried to refute each key height,
+dimension, date and licence, where possible with a method different from the one above.
+- Tool: `tools/buildings/itb_verify.py` writes `tools/buildings/itb_verify.json` (numbers only) and the QA crops
+  `out/buildings/itb/verify/qa_*.jpg` (NAIP pixels, local). With `--apply` it writes the verdicts into
+  `tools/buildings/spec_itb.json`. It runs offline from the caches in about 5 s.
+- Re-fetched on 4 Nov 2026, in `refs/cache/buildings/itb/verify/` (provenance in `SOURCES.json`):
+  - the FAA DOF (`DAILY_DOF_CSV.ZIP`, `DOF.CSV` dated 2026-11-02; now in `refs/cache/lighting/`);
+  - 15 source pages (`src/*.html`); **SEAONC now opens first-hand**;
+  - the Commons licence records of all 24 photos (`commons_photos.json`).
+- `itb_naip_measure.py` re-run on the restored NAIP 2024 raster and the new DOF file: **byte-identical output**.
+- `js/` and `data/` are untouched. Corrected values in `spec_itb.json` keep the old value under `corrected`, and every
+  item now carries a `verification` record.
+
+**Verdicts.** CONFIRMED: an independent check agrees. PLAUSIBLE: consistent, but not pinned tighter. CONFLICT: sources
+disagree. CORRECTED: the stated value or derivation is wrong; replaced. REFUTED: shown wrong. NOT RE-CHECKED: no new
+evidence this round.
+
+### V.1 Claim by claim
+
+**Heights**
+
+| # | Claim | Verdict | Evidence |
+|---|---|---|---|
+| 1 | DOF roof tops 06-035315 / -316: 131 / 132 ft AGL, 139 / 140 ft AMSL, 1A | **CONFIRMED** | Unchanged in the 2026-11-02 file: same height, same accuracy (1A), position identical. New detail: VERIFIED STATUS O, ACTION A, JDATE 2013289, so the obstacles were **added on 16 Oct 2013**. The survey predates NAIP 2024 and the 2024–26 re-roofing. |
+| 2 | The DOF points sit "at u = +54.7 and −60.9 m, on the flanks of the hump plateau" | **CORRECTED** | Those u values are measured from the *imaged* roof centre. From the relief-corrected centre they are at **u = +57.2 and −58.4 m**, 0.6–0.9 m inside the west eave. They are symmetric about the centre and **115.5 m apart along the axis = 379 ft**, which matches the published 380-ft centre span. The two surveyed tops therefore mark the roof over the **inner column lines** (±190 ft = ±57.9 m), which supports §2.1's inferred rhythm. |
+| 3 | Ground ≈ 8 ft AMSL | **CONFIRMED** | AMSL − AGL = 8, 8 and 9 ft. |
+| 4 | "144 ft" (SOM, Enclos), datum unknown | **CONFIRMED as published; conflict kept** | SOM: "Building Height: 144 feet". Enclos's spec block also names the owner as "San Francisco Department of Public Health", a data-entry error, so **Enclos is not an independent source** for the height. |
+| 5 | Interior hall "705 × 210 × up to 83 ft" | **CONFIRMED (now first-hand)** | SEAONC: "glass-enclosed 'great hall' – 705 ft long, 210 ft wide, and up to 83 ft high". **83 ft is the interior height**, confirming §5 row 1. |
+| 6 | Wing profile: humps 40.1, notches 35.7, crown ≈ 40, tips ≈ 34.9 m | **PLAUSIBLE**; one new independent check | (a) Reproduced exactly. (b) **New:** the *east* eave wanders together with the west eave. From the north tip to the hump the west eave moves +2.25 m and the east eave +2.20 m, while the imaged width stays at 66.0–66.6 m. A curved plan would move the two eaves in opposite directions, so the wander is height, as assumed. (c) The photo silhouette (crown, tips) **could not be re-run**: the Commons API and upload host returned HTTP 429 (rate limit) and the photo is not cached. (d) The two relief models in V.2 differ by 1–4 % along the hall, which is ≤ 0.5 m on the drops. |
+| 7 | Level-3 floor 11.5 ± 1.5 m [inf] | **PLAUSIBLE / still unverified** | Three published heights now bracket it: 40.1 m − 90 ft = 12.7 m; − 100 ft = 9.6 m; − the first-hand 83-ft hall height = 14.8 m (less the roof build-up at the crown). No section drawing found. |
+| 8 | Boarding Area A main roof ≈ 17 m ± 2.5 | **CORRECTED (refined) → 17.9 m, range 16.9–18.8** | The west band was re-measured with automatic half-level edges: **8.79 m** (IQR 8.71–8.86, 11 clean stations). The band equals (relief + shadow) × h. The note subtracts "any roof overhang", but **an overhang moves both band edges equally and cancels**. Method (b) relies on the SFO Museum footprint, which at G sits 3–6 m off. Result: h = 18.3 m with k(x), 17.4 m with the frame model. |
+| 9 | Boarding Area A pod 1 top 85 ft (DOF 06-035352); rim band 2.5–3 m ⇒ about 7.5 m above the main roof | **DOF value CONFIRMED; derivation weaker than stated** | The rim bands at the three pod apexes measure 2.49–2.52 m. The dark band includes the pod's own shadow (0.116 m per m of rise), so the rise is **4.9–5.2 m** (6.8–6.9 m if the shadow is ignored, as in the note). Pod top = **22.3–25.2 m** against the DOF's 25.9 m: consistent only at its upper end. The DOF point (±6.1 m) lies at pod 1's NNE end near the west eave. |
+| 10 | Boarding Area G main roof ≈ 17 m ± 3 | **PLAUSIBLE** | The NNE shadow band was re-measured: **2.14 m** (IQR 1.75–2.36, 41 stations). With k(x), h = **16.9 m** (IQR 15.5–18.0). The sunlit SSW facade cannot be separated from the apron, so the note's k-free sum (0.297·h) was **not** reproduced. |
+
+**Plan and structure**
+
+| # | Claim | Verdict | Evidence |
+|---|---|---|---|
+| 11 | Roof axis heading 162.85° | **CONFIRMED** | An independent straight-line fit to the west facade base (ground level, so no relief) gives **162.81°**: 312 of 339 rows, sd 0.15 m. 162.83° = the airport grid t-axis (27.83°) + 135°. The piers sit on the grid axes too: A at 208.0° and G at 297.75°, by NAIP edge alignment. |
+| 12 | Roof length 252.7 m ± 1.5 | **PLAUSIBLE; range widened to 252.6–255.1 m** | See V.2. The 252.7 m depends on removing a 2.4 m along-axis magnification, which a frame camera produces and an across-track-only relief model does not. Either way the roof is **7–9 m shorter than 860 ft**. |
+| 13 | Corner outline NW/NE/SE/SW (±1.5 m) | **CORRECTED** | The stated corners span **255.06 m** along the axis: they were relief-corrected east-only. That contradicts the stated length of 252.68 m, which removes the magnification. Replaced by frame-model corners (V.2): NW (−1313.08, 254.23), NE (−1250.59, 234.95), SE (−1176.03, 476.58), SW (−1238.52, 495.86), outline 252.87 × 65.39 m. The east-only alternative is kept in the spec as `alt_x_only_model`. |
+| 14 | Centre (−1245.0, 364.7) | **PLAUSIBLE** | The frame model gives (−1244.56, 365.40), 0.85 m away, inside the stated ±1.5 m. |
+| 15 | Width 65.4 m | **CONFIRMED** | East eave re-measured: imaged width 66.15 m, constant along the length; true 65.39 m. |
+| 16 | 5 truss lines, 12.12 m (39.8 ft) apart | **CONFIRMED** | Autocorrelation of 207 cross profiles: imaged 12.28 m (IQR 12.24–12.32), giving **12.16 m = 39.9 ft** against the published 40 ft (12.19 m). |
+| 17 | 5 lens skylights, 48.4 m × 9.6 m | **PLAUSIBLE (minor)** | 48.4 m is the *imaged* detection-box length; with the magnification removed it is ≈ 47.9 m. The pointed ends fade, so tip to tip may be 1–2 m more. The westmost lens is full length too; it was detected at 34 m only because it is darker. Each skylight reads as a **D** in NAIP: straight east edge, convex west edge. Whether that is a vaulted lens leaning east or a D-shaped plan is not settled. |
+| 18 | Glazed tip bands 18.75 m (N) / 15.75 m (S) | **CONFIRMED**, plus a new asymmetry | The bands are visible at the stated rows (`qa_tip_N.jpg`, `qa_tip_S.jpg`). **New:** the centre-section lens row sits **2.2 m north** of the fascia midpoint. Beyond the glass, the south tip carries a **3.6 m white segmented strip** and the north tip 1.6 m. The dark band beyond the north fascia is not roof: it continues outside the roof width, and is 0.4 m wider inside it, where the hall's shadow falls. |
+| 19 | Rhythm 20 \| 140 \| col \| 80 \| col \| 100 \| 180 … ft [inf] | **PLAUSIBLE; the end segment conflicts** | The inner column lines are supported by the DOF pair (#2). With the 80-ft bay, the outer columns sit at ±82.3 m, and NAIP puts the fascia **44.1 m = 145 ft** beyond them, not 160 ft. Either the 860-ft total or the bay does not describe the visible roof. |
+| 20 | 860 ft, 380 ft, 160 ft, 29 ft deep, 20 columns from level 3, five double-cantilever sets | **CONFIRMED first-hand** (were snippet-only) | SEAONC page text: "five sets of steel balanced double cantilever trusses with a central trussed span"; "supported on 20 cantilevered columns rising from the third floor departures level"; "up to 29 ft deep, spans 380 ft at its center and 160 ft at each end cantilever with an overall length of 860 ft". Also new: "172,000 sq. ft. of exposed trussed steel roof (4,040 tons including main roof cantilevered box columns)" = 15,980 m², against the NAIP outline of 16,535 m². |
+| 21 | Truss length 320 ft, centre section 180 ft | **STILL SNIPPET-ONLY** | AISC PDF: curl 403 (Cloudflare) and WebFetch 403; web.archive.org has a 2024-09-04 snapshot, but the connection was reset. |
+| 22 | Herrick; Mare Island; ~35 pieces by barge | **CONFIRMED (now first-hand)** | SEAONC lists The Herrick Corporation. Quote: "fully assembled at the Mare Island fabrication shop and then disassembled into some 35 major pieces … shipped directly to the site on barges … jacked into position and pinned in place". Smith-Emery: "middle sections were erected first, followed by the outside cantilever and the inside cantilever trusses". |
+| 23 | Boarding Area A imaged roof 36.5 m | **PLAUSIBLE** | Re-measured at **37.85 m** (58 stations; the upper quartile is gate rooms). |
+| 24 | Boarding Area G imaged roof "~33.5 m" | **REFUTED** | Between its two parapet lines the roof measures **38.4 m** (IQR 38.2–38.7, 38 stations). This matches the SFO Museum body width of 38.3–38.4 m. |
+| 25 | Pod lengths A 70 / 55 / 55 m, G 60 / 55 / 62 m (by eye) | **PLAUSIBLE** | Read by eye again on the grid-aligned crops: A pod 1 ≈ 55–60 m (not 70); pods 2 and 3 ≈ 52–55 m. G ≈ 62 / 58 / 66 m. All ±4 m. |
+
+**Method, dates and licences**
+
+| # | Claim | Verdict | Evidence |
+|---|---|---|---|
+| 26 | Relief k(x) = 0.7553 + 0.0002753·x, east-only | **PLAUSIBLE; north–south component unresolved** | See V.2. |
+| 27 | Sun azimuth ~187°, elevation ~72.4° (local noon) | **CONFIRMED** | NOAA solar position for 2024-05-20 at the shadow azimuth of 186.6°: **13:14 PDT, elevation 72.39°** (71.9–72.4° for ±4° of azimuth), declination 20.09°. The shadow-length value, 72.5°, agrees. |
+| 28 | Dates: ground broken Oct 1995; opened 10 Dec 2000; renamed 16 Jan 2024; re-roof ceremony 27 Jun 2024; completion mid-2026 | **CONFIRMED** | Airport World: "On Sunday, December 10, 2000, SFO held a ribbon-cutting ceremony"; "Breaking ground in October 1995"; "On January 16, 2024, the San Francisco Airport Commission approved a resolution to rename"; "expected to be completed in mid-2026". Webcor: "June 27, 2024". Other dates: SEAONC "Designed and constructed from 1994 to 2000"; Tutor Perini lists "COMPLETION 2001", the contract close-out. |
+| 29 | Upgrade scope: 1,400 kW PV, 90-ft scaffolds, $75 M | **CONFIRMED except the cost** | Webcor: "installing 1,400 kW solar". FTF, now read first-hand: "Scaffolds reached 90 feet high over active roadways and AirTran tracks". The **"$75 M" is not in the re-fetched Webcor pages**, and Airports International is still 403: unverified. |
+| 30 | Gates at opening: 26 | **CONFLICT** | SEAONC, first-hand: "26 new gates". Tutor Perini ITB page: "24 international gates". |
+| 31 | Other published figures | **CONFIRMED** | **Size:** 1.8 M sq ft; 1,000,000 sq ft site. **Levels:** 5 stories / five levels, L1 services and baggage, L2 arrivals, L3 departures, L4–5 offices. **Roof:** 380-ft span; ticket lobby 700 ft; bamboo 55 ft; 60–90 ft above the floor; three-chord "football" trusses. **Envelope:** 267 isolators (SEAONC adds "up to 20 inches" of displacement); curtain walls spanning over 60 ft; 382,000 sq ft of cladding. **Boarding Area G:** 380,000 sq ft, three-story, six double-gated gate rooms for twelve 747-400s, Robin Chiang & Company, completed 1999, composite aluminium panels. **Boarding Area A:** 23 bridges at A1–A15, A6 retrofitted for three bridges. Each quote was found verbatim in the cached pages; `itb_verify.json` `sources.quotes` lists them. |
+| 32 | A6 (AGS) vs A11 (Wikipedia) for the three-bridge A380 gate | **Not a contradiction in time** | Wikipedia "Gate A11 has three jetways" cites an older SFGate A380 article. AGS: A6 was retrofitted in the 2020 project. |
+| 33 | Photo licences, authors and dates (24 files) | **CONFIRMED** | Commons API re-query: all 24 licences and authors match `spec_itb.json` `photos[]`. |
+| 34 | 40-ft E/W grid by 80-ft N/S bays (SOM sketch) | **NOT RE-CHECKED** (image not re-fetched) | The E/W grid agrees with #16; the N/S bay is not observable in NAIP. |
+
+### V.2 The relief model, and what it does to length, corners and pier heights
+
+The measurement fits only the **east** component of the five pole-ring shifts. Fitting their full 2-D shifts with one
+central projection, shift = h·(P − N)/(H − h), works better:
+
+| Model | Parameters | RMS |
+|---|---|---|
+| Frame | nadir **N = (−2768, 444)** ± (98, 9); H − h = 3705 ± 277 m | **0.21 m** |
+| x-only | k(x), as in the measurement | 0.54 m |
+
+The shift direction rotates with z, as a frame camera's does:
+
+| Pole z | 338 | 421 | 447 | 467 | 520 |
+|---|---|---|---|---|---|
+| Shift direction | 86.8° | 88.0° | 90.0° | 90.0° | 94.9° |
+
+The correlation is 0.91. NAIP 2022 over SFO was a Leica ContentMapper frame sensor (`imagery.md`); no open metadata names
+the 2024 sensor. But two of the five picks are manual (±1 m), so the north–south signal (|dz| ≤ 1.25 m) is close to the
+pick noise. At Boarding Area G (z ≈ 100) the single-frame model **fails**: the roof would lean over its own north shadow
+(visible shadow 0.04 m per metre of height), yet 2.1 m of shadow is seen. G is therefore in another frame of the mosaic,
+or the relief there has little north–south component.
+
+**Consequences.**
+
+| Quantity | Frame model | x-only model | Adopted |
+|---|---|---|---|
+| Length | 252.87 m | 255.04 m (no magnification) | 252.68 m stated; range **252.6–255.1 m** |
+| Corners | consistent with the 252.87 m length | 255.06 m outline (the stated corners) | frame model (the stated corners contradicted the stated length) |
+| Hall heading | 162.85° | 163.03° | 162.85° |
+| Boarding Area A height | 17.4 m | 18.3 m | 17.9 m |
+| Boarding Area G height | fails (see above) | 16.9 m | 17 m kept, range 13–20 m |
+
+The 860-ft conflict survives both models.
+
+### V.3 Changes made to `spec_itb.json` (by `itb_verify.py --apply`)
+
+- **Corrected values** (the old value kept under `corrected`):
+  - `roof.corners_obs`: frame-model corners; the old ones are also kept as `alt_x_only_model`.
+  - `ba_a.height_roof`: 17.0 → **17.9 m**, range 16.9–18.8, confidence low → medium.
+- **Status changes:**
+  - **snippet-only → verified (SEAONC first-hand):** `roof.cantilever_end`, `roof.truss_depth`, `roof.columns` and
+    `itb.steel`.
+  - **unverified → verified:** `hall.size_snippet`.
+  - **unverified → conflict:** `itb.gates_2000`, now 24 vs 26.
+- **Additions:**
+  - `range_m` on `roof.length_obs` (252.6–255.1), `ba_a.height_roof` and `ba_g.height_roof` (13–20);
+  - `alt_frame_model` on `roof.centre_obs` and `naip.k_model`;
+  - `naip_roof_width_m` on both pier footprints (A 37.85 m, G 38.4 m; G's "~33.5 m" refuted);
+  - a `verification` record on all 65 items, and `photos_verification`.
+- **Sources and lists:**
+  - The `seaonc` source is now `read: full`.
+  - The `unverified` list drops the SEAONC / "705 × 210 × 83" entries and gains three: the AISC PDF, the NAIP 2024
+    sensor, and the $75 M cost.
+  - One open question added (below).
+
+### V.4 Still unknown, and what would settle it
+
+1. **Roof length**: 252.6–255.1 m (NAIP) against 860 ft = 262.1 m (SEAONC, Smith-Emery). The 380-ft centre span is now
+   confirmed independently by the DOF pair, so the discrepancy sits in the end cantilevers: 145 ft visible against 160 ft
+   published. Any one of these would settle it: an SFO record roof plan, a ground survey of the tip fascias, or the NAIP
+   2024 FGDC metadata with the frame centres.
+2. **Truss length (320 ft) and centre section (180 ft)**: only the AISC article states them, and it is still unreadable.
+3. **Crown and tip heights**: these rest on the 2005 photo, which could not be re-checked this round (rate limit); the
+   tips also rest on extrapolation of the eave fit.
+4. **Pier pods**: their heights are unmeasured (A pod 22–25 m by relief; DOF 25.9 m), and G has no DOF entry.
+5. **Level-3 floor**: still only bracketed (9.6–14.8 m) by published heights.
+6. **The 2026 roof** (PV layout) and **the $75 M cost**: as before.
+7. **The lens skylight plan** (lens or D shape): one interior photo, e.g. Famartin 2025, would settle it.
+
+Reproduce:
+```bash
+python3 tools/buildings/itb_naip_measure.py          # unchanged; output identical
+python3 tools/buildings/build_spec_itb.py            # regenerates spec_itb.json without the verdicts ...
+python3 tools/buildings/itb_verify.py --apply        # ... so re-apply them (writes itb_verify.json and the spec)
+```

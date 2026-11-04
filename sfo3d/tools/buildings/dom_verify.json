@@ -1,0 +1,543 @@
+{
+ "generated_by": "tools/buildings/dom_verify.py",
+ "date": "2026-11-04",
+ "reproduce": {
+  "ba_a_body": {
+   "h_m": 18.74,
+   "spec": 18.74
+  },
+  "ba_b_south": {
+   "h_m": 12.87,
+   "spec": 12.87
+  },
+  "ba_e_north": {
+   "h_m": 13.51,
+   "spec": 13.51
+  },
+  "ba_f_ne_arm": {
+   "h_m": 11.03,
+   "spec": 11.03
+  },
+  "ba_d_head": {
+   "h_m": 8.92,
+   "spec": 8.92
+  },
+  "ba_c_east": {
+   "h_m": 7.54,
+   "spec": 7.54
+  }
+ },
+ "tower_shadow_2020": {
+  "method": "sub-pixel 50 % crossings of both shadow edges every 1 m over x -689..-658 (0.05 m/px crop, sigma 0.2 m); centre line fitted by least squares",
+  "heading_deg": 88.87,
+  "se_deg": 0.18,
+  "edge_slopes": {
+   "top": -0.17,
+   "bottom": 0.131
+  },
+  "note": "the two edges diverge unequally (the shaft / flare is not a circular cylinder), so the centre line carries a systematic error of the order of 1 deg beyond the statistical one",
+  "alt_range_-693": 88.09
+ },
+ "sun_2020": {
+  "research_azimuth": {
+   "shadow_az_deg": 87.4,
+   "sun_el_deg": 39.21,
+   "utc": "23:50",
+   "s20_abs": 1.226
+  },
+  "remeasured_azimuth": {
+   "shadow_az_deg": 88.87,
+   "sun_el_deg": 37.33,
+   "utc": "00:00",
+   "s20_abs": 1.311
+  },
+  "remeasured_azimuth_alt_range": {
+   "shadow_az_deg": 88.09,
+   "sun_el_deg": 38.42,
+   "utc": "23:54",
+   "s20_abs": 1.261
+  },
+  "calibrated": {
+   "s20_abs": 1.19,
+   "note": "calibrated in the research (DOF 06-035331 + BA-A pole lean); on the sun path it needs a shadow azimuth of ~86.7 deg (el 40.0)"
+  },
+  "options": {
+   "calibrated": {
+    "shadow_az": 87.4,
+    "s20_abs": 1.19
+   },
+   "central": {
+    "shadow_az": 88.0,
+    "s20_abs": 1.25
+   },
+   "sunpath": {
+    "shadow_az": 88.87,
+    "s20_abs": 1.311
+   }
+  }
+ },
+ "heights_at_sunpath_s20": {
+  "ba_a_body": {
+   "calibrated": 18.74,
+   "central": 17.83,
+   "sunpath": 16.94
+  },
+  "ba_b_south": {
+   "calibrated": 12.87,
+   "central": 12.25,
+   "sunpath": 11.64
+  },
+  "ba_e_north": {
+   "calibrated": 13.51,
+   "central": 12.85,
+   "sunpath": 12.21
+  },
+  "ba_f_ne_arm": {
+   "calibrated": 11.03,
+   "central": 10.49,
+   "sunpath": 9.97
+  },
+  "ba_d_head": {
+   "calibrated": 8.93,
+   "central": 8.49,
+   "sunpath": 8.07
+  },
+  "ba_c_east": {
+   "calibrated": 7.53,
+   "central": 7.2,
+   "sunpath": 6.99
+  }
+ },
+ "ba_b": {
+  "windows": [
+   {
+    "s2020": -432.0,
+    "p_20_24": 2.25,
+    "r": 0.977,
+    "p_22_24": -0.3,
+    "r22": 0.991
+   },
+   {
+    "s2020": -430.0,
+    "p_20_24": 2.3,
+    "r": 0.998,
+    "p_22_24": -0.3,
+    "r22": 0.997
+   },
+   {
+    "s2020": -428.0,
+    "p_20_24": 4.5,
+    "r": 0.773,
+    "p_22_24": -0.25,
+    "r22": 0.999
+   },
+   {
+    "s2020": -426.0,
+    "p_20_24": 2.25,
+    "r": 0.981,
+    "p_22_24": -0.4,
+    "r22": 0.998
+   },
+   {
+    "s2020": -424.0,
+    "p_20_24": 1.25,
+    "r": 0.788,
+    "p_22_24": -0.15,
+    "r22": 0.998
+   },
+   {
+    "s2020": -422.0,
+    "p_20_24": 6.0,
+    "r": 0.549,
+    "p_22_24": 4.95,
+    "r22": 0.938
+   },
+   {
+    "s2020": -420.0,
+    "p_20_24": 1.8,
+    "r": 0.759,
+    "p_22_24": -0.8,
+    "r22": 0.854
+   },
+   {
+    "s2020": -418.0,
+    "p_20_24": 3.6,
+    "r": 0.885,
+    "p_22_24": -0.7,
+    "r22": 0.963
+   },
+   {
+    "s2020": -416.0,
+    "p_20_24": 3.4,
+    "r": 1.0,
+    "p_22_24": -0.4,
+    "r22": 0.975
+   },
+   {
+    "s2020": -414.0,
+    "p_20_24": 3.4,
+    "r": 0.999,
+    "p_22_24": -0.35,
+    "r22": 0.993
+   },
+   {
+    "s2020": -412.0,
+    "p_20_24": 3.3,
+    "r": 0.987,
+    "p_22_24": -0.25,
+    "r22": 0.998
+   },
+   {
+    "s2020": -410.0,
+    "p_20_24": 3.3,
+    "r": 0.993,
+    "p_22_24": -0.4,
+    "r22": 0.975
+   },
+   {
+    "s2020": -408.0,
+    "p_20_24": 3.3,
+    "r": 0.992,
+    "p_22_24": -0.2,
+    "r22": 0.995
+   },
+   {
+    "s2020": -406.0,
+    "p_20_24": 3.45,
+    "r": 0.999,
+    "p_22_24": -0.3,
+    "r22": 0.998
+   },
+   {
+    "s2020": -404.0,
+    "p_20_24": 3.45,
+    "r": 0.985,
+    "p_22_24": -0.3,
+    "r22": 0.997
+   },
+   {
+    "s2020": -402.0,
+    "p_20_24": 3.35,
+    "r": 0.996,
+    "p_22_24": -0.3,
+    "r22": 0.997
+   },
+   {
+    "s2020": -400.0,
+    "p_20_24": 3.45,
+    "r": 0.995,
+    "p_22_24": -0.2,
+    "r22": 0.952
+   },
+   {
+    "s2020": -398.0,
+    "p_20_24": 3.4,
+    "r": 0.995,
+    "p_22_24": -0.15,
+    "r22": 0.998
+   },
+   {
+    "s2020": -396.0,
+    "p_20_24": 3.45,
+    "r": 0.996,
+    "p_22_24": -0.15,
+    "r22": 0.997
+   },
+   {
+    "s2020": -394.0,
+    "p_20_24": 3.4,
+    "r": 0.997,
+    "p_22_24": -0.2,
+    "r22": 0.998
+   },
+   {
+    "s2020": -392.0,
+    "p_20_24": 3.35,
+    "r": 0.997,
+    "p_22_24": -0.2,
+    "r22": 0.99
+   },
+   {
+    "s2020": -390.0,
+    "p_20_24": 3.55,
+    "r": 0.695,
+    "p_22_24": -0.2,
+    "r22": 0.999
+   }
+  ],
+  "p_low_wnw_band": 2.25,
+  "p_low_ese_lip": 2.3,
+  "p_low": 2.28,
+  "p_central": 3.4,
+  "ratio_low_central": 0.669,
+  "ese_lip_2020": -381.55,
+  "ese_lip_2024": -379.25,
+  "central_edge_2020": {
+   "pos": -388.0,
+   "contrast": -114.6,
+   "grad": -12.74
+  },
+  "central_shadow_end_on_low_roof_2020": {
+   "pos": -383.1,
+   "contrast": 31.1,
+   "grad": 4.79
+  },
+  "step_shadow_2020": 4.9,
+  "band20": 12.03,
+  "band24": 6.0,
+  "p_research": 3.35,
+  "h_research": 12.87
+ },
+ "ba_b_section": {
+  "calibrated": {
+   "den": 1.14,
+   "h_low": 13.81,
+   "h_central_parallax": 20.6,
+   "h_central_step_shadow": 19.44,
+   "h_central": 20.02,
+   "k20_n": 0.155,
+   "k24_n": 0.32
+  },
+  "central": {
+   "den": 1.199,
+   "h_low": 13.14,
+   "h_central_parallax": 19.6,
+   "h_central_step_shadow": 18.49,
+   "h_central": 19.04,
+   "k20_n": 0.169,
+   "k24_n": 0.342
+  },
+  "sunpath": {
+   "den": 1.261,
+   "h_low": 12.49,
+   "h_central_parallax": 18.62,
+   "h_central_step_shadow": 17.57,
+   "h_central": 18.1,
+   "k20_n": 0.184,
+   "k24_n": 0.366
+  }
+ },
+ "ba_e": {
+  "windows": [
+   {
+    "s2020": -730.0,
+    "p_20_24": -1.7,
+    "r": 0.814
+   },
+   {
+    "s2020": -728.0,
+    "p_20_24": 1.2,
+    "r": 0.941
+   },
+   {
+    "s2020": -726.0,
+    "p_20_24": 1.3,
+    "r": 0.981
+   },
+   {
+    "s2020": -724.0,
+    "p_20_24": 0.7,
+    "r": 0.989
+   },
+   {
+    "s2020": -722.0,
+    "p_20_24": 1.25,
+    "r": 0.838
+   },
+   {
+    "s2020": -720.0,
+    "p_20_24": -2.6,
+    "r": 0.897
+   },
+   {
+    "s2020": -718.0,
+    "p_20_24": 2.55,
+    "r": 0.998
+   },
+   {
+    "s2020": -716.0,
+    "p_20_24": 2.65,
+    "r": 0.999
+   },
+   {
+    "s2020": -714.0,
+    "p_20_24": 2.6,
+    "r": 1.0
+   },
+   {
+    "s2020": -712.0,
+    "p_20_24": 2.6,
+    "r": 1.0
+   },
+   {
+    "s2020": -710.0,
+    "p_20_24": 2.8,
+    "r": 0.97
+   },
+   {
+    "s2020": -708.0,
+    "p_20_24": 2.7,
+    "r": 0.983
+   },
+   {
+    "s2020": -706.0,
+    "p_20_24": 2.75,
+    "r": 0.973
+   },
+   {
+    "s2020": -704.0,
+    "p_20_24": 2.65,
+    "r": 0.998
+   },
+   {
+    "s2020": -702.0,
+    "p_20_24": 2.6,
+    "r": 0.992
+   },
+   {
+    "s2020": -700.0,
+    "p_20_24": 2.65,
+    "r": 0.987
+   },
+   {
+    "s2020": -698.0,
+    "p_20_24": 2.6,
+    "r": 0.995
+   },
+   {
+    "s2020": -696.0,
+    "p_20_24": 2.6,
+    "r": 0.998
+   },
+   {
+    "s2020": -694.0,
+    "p_20_24": 2.6,
+    "r": 0.998
+   },
+   {
+    "s2020": -692.0,
+    "p_20_24": -3.2,
+    "r": 0.996
+   },
+   {
+    "s2020": -690.0,
+    "p_20_24": 5.8,
+    "r": 0.868
+   }
+  ],
+  "p_roof_median": 2.6,
+  "p_roof_n": 13,
+  "p_roof_range": [
+   2.55,
+   2.8
+  ]
+ },
+ "dof": {
+  "06-035323": {
+   "type": "BLDG",
+   "agl_ft": 17,
+   "acc": "1A",
+   "jdate": "2013289",
+   "x": -696.67,
+   "z": 628.73,
+   "nearest_outline": "Boarding Area B",
+   "distance_outside_m": 60.0,
+   "inside": []
+  },
+  "06-035351": {
+   "type": "BLDG",
+   "agl_ft": 50,
+   "acc": "1A",
+   "jdate": "2013289",
+   "x": -881.37,
+   "z": 518.05,
+   "nearest_outline": "Harvey Milk Terminal 1",
+   "distance_outside_m": 0.0,
+   "inside": [
+    "Harvey Milk Terminal 1"
+   ]
+  },
+  "06-035322": {
+   "type": "BLDG",
+   "agl_ft": 24,
+   "acc": "1A",
+   "jdate": "2013289",
+   "x": -620.2,
+   "z": 493.11,
+   "nearest_outline": "Boarding Area C",
+   "distance_outside_m": 26.7,
+   "inside": []
+  },
+  "06-035321": {
+   "type": "BLDG",
+   "agl_ft": 24,
+   "acc": "1A",
+   "jdate": "2013289",
+   "x": -482.1,
+   "z": 257.82,
+   "nearest_outline": "Boarding Area D",
+   "distance_outside_m": 37.2,
+   "inside": []
+  },
+  "06-035320": {
+   "type": "BLDG",
+   "agl_ft": 25,
+   "acc": "1A",
+   "jdate": "2013289",
+   "x": -444.31,
+   "z": 194.0,
+   "nearest_outline": "Boarding Area D",
+   "distance_outside_m": 31.8,
+   "inside": []
+  },
+  "06-039216": {
+   "type": "BLDG",
+   "agl_ft": 130,
+   "acc": "4D",
+   "jdate": "2016246",
+   "x": -896.34,
+   "z": 178.87,
+   "nearest_outline": "Terminal 3",
+   "distance_outside_m": 0.0,
+   "inside": [
+    "Terminal 3"
+   ]
+  },
+  "06-035330": {
+   "type": "BLDG",
+   "agl_ft": 25,
+   "acc": "1A",
+   "jdate": "2013289",
+   "x": -486.94,
+   "z": 71.91,
+   "nearest_outline": "Boarding Area D",
+   "distance_outside_m": 23.7,
+   "inside": []
+  },
+  "06-035331": {
+   "type": "BLDG",
+   "agl_ft": 34,
+   "acc": "1A",
+   "jdate": "2013289",
+   "x": -1027.22,
+   "z": -211.16,
+   "nearest_outline": "Boarding Area F",
+   "distance_outside_m": 0.0,
+   "inside": [
+    "Terminal 3",
+    "Boarding Area F"
+   ]
+  },
+  "06-035332": {
+   "type": "BLDG",
+   "agl_ft": 16,
+   "acc": "1A",
+   "jdate": "2013289",
+   "x": -1022.09,
+   "z": -243.79,
+   "nearest_outline": "Terminal 3",
+   "distance_outside_m": 9.2,
+   "inside": []
+  }
+ }
+}

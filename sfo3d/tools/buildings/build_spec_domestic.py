@@ -380,3 +380,12 @@ spec = dict(
 )
 json.dump(spec, open(os.path.join(HERE, 'spec_domestic.json'), 'w'), indent=1, ensure_ascii=False)
 print('items', len(I), 'sources', len(S), 'photos', len(photos))
+
+# adversarial fact-check records (tools/buildings/dom_verify.py -> dom_verify.json; doc section "Verification"): re-applied
+# after every regeneration so corrected values keep their `corrected` / `verification` records
+if os.path.exists(os.path.join(HERE, 'dom_verify.json')):
+    import sys
+    sys.path.insert(0, HERE)
+    import dom_verify_spec
+    dom_verify_spec.apply(os.path.join(HERE, 'spec_domestic.json'), json.load(open(os.path.join(HERE, 'dom_verify.json'))))
+    print('verification records applied (dom_verify_spec.py)')

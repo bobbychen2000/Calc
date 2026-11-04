@@ -3,6 +3,10 @@
 Research note, 26 Sep 2026. **This is a research draft for the owner's review.** No 2-D sheet or 3-D geometry has been
 built from it yet, per the owner's method (drawings first).
 
+**Verified adversarially on 4 Nov 2026: see [Verification](#verification) at the end.** It refutes the T1 "70 ft"
+skylight-truss figure (it is the ITB's), finds BA-B stepped (outer edges ~13.1 m, raised central roof ~19.0 m), and
+moves every NAIP height by about −5 % (2020 sun scale). The corrected values are in the spec.
+
 Where things are:
 
 | What | Where | Committed? |
@@ -391,3 +395,208 @@ Helpers:
 - `dom_common.py`: epoch rasters, (s, t) crops, DOF reader, QA grids;
 - `dom_profile.py`: median cross-profiles and sub-pixel steps;
 - `dom_edges.py`: per-row edge picker, used in exploration.
+
+---------------------------------------------------------------------------------------------------------------------
+
+## Verification
+
+Adversarial fact-check, 4 Nov 2026 (section V of this note). I re-fetched the cited sources I could reach and tried to
+refute each key height, dimension, date and licence. Where I could, I used a *different* method from the one above.
+- Tool: `tools/buildings/dom_verify.py` writes `tools/buildings/dom_verify.json` (numbers only) and the local crop
+  `out/buildings/domestic/verify/bab_section_2020_2024.jpg`; `python3 tools/buildings/dom_verify.py --apply` (and every
+  run of `build_spec_domestic.py`) writes the records into the spec via `tools/buildings/dom_verify_spec.py`.
+- Imagery: NAIP 2020, 2022 and 2024 re-made with `dom_naip_epochs.py` (2020 / 2022 from the Planetary Computer COGs,
+  which still serve range reads; 2024 from the restored USDA mosaic). `dom_heights.py` on them reproduces
+  `dom_heights.json` byte for byte.
+- Re-fetched sources are in `refs/cache/buildings/domestic/src/verify/`: the T3W CDR CD Phase 3 PDF, the SFO Museum
+  reflector page, the SFO Museum BA-B record, the FAA DOF (`refs/cache/lighting/DAILY_DOF_CSV.ZIP`), the flysfo T1 and
+  T3W releases, Arup, DBIA, Cupertino Electric, RDH, Airport Improvement (T1, T2), IDA, Hensel Phelps, Gensler T2 and
+  Wikipedia. Commons licences: `commons_verify.json`.
+- `js/` and `data/` are untouched. Refuted or corrected values are corrected in `tools/buildings/spec_domestic.json`.
+  Each one carries a `verification` record, and a `corrected` record holds the previous value and the reason.
+
+**Verdicts.** CONFIRMED: an independent check agrees. PLAUSIBLE: consistent, but not pinned tighter. DISPUTED: an
+independent check conflicts with it. CORRECTED or REFUTED: shown wrong.
+
+### V.1 Claim by claim
+
+| # | Claim | Verdict | Evidence |
+|---|---|---|---|
+| 1 | T1 Main Hall skylight trusses 70 ft above the Level 3 floor; four 180 × 30 ft reflectors (SFO Museum) | **REFUTED (wrong building)** | The page's location line reads "Dianne Feinstein **International** Terminal, Main Hall - Level 3 - Pre-Security", dated **2000** (the ITB opened in 2000). "Harvey Milk Terminal 1" appears only in the site's list of terminals. So the figures describe the ITB main hall, not T1. The page also disagrees with itself: its dimension field reads "L160 in. x W25 in. each", against "180 x 30-foot" in the text. T1 Center has **no** published height. |
+| 2 | T1 skylight count conflict (SFO Museum 4 vs Airport Improvement 3) | **CORRECTED** | With item 1 refuted, the conflict disappears. Airport Improvement 2020 (the Gensler principal, in the T1 Center section) says: "Three large skylights provide daylighting in the tremendous space". The three ~9 × 11 m glazed openings seen on NAIP 2024 fit that. |
+| 3 | \|s20\| = 1.19 ± 0.03, fixed by two controls | **DISPUTED: precision refuted, value moved** | See V.2. On the sun path, the research's own ATCT azimuth (87.4°) gives **1.226**; 1.19 would need 86.7°. The re-measured shadow centre line gives 88.1–88.9°, i.e. 1.26–1.31. The DOF control fits **~1.27** best and only bounds the value to 1.17–1.40. Only the BA-A pole-lean check favours 1.19. **Adopted: 1.25, range 1.19–1.31.** Every two-epoch height therefore scales by ×0.95, within a range of ×0.90–1.00. |
+| 4 | Two-epoch method (both leans cancel) | **CONFIRMED (algebra)** | Re-derived term by term (V.3). It holds **only if** all four picks (band20, band24, p and the edge) belong to one roof level, and if k24 is the same on both faces. |
+| 5 | BA-B outer roof edge 12.9 ± 0.7 m; "the dark ESE perimeter strip and the PV rows shift alike, so the strip is not a lower eave" | **CORRECTED: the section is stepped** | See V.3. The parallax splits into two populations: the central PV field moves **3.40 m**, and the side bands and outer edges move **2.25–2.30 m** (r > 0.95). The 2020 "dark strip" (s −388…−382) is the **shadow of a raised central roof** on the lower ESE band; in 2024 that strip is white roof with one thin PV row. The research had paired the outer-edge bands with the central shift. Corrected: outer (lower) edges **13.1 m** (range 12.5–13.8, ±0.7 picks); raised central roof **19.0 m** (18.1–20.0, ±1). |
+| 6 | BA-B lean-free edges: ESE 3.3 m outside the level-2 outline, WNW 1.6 m inside; width 55.4 vs 53.7 m | **CORRECTED** | The offsets of the research lines from the outline re-measure as stated (3.32 / 1.66 m). The corrected height and leans move the ESE edge to **~2.3 m** outside the outline (WNW ~1.7 m inside), for a width of **~54.3 m**. |
+| 7 | BA-B PV rows ~5.5 m wide at ~9 m pitch | **PLAUSIBLE (width corrected)** | Autocorrelation gives a pitch of **9.1 m (2020) / 9.3 m (2024)**. The dark-row widths are **5.7–7.1 m**. |
+| 8 | BA-E 13.5 ± 0.7 m to the fascia, one level at the edge | **PLAUSIBLE; value 12.85 m** | The local parallax is uniform across the roof: median 2.60 m, range 2.55–2.80, r > 0.95. So this is one level and the method applies. The fascia-lip pick allows band20 10.6–11.3 m (up to −0.6 m). Scale: 12.2–13.5 m. |
+| 9 | BA-F NE arm 11.0 m vs DOF 06-035331 34 ft | **PLAUSIBLE; value 10.49 m** | The DOF point lies **inside** the BA-F outline, at the NE arm tip: it is on the building. At \|s20\| 1.25 the arm measures 10.49 m, against 10.36 m in the DOF. The local parallax at the ESE edge is 1.75–1.85 m (the research used 1.98). |
+| 10 | DOF 06-035332 (16 ft) is "a lower end structure or rotunda" of BA-F | **REFUTED** | It lies **9.2 m outside** the T3/BA-F outline, beyond the pier tip on the apron, where aircraft park. It is an apron object (probably a bridge), not BA-F. |
+| 11 | BA-D DOF points 24–25 ft "at the head corners" | **REFUTED** | 06-035330, 321 and 320 lie **23.7, 37.2 and 31.8 m outside** the BA-D outline. DOF 1A means ±20 ft = 6 m horizontally, so none of them is on the pier. They cannot check BA-D. |
+| 12 | BA-D head 8.9 m (low) | **PLAUSIBLE (low; no control)** | Reproduced. Scale: 8.1–8.9 m (adopted 8.49). Its two faces are 118 m apart, and the local parallax across the head varies from 0.5 to 7 m, so the head is not one level. |
+| 13 | BA-C 7.5 ± 1.6 m (single face) | **PLAUSIBLE (low)** | Scale: 7.0–7.5 m (adopted 7.20). The assumed k24.x of 0.40 is not independently checked. |
+| 14 | Control BA-A 18.7 m ("1 % agreement") | **PLAUSIBLE; value 17.83 m** | The 1 % is the k24 lean (pole model at x −1225), which is circular with \|s20\| 1.19. The ITB research measures this roof at 17.0 ± 2.5 m. At 1.25 the value is 17.83 m. |
+| 15 | T3 levels: L1 11'-0", T3W L1 10'-3", L2 27'-0", L2M 42'-6", L3 45'-0", R2 58'-6", R3 81'-0", T3W parapet 66'-0" | **CONFIRMED** | Re-read with pdftotext from the re-fetched CDR. "T3 R2 / R3 TOP OF ROOF @ HIGH PT." is printed verbatim. **No datum is printed** (still open). |
+| 16 | Wall sections: field 16'-0" + 18'-0" + 22'-0" = 56'-0" with a 42" parapet; gatehouse 16'-9" + 18'-0" … = 59'-7" with an 8'-0" penthouse screen | **CONFIRMED (wording)** | The field section prints 10'-00", 18'-00", 16'-00", 56'-00", 10'-00", 2'-00" and 0'-42". So **22'-0" is the sum 10 + 10 + 2**, not a printed dimension. The gatehouse section prints 59'-07" and 8'-00". |
+| 17 | SFO Museum polygons are level-2 floor outlines | **CONFIRMED** | Re-fetched record 1947304261 (BA-B): `sfo:level` 2, `wfnd:level` 2. |
+| 18 | BA-B: 25 gates; two levels and a mezzanine; three-storey concrete frame; 100-ft piles; View glass 112,000 sq ft; Low-E at the clerestory; 1 MW / 1.2 MWdc, ~3,000 panels; 619,150 / 617,700 sq ft | **CONFIRMED as published** | Each was re-read in Arup, DBIA, RDH, Airport Improvement and Cupertino Electric. Cupertino Electric also says "500,000-square-foot project". |
+| 19 | Dates: T1 phases (July 2019, May 2020, 2021, 17 Jun 2024 with gates B3/C1); T3W start 20 Aug 2024 ($2.6 B, 650,000 + 200,000 sq ft, six-storey building); BA-E unveiled 25 Jan 2014 ($138 M, 10 gates, 68,800 sq ft); T2 reopened 14 Apr 2011 ($383 M, 640,000 sq ft, two levels, 14 gates, LEED Gold) | **CONFIRMED** | Re-read in flysfo (both releases), Arup ("three phases (2019, 2020, and 2021)"), Airport Improvement, Hensel Phelps, Gensler and Wikipedia. Not re-read: the exact day 23 Jul 2019. "Courtyard 4" is the CDR's name and is not in the press release. T3W openings: fall 2027 / early 2028 / early 2029. |
+| 20 | BA-E roof "tapered edges overhanging clerestory glazing … long-span trusses"; middle two column rows removed | **CONFIRMED** | IDA entry re-read verbatim. |
+| 21 | T2 "floating angular planes", skylights and clerestories | **CONFIRMED** | Airport Improvement 2011 re-read. The 456 kW PV figure was not re-read (it is not in Airport Improvement). |
+| 22 | International Terminal rebuild (Gensler) 1983 | **PLAUSIBLE (secondary)** | Wikipedia gives 1983 in one passage and 1984 in another. |
+| 23 | DOF 06-039216 (130 ft) is an antenna on the garage, not a terminal | **PLAUSIBLE (not re-read)** | DOF re-read: BLDG, 130 ft, accuracy **4D** (±250 ft H / ±50 ft V), study 2012AWP07455OE. Its DOF position falls *inside* the T3 outline, which 4D allows. The OE/AAA page was not re-fetched (the endpoint returned 404). |
+| 24 | Photo licences (26 files) | **CONFIRMED; authors corrected** | All licences match the Commons API. p24 and p25 report CC BY-SA 3.0 as their first licence, with others alongside. **p17–p20 author: "Benoît Prieur"**; the spec had HTML residue. |
+| 25 | Cross-workflow: the ATCT axis is at x ≈ −733.5, 7 m east of the tower research | **REFUTED as a conflict** | It assumed \|s20\| = 1.19. At 1.25–1.31 the same shadow puts the axis about 4–8 m further west, at about −737 to −741. |
+| 26 | Truss rhythm, facade bays | **STILL UNKNOWN** | No domestic source gives a truss or bay module. BA-E's trusses are "long-span" only. The T3W elevations carry grid lines 1.W–11.W but print no spacing. NAIP cannot see facades. |
+
+### V.2 The 2020 sun (the scale of every two-epoch height)
+
+Only \|s20\|, the 2020 shadow length per metre of height, sets the scale: h = (band20 + band24 − p) / ((s20 − s24)·n).
+
+**Shadow azimuth.** I re-measured the ATCT shadow on NAIP 2020 differently: the sub-pixel 50 % crossings of both shadow
+edges every metre along x, with the centre line fitted.
+- Over x −689…−658 the fit gives **88.87 ± 0.18°**; over x −693…−658 it gives 88.09°.
+- The two edges diverge unequally (slopes −0.17 and +0.13), because the shaft and flare are not a circular cylinder. So
+  the centre line carries about 1° of systematic error.
+- The research's 87.4 ± 1.5° came from the direction from the tower axis to the cab-shadow blob. It is compatible, but
+  sits at the low end.
+
+**Sun-path elevation** on 2020-05-24 (`dom_sun.py`, NOAA):
+
+| Shadow azimuth | Elevation | \|s20\| | Note |
+|---|---|---|---|
+| 86.7° | 40.0° | 1.19 | the research's calibrated value |
+| **87.4°** | **39.2°** | **1.226** | the research's own measured azimuth |
+| 88.1° | 38.4° | 1.261 | |
+| 88.9° | 37.3° | 1.311 | |
+
+**Controls.**
+
+| Control | What it gives |
+|---|---|
+| FAA DOF 06-035331, 34 ± 3 ft, on the BA-F arm tip roof (V.1 #9) | best fit 1.27; bounds 1.17–1.40 |
+| BA-A two-epoch k24 against the ITB pole model | 1.19, but the pole lean is extrapolated 120–400 m and rests on DOF base positions (±20 ft) |
+| BA-A against the ITB research's own 17.0 ± 2.5 m | 1.31 |
+
+**Not achieved: a direct pole measurement.** A matched-filter search and zoomed inspection of the 2020 shadows of 23
+DOF apron poles (100–157 ft) found no measurable shadow line at 0.6 m GSD against the striped apron markings. Several
+2013 DOF pole positions near T1 and T3 now fall on rebuilt roofs.
+
+**Result.** \|s20\| = **1.25 (range 1.19–1.31)**. The 2020 mosaic may also join strips flown minutes apart, so one sun
+vector for the whole site is itself an assumption.
+
+| Roof | Research (1.19) | **Adopted (1.25)** | At 1.31 |
+|---|---|---|---|
+| BA-A (control) | 18.74 | **17.83** | 16.94 |
+| BA-B outer edges (corrected, V.3) | (12.87) | **13.14** | 12.49 |
+| BA-B raised central roof (new) | – | **19.04** | 18.10 |
+| BA-E fascia | 13.51 | **12.85** | 12.21 |
+| BA-F NE arm (DOF 10.36) | 11.03 | **10.49** | 9.97 |
+| BA-D head (low) | 8.92 | **8.49** | 8.07 |
+| BA-C east (low, single face) | 7.54 | **7.20** | 6.99 |
+
+The pick uncertainty of each height (±0.7 m, or ±1 m for the BA-B central roof) adds to the scale range.
+
+### V.3 Boarding Area B is stepped
+
+**Parallax across the width.** The research used one parallax per roof. Instead I computed local 1-D NCC shifts in 6-m
+windows across the whole width of the BA-B south half (t −1236…−1180). All values below have r > 0.95.
+
+| Part | s (2020) | Shift 2020→2024 |
+|---|---|---|
+| WNW side band | −432…−426 | **2.25 m** |
+| central PV field | −416…−392 | **3.30–3.45 m** (median 3.40) |
+| ESE outer lip (steepest-descent edge per row) | −381.55 → −379.25 | **2.30 m** |
+
+- Between 2022 and 2024 the shift is ~0 everywhere, so k22 ≈ k24.
+- The windows on the step itself (−424…−418) correlate poorly.
+- Different shifts mean different heights. The ratio is **h_low / h_central = 2.28 / 3.40 = 0.67**, independent of the
+  sun and of the leans.
+
+**What the 2020 dark strip is.**
+- In 2020, s −388.0…−383.1 is darker than the roof but lighter than the shadow on the apron (81–133 against 63). That
+  is shadow on a white roof.
+- In 2024 the same place is white roof with a single thin PV row (`bab_section_2020_2024.jpg`).
+- So it is the **shadow of the raised central roof's edge on the lower ESE band**, 4.9 m long in the image. It is not a
+  dark roof strip at the same height.
+
+**Solving.** The research's band20 (12.03) and band24 (6.0) are both outer-edge bands, but its p (3.35) is the central
+field's. With the outer edges' own p = 2.28:
+
+h_low = (12.03 + 6.0 − 2.28) / den = **13.81 / 13.14 / 12.49 m** at \|s20\| 1.19 / 1.25 / 1.31.
+
+The central roof is estimated two ways, which agree within about 1 m:
+- by the parallax ratio, h_low × 3.40 / 2.28 = **19.6 m** (at 1.25);
+- by the step shadow, h_low + 4.9 / (s20 − k20)·n = **18.5 m**.
+
+Adopted **19.0 m (18.1–20.0)**. The leans come out plausible: k20·n = 0.17 and k24·n = 0.34.
+
+**Plan, lean-corrected and approximate:**
+- lower band ~7.5 m wide on the ESE side and ~14 m on the WNW side;
+- raised part ~33 m wide;
+- outer edges ~2.3 m outside the level-2 outline on the ESE side and ~1.7 m inside it on the WNW side.
+
+The ~6 m step is the clerestory of Arup's "Low-E high performance glazing at the clerestory level". This is measured on
+the south half only. The research's 12.87 m for the outer edge is close to the corrected 13.1 m only because two errors
+compensate: the wrong p (+0.9 m) and the \|s20\| scale (−0.7 m).
+
+Algebra check of the method, per face:
+- band20 = h(s20 − k20)·n: on the face away from the 2020 sun, from the leaning roof edge to the end of the cast shadow
+  (a visible facade there is self-shaded and so part of the band);
+- band24 = h(k24 − s24)·n: on the WNW face in 2024, the visible shaded facade plus the shadow, which falls outward
+  because s24·n = −0.114;
+- p = h(k24 − k20)·n.
+
+The sum is h(s20 − s24)·n. All terms must refer to the **same** edge height, which BA-B violated.
+
+### V.4 Changes made to `spec_domestic.json`
+
+Applied by `dom_verify_spec.py`, which is idempotent and re-applied by `build_spec_domestic.py`.
+
+**Values changed** (each keeps a `corrected` record with the previous value and the reason):
+
+| Item | Change |
+|---|---|
+| `sun.2020` | 1.19 → **1.25**, with `shadow_len_range` [1.19, 1.311] |
+| `control.ba_a` | → 17.83 |
+| `bab.h_roof` | → **13.14**, range [12.49, 13.81], renamed to the outer (lower) edges |
+| `bab.roof_edges` | offsets 3.31 / 5.08 → 2.27 / 5.04 |
+| `bae.h_roof` | → 12.85 |
+| `baf.h_roof_ne_arm` | → 10.49 |
+| `bad.h_roof` | → 8.49 |
+| `bac.h_roof` | → 7.20 |
+| photos p17–p20 | author corrected |
+
+Each height above also gets a `range`.
+
+**Refuted:**
+- `t1c.skylight_truss_h` and `t1c.skylight_reflectors`: value set to null, status `refuted`, `applies_to` ITB;
+- `bad.dof`: status `refuted` as BA-D heights.
+
+**Corrected:** `t1c.skylights_count` → 3 (Airport Improvement); the conflict is dissolved.
+
+**New item:** `bab.h_roof_central` 19.04 m (low).
+
+**`verification` records** on every checked item: see V.1.
+
+**List changes:**
+- `current_model_deviations` 1 and 2 rewritten;
+- `open_questions`: replaced the T1 / T2, BA-B clerestory, BA-C / BA-D and tower items; added the NAIP 2020 sun item and
+  a note for the ITB research (the 70 ft / reflectors belong there).
+
+### V.5 What would settle the open points
+
+1. **The 2020 sun.** The acquisition time of the NAIP 2020 strips over SFO (USDA APFO seamline or flight-log
+   metadata), or any object of surveyed height with a clean 2020 shadow. Either fixes every two-epoch height to about
+   ±2 %.
+2. **The BA-B section.** An SFO / HKS section drawing, or a licensed photo of the clerestory step with a scale reference.
+   Also the same parallax scan on the north half and the roof wells.
+3. **The T3 datum.** The SFO project datum against NAVD88, from SFO Design & Construction.
+4. **T1 Center and T2 hall heights.** Still nothing published (item 1).
+
+Reproduce:
+```bash
+python3 tools/buildings/dom_naip_epochs.py --years 2020,2022,2024   # ~2 min
+python3 tools/buildings/dom_verify.py                               # ~10 s -> tools/buildings/dom_verify.json + out/buildings/domestic/verify/
+python3 tools/buildings/dom_verify.py --apply                       # -> spec_domestic.json records
+```

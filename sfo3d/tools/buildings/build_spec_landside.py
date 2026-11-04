@@ -705,6 +705,9 @@ def main():
     ids = [v['id'] for v in VALUES]
     assert len(ids) == len(set(ids)), 'duplicate value ids'
     print('wrote', out, len(VALUES), 'values,', len(SOURCES), 'sources')
+    # keep the adversarial fact-check's corrections (docs/research/buildings_landside.md ## Verification)
+    import landside_verify_apply
+    landside_verify_apply.apply(out)
 
 
 if __name__ == '__main__':

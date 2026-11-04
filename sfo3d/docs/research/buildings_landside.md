@@ -16,6 +16,14 @@ it yet, per the owner's method: drawings first.
   - QA overlays with NAIP pixels are in `out/buildings/landside/`, which is local only: `overview_landside.jpg`,
     `crop_*.jpg`, `qa_cars_*.jpg` and `f_*.png`.
 - **Not touched:** nothing in `js/` or `data/` was edited, and nothing was committed.
+- **Fact-checked 4 Nov 2026:** see `## Verification` at the end. Every value in the spec now carries a verdict.
+  The key changes:
+  - The Garage A / G helix-drum tops are 38–40 m; the "25–30 m" reading is disputed.
+  - The RCC parapet is 54–59 ft (DOF); the NAIP "19.5 m agrees" check is refuted.
+  - The CAC parapet is 17.4–19.2 m and the LTP 1 parapet about 16.5 m, both by shadow.
+  - The Central garage was built in phases from 1963 to 1981.
+  - The Superbay roof has 8 × 17.3-m bays per side (Deep3DS says 50 ft) and a 32-m spine.
+  - The NAIP frames differ in time and in lean.
 
 **Legend.**
 
@@ -470,4 +478,135 @@ Only partly researched. Every item below is [obs, low] or [unverified] unless ma
 python3 tools/buildings/landside_naip_measure.py   # ~1 min: footprints, DOF, roof-shift scans, roof cars, MOC, AirTrain
 python3 tools/buildings/build_spec_landside.py     # -> tools/buildings/spec_landside.json (asserts all source ids exist)
 python3 tools/buildings/landside_fetch.py URL NAME # re-download a source into refs/cache/buildings/landside/src/
+```
+
+---------------------------------------------------------------------------------------------------------------------
+
+## Verification
+
+Adversarial fact-check, 4 Nov 2026 (section 14 of this note). I re-fetched every cited source I could reach and tried
+to refute each key height, dimension, date, level count, roof form and footprint. Where I could, I used a *different*
+method from the one above.
+
+- **Tools.**
+  - `tools/buildings/landside_verify.py` writes `out/buildings/landside/verify/verify.json` plus QA crops with NAIP
+    pixels (local only), offline from the caches:
+    - `dof`: FAA DOF on a newer edition, DOF.CSV of 2026-11-03;
+    - `fp`: footprints re-computed with shapely;
+    - `shift2d`: a 2-D roof-shift scan;
+    - `drums`: helix-drum facade bands;
+    - `shadow`: north shadows on grade, with a NOAA solar ephemeris;
+    - `superbay`: roof rhythm;
+    - `text`: the quotes re-read.
+  - `tools/buildings/landside_verify_apply.py` writes the verdicts and corrections into the spec. Since
+    `build_spec_landside.py` now calls it, a rebuilt spec keeps them; I checked that rebuild + apply is byte-identical
+    and idempotent.
+- **Sources.** 43 re-fetched to `refs/cache/buildings/landside/src/verify_*`, recorded in `SOURCES.json` there. The 13
+  SFO Museum Who's On First records are in `refs/cache/buildings/landside/verify/wof/`.
+- **Not touched.** Nothing in `js/` or `data/`. Nothing committed.
+- **Not reachable.** The Commons API returned HTTP 429, so the 13 photo licences were **not re-checked**. The Buehler
+  page now returns a script shell, and the scanned CAC NOD PDF has no text layer.
+- **Fix to `landside_fetch.py`.** It now falls back to `pdftotext` when PyMuPDF is missing.
+
+**Verdicts.**
+
+| Verdict | Meaning |
+|---|---|
+| CONFIRMED | An independent check agrees. |
+| PLAUSIBLE | Consistent, but not pinned tighter. |
+| DISPUTED | An independent check conflicts with it. |
+| CORRECTED / REFUTED | Shown wrong. |
+| STILL UNKNOWN | No source or measurement settles it. |
+| NOT RE-CHECKED | The source was unreachable. |
+
+**Tally in the spec** (130 values):
+- 84 CONFIRMED, 18 of them with a qualifier (number only, as published, conflict stands, or the definition disputed);
+- 2 PLAUSIBLE;
+- 4 DISPUTED, 6 CORRECTED and 1 REFUTED;
+- 1 STILL UNKNOWN and 28 NOT RE-CHECKED (roof-car counts, photo-based facades, identities);
+- 4 new.
+
+### 14.1 Claim by claim (the key ones; every value carries its record in the spec)
+
+| # | Claim | Verdict | Evidence |
+|---|---|---|---|
+| 1 | Central garage "five-level, 81-foot-tall", 3,680,000 sq ft, 6,460 spaces (DEIR p. 2-34) | **CONFIRMED** (number); definition still unknown | Re-read in the DEIR, its table ("Building 195 3,680,000") and the NOP. NAIP cannot test it: elevated roadways ring the garage, so no shadow falls on grade, and the 2-D scan is weak (best 5 m toward 143°). |
+| 2 | Central garage opened 1981; "an earlier garage stood 1963–1981" | **CORRECTED** | RADP Historic Resources Evaluation (in the appendices): Building 195 "Years constructed: 1963–1981". The first section (Edward B. Page / Gould & Degenkolb, 1963–65, four floors over about the eastern third) "was partially demolished and absorbed by the later phases". "Following the completion of the central parking garage in 1980". App. A Build Year 1974. SFO Museum "1981~" is approximate. **It is one phased building, not a replacement.** |
+| 3 | Central void "200 feet in diameter"; outline hole 58.9 m | **CONFIRMED** | D+B re-read. shapely: area-equivalent 58.74 m, minimum enclosing 58.96 m, centre (−930.8, 275.5). |
+| 4 | Garages A/G "nine-level", AirTrain from Level 7, 8'2" | **CONFIRMED** | Tutor Perini ("the $60 million, nine-level concrete parking garage"; singular, for the 3,200 spaces of both) and flysfo re-read. App. A: Buildings 95 / 495, 2000. |
+| 5 | Garages A/G height 25–36 m; "about three levels above the AirTrain → roof ~25–30 m" | **DISPUTED** (the 25–30 m reading); deck still unknown | New, independent measure. NAIP leans these roofs due east (2-D scan: Garage A best (13.0, 0) m). The ribbed **west facade of each helix drum** is therefore imaged as a band from the outline (a flysfo ground trace; the drum base lies on it, `drums.jpg`) to the drum's top ring. Bands: **13.25 m** (A, 45 rows) and **12.0 m** (G, 57 rows). k = 0.334 / 0.319 from the ITB high-mast-pole model, used **inside** its calibrated x range (−1622…−1346; drums at x −1530 / −1585). **Drum tops 39.6 m (A, IQR 38.9–40.2) and 37.6 m (G, IQR 37.6–39.9), ± about 2 m.** The roof deck can be lower than the drum crown ("arched openings at the top"), but not the drum. For G, the 2-D scan does not reproduce the 12.0 m east peak as a 2-D maximum. |
+| 6 | LTP Garage 1: DOF 86 / 91 ft; levels ≥ 5; the NAIP scan "not usable" (37 m) | DOF **CONFIRMED**; scan **CORRECTED**; levels **PLAUSIBLE** | DOF 1A unchanged; grade 9–12 ft AMSL. **North-end parapet by shadow: 15.9–16.8 m.** The shadow runs 5.25 m from the outline along the shadow direction. The outline is a ground trace there: the roof edge is imaged −2.75 m along u, against −2.79 m predicted from the 5.5-m east lean. So the DOF points are about 10 m higher elements. Lean = 5.5 / 16.5 = **0.33 per m**, against 0.14 from the extrapolated ITB model. The model, not the garage, made the 37 m. A roof at Level 5 fits (4 storeys of about 3.8 m plus a parapet). |
+| 7 | LTP Garage 2: 6 levels, 12-ft floor height, 3,600 stalls, completed 2020, "four seismically isolated structures" | levels / height / stalls / date **CONFIRMED**; structures **CORRECTED** | DLR, ENR, DBIA, Langan and the DEIR footnote re-read. DBIA says "**seismically separated** structures", with no count; "isolated" is in no source. "Four" rests on the Buehler page alone, now unreadable: [unverified]. New: DLR "Louvered towers at three corners". The 60-ft roof deck is not settled by NAIP: the outline's north edges lie 1.75–3.25 m outside the imaged roof, where the 1.8-m lean predicts 0.5 m. |
+| 8 | RCC "66-foot-tall", 1,488,000 sq ft, 2,485 stalls, Building 780 | number **CONFIRMED**; as a roof height **DISPUTED** | DEIR p. 2-36 re-read. The FAA DOF 1A survey (±3 ft) puts the roof outline at **54 ft (three points) and 59 ft (one)**, so 66 ft is 7–12 ft above the surveyed edge. Read it as the tallest element. |
+| 9 | RCC "NAIP 19.5 m agrees with 66 ft" | **REFUTED** | The 3.0-m peak was the third strongest; the 2-D scan ranks (8.5, 2.5) m and (5.5, 1.0) m first. k = 0.154 is the ITB model extrapolated 600 m west, where it fails (item 6, item 12). |
+| 10 | RCC DOF points "NE, W and SW corners" | **CORRECTED** | All four lie on the **west (AirTrain) side**: −35203 near the SW corner, −35204 mid-west, −35205 west, −35329 NW. None is at the NE corner. Missed: 06-035328 BLDG **34 ft** 1A, 1.5 m outside the SE part. |
+| 11 | Build years: LTP 1 1997, RCC 2000 | **DISPUTED** | RADP App. A Build Year (= completion): Building 795 **1994**; 779 / 780 / 782 **1998**. SFO Museum: "1997~" and "2000~", approximate. |
+| 12 | CAC height "about 64 ft (60–66)"; NAIP scan 28.6 m | 64 ft **CONFIRMED within ±1.5 m**; 28.6 m **REFUTED** | North shadows on grade (edges 1, 2, 5) run 5.75–6.0 m. With cot e = 0.313–0.33 (the sun cannot pass 72.59° that day), **h = 17.4–19.2 m**. The outline is a ground trace there: the roof edge is imaged −2.25 to −2.75 m along u, against −1.7 to −2.6 m predicted from the 5.5-m east lean (`ov_cac.jpg`). That fits 4 × 15 ft = 18.3 m plus a parapet. The lean is 0.30 per m here, not the model's 0.19. |
+| 13 | CAC: 4 stories, 15-ft floor-to-floor, 135,000 (136,000) sq ft, Phase II addendum | **CONFIRMED**; area conflict gone | Cavagnero, P&W, Webcor and MCK re-read. P&W now also shows 135,000. DEIR fn. 45 re-read (Case 2019-006583ETM, 17 May 2021). New: Phase 1 = **Building 674**. Phase 2 (demolition of Building 676, the former Design & Construction building) was "anticipated to begin in 2025". |
+| 14 | Grand Hyatt: 12 stories, 4th-floor lobby, opened 7 Oct 2019, 351 rooms, Building 55 | **CONFIRMED** | DBIA, Webcor, AGA, SF Chronicle, the 2019 release and the DEIR re-read. The site conflict 4.2 / 4.7 acres stands (Webcor also says 4.7). |
+| 15 | Grand Hyatt provisional 44 m (40–48) | **STILL UNKNOWN** | The SFO Museum outline (src sfomuseum) is **not a ground trace of the slab**. It covers the west crescent and podium; the slab's white PV roof lies largely east of its concave edge (`z_hyatt.jpg`). The slab's north shadow falls on the station and the elevated roadways. |
+| 16 | Superbay: Building 1060, 1969–72, four bays, six office levels, 120 ft inside, DOF 135 ft | **CONFIRMED** | Weitz, Deep3DS, the SFO Museum negative (12 Jun 1970) and the DEIR re-read; App. A Build Year 1969. DOF: action **C**, JDATE **2011356**, not the 2013 batch. The point sits on the ESE edge of the spine near its SSW end (a = +17.9, b = −58.9 m). |
+| 17 | "cantilever over 230 feet from the center" → "≈70 m each, 165.9 = 2 × 70 + spine" | quote **CONFIRMED**; decomposition **REFUTED** | 230 ft is measured **from the centre**, so tip to tip is ≥ 140.2 m. NAIP (rectified roof, `sb_rect.jpg`): roof 165 m along a (±82.5 m = 271 ft from the centre line); **spine 32 m** (not 25–30); about 66.5 m (218 ft) beyond the spine on each side. |
+| 18 | Superbay layout "each side split into two bays of ~67 m" [inf] | **CORRECTED** (roof form) | NAIP shows each cantilever side **folded into 8 bays of 17.3 m** along the spine: autocorrelation 17.0 m on both sides (r 0.73 / 0.69), fold spacing 17.4 / 17.5 m. Each bay is a light / shaded pair with darker grey tip panels over about 138 m. **New conflict:** Deep3DS "a cantilever system having **50 foot** wide structural bays" (15.24 m, i.e. 9 bays). Relief displacement cannot stretch the period by 13 %. The two aircraft positions per side do not show on the roof and stay [inf]. |
+| 19 | NAIP moment "about 13:25 PDT" for all landside buildings | **CORRECTED** | Frames differ in time. The terminal and North Field frames cast north shadows; the Superbay frame has the sun in the **ESE**: the ESE door facade is imaged as a sunlit 10-m band, and a 5–6 m shadow lies beyond the WNW roof edge (about 10:45–11:35 PDT). NOAA ephemeris for 2024-05-20: maximum 72.59° at 13:06 PDT. Roof-car counts are therefore not one moment. |
+| 20 | One NAIP lean model k(x) for the landside scans | **REFUTED** outside its range | The 2-D scan confirms an **east** lean (bearing 90–106°) for Garage A, LTP 1, RCC, Hyatt and CAC, and 317° for the Superbay. The magnitude is not k(x): CAC 0.30 and LTP 1 0.33 per m (items 6, 12) against 0.19 / 0.14 modelled. Each frame has its own nadir. |
+| 21 | AirTrain: CX-100 9'3" × 39'6", $430 M, 1,900-ft extension "50 feet above a public roadway", "35 to 40 feet", over 6 miles, 41 cars | **CONFIRMED as published** | Fact sheet, SF-03-10, the 2021 release, PTT ($172 M), Airport World ($259 M), PGH Wong and RADP App. B re-read. Opened 24 Feb 2003 (Wikipedia; SFO Museum station inception 2003-02-24); official opening 3 Mar (release). The rail polygon re-run gives 57,727 m², widths 4.5 / 4.8 / 5.1 / 9.5 / 11.5 m and a 7.8-km (4.9-mi) route, so "over 6 miles" probably counts track miles. |
+| 22 | SFO Museum newer A/G station polygons swapped | **CONFIRMED** | WOF geometries: 1729791961 "A" centroid z = +466 (south), 1729791965 "G" z = +240; the newer 1763588569 "(A)" z = +242 and 1763588567 "(G)" z = +469. |
+| 23 | Footprints (all nine) | **CONFIRMED** | shapely minimum rectangles and areas equal the research's cv2 values to 0.1 m / 0.1 m². |
+| 24 | Parking supply 2018 (A 1,008 + 577, G 1,151 + 254, Central 6,459, LTP 1 3,109) | **CONFIRMED** | App. E.1 re-read. The June 2017 sheet splits A 902 / 683 and G 1,130 / 275, with the same totals. |
+| 25 | United MOC DOF 132 / 117 / 116 ft and others; history 1947 / 1948 | **CONFIRMED** (DOF, secondary history) | DOF.CSV 2026-11-03 positions listed in the spec; PCAD and AirlineReporter re-read. |
+| 26 | 13 reference-photo licences | **NOT RE-CHECKED** | Commons API HTTP 429 on 2026-11-04. |
+
+### 14.2 New facts found
+
+| Fact | Value | Source |
+|---|---|---|
+| Central garage construction history | first section 1963–65 (Edward B. Page / Gould & Degenkolb), enlarged 1969–81 by the San Francisco Airport Architects; completed 1980–81; App. A Build Year 1974 | RADP HRE (appendices) |
+| Garage A / G helix-drum tops | 39.6 m / 37.6 m (± about 2 m) | NAIP west-facade band ÷ ITB pole k [obs] |
+| LTP Garage 1 north-end parapet | 15.9–16.8 m | NAIP shadow [obs] |
+| CAC parapet | 17.4–19.2 m | NAIP shadow [obs] |
+| CAC building numbers | Phase 1 = 674; Building 676 = former Design & Construction building, to be demolished for Phase 2 (start anticipated 2025) | DEIR |
+| CAC floor plate vs outline | 135,000 sq ft / 4 = 3,135 m² per floor, against a 4,752 m² outline | arithmetic |
+| Superbay spine | 32 m wide | NAIP [obs] |
+| Superbay roof rhythm | 8 bays of 17.3 m per side, against "50 foot wide structural bays" (Deep3DS) | NAIP [obs] / [pub] |
+| RCC DOF 34-ft building | 06-035328, 1.5 m outside the SE part | DOF |
+| LTP Garage 2 | louvered towers at three corners | DLR |
+| NAIP 2024 frames | not one time: the Superbay frame is a morning frame | NAIP |
+
+### 14.3 Changes made to `spec_landside.json`
+
+- **Verification records.** Every value now carries one: `{verdict, evidence, date}`.
+- **Corrections.** Each keeps the previous fields in `corrected.old`, with the reason:
+  - `naip_epoch`: not one moment.
+  - `cg_built`: now 1963–1981, phased.
+  - `ltp1_built`: range 1994–1997.
+  - `rcc_built`: range 1998–2000.
+  - `rcc_height_check`: withdrawn; it now carries `parapet_dof_m` 16.46–17.98.
+  - `rcc_dof`: positions corrected and the 34-ft point added.
+  - `garage_a_height` / `garage_g_height`:
+    - `drum_top_m` 39.6 / 37.6;
+    - range 25–41.5 / 25–40.
+  - `ltp1_scan`: lean 0.33 per m; model invalid here.
+  - `ltp2_structure`: "separated", count [unverified], louvered towers.
+  - `cac_height`: range 17.4–19.5 and `shadow_obs_m`.
+  - `sb_layout`: spine 32 m, 8 × 17.3 m roof bays, 66.5 m beyond the spine; tag inf → obs.
+- **New values:** `sb_roof_bays_obs`, `sb_structural_bays_pub`, `ltp1_parapet_obs`, `cg_first_section`.
+- **New source:** `verify`.
+- **New conflicts:** 5.
+- **New open questions:** 3.
+
+### 14.4 What would settle the open points
+
+1. **Garages A / G roof deck.** An SFO drawing, or the station platform elevation at Level 7. On NAIP, a free deck edge
+   on the west, or a north shadow on grade, would do; the north sides border elevated ramps.
+2. **The RCC's 66 ft.** What the DEIR measures: the station tower or canopies. The DOF settles the parapet.
+3. **Grand Hyatt.** A ground outline of the slab (SFO GIS), or the FAA OE/AAA filing.
+4. **Superbay bays.** A drawing or a scaled photo: are the 17.3-m roof folds the structural bays?
+5. **Photo licences.** Re-run the Commons check when the API is not rate-limited.
+6. **Lean per frame.** The frame nadirs (NAIP 2024 frame metadata) would turn every east shift into a height.
+
+Reproduce:
+```bash
+python3 tools/buildings/landside_fetch.py URL verify_<source id>.(pdf|html)   # for each source in the spec
+python3 tools/buildings/landside_verify.py all   # ~15 s: dof fp shift2d drums shadow text superbay qa apply
 ```

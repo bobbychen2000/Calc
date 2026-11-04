@@ -1,0 +1,1090 @@
+{
+ "generated_by": "tools/buildings/itb_verify.py",
+ "date": "2026-11-04",
+ "dof": {
+  "file": "DOF.CSV 2026-11-02 (DAILY_DOF_CSV.ZIP re-fetched 2026-11-04)",
+  "objects": {
+   "06-035352": {
+    "type": "BLDG",
+    "agl_ft": 85,
+    "amsl_ft": 94,
+    "acc": "1A",
+    "verified": "O",
+    "action": "A",
+    "jdate": "2013289",
+    "x": -1195.33,
+    "z": 554.97,
+    "ground_amsl_ft": 9
+   },
+   "06-035357": {
+    "type": "POLE",
+    "agl_ft": 156,
+    "amsl_ft": 165,
+    "acc": "1A",
+    "verified": "O",
+    "action": "A",
+    "jdate": "2013289",
+    "x": -1620.8,
+    "z": 520.05,
+    "ground_amsl_ft": 9
+   },
+   "06-035353": {
+    "type": "POLE",
+    "agl_ft": 157,
+    "amsl_ft": 163,
+    "acc": "1A",
+    "verified": "O",
+    "action": "A",
+    "jdate": "2013289",
+    "x": -1346.12,
+    "z": 467.05,
+    "ground_amsl_ft": 6
+   },
+   "06-035356": {
+    "type": "POLE",
+    "agl_ft": 154,
+    "amsl_ft": 162,
+    "acc": "1A",
+    "verified": "O",
+    "action": "A",
+    "jdate": "2013289",
+    "x": -1509.72,
+    "z": 447.04,
+    "ground_amsl_ft": 8
+   },
+   "06-035315": {
+    "type": "BLDG",
+    "agl_ft": 131,
+    "amsl_ft": 139,
+    "acc": "1A",
+    "verified": "O",
+    "action": "A",
+    "jdate": "2013289",
+    "x": -1258.09,
+    "z": 429.44,
+    "ground_amsl_ft": 8
+   },
+   "06-035355": {
+    "type": "POLE",
+    "agl_ft": 153,
+    "amsl_ft": 164,
+    "acc": "1A",
+    "verified": "O",
+    "action": "A",
+    "jdate": "2013289",
+    "x": -1427.07,
+    "z": 421.08,
+    "ground_amsl_ft": 11
+   },
+   "06-034825": {
+    "type": "POLE",
+    "agl_ft": 108,
+    "amsl_ft": 117,
+    "acc": "1A",
+    "verified": "O",
+    "action": "A",
+    "jdate": "2013289",
+    "x": -1088.13,
+    "z": 397.16,
+    "ground_amsl_ft": 9
+   },
+   "06-035354": {
+    "type": "POLE",
+    "agl_ft": 157,
+    "amsl_ft": 163,
+    "acc": "1A",
+    "verified": "O",
+    "action": "A",
+    "jdate": "2013289",
+    "x": -1384.59,
+    "z": 337.85,
+    "ground_amsl_ft": 6
+   },
+   "06-035316": {
+    "type": "BLDG",
+    "agl_ft": 132,
+    "amsl_ft": 140,
+    "acc": "1A",
+    "verified": "O",
+    "action": "A",
+    "jdate": "2013289",
+    "x": -1292.42,
+    "z": 319.11,
+    "ground_amsl_ft": 8
+   },
+   "06-034826": {
+    "type": "POLE",
+    "agl_ft": 108,
+    "amsl_ft": 117,
+    "acc": "1A",
+    "verified": "O",
+    "action": "A",
+    "jdate": "2013289",
+    "x": -1134.46,
+    "z": 248.54,
+    "ground_amsl_ft": 9
+   },
+   "06-034823": {
+    "type": "POLE",
+    "agl_ft": 102,
+    "amsl_ft": 113,
+    "acc": "1A",
+    "verified": "O",
+    "action": "A",
+    "jdate": "2013289",
+    "x": -1133.91,
+    "z": 136.0,
+    "ground_amsl_ft": 11
+   }
+  },
+  "vs_measurement": {
+   "06-035352": {
+    "same_agl": true,
+    "same_amsl": true,
+    "same_acc": true,
+    "moved_m": 0.0
+   },
+   "06-035357": {
+    "same_agl": true,
+    "same_amsl": true,
+    "same_acc": true,
+    "moved_m": 0.0
+   },
+   "06-035353": {
+    "same_agl": true,
+    "same_amsl": true,
+    "same_acc": true,
+    "moved_m": 0.0
+   },
+   "06-035356": {
+    "same_agl": true,
+    "same_amsl": true,
+    "same_acc": true,
+    "moved_m": 0.0
+   },
+   "06-035315": {
+    "same_agl": true,
+    "same_amsl": true,
+    "same_acc": true,
+    "moved_m": 0.0
+   },
+   "06-035355": {
+    "same_agl": true,
+    "same_amsl": true,
+    "same_acc": true,
+    "moved_m": 0.0
+   },
+   "06-035354": {
+    "same_agl": true,
+    "same_amsl": true,
+    "same_acc": true,
+    "moved_m": 0.0
+   },
+   "06-035316": {
+    "same_agl": true,
+    "same_amsl": true,
+    "same_acc": true,
+    "moved_m": 0.0
+   },
+   "06-034826": {
+    "same_agl": true,
+    "same_amsl": true,
+    "same_acc": true,
+    "moved_m": 0.0
+   }
+  },
+  "note": "JDATE yyyyddd = date of the action; ACTION A = added (DOF_README). 2013289 = 2013-10-16."
+ },
+ "relief": {
+  "frame": {
+   "nadir_xz": [
+    -2767.8,
+    443.6
+   ],
+   "nadir_sd": [
+    98.5,
+    8.7
+   ],
+   "H_minus_h": 3704.8,
+   "H_minus_h_sd": 277.3,
+   "rms_m": 0.207,
+   "residuals_xz": [
+    [
+     0.06,
+     0.3
+    ],
+    [
+     -0.13,
+     -0.37
+    ],
+    [
+     0.01,
+     0.3
+    ],
+    [
+     -0.06,
+     0.04
+    ],
+    [
+     0.12,
+     -0.27
+    ]
+   ]
+  },
+  "x_only": {
+   "nadir_x": -2728.4,
+   "H_minus_h": 3593.4,
+   "rms_m": 0.541
+  },
+  "pole_dir_vs_z": [
+   [
+    467.0,
+    90.0,
+    "auto-DoG"
+   ],
+   [
+    337.8,
+    86.8,
+    "auto-DoG"
+   ],
+   [
+    421.1,
+    88.0,
+    "manual"
+   ],
+   [
+    447.0,
+    90.0,
+    "auto-DoG"
+   ],
+   [
+    520.0,
+    94.9,
+    "manual"
+   ]
+  ],
+  "corr_dir_z": 0.913,
+  "note": "frame model: one central projection fitted to the 2-D ring shifts of the five DOF poles; x_only: the measurement's k(x) (no north-south component). Two of the five picks are manual (+-1 m), so the north-south signal (dz up to 1.25 m) is near the pick noise."
+ },
+ "sun": {
+  "date": "2024-05-20",
+  "az_from_shadow": 186.6,
+  "utc": "20:14",
+  "pdt": "13:14",
+  "elev_deg": 72.39,
+  "elev_range_deg": [
+   71.94,
+   72.39
+  ],
+  "declination_deg": 20.09,
+  "cot_elev": 0.3175,
+  "elev_from_shadow_length": 72.5
+ },
+ "planform": {
+  "frame": {
+   "heading_deg": 162.85,
+   "length_m": 252.87,
+   "width_m": 65.39,
+   "centre_xz": [
+    -1244.56,
+    365.4
+   ],
+   "corners": {
+    "NW": [
+     -1313.08,
+     254.23
+    ],
+    "NE": [
+     -1250.59,
+     234.95
+    ],
+    "SE": [
+     -1176.03,
+     476.58
+    ],
+    "SW": [
+     -1238.52,
+     495.86
+    ]
+   },
+   "dof_roof_tops": {
+    "06-035315": {
+     "u": 57.2,
+     "v_inside_west_eave": 0.88
+    },
+    "06-035316": {
+     "u": -58.35,
+     "v_inside_west_eave": 0.61
+    }
+   },
+   "lens_row_u": -2.25,
+   "glass_edges_u": {
+    "N_outer": -124.83,
+    "N_inner": -106.25,
+    "S_inner": 107.24,
+    "S_outer": 122.85
+   },
+   "fascia_u": {
+    "N": -126.44,
+    "S": 126.44
+   }
+  },
+  "x_only": {
+   "heading_deg": 163.03,
+   "length_m": 255.04,
+   "width_m": 65.43,
+   "centre_xz": [
+    -1244.62,
+    364.65
+   ],
+   "corners": {
+    "NW": [
+     -1313.13,
+     252.24
+    ],
+    "NE": [
+     -1250.55,
+     233.14
+    ],
+    "SE": [
+     -1176.11,
+     477.07
+    ],
+    "SW": [
+     -1238.7,
+     496.17
+    ]
+   },
+   "dof_roof_tops": {
+    "06-035315": {
+     "u": 58.04,
+     "v_inside_west_eave": 0.93
+    },
+    "06-035316": {
+     "u": -57.51,
+     "v_inside_west_eave": 0.29
+    }
+   },
+   "lens_row_u": -2.36,
+   "glass_edges_u": {
+    "N_outer": -125.89,
+    "N_inner": -107.16,
+    "S_inner": 108.16,
+    "S_outer": 123.9
+   },
+   "fascia_u": {
+    "N": -127.52,
+    "S": 127.52
+   }
+  },
+  "measurement_corners_outline_length_m": 255.06,
+  "measurement_length_m": 252.68,
+  "dof_pair_along_axis_m": 115.55,
+  "inner_column_span_published_m": 115.82
+ },
+ "naip": {
+  "truss_spacing": {
+   "rows": 207,
+   "imaged_m": 12.282,
+   "iqr": [
+    12.243,
+    12.315
+   ],
+   "true_m": 12.157,
+   "true_ft": 39.89
+  },
+  "axis": {
+   "points": 312,
+   "of": 339,
+   "facade_base_v": -43.66,
+   "slope": 0.00072,
+   "sd_m": 0.15,
+   "heading_deg": 162.81,
+   "grid_t_plus_135": 162.83
+  },
+  "eaves": {
+   "rows": [
+    {
+     "u": -115,
+     "west": -41.0,
+     "east": 25.05,
+     "width": 66.05
+    },
+    {
+     "u": -105,
+     "west": -40.62,
+     "east": 25.45,
+     "width": 66.08
+    },
+    {
+     "u": -95,
+     "west": -40.12,
+     "east": 26.25,
+     "width": 66.38
+    },
+    {
+     "u": -85,
+     "west": -39.75,
+     "east": 26.85,
+     "width": 66.6
+    },
+    {
+     "u": -75,
+     "west": -39.25,
+     "east": 26.85,
+     "width": 66.1
+    },
+    {
+     "u": -65,
+     "west": -39.0,
+     "east": 27.15,
+     "width": 66.15
+    },
+    {
+     "u": -55,
+     "west": -38.75,
+     "east": 27.25,
+     "width": 66.0
+    },
+    {
+     "u": -45,
+     "west": -39.12,
+     "east": 26.95,
+     "width": 66.08
+    },
+    {
+     "u": -35,
+     "west": -39.75,
+     "east": 26.35,
+     "width": 66.1
+    },
+    {
+     "u": -25,
+     "west": -40.5,
+     "east": 25.85,
+     "width": 66.35
+    },
+    {
+     "u": 25,
+     "west": -40.5,
+     "east": 25.85,
+     "width": 66.35
+    },
+    {
+     "u": 35,
+     "west": -40.0,
+     "east": 26.4,
+     "width": 66.4
+    },
+    {
+     "u": 45,
+     "west": -39.25,
+     "east": 16.9,
+     "width": 56.15
+    },
+    {
+     "u": 55,
+     "west": -38.75,
+     "east": 29.25,
+     "width": 68.0
+    },
+    {
+     "u": 65,
+     "west": -38.5,
+     "east": 27.65,
+     "width": 66.15
+    },
+    {
+     "u": 75,
+     "west": -38.75,
+     "east": 19.7,
+     "width": 58.45
+    },
+    {
+     "u": 85,
+     "west": -39.0,
+     "east": 27.2,
+     "width": 66.2
+    },
+    {
+     "u": 95,
+     "west": -39.5,
+     "east": 26.6,
+     "width": 66.1
+    },
+    {
+     "u": 105,
+     "west": -40.0,
+     "east": 19.75,
+     "width": 59.75
+    },
+    {
+     "u": 115,
+     "west": -40.75,
+     "east": 25.45,
+     "width": 66.2
+    }
+   ],
+   "width_median": 66.15,
+   "north_tip_to_hump": {
+    "west": 2.25,
+    "east": 2.2
+   },
+   "note": "rows with an implausible width (other roof features picked) are excluded from the median"
+  },
+  "north_tip": {
+   "inside_roof": {
+    "min_L": 91.0,
+    "band_from_roof_end_m": 2.0299999713897705
+   },
+   "outside_roof": {
+    "min_L": 100.0,
+    "band_from_roof_end_m": 1.590000033378601
+   },
+   "note": "inside the imaged roof width the dark band beyond the fascia is wider: the hall casts its shadow there; the band continues outside the roof (a joint of the lower structure), so it is not roof"
+  },
+  "pier_A": {
+   "axis_heading_deg": 208.0,
+   "stations": 11,
+   "band_m": 8.79,
+   "band_iqr": [
+    8.71,
+    8.86
+   ],
+   "shadow_per_m": 0.116,
+   "relief_per_m": {
+    "frame": 0.39,
+    "x_only": 0.365
+   },
+   "h_roof_m": {
+    "x_only": 18.3,
+    "frame": 17.4
+   },
+   "pod_rim_band_m": [
+    2.49,
+    2.52,
+    2.49
+   ],
+   "pod_dh_m_frame_xonly_noshadow": [
+    [
+     4.9,
+     5.2,
+     6.8
+    ],
+    [
+     5.0,
+     5.2,
+     6.9
+    ],
+    [
+     4.9,
+     5.2,
+     6.8
+    ]
+   ],
+   "note": "band = imaged eave -> outer edge of the shadow on the apron = (relief + shadow) * h; a roof overhang moves both edges equally and cancels"
+  },
+  "pier_G": {
+   "axis_heading_deg": 297.75,
+   "stations": 41,
+   "shadow_band_m": 2.14,
+   "band_iqr": [
+    1.75,
+    2.36
+   ],
+   "shadow_per_m": 0.296,
+   "relief_per_m_x_only": [
+    0.156,
+    0.189
+   ],
+   "relief_per_m_frame": [
+    0.257,
+    0.257
+   ],
+   "h_roof_m_x_only": {
+    "median": 16.9,
+    "iqr": [
+     15.5,
+     18.0
+    ]
+   },
+   "frame_visible_shadow_per_m": 0.039,
+   "note": "visible shadow = (shadow - relief) * h along the north normal (the roof leans over its own shadow); under the single-frame model the roof would cover almost all of it (h ~ 45 m implied, impossible for a three-story pier) -> G is not in the poles' frame, or the relief there has no strong northward component. The sunlit SSW facade could not be separated from the apron, so the k-free sum method of the research note was not reproduced."
+  },
+  "pier_widths": {
+   "A": {
+    "stations": 58,
+    "width_img_m": 37.85,
+    "iqr": [
+     37.5,
+     41.17
+    ],
+    "note": "upper quartile = gate rooms / bridge heads on the east side"
+   },
+   "G": {
+    "stations": 38,
+    "width_img_m": 38.4,
+    "iqr": [
+     38.2,
+     38.68
+    ],
+    "note": "parapet-line centres; outer edges ~0.5-1 m more"
+   }
+  }
+ },
+ "sources": {
+  "fetched": "2026-11-04",
+  "cache": "refs/cache/buildings/itb/verify/src/",
+  "quotes": [
+   {
+    "src": "seaonc",
+    "quote": "five sets of steel balanced double cantilever trusses with a central trussed span",
+    "found": true
+   },
+   {
+    "src": "seaonc",
+    "quote": "supported on 20 cantilevered columns rising from the third floor departures level",
+    "found": true
+   },
+   {
+    "src": "seaonc",
+    "quote": "up to 29 ft deep, spans 380 ft at its center and 160 ft at each end cantilever with an overall length of 860 ft",
+    "found": true
+   },
+   {
+    "src": "seaonc",
+    "quote": "705 ft long, 210 ft wide, and up to 83 ft high",
+    "found": true
+   },
+   {
+    "src": "seaonc",
+    "quote": "26 new gates",
+    "found": true
+   },
+   {
+    "src": "seaonc",
+    "quote": "172,000 sq. ft. of exposed trussed steel roof",
+    "found": true
+   },
+   {
+    "src": "seaonc",
+    "quote": "disassembled into some 35 major pieces",
+    "found": true
+   },
+   {
+    "src": "seaonc",
+    "quote": "The Herrick Corporation",
+    "found": true
+   },
+   {
+    "src": "seaonc",
+    "quote": "267 single concave friction pendulum",
+    "found": true
+   },
+   {
+    "src": "seaonc",
+    "quote": "Designed and constructed from 1994 to 2000",
+    "found": true
+   },
+   {
+    "src": "som",
+    "quote": "Building Height: 144 feet",
+    "found": true
+   },
+   {
+    "src": "som",
+    "quote": "Number of Stories: 5",
+    "found": true
+   },
+   {
+    "src": "som",
+    "quote": "Building Gross Area: 1,800,000 square feet",
+    "found": true
+   },
+   {
+    "src": "som",
+    "quote": "Site Area: 1,000,000 square feet",
+    "found": true
+   },
+   {
+    "src": "som",
+    "quote": "Design Finish Year 1995",
+    "found": true
+   },
+   {
+    "src": "som",
+    "quote": "A series of double-cantilevered trusses linked by bowstring trusses support the roof",
+    "found": true
+   },
+   {
+    "src": "smith_emery",
+    "quote": "860’ long “winglike” roof",
+    "found": true
+   },
+   {
+    "src": "smith_emery",
+    "quote": "soaring 60 to 90’ above the floor",
+    "found": true
+   },
+   {
+    "src": "smith_emery",
+    "quote": "three-chord “football” shaped trusses",
+    "found": true
+   },
+   {
+    "src": "sfgate2000",
+    "quote": "100-foot-high terminal roof",
+    "found": true
+   },
+   {
+    "src": "sfgate2000",
+    "quote": "The roof has a 380-foot span",
+    "found": true
+   },
+   {
+    "src": "sfgate2000",
+    "quote": "The ticket lobby is 700 feet long",
+    "found": true
+   },
+   {
+    "src": "sfgate2000",
+    "quote": "Level 1 is devoted to services and baggage; level 2 to arrivals; level 3 to departures",
+    "found": true
+   },
+   {
+    "src": "sfgate2000",
+    "quote": "55 feet high",
+    "found": true
+   },
+   {
+    "src": "enclos",
+    "quote": "Height: 144 ft",
+    "found": true
+   },
+   {
+    "src": "enclos",
+    "quote": "San Francisco Department of Public Health",
+    "found": true
+   },
+   {
+    "src": "enclos",
+    "quote": "some 267 of them",
+    "found": true
+   },
+   {
+    "src": "tutor_itb",
+    "quote": "382,000 square feet of metal and glass",
+    "found": true
+   },
+   {
+    "src": "tutor_itb",
+    "quote": "COMPLETION 2001",
+    "found": true
+   },
+   {
+    "src": "tutor_itb",
+    "quote": "24 international gates",
+    "found": true
+   },
+   {
+    "src": "tutor_itb",
+    "quote": "five-level steel structure",
+    "found": true
+   },
+   {
+    "src": "tutor_bag",
+    "quote": "380,000-square-foot, three-story",
+    "found": true
+   },
+   {
+    "src": "tutor_bag",
+    "quote": "ARCHITECT Robin Chiang & Company",
+    "found": true
+   },
+   {
+    "src": "tutor_bag",
+    "quote": "COMPLETION 1999",
+    "found": true
+   },
+   {
+    "src": "tutor_bag",
+    "quote": "twelve 747-400",
+    "found": true
+   },
+   {
+    "src": "tutor_bag",
+    "quote": "metallic finished composite aluminum panels",
+    "found": true
+   },
+   {
+    "src": "ags_baa",
+    "quote": "23 passenger boarding bridges (PBBs) at Gates A1 through A15",
+    "found": true
+   },
+   {
+    "src": "ags_baa",
+    "quote": "Gate A6 was retrofitted to allow for a three PBB",
+    "found": true
+   },
+   {
+    "src": "airportworld25",
+    "quote": "On Sunday, December 10, 2000, SFO held a ribbon-cutting ceremony",
+    "found": true
+   },
+   {
+    "src": "airportworld25",
+    "quote": "Breaking ground in October 1995",
+    "found": true
+   },
+   {
+    "src": "airportworld25",
+    "quote": "On January 16, 2024, the San Francisco Airport Commission approved a resolution to rename",
+    "found": true
+   },
+   {
+    "src": "airportworld25",
+    "quote": "expected to be completed in mid-2026",
+    "found": true
+   },
+   {
+    "src": "webcor_roof",
+    "quote": "1,400 kW",
+    "found": true
+   },
+   {
+    "src": "webcor_ceremony",
+    "quote": "June 27, 2024",
+    "found": true
+   },
+   {
+    "src": "webcor_ceremony",
+    "quote": "$75",
+    "found": false
+   },
+   {
+    "src": "ftf_roof",
+    "quote": "Scaffolds reached 90 feet high",
+    "found": true
+   },
+   {
+    "src": "wiki_sfo",
+    "quote": "Gate A11 has three [[Jet bridge|jetways]]",
+    "found": true
+   },
+   {
+    "src": "wiki_sfo",
+    "quote": "Gerson/Overstreet Architects and built by [[Hensel Phelps Construction]]",
+    "found": true
+   },
+   {
+    "src": "wiki_sfo",
+    "quote": "Robin Chiang & Company, Robert B. Wong Architects",
+    "found": true
+   }
+  ],
+  "unreachable": {
+   "msc2000": "curl 403 (Cloudflare), WebFetch 403, web.archive.org connection reset (snapshot 2024-09-04 exists)",
+   "ai_roof": "curl 403"
+  }
+ },
+ "photos": {
+  "api": "Wikimedia Commons API imageinfo/extmetadata, 2026-11-04",
+  "n": 24,
+  "all_licences_match": true,
+  "all_authors_match": true,
+  "rows": [
+   {
+    "title": "File:2025-08-12 09 20 15 View of the G gate side of the International Terminal at San Francisco International Airport in San Mateo County, California.jpg",
+    "licence": "CC BY-SA 4.0",
+    "author": "Famartin",
+    "spec_licence": "CC BY-SA 4.0",
+    "licence_match": true,
+    "author_match": true
+   },
+   {
+    "title": "File:International Terminal of San Francisco International Airport.jpg",
+    "licence": "CC BY 3.0",
+    "author": "Constantine Kulikovsky",
+    "spec_licence": "CC BY 3.0",
+    "licence_match": true,
+    "author_match": true
+   },
+   {
+    "title": "File:International Terminal of San Francisco International Airport2.jpg",
+    "licence": "CC BY 3.0",
+    "author": "Constantine Kulikovsky",
+    "spec_licence": "CC BY 3.0",
+    "licence_match": true,
+    "author_match": true
+   },
+   {
+    "title": "File:KSFO10.jpg",
+    "licence": "CC BY-SA 4.0",
+    "author": "Vmzp85",
+    "spec_licence": "CC BY-SA 4.0",
+    "licence_match": true,
+    "author_match": true
+   },
+   {
+    "title": "File:SFOIntTermexterior (4450348537).jpg",
+    "licence": "CC BY-SA 2.0",
+    "author": "Bill Larkins",
+    "spec_licence": "CC BY-SA 2.0",
+    "licence_match": true,
+    "author_match": true
+   },
+   {
+    "title": "File:SFO - The new international terminal (5381513749).jpg",
+    "licence": "CC BY 2.0",
+    "author": "Moto \"Club4AG\" Miwa from USA",
+    "spec_licence": "CC BY 2.0",
+    "licence_match": true,
+    "author_match": true
+   },
+   {
+    "title": "File:SFO INTERNATIONAL TERMINAL 8-9 - panoramio.jpg",
+    "licence": "CC BY-SA 3.0",
+    "author": "Masrur Odinaev",
+    "spec_licence": "CC BY-SA 3.0",
+    "licence_match": true,
+    "author_match": true
+   },
+   {
+    "title": "File:SFO IT (35656942334).jpg",
+    "licence": "CC BY 2.0",
+    "author": "Elizabeth K. Joseph from San Francisco, United States",
+    "spec_licence": "CC BY 2.0",
+    "licence_match": true,
+    "author_match": true
+   },
+   {
+    "title": "File:SFO International - panoramio.jpg",
+    "licence": "CC BY-SA 3.0",
+    "author": "Masrur Odinaev",
+    "spec_licence": "CC BY-SA 3.0",
+    "licence_match": true,
+    "author_match": true
+   },
+   {
+    "title": "File:SFO New International Terminal (5382111170).jpg",
+    "licence": "CC BY 2.0",
+    "author": "Moto \"Club4AG\" Miwa from USA",
+    "spec_licence": "CC BY 2.0",
+    "licence_match": true,
+    "author_match": true
+   },
+   {
+    "title": "File:SFO international terminal.jpg",
+    "licence": "CC BY 2.0",
+    "author": "Håkan Dahlström",
+    "spec_licence": "CC BY 2.0",
+    "licence_match": true,
+    "author_match": true
+   },
+   {
+    "title": "File:SFO rainbow (19138413200).jpg",
+    "licence": "CC BY 2.0",
+    "author": "Neeta Lind",
+    "spec_licence": "CC BY 2.0",
+    "licence_match": true,
+    "author_match": true
+   },
+   {
+    "title": "File:SFO view 2008-3 (5299520824).jpg",
+    "licence": "CC BY-SA 2.0",
+    "author": "Bill Larkins",
+    "spec_licence": "CC BY-SA 2.0",
+    "licence_match": true,
+    "author_match": true
+   },
+   {
+    "title": "File:San Francisco International.jpg",
+    "licence": "Public domain",
+    "author": "DimiCalifornia",
+    "spec_licence": "Public domain",
+    "licence_match": true,
+    "author_match": true
+   },
+   {
+    "title": "File:San Francisco International Airport, California LCCN2013632177.tif",
+    "licence": "Public domain",
+    "author": "Carol M. Highsmith",
+    "spec_licence": "Public domain",
+    "licence_match": true,
+    "author_match": true
+   },
+   {
+    "title": "File:San Francisco International Airport, California LCCN2013632178.tif",
+    "licence": "Public domain",
+    "author": "Carol M. Highsmith",
+    "spec_licence": "Public domain",
+    "licence_match": true,
+    "author_match": true
+   },
+   {
+    "title": "File:San Francisco International Airport, California LCCN2013632596.tif",
+    "licence": "Public domain",
+    "author": "Carol M. Highsmith",
+    "spec_licence": "Public domain",
+    "licence_match": true,
+    "author_match": true
+   },
+   {
+    "title": "File:San Francisco International Airport, California LCCN2013632597.tif",
+    "licence": "Public domain",
+    "author": "Carol M. Highsmith",
+    "spec_licence": "Public domain",
+    "licence_match": true,
+    "author_match": true
+   },
+   {
+    "title": "File:San Francisco International Airport, California LCCN2013632598.tif",
+    "licence": "Public domain",
+    "author": "Carol M. Highsmith",
+    "spec_licence": "Public domain",
+    "licence_match": true,
+    "author_match": true
+   },
+   {
+    "title": "File:San Francisco International Airport International Terminal.jpg",
+    "licence": "CC BY-SA 3.0",
+    "author": "",
+    "spec_licence": "CC BY-SA 3.0",
+    "licence_match": true,
+    "author_match": true
+   },
+   {
+    "title": "File:San Mateo County, CA, USA - panoramio (2).jpg",
+    "licence": "CC BY-SA 3.0",
+    "author": "Masrur Odinaev",
+    "spec_licence": "CC BY-SA 3.0",
+    "licence_match": true,
+    "author_match": true
+   },
+   {
+    "title": "File:San Mateo County, CA, USA - panoramio (3).jpg",
+    "licence": "CC BY-SA 3.0",
+    "author": "Masrur Odinaev",
+    "spec_licence": "CC BY-SA 3.0",
+    "licence_match": true,
+    "author_match": true
+   },
+   {
+    "title": "File:San Mateo County, CA, USA - panoramio (4).jpg",
+    "licence": "CC BY-SA 3.0",
+    "author": "Masrur Odinaev",
+    "spec_licence": "CC BY-SA 3.0",
+    "licence_match": true,
+    "author_match": true
+   },
+   {
+    "title": "File:X20130316 135947 (8954066539).jpg",
+    "licence": "CC BY 2.0",
+    "author": "Peter C in Toronto Canada from Toronto, Canada",
+    "spec_licence": "CC BY 2.0",
+    "licence_match": true,
+    "author_match": true
+   }
+  ]
+ }
+}

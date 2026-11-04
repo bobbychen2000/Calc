@@ -8,7 +8,7 @@
   "id": "ltp-nad83-2011",
   "axes": "world x east, z south, metres from the ARP; airport grid s (117.83 deg) / t (27.83 deg) as in tools/geo_frame.py"
  },
- "status": "RESEARCH DRAFT for owner review. No 2-D sheet or 3-D geometry has been built from it.",
+ "status": "RESEARCH DRAFT for owner review. No 2-D sheet or 3-D geometry has been built from it. Verified adversarially on 2026-11-04 (doc section \"Verification\").",
  "tags": {
   "pub": "published by an original source (SFO, SF Arts Commission CDR submittals, architect/engineer/builder, FAA) - see sources[].read",
   "obs": "measured by us on public imagery/data (NAIP 2020/2024, FAA DOF, SFO Museum footprints) with the stated method",
@@ -390,17 +390,25 @@
     "https://naipeuwest.blob.core.windows.net/naip/v002/ca/2020/ca_060cm_2020/37122/m_3712229_ne_10_060_20200524.tif"
    ],
    "confidence": "medium",
-   "status": "verified"
+   "status": "verified",
+   "verification": {
+    "verdict": "CONFIRMED",
+    "evidence": "SFO Museum record 1947304261 (Boarding Area B, raw GeoJSON re-fetched): sfo:level 2, wfnd:level 2 (refs/cache/buildings/domestic/src/verify/sfom_bab.geojson)",
+    "date": "2026-11-04"
+   }
   },
   {
    "id": "sun.2020",
    "group": "method",
    "name": "Sun / shadow vector on NAIP 2020 over the domestic terminals",
    "value": {
-    "shadow_azimuth_deg": 87.4,
-    "shadow_len_per_m": 1.19,
-    "shadow_len_sd": 0.03,
-    "sun_elevation_deg": 40.0
+    "shadow_azimuth_deg": 88.0,
+    "shadow_len_per_m": 1.25,
+    "shadow_len_range": [
+     1.19,
+     1.311
+    ],
+    "sun_elevation_deg": 38.7
    },
    "unit": "deg, m/m",
    "tag": "obs",
@@ -416,7 +424,24 @@
    ],
    "confidence": "medium",
    "status": "verified",
-   "method": "ATCT shadow azimuth on NAIP 2020 (87.4 +- 1.5 deg), elevation fixed on the 2020-05-24 sun path (NOAA algorithm, dom_sun.py) and scaled so that FAA DOF 06-035331 (BA F arm roof, 34 ft) and Boarding Area A (k from DOF poles) are reproduced; implied time ~16:45 PDT"
+   "method": "ATCT shadow azimuth on NAIP 2020 (87.4 +- 1.5 deg), elevation fixed on the 2020-05-24 sun path (NOAA algorithm, dom_sun.py) and scaled so that FAA DOF 06-035331 (BA F arm roof, 34 ft) and Boarding Area A (k from DOF poles) are reproduced; implied time ~16:45 PDT",
+   "verification": {
+    "verdict": "DISPUTED (precision refuted; value corrected)",
+    "evidence": "|s20| (2020 shadow per m of height) is DISPUTED: the sun path at the research's own ATCT azimuth 87.4 deg gives 1.226, not 1.19 (1.19 needs 86.7 deg); the re-measured shadow centre line gives 88.09-88.87 deg -> 1.261-1.311; the FAA DOF control 06-035331 (34 +- 3 ft) is best fitted by ~1.27 and only bounds |s20| to 1.17-1.40; only the BA-A pole-lean check (extrapolated ITB pole model) favours 1.19. Adopted: 1.25, range 1.19-1.31 (heights x 0.95, range x 0.90-1.00).",
+    "date": "2026-11-04"
+   },
+   "corrected": {
+    "field": "value",
+    "previous": {
+     "value": {
+      "shadow_azimuth_deg": 87.4,
+      "shadow_len_per_m": 1.19,
+      "shadow_len_sd": 0.03,
+      "sun_elevation_deg": 40.0
+     }
+    },
+    "reason": "independent sun-path / tower-shadow check (doc Verification V.2)"
+   }
   },
   {
    "id": "sun.2024",
@@ -439,13 +464,18 @@
    ],
    "confidence": "high",
    "status": "verified",
-   "method": "FAA DOF pole 06-034826 (108 ft) shadow (ITB research); on the 2024-05-20 sun path at 13:14 PDT (dom_sun.py)"
+   "method": "FAA DOF pole 06-034826 (108 ft) shadow (ITB research); on the 2024-05-20 sun path at 13:14 PDT (dom_sun.py)",
+   "verification": {
+    "verdict": "CONFIRMED",
+    "evidence": "sun path 2024-05-20 at azimuth 186.5 deg: el 72.50 deg, 0.315 m/m (dom_sun.py re-run); noon maximum 72.6 deg",
+    "date": "2026-11-04"
+   }
   },
   {
    "id": "control.ba_a",
    "group": "method",
    "name": "Control 1: Boarding Area A main-body roof (ITB pier) by the two-epoch method",
-   "value": 18.74,
+   "value": 17.83,
    "unit": "m",
    "tag": "obs",
    "sources": [
@@ -459,7 +489,24 @@
    "confidence": "medium",
    "status": "verified",
    "sd_m": 0.75,
-   "note": "lean solved k24.x = 0.418 vs 0.413 from the FAA DOF poles (ITB research, extrapolated 116 m): agreement 1 %; the ITB research gives 17.0 m (low confidence) with its own single-epoch band"
+   "note": "lean solved k24.x = 0.418 vs 0.413 from the FAA DOF poles (ITB research, extrapolated 116 m): agreement 1 %; the ITB research gives 17.0 m (low confidence) with its own single-epoch band",
+   "verification": {
+    "verdict": "PLAUSIBLE (value scale-dependent)",
+    "evidence": "reproduced 18.74 m at |s20| 1.19; 17.83 m at 1.25, 16.94 at 1.31. The ITB research measures 17.0 +- 2.5 (low) on the same roof. Its agreement with the ITB pole lean (k24.x 0.418) is the only evidence for 1.19; that lean is extrapolated from poles 120-400 m west and rests on DOF base positions (1A: +-20 ft)",
+    "date": "2026-11-04"
+   },
+   "corrected": {
+    "field": "value, range",
+    "previous": {
+     "value": 18.74,
+     "range": null
+    },
+    "reason": "|s20| corrected (V.2)"
+   },
+   "range": [
+    16.94,
+    18.74
+   ]
   },
   {
    "id": "control.ba_f_dof",
@@ -482,7 +529,12 @@
    ],
    "confidence": "medium",
    "status": "verified",
-   "note": "DOF 34 ft AGL / 44 ft AMSL, 1A, surveyed 2013 (JDATE 2013289) at world (-1027.2, -211.2): roof of the arm, west edge. Difference +0.67 m = 1.0 sigma of the measurement + DOF vertical tolerance"
+   "note": "DOF 34 ft AGL / 44 ft AMSL, 1A, surveyed 2013 (JDATE 2013289) at world (-1027.2, -211.2): roof of the arm, west edge. Difference +0.67 m = 1.0 sigma of the measurement + DOF vertical tolerance",
+   "verification": {
+    "verdict": "DISPUTED as a calibration",
+    "evidence": "DOF 06-035331 lies inside the BA-F outline at the NE arm tip (on the building). 11.03 m vs 10.36 m is a 6.5 % misfit at |s20| 1.19; the DOF +-3 ft allows |s20| 1.17-1.40, best 1.27. At the adopted 1.25: 10.49 m (DOF 10.36).",
+    "date": "2026-11-04"
+   }
   },
   {
    "id": "t1.name",
@@ -520,7 +572,12 @@
     "https://www.flysfo.com/about/media/press-releases/sfo-opens-final-phase-harvey-milk-terminal-1"
    ],
    "confidence": "high",
-   "status": "verified"
+   "status": "verified",
+   "verification": {
+    "verdict": "CONFIRMED",
+    "evidence": "flysfo 17 Jun 2024 press release re-read (final phase: north lobby, mezzanine checkpoint, gates B3 and C1, connector); Airport Improvement 2020: first 9 gates + part of T1 Center July 2019, 9 more gates + south lobby May 2020; Arup: \"opened in three phases (2019, 2020, and 2021)\". The exact day 23 Jul 2019 was not re-read.",
+    "date": "2026-11-04"
+   }
   },
   {
    "id": "t1.team",
@@ -583,7 +640,12 @@
    ],
    "confidence": "medium",
    "status": "conflict",
-   "note": "BA-B: 619,150 sf (DBIA, Southland, RDH ~619,000), 617,700 sf \"on 3 levels\" (Airport Improvement 2020), 46,000 m2 / 500,000 sf (Woods Bagot); T1 Center: 1.1 million sf (Kuth Ranieri), 900,000 SF (Hensel Phelps)"
+   "note": "BA-B: 619,150 sf (DBIA, Southland, RDH ~619,000), 617,700 sf \"on 3 levels\" (Airport Improvement 2020), 46,000 m2 / 500,000 sf (Woods Bagot); T1 Center: 1.1 million sf (Kuth Ranieri), 900,000 SF (Hensel Phelps)",
+   "verification": {
+    "verdict": "CONFIRMED as published (conflict stands)",
+    "evidence": "DBIA 619,150 sq ft; Airport Improvement 617,700 sq ft \"on 3 levels including MARS stands\"; Cupertino Electric adds \"500,000-square-foot project\" (BA-B).",
+    "date": "2026-11-04"
+   }
   },
   {
    "id": "bab.gates",
@@ -604,7 +666,12 @@
    ],
    "confidence": "high",
    "status": "verified",
-   "note": "incl. 4 international swing gates (Airport Improvement); Webcor: \"24 new gates\"; Wikipedia counts 26 (B2-B27) after B3 opened in 2024"
+   "note": "incl. 4 international swing gates (Airport Improvement); Webcor: \"24 new gates\"; Wikipedia counts 26 (B2-B27) after B3 opened in 2024",
+   "verification": {
+    "verdict": "CONFIRMED",
+    "evidence": "Arup and DBIA: 25 gates; Airport Improvement: \"25 (including 4 int'l swing gates)\"",
+    "date": "2026-11-04"
+   }
   },
   {
    "id": "bab.levels",
@@ -626,7 +693,12 @@
     "https://dbia.org/project/san-francisco-international-airport-harvey-milk-terminal-1-boarding-area-b/"
    ],
    "confidence": "high",
-   "status": "verified"
+   "status": "verified",
+   "verification": {
+    "verdict": "CONFIRMED",
+    "evidence": "Arup: \"two levels and a mezzanine\"; RDH: \"three-story, concrete-framed\"; DBIA: mezzanine with airline clubs and an international corridor",
+    "date": "2026-11-04"
+   }
   },
   {
    "id": "bab.structure",
@@ -646,7 +718,12 @@
     "https://airportimprovement.com/article/san-francisco-int-l-rebuilds-terminal-1-24-billion/"
    ],
    "confidence": "high",
-   "status": "verified"
+   "status": "verified",
+   "verification": {
+    "verdict": "CONFIRMED",
+    "evidence": "Airport Improvement: \"100-foot-deep piles\"; RDH: concrete frame on a pile foundation",
+    "date": "2026-11-04"
+   }
   },
   {
    "id": "bab.glazing",
@@ -666,7 +743,12 @@
     "https://www.woodsbagot.com/projects/san-francisco-international-airports-harvey-milk-terminal-1-boarding-area-b/"
    ],
    "confidence": "high",
-   "status": "verified"
+   "status": "verified",
+   "verification": {
+    "verdict": "CONFIRMED",
+    "evidence": "Airport Improvement: View Dynamic Glass 112,000 sq ft; Arup: electrochromic glazing throughout the concourse level with Low-E glazing at the clerestory level",
+    "date": "2026-11-04"
+   }
   },
   {
    "id": "bab.clerestory",
@@ -683,7 +765,12 @@
    ],
    "confidence": "medium",
    "status": "verified",
-   "note": "geometry (clerestory height and width) not published; visible in Commons photo p02 (Elbeaux 2024) and the Woods Bagot interior photos (reference only)"
+   "note": "geometry (clerestory height and width) not published; visible in Commons photo p02 (Elbeaux 2024) and the Woods Bagot interior photos (reference only)",
+   "verification": {
+    "verdict": "CONFIRMED and measured",
+    "evidence": "Arup re-read (\"Low-E high performance glazing at the clerestory level\"); the NAIP parallax and the 2020 step shadow show the raised central roof ~6 m above the outer roof (bab.h_roof_central)",
+    "date": "2026-11-04"
+   }
   },
   {
    "id": "bab.pv",
@@ -710,7 +797,12 @@
    ],
    "confidence": "high",
    "status": "verified",
-   "note": "\"1 MW solar array located on the building's roof\" (Arup, RDH, HKS extract); \"1.2-MWDC rooftop array consisting of nearly 3,000 photovoltaic (PV) panels\" (Cupertino Electric)"
+   "note": "\"1 MW solar array located on the building's roof\" (Arup, RDH, HKS extract); \"1.2-MWDC rooftop array consisting of nearly 3,000 photovoltaic (PV) panels\" (Cupertino Electric)",
+   "verification": {
+    "verdict": "CONFIRMED",
+    "evidence": "Cupertino Electric: \"1.2-MWDC rooftop array consisting of nearly 3,000 PV panels\"; Arup / RDH: 1 MW",
+    "date": "2026-11-04"
+   }
   },
   {
    "id": "bab.pv_layout",
@@ -729,7 +821,12 @@
    ],
    "confidence": "medium",
    "status": "verified",
-   "method": "NAIP 2020/2024 cross-profiles (dom_profile.py) and the Google screenshot b1d51b0f (reference only)"
+   "method": "NAIP 2020/2024 cross-profiles (dom_profile.py) and the Google screenshot b1d51b0f (reference only)",
+   "verification": {
+    "verdict": "PLAUSIBLE (width corrected)",
+    "evidence": "autocorrelation of the median s-profile over the central field (t -1236..-1180): pitch 9.1 m (2020) / 9.3 m (2024); dark-row widths 5.7-7.1 m (threshold at mid level), wider than \"~5.5 m\". The PV field sits on the RAISED central roof (parallax 3.40 m); single PV rows also lie on the lower side bands (parallax 2.25 m).",
+    "date": "2026-11-04"
+   }
   },
   {
    "id": "bab.roof_wells",
@@ -754,8 +851,8 @@
   {
    "id": "bab.h_roof",
    "group": "boarding_area_b",
-   "name": "Outer roof edge height above apron, south half (t -1238..-1176)",
-   "value": 12.87,
+   "name": "Outer (lower) roof edges, both sides, south half (t -1238..-1176)",
+   "value": 13.14,
    "unit": "m",
    "tag": "obs",
    "sources": [
@@ -770,8 +867,8 @@
    ],
    "confidence": "medium",
    "status": "verified",
-   "value_ft": 42.2,
-   "sd_m": 0.68,
+   "value_ft": 43.1,
+   "sd_m": 0.7,
    "method": "h = (band20 + band24 - p) / ((s20 - s24) . n) (dom_heights.py; |s20| calibrated 1.19 +- 0.03)",
    "measurement": {
     "band20": 12.03,
@@ -781,7 +878,54 @@
     "k24_n": 0.352,
     "k20_n": 0.092
    },
-   "note": "the dark ESE perimeter strip (6 m) and the PV field shift alike between epochs (3.3 / 3.4 m), i.e. same height within +-1.5 m; the central clerestory rises above this (not measured)"
+   "note": "the dark ESE perimeter strip (6 m) and the PV field shift alike between epochs (3.3 / 3.4 m), i.e. same height within +-1.5 m; the central clerestory rises above this (not measured)",
+   "verification": {
+    "verdict": "CORRECTED (derivation refuted; the value ~holds for the OUTER edges by compensating errors)",
+    "evidence": "Local 1-D NCC shifts 2020->2024 in 6 m windows across the roof (dom_verify.py): the central field (s -417..-391) moves 3.40 m, the WNW side band (s -433..-425) 2.25 m, the ESE outer lip 2.30 m (2020 -381.55 -> 2024 -379.25), all with r > 0.95; 2022->2024 is ~0 everywhere. Different shifts = different heights (h_low / h_central = 0.67, independent of the sun and the leans). In 2020 the ESE strip s -388..-382 that the research read as a dark roof strip \"at the same height\" is SHADOW of the raised central roof on the lower band (it is white roof with one thin PV row in 2024); its length 4.9 m confirms the step. The research paired the outer-edge bands (band20 12.03, band24 6.00) with the CENTRAL field shift p = 3.35; with the outer edges' own shift p = 2.28: h_low = (band20 + band24 - p) / den = 13.14 m at |s20| 1.25 (12.49-13.81 over 1.19-1.31); central roof = h_low x 3.40 / 2.28 = 19.60, or h_low + step shadow / (s20 - k20).n = 18.49 -> 19.04 m.",
+    "date": "2026-11-04"
+   },
+   "corrected": {
+    "field": "value, value_ft, sd_m, range, name",
+    "previous": {
+     "value": 12.87,
+     "value_ft": 42.2,
+     "sd_m": 0.68,
+     "range": null,
+     "name": "Outer roof edge height above apron, south half (t -1238..-1176)"
+    },
+    "reason": "stepped section: wrong parallax paired with the outer-edge bands; |s20| corrected (doc Verification V.3/V.4)"
+   },
+   "range": [
+    12.49,
+    13.81
+   ]
+  },
+  {
+   "id": "bab.h_roof_central",
+   "group": "boarding_area_b",
+   "name": "Raised central roof (PV field) above apron, south half",
+   "value": 19.04,
+   "unit": "m",
+   "tag": "obs",
+   "sources": [
+    "naip"
+   ],
+   "source_urls": [],
+   "confidence": "low",
+   "status": "verified",
+   "value_ft": 62.5,
+   "sd_m": 1.0,
+   "range": [
+    18.1,
+    20.02
+   ],
+   "method": "parallax ratio (central field 3.40 m vs outer edges 2.28 m) times the outer-edge height; cross-checked by the 2020 shadow of the step on the lower ESE band",
+   "note": "the step (~6 m) is the \"clerestory\" of Arup (\"Low-E glazing at the clerestory level\"). Plan (lean-corrected, approximate): lower band ~7.5 m wide on the ESE side, ~14 m on the WNW side, raised part ~33 m wide",
+   "verification": {
+    "verdict": "NEW (from the verification)",
+    "evidence": "Local 1-D NCC shifts 2020->2024 in 6 m windows across the roof (dom_verify.py): the central field (s -417..-391) moves 3.40 m, the WNW side band (s -433..-425) 2.25 m, the ESE outer lip 2.30 m (2020 -381.55 -> 2024 -379.25), all with r > 0.95; 2022->2024 is ~0 everywhere. Different shifts = different heights (h_low / h_central = 0.67, independent of the sun and the leans). In 2020 the ESE strip s -388..-382 that the research read as a dark roof strip \"at the same height\" is SHADOW of the raised central roof on the lower band (it is white roof with one thin PV row in 2024); its length 4.9 m confirms the step. The research paired the outer-edge bands (band20 12.03, band24 6.00) with the CENTRAL field shift p = 3.35; with the outer edges' own shift p = 2.28: h_low = (band20 + band24 - p) / den = 13.14 m at |s20| 1.25 (12.49-13.81 over 1.19-1.31); central roof = h_low x 3.40 / 2.28 = 19.60, or h_low + step shadow / (s20 - k20).n = 18.49 -> 19.04 m.",
+    "date": "2026-11-04"
+   }
   },
   {
    "id": "bab.roof_edges",
@@ -798,7 +942,7 @@
       861.72
      ]
     ],
-    "n_offset_from_line": 3.31,
+    "n_offset_from_line": 2.27,
     "m_line": [
      [
       -936.04,
@@ -809,7 +953,7 @@
       890.73
      ]
     ],
-    "m_offset_from_line": 5.08
+    "m_offset_from_line": 5.04
    },
    "unit": "m",
    "tag": "obs",
@@ -821,7 +965,21 @@
    ],
    "confidence": "medium",
    "status": "verified",
-   "note": "ESE roof edge 3.3 m outside the SFO Museum level-2 outline (roof overhang), WNW edge 1.6 m inside it; roof width 55.4 m vs outline 53.7 m (+-1 m)"
+   "note": "n_line / m_line endpoints are the research values; the corrected offsets from the research face lines are n_offset_from_line / m_offset_from_line: ESE true outer edge ~2.3 m outside the level-2 outline (was 3.3), WNW ~1.7 m inside it (was 1.6); outer-roof width ~54.3 m (outline 53.7)",
+   "corrected": {
+    "field": "value.n_offset_from_line, value.m_offset_from_line, note",
+    "previous": {
+     "n_offset_from_line": 3.31,
+     "m_offset_from_line": 5.08,
+     "note": "ESE roof edge 3.3 m outside the SFO Museum level-2 outline (roof overhang), WNW edge 1.6 m inside it; roof width 55.4 m vs outline 53.7 m (+-1 m)"
+    },
+    "reason": "lean-free edges recomputed with the outer-edge height and leans of V.4"
+   },
+   "verification": {
+    "verdict": "CORRECTED",
+    "evidence": "outline offsets re-measured (shapely, SFO Museum outline): the research lines lie 3.32 m (ESE) and 1.66 m (WNW) from the outline as stated; the overhang shrinks with the corrected leans",
+    "date": "2026-11-04"
+   }
   },
   {
    "id": "bab.materials",
@@ -844,7 +1002,7 @@
    "id": "t1c.skylight_truss_h",
    "group": "terminal_1_center",
    "name": "Height of the skylight trusses above the Main Hall (Level 3) floor",
-   "value": 70,
+   "value": null,
    "unit": "ft",
    "tag": "pub",
    "sources": [
@@ -853,20 +1011,31 @@
    "source_urls": [
     "https://www.sfomuseum.org/public-art/public-collection/four-sculptural-light-reflectors"
    ],
-   "confidence": "high",
-   "status": "verified",
+   "confidence": "n/a",
+   "status": "refuted",
    "value_m": 21.34,
-   "note": "\"inserted within the truss structure of the skylights, 70 feet above the floor\" - floor = Main Hall, Level 3, pre-security; the floor elevation above the apron is not published"
+   "note": "\"inserted within the truss structure of the skylights, 70 feet above the floor\" - floor = Main Hall, Level 3, pre-security; the floor elevation above the apron is not published",
+   "corrected": {
+    "field": "value, group, status",
+    "previous": {
+     "value": 70,
+     "group": "terminal_1_center",
+     "status": "verified"
+    },
+    "reason": "the SFO Museum page places the work in the Dianne Feinstein INTERNATIONAL Terminal, Main Hall - Level 3 (2000), not in Harvey Milk Terminal 1"
+   },
+   "applies_to": "international_terminal (ITB) main hall - pass to the ITB research",
+   "verification": {
+    "verdict": "REFUTED (wrong building)",
+    "date": "2026-11-04",
+    "evidence": "Re-fetched refs/cache/buildings/domestic/src/verify/sfom_reflectors.html: breadcrumb \"Four Sculptural Light Reflectors - Dianne Feinstein International Terminal - Main Hall - Level 3 - Pre-Security\", dated 2000 (the ITB opened in 2000); \"inserted within the truss structure of the skylights, 70 feet above the floor\"; \"the four 180 x 30-foot sculptures\". \"Harvey Milk Terminal 1\" appears only in the page's terminal navigation list. The same page's dimension field reads \"L160 in. x W25 in. each\" (conflicts with 180 x 30 ft)."
+   }
   },
   {
    "id": "t1c.skylight_reflectors",
    "group": "terminal_1_center",
    "name": "Skylight light reflectors (art, James Carpenter)",
-   "value": {
-    "count": 4,
-    "length_ft": 180,
-    "width_ft": 30
-   },
+   "value": null,
    "unit": "ft",
    "tag": "pub",
    "sources": [
@@ -875,20 +1044,38 @@
    "source_urls": [
     "https://www.sfomuseum.org/public-art/public-collection/four-sculptural-light-reflectors"
    ],
-   "confidence": "high",
-   "status": "verified",
+   "confidence": "n/a",
+   "status": "refuted",
    "value_m": {
     "length": 54.86,
     "width": 9.14
    },
-   "note": "each reflector sits in a skylight -> at least four skylights >= 55 m x 9 m; AIP 2020 (phase 1) mentions \"three large skylights\""
+   "note": "each reflector sits in a skylight -> at least four skylights >= 55 m x 9 m; AIP 2020 (phase 1) mentions \"three large skylights\"",
+   "corrected": {
+    "field": "value, group, status",
+    "previous": {
+     "value": {
+      "count": 4,
+      "length_ft": 180,
+      "width_ft": 30
+     },
+     "group": "terminal_1_center",
+     "status": "verified"
+    },
+    "reason": "the SFO Museum page places the work in the Dianne Feinstein INTERNATIONAL Terminal, Main Hall - Level 3 (2000), not in Harvey Milk Terminal 1"
+   },
+   "applies_to": "international_terminal (ITB) main hall - pass to the ITB research",
+   "verification": {
+    "verdict": "REFUTED (wrong building)",
+    "date": "2026-11-04",
+    "evidence": "Re-fetched refs/cache/buildings/domestic/src/verify/sfom_reflectors.html: breadcrumb \"Four Sculptural Light Reflectors - Dianne Feinstein International Terminal - Main Hall - Level 3 - Pre-Security\", dated 2000 (the ITB opened in 2000); \"inserted within the truss structure of the skylights, 70 feet above the floor\"; \"the four 180 x 30-foot sculptures\". \"Harvey Milk Terminal 1\" appears only in the page's terminal navigation list. The same page's dimension field reads \"L160 in. x W25 in. each\" (conflicts with 180 x 30 ft)."
+   }
   },
   {
    "id": "t1c.skylights_count",
    "group": "terminal_1_center",
    "name": "Number of main-hall skylights",
    "value": {
-    "sfo_museum": 4,
     "airport_improvement_2020": 3
    },
    "unit": "skylights",
@@ -902,8 +1089,25 @@
     "https://airportimprovement.com/article/san-francisco-int-l-rebuilds-terminal-1-24-billion/"
    ],
    "confidence": "medium",
-   "status": "conflict",
-   "note": "3 in the 2020 article (only half the hall existed then); 4 reflectors in the finished hall. Not identified on NAIP 2024 (roof is saturated white with PV)"
+   "status": "verified",
+   "note": "3 in the 2020 article (only half the hall existed then); 4 reflectors in the finished hall. Not identified on NAIP 2024 (roof is saturated white with PV)",
+   "verification": {
+    "verdict": "CORRECTED (conflict dissolved)",
+    "evidence": "The 4 reflectors are in the ITB (above), so the only T1 Center source is Airport Improvement 2020 (Gensler, T1 Center section): \"Three large skylights provide daylighting in the tremendous space\". NAIP 2024 shows three ~9 x 11 m glazed openings (t1c.roof_pv) - consistent.",
+    "date": "2026-11-04"
+   },
+   "corrected": {
+    "field": "value, status, confidence",
+    "previous": {
+     "value": {
+      "sfo_museum": 4,
+      "airport_improvement_2020": 3
+     },
+     "status": "conflict",
+     "confidence": "medium"
+    },
+    "reason": "the SFO Museum count belongs to the ITB"
+   }
   },
   {
    "id": "t1c.landside_facade",
@@ -951,8 +1155,7 @@
    "unit": "m",
    "tag": "obs",
    "sources": [
-    "naip",
-    "sfom_reflectors"
+    "naip"
    ],
    "source_urls": [
     "https://naipeuwest.blob.core.windows.net/naip/v002/ca/2020/ca_060cm_2020/37122/m_3712229_ne_10_060_20200524.tif",
@@ -960,7 +1163,12 @@
    ],
    "confidence": "low",
    "status": "unverified",
-   "note": "not measured: curved faces, the landside faces are over roadways/garage and the airfield face has a strip whose shadow is ambiguous; lower bound ~ Level 3 floor + 70 ft (21.3 m)"
+   "note": "not measured and NOT published: curved faces, the landside faces over roadways / garage. (The earlier lower bound \"Level 3 floor + 70 ft\" was refuted: that 70 ft is the ITB main hall.)",
+   "verification": {
+    "verdict": "STILL UNKNOWN",
+    "evidence": "no T1 Center height in any re-read source",
+    "date": "2026-11-04"
+   }
   },
   {
    "id": "t1.dof_2013",
@@ -981,7 +1189,12 @@
    ],
    "confidence": "low",
    "status": "verified",
-   "note": "surveyed 2013 (JDATE 2013289): 06-035351 50 ft at (-881.4, 518.1) was on the old T1 center (demolished 2019-2023); 06-035323 17 ft at (-696.7, 628.7) and 06-035322 24 ft at (-620.2, 493.1) are on the apron today (old structures or jet bridges). Superseded - do not use for the new T1"
+   "note": "surveyed 2013 (JDATE 2013289): 06-035351 50 ft at (-881.4, 518.1) was on the old T1 center (demolished 2019-2023); 06-035323 17 ft at (-696.7, 628.7) and 06-035322 24 ft at (-620.2, 493.1) are on the apron today (old structures or jet bridges). Superseded - do not use for the new T1",
+   "verification": {
+    "verdict": "CONFIRMED (values); location note added",
+    "evidence": "DOF re-fetched: 06-035351 50 ft lies inside the T1 outline (2013 survey, old South Terminal); 06-035323 17 ft is 60 m outside any outline and 06-035322 24 ft 26.7 m outside BA-C: apron objects, not buildings.",
+    "date": "2026-11-04"
+   }
   },
   {
    "id": "bac.gates",
@@ -1024,7 +1237,7 @@
    "id": "bac.h_roof",
    "group": "boarding_area_c",
    "name": "Roof edge height above apron, east half, NNE face (single-face estimate)",
-   "value": 7.54,
+   "value": 7.2,
    "unit": "m",
    "tag": "obs",
    "sources": [
@@ -1047,7 +1260,24 @@
     "p": 4.14,
     "den": 0.414
    },
-   "note": "single-face method with an assumed lean k24.x = 0.40 +- 0.06 (from the two-epoch sites); the west half gives an inconsistent band (neighbouring T1 structures in the 2020 shadow)"
+   "note": "single-face method with an assumed lean k24.x = 0.40 +- 0.06 (from the two-epoch sites); the west half gives an inconsistent band (neighbouring T1 structures in the 2020 shadow)",
+   "verification": {
+    "verdict": "PLAUSIBLE (low; scale-dependent)",
+    "evidence": "reproduced 7.54 m at |s20| 1.19; 7.20 at 1.25, 6.99 at 1.31; the assumed k24.x 0.40 is not independently checked",
+    "date": "2026-11-04"
+   },
+   "corrected": {
+    "field": "value, range",
+    "previous": {
+     "value": 7.54,
+     "range": null
+    },
+    "reason": "|s20| corrected (V.2)"
+   },
+   "range": [
+    6.99,
+    7.53
+   ]
   },
   {
    "id": "bac.roof",
@@ -1085,7 +1315,12 @@
     "https://en.wikipedia.org/wiki/San_Francisco_International_Airport"
    ],
    "confidence": "high",
-   "status": "verified"
+   "status": "verified",
+   "verification": {
+    "verdict": "CONFIRMED (Wikipedia-level detail)",
+    "evidence": "Airport Improvement: $383 M renovation; Wikipedia: opened Aug 27 1954, reopened 14 Apr 2011; the International-Terminal rebuild is dated 1983 in one Wikipedia passage and 1984 in another (secondary)",
+    "date": "2026-11-04"
+   }
   },
   {
    "id": "t2.area_levels",
@@ -1101,7 +1336,12 @@
     "https://airportimprovement.com/article/sfo-finds-deeper-shade-green-terminal-2/"
    ],
    "confidence": "high",
-   "status": "verified"
+   "status": "verified",
+   "verification": {
+    "verdict": "CONFIRMED",
+    "evidence": "Airport Improvement 2011 re-read: \"640,000-square-foot, two-level structure\"",
+    "date": "2026-11-04"
+   }
   },
   {
    "id": "t2.daylight",
@@ -1122,7 +1362,12 @@
    ],
    "confidence": "high",
    "status": "verified",
-   "note": "positions/sizes of the clerestories and skylights are not published"
+   "note": "positions/sizes of the clerestories and skylights are not published",
+   "verification": {
+    "verdict": "CONFIRMED",
+    "evidence": "Airport Improvement 2011: \"skylights and clerestories\"; \"Large, floating angular planes in the roof\"",
+    "date": "2026-11-04"
+   }
   },
   {
    "id": "t2.pv",
@@ -1188,13 +1433,18 @@
     "https://en.wikipedia.org/wiki/San_Francisco_International_Airport"
    ],
    "confidence": "high",
-   "status": "verified"
+   "status": "verified",
+   "verification": {
+    "verdict": "CONFIRMED",
+    "evidence": "Gensler T2 page: \"accommodates 14 gates\"",
+    "date": "2026-11-04"
+   }
   },
   {
    "id": "bad.h_roof",
    "group": "boarding_area_d",
    "name": "Roof height above apron, D head (ESE face) paired with the south WNW face 90 m away",
-   "value": 8.92,
+   "value": 8.49,
    "unit": "m",
    "tag": "obs",
    "sources": [
@@ -1220,7 +1470,24 @@
     "k24_n": 0.481,
     "k20_n": -0.309
    },
-   "note": "two-epoch method, but the two faces may belong to different roof levels; FAA DOF (2013) gives 25 ft (7.6 m) at (-486.9, 71.9) and 24 ft (7.3 m) at (-482.1, 257.8) near the head corners (+-6 m horizontal)"
+   "note": "two-epoch method, but the two faces may belong to different roof levels; FAA DOF (2013) gives 25 ft (7.6 m) at (-486.9, 71.9) and 24 ft (7.3 m) at (-482.1, 257.8) near the head corners (+-6 m horizontal)",
+   "verification": {
+    "verdict": "PLAUSIBLE (low; no control)",
+    "evidence": "reproduced 8.92 m at |s20| 1.19; 8.49 at 1.25, 8.07 at 1.31. Its two faces are 118 m apart (true width) and the local parallax across the head varies 0.5-7 m: the head is not one level. The DOF \"check\" does not apply (bad.dof).",
+    "date": "2026-11-04"
+   },
+   "corrected": {
+    "field": "value, range",
+    "previous": {
+     "value": 8.92,
+     "range": null
+    },
+    "reason": "|s20| corrected (V.2)"
+   },
+   "range": [
+    8.07,
+    8.93
+   ]
   },
   {
    "id": "bad.dof",
@@ -1240,8 +1507,20 @@
     "https://aeronav.faa.gov/Obst_Data/DAILY_DOF_CSV.ZIP"
    ],
    "confidence": "medium",
-   "status": "verified",
-   "note": "06-035330 (-486.9, 71.9), 06-035321 (-482.1, 257.8), 06-035320 (-444.3, 194.0; 30 m east of the head, probably a jet bridge / apron structure). 2013 survey, T2 unchanged since 2011"
+   "status": "refuted",
+   "note": "06-035330 (-486.9, 71.9), 06-035321 (-482.1, 257.8), 06-035320 (-444.3, 194.0; 30 m east of the head, probably a jet bridge / apron structure). 2013 survey, T2 unchanged since 2011",
+   "verification": {
+    "verdict": "REFUTED as BA-D roof heights",
+    "evidence": "the three points lie 23.7, 37.2 and 31.8 m OUTSIDE the BA-D outline (06-035330, 321, 320); DOF accuracy 1A is +-20 ft (6 m) horizontally, so none is on the pier. 24-25 ft matches apron structures (e.g. jet-bridge rotundas), not identified. They cannot check bad.h_roof.",
+    "date": "2026-11-04"
+   },
+   "corrected": {
+    "field": "status",
+    "previous": {
+     "status": "verified"
+    },
+    "reason": "location test against the SFO Museum outline (V.5)"
+   }
   },
   {
    "id": "bad.roof_edges",
@@ -1345,7 +1624,12 @@
    ],
    "confidence": "high",
    "status": "verified",
-   "note": "sheet 5A-A5.01.01/.02 level markers; datum not stated on the sheets (see t3.heights_above_L1)"
+   "note": "sheet 5A-A5.01.01/.02 level markers; datum not stated on the sheets (see t3.heights_above_L1)",
+   "verification": {
+    "verdict": "CONFIRMED",
+    "evidence": "CDR CD Phase 3 re-read (pdftotext): T3 L1 11'-0\", T3W L1 10'-3\", L2 27'-0\", L2M 42'-6\", L3 FIS 45'-0\", \"T3 R2 TOP OF ROOF @ HIGH PT.\" 58'-6\", \"T3 R3 TOP OF ROOF @ HIGH PT.\" 81'-0\", \"T3W TOP OF PARAPET\" 66'-0\". No datum is printed (still open).",
+    "date": "2026-11-04"
+   }
   },
   {
    "id": "t3.heights_above_L1",
@@ -1388,7 +1672,12 @@
    "confidence": "high",
    "status": "verified",
    "method": "elevation minus L1 TOC (11'-0\" T3, 10'-3\" T3W)",
-   "note": "apron vs L1: DOF ground near T3 is 9-10 ft AMSL (06-035331: 44-34; 06-035332: 25-16); if the project datum is ~AMSL, L1 is 1-2 ft above the apron [inf, unverified]"
+   "note": "apron vs L1: DOF ground near T3 is 9-10 ft AMSL (06-035331: 44-34; 06-035332: 25-16); if the project datum is ~AMSL, L1 is 1-2 ft above the apron [inf, unverified]",
+   "verification": {
+    "verdict": "CONFIRMED (arithmetic)",
+    "evidence": "58'-6\" - 11'-0\" = 47.5 ft = 14.48 m; 81'-0\" - 11'-0\" = 70.0 ft = 21.34 m. Relative to L1, not to the apron (datum unknown).",
+    "date": "2026-11-04"
+   }
   },
   {
    "id": "t3w.wall_field",
@@ -1412,7 +1701,12 @@
    ],
    "confidence": "high",
    "status": "verified",
-   "note": "CDR p.18; materials: ACM panel, aluminium window wall with vertical fins, accent frame / deluge concealment, single-ply roofing"
+   "note": "CDR p.18; materials: ACM panel, aluminium window wall with vertical fins, accent frame / deluge concealment, single-ply roofing",
+   "verification": {
+    "verdict": "CONFIRMED with a wording fix",
+    "evidence": "the field section prints 10'-00\", 18'-00\", 16'-00\", 56'-00\", 10'-00\", 2'-00\" and 0'-42\" (42\" parapet): the 22'-0\" above the international level is the sum 10 + 10 + 2 ft, not a printed dimension",
+    "date": "2026-11-04"
+   }
   },
   {
    "id": "t3w.wall_gatehouse",
@@ -1434,7 +1728,12 @@
    ],
    "confidence": "high",
    "status": "verified",
-   "note": "CDR p.20; roof = mechanical penthouse; escalator/stair behind glazing"
+   "note": "CDR p.20; roof = mechanical penthouse; escalator/stair behind glazing",
+   "verification": {
+    "verdict": "CONFIRMED",
+    "evidence": "prints 10'-00\", 18'-00\", 16'-09\", 59'-07\" and an 8'-00\" penthouse enclosure",
+    "date": "2026-11-04"
+   }
   },
   {
    "id": "t3w.materials",
@@ -1489,7 +1788,12 @@
     "https://www.turnerconstruction.com/projects/sfo-terminal-3-west-modernization"
    ],
    "confidence": "high",
-   "status": "verified"
+   "status": "verified",
+   "verification": {
+    "verdict": "CONFIRMED",
+    "evidence": "flysfo 20 Aug 2024 re-read: $2.6 B, 650,000 sq ft renovated, +200,000 sq ft, a new six-story building (opening early 2028); expanded section fall 2027; east check-in lobby early 2029. \"Courtyard 4\" is the CDR name, not in the press release.",
+    "date": "2026-11-04"
+   }
   },
   {
    "id": "t3e.facade",
@@ -1572,7 +1876,12 @@
     "https://www.idesignawards.com/winners/zoom.php?eid=9-9249-15"
    ],
    "confidence": "high",
-   "status": "verified"
+   "status": "verified",
+   "verification": {
+    "verdict": "CONFIRMED",
+    "evidence": "Hensel Phelps news re-read: Saturday 25 Jan 2014, 10 United gates, $138 M, Hensel Phelps / Gensler / KPA",
+    "date": "2026-11-04"
+   }
   },
   {
    "id": "bae.area",
@@ -1593,7 +1902,12 @@
     "https://www.henselphelps.com/sfo-unveils-hensel-phelps-terminal-3-boarding-area-e-design-build-renovation/"
    ],
    "confidence": "medium",
-   "status": "conflict"
+   "status": "conflict",
+   "verification": {
+    "verdict": "CONFIRMED as published",
+    "evidence": "Hensel Phelps: 68,800 sq ft BA-E (+150,000 sq ft eastern concourse)",
+    "date": "2026-11-04"
+   }
   },
   {
    "id": "bae.roof",
@@ -1609,7 +1923,12 @@
     "https://www.idesignawards.com/winners/zoom.php?eid=9-9249-15"
    ],
    "confidence": "high",
-   "status": "verified"
+   "status": "verified",
+   "verification": {
+    "verdict": "CONFIRMED",
+    "evidence": "IDA entry re-read: \"With tapered edges overhanging clerestory glazing, the roof is structured with lightweight, long-span trusses ... remove the existing middle two rows of structural columns\"",
+    "date": "2026-11-04"
+   }
   },
   {
    "id": "bae.facade",
@@ -1632,7 +1951,7 @@
    "id": "bae.h_roof",
    "group": "boarding_area_e",
    "name": "Roof (tapered fascia) edge height above apron, north part (t -350..-310)",
-   "value": 13.51,
+   "value": 12.85,
    "unit": "m",
    "tag": "obs",
    "sources": [
@@ -1647,7 +1966,7 @@
    ],
    "confidence": "medium",
    "status": "verified",
-   "value_ft": 44.3,
+   "value_ft": 42.2,
    "sd_m": 0.69,
    "method": "h = (band20 + band24 - p) / ((s20 - s24) . n) (dom_heights.py; |s20| calibrated 1.19 +- 0.03)",
    "measurement": {
@@ -1658,7 +1977,25 @@
     "k24_n": 0.367,
     "k20_n": 0.189
    },
-   "note": "fascia edge and roof texture shift alike (2.2 / 2.5 m) -> one roof level at the edge; values from the s-profiles recorded in dom_heights.py"
+   "note": "fascia edge and roof texture shift alike (2.2 / 2.5 m) -> one roof level at the edge; values from the s-profiles recorded in dom_heights.py",
+   "verification": {
+    "verdict": "PLAUSIBLE (scale-dependent)",
+    "evidence": "the roof is ONE level across its width (local parallax 2.60 m median, 2.55-2.80 over s -718..-694, r > 0.95), so the fascia method holds; the fascia lip pick allows band20 10.6-11.3 m (-0.6 m). Reproduced 13.51 m at |s20| 1.19; 12.85 at 1.25, 12.21 at 1.31.",
+    "date": "2026-11-04"
+   },
+   "corrected": {
+    "field": "value, value_ft, range",
+    "previous": {
+     "value": 13.51,
+     "value_ft": 44.3,
+     "range": null
+    },
+    "reason": "|s20| corrected (V.2)"
+   },
+   "range": [
+    12.21,
+    13.51
+   ]
   },
   {
    "id": "baf.gates",
@@ -1700,7 +2037,7 @@
    "id": "baf.h_roof_ne_arm",
    "group": "boarding_area_f",
    "name": "Roof height above apron, north-east arm",
-   "value": 11.03,
+   "value": 10.49,
    "unit": "m",
    "tag": "obs",
    "sources": [
@@ -1715,7 +2052,7 @@
    ],
    "confidence": "medium",
    "status": "verified",
-   "value_ft": 36.2,
+   "value_ft": 34.4,
    "sd_m": 0.66,
    "method": "h = (band20 + band24 - p) / ((s20 - s24) . n) (dom_heights.py; |s20| calibrated 1.19 +- 0.03)",
    "measurement": {
@@ -1726,7 +2063,25 @@
     "k24_n": 0.275,
     "k20_n": 0.095
    },
-   "note": "control against FAA DOF 06-035331 (34 ft)"
+   "note": "control against FAA DOF 06-035331 (34 ft)",
+   "verification": {
+    "verdict": "PLAUSIBLE (scale-dependent)",
+    "evidence": "reproduced 11.03 m at |s20| 1.19; 10.49 at 1.25 (DOF 06-035331: 10.36), 9.97 at 1.31. Local parallax at the ESE edge 1.75-1.85 m vs the research's 1.98.",
+    "date": "2026-11-04"
+   },
+   "corrected": {
+    "field": "value, value_ft, range",
+    "previous": {
+     "value": 11.03,
+     "value_ft": 36.2,
+     "range": null
+    },
+    "reason": "|s20| corrected (V.2)"
+   },
+   "range": [
+    9.97,
+    11.03
+   ]
   },
   {
    "id": "baf.dof",
@@ -1746,7 +2101,12 @@
    ],
    "confidence": "high",
    "status": "verified",
-   "note": "06-035331 (-1027.2, -211.2) roof of the NE arm; 06-035332 (-1022.1, -243.8) 16 ft at the arm tip (lower end structure or bridge rotunda)"
+   "note": "06-035331 (-1027.2, -211.2) roof of the NE arm; 06-035332 (-1022.1, -243.8) 16 ft at the arm tip (lower end structure or bridge rotunda)",
+   "verification": {
+    "verdict": "CONFIRMED (331); 332 is not BA-F",
+    "evidence": "06-035331 (34 ft, 1A, 2013289) lies inside the BA-F outline at the NE arm tip; 06-035332 (16 ft) lies 9.2 m outside the T3 outline, beyond the pier tip on the apron (a jet bridge / apron object, not a \"lower end structure\")",
+    "date": "2026-11-04"
+   }
   },
   {
    "id": "baf.roof_edges",
@@ -1804,7 +2164,12 @@
     "https://aeronav.faa.gov/Obst_Data/DAILY_DOF_CSV.ZIP"
    ],
    "confidence": "high",
-   "status": "verified"
+   "status": "verified",
+   "verification": {
+    "verdict": "PLAUSIBLE (not re-read)",
+    "evidence": "DOF 06-039216 re-read: BLDG, 130 ft AGL, accuracy 4D (+-250 ft horizontal / +-50 ft vertical), study 2012AWP07455OE; its DOF position falls INSIDE the T3 outline, which 4D allows. The OE/AAA case page was not re-fetched (endpoint 404).",
+    "date": "2026-11-04"
+   }
   }
  ],
  "photos": [
@@ -1819,7 +2184,8 @@
     37.615028,
     -122.385881
    ],
-   "use": "T1 landside facade (fritted glass, canopy) from the AirTrain, 2025"
+   "use": "T1 landside facade (fritted glass, canopy) from the AirTrain, 2025",
+   "verification": "licence and author re-checked against the Commons API on 2026-11-04 (refs/cache/buildings/domestic/src/verify/commons_verify.json)"
   },
   {
    "file": "refs/cache/buildings/domestic/photos/p01.jpg",
@@ -1832,7 +2198,8 @@
     37.614933,
     -122.38495
    ],
-   "use": "T1 (category Harvey Milk Terminal 1)"
+   "use": "T1 (category Harvey Milk Terminal 1)",
+   "verification": "licence and author re-checked against the Commons API on 2026-11-04 (refs/cache/buildings/domestic/src/verify/commons_verify.json)"
   },
   {
    "file": "refs/cache/buildings/domestic/photos/p02.jpg",
@@ -1845,7 +2212,8 @@
     37.613144,
     -122.384361
    ],
-   "use": "BA-B concourse interior with the clerestory band, 2024"
+   "use": "BA-B concourse interior with the clerestory band, 2024",
+   "verification": "licence and author re-checked against the Commons API on 2026-11-04 (refs/cache/buildings/domestic/src/verify/commons_verify.json)"
   },
   {
    "file": "refs/cache/buildings/domestic/photos/p03.jpg",
@@ -1858,7 +2226,8 @@
     37.612147,
     -122.385086
    ],
-   "use": "T1 (category Harvey Milk Terminal 1)"
+   "use": "T1 (category Harvey Milk Terminal 1)",
+   "verification": "licence and author re-checked against the Commons API on 2026-11-04 (refs/cache/buildings/domestic/src/verify/commons_verify.json)"
   },
   {
    "file": "refs/cache/buildings/domestic/photos/p04.jpg",
@@ -1868,7 +2237,8 @@
    "author": "Frank Schulenburg",
    "date": "7 November 2019, 12:45:32",
    "camera": null,
-   "use": "T1"
+   "use": "T1",
+   "verification": "licence and author re-checked against the Commons API on 2026-11-04 (refs/cache/buildings/domestic/src/verify/commons_verify.json)"
   },
   {
    "file": "refs/cache/buildings/domestic/photos/p05.jpg",
@@ -1878,7 +2248,8 @@
    "author": "Frank Schulenburg",
    "date": "7 November 2019, 12:47:29",
    "camera": null,
-   "use": "T1"
+   "use": "T1",
+   "verification": "licence and author re-checked against the Commons API on 2026-11-04 (refs/cache/buildings/domestic/src/verify/commons_verify.json)"
   },
   {
    "file": "refs/cache/buildings/domestic/photos/p06.jpg",
@@ -1891,7 +2262,8 @@
     37.616795,
     -122.384529
    ],
-   "use": "T2 with the old tower on top, from the AirTrain, 2013"
+   "use": "T2 with the old tower on top, from the AirTrain, 2013",
+   "verification": "licence and author re-checked against the Commons API on 2026-11-04 (refs/cache/buildings/domestic/src/verify/commons_verify.json)"
   },
   {
    "file": "refs/cache/buildings/domestic/photos/p07.jpg",
@@ -1901,7 +2273,8 @@
    "author": "Bobak Ha'Eri",
    "date": "22 July 2009",
    "camera": null,
-   "use": "T2 2009 (old tower)"
+   "use": "T2 2009 (old tower)",
+   "verification": "licence and author re-checked against the Commons API on 2026-11-04 (refs/cache/buildings/domestic/src/verify/commons_verify.json)"
   },
   {
    "file": "refs/cache/buildings/domestic/photos/p08.jpg",
@@ -1914,7 +2287,8 @@
     37.610047,
     -122.389617
    ],
-   "use": "T2"
+   "use": "T2",
+   "verification": "licence and author re-checked against the Commons API on 2026-11-04 (refs/cache/buildings/domestic/src/verify/commons_verify.json)"
   },
   {
    "file": "refs/cache/buildings/domestic/photos/p09.jpg",
@@ -1927,7 +2301,8 @@
     37.612431,
     -122.389328
    ],
-   "use": "T2"
+   "use": "T2",
+   "verification": "licence and author re-checked against the Commons API on 2026-11-04 (refs/cache/buildings/domestic/src/verify/commons_verify.json)"
   },
   {
    "file": "refs/cache/buildings/domestic/photos/p10.jpg",
@@ -1940,7 +2315,8 @@
     37.613472,
     -122.388756
    ],
-   "use": "T2"
+   "use": "T2",
+   "verification": "licence and author re-checked against the Commons API on 2026-11-04 (refs/cache/buildings/domestic/src/verify/commons_verify.json)"
   },
   {
    "file": "refs/cache/buildings/domestic/photos/p11.jpg",
@@ -1953,7 +2329,8 @@
     37.616528,
     -122.392844
    ],
-   "use": "T2"
+   "use": "T2",
+   "verification": "licence and author re-checked against the Commons API on 2026-11-04 (refs/cache/buildings/domestic/src/verify/commons_verify.json)"
   },
   {
    "file": "refs/cache/buildings/domestic/photos/p12.jpg",
@@ -1963,7 +2340,8 @@
    "author": "Yelderberry ( talk )",
    "date": "29 July 2024, 11:33:11",
    "camera": null,
-   "use": "T2"
+   "use": "T2",
+   "verification": "licence and author re-checked against the Commons API on 2026-11-04 (refs/cache/buildings/domestic/src/verify/commons_verify.json)"
   },
   {
    "file": "refs/cache/buildings/domestic/photos/p13.jpg",
@@ -1976,7 +2354,8 @@
     37.616714,
     -122.384103
    ],
-   "use": "T2 landside sign/facade 2025"
+   "use": "T2 landside sign/facade 2025",
+   "verification": "licence and author re-checked against the Commons API on 2026-11-04 (refs/cache/buildings/domestic/src/verify/commons_verify.json)"
   },
   {
    "file": "refs/cache/buildings/domestic/photos/p14.jpg",
@@ -1986,7 +2365,8 @@
    "author": "Kohsuke Kawaguchi from San Jose, USA",
    "date": "27 January 2014, 05:42",
    "camera": null,
-   "use": "T3"
+   "use": "T3",
+   "verification": "licence and author re-checked against the Commons API on 2026-11-04 (refs/cache/buildings/domestic/src/verify/commons_verify.json)"
   },
   {
    "file": "refs/cache/buildings/domestic/photos/p15.jpg",
@@ -1999,7 +2379,8 @@
     37.61758,
     -122.388606
    ],
-   "use": "T3 connector"
+   "use": "T3 connector",
+   "verification": "licence and author re-checked against the Commons API on 2026-11-04 (refs/cache/buildings/domestic/src/verify/commons_verify.json)"
   },
   {
    "file": "refs/cache/buildings/domestic/photos/p16.jpg",
@@ -2009,59 +2390,84 @@
    "author": "wbaiv",
    "date": "8 September 2018, 13:09:28",
    "camera": null,
-   "use": "T3/BA-G apron view 2018"
+   "use": "T3/BA-G apron view 2018",
+   "verification": "licence and author re-checked against the Commons API on 2026-11-04 (refs/cache/buildings/domestic/src/verify/commons_verify.json)"
   },
   {
    "file": "refs/cache/buildings/domestic/photos/p17.jpg",
    "page": "https://commons.wikimedia.org/wiki/File:Aerial_photographs_of_San_Francisco_International_Airport_%28July_2022%29_-_1.jpg",
    "title": "File:Aerial photographs of San Francisco International Airport (July 2022) - 1.jpg",
    "licence": "CC0",
-   "author": ".mw-parser-output .commons-creator-table{background-color:#f0f0ff;box-sizing:bor",
+   "author": "Benoît Prieur",
    "date": "21 July 2022, 11:30:59",
    "camera": [
     37.701622,
     -122.441231
    ],
-   "use": "aerial 2022"
+   "use": "aerial 2022",
+   "corrected": {
+    "field": "author",
+    "previous": ".mw-parser-output .commons-creator-table{background-color:#f0f0ff;box-sizing:bor",
+    "reason": "HTML residue of the Commons creator template"
+   },
+   "verification": "licence and author re-checked against the Commons API on 2026-11-04 (refs/cache/buildings/domestic/src/verify/commons_verify.json)"
   },
   {
    "file": "refs/cache/buildings/domestic/photos/p18.jpg",
    "page": "https://commons.wikimedia.org/wiki/File:Aerial_photographs_of_San_Francisco_International_Airport_%28July_2022%29_-_2.jpg",
    "title": "File:Aerial photographs of San Francisco International Airport (July 2022) - 2.jpg",
    "licence": "CC0",
-   "author": ".mw-parser-output .commons-creator-table{background-color:#f0f0ff;box-sizing:bor",
+   "author": "Benoît Prieur",
    "date": "21 July 2022, 11:31:06",
    "camera": [
     37.633869,
     -122.515253
    ],
-   "use": "aerial 2022"
+   "use": "aerial 2022",
+   "corrected": {
+    "field": "author",
+    "previous": ".mw-parser-output .commons-creator-table{background-color:#f0f0ff;box-sizing:bor",
+    "reason": "HTML residue of the Commons creator template"
+   },
+   "verification": "licence and author re-checked against the Commons API on 2026-11-04 (refs/cache/buildings/domestic/src/verify/commons_verify.json)"
   },
   {
    "file": "refs/cache/buildings/domestic/photos/p19.jpg",
    "page": "https://commons.wikimedia.org/wiki/File:Aerial_photographs_of_San_Francisco_International_Airport_%28July_2022%29_-_3.jpg",
    "title": "File:Aerial photographs of San Francisco International Airport (July 2022) - 3.jpg",
    "licence": "CC0",
-   "author": ".mw-parser-output .commons-creator-table{background-color:#f0f0ff;box-sizing:bor",
+   "author": "Benoît Prieur",
    "date": "21 July 2022, 11:31:18",
    "camera": [
     37.618486,
     -122.516503
    ],
-   "use": "aerial 2022"
+   "use": "aerial 2022",
+   "corrected": {
+    "field": "author",
+    "previous": ".mw-parser-output .commons-creator-table{background-color:#f0f0ff;box-sizing:bor",
+    "reason": "HTML residue of the Commons creator template"
+   },
+   "verification": "licence and author re-checked against the Commons API on 2026-11-04 (refs/cache/buildings/domestic/src/verify/commons_verify.json)"
   },
   {
    "file": "refs/cache/buildings/domestic/photos/p20.jpg",
    "page": "https://commons.wikimedia.org/wiki/File:Aerial_photographs_of_San_Francisco_International_Airport_%28July_2022%29_-_4.jpg",
    "title": "File:Aerial photographs of San Francisco International Airport (July 2022) - 4.jpg",
    "licence": "CC0",
-   "author": ".mw-parser-output .commons-creator-table{background-color:#f0f0ff;box-sizing:bor",
+   "author": "Benoît Prieur",
    "date": "21 July 2022, 11:32:48",
    "camera": [
     37.489447,
     -122.457558
    ],
-   "use": "aerial 2022"
+   "use": "aerial 2022",
+   "corrected": {
+    "field": "author",
+    "previous": ".mw-parser-output .commons-creator-table{background-color:#f0f0ff;box-sizing:bor",
+    "reason": "HTML residue of the Commons creator template"
+   },
+   "verification": "licence and author re-checked against the Commons API on 2026-11-04 (refs/cache/buildings/domestic/src/verify/commons_verify.json)"
   },
   {
    "file": "refs/cache/buildings/domestic/photos/p21.jpg",
@@ -2071,7 +2477,8 @@
    "author": "Pi.1415926535",
    "date": "Taken on 30 September 2022",
    "camera": null,
-   "use": "aerial overview 2022"
+   "use": "aerial overview 2022",
+   "verification": "licence and author re-checked against the Commons API on 2026-11-04 (refs/cache/buildings/domestic/src/verify/commons_verify.json)"
   },
   {
    "file": "refs/cache/buildings/domestic/photos/p22.jpg",
@@ -2084,7 +2491,8 @@
     37.623444,
     -122.380764
    ],
-   "use": "oblique aerial of T2/BA-D, ATCT, T3, BA-E, BA-F from the NE, Sep 2025 (best exterior reference)"
+   "use": "oblique aerial of T2/BA-D, ATCT, T3, BA-E, BA-F from the NE, Sep 2025 (best exterior reference)",
+   "verification": "licence and author re-checked against the Commons API on 2026-11-04 (refs/cache/buildings/domestic/src/verify/commons_verify.json)"
   },
   {
    "file": "refs/cache/buildings/domestic/photos/p23.jpg",
@@ -2094,7 +2502,8 @@
    "author": "Pi.1415926535",
    "date": "Taken on 9 September 2025",
    "camera": null,
-   "use": "oblique aerial 2025 (ITB AirTrain station, BA-G)"
+   "use": "oblique aerial 2025 (ITB AirTrain station, BA-G)",
+   "verification": "licence and author re-checked against the Commons API on 2026-11-04 (refs/cache/buildings/domestic/src/verify/commons_verify.json)"
   },
   {
    "file": "refs/cache/buildings/domestic/photos/p24.jpg",
@@ -2104,7 +2513,8 @@
    "author": "Vladimir Menkov",
    "date": "24 December 2006",
    "camera": null,
-   "use": "aerial"
+   "use": "aerial",
+   "verification": "licence and author re-checked against the Commons API on 2026-11-04 (refs/cache/buildings/domestic/src/verify/commons_verify.json)"
   },
   {
    "file": "refs/cache/buildings/domestic/photos/p25.jpg",
@@ -2114,12 +2524,13 @@
    "author": "Vladimir Menkov",
    "date": "24 December 2006",
    "camera": null,
-   "use": "aerial"
+   "use": "aerial",
+   "verification": "licence and author re-checked against the Commons API on 2026-11-04 (refs/cache/buildings/domestic/src/verify/commons_verify.json)"
   }
  ],
  "current_model_deviations": [
-  "tools/build_terminal_parts.py: every pier PIER_H = 14.6 m. Measured: BA-B 12.9 +- 0.7, BA-E 13.5 +- 0.7, BA-F NE arm 11.0 +- 0.7 (DOF 10.4), BA-D ~8.9 (low), BA-C ~7.5 (low)",
-  "tools/build_terminal_parts.py: HALL_H T1 20.0 / T2 19.0 / T3 21.0 m \"approximate\". Published T3: roof high points 47.5 ft (14.5 m, R2) and 70 ft (21.3 m, R3) above L1; T1 main hall skylight trusses 70 ft above the Level 3 floor; T2 not measured",
+  "tools/build_terminal_parts.py: every pier PIER_H = 14.6 m. Measured (verified, |s20| 1.25, range -5 %/+5 %): BA-B outer edges 13.1 with a raised central roof 19.0, BA-E 12.8, BA-F NE arm 10.5 (DOF 10.4), BA-D ~8.5 (low), BA-C ~7.2 (low)",
+  "tools/build_terminal_parts.py: HALL_H T1 20.0 / T2 19.0 / T3 21.0 m \"approximate\". Published T3: roof high points 47.5 ft (14.5 m, R2) and 70 ft (21.3 m, R3) above L1 (datum unknown); T1 and T2: no published or measured height (the \"70 ft\" skylight trusses are the ITB's)",
   "js/live/terminals.js: piers with glass curtain walls to 13.4 m, light roof with a skylight spine - BA-B has a PV-covered roof with a central clerestory and landside roof wells; BA-E has a tapered overhanging fascia over clerestory glazing; T3E/T3W have large mechanical penthouses",
   "SFO Museum polygons are level-2 floor outlines: measured roof edges overhang them by up to ~3-5 m on the airfield (ESE) faces"
  ],
@@ -2132,12 +2543,20 @@
  ],
  "open_questions": [
   "Datum of the T3W CDR elevations (L1 = 11'-0\"): SFO project datum vs NAVD88 - ask SFO Design & Construction; needed to turn 58'-6\" / 81'-0\" into heights above the apron (currently taken relative to L1).",
-  "T1 Center and T2 main-hall roof heights, clerestory/skylight geometry: not published; NAIP faces are curved or over roadways. A licensed photo with a scale reference or the Level-3 floor elevation would close it.",
-  "BA-B clerestory: height/width of the raised central roof above the 12.9 m outer roof; BA-B north half and the landside roof wells not measured.",
-  "BA-C and BA-D heights are low-confidence (single face / faces far apart); DOF 2013 points at D (24-25 ft) are 1.3-1.6 m below our 8.9 m.",
   "Which structures the DOF points 06-035320/322/323/332 represent (apron objects? rotundas?).",
   "T3W is under construction (2024-2029) with a 2026 design change (+1 storey airside): which state should the model show?",
   "Relief leans on NAIP 2020 vary irregularly across the site (frame/strip seams); a true orthophoto or lidar (none public) would remove the ambiguity.",
-  "Cross-workflow: the ATCT shadow on NAIP 2020 with the calibrated |s20| = 1.19 implies the tower axis at x = -733.5 +- 3, about 7 m east of the tower research value (-740.5); worth re-checking there."
- ]
+  "T1 Center and T2 main-hall roof heights: nothing published (the 70 ft skylight-truss figure belongs to the ITB). A licensed photo with a scale reference or an SFO section drawing would close it.",
+  "NAIP 2020 sun: |s20| is 1.19-1.31 (adopted 1.25). The acquisition time of the 2020 strips (USDA seamline / flight logs) or a pole of known height with a measurable 2020 shadow would fix the scale of every two-epoch height (+-5 %). Different strips may also carry different sun times.",
+  "BA-B: the stepped section (outer edges ~13 m, raised central roof ~19 m) is measured on the south half only; the north half, the roof wells and the exact step lines need the same parallax scan.",
+  "BA-C and BA-D: low confidence; the DOF points near D are not on the pier (bad.dof).",
+  "Cross-workflow (tower): the domestic research's tower axis x -733.5 assumed |s20| 1.19; at 1.25-1.31 the same shadow puts the axis ~4-8 m further west (~-737 to -741), i.e. no conflict with the tower research.",
+  "ITB research: the SFO Museum \"Four Sculptural Light Reflectors\" page gives the ITB main hall: skylight trusses 70 ft above the Level 3 floor, four 180 x 30 ft reflectors (2000)."
+ ],
+ "verified": {
+  "date": "2026-11-04",
+  "doc": "docs/research/buildings_domestic.md#verification",
+  "tool": "tools/buildings/dom_verify.py",
+  "numbers": "tools/buildings/dom_verify.json"
+ }
 }

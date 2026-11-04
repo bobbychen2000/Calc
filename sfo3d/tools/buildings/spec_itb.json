@@ -73,14 +73,16 @@
    "publisher": "AISC",
    "url": "https://www.aisc.org/globalassets/modern-steel/archives/2000/02/2000v02_sf_airport.pdf",
    "read": "snippet",
-   "note": "PDF behind a Cloudflare challenge (curl 403 / WebFetch 403; Scribd copy 373810186 also blocked); abstract text read via search-engine extracts only"
+   "note": "PDF behind a Cloudflare challenge (curl 403 / WebFetch 403; Scribd copy 373810186 also blocked); abstract text read via search-engine extracts only; re-tried 2026-11-04: curl 403 (Cloudflare), WebFetch 403, web.archive.org connection reset (snapshot 2024-09-04 exists)"
   },
   "seaonc": {
    "title": "Hensolt SEAONC Legacy Project: San Francisco Airport International Terminal Building",
    "publisher": "Structural Engineers Association of Northern California",
    "url": "https://legacy.seaonc.org/structure/sfo-international-terminal/",
-   "read": "snippet",
-   "note": "site returns an sgcaptcha challenge to curl and an empty page to WebFetch; text read via search-engine extracts only"
+   "read": "full",
+   "note": "read first-hand on 2026-11-04 (the bot challenge of Sep 2026 no longer blocked curl)",
+   "accessed": "2026-11-04",
+   "cache": "refs/cache/buildings/itb/verify/src/seaonc.html"
   },
   "smith_emery": {
    "title": "Smith-Emery project page: San Francisco International Airport Roof Truss System",
@@ -229,7 +231,12 @@
     "wiki_sfo"
    ],
    "confidence": "high",
-   "status": "verified"
+   "status": "verified",
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "CONFIRMED",
+    "evidence": "Airport World: \"On January 16, 2024, the San Francisco Airport Commission approved a resolution to rename the International Terminal ... for the late Senator ... Dianne Feinstein\""
+   }
   },
   {
    "id": "itb.opened",
@@ -243,7 +250,12 @@
    ],
    "confidence": "high",
    "status": "verified",
-   "note": "ground broken October 1995 (airportworld25; \"late 1995\" sfgate2000); SOM: design finish 1995, completion 2000"
+   "note": "ground broken October 1995 (airportworld25; \"late 1995\" sfgate2000); SOM: design finish 1995, completion 2000",
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "CONFIRMED",
+    "evidence": "Airport World: \"On Sunday, December 10, 2000, SFO held a ribbon-cutting ceremony\"; ground broken October 1995; SEAONC \"Designed and constructed from 1994 to 2000\"; Tutor Perini lists COMPLETION 2001 (contract close-out, not the opening)"
+   }
   },
   {
    "id": "itb.architect",
@@ -257,7 +269,12 @@
     "sfgate2000"
    ],
    "confidence": "high",
-   "status": "verified"
+   "status": "verified",
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "CONFIRMED",
+    "evidence": "SOM page; SEAONC lists Craig W. Hartman, Keith Boswell, Michael Duncan (SOM), Del Campo & Maru, Michael Willis & Associates (JV)"
+   }
   },
   {
    "id": "itb.structure_engineer",
@@ -267,10 +284,16 @@
    "unit": null,
    "tag": "pub",
    "sources": [
-    "som"
+    "som",
+    "seaonc"
    ],
    "confidence": "high",
-   "status": "verified"
+   "status": "verified",
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "CONFIRMED",
+    "evidence": "SEAONC: structural engineering firms SOM, OLMM, Faye Bernstein & Associates; engineers Navinchandra R. Amin, Raj Desai"
+   }
   },
   {
    "id": "itb.contractor",
@@ -281,10 +304,16 @@
    "tag": "pub",
    "sources": [
     "som",
-    "tutor_itb"
+    "tutor_itb",
+    "seaonc"
    ],
    "confidence": "high",
-   "status": "verified"
+   "status": "verified",
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "CONFIRMED",
+    "evidence": "SOM collaborators; SEAONC main contractor \"Tutor Saliba, Perini Corporation, Buckley & Co. (JV)\""
+   }
   },
   {
    "id": "itb.steel",
@@ -294,11 +323,17 @@
    "unit": null,
    "tag": "pub",
    "sources": [
-    "msc2000"
+    "msc2000",
+    "seaonc"
    ],
-   "confidence": "medium",
-   "status": "snippet-only",
-   "note": "from the article abstract / author line only (PDF not readable)"
+   "confidence": "high",
+   "status": "verified",
+   "note": "from the article abstract / author line only (PDF not readable)",
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "CONFIRMED (now first-hand)",
+    "evidence": "SEAONC page read first-hand on 2026-11-04 (refs/cache/buildings/itb/verify/src/seaonc.html): The Herrick Corporation listed; \"Roof trusses were fully assembled at the Mare Island fabrication shop and then disassembled into some 35 major pieces ... shipped directly to the site on barges. Once completed, trusses were jacked into position and pinned in place.\""
+   }
   },
   {
    "id": "itb.gross_area",
@@ -313,7 +348,12 @@
    ],
    "confidence": "high",
    "status": "verified",
-   "note": "2.5 million sq ft including the two concourses (sfgate2000; webcor_roof)"
+   "note": "2.5 million sq ft including the two concourses (sfgate2000; webcor_roof)",
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "CONFIRMED",
+    "evidence": "SOM \"Building Gross Area: 1,800,000 square feet\"; Tutor Perini \"1,800,000-square-foot\"; SEAONC \"1.8 million sq. ft. of framed steel area\""
+   }
   },
   {
    "id": "itb.site_area",
@@ -326,7 +366,12 @@
     "som"
    ],
    "confidence": "medium",
-   "status": "verified"
+   "status": "verified",
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "CONFIRMED",
+    "evidence": "SOM \"Site Area: 1,000,000 square feet\""
+   }
   },
   {
    "id": "itb.stories",
@@ -340,7 +385,12 @@
     "sfgate2000"
    ],
    "confidence": "high",
-   "status": "verified"
+   "status": "verified",
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "CONFIRMED",
+    "evidence": "SOM \"Number of Stories: 5\"; SFGate \"Five stories high\"; Tutor Perini \"five-level\"; SEAONC \"five-story structure\""
+   }
   },
   {
    "id": "itb.levels",
@@ -355,7 +405,12 @@
    ],
    "confidence": "high",
    "status": "verified",
-   "note": "RADP NOP: \"levels two (arrivals) and three (departures) of the ITB\""
+   "note": "RADP NOP: \"levels two (arrivals) and three (departures) of the ITB\"",
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "CONFIRMED",
+    "evidence": "SFGate: \"Level 1 is devoted to services and baggage; level 2 to arrivals; level 3 to departures, ticketing and security checks; levels 4 and 5 to airline offices and lounges.\" SEAONC: columns \"rising from the third floor departures level\""
+   }
   },
   {
    "id": "itb.height_som",
@@ -385,7 +440,12 @@
      "src": "sfgate2000",
      "note": "\"the soaring, 100-foot-high terminal roof\" (height above the hall floor, rounded)"
     }
-   ]
+   ],
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "CONFIRMED as published; datum still unknown (conflict kept)",
+    "evidence": "SOM \"Building Height: 144 feet\". Enclos repeats 144 ft but its spec block also lists the owner as \"San Francisco Department of Public Health\" (a data-entry error): Enclos is not an independent source for the height. DOF 131/132 ft AGL = 139/140 ft AMSL - 144 ft matches neither."
+   }
   },
   {
    "id": "itb.isolators",
@@ -395,11 +455,17 @@
    "unit": "friction pendulum isolators",
    "tag": "pub",
    "sources": [
-    "enclos"
+    "enclos",
+    "seaonc"
    ],
    "confidence": "high",
    "status": "verified",
-   "note": "\"the largest building in the world constructed on base isolators\" (airportworld25)"
+   "note": "\"the largest building in the world constructed on base isolators\" (airportworld25)",
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "CONFIRMED",
+    "evidence": "Enclos \"some 267\"; SEAONC \"267 single concave friction pendulum 'cast steel' isolation bearings ... allowing up to 20 inches of lateral displacement\""
+   }
   },
   {
    "id": "itb.gates_2000",
@@ -411,9 +477,22 @@
    "sources": [
     "seaonc"
    ],
-   "confidence": "low",
-   "status": "unverified",
-   "note": "SEAONC text via search extract only"
+   "confidence": "medium",
+   "status": "conflict",
+   "note": "SEAONC text via search extract only",
+   "conflicting_values": [
+    {
+     "value": 24,
+     "unit": "count",
+     "src": "tutor_itb",
+     "note": "\"Some of the features include 24 international gates\""
+    }
+   ],
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "CONFLICT (now first-hand)",
+    "evidence": "SEAONC page read first-hand on 2026-11-04 (refs/cache/buildings/itb/verify/src/seaonc.html): \"26 new gates\"; Tutor Perini ITB page: \"24 international gates\". Today: A1-A15 + G1-G14 (Wikipedia)."
+   }
   },
   {
    "id": "itb.cladding",
@@ -426,7 +505,12 @@
     "tutor_itb"
    ],
    "confidence": "high",
-   "status": "verified"
+   "status": "verified",
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "CONFIRMED",
+    "evidence": "Tutor Perini: \"382,000 square feet of metal and glass\""
+   }
   },
   {
    "id": "roof.form",
@@ -442,7 +526,12 @@
     "smith_emery"
    ],
    "confidence": "high",
-   "status": "verified"
+   "status": "verified",
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "CONFIRMED (first-hand)",
+    "evidence": "SEAONC page read first-hand on 2026-11-04 (refs/cache/buildings/itb/verify/src/seaonc.html): \"five sets of steel balanced double cantilever trusses with a central trussed span linked together creating a continuous wing-like form\"; Smith-Emery \"three-chord 'football' shaped trusses\"; \"The middle sections were erected first, followed by the outside cantilever and the inside cantilever trusses.\""
+   }
   },
   {
    "id": "roof.length_pub",
@@ -472,7 +561,12 @@
      "unit": "m",
      "src": "naip"
     }
-   ]
+   ],
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "CONFIRMED as published; CONFLICT with NAIP kept",
+    "evidence": "SEAONC page read first-hand on 2026-11-04 (refs/cache/buildings/itb/verify/src/seaonc.html): \"overall length of 860 ft\"; Smith-Emery \"860' long\". NAIP gives 252.9-255.0 m (frame / x-only relief model) = 830-837 ft, i.e. 7-9 m short. SEAONC also gives \"172,000 sq. ft. of exposed trussed steel roof\" (15,980 m2; NAIP outline 16535 m2)."
+   }
   },
   {
    "id": "roof.span_centre",
@@ -488,7 +582,12 @@
    ],
    "confidence": "high",
    "status": "verified",
-   "value_m": 115.82
+   "value_m": 115.82,
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "CONFIRMED + independent support",
+    "evidence": "SEAONC page read first-hand on 2026-11-04 (refs/cache/buildings/itb/verify/src/seaonc.html) (\"spans 380 ft at its center\"); SFGate \"380-foot span\". NEW: the two DOF roof tops lie 115.5 m apart along the axis (379 ft) at u = +57.2 / -58.4 m from the relief-corrected roof centre - i.e. over the inferred inner column lines (+-190 ft = +-57.9 m)."
+   }
   },
   {
    "id": "roof.cantilever_end",
@@ -502,8 +601,13 @@
     "msc2000"
    ],
    "confidence": "high",
-   "status": "snippet-only",
-   "value_m": 48.77
+   "status": "verified",
+   "value_m": 48.77,
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "CONFIRMED (now first-hand); geometry conflict with NAIP",
+    "evidence": "SEAONC page read first-hand on 2026-11-04 (refs/cache/buildings/itb/verify/src/seaonc.html): \"160 ft at each end cantilever\". With the inner columns at the DOF tops and the 80-ft N/S column bay, NAIP puts the fascia 44.1 m (145 ft) beyond the outer column line, not 160 ft."
+   }
   },
   {
    "id": "roof.truss_len",
@@ -516,7 +620,12 @@
     "msc2000"
    ],
    "confidence": "medium",
-   "status": "snippet-only"
+   "status": "snippet-only",
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "STILL SNIPPET-ONLY",
+    "evidence": "AISC PDF: curl 403 (Cloudflare), WebFetch 403, web.archive.org connection reset (snapshot 2024-09-04 exists)"
+   }
   },
   {
    "id": "roof.centre_section",
@@ -531,7 +640,12 @@
    "confidence": "medium",
    "status": "snippet-only",
    "value_m": 54.86,
-   "note": "jacked up ~60 ft into place in two phases"
+   "note": "jacked up ~60 ft into place in two phases",
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "STILL SNIPPET-ONLY",
+    "evidence": "AISC PDF: curl 403 (Cloudflare), WebFetch 403, web.archive.org connection reset (snapshot 2024-09-04 exists)"
+   }
   },
   {
    "id": "roof.truss_depth",
@@ -545,8 +659,13 @@
     "msc2000"
    ],
    "confidence": "high",
-   "status": "snippet-only",
-   "value_m": 8.84
+   "status": "verified",
+   "value_m": 8.84,
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "CONFIRMED (now first-hand)",
+    "evidence": "SEAONC page read first-hand on 2026-11-04 (refs/cache/buildings/itb/verify/src/seaonc.html): \"up to 29 ft deep\""
+   }
   },
   {
    "id": "roof.columns",
@@ -558,9 +677,14 @@
    "sources": [
     "seaonc"
    ],
-   "confidence": "medium",
-   "status": "snippet-only",
-   "note": "\"supported on 20 cantilevered columns rising from the third floor departures level\" (search extract of SEAONC)"
+   "confidence": "high",
+   "status": "verified",
+   "note": "\"supported on 20 cantilevered columns rising from the third floor departures level\" (search extract of SEAONC)",
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "CONFIRMED (now first-hand)",
+    "evidence": "SEAONC page read first-hand on 2026-11-04 (refs/cache/buildings/itb/verify/src/seaonc.html): \"supported on 20 cantilevered columns rising from the third floor departures level\"; trusses \"sitting on spherical ball-joints atop the cantilevered concrete filled steel box columns\""
+   }
   },
   {
    "id": "roof.col_grid",
@@ -574,7 +698,12 @@
    ],
    "confidence": "medium",
    "status": "verified",
-   "note": "truss-line spacing confirmed by NAIP (roof.truss_spacing_obs = 12.12 m)"
+   "note": "truss-line spacing confirmed by NAIP (roof.truss_spacing_obs = 12.12 m)",
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "NOT RE-CHECKED (image not re-fetched); E/W grid consistent",
+    "evidence": "the 40-ft E/W grid matches the NAIP truss spacing 39.89 ft; the 80-ft N/S bay is not observable in NAIP"
+   }
   },
   {
    "id": "roof.height_above_floor",
@@ -589,7 +718,12 @@
    ],
    "confidence": "medium",
    "status": "verified",
-   "note": "\"soaring 60 to 90' above the floor of a cavernous ticketing hall\" - which surface (top / underside) is not stated"
+   "note": "\"soaring 60 to 90' above the floor of a cavernous ticketing hall\" - which surface (top / underside) is not stated",
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "CONFIRMED",
+    "evidence": "Smith-Emery: \"soaring 60 to 90' above the floor of a cavernous ticketing hall\" (top or underside not stated)"
+   }
   },
   {
    "id": "hall.size_snippet",
@@ -601,9 +735,14 @@
    "sources": [
     "seaonc"
    ],
-   "confidence": "low",
-   "status": "unverified",
-   "note": "search engines attribute this sentence to the SEAONC page, which could not be opened. 83 ft is an INTERIOR hall height, not the roof height above ground (the current model js/live/terminals.js uses 83 ft as roof height above ground)"
+   "confidence": "high",
+   "status": "verified",
+   "note": "search engines attribute this sentence to the SEAONC page, which could not be opened. 83 ft is an INTERIOR hall height, not the roof height above ground (the current model js/live/terminals.js uses 83 ft as roof height above ground)",
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "CONFIRMED (now first-hand)",
+    "evidence": "SEAONC page read first-hand on 2026-11-04 (refs/cache/buildings/itb/verify/src/seaonc.html): \"The main Terminal's glass-enclosed 'great hall' - 705 ft long, 210 ft wide, and up to 83 ft high\". 83 ft is the interior hall height, not the roof height above ground."
+   }
   },
   {
    "id": "hall.lobby_len",
@@ -617,7 +756,12 @@
    ],
    "confidence": "high",
    "status": "verified",
-   "value_m": 213.36
+   "value_m": 213.36,
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "CONFIRMED",
+    "evidence": "SFGate: \"The ticket lobby is 700 feet long.\""
+   }
   },
   {
    "id": "hall.bamboo",
@@ -632,7 +776,12 @@
    "confidence": "high",
    "status": "verified",
    "value_m": 16.76,
-   "note": "\"stretches 55 feet high between Levels 2 and 3\" (interior)"
+   "note": "\"stretches 55 feet high between Levels 2 and 3\" (interior)",
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "CONFIRMED",
+    "evidence": "SFGate: \"A stand of living giant bamboo stretches 55 feet high between Levels 2 and 3.\""
+   }
   },
   {
    "id": "roof.rhythm_inf",
@@ -649,7 +798,12 @@
    "confidence": "medium",
    "status": "verified",
    "method": "the only split that satisfies all published numbers at once: 160 (end cantilever) + 80 (column bay) + 380 (centre span) + 80 + 160 = 860; truss 140 + 80 + 100 = 320; centre section 380 - 2 x 100 = 180",
-   "note": "the 20 ft overhang beyond the truss ends is the inferred closure; if the as-built roof is 829 ft (NAIP) the cantilevers or the overhang are ~15 ft shorter each side"
+   "note": "the 20 ft overhang beyond the truss ends is the inferred closure; if the as-built roof is 829 ft (NAIP) the cantilevers or the overhang are ~15 ft shorter each side",
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "PLAUSIBLE (inner span supported; end segment conflicts with NAIP)",
+    "evidence": "the DOF roof-top pair marks +-57.8 m (= 190 ft) from the centre, as the inferred inner column lines; but the NAIP fascia lies 44.1 m beyond the inferred outer column line (+-82.3 m) instead of 160 ft (48.8 m): either the 860-ft total or the 80-ft bay does not apply to the visible roof."
+   }
   },
   {
    "id": "roof.col_positions_inf",
@@ -674,7 +828,12 @@
    ],
    "confidence": "medium",
    "status": "verified",
-   "note": "= +-57.9 m and +-82.3 m. 20 columns = 5 truss lines x 2 double-cantilever trusses x 2 columns (inf; the SOM perspective section shows a column under each truss line)"
+   "note": "= +-57.9 m and +-82.3 m. 20 columns = 5 truss lines x 2 double-cantilever trusses x 2 columns (inf; the SOM perspective section shows a column under each truss line)",
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "PLAUSIBLE (inner lines supported by the DOF pair)",
+    "evidence": "DOF 06-035315/-316 at u = +57.2 / -58.4 m from the relief-corrected centre"
+   }
   },
   {
    "id": "roof.axis_obs",
@@ -689,7 +848,12 @@
    "confidence": "high",
    "status": "verified",
    "method": "glazed tip edges and the lens row are perpendicular to the axis; the straight west facade base line confirms it (sd 0.61 m over 182 rows)",
-   "note": "2.9 deg clockwise from the principal axis of the SFO Museum hall part used by the current model"
+   "note": "2.9 deg clockwise from the principal axis of the SFO Museum hall part used by the current model",
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "CONFIRMED",
+    "evidence": "independent straight-line fit to the west facade base (ground level, no relief): 312 of 339 rows, sd 0.15 m, heading 162.81 deg. 162.83 = the airport grid t-axis (27.83) + 135 deg; the piers lie on the grid axes too (A 208.0, G 297.75 by NAIP edge alignment)."
+   }
   },
   {
    "id": "roof.centre_obs",
@@ -708,7 +872,16 @@
    "confidence": "medium",
    "status": "verified",
    "method": "NAIP roof features moved back by k*h (k = 0.418 at the ITB from DOF poles, h from the eave profile)",
-   "note": "+-1.5 m"
+   "note": "+-1.5 m",
+   "alt_frame_model": [
+    -1244.56,
+    365.4
+   ],
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "PLAUSIBLE",
+    "evidence": "frame-camera relief model: [-1244.56, 365.4] (0.84 m from the stated centre); within the +-1.5 m stated"
+   }
   },
   {
    "id": "roof.corners_obs",
@@ -716,20 +889,20 @@
    "name": "Main roof outline corners (relief-corrected, world x/z)",
    "value": {
     "NW": [
-     -1313.87,
-     252.48
+     -1313.08,
+     254.23
     ],
     "NE": [
-     -1251.4,
-     233.2
+     -1250.59,
+     234.95
     ],
     "SE": [
-     -1176.2,
-     476.93
+     -1176.03,
+     476.58
     ],
     "SW": [
-     -1238.66,
-     496.2
+     -1238.52,
+     495.86
     ]
    },
    "unit": "m",
@@ -740,7 +913,52 @@
    ],
    "confidence": "medium",
    "status": "verified",
-   "note": "rectangle at the eaves; +-1.5 m. Check: DOF roof tops 06-035315/06-035316 fall 1.1 / 0.8 m inside the corrected west eave line"
+   "note": "rectangle at the eaves; +-1.5 m. Check: DOF roof tops 06-035315/06-035316 fall 1.1 / 0.8 m inside the corrected west eave line",
+   "corrected": {
+    "old_value": {
+     "NW": [
+      -1313.87,
+      252.48
+     ],
+     "NE": [
+      -1251.4,
+      233.2
+     ],
+     "SE": [
+      -1176.2,
+      476.93
+     ],
+     "SW": [
+      -1238.66,
+      496.2
+     ]
+    },
+    "date": "2026-11-04",
+    "reason": "stated corners were relief-corrected east-only (outline 255.06 m long) and contradict roof.length_obs; replaced by frame-model corners (outline 252.87 m)"
+   },
+   "alt_x_only_model": {
+    "NW": [
+     -1313.13,
+     252.24
+    ],
+    "NE": [
+     -1250.55,
+     233.14
+    ],
+    "SE": [
+     -1176.11,
+     477.07
+    ],
+    "SW": [
+     -1238.7,
+     496.17
+    ]
+   },
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "CORRECTED (internal inconsistency)",
+    "evidence": "the stated corners span 255.06 m along the axis (no magnification removed: the east-only k(x) shift), while roof.length_obs (252.68 m) removes it. New corners from one central-projection relief model fitted to the same five pole picks (nadir [-2767.8, 443.6], H-h 3705 m): outline 252.87 x 65.39 m, consistent with the length."
+   }
   },
   {
    "id": "roof.length_obs",
@@ -762,7 +980,16 @@
      "unit": "ft",
      "src": "msc2000"
     }
-   ]
+   ],
+   "range_m": [
+    252.6,
+    255.1
+   ],
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "PLAUSIBLE; range widened",
+    "evidence": "re-derived: 252.87 m (central projection, the pole ring shifts rotate with z: corr 0.91, rms 0.21 vs 0.54 m) or 255.04 m (east-only relief, no magnification). The north-south relief component is not pinned (two of five picks manual; Boarding Area G contradicts a single frame). Still 7-9 m short of 860 ft."
+   }
   },
   {
    "id": "roof.width_obs",
@@ -784,7 +1011,12 @@
      "src": "som_sketch",
      "note": "concept"
     }
-   ]
+   ],
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "CONFIRMED",
+    "evidence": "east eave re-measured: imaged width 66.15 m (median of the 10-m bins), constant along the length; true 65.39 m (frame model)"
+   }
   },
   {
    "id": "roof.truss_lines_obs",
@@ -800,7 +1032,12 @@
    ],
    "confidence": "high",
    "status": "verified",
-   "note": "5 straight glazed lines along the roof (\"roof plane is opened with glass along major truss lines\", SOM sketch)"
+   "note": "5 straight glazed lines along the roof (\"roof plane is opened with glass along major truss lines\", SOM sketch)",
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "CONFIRMED",
+    "evidence": "five straight glazed lines visible on the NAIP crops; five lens skylights on them"
+   }
   },
   {
    "id": "roof.truss_spacing_obs",
@@ -815,7 +1052,12 @@
    "confidence": "high",
    "status": "verified",
    "method": "comb fit of 5 equally spaced lines (north half, 39 rows) and the lens-skylight centres; both 12.25 m imaged",
-   "note": "= 39.8 ft (published grid 40 ft); outer lines 48.5 m apart; outer line to eave ~8.4 m each side"
+   "note": "= 39.8 ft (published grid 40 ft); outer lines 48.5 m apart; outer line to eave ~8.4 m each side",
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "CONFIRMED",
+    "evidence": "autocorrelation of 207 cross profiles: imaged 12.282 m (IQR [12.243, 12.315]) -> 12.157 m = 39.89 ft (published 40 ft = 12.192 m)"
+   }
   },
   {
    "id": "roof.lenses_obs",
@@ -834,7 +1076,12 @@
    ],
    "confidence": "medium",
    "status": "verified",
-   "note": "lens-shaped (pointed ends) glazed skylights, one per truss line, occupying the central section (published 180 ft = 54.9 m); interior photos show them as glazed basket trusses; +-1 m"
+   "note": "lens-shaped (pointed ends) glazed skylights, one per truss line, occupying the central section (published 180 ft = 54.9 m); interior photos show them as glazed basket trusses; +-1 m",
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "PLAUSIBLE (minor)",
+    "evidence": "48.4 m is the IMAGED detection-box length (mean of the four detected boxes 47.75-48.75 m; magnification not removed -> ~47.9 m); the pointed ends fade, so tip-to-tip may be 1-2 m more. The westmost lens is full length too (detected 34 m because it is darker). Each skylight reads as a D in NAIP (straight east edge, convex west edge): a vaulted lens leaning east, or a D in plan - not settled."
+   }
   },
   {
    "id": "roof.glazed_tips_obs",
@@ -851,7 +1098,12 @@
    ],
    "confidence": "medium",
    "status": "verified",
-   "note": "bluish glazed grid across the full roof width at both cantilever tips; N/S difference (3 m) not explained; +-1 m"
+   "note": "bluish glazed grid across the full roof width at both cantilever tips; N/S difference (3 m) not explained; +-1 m",
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "CONFIRMED + NEW asymmetry",
+    "evidence": "glass bands visible on 0.1 m crops at the stated rows. NEW: relative to the fascia midpoint the centre-section lens row sits 2.2 m north; beyond the glass the south tip carries a 3.6 m white segmented strip, the north tip 1.6 m (frame model)"
+   }
   },
   {
    "id": "roof.dof_06-035315",
@@ -866,7 +1118,12 @@
    "confidence": "high",
    "status": "verified",
    "value_m": 39.93,
-   "note": "AGL 131 ft / AMSL 139 ft, accuracy 1A, verified, JDATE 2013289, 37 36 53.77N 122 23 22.86W -> world (-1258.1, 429.4); lies at the west eave over the column pairs (u = 54.68 m)"
+   "note": "AGL 131 ft / AMSL 139 ft, accuracy 1A, verified, JDATE 2013289, 37 36 53.77N 122 23 22.86W -> world (-1258.1, 429.4); lies at the west eave over the column pairs (u = 54.68 m)",
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "CONFIRMED",
+    "evidence": "current DOF (DOF.CSV 2026-11-02 (DAILY_DOF_CSV.ZIP re-fetched 2026-11-04)): 131 ft AGL / 139 ft AMSL, accuracy 1A, verified status O, ACTION A, JDATE 2013289 (added 2013-10-16, before NAIP 2024 and the 2024-26 re-roofing); position unchanged. On the roof: u = +57.2 m from the relief-corrected centre, 0.9 m inside the west eave (frame model) - the u values +54.7 / -60.9 in the note were relative to the IMAGED centre."
+   }
   },
   {
    "id": "roof.dof_06-035316",
@@ -881,7 +1138,12 @@
    "confidence": "high",
    "status": "verified",
    "value_m": 40.23,
-   "note": "AGL 132 ft / AMSL 140 ft, accuracy 1A, verified, JDATE 2013289, 37 36 57.35N 122 23 24.26W -> world (-1292.4, 319.1); lies at the west eave over the column pairs (u = -60.86 m)"
+   "note": "AGL 132 ft / AMSL 140 ft, accuracy 1A, verified, JDATE 2013289, 37 36 57.35N 122 23 24.26W -> world (-1292.4, 319.1); lies at the west eave over the column pairs (u = -60.86 m)",
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "CONFIRMED",
+    "evidence": "current DOF (DOF.CSV 2026-11-02 (DAILY_DOF_CSV.ZIP re-fetched 2026-11-04)): 132 ft AGL / 140 ft AMSL, accuracy 1A, verified status O, ACTION A, JDATE 2013289 (added 2013-10-16, before NAIP 2024 and the 2024-26 re-roofing); position unchanged. On the roof: u = -58.4 m from the relief-corrected centre, 0.6 m inside the west eave (frame model) - the u values +54.7 / -60.9 in the note were relative to the IMAGED centre."
+   }
   },
   {
    "id": "roof.ground_amsl",
@@ -896,7 +1158,12 @@
    "confidence": "medium",
    "status": "verified",
    "value_m": 2.44,
-   "note": "139-131 = 140-132 = 8 ft AMSL (DOF rounding +-1 ft); SFO field elevation 13 ft"
+   "note": "139-131 = 140-132 = 8 ft AMSL (DOF rounding +-1 ft); SFO field elevation 13 ft",
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "CONFIRMED",
+    "evidence": "AMSL - AGL = 8 / 8 ft (roof tops), 9 ft (06-035352)"
+   }
   },
   {
    "id": "roof.profile",
@@ -1058,7 +1325,12 @@
      "abs_u": 123.0,
      "h_agl_m": 34.83
     }
-   ]
+   ],
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "PLAUSIBLE (reproduced; one new independent check)",
+    "evidence": "itb_naip_measure.py re-run: byte-identical output. NEW: the east eave wanders WITH the west eave (north tip -> hump: west +2.25 m, east +2.20 m, width constant) - the wander is a height signal, not a curved plan. The photo silhouette was not re-run (Commons API rate-limited, file not cached). The two relief models differ by 1-4 % along the hall (<= 0.5 m on the drops)."
+   }
   },
   {
    "id": "level3.floor",
@@ -1075,7 +1347,12 @@
    "confidence": "low",
    "status": "unverified",
    "method": "DOF roof top (40.1 m) minus \"90 ft\" (smith_emery, upper value) = 12.7 m, minus \"100 ft\" (sfgate2000) = 9.6 m; midpoint",
-   "note": "+-1.5 m; no drawing or survey found - see open questions"
+   "note": "+-1.5 m; no drawing or survey found - see open questions",
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "PLAUSIBLE / STILL UNVERIFIED",
+    "evidence": "published heights bracket it: 40.1 m minus 90 ft (12.7), minus 100 ft (9.6), minus the 83-ft hall height now read first-hand (14.8, less the roof build-up at the crown). No section drawing found."
+   }
   },
   {
    "id": "facade.west",
@@ -1090,7 +1367,12 @@
    ],
    "confidence": "high",
    "status": "verified",
-   "note": "photos: lower band clear glazing at the curb with entrance vestibules and a canopy; upper wall light fritted panels; pairs of white columns at the column lines; roof trusses exposed above the wall"
+   "note": "photos: lower band clear glazing at the curb with entrance vestibules and a canopy; upper wall light fritted panels; pairs of white columns at the column lines; roof trusses exposed above the wall",
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "CONFIRMED",
+    "evidence": "SFGate (frit, glass) re-read"
+   }
   },
   {
    "id": "facade.end_walls",
@@ -1103,7 +1385,12 @@
     "enclos"
    ],
    "confidence": "high",
-   "status": "verified"
+   "status": "verified",
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "CONFIRMED",
+    "evidence": "Enclos: \"custom-designed unitized curtainwalls spanning over 60'\""
+   }
   },
   {
    "id": "facade.back_wall",
@@ -1116,7 +1403,12 @@
     "sfgate2000"
    ],
    "confidence": "high",
-   "status": "verified"
+   "status": "verified",
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "CONFIRMED",
+    "evidence": "SFGate re-read"
+   }
   },
   {
    "id": "roof.upgrade_2024",
@@ -1134,7 +1426,12 @@
    ],
    "confidence": "high",
    "status": "verified",
-   "note": "NAIP 2024 (2024-05-20) predates the works: the 2026 roof carries PV arrays whose layout is not documented in any open source found (open question)"
+   "note": "NAIP 2024 (2024-05-20) predates the works: the 2026 roof carries PV arrays whose layout is not documented in any open source found (open question)",
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "CONFIRMED except the cost",
+    "evidence": "Webcor: ceremony \"June 27, 2024\", \"installing 1,400 kW solar\"; FTF (first-hand): \"Scaffolds reached 90 feet high over active roadways and AirTran tracks\"; Airport World: \"expected to be completed in mid-2026\". The \"$75 M\" was not found in the re-fetched Webcor pages (Airports International still 403): unverified."
+   }
   },
   {
    "id": "naip.k_model",
@@ -1170,7 +1467,47 @@
    ],
    "confidence": "high",
    "status": "verified",
-   "note": "5 DOF poles 153-157 ft AGL; scatter 0.0022; k at ITB roof 0.418; predicts the tower cab lean (38-40 m) for 69-73 m height vs DOF top 74.7 m (245 ft incl. appurtenances)"
+   "note": "5 DOF poles 153-157 ft AGL; scatter 0.0022; k at ITB roof 0.418; predicts the tower cab lean (38-40 m) for 69-73 m height vs DOF top 74.7 m (245 ft incl. appurtenances)",
+   "alt_frame_model": {
+    "nadir_xz": [
+     -2767.8,
+     443.6
+    ],
+    "nadir_sd": [
+     98.5,
+     8.7
+    ],
+    "H_minus_h": 3704.8,
+    "H_minus_h_sd": 277.3,
+    "rms_m": 0.207,
+    "residuals_xz": [
+     [
+      0.06,
+      0.3
+     ],
+     [
+      -0.13,
+      -0.37
+     ],
+     [
+      0.01,
+      0.3
+     ],
+     [
+      -0.06,
+      0.04
+     ],
+     [
+      0.12,
+      -0.27
+     ]
+    ]
+   },
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "PLAUSIBLE (reproduced); north-south component unresolved",
+    "evidence": "the five ring shifts also fit one central projection (nadir [-2767.8, 443.6], H-h 3705 m) with rms 0.21 m against 0.54 m for k(x); the shift direction rotates with z (corr 0.91), as in a frame camera (NAIP 2022 here was a Leica ContentMapper frame sensor; the 2024 sensor is not documented in an open source found). At Boarding Area G (z ~100) the single-frame model fails (see ba_g.height_roof)."
+   }
   },
   {
    "id": "naip.sun",
@@ -1192,7 +1529,12 @@
    ],
    "confidence": "medium",
    "status": "verified",
-   "note": "shadow of DOF pole 06-034826 (108 ft): azimuth ~187 deg, elevation ~72.4 deg (the local-noon maximum for 2024-05-20) - for later shadow checks"
+   "note": "shadow of DOF pole 06-034826 (108 ft): azimuth ~187 deg, elevation ~72.4 deg (the local-noon maximum for 2024-05-20) - for later shadow checks",
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "CONFIRMED",
+    "evidence": "NOAA solar position for 2024-05-20 at the shadow azimuth 186.6 deg: 13:14 PDT, elevation 72.39 deg (cot 0.3175), declination 20.09 deg; the shadow-length elevation 72.5 agrees"
+   }
   },
   {
    "id": "ba_a.architect",
@@ -1206,7 +1548,12 @@
    ],
    "confidence": "medium",
    "status": "secondary-only",
-   "note": "secondary (Wikipedia citing the 2007 flySFO fact sheet)"
+   "note": "secondary (Wikipedia citing the 2007 flySFO fact sheet)",
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "UNCHANGED (secondary-only)",
+    "evidence": "Wikipedia re-read: \"Gerson/Overstreet Architects and built by Hensel Phelps Construction (Boarding Area A)\""
+   }
   },
   {
    "id": "ba_a.gates",
@@ -1221,7 +1568,12 @@
    ],
    "confidence": "high",
    "status": "verified",
-   "note": "AGS: 23 passenger boarding bridges at A1-A15 reconfigured (completed 2020); A6 retrofitted for a three-bridge A380 operation (AGS) - Wikipedia names A11 for three jetways (conflict, gate-level detail)"
+   "note": "AGS: 23 passenger boarding bridges at A1-A15 reconfigured (completed 2020); A6 retrofitted for a three-bridge A380 operation (AGS) - Wikipedia names A11 for three jetways (conflict, gate-level detail)",
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "CONFIRMED (A6 vs A11 not a contradiction in time)",
+    "evidence": "AGS: \"Gate A6 was retrofitted to allow for a three PBB operation\" (completed 2020); Wikipedia: \"Gate A11 has three jetways\" citing an older SFGate A380 article"
+   }
   },
   {
    "id": "ba_a.footprint",
@@ -1235,20 +1587,26 @@
    ],
    "confidence": "medium",
    "status": "verified",
-   "note": "NAIP imaged roof (fascia to fascia) 36.5 m at three stations (by eye, +-1 m); the SFO Museum edge includes the oblique facade band"
+   "note": "NAIP imaged roof (fascia to fascia) 36.5 m at three stations (by eye, +-1 m); the SFO Museum edge includes the oblique facade band",
+   "naip_roof_width_m": 37.85,
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "PLAUSIBLE",
+    "evidence": "imaged main-roof width re-measured 37.85 m (IQR [37.5, 41.17], 58 stations; note: 36.5 m by eye); axis 208.0 deg by NAIP edge alignment = airport grid t-axis + 180 (SFO Museum rectangle 207.7)"
+   }
   },
   {
    "id": "ba_a.height_roof",
    "group": "boarding_area_a",
    "name": "Main pier roof height above apron",
-   "value": 17.0,
+   "value": 17.9,
    "unit": "m",
    "tag": "obs",
    "sources": [
     "naip",
     "sfom_data"
    ],
-   "confidence": "low",
+   "confidence": "medium",
    "status": "verified",
    "method": "(a) NAIP west-side dark band (oblique WNW facade + shadow) 8.5-9 m wide = (0.873 k + 0.122) h with k = 0.42 -> 17.4-18.4 m (minus any roof overhang); (b) NAIP roof centre vs SFO Museum footprint centre 5.85 m = 0.873 k h -> 15.9 m",
    "note": "+-2.5 m. Consistent with a three-level pier (apron + two passenger levels) [inf]. OSM says 25 m (unsourced)",
@@ -1259,7 +1617,21 @@
      "src": "osm",
      "note": "unsourced"
     }
-   ]
+   ],
+   "corrected": {
+    "old_value": 17.0,
+    "date": "2026-11-04",
+    "reason": "the overhang cancels in the band method; the footprint-offset method is unreliable; re-measured band gives 17.4-18.3 m"
+   },
+   "range_m": [
+    16.9,
+    18.8
+   ],
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "CORRECTED (refined; derivation partly flawed)",
+    "evidence": "west band re-measured 8.79 m (IQR [8.71, 8.86], 11 clean stations) = (relief + shadow) x h; a roof overhang moves both band edges equally and cancels, so the note's \"minus any roof overhang\" does not apply; method (b) depends on the SFO Museum footprint (offset 3-6 m at G). h = 18.3 m (k(x)) / 17.4 m (frame model)."
+   }
   },
   {
    "id": "ba_a.pods",
@@ -1281,7 +1653,12 @@
    ],
    "confidence": "low",
    "status": "verified",
-   "note": "by eye on NAIP (+-3 m); the first pod (nearest the ITB) top is FAA DOF 06-035352 = 85 ft AGL (25.9 m, 94 ft AMSL); its oblique rim band (2.5-3 m) gives ~7.5 m above the main roof, consistent with 17 + 7.5 = 24.5-26 m"
+   "note": "by eye on NAIP (+-3 m); the first pod (nearest the ITB) top is FAA DOF 06-035352 = 85 ft AGL (25.9 m, 94 ft AMSL); its oblique rim band (2.5-3 m) gives ~7.5 m above the main roof, consistent with 17 + 7.5 = 24.5-26 m",
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "PLAUSIBLE (weaker than stated)",
+    "evidence": "rim bands at the three pod apexes [2.49, 2.52, 2.49] m (note: 2.5-3); the dark band includes the pod's own shadow (0.116 per m), so the rise is [[4.9, 5.2, 6.8], [5.0, 5.2, 6.9], [4.9, 5.2, 6.8]] m (frame / k(x) / band without shadow) -> pod top 22.3-25.2 m, not 7.5 m above the main roof; the DOF 85 ft (25.9 m) point lies at pod 1's NNE end near the west eave (+-6.1 m). Pod 1 reads ~55-60 m long by eye on qa_pierA_frame.jpg (note: 70); pods 2 and 3 ~52-55 m."
+   }
   },
   {
    "id": "ba_a.dof_pod",
@@ -1296,7 +1673,12 @@
    "confidence": "high",
    "status": "verified",
    "value_m": 25.91,
-   "note": "BLDG 85 ft AGL / 94 ft AMSL, 1A, 37 36 49.70N 122 23 20.30W -> world (-1195.3, 555.0): west side of Boarding Area A pod 1 (pier frame u ~ -125 m)"
+   "note": "BLDG 85 ft AGL / 94 ft AMSL, 1A, 37 36 49.70N 122 23 20.30W -> world (-1195.3, 555.0): west side of Boarding Area A pod 1 (pier frame u ~ -125 m)",
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "CONFIRMED",
+    "evidence": "current DOF: 06-035352 85 ft AGL / 94 ft AMSL, 1A, added 2013-10-16"
+   }
   },
   {
    "id": "ba_g.architect",
@@ -1310,7 +1692,12 @@
     "wiki_sfo"
    ],
    "confidence": "high",
-   "status": "verified"
+   "status": "verified",
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "CONFIRMED",
+    "evidence": "Tutor Perini: \"ARCHITECT Robin Chiang & Company\"; Wikipedia: HOK in association with Robin Chiang & Company, Robert B. Wong Architects"
+   }
   },
   {
    "id": "ba_g.area",
@@ -1323,7 +1710,12 @@
     "tutor_bag"
    ],
    "confidence": "high",
-   "status": "verified"
+   "status": "verified",
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "CONFIRMED",
+    "evidence": "Tutor Perini: \"380,000-square-foot, three-story\""
+   }
   },
   {
    "id": "ba_g.stories",
@@ -1336,7 +1728,12 @@
     "tutor_bag"
    ],
    "confidence": "high",
-   "status": "verified"
+   "status": "verified",
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "CONFIRMED",
+    "evidence": "Tutor Perini re-read"
+   }
   },
   {
    "id": "ba_g.gaterooms",
@@ -1349,7 +1746,12 @@
     "tutor_bag"
    ],
    "confidence": "high",
-   "status": "verified"
+   "status": "verified",
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "CONFIRMED",
+    "evidence": "Tutor Perini: \"six double-gated, two-level common use passenger gate rooms- capable of handling passenger traffic of twelve 747-400 wide-body aircraft\""
+   }
   },
   {
    "id": "ba_g.gates",
@@ -1362,7 +1764,12 @@
     "wiki_sfo"
    ],
    "confidence": "medium",
-   "status": "secondary-only"
+   "status": "secondary-only",
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "UNCHANGED (secondary-only)",
+    "evidence": "Wikipedia re-read: \"Boarding Area G with 14 gates (G1-G14)\""
+   }
   },
   {
    "id": "ba_g.facade",
@@ -1375,7 +1782,12 @@
     "tutor_bag"
    ],
    "confidence": "high",
-   "status": "verified"
+   "status": "verified",
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "CONFIRMED",
+    "evidence": "Tutor Perini: \"metallic finished composite aluminum panels and a tinted energy-efficient glazed curtainwall\""
+   }
   },
   {
    "id": "ba_g.footprint",
@@ -1389,7 +1801,13 @@
    ],
    "confidence": "medium",
    "status": "verified",
-   "note": "NAIP imaged roof width ~33.5 m by eye (edges ambiguous, low); the SFO Museum G outline is offset ~3-6 m NNE of the relief-corrected NAIP roof (imagery.md s.6 lists +4 m) - unresolved"
+   "note": "NAIP imaged roof width ~33.5 m by eye (edges ambiguous, low); the SFO Museum G outline is offset ~3-6 m NNE of the relief-corrected NAIP roof (imagery.md s.6 lists +4 m) - unresolved",
+   "naip_roof_width_m": 38.4,
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "NAIP WIDTH REFUTED (value unchanged)",
+    "evidence": "the roof between its two parapet lines measures 38.40 m (IQR [38.2, 38.68], 38 stations), not ~33.5 m - it matches the SFO Museum body width 38.3-38.4 m; axis 297.75 deg by NAIP edge alignment = airport grid s-axis + 180. The 3-6 m NNE offset was not re-checked."
+   }
   },
   {
    "id": "ba_g.height_roof",
@@ -1404,7 +1822,16 @@
    "confidence": "low",
    "status": "verified",
    "method": "NAIP: NNE shadow band + SSW oblique facade band = 4.5-5.5 m = 0.297 h (sun elevation 72.4 deg, azimuth 187 deg; k = 0.36)",
-   "note": "+-3 m; three-story (pub) supports ~17-20 m [inf]"
+   "note": "+-3 m; three-story (pub) supports ~17-20 m [inf]",
+   "range_m": [
+    13.0,
+    20.0
+   ],
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "PLAUSIBLE (re-measured, k(x) relief)",
+    "evidence": "north shadow band re-measured 2.14 m (IQR [1.75, 2.36], 41 stations); with k(x) h = 16.9 m (IQR [15.5, 18.0]). The sunlit SSW facade could not be separated from the apron, so the k-free sum (0.297 h) was not reproduced. Under the single-frame relief model the roof would hide its own shadow -> G is in another frame of the mosaic or has little north-south relief."
+   }
   },
   {
    "id": "ba_g.pods",
@@ -1426,7 +1853,12 @@
    ],
    "confidence": "low",
    "status": "verified",
-   "note": "by eye on NAIP (+-3 m); heights not measured - no DOF entry on Boarding Area G"
+   "note": "by eye on NAIP (+-3 m); heights not measured - no DOF entry on Boarding Area G",
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "PLAUSIBLE",
+    "evidence": "by eye on the G-frame crop (heading 297.75): ~62 / 58 / 66 m (note 60 / 55 / 62), +-4 m"
+   }
   },
   {
    "id": "radp.itb",
@@ -1440,7 +1872,12 @@
    ],
    "confidence": "high",
    "status": "unverified",
-   "note": "planning-stage only; whether any was built by 2026 is not verified"
+   "note": "planning-stage only; whether any was built by 2026 is not verified",
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "NOT RE-CHECKED",
+    "evidence": "the RADP NOP was not re-fetched in this round"
+   }
   }
  ],
  "photos": [
@@ -1521,7 +1958,7 @@
    "licence": "Public domain",
    "use": "west elevation from an elevated viewpoint (Highsmith, Library of Congress): departures and arrivals decks, column pairs, roof tips beyond the end walls",
    "author": "Carol M. Highsmith",
-   "date": "Taken on\u00a08 July 2012, 23:20\u00a0(according t",
+   "date": "Taken on 8 July 2012, 23:20 (according t",
    "downloaded": true
   },
   {
@@ -1531,7 +1968,7 @@
    "licence": "Public domain",
    "use": "wider west view incl. a 153-157 ft DOF high-mast pole and the Garage G side (Highsmith)",
    "author": "Carol M. Highsmith",
-   "date": "Taken on\u00a08 July 2012, 23:24\u00a0(according t",
+   "date": "Taken on 8 July 2012, 23:24 (according t",
    "downloaded": true
   },
   {
@@ -1570,7 +2007,7 @@
    "title": "File:SFO international terminal.jpg",
    "licence": "CC BY 2.0",
    "use": "night, departures curb: eave overhang, trusses, notch between north wing and centre section",
-   "author": "H\u00e5kan Dahlstr\u00f6m",
+   "author": "Håkan Dahlström",
    "date": "2009-11-18 18:19:50",
    "downloaded": true
   },
@@ -1601,7 +2038,7 @@
    "licence": "Public domain",
    "use": "not reviewed",
    "author": "Carol M. Highsmith",
-   "date": "Taken on\u00a08 July 2012, 19:28\u00a0(according t",
+   "date": "Taken on 8 July 2012, 19:28 (according t",
    "downloaded": false
   },
   {
@@ -1611,7 +2048,7 @@
    "licence": "Public domain",
    "use": "not reviewed",
    "author": "Carol M. Highsmith",
-   "date": "Taken on\u00a08 July 2012, 19:28\u00a0(according t",
+   "date": "Taken on 8 July 2012, 19:28 (according t",
    "downloaded": false
   },
   {
@@ -1621,7 +2058,7 @@
    "licence": "Public domain",
    "use": "not reviewed",
    "author": "Carol M. Highsmith",
-   "date": "Taken on\u00a08 July 2012, 19:28\u00a0(according t",
+   "date": "Taken on 8 July 2012, 19:28 (according t",
    "downloaded": false
   },
   {
@@ -1695,21 +2132,37 @@
  ],
  "unverified": [
   "flySFO \"Fact Sheet - International Terminal\" (2007) could not be retrieved (web.archive.org refused); its dimensions are only known through Wikipedia",
-  "AISC Modern Steel Construction Feb 2000 article and the SEAONC Legacy page: only search-engine extracts could be read (bot challenges)",
-  "the \"705 x 210 x 83 ft\" great-hall figures: attribution to SEAONC not confirmed first-hand",
   "datum of the architect's \"144 ft\" building height",
   "departures (level 3) floor elevation above ground (inferred 11.5 +-1.5 m)",
   "roof tip and centre-crown heights (NAIP + one photo, +-1.5-2 m); whether the DOF tops are the eave or skylight ridges",
   "as-built roof length: NAIP 252.7 m vs published 860 ft (262.1 m)",
   "pier roof heights (NAIP relief/shadow only), heights of pods other than A pod 1, G pod heights",
   "post-2024 roof: PV array layout, new membrane colour",
-  "gate with the three-bridge A380 operation: A6 (AGS) vs A11 (Wikipedia)"
+  "gate with the three-bridge A380 operation: A6 (AGS) vs A11 (Wikipedia)",
+  "AISC Modern Steel Construction Feb 2000: still unreadable (curl 403 (Cloudflare), WebFetch 403, web.archive.org connection reset (snapshot 2024-09-04 exists)) - truss length 320 ft and centre section 180 ft remain snippet-only",
+  "NAIP 2024 sensor / mosaic seamlines: no open FGDC metadata found; the north-south relief component (roof length 252.7-255.1 m, pier G height) depends on it",
+  "ITB roof upgrade cost ($75 M): not found in the re-fetched Webcor pages"
  ],
  "open_questions": [
   "Owner: can we obtain SFO / SF Planning / SOM drawings (sections, elevations) of the ITB? e.g. SFO Bureau of Design and Construction record drawings, or the 1992 SFO Master Plan FEIR (the ITB EIR) - they would fix the level heights and the roof profile",
   "Which length to model: NAIP 252.7 m (as imaged) or the published 860 ft? Proposed: NAIP for the planform, published rhythm scaled to it, flagged on the drawing",
   "Roof appearance for 2026: new membrane + 1.4 MW PV - needs post-2024 imagery (NAIP 2026 when released, or owner photos); until then model the 2024 roof",
   "Pier heights: accept the NAIP-derived ~17 m (with pods ~26 m) or wait for an elevation source?",
-  "Boarding Area G outline: SFO Museum polygon offset vs NAIP - retrace from NAIP ground-level edges?"
- ]
+  "Boarding Area G outline: SFO Museum polygon offset vs NAIP - retrace from NAIP ground-level edges?",
+  "Verification 2026-11-04: the roof length (252.7-255.1 m by NAIP) is 7-9 m short of the published 860 ft even though the DOF roof-top pair confirms the 380-ft centre span; an SFO record drawing (roof plan) or a ground survey of the tips would settle it"
+ ],
+ "photos_verification": {
+  "date": "2026-11-04",
+  "method": "Wikimedia Commons API imageinfo/extmetadata, 2026-11-04",
+  "n": 24,
+  "all_licences_match": true,
+  "all_authors_match": true
+ },
+ "verification": {
+  "date": "2026-11-04",
+  "tool": "tools/buildings/itb_verify.py",
+  "results": "tools/buildings/itb_verify.json",
+  "doc": "docs/research/buildings_itb.md ## Verification",
+  "note": "verdicts per item in items[].verification; corrected items keep the previous value in items[].corrected"
+ }
 }

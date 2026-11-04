@@ -43,7 +43,12 @@ def html_text(path):
 
 
 def pdf_text(path):
-    import pymupdf
+    try:
+        import pymupdf
+    except ImportError:                       # fallback (2026-11-04 container): poppler's pdftotext, pages split at \f
+        import subprocess as sp
+        t = sp.run(['pdftotext', '-layout', path, '-'], capture_output=True, text=True).stdout
+        return '\n'.join(f'=== page {i + 1} ===\n' + pg for i, pg in enumerate(t.split('\f')) if pg.strip() or i == 0)
     doc = pymupdf.open(path)
     return '\n'.join(f'=== page {i + 1} ===\n' + pg.get_text() for i, pg in enumerate(doc))
 
