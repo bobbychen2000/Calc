@@ -61,6 +61,28 @@ VIEWER_EXT = {".js", ".css", ".json"}
 CONFIG_RE = re.compile(r"<script>window\.PC12_CONFIG = \{[^<]*\};</script>")
 BUNDLE_CONFIG = {"vendor": "<script>window.PC12_CONFIG = { data: './data/', three: './three/', glbLow: 'pc12_low.glb' };</script>",
                  "cdn": "<script>window.PC12_CONFIG = { data: './data/', three: 'cdn', glbLow: 'pc12_low.glb' };</script>"}
+MIT_LICENSE = """The MIT License
+
+{holder}
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+"""
 MESHOPT_ARGS = ["--level", "medium", "--quantize-position", "16", "--quantize-normal", "8"]   # CLI fallback only
 # EXT_meshopt_compression on the build's own quantised data (gltf-transform's API: reorder + the extension, method
 # QUANTIZE = the CLI's --level medium without its quantize step): out/pc12.glb quantises the touching meshes of a part
@@ -407,7 +429,16 @@ def build(out: Path, data: Path, materials: Path | None, three: str, use_meshopt
             shutil.copy2(THREE_LOCAL / rel, out / "three" / rel)
         (out / "three" / "README.txt").write_text(
             f"three.js r{THREE_REVISION} (https://github.com/mrdoob/three.js, MIT licence, Copyright 2010-2023 Three.js "
-            "Authors): the files the PC-12 viewer imports, copied unchanged by web/package.py.\n")
+            "Authors): the files the PC-12 viewer imports, copied unchanged by web/package.py.  The licence texts are "
+            "in LICENSE (three.js; meshoptimizer for examples/jsm/libs/meshopt_decoder.module.js).\n")
+        # the checkout carries no LICENSE file: the MIT texts of three.js and of the meshoptimizer decoder it vendors
+        lic = [f"three.js r{THREE_REVISION} (https://github.com/mrdoob/three.js)\n\n" + MIT_LICENSE.format(
+            holder="Copyright © 2010-2023 three.js authors")]
+        if any(rel.endswith("meshopt_decoder.module.js") for rel in files):
+            lic.append("examples/jsm/libs/meshopt_decoder.module.js: meshoptimizer "
+                       "(https://github.com/zeux/meshoptimizer)\n\n"
+                       + MIT_LICENSE.format(holder="Copyright (c) 2016-2022 Arseny Kapoulkine"))
+        (out / "three" / "LICENSE").write_text(("\n" + "-" * 78 + "\n\n").join(lic))
         info["three_files"] = files
 
     missing = [f for f in DATA_FILES if not (data / f).is_file()]
