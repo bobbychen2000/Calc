@@ -406,10 +406,10 @@ def hall_trusses(lod=0):
             for a, b in zip(seg[:-1], seg[1:]):
                 for f in np.linspace(0, 1, 4)[:-1]: fine.append(a + (b - a) * f)
             fine.append(seg[-1])
-            tube(mb, [Buv(u, vk, zb(u)) for u in fine], R_BOT, sides, 'steel_white')
-            tops = (vk - TRUSS_HALF, vk + TRUSS_HALF) if lod == 0 else (vk,)
+            tube(mb, [Buv(u, vk, zb(u)) for u in fine], R_BOT, sides, 'steel_white', cap=True)   # capped: open chord ends
+            tops = (vk - TRUSS_HALF, vk + TRUSS_HALF) if lod == 0 else (vk,)                 # would show back faces
             for vt in tops:
-                tube(mb, [Buv(u, vt, zt(u)) for u in fine], R_TOP, max(4, sides - 2), 'steel_white')
+                tube(mb, [Buv(u, vt, zt(u)) for u in fine], R_TOP, max(4, sides - 2), 'steel_white', cap=True)
             for i, u in enumerate(seg):
                 if lod == 0:
                     for vt in tops:   # node posts (V in the cross section)
@@ -489,7 +489,7 @@ def hall_west_wall():
         a, b = Buv(u0, V_W, 0), Buv(u1, V_W, 0)
         h0, h1 = head(u0), head(u1)
         # (z ranges, material); UV tiles: glass panes 6.096 x 4.4 m
-        bands = [(L3, CANOPY, CANOPY, CANOPY, 'glass_entrance')]
+        bands = [(L3, CANOPY, L3, CANOPY, 'glass_entrance')]
         if side:
             bands += [(CANOPY, CANOPY + 1.5, CANOPY, CANOPY + 1.5, 'glass_clear'), (CANOPY + 1.5, h0, CANOPY + 1.5, h1, 'glass_frit')]
         else:
@@ -608,7 +608,7 @@ def hall_podium():
 
 
 def end_wall_poly(u):
-    top = roof_us(u) - 0.02
+    top = roof_us(u)           # up to the soffit (edge contact, no slit)
     return [(V_W, L3), (V_E, L3), (V_E, top), (V_UP, top), (V_UP, head(u)), (V_W, head(u))]
 
 
@@ -650,7 +650,7 @@ def hall_east_clerestory():
     U = sorted(set(wall_u_breaks()) | set(np.arange(-HALL_HL, HALL_HL, 3.0).round(3).tolist()))
     for u0, u1 in zip(U[:-1], U[1:]):
         a, b = Buv(u0, V_E, 0), Buv(u1, V_E, 0)
-        mb.quad_wall(b, a, H_CORE, roof_us(u1) - 0.02, H_CORE, roof_us(u0) - 0.02, 'glass_tinted', -u1, (6.096, 4.4), grp='c')
+        mb.quad_wall(b, a, H_CORE, roof_us(u1), H_CORE, roof_us(u0), 'glass_tinted', -u1, (6.096, 4.4), grp='c')
     return mb
 
 

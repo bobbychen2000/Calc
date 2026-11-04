@@ -99,7 +99,10 @@ def entry(build, ver, parts, mats):
                                    heading_deg=162.85, note='u along the roof axis (+ towards BA-A, SSE), v across (+ ENE)')),
         lods=lods,
         lod_note='LOD nodes are siblings under the root: show exactly one (camera distance to the root >= switch_m of that LOD and '
-                 '< switch_m of the next). LOD1 / LOD0 share the shell meshes and atlas A; phone budget: LOD1 / LOD2.',
+                 '< switch_m of the next). LOD1 / LOD0 share the shell meshes and atlas A; LOD2 is one joined node (L2_itb, '
+                 'extras.parts keeps the per-part tags) with its own atlas B. Phone / far tier: data/buildings3d/itb_lod2.glb holds '
+                 'the LOD2 subtree alone (same root transform).',
+        files=['data/buildings3d/itb.glb', 'data/buildings3d/itb_lod2.glb'], lod2_glb=build.get('lod2_glb'),
         textures=tex, materials=mat,
         material_note='glass: coated (IOR 1.9 -> F0 0.096, KHR_materials_ior), opaque (interior not modelled; glass_hall carries the '
                       'brightness of the lit hall seen through the clear bay); no imagery is used as a texture. No TANGENT attribute '
@@ -116,6 +119,7 @@ def entry(build, ver, parts, mats):
 
 
 def keep_renders(old, new):
-    if old and old.get('renders'):
-        new['renders'] = old['renders']
+    for k in ('renders', 'render_check', 'renders_updated', 'qa'):
+        if old and old.get(k):
+            new[k] = old[k]
     return new

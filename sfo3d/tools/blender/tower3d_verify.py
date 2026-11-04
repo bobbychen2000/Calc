@@ -647,8 +647,9 @@ def manifest_entry(results, ver, renders, args, rev, secs):
             replaces='js/live/terminals.js buildTower() + the atc branch of js/live/airport.js (procedural shaft at the footprint '
                      'centroid, 7.2 m S of the inferred axis)',
             app_parts_over_footprint=v1['plausibility'].get('app_parts_over_footprint'),
-            action='cut the base-building footprint (below its parapet) out of the listed app parts (data/sfo_buildings.json T2 hall '
-                   'h 19.0 covers 1,119 m2 of it; BA-D walkway 62 m2) or the base building disappears inside the T2 hall volume',
+            action='cut the base-building footprint (below its parapet) out of the listed app parts of data/sfo_buildings.json ('
+                   + '; '.join(f"{o['part']} h {o['h']}: {o['overlap_m2']} m2" for o in (v1['plausibility'].get('app_parts_over_footprint') or []))
+                   + ' of overlap with the asset below 20 m) or the base building disappears inside the T2 hall volume',
             exclusion_footprint_world=[[round(float(x), 2), round(float(z), 2)] for x, z in
                                        np.asarray(DT.D.sfom('Air Traffic Control Tower')[0][0], float)],
             flare_overhang=dict(centre_world=[float(G.AXIS[0]), float(G.AXIS[1])], radius_m=round(TW.r_top + 2.0, 2),
@@ -664,6 +665,109 @@ def manifest_entry(results, ver, renders, args, rev, secs):
                    date=__import__('datetime').date.today().isoformat()),
     )
 
+
+# ------------------------------------------------------------------------------------------------ docs/research/buildings3d.md
+DOC_BEGIN, DOC_END = '<!-- tower:begin (written by tools/blender/build_tower.py) -->', '<!-- tower:end -->'
+
+
+def doc_section(entry, ver):
+    """the tower section of docs/research/buildings3d.md, from the manifest entry and the verification."""
+    v1 = ver[1]; L = entry['lods']; a = entry['anchors']
+    fails = entry['verification']['failures']
+    lines = [DOC_BEGIN, '## Control tower (ATCT 2016) and base building: `data/buildings3d/tower.glb`', '',
+             '```bash', 'python3 tools/blender/build_tower.py --render --audit   # both families, AO bake, export, manifest, '
+             'verification, renders (~16 min, 4 CPUs)', 'python3 tools/blender/tower3d_verify.py data/buildings3d/tower.glb   '
+             '# re-measure an exported file', '```', '',
+             '**Source of the geometry.** Everything is generated from the approved sheets BT-01..03: `tools/blender/tower_geom.py` '
+             'imports `tools/buildings/draw_tower.py` (and through it `spec_tower.json` and the SFO Museum footprint) and uses its '
+             'functions and constants (`shaft_outline`, `cab_outline`, `plinth`, `SHOULDER`, slot / mast / pole bearings, `WING_TIP`, '
+             '`RIB_BRG`, `IBF_AIR_BAND`, `IBF_CW`, rows / twist of the cladding). Nothing is typed in twice. The one new measurement is '
+             'the roof-garden outline (NAIP 2024 vegetated pixels, lean-corrected). No imagery is used as a texture.', '',
+             '**Height family.** The sheets draw two self-consistent families and prefer neither (buildings_tower.md 12.3). Both are '
+             'built: `tower.glb` = F1 (D 15.2, rim 67.36 = 221 ft), `tower_f2.glb` = F2 (D 14.5, rim 64.0, 221 ft at the masts). '
+             'F1 is the default file only because CTBUH classifies 221 ft as a height without antennae (not a survey). '
+             '`manifest.json#tower.family_decided = false`.', '',
+             '**Placement.** Root node `tower` at world (-740.5, GROUND_Y, 324.5) = the inferred shaft axis at grade '
+             '(x east, y up, z south, js/geo.js). Cab-floor / eye heights and the other anchors are in the root extras and the '
+             f'manifest (F1: floor {a["cab_floor_h"]} m, eye {a["cab_eye_h"]} m, glass {a["glass_sill_h"]}-{a["glass_head_h"]} m, '
+             f'rim {a["roof_rim_h"]} m, highest mast {a["mast_tip_max_h"]} m).', '',
+             '| LOD | Use (suggested camera distance) | Triangles F1 / F2 | AO atlas (TEXCOORD_1) | Content |', '|---|---|---|---|---|']
+    use = {0: '< 350 m (close-up, tower view)', 1: '350-1200 m', 2: '> 1200 m; phone (`tower_lod2.glb`)'}
+    cont = {0: '272 helical columns, recessed slots with glazed panes, seams, 24 cab panes + joints, ribbon mullions, 15 whips + '
+               '9 poles + red light, base-building mullions, coping, rails, rooftop unit, sunken garden',
+            1: '136 columns, flat slots, 24-facet cab, 15 whips, plain base building with parapet',
+            2: '68 columns, flat slots, 12-facet cab, no masts, base building as a box'}
+    for l in L:
+        lod = int(l['node'][3:])
+        lines.append(f"| {l['node']} | {use[lod]} | {l['tris']:,} / {l['tris_f2']:,} | {l['ao_atlas']} px | {cont[lod]} |")
+    lines += ['', f"Files: `tower.glb` {entry['bytes']['F1'] / 1e6:.2f} MB, `tower_f2.glb` {entry['bytes']['F2'] / 1e6:.2f} MB, "
+              f"`tower_lod2.glb` {entry['bytes']['F1_lod2_only'] / 1e6:.2f} MB (PNG textures; KTX2 / meshopt later with "
+              '`tools/engine/glb_compress.mjs`). Materials are PBR constants (our choices for the published "SFO Silver" ACM, glass, '
+              'panels; `extras.src` on every material); detail normal tiles on TEXCOORD_0 (`tools/blender/tower_tex.py`: panel joints, '
+              'louvres, base-building panels, mip-mapped: no moire); sun-independent AO baked by Cycles (48 samples, 8 m rays, ground '
+              'plane as occluder). Glass of the cab is alpha-blended and double-sided; every other surface is single-sided and wound '
+              'outwards (back-face audit renders: 0 back-face pixels in 6 views per LOD).', '',
+              '**Verification** (`out/buildings3d/tower_verify.json`, measured on the exported GLB against the sheet functions):',
+              f"- F1: {v1['summary']}", f"- F2: {ver[2]['summary']}" if 2 in ver else '',
+              f"- largest deviation of a length: {entry['verification']['max_abs_dev_m']:.3f} m (tolerance 0.5 m / 2 %); "
+              f"{len(fails)} failures.",
+              '- Khronos glTF-Validator ' + '; '.join(f"{k}: {g.get('errors')} errors, {g.get('warnings')} warnings, {g.get('infos')} infos "
+                                                     f"({', '.join(g.get('codes', {}))})" for k, g in entry['verification']['gltf_validator'].items() if g),
+              f"- plausibility: {v1['plausibility']['verdict']}; nearest aircraft envelope {v1['plausibility']['nearest_aircraft_envelope_m']} m "
+              f"({v1['plausibility']['nearest_aircraft_stand']}), bridge {v1['plausibility']['nearest_bridge_m']} m, taxiway centreline "
+              f"{v1['plausibility']['nearest_taxi_centreline_m']} m.", '',
+              '**Integration (for the app owner).** Parts of the app\'s `data/sfo_buildings.json` overlap the asset below 20 m: '
+              + '; '.join(f"\"{o['part']}\" ({o['kind']}, {o['h']} m) {o['overlap_m2']} m2" for o in v1['plausibility'].get('app_parts_over_footprint') or [])
+              + '. The base building would be swallowed by the T2 hall box. Cut the footprint (`manifest.json#tower.integration.'
+              'exclusion_footprint_world`) out of those parts, replace `buildTower()`, and put the tower camera at `anchors.cab_eye_h` '
+              '(the app uses GROUND_Y + 62).', '',
+              '**Renders** (Cycles CPU, 64 samples + OIDN, AgX; ours): `out/buildings3d/tower_A.png`, `tower_B.png` (the BT-02 '
+              'elevations, orthographic; `tower_overlay_A/B.png` carry the sheet outlines in red), `tower_t2.png`, `tower_t3.png`, '
+              '`tower_t4.png` (camera-matched to the reference photos t2 / t3 / t4, Famartin 2025, CC BY-SA 4.0; side-by-side '
+              'comparisons `tower_compare_*.jpg` stay local).', '',
+              '**Observed vs inferred.** Per dimension in `manifest.json#tower.dimensions`; lists `inferred`, `unknown`, '
+              '`not_modelled`, `conflicts` there. Node extras carry `src`, the spec keys and per-feature tags.', '',
+              '**Open (for the owner).**',
+              '- The height family (F1 / F2).',
+              '- NE blade tip: drawn at deck + 1.2 (61.7 m F1, obs low). In the t3 / t4 comparisons the model\'s tip stands ~2-3 m '
+              'higher than the photographed tip (perspective-corrected estimate from t3: the prow top is near the flare corner, '
+              '~58-59 m). Not changed: the sheet is the reference.',
+              '- t2 camera match: with the rim registered, the base-building parapet renders ~90 px (~2.9 m) higher than in the photo; '
+              'the camera height (11.5 m) and focal length are estimates (no EXIF here), so this is a camera-model check only, but '
+              'the parapet / roof station (rim - 3.46 D - 0.7) comes from the same photo.',
+              '- Slot 345.5 deg: its top corner falls on the NE blade root; clipped 0.3 m clear of the crease (the sheet lets the '
+              'blade cover it).',
+              DOC_END]
+    return '\n'.join(x for x in lines if x is not None)
+
+
+def write_doc(entry, ver):
+    path = os.path.join(ROOT, 'docs', 'research', 'buildings3d.md')
+    sec = doc_section(entry, ver)
+    if os.path.exists(path):
+        txt = open(path).read()
+        if DOC_BEGIN in txt and DOC_END in txt:
+            i = txt.index(DOC_BEGIN); j = txt.index(DOC_END) + len(DOC_END)
+            txt = txt[:i] + sec + txt[j:]
+        else:
+            txt = txt.rstrip('\n') + '\n\n' + sec + '\n'
+    else:
+        txt = ('# 3-D building assets (Blender, from the verified 2-D sheets)\n\n'
+               'One section per asset group, each written by its builder under `tools/blender/`. The assets live in '
+               '`data/buildings3d/` with one key per group in `data/buildings3d/manifest.json`. Owner\'s rules: drawings first; '
+               'no unverified key assumption (inferred / unknown items are listed per asset); no third-party imagery as textures; '
+               'observed vs inferred per asset; nothing physically implausible.\n\n' + sec + '\n')
+    tmp = path + '.tower.tmp'
+    open(tmp, 'w').write(txt); os.replace(tmp, path)
+    return path
+
+
+if __name__ == '__main__' and '--doc' in sys.argv:
+    # rewrite the tower section of docs/research/buildings3d.md from the manifest and the last verification
+    ent = json.load(open(os.path.join(ROOT, 'data', 'buildings3d', 'manifest.json')))['tower']
+    vj = json.load(open(os.path.join(ROOT, 'out', 'buildings3d', 'tower_verify.json')))
+    print(write_doc(ent, {int(k[1:]): v for k, v in vj.items()}))
+    sys.exit(0)
 
 if __name__ == '__main__':
     glb = sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, 'data', 'buildings3d', 'tower.glb')

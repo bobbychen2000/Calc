@@ -230,10 +230,10 @@ def run(path):
         devs = []
         for uu in [x for x in G.NODE_U if 57.8 <= abs(x) <= 82.4]:
             s = T_[(np.abs(T_[:, 1] - vk) < 0.6) & (np.abs(T_[:, 0] - uu) < 0.3)]
-            want = float(I.roof_line(uu) - I.depth(uu)) if k else float(max(I.chord(uu), G.head(uu)))
+            want = float(I.roof_line(uu) - I.depth(uu)) if k else float(max(I.chord(uu), G.head(uu), I.roof_line(uu) - I.depth(uu)))
             devs.append(float(s[:, 2].min()) - want)
         C.add('truss %d bottom chord over the supports (|u| 57.9-82.3), max |dev|' % k, max(abs(d) for d in devs), 0.0, 0.5,
-              'BI-03 roof_line - depth, 29 ft [pub]' if k else 'BI-02 chord(u) = glass head')
+              'BI-03 roof_line - depth, 29 ft [pub]' if k else 'max(BI-02 chord, BI-03 roof_line - depth)')
     s = T_[(np.abs(T_[:, 1] - G.LINES_V[0]) < 0.6) & (np.abs(T_[:, 0]) > 30) & (np.abs(T_[:, 0]) < I.HALL_HL)]
     if len(s):
         dv = []
@@ -278,6 +278,18 @@ def run(path):
     en = to_uvh(allP(Wl, 'glass_entrance'))
     C.add('glass wall foot = level 3', float(en[:, 2].min()), I.L3, None, 'level3.floor 11.5 [inf]')
     C.add('glass wall length (705-ft hall)', float(en[:, 0].max() - en[:, 0].min()), 2 * I.HALL_HL, None, 'SEAONC 705 ft [pub]')
+    # glazed area of the wall plane vs the drawn outline (L3 .. head(u) over the 705-ft hall): catches holes / missing bands
+    area = 0.0
+    for p in Wl['prims']:
+        if not p['mat'].split('@')[0].startswith('glass'): continue
+        Q = to_uvh(p['P'])
+        for t in p['T']:
+            q = Q[t]
+            if np.all(np.abs(q[:, 1] - G.V_W) < 0.05):
+                area += 0.5 * abs((q[1, 0] - q[0, 0]) * (q[2, 2] - q[0, 2]) - (q[2, 0] - q[0, 0]) * (q[1, 2] - q[0, 2]))
+    us_ = np.linspace(-I.HALL_HL, I.HALL_HL, 4001)
+    want_a = float(np.trapz([G.head(x) - I.L3 for x in us_], us_))
+    C.add('west wall glazed area (L3 .. head over the hall)', area, want_a, 0.005 * want_a, 'BI-02 V1 outline', 'm2')
     hl = to_uvh(allP(Wl, 'glass_hall'))
     hl = hl[np.abs(hl[:, 1] - G.V_W) < 0.05]
     C.add('central bay head (max)', float(hl[:, 2].max()), I.WH + I.BAY_HEAD, None, 'BI-02: WH + 2 [obs photo i4, tentative]')
@@ -322,15 +334,16 @@ def run(path):
     landside_ok = ('hall_roof', 'hall_trusses', 'hall_outriggers', 'hall_columns', 'hall_west_wall', 'hall_canopy', 'hall_hangers',
                    'hall_curb', 'hall_podium', 'hall_mullions', 'hall_lettering', 'hall_end_walls', 'hall_end_mullions', 'hall_east_clerestory')
     fps = {}
+    # the landside parts (hall roof, canopy, curb ...) overhang the curb / roadway west of the outline by design
+    land = unary_union([footprint(m) for n, m in S.items() if m['lod'] == 0 and n.split('_', 1)[1] in landside_ok])
     for lod in (0, 1, 2):
         parts = {n: m for n, m in S.items() if m['lod'] == lod}
         fa = unary_union([footprint(m) for n, m in parts.items() if n.split('_', 1)[1] not in landside_ok])
         fps[lod] = fa
-        out = fa.difference(airside.buffer(0.05)).area
+        # LOD2 is one joined node: its hall parts are allowed where LOD0's landside parts are
+        out = fa.difference(airside.buffer(0.05)).difference(land.buffer(0.5) if lod == 2 else Polygon()).area
         C.add('LOD%d airside footprint outside the SFO Museum outlines' % lod, out, 0.0, 0.5, 'outlines used by check_stands.py', 'm2')
     fa = fps[0]
-    # the landside parts must stay west of the airside outline or inside it (the roof overhangs the curb / roadway)
-    land = unary_union([footprint(m) for n, m in S.items() if m['lod'] == 0 and n.split('_', 1)[1] in landside_ok])
     try:
         import geom as GM
         st = json.load(open(os.path.join(ROOT, 'data', 'sfo_stands.json')))['stands']

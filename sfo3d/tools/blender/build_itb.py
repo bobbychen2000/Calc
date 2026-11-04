@@ -169,6 +169,12 @@ def make_material(key, atlas, tex_imgs, ao_img):
     b.inputs['Metallic'].default_value = spec['m']
     b.inputs['Roughness'].default_value = spec['r']
     b.inputs['IOR'].default_value = spec.get('ior', 1.5)
+    if spec.get('ior'):
+        # the glTF exporter writes KHR_materials_ior only together with KHR_materials_specular / transmission: a specular
+        # level of 0.499 exports KHR_materials_specular (specularFactor 0.998) and with it the coated-glass IOR 1.9
+        b.inputs['Specular IOR Level'].default_value = 0.499
+        m['ior'] = spec['ior']
+    m.use_backface_culling = True       # single-sided (doubleSided false): every face is wound outwards (verify / back-face QA)
     if spec.get('tex'):
         t = nt.nodes.new('ShaderNodeTexImage'); t.image = tex_imgs[spec['tex']]
         uvn = nt.nodes.new('ShaderNodeUVMap'); uvn.uv_map = 'UV_detail'
@@ -474,6 +480,20 @@ def main():
             objs[0].append(lettering(e, 0))
             stats_parts['hall_lettering'] = {0: len(objs[0][-1].data.polygons)}
     log('objects built', {l: len(o) for l, o in objs.items()})
+    # LOD2 (far / phone tier): all parts joined into one node -> one primitive per material (fewer draw calls); the per-part
+    # tags move into its extras.parts
+    l2 = objs[2]
+    bpy.ops.object.select_all(action='DESELECT')
+    for o in l2: o.select_set(True)
+    bpy.context.view_layer.objects.active = l2[0]
+    bpy.ops.object.join()
+    j2 = bpy.context.view_layer.objects.active
+    for k in list(j2.keys()): del j2[k]
+    j2.name = 'L2_itb'; j2.data.name = 'L2_itb'
+    j2['src'] = 'mixed: see parts'; j2['feature'] = 'coarse shell: hall roof, walls, canopy, core, piers, pods, end box (joined)'
+    j2['lod'] = 2; j2['parts'] = {n: p.extras(2) for n, p in parts[2].items()}
+    objs[2] = [j2]; shells['B'] = [j2]
+    log('LOD2 joined: %d material slots' % len(j2.data.materials))
 
     # ---- AO
     ao_info = {}
@@ -523,6 +543,7 @@ def main():
     log('glb', json.dumps({k: st[k] for k in ('bytes', 'lods', 'materials', 'materials_with_occlusion', 'occlusion_texcoords')}))
     build = dict(built=datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='seconds'), git=git_rev(),
                  bpy=bpy.app.version_string, glb=st, ao=ao_info, naip_colours=nc, parts_tris=stats_parts,
+                 lod2_glb=dict(path=os.path.relpath(lod2_path, ROOT), bytes=os.path.getsize(lod2_path)),
                  seconds=round(time.time() - T0, 1))
     json.dump(build, open(os.path.join(OUT, 'itb_build.json'), 'w'), indent=1)
 

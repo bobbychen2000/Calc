@@ -49,7 +49,7 @@ GROUND_Y = 3.0                       # js/geo.js GROUND_Y (nominal airfield elev
 AO_RES = {0: 2048, 1: 1024, 2: 512}
 AO_FLAG = {}                         # object name -> receives the baked AO (thin details, glass and masts do not)
 AO_DIST = 8.0                        # AO ray length, m
-RENDER = dict(sun=3.0, sky=0.05, exposure=-0.5)   # reference-render lighting (set by --sun / --sky / --exposure)
+RENDER = dict(sun=3.0, sky=0.05, exposure=-0.3)   # reference-render lighting (set by --sun / --sky / --exposure)
 
 # PBR materials: sRGB base colour, metallic, roughness, extras. Values are our choices for the published materials
 # (tags in the manifest); no texture is taken from imagery.
@@ -229,7 +229,10 @@ def bake_ao(objs, hide, img, samples):
     for o in objs:
         o.data.uv_layers.active = o.data.uv_layers['UV_ao']
     t = time.time()
-    bpy.ops.object.bake(type='AO', margin=6, margin_type='EXTEND', use_clear=True)
+    # pre-fill with white and bake without clearing: texels outside the islands stay 1.0 (unoccluded), so mip levels do not
+    # bleed black into the island edges at distance
+    img.pixels[:] = np.ones(img.size[0] * img.size[1] * 4, np.float32)
+    bpy.ops.object.bake(type='AO', margin=6, margin_type='EXTEND', use_clear=False)
     for o in hide: o.hide_render = False
     for o in objs:
         o.data.uv_layers.active = o.data.uv_layers['UV_detail']
@@ -477,7 +480,7 @@ def render_views(res_obj, args):
         res = (int(args.res * 0.75), args.res)
         loc = W(c + d * 400.0, hc)
         views.append((nm, camera(f'cam_{nm}', loc, (brg + 180.0) % 360, 0.0, ortho=H, res=res), res,
-                      dict(sun=(160, 55) if nm == 'A' else (250, 35), ortho_m=H, centre_u=round(uc, 3), centre_h=hc,
+                      dict(sun=(150, 40) if nm == 'A' else (255, 30), ortho_m=H, centre_u=round(uc, 3), centre_h=hc,
                            m_per_px=round(H / max(res), 5), view_bearing=(brg + 180.0) % 360)))
     for nm, pv in PHOTO_VIEWS.items():
         res = (args.res * 3 // 4, args.res) if pv['size'][1] > pv['size'][0] else (args.res, args.res * 3 // 4)
@@ -538,6 +541,9 @@ def backface_audit(res_obj, res=320):
         for l2, (e2_, ob2, _) in res_obj['lod_objs'].items():
             for o in ob2:
                 o.hide_render = (l2 != lod) or o.name.endswith('cab_glass')
+        if os.environ.get('TOWER_AUDIT_SELFTEST') and lod == 0:      # flip one node: the audit must then report red pixels
+            ob_t = [o for o in objs if o.name.endswith('_ibf')][0]
+            ob_t.data.flip_normals()
         saved = {}
         for o in objs:
             saved[o.name] = list(o.data.materials)
@@ -643,8 +649,14 @@ def main():
     for fam, v in ver.items():
         log(f'F{fam}: {v["summary"]}')
     if not args.no_manifest and 1 in results:
+        if not renders:                     # keep the last reference renders (they do not depend on the AO bake)
+            try:
+                renders = json.load(open(os.path.join(DATA, 'manifest.json')))['tower'].get('renders', {})
+            except Exception:  # noqa: BLE001
+                renders = {}
         entry = TV.manifest_entry(results, ver, renders, args, git_rev(), round(time.time() - t0, 1))
         log('manifest ->', merge_manifest(entry))
+        log('doc ->', TV.write_doc(entry, ver))
     log(f'done in {time.time() - t0:.1f} s')
 
 

@@ -2,9 +2,9 @@
  "_about": "SFO Live 3D building assets (glTF 2.0, built with Blender from the verified 2-D sheets); one key per asset group; frame ltp-nad83-2011 (x east, y up, z south, m from the ARP); see docs/research/buildings3d.md",
  "itb": {
   "asset": "data/buildings3d/itb.glb",
-  "bytes": 5598884,
-  "built": "2026-11-04T23:20:28+00:00",
-  "git": "40a32e3",
+  "bytes": 5617560,
+  "built": "2026-11-04T23:48:43+00:00",
+  "git": "29d90e9+dirty",
   "generator": "tools/blender/build_itb.py (bpy 5.0.1, Cycles CPU AO bake); geometry tools/blender/itb_geom.py",
   "reference": "2-D sheets BI-01..04 (docs/drawings/buildings/README.md), drawn by tools/buildings/draw_itb.py, imported by itb_geom.py",
   "spec": "tools/buildings/spec_itb.json (+ itb_naip_measurements.json, itb_pods.json)",
@@ -36,28 +36,36 @@
     "lod": 0,
     "node": "LOD0",
     "switch_m": 0.0,
-    "tris": 59036,
-    "verts": 63486,
+    "tris": 59497,
+    "verts": 64090,
     "ao_atlas": "itb_ao_A (shared by LOD0 / LOD1 shell meshes)"
    },
    {
     "lod": 1,
     "node": "LOD1",
     "switch_m": 450.0,
-    "tris": 28386,
-    "verts": 32653,
+    "tris": 28547,
+    "verts": 32897,
     "ao_atlas": "itb_ao_A (shared by LOD0 / LOD1 shell meshes)"
    },
    {
     "lod": 2,
     "node": "LOD2",
     "switch_m": 1600.0,
-    "tris": 3687,
-    "verts": 5788,
+    "tris": 3728,
+    "verts": 5802,
     "ao_atlas": "itb_ao_B"
    }
   ],
-  "lod_note": "LOD nodes are siblings under the root: show exactly one (camera distance to the root >= switch_m of that LOD and < switch_m of the next). LOD1 / LOD0 share the shell meshes and atlas A; phone budget: LOD1 / LOD2.",
+  "lod_note": "LOD nodes are siblings under the root: show exactly one (camera distance to the root >= switch_m of that LOD and < switch_m of the next). LOD1 / LOD0 share the shell meshes and atlas A; LOD2 is one joined node (L2_itb, extras.parts keeps the per-part tags) with its own atlas B. Phone / far tier: data/buildings3d/itb_lod2.glb holds the LOD2 subtree alone (same root transform).",
+  "files": [
+   "data/buildings3d/itb.glb",
+   "data/buildings3d/itb_lod2.glb"
+  ],
+  "lod2_glb": {
+   "path": "data/buildings3d/itb_lod2.glb",
+   "bytes": 484224
+  },
   "textures": [
    {
     "name": "itb_n_panel",
@@ -76,7 +84,7 @@
      2048
     ],
     "mime": "image/png",
-    "bytes": 2058661,
+    "bytes": 2034105,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    },
    {
@@ -146,7 +154,7 @@
      512
     ],
     "mime": "image/png",
-    "bytes": 148845,
+    "bytes": 162031,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    }
   ],
@@ -459,9 +467,9 @@
      0,
      1
     ],
-    "bake_s": 98.7,
-    "mean": 0.658,
-    "p2": 0.005,
+    "bake_s": 95.9,
+    "mean": 0.656,
+    "p2": 0.004,
     "samples": 48,
     "distance_m": 10.0,
     "ground_plane": true
@@ -471,9 +479,9 @@
     "lods": [
      2
     ],
-    "bake_s": 5.0,
-    "mean": 0.678,
-    "p2": 0.002,
+    "bake_s": 3.6,
+    "mean": 0.655,
+    "p2": 0.0,
     "samples": 48,
     "distance_m": 10.0,
     "ground_plane": true
@@ -1308,7 +1316,7 @@
   "verification": {
    "tool": "tools/blender/verify_itb.py",
    "report": "out/buildings3d/itb_verify.json (local)",
-   "n_checks": 91,
+   "n_checks": 92,
    "n_fail": 0,
    "failed": [],
    "tolerance": "0.5 m or 2 % of the drawn value (whichever is larger) unless stated",
@@ -1657,12 +1665,12 @@
     },
     {
      "check": "truss 0 bottom chord over the supports (|u| 57.9-82.3), max |dev|",
-     "model": 0.402,
+     "model": 0.001,
      "drawing": 0.0,
-     "dev": 0.402,
+     "dev": 0.001,
      "tol": 0.5,
      "ok": true,
-     "src": "BI-02 chord(u) = glass head"
+     "src": "max(BI-02 chord, BI-03 roof_line - depth)"
     },
     {
      "check": "truss 1 bottom chord over the supports (|u| 57.9-82.3), max |dev|",
@@ -1798,6 +1806,15 @@
      "tol": 4.297680000000001,
      "ok": true,
      "src": "SEAONC 705 ft [pub]"
+    },
+    {
+     "check": "west wall glazed area (L3 .. head over the hall)",
+     "model": 4281.261,
+     "drawing": 4281.261,
+     "dev": 0.0,
+     "tol": 21.406306003675436,
+     "ok": true,
+     "src": "BI-02 V1 outline"
     },
     {
      "check": "central bay head (max)",
@@ -2219,7 +2236,7 @@
     "view": "i4",
     "file": "out/buildings3d/itb_i4.png",
     "what": "landside perspective approximating photo i4 (DimiCalifornia 2005, PD); itb_cmp_i4.png side by side",
-    "samples": 24,
+    "samples": 48,
     "note": "local (out/ is gitignored); comparison sheets with photo pixels stay local"
    },
    {
@@ -2233,7 +2250,7 @@
     "view": "baa",
     "file": "out/buildings3d/itb_baa.png",
     "what": "aerial from the ESE over Boarding Area A (photo a2 direction, BI-04 view 2)",
-    "samples": 32,
+    "samples": 48,
     "note": "local (out/ is gitignored); comparison sheets with photo pixels stay local"
    },
    {
@@ -2250,7 +2267,40 @@
     "samples": 48,
     "note": "local (out/ is gitignored); comparison sheets with photo pixels stay local"
    }
-  ]
+  ],
+  "render_check": {
+   "px_per_m": 3.529,
+   "n": 888,
+   "wing_max_abs_dev_m": 0.208,
+   "wing_mean_dev_m": -0.018,
+   "centre_max_abs_dev_m": 0.146,
+   "note": "silhouette = topmost opaque pixel of the orthographic west render (LOD0, alpha pass) vs BI-02 roof_line(u); resolution 1 px = 0.28 m; in the centre the lens glass / arch form the top"
+  },
+  "renders_updated": "2026-11-04T23:45:29+00:00",
+  "qa": {
+   "gltf_validator": {
+    "tool": "Khronos glTF-Validator 2.0.0-dev.3.10 (node tools/blender/tower_validate.mjs <glb>)",
+    "itb_glb": {
+     "errors": 0,
+     "warnings": 39,
+     "warning_codes": [
+      "MESH_PRIMITIVE_GENERATED_TANGENT_SPACE"
+     ],
+     "draw_calls_all_lods": 74
+    },
+    "itb_lod2_glb": {
+     "errors": 0,
+     "warnings": 11,
+     "draw_calls": 19
+    }
+   },
+   "backface": {
+    "tool": "python3 tools/blender/ao_view_itb.py --backface --views i4,i3,baa,east,top --lod N",
+    "result": "0 red (back-facing) pixels in 5 views x LOD0 / LOD1 / LOD2 (single-sided materials)"
+   },
+   "ao_view": "out/buildings3d/itb_ao_{i4,i3,baa}.png (local)",
+   "date": "2026-11-04"
+  }
  },
  "tower": {
   "name": "SFO air traffic control tower (2016) and base building (IBF)",
@@ -2263,9 +2313,9 @@
   "family_decided": false,
   "family_note": "Two self-consistent height families (docs/research/buildings_tower.md 12.3). The sheets draw both and prefer neither; F1 is the default file only because CTBUH classifies 221 ft as excluding antennae (not a survey). Settle with a surveyed ground photo, the NAIP shadow with the flight time, or an SFO / FAA elevation drawing.",
   "bytes": {
-   "F1": 3478840,
-   "F2": 3391604,
-   "F1_lod2_only": 230020
+   "F1": 3468292,
+   "F2": 3370676,
+   "F1_lod2_only": 231772
   },
   "placement": {
    "frame": "ltp-nad83-2011 (js/geo.js): x east, y up, z south, m from the ARP; ground GROUND_Y = 3.0",
@@ -2327,8 +2377,8 @@
   "lods": [
    {
     "node": "LOD0",
-    "tris": 33343,
-    "tris_f2": 32276,
+    "tris": 33631,
+    "tris_f2": 32564,
     "switch_m": [
      0,
      350
@@ -2339,7 +2389,7 @@
      "landside": 1666,
      "ribbon": 196,
      "flare_deck": 4423,
-     "cab": 1728,
+     "cab": 2016,
      "cab_glass": 336,
      "roof_masts": 928,
      "ibf": 54,
@@ -2353,8 +2403,8 @@
    },
    {
     "node": "LOD1",
-    "tris": 9812,
-    "tris_f2": 9522,
+    "tris": 9956,
+    "tris_f2": 9666,
     "switch_m": [
      350,
      1200
@@ -2365,7 +2415,7 @@
      "landside": 726,
      "ribbon": 132,
      "flare_deck": 1143,
-     "cab": 864,
+     "cab": 1008,
      "cab_glass": 48,
      "roof_masts": 90,
      "ibf": 54
@@ -2373,8 +2423,8 @@
    },
    {
     "node": "LOD2",
-    "tris": 2334,
-    "tris_f2": 2200,
+    "tris": 2382,
+    "tris_f2": 2248,
     "switch_m": [
      1200,
      null
@@ -2385,7 +2435,7 @@
      "landside": 208,
      "ribbon": 52,
      "flare_deck": 369,
-     "cab": 312,
+     "cab": 360,
      "cab_glass": 24,
      "ibf": 24
     }
@@ -2399,7 +2449,7 @@
      2048
     ],
     "mode": "L",
-    "bytes": 951533
+    "bytes": 920840
    },
    {
     "name": "tile_panel_tower",
@@ -2435,7 +2485,7 @@
      1024
     ],
     "mode": "L",
-    "bytes": 272523
+    "bytes": 268653
    },
    {
     "name": "tower_ao_L2",
@@ -2444,7 +2494,7 @@
      512
     ],
     "mode": "L",
-    "bytes": 71968
+    "bytes": 71099
    }
   ],
   "texture_note": "AO atlases on TEXCOORD_1 (grey-scale PNG, sun-independent, Cycles); detail normal tiles on TEXCOORD_0 (procedural, tools/blender/tower_tex.py). KTX2 / meshopt: later (tools/engine/glb_compress.mjs).",
@@ -2702,8 +2752,8 @@
   ],
   "node_extras": "every node: extras {src, feature, spec (spec_tower.json keys), drawing, tags}; materials: extras.src (+ led / obstruction_light flags for the app)",
   "verification": {
-   "F1": "109/109 checks within tolerance; tris {0: 33343, 1: 9812, 2: 2334}; plausibility clear of aircraft envelopes, bridges and taxilanes; the app's T2 hall / BA-D walkway parts overlap the base-building footprint (integration: cut them)",
-   "F2": "109/109 checks within tolerance; tris {0: 32276, 1: 9522, 2: 2200}; plausibility clear of aircraft envelopes, bridges and taxilanes; the app's T2 hall / BA-D walkway parts overlap the base-building footprint (integration: cut them)",
+   "F1": "109/109 checks within tolerance; tris {0: 33631, 1: 9956, 2: 2382}; plausibility clear of aircraft envelopes, bridges and taxilanes; the app's T2 hall / BA-D walkway parts overlap the base-building footprint (integration: cut them)",
+   "F2": "109/109 checks within tolerance; tris {0: 32564, 1: 9666, 2: 2248}; plausibility clear of aircraft envelopes, bridges and taxilanes; the app's T2 hall / BA-D walkway parts overlap the base-building footprint (integration: cut them)",
    "max_abs_dev_m": 0.047,
    "gltf_validator": {
     "F1": {
@@ -2717,8 +2767,8 @@
      },
      "first": [],
      "drawCalls": 67,
-     "triangles": 45489,
-     "vertices": 39326
+     "triangles": 45969,
+     "vertices": 39869
     },
     "F2": {
      "validator": "2.0.0-dev.3.10",
@@ -2731,8 +2781,8 @@
      },
      "first": [],
      "drawCalls": 67,
-     "triangles": 43998,
-     "vertices": 38272
+     "triangles": 44478,
+     "vertices": 38676
     }
    },
    "file": "out/buildings3d/tower_verify.json",
@@ -2790,7 +2840,7 @@
      "overlap_m2": 1123.3
     }
    ],
-   "action": "cut the base-building footprint (below its parapet) out of the listed app parts (data/sfo_buildings.json T2 hall h 19.0 covers 1,119 m2 of it; BA-D walkway 62 m2) or the base building disappears inside the T2 hall volume",
+   "action": "cut the base-building footprint (below its parapet) out of the listed app parts of data/sfo_buildings.json (Boarding Area D walkway h 10.5: 66.3 m2; Terminal 2 h 19.0: 1123.3 m2 of overlap with the asset below 20 m) or the base building disappears inside the T2 hall volume",
    "exclusion_footprint_world": [
     [
      -742.5,
@@ -2840,15 +2890,15 @@
     ],
     "samples": 64,
     "sun": [
-     160,
-     55
+     150,
+     40
     ],
     "ortho_m": 82.0,
     "centre_u": -6.584,
     "centre_h": 38.0,
     "m_per_px": 0.08542,
     "view_bearing": 297.7,
-    "render_s": 73.8
+    "render_s": 66.7
    },
    "B": {
     "path": "out/buildings3d/tower_B.png",
@@ -2858,15 +2908,15 @@
     ],
     "samples": 64,
     "sun": [
-     250,
-     35
+     255,
+     30
     ],
     "ortho_m": 82.0,
     "centre_u": 6.584,
     "centre_h": 38.0,
     "m_per_px": 0.08542,
     "view_bearing": 117.69999999999999,
-    "render_s": 63.7
+    "render_s": 67.6
    },
    "t2": {
     "path": "out/buildings3d/tower_t2.png",
@@ -2889,7 +2939,7 @@
     "f_px": 3075.0,
     "photo": "refs/cache/buildings/review_likeness/t2.jpg",
     "photo_credit": "Famartin 2025-08-12 11:57, CC BY-SA 4.0 (reference only)",
-    "render_s": 77.7
+    "render_s": 71.2
    },
    "t3": {
     "path": "out/buildings3d/tower_t3.png",
@@ -2912,7 +2962,7 @@
     "f_px": 3209.5,
     "photo": "refs/cache/buildings/review_likeness/t3.jpg",
     "photo_credit": "Famartin 2025-08-12 09:12, CC BY-SA 4.0 (reference only)",
-    "render_s": 40.5
+    "render_s": 44.3
    },
    "t4": {
     "path": "out/buildings3d/tower_t4.png",
@@ -2935,7 +2985,7 @@
     "f_px": 1140.0,
     "photo": "refs/cache/buildings/review_likeness/t4.jpg",
     "photo_credit": "Famartin 2025-08-12 09:10, CC BY-SA 4.0 (reference only)",
-    "render_s": 77.2
+    "render_s": 104.8
    },
    "_compare": {
     "overlay_A": "out/buildings3d/tower_overlay_A.png",
@@ -2954,8 +3004,8 @@
     "tools/blender/tower3d_verify.py"
    ],
    "bpy": "5.0.1",
-   "git": "398e91e+dirty",
-   "seconds": 958.3,
+   "git": "29d90e9+dirty",
+   "seconds": 619.1,
    "ao_samples": 48,
    "date": "2026-11-04"
   }

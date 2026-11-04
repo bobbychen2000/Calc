@@ -44,3 +44,27 @@ def add_renders(done, args):
         os.remove(PATH + '.lock')
     except OSError:
         pass
+
+
+def add_verification(path=os.path.join(ROOT, 'out', 'buildings3d', 'itb_verify.json')):
+    """refresh the verification block of the "itb" entry from a re-run of tools/blender/verify_itb.py."""
+    ver = json.load(open(path))
+    with open(PATH + '.lock', 'a') as lf:
+        fcntl.flock(lf, fcntl.LOCK_EX)
+        cur = json.load(open(PATH))
+        e = cur['itb']
+        e['verification'].update(n_checks=ver['n_checks'], n_fail=ver['n_fail'], failed=[r['check'] for r in ver['checks'] if not r['ok']],
+                                 checks=[{k: r[k] for k in ('check', 'model', 'drawing', 'dev', 'tol', 'ok', 'src')} for r in ver['checks']],
+                                 plausibility=ver.get('plausibility'))
+        tmp = PATH + '.itb.tmp'
+        json.dump(cur, open(tmp, 'w'), indent=1)
+        os.replace(tmp, PATH)
+        fcntl.flock(lf, fcntl.LOCK_UN)
+    try:
+        os.remove(PATH + '.lock')
+    except OSError:
+        pass
+
+
+if __name__ == '__main__':
+    add_verification()
