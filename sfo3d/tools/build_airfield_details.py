@@ -16,7 +16,12 @@ Outputs data/sfo_details.json (+ debug PNGs in out/details/):
   edges          taxiway edge polylines where the taxiway borders unpaved ground: SFO Museum outline, snapped to the painted
                  edge line on NAIP 2024 (edgeMeta / edgeStats; review round 3)
   masts          floodlight masts mapped in OSM (man_made=mast, tower:type=lighting; review round 3 - were inferred)
-  roads          ramp service-road lines offset from the terminal face
+  roads          empty since the static close-out (2026-11-04): the former inferred offset lines of the terminal face are gone
+                 (roadsNote)
+  centerlineRetired / osmBase   OSM ways / NAIP traces retired by OSM_UPDATES, and the pinned OSM base + update extract
+Static close-out (2026-11-04): the OSM base is pinned (database 2026-09-24T09:07:42Z, tools/xcheck/fetch_osm.py); later OSM
+edits enter only through OSM_UPDATES (relocated W + its inferred holds, the 10L/28R / 10R/28L crossing arcs); edges reject
+white paint and the runway edge zone; polyline hygiene (cusps, back-tracks, spikes, loops); `drawn` per stretch.
 World frame (matches js/geo.js): x = east, z = south (m), origin = ARP; projection/datum from tools/geo_frame.py
 (exact GRS80 local tangent plane, NAD83(2011)). The ADS-B snapshot (WGS 84) is used only for the debug image (review round 3).
 Also writes data/sfo_details.js (the same JSON as an ES module).
@@ -25,7 +30,7 @@ import json, math, os, sys
 from collections import Counter
 import numpy as np, cv2
 from scipy import ndimage as ndi
-from skimage.morphology import skeletonize
+# (skimage.morphology.skeletonize was imported here but never used; scikit-image is not installed since 2026-11-04)
 
 HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.join(HERE, '..')
 sys.path.insert(0, HERE)
@@ -137,6 +142,43 @@ sys.path.insert(0, os.path.join(HERE, 'imagery'))
 from paintline import Yellow, find_ladder, along_profile, refine_bar, BAR_DEPTH
 YEL = Yellow()
 OSM = json.load(open(os.path.join(ROOT, 'refs', 'cache', 'osm', 'ksfo_osm_parsed.json')))
+assert OSM['osm_base'] == '2026-09-24T09:07:42Z', 'the base OSM extract is pinned (tools/xcheck/fetch_osm.py): %s' % OSM['osm_base']
+
+# ---- static close-out (2026-11-04): OSM edits made AFTER the pinned base enter the data only through this list, each
+# with its evidence (a re-fetch must not silently change anything else). The ways are read from a second pinned extract,
+# aeroway only: refs/cache/osm/overpass_ksfo_aeroway_at_<OSM_UPDATE_DATE>.json (tools/xcheck/fetch_osm.py --date ...
+# --parts aeroway). Other post-base edits (9 modified ways of changesets 189525528 / 190952582: A, B, D, E, K, L, Q, R) are
+# NOT taken: not reviewed; the base geometry of those ways is the one checked on NAIP 2024.
+OSM_UPDATE_DATE = '2026-11-04T18:00:00Z'
+_W_WHY = ('taxiway W relocated: OSM way 1562117372 v1 (changeset 189525528, 25 Sep 2026, "Fix horizontal position of Taxiway W", '
+          'imagery San Francisco Orthoimagery 2025); FAA AL-375 SFO cycle 2611 (eff. 29 Oct 2026, refs/cache/faa/00375ad_2611.pdf) shows '
+          'one W crossing of 1L / 1R with hold bars on both sides; ADS-B (adsb.lol): UAL189 / ANA107 24 Sep within 2 m of it at '
+          'true heading 118.1 deg (docs/requests/realtime_round2.md 2a), 4 Nov 17:43-21Z 6 aircraft along it, none along the old '
+          'crossing. NAIP 2024 predates it (paint on 15 of its 560 m), so it is not snapped on NAIP; its centreline is drawn '
+          '(FAA AC 150/5340-1M s.4.2: every taxiway has one), position = OSM')
+_ARC_WHY = ('painted lead-on / lead-off arcs at the 10L/28R and 10R/28L crossings: OSM changeset 190952582 (24 Oct 2026, '
+            '"update taxiways"), checked on NAIP 2024 paint like every OSM way (static review 2026-11-04: paint on 70-100 % of each). '
+            'They run ON the runway (from its edge to its centreline: FAA AC 150/5340-1M taxiway lead-on / lead-off lines), so they '
+            'are not cut at the runway edge; peaks that are not yellow (b* < BSTAR_MIN: runway white paint) are not used')
+OSM_UPDATES = {
+    'add': {1562117372: {'naip': False, 'ref': 'W', 'width_m': 75 * 0.3048, 'why': _W_WHY},
+            **{i: {'naip': True, 'on_runway': True, 'why': _ARC_WHY} for i in range(1571228365, 1571228382)}},
+    # old W (deleted in OSM changeset 189525528) and the NAIP-traced old crossing of 1L / 1R (SFO Museum polygon 'F1'):
+    # superseded by the relocated W (evidence above); their holds go to holdsDropped
+    'retire': {155476502: 'old taxiway W alignment, deleted in OSM changeset 189525528 (W relocated 62-64 m; see the W entry of OSM_UPDATES)',
+               155476504: 'old taxiway W alignment, deleted in OSM changeset 189525528 (W relocated)'},
+    'retire_traces': {'painted E-W taxiway crossing 1L/19R and 1R/19L, no OSM way':
+                      'old W crossing of 1L / 1R (NAIP 2024 paint): FAA AL-375 cycle 2611 shows one W crossing, at the relocated W; '
+                      'ADS-B 4 Nov 2026: no aircraft along it (6 along the new W)'},
+}
+_upd_fn = os.path.join(ROOT, 'refs', 'cache', 'osm', 'overpass_ksfo_aeroway_at_%s.json' % OSM_UPDATE_DATE.replace('-', '').replace(':', ''))
+_upd = {e['id']: e for e in json.load(open(_upd_fn))['elements'] if e['type'] == 'way'}
+UPD_WAYS = []
+for _i, _u in OSM_UPDATES['add'].items():
+    _e = _upd[_i]
+    UPD_WAYS.append({'id': _i, 'version': _e['version'], 'timestamp': _e['timestamp'], 'changeset': _e['changeset'],
+                     'tags': dict(_e.get('tags', {}), **({'ref': _u['ref']} if _u.get('ref') and not _e.get('tags', {}).get('ref') else {})),
+                     'pts': [(g['lat'], g['lon']) for g in _e['geometry']], '_upd': _u})
 
 def densify(pl, step=2.0):
     P = np.asarray(pl, float); out = [P[0]]
@@ -189,16 +231,21 @@ def window_corr(ss, offs, min_shift=0.5, mad_max=0.4, clip=None, strict_big=True
     return corr
 
 
-def measure(P, S, T, ss, half=3.5, avg=4.0, thr=0.6, skip=None):
+BSTAR_MIN = 9.0     # static close-out: b* calibration in paintline.Yellow.bstar (rejects ~7 % of yellow peaks, most white ones)
+
+
+def measure(P, S, T, ss, half=3.5, avg=4.0, thr=0.6, skip=None, white_reject=False):
     """paint offset per sample; `skip` (prepared shapely geometry): samples inside it are not measured (review round 4:
-    the taxiway edge runs were pulled 2-3 m onto the runway holding-position ladders and their sign boxes)"""
+    the taxiway edge runs were pulled 2-3 m onto the runway holding-position ladders and their sign boxes);
+    `white_reject` (static close-out 2026-11-04, taxiway edges): a peak whose colour is not yellow (b* < BSTAR_MIN) is not
+    paint of this line - the min(R, G) - B index also lights up white runway side stripes"""
     offs = np.full(len(ss), np.nan)
     for i, s_ in enumerate(ss):
         p = np.array([np.interp(s_, S, P[:, 0]), np.interp(s_, S, P[:, 1])]); t = np.array([np.interp(s_, S, T[:, 0]), np.interp(s_, S, T[:, 1])])
         t /= max(1e-9, np.hypot(*t))
         if skip is not None and skip.contains(_SPt0(float(p[0]), float(p[1]))): offs[i] = np.inf; continue   # masked (inf)
         r = YEL.cross_peak(p, t, half=half, avg=avg, step=0.1, min_contrast=10.0)
-        if r and r[2] < thr * r[1]: offs[i] = r[0]
+        if r and r[2] < thr * r[1] and (not white_reject or YEL.bstar(p, t, r[0], avg) >= BSTAR_MIN): offs[i] = r[0]
     return offs
 
 
@@ -222,6 +269,72 @@ def trace_paint(a, b, step=2.0):
         p = q; pts.append(p.copy())
     return np.array(pts), n_ok, n_all
 
+# ---- static close-out (2026-11-04): polyline hygiene. The review found 15 centrelines with reversals > 150 deg (line 213
+# doubled back 57 m over itself, line 80 a 151 deg cusp at its hold bar), 40 edge vertices turning > 150 deg with 3-12 m
+# legs (hairpin spikes onto the runway) and 25 self-intersecting edge lines.
+def _turn(u, v):
+    return math.degrees(math.acos(max(-1.0, min(1.0, float(u @ v) / (np.linalg.norm(u) * np.linalg.norm(v))))))
+
+
+def _plen(A): return float(sum(np.linalg.norm(np.asarray(A[i + 1]) - np.asarray(A[i])) for i in range(len(A) - 1)))
+
+
+def hygiene(A, spike_len=3.0, max_turn=150.0, loop_max=40.0, min_len=6.0):
+    """-> list of clean polylines: a vertex where the line reverses (turn > max_turn) is dropped when one of its legs is
+    shorter than spike_len (a spike), else the line is split there (a cusp / back-track); a piece that runs back over
+    another piece of the same line (>= 80 % of it within 2 m) is dropped; a self-intersection closes a loop shorter than
+    loop_max at the crossing point, a longer one splits the line there; pieces shorter than min_len are dropped"""
+    A = [np.asarray(p, float) for p in A]
+    changed = True
+    while changed and len(A) >= 3:            # zero-length legs and spikes, repeatedly
+        changed = False
+        B = [A[0]]
+        for q in A[1:]:
+            if np.linalg.norm(q - B[-1]) > 1e-6: B.append(q)
+        A = B
+        for i in range(1, len(A) - 1):
+            u = A[i] - A[i - 1]; v = A[i + 1] - A[i]
+            if _turn(u, v) > max_turn and min(np.linalg.norm(u), np.linalg.norm(v)) < spike_len:
+                del A[i]; changed = True; break
+    if len(A) < 2: return []
+    pieces, cur = [], [A[0]]
+    for i in range(1, len(A)):                # split at the remaining reversals (cusps / back-tracks)
+        cur.append(A[i])
+        if i < len(A) - 1 and _turn(A[i] - A[i - 1], A[i + 1] - A[i]) > max_turn:
+            pieces.append(cur); cur = [A[i]]
+    pieces.append(cur)
+    # back-tracking pieces
+    from shapely.geometry import LineString as _L
+    keep = []
+    for k, P in enumerate(pieces):
+        if len(P) < 2: continue
+        others = [_L(Q) for j, Q in enumerate(pieces) if j != k and len(Q) >= 2 and _plen(Q) >= _plen(P)]
+        if others:
+            dense = densify(P, 1.0); near = np.mean([min(o.distance(_SPt0(*q)) for o in others) < 2.0 for q in dense])
+            if near >= 0.8: continue
+        keep.append(P)
+    out = []
+    for P in keep:
+        stack = [P]
+        while stack:
+            Q = stack.pop()
+            if _plen(Q) < min_len: continue
+            hit = None
+            for a in range(len(Q) - 1):
+                sa = _L([Q[a], Q[a + 1]])
+                for b in range(a + 2, len(Q) - 1):
+                    if a == 0 and b == len(Q) - 2 and np.allclose(Q[0], Q[-1]): continue
+                    x = sa.intersection(_L([Q[b], Q[b + 1]]))
+                    if not x.is_empty and x.geom_type == 'Point': hit = (a, b, np.array([x.x, x.y])); break
+                if hit: break
+            if not hit: out.append(Q); continue
+            a, b, X = hit
+            loop = _plen([X] + list(Q[a + 1:b + 1]) + [X])
+            if loop < loop_max: stack.append(list(Q[:a + 1]) + [X] + list(Q[b + 1:]))
+            else: stack.append(list(Q[:a + 1]) + [X]); stack.append([X] + list(Q[b + 1:]))
+    return [[[round(float(p[0]), 2), round(float(p[1]), 2)] for p in Q] for Q in out]
+
+
 # Review round 4: OSM ways whose END leaves the painted route (centreline T, OSM 23718429: from x ~ -480 it cuts
 # diagonally across the taxiway edge marking and the striped non-movement shoulder to the runway edge, while the paint
 # runs straight on at z -387..-383 to the runway edge at x ~ -655, measured with Yellow.cross_peak every 15 m: -384.8
@@ -232,9 +345,50 @@ PAINT_REROUTES = {
 }
 
 centerlines, cl_meta = [], []
+centerline_retired = []
 n_samp = n_peak = 0; corr_len = tot_len = 0.0; resid_before, resid_after = [], []
-for w in OSM['taxiways']:
+GAP_RUN = 7          # static close-out: >= 7 consecutive 4 m samples (>= 28 m) without paint on a drawn line are not drawn
+
+
+def emit_line(Q, ss, paint, meta, drawn):
+    """append one processed centreline run: the parts where NAIP shows no paint over >= GAP_RUN samples are split off with
+    drawn false (static review 2026-11-04: `drawn` was decided per line - line 24 (D) south of its hold, line 97 (7B) across
+    a service road were drawn over bare pavement), then polyline hygiene (cusps / back-tracks / loops)"""
+    S_ = arclen(Q); cuts = []
+    if drawn and paint is not None and len(ss) >= GAP_RUN:
+        k = 0
+        while k < len(ss):
+            if paint[k]: k += 1; continue
+            j = k
+            while j + 1 < len(ss) and not paint[j + 1]: j += 1
+            if j - k + 1 >= GAP_RUN:
+                lo = ss[k - 1] + 2.0 if k > 0 else 0.0; hi = ss[j + 1] - 2.0 if j + 1 < len(ss) else S_[-1]
+                if hi - lo >= 20.0: cuts.append((lo, hi))
+            k = j + 1
+    segs, prev = [], 0.0
+    for lo, hi in cuts:
+        if lo > prev: segs.append((prev, lo, True))
+        segs.append((lo, hi, False)); prev = hi
+    segs.append((prev, S_[-1], drawn))
+    for lo, hi, dr in segs:
+        if hi - lo < 1.0: continue
+        sel = (S_ > lo) & (S_ < hi)
+        pts = np.vstack([[np.interp(lo, S_, Q[:, 0]), np.interp(lo, S_, Q[:, 1])], Q[sel], [np.interp(hi, S_, Q[:, 0]), np.interp(hi, S_, Q[:, 1])]])
+        a = cv2.approxPolyDP(pts.astype(np.float32).reshape(-1, 1, 2), 0.12, False)[:, 0, :]
+        parts = hygiene(a, spike_len=3.0)
+        for k_, pl in enumerate(parts):
+            centerlines.append(pl)
+            m_ = dict(meta, drawn=bool(dr))
+            if len(segs) > 1 or len(parts) > 1: m_['part'] = '%.0f-%.0f m%s' % (lo, hi, '' if len(parts) == 1 else ' (%d/%d after hygiene)' % (k_ + 1, len(parts)))
+            if not dr and drawn: m_['drawn_why'] = 'no NAIP 2024 paint over %.0f m of this line' % (hi - lo)
+            cl_meta.append(m_)
+
+
+for w in OSM['taxiways'] + UPD_WAYS:
+    if w['id'] in OSM_UPDATES['retire']:
+        centerline_retired.append({'osm_id': w['id'], 'ref': w['tags'].get('ref'), 'why': OSM_UPDATES['retire'][w['id']]}); continue
     if w['tags'].get('construction') == 'yes' or len(w['pts']) < 2: continue
+    upd = w.get('_upd')
     Pw = densify([geo_frame.wgs84_to_world(la, lo) for la, lo in w['pts']], 2.0)
     rr_note = None
     if w['id'] in PAINT_REROUTES:
@@ -257,7 +411,8 @@ for w in OSM['taxiways']:
         assert on_runway(np.array(R_['to'])), 'reroute target must lie on the runway it joins'
         Pw = np.vstack([densify(np.vstack([keep_part, tr_[1:]]), 2.0)] + ([densify(far, 2.0)] if len(far) >= 2 else []))
         rr_note = 'rerouted: %s; traced part paint %d/%d samples' % (R_['why'], n_ok_, n_all_)
-    keep = np.array([not on_runway(p) for p in Pw])
+    keep = np.array([True] * len(Pw)) if (upd and upd.get('on_runway')) else np.array([not on_runway(p) for p in Pw])
+    wr_ = bool(upd and upd.get('on_runway'))
     runs, cur = [], []
     for p, k in zip(Pw, keep):
         if k: cur.append(p)
@@ -268,7 +423,10 @@ for w in OSM['taxiways']:
         if len(P) < 3 or arclen(P)[-1] < 6: continue
         S = arclen(P); T = tangents(P)
         ss = np.arange(2.0, S[-1] - 1.0, 4.0) if S[-1] > 4 else np.array([S[-1] / 2])
-        offs = measure(P, S, T, ss); n_samp += len(ss); n_peak += int((~np.isnan(offs)).sum())
+        if upd and not upd['naip']:
+            offs = np.full(len(ss), np.nan)        # built after NAIP 2024: no paint to snap to (OSM_UPDATES)
+        else:
+            offs = measure(P, S, T, ss, white_reject=wr_); n_samp += len(ss); n_peak += int((~np.isnan(offs)).sum())
         # (review round 2, centreline 24 / OSM 23718492: a correction above 1.5 m needs the full 7-sample window (24 m)
         # with paint and MAD < 0.25 m - inside window_corr)
         corr = window_corr(ss, offs, 0.5)
@@ -299,27 +457,30 @@ for w in OSM['taxiways']:
         # review round 4: second pass on the corrected line (the +-3.5 m search is now centred on it): residual offsets
         # the first pass could not reach (a curve drifting > 3.5 m, windows split by a gap) are corrected the same way
         if np.any(np.abs(c_pts) > 0.01):
-            S2 = arclen(Q); T2 = tangents(Q); o2 = measure(Q, S2, T2, ss); c2 = window_corr(ss, o2, 0.5)
+            S2 = arclen(Q); T2 = tangents(Q); o2 = measure(Q, S2, T2, ss, white_reject=wr_); c2 = window_corr(ss, o2, 0.5)
             if np.any(np.abs(c2) > 0.01):
                 c2p = np.interp(S2, ss, c2) if len(ss) > 1 else np.full(len(S2), c2[0])
                 Q = Q + np.stack([-T2[:, 1], T2[:, 0]], 1) * c2p[:, None]; c_pts = c_pts + c2p; corr = corr + c2
         tot_len += S[-1]; corr_len += float(np.sum((np.abs(c_pts[1:]) > 0.01) * np.diff(S)))
-        o3 = measure(Q, arclen(Q), tangents(Q), ss) if np.any(np.abs(c_pts) > 0.01) else offs      # review round 4: residual on the final line
+        o3 = measure(Q, arclen(Q), tangents(Q), ss, white_reject=wr_) if np.any(np.abs(c_pts) > 0.01) else offs      # review round 4: residual on the final line
         g3 = ~np.isnan(o3)
         resid_before += list(np.abs(offs[good])); resid_after += list(np.abs(o3[g3]))
-        a = cv2.approxPolyDP(Q.astype(np.float32).reshape(-1, 1, 2), 0.12, False)[:, 0, :]
-        centerlines.append([[round(float(x), 2), round(float(z), 2)] for x, z in a])
         # review round 4: a line with paint in < 25 % of its samples (or naip_unverified) is kept for routing but not
         # drawn: NAIP shows no (or no consistent) centreline paint there (round 4: ~2 km of yellow on bare pavement)
         drawn = not ((len(ss) and good.sum() < 0.25 * len(ss)) or (fit_note and fit_note.startswith('naip_unverified')))
-        cl_meta.append({'osm_id': w['id'], 'ref': w['tags'].get('ref'), 'src': ('osm+naip' if np.any(np.abs(c_pts) > 0.01) else 'osm') + ('+naip_trace' if rr_note else ''),
-                        'drawn': bool(drawn), **({'reroute': rr_note} if rr_note else {}),
+        if upd and not upd['naip']: drawn = True        # built after NAIP 2024 (OSM_UPDATES): drawn from OSM, see its 'why'
+        paint_ = (~np.isnan(o3)) if (upd is None or upd['naip']) else None
+        emit_line(Q, ss, paint_, {'osm_id': w['id'], 'ref': w['tags'].get('ref'),
+                        'src': ('osm_update' if upd and not upd['naip'] else ('osm+naip' if np.any(np.abs(c_pts) > 0.01) else 'osm') + ('+naip_trace' if rr_note else '')),
+                        **({'osm_version': w['version'], 'osm_changeset': w['changeset'], 'osm_timestamp': w['timestamp'], 'update_why': upd['why'],
+                            **({'width_m': round(upd['width_m'], 2), 'width_src': 'inferred: 75 ft (OSM has no width; no imagery after NAIP 2024 in hand)'} if upd.get('width_m') else {})} if upd else {}),
+                        **({'reroute': rr_note} if rr_note else {}),
                         'naip_samples': int(len(ss)), 'naip_peaks': int(good.sum()),
                         'naip_med_abs_off': round(float(np.median(np.abs(offs[good]))), 2) if good.any() else None,
                         'naip_resid_after': round(float(np.median(np.abs(o3[g3]))), 2) if g3.any() else None,
                         'naip_gt1.5_after': int((np.abs(o3[g3]) > 1.5).sum()),
                         'max_corr': round(float(np.max(np.abs(c_pts))), 2), **({'naip_fit': fit_note} if fit_note else {}),
-                        **({'naip_unverified': True} if fit_note and fit_note.startswith('naip_unverified') else {})})
+                        **({'naip_unverified': True} if fit_note and fit_note.startswith('naip_unverified') else {})}, drawn)
 # ---- centrelines painted on NAIP 2024 that OSM does not map (review round 2). Each entry: two locator points (world
 # x, z) near the ends of the painted line, read on NAIP; the line itself is TRACED on the paint (Yellow.cross_peak every
 # 2 m, +-2.5 m search, heading from the last 10 m of accepted peaks) and is not the straight line between the locators.
@@ -334,6 +495,9 @@ PAINT_TRACES = [
 ]
 
 for tr in PAINT_TRACES:
+    if tr['why'] in OSM_UPDATES['retire_traces']:
+        centerline_retired.append({'osm_id': None, 'trace': [list(tr['from']), list(tr['to'])], 'ref': 'F1 (SFO Museum polygon)',
+                                   'why': OSM_UPDATES['retire_traces'][tr['why']]}); continue
     P0, n_ok, n_all = trace_paint(tr['from'], tr['to'])
     P0 = densify(P0, 2.0)
     keep = np.array([not on_runway(p) for p in P0]); runs, cur = [], []
@@ -626,6 +790,51 @@ for g in groups:
         foot = R['pa'] + R['dir'] * rw_frame(R, q_)[0]
         un = un if un @ (foot - q_) > 0 else -un
         add_hold_from_bar(g, R, q_, bar, c_, un, depth, ci_ if dmin < 12 else None, multi=len(picks) > 1)
+# ---- static close-out (2026-11-04): holds of the retired old W crossing are dropped; the relocated W (OSM_UPDATES, built
+# after NAIP 2024) gets INFERRED holds: FAA AL-375 cycle 2611 shows hold bars on both sides of 1L and 1R on W; position =
+# the median distance from the runway centreline of the NAIP-measured runway holds on the same runway (SFO's own practice;
+# the FAA design distance depends on approach category / ADG / elevation and is not sourced here), bar across the 75 ft
+# taxiway (inferred width, OSM_UPDATES width_m), sign text copied from the retired crossing's hold on the same side of the
+# same runway. src 'inf'.
+from shapely.geometry import LineString as _LS_h, Point as _P_h
+_ret = [_LS_h([geo_frame.wgs84_to_world(la, lo) for la, lo in w['pts']]) for w in OSM['taxiways'] if w['id'] in OSM_UPDATES['retire']]
+_ret += [_LS_h([r['trace'][0], r['trace'][1]]) for r in centerline_retired if r.get('trace')]
+_kept, _gone = [], []
+for h in holds:
+    (_gone if any(l.distance(_P_h(*h['p'])) < 12.0 for l in _ret) else _kept).append(h)
+for h in _gone:
+    hold_log.append({'p': h['p'], 'rwy': h['rwy'], 'twy': h.get('twy'), 'text': h.get('text'), 'status': 'retired crossing (OSM_UPDATES): ' + 'old W / F1 crossing of 1L / 1R'})
+holds = _kept
+for w in UPD_WAYS:
+    if not w['_upd'].get('width_m'): continue
+    LW = _LS_h([geo_frame.wgs84_to_world(la, lo) for la, lo in w['pts']]); wid = w['_upd']['width_m']
+    for R in RWYS:
+        if R['a'] not in ('1L', '1R'): continue
+        RL = _LS_h([tuple(R['pa']), tuple(R['pb'])]); X = LW.intersection(RL)
+        if X.is_empty or X.geom_type != 'Point': continue
+        sx = LW.project(X)
+        HD = float(np.median([h['dist'] for h in _kept if h['rwy'] == R['a'] + '/' + R['b'] and h['src'] == 'naip' and h['kind'] == 'runway']))
+        for sg in (-1, 1):
+            # point on W 76.2 m (perpendicular distance) from the runway centreline on this side
+            lo_, hi_ = (0.0, sx) if sg < 0 else (sx, LW.length)
+            best = None
+            for s_ in np.arange(lo_, hi_, 0.1):
+                q = LW.interpolate(s_); dd = abs(rw_frame(R, (q.x, q.y))[1])
+                if best is None or abs(dd - HD) < best[0]: best = (abs(dd - HD), s_, q)
+            if best is None or best[0] > 0.5: continue
+            q = np.array([best[2].x, best[2].y]); q0 = LW.interpolate(best[1] - 2.0); q1 = LW.interpolate(best[1] + 2.0)
+            t_ = np.array([q1.x - q0.x, q1.y - q0.y]); t_ /= np.linalg.norm(t_)
+            foot = R['pa'] + R['dir'] * rw_frame(R, q)[0]; u_ = (foot - q) / np.linalg.norm(foot - q)        # towards the runway
+            bar = np.array([-t_[1], t_[0]])
+            side = np.sign(rw_frame(R, q)[1])
+            tx = [g for g in _gone if g['rwy'] == R['a'] + '/' + R['b'] and np.sign(rw_frame(R, g['p'])[1]) == side]
+            holds.append({'p': [round(float(q[0]), 2), round(float(q[1]), 2)], 'a': [round(float((q + bar * wid / 2)[0]), 2), round(float((q + bar * wid / 2)[1]), 2)],
+                          'b': [round(float((q - bar * wid / 2)[0]), 2), round(float((q - bar * wid / 2)[1]), 2)], 'dir': [round(float(u_[0]), 4), round(float(u_[1]), 4)],
+                          'rwy': R['a'] + '/' + R['b'], 'text': tx[0]['text'] if tx else None, 'twy': 'W', 'w': round(wid, 1), 'dist': round(HD, 2),
+                          'src': 'inf', 'kind': 'runway', 'osm_ids': [w['id']],
+                          'note': 'inferred: relocated W (built after NAIP 2024); FAA AL-375 cycle 2611 shows the hold; %.1f m from the runway '
+                                  'centreline = median of the NAIP-measured holds on %s; sign text from the retired crossing' % (HD, R['a'] + '/' + R['b'])})
+    print('W holds (inferred):', sum(1 for h in holds if h['src'] == 'inf'))
 holds = sorted(holds, key=lambda h: (h['rwy'], h['p'][0], h['p'][1]))
 dists = np.array([h['dist'] for h in holds if h['src'] == 'naip'])
 HOLD_STATS = {'n': len(holds), 'src': dict(Counter(h['src'] for h in holds)), 'kind': dict(Counter(h['kind'] for h in holds)),
@@ -662,7 +871,21 @@ for t in D['taxiways']:
 # simplify
 def simplify(pl, tol):
     c = np.array(pl, np.float32).reshape(-1, 1, 2); a = cv2.approxPolyDP(c, tol, False)[:, 0, :]; return [[round(float(p[0]), 2), round(float(p[1]), 2)] for p in a]
-edges = [simplify(e, 0.35) for e in edges if sum(math.dist(e[i], e[i + 1]) for i in range(len(e) - 1)) > 15]
+# static close-out (2026-11-04): no taxiway edge on the runway or its edge stripe. Where the SFO Museum taxiway outline runs
+# along a runway edge (taxiway pavement meeting runway pavement that borders grass), the "edge" is the runway's white side
+# stripe (review: 1.11 km in 97 lines within 28.4-31.6 m of a runway centreline, drawn as yellow double lines). Outline
+# points within RWY_HW + 3 m of a runway centreline (within its length) are cut out of the runs.
+_e2 = []
+for e in edges:
+    cur = []
+    for p in densify(e, 1.0):
+        if on_runway(p, 3.0):
+            if len(cur) > 3: _e2.append(cur)
+            cur = []
+        else: cur.append([round(float(p[0]), 2), round(float(p[1]), 2)])
+    if len(cur) > 3: _e2.append(cur)
+N_EDGE_RWY = len(edges)
+edges = [simplify(e, 0.35) for e in _e2 if sum(math.dist(e[i], e[i + 1]) for i in range(len(e) - 1)) > 15]
 print('edge runs (SFO Museum outline)', len(edges))
 # Review round 3: the runs above are the SFO Museum taxiway outline moved 0.9 m inward (inferred) and sat 1-2 m inside
 # the painted double yellow edge line (review: median 0.95 m, 20.6 km of 83 km over 1.5 m). Each run is now snapped to
@@ -673,6 +896,7 @@ print('edge runs (SFO Museum outline)', len(edges))
 # the samples are dropped (NAIP shows no edge line there; review: lines drawn on grey pavement).
 edge_meta, edges_out = [], []
 E_before, E_after = [], []
+N_HYG = [0]
 # review round 4: no paint measurement within 7 m of a runway holding-position bar (the 4-line ladder and the sign boxes
 # next to it pulled the edge runs 143 / 242 / 302 ... 2-3 m inwards over 10-20 m); the run keeps its neighbours' offset
 HOLD_ZONE = _prep0(_suu0([_SLS0([tuple(h['a']), tuple(h['b'])]).buffer(7.0) for h in holds]))
@@ -680,7 +904,7 @@ for e in edges:
     P = densify(e, 1.0); S = arclen(P); T = tangents(P)
     if S[-1] < 4: continue
     ss = np.arange(1.0, S[-1] - 0.5, 2.0) if S[-1] > 3 else np.array([S[-1] / 2])
-    offs = measure(P, S, T, ss, avg=3.0, thr=0.7, skip=HOLD_ZONE)
+    offs = measure(P, S, T, ss, avg=3.0, thr=0.7, skip=HOLD_ZONE, white_reject=True)
     good = np.isfinite(offs); frac = float(good.sum() / max(1, (~np.isinf(offs)).sum()))
     if S[-1] > 30 and frac < 0.15:
         edge_meta.append(None); continue          # marker for the stats below (dropped run)
@@ -693,7 +917,7 @@ for e in edges:
     # window when >= 3 of those found paint on the same side (no MAD gate; the +-3.5 m search is centred on the line
     # by now, hold-bar zones stay masked)
     for pass_ in (2, 3, 4):
-        S2 = arclen(Q); T2 = tangents(Q); o2 = measure(Q, S2, T2, ss, avg=3.0, thr=0.7, skip=HOLD_ZONE)
+        S2 = arclen(Q); T2 = tangents(Q); o2 = measure(Q, S2, T2, ss, avg=3.0, thr=0.7, skip=HOLD_ZONE, white_reject=True)
         if pass_ == 2: c2 = window_corr(ss, o2, 0.2, clip=3.5, strict_big=False)
         else:
             c2 = np.zeros(len(ss)); of = np.where(np.isinf(o2), np.nan, o2)
@@ -719,19 +943,25 @@ for e in edges:
                 sel = (S_ > sa) & (S_ < sb)
                 Q[sel] = qa + np.outer((S_[sel] - sa) / (sb - sa), qb - qa)
             i = j + 1
-    o3 = measure(Q, arclen(Q), tangents(Q), ss, avg=3.0, thr=0.7, skip=HOLD_ZONE) if np.any(np.abs(c_pts) > 0.01) else offs     # review round 4: residual on the final line
+    o3 = measure(Q, arclen(Q), tangents(Q), ss, avg=3.0, thr=0.7, skip=HOLD_ZONE, white_reject=True) if np.any(np.abs(c_pts) > 0.01) else offs     # review round 4: residual on the final line
     # review round 4: a run whose paint support is weak (< 30 % of its samples) AND whose final line still sits > 1 m off
     # the paint found (median) is dropped: the paint does not support it (edges 145 / 146 / 246 / 299 / 341 ...)
     f3 = o3[np.isfinite(o3)]
     if len(f3) < 0.3 * max(1, (~np.isinf(o3)).sum()) and (len(f3) == 0 or float(np.median(np.abs(f3))) > 1.0):
         edge_meta.append(None); continue
     E_before += list(np.abs(offs[good])); E_after += list(np.abs(o3[np.isfinite(o3)]))
-    edges_out.append(simplify(Q.tolist(), 0.2))
-    edge_meta.append({'src': 'naip' if np.any(np.abs(c_pts) > 0.01) else 'outline', 'len': round(float(S[-1]), 1), 'paint_frac': round(frac, 2),
-                      'naip_med_abs_off_before': round(float(np.median(np.abs(offs[good]))), 2) if good.any() else None,
-                      'naip_med_abs_off_after': round(float(np.median(np.abs(o3[np.isfinite(o3)]))), 2) if np.isfinite(o3).any() else None})
+    m_ = {'src': 'naip' if np.any(np.abs(c_pts) > 0.01) else 'outline', 'len': round(float(S[-1]), 1), 'paint_frac': round(frac, 2),
+          'naip_med_abs_off_before': round(float(np.median(np.abs(offs[good]))), 2) if good.any() else None,
+          'naip_med_abs_off_after': round(float(np.median(np.abs(o3[np.isfinite(o3)]))), 2) if np.isfinite(o3).any() else None}
+    # static close-out: hairpin spikes (legs up to 12 m) and loops removed (hygiene); a split run keeps its meta per piece
+    parts_ = hygiene(simplify(Q.tolist(), 0.2), spike_len=15.0, min_len=4.0)
+    if not parts_: edge_meta.append(None); continue
+    N_HYG[0] += len(parts_) - 1
+    for k_, pl in enumerate(parts_):
+        edges_out.append(pl); edge_meta.append(dict(m_, **({'part': '%d/%d' % (k_ + 1, len(parts_))} if len(parts_) > 1 else {})))
 EDGE_STATS = {'runs_outline': len(edges), 'runs_kept': len(edges_out), 'dropped_no_paint': sum(1 for m in edge_meta if m is None),   # (incl. round 4: weak paint and > 1 m off)
-              'km_kept': round(sum(m['len'] for m in edge_meta if m) / 1000, 2),
+              'km_kept': round(sum(_plen(e) for e in edges_out) / 1000, 2),
+              'white_reject_bstar_min': BSTAR_MIN, 'runway_zone_m': round(RWY_HW + 3.0, 2), 'runs_split_by_hygiene': N_HYG[0],
               'snapped_runs': sum(1 for m in edge_meta if m and m['src'] == 'naip'),
               'paint_offset_before': {'median': round(float(np.median(E_before)), 2), 'gt1.5': round(float((np.array(E_before) > 1.5).mean()), 3)} if E_before else None,
               'paint_offset_after': {'median': round(float(np.median(E_after)), 2), 'gt1.5': round(float((np.array(E_after) > 1.5).mean()), 3)} if E_after else None}
@@ -785,23 +1015,15 @@ for m in OSM.get('lighting_masts', []):
     if dcl < 25: mast_near_tw.append({'osm_id': m['id'], 'dist_centreline': round(dcl, 1)})
     masts.append([round(x, 2), round(z, 2)])
 print('masts', len(masts), 'moved off buildings', len(mast_moved), 'near taxiway centrelines', len(mast_near_tw))
-dTW = dist_to(TW | RW)   # (used by the service-road lines below)
 
 # ---------------------------------------------------------------- service road lines along the terminal face
+# Static close-out (2026-11-04): NOT generated any more. They were the terminal outline offset by 7 / 14.5 m on the 1 m
+# raster (inferred look-alike white lines, stair-stepped, crossing stands - review: 1-4 % of their samples on imaged white
+# paint, lines under parked aircraft and bridges at F14 / E8 / D6). The real apron service-road paint is not traced yet
+# (NAIP white-line tracing or OSM highway=service on the apron: open, stands_rebuild.md s.16); until then nothing is drawn.
 roads = []
-for off in (7.0, 14.5):
-    band = ((dT <= off) & (TC == 0)).astype(np.uint8)
-    cs, _ = cv2.findContours(band | TC, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-    for c in cs:
-        c = c[:, 0, :]; run = []
-        for p in c:
-            x, y = p
-            ok = apron[min(H - 1, y), min(W - 1, x)] and dTW[y, x] > 6
-            if ok: run.append(world((x + 0.5, y + 0.5)))
-            else:
-                if len(run) > 25: roads.append({'off': off, 'pts': simplify(run, 0.5)})
-                run = []
-        if len(run) > 25: roads.append({'off': off, 'pts': simplify(run, 0.5)})
+ROADS_NOTE = ('empty since 2026-11-04: the former lines were an inferred offset of the terminal outline, not the imaged service-road '
+              'paint (static review); real apron service-road lines are not traced yet')
 print('road lines', len(roads))
 
 # Review round 3: the 45 m 'patches' paved wherever an ADS-B aircraft of data/snapshot.js (adsb.fi + adsb.lol, not a
@@ -811,18 +1033,23 @@ out = {'attribution': 'Taxiway centrelines: OpenStreetMap aeroway=taxiway ways (
                       'checked and locally moved onto the paint measured on USDA NAIP 2024 (public domain). Holding positions: '
                       'painted markings measured on NAIP 2024 (src naip; locator osm = found via an OSM aeroway=holding_position) or OSM '
                       'aeroway=holding_position (src osm). Centrelines with src naip: traced on the NAIP paint where OSM has no way. Taxiway edge lines: '
-                      'SFO Museum sfomuseum-data-architecture taxiway outlines (CDLA-Permissive-1.0) snapped to the paint measured on NAIP 2024 '
-                      '(edgeMeta). Floodlight masts: OpenStreetMap man_made=mast + tower:type=lighting (ODbL). Apron outline and road lines: '
-                      'derived from SFO Museum geometry, inferred. See tools/build_airfield_details.py and docs/ATTRIBUTION.md',
+                      'SFO Museum sfomuseum-data-architecture taxiway outlines (Community Data License Agreement - Permissive 1.0, https://cdla.dev/permissive-1-0/; '
+                      'CHANGED by sfo3d: converted to the world frame, offset and snapped to the paint measured on NAIP 2024) '
+                      '(edgeMeta). Floodlight masts: OpenStreetMap man_made=mast + tower:type=lighting (ODbL). Apron outline: '
+                      'derived from SFO Museum geometry, inferred. OSM base pinned (database 2026-09-24T09:07:42Z); later OSM edits only '
+                      'through the listed updates (osmBase; relocated taxiway W, runway-crossing arcs). Holds src inf: inferred (holds[i].note). '
+                      'See tools/build_airfield_details.py and docs/ATTRIBUTION.md',
        'frame': geo_frame.FRAME_ID, 'apron': apron_polys, 'centerlines': centerlines, 'centerlineMeta': cl_meta, 'centerlineStats': CL_STATS,
        'holds': holds, 'holdStats': HOLD_STATS, 'holdsDropped': hold_log, 'edges': edges, 'edgeMeta': edge_meta, 'edgeStats': EDGE_STATS,
        'masts': masts, 'mastMeta': {'src': 'osm man_made=mast + tower:type=lighting (base position)', 'n': len(masts),
                                     'check': 'NAIP 2024: all 70 viewed on contact sheets (base of an imaged mast; at the terminal on the facade line), review round 3',
                                     'height': 'not in OSM; js/live/items.js MAST_H is inferred',
                                     'clear_of_buildings_m': MAST_CLEAR, 'moved': mast_moved, 'near_taxiway': mast_near_tw},
-       'roads': roads}
+       'roads': roads, 'roadsNote': ROADS_NOTE, 'centerlineRetired': centerline_retired,
+       'osmBase': {'base': OSM['osm_base'], 'updates': {'date': OSM_UPDATE_DATE, 'file': os.path.basename(_upd_fn),
+                                                         'added': sorted(OSM_UPDATES['add']), 'retired': sorted(OSM_UPDATES['retire'])}}}
 json.dump(out, open(os.path.join(ROOT, 'data', 'sfo_details.json'), 'w'), separators=(',', ':'))
-open(os.path.join(ROOT, 'data', 'sfo_details.js'), 'w').write('// generated by tools/build_airfield_details.py - ODbL 1.0: taxiway centrelines contain information from OpenStreetMap (c) OpenStreetMap contributors; holds measured on USDA NAIP 2024; apron/edges from SFO Museum (CDLA-Permissive-1.0) - docs/ATTRIBUTION.md\nexport const DETAILS = ' + json.dumps(out, separators=(',', ':')) + ';\n')
+open(os.path.join(ROOT, 'data', 'sfo_details.js'), 'w').write('// generated by tools/build_airfield_details.py - ODbL 1.0: taxiway centrelines contain information from OpenStreetMap (c) OpenStreetMap contributors; holds measured on USDA NAIP 2024; apron/edges derived from SFO Museum data (CDLA-Permissive-1.0, https://cdla.dev/permissive-1-0/ - changed by sfo3d: re-projected, offset, snapped to NAIP paint) - docs/ATTRIBUTION.md\nexport const DETAILS = ' + json.dumps(out, separators=(',', ':')) + ';\n')
 print('wrote', os.path.getsize(os.path.join(ROOT, 'data', 'sfo_details.json')) // 1024, 'KB')
 
 # ---------------------------------------------------------------- debug image

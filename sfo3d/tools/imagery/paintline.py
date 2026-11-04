@@ -12,6 +12,7 @@ API (world frame x east, z south, metres, tools/geo_frame.py):
   Y = Yellow();  Y.sample(X, Z) -> yellowness
   Y.cross_peak(p, t, half=8, avg=4, step=0.1) -> (offset along the normal n = (-t_z, t_x), strength, background)
   Y.ladder(p, u, n, ...)  -> hold-marking 4-line ladder position along u (see build_airfield_details.py)
+  Y.bstar(p, t, off)      -> CIE Lab b* at a found peak (white-paint rejection for the taxiway edges, static close-out)
 """
 import json, math, os
 import numpy as np
@@ -71,6 +72,26 @@ class Yellow:
         mask = np.abs(o - o[k]) > 1.5
         c2 = float(y[mask].max() - bg) if mask.any() else 0.0
         return float(off), float(c), c2
+
+
+    def bstar(self, p, t, off, avg=3.0):
+        """CIE Lab b* (D65, sRGB) of the NAIP colour at offset `off` (m, right of t) from p, averaged over avg m along t.
+        Static close-out (2026-11-04): the index min(R, G) - B is ~7 on WHITE runway side-stripe paint (NAIP median RGB 226,
+        221, 212), enough for a ridge on dark asphalt, so taxiway edges were snapped onto the runway side stripes. b* separates
+        better: yellow centreline peaks p5 / p10 / median 8.4 / 9.4 / 16.3, white side-stripe peaks median 7.7
+        (tools/build_airfield_details.py BSTAR_MIN)."""
+        if not hasattr(self, '_im'):
+            self._im = np.load(NPY, mmap_mode='r')
+        t = np.asarray(t, float) / np.linalg.norm(t); n = np.array([-t[1], t[0]]); q = np.asarray(p, float) + n * off
+        a = np.linspace(-avg / 2, avg / 2, 7)
+        r, c = self._rc(q[0] + a * t[0], q[1] + a * t[1])
+        r0, c0 = int(max(0, np.floor(r.min()) - 1)), int(max(0, np.floor(c.min()) - 1))
+        sub = np.asarray(self._im[r0:int(np.ceil(r.max())) + 2, c0:int(np.ceil(c.max())) + 2], np.float32)
+        rgb = np.stack([map_coordinates(sub[..., k], [r - r0, c - c0], order=1, mode='nearest') for k in (2, 1, 0)], -1).mean(0) / 255.0
+        v = np.where(rgb > 0.04045, ((rgb + 0.055) / 1.055) ** 2.4, rgb / 12.92)
+        xyz = np.array([[0.4124, 0.3576, 0.1805], [0.2126, 0.7152, 0.0722], [0.0193, 0.1192, 0.9505]]) @ v / np.array([0.95047, 1.0, 1.08883])
+        f = np.where(xyz > 0.008856, np.cbrt(xyz), 7.787 * xyz + 16 / 116)
+        return float(200 * (f[1] - f[2]))
 
 
 BAR_DEPTH = 7 * 0.3048   # runway holding-position marking: 4 lines 12 in wide with 12 in gaps = 7 ft deep (FAA AC 150/5340-1M fig. A-5? see build_airfield_details.py)

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osmChange version="0.6" generator="openstreetmap-cgimap 2.1.1 (3774639 spike-06.openstreetmap.org)" copyright="OpenStreetMap and contributors" attribution="http://www.openstreetmap.org/copyright" license="http://opendatacommons.org/licenses/odbl/1-0/">
+ <modify>
+  <node id="14332384301" visible="true" version="2" changeset="191217839" timestamp="2026-10-30T01:18:17Z" user="Abiding_Citizen" uid="23516865" lat="37.5945628" lon="-122.3856427">
+   <tag k="camera:type" v="fixed"/>
+   <tag k="direction" v="290"/>
+   <tag k="man_made" v="surveillance"/>
+   <tag k="manufacturer" v="Flock Safety"/>
+   <tag k="manufacturer:wikidata" v="Q108485435"/>
+   <tag k="surveillance" v="public"/>
+   <tag k="surveillance:type" v="ALPR"/>
+   <tag k="surveillance:zone" v="traffic"/>
+  </node>
+ </modify>
+</osmChange>

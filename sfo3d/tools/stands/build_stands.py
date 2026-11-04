@@ -58,6 +58,9 @@ for t, r in ACAP_REF.items(): REF.setdefault(t, r)
 # 757-300 length 54.43 m). It was (38.5, 48): the baseline 757-200 span, and too short for the 757-300 (C5 / F17 had
 # gone to class D for its length). Same table in js/live/airport.js CLASS_MAX.
 CLASS_MAX = {'B': (28.5, 37), 'C': (36.5, 45), 'CL': (41.1, 54.5), 'D': (52, 62), 'E': (61, 68), 'EL': (65.5, 77), 'F': (80, 80)}
+# flysfo AODB snapshots used for names / classes / exclusions: the 14 of 24-25 Sep 2026, newest
+# flysfo_api_flight-status_20260925T233852Z.json.gz (static close-out 2026-11-04: pinned, see the snapshot loop)
+FLYSFO_UNTIL = '20260925T233852Z'
 ORDER = ['B', 'C', 'CL', 'D', 'E', 'EL', 'F']
 # reference planform per class = the largest type of the class that SFO parks (REF dims: ACAP documents)
 CLS_REF = {'B': 'E75L', 'C': 'A321', 'CL': 'B753', 'D': 'B763', 'E': 'B772', 'EL': 'B77W', 'F': 'A388'}
@@ -207,7 +210,14 @@ def main():
     # version put on a stand is kept as provenance (`superseded_types`) and used only when a stand has no other type.
     import glob as _glob
     seen_ = set(); newest_ = {}
-    for path_ in sorted(_glob.glob(os.path.join(G.CACHE, 'flysfo_api_flight-status_*.json*')), key=G.snapshot_time):
+    # static close-out (2026-11-04): the snapshot list is PINNED (FLYSFO_UNTIL) - a rebuild must not derive names, classes
+    # and exclusions from whatever snapshots happen to be cached (after the container loss only the 4 Nov one was);
+    # later AODB windows enter through tools/stands/patch_stands.py (FLYSFO_WINDOW2), with their evidence listed
+    snaps_ = [p_ for p_ in sorted(_glob.glob(os.path.join(G.CACHE, 'flysfo_api_flight-status_*.json*')), key=G.snapshot_time)
+              if re.search(r'(\d{8}T\d{6}Z)', os.path.basename(p_)).group(1) <= FLYSFO_UNTIL]
+    if not snaps_: raise SystemExit('no flysfo snapshot <= %s cached: the September AODB evidence is needed (lost 2026-11-04; '
+                                    'data/sfo_stands.json = refs/cache/stands/sfo_stands_built_20260926.json + patch_stands.py)' % FLYSFO_UNTIL)
+    for path_ in snaps_:
         for r in G.load_flysfo(path_)[2]:
             newest_[r['flight_id']] = r
             t = (r.get('aircraft_transport_type') or {}).get('icao_code'); turn = tuple(sorted([r['flight_id'], r.get('linked_flight_id') or '']))
@@ -608,8 +618,9 @@ def main():
             s['naip']['superseded'] = 'NAIP 2024 (2024-05-20) aircraft on the earlier (OSM) axis; not a check of the ADS-B axis'
             s['naip'].pop('along_conflict', None)
         s.pop('conflict_along', None); s.pop('conflict_axis', None); s.pop('_axis_tf', None)
-        # the ADS-B that placed the stand cannot verify it (like F15's NAIP reading); an aircraft WAS seen there -> obs
-        s['verified_by'] = []; s['verified_unconfirmed'] = []; s['src'] = 'obs'
+        # the ADS-B that placed the stand cannot verify it (like F15's NAIP reading). Static close-out (2026-11-04): src inf -
+        # nothing independent observed the new axis (it had been obs: D3 / D4 / D9)
+        s['verified_by'] = []; s['verified_unconfirmed'] = []; s['src'] = 'inf'
         s['paint'] = paint_fit(YEL, s['nose'], s['hdg']); s.pop('paint_after', None)
         f_ = hdg_vec(s['hdg']); s['leadin_pts'] = [(s['nose'][0] - f_[0] * 40, s['nose'][1] - f_[1] * 40), tuple(s['nose'])]
         s['leadin_src'] = 'inferred: straight 40 m along the ADS-B axis (the painted line of the current layout is not imaged: NAIP 2024 predates it)'
@@ -675,6 +686,11 @@ def main():
                                                                      'stand nose need a range no single datasheet bridge has - taken as a hold / tow, not a parked turn' % (dur_by[fm][0], -d_)}
                     continue
                 tsd[fm] = {'along': round(min(d_, 0.0), 1), 'n': len(v), 'src': 'adsb (median %.1f m vs family %.1f m)' % (float(np.median(v)), fam_ref[fm])}
+            if d_ > 1.5:
+                # static close-out (2026-11-04; review: B9 / D6 aircraft stop 2.4-3.2 m BEYOND the model nose): a family
+                # stopping beyond the nose was clipped to 0 and dropped below - it is recorded as a conflict now
+                s.setdefault('_beyond', []).append({'with': 'adsb', 'beyond': True, 'family': fm, 'resid_along': round(d_, 1), 'n': len(v),
+                                                    'note': 'ADS-B %s aircraft stop %.1f m beyond the model nose (median %.1f m vs family %.1f m)' % (fm, d_, float(np.median(v)), fam_ref[fm])})
         # review round 3: a family stop of 3-5 m that the NAIP aircraft on the same line confirms (its relief-corrected
         # nose within 1.5 m of the ADS-B stop, n >= 2 ADS-B aircraft; B22: three E-Jets 4.3-5.4 m short, NAIP -4.1 m)
         rn = s.get('naip') or {}
@@ -687,9 +703,14 @@ def main():
                     s['conflict_along']['explained_by'] = fm
                     s['conflict_along']['note'] += '; explained by the %s stop (ADS-B n=%d at %+.1f m agrees)' % (fm, len(v), d_)
         s['type_stops'] = {k: v for k, v in tsd.items() if v['along'] < 0} or None
+        for b_ in s.pop('_beyond', []):
+            if not s.get('conflict_along'): s['conflict_along'] = b_
+            else: s['conflict_along'].setdefault('also', []).append(b_)
+            s['src'] = 'inf'
         if s.get('conflict_along') and not s['conflict_along'].get('explained_by') and s.get('_why_along'):
             s['conflict_along']['why_not_moved'] = s['_why_along']
-        if (s.get('conflict_along') or {}).get('explained_by') and ('adsb' in s['verified_by'] or 'naip' in s['verified_by']): s['src'] = 'obs'
+        # static close-out (2026-11-04): an explained conflict_along no longer makes the stand obs (s.13: such a stand is
+        # never src obs - B22 had been set obs here)
     # Stands whose calibrated nose puts the aircraft against the building (review round 2: F16 0.05 m, F17 0.59 m from the
     # Boarding Area F facade; their OSM lead-ins end at the facade) are moved back to the stop ADS-B shows there, when
     # it does: the stand nose takes the family stop (pos_src 'osm+adsb'), the other families keep their offsets.
@@ -874,7 +895,7 @@ def main():
             if found:
                 q, pre, dm = found
                 b['rotunda_osm'] = b['rotunda']; b['rotunda'] = [round(q[0], 2), round(q[1], 2)]
-                b['walk'] = [[round(v, 2) for v in p_] for p_ in list(pre) + [q]]; b['rotunda_src'] = (b.get('rotunda_src') or 'OSM') + '; moved %.1f m back along the walkway (min. extension / wing clearance)' % dm
+                b['walk'] = [[round(v, 2) for v in p_] for p_ in list(pre) + [q]]; b['rotunda_src'] = 'inferred: ' + (b.get('rotunda_src') or 'OSM') + '; moved %.1f m back along the walkway (min. extension / wing clearance)' % dm
             else:
                 b['rotunda_src'] = (b.get('rotunda_src') or 'OSM') + '; too close to the door or inside the wing sweep, and the walkway gives no feasible point'
                 problems.append((st['name'], 'rotunda of bridge %s infeasible' % b['osm_id']))
@@ -1151,6 +1172,11 @@ def main():
             dm = min([math.dist(b['rotunda'], r) for i, r in rots if i != id(b)] or [99])
             dw = min([w.distance(Point(b['rotunda'])) for i, at, w in walks if i != id(b) and at != tuple(b['attach'])] or [99])
             b['rotunda_max_r'] = round(max(0.0, min(GM.ROT_R, dm / 2 - 0.05, dw - GM.WALK_W / 2 - 0.05)), 2)
+            # static close-out (2026-11-04; bridges_static.md #1 / #1b): also the terminal outline the app draws (gates.js
+            # keeps the drum 0.2 m off it); a rotunda that leaves less than the 1.5 m minimum drum is moved out by
+            # tools/stands/patch_stands.py P3 (B2, F9 in the 26 Sep build) - kept there so that both use one rule
+            db_ = bld_poly.boundary.distance(Point(b['rotunda'])) if not bld_poly.contains(Point(b['rotunda'])) else 0.0
+            if db_ - 0.2 < b['rotunda_max_r']: b['rotunda_max_r'] = round(max(0.0, db_ - 0.2), 2)
     # ---------------------------------------------------------------- bridge model per bridge (review round 3)
     # One bridge is one datasheet model (geom.MODELS, Oshkosh AeroTech sell sheet): its operational range, not the
     # 9.846-41.381 m span of the whole product line, limits both docking and resting. The model (inferred - SFO's
@@ -1563,6 +1589,8 @@ def build_output(stands, remote, positions, naip_off, info, osm, unplaced=()):
         res['redBoxes'] = []
     js = json.dumps(res, separators=(',', ':'))
     json.dump(res, open(os.path.join(ROOT, 'data', 'sfo_stands.json'), 'w'), separators=(',', ':'))
+    # static close-out: the build output is also the BASE of tools/stands/patch_stands.py (run it after this script)
+    json.dump(res, open(os.path.join(CACHE, 'stands', 'sfo_stands_built.json'), 'w'), separators=(',', ':'))
     open(os.path.join(ROOT, 'data', 'sfo_stands.js'), 'w').write(
         '// generated by tools/stands/build_stands.py - ODbL 1.0: contains information from OpenStreetMap (c) OpenStreetMap '
         'contributors (docs/ATTRIBUTION.md)\nexport const STANDS = ' + js + ';\n')

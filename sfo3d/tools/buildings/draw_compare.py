@@ -30,18 +30,18 @@ def rows():
         ('Tower: flare, widest', f'D {2 * 7.2:.1f} at 57.2 m', f'D {2 * r_at(59.4, F1):.1f} / {2 * r_at(59.4, F2):.1f} (1.58 D)', 'inf', f'{14.4 - 2 * r_at(59.4, F1):+.1f} / {14.4 - 2 * r_at(59.4, F2):+.1f} m', 'spec 22.6 +-1.5 at D 14.3'),
         ('Tower: waist', 'D 8.4 at 36-44 m', f'D {2 * r_at(26.3, F1):.1f} / {2 * r_at(26.3, F2):.1f}', 'inf', f'{8.4 - 2 * r_at(26.3, F1):+.1f} / {8.4 - 2 * r_at(26.3, F2):+.1f} m', 'ratio x D'),
         ('Tower: mast tips / base-building roof', f'{cab["mast_top"]:.1f} / {A["ibf_roof"]:.1f} m', f'70.9 / {F1["ibf"]:.1f} (F1); 67.4 / {F2["ibf"]:.1f} (F2)', 'inf', f'{cab["mast_top"] - 70.9:+.1f} / {A["ibf_roof"] - F1["ibf"]:+.1f} (F1)', ''),
-        ('ITB hall: roof top', f'{min(hall_top):.1f}-{max(hall_top) + 0.6:.1f} m ("83 ft" + 0.6 crown)', '34.9-40.1 m (DOF 131/132 ft)', 'pub', f'{max(hall_top) + 0.6 - 40.08:+.1f} m', '83 ft is the interior height'),
+        ('ITB hall: roof top', f'{min(hall_top):.1f}-{max(hall_top) + 0.6:.1f} m ("83 ft" + 0.6 crown)', 'tips 34.9 [obs]; DOF 39.93 / 40.23 [pub]; fit peak 40.08 [inf]; crown 40.1 +-2 [obs]', 'obs', f'{max(hall_top) + 0.6 - 40.23:+.1f} m (vs DOF)', '83 ft is the interior height'),
         ('ITB hall: roof size', f'{G["L"]:.1f} x {G["W"]:.1f} m', '252.9 x 65.4 m (860 ft pub)', 'obs', f'{G["L"] - 252.9:+.1f} / {G["W"] - 65.4:+.1f}', ''),
         ('ITB hall: roof centre / axis', f'({G["c"][0]:.1f}, {G["c"][1]:.1f}), SFOM hall-part axis', '(-1244.6, 365.4), 162.85 deg', 'obs', '35 m E, 2.9 deg', ''),
         ('ITB hall: columns', '2 rows of 10 ACROSS the width at s +-57.9 m', '5 truss lines x 4 at +-190 / +-270 ft', 'inf', 'layout', '20 from level 3 [pub]'),
-        ('Boarding Area A', f'{sp("Boarding Area A")} m', '17.9 m (16.9-18.8); pod 1 25.9 m', 'obs', f'{sp("Boarding Area A") - 17.9:+.1f} m', 'pods not built'),
+        ('Boarding Area A', f'{sp("Boarding Area A")} m', '17.9 (16.9-18.8) [obs]; pod 1: DOF 25.9 [pub] vs NAIP 22.3-25.2 [obs] (conflict)', 'obs', f'{sp("Boarding Area A") - 17.9:+.1f} m', 'pods not built'),
         ('Boarding Area G', f'{sp("Boarding Area G")} m', '17.0 m (13-20)', 'obs', f'{sp("Boarding Area G") - 17.0:+.1f} m', 'low'),
         ('Boarding Area B', f'{sp("Boarding Area B")} m flat', '13.1 outer / 19.0 raised centre', 'obs', f'{sp("Boarding Area B") - 13.14:+.1f} / {sp("Boarding Area B") - 19.04:+.1f}', 'stepped section'),
         ('Boarding Area C', f'{sp("Boarding Area C")} m', '7.2 m (7.0-7.5)', 'obs', f'{sp("Boarding Area C") - 7.2:+.1f} m', 'low'),
         ('Boarding Area D', f'{sp("Boarding Area D")} m', '8.5 m (8.1-8.9)', 'obs', f'{sp("Boarding Area D") - 8.49:+.1f} m', 'low'),
         ('Boarding Area E', f'{sp("Boarding Area E")} m', '12.85 m (12.2-13.5)', 'obs', f'{sp("Boarding Area E") - 12.85:+.1f} m', ''),
         ('Boarding Area F (NE arm)', f'{sp("Boarding Area F")} m', '10.49 m; DOF 10.36 m', 'obs', f'{sp("Boarding Area F") - 10.49:+.1f} m', ''),
-        ('Pier outlines', 'SFOM level-2 outline = roof', 'roof 1.8-2.3 m outside (ESE), 1.3-1.7 inside (WNW)', 'obs', '1-3 m', 'BA-B, BA-F'),
+        ('Pier outlines', 'SFOM level-2 outline = roof', 'roof edge vs outline, ESE / WNW: B +2.3 / -1.7, D +2.4 / -1.4, F 0.0 / -1.0..-1.3 m', 'obs', '0-2.4 m', 'spec range 0-5 out / 0-2 in'),
         ('T1 / T2 / T3 halls', f'{D.app_part("Harvey Milk Terminal 1")["h"]} / {D.app_part("Terminal 2")["h"]} / {D.app_part("Terminal 3")["h"]} m', 'T1, T2 unknown; T3 R2 14.5 / R3 21.3', 'inf', '-', 'T3 datum unknown'),
         ('Central Parking Garage', f'{D.APP_STRUCT_H["Central Parking Garage"]} m', '24.69 m (81 ft)', 'pub', f'{22 - 24.69:+.1f} m', 'definition open'),
         ('Garages A / G', '21 / 21 m', 'deck unmeasured; drums 39.6 / 37.6', 'obs', '?', '9 levels [pub]'),
@@ -49,7 +49,7 @@ def rows():
         ('Rental Car Center', '26 m', '16.5-18.0 roof (DOF) / 20.1 (66 ft)', 'pub', '+8.0 / +5.9', ''),
         ('Consolidated Admin. Campus', '20 m', '18.3-19.5 m', 'inf', '+0.5..+1.7', 'shadow 17.4-19.2'),
         ('Grand Hyatt', '38 m', '~44 m (40-48)', 'inf', '-6 m', 'not published'),
-        ('Superbay hangar', '34 m flat box', '41.15 m (DOF 135 ft)', 'pub', '-7.2 m', 'spine + cantilevers'),
+        ('Superbay hangar', '34 m flat box', '41.15 m spine (DOF 135 ft) [pub]; tips ~27 [inf]', 'pub', '-7.2 m', 'cantilevers fall to the tips'),
         ('United MOC hangars', 'not built', 'DOF 35.4-40.2 m; imaged roofs', 'pub', '-', 'no SFOM outline'),
     ]
     return R
@@ -81,7 +81,7 @@ def sheet():
     # ---------------- heights dot plot
     ax2 = fig.add_axes([(BORDER + 58) / pw, (BORDER + 10) / ph, 236 / pw, 150 / ph])
     items = [('Tower roof rim (F1 dot; F2 64.0)', 61.9, F1['rim'], (63.0, 67.6), 'inf'), ('Tower base bldg', 14.0, F1['ibf'], (12.7, 16.5), 'inf'),
-             ('ITB hall roof (max)', 27.1, 40.08, (34.9, 40.1), 'pub'), ('BA-A', 14.6, 17.9, (16.9, 18.8), 'obs'), ('BA-G', 14.6, 17.0, (13, 20), 'obs'),
+             ('ITB hall roof (DOF 40.23)', 27.1, 40.23, (34.9, 40.23), 'pub'), ('BA-A', 14.6, 17.9, (16.9, 18.8), 'obs'), ('BA-G', 14.6, 17.0, (13, 20), 'obs'),
              ('BA-B outer', 14.6, 13.14, (12.49, 13.81), 'obs'), ('BA-B centre', 14.6, 19.04, (18.1, 20.0), 'obs'), ('BA-C', 14.6, 7.2, (6.99, 7.53), 'obs'),
              ('BA-D', 14.6, 8.49, (8.07, 8.93), 'obs'), ('BA-E', 14.6, 12.85, (12.21, 13.51), 'obs'), ('BA-F', 14.6, 10.49, (9.97, 11.03), 'obs'),
              ('Central garage', 22, 24.69, None, 'pub'), ('Garage A (drum)', 21, 39.6, (25, 41.5), 'obs'), ('Garage G (drum)', 21, 37.6, (25, 40), 'obs'),
@@ -117,7 +117,7 @@ def sheet():
     ax3 = fig.add_axes([(BORDER + 326) / pw, (BORDER + 22) / ph, 160 / pw, 150 / ph])
     I = __import__('draw_itb')
     us = np.linspace(-I.HL, I.HL, 400)
-    ax3.plot(us, [I.roof_line(u) for u in us], color=TAGS['obs']['c'], lw=1.0, label='spec: wing eave profile + centre arch [obs / pub DOF]')
+    ax3.plot(us, [I.roof_line(u) for u in us], color=TAGS['obs']['c'], lw=1.0, label='spec: wing eave profile [obs shape, DOF-anchored inf] + centre arch [obs]')
     G = D.app_great_hall(); ss = np.linspace(-G['L'] / 2, G['L'] / 2, 200)
     ax3.plot(ss, [G['top'](s) + 0.6 for s in ss], color=TAGS['app']['c'], lw=1.0, ls=TAGS['app']['ls'], label='app: greatHall top(s) + 0.6 crown')
     ax3.plot([-131.06, 131.06], [1, 1], color='k', lw=2, alpha=0.4, label='published 860 ft length')

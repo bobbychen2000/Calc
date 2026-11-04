@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osmChange version="0.6" generator="openstreetmap-cgimap 2.1.1 (3694617 spike-06.openstreetmap.org)" copyright="OpenStreetMap and contributors" attribution="http://www.openstreetmap.org/copyright" license="http://opendatacommons.org/licenses/odbl/1-0/">
+ <modify>
+  <node id="14250282976" visible="true" version="2" changeset="190181251" timestamp="2026-10-08T06:39:10Z" user="Omnific" uid="1408522" lat="37.7776641" lon="-122.4334907">
+   <tag k="addr:city" v="San Francisco"/>
+   <tag k="addr:housenumber" v="1000"/>
+   <tag k="addr:postcode" v="94117"/>
+   <tag k="addr:state" v="CA"/>
+   <tag k="addr:street" v="Fulton Street"/>
+   <tag k="description" v="In HF0’s hacker monastery, Archbishop Mansion, 1000 Fulton: I’m Aleksei Dolgikh—OSI 7-layer hacker, GIS. Building 2026-2036+ reg  UnicornsMap.com $UM-Radar, the Agentic Swarm Orchestra Conductor. 12 weeks, 12 months of progress."/>
+   <tag k="email" v="support@unicornsmap.com"/>
+   <tag k="name:en" v="UnicornsMap.com $UM-Radar *GIS OSINT HF0"/>
+   <tag k="office" v="company"/>
+   <tag k="opening_hours" v="24/7"/>
+   <tag k="start_date" v="2026-02-10"/>
+   <tag k="website" v="https://unicornsmap.com"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="14251899860" visible="true" version="3" changeset="190181251" timestamp="2026-10-08T06:39:10Z" user="Omnific" uid="1408522" lat="33.9454070" lon="-118.1297909">
+   <tag k="addr:city" v="Downey"/>
+   <tag k="addr:housenumber" v="10630"/>
+   <tag k="addr:postcode" v="90241"/>
+   <tag k="addr:state" v="CA"/>
+   <tag k="addr:street" v="Downey Avenue"/>
+   <tag k="addr:unit" v="Ste 104"/>
+   <tag k="email" v="info@rishermortuary.net"/>
+   <tag k="name" v="Risher Mortuary &amp; Cremation Service"/>
+   <tag k="opening_hours" v="24/7"/>
+   <tag k="operator" v="Greg Welch"/>
+   <tag k="payment:cash" v="yes"/>
+   <tag k="payment:cheque" v="yes"/>
+   <tag k="payment:debit_cards" v="yes"/>
+   <tag k="payment:discover_card" v="yes"/>
+   <tag k="payment:mastercard" v="yes"/>
+   <tag k="payment:visa" v="yes"/>
+   <tag k="phone" v="+1-562-861-3888"/>
+   <tag k="shop" v="funeral_directors"/>
+   <tag k="website" v="https://www.rishermortuary.com/"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="14248981413" visible="true" version="4" changeset="190181251" timestamp="2026-10-08T06:39:10Z" user="Omnific" uid="1408522" lat="39.2197328" lon="-121.0993070">
+   <tag k="addr:city" v="Grass Valley"/>
+   <tag k="addr:housenumber" v="12582"/>
+   <tag k="addr:postcode" v="95945"/>
+   <tag k="addr:state" v="CA"/>
+   <tag k="addr:street" v="Squirrel Creek Road"/>
+   <tag k="amenity" v="place_of_worship"/>
+   <tag k="name" v="Unitarian Universalist Community of the Mountains"/>
+   <tag k="phone" v="+1-530-274-1675"/>
+   <tag k="religion" v="unitarian_universalist"/>
+   <tag k="service_times" v="Su 09:30"/>
+   <tag k="website" v="https://www.uugrassvalley.org"/>
+  </node>
+ </modify>
+</osmChange>

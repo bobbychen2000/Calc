@@ -63,10 +63,19 @@ export class LiveAircraft extends Aircraft {
   }
   // true while the brand / neutral texture of a type whose own atlas is wrong for it is still loading
   liveryPending() { return !!(this._livTexKey && !this.livTex && !this._livFailed && this._ownAtlasWrong); }
+  // model -> aircraft-local matrix: uniform scale, the model's nose at T.xMain ahead of the main gear, seated on its own gear
+  // (lowest point on the ground) or at T.Hc; models on their own gear are pitched nose-down about the main-gear contact
+  // (js/aircraft/fit.js T.fit.pitch: both gear units touch). The pitch is a rotation of the matrix, not of the vertices, so
+  // the model-space positions js/shaders/aircraft_real.js reads (belly line, registration decal) stay in the body frame.
   placement() {
+    if (this._plc && this._plcModel === this.model && this._plcFit === this.T.fit) return this._plc;
     const T = this.T, d = this.model.dims; const s = T.L / d.L;   // d.L includes the fuselage plugs: s = T.fit.s
     const y = d.hasGear ? -d.low * s : T.Hc;
-    return m4.mul(m4.translate(T.xMain, y, 0), m4.scale(s, s, s));
+    let P = m4.mul(m4.translate(T.xMain, y, 0), m4.scale(s, s, s));
+    const p = d.hasGear && T.fit && T.fit.model === this.modelKey ? T.fit.pitch : null;
+    if (p && p.a) P = m4.mul(P, m4.mul(m4.translate(p.x0, p.y0, 0), m4.mul(m4.rotZ(-p.a), m4.translate(-p.x0, -p.y0, 0))));
+    this._plc = P; this._plcModel = this.model; this._plcFit = T.fit;
+    return P;
   }
   realUniforms(U) {
     const L = this.liv, T = this.T, d = this.model.dims; const s = T.L / d.L; const C = linearLivery(L);

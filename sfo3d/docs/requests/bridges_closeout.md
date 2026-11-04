@@ -17,6 +17,9 @@ that samples every vehicle MESH (`gse.mjs`). Scratch scripts are not committed; 
 | GSE, all 106 stands occupied (largest type) | belt loaders 0, catering 20, fuel 21 | belt loaders 79, catering 11, fuel 37; 0 conflicts (mesh-sampled) |
 | docked slopes > 1:12 / > 1:8 (all; observed) | 953 / 380; 102 / 29 of 535 | unchanged (heights: static §5) |
 
+Snapshot render (llvmpipe, 800x500, B-pier tip as in the review): no page errors. The snapshot's 7 parked aircraft got 10
+belt loaders, 2 catering trucks and 2 fuel trucks, with no part visibly clipping.
+
 ## What changed in gates.js (for everybody who reads it)
 
 | Item | Now |

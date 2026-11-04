@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osmChange version="0.6" generator="openstreetmap-cgimap 2.1.1 (3805549 spike-07.openstreetmap.org)" copyright="OpenStreetMap and contributors" attribution="http://www.openstreetmap.org/copyright" license="http://opendatacommons.org/licenses/odbl/1-0/">
+ <modify>
+  <way id="25815445" visible="true" version="21" changeset="190715819" timestamp="2026-10-18T21:00:24Z" user="jesszhan0024" uid="23667821">
+   <nd ref="6386800179"/>
+   <nd ref="4906098118"/>
+   <nd ref="4906098112"/>
+   <nd ref="1438930205"/>
+   <nd ref="6421532885"/>
+   <nd ref="4204722167"/>
+   <nd ref="281572961"/>
+   <tag k="highway" v="unclassified"/>
+   <tag k="lit" v="yes"/>
+   <tag k="name" v="South El Camino Real"/>
+   <tag k="oneway" v="yes"/>
+   <tag k="parking:both" v="yes"/>
+   <tag k="parking:both:orientation" v="parallel"/>
+   <tag k="sidewalk" v="right"/>
+  </way>
+ </modify>
+ <modify>
+  <way id="515889270" visible="true" version="6" changeset="190715819" timestamp="2026-10-18T21:10:22Z" user="jesszhan0024" uid="23667821">
+   <nd ref="297163875"/>
+   <nd ref="4204722188"/>
+   <nd ref="6323802808"/>
+   <nd ref="276563545"/>
+   <nd ref="6323777035"/>
+   <tag k="cycleway:right" v="lane"/>
+   <tag k="cycleway:right:buffer" v="yes"/>
+   <tag k="highway" v="residential"/>
+   <tag k="lanes" v="3"/>
+   <tag k="lanes:backward" v="2"/>
+   <tag k="lanes:forward" v="1"/>
+   <tag k="name" v="Murchison Drive"/>
+   <tag k="parking:lane:right" v="parallel"/>
+   <tag k="sidewalk" v="both"/>
+   <tag k="tiger:county" v="San Mateo, CA"/>
+   <tag k="turn:lanes:backward" v="left|through;right"/>
+  </way>
+ </modify>
+ <modify>
+  <way id="396939377" visible="true" version="5" changeset="190715819" timestamp="2026-10-18T21:11:00Z" user="jesszhan0024" uid="23667821">
+   <nd ref="1431885147"/>
+   <nd ref="4184406624"/>
+   <tag k="hgv" v="designated"/>
+   <tag k="hgv:national_network" v="terminal_access"/>
+   <tag k="highway" v="primary"/>
+   <tag k="lanes" v="4"/>
+   <tag k="maxspeed" v="35 mph"/>
+   <tag k="name" v="El Camino Real"/>
+   <tag k="old_ref" v="US 101"/>
+   <tag k="oneway" v="yes"/>
+   <tag k="ref" v="CA 82"/>
+   <tag k="sidewalk" v="right"/>
+   <tag k="source:hgv:national_network" v="Caltrans http://www.dot.ca.gov/hq/traffops/trucks/truckmap/"/>
+   <tag k="turn:lanes" v="|||right"/>
+  </way>
+ </modify>
+ <modify>
+  <way id="286685345" visible="true" version="3" changeset="190715819" timestamp="2026-10-18T21:16:48Z" user="jesszhan0024" uid="23667821">
+   <nd ref="1431885078"/>
+   <nd ref="6323776988"/>
+   <nd ref="1459800267"/>
+   <nd ref="297163931"/>
+   <tag k="highway" v="tertiary"/>
+   <tag k="lanes" v="3"/>
+   <tag k="maxspeed" v="30 mph"/>
+   <tag k="name" v="Millbrae Avenue"/>
+   <tag k="oneway" v="yes"/>
+   <tag k="sidewalk" v="right"/>
+   <tag k="turn:lanes" v="left||"/>
+  </way>
+ </modify>
+ <modify>
+  <way id="409984416" visible="true" version="11" changeset="190715819" timestamp="2026-10-18T21:18:33Z" user="jesszhan0024" uid="23667821">
+   <nd ref="12252229305"/>
+   <nd ref="4118495189"/>
+   <nd ref="436864970"/>
+   <nd ref="8574977355"/>
+   <nd ref="1431884979"/>
+   <nd ref="6323774384"/>
+   <tag k="hgv" v="designated"/>
+   <tag k="hgv:national_network" v="terminal_access"/>
+   <tag k="highway" v="primary"/>
+   <tag k="lanes" v="5"/>
+   <tag k="maxspeed" v="35 mph"/>
+   <tag k="name" v="El Camino Real"/>
+   <tag k="old_ref" v="US 101"/>
+   <tag k="oneway" v="yes"/>
+   <tag k="ref" v="CA 82"/>
+   <tag k="sidewalk" v="right"/>
+   <tag k="source:hgv:national_network" v="Caltrans http://www.dot.ca.gov/hq/traffops/trucks/truckmap/"/>
+   <tag k="surface" v="asphalt"/>
+   <tag k="turn:lanes" v="left|left|none|none|none"/>
+  </way>
+ </modify>
+ <modify>
+  <way id="8942069" visible="true" version="24" changeset="190715819" timestamp="2026-10-18T21:30:43Z" user="jesszhan0024" uid="23667821">
+   <nd ref="297164236"/>
+   <nd ref="262936216"/>
+   <nd ref="4204722310"/>
+   <nd ref="6319071121"/>
+   <nd ref="418085596"/>
+   <tag k="highway" v="residential"/>
+   <tag k="name" v="La Cruz Avenue"/>
+   <tag k="parking:lane:both" v="parallel"/>
+   <tag k="sidewalk" v="both"/>
+   <tag k="tiger:cfcc" v="A41"/>
+   <tag k="tiger:county" v="San Mateo, CA"/>
+   <tag k="tiger:name_base" v="La Cruz"/>
+   <tag k="tiger:name_type" v="Ave"/>
+  </way>
+ </modify>
+</osmChange>

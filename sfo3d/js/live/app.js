@@ -18,7 +18,7 @@ import { buildLiveWorld, releaseAirportMap } from './world.js';
 import { LiveGateSystem } from './gates.js';
 import { buildLiveLights, lightSpriteFn, buildPierGeometry } from './lights.js';
 import { Traffic, category, hdgVec, RWY, phaseLabel, antOf, DELAY_MS } from './traffic.js';
-import { GroundPhysics, buildingGrid } from './ground.js';
+import { GroundPhysics, buildingGrid, bridgeGrid } from './ground.js';
 import { Feed, StreamFeed, Routes, fetchMetar, fetchGates, parsePayload, SOURCES } from './feed.js';
 import { runwayStats, statsLine, statsHtml, runwayQueue } from './stats.js';
 import { atcRoles, onFeed, roleChip, FEEDS, FEED_BY } from './atc.js';
@@ -192,8 +192,8 @@ export async function startApp(cfg) {
   // rest; retracts when it is leaving, before it moves) and only for aircraft with a 3-D airframe
   // opt.fast (traffic.js undock of a departing / removed aircraft): the retraction takes opt.s seconds instead of the
   // datasheet rates -- the data shows a departure only once the push-back has begun, when the real bridge is already
-  // retracted (traffic.js FAST_UNDOCK_S). gates.js has no such option yet (docs/requests/bridges_fast_undock.md): the
-  // retraction animation it just started is shortened here
+  // retracted (traffic.js FAST_UNDOCK_S): gates.js hurryUndock() (requested in docs/requests/realtime_round2.md s.1a; it keeps
+  // the datasheet's rates as the floor). The fallback below only serves an older gates.js without it
   function applyGate(g, tr, opt) {
     const G = bridgeGate(g); const now = Date.now();
     gateSys.setOccupant(G, tr && tr.model && TYPES[tr.model.t] ? tr.model.t : null, booted(), now, tr ? poseST(tr) : null, tr ? tr.info.icao : null);
@@ -234,7 +234,9 @@ export async function startApp(cfg) {
   }
   function statsSheet(now) { if (!ui.statsOpen()) return; const tD = traffic.displayTime(now); const ages = (traffic.ages || []).filter(q => q[2]).map(q => q[1]).sort((a, b) => a - b);
     ui.setStatsSheet(statsHtml(runwayStats(traffic.events, tD), runwayQueue(traffic.tracks.values(), RWY), { delayS: traffic.delay / 1000, audioS: (traffic.audioDelay || 0) / 1000, ageS: ages.length ? ages[ages.length >> 1] : null })); }
-  const physics = new GroundPhysics({ paved: pavedMask, building: buildingAt, net: traffic.net });
+  // (the jet bridges at rest are obstacles for aircraft parked off a stand: gates.js solids(g, b, 0), ground.js bridgeGrid)
+  const restBridges = (() => { if (!gateSys.solids) return null; const boxes = []; try { for (const g of world.gates) for (const b of g.bridges || []) boxes.push(...gateSys.solids(g, b, 0)); } catch (e) { console.warn('bridge solids', e); return null; } return bridgeGrid(boxes, GROUND_Y); })();
+  const physics = new GroundPhysics({ paved: pavedMask, building: buildingAt, net: traffic.net, bridges: restBridges });
   // footprints of aircraft on the ground (vehicles around a stand must not hit them)
   gateSys.aircraftFootprints = () => {
     const out = [];

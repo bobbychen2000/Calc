@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osmChange version="0.6" generator="openstreetmap-cgimap 2.1.1 (49960 spike-08.openstreetmap.org)" copyright="OpenStreetMap and contributors" attribution="http://www.openstreetmap.org/copyright" license="http://opendatacommons.org/licenses/odbl/1-0/">
+ <modify>
+  <node id="14298514001" visible="true" version="2" changeset="190826785" timestamp="2026-10-21T09:19:04Z" user="confusedbuffalo-bot" uid="23492813" lat="37.7607606" lon="-122.4354992">
+   <tag k="addr:housenumber" v="4121"/>
+   <tag k="addr:postcode" v="94114"/>
+   <tag k="addr:street" v="18th Street"/>
+   <tag k="amenity" v="nightclub"/>
+   <tag k="internet_access" v="wlan"/>
+   <tag k="name" v="Badlands"/>
+   <tag k="opening_hours" v="Mo-Th 17:00-02:00; Fr-Su 16:00-02:00"/>
+   <tag k="phone" v="+1-415-626-9320"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="14303969901" visible="true" version="2" changeset="190826785" timestamp="2026-10-21T09:19:04Z" user="confusedbuffalo-bot" uid="23492813" lat="36.9282275" lon="-121.7646553">
+   <tag k="addr:housenumber" v="1430 Building F"/>
+   <tag k="addr:postcode" v="95076"/>
+   <tag k="addr:street" v="Freedom Boulevard"/>
+   <tag k="check_date" v="2026-10-20"/>
+   <tag k="check_date:opening_hours" v="2026-10-20"/>
+   <tag k="healthcare" v="psychotherapist"/>
+   <tag k="internet_access" v="wlan"/>
+   <tag k="name" v="Santa Cruz County Behavioral Health"/>
+   <tag k="opening_hours" v="Mo-Fr 09:00-17:00"/>
+   <tag k="phone" v="+1-831-763-8200"/>
+   <tag k="website" v="https://www.santacruzhealth.org/BehavioralHealth.aspx"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="14304902401" visible="true" version="2" changeset="190826785" timestamp="2026-10-21T09:19:04Z" user="confusedbuffalo-bot" uid="23492813" lat="34.1350331" lon="-118.3615288">
+   <tag k="addr:housenumber" v="3711"/>
+   <tag k="addr:postcode" v="91604"/>
+   <tag k="addr:street" v="Cahuenga Boulevard"/>
+   <tag k="amenity" v="restaurant"/>
+   <tag k="check_date" v="2026-10-20"/>
+   <tag k="check_date:opening_hours" v="2026-10-20"/>
+   <tag k="cuisine" v="oriental"/>
+   <tag k="diet:vegan" v="yes"/>
+   <tag k="diet:vegetarian" v="yes"/>
+   <tag k="name" v="Broken Engrish"/>
+   <tag k="opening_hours" v="Mo-Sa 12:00-20:00"/>
+   <tag k="phone" v="+1-818-754-1149"/>
+   <tag k="website" v="http://www.brokenengrish.com/"/>
+   <tag k="website:menu" v="http://www.brokenengrish.com/wp-content/uploads/menu.pdf"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="1467729510" visible="true" version="4" changeset="190826785" timestamp="2026-10-21T09:19:04Z" user="confusedbuffalo-bot" uid="23492813" lat="40.8035189" lon="-124.1553971">
+   <tag k="addr:city" v="Eureka"/>
+   <tag k="addr:housenumber" v="1435"/>
+   <tag k="addr:postcode" v="95501"/>
+   <tag k="addr:state" v="CA"/>
+   <tag k="addr:street" v="5th Street"/>
+   <tag k="check_date" v="2025-07-03"/>
+   <tag k="fax" v="+1-707-443-8471"/>
+   <tag k="name" v="Humboldt Pawn"/>
+   <tag k="opening_hours" v="Mo-Su 10:00-18:00"/>
+   <tag k="payment:credit_cards" v="yes"/>
+   <tag k="payment:debit_cards" v="yes"/>
+   <tag k="payment:visa" v="yes"/>
+   <tag k="phone" v="+17074427777"/>
+   <tag k="shop" v="pawnbroker"/>
+   <tag k="website" v="https://humboldtpawn.com/"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="11696451623" visible="true" version="4" changeset="190826785" timestamp="2026-10-21T09:19:04Z" user="confusedbuffalo-bot" uid="23492813" lat="37.4888649" lon="-122.2387186">
+   <tag k="amenity" v="dentist"/>
+   <tag k="check_date" v="2026-10-18"/>
+   <tag k="healthcare" v="dentist"/>
+   <tag k="name" v="Randhawa Dental"/>
+   <tag k="phone" v="+1-650-361-9880"/>
+   <tag k="website" v="https://www.510dentist.com"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="3623918733" visible="true" version="6" changeset="190826785" timestamp="2026-10-21T09:19:04Z" user="confusedbuffalo-bot" uid="23492813" lat="34.2615470" lon="-117.2104438">
+   <tag k="addr:city" v="Lake Arrowhead"/>
+   <tag k="addr:housenumber" v="27176"/>
+   <tag k="addr:postcode" v="92352"/>
+   <tag k="addr:state" v="CA"/>
+   <tag k="addr:street" v="Peninsula Drive"/>
+   <tag k="ele" v="5246"/>
+   <tag k="name" v="Mountain History Museum"/>
+   <tag k="opening_hours" v="May 25-Nov 7 Sa-Su 11:00-17:00"/>
+   <tag k="operator" v="Rim of the World Historical Society"/>
+   <tag k="phone" v="+1-909-744-8625"/>
+   <tag k="tourism" v="museum"/>
+   <tag k="website" v="https://www.mtnmuseum.org/"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="14079388850" visible="true" version="7" changeset="190826785" timestamp="2026-10-21T09:19:04Z" user="confusedbuffalo-bot" uid="23492813" lat="38.9417048" lon="-119.9778299">
+   <tag k="addr:housenumber" v="985"/>
+   <tag k="addr:postcode" v="96150"/>
+   <tag k="addr:street" v="Tallac Avenue"/>
+   <tag k="check_date" v="2026-08-07"/>
+   <tag k="name" v="Boyd’s Barber Shop"/>
+   <tag k="opening_hours" v="Mo-Fr 09:00-17:00"/>
+   <tag k="phone" v="+1-530-542-3392"/>
+   <tag k="shop" v="hairdresser"/>
+  </node>
+ </modify>
+</osmChange>

@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osmChange version="0.6" generator="openstreetmap-cgimap 2.1.1 (3747393 spike-06.openstreetmap.org)" copyright="OpenStreetMap and contributors" attribution="http://www.openstreetmap.org/copyright" license="http://opendatacommons.org/licenses/odbl/1-0/">
+ <modify>
+  <node id="10964013138" visible="true" version="3" changeset="190010143" timestamp="2026-10-05T03:33:55Z" user="TheNightRider" uid="1968961" lat="39.1452815" lon="-123.1982267">
+   <tag k="amenity" v="charging_station"/>
+   <tag k="brand" v="Tesla"/>
+   <tag k="brand:wikidata" v="Q478214"/>
+   <tag k="motorcar" v="yes"/>
+   <tag k="name" v="Tesla Destination Charger"/>
+   <tag k="operator" v="Tesla"/>
+  </node>
+ </modify>
+ <modify>
+  <relation id="17135490" visible="true" version="3" changeset="190010143" timestamp="2026-10-05T03:33:55Z" user="TheNightRider" uid="1968961">
+   <member type="node" ref="11574986691" role=""/>
+   <member type="node" ref="11574986692" role=""/>
+   <member type="node" ref="11574986693" role=""/>
+   <member type="node" ref="11574986694" role=""/>
+   <member type="node" ref="11574986695" role=""/>
+   <member type="node" ref="11574986696" role=""/>
+   <member type="node" ref="11574986697" role=""/>
+   <member type="node" ref="11574986698" role=""/>
+   <member type="way" ref="1245093493" role="parking_space"/>
+   <member type="way" ref="1245093492" role="parking_space"/>
+   <member type="way" ref="1245093491" role="parking_space"/>
+   <member type="way" ref="1245093490" role="parking_space"/>
+   <member type="way" ref="1245093489" role="parking_space"/>
+   <member type="way" ref="1245093488" role="parking_space"/>
+   <member type="way" ref="1245093487" role="parking_space"/>
+   <member type="way" ref="1245093486" role="parking_space"/>
+   <tag k="access" v="customers"/>
+   <tag k="amenity" v="charging_station"/>
+   <tag k="brand" v="Tesla Supercharger"/>
+   <tag k="brand:website" v="https://www.tesla.com/supercharger"/>
+   <tag k="brand:wikidata" v="Q17089620"/>
+   <tag k="capacity" v="8"/>
+   <tag k="covered" v="no"/>
+   <tag k="fee" v="yes"/>
+   <tag k="frequency" v="0"/>
+   <tag k="motorcar" v="designated"/>
+   <tag k="motor_vehicle" v="yes"/>
+   <tag k="name" v="Tesla Supercharger"/>
+   <tag k="network" v="Supercharger"/>
+   <tag k="network:website" v="https://www.tesla.com/supercharger"/>
+   <tag k="network:wikidata" v="Q17089620"/>
+   <tag k="opening_hours" v="24/7"/>
+   <tag k="operator" v="Tesla"/>
+   <tag k="operator:wikidata" v="Q478214"/>
+   <tag k="payment:contactless" v="yes"/>
+   <tag k="ref:tesla" v="NewtonMAsupercharger"/>
+   <tag k="short_name" v="Tesla"/>
+   <tag k="site" v="parking"/>
+   <tag k="socket:nacs" v="8"/>
+   <tag k="type" v="site"/>
+   <tag k="website" v="https://www.tesla.com/findus/location/supercharger/NewtonMAsupercharger"/>
+  </relation>
+ </modify>
+ <modify>
+  <relation id="17135542" visible="true" version="5" changeset="190010143" timestamp="2026-10-05T03:33:55Z" user="TheNightRider" uid="1968961">
+   <member type="way" ref="1245099036" role="parking_space"/>
+   <member type="way" ref="1245099037" role="parking_space"/>
+   <member type="way" ref="1245099038" role="parking_space"/>
+   <member type="way" ref="1245099039" role="parking_space"/>
+   <member type="way" ref="1245099040" role="parking_space"/>
+   <member type="way" ref="1245099041" role="parking_space"/>
+   <member type="way" ref="1245099042" role="parking_space"/>
+   <member type="way" ref="1245099043" role="parking_space"/>
+   <member type="way" ref="1245099044" role="parking_space"/>
+   <member type="way" ref="1245099045" role="parking_space"/>
+   <member type="way" ref="1245099046" role="parking_space"/>
+   <member type="way" ref="1245099047" role="parking_space"/>
+   <member type="node" ref="11575034984" role=""/>
+   <member type="node" ref="11575034985" role=""/>
+   <member type="node" ref="11575034986" role=""/>
+   <member type="node" ref="11575034987" role=""/>
+   <member type="node" ref="11575034988" role=""/>
+   <member type="node" ref="11575034989" role=""/>
+   <member type="node" ref="11575034990" role=""/>
+   <member type="node" ref="11575034991" role=""/>
+   <member type="node" ref="11575034992" role=""/>
+   <member type="node" ref="11575034993" role=""/>
+   <member type="node" ref="11575034994" role=""/>
+   <member type="node" ref="11575034995" role=""/>
+   <tag k="access" v="customers"/>
+   <tag k="amenity" v="charging_station"/>
+   <tag k="brand" v="Tesla, Inc."/>
+   <tag k="brand:wikidata" v="Q478214"/>
+   <tag k="capacity" v="12"/>
+   <tag k="fee" v="yes"/>
+   <tag k="motor_vehicle" v="yes"/>
+   <tag k="name" v="Tesla Supercharger"/>
+   <tag k="operator" v="Tesla, Inc."/>
+   <tag k="operator:wikidata" v="Q478214"/>
+   <tag k="payment:contactless" v="yes"/>
+   <tag k="short_name" v="Tesla"/>
+   <tag k="site" v="parking"/>
+   <tag k="socket:tesla_supercharger" v="12"/>
+   <tag k="socket:tesla_supercharger:output" v="250 kW"/>
+   <tag k="type" v="site"/>
+   <tag k="website" v="https://www.tesla.com/findus/location/supercharger/BurlingtonMAsupercharger"/>
+  </relation>
+ </modify>
+ <modify>
+  <relation id="16859625" visible="true" version="6" changeset="190010143" timestamp="2026-10-05T03:33:55Z" user="TheNightRider" uid="1968961">
+   <member type="way" ref="1233311756" role="parking_space"/>
+   <member type="way" ref="1233311757" role="parking_space"/>
+   <member type="way" ref="1233311758" role="parking_space"/>
+   <member type="way" ref="1233311759" role="parking_space"/>
+   <member type="way" ref="1233311760" role="parking_space"/>
+   <member type="way" ref="1233311761" role="parking_space"/>
+   <member type="way" ref="1233311762" role="parking_space"/>
+   <member type="way" ref="1233311763" role="parking_space"/>
+   <member type="way" ref="1233311764" role="parking_space"/>
+   <member type="way" ref="1233311765" role="parking_space"/>
+   <member type="way" ref="1233311766" role="parking_space"/>
+   <member type="way" ref="1233311767" role="parking_space"/>
+   <member type="node" ref="11443649036" role=""/>
+   <member type="node" ref="11443649035" role=""/>
+   <member type="node" ref="11443649034" role=""/>
+   <member type="node" ref="11443649033" role=""/>
+   <member type="node" ref="11443649032" role=""/>
+   <member type="node" ref="11443649031" role=""/>
+   <member type="node" ref="11443649030" role=""/>
+   <member type="node" ref="11443649029" role=""/>
+   <member type="node" ref="11443649028" role=""/>
+   <member type="node" ref="11443649027" role=""/>
+   <member type="node" ref="11443649026" role=""/>
+   <member type="node" ref="11443649025" role=""/>
+   <tag k="access" v="customers"/>
+   <tag k="amenity" v="charging_station"/>
+   <tag k="brand" v="Tesla"/>
+   <tag k="brand:website" v="https://www.tesla.com/supercharger"/>
+   <tag k="brand:wikidata" v="Q478214"/>
+   <tag k="capacity" v="12"/>
+   <tag k="fee" v="yes"/>
+   <tag k="frequency" v="0"/>
+   <tag k="motorcar" v="designated"/>
+   <tag k="motor_vehicle" v="yes"/>
+   <tag k="name" v="Tesla Supercharger"/>
+   <tag k="network" v="Supercharger"/>
+   <tag k="network:website" v="https://www.tesla.com/supercharger"/>
+   <tag k="network:wikidata" v="Q17089620"/>
+   <tag k="opening_hours" v="24/7"/>
+   <tag k="operator" v="Tesla"/>
+   <tag k="operator:wikidata" v="Q478214"/>
+   <tag k="ref:tesla" v="TyngsboroughMAsupercharger"/>
+   <tag k="site" v="parking"/>
+   <tag k="socket:nacs" v="12"/>
+   <tag k="socket:nacs:output" v="250 kW"/>
+   <tag k="socket:tesla_supercharger" v="12"/>
+   <tag k="socket:tesla_supercharger:output" v="250 kW"/>
+   <tag k="type" v="site"/>
+   <tag k="website" v="https://www.tesla.com/findus/location/supercharger/TyngsboroughMAsupercharger"/>
+  </relation>
+ </modify>
+ <modify>
+  <relation id="17869907" visible="true" version="9" changeset="190010143" timestamp="2026-10-05T03:33:55Z" user="TheNightRider" uid="1968961">
+   <member type="way" ref="1303421785" role="outer"/>
+   <member type="way" ref="1303421788" role="outer"/>
+   <tag k="access" v="yes"/>
+   <tag k="addr:city" v="Beaumont"/>
+   <tag k="addr:housenumber" v="5780"/>
+   <tag k="addr:postcode" v="77707"/>
+   <tag k="addr:state" v="TX"/>
+   <tag k="addr:street" v="Walden Road"/>
+   <tag k="amenity" v="charging_station"/>
+   <tag k="authentication:app" v="yes"/>
+   <tag k="bicycle" v="no"/>
+   <tag k="branch" v="Beaumont, TX - Walden Road"/>
+   <tag k="brand" v="Tesla Supercharger"/>
+   <tag k="brand:website" v="https://www.tesla.com/supercharger"/>
+   <tag k="brand:wikidata" v="Q17089620"/>
+   <tag k="capacity" v="12"/>
+   <tag k="capacity:disabled" v="3"/>
+   <tag k="charge" v="0.43 USD/kWh"/>
+   <tag k="covered" v="no"/>
+   <tag k="description" v="Non-Teslas can charge here. NACS (Tesla) receptacle or adapter required."/>
+   <tag k="ele" v="5"/>
+   <tag k="fee" v="yes"/>
+   <tag k="frequency" v="0"/>
+   <tag k="maxstay" v="no"/>
+   <tag k="motorcar" v="designated"/>
+   <tag k="name" v="Tesla Supercharger"/>
+   <tag k="network" v="Supercharger"/>
+   <tag k="network:website" v="https://www.tesla.com/supercharger"/>
+   <tag k="network:wikidata" v="Q17089620"/>
+   <tag k="opening_hours" v="24/7"/>
+   <tag k="operator" v="Tesla"/>
+   <tag k="operator:wikidata" v="Q478214"/>
+   <tag k="parking:fee" v="no"/>
+   <tag k="payment:app:tesla" v="yes"/>
+   <tag k="ref:plugshare" v="460774"/>
+   <tag k="ref:supercharge_info" v="4426"/>
+   <tag k="ref:tesla" v="BeaumontTXQ322"/>
+   <tag k="scooter" v="no"/>
+   <tag k="socket:nacs" v="12"/>
+   <tag k="socket:nacs:output" v="250"/>
+   <tag k="start_date" v="2022-09-09"/>
+   <tag k="type" v="multipolygon"/>
+   <tag k="website" v="https://www.tesla.com/findus/location/supercharger/BeaumontTXQ322"/>
+   <tag k="wheelchair" v="yes"/>
+  </relation>
+ </modify>
+</osmChange>

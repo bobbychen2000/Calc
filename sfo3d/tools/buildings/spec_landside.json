@@ -2043,7 +2043,8 @@
     "verdict": "NOT RE-CHECKED",
     "evidence": "Not re-checked in the 2026-11-04 fact-check. Roof-car counts were not re-run (+-30 %; see naip_epoch: the frames differ in time). Photo-based facade notes rest on Commons photos that could not be re-fetched (Commons API HTTP 429).",
     "date": "2026-11-04"
-   }
+   },
+   "drawing_note": "2026-11-04: re-checked on photo l4 = \"Harvey Milk Terminal 1 Community Day - July 2019 (7391)\" (Gregory Varnum, CC BY-SA 4.0, the photo cited here): east face all glass, dark metal podium under its south ~47 %, a recessed colonnade level above the podium, a dark stepped penthouse at 0.52-0.74 of the face, 4 corner masts. The \"taller straight block at the north end\" is NOT visible: one parapet level along the whole east face [conflict, not drawn on BL-03]."
   },
   {
    "id": "gh_footprint",
@@ -2081,7 +2082,8 @@
     "verdict": "NOT RE-CHECKED",
     "evidence": "Not re-checked in the 2026-11-04 fact-check. Roof-car counts were not re-run (+-30 %; see naip_epoch: the frames differ in time). Photo-based facade notes rest on Commons photos that could not be re-fetched (Commons API HTTP 429).",
     "date": "2026-11-04"
-   }
+   },
+   "drawing_note": "confirmed on photo l4 (7391): unitised glass curtain wall, vertical mullion grid, one spandrel band per floor, corner masts ~1.1 pitch, penthouse ~1.5 / 0.7 pitches in two steps (BL-03)"
   },
   {
    "id": "gh_height",
@@ -2528,7 +2530,8 @@
    },
    "spine_width_m": 32.0,
    "roof_bay_m": 17.3,
-   "roof_bays_per_side": 8
+   "roof_bays_per_side": 8,
+   "drawing_note": "BL-03 draws the cantilever roofs falling from the spine (41.15 m DOF) to tips at ~27 m (22-32) [inf]: photo l3 (BrokenSphere 2009, CC BY-SA 3.0, identification unverified) reads tip / ridge ~87 / 133 px; and a WNW door face with the 8 folded bays and two ~67 m door bays [inf]. Roof along the spine 138 m vs the outline 134.5 m: 1.75 m per end = overhang [inf] or outline error [unk]."
   },
   {
    "id": "sb_roof_shift",

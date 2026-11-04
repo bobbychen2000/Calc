@@ -1,0 +1,322 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osmChange version="0.6" generator="openstreetmap-cgimap 2.1.1 (3862814 spike-07.openstreetmap.org)" copyright="OpenStreetMap and contributors" attribution="http://www.openstreetmap.org/copyright" license="http://opendatacommons.org/licenses/odbl/1-0/">
+ <modify>
+  <node id="6238050731" visible="true" version="2" changeset="190578838" timestamp="2026-10-15T21:45:24Z" user="xyz32" uid="600992" lat="19.4147535" lon="-155.2432272">
+   <tag k="climbing" v="route_bottom"/>
+   <tag k="climbing:boulder" v="yes"/>
+   <tag k="climbing:grade:hueco" v="V1"/>
+   <tag k="name" v="Broda Iz"/>
+   <tag k="sport" v="climbing"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="6238050732" visible="true" version="2" changeset="190578838" timestamp="2026-10-15T21:45:24Z" user="xyz32" uid="600992" lat="19.4146716" lon="-155.2432105">
+   <tag k="climbing" v="route_bottom"/>
+   <tag k="climbing:boulder" v="yes"/>
+   <tag k="climbing:grade:hueco" v="V3"/>
+   <tag k="name" v="Mark of the Haole"/>
+   <tag k="sport" v="climbing"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="6238141549" visible="true" version="2" changeset="190578838" timestamp="2026-10-15T21:45:24Z" user="xyz32" uid="600992" lat="19.5478083" lon="-155.9595829">
+   <tag k="climbing" v="route_bottom"/>
+   <tag k="climbing:boulder" v="yes"/>
+   <tag k="climbing:deepwater" v="yes"/>
+   <tag k="climbing:grade:hueco" v="V1"/>
+   <tag k="name" v="If You're Ballzy Enough"/>
+   <tag k="sport" v="climbing"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="6238141550" visible="true" version="2" changeset="190578838" timestamp="2026-10-15T21:45:24Z" user="xyz32" uid="600992" lat="19.5477862" lon="-155.9595803">
+   <tag k="climbing" v="route_bottom"/>
+   <tag k="climbing:boulder" v="yes"/>
+   <tag k="climbing:deepwater" v="yes"/>
+   <tag k="climbing:grade:hueco" v="V1/V2"/>
+   <tag k="name" v="Rip Hide DWS"/>
+   <tag k="sport" v="climbing"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="6238141551" visible="true" version="2" changeset="190578838" timestamp="2026-10-15T21:45:24Z" user="xyz32" uid="600992" lat="19.5477721" lon="-155.9595639">
+   <tag k="climbing" v="route_bottom"/>
+   <tag k="climbing:boulder" v="yes"/>
+   <tag k="climbing:deepwater" v="yes"/>
+   <tag k="climbing:grade:hueco" v="V1"/>
+   <tag k="name" v="Crab Traverse DWS"/>
+   <tag k="sport" v="climbing"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="6238141552" visible="true" version="2" changeset="190578838" timestamp="2026-10-15T21:45:24Z" user="xyz32" uid="600992" lat="19.5477566" lon="-155.9595461">
+   <tag k="climbing" v="route_bottom"/>
+   <tag k="climbing:boulder" v="yes"/>
+   <tag k="climbing:deepwater" v="yes"/>
+   <tag k="climbing:grade:hueco" v="V1/V2"/>
+   <tag k="name" v="Dong Central Station"/>
+   <tag k="sport" v="climbing"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="6241666694" visible="true" version="2" changeset="190578838" timestamp="2026-10-15T21:45:24Z" user="xyz32" uid="600992" lat="19.8113521" lon="-156.0066017">
+   <tag k="climbing" v="route_bottom"/>
+   <tag k="climbing:boulder" v="yes"/>
+   <tag k="climbing:grade:hueco" v="V5"/>
+   <tag k="name" v="RIP Rock"/>
+   <tag k="sport" v="climbing"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="6241666695" visible="true" version="2" changeset="190578838" timestamp="2026-10-15T21:45:24Z" user="xyz32" uid="600992" lat="19.8113653" lon="-156.0065470">
+   <tag k="climbing" v="route_bottom"/>
+   <tag k="climbing:boulder" v="yes"/>
+   <tag k="climbing:grade:hueco" v="V1"/>
+   <tag k="name" v="Sandy Butt"/>
+   <tag k="sport" v="climbing"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="6241666696" visible="true" version="2" changeset="190578838" timestamp="2026-10-15T21:45:24Z" user="xyz32" uid="600992" lat="19.8113737" lon="-156.0064808">
+   <tag k="climbing" v="route_bottom"/>
+   <tag k="climbing:boulder" v="yes"/>
+   <tag k="climbing:grade:hueco" v="V1"/>
+   <tag k="name" v="Touch O' Green"/>
+   <tag k="sport" v="climbing"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="6241666697" visible="true" version="2" changeset="190578838" timestamp="2026-10-15T21:45:24Z" user="xyz32" uid="600992" lat="19.8113701" lon="-156.0064388">
+   <tag k="climbing" v="route_bottom"/>
+   <tag k="climbing:boulder" v="yes"/>
+   <tag k="climbing:grade:hueco" v="V3"/>
+   <tag k="name" v="Water Moccasin"/>
+   <tag k="sport" v="climbing"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="6241666698" visible="true" version="2" changeset="190578838" timestamp="2026-10-15T21:45:24Z" user="xyz32" uid="600992" lat="19.8113581" lon="-156.0063841">
+   <tag k="climbing" v="route_bottom"/>
+   <tag k="climbing:boulder" v="yes"/>
+   <tag k="climbing:grade:hueco" v="V3"/>
+   <tag k="name" v="Shredder is a Turtle"/>
+   <tag k="sport" v="climbing"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="7409034233" visible="true" version="2" changeset="190578838" timestamp="2026-10-15T21:45:24Z" user="xyz32" uid="600992" lat="46.1181030" lon="23.4784807">
+   <tag k="climbing" v="route_bottom"/>
+   <tag k="climbing:length" v="15.0"/>
+   <tag k="climbing:sport" v="yes"/>
+   <tag k="name" v="7.Alfa"/>
+   <tag k="sport" v="climbing"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="4587981785" visible="true" version="3" changeset="190578838" timestamp="2026-10-15T21:45:24Z" user="xyz32" uid="600992" lat="38.6200420" lon="-105.2378590">
+   <tag k="climbing" v="route_bottom"/>
+   <tag k="climbing:grade:yds_class" v="5.9"/>
+   <tag k="climbing:rock" v="limestone"/>
+   <tag k="climbing:sport" v="yes"/>
+   <tag k="climbing:toprope" v="yes"/>
+   <tag k="name" v="Red Dog"/>
+   <tag k="sport" v="climbing"/>
+   <tag k="url" v="https://www.mountainproject.com/v/red-dog/105756586"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="4587981786" visible="true" version="3" changeset="190578838" timestamp="2026-10-15T21:45:24Z" user="xyz32" uid="600992" lat="38.6200170" lon="-105.2378630">
+   <tag k="climbing" v="route_bottom"/>
+   <tag k="climbing:grade:yds_class" v="5.9"/>
+   <tag k="climbing:rock" v="limestone"/>
+   <tag k="climbing:sport" v="yes"/>
+   <tag k="climbing:toprope" v="yes"/>
+   <tag k="name" v="Unknown"/>
+   <tag k="sport" v="climbing"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="4587981787" visible="true" version="3" changeset="190578838" timestamp="2026-10-15T21:45:24Z" user="xyz32" uid="600992" lat="38.6200340" lon="-105.2378130">
+   <tag k="climbing" v="route_bottom"/>
+   <tag k="climbing:grade:yds_class" v="5.8"/>
+   <tag k="climbing:rock" v="limestone"/>
+   <tag k="climbing:sport" v="yes"/>
+   <tag k="climbing:toprope" v="yes"/>
+   <tag k="name" v="True to Tradition (the Original Route)"/>
+   <tag k="sport" v="climbing"/>
+   <tag k="url" v="https://www.mountainproject.com/v/original-route/105927036"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="4587981788" visible="true" version="3" changeset="190578838" timestamp="2026-10-15T21:45:24Z" user="xyz32" uid="600992" lat="38.6200510" lon="-105.2378270">
+   <tag k="climbing" v="route_bottom"/>
+   <tag k="climbing:grade:yds_class" v="5.7"/>
+   <tag k="climbing:rock" v="limestone"/>
+   <tag k="climbing:sport" v="yes"/>
+   <tag k="climbing:toprope" v="yes"/>
+   <tag k="name" v="Tucker's Faith"/>
+   <tag k="sport" v="climbing"/>
+   <tag k="url" v="https://www.mountainproject.com/v/true-to-traditiontuckers-faith/105756613"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="4587982689" visible="true" version="3" changeset="190578838" timestamp="2026-10-15T21:45:24Z" user="xyz32" uid="600992" lat="38.6200630" lon="-105.2378270">
+   <tag k="climbing" v="route_bottom"/>
+   <tag k="climbing:grade:yds_class" v="5.11d"/>
+   <tag k="climbing:rock" v="limestone"/>
+   <tag k="climbing:sport" v="yes"/>
+   <tag k="climbing:toprope" v="yes"/>
+   <tag k="name" v="Shelf's Worst Route"/>
+   <tag k="sport" v="climbing"/>
+   <tag k="url" v="https://www.mountainproject.com/v/shelfs-worst-route/105752911"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="4587982690" visible="true" version="3" changeset="190578838" timestamp="2026-10-15T21:45:24Z" user="xyz32" uid="600992" lat="38.6200680" lon="-105.2378310">
+   <tag k="climbing" v="route_bottom"/>
+   <tag k="climbing:grade:yds_class" v="5.9"/>
+   <tag k="climbing:rock" v="limestone"/>
+   <tag k="climbing:sport" v="yes"/>
+   <tag k="climbing:toprope" v="yes"/>
+   <tag k="name" v="Bat Crack"/>
+   <tag k="sport" v="climbing"/>
+   <tag k="url" v="https://www.mountainproject.com/v/bat-crack/105756616"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="4587982691" visible="true" version="3" changeset="190578838" timestamp="2026-10-15T21:45:24Z" user="xyz32" uid="600992" lat="38.6200790" lon="-105.2378400">
+   <tag k="climbing" v="route_bottom"/>
+   <tag k="climbing:grade:yds_class" v="5.11c"/>
+   <tag k="climbing:rock" v="limestone"/>
+   <tag k="climbing:sport" v="yes"/>
+   <tag k="climbing:toprope" v="yes"/>
+   <tag k="name" v="Graceland"/>
+   <tag k="sport" v="climbing"/>
+   <tag k="url" v="https://www.mountainproject.com/v/graceland/105752908"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="4587982692" visible="true" version="3" changeset="190578838" timestamp="2026-10-15T21:45:24Z" user="xyz32" uid="600992" lat="38.6200880" lon="-105.2378480">
+   <tag k="climbing" v="route_bottom"/>
+   <tag k="climbing:grade:yds_class" v="5.11a"/>
+   <tag k="climbing:rock" v="limestone"/>
+   <tag k="climbing:sport" v="yes"/>
+   <tag k="climbing:toprope" v="yes"/>
+   <tag k="name" v="Slender Fungus"/>
+   <tag k="sport" v="climbing"/>
+   <tag k="url" v="https://www.mountainproject.com/v/slender-fungus/105752905"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="4587982693" visible="true" version="3" changeset="190578838" timestamp="2026-10-15T21:45:24Z" user="xyz32" uid="600992" lat="38.6200970" lon="-105.2378550">
+   <tag k="climbing" v="route_bottom"/>
+   <tag k="climbing:grade:yds_class" v="5.10d"/>
+   <tag k="climbing:rock" v="limestone"/>
+   <tag k="climbing:sport" v="yes"/>
+   <tag k="climbing:toprope" v="yes"/>
+   <tag k="name" v="Flashback To Acid Beach"/>
+   <tag k="sport" v="climbing"/>
+   <tag k="url" v="https://www.mountainproject.com/v/flashback-to-acid-beach/105752899"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="4587982694" visible="true" version="3" changeset="190578838" timestamp="2026-10-15T21:45:24Z" user="xyz32" uid="600992" lat="38.6201070" lon="-105.2378630">
+   <tag k="climbing" v="route_bottom"/>
+   <tag k="climbing:grade:yds_class" v="5.10a"/>
+   <tag k="climbing:rock" v="limestone"/>
+   <tag k="climbing:sport" v="yes"/>
+   <tag k="climbing:toprope" v="yes"/>
+   <tag k="name" v="I am a Viking"/>
+   <tag k="sport" v="climbing"/>
+   <tag k="url" v="https://www.mountainproject.com/v/i-am-a-viking/110108712"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="4587982695" visible="true" version="3" changeset="190578838" timestamp="2026-10-15T21:45:24Z" user="xyz32" uid="600992" lat="38.6201150" lon="-105.2378700">
+   <tag k="climbing" v="route_bottom"/>
+   <tag k="climbing:grade:yds_class" v="5.9"/>
+   <tag k="climbing:rock" v="limestone"/>
+   <tag k="climbing:sport" v="yes"/>
+   <tag k="climbing:toprope" v="yes"/>
+   <tag k="name" v="Caught in the Middle"/>
+   <tag k="sport" v="climbing"/>
+   <tag k="url" v="https://www.mountainproject.com/v/caught-in-the-middle/112270910"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="4587982696" visible="true" version="3" changeset="190578838" timestamp="2026-10-15T21:45:24Z" user="xyz32" uid="600992" lat="38.6201240" lon="-105.2378790">
+   <tag k="climbing" v="route_bottom"/>
+   <tag k="climbing:grade:yds_class" v="5.10c"/>
+   <tag k="climbing:rock" v="limestone"/>
+   <tag k="climbing:sport" v="yes"/>
+   <tag k="climbing:toprope" v="yes"/>
+   <tag k="name" v="Back for More"/>
+   <tag k="sport" v="climbing"/>
+   <tag k="url" v="https://www.mountainproject.com/v/back-for-more/108290668"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="6238098108" visible="true" version="4" changeset="190578838" timestamp="2026-10-15T21:45:24Z" user="xyz32" uid="600992" lat="18.9360609" lon="-155.6465696">
+   <tag k="climbing" v="route_bottom"/>
+   <tag k="climbing:boulder" v="yes"/>
+   <tag k="climbing:grade:hueco" v="V3"/>
+   <tag k="name" v="Olivine's Crack"/>
+   <tag k="sport" v="climbing"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="6238098109" visible="true" version="4" changeset="190578838" timestamp="2026-10-15T21:45:24Z" user="xyz32" uid="600992" lat="18.9360934" lon="-155.6465429">
+   <tag k="climbing" v="route_bottom"/>
+   <tag k="climbing:boulder" v="yes"/>
+   <tag k="climbing:grade:hueco" v="V1/V2"/>
+   <tag k="name" v="Pele's Melee"/>
+   <tag k="sport" v="climbing"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="6238108488" visible="true" version="4" changeset="190578838" timestamp="2026-10-15T21:45:24Z" user="xyz32" uid="600992" lat="18.9145577" lon="-155.6830103">
+   <tag k="climbing" v="route_bottom"/>
+   <tag k="climbing:boulder" v="yes"/>
+   <tag k="climbing:grade:hueco" v="V1/V2"/>
+   <tag k="name" v="HighTide Pocket"/>
+   <tag k="sport" v="climbing"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="6238108489" visible="true" version="4" changeset="190578838" timestamp="2026-10-15T21:45:24Z" user="xyz32" uid="600992" lat="18.9145304" lon="-155.6830153">
+   <tag k="climbing" v="route_bottom"/>
+   <tag k="climbing:boulder" v="yes"/>
+   <tag k="climbing:deepwater" v="yes"/>
+   <tag k="climbing:grade:hueco" v="V0"/>
+   <tag k="name" v="The Blowhole DWS"/>
+   <tag k="sport" v="climbing"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="4557975598" visible="true" version="5" changeset="190578838" timestamp="2026-10-15T21:45:24Z" user="xyz32" uid="600992" lat="36.1679220" lon="-115.4268340">
+   <tag k="climbing" v="route_bottom"/>
+   <tag k="climbing:grade:yds_class" v="5.10a"/>
+   <tag k="climbing:trad" v="yes"/>
+   <tag k="name" v="Atman"/>
+   <tag k="sport" v="climbing"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="4557975622" visible="true" version="6" changeset="190578838" timestamp="2026-10-15T21:45:24Z" user="xyz32" uid="600992" lat="36.1678700" lon="-115.4268240">
+   <tag k="climbing" v="route_bottom"/>
+   <tag k="climbing:grade:yds_class" v="5.11a"/>
+   <tag k="climbing:trad" v="yes"/>
+   <tag k="name" v="Yin and yang"/>
+   <tag k="sport" v="climbing"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="1286287608" visible="true" version="7" changeset="190578838" timestamp="2026-10-15T21:45:24Z" user="xyz32" uid="600992" lat="51.5538580" lon="-4.2615600">
+   <tag k="climbing" v="crag"/>
+   <tag k="name" v="Deborah's Overhang"/>
+   <tag k="name:cy" v="Gor-hongian Deborah"/>
+   <tag k="natural" v="cliff"/>
+   <tag k="sport" v="climbing"/>
+  </node>
+ </modify>
+</osmChange>

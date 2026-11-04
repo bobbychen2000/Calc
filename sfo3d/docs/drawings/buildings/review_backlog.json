@@ -1,0 +1,220 @@
+{
+ "about": "Review findings of workflow wf_a3c8773d-cf5 (building 2-D, rounds 1-2) that never reached the fixer: the orchestration script truncated the findings text at 25,000 characters. \"partial\" = the fixer saw only the start. Round-2 fixes may already cover some round-1 items; check each against the current sheets first.",
+ "groups": {
+  "domestic": [
+   {
+    "id": "r1-22",
+    "status": "partial",
+    "severity": "major",
+    "where": "BD-01 (BA-F), BD-02 view 1",
+    "problem": "The BA-F hub is drawn as the merged outline where the NW and NE arms meet. The research records 'an octagonal rotunda hub with arms [pub, CDR massing; obs]', and NAIP shows an octagonal roof with a concentric octagonal lantern or skylight ring. The NW arm's long central roof monitor (a light strip along its centreline) is also not drawn. BD-02 has no section of the hub or of the NW arm. Of the T3 piers, only the NE arm is shown.",
+    "evidence": "out/buildings/drawings/BD-01_naip.jpg, crop of sheet area (280-620, 110-380) at 1800 px width: the octagon with an inner octagon at the arm junction, and a continuous central light strip along the NW arm. docs/research/buildings_domestic.md §5.4.",
+    "fix": "Draw the octagonal hub and lantern and the NW-arm monitor from NAIP (obs plan, heights unk), and add a hub section."
+   },
+   {
+    "id": "r1-23",
+    "status": "dropped",
+    "severity": "major",
+    "where": "BD-01 (BA-B), BD-02 view 1 (BA-B south half)",
+    "problem": "The BA-B raised central clerestory (19.0 m) is hatched only over about 60 m at the south tip. The rest of the 400-m pier reads as one flat 13.1 m roof. NAIP shows the PV-covered central band running continuously from the T1 Center junction to the tip. The published design is a pier with a central clerestory along the concourse. The likeness of BA-B is its long raised spine, not a tip-only bump.",
+    "evidence": "out/buildings/drawings/BD-01_naip.jpg, crop at sheet (380-920, 560-1150): the PV rows on the central band are continuous along the pier. BD-01 label: 'raised part ~33 m wide (hatched, approx.)' at t -1238..-1176 only. The research admits 'BA-B north half not measured'.",
+    "fix": "Draw the central band along the whole pier from NAIP, tagged inf where the height is not measured, rather than leaving it flat."
+   },
+   {
+    "id": "r1-34",
+    "status": "dropped",
+    "severity": "minor",
+    "where": "BD-02 view 1 (BA-E), BD set as a whole",
+    "problem": "1. BA-E is a plain rectangle. Its published roof is 'tapered edges overhanging clerestory glazing', and a1 shows a PV-covered roof with a clerestory band under an overhanging edge and a full-height glazed head end.\n2. More broadly, the domestic set has no elevation of any landside hall: not the T1 Harvey Milk front, not T2, not T3. These are the faces travellers see from the AirTrain and the roadways. The T1 front is a two-tier fritted-glass wall with large lettering, a glass curb canopy and a PV roof. T3E has a large perforated-metal rooftop penthouse (CDR).",
+    "evidence": "a1.jpg crop (1040-1920, 560-880): BA-E roof with PV, a dark clerestory band below the roof edge, and a glazed head end. refs/cache/buildings/review_likeness/d1.jpg (Famartin, CC BY-SA 4.0): T1 landside facade. docs/research/buildings_domestic.md §5.2-5.3.",
+    "fix": "Show the BA-E fascia overhang and clerestory band in section, and add at least schematic landside elevations of T1, T2 and T3, with unknown heights drawn as unk placeholders."
+   }
+  ],
+  "landside": [
+   {
+    "id": "r1-24",
+    "status": "dropped",
+    "severity": "major",
+    "where": "BL-03 view 4 (Superbay, across the spine); draw_landside.py sheet_elev V4",
+    "problem": "The flanking cantilever bays are drawn as flat-topped boxes at 120 ft (36.6 m) either side of a 135-ft spine block, a stepped 'castle' silhouette. 120 ft is the published interior height. The research's own deviation table says 'cantilevered roofs falling to the doors'. The reference photo shows roof planes falling from the central ridge to an eave over the door line well below the ridge, a folded sawtooth eave (the 8 × 17.3 m bays) and faceted hipped ends.",
+    "evidence": "refs/cache/buildings/review_likeness/l3.jpg (BrokenSphere, CC BY-SA 3.0; identification as the Superbay is the spec's own and unverified). Door and wall face from the eave at y about 515-530 px to the base at about 690 (about 175 px). The roof rises a further about 90 px to the ridge at y about 425. If the ridge is 41.1 m, the eave is roughly 27 m. The sawtooth eave is on the right half and the triangular facets on the left. docs/research/buildings_landside.md, model table: 'Superbay … cantilevered roofs falling to the doors'.",
+    "fix": "Draw sloping cantilever roofs from the spine to an inf/unk eave height, with the folded eave, rather than flat 120-ft boxes."
+   },
+   {
+    "id": "r1-25",
+    "status": "dropped",
+    "severity": "minor",
+    "where": "BL-03 view 2 (Grand Hyatt)",
+    "problem": "The hotel is drawn as one 107 m × 44 m box with 12 equal floors from grade. The spec photo notes and the research describe a crescent slab with a concave east face, a podium (lobby and AirTrain at the 4th floor), a taller or narrower north block, a rooftop penthouse and corner masts. A viewer would not recognise the drawn box.",
+    "evidence": "refs/cache/buildings/review_likeness/l4.jpg (Gregory Varnum, CC BY-SA 4.0): a dark metal-panel podium about 3 floors high (y 895-1065 px) under the left part of the face. About 9.4 glass floors sit above it at about 55 px per floor. A dark penthouse about 1.4 floors high sits right of centre (x 990-1395, y 310-385). There is a separate end block at the left edge and obstruction-light masts at the corners. docs/research/buildings_landside.md model table: 'crescent tower plus podium, not one block'.",
+    "fix": "Draw the podium, the slab, the penthouse and the end block as separate masses, with heights tagged inf."
+   },
+   {
+    "id": "r1-32",
+    "status": "dropped",
+    "severity": "minor",
+    "where": "BL-03 views 1-2 (Garages A and G), BL-02",
+    "problem": "Each garage is drawn as a 25 m box with a light-blue 25-41.5 m 'deck range' band over its full 282 m length. The sheet therefore reads as a 41.5 m-tall block. In reality the 37.6 / 39.6 m 'drum tops' are discrete round precast helix towers at the west ends, with perforated-metal screens, rising above a lower deck. The AirTrain guideway runs into each garage at Level 7, which is in the text only.",
+    "evidence": "refs/cache/buildings/review_likeness/l1.jpg (Pi.1415926535, CC BY-SA 4.0): the curved helix drum beside the guideway entering the Garage A station box. a2.jpg: Garage G's rounded west end with its rooftop drum. BL-02_naip.jpg: round helix structure at the west end of each outline.",
+    "fix": "Show the helix drum as its own round mass at the end, the deck range as a range bar (not a full-length band), and the guideway entry at L7."
+   },
+   {
+    "id": "r1-33",
+    "status": "dropped",
+    "severity": "minor",
+    "where": "BL-03 view 3 (Rental Car Center)",
+    "problem": "The RCC is a plain box with a 'station tower 60 ft' tick. The two features a passer-by identifies are not drawn:\n- the canted (outward-leaning) corrugated-metal upper wall over the board-formed concrete with ribbon windows;\n- the free-standing cylindrical perforated-metal stair/elevator tower at the AirTrain station.",
+    "evidence": "refs/cache/buildings/review_likeness/l5.jpg (Pi.1415926535, CC BY-SA 4.0): the canted corrugated band on the left, and the round perforated tower (display x 950-1305, y 185-990). spec_landside photo note lists both.",
+    "fix": "Draw the canted upper band and the cylindrical tower (heights inf / DOF 60 ft)."
+   },
+   {
+    "id": "r2-22",
+    "status": "partial",
+    "severity": "major",
+    "where": "BL-03 view 2, Grand Hyatt at SFO (Bldg 55); spec gh_plan_shape, gh_facade [obs]",
+    "problem": "The Grand Hyatt is drawn as a plain 12-storey box with a uniform floor grid and a hatched 40-48 m top band. The massing features that are already in the spec are left out: the dark podium, the taller straight block at the north end, the dark stepped penthouse and the corner masts. The concave east face is not indicated either.",
+    "evidence": "spec gh_plan_shape: 'crescent-shaped slab ... concave all-glass facade to the east; taller straight block at the north end next to the AirTrain station; 2-3-storey podium clad in dark metal panels'. spec gh_facade: 'dark stepped mechanical penthouse near mid-length; 4 corner masts'.\nl4 (Gregory Varnum, July 2019, CC BY-SA 4.0) shows:\n- the dark brown podium, about 3 floors, along the lower left, with large glazed openings;\n- a narrow end module at the left with a different, horizontally banded curtain wall and the red sign;\n- the dark penthouse above the roof right of centre, about 20 % of the face long;\n- masts at the corners.",
+    "fix": "Add the podium, the north end block, the penthouse and the masts, with heights tagged inf / unk. Note in the elevation that the east face is concave."
+   },
+   {
+    "id": "r2-23",
+    "status": "dropped",
+    "severity": "major",
+    "where": "BL-03 view 1 / 2, International Garages A and G; draw_landside.py (bands 25-41.5 / 25-40; drum top only as a marker at u 12)",
+    "problem": "Each whole 281-282 m face is drawn as a box with a shaded 25-41.5 m (A) or 25-40 m (G) band. The helix drum, which is what sets the top value, appears only as a point marker. The garage therefore reads as a slab up to 41.5 m tall, and its recognisable parts are missing: the cylindrical helix drum, the AirTrain portal and the stair towers.",
+    "evidence": "spec garage_ag_facade [obs]: 'light architectural precast concrete panels in a square grid; parking levels screened by prefabricated perforated metal panels with horizontal slots; cylindrical helix drum at the west end with continuous horizontal bands and arched openings at the top; square stair/elevator towers rise above the parapet'.\nl1 (Pi.1415926535, Oct 2020, CC BY-SA 4.0) shows the drum as a separate curved concrete cylinder with horizontal bands next to the precast-grid block and the perforated screens, and the AirTrain guideway entering the station inside the garage at level 7 [pub].\nThe 9-level deck (8 ft 2 in clearance) is probably well below the drum top.",
+    "fix": "Draw the drum as its own cylinder at the west end with its 38-41.5 m top. Show the deck as unk (dotted) at a height inferred from the level count. Add the AirTrain portal at L7 and the stair towers."
+   },
+   {
+    "id": "r2-28",
+    "status": "dropped",
+    "severity": "minor",
+    "where": "BL-03 central parking garage and Rental Car Center; spec cg_airtrain_level [pub]",
+    "problem": "The AirTrain stations for T1 / T2 / T3 on garage level 5 and the guideway around the garage are not shown in the central garage elevation. The RCC is drawn as a plain box, without its long horizontal metal fins / louvres or the cylindrical perforated-mesh stair / elevator tower at its AirTrain station.",
+    "evidence": "cg_airtrain_level [pub]: 'AirTrain T1, T2, T3 stations on garage Level 5'. l5 (Pi.1415926535, May 2021, CC BY-SA 4.0) shows the RCC facade of horizontal metal fins, the curved station canopy and the mesh cylinder tower.",
+    "fix": "Indicate the AirTrain level and the stations on the garage elevation. Add the RCC fin cladding note and the mesh tower, tagged obs photo."
+   }
+  ],
+  "itb": [
+   {
+    "id": "r1-26",
+    "status": "dropped",
+    "severity": "minor",
+    "where": "BI-01 views 3 and 4 (Boarding Areas A and G); draw_itb.py lines 170-172",
+    "problem": "The raised roof pods are given only as labels ('3 raised D-shaped pods 70/55/55 m', '3 raised lens pods 60/55/62 m'). They are not drawn in plan or in any elevation, although BA-A pod 1 is a DOF point 8 m above the main roof. They are the main roof features of both boarding areas.",
+    "evidence": "out/buildings/drawings/BI-01_naip.jpg, BA-G panel: three raised elliptical volumes clearly imaged on the roof. refs/cache/buildings/review_likeness/a2.jpg (Pi.1415926535, CC BY-SA 4.0, Sep 2025): raised oval drums with rounded ends, about one storey above the BA-G roof (x 40-510 and 1100-1560 px, y 780-900). A grep for 'pod' in draw_itb.py finds only leaders and the DOF marker.",
+    "fix": "Trace the pod outlines from NAIP (obs, with the lean noted) and draw them in plan, with heights unk except the BA-A DOF pod."
+   },
+   {
+    "id": "r1-31",
+    "status": "dropped",
+    "severity": "minor",
+    "where": "BI-02 view 1 (facade), docs/drawings/buildings/README.md ('Facade mullion module unknown')",
+    "problem": "The west facade is one uniform fill, 'mullion grid not dimensioned [unk]'. Several elements a visitor reads are not drawn:\n- the departures canopy along the curb;\n- its inclined support struts;\n- the horizontally banded fritted wing walls, against the clear-glass centre section;\n- the 'SAN FRANCISCO INTERNATIONAL' lettering on the centre bay.\nThe canopy struts give a measurable module that the README calls unknown.",
+    "evidence": "i4.jpg zoom: canopy struts at crop x about 320, 450, 580, 715, 850 (×1/1.5 → about 88 px). That is about 11.8 m at 0.1335 m/px, consistent with the published 40-ft (12.19 m) truss grid. The wings' fritted walls are horizontally banded, and the centre bay is clear glass with the lettering (i1.jpg, i4.jpg).",
+    "fix": "Record the 40-ft module as obs-photo, and draw the canopy line, the strut rhythm and the wing / centre glazing split."
+   },
+   {
+    "id": "r2-26",
+    "status": "dropped",
+    "severity": "minor",
+    "where": "BI-02 / BI-03: column heads and the departures canopy",
+    "problem": "Each column is drawn ending in a 2-strut V ('strut form schematic'). In the photos each white column branches into a fan of 4-6 or more struts into the trusses, a signature of the ITB. The departures canopy is only a dashed line at +14.5. Its inclined white support struts, which are prominent along the curb, are not drawn.",
+    "evidence": "In i3 (Elizabeth K. Joseph 2017, CC BY 2.0) the near columns end in clusters of radiating struts. i4 shows about 4 members per column in elevation (2 each side) fanning out from about the glass-head level.\nCanopy struts: inclined white members from the canopy up to the glass, at about 12 m spacing (i4 x 210, 300, 390 ... = 90 px at 0.133 m/px).",
+    "fix": "Draw a fan of 4-6 struts per column head and the canopy struts. Both inf / obs photo, schematic."
+   },
+   {
+    "id": "r2-27",
+    "status": "dropped",
+    "severity": "minor",
+    "where": "BI-02 / BI-03 roof line near the tips; draw_itb.py wing() / roof_line()",
+    "problem": "The eave sags 0.5 m just inboard of each tip and then rises. The photos show the eave rising steadily from the tip.",
+    "evidence": "roof_line(u) gives 34.90 at |u| 126.4, 34.40 at |u| 115-118 and 34.83 at |u| 110. In i4 (left crop) the eave rises steadily: y 72 / 68 / 63 / 48 px at x 15 / 60 / 100 / 200. i1 shows the same steady rise. The sag is probably NAIP eave noise over the glazed tip band.",
+    "fix": "Make the eave rise monotonically from the tip, or tag the |u| 110-123 segment as uncertain."
+   },
+   {
+    "id": "r2-29",
+    "status": "dropped",
+    "severity": "minor",
+    "where": "BI-01 views 3 / 4 (Boarding Areas A / G): plans only",
+    "problem": "There is no elevation or section for the ITB boarding areas. Their roof pods and glazing bands are carried only as labels ('3 raised lens pods ... heights unknown').",
+    "evidence": "a2 (Pi.1415926535, Sept 2025, CC BY-SA 4.0) shows the pier with:\n- a continuous departure-level glazed band at the holdrooms and light metal panels elsewhere;\n- a long raised rectangular box and an elliptical raised drum on the roof, each roughly a quarter of the wall height.",
+    "fix": "Add a long-face elevation of BA-A / BA-G with the pods as inf / unk heights and the glazing band."
+   },
+   {
+    "id": "r2-30",
+    "status": "dropped",
+    "severity": "minor",
+    "where": "No sheet (ITB BA-G / T3 area)",
+    "problem": "An unidentified box-shaped rooftop tower appears in a 2018 photo and is not on any sheet.",
+    "evidence": "d2 (wbaiv, 2018-09-08, CC BY 4.0; titled 'SFO AirTrain Terminal 3 intl faceNorthWest') shows, at the left edge, a box tower about 2 storeys above a terminal roof with a dark window band and antennas. docs/research/atc.md lists ramp control 'Ramp G (West)'. The pre-2016 T2 tower's demolition was reviewed in 2017-2018 (buildings_tower.md). It is unclear whether this is that tower or a ramp tower, and whether it still stands.",
+    "fix": "Identify the structure and its building, and check a recent image (NAIP 2024 or a recent photo) before the 3-D step. Add it to the right sheet if it still stands."
+   }
+  ],
+  "tower": [
+   {
+    "id": "r1-27",
+    "status": "dropped",
+    "severity": "minor",
+    "where": "BT-02 views A and B (upper slots)",
+    "problem": "The 49.2-56.8 m slot band is drawn as uniform hatching across the full width, and in view B also across the landside blades. Photos show discrete narrow dark slots, about 1 m wide, all leaning the same way: about 7 visible across the airside half, so about 12-14 round the round body. On the landside they appear only on the round body NE of the ribbon, none on the SW louvred wing. Some slots have a glazed window in their lower end. The flare's widest line is drawn as a sharp corner with a short vertical lip; photos show a rounded shoulder curving in to the cab deck.",
+    "evidence": "t2.jpg (Famartin, airside, bearing 126): 6-7 slots between display y about 510 and 720, the bottoms cut on a ring seam. t1.jpg crop (800-1250, 100-450): 7 parallelogram slots. t4.jpg crop: 3 slots left of the ribbon, the lower one glazed at display (310-345, 510-630) in the crop. None on the right wing. Band heights agree with the spec: t1 gives 49.6-57.1 m on the rim and D anchor.",
+    "fix": "Draw individual slots (count and lean inf from photos) on the round body only, and round the flare shoulder."
+   },
+   {
+    "id": "r1-28",
+    "status": "dropped",
+    "severity": "minor",
+    "where": "BT-02 view A (single lower slot); draw_tower.py, poly (0.6,a)-(1.6,a)-(3.4,b)-(2.4,b)",
+    "problem": "The lower airside slot is drawn with a 1.8 m sideways shift over its 17 m height, about 6° from vertical. Two photos from different bearings both show it leaning about 15-16°, with its top close to the right silhouette.",
+    "evidence": "t2.jpg: dark-pixel centre of the slot moves from display x about 780 at y 940 to x about 746 at y 1060, i.e. 34 px per 120 px, about 16°. t1.jpg: about (1075,525) to (1010,760), 65/235 px, about 15.5°. Slot top is about 5 m right of the axis at 0.0698 m/px. Width (about 1 m) and length (about 16.7 m) agree with the drawing.",
+    "fix": "Re-measure the slot's top and bottom offsets and redraw it at about 15°, tagged inf-photo."
+   },
+   {
+    "id": "r1-29",
+    "status": "dropped",
+    "severity": "minor",
+    "where": "BT-02 (masts), draw_tower.py 'masts (count changes over time; 2-3 shown)'",
+    "problem": "Four masts are drawn. The spec's own note gives 'about 8 masts' in 2015 and 'about 12 masts + camera poles' in 2025, spread round the whole rim at several heights. The 2015 photo also shows a lattice instrument boom (a mast with a cross-arm) standing on the flare deck beside the cab. It is not drawn.",
+    "evidence": "t1.jpg crop (800-1250, 100-450): 8 masts, plus the boom at crop (140-275, 185-310). t3.jpg / t4.jpg (2025): 12-14 masts plus cameras. spec_tower.json h_antenna_tips.note.",
+    "fix": "Draw the 2025 mast set (positions inf from the photos) and the flare-deck boom, if still present."
+   },
+   {
+    "id": "r1-30",
+    "status": "dropped",
+    "severity": "minor",
+    "where": "BT-02 views A and B (base building), BT-01",
+    "problem": "The base building is a blank box with a level mark for the roof garden. Photos show features that frame the shaft:\n- dark louvred mechanical volumes rising above the roof beside the shaft;\n- thin cantilevered canopy plates on the airside;\n- a continuous dark ribbon window along the airside face;\n- on the landside, a large green-tinted curtain-wall bay directly under the glass ribbon.",
+    "evidence": "t1.jpg crop (700-1300, 600-950): two dark textured rooftop boxes flanking the shaft with thin white canopy plates. t2.jpg: a tall dark louvred block right of the shaft (display x 915-1060, y 1430-1560) and a dark ribbon window band at y about 1600-1700. t4.jpg: a curtain-wall bay below the ribbon (display x 900-1355, y 1680-2000).",
+    "fix": "Add these as obs-photo massing (heights inf) on BT-02, and mark their plan positions on BT-01 as approximate."
+   },
+   {
+    "id": "r2-24",
+    "status": "dropped",
+    "severity": "minor",
+    "where": "BT-02 view B; draw_blades() draws the ribbon centred on u = 0, while BT-01 sheet_plan draws the channel at hdg_vec(310)",
+    "problem": "The plan and the elevation disagree. BT-01 puts the ribbon channel at heading 310, but the WNW elevation (view from 297.7) draws the ribbon on the shaft axis. At azimuth 310 it should project to the NE of the axis, and more of the SW wing would show.",
+    "evidence": "With right = hdg_vec(207.7), a ribbon at azimuth 310 projects at -0.21 R: -2.5 m at the flare (R 12) and -1.1 m at the base (R 5.2).\nThe photos fit an azimuth of about 300-310. The ribbon centre appears 4 m (t3, bearing 319) and 5.5 m (t4, bearing 338) right of the cab centre. Azimuth 310 predicts +0.16 R / +0.47 R; azimuth 300 predicts +0.33 R / +0.62 R.",
+    "fix": "Draw the ribbon and the blades at their plan azimuth in view B, shifted about 1-2.5 m to the NE, tagged inf. Adjust the wing (see the SW-wing finding)."
+   },
+   {
+    "id": "r2-25",
+    "status": "dropped",
+    "severity": "minor",
+    "where": "BT-02 A / B: masts and cladding",
+    "problem": "Only 4 masts are drawn, at u -5.6, -2.0, 3.4 and 6.0. The roof carries 9-12 masts of different heights around the rim, plus a railing and equipment. The cladding seams are drawn horizontal only; the real panel joints run diagonally (helically), parallel to the slots. That is the tower's surface texture.",
+    "evidence": "t1 shows 9 masts along the rim. t3 (crop of the top) shows about 12, the tallest about 4.5 m, plus a dish and the roof railing. In t1 and t2 the panel joints are clearly inclined, in the same sense as the slots. The drawn mast height (3.5 m) agrees with t1 (3.7 m).",
+    "fix": "Draw masts around the rim (count from t3) and note or indicate the diagonal panel grid. Tag both obs photo."
+   },
+   {
+    "id": "orch-1",
+    "status": "new",
+    "severity": "minor",
+    "where": "BT-02 elevation A",
+    "problem": "The \"FAMILY 2 (dash-dot outline): D 14.5, rim 64.0, 221 ft at the masts\" header label is clipped at the left sheet edge (seen on the 20:10Z render).",
+    "evidence": "orchestrator look at BT-02.png",
+    "fix": "keep the label inside the drawing frame"
+   }
+  ]
+ }
+}

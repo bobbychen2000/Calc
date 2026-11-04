@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osmChange version="0.6" generator="openstreetmap-cgimap 2.1.1 (4868 spike-08.openstreetmap.org)" copyright="OpenStreetMap and contributors" attribution="http://www.openstreetmap.org/copyright" license="http://opendatacommons.org/licenses/odbl/1-0/">
+ <modify>
+  <node id="10981800170" visible="true" version="2" changeset="190716698" timestamp="2026-10-18T21:30:09Z" user="jesszhan0024" uid="23667821" lat="37.6010986" lon="-122.3910831">
+   <tag k="addr:housenumber" v="7"/>
+   <tag k="addr:street" v="La Cruz Avenue"/>
+   <tag k="check_date" v="2023-06-16"/>
+   <tag k="female" v="yes"/>
+   <tag k="male" v="yes"/>
+   <tag k="name" v="Don Juan’s Barbershop"/>
+   <tag k="opening_hours" v="Tu,Th 08:00-18:00; We 06:00-18:00; Fr 06:00-16:00; Su 10:00-13:00"/>
+   <tag k="shop" v="hairdresser"/>
+  </node>
+ </modify>
+</osmChange>

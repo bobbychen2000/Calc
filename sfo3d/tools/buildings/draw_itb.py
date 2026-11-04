@@ -39,9 +39,15 @@ MAG = 0.99                                             # imaged -> true size at 
 DOF_ROOF = {'06-035315': ((-1258.1, 429.4), 131), '06-035316': ((-1292.4, 319.1), 132)}
 DOF_POD = ((-1195.3, 555.0), 85)
 UN = 27.0                    # |u| of the V notches (spec 25-31 m; photo i4 27-29 m) [obs]
-WALL = D.itb_west_wall()     # west glass wall (true v, range) [obs NAIP base line + inf base height]
+WALL = D.itb_west_wall()     # west glass wall: band of the two canopy readings, v = its middle [inf] (NAIP line [obs])
 WH = 30.8                    # glass-wall head: 70 px = 9.3 m below the wing crest in photo i4 (0.1335 m/px) [obs, photo, +-1.5]
-CANOPY = L3 + 5.0            # curb canopy: ~4.5-6 m above the departures curb (photos i3 / i4) [inf]
+CANOPY = WALL['h_canopy']    # curb canopy: ~4.5-6 m above the departures curb (photos i3 / i4) [inf]; exists [pub SEAONC]
+CANOPY_D = D.CANOPY_D        # its depth, ~5 m (photos) [inf]
+HALL_W = 210 * FT            # great hall width 210 ft [pub SEAONC]
+BAY_HW = 40.0                # clear central glazing bay: +-39 m (i4: x 730-1320 about 1025 at 0.1331 m/px) / +-42 m (i1) [obs photos]
+LETTER_HW = 33.0             # 'SAN FRANCISCO INTERNATIONAL': +-32.5 m (i4) / +-37 m (i1) [obs photos]
+BAY_HEAD = 2.0               # the central glazing's head follows the centre section's bottom chord, 1-3.5 m above the side
+                             # bays' head (i4 crop: 25-40 px at 0.1331 m/px x 0.67) [obs photo i4, tentative]
 HALL_HL = 705 * FT / 2       # great hall 705 ft [pub SEAONC]; centred on the roof [inf]
 TIP_GAP = (1.6, 3.6)         # glass band ends inside the fascia: N 1.6 / S 3.6 m (white strip, spec verification) [obs]
 TN, TS = I['roof.glazed_tips_obs']['value']['north'], I['roof.glazed_tips_obs']['value']['south']
@@ -90,7 +96,7 @@ def chord(u):
     return float(np.interp(a, [HALL_HL, HL], [WH, H_TIP - 1.5]))
 
 
-def lens_poly(k):
+def lens_poly(k, d_shape=False):
     """lens k (west -> east) in the roof frame: centred on its truss line; u from the detected boxes relative to the
     FASCIA midpoint (imaged +1.0) and the area centroid, i.e. 1.5-2.2 m north of the roof centre [obs]; the westmost lens
     is full length (detected 34 m only because it is darker - spec verification): drawn with the mean of the others."""
@@ -102,6 +108,10 @@ def lens_poly(k):
         uc, half, w = L['u_c'], (L['u1'] - L['u0']) / 2, L['w_max']
     uc = (uc - FASCIA_MID_IMG) * MAG; a = half * MAG; b = w / 2 * MAG
     t = np.linspace(-1, 1, 25)
+    if d_shape:   # alternative planform: a D with a straight east edge and a convex west edge, same length / width [inf]
+        top = [(uc + a * x, LINES_V[k] + b) for x in t]
+        bot = [(uc + a * x, LINES_V[k] + b - 2 * b * (1 - x * x)) for x in t[::-1]]
+        return [UV(u, v) for u, v in top + bot], 2 * a, 2 * b, uc
     top = [(uc + a * x, LINES_V[k] + b * (1 - x * x)) for x in t]
     bot = [(uc + a * x, LINES_V[k] - b * (1 - x * x)) for x in t[::-1]]
     return [UV(u, v) for u, v in top + bot], 2 * a, 2 * b, uc
@@ -122,7 +132,8 @@ def draw_hall_roof(V, variant, detail=True):
         V.line([UV(n1, v), UV(s0, v)], 'obs', lw=0.5 if detail else 0.3, z=3.4)
     for k in range(5):
         P = lens_poly(k)[0]
-        V.poly(P, 'obs', fc='#cfe3f3' if variant == 'vector' else 'none', z=3.6, lw=0.5)
+        V.poly(P, 'inf', fc='#cfe3f3' if variant == 'vector' else 'none', z=3.6, lw=0.5)
+        if detail: V.poly(lens_poly(k, d_shape=True)[0], 'unk', fc='none', z=3.62, lw=0.4)
     if detail:
         for cu in COL_U:
             for s in (-1, 1):
@@ -130,10 +141,12 @@ def draw_hall_roof(V, variant, detail=True):
                 for v in LINES_V[1:]:
                     V.mark(UV(s * cu, v), 'inf', marker='s', ms=2.4)
                 V.mark(UV(s * cu, WALL['v'] - 2.5), 'inf', marker='o', ms=2.6)
-        # west glass wall (true position) over the hall extent, with its range
-        V.line([UV(-HALL_HL, WALL['v']), UV(HALL_HL, WALL['v'])], 'obs', lw=1.0, z=3.7, color='#46576a')
-        for vr in WALL['v_range']:
-            V.line([UV(-HALL_HL, vr), UV(HALL_HL, vr)], 'inf', lw=0.3, z=3.7)
+        # west glass wall over the hall extent: the band of the two canopy readings [inf] and the L3-foot reading (dotted)
+        b0, b1 = WALL['band']
+        V.poly([UV(-HALL_HL, b0), UV(HALL_HL, b0), UV(HALL_HL, b1), UV(-HALL_HL, b1)], 'inf', fc='#f6e3cf' if variant == 'vector' else 'none',
+               lw=0.3, z=3.65, alpha=0.8)
+        V.line([UV(-HALL_HL, WALL['v']), UV(HALL_HL, WALL['v'])], 'inf', lw=1.0, z=3.7)
+        V.line([UV(-HALL_HL, WALL['v_l3']), UV(HALL_HL, WALL['v_l3'])], 'inf', lw=0.4, z=3.7, ls=(0, (1, 1.5)))
     return ring
 
 
@@ -168,7 +181,7 @@ def sheet_plan(variant='vector', dev=None):
     C = F['corners']
     V2.dim(C['NW'], C['SW'], -9, f'{F["L"]:.2f} m eave tip to tip (252.6-255.1) [obs, NAIP relief-corrected]', 'obs', fs=4.6)
     V2.dim(C['NW'] + F['ax'] * (HL - 131.06), C['SW'] + F['ax'] * (131.06 - HL), -19, '860 ft = 262.13 m overall [pub SEAONC, Smith-Emery] - CONFLICT with the obs length', 'pub', fs=4.6)
-    V2.dim(C['NE'], C['NW'], -8, f'{F["W"]:.2f} m [obs] (214 ft; hall 210 ft [pub])', 'obs', fs=4.6)
+    V2.dim(C['NE'], C['NW'], -8, f'{F["W"]:.2f} m [obs] (214 ft); hall 210 ft [pub] does NOT fit east of the west wall (BI-03)', 'obs', fs=4.6)
     V2.dim(UV(-60, LINES_V[3]), UV(-60, LINES_V[4]), 0, f'{SP:.2f} [obs] = 40 ft grid [pub]', 'obs', fs=3.8, ext=False)
     (n0, n1), (s0, s1) = tip_bands()
     V2.dim(UV(s0, HW + 1), UV(s1, HW + 1), 5, f'{TS} glazed [obs]', 'obs', fs=3.6)
@@ -186,21 +199,30 @@ def sheet_plan(variant='vector', dev=None):
             V2.text(UV(s * cu, -HW - 7), f'{"inner" if cu < 60 else "outer"} col. line\nu {s * cu:+.1f} [inf]', 'inf', fs=3.4)
     V2.leader(UV(70, LINES_V[2]), 30, 30, '20 columns = 5 truss lines x 4 (inner / outer column lines at +-190 / +-270 ft) [inf];\n'
               '"20 cantilevered columns rising from the third floor departures level" [pub SEAONC];\n'
-              'west line: the columns stand clear in front of the glass (circles) [obs photos], v not measured [unk]', 'inf', fs=3.8)
+              'west line: the columns stand clear in front of the glass (circles) [obs photos], v not measured -\ndrawn 2.5 m in front of '
+              'the wall band\'s middle [inf]', 'inf', fs=3.8)
     P, Lk, Wk, uc = lens_poly(2)
-    V2.leader(UV(uc, LINES_V[2] + 4), 34, 6, f'5 lens skylights on the truss lines, {Lk:.1f} m x {Wk:.1f} m [obs], row centred\n{-uc:.1f} m N of the '
-              'fascia midpoint [obs]; the westmost is full length too\n(spec verification); centre section 180 ft [pub, snippet]', 'obs', fs=3.8)
-    V2.leader(UV(-80, WALL['v']), -26, 12, f'west glass wall, true position v {WALL["v"]:.1f} ({WALL["v_range"][0]:.1f} to {WALL["v_range"][1]:.1f}):\n'
-              f'NAIP facade-base line [obs] moved back by the relief of its height\n= the departures curb, L3 {L3} ({L3R[0]}-{L3R[1]}) [inf];'
-              f' {WALL["v"] + HW:.1f} m inside the eave;\nover the 705-ft hall only [pub length, centred inf]', 'obs', fs=3.8)
+    V2.leader(UV(uc, LINES_V[2] + 4), 34, 6, f'5 skylights on the truss lines, {Lk:.1f} m x {Wk:.1f} m [obs], row centred {-uc:.1f} m N of\n'
+              'the fascia midpoint [obs]; the westmost is full length too (spec verification);\ncentre section 180 ft [pub, snippet]. PLANFORM [inf]: '
+              'NAIP shows each as a D\n(straight east edge, convex west edge) - a vaulted lens leaning east (drawn,\npointed lens) or a D in plan '
+              '(dotted) - not settled (spec roof.lenses_obs)', 'inf', fs=3.8)
+    b0, b1 = WALL['band']
+    V2.leader(UV(-80, WALL['v']), -26, 12, f'west glass wall [inf]: band v {b0:.1f} to {b1:.1f} ({b0 + HW:.1f}-{b1 + HW:.1f} m inside the eave),\n'
+              f'drawn at its middle {WALL["v"]:.1f}. The NAIP straight facade-base line [obs] is NOT the wall\'s foot:\n'
+              f'the curb canopy ("entrance canopy" [pub SEAONC], ~5 m deep [inf]) hides the foot\nfrom the camera whenever it is deeper than '
+              f'{WALL["foot_hidden_depth"]:.1f} m ({CANOPY - L3:.0f} m x {WALL["k"]:.2f} m/m), so the line is\nthe canopy edge (-> {b1:.1f}) or the '
+              f'wall just above the canopy (-> {b0:.1f}).\nDotted: {WALL["v_l3"]:.1f}, valid only if the canopy were <= 2 m deep (foot on L3 '
+              f'visible).\nOver the 705-ft hall only [pub length, centred inf]', 'inf', fs=3.8)
     for oas, (p, ft) in DOF_ROOF.items():
         V2.mark(p, 'pub', marker='^', ms=4.5)
         V2.leader(p, -24, 6 if ft == 132 else -6, f'FAA DOF {oas}: {ft} ft AGL = {ft * FT:.2f} m\n(1A, +-3 ft) roof top [pub]', 'pub', fs=3.8)
-    for uu, s in ((0, f'crown {CROWN} (photo, +-2) [obs]'), (-UN, f'notch {H_NOTCH} [obs]'), (UN, f'notch {H_NOTCH} [obs]'), (-67, 'hump 40.08 [pub DOF]'), (67, 'hump 40.08 [pub DOF]'),
+    for uu, s in ((0, f'crown {CROWN} (photo, +-2) [obs]'), (-UN, f'notch {H_NOTCH} [obs]'), (UN, f'notch {H_NOTCH} [obs]'), (-67, 'hump 40.08 [inf: DOF-anchored fit]'), (67, 'hump 40.08 [inf: DOF-anchored fit]'),
                   (-100, '36.4 [obs]'), (100, '36.4 [obs]'), (-124, f'tip {H_TIP} [obs]'), (124, f'tip {H_TIP} [obs]')):
         V2.mark(UV(uu, -HW), 'obs', marker='o', ms=2.0)
-        V2.text(UV(uu, -HW - 2.5), s, 'pub' if 'DOF' in s else 'obs', fs=3.6, ha='right', rot=0)
-    V2.text(UV(-112, -HW - 46), 'west eave heights AGL\n(roof.profile: NAIP eave relief,\nanchored on the DOF tops)', 'obs', fs=3.8)
+        V2.text(UV(uu, -HW - 2.5), s, 'inf' if 'fit' in s else 'obs', fs=3.6, ha='right', rot=0)
+    V2.text(UV(-112, -HW - 46), 'west eave heights AGL\n(roof.profile: NAIP eave relief,\nanchored on the DOF mean at the\nfitted peak |u| 67 [inf]; at the DOF\n'
+            'stations u +57.2 / -58.4 the curve\nreads 39.70 / 39.78, 0.23 / 0.45 m\nbelow 39.93 / 40.23 [pub]: anchored\nthere, all heights '
+            'rise ~0.34 m)', 'obs', fs=3.8)
     A = D.app_great_hall(); av = np.array([A['ax'][1], -A['ax'][0]])
     R = [A['c'] + A['ax'] * su * A['L'] / 2 + av * sv * A['W'] / 2 for su, sv in ((-1, -1), (-1, 1), (1, 1), (1, -1))]
     V2.poly(R, 'app', fc='none', lw=0.8, z=6)
@@ -225,14 +247,16 @@ def sheet_plan(variant='vector', dev=None):
               'above the main roof [obs] -> top 22.3-25.2 m: CONFLICT with the DOF\n25.9 m except at its upper end; pod positions not recorded', 'obs', fs=3.8, ha='right')
     V4.leader((-1400, 100), -4, -22, 'main roof 17.0 m (13-20) [obs, low; k(x) relief]\nroof width 38.4 m between parapets [obs]\n(the earlier ~33.5 m is refuted)', 'obs', fs=3.8)
     V4.leader((-1520, 30), -6, 22, '3 raised lens pods 60 / 55 / 62 m [obs, by eye]\nno DOF entry: pod heights unknown [unk]\nSFOM outline 3-6 m NNE of the NAIP roof [obs, unresolved]', 'obs', fs=3.8, ha='right')
-    rows = [('Roof top over the column pairs (humps)', '40.08 m (131/132 ft)', 'pub', 'FAA DOF 06-035315/16, 1A'),
+    rows = [('DOF roof tops (u +57.2 / -58.4, west eave)', '39.93 / 40.23 m (131/132 ft)', 'pub', 'FAA DOF 06-035315/16, 1A (+-3 ft)'),
+            ('Hump (fitted peak, |u| 67)', '40.08 m', 'inf', 'eave fit anchored on the DOF mean at its peak; 0.23 / 0.45 m low at the DOF stations'),
             ('Notches (wings meet centre section)', f'{H_NOTCH} m at |u| ~27', 'obs', 'NAIP eave relief 36.25 + photo 35.2'),
             ('Centre crown (glazed arch top)', '40.1 m +-2', 'obs', 'public-domain photo only'),
             ('Tips', '34.9 m', 'obs', 'NAIP + photo'),
             ('Roof length / width', '252.9 x 65.4 m', 'obs', 'NAIP, relief-corrected; 860 ft pub conflicts'),
             ('Truss lines / spacing', '5 / 12.12 m', 'obs', 'NAIP comb fit; 40 ft grid [pub]'),
             ('Truss depth max / centre span / end cantilever', '29 / 380 / 160 ft', 'pub', 'SEAONC (read in full)'),
-            ('West glass wall behind the eave', f'{WALL["v"] + HW:.1f} m ({WALL["v_range"][1] + HW:.1f}-{WALL["v_range"][0] + HW:.1f})', 'inf', 'NAIP base line [obs] + base at L3 [inf]'),
+            ('West glass wall behind the eave', f'{WALL["v"] + HW:.1f} m ({WALL["band"][0] + HW:.1f}-{WALL["band"][1] + HW:.1f})', 'inf', 'NAIP line [obs] = canopy edge or wall above the canopy [inf]'),
+            ('Hall width 210 ft vs room under the roof', f'64.0 vs <= {HW - WALL["band"][0]:.1f} m', 'pub', 'CONFLICT: see BI-03'),
             ('Level 3 (departures) floor', f'{L3} m ({L3R[0]}-{L3R[1]})', 'inf', 'DOF top minus 100 ft / 90 ft / 83 ft'),
             ('"Building height 144 ft"', 'datum unknown', 'pub', 'SOM, Enclos - do not use'),
             ('BA-A / BA-G main roof', '17.9 / 17.0 m', 'obs', 'NAIP relief / shadow'),
@@ -283,7 +307,7 @@ def draw_columns(V, struts=True):
     for cu in COL_U:
         for s in (-1, 1):
             u = s * cu
-            V.poly([(u - 0.75, L3), (u + 0.75, L3), (u + 0.75, WH), (u - 0.75, WH)], 'obs', fc='#ffffff', z=6.5, lw=0.7)
+            V.poly([(u - 0.75, L3), (u + 0.75, L3), (u + 0.75, WH), (u - 0.75, WH)], 'inf', fc='#ffffff', z=6.5, lw=0.7)
             if struts:
                 for du in (-5.0, 0.0, 5.0):
                     V.line([(u, WH), (u + du, roof_line(u + du) - 1.2)], 'inf', lw=0.9, z=6.4, color='#8c8c8c')
@@ -298,9 +322,26 @@ def west_elev(V):
     V.ax.fill_between([-HL - 20, HL + 20], [L3 - 1.2] * 2, [L3] * 2, color='#c9c9c9', lw=0, zorder=2)
     V.line([(-HL - 20, L3), (HL + 20, L3)], 'inf', lw=0.6)
     V.text((-HL - 8, L3 + 1.6), 'departures roadway / curb (L3)', 'inf', fs=3.6, ha='left')
-    V.text((0, 5.0), 'levels 1-2 (services, arrivals) behind the lower roadway: not dimensioned in any source [unk]', 'unk', fs=3.9)
-    # west glass wall (flat-topped) over the hall extent; curb canopy
-    V.poly([(-HALL_HL, L3), (HALL_HL, L3), (HALL_HL, WH), (-HALL_HL, WH)], 'obs', fc='#e3ebf2', z=1.7)
+    V.text((0, 4.0), 'levels 1-2 (services, arrivals) behind the lower roadway: not dimensioned in any source [unk]', 'unk', fs=3.9)
+    # west glass wall over the hall extent [obs photos i1 / i4]: clear entrance glazing under the curb canopy; above it fritted
+    # side bays (white, horizontal frit bands, a dark clear strip just above the canopy) and the wide clear central bay on a
+    # mullion grid carrying the 'SAN FRANCISCO INTERNATIONAL' lettering; the central glazing's head rises into the centre section
+    V.poly([(-HALL_HL, L3), (HALL_HL, L3), (HALL_HL, CANOPY), (-HALL_HL, CANOPY)], 'obs', fc='#c9d6e2', z=1.7, lw=0.3)
+    for sg in (-1, 1):
+        a, b = sorted((sg * BAY_HW, sg * HALL_HL))
+        V.poly([(a, CANOPY), (b, CANOPY), (b, WH), (a, WH)], 'obs', fc='#f4f4f1', z=1.7, lw=0.4)
+        V.poly([(a, CANOPY), (b, CANOPY), (b, CANOPY + 1.5), (a, CANOPY + 1.5)], 'obs', fc='#5f6d7a', z=1.75, lw=0.2)
+        for hh in np.arange(CANOPY + 2.4, WH - 0.3, 0.9):
+            V.line([(a, hh), (b, hh)], 'obs', lw=0.15, z=1.76, color='#b8bec4')
+    head = [(-BAY_HW, WH), (-UN, WH + BAY_HEAD), (UN, WH + BAY_HEAD), (BAY_HW, WH)]
+    V.poly([(BAY_HW, CANOPY), (-BAY_HW, CANOPY)] + head, 'obs', fc='#d7e6f3', z=1.72, lw=0.5)
+    for uu in np.arange(-BAY_HW, BAY_HW + 0.01, 20 * FT):
+        V.line([(uu, CANOPY), (uu, float(np.interp(uu, [p[0] for p in head], [p[1] for p in head])))], 'obs', lw=0.2, z=1.77, color='#7f97ad')
+    for hh in np.arange(CANOPY + 2.2, WH + BAY_HEAD, 2.2):
+        ua = float(np.interp(hh, [WH, WH + BAY_HEAD], [BAY_HW, UN])) if hh > WH else BAY_HW
+        V.line([(-ua, hh), (ua, hh)], 'obs', lw=0.2, z=1.77, color='#7f97ad')
+    V.poly([(-LETTER_HW, 25.8), (LETTER_HW, 25.8), (LETTER_HW, 28.6), (-LETTER_HW, 28.6)], 'obs', fc='none', z=1.8, lw=0.3, ls=(0, (1, 1)))
+    V.text((0, 27.2), 'SAN FRANCISCO INTERNATIONAL', 'obs', fs=6.2, bg=False, color='#26323d', style='normal', weight='bold', z=1.9)
     V.line([(-HALL_HL, CANOPY), (HALL_HL, CANOPY)], 'inf', lw=0.7, z=5)
     for s in (-1, 1):
         V.line([(s * HALL_HL, L3), (s * HALL_HL, chord(s * HALL_HL))], 'obs', lw=0.8, z=5)
@@ -321,9 +362,9 @@ def west_elev(V):
         V.text((u, ft * FT + 3.0), f'DOF {oas}\n{ft} ft = {ft * FT:.2f} m [pub]', 'pub', fs=3.9)
     V.level(HL + 2, 144 * FT, '+43.89 "building height 144 ft" [pub SOM / Enclos] - datum not stated, conflict', 'pub', len_mm=6, fs=4.0, u_line=HL - 10)
     V.level(HL + 2, H_TIP, f'+{H_TIP} tip [obs]', 'obs', len_mm=6, fs=4.2, u_line=HL)
-    V.level(-HL - 2, H_PEAK, '+40.08 humps over the column pairs [pub DOF]', 'pub', side='left', len_mm=6, fs=4.2, u_line=-67)
-    V.level(-HL - 2, H_NOTCH, f'+{H_NOTCH} V notches at |u| ~27 [obs]', 'obs', side='left', len_mm=6, fs=4.2, u_line=-UN)
-    V.level(-HL - 2, CROWN + 0.0001, f'+{CROWN} centre crown, glazed arch (photo, +-2: blue band) [obs]', 'obs', side='left', len_mm=6, fs=4.2, u_line=0)
+    V.level(HL + 2, H_PEAK, '+40.08 humps at |u| 67: DOF-anchored eave fit [inf] (DOF tops below)', 'inf', len_mm=6, fs=4.2, u_line=67)
+    V.level(-HL - 2, H_NOTCH, f'+{H_NOTCH} notches [obs]', 'obs', side='left', len_mm=4, fs=4.2, u_line=-UN)
+    V.level(-HL - 2, CROWN + 0.0001, f'+{CROWN} crown (photo +-2) [obs]', 'obs', side='left', len_mm=4, fs=4.2, u_line=0)
     V.dim((-HL, -1), (HL, -1), -8, f'{F["L"]:.2f} m eave tip to tip (252.6-255.1) [obs]', 'obs', fs=4.6)
     V.dim((-131.06, -1), (131.06, -1), -16, '860 ft = 262.13 m [pub] - conflict', 'pub', fs=4.6)
     V.dim((-HALL_HL, L3 - 1.4), (HALL_HL, L3 - 1.4), -3, '705 ft = 214.9 m great hall [pub SEAONC]; centred [inf]', 'pub', fs=4.2)
@@ -332,12 +373,29 @@ def west_elev(V):
     for a, b in zip([-430, -410, -270, -190, -90, 90, 190, 270, 410], [-410, -270, -190, -90, 90, 190, 270, 410, 430]):
         V.dim((a * FT, 46), (b * FT, 46), 4, f'{b - a}', 'inf', fs=3.8)
     V.text((0, 52.5), 'published / inferred structural rhythm, ft [inf]: 20 | 140 | 80 | 100 | 180 | 100 | 80 | 140 | 20', 'inf', fs=4.2)
-    V.text((-20, 21.5), 'WEST GLASS WALL on the departures curb: three layers of ceramic frit [pub]; clear entrance glazing under the canopy [obs photos];\n'
-           'mullion grid not dimensioned in any source [unk]; drawn over the 705-ft hall only - the roof tips beyond are open cantilevers [obs photos]', 'pub', fs=4.0)
+    V.text((0, 8.6), 'WEST GLASS WALL on the departures curb: three layers of ceramic frit [pub]; drawn over the 705-ft hall only - the roof tips beyond are open cantilevers [obs photos]',
+           'pub', fs=4.0)
+    V.leader((BAY_HW - 6, 22.0), 26, -14, f'clear central bay ~{2 * BAY_HW:.0f} m wide (+-39 m i4, +-42 m i1) on a mullion grid (~6.1 m x ~2.2 m, i4,\n'
+             f'low), carrying the lettering (~{2 * LETTER_HW:.0f} m: +-32.5 i4, +-37 i1; ~2.8 m tall, centre ~27 m) [obs photos i1 / i4];\n'
+             f'its head follows the centre section\'s bottom chord, ~{BAY_HEAD:.0f} m (1-3.5) above the side bays\' head [obs photo i4,\n'
+             'tentative]. Side bays: white horizontally banded frit, a dark clear strip just above the canopy;\nclear entrance glazing under the '
+             'canopy [obs photos i1-i4]; module not published [unk]', 'obs', fs=3.8)
     V.leader((-COL_U[1], (L3 + WH) / 2 + 3), -16, 9, 'white columns stand clear in front of the glass (shadow on it)\nand branch into struts into the trusses [obs photos i3 / i4];\n'
-             'u at the column lines [inf] (photo i4: -83.4 / -59.4 m); strut form schematic [inf]', 'obs', fs=3.8, ha='right')
-    V.leader((-95, (chord(-95) + roof_line(-95)) / 2), -10, 14, 'exposed "football" trusses above the wall head, tapering to the tips\n'
+             'u at the column lines [inf] (photo i4: -83.4 / -59.4 m); strut form schematic [inf]', 'inf', fs=3.8, ha='right')
+    V.leader((-112, (chord(-112) + roof_line(-112)) / 2), -6, -12, 'exposed "football" trusses above the wall head, tapering to the tips\n'
              '(bottom chord = soffit over the open cantilevers) [obs photos]; web schematic [inf]', 'inf', fs=3.8, ha='right')
+
+
+def hall_conflict(V, sign, y):
+    """dimension the published hall width from the west wall (plot coordinate = sign x v) against the room under the roof."""
+    vw = WALL['v']; ve = vw + HALL_W
+    V.line([(sign * ve, L3), (sign * ve, WH)], 'inf', lw=0.7, ls=(0, (4, 2)))
+    V.dim((sign * vw, y), (sign * ve, y), 3 if sign < 0 else -3, f'hall 210 ft = {HALL_W:.1f} m [pub SEAONC], measured from the west wall [inf]', 'pub', fs=3.8)
+    V.dim((sign * WALL['band'][0], y - 3.2), (sign * HW, y - 3.2), 3 if sign < 0 else -3,
+          f'<= {HW - WALL["band"][0]:.1f} m under the roof east of the wall (wall band: {HW - WALL["band"][1]:.1f}-{HW - WALL["band"][0]:.1f})', 'inf', fs=3.8)
+    V.leader((sign * ve, (L3 + WH) / 2), -sign * 6 if sign > 0 else 6, 4, f'CONFLICT: the published hall ends {ve - HW:.1f} m beyond the measured east eave.\n'
+             'Resolutions: wall nearer the eave / hall continuing east under a lower roof\n(east edge = "fascia -> lower roof fall" [obs]) / wider roof (SOM sketch 260 ft)', 'pub', fs=3.7,
+             ha='left' if sign < 0 else 'right')
 
 
 def north_elev(V):
@@ -345,23 +403,24 @@ def north_elev(V):
     V.line([(-HW - 18, 0), (HW + 18, 0)], 'pub', lw=0.8)
     # plot coordinate = -v (viewer looks SSE: right hand = WSW)
     V.poly([(-HW, H_TIP - 1.5), (HW, H_TIP - 1.5), (HW, H_TIP), (-HW, H_TIP)], 'obs', fc='#cfe3f3', z=3, hatch='||||')
-    V.line([(-HW, H_PEAK), (HW, H_PEAK)], 'pub', lw=0.5, ls=(0, (6, 3)))
-    V.text((0, H_PEAK + 1.6), 'silhouette of the humps behind (40.08 m [pub DOF]); cross camber unknown [unk]', 'pub', fs=4.0)
+    V.line([(-HW, H_PEAK), (HW, H_PEAK)], 'inf', lw=0.5, ls=(0, (6, 3)))
+    V.text((0, H_PEAK + 1.6), 'silhouette of the humps behind (40.08 m, DOF-anchored fit [inf]; DOF 39.93 / 40.23 [pub]); cross camber unknown [unk]', 'inf', fs=4.0)
     V.line([(-HW, CROWN), (HW, CROWN)], 'obs', lw=0.4, ls=(0, (2, 3)))
     xw = -WALL['v']; top = chord(HALL_HL)
     V.poly([(-HW, L3), (xw, L3), (xw, top), (-HW, top)], 'unk', fc='#f4f8fb', z=2)
     V.text((xw - 30, (L3 + top) / 2), 'END CURTAIN WALL: custom unitized, spanning over 60 ft [pub Enclos]\nunder the roof, set back ~19 m behind the tip '
            '[inf: 705-ft hall\ncentred in the 252.9-m roof; photo i4 ~21 m]; outline and mullions not\npublished [unk]; open cantilever in front of it', 'unk', fs=4.0)
-    V.line([(xw, L3), (xw, WH)], 'obs', lw=1.0, color='#46576a')
+    V.ax.fill_between([-WALL['band'][1], -WALL['band'][0]], [L3] * 2, [WH] * 2, color='#f6e3cf', lw=0, zorder=2.1, alpha=0.8)
+    V.line([(xw, L3), (xw, WH)], 'inf', lw=1.0)
+    hall_conflict(V, sign=-1, y=L3 - 4.5)
     V.line([(-HW - 4, L3), (HW + 12, L3)], 'inf', lw=0.5)
     V.level(HW + 2, L3, f'+{L3} level 3 / curb ({L3R[0]}-{L3R[1]}) [inf]', 'inf', len_mm=5, fs=4.2, u_line=HW)
     V.level(HW + 2, H_TIP, f'+{H_TIP} roof tip fascia [obs]', 'obs', len_mm=5, fs=4.2, u_line=HW)
     V.level(HW + 2, H_TIP - 1.5, 'tip depth ~1.5 m (truss taper) [inf]', 'inf', len_mm=5, fs=4.0, u_line=HW)
     V.level(HW + 2, WH, f'+{WH} west glass-wall head [obs photo]', 'obs', len_mm=5, fs=4.0, u_line=xw)
-    V.level(-HW - 2, H_PEAK, '+40.08 humps [pub DOF]', 'pub', side='left', len_mm=5, fs=4.2, u_line=-HW)
+    V.level(-HW - 2, H_PEAK, '+40.08 humps [inf: DOF-anchored fit]', 'inf', side='left', len_mm=5, fs=4.2, u_line=-HW)
     V.dim((-HW, 0), (HW, 0), -7, f'{F["W"]:.2f} m eave to eave [obs]', 'obs', fs=4.6)
-    V.dim((xw, L3 + 1), (HW, L3 + 1), 3, f'{HW - xw:.1f} eave overhang [obs/inf]', 'obs', fs=3.9)
-    V.text((0, L3 - 3.0), 'hall interior 210 ft = 64.0 m wide [pub SEAONC]; its position across the roof is not known [unk]', 'pub', fs=3.9)
+    V.dim((xw, L3 + 1), (HW, L3 + 1), 3, f'{HW - xw:.1f} ({HW + WALL["band"][1]:.1f}-{HW + WALL["band"][0]:.1f}) eave overhang [inf]', 'inf', fs=3.9)
     V.text((-HW + 2, 4), 'E (airside)', 'unk', fs=4.0, color='#555555', style='normal')
     V.text((HW - 2, 4), 'W (landside)', 'unk', fs=4.0, color='#555555', style='normal')
     V.text((0, 6.5), 'levels 1-2 (services, arrivals) and the airside building east of the hall: not dimensioned in any source [unk]', 'unk', fs=3.8)
@@ -376,7 +435,8 @@ def sheet_elev():
     north_elev(V2); V2.scalebar(y_mm=6)
     rows = [('Eave profile |u| 27-123 m', '35.7 -> 40.08 -> 34.8 m', 'obs', 'NAIP: west eave vs the straight facade-base line, 0.955 k h; even-polynomial fit, rms 0.20 m'),
             ('Second method (photo)', 'drops 4.91 / 4.62 m', 'obs', 'public-domain frontal photo; NAIP drops 3.83 / 5.68 m'),
-            ('Humps', '40.08 m', 'pub', 'DOF 131/132 ft; may be the skylight ridges, then the eave is 1-2 m lower [unverified]'),
+            ('DOF roof tops', '39.93 / 40.23 m', 'pub', 'DOF 131/132 ft at u +57.2 / -58.4, 0.8-1.1 m inside the west eave'),
+            ('Humps (fitted peak |u| 67)', '40.08 m', 'inf', 'fit anchored on the DOF mean at its peak: 0.23 / 0.45 m below the DOF at their stations'),
             ('Centre arch crown', '40.1 m +-2', 'obs', 'photo only (i4 reads it level with the humps, ~41)'),
             ('Glass-wall head', f'{WH} m +-1.5', 'obs', 'photo i4: 9.3 m below the wing crest'),
             ('Roof "90 ft" / "100 ft" above the floor', f'-> L3 = 40.1 - 90 ft / - 100 ft = 12.7 / 9.6 m', 'inf', 'Smith-Emery (60 to 90 ft) / sfgate2000 (100 ft); surface not stated'),
@@ -389,6 +449,10 @@ def sheet_elev():
     S.note('Facade from photos (reference only): the glass wall stands on the departures curb (L3) and is level-topped at ~30.8 m; the '
            'football trusses are exposed above it; the columns stand in front of the glass; the 705-ft hall ends ~19-21 m short of each tip.')
     S.note('Not published: mullion module, fascia depth, canopy depth, the end-wall outline, the lower building masses. They need SFO record drawings.')
+    S.note('Hall width CONFLICT: 210 ft = 64.0 m [pub SEAONC] does not fit under the measured 65.4-m roof east of the west wall (at most '
+           f'{HW - WALL["band"][0]:.1f} m with the wall at its westmost reading). Resolutions: the wall nearer the eave; the hall running east under a '
+           'lower roof (the measured east edge is a "fascia -> lower roof fall"); or a wider roof (SOM concept sketch "866\' x 260\'"). Drawn: '
+           'the published width measured from the west wall, ending beyond the east eave.')
     return S.finish()
 
 
@@ -422,7 +486,11 @@ def sheet_section():
               'supports [pub]; taper to the tips and the centre section drawn linearly [inf]; trusses "up to 320 ft long" [snippet]', 'inf', fs=3.9)
     V1.leader((57.9, L3 + 8), -20, -8, 'columns rising from the level-3 floor\n(4 per truss line, 20 in all) [pub count; positions inf]', 'inf', fs=3.9, ha='right')
     V1.text((0, -2.5), 'base isolation: 267 friction-pendulum isolators [pub]; foundations not dimensioned [unk]', 'pub', fs=3.9)
-    V1.level(-HL - 2, H_PEAK, '+40.08 [pub DOF]', 'pub', side='left', len_mm=6, fs=4.2, u_line=-67)
+    V1.level(HL + 2, H_PEAK, '+40.08 humps [inf: DOF-anchored fit]', 'inf', len_mm=6, fs=4.2, u_line=67)
+    for oas, (p, ft) in DOF_ROOF.items():
+        u = float(np.dot(np.asarray(p) - F['c'], F['ax']))
+        V1.mark((u, ft * FT), 'pub', marker='v', ms=4)
+        V1.text((u, ft * FT + 2.6), f'DOF {ft} ft = {ft * FT:.2f} [pub]', 'pub', fs=3.7)
     V1.level(-HL - 2, CROWN + 0.0001, f'+{CROWN} centre crown (photo, +-2) [obs]', 'obs', side='left', len_mm=6, fs=4.2, u_line=0)
     V1.level(-HL - 2, H_TIP, f'+{H_TIP} tip [obs]', 'obs', side='left', len_mm=6, fs=4.2, u_line=-HL)
     V1.scalebar(y_mm=6)
@@ -432,34 +500,46 @@ def sheet_section():
     V2.ax.fill_between([-HW - 22, HW + 18], [-3, -3], [0, 0], color='#dddddd', lw=0, zorder=1)
     V2.line([(-HW - 22, 0), (HW + 18, 0)], 'pub', lw=0.8)
     V2.poly([(-HW, h0 - 1.0), (HW, h0 - 1.0), (HW, h0), (-HW, h0)], 'obs', fc='#999999', z=3)
-    V2.text((0, h0 + 1.8), f'roof top {h0:.1f} m at u 57.9 (eave profile [obs]); cross camber unknown - drawn flat [unk]', 'obs', fs=4.0)
+    V2.text((0, h0 + 4.2), f'roof top {h0:.1f} m at u 57.9 (eave profile: NAIP shape [obs], DOF-anchored at its peak [inf]); cross camber unknown - drawn flat [unk]',
+            'inf', fs=4.0)
+    for oas, (p, ft) in DOF_ROOF.items():
+        uu = float(np.dot(np.asarray(p) - F['c'], F['ax'])); vv = float(np.dot(np.asarray(p) - F['c'], F['v']))
+        V2.mark((vv, ft * FT), 'pub', marker='v', ms=4.5)
+        V2.leader((vv, ft * FT), -10 if ft == 131 else 6, 7 if ft == 131 else 12, f'DOF {oas} {ft} ft = {ft * FT:.2f} [pub]\nat u {uu:+.1f}, v {vv:.1f}'
+                  + (' (mirror station)' if uu < 0 else ''), 'pub', fs=3.6)
     for v in LINES_V:
         V2.poly([(v - 1.2, h0 - d0), (v + 1.2, h0 - d0), (v + 1.2, h0 - 1), (v - 1.2, h0 - 1)], 'inf', fc='#f6e3cf', z=3)
     for v in LINES_V[1:]:
         V2.poly([(v - 0.6, L3), (v + 0.6, L3), (v + 0.6, h0 - d0), (v - 0.6, h0 - d0)], 'inf', fc='#b35900', z=4)
     # west line: column in front of the glass, branching into the outer truss; the wall behind it
-    V2.poly([(vc - 0.75, L3), (vc + 0.75, L3), (vc + 0.75, WH), (vc - 0.75, WH)], 'obs', fc='#ffffff', z=4.5, lw=0.8)
-    for tv in (LINES_V[0] - 1.0, LINES_V[0] + 1.0, -HW + 2.0):
-        V2.line([(vc, WH), (tv, h0 - d0 if tv > -HW + 3 else h0 - 1.2)], 'inf', lw=0.9, z=4.4, color='#8c8c8c')
-    V2.ax.fill_between(list(WALL['v_range']), [L3] * 2, [WH] * 2, color='#cfe0f2', lw=0, zorder=2.2, alpha=0.8)
-    V2.line([(vw, L3), (vw, WH)], 'obs', lw=1.2, color='#46576a', z=4.6)
+    V2.poly([(vc - 0.75, L3), (vc + 0.75, L3), (vc + 0.75, WH), (vc - 0.75, WH)], 'inf', fc='#ffffff', z=4.5, lw=0.8)
+    for tv, th in ((LINES_V[0], h0 - d0 / 2), (-HW + 1.5, h0 - 1.5), ((LINES_V[0] + LINES_V[1]) / 2, h0 - d0 + 0.5)):
+        V2.line([(vc, WH), (tv, th)], 'inf', lw=0.9, z=4.4, color='#8c8c8c')
+    V2.ax.fill_between(list(WALL['band']), [L3] * 2, [WH] * 2, color='#f6e3cf', lw=0, zorder=2.2, alpha=0.8)
+    V2.line([(vw, L3), (vw, WH)], 'inf', lw=1.2, z=4.6)
+    V2.line([(WALL['v_l3'], L3), (WALL['v_l3'], WH)], 'inf', lw=0.4, ls=(0, (1, 1.5)), z=4.6)
+    # sight line from the wall's foot to the NAIP camera (frame model): hidden by any canopy deeper than ~2 m
+    V2.line([(WALL['v_l3'], L3), (WALL['v_l3'] - WALL['k'] * (CANOPY + 3 - L3), CANOPY + 3)], 'inf', lw=0.4, ls=(0, (3, 1, 1, 1)), z=4.7)
+    hall_conflict(V2, sign=1, y=L3 + 3.0)
     V2.line([(vw, WH), (LINES_V[0] + 1.2, WH)], 'unk', lw=0.5)
     V2.poly([(-HW - 16, L3 - 1.0), (vw, L3 - 1.0), (vw, L3), (-HW - 16, L3)], 'inf', fc='#c9c9c9', z=3)
-    V2.line([(vw, CANOPY), (vw - 5.0, CANOPY)], 'inf', lw=1.0)
+    V2.line([(vw, CANOPY), (vw - CANOPY_D, CANOPY)], 'inf', lw=1.0)
     V2.poly([(vw + 0.5, L3 - 0.8), (HW - 0.5, L3 - 0.8), (HW - 0.5, L3), (vw + 0.5, L3)], 'inf', fc='#999999', z=3)
-    V2.leader((vw, WH - 3), -16, -2, f'west glass wall (3 layers of frit) [pub] on the departures curb:\nv {vw:.1f} ({WALL["v_range"][0]:.1f} to '
-              f'{WALL["v_range"][1]:.1f}) = NAIP facade-base line [obs] moved\nback by the relief of L3 [inf] (blue band = L3 {L3R[0]}-{L3R[1]});'
-              f' at grade it would\nread {WALL["v_grade"]:.1f}; head +{WH} [obs photo]', 'obs', fs=3.8, ha='right')
+    b0, b1 = WALL['band']
+    V2.leader((vw, WH - 3), -16, -2, f'west glass wall (3 layers of frit) [pub] on the departures curb [inf]: band v {b0:.1f} to {b1:.1f}\n'
+              f'(orange), drawn at its middle {vw:.1f}. The NAIP facade-base line [obs] reads {WALL["v_grade"]:.1f} at grade;\n'
+              f'the canopy ({CANOPY_D:.0f} m deep [inf]) hides the wall foot from the camera (sight line dash-dot:\n{WALL["k"]:.2f} m/m -> '
+              f'{WALL["foot_hidden_depth"]:.1f} m at canopy height), so the line is the canopy edge (-> {b1:.1f})\nor the wall above the canopy '
+              f'(-> {b0:.1f}); dotted {WALL["v_l3"]:.1f} = foot on L3, only with a canopy\n<= 2 m deep; head +{WH} [obs photo]', 'inf', fs=3.8, ha='right')
     V2.leader((vc, (L3 + WH) / 2), -12, 8, 'column stands clear in front of the glass and branches into the\nouter truss [obs photos i3 / i4]; '
               'its v is not measured [unk] -\ndrawn 2.5 m in front of the wall [inf]', 'inf', fs=3.8, ha='right')
     V2.text((-HW - 10, L3 + 1.5), 'departures roadway / curb', 'inf', fs=3.6)
-    V2.text((vw - 2.5, CANOPY + 1.2), 'canopy [inf]', 'inf', fs=3.4)
-    V2.line([(HW - 4, L3), (HW - 4, h0 - d0)], 'unk', lw=0.6)
-    V2.text((HW + 1.5, 24), 'east: cherry-wood high wall\n(interior) [pub]; position\nunknown [unk]', 'unk', fs=3.9, ha='left')
+    V2.text((vw - 2.5, CANOPY + 1.2), 'entrance canopy [pub SEAONC];\ndepth ~5 m [inf]', 'inf', fs=3.4)
+    V2.text((HW + 1.5, 24), 'east: cherry-wood high wall\n(interior) [pub]; position\nunknown [unk]; dashed = 210 ft\nfrom the west wall [inf]', 'unk', fs=3.9, ha='left')
     for a, b in zip(LINES_V[:-1], LINES_V[1:]):
         V2.dim((a, L3 - 1), (b, L3 - 1), -4, f'{SP:.2f}', 'obs', fs=4.0)
     V2.dim((-HW, 0), (HW, 0), -8, f'{F["W"]:.2f} m eave to eave [obs]; outer truss line to eave ~8.4 m [obs]', 'obs', fs=4.4)
-    V2.dim((-HW, h0 - 1.0), (vw, h0 - 1.0), 2.5, f'{vw + HW:.1f} ({WALL["v_range"][1] + HW:.1f}-{WALL["v_range"][0] + HW:.1f}) eave overhang', 'obs', fs=3.9)
+    V2.dim((-HW, h0 - 1.0), (vw, h0 - 1.0), 2.5, f'{vw + HW:.1f} ({b0 + HW:.1f}-{b1 + HW:.1f}) eave overhang [inf]', 'inf', fs=3.9)
     V2.dim((LINES_V[4] + 1.2, h0 - d0), (LINES_V[4] + 1.2, h0), 4, '29 ft [pub]', 'pub', fs=4.0)
     V2.level(HW + 2, L3, f'+{L3} level 3 ({L3R[0]}-{L3R[1]}) [inf]', 'inf', len_mm=5, fs=4.2, u_line=HW)
     V2.level(HW + 2, WH, f'+{WH} glass-wall head [obs photo]', 'obs', len_mm=5, fs=4.2, u_line=vw)
@@ -467,7 +547,7 @@ def sheet_section():
     V2.scalebar(y_mm=6)
     rows = [('Five balanced double-cantilever truss sets, linked by bowstring trusses', 'roof form', 'pub', 'SEAONC, MSC 2000, SOM, Smith-Emery'),
             ('Truss depth (max, over supports)', '29 ft = 8.84 m', 'pub', 'SEAONC'),
-            ('Centre span / end cantilever / overall', '380 / 160 / 860 ft', 'pub', 'SEAONC; 860 ft conflicts with NAIP 829 ft'),
+            ('Centre span / end cantilever / overall', '380 / 160 / 860 ft', 'pub', 'SEAONC; 860 ft conflicts with NAIP 830 ft'),
             ('Truss length / centre section', '320 / 180 ft', 'pub', 'MSC 2000 snippet only (AISC PDF unreadable)'),
             ('Columns', '20 from level 3', 'pub', 'SEAONC; positions inferred (5 lines x 4); west line in front of the glass [obs photo]'),
             ('Steel', 'Herrick; ~35 pieces by barge', 'pub', 'MSC 2000, SEAONC'),
@@ -476,6 +556,11 @@ def sheet_section():
     S.note('The section is a measured roof top (NAIP eave profile anchored on the FAA DOF roof tops) over an INFERRED structure: '
            'column positions from the published spans, truss depth published as a maximum only.')
     S.note('Level 3 = DOF roof top minus "100 ft" (sfgate2000) / "90 ft" (Smith-Emery) / the 83-ft hall height: 9.6-14.8 m, 11.5 adopted - no drawing or survey found.')
-    S.note('West wall: the NAIP base line fixes the wall only together with the height of its base; photos put that base on the elevated '
-           'departures curb (L3). If the imaged line were the curb-canopy edge instead, the wall would sit 2-4 m further east.')
+    S.note('West wall [inf]: the NAIP straight line fixes the wall only together with what it images. The curb canopy (SEAONC: "760 tons of '
+           'exposed steel at the ITB departures level window walls and entrance canopy"; ~5 m above L3 and ~5 m deep in photos) hides the wall\'s '
+           'foot from the camera if deeper than ~2 m, so the line is the canopy edge or the wall just above it: band v -28.3 to -23.3. The '
+           'earlier -26.3 (foot on L3) holds only for a canopy <= 2 m deep.')
+    S.note('Hall width CONFLICT: 210 ft = 64.0 m [pub] against at most 61.0 m under the roof east of the wall (55.9-61.0 over the band). '
+           'Resolutions: the wall nearer the eave; the hall continuing east under a lower roof (east edge = "fascia -> lower roof fall"); a '
+           'wider roof (SOM concept sketch 260 ft). Drawn: the published width from the west wall (dashed), 5.5 m beyond the east eave.')
     return S.finish()

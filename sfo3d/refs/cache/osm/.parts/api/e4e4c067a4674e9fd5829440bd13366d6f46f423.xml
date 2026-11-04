@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osmChange version="0.6" generator="openstreetmap-cgimap 2.1.1 (4868 spike-08.openstreetmap.org)" copyright="OpenStreetMap and contributors" attribution="http://www.openstreetmap.org/copyright" license="http://opendatacommons.org/licenses/odbl/1-0/">
+ <create>
+  <node id="14316031318" visible="true" version="1" changeset="190973639" timestamp="2026-10-24T14:18:25Z" user="Djroatan" uid="6650391" lat="37.5977004" lon="-122.3918019"/>
+ </create>
+ <create>
+  <node id="14316031319" visible="true" version="1" changeset="190973639" timestamp="2026-10-24T14:18:25Z" user="Djroatan" uid="6650391" lat="37.5977669" lon="-122.3916876"/>
+ </create>
+ <create>
+  <node id="14316031320" visible="true" version="1" changeset="190973639" timestamp="2026-10-24T14:18:25Z" user="Djroatan" uid="6650391" lat="37.5977663" lon="-122.3919146"/>
+ </create>
+ <create>
+  <node id="14316031321" visible="true" version="1" changeset="190973639" timestamp="2026-10-24T14:18:25Z" user="Djroatan" uid="6650391" lat="37.5977403" lon="-122.3918930"/>
+ </create>
+ <modify>
+  <node id="1389655475" visible="true" version="2" changeset="190973639" timestamp="2026-10-24T14:18:25Z" user="Djroatan" uid="6650391" lat="37.5976529" lon="-122.3918704"/>
+ </modify>
+ <modify>
+  <node id="1389655544" visible="true" version="2" changeset="190973639" timestamp="2026-10-24T14:18:25Z" user="Djroatan" uid="6650391" lat="37.5976924" lon="-122.3917974"/>
+ </modify>
+ <modify>
+  <node id="1389655575" visible="true" version="2" changeset="190973639" timestamp="2026-10-24T14:18:25Z" user="Djroatan" uid="6650391" lat="37.5977206" lon="-122.3919305"/>
+ </modify>
+ <modify>
+  <node id="1389655646" visible="true" version="2" changeset="190973639" timestamp="2026-10-24T14:18:25Z" user="Djroatan" uid="6650391" lat="37.5978515" lon="-122.3917546"/>
+ </modify>
+ <modify>
+  <way id="125009041" visible="true" version="3" changeset="190973639" timestamp="2026-10-24T14:18:25Z" user="Djroatan" uid="6650391">
+   <nd ref="1389655475"/>
+   <nd ref="1389655575"/>
+   <nd ref="14316031321"/>
+   <nd ref="14316031320"/>
+   <nd ref="1389655646"/>
+   <nd ref="14316031319"/>
+   <nd ref="14316031318"/>
+   <nd ref="1389655544"/>
+   <nd ref="1389655475"/>
+   <tag k="building" v="yes"/>
+   <tag k="source" v="Bing"/>
+  </way>
+ </modify>
+</osmChange>

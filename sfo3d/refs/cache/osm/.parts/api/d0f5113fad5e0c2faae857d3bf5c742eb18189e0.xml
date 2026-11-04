@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osmChange version="0.6" generator="openstreetmap-cgimap 2.1.1 (3862814 spike-07.openstreetmap.org)" copyright="OpenStreetMap and contributors" attribution="http://www.openstreetmap.org/copyright" license="http://opendatacommons.org/licenses/odbl/1-0/">
+ <create>
+  <node id="14301733211" visible="true" version="1" changeset="190773051" timestamp="2026-10-20T06:34:22Z" user="ChrisMD123" uid="2159136" lat="37.6232532" lon="-122.3955079"/>
+ </create>
+ <create>
+  <node id="14301733212" visible="true" version="1" changeset="190773051" timestamp="2026-10-20T06:34:22Z" user="ChrisMD123" uid="2159136" lat="37.6235800" lon="-122.3956391"/>
+ </create>
+ <create>
+  <node id="14301733213" visible="true" version="1" changeset="190773051" timestamp="2026-10-20T06:34:22Z" user="ChrisMD123" uid="2159136" lat="37.6235496" lon="-122.3957868"/>
+ </create>
+ <create>
+  <node id="14301733214" visible="true" version="1" changeset="190773051" timestamp="2026-10-20T06:34:22Z" user="ChrisMD123" uid="2159136" lat="37.6232140" lon="-122.3956610"/>
+ </create>
+ <create>
+  <way id="1569928558" visible="true" version="1" changeset="190773051" timestamp="2026-10-20T06:34:22Z" user="ChrisMD123" uid="2159136">
+   <nd ref="14301733211"/>
+   <nd ref="14301733212"/>
+   <nd ref="14301733213"/>
+   <nd ref="14301733214"/>
+   <nd ref="14301733211"/>
+   <tag k="building" v="construction"/>
+  </way>
+ </create>
+ <modify>
+  <way id="1428204598" visible="true" version="5" changeset="190773051" timestamp="2026-10-20T06:34:22Z" user="ChrisMD123" uid="2159136">
+   <nd ref="13130239588"/>
+   <nd ref="13389245858"/>
+   <nd ref="13130239589"/>
+   <nd ref="14301733212"/>
+   <nd ref="14301733211"/>
+   <nd ref="13130239590"/>
+   <nd ref="13130239591"/>
+   <nd ref="13130239592"/>
+   <nd ref="13130239593"/>
+   <nd ref="12537514002"/>
+   <nd ref="14301711840"/>
+   <nd ref="12537514001"/>
+   <nd ref="13130239588"/>
+   <tag k="landuse" v="construction"/>
+  </way>
+ </modify>
+</osmChange>

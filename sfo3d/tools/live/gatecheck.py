@@ -19,7 +19,7 @@ Our side (reimplemented exactly from the app, nothing imported from js/ at run t
     is reported; remote stands: distance < 40 m, score d + 4); taxiway polygons and runways excluded as in the app.
     Not reproduced: the app's occupancy arbitration and neighbour blocking (they depend on live state) -- this tool
     reports the best and the runner-up stand instead and flags two aircraft picking the same stand.
-  * js/live/airport.js CLASS_MAX, js/aircraft/types.js TYPES, js/live/aircraft.js TYPE_MODELS/BIZ_LEN (dumped with node).
+  * js/live/airport.js CLASS_MAX, js/aircraft/types.js TYPES, js/aircraft/fit.js TYPE_MODELS/BIZ_LEN (dumped with node).
   * --js runs the app's own Traffic.matchGate in node on the same reports and reports any difference (none on 24 Sep).
 
 Usage (from the repo root):
@@ -111,20 +111,18 @@ def in_polys(P, x, z):
 
 _TYPES_JS = r"""
 import { TYPES } from '%s/js/aircraft/types.js';
-import fs from 'fs';
-const src = fs.readFileSync('%s/js/live/aircraft.js', 'utf8');
-const TM = eval('(' + src.match(/export const TYPE_MODELS = (\{[\s\S]*?\n\});/)[1] + ')');
-const BZ = eval('(' + src.match(/const BIZ_LEN = (\{[\s\S]*?\});/)[1] + ')');
+// (TYPE_MODELS / BIZ_LEN live in js/aircraft/fit.js since the aircraft workflow's split; imported, not parsed out of the source)
+const { TYPE_MODELS: TM, BIZ_LEN: BZ } = await import('%s/js/aircraft/fit.js');
 const out = {};
 for (const [k, v] of Object.entries(TM)) { const T = TYPES[v.t]; if (T) out[k] = { t: v.t, L: T.L, span: T.wing ? T.wing.span : null }; }
 const C = TYPES.crj2;
-for (const [k, L] of Object.entries(BZ)) if (!out[k]) out[k] = { t: 'biz_' + k, L, span: C.wing.span * L / C.L };
+for (const [k, L] of Object.entries(BZ || {})) if (!out[k]) out[k] = { t: 'biz_' + k, L, span: C.wing.span * L / C.L };
 console.log(JSON.stringify(out));
 """
 def load_types():
     """ICAO type -> {L, span} exactly as the app sizes it (TYPE_MODELS -> TYPES, business jets scaled from crj2)."""
     p = os.path.join(CACHE, 'app_types.json')
-    srcs = [os.path.join(ROOT, 'js', 'aircraft', 'types.js'), os.path.join(ROOT, 'js', 'live', 'aircraft.js')]
+    srcs = [os.path.join(ROOT, 'js', 'aircraft', 'types.js'), os.path.join(ROOT, 'js', 'aircraft', 'fit.js')]
     if os.path.exists(p) and os.path.getmtime(p) > max(os.path.getmtime(s) for s in srcs): return json.load(open(p))
     try:
         out = subprocess.run(['node', '--input-type=module', '-e', _TYPES_JS % (ROOT, ROOT)], capture_output=True, text=True, timeout=60)

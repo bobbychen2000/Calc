@@ -11,7 +11,7 @@ Writes
   docs/drawings/buildings/index.json        sheet list (id, title, paper, scales, files)
   out/buildings/drawings/<id>_naip.jpg      the plan sheets over NAIP 2024 with deviation dots (local; NAIP is public
                                             domain but the owner keeps imagery overlays out of the repo)
-Sheets: BT-01..03 control tower, BI-01..03 international terminal, BD-01..02 domestic terminals, BL-01..03 landside,
+Sheets: BT-01..03 control tower, BI-01..03 international terminal, BD-01..03 domestic terminals, BL-01..03 landside,
 BX-01 current 3-D app vs spec. Engine: draw_lib.py; inputs: draw_data.py; deviations: draw_measure.py.
 """
 import json
@@ -29,7 +29,7 @@ def main(argv):
     dev = draw_measure.run() if naip else json.load(open(os.path.join(DOCS, 'deviations.json')))
     jobs = [('BT-01', lambda: draw_tower.sheet_plan()), ('BT-02', draw_tower.sheet_elev), ('BT-03', draw_tower.sheet_section),
             ('BI-01', lambda: draw_itb.sheet_plan()), ('BI-02', draw_itb.sheet_elev), ('BI-03', draw_itb.sheet_section),
-            ('BD-01', lambda: draw_domestic.sheet_plan()), ('BD-02', draw_domestic.sheet_elev),
+            ('BD-01', lambda: draw_domestic.sheet_plan()), ('BD-02', draw_domestic.sheet_elev), ('BD-03', draw_domestic.sheet_landside),
             ('BL-01', draw_landside.sheet_key), ('BL-02', lambda: draw_landside.sheet_roofs()), ('BL-03', draw_landside.sheet_elev),
             ('BX-01', draw_compare.sheet)]
     if naip:

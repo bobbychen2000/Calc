@@ -93,9 +93,9 @@ def run():
     E = []
     # ------------------------------------------------------------------ tower base building + cab disc
     atc = D.sfom('Air Traffic Control Tower')[0][0]
-    h_ibf = D.TV['h_ibf_roof']['value']
+    h_ibf = round(67.36 - (3.46 * 15.2 + 0.7), 2)   # family 1 (buildings_tower.md 12.3); family 2: 13.1 (0.5 m less relief)
     E += measure_ring('Tower base building (IBF)', atc, h_ibf, lambda P: per_m_frame(P, h_ibf), 'frame',
-                      'h_ibf_roof 14.2 [inf] (12.7-16.5)')
+                      f'family-1 base-building roof {h_ibf} [inf] (spec range 12.7-16.5; family 2 13.1)')
     cab = np.array(D.TV['position_cab_roof_centre']['value'], float)
     imaged = np.array([-700.85, 322.40])  # spec position_cab_roof_centre note: NAIP 2024 disc centre (obs)
     cabchk = {}
@@ -104,6 +104,14 @@ def run():
         pred = cab + D.lean_frame(cab, H); preds.append(pred)
         cabchk[fam] = dict(predicted_imaged=[round(float(x), 2) for x in pred], observed_imaged=imaged.tolist(),
                            delta=[round(float(x), 2) for x in imaged - pred])
+    # family 2 at an F2-admissible cab x: its likely bound at rim 64.0 (spec x_bounds interpolated, as BT-01) [inf]
+    xb2 = round(-737.1 + (-739.6 + 737.1) * (64.0 - 63.3) / (67.36 - 63.3), 1)
+    cab2 = np.array([xb2, cab[1]])
+    pred2 = cab2 + D.lean_frame(cab2, 64.0)
+    cabchk[f'family 2 at its likely x bound (rim 64.0 m)'] = dict(
+        cab_x=xb2, predicted_imaged=[round(float(x), 2) for x in pred2], observed_imaged=imaged.tolist(),
+        delta=[round(float(x), 2) for x in imaged - pred2],
+        note='F2 cab moved to its own likely bound (the spec x_bounds for a 63.3 / 67.36 m rim interpolated to 64.0 m): |delta| 1.72 m against F1 1.53 m - about as good')
     fm = D.IV['naip.k_model']['alt_frame_model']
     lean_m = float(np.hypot(*D.lean_frame(cab, 66.0)))
     cabchk['_reading'] = dict(
@@ -112,7 +120,8 @@ def run():
                                frame_lean_sd_m=round(lean_m * fm['H_minus_h_sd'] / fm['H_minus_h'], 1),
                                frame_note=f"H - h sd {fm['H_minus_h_sd']} m of {fm['H_minus_h']} m on the ~{lean_m:.0f} m lean"),
         verdict='INCONCLUSIVE: the two families predict imaged centres closer together than the input uncertainty; the k(x) model '
-                'gives the same pair (-701.8 / -703.7), so a second relief model does not separate them.')
+                'gives the same pair (-701.8 / -703.7), so a second relief model does not separate them. At x -739 F2 lies below its own '
+                'likely bound; with F2 at that bound its |delta| (1.72 m) is about F1\'s (1.53 m).')
     # ------------------------------------------------------------------ ITB hall roof (eave height varies along u)
     F = D.itb_frame(); C = F['corners']
     ring = [C['NW'], C['NE'], C['SE'], C['SW']]
@@ -126,7 +135,7 @@ def run():
     # v -43.5) is the wall base on the elevated departures curb (level 3, photos); drawn wall = that line moved back by the
     # relief of h = L3; checked at its predicted imaged position (same imagery: a consistency check of the placement)
     W = D.itb_west_wall()
-    a, b = D.itb_uv(F, -100.0, W['v']), D.itb_uv(F, 100.0, W['v'])
+    a, b = D.itb_uv(F, -100.0, W['v_l3']), D.itb_uv(F, 100.0, W['v_l3'])   # the L3-foot reading (consistency only)
     for p, q in _chunks(a, b):
         mid = (p + q) / 2; sh = D.lean_frame(mid, W['h_base']); n = -F['v']
         r = measure_edge(p, q, n, sh, half=3.0)

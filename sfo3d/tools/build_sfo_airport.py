@@ -53,8 +53,12 @@ SMOOTH_HALF = 3.0         # m, half-length of the chord used for the normal at s
 UNTWIST_MAX_SPAN = 4      # self-crossing loops of at most this many vertices ...
 UNTWIST_MAX_AREA = 10.0   # m^2 ... and this area are cut out of the (snapped) rings
 
-ATTRIBUTION = ('Airport geometry: SFO Museum, sfomuseum-data-architecture '
-               '(CDLA-Permissive-1.0)')
+# static close-out (2026-11-04): CDLA-Permissive-1.0 s.3.1(a) name + link of the agreement, s.3.1(b) "prominent notices
+# that You have changed those files" (docs/ATTRIBUTION.md). data/sfo_airport.* carries this only after a regeneration
+# (needs the SFO Museum repository at refs/sfom-arch or $SFOM_DATA - not present in the container since 2026-11-04).
+ATTRIBUTION = ('Airport geometry: SFO Museum, sfomuseum-data-architecture (Community Data License Agreement - Permissive '
+               '1.0, https://cdla.dev/permissive-1-0/). CHANGED by sfo3d (tools/build_sfo_airport.py): projected to the '
+               'local world frame, rings simplified / snapped / untwisted, duplicate gates flagged')
 RING_CONVENTION = ('Coordinates are [x, z] in metres: x = east, z = south, origin = ARP. '
                    'Each polygon is a list of rings: rings[0] is the outer ring, the rest '
                    'are holes. Viewed from above in (x, -z) = (east, north) space, outer '

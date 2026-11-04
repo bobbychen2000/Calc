@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osmChange version="0.6" generator="openstreetmap-cgimap 2.1.1 (49966 spike-08.openstreetmap.org)" copyright="OpenStreetMap and contributors" attribution="http://www.openstreetmap.org/copyright" license="http://opendatacommons.org/licenses/odbl/1-0/">
+ <modify>
+  <node id="4204722301" visible="true" version="4" changeset="190716573" timestamp="2026-10-18T21:25:31Z" user="jesszhan0024" uid="23667821" lat="37.6003263" lon="-122.3897776">
+   <tag k="barrier" v="kerb"/>
+   <tag k="kerb" v="lowered"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="10131822086" visible="true" version="2" changeset="190716573" timestamp="2026-10-18T21:26:12Z" user="jesszhan0024" uid="23667821" lat="37.6004663" lon="-122.3898998">
+   <tag k="barrier" v="kerb"/>
+   <tag k="kerb" v="lowered"/>
+  </node>
+ </modify>
+</osmChange>

@@ -172,7 +172,7 @@ const ICAO_OF = {}; for (const [icao, k] of Object.entries(ICAO_TYPES)) if (!ICA
 // of a wide-body stand docks to (T.dock2, from the manufacturers' documents), 3 the A380 upper-deck door U1L (upper-deck
 // bridges). x = door CENTRE station from the nose tip (the rendered door of the imported model where it has one, else the
 // published centre), cab floor = published door sill above the ground, and the cab stops at the rendered fuselage side at
-// door height (T.dockHW).
+// that door (T.dockHW, T.dockHW2 for the second bridge's door, T.dockHW3 for U1L: the widest skin over the door opening).
 function doorOf(nose, f, T, which) {
   const left = v3.mul(v3.norm(v3.cross(f, [0, 1, 0])), -1);
   if (which === 3) {
@@ -190,7 +190,8 @@ function doorOf(nose, f, T, which) {
   // second bridge (docks()); its retracted bridge still points at door 2 or the aft door)
   const x = two ? T.dockX2 : which >= 2 ? ((T.doorsOpt && T.doorsOpt[0]) ?? T.doors[1] ?? T.dockX1) : (T.dockX1 ?? T.doors[0]);
   const sill = two ? (T.dockSill2 ?? T.dockSill) : (T.dockSill ?? (T.sill ?? T.Hc - 0.3 * T.R));
-  const d = v3.add(v3.sub(nose, v3.mul(f, x)), v3.mul(left, (T.dockHW ?? T.R) + 0.15)); d[1] = G + sill;
+  const hw = (two ? T.dockHW2 : null) ?? T.dockHW ?? T.R;   // skin half width at that door (js/aircraft/fit.js)
+  const d = v3.add(v3.sub(nose, v3.mul(f, x)), v3.mul(left, hw + 0.15)); d[1] = G + sill;
   return { door: d, left };
 }
 export { doorOf, acHit, boxHitsAc, PBB };

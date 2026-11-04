@@ -166,14 +166,16 @@ def itb_eave_h(absu):
     return np.interp(absu, U, H)
 
 
+CANOPY_RISE, CANOPY_D = 5.0, 5.0   # ITB curb canopy: height above L3 and depth, photos i3 / i4 [inf]; existence [pub SEAONC]
 L3_RANGE = (9.6, 14.8)      # level3.floor: 40.1 m minus 100 ft (sfgate2000) .. minus the 83-ft hall height (verification)
 
 
 def itb_west_wall():
     """True position of the ITB west glass wall in the roof frame (v, m; west eave at -W/2), from the NAIP straight
     facade-base line (itb_naip_measurements eave_profile.base_line_v_median, imaged frame, sd 0.6 m) [obs] moved back by
-    the frame-model relief of the height of that base. The base is the glass wall's foot on the elevated departures curb
-    (level 3, photos i3 / i4) [inf height: level3.floor 11.5, 9.6-14.8]; v_grade = the reading if the base were at grade."""
+    the frame-model relief of the height of that base. v_l3 = the reading if the line is the wall's foot on the departures
+    curb (level 3, 11.5 m [inf]); v_grade = at grade. With the curb canopy drawn (5 m deep) the foot is hidden, so the wall
+    is drawn as the band between the canopy-edge and wall-above-canopy readings, v = its middle [inf]."""
     F = itb_frame(); rf = ITBM['roof_frame']; ep = ITBM['eave_profile']
     ci = np.array(rf['centre_imaged_xz'], float); ax = unit(rf['axis_xz']); vv = np.array([ax[1], -ax[0]])
     P = ci + vv * ep['base_line_v_median']
@@ -182,7 +184,15 @@ def itb_west_wall():
     def v_at(h):
         return v_img - float(np.dot(lean_frame(P, h), F['v']))
     h = IV['level3.floor']['value']
-    return dict(v=v_at(h), v_range=(v_at(L3_RANGE[1]), v_at(L3_RANGE[0])), v_grade=v_img, h_base=h, sd=ep['base_line_v_sd'])
+    # the curb canopy (SEAONC: "760 tons of exposed steel at the ITB departures level window walls and entrance canopy" [pub
+    # existence]; ~5 m above L3 and ~5 m deep in photos i3 / i4 [inf]) hides the wall's foot from the NAIP camera whenever it
+    # is deeper than (CANOPY_H - L3) x k (~2 m): the imaged straight line is then either the canopy's outer edge (wall =
+    # reading at CANOPY_H + depth) or the wall just above the canopy (reading at CANOPY_H) [inf]
+    k = (v_img - v_at(h)) / h
+    hc = h + CANOPY_RISE
+    band = (v_at(hc), v_at(hc) + CANOPY_D)
+    return dict(v=0.5 * (band[0] + band[1]), band=band, v_l3=v_at(h), v_range=(v_at(L3_RANGE[1]), v_at(L3_RANGE[0])), v_grade=v_img,
+                h_base=h, k=k, h_canopy=hc, foot_hidden_depth=CANOPY_RISE * k, sd=ep['base_line_v_sd'])
 
 
 def itb_profile_points():

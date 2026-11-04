@@ -573,3 +573,62 @@ python3 tools/buildings/itb_naip_measure.py          # unchanged; output identic
 python3 tools/buildings/build_spec_itb.py            # regenerates spec_itb.json without the verdicts ...
 python3 tools/buildings/itb_verify.py --apply        # ... so re-apply them (writes itb_verify.json and the spec)
 ```
+
+## Drawing round (2026-11-04): facade and roof details used by BI-01..03
+
+**West glass wall position** [obs + inf]. `eave_profile.base_line_v_median` = −43.5 m (imaged frame, centre
+(−1223.11, 361.42), sd 0.6) lies at v = −21.8 m in the relief-corrected roof frame of the sheets (centre
+(−1244.56, 365.41)). The line fixes the wall only together with the height of the base it images. Photos put the wall's
+foot on the elevated departures curb (level 3), so the wall is the line moved back by the frame-model relief of L3:
+**v = −26.3 m (−27.6 to −25.6 for L3 14.8–9.6 m), 6.4 m (5.1–7.1) inside the west eave** (`draw_data.itb_west_wall`).
+At grade it would read −21.8; if the imaged line were the curb-canopy edge (~16.5 m) the wall would sit 2–4 m further
+east. The deviation check of the drawn wall base at its predicted imaged position: 6/6 pieces, median +0.03 m
+(consistency, same imagery).
+
+**Photos** (i4 DimiCalifornia 2005, public domain, near-frontal long lens: 0.1335 m/px from the 126.4 m tip-to-crown
+span; i3 Elizabeth K. Joseph 2017, CC BY 2.0; i1 Kulikovsky 2007, CC BY 3.0; reference only):
+- Glass-wall head level at ~30.8 m: 70 px = 9.3 m below the wing crest (cf. the 29-ft truss depth) [obs, ± 1.5].
+- The football trusses are exposed above the wall along the whole facade and taper to the tips [obs].
+- Columns: single white columns at u −83.4 / −59.4 m (± 1.5; inferred lines −82.3 / −57.9). Each "pair" in i4 is a
+  column and its shadow on the glass, so the columns stand clear in front of the wall; in i3 they rise from the curb
+  sidewalk and branch into struts into the trusses [obs]. Their v is not measured.
+- The hall's west wall ends ~157 px = ~21 m short of the north tip (705-ft hall centred: 19.0 m): open cantilevers.
+- V notches at |u| 27–29 m; the centre arch reads level with, or ~1 m above, the humps (40.1 m ± 2 kept).
+- Curb canopy ~4.5–6 m above the curb [inf].
+
+**Roof plan.** Relative to the fascia midpoint (imaged u +1.0), the glass tip bands end 1.6 m (N) / 3.6 m (S) inside
+the fascia, and the lens row's area centroids lie 1.5–2.2 m north; the westmost lens is drawn full length (mean of the
+other four), per the verification.
+
+**BA-G overlay** uses the k(x) relief (as the verified height): roof median +0.13 m, |median| 1.05, 88 % within 2.5 m;
+with the frame model (which fails at G) −0.60 / 1.46 / 72 %. Base unchanged (−0.57 / −0.64).
+
+## Drawing round 2 (2026-11-04)
+
+**West wall and the curb canopy** [inf]. SEAONC (re-fetched): "760 tons of exposed steel at the ITB departures level
+window walls and entrance canopy" — the canopy exists [pub]; ~5 m above L3 and ~5 m deep in photos i3 / i4 [inf]. The
+frame-model lean across the facade is (−21.83 + 26.31) / 11.5 = 0.39 m/m, so the sight line from the wall's foot (L3)
+leaves the wall by only 1.95 m at canopy height: a canopy deeper than ~2 m hides the foot. The imaged straight line is
+then the canopy's outer edge (wall at v −23.3) or the wall just above the canopy (v −28.3). The sheets draw the band
+−28.3 to −23.3 (4.4–9.4 m inside the eave) at its middle −25.8, tagged inf; −26.3 is valid only for a canopy ≤ 2 m deep.
+
+**Hall width conflict** [pub vs obs]. SEAONC: "705 ft long, 210 ft wide, and up to 83 ft high" = 64.0 m wide. East of
+the wall there are at most 61.0 m (55.9–61.0 over the band) under the 65.4 m roof. Resolutions: the wall nearer the
+eave; the hall running east under a lower roof (the measured east edge is "fascia → lower roof fall"); a wider roof (SOM
+concept sketch 866' × 260'). BI-02 / BI-03 draw the published width from the wall, ending 5.5 m beyond the east eave.
+
+**Hump anchor** [inf]. The eave fit is anchored on the DOF mean (40.08) at its fitted peak |u| 67, where no DOF point
+exists. At the DOF stations (u +57.16, 39.93; u −58.35, 40.23; 0.8–1.1 m inside the west eave) the curve reads 39.70 /
+39.78, 0.23 / 0.45 m low (inside the 1A ± 3 ft). Anchored there every eave height would rise ~0.34 m (peak ~40.4).
+The sheets tag 40.08 as a DOF-anchored fit [inf] and show the DOF values at their stations [pub].
+
+**West facade** (photos i1 Kulikovsky 2007, CC BY 3.0; i4 DimiCalifornia 2005, public domain; reference only), measured
+on i4 at 0.1331 m/px about the centre column 1025: a clear central bay x 727–1323 (±39 m; i1 ±42 m) on a mullion grid
+(verticals ~6.1 m, horizontals ~2.2 m, low); the lettering "SAN FRANCISCO INTERNATIONAL" x 780–1267 (±32.5 m; i1 ±37 m),
+~2.7–2.8 m tall; fritted side bays white with horizontal frit bands and a dark clear strip just above the canopy; the
+central glazing's head follows the centre section's bottom chord, 1–3.5 m above the side bays' head (tentative).
+
+**Skylight planform** [inf]: drawn as pointed lenses with the D-shaped alternative dotted (spec verification: not settled).
+
+**Tags corrected**: the west-line columns (u at the inferred column lines) and the hump are inf; the BA-A pod-1 top is
+"DOF 25.9 [pub] vs NAIP 22.3–25.2 [obs] (conflict)"; 252.87 m = 830 ft (rounded, was 829).

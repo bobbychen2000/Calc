@@ -31,6 +31,28 @@ export function buildingGrid(airport, res = 2) {
   cv.width = cv.height = 1;
   return (x, z) => { const i = Math.floor((x - x0) / res), j = Math.floor((z - z0) / res); return i >= 0 && j >= 0 && i < W && j < H && m[j * W + i] === 1; };
 }
+// jet bridges at rest as obstacles for the FUSELAGE of an aircraft parked off a stand: the footprints of the bridge solids
+// (gates.js solids(g, b, 0): oriented boxes {c, u, hl, hw, lo, hi, round} with world heights) whose height band reaches
+// below the top of an airliner fuselage (lo < 7 m above the ground, B777 crown ~6.3 m), on a 1 m grid. Review 4 Nov: UAL1180
+// B77W was drawn inside the G8 bridge tunnel at rest for 18 min (bridge.hit.fus 1,097 frames) -- the outline check never
+// saw it, it knew no bridges. Parked aircraft at a surveyed stand pose are not tested (the layout clears the rest poses)
+export function bridgeGrid(boxes, groundY = 0, res = 1) {
+  const B = boxes.filter(b => b && b.c && (b.lo - groundY) < 7);
+  if (!B.length) return null;
+  let x0 = 1e9, z0 = 1e9, x1 = -1e9, z1 = -1e9;
+  for (const b of B) { const r = b.round || Math.hypot(b.hl, b.hw); x0 = Math.min(x0, b.c[0] - r); x1 = Math.max(x1, b.c[0] + r); z0 = Math.min(z0, b.c[1] - r); z1 = Math.max(z1, b.c[1] + r); }
+  x0 = Math.floor(x0) - 1; z0 = Math.floor(z0) - 1; const W = Math.ceil((x1 - x0) / res) + 2, H = Math.ceil((z1 - z0) / res) + 2;
+  const m = new Uint8Array(W * H);
+  for (const b of B) {
+    const r = b.round || Math.hypot(b.hl, b.hw); const i0 = Math.max(0, Math.floor((b.c[0] - r - x0) / res)), i1 = Math.min(W - 1, Math.ceil((b.c[0] + r - x0) / res));
+    const j0 = Math.max(0, Math.floor((b.c[1] - r - z0) / res)), j1 = Math.min(H - 1, Math.ceil((b.c[1] + r - z0) / res));
+    for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) {
+      const dx = x0 + (i + 0.5) * res - b.c[0], dz = z0 + (j + 0.5) * res - b.c[1];
+      if (b.round ? Math.hypot(dx, dz) < b.round : (Math.abs(dx * b.u[0] + dz * b.u[1]) < b.hl && Math.abs(-dx * b.u[1] + dz * b.u[0]) < b.hw)) m[j * W + i] = 1;
+    }
+  }
+  return (x, z) => { const i = Math.floor((x - x0) / res), j = Math.floor((z - z0) / res); return i >= 0 && j >= 0 && i < W && j < H && m[j * W + i] === 1; };
+}
 // pavement test: rendered mask OR the OSM taxi net (aprons + taxiway strips); cached on a 1 m grid
 export function pavedUnion(mask, net) {
   if (!net || !net.ok) return mask;
@@ -54,7 +76,11 @@ export function samples(T, nose, h) {
   const hs = T.hstab ? T.hstab.span / 2 : 6, hx = T.hstab ? T.hstab.x + (T.hstab.rootC || 3) : T.L - 2;
   const outline = [P(0, 0), P(T.L, 0), P(tipLE + tipC / 2, span), P(tipLE + tipC / 2, -span), P(le + span * 0.5 * sw, span * 0.5), P(le + span * 0.5 * sw, -span * 0.5),
     P(hx, hs), P(hx, -hs), P(T.L * 0.25, 0), P(T.L * 0.5, 0), P(T.L * 0.75, 0), P(le, T.R), P(le, -T.R)];
-  return { gear, outline, f, r };
+  // the fuselage itself: both sides (0.9 R) every <= 3 m from 1 m behind the nose to the tail cone, for the building and
+  // bridge tests (13 outline points left 10-20 m of a 777's sides unsampled: review 4 Nov, UAL1180 drawn in the terminal)
+  const fus = []; const n = Math.max(4, Math.ceil(T.L / 3)), R = (T.R || 2) * 0.9;
+  for (let i = 0; i <= n; i++) { const a = 1 + (T.L - 2) * i / n; fus.push(P(a, R), P(a, -R)); }
+  return { gear, outline, fus, f, r };
 }
 // is point q inside the planform of aircraft A (nose, heading, type) with margin m
 export function inside(A, q, m) {
@@ -79,7 +105,7 @@ export function overlaps(A, B, m = 0) {
 }
 
 export class GroundPhysics {
-  constructor({ paved, building, net = null }) { this.paved = pavedUnion(paved, net); this.building = building; this.frame = 0; this.stats = {}; }
+  constructor({ paved, building, net = null, bridges = null }) { this.paved = pavedUnion(paved, net); this.building = building; this.bridges = bridges; this.frame = 0; this.stats = {}; }
   body(tr, pose) {
     const T = tr.model && TYPES[tr.model.t]; if (!T) return null;
     const D = pose || tr.disp; const B = bodyOf(T, D.x, D.z, D.hdg); B.tr = tr; return B;
@@ -88,6 +114,8 @@ export class GroundPhysics {
     const S = samples(B.T, B.nose, B.h);
     if (gear && this.paved) for (const g of S.gear) if (!this.paved(g[0], g[1])) return false;
     for (const p of S.outline) if (this.building && this.building(p[0], p[1])) return false;
+    for (const p of S.fus) if ((this.building && this.building(p[0], p[1])) || (this.bridges && this.bridges(p[0], p[1]))) return false;
+    if (this.bridges) for (const k of [0, 8, 9, 10]) { const p = S.outline[k]; if (this.bridges(p[0], p[1])) return false; }   // (nose, tail cone, centreline)
     for (const o of others) {
       if (Math.hypot(o.nose[0] - B.nose[0], o.nose[1] - B.nose[1]) > (o.T.L + B.T.L) * 0.5 + 45) continue;
       for (const p of S.outline) if (inside(o, p, 1.0)) return false;

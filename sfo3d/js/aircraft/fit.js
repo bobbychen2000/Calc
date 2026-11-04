@@ -14,13 +14,18 @@
 //             model, A320neo family sharklet span on the fence-tip models, A330neo, 767-400ER, CRJ900 late build, ...).
 //             The tip shape itself is the model's (a fence stays a fence): see docs/research/aircraft_models_check.md.
 //   seating   models with their own gear stand on it (FG 737-800, 777; the 777's extended oleos compressed to the published
-//             fuselage height); gear-less models are placed so the door the bridge meets is where the documents put it: on the door-1 sill
+//             fuselage height), pitched nose-down about the main-gear contact so the nose tyre touches the ground too (T.fit.pitch,
+//             applied by js/live/aircraft.js placement(); the FG models stand level with the nose tyre 0.165 m (737) / 0.18 m
+//             (777) up, review 4 Nov 2026; the ACAPs show both types nose-down at rest, e.g. 737-800 entry door 1 sill
+//             2.59-2.74 m vs door 2 2.97-3.12 m, D6-58325-7 Rev C §2.3.2 p.2-18: ~0.8 deg); gear-less models are placed so the door the bridge meets is where the documents put it: on the door-1 sill
 //             when the source model has a door object (A320 family, A220-100, CRJ700/900, E-Jets), else on the published
 //             fuselage top at door 1, else on the published overall height. The 737-800 model has its own gear.
 //   docking   the jet bridge docks at the rendered door: the model's own door object where it has one (rendered station,
 //             including scale and plugs), else the published door centre; floor at the published sill; the cab stops at the
-//             rendered fuselage side at door height.
-// Results are written onto the TYPES entry (T.fit, T.Hc, T.dockX1/2, T.dockSill/2, T.dockHW), which js/live/gates.js,
+//             rendered fuselage side at the door's station: the widest skin over the door opening (sill to sill + 1.9 m),
+//             measured on planar cuts of the mesh (hwAt) for door 1 (T.dockHW), the second bridge's door (T.dockHW2) and the
+//             A380 upper-deck door (T.dockHW3); T.dockSkin holds the skin profile from the sill up for each.
+// Results are written onto the TYPES entry (T.fit, T.Hc, T.dockX1/2/3, T.dockSill/2/3, T.dockHW/2/3, T.dockSkin), which js/live/gates.js,
 // js/live/aircraft.js and the procedural airframe read.
 import { TYPES, SPEC, ICAO_TYPES } from './types.js';
 import { MODEL_DIMS, MODEL_FEATURES } from '../../data/models/manifest.js';
@@ -92,6 +97,10 @@ const TIP_CUT = { b738: { z0: 17.5, y0: 0.75, zTo: 17.62, yTo: 0.6 } };
 // CFM International LEAP-1B and CFM56-7B data) about the nacelle's lowest line, so the ground clearance stays the model's
 const ENG_SCALE = { b37m: 1.14, b38m: 1.14, b39m: 1.14, b3xm: 1.14 };
 
+// A380 upper-deck door U1L: Airbus AC A380 Dec 01/25 FIGURE-2-7-0-991-002 (U1 20.94 m from the nose) and
+// FIGURE-2-3-0-991-001 (U1 sill 7.87-7.89 m at MRW, fwd / aft CG; docs/requests/bridges_aircraft.md)
+const A388_U1 = { x: 20.94, sill: 7.88 };
+
 function plugsFor(t, base) {
   const T = SPEC[t], B = SPEC[base]; const dL = T.L - B.L;
   if (Math.abs(dL) < 0.3 || !PLUG_AT[base]) return null;
@@ -120,18 +129,47 @@ function secAt(F, xm) {
   }
   return best;
 }
+// rendered skin half width (model units) at station st (model units, positive aft) and model height y, where the jet-bridge
+// cab meets the fuselage: the section table F.sec.hwf (half widths at the fractions F.sec.f of each section's height,
+// tools/models/model_features.py) interpolated in height, then linearly in station between the nearest complete section
+// ahead of st and the nearest behind it (each within 2 m: a cut through a door opening may be incomplete). Review 4 Nov
+// 2026: the ellipse through the tallest section within +-2 m (secAt) took a section 1-2 m aft of a widebody's door 1 in
+// the tapering nose, and the bellows stopped 0.20-0.29 m short of the skin. Falls back to that ellipse without a table.
+function hwAt(F, st, y) {
+  const S = F && F.sec; if (!S) return null;
+  const at = (j) => {
+    const t = S.top[j], b = S.bot[j], h = S.hw[j], r = S.hwf && S.hwf[j];
+    if (t == null || b == null || h == null || h < 0.3 * (t - b) / 2 || !r) return null;
+    const q = (y - b) / (t - b), f = S.f; if (q < f[0] || q > f[f.length - 1]) return null;
+    let k = 0; while (k < f.length - 2 && q > f[k + 1]) k++;
+    if (r[k] == null || r[k + 1] == null) return null;
+    return r[k] + (r[k + 1] - r[k]) * (q - f[k]) / (f[k + 1] - f[k]);
+  };
+  const j0 = Math.floor(st / S.dx), w = Math.round(2 / S.dx), n = S.top.length;
+  let a = null, b = null;
+  for (let j = j0; j >= Math.max(0, j0 - w); j--) { const v = at(j); if (v != null) { a = { j, v }; break; } }
+  for (let j = j0 + 1; j <= Math.min(n - 1, j0 + 1 + w); j++) { const v = at(j); if (v != null) { b = { j, v }; break; } }
+  if (a && b) return a.v + (b.v - a.v) * (st / S.dx - a.j) / (b.j - a.j);
+  if (a || b) return (a || b).v;
+  const sec = secAt(F, st); if (!sec) return null;
+  const yc = (sec.top + sec.bot) / 2, R = (sec.top - sec.bot) / 2;
+  return sec.hw * Math.sqrt(Math.max(0.05, 1 - ((y - yc) / R) ** 2));
+}
+// model station (units, positive aft) of a rendered station X (m from the nose): inverse of rx (bisection)
+function stOf(rx, X, L) { let lo = -10, hi = L + 20; for (let it = 0; it < 40; it++) { const m = (lo + hi) / 2; if (rx(m) < X) lo = m; else hi = m; } return (lo + hi) / 2; }
 // top of the fuselage (model units) over the forward fuselage (10-50 % of the length; 747/A380: the upper deck). The top
 // profile is first median-filtered over 5 m so a short dorsal hump or antenna fairing is not taken for the crown (A220-300
 // model: a hump of +0.28 m at 12 m seated the aircraft 0.28 m too low, review round 1); the 747 / A380 upper decks are
 // longer than the filter and are kept.
-function crownOf(F, L) {
+// ty(st, y): optional map of a profile point (station, model y) to the rendered model y (the stance pitch of gear models)
+function crownOf(F, L, ty = null) {
   const S = F && F.sec; if (!S) return null;
   const ok = (j) => { const t = S.top[j], b = S.bot[j], h = S.hw[j]; return t != null && b != null && h != null && h >= 0.3 * (t - b) / 2; };
   const w = Math.max(1, Math.round(2.5 / S.dx)); let c = null;
   for (let j = Math.ceil(0.1 * L / S.dx); j <= Math.floor(0.5 * L / S.dx) && j < S.top.length; j++) {
     if (!ok(j)) continue;
     const win = []; for (let i = j - w; i <= j + w; i++) if (i >= 0 && i < S.top.length && ok(i)) win.push(S.top[i]);
-    win.sort((a, b) => a - b); const t = win[win.length >> 1];
+    win.sort((a, b) => a - b); const t = ty ? ty(j * S.dx, win[win.length >> 1]) : win[win.length >> 1];
     if (c == null || t > c) c = t;
   }
   return c;
@@ -160,7 +198,7 @@ export function fitType(t, m) {
   const T = TYPES[t], S = SPEC[t], d = MODEL_DIMS[m], F = MODEL_FEATURES[m] || null; if (!T || !S || !d) return null;
   const base = MODEL_BASE[m], B = SPEC[base];
   const s0 = B.L / d.L;                                   // model units -> metres (published length of the model's own type)
-  const pl = base !== t ? plugsFor(t, base) : null;
+  const pl = base !== t && !T.uniform ? plugsFor(t, base) : null;   // T.uniform: generic airframe, scaled uniformly
   const stretch = {};
   if (pl) Object.assign(stretch, { cut1: -pl.at1 / s0, cut2: -pl.at2 / s0, d1: pl.d1 / s0, d2: pl.d2 / s0, bl2: pl.bl2 / s0 });
   const plugM = pl ? (pl.d1 + pl.d2) / s0 : 0;
@@ -169,17 +207,13 @@ export function fitType(t, m) {
   // (stations inside a removed section map onto the plug station or the blend, plugShift above)
   const sh = (st, a, dd, bl = 0) => -plugShift(-st, -a, dd, bl);
   const rx = (xm) => s * (xm + (pl ? sh(xm, pl.at1 / s0, pl.d1 / s0) + sh(xm, pl.at2 / s0, pl.d2 / s0, pl.bl2 / s0) : 0));
-  // wing span fit
-  // 757: the ACAP span (38.05 m) is the plain wing; the model carries blended winglets (fitted to most SFO 757s) whose span
-  // is in no primary document here (APB publishes weights only). The wing is fitted up to the winglet root (model |z|
-  // 18.55, measured on the model's upper-skin profile: the skin rises 0.5 m within 0.25 m outboard of it), so the plain wing
-  // has the documented span and the winglet adds its own (artist) extent (review round 1: squeezing the whole tip to
-  // 38.05 m made a winglet aircraft 3 m narrower than any real one)
-  const WROOT = { b752: 18.55 };
+  // wing span fit (757: SPEC span is the blended-winglet span the model carries, 41.07 m, Boeing / APB; the outer wing is
+  // stretched and the winglet translated rigidly. Review 4 Nov 2026: the earlier fit to the plain-wing 38.05 m up to the
+  // winglet root drew 39.16 m, 1.9 m short of the published winglet span)
   const cut = TIP_ADD[t] && TIP_CUT[m];
   if (cut) stretch.tipCut = cut;
   if (ENG_SCALE[t] && TIP_CUT[m]) stretch.engScale = { k: ENG_SCALE[t] };
-  const semi = WROOT[m] && S.spanNoTip ? WROOT[m] : cut ? cut.zTo : F ? F.wing.semi : d.span / 2;
+  const semi = cut ? cut.zTo : F ? F.wing.semi : d.span / 2;
   const want = (S.span / 2 - (TIP_ADD[t] ? TIP_LAT[TIP_ADD[t]] : 0)) / s; let wing = null;
   if (Math.abs(want / semi - 1) > SPAN_TOL) {
     const e = T.eng && T.eng.length ? T.eng[T.eng.length - 1] : null;
@@ -187,6 +221,26 @@ export function fitType(t, m) {
     const z0 = Math.max(engOut + 0.5 / s, 0.35 * semi), z1 = semi - TIP;
     if (z1 > z0 + 1) { wing = { z0: +z0.toFixed(3), z1: +z1.toFixed(3), dz: +(want - semi).toFixed(3), xMin: -0.8 * d.L }; stretch.wing = wing; }
   }
+  // stance of a model on its own gear: the FG 737-800 / 777 models stand level with the nose tyre above the main-tyre
+  // bottom (F.contact, tools/models/model_features.py). The model is pitched nose-down by a about the main-gear contact
+  // (stretched model frame: x0 = the main contact after the plugs, y0 = its height) so both units touch; the angle is per
+  // type (its wheelbase after the plugs). 777 bogie: pivot at the centre axle, the front / aft axles are +-9 mm off the
+  // ground at 0.34 deg. js/live/aircraft.js placement() applies it as a rotation of the model matrix, so the model-space
+  // positions the shader uses (belly line, registration decal) stay in the body frame.
+  let pitch = null;
+  const C = d.hasGear && F && F.contact;
+  const xOf = (st) => -rx(st) / s;                        // stretched model x (aft negative) of a model station st
+  if (C) {
+    const xn = xOf(C.nose.st), xm = xOf(C.main.st), dy = C.nose.y - C.main.y;
+    if (dy > 0.005 && xn > xm) pitch = { a: +Math.atan2(dy, xn - xm).toFixed(6), x0: +xm.toFixed(3), y0: C.main.y };
+  }
+  // model point (station st, height y) -> [x, y] of the stretched, pitched model (model units)
+  const pose = (st, y) => {
+    const x = xOf(st); if (!pitch) return [x, y];
+    const ca = Math.cos(pitch.a), sa = Math.sin(pitch.a), dx = x - pitch.x0, dy = y - pitch.y0;
+    return [pitch.x0 + dx * ca + dy * sa, pitch.y0 + dy * ca - dx * sa];
+  };
+  const tyP = pitch ? (st, y) => pose(st, y)[1] : null;
   // seating and the door the bridge docks to
   const dm = doorMesh(m); let Hc, seat;
   const x1m = dm ? dm.x : T.doors[0] / s;
@@ -195,11 +249,12 @@ export function fitType(t, m) {
     // FlightGear gear is modelled with the oleos extended (the simulator compresses them): where the model standing on its
     // own gear puts the fuselage top more than 0.15 m above the published height, the gear (zone 3) is moved up by the
     // excess (oleo compression; the strut tops disappear into the wing / fairing) and the airframe comes down onto it
-    const top0 = crownOf(F, d.L);
+    const top0 = crownOf(F, d.L, tyP);
     if (S.crown && top0 != null && OLEO.has(m)) {
       const ex = Hc + top0 * s - (S.crown[0] + S.crown[1]) / 2;
       if (ex > 0.15) { stretch.gearUp = +(ex / s).toFixed(3); Hc -= ex; seat = 'gear (oleos compressed ' + ex.toFixed(2) + ' m)'; }
     }
+    if (pitch) { pitch.y0 = +(C.main.y + (stretch.gearUp || 0)).toFixed(3); seat += ', nose-down ' + (pitch.a * 180 / Math.PI).toFixed(2) + ' deg'; }
   }
   else if (dm && T.sill != null) { Hc = T.sill - dm.ySill * s; seat = 'sill'; }
   else if (T.crown != null && crownOf(F, d.L) != null) { Hc = T.crown - crownOf(F, d.L) * s; seat = 'crown'; }
@@ -213,7 +268,7 @@ export function fitType(t, m) {
   // wing / tailplane dihedral: the FAM A330 wing tip renders 0.8 m below W1 and its tailplane tip 0.5 m below HT (AC A330
   // FIGURE-2-3-0-991-001-A01; review round 1). Where SPEC carries tipClr / htClr (the model's own type's), the wing outboard
   // of the fuselage side (and the tailplane outboard of 0.8 m) is sheared up linearly with |z| so its tip meets the table
-  const Fw = F && F.wing, SB = SPEC[base] || {};
+  const Fw = F && F.wing, SB = T.uniform ? {} : SPEC[base] || {};
   const TC = S.tipClr || SB.tipClr, HC = S.htClr || SB.htClr;
   const hwM = F && F.sec ? (F.sec.hw.filter(v => v != null).sort((a, b) => a - b)[Math.floor(F.sec.hw.filter(v => v != null).length * 0.8)] || 2) : 2;
   let lift = null;
@@ -232,7 +287,7 @@ export function fitType(t, m) {
   const engZ = T.eng && T.eng.length ? T.eng[0].z / s : 0;
   const eL = F && F.wing && F.wing.engLow != null ? F.wing.engLow + (lift ? lift.t * Math.max(0, engZ - lift.z0) : 0) : null;
   if (!d.hasGear && seat !== 'sill' && eL != null && eL < 0) {
-    const C = S.engClr || (SPEC[base] && SPEC[base].engClr);
+    const C = S.engClr || SB.engClr;
     if (C) {
       const tgt = (C[0] + C[1]) / 2, now = Hc + eL * s;
       if (now < C[0]) { const k = Math.max(0.75, Math.min(1, (Hc - tgt) / (-eL * s))); if (k < 0.999) { squash = { y0: 0, k: +k.toFixed(4) }; stretch.squash = squash; } }
@@ -240,19 +295,38 @@ export function fitType(t, m) {
   }
   const yR = (y) => (squash && y < squash.y0 ? squash.y0 + (y - squash.y0) * squash.k : y);   // model y after the compression
   Hc = +Hc.toFixed(3);
-  const dockX1 = dm ? +rx(dm.x).toFixed(3) : T.doors[0];
+  // rendered door object: centre station at mid height, sill (pitched on gear models)
+  const doorR = dm ? { x: +(-pose(dm.x, (dm.ySill + dm.yTop) / 2)[0] * s).toFixed(3), sill: +(Hc + pose(dm.x, dm.ySill)[1] * s).toFixed(3) } : null;
+  const dockX1 = dm ? doorR.x : T.doors[0];
   // cab floor: the published sill, except on a model standing on its own gear whose door object sits elsewhere (FG
-  // 737-800: the artist's door 1L sill is 0.38-0.53 m above the published 2.59-2.74 m, review round 1): the bridge meets the
-  // door that is drawn (rendered sill), so cab floor and door outline agree; the deviation is recorded by check_dims
-  const dockSill = (seat === 'gear' && dm) ? +(Hc + dm.ySill * s).toFixed(3) : T.sill != null ? T.sill : Hc - 0.3 * d.R * s;
-  // rendered half width of the fuselage at door 1, at door mid height (ellipse through the section's top, bottom, width)
-  const sec = secAt(F, x1m);
-  let dockHW = T.R;
-  if (sec) {
-    const yc = (sec.top + sec.bot) / 2, R = (sec.top - sec.bot) / 2, y = (dockSill - Hc) / s + 0.95 / s;
-    dockHW = +(sec.hw * Math.sqrt(Math.max(0.05, 1 - ((y - yc) / R) ** 2)) * s).toFixed(3);
-  }
+  // 737-800: with the nose-down stance the artist's door 1L sill renders 2.97 m (level: 3.12 m), 0.23 m above the
+  // published 2.59-2.74 m (D6-58325-7 Rev C §2.3.2; +-3 in nominal). The door object fills its opening in the skin (a
+  // section at the door station has one skin layer), so it cannot be moved without re-cutting the skin, which needs the
+  // FG source model and a re-bake of every b738 livery: the bridge meets the door that is drawn (rendered sill), so cab
+  // floor and door outline agree; the deviation is recorded by check_dims
+  const dockSill = (d.hasGear && dm) ? doorR.sill : T.sill != null ? T.sill : Hc - 0.3 * d.R * s;
+  // rendered half width of the fuselage at a door (station st, model units), at door mid height (sill + 0.95 m): model
+  // height of a rendered height at that station (the stance pitch undone)
+  const yModel = (st, yR) => {
+    if (!pitch) return (yR - Hc) / s;
+    const y = (yR - Hc) / s, dx = xOf(st) - pitch.x0;
+    return pitch.y0 + (y - pitch.y0 + dx * Math.sin(pitch.a)) / Math.cos(pitch.a);
+  };
+  // the cab's bellows has a flat front: it stops at the widest skin over the door opening (sill to sill + 1.9 m, the
+  // passenger doors' clear height), so it closes on the fuselage at the max-breadth line and never cuts into the skin
+  // below or above door mid height (737-800 door 1L: 1.76 m at the max breadth vs 1.69 m at sill + 0.95 m)
+  const hwDoor = (st, sill) => {
+    let h = null; for (let dz = 0.05; dz <= 1.9001; dz += 0.1) { const v = hwAt(F, st, yModel(st, sill + dz)); if (v != null && (h == null || v > h)) h = v; }
+    return h != null ? +(h * s).toFixed(3) : T.R;
+  };
+  const hwMid = (st, sill) => { const h = hwAt(F, st, yModel(st, sill + 0.95)); return h != null ? +(h * s).toFixed(3) : null; };
+  const dockHW = hwDoor(x1m, dockSill);
+  // the second bridge's door (published station, T.dock2) and the A380 upper-deck door U1L (gates.js door 3)
+  const dockHW2 = T.dock2 && T.doors[T.dock2 - 1] != null ? hwDoor(stOf(rx, T.doors[T.dock2 - 1], d.L), T.sill2 ?? dockSill) : null;
+  const dockHW3 = t === 'a388' ? hwDoor(stOf(rx, A388_U1.x, d.L), A388_U1.sill) : null;
   const top = crownOf(F, d.L);
+  // pitch-induced rise of the fin tip (model units): the published height is the fin top in the real attitude
+  const finRise = pitch && F.finTop ? pose(F.finTop.st, d.H)[1] - d.H : 0;
   // fin height fit: where the model's fin top misses the published overall height (the artist's fin is too short or too
   // tall relative to the fuselage, e.g. FAM A330/787, FG 737-800), the fin (everything above the fuselage top aft of
   // 60 % of the length, except engines, pylons and gear) is scaled vertically about the fuselage top so that its height
@@ -260,18 +334,20 @@ export function fitType(t, m) {
   // mid(H) - the rendered fuselage top.
   let fin = null;
   if (top != null && S.H) {
-    const Hr = Hc + d.H * s, [h0, h1] = S.H, tol = 0.005 * (h0 + h1) / 2;
+    const Hr = Hc + (d.H + finRise) * s, [h0, h1] = S.H, tol = 0.005 * (h0 + h1) / 2;
     if (Hr < h0 - tol || Hr > h1 + tol) {
-      const want = (h0 + h1) / 2 - (S.crown ? (S.crown[0] + S.crown[1]) / 2 : Hc + top * s);
+      const want = (h0 + h1) / 2 - finRise * s - (S.crown ? (S.crown[0] + S.crown[1]) / 2 : Hc + top * s);
       const k = want / ((d.H - top) * s);
-      if (k > 0.7 && k < 1.4) { fin = { yF: +top.toFixed(3), xF: +(-0.6 * d.L).toFixed(3), k: +k.toFixed(4) }; stretch.fin = fin; }
+      // (a generic airframe takes a wider range: a scaled CRJ200 fin on a small business jet is up to ~2x too short)
+      if (k > (T.uniform ? 0.6 : 0.7) && k < (T.uniform ? 2.4 : 1.4)) { fin = { yF: +top.toFixed(3), xF: +(-0.6 * d.L).toFixed(3), k: +k.toFixed(4) }; stretch.fin = fin; }
     }
   }
   const finTop = fin ? top + (d.H - top) * fin.k : d.H;
+  const topR = pitch ? crownOf(F, d.L, tyP) : top;
   const fit = { model: m, base, s: +s.toFixed(5), s0: +s0.toFixed(5), plugs: pl, wing, stretch: Object.keys(stretch).length ? stretch : null, rx,
-    Hc, seat, fin, squash, tipAdd: TIP_ADD[t] || null, door: dm ? { name: dm.name, from: dm.from, x: dockX1, sill: +(Hc + dm.ySill * s).toFixed(3) } : null,
-    renderedSpan: +(2 * ((cut ? cut.zTo : F ? F.wing.semi : d.span / 2) + (wing ? wing.dz : 0)) * s + (TIP_ADD[t] ? 2 * TIP_LAT[TIP_ADD[t]] : 0)).toFixed(3), renderedL: +((d.L + plugM) * s).toFixed(3), renderedH: +(Hc + finTop * s).toFixed(3),
-    renderedCrown: top != null ? +(Hc + top * s).toFixed(3) : null };
+    Hc, seat, pitch, fin, squash, tipAdd: TIP_ADD[t] || null, door: dm ? { name: dm.name, from: dm.from, x: dockX1, sill: doorR.sill } : null,
+    renderedSpan: +(2 * ((cut ? cut.zTo : F ? F.wing.semi : d.span / 2) + (wing ? wing.dz : 0)) * s + (TIP_ADD[t] ? 2 * TIP_LAT[TIP_ADD[t]] : 0)).toFixed(3), renderedL: +((d.L + plugM) * s).toFixed(3), renderedH: +(Hc + (finTop + finRise) * s).toFixed(3),
+    renderedCrown: topR != null ? +(Hc + topR * s).toFixed(3) : null };
   // rendered engine clearance and the skin above the main gear (the procedural struts of gear-less models reach into it)
   fit.engClear = eL != null ? +(Hc + yR(eL) * s).toFixed(3) : null;
   if (!d.hasGear && T.xMain != null) {
@@ -280,6 +356,15 @@ export function fitType(t, m) {
     fit.gearTop = u != null ? +(Hc + yR(u) * s).toFixed(3) : null;
   }
   T.fit = fit; T.Hc = Hc; T.dockX1 = dockX1; T.dockSill = dockSill; T.dockHW = dockHW;
+  fit.dockHWmid = hwMid(x1m, dockSill);                   // skin half width at door 1 mid height (check_dims: bellows gap)
+  // skin half width (m) at the door's station from the sill up, every 0.25 m to sill + 3 m (the bellows' height), per
+  // docking door (1, 2, 3 = A380 U1L): for a bellows front that follows the skin (js/live/gates.js draws a flat one)
+  const prof = (st, sill) => { const r = []; for (let k = 0; k <= 12; k++) { const v = hwAt(F, st, yModel(st, sill + 0.25 * k)); r.push(v != null ? +(v * s).toFixed(3) : null); } return r; };
+  T.dockSkin = { dz: 0.25, 1: prof(x1m, dockSill) };
+  if (dockHW2 != null) T.dockSkin[2] = prof(stOf(rx, T.doors[T.dock2 - 1], d.L), T.sill2 ?? dockSill);
+  if (dockHW3 != null) T.dockSkin[3] = prof(stOf(rx, A388_U1.x, d.L), A388_U1.sill);
+  if (dockHW2 != null) T.dockHW2 = dockHW2;
+  if (dockHW3 != null) T.dockHW3 = dockHW3;
   return fit;
 }
 // procedural airframes (no model) and every type's second-bridge door
@@ -288,9 +373,9 @@ function dockDefaults(T) {
   if (T.dockSill == null) T.dockSill = T.sill ?? T.Hc - 0.3 * T.R;
   if (T.dockHW == null) T.dockHW = T.R;
   T.dockX2 = T.dock2 ? T.doors[T.dock2 - 1] : null; T.dockSill2 = T.dock2 ? (T.sill2 ?? T.dockSill) : null;
-  // A380 upper-deck door U1L for the upper-deck bridges (js/live/gates.js door 3): Airbus AC380 Dec 01/25
-  // FIGURE-2-7-0-991-002 (U1 20.94 m from the nose) and FIGURE-2-3-0-991-001 (U1 sill 7.87-7.89 m at MRW)
-  if (T.key === 'a388') { T.dockX3 = 20.94; T.dockSill3 = 7.88; }
+  // A380 upper-deck door U1L for the upper-deck bridges (js/live/gates.js door 3); dockHW3 (rendered skin half width at
+  // U1L mid height) is measured by fitType
+  if (T.key === 'a388') { T.dockX3 = A388_U1.x; T.dockSill3 = A388_U1.sill; }
 }
 for (const t in TYPE_MODEL) { if (TYPE_MODEL[t]) fitType(t, TYPE_MODEL[t]); if (TYPES[t]) dockDefaults(TYPES[t]); }
 
@@ -298,11 +383,29 @@ for (const t in TYPE_MODEL) { if (TYPE_MODEL[t]) fitType(t, TYPE_MODEL[t]); if (
 export function stretchFor(t, m) { const T = TYPES[t]; return T && T.fit && T.fit.model === m ? T.fit.stretch : null; }
 export function seatType(t, m) { const T = TYPES[t]; if (T && !T.uniform && (!T.fit || T.fit.model !== m) && m && SPEC[t]) { fitType(t, m); dockDefaults(T); } }
 
-// business jets: a uniformly scaled regional-jet airframe (T-tail, rear engines) at the type's published length.
-// Lengths: manufacturers' published overall lengths (not re-verified here; the airframe is labelled generic in the UI).
-export const BIZ_LEN = { GLF4: 26.92, GLF5: 29.39, GLF6: 30.41, G280: 20.3, GA5C: 29.4, GA6C: 30.4, GLEX: 30.3, GL5T: 29.5, GL7T: 33.8, CL30: 20.92, CL35: 20.92, CL60: 20.85,
-  C56X: 15.79, C68A: 18.97, C700: 22.3, C750: 22.04, C25B: 15.6, C25C: 16.3, C560: 14.9, E55P: 15.9, E545: 19.7, E550: 20.7, E135: 26.33, E35L: 26.33,
-  LJ45: 17.7, LJ60: 17.9, LJ75: 17.7, FA7X: 23.2, FA8X: 24.5, F900: 20.2, F2TH: 20.2, FA50: 18.5, H25B: 15.6, PC24: 16.85, BE40: 14.75 };
+// business jets and the ERJ-135 / -145 regional jets: the CRJ200 model (T-tail, two rear engines) scaled uniformly to the
+// type's length, the outer wing stretched to its span and the fin to its tail height (fitType with T.uniform: no plugs, no
+// CRJ200 clearance tables, no CRJ window row). Labelled generic in the UI (js/live/app.js modelNote).
+// [length, span (with winglets where the FAA lists one), tail height at OEW, engines] in metres from the FAA Aircraft
+// Characteristics Database (https://www.faa.gov/airports/engineering/aircraft_char_database, aircraft_data .xlsx, fetched
+// 4 Nov 2026: refs/cache/faa/faa_aircraft_char_database.xlsx, tools/models/faa_acd.py). Review 4 Nov 2026: the span had
+// been the CRJ200's scaled by the length ratio (GLEX 24.0 m against 28.65 m) and the lengths were not re-verified (GA5C /
+// GA6C were 1.6 / 1.1 m too long). E135: the ACD row covers the ERJ-135/-140 (length of the -140). Trijets (FA50, F900, FA7X,
+// FA8X: 3 engines) are drawn with the CRJ's two (typeForIcao flags them: engines 3).
+export const BIZ = {
+  GLF4: [26.91, 23.71, 7.44, 2], GLF5: [29.38, 28.50, 7.89, 2], GLF6: [30.42, 30.39, 7.86, 2], G280: [20.36, 19.20, 6.49, 2], GALX: [18.99, 17.71, 6.52, 2],
+  GA5C: [27.79, 26.32, 7.77, 2], GA6C: [29.29, 28.70, 7.71, 2], GLEX: [30.30, 28.65, 7.77, 2], GL5T: [29.50, 28.65, 7.77, 2], GL7T: [33.71, 31.79, 8.14, 2],
+  CL30: [20.97, 19.45, 6.19, 2], CL35: [20.91, 21.00, 6.10, 2], CL60: [20.85, 19.60, 6.31, 2],
+  C56X: [15.79, 17.16, 5.24, 2], C68A: [18.99, 22.04, 6.37, 2], C700: [22.31, 21.00, 5.91, 2], C750: [22.04, 19.39, 5.88, 2],
+  C25A: [14.54, 15.18, 4.27, 2], C25B: [15.61, 16.25, 4.63, 2], C25C: [16.25, 15.48, 4.69, 2], C560: [14.90, 16.49, 4.57, 2],
+  E55P: [15.64, 15.91, 5.12, 2], E545: [19.69, 20.24, 6.43, 2], E550: [20.73, 20.27, 6.43, 2], E35L: [26.33, 21.09, 6.77, 2],
+  E135: [28.47, 20.06, 6.77, 2], E145: [29.87, 20.06, 6.77, 2],
+  LJ45: [17.68, 14.57, 4.30, 2], LJ60: [17.89, 13.35, 4.48, 2], LJ75: [17.68, 15.51, 4.27, 2],
+  FA7X: [23.20, 26.21, 7.83, 3], FA8X: [24.44, 26.30, 7.96, 3], F900: [20.21, 19.32, 7.56, 3], F2TH: [20.21, 19.32, 7.07, 2], FA50: [18.53, 18.87, 6.98, 3],
+  H25B: [15.61, 15.67, 5.52, 2], PC24: [16.86, 17.01, 5.39, 2], BE40: [14.75, 13.26, 4.24, 2],
+};
+const REGIONAL = new Set(['E135', 'E145']);
+export const BIZ_LEN = Object.fromEntries(Object.entries(BIZ).map(([k, v]) => [k, v[0]]));   // old export (lengths only)
 // (HDJT removed, review round 1: the HondaJet's engines are over the wing; a rear-engine airframe misrepresents it: marker.
 // The generic airframe is drawn without a cabin-window row: js/live/aircraft.js, uNoCabin for T.uniform)
 const NOSCALE = new Set(['sweep', 'dihedral', 'tcRoot', 'tcTip', 'top', 'wheels', 'flex', 'flat', 'noseTop', 'nose', 'pt', 'pb', 'pw', 'noseTip', 'dock2', 'spec', 'fit']);
@@ -315,15 +418,18 @@ function scaleObj(o, f) {
 export function typeForIcao(icao) {
   if (!icao) return null;
   if (TYPE_MODELS[icao]) return TYPE_MODELS[icao];
-  if (BIZ_LEN[icao]) {
+  if (BIZ[icao]) {
     const key = 'biz_' + icao;
     if (!TYPES[key]) {
-      const B = TYPES.crj2, f = BIZ_LEN[icao] / B.L;
+      const [L, span, H] = BIZ[icao];
+      const B = TYPES.crj2, f = L / B.L;
       const T = scaleObj(B, f); T.name = icao; T.key = key; T.cls = 'B'; T.uniform = true; T.wing.y = B.wing.y; T.win.forEach((w, i) => { w.y = B.win[i].y * f; });
-      T.fit = B.fit ? { ...B.fit, s: B.fit.s * f } : null;
+      T.L = L; T.wing.span = span; T.H = H; T.fit = null;
+      SPEC[key] = { doc: 'FAA ACD', L, span, H: [H, H], src: 'FAA Aircraft Characteristics Database (js/aircraft/fit.js BIZ)' };
       TYPES[key] = T;
+      fitType(key, 'crj2'); dockDefaults(T);
     }
-    return { t: key, m: 'crj2', generic: 'business jet' };
+    return { t: key, m: 'crj2', generic: REGIONAL.has(icao) ? 'regional jet' : 'business jet', engines: BIZ[icao][3] };
   }
   return null;
 }

@@ -14,6 +14,8 @@ from draw_lib import Sheet, FT, hdg_vec, unit
 from draw_tower import draw_dev
 
 LV = D.LV
+SB_TIP, SB_TIP_RNG = 27.0, (22.0, 32.0)    # Superbay cantilever tip height [inf, photo l3 ratio, low; identification unverified]
+SB_FOLD, SB_DOOR_GAP = 1.5, 3.0            # fold amplitude at the tip face [unk], door head below the tip [unk] (schematic)
 LB = D.LANDM['buildings']
 MOC = D.LANDM['moc']
 NAMES = {'central_garage': 'Central Parking Garage', 'garage_a': 'Garage A', 'garage_g': 'Garage G', 'ltp_garage_1': 'Long-Term Parking Garage 1',
@@ -25,9 +27,9 @@ SUMMARY = {
     'garage_g': ('International Garage G (Bldg 495)', '9 levels [pub]; AirTrain at L7 [pub]; roof deck NOT measured;\nhelix drum top 37.6 m (36.0-40.0) [obs, low]', 'obs'),
     'grand_hyatt': ('Grand Hyatt at SFO (Bldg 55)', '12 stories [pub]; lobby + AirTrain at the 4th floor [pub];\nheight ~44 m (40-48) [inf, low] - NOT published', 'inf'),
     'cac': ('Consolidated Administration Campus', '4 stories x 15 ft [pub] -> 60 ft roof, ~64 ft parapet [inf];\nNAIP shadow 17.4-19.2 m [obs]', 'inf'),
-    'ltp_garage_1': ('Long-Term Parking Garage 1 (Bldg 795)', 'north-end parapet 16.5 m (15.9-16.8) [obs, shadow];\nDOF 86 / 91 ft = towers [pub]; >= 5 levels [inf]', 'obs'),
+    'ltp_garage_1': ('Long-Term Parking Garage 1 (Bldg 795)', 'north-end parapet 16.5 m (15.9-16.8) [obs, shadow];\nDOF 86 / 91 ft [pub] = stair towers / helix? [inf]; >= 5 levels [inf]', 'obs'),
     'ltp_garage_2': ('Long-Term Parking Garage 2 (Bldg 794)', '6 levels, 12 ft floor-to-floor [pub] -> deck 60 ft [inf];\nroof PV canopies [pub], height unknown', 'inf'),
-    'rental_car_center': ('Rental Car Center (Bldg 780)', '5 levels [pub]; "66-foot-tall" = 20.12 m [pub, disputed as roof];\nroof outline 54 / 59 ft [pub DOF]; station tower 60 ft [pub]', 'pub'),
+    'rental_car_center': ('Rental Car Center (Bldg 780)', '5 levels [pub]; "66-foot-tall" = 20.12 m [pub, disputed as roof];\nroof outline 54 / 59 ft [pub DOF]; DOF TANK 60 ft [pub]\n= station stair / elevator tower? [inf]', 'pub'),
     'superbay': ('Superbay hangar (Bldg 1060)', 'DOF 135 ft = 41.15 m, red light [pub]; "140-ft roof" [pub];\ninterior 120 ft [pub]; cantilever "over 230 ft from the centre" [pub]', 'pub'),
 }
 
@@ -175,6 +177,10 @@ def sheet_roofs(variant='vector', dev=None):
             V.line([c + sv * a0 + tv * t, c + sv * a1 + tv * t], 'obs', lw=0.35, z=3)
     V.leader(c + tv * -40, -10, 56, 'central spine 32 m (a -14..+18) along the 27.8 deg grid [obs];\nfolded cantilever roofs WNW / ESE, ~66.5 m beyond it, 8 bays\n'
              'of 17.3 m per side [obs] (Deep3DS: "50 ft structural bays" [pub],\nconflict); roof 165 m overall [obs]', 'obs', fs=3.8)
+    sbL = LB['superbay']['footprint']['min_rect']
+    Wsp = min(sbL['length_m'], sbL['width_m'])
+    V.dim(c + sv * 18 + tv * -69, c + sv * 18 + tv * 69, -14, f'roof 138.0 m along the spine (8 x 17.25) [obs] vs outline {Wsp:.1f} m [obs]: '
+          f'{(138.0 - Wsp) / 2:.2f} m per end = roof overhang [inf] or outline error [unk]', 'inf', fs=3.6)
     label_dofs(V, 'superbay', 14, -26)
     V.leader(c + sv * 60, 4, -46, 'NAIP roof imaged (-7.0, -7.5) m NW of the outline\n(frame leans NW here) [obs]', 'obs', fs=3.8)
     for V in panels: V.scalebar()
@@ -235,6 +241,39 @@ def massing(V, x0, W, title, items):
     V.text((x0 + W / 2, -9), title, 'pub', fs=4.6, weight='bold', bg=False, color='#000000', style='normal')
 
 
+GH_P = 44.0 / 13.2          # Hyatt floor pitch: the inferred 44 m over the 13.2 pitches of photo 7391 [inf]
+GH_POD, GH_COL = 3.2, 1.0   # podium / recessed colonnade level in pitches (spec gh_height note, photo 7391) [obs ratio]
+
+
+def hyatt_elev(V, x0, W):
+    """Grand Hyatt east face (photo l4 = 'Harvey Milk Terminal 1 Community Day - July 2019 (7391)', Gregory Varnum, CC BY-SA 4.0,
+    seen from the airfield; left = SSW): spec gh_plan_shape / gh_facade [obs] and the pitch decomposition of gh_height."""
+    p = GH_P; H = 13.2 * p; hp, hc = GH_POD * p, (GH_POD + GH_COL) * p
+    pod = 0.47 * W                                   # dark podium under the south half (l4: x 35-450 of the 28-930 slab) [obs photo]
+    V.poly([(x0, 0), (x0 + W, 0), (x0 + W, H), (x0, H)], 'inf', fc='#dbe7ee', z=2, lw=0.8)        # glass curtain wall
+    V.poly([(x0, 0), (x0 + pod, 0), (x0 + pod, hp), (x0, hp)], 'obs', fc='#4b4f55', z=2.2, lw=0.5)  # podium, dark metal panels
+    V.poly([(x0 + 0.4, hp), (x0 + pod, hp), (x0 + pod, hc), (x0 + 0.4, hc)], 'obs', fc='#9aa3ab', z=2.2, lw=0.4)   # colonnade recess
+    for i in range(1, 10):
+        V.line([(x0, hc + i * p - p), (x0 + W, hc + i * p - p)], 'inf', lw=0.25, z=2.3, color='#6f8796')     # spandrel band per floor
+    for xx in np.arange(x0 + 3.0, x0 + W, 3.0):
+        V.line([(xx, hp if xx < x0 + pod else 0.0), (xx, H)], 'inf', lw=0.12, z=2.25, color='#8fa6b4')
+    a, b, c2 = x0 + 0.52 * W, x0 + 0.70 * W, x0 + 0.62 * W
+    V.poly([(a, H), (b, H), (b, H + 1.5 * p), (a, H + 1.5 * p)], 'obs', fc='#4b4f55', z=2.4, lw=0.4)                 # penthouse, upper step
+    V.poly([(c2, H), (x0 + 0.74 * W, H), (x0 + 0.74 * W, H + 0.7 * p), (c2, H + 0.7 * p)], 'obs', fc='#4b4f55', z=2.35, lw=0.4)
+    for u in (1.5, 4.0, W - 4.0, W - 1.5):
+        V.line([(x0 + u, H), (x0 + u, H + 1.1 * p)], 'obs', lw=0.5, z=2.4)
+    V.level(x0 + W + 1, H, f'+{H:.0f} parapet (40-48) [inf, low]: 13.2 floor pitches x 3.2-3.5 m (photo 7391) - NOT published', 'inf', len_mm=3, fs=3.9, u_line=x0 + W)
+    V.level(x0 + W + 1, hc, f'+{hc:.1f} top of the colonnade level ({GH_POD + GH_COL:.1f} pitches) [inf]', 'inf', len_mm=3, fs=3.7, u_line=x0 + pod)
+    V.level(x0 + W + 1, hp, f'+{hp:.1f} podium roof ({GH_POD} pitches) [inf]', 'inf', len_mm=3, fs=3.7, u_line=x0 + pod)
+    V.leader((x0 + pod / 2, hp / 2), -14, 16, 'podium: dark metal panels, large glazed openings,\nporte-cochere (2-3 storeys) [obs photo l4 / spec gh_plan_shape]', 'obs', fs=3.6, ha='right')
+    V.leader(((a + b) / 2, H + 1.5 * p), 6, 9, 'dark stepped mechanical penthouse near mid-length\n(0.52-0.74 of the face, ~1.5 / 0.7 pitches) [obs photo l4];\n'
+             '4 corner masts ~1.1 pitch [obs photo l4]', 'obs', fs=3.6)
+    V.leader((x0 + 0.8 * W, H * 0.6), 14, -8, 'unitised glass curtain wall, vertical mullion grid,\none spandrel band per floor [obs gh_facade];\n'
+             'concave all-glass east face [obs gh_plan_shape];\nmullion module schematic (3 m) [inf]; 12 stories [pub],\nlobby + AirTrain at the 4th floor [pub]', 'obs', fs=3.6)
+    V.text((x0 + W / 2, -14.5), 'spec "taller straight block at the north end" [obs, not re-checked]: photo l4 shows one parapet level along the whole east face - not drawn [conflict]',
+           'inf', fs=3.4)
+
+
 def sheet_elev():
     S = Sheet('BL-03', 'Landside and support buildings: principal elevations (long faces) with levels and heights', 'A1',
               subtitle='Spec: tools/buildings/spec_landside.json; massing elevations - facade detail is not measured')
@@ -264,18 +303,19 @@ def sheet_elev():
             [('text', W / 2, 12, 'unk', '5 levels [pub]; level lines = equal fifths (placeholder) [unk];\nAirTrain T1/T2/T3 stations on Level 5 [pub];\n'
               'DOF points at their projected positions, u from the SSW end [pub]')])
     x = W + 40; W = L('garage_a')
-    massing(V1, x, W, 'INTERNATIONAL GARAGE A (Bldg 95)', [('band', 25, 41.5, '#cfe0f2'), ('box', 25.0, 'unk', '+25-41.5 roof deck: deck NOT measured; 25 = the DISPUTED AirTrain-photo reading,\n41.5 = drum-top upper bound [spec garage_a_height range]'),
+    massing(V1, x, W, 'INTERNATIONAL GARAGE A (Bldg 95)', [('band', 25, 41.5, '#cfe0f2'), ('box', 25.0, 'unk', '+25-41.5 roof deck NOT measured [unk]'),
                                                           ('mark', 12, 39.6, 'obs', 'helix drum top 39.6\n(38.0-41.5) [obs]'),
-                                                          ('text', W / 2, 10, 'pub', '9 levels [pub]; AirTrain station from Level 7 [pub];\nclearance 8 ft 2 in [pub]; precast grid + perforated metal [obs]')])
+                                                          ('text', W / 2, 10, 'pub', '9 levels [pub]; AirTrain station from Level 7 [pub];\nclearance 8 ft 2 in [pub]; precast grid + perforated metal [obs];\n'
+                                                           'band 25-41.5 = spec range: 25 = the DISPUTED AirTrain-photo reading, 41.5 = drum top [obs]')])
     V2 = S.view(0, 2 * rowh + 8, S.vw, rowh - 6, 1000, (300, 22), kind='elev', frame=False, title='2  GARAGE G, GRAND HYATT, CONSOLIDATED ADMINISTRATION CAMPUS')
     x = 0; W = L('garage_g')
-    massing(V2, x, W, 'INTERNATIONAL GARAGE G (Bldg 495)', [('band', 25, 40.0, '#cfe0f2'), ('box', 25.0, 'unk', '+25-40 roof deck: deck NOT measured; 25 = the DISPUTED AirTrain-photo reading,\n40 = drum-top upper bound [spec garage_g_height range]'),
+    massing(V2, x, W, 'INTERNATIONAL GARAGE G (Bldg 495)', [('band', 25, 40.0, '#cfe0f2'), ('box', 25.0, 'unk', '+25-40 roof deck NOT measured [unk]'),
                                                            ('mark', 12, 37.6, 'obs', 'helix drum top 37.6\n(36.0-40.0) [obs]'),
-                                                           ('text', W / 2, 10, 'pub', '9 levels [pub]; BART + AirTrain station from Level 7 [pub]')])
+                                                           ('text', W / 2, 10, 'pub', '9 levels [pub]; BART + AirTrain station from Level 7 [pub];\n'
+                                                            'band 25-40 = spec range: 25 = the DISPUTED AirTrain-photo reading, 40 = drum top [obs]')])
     x = W + 40; W = L('grand_hyatt')
-    massing(V2, x, W, 'GRAND HYATT AT SFO (Bldg 55)', [('band', 40, 48, '#f3d9bf'), ('box', 44.0, 'inf', '+44 (40-48) [inf, low]: 13.2 floor pitches x 3.2-3.5 m (photo) - NOT published'),
-                                                     ('levels', [44.0 * i / 12 for i in range(1, 12)], 'unk'),
-                                                     ('text', W / 2, 20, 'pub', '12 stories [pub];\nlobby + AirTrain\nat the 4th floor [pub]')])
+    massing(V2, x, W, 'GRAND HYATT AT SFO (Bldg 55), east (airfield) face', [('band', 40, 48, '#f3d9bf')])
+    hyatt_elev(V2, x, W)
     x += W + 50; W = L('cac')
     massing(V2, x, W, 'CONSOLIDATED ADMINISTRATION CAMPUS', [('band', 17.4, 19.2, '#cfe0f2'), ('box', 60 * FT, 'inf', '+18.29 roof = 4 x 15 ft [inf]'),
                                                            ('lvlL', 64 * FT, 'inf', 'parapet ~64 ft = 19.51 [inf]; shadow 17.4-19.2 [obs] +'),
@@ -298,19 +338,49 @@ def sheet_elev():
                                                      ('mark', proj('rental_car_center', next(d['world'] for d in LB['rental_car_center']['dof'] if d['type'] == 'TANK')),
                                                       60 * FT, 'pub', 'DOF 06-034240 TANK 60 ft [pub]\n= station stair / elevator\ntower? [inf]'),
                                                      ('text', W / 2, 8, 'pub', '5 levels [pub]; 2,485 ready-return stalls [pub];\n66 ft is 7-12 ft above the DOF-surveyed roof edge (definition disputed);\nTANK at its projected position, u from the SSW end')])
-    V4 = S.view(0, 8, S.vw, rowh - 6, 1000, (300, 22), kind='elev', frame=False, title='4  SUPERBAY HANGAR (section across the spine) and UNITED MOC LARGE HANGAR')
+    V4 = S.view(0, 8, S.vw, rowh - 6, 1000, (322, 22), kind='elev', frame=False, title='4  SUPERBAY HANGAR (section across the spine, WNW door face) and UNITED MOC LARGE HANGAR')
     x = 0; W = 165.0
-    massing(V4, x, W, 'SUPERBAY HANGAR (Bldg 1060), across the spine (WNW-ESE)', [
-        ('text', W / 2, 18, 'pub', 'four 747-size bays, 6 office levels\n+ central workshop [pub]; roof beams cantilever\n"over 230 ft from the centre" [pub]')])
+    massing(V4, x, W, 'SUPERBAY HANGAR (Bldg 1060), section across the spine (WNW-ESE), looking NNE', [
+        ('text', W / 2, 7, 'pub', 'four 747-size bays, 6 office levels\n+ central workshop [pub]; roof beams cantilever\n"over 230 ft from the centre" [pub]')])
     sp0, sp1 = 80.5 - 14, 80.5 + 18
-    V4.poly([(sp0, 0), (sp1, 0), (sp1, 135 * FT), (sp0, 135 * FT)], 'pub', fc='#f4f7fb', z=2)
+    hs, ht = 135 * FT, SB_TIP
+    V4.ax.fill_between([0, W], [SB_TIP_RNG[0]] * 2, [SB_TIP_RNG[1]] * 2, color='#e6e6e6', lw=0, zorder=1.3)
+    V4.poly([(sp0, 0), (sp1, 0), (sp1, hs), (sp0, hs)], 'pub', fc='#f4f7fb', z=2.2)
     for a, b in ((0, sp0), (sp1, W)):
-        V4.poly([(a, 0), (b, 0), (b, 120 * FT), (a, 120 * FT)], 'unk', fc='#f9f9f9', z=1.8)
-    V4.level(W + 1, 135 * FT, '+41.15 135 ft [pub DOF 1A, red light] at the spine edge', 'pub', len_mm=3, fs=3.9, u_line=sp1)
+        tip = a if a == 0 else b; root = b if a == 0 else a
+        V4.poly([(tip, 0), (root, 0), (root, hs - 1.5), (tip, ht)], 'inf', fc='#f9f9f9', z=1.8)          # cantilever roof falling to the tip
+        V4.line([(root, hs - 1.5), (tip, ht)], 'inf', lw=1.0, z=2.3)
+        V4.line([(tip, 0), (tip, ht - SB_DOOR_GAP)], 'unk', lw=0.5, z=2.3)
+    V4.level(W + 1, hs, '+41.15 135 ft [pub DOF 1A, red light] at the spine edge', 'pub', len_mm=3, fs=3.9, u_line=sp1)
     V4.level(W + 1, 140 * FT, '+42.67 "140-foot tall roof" [pub, round number]', 'pub', len_mm=3, fs=3.9, u_line=sp1)
-    V4.level(W + 1, 120 * FT, '+36.58 interior ~120 ft [pub]; cantilever tip heights unknown [unk]', 'pub', len_mm=3, fs=3.9, u_line=W)
-    V4.dim((sp0, 135 * FT), (sp1, 135 * FT), 3, 'spine 32 m [obs]', 'obs', fs=3.8)
-    x = 215; W = MOC['moc_large_hangar']['min_rect']['length_m']
+    V4.level(W + 1, 120 * FT, '+36.58 interior ~120 ft [pub] (where it is measured: not stated)', 'pub', len_mm=3, fs=3.9, u_line=sp1)
+    V4.level(W + 1, ht, f'+{ht:.0f} ({SB_TIP_RNG[0]}-{SB_TIP_RNG[1]}) cantilever tips [inf, photo l3, low]; not published [unk]', 'inf', len_mm=3, fs=3.9, u_line=W)
+    V4.dim((sp0, hs), (sp1, hs), 3, 'spine 32 m [obs]', 'obs', fs=3.8)
+    V4.leader((sp0 - 25, (hs + ht) / 2 + 3), -10, 14, 'roofs fall from the spine to both tips [obs photo l3, BrokenSphere 2009,\nCC BY-SA 3.0, '
+              'identification unverified; spec sb_layout]: tip / ridge\n~87 / 133 px -> ~27 m if the ridge is the 41.15 m DOF top [inf, low]', 'inf', fs=3.6, ha='right')
+    # WNW face (door face) looking ESE: 8 folded roof bays of 17.25 m along the spine, two door openings per side
+    xw0 = 252 + MOC['moc_large_hangar']['min_rect']['length_m'] + 38; Lr = 138.0; Lo = 134.5
+    V4.ax.fill_between([xw0 - 6, xw0 + Lr + 6], [-2.0, -2.0], [0, 0], color='#dddddd', lw=0, zorder=1)
+    V4.line([(xw0 - 6, 0), (xw0 + Lr + 6, 0)], 'pub', lw=0.7)
+    edge = [(xw0 + 17.25 * i / 2, ht + (SB_FOLD if i % 2 else 0.0)) for i in range(17)]
+    V4.poly([(xw0, 0), (xw0 + Lr, 0)] + edge[::-1], 'inf', fc='#f9f9f9', z=1.8)
+    V4.line(edge, 'inf', lw=0.9, z=2.3)
+    for i in range(1, 16, 2):
+        V4.line([(xw0 + 17.25 * i / 2, ht + SB_FOLD), (xw0 + 17.25 * i / 2, hs - 1.5)], 'unk', lw=0.3, z=2.2)
+    V4.line([(xw0, hs - 1.5), (xw0 + Lr, hs - 1.5)], 'pub', lw=0.6, z=2.1)
+    dw = 67.0
+    for k in range(2):
+        a = xw0 + (Lr - 2 * dw) / 2 + k * dw
+        V4.poly([(a + 0.5, 0), (a + dw - 0.5, 0), (a + dw - 0.5, ht - SB_DOOR_GAP), (a + 0.5, ht - SB_DOOR_GAP)], 'unk', fc='#ececec', z=2.0)
+        for xx in np.linspace(a + 0.5, a + dw - 0.5, 9)[1:-1]:
+            V4.line([(xx, 0), (xx, ht - SB_DOOR_GAP)], 'unk', lw=0.2, z=2.05)
+    V4.dim((xw0, 0), (xw0 + Lr, 0), -4, f'{Lr:.0f} m roof (8 x 17.25) [obs] / outline {Lo} m [obs]', 'obs', fs=3.8)
+    V4.text((xw0 + Lr / 2, -9), 'SUPERBAY, WNW (door) face, looking ESE', 'pub', fs=4.6, weight='bold', bg=False, color='#000000', style='normal')
+    V4.leader((xw0 + 17.25 * 1.5, ht + SB_FOLD), -4, 12, 'folded roof: 8 bays of 17.25 m per side, each a light / shaded pair\n'
+              '[obs NAIP, spec sb_roof_bays_obs]; fold amplitude drawn 1.5 m [unk];\nspine roof behind at +41.15 [pub DOF]', 'inf', fs=3.6)
+    V4.leader((xw0 + Lr / 2, (ht - SB_DOOR_GAP) / 2), 22, 18, 'hangar doors on the WNW and ESE faces [obs NAIP: sunlit\n10-m ESE door band]; '
+              'two door bays of ~67 m per side (four 747-size\nbays [pub]) [inf]; door head and leaf division [unk]', 'unk', fs=3.6)
+    x = 252; W = MOC['moc_large_hangar']['min_rect']['length_m']
     ax = hdg_vec(160.9); c = np.array(MOC['moc_large_hangar']['min_rect']['centre'])
     u = lambda p: float(np.dot(np.asarray(p) - c, ax)) + W / 2
     zN, zS = -1945, -1885

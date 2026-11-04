@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osmChange version="0.6" generator="openstreetmap-cgimap 2.1.1 (3661098 spike-07.openstreetmap.org)" copyright="OpenStreetMap and contributors" attribution="http://www.openstreetmap.org/copyright" license="http://opendatacommons.org/licenses/odbl/1-0/">
+ <modify>
+  <way id="682004191" visible="true" version="2" changeset="190712443" timestamp="2026-10-18T19:19:37Z" user="jesszhan0024" uid="23667821">
+   <nd ref="441523095"/>
+   <nd ref="6386800165"/>
+   <nd ref="6386800170"/>
+   <nd ref="6386800168"/>
+   <nd ref="6386800169"/>
+   <nd ref="5431564185"/>
+   <tag k="highway" v="service"/>
+   <tag k="surface" v="asphalt"/>
+  </way>
+ </modify>
+</osmChange>

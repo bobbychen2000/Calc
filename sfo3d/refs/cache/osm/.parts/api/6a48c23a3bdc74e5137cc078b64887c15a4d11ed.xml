@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osmChange version="0.6" generator="openstreetmap-cgimap 2.1.1 (3739637 spike-06.openstreetmap.org)" copyright="OpenStreetMap and contributors" attribution="http://www.openstreetmap.org/copyright" license="http://opendatacommons.org/licenses/odbl/1-0/">
+ <modify>
+  <node id="10742623336" visible="true" version="3" changeset="190275283" timestamp="2026-10-09T22:07:34Z" user="Kartenkunst" uid="24614924" lat="37.6003161" lon="-122.3870984">
+   <tag k="amenity" v="vending_machine"/>
+   <tag k="check_date" v="2023-05-03"/>
+   <tag k="indoor" v="no"/>
+   <tag k="operator" v="Caltrain"/>
+   <tag k="vending" v="public_transport_tickets"/>
+  </node>
+ </modify>
+</osmChange>

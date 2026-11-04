@@ -1,0 +1,375 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osmChange version="0.6" generator="openstreetmap-cgimap 2.1.1 (3661098 spike-07.openstreetmap.org)" copyright="OpenStreetMap and contributors" attribution="http://www.openstreetmap.org/copyright" license="http://opendatacommons.org/licenses/odbl/1-0/">
+ <create>
+  <node id="14316004518" visible="true" version="1" changeset="190973540" timestamp="2026-10-24T14:16:35Z" user="Djroatan" uid="6650391" lat="37.6027541" lon="-122.3985138">
+   <tag k="direction" v="forward"/>
+   <tag k="highway" v="stop"/>
+  </node>
+ </create>
+ <create>
+  <node id="14316004519" visible="true" version="1" changeset="190973540" timestamp="2026-10-24T14:16:35Z" user="Djroatan" uid="6650391" lat="37.5920512" lon="-122.4040111"/>
+ </create>
+ <create>
+  <node id="14316004520" visible="true" version="1" changeset="190973540" timestamp="2026-10-24T14:16:35Z" user="Djroatan" uid="6650391" lat="37.5920941" lon="-122.4039401"/>
+ </create>
+ <create>
+  <node id="14316004521" visible="true" version="1" changeset="190973540" timestamp="2026-10-24T14:16:35Z" user="Djroatan" uid="6650391" lat="37.5921770" lon="-122.4038617"/>
+ </create>
+ <create>
+  <node id="14316004522" visible="true" version="1" changeset="190973540" timestamp="2026-10-24T14:16:35Z" user="Djroatan" uid="6650391" lat="37.5922236" lon="-122.4037842"/>
+ </create>
+ <create>
+  <node id="14316004523" visible="true" version="1" changeset="190973540" timestamp="2026-10-24T14:16:35Z" user="Djroatan" uid="6650391" lat="37.5922525" lon="-122.4036805"/>
+ </create>
+ <create>
+  <node id="14316004524" visible="true" version="1" changeset="190973540" timestamp="2026-10-24T14:16:35Z" user="Djroatan" uid="6650391" lat="37.5922784" lon="-122.4035974"/>
+ </create>
+ <create>
+  <way id="1571373670" visible="true" version="1" changeset="190973540" timestamp="2026-10-24T14:16:35Z" user="Djroatan" uid="6650391">
+   <nd ref="420520933"/>
+   <nd ref="420520936"/>
+   <nd ref="65429161"/>
+   <nd ref="1430720811"/>
+   <nd ref="1430720817"/>
+   <nd ref="4204722498"/>
+   <nd ref="65465018"/>
+   <nd ref="7490877579"/>
+   <nd ref="65461435"/>
+   <nd ref="4204722503"/>
+   <nd ref="7490877560"/>
+   <nd ref="1430715366"/>
+   <nd ref="360975921"/>
+   <nd ref="360975922"/>
+   <nd ref="1430715303"/>
+   <nd ref="1430715308"/>
+   <nd ref="360975923"/>
+   <nd ref="1430715324"/>
+   <nd ref="360975924"/>
+   <nd ref="1430715347"/>
+   <nd ref="65407834"/>
+   <nd ref="7400202338"/>
+   <nd ref="360976601"/>
+   <nd ref="65465019"/>
+   <nd ref="1430715329"/>
+   <nd ref="360976602"/>
+   <nd ref="1430715379"/>
+   <nd ref="65465022"/>
+   <nd ref="1430715376"/>
+   <nd ref="1430715337"/>
+   <nd ref="65465026"/>
+   <nd ref="1430715343"/>
+   <nd ref="1430715281"/>
+   <nd ref="1430715300"/>
+   <nd ref="65429246"/>
+   <nd ref="1430715354"/>
+   <nd ref="65434591"/>
+   <nd ref="1431884840"/>
+   <nd ref="13296310159"/>
+   <nd ref="65451526"/>
+   <tag k="cycleway" v="shared_lane"/>
+   <tag k="highway" v="secondary"/>
+   <tag k="lanes" v="2"/>
+   <tag k="lanes:backward" v="1"/>
+   <tag k="lanes:forward" v="1"/>
+   <tag k="maxspeed" v="25 mph"/>
+   <tag k="name" v="Magnolia Avenue"/>
+   <tag k="parking:lane:both" v="parallel"/>
+  </way>
+ </create>
+ <create>
+  <way id="1571373671" visible="true" version="1" changeset="190973540" timestamp="2026-10-24T14:16:35Z" user="Djroatan" uid="6650391">
+   <nd ref="65465016"/>
+   <nd ref="420520933"/>
+   <tag k="cycleway" v="shared_lane"/>
+   <tag k="highway" v="secondary"/>
+   <tag k="lanes" v="2"/>
+   <tag k="lanes:backward" v="1"/>
+   <tag k="lanes:forward" v="1"/>
+   <tag k="maxspeed" v="25 mph"/>
+   <tag k="name" v="Magnolia Avenue"/>
+   <tag k="parking:lane:both" v="parallel"/>
+  </way>
+ </create>
+ <create>
+  <way id="1571373672" visible="true" version="1" changeset="190973540" timestamp="2026-10-24T14:16:35Z" user="Djroatan" uid="6650391">
+   <nd ref="7271260442"/>
+   <nd ref="65475985"/>
+   <nd ref="911109942"/>
+   <nd ref="911109943"/>
+   <nd ref="1436356488"/>
+   <nd ref="258807512"/>
+   <nd ref="259167095"/>
+   <nd ref="911109947"/>
+   <nd ref="911108610"/>
+   <nd ref="1436356480"/>
+   <nd ref="258807513"/>
+   <nd ref="911108618"/>
+   <nd ref="911108620"/>
+   <nd ref="1436356431"/>
+   <nd ref="264798756"/>
+   <nd ref="65502877"/>
+   <nd ref="1436356454"/>
+   <nd ref="911115143"/>
+   <tag k="highway" v="secondary"/>
+   <tag k="lanes" v="4"/>
+   <tag k="lanes:backward" v="2"/>
+   <tag k="lanes:forward" v="2"/>
+   <tag k="maxspeed" v="35 mph"/>
+   <tag k="name" v="Trousdale Drive"/>
+   <tag k="parking:lane:both" v="parallel"/>
+   <tag k="surface" v="asphalt"/>
+   <tag k="tiger:cfcc" v="A41"/>
+   <tag k="tiger:county" v="San Mateo, CA"/>
+   <tag k="tiger:name_base" v="Trousdale"/>
+   <tag k="tiger:name_type" v="Dr"/>
+  </way>
+ </create>
+ <create>
+  <way id="1571373673" visible="true" version="1" changeset="190973540" timestamp="2026-10-24T14:16:35Z" user="Djroatan" uid="6650391">
+   <nd ref="7271260443"/>
+   <nd ref="7271260444"/>
+   <nd ref="7271260445"/>
+   <nd ref="7271260446"/>
+   <nd ref="7271260447"/>
+   <nd ref="7271260448"/>
+   <tag k="highway" v="service"/>
+   <tag k="oneway" v="yes"/>
+  </way>
+ </create>
+ <create>
+  <way id="1571373674" visible="true" version="1" changeset="190973540" timestamp="2026-10-24T14:16:35Z" user="Djroatan" uid="6650391">
+   <nd ref="14316004519"/>
+   <nd ref="14316004520"/>
+   <nd ref="14316004521"/>
+   <nd ref="14316004522"/>
+   <nd ref="14316004523"/>
+   <nd ref="14316004524"/>
+   <nd ref="7111419451"/>
+   <tag k="highway" v="service"/>
+   <tag k="service" v="driveway"/>
+  </way>
+ </create>
+ <create>
+  <relation id="21784199" visible="true" version="1" changeset="190973540" timestamp="2026-10-24T14:16:35Z" user="Djroatan" uid="6650391">
+   <member type="way" ref="563067464" role="from"/>
+   <member type="node" ref="420520933" role="via"/>
+   <member type="way" ref="1571373671" role="to"/>
+   <tag k="restriction" v="no_left_turn"/>
+   <tag k="type" v="restriction"/>
+  </relation>
+ </create>
+ <create>
+  <relation id="21784200" visible="true" version="1" changeset="190973540" timestamp="2026-10-24T14:16:35Z" user="Djroatan" uid="6650391">
+   <member type="way" ref="778773381" role="from"/>
+   <member type="node" ref="7271260442" role="via"/>
+   <member type="way" ref="37222876" role="to"/>
+   <tag k="restriction" v="no_left_turn"/>
+   <tag k="type" v="restriction"/>
+  </relation>
+ </create>
+ <modify>
+  <node id="7111419451" visible="true" version="2" changeset="190973540" timestamp="2026-10-24T14:16:35Z" user="Djroatan" uid="6650391" lat="37.5923038" lon="-122.4035820"/>
+ </modify>
+ <modify>
+  <node id="7490877560" visible="true" version="2" changeset="190973540" timestamp="2026-10-24T14:16:35Z" user="Djroatan" uid="6650391" lat="37.6054693" lon="-122.3991071">
+   <tag k="crossing" v="marked"/>
+   <tag k="crossing:markings" v="yes"/>
+   <tag k="highway" v="crossing"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="7490877579" visible="true" version="2" changeset="190973540" timestamp="2026-10-24T14:16:35Z" user="Djroatan" uid="6650391" lat="37.6048934" lon="-122.3985865">
+   <tag k="crossing" v="marked"/>
+   <tag k="crossing:markings" v="yes"/>
+   <tag k="highway" v="crossing"/>
+  </node>
+ </modify>
+ <modify>
+  <way id="778773382" visible="true" version="2" changeset="190973540" timestamp="2026-10-24T14:16:35Z" user="Djroatan" uid="6650391">
+   <nd ref="7271260460"/>
+   <nd ref="7271260461"/>
+   <nd ref="7271260462"/>
+   <nd ref="7271260463"/>
+   <nd ref="7271260443"/>
+   <tag k="highway" v="service"/>
+   <tag k="oneway" v="yes"/>
+  </way>
+ </modify>
+ <modify>
+  <way id="800887675" visible="true" version="2" changeset="190973540" timestamp="2026-10-24T14:16:35Z" user="Djroatan" uid="6650391">
+   <nd ref="7490877557"/>
+   <nd ref="7490877560"/>
+   <nd ref="7490877558"/>
+   <nd ref="4204722501"/>
+   <nd ref="7490877559"/>
+   <tag k="crossing" v="marked"/>
+   <tag k="crossing:markings" v="yes"/>
+   <tag k="footway" v="crossing"/>
+   <tag k="highway" v="footway"/>
+   <tag k="tactile_paving" v="yes"/>
+  </way>
+ </modify>
+ <modify>
+  <way id="800887679" visible="true" version="2" changeset="190973540" timestamp="2026-10-24T14:16:35Z" user="Djroatan" uid="6650391">
+   <nd ref="7490877577"/>
+   <nd ref="7490877579"/>
+   <nd ref="7490877578"/>
+   <tag k="crossing" v="marked"/>
+   <tag k="crossing:markings" v="yes"/>
+   <tag k="footway" v="crossing"/>
+   <tag k="highway" v="footway"/>
+  </way>
+ </modify>
+ <modify>
+  <node id="65461446" visible="true" version="8" changeset="190973540" timestamp="2026-10-24T14:16:35Z" user="Djroatan" uid="6650391" lat="37.6010310" lon="-122.4066564">
+   <tag k="highway" v="stop"/>
+   <tag k="stop" v="all"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="65461447" visible="true" version="8" changeset="190973540" timestamp="2026-10-24T14:16:35Z" user="Djroatan" uid="6650391" lat="37.5998639" lon="-122.4086813">
+   <tag k="direction" v="both"/>
+   <tag k="highway" v="stop"/>
+   <tag k="stop" v="all"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="65483592" visible="true" version="8" changeset="190973540" timestamp="2026-10-24T14:16:35Z" user="Djroatan" uid="6650391" lat="37.5988741" lon="-122.4085752">
+   <tag k="highway" v="stop"/>
+   <tag k="stop" v="all"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="65410611" visible="true" version="9" changeset="190973540" timestamp="2026-10-24T14:16:35Z" user="Djroatan" uid="6650391" lat="37.6000968" lon="-122.4049549">
+   <tag k="direction" v="both"/>
+   <tag k="highway" v="stop"/>
+   <tag k="stop" v="minor"/>
+  </node>
+ </modify>
+ <modify>
+  <way id="586554300" visible="true" version="11" changeset="190973540" timestamp="2026-10-24T14:16:35Z" user="Djroatan" uid="6650391">
+   <nd ref="65437962"/>
+   <nd ref="4884399713"/>
+   <nd ref="6321842763"/>
+   <nd ref="252343803"/>
+   <nd ref="1427634483"/>
+   <nd ref="6319071161"/>
+   <nd ref="6319071156"/>
+   <nd ref="65465005"/>
+   <nd ref="6319071155"/>
+   <nd ref="6319071158"/>
+   <nd ref="6319620331"/>
+   <nd ref="6319071150"/>
+   <nd ref="6319071146"/>
+   <nd ref="65465007"/>
+   <nd ref="6319071144"/>
+   <nd ref="6319071148"/>
+   <nd ref="6319071141"/>
+   <nd ref="6319071137"/>
+   <nd ref="65415604"/>
+   <nd ref="6319071139"/>
+   <nd ref="6319071140"/>
+   <nd ref="65427876"/>
+   <nd ref="4204722348"/>
+   <nd ref="65465008"/>
+   <nd ref="4204722352"/>
+   <nd ref="65465012"/>
+   <nd ref="4906167226"/>
+   <nd ref="360977159"/>
+   <nd ref="1430720812"/>
+   <nd ref="4906167229"/>
+   <nd ref="262934073"/>
+   <nd ref="1430720816"/>
+   <nd ref="1430720814"/>
+   <nd ref="1430720813"/>
+   <nd ref="4204722370"/>
+   <nd ref="65465015"/>
+   <nd ref="1430720821"/>
+   <nd ref="4906167103"/>
+   <nd ref="1430720807"/>
+   <nd ref="1430720808"/>
+   <nd ref="1430720809"/>
+   <nd ref="4906167104"/>
+   <nd ref="65465016"/>
+   <tag k="cycleway" v="shared_lane"/>
+   <tag k="highway" v="secondary"/>
+   <tag k="lanes" v="2"/>
+   <tag k="lanes:backward" v="1"/>
+   <tag k="lanes:forward" v="1"/>
+   <tag k="maxspeed" v="25 mph"/>
+   <tag k="name" v="Magnolia Avenue"/>
+   <tag k="parking:lane:both" v="parallel"/>
+  </way>
+ </modify>
+ <modify>
+  <way id="129736765" visible="true" version="13" changeset="190973540" timestamp="2026-10-24T14:16:35Z" user="Djroatan" uid="6650391">
+   <nd ref="65439967"/>
+   <nd ref="6319614280"/>
+   <nd ref="6318920401"/>
+   <nd ref="4529725602"/>
+   <nd ref="6318920399"/>
+   <nd ref="4884402921"/>
+   <nd ref="65437966"/>
+   <nd ref="4884402923"/>
+   <nd ref="6318920397"/>
+   <nd ref="7539666227"/>
+   <nd ref="65446960"/>
+   <nd ref="1427634356"/>
+   <nd ref="65427877"/>
+   <nd ref="65446964"/>
+   <nd ref="1427634372"/>
+   <nd ref="418089071"/>
+   <nd ref="418089072"/>
+   <nd ref="1430720805"/>
+   <nd ref="4906167242"/>
+   <nd ref="13273168265"/>
+   <nd ref="65446967"/>
+   <nd ref="4906167248"/>
+   <nd ref="7279049647"/>
+   <nd ref="7279049654"/>
+   <nd ref="65446968"/>
+   <nd ref="7223894145"/>
+   <nd ref="7223894137"/>
+   <nd ref="14316004518"/>
+   <nd ref="65446969"/>
+   <tag k="highway" v="residential"/>
+   <tag k="name" v="Poplar Avenue"/>
+   <tag k="parking:lane:both" v="parallel"/>
+   <tag k="tiger:cfcc" v="A41"/>
+   <tag k="tiger:county" v="San Mateo, CA"/>
+   <tag k="tiger:name_base" v="Poplar"/>
+   <tag k="tiger:name_type" v="Ave"/>
+  </way>
+ </modify>
+ <modify>
+  <way id="37222876" visible="true" version="24" changeset="190973540" timestamp="2026-10-24T14:16:35Z" user="Djroatan" uid="6650391">
+   <nd ref="65436831"/>
+   <nd ref="6318837041"/>
+   <nd ref="911112030"/>
+   <nd ref="911112035"/>
+   <nd ref="259167089"/>
+   <nd ref="1436356449"/>
+   <nd ref="911112042"/>
+   <nd ref="911112046"/>
+   <nd ref="264705950"/>
+   <nd ref="911112049"/>
+   <nd ref="911112050"/>
+   <nd ref="65502875"/>
+   <nd ref="1436356502"/>
+   <nd ref="911109941"/>
+   <nd ref="7271260442"/>
+   <tag k="highway" v="secondary"/>
+   <tag k="lanes" v="4"/>
+   <tag k="lanes:backward" v="2"/>
+   <tag k="lanes:forward" v="2"/>
+   <tag k="maxspeed" v="35 mph"/>
+   <tag k="name" v="Trousdale Drive"/>
+   <tag k="parking:lane:both" v="parallel"/>
+   <tag k="surface" v="asphalt"/>
+   <tag k="tiger:cfcc" v="A41"/>
+   <tag k="tiger:county" v="San Mateo, CA"/>
+   <tag k="tiger:name_base" v="Trousdale"/>
+   <tag k="tiger:name_type" v="Dr"/>
+  </way>
+ </modify>
+</osmChange>

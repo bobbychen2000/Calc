@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osmChange version="0.6" generator="openstreetmap-cgimap 2.1.1 (4187677 spike-08.openstreetmap.org)" copyright="OpenStreetMap and contributors" attribution="http://www.openstreetmap.org/copyright" license="http://opendatacommons.org/licenses/odbl/1-0/">
+ <modify>
+  <node id="6975717472" visible="true" version="2" changeset="190716003" timestamp="2026-10-18T21:06:29Z" user="jesszhan0024" uid="23667821" lat="37.5960940" lon="-122.3843855">
+   <tag k="addr:housenumber" v="1850"/>
+   <tag k="addr:street" v="El Camino Real"/>
+   <tag k="amenity" v="clinic"/>
+   <tag k="healthcare" v="clinic"/>
+   <tag k="name" v="Bay Area Vein &amp; Vascular Center"/>
+   <tag k="opening_hours" v="Mo-Fr 09:00-16:00"/>
+   <tag k="phone" v="+1-650-697-2431"/>
+   <tag k="website" v="https://www.bayareavein.com/"/>
+  </node>
+ </modify>
+ <modify>
+  <way id="1342084629" visible="true" version="2" changeset="190716003" timestamp="2026-10-18T21:12:38Z" user="jesszhan0024" uid="23667821">
+   <nd ref="276563251"/>
+   <nd ref="12415648685"/>
+   <nd ref="12415648672"/>
+   <nd ref="12415648673"/>
+   <nd ref="12415648686"/>
+   <nd ref="12415648674"/>
+   <nd ref="12415648683"/>
+   <nd ref="12415648682"/>
+   <nd ref="12415648675"/>
+   <nd ref="12415648681"/>
+   <nd ref="12415648676"/>
+   <nd ref="12415648677"/>
+   <nd ref="12415648678"/>
+   <nd ref="12415648679"/>
+   <nd ref="12415648684"/>
+   <nd ref="12415648680"/>
+   <nd ref="276563251"/>
+   <tag k="building" v="yes"/>
+   <tag k="disused:amenity" v="pharmacy"/>
+   <tag k="disused:healthcare" v="pharmacy"/>
+   <tag k="source" v="microsoft/BuildingFootprints"/>
+  </way>
+ </modify>
+ <modify>
+  <node id="9788199317" visible="true" version="3" changeset="190716003" timestamp="2026-10-18T21:14:49Z" user="jesszhan0024" uid="23667821" lat="37.5978636" lon="-122.3875080">
+   <tag k="disused:amenity" v="fast_food"/>
+   <tag k="disused:cuisine" v="mexican"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="10981800117" visible="true" version="2" changeset="190716003" timestamp="2026-10-18T21:19:12Z" user="jesszhan0024" uid="23667821" lat="37.5993237" lon="-122.3887769">
+   <tag k="addr:housenumber" v="101"/>
+   <tag k="addr:street" v="El Camino Real"/>
+   <tag k="amenity" v="clinic"/>
+   <tag k="check_date" v="2026-10-18"/>
+   <tag k="check_date:opening_hours" v="2026-10-18"/>
+   <tag k="healthcare" v="clinic"/>
+   <tag k="name" v="Medical Center"/>
+   <tag k="opening_hours" v="Mo-Fr 09:00-17:00; Sa 09:00-12:00"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="10981800118" visible="true" version="2" changeset="190716003" timestamp="2026-10-18T21:19:52Z" user="jesszhan0024" uid="23667821" lat="37.5994120" lon="-122.3888770">
+   <tag k="addr:housenumber" v="103"/>
+   <tag k="addr:street" v="El Camino Real"/>
+   <tag k="amenity" v="restaurant"/>
+   <tag k="check_date" v="2026-10-18"/>
+   <tag k="check_date:opening_hours" v="2026-10-18"/>
+   <tag k="name" v="Z Hot Pot"/>
+   <tag k="opening_hours" v="&quot;reservation only&quot;"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="10981800119" visible="true" version="2" changeset="190716003" timestamp="2026-10-18T21:20:35Z" user="jesszhan0024" uid="23667821" lat="37.5994971" lon="-122.3889570">
+   <tag k="addr:housenumber" v="121"/>
+   <tag k="addr:street" v="El Camino Real"/>
+   <tag k="amenity" v="restaurant"/>
+   <tag k="check_date" v="2026-10-18"/>
+   <tag k="check_date:opening_hours" v="2026-10-18"/>
+   <tag k="cuisine" v="chinese"/>
+   <tag k="name" v="Zhen Wei Guan"/>
+   <tag k="opening_hours" v="&quot;reservation only&quot;"/>
+   <tag k="phone" v="+1 650-302-1316"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="10981800120" visible="true" version="2" changeset="190716003" timestamp="2026-10-18T21:23:15Z" user="jesszhan0024" uid="23667821" lat="37.5996297" lon="-122.3891478">
+   <tag k="addr:housenumber" v="131"/>
+   <tag k="addr:street" v="El Camino Real"/>
+   <tag k="check_date" v="2026-10-18"/>
+   <tag k="check_date:opening_hours" v="2026-10-18"/>
+   <tag k="name" v="Sun’s Market"/>
+   <tag k="opening_hours" v="09:30-19:30"/>
+   <tag k="shop" v="supermarket"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="10981800121" visible="true" version="2" changeset="190716003" timestamp="2026-10-18T21:23:59Z" user="jesszhan0024" uid="23667821" lat="37.5997589" lon="-122.3892747">
+   <tag k="addr:housenumber" v="133"/>
+   <tag k="addr:street" v="El Camino Real"/>
+   <tag k="amenity" v="restaurant"/>
+   <tag k="check_date" v="2026-10-18"/>
+   <tag k="check_date:opening_hours" v="2026-10-18"/>
+   <tag k="cuisine" v="korean"/>
+   <tag k="name" v="Mom’s Tofu House"/>
+   <tag k="opening_hours" v="We-Mo 11:00-21:00; Tu off"/>
+   <tag k="website" v="https://momstofu.com"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="10981800122" visible="true" version="2" changeset="190716003" timestamp="2026-10-18T21:24:11Z" user="jesszhan0024" uid="23667821" lat="37.5998995" lon="-122.3894122">
+   <tag k="addr:housenumber" v="139"/>
+   <tag k="addr:street" v="El Camino Real"/>
+   <tag k="check_date" v="2026-10-18"/>
+   <tag k="check_date:opening_hours" v="2026-10-18"/>
+   <tag k="name" v="L. F. George Jewelery"/>
+   <tag k="opening_hours" v="Tu-Sa 11:00-18:30"/>
+   <tag k="phone" v="+1 415-863-5353; +1 415-863-2888"/>
+   <tag k="shop" v="jewelry"/>
+   <tag k="website" v="https://lfgeorgejewelery.com"/>
+  </node>
+ </modify>
+ <modify>
+  <way id="125008752" visible="true" version="6" changeset="190716003" timestamp="2026-10-18T21:29:51Z" user="jesszhan0024" uid="23667821">
+   <nd ref="1389658210"/>
+   <nd ref="1389658242"/>
+   <nd ref="1389658290"/>
+   <nd ref="3952980225"/>
+   <nd ref="1389658270"/>
+   <nd ref="1389658210"/>
+   <tag k="addr:city" v="Milbrae"/>
+   <tag k="addr:country" v="US"/>
+   <tag k="addr:housenumber" v="279"/>
+   <tag k="addr:postcode" v="94030"/>
+   <tag k="addr:state" v="CA"/>
+   <tag k="addr:street" v="El Camino Real"/>
+   <tag k="amenity" v="restaurant"/>
+   <tag k="building" v="commercial"/>
+   <tag k="cuisine" v="chinese"/>
+   <tag k="fax" v="+1 650 692 9682"/>
+   <tag k="name" v="The Kitchen"/>
+   <tag k="opening_hours" v="Mo-Fr 11:00-14:30, Mo-Fr 17:00-21:30, Sa,Su 10:00-14:30, Sa,Su 17:00-21:30"/>
+   <tag k="phone" v="+1 650 692 9688"/>
+   <tag k="source" v="Bing"/>
+  </way>
+ </modify>
+</osmChange>

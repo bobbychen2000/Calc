@@ -191,10 +191,14 @@ export const SPEC = {
   b3xm: { doc: 'MAX', L: 43.79, span: 35.92, H: [11.91, 12.45], crown: [5.08, 5.54], sill: [2.77, 3.07], nose: 4.09, main: [22.43], track: 5.72, doors: [5.03, 36.20],
     src: '§2.2.4 p.2-12 (preliminary), §2.3.4 p.2-16, §2.7.1 p.2-26' },
   // ---- Boeing 757 (§2.3: A fuselage top, C door 1 sill; letters identified on the figure)
-  b752: { doc: 'B757', spanNoTip: true, L: 47.32, span: 38.05, H: [13.49, 13.74], crown: [6.25, 6.45], sill: [3.79, 4.01], nose: 5.89, main: [24.18], track: 7.32, doors: [5.05, 13.99, 38.23],
-    src: '§2.2.1 p.2-10, §2.3.1 p.2-12, §2.7.1 p.2-21 ("nose to center of door")', unv: ['span with blended winglets (STC) not in the ACAP: per airframe'] },
-  b753: { doc: 'B757', spanNoTip: true, L: 54.43, span: 38.06, H: [13.56, 13.64], crown: [6.27, 6.50], sill: [3.79, 4.01], nose: 5.89, main: [28.24], track: 7.32, doors: [5.05, 13.99, 35.99, 45.34],
-    src: '§2.2.2 p.2-11, §2.3.2 p.2-13, §2.7.1 p.2-21' },
+  // span: with the APB blended winglets the model carries, 134 ft 9 in = 41.07 m (Boeing Airport Technology 'Wingspan
+  // Increases Due to the Addition of Winglets', APB data, 757-200/-300; FAA Aircraft Characteristics Database: 41.09 m);
+  // spanPlain = the ACAP's plain wing (review 4 Nov 2026: the drawn winglet tips reached 0.55 m a side beyond the 38.05 m
+  // planform). Winglets are a retrofit: a plain-wing 757 is drawn with them (per-airframe fit not modelled)
+  b752: { doc: 'B757', L: 47.32, span: 41.07, spanPlain: 38.05, H: [13.49, 13.74], crown: [6.25, 6.45], sill: [3.79, 4.01], nose: 5.89, main: [24.18], track: 7.32, doors: [5.05, 13.99, 38.23],
+    src: '§2.2.1 p.2-10, §2.3.1 p.2-12, §2.7.1 p.2-21 ("nose to center of door"); span: wingletspans.pdf (Boeing / APB)', unv: ['winglets per airframe (retrofit): all drawn with them'] },
+  b753: { doc: 'B757', L: 54.43, span: 41.07, spanPlain: 38.06, H: [13.56, 13.64], crown: [6.27, 6.50], sill: [3.79, 4.01], nose: 5.89, main: [28.24], track: 7.32, doors: [5.05, 13.99, 35.99, 45.34],
+    src: '§2.2.2 p.2-11, §2.3.2 p.2-13, §2.7.1 p.2-21; span: wingletspans.pdf (Boeing / APB)' },
   // ---- Boeing 767 (§2.3: A fuselage top, C door 1 sill; §2.7.1 p.2-30: door 2 "OPTION ON -300, -300ER, STANDARD ON -400ER")
   b762: { doc: 'B767', L: 48.51, span: 47.57, H: [15.60, 16.13], crown: [7.16, 7.47], sill: [4.09, 4.47], nose: 4.55, main: [24.24], track: 9.30, doors: [5.70, 36.12],
     src: '§2.2.1 p.2-8 (nose 14 ft 11 in, wheelbase 64 ft 7 in), §2.3.1 p.2-12, §2.7.1 p.2-30' },

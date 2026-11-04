@@ -1,0 +1,280 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osmChange version="0.6" generator="openstreetmap-cgimap 2.1.1 (12729 spike-08.openstreetmap.org)" copyright="OpenStreetMap and contributors" attribution="http://www.openstreetmap.org/copyright" license="http://opendatacommons.org/licenses/odbl/1-0/">
+ <modify>
+  <node id="11075467105" visible="true" version="2" changeset="189729209" timestamp="2026-09-29T13:49:45Z" user="Omnific" uid="1408522" lat="38.2200539" lon="-122.1276218">
+   <tag k="addr:housenumber" v="251"/>
+   <tag k="addr:street" v="Pittman Road"/>
+   <tag k="addr:unit" v="E"/>
+   <tag k="amenity" v="restaurant"/>
+   <tag k="cuisine" v="american"/>
+   <tag k="email" v="slantedtree@gmail.com"/>
+   <tag k="name" v="Slanted Tree Kitchen &amp; Taproom"/>
+   <tag k="opening_hours" v="Mo-Th 11:00-22:00; Fr-Sa 11:00-24:00; Su 10:00-22:00"/>
+   <tag k="outdoor_seating" v="yes"/>
+   <tag k="phone" v="+1 707-803-5666"/>
+   <tag k="website" v="https://www.slantedtree.net"/>
+   <tag k="wheelchair" v="designated"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="14214732282" visible="true" version="2" changeset="189729209" timestamp="2026-09-29T13:49:45Z" user="Omnific" uid="1408522" lat="37.5508022" lon="-122.0509831">
+   <tag k="addr:city" v="Newark"/>
+   <tag k="addr:housenumber" v="34917"/>
+   <tag k="addr:postcode" v="94560"/>
+   <tag k="addr:state" v="CA"/>
+   <tag k="addr:street" v="Newark Boulevard"/>
+   <tag k="name" v="Vaporation"/>
+   <tag k="opening_hours" v="Mo-Su 11:00-20:00"/>
+   <tag k="shop" v="e-cigarette"/>
+   <tag k="website" v="https://vaporationecignewark.com/"/>
+  </node>
+ </modify>
+ <modify>
+  <way id="1561848977" visible="true" version="2" changeset="189729209" timestamp="2026-09-29T13:49:45Z" user="Omnific" uid="1408522">
+   <nd ref="14210680820"/>
+   <nd ref="14210680821"/>
+   <nd ref="14210680822"/>
+   <nd ref="14210680823"/>
+   <nd ref="14210680824"/>
+   <nd ref="14210680825"/>
+   <nd ref="14210680826"/>
+   <nd ref="14210680827"/>
+   <nd ref="14210680828"/>
+   <nd ref="14210680829"/>
+   <nd ref="14210680830"/>
+   <nd ref="14210680831"/>
+   <nd ref="14210680832"/>
+   <nd ref="14210680833"/>
+   <nd ref="14210680834"/>
+   <nd ref="14210680835"/>
+   <nd ref="14210680836"/>
+   <nd ref="14210680837"/>
+   <nd ref="14210680838"/>
+   <nd ref="14210680839"/>
+   <nd ref="14210680840"/>
+   <nd ref="14210680841"/>
+   <nd ref="14210680842"/>
+   <nd ref="14210680843"/>
+   <nd ref="14210680844"/>
+   <nd ref="14210680845"/>
+   <nd ref="14210680846"/>
+   <nd ref="14210680847"/>
+   <nd ref="14210680848"/>
+   <nd ref="14210680849"/>
+   <nd ref="14210680850"/>
+   <nd ref="14210680851"/>
+   <nd ref="14210680852"/>
+   <nd ref="14210680853"/>
+   <nd ref="14210680854"/>
+   <nd ref="14210680855"/>
+   <nd ref="14210680856"/>
+   <nd ref="14210680857"/>
+   <nd ref="14210680858"/>
+   <nd ref="14210680859"/>
+   <nd ref="14210680820"/>
+   <tag k="leisure" v="park"/>
+   <tag k="name" v="Erickson Ranch"/>
+   <tag k="opening_hours" v="dawn-dusk"/>
+   <tag k="operator" v="Mother Lode Land Trust"/>
+  </way>
+ </modify>
+ <modify>
+  <relation id="21446181" visible="true" version="2" changeset="189729209" timestamp="2026-09-29T13:49:45Z" user="Omnific" uid="1408522">
+   <member type="way" ref="1562656057" role="outer"/>
+   <member type="way" ref="1562656056" role="outer"/>
+   <tag k="access" v="yes"/>
+   <tag k="barrier" v="fence"/>
+   <tag k="leisure" v="dog_park"/>
+   <tag k="name" v="Bark Barracks"/>
+   <tag k="opening_hours" v="06:00-22:00"/>
+   <tag k="operator" v="City of Tustin"/>
+   <tag k="operator:type" v="government"/>
+   <tag k="type" v="multipolygon"/>
+  </relation>
+ </modify>
+ <modify>
+  <node id="14210530681" visible="true" version="3" changeset="189729209" timestamp="2026-09-29T13:49:45Z" user="Omnific" uid="1408522" lat="34.0982117" lon="-118.3225619">
+   <tag k="addr:city" v="Los Angeles"/>
+   <tag k="addr:housenumber" v="6115"/>
+   <tag k="addr:postcode" v="90028"/>
+   <tag k="addr:state" v="CA"/>
+   <tag k="addr:street" v="West Sunset Boulevard"/>
+   <tag k="amenity" v="cafe"/>
+   <tag k="check_date" v="2026-09-24"/>
+   <tag k="check_date:currency:XBT" v="2026-09-24"/>
+   <tag k="contact:instagram" v="louiscoffeebar"/>
+   <tag k="currency:XBT" v="yes"/>
+   <tag k="email" v="info@louiscoffeebar.com"/>
+   <tag k="name" v="Louis Coffee Bar"/>
+   <tag k="opening_hours" v="Mo-Su 07:00-19:00"/>
+   <tag k="outdoor_seating" v="no"/>
+   <tag k="payment:lightning" v="yes"/>
+   <tag k="payment:lightning_contactless" v="no"/>
+   <tag k="payment:lightning:operator" v="square"/>
+   <tag k="payment:onchain" v="no"/>
+   <tag k="phone" v="+1 818 322 6203"/>
+   <tag k="website" v="https://order.louiscoffeebar.com/order"/>
+  </node>
+ </modify>
+ <modify>
+  <way id="708312409" visible="true" version="3" changeset="189729209" timestamp="2026-09-29T13:49:45Z" user="Omnific" uid="1408522">
+   <nd ref="6655747274"/>
+   <nd ref="6655747275"/>
+   <nd ref="6655747276"/>
+   <nd ref="6655747277"/>
+   <nd ref="6655747274"/>
+   <tag k="amenity" v="marketplace"/>
+   <tag k="name" v="Modesto Certified Farmer's Market"/>
+   <tag k="opening_hours" v="Mar 14-Nov 21 Th 08:00-13:00; Mar 16-Dec 21 Sa 08:00-13:00"/>
+   <tag k="website" v="https://modestocfm.com/"/>
+  </way>
+ </modify>
+ <modify>
+  <node id="8495303388" visible="true" version="4" changeset="189729209" timestamp="2026-09-29T13:49:45Z" user="Omnific" uid="1408522" lat="37.2942345" lon="-121.9141830">
+   <tag k="addr:city" v="San Jose"/>
+   <tag k="addr:housenumber" v="1601"/>
+   <tag k="addr:postcode" v="95125"/>
+   <tag k="addr:state" v="CA"/>
+   <tag k="addr:street" v="Meridian Avenue"/>
+   <tag k="amenity" v="restaurant"/>
+   <tag k="check_date" v="2026-06-15"/>
+   <tag k="cuisine" v="german;breakfast"/>
+   <tag k="name" v="Gunther's Restaurant &amp; Catering"/>
+   <tag k="opening_hours" v="Mo-Fr 10:00-15:00; Sa 08:00-14:00"/>
+   <tag k="payment:cash" v="no"/>
+   <tag k="payment:credit_cards" v="yes"/>
+   <tag k="payment:debit_cards" v="yes"/>
+   <tag k="phone" v="+1-408-266-9022"/>
+   <tag k="website" v="https://www.guntherscatering.com/"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="8548517915" visible="true" version="4" changeset="189729209" timestamp="2026-09-29T13:49:45Z" user="Omnific" uid="1408522" lat="40.7804930" lon="-124.1593618">
+   <tag k="addr:city" v="Eureka"/>
+   <tag k="addr:housenumber" v="831"/>
+   <tag k="addr:postcode" v="95503"/>
+   <tag k="addr:state" v="CA"/>
+   <tag k="addr:street" v="Harris Street"/>
+   <tag k="email" v="info@humboldtaudiology.com"/>
+   <tag k="entrance" v="main"/>
+   <tag k="opening_hours" v="Mo-Fr 09:00-12:00; Mo-Th 13:00-17:00; PH closed"/>
+   <tag k="phone" v="+1-707-832-4424"/>
+   <tag k="website" v="https://humboldtaudiology.com/contact-us/"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="12623570712" visible="true" version="4" changeset="189729209" timestamp="2026-09-29T13:49:45Z" user="Omnific" uid="1408522" lat="34.0981387" lon="-118.3372300">
+   <tag k="addr:city" v="Los Angeles"/>
+   <tag k="addr:housenumber" v="6275"/>
+   <tag k="addr:postcode" v="90028"/>
+   <tag k="addr:state" v="CA"/>
+   <tag k="addr:street" v="West Sunset Boulevard"/>
+   <tag k="alt_name" v="Javista Hollywood"/>
+   <tag k="amenity" v="cafe"/>
+   <tag k="currency:XBT" v="yes"/>
+   <tag k="name" v="Javista Coffee"/>
+   <tag k="opening_hours" v="Mo-Su 07:00-17:00"/>
+   <tag k="payment:lightning" v="yes"/>
+   <tag k="payment:lightning:operator" v="square"/>
+   <tag k="phone" v="+1-323-696-6725"/>
+   <tag k="website" v="https://www.javistacoffee.com/"/>
+  </node>
+ </modify>
+ <modify>
+  <way id="179048964" visible="true" version="4" changeset="189729209" timestamp="2026-09-29T13:49:45Z" user="Omnific" uid="1408522">
+   <nd ref="1893861646"/>
+   <nd ref="1893861604"/>
+   <nd ref="1893861607"/>
+   <nd ref="1893861644"/>
+   <nd ref="1893861631"/>
+   <nd ref="1893861605"/>
+   <nd ref="1893861649"/>
+   <nd ref="1893861620"/>
+   <nd ref="1893861633"/>
+   <nd ref="1893861645"/>
+   <nd ref="1893861640"/>
+   <nd ref="1893861589"/>
+   <nd ref="1893861586"/>
+   <nd ref="1893861653"/>
+   <nd ref="1893861652"/>
+   <nd ref="1893861648"/>
+   <nd ref="1893861647"/>
+   <nd ref="1893861636"/>
+   <nd ref="1893861618"/>
+   <nd ref="1893861642"/>
+   <nd ref="1893861634"/>
+   <nd ref="1893861650"/>
+   <nd ref="1893861646"/>
+   <tag k="addr:city" v="Modesto"/>
+   <tag k="addr:housenumber" v="1500"/>
+   <tag k="addr:postcode" v="95354"/>
+   <tag k="addr:state" v="CA"/>
+   <tag k="addr:street" v="I Street"/>
+   <tag k="air_conditioning" v="yes"/>
+   <tag k="amenity" v="library"/>
+   <tag k="building" v="yes"/>
+   <tag k="building:levels" v="2"/>
+   <tag k="gnis:feature_id" v="1816943"/>
+   <tag k="internet_access" v="yes"/>
+   <tag k="internet_access:fee" v="no"/>
+   <tag k="name" v="Modesto Main Branch Stanislaus County Library"/>
+   <tag k="opening_hours" v="Mo-Th 10:00-20:00 open, Fr,Sa 10:00-17:00 open, Dec 31 17:00+ closed"/>
+   <tag k="operator" v="Stanislaus County"/>
+   <tag k="operator:type" v="government"/>
+   <tag k="phone" v="+1-209-558-7800"/>
+   <tag k="website" v="https://stanislauslibrary.org/"/>
+   <tag k="wheelchair" v="yes"/>
+  </way>
+ </modify>
+ <modify>
+  <node id="368171678" visible="true" version="5" changeset="189729209" timestamp="2026-09-29T13:49:45Z" user="Omnific" uid="1408522" lat="34.3518697" lon="-119.0598198">
+   <tag k="addr:city" v="Santa Paula"/>
+   <tag k="addr:country" v="US"/>
+   <tag k="addr:housenumber" v="970"/>
+   <tag k="addr:postcode" v="93060"/>
+   <tag k="addr:state" v="CA"/>
+   <tag k="addr:street" v="East Ventura Street"/>
+   <tag k="amenity" v="townhall"/>
+   <tag k="ele" v="81"/>
+   <tag k="gnis:feature_id" v="1870881"/>
+   <tag k="name" v="Santa Paula City Hall"/>
+   <tag k="opening_hours" v="Mo-Th 09:00-16:00; Fr 09:00-16:00; PH closed"/>
+   <tag k="source" v="USGS Geonames"/>
+   <tag k="website" v="https://www.spcity.org/"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="1514640136" visible="true" version="6" changeset="189729209" timestamp="2026-09-29T13:49:45Z" user="Omnific" uid="1408522" lat="37.2938827" lon="-121.9322877">
+   <tag k="addr:floor" v="1;2"/>
+   <tag k="addr:housenumber" v="990"/>
+   <tag k="addr:street" v="East Hamilton Avenue"/>
+   <tag k="check_date" v="2026-08-07"/>
+   <tag k="level" v="0;1"/>
+   <tag k="name" v="Citti's Florist"/>
+   <tag k="opening_hours" v="Mo-Fr 08:00-18:00; Sa 08:30-13:00; Su off"/>
+   <tag k="shop" v="florist"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="2059093052" visible="true" version="11" changeset="189729209" timestamp="2026-09-29T13:49:45Z" user="Omnific" uid="1408522" lat="37.8718309" lon="-122.2721190">
+   <tag k="addr:city" v="Berkeley"/>
+   <tag k="addr:country" v="US"/>
+   <tag k="addr:housenumber" v="1941"/>
+   <tag k="addr:postcode" v="94704"/>
+   <tag k="addr:state" v="CA"/>
+   <tag k="addr:street" v="University Avenue"/>
+   <tag k="addr:unit" v="A"/>
+   <tag k="amenity" v="restaurant"/>
+   <tag k="check_date" v="2026-09-24"/>
+   <tag k="contact:instagram" v="https://www.instagram.com/kinda.izakaya/"/>
+   <tag k="contact:yelp" v="https://www.yelp.com/biz/kinda-izakaya-berkeley"/>
+   <tag k="cuisine" v="japanese;izakaya"/>
+   <tag k="diet:vegan" v="yes"/>
+   <tag k="name" v="Kinda Izakaya"/>
+   <tag k="opening_hours" v="Su, Mo, Th 17:30-22:00; Fr, Sa 17:30-23:30"/>
+   <tag k="phone" v="+1-510-647-9226"/>
+   <tag k="website" v="https://kindaizakaya6.godaddysites.com/"/>
+   <tag k="wheelchair" v="yes"/>
+  </node>
+ </modify>
+</osmChange>

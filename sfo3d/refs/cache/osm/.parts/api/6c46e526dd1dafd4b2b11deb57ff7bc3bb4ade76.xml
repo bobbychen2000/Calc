@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osmChange version="0.6" generator="openstreetmap-cgimap 2.1.1 (3400712 spike-07.openstreetmap.org)" copyright="OpenStreetMap and contributors" attribution="http://www.openstreetmap.org/copyright" license="http://opendatacommons.org/licenses/odbl/1-0/">
+ <modify>
+  <node id="14208424971" visible="true" version="2" changeset="189486218" timestamp="2026-09-24T09:17:15Z" user="confusedbuffalo-bot" uid="23492813" lat="37.8592342" lon="-122.2422482">
+   <tag k="addr:city" v="Berkeley"/>
+   <tag k="addr:housenumber" v="41"/>
+   <tag k="addr:postcode" v="94705"/>
+   <tag k="addr:state" v="CA"/>
+   <tag k="addr:street" v="Tunnel Road"/>
+   <tag k="amenity" v="cafe"/>
+   <tag k="cuisine" v="american;coffee"/>
+   <tag k="email" v="info@claremontresort.com"/>
+   <tag k="internet_access" v="yes"/>
+   <tag k="internet_access:fee" v="no"/>
+   <tag k="name" v="East Bay Provisions"/>
+   <tag k="opening_hours" v="Mo-Su 06:00-16:00"/>
+   <tag k="outdoor_seating" v="yes"/>
+   <tag k="phone" v="+1-510-843-3000"/>
+   <tag k="website" v="https://claremontresortandclub.com/dine/east-bay-provisions/"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="14209691802" visible="true" version="2" changeset="189486218" timestamp="2026-09-24T09:17:15Z" user="confusedbuffalo-bot" uid="23492813" lat="38.5640957" lon="-121.4347590">
+   <tag k="addr:housenumber" v="1029"/>
+   <tag k="addr:postcode" v="95819"/>
+   <tag k="addr:street" v="56th Street"/>
+   <tag k="amenity" v="dentist"/>
+   <tag k="name" v="Alex Mercado, DDS - Mercado Dental Studio"/>
+   <tag k="opening_hours" v="Mo-Th 07:00-16:00; Fr 08:00-12:00"/>
+   <tag k="phone" v="+1-916-448-5458"/>
+   <tag k="website" v="http://sacsmiles.com"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="11663888100" visible="true" version="3" changeset="189486218" timestamp="2026-09-24T09:17:15Z" user="confusedbuffalo-bot" uid="23492813" lat="33.8591650" lon="-118.2651789">
+   <tag k="addr:city" v="Carson"/>
+   <tag k="addr:housenumber" v="619"/>
+   <tag k="addr:postcode" v="90746"/>
+   <tag k="addr:state" v="CA"/>
+   <tag k="addr:street" v="East University Drive"/>
+   <tag k="branch" v="Carson"/>
+   <tag k="brand" v="99 Cents Only Stores"/>
+   <tag k="brand:wikidata" v="Q4646294"/>
+   <tag k="name" v="Sprouts Farmers Market"/>
+   <tag k="opening_hours" v="Mo 07:00-22:00; Tu 07:00-22:00; We 07:00-22:00; Th 07:00-22:00; Fr-Su 07:00-22:00"/>
+   <tag k="phone" v="+1-424-546-3781"/>
+   <tag k="shop" v="variety_store"/>
+   <tag k="website" v="https://www.sprouts.com/store/ca/carson/e-university-dr/"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="2660483387" visible="true" version="4" changeset="189486218" timestamp="2026-09-24T09:17:15Z" user="confusedbuffalo-bot" uid="23492813" lat="32.7740940" lon="-117.1858921">
+   <tag k="level" v="2"/>
+   <tag k="name" v="USD Outdoor Adventures"/>
+   <tag k="office" v="yes"/>
+   <tag k="opening_hours" v="Mo-Fr: 9:00-17:00"/>
+   <tag k="phone" v="+1-619-260-4709"/>
+   <tag k="website" v="https://www.sandiego.edu/outdoor-adventures/"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="6654202793" visible="true" version="6" changeset="189486218" timestamp="2026-09-24T09:17:15Z" user="confusedbuffalo-bot" uid="23492813" lat="34.2370974" lon="-118.5286106">
+   <tag k="addr:city" v="Northridge"/>
+   <tag k="addr:housenumber" v="18111"/>
+   <tag k="addr:state" v="CA"/>
+   <tag k="addr:street" v="Nordhoff Street"/>
+   <tag k="air_conditioning" v="yes"/>
+   <tag k="amenity" v="fast_food"/>
+   <tag k="check_date" v="2026-09-22"/>
+   <tag k="cuisine" v="mexican"/>
+   <tag k="drive_through" v="no"/>
+   <tag k="highchair" v="no"/>
+   <tag k="name" v="Karne Kitchen"/>
+   <tag k="opening_hours" v="Mo-We 11:00-16:00; Th-Su off"/>
+   <tag k="outdoor_seating" v="yes"/>
+   <tag k="payment:cash" v="yes"/>
+   <tag k="payment:credit_cards" v="yes"/>
+   <tag k="payment:debit_cards" v="yes"/>
+   <tag k="phone" v="+1-818-677-3000"/>
+   <tag k="smoking" v="no"/>
+   <tag k="takeaway" v="yes"/>
+   <tag k="website" v="https://thesoraya.org"/>
+  </node>
+ </modify>
+ <modify>
+  <relation id="6302565" visible="true" version="6" changeset="189486218" timestamp="2026-09-24T09:17:15Z" user="confusedbuffalo-bot" uid="23492813">
+   <member type="way" ref="424024125" role="outer"/>
+   <member type="way" ref="424024134" role="inner"/>
+   <tag k="addr:housenumber" v="7023"/>
+   <tag k="addr:postcode" v="90028"/>
+   <tag k="addr:street" v="West Sunset Boulevard"/>
+   <tag k="brand" v="Days Inn"/>
+   <tag k="brand:wikidata" v="Q1047239"/>
+   <tag k="building" v="hotel"/>
+   <tag k="building:units" v="74"/>
+   <tag k="check_date" v="2026-09-22"/>
+   <tag k="ele" v="119.3"/>
+   <tag k="height" v="12.2"/>
+   <tag k="internet_access" v="wlan"/>
+   <tag k="lacounty:ain" v="5548013008"/>
+   <tag k="lacounty:bld_id" v="458098858266"/>
+   <tag k="name" v="Palihotel Hollywood"/>
+   <tag k="official_name" v="Days Inn by Wyndham"/>
+   <tag k="phone" v="+1-323-545-0535"/>
+   <tag k="start_date" v="1958"/>
+   <tag k="tourism" v="hotel"/>
+   <tag k="type" v="multipolygon"/>
+   <tag k="website" v="https://www.palisociety.com/hotels/hollywood"/>
+  </relation>
+ </modify>
+ <modify>
+  <node id="10742623332" visible="true" version="7" changeset="189486218" timestamp="2026-09-24T09:17:15Z" user="confusedbuffalo-bot" uid="23492813" lat="37.6005661" lon="-122.3844651">
+   <tag k="addr:city" v="Millbrae"/>
+   <tag k="addr:housenumber" v="100"/>
+   <tag k="addr:postcode" v="94030"/>
+   <tag k="addr:state" v="CA"/>
+   <tag k="addr:street" v="Rollins Road"/>
+   <tag k="amenity" v="fast_food"/>
+   <tag k="branch" v="MILLBRAE AVENUE AND ROLLINS ROAD"/>
+   <tag k="brand" v="Panda Express"/>
+   <tag k="brand:wikidata" v="Q1358690"/>
+   <tag k="check_date" v="2026-07-02"/>
+   <tag k="cuisine" v="chinese"/>
+   <tag k="drive_through" v="no"/>
+   <tag k="name" v="Panda Express"/>
+   <tag k="opening_hours" v="09:00-22:30"/>
+   <tag k="phone" v="+1-650-844-7988"/>
+   <tag k="takeaway" v="yes"/>
+   <tag k="website" v="https://www.pandaexpress.com/locations/ca/millbrae/3765"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="1017262478" visible="true" version="8" changeset="189486218" timestamp="2026-09-24T09:17:15Z" user="confusedbuffalo-bot" uid="23492813" lat="37.6373326" lon="-122.4172150">
+   <tag k="addr:city" v="San Bruno"/>
+   <tag k="addr:housenumber" v="1150"/>
+   <tag k="addr:postcode" v="94066"/>
+   <tag k="addr:state" v="CA"/>
+   <tag k="addr:street" v="El Camino Real"/>
+   <tag k="addr:unit" v="Suite 196"/>
+   <tag k="amenity" v="fast_food"/>
+   <tag k="branch" v="El Camino Real &amp; Sneath (Tanforan Shopping Center)"/>
+   <tag k="brand" v="Panda Express"/>
+   <tag k="brand:wikidata" v="Q1358690"/>
+   <tag k="cuisine" v="chinese"/>
+   <tag k="level" v="1"/>
+   <tag k="name" v="Panda Express"/>
+   <tag k="opening_hours" v="Mo-Sa 11:00-20:00; Su 11:00-19:00"/>
+   <tag k="phone" v="+1-650-589-5717"/>
+   <tag k="takeaway" v="yes"/>
+   <tag k="website" v="https://www.pandaexpress.com/locations/ca/san-bruno/1068"/>
+  </node>
+ </modify>
+</osmChange>

@@ -79,6 +79,30 @@ def sheet_plan(variant='vector', dev=None):
     band = [n_a + nn * 7.5, n_b + nn * 7.5]
     m2 = [m_b - nn * 14.0, m_a - nn * 14.0]
     V.poly([band[0], band[1], *sorted(m2, key=lambda p: np.dot(p - band[0], ti), reverse=True)], 'inf', fc='#f6e3cf' if not bg else 'none', z=5, lw=0.6)
+    # BA-B roof features along the whole pier (NAIP 2024, by eye, tools/buildings/dom_bab_roof.json) moved back by the relief of
+    # the outer roof [obs positions, inf height]
+    BR = D._j(D.TB, 'dom_bab_roof.json')['manual']
+    lvB, hB, _ = D.dom_lean('B'); shB = -lvB * hB
+    from shapely.geometry import Polygon as SP
+    roofB = max((SP(r) for r in D.outer_rings('Boarding Area B', 'boardingAreas')), key=lambda g: g.area).buffer(2.5, join_style=2)
+
+    def onroof(r):   # clip a feature to the roof (level-2 outline + 2.5 m: the measured ESE overhang is 2.3 m) [inf]
+        g = SP(np.asarray(r) + shB).intersection(roofB)
+        gs = [g] if g.geom_type == 'Polygon' else [x for x in getattr(g, 'geoms', []) if x.geom_type == 'Polygon']
+        return [np.asarray(x.exterior.coords[:-1]) for x in gs if x.area > 5]
+    for r in BR['pv_fields']:
+        for q in onroof(r): V.poly(q, 'obs', fc='none', z=5.2, lw=0.4, hatch='||||||', ec='#5a7da0')
+    for r in BR['wells']:
+        for q in onroof(r): V.poly(q, 'obs', fc='#d7ead0' if not bg else 'none', z=5.3, lw=0.6)
+    for r in BR['bridges']:
+        for q in onroof(r): V.poly(q, 'obs', fc='white' if not bg else 'none', z=5.35, lw=0.5)
+    for r in BR['skylight_grids']:
+        for q in onroof(r): V.poly(q, 'obs', fc='#cfe3f3' if not bg else 'none', z=5.3, lw=0.5, hatch='++')
+    V.leader(np.mean(BR['wells'][1], 0) + shB, -44, 6, 'BA-B roof (NAIP 2024, by eye +-3 m [obs]; moved back by the 13.1 m outer-roof\n'
+             f'relief, {np.hypot(*shB):.1f} m W [inf]): three planted sunken roof wells on the WNW side\n(green; "roof wells" [pub CDR 2016]) '
+             'crossed by two bridges (white; they continue W\noff the roof - walkway links?) [obs]; two skylight grids (blue,\ncross-hatched); PV row fields '
+             '(hatched; 1.0-1.2 MW, ~3,000 panels [pub];\nrows ~5.5 m at ~9 m pitch [obs]); all clipped to the roof (outline\n+2.5 m) [inf]; '
+             'heights of the wells, bridges and skylights\nnot measured [unk]', 'obs', fs=4.0)
     # BA-D head: drums and roof-plane / skylight lines (imaged; moved back by the relief of an assumed height) [obs / inf]
     lvD = D.dom_lean('D')[0]
     for c, r in BAD_DRUMS_IMG:
@@ -104,7 +128,7 @@ def sheet_plan(variant='vector', dev=None):
     L = [((-905, 905), -40, 24, 'Boarding Area B (south half, t -1238..-1176):\nouter roof edges ' + fmt_h(DV['bab.h_roof']) + ' [obs]\n'
           'raised central roof ' + fmt_h(DV['bab.h_roof_central']) + ' [obs, low]\nlean-free edges (thick blue): ESE 2.3 m outside, WNW 1.7 m\n'
           'inside the level-2 outline; width 54.3 m [obs]; raised part\n~33 m wide (hatched, approx.) [inf]', 'obs'),
-         ((-905, 600), -48, -2, 'BA-B north half: not measured; PV rows on the roof\n(1.0-1.2 MW, ~3,000 panels [pub]); landside roof wells [pub/obs]', 'obs'),
+         ((-905, 600), -48, -2, 'BA-B north half: roof heights not measured [unk];\nroof features drawn from NAIP (wells, bridges, skylights, PV)', 'obs'),
          ((-650, 410), 18, 22, 'Boarding Area C: roof edge ' + fmt_h(DV['bac.h_roof']) + '\n[obs, low: single face, assumed lean]', 'obs'),
          ((-520, 200), 14, 18, 'Boarding Area D head: ' + fmt_h(DV['bad.h_roof']) + ' [obs, low]\n(faces 118.7 m apart may be two roof levels)', 'obs'),
          ((-800, -40), 24, -10, 'Boarding Area E (north part, t -350..-310):\ntapered fascia ' + fmt_h(DV['bae.h_roof']) + ' [obs]', 'obs'),
@@ -143,8 +167,8 @@ def sheet_plan(variant='vector', dev=None):
             ('The app (tools/build_terminal_parts.py)', 'piers 14.6 m', 'app', 'halls T1 20 / T2 19 / T3 21 m')]
     S.table(570, 300, 166, 'Domestic roof heights (above the apron)', rows, fs=3.9, col=(0.42, 0.24))
     S.note('SFO Museum boarding-area polygons are departure-level (sfo:level 2) floor outlines, verified on record 1947304261 (BA-B): they '
-           'are not roof outlines. Measured lean-free roof edges overhang them by ~1.8-2.3 m on the airfield (ESE) faces and lie 1.3-1.7 m '
-           'inside them on the WNW faces.')
+           'are not roof outlines. The measured lean-free roof edges lie, from the outline (shapely, + = outside): BA-B ESE +2.3 / WNW -1.7 m; '
+           'BA-D +2.4 / -1.4 m; BA-F ESE 0.0 (on the outline) / WNW -1.0 to -1.3 m. Spec frame range: 0-5 m outside (ESE), 0-2 m inside (WNW).')
     S.note('Heights scale with the 2020 sun (|s20| 1.25, range 1.19-1.31): x0.95-1.05. Measured stretches only (labels name them); other parts '
            'of the piers are unmeasured.')
     S.note('The T1 "70 ft skylight trusses / four 180 x 30 ft reflectors" belong to the ITB main hall (refuted for T1 in the verification).')
@@ -179,6 +203,37 @@ def pier_section(V, x0, title, W, h, rng, tag='obs', step=None, note='', h2=None
     V.text((x0 + W / 2, -11), title, 'pub', fs=4.8, weight='bold', bg=False, color='#000000', style='normal')
 
 
+BAE_FLANK, BAE_STEP, BAE_OVER = 4.4, 3.0, 1.5   # BA-E: lower side roofs ~10 % of the width each, ~3 m below the raised
+                                                # roof, tapered edge overhanging the clerestory ~1.5 m (photo a1, Pi.1415926535
+                                                # Sept 2025, CC BY-SA 4.0; pier identified by position / airline) [inf, low]
+
+
+def bae_section(V, x0, W, h, rng):
+    """BA-E stepped cross-section: raised centre roof with a thin tapered edge overhanging a recessed clerestory band,
+    between lower flat side roofs [pub form bae.roof; obs photo a1; proportions inf]."""
+    V.ax.fill_between([x0 - 4, x0 + W + 4], [-1.5, -1.5], [0, 0], color='#dddddd', lw=0, zorder=1)
+    V.line([(x0 - 4, 0), (x0 + W + 4, 0)], 'pub', lw=0.7)
+    V.ax.fill_between([x0, x0 + W], [rng[0]] * 2, [rng[1]] * 2, color='#cfe0f2', lw=0, zorder=1.2, alpha=0.8)
+    hs = h - BAE_STEP; a, b = x0 + BAE_FLANK, x0 + W - BAE_FLANK
+    V.poly([(x0, 0), (x0 + W, 0), (x0 + W, hs), (x0, hs)], 'inf', fc='#f4f7fb', z=2, lw=0.7)          # body + side roofs
+    V.poly([(a, hs), (b, hs), (b, h - 1.0), (a, h - 1.0)], 'inf', fc='#d7e6f3', z=2.1, lw=0.5)          # clerestory glazing
+    for xx in np.linspace(a, b, 9)[1:-1]:
+        V.line([(xx, hs), (xx, h - 1.0)], 'inf', lw=0.2, z=2.15, color='#7f97ad')
+    o = BAE_OVER
+    roof = [(a - o, h - 0.15), (a + 3, h - 1.0), (b - 3, h - 1.0), (b + o, h - 0.15), (b + o, h), (a - o, h)]
+    V.poly(roof, 'obs', fc='#c9c9c9', z=2.3, lw=0.7)
+    V.level(x0 + W + 1, h, f'+{h:.2f} ({rng[0]:.1f}-{rng[1]:.1f}) tapered fascia [obs]', 'obs', len_mm=3, fs=4.0, u_line=b + o)
+    V.level(x0 + W + 1, hs, f'+{hs:.1f} lower side roofs: ~{BAE_STEP:.0f} m step [inf, photo a1, low]', 'inf', len_mm=3, fs=3.8, u_line=x0 + W)
+    V.dim((x0, hs), (a, hs), 3, f'~{BAE_FLANK}', 'inf', fs=3.6)
+    V.dim((b, hs), (x0 + W, hs), 3, f'~{BAE_FLANK}', 'inf', fs=3.6)
+    V.dim((x0, 0), (x0 + W, 0), -5, f'{W:.1f} m [inf: s-profiles + leans]', 'inf', fs=4.0)
+    V.leader((a - o + 0.3, h - 0.1), -10, 14, 'raised centre roof, thin tapered edge overhanging\nthe recessed clerestory glazing [pub IDA: "tapered edges\n'
+             'overhanging clerestory glazing"; obs photo a1]; overhang\n~1.5 m, step and flank widths [inf, low]; the measured\n'
+             '12.85 m fascia taken as the raised roof\'s edge [inf]', 'pub', fs=3.6, ha='right')
+    V.text((x0 + W / 2, (hs + h - 1.0) / 2), 'clerestory [pub]', 'pub', fs=3.4)
+    V.text((x0 + W / 2, -11), 'BOARDING AREA E (north part)', 'pub', fs=4.8, weight='bold', bg=False, color='#000000', style='normal')
+
+
 def sheet_elev():
     S = Sheet('BD-02', 'Domestic terminals: pier cross-sections on a common datum and Terminal 3 West airside wall sections', 'A1',
               subtitle='Spec: tools/buildings/spec_domestic.json (heights obs; T3 levels / wall sections pub, CDR 95 % CD Oct 2023)')
@@ -190,8 +245,8 @@ def sheet_elev():
                  h2=DV['bab.h_roof_central']['value'], rng2=DV['bab.h_roof_central']['range'], note=' outer roof edges [obs]')
     V.text((x + 27, 4.5), 'apron + concourse + mezzanine\n("two levels and a mezzanine") [pub];\nfloor heights not published [unk]', 'unk', fs=3.7)
     x += 54.3 + GAP
-    pier_section(V, x, 'BOARDING AREA E (north part)', 42.9, DV['bae.h_roof']['value'], DV['bae.h_roof']['range'], note=' [inf: s-profiles + leans]', Wc='inf')
-    V.text((x + 21, 4.5), 'tapered roof edge over\nclerestory glazing [pub IDA]', 'pub', fs=3.7)
+    bae_section(V, x, 42.9, DV['bae.h_roof']['value'], DV['bae.h_roof']['range'])
+    V.text((x + 21, 4.5), 'concourse; end wall: full-height\nrecessed glass [obs photo a1]', 'obs', fs=3.7)
     x += 42.9 + GAP
     pier_section(V, x, 'BOARDING AREA F (NE arm)', 27.0, DV['baf.h_roof_ne_arm']['value'], DV['baf.h_roof_ne_arm']['range'], note=' lean-free edges [obs]')
     V.mark((x + 13.5, 34 * FT), 'pub', marker='v', ms=4)
@@ -283,6 +338,92 @@ def sheet_elev():
     S.note('Pier sections are schematic boxes at the measured roof height and width; shaded bands = the spec range. Roof forms beyond what is '
            'listed (fascia depths, clerestory glazing heights, PV racks) are not measured.')
     S.note('BA-B step: lower band ~7.5 m (ESE) / ~14 m (WNW), raised part ~33 m (lean-corrected, approximate, south half only).')
+    S.note('BA-E is drawn stepped (photo a1, Sept 2025, CC BY-SA 4.0; pier identified by position and airline only): a raised PV-covered '
+           'centre roof whose knife-thin tapered edge overhangs a recessed glass clerestory / end wall, between lower flat side roofs. Step '
+           '(~3 m), flank width (~4.4 m) and overhang (~1.5 m) are photo proportions [inf, low]; which level the measured 12.85 m fascia '
+           'belongs to is not settled (drawn as the raised roof).')
     S.note('BA-E width 42.9 m is derived from the research s-profiles (fascia s -686.2, 2020; WNW roof edge s -726.5, 2024) with the solved '
            'leans [inf]; BA-C width is the level-2 outline.')
+    return S.finish()
+
+
+# ------------------------------------------------------------------------------------------------ BD-03 landside elevations
+# Face lengths: SFO Museum level-2 outline edges whose outward normal faces the central garage (within 260 m of its centre):
+# T1 two curved runs of 94.1 m ((-805.4, 375.7) -> (-871.2, 440.7)) and 93.8 m ((-912.8, 453.6) -> (-1003.6, 437.3)) with a
+# 43.6 m set-back between them; T2 one run of 47.7 m ((-748.3, 296.4) -> (-770.7, 338.5)) [obs SFOM].
+# Heights above the departures curb, photo d1 (Famartin 2025-08-12 09:08, CC BY-SA 4.0, from the garage; a person by the wall =
+# ~45 px for ~1.7 m): canopy soffit ~3.5-4.5 m, wall head ~12-14 m, tier transom 44 % of the way from the canopy to the head
+# [inf, photo d1, low]. The curb's own height above the apron is not published or measured [unk].
+T1_RUNS = (94.1, 43.6, 93.8)
+T1_CANOPY, T1_HEAD, T1_SPLIT = 4.0, 13.0, 0.44
+T2_FACE = 47.7
+
+
+def t1_mullions(x0, x1, seed=7):
+    """irregular vertical mullion positions ('reminiscent of Redwood trees' [pub]): 1.2-2.4 m apart, schematic [inf]."""
+    rng = np.random.default_rng(seed); xs = [x0]
+    while xs[-1] < x1 - 1.2: xs.append(xs[-1] + float(rng.uniform(1.2, 2.4)))
+    return xs[1:-1]
+
+
+def sheet_landside():
+    S = Sheet('BD-03', 'Domestic terminals: landside (curb) elevations of Harvey Milk Terminal 1 Center and Terminal 2', 'A1',
+              subtitle='Spec: tools/buildings/spec_domestic.json (t1c.landside_facade, t2.landside [pub]); photo d1 (reference); heights above the curb')
+    # ---- T1 Center: developed elevation of the curved face towards the central garage
+    L = sum(T1_RUNS)
+    V = S.view(0, 330, S.vw, 200, 400, (L / 2 + 28, 6.5), title='1  HARVEY MILK TERMINAL 1 CENTER: landside face towards the central garage, '
+               'DEVELOPED (unrolled along the curved outline), looking SE', kind='elev', frame=False)
+    V.ax.fill_between([-8, L + 8], [-1.2, -1.2], [0, 0], color='#dddddd', lw=0, zorder=1)
+    V.line([(-8, 0), (L + 8, 0)], 'unk', lw=0.8)
+    V.text((-6, -2.6), 'departures curb (upper roadway); its height above the apron is not published or measured [unk]', 'unk', fs=3.8, ha='left')
+    xs = [0.0, T1_RUNS[0], T1_RUNS[0] + T1_RUNS[1], L]
+    hs = T1_CANOPY + (T1_HEAD - T1_CANOPY) * T1_SPLIT
+    for a, b, setback in ((xs[0], xs[1], False), (xs[1], xs[2], True), (xs[2], xs[3], False)):
+        if setback:
+            V.poly([(a, 0), (b, 0), (b, T1_HEAD), (a, T1_HEAD)], 'unk', fc='#f2f2f2', z=1.5)
+            V.text(((a + b) / 2, T1_HEAD / 2), f'{b - a:.1f} m set-back in the\noutline (station / connector?)\nnot drawn [unk]', 'unk', fs=3.6)
+            continue
+        V.poly([(a, 0), (b, 0), (b, T1_CANOPY), (a, T1_CANOPY)], 'obs', fc='#cfdce8', z=1.6, lw=0.4)                 # clear glass below
+        V.poly([(a, T1_CANOPY), (b, T1_CANOPY), (b, T1_HEAD), (a, T1_HEAD)], 'obs', fc='#c4d8c4', z=1.6, lw=0.6)      # fritted green
+        V.line([(a, hs), (b, hs)], 'obs', lw=0.5, z=1.7, color='#5b6b5b')
+        for x in t1_mullions(a, b):
+            V.line([(x, T1_CANOPY), (x, T1_HEAD)], 'inf', lw=0.25, z=1.7, color='#5b6b5b')
+        V.poly([(a - 0.5, T1_CANOPY - 0.35), (b + 0.5, T1_CANOPY - 0.35), (b + 0.5, T1_CANOPY), (a - 0.5, T1_CANOPY)], 'obs', fc='#9fb7c9', z=1.8, lw=0.4)
+        for x in np.arange(a + 1, b, 3.0):
+            V.line([(x, T1_HEAD + 0.15), (x + 2.2, T1_HEAD + 0.9)], 'obs', lw=0.4, z=1.7, color='#4c6a88')            # PV at the roof edge
+        V.dim((a, 0), (b, 0), -5, f'{b - a:.1f} m developed [obs SFOM outline]', 'obs', fs=3.8)
+    a, b = xs[2], xs[3]
+    V.poly([(a + 35, hs + 0.8), (b - 6, hs + 0.8), (b - 6, T1_HEAD - 1.0), (a + 35, T1_HEAD - 1.0)], 'obs', fc='none', lw=0.4, z=1.9, ls=(0, (1, 1)))
+    V.text(((a + 35 + b - 6) / 2, (hs + T1_HEAD) / 2 + 0.2), 'Harvey Milk Terminal\nTerminal (1)', 'obs', fs=5.0, bg=False, color='#26323d', style='normal', weight='bold', z=2)
+    V.leader((b - 6, T1_HEAD - 1.0), 10, 8, 'signage zone "Harvey Milk Terminal / Terminal 1" in the\nupper tier [obs photo d1]; extent schematic [inf]', 'obs', fs=3.7)
+    V.leader((a + 8, (T1_CANOPY + hs) / 2), -4, 26, 'two-tier fritted-glass curtain wall, vertical mullions "reminiscent of\nRedwood trees" [pub t1c.landside_facade]; '
+             'irregular mullion rhythm\n(drawn 1.2-2.4 m, schematic) [inf]; green frit [obs photo d1]', 'pub', fs=3.7)
+    V.leader((xs[0] + 20, T1_CANOPY - 0.2), -6, -18, 'continuous glass canopy over the curb; clear glass below it\n[pub CDR 2016 / t1c.landside_facade; '
+             'obs photo d1]; warm wood entries [pub]', 'pub', fs=3.7)
+    V.leader((xs[0] + 60, T1_HEAD + 0.6), 8, 10, 'PV along the roof edge [obs photo d1, NAIP]', 'obs', fs=3.7)
+    for h, s, tg in ((T1_CANOPY, f'+{T1_CANOPY:.1f} canopy (3.5-4.5) above the curb', 'inf'), (hs, f'+{hs:.1f} tier transom (44 % up)', 'inf'),
+                     (T1_HEAD, f'+{T1_HEAD:.1f} wall head (12-14) above the curb', 'inf')):
+        V.level(L + 2, h, s + f' [{tg}, photo d1, low]', tg, len_mm=4, fs=3.8, u_line=L)
+    V.scalebar(y_mm=4)
+    # ---- T2
+    V2 = S.view(0, 60, 420, 200, 200, (T2_FACE / 2 + 22, 8), title='2  TERMINAL 2: landside entry face towards the central garage, looking E', kind='elev', frame=False)
+    V2.ax.fill_between([-8, T2_FACE + 8], [-1.2, -1.2], [0, 0], color='#dddddd', lw=0, zorder=1)
+    V2.line([(-8, 0), (T2_FACE + 8, 0)], 'unk', lw=0.8)
+    hb = 12.0
+    V2.poly([(0, 0), (T2_FACE, 0), (T2_FACE, hb), (0, hb)], 'unk', fc='#eeeeec', z=1.5)
+    for y in np.arange(1.5, hb, 1.5):
+        V2.line([(0, y), (T2_FACE, y)], 'unk', lw=0.15, z=1.6, color='#bbbbbb')
+    g0, g1 = T2_FACE * 0.2, T2_FACE * 0.8
+    V2.poly([(g0, 0), (g1, 0), (g1, 7.0), (g0, 7.0)], 'unk', fc='#d7e6f3', z=1.7)
+    V2.poly([(g0 + 3, 8.2), (g1 - 3, 8.2), (g1 - 3, 10.6), (g0 + 3, 10.6)], 'unk', fc='none', z=1.8, ls=(0, (1, 1)))
+    V2.text(((g0 + g1) / 2, 9.4), 'Terminal 2', 'unk', fs=5.0, bg=False, color='#555555', style='normal', weight='bold')
+    V2.dim((0, 0), (T2_FACE, 0), -5, f'{T2_FACE} m [obs SFOM outline face]', 'obs', fs=3.8)
+    V2.leader((T2_FACE, hb), 8, 6, 'light metal-panel box with the "Terminal 2" sign and a glass entry\nwall ("neutral exterior, warm interior") [pub CDR '
+              't2.landside]; the box\nheight (drawn 12 m), the glass-wall extent and the sign position are\nplaceholders: NOT published or measured [unk]',
+              'unk', fs=3.7)
+    V2.scalebar(y_mm=4)
+    S.note('Landside faces are developed along the SFO Museum level-2 outline edges that face the central garage (lengths [obs]); heights are '
+           'above the departures curb, whose own height above the apron is unknown. Photo d1 (Famartin 2025-08-12, CC BY-SA 4.0) is reference '
+           'only; its ratios are scaled by a person at the wall (~1.7 m) [inf, low].')
+    S.note('T2: nothing about the landside face is dimensioned in any source found; the elevation records the published description only.')
     return S.finish()

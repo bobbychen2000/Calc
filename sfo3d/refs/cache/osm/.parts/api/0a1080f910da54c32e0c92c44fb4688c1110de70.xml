@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osmChange version="0.6" generator="openstreetmap-cgimap 2.1.1 (3562605 spike-07.openstreetmap.org)" copyright="OpenStreetMap and contributors" attribution="http://www.openstreetmap.org/copyright" license="http://opendatacommons.org/licenses/odbl/1-0/">
+ <modify>
+  <way id="340591733" visible="true" version="3" changeset="190275282" timestamp="2026-10-09T22:07:32Z" user="Kartenkunst" uid="24614924">
+   <nd ref="65484952"/>
+   <nd ref="6323386801"/>
+   <nd ref="65484955"/>
+   <nd ref="911818983"/>
+   <tag k="highway" v="service"/>
+   <tag k="oneway" v="yes"/>
+   <tag k="service" v="parking_aisle"/>
+   <tag k="surface" v="asphalt"/>
+   <tag k="tiger:cfcc" v="A41"/>
+   <tag k="tiger:county" v="San Mateo, CA"/>
+   <tag k="tiger:name_base" v="Linden"/>
+   <tag k="tiger:name_type" v="Ave"/>
+   <tag k="tiger:reviewed" v="no"/>
+  </way>
+ </modify>
+ <modify>
+  <way id="340591728" visible="true" version="10" changeset="190275282" timestamp="2026-10-09T22:07:32Z" user="Kartenkunst" uid="24614924">
+   <nd ref="911818983"/>
+   <nd ref="351983178"/>
+   <nd ref="252343796"/>
+   <nd ref="13660234511"/>
+   <nd ref="391718023"/>
+   <tag k="cycleway" v="shared_lane"/>
+   <tag k="highway" v="tertiary"/>
+   <tag k="lanes" v="2"/>
+   <tag k="lanes:backward" v="1"/>
+   <tag k="lanes:forward" v="1"/>
+   <tag k="lcn" v="yes"/>
+   <tag k="name" v="California Drive"/>
+   <tag k="parking:both" v="yes"/>
+   <tag k="parking:both:orientation" v="parallel"/>
+   <tag k="surface" v="asphalt"/>
+  </way>
+ </modify>
+</osmChange>

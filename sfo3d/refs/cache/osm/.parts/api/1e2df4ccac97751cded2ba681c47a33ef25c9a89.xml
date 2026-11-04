@@ -1,0 +1,373 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osmChange version="0.6" generator="openstreetmap-cgimap 2.1.1 (3594972 spike-07.openstreetmap.org)" copyright="OpenStreetMap and contributors" attribution="http://www.openstreetmap.org/copyright" license="http://opendatacommons.org/licenses/odbl/1-0/">
+ <modify>
+  <node id="14232856975" visible="true" version="2" changeset="189919207" timestamp="2026-10-03T09:50:27Z" user="confusedbuffalo-bot" uid="23492813" lat="39.2528841" lon="-121.0244222">
+   <tag k="addr:city" v="Nevada City"/>
+   <tag k="addr:housenumber" v="106"/>
+   <tag k="addr:postcode" v="95959"/>
+   <tag k="addr:state" v="CA"/>
+   <tag k="addr:street" v="Argall Way"/>
+   <tag k="name" v="Planet Refills"/>
+   <tag k="old_name" v="Gaia Soap Supply"/>
+   <tag k="opening_hours" v="Mo-Fr 10:30-17:30; Sa 11:00-15:00; Su off"/>
+   <tag k="phone" v="+1-530-265-2210"/>
+   <tag k="shop" v="chemist"/>
+   <tag k="website" v="https://planetrefills.com/"/>
+   <tag k="zero_waste" v="yes"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="14234254853" visible="true" version="2" changeset="189919207" timestamp="2026-10-03T09:50:27Z" user="confusedbuffalo-bot" uid="23492813" lat="36.8115405" lon="-119.8045150">
+   <tag k="addr:city" v="Fresno"/>
+   <tag k="addr:housenumber" v="5200"/>
+   <tag k="addr:postcode" v="93704"/>
+   <tag k="addr:state" v="CA"/>
+   <tag k="addr:street" v="N Palm Ave, Ste 200"/>
+   <tag k="addr:unit" v="5200"/>
+   <tag k="healthcare" v="rehabilitation"/>
+   <tag k="healthcare:speciality" v="psychiatry;physiatry"/>
+   <tag k="name" v="Alcohol Rehab Fresno"/>
+   <tag k="phone" v="+1-559-249-0874"/>
+   <tag k="website" v="http://alcoholrehabfresno.com/"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="14235372077" visible="true" version="2" changeset="189919207" timestamp="2026-10-03T09:50:27Z" user="confusedbuffalo-bot" uid="23492813" lat="33.7216888" lon="-116.3866900">
+   <tag k="addr:city" v="Palm Desert"/>
+   <tag k="addr:housenumber" v="73280"/>
+   <tag k="addr:postcode" v="92260"/>
+   <tag k="addr:state" v="CA"/>
+   <tag k="addr:street" v="HWY 111"/>
+   <tag k="addr:unit" v="STE 102"/>
+   <tag k="name" v="Lazer IT Consultants"/>
+   <tag k="office" v="it"/>
+   <tag k="opening_hours" v="Mo-Fr-8am-5pm"/>
+   <tag k="phone" v="+1-760-992-5562"/>
+   <tag k="website" v="https://lazeritconsultants.com"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="14235410201" visible="true" version="2" changeset="189919207" timestamp="2026-10-03T09:50:27Z" user="confusedbuffalo-bot" uid="23492813" lat="38.5519014" lon="-121.4262703">
+   <tag k="addr:housenumber" v="1865"/>
+   <tag k="addr:postcode" v="95819"/>
+   <tag k="addr:street" v="65th Street"/>
+   <tag k="check_date" v="2026-09-30"/>
+   <tag k="check_date:opening_hours" v="2026-09-30"/>
+   <tag k="internet_access" v="wlan"/>
+   <tag k="name" v="Home2 Suites by Hilton Sacramento at CSUS"/>
+   <tag k="opening_hours" v="24/7"/>
+   <tag k="phone" v="+1-916-451-1459"/>
+   <tag k="tourism" v="hotel"/>
+   <tag k="website" v="http://hilton.com"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="14236031002" visible="true" version="2" changeset="189919207" timestamp="2026-10-03T09:50:27Z" user="confusedbuffalo-bot" uid="23492813" lat="32.7160203" lon="-117.1598861">
+   <tag k="addr:housenumber" v="1007"/>
+   <tag k="addr:postcode" v="92101"/>
+   <tag k="addr:street" v="5th Avenue"/>
+   <tag k="name" v="Arrive Broadway Lofts"/>
+   <tag k="opening_hours" v="Mo-Su 09:00-18:00"/>
+   <tag k="phone" v="+1-833-802-1909"/>
+   <tag k="tourism" v="apartment"/>
+   <tag k="website" v="https://arrivebroadwaylofts.com/?utm_source=gmb"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="14237653900" visible="true" version="2" changeset="189919207" timestamp="2026-10-03T09:50:27Z" user="confusedbuffalo-bot" uid="23492813" lat="37.3324739" lon="-121.8943922">
+   <tag k="addr:city" v="San Jose"/>
+   <tag k="addr:housenumber" v="99"/>
+   <tag k="addr:postcode" v="95113"/>
+   <tag k="addr:state" v="CA"/>
+   <tag k="addr:street" v="South Almaden Boulevard"/>
+   <tag k="addr:unit" v="600"/>
+   <tag k="facebook" v="https://www.facebook.com/profile.php?id=61594283537340"/>
+   <tag k="healthcare" v="rehabilitation"/>
+   <tag k="healthcare:speciality" v="addiction_rehabilitation_facilities;mental_health_counseling"/>
+   <tag k="name" v="Addiction Rehab San Jose"/>
+   <tag k="phone" v="+1-669-223-9839"/>
+   <tag k="website" v="http://addictionrehabsanjose.com/"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="14237805480" visible="true" version="2" changeset="189919207" timestamp="2026-10-03T09:50:27Z" user="confusedbuffalo-bot" uid="23492813" lat="37.6444499" lon="-122.4267736">
+   <tag k="addr:city" v="South San Francisco"/>
+   <tag k="addr:housenumber" v="333"/>
+   <tag k="addr:postcode" v="94080"/>
+   <tag k="addr:state" v="CA"/>
+   <tag k="addr:street" v="El Camino Real"/>
+   <tag k="facebook" v="https://www.facebook.com/profile.php?id=61594385204081"/>
+   <tag k="healthcare" v="rehabilitation"/>
+   <tag k="healthcare:speciality" v="rehabilitation_facilities;mental_health_counseling"/>
+   <tag k="name" v="Addiction Rehab San Francisco"/>
+   <tag k="phone" v="+1-213-433-5886"/>
+   <tag k="website" v="http://addictionrehabsanfrancisco.com/"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="14244590864" visible="true" version="2" changeset="189919207" timestamp="2026-10-03T09:50:27Z" user="confusedbuffalo-bot" uid="23492813" lat="33.6469942" lon="-117.9124851">
+   <tag k="addr:city" v="Costa Mesa"/>
+   <tag k="addr:housenumber" v="1982"/>
+   <tag k="addr:postcode" v="92627"/>
+   <tag k="addr:state" v="CA"/>
+   <tag k="addr:street" v="Newport Blvd"/>
+   <tag k="craft" v="plumber"/>
+   <tag k="email" v="info@leakdetectioncostamesa.com"/>
+   <tag k="name" v="Costa Mesa Leak Fix Pros"/>
+   <tag k="opening_hours" v="24/7"/>
+   <tag k="phone" v="+1-949-804-1138"/>
+   <tag k="website" v="https://leakdetectioncostamesa.com"/>
+  </node>
+ </modify>
+ <modify>
+  <way id="1563758648" visible="true" version="2" changeset="189919207" timestamp="2026-10-03T09:50:27Z" user="confusedbuffalo-bot" uid="23492813">
+   <nd ref="14234254854"/>
+   <nd ref="14234254855"/>
+   <nd ref="14234254856"/>
+   <nd ref="14234254857"/>
+   <nd ref="14234254858"/>
+   <nd ref="14234254859"/>
+   <nd ref="14234254860"/>
+   <nd ref="14234254861"/>
+   <nd ref="14234254862"/>
+   <nd ref="14234254863"/>
+   <nd ref="14234254864"/>
+   <nd ref="14234254865"/>
+   <nd ref="14234254866"/>
+   <nd ref="14234254867"/>
+   <nd ref="14234254868"/>
+   <nd ref="14234254869"/>
+   <nd ref="14234254870"/>
+   <nd ref="14234254871"/>
+   <nd ref="14234254854"/>
+   <tag k="addr:city" v="Fresno"/>
+   <tag k="addr:postcode" v="93704"/>
+   <tag k="addr:state" v="CA"/>
+   <tag k="addr:street" v="N Palm Ave, Ste 200,"/>
+   <tag k="addr:unit" v="5200"/>
+   <tag k="healthcare" v="rehabilitation"/>
+   <tag k="healthcare:speciality" v="psychiatry;physiatry"/>
+   <tag k="name" v="Alcohol Rehab Fresno"/>
+   <tag k="phone" v="+1-559-249-0874"/>
+   <tag k="website" v="http://alcoholrehabfresno.com/"/>
+  </way>
+ </modify>
+ <modify>
+  <node id="14179797628" visible="true" version="3" changeset="189919207" timestamp="2026-10-03T09:50:27Z" user="confusedbuffalo-bot" uid="23492813" lat="33.1839466" lon="-117.2849966">
+   <tag k="addr:street" v="Hacienda Drive"/>
+   <tag k="addr:unit" v="H"/>
+   <tag k="brand" v="uBreakiFix"/>
+   <tag k="brand:wikidata" v="Q53685733"/>
+   <tag k="check_date" v="2026-09-20"/>
+   <tag k="craft" v="electronics_repair"/>
+   <tag k="electronics_repair" v="computer;phone"/>
+   <tag k="name" v="uBreakiFix"/>
+   <tag k="opening_hours" v="Mo-Sa 10:00-19:00; Su 12:00-17:00"/>
+   <tag k="phone" v="+1-760-330-9998"/>
+  </node>
+ </modify>
+ <modify>
+  <way id="1564549767" visible="true" version="3" changeset="189919207" timestamp="2026-10-03T09:50:27Z" user="confusedbuffalo-bot" uid="23492813">
+   <nd ref="14244310508"/>
+   <nd ref="14244310509"/>
+   <nd ref="14244310510"/>
+   <nd ref="14244637373"/>
+   <nd ref="14244310511"/>
+   <nd ref="14244310508"/>
+   <tag k="addr:city" v="Winterhaven"/>
+   <tag k="addr:housenumber" v="1473"/>
+   <tag k="addr:postcode" v="92283"/>
+   <tag k="addr:state" v="CA"/>
+   <tag k="addr:street" v="Ross Road"/>
+   <tag k="building" v="yes"/>
+   <tag k="name" v="Bard Water District"/>
+   <tag k="office" v="water_utility"/>
+   <tag k="operator" v="Bard Water District"/>
+   <tag k="phone" v="+1-760-356-0714"/>
+   <tag k="website" v="https://bardwaterdistrict.com/"/>
+  </way>
+ </modify>
+ <modify>
+  <way id="1322971846" visible="true" version="4" changeset="189919207" timestamp="2026-10-03T09:50:27Z" user="confusedbuffalo-bot" uid="23492813">
+   <nd ref="12241992444"/>
+   <nd ref="12241992445"/>
+   <nd ref="12241992446"/>
+   <nd ref="12241992447"/>
+   <nd ref="12241992444"/>
+   <tag k="addr:city" v="Kings Beach"/>
+   <tag k="addr:housenumber" v="8345"/>
+   <tag k="addr:postcode" v="96143"/>
+   <tag k="addr:state" v="CA"/>
+   <tag k="addr:street" v="North Lake Boulevard"/>
+   <tag k="amenity" v="restaurant"/>
+   <tag k="building" v="yes"/>
+   <tag k="cuisine" v="mexican"/>
+   <tag k="name" v="Las Panchitas"/>
+   <tag k="outdoor_seating" v="yes"/>
+   <tag k="phone" v="+1-530-546-4539"/>
+   <tag k="website" v="https://www.laspanchitas.com/"/>
+  </way>
+ </modify>
+ <modify>
+  <node id="6776211956" visible="true" version="5" changeset="189919207" timestamp="2026-10-03T09:50:27Z" user="confusedbuffalo-bot" uid="23492813" lat="33.6497294" lon="-117.8389569">
+   <tag k="addr:unit" v="A124"/>
+   <tag k="amenity" v="cafe"/>
+   <tag k="cuisine" v="bubble_tea"/>
+   <tag k="name" v="OWLY Dessert Shoppe"/>
+   <tag k="phone" v="+1-310-862-2451"/>
+   <tag k="website" v="https://www.yelp.com/biz/owly-dessert-shoppe-irvine-2"/>
+  </node>
+ </modify>
+ <modify>
+  <way id="61710235" visible="true" version="5" changeset="189919207" timestamp="2026-10-03T09:50:27Z" user="confusedbuffalo-bot" uid="23492813">
+   <nd ref="769012548"/>
+   <nd ref="769020718"/>
+   <nd ref="769015609"/>
+   <nd ref="769000648"/>
+   <nd ref="769018939"/>
+   <nd ref="769012548"/>
+   <tag k="addr:city" v="Fresno"/>
+   <tag k="addr:housenumber" v="700"/>
+   <tag k="addr:postcode" v="93721"/>
+   <tag k="addr:state" v="CA"/>
+   <tag k="addr:street" v="M Street"/>
+   <tag k="addr:unit" v="500"/>
+   <tag k="attribution" v="Fresno_County_GIS"/>
+   <tag k="building" v="yes"/>
+   <tag k="building:levels" v="1"/>
+   <tag k="healthcare" v="rehabilitation"/>
+   <tag k="healthcare:speciality" v="addiction_rehab_facilities;mental_health_counseling"/>
+   <tag k="name" v="Addiction Rehab Fresno"/>
+   <tag k="other_use" v="C"/>
+   <tag k="phone" v="+1-559-254-6845"/>
+   <tag k="primary_use" v="SOH"/>
+   <tag k="secondary_use" v="000"/>
+   <tag k="source" v="http://www.co.fresno.ca.us/%5Cdepartmentpage.aspx?id=16313"/>
+   <tag k="website" v="http://addictionrehabfresno.com/"/>
+  </way>
+ </modify>
+ <modify>
+  <way id="261412256" visible="true" version="6" changeset="189919207" timestamp="2026-10-03T09:50:27Z" user="confusedbuffalo-bot" uid="23492813">
+   <nd ref="2670269570"/>
+   <nd ref="2670269567"/>
+   <nd ref="2670269553"/>
+   <nd ref="2670269549"/>
+   <nd ref="2670269551"/>
+   <nd ref="2670269550"/>
+   <nd ref="2670269561"/>
+   <nd ref="2670269563"/>
+   <nd ref="2670269572"/>
+   <nd ref="2670269568"/>
+   <nd ref="2670269608"/>
+   <nd ref="2670269610"/>
+   <nd ref="2670269633"/>
+   <nd ref="2670269639"/>
+   <nd ref="2670269596"/>
+   <nd ref="2670269598"/>
+   <nd ref="2670269584"/>
+   <nd ref="2670269570"/>
+   <tag k="addr:city" v="San Francisco"/>
+   <tag k="addr:housenumber" v="510"/>
+   <tag k="addr:postcode" v="94117"/>
+   <tag k="addr:state" v="CA"/>
+   <tag k="addr:street" v="600 Steiner St"/>
+   <tag k="building" v="yes"/>
+   <tag k="healthcare" v="rehabilitation"/>
+   <tag k="healthcare:speciality" v="rehabilitationfacility;mentalhealthcounseling"/>
+   <tag k="height" v="12"/>
+   <tag k="name" v="Alcohol Rehab San Francisco"/>
+   <tag k="phone" v="+1-213-433-5877"/>
+   <tag k="website" v="http://alcoholrehabsanfrancisco.com/"/>
+  </way>
+ </modify>
+ <modify>
+  <node id="761849601" visible="true" version="126" changeset="189919207" timestamp="2026-10-03T09:50:27Z" user="confusedbuffalo-bot" uid="23492813" lat="38.4808969" lon="-121.5179966">
+   <tag k="addr:housenumber" v="7600"/>
+   <tag k="addr:postcode" v="95831"/>
+   <tag k="addr:street" v="Greenhaven Drive"/>
+   <tag k="amenity" v="restaurant"/>
+   <tag k="check_date" v="2026-03-29"/>
+   <tag k="check_date:opening_hours" v="2026-03-29"/>
+   <tag k="cuisine" v="vietnamese"/>
+   <tag k="name" v="Pho Bac Hoa Viet Restaurant"/>
+   <tag k="name:vi" v="Phở Bác Hoa Viet"/>
+   <tag k="opening_hours" v="Th-Tu 11:30-21:00"/>
+   <tag k="phone" v="+1-916-393-0138"/>
+   <tag k="website" v="https://places.singleplatform.com/pho-bac-hoa-viet-6/menu?"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="8778102599" visible="true" version="127" changeset="189919207" timestamp="2026-10-03T09:50:27Z" user="confusedbuffalo-bot" uid="23492813" lat="38.5323120" lon="-121.4958056">
+   <tag k="addr:city" v="Sacramento"/>
+   <tag k="addr:housenumber" v="4720"/>
+   <tag k="addr:postcode" v="95822"/>
+   <tag k="addr:state" v="CA"/>
+   <tag k="addr:street" v="Freeport Boulevard"/>
+   <tag k="amenity" v="fast_food"/>
+   <tag k="check_date" v="2026-03-29"/>
+   <tag k="cuisine" v="sandwich"/>
+   <tag k="drive_through" v="no"/>
+   <tag k="name" v="West Coast Sourdough"/>
+   <tag k="opening_hours" v="Mo-Fr 10:00-20:00; Sa 10:00-19:00; Su 11:00-18:00"/>
+   <tag k="phone" v="+1-916-330-1891"/>
+   <tag k="website" v="http://wcsourdough.com"/>
+  </node>
+ </modify>
+ <modify>
+  <way id="1337794842" visible="true" version="149" changeset="189919207" timestamp="2026-10-03T09:50:27Z" user="confusedbuffalo-bot" uid="23492813">
+   <nd ref="8555142864"/>
+   <nd ref="8555142865"/>
+   <nd ref="8555142866"/>
+   <nd ref="8555126056"/>
+   <nd ref="8555126055"/>
+   <nd ref="12374439525"/>
+   <nd ref="8555126054"/>
+   <nd ref="8555126053"/>
+   <nd ref="8555126052"/>
+   <nd ref="8555126051"/>
+   <nd ref="12374439556"/>
+   <nd ref="12374439557"/>
+   <nd ref="12374439558"/>
+   <nd ref="12374439552"/>
+   <nd ref="12374439551"/>
+   <nd ref="12374439550"/>
+   <nd ref="12374439549"/>
+   <nd ref="12374439548"/>
+   <nd ref="12374439547"/>
+   <nd ref="12374439538"/>
+   <nd ref="12374439537"/>
+   <nd ref="12374439559"/>
+   <nd ref="12374439560"/>
+   <nd ref="12374439561"/>
+   <nd ref="8555142864"/>
+   <tag k="addr:housenumber" v="8144"/>
+   <tag k="addr:postcode" v="95831"/>
+   <tag k="addr:street" v="Pocket Road"/>
+   <tag k="amenity" v="school"/>
+   <tag k="check_date" v="2026-03-31"/>
+   <tag k="check_date:opening_hours" v="2026-03-31"/>
+   <tag k="name" v="Bergamo Montessori School"/>
+   <tag k="opening_hours" v="Mo-Fr 07:00-18:00"/>
+   <tag k="phone" v="+1-916-399-1900"/>
+   <tag k="website" v="http://bergamoschools.com"/>
+  </way>
+ </modify>
+ <modify>
+  <node id="8777686511" visible="true" version="159" changeset="189919207" timestamp="2026-10-03T09:50:27Z" user="confusedbuffalo-bot" uid="23492813" lat="38.5330448" lon="-121.4964524">
+   <tag k="addr:city" v="Sacramento"/>
+   <tag k="addr:housenumber" v="4690"/>
+   <tag k="addr:postcode" v="95822"/>
+   <tag k="addr:state" v="CA"/>
+   <tag k="addr:street" v="Freeport Boulevard"/>
+   <tag k="brand" v="Raley's"/>
+   <tag k="brand:wikidata" v="Q7286970"/>
+   <tag k="check_date" v="2026-03-29"/>
+   <tag k="check_date:opening_hours" v="2026-03-29"/>
+   <tag k="name" v="Raley's"/>
+   <tag k="opening_hours" v="Mo-Su 06:00-23:00"/>
+   <tag k="phone" v="+1-916-451-0126"/>
+   <tag k="shop" v="supermarket"/>
+   <tag k="website" v="http://Raleys.com"/>
+  </node>
+ </modify>
+</osmChange>

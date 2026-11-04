@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osmChange version="0.6" generator="openstreetmap-cgimap 2.1.1 (3853709 spike-07.openstreetmap.org)" copyright="OpenStreetMap and contributors" attribution="http://www.openstreetmap.org/copyright" license="http://opendatacommons.org/licenses/odbl/1-0/">
+ <modify>
+  <node id="14280060044" visible="true" version="2" changeset="190639194" timestamp="2026-10-17T08:51:05Z" user="confusedbuffalo-bot" uid="23492813" lat="33.6196934" lon="-117.8750810">
+   <tag k="addr:city" v="Newport Beach"/>
+   <tag k="addr:housenumber" v="690"/>
+   <tag k="addr:postcode" v="92660"/>
+   <tag k="addr:state" v="CA"/>
+   <tag k="addr:street" v="Newport Center Drive East"/>
+   <tag k="amenity" v="restaurant"/>
+   <tag k="cuisine" v="californian;italian"/>
+   <tag k="email" v="clubreception@elwoodclub.com"/>
+   <tag k="name" v="Viamara at The Elwood Club"/>
+   <tag k="opening_hours" v="We-Sa 11:30-14:30, 17:30-22:00, Su 11:30-14:30, 18:30-20:30"/>
+   <tag k="outdoor_seating" v="yes"/>
+   <tag k="phone" v="+1-949-688-8001"/>
+   <tag k="reservation" v="yes"/>
+   <tag k="website" v="https://www.pendry.com/newport-beach/dining/viamara-elwood-club/"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="14282212965" visible="true" version="2" changeset="190639194" timestamp="2026-10-17T08:51:05Z" user="confusedbuffalo-bot" uid="23492813" lat="33.7021144" lon="-116.7116508">
+   <tag k="addr:city" v="Mountain Center"/>
+   <tag k="addr:housenumber" v="54250"/>
+   <tag k="addr:postcode" v="92561"/>
+   <tag k="addr:state" v="CA"/>
+   <tag k="addr:street" v="Keen Camp Road"/>
+   <tag k="amenity" v="animal_shelter"/>
+   <tag k="animal_shelter" v="dog;cat;horse"/>
+   <tag k="email" v="info@living-free.org"/>
+   <tag k="name" v="Living Free"/>
+   <tag k="opening_hours" v="Tuesday - Saturdays  from 10am - 3pm​"/>
+   <tag k="phone" v="+1-951-659-4687"/>
+   <tag k="website" v="https://www.living-free.org"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="14284627883" visible="true" version="2" changeset="190639194" timestamp="2026-10-17T08:51:05Z" user="confusedbuffalo-bot" uid="23492813" lat="34.0225908" lon="-118.1346867">
+   <tag k="addr:city" v="Montebello"/>
+   <tag k="addr:housenumber" v="2915"/>
+   <tag k="addr:postcode" v="90640"/>
+   <tag k="addr:state" v="CA"/>
+   <tag k="addr:street" v="West Beverly Boulevard"/>
+   <tag k="amenity" v="bar"/>
+   <tag k="contact:facebook" v="https://www.facebook.com/110274675738847"/>
+   <tag k="lgbtq" v="primary"/>
+   <tag k="name" v="Chico"/>
+   <tag k="phone" v="+1-909-990-6446"/>
+   <tag k="website" v="http://www.clubchico.com/"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="14284790901" visible="true" version="2" changeset="190639194" timestamp="2026-10-17T08:51:05Z" user="confusedbuffalo-bot" uid="23492813" lat="37.0178299" lon="-121.5743040">
+   <tag k="addr:housenumber" v="8296"/>
+   <tag k="addr:postcode" v="95020"/>
+   <tag k="addr:street" v="Monterey Road"/>
+   <tag k="amenity" v="restaurant"/>
+   <tag k="check_date" v="2026-10-14"/>
+   <tag k="cuisine" v="barbecue"/>
+   <tag k="name" v="BBQ 152"/>
+   <tag k="phone" v="+1-408-842-4299"/>
+   <tag k="website" v="http://bbq152.com/"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="14288594377" visible="true" version="2" changeset="190639194" timestamp="2026-10-17T08:51:05Z" user="confusedbuffalo-bot" uid="23492813" lat="34.2012367" lon="-118.4245071">
+   <tag k="addr:housenumber" v="8905"/>
+   <tag k="addr:street" v="glenoaks blvd"/>
+   <tag k="amenity" v="restaurant"/>
+   <tag k="name" v="El rinconcito jaliciense"/>
+   <tag k="opening_hours" v="Mo-Sa 09:00-20:00; Su 09:00-19:00"/>
+   <tag k="phone" v="+1-818-767-7250"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="14288601377" visible="true" version="2" changeset="190639194" timestamp="2026-10-17T08:51:05Z" user="confusedbuffalo-bot" uid="23492813" lat="34.2012787" lon="-118.4237976">
+   <tag k="addr:housenumber" v="13359"/>
+   <tag k="addr:street" v="sherman way"/>
+   <tag k="amenity" v="restaurant"/>
+   <tag k="name" v="The hungry fox"/>
+   <tag k="opening_hours" v="Mo-Sa 07:00-14:00; Su 07:00-14:30"/>
+   <tag k="phone" v="+1-818-765-7111"/>
+   <tag k="website" v="https://hungry-fox.net/"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="14288623723" visible="true" version="2" changeset="190639194" timestamp="2026-10-17T08:51:05Z" user="confusedbuffalo-bot" uid="23492813" lat="34.1292610" lon="-118.2598648">
+   <tag k="addr:housenumber" v="4106"/>
+   <tag k="addr:street" v="san fernando rd"/>
+   <tag k="name" v="Amai"/>
+   <tag k="opening_hours" v="Mo-Fr 07:00-19:00; Sa, Su 08:00-19:00"/>
+   <tag k="phone" v="+1-818-245-6600"/>
+   <tag k="shop" v="coffee"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="14290925901" visible="true" version="2" changeset="190639194" timestamp="2026-10-17T08:51:05Z" user="confusedbuffalo-bot" uid="23492813" lat="33.5732126" lon="-117.2051560">
+   <tag k="addr:housenumber" v="24350"/>
+   <tag k="addr:postcode" v="92562"/>
+   <tag k="addr:street" v="Jackson Avenue"/>
+   <tag k="amenity" v="social_facility"/>
+   <tag k="check_date" v="2026-10-16"/>
+   <tag k="check_date:opening_hours" v="2026-10-16"/>
+   <tag k="internet_access" v="wlan"/>
+   <tag k="name" v="Brookdale Murrieta"/>
+   <tag k="opening_hours" v="Mo-Su 08:00-06:00"/>
+   <tag k="phone" v="+1-951-696-5753"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="14291047270" visible="true" version="2" changeset="190639194" timestamp="2026-10-17T08:51:05Z" user="confusedbuffalo-bot" uid="23492813" lat="38.5106197" lon="-122.7899154">
+   <tag k="addr:city" v="Santa Rosa"/>
+   <tag k="addr:housenumber" v="1402"/>
+   <tag k="addr:postcode" v="95403"/>
+   <tag k="addr:state" v="CA"/>
+   <tag k="addr:street" v="Airport Boulevard"/>
+   <tag k="name" v="AEL - Advanced Extraction Labs"/>
+   <tag k="office" v="company"/>
+   <tag k="opening_hours" v="Mon – Fri, 8AM – 6PM PT"/>
+   <tag k="phone" v="+1-888-502-6695"/>
+   <tag k="website" v="http://advancedextractionlabs.com/"/>
+  </node>
+ </modify>
+ <modify>
+  <way id="1568399810" visible="true" version="2" changeset="190639194" timestamp="2026-10-17T08:51:05Z" user="confusedbuffalo-bot" uid="23492813">
+   <nd ref="14285479821"/>
+   <nd ref="14285479822"/>
+   <nd ref="14285479823"/>
+   <nd ref="14285479824"/>
+   <nd ref="14285479821"/>
+   <tag k="addr:city" v="Penn Valley"/>
+   <tag k="addr:housenumber" v="17652"/>
+   <tag k="addr:postcode" v="95946"/>
+   <tag k="addr:state" v="CA"/>
+   <tag k="addr:street" v="Penn Valley Drive"/>
+   <tag k="brand" v="Dollar General"/>
+   <tag k="brand:wikidata" v="Q145168"/>
+   <tag k="building" v="yes"/>
+   <tag k="name" v="Dollar General"/>
+   <tag k="opening_hours" v="Mo-Su 8:00-22:00"/>
+   <tag k="phone" v="+1-530-648-0900"/>
+   <tag k="shop" v="variety_store"/>
+   <tag k="website" v="https://www.dollargeneral.com/store-directory/ca/penn-valley/16348"/>
+  </way>
+ </modify>
+ <modify>
+  <node id="14287938901" visible="true" version="3" changeset="190639194" timestamp="2026-10-17T08:51:05Z" user="confusedbuffalo-bot" uid="23492813" lat="33.7232082" lon="-118.3141200">
+   <tag k="addr:housenumber" v="1623"/>
+   <tag k="addr:postcode" v="90732"/>
+   <tag k="addr:street" v="West 25th Street"/>
+   <tag k="level" v="1"/>
+   <tag k="name" v="South Shore Barber Beauty"/>
+   <tag k="opening_hours" v="Sa 08:00-16:00; Tu-Fr 08:00-17:00; Su 09:00-17:00"/>
+   <tag k="phone" v="+1-310-831-1054"/>
+   <tag k="shop" v="hairdresser"/>
+   <tag k="website" v="http://city-data.com"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="10292342264" visible="true" version="4" changeset="190639194" timestamp="2026-10-17T08:51:05Z" user="confusedbuffalo-bot" uid="23492813" lat="40.5717601" lon="-122.3887068">
+   <tag k="addr:housenumber" v="2680"/>
+   <tag k="addr:postcode" v="96001"/>
+   <tag k="addr:street" v="South Market Street"/>
+   <tag k="amenity" v="marketplace"/>
+   <tag k="check_date" v="2026-09-09"/>
+   <tag k="name" v="Lao Market"/>
+   <tag k="opening_hours" v="Mo-Sa 10:00-18:00; Su 10:00-14:00"/>
+   <tag k="phone" v="+1-530-229-9400"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="11149072612" visible="true" version="4" changeset="190639194" timestamp="2026-10-17T08:51:05Z" user="confusedbuffalo-bot" uid="23492813" lat="38.7434519" lon="-121.2582591">
+   <tag k="addr:city" v="Roseville"/>
+   <tag k="addr:housenumber" v="1850 suite 402"/>
+   <tag k="addr:postcode" v="95661"/>
+   <tag k="addr:street" v="Douglas Boulevard"/>
+   <tag k="addr:unit" v="402"/>
+   <tag k="brand" v="Cell Phone Repair"/>
+   <tag k="brand:wikidata" v="Q104029076"/>
+   <tag k="check_date" v="2024-05-24"/>
+   <tag k="craft" v="electronics_repair"/>
+   <tag k="electronics_repair" v="phone"/>
+   <tag k="name" v="Cell Phone Repair"/>
+   <tag k="opening_hours" v="Mo-Fr 09:00-18:00; Sa 10:00-17:00"/>
+   <tag k="phone" v="+1-916-772-2772"/>
+   <tag k="short_name" v="CPR"/>
+   <tag k="website" v="https://www.cellphonerepair.com/locations/store/cpr-roseville-ca-901398?utm_source=google&amp;utm_medium=lastmile&amp;utm_campaign=901398"/>
+  </node>
+ </modify>
+ <modify>
+  <way id="781187396" visible="true" version="5" changeset="190639194" timestamp="2026-10-17T08:51:05Z" user="confusedbuffalo-bot" uid="23492813">
+   <nd ref="7276088596"/>
+   <nd ref="7293728253"/>
+   <nd ref="7293728254"/>
+   <nd ref="7276088595"/>
+   <nd ref="7276088596"/>
+   <tag k="addr:city" v="Grass Valley"/>
+   <tag k="addr:housenumber" v="722-L"/>
+   <tag k="addr:postcode" v="95949"/>
+   <tag k="addr:state" v="CA"/>
+   <tag k="addr:street" v="Freeman Lane"/>
+   <tag k="amenity" v="restaurant"/>
+   <tag k="building" v="commercial"/>
+   <tag k="cuisine" v="indian"/>
+   <tag k="name" v="India Oven"/>
+   <tag k="opening_hours" v="Mo-Su 11:00-20:30"/>
+   <tag k="outdoor_seating" v="no"/>
+   <tag k="phone" v="+1-530-477-5670"/>
+   <tag k="website" v="https://www.indiaoven.com/grass-valley"/>
+  </way>
+ </modify>
+</osmChange>

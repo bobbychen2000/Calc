@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osmChange version="0.6" generator="openstreetmap-cgimap 2.1.1 (3760731 spike-06.openstreetmap.org)" copyright="OpenStreetMap and contributors" attribution="http://www.openstreetmap.org/copyright" license="http://opendatacommons.org/licenses/odbl/1-0/">
+ <create>
+  <node id="14314233401" visible="true" version="1" changeset="190950593" timestamp="2026-10-24T00:13:46Z" user="khoo489" uid="24678761" lat="37.5781603" lon="-122.3472515">
+   <tag k="addr:housenumber" v="1311"/>
+   <tag k="addr:postcode" v="94010"/>
+   <tag k="addr:street" v="Burlingame Avenue"/>
+   <tag k="check_date" v="2026-10-19"/>
+   <tag k="name" v="topdrawer"/>
+   <tag k="shop" v="stationery"/>
+  </node>
+ </create>
+ <create>
+  <node id="14314233501" visible="true" version="1" changeset="190950593" timestamp="2026-10-24T00:13:47Z" user="khoo489" uid="24678761" lat="37.6092746" lon="-122.0231420">
+   <tag k="addr:housenumber" v="33090"/>
+   <tag k="addr:postcode" v="94587"/>
+   <tag k="addr:street" v="Mission Boulevard"/>
+   <tag k="check_date" v="2026-10-19"/>
+   <tag k="name" v="Tom’s Flower Shop"/>
+   <tag k="shop" v="florist"/>
+  </node>
+ </create>
+ <create>
+  <node id="14314233601" visible="true" version="1" changeset="190950593" timestamp="2026-10-24T00:13:49Z" user="khoo489" uid="24678761" lat="37.5027617" lon="-122.2471221">
+   <tag k="addr:housenumber" v="1123"/>
+   <tag k="addr:postcode" v="94070"/>
+   <tag k="addr:street" v="Industrial Road"/>
+   <tag k="check_date" v="2026-10-19"/>
+   <tag k="name" v="Home Consignment Center"/>
+   <tag k="shop" v="second_hand"/>
+  </node>
+ </create>
+</osmChange>

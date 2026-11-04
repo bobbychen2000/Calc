@@ -1,0 +1,38 @@
+{
+ "file": "overpass_ksfo_aeroway_at_20261104T180000Z.json",
+ "osm_base": "2026-11-04T18:00:00Z",
+ "parts_only": [
+  "aeroway"
+ ],
+ "attic_date": "2026-11-04T18:00:00Z",
+ "bbox": [
+  37.595,
+  -122.405,
+  37.64,
+  -122.35
+ ],
+ "fetched_utc": "20261104T205610Z",
+ "endpoint": [
+  "https://api.openstreetmap.org/api/0.6"
+ ],
+ "parts": [
+  {
+   "part": "osm-api attic (aeroway)",
+   "endpoint": "https://api.openstreetmap.org/api/0.6",
+   "method": " (exact, not an approximation of Overpass' attic query):\n  1. current data: GET /api/0.6/map?bbox=... on tiles (a tile over the API's node limit is split in 4);\n  2. every changeset that touched the bbox after the date: GET /api/0.6/changesets?bbox=...&time=<date>,<t> paged back from\n     now; for each, its osmChange (GET /api/0.6/changeset/<id>/download); per element the smallest version written after\n     the date (element timestamps > date; a changeset open across the date can hold earlier edits);\n  3. version at the date = that smallest version - 1 (0: created later, so absent); those versions are fetched by id+version\n     (GET /api/0.6/nodes?nodes=<id>v<n>,... / ways / relations, 100 per request); elements never touched after the date\n     are the current ones; nodes a way needs that step 1 did not return are fetched (current = state at the date when\n     untouched); any element still dated after the date (changed by a changeset that did not touch the bbox, e.g. a\n     node of a long way outside it) takes the last version of its history at or before the date;\n  4. the predicate of the extract (tags) and the bbox (nodes inside; ways with a segment meeting it; relations with a\n     member inside) select the elements, written in Overpass `out meta geom` form (ways with `geometry`, `bounds`).\nData (c) OpenStreetMap contributors, ODbL 1.0. API usage: one request at a time with",
+   "elements": 1118
+  }
+ ],
+ "bytes": 828899,
+ "sha256": "fec2e711adcac8d4cdebff7a7a4617e7f26a1a9ef81d152de7098f6418b40968",
+ "elements": 1118,
+ "log": [
+  "map (37.595, -122.405, 37.6175, -122.3775): 57563 elements",
+  "map (37.595, -122.3775, 37.6175, -122.35): 9149 elements",
+  "map (37.6175, -122.405, 37.64, -122.3775): 23217 elements",
+  "map (37.6175, -122.3775, 37.64, -122.35): 3028 elements",
+  "changesets touching the bbox since 2026-11-04T18:00:00Z: 0",
+  "elements written after 2026-11-04T18:00:00Z: 0"
+ ],
+ "licence": "ODbL 1.0, (c) OpenStreetMap contributors"
+}

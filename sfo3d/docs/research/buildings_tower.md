@@ -635,3 +635,52 @@ Reproduce:
 ```bash
 python3 tools/buildings/tower_verify.py
 ```
+
+## 13. Drawing round (2026-11-04): what the 2-D sheets use beyond section 12
+
+**Height families.** BT-01..03 draw both families of 12.3 and not the spec trio {67.36, 14.3, 14.2}, which fails the
+consistency test. Every station is rim_f − (67.36 − h_spec) × D_f / 14.3; the A380 radii are divided by 1.015
+(the ratios are ~1.5 % high); the base-building roof is rim − (3.46 D + 0.7):
+
+| | D | Rim | Masts | Glass sill / head | Flare (1.58 D) | Base-building roof |
+|---|---|---|---|---|---|---|
+| F1 | 15.2 | 67.36 (221 ft) | 70.9 | 61.5 / 64.5 | 24.0 | 14.1 |
+| F2 | 14.5 | 64.0 | 67.4 (221 ft) | 58.4 / 61.3 | 22.9 | 13.1 |
+
+The x bounds of `position_cab_roof_centre` (NAIP 2022 field of view) depend on the assumed rim height: F1 −744.1 hard /
+−739.6 likely, F2 (rim 63.3–64) −741.3 / −737.1 [inf]. The NAIP 2024 cab-disc check (frame model) cannot separate the
+families: their predicted imaged centres differ by 1.9 m, less than the cab-x (± 5 m) and flying-height (± 2.7 m on the
+lean) uncertainties; the k(x) model gives the same pair.
+
+**Landside blades** (photos t3 / t4, Famartin 2025-08-12, CC BY-SA 4.0, Wikimedia Commons; reference only, kept in
+`refs/cache/buildings/review_likeness/`). The glass ribbon sits in a flat-faced channel between two blades that run the
+full height with creases diverging upwards [obs, photo]:
+- NE blade: narrow, sharp-edged, ending in a pointed tip at about the flare rim (t4 reads it level with the rim edge to
+  ~2.4 m above it) [obs, low].
+- SW wing: broad, with a horizontally louvred face, a flat top and a rounded outer edge; in the oblique t4 view it
+  reaches ~5.5 m beyond the ribbon at the top [inf: not a frontal measurement].
+- Ribbon: 2 mullion columns over the full height, ~25 rows (t4, column profile at x 1110: row pitch 46.6 px).
+- The ribbon head looks slanted in t4, but its slope (0.18 px/px: y 389 at x 1100 → 425 at x 1300) equals that of the
+  horizontal mullion rows (0.19): perspective, so the head is drawn level.
+- Plan depth / width of the blades and the channel: not measured [unk]; BT-01 shows them schematically.
+
+**DOF datum.** 06-323169 is plotted with the DOF convention (WGS 84 → (−741.0, 335.9)), as on every other sheet; the
+2008 OE/AAA letter's NAD83 reading of the same numbers, (−742.6, 335.7), is shown hollow.
+
+## Drawing round 2 (2026-11-04): photo features and corrections used by BT-01..03
+
+Reference photos (Wikimedia Commons, reference only; files in `refs/cache/buildings/review_likeness/`, licences in its
+`SOURCES.json`): t1 Basil D Soufi 2015 (CC BY-SA 4.0, bearing 142), t2 / t3 / t4 Famartin 2025-08-12 (CC BY-SA 4.0,
+bearings 126 / 319 / 338).
+
+| Item | Reading | Tag |
+|---|---|---|
+| Upper slots | Discrete parallelogram slots, not a continuous band. t1 row profiles at mid-band find slots at bearings ~212 / 178 / 154 / 124 / 99 / 72 (spacing 24–34°, mean 27.7° → ~13 around); each ~1.4 m wide (15–25 px at 0.074 m/px); each sweeps ~20° of azimuth between the band seams (rows 240–320: 13° over 6 m), top towards smaller bearings (NNE on the airside). t3 / t4 show 2–3 on the NE flank, none in the ribbon / wing sector. | obs photo; count / phase inf |
+| Long slot | A helix: u/R +0.13 → +0.78 seen from 142 (t1), −0.22 → +0.52 from 126 (t2); both give bearing ~135–139 at the foot and ~91–95 at the head, i.e. ~44° of azimuth. The previous drawing swept ~13°. | inf from obs photos |
+| Cab plinth | Dark ring under the glass on the flare shoulder: 590 of the 830-px (15.2 m) roof in t1 → D 10.8 m, ~0.73 m high; t3 shows a railing on it. | obs photo t1 |
+| SW wing tip | t3: 14.5 m right of the cab centre, 7.0 m beyond the ribbon edge; t4: 15.7 / 6.6 m (scaled by the 15.2 m roof). With the inferred cab offset, the single plan point bearing 254°, 14.0 m from the axis reproduces both (model 14.5 / 7.6 and 15.7 / 5.8). From BT-02 B (297.7°) it projects at u +9.7, inside the round flare (12.0): the oblique photos do not show the B silhouette. A wing wrapping south to ~208° (allowed by t3 / t4) would reach u +13.6. | inf |
+| Ribbon bearing | Plan and elevation now agree: the ribbon faces 310° (middle of 300–320), so in B it sits up to 2.3 m left of the axis. | inf |
+| Cab-roof z spread | 322.4–325.3 over the four NAIP epochs: ±1.45 m about 323.85 (the spec note's "±1.2 m" was corrected). | obs |
+| F2 x bounds | The spec's bounds for a 63.3 m rim interpolated to F2's 64.0 m: ≥ −741.8 hard, ≥ −737.5 likely. With F2's cab at −737.5 the frame model predicts the imaged disc at (−702.27, 321.42), delta (1.42, 0.98) m (|1.72|) against F1's (1.06, 1.10) (|1.53|): about as good; still inconclusive. | inf |
+| Cab offset | (1.5 E, 1.0 N) = 1.80 m from the axis (bearing ~56°); 1.6 m in the 27.7° view plane. | inf |
+| CTBUH | Skyscraper Center (re-fetched 2026-11-04): "Structure Height 67.4 m / 221 ft, Floors 12" — 221 ft classified as excluding antennae. Favours F1's definition; a database classification, not a survey. | pub |

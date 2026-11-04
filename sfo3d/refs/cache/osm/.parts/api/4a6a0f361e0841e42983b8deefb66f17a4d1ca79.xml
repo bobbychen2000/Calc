@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osmChange version="0.6" generator="openstreetmap-cgimap 2.1.1 (3641929 spike-06.openstreetmap.org)" copyright="OpenStreetMap and contributors" attribution="http://www.openstreetmap.org/copyright" license="http://opendatacommons.org/licenses/odbl/1-0/">
+ <modify>
+  <way id="135248702" visible="true" version="4" changeset="190715965" timestamp="2026-10-18T21:04:58Z" user="jesszhan0024" uid="23667821">
+   <nd ref="1485534816"/>
+   <nd ref="1485534812"/>
+   <nd ref="1485534817"/>
+   <nd ref="1485534822"/>
+   <nd ref="1485534816"/>
+   <tag k="addr:housenumber" v="1828"/>
+   <tag k="building" v="office"/>
+   <tag k="building:colour" v="grey"/>
+   <tag k="building:levels" v="7"/>
+  </way>
+ </modify>
+</osmChange>

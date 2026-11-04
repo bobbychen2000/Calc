@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osmChange version="0.6" generator="openstreetmap-cgimap 2.1.1 (3819604 spike-07.openstreetmap.org)" copyright="OpenStreetMap and contributors" attribution="http://www.openstreetmap.org/copyright" license="http://opendatacommons.org/licenses/odbl/1-0/">
+ <modify>
+  <relation id="9736431" visible="true" version="3" changeset="190410295" timestamp="2026-10-12T16:04:44Z" user="Minh Nguyen" uid="33757">
+   <member type="node" ref="1087091566" role=""/>
+   <member type="node" ref="6580620898" role="stop"/>
+   <member type="node" ref="6580620897" role="stop"/>
+   <member type="way" ref="700740483" role="platform"/>
+   <tag k="name" v="Garage A"/>
+   <tag k="network" v="SFO AirTrain"/>
+   <tag k="public_transport" v="stop_area"/>
+   <tag k="railway" v="facility"/>
+   <tag k="type" v="public_transport"/>
+   <tag k="wikidata" v="Q141595981"/>
+  </relation>
+ </modify>
+ <modify>
+  <relation id="9736433" visible="true" version="3" changeset="190410295" timestamp="2026-10-12T16:04:44Z" user="Minh Nguyen" uid="33757">
+   <member type="node" ref="1087090410" role=""/>
+   <member type="node" ref="6580620900" role="stop"/>
+   <member type="node" ref="6580620899" role="stop"/>
+   <member type="way" ref="700740484" role="platform"/>
+   <tag k="name" v="International Terminal A"/>
+   <tag k="network" v="SFO AirTrain"/>
+   <tag k="public_transport" v="stop_area"/>
+   <tag k="railway" v="facility"/>
+   <tag k="type" v="public_transport"/>
+   <tag k="wikidata" v="Q141596008"/>
+  </relation>
+ </modify>
+ <modify>
+  <node id="6884026274" visible="true" version="5" changeset="190410295" timestamp="2026-10-12T16:04:44Z" user="Minh Nguyen" uid="33757" lat="37.6134510" lon="-122.3936970">
+   <tag k="alt_name" v="Grand Hyatt"/>
+   <tag k="monorail" v="yes"/>
+   <tag k="name" v="Grand Hyatt at SFO"/>
+   <tag k="network" v="SFO AirTrain"/>
+   <tag k="public_transport" v="stop_position"/>
+   <tag k="railway" v="stop"/>
+   <tag k="wikidata" v="Q141595811"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="6580620897" visible="true" version="6" changeset="190410295" timestamp="2026-10-12T16:04:44Z" user="Minh Nguyen" uid="33757" lat="37.6139445" lon="-122.3911823">
+   <tag k="monorail" v="yes"/>
+   <tag k="name" v="Garage A"/>
+   <tag k="network" v="SFO AirTrain"/>
+   <tag k="public_transport" v="stop_position"/>
+   <tag k="railway" v="stop"/>
+   <tag k="wikidata" v="Q141595981"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="6580620898" visible="true" version="6" changeset="190410295" timestamp="2026-10-12T16:04:44Z" user="Minh Nguyen" uid="33757" lat="37.6138451" lon="-122.3920957">
+   <tag k="monorail" v="yes"/>
+   <tag k="name" v="Garage A"/>
+   <tag k="network" v="SFO AirTrain"/>
+   <tag k="public_transport" v="stop_position"/>
+   <tag k="railway" v="stop"/>
+   <tag k="wikidata" v="Q141595981"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="6884026275" visible="true" version="6" changeset="190410295" timestamp="2026-10-12T16:04:44Z" user="Minh Nguyen" uid="33757" lat="37.6134657" lon="-122.3931272">
+   <tag k="alt_name" v="Grand Hyatt"/>
+   <tag k="monorail" v="yes"/>
+   <tag k="name" v="Grand Hyatt at SFO"/>
+   <tag k="network" v="SFO AirTrain"/>
+   <tag k="public_transport" v="stop_position"/>
+   <tag k="railway" v="stop"/>
+   <tag k="wikidata" v="Q141595811"/>
+  </node>
+ </modify>
+ <modify>
+  <relation id="10162395" visible="true" version="6" changeset="190410295" timestamp="2026-10-12T16:04:44Z" user="Minh Nguyen" uid="33757">
+   <member type="node" ref="7119024966" role=""/>
+   <member type="node" ref="6884026274" role="stop"/>
+   <member type="node" ref="6884026275" role="stop"/>
+   <member type="node" ref="7125150653" role=""/>
+   <member type="way" ref="1090178812" role="platform"/>
+   <tag k="alt_name" v="Grand Hyatt"/>
+   <tag k="name" v="Grand Hyatt at SFO"/>
+   <tag k="network" v="SFO AirTrain"/>
+   <tag k="public_transport" v="stop_area"/>
+   <tag k="railway" v="facility"/>
+   <tag k="type" v="public_transport"/>
+   <tag k="wikidata" v="Q141595811"/>
+  </relation>
+ </modify>
+ <modify>
+  <node id="6580620899" visible="true" version="7" changeset="190410295" timestamp="2026-10-12T16:04:44Z" user="Minh Nguyen" uid="33757" lat="37.6145648" lon="-122.3886127">
+   <tag k="monorail" v="yes"/>
+   <tag k="name" v="International Terminal A"/>
+   <tag k="network" v="SFO AirTrain"/>
+   <tag k="public_transport" v="stop_position"/>
+   <tag k="railway" v="stop"/>
+   <tag k="wikidata" v="Q141596008"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="6580620900" visible="true" version="7" changeset="190410295" timestamp="2026-10-12T16:04:44Z" user="Minh Nguyen" uid="33757" lat="37.6146046" lon="-122.3890079">
+   <tag k="monorail" v="yes"/>
+   <tag k="name" v="International Terminal A"/>
+   <tag k="network" v="SFO AirTrain"/>
+   <tag k="public_transport" v="stop_position"/>
+   <tag k="railway" v="stop"/>
+   <tag k="wikidata" v="Q141596008"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="7119024966" visible="true" version="8" changeset="190410295" timestamp="2026-10-12T16:04:44Z" user="Minh Nguyen" uid="33757" lat="37.6134590" lon="-122.3934160">
+   <tag k="light_rail" v="yes"/>
+   <tag k="name" v="Grand Hyatt"/>
+   <tag k="network" v="SFO AirTrain"/>
+   <tag k="network:wikidata" v="Q1826452"/>
+   <tag k="public_transport" v="station"/>
+   <tag k="railway" v="station"/>
+   <tag k="station" v="light_rail"/>
+   <tag k="wheelchair" v="yes"/>
+   <tag k="wikidata" v="Q141595811"/>
+   <tag k="wikimedia_commons" v="Category:Grand Hyatt at SFO station"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="1087091566" visible="true" version="15" changeset="190410295" timestamp="2026-10-12T16:04:44Z" user="Minh Nguyen" uid="33757" lat="37.6138308" lon="-122.3919050">
+   <tag k="light_rail" v="yes"/>
+   <tag k="name" v="Garage A"/>
+   <tag k="network" v="SFO AirTrain"/>
+   <tag k="network:wikidata" v="Q1826452"/>
+   <tag k="public_transport" v="station"/>
+   <tag k="railway" v="station"/>
+   <tag k="station" v="light_rail"/>
+   <tag k="wikidata" v="Q141595981"/>
+   <tag k="wikimedia_commons" v="Category:International Garage A station"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="1087090410" visible="true" version="19" changeset="190410295" timestamp="2026-10-12T16:04:44Z" user="Minh Nguyen" uid="33757" lat="37.6145864" lon="-122.3888019">
+   <tag k="level" v="3"/>
+   <tag k="light_rail" v="yes"/>
+   <tag k="name" v="International Terminal A"/>
+   <tag k="network" v="SFO AirTrain"/>
+   <tag k="network:wikidata" v="Q1826452"/>
+   <tag k="public_transport" v="station"/>
+   <tag k="railway" v="station"/>
+   <tag k="station" v="light_rail"/>
+   <tag k="wheelchair" v="yes"/>
+   <tag k="wikidata" v="Q141596008"/>
+   <tag k="wikimedia_commons" v="Category:International Terminal A station"/>
+  </node>
+ </modify>
+</osmChange>

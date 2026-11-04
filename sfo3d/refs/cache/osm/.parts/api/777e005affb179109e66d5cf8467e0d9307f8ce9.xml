@@ -1,0 +1,257 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osmChange version="0.6" generator="openstreetmap-cgimap 2.1.1 (3839799 spike-07.openstreetmap.org)" copyright="OpenStreetMap and contributors" attribution="http://www.openstreetmap.org/copyright" license="http://opendatacommons.org/licenses/odbl/1-0/">
+ <create>
+  <node id="14316038035" visible="true" version="1" changeset="190974258" timestamp="2026-10-24T14:30:29Z" user="Djroatan" uid="6650391" lat="37.5996799" lon="-122.4008684"/>
+ </create>
+ <create>
+  <node id="14316038036" visible="true" version="1" changeset="190974258" timestamp="2026-10-24T14:30:29Z" user="Djroatan" uid="6650391" lat="37.6645327" lon="-122.4578829"/>
+ </create>
+ <create>
+  <node id="14316038037" visible="true" version="1" changeset="190974258" timestamp="2026-10-24T14:30:29Z" user="Djroatan" uid="6650391" lat="37.6646565" lon="-122.4579564"/>
+ </create>
+ <create>
+  <node id="14316038038" visible="true" version="1" changeset="190974258" timestamp="2026-10-24T14:30:29Z" user="Djroatan" uid="6650391" lat="37.6648017" lon="-122.4578677"/>
+ </create>
+ <create>
+  <node id="14316038039" visible="true" version="1" changeset="190974258" timestamp="2026-10-24T14:30:29Z" user="Djroatan" uid="6650391" lat="37.6648603" lon="-122.4580752"/>
+ </create>
+ <create>
+  <node id="14316038040" visible="true" version="1" changeset="190974258" timestamp="2026-10-24T14:30:29Z" user="Djroatan" uid="6650391" lat="37.6647132" lon="-122.4579609"/>
+ </create>
+ <create>
+  <node id="14316038041" visible="true" version="1" changeset="190974258" timestamp="2026-10-24T14:30:29Z" user="Djroatan" uid="6650391" lat="37.6608633" lon="-122.4609102"/>
+ </create>
+ <create>
+  <node id="14316038042" visible="true" version="1" changeset="190974258" timestamp="2026-10-24T14:30:29Z" user="Djroatan" uid="6650391" lat="37.6612063" lon="-122.4612469"/>
+ </create>
+ <create>
+  <node id="14316038043" visible="true" version="1" changeset="190974258" timestamp="2026-10-24T14:30:29Z" user="Djroatan" uid="6650391" lat="37.6612369" lon="-122.4614302"/>
+ </create>
+ <create>
+  <node id="14316038044" visible="true" version="1" changeset="190974258" timestamp="2026-10-24T14:30:29Z" user="Djroatan" uid="6650391" lat="37.6613440" lon="-122.4618423"/>
+ </create>
+ <create>
+  <way id="1571376635" visible="true" version="1" changeset="190974258" timestamp="2026-10-24T14:30:29Z" user="Djroatan" uid="6650391">
+   <nd ref="65503992"/>
+   <nd ref="14316038039"/>
+   <tag k="highway" v="residential"/>
+  </way>
+ </create>
+ <modify>
+  <node id="260435008" visible="true" version="2" changeset="190974258" timestamp="2026-10-24T14:30:29Z" user="Djroatan" uid="6650391" lat="37.6612802" lon="-122.4616330"/>
+ </modify>
+ <modify>
+  <node id="260435240" visible="true" version="2" changeset="190974258" timestamp="2026-10-24T14:30:29Z" user="Djroatan" uid="6650391" lat="37.6611975" lon="-122.4604953"/>
+ </modify>
+ <modify>
+  <node id="1655404489" visible="true" version="2" changeset="190974258" timestamp="2026-10-24T14:30:29Z" user="Djroatan" uid="6650391" lat="37.6623927" lon="-122.4566434">
+   <tag k="highway" v="stop"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="2378712595" visible="true" version="2" changeset="190974258" timestamp="2026-10-24T14:30:29Z" user="Djroatan" uid="6650391" lat="37.6001250" lon="-122.4001184"/>
+ </modify>
+ <modify>
+  <node id="2378712613" visible="true" version="2" changeset="190974258" timestamp="2026-10-24T14:30:29Z" user="Djroatan" uid="6650391" lat="37.6003494" lon="-122.4000215"/>
+ </modify>
+ <modify>
+  <node id="2378712621" visible="true" version="2" changeset="190974258" timestamp="2026-10-24T14:30:29Z" user="Djroatan" uid="6650391" lat="37.6003620" lon="-122.3999580"/>
+ </modify>
+ <modify>
+  <node id="2378712628" visible="true" version="2" changeset="190974258" timestamp="2026-10-24T14:30:29Z" user="Djroatan" uid="6650391" lat="37.6002512" lon="-122.4000568"/>
+ </modify>
+ <modify>
+  <node id="2378712633" visible="true" version="2" changeset="190974258" timestamp="2026-10-24T14:30:29Z" user="Djroatan" uid="6650391" lat="37.6003102" lon="-122.4000363"/>
+ </modify>
+ <modify>
+  <node id="4911120300" visible="true" version="2" changeset="190974258" timestamp="2026-10-24T14:30:29Z" user="Djroatan" uid="6650391" lat="37.6609675" lon="-122.4609180"/>
+ </modify>
+ <modify>
+  <node id="9084789001" visible="true" version="2" changeset="190974258" timestamp="2026-10-24T14:30:29Z" user="Djroatan" uid="6650391" lat="37.6618808" lon="-122.4632441"/>
+ </modify>
+ <modify>
+  <node id="9451611665" visible="true" version="2" changeset="190974258" timestamp="2026-10-24T14:30:29Z" user="Djroatan" uid="6650391" lat="37.6006740" lon="-122.3999449"/>
+ </modify>
+ <modify>
+  <node id="9451611666" visible="true" version="2" changeset="190974258" timestamp="2026-10-24T14:30:29Z" user="Djroatan" uid="6650391" lat="37.6006694" lon="-122.3999633"/>
+ </modify>
+ <modify>
+  <node id="9451611667" visible="true" version="2" changeset="190974258" timestamp="2026-10-24T14:30:29Z" user="Djroatan" uid="6650391" lat="37.6006224" lon="-122.4000864"/>
+ </modify>
+ <modify>
+  <node id="9451611668" visible="true" version="2" changeset="190974258" timestamp="2026-10-24T14:30:29Z" user="Djroatan" uid="6650391" lat="37.6006726" lon="-122.3999914"/>
+ </modify>
+ <delete>
+  <node id="13969179078" visible="false" version="2" changeset="190974258" timestamp="2026-10-24T14:30:29Z" user="Djroatan" uid="6650391"/>
+ </delete>
+ <modify>
+  <node id="14156437783" visible="true" version="2" changeset="190974258" timestamp="2026-10-24T14:30:29Z" user="Djroatan" uid="6650391" lat="37.6630262" lon="-122.4707972">
+   <tag k="amenity" v="charging_station"/>
+   <tag k="brand" v="EVgo"/>
+   <tag k="brand:wikidata" v="Q61803820"/>
+   <tag k="capacity" v="4"/>
+   <tag k="name" v="EVgo"/>
+   <tag k="operator" v="EVgo"/>
+   <tag k="operator:wikidata" v="Q61803820"/>
+   <tag k="ref:afdc" v="228442"/>
+   <tag k="socket:chademo" v="yes"/>
+   <tag k="socket:type1_combo" v="yes"/>
+   <tag k="start_date" v="2021-04-07"/>
+  </node>
+ </modify>
+ <modify>
+  <way id="499931919" visible="true" version="2" changeset="190974258" timestamp="2026-10-24T14:30:29Z" user="Djroatan" uid="6650391">
+   <nd ref="65503992"/>
+   <nd ref="14316038038"/>
+   <nd ref="65407829"/>
+   <nd ref="65460453"/>
+   <tag k="highway" v="residential"/>
+   <tag k="name" v="Newman Drive"/>
+   <tag k="tiger:cfcc" v="A41"/>
+   <tag k="tiger:county" v="San Mateo, CA"/>
+   <tag k="tiger:name_base" v="Newman"/>
+   <tag k="tiger:name_type" v="Dr"/>
+   <tag k="tiger:reviewed" v="no"/>
+  </way>
+ </modify>
+ <modify>
+  <way id="1532837331" visible="true" version="2" changeset="190974258" timestamp="2026-10-24T14:30:29Z" user="Djroatan" uid="6650391">
+   <nd ref="4529741949"/>
+   <nd ref="14316038035"/>
+   <nd ref="13969179079"/>
+   <nd ref="13969179080"/>
+   <nd ref="5608537721"/>
+   <tag k="highway" v="footway"/>
+  </way>
+ </modify>
+ <modify>
+  <node id="2378712607" visible="true" version="3" changeset="190974258" timestamp="2026-10-24T14:30:29Z" user="Djroatan" uid="6650391" lat="37.6005409" lon="-122.4000902"/>
+ </modify>
+ <modify>
+  <node id="2378712617" visible="true" version="3" changeset="190974258" timestamp="2026-10-24T14:30:29Z" user="Djroatan" uid="6650391" lat="37.6005786" lon="-122.4000866"/>
+ </modify>
+ <modify>
+  <way id="152755503" visible="true" version="4" changeset="190974258" timestamp="2026-10-24T14:30:29Z" user="Djroatan" uid="6650391">
+   <nd ref="65468175"/>
+   <nd ref="65468177"/>
+   <nd ref="65416742"/>
+   <nd ref="260435793"/>
+   <nd ref="65437329"/>
+   <nd ref="260435240"/>
+   <nd ref="65441078"/>
+   <nd ref="14316038042"/>
+   <nd ref="14316038043"/>
+   <nd ref="260435008"/>
+   <nd ref="14316038044"/>
+   <nd ref="9084789003"/>
+   <nd ref="65468179"/>
+   <nd ref="65468180"/>
+   <tag k="highway" v="residential"/>
+   <tag k="name" v="Clay Avenue"/>
+   <tag k="tiger:cfcc" v="A41"/>
+   <tag k="tiger:county" v="San Mateo, CA"/>
+   <tag k="tiger:name_base" v="Clay"/>
+   <tag k="tiger:name_type" v="Ave"/>
+   <tag k="tiger:reviewed" v="no"/>
+  </way>
+ </modify>
+ <modify>
+  <node id="65460452" visible="true" version="5" changeset="190974258" timestamp="2026-10-24T14:30:29Z" user="Djroatan" uid="6650391" lat="37.6646961" lon="-122.4553246">
+   <tag k="highway" v="stop"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="65407828" visible="true" version="6" changeset="190974258" timestamp="2026-10-24T14:30:29Z" user="Djroatan" uid="6650391" lat="37.6641027" lon="-122.4565356">
+   <tag k="highway" v="stop"/>
+   <tag k="stop" v="all"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="65437329" visible="true" version="6" changeset="190974258" timestamp="2026-10-24T14:30:29Z" user="Djroatan" uid="6650391" lat="37.6612410" lon="-122.4601838"/>
+ </modify>
+ <modify>
+  <node id="65441078" visible="true" version="6" changeset="190974258" timestamp="2026-10-24T14:30:29Z" user="Djroatan" uid="6650391" lat="37.6611813" lon="-122.4609176"/>
+ </modify>
+ <modify>
+  <node id="65468172" visible="true" version="6" changeset="190974258" timestamp="2026-10-24T14:30:29Z" user="Djroatan" uid="6650391" lat="37.6624732" lon="-122.4566896">
+   <tag k="highway" v="stop"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="65468177" visible="true" version="6" changeset="190974258" timestamp="2026-10-24T14:30:29Z" user="Djroatan" uid="6650391" lat="37.6617372" lon="-122.4587242"/>
+ </modify>
+ <modify>
+  <node id="65468179" visible="true" version="6" changeset="190974258" timestamp="2026-10-24T14:30:29Z" user="Djroatan" uid="6650391" lat="37.6616089" lon="-122.4624472">
+   <tag k="highway" v="stop"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="65407829" visible="true" version="7" changeset="190974258" timestamp="2026-10-24T14:30:29Z" user="Djroatan" uid="6650391" lat="37.6649132" lon="-122.4571810">
+   <tag k="highway" v="stop"/>
+   <tag k="stop" v="all"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="65416742" visible="true" version="7" changeset="190974258" timestamp="2026-10-24T14:30:29Z" user="Djroatan" uid="6650391" lat="37.6614745" lon="-122.4594420"/>
+ </modify>
+ <modify>
+  <node id="65503992" visible="true" version="7" changeset="190974258" timestamp="2026-10-24T14:30:29Z" user="Djroatan" uid="6650391" lat="37.6647573" lon="-122.4579407"/>
+ </modify>
+ <modify>
+  <node id="65468175" visible="true" version="8" changeset="190974258" timestamp="2026-10-24T14:30:29Z" user="Djroatan" uid="6650391" lat="37.6620106" lon="-122.4579870">
+   <tag k="highway" v="stop"/>
+  </node>
+ </modify>
+ <modify>
+  <way id="8931069" visible="true" version="8" changeset="190974258" timestamp="2026-10-24T14:30:29Z" user="Djroatan" uid="6650391">
+   <nd ref="65441078"/>
+   <nd ref="4911120300"/>
+   <nd ref="14316038041"/>
+   <nd ref="260435011"/>
+   <nd ref="260435013"/>
+   <nd ref="65441079"/>
+   <nd ref="260435014"/>
+   <nd ref="260435027"/>
+   <nd ref="65441081"/>
+   <tag k="highway" v="residential"/>
+   <tag k="name" v="Norwich Drive"/>
+   <tag k="tiger:cfcc" v="A41"/>
+   <tag k="tiger:county" v="San Mateo, CA"/>
+   <tag k="tiger:name_base" v="Norwich"/>
+   <tag k="tiger:name_type" v="Dr"/>
+   <tag k="tiger:reviewed" v="no"/>
+  </way>
+ </modify>
+ <modify>
+  <way id="8939447" visible="true" version="17" changeset="190974258" timestamp="2026-10-24T14:30:29Z" user="Djroatan" uid="6650391">
+   <nd ref="65452949"/>
+   <nd ref="65395433"/>
+   <nd ref="65501114"/>
+   <nd ref="260436971"/>
+   <nd ref="13296290879"/>
+   <nd ref="65451939"/>
+   <nd ref="13296290882"/>
+   <nd ref="65437376"/>
+   <nd ref="65450610"/>
+   <nd ref="65494696"/>
+   <nd ref="65459673"/>
+   <nd ref="65392085"/>
+   <nd ref="65472848"/>
+   <nd ref="1655404489"/>
+   <nd ref="65468172"/>
+   <nd ref="65470023"/>
+   <nd ref="318268635"/>
+   <nd ref="14316038036"/>
+   <nd ref="14316038037"/>
+   <nd ref="14316038040"/>
+   <nd ref="65503992"/>
+   <tag k="highway" v="residential"/>
+   <tag k="name" v="Newman Drive"/>
+   <tag k="tiger:cfcc" v="A41"/>
+   <tag k="tiger:county" v="San Mateo, CA"/>
+   <tag k="tiger:name_base" v="Newman"/>
+   <tag k="tiger:name_type" v="Dr"/>
+   <tag k="tiger:reviewed" v="no"/>
+  </way>
+ </modify>
+</osmChange>

@@ -1081,7 +1081,8 @@
     "date": "2026-11-04",
     "verdict": "PLAUSIBLE (minor)",
     "evidence": "48.4 m is the IMAGED detection-box length (mean of the four detected boxes 47.75-48.75 m; magnification not removed -> ~47.9 m); the pointed ends fade, so tip-to-tip may be 1-2 m more. The westmost lens is full length too (detected 34 m because it is darker). Each skylight reads as a D in NAIP (straight east edge, convex west edge): a vaulted lens leaning east, or a D in plan - not settled."
-   }
+   },
+   "drawing_note": "BI-01 draws the pointed-lens planform tagged [inf] with the D-shaped alternative dotted (the verification leaves it unsettled)"
   },
   {
    "id": "roof.glazed_tips_obs",
@@ -1330,7 +1331,8 @@
     "date": "2026-11-04",
     "verdict": "PLAUSIBLE (reproduced; one new independent check)",
     "evidence": "itb_naip_measure.py re-run: byte-identical output. NEW: the east eave wanders WITH the west eave (north tip -> hump: west +2.25 m, east +2.20 m, width constant) - the wander is a height signal, not a curved plan. The photo silhouette was not re-run (Commons API rate-limited, file not cached). The two relief models differ by 1-4 % along the hall (<= 0.5 m on the drops)."
-   }
+   },
+   "drawing_note": "2026-11-04 (drawing review round 2): the curve is anchored on the DOF mean (40.08) at its FITTED peak |u| 67, where no DOF point exists; the DOF points sit at u +57.16 (06-035315, 39.93) and -58.35 (06-035316, 40.23), 0.8-1.1 m inside the west eave, where the curve reads 39.70 / 39.78 (0.23 / 0.45 m low, inside the 1A +-3 ft). Anchored at the DOF stations every eave height would rise ~0.34 m (peak ~40.4). The hump value 40.08 is therefore [inf] (DOF-anchored fit); the DOF tops stay [pub]."
   },
   {
    "id": "level3.floor",
@@ -1372,7 +1374,8 @@
     "date": "2026-11-04",
     "verdict": "CONFIRMED",
     "evidence": "SFGate (frit, glass) re-read"
-   }
+   },
+   "drawing_obs": "photos i1 / i4 (reference): a clear central bay ~80 m wide (+-39 m i4, +-42 m i1) on a mullion grid (~6.1 x ~2.2 m, low) carrying \"SAN FRANCISCO INTERNATIONAL\" (+-32.5 m i4 / +-37 m i1); white horizontally banded fritted side bays with a dark clear strip just above the curb canopy; the central glazing head follows the centre section bottom chord, 1-3.5 m above the side-bay head (tentative). Wall position: the curb canopy (\"entrance canopy\" [pub SEAONC]) hides the wall foot from the NAIP camera if deeper than ~2 m, so the NAIP line reads the wall at v -28.3 (above the canopy) to -23.3 (canopy edge, 5 m deep) [inf]; -26.3 only for a canopy <= 2 m."
   },
   {
    "id": "facade.end_walls",

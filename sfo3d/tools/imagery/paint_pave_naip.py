@@ -13,7 +13,10 @@ paint_pave_naip.py --stats prints them for sample areas):
   concrete      pavement component with median V >= 150 (asphalt darker)
 Kept only on the airfield: green paint within 30 m of SFO Museum taxiway / runway pavement and not on it (the paint
 is on the island pavement between taxiway fillets); extra pavement within 60 m of the SFO Museum paved areas + the
-inferred apron (data/sfo_details.json) - or inside OSM aprons / within 40 m of OSM taxi centrelines (review round 3) -,
+inferred apron (data/sfo_details.json) - or inside OSM aprons / within 40 m of OSM taxi centrelines (review round 3), or
+within 60 m of an aircraft parking position / ADS-B parked stay (static close-out 2026-11-04: north cargo aprons; inside a
+position's own footprint every pixel that is not vegetation / bare soil / building counts, so parked aircraft, GSE and
+ULDs do not leave holes) -,
 outside them and outside buildings (SFO Museum structures, terminal
 complex, boarding areas; OSM buildings are not used), components >= 300 m2 after a 1.5 m opening, holes (parked
 aircraft, vehicles, shadows) < 3000 m2 filled. Roofs of hangars that SFO Museum does not map can classify as
@@ -22,7 +25,7 @@ pavement (grey); they are listed by area in the log for review.
     python3 tools/imagery/paint_pave_naip.py          # writes data/sfo_paint.* and data/sfo_pavement.*
     python3 tools/imagery/paint_pave_naip.py --preview   # + refs/cache/naip/paint_pave_preview.jpg (NAIP pixels; stays local)
 """
-import json, os, sys
+import json, math, os, sys
 import numpy as np, cv2
 from scipy import ndimage as ndi
 
@@ -100,7 +103,26 @@ def main(preview=False):
         q = np.round(P([GF.wgs84_to_world(la, lo) for la, lo in t['pts']]) * 4).astype(np.int32)
         if len(q) >= 2: cv2.polylines(ocl, [q], False, 1, 1, shift=2)
     dcl = ndi.distance_transform_edt(ocl == 0) * RES
-    cand = (dpav < 60) | (oap > 0) | (dcl < 40)
+    # static close-out (2026-11-04; open requests traffic_engine_data.md s.2, realtime_round1/2: the north cargo /
+    # maintenance aprons): the candidate region also covers 60 m round every aircraft parking position of
+    # data/sfo_stands.json (positions: OSM aeroway=parking_position; remote: SFO remote stands) and every ADS-B parked stay
+    # of refs/cache/stands/adsb_parked.json (adsb.lol): the review found 40 of 179 positions with > 50 % of a narrow-body
+    # footprint outside the app's pavement (KAL214 B748, CSB805 B762, EVA629, ATN3300 parked there). NAIP decides as
+    # everywhere: grey + smooth only. Holes (the parked aircraft, GSE, ULDs) up to 12000 m2 are filled when such a point
+    # lies in them (a 747-8 with its shadow exceeds the general 3000 m2 limit).
+    St = json.load(open(os.path.join(ROOT, 'data', 'sfo_stands.json')))
+    park = np.zeros((H, W), np.uint8)
+    pts_ = [[q['x'], q['z']] for q in St.get('positions', []) + St.get('remote', []) if 'x' in q]
+    try:
+        pts_ += [[v['x'], v['z']] for v in json.load(open(os.path.join(ROOT, 'refs', 'cache', 'stands', 'adsb_parked.json')))['stays']]
+    except (OSError, KeyError, ValueError):
+        pass
+    N_PARK = 0
+    for q in pts_:
+        if not q: continue
+        c_ = P([q])[0]
+        if 0 <= c_[0] < W and 0 <= c_[1] < H: cv2.circle(park, (int(c_[0]), int(c_[1])), int(60 / RES), 1, -1); N_PARK += 1
+    cand = (dpav < 60) | (oap > 0) | (dcl < 40) | (park > 0)
     p = (grey | g) & (pav == 0) & (bld == 0) & cand
     p = ndi.binary_opening(p, iterations=3)
     lab, n = ndi.label(p); sz = ndi.sum(p, lab, range(1, n + 1))
@@ -108,12 +130,40 @@ def main(preview=False):
     holes = ndi.binary_fill_holes(p) & ~p
     lh, nh = ndi.label(holes); hs = ndi.sum(holes, lh, range(1, nh + 1))
     p |= np.isin(lh, 1 + np.nonzero(hs * RES * RES < 3000)[0])
+    pcore = np.zeros((H, W), np.uint8)              # the parking points themselves (12 m discs) for the larger hole limit
+    for q in pts_:
+        if not q: continue
+        c_ = P([q])[0]
+        if 0 <= c_[0] < W and 0 <= c_[1] < H: cv2.circle(pcore, (int(c_[0]), int(c_[1])), int(12 / RES), 1, -1)
+    hp = ndi.sum(pcore > 0, lh, range(1, nh + 1))
+    p |= np.isin(lh, 1 + np.nonzero((hs * RES * RES < 12000) & (hp > 0))[0])
     p = ndi.gaussian_filter(p.astype(np.float32), 1.0 / RES) > 0.5
     p &= (pav == 0) | (dpav > 0)
     lab, n = ndi.label(p); sz = ndi.sum(p, lab, range(1, n + 1))
     keep = 1 + np.nonzero(sz * RES * RES >= 300)[0]
     p = np.isin(lab, keep)
     p |= (holdm > 0) & (pav == 0) & (bld == 0)          # the measured hold bars are on pavement by definition
+    # static close-out (2026-11-04): an aircraft parking position's footprint (OSM position: 38 x 40 m box along its heading;
+    # ADS-B parked stay: 25 m disc) is pavement wherever NAIP shows no vegetation / bare soil there and no mapped building:
+    # the cluttered aprons (parked aircraft, GSE, ULDs, cars) fail the grey + smooth test (review: 40 of 179 positions > 50 %
+    # unpaved; the review's suggestion "fill the holes left by aircraft, GSE and ULDs")
+    veg = ((Hh >= 50) & (Hh <= 175) & (S > 35)) | ((Hh >= 15) & (Hh < 50) & (S > 45) & (V < 175))
+    foot = np.zeros((H, W), np.uint8)
+    for q in St.get('positions', []) + St.get('remote', []):
+        if 'x' not in q: continue
+        h_ = math.radians(q.get('hdg') or 0.0); f_ = np.array([math.sin(h_), -math.cos(h_)]); r_ = np.array([math.cos(h_), math.sin(h_)])
+        c_ = np.array([q['x'], q['z']]) - f_ * 20.0          # the footprint lies behind the stop point
+        fill(foot, [[list(c_ + f_ * a + r_ * b) for a, b in ((20, 19), (20, -19), (-20, -19), (-20, 19))]])
+    try:
+        for v in json.load(open(os.path.join(ROOT, 'refs', 'cache', 'stands', 'adsb_parked.json')))['stays']:
+            c_ = P([[v['x'], v['z']]])[0]
+            if 0 <= c_[0] < W and 0 <= c_[1] < H: cv2.circle(foot, (int(c_[0]), int(c_[1])), int(25 / RES), 1, -1)
+    except (OSError, KeyError, ValueError):
+        pass
+    vegc = ndi.binary_opening(veg, iterations=2)          # isolated green / brown pixels (paint, vehicles) are not vegetation
+    addf = (foot > 0) & ~vegc & (bld == 0) & (pav == 0) & (V > 40)
+    print('parking footprints: +%.1f ha pavement (not vegetation, not building)' % ((addf & ~p).sum() * RES * RES / 1e4))
+    p |= addf
     pave_polys, conc = [], []
     lab, n = ndi.label(p)
     big = []
@@ -128,15 +178,26 @@ def main(preview=False):
         for poly in polys: pave_polys.append(poly); conc.append(bool(vmed >= 150))
         big.append((round(len(ys) * RES * RES), world((xs.mean(), ys.mean())), round(vmed)))
     big.sort(reverse=True)
+    # static close-out (2026-11-04): taxiways built after NAIP 2024 (data/sfo_details.json centrelines with src
+    # 'osm_update' and a width: the relocated W) are paved as the centreline buffered by half their (inferred) width -
+    # NAIP cannot show them; src per polygon in `src`
+    from shapely.geometry import LineString as _LS
+    srcs = ['naip'] * len(pave_polys)
+    for cl_, m_ in zip(Dt.get('centerlines', []), Dt.get('centerlineMeta', [])):
+        if m_.get('src') == 'osm_update' and m_.get('width_m') and len(cl_) >= 2:
+            g_ = _LS(cl_).buffer(m_['width_m'] / 2, cap_style=2, join_style=1).simplify(0.2)
+            pave_polys.append([[[round(x, 2), round(z, 2)] for x, z in list(g_.exterior.coords)[:-1]]]); conc.append(False)
+            srcs.append('osm_update %s (%s, width %s)' % (m_.get('osm_id'), m_.get('ref'), m_['width_m']))
     prov = ('tools/imagery/paint_pave_naip.py: colour classification of USDA NAIP 2024 (public domain, flown 2024-05-20, '
-            '0.5 m world raster), 24 Sep 2026')
+            '0.5 m world raster), 24 Sep 2026; static close-out 2026-11-04 (parking-position candidates / footprints, the relocated W)')
     paint = {'frame': GF.FRAME_ID, 'note': 'Green no-taxi island paint (FAA AC 150/5340-1M para 1.5.2) classified on USDA NAIP 2024 '
              '(hue 140-180, S > 55, V > 150; within 30 m of SFO Museum taxiway/runway pavement).', 'provenance': prov,
              'polys': paint_polys}
     pave = {'frame': GF.FRAME_ID, 'note': 'Paved areas not in the SFO Museum geometry (cargo/maintenance aprons, service roads, '
-            'shoulders) classified on USDA NAIP 2024 (grey pixels within 60 m of mapped pavement, outside mapped buildings); '
+            'shoulders) classified on USDA NAIP 2024 (grey pixels within 60 m of mapped pavement, of OSM aprons / taxi centrelines '
+            '(40 m) or of aircraft parking positions / ADS-B parked stays (60 m; static close-out 2026-11-04), outside mapped buildings); '
             'conc = concrete (median V >= 150). Unmapped grey roofs can be included (inferred).', 'provenance': prov,
-            'polys': pave_polys, 'conc': conc}
+            'polys': pave_polys, 'conc': conc, 'src': srcs}
     for name, var, res in (('paint', 'PAINT', paint), ('pavement', 'PAVEMENT', pave)):
         blob = json.dumps(res, separators=(',', ':'))
         open(os.path.join(ROOT, 'data', f'sfo_{name}.json'), 'w').write(blob)

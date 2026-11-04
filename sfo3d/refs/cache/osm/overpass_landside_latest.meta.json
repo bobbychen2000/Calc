@@ -1,0 +1,38 @@
+{
+ "file": "overpass_landside_at_20260926T030301Z.json",
+ "osm_base": "2026-09-26T03:03:01Z",
+ "parts_only": null,
+ "attic_date": "2026-09-26T03:03:01Z",
+ "bbox": [
+  37.6,
+  -122.412,
+  37.64,
+  -122.372
+ ],
+ "fetched_utc": "20261104T210355Z",
+ "endpoint": [
+  "https://api.openstreetmap.org/api/0.6"
+ ],
+ "parts": [
+  {
+   "part": "osm-api attic (highway, parking)",
+   "endpoint": "https://api.openstreetmap.org/api/0.6",
+   "method": " (exact, not an approximation of Overpass' attic query):\n  1. current data: GET /api/0.6/map?bbox=... on tiles (a tile over the API's node limit is split in 4);\n  2. every changeset that touched the bbox after the date: GET /api/0.6/changesets?bbox=...&time=<date>,<t> paged back from\n     now; for each, its osmChange (GET /api/0.6/changeset/<id>/download); per element the smallest version written after\n     the date (element timestamps > date; a changeset open across the date can hold earlier edits);\n  3. version at the date = that smallest version - 1 (0: created later, so absent); those versions are fetched by id+version\n     (GET /api/0.6/nodes?nodes=<id>v<n>,... / ways / relations, 100 per request); elements never touched after the date\n     are the current ones; nodes a way needs that step 1 did not return are fetched (current = state at the date when\n     untouched); any element still dated after the date (changed by a changeset that did not touch the bbox, e.g. a\n     node of a long way outside it) takes the last version of its history at or before the date;\n  4. the predicate of the extract (tags) and the bbox (nodes inside; ways with a segment meeting it; relations with a\n     member inside) select the elements, written in Overpass `out meta geom` form (ways with `geometry`, `bounds`).\nData (c) OpenStreetMap contributors, ODbL 1.0. API usage: one request at a time with",
+   "elements": 4752
+  }
+ ],
+ "bytes": 2996449,
+ "sha256": "f8c96dd33eede73f713174d3370c40fae2330f8a144b155e171e7b7748a1d7b9",
+ "elements": 4752,
+ "log": [
+  "map (37.6, -122.412, 37.620000000000005, -122.392): 46379 elements",
+  "map (37.6, -122.392, 37.620000000000005, -122.372): 33319 elements",
+  "map (37.620000000000005, -122.412, 37.64, -122.392): 26248 elements",
+  "map (37.620000000000005, -122.392, 37.64, -122.372): 9124 elements",
+  "changesets touching the bbox since 2026-09-26T03:03:01Z: 82",
+  "elements written after 2026-09-26T03:03:01Z: 5113",
+  "fetching 7559 untouched nodes outside the tiles",
+  "history of 427 elements written after the date outside the changeset scan"
+ ],
+ "licence": "ODbL 1.0, (c) OpenStreetMap contributors"
+}

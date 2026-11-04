@@ -1,0 +1,352 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osmChange version="0.6" generator="openstreetmap-cgimap 2.1.1 (3805549 spike-07.openstreetmap.org)" copyright="OpenStreetMap and contributors" attribution="http://www.openstreetmap.org/copyright" license="http://opendatacommons.org/licenses/odbl/1-0/">
+ <modify>
+  <way id="449636628" visible="true" version="3" changeset="190715729" timestamp="2026-10-18T20:57:43Z" user="jesszhan0024" uid="23667821">
+   <nd ref="65402778"/>
+   <nd ref="1438930182"/>
+   <nd ref="1438930184"/>
+   <tag k="hgv" v="designated"/>
+   <tag k="hgv:national_network" v="terminal_access"/>
+   <tag k="highway" v="primary"/>
+   <tag k="lanes" v="3"/>
+   <tag k="name" v="El Camino Real"/>
+   <tag k="name_1" v="Mission Street"/>
+   <tag k="old_ref" v="US 101"/>
+   <tag k="oneway" v="yes"/>
+   <tag k="ref" v="CA 82"/>
+   <tag k="source" v="Yahoo,TIGER"/>
+   <tag k="source:hgv:national_network" v="Caltrans http://www.dot.ca.gov/hq/traffops/trucks/truckmap/"/>
+   <tag k="surface" v="asphalt"/>
+  </way>
+ </modify>
+ <modify>
+  <way id="563659841" visible="true" version="3" changeset="190715729" timestamp="2026-10-18T20:58:20Z" user="jesszhan0024" uid="23667821">
+   <nd ref="5431564185"/>
+   <nd ref="5431564184"/>
+   <nd ref="5431564183"/>
+   <nd ref="5431564182"/>
+   <nd ref="5431564181"/>
+   <nd ref="5431564186"/>
+   <tag k="highway" v="service"/>
+   <tag k="oneway" v="yes"/>
+   <tag k="service" v="parking_aisle"/>
+   <tag k="surface" v="asphalt"/>
+  </way>
+ </modify>
+ <modify>
+  <way id="449636623" visible="true" version="4" changeset="190715729" timestamp="2026-10-18T20:58:32Z" user="jesszhan0024" uid="23667821">
+   <nd ref="1438930184"/>
+   <nd ref="4465851811"/>
+   <nd ref="4118331195"/>
+   <tag k="hgv" v="designated"/>
+   <tag k="hgv:national_network" v="terminal_access"/>
+   <tag k="highway" v="primary"/>
+   <tag k="lanes" v="3"/>
+   <tag k="name" v="El Camino Real"/>
+   <tag k="name_1" v="Mission Street"/>
+   <tag k="old_ref" v="US 101"/>
+   <tag k="oneway" v="yes"/>
+   <tag k="ref" v="CA 82"/>
+   <tag k="source" v="Yahoo,TIGER"/>
+   <tag k="source:hgv:national_network" v="Caltrans http://www.dot.ca.gov/hq/traffops/trucks/truckmap/"/>
+   <tag k="surface" v="asphalt"/>
+  </way>
+ </modify>
+ <modify>
+  <way id="449638584" visible="true" version="4" changeset="190715729" timestamp="2026-10-18T20:58:55Z" user="jesszhan0024" uid="23667821">
+   <nd ref="297163786"/>
+   <nd ref="5578846970"/>
+   <nd ref="5578846963"/>
+   <nd ref="5578846955"/>
+   <nd ref="5578846972"/>
+   <nd ref="4465851809"/>
+   <nd ref="4465851810"/>
+   <nd ref="5578846979"/>
+   <nd ref="5578846961"/>
+   <nd ref="4465851811"/>
+   <tag k="highway" v="primary_link"/>
+   <tag k="oneway" v="yes"/>
+   <tag k="surface" v="asphalt"/>
+  </way>
+ </modify>
+ <modify>
+  <way id="449638583" visible="true" version="3" changeset="190715729" timestamp="2026-10-18T20:59:07Z" user="jesszhan0024" uid="23667821">
+   <nd ref="297163786"/>
+   <nd ref="4118332391"/>
+   <tag k="hgv" v="designated"/>
+   <tag k="hgv:national_network" v="terminal_access"/>
+   <tag k="highway" v="primary"/>
+   <tag k="lanes" v="3"/>
+   <tag k="name" v="El Camino Real"/>
+   <tag k="old_ref" v="US 101"/>
+   <tag k="oneway" v="yes"/>
+   <tag k="ref" v="CA 82"/>
+   <tag k="source:hgv:national_network" v="Caltrans http://www.dot.ca.gov/hq/traffops/trucks/truckmap/"/>
+   <tag k="surface" v="asphalt"/>
+   <tag k="turn:lanes" v="none|none|merge_to_left"/>
+  </way>
+ </modify>
+ <modify>
+  <way id="1420871290" visible="true" version="2" changeset="190715729" timestamp="2026-10-18T20:59:10Z" user="jesszhan0024" uid="23667821">
+   <nd ref="13057406108"/>
+   <nd ref="297163786"/>
+   <tag k="hgv" v="designated"/>
+   <tag k="hgv:national_network" v="terminal_access"/>
+   <tag k="highway" v="primary"/>
+   <tag k="lanes" v="3"/>
+   <tag k="name" v="El Camino Real"/>
+   <tag k="old_ref" v="US 101"/>
+   <tag k="oneway" v="yes"/>
+   <tag k="ref" v="CA 82"/>
+   <tag k="source:hgv:national_network" v="Caltrans http://www.dot.ca.gov/hq/traffops/trucks/truckmap/"/>
+   <tag k="surface" v="asphalt"/>
+   <tag k="turn:lanes" v="none|none|merge_to_left"/>
+  </way>
+ </modify>
+ <modify>
+  <way id="25815445" visible="true" version="22" changeset="190715729" timestamp="2026-10-18T21:00:44Z" user="jesszhan0024" uid="23667821">
+   <nd ref="6386800179"/>
+   <nd ref="4906098118"/>
+   <nd ref="4906098112"/>
+   <nd ref="1438930205"/>
+   <nd ref="6421532885"/>
+   <nd ref="4204722167"/>
+   <nd ref="281572961"/>
+   <tag k="highway" v="unclassified"/>
+   <tag k="lit" v="yes"/>
+   <tag k="name" v="South El Camino Real"/>
+   <tag k="oneway" v="yes"/>
+   <tag k="parking:both" v="yes"/>
+   <tag k="parking:both:orientation" v="parallel"/>
+   <tag k="sidewalk" v="right"/>
+   <tag k="surface" v="asphalt"/>
+  </way>
+ </modify>
+ <modify>
+  <way id="927639066" visible="true" version="4" changeset="190715729" timestamp="2026-10-18T21:02:53Z" user="jesszhan0024" uid="23667821">
+   <nd ref="281572961"/>
+   <nd ref="4204722163"/>
+   <nd ref="6386708138"/>
+   <tag k="highway" v="unclassified"/>
+   <tag k="name" v="South El Camino Real"/>
+   <tag k="oneway" v="yes"/>
+   <tag k="parking:both" v="yes"/>
+   <tag k="parking:both:orientation" v="parallel"/>
+   <tag k="surface" v="asphalt"/>
+  </way>
+ </modify>
+ <modify>
+  <way id="43976153" visible="true" version="4" changeset="190715729" timestamp="2026-10-18T21:04:39Z" user="jesszhan0024" uid="23667821">
+   <nd ref="559248575"/>
+   <nd ref="6386708151"/>
+   <nd ref="5429461357"/>
+   <nd ref="6386708145"/>
+   <tag k="highway" v="service"/>
+   <tag k="surface" v="asphalt"/>
+  </way>
+ </modify>
+ <modify>
+  <way id="681993884" visible="true" version="5" changeset="190715729" timestamp="2026-10-18T21:05:16Z" user="jesszhan0024" uid="23667821">
+   <nd ref="6386708138"/>
+   <nd ref="559248575"/>
+   <nd ref="6386708144"/>
+   <nd ref="5429461379"/>
+   <nd ref="4904376122"/>
+   <nd ref="4904375614"/>
+   <tag k="highway" v="unclassified"/>
+   <tag k="name" v="South El Camino Real"/>
+   <tag k="oneway" v="yes"/>
+   <tag k="parking:left" v="yes"/>
+   <tag k="parking:left:orientation" v="diagonal"/>
+   <tag k="surface" v="asphalt"/>
+  </way>
+ </modify>
+ <modify>
+  <way id="563411163" visible="true" version="2" changeset="190715729" timestamp="2026-10-18T21:07:36Z" user="jesszhan0024" uid="23667821">
+   <nd ref="5429461386"/>
+   <nd ref="5429461381"/>
+   <nd ref="5429461380"/>
+   <nd ref="5429461378"/>
+   <tag k="highway" v="service"/>
+   <tag k="oneway" v="yes"/>
+   <tag k="service" v="parking_aisle"/>
+   <tag k="surface" v="asphalt"/>
+  </way>
+ </modify>
+ <modify>
+  <way id="563411161" visible="true" version="2" changeset="190715729" timestamp="2026-10-18T21:07:51Z" user="jesszhan0024" uid="23667821">
+   <nd ref="5429461378"/>
+   <nd ref="5429461379"/>
+   <tag k="highway" v="service"/>
+   <tag k="oneway" v="yes"/>
+   <tag k="surface" v="asphalt"/>
+  </way>
+ </modify>
+ <modify>
+  <way id="563411180" visible="true" version="2" changeset="190715729" timestamp="2026-10-18T21:08:19Z" user="jesszhan0024" uid="23667821">
+   <nd ref="5429461388"/>
+   <nd ref="4904375614"/>
+   <tag k="highway" v="service"/>
+   <tag k="surface" v="concrete"/>
+  </way>
+ </modify>
+ <modify>
+  <way id="1097205803" visible="true" version="3" changeset="190715729" timestamp="2026-10-18T21:08:39Z" user="jesszhan0024" uid="23667821">
+   <nd ref="4904375614"/>
+   <nd ref="6323802807"/>
+   <nd ref="4204722184"/>
+   <nd ref="65349935"/>
+   <tag k="highway" v="unclassified"/>
+   <tag k="name" v="South El Camino Real"/>
+   <tag k="oneway" v="yes"/>
+   <tag k="parking:lane:left" v="diagonal"/>
+   <tag k="surface" v="asphalt"/>
+  </way>
+ </modify>
+ <modify>
+  <way id="396939377" visible="true" version="6" changeset="190715729" timestamp="2026-10-18T21:11:07Z" user="jesszhan0024" uid="23667821">
+   <nd ref="1431885147"/>
+   <nd ref="4184406624"/>
+   <tag k="hgv" v="designated"/>
+   <tag k="hgv:national_network" v="terminal_access"/>
+   <tag k="highway" v="primary"/>
+   <tag k="lanes" v="4"/>
+   <tag k="maxspeed" v="35 mph"/>
+   <tag k="name" v="El Camino Real"/>
+   <tag k="old_ref" v="US 101"/>
+   <tag k="oneway" v="yes"/>
+   <tag k="ref" v="CA 82"/>
+   <tag k="sidewalk" v="right"/>
+   <tag k="source:hgv:national_network" v="Caltrans http://www.dot.ca.gov/hq/traffops/trucks/truckmap/"/>
+   <tag k="surface" v="asphalt"/>
+   <tag k="turn:lanes" v="|||right"/>
+  </way>
+ </modify>
+ <modify>
+  <way id="354918764" visible="true" version="5" changeset="190715729" timestamp="2026-10-18T21:12:00Z" user="jesszhan0024" uid="23667821">
+   <nd ref="3605656395"/>
+   <nd ref="6323776997"/>
+   <nd ref="6323776998"/>
+   <nd ref="4884392990"/>
+   <nd ref="3605656187"/>
+   <nd ref="3605656186"/>
+   <nd ref="6323777002"/>
+   <nd ref="3605656183"/>
+   <tag k="highway" v="service"/>
+   <tag k="service" v="parking_aisle"/>
+   <tag k="surface" v="asphalt"/>
+  </way>
+ </modify>
+ <modify>
+  <way id="563391289" visible="true" version="2" changeset="190715729" timestamp="2026-10-18T21:12:20Z" user="jesszhan0024" uid="23667821">
+   <nd ref="3605656187"/>
+   <nd ref="3605656184"/>
+   <tag k="highway" v="service"/>
+   <tag k="service" v="parking_aisle"/>
+   <tag k="surface" v="asphalt"/>
+  </way>
+ </modify>
+ <modify>
+  <way id="675254095" visible="true" version="3" changeset="190715729" timestamp="2026-10-18T21:12:43Z" user="jesszhan0024" uid="23667821">
+   <nd ref="6323776997"/>
+   <nd ref="12415648685"/>
+   <tag k="highway" v="service"/>
+   <tag k="oneway" v="yes"/>
+   <tag k="surface" v="asphalt"/>
+  </way>
+ </modify>
+ <modify>
+  <way id="1342084630" visible="true" version="2" changeset="190715729" timestamp="2026-10-18T21:13:09Z" user="jesszhan0024" uid="23667821">
+   <nd ref="12415648686"/>
+   <nd ref="6323776995"/>
+   <nd ref="6323776996"/>
+   <tag k="highway" v="service"/>
+   <tag k="oneway" v="yes"/>
+   <tag k="surface" v="concrete"/>
+  </way>
+ </modify>
+ <modify>
+  <way id="675254093" visible="true" version="2" changeset="190715729" timestamp="2026-10-18T21:13:31Z" user="jesszhan0024" uid="23667821">
+   <nd ref="3605656398"/>
+   <nd ref="3605656396"/>
+   <tag k="highway" v="service"/>
+   <tag k="oneway" v="yes"/>
+   <tag k="service" v="parking_aisle"/>
+   <tag k="surface" v="asphalt"/>
+  </way>
+ </modify>
+ <modify>
+  <way id="354918763" visible="true" version="3" changeset="190715729" timestamp="2026-10-18T21:13:37Z" user="jesszhan0024" uid="23667821">
+   <nd ref="3605656399"/>
+   <nd ref="3605656398"/>
+   <tag k="highway" v="service"/>
+   <tag k="oneway" v="yes"/>
+   <tag k="surface" v="asphalt"/>
+  </way>
+ </modify>
+ <modify>
+  <way id="563391297" visible="true" version="4" changeset="190715729" timestamp="2026-10-18T21:18:32Z" user="jesszhan0024" uid="23667821">
+   <nd ref="436864970"/>
+   <nd ref="6319038798"/>
+   <nd ref="5429299870"/>
+   <tag k="highway" v="service"/>
+   <tag k="oneway" v="yes"/>
+   <tag k="surface" v="concrete"/>
+  </way>
+ </modify>
+ <modify>
+  <way id="563084820" visible="true" version="3" changeset="190715729" timestamp="2026-10-18T21:27:29Z" user="jesszhan0024" uid="23667821">
+   <nd ref="3922881623"/>
+   <nd ref="6319038283"/>
+   <nd ref="5427096521"/>
+   <tag k="highway" v="service"/>
+   <tag k="oneway" v="yes"/>
+   <tag k="surface" v="concrete"/>
+  </way>
+ </modify>
+ <modify>
+  <way id="563084818" visible="true" version="3" changeset="190715729" timestamp="2026-10-18T21:27:44Z" user="jesszhan0024" uid="23667821">
+   <nd ref="3922881624"/>
+   <nd ref="6319038284"/>
+   <nd ref="5427095620"/>
+   <tag k="highway" v="service"/>
+   <tag k="surface" v="concrete"/>
+  </way>
+ </modify>
+ <modify>
+  <way id="389124440" visible="true" version="5" changeset="190715729" timestamp="2026-10-18T21:27:51Z" user="jesszhan0024" uid="23667821">
+   <nd ref="5427096521"/>
+   <nd ref="4309860491"/>
+   <tag k="highway" v="service"/>
+   <tag k="oneway" v="yes"/>
+   <tag k="service" v="parking_aisle"/>
+   <tag k="surface" v="asphalt"/>
+  </way>
+ </modify>
+ <modify>
+  <way id="8942069" visible="true" version="25" changeset="190715729" timestamp="2026-10-18T21:30:48Z" user="jesszhan0024" uid="23667821">
+   <nd ref="297164236"/>
+   <nd ref="262936216"/>
+   <nd ref="4204722310"/>
+   <nd ref="6319071121"/>
+   <nd ref="418085596"/>
+   <tag k="highway" v="residential"/>
+   <tag k="name" v="La Cruz Avenue"/>
+   <tag k="parking:lane:both" v="parallel"/>
+   <tag k="sidewalk" v="both"/>
+   <tag k="surface" v="asphalt"/>
+   <tag k="tiger:cfcc" v="A41"/>
+   <tag k="tiger:county" v="San Mateo, CA"/>
+   <tag k="tiger:name_base" v="La Cruz"/>
+   <tag k="tiger:name_type" v="Ave"/>
+  </way>
+ </modify>
+ <modify>
+  <way id="780347915" visible="true" version="2" changeset="190715729" timestamp="2026-10-18T21:49:36Z" user="jesszhan0024" uid="23667821">
+   <nd ref="297164262"/>
+   <nd ref="420520167"/>
+   <tag k="highway" v="service"/>
+   <tag k="surface" v="asphalt"/>
+  </way>
+ </modify>
+</osmChange>

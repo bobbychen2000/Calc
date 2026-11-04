@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osmChange version="0.6" generator="openstreetmap-cgimap 2.1.1 (49963 spike-08.openstreetmap.org)" copyright="OpenStreetMap and contributors" attribution="http://www.openstreetmap.org/copyright" license="http://opendatacommons.org/licenses/odbl/1-0/">
+ <create>
+  <node id="14316014739" visible="true" version="1" changeset="190973153" timestamp="2026-10-24T14:08:52Z" user="Djroatan" uid="6650391" lat="37.6016763" lon="-122.4008267">
+   <tag k="direction" v="backward"/>
+   <tag k="highway" v="stop"/>
+  </node>
+ </create>
+ <create>
+  <node id="14316014740" visible="true" version="1" changeset="190973153" timestamp="2026-10-24T14:08:52Z" user="Djroatan" uid="6650391" lat="37.6014782" lon="-122.4008042">
+   <tag k="direction" v="forward"/>
+   <tag k="highway" v="stop"/>
+  </node>
+ </create>
+ <create>
+  <node id="14316014741" visible="true" version="1" changeset="190973153" timestamp="2026-10-24T14:08:52Z" user="Djroatan" uid="6650391" lat="37.6016712" lon="-122.4006878">
+   <tag k="direction" v="forward"/>
+   <tag k="highway" v="stop"/>
+  </node>
+ </create>
+ <modify>
+  <way id="520286856" visible="true" version="4" changeset="190973153" timestamp="2026-10-24T14:08:52Z" user="Djroatan" uid="6650391">
+   <nd ref="418089340"/>
+   <nd ref="65483585"/>
+   <nd ref="1430715353"/>
+   <nd ref="1430715286"/>
+   <nd ref="418089067"/>
+   <nd ref="1430715350"/>
+   <nd ref="1430715336"/>
+   <nd ref="1430715351"/>
+   <nd ref="65483582"/>
+   <nd ref="14316014740"/>
+   <nd ref="65471477"/>
+   <nd ref="65441690"/>
+   <nd ref="583444246"/>
+   <nd ref="1430715327"/>
+   <nd ref="1430715346"/>
+   <nd ref="65446969"/>
+   <tag k="cycleway:right" v="shared_lane"/>
+   <tag k="highway" v="residential"/>
+   <tag k="lanes" v="2"/>
+   <tag k="maxspeed" v="35 mph"/>
+   <tag k="name" v="Richmond Drive"/>
+   <tag k="oneway" v="yes"/>
+   <tag k="surface" v="asphalt"/>
+   <tag k="tiger:cfcc" v="A41"/>
+   <tag k="tiger:county" v="San Mateo, CA"/>
+   <tag k="tiger:name_base" v="Richmond"/>
+   <tag k="tiger:name_type" v="Dr"/>
+  </way>
+ </modify>
+ <modify>
+  <way id="45842182" visible="true" version="14" changeset="190973153" timestamp="2026-10-24T14:08:52Z" user="Djroatan" uid="6650391">
+   <nd ref="65446969"/>
+   <nd ref="1430715289"/>
+   <nd ref="583444225"/>
+   <nd ref="583444227"/>
+   <nd ref="14316014741"/>
+   <nd ref="583444232"/>
+   <nd ref="583444233"/>
+   <nd ref="1430715345"/>
+   <nd ref="1430715321"/>
+   <nd ref="1430715369"/>
+   <nd ref="583444234"/>
+   <tag k="cycleway:right" v="lane"/>
+   <tag k="highway" v="residential"/>
+   <tag k="lanes" v="2"/>
+   <tag k="maxspeed" v="35 mph"/>
+   <tag k="name" v="Richmond Drive"/>
+   <tag k="oneway" v="yes"/>
+   <tag k="surface" v="asphalt"/>
+   <tag k="tiger:cfcc" v="A41"/>
+   <tag k="tiger:county" v="San Mateo, CA"/>
+   <tag k="tiger:name_base" v="Richmond"/>
+   <tag k="tiger:name_type" v="Dr"/>
+  </way>
+ </modify>
+ <modify>
+  <way id="8935263" visible="true" version="20" changeset="190973153" timestamp="2026-10-24T14:08:52Z" user="Djroatan" uid="6650391">
+   <nd ref="65471477"/>
+   <nd ref="583444232"/>
+   <nd ref="14316014739"/>
+   <nd ref="65429167"/>
+   <nd ref="7490877554"/>
+   <nd ref="65461439"/>
+   <nd ref="7490877555"/>
+   <nd ref="360975202"/>
+   <nd ref="1431884839"/>
+   <nd ref="360975203"/>
+   <nd ref="1431885129"/>
+   <nd ref="65407838"/>
+   <nd ref="1431884947"/>
+   <nd ref="360974208"/>
+   <nd ref="1431884868"/>
+   <nd ref="1430715373"/>
+   <nd ref="5426966354"/>
+   <nd ref="65435350"/>
+   <nd ref="5426966360"/>
+   <nd ref="262934243"/>
+   <nd ref="1430715342"/>
+   <nd ref="1430715365"/>
+   <nd ref="1430715367"/>
+   <nd ref="1430715290"/>
+   <nd ref="65471478"/>
+   <tag k="highway" v="residential"/>
+   <tag k="lanes" v="2"/>
+   <tag k="maxspeed" v="25 mph"/>
+   <tag k="name" v="Laurel Avenue"/>
+   <tag k="oneway" v="no"/>
+   <tag k="surface" v="asphalt"/>
+   <tag k="tiger:cfcc" v="A41"/>
+   <tag k="tiger:county" v="San Mateo, CA"/>
+   <tag k="tiger:name_base" v="Laurel"/>
+   <tag k="tiger:name_type" v="Ave"/>
+  </way>
+ </modify>
+</osmChange>

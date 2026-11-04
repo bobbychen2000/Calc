@@ -1,0 +1,322 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osmChange version="0.6" generator="openstreetmap-cgimap 2.1.1 (3857748 spike-07.openstreetmap.org)" copyright="OpenStreetMap and contributors" attribution="http://www.openstreetmap.org/copyright" license="http://opendatacommons.org/licenses/odbl/1-0/">
+ <modify>
+  <node id="14279651815" visible="true" version="2" changeset="190979760" timestamp="2026-10-24T16:43:02Z" user="Omnific" uid="1408522" lat="37.7896467" lon="-122.4342074">
+   <tag k="addr:city" v="San Francisco"/>
+   <tag k="addr:housenumber" v="2193"/>
+   <tag k="addr:postcode" v="94115"/>
+   <tag k="addr:state" v="CA"/>
+   <tag k="addr:street" v="Fillmore Street"/>
+   <tag k="name" v="Breathe Design Studio"/>
+   <tag k="office" v="interior_design"/>
+   <tag k="opening_hours" v="Mo-Su 06:00-23:00"/>
+   <tag k="phone" v="+1-832-623-3775"/>
+   <tag k="website" v="https://www.breathedesignstudio.com/san-francisco-modern-interior-designers"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="14284319032" visible="true" version="2" changeset="190979760" timestamp="2026-10-24T16:43:02Z" user="Omnific" uid="1408522" lat="33.8347964" lon="-118.3508471">
+   <tag k="addr:city" v="Torrance"/>
+   <tag k="addr:housenumber" v="21540"/>
+   <tag k="addr:postcode" v="90503"/>
+   <tag k="addr:state" v="CA"/>
+   <tag k="addr:street" v="Hawthorne Boulevard"/>
+   <tag k="addr:unit" v="520B"/>
+   <tag k="amenity" v="ice_cream"/>
+   <tag k="brand" v="Bacio di Latte"/>
+   <tag k="brand:wikidata" v="Q110249379"/>
+   <tag k="coffee" v="yes"/>
+   <tag k="diet:vegan" v="yes"/>
+   <tag k="name" v="Bacio di Latte"/>
+   <tag k="opening_hours" v="Mo-Th 10:00-21:30; Fr-Sa 10:00-22:00; Su 10:00-21:00"/>
+   <tag k="website" v="https://baciodilatte.us/"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="14288503569" visible="true" version="2" changeset="190979760" timestamp="2026-10-24T16:43:02Z" user="Omnific" uid="1408522" lat="37.8588274" lon="-122.2890901">
+   <tag k="addr:city" v="Berkeley"/>
+   <tag k="addr:housenumber" v="2621"/>
+   <tag k="addr:postcode" v="94702"/>
+   <tag k="addr:state" v="CA"/>
+   <tag k="addr:street" v="Tenth Street"/>
+   <tag k="amenity" v="cafe"/>
+   <tag k="cuisine" v="coffee_shop"/>
+   <tag k="indoor_seating" v="yes"/>
+   <tag k="name" v="Hydra Health Coffee"/>
+   <tag k="opening_hours" v="Mo-Fr 07:30-15:30"/>
+   <tag k="outdoor_seating" v="no"/>
+   <tag k="website" v="https://coffee.hydrahealth.co/?location=LWAXN3FW0PR4V"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="14298315716" visible="true" version="2" changeset="190979760" timestamp="2026-10-24T16:43:02Z" user="Omnific" uid="1408522" lat="38.3310918" lon="-122.7101178">
+   <tag k="addr:city" v="Cotati"/>
+   <tag k="addr:housenumber" v="7764"/>
+   <tag k="addr:postcode" v="94931"/>
+   <tag k="addr:state" v="CA"/>
+   <tag k="addr:street" v="Old Redwood Highway"/>
+   <tag k="amenity" v="cafe"/>
+   <tag k="cuisine" v="coffee_shop"/>
+   <tag k="name" v="Peet's Coffee"/>
+   <tag k="not:brand:wikidata" v="Q1094101"/>
+   <tag k="opening_hours" v="05:00-18:30"/>
+   <tag k="outdoor_seating" v="yes"/>
+   <tag k="phone" v="+17077967080"/>
+   <tag k="website" v="http://order.peets.com/"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="14305040127" visible="true" version="2" changeset="190979760" timestamp="2026-10-24T16:43:02Z" user="Omnific" uid="1408522" lat="37.2532332" lon="-121.8050004">
+   <tag k="addr:city" v="San Jose"/>
+   <tag k="addr:housenumber" v="88"/>
+   <tag k="addr:postcode" v="95123"/>
+   <tag k="addr:state" v="CA"/>
+   <tag k="addr:street" v="Blossom Hill Road"/>
+   <tag k="brand" v="Public Storage"/>
+   <tag k="brand:wikidata" v="Q1156045"/>
+   <tag k="name" v="Public Storage"/>
+   <tag k="opening_hours" v="Mo-Fr 06:00-18:00; Sa-Su 06:00-17:00"/>
+   <tag k="phone" v="+1-408-620-4516"/>
+   <tag k="shop" v="storage_rental"/>
+   <tag k="website" v="https://www.publicstorage.com"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="14305053383" visible="true" version="2" changeset="190979760" timestamp="2026-10-24T16:43:02Z" user="Omnific" uid="1408522" lat="37.2552043" lon="-121.8006068">
+   <tag k="addr:city" v="San Jose"/>
+   <tag k="addr:housenumber" v="5504"/>
+   <tag k="addr:postcode" v="95138"/>
+   <tag k="addr:state" v="CA"/>
+   <tag k="addr:street" v="Monterey Road"/>
+   <tag k="amenity" v="clinic"/>
+   <tag k="healthcare" v="clinic"/>
+   <tag k="name" v="Bay Area Community Health Clinic - Monterey Clinic"/>
+   <tag k="opening_hours" v="Mo 08:00-17:00; Tu 10:00-19:00; We-Fr 08:00-17:00"/>
+   <tag k="phone" v="+1-408-729-9700"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="14305067601" visible="true" version="2" changeset="190979760" timestamp="2026-10-24T16:43:02Z" user="Omnific" uid="1408522" lat="37.2572251" lon="-121.8041135">
+   <tag k="addr:city" v="San Jose"/>
+   <tag k="addr:housenumber" v="5400"/>
+   <tag k="addr:postcode" v="95111"/>
+   <tag k="addr:state" v="CA"/>
+   <tag k="addr:street" v="Calle Alondra"/>
+   <tag k="amenity" v="restaurant"/>
+   <tag k="cuisine" v="chinese"/>
+   <tag k="name" v="Ocean Delight"/>
+   <tag k="opening_hours" v="Mo-Fr 10:30-20:30; Sa-Su 09:00-20:30"/>
+   <tag k="phone" v="+1-408-281-3838"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="14305776410" visible="true" version="2" changeset="190979760" timestamp="2026-10-24T16:43:02Z" user="Omnific" uid="1408522" lat="33.8759455" lon="-118.3955622">
+   <tag k="Address" v="400 S Sepulveda Blvd, Manhattan Beach, CA 90266, USA"/>
+   <tag k="amenity" v="clinic"/>
+   <tag k="Description" v="Orthopedic problems extend beyond professional athletes and can significantly impact anyone's quality of life."/>
+   <tag k="healthcare" v="clinic"/>
+   <tag k="name" v="Mellano Orthopedics"/>
+   <tag k="opening_hours" v="Mo-Fr 08:00-17:00"/>
+   <tag k="operator" v="Chris Mellano"/>
+   <tag k="Payments" v="All Major Credit/debit Cards, Cash, Check, Insurance"/>
+   <tag k="Phone" v="310-546-3461"/>
+   <tag k="Website" v="https://www.mellanoorthopedics.com"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="14307926232" visible="true" version="2" changeset="190979760" timestamp="2026-10-24T16:43:02Z" user="Omnific" uid="1408522" lat="33.6934029" lon="-117.9922842">
+   <tag k="addr:city" v="Huntington Beach"/>
+   <tag k="addr:housenumber" v="18589"/>
+   <tag k="addr:postcode" v="92648"/>
+   <tag k="addr:state" v="CA"/>
+   <tag k="addr:street" v="Main Street"/>
+   <tag k="branch" v="Five Points Plaza"/>
+   <tag k="brand" v="Hot Topic"/>
+   <tag k="clothes" v="fashion"/>
+   <tag k="name" v="Hot Topic"/>
+   <tag k="opening_hours" v="Mo-Sa 11:00-20:00, Su 11:00-18:00"/>
+   <tag k="shop" v="clothes"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="14309347581" visible="true" version="2" changeset="190979760" timestamp="2026-10-24T16:43:02Z" user="Omnific" uid="1408522" lat="37.3183821" lon="-121.8242297">
+   <tag k="addr:city" v="San Jose"/>
+   <tag k="addr:housenumber" v="1669"/>
+   <tag k="addr:postcode" v="95121"/>
+   <tag k="addr:state" v="CA"/>
+   <tag k="addr:street" v="Flanigan Drive"/>
+   <tag k="name" v="40Hrs"/>
+   <tag k="office" v="company"/>
+   <tag k="opening_hours" v="00:00-24:00 open"/>
+   <tag k="phone" v="+14086884608"/>
+   <tag k="website" v="http://40hrsbrokers.us/"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="14282212965" visible="true" version="3" changeset="190979760" timestamp="2026-10-24T16:43:02Z" user="Omnific" uid="1408522" lat="33.7021144" lon="-116.7116508">
+   <tag k="addr:city" v="Mountain Center"/>
+   <tag k="addr:housenumber" v="54250"/>
+   <tag k="addr:postcode" v="92561"/>
+   <tag k="addr:state" v="CA"/>
+   <tag k="addr:street" v="Keen Camp Road"/>
+   <tag k="amenity" v="animal_shelter"/>
+   <tag k="animal_shelter" v="dog;cat;horse"/>
+   <tag k="email" v="info@living-free.org"/>
+   <tag k="name" v="Living Free"/>
+   <tag k="opening_hours" v="Tu-Sa 10:00-15:00"/>
+   <tag k="phone" v="+1-951-659-4687"/>
+   <tag k="website" v="https://www.living-free.org"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="14300999649" visible="true" version="3" changeset="190979760" timestamp="2026-10-24T16:43:02Z" user="Omnific" uid="1408522" lat="33.7585377" lon="-117.9564870">
+   <tag k="addr:city" v="Garden Grove"/>
+   <tag k="addr:housenumber" v="9892"/>
+   <tag k="addr:postcode" v="92844"/>
+   <tag k="addr:state" v="CA"/>
+   <tag k="addr:street" v="Westminster Avenue"/>
+   <tag k="addr:unit" v="315"/>
+   <tag k="amenity" v="restaurant"/>
+   <tag k="cuisine" v="vietnamese"/>
+   <tag k="delivery" v="yes"/>
+   <tag k="indoor_seating" v="yes"/>
+   <tag k="name" v="Phở Lovers 2"/>
+   <tag k="opening_hours" v="Mo-Su 09:00-21:00"/>
+   <tag k="outdoor_seating" v="no"/>
+   <tag k="payment:cash" v="yes"/>
+   <tag k="payment:contactless" v="yes"/>
+   <tag k="payment:credit_cards" v="yes"/>
+   <tag k="payment:debit_cards" v="yes"/>
+   <tag k="phone" v="+1-714-591-5199"/>
+   <tag k="reservation" v="yes"/>
+   <tag k="takeaway" v="yes"/>
+   <tag k="toilets" v="yes"/>
+   <tag k="website" v="https://pholovers.restaurants-us.com/"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="14301323753" visible="true" version="3" changeset="190979760" timestamp="2026-10-24T16:43:02Z" user="Omnific" uid="1408522" lat="33.7481765" lon="-117.8684906">
+   <tag k="addr:city" v="Santa Ana"/>
+   <tag k="addr:housenumber" v="117"/>
+   <tag k="addr:postcode" v="92701"/>
+   <tag k="addr:state" v="CA"/>
+   <tag k="addr:street" v="West 4th Street"/>
+   <tag k="addr:unit" v="101,102"/>
+   <tag k="amenity" v="restaurant"/>
+   <tag k="cuisine" v="pizza"/>
+   <tag k="indoor_seating" v="yes"/>
+   <tag k="level" v="1"/>
+   <tag k="name" v="The Pizza Press"/>
+   <tag k="opening_hours" v="Mo-Th 11:00-21:00; Fr-Su 11:00-23:00"/>
+   <tag k="outdoor_seating" v="no"/>
+   <tag k="phone" v="+1-714-760-4425"/>
+   <tag k="website" v="https://thepizzapress.com/location/santa-ana-ca/"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="14305177051" visible="true" version="3" changeset="190979760" timestamp="2026-10-24T16:43:02Z" user="Omnific" uid="1408522" lat="33.5631073" lon="-117.6717567">
+   <tag k="addr:city" v="Mission Viejo"/>
+   <tag k="addr:country" v="USA"/>
+   <tag k="addr:postcode" v="92691"/>
+   <tag k="addr:state" v="CA"/>
+   <tag k="addr:street" v="27529 Puerta Real"/>
+   <tag k="description" v="The effects of our environment, aging, and busy lives impact the way we feel and truly see ourselves. At soul&amp;beautyMEDx we offer medical-grade skincare, aesthetics and wellness treatments."/>
+   <tag k="name" v="soul&amp;beautyMEDx"/>
+   <tag k="opening_hours" v="Mo-Th 10:00-19:00"/>
+   <tag k="phone" v="+1-949-481-8881"/>
+   <tag k="website" v="https://soulandbeautymedx.com/"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="14305343545" visible="true" version="3" changeset="190979760" timestamp="2026-10-24T16:43:02Z" user="Omnific" uid="1408522" lat="37.3374429" lon="-121.8814395">
+   <tag k="club" v="engineering"/>
+   <tag k="name" v="SJSU Robotics Club"/>
+   <tag k="opening_hours" v="Sa 13:30-16:00"/>
+   <tag k="short_name" v="SJSU Robotics"/>
+   <tag k="website" v="https://sjsurobotics.org"/>
+  </node>
+ </modify>
+ <modify>
+  <way id="1231255004" visible="true" version="3" changeset="190979760" timestamp="2026-10-24T16:43:02Z" user="Omnific" uid="1408522">
+   <nd ref="11419025235"/>
+   <nd ref="11419025236"/>
+   <nd ref="11419025237"/>
+   <nd ref="11419025238"/>
+   <nd ref="11419025269"/>
+   <nd ref="11419025239"/>
+   <nd ref="11419025240"/>
+   <nd ref="11419025241"/>
+   <nd ref="11419025242"/>
+   <nd ref="11419025243"/>
+   <nd ref="11419025244"/>
+   <nd ref="11419025235"/>
+   <tag k="addr:city" v="Rohnert Park"/>
+   <tag k="addr:housenumber" v="6258"/>
+   <tag k="addr:postcode" v="94928"/>
+   <tag k="addr:state" v="CA"/>
+   <tag k="addr:street" v="Redwood Drive"/>
+   <tag k="amenity" v="car_wash"/>
+   <tag k="building" v="yes"/>
+   <tag k="name" v="LUV Car Wash"/>
+   <tag k="opening_hours" v="Mo-Sa 08:00-19:00; Su 08:00-18:00"/>
+  </way>
+ </modify>
+ <modify>
+  <way id="1568399810" visible="true" version="3" changeset="190979760" timestamp="2026-10-24T16:43:02Z" user="Omnific" uid="1408522">
+   <nd ref="14285479821"/>
+   <nd ref="14285479822"/>
+   <nd ref="14285479823"/>
+   <nd ref="14285479824"/>
+   <nd ref="14285479821"/>
+   <tag k="addr:city" v="Penn Valley"/>
+   <tag k="addr:housenumber" v="17652"/>
+   <tag k="addr:postcode" v="95946"/>
+   <tag k="addr:state" v="CA"/>
+   <tag k="addr:street" v="Penn Valley Drive"/>
+   <tag k="brand" v="Dollar General"/>
+   <tag k="brand:wikidata" v="Q145168"/>
+   <tag k="building" v="yes"/>
+   <tag k="name" v="Dollar General"/>
+   <tag k="opening_hours" v="Mo-Su 08:00-22:00"/>
+   <tag k="phone" v="+1-530-648-0900"/>
+   <tag k="shop" v="variety_store"/>
+   <tag k="website" v="https://www.dollargeneral.com/store-directory/ca/penn-valley/16348"/>
+  </way>
+ </modify>
+ <modify>
+  <node id="14291047270" visible="true" version="4" changeset="190979760" timestamp="2026-10-24T16:43:02Z" user="Omnific" uid="1408522" lat="38.5106197" lon="-122.7899154">
+   <tag k="addr:city" v="Santa Rosa"/>
+   <tag k="addr:housenumber" v="1402"/>
+   <tag k="addr:postcode" v="95403"/>
+   <tag k="addr:state" v="CA"/>
+   <tag k="addr:street" v="Airport Boulevard"/>
+   <tag k="name" v="AEL - Advanced Extraction Labs"/>
+   <tag k="office" v="company"/>
+   <tag k="opening_hours" v="Mo-Fr 08:00-18:00"/>
+   <tag k="phone" v="+1-888-502-6695"/>
+   <tag k="website" v="http://advancedextractionlabs.com/"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="11696451625" visible="true" version="5" changeset="190979760" timestamp="2026-10-24T16:43:02Z" user="Omnific" uid="1408522" lat="37.4887843" lon="-122.2385101">
+   <tag k="check_date" v="2026-10-18"/>
+   <tag k="name" v="Ronbow"/>
+   <tag k="opening_hours" v="Mo-Th,Sa 09:30-18:00; Fr 10:30-17:30; Su &quot;by appointment&quot;"/>
+   <tag k="shop" v="kitchen"/>
+   <tag k="wheelchair" v="no"/>
+  </node>
+ </modify>
+ <modify>
+  <node id="4362241792" visible="true" version="7" changeset="190979760" timestamp="2026-10-24T16:43:02Z" user="Omnific" uid="1408522" lat="37.7610750" lon="-122.4304197">
+   <tag k="addr:housenumber" v="3897"/>
+   <tag k="addr:postcode" v="94114"/>
+   <tag k="addr:street" v="18th Street"/>
+   <tag k="check_date" v="2026-10-20"/>
+   <tag k="name" v="Imagiknit"/>
+   <tag k="opening_hours" v="Fr-We 11:00-17:00; Th 11:00-19:00"/>
+   <tag k="phone" v="+1-415-621-6642"/>
+   <tag k="shop" v="wool"/>
+   <tag k="website" v="https://imagiknit.com/"/>
+  </node>
+ </modify>
+</osmChange>

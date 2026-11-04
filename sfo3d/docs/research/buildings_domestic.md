@@ -600,3 +600,50 @@ python3 tools/buildings/dom_naip_epochs.py --years 2020,2022,2024   # ~2 min
 python3 tools/buildings/dom_verify.py                               # ~10 s -> tools/buildings/dom_verify.json + out/buildings/domestic/verify/
 python3 tools/buildings/dom_verify.py --apply                       # -> spec_domestic.json records
 ```
+
+## Drawing round (2026-11-04): roof features measured on NAIP 2024 for BD-01 / BD-02
+
+All imaged (relief not removed unless stated); world frame; ± 1 m.
+- **BA-D head drums** [obs]: two roof circles, centres (−535.3, 97.8) and (−509.5, 187.6), radius 9.6 m (D ~19 m). Each
+  has a dark crescent on its west side ~2.5–3 m wide (the drum wall seen obliquely; sun at 187°, so little shadow):
+  ~4–5 m above the adjacent roof at the head's lean 0.58 m/m [obs, low]. BD-01 draws them moved back by the relief of a
+  ~13 m top [inf]; BD-02 1b shows them projected on the head section (top ~13 m [inf]).
+- **BA-D head lines** [obs]: a bright angular roof plane bounded by dark lines (−540, 110)–(−559, 150), (−554, 137)–
+  (−527, 128), (−540, 110)–(−505, 118) (linear skylights / plane edges), drawn less the 8.5 m roof relief. The T2
+  "floating angular planes" of Airport Improvement 2011 are interior ceiling planes (section 4), not this roof.
+- **BA-F hub** [obs]: the SFO Museum outline's hub edges fit a regular octagon (centre (−1069.36, −125.93), apothem
+  37.10 m = 74.2 m across the flats, edges parallel to the s / t grid and the diagonals; residuals 0.01 m). NAIP shows a
+  pair of concentric octagonal rings (lantern / skylight) 19.4 m and 13.4 m across (luminance profiles along 4 axes),
+  imaged centre (−1061.3, −125.7), 8.1 m east of the hub centre. If concentric, that is ~24 m of relief height at the
+  0.33 m/m lean [inf, unverified]; the hub and lantern heights are unknown.
+- **BA-F NW arm** [obs, low contrast]: a central roof monitor / light strip ~8 m wide (imaged d −6.5 to +1.5 m from the
+  line (−1290, −243)–(−1100, −158), heading 114°), height unknown.
+- **T3W field wall**: the window stack 10 ft + 2 ft band + 10 ft is drawn from the international level (34 ft) to the
+  top of the parapet (56 ft), the verified reading of the printed chain.
+
+## Drawing round 2 (2026-11-04)
+
+**Roof edges vs the level-2 outlines** (shapely, `draw_data.dom_true_edges` against `data/sfo_airport.json`, + =
+outside): BA-B ESE +2.25 / +2.26, WNW −1.69 m; BA-D ESE +2.40, WNW −1.36 m; BA-F ESE +0.01 / −0.02 (on the outline),
+WNW −0.96 / −1.31 m. The spec's BA-F note ("ESE 1.8 m outside") used n_offset_from_line 1.83, the shift from the imaged
+face; corrected in `spec_domestic.json` (baf.roof_edges.corrected).
+
+**BA-B roof features** (NAIP 2024, by eye on 10-m-grid crops, ±3 m; `tools/buildings/dom_bab_roof.py` →
+`dom_bab_roof.json`, as imaged): three planted sunken roof wells on the WNW side (imaged x −845..−826 / z 627..678,
+x −885..−844 / z 686..765, x −926..−897 / z 772..812), two bridges (z ~667–687 and ~754–774), two skylight grids
+(~(−815, 703), ~(−870, 810)) and three PV row fields (north, a strip along the ESE side, the south end). BD-01 draws them
+moved back by the 13.1 m outer-roof relief (5.1 m W) [inf]. An automatic dark-pixel segmentation was tried and rejected
+(shadows and jet-bridge roofs read as dark as the PV rows on this raster).
+
+**BA-E section** (photo a1, Pi.1415926535, Sept 2025, CC BY-SA 4.0; pier identified by position / airline only): a raised
+PV-covered centre roof with a knife-thin tapered edge overhanging a recessed full-height glass end wall / clerestory,
+lower flat roofs on both flanks — the published "tapered edges overhanging clerestory glazing". Step ~3 m, flanks ~10 %
+of the width each, overhang ~1.5 m [inf, low].
+
+**Landside faces** (BD-03). T1 Center (photo d1, Famartin 2025-08-12, CC BY-SA 4.0, taken from the garage): two-tier
+fritted green-glass curtain wall with irregular vertical mullions, continuous glass canopy over the curb, clear glass
+below, "Harvey Milk Terminal / Terminal 1" lettering in the upper tier, PV along the roof edge. Ratios scaled by a person
+at the wall (~45 px ≈ 1.7 m): canopy soffit ~3.5–4.5 m, wall head ~12–14 m above the curb, the tier transom 44 % of the
+way up [inf, low]. Face lengths from the SFO Museum outline edges facing the central garage: 94.1 m + 43.6 m set-back +
+93.8 m (T1), 47.7 m (T2) [obs]. T2: only the published description (light metal-panel box, "Terminal 2" sign, glass
+entry wall); every dimension unknown.

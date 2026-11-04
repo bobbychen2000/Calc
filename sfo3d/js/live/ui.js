@@ -267,14 +267,19 @@ function headline(tr, sfo) {
 // departure) is authoritative for SFO flights; the VRS standing-data route (adsb.lol mirror) can be stale or name a
 // multi-leg rotation (review round 2: UAL1375 shown 'ONT → SFO → ORD' while SFO had it departing to PHX; DAL977
 // 'BOS → SFO → BOS'). When the two disagree, SFO's leg is shown and the VRS route is flagged.
+// (a same-number turn -- AA1253 ORD -> SFO arrives, AA1253 SFO -> ORD departs from the same stand -- is not a conflict: the
+// VRS leg is flagged only when it is NEITHER of SFO's legs for this aircraft's flights today; review 4 Nov, AAL1253 at B26)
+const legOfRec = (f) => f && f.other && f.other.iata ? (f.kind === 'A' ? [f.other.iata, 'SFO'] : f.kind === 'D' ? ['SFO', f.other.iata] : null) : null;
 function legOf(tr, sfo) {
-  const sf = sfo && sfo.flight; const sfoLeg = sf && sf.other && sf.other.iata ? (sf.kind === 'A' ? [sf.other.iata, 'SFO'] : sf.kind === 'D' ? ['SFO', sf.other.iata] : null) : null;
+  const sf = sfo && sfo.flight; const sfoLeg = legOfRec(sf);
+  const sfoLegs = sfo ? [legOfRec(sfo.arr), legOfRec(sfo.dep), sfoLeg].filter(Boolean).map(l => l.join('-')) : [];
   const r = tr.route && tr.route.codes && tr.route.plausible ? tr.route : null; let leg = null;
   if (r) { const c = r.codes, i = c.indexOf('SFO'); const dir = sfoLeg ? (sfoLeg[1] === 'SFO' ? 'arr' : 'dep') : tr.dirSFO;
     if (i < 0) leg = c.slice(); else if (dir === 'arr' && i > 0) leg = [c[i - 1], 'SFO']; else if (dir === 'dep' && i < c.length - 1) leg = ['SFO', c[i + 1]];
     else leg = c.slice(); }   // (direction unknown: the whole route)
-  const conflict = !!(sfoLeg && r && (!leg || leg.join('-') !== sfoLeg.join('-')));
-  return { sfoLeg, leg: conflict ? sfoLeg : (leg || sfoLeg), per: conflict || (!leg && !!sfoLeg) ? 'sfo' : leg ? 'vrs' : null, conflict, r };
+  const differs = !!(sfoLeg && r && (!leg || leg.join('-') !== sfoLeg.join('-')));
+  const conflict = differs && !(leg && sfoLegs.includes(leg.join('-')));
+  return { sfoLeg, leg: differs ? sfoLeg : (leg || sfoLeg), per: differs || (!leg && !!sfoLeg) ? 'sfo' : leg ? 'vrs' : null, conflict, r };
 }
 function routeRow(tr, sfo) {
   const L = legOf(tr, sfo); if (!L.leg) return '<span class="dim">Route not available</span>';

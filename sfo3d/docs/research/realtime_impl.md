@@ -620,3 +620,91 @@ The display stays 3.0 s behind real time on the public feeds (median report age;
 - **Display delay** stays adaptive 1–3 s (settles at 3 s on the public feeds): step 2 measured the fixed 1.5 s variant
   with 7.7× more ground jerk exceedances and worse position errors; lower latency needs a feeder account or own receiver
   (realtime_feeds.md §3).
+
+# Step 6 — review of 4 Nov 2026 (new recording 17:43–18:33Z), fixes
+
+Evidence: `tools/live/invariants.mjs` at 10 Hz on the relay-merge replay of `refs/cache/rec` (4 Nov 17:43–18:33Z, 2,004
+events, checked 17:48:04–18:33:28Z = 0.76 h, display delay 2.94 s), `tools/live/card_replay.mjs` for 78 SFO ground
+aircraft, flysfo snapshot 18:01:42Z. "Before" = the code the reviewer ran (commit 92de1e2), with the same working-tree
+`js/live/gates.js` and data as "after", so only this step's changes differ. Requests to other owners:
+`docs/requests/realtime_closeout.md`.
+
+## 1. What changed
+
+**Push-back from one GNSS jump (critical; UAL1180 B77W into G8).** Raw: entering G8 nose-first at 1.4–7.8 kt, true
+heading 28.1°; at 17:50:51.8 → 53.2Z one fix 12.3 m backward in 1.4 s at a reported 1.9 kt (the two fixes before it had
+drifted 7–8 m ahead of the track).
+- `report()`: a chord the reported speeds cannot explain (> 1.6 gs dt + 3 m, the `motionConfirmed()` test) never sets
+  the push-back flag; a track that is MOVING forward needs a second report against the nose (`tr._pushCand`). Stopped
+  tracks keep `motionConfirmed()`. 6 jumps rejected, 19 candidates on this recording.
+- `sampleReps()`: across such a jump the reported velocities are kept (the jump's own 8.8 m/s backward made the body at
+  the stop point start a U-turn).
+- `target()`: an interpolated target creeping into a stand (< 4 m/s) is held at the stop point like a dead-reckoned
+  one, as a braking stop target, and a body already at the stop point waits there for the data; `docking()` keeps its
+  dock up to 20 m past the stop (a past-stop fix used to drop the dock, and with it the clamp). At a gate a body that came
+  to rest ≤ 2 m past its stop pose along its axis stays there (no backing up under own power; 21 cases).
+- STALE path: a silent aircraft stopped inside a stand's limits after a push is parked there; a departure stopped at its
+  push end (≤ 30 m) is kept instead of dropped.
+- `GroundPhysics.valid()`: fuselage sides (0.9 R, every ≤ 3 m) tested against buildings, and the jet bridges at rest
+  (`gates.js solids(g, b, 0)` → `ground.js bridgeGrid`, wired in `app.js` and `invariants.mjs`) against the fuselage.
+
+**Silent docks (major).** The drive's speed profile was never applied (`SP.v` undefined: the body ran at the 5 m/s
+cap). Now: a profile from the body's speed to 2 m/s, and 0.8 m/s over the last 20 m (observed: JAL2 84 m in 41 s into
+A1, last 15 m in 19 s; AAL76 25 m in 34 s on B19; SKW3497 4.2 → 0.5 kt), the path heading as the target heading. A
+STOPPED aircraft is docked only when it stopped on that stand's lead-in (`onLeadIn`); SKW3497 waiting 72 m from B7, 55°
+off its axis, is left to the data. When the data resumes on the way into the same stand (`intoStand`) the stand is kept
+(`silentCont`): no release, no fade back (`reacquire` exception), no second in-block (`occupy` also suppresses a repeat
+in-block at the same stand without an off-block in between). The 75 s STALE path docks through `silentDock()` (the drive)
+instead of placing the body at the stand pose.
+
+**'Push-back complete' (major).** Shown only within max(40 m, 1 L) of where the push ended (`tr.pushEnd`); a stopped
+departure elsewhere is 'holding' (runway sheet 'Holding short', ATC Ground / Ramp follow `stats.js` / `atc.js` unchanged).
+
+**Off-blocks (minor).** No forward off-block for an arrival in progress (landed and not in-blocked, or SFO's own arrival
+record with a block-in < 10 min ago or ahead: `arrivalPending`, UAL743 into E6 — needs the full `/api/gates` payload the
+app gets; the reduced `gates.jsonl.gz` of the replay lacks the flight records). A track dropped and re-created on the
+ground within 30 min keeps its turn (`turnMemo`: landed, in-block, off-block, push end). No in-block on a contact stand
+within 10 min of a push-back off-block. `pushStandOf` uses SFO's stand with wider limits and SFO's just-ended window
+(AAL1732: 'from B20').
+
+**Minors.** `ui.js legOf`: a VRS leg equal to either of SFO's legs for the aircraft's flights is not a conflict
+(AAL1253 at B26). `runwayTarget`: the line-up hold is released at the back-dated roll start when the next report already
+rolls (constant acceleration through it, 1–4 m/s²). `invariants.mjs`: `cut.gnd_sfo / cut.gnd_other / cut.air_*` — a
+visible body faded out and back in elsewhere, one event each with distance, heading change and gap. `gatecheck.py`:
+world frame via `tools/geo_frame.py` (`wgs84_to_world` for ADS-B, `ll_to_world` for the FAA runway ends); the type table
+is imported from `js/aircraft/fit.js` (the regex on `js/live/aircraft.js` had broken). `app.js`: comment points to
+`realtime_round2.md` §1a; its anims fallback only serves a gates.js without `hurryUndock`.
+
+## 2. Metrics (same replay; before → after)
+
+| Class / counter | Before | After |
+|---|---|---|
+| building | 1,018 frames (UAL1180) | 0 |
+| bridge.hit.fus / hit_at_rest | 1,097 / 1,097 (UAL1180, G8 tunnel) | 0 / 0 |
+| lag.gnd_30m | 657 frames, 7 aircraft | 431, 6 |
+| phase.flicker | 13 | 12 |
+| gnd.acc.taxi · gnd.jerk · gnd.spin | 24 · 3 · 14 | 23 · 3 · 15 |
+| air.acc | 109 | 93 |
+| offpave.mask · offpave.union | 25,871 · 413 | 24,512 · 412 |
+| cut.gnd_sfo (new class; the "before" counted with the same checker) | 9: SKW3497 71 m / 66° (silent dock, `gap`), 8 `repark` ≤ 7 m | 8, all `repark` ≤ 7 m (UAL1063 7 m / 28°, SKW4708 5.4 m / 21°, EJM750 4.3 m / 93°) |
+| silent docks (undone) | 6 (3) | 5 (0; 2 continued into the same stand) |
+| in-block events (duplicates) | 41 (3) | 39 (0) |
+| off-block events (forward) | 35 (5) | 30 (1; 0 with the full SFO plan) |
+| card 'Push-back complete' aircraft-s (> 120 m from any stand) | 10,098 (3,828) | 5,170 (806: push ends of SIA31, UAL217, UAL893 — long widebody pushes) |
+| card pushed ↔ taxi transitions | 104 | 44 |
+| card rows with the VRS 'not today's flight' note | 7,835 | 5,148 (all genuine: the VRS leg is neither SFO leg) |
+| runways vs raw detector | 19/19 landings, 21/21 take-offs | same |
+| in-blocks vs flysfo (unique flight/stand) | 30 agree, UAL1180 G8 missed | 31 agree (G8 found), 0 missed |
+| teleport · overlap · bridge.misdock · pop.remove | 0 | 0 |
+
+Unchanged or worse, with the reason:
+- `lag.roll_100m` 508 → 507 frames (AAL1732, SKW5510, QXE2028): late data, not the line-up hold. AAL1732's first
+  rolling report (17:58:35.6Z, 28.5 kt, 65 m down the runway after an 8.6 s gap) reached the engine ~4 s after its
+  position time, later than the 2.94 s display delay, so the drawn roll starts ~9 s after the real one; catching up at a
+  plausible ≤ 3.5 m/s² takes the rest of the roll. The back-dating applies when the next report is already known (1 case
+  here). `rwy.lineup_hdg` (4 aircraft 24–30° off at line-up) not addressed in this step.
+- `bridge.orphan` 874–890 frames (13 stands) in both runs: caused by the working-tree `gates.js` (hurryUndock now never
+  faster than the datasheet rates; 0 with the gates.js the reviewer ran) — request in `realtime_closeout.md` §2a.
+- `lag.gnd_30m.other_airfield` 7,546 → 8,310: N52SG TBM9 parked at another field with ±12 m GNSS scatter at 0–0.1 kt
+  — before, a false push-back from that scatter reversed the body around it; now it stays put (the target is the scatter).
+- `offpave.*`: static data (FBO ramp, taxi routes south of pier B, taxiway W across 1L/1R) — `realtime_closeout.md` §1.

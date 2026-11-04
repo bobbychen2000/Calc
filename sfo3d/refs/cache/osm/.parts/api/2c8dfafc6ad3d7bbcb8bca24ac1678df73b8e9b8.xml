@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osmChange version="0.6" generator="openstreetmap-cgimap 2.1.1 (3400712 spike-07.openstreetmap.org)" copyright="OpenStreetMap and contributors" attribution="http://www.openstreetmap.org/copyright" license="http://opendatacommons.org/licenses/odbl/1-0/">
+ <modify>
+  <node id="5429898621" visible="true" version="2" changeset="191415632" timestamp="2026-11-03T12:56:45Z" user="Pan_Nug" uid="17280926" lat="37.5962592" lon="-122.3767398"/>
+ </modify>
+ <modify>
+  <node id="7522454720" visible="true" version="2" changeset="191415632" timestamp="2026-11-03T12:56:45Z" user="Pan_Nug" uid="17280926" lat="37.5960992" lon="-122.3767636"/>
+ </modify>
+ <modify>
+  <node id="7522454721" visible="true" version="2" changeset="191415632" timestamp="2026-11-03T12:56:45Z" user="Pan_Nug" uid="17280926" lat="37.5961114" lon="-122.3767779"/>
+ </modify>
+ <modify>
+  <node id="7522454722" visible="true" version="2" changeset="191415632" timestamp="2026-11-03T12:56:45Z" user="Pan_Nug" uid="17280926" lat="37.5961270" lon="-122.3767766"/>
+ </modify>
+ <modify>
+  <node id="7522454723" visible="true" version="2" changeset="191415632" timestamp="2026-11-03T12:56:45Z" user="Pan_Nug" uid="17280926" lat="37.5961683" lon="-122.3767531"/>
+ </modify>
+ <modify>
+  <node id="7522454724" visible="true" version="2" changeset="191415632" timestamp="2026-11-03T12:56:45Z" user="Pan_Nug" uid="17280926" lat="37.5962384" lon="-122.3767008"/>
+ </modify>
+ <modify>
+  <node id="9622508653" visible="true" version="2" changeset="191415632" timestamp="2026-11-03T12:56:45Z" user="Pan_Nug" uid="17280926" lat="37.5961551" lon="-122.3767621">
+   <tag k="highway" v="crossing"/>
+  </node>
+ </modify>
+</osmChange>

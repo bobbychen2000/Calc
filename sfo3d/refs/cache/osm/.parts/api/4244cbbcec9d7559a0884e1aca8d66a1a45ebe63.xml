@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osmChange version="0.6" generator="openstreetmap-cgimap 2.1.1 (4193212 spike-08.openstreetmap.org)" copyright="OpenStreetMap and contributors" attribution="http://www.openstreetmap.org/copyright" license="http://opendatacommons.org/licenses/odbl/1-0/">
+ <modify>
+  <way id="25815445" visible="true" version="23" changeset="190715848" timestamp="2026-10-18T21:01:23Z" user="jesszhan0024" uid="23667821">
+   <nd ref="6386800179"/>
+   <nd ref="4906098118"/>
+   <nd ref="4906098112"/>
+   <nd ref="1438930205"/>
+   <nd ref="6421532885"/>
+   <nd ref="4204722167"/>
+   <nd ref="281572961"/>
+   <tag k="cycleway:right" v="no"/>
+   <tag k="highway" v="unclassified"/>
+   <tag k="lit" v="yes"/>
+   <tag k="name" v="South El Camino Real"/>
+   <tag k="oneway" v="yes"/>
+   <tag k="parking:both" v="yes"/>
+   <tag k="parking:both:orientation" v="parallel"/>
+   <tag k="sidewalk" v="right"/>
+   <tag k="surface" v="asphalt"/>
+  </way>
+ </modify>
+ <modify>
+  <way id="927639066" visible="true" version="5" changeset="190715848" timestamp="2026-10-18T21:03:05Z" user="jesszhan0024" uid="23667821">
+   <nd ref="281572961"/>
+   <nd ref="4204722163"/>
+   <nd ref="6386708138"/>
+   <tag k="cycleway:right" v="no"/>
+   <tag k="highway" v="unclassified"/>
+   <tag k="name" v="South El Camino Real"/>
+   <tag k="oneway" v="yes"/>
+   <tag k="parking:both" v="yes"/>
+   <tag k="parking:both:orientation" v="parallel"/>
+   <tag k="surface" v="asphalt"/>
+  </way>
+ </modify>
+ <modify>
+  <way id="681993884" visible="true" version="6" changeset="190715848" timestamp="2026-10-18T21:05:30Z" user="jesszhan0024" uid="23667821">
+   <nd ref="6386708138"/>
+   <nd ref="559248575"/>
+   <nd ref="6386708144"/>
+   <nd ref="5429461379"/>
+   <nd ref="4904376122"/>
+   <nd ref="4904375614"/>
+   <tag k="cycleway:right" v="no"/>
+   <tag k="highway" v="unclassified"/>
+   <tag k="name" v="South El Camino Real"/>
+   <tag k="oneway" v="yes"/>
+   <tag k="parking:left" v="yes"/>
+   <tag k="parking:left:orientation" v="diagonal"/>
+   <tag k="surface" v="asphalt"/>
+  </way>
+ </modify>
+ <modify>
+  <way id="803752916" visible="true" version="5" changeset="190715848" timestamp="2026-10-18T21:17:24Z" user="jesszhan0024" uid="23667821">
+   <nd ref="6323774384"/>
+   <nd ref="6323774383"/>
+   <tag k="cycleway:right" v="no"/>
+   <tag k="hgv" v="designated"/>
+   <tag k="hgv:national_network" v="terminal_access"/>
+   <tag k="highway" v="primary"/>
+   <tag k="lanes" v="5"/>
+   <tag k="maxspeed" v="35 mph"/>
+   <tag k="name" v="El Camino Real"/>
+   <tag k="old_ref" v="US 101"/>
+   <tag k="oneway" v="yes"/>
+   <tag k="ref" v="CA 82"/>
+   <tag k="sidewalk" v="right"/>
+   <tag k="source:hgv:national_network" v="Caltrans http://www.dot.ca.gov/hq/traffops/trucks/truckmap/"/>
+   <tag k="surface" v="asphalt"/>
+   <tag k="turn:lanes" v="left|left|none|none|none"/>
+  </way>
+ </modify>
+ <modify>
+  <way id="587097206" visible="true" version="9" changeset="190715848" timestamp="2026-10-18T21:26:56Z" user="jesszhan0024" uid="23667821">
+   <nd ref="4204722312"/>
+   <nd ref="262936216"/>
+   <nd ref="3922881624"/>
+   <nd ref="3922881623"/>
+   <nd ref="1431885175"/>
+   <nd ref="6319071124"/>
+   <nd ref="4204722304"/>
+   <nd ref="262936217"/>
+   <tag k="cycleway:right" v="no"/>
+   <tag k="highway" v="unclassified"/>
+   <tag k="lanes" v="1"/>
+   <tag k="name" v="El Camino Real"/>
+   <tag k="oneway" v="yes"/>
+   <tag k="parking:left" v="yes"/>
+   <tag k="parking:left:orientation" v="parallel"/>
+   <tag k="parking:right" v="yes"/>
+   <tag k="parking:right:orientation" v="diagonal"/>
+   <tag k="sidewalk:left" v="no"/>
+   <tag k="sidewalk:right" v="separate"/>
+   <tag k="surface" v="asphalt"/>
+  </way>
+ </modify>
+ <modify>
+  <way id="8942069" visible="true" version="26" changeset="190715848" timestamp="2026-10-18T21:31:06Z" user="jesszhan0024" uid="23667821">
+   <nd ref="297164236"/>
+   <nd ref="262936216"/>
+   <nd ref="4204722310"/>
+   <nd ref="6319071121"/>
+   <nd ref="418085596"/>
+   <tag k="cycleway:both" v="no"/>
+   <tag k="highway" v="residential"/>
+   <tag k="name" v="La Cruz Avenue"/>
+   <tag k="parking:lane:both" v="parallel"/>
+   <tag k="sidewalk" v="both"/>
+   <tag k="surface" v="asphalt"/>
+   <tag k="tiger:cfcc" v="A41"/>
+   <tag k="tiger:county" v="San Mateo, CA"/>
+   <tag k="tiger:name_base" v="La Cruz"/>
+   <tag k="tiger:name_type" v="Ave"/>
+  </way>
+ </modify>
+</osmChange>

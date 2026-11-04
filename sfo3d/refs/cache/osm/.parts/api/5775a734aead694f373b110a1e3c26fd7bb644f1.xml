@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osmChange version="0.6" generator="openstreetmap-cgimap 2.1.1 (3839819 spike-07.openstreetmap.org)" copyright="OpenStreetMap and contributors" attribution="http://www.openstreetmap.org/copyright" license="http://opendatacommons.org/licenses/odbl/1-0/">
+ <modify>
+  <node id="12381255265" visible="true" version="2" changeset="189623408" timestamp="2026-09-27T10:42:17Z" user="dsk1" uid="2349071" lat="37.6343780" lon="-122.4003445"/>
+ </modify>
+ <modify>
+  <node id="12381255266" visible="true" version="2" changeset="189623408" timestamp="2026-09-27T10:42:17Z" user="dsk1" uid="2349071" lat="37.6345069" lon="-122.4004140"/>
+ </modify>
+ <modify>
+  <way id="1167919948" visible="true" version="2" changeset="189623408" timestamp="2026-09-27T10:42:17Z" user="dsk1" uid="2349071">
+   <nd ref="6883403619"/>
+   <nd ref="10862019363"/>
+   <nd ref="10862019366"/>
+   <nd ref="10862019364"/>
+   <nd ref="12381255266"/>
+   <nd ref="4911192557"/>
+   <tag k="highway" v="service"/>
+  </way>
+ </modify>
+ <modify>
+  <way id="289753840" visible="true" version="16" changeset="189623408" timestamp="2026-09-27T10:42:17Z" user="dsk1" uid="2349071">
+   <nd ref="2932963603"/>
+   <nd ref="2932963601"/>
+   <nd ref="12381255265"/>
+   <nd ref="661909084"/>
+   <tag k="highway" v="unclassified"/>
+   <tag k="lanes" v="2"/>
+   <tag k="oneway" v="yes"/>
+   <tag k="surface" v="asphalt"/>
+  </way>
+ </modify>
+</osmChange>

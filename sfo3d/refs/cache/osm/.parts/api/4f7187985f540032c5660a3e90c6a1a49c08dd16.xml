@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osmChange version="0.6" generator="openstreetmap-cgimap 2.1.1 (3747653 spike-07.openstreetmap.org)" copyright="OpenStreetMap and contributors" attribution="http://www.openstreetmap.org/copyright" license="http://opendatacommons.org/licenses/odbl/1-0/">
+ <modify>
+  <node id="10981800178" visible="true" version="2" changeset="190716730" timestamp="2026-10-18T21:31:34Z" user="jesszhan0024" uid="23667821" lat="37.6009723" lon="-122.3916079">
+   <tag k="amenity" v="atm"/>
+   <tag k="cash_in" v="yes"/>
+   <tag k="check_date" v="2026-10-18"/>
+   <tag k="covered" v="yes"/>
+   <tag k="drive_through" v="no"/>
+   <tag k="indoor" v="no"/>
+   <tag k="opening_hours" v="24/7"/>
+   <tag k="operator" v="California Bank &amp; Trust"/>
+  </node>
+ </modify>
+</osmChange>

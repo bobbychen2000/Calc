@@ -79,7 +79,9 @@ export function standGates(stands) {
     // datasheet model (Oshkosh AeroTech sell sheet; one model per bridge, inferred), model, dockTypesOut (accepted types
     // this bridge cannot reach: it stays at stowW), cabTurnDeg / cabOption (signed cab turn of the observed dockings,
     // cab_convention in the data), stowLen (rest length >= the model's retraction), rotundaSrc (provenance)
-    const bridges = s.bridges.map(b => ({ gate: b.gate, attach: worldToST(b.attach[0], b.attach[1]), attachW: b.attach, door: b.door,
+    // static close-out (2026-11-04, docs/requests/bridges_static.md #5): the upper-deck (A380 U1L) bridges of A6 / A11 / G13
+    // are passed too, as `bridgesUpper` (same fields, door 3, upper: true) - one source for gates.js / the engine / tools
+    const brMap = (b, upper) => ({ gate: b.gate, attach: worldToST(b.attach[0], b.attach[1]), attachW: b.attach, door: upper ? 3 : b.door, upper: !!upper,
       rotundaW: b.rotunda || null, cabW: b.cab || null, walkW: b.walk || null, cabPose: b.cab_pose || null, stowW: b.stow || null,
       rotundaMaxR: b.rotunda_max_r ?? null, rotundaTwinOf: b.rotunda_twin_of ?? null,
       tunnelEndW: b.tunnel_end || null, extRange: b.ext_range || null, model: b.model || null, dockTypesOut: b.dock_types_out || [],
@@ -87,7 +89,9 @@ export function standGates(stands) {
       // static fix-up (26 Sep 2026): shortUnit = an imaged bridge shorter than every datasheet unit (F5 L1: extRange below
       // 9.846 m is intended); dockOutWhy = {type: reason} for observed types this bridge does not dock by decision (A1 / A2
       // L2: the 787-10's L2 door is beyond the longest Oshkosh unit - the L2 stays at stowW, L1 boards)
-      shortUnit: !!b.short_unit, dockOutWhy: b.dock_out_why || null }));
+      shortUnit: !!b.short_unit, dockOutWhy: b.dock_out_why || null });
+    const bridges = s.bridges.map(b => brMap(b, false));
+    const bridgesUpper = (s.bridges_upper || []).length ? s.bridges_upper.map(b => brMap(b, true)) : null;
     const cm = CLASS_MAX[s.cls] || CLASS_MAX.C; const wide = cm.span > 41.2;   // D and larger (CL = 757 with winglets is narrow-body)
     const maxSpan = s.span_max ? Math.min(cm.span, s.span_max + 0.1) : cm.span;
     const maxLen = s.len_max ? Math.min(cm.len, s.len_max + 0.1) : cm.len;
@@ -108,6 +112,11 @@ export function standGates(stands) {
       // alternative position, per base bridge {osm_id, of, door, dock_types, dock_types_out, rest_clear_m}; belowIcao = per
       // neighbour the clearance evidence (SFO's simultaneous plan, ADS-B-confirmed windows, planned type pairs)
       axisAdsb: s.axis_adsb || null, leadinSrc: s.leadin_src || null, sharedBridgeUse: s.bridges_shared || null, belowIcao: s.below_icao || null,
+      // static close-out (2026-11-04; tools/stands/patch_stands.py P2): exclTypes = {neighbour: [ICAO types]} - while this stand
+      // holds one of those types the neighbour must stay free, and an occupied neighbour keeps those types off this stand
+      // (entries '@F19:B772' on the neighbour name the type at the other stand). F19 B772 -> F20 / F18, C9 B763 -> C11, C8 B752
+      // -> C10 (each < ICAO clearance; SFO plans them only with the neighbour free). bridgesUpper: see brMap above.
+      exclTypes: s.excl_types || null, bridgesUpper,
       nose, dir, outN: [-dir[0], -dir[1]], attach: bridges.length ? bridges[0].attach : nose, bridges, wide, len: cm.len, span: cm.span,
       bridge: bridges.length > 0, remote: false, hdg: s.hdg, world: { x: s.nose[0], z: s.nose[1], hdg: s.hdg }, empty: true, acType: null, dynamic: false,
     });
@@ -290,7 +299,11 @@ export function paintAirportMapReal(data, gates, res = APT_RECT.res, details = n
   const lineW = (pts, w) => { cx.lineWidth = w / res; cx.beginPath(); pts.forEach((p, i) => { const q = Pw(p[0], p[1]); i ? cx.lineTo(q[0], q[1]) : cx.moveTo(q[0], q[1]); }); cx.stroke(); };
   // OSM landside (data/sfo_landside.js): at-grade roads (width from OSM width / lanes / class default) and surface car
   // parks; elevated roads' footprints and multi-storey garages count as paved ground only (not asphalt road paint)
-  const landsidePave = () => { for (const r of LANDSIDE.roads) lineW(r.pts, r.w); for (const p of LANDSIDE.parking) { pathRings([p.pts]); cx.fill(); } };
+  // static close-out (2026-11-04): airside_paths = the infield / perimeter vehicle paths (OSM access=no on the airfield),
+  // concrete, width and position measured on NAIP 2024 by tools/build_landside.py - paved + concrete, never asphalt;
+  // paths NAIP does not show (drawn false) add nothing
+  const airsidePaths = () => { for (const r of LANDSIDE.airside_paths || []) if (r.drawn && r.w) lineW(r.pts, r.w); };
+  const landsidePave = () => { for (const r of LANDSIDE.roads) lineW(r.pts, r.w); for (const p of LANDSIDE.parking) { pathRings([p.pts]); cx.fill(); } airsidePaths(); };
   const landsideCat = () => {
     cx.fillStyle = cx.strokeStyle = '#fff'; for (const r of LANDSIDE.roads) if (!r.elevated) lineW(r.pts, r.w);
     cx.fillStyle = '#999'; for (const p of LANDSIDE.parking) if (p.kind === 'parking') { pathRings([p.pts]); cx.fill(); }
@@ -333,6 +346,7 @@ export function paintAirportMapReal(data, gates, res = APT_RECT.res, details = n
   const conc = layer(() => {
     apron(); if (!details) APRONS.filter(a => a.conc && farFromTerminal(a)).forEach(a => { polyST(a.pts); cx.fill(); });
     const P2 = extra.pavement; if (P2) P2.polys.forEach((poly, i) => { if (P2.conc && P2.conc[i]) { pathRings(poly); cx.fill('evenodd'); } });
+    airsidePaths();
   });
   const wear = layer(() => {
     // tyre and oil wear on the surveyed stands: nose-gear track along the lead-in line, stains under the main gear

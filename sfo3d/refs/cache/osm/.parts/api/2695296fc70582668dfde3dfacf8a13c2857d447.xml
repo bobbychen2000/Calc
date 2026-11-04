@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osmChange version="0.6" generator="openstreetmap-cgimap 2.1.1 (4187677 spike-08.openstreetmap.org)" copyright="OpenStreetMap and contributors" attribution="http://www.openstreetmap.org/copyright" license="http://opendatacommons.org/licenses/odbl/1-0/">
+ <create>
+  <node id="14279636401" visible="true" version="1" changeset="190439386" timestamp="2026-10-13T08:31:06Z" user="Mati_cham23452154" uid="21276348" lat="45.9588174" lon="-0.9541532">
+   <tag k="addr:housenumber" v="9"/>
+   <tag k="addr:postcode" v="17300"/>
+   <tag k="addr:street" v="Rue Hubert Pennevert"/>
+   <tag k="craft" v="metal_construction"/>
+   <tag k="name" v="NDC International"/>
+   <tag k="opening_hours" v="Mo-Fr 09:00-17:00"/>
+   <tag k="website" v="http://www.ndc-foundry.com/"/>
+  </node>
+ </create>
+ <create>
+  <node id="14279636501" visible="true" version="1" changeset="190439386" timestamp="2026-10-13T08:31:07Z" user="Mati_cham23452154" uid="21276348" lat="34.0488413" lon="-118.2125801">
+   <tag k="name" v="Other Books, Comics, and Zines"/>
+   <tag k="shop" v="books"/>
+  </node>
+ </create>
+ <create>
+  <node id="14279636502" visible="true" version="1" changeset="190439386" timestamp="2026-10-13T08:31:07Z" user="Mati_cham23452154" uid="21276348" lat="34.0612823" lon="-118.2386718">
+   <tag k="addr:housenumber" v="727 #133"/>
+   <tag k="addr:street" v="North Broadway"/>
+   <tag k="name" v="Now Serving"/>
+   <tag k="shop" v="books"/>
+  </node>
+ </create>
+ <create>
+  <node id="14279636601" visible="true" version="1" changeset="190439386" timestamp="2026-10-13T08:31:08Z" user="Mati_cham23452154" uid="21276348" lat="34.0611519" lon="-118.2384430">
+   <tag k="addr:housenumber" v="727 #115"/>
+   <tag k="addr:street" v="North Broadway"/>
+   <tag k="name" v="East West Shop"/>
+   <tag k="shop" v="second_hand"/>
+  </node>
+ </create>
+ <create>
+  <node id="14279636701" visible="true" version="1" changeset="190439386" timestamp="2026-10-13T08:31:09Z" user="Mati_cham23452154" uid="21276348" lat="34.0790823" lon="-118.3617067">
+   <tag k="addr:housenumber" v="419"/>
+   <tag k="addr:street" v="North Fairfax Avenue"/>
+   <tag k="amenity" v="bar"/>
+   <tag k="name" v="The Kibitz Room"/>
+  </node>
+ </create>
+ <create>
+  <node id="14279636801" visible="true" version="1" changeset="190439386" timestamp="2026-10-13T08:31:10Z" user="Mati_cham23452154" uid="21276348" lat="34.0859517" lon="-118.3430454">
+   <tag k="addr:housenumber" v="825"/>
+   <tag k="addr:street" v="North La Brea Avenue"/>
+   <tag k="name" v="Jet Rag"/>
+   <tag k="shop" v="second_hand"/>
+  </node>
+ </create>
+ <create>
+  <node id="14279636901" visible="true" version="1" changeset="190439386" timestamp="2026-10-13T08:31:11Z" user="Mati_cham23452154" uid="21276348" lat="34.1009761" lon="-118.3293913">
+   <tag k="addr:housenumber" v="1638"/>
+   <tag k="addr:street" v="North Cahuenga Boulevard"/>
+   <tag k="amenity" v="bar"/>
+   <tag k="name" v="Tramp Stamp Granny's"/>
+  </node>
+ </create>
+ <create>
+  <node id="14279636402" visible="true" version="1" changeset="190439386" timestamp="2026-10-13T08:31:12Z" user="Mati_cham23452154" uid="21276348" lat="34.0528220" lon="-118.3034331">
+   <tag k="amenity" v="restaurant"/>
+   <tag k="name" v="Ham Hung"/>
+  </node>
+ </create>
+ <create>
+  <node id="14279637001" visible="true" version="1" changeset="190439386" timestamp="2026-10-13T08:31:12Z" user="Mati_cham23452154" uid="21276348" lat="34.0579200" lon="-118.2814956">
+   <tag k="addr:housenumber" v="703"/>
+   <tag k="addr:street" v="South Carondelet Street"/>
+   <tag k="name" v="Mc Manus &amp; Morgan Fine Art Paper"/>
+   <tag k="shop" v="stationery"/>
+  </node>
+ </create>
+ <create>
+  <node id="14279637002" visible="true" version="1" changeset="190439386" timestamp="2026-10-13T08:31:12Z" user="Mati_cham23452154" uid="21276348" lat="34.0582580" lon="-118.2813256">
+   <tag k="addr:housenumber" v="2500 #E"/>
+   <tag k="addr:street" v="West 7th Street"/>
+   <tag k="craft" v="handicraft"/>
+   <tag k="name" v="Aardvack"/>
+  </node>
+ </create>
+ <create>
+  <node id="14279636802" visible="true" version="1" changeset="190439386" timestamp="2026-10-13T08:31:13Z" user="Mati_cham23452154" uid="21276348" lat="34.0322045" lon="-118.2597033">
+   <tag k="addr:housenumber" v="1515"/>
+   <tag k="addr:street" v="Maple Avenue"/>
+   <tag k="amenity" v="restaurant"/>
+   <tag k="name" v="Yangban Sul Lung Tang"/>
+  </node>
+ </create>
+ <create>
+  <node id="14279637101" visible="true" version="1" changeset="190439386" timestamp="2026-10-13T08:31:13Z" user="Mati_cham23452154" uid="21276348" lat="34.0407734" lon="-118.2674939">
+   <tag k="addr:housenumber" v="1254 #8th floor"/>
+   <tag k="addr:street" v="South Figueroa Street"/>
+   <tag k="amenity" v="bar"/>
+   <tag k="name" v="Mr. Wanderlust"/>
+  </node>
+ </create>
+ <create>
+  <node id="14279636902" visible="true" version="1" changeset="190439386" timestamp="2026-10-13T08:31:14Z" user="Mati_cham23452154" uid="21276348" lat="34.0484212" lon="-118.2484932">
+   <tag k="addr:housenumber" v="416"/>
+   <tag k="addr:street" v="South Spring Street"/>
+   <tag k="amenity" v="bar"/>
+   <tag k="name" v="The Stowaway"/>
+  </node>
+ </create>
+ <modify>
+  <way id="549041816" visible="true" version="9" changeset="190439386" timestamp="2026-10-13T08:31:14Z" user="Mati_cham23452154" uid="21276348">
+   <nd ref="5303764025"/>
+   <nd ref="12870028667"/>
+   <nd ref="5303764026"/>
+   <nd ref="12870028668"/>
+   <nd ref="7475286532"/>
+   <nd ref="7475286534"/>
+   <nd ref="7475286535"/>
+   <nd ref="7475286533"/>
+   <nd ref="12870028666"/>
+   <nd ref="12870028665"/>
+   <nd ref="5303764027"/>
+   <nd ref="5303764028"/>
+   <nd ref="12870028716"/>
+   <nd ref="5303764029"/>
+   <nd ref="12870028660"/>
+   <nd ref="7475286537"/>
+   <nd ref="12870028654"/>
+   <nd ref="12870028655"/>
+   <nd ref="12870028658"/>
+   <nd ref="12870028657"/>
+   <nd ref="12870028659"/>
+   <nd ref="12870028656"/>
+   <nd ref="12870028682"/>
+   <nd ref="5303764025"/>
+   <tag k="amenity" v="pub"/>
+   <tag k="building" v="yes"/>
+   <tag k="cuisine" v="fish"/>
+   <tag k="indoor_seating" v="yes"/>
+   <tag k="layer" v="1"/>
+   <tag k="level" v="1"/>
+   <tag k="microbrewery" v="yes"/>
+   <tag k="name" v="Eric Ericsson's Fish Co"/>
+   <tag k="outdoor_seating" v="yes"/>
+  </way>
+ </modify>
+ <create>
+  <node id="14279637201" visible="true" version="1" changeset="190439386" timestamp="2026-10-13T08:31:16Z" user="Mati_cham23452154" uid="21276348" lat="34.4130746" lon="-119.6923923">
+   <tag k="addr:housenumber" v="134"/>
+   <tag k="addr:street" v="Chapala Street"/>
+   <tag k="name" v="ITH Santa Barbara beach hostel"/>
+   <tag k="tourism" v="hostel"/>
+  </node>
+ </create>
+ <create>
+  <node id="14279636803" visible="true" version="1" changeset="190439386" timestamp="2026-10-13T08:31:17Z" user="Mati_cham23452154" uid="21276348" lat="34.2793056" lon="-119.3013491">
+   <tag k="addr:housenumber" v="36"/>
+   <tag k="addr:street" v="West Santa Clara Street"/>
+   <tag k="name" v="Real Cheap Sports"/>
+   <tag k="shop" v="sports"/>
+  </node>
+ </create>
+ <create>
+  <node id="14279637301" visible="true" version="1" changeset="190439386" timestamp="2026-10-13T08:31:17Z" user="Mati_cham23452154" uid="21276348" lat="37.7902447" lon="-122.4049491">
+   <tag k="addr:housenumber" v="18"/>
+   <tag k="addr:postcode" v="94108"/>
+   <tag k="addr:street" v="Harlan Place"/>
+   <tag k="amenity" v="bar"/>
+   <tag k="name" v="Harlan Records"/>
+  </node>
+ </create>
+ <create>
+  <node id="14279636903" visible="true" version="1" changeset="190439386" timestamp="2026-10-13T08:31:18Z" user="Mati_cham23452154" uid="21276348" lat="37.7634216" lon="-122.4160900">
+   <tag k="addr:housenumber" v="305"/>
+   <tag k="craft" v="handicraft"/>
+   <tag k="name" v="Shotwell Paper Mill"/>
+  </node>
+ </create>
+</osmChange>

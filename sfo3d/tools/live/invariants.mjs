@@ -30,6 +30,9 @@
 //   air.acc / air.lat / air.turn / air.vacc / air.vs      along-track > 3 m/s2, lateral > 6 m/s2 (31 deg bank; x1.7
 //                         light), turn > 7 deg/s (x1.8 light), vertical acc > 3 m/s2, |vs| > 8000 fpm below 10,000 ft
 //   teleport              a frame displacement that differs from the previous velocity * dt by > 20 m (+ reason)
+//   cut.gnd_sfo / cut.gnd_other / cut.air_sfo / cut.air_other  (review 4 Nov) a VISIBLE body faded out and back in somewhere
+//                         else (> 1 m or > 5 deg): the re-placements 'teleport' does not count (frames < 0.5 alpha are not
+//                         checked); one event each, value = distance, with the heading change and the gap
 //   jump.gnd_1_20m / jump.air_5_20m  the same deviation > 1 m on the ground (> 100 m/s2 implied) / > 5 m in the air
 //   hdg.flip              heading change > 20 deg in one 0.1 s frame
 //   vert.ground           ground aircraft with y != GROUND_Y;  vert.below: y < GROUND_Y
@@ -87,7 +90,7 @@ let TAXIGRAPH = null; try { ({ TAXIGRAPH } = await imp('data/sfo_taxigraph.js'))
 const { standGates, paintAirportMapReal, endZoneRects } = await imp('js/live/airport.js');
 const TR = await imp('js/live/traffic.js'); const { Traffic, RWY, hdgVec } = TR;
 const antOf = TR.antOf || ((T) => TR.ANT * T.L);   // position reference behind the nose (per family, traffic.js)
-const { GroundPhysics, buildingGrid, pavedUnion } = await imp('js/live/ground.js');
+const GROUNDJS = await imp('js/live/ground.js'); const { GroundPhysics, buildingGrid, pavedUnion } = GROUNDJS;
 const { parsePayload } = await imp('js/live/feed.js');
 const { TYPES } = await imp('js/aircraft/types.js');
 const GEO = await imp('js/geo.js'); const { GROUND_Y, worldToST } = GEO; const toLL = GEO.worldToWgs84 || GEO.worldToLL; const toW = GEO.wgs84ToWorld || GEO.llToWorld;
@@ -124,7 +127,9 @@ function animStep(now) { if (gsys.step) { gsys.step(now); return; } for (const [
 const traffic = new Traffic({ gates, airport: AIRPORT, persist: false, centerlines: DETAILS.centerlines, taxigraph: TAXIGRAPH, stands: STANDS, onGateChange: (g, tr, opt) => applyGate(g, tr, opt) });
 traffic.buildingAt = building; if (process.env.LOCKLOG) traffic.lockLog = []; if (process.env.CANDLOG) traffic.candLog = []; if (TRACE) { traffic.debug = TRACES.size === 1 ? TRACE : null; traffic.debugSet = TRACES; traffic.onEvent = (e) => { if (TRACES.has(e.hex)) console.error('EVENT', new Date(e.t).toISOString().slice(11, 21), e.kind, JSON.stringify(e).slice(0, 200)); }; }
 traffic.bridgeK = (g) => { const G = bridgeGate(g); if (gsys.extension) return gsys.extension(G); const a = gsys.anims.get(G.id); return a ? a.k : (G.acType ? 1 : 0); };   // (as app.js)
-const physics = new GroundPhysics({ paved: apt.paved, building, net: traffic.net });
+// (as js/live/app.js: the jet bridges at rest are obstacles for aircraft parked off a stand)
+const restBridges = GROUNDJS.bridgeGrid && gsys.solids ? (() => { const boxes = []; for (const g of gates) for (const b of g.bridges || []) boxes.push(...gsys.solids(g, b, 0)); return GROUNDJS.bridgeGrid(boxes, GROUND_Y); })() : null;
+const physics = new GroundPhysics({ paved: apt.paved, building, net: traffic.net, bridges: restBridges });
 const pavedMask = apt.paved, pavedAll = pavedUnion(apt.paved, traffic.net);
 
 // ---------------------------------------------------------------- geometry helpers
@@ -281,6 +286,7 @@ function rawTruth(a, t) {
 
 // ---------------------------------------------------------------- per-aircraft frame state
 const K = new Map();
+const cutFrom = new Map(); // hex -> last visible pose before a fade-out (cut.* classes)
 // gAccRollLight: business jets accelerate at ~4 m/s^2 on the take-off roll (PFT144 C750 on 28R, 24 Sep 17:03Z: 0.5 -> 123 kt
 // in 16 s); the engine allows 5 m/s^2 for them (traffic.js ctlGround)
 const EXC = { gAccRoll: 3.5, gAccRollLight: 5.5, gAccTaxi: 2.0, gLat: 3.0, gJerk: 6.0, gYaw: 25, slip: 5, aAcc: 3.0, aLat: 6.0, aVacc: 3.0, aTurn: 7 };
@@ -320,7 +326,10 @@ while (simNow < tEnd && (nextEv || simNow < tStart + 1)) {
   for (const tr of traffic.tracks.values()) {
     const D = tr.disp; if (!D.valid) continue; const veh = tr.vehicle;
     // faded out (a re-placement in progress, or not yet shown): not drawn -> not checked; its reappearance is a new start
-    if (D.alpha != null && D.alpha < 0.5) { K.delete(tr.hex); tr._reset = null; continue; }
+    // (review 4 Nov: a fade re-placement of a VISIBLE body is a relocation the viewer sees -- recorded as cut.* when it shows again)
+    if (D.alpha != null && D.alpha < 0.5) { const s0 = K.get(tr.hex); if (s0 && s0.vis && !cutFrom.has(tr.hex)) cutFrom.set(tr.hex, { x: s0.rx, z: s0.rz, hdg: s0.hdg, g: s0.g, t: simNow, why: tr.cutting || (tr.fadeOut ? 'fade' : null) }); K.delete(tr.hex); tr._reset = null; continue; }
+    { const c0 = cutFrom.get(tr.hex); if (c0) { cutFrom.delete(tr.hex); const d = Math.hypot(D.x - c0.x, D.z - c0.z), dh = Math.abs(wrapD((D.hdg - c0.hdg) / DEG));
+      if (chk && !veh && (d > 1 || dh > 5)) { const sfo = inAirport(D.x, D.z); viol(c0.g && D.ground ? (sfo ? 'cut.gnd_sfo' : 'cut.gnd_other') : (sfo ? 'cut.air_sfo' : 'cut.air_other'), tr, d, { d: +d.toFixed(1), dh: +dh.toFixed(0), gapS: +((simNow - c0.t) / 1000).toFixed(1), why: c0.why, phase: tr.phase, stand: tr.gate ? tr.gate.name : null }); } } }
     const s = K.get(tr.hex); const T = tr.model && TYPES[tr.model.t];
     const near = Math.hypot(D.x, D.z) < 40000; const light = tr.info.category === 'A1' || (T && T.L < 20); const rotor = tr.info.category === 'A7';
     // (the no-slip point of the engine's ground body, traffic.js ctlGround `back`: 8 m behind the reference for an aircraft
@@ -428,6 +437,7 @@ while (simNow < tEnd && (nextEv || simNow < tStart + 1)) {
   }
   // (round 2) a track removed while it was drawn (alpha >= 0.5 in the previous frame): an instant pop, not a fade
   for (const [hex, s] of K) if (!traffic.tracks.has(hex)) { if (checking() && s && s.vis) { const g = s.g; const pc = inAirport(s.rx, s.rz) ? 'pop.remove' : 'pop.remove.other_airfield'; let v = V.get(pc); if (!v) V.set(pc, v = { frames: 0, eps: 0, who: new Map(), worst: [] }); v.frames++; v.eps++; const ll = toLL(s.rx, s.rz); v.who.set(hex + '@' + simNow, { n: 1, max: 1, ex: { t: iso(simNow), hex, flight: s.fl || null, type: s.ty || null, phase: s.ph, x: +s.rx.toFixed(1), z: +s.rz.toFixed(1), lat: +ll[0].toFixed(6), lon: +ll[1].toFixed(6), ground: g ? 1 : 0, stale: s.st ? 1 : 0 } }); } K.delete(hex); surfCache.delete(hex); }
+  for (const hex of cutFrom.keys()) if (!traffic.tracks.has(hex)) cutFrom.delete(hex);
   if (frames % 600 === 0) pairCache.clear();
   if (TRACE && frames % 5 === 0) for (const hx of TRACES) { const tr = traffic.tracks.get(hx); if (tr && tr.disp.valid) { const D = tr.disp, d = tr._dbg || {}; const f2 = (v) => v == null ? '-' : (+v).toFixed(1);
     console.error(iso(simNow), TRACES.size > 1 ? hx : '', tr.phase, tr.m.phase, 'disp', f2(D.x), f2(D.z), 'y', f2(D.y), 'hdg', f2(D.hdg / DEG), 'v', f2(tr.ctl && tr.ctl.v), 'g', D.ground ? 1 : 0, '| tgt', f2(d.ox), f2(d.oz), 'tv', f2(Math.hypot(d.ovx || 0, d.ovz || 0)), d.stop ? 'STOP' : '', 'ex', f2(d.ex), '| park', tr.parkPos ? f2(tr.parkPos[0]) + ',' + f2(tr.parkPos[1]) + '@' + f2((tr.parkHdg ?? 0) / DEG) : '-', tr.parkMode || '', tr.gate ? tr.gate.name : '-', tr.ctl && tr.ctl.towing ? 'TOW' : '', tr.stale ? 'STALE' : '', tr.lock ? 'LOCK' : '', tr.bridgeOn ? 'BRIDGE' : '', tr.bridgeGate ? 'k' + (traffic.bridgeK(tr.bridgeGate)).toFixed(2) : '', tr.leaving ? 'LEAVING' : '', tr._stop ? 'stopErr ' + f2(Math.hypot(tr._stop.x - tr.ctl.x, tr._stop.z - tr.ctl.z)) + '/' + f2(tr._stop.hd != null ? Math.abs(wrapPi(tr._stop.hd - tr.ctl.psi)) / DEG : 0) : '', tr.gate && tr.gate.dock && tr.parkPos ? 'dockPoseVsPark ' + f2(Math.hypot(poseST(tr).nose[0] - tr.gate.dock.nose[0], poseST(tr).nose[1] - tr.gate.dock.nose[1])) + 'm' : '', 'last', tr.last ? f2((simNow - tr.last.t) / 1000) + 's gs' + f2(tr.last.gs) + (tr.last.push ? ' PUSH' : '') + (tr.last.ground ? ' G' : ' A') : ''); } }

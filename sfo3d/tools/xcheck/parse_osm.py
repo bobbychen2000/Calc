@@ -36,7 +36,7 @@ def main():
     meta = json.load(open(SRC.replace('.json', '.meta.json')))
     E = raw['elements']
     out = {'source': os.path.relpath(SRC, X.ROOT), 'osm_base': raw['osm3s']['timestamp_osm_base'],
-           'endpoint': meta['endpoint'], 'fetched_utc': meta['utc'], 'licence': 'ODbL 1.0, (c) OpenStreetMap contributors',
+           'endpoint': ', '.join(meta['endpoint']) if isinstance(meta['endpoint'], list) else meta['endpoint'], 'fetched_utc': meta.get('utc') or meta.get('fetched_utc'), 'attic_date': meta.get('attic_date'), 'licence': 'ODbL 1.0, (c) OpenStreetMap contributors',
            'parking_positions': [], 'gates': [], 'jet_bridges': [], 'runways': [], 'stopways': [], 'blast_pads': [],
            'thresholds': [], 'holding_positions': [], 'taxiways': [], 'aprons': [], 'terminals': [], 'hangars': [],
            'towers': [], 'navaids': [], 'windsocks': [], 'helipads': [], 'lighting_masts': [], 'other_aeroway': Counter(), 'buildings': Counter()}

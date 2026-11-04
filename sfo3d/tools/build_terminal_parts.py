@@ -163,7 +163,7 @@ for c in cs:
 # Area D's SSE face imaged 7.7 m outside (2.5 m predicted), BA A east +10.3 (7.2); the Harvey Milk T1 hall includes a
 # ~20 m bulge over the departures roadway / AirTrain guideway at x -1047..-980, z 412..443 (SFO Museum footprint; NAIP
 # shows roadway and guideway there - kept, not verifiable without a true ortho). All footprints: inferred, +-5 m.
-_doc = {'frame': D.get('frameId', 'equirect-v1'), 'complex': cxr, 'parts': out, 'note': 'derived from SFO Museum footprints; heights approximate except ITB hall (83 ft)',
+_doc = {'frame': D.get('frameId', 'equirect-v1'), 'complex': cxr, 'parts': out, 'note': 'derived from SFO Museum footprints (CDLA-Permissive-1.0, https://cdla.dev/permissive-1-0/; CHANGED by sfo3d: split into parts, trimmed at T1 / T3 by OSM carriageways, heights added); heights approximate except ITB hall (83 ft)',
         'footprint_accuracy': {'src': 'inferred', 'tol_m': 5.0, 'why': 'SFO Museum outlines; NAIP 2022/2024 roofs lean east ~0.54 m/m (same lean in both epochs): no lean-free check',
                                'known_misfits': ['Boarding Area D SSE face: imaged roof 7.7 m outside vs 2.5 m predicted lean',
                                                  'Boarding Area A east face: +10.3 m vs 7.2 m predicted',
@@ -176,7 +176,7 @@ _doc = {'frame': D.get('frameId', 'equirect-v1'), 'complex': cxr, 'parts': out, 
                                'trimmed': {k: dict(v, how='complex cut back by the OSM carriageways (lanes x 3.6 m) inside the window; NAIP 2024 shows vehicles on them inside the SFO Museum footprint (static fix-up 26 Sep 2026)') for k, v in TRIMMED.items()},
                                'not_trimmed_why': 'BA D SSE corner, BA A east face and the unconfirmed medians: no ground-contact evidence (the imaged roof corner of BA D is not separable from the concrete apron at NAIP contrast; the D3 bridge attaches there) and no OSM outline; the review\'s by-eye offsets are not a source - listed misfits (footprints are SFO Museum, CDLA; tolerance stated above)'}}
 json.dump(_doc, open(os.path.join(ROOT, 'data', 'sfo_buildings.json'), 'w'), separators=(',', ':'))
-open(os.path.join(ROOT, 'data', 'sfo_buildings.js'), 'w').write('// Terminal building parts derived from SFO Museum footprints (CDLA-Permissive-1.0), trimmed at T1 / T3 by OpenStreetMap carriageways (ODbL 1.0, (c) OpenStreetMap contributors) - tools/build_terminal_parts.py\nexport const BUILDINGS = ' + json.dumps(_doc, separators=(',', ':')) + ';\n')
+open(os.path.join(ROOT, 'data', 'sfo_buildings.js'), 'w').write('// Terminal building parts derived from SFO Museum footprints (CDLA-Permissive-1.0, https://cdla.dev/permissive-1-0/; CHANGED by sfo3d: split into parts, heights added), trimmed at T1 / T3 by OpenStreetMap carriageways (ODbL 1.0, (c) OpenStreetMap contributors) - tools/build_terminal_parts.py\nexport const BUILDINGS = ' + json.dumps(_doc, separators=(',', ':')) + ';\n')
 print('bytes', os.path.getsize(os.path.join(ROOT, 'data', 'sfo_buildings.json')))
 # debug image
 img = np.zeros((H, W, 3), np.uint8)

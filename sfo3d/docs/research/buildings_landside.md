@@ -610,3 +610,27 @@ Reproduce:
 python3 tools/buildings/landside_fetch.py URL verify_<source id>.(pdf|html)   # for each source in the spec
 python3 tools/buildings/landside_verify.py all   # ~15 s: dof fp shift2d drums shadow text superbay qa apply
 ```
+
+## Drawing round (2026-11-04)
+
+BL-03 draws the FAA DOF points of the central garage, LTP Garage 1 and the RCC at their positions projected on the long
+side of each outline's minimum rectangle (u from the end opposite the long-side heading): central garage 06-034812
+138.4 m, 06-034813 213.9 m, 06-039216 241.4 m (of 275.3, from the SSW end); LTP 1 06-035207 38.8 m, 06-035206 177.2 m
+(of 177.0, from the NNW end); RCC TANK 06-034240 90.6 m (of 203.5, from the SSW end; its identity as the station
+stair / elevator tower is inferred). The 25 m lower end of the Garage A / G roof-deck band is what remains of the
+disputed "25–30 m" AirTrain-photo reading (`garage_a_height` / `garage_g_height`), not a level count.
+
+## Drawing round 2 (2026-11-04)
+
+- **Tags.** The identities of the LTP 1 DOF points (86 / 91 ft: stair towers / helix) and of the RCC TANK 06-034240
+  (60 ft: station stair / elevator tower) are inferences [inf]; the values stay [pub].
+- **Superbay.** Roof along the spine 138 m (8 × 17.25) against the outline's 134.5 m: 1.75 m per end of overhang [inf]
+  or outline error [unk]. BL-03 now draws the cantilever roofs falling from the spine (41.15 m DOF) to tips at ~27 m
+  (22–32) — photo l3 (BrokenSphere 2009, CC BY-SA 3.0, identification unverified) reads tip / ridge ~87 / 133 px [inf, low]
+  — and a WNW door face with the 8 folded bays (fold amplitude unknown) and two ~67 m door bays per side [inf].
+- **Grand Hyatt east face** (photo l4 = "Harvey Milk Terminal 1 Community Day - July 2019 (7391)", Gregory Varnum, CC BY-SA
+  4.0, the photo the spec cites): all-glass curtain wall with one spandrel band per floor; dark metal podium under the
+  south ~47 % (3.2 pitches), a recessed colonnade level (1 pitch), the slab (9 pitches); a dark stepped penthouse at
+  0.52–0.74 of the face (~1.5 / 0.7 pitches); four corner masts (~1.1 pitch). Pitch 3.33 m = the inferred 44 m / 13.2
+  [inf]. The spec's "taller straight block at the north end" is not visible in l4 (one parapet level along the face):
+  recorded as a conflict, not drawn.

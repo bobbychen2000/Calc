@@ -1141,6 +1141,12 @@
    "bytes": 721044,
    "sha256": "7ce3ec04ee63f140dba365f4d9b55c099ef39217a7d1b732611dbe3973da64b3"
   },
+  "gate_truth/app_types.json": {
+   "class": "local",
+   "why": "flysfo.com responses: no published terms",
+   "bytes": 4685,
+   "sha256": "62d77ef643484f63b828af1e8ccad914d7c5b63285c8d0562ffb87a534c6ca24"
+  },
   "gate_truth/flysfo_api_flight-status_20261104T180142Z.json.gz": {
    "class": "local",
    "why": "flysfo.com responses: no published terms",
@@ -1178,6 +1184,72 @@
    "bytes": 352,
    "sha256": "285779bc24562b49b789e70ec24caf6bea3d7b937a27c7ab5bc37c55e46077fd"
   },
+  "osm/.parts/api/2ca00ae0839fbfdec5cb3618d2d0d3cf49edd196.json": {
+   "class": "local",
+   "why": "OpenStreetMap (ODbL); larger than 25 MB",
+   "bytes": 50678488,
+   "sha256": "d507cb7cb175101fb9c246181ca950d7c887c0a73f6cd99690de5845f2d9e1c3"
+  },
+  "osm/.parts/api/3a31a77741d818a64fe0ff98b60ac3af7a26d13e.json": {
+   "class": "local",
+   "why": "OpenStreetMap (ODbL); larger than 25 MB",
+   "bytes": 50328478,
+   "sha256": "89dae2e92cd168c293cf3d1ebdc701fe384f3c9a10554160d4ca5f5e4b72cad6"
+  },
+  "osm/.parts/api/3cdc965ac244d667ecee52463ee68860071d413c.json": {
+   "class": "local",
+   "why": "OpenStreetMap (ODbL); larger than 25 MB",
+   "bytes": 64931700,
+   "sha256": "93209b3863448f6d37687632e7ca456f808866bb9385ede42f18717757a64d57"
+  },
+  "osm/.parts/api/413edae8564772c274d3f12d9e1ecf8b672fce8d.json": {
+   "class": "local",
+   "why": "OpenStreetMap (ODbL); larger than 25 MB",
+   "bytes": 28837459,
+   "sha256": "e000ee05633eefcd00156f7744feeeaf06a9c1c84ca51ddd239e75eb0281819a"
+  },
+  "osm/.parts/api/516db27cbfa9e2692b59cefb08f2d03877f12f5e.json": {
+   "class": "local",
+   "why": "OpenStreetMap (ODbL); larger than 25 MB",
+   "bytes": 59631602,
+   "sha256": "d918c0d90998ce13dacc4cd7e3c64265b8840c63544415b491edc760fc6cdc51"
+  },
+  "osm/.parts/api/737936c6a828d8d057bc1121b54ce2b9dc727feb.json": {
+   "class": "local",
+   "why": "OpenStreetMap (ODbL); larger than 25 MB",
+   "bytes": 58872203,
+   "sha256": "13aee3b18501bee344b6767178c205d098008ed9f099d8aaf224a8ad1a9bb1e0"
+  },
+  "osm/.parts/api/7ce7cb677f331c1c962777729a8b803867bca0be.json": {
+   "class": "local",
+   "why": "OpenStreetMap (ODbL); larger than 25 MB",
+   "bytes": 35953827,
+   "sha256": "6002d90ae74d22d27bcd5a76a4224c067278cc8d7fba1b68e9240d6f9886df9a"
+  },
+  "osm/.parts/api/9aac6b5ecbb2376dc69066676ccbeacc80540367.json": {
+   "class": "local",
+   "why": "OpenStreetMap (ODbL); larger than 25 MB",
+   "bytes": 51552723,
+   "sha256": "4aa8c98d08401539d3d4c4803ed2d7eaafecf73f5d265cd4137fcd52357f06b3"
+  },
+  "osm/.parts/api/c8a62111aeeb7790be199d1d86c5c189693a78cc.json": {
+   "class": "local",
+   "why": "OpenStreetMap (ODbL); larger than 25 MB",
+   "bytes": 73713927,
+   "sha256": "050a2d2ce1993be1eae04fbe3113da0337334aed78b0e6a39dcf0d7e086fab12"
+  },
+  "osm/.parts/api/d44f416a9939eeaacb788d262ba7f146dafcf71b.json": {
+   "class": "local",
+   "why": "OpenStreetMap (ODbL); larger than 25 MB",
+   "bytes": 51877238,
+   "sha256": "db225ac298822f48eb0f266e2162a116f4d65cd2d6148bcd3f86928915cba132"
+  },
+  "osm/.parts/api/d82cdda223e6e51eb08e6b66799216b32ccead63.json": {
+   "class": "local",
+   "why": "OpenStreetMap (ODbL); larger than 25 MB",
+   "bytes": 53955315,
+   "sha256": "1c236de01e9747f7ea5fdbfa37890a3f1bf22e97e39864d4bb5b3f3e4b690a28"
+  },
   "rec/adsbfi_20261104_17.jsonl.gz": {
    "class": "local",
    "why": "adsb.fi terms: personal non-commercial use, not to be licensed on",
@@ -1199,8 +1271,14 @@
   "rec/adsbfi_20261104_20.jsonl.gz": {
    "class": "local",
    "why": "adsb.fi terms: personal non-commercial use, not to be licensed on",
-   "bytes": 4366601,
-   "sha256": "2308dc2eace1411fc0047d49acc1d99c30faf1c385412d5af38007c2e4d2147f"
+   "bytes": 22098257,
+   "sha256": "0ea3beb528dad724727368c7ff5c0728acbd9b13660b9fd1e51e887c416e9b91"
+  },
+  "rec/adsbfi_20261104_21.jsonl.gz": {
+   "class": "local",
+   "why": "adsb.fi terms: personal non-commercial use, not to be licensed on",
+   "bytes": 4219322,
+   "sha256": "a625773f041efccb1a4f0a88a1c15e8f149211556869319683ae053fe052ee0b"
   },
   "rec/adsblol_20261104_17.jsonl.gz": {
    "class": "pack",
@@ -1223,14 +1301,20 @@
   "rec/adsblol_20261104_20.jsonl.gz": {
    "class": "pack",
    "why": "ODbL (adsb.lol); trimmed copy in rec_pack/",
-   "bytes": 1263483,
-   "sha256": "1e157d38f854f7a2218329ea19ee0d27c99e0baee75cf526b5cb8d50615da361"
+   "bytes": 5995292,
+   "sha256": "a97defc865ffdb5351a57715a2c699cfbc032b4b615114f4a6c1baf9c2468184"
+  },
+  "rec/adsblol_20261104_21.jsonl.gz": {
+   "class": "pack",
+   "why": "ODbL (adsb.lol); trimmed copy in rec_pack/",
+   "bytes": 1180643,
+   "sha256": "b8897ad39c887bdc93f4a79d2b6208bf6e4e0106db594bb6ca8c98113c637de2"
   },
   "rec/recorder.log": {
    "class": "local",
    "why": "recorder state",
-   "bytes": 5099,
-   "sha256": "3235dc1d01346972ea01690c0e4485a1667b8f1e27f3b0be8135a607b5bd3706"
+   "bytes": 7199,
+   "sha256": "fde8c5d89caa7ce3e6f361a5ecb5c4577c6aba8513cb5997fcdb5063b733ca24"
   },
   "rec/recorder.pid": {
    "class": "local",

@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osmChange version="0.6" generator="openstreetmap-cgimap 2.1.1 (3862814 spike-07.openstreetmap.org)" copyright="OpenStreetMap and contributors" attribution="http://www.openstreetmap.org/copyright" license="http://opendatacommons.org/licenses/odbl/1-0/">
+ <modify>
+  <way id="1178325085" visible="true" version="3" changeset="190772516" timestamp="2026-10-20T06:14:48Z" user="ChrisMD123" uid="2159136">
+   <nd ref="5729391174"/>
+   <nd ref="10946314528"/>
+   <nd ref="6975800698"/>
+   <tag k="highway" v="construction"/>
+   <tag k="oneway" v="yes"/>
+   <tag k="turn:lanes" v="|merge_to_left"/>
+  </way>
+ </modify>
+ <modify>
+  <way id="1178325075" visible="true" version="4" changeset="190772516" timestamp="2026-10-20T06:14:48Z" user="ChrisMD123" uid="2159136">
+   <nd ref="5729391876"/>
+   <nd ref="10946314522"/>
+   <nd ref="6778495189"/>
+   <nd ref="10946314521"/>
+   <nd ref="10946314527"/>
+   <nd ref="5729391174"/>
+   <tag k="bicycle" v="no"/>
+   <tag k="highway" v="construction"/>
+   <tag k="name" v="Zone D"/>
+   <tag k="oneway" v="yes"/>
+   <tag k="turn:lanes" v="through|through;right"/>
+  </way>
+ </modify>
+ <modify>
+  <way id="722638151" visible="true" version="6" changeset="190772516" timestamp="2026-10-20T06:14:48Z" user="ChrisMD123" uid="2159136">
+   <nd ref="6778495202"/>
+   <nd ref="6778495201"/>
+   <tag k="bicycle" v="no"/>
+   <tag k="highway" v="construction"/>
+   <tag k="name" v="Zone C D"/>
+   <tag k="oneway" v="yes"/>
+  </way>
+ </modify>
+ <modify>
+  <way id="781827703" visible="true" version="6" changeset="190772516" timestamp="2026-10-20T06:14:48Z" user="ChrisMD123" uid="2159136">
+   <nd ref="7299574635"/>
+   <nd ref="7299574636"/>
+   <nd ref="7299574637"/>
+   <nd ref="6778495202"/>
+   <tag k="bicycle" v="no"/>
+   <tag k="destination" v="Zone C;Zone D"/>
+   <tag k="highway" v="construction"/>
+   <tag k="name" v="Zone C D"/>
+   <tag k="oneway" v="yes"/>
+  </way>
+ </modify>
+ <modify>
+  <way id="682008751" visible="true" version="9" changeset="190772516" timestamp="2026-10-20T06:14:48Z" user="ChrisMD123" uid="2159136">
+   <nd ref="6386835531"/>
+   <nd ref="6778495197"/>
+   <nd ref="6778495194"/>
+   <nd ref="11979010222"/>
+   <nd ref="6778495193"/>
+   <nd ref="11979010221"/>
+   <nd ref="6778495190"/>
+   <nd ref="6386835532"/>
+   <tag k="bicycle" v="no"/>
+   <tag k="highway" v="construction"/>
+   <tag k="name" v="Zone C"/>
+   <tag k="oneway" v="yes"/>
+  </way>
+ </modify>
+ <modify>
+  <way id="722638149" visible="true" version="9" changeset="190772516" timestamp="2026-10-20T06:14:48Z" user="ChrisMD123" uid="2159136">
+   <nd ref="6778495201"/>
+   <nd ref="9371934811"/>
+   <nd ref="5729391171"/>
+   <tag k="bicycle" v="no"/>
+   <tag k="destination" v="Zone C;Zone D"/>
+   <tag k="highway" v="construction"/>
+   <tag k="name" v="Zone B"/>
+   <tag k="oneway" v="yes"/>
+  </way>
+ </modify>
+ <modify>
+  <way id="603550581" visible="true" version="11" changeset="190772516" timestamp="2026-10-20T06:14:48Z" user="ChrisMD123" uid="2159136">
+   <nd ref="6975800698"/>
+   <nd ref="9371934784"/>
+   <nd ref="10946314524"/>
+   <nd ref="5729391176"/>
+   <nd ref="5729391177"/>
+   <tag k="highway" v="construction"/>
+   <tag k="oneway" v="yes"/>
+   <tag k="turn:lanes" v="right"/>
+  </way>
+ </modify>
+ <modify>
+  <way id="603550622" visible="true" version="11" changeset="190772516" timestamp="2026-10-20T06:14:48Z" user="ChrisMD123" uid="2159136">
+   <nd ref="6386835532"/>
+   <nd ref="9371934783"/>
+   <nd ref="9371934812"/>
+   <nd ref="5729391877"/>
+   <nd ref="5729391876"/>
+   <tag k="bicycle" v="no"/>
+   <tag k="highway" v="construction"/>
+   <tag k="name" v="Zone D"/>
+   <tag k="oneway" v="yes"/>
+  </way>
+ </modify>
+ <modify>
+  <way id="603550626" visible="true" version="12" changeset="190772516" timestamp="2026-10-20T06:14:48Z" user="ChrisMD123" uid="2159136">
+   <nd ref="5729391171"/>
+   <nd ref="6778495199"/>
+   <nd ref="8824781506"/>
+   <nd ref="5729391885"/>
+   <nd ref="10946314529"/>
+   <nd ref="6386835529"/>
+   <nd ref="9371934782"/>
+   <nd ref="6778495198"/>
+   <nd ref="6386835530"/>
+   <nd ref="6386835531"/>
+   <tag k="bicycle" v="no"/>
+   <tag k="highway" v="construction"/>
+   <tag k="name" v="Zone B"/>
+   <tag k="oneway" v="yes"/>
+  </way>
+ </modify>
+</osmChange>

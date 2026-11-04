@@ -12,7 +12,8 @@ aft of the nose (x_station = -x).
 
 Per model:
   sec    fuselage section every `dx` metres from the nose: top / bottom of the skin on the centre plane and the half
-         width at mid height (planar cut of the triangle mesh; body and fin zones only, i.e. no gear, engines, glass)
+         width at mid height (planar cut of the triangle mesh; body and fin zones only, i.e. no gear, engines, glass);
+         over the forward 45 % also `hwf`, the half widths at the fractions `f` of the section height (bridge cab vs skin)
   doors  passenger-door objects of the SOURCE model (FlightAirMap .glb node names, e.g. A320 `DoorL1`, CRJ `LeftDoor`,
          E-Jet `door.l1`, A220 `doorFL`): station of the centre and of both edges, sill (lowest y) and top, side (L/R).
          Only some source models have door objects; for the others the doors exist only in the texture.
@@ -21,6 +22,12 @@ Per model:
   under  lowest skin height over a (station, |z|) grid: where the procedural struts of gear-less models meet the skin
   nose   id of another model whose nose section (x < 8 m) is vertex-identical (median distance < 2 cm), so a door
          measured on that model also holds for this one (E175 = E170 nose, CRJ900 = CRJ700 nose)
+  contact  models with their own gear (FG 737-800, 777): station and height of the nose-tyre and main-tyre bottoms
+         (main: median station of the tyre bottoms within 1 cm of the lowest point, i.e. the bogie centre). The FG models
+         stand level with the nose tyre 0.165-0.182 m above the ground; js/aircraft/fit.js pitches them nose-down about
+         the main contact so both units touch (review: nose wheel floating).
+  finTop station and height of the highest vertex (the fin tip), for the fin-height fit of a pitched model
+Source objects (doors, gearDoors) need the source models; without them the values of the existing features.json are kept.
 
 Usage: python3 tools/models/model_features.py [--fam DIR]
   --fam: FlightAirMap-3dmodels checkout (default $FAM_DIR or refs/cache/src/fam3d); without it only `sec`/`wing` are written
@@ -74,19 +81,36 @@ def crossings(segs, axis, v):
     return r
 
 
-def sections(pos, zone, idx, L, dx):
+# heights (fractions of the section height above its bottom) of the half-width table `hwf` over the forward fuselage
+# (stations <= HWF_TO x L): where the jet-bridge cab meets the skin (js/aircraft/fit.js hwAt: door 1, door 2, A380 U1L).
+# Review 4 Nov 2026: the ellipse through the best section within +-2 m of the door put widebody cabs 0.20-0.29 m off the skin.
+HWF = (0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9)
+HWF_TO = 0.45
+
+
+def sections(pos, zone, idx, L, dx, hwf=False):
     tri = idx[np.isin(zone[idx], (0, 1)).all(1)]
-    top, bot, hw = [], [], []
+    top, bot, hw, hf = [], [], [], []
     n = int(L / dx) + 1
     for i in range(n):
         xs = -min(max(i * dx, 0.02), L - 0.02)
         segs = plane_segments(pos, tri, xs)
         ys = crossings(segs, 1, 0.0) if len(segs) else []
-        if not ys: top.append(None); bot.append(None); hw.append(None); continue
+        if not ys:
+            top.append(None); bot.append(None); hw.append(None)
+            if hwf and i * dx <= HWF_TO * L: hf.append(None)
+            continue
         t, b = max(ys), min(ys)
         zs = crossings(segs, 0, (t + b) / 2)
         top.append(round(float(t), 2)); bot.append(round(float(b), 2)); hw.append(round(float(max(abs(z) for z in zs)), 2) if zs else None)
-    return dict(dx=dx, top=top, bot=bot, hw=hw)
+        if hwf and i * dx <= HWF_TO * L:
+            row = []
+            for f in HWF:
+                zz = crossings(segs, 0, b + f * (t - b)); row.append(round(float(max(abs(z) for z in zz)), 2) if zz else None)
+            hf.append(row)
+    out = dict(dx=dx, top=top, bot=bot, hw=hw)
+    if hwf: out.update(f=list(HWF), hwf=hf)
+    return out
 
 
 def wing(pos, zone, L, hw=2.0):
@@ -130,6 +154,18 @@ def underside(pos, zone, idx, L, cell=0.5):
         np.minimum.at(grid, (i, j), P[ok, 1])
     y = [[None if not np.isfinite(v) else round(float(v), 2) for v in row] for row in grid]
     return dict(s0=round(s0, 2), ds=cell, dz=cell, y=y)
+
+
+def contact(pos, zone, idx, L):
+    """nose / main tyre bottoms of a model with its own gear (zone 3), stations positive aft"""
+    used = np.zeros(len(pos), bool); used[np.unique(idx)] = True
+    g = pos[(zone == 3) & used]
+    if len(g) < 50: return None
+    nose, main = g[g[:, 0] > -0.3 * L], g[g[:, 0] <= -0.3 * L]
+    if not len(nose) or not len(main): return None
+    n = nose[np.argmin(nose[:, 1])]; ym = float(main[:, 1].min()); mb = main[main[:, 1] < ym + 0.01]
+    return dict(nose=dict(st=round(float(-n[0]), 3), y=round(float(n[1]), 3)),
+                main=dict(st=round(float(-np.median(mb[:, 0])), 3), y=round(ym, 3), st0=round(float(-mb[:, 0].max()), 3), st1=round(float(-mb[:, 0].min()), 3)))
 
 
 def source_objects(key, fam):
@@ -215,14 +251,25 @@ def main():
         k = fn[:-5]; head, pos, zone, idx = load(os.path.join(MD, fn))
         models[k] = dict(head=head, pos=pos, zone=zone, idx=idx)
     noses = same_nose(models)
+    old = {}
+    try: old = json.load(open(os.path.join(MD, 'features.json')))
+    except Exception: pass
     feats = {}
     for k, m in models.items():
         L = m['head']['dims']['L']
-        sec = sections(m['pos'], m['zone'], m['idx'], L, a.dx)
+        sec = sections(m['pos'], m['zone'], m['idx'], L, a.dx, hwf=True)
         hwm = float(np.median([h for h in sec['hw'][int(0.3 * L / a.dx):int(0.5 * L / a.dx)] if h is not None] or [2.0]))
         f = dict(sec=sec, wing=wing(m['pos'], m['zone'], L, hwm), under=underside(m['pos'], m['zone'], m['idx'], L))
+        if m['head']['dims'].get('hasGear'):
+            c = contact(m['pos'], m['zone'], m['idx'], L)
+            if c: f['contact'] = c
+        used = np.unique(m['idx']); it = used[np.argmax(m['pos'][used, 1])]
+        f['finTop'] = dict(st=round(float(-m['pos'][it, 0]), 3), y=round(float(m['pos'][it, 1]), 3))
         so = source_objects(k, a.fam) if os.path.isdir(a.fam) else None
         if so: f.update(so)
+        else:                                   # source models not present: keep the measured source objects
+            for kk in ('doors', 'gearDoors'):
+                if kk in old.get(k, {}): f[kk] = old[k][kk]
         if k in noses: f['sameNose'] = sorted(noses[k])
         feats[k] = f
         print(f"{k:5s} L={L:6.2f} semi={f['wing']['semi']:.2f} engOut={f['wing']['engOut']} doors={[d['name'] + '@' + str(d['x']) for d in f.get('doors', [])]} sameNose={f.get('sameNose')}")

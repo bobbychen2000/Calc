@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osmChange version="0.6" generator="openstreetmap-cgimap 2.1.1 (3590320 spike-07.openstreetmap.org)" copyright="OpenStreetMap and contributors" attribution="http://www.openstreetmap.org/copyright" license="http://opendatacommons.org/licenses/odbl/1-0/">
+ <modify>
+  <node id="10742623332" visible="true" version="8" changeset="189500001" timestamp="2026-09-24T13:53:51Z" user="dsk1" uid="2349071" lat="37.6005661" lon="-122.3844651">
+   <tag k="addr:city" v="Millbrae"/>
+   <tag k="addr:housenumber" v="100"/>
+   <tag k="addr:postcode" v="94030"/>
+   <tag k="addr:state" v="CA"/>
+   <tag k="addr:street" v="Rollins Road"/>
+   <tag k="amenity" v="fast_food"/>
+   <tag k="branch" v="Millbrae Avenua and Rollins Road"/>
+   <tag k="brand" v="Panda Express"/>
+   <tag k="brand:wikidata" v="Q1358690"/>
+   <tag k="check_date" v="2026-07-02"/>
+   <tag k="cuisine" v="chinese"/>
+   <tag k="drive_through" v="no"/>
+   <tag k="name" v="Panda Express"/>
+   <tag k="opening_hours" v="09:00-22:30"/>
+   <tag k="phone" v="+1-650-844-7988"/>
+   <tag k="takeaway" v="yes"/>
+   <tag k="website" v="https://www.pandaexpress.com/locations/ca/millbrae/3765"/>
+  </node>
+ </modify>
+</osmChange>

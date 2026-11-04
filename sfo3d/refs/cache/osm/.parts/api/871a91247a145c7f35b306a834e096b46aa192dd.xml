@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osmChange version="0.6" generator="openstreetmap-cgimap 2.1.1 (3562590 spike-07.openstreetmap.org)" copyright="OpenStreetMap and contributors" attribution="http://www.openstreetmap.org/copyright" license="http://opendatacommons.org/licenses/odbl/1-0/">
+ <modify>
+  <way id="1241804672" visible="true" version="7" changeset="189800483" timestamp="2026-10-01T02:42:50Z" user="bobbykins" uid="24579253">
+   <nd ref="5172329035"/>
+   <nd ref="11538731322"/>
+   <nd ref="11538731321"/>
+   <nd ref="11538731320"/>
+   <nd ref="11538731319"/>
+   <nd ref="11538731318"/>
+   <nd ref="14097705503"/>
+   <nd ref="5172329035"/>
+   <tag k="addr:state" v="CA"/>
+   <tag k="airside" v="yes"/>
+   <tag k="amenity" v="fast_food"/>
+   <tag k="check_date" v="2026-09-30"/>
+   <tag k="check_date:opening_hours" v="2026-09-30"/>
+   <tag k="drive_through" v="no"/>
+   <tag k="indoor" v="room"/>
+   <tag k="indoor_seating" v="yes"/>
+   <tag k="level" v="1"/>
+   <tag k="name" v="Klein's Deli"/>
+   <tag k="opening_hours" v="Mo-Su 05:00-23:00"/>
+   <tag k="outdoor_seating" v="no"/>
+   <tag k="wheelchair" v="yes"/>
+  </way>
+ </modify>
+</osmChange>
