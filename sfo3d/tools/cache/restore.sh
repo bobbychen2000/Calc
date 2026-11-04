@@ -10,9 +10,9 @@
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 mkdir -p refs/cache/rec
-for f in refs/cache/rec_pack/adsblol_*.jsonl.gz; do
+for f in refs/cache/rec_pack/adsblol_*.jsonl.xz; do       # xz packs -> the recorder's gzip format (tools/live/recio.py)
   [ -e "$f" ] || continue
-  b=$(basename "$f"); [ -e "refs/cache/rec/$b" ] || cp "$f" "refs/cache/rec/$b"
+  b=$(basename "$f" .xz).gz; [ -e "refs/cache/rec/$b" ] || python3 -c 'import gzip,lzma,shutil,sys; shutil.copyfileobj(lzma.open(sys.argv[1]), gzip.open(sys.argv[2], "wb", 6))' "$f" "refs/cache/rec/$b"
 done
 if [ ! -e refs/cache/naip/naip_2024_world_0.5m.png ]; then
   python3 tools/imagery/naip_fetch.py --source usda

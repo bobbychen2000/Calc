@@ -1107,8 +1107,8 @@ export class LiveGateSystem {
     // hull of a vehicle at v: local boxes [x0, x1, z0, z1, y0, y1] (x forward, z right), plus an optional sloped conveyor
     // {x0, y0, len, th, w, h, xe} whose last 1.0 m (the end and its bumper on the cargo-door sill) may touch the fuselage
     // and whose rest keeps 0.1 m under the lower lobe (the chassis and the other vehicles 0.3 m)
-    const no = (why) => { if (this.gseWhy) this.gseWhy.push(why); return false; }; // (gseWhy: checkers' diagnostics)
-    const ok = (v, boxes, belt = null) => {
+    let label = ''; const no = (why) => { if (this.gseWhy) this.gseWhy.push(label + ': ' + why); return false; }; // (gseWhy: checkers' diagnostics)
+    const ok = (v, boxes, belt = null, lab = '') => { label = lab;
       const rt = [-v.d[2], v.d[0]]; const W = (x, z) => [v.p[0] + v.d[0] * x + rt[0] * z, v.p[2] + v.d[2] * x + rt[1] * z];
       const smp = []; // [x, z (world), lo, hi (above the apron), margin, closure]
       for (const [x0, x1, z0, z1, y0, y1] of boxes) { const nx = Math.max(1, Math.ceil((x1 - x0) / 0.3)), nz = Math.max(1, Math.ceil((z1 - z0) / 0.3));
@@ -1129,7 +1129,7 @@ export class LiveGateSystem {
     const tint = () => { const cs = [[0.95, 0.95, 0.95], [0.9, 0.75, 0.1], [0.15, 0.3, 0.6], [0.85, 0.3, 0.1], [0.4, 0.42, 0.45]]; return [...cs[Math.floor(R() * cs.length)], 1]; };
     const B = this.vehicleBuckets;
     const HULL = { tug: [[-1.4, 1.4, -0.92, 0.92, 0, 2.1]], cart: [[-1.5, 1.5, -0.85, 0.85, 0, 1.6]], catering: [[-3.5, 4.55, -1.2, 1.2, 0, 6.2]], fuel: [[-3.8, 4.55, -1.3, 1.3, 0, 3.2]], gpu: [[-1.2, 1.2, -0.7, 0.7, 0, 1.5]], cone: [[-0.22, 0.22, -0.22, 0.22, 0, 0.75]] };
-    const put = (bucket, v, color) => { if (ok(v, HULL[bucket])) { B[bucket].push(inst(v.M, color || tint())); return true; } return false; };
+    const put = (bucket, v, color) => { if (ok(v, HULL[bucket], null, bucket)) { B[bucket].push(inst(v.M, color || tint())); return true; } return false; };
     const fuse = T.R + 0.4;
     // cargo doors are on the right (starboard) side: forward ahead of the wing, aft behind it (stations inferred)
     const fwdCargo = T.L * 0.22, aftCargo = T.L * 0.66;
@@ -1149,10 +1149,13 @@ export class LiveGateSystem {
       for (const [X, pr, sgn] of [[fwdCargo, 0.85, -1], [aftCargo, 0.6, 1]]) { if (R() >= pr) continue;
         for (const yaw of [72, 90, 60]) { const c = sgn * Math.cos(yaw * DEG), sn = -Math.sin(yaw * DEG); const d = v3.norm(v3.add(v3.mul(f, c), v3.mul(r, sn)));
           const e = v3.add(v3.sub(nose, v3.mul(f, X)), v3.mul(r, yEnd)); const p = v3.sub(e, v3.mul(d, sh.xe));
-          const v = { M: m4.basis(d, [0, 1, 0], [p[0], G, p[2]]), p, d }; if (ok(v, boxes, belt)) { B[bk].push(inst(v.M, tint())); break; } } } }
+          const v = { M: m4.basis(d, [0, 1, 0], [p[0], G, p[2]]), p, d }; if (ok(v, boxes, belt, bk)) { B[bk].push(inst(v.M, tint())); break; } } } }
     // baggage train alongside the aft fuselage behind the wing, tug facing forward, carts trailing
-    if (R() < 0.75) { const y = fuse + 6.8, a0 = aftCargo + 2.5; if (put('tug', at(a0, y, 0), tugCol())) for (let i = 0; i < 3; i++) put('cart', at(a0 + 3.4 + i * 3.4, y, 0), cartCol()); }
-    if (R() < 0.45 && T.doors[1] != null) put('catering', at(T.doors[1] + 1, fuse + 4.4, -Math.PI / 2), [0.95, 0.95, 0.95, 1]);
+    // (beside the aft belt loader's low end, or further out where that is in the way)
+    if (R() < 0.75) { const tc = tugCol(), cc = [cartCol(), cartCol(), cartCol()]; const a0 = aftCargo + 2.5;
+      for (const y of [fuse + 6.8, fuse + 10.5]) if (put('tug', at(a0, y, 0), tc)) { for (let i = 0; i < 3; i++) put('cart', at(a0 + 3.4 + i * 3.4, y, 0), cc[i]); break; } }
+    // (catering truck square to the door, its front 0.7 m off the fuselage side: the mesh reaches 4.55 m ahead of its origin)
+    if (R() < 0.45 && T.doors[1] != null) put('catering', at(T.doors[1] + 1, fuse + 4.85, -Math.PI / 2), [0.95, 0.95, 0.95, 1]);
     if (R() < 0.35 && T.eng.length) put('fuel', at(T.xMain - 5, T.eng[T.eng.length - 1].z + 7.5, 0), [0.85, 0.85, 0.85, 1]);
     if (R() < 0.6) put('gpu', at(3.5, fuse + 3.4, 0.3));
     const span = T.wing ? T.wing.span / 2 : 18;

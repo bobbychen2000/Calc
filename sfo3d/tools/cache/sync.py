@@ -9,7 +9,8 @@ The repository is PUBLIC (github.com/bobbychen2000/Calc), so a file is committed
            in a SOURCES.json next to the file; at most MAX_MB per file (GitHub refuses > 100 MB; big blobs slow every
            clone of this shared repo).
   pack     adsb.lol recordings: a trimmed copy (aircraft within PACK_NM of SFO and at most PACK_FT, or on the ground;
-           every field kept) in refs/cache/rec_pack/, committed; tools/cache/restore.sh puts it back into rec/.
+           every field kept) in refs/cache/rec_pack/<hour>.jsonl.xz, committed; xz -9e (lossless, ~0.9 MB per busy hour
+           vs ~3.6 MB as gzip-9); tools/cache/restore.sh re-gzips it back into rec/.
   local    everything else stays on disk only and is listed in refs/MANIFEST.json with its size, SHA-256, licence
            class and source URL (when known), so it can be re-fetched and checked: rasters reproducible from public
            sources (NAIP: tools/cache/restore.sh), manufacturer documents, photos without an open licence, the user's
@@ -146,8 +147,9 @@ def trim_pack(src, dst):
                 break
         else:
             break
+    import lzma
     tmp = dst + '.tmp'
-    with gzip.open(tmp, 'wt', compresslevel=9) as out:
+    with lzma.open(tmp, 'wt', preset=9 | lzma.PRESET_EXTREME) as out:
         for line in buf.decode('utf-8', 'replace').splitlines():
             try:
                 r = json.loads(line)
@@ -179,7 +181,10 @@ def main():
     os.makedirs(pack_dir, exist_ok=True)
     hours = sorted(glob.glob(os.path.join(CACHE, 'rec', 'adsblol_*.jsonl.gz')))
     for p in hours[:-1]:       # the newest file is still being written by the recorder
-        dst = os.path.join(pack_dir, os.path.basename(p))
+        dst = os.path.join(pack_dir, os.path.basename(p)[:-len('.gz')] + '.xz')
+        old = dst[:-len('.xz')] + '.gz'          # packs before 2026-11-04 20:00Z were gzip
+        if os.path.exists(old) and not a.dry_run:
+            os.remove(old)
         if not os.path.exists(dst) or os.path.getmtime(dst) < os.path.getmtime(p):
             if not a.dry_run:
                 trim_pack(p, dst)

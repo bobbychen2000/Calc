@@ -14,11 +14,12 @@ compared with NAIP at its PREDICTED IMAGED position, and a footprint (ground-con
                position; NOT independent (derived from the same imagery) - a consistency check of the lean model.
 
 Lean (relief per metre of height, world x, z) per building, with its source:
-  frame    NAIP 2024 frame model on the five FAA DOF poles (draw_data.lean_frame; ITB research V.2): ITB hall, BA-A,
-           BA-G, the tower and its base building;
+  frame    NAIP 2024 frame model on the five FAA DOF poles (draw_data.lean_frame; ITB research V.2): ITB hall and its
+           west facade base, BA-A, the tower and its base building (BA-G: reported for comparison only);
   dom      the domestic two-epoch 2024 lean per pier (draw_data.dom_lean; east assumed for the along-face part);
   north    0.30-0.33 m/m east measured at the CAC and LTP Garage 1 by shadow (spec_landside cac_height, ltp1_scan);
-  kmodel   the ITB k(x) east model inside its calibrated range (Garages A / G) or extrapolated (central garage) [inf];
+  kmodel   the ITB k(x) east model inside its calibrated range (BA-G, as its spec height; Garages A / G) or
+           extrapolated (central garage) [inf];
   fitted   the Superbay's 2-D roof shift (-7.0, -7.5) m over the DOF 135 ft - fitted to this imagery, so its roof
            offsets are circular (reported, not a check).
 Offsets o are signed along the edge's OUTWARD normal: + = NAIP edge outside the predicted / drawn edge.
@@ -98,10 +99,20 @@ def run():
     cab = np.array(D.TV['position_cab_roof_centre']['value'], float)
     imaged = np.array([-700.85, 322.40])  # spec position_cab_roof_centre note: NAIP 2024 disc centre (obs)
     cabchk = {}
-    for fam, H in (('spec / family 1 (rim 67.36 m)', 67.36), ('family 2 (rim 64.0 m)', 64.0)):
-        pred = cab + D.lean_frame(cab, H)
+    preds = []
+    for fam, H in (('family 1 (rim 67.36 m)', 67.36), ('family 2 (rim 64.0 m)', 64.0)):
+        pred = cab + D.lean_frame(cab, H); preds.append(pred)
         cabchk[fam] = dict(predicted_imaged=[round(float(x), 2) for x in pred], observed_imaged=imaged.tolist(),
                            delta=[round(float(x), 2) for x in imaged - pred])
+    fm = D.IV['naip.k_model']['alt_frame_model']
+    lean_m = float(np.hypot(*D.lean_frame(cab, 66.0)))
+    cabchk['_reading'] = dict(
+        prediction_difference_m=round(float(np.hypot(*(preds[0] - preds[1]))), 2),
+        input_uncertainty=dict(cab_x_m=5.0, cab_x_tag='inf (OSM / Google traced on lean-affected imagery; spec: not independent)',
+                               frame_lean_sd_m=round(lean_m * fm['H_minus_h_sd'] / fm['H_minus_h'], 1),
+                               frame_note=f"H - h sd {fm['H_minus_h_sd']} m of {fm['H_minus_h']} m on the ~{lean_m:.0f} m lean"),
+        verdict='INCONCLUSIVE: the two families predict imaged centres closer together than the input uncertainty; the k(x) model '
+                'gives the same pair (-701.8 / -703.7), so a second relief model does not separate them.')
     # ------------------------------------------------------------------ ITB hall roof (eave height varies along u)
     F = D.itb_frame(); C = F['corners']
     ring = [C['NW'], C['NE'], C['SE'], C['SW']]
@@ -111,10 +122,30 @@ def run():
         return float(D.itb_eave_h(min(abs(u), 126.0)))
     E += measure_ring('ITB main hall roof', ring, None, lambda P: per_m_frame(P, 38.0), 'frame',
                       'roof.profile (eave, obs; DOF-anchored)', kinds=('roof',), hfun=h_itb)
-    for nm, hid in (('Boarding Area A', 'ba_a.height_roof'), ('Boarding Area G', 'ba_g.height_roof')):
-        h = D.IV[hid]['value']
-        for r in D.outer_rings(nm, 'boardingAreas'):
-            E += measure_ring(nm, r, h, lambda P, h=h: per_m_frame(P, h), 'frame', f'{hid} {h} [obs]')
+    # ITB west facade (glass wall) base: the NAIP straight facade-base line (itb_naip_measurements eave_profile, imaged
+    # v -43.5) is the wall base on the elevated departures curb (level 3, photos); drawn wall = that line moved back by the
+    # relief of h = L3; checked at its predicted imaged position (same imagery: a consistency check of the placement)
+    W = D.itb_west_wall()
+    a, b = D.itb_uv(F, -100.0, W['v']), D.itb_uv(F, 100.0, W['v'])
+    for p, q in _chunks(a, b):
+        mid = (p + q) / 2; sh = D.lean_frame(mid, W['h_base']); n = -F['v']
+        r = measure_edge(p, q, n, sh, half=3.0)
+        if r is None: continue
+        E.append(dict(building='ITB west facade (glass-wall base on L3)', kind='base', p0=[round(float(x), 2) for x in p],
+                      p1=[round(float(x), 2) for x in q], n=[round(float(x), 3) for x in n], h=round(W['h_base'], 2),
+                      shift=[round(float(x), 2) for x in sh], lean='frame', h_src=f"level3.floor {W['h_base']} [inf]", **r,
+                      ok=bool(r['ratio'] >= 1.25 and r['strength'] >= 3.0)))
+    # Boarding Areas A (frame model) and G (k(x) east-only, as the spec's verified height; the frame model is reported
+    # for comparison only: under it G's roof would hide its own shadow - spec ba_g.height_roof verification)
+    h = D.IV['ba_a.height_roof']['value']
+    for r in D.outer_rings('Boarding Area A', 'boardingAreas'):
+        E += measure_ring('Boarding Area A', r, h, lambda P, h=h: per_m_frame(P, h), 'frame', f'ba_a.height_roof {h} [obs]')
+    h = D.IV['ba_g.height_roof']['value']
+    for r in D.outer_rings('Boarding Area G', 'boardingAreas'):
+        kx = np.array([D.k_x_model(float(np.mean(np.asarray(r)[:, 0]))), 0.0])
+        E += measure_ring('Boarding Area G', r, h, kx, f'kmodel east k {kx[0]:.3f} (as spec ba_g.height_roof)', f'ba_g.height_roof {h} [obs]')
+        E += measure_ring('Boarding Area G (frame model, comparison only)', r, h, lambda P, h=h: per_m_frame(P, h), 'frame',
+                          f'ba_g.height_roof {h} [obs]')
     # ------------------------------------------------------------------ domestic piers and halls
     for L, nm in (('B', 'Boarding Area B'), ('C', 'Boarding Area C'), ('D', 'Boarding Area D'), ('E', 'Boarding Area E'),
                   ('F', 'Boarding Area F')):

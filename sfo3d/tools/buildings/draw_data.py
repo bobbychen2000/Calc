@@ -166,6 +166,25 @@ def itb_eave_h(absu):
     return np.interp(absu, U, H)
 
 
+L3_RANGE = (9.6, 14.8)      # level3.floor: 40.1 m minus 100 ft (sfgate2000) .. minus the 83-ft hall height (verification)
+
+
+def itb_west_wall():
+    """True position of the ITB west glass wall in the roof frame (v, m; west eave at -W/2), from the NAIP straight
+    facade-base line (itb_naip_measurements eave_profile.base_line_v_median, imaged frame, sd 0.6 m) [obs] moved back by
+    the frame-model relief of the height of that base. The base is the glass wall's foot on the elevated departures curb
+    (level 3, photos i3 / i4) [inf height: level3.floor 11.5, 9.6-14.8]; v_grade = the reading if the base were at grade."""
+    F = itb_frame(); rf = ITBM['roof_frame']; ep = ITBM['eave_profile']
+    ci = np.array(rf['centre_imaged_xz'], float); ax = unit(rf['axis_xz']); vv = np.array([ax[1], -ax[0]])
+    P = ci + vv * ep['base_line_v_median']
+    v_img = float(np.dot(P - F['c'], F['v']))
+
+    def v_at(h):
+        return v_img - float(np.dot(lean_frame(P, h), F['v']))
+    h = IV['level3.floor']['value']
+    return dict(v=v_at(h), v_range=(v_at(L3_RANGE[1]), v_at(L3_RANGE[0])), v_grade=v_img, h_base=h, sd=ep['base_line_v_sd'])
+
+
 def itb_profile_points():
     fc = IV['roof.profile']['full_curve']
     return [(p['abs_u'], p['h_agl_m']) for p in fc]
