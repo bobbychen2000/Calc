@@ -1,0 +1,591 @@
+// GLB loading, part registry, visibility and material variants
+// (primer/paint sweep, cutaway clipping with lining-coloured back faces, x-ray, highlights).
+// The materials themselves (lookdev PBR values and the shader patches) live in materials.js.
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { U as MU, CABIN, INTERIOR_PARTS as LIT_INTERIOR, upgradeMaterials, clonePatched, addFur } from './materials.js';
+
+// Skin parts clipped by the cutaway plane (model y = 0, glTF X = 0; the port half X < 0 is removed).
+export const CUT_PARTS = new Set([
+  'fus_center', 'fus_fwd', 'fus_aft', 'glazing_cabin', 'glazing_flightdeck', 'door_airstair', 'door_cargo',
+  'exit_hatch', 'door_frames', 'belly_fairing', 'cowl_upper', 'cowl_lower', 'chin_inlet',
+  'gear_door_NR', 'gear_door_NL', 'dorsal_fin', 'structure', 'interior_lining',
+  // the airstair's handrail (lower rod, telescoping upper rod, its sleeve on the jamb) and restraint cables are cut
+  // with the door
+  'door_airstair_rail', 'door_airstair_rail_up', 'door_airstair_rail_sleeve', 'door_airstair_cable',
+]);
+// Fixed interior parts cut with the lining (review r2 M3): the port half of the cabin furniture (ledges -- their
+// cargo-door segment rides on the clipped door_cargo --, cabinets, lavatory, headliner fittings) and of the flight
+// deck's divider (fd_divider: walnut walls, curtain, extinguisher) and side consoles (fd_consoles), each cut as a
+// whole part so no fitting is left floating over a clipped body (review r3 C1).  null = every material of the part.
+// The floor, carpet and seat tracks (cabin_floor; the flight deck's carpet and tunnel plinth in flight_deck) stay
+// whole -- the seats stand on them (review r3 F4) -- and so do the panel, glareshield, pedestal, the seats and the crew
+// controls.  The club tables (table_*, table_*_leaf) go with the ledges they slide out of.
+export const CUT_MATERIALS = {
+  cabin_interior: null,
+  fd_divider: null,
+  fd_consoles: null,
+};
+const CUT_PREFIX = /^table_/;
+// Exterior shells that turn translucent in X-ray.
+export const XRAY_PARTS = new Set([
+  ...[...CUT_PARTS].filter((id) => id !== 'structure'),
+  'wing_R', 'wing_L', 'winglet_R', 'winglet_L', 'fin', 'rudder', 'rudder_tab', 'stabilizer',
+  'elevator_R', 'elevator_L', 'tail_bullet', 'flap_R', 'flap_L', 'aileron_R', 'aileron_L', 'ail_tab_R',
+  'ail_tab_L', 'flap_fairings', 'flap_canoes_R', 'flap_canoes_L', 'strakes', 'radar_pod',
+]);
+// Parts that sit inside the skin (for the "use X-ray / cutaway" hint).  Every part of the GLB group 'Interior' (the
+// seats seat_pilot, seat_copilot, seat_pax1 .. of model/seats.py) is added when the model loads.
+export const INTERNAL_PARTS = new Set([
+  'structure', 'eng_rgb', 'eng_exhaust', 'eng_pt', 'eng_combustor', 'eng_compressor', 'eng_inlet_screen',
+  'eng_agb', 'engine_mount', 'firewall', 'inlet_duct', 'flight_deck', 'cabin_interior', 'interior_lining', 'gear_bays',
+]);
+const SHADOW_CASTERS = /^(gear_|blade_|propeller|brace_|exhaust_stacks|antennas|pitot|lights)/;
+// Inside (look L2: the sun's shadow map round the flight deck, scene.js LOOK.sun): the skins, the cowl, the glazing frames,
+// the doors and every interior part cast; the glass never does (the exterior set lets the glazing cast with its xray
+// shell: inside, the windshield would block the sun); a spinning propeller's blades do not (a frozen blade shadow; the
+// map follows the pose, not the spin).  The interior parts, the door / glazing frames and the doors' inner faces receive.
+const SUN_CASTERS = /^(fus_|cowl_|chin_inlet|blade_|propeller|glazing_|door_|exit_hatch|flight_deck|fd_|yoke_|pedal_|seat_|interior_lining|cabin_|table_)/;
+const SUN_RECEIVERS = /^(flight_deck|fd_|yoke_|pedal_|seat_|interior_lining|cabin_|table_|glazing_|door_|exit_hatch)/;
+const NO_CAST_RE = /^(glass|lens)/;
+// Exterior parts whose bases reach through the skin into the cabin (the dorsal antenna bases hang ~5 cm below the
+// crown skin): hidden while the camera is inside the cabin, where they would show as glossy blue blobs on the
+// ceiling.  A stopgap until model/details.py trims them at the OML.
+const CABIN_HIDDEN = new Set(['antennas']);
+// flight deck fix r5 (FID-FD4-06; the owner: the crew seats barely appear in the forward views): through the photo-fitted
+// panel_408b camera P1046408's cushion tops sit ~45 px (900 px frame) above the neutral seats' -- full forward or full up
+// alone each ~40 px of the L6 travel.  Parked there (35 mm fwd + 25 up, then 40 up alone) the seat backs and cushions
+// covered the side consoles at that camera, which the photo shows clear beside the raised cushions ([FD-L2] lost every
+// console pixel): the seats / consoles disagree with the photo in plan, not in travel -- an L6 table question, so the
+// default stays the neutral SRP the GLB is built at; ?seatpark=1 shows the photo's 40 mm up (glTF offsets: X = BL,
+// Y = WL, Z = STA).
+// (flight deck fix FDY r1, FIDY1-05 -- an OPEN owner question, the crew-seat / console tables' re-measure: at the
+// bundle-adjusted P1046410 / 09 / Mexico cameras the neutral seat backs fill ~1/3 of the frame where the photos show none;
+// ?seatpark=aft parks both seats at full aft travel, CREW_SEAT travel_x 70 mm, to compare those photos like with like;
+// the default is unchanged)
+const SEAT_PARK_Q = new URLSearchParams(location.search).get('seatpark');
+// (flight deck fix FDY r2, FIDY2-03: ?seatpark=dy,dz -- any up / aft offset in m, glTF Y / Z, for the photo comparisons)
+const SEAT_PARK_XYZ = /^-?[\d.]+,-?[\d.]+$/.test(SEAT_PARK_Q || '') ? [0, ...SEAT_PARK_Q.split(',').map(Number)] : null;
+const SEAT_PARK = SEAT_PARK_Q === '1' ? { seat_pilot: [0, 0.040, 0], seat_copilot: [0, 0.040, 0] }
+  : SEAT_PARK_Q === 'aft' ? { seat_pilot: [0, 0, 0.070], seat_copilot: [0, 0, 0.070] }
+  : SEAT_PARK_XYZ ? { seat_pilot: SEAT_PARK_XYZ, seat_copilot: SEAT_PARK_XYZ } : {};
+
+const PAINT_RE = /^(paint_|trim_black$)/;
+const GLASS_RE = /^(glass|lens$)/;
+export const PRIMER_HEX = MU.primer.value.getHex();
+
+// The packaged GLB is EXT_meshopt_compression (web/package.py: ~3x smaller); out/pc12.glb (KHR_mesh_quantization
+// only) loads through the same loader.  The meshopt decoder is WebAssembly, which a Content-Security-Policy without
+// 'wasm-unsafe-eval' refuses: it is imported on its own, so neither its evaluation nor its rejected start-up can stop
+// the viewer (null = no decoder), and not at all when index.html found WebAssembly refused (PC12_BOOT.wasm false: the
+// page loads the gzip-compressed plain GLB instead).
+const MESHOPT = window.PC12_BOOT && window.PC12_BOOT.wasm === false ? Promise.resolve(null)
+  : import('three/addons/libs/meshopt_decoder.module.js').then(({ MeshoptDecoder: d }) => {
+    if (d && d.ready) d.ready.catch(() => {});
+    return d && d.supported !== false ? d : null;
+  }, () => null);
+const asError = (err) => (err instanceof Error ? err : new Error(String(err && err.message || err)));
+// Images embedded in the GLB (the G3000 page atlas): three's loader turns the bufferView into a blob: URL and fetch()es
+// it, which a Content-Security-Policy whose connect-src has no blob: refuses (the claude.ai Artifact host: the displays
+// stayed blank).  The bytes are decoded directly instead, as its ImageBitmapLoader would (no premultiply, no colour
+// conversion); without createImageBitmap three's own path is kept.
+function embeddedImages(parser) {
+  const own = parser.loadImageSource.bind(parser);
+  parser.loadImageSource = (index, texLoader) => {
+    const def = parser.json.images[index];
+    if (def.bufferView === undefined || typeof createImageBitmap === 'undefined') return own(index, texLoader);
+    if (parser.sourceCache[index] !== undefined) return parser.sourceCache[index].then((t) => t.clone());
+    const p = parser.getDependency('bufferView', def.bufferView)
+      .then((bv) => createImageBitmap(new Blob([bv], { type: def.mimeType }), { premultiplyAlpha: 'none', colorSpaceConversion: 'none' }))
+      .then((bmp) => {
+        const t = new THREE.Texture(bmp);
+        t.needsUpdate = true;
+        t.userData.mimeType = def.mimeType;
+        return t;
+      });
+    parser.sourceCache[index] = p;
+    return p;
+  };
+  return { name: 'pc12_embedded_images' };
+}
+async function loader(meshopt) {
+  const l = new GLTFLoader().register(embeddedImages), d = meshopt === false ? null : await MESHOPT;
+  return d ? l.setMeshoptDecoder(d) : l;
+}
+export async function loadGLB(url, onProgress) {
+  const l = await loader();
+  return new Promise((resolve, reject) => {
+    l.load(url, resolve, (e) => onProgress && onProgress(e), (err) => reject(asError(err)));
+  });
+}
+// a GLB the page downloaded itself (index.html's boot script streams it for the loading bar); meshopt false: a plain
+// GLB parsed without the decoder (the gzip fallback)
+export async function parseGLB(buffer, url, { meshopt = true } = {}) {
+  const base = new URL('.', new URL(url, location.href)).href, l = await loader(meshopt);
+  return new Promise((resolve, reject) => {
+    l.parse(buffer, base, resolve, (err) => reject(asError(err)));
+  });
+}
+
+// Translucent "ghost" material: fresnel-weighted alpha, no depth write.
+function makeXray(clipPlanes) {
+  const m = new THREE.MeshStandardMaterial({
+    color: 0x9fb6cc, roughness: 0.35, metalness: 0.0, transparent: true, opacity: 0.1,
+    depthWrite: false, side: THREE.DoubleSide, emissive: 0x2a4460, emissiveIntensity: 0.25,
+  });
+  if (clipPlanes) m.clippingPlanes = clipPlanes;
+  m.onBeforeCompile = (sh) => {
+    sh.fragmentShader = sh.fragmentShader.replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
+  float fres = 1.0 - abs(dot(normalize(normal), normalize(vViewPosition)));
+  diffuseColor.a = mix(0.05, 0.5, pow(fres, 2.2));`);
+  };
+  m.customProgramCacheKey = () => 'pc12:xray';
+  return m;
+}
+
+function makeOverlay(color, opacity, { depthTest = true, clip = null } = {}) {
+  const m = new THREE.MeshBasicMaterial({
+    color, transparent: true, opacity, depthWrite: false, depthTest, side: THREE.DoubleSide,
+    polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2, fog: false,
+  });
+  if (clip) m.clippingPlanes = clip;
+  return m;
+}
+const noRaycast = () => {};
+const _g = new THREE.Vector3();
+
+export class Model {
+  constructor(gltf, meta, { materials = null, fur = 0 } = {}) {
+    this.root = gltf.scene;
+    this.meta = meta;
+    // lookdev materials (MeshPhysicalMaterial by name) before anything references the GLB ones
+    this.materialInfo = upgradeMaterials(this.root, materials);
+    this.parts = new Map();           // id -> part record
+    this.list = [];                   // part records, parents before children
+    this.meshRecs = [];
+    this.meshToPart = new Map();
+    this.pickables = [];
+    this.U = MU;                      // shared shader uniforms (paint sweep, primer, lining)
+    this.clipPlanes = [new THREE.Plane(new THREE.Vector3(1, 0, 0), 0)];
+    this.cutaway = false;
+    this.xray = false;
+    this.structureOn = false;
+    this.isolate = null;              // Set of part ids or null
+    this.paint = { target: 100, cur: 100 };
+    this._cut = new Map();
+    this._glassX = new Map();
+    this.xrayMat = makeXray(null);
+    this.xrayCutMat = makeXray(this.clipPlanes);
+    const accent = 0x1d7bff;
+    this.ov = {
+      sel: makeOverlay(accent, 0.24), selCut: makeOverlay(accent, 0.24, { clip: this.clipPlanes }),
+      ghost: makeOverlay(accent, 0.08, { depthTest: false }), ghostCut: makeOverlay(accent, 0.08, { depthTest: false, clip: this.clipPlanes }),
+      hover: makeOverlay(0xffb020, 0.22), hoverCut: makeOverlay(0xffb020, 0.22, { clip: this.clipPlanes }),
+    };
+    this.overlays = { sel: [], hover: [] };
+    this.selected = null;
+    this.hovered = null;
+    this.blurFade = 0;                // the propeller blur's fade (propblur.js), for the blade overlays
+    this.groundY = 0;                 // ground drop needed so exploded parts stay above the grid
+    this.camInside = false;           // camera inside the closed cabin (updateCabin)
+    this.sunInside = false;           // the inside caster / receiver set for the sun (setSunInside)
+    this.sunSpin = false;             // ... with a spinning propeller's blades left out
+
+    const stepIndex = new Map(meta.steps.map((s, i) => [s.key, i]));
+    // register parts in traversal order (parents first)
+    this.root.traverse((o) => {
+      const ex = o.userData;
+      if (!ex || !ex.part) return;
+      let parent = o.parent, prec = null;
+      while (parent) { if (parent.userData && parent.userData.part) { prec = this.parts.get(parent.userData.part); break; } parent = parent.parent; }
+      const rec = {
+        id: ex.part, node: o, ex, parent: prec, children: [],
+        restPos: o.position.clone(),
+        anim: { pos: new THREE.Vector3(), quat: new THREE.Quaternion() },
+        explode: new THREE.Vector3().fromArray(ex.explode || [0, 0, 0]),
+        fly: 0, buildVisible: true, userHidden: false, shown: true,
+        stepIndex: stepIndex.has(ex.step) ? stepIndex.get(ex.step) : 0,
+        meshes: [], extras: [],
+        cut: CUT_PARTS.has(ex.part), xray: XRAY_PARTS.has(ex.part),
+      };
+      if (SEAT_PARK[rec.id]) rec.restPos.add(new THREE.Vector3().fromArray(SEAT_PARK[rec.id]));
+      if (prec) prec.children.push(rec);
+      if (ex.group === 'Interior') INTERNAL_PARTS.add(ex.part);
+      this.parts.set(rec.id, rec);
+      this.list.push(rec);
+    });
+    for (const rec of this.list) {
+      for (const ch of rec.node.children) {
+        if (!ch.isMesh) continue;
+        let base = ch.material;
+        const name = base.name || '';
+        if (rec.id === 'structure' || rec.id === 'gear_bays') {
+          // frames / stringers / rib caps nearly coincide with the skins: push them back in depth
+          // (own clones, so other parts keep the shared materials) to stop the skins z-fighting; the main-gear bay
+          // liner's roof lies 4 mm under the wing's upper skin (gear.MAIN_BAY_ROOF_GAP): without the offset it drew
+          // ghost outlines of the bays through the skin from above and sparkled at far cameras (all-lens review r1
+          // EXT-A1-01: the Top preset, the 45 m top view, the fitted 90 m top_048 camera)
+          base = clonePatched(base);
+          base.polygonOffset = true;
+          base.polygonOffsetFactor = 2;
+          base.polygonOffsetUnits = 8;
+          ch.material = base;
+        }
+        const cm = rec.id in CUT_MATERIALS ? CUT_MATERIALS[rec.id] : (CUT_PREFIX.test(rec.id) ? null : undefined);
+        // club tables: own material clones clipped at the ledge fascia plane (a stowed table slides into the ledge)
+        let extraClip = null;
+        const tpv = rec.ex.pivot && rec.ex.pivot.kind === 'table' ? rec.ex.pivot
+          : (rec.parent && rec.parent.ex.pivot && rec.parent.ex.pivot.kind === 'table' ? rec.parent.ex.pivot : null);
+        if (tpv && tpv.fascia_bl != null) {
+          const bl = tpv.fascia_bl;
+          extraClip = [new THREE.Plane(new THREE.Vector3(-Math.sign(bl), 0, 0), Math.abs(bl))];
+          base = clonePatched(base);
+          base.clippingPlanes = extraClip;
+          base.clipShadows = true;
+          ch.material = base;
+        }
+        const mr = { mesh: ch, part: rec, base, paint: PAINT_RE.test(name), glass: GLASS_RE.test(name) && base.transparent,
+          // structure: clip the fuselage frames/stringers but keep the wing spars & ribs whole
+          cut: (rec.cut && !(rec.id === 'structure' && name === 'interior_green')) ||
+            (cm !== undefined && (cm === null || cm.has(name))),
+          interiorCut: cm !== undefined, extraClip };
+        ch.castShadow = rec.xray || SHADOW_CASTERS.test(rec.id);
+        ch.receiveShadow = false;
+        mr.noCast = NO_CAST_RE.test(name);
+        rec.meshes.push(mr);
+        this.meshRecs.push(mr);
+        this.meshToPart.set(ch, rec);
+        this.pickables.push(ch);
+      }
+    }
+    // shell fur on the crew seats' sheepskin (materials.js addFur: `fur` shells drawn after each fleece mesh)
+    this.furMeshes = 0;
+    // (the part's other meshes are the obstacles that bound the pile's root: the leather the pads sink into)
+    if (fur > 0) {
+      for (const mr of this.meshRecs) {
+        const rec = this.meshToPart.get(mr.mesh);
+        const obst = rec ? rec.meshes.map((m) => m.mesh).filter((m) => m !== mr.mesh && !/^(harness|stitch|chrome)/.test(m.material.name || '')) : [];
+        if (addFur(mr.mesh, fur, obst)) this.furMeshes++;
+      }
+    }
+    this.root.updateMatrixWorld(true);
+    this.box = new THREE.Box3().setFromObject(this.root);
+    this._restGeometry();
+    // the space inside the skin where the camera counts as "in the cabin" (rest pose): flight deck + cabin
+    this.interiorBox = new THREE.Box3();
+    for (const id of LIT_INTERIOR) { const p = this.parts.get(id); if (p && !p.restBox.isEmpty()) this.interiorBox.union(p.restBox); }
+  }
+
+  // Rest-pose data used by the build fly-in, the ground drop and the camera fit (all node rotations
+  // are identity at rest, so world offsets are plain sums of node positions).
+  _restGeometry() {
+    const tmp = new THREE.Box3(), wp = new THREE.Vector3();
+    this.restLowest = Infinity;
+    for (const p of this.list) {
+      p.restBox = new THREE.Box3();
+      for (const mr of p.meshes) {
+        const g = mr.mesh.geometry;
+        if (!g.boundingBox) g.computeBoundingBox();
+        p.restBox.union(tmp.copy(g.boundingBox).applyMatrix4(mr.mesh.matrixWorld));
+      }
+      p.restMinY = p.restBox.isEmpty() ? Infinity : p.restBox.min.y;
+      if (p.restMinY < this.restLowest) this.restLowest = p.restMinY;
+    }
+    for (const p of this.list) {
+      // children of the spinning propeller (blades): lowest point over a revolution, and their
+      // (radial) explode vector can point straight down at some phase
+      const par = p.parent;
+      p.spin = !!(par && par.ex.pivot && par.ex.pivot.kind === 'spin' && !p.restBox.isEmpty());
+      if (p.spin) {
+        const o = par.ex.pivot.origin, ax = new THREE.Vector3().fromArray(par.ex.pivot.axis).normalize();
+        let rmax = 0;
+        for (let i = 0; i < 8; i++) {
+          wp.set(i & 1 ? p.restBox.max.x : p.restBox.min.x, i & 2 ? p.restBox.max.y : p.restBox.min.y, i & 4 ? p.restBox.max.z : p.restBox.min.z);
+          wp.x -= o[0]; wp.y -= o[1]; wp.z -= o[2];
+          wp.addScaledVector(ax, -wp.dot(ax));
+          rmax = Math.max(rmax, wp.length());
+        }
+        p.spinMinY = o[1] - rmax;
+        p.explodeR = p.explode.length();
+      }
+      // Build fly-in.  A part with an explode vector flies in from 3 x explode (+ a lift for top-level
+      // parts), clamped so it never starts below the ground.  Parts without one (glazing, door frames,
+      // bays, braces, firewall, interior, small details) would otherwise just drop through what is
+      // already built, so they grow in place about their centre instead.
+      const sameStepParent = par && par.stepIndex === p.stepIndex;
+      p.grow = p.explode.lengthSq() < 1e-10 && !sameStepParent;
+      p.flyVec = new THREE.Vector3();
+      p.growC = new THREE.Vector3();
+      if (p.grow) {
+        const sub = new THREE.Box3();
+        for (const id of this.descendants(p.id)) { const q = this.parts.get(id); if (q.stepIndex === p.stepIndex) sub.union(q.restBox); }
+        p.node.getWorldPosition(wp);
+        if (!sub.isEmpty()) sub.getCenter(p.growC).sub(wp);     // centre in the node frame
+        p.startY = 0;
+      } else {
+        p.flyVec.copy(p.explode).multiplyScalar(3);
+        if (!par) p.flyVec.y += 0.9;
+        const baseY = sameStepParent && !par.grow ? par.startY : 0;
+        if (Number.isFinite(p.restMinY)) p.flyVec.y = Math.max(p.flyVec.y, -(p.restMinY + baseY));
+        p.startY = baseY + p.flyVec.y;
+      }
+    }
+  }
+
+  // ~4000 vertices sampled from every mesh (world, rest pose) for silhouette-tight camera fits
+  silhouettePoints(target = 4000) {
+    let total = 0;
+    for (const mr of this.meshRecs) total += mr.mesh.geometry.attributes.position.count;
+    const stride = Math.max(1, Math.floor(total / target));
+    const out = [], v = new THREE.Vector3();
+    for (const mr of this.meshRecs) {
+      const pos = mr.mesh.geometry.attributes.position;
+      for (let i = 0; i < pos.count; i += stride) {
+        v.fromBufferAttribute(pos, i).applyMatrix4(mr.mesh.matrixWorld);
+        out.push(v.x, v.y, v.z);
+      }
+    }
+    return new Float32Array(out);
+  }
+
+  part(id) { return this.parts.get(id); }
+
+  // ---------------------------------------------------------------- materials
+  cutVariant(mr) {
+    const key = mr.interiorCut ? mr.base.uuid + ':i' : mr.base;
+    let m = this._cut.get(key);
+    if (!m) {
+      // the cut edge exposes the inside of every skin: all non-glass cut skin materials get the lining; furniture
+      // keeps its own colour on the cut back faces (the lining tint is for the skins)
+      m = clonePatched(mr.base, mr.glass || mr.interiorCut ? {} : { lining: true });
+      m.clippingPlanes = mr.extraClip ? [...this.clipPlanes, ...mr.extraClip] : this.clipPlanes;
+      m.clipShadows = true;
+      this._cut.set(key, m);
+    }
+    return m;
+  }
+
+  glassXray(mr, cut) {
+    const key = mr.base.uuid + (cut ? 'c' : '');
+    let m = this._glassX.get(key);
+    if (!m) {
+      m = clonePatched(mr.base);
+      m.opacity = Math.min(m.opacity, 0.25);
+      m.depthWrite = false;
+      if (cut) m.clippingPlanes = this.clipPlanes;
+      this._glassX.set(key, m);
+    }
+    return m;
+  }
+
+  // Interior light by viewpoint: the image-based light has no occlusion, so the cabin is dimmed while the
+  // camera is outside a closed skin (and far-side panes darken, see materials.js U.cabinClosed); from
+  // inside (cockpit view) the eye adapts; opened up (cutaway / X-ray / explode) it is lit like the outside.
+  // Returns true when a uniform or the visibility changed (the caller re-renders and refreshes the shadows).
+  // forceInside: the interior tour's first-person camera (tour.js), lit as inside wherever it stands (the airstair
+  // doorway is outside the furniture's box)
+  updateCabin(camPos, explodeF = 0, doorOpen = 0, forceInside = false) {
+    const open = this.cutaway || this.xray || explodeF > 0.02;
+    const inside = !open && (forceInside || (!this.interiorBox.isEmpty() && this.interiorBox.containsPoint(camPos)));
+    const ao = open ? CABIN.open : inside ? CABIN.inside
+      : CABIN.outside + (CABIN.door - CABIN.outside) * Math.min(1, Math.max(0, doorOpen));
+    const closed = open || inside ? 0 : 1;
+    let changed = false;
+    if (inside !== this.camInside) { this.camInside = inside; this.updateVisibility(); changed = true; }
+    const cin = inside ? 1 : 0;
+    if (MU.cabinAO.value === ao && MU.cabinClosed.value === closed && MU.cabinIn.value === cin) return changed;
+    MU.cabinAO.value = ao;
+    MU.cabinClosed.value = closed;
+    MU.cabinIn.value = cin;      // the cabin light (materials.js CABIN_LOOK) instead of the studio's
+    return true;
+  }
+
+  applyMaterials() {
+    for (const mr of this.meshRecs) {
+      const p = mr.part;
+      const cut = this.cutaway && mr.cut;
+      let m = mr.base;
+      if (this.xray && p.xray) {
+        m = mr.glass ? this.glassXray(mr, cut) : (cut ? this.xrayCutMat : this.xrayMat);
+      } else if (cut) {
+        m = this.cutVariant(mr);
+      }
+      mr.mesh.material = m;
+      mr.mesh.castShadow = this._casts(mr);
+    }
+    this._refreshOverlays();
+  }
+
+  // shadow casting: the exterior set (the key light onto the ground), or inside the sun's (setSunInside)
+  _casts(mr) {
+    const id = mr.part.id;
+    if (!this.sunInside) return (mr.part.xray && !this.xray) || SHADOW_CASTERS.test(id);
+    if (mr.noCast || (this.sunSpin && id.startsWith('blade_'))) return false;
+    return SUN_CASTERS.test(id);
+  }
+  // the sun's casters / receivers inside (look L2; scene.js setInteriorLook), the exterior set back outside; spin: the
+  // propeller turns (its blades leave the sun's casters).  Returns true when anything changed (the caller re-renders the
+  // shadow map).
+  setSunInside(on, spin = false) {
+    on = !!on; spin = !!spin;
+    if (on === this.sunInside && spin === this.sunSpin) return false;
+    this.sunInside = on; this.sunSpin = spin;
+    for (const mr of this.meshRecs) {
+      mr.mesh.castShadow = this._casts(mr);
+      mr.mesh.receiveShadow = on && !mr.noCast && SUN_RECEIVERS.test(mr.part.id);
+    }
+    return true;
+  }
+
+  setCutaway(on) { this.cutaway = !!on; this.applyMaterials(); }
+  setXray(on) { this.xray = !!on; this.applyMaterials(); }
+
+  // paint sweep: target +100 = fully painted, -100 = all primer; animated in update()
+  setPaint(on, instant) {
+    const target = on ? 100 : -100;
+    if (target === this.paint.target && (instant ? this.paint.cur === target : true)) return;
+    this.paint.target = target;
+    if (instant) { this.paint.cur = this.paint.target; this.U.paintSweep.value = this.paint.cur; }
+    else if (Math.abs(this.paint.cur) > 50) {
+      // start the sweep just outside the aircraft (nose for painting, tail for stripping)
+      this.paint.cur = on ? -2.5 : 17.5;
+      this.U.paintSweep.value = this.paint.cur;
+    }
+  }
+  get painted() { return this.paint.target > 0; }
+
+  updatePaint(dt) {
+    const p = this.paint;
+    if (p.cur === p.target) return false;
+    const speed = 7.5; // m/s along the fuselage
+    if (p.target > 0) {
+      p.cur = Math.min(p.cur + speed * dt, 18);
+      if (p.cur >= 18) p.cur = p.target;
+    } else {
+      p.cur = Math.max(p.cur - speed * dt, -3);
+      if (p.cur <= -3) p.cur = p.target;
+    }
+    this.U.paintSweep.value = p.cur;
+    return true;
+  }
+
+  // ---------------------------------------------------------------- visibility
+  updateVisibility() {
+    for (const p of this.list) {
+      let shown = p.buildVisible && !p.userHidden;
+      if (shown && this.isolate) shown = this.isolate.has(p.id);
+      if (shown && p.id === 'structure') shown = this.structureOn;
+      if (shown && this.camInside && CABIN_HIDDEN.has(p.id)) shown = false;
+      p.shown = shown;
+      // (a blade faded into the spinning propeller's blur disc stays hidden: propblur.js mr.blurHidden)
+      for (const mr of p.meshes) mr.mesh.visible = shown && !mr.blurHidden;
+    }
+  }
+
+  descendants(id, out = new Set()) {
+    const p = this.parts.get(id);
+    if (!p) return out;
+    out.add(id);
+    for (const c of p.children) this.descendants(c.id, out);
+    return out;
+  }
+
+  setIsolate(id) {
+    this.isolate = id ? this.descendants(id) : null;
+    this.updateVisibility();
+  }
+
+  // ---------------------------------------------------------------- transforms
+  // node = rest + animation offset (parent frame) + explode (hierarchical, parent frame)
+  // + build fly-in (flyVec, see _restGeometry) or grow-in (scale about the part centre).
+  // Also works out how far the ground has to drop so no exploded part sits below it
+  // (rest-frame estimate, stable while things animate; blades use their spin envelope).
+  applyTransforms(explodeF) {
+    let lowest = Infinity;
+    for (const p of this.list) {
+      const n = p.node;
+      n.position.copy(p.restPos).add(p.anim.pos).addScaledVector(p.explode, explodeF);
+      n.quaternion.copy(p.anim.quat);
+      let oy = (p.parent ? p.parent._oy : 0) + p.explode.y * explodeF;
+      if (p.fly > 0 && p.grow) {
+        const s = Math.max(1e-3, 1 - p.fly);
+        n.scale.setScalar(s);
+        _g.copy(p.growC).applyQuaternion(p.anim.quat).multiplyScalar(1 - s);
+        n.position.add(_g);
+      } else {
+        if (n.scale.x !== 1) n.scale.setScalar(1);
+        if (p.fly > 0) { n.position.addScaledVector(p.flyVec, p.fly); oy += p.flyVec.y * p.fly; }
+      }
+      p._oy = oy;
+      if (p.shown && p.meshes.length) {
+        const m = p.spin ? p.spinMinY + p.parent._oy - p.explodeR * explodeF : p.restMinY + oy;
+        if (m < lowest) lowest = m;
+      }
+    }
+    this.groundY = Number.isFinite(lowest) ? Math.min(0, lowest - Math.min(0, this.restLowest)) : 0;
+  }
+
+  // ---------------------------------------------------------------- highlights
+  _refreshOverlays() {
+    for (const kind of ['sel', 'hover']) {
+      for (const o of this.overlays[kind]) {
+        const cut = this.cutaway && o.userData.mr.cut;
+        o.material = kind === 'hover' ? (cut ? this.ov.hoverCut : this.ov.hover)
+          : o.userData.ghost ? (cut ? this.ov.ghostCut : this.ov.ghost) : (cut ? this.ov.selCut : this.ov.sel);
+      }
+    }
+  }
+
+  // the spinning propeller: the highlight overlays of its blades / boots show while the blades do (below half the
+  // fade into the blur disc); the disc takes the highlight as a tint above it (propblur.js)
+  syncBlurOverlays() {
+    for (const kind of ['sel', 'hover']) {
+      for (const o of this.overlays[kind]) if (o.userData.mr.blurFade) o.visible = !(this.blurFade >= 0.5);
+    }
+  }
+
+  setHighlight(kind, id) {
+    const cur = kind === 'sel' ? this.selected : this.hovered;
+    if (cur === id) return false;
+    for (const o of this.overlays[kind]) o.parent && o.parent.remove(o);
+    this.overlays[kind] = [];
+    if (kind === 'sel') this.selected = id; else this.hovered = id;
+    if (id && this.parts.has(id)) {
+      for (const pid of this.descendants(id)) {
+        const p = this.parts.get(pid);
+        for (const mr of p.meshes) {
+          const layers = kind === 'sel' ? [false, true] : [false];
+          for (const ghost of layers) {
+            const o = new THREE.Mesh(mr.mesh.geometry, this.ov.sel);
+            o.userData = { mr, ghost };
+            if (mr.blurFade) o.visible = !(this.blurFade >= 0.5);
+            o.raycast = noRaycast;
+            o.renderOrder = ghost ? 10 : 5;
+            o.castShadow = false;
+            mr.mesh.add(o);
+            this.overlays[kind].push(o);
+          }
+        }
+      }
+    }
+    this._refreshOverlays();
+    return true;
+  }
+
+  worldBox(id, out = new THREE.Box3()) {
+    out.makeEmpty();
+    const p = this.parts.get(id);
+    if (!p) return out;
+    this.root.updateMatrixWorld(true);
+    const tmp = new THREE.Box3();
+    for (const pid of this.descendants(id)) {
+      for (const mr of this.parts.get(pid).meshes) {
+        const g = mr.mesh.geometry;
+        if (!g.boundingBox) g.computeBoundingBox();
+        tmp.copy(g.boundingBox).applyMatrix4(mr.mesh.matrixWorld);
+        out.union(tmp);
+      }
+    }
+    return out;
+  }
+}

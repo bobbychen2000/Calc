@@ -1,0 +1,551 @@
+// Movable parts driven by the pivot extras in the GLB.
+//
+// Axes: pivot.origin / pivot.axis are glTF axes (X = butt line, Y = water line, Z = station).
+// Some brace / flap fields are stored in MODEL axes (x = station, y = butt line, z = water line) and
+// are converted with gl = (y, z, x).  All rotations are right-handed about the stored axis, applied
+// to the part node about its own origin (the mesh vertices are relative to the pivot).
+import * as THREE from 'three';
+import { PropBlur } from './propblur.js';
+import { Engine, driveEngine, npTarget, spoolRpm, fuelRpm, PROP_SPOOL } from './engine.js';
+import { isa, ENV_DEFAULTS, airData } from './env.js';
+
+const DEG = Math.PI / 180;
+export const modelToGl = (a) => new THREE.Vector3(a[1], a[2], a[0]);
+const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
+const smooth = (t) => t * t * (3 - 2 * t);
+// a table sampled at even steps of [0, 1] (model/airstair.py _interp), linear between them
+export const tableAt = (tab, t) => {
+  const x = clamp(t, 0, 1) * (tab.length - 1), i = Math.min(Math.floor(x), tab.length - 2);
+  return tab[i] + (x - i) * (tab[i + 1] - tab[i]);
+};
+
+// scratch vectors (no per-frame allocation)
+const _d = new THREE.Vector3(), _u = new THREE.Vector3(), _p = new THREE.Vector3();
+const _a = new THREE.Vector3(), _b = new THREE.Vector3(), _c = new THREE.Vector3();
+const _e1 = new THREE.Vector3(), _e2 = new THREE.Vector3();
+
+/**
+ * Port of model/brace.py:solve_knee.  Knee K of the two-link chain A-K-B in the plane normal to
+ * `axis`; the solution on the side of `bendRef` is chosen.  Like the Python original, D is clamped
+ * to L1 + L2 (an unreachable B leaves u un-normalised, exactly as in brace.py).
+ */
+export function solveKnee(A, B, L1, L2, axis, bendRef, out) {
+  _d.subVectors(B, A);
+  _d.addScaledVector(axis, -_d.dot(axis));          // project B - A into the plane
+  let D = _d.length();
+  D = Math.min(D, L1 + L2 - 1e-9);
+  _u.copy(_d).divideScalar(Math.max(D, 1e-12));
+  const a = (L1 * L1 - L2 * L2 + D * D) / (2 * D);   // distance from A to the chord foot
+  const h = Math.sqrt(Math.max(L1 * L1 - a * a, 0));  // knee offset from the A-B line
+  _p.crossVectors(axis, _u);
+  if (_p.dot(bendRef) < 0) _p.negate();
+  return out.copy(A).addScaledVector(_u, a).addScaledVector(_p, h);
+}
+
+// signed angle from u to v about unit axis n (both projected into the plane normal to n)
+export function signedAngle(u, v, n) {
+  _a.copy(u).addScaledVector(n, -u.dot(n));
+  _b.copy(v).addScaledVector(n, -v.dot(n));
+  _c.crossVectors(_a, _b);
+  return Math.atan2(n.dot(_c), _a.dot(_b));
+}
+
+// Propeller speed (PT6E-67XP free turbine driving the Hartzell 5-blade; POH NGX / PC-12 PRO): ground idle ~1,000 rpm,
+// 1,550 rpm low-speed (quiet cruise) mode, 1,700 rpm take-off / max.  Spool model (rpm / s, engine.js PROP_SPOOL /
+// spoolRpm / driveEngine), a viewer estimate of a start and shutdown: on a start the free power turbine -- and the
+// propeller -- stays still (a creep of a few rpm) until the gas generator lights off (engine.js Engine, ~6.6 s after the
+// start), then accelerates with the gas generator (~28 s from the start to ground idle); the governor moves between
+// governed speeds in ~3 s; after shutdown the feathering prop runs down in ~20-25 s.  The commanded speed is what
+// the PCL / condition asks for: the engine holds ground idle by its power balance (>= 1,000 rpm, more on a cold day) and
+// reverse at 1,615 rpm (engine.js npTarget).
+export const PROP_RPM = { idle: 1000, cruise: 1550, max: 1700, governed: 900 };   // governed: below it, starting / running down
+const GOVERNED = PROP_RPM.governed;
+const FEATHERED = PROP_SPOOL.feathered, UNFEATHER_RPM = PROP_SPOOL.unfeather;   // deg (feather 62), rpm: out of feather on a start
+
+export class Kinematics {
+  constructor(model) {
+    this.model = model;
+    const P = (id) => model.part(id);
+    const piv = (id) => { const p = P(id); return p && p.ex.pivot; };
+    const axisOf = (id) => new THREE.Vector3().fromArray(piv(id).axis).normalize();
+
+    this.surf = {};
+    for (const id of ['flap_R', 'flap_L', 'aileron_R', 'aileron_L', 'ail_tab_R', 'ail_tab_L', 'elevator_R', 'elevator_L',
+      'rudder', 'rudder_tab', 'stabilizer', 'door_airstair', 'door_cargo', 'gear_main_R', 'gear_main_L', 'gear_nose',
+      'gear_door_NR', 'gear_door_NL', 'propeller', 'blade_1', 'blade_2', 'blade_3', 'blade_4', 'blade_5']) {
+      const p = P(id);
+      if (!p || !p.ex.pivot) continue;
+      this.surf[id] = { rec: p, pv: p.ex.pivot, axis: axisOf(id), angle: 0 };
+    }
+    // Fowler travel is stored in model axes -> glTF
+    for (const id of ['flap_R', 'flap_L']) {
+      const s = this.surf[id];
+      if (s) s.travel = modelToGl(s.pv.travel || [0, 0, 0]);
+    }
+    // braces: A, B0, K0, bend in model axes -> glTF; B0 moves with the gear node
+    this.braces = [];
+    for (const id of ['brace_main_R_up', 'brace_main_L_up', 'brace_nose_up']) {
+      const up = P(id);
+      if (!up) continue;
+      const pv = up.ex.pivot;
+      const lo = up.children.find((c) => c.ex.pivot && c.ex.pivot.role === 'lower');
+      const g = this.surf[pv.gear];
+      if (!lo || !g) continue;
+      const A = modelToGl(pv.A), B0 = modelToGl(pv.B0), K0 = modelToGl(pv.K0);
+      this.braces.push({
+        up, lo, gear: g, A, B0, K0, L1: pv.L1, L2: pv.L2,
+        axis: new THREE.Vector3().fromArray(pv.axis).normalize(),
+        bend: modelToGl(pv.bend),
+        gOrigin: new THREE.Vector3().fromArray(g.pv.origin),
+        B: new THREE.Vector3(), K: new THREE.Vector3(),
+        ua: 0, la: 0,
+      });
+    }
+
+    // pieces moved by a door's travel (model/airstair.py child_parts: the airstair handrail and restraint cables).
+    // They follow pivot.follows: kind 'fold' turns about its own axis by pivot.curve(door fraction) (an angle table
+    // at even steps of the eased door fraction) or by pivot.open over the door-travel window [w0, w1]; kind
+    // 'stretch' also scales by pivot.scale(fraction) along its built unit direction pivot.dir about its origin (the
+    // telescoping rail, the cables paying out of the jamb fittings): its meshes are wrapped in
+    // node > g (rotation Q: +X -> dir, scale (s, 1, 1)) > gi (Q^-1) > meshes, so only g.scale.x changes per frame
+    this.folds = [];
+    const _x = new THREE.Vector3(1, 0, 0);
+    for (const rec of model.list) {
+      const pv = rec.ex.pivot;
+      if (!pv || (pv.kind !== 'fold' && pv.kind !== 'stretch') || !this.surf[pv.follows]) continue;
+      const f = { rec, pv, axis: new THREE.Vector3().fromArray(pv.axis).normalize(), door: pv.follows,
+        w: pv.window || [0, 1], curve: pv.curve || null, scale: pv.scale || null, angle: 0, s: 1, g: null };
+      if (pv.kind === 'stretch' && f.scale) {
+        const q = new THREE.Quaternion().setFromUnitVectors(_x, new THREE.Vector3().fromArray(pv.dir).normalize());
+        const g = new THREE.Group(), gi = new THREE.Group();
+        g.quaternion.copy(q);
+        gi.quaternion.copy(q).invert();
+        for (const ch of [...rec.node.children]) if (ch.isMesh) gi.add(ch);
+        g.add(gi);
+        rec.node.add(g);
+        g.name = rec.id + ':stretch';
+        f.g = g;
+      }
+      this.folds.push(f);
+    }
+
+    // crew controls (model/flightdeck.py control_pivots, review r2 M4): the yokes roll about their columns and slide
+    // fore / aft with the pitch command, the rudder pedals swing about their hanging-arm pivots with the yaw command,
+    // the nose-wheel fork ('steer', gear_nose_steer) turns with it while the gear is down
+    this.controls = [];
+    for (const rec of model.list) {
+      const pv = rec.ex.pivot;
+      if (!pv || (pv.kind !== 'yoke' && pv.kind !== 'pedal' && pv.kind !== 'steer')) continue;
+      this.controls.push({ rec, pv, axis: new THREE.Vector3().fromArray(pv.axis).normalize(),
+        pull: pv.travel_pull ? modelToGl(pv.travel_pull) : null, push: pv.travel_push ? modelToGl(pv.travel_push) : null,
+        rest: pv.rest ? modelToGl(pv.rest) : null });
+    }
+    // rev Q (3-D judges r4 CR4-05): the yokes' fore-aft travel (pull, push, parked rest -- signed, + aft) for the
+    // elevators, which follow the yokes' own position (pitchPos)
+    const yk = this.controls.find((k) => k.pv.kind === 'yoke' && k.pull && k.push);
+    this.yokeTravel = yk ? { pull: yk.pull.length(), push: yk.push.length(),
+      rest: yk.rest ? (yk.rest.dot(yk.push) > 0 ? -1 : 1) * yk.rest.length() : 0 } : null;
+
+    // club tables (model/cabin.py table_parts, review r3 F5): pivot kind 'table' on the outboard leaf (slides out of
+    // the ledge fascia by pivot.slide, model axes, over open 0 .. 0.5; built at open 0.5 = pivot.rest, the leaf out)
+    // and its child 'table_leaf' (the inboard leaf, built folded under it, unfolds by pivot.fold rad over 0.5 .. 1);
+    // the materials are clipped at the fascia plane (model.js), so a stowed table is inside the ledge, unseen
+    this.tables = [];
+    for (const rec of model.list) {
+      const pv = rec.ex.pivot;
+      if (!pv || pv.kind !== 'table') continue;
+      const lf = rec.children.find((c) => c.ex.pivot && c.ex.pivot.kind === 'table_leaf');
+      this.tables.push({ rec, pv, slide: modelToGl(pv.slide || [0, 0, 0]), rest: pv.rest != null ? pv.rest : 0.5,
+        leaf: lf || null, leafAxis: lf ? new THREE.Vector3().fromArray(lf.ex.pivot.axis).normalize() : null,
+        fold: lf ? lf.ex.pivot.fold : 0 });
+    }
+
+    // commanded targets and current (smoothed) values
+    this.t = { flaps: 0, rpm: 0, pitch: 0, roll: 0, pitchCmd: 0, yaw: 0, stabTrim: 0, ailTrim: 0, rudTrim: 0,
+      door_airstair: 0, door_cargo: 0, table: 0 };
+    this.c = { ...this.t, propAngle: 0 };
+    // gear: pos 0 = down .. 1 = up; door 0 = closed .. 1 = open (nose clamshells).  The nose doors hang open
+    // whenever the gear is down or travelling and close only once it is locked up (photo s/n 3001); the GLB
+    // builds them open (pivot.rest = 1), so the rest pose is gear down, doors open.
+    this.gear = { pos: 0, door: 1, target: 0, run: null };
+    this.defl = {};   // current surface deflections in degrees (for readouts / tests)
+    // the spinning propeller's motion blur (propblur.js): blurred disc + spinner band, the solid blades fade out
+    this.blur = this.surf.propeller ? PropBlur.create(model, this.surf.propeller.rec) : null;
+    this.disc = this.blur ? this.blur.disc : null;
+    this.bladeRec = this.model.part('blade_1');
+    this.bladePush = this.bladeRec ? this.bladeRec.explode.length() : 0;    // radial explode of each blade (m at f = 1)
+    this.push = 0;
+    // the engine (engine.js): ONE state model for the sound (kin.gg, the GasGenerator API) and the cockpit displays
+    // (kin.eng.state), in the atmosphere of the Environment knobs (setEnv; the defaults until main.js hands it over)
+    this.atm = isa({ oat: ENV_DEFAULTS.oat, elev: ENV_DEFAULTS.elev, qnh: ENV_DEFAULTS.qnh });
+    this.atm.air = airData(ENV_DEFAULTS, this.atm);
+    this.eng = new Engine(this.atm, { fuelLb: ENV_DEFAULTS.fuelLb, gpu: ENV_DEFAULTS.gpu });
+    this.toMode = false;              // the 'T/O' button: 1,700 rpm at the governor's blade angle for the EPECS rating
+    this.toPitchV = this.eng.toPitch();
+    this.apply();
+  }
+
+  // the engine sound's view of the engine (sound.js): the same object as the displays'
+  get gg() { return this.eng; }
+
+  // the day (env.js Environment): every knob change reaches the engine (its own lags; {instant} snaps them)
+  setEnv(env) {
+    this.env = env;
+    const apply = (atm, { instant = false } = {}) => {
+      this.atm = atm;
+      const v = env.get();
+      this.eng.setEnv(atm, { fuelLb: v.fuelLb, gpu: v.gpu }, { instant });
+      this.toPitchV = this.eng.toPitch();
+      if (this.toMode && !this.unfeather) { this.t.pitch = this.toPitchV; if (instant) this.c.pitch = this.t.pitch; }
+      if (instant && this.c.rpm > 0 && this.t.rpm > 0 && this.eng.phase === 'run') {
+        this.c.rpm = npTarget(atm, this.t.rpm, this.c.pitch);
+        this.eng.snap(fuelRpm(this.t.rpm), this.c.rpm, this.c.pitch);
+      }
+    };
+    apply(env.atm, { instant: true });
+    env.onChange(apply);
+  }
+
+  // take-off power: 1,700 rpm and the blade angle at which the propeller absorbs the EPECS rating of the day
+  // (from rest: a start that unfeathers as usual and takes the T/O blade angle once governing)
+  setTakeoff(instant) {
+    this.setProp({ rpm: PROP_RPM.max }, false);
+    this.toMode = true;
+    this.toPitchV = this.eng.toPitch();
+    if (!this.unfeather) this.t.pitch = this.toPitchV;
+    if (instant) { this.unfeather = false; this.t.pitch = this.toPitchV; this.setProp({}, true); }
+  }
+
+  // radial offset of the blades (explode factor + build fly-in): the blur disc grows with them
+  setExplodeView(f) {
+    const b = this.bladeRec;
+    const e = this.bladePush * (f + (b && b.fly > 0 && !b.grow ? 3 * b.fly : 0));
+    if (e === this.push) return;
+    this.push = e;
+    if (this.blur) this.blur.setPush(e);
+  }
+
+  // ------------------------------------------------------------------ commands
+  setFlaps(deg, instant) {
+    const s = this.surf.flap_R;
+    this.t.flaps = clamp(+deg || 0, 0, s ? s.pv.max : 40);
+    if (instant) this.c.flaps = this.t.flaps;
+  }
+
+  setDoor(id, v, instant) {
+    const key = id === 'airstair' ? 'door_airstair' : id === 'cargo' ? 'door_cargo' : id;
+    if (!(key in this.t)) throw new Error('unknown door ' + id);
+    this.t[key] = clamp(+v || 0, 0, 1);
+    if (instant) this.c[key] = this.t[key];
+  }
+
+  // club tables: 0 stowed (TTL) .. 0.5 the outboard leaf out .. 1 deployed (inboard leaf unfolded)
+  setTable(v, instant) {
+    this.t.table = clamp(+v || 0, 0, 1);
+    if (instant) this.c.table = this.t.table;
+  }
+
+  // a start from feather (no pitch given, the blades feathered, the propeller below the governed range) comes out of
+  // feather to fine pitch once it turns UNFEATHER_RPM (the oil pressure the governor needs), as a PT6 / Hartzell does
+  setProp({ rpm, pitch, angle } = {}, instant) {
+    if (angle != null) this.c.propAngle = +angle;          // spin phase (radians), e.g. 0 for tests
+    if (rpm != null || pitch != null) this.toMode = false;
+    if (rpm != null) this.t.rpm = clamp(+rpm, 0, PROP_RPM.max);
+    if (pitch != null) this.t.pitch = clamp(+pitch, -38, 62);
+    if (rpm != null || pitch != null)
+      this.unfeather = pitch == null && rpm != null && this.t.rpm > 0 && this.t.pitch >= FEATHERED && this.c.rpm < GOVERNED;
+    if (instant) {
+      if (this.unfeather && this.t.rpm > 0) { this.t.pitch = 0; this.unfeather = false; }
+      this.c.pitch = this.t.pitch;
+      this.c.rpm = npTarget(this.atm, this.t.rpm, this.c.pitch);
+      this.eng.snap(fuelRpm(this.t.rpm), this.c.rpm, this.c.pitch);
+    }
+  }
+
+  setControls(o = {}, instant) {
+    const map = { roll: 'roll', pitch: 'pitchCmd', yaw: 'yaw', stabTrim: 'stabTrim', ailTrim: 'ailTrim', rudTrim: 'rudTrim' };
+    const lim = { roll: [-1, 1], pitchCmd: [-1, 1], yaw: [-1, 1], stabTrim: [-4, 2], ailTrim: [-10, 10], rudTrim: [-12, 12] };
+    for (const k in map) {
+      if (o[k] == null) continue;
+      const key = map[k];
+      this.t[key] = clamp(+o[k], lim[key][0], lim[key][1]);
+      if (instant) this.c[key] = this.t[key];
+    }
+  }
+
+  // v: 0 = down .. 1 = up, or 'up' / 'down'.  Instant poses put the nose doors open unless the gear is
+  // locked up (the sequence never has them closed in transit or with the gear down).
+  setGear(v, instant) {
+    const x = v === 'up' ? 1 : v === 'down' ? 0 : clamp(+v || 0, 0, 1);
+    const g = this.gear;
+    g.target = x;
+    if (instant) {
+      g.pos = x;
+      g.door = this.doorTarget();
+      g.run = null;
+    }
+  }
+
+  // nose-door target at the current gear state: closed (0) only when locked up, otherwise open (1)
+  doorTarget() {
+    const g = this.gear;
+    return g.pos >= 1 && g.target >= 1 ? 0 : 1;
+  }
+
+  get gearMoving() {
+    const g = this.gear;
+    return g.pos !== g.target || g.door !== this.doorTarget();
+  }
+
+  // ------------------------------------------------------------------ update
+  // returns true when anything moved
+  update(dt) {
+    if (dt <= 0) return false;
+    const t = this.t, c = this.c;
+    let moved = false;
+    const approach = (key, rate) => {           // linear rate (units / s)
+      const d = t[key] - c[key];
+      if (d === 0) return;
+      const step = rate * dt;
+      c[key] = Math.abs(d) <= step ? t[key] : c[key] + Math.sign(d) * step;
+      moved = true;
+    };
+    const lag = (key, k, eps) => {              // first-order lag
+      const d = t[key] - c[key];
+      if (d === 0) return;
+      c[key] = Math.abs(d) < eps ? t[key] : c[key] + d * (1 - Math.exp(-k * dt));
+      moved = true;
+    };
+    approach('flaps', 11);                      // ~3.6 s for 0 -> 40 deg
+    approach('door_airstair', 0.45);
+    approach('door_cargo', 0.5);
+    approach('table', 0.5);
+    approach('pitch', 35);
+    lag('roll', 7, 1e-3); lag('pitchCmd', 7, 1e-3); lag('yaw', 7, 1e-3);
+    approach('stabTrim', 1.2); approach('ailTrim', 6); approach('rudTrim', 6);
+    // the propeller's spool and the engine (engine.js driveEngine: no power on the propeller until the light-off -- the
+    // free turbine; a creep from the compressor's air flow -- the spool laws and the engine at a fixed sub-step)
+    if (this.toMode && !this.unfeather && c.rpm >= GOVERNED && t.pitch !== this.toPitchV) t.pitch = this.toPitchV;
+    if (driveEngine(this, dt)) moved = true;
+    const movedBeforeSpin = moved;
+    if (c.rpm > 0) {
+      c.propAngle = (c.propAngle + (c.rpm / 60) * 2 * Math.PI * dt) % (2 * Math.PI);
+      moved = true;
+    }
+    if (this.blur) this.blur.tick(dt, c.rpm);
+    // gear sequence: nose doors open -> gear travels (~4 s, eased) -> doors close once locked UP (they stay open
+    // with the gear down)
+    const g = this.gear;
+    if (g.pos !== g.target) {
+      if (g.door < 1) {
+        g.door = Math.min(1, g.door + dt / 0.8);
+        g.run = null;
+      } else {
+        if (!g.run || g.run.to !== g.target) g.run = { from: g.pos, to: g.target, s: 0, dur: Math.max(0.3, 4.0 * Math.abs(g.target - g.pos)) };
+        const r = g.run;
+        r.s = Math.min(1, r.s + dt / r.dur);
+        g.pos = r.from + (r.to - r.from) * smooth(r.s);
+        if (r.s >= 1) { g.pos = r.to; g.run = null; }
+      }
+      moved = true;
+    } else if (g.door !== this.doorTarget()) {
+      // locked up: the doors close; gear down (or stopped between the locks): they open / stay open
+      const dT = this.doorTarget();
+      g.door = dT > g.door ? Math.min(1, g.door + dt / 0.8) : Math.max(0, g.door - dt / 0.8);
+      moved = true;
+    }
+    this.onlySpin = moved && !movedBeforeSpin && g.pos === g.target && g.door === this.doorTarget();
+    if (moved) this.apply();
+    return moved;
+  }
+
+  // propeller speed one step toward the target: start / governed / run-down laws (engine.js spoolRpm)
+  _spool(rpm, target, dt) { return spoolRpm(rpm, target, dt); }
+
+  // ------------------------------------------------------------------ pose
+  // rev Q (3-D judges r4 CR4-05): the yokes' fore-aft position for a pitch command as a share of the pull (+) / push (-)
+  // travel: the command blends from the parked rest to the full pull / push (as the yokes' 'rest' pivot)
+  pitchPos(cmd) {
+    const t = this.yokeTravel;
+    if (!t || !t.rest) return cmd;
+    const a = Math.abs(cmd), x = (cmd >= 0 ? cmd * t.pull : -a * t.push) + (1 - a) * t.rest;
+    return x >= 0 ? x / t.pull : x / t.push;
+  }
+
+  _rot(id, deg) {
+    const s = this.surf[id];
+    if (!s) return;
+    s.angle = deg;
+    s.rec.anim.quat.setFromAxisAngle(s.axis, deg * DEG);
+  }
+
+  apply() {
+    const c = this.c, S = this.surf, D = this.defl;
+    // Fowler flaps: rotate about the hinge line AND translate aft/down proportionally
+    for (const id of ['flap_R', 'flap_L']) {
+      const s = S[id];
+      if (!s) continue;
+      this._rot(id, c.flaps);
+      s.rec.anim.pos.copy(s.travel).multiplyScalar(c.flaps / s.pv.max);
+    }
+    D.flaps = c.flaps;
+    // ailerons: + angle = trailing edge down (both hinge axes point to starboard).
+    // Right roll: right aileron up (to range[0] = -20), left aileron down (to range[1] = +15).
+    for (const id of ['aileron_R', 'aileron_L']) {
+      const s = S[id];
+      if (!s) continue;
+      const cmd = -s.pv.sign * c.roll;     // + = this aileron trailing edge down
+      const [lo, hi] = s.pv.range;
+      const d = cmd >= 0 ? cmd * hi : -cmd * lo;
+      this._rot(id, d);
+      D[id] = d;
+      // Flettner geared tab (child of the aileron): gearing x aileron, plus electric trim on the left
+      const tabId = id === 'aileron_R' ? 'ail_tab_R' : 'ail_tab_L';
+      const ts = S[tabId];
+      if (ts) {
+        const td = (ts.pv.gearing || 0) * d + (tabId === 'ail_tab_L' ? c.ailTrim : 0);
+        this._rot(tabId, td);
+        D[tabId] = td;
+      }
+    }
+    // elevators (children of the stabiliser): pull (pitch > 0) = trailing edge up = range[0].  Rev Q (3-D judges r4
+    // CR4-05): they follow the yokes' own fore-aft position (pitchPos), so at a zero command -- the free yokes parked at
+    // their rest, ~35 mm forward as in the photos of the unlocked PRO yokes (Mexico, AOPA) -- the elevators hang
+    // trailing-edge DOWN by the same share of their travel (~8 deg: the parked droop of LX-FLI / MSN 3008 0517; the
+    // cable run allows no forward yoke over a neutral elevator); full pull / push still reach the stops
+    const pq = this.pitchPos(c.pitchCmd);
+    for (const id of ['elevator_R', 'elevator_L']) {
+      const s = S[id];
+      if (!s) continue;
+      const [lo, hi] = s.pv.range;
+      const d = pq >= 0 ? pq * lo : -pq * hi;
+      this._rot(id, d);
+      D[id] = d;
+    }
+    // stabiliser incidence: - = leading edge down = nose-up trim (axis points to starboard,
+    // hinge at 62 % chord, so a negative rotation lowers the leading edge)
+    this._rot('stabilizer', c.stabTrim);
+    D.stabilizer = c.stabTrim;
+    // rudder: axis runs up the hinge line; + rotation moves the trailing edge to starboard = right yaw
+    if (S.rudder) {
+      const [lo, hi] = S.rudder.pv.range;
+      const d = c.yaw >= 0 ? c.yaw * hi : -c.yaw * lo;
+      this._rot('rudder', d);
+      D.rudder = d;
+      if (S.rudder_tab) {
+        const td = (S.rudder_tab.pv.gearing || 0) * d + c.rudTrim;
+        this._rot('rudder_tab', td);
+        D.rudder_tab = td;
+      }
+    }
+    // yokes (right roll = clockwise as the pilot sees it = + about the forward-pointing column axis; pull = aft),
+    // rudder pedals (right rudder: the right-foot pedals forward = - about +BL, gearing -1 for the left-foot ones) and
+    // the nose-wheel fork (model judging r1 GR1-07: + about the down-pointing strut axis = nose wheel right, pedal_deg
+    // at full rudder, centred as soon as the gear leaves the down lock)
+    for (const k of this.controls) {
+      if (k.pv.kind === 'yoke') {
+        k.rec.anim.quat.setFromAxisAngle(k.axis, c.roll * k.pv.roll_deg * DEG);
+        if (k.pull) {
+          // rev P (3-D judges r3 FID3-02): at a zero command the free yoke stands at its parked rest (interior.YOKE rest,
+          // the photos' unlocked yokes ~35 mm forward); the command blends from there to the full push / pull
+          k.rec.anim.pos.copy(c.pitchCmd >= 0 ? k.pull : k.push).multiplyScalar(Math.abs(c.pitchCmd));
+          if (k.rest) k.rec.anim.pos.addScaledVector(k.rest, 1 - Math.abs(c.pitchCmd));
+        }
+      } else if (k.pv.kind === 'steer') {
+        const down = 1 - clamp(this.gear.pos / 0.05, 0, 1);
+        k.angle = c.yaw * k.pv.pedal_deg * down;
+        k.rec.anim.quat.setFromAxisAngle(k.axis, k.angle * DEG);
+      } else {
+        k.rec.anim.quat.setFromAxisAngle(k.axis, -(k.pv.gearing || 0) * c.yaw * k.pv.travel_deg * DEG);
+      }
+    }
+    // doors (open angle in radians), eased
+    for (const id of ['door_airstair', 'door_cargo']) {
+      const s = S[id];
+      if (!s) continue;
+      const a = s.pv.open * smooth(c[id]);
+      s.angle = a / DEG;
+      s.rec.anim.quat.setFromAxisAngle(s.axis, a);
+    }
+    // club tables: slide over open 0 .. 0.5 (rest = built pose), the inboard leaf unfolds over 0.5 .. 1
+    for (const tb of this.tables) {
+      const o = c.table;
+      const fs = smooth(clamp(o / 0.5, 0, 1)), fsr = smooth(clamp(tb.rest / 0.5, 0, 1));
+      tb.rec.anim.pos.copy(tb.slide).multiplyScalar(fs - fsr);
+      if (tb.leaf) {
+        const ff = smooth(clamp((o - 0.5) / 0.5, 0, 1)), ffr = smooth(clamp((tb.rest - 0.5) / 0.5, 0, 1));
+        tb.leaf.anim.quat.setFromAxisAngle(tb.leafAxis, tb.fold * (ff - ffr));
+      }
+    }
+    // pieces moved by a door (airstair handrail, cables): the door fraction is the eased door angle / its open angle;
+    // angle = curve(fraction) (linear between the table's even steps) or open x clamp((fraction - w0) / (w1 - w0)),
+    // 'stretch' also scale(fraction) along its direction (model/airstair.py child_matrix / posed_matrix)
+    for (const f of this.folds) {
+      const df = smooth(c[f.door] || 0);
+      if (f.curve) f.angle = tableAt(f.curve, df);
+      else f.angle = f.pv.open * clamp((df - f.w[0]) / Math.max(f.w[1] - f.w[0], 1e-9), 0, 1);
+      f.rec.anim.quat.setFromAxisAngle(f.axis, f.angle);
+      if (f.g) { f.s = tableAt(f.scale, df); f.g.scale.set(f.s, 1, 1); }
+    }
+    // gear (retract in degrees) and nose clamshell doors (open in degrees)
+    const g = this.gear;
+    for (const id of ['gear_main_R', 'gear_main_L', 'gear_nose']) if (S[id]) this._rot(id, S[id].pv.retract * g.pos);
+    // nose doors: pivot.open = closed -> open angle; the geometry is built at pivot.rest (1 = open)
+    for (const id of ['gear_door_NR', 'gear_door_NL']) {
+      const s = S[id];
+      if (!s) continue;
+      const a = s.pv.open * smooth(g.door);
+      s.angle = a;
+      s.rec.anim.quat.setFromAxisAngle(s.axis, (a - s.pv.open * (s.pv.rest || 0)) * DEG);
+    }
+    // braces: B follows the gear leg; solve the knee; upper link about A, lower link about the knee
+    for (const b of this.braces) {
+      const th = b.gear.angle * DEG;
+      b.B.copy(b.B0).sub(b.gOrigin).applyAxisAngle(b.gear.axis, th).add(b.gOrigin);
+      solveKnee(b.A, b.B, b.L1, b.L2, b.axis, b.bend, b.K);
+      // upper-link angle: (K0 - A) -> (K - A)
+      b.ua = signedAngle(_e1.subVectors(b.K0, b.A), _e2.subVectors(b.K, b.A), b.axis);
+      // lower link is a child of the upper: its own angle is the absolute one, (B0 - K0) -> (B - K),
+      // minus the upper's
+      const abs = signedAngle(_e1.subVectors(b.B0, b.K0), _e2.subVectors(b.B, b.K), b.axis);
+      b.la = abs - b.ua;
+      b.up.anim.quat.setFromAxisAngle(b.axis, b.ua);
+      b.lo.anim.quat.setFromAxisAngle(b.axis, b.la);
+    }
+    // propeller spin (axis points forward: + = clockwise seen from the cockpit) and blade pitch
+    if (S.propeller) {
+      S.propeller.rec.anim.quat.setFromAxisAngle(S.propeller.axis, c.propAngle);
+      for (let k = 1; k <= 5; k++) this._rot('blade_' + k, c.pitch);
+      // motion blur only with the whole propeller on show (a hidden / isolated blade keeps the solid geometry)
+      if (this.blur) this.blur.apply(c.rpm, c.pitch, c.propAngle, S.propeller.rec.shown && this.blur.blades.every((b) => b.shown));
+    }
+  }
+}
+
+// ------------------------------------------------------------------ the sound's loudness references (sound.js)
+// The engine itself is engine.js (Engine: Ng, the start, the light-off, the starter, the indications).  These are the
+// references the engine sound was tuned on and keeps: NG.rpm100 (100 % Ng = 37,468 rpm [S TCDS A.089, POH 1-4]: the
+// compressor tones' frequencies), bladeLoad (the blade loading by pitch: the propeller tone / swish levels) and ngRun
+// (the legacy Ng law of that tuning: the loudness ceiling's reference E_REF only).
+export const NG = { idle: 60, max: 101, crank: 18, rpm100: 37468 };
+
+// relative blade loading of the Hartzell on the ground (no forward speed), by blade pitch (deg relative to the modelled
+// fine pitch: feather +62, reverse -38): fine pitch 0.45; most near 20 deg (the blades close to the stall); the
+// feathered blades edge-on to the flow ~0.05; reverse (beta) 1.0.  An estimate for the sound levels.
+const LOAD = [[-38, 1.0], [-20, 0.75], [0, 0.45], [20, 0.85], [40, 0.6], [62, 0.05]];
+export function bladeLoad(pitch) {
+  const p = clamp(+pitch || 0, LOAD[0][0], LOAD[LOAD.length - 1][0]);
+  let i = 0;
+  while (i < LOAD.length - 2 && p > LOAD[i + 1][0]) i++;
+  const [x0, y0] = LOAD[i], [x1, y1] = LOAD[i + 1];
+  return y0 + (y1 - y0) * (p - x0) / (x1 - x0);
+}
+
+// the legacy Ng law (sound.js E_REF): absorbed power ~ blade loading x rpm^3 mapped onto 60 .. 101 %
+export function propPower(rpm, pitch) { return bladeLoad(pitch) * Math.pow(Math.max(0, rpm) / PROP_RPM.max, 3); }
+const P_IDLE = propPower(PROP_RPM.idle, 0);
+export function ngRun(rpm, pitch) {
+  if (!(rpm > 0)) return 0;
+  const p = Math.max(0, propPower(rpm, pitch) - P_IDLE) / (1 - P_IDLE);
+  return NG.idle + (NG.max - NG.idle) * Math.sqrt(Math.min(1, p));
+}

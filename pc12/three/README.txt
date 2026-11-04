@@ -1,0 +1,1 @@
+three.js r160 (https://github.com/mrdoob/three.js, MIT licence, Copyright 2010-2023 Three.js Authors): the files the PC-12 viewer imports, copied unchanged by web/package.py.  The licence texts are in LICENSE (three.js; meshoptimizer for examples/jsm/libs/meshopt_decoder.module.js).
