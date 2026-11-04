@@ -6,7 +6,7 @@ overlaid on NAIP 2024 with measured deviations, and compared with what the 3-D a
 later workflow.
 
 ```bash
-python3 tools/buildings/draw.py              # all 13 sheets + 4 NAIP overlays + deviations.json (~60 s)
+python3 tools/buildings/draw.py              # all 14 sheets + 4 NAIP overlays + deviations.json (~60 s)
 python3 tools/buildings/draw.py BT BI        # only the sheets whose id starts with BT / BI
 python3 tools/buildings/draw.py --no-naip    # vector sheets only (reuses deviations.json)
 ```
@@ -58,15 +58,16 @@ Nothing in `js/` or `data/` is changed.
 
 | Sheet | Contents | Paper, scale |
 |---|---|---|
-| [BT-01](BT-01.svg) | **Tower: site and roof plan.**<br>- Base-building footprint, with its dimensions.<br>- Cab-roof caps of both height families (D 15.2 / 14.5) at the inferred centre, with the tolerance box.<br>- The x bounds of each family at its own rim (F1 67.36, F2 64.0), tagged inf.<br>- Flare and base circles of both families on the inferred axis.<br>- The landside ribbon channel (bearing 310) and its two blades; the SW wing tip at 254° / 14.0 m reproduces both oblique photos (schematic: plan not measured).<br>- FAA DOF 06-323169 (WGS 84, as the other sheets) and the OE/AAA NAD83 readings of sites 13 / 13A.<br>- The cab as imaged by NAIP 2016 / 18 / 22 / 24.<br>- The app's shaft and cab.<br>Overlay: `BT-01_naip.jpg` | A3, 1:400 |
-| [BT-02](BT-02.svg) | **Tower: elevations from the ESE (airside) and the WNW (landside).**<br>- Both height families: F1 (D 15.2, rim 67.36) filled, F2 (D 14.5, rim 64.0) dash-dot; levels of F1 right, F2 left; the diameters of both at each station.<br>- The cab on its inferred centre (1.8 m off the axis, 1.6 m in these views), on its dark plinth ring (D 10.8 m).<br>- Airside: the discrete upper slots (each ~1.4 m wide, sweeping ~20°) and the long helical slot (~44°), projected from plan bearings.<br>- Landside: the glass ribbon (2 columns × ~25 rows), drawn at its plan bearing 310 (up to 2.3 m left of the axis), between the narrow NE blade and the louvred SW wing; the NE-flank slots.<br>- The DOF 245 ft envelope; the CTBUH classification of 221 ft. | A1, 1:200 |
+| [BT-01](BT-01.svg) | **Tower: site and roof plan.**<br>- Base-building footprint, with its dimensions.<br>- Cab-roof caps of both height families (D 15.2 / 14.5) at the inferred centre, with the tolerance box.<br>- The x bounds of each family at its own rim (F1 67.36, F2 64.0), tagged inf.<br>- Flare and base circles of both families on the inferred axis.<br>- The landside ribbon channel (bearing 310) and its two blades; the SW wing tip at 254° / 14.0 m reproduces both oblique photos (schematic: plan not measured).<br>- FAA DOF 06-323169 (WGS 84, as the other sheets) and the OE/AAA NAD83 readings of sites 13 / 13A.<br>- The cab as imaged by NAIP 2016 / 18 / 22 / 24.<br>- The app's shaft and cab.<br>- The 2025 roof masts on the cab (15 whips, 9 camera / lamp poles; bearings inf); the airside glazing band and the landside curtain-wall bay along the base-building faces (approximate).<br>Overlay: `BT-01_naip.jpg` | A3, 1:400 |
+| [BT-02](BT-02.svg) | **Tower: elevations from the ESE (airside) and the WNW (landside).**<br>- Both height families: F1 (D 15.2, rim 67.36) filled, F2 (D 14.5, rim 64.0) dash-dot; levels of F1 right, F2 left; the diameters of both at each station.<br>- The cab on its inferred centre (1.8 m off the axis, 1.6 m in these views), on its dark plinth ring (D 10.8 m).<br>- Airside: the discrete upper slots (each ~1.4 m wide, sweeping ~20°) and the long helical slot (~44°), projected from plan bearings.<br>- Landside: the glass ribbon (2 columns × ~25 rows), drawn at its plan bearing 310 (up to 2.3 m left of the axis), between the narrow NE blade and the louvred SW wing; the NE-flank slots.<br>- The flare top as a rounded shoulder rising to the plinth (photo t1), not a vertical lip.<br>- The cladding grid, thin: panel rows every 2.47 spec m (the slot ends lie on rows) and ~68 helical joints with the slots' twist (2.6°/m).<br>- The NE-flank slots' glazed lower panes; the 2025 roof masts (15 whips + 9 poles, from photos t2 / t3); the post on the SW wing top.<br>- Base building: airside parapet + continuous dark glazing band (photo t2); landside curtain-wall bay (photo t4). The louvred block seen beside the shaft in the photos is the Terminal 2 AirTrain station, 91 m NW (triangulated): not drawn.<br>- The DOF 245 ft envelope; the CTBUH classification of 221 ft. | A1, 1:200 |
 | [BT-03](BT-03.svg) | **Tower: section through the shaft axis.**<br>- Mat, base building, cladding outline of both families.<br>- Core (published as text only; diameter unknown).<br>- Cab floor, plinth ring, glass, roof (offset cab) and the snippet-only centre column. | A3, 1:400 |
-| [BI-01](BI-01.svg) | **ITB: roof plans.**<br>- Key plan, 1:2500.<br>- Main-hall wing roof, 1:750: relief-corrected outline, 5 truss lines, 5 skylights (row 1.7 m north of the fascia midpoint, all full length; planform inf, D-shaped alternative dotted), glazed tip bands (1.6 m / 3.6 m inside the fascia); the west glass wall as the band of its two canopy readings [inf]; inferred column lines and 20 columns (west line in front of the glass); DOF roof tops; eave heights (hump = DOF-anchored fit, inf); the obs and published lengths; the published rhythm; the app's roof.<br>- BA-A, 1:2000 and BA-G, 1:2500: outlines, heights, the DOF pod point.<br>- Key-value table.<br>Overlay: `BI-01_naip.jpg` | A1, 1:750 / 2000 / 2500 |
-| [BI-02](BI-02.svg) | **ITB hall: elevations.**<br>- West (landside), 1:400: wing eave profile with V notches and the glazed centre arch (±2 m band), the exposed truss band above a level glass-wall head, the white columns with their struts (inf), the 705-ft glass wall on the departures curb (clear ~80 m central bay with the "SAN FRANCISCO INTERNATIONAL" lettering, fritted side bays, clear glass under the canopy) and the open cantilever tips; DOF tops, level 3, the curb canopy, 252.9 m vs 860 ft, structural rhythm.<br>- North end, 1:250: width, tip fascia, hump silhouette, the west wall band and its eave overhang, the hall-width conflict, placeholder end wall. | A1, 1:400 / 1:250 |
+| [BI-01](BI-01.svg) | **ITB: roof plans.**<br>- Key plan, 1:2500.<br>- Main-hall wing roof, 1:750: relief-corrected outline, 5 truss lines, 5 skylights (row 1.7 m north of the fascia midpoint, all full length; planform inf, D-shaped alternative dotted), glazed tip bands (1.6 m / 3.6 m inside the fascia); the west glass wall as the band of its two canopy readings [inf]; inferred column lines and 20 columns (west line in front of the glass); DOF roof tops; eave heights (hump = DOF-anchored fit, inf); the obs and published lengths; the published rhythm; the app's roof.<br>- BA-A, 1:2000 and BA-G, 1:2500: outlines, heights, the DOF pod point, the 3 + 3 roof pods traced on NAIP 2024 (relief-corrected; the imaged trace dotted on the overlay) and the BA-G pod-3 end box (probable ramp-control cab, inf).<br>- Key-value table.<br>Overlay: `BI-01_naip.jpg` | A1, 1:750 / 2000 / 2500 |
+| [BI-02](BI-02.svg) | **ITB hall: elevations.**<br>- West (landside), 1:400: wing eave profile with V notches and the glazed centre arch (±2 m band), the exposed truss band above a level glass-wall head, the white columns, each branching into a fan of 4-6 members (count obs, geometry inf), the curb-canopy hangers and posts on the 40-ft grid (obs photo), the 705-ft glass wall on the departures curb (clear ~80 m central bay with the "SAN FRANCISCO INTERNATIONAL" lettering, fritted side bays, clear glass under the canopy) and the open cantilever tips (eave non-increasing to the 34.4 m tip); DOF tops, level 3, the curb canopy, 252.9 m vs 860 ft, structural rhythm.<br>- North end, 1:250: width, tip fascia, hump silhouette, the west wall band and its eave overhang, the hall-width conflict, placeholder end wall. | A1, 1:400 / 1:250 |
 | [BI-03](BI-03.svg) | **ITB hall: sections.**<br>- Long section on the centre truss line: football trusses 29 ft max over the supports with an inferred taper, the centre arch, columns from level 3, the 705-ft hall, the 83-ft interior.<br>- Cross section at the inner column line: 5 truss lines at 12.12 m, 65.4 m width; the DOF tops at their stations; the west glass wall band (canopy edge / wall above the canopy) behind the column, the sight line to the camera, the entrance canopy [pub SEAONC]; the 210-ft hall measured from the wall, 5.5 m beyond the east eave (conflict).<br>- Structure table. | A1, 1:400 / 1:250 |
-| [BD-01](BD-01.svg) | **Domestic T1 / T2 / T3: plan.**<br>- SFO Museum level-2 outlines.<br>- Measured lean-free roof edges for BA-B, BA-D and BA-F.<br>- BA-B raised centre band (approximate), and along the whole pier its three planted roof wells, two bridges, two skylight grids and the PV fields (NAIP, lean-corrected).<br>- BA-D head: the two round drums and the linear skylight / roof-plane edges (NAIP).<br>- BA-F: the octagonal hub, its lantern rings and the NW arm's central roof monitor (NAIP).<br>- Pier heights with their ranges.<br>- T1 Center skylights.<br>- FAA DOF points, with the refuted ones marked.<br>- Height table.<br>Overlay: `BD-01_naip.jpg` | A1, 1:2500 |
-| [BD-02](BD-02.svg) | **Domestic: elevations.**<br>- Pier cross-sections on a common datum, 1:500: BA-B stepped, BA-E stepped (raised centre with the tapered edge over the clerestory, lower side roofs), BA-F, BA-D head (with its drums), BA-C, BA-A control, and the app's 14.6 m.<br>- BA-F hub cut through the lantern and the NW arm with its monitor (heights unknown, placeholders).<br>- Terminal 3 West airside field / gatehouse wall sections (field-wall window stack per the printed 10 + 2 + 10 ft chain) and the T3 level datum, 1:200, from the published CDR 95 % CD. | A1, 1:500 / 1:200 |
-| [BD-03](BD-03.svg) | **Domestic: landside (curb) elevations.**<br>- Harvey Milk T1 Center, developed along its curved face towards the central garage, 1:400: clear glass under the curb canopy, the two-tier fritted curtain wall with its irregular mullions (schematic), the signage zone, PV at the roof edge; heights above the curb [inf, photo d1].<br>- Terminal 2 entry face, 1:200: the published description only (heights unknown). | A1, 1:400 / 1:200 |
+| [BI-04](BI-04.svg) | **ITB boarding areas: elevations and sections.**<br>- BA-G apron (NNE) face and BA-A apron (ESE) face, 1:750: pier bodies (main-roof ranges), the traced pods with their NAIP band rises, the BA-G pod-3 end box (window band / antennas schematic), the BA-A pod-1 DOF top, the BA-A glazed gate-room band (photo a2).<br>- Sections through pod A1 and through pod G3 with the end box, 1:400.<br>- Pod table (`tools/buildings/itb_pods.py` → `itb_pods.json`). | A1, 1:750 / 1:400 |
+| [BD-01](BD-01.svg) | **Domestic T1 / T2 / T3: plan.**<br>- SFO Museum level-2 outlines.<br>- Measured lean-free roof edges for BA-B, BA-D and BA-F.<br>- BA-B raised centre band along the whole straight pier (t −1236..−946, measured: 2020 step shadow + parallax, `dom_bab_band.json`), and along the whole pier its three planted roof wells, two bridges, two skylight grids and the PV fields (NAIP, lean-corrected).<br>- BA-D head: the two round drums and the linear skylight / roof-plane edges (NAIP).<br>- BA-F: the octagonal hub (its free faces checked on NAIP, `dom_baf_hub.json`), its lantern rings (eccentric, ~3.3 m E [inf]) and the NW arm's central roof monitor (NAIP).<br>- Pier heights with their ranges.<br>- T1 Center skylights.<br>- FAA DOF points, with the refuted ones marked.<br>- Height table.<br>Overlay: `BD-01_naip.jpg` | A1, 1:2500 |
+| [BD-02](BD-02.svg) | **Domestic: elevations.**<br>- Pier cross-sections on a common datum, 1:500: BA-B stepped, BA-E stepped (raised centre with the tapered edge over the clerestory, lower side roofs), BA-F, BA-D head (with its drums), BA-C, BA-A control, and the app's 14.6 m.<br>- BA-F hub cut WSW–ENE through the lantern (hub roof edge 10.4–12.1 m single-epoch band; lantern rise ≤ 4.6 m) and the NW arm with its monitor (placeholders).<br>- Terminal 3 West airside field / gatehouse wall sections (field-wall window stack per the printed 10 + 2 + 10 ft chain) and the T3 level datum, 1:200, from the published CDR 95 % CD. | A1, 1:500 / 1:200 |
+| [BD-03](BD-03.svg) | **Domestic: landside (curb) elevations.**<br>- Harvey Milk T1 Center, developed along its curved face towards the central garage, 1:400: clear glass under the curb canopy, the two-tier fritted curtain wall with its irregular mullions (schematic), the signage zone, PV at the roof edge; heights above the curb [inf, photo d1].<br>- Terminal 2 entry face, 1:200: the published description only (heights unknown).<br>- Terminal 3, developed along its curved face, 1:400: the published CDR levels above L1, T3 West's ACM / fritted window wall / spandrel (CDR p.23, band proportions inf), the AirTrain-connector gap, T3 East massing (facade unknown) and its mechanical penthouse (extent and set-back from NAIP, top at R3 [inf]). | A1, 1:400 / 1:200 |
 | [BL-01](BL-01.svg) | **Landside: key plan.**<br>- Every landside building with its height summary.<br>- FAA DOF points.<br>- AirTrain guideway and stations.<br>- United MOC, from the imaged roof. | A1, 1:5000 |
 | [BL-02](BL-02.svg) | **Landside: roof plans.**<br>- Central garage (with its void), Garages A / G and the Grand Hyatt, LTP 1 / 2, MOC, RCC, CAC.<br>- Superbay, with its spine and 8 × 17.3 m roof bays (138 m against the 134.5 m outline).<br>- Minimum-rectangle dimensions, DOF points, height table.<br>Overlay: `BL-02_naip.jpg` | A1, 1:2000 |
 | [BL-03](BL-03.svg) | **Landside: principal elevations (long faces).**<br>- Massing elevations of the 10 buildings, with levels, published / DOF / inferred heights and ranges; DOF points at their projected positions.<br>- Superbay across the spine (roofs falling from the spine to ~27 m tips [inf]) and its WNW door face (8 folded bays, two ~67 m door bays); Grand Hyatt east face (podium, colonnade level, curtain wall, penthouse, masts); MOC stepped by its DOF points. | A1, 1:1000 |
@@ -135,7 +136,7 @@ not drawn. Both self-consistent families are drawn, and neither is preferred:
 - The core diameter and floor levels.
 - A lean-free absolute position.
 
-### ITB (BI-01..03; spec verification 2026-11-04)
+### ITB (BI-01..04; spec verification 2026-11-04)
 
 **Verified.**
 - DOF roof tops: 131 / 132 ft = 39.93 / 40.23 m (1A), at u +57.2 / −58.4, 0.8–1.1 m inside the west eave. They mark the
@@ -143,23 +144,36 @@ not drawn. Both self-consistent families are drawn, and neither is preferred:
 - Roof [obs, relief-corrected]: 252.9 × 65.4 m, axis 162.85°, 5 truss lines at 12.12 m (the 40 ft grid), 5 lens
   skylights (all full length; the row 1.5–2.2 m north of the fascia midpoint), glazed tip bands of 18.75 m (N) and
   15.75 m (S) ending 1.6 m / 3.6 m inside the fascia.
-- Wing eave profile: 34.9 m at the tips → 40.08 m humps → 35.7 m notches (NAIP re-run byte-identical). The hump value
-  is the fit's anchor (the DOF mean at the fitted peak |u| 67) [inf]; at the DOF stations the curve reads 0.23 / 0.45 m
-  below the DOF values (inside the 1A ± 3 ft); anchored there, every eave height would rise ~0.34 m.
+- Wing eave profile: 34.4 m at the tips (32–35.5; the fit held non-increasing beyond the humps, see below) → 40.08 m
+  humps → 35.7 m notches (NAIP re-run byte-identical). The hump value is the fit's anchor (the DOF mean at the fitted
+  peak |u| 67) [inf]; at the DOF stations the curve reads 0.23 / 0.45 m below the DOF values (inside the 1A ± 3 ft);
+  anchored there, every eave height would rise ~0.34 m.
 - SEAONC, read in full: 5 double-cantilever truss sets, 29 ft deep, 380 / 160 / 860 ft, 20 columns from level 3,
   705 × 210 × 83 ft interior.
 - Piers: BA-A 17.9 m (16.9–18.8). BA-G 17.0 m (13–20, low; k(x) relief).
 
 **Plausible / not re-checked.**
 - The glazed centre arch's crown, 40.1 m ± 2: one photo; its silhouette was not re-run by the verification.
-- BA-A pods: pod 1 ~55–60 m long (the note's 70 m revised), pods 2 / 3 ~52–55 m; pod 1 rises 4.9–6.9 m above the main
-  roof, so its top is 22.3–25.2 m — a **conflict** with the DOF 25.9 m except at the upper end.
+- Roof pods (BI-01 / BI-04; `itb_pods.json`, NAIP 2024 traced in the pier frames, relief-corrected) [obs]: BA-A three D-shaped pods 55.9 / 51.6 / 55.9 m
+  long, ~24.5 m wide (curved WNW edge, straight ends, straight ESE side a weak line only); BA-G three lenses truncated by
+  straight end walls, 58.3 / 54.2 / 62.5 m long, ~25 m wide, ~3 m from the NNE roof edge. Rises from the WNW band (face +
+  shadow) [obs, low]: BA-A 5.4–5.7 m → tops 23.3–23.6 (21.8–25.0); BA-G 5.2–6.2 m → tops 22.2–23.2 (main roof 13–20 carries
+  into them). BA-A pod 1 meets the DOF 25.9 m only at the upper ends of both.
+- BA-G pod-3 end box (~8 × 9 m, set back ~1 m from the pod's WNW end) [obs]: 7.4–10.3 m above the pod, top 30.5–33.4 m (26–37)
+  [obs, low]; the only BA-G rooftop structure taller than the pods. It is the box-shaped cab with a dark window band and
+  antennas of photo d2 (wbaiv 2018, CC BY 4.0) [inf], and stands on NAIP 2024-05-20; function a ramp-control cab [inf,
+  unconfirmed].
+- Eave at the tips: the full_curve's rise from 34.40 (|u| 115–119) to 34.83 at |u| 123 is a polynomial end artefact (raw
+  NAIP stations and the photo silhouette fall steadily to the tips); drawn non-increasing, tip 34.4 m (32–35.5) [obs, low].
 
 **Observed in photos** (i3, i4; reference only).
 - The west glass wall stands on the elevated departures curb and is level-topped ~9.3 m below the wing crest (30.8 m).
 - The football trusses are exposed above it along the whole facade and taper to the tips.
 - Single white columns stand clear in front of the glass (each casts a shadow on it) at u −83.4 / −59.4 m, and branch
-  into struts into the trusses.
+  at the glass head into a fan of 4–6 members into the trusses (post + ~2 per side).
+- Curb-canopy hangers (inclined pairs from the glass wall to the canopy, a post under the canopy at each): 40 ft apart, 20 ft
+  either side of every column line (|u| 130–330 ft; ratio to the 80-ft bay 0.489–0.493 on i4), and ±30 / ±90 ft over the
+  180-ft centre section; apex ~3.6 m above the canopy.
 - The hall stops ~21 m short of each roof tip: the tips are open cantilevers.
 
 **Inferred.**
@@ -185,17 +199,18 @@ not drawn. Both self-consistent families are drawn, and neither is preferred:
   "fascia → lower roof fall"); a wider roof (SOM concept sketch 260 ft). BI-02 / BI-03 draw the published width from the
   wall, 5.5 m beyond the east eave.
 - "Building height 144 ft" [pub]: datum unknown.
-- BA-A pod 1 top: NAIP 22.3–25.2 m against DOF 25.9 m.
+- BA-A pod 1 top: NAIP 21.8–25.0 m (band rise 5.7 m; the verification read 22.3–25.2) against DOF 25.9 m (±0.9).
 
 **Unknown.**
 - Cross camber.
 - Fascia depth.
-- Facade mullion module, canopy depth, the end-wall outline.
+- Facade mullion module, canopy depth, the end-wall outline (the canopy hanger rhythm is now observed, above).
 - The 2024–26 rooftop PV layout.
-- The BA-G pod heights.
-- The pod positions.
+- Pier floor heights and the gate-room bay positions along the pier faces (BA-A glazing band ~5.2–17.2 m AGL, photo a2,
+  rough).
+- The function of the BA-G end box (no SFO source).
 
-### Domestic (BD-01..02; spec verification 2026-11-04)
+### Domestic (BD-01..03; spec verification 2026-11-04)
 
 **Verified.**
 - The SFO Museum polygons are departure-level (level 2) floor outlines, not roofs. The lean-free roof edges lie, from the
@@ -221,12 +236,26 @@ not drawn. Both self-consistent families are drawn, and neither is preferred:
   angular roof-plane edges, drawn less the 8.5 m roof relief. (The T2 "floating angular planes" are interior ceiling
   planes per the research, not the roof.)
 - BA-F hub: a regular octagon 74.2 m across the flats fits the SFO Museum outline to 0.01 m; an octagonal lantern /
-  skylight pair of rings 19.4 / 13.4 m across (drawn concentric [inf]; heights unknown). The imaged ring centre lies
-  8.1 m east of the hub centre: if concentric, a top of ~24 m at the 0.33 m/m lean [inf, unverified].
+  skylight pair of rings 19.4 / 13.4 m across (heights unknown). The imaged ring centre lies 8.1 m east of the hub
+  centre. Backlog round (`dom_baf_hub.py`): the four free hub faces put the NAIP 2024 roof edge on the octagon
+  (−0.3 / +0.2 m) at 10.4–12.1 m (single epoch; the spread is the lean direction) [obs, low]; a concentric ring would
+  then need ~11–12 m of rise, but its 2020 cast shadow (≤ 5.2 m at 1.25 m/m) bounds the rise to ≤ 4.6 m, so the ring is
+  drawn eccentric, ~3.3 m east of the hub centre [inf] (the earlier "concentric, ~24 m top" reading is dropped).
 - BA-F NW arm: a central roof monitor / light strip ~8 m wide (low contrast), height unknown.
 - BA-B, whole pier (by eye, ±3 m, `dom_bab_roof.json`; drawn less the 13.1 m outer-roof relief, 5.1 m W [inf]): three
   planted sunken roof wells on the WNW side ("roof wells" [pub CDR 2016]), two bridges across them, two skylight grids,
   three PV row fields. Their heights are not measured.
+- BA-B raised centre, whole straight pier (backlog r1-23, `dom_bab_band.py`): the 2020 shadow of the step on the lower
+  ESE band is present at every 2-m station from t −1236 to −946 (290 m, the bend towards T1 Center to ~20 m short of the
+  tip), 4.79–4.95 m long (p10–p90 of 144 stations) = the same ~5.9 m step; the 2020→2024 parallax of the centre exceeds
+  the outer lip's at every correlating station (median 3.40 / 3.65 m S / N vs 2.30 / 2.60 m). Lean-free edges: ESE
+  s −391.0 (2020 edge, sd 0.13 m along the pier) [obs], WNW s −423.4 (2024 wall band over the roof wells, t −1150..−960)
+  [obs], carried south [inf]; raised part 32.4 m. Top ~19 m along the pier if the outer roof is 13.1 m throughout [inf:
+  measured on the south half only]. The oblique north wing beyond the bend is not tested.
+- Terminal 3 landside face (BD-03, backlog r1-34): 106.4 m (T3 West) + 16.6 m connector gap + 122.5 m (T3 East) of SFO
+  Museum outline facing the garage [obs]; levels from the CDR 95 % CD above T3 L1 [pub / inf]; T3 East penthouse: NAIP
+  2024 top edges x −944..−884, set back ~20–24 m, W-wall band 3.3 m and N shadow 1.5–2 m → ~6–9 m above the roof [obs, low],
+  drawn to R3 81'-0" [inf].
 - BA-E (photo a1, Sept 2025, CC BY-SA 4.0, pier identified by position / airline): a raised PV-covered centre roof whose
   thin tapered edge overhangs a recessed glass clerestory / end wall, between lower side roofs; step ~3 m, flanks ~4.4 m,
   overhang ~1.5 m [inf, low]. Which level the measured 12.85 m fascia belongs to is not settled.
@@ -234,7 +263,8 @@ not drawn. Both self-consistent families are drawn, and neither is preferred:
   above the departures curb [inf, low]; face lengths along the SFO Museum outline 94.1 + 43.6 (set-back) + 93.8 m [obs].
 
 **Inferred.**
-- The BA-B step widths (7.5 / 33 / 14 m): approximate, measured on the south half only.
+- The BA-B step widths south of t −1150 (the WNW edge carried from the north half; 7.3 / 32.4 / 14.7 m).
+- The BA-F lantern position (eccentric, from the 2020 rise bound) and the T3 East penthouse top at R3.
 - The BA-E width, 42.9 m.
 - T3 heights above L1.
 
@@ -246,7 +276,8 @@ not drawn. Both self-consistent families are drawn, and neither is preferred:
 - T1 Center and T2 hall heights: nothing is published or measured.
 - The T3 datum.
 - Bay modules.
-- The heights of the BA-B north half and of its roof wells / skylights.
+- The BA-B outer-roof height on the north half, the depth of its roof wells and the skylight heights.
+- The T3 East landside facade, the T3W penthouse positions, the T3 landside band heights (only rendered proportions).
 - The departures-curb heights of T1 / T2, the T2 landside box height.
 - Which state of T3W to model: under construction 2024–29; a May 2026 change adds a storey.
 

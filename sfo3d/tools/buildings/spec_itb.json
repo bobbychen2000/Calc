@@ -1332,7 +1332,8 @@
     "verdict": "PLAUSIBLE (reproduced; one new independent check)",
     "evidence": "itb_naip_measure.py re-run: byte-identical output. NEW: the east eave wanders WITH the west eave (north tip -> hump: west +2.25 m, east +2.20 m, width constant) - the wander is a height signal, not a curved plan. The photo silhouette was not re-run (Commons API rate-limited, file not cached). The two relief models differ by 1-4 % along the hall (<= 0.5 m on the drops)."
    },
-   "drawing_note": "2026-11-04 (drawing review round 2): the curve is anchored on the DOF mean (40.08) at its FITTED peak |u| 67, where no DOF point exists; the DOF points sit at u +57.16 (06-035315, 39.93) and -58.35 (06-035316, 40.23), 0.8-1.1 m inside the west eave, where the curve reads 39.70 / 39.78 (0.23 / 0.45 m low, inside the 1A +-3 ft). Anchored at the DOF stations every eave height would rise ~0.34 m (peak ~40.4). The hump value 40.08 is therefore [inf] (DOF-anchored fit); the DOF tops stay [pub]."
+   "drawing_note": "2026-11-04 (drawing review round 2): the curve is anchored on the DOF mean (40.08) at its FITTED peak |u| 67, where no DOF point exists; the DOF points sit at u +57.16 (06-035315, 39.93) and -58.35 (06-035316, 40.23), 0.8-1.1 m inside the west eave, where the curve reads 39.70 / 39.78 (0.23 / 0.45 m low, inside the 1A +-3 ft). Anchored at the DOF stations every eave height would rise ~0.34 m (peak ~40.4). The hump value 40.08 is therefore [inf] (DOF-anchored fit); the DOF tops stay [pub].",
+   "drawing_note_tips": "2026-11-04 (drawing review backlog, BI-01..03): the full_curve rises from 34.40 (|u| 115-119) to 34.83 at |u| 123 - an end artefact of the even polynomial: the raw NAIP eave stations fall monotonically to the tips (median per bin N / S: |u| 100-105 34.8 / 36.3, 110-114 33.5 / 35.6, 114-121 32.1 / 34.4-33.8; read over the glazed tip bands, weak) and so does the photo silhouette (itb_photo_skyline.json; south side: a 0.5-0.9 m upturn in the last ~2 m, the fascia corner only). The sheets draw the fit made non-increasing beyond the humps (its minimum 34.40 held to the tip): tip 34.4 m, range 32-35.5 [obs, low]; the value 34.9 above is the NAIP 34.4 / photo 35.5 blend."
   },
   {
    "id": "level3.floor",
@@ -1375,7 +1376,8 @@
     "verdict": "CONFIRMED",
     "evidence": "SFGate (frit, glass) re-read"
    },
-   "drawing_obs": "photos i1 / i4 (reference): a clear central bay ~80 m wide (+-39 m i4, +-42 m i1) on a mullion grid (~6.1 x ~2.2 m, low) carrying \"SAN FRANCISCO INTERNATIONAL\" (+-32.5 m i4 / +-37 m i1); white horizontally banded fritted side bays with a dark clear strip just above the curb canopy; the central glazing head follows the centre section bottom chord, 1-3.5 m above the side-bay head (tentative). Wall position: the curb canopy (\"entrance canopy\" [pub SEAONC]) hides the wall foot from the NAIP camera if deeper than ~2 m, so the NAIP line reads the wall at v -28.3 (above the canopy) to -23.3 (canopy edge, 5 m deep) [inf]; -26.3 only for a canopy <= 2 m."
+   "drawing_obs": "photos i1 / i4 (reference): a clear central bay ~80 m wide (+-39 m i4, +-42 m i1) on a mullion grid (~6.1 x ~2.2 m, low) carrying \"SAN FRANCISCO INTERNATIONAL\" (+-32.5 m i4 / +-37 m i1); white horizontally banded fritted side bays with a dark clear strip just above the curb canopy; the central glazing head follows the centre section bottom chord, 1-3.5 m above the side-bay head (tentative). Wall position: the curb canopy (\"entrance canopy\" [pub SEAONC]) hides the wall foot from the NAIP camera if deeper than ~2 m, so the NAIP line reads the wall at v -28.3 (above the canopy) to -23.3 (canopy edge, 5 m deep) [inf]; -26.3 only for a canopy <= 2 m.",
+   "drawing_obs_canopy": "2026-11-04 (drawing review backlog, BI-02): curb-canopy hangers (inclined pairs from the glass wall down to the canopy, the long leg falling towards +u, a post under the canopy at each) read on photo i4 as ratios to the 80-ft column bay: spacing 0.493 (N wing) / 0.489 (S wing) of the bay = 40 ft, set 20 ft either side of every column line, i.e. at |u| = 130, 170 ... 330 ft; over the 180-ft centre section at +-30 / +-90 ft (60-ft spacing); read u within +-0.5 m of that grid; apex ~3.6 m above the canopy, leg ~2.9 m [obs photo, rough]. Columns: each branches at the glass head into a fan of 4-6 members (vertical post + ~2 per side, photos i3 / i4) [obs count]."
   },
   {
    "id": "facade.end_walls",
@@ -1661,7 +1663,8 @@
     "date": "2026-11-04",
     "verdict": "PLAUSIBLE (weaker than stated)",
     "evidence": "rim bands at the three pod apexes [2.49, 2.52, 2.49] m (note: 2.5-3); the dark band includes the pod's own shadow (0.116 per m), so the rise is [[4.9, 5.2, 6.8], [5.0, 5.2, 6.9], [4.9, 5.2, 6.8]] m (frame / k(x) / band without shadow) -> pod top 22.3-25.2 m, not 7.5 m above the main roof; the DOF 85 ft (25.9 m) point lies at pod 1's NNE end near the west eave (+-6.1 m). Pod 1 reads ~55-60 m long by eye on qa_pierA_frame.jpg (note: 70); pods 2 and 3 ~52-55 m."
-   }
+   },
+   "drawing_obs": "2026-11-04 (drawing review backlog, BI-01 / BI-04): traced on NAIP 2024 in the pier frame (heading 208.0) by tools/buildings/itb_pods.py -> itb_pods.json: imaged roof lengths 55.9 / 51.6 / 55.9 m (A1 nearest the ITB), width ~24.5 m (curved WNW edge scanned every metre; straight ends; the straight ESE side is a weak line only) [obs]; relief-corrected with the frame model. Rise from the WNW band (half-level 2.88 / 2.88 / 2.75 m, face + shadow 0.506 per m): 5.7 / 5.7 / 5.4 m -> tops 23.6 / 23.6 / 23.3 m (with the main-roof range 21.8-25.0) [obs, low]. Pod 1 DOF 25.91 m (+-0.9) meets the NAIP range only at its upper end. Photo a2 (Pi.1415926535, Sept 2025, CC BY-SA 4.0) shows BA-A from the east (pods with straight near walls, glazed gate-room bays ~5.2-17.2 m AGL, rough)."
   },
   {
    "id": "ba_a.dof_pod",
@@ -1861,6 +1864,58 @@
     "date": "2026-11-04",
     "verdict": "PLAUSIBLE",
     "evidence": "by eye on the G-frame crop (heading 297.75): ~62 / 58 / 66 m (note 60 / 55 / 62), +-4 m"
+   },
+   "drawing_obs": "2026-11-04 (drawing review backlog, BI-01 / BI-04): traced on NAIP 2024 in the pier frame (heading 297.75): lenses truncated by straight end walls; imaged lengths 58.3 / 54.2 / 62.5 m (G1 nearest the ITB; G3 runs under the image of its end box), width ~24.6 m, set ~3 m from the NNE roof edge and ~10 m from the SSW edge [obs]; edges between the read points parabolic [inf]. Rise from the WNW end band (2.25-2.5 m, k(x) face + shadow): 5.4 / 5.2 / 6.2 m -> tops 22.4 / 22.2 / 23.2 m with the 17.0 main roof (13-20 carries into them) [obs, low]."
+  },
+  {
+   "id": "ba_g.pod3_end_box",
+   "group": "boarding_area_g",
+   "name": "Raised box at the WNW end of pod 3 (probable ramp-control cab)",
+   "value": {
+    "top_m": [
+     30.5,
+     33.4
+    ],
+    "rise_above_pod_m": [
+     7.4,
+     10.3
+    ],
+    "imaged_roof_m": [
+     8.2,
+     9.0
+    ],
+    "ring_true_xz": [
+     [
+      -1548.13,
+      28.74
+     ],
+     [
+      -1555.37,
+      24.9
+     ],
+     [
+      -1559.52,
+      32.87
+     ],
+     [
+      -1552.28,
+      36.71
+     ]
+    ]
+   },
+   "unit": "m",
+   "tag": "obs",
+   "sources": [
+    "naip"
+   ],
+   "confidence": "low",
+   "status": "drawing review 2026-11-04",
+   "method": "tools/buildings/itb_pods.py: its WNW band splits into the box face (3.0 m) and the pod end wall (2.5 m) separated by a light ridge; rise above the pod = 3.0 m / (k(x) face + shadow 0.406) .. / (face only 0.292); pod 3 rise 6.2 m from the second band; main roof 17.0 m",
+   "note": "the only rooftop structure on BA-G whose band exceeds the pods' (all three pods and the pier head checked; BA-F and the ITB north end show nothing like it). Photo d2 (wbaiv, 2018-09-08, CC BY 4.0, 'SFO AirTrain Terminal 3 intl faceNorthWest', old gate numbers 94 / 96 = BA-G) shows a box-shaped cab with a dark window band and antennas on a raised roof volume above a glass-walled terminal roof, about as high again as the volume [obs photo]; it stands on NAIP 2024-05-20 [obs]. Function: a ramp-control cab [inf] (LiveATC lists 'KSFO Ramp G (West)' 119.225, docs/research/atc.md; no SFO source). The camera position of d2 was not solved, so the identification of the photo's cab with this box rests on uniqueness [inf]. Height range with the main-roof range: 26.0-36.9 m.",
+   "verification": {
+    "date": "2026-11-04",
+    "verdict": "OBSERVED (NAIP), FUNCTION INFERRED",
+    "evidence": "itb_pods.json (G3-box); BI-01 view 4, BI-04 views 1 / 4"
    }
   },
   {

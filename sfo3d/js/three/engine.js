@@ -26,6 +26,9 @@ const { pass, mrt, output, velocity, normalView, packNormalToRGB, unpackRGBToNor
 // livMB: GPU budget for brand livery textures (js/three/aircraft.js LiveryCache evicts the least recently used beyond it)
 export const QUALITY3 = {
   high: { name: 'high', dprMax: 2, maxPx: 3.2e6, shadow: 2048, cascades: 3, shadowRadius: 2, ao: 'prepass', aoScale: 0.5, traa: true, bloom: true, bloomScale: 0.5, terrainStep: 15, mapRes: 1.0, aptRes: 0.8, cityRes: 4096, skyRes: 1024, lod: 1800, shadowDist: 1600, aniso: 16, maxTex: 0, floodSpots: 2, spotMap: 2048, livMB: 320 },
+  // stills / visual QA only (js/live/app.js QUALITY.ultra, ?quality=ultra: 4096 shadow map, DPR 3, 0.6 m airfield bake,
+  // 8192 city bake; review round 3: live3 mapped it to 'high'). Adds full-resolution GTAO and 4096^2 floodlight spots.
+  ultra: { name: 'ultra', dprMax: 3, maxPx: 3.4e7, shadow: 4096, cascades: 3, shadowRadius: 2, ao: 'prepass', aoScale: 1.0, traa: true, bloom: true, bloomScale: 0.5, terrainStep: 10, mapRes: 0.75, aptRes: 0.6, cityRes: 8192, skyRes: 2048, lod: 4000, shadowDist: 2500, aniso: 16, maxTex: 0, floodSpots: 2, spotMap: 4096, livMB: 640 },
   medium: { name: 'medium', dprMax: 1.5, maxPx: 2.0e6, shadow: 2048, cascades: 3, shadowRadius: 2, ao: 'prepass', aoScale: 0.5, traa: true, bloom: true, bloomScale: 0.5, terrainStep: 20, mapRes: 1.25, aptRes: 1.0, cityRes: 4096, skyRes: 1024, lod: 1300, shadowDist: 1100, aniso: 8, maxTex: 2048, floodSpots: 2, spotMap: 2048, livMB: 160 },
   // low (phones): 3 cascades x 1024^2 (review round 2: 2 cascades left rooftop units without shadows), the first split
   // closer than the rig's, the last at least the tier's shadow distance
@@ -37,6 +40,63 @@ export const QUALITY3 = {
 // is caught (review round 1: shade under aircraft was only 1/6 of sunlit concrete, about 1/30 in a reference photo;
 // the old 2.2 m radius saw only contact creases)
 const AO_RADIUS = 4.0;
+
+// GTAO denoise (review round 3, major: speckled AO on the fuselage above the wing root and on the shaded apron by the
+// gear, high-pass sd ~1.8-4x the old renderer's). three r186 GTAONode rotates its slices by a 5x5 magic-square noise
+// tile (GTAONode.js generateMagicSquareNoise(5)) and has no spatial filter; at half resolution the residue is upsampled
+// to 2 px blobs that TRAA does not fully average and CAS then sharpened. This pass is the denoise the GTAO paper pairs
+// with that tile (Jimenez et al. 2016, "Practical Realtime Strategies for Accurate Indirect Occlusion": a spatial box
+// over the noise tile): a 5x5 box at the AO resolution, so every output texel averages all 25 slice rotations, with
+// each tap weighted by how far its surface point lies from the centre texel's tangent plane (no blur across the
+// fuselage / wing / apron silhouettes): w = max(0, 1 - |(P_tap - P_c) . N_c| / (0.03 |z_c| + 0.05 m)). Same depth
+// (GTAO's own input, gather-min at half resolution as GTAO does) and the same view normals as GTAO.
+const { getViewPosition, passTexture } = TSL;
+class AODenoiseNode extends THREE.TempNode {
+  static get type() { return 'AODenoiseNode'; }
+  constructor(aoNode, depthNode, normalNode, camera) {
+    super('float');
+    this.aoNode = aoNode; this.depthNode = depthNode; this.normalNode = normalNode;
+    this.updateBeforeType = THREE.NodeUpdateType.FRAME;
+    this.rt = new THREE.RenderTarget(1, 1, { depthBuffer: false, format: THREE.RedFormat }); this.rt.texture.name = 'AODenoise';
+    this.projInv = uniform(camera.projectionMatrixInverse); this.texel = uniform(new THREE.Vector2(1, 1));
+    this.mat = new THREE.NodeMaterial(); this.mat.name = 'AODenoise'; this.quad = new THREE.QuadMesh(this.mat);
+    this._tex = passTexture(this, this.rt.texture); this._state = undefined; this._size = new THREE.Vector2(); // _state: undefined, not null (RendererUtils' default parameter)
+  }
+  getTextureNode() { return this._tex; }
+  updateBefore(frame) {
+    const R = frame.renderer; const s = R.getDrawingBufferSize(this._size); const k = this.aoNode.resolutionScale;
+    const w = Math.max(1, Math.round(k * s.width)), h = Math.max(1, Math.round(k * s.height)); // = GTAONode.setSize
+    if (this.rt.width !== w || this.rt.height !== h) this.rt.setSize(w, h);
+    this.texel.value.set(1 / w, 1 / h);
+    this._state = THREE.RendererUtils.resetRendererState(R, this._state);
+    R.setClearColor(0xffffff, 1); R.setRenderTarget(this.rt); this.quad.render(R);
+    THREE.RendererUtils.restoreRendererState(R, this._state);
+  }
+  setup() {
+    if (this.mat.fragmentNode) return this._tex; // every scene material that samples the result runs setup(); build once
+    const ao = this.aoNode.getTextureNode(), D = this.depthNode, P = this.projInv, T = this.texel;
+    const half = this.aoNode.resolutionScale < 1;
+    const depthAt = (u) => { if (!half) return D.sample(u).r; const g = D.gather().sample(u); return min(min(g.x, g.y), min(g.z, g.w)); };
+    this.mat.fragmentNode = Fn(() => {
+      const uc = TSL.uv();
+      const dc = depthAt(uc).toVar();
+      const pc = getViewPosition(uc, dc, P).toVar();
+      const nc = this.normalNode.sample(uc).rgb.normalize().toVar();
+      const itol = float(1.0).div(TSL.abs(pc.z).mul(0.03).add(0.05)).toVar();
+      const sum = float(0).toVar(), wsum = float(0).toVar();
+      for (let j = -2; j <= 2; j++) for (let i = -2; i <= 2; i++) {
+        const u = (i === 0 && j === 0) ? uc : uc.add(vec2(i, j).mul(T));
+        const a = ao.sample(u).r;
+        const w = (i === 0 && j === 0) ? float(1.0) : max(float(1.0).sub(TSL.abs(dot(getViewPosition(u, depthAt(u), P).sub(pc), nc)).mul(itol)), 0.0);
+        sum.addAssign(a.mul(w)); wsum.addAssign(w);
+      }
+      return vec4(TSL.select(dc.greaterThanEqual(1.0), float(1.0), sum.div(wsum)), 0.0, 0.0, 1.0);
+    })();
+    this.mat.needsUpdate = true;
+    return this._tex;
+  }
+  dispose() { super.dispose(); this.rt.dispose(); this.mat.dispose(); }
+}
 
 // ---------------------------------------------------------------- AgX with a look (display transform)
 // three r186 AgXToneMapping (src/nodes/display/ToneMappingFunctions.js: Troy Sobotka's AgX, Benjamin Wrensch's fit),
@@ -106,7 +166,11 @@ class CSM3 extends THREE.CSMShadowNode {
 
 export class Engine {
   static temporalShadows = true; // pcfTemporal (TRAA on every tier)
-  constructor(parent, Q, opts = {}) { this.parent = parent; this.Q = Q; this.opts = opts; this.onLost = null; }
+  // The FloodLight exists from the constructor on (review round 3, critical): js/three/renderer3.js attachWorld() runs
+  // synchronously inside the app's `new Scene(...)` and sets the floodlight field, usually BEFORE the async init() below
+  // has resolved (WebGPU adapter request / WebGL 2 fallback); `this.flood` created in init() was then undefined and the
+  // app died at start-up. It needs no renderer; init() adds it to the scene.
+  constructor(parent, Q, opts = {}) { this.parent = parent; this.Q = Q; this.opts = opts; this.onLost = null; this.flood = new FloodLight(Q.floodSpots || 0); }
   async init() {
     const Q = this.Q; const q = new URLSearchParams(location.search);
     const forceWebGL = q.get('webgl') === '1' || this.opts.forceWebGL;
@@ -149,7 +213,7 @@ export class Engine {
     // apron floodlights (a FloodLight whose field is set by renderer3 once the masts are known) and the spot lights for
     // the masts nearest the view (renderer3 assigns them per frame; always in the scene, dark and without shadows by
     // day, so the lights setup of the materials never changes except at the sun's shadow switch, see setFloodSpots)
-    const nSp = Q.floodSpots || 0; this.flood = new FloodLight(nSp); scene.add(this.flood);
+    const nSp = Q.floodSpots || 0; scene.add(this.flood); // created in the constructor (renderer3.attachWorld may set its field before init resolves)
     this.spots = [];
     for (let k = 0; k < nSp; k++) { const s = new MastSpot(Q.spotMap || 1024); s.castShadow = false; if (Engine.temporalShadows) s.shadow.filterNode = pcfTemporal; scene.add(s); scene.add(s.target); this.spots.push(s); }
     this.aoAmount = uniform(1.0); this.frameNo = 0;
@@ -179,10 +243,10 @@ export class Engine {
     this.aoNear.value = c.near; this.aoFar.value = c.far;
   }
   buildPipeline() {
-    const { renderer, scene, camera, Q } = this;
+    const { renderer, scene, camera, Q } = this; const q = new URLSearchParams(location.search);
     const pipe = new THREE.RenderPipeline(renderer); this.pipe = pipe;
     let color, depth, vel;
-    if (Q.ao === 'none' || Q.ao === false) { // AO off (js/three/perf.js flags, js/three/perf_phone.js phone tier): one scene pass without GTAO (a velocity target only for TRAA)
+    if (Q.ao === 'none' || Q.ao === false) { // AO off: one scene pass without GTAO (a velocity target only for TRAA). No shipped tier uses it; it is the hook for the deferred phone-performance work (js/three/perf.js, not imported yet: docs/research/mobile_perf.md)
       const sp = pass(scene, camera); sp.name = 'scene';
       if (Q.traa) sp.setMRT(mrt({ output, velocity }));
       depth = sp.getTextureNode('depth'); vel = Q.traa ? sp.getTextureNode('velocity') : null;
@@ -197,11 +261,13 @@ export class Engine {
       const aoN = THREE.ao(ai.depth, nrm, ai.camera); aoN.resolutionScale = Q.aoScale; aoN.radius.value = AO_RADIUS; aoN.distanceExponent.value = 1.3; aoN.thickness.value = 2.5; aoN.scale.value = 1.15;
       aoN.useTemporalFiltering = !!Q.traa; // rotate GTAO's noise per frame so TRAA averages it (a static pattern left a mottle on fuselages and under wings)
       this.aoNode = aoN; this.wrapAOTemporal(aoN);
+      // denoised GTAO (AODenoiseNode above; ?aodn=0 or Q.aoDenoise === false: GTAO's raw target, for A/B checks)
+      const aoT = (Q.aoDenoise !== false && q.get('aodn') !== '0') ? (this.aoDen = new AODenoiseNode(aoN, ai.depth, nrm, ai.camera)).getTextureNode() : aoN.getTextureNode();
       const sp = pass(scene, camera); sp.name = 'scene';
-      sp.contextNode = builtinAOContext(mix(float(1.0), aoN.getTextureNode().sample(screenUV).r, this.aoAmount));
-      // the floodlight's direct term is occluded by the same AO (plain texture node of GTAO's target: GTAO is already
-      // scheduled by the context above, and a pass-texture here would also run it inside the pre-pass)
-      this.flood.aoNode = mix(float(1.0), TSL.texture(aoN.getTextureNode().value, screenUV).r, this.aoAmount);
+      sp.contextNode = builtinAOContext(mix(float(1.0), aoT.sample(screenUV).r, this.aoAmount));
+      // the floodlight's direct term is occluded by the same AO (plain texture node of the AO target: GTAO and the
+      // denoise are already scheduled by the context above, and a pass-texture here would also run them inside the pre-pass)
+      this.flood.aoNode = mix(float(1.0), TSL.texture(aoT.value, screenUV).r, this.aoAmount);
       color = sp; this.scenePass = sp;
     } else {
       const sp = pass(scene, camera); sp.name = 'scene';
@@ -241,7 +307,11 @@ export class Engine {
       const LC = lc(cC), LN = lc(cN), LS = lc(cS), LE = lc(cE), LW = lc(cW);
       const mn = min(LC, min(min(LN, LS), min(LE, LW))), mx = max(LC, max(max(LN, LS), max(LE, LW)));
       const amp = sqrt(clamp(min(mn, float(1.0).sub(mx)).div(max(mx, 1e-4)), 0.0, 1.0));
-      const wgt = amp.mul(float(-1.0).div(mix(8.0, 5.0, this.casAmount)));
+      // noise gate (review round 3): CAS's amplitude is largest where the local contrast is smallest, so it amplified the
+      // residual AO / PCF grain (5-tap range of noise ~0.003-0.01 in these compressed units) while edges and livery
+      // detail span 0.05-0.5. No sharpening below a 0.01 range, full above 0.03.
+      const gate = smoothstep(0.01, 0.03, mx.sub(mn));
+      const wgt = amp.mul(gate).mul(float(-1.0).div(mix(8.0, 5.0, this.casAmount)));
       hdr = vec4(max(cC.rgb.add(cN.rgb.add(cS.rgb).add(cE.rgb).add(cW.rgb).mul(wgt)).div(wgt.mul(4.0).add(1.0)), vec3(0.0)), 1.0);
     }
     // light sprites after TRAA (review round 1: a 1-frame strobe flash kept ~3-5 % of its energy through TRAA's history
@@ -278,7 +348,7 @@ export class Engine {
     const px = screenCoordinate.xy;
     const dith = h(px.mul(1.37)).sub(0.5).div(255.0).add(h(px.add(fract(G.time.mul(17.13)).mul(1000.0))).sub(0.5).mul(G.grain));
     pipe.outputNode = vec4(enc.add(dith), 1.0);
-    if (Q.aa === 'fxaa' && !Q.traa) pipe.outputNode = THREE.fxaa(pipe.outputNode); // js/three/perf.js phone tier: FXAA (display-referred input) instead of TRAA
+    if (Q.aa === 'fxaa' && !Q.traa) pipe.outputNode = THREE.fxaa(pipe.outputNode); // FXAA (display-referred input) instead of TRAA: inert hook for the deferred phone work (js/three/perf.js, docs/research/mobile_perf.md)
   }
   // rig camera {pos, target|dir, fov, near, far, shadowSplits} -> three camera + cascade splits
   setCamera(c, W, H) {
@@ -325,13 +395,23 @@ export class Engine {
     for (let k = 0; k < this.spots.length; k++) {
       const s = this.spots[k], m = list && list[k];
       if (m) { s.setMast(m.x, m.z, m.ax, m.az); F.spotU[k].set(m.x, m.z, m.ax, m.az); }
-      F.spotOn[k] = m && on > 0 ? 1 : 0; s.intensity = m ? on : 0; s.scale = scale; s.castShadow = cast;
+      F.spotOn[k] = m && on > 0 ? 1 : 0; s.intensity = m ? on : 0; s.level = scale; s.castShadow = cast;
     }
   }
   // GTAO's noise rotation (three r186 GTAONode.updateBefore: _temporalRotations[frameId % 6], _spatialOffsets[frameId % 4])
   // from this engine's frame counter: three's frameId steps once per render call, i.e. by the number of passes per frame
-  // (19-22 here), which visited only a few of the 24 patterns and left a static mottle (review round 2)
-  wrapAOTemporal(aoN) { const ub = aoN.updateBefore.bind(aoN); aoN.updateBefore = (frame) => ub({ renderer: frame.renderer, frameId: this.frameNo }); }
+  // (19-22 here), which visited only a few of the 24 patterns and left a static mottle (review round 2). Review round 3:
+  // ONE counter cannot reach all 24 (rotation, offset) pairs either: 6 and 4 share the factor 2, so f % 6 and f % 4
+  // always have the same parity and the sequence repeats after 12 frames. The pair is now rotation = f % 6, offset =
+  // floor(f / 6) % 4 (24 frames), written into GTAO's two uniforms, whose own writes in updateBefore are ignored.
+  wrapAOTemporal(aoN) {
+    const ROT = [60, 300, 180, 240, 120, 0], OFF = [0, 0.5, 0.25, 0.75]; // GTAONode.js _temporalRotations / _spatialOffsets
+    const st = { dir: 0, off: 0 }; const pin = (u, k) => { if (u) Object.defineProperty(u, 'value', { configurable: true, get: () => st[k], set: () => { } }); };
+    const pinned = !!(aoN._temporalDirection && aoN._temporalOffset); if (pinned) { pin(aoN._temporalDirection, 'dir'); pin(aoN._temporalOffset, 'off'); }
+    const ub = aoN.updateBefore.bind(aoN);
+    aoN.updateBefore = (frame) => { const f = this.frameNo, tf = aoN.useTemporalFiltering === true; st.dir = tf ? ROT[f % 6] / 360 : 0; st.off = tf ? OFF[Math.floor(f / 6) % 4] : 1; return ub({ renderer: frame.renderer, frameId: f }); };
+    if (!pinned) console.warn('[engine] GTAONode temporal uniforms not found (three changed?): 12 of 24 noise patterns used');
+  }
   // (_sizing: js/three/renderer3.js owns the canvas size under live3 and lets only these writes through)
   resize(cssW, cssH, pixelRatio) { this._sizing = true; try { this.renderer.setPixelRatio(pixelRatio); this.renderer.setSize(cssW, cssH, false); } finally { this._sizing = false; } }
   // per-frame counters (info.render.drawCalls / triangles): three resets them from its own rAF loop, which we do not use

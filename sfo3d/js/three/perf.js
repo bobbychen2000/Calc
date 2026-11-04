@@ -1,3 +1,5 @@
+// STATUS (4 Nov 2026): parked. Nothing imports this module yet; the owner deferred phone performance (docs/research/
+// mobile_perf.md "Work started, then stopped"). Kept for when that work resumes; wire it from renderer3.js then.
 // Performance flags and per-frame timing for the three.js renderer (js/three/renderer3.js, js/three/engine.js), used by
 // the phone benchmark artifact (tools/build3/phone_bench.sh, docs/research/mobile_perf.md). Everything here is inert
 // unless window.SFO_PERF is set before the app bundle runs (artifacts cannot take query strings, so the benchmark page

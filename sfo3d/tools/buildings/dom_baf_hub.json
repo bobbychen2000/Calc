@@ -1,0 +1,154 @@
+{
+ "ring_2020_shadow": {
+  "dark_run_x": [
+   -1059.875,
+   -1054.625
+  ],
+  "length": 5.25,
+  "per_m": 1.143,
+  "rise_upper_bound": 4.6,
+  "note": "2020 E-W luminance (median over z +-3 m), threshold 150 on a ~175 roof; the run includes the ring rim itself, so the rise is at most this (a ~12 m rise would cast ~14 m)"
+ },
+ "generated_by": "tools/buildings/dom_baf_hub.py",
+ "date": "2026-11-04",
+ "image": "NAIP 2024 world raster 0.5 m (public domain)",
+ "hub": {
+  "centre": [
+   -1069.36,
+   -125.93
+  ],
+  "apothem": 37.1,
+  "across_flats": 74.2
+ },
+ "faces": [
+  {
+   "normal_hdg": 28.0,
+   "o_h0": -1.02,
+   "ratio_h0": 1.39,
+   "o_at_10_49": -2.61,
+   "ratio_at_10_49": 1.63,
+   "role": "NE arm junction",
+   "used": false
+  },
+  {
+   "normal_hdg": 73.0,
+   "o_h0": 3.12,
+   "ratio_h0": 2.61,
+   "o_at_10_49": -0.17,
+   "ratio_at_10_49": 2.88,
+   "role": "free face",
+   "used": true
+  },
+  {
+   "normal_hdg": 118.0,
+   "o_h0": 8.18,
+   "ratio_h0": 1.87,
+   "o_at_10_49": 7.18,
+   "ratio_at_10_49": 1.49,
+   "role": "S connector side",
+   "used": false
+  },
+  {
+   "normal_hdg": 163.0,
+   "o_h0": 1.62,
+   "ratio_h0": 2.75,
+   "o_at_10_49": 0.79,
+   "ratio_at_10_49": 2.1,
+   "role": "free face",
+   "used": true
+  },
+  {
+   "normal_hdg": 208.0,
+   "o_h0": -2.19,
+   "ratio_h0": 3.39,
+   "o_at_10_49": -0.56,
+   "ratio_at_10_49": 3.66,
+   "role": "free face",
+   "used": true
+  },
+  {
+   "normal_hdg": 253.0,
+   "o_h0": -4.33,
+   "ratio_h0": 1.52,
+   "o_at_10_49": -1.02,
+   "ratio_at_10_49": 1.54,
+   "role": "free face",
+   "used": true
+  },
+  {
+   "normal_hdg": 298.0,
+   "o_h0": -8.3,
+   "ratio_h0": 2.03,
+   "o_at_10_49": -5.26,
+   "ratio_at_10_49": 1.25,
+   "role": "NW arm junction",
+   "used": false
+  },
+  {
+   "normal_hdg": 343.0,
+   "o_h0": -6.27,
+   "ratio_h0": 1.11,
+   "o_at_10_49": -5.24,
+   "ratio_at_10_49": 1.11,
+   "role": "free face",
+   "used": false
+  }
+ ],
+ "fits": {
+  "east": {
+   "lean_per_m": [
+    0.332,
+    0.0
+   ],
+   "delta": -0.27,
+   "h": 12.11,
+   "h_sd": 1.28,
+   "rms": 0.44,
+   "faces": [
+    73.0,
+    163.0,
+    208.0,
+    253.0
+   ],
+   "residuals": [
+    -0.46,
+    0.71,
+    -0.04,
+    -0.22
+   ],
+   "lantern_offset_from_imaged_hub_centre": [
+    4.04,
+    0.23
+   ],
+   "lantern_rise_if_concentric": 12.2
+  },
+  "frame_direction": {
+   "lean_per_m": [
+    0.332,
+    -0.111
+   ],
+   "delta": 0.24,
+   "h": 10.38,
+   "h_sd": 2.51,
+   "rms": 0.96,
+   "faces": [
+    73.0,
+    163.0,
+    208.0,
+    253.0
+   ],
+   "residuals": [
+    -0.75,
+    1.48,
+    0.21,
+    -0.94
+   ],
+   "lantern_offset_from_imaged_hub_centre": [
+    4.62,
+    1.38
+   ],
+   "lantern_rise_if_concentric": 11.3
+  }
+ },
+ "reading": "the free faces put the roof edge on the SFO Museum octagon (|delta| < 0.5 m) at a height close to the NE arm (10.49 m); the lantern ring is NOT where a flat concentric ring would be imaged: it would need ~11-12 m of rise to be concentric, but its 2020 cast shadow bounds the rise to <= ~4.6 m, so it is eccentric by ~4 m to the E (or the hub is not a regular octagon about that centre) [inf]; the rise itself is not measured [unk]"
+}

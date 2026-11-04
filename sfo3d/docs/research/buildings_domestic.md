@@ -647,3 +647,54 @@ at the wall (~45 px ≈ 1.7 m): canopy soffit ~3.5–4.5 m, wall head ~12–14 m
 way up [inf, low]. Face lengths from the SFO Museum outline edges facing the central garage: 94.1 m + 43.6 m set-back +
 93.8 m (T1), 47.7 m (T2) [obs]. T2: only the published description (light metal-panel box, "Terminal 2" sign, glass
 entry wall); every dimension unknown.
+
+## Drawing round 3 (2026-11-04): review backlog `groups.domestic` (r1-22, r1-23, r1-34)
+
+The three findings of `docs/drawings/buildings/review_backlog.json` that never reached the round-2 fixer, checked against
+the current sheets, NAIP 2020 / 2022 / 2024, the CDR 95 % CD set and the photos.
+
+**r1-23, BA-B raised centre (fixed, by measurement).** `tools/buildings/dom_bab_band.py` → `dom_bab_band.json` repeats the
+verification's two methods (V.3) at stations along the whole pier:
+- 2020 step shadow (4-m strips every 2 m): the raised edge at imaged s −387.8 (sd 0.13 m) and its shadow on the lower ESE
+  band are present at every station from **t −1236 to −946** (290 m); length 4.79–4.95 m (p10–p90, 144 stations), i.e.
+  the same ~5.9 m step everywhere (step-shadow top 18.9–19.1 m with the outer roof at 13.14 m).
+- 2020→2024 parallax (6-m NCC windows, 10-m stations): the centre moves 3.40 m (south) / 3.65 m (north, median), the
+  ESE outer lip 2.30 / 2.60 m; the ratio gives 19.5 / 18.5 m. The windows west of s −418 do not correlate north of
+  t −1150 (planted wells, changed since 2020).
+- 2024: the raised roof's WNW wall shows as a dark band over the wells (t −1150..−960), edge imaged s −417.0 → lean-free
+  **s −423.4** (k24·n 0.342); the south half's inferred −424.0 agrees within 0.6 m.
+- Plan: ESE edge s −391.0 [obs], WNW edge s −423.4 [obs north, inf south], raised part 32.4 m, lower bands 7.3 (ESE) /
+  14.7 m (WNW, carrying the roof wells on the north half). North of t −946 the pier bends towards T1 Center; that oblique
+  wing is not tested (its edges are not along t). The south end is ~15–20 m short of the tip. The outer roof (13.14 m) is
+  measured on the south half only, so the north-half top (~19 m) is [obs, low] conditional on it.
+- Drawn on BD-01 (hatched band, thick obs edges) and BD-02 (BA-B "typical" section with the measured widths).
+
+**r1-22, BA-F hub (already fixed in round 2; refined).** Round 2 drew the octagon, the lantern rings, the NW-arm monitor and
+a hub / NW-arm section. Checked here (`tools/buildings/dom_baf_hub.py` → `dom_baf_hub.json`):
+- The four free hub faces (normals 73 / 163 / 208 / 253°; the NNE / ESE / WNW faces are arm junctions, the NNW face is
+  weak) fit the SFO Museum octagon at δ −0.27 m, h 12.1 ± 1.3 m (east-only BA-F lean, rms 0.44 m) or δ +0.24 m,
+  h 10.4 ± 2.5 m (frame-model lean direction): the level-2 octagon is the roof outline, and the hub roof edge is at about
+  the NE-arm height [obs, low, single epoch].
+- The lantern ring: a flat concentric ring would be imaged ~4 m further west than it is; being concentric would need
+  ~11–12 m of rise. NAIP 2020 (low W sun) shows a raised ring that casts a dark run of only ≤ 5.25 m to the east, which
+  bounds the rise to ≤ 4.6 m at 1.14 m of shadow per m. So the ring is eccentric: drawn ~3.3 m east of the hub centre
+  [inf]; the round-2 "if concentric, a ~24 m top" reading is dropped. Its rise is unknown (placeholder at the bound).
+
+**r1-34, BA-E and the landside elevations (part already fixed; T3 added).** The BA-E stepped section (tapered edge over the
+clerestory, lower side roofs, glazed end wall) and the T1 / T2 landside elevations were done in round 2 (BD-02, BD-03).
+The missing **Terminal 3** landside elevation is now BD-03 view 3:
+- Face: SFO Museum outline edges facing the central garage: T3 West 106.4 m (alternating 10.3 / 4.5 m bays with
+  0.6–0.9 m jogs) + 16.6 m AirTrain / garage connector gap + T3 East 122.5 m [obs]; west = T3W, east = T3E per the labels
+  of the CDR landside view (p.24) [inf].
+- Heights: the CDR project levels as metres above T3 L1 11'-0" (L2 4.88, L3 10.36, R2 14.48, T3W parapet 66'-0" =
+  16.76, R3 21.34) [pub; subtraction inf; datum unknown]; the departures roadway meets L2 (CDR p.23 section) [inf].
+- T3W landside facade: ACM rainscreen above an aluminium window wall with fritted IGUs over the departures level and an
+  ACM spandrel at the slab edge (CDR p.23 "East Facade Wall Sections", no dimensions printed): bands drawn from the
+  rendered proportions (spandrel ~1.7 m, glazing ~5.8 m) [inf, low].
+- T3E: the landside facade is not described in any source found [unk]; its mechanical penthouse (t3.penthouses [pub])
+  is measured on NAIP 2024 (top edges x −944..−884, S edge z 68–76, N edge z 42.5–49.5; set back ~20–24 m), ~6–9 m above
+  the roof from its W-wall band (3.3 m) and N shadow (1.5–2 m) [obs, low], which matches R3 − R2 = 6.9 m; drawn to R3
+  [inf: R3 read as the penthouse roof], lean-corrected by ~8 m and projected radially on the developed face [inf].
+- Not drawn: the T3W penthouse row and the new T3W mechanical penthouses (not dimensioned in the CDR) [unk].
+
+Reproduce: `python3 tools/buildings/dom_bab_band.py; python3 tools/buildings/dom_baf_hub.py; python3 tools/buildings/draw.py BD`.

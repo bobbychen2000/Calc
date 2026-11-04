@@ -31,6 +31,7 @@ export class Sprites {
     for (const a of [this.aP, this.aC, this.aD]) a.setUsage(THREE.DynamicDrawUsage);
     g.setAttribute('iP', this.aP); g.setAttribute('iC', this.aC); g.setAttribute('iD', this.aD); g.instanceCount = 0;
     this.camRight = uniform(new THREE.Vector3(1, 0, 0)); this.camUp = uniform(new THREE.Vector3(0, 1, 0)); this.fovScale = uniform(0.001);
+    this.depthOn = uniform(1); // QA: 0 turns the occlusion test off (SFO.R.sprites.depthOn.value = 0) to tell an occluded light from a missing one
     const expo = opts.expo || uniform(1.0), night = opts.night || uniform(1.0);
     const m = new THREE.MeshBasicNodeMaterial({ transparent: true, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide });
     m.fog = false;
@@ -57,7 +58,7 @@ export class Sprites {
         const sd = opts.depthNode.sample(screenUV).r;
         const sceneZ = perspectiveDepthToViewZ(sd, cameraNear, cameraFar);
         if (opts.debugDepth) return vec4(sd.mul(100.0), sceneZ.negate().div(1000.0), vZ.negate().div(1000.0), 1.0);
-        If(sceneZ.greaterThan(vZ.add(vTol)), () => { Discard(); }); // a surface in front of the light
+        If(sceneZ.greaterThan(vZ.add(vTol)).and(this.depthOn.greaterThan(0.5)), () => { Discard(); }); // a surface in front of the light
       }
       const halo = min(vI.mul(0.08), float(0.5).div(max(expo, 1e-3))).mul(exp(r2.mul(-6.0)));
       return vec4(vC.mul(vI.mul(exp(r2.mul(-22.0))).add(halo)), 1.0);

@@ -18,6 +18,10 @@ What it does
      the skin above the main gear (gear-less models), each against the ground-clearance tables where SPEC carries them
      (engClr, bellyClr, tipClr, htClr). Types without an independent REF are checked against SPEC itself: those rows are
      marked 'self' (they only prove the runtime uses SPEC, not that SPEC is right).
+  6. Stance (review 4 Nov 2026): models on their own gear are rendered with js/aircraft/fit.js T.fit.pitch (nose-down
+     about the main contact, js/live/aircraft.js placement()); the nose / main tyre bottoms must touch the ground. The
+     fuselage top is measured as fit.js crownOf defines it (centre-plane section cuts, 5 m median: not an antenna).
+     Heights above the ground are flagged beyond +-0.08 m (the ACAPs' nominal +-3 in), not 1 % of the length.
   4. Compares what the app renders / uses against REF (below), transcribed by hand from the manufacturer documents.
      Every value carries its document, page and figure. Values marked 'inf' are inferred (e.g. a door centre derived
      from a dimensioned door edge + door width, or scaled off a drawing) and are not treated as hard references.

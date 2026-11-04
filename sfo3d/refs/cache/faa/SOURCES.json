@@ -1,0 +1,14 @@
+{
+ "00375ad_2611.pdf": {
+  "url": "https://aeronav.faa.gov/d-tpp/2611/00375ad.pdf",
+  "licence": "US Government work (FAA, 17 U.S.C. 105), public domain",
+  "fetched": "2026-11-04",
+  "note": "AL-375 (FAA) SFO airport diagram, cycle 2611, effective 29 Oct 2026 - 26 Nov 2026; used for the relocated taxiway W and its holds (tools/build_airfield_details.py OSM_UPDATES)"
+ },
+ "faa_aircraft_char_database.xlsx": {
+  "url": "https://www.faa.gov/airports/engineering/aircraft_char_database/aircraft_data",
+  "licence": "US Government work (FAA, 17 U.S.C. 105), public domain",
+  "fetched": "2026-11-04",
+  "note": "FAA Aircraft Characteristics Database (ACD_Data sheet); read by tools/models/faa_acd.py: business-jet / ERJ lengths, spans and tail heights of js/aircraft/fit.js BIZ, 757 / 767 winglet spans (cross-check)"
+ }
+}

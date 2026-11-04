@@ -50,7 +50,13 @@ def hf(h, f):
 def shaft_outline(f):
     """half-profile (r, h) of the round airside body of family f from the base-building roof to the flare top deck."""
     pts = [(PROF[0][1] * f['s'], f['ibf'])]                      # Famartin base width at the base-building roof
-    pts += [(r * f['s'] / RAT, hf(h, f)) for h, r in PROF[1:]]    # A380 ratios (1.5 % correction)
+    pts += [(r * f['s'] / RAT, hf(h, f)) for h, r in PROF[1:] if h <= 59.4]    # A380 ratios (1.5 % correction)
+    # flare top: rounded shoulder from the widest corner (59.4) rising inwards to the deck at the plinth foot (60.9), shape
+    # SHOULDER [obs photo t1]; replaces the spec's vertical lip (59.4 -> 60.9 at r 11.48 -> 11.0) and flat deck
+    r0, h0 = pts[-1]; r1, h1 = PLINTH_D / 2 * f['D'] / PLINTH_REF, hf(60.9, f)
+    for a, b in SHOULDER[1:]:
+        pts.append((r0 - (r0 - r1) * a, h0 + (h1 - h0) * b))
+    pts.append((PROF[-1][1] * f['s'] / RAT, hf(PROF[-1][0], f)))  # 61.0: the deck meets the cab (inside the plinth)
     return pts
 
 
@@ -89,6 +95,56 @@ WING_TIP = (254.0, 14.0)     # SW wing outer tip in plan (bearing, m from the ax
                              # BOTH oblique photos - t3: 14.5 m right of the cab centre and 7.0 m beyond the ribbon edge;
                              # t4: 15.7 m and 6.6 m (model: 14.5 / 7.6 and 15.7 / 5.8) [inf from obs photos t3 / t4]
 RIB_BRG = 310.0              # ribbon facing, middle of the 300-320 deg photo range [obs photos]
+
+# Review backlog (round 3, 2026-11-04), read on the same photos (t1-t5, refs/cache/buildings/review_likeness, reference only):
+# Flare shoulder [obs photo t1, near-orthographic from 1.75 km; 0.073 m/px; 1.6 deg roll removed]: no vertical lip - the top
+# rises inwards from the widest corner in a rounded shoulder: 0.15 / 0.35 / 0.48 / 0.86 / 1.15 m above the corner at 0.2 / 0.5 /
+# 1.1 / 3.4 / 6.6 m in from the limb (6.6 m = the plinth foot). Drawn as these fractions of the spec rise 59.4 -> 60.9
+# (the photo's 1.15 m in F1 metres is inside the spec's +-0.8 m) [shape obs, stations inf].
+SHOULDER = ((0.0, 0.0), (0.03, 0.13), (0.076, 0.30), (0.167, 0.42), (0.515, 0.75), (1.0, 1.0))   # (run, rise) fractions
+# Cladding grid [obs photo t2, 0.0315 m/px at the shaft]: circumferential panel rows 82-84 px apart = 6 rows between the seams
+# 29.5 / 44.3 -> pitch 14.8 / 6 = 2.467 spec m; the same pitch lands on 49.2 / 56.6 (upper slot band), 24.6 / 41.8 (long slot)
+# and 59.1 (flare corner): the slots start and end on row joints. Vertical joints ~0.46 m apart at the waist (t2 rows
+# y 1600-1700) -> ~68 around [obs; count inf]; they lean 12-15 deg there, top towards smaller bearings, as the slots.
+# Slots and joints share one twist rate: upper slots 20 deg / 7.6 m = 2.63, long slot 44 / 17.1 = 2.57 deg per spec metre
+# (a constant-twist, ruled cladding; 2.6 deg/m x r 4.9 m -> 12.5 deg at the waist = the joint lean) [inf from obs].
+# Published: ~1,500 curved trapezoidal panels with spiralling joints (MCN 2017); 68 x ~18 rows ~ 1,200 + flare / landside.
+ROW0, ROW_PITCH = 29.5, 14.8 / 6        # spec metres
+N_JOINTS, TWIST = 68, 2.6               # joints around; deg of azimuth per spec metre (bearing decreases upwards)
+# Roof masts, 2025 set [obs photos t2 (11:57, bearing 126) / t3 (09:12, bearing 319), Famartin 2025-08-12]: each photo only
+# gives true heights on its near half (the camera is ~12 deg below the rim, so far-side bases hide ~1.5-3 m behind the near rim).
+# Near-side whips: bearing = right + acos(a / 0.92) (a = u / rim half-width, /1.027 for the nearer distance), masts on a ring
+# at 0.92 x the rim radius; heights above the rim in F1 metres (rim = D 15.2 m: t2 474 px, t3 371 px). The short whips each
+# photo shows on its far half fall on the other photo's near set (far branch): t2 1.7 / 1.3 / 1.8 m -> 279 / 300 / 340 deg
+# (t3 P 283, O 291 - M 312, G 334 - D 346); t3 2.1 m and the thin whips -> 96 / 118 / 139 deg (t2 100, 111, 142); t3's thin
+# whip at 188 deg matches t2's short item at the SW limb (a ~1.3 m pole). Whips seen: t3 14, t2 ~10; drawn 15 [count obs;
+# bearings / heights inf, +-5 deg / +-0.3 m]. The landside whips reach ~4.5 m above the rim, the airside ones 2.3-3.5 m
+# (2015 t1: 8 masts, ~3.3-3.6 m; the spec's mast-tip station 70.7 = rim + 3.0-3.35 spec m comes from those).
+MAST_K = 0.92
+MASTS = ((168, 3.4), (142, 3.5), (111, 2.3), (100, 3.2), (82, 3.0), (78, 2.5),                      # t2 near half (airside)
+         (6, 4.0), (351, 3.2), (346, 4.5), (334, 3.6), (325, 4.7), (312, 2.8), (291, 2.5), (283, 4.5), (272, 4.2))   # t3
+POLES = ((188, 1.3), (139, 1.6), (67, 0.8),                                                         # t2: pole, dome camera, lamp
+         (16, 1.8), (342, 1.1), (322, 1.5), (297, 1.6), (276, 1.6), (257, 0.8))                     # t3: cameras, lamps, brackets
+WING_POST = 1.9              # post with a diagonal stay on the SW wing top [obs photos t3 / t4 2025, t5 2018; position inf]
+SLOT_GLAZED = (330.0, 30.0)  # NE-flank slots (bearings 345.5 / 13.2) carry a glazed pane in their lowest panel row, ~70 % of the
+                             # slot width [obs photos t3 / t4]; none on the airside slots (t1 / t2); the slot at ~41 is at the limb
+                             # in t3 / t4 (not resolved)
+# Base building (IBF) faces [obs photos]:
+# airside (SE) face, t2 (frontal, 8 deg off view A; 0.0299 m/px at the face, 244 m): parapet top y 2005, a metal panel band to
+# y 2055 (1.50 m), a continuous dark glazing band to y 2183 (3.83 m), panels below (lower face hidden by the gates). Seen from
+# u -12.9 (view A) to the NE end; SW of that it is hidden by a foreground building.
+IBF_AIR_BAND = (1.50, 3.83, -12.9)      # panel band below the parapet, glazing band, observed SW end (u in view A)
+# landside (NW) face, t4 (81 m, bearing 338; 0.0184 deg/px from the shaft limb and the ribbon base): a full-height curtain-wall
+# bay (5 bays between 6 mullions, transoms ~1.2 m) in the same plane as the metal panels, under the parapet; its edges' rays
+# (x 1152 / 1733) meet the NW face 8.1 and 29.2 m from its N corner (-742.5, 305.5) -> view B u -7.8 .. +13.3 (+-5 m: phone GPS,
+# 40 deg oblique). In t4 its NE edge looks aligned with the ribbon only by perspective (the face is 6.3 m in front of the ribbon).
+# Seen >= 9.6 m down from its head; its foot is below the frame [unk].
+IBF_CW = (8.1, 29.2, 9.6, 5)
+# NOT the base building: the tall dark louvred block beside the shaft (t1 left, t2 right, t3 right of the shaft) triangulates
+# from the three photos to (-804, 259) (residual 1.3 m), 91 m NW of the axis at the SE end of the SFO Museum "Terminal 2
+# AirTrain Station" polygon; the thin "canopy plates" in t1 lie on the same rays as that station's platform canopy (the V-strut
+# roof in the t3 foreground). The 2015 jib davit on the SW flare deck (t1: post ~4.3 m, jib ~5 m) is not in the 2025 photos.
+AIRTRAIN_BLOCK = (-804.3, 259.4)
 
 
 def h2spec(h, f):
@@ -195,6 +251,12 @@ def draw_blades(V, f, hb, ht, w0, w1, right):
         xo = np.interp(h, [p[1] for p in out], [p[0] for p in out]); xi = inner(h)
         if xo > xi + 0.6: V.line([(xi + 0.2, h), (xo - 0.2, h)], 'inf', lw=0.18, z=5.7, color='#9aa7b4')
     V.line(S([(w0 / 2 + 0.7, hb), (w1 / 2 + 2.6, ht)]), 'inf', lw=0.3, z=5.7)              # crease
+    # post with a diagonal stay on the wing top, about 3/5 of the way out [obs photos t3 / t4 2025, t5 2018; position inf]
+    up = inner(ht) + 0.6 * (wt - inner(ht)); pt = ht + WING_POST * f['D'] / 15.2
+    V.line([(up, ht), (up, pt)], 'obs', lw=0.7, z=5.8, ls='-')
+    V.line([(up, pt - 0.2), (up - 1.6, ht)], 'obs', lw=0.25, z=5.8, ls='-')
+    V.leader((up, pt), 14, 10, f'post with a stay on the SW wing top, ~{WING_POST} m [obs photos t3 / t4 2025, t5 2018;\n'
+             'position inf]', 'obs', fs=3.9)
     V.leader(sh(-w1 / 2 - 1.0, tip), -20, 60, f'NE blade: narrow, sharp-edged; pointed tip at about the flare rim\n'
              f'(+{tip:.1f}; photos read 0-2.4 m above it) [obs photo t4, low]', 'inf', fs=4.0)
     V.leader((wt - 1.5, ht - 6), 22, 8, f'SW wing: broad blade, horizontally louvred face, flat top, rounded outer\ncorner [obs photo t3 / t4]. '
@@ -221,11 +283,89 @@ def draw_slots(V, f, right):
         bm = (SLOT_PHASE + k * 360.0 / n) % 360
         if SLOT_SKIP[0] <= bm <= SLOT_SKIP[1] or not visible(bm, right): continue
         V.poly(slot_poly(right, f, bm + SLOT_SWEEP / 2, bm - SLOT_SWEEP / 2, a, b, SLOT_W), 'inf', fc='#4a5663', z=4.2, lw=0.3)
+        if bm >= SLOT_GLAZED[0] or bm <= SLOT_GLAZED[1]:
+            # glazed pane in the slot's lowest panel row (one row pitch), inset 0.25 m [obs photos t3 / t4]
+            g0, g1 = a + 0.25 * f['s'], hf(h2spec(a, f) + ROW_PITCH, f) - 0.25 * f['s']
+            t0, t1 = (g0 - a) / (b - a), (g1 - a) / (b - a)
+            b0 = bm + SLOT_SWEEP / 2 - SLOT_SWEEP * t0; b1 = bm + SLOT_SWEEP / 2 - SLOT_SWEEP * t1
+            V.poly(slot_poly(right, f, b0, b1, g0, g1, 0.7 * SLOT_W, n=6), 'obs', fc='#a9c3d6', z=4.25, lw=0.3)
         shown += 1
     a2, b2 = (hf(x, f) for x in T['h_lower_slot']['value'])
     if visible(sum(LONG_SLOT) / 2, right):
         V.poly(slot_poly(right, f, LONG_SLOT[0], LONG_SLOT[1], a2, b2, LONG_W, n=24), 'inf', fc='#4a5663', z=4.2, lw=0.3)
     return shown, (a, b), (a2, b2)
+
+
+def draw_cladding_grid(V, f, right):
+    """panel rows (ROW_PITCH) and helical vertical joints (N_JOINTS, TWIST) on the round body of family f, thin and light
+    [rows / spacing obs photo t2; twist inf from the slots; joint phase unknown: one joint drawn along the long-slot foot]."""
+    lo, hi = h2spec(f['ibf'], f) + 0.3, 59.4 - 0.3
+    for k in range(-12, 13):
+        h = ROW0 + k * ROW_PITCH
+        if lo < h < hi and min(abs(h - s) for s in T['h_seams']['value']) > 0.3:
+            r = r_at(h, f); V.line([(-r, hf(h, f)), (r, hf(h, f))], 'inf', lw=0.15, z=3.6, color='#aeb9c4', ls='-')
+    hs = np.linspace(lo - 0.3, 59.4, 60)
+    for j in range(N_JOINTS):
+        seg = []
+        for h in list(hs) + [None]:
+            b = None if h is None else LONG_SLOT[0] + j * 360.0 / N_JOINTS - TWIST * (h - T['h_lower_slot']['value'][0])
+            if b is not None and visible(b, right):
+                seg.append((surf_u(b, r_at(h, f), right), hf(h, f)))
+            elif seg:
+                if len(seg) > 1: V.line(seg, 'inf', lw=0.12, z=3.6, color='#aeb9c4', ls='-')
+                seg = []
+
+
+def mast_u(b, f, right, uo):
+    """u of a roof mast at bearing b (from the cab centre) on the ring MAST_K x the rim radius of family f."""
+    return uo + MAST_K * cab_outline(f)['roof_rim'][0] * float(np.dot(hdg_vec(b), right))
+
+
+def draw_masts(V, f, right, uo):
+    """2025 roof masts (whips) and short camera / lamp / bracket poles of family f [count obs photos t2 / t3; positions inf]."""
+    rim = cab_outline(f)['roof_rim'][1]; k = f['D'] / 15.2
+    for b, hm in MASTS:
+        V.line([(mast_u(b, f, right, uo), rim), (mast_u(b, f, right, uo), rim + hm * k)], 'inf', lw=0.45, z=4, ls='-')
+    for b, hm in POLES:
+        u = mast_u(b, f, right, uo)
+        V.line([(u, rim), (u, rim + hm * k)], 'inf', lw=0.8, z=4, ls='-')
+        V.mark((u, rim + hm * k), 'inf', marker='o', ms=1.3, fc='none', z=4.1)
+
+
+def ibf_face_u(s, right):
+    """u in a view of the point s metres along the base building's NW face from its N corner (towards the W corner)."""
+    ring = np.asarray(D.sfom('Air Traffic Control Tower')[0][0], float)
+    e = unit(ring[1] - ring[0])
+    return float((ring[0] + e * s - AXIS) @ right)
+
+
+def draw_ibf_faces(V, right, ribbon, u0, u1):
+    """photo features of the base-building faces (F1 heights): airside parapet + dark glazing band (view A), landside
+    curtain-wall bay (view B) [obs photos t2 / t4; extents / heights relative to the parapet / roof]."""
+    par = F1['ibf'] + PARAPET
+    if not ribbon:
+        V.poly([(u0, F1['ibf']), (u1, F1['ibf']), (u1, par), (u0, par)], 'inf', fc='#f7f7f7', z=3.5, lw=0.4)
+        gt = par - IBF_AIR_BAND[0]; gb = gt - IBF_AIR_BAND[1]; us = IBF_AIR_BAND[2]
+        V.poly([(us, gb), (u1, gb), (u1, gt), (us, gt)], 'obs', fc='#3d4a57', z=1.7, lw=0.4)
+        V.poly([(u0, gb), (us, gb), (us, gt), (u0, gt)], 'unk', fc='none', z=1.7, lw=0.4)
+        V.leader((us + 14, gb + 0.6), 6, -14, f'airside face: parapet +{par:.1f} = rim - 3.46 D [obs photo span], metal panel band '
+                 f'{IBF_AIR_BAND[0]:.1f} m,\ncontinuous dark glazing band {IBF_AIR_BAND[1]:.1f} m (+{gb:.1f} to +{gt:.1f}) [obs photo t2, '
+                 f'heights below the parapet;\nabsolute inherits F1]; seen from u {us:+.1f} to the NE end, hidden further SW '
+                 '(dotted) [unk];\nlower face hidden by the gates in t2 [unk]', 'obs', fs=3.9)
+    else:
+        s0, s1, hv_, nb = IBF_CW
+        ua, ub = sorted((ibf_face_u(s0, right), ibf_face_u(s1, right)))
+        top = F1['ibf']; bot = top - hv_
+        V.poly([(ua, bot), (ub, bot), (ub, top), (ua, top)], 'obs', fc='#8fa79e', z=1.7, lw=0.4)
+        V.poly([(ua, 0), (ub, 0), (ub, bot), (ua, bot)], 'unk', fc='none', z=1.7, lw=0.4)
+        for i in range(1, nb):
+            u = ua + (ub - ua) * i / nb; V.line([(u, bot), (u, top)], 'obs', lw=0.3, z=1.8, color='#4b5d57')
+        for h in np.arange(top - 1.2, bot, -1.2):
+            V.line([(ua, h), (ub, h)], 'obs', lw=0.18, z=1.8, color='#4b5d57')
+        V.leader(((ua + ub) / 2 + 3, bot + 2), 10, -24, f'landside face: curtain-wall bay, 5 bays, transoms ~1.2 m, under the parapet '
+                 f'[obs photo t4];\nplan {s0}-{s1} m from the N corner of the NW face = u {ua:+.1f} .. {ub:+.1f} (+-5 m) [inf: t4 rays, '
+                 'phone GPS,\n40 deg oblique]; seen >= 9.6 m down, foot below the frame (dotted) [unk]. Not centred\non the ribbon: '
+                 'in t4 its NE edge lines up with the ribbon only by perspective', 'obs', fs=3.9)
 
 
 def draw_tower_elev(V, right, ribbon=False):
@@ -242,10 +382,18 @@ def draw_tower_elev(V, right, ribbon=False):
     V.dim((u0, 0), (u1, 0), -6, f'{u1 - u0:.2f} m  long face [obs SFOM footprint]', 'obs')
     draw_body(V, F1, True, uo)
     draw_body(V, F2, False, cab_offset(right))
+    draw_ibf_faces(V, right, ribbon, u0, u1)
+    draw_cladding_grid(V, F1, right)
     c1 = cab_outline(F1); rim = c1['roof_rim'][1]
-    mast = rim + (T['h_antenna_tips']['value'] - H_SPEC) * F1['s']
-    for x in (-5.6, -2.0, 3.4, 6.0):
-        V.line([(uo + x, rim), (uo + x, mast)], 'inf', lw=0.5, z=4)
+    draw_masts(V, F1, right, uo)
+    um = max(MASTS, key=lambda m: m[1] if visible(m[0], right) else 0)
+    if not ribbon:
+        V.leader((mast_u(um[0], F1, right, uo), rim + um[1] * F1['D'] / 15.2 - 0.3), -24, 8,
+             f'roof masts (both views), 2025 set: {len(MASTS)} whips + {len(POLES)} camera / lamp / bracket poles (dots), on a ring at '
+             f'{MAST_K} x the rim radius\n[count obs photos t2 / t3, Famartin 2025; bearings / heights inf, each from the photo '
+             'that sees it on its near half].\nLandside whips up to ~4.7 m above the rim, airside 2.3-3.5 m; the levels\' '
+             '"mast tips" = the spec station (2015 masts,\n~3.3-3.6 m in t1). The 2015 jib davit on the SW deck (t1) is not in '
+             'the 2025 photos: not drawn', 'inf', fs=3.9)
     for h in T['h_seams']['value']:
         r = r_at(h, F1); V.line([(-r, hf(h, F1)), (r, hf(h, F1))], 'inf', lw=0.4, z=4)
     nsl, (a, bq), (a2, b2) = draw_slots(V, F1, right)
@@ -257,12 +405,20 @@ def draw_tower_elev(V, right, ribbon=False):
         ur = surf_u(SLOT_PHASE, r_h((a + bq) / 2, F1), right)
         V.leader((ur, (a + bq) / 2), 30, 10, f'upper band: {int(round(360 / SLOT_PITCH))} positions every {SLOT_PITCH} deg, none in the landside\n'
                  f'ribbon / wing sector -> {nsl} visible here; each ~{SLOT_W} m wide, sweeping ~{SLOT_SWEEP:.0f} deg\nbetween the band seams, '
-                 'tops towards the NNE [obs photo t1: 6 slots\nacross the visible half; t2: 5] [inf: count / phase]', 'inf', fs=4.0)
+                 'tops towards the NNE [obs photo t1: 6 slots\nacross the visible half; t2: 5] [inf: count / phase]; no glazed panes on '
+                 'the airside slots (t1 / t2)', 'inf', fs=4.0)
+        rr = ROW0 + 4 * ROW_PITCH; ug = surf_u(LONG_SLOT[0] - 40, r_h(hf(rr, F1), F1), right)
+        V.leader((ug, hf(rr, F1)), -54, 6, f'cladding grid (thin): panel rows every {ROW_PITCH:.2f} spec m = {ROW_PITCH * F1["s"]:.2f} m (F1) - 6 '
+                 'between the seams; the slot ends\nlie on rows [obs photo t2]; ~1,500 trapezoidal ACM panels with spiralling joints '
+                 f'[pub MCN]: ~{N_JOINTS} joints\naround (~0.46 m apart at the waist) [obs photo t2; count inf], each turning '
+                 f'{TWIST} deg of azimuth per spec metre,\nthe twist of both slot kinds (12-15 deg lean at the waist) [inf]; joint '
+                 'phase unknown', 'inf', fs=3.9)
     else:
         w0, w1 = T['ribbon_width']['value']; rh = T['ribbon_height']['value_m']
         draw_blades(V, F1, F1['ibf'], F1['ibf'] + rh, w0, w1, right)
         V.leader((surf_u((SLOT_PHASE + 8 * 360 / 13) % 360, r_h(52.5, F1), right), 52.5), -34, 14,
-                 f'{nsl} upper slots visible on the NE flank, left of the ribbon\n[obs photos t3 / t4: 2-3 slots]; none in the ribbon / wing sector', 'inf', fs=4.0)
+                 f'{nsl} upper slots visible on the NE flank, left of the ribbon\n[obs photos t3 / t4: 2-3 slots]; none in the ribbon / wing sector;\n'
+                 'each has a glazed pane in its lowest panel row (light) [obs photos t3 / t4]', 'inf', fs=4.0)
     # diameters of both families at their stations (dimension line on family 1)
     fsd = 3.8 if V.scale >= 400 else 4.3
     d1, d2 = F1['D'], F2['D']
@@ -353,6 +509,32 @@ def sheet_plan(variant='vector', dev=None):
     V.circle(CAB, F2['D'] / 2, 'inf', z=5, lw=0.7, ls=F2LS)
     V.mark(CAB, 'inf', marker='+', ms=6)
     V.mark(AXIS, 'inf', marker='x', ms=4)
+    # roof masts (2025 set, F1 cab) [count obs photos t2 / t3; bearings inf]
+    rr = MAST_K * cab_outline(F1)['roof_rim'][0]
+    for b, _ in MASTS:
+        V.mark(CAB + hdg_vec(b) * rr, 'inf', marker='o', ms=1.1, fc='#b35806')
+    for b, _ in POLES:
+        V.mark(CAB + hdg_vec(b) * rr, 'inf', marker='o', ms=1.1, fc='none')
+    V.leader(CAB + hdg_vec(100) * rr, 46, 14, f'roof masts, 2025: {len(MASTS)} whips (filled) + {len(POLES)} camera / lamp poles (hollow)\n'
+             f'on a ring {MAST_K} x the F1 rim radius [count obs photos t2 / t3; bearings inf] (BT-02)', 'inf', fs=3.5)
+    # base-building faces seen in photos (BT-02): airside glazing band (SE face), landside curtain-wall bay (NW face) [approximate]
+    ring_ = np.asarray(D.sfom('Air Traffic Control Tower')[0][0], float); cen = ring_.mean(0)
+    def face_seg(i, s0, s1, off=0.9):
+        p, q = ring_[i], ring_[(i + 1) % 4]; e = unit(q - p); n = np.array([e[1], -e[0]])
+        if np.dot(n, p - cen) < 0: n = -n
+        return [p + e * s0 + n * off, p + e * s1 + n * off]
+    se = 2; rA = hdg_vec(27.7)
+    p, q = ring_[se], ring_[(se + 1) % 4]; L = float(np.hypot(*(q - p)))
+    up_, uq_ = float((p - AXIS) @ rA), float((q - AXIS) @ rA)
+    s_obs = (IBF_AIR_BAND[2] - up_) / (uq_ - up_) * L
+    V.line(face_seg(se, s_obs, L), 'obs', lw=1.8, color='#3d4a57', ls='-', z=4)
+    V.line(face_seg(se, 0, s_obs), 'unk', lw=1.0, z=4)
+    V.leader(face_seg(se, s_obs, L)[0] * 0.5 + face_seg(se, s_obs, L)[1] * 0.5, 16, -10,
+             'airside face: continuous dark glazing band under a 1.5 m panel band\n[obs photo t2]; dotted = hidden in t2 [unk] (BT-02 A)', 'obs', fs=3.5)
+    cw = face_seg(0, IBF_CW[0], IBF_CW[1], off=1.8)
+    V.line(cw, 'obs', lw=1.8, color='#6f8f84', ls='-', z=4)
+    V.leader(cw[0] * 0.45 + cw[1] * 0.55, -36, 6, f'landside face: curtain-wall bay {IBF_CW[0]}-{IBF_CW[1]} m from the\n'
+             'N corner (+-5 m) [obs photo t4; extent inf] (BT-02 B)', 'obs', fs=3.5)
     V.poly([(-744, 321.5), (-734, 321.5), (-734, 325.5), (-744, 325.5)], 'inf', fc='none', z=4, lw=0.4)
     V.leader(CAB + np.array([5.0, -5.0]), 22, 40, f'cab-roof cap D {F1["D"]} (F1) / {F2["D"]} (F2) [inf];\nmeasured 14.3 +-1.0, EXIF 14.75 +-0.5 [obs]\n'
              'centre (-739, 323.5) [inf]: z 323.5 +-2 from four NAIP epochs [obs];\nx -739 +-5 [inf]; small box = the adopted tolerance', 'inf', fs=4.0)
@@ -439,7 +621,14 @@ def sheet_elev():
            'the flare silhouette from 297.7 deg.')
     S.note('Cab glazing: 24 panes of 6 x 11 ft [pub ENR] do not fit the drawn glass ring; glazed arc 220 / 235 / 270 deg [pub, conflict]. '
            'Cab-glass lean 20 +-4 deg out [obs]. Red obstruction light on the roof rim (SW) [obs, photo]; DOF lighting code R [pub].')
-    S.note('Cladding: ~1,500 curved trapezoidal ACM panels (4-mm Alucobond Plus "SFO Silver") with spiralling joints [pub].')
+    S.note('Cladding: ~1,500 curved trapezoidal ACM panels (4-mm Alucobond Plus "SFO Silver") with spiralling joints [pub]. Drawn '
+           'thin on F1: panel rows every 2.47 spec m (6 between the seams; the slot ends lie on rows) and ~68 helical joints turning '
+           '2.6 deg of azimuth per spec metre, the twist of both slot kinds [rows / spacing obs photo t2; twist / count inf].')
+    S.note('Flare top: a rounded shoulder rising inwards from the widest corner to the plinth foot (t1: 0.35 m in the first 0.5 m, '
+           '0.86 m at 3.4 m, ~1.15 m at the plinth) [obs photo t1]; the spec\'s vertical lip + flat deck is not drawn.')
+    S.note('Not the base building: the tall dark louvred block seen beside the shaft (t1 left, t2 / t3 right) triangulates from the '
+           f'three photos to ({AIRTRAIN_BLOCK[0]:.0f}, {AIRTRAIN_BLOCK[1]:.0f}), 91 m NW of the axis, the SE end of the Terminal 2 AirTrain '
+           'station (SFO Museum polygon); the thin canopy plates in t1 are that station\'s platform roof. Neither is drawn.')
     return S.finish()
 
 
@@ -473,7 +662,8 @@ def sheet_section():
     V.leader((-9.5, 54), -14, 4, 'steel-framed flare and cab cantilever\nfrom the core [pub]; cladding outline [inf]', 'inf', fs=3.8)
     c = cab_outline(F1); gb, gt, rim = c['glass_bottom'], c['glass_top'], c['roof_rim']
     fl = hf(61.0, F1)
-    V.poly([(-11.5, fl - 0.4), (11.5, fl - 0.4), (11.5, fl), (-11.5, fl)], 'inf', fc='#999999', z=4)
+    pr_ = plinth(F1)[0]          # cab floor inside the plinth ring (the flare top is the sloping shoulder outside it)
+    V.poly([(uo - pr_, fl - 0.4), (uo + pr_, fl - 0.4), (uo + pr_, fl), (uo - pr_, fl)], 'inf', fc='#999999', z=4)
     for s in (-1, 1):
         V.line([(uo + s * gb[0], gb[1]), (uo + s * gt[0], gt[1])], 'inf', lw=1.2, color='#46576a')
         V.line([(uo + s * gt[0], gt[1]), (uo + s * rim[0], rim[1])], 'inf', lw=0.9)

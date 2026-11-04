@@ -351,7 +351,10 @@ function runwayAt(st, fw, G, glyph) {
     if (padCond) If(found.lessThan(0.5).and(inW).and(padCond), () => {
       found.assign(1.0);
       const atA = u.lessThanEqual(a0); const xb = select(atA, float(a0).sub(u), u.sub(a1)); const typ = select(atA, float(eA), float(eB));
-      const q = xb.sub(abs(dv)).sub(15.0); const k = floor(q.div(29.7).add(0.5)); const f = q.sub(k.mul(29.7));
+      // chevron apexes on the axis every 100 ft (30.48 m), the first 17.0 m beyond the runway end: NAIP 2024 yellow peaks
+      // 10L 17.1, 10R 16.6, 28R 17.3, 28L 17.1 m, pitch 30.4-30.6 m (docs/requests/static_geometry_round2.md,
+      // bridges_engine.md §2; AC 150/5340-1M Fig. A-9: 100 ft spacing); identical to js/shaders/ground.js (was 15.0 / 29.7)
+      const q = xb.sub(abs(dv)).sub(17.0); const k = floor(q.div(30.48).add(0.5)); const f = q.sub(k.mul(30.48));
       const chev = float(1.0).sub(smoothstep(float(0.64).sub(fw), float(0.64).add(fw), abs(f))).mul(step(0.0, k));
       const mm = max(chev, band(xb, 0.0, 0.91, fw)).mul(band(abs(dv), -1.0, 29.9, fw));
       m.assign(select(typ.lessThan(1.5), mm, float(0.0))); flag.assign(select(typ.lessThan(1.5), float(2.0), float(3.0))); local.assign(vec2(u, dv));

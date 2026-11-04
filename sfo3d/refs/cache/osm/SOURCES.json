@@ -1,0 +1,8 @@
+{
+  "overpass_ksfo_at_20260924T090742Z.json": {"url": "OpenStreetMap database state at 2026-09-24T09:07:42Z, rebuilt from the OSM editing API (https://api.openstreetmap.org/api/0.6) by tools/xcheck/fetch_osm.py --via api (Overpass unreachable 2026-11-04)", "licence": "ODbL 1.0, (c) OpenStreetMap contributors", "fetched": "2026-11-04", "note": "verified: tools/build_airfield_details.py of HEAD 8d13a5f reproduces data/sfo_details.json from it (every OSM-derived centreline, hold, edge, mast identical; 2 NAIP-only features differ by <= 1 m from the re-fetched NAIP raster)"},
+  "overpass_ksfo_latest.json": {"url": "copy of overpass_ksfo_at_20260924T090742Z.json for older readers", "licence": "ODbL 1.0, (c) OpenStreetMap contributors"},
+  "overpass_landside_at_20260926T030301Z.json": {"url": "OpenStreetMap database state at 2026-09-26T03:03:01Z (bbox 37.600,-122.412,37.640,-122.372), rebuilt from the OSM editing API by tools/xcheck/fetch_osm.py --via api", "licence": "ODbL 1.0, (c) OpenStreetMap contributors", "fetched": "2026-11-04", "note": "verified: tools/build_landside.py of HEAD reproduces data/sfo_landside.json (1608 roads, 73 car parks) identically"},
+  "overpass_ksfo_aeroway_at_20261104T180000Z.json": {"url": "OpenStreetMap aeroway features at 2026-11-04T18:00:00Z (OSM editing API)", "licence": "ODbL 1.0, (c) OpenStreetMap contributors", "fetched": "2026-11-04", "note": "read only for the ways listed in tools/build_airfield_details.py OSM_UPDATES"},
+  "*.meta.json": {"url": "fetch provenance written by tools/xcheck/fetch_osm.py", "licence": "own output"},
+  "ksfo_osm_parsed.json": {"url": "tools/xcheck/parse_osm.py of overpass_ksfo_latest.json", "licence": "ODbL 1.0, (c) OpenStreetMap contributors"}
+}

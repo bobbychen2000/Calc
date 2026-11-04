@@ -549,6 +549,47 @@ can be combined with it. The app must show the OSM attribution (request for the 
 - Remote stands: only those SFO allocated while the recorder ran (daytime coverage from 15:13 UTC) have positions.
 - Classes follow one day of AODB data; rarer larger types will raise some classes.
 
+## 16. Static close-out (2026-11-04): after the container loss
+
+Review of 2026-11-04 (13 findings). Requests to the other tracks: `docs/requests/static_closeout.md`.
+
+**Inputs (critical).** Every generator input was gone. Overpass was unreachable all day (maps.mail.ru answered three parts
+at 20:26Z, then only 504; overpass-api.de / lz4 / z reset, kumi stale, private.coffee time-out), so
+`tools/xcheck/fetch_osm.py` is now **date-pinned** (Overpass `[date:...]`, parts tiled and cached) with a fallback
+`--via api` (`tools/xcheck/osm_attic_api.py`): the OSM database state at the date rebuilt from the editing API (map tiles,
+every changeset that touched the bbox since the date and its osmChange, versions at the date by id+version, histories for
+the rest). Verified by reproduction: **8d13a5f's own `build_airfield_details.py` and `build_landside.py` regenerate
+`data/sfo_details.json` and `data/sfo_landside.json` key-for-key identical** (all 267 centrelines, 90 holds, 392 edges,
+70 masts; 1608 roads, 73 car parks). The landside query's bbox (meta lost) was recovered by search: 37.600, -122.412,
+37.640, -122.372 is the only one that yields exactly the 26 Sep set. `build_terminal_parts.py` also reproduces
+`sfo_buildings.json` (only the `note` changed: CDLA change notice). Extracts and SOURCES.json in `refs/cache/osm/`
+(`.parts/` stays local). `build_stands.py` cannot be re-run (14 Sep flysfo snapshots, the 24-25 Sep adsb.lol recording,
+naip_relief / redboxes_naip / NAIP 2022 are lost and not re-fetchable): its flysfo list is now pinned (`FLYSFO_UNTIL`), and
+the data changes go through the new scripted stage **`tools/stands/patch_stands.py`** on the 26 Sep build output
+(`refs/cache/stands/sfo_stands_built_20260926.json`, byte-identical to the committed file), with `fixups` (log,
+evidence, `evidence_status`) in the data. No data file was hand-edited.
+
+| finding | change | evidence / numbers (before -> after) |
+|---|---|---|
+| inputs lost, generators not runnable (critical) | above | reproduction identical; base dates asserted in build_airfield_details; OSM edits after the base only via `OSM_UPDATES` |
+| taxiway W rebuilt, not in the data (major) | `OSM_UPDATES`: W = OSM 1562117372 v1 (2025 orthoimagery), not snapped (NAIP 2024 predates it), drawn; old W 155476502 / 155476504 and the NAIP-traced old F1 crossing retired (`centerlineRetired`) with their 4 holds; 4 **inferred** W holds at 1L / 1R (median NAIP hold distance of that runway; text from the retired holds); W paved in `sfo_pavement` (centreline +- 37.5 ft, width inferred) | FAA AL-375 cycle 2611 (`refs/cache/faa/00375ad_2611.pdf`): one W crossing, holds both sides; ADS-B 4 Nov 17:43-21Z: 6 aircraft along the new W (38 reports within 10 m, track within 20 deg), 0 along the old crossing |
+| stand classes / whitelists from 1-2 days (major) | P1: SFO's 4 Nov plan (newest flight versions) joins `obs_types` (`obs_types_aodb2`); class raised to the planned type with span / len limits = that type: A15 C -> E (A332), D5 / C9 CL -> D (B763); C11 types_ok + B738 / E195; F19 + B752 / B772. P2 `excl_types`: F19 B772 -> F20 (4.7 m) / F18 (6.6 m), C9 B763 -> C11 (5.5 m), C8 B752 -> C10 (5.9 m) - each below ICAO and never overlapping in SFO's plan | check_stands: 0 new ISSUE; types_ok_all_paths kept on F19 / F20 (B77L / A338 still 1.9-2.4 m from F20 on the class path) |
+| edges on white runway stripes, spikes (major) | edge outline points within RWY_HW + 3 m of a runway centreline cut out; b* >= 9 required at every edge peak (`paintline.Yellow.bstar`, calibrated: yellow centreline peaks p5 8.4 / median 16.3, white side stripes median 7.7); `hygiene()`: spikes (legs < 15 m) dropped, loops cut | independent check (new, `check_markings.py`): edges on side stripes **1098 -> 0 m**, reversals > 150 deg **40 -> 0**, self-intersecting **25 -> 0**; edge b* residual median 0.10 m, > 1.5 m 2.2 -> 2.5 % |
+| lead-on / lead-off arcs missing (major) | the 17 ways of changeset 190952582 via `OSM_UPDATES` (on the runway: not cut at its edge; peaks need b* >= 9) | 14 drawn (paint in >= 25 % of samples), 3 not drawn (369 / 370 / 371: 0-3 of 13-14 samples yellow) |
+| ramp road lines inferred (major) | not generated (`roads: []`, `roadsNote`) | 13.2 km -> 0; real service-road paint not traced (open) |
+| airside paths as landside asphalt (major) | `access=no` service ways within 250 m of a runway centreline / 120 m of taxiway pavement -> `airside_paths`: concrete, width / offset measured on NAIP (bright band every 5 m); drawn only where NAIP shows the band; `level` > 0, 'Level N >= 2' names and aisles inside multi-storey garages -> elevated; airport.js draws airside paths as paved + concrete, never asphalt | at-grade roads within 200 m of a runway: **22.2 -> 0.0 km**; 'Level N' aisles at grade 630 -> 0 m; 101 airside paths (38.9 km), 19 drawn (19.4 km), width p10 / p50 / p90 1.65 / 3.0 / 3.25 m, median offset 1.75 m |
+| north aprons unpaved (major) | `paint_pave_naip.py`: candidates also within 60 m of every parking position / ADS-B stay; inside a position's footprint every non-vegetation, non-building pixel is pavement; holes up to 12000 m2 filled where a position lies in them | positions with > 50 % of a narrow-body footprint unpaved **48 -> 2** (box centred on the position; 49 -> 9 behind the stop), > 25 %: 69 -> 33; extra pavement 154 -> 172 ha; green share inside it 2.30 -> 2.11 % |
+| rotundas into the terminal (major) | P3: `rotunda_max_r` <= outline distance - 0.2 m (D7, E2, E3, E8, F7, F8 L1: 1.99-2.31 m); B2 / F9 L1 moved straight out 2.40 / 1.45 m (src inferred); build_stands.py has the same rule; `standGates()` passes `bridgesUpper` | check_stands: no new ISSUE |
+| ATTRIBUTION (major + minor) | snapshot.js marked a licence conflict (owner); CDLA 3.1(a)-(c) quoted, change notices added to the SFO Museum generators (sfo_buildings / sfo_details regenerated; sfo_airport needs the SFO Museum repo); rows for brands.js, liveries, rec_pack, osm, faa, stands caches; counts; date-pinned method; flysfo still undecided | - |
+| centreline defects (minor) | split at reversals > 150 deg (spikes < 3 m dropped), back-tracking pieces dropped, loops cut; `drawn` per stretch (>= 28 m without paint -> separate undrawn part) | drawn centrelines with reversals 12 -> 0; 267 -> 345 entries (94 parts), 292 drawn; generator final-vs-paint median 0.15 m, > 1.5 m 2.1 -> 2.0 %; independent b* > 1.5 m 6.3 -> 6.2 % |
+| positive ADS-B stops dropped (minor) | build_stands.py records them; P5 from the 4 Nov stays: `conflict_along` (beyond) when n >= 2 or the Sep residual agrees: B9 +2.4, B18 +1.8, D6 +2.7, F10 +3.4 m; `adsb_beyond` (one airframe) B26 +4.9, C4 +2.6 m | - |
+| obs / inf (minor) | P4 + build_stands.py: conflict_along or axis_adsb without independent verification -> inf (B9, B18, B22, D3, D4, D6, D9, F10); moved OSM rotunda nodes -> 'inferred:' | obs 74 -> 66; the Sep ADS-B / NAIP 2022 evidence is not re-checkable: `fixups.evidence_status` (4 Nov stays on the axis at 27 stands) |
+| A10, CLAUDE.md (minor) | A10 not settled (no outline / bridge source); CLAUDE.md request | check_stands 1 ISSUE (A10), WARN 14 -> 18 (rest poses vs narrow bodies SFO now plans on wide-body stands: G3 L2 1.8, G8 L2 2.8, F19 L1 2.5, G13 L3 6.9 m; A2 L2 A35K 43.0 m; B26 L1 E75L +0.1 m over its range), APP 1 (F19/F20) |
+
+Not done (stated, not hidden): the upper-deck bridges A6 / A11 (models, rest poses), A10, the rest-pose re-search for the
+newly planned narrow bodies (needs build_stands.py), real apron service-road paint, the flysfo / snapshot.js licence
+decisions, sfo_airport.* change notice (needs the SFO Museum repository), widths of W and the airside paths beyond NAIP.
+
 ## 15. Static fix-up (26 Sep 2026): the open findings of review round 4
 
 Pipeline re-run: `build_stands.py` -> `report.py` -> `check_stands.py` (also `tools/sat/check.py`, `check_bridges.py`);

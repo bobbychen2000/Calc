@@ -23,11 +23,23 @@
 //     bands, rooftop units with a shadow side and a few solar arrays, aligned with the airport grid (the terminals are);
 //     the satellite reference (docs/qa/ref/mosaic_stands_small.jpg) shows all of these, the old roof was flat white;
 //   - garage roofs (id 11): the deck and stall lines only; the cars are instanced boxes that cast shadows (garageCars).
+// Review round 3 (4 Nov 2026), curtain wall (id 1) read as matte khaki panelling with no sky reflection (pane display
+// ~(59,59,55); live.html ~(24,29,35)). Cause: the concourse seen through the pane was written into the ALBEDO, so the
+// interior was shaded as an opaque outdoor wall under the full sun and sky (linear ~0.11-0.13, warm), and that diffuse
+// term swamped the coated glass's Fresnel reflection (F ~0.14-0.22 at 60-70 deg). Now the pane has no diffuse albedo
+// (glass) and the hall is EMISSION: radiance = rho_hall x E_hall / pi x T x (1 - F), with E_hall the hall's own
+// illuminance (renderer3 interiorE: daylight factor x the exterior horizontal illuminance + the hall lamps by day; the
+// night term below as before), T the pane's one-way visible transmittance (0.48 / 0.52 / 0.54, VLT ~0.51, blue-green;
+// typical tinted low-e IGU VLT 0.4-0.7: inferred, not an SFO specification) and F Schlick's Fresnel with the pane's F0.
+// What a pane reflects from an elevated view is the apron in front of it (a vertical mirror keeps the ray's downward
+// slope), and the IBL's lower hemisphere is the SUNLIT average airfield (warm). In front of a facade that faces away
+// from the sun that strip lies in the building's own shadow, lit by the sky only: there the pane's specular colour is
+// scaled per channel by shadeK = E_sky / (E_sun + E_sky) (horizontal irradiances, renderer3). No other local reflection.
 import { THREE, TSL } from './lib.js';
 import { hash12, lampK } from './tsl/common.js';
 import { Geo } from '../geom.js';
 import { GROUND_Y, DIR_S, DIR_T } from '../geo.js';
-const { Fn, uniform, attribute, vec2, vec3, vec4, float, texture, dot, abs, max, min, mix, smoothstep, step, clamp, normalize, length, floor, fract, sin, atan, select, If, fwidth, positionWorld, cameraPosition, normalWorld, cameraViewMatrix, modelWorldMatrixInverse, exp } = TSL;
+const { Fn, uniform, attribute, vec2, vec3, vec4, float, texture, dot, abs, max, min, mix, smoothstep, step, clamp, normalize, length, floor, fract, sin, atan, select, If, fwidth, positionWorld, cameraPosition, normalWorld, cameraViewMatrix, modelWorldMatrixInverse, exp, normalWorldGeometry, reflect } = TSL;
 
 const gridLine = (x, period, w) => { const f = abs(fract(x.div(period).add(0.5)).sub(0.5)).mul(period); const fw = fwidth(x).mul(0.8); return float(1.0).sub(smoothstep(w, fw.add(w), f)); };
 
@@ -72,6 +84,11 @@ function concourse(u, v, LP, LN, wt) {
 // brown). Returns an InstancedMesh (vehicle material) or null. Only stalls whose whole footprint lies on the roof.
 const CAR_COLS = [[0.25, [0.72, 0.72, 0.72]], [0.47, [0.025, 0.025, 0.025]], [0.65, [0.14, 0.14, 0.14]], [0.75, [0.42, 0.43, 0.45]], [0.85, [0.33, 0.025, 0.02]], [0.94, [0.02, 0.05, 0.19]], [1.01, [0.28, 0.22, 0.14]]];
 let carGeoCache = null;
+// Distance LOD of the roof cars (review round 3, minor: 2878 sub-pixel cars aliased into a bright speckled disk in the
+// overview). Material opts.carFade: from CAR_FADE[0] to CAR_FADE[1] metres every car part takes the mean colour of a
+// car seen from above (paint table above, weighted: 85 % paint, 15 % glass), so the far roof reads as its average.
+export const CAR_FADE = [300, 900];
+const CAR_MEAN = (() => { let p = 0; const m = [0, 0, 0]; for (const [t, c] of CAR_COLS) { const w = t - p; p = t; for (let k = 0; k < 3; k++) m[k] += w * c[k]; } return m.map((v, k) => 0.85 * v / p + 0.15 * [0.06, 0.07, 0.08][k]); })();
 export function garageCars(data, model, vehMat, tier) {
   if (!data || !data.extra || !data.pos) return null;
   const P = data.pos, N = data.nrm, X = data.extra, I = data.idx; const tris = [];
@@ -120,7 +137,8 @@ export function garageCars(data, model, vehMat, tier) {
 // opts: { instanced: bool (per-instance iData: x = tunnel length, rgb/w = vehicle tint), instColor: bool (colour and
 // extra per instance in iCol / iExt: unit boxes and cylinders of the bridges), noiseTex, night (uniform), time (uniform) }
 export function objectMaterial(opts) {
-  const { noiseTex, night, time } = opts;
+  const { noiseTex, night, time } = opts; const interiorE = opts.interiorE || uniform(0.03); // hall illuminance (sky units; renderer3)
+  const sunDir = opts.sunDir || uniform(new THREE.Vector3(0, 1, 0)), shadeK = opts.shadeK || uniform(new THREE.Vector3(1, 1, 1)); // renderer3: sun direction; sky / (sun + sky) horizontal irradiance per channel
   const mat = new THREE.MeshPhysicalNodeMaterial({ side: THREE.DoubleSide });
   const core = () => {
     const col = opts.instColor ? attribute('iCol', 'vec4') : attribute('color', 'vec4'); const ext = opts.instColor ? attribute('iExt', 'vec4') : attribute('extra', 'vec4');
@@ -147,7 +165,20 @@ export function objectMaterial(opts) {
       const pane = vec2(floor(u.div(1.8)), floor(v.div(3.9)));
       const hP = hash12(pane.add(vec2(17.0, 3.0))), hQ = hash12(pane.add(vec2(5.0, 41.0))), hR = hash12(pane.add(vec2(29.0, 7.0)));
       const room = concourse(u, v, LP, LN, wt);
-      albedo.assign(mix(room.day.mul(vec3(0.24, 0.27, 0.29)), vec3(0.28, 0.29, 0.3), frame)); // through blue-green tinted glazing (first render: the rooms read warm tan)
+      albedo.assign(mix(vec3(0.0), vec3(0.28, 0.29, 0.3), frame)); // the pane itself: no diffuse (review round 3); mullions / spandrels opaque
+      // the hall behind the pane as emission (see the header): rho x E_hall / pi x T x (1 - F); F = Schlick with F0 = 0.111 (IOR 2.0)
+      // geometry normal, NOT normalWorld: core() also feeds mat.normalNode, and normalWorld depends on it (that cycle turned every object black)
+      const cosV = abs(dot(normalize(cameraPosition.sub(wp)), normalWorldGeometry)); const fr = float(0.111).add(float(0.889).mul(float(1.0).sub(cosV).pow(5.0)));
+      extraEmis.addAssign(room.day.mul(vec3(0.48, 0.52, 0.54)).mul(interiorE.mul(1.0 / Math.PI)).mul(float(1.0).sub(fr)).mul(float(1.0).sub(frame)).mul(isWall));
+      // the facade's own shadow in its reflection (see the header): a downward reflection hits the apron at dN in front
+      // of the pane; if the sun is behind the facade and dN is inside the building's shadow (top assumed 4 m above the
+      // pane, at least 12 m: inferred), that ground is lit by the sky only, so the IBL's sunlit ground is scaled by shadeK
+      const nxz = normalize(vec2(normalWorldGeometry.x, normalWorldGeometry.z).add(1e-5));
+      const Rw = reflect(normalize(wp.sub(cameraPosition)), normalWorldGeometry); const hG = max(wp.y.sub(GROUND_Y), 0.5);
+      const dN = hG.mul(max(dot(vec2(Rw.x, Rw.z), nxz), 0.0)).div(max(Rw.y.negate(), 1e-3));
+      const shLen = max(hG.add(4.0), 12.0).mul(max(dot(vec2(sunDir.x, sunDir.z), nxz).negate(), 0.0)).div(max(sunDir.y, 0.02)).max(1e-3);
+      const own = float(1.0).sub(smoothstep(shLen.mul(0.8), shLen, dN)).mul(float(1.0).sub(smoothstep(-0.05, 0.0, Rw.y))).mul(float(1.0).sub(frame)).mul(isWall);
+      spec.assign(spec.mul(mix(vec3(1.0), shadeK, own)));
       rough.assign(mix(hP.mul(0.05).add(0.03), 0.4, mull)); metal.assign(mix(0.0, 0.8, mull));
       ior.assign(mix(2.0, 1.5, frame)); spec.assign(mix(vec3(0.9, 0.96, 1.0), vec3(1.0), frame));
       nPert.assign(vec3(wt.x, 0.0, wt.y).mul(hQ.sub(0.5)).add(vec3(0.0, hR.sub(0.5), 0.0)).mul(0.03).mul(float(1.0).sub(frame)).mul(isWall));
@@ -233,6 +264,7 @@ export function objectMaterial(opts) {
     // mild ground-contact AO (the old shader used 0.55; GTAO now supplies most of the contact darkening)
     ao.mulAssign(select(matId.equal(7), float(1.0), mix(float(0.78), float(1.0), smoothstep(0.0, 4.0, wp.y.sub(3.0)))));
     // per-vertex emission (lamp heads etc.) in lamp units x lampK; the night terms above already carry nightE (opts.night)
+    if (opts.carFade) { const k = smoothstep(CAR_FADE[0], CAR_FADE[1], dist); albedo.assign(mix(albedo, vec3(...CAR_MEAN), k)); rough.assign(mix(rough, 0.5, k)); metal.assign(mix(metal, 0.0, k)); }
     const emissive = albedo.mul(emis).mul(lampK).add(extraEmis);
     return { albedo, rough, metal, ao, emissive, nPert, ior, spec };
   };

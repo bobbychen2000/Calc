@@ -64,13 +64,20 @@ const LUX_PER_UNIT = 133300 / 20;
 export const LAMP_M = (20 / LUX_PER_UNIT) / E_STAND;
 export const NIGHT_EXPOSURE = KEY_NIGHT * Math.PI / (RHO_CONC * E_STAND * LAMP_M); // in sky units (lamps x LAMP_M)
 const lum = (c) => 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+// Illuminance inside the terminal halls seen through the curtain walls (js/three/objects.js id 1; review round 3: the
+// hall was shaded as an outdoor wall). E_hall = HALL_DF x the exterior horizontal illuminance (sun + sky) + HALL_LUX of
+// lamps by day (fading out as the night term of objects.js takes over). Both inferred: HALL_DF 5 % is a typical average
+// daylight factor of a deep, fully glazed concourse; HALL_LUX 200 lx is the usual design level of airport departure
+// halls (EN 12464-1 airports table, recalled, not re-checked here). Not SFO measurements.
+const HALL_DF = 0.05, HALL_LUX = 200;
 
-// tier: ?tier=high|medium|low overrides; otherwise the old app's choice, recognised from the options it passes
-// (js/live/app.js QUALITY: high = 3072 shadow map, low = 2x MSAA)
+// tier: ?tier=ultra|high|medium|low overrides; otherwise the old app's choice, recognised from the options it passes
+// (js/live/app.js QUALITY: ultra = 4096 shadow map, high = 3072, low = 2x MSAA)
 function tierOf(opts) {
   const q = new URLSearchParams(location.search).get('tier');
   if (q && QUALITY3[q]) return q;
   if (opts && opts.msaa === 2) return 'low';
+  if (opts && opts.shadowRes >= 4096) return 'ultra';
   if (opts && opts.shadowRes >= 3072) return 'high';
   return 'medium';
 }
@@ -89,14 +96,26 @@ export class Renderer3 {
     this.baseLight = null; this.extraCommon = {}; this.progs = {}; this.curCam = null; this.curRange = null;
     this.world = null; this.sceneShim = null; this.seen = new Set(); this.pendingSigns = []; this.clouds = new Map();
     this.pxScale = uniform(0.001); this.time = uniform(0); this.night = uniform(0); this.nightE = uniform(0); // nightE: night-only lamp emission scale (nightF x LAMP_M)
+    this.interiorE = uniform(HALL_LUX / LUX_PER_UNIT); // terminal-hall illuminance behind the curtain walls (sky units; render())
+    this.shadeK = uniform(new THREE.Vector3(1, 1, 1)); // sky / (sun + sky) horizontal irradiance per channel (objects.js curtain-wall reflections)
     this.exposureScale = +(qs.get('expo') || 1.0);
     this.initP = this.engine.init().then(() => this._onReady()).catch((e) => {
       this.failed = e; console.error('three.js renderer failed to start', e);
-      this.fatal('Sorry — this browser could not start the 3D renderer (WebGPU / WebGL 2).<br><small>' + String(e && e.message || e) + '</small>', 'renderer: ' + String(e && e.stack || e));
+      // the browser is blamed only when it really lacks both APIs (review round 3: a TypeError in our own code was shown
+      // as "this browser could not start the 3D renderer")
+      const msg = Renderer3.noGPUApi() ? 'Sorry — this browser could not start the 3D renderer (it supports neither WebGPU nor WebGL 2).'
+        : 'Sorry — the 3D renderer failed to start (an error in the app, not your browser). <a href="#" onclick="location.reload()">Reload</a>, or open live.html.';
+      this.fatal(msg + '<br><small>' + String(e && e.message || e) + '</small>', 'renderer: ' + String(e && e.stack || e));
     });
     this.fontP = loadSignFont().then(f => { this.font = f; }).catch(e => { this.fontFailed = true; console.error('[r3] ERROR: MSDF sign font failed to load; signs use the canvas atlas', e); });
   }
   // ------------------------------------------------------------ failure paths
+  // true when the browser has neither WebGPU nor WebGL 2 (probed on a scratch canvas: the app's canvas may hold a context)
+  static noGPUApi() {
+    if (typeof navigator !== 'undefined' && navigator.gpu) return false;
+    try { const c = document.createElement('canvas'); const g = c.getContext('webgl2'); if (g) { const x = g.getExtension('WEBGL_lose_context'); if (x) x.loseContext(); return false; } } catch (e) { }
+    return true;
+  }
   // fatal error: the app's loading overlay if it is still there, and an overlay of our own (the app has no hook yet:
   // docs/requests/engine_exports.md); also window.__sfoError for the QA harness
   fatal(html, detail) {
@@ -143,7 +162,9 @@ export class Renderer3 {
       const dpr = Math.min(window.devicePixelRatio || 1, this.Q.dprMax || 2);
       const cw = this._appCW > 0 ? this._appCW : Math.max(1, Math.round(c.clientWidth * dpr)), ch = this._appCH > 0 ? this._appCH : Math.max(1, Math.round(c.clientHeight * dpr));
       const ratio = Math.min(1, Math.max(w / cw, h / ch));
-      const steps = [1, 0.85, 0.72, 0.6, 0.5, 0.4]; let st = steps[steps.length - 1]; for (const s of steps) if (s <= ratio + 0.03) { st = s; break; }
+      // 0.8 is a step because it is the app's low-tier scaleMax (js/live/app.js QUALITY.low): without it phones rendered
+      // 0.72x where live.html renders 0.8x (review round 3)
+      const steps = [1, 0.85, 0.8, 0.72, 0.6, 0.5, 0.4]; let st = steps[steps.length - 1]; for (const s of steps) if (s <= ratio + 0.03) { st = s; break; }
       const now = performance.now(); const canvasChanged = this._cw !== cw || this._ch !== ch;
       // hysteresis: a step change at most every 8 s (a new size reallocates every post target and restarts TRAA)
       if (!canvasChanged && this._step !== undefined && st !== this._step && now - (this._tStep || 0) < 8000) st = this._step;
@@ -156,7 +177,7 @@ export class Renderer3 {
     if (this.ready) {
       const E = this.engine, v = E.renderer.getDrawingBufferSize(new THREE.Vector2());
       if (v.x !== w || v.y !== h || (c && (c.width !== w || c.height !== h))) E.resize(w, h, 1);
-      E.casAmount.value = Math.min(0.8, 0.35 + (1 - (this._step || 1)) * 0.6); // sharpen more when fewer pixels are rendered
+      E.casAmount.value = this.casLock != null ? this.casLock : Math.min(0.8, 0.35 + (1 - (this._step || 1)) * 0.6); // sharpen more when fewer pixels are rendered (?cas= pins it: it was parsed but never applied)
     }
   }
   present() { }
@@ -170,6 +191,13 @@ export class Renderer3 {
   }
   // ------------------------------------------------------------ attachments from the compat modules
   attachWorld(world, sceneShim) {
+    try { this._attachWorld(world, sceneShim); } catch (e) { // the app cannot continue: say so instead of leaving the loading overlay up
+      this.failed = e; console.error('[r3] attachWorld failed', e);
+      this.fatal('Sorry — the 3D renderer failed to start (an error in the app, not your browser). <a href="#" onclick="location.reload()">Reload</a>, or open live.html.<br><small>' + String(e && e.message || e) + '</small>', 'renderer: ' + String(e && e.stack || e));
+      throw e;
+    }
+  }
+  _attachWorld(world, sceneShim) {
     this.world = world; this.sceneShim = sceneShim;
     const T = world.textures;
     this.noiseTex = textureOf(T.noise, { anisotropy: this.Q.aniso }); this.noiseTex.wrapS = this.noiseTex.wrapT = THREE.RepeatWrapping;
@@ -177,7 +205,8 @@ export class Renderer3 {
     this.sky = new Sky(this.engine, { cloudTex, noiseTex: this.noiseTex, baseRes: this.Q.skyRes });
     this.sky.u.night = this.nightE; this.sky.u.time = this.time; // ground.js city lights: nightE
     if (this.env) this.sky.setEnv(this.env);
-    // apron floodlight field from the masts (before any material is compiled: the light node samples it)
+    // apron floodlight field from the masts (before any material is compiled: the light node samples it). engine.flood
+    // exists before init() resolves (js/three/engine.js constructor); this runs inside the app's synchronous start-up.
     const masts = (world.details && world.details.masts) || [];
     const t0 = performance.now(); const f = floodField(masts, { res: this.tier === 'low' ? 5 : 3 });
     if (f) { this.engine.flood.setField(f); this.floodScale = f.scale; tlog('flood field ' + f.w + 'x' + f.h + 'x' + f.d + ' in ' + (performance.now() - t0).toFixed(0) + ' ms (' + JSON.stringify(f.stats) + ')'); }
@@ -235,8 +264,9 @@ export class Renderer3 {
     this.sunRad = uniform(new THREE.Vector3(1, 1, 1));
     E.sun.colorNode = this.sunRad.mul(sky.cloudShadow(TSL.positionWorld));
     this.gMat = groundMaterial(W, this.bakes, sky, Q); this.wMat = waterMaterial(W, this.bakes, sky);
-    const common = { noiseTex: this.noiseTex, night: this.nightE, time: this.time }; // objects.js night emissions: nightE
+    const common = { noiseTex: this.noiseTex, night: this.nightE, time: this.time, interiorE: this.interiorE, sunDir: E.sunDirU, shadeK: this.shadeK }; // objects.js night emissions: nightE
     this.objMat = objectMaterial(common); this.vehMat = objectMaterial({ ...common, instanced: true });
+    this.carMat = objectMaterial({ ...common, instanced: true, carFade: true }); // garage-roof cars: distance fade to their mean colour
     this.markMat = markingMaterial({ noiseTex: this.noiseTex, pxScale: this.pxScale, reversed: E.reversed });
     this.sprites = new Sprites(24000, { depthNode: E.depthNode, expo: E.expo, night: this.night }); E.fxScene.add(this.sprites.mesh);
     this.acr = new AircraftRenderer(S, { noiseTex: this.noiseTex, Q: this.Q, renderer: E.renderer });
@@ -267,7 +297,7 @@ export class Renderer3 {
         const P = it.mesh.data && it.mesh.data.pos, m0 = this.masts && this.masts[0];
         if (P && m0 && Math.hypot(P[0] - m0.x, P[2] - m0.z) < 1.5 && Math.abs(P[1] - GROUND_Y) < 1.0) m.layers.set(MAST_LAYER);
         // cars on the garage roofs as instanced boxes (review round 2: a mosaic of flat squares read as confetti)
-        const cars = garageCars(it.mesh.data, it.model, this.vehMat, this.tier); if (cars) G.add(cars);
+        const cars = garageCars(it.mesh.data, it.model, this.carMat, this.tier); if (cars) G.add(cars);
       } else if (p === 'mark') {
         const m = new THREE.Mesh(geometryOf(it.mesh), this.markMat); m.frustumCulled = false; m.receiveShadow = true; m.renderOrder = 1; m.matrixAutoUpdate = false; G.add(m);
       } else if (p === 'sign') this.pendingSigns.push(it);
@@ -347,6 +377,7 @@ export class Renderer3 {
       this.sky.renderSky(R);
       this.sky.updateEnvironment(R, S);
       E.setSun(L.sunDir, L.sunColor); this.sunRad.value.set(L.sunColor[0], L.sunColor[1], L.sunColor[2]);
+      { const sy = Math.max(0, L.sunDir[1]); const k = [0, 1, 2].map(c => { const sk = Math.PI * L.skyUp[c], su = L.sunColor[c] * sy; return sk + su > 1e-9 ? sk / (sk + su) : 1; }); this.shadeK.value.set(k[0], k[1], k[2]); }
     }
     const nightF = this.extraCommon.uNight || 0;
     this.time.value = t; this.night.value = nightF; this.nightE.value = nightF * LAMP_M; lampK.value = Math.pow(LAMP_M, nightF);
@@ -364,6 +395,7 @@ export class Renderer3 {
     const pe = post.exposure ?? 0.45; const B = this.baseLight || L;
     const eAmb = lum(B.sunColor) * Math.max(0, B.sunDir[1]) + Math.PI * lum(B.skyUp);
     const eKey = eAmb + E_STAND * LAMP_M * nightF;
+    this.interiorE.value = HALL_DF * eAmb + (1 - nightF) * HALL_LUX / LUX_PER_UNIT; // terminal halls (objects.js id 1)
     const expoKey = KEY_NIGHT * Math.PI / (RHO_CONC * Math.max(eKey, 1e-7));
     const expoDay = dark < 0.999 ? Math.max(0, (pe - APP_NIGHT_EXPO * dark) / (1 - dark)) * DAY_GAIN : 0;
     E.expo.value = Math.max(expoDay, expoKey) * this.exposureScale; this.eKey = eKey;

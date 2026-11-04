@@ -4,6 +4,8 @@ measurement record tools/buildings/itb_naip_measurements.json:
   BI-01  roof plans: group key plan 1:2500, hall roof 1:750, BA-A 1:2000, BA-G 1:2500 (A1) + NAIP overlay
   BI-02  west (landside) elevation 1:400 and north end elevation 1:250 (A1)
   BI-03  long section along the roof axis 1:400 and cross section at the inner column line 1:250 (A1)
+  BI-04  Boarding Areas A and G: apron-face elevations 1:750 and sections 1:400 with the roof pods and the BA-G pod-3 end
+         box (tools/buildings/itb_pods.json, NAIP 2024 trace) (A1)
 Roof frame: corners of spec roof.corners_obs (frame-model relief correction); u along the axis (+ towards BA-A, SSE),
 v across (+ towards ENE). Heights AGL (grade ~8 ft AMSL at the ITB, DOF AMSL - AGL).
 
@@ -13,7 +15,9 @@ topped ~9.3 m below the wing crest; the triangulated "football" trusses are expo
 single white columns stand clear in front of the glass (each casts a shadow on it) at the column lines and branch into
 struts into the trusses; the hall (705 ft) stops ~19-21 m short of each roof tip, so the tips are open cantilevers.
 """
+import json
 import math
+import os
 
 import numpy as np
 
@@ -31,7 +35,17 @@ COL_U = [57.9, 82.3]                                   # roof.col_positions_inf 
 H_PEAK = 40.08
 CROWN = I['roof.profile']['value']['centre crown (u ~ 0, glazed centre section top)']['h']
 H_NOTCH = I['roof.profile']['value']['notch (|u| 25-31 m, where the wings meet the centre section)']['h']
-H_TIP = I['roof.profile']['value']['tip (|u| ~ 126 m)']['h']
+H_TIP_SPEC = I['roof.profile']['value']['tip (|u| ~ 126 m)']['h']     # 34.9 = blend of NAIP 34.4 (at |u| 119) and photo 35.5
+# Beyond the humps the eave fit is made NON-INCREASING towards the tips (review r2-27): the even polynomial's rise from
+# 34.40 (|u| 115-119) to 34.83 at |u| 123 is an end artefact - the raw NAIP eave stations fall monotonically to the tips
+# (itb_naip_measurements eave_profile.points, median per bin N / S: |u| 100-105 34.8 / 36.3, 110-114 33.5 / 35.6,
+# 114-121 32.1 / 34.4-33.8, read over the glazed tip bands, weak) and so does the photo silhouette (itb_photo_skyline:
+# north side monotone from x 60 to the hump; south side monotone to the last ~2 m, a 0.5-0.9 m upturn at the fascia
+# corner only). Isotonic version of the fit: its minimum 34.40 is held from |u| 117 to the tip [obs, low; 32-35.5].
+_EU = np.arange(67.0, 123.01, 0.5)
+_EH = np.minimum.accumulate(D.itb_eave_h(_EU))
+H_TIP = round(float(_EH[-1]), 2)                       # drawn tip (34.40) [obs, low]
+TIP_RNG = (32.0, 35.5)                                 # raw NAIP stations over the glazed band .. photo pair mean (+-2)
 L3 = I['level3.floor']['value']
 L3R = D.L3_RANGE
 LENS = D.ITBM['lenses']
@@ -49,8 +63,20 @@ LETTER_HW = 33.0             # 'SAN FRANCISCO INTERNATIONAL': +-32.5 m (i4) / +-
 BAY_HEAD = 2.0               # the central glazing's head follows the centre section's bottom chord, 1-3.5 m above the side
                              # bays' head (i4 crop: 25-40 px at 0.1331 m/px x 0.67) [obs photo i4, tentative]
 HALL_HL = 705 * FT / 2       # great hall 705 ft [pub SEAONC]; centred on the roof [inf]
+# curb-canopy hangers (review r1-31 / r2-26) [obs photo i4]: inclined pairs from the glass wall down to the canopy, the
+# long leg falling towards +u, with a post under the canopy at each. i4 (frontal, long lens): in the wings their spacing
+# is 0.493 / 0.489 of the 80-ft column bay (N / S wing: 266 / 281 px against 540 / 575 px on 3x crops) = 40 ft, set
+# 20 ft either side of every column line; over the 180-ft centre section they stand at +-30 / +-90 ft (spacing 60 ft).
+# Read u (i4, columns as scale): N -87.9 -76.1 -64.2 -52.2, centre -27.9 -9.2 9.2 27.9, S 28.2 40.1 51.9 63.8 75.9 87.8
+# -> the 40-ft grid 90 + 40 k ft within +-0.5 m. Apex ~3.6 m above the canopy, long leg ~2.9 m along u [obs, rough].
+HANGER_U = sorted(sg * f * FT for sg in (-1, 1) for f in (30, 90, 130, 170, 210, 250, 290, 330))
+HANGER_H, HANGER_L = 3.6, 2.9
 TIP_GAP = (1.6, 3.6)         # glass band ends inside the fascia: N 1.6 / S 3.6 m (white strip, spec verification) [obs]
 TN, TS = I['roof.glazed_tips_obs']['value']['north'], I['roof.glazed_tips_obs']['value']['south']
+# Boarding Areas A / G pods and the BA-G pod-3 end box: NAIP 2024 trace + band heights (tools/buildings/itb_pods.py, review
+# r1-26 / r2-29 / r2-30); outlines relief-corrected [obs], heights [obs, low], the box's function [inf]
+PODS = json.load(open(os.path.join(D.TB, 'itb_pods.json')))
+POD = {p['id']: p for p in PODS['pods']}
 FASCIA_MID_IMG = (D.ITBM['roof_length']['tips']['fascia']['N'] + D.ITBM['roof_length']['tips']['fascia']['S']) / 2   # +1.0 m imaged
 
 
@@ -60,9 +86,10 @@ def UV(u, v):
 
 def wing(u):
     """west-eave height of the wings [obs]: spec roof.profile full_curve (NAIP eave relief, DOF-anchored) for |u| >= UN,
-    eased over 6 m into the notch value 35.7 [obs] (the NAIP curve reads 36.25 at |u| 27), extended to the 34.9 m tip."""
+    eased over 6 m into the notch value 35.7 [obs] (the NAIP curve reads 36.25 at |u| 27); beyond the hump (|u| 67) made
+    non-increasing towards the tip (isotonic fit, see H_TIP): 34.40 from |u| 117 to the tip."""
     a = max(abs(u), UN)
-    if a > 123: return float(np.interp(a, [123, HL], [34.83, H_TIP]))
+    if a >= 67: return float(np.interp(min(a, 123.0), _EU, _EH))
     d = float(D.itb_eave_h(UN)) - H_NOTCH
     return float(D.itb_eave_h(a)) - d * max(0.0, 1.0 - (a - UN) / 6.0)
 
@@ -150,6 +177,20 @@ def draw_hall_roof(V, variant, detail=True):
     return ring
 
 
+def _ring_c(p):
+    return np.mean(np.asarray(p['ring_true_xz'], float), axis=0)
+
+
+def draw_pods(V, pier, variant):
+    """pods / end box of one pier (itb_pods.json): relief-corrected outline [obs]; on the overlay also the imaged trace (dotted)."""
+    for p in PODS['pods']:
+        if p['pier'] != pier: continue
+        box = p['id'].endswith('box')
+        V.poly(p['ring_true_xz'], 'obs', fc=('#f3dcc0' if box else '#d6e6f5') if variant == 'vector' else 'none', lw=0.6, z=3)
+        if variant != 'vector': V.poly(p['ring_imaged_xz'], 'obs', fc='none', lw=0.4, z=3.1, ls=(0, (1, 1.2)))
+        if not box: V.text(_ring_c(p), p['id'], 'obs', fs=3.4, bg=False, z=3.2)
+
+
 def sheet_plan(variant='vector', dev=None):
     S = Sheet('BI-01', 'International Terminal: roof plans (main hall wing roof, Boarding Areas A and G)', 'A1', variant=variant,
               subtitle='Spec: tools/buildings/spec_itb.json + itb_naip_measurements.json; note docs/research/buildings_itb.md (Verification)')
@@ -217,7 +258,7 @@ def sheet_plan(variant='vector', dev=None):
         V2.mark(p, 'pub', marker='^', ms=4.5)
         V2.leader(p, -24, 6 if ft == 132 else -6, f'FAA DOF {oas}: {ft} ft AGL = {ft * FT:.2f} m\n(1A, +-3 ft) roof top [pub]', 'pub', fs=3.8)
     for uu, s in ((0, f'crown {CROWN} (photo, +-2) [obs]'), (-UN, f'notch {H_NOTCH} [obs]'), (UN, f'notch {H_NOTCH} [obs]'), (-67, 'hump 40.08 [inf: DOF-anchored fit]'), (67, 'hump 40.08 [inf: DOF-anchored fit]'),
-                  (-100, '36.4 [obs]'), (100, '36.4 [obs]'), (-124, f'tip {H_TIP} [obs]'), (124, f'tip {H_TIP} [obs]')):
+                  (-100, '36.4 [obs]'), (100, '36.4 [obs]'), (-124, f'tip {H_TIP:.1f} ({TIP_RNG[0]:.0f}-{TIP_RNG[1]}) [obs, low]'), (124, f'tip {H_TIP:.1f} [obs, low]')):
         V2.mark(UV(uu, -HW), 'obs', marker='o', ms=2.0)
         V2.text(UV(uu, -HW - 2.5), s, 'inf' if 'fit' in s else 'obs', fs=3.6, ha='right', rot=0)
     V2.text(UV(-112, -HW - 46), 'west eave heights AGL\n(roof.profile: NAIP eave relief,\nanchored on the DOF mean at the\nfitted peak |u| 67 [inf]; at the DOF\n'
@@ -239,19 +280,33 @@ def sheet_plan(variant='vector', dev=None):
         for r in D.outer_rings(nm, 'boardingAreas'):
             V.poly(r, 'obs', fc='#e7eef6' if not bg else 'none', lw=0.7, z=2)
         V.scalebar()
+    draw_pods(V3, 'A', variant); draw_pods(V4, 'G', variant)
     V3.mark(DOF_POD[0], 'pub', marker='^', ms=4.5)
     V3.leader(DOF_POD[0], 14, 12, 'FAA DOF 06-035352: 85 ft = 25.91 m AGL\n(1A) top of pod 1 [pub]', 'pub', fs=3.8)
     V3.leader((-1240, 700), 16, -4, 'main roof 17.9 m (16.9-18.8) [obs]\nNAIP oblique-band method, k 0.42;\n'
               'two-epoch control 17.8 m [obs]\nroof width 37.85 m [obs]; outline\n38.7-38.8 m (incl. facade band) [obs]', 'obs', fs=3.8)
-    V3.leader((-1300, 780), -2, 16, '3 raised D-shaped pods: pod 1 ~55-60 m, pods 2 / 3 ~52-55 m long\n[obs, by eye; the note\'s 70 m revised]; pod 1 rises 4.9-6.9 m\n'
-              'above the main roof [obs] -> top 22.3-25.2 m: CONFLICT with the DOF\n25.9 m except at its upper end; pod positions not recorded', 'obs', fs=3.8, ha='right')
+    A_ = [POD[k] for k in ('A1', 'A2', 'A3')]; G_ = [POD[k] for k in ('G1', 'G2', 'G3')]; BX = POD['G3-box']
+    V3.leader(_ring_c(A_[2]), -8, -16, '3 raised D-shaped pods A1-A3 (from the ITB), traced on NAIP 2024 and\nrelief-corrected (frame model) [obs]: L ' +
+              ' / '.join(f"{p['length_m']:.0f}" for p in A_) + f" m, W ~{A_[0]['width_m']:.0f} m; curved WNW edge, straight\nends [obs], straight ESE side [obs, weak]. "
+              f"Rise {min(p['rise_m'] for p in A_)}-{max(p['rise_m'] for p in A_)} m (WNW band\n= face + shadow) -> tops {A_[2]['top_m']}-{A_[0]['top_m']} m "
+              f"({A_[2]['top_range_m'][0]}-{A_[0]['top_range_m'][1]}) [obs, low];\npod 1 DOF 25.9 m [pub]: consistent only at the upper ends\n"
+              '(dotted on the overlay = imaged trace)', 'obs', fs=3.8, ha='right')
+    V3.leader((-1240, 700), 16, -4, 'main roof 17.9 m (16.9-18.8) [obs]\nNAIP oblique-band method, k 0.42;\n'
+              'two-epoch control 17.8 m [obs]\nroof width 37.85 m [obs]; outline\n38.7-38.8 m (incl. facade band) [obs]', 'obs', fs=3.8)
     V4.leader((-1400, 100), -4, -22, 'main roof 17.0 m (13-20) [obs, low; k(x) relief]\nroof width 38.4 m between parapets [obs]\n(the earlier ~33.5 m is refuted)', 'obs', fs=3.8)
-    V4.leader((-1520, 30), -6, 22, '3 raised lens pods 60 / 55 / 62 m [obs, by eye]\nno DOF entry: pod heights unknown [unk]\nSFOM outline 3-6 m NNE of the NAIP roof [obs, unresolved]', 'obs', fs=3.8, ha='right')
+    V4.leader(_ring_c(G_[1]), 10, 34, '3 raised lens pods G1-G3 (from the ITB), truncated by straight end walls;\ntraced on NAIP 2024, relief-corrected (k(x)) [obs]: L ' +
+              ' / '.join(f"{p['length_m']:.0f}" for p in G_) + f" m, W ~{G_[1]['width_m']:.0f} m (edges between the read\npoints parabolic [inf]); "
+              f"rise {min(p['rise_m'] for p in G_)}-{max(p['rise_m'] for p in G_)} m (WNW end band) -> tops "
+              f"{min(p['top_m'] for p in G_)}-{max(p['top_m'] for p in G_)} m\n[obs, low; main roof 13-20]; no DOF entry. SFOM outline 3-6 m NNE of\nthe NAIP roof [obs, unresolved]", 'obs', fs=3.8, ha='left')
+    V4.leader(_ring_c(BX), 3, -62, f"raised box ~{BX['length_m']:.0f} x {BX['width_m']:.0f} m at the WNW end of pod G3 [obs, NAIP 2024]:\n"
+              f"WNW band = box face {BX['band_box_face_m']} m + pod end {BX['band_pod_end_m']} m -> {BX['rise_above_pod_m'][0]}-{BX['rise_above_pod_m'][1]} m above\n"
+              f"the pod, top {BX['top_main_value_m'][0]}-{BX['top_main_value_m'][1]} m ({BX['top_range_m'][0]}-{BX['top_range_m'][1]}) [obs, low]. The box-shaped cab\n"
+              'with a dark window band and antennas on a raised roof volume of\nphoto d2 (wbaiv 2018, CC BY 4.0) [inf]; ramp-control cab [inf, unconfirmed]', 'inf', fs=3.8, ha='left')
     rows = [('DOF roof tops (u +57.2 / -58.4, west eave)', '39.93 / 40.23 m (131/132 ft)', 'pub', 'FAA DOF 06-035315/16, 1A (+-3 ft)'),
             ('Hump (fitted peak, |u| 67)', '40.08 m', 'inf', 'eave fit anchored on the DOF mean at its peak; 0.23 / 0.45 m low at the DOF stations'),
             ('Notches (wings meet centre section)', f'{H_NOTCH} m at |u| ~27', 'obs', 'NAIP eave relief 36.25 + photo 35.2'),
             ('Centre crown (glazed arch top)', '40.1 m +-2', 'obs', 'public-domain photo only'),
-            ('Tips', '34.9 m', 'obs', 'NAIP + photo'),
+            ('Tips', f'{H_TIP:.1f} m ({TIP_RNG[0]:.0f}-{TIP_RNG[1]})', 'obs', f'eave fit made non-increasing to the tips (minimum held); spec {H_TIP_SPEC} = NAIP / photo blend'),
             ('Roof length / width', '252.9 x 65.4 m', 'obs', 'NAIP, relief-corrected; 860 ft pub conflicts'),
             ('Truss lines / spacing', '5 / 12.12 m', 'obs', 'NAIP comb fit; 40 ft grid [pub]'),
             ('Truss depth max / centre span / end cantilever', '29 / 380 / 160 ft', 'pub', 'SEAONC (read in full)'),
@@ -260,6 +315,9 @@ def sheet_plan(variant='vector', dev=None):
             ('Level 3 (departures) floor', f'{L3} m ({L3R[0]}-{L3R[1]})', 'inf', 'DOF top minus 100 ft / 90 ft / 83 ft'),
             ('"Building height 144 ft"', 'datum unknown', 'pub', 'SOM, Enclos - do not use'),
             ('BA-A / BA-G main roof', '17.9 / 17.0 m', 'obs', 'NAIP relief / shadow'),
+            ('BA-A pods A1-A3 (D)', f"top {POD['A3']['top_m']}-{POD['A1']['top_m']} m", 'obs', 'NAIP trace + WNW band (low); pod 1 DOF 25.9 [pub]'),
+            ('BA-G pods G1-G3 (lens)', f"top {POD['G2']['top_m']}-{POD['G3']['top_m']} m", 'obs', 'NAIP trace + end band (low); main roof 13-20'),
+            ('BA-G pod-3 end box', f"top {POD['G3-box']['top_main_value_m'][0]}-{POD['G3-box']['top_main_value_m'][1]} m", 'obs', 'NAIP band (low); cab of photo d2 [inf]'),
             ('Roof 2024-26 upgrade (membrane, ~1,400 kW PV)', 'layout unknown', 'pub', 'NAIP 2024-05-20 predates it')]
     S.table(0, 150, 222, 'ITB key values', rows, fs=4.0, col=(0.46, 0.24))
     S.note('Hall roof outline, truss lines, lenses and tip bands: NAIP 2024 measured and relief-corrected with the frame model fitted to five '
@@ -304,13 +362,24 @@ def draw_trusses(V, us):
 
 
 def draw_columns(V, struts=True):
+    """the 20 columns' west line: white columns in front of the glass up to the glass head, where each branches into a
+    fan of 4-6 members into the trusses (photos i3 / i4: a vertical post continuing to the top chord + about 2 members
+    each side) [obs count, review r2-26]; drawn as post + 2 per side at +-5 / +-10 m [inf geometry, schematic]."""
     for cu in COL_U:
         for s in (-1, 1):
             u = s * cu
             V.poly([(u - 0.75, L3), (u + 0.75, L3), (u + 0.75, WH), (u - 0.75, WH)], 'inf', fc='#ffffff', z=6.5, lw=0.7)
             if struts:
-                for du in (-5.0, 0.0, 5.0):
-                    V.line([(u, WH), (u + du, roof_line(u + du) - 1.2)], 'inf', lw=0.9, z=6.4, color='#8c8c8c')
+                for du in (-10.0, -5.0, 0.0, 5.0, 10.0):
+                    V.line([(u, WH), (u + du, roof_line(u + du) - (0.6 if abs(du) > 7 else 1.2))], 'inf', lw=0.8 if du else 1.0, z=6.4, color='#8c8c8c')
+
+
+def draw_hangers(V):
+    """curb-canopy hangers and the posts under the canopy (HANGER_U) [obs photo i4; form schematic]."""
+    for uh in HANGER_U:
+        if abs(uh) > HALL_HL: continue
+        V.line([(uh - 0.4, CANOPY), (uh, CANOPY + HANGER_H), (uh + HANGER_L, CANOPY)], 'obs', lw=0.45, z=5.2, color='#3f4f5c')
+        V.line([(uh, L3), (uh, CANOPY)], 'obs', lw=0.35, z=5.1, color='#6d7c88')
 
 
 def west_elev(V):
@@ -343,6 +412,7 @@ def west_elev(V):
     V.poly([(-LETTER_HW, 25.8), (LETTER_HW, 25.8), (LETTER_HW, 28.6), (-LETTER_HW, 28.6)], 'obs', fc='none', z=1.8, lw=0.3, ls=(0, (1, 1)))
     V.text((0, 27.2), 'SAN FRANCISCO INTERNATIONAL', 'obs', fs=6.2, bg=False, color='#26323d', style='normal', weight='bold', z=1.9)
     V.line([(-HALL_HL, CANOPY), (HALL_HL, CANOPY)], 'inf', lw=0.7, z=5)
+    draw_hangers(V)
     for s in (-1, 1):
         V.line([(s * HALL_HL, L3), (s * HALL_HL, chord(s * HALL_HL))], 'obs', lw=0.8, z=5)
     draw_trusses(V, us)
@@ -354,15 +424,15 @@ def west_elev(V):
         V.ax.fill_between(uu, [roof_line(u) - 1.0 for u in uu], [roof_line(u) for u in uu], color='#cfe3f3', lw=0, zorder=6.2, hatch='||||', edgecolor='#0b57a4')
     # levels
     V.level(HL + 2, L3, f'+{L3} departures curb / level 3 ({L3R[0]}-{L3R[1]}) [inf]', 'inf', len_mm=6, fs=4.2, u_line=HALL_HL)
-    V.level(HL + 2, CANOPY, f'+{CANOPY:.1f} curb canopy (~4.5-6 m above the curb, photos) [inf]', 'inf', len_mm=6, fs=4.0, u_line=HALL_HL)
-    V.level(HL + 2, WH, f'+{WH} glass-wall head, level (9.3 m below the wing crest, photo i4) [obs, +-1.5]', 'obs', len_mm=6, fs=4.0, u_line=HALL_HL)
+    V.level(HL + 2, CANOPY, f'+{CANOPY:.1f} curb canopy (photos) [inf]', 'inf', len_mm=6, fs=4.0, u_line=HALL_HL)
+    V.level(HL + 2, WH, f'+{WH} glass-wall head (photo i4) [obs, +-1.5]', 'obs', len_mm=6, fs=4.0, u_line=HALL_HL)
     for oas, (p, ft) in DOF_ROOF.items():
         u = float(np.dot(np.asarray(p) - F['c'], F['ax']))
         V.mark((u, ft * FT), 'pub', marker='v', ms=4)
         V.text((u, ft * FT + 3.0), f'DOF {oas}\n{ft} ft = {ft * FT:.2f} m [pub]', 'pub', fs=3.9)
-    V.level(HL + 2, 144 * FT, '+43.89 "building height 144 ft" [pub SOM / Enclos] - datum not stated, conflict', 'pub', len_mm=6, fs=4.0, u_line=HL - 10)
-    V.level(HL + 2, H_TIP, f'+{H_TIP} tip [obs]', 'obs', len_mm=6, fs=4.2, u_line=HL)
-    V.level(HL + 2, H_PEAK, '+40.08 humps at |u| 67: DOF-anchored eave fit [inf] (DOF tops below)', 'inf', len_mm=6, fs=4.2, u_line=67)
+    V.level(HL + 2, 144 * FT, '+43.89 "144 ft" [pub SOM]: datum unknown', 'pub', len_mm=6, fs=4.0, u_line=HL - 10)
+    V.level(HL + 2, H_TIP, f'+{H_TIP:.1f} tip ({TIP_RNG[0]:.0f}-{TIP_RNG[1]}) [obs, low]', 'obs', len_mm=6, fs=4.0, u_line=HL)
+    V.level(HL + 2, H_PEAK, '+40.08 humps |u| 67 [inf: DOF-anchored fit]', 'inf', len_mm=6, fs=4.2, u_line=67)
     V.level(-HL - 2, H_NOTCH, f'+{H_NOTCH} notches [obs]', 'obs', side='left', len_mm=4, fs=4.2, u_line=-UN)
     V.level(-HL - 2, CROWN + 0.0001, f'+{CROWN} crown (photo +-2) [obs]', 'obs', side='left', len_mm=4, fs=4.2, u_line=0)
     V.dim((-HL, -1), (HL, -1), -8, f'{F["L"]:.2f} m eave tip to tip (252.6-255.1) [obs]', 'obs', fs=4.6)
@@ -380,8 +450,13 @@ def west_elev(V):
              f'its head follows the centre section\'s bottom chord, ~{BAY_HEAD:.0f} m (1-3.5) above the side bays\' head [obs photo i4,\n'
              'tentative]. Side bays: white horizontally banded frit, a dark clear strip just above the canopy;\nclear entrance glazing under the '
              'canopy [obs photos i1-i4]; module not published [unk]', 'obs', fs=3.8)
-    V.leader((-COL_U[1], (L3 + WH) / 2 + 3), -16, 9, 'white columns stand clear in front of the glass (shadow on it)\nand branch into struts into the trusses [obs photos i3 / i4];\n'
-             'u at the column lines [inf] (photo i4: -83.4 / -59.4 m); strut form schematic [inf]', 'inf', fs=3.8, ha='right')
+    V.leader((-COL_U[1], L3 + 2.0), -4, -21, 'white columns stand clear in front of the glass (shadow on it) and branch at the\nglass head into a fan of 4-6 members '
+             'into the trusses (post + ~2 per side) [obs photos i3 / i4];\nu at the column lines [inf] (photo i4: -83.4 / -59.4 m); member geometry schematic [inf]', 'inf', fs=3.8, ha='right')
+    uh = HANGER_U[len(HANGER_U) // 2 + 4]
+    V.leader((uh + 1.0, CANOPY + 1.8), 12, -31, 'curb-canopy hangers: inclined pairs from the glass wall to the canopy (long leg falling to +u), a post under\n'
+             'the canopy at each [obs photo i4]: |u| = 30 / 90 ft over the 180-ft centre section, then every 40 ft from 130 to 330 ft\n'
+             '= 20 ft either side of each column line (i4: spacing / 80-ft bay 0.493 N, 0.489 S; read u within +-0.5 m of the grid);\n'
+             f'apex ~{HANGER_H} m above the canopy, leg ~{HANGER_L} m [obs photo, rough]; canopy height / depth [inf]', 'obs', fs=3.7)
     V.leader((-112, (chord(-112) + roof_line(-112)) / 2), -6, -12, 'exposed "football" trusses above the wall head, tapering to the tips\n'
              '(bottom chord = soffit over the open cantilevers) [obs photos]; web schematic [inf]', 'inf', fs=3.8, ha='right')
 
@@ -415,7 +490,7 @@ def north_elev(V):
     hall_conflict(V, sign=-1, y=L3 - 4.5)
     V.line([(-HW - 4, L3), (HW + 12, L3)], 'inf', lw=0.5)
     V.level(HW + 2, L3, f'+{L3} level 3 / curb ({L3R[0]}-{L3R[1]}) [inf]', 'inf', len_mm=5, fs=4.2, u_line=HW)
-    V.level(HW + 2, H_TIP, f'+{H_TIP} roof tip fascia [obs]', 'obs', len_mm=5, fs=4.2, u_line=HW)
+    V.level(HW + 2, H_TIP, f'+{H_TIP:.1f} roof tip fascia ({TIP_RNG[0]:.0f}-{TIP_RNG[1]}) [obs, low]', 'obs', len_mm=5, fs=4.2, u_line=HW)
     V.level(HW + 2, H_TIP - 1.5, 'tip depth ~1.5 m (truss taper) [inf]', 'inf', len_mm=5, fs=4.0, u_line=HW)
     V.level(HW + 2, WH, f'+{WH} west glass-wall head [obs photo]', 'obs', len_mm=5, fs=4.0, u_line=xw)
     V.level(-HW - 2, H_PEAK, '+40.08 humps [inf: DOF-anchored fit]', 'inf', side='left', len_mm=5, fs=4.2, u_line=-HW)
@@ -433,7 +508,8 @@ def sheet_elev():
     west_elev(V1); V1.scalebar(y_mm=6)
     V2 = S.view(0, 6, 420, 280, 250, (0, 22), title='2  NORTH END ELEVATION, looking SSE', kind='elev', frame=False)
     north_elev(V2); V2.scalebar(y_mm=6)
-    rows = [('Eave profile |u| 27-123 m', '35.7 -> 40.08 -> 34.8 m', 'obs', 'NAIP: west eave vs the straight facade-base line, 0.955 k h; even-polynomial fit, rms 0.20 m'),
+    rows = [('Eave profile |u| 27-126 m', f'35.7 -> 40.08 -> {H_TIP:.1f} m', 'obs', 'NAIP: west eave vs the straight facade-base line, 0.955 k h; even-polynomial fit, rms 0.20 m; '
+             'beyond the humps held non-increasing (the fit\'s upturn at |u| 123 is an end artefact; raw stations and photo fall to the tips)'),
             ('Second method (photo)', 'drops 4.91 / 4.62 m', 'obs', 'public-domain frontal photo; NAIP drops 3.83 / 5.68 m'),
             ('DOF roof tops', '39.93 / 40.23 m', 'pub', 'DOF 131/132 ft at u +57.2 / -58.4, 0.8-1.1 m inside the west eave'),
             ('Humps (fitted peak |u| 67)', '40.08 m', 'inf', 'fit anchored on the DOF mean at its peak: 0.23 / 0.45 m below the DOF at their stations'),
@@ -444,10 +520,11 @@ def sheet_elev():
             ('Stories', '5', 'pub', 'L1 services, L2 arrivals, L3 departures, L4-5 offices / lounges'),
             ('Ground at the ITB', '8 ft AMSL', 'inf', 'DOF AMSL - AGL')]
     S.table(430, 290, 305, 'Heights and their sources', rows, fs=4.1, col=(0.36, 0.22))
-    S.note('Roof silhouette: spec roof.profile full_curve (|u| 27-123 m), eased into the 35.7 m V notches and extended to the 34.9 m tip; '
-           'between the notches the glazed centre arch (one photo, +-2 m, blue band). The profile is symmetric by fit (halves pooled).')
-    S.note('Facade from photos (reference only): the glass wall stands on the departures curb (L3) and is level-topped at ~30.8 m; the '
-           'football trusses are exposed above it; the columns stand in front of the glass; the 705-ft hall ends ~19-21 m short of each tip.')
+    S.note('Roof: spec roof.profile full_curve eased into the 35.7 m notches; beyond the humps held non-increasing to the '
+           f'{H_TIP:.1f} m tip (the fit\'s upturn at |u| 123 is an end artefact). Centre arch: one photo, +-2 m (blue band). Symmetric by fit.')
+    S.note('Facade from photos (reference only): glass wall on the departures curb (L3), level-topped ~9.3 m below the crest; trusses '
+           'exposed above; columns in front of the glass, each branching into 4-6 members; canopy ~4.5-6 m above the curb, its hangers on the '
+           '40-ft grid and at +-30 / +-90 ft; the hall ends ~19-21 m short of each tip.')
     S.note('Not published: mullion module, fascia depth, canopy depth, the end-wall outline, the lower building masses. They need SFO record drawings.')
     S.note('Hall width CONFLICT: 210 ft = 64.0 m [pub SEAONC] does not fit under the measured 65.4-m roof east of the west wall (at most '
            f'{HW - WALL["band"][0]:.1f} m with the wall at its westmost reading). Resolutions: the wall nearer the eave; the hall running east under a '
@@ -492,7 +569,7 @@ def sheet_section():
         V1.mark((u, ft * FT), 'pub', marker='v', ms=4)
         V1.text((u, ft * FT + 2.6), f'DOF {ft} ft = {ft * FT:.2f} [pub]', 'pub', fs=3.7)
     V1.level(-HL - 2, CROWN + 0.0001, f'+{CROWN} centre crown (photo, +-2) [obs]', 'obs', side='left', len_mm=6, fs=4.2, u_line=0)
-    V1.level(-HL - 2, H_TIP, f'+{H_TIP} tip [obs]', 'obs', side='left', len_mm=6, fs=4.2, u_line=-HL)
+    V1.level(-HL - 2, H_TIP, f'+{H_TIP:.1f} tip ({TIP_RNG[0]:.0f}-{TIP_RNG[1]}) [obs, low]', 'obs', side='left', len_mm=6, fs=4.2, u_line=-HL)
     V1.scalebar(y_mm=6)
     # cross section at u = +57.9 (looking NNW: right hand = ENE = +v)
     V2 = S.view(0, 6, 420, 280, 250, (-2, 22), title='2  CROSS SECTION at the inner column line u = +57.9 m, looking NNW', kind='elev', frame=False)
@@ -563,4 +640,161 @@ def sheet_section():
     S.note('Hall width CONFLICT: 210 ft = 64.0 m [pub] against at most 61.0 m under the roof east of the wall (55.9-61.0 over the band). '
            'Resolutions: the wall nearer the eave; the hall continuing east under a lower roof (east edge = "fascia -> lower roof fall"); a '
            'wider roof (SOM concept sketch 260 ft). Drawn: the published width from the west wall (dashed), 5.5 m beyond the east eave.')
+    return S.finish()
+
+
+# ------------------------------------------------------------------------------------------------ piers (BI-04)
+# Boarding Areas A and G: long (apron) faces and cross sections with the pods and the BA-G pod-3 end box (review r2-29,
+# r2-30). Pier frames as tools/buildings/itb_pods.py (s along the pier away from the ITB, t across).
+BODY_S = {'A': (-130.0, 169.4), 'G': (-140.0, 235.1)}   # pier body along s: SFO Museum outline; beyond it, the junction /
+                                                         # connector to the ITB (s profile of the outline, width ~38-39 m)
+
+
+def _pf(key):
+    P = PODS['piers'][key]
+    return np.array(P['centre_xz'], float), np.array(P['s_axis'], float), np.array(P['t_axis'], float)
+
+
+def _st(key, ring):
+    c, ax, n = _pf(key); r = np.asarray(ring, float) - c
+    return np.c_[r @ ax, r @ n]
+
+
+def _cut(key, ring, s0):
+    """t interval of a ring (world) on the cross line s = s0 (pier frame)."""
+    from shapely.geometry import Polygon, LineString
+    g = LineString([(s0, -200), (s0, 200)]).intersection(Polygon(_st(key, ring)).buffer(0))
+    return (g.bounds[1], g.bounds[3]) if not g.is_empty else None
+
+
+def _pier_elev(V, key, sign):
+    """long-face elevation of one pier: plot x = sign * s."""
+    P = PODS['piers'][key]; hm = P['h_main_roof']; r0, r1 = P['h_main_range']; s0, s1 = BODY_S[key]
+    X = lambda s: sign * s  # noqa: E731
+    xa, xb = sorted((X(s0 - 25), X(s1 + 15)))
+    V.ax.fill_between([xa, xb], [-3, -3], [0, 0], color='#dddddd', lw=0, zorder=1)
+    V.line([(xa, 0), (xb, 0)], 'pub', lw=0.8)
+    V.poly([(X(s0), 0), (X(s1), 0), (X(s1), hm), (X(s0), hm)], 'obs', fc='#eef3f8', z=2, lw=0.8)
+    V.ax.fill_between(sorted([X(s0), X(s1)]), [r0, r0], [r1, r1], color='#9cc3e0', alpha=0.25, lw=0, zorder=2.1)
+    V.poly([(X(s0 - 22), 0), (X(s0), 0), (X(s0), hm), (X(s0 - 22), hm)], 'unk', fc='none', z=2, lw=0.5)
+    V.text((X(s0 - 11), hm / 2), 'junction /\nconnector\nto the ITB\n[unk]', 'unk', fs=3.4)
+    pods = [p for p in PODS['pods'] if p['pier'] == key]
+    for p in pods:
+        st = _st(key, p['ring_true_xz']); a, b = st[:, 0].min(), st[:, 0].max()
+        if p['id'].endswith('box'):
+            base = POD['G3']['top_m']; t0, t1 = p['top_main_value_m']; top = p['top_m']
+            V.poly([(X(a), base), (X(b), base), (X(b), top), (X(a), top)], 'obs', fc='#f3dcc0', z=3.2, lw=0.7)
+            V.ax.fill_between(sorted([X(a), X(b)]), [t0, t0], [t1, t1], color='#e0a060', alpha=0.35, lw=0, zorder=3.3)
+            V.ax.fill_between(sorted([X(a) + sign * 0.6, X(b) - sign * 0.6]), [top - 2.6] * 2, [top - 1.2] * 2, color='#55606a', lw=0, zorder=3.4)
+            for xx in np.linspace(X(a) + sign * 1.5, X(b) - sign * 1.5, 3):
+                V.line([(xx, top), (xx, top + 5.0)], 'obs', lw=0.35, z=3.4, color='#55606a')
+            continue
+        top = p['top_m']
+        V.poly([(X(a), hm), (X(b), hm), (X(b), top), (X(a), top)], 'obs', fc='#d6e6f5', z=3, lw=0.7)
+        V.text(((X(a) + X(b)) / 2, (hm + top) / 2), p['id'], 'obs', fs=3.6, bg=False, z=3.5)
+        V.dim((X(a), top), (X(b), top), 3 if sign > 0 else -3, f"{p['length_m']:.1f} [obs]", 'obs', fs=3.5)
+    return pods
+
+
+def sheet_piers():
+    S = Sheet('BI-04', 'International Terminal: Boarding Areas A and G - long-face elevations and cross sections with the roof pods', 'A1',
+              subtitle='Spec: spec_itb.json (ba_a.*, ba_g.*); pods / end box: itb_pods.json (NAIP 2024 trace, tools/buildings/itb_pods.py)')
+    A_ = [POD[k] for k in ('A1', 'A2', 'A3')]; G_ = [POD[k] for k in ('G1', 'G2', 'G3')]; BX = POD['G3-box']
+    PA, PG = PODS['piers']['A'], PODS['piers']['G']
+    # ---------------- V1 BA-G apron (NNE) face, looking SSW: x = +s (right = WNW, away from the ITB)
+    V1 = S.view(0, 395, S.vw, 172, 750, (50, 22), title='1  BOARDING AREA G: north-north-east (apron) face, looking SSW (left: the ITB)', kind='elev', frame=False)
+    _pier_elev(V1, 'G', +1)
+    s0, s1 = BODY_S['G']
+    V1.dim((s0, -2), (s1, -2), -5, f'{s1 - s0:.0f} m pier body (SFO Museum outline) [obs]', 'obs', fs=4.2)
+    V1.level(s1 + 3, PG['h_main_roof'], f"+{PG['h_main_roof']} main roof ({PG['h_main_range'][0]:.0f}-{PG['h_main_range'][1]:.0f}, blue band) [obs, low]", 'obs', len_mm=5, fs=4.0, u_line=s1)
+    V1.level(s1 + 3, G_[2]['top_m'], f"+{min(p['top_m'] for p in G_)}-{max(p['top_m'] for p in G_)} pod tops: rise {min(p['rise_m'] for p in G_)}-"
+             f"{max(p['rise_m'] for p in G_)} m [obs, low]", 'obs', len_mm=5, fs=4.0, u_line=s1)
+    V1.level(s1 + 3, BX['top_m'], f"+{BX['top_main_value_m'][0]}-{BX['top_main_value_m'][1]} end box (orange band) [obs, low]", 'obs', len_mm=5, fs=4.0, u_line=s1)
+    sb = _st('G', BX['ring_true_xz'])[:, 0].mean()
+    V1.leader((sb, BX['top_m'] + 2.0), -30, 9, 'END BOX on pod G3 (~8 x 9 m, set back ~1 m from the pod end) [obs, NAIP 2024]: NAIP band of its WNW face\n'
+              f"{BX['band_box_face_m']} m above the pod-end band {BX['band_pod_end_m']} m -> {BX['rise_above_pod_m'][0]}-{BX['rise_above_pod_m'][1]} m above the pod roof "
+              f"(face + shadow .. face only).\nPhoto d2 (wbaiv, 2018-09-08, CC BY 4.0): a box-shaped cab with a dark window band and antennas on a raised roof volume,\n"
+              'about as high again above it as the volume above the main roof [obs photo]. Window band / antennas drawn schematic [inf];\n'
+              'function: ramp-control cab (LiveATC lists "Ramp G (West)") [inf, NOT confirmed by any SFO source]', 'inf', fs=3.8, ha='right')
+    V1.text((40, 6.0), 'apron level + level 2 (arrivals, sterile corridor) + level 3 (departures concourse) [pub tutor_bag]; floor heights not dimensioned [unk].\n'
+            'Facade: metallic-finish composite aluminium panels and a tinted glazed curtain wall [pub]; bay layout not measured [unk]', 'unk', fs=3.8)
+    V1.scalebar(y_mm=4)
+    # ---------------- V2 BA-A apron (ESE) face, looking WNW: x = -s (right = NNE, the ITB)
+    V2 = S.view(0, 213, S.vw, 172, 750, (-60, 22), title='2  BOARDING AREA A: east-south-east (apron) face, looking WNW (right: the ITB)', kind='elev', frame=False)
+    _pier_elev(V2, 'A', -1)
+    s0, s1 = BODY_S['A']
+    V2.dim((-s1, -2), (-s0, -2), -5, f'{s1 - s0:.0f} m pier body (SFO Museum outline) [obs]', 'obs', fs=4.2)
+    sd = float(_st('A', [DOF_POD[0]])[0, 0])
+    V2.mark((-sd, DOF_POD[1] * FT), 'pub', marker='v', ms=4)
+    V2.leader((-sd, DOF_POD[1] * FT), 8, 10, 'FAA DOF 06-035352: 85 ft = 25.91 m [pub]\n(1A: +-20 ft H, +-3 ft V) at pod A1\'s NNE end', 'pub', fs=3.7)
+    V2.level(-s1 - 3, PA['h_main_roof'], f"+{PA['h_main_roof']} main roof ({PA['h_main_range'][0]}-{PA['h_main_range'][1]}) [obs]", 'obs', side='left', len_mm=5, fs=4.0, u_line=-s1)
+    V2.level(-s1 - 3, A_[0]['top_m'], f"+{A_[2]['top_m']}-{A_[0]['top_m']} pod tops ({A_[2]['top_range_m'][0]}-{A_[0]['top_range_m'][1]}) [obs, low]", 'obs', side='left', len_mm=5, fs=4.0, u_line=-s1)
+    V2.line([(-s1 - 6.75, 17.2), (-s1, 17.2)], 'obs', lw=0.35)
+    V2.line([(-s1 - 6.75, 5.2), (-s1 - 6.75, 17.2)], 'obs', lw=0.35)
+    V2.level(-s1 - 3, 5.2, 'glazed gate-room bays ~5.2-17.2 m (photo a2, +-1.5) [obs photo]', 'obs', side='left', len_mm=5, fs=3.6, u_line=-s1)
+    V2.text((-20, 3.0), 'glazed gate-room bays (two passenger levels) alternate with metal panels; bay positions along the face not measured [unk] (photo a2,\n'
+            'Pi.1415926535, Sept 2025, CC BY-SA 4.0: BA-A from the east). Apron level below; floor heights not dimensioned [unk]', 'unk', fs=3.6)
+    V2.scalebar(y_mm=4)
+    # ---------------- table
+    rows = [('BA-A pods A1 / A2 / A3: length', ' / '.join(f"{p['length_m']}" for p in A_) + ' m', 'obs', 'NAIP 2024 trace (imaged roof edges; ends by eye, WNW arc scanned)'),
+            ('BA-A pods: width (arc apex - ESE side)', f"~{A_[0]['width_m']} m", 'obs', 'ESE side a weak line only (all three pods)'),
+            ('BA-A pods: rise / top', f"{A_[2]['rise_m']}-{A_[0]['rise_m']} / {A_[2]['top_m']}-{A_[0]['top_m']} m", 'obs', f"WNW band {A_[0]['band_wnw_m']} m / {A_[0]['band_coef_per_m']} per m (frame face + shadow); low"),
+            ('BA-A pod 1 DOF top', '25.91 m', 'pub', 'FAA DOF 06-035352 (1A); NAIP range reaches 25.0'),
+            ('BA-G pods G1 / G2 / G3: length', ' / '.join(f"{p['length_m']}" for p in G_) + ' m', 'obs', 'NAIP 2024 trace; G3 runs under the end box image'),
+            ('BA-G pods: width', f"~{G_[1]['width_m']} m", 'obs', 'apexes by eye; edges parabolic between [inf]'),
+            ('BA-G pods: rise / top', f"{G_[1]['rise_m']}-{G_[2]['rise_m']} / {G_[1]['top_m']}-{G_[2]['top_m']} m", 'obs', 'WNW end band 2.25-2.5 m, k(x) face + shadow; main roof 13-20 (low)'),
+            ('BA-G end box on G3', f"{BX['top_main_value_m'][0]}-{BX['top_main_value_m'][1]} m", 'obs', f"{BX['rise_above_pod_m'][0]}-{BX['rise_above_pod_m'][1]} m above the pod; range {BX['top_range_m'][0]}-{BX['top_range_m'][1]} with the main roof"),
+            ('End box function', 'ramp-control cab?', 'inf', 'photo d2 (2018) form + "Ramp G (West)" frequency; unconfirmed'),
+            ('Pier glazing (BA-A)', '~5.2-17.2 m', 'obs', 'photo a2, rough; bay positions unknown')]
+    S.table(500, 200, 239, 'Boarding-area pods and heights', rows, fs=3.8, col=(0.40, 0.20))
+    # ---------------- V3 / V4 cross sections
+    for k, (key, pid, x0, w, title, sign) in enumerate((('A', 'A1', 0, 235, '3  BA-A SECTION through pod A1 near its NNE end, looking NNE', 1),
+                                                         ('G', 'G3', 245, 245, '4  BA-G SECTION through pod G3 and the end box, looking WNW', -1))):
+        P = PODS['piers'][key]; hm = P['h_main_roof']; r0, r1 = P['h_main_range']
+        if key == 'A': sc = float(_st('A', POD['A1']['ring_true_xz'])[:, 0].min()) + 8.0   # near the NNE end (DOF station)
+        else: sc = float(_st('G', BX['ring_true_xz'])[:, 0].mean())
+        body = _cut(key, D.outer_rings(P['name'], 'boardingAreas')[0], sc); pod = _cut(key, POD[pid]['ring_true_xz'], sc)
+        tc = 0.5 * (body[0] + body[1])
+        V = S.view(x0, 8, w, 190, 400, (sign * tc, 18), title=title, kind='elev', frame=False)
+        X = lambda t: sign * t  # noqa: E731
+        V.ax.fill_between(sorted([X(body[0] - 14), X(body[1] + 14)]), [-2, -2], [0, 0], color='#dddddd', lw=0, zorder=1)
+        V.line([(X(body[0] - 14), 0), (X(body[1] + 14), 0)], 'pub', lw=0.8)
+        V.poly([(X(body[0]), 0), (X(body[1]), 0), (X(body[1]), hm), (X(body[0]), hm)], 'obs', fc='#eef3f8', z=2, lw=0.8)
+        V.ax.fill_between(sorted([X(body[0]), X(body[1])]), [r0, r0], [r1, r1], color='#9cc3e0', alpha=0.25, lw=0, zorder=2.1)
+        top = POD[pid]['top_m']
+        V.poly([(X(pod[0]), hm), (X(pod[1]), hm), (X(pod[1]), top), (X(pod[0]), top)], 'obs', fc='#d6e6f5', z=3, lw=0.8)
+        V.dim((X(body[0]), -1), (X(body[1]), -1), -5 if sign > 0 else 5, f'{body[1] - body[0]:.1f} m (SFO Museum outline at this station) [obs]', 'obs', fs=4.0)
+        V.dim((X(pod[0]), top), (X(pod[1]), top), 3 if sign > 0 else -3, f'{pod[1] - pod[0]:.1f} pod [obs]', 'obs', fs=3.8)
+        V.dim((X(body[1]) + sign * 3, 0), (X(body[1]) + sign * 3, hm), -3 if sign > 0 else 3, f'{hm}', 'obs', fs=3.8)
+        V.dim((X(pod[1]) + sign * 2, hm), (X(pod[1]) + sign * 2, top), -3 if sign > 0 else 3, f"+{POD[pid]['rise_m']}", 'obs', fs=3.8)
+        V.text((X(tc), hm / 2), 'apron level + 2 passenger levels:\nfloors not dimensioned [unk]', 'unk', fs=3.8)
+        if key == 'A':
+            td = float(_st('A', [DOF_POD[0]])[0, 1])
+            V.mark((X(td), DOF_POD[1] * FT), 'pub', marker='v', ms=4)
+            V.leader((X(td), DOF_POD[1] * FT), -6, 8, 'DOF 06-035352 25.91 m [pub]\n(+-6.1 m horizontally: at the\npod\'s WNW rim or the eave)', 'pub', fs=3.6, ha='right')
+            V.leader((X(pod[0]), top), -8, -18, f"curved WNW rim [obs]; top {top} ({POD[pid]['top_range_m'][0]}-{POD[pid]['top_range_m'][1]}) [obs, low]", 'obs', fs=3.6, ha='right')
+            V.leader((X(pod[1]), (hm + top) / 2), 10, 8, 'straight ESE side [obs, weak]', 'obs', fs=3.6)
+            V.text((X(body[1]) + 8, -1.0), 'right: ESE (apron) face', 'unk', fs=3.4, color='#555555', style='normal')
+        else:
+            bx = _cut('G', BX['ring_true_xz'], sc); t0, t1 = BX['top_main_value_m']; bt = BX['top_m']
+            V.poly([(X(bx[0]), top), (X(bx[1]), top), (X(bx[1]), bt), (X(bx[0]), bt)], 'obs', fc='#f3dcc0', z=3.2, lw=0.8)
+            V.ax.fill_between(sorted([X(bx[0]), X(bx[1])]), [t0, t0], [t1, t1], color='#e0a060', alpha=0.35, lw=0, zorder=3.3)
+            V.ax.fill_between(sorted([X(bx[0]) + sign * 0.3, X(bx[1]) - sign * 0.3]), [bt - 2.6] * 2, [bt - 1.2] * 2, color='#55606a', lw=0, zorder=3.4)
+            V.dim((X(bx[0]), bt), (X(bx[1]), bt), -3, f'{bx[1] - bx[0]:.1f} box [obs]', 'obs', fs=3.8)
+            ur = max(X(body[0]), X(body[1])) + 2.0
+            V.level(ur, bt, f'+{t0}-{t1} box top (orange band) [obs, low]', 'obs', len_mm=4, fs=3.8, u_line=max(X(bx[0]), X(bx[1])))
+            V.level(ur, top, f'+{top} pod top [obs, low]', 'obs', len_mm=4, fs=3.8, u_line=max(X(pod[0]), X(pod[1])))
+            V.text((ur + 6, -1.0), 'right: NNE (apron) face', 'unk', fs=3.4, color='#555555', style='normal')
+            V.leader((X(0.5 * (bx[0] + bx[1])), bt - 1.9), 14, 10, 'dark window band + antennas: as photo d2,\nschematic [inf]', 'inf', fs=3.6)
+        V.scalebar(y_mm=4)
+    S.note('Pods and the end box are traced on NAIP 2024 in pier frames (BA-A 208.0 deg, BA-G 297.75 deg) and relief-corrected with their own '
+           'top heights (BA-A frame model, BA-G k(x), as the main-roof heights). Outlines +-1 m; tools/buildings/itb_pods.py writes itb_pods.json.')
+    S.note('Heights: a raised volume\'s dark band on its WNW side = (visible face + shadow) x rise. Low confidence: one image, half-level band '
+           'widths, the relief model, and the main-roof ranges (BA-G 13-20 m) all carry into the tops.')
+    S.note('BA-A pod 1: NAIP 21.8-25.0 m against the FAA DOF 25.91 m (+-0.9 m): consistent only at the upper ends. The NNE-end DOF point lies '
+           'within its 6.1 m horizontal accuracy of the pod\'s WNW rim.')
+    S.note('BA-G end box: the only structure on BA-G whose band exceeds the pods\' (checked on all three pods and the pier head; BA-F and the '
+           'ITB north end show nothing like it). It stands on NAIP 2024-05-20, so the 2018 photo d2 shows it in place. Its function is '
+           'inferred; model it as a closed box with a window band, heights per the band.')
+    S.note('Not measured: floor heights, gate-room bay positions, parapets and roof equipment. Photos a2 / d2 are reference only.')
     return S.finish()

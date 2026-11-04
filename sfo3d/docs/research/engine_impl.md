@@ -1,7 +1,9 @@
 # three.js r186 renderer for SFO Live 3D: implementation notes (live3.html)
 
-Status: 26 Sep 2026 (UTC), after review round 1 (§4.3). Decision record: `docs/research/engine.md` (verified). This note records how the port is
-built, what was checked in this sandbox, and what is still open. Labels: **Observed** (run or read here), **Inferred**.
+Status: 4 Nov 2026 (UTC), after review round 3 (§4.7). Round 2 (26 Sep, §4.6) was committed as a WIP snapshot (06ecf63)
+that never started: `live3.html` threw at start-up until the round-3 fixes. Decision record: `docs/research/engine.md`
+(verified). This note records how the port is built, what was checked in this sandbox, and what is still open. Labels:
+**Observed** (run or read here), **Inferred**.
 
 ## 1. What it is
 
@@ -14,10 +16,13 @@ untouched.
 python3 -m http.server 8000     # repo root
 http://localhost:8000/live3.html?mode=snapshot          # recorded snapshot
 http://localhost:8000/live3.html                        # live (relay auto-detected via /api/ping, as live.html)
-  ?tier=high|medium|low   force a quality tier (default: the old app's choice: phones low, <=4 GB medium, else high)
+  ?tier=ultra|high|medium|low   force a quality tier (default: the old app's choice: phones low, <=4 GB medium, else
+                          high; the app's ?quality=ultra (4096 shadow map) maps to ultra)
   ?webgl=1                force the WebGL 2 backend       ?revz=0   no reversed depth buffer
   ?res=1                  render at canvas size x DPR (QA renders; the app's dynamic resolution is ignored)
-  ?sat= ?contrast= ?lookSat= ?vignette= ?expo=   grade overrides (defaults 1.0 / 1.8 / 1.0 / app 0.18 / 1.0)
+  ?sat= ?contrast= ?lookSat= ?lookSatLo= ?vignette= ?expo= ?cas=   grade overrides (defaults 1.0 / 1.6 / 1.8 /
+                          1.0 / app 0.18 / 1.0 / from the render scale)
+  ?aodn=0                 GTAO without the denoise pass (A/B)        ?nocast=1  no shadow casters (debug)
 ```
 
 QA harnesses (same mock relay and snapshot as `jobs/qa3.mjs`):
@@ -29,6 +34,9 @@ SOFTGL=1 W=960 H=540 OUT=out/engine PAGES="live3.html,live.html" \
 SOFTGL=1 W=960 H=540 OUT=out/engine2 PAGE="live3.html?tier=high" HDR=1 node livetest.mjs tools/build3/job_review.mjs
 # -> review views (day, dusk, night) + per-frame metrics + HDR dumps; python3 tools/build3/grade_hdr.py grades dumps offline
 SOFTGL=1 PREV=out/three_prev.js node livetest.mjs tools/build3/job_ghost.mjs     # TRAA disocclusion A/B (§4.3)
+SOFTGL=1 LP_NUM_THREADS=3 W=960 H=540 OUT=out/engine_r3 PAGE="live3.html?tier=high" node livetest.mjs tools/build3/job_round3.mjs
+# -> review-round-3 set in one page load (§4.7): overview, gate B20, UAL B39M close-up after 8 / 32 frames and in a
+#    3 deg/frame orbit, sprites without occlusion, dusk, night with / without the floodlight spots; SHORT=1 for the low tier
 node tools/build3/wgpu_run.mjs tools/build3/job_dev.mjs                          # dev pages on WebGPU (SwiftShader)
 ```
 
@@ -55,16 +63,16 @@ without any port work, as long as `app.js` keeps its renderer calls (listed in `
 
 | File | Content | Ported from |
 |---|---|---|
-| `engine.js` | `WebGPURenderer` (reversed depth), camera, sun + `CSM3` (CSMShadowNode with a per-cascade slope-scaled bias, normal offset 1.25 texels per cascade, PCF with a per-frame rotated tap pattern so TRAA averages it), post: depth/normal/velocity pre-pass -> GTAO (4 m radius, temporal noise rotation, into the ambient term via `builtinAOContext`) -> lit pass -> TRAA -> + light-sprite pass (after TRAA, un-jittered camera) -> exposure -> bloom (all tiers; threshold in exposed units, soft luminance clamp) -> AgX with a look (contrast 1.8 in log2 around 18 % grey, look saturation 1.0) -> saturation -> vignette -> sRGB -> dither/grain. Low tier: one MRT pass, half-res GTAO multiplied into colour, TRAA, same output chain. Registers the floodlight light node. | `js/renderer.js`, `js/shaders/post.js` |
-| `flood.js` | Apron floodlights as a light: CPU field of the 70 observed masts (vector irradiance + horizontal spread, RGBA16F over the masts' box, calibrated to the ICAO 20 lux stand average; lamp units, x `LAMP_M` in the scene, §4.5) and `FloodLightNode` (a three.js analytic light node sampling it per pixel). | new (review round 1) |
+| `engine.js` | `WebGPURenderer` (reversed depth), camera, sun + `CSM3` (CSMShadowNode with a per-cascade slope-scaled bias, normal offset 1.25 texels per cascade, PCF with a per-frame rotated tap pattern so TRAA averages it), post: depth/normal/velocity pre-pass -> GTAO (4 m radius, half res, temporal noise rotation over all 24 rotation x offset pairs) -> `AODenoiseNode` (5x5 plane-distance-weighted box at the AO resolution, §4.7) -> into the ambient term via `builtinAOContext` and onto the floodlight term -> lit pass -> TRAA -> CAS sharpening (noise-gated) -> + light-sprite pass (after TRAA, un-jittered camera) -> exposure -> bloom (all tiers; threshold in exposed units, soft luminance clamp) -> AgX with a look (contrast 1.6 on log2 LUMINANCE around 18 % grey, look saturation 1.0 up to grey rising to 1.8 on the shoulder) -> saturation -> vignette -> sRGB -> dither/grain. Low tier: one MRT pass, the PREVIOUS frame's half-res GTAO (reprojected, not denoised) in the ambient term, TRAA, same output chain. Creates the floodlight light in its constructor (§4.7) and registers its nodes. | `js/renderer.js`, `js/shaders/post.js` |
+| `flood.js` | Apron floodlights as a light: CPU field of the 70 observed masts at 4 receiver heights (2 / 9 / 16 / 23 m; vector irradiance + horizontal spread, RGBA16F 3-D texture over the masts' box, calibrated to the ICAO 20 lux stand average; lamp units, x `LAMP_M` in the scene, §4.5), `FloodLightNode` (a three.js analytic light node sampling it per pixel, GTAO on the direct term, spread + ground bounce as irradiance) and `MastSpot` / `MastSpotNode` (the 2 masts that light the view most as shadow-casting spot lights; their share is subtracted from the field, so spot + residual = field). | new (review rounds 1-2) |
 | `sky.js` | Rayleigh/Mie single-scattering sky (same constants/steps), sun disk, cirrus, METAR cloud layer, low overcast slab, ENV composition -> PMREM (GGX-prefiltered IBL, ground below the horizon = the airfield bake's mean albedo x irradiance), `skyAlong(ro, rd)` (the visible sky from any point: background and water reflections), night floor with a warm horizon glow (lamp units, §4.5), twilight multiple-scattering term below the horizon (§4.5), exponential height fog with Mie glow as `scene.fogNode`; ambient terms computed on the CPU so `setupSky` stays synchronous. | `common.js` SKY_PRECOMPUTE_FS, `env.js` SKY_FS / ENV_FS / CLOUD_FS, `renderer.js setupSky` |
 | `ground.js` | Airfield / aux / city bakes (tiles of <= 1024² texels, a few per frame, NoBlending so the coverage alpha survives), ground material with the SDF runway markings (thresholds, designations from the glyph atlas, TDZ, aiming point, displaced-threshold arrows, blast-pad chevrons, rubber), concrete joints, city street lights at night (energy-conserving far away; the apron floodlights are `flood.js`); water with wind-driven wave slopes and roughness, IOR 1.333 Fresnel, its sky reflection = `skyAlong` from the water point, foam at the seawall. | `js/shaders/ground.js`, `env.js` WATER_FS |
 | `markings.js` | Taxiway/hold/edge/road ribbons and stand lead-ins/red boxes with a minimum 1.2 px width measured on the projected perpendicular (foreshortening-aware, on the unit perpendicular: the miter length at joints no longer blows corners up) and area-correct alpha, anti-aliased dashes averaging to their duty ratio far away. | `js/live/markings.js` MARK_VS/FS |
-| `objects.js` | PBR object material (MeshPhysical: IOR per material id) for terminals, tower, ITB, garages, masts, EMAS, piers, bridges, stand equipment, GSE: the 14 procedural material ids (curtain wall = coated glass IOR 2.0 over parallax rooms with per-pane roughness / normal variation, panels, garage, corrugated metal, roofs, windows, foliage, tunnel ribs, garage-roof cars, tower cab glass and LED ribbon = coated glass, hangar door, lamp lenses, service facade), vehicle tint. | `js/shaders/objects.js` |
+| `objects.js` | PBR object material (MeshPhysical: IOR per material id) for terminals, tower, ITB, garages, masts, EMAS, piers, bridges, stand equipment, GSE: the 14 procedural material ids (curtain wall = coated glass IOR 2.0 with no diffuse albedo over an interior-mapped concourse drawn as EMISSION lit by its own illuminance `interiorE` (§4.7), per-pane roughness / normal variation, panels, garage, corrugated metal, roofs, windows, foliage, tunnel ribs, garage-roof deck (the cars are instanced boxes, fading to their mean colour 300-900 m), tower cab glass and LED ribbon = coated glass, hangar door, lamp lenses, service facade), vehicle tint. | `js/shaders/objects.js` |
 | `signs.js` | Hold / location / painted / distance-remaining / gate / stand / VDGS faces rebuilt as panel + MSDF glyph quads (sharp at any distance); faces found by the UV rectangle the existing builders emit. Fallback when the font fails: the builders' own quads with their canvas atlas (`atlasSignMaterial`). | `js/live/signs.js` makeAtlas styles |
 | `bridges.js` | Converts `LiveGateSystem.items()` (batched static bridges + stand equipment, per-frame mesh of the moving bridges only, sign quads, GSE instances -> `InstancedMesh` per vehicle type). Bridges and GSE do not wait for the sign font; sign faces follow when it arrives (or from the atlas fallback). | uses `js/live/gates.js` as is |
 | `aircraft.js` | Imported models: paint zones recoloured by livery, clear-coat paint, glass as a smooth clear-coat layer with warm cabin light at night, bare metal, lenses, gear collapse; procedural airframes (windows, doors, flight-deck panes, fin, engines); per-aircraft uniforms (`onObjectUpdate`) so each model is one program; brand x model livery textures as loaded by `LiveAircraft` (`ac.livTex`, js/aircraft/liveries.js) on the atlas draws, atlas alpha = painted cabin-window glass. | `js/shaders/aircraft_real.js`, `aircraft.js` |
-| `lights.js` | All light sprites in one instanced additive draw in their own pass after TRAA (directional lobes, 2.2 px minimum with energy conservation, 12 px maximum, halo capped in exposed units, x0.5 by day, x `lampK` (§4.5), markers fade out within 150 m; occlusion by the scene depth per fragment). | `js/shaders/sprites.js` |
+| `lights.js` | All light sprites in one instanced additive draw in their own pass after TRAA (directional lobes, 2.2 px minimum with energy conservation, 12 px maximum, halo capped in exposed units, x0.5 by day, x `lampK` (§4.5), markers fade out within 150 m; occlusion by the scene depth per fragment, switchable for QA: `SFO.R.sprites.depthOn.value = 0`). | `js/shaders/sprites.js` |
 | `convert.js`, `tsl/common.js` | Record -> BufferGeometry/Texture (image textures from non-premultiplied ImageBitmap copies, uploaded at once and released: `compat/gl.js` snapshot / `imageHooks`); hashes, value noise, fbm, `band()`, viewer-facing normals, the shared `lampK` uniform. | `common.js` noise chunk |
 | `assets/msdf_signs.*` | Offline MSDF atlas (Liberation Sans/Mono Bold, SIL OFL), `tools/build3/msdf_atlas.py`; `build.mjs --app` copies it next to the bundle. | — |
 | `dev/*.html`, `dev/ghost.js` | Dev pages: `envtest` (`?night=1` floodlights, `?sprites=1` light pass), `shadowtest` (`?eng=nobias` etc.), `ghosttest` (TRAA A/B), `actest`, `marktest`, `probe`. | — |
@@ -239,19 +247,43 @@ sun-facing surfaces are pink-lit. The apron is mid-grey (106,91,83) under floods
 
 Night is unchanged in look: exposure 453 x LAMP_M = 2.2 against the old 2.03.
 
+### 4.6 Review round 2 (26 Sep 2026): changes made, first run in round 3
+
+These changes were committed in the WIP snapshot 06ecf63 (739 changed lines in 8 `js/three` files) when the workflow
+was interrupted, and were recorded only in code comments. They never ran: the snapshot threw at start-up (§4.7 #1-2).
+The numbers quoted in the code comments for them (e.g. the round-2 grade) are offline values from
+`tools/build3/grade_hdr.py` on HDR dumps, not live renders (Inferred from the history). Round 3 is their first run.
+
+| Area | Change (file) |
+|---|---|
+| Look | AgX contrast on log2 LUMINANCE only, the same offset added to all channels (per channel, contrast 1.8 raised every channel ratio to the power 1.8: navy shade, pastel paint); look saturation 1.0 up to grey, rising to 1.8 on the shoulder; contrast 1.6, `DAY_GAIN` 0.80 (`engine.js agxLook`, `renderer3.js`) |
+| AO / AA | GTAO noise rotation from the engine's own frame counter (three's `frameId` steps by the passes per frame); CAS sharpening after TRAA, stronger at lower render scales (`engine.js`) |
+| Low tier | 3 cascades x 1024² (2 left rooftop units unshadowed); the previous frame's GTAO, reprojected, in the ambient term instead of multiplied into the lit colour (`engine.js QUALITY3.low`, `buildPipeline`) |
+| Floodlights | field at 4 receiver heights (roofs rendered snow-white with the 2 m field everywhere), beam cut-off 81.7 -> 80 deg from nadir, horizontal-spread and ground-bounce terms, GTAO on the direct term, the 2 masts lighting the view as shadow-casting `MastSpot` lights, masts on their own layer (`flood.js`, `renderer3.js _floodSpots`) |
+| Canvas | `Renderer3` owns the canvas size (dynamic resolution left three drawing into a corner of a full-size canvas) |
+| Aircraft | per-aircraft values from `LiveAircraft.realUniforms()`; registrations from one shared LRU atlas (`RegAtlas`); procedural wing-tip devices drawn; procedural airframe while the livery is pending; brand liveries evicted LRU beyond the tier's `livMB` (`aircraft.js`) |
+| Objects | curtain walls show one continuous lit concourse (interior mapping) instead of office rooms; flat roofs with membrane seams, skylights, rooftop units, solar arrays; garage cars as instanced boxes (`objects.js`) |
+| Ground / signs / markings | far city lights as sparse point-like clusters; water body colour fix (envNode also drives the diffuse irradiance); canvas sign atlases released once the MSDF font is in; red-box corner miter fix (`ground.js`, `signs.js`, `markings.js`) |
+| Start-up UI | progress overlay until the first frame (bake, compile, first frame took minutes on llvmpipe with a black canvas) |
+
 ## 5. Quality tiers (`engine.js QUALITY3`)
 
 | Tier | Chosen for | Shadows | AO | AA | Bloom | Bakes (m/texel) | Max image texture |
 |---|---|---|---|---|---|---|---|
-| high | desktop, > 4 GB | 3 cascades x 2048², splits 1.4 / 5 / 16 x orbit distance (rig) | GTAO from a pre-pass, half res | TRAA | yes (half res) | airfield 0.8, city 4096² | full |
-| medium | <= 4 GB | 3 x 2048², same splits | same | TRAA | yes (half res) | 1.0, 4096² | 2048 |
-| low | phones | 2 x 1024², 1.4 x orbit distance, then the larger of 700 m (`shadowDist`) and 5 x (at most 16 x) | GTAO half res from the MRT normal of the single pass | TRAA | yes (quarter res) | 1.25, 2048² | 1024 |
+| ultra | stills / QA (`?quality=ultra` or `?tier=ultra`) | 3 x 4096², rig splits; floodlight spots 4096² | GTAO full res from a pre-pass + denoise | TRAA + CAS | yes (half res) | airfield 0.6, city 8192² | full |
+| high | desktop, > 4 GB | 3 cascades x 2048², splits 1.4 / 5 / 16 x orbit distance (rig); 2 floodlight spots 2048² | GTAO from a pre-pass, half res + denoise | TRAA + CAS | yes (half res) | airfield 0.8, city 4096² | full |
+| medium | <= 4 GB | 3 x 2048², same splits; 2 spots 2048² | same | TRAA + CAS | yes (half res) | 1.0, 4096² | 2048 |
+| low | phones | 3 x 1024² (round 2: 2 cascades left rooftop units unshadowed): splits a = 0.8 r0, b = max(2.5 a, 0.8 r1), max(1.5 b, min(r2, max(700 m `shadowDist`, 1.6 r1))) of the rig's [r0, r1, r2]; 1 spot 1024² | the previous frame's GTAO (half res, from the MRT normal of the single pass, reprojected; no denoise pass) in the ambient term | TRAA + CAS | yes (quarter res) | 1.25, 2048² | 1024 |
+
+Render-scale steps of the dynamic resolution: 1 / 0.85 / 0.8 / 0.72 / 0.6 / 0.5 / 0.4 (0.8 = the app's low-tier
+`scaleMax`, added in round 3; phones rendered 0.72x where live.html renders 0.8x).
 
 ## 6. Not ported yet / known gaps
 
 - `decal` items (stand centrelines; off by default in `js/live/world.js`) are not drawn.
 - Smoke particles (`scene.smokeFns`, unused by the live app) are not drawn.
-- The low tier's single-pass GTAO is applied to the lit colour (the high/medium tiers apply it to the ambient term only).
+- The low tier's AO is the previous frame's GTAO in the ambient term without the denoise pass (an extra full-screen
+  pass on the phone was not measured; phone performance is deferred by the owner, `docs/research/mobile_perf.md`).
 - Aircraft `.sfom` -> `BufferGeometry` directly; the `.glb` + KTX2 path (engine.md §5) is not done. The texture memory
   (§4: about 500 MB on the low tier with every aircraft texture uploaded, as the old renderer did) is the main phone
   risk that KTX2 would remove.
@@ -262,8 +294,15 @@ Night is unchanged in look: exposure 453 x LAMP_M = 2.2 against the old 2.03.
   - the GTAO depth re-encode;
   - the reversed-depth TRAA patch;
   - device-loss recovery.
-- No floodlight shadows: surfaces under wings and bridges are lit at night, and GTAO darkens only the spread part.
+- Floodlight shadows only from the 2 masts that light the view most (`MastSpot`); the other masts' field passes through
+  buildings and aircraft (GTAO darkens their direct and spread parts).
 - Under-aircraft shade lacks the second bounce from sunlit concrete (§4.4).
 - A dark smear on the apron at the B27 lead-in shows in every light. It is in the pavement wear map of the airfield
   bake, not the renderer (Inferred from its presence by day).
 - Blender (tools/blender/): Cycles reference renders and baked-AO aircraft assets not started.
+- `js/three/perf.js` (runtime perf flags + timing) is parked, not imported: phone performance deferred by the owner
+  (`docs/research/mobile_perf.md`); `engine.js` keeps its two inert hooks (`Q.ao === 'none'`, `Q.aa === 'fxaa'`).
+- Replicas of other tracks' logic (drift risk, parity checked by reading on 4 Nov 2026: no differences):
+  `signs.js worldSignAtlasMap` / `locName` (js/live/signs.js `buildSigns` face list), `aircraft.js RegAtlas` and the
+  LOD / livery-pending / tip-device / gear rules (js/live/models.js `registrationTexture`, js/live/aircraft.js `items()`).
+  The exports that would remove them are requested (`docs/requests/engine_closeout.md`).

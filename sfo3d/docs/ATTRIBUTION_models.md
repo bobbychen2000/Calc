@@ -111,6 +111,11 @@ stations, pitch, size, height) are in the repository. The drawings stay in the g
 - Airbus, "Aircraft Characteristics - Airport and Maintenance Planning" (A319, A320, A321, A330, A350, A380 revisions
   in `refs/cache/acap/`, see `docs/research/aircraft_models_check.md`).
 - Bombardier CRJ200 Airport Planning Manual rev. 8 (`refs/cache/acap/`).
+- Boeing Airport Technology, "Wingspan Increases Due to the Addition of Winglets" (APB data; `refs/cache/acap/wingletspans.pdf`):
+  the 757's blended-winglet span (41.07 m) that `js/aircraft/fit.js` fits the 757 model's winglet tips to.
+- FAA Office of Airports, Aircraft Characteristics Database (US Government work, public domain;
+  `refs/cache/faa/faa_aircraft_char_database.xlsx`, read by `tools/models/faa_acd.py`): length, wingspan and tail height of
+  the business jets and ERJ-135/145 drawn with the generic (scaled CRJ200) airframe (`js/aircraft/fit.js` BIZ).
 
 Where the artist's window glass or openings did not match these drawings, they were removed from the converted models
 (the openings closed with skin triangles) and the measured row is painted instead; this is a modification of the GPL

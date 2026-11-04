@@ -52,6 +52,7 @@ export const FLOOD_COLOR = [1.0, 0.93, 0.84]; // ~4000 K LED (colour of the SFO 
 export const LAMP_H = MAST_H - 0.3;           // luminaire height above the ground (m)
 export const FIELD_LAYERS = [2, 9, 16, 23];   // receiver heights above the ground of the field layers (m)
 export const MAST_LAYER = 2;                  // three.js layer of the mast geometry (not in the spot shadow maps)
+export const SPOT_SHADOW_LAYER = 3;           // marker bit of the spot shadow cameras' mask (no object on it; see MastSpot)
 const RECV_H = 2.0, DY2 = LAMP_H - RECV_H;    // the design plane (2 m) and the lamp height above it
 const DC = 100, RC = 140;                     // beam: 1/cos^3 out to DC on the design plane, cut to 0 at RC
 const RC3 = Math.pow(Math.hypot(DC, DY2) / DY2, 3);
@@ -133,12 +134,14 @@ export class FloodLight extends THREE.Light {
     this.isFloodLight = true; this.type = 'FloodLight';
     this.fieldTex = new THREE.Data3DTexture(new Uint16Array(4 * 2), 1, 1, 2); this.fieldTex.format = THREE.RGBAFormat; this.fieldTex.type = THREE.HalfFloatType; this.fieldTex.needsUpdate = true;
     this.rect = new THREE.Vector4(0, 0, 1, 1); // x0, z0, width, depth (world metres)
-    this.scale = 1; this.nSpots = nSpots; this.spotU = []; this.spotOn = [];
+    // level: the field's level factor (floodField().scale). NOT 'scale': Object3D.scale is a non-writable Vector3 (review
+    // round 3, critical: `this.scale = 1` threw in the constructor and live3.html never started)
+    this.level = 1; this.nSpots = nSpots; this.spotU = []; this.spotOn = [];
     for (let k = 0; k < nSpots; k++) { this.spotU.push(new THREE.Vector4(1e6, 1e6, 1, 0)); this.spotOn.push(0); }
     this.bounce = new THREE.Vector3(0.3, 0.27, 0.21); this.aoNode = null;
   }
   setField(field) { // before the first compile (renderer3.attachWorld); the node samples this.fieldTex
-    if (!field) return; this.fieldTex = floodTexture(field); this.rect.set(field.rect[0], field.rect[1], field.rect[2], field.rect[3]); this.scale = field.scale; this.stats = field.stats;
+    if (!field) return; this.fieldTex = floodTexture(field); this.rect.set(field.rect[0], field.rect[1], field.rect[2], field.rect[3]); this.level = field.scale; this.stats = field.stats;
   }
 }
 const NL = FIELD_LAYERS.length, H0 = FIELD_LAYERS[0], H1 = FIELD_LAYERS[NL - 1];
@@ -152,7 +155,7 @@ export class FloodLightNode extends THREE.AnalyticLightNode {
   }
   update(frame) {
     super.update(frame); const L = this.light; if (!L) return;
-    this.rectU.value.copy(L.rect); this.scaleU.value = L.scale; this.bounceU.value.copy(L.bounce);
+    this.rectU.value.copy(L.rect); this.scaleU.value = L.level; this.bounceU.value.copy(L.bounce);
     for (let k = 0; k < this.spotUs.length; k++) { this.spotUs[k].value.copy(L.spotU[k]); this.spotOnU[k].value = L.spotOn[k]; }
   }
   // field at the receiver (height-interpolated) and at the ground (bounce); zero outside the masts' box
@@ -191,22 +194,27 @@ export class FloodLightNode extends THREE.AnalyticLightNode {
 }
 
 // one mast as a shadow-casting spot light (see 3. above). mast = vec4(x, z, aim x, aim z); intensity = lamps on x LAMP_M
-// (renderer3), scale = the field's level factor (floodField().scale), so that spot k + FloodLightNode's residual = field.
+// (renderer3), level = the field's level factor (floodField().scale), so that spot k + FloodLightNode's residual = field.
 export class MastSpot extends THREE.SpotLight {
   constructor(mapSize = 2048) {
     super(new THREE.Color(...FLOOD_COLOR), 0, 0, 80 * Math.PI / 180, 0, 2);
     this.isMastSpot = true; this.type = 'MastSpot';
-    this.mast = new THREE.Vector4(1e6, 1e6, 1, 0); this.scale = 1;
+    this.mast = new THREE.Vector4(1e6, 1e6, 1, 0); this.level = 1;
     this.shadow.mapSize.set(mapSize, mapSize); this.shadow.camera.near = 0.5; this.shadow.camera.far = 320;
     this.shadow.bias = -0.00002; this.shadow.normalBias = 0.06; this.shadow.radius = 2;
-    this.shadow.camera.layers.set(0); // everything but the masts (MAST_LAYER)
+    // everything but the masts (MAST_LAYER). Layer 0 plus SPOT_SHADOW_LAYER, which no object uses (review round 3, major:
+    // three r186 ShadowNode.updateShadow REPLACES a shadow-camera mask that has only bit 0 set with the main camera's
+    // mask, which includes MAST_LAYER, so `layers.set(0)` alone was a no-op. The mast's own head ring (r 1.25 m, 16
+    // sides, 0.25 m under the spot origin) then shadowed everything beyond ~79 deg from nadir: a 16-sided hard-edged
+    // dark region ~130 m across around each spot mast at night.)
+    this.shadow.camera.layers.set(0); this.shadow.camera.layers.enable(SPOT_SHADOW_LAYER);
   }
   setMast(x, z, ax, az) { this.mast.set(x, z, ax, az); this.position.set(x, GROUND_Y + LAMP_H, z); this.target.position.set(x + ax * 0.01, GROUND_Y, z + az * 0.01); this.updateMatrixWorld(); this.target.updateMatrixWorld(); }
 }
 export class MastSpotNode extends THREE.SpotLightNode {
   static get type() { return 'MastSpotNode'; }
   constructor(light = null) { super(light); this.mastU = uniform(new THREE.Vector4(1e6, 1e6, 1, 0)); this.scaleU = uniform(1); }
-  update(frame) { super.update(frame); if (this.light) { this.mastU.value.copy(this.light.mast); this.scaleU.value = this.light.scale; } }
+  update(frame) { super.update(frame); if (this.light) { this.mastU.value.copy(this.light.mast); this.scaleU.value = this.light.level; } }
   setupDirect() {
     const e = mastEnode(positionWorld, this.mastU, this.scaleU); const E = e.xyz.add(vec3(0.0, 1e-7, 0.0));
     return { lightDirection: normalize(cameraViewMatrix.mul(vec4(E, 0.0)).xyz), lightColor: this.colorNode.mul(length(E)) };
