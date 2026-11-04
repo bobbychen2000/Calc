@@ -29,6 +29,7 @@ import argparse, fnmatch, glob, gzip, hashlib, json, os, subprocess, sys
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 CACHE = os.path.join(ROOT, 'refs', 'cache')
 MAX_MB = 25
+GUARD_MB = 30          # new committable data per sync above this stops the sync (see main)
 PACK_NM, PACK_FT = 25.0, 18000
 OPEN_LICENCES = ('public domain', 'pd', 'cc0', 'cc-by', 'cc by', 'odbl', 'gpl', 'lgpl', 'mit', 'bsd', 'apache',
                  'cdla-permissive', 'us government work')
@@ -60,6 +61,8 @@ RULES = [
     ('lighting/*', 'commit', 'FAA data (US government work)'),
     ('faa/*', 'commit', 'FAA data (US government work)'),
     ('bts/*', 'commit', 'US DOT BTS data (US government work)'),
+    ('*/.parts/*', 'local', 'intermediate download pages (re-fetchable; 2026-11-04: 950 OSM API pages, 750 MB)'),
+    ('.*/*', 'local', 'hidden working directory'),
     ('osm/*', 'commit', 'OpenStreetMap (ODbL)'),
     ('xplane/*', 'commit', 'X-Plane Scenery Gateway (GPL)'),
     ('stands/*', 'commit', 'our own outputs'),
@@ -173,6 +176,7 @@ def trim_pack(src, dst):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--dry-run', action='store_true')
+    ap.add_argument('--allow-large', action='store_true', help=f'commit even if more than GUARD_MB of new files')
     a = ap.parse_args()
     if not os.path.isdir(CACHE):
         print('no refs/cache'); return
@@ -222,6 +226,21 @@ def main():
            'files': dict(sorted(manifest.items()))}
     print(f'commit {len(add)} files ({sum(os.path.getsize(p) for p in add) / 1e6:.1f} MB), '
           f'local {len(manifest)} ({sum(v["bytes"] for v in manifest.values()) / 1e6:.1f} MB)')
+    # guard: a sudden jump in what would be committed (an agent caching a bulk download) stops here for a look
+    tracked = set(subprocess.run(['git', 'ls-files', '--', 'refs/cache'], cwd=ROOT, capture_output=True,
+                                 text=True).stdout.split('\n'))
+    new = [p for p in add if os.path.relpath(p, ROOT) not in tracked]
+    new_mb = sum(os.path.getsize(p) for p in new) / 1e6
+    if new_mb > GUARD_MB and not a.allow_large:
+        by = {}
+        for p in new:
+            d = os.path.dirname(os.path.relpath(p, CACHE))
+            by[d] = by.get(d, 0) + os.path.getsize(p)
+        print(f'STOP: {len(new)} new files, {new_mb:.1f} MB > {GUARD_MB} MB would be committed. Largest directories:')
+        for d, n in sorted(by.items(), key=lambda x: -x[1])[:10]:
+            print(f'  {n / 1e6:8.1f} MB  {d}')
+        print('Add a RULES entry (local) for bulk / re-fetchable data, or re-run with --allow-large.')
+        sys.exit(2)
     if a.dry_run:
         for p in add:
             print('  +', os.path.relpath(p, ROOT))
