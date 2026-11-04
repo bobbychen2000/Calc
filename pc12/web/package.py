@@ -564,7 +564,9 @@ def main():
         "glb_low": info.get("meshopt_low") or "KHR_mesh_quantization (as built)",
         "commit": git_commit(),
         "built": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
-        "files": {str(p.relative_to(out)): {"bytes": p.stat().st_size, "sha256": sha256(p)} for p in files},
+        # not itself (the placeholder written at the start of the run would be listed)
+        "files": {str(p.relative_to(out)): {"bytes": p.stat().st_size, "sha256": sha256(p)} for p in files
+                  if p != out / "MANIFEST.json"},
     }
     (out / "MANIFEST.json").write_text(json.dumps(manifest, indent=1) + "\n")
     total = sum(v["bytes"] for v in manifest["files"].values())
