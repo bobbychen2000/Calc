@@ -430,7 +430,7 @@ def build(out: Path, data: Path, materials: Path | None, three: str, use_meshopt
         (out / "three" / "README.txt").write_text(
             f"three.js r{THREE_REVISION} (https://github.com/mrdoob/three.js, MIT licence, Copyright 2010-2023 Three.js "
             "Authors): the files the PC-12 viewer imports, copied unchanged by web/package.py.  The licence texts are "
-            "in LICENSE (three.js; meshoptimizer for examples/jsm/libs/meshopt_decoder.module.js).\n")
+            "in LICENSE.txt (three.js; meshoptimizer for examples/jsm/libs/meshopt_decoder.module.js).\n")
         # the checkout carries no LICENSE file: the MIT texts of three.js and of the meshoptimizer decoder it vendors
         lic = [f"three.js r{THREE_REVISION} (https://github.com/mrdoob/three.js)\n\n" + MIT_LICENSE.format(
             holder="Copyright © 2010-2023 three.js authors")]
@@ -438,7 +438,7 @@ def build(out: Path, data: Path, materials: Path | None, three: str, use_meshopt
             lic.append("examples/jsm/libs/meshopt_decoder.module.js: meshoptimizer "
                        "(https://github.com/zeux/meshoptimizer)\n\n"
                        + MIT_LICENSE.format(holder="Copyright (c) 2016-2022 Arseny Kapoulkine"))
-        (out / "three" / "LICENSE").write_text(("\n" + "-" * 78 + "\n\n").join(lic))
+        (out / "three" / "LICENSE.txt").write_text(("\n" + "-" * 78 + "\n\n").join(lic))
         info["three_files"] = files
 
     missing = [f for f in DATA_FILES if not (data / f).is_file()]
