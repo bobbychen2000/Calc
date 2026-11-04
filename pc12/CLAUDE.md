@@ -2391,3 +2391,21 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
     on all 15; ship only if the A/B prefers it, else keep main's fleece.
   * Expected: 2-3 lab iterations, 1-2 viewer rounds (fdlook + 2 judges each), then the usual rebuild / full verification
     (no GLB change unless the seats' rim geometry is touched).
+- PUBLIC SITE (owner 2026-11-04: "publish the final site somewhere" -> GitHub Pages, chosen by the owner): the
+  `web/package.py` bundle at https://bobbychen2000.github.io/Calc/pc12/ (the root https://bobbychen2000.github.io/Calc/
+  redirects there), served from the `gh-pages` branch of this repository: `pc12/` = dist/ as built, plus a root
+  `index.html` (meta refresh to ./pc12/) and `.nojekyll`.  Pages switched itself on when the branch was first pushed
+  (the proxy refuses the /pages API).  Before the first publish a pre-publish audit (privacy / licences / brand / hosting
+  under a /Calc/ subpath) found nothing private; it added three/LICENSE.txt (the MIT texts of three.js r160 and of the
+  meshoptimizer decoder, written by package.py: the three_local checkout has no LICENSE) and the Specs panel's last line,
+  an unofficial-model / not-affiliated note (`#disclaimer`, index.html).  Verified live on db39ac6 (headless Chromium
+  through the proxy): every file byte-identical to the bundle, the full model on desktop, the light tier + 512 px HDRI
+  on an iPhone profile, ?detail=full, the tour's pilot stop with the live G3000 pages, the engine start, the drawings,
+  dark scheme, reduced motion, 0 console errors / failed requests.  To UPDATE: run `python3 web/package.py` at the
+  commit to ship, copy dist/ to a staging folder's pc12/ (with the root index.html and .nojekyll), write a tree from it
+  (`GIT_INDEX_FILE=<tmp> git --work-tree=<staging> add -A -f .; git write-tree`), `git commit-tree <tree> -p
+  origin/gh-pages` and push that commit to refs/heads/gh-pages (a child commit, no force push); GitHub deploys in ~1-3
+  min (MANIFEST.json's 'commit' shows the live build).  Not done (owner's settings / minor): 'Enforce HTTPS' in the
+  repository's Pages settings is off (plain http:// answers 200); a browser with WebAssembly disabled downloads the full
+  GLB and then stops with the loader's meshopt message (the Pages bundle has no gzip fallback: +52 MB); only Chromium was
+  available to test (Safari / Firefox unverified).
