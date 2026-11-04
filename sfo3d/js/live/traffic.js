@@ -435,7 +435,10 @@ export class Traffic {
       if (L && tf - L.t > (L.ground ? 30000 : 15000)) {   // coverage gap: re-acquire (fade out / in), do not race
         const P = tr.stillPos || tr.parkRep || (tr.lock ? [tr.lock.x, tr.lock.z] : null);
         const parkedHere = P && a.ground && (a.gs ?? 0) < 3 && tr.m.phase === 'still' && this.stillHere(tr, P, x, z, a);
-        if (!parkedHere) { tr.reacquire = true; }
+        // (a silent docking the data resumes on the way into that stand: the body, drawn ahead on the lead-in, waits for the
+        // data -- never faded back to it; review 4 Nov)
+        const docking = tr.silentDockG && tr.gate === tr.silentDockG && a.ground && this.intoStand(tr, tr.silentDockG, x, z, a.trueHeading != null ? a.trueHeading * DEG : null);
+        if (!parkedHere && !docking) { tr.reacquire = true; }
       }
       const r = this.report(tr, a, x, z, tf);
       if (!r) { tr.lastRecv = recvNow; continue; }
@@ -941,9 +944,15 @@ export class Traffic {
     const wasStill = M.phase === 'still'; const wasSilent = tr.silentDockG || null;
     tr.still = []; tr.seenMoving = true; tr.stillPos = null; tr.stillHdg = null; tr.freePark = null; tr.dockComplete = false; tr.lock = null;
     // heard again, moving: the silent docking is undone by the data; still on its way into that stand, it docks normally
-    if (tr.silentDockG) { tr.silentDockG = null; tr.forceStand = false; tr.silentInBlock = null; tr.silentPath = null; this.counters.silentDockUndone = (this.counters.silentDockUndone || 0) + 1;
-      if (tr.gate) { const g = tr.gate; this.releaseGate(tr, t); tr.dock = { g, t }; } }
-    if (tr.gate && this.distToPark(tr, r) > (creep ? 30 : 12)) this.releaseGate(tr, t);
+    // ...and when the report is on its way into that same stand, the stand is KEPT (tr.silentCont): no release, no second
+    // in-block, and the body -- already at or near the stop mark -- waits there for the data instead of backing up to it
+    // (review 4 Nov: JAL2 at A1, SKW3497 at B7, AAL76 at B19 logged two in-blocks each and reversed 3.5-7 m)
+    if (tr.silentDockG) { const sg = tr.silentDockG; const cont = tr.gate === sg && this.intoStand(tr, sg, r.x, r.z, r.dir);
+      tr.silentDockG = null; tr.forceStand = false; tr.silentPath = null;
+      if (cont) { tr.silentCont = { g: sg, t }; tr.parkRep = null; tr.dock = { g: sg, t }; this.counters.silentDockCont = (this.counters.silentDockCont || 0) + 1; }
+      else { tr.silentInBlock = null; this.counters.silentDockUndone = (this.counters.silentDockUndone || 0) + 1; if (tr.gate) { const g = tr.gate; this.releaseGate(tr, t); tr.dock = { g, t }; } } }
+    if (tr.gate && tr.silentCont && tr.silentCont.g === tr.gate) { if (!this.intoStand(tr, tr.gate, r.x, r.z, r.dir)) { tr.silentCont = null; this.releaseGate(tr, t); } }
+    else if (tr.gate && this.distToPark(tr, r) > (creep ? 30 : 12)) this.releaseGate(tr, t);
     // the start of the motion (first report of the confirmed sequence), for back-dating the phase
     const F2 = tr.reps; let t0 = t; for (let i = F2.length - 2; i >= 0 && t - F2[i].t < 30000; i--) { if (!F2[i].mv && !(F2[i].gs >= 0.6 && !F2[i].noise)) break; t0 = F2[i].t; }
     // (one off-block per turn: a push-back that stops and continues is not a second one -- review round 2: 108 off-block
@@ -1047,6 +1056,7 @@ export class Traffic {
     // start (UAL755 F17 20:09Z), so it does not block the stand)
     if (!tr.gate && (dur >= 20000 || tr.dock || !tr.seenMoving)) { const g = this.matchGate(tr, { x: mx, z: mz, hd: tr.stillHdg, hdReal: hs.length >= 3, icao: tr.info.icao });
       if (g && !(tr.offBlock && tr.offBlock.stand === g.name && t - tr.offBlock.t < 600000)) this.occupy(tr, g, t); }
+    if (tr.gate && tr.silentCont && tr.silentCont.g === tr.gate) tr.dockComplete = true;   // (at the stop mark the drawn body already reached)
     if (tr.gate) this.updatePark(tr);
     else if (!tr.freePark || Math.hypot(tr.freePark[0] - mx, tr.freePark[1] - mz) > 15) tr.freePark = [mx, mz];
     // parked on a ramp (not a taxiway or runway) for a minute, not after its own push-back: its next movement may be a
@@ -1179,7 +1189,12 @@ export class Traffic {
     // round 1, SKW3007 reported the stale arrival runway at its departure)
     tr.pushOk = !tr.pushback; tr.pushbackFrom = null; tr.pushG = null; tr.pushed = false; tr.pushEnd = null; tr.inBlockAt = t ?? tr.lastFixT; tr.leaving = false; tr.leaveFast = false; tr.leaveHintT = null;
     if (tr.m.phase === 'still') tr.m.rwy = null;
-    if (t != null) this.event(tr, t, 'in-block', { stand: g.name, src: tr.gateSrc || 'geo' });
+    // (one in-block per turn: the same stand again with no off-block since -- a docking the data interrupted and resumed --
+    // is not a second one; review 4 Nov: 3 aircraft logged two)
+    const lb = tr.lastInBlock; const dup = t != null && lb && lb.stand === g.name && t - lb.t < 1800e3 && !(tr.offBlock && tr.offBlock.t > lb.t);
+    if (dup) this.counters.inBlockDup = (this.counters.inBlockDup || 0) + 1;
+    else if (t != null) { this.event(tr, t, 'in-block', { stand: g.name, src: tr.gateSrc || 'geo' }); tr.lastInBlock = { stand: g.name, t }; }
+    tr.silentCont = null;
     // the jet bridge docks later, from the display side, once the drawn aircraft has settled at this pose (syncBridge)
     this.saveParkedSoon();
   }
@@ -1210,7 +1225,7 @@ export class Traffic {
   }
   releaseGate(tr, t, fast = false) {
     const g = tr.gate; if (!g) return; if (g.occupant === tr.hex) { g.occupant = null; g.oversize = false; }
-    tr.parkRep = null; tr.parkPos = null; tr.gate = null; tr.forceStand = false; tr.lock = null; tr.silentDockG = null; tr.silentInBlock = null; tr.silentPath = null;
+    tr.parkRep = null; tr.parkPos = null; tr.gate = null; tr.forceStand = false; tr.lock = null; tr.silentDockG = null; tr.silentInBlock = null; tr.silentPath = null; tr.silentCont = null;
     this.undock(tr, fast || !!tr.leaveFast); this.saveParkedSoon();
   }
   // retract the jet bridge docked to this aircraft (the body is held until it is clear: ctlGround holdBridge); fast = a
@@ -1249,6 +1264,11 @@ export class Traffic {
       }
     }
     if (!g) return false;
+    // a STOPPED aircraft is docked only when it stopped on that stand's lead-in, nose along it, short of the stop mark
+    // (waiting there for the stand to clear, or creeping in with sparse data). One holding OFF the lead-in is waiting for its
+    // stand: left to the data. Review 4 Nov: SKW3497 E75L waited 281 s 72 m from B7, 55 deg off its axis; 15 s into a quiet
+    // spell it was moved there ~22 s before the real aircraft started to move, and its first new report put it back
+    if (tr.m.phase === 'still' && !this.onLeadIn(tr, g, tr.stillPos || P, tr.stillHdg ?? lf.hd)) { this.counters.silentDockHolding = (this.counters.silentDockHolding || 0) + 1; return false; }
     // the path the target follows while the data is silent (only when the drawn body exists and is on the ground), in the
     // report frame (the stop pose = the stand's stop mark for this type minus the antenna offset, as occupy() places it):
     // a smooth curve from the body's pose (tangent = its heading) to the lead-in entry 0.8 L (>= 25 m) out on the stand
@@ -1287,13 +1307,35 @@ export class Traffic {
     // not a 'forward off-block' -- SKW3305 at C1, 25 Sep 18:42:55Z)
     this.occupy(tr, g, null); tr.inBlockAt = t; tr.pushOk = false; tr.silentInBlock = { stand: g.name, how }; if (tr.parkPos) { tr.stillPos = tr.parkPos.slice(); tr.parkRep = tr.stillPos; }
     this.counters.silentDocks = (this.counters.silentDocks || 0) + 1; this.event(tr, t, 'silent-dock', { stand: g.name, how });
-    // speed along the path: the body's own speed (1.5-5 m/s), slowing at 0.3 m/s^2 to 2 m/s, the lead-in taxi speed; the
-    // stop target then brakes the body onto the stop mark. (JBU413 above: the real aircraft covered 55 m in the 18 s of
-    // silence, turning in from 7 m/s; this profile covers 51 m, the constant 5 m/s of the first version 90 m)
+    // speed along the path, as fast as the real aircraft and no faster: from the body's own speed it slows (<= 0.5 m/s^2) to
+    // 2 m/s, the turn-in speed, and over the last 20 m to the 0.8 m/s lead-in creep; the stop target then brakes the body onto
+    // the stop mark. Observed 4 Nov 17:43-18:33Z: JAL2 B77W turned into A1 at 2.0 m/s (84 m in 41 s) and crept the last 15 m in
+    // 19 s; AAL76 A321 25 m in 34 s on the B19 lead-in; SKW3497 E75L 4.2 -> 0.5 kt over its last 15 m into B7. (Review 4 Nov:
+    // the drive ran at 5 m/s -- its speed profile was never applied -- and arrived ~30 s ahead of JAL2; the data then put the
+    // aircraft 13 m short and the body backed up)
     if (path) { if (tr.parkPos) path[path.length - 1] = tr.parkPos.slice();
       const seg = []; let tot = 0; for (let i = 1; i < path.length; i++) { const l = Math.hypot(path[i][0] - path[i - 1][0], path[i][1] - path[i - 1][1]); seg.push(l); tot += l; }
-      tr.silentPath = { pts: path, seg, tot, t0: tDisp, v0: clamp(Math.abs(c0.v) || lf.gs || 3, 1.5, 5), vIn: 2, a: 0.3 }; }
+      const DT = 0.25, prof = []; let d = 0, v = clamp(Math.abs(c0.v) || lf.gs || 2, 0.5, 6), tt = 0;
+      while (tt < 900) { prof.push([d, v]); if (d >= tot) break; const vT = clamp(0.8 + (tot - d - 5) * 0.08, 0.8, 2); v += clamp(vT - v, -0.5 * DT, 0.3 * DT); d = Math.min(tot, d + v * DT); tt += DT; }
+      tr.silentPath = { pts: path, seg, tot, t0: tDisp, dt: DT, prof }; }
     return true;
+  }
+  // the stop mark of stand g for this aircraft, in the report frame (where its antenna is when its nose is at the family's stop)
+  stopRef(tr, g) { const T = typeOf(tr), L = T ? T.L : 38; const sa = stopAlong(g, tr.info.icao) - antOf(T, L); return [g.w.x + g.w.dx * sa, g.w.z + g.w.dz * sa]; }
+  // stopped on stand g's lead-in: short of the stop mark by at most max(40 m, 1.2 L), laterally within 6 m (+ 10 %), the nose
+  // within 30 deg of the stand heading
+  onLeadIn(tr, g, Q, h) {
+    if (!Q || h == null) return false; const T = typeOf(tr), L = T ? T.L : 38; const S = this.stopRef(tr, g);
+    const bx = Q[0] - S[0], bz = Q[1] - S[1], out = -(bx * g.w.dx + bz * g.w.dz), lat = Math.abs(-bx * g.w.dz + bz * g.w.dx);
+    return out > -3 && out <= Math.max(40, 1.2 * L) && lat < 6 + 0.1 * Math.max(0, out) && Math.abs(wrapPi(h - g.w.hdg)) < 30 * DEG;
+  }
+  // a report on its way INTO stand g: short of the stop mark (<= 300 m), and moving toward it (within 60 deg) or along the
+  // lead-in (laterally within 8 m + 15 %, within 50 deg of the stand heading); without a direction, on the lead-in line
+  intoStand(tr, g, x, z, dir) {
+    const S = this.stopRef(tr, g); const bx = x - S[0], bz = z - S[1], d = Math.hypot(bx, bz); const out = -(bx * g.w.dx + bz * g.w.dz), lat = Math.abs(-bx * g.w.dz + bz * g.w.dx);
+    if (out < -4 || d > 300) return false; if (d < 6) return true;
+    if (dir == null) return lat < 8 + 0.15 * Math.max(0, out);
+    return Math.abs(wrapPi(vecHdg(-bx, -bz) - dir)) < 60 * DEG || (lat < 8 + 0.15 * Math.max(0, out) && Math.abs(wrapPi(dir - g.w.hdg)) < 50 * DEG);
   }
   // docking: a slow taxiing aircraft close to a free stand's lead-in line and heading along it follows that line
   docking(tr, r, t) {
@@ -1366,14 +1408,21 @@ export class Traffic {
           // (switched off while docking: it completes the docking at the stand it was lining up with)
           // (also after a push-back: stopped and silent INSIDE a stand's limits it is parked there -- the transponder is off at
           // a stand, not on a taxiway; review 4 Nov: UAL1180, a false push at G8, was deleted while parked at the gate)
+          // (switched off while docking -- lining up with a lead-in, or an arrival on its way in: it completes the docking the way
+          // silentDock() drives it, along the lead-in at taxi-in speed. Review 4 Nov: placing it at the stand pose here moved a body
+          // that was 40+ m away there by a fade re-placement)
           if (!tr.gate && (lf.gs || 0) < 8 * KT && (!tr.pushed || tr.m.phase === 'still')) { const p = tr.stillPos ? { x: tr.stillPos[0], z: tr.stillPos[1], hd: tr.stillHdg, hdReal: false, icao: tr.info.icao } : { x: lf.x, z: lf.z, hd: lf.hd, hdReal: false, icao: tr.info.icao };
-            const dg = !tr.pushed && tr.dock && tr.dock.g && (!tr.dock.g.occupant || tr.dock.g.occupant === tr.hex) && !this.blocked(tr.dock.g, tr) ? tr.dock.g : null;
-            const g = dg || (tr.m.phase === 'still' ? this.matchGate(tr, p) : null); if (g) { if (dg) { tr.stillPos = null; tr.stillHdg = g.w.hdg; tr.forceStand = true; tr.dockComplete = true; } this.occupy(tr, g, null); } }
+            if (!tr.pushed && !this.noSilentDock && !tr.silentDockG && tr.groundSFO && (tr.dirSFO === 'arr' || tr.landedAt || tr.dock)) this.silentDock(tr, lf, tDisp);
+            const g = !tr.gate && tr.m.phase === 'still' ? this.matchGate(tr, p) : null; if (g) this.occupy(tr, g, null); }
           // ...but only a PARKED aircraft (at a stand, or stopped on a ramp): one that went silent while taxiing, pushing,
           // lined up or holding on a taxiway/runway is dropped -- a ghost there is driven through by every aircraft that
           // passes (review round 1: stale SKW5471 'taxi' at (-1020,-327) overlapped by four 777s, UAN783UA 'pushback')
           const P = tr.parkPos || tr.stillPos || [lf.x, lf.z];
-          const parked = !!tr.gate || (tr.m.phase === 'still' && !tr.pushback && !tr.pushed && !inPolys(this.taxiways, P[0], P[1]) && !runwayAt(P[0], P[1]));
+          // (a departure stopped where its push-back ended -- engine start, waiting for its taxi clearance -- is still there:
+          // kept. Review 4 Nov: SIA31 B77W, silent for 98 s at the end of its push from G9, was dropped, re-created when heard
+          // again and logged a second, 'forward' off-block; a live aircraft that drives into it removes it, GroundPhysics)
+          const atPushEnd = !!(tr.pushed && tr.m.phase === 'still' && tr.pushEnd && Math.hypot(P[0] - tr.pushEnd[0], P[1] - tr.pushEnd[1]) < 30 && !runwayAt(P[0], P[1]));
+          const parked = !!tr.gate || atPushEnd || (tr.m.phase === 'still' && !tr.pushback && !tr.pushed && !inPolys(this.taxiways, P[0], P[1]) && !runwayAt(P[0], P[1]));
           if (!parked) { gone(tr); this.counters.silentDropped = (this.counters.silentDropped || 0) + 1; }
           // (silent at its stand after a creep / re-position: it is parked there, its bridge may dock)
           else { tr.stale = true; tr.staleSince = now; if (tr.gate && !tr.pushed) tr.leaving = false; this.saveParkedSoon(); }
@@ -1413,7 +1462,7 @@ export class Traffic {
     if (!tr.lock && S && parkedNow && !tr.leaving && Math.abs(c.v) < 0.02 && !c.towing && !tr.cutting && D.alpha >= 1 &&
       (acc || (Math.hypot(S.x - c.x, S.z - c.z) < tolM && (S.hd == null || Math.abs(wrapPi(S.hd - c.psi)) < tolH)))) {
       tr.lock = { x: c.x, z: c.z, hdg: c.psi, t: tDisp }; this.counters.locks = (this.counters.locks || 0) + 1;
-      if (tr.silentInBlock && tr.gate) { this.event(tr, tDisp, 'in-block', { stand: tr.gate.name, src: tr.gateSrc || 'geo', silent: tr.silentInBlock.how }); tr.silentInBlock = null; }
+      if (tr.silentInBlock && tr.gate) { this.event(tr, tDisp, 'in-block', { stand: tr.gate.name, src: tr.gateSrc || 'geo', silent: tr.silentInBlock.how }); tr.silentInBlock = null; tr.lastInBlock = { stand: tr.gate.name, t: tDisp }; }
       if (S.hd == null && !tr.parkPos) tr.stillHdg = c.psi;   // (no heading reported: the body's heading is the estimate, see target())
     }
     const g = tr.gate;
@@ -1451,7 +1500,8 @@ export class Traffic {
         if (!tr.parkPos && tr.seenMoving && !tr.stale && !tr.still.some(q => q.hdReal)) o.hd = null; }
       o.vx = o.vz = 0; o.gs = 0; o.stop = true; o.push = false;
       if (tr.silentDockG) { o.vcap = 5; o.dockDrive = true;   // (silent docking: taxi-in speed along the lead-in)
-        const SP = tr.silentPath; if (SP && !K) { let d = SP.v * (t - SP.t0) / 1000;
+        const SP = tr.silentPath; if (SP && !K) { const el = (t - SP.t0) / 1000, pr = SP.prof; let d = -1, vv = 0;
+          if (el >= 0 && pr && pr.length) { const i = Math.min(pr.length - 1, Math.floor(el / SP.dt)), j = Math.min(pr.length - 1, i + 1), u = clamp(el / SP.dt - i, 0, 1); d = pr[i][0] + (pr[j][0] - pr[i][0]) * u; vv = pr[i][1] + (pr[j][1] - pr[i][1]) * u; SP.v = vv; }
           if (d >= 0 && d < SP.tot) { for (let i = 0; i < SP.seg.length; i++) { if (d <= SP.seg[i] || i === SP.seg.length - 1) { const a = SP.pts[i], b = SP.pts[i + 1], u = SP.seg[i] > 0 ? Math.min(1, d / SP.seg[i]) : 1;
             const ux = (b[0] - a[0]) / (SP.seg[i] || 1), uz = (b[1] - a[1]) / (SP.seg[i] || 1); o.x = a[0] + (b[0] - a[0]) * u; o.z = a[1] + (b[1] - a[1]) * u; o.vx = ux * SP.v; o.vz = uz * SP.v; o.gs = SP.v; o.stop = false; o.hd = i === SP.seg.length - 1 ? tr.parkHdg : null; break; } d -= SP.seg[i]; } } } }
     }

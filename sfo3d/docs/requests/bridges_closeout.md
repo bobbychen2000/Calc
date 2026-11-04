@@ -5,6 +5,18 @@ From: owner of `js/live/gates.js` (bridge geometry / animation, VDGS, GSE), `js/
 its `type_stops` stop, incl. alternative positions), re-run before / after this round; GSE also with an independent check
 that samples every vehicle MESH (`gse.mjs`). Scratch scripts are not committed; the numbers are quoted here.
 
+| Check (131 bridges, 3,373 bridge x type dockings) | Before (HEAD 90a1f0c) | After |
+|---|---|---|
+| bcheck issues (critical / major / minor) | 8 / 0 / 1 (F15 L1 path through L2's connector; A15 walkway in the pier) | 0 / 0 / 0 |
+| dockings made / refused | 3,282 / 91 | 3,273 / 100 (+9: F15 L1 737 family + B744, static §1) |
+| drums narrower than 1.5 m | 6 (min 1.11 m) | 0 |
+| docking path steeper than 1:4 at any point | 28 (max 1:2.9) | 0 (max 1:4.0) |
+| rest after an undocking steeper than 1:4 / 1:12 | 208 / 1,679, for hours | 0 / 1,671 for p50 33 s, max 133 s, then 0 |
+| fast undocking (5 s request) pivot speed / cab rate p50 | 1.97 m/s / 456 deg/min | 0.45 m/s / 92 deg/min (sheet: 0.45 m/s, 145 deg/min); 16-93 s, p50 26 s |
+| VDGS facade units without a wall behind | 3 (A13, G10, G13) | 0 (82 posts, 21 facade, 0 blocked) |
+| GSE, all 106 stands occupied (largest type) | belt loaders 0, catering 20, fuel 21 | belt loaders 79, catering 11, fuel 37; 0 conflicts (mesh-sampled) |
+| docked slopes > 1:12 / > 1:8 (all; observed) | 953 / 380; 102 / 29 of 535 | unchanged (heights: static §5) |
+
 ## What changed in gates.js (for everybody who reads it)
 
 | Item | Now |

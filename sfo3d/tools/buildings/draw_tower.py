@@ -120,18 +120,16 @@ def draw_blades(V, f, hb, ht, w0, w1):
         xo = np.interp(h, [p[1] for p in out], [p[0] for p in out]); xi = w0 / 2 + (w1 - w0) / 2 * (h - hb) / (ht - hb)
         if xo > xi + 0.6: V.line([(xi + 0.2, h), (xo - 0.2, h)], 'inf', lw=0.18, z=5.2, color='#9aa7b4')
     V.line([(w0 / 2 + 0.7, hb), (w1 / 2 + 2.6, ht)], 'inf', lw=0.3, z=5.3)              # crease
-    V.leader((-w1 / 2 - 1.0, tip), -30, 9, f'NE blade: narrow, sharp-edged; pointed tip at about the flare rim\n'
+    V.leader((-w1 / 2 - 1.0, tip), -20, 60, f'NE blade: narrow, sharp-edged; pointed tip at about the flare rim\n'
              f'(+{tip:.1f}; photos read 0-2.4 m above it) [obs photo t4, low]', 'inf', fs=4.0)
     V.leader((wo - 1.5, ht - 6), 22, 8, 'SW wing: broad blade, horizontally louvred face, flat top,\nrounded outer edge [obs photo t3 / t4];'
              ' width ~5.5 m beyond the\nribbon at the top [inf: oblique photo]; plan depth unknown [unk]', 'inf', fs=4.0)
-    V.leader((0, (hb + ht) / 2 + 4), -30, 12, f'glass ribbon (LED-backlit, "waterfall"): 147 ft = {ht - hb:.2f} m tall [pub];\n'
-             f'width {w0} -> {w1} m bottom -> top [obs, low; T2 AirTrain photo]; 2 columns x ~25 rows\n'
-             '[obs photos]; set in a flat-faced channel between the two blades [obs photo];\n'
-             'start / end levels not published: drawn from the base-building roof [inf]', 'obs', fs=4.0)
-    V.text((0, ht + 2.2), 'ribbon head drawn level: in t4 the head and the mullion rows slope alike\n'
-           '(0.18-0.19 px/px), so the slant seen there is perspective [obs photo]', 'obs', fs=3.6)
+    V.leader((w0 / 2 + 0.6, hb + 19), 44, 0, f'glass ribbon (LED-backlit, "waterfall"): 147 ft = {ht - hb:.2f} m tall [pub];\n'
+             f'width {w0} -> {w1} m bottom -> top [obs, low; T2 AirTrain photo];\n2 columns x ~25 rows [obs photos]; set in a flat-faced '
+             'channel between\nthe two blades [obs photo]; start / end levels not published:\ndrawn from the base-building roof [inf]; head '
+             'drawn level: in t4 the\nhead and the mullion rows slope alike (0.18-0.19 px/px), so the\nslant seen there is perspective [obs photo]', 'obs', fs=4.0)
     V.dim((-w0 / 2, hb - 1.0), (w0 / 2, hb - 1.0), -2.5, f'{w0} [obs]', 'obs', fs=4.0)
-    V.dim((-w1 / 2, ht + 0.4), (w1 / 2, ht + 0.4), 7.0, f'{w1} [obs]', 'obs', fs=4.0)
+    V.dim((-w1 / 2, ht - 2.0), (w1 / 2, ht - 2.0), 0, f'{w1} [obs]', 'obs', fs=4.0, ext=False)
 
 
 def draw_tower_elev(V, right, ribbon=False):
@@ -201,8 +199,8 @@ def draw_tower_elev(V, right, ribbon=False):
             else:
                 V.level(-sx + 1.5, y, f['short'] + ': ' + s, 'inf', side='left', len_mm=3, fs=fsl - 0.1, u_line=min(u0, -12.6) if h < 20 else -12.6)
             yprev = y
-    V.text((sx + 10, 72.0), 'FAMILY 1 (filled, dashed): D 15.2, rim 67.36 = 221 ft', 'inf', fs=fsl + 0.4, ha='left', weight='bold')
-    V.text((-sx - 10, 72.0), 'FAMILY 2 (dash-dot outline): D 14.5, rim 64.0, 221 ft at the masts', 'inf', fs=fsl + 0.4, ha='right', weight='bold')
+    V.text((sx, 78.0), 'F1 (filled): D 15.2, rim 67.36 = 221 ft', 'inf', fs=fsl + 0.4, ha='left', weight='bold')
+    V.text((-sx + 1.5, 78.0), 'F2 (dash-dot): D 14.5, rim 64.0', 'inf', fs=fsl + 0.4, ha='right', weight='bold')
     lv(F1, 'right'); lv(F2, 'left')
     V.text((0, -9.0), f'u = 0: shaft axis [inf] (-740.5, 324.5); cab drawn {uo:+.1f} m off the axis (cab centre (-739, 323.5): '
            'offset 1.5 m towards the airfield [inf, model_proposal])', 'inf', fs=3.8)
@@ -263,7 +261,7 @@ def sheet_plan(variant='vector', dev=None):
     V.mark(DOF_TOWER, 'pub', marker='^', ms=4)
     V.mark(OEAAA_13, 'pub', marker='^', ms=3.4, fc='none')
     V.mark((-737.0, 324.9), 'pub', marker='^', ms=4, fc='none')
-    V.leader(DOF_TOWER, -30, -30, 'FAA DOF 06-323169 = OE/AAA 2008 site 13: 245 ft AGL envelope, accuracy 4D (+-76 m) [pub];\n'
+    V.leader(DOF_TOWER, -36, -50, 'FAA DOF 06-323169 = OE/AAA 2008 site 13: 245 ft AGL envelope, accuracy 4D (+-76 m) [pub];\n'
              f'filled = DOF convention WGS 84 ({DOF_TOWER[0]:.1f}, {DOF_TOWER[1]:.1f}), as on BI / BD / BL;\nhollow = the letter\'s NAD83 reading (-742.6, 335.7)', 'pub', fs=3.8)
     V.leader((-737.0, 324.9), 34, -6, 'OE/AAA site 13A (241 ft AGL; NAD83 position) [pub]', 'pub', fs=3.8)
     epochs = {'2016': (-752.75, 323.35), '2018': (-749.70, 323.20), '2022': (-698.75, 325.30), '2024': (-700.85, 322.40)}
