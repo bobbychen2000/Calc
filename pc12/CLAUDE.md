@@ -2368,8 +2368,9 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   Verified on 5fd7515 (both tiers rebuilt: 2,803,875 / 2,363,498 triangles): fit_check FIT OK (no open row),
   consistency_2d3d 157 / 157, yoke_mesh_check OK, the FULL viewer_test 253 / 253, web/package.py verify OK, the Artifact
   bundle verify OK, artifact_test 76 / 76.
-  Merged into main at ee751b7 (the lead, 2026-10-25: second interim).  The fur-field rework below is NOT started: the
-  lead put it to the owner (now / after the usage reset / accept 8.3).
+  Merged into main at ee751b7 (the lead, 2026-10-25: second interim).  OWNER DECISION (2026-11-04, "Accept for now"):
+  the flight deck is ACCEPTED at 8.3 (no major) for now; the 8.5 target is parked and the fur-field rework below is
+  NOT started -- it stays the next step if the owner reopens the deck.
   DESIGN NOTE -- a lock-strand fur field for the crew fleece (the last lever to 8.5 per both judges, ~+0.2):
   * Problem: the shell fur's coverage field is isotropic value noise above a rising threshold, so its cut contours are
     round cells -- up close a sponge / coral of dark holes, edge-on stacked florets.  Tuning (gap tone, partings, caps,
