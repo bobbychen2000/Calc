@@ -212,8 +212,8 @@ def sheet_roofs(variant='vector', dev=None):
     V.leader(Ga['drum_c'] + np.array([0, Ga['R']]), -4, -14, f'helix drums (west ends): circle fits to the outline arcs, A D {2 * Ga["R"]:.0f} m,\n'
              f'G D {2 * Gg["R"]:.0f} m [obs]; core cylinder ~13 m (dotted) [obs NAIP]; Garage A\nrooftop box (dotted, lean-corrected) [obs NAIP]', 'obs', fs=3.5, ha='right')
     pA = Ga['c'] + Ga['a'] * (Ga['L'] / 2 - 40) - Ga['b'] * 18
-    V.leader(pA, 6, -12, f'dashed: end of the garage body (u {Ga["Lb"]:.0f} / {Gg["Lb"]:.0f} m); beyond it the outlines are a\n'
-             f'{Ga["tail_w"]:.1f}-m tail along the AirTrain guideway to the ITB station [obs]', 'obs', fs=3.5)
+    V.leader(pA, -2, -34, f'dashed: end of the garage body (u {Ga["Lb"]:.0f} / {Gg["Lb"]:.0f} m); beyond it the outlines are a\n'
+             f'{Ga["tail_w"]:.1f}-m tail along the AirTrain guideway to the ITB station [obs]', 'obs', fs=3.5, ha='right')
     # P3 LTP garages
     V = panel(426, 360, 150, 210, 2000, (-2266, -1921), 'C  LONG-TERM PARKING GARAGES 1 AND 2')
     for k in ('ltp_garage_1', 'ltp_garage_2'):
@@ -236,8 +236,8 @@ def sheet_roofs(variant='vector', dev=None):
     tk = next(d for d in LB['rental_car_center']['dof'] if d['type'] == 'TANK')
     V.circle(tk['world'], RCC_TOWER_D / 2, 'inf', z=3.2)
     V.line([RCC_N, RCC_S], 'obs', lw=0.4, z=3.1, ls=(0, (1, 1.5)))
-    V.leader(np.array(tk['world']) + np.array([-RCC_TOWER_D / 2, 0]), -10, -30, f'station tower D ~{RCC_TOWER_D} m at the TANK point\n[inf, photo l5]; '
-             'dotted: west-face chord\ndrawn on BL-03 [obs]', 'inf', fs=3.4, ha='right')
+    V.leader(np.array(tk['world']) + np.array([RCC_TOWER_D / 2, 0]), 14, -22, f'station tower D ~{RCC_TOWER_D} m at the TANK point\n[inf, photo l5]; '
+             'dotted: west-face chord\ndrawn on BL-03 [obs]', 'inf', fs=3.4)
     # P6 CAC
     V = panel(0, 8, 150, 100, 2000, (-2014, -458), 'F  CONSOLIDATED ADMINISTRATION CAMPUS')
     draw_bldg(V, 'cac', bg); dims(V, 'cac', 5)
