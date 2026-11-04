@@ -1,6 +1,97 @@
 {
  "about": "Files under refs/cache that are NOT committed (licence or size), with their hashes. Written by tools/cache/sync.py; restore what can be rebuilt with tools/cache/restore.sh.",
  "files": {
+  "acap/737MAX_RevK.pdf": {
+   "class": "local",
+   "why": "manufacturer airport-planning documents (copyright)",
+   "bytes": 18127573,
+   "sha256": "6ac41b3794c19e96ec7413fe45f2cc13f68d748561573a032d13ea2d6a9119ee",
+   "url": "https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737MAX_RevK.pdf"
+  },
+  "acap/737MAX_RevK.txt": {
+   "class": "local",
+   "why": "manufacturer airport-planning documents (copyright)",
+   "bytes": 220790,
+   "sha256": "2ffa6b882669ce4e645f7724272343b528d7db58c37fc2b30bc07f8fcc8f81b6",
+   "url": "pdftotext -layout of the PDFs above"
+  },
+  "acap/737NG_REV_C.pdf": {
+   "class": "local",
+   "why": "manufacturer airport-planning documents (copyright)",
+   "bytes": 20031940,
+   "sha256": "22b1746201262dc34bb3ea46ae710b8802aff5c7df45ee73106f6f5ce9eb65bf",
+   "url": "https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737NG_REV_C.pdf"
+  },
+  "acap/737NG_REV_C.txt": {
+   "class": "local",
+   "why": "manufacturer airport-planning documents (copyright)",
+   "bytes": 299594,
+   "sha256": "4154dfedd3951769afb3c65adc7557e10a69c88e7260c7cf431163a3f4c007e2",
+   "url": "pdftotext -layout of the PDFs above"
+  },
+  "acap/777-200-200ER-300_Rev_E.pdf": {
+   "class": "local",
+   "why": "manufacturer airport-planning documents (copyright)",
+   "bytes": 20273897,
+   "sha256": "ef189aefb353fc15a33866453c51fe2e6251d54a8ca979ba639e9980e5cf19a5",
+   "url": "https://www.boeing.com/content/dam/boeing/v2/airports/acaps/777-200-200ER-300_Rev_E.pdf"
+  },
+  "acap/777-200-200ER-300_Rev_E.txt": {
+   "class": "local",
+   "why": "manufacturer airport-planning documents (copyright)",
+   "bytes": 174567,
+   "sha256": "e7c36af530fbb888c645b5d1d55677339543ef60488eef007ee42370ad668e6a",
+   "url": "pdftotext -layout of the PDFs above"
+  },
+  "acap/777-200LR-300ER-F_Rev_G.pdf": {
+   "class": "local",
+   "why": "manufacturer airport-planning documents (copyright)",
+   "bytes": 12858800,
+   "sha256": "9c98f2e9c013615c0eaa9dc87ccb82544b7a3333ed1b725d996e283d50da142a",
+   "url": "https://www.boeing.com/content/dam/boeing/v2/airports/acaps/777-200LR-300ER-F_Rev_G.pdf"
+  },
+  "acap/777-200LR-300ER-F_Rev_G.txt": {
+   "class": "local",
+   "why": "manufacturer airport-planning documents (copyright)",
+   "bytes": 165276,
+   "sha256": "c9024e1c29de56fef113d545471d00ecbb5941ca0cdc681c365baf479b6bdbf0",
+   "url": "pdftotext -layout of the PDFs above"
+  },
+  "acap/787_ACAP_Rev_Q.pdf": {
+   "class": "local",
+   "why": "manufacturer airport-planning documents (copyright)",
+   "bytes": 11726333,
+   "sha256": "b9f0398de13da78aa0391b9aefa32b1ecdecf5032d83413381018aeae81c57f6",
+   "url": "https://www.boeing.com/content/dam/boeing/v2/airports/acaps/787_ACAP_Rev_Q.pdf"
+  },
+  "acap/787_ACAP_Rev_Q.txt": {
+   "class": "local",
+   "why": "manufacturer airport-planning documents (copyright)",
+   "bytes": 179966,
+   "sha256": "e51b9ae4494f73691c19f168485be56d7fc5a1106272369f3948acf9468cd6c1",
+   "url": "pdftotext -layout of the PDFs above"
+  },
+  "acap/AC_A321_jul2026.pdf": {
+   "class": "local",
+   "why": "manufacturer airport-planning documents (copyright)",
+   "bytes": 12765980,
+   "sha256": "50ae7a11b9834cbb1b0f8b862fcb6e85aa7817e77596cd12903033e81456d40d",
+   "url": "https://mediaassets.airbus.com/pm_38_916_916230-7u6neg4lfg.pdf?fileName=aca32101-jul-2026.pdf"
+  },
+  "acap/AC_A321_jul2026.txt": {
+   "class": "local",
+   "why": "manufacturer airport-planning documents (copyright)",
+   "bytes": 1126975,
+   "sha256": "ef2ba69875652004e3d7d11c0585212ce1c99a5c61a5f3de0994325d7abf4ddd",
+   "url": "pdftotext -layout of the PDFs above"
+  },
+  "acap/wingletspans.pdf": {
+   "class": "local",
+   "why": "manufacturer airport-planning documents (copyright)",
+   "bytes": 22290,
+   "sha256": "60ae6c1fcb40f2a3229d656df7f82ac68adac808f03853c12b9b2a851bf19466",
+   "url": "https://www.boeing.com/content/dam/boeing/v2/airports/faq/wingletspans.pdf"
+  },
   "buildings/domestic/naip/naip_2020_dom.png": {
    "class": "local",
    "why": "image / document without an open licence in SOURCES.json",
@@ -25,6 +116,24 @@
    "bytes": 11077898,
    "sha256": "10e2dd137c7fb08defd2cf32b04dab22924f37d9b295c3dbac278baaf8eb46d5"
   },
+  "buildings/domestic/src/verify/aip_t1.html": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 756246,
+   "sha256": "f442550ec141baa78da679fd3be313075c8fb3905ffea2ce043f80a0dec4c359"
+  },
+  "buildings/domestic/src/verify/aip_t2.html": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 741908,
+   "sha256": "b4046b113b7a56a8bc6ecde88419997e40cec0711983f2c634ef24d621f38ed9"
+  },
+  "buildings/domestic/src/verify/arup_t1.html": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 158672,
+   "sha256": "21f4b062f001d0a6c18cb6f56dba4d627669d7dff7f3585ea4432fb0fe749baf"
+  },
   "buildings/domestic/src/verify/cdr.txt": {
    "class": "local",
    "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
@@ -37,11 +146,77 @@
    "bytes": 182645,
    "sha256": "8b941c4b4e981d52a3cae1c77b3d3c0c7d6904b833ccc5d2b7f80b19e076d1be"
   },
+  "buildings/domestic/src/verify/cei_bab.html": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 48159,
+   "sha256": "347c0602d7a2a8feead0b7c0b9eb39c59c46ea0c17a2c165e3c8d77892393d52"
+  },
+  "buildings/domestic/src/verify/commons_api.json": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 14262,
+   "sha256": "3cb7d5c0f00d25b7549aec8a49f8c6675d83a6bdfe8beced630910813db1d929"
+  },
+  "buildings/domestic/src/verify/commons_verify.json": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 4867,
+   "sha256": "e3687f0f65e61c2b366910a63666e1061964c5b1bc98e7ff71d996530d8a93f3"
+  },
+  "buildings/domestic/src/verify/dbia_bab.html": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 104801,
+   "sha256": "603ba6ba646d479b664d4fff1dcd3b6f7fb78d8d3dbb003f1c43607d1c6d279f"
+  },
+  "buildings/domestic/src/verify/flysfo_t1_final.html": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 196396,
+   "sha256": "cb4dbc401f381a311f1f59ffa6c5e968eaa3fe34823d18328bdb941d5921125f"
+  },
+  "buildings/domestic/src/verify/flysfo_t3w.html": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 195711,
+   "sha256": "f207eedc56d078567c528d1ea89943a6d7e6d8d379850ad4338d596cb3bf374a"
+  },
+  "buildings/domestic/src/verify/gensler_t2.html": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 112578,
+   "sha256": "ef38d0466eaaad72c0006767e2d3d9a7b15b8c3d72103582b39ced4efa6363ab"
+  },
+  "buildings/domestic/src/verify/hp_bae.html": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 278501,
+   "sha256": "3bc46caede4386ad1046841f6cb769ef356f183095b3c10586a7cf47c0836154"
+  },
+  "buildings/domestic/src/verify/ida_bae.html": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 136813,
+   "sha256": "963e2629d4dfaef3641e71d18a3de472f0fe554c49e5ab671bc5bad55c37ad49"
+  },
   "buildings/domestic/src/verify/oe_7455.json": {
    "class": "local",
    "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
    "bytes": 0,
    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "buildings/domestic/src/verify/rdh_bab.html": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 76572,
+   "sha256": "e4821e909a0fa429afc18c96b5c5ed95f0d5310cff0526255688effe8401cb2f"
+  },
+  "buildings/domestic/src/verify/sfom_bab.geojson": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 11575,
+   "sha256": "87e1ed1e26b8ffe525dc8452cb1eb664d2dda63c4119a3bd57d3777b5f49faf3"
   },
   "buildings/domestic/src/verify/sfom_reflectors.html": {
    "class": "local",
@@ -49,185 +224,922 @@
    "bytes": 184097,
    "sha256": "f4d9c59b9ef7611b843733367525f36f0fc23a9bde2767ca221e8587858fcf81"
   },
+  "buildings/domestic/src/verify/wiki_sfo.html": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 1701164,
+   "sha256": "48bd5616286b24d63a82194cc2559f6497dec7929a27f13a8f3b5f388399112f"
+  },
   "buildings/itb/verify/src/ags_baa.html": {
    "class": "local",
    "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
    "bytes": 27613,
-   "sha256": "662ef46887c0c1903ad1461de9ccafada1a791b5d00c5a704b187cb2e6e6b020"
+   "sha256": "662ef46887c0c1903ad1461de9ccafada1a791b5d00c5a704b187cb2e6e6b020",
+   "url": "https://www.agsinc.com/projects/sfo-gate-enhancement"
   },
   "buildings/itb/verify/src/ags_baa.txt": {
    "class": "local",
    "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
    "bytes": 2457,
-   "sha256": "769d325b9a454edd0c772ba427e5ce630a237b2685dd1b33d6384fcf6b135cb8"
+   "sha256": "769d325b9a454edd0c772ba427e5ce630a237b2685dd1b33d6384fcf6b135cb8",
+   "url": "https://www.agsinc.com/projects/sfo-gate-enhancement"
   },
   "buildings/itb/verify/src/ai_roof.html": {
    "class": "local",
    "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
    "bytes": 2182,
-   "sha256": "2769c4dd12d4cdccf6f8dcab84cb9b9b146dc073ab7a0268055f6d53ec61d6f6"
+   "sha256": "2769c4dd12d4cdccf6f8dcab84cb9b9b146dc073ab7a0268055f6d53ec61d6f6",
+   "url": "https://www.airportsinternational.com/article/sfo-upgrade-terminal-roof"
   },
   "buildings/itb/verify/src/ai_roof.txt": {
    "class": "local",
    "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
    "bytes": 119,
-   "sha256": "c64642964a3ae62502f935f45a47959cd01f397e9d747dd2ff6fcb85440c6302"
+   "sha256": "c64642964a3ae62502f935f45a47959cd01f397e9d747dd2ff6fcb85440c6302",
+   "url": "https://www.airportsinternational.com/article/sfo-upgrade-terminal-roof"
   },
   "buildings/itb/verify/src/airportworld25.html": {
    "class": "local",
    "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
    "bytes": 123648,
-   "sha256": "74b7006de5ea167b64f4940d8cd11b5d71ec1dbd233920b2bcd5c82110bc08f6"
+   "sha256": "74b7006de5ea167b64f4940d8cd11b5d71ec1dbd233920b2bcd5c82110bc08f6",
+   "url": "https://airport-world.com/sfos-international-terminal-celebrates-25th-anniversary/"
   },
   "buildings/itb/verify/src/airportworld25.txt": {
    "class": "local",
    "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
    "bytes": 4766,
-   "sha256": "d8e90c4b81f6e14adb2117e71cc3d77f55930a7143a58c857287f82d8560c92c"
+   "sha256": "d8e90c4b81f6e14adb2117e71cc3d77f55930a7143a58c857287f82d8560c92c",
+   "url": "https://airport-world.com/sfos-international-terminal-celebrates-25th-anniversary/"
   },
   "buildings/itb/verify/src/enclos.html": {
    "class": "local",
    "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
    "bytes": 126027,
-   "sha256": "95cc1a170dfbcd9eecf662b5d5023ce7e2df168bb0a98c6d334b7fdfcad2a48f"
+   "sha256": "95cc1a170dfbcd9eecf662b5d5023ce7e2df168bb0a98c6d334b7fdfcad2a48f",
+   "url": "https://enclos.com/project/san-francisco-international-airport-international-terminal/"
   },
   "buildings/itb/verify/src/enclos.txt": {
    "class": "local",
    "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
    "bytes": 2442,
-   "sha256": "03e22802c77690b11c33ac3dc84bc3993cbbedc863642bf9c444238dd67ddb03"
+   "sha256": "03e22802c77690b11c33ac3dc84bc3993cbbedc863642bf9c444238dd67ddb03",
+   "url": "https://enclos.com/project/san-francisco-international-airport-international-terminal/"
   },
   "buildings/itb/verify/src/ftf_roof.html": {
    "class": "local",
    "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
    "bytes": 87951,
-   "sha256": "47e824eb2f0909f82a9ddf47309bdd343c2d44e08a1d6a91f4d8b3ca3734fcb9"
+   "sha256": "47e824eb2f0909f82a9ddf47309bdd343c2d44e08a1d6a91f4d8b3ca3734fcb9",
+   "url": "https://ftfengineering.com/portfolio_page/international-terminal-building-roof-upgrade-sfo/"
   },
   "buildings/itb/verify/src/ftf_roof.txt": {
    "class": "local",
    "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
    "bytes": 4853,
-   "sha256": "4d1b8d05fa5c3ba40a5c101df14b9e4ac83a0ec123d6be6b31cf33d80b5cd401"
+   "sha256": "4d1b8d05fa5c3ba40a5c101df14b9e4ac83a0ec123d6be6b31cf33d80b5cd401",
+   "url": "https://ftfengineering.com/portfolio_page/international-terminal-building-roof-upgrade-sfo/"
   },
   "buildings/itb/verify/src/msc2000.html": {
    "class": "local",
    "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
    "bytes": 5842,
-   "sha256": "3def4d8185cf58b7e27bf5ff6134b80ba1c4b4e24ffc77a73bf41d5722a9a271"
+   "sha256": "3def4d8185cf58b7e27bf5ff6134b80ba1c4b4e24ffc77a73bf41d5722a9a271",
+   "url": "https://www.aisc.org/globalassets/modern-steel/archives/2000/02/2000v02_sf_airport.pdf"
   },
   "buildings/itb/verify/src/msc2000.txt": {
    "class": "local",
    "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
    "bytes": 18,
-   "sha256": "545415566d2ce73b7d5e341bd27ceae5b3dc8fd7c6f17bd2b33e79cdb421e8b1"
+   "sha256": "545415566d2ce73b7d5e341bd27ceae5b3dc8fd7c6f17bd2b33e79cdb421e8b1",
+   "url": "https://www.aisc.org/globalassets/modern-steel/archives/2000/02/2000v02_sf_airport.pdf"
   },
   "buildings/itb/verify/src/seaonc.html": {
    "class": "local",
    "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
    "bytes": 49010,
-   "sha256": "9979a2756ef476aa8784b0bd89efab079968dea75a2151b0673549f62543a0cd"
+   "sha256": "9979a2756ef476aa8784b0bd89efab079968dea75a2151b0673549f62543a0cd",
+   "url": "https://legacy.seaonc.org/structure/sfo-international-terminal/"
   },
   "buildings/itb/verify/src/seaonc.txt": {
    "class": "local",
    "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
    "bytes": 4741,
-   "sha256": "fae793e98761251c3662abbf8bf741d9ca27dd853102cfadd4a1d18084b96d2d"
+   "sha256": "fae793e98761251c3662abbf8bf741d9ca27dd853102cfadd4a1d18084b96d2d",
+   "url": "https://legacy.seaonc.org/structure/sfo-international-terminal/"
   },
   "buildings/itb/verify/src/sfgate2000.html": {
    "class": "local",
    "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
    "bytes": 428977,
-   "sha256": "b4d15cc9bc1636e12896cbdc385706c563b9113b0cb0854869d191b5c4c7435e"
+   "sha256": "b4d15cc9bc1636e12896cbdc385706c563b9113b0cb0854869d191b5c4c7435e",
+   "url": "https://www.sfgate.com/business/article/SFO-terminal-ready-to-take-wing-3077658.php"
   },
   "buildings/itb/verify/src/sfgate2000.txt": {
    "class": "local",
    "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
    "bytes": 13368,
-   "sha256": "f68d78b54ba027cbbdf4ab8207bb40d171ee8f3ef14269b15c17fe60d61a2093"
+   "sha256": "f68d78b54ba027cbbdf4ab8207bb40d171ee8f3ef14269b15c17fe60d61a2093",
+   "url": "https://www.sfgate.com/business/article/SFO-terminal-ready-to-take-wing-3077658.php"
   },
   "buildings/itb/verify/src/smith_emery.html": {
    "class": "local",
    "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
    "bytes": 255998,
-   "sha256": "973b4035712511dc81f03d917f75acf384f1f8499084a7afead054063f9851ea"
+   "sha256": "973b4035712511dc81f03d917f75acf384f1f8499084a7afead054063f9851ea",
+   "url": "https://www.smithemery.com/staging/4272/projects/san-francisco-international-airport-roof-truss-system-san-francisco-california/"
   },
   "buildings/itb/verify/src/smith_emery.txt": {
    "class": "local",
    "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
    "bytes": 1792,
-   "sha256": "826d23bf16d043818b92b431faa53eb24f66e3c0dd18e8be62ea367ced5b5a10"
+   "sha256": "826d23bf16d043818b92b431faa53eb24f66e3c0dd18e8be62ea367ced5b5a10",
+   "url": "https://www.smithemery.com/staging/4272/projects/san-francisco-international-airport-roof-truss-system-san-francisco-california/"
   },
   "buildings/itb/verify/src/som.html": {
    "class": "local",
    "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
    "bytes": 185130,
-   "sha256": "bb279c508a15e3c98e69ad1c93711d9b36408f89a0025f259458406fac1a3b22"
+   "sha256": "bb279c508a15e3c98e69ad1c93711d9b36408f89a0025f259458406fac1a3b22",
+   "url": "https://www.som.com/projects/san-francisco-international-airport-international-terminal/"
   },
   "buildings/itb/verify/src/som.txt": {
    "class": "local",
    "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
    "bytes": 5657,
-   "sha256": "4f79ebe4a1cf6974eaa20339c54130e8ddb937ca4d27e364815cb91faaa5ced7"
+   "sha256": "4f79ebe4a1cf6974eaa20339c54130e8ddb937ca4d27e364815cb91faaa5ced7",
+   "url": "https://www.som.com/projects/san-francisco-international-airport-international-terminal/"
   },
   "buildings/itb/verify/src/tutor_bag.html": {
    "class": "local",
    "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
    "bytes": 16667,
-   "sha256": "6461eccf361e9ffcb27b08f5d22617360c607fe55f982b3a07a3ac36015ac89d"
+   "sha256": "6461eccf361e9ffcb27b08f5d22617360c607fe55f982b3a07a3ac36015ac89d",
+   "url": "https://www.tutorperini.com/projects/aviation/sfo-boarding-area-g/"
   },
   "buildings/itb/verify/src/tutor_bag.txt": {
    "class": "local",
    "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
    "bytes": 2635,
-   "sha256": "ea80fce3a5e545457c16cbe9168eb8306243ccb1c78e8ffd72d28045069fb5a2"
+   "sha256": "ea80fce3a5e545457c16cbe9168eb8306243ccb1c78e8ffd72d28045069fb5a2",
+   "url": "https://www.tutorperini.com/projects/aviation/sfo-boarding-area-g/"
   },
   "buildings/itb/verify/src/tutor_itb.html": {
    "class": "local",
    "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
    "bytes": 17828,
-   "sha256": "abdd5882b8701885a21af89c67a9b42df8316dc64a352ee6a8856ffd86cfe7da"
+   "sha256": "abdd5882b8701885a21af89c67a9b42df8316dc64a352ee6a8856ffd86cfe7da",
+   "url": "https://www.tutorperini.com/projects/aviation/sfo-international-terminal/"
   },
   "buildings/itb/verify/src/tutor_itb.txt": {
    "class": "local",
    "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
    "bytes": 3152,
-   "sha256": "6b88b3be6473a78f755b0eef5ee04eea6032f7f135f4ec36b586e33bfa1492b9"
+   "sha256": "6b88b3be6473a78f755b0eef5ee04eea6032f7f135f4ec36b586e33bfa1492b9",
+   "url": "https://www.tutorperini.com/projects/aviation/sfo-international-terminal/"
   },
   "buildings/itb/verify/src/webcor_ceremony.html": {
    "class": "local",
    "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
    "bytes": 40259,
-   "sha256": "0e6176c0a5bb7eeb8c15007525c9f8406c7629be8d983c911d5b7d3ea90a7c79"
+   "sha256": "0e6176c0a5bb7eeb8c15007525c9f8406c7629be8d983c911d5b7d3ea90a7c79",
+   "url": "https://www.webcor.com/webcor-articles/ceremony-marks-start-of-upgrade-to-roof-of-24-year-old-terminal-roof"
   },
   "buildings/itb/verify/src/webcor_ceremony.txt": {
    "class": "local",
    "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
    "bytes": 3495,
-   "sha256": "9c7bbe422472daf1b3a3a91d3c47fd2e41e8a6d08cfebb0cb8c449908112f8b7"
+   "sha256": "9c7bbe422472daf1b3a3a91d3c47fd2e41e8a6d08cfebb0cb8c449908112f8b7",
+   "url": "https://www.webcor.com/webcor-articles/ceremony-marks-start-of-upgrade-to-roof-of-24-year-old-terminal-roof"
   },
   "buildings/itb/verify/src/webcor_roof.html": {
    "class": "local",
    "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
    "bytes": 110174,
-   "sha256": "b4904ff7b850598f67e0c084e55ce05b715c96cf03598f0e149c922046482265"
+   "sha256": "b4904ff7b850598f67e0c084e55ce05b715c96cf03598f0e149c922046482265",
+   "url": "https://www.webcor.com/projects/sfo-international-terminal-building-itb-roof-upgrade-project"
   },
   "buildings/itb/verify/src/webcor_roof.txt": {
    "class": "local",
    "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
    "bytes": 16394,
-   "sha256": "8452bb54132b9d0cfb0f0e866f7741b0f0038f0e0e7471ec4329b4336f3b0777"
+   "sha256": "8452bb54132b9d0cfb0f0e866f7741b0f0038f0e0e7471ec4329b4336f3b0777",
+   "url": "https://www.webcor.com/projects/sfo-international-terminal-building-itb-roof-upgrade-project"
   },
-  "buildings/itb/verify/src/wiki_sfo.html": {
+  "buildings/landside/src/verify_aga_hyatt.html": {
    "class": "local",
    "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
-   "bytes": 254773,
-   "sha256": "20894408d507ed307b1db4ae3a38ebb34b83277e34763dd5cbe321baf3a45934"
+   "bytes": 126994,
+   "sha256": "a118c4ac340dd844c0b26abd6e4084ab894d34cfcbf1b84516db17b95050c02a",
+   "url": "https://www.aga-ca.com/portfolio/sfo-grand-hyatt/"
   },
-  "buildings/itb/verify/src/wiki_sfo.txt": {
+  "buildings/landside/src/verify_aga_hyatt.txt": {
    "class": "local",
    "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
-   "bytes": 243351,
-   "sha256": "271b94b58a1d7482bdbe8774aa6eedd3453b614e502b493d9d0c31fe10cd09a7"
+   "bytes": 2656,
+   "sha256": "1a271daa7dd76b2271cf0708938eca69b1e479a03418145c459a5ce10c8452c4",
+   "url": "https://www.aga-ca.com/portfolio/sfo-grand-hyatt/"
+  },
+  "buildings/landside/src/verify_airlinereporter_2018.html": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 104561,
+   "sha256": "62fae2554febcbd0e397cd168becfc6e0a71ad2f9935408f9f0b2d2ca2f8d210",
+   "url": "https://www.airlinereporter.com/2018/10/chix-fix-and-a-777-bbq-celebrating-family-day-with-united-airlines/"
+  },
+  "buildings/landside/src/verify_airlinereporter_2018.txt": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 8557,
+   "sha256": "770930e8e40db87cca267874a34d8720dbfe4f6557cf1f666b90252f1f272cc7",
+   "url": "https://www.airlinereporter.com/2018/10/chix-fix-and-a-777-bbq-celebrating-family-day-with-united-airlines/"
+  },
+  "buildings/landside/src/verify_aw_airtrain_leed.html": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 119646,
+   "sha256": "eb3686db38286a4c344641bb5357fd671af70d00bccec736f6aee8f78363e537",
+   "url": "https://airport-world.com/sfos-newest-airtrain-stations-earn-leed-gold-certification/"
+  },
+  "buildings/landside/src/verify_aw_airtrain_leed.txt": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 4664,
+   "sha256": "0902c1fda86335527feb29dfed76904e9a3b9378ae2a8beed8f702b7e1728efa",
+   "url": "https://airport-world.com/sfos-newest-airtrain-stations-earn-leed-gold-certification/"
+  },
+  "buildings/landside/src/verify_buehler_ltp2.html": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 12040,
+   "sha256": "fa857617f248a620b8e781fcd344a5b21101587f676fd26a0dfd90515eda5304",
+   "url": "https://buehlerengineering.com/project/sfo-ltpg2"
+  },
+  "buildings/landside/src/verify_buehler_ltp2.txt": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 74,
+   "sha256": "659eeb6b092211288253eb840372bf6d2a4b3b6dc950851378b7a5f594f82925",
+   "url": "https://buehlerengineering.com/project/sfo-ltpg2"
+  },
+  "buildings/landside/src/verify_cavagnero_cac.html": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 200321,
+   "sha256": "d14590dcb46214a614c83b0427b7d6b208fc52a8f1564ac56507969759f7a8cc",
+   "url": "https://www.cavagnero.com/project/sfo-consolidated-administration-campus/"
+  },
+  "buildings/landside/src/verify_cavagnero_cac.txt": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 3185,
+   "sha256": "0f3096043da25816fb274e63bd04aa5b36a2d00c3351c7e604c570fd9eaa6801",
+   "url": "https://www.cavagnero.com/project/sfo-consolidated-administration-campus/"
+  },
+  "buildings/landside/src/verify_chs_ltp2.html": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 40820,
+   "sha256": "505885ca77e154c2699b7e4a17fe65b3003bca481cced84e81f767bdf91fa0c6",
+   "url": "http://www.chsconsulting.net/portfolio/design-build-projects/san-francisco-international-airport-long-term-parking-garage-2/"
+  },
+  "buildings/landside/src/verify_chs_ltp2.txt": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 2783,
+   "sha256": "1f136454458f26f0b1fdb72c5832e9ee0f45af3866c584b2e8b011d8eee3225a",
+   "url": "http://www.chsconsulting.net/portfolio/design-build-projects/san-francisco-international-airport-long-term-parking-garage-2/"
+  },
+  "buildings/landside/src/verify_conrac_sol.html": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 1341551,
+   "sha256": "b2dddf25e2c538fa522fbea440950403d6712fe756c0e78f4c0c9d17d77397d4",
+   "url": "https://www.conracsolutions.com/project/sfo"
+  },
+  "buildings/landside/src/verify_conrac_sol.txt": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 3595,
+   "sha256": "1513f9217e934a7e3f2f9979c6570a554baffc78cefdb230180a9af06f1d4e6b",
+   "url": "https://www.conracsolutions.com/project/sfo"
+  },
+  "buildings/landside/src/verify_db_1981.html": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 62963,
+   "sha256": "cf5726536423d5d5dc8a7021ebf1af145ee8064a3dda564e67fd9d65071d6a83",
+   "url": "https://www.dreyfussblackford.com/project/san-francisco-international-airport-parking-structure/"
+  },
+  "buildings/landside/src/verify_db_1981.txt": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 1343,
+   "sha256": "a41703441974e5eafc583efab60e2e69fcdca9e36b4cb7ea10f3449a23030f72",
+   "url": "https://www.dreyfussblackford.com/project/san-francisco-international-airport-parking-structure/"
+  },
+  "buildings/landside/src/verify_dbia_hyatt.html": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 104141,
+   "sha256": "3e6b8ef2379ddd2f13fdaaa00df9965bc256f5ecb19f391eedd38fc3cfb95811",
+   "url": "https://dbia.org/project/grand-hyatt-at-sfo/"
+  },
+  "buildings/landside/src/verify_dbia_hyatt.txt": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 4743,
+   "sha256": "6ce24b994e00e22256983703ab165e3b64feb5fe5109ba63e97796b91a6f7134",
+   "url": "https://dbia.org/project/grand-hyatt-at-sfo/"
+  },
+  "buildings/landside/src/verify_dbia_ltp2.html": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 104275,
+   "sha256": "abc1f0d57e05d2ce439084cbbfeb3b8fadd3a072123ae592f0e912ff07348050",
+   "url": "https://dbia.org/project/san-francisco-international-airport-long-term-garage/"
+  },
+  "buildings/landside/src/verify_dbia_ltp2.txt": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 4398,
+   "sha256": "14f2d14a4c1b72502825f5004fb703757080c0f3141643a498e5aba0989c321c",
+   "url": "https://dbia.org/project/san-francisco-international-airport-long-term-garage/"
+  },
+  "buildings/landside/src/verify_deep3ds_superbay.html": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 113462,
+   "sha256": "f4598af41947eb6b7e9f84dacf34689652577f2b895303e2f9db6810ad3d16c9",
+   "url": "https://www.deep3ds.com/san-francisco-superbay-hangar-american-united-airlin/"
+  },
+  "buildings/landside/src/verify_deep3ds_superbay.txt": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 6207,
+   "sha256": "8a2e663359e517604aa86cba888446c02838b25d3ec2a12ee36276f72e1e4f03",
+   "url": "https://www.deep3ds.com/san-francisco-superbay-hangar-american-united-airlin/"
+  },
+  "buildings/landside/src/verify_dlr_ltp2.html": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 282444,
+   "sha256": "5d2807d16c807e17bc6d22c031e1b1fa03624dd4e584266c0102d6f56e5e7803",
+   "url": "https://www.dlrgroup.com/work/san-francisco-international-airport-long-term-parking-garage/"
+  },
+  "buildings/landside/src/verify_dlr_ltp2.txt": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 17299,
+   "sha256": "a5622af99f44c903ce964eb0c92ad9b86d367f00f180a0bb3f2afcc143a5387e",
+   "url": "https://www.dlrgroup.com/work/san-francisco-international-airport-long-term-parking-garage/"
+  },
+  "buildings/landside/src/verify_enr_ltp2.html": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 70406,
+   "sha256": "dac74220021f1fda4509ebdb24c42e9260d3ebc4ead0a16d079c536da1138874",
+   "url": "https://www.enr.com/articles/47644-sfo-long-term-parking-garage-2-airporttransit"
+  },
+  "buildings/landside/src/verify_enr_ltp2.txt": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 6379,
+   "sha256": "4e7a57ec1ece662ba73e61d875580e3b092f2dc038c273754ea888d025b4162d",
+   "url": "https://www.enr.com/articles/47644-sfo-long-term-parking-garage-2-airporttransit"
+  },
+  "buildings/landside/src/verify_flysfo_airtrain_fs.pdf": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 20461,
+   "sha256": "0523d9a087d7f3cdea9bc52ced5edf9987f4440a7add1a2cc8e0c8136b8015af",
+   "url": "https://www.flysfo.com/sites/default/files/default/download/about/news/pressres/fact-sheet/pdf/AirTrain_Fact_Sheet.pdf"
+  },
+  "buildings/landside/src/verify_flysfo_airtrain_fs.txt": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 3404,
+   "sha256": "c6c8ff3edc2b2d9cdc740af160e5baa633b6ed1a7956255a239c47873e7b228b",
+   "url": "https://www.flysfo.com/sites/default/files/default/download/about/news/pressres/fact-sheet/pdf/AirTrain_Fact_Sheet.pdf"
+  },
+  "buildings/landside/src/verify_flysfo_around.html": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 193066,
+   "sha256": "419ef99452c7c59ad053e45c314fa46c05b231a1006b3e9764aaecf8768e4ce0",
+   "url": "https://www.flysfo.com/to-from/getting-around-sfo"
+  },
+  "buildings/landside/src/verify_flysfo_around.txt": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 9143,
+   "sha256": "6604a2e78bce300749d5c81eac0c38be90fcc43bb7f9810439a58b961e4284f8",
+   "url": "https://www.flysfo.com/to-from/getting-around-sfo"
+  },
+  "buildings/landside/src/verify_flysfo_ltp.html": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 191039,
+   "sha256": "f17aeb2b3b9a58688125dd17623eefdbb9e94de8117190fa63d274c2c54c3ba8",
+   "url": "https://www.flysfo.com/to-from/parking/long-term"
+  },
+  "buildings/landside/src/verify_flysfo_ltp.txt": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 7503,
+   "sha256": "45ce9d22dcac8370f81d7f9efa00591c3a65c4d73bca3e4d99b9ddf396f01fd2",
+   "url": "https://www.flysfo.com/to-from/parking/long-term"
+  },
+  "buildings/landside/src/verify_flysfo_parking.html": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 202344,
+   "sha256": "379cfb6a7bd5d41b6717bd94bcea713a7fe072d577756f837b7777b5e17897f1",
+   "url": "https://www.flysfo.com/to-from/parking"
+  },
+  "buildings/landside/src/verify_flysfo_parking.txt": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 6962,
+   "sha256": "14c6f11a5f15d9d5d9543fdf5519af155a61fa93c9b2d5b39fbc6ac568d9c4ef",
+   "url": "https://www.flysfo.com/to-from/parking"
+  },
+  "buildings/landside/src/verify_flysfo_pr_2003.pdf": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 7139,
+   "sha256": "6e11a3f4d29f4e678c9f947178b55158ced7dbaa3160e8b733483ecaa1fb274d",
+   "url": "https://www.flysfo.com/sites/default/files/SF-03-10.pdf"
+  },
+  "buildings/landside/src/verify_flysfo_pr_2003.txt": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 1916,
+   "sha256": "5d5cb067b0bc4a90ecd900fcb3e94b67dbca140853bf1b1fb9226fe909625020",
+   "url": "https://www.flysfo.com/sites/default/files/SF-03-10.pdf"
+  },
+  "buildings/landside/src/verify_flysfo_pr_2021.html": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 192008,
+   "sha256": "f7e89a6082e8e96765b44c55e1f1b16b0e6bb066dd27ae27cc091252ef31e7a5",
+   "url": "https://www.flysfo.com/media/press-releases/sfo-completes-airtrain-extension-long-term-parking"
+  },
+  "buildings/landside/src/verify_flysfo_pr_2021.txt": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 8806,
+   "sha256": "6a8b97e119f8c76c5afcb0d1e5065c0a509fa1d04f301c121de2f362ae7c3c6f",
+   "url": "https://www.flysfo.com/media/press-releases/sfo-completes-airtrain-extension-long-term-parking"
+  },
+  "buildings/landside/src/verify_hw_hyatt.html": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 98602,
+   "sha256": "96c381462988cf9df0d08f38582ad764393e4d9fb1cc4fb57ba770e1547aed4d",
+   "url": "https://www.hornbergerworstell.com/projects/grand-hyatt-sfo/"
+  },
+  "buildings/landside/src/verify_hw_hyatt.txt": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 1743,
+   "sha256": "8277aca92ec6765de63694b0e8ef3eaa542d24b6461f635e2122954c0568e462",
+   "url": "https://www.hornbergerworstell.com/projects/grand-hyatt-sfo/"
+  },
+  "buildings/landside/src/verify_hyatt_pr_2016.html": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 195087,
+   "sha256": "aaef4365ada1c85bf379eeef55abc3ab79b2864731b4f595b13805e1150b35a2",
+   "url": "https://newsroom.hyatt.com/012216Hyatt-And-San-Francisco-International-Airport-Announce-Plans-For-A-Grand-Hyatt-Hotel"
+  },
+  "buildings/landside/src/verify_hyatt_pr_2016.txt": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 10937,
+   "sha256": "da08a124ef303f7ba9ddafb0a39ba2b5c4064c7a8274fd89c9751642cab60b4b",
+   "url": "https://newsroom.hyatt.com/012216Hyatt-And-San-Francisco-International-Airport-Announce-Plans-For-A-Grand-Hyatt-Hotel"
+  },
+  "buildings/landside/src/verify_hyatt_pr_2019.html": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 197613,
+   "sha256": "f0d0dbcb173e920b8760f3fa7e3703bb9126fe93db408b5527d8baf372500192",
+   "url": "https://newsroom.hyatt.com/news-releases?item=123896"
+  },
+  "buildings/landside/src/verify_hyatt_pr_2019.txt": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 12904,
+   "sha256": "f480a503fc947b2905420e4e609511cc0ed4b35d4d83044258f23c5f3c516dfd",
+   "url": "https://newsroom.hyatt.com/news-releases?item=123896"
+  },
+  "buildings/landside/src/verify_langan_ltp2.html": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 56291,
+   "sha256": "a4b85eb3b10f582f99d5ed45f672015b81f804b22d0ecabad5140969d9640dc1",
+   "url": "https://www.langan.com/portfolio/sfo-parking-garage-2"
+  },
+  "buildings/landside/src/verify_langan_ltp2.txt": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 4744,
+   "sha256": "7ff32bfcdb5b83cb842854f4245692efdec33356c69d14a95d2e28688fcac8ad",
+   "url": "https://www.langan.com/portfolio/sfo-parking-garage-2"
+  },
+  "buildings/landside/src/verify_mck_cac.html": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 819738,
+   "sha256": "d6f844c356d1d459b463349d466f4548f506e6618b459c68613255460defe386",
+   "url": "https://www.mckinc.net/buildings-hospitality/sfo-cac"
+  },
+  "buildings/landside/src/verify_mck_cac.txt": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 1669,
+   "sha256": "9d37738a3673dc16866b945575fda8f2d14a6cb963731fa739a5340c2762e83f",
+   "url": "https://www.mckinc.net/buildings-hospitality/sfo-cac"
+  },
+  "buildings/landside/src/verify_pcad_united.html": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 7580,
+   "sha256": "5f0f52d723eaff80d116946bfc56dfe06f677c7ac984d12e2d4e34bcde5b121b",
+   "url": "https://pcad.lib.washington.edu/building/12969/"
+  },
+  "buildings/landside/src/verify_pcad_united.txt": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 1484,
+   "sha256": "e118a0896706b882133f5ab60060c29df86a1fd5f32b72e8690d8a30a3fc92de",
+   "url": "https://pcad.lib.washington.edu/building/12969/"
+  },
+  "buildings/landside/src/verify_pghwong.html": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 53875,
+   "sha256": "006797cd7888e0b746ddcb84b5471269561163bddfecf1647212e3576420b9eb",
+   "url": "https://pghwong.com/project/san-francisco-international-airport-sfo-airtrain-extension-project/"
+  },
+  "buildings/landside/src/verify_pghwong.txt": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 1823,
+   "sha256": "ac48fc1219fea0f76c6bd64e20596ad2c18f0eef145b1447dd98a8af716217d5",
+   "url": "https://pghwong.com/project/san-francisco-international-airport-sfo-airtrain-extension-project/"
+  },
+  "buildings/landside/src/verify_ptt_2021.html": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 209438,
+   "sha256": "385a6c250f37b120f5e53399d98bea91f89c0e9f86657b679225803dce049a3b",
+   "url": "https://www.passengerterminaltoday.com/news/accessibility/skanska-completes-airtrain-extension-at-san-francisco-international-airport.html"
+  },
+  "buildings/landside/src/verify_ptt_2021.txt": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 9690,
+   "sha256": "7c369b1121fab21c9fb5ba359c5d81c7609056137c7102105d9ca3d0e81e5f2f",
+   "url": "https://www.passengerterminaltoday.com/news/accessibility/skanska-completes-airtrain-extension-at-san-francisco-international-airport.html"
+  },
+  "buildings/landside/src/verify_pw_cac.html": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 168384,
+   "sha256": "955499c486abb1454ae22ee88b75cd7292974b9ee30cca162a481d94a9e5f0f7",
+   "url": "https://perkinswill.com/project/sfo-consolidated-administration-campus/"
+  },
+  "buildings/landside/src/verify_pw_cac.txt": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 11585,
+   "sha256": "5709d6fe945de7b8ce119e4cb2b6082614a7f63842d993a142add06b95e196c0",
+   "url": "https://perkinswill.com/project/sfo-consolidated-administration-campus/"
+  },
+  "buildings/landside/src/verify_radp_appx.pdf": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 28110970,
+   "sha256": "9a11e4f313f03f6a1913bbda94a4e47c8102135607ae706b9e84a195cf3aeec2",
+   "url": "https://files.ceqanet.lci.ca.gov/251582-3/attachment/BG1oT278S0KLo_J9GLLCoEtRiJMVmoDMo7ymfZHbivTCRYzqkOIfPVdzDW3l6fyMJ27ugjUEP2nsm6ux0"
+  },
+  "buildings/landside/src/verify_radp_appx.txt": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 3025757,
+   "sha256": "fd1d0c3d707b431fd210354441ea872a7963560881aa0a0bcb1203e214fbf14e",
+   "url": "https://files.ceqanet.lci.ca.gov/251582-3/attachment/BG1oT278S0KLo_J9GLLCoEtRiJMVmoDMo7ymfZHbivTCRYzqkOIfPVdzDW3l6fyMJ27ugjUEP2nsm6ux0"
+  },
+  "buildings/landside/src/verify_radp_deir.pdf": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 13628031,
+   "sha256": "7a0f0bf4ee2904b3ee50241ff7f60067094f218c86e48ea3eeba4cc4fa72966c",
+   "url": "https://ceqanet.lci.ca.gov/2019050013/3/Attachment/11Kyqq"
+  },
+  "buildings/landside/src/verify_radp_deir.txt": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 2165809,
+   "sha256": "7edca6aa4c854af85eb570750dfb840e01ab6bbfc847191ac407d737ea2e225c",
+   "url": "https://ceqanet.lci.ca.gov/2019050013/3/Attachment/11Kyqq"
+  },
+  "buildings/landside/src/verify_radp_nop.pdf": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 5156140,
+   "sha256": "0d3cecd7f2507a7d14f8ec3c1aa5f0c0b19635a3122e6c8fab92423420d98e95",
+   "url": "https://files.ceqanet.lci.ca.gov/251582-2/attachment/Fs6wnks-wJqMOZWG2LguShqJHLMXyIWsfRYSvrFzGL2VYNtz1bweGuhFgqhUz8wAU_5X4oeKzE5JBCE10"
+  },
+  "buildings/landside/src/verify_radp_nop.txt": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 133331,
+   "sha256": "47d58dc618b0b55851963e30217e27c9a7cc9dbc6c39a751b554c1cfa73e1145",
+   "url": "https://files.ceqanet.lci.ca.gov/251582-2/attachment/Fs6wnks-wJqMOZWG2LguShqJHLMXyIWsfRYSvrFzGL2VYNtz1bweGuhFgqhUz8wAU_5X4oeKzE5JBCE10"
+  },
+  "buildings/landside/src/verify_radp_rtc.pdf": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 6513567,
+   "sha256": "ac39e3a8921688d1e5cf923628ba249578d38e2efb72fcf4c5f4db58465850c7",
+   "url": "https://files.ceqanet.lci.ca.gov/251582-5/attachment/jsWJ52D74QjjdNqbpa6eaOYsA8uWxChG8Na2rOMEJIawrjDxWROUXrF_juktwcfHO_9zmEpTVMqcQvaJ0"
+  },
+  "buildings/landside/src/verify_radp_rtc.txt": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 726196,
+   "sha256": "c5100c08d823935f37d358a545268c3e7d2dedaf838340847d7c436195f8607c",
+   "url": "https://files.ceqanet.lci.ca.gov/251582-5/attachment/jsWJ52D74QjjdNqbpa6eaOYsA8uWxChG8Na2rOMEJIawrjDxWROUXrF_juktwcfHO_9zmEpTVMqcQvaJ0"
+  },
+  "buildings/landside/src/verify_sfchron_hyatt.html": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 585885,
+   "sha256": "697792fcbf43f131ac2ee039d9719f1c1502aa7db858ed498bfbd807affbbe55",
+   "url": "https://www.sfchronicle.com/chris-mcginnis/article/Grand-Hyatt-hotel-SFO-construction-13276463.php"
+  },
+  "buildings/landside/src/verify_sfchron_hyatt.txt": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 9229,
+   "sha256": "35f6929e96d2127984f6e7a0b73cfddba5d58ec9c632f0547858fe79ef8fb24d",
+   "url": "https://www.sfchronicle.com/chris-mcginnis/article/Grand-Hyatt-hotel-SFO-construction-13276463.php"
+  },
+  "buildings/landside/src/verify_sfom_superbay_neg.html": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 87762,
+   "sha256": "c0b1d3f03f90de85350552e2db53571b4e7b3838c375a0a7e67efd89326e0c5e",
+   "url": "https://collection.sfomuseum.org/objects/1511948883/"
+  },
+  "buildings/landside/src/verify_sfom_superbay_neg.txt": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 5058,
+   "sha256": "ad6558735cf336273f31548465723e31a4f23ecb3a0b6a8912c18a9a57ab9b39",
+   "url": "https://collection.sfomuseum.org/objects/1511948883/"
+  },
+  "buildings/landside/src/verify_sfplan_nod_cac.pdf": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 1681327,
+   "sha256": "e4a6597151431143b60ca4999b18844352a961276360d15fff22e3bd6ae18c05",
+   "url": "https://media.api.sf.gov/documents/23.0000024_SFO_Consolidated_Administration_Campus.pdf"
+  },
+  "buildings/landside/src/verify_sfplan_nod_cac.txt": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 15,
+   "sha256": "4252ec6c3a358f79a9599fb9d804dfd169356e0eeb9d5f742d7af02dd4f6ded3",
+   "url": "https://media.api.sf.gov/documents/23.0000024_SFO_Consolidated_Administration_Campus.pdf"
+  },
+  "buildings/landside/src/verify_tutor_itb.html": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 17828,
+   "sha256": "8b8c45ea70a409d743929d3ad5578316e200856e4e3889c35d4e7b7404eb289b",
+   "url": "https://www.tutorperini.com/projects/aviation/sfo-international-terminal/"
+  },
+  "buildings/landside/src/verify_tutor_itb.txt": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 3196,
+   "sha256": "802a8d23ed9f8de1eef4b4caae646bef2ecda0ac508ec2f2cf7ef88f5ebebf23",
+   "url": "https://www.tutorperini.com/projects/aviation/sfo-international-terminal/"
+  },
+  "buildings/landside/src/verify_tutor_rcc.html": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 15345,
+   "sha256": "fe531073a5ddcf67a103ee4b51844a54f43b8d0f1e5f843dac27e66a1fb68e72",
+   "url": "https://www.tutorperini.com/projects/aviation/sfo-rental-car-center/"
+  },
+  "buildings/landside/src/verify_tutor_rcc.txt": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 1853,
+   "sha256": "41a994abc7bcc96599e9c7224f99342ec9c63ddc117bf2ef4267316e60c2e5d4",
+   "url": "https://www.tutorperini.com/projects/aviation/sfo-rental-car-center/"
+  },
+  "buildings/landside/src/verify_webcor_cac.html": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 111001,
+   "sha256": "6f23d666a0a694f922bf974303800127e6998799ab81cbd71d0355d94662b073",
+   "url": "https://www.webcor.com/projects/sfo-consolidated-administration-campus"
+  },
+  "buildings/landside/src/verify_webcor_cac.txt": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 16767,
+   "sha256": "1dc0cb339690256d0dac96b97f2ebb00ca905dc3a8e04b23548aa4987c027ecb",
+   "url": "https://www.webcor.com/projects/sfo-consolidated-administration-campus"
+  },
+  "buildings/landside/src/verify_webcor_hyatt.html": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 109160,
+   "sha256": "ad1845e39381130c704e2f8ce5148b2d1d300b5f8e00e66d7b19936278d546f0",
+   "url": "https://www.webcor.com/projects/grand-hyatt-at-san-francisco-international-airport-sfo"
+  },
+  "buildings/landside/src/verify_webcor_hyatt.txt": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 15608,
+   "sha256": "57ae8d1155bb2b12d1eecd6d770ba75d1529baaf0233c94fdc87389b28f61b40",
+   "url": "https://www.webcor.com/projects/grand-hyatt-at-san-francisco-international-airport-sfo"
+  },
+  "buildings/landside/src/verify_weitz_superbay.html": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 109165,
+   "sha256": "d0b1ae7bf07ee376b5de6bee5924025f51f5af6bf437ebc184a07b72d59d2fc3",
+   "url": "https://www.weitz.com/projects/san-francisco-international-airport-superbay-hangar/"
+  },
+  "buildings/landside/src/verify_weitz_superbay.txt": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 6009,
+   "sha256": "0392bae60da68ac2711b9d063b5f77d178a44ce0c9c63d2126960d9182d29baa",
+   "url": "https://www.weitz.com/projects/san-francisco-international-airport-superbay-hangar/"
+  },
+  "buildings/landside/src/verify_weitz_superbay_story.html": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 102403,
+   "sha256": "e0933a3921b333f7b9580645dc1c0bc7059fab21cb109040e9ba020ee7254cd6",
+   "url": "https://www.weitz.com/building-a-legacy-sfo-superbay-hangar/"
+  },
+  "buildings/landside/src/verify_weitz_superbay_story.txt": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 6138,
+   "sha256": "44b52e8949ecf2f0c7ace2d67f6ce855129b42925cade08975d9abbe9c3c1f51",
+   "url": "https://www.weitz.com/building-a-legacy-sfo-superbay-hangar/"
+  },
+  "buildings/landside/src/verify_wiki_airtrain.txt": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 14051,
+   "sha256": "19f35741678abf9838f739bd21f2941620bab4e26c7de48d43194485af29405d",
+   "url": "https://en.wikipedia.org/wiki/AirTrain_(San_Francisco_International_Airport)"
+  },
+  "buildings/landside/src/verify_willis_ltp1.html": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 125118,
+   "sha256": "1b233c98826224bd1808f4cdfbccff4107bed84aad8580097f447742f9dda6f0",
+   "url": "https://willisconstruction.com/sfo-long-term-parking-garage/"
+  },
+  "buildings/landside/src/verify_willis_ltp1.txt": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 5009,
+   "sha256": "255599d19b385164c2c9069e17eda3b3281d29a497fb1982693fcc3732a34bfb",
+   "url": "https://willisconstruction.com/sfo-long-term-parking-garage/"
+  },
+  "buildings/review_likeness/a1.jpg": {
+   "class": "local",
+   "why": "image / document without an open licence in SOURCES.json",
+   "bytes": 619215,
+   "sha256": "8dcd894723ec0aa74a43fd006dda119bb851bb2ed7a16ef7d9b31672f2cd8ef9"
+  },
+  "buildings/review_likeness/a2.jpg": {
+   "class": "local",
+   "why": "image / document without an open licence in SOURCES.json",
+   "bytes": 849371,
+   "sha256": "1b51eac78c8b5a432f3171e1b2a773ca28dc87c9179bfca6e368e9bd58d2a033"
+  },
+  "buildings/review_likeness/a3.jpg": {
+   "class": "local",
+   "why": "image / document without an open licence in SOURCES.json",
+   "bytes": 636309,
+   "sha256": "8a88a0e21f1eccbb24763344b35b81db8fc7b38779e761b6c57e29d7c6d1c806"
+  },
+  "buildings/review_likeness/a4.jpg": {
+   "class": "local",
+   "why": "image / document without an open licence in SOURCES.json",
+   "bytes": 1097887,
+   "sha256": "64678b85b4aaeeda8087ce9e64f7f88952eb86a91034e8b7b0941c0500181acf"
+  },
+  "buildings/review_likeness/d1.jpg": {
+   "class": "local",
+   "why": "image / document without an open licence in SOURCES.json",
+   "bytes": 727961,
+   "sha256": "93d8c9b813ca5359b1dc11aa0d40f7faace3ba0cc8bd32db07876c0910ab05d9"
+  },
+  "buildings/review_likeness/d2.jpg": {
+   "class": "local",
+   "why": "image / document without an open licence in SOURCES.json",
+   "bytes": 500871,
+   "sha256": "f8ae4a794cf6fbd9b553fc6379126b69a545c8d3c25fd1ba84d597666d942c2e"
+  },
+  "buildings/review_likeness/i1.jpg": {
+   "class": "local",
+   "why": "image / document without an open licence in SOURCES.json",
+   "bytes": 292245,
+   "sha256": "78b1bac4271e7f639cb0b53819ac19cb9e8ecbaa4b977166a9c4c4b123135bc9"
+  },
+  "buildings/review_likeness/i2.jpg": {
+   "class": "local",
+   "why": "image / document without an open licence in SOURCES.json",
+   "bytes": 654127,
+   "sha256": "4107fd9597c51120fab369a4209db9a46bacca9ec21086f399fa470dd5d18acc"
+  },
+  "buildings/review_likeness/i3.jpg": {
+   "class": "local",
+   "why": "image / document without an open licence in SOURCES.json",
+   "bytes": 473584,
+   "sha256": "2ff14073703c967af7eeaf18e05b4edde629aea2806166577d97b374e97dff56"
+  },
+  "buildings/review_likeness/i4.jpg": {
+   "class": "local",
+   "why": "image / document without an open licence in SOURCES.json",
+   "bytes": 316768,
+   "sha256": "9a541a4f9db1b595c903a2e533ca8073af0a5a7e1efd0f483fe0959b8e9760b0"
+  },
+  "buildings/review_likeness/l1.jpg": {
+   "class": "local",
+   "why": "image / document without an open licence in SOURCES.json",
+   "bytes": 727149,
+   "sha256": "b5926fb81795c88a32fbee8ec432c8bd0660debe0ec4bb55267713914505099e"
+  },
+  "buildings/review_likeness/l2.jpg": {
+   "class": "local",
+   "why": "image / document without an open licence in SOURCES.json",
+   "bytes": 918483,
+   "sha256": "d840cd4c083a7d6ceed819026a8902b6357eff172d5d1bee5e8ce447a3b28608"
+  },
+  "buildings/review_likeness/l3.jpg": {
+   "class": "local",
+   "why": "image / document without an open licence in SOURCES.json",
+   "bytes": 358153,
+   "sha256": "8c41957868307a78834682212c0844947f11d5cdc5e68d374d91448333245557"
+  },
+  "buildings/review_likeness/l4.jpg": {
+   "class": "local",
+   "why": "image / document without an open licence in SOURCES.json",
+   "bytes": 570406,
+   "sha256": "ca7951c3b9ae0b5568d890d4bdbe7780114b622bbefe24477dc5877bdda82b1f"
+  },
+  "buildings/review_likeness/l5.jpg": {
+   "class": "local",
+   "why": "image / document without an open licence in SOURCES.json",
+   "bytes": 733012,
+   "sha256": "058c8a33e43bd5fa53f0b70f942c2207656de34543ee70642b82ee7ccaf5148c"
+  },
+  "buildings/review_likeness/t1.jpg": {
+   "class": "local",
+   "why": "image / document without an open licence in SOURCES.json",
+   "bytes": 320060,
+   "sha256": "7de8c0abf9f19b7c43512849ee218c8103be6614d7a21ad2c946f99ec281152a"
+  },
+  "buildings/review_likeness/t2.jpg": {
+   "class": "local",
+   "why": "image / document without an open licence in SOURCES.json",
+   "bytes": 589874,
+   "sha256": "3affb631a634e2e5cda3c8c6db32739d2963067ac888a3a53a55a3a274a06731"
+  },
+  "buildings/review_likeness/t3.jpg": {
+   "class": "local",
+   "why": "image / document without an open licence in SOURCES.json",
+   "bytes": 381767,
+   "sha256": "a562fa69b25c4f3137399e1a36a07f52163b5124a58d35defd10a117f8e0a8cd"
+  },
+  "buildings/review_likeness/t4.jpg": {
+   "class": "local",
+   "why": "image / document without an open licence in SOURCES.json",
+   "bytes": 602048,
+   "sha256": "19fac2bf45f825c0423cd70b911096dc5e429bf430a026e12ff72d72ab587d9d"
+  },
+  "buildings/review_likeness/t5.jpg": {
+   "class": "local",
+   "why": "image / document without an open licence in SOURCES.json",
+   "bytes": 721044,
+   "sha256": "7ce3ec04ee63f140dba365f4d9b55c099ef39217a7d1b732611dbe3973da64b3"
   },
   "gate_truth/flysfo_api_flight-status_20261104T180142Z.json.gz": {
    "class": "local",
@@ -239,7 +1151,8 @@
    "class": "local",
    "why": "bulk archive, re-fetchable (extracts are committed)",
    "bytes": 20738799,
-   "sha256": "dc892a560a9db3d30001d49ded5acbe49171d3cc5b319e30a0deb9c891a5ce25"
+   "sha256": "dc892a560a9db3d30001d49ded5acbe49171d3cc5b319e30a0deb9c891a5ce25",
+   "url": "https://aeronav.faa.gov/Obst_Data/DAILY_DOF_CSV.ZIP"
   },
   "naip/naip_2024_sfo_utm10n.tif": {
    "class": "local",
@@ -274,8 +1187,20 @@
   "rec/adsbfi_20261104_18.jsonl.gz": {
    "class": "local",
    "why": "adsb.fi terms: personal non-commercial use, not to be licensed on",
-   "bytes": 1538670,
-   "sha256": "89f36cff344d32998a7226ebdb5016184ca2ff2e55f49105b90fe32a76af0ccf"
+   "bytes": 19232281,
+   "sha256": "1ce1e78f9da4645e56981766a4759493d531fa5a77d672ecc69a5896cba639d8"
+  },
+  "rec/adsbfi_20261104_19.jsonl.gz": {
+   "class": "local",
+   "why": "adsb.fi terms: personal non-commercial use, not to be licensed on",
+   "bytes": 19655607,
+   "sha256": "76462d062521d8b14fb32119d53847667449b6b61653342893267189a0d740e2"
+  },
+  "rec/adsbfi_20261104_20.jsonl.gz": {
+   "class": "local",
+   "why": "adsb.fi terms: personal non-commercial use, not to be licensed on",
+   "bytes": 139610,
+   "sha256": "f1197808fc3b4b560f214a7a8415dea33d9fa7a9edb8d6ca645ac0d4e6890b32"
   },
   "rec/adsblol_20261104_17.jsonl.gz": {
    "class": "pack",
@@ -286,20 +1211,50 @@
   "rec/adsblol_20261104_18.jsonl.gz": {
    "class": "pack",
    "why": "ODbL (adsb.lol); trimmed copy in rec_pack/",
-   "bytes": 450599,
-   "sha256": "840c4deeb2b24d0976ce7a02414357628e9d6a0c4132d615d300f54cd5830d74"
+   "bytes": 5161132,
+   "sha256": "e81d9a93417c126407ca85a52ab60fc10271aaedd854becbafbf4b2b3671ec0e"
+  },
+  "rec/adsblol_20261104_19.jsonl.gz": {
+   "class": "pack",
+   "why": "ODbL (adsb.lol); trimmed copy in rec_pack/",
+   "bytes": 5504797,
+   "sha256": "4dd2895613fab31fe399f31aacbd75dfb692cc3bc6da3ff2bd58c815130d5044"
+  },
+  "rec/adsblol_20261104_20.jsonl.gz": {
+   "class": "pack",
+   "why": "ODbL (adsb.lol); trimmed copy in rec_pack/",
+   "bytes": 103511,
+   "sha256": "2197e1169ac7d8ca33dc7903e9b3ab4f16d448a2b3b94df9f1f382257a09de42"
   },
   "rec/recorder.log": {
    "class": "local",
    "why": "recorder state",
-   "bytes": 921,
-   "sha256": "cfc69021ae5b1ecca60ea579dcda3f1f6b511e6cb95587877740fc9132097ee4"
+   "bytes": 4749,
+   "sha256": "7eef1394f2f6e63cac40ea242bf248dd9a25cbcde525dae386b324b071951070"
   },
   "rec/recorder.pid": {
    "class": "local",
    "why": "recorder state",
    "bytes": 3,
    "sha256": "42f0bec3310ddd8a55e8d62817337ca49c55a898c14ab073d07c16dee24d73d4"
+  },
+  "replay/reports.pkl": {
+   "class": "local",
+   "why": "our own outputs; larger than 25 MB",
+   "bytes": 46913074,
+   "sha256": "cfc47b3d1614ba3a129148bc13d78ff6eb38f6945e17b29040e0091ef44f519d"
+  },
+  "routes/vrs_airports.csv.gz": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 1013398,
+   "sha256": "ed14b43bd29929f25b60709fa4a03821e2770c25edf92db114b2716601b7877a"
+  },
+  "routes/vrs_routes.csv.gz": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 4500164,
+   "sha256": "b41b7eb70ac93a88f735417bb6e85f3d68309a063872e6e13826ab2f128c6c2d"
   }
  }
 }

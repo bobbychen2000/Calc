@@ -13,6 +13,13 @@ Committed third-party data and its attribution:
 - `naip/` provenance and previews — USDA Farm Service Agency NAIP (public domain).
 - `lighting/`, `faa/`, `weather/`, `bts/` — US government works (FAA, NOAA, US DOT BTS).
 - `xplane/` — X-Plane Scenery Gateway data (GPL, as published by the Gateway).
+- `buildings/**/verify/wof/*.geojson` — SFO Museum Who's On First architecture data
+  (https://github.com/sfomuseum-data/sfomuseum-data-architecture), Community Data License Agreement – Permissive 1.0.
+- `buildings/**/src/*wiki*` — Wikipedia article text as fetched (URLs in the `SOURCES.json` beside each file), by
+  Wikipedia contributors, CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/); these copies stay under
+  CC BY-SA 4.0.
+- `commons_photos.json`, `review_likeness/manifest.json` — Wikimedia Commons metadata (structured data CC0) listing
+  each photo's author and licence; the photos themselves are kept local (reference only, never textures).
 
 Agents saving a third-party file here record it in a `SOURCES.json` beside it:
 `{"<file or glob>": {"url": "...", "licence": "..."}}` — only an open licence (public domain, CC0, CC-BY(-SA), ODbL,

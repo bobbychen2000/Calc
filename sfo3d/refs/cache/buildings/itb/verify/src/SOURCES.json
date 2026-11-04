@@ -1,0 +1,152 @@
+{
+ "som.html": {
+  "url": "https://www.som.com/projects/san-francisco-international-airport-international-terminal/",
+  "licence": "copyright of the publisher - reference only, not redistributed",
+  "note": "fetched 2026-11-04 for the ITB fact-check"
+ },
+ "som.txt": {
+  "url": "https://www.som.com/projects/san-francisco-international-airport-international-terminal/",
+  "licence": "copyright of the publisher - reference only, not redistributed",
+  "note": "text extract of som.html"
+ },
+ "msc2000.html": {
+  "url": "https://www.aisc.org/globalassets/modern-steel/archives/2000/02/2000v02_sf_airport.pdf",
+  "licence": "copyright of the publisher - reference only, not redistributed",
+  "note": "HTTP 403 error page, not the document"
+ },
+ "msc2000.txt": {
+  "url": "https://www.aisc.org/globalassets/modern-steel/archives/2000/02/2000v02_sf_airport.pdf",
+  "licence": "copyright of the publisher - reference only, not redistributed",
+  "note": "text extract of msc2000.html"
+ },
+ "seaonc.html": {
+  "url": "https://legacy.seaonc.org/structure/sfo-international-terminal/",
+  "licence": "copyright of the publisher - reference only, not redistributed",
+  "note": "fetched 2026-11-04 for the ITB fact-check"
+ },
+ "seaonc.txt": {
+  "url": "https://legacy.seaonc.org/structure/sfo-international-terminal/",
+  "licence": "copyright of the publisher - reference only, not redistributed",
+  "note": "text extract of seaonc.html"
+ },
+ "smith_emery.html": {
+  "url": "https://www.smithemery.com/staging/4272/projects/san-francisco-international-airport-roof-truss-system-san-francisco-california/",
+  "licence": "copyright of the publisher - reference only, not redistributed",
+  "note": "fetched 2026-11-04 for the ITB fact-check"
+ },
+ "smith_emery.txt": {
+  "url": "https://www.smithemery.com/staging/4272/projects/san-francisco-international-airport-roof-truss-system-san-francisco-california/",
+  "licence": "copyright of the publisher - reference only, not redistributed",
+  "note": "text extract of smith_emery.html"
+ },
+ "sfgate2000.html": {
+  "url": "https://www.sfgate.com/business/article/SFO-terminal-ready-to-take-wing-3077658.php",
+  "licence": "copyright of the publisher - reference only, not redistributed",
+  "note": "fetched 2026-11-04 for the ITB fact-check"
+ },
+ "sfgate2000.txt": {
+  "url": "https://www.sfgate.com/business/article/SFO-terminal-ready-to-take-wing-3077658.php",
+  "licence": "copyright of the publisher - reference only, not redistributed",
+  "note": "text extract of sfgate2000.html"
+ },
+ "enclos.html": {
+  "url": "https://enclos.com/project/san-francisco-international-airport-international-terminal/",
+  "licence": "copyright of the publisher - reference only, not redistributed",
+  "note": "fetched 2026-11-04 for the ITB fact-check"
+ },
+ "enclos.txt": {
+  "url": "https://enclos.com/project/san-francisco-international-airport-international-terminal/",
+  "licence": "copyright of the publisher - reference only, not redistributed",
+  "note": "text extract of enclos.html"
+ },
+ "tutor_itb.html": {
+  "url": "https://www.tutorperini.com/projects/aviation/sfo-international-terminal/",
+  "licence": "copyright of the publisher - reference only, not redistributed",
+  "note": "fetched 2026-11-04 for the ITB fact-check"
+ },
+ "tutor_itb.txt": {
+  "url": "https://www.tutorperini.com/projects/aviation/sfo-international-terminal/",
+  "licence": "copyright of the publisher - reference only, not redistributed",
+  "note": "text extract of tutor_itb.html"
+ },
+ "tutor_bag.html": {
+  "url": "https://www.tutorperini.com/projects/aviation/sfo-boarding-area-g/",
+  "licence": "copyright of the publisher - reference only, not redistributed",
+  "note": "fetched 2026-11-04 for the ITB fact-check"
+ },
+ "tutor_bag.txt": {
+  "url": "https://www.tutorperini.com/projects/aviation/sfo-boarding-area-g/",
+  "licence": "copyright of the publisher - reference only, not redistributed",
+  "note": "text extract of tutor_bag.html"
+ },
+ "ags_baa.html": {
+  "url": "https://www.agsinc.com/projects/sfo-gate-enhancement",
+  "licence": "copyright of the publisher - reference only, not redistributed",
+  "note": "fetched 2026-11-04 for the ITB fact-check"
+ },
+ "ags_baa.txt": {
+  "url": "https://www.agsinc.com/projects/sfo-gate-enhancement",
+  "licence": "copyright of the publisher - reference only, not redistributed",
+  "note": "text extract of ags_baa.html"
+ },
+ "airportworld25.html": {
+  "url": "https://airport-world.com/sfos-international-terminal-celebrates-25th-anniversary/",
+  "licence": "copyright of the publisher - reference only, not redistributed",
+  "note": "fetched 2026-11-04 for the ITB fact-check"
+ },
+ "airportworld25.txt": {
+  "url": "https://airport-world.com/sfos-international-terminal-celebrates-25th-anniversary/",
+  "licence": "copyright of the publisher - reference only, not redistributed",
+  "note": "text extract of airportworld25.html"
+ },
+ "webcor_roof.html": {
+  "url": "https://www.webcor.com/projects/sfo-international-terminal-building-itb-roof-upgrade-project",
+  "licence": "copyright of the publisher - reference only, not redistributed",
+  "note": "fetched 2026-11-04 for the ITB fact-check"
+ },
+ "webcor_roof.txt": {
+  "url": "https://www.webcor.com/projects/sfo-international-terminal-building-itb-roof-upgrade-project",
+  "licence": "copyright of the publisher - reference only, not redistributed",
+  "note": "text extract of webcor_roof.html"
+ },
+ "webcor_ceremony.html": {
+  "url": "https://www.webcor.com/webcor-articles/ceremony-marks-start-of-upgrade-to-roof-of-24-year-old-terminal-roof",
+  "licence": "copyright of the publisher - reference only, not redistributed",
+  "note": "fetched 2026-11-04 for the ITB fact-check"
+ },
+ "webcor_ceremony.txt": {
+  "url": "https://www.webcor.com/webcor-articles/ceremony-marks-start-of-upgrade-to-roof-of-24-year-old-terminal-roof",
+  "licence": "copyright of the publisher - reference only, not redistributed",
+  "note": "text extract of webcor_ceremony.html"
+ },
+ "ftf_roof.html": {
+  "url": "https://ftfengineering.com/portfolio_page/international-terminal-building-roof-upgrade-sfo/",
+  "licence": "copyright of the publisher - reference only, not redistributed",
+  "note": "fetched 2026-11-04 for the ITB fact-check"
+ },
+ "ftf_roof.txt": {
+  "url": "https://ftfengineering.com/portfolio_page/international-terminal-building-roof-upgrade-sfo/",
+  "licence": "copyright of the publisher - reference only, not redistributed",
+  "note": "text extract of ftf_roof.html"
+ },
+ "ai_roof.html": {
+  "url": "https://www.airportsinternational.com/article/sfo-upgrade-terminal-roof",
+  "licence": "copyright of the publisher - reference only, not redistributed",
+  "note": "HTTP 403 error page, not the document"
+ },
+ "ai_roof.txt": {
+  "url": "https://www.airportsinternational.com/article/sfo-upgrade-terminal-roof",
+  "licence": "copyright of the publisher - reference only, not redistributed",
+  "note": "text extract of ai_roof.html"
+ },
+ "wiki_sfo.html": {
+  "url": "https://en.wikipedia.org/w/index.php?title=San_Francisco_International_Airport&action=raw",
+  "licence": "CC BY-SA 4.0 (Wikipedia text)",
+  "note": "fetched 2026-11-04 for the ITB fact-check"
+ },
+ "wiki_sfo.txt": {
+  "url": "https://en.wikipedia.org/w/index.php?title=San_Francisco_International_Airport&action=raw",
+  "licence": "CC BY-SA 4.0 (Wikipedia text)",
+  "note": "text extract of wiki_sfo.html"
+ }
+}

@@ -1,0 +1,8 @@
+{
+ "DAILY_DOF_CSV.ZIP": {
+  "url": "https://aeronav.faa.gov/Obst_Data/DAILY_DOF_CSV.ZIP",
+  "licence": "public domain (US government work, FAA)",
+  "fetched": "2026-11-04",
+  "note": "DOF.CSV dated 2026-11-02"
+ }
+}

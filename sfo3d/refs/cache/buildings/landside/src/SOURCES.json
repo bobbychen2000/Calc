@@ -1,0 +1,475 @@
+{
+ "verify_radp_deir.pdf": {
+  "url": "https://ceqanet.lci.ca.gov/2019050013/3/Attachment/11Kyqq",
+  "licence": "California CEQA public record (SF Planning / SFO); redistribution not verified - reference only",
+  "fetched": "2026-11-04",
+  "by": "tools/buildings/landside_fetch.py (landside fact-check)"
+ },
+ "verify_radp_deir.txt": {
+  "url": "https://ceqanet.lci.ca.gov/2019050013/3/Attachment/11Kyqq",
+  "licence": "text extract of verify_radp_deir.pdf - same terms",
+  "fetched": "2026-11-04"
+ },
+ "verify_radp_appx.pdf": {
+  "url": "https://files.ceqanet.lci.ca.gov/251582-3/attachment/BG1oT278S0KLo_J9GLLCoEtRiJMVmoDMo7ymfZHbivTCRYzqkOIfPVdzDW3l6fyMJ27ugjUEP2nsm6ux0",
+  "licence": "California CEQA public record (SF Planning / SFO); redistribution not verified - reference only",
+  "fetched": "2026-11-04",
+  "by": "tools/buildings/landside_fetch.py (landside fact-check)"
+ },
+ "verify_radp_appx.txt": {
+  "url": "https://files.ceqanet.lci.ca.gov/251582-3/attachment/BG1oT278S0KLo_J9GLLCoEtRiJMVmoDMo7ymfZHbivTCRYzqkOIfPVdzDW3l6fyMJ27ugjUEP2nsm6ux0",
+  "licence": "text extract of verify_radp_appx.pdf - same terms",
+  "fetched": "2026-11-04"
+ },
+ "verify_radp_nop.pdf": {
+  "url": "https://files.ceqanet.lci.ca.gov/251582-2/attachment/Fs6wnks-wJqMOZWG2LguShqJHLMXyIWsfRYSvrFzGL2VYNtz1bweGuhFgqhUz8wAU_5X4oeKzE5JBCE10",
+  "licence": "California CEQA public record (SF Planning / SFO); redistribution not verified - reference only",
+  "fetched": "2026-11-04",
+  "by": "tools/buildings/landside_fetch.py (landside fact-check)"
+ },
+ "verify_radp_nop.txt": {
+  "url": "https://files.ceqanet.lci.ca.gov/251582-2/attachment/Fs6wnks-wJqMOZWG2LguShqJHLMXyIWsfRYSvrFzGL2VYNtz1bweGuhFgqhUz8wAU_5X4oeKzE5JBCE10",
+  "licence": "text extract of verify_radp_nop.pdf - same terms",
+  "fetched": "2026-11-04"
+ },
+ "verify_radp_rtc.pdf": {
+  "url": "https://files.ceqanet.lci.ca.gov/251582-5/attachment/jsWJ52D74QjjdNqbpa6eaOYsA8uWxChG8Na2rOMEJIawrjDxWROUXrF_juktwcfHO_9zmEpTVMqcQvaJ0",
+  "licence": "California CEQA public record (SF Planning / SFO); redistribution not verified - reference only",
+  "fetched": "2026-11-04",
+  "by": "tools/buildings/landside_fetch.py (landside fact-check)"
+ },
+ "verify_radp_rtc.txt": {
+  "url": "https://files.ceqanet.lci.ca.gov/251582-5/attachment/jsWJ52D74QjjdNqbpa6eaOYsA8uWxChG8Na2rOMEJIawrjDxWROUXrF_juktwcfHO_9zmEpTVMqcQvaJ0",
+  "licence": "text extract of verify_radp_rtc.pdf - same terms",
+  "fetched": "2026-11-04"
+ },
+ "verify_sfplan_nod_cac.pdf": {
+  "url": "https://media.api.sf.gov/documents/23.0000024_SFO_Consolidated_Administration_Campus.pdf",
+  "licence": "California CEQA public record (SF Planning / SFO); redistribution not verified - reference only",
+  "fetched": "2026-11-04",
+  "by": "tools/buildings/landside_fetch.py (landside fact-check)"
+ },
+ "verify_sfplan_nod_cac.txt": {
+  "url": "https://media.api.sf.gov/documents/23.0000024_SFO_Consolidated_Administration_Campus.pdf",
+  "licence": "text extract of verify_sfplan_nod_cac.pdf - same terms",
+  "fetched": "2026-11-04"
+ },
+ "verify_db_1981.html": {
+  "url": "https://www.dreyfussblackford.com/project/san-francisco-international-airport-parking-structure/",
+  "licence": "third-party web page, all rights reserved - reference only, do not commit",
+  "fetched": "2026-11-04",
+  "by": "tools/buildings/landside_fetch.py (landside fact-check)"
+ },
+ "verify_db_1981.txt": {
+  "url": "https://www.dreyfussblackford.com/project/san-francisco-international-airport-parking-structure/",
+  "licence": "text extract of verify_db_1981.html - same terms",
+  "fetched": "2026-11-04"
+ },
+ "verify_flysfo_parking.html": {
+  "url": "https://www.flysfo.com/to-from/parking",
+  "licence": "SFO web page / press material, no open licence stated - reference only",
+  "fetched": "2026-11-04",
+  "by": "tools/buildings/landside_fetch.py (landside fact-check)"
+ },
+ "verify_flysfo_parking.txt": {
+  "url": "https://www.flysfo.com/to-from/parking",
+  "licence": "text extract of verify_flysfo_parking.html - same terms",
+  "fetched": "2026-11-04"
+ },
+ "verify_flysfo_ltp.html": {
+  "url": "https://www.flysfo.com/to-from/parking/long-term",
+  "licence": "SFO web page / press material, no open licence stated - reference only",
+  "fetched": "2026-11-04",
+  "by": "tools/buildings/landside_fetch.py (landside fact-check)"
+ },
+ "verify_flysfo_ltp.txt": {
+  "url": "https://www.flysfo.com/to-from/parking/long-term",
+  "licence": "text extract of verify_flysfo_ltp.html - same terms",
+  "fetched": "2026-11-04"
+ },
+ "verify_flysfo_around.html": {
+  "url": "https://www.flysfo.com/to-from/getting-around-sfo",
+  "licence": "SFO web page / press material, no open licence stated - reference only",
+  "fetched": "2026-11-04",
+  "by": "tools/buildings/landside_fetch.py (landside fact-check)"
+ },
+ "verify_flysfo_around.txt": {
+  "url": "https://www.flysfo.com/to-from/getting-around-sfo",
+  "licence": "text extract of verify_flysfo_around.html - same terms",
+  "fetched": "2026-11-04"
+ },
+ "verify_flysfo_airtrain_fs.pdf": {
+  "url": "https://www.flysfo.com/sites/default/files/default/download/about/news/pressres/fact-sheet/pdf/AirTrain_Fact_Sheet.pdf",
+  "licence": "SFO web page / press material, no open licence stated - reference only",
+  "fetched": "2026-11-04",
+  "by": "tools/buildings/landside_fetch.py (landside fact-check)"
+ },
+ "verify_flysfo_airtrain_fs.txt": {
+  "url": "https://www.flysfo.com/sites/default/files/default/download/about/news/pressres/fact-sheet/pdf/AirTrain_Fact_Sheet.pdf",
+  "licence": "text extract of verify_flysfo_airtrain_fs.pdf - same terms",
+  "fetched": "2026-11-04"
+ },
+ "verify_flysfo_pr_2003.pdf": {
+  "url": "https://www.flysfo.com/sites/default/files/SF-03-10.pdf",
+  "licence": "SFO web page / press material, no open licence stated - reference only",
+  "fetched": "2026-11-04",
+  "by": "tools/buildings/landside_fetch.py (landside fact-check)"
+ },
+ "verify_flysfo_pr_2003.txt": {
+  "url": "https://www.flysfo.com/sites/default/files/SF-03-10.pdf",
+  "licence": "text extract of verify_flysfo_pr_2003.pdf - same terms",
+  "fetched": "2026-11-04"
+ },
+ "verify_flysfo_pr_2021.html": {
+  "url": "https://www.flysfo.com/media/press-releases/sfo-completes-airtrain-extension-long-term-parking",
+  "licence": "SFO web page / press material, no open licence stated - reference only",
+  "fetched": "2026-11-04",
+  "by": "tools/buildings/landside_fetch.py (landside fact-check)"
+ },
+ "verify_flysfo_pr_2021.txt": {
+  "url": "https://www.flysfo.com/media/press-releases/sfo-completes-airtrain-extension-long-term-parking",
+  "licence": "text extract of verify_flysfo_pr_2021.html - same terms",
+  "fetched": "2026-11-04"
+ },
+ "verify_aw_airtrain_leed.html": {
+  "url": "https://airport-world.com/sfos-newest-airtrain-stations-earn-leed-gold-certification/",
+  "licence": "third-party web page, all rights reserved - reference only, do not commit",
+  "fetched": "2026-11-04",
+  "by": "tools/buildings/landside_fetch.py (landside fact-check)"
+ },
+ "verify_aw_airtrain_leed.txt": {
+  "url": "https://airport-world.com/sfos-newest-airtrain-stations-earn-leed-gold-certification/",
+  "licence": "text extract of verify_aw_airtrain_leed.html - same terms",
+  "fetched": "2026-11-04"
+ },
+ "verify_ptt_2021.html": {
+  "url": "https://www.passengerterminaltoday.com/news/accessibility/skanska-completes-airtrain-extension-at-san-francisco-international-airport.html",
+  "licence": "third-party web page, all rights reserved - reference only, do not commit",
+  "fetched": "2026-11-04",
+  "by": "tools/buildings/landside_fetch.py (landside fact-check)"
+ },
+ "verify_ptt_2021.txt": {
+  "url": "https://www.passengerterminaltoday.com/news/accessibility/skanska-completes-airtrain-extension-at-san-francisco-international-airport.html",
+  "licence": "text extract of verify_ptt_2021.html - same terms",
+  "fetched": "2026-11-04"
+ },
+ "verify_pghwong.html": {
+  "url": "https://pghwong.com/project/san-francisco-international-airport-sfo-airtrain-extension-project/",
+  "licence": "third-party web page, all rights reserved - reference only, do not commit",
+  "fetched": "2026-11-04",
+  "by": "tools/buildings/landside_fetch.py (landside fact-check)"
+ },
+ "verify_pghwong.txt": {
+  "url": "https://pghwong.com/project/san-francisco-international-airport-sfo-airtrain-extension-project/",
+  "licence": "text extract of verify_pghwong.html - same terms",
+  "fetched": "2026-11-04"
+ },
+ "verify_wiki_airtrain.html": {
+  "url": "https://en.wikipedia.org/wiki/AirTrain_(San_Francisco_International_Airport)",
+  "licence": "CC BY-SA 4.0 (Wikipedia text)",
+  "fetched": "2026-11-04",
+  "by": "tools/buildings/landside_fetch.py (landside fact-check)"
+ },
+ "verify_wiki_airtrain.txt": {
+  "url": "https://en.wikipedia.org/wiki/AirTrain_(San_Francisco_International_Airport)",
+  "licence": "text extract of verify_wiki_airtrain.html - same terms",
+  "fetched": "2026-11-04"
+ },
+ "verify_tutor_itb.html": {
+  "url": "https://www.tutorperini.com/projects/aviation/sfo-international-terminal/",
+  "licence": "third-party web page, all rights reserved - reference only, do not commit",
+  "fetched": "2026-11-04",
+  "by": "tools/buildings/landside_fetch.py (landside fact-check)"
+ },
+ "verify_tutor_itb.txt": {
+  "url": "https://www.tutorperini.com/projects/aviation/sfo-international-terminal/",
+  "licence": "text extract of verify_tutor_itb.html - same terms",
+  "fetched": "2026-11-04"
+ },
+ "verify_tutor_rcc.html": {
+  "url": "https://www.tutorperini.com/projects/aviation/sfo-rental-car-center/",
+  "licence": "third-party web page, all rights reserved - reference only, do not commit",
+  "fetched": "2026-11-04",
+  "by": "tools/buildings/landside_fetch.py (landside fact-check)"
+ },
+ "verify_tutor_rcc.txt": {
+  "url": "https://www.tutorperini.com/projects/aviation/sfo-rental-car-center/",
+  "licence": "text extract of verify_tutor_rcc.html - same terms",
+  "fetched": "2026-11-04"
+ },
+ "verify_conrac_sol.html": {
+  "url": "https://www.conracsolutions.com/project/sfo",
+  "licence": "third-party web page, all rights reserved - reference only, do not commit",
+  "fetched": "2026-11-04",
+  "by": "tools/buildings/landside_fetch.py (landside fact-check)"
+ },
+ "verify_conrac_sol.txt": {
+  "url": "https://www.conracsolutions.com/project/sfo",
+  "licence": "text extract of verify_conrac_sol.html - same terms",
+  "fetched": "2026-11-04"
+ },
+ "verify_willis_ltp1.html": {
+  "url": "https://willisconstruction.com/sfo-long-term-parking-garage/",
+  "licence": "third-party web page, all rights reserved - reference only, do not commit",
+  "fetched": "2026-11-04",
+  "by": "tools/buildings/landside_fetch.py (landside fact-check)"
+ },
+ "verify_willis_ltp1.txt": {
+  "url": "https://willisconstruction.com/sfo-long-term-parking-garage/",
+  "licence": "text extract of verify_willis_ltp1.html - same terms",
+  "fetched": "2026-11-04"
+ },
+ "verify_dlr_ltp2.html": {
+  "url": "https://www.dlrgroup.com/work/san-francisco-international-airport-long-term-parking-garage/",
+  "licence": "third-party web page, all rights reserved - reference only, do not commit",
+  "fetched": "2026-11-04",
+  "by": "tools/buildings/landside_fetch.py (landside fact-check)"
+ },
+ "verify_dlr_ltp2.txt": {
+  "url": "https://www.dlrgroup.com/work/san-francisco-international-airport-long-term-parking-garage/",
+  "licence": "text extract of verify_dlr_ltp2.html - same terms",
+  "fetched": "2026-11-04"
+ },
+ "verify_buehler_ltp2.html": {
+  "url": "https://buehlerengineering.com/project/sfo-ltpg2",
+  "licence": "third-party web page, all rights reserved - reference only, do not commit",
+  "fetched": "2026-11-04",
+  "by": "tools/buildings/landside_fetch.py (landside fact-check)"
+ },
+ "verify_buehler_ltp2.txt": {
+  "url": "https://buehlerengineering.com/project/sfo-ltpg2",
+  "licence": "text extract of verify_buehler_ltp2.html - same terms",
+  "fetched": "2026-11-04"
+ },
+ "verify_enr_ltp2.html": {
+  "url": "https://www.enr.com/articles/47644-sfo-long-term-parking-garage-2-airporttransit",
+  "licence": "third-party web page, all rights reserved - reference only, do not commit",
+  "fetched": "2026-11-04",
+  "by": "tools/buildings/landside_fetch.py (landside fact-check)"
+ },
+ "verify_enr_ltp2.txt": {
+  "url": "https://www.enr.com/articles/47644-sfo-long-term-parking-garage-2-airporttransit",
+  "licence": "text extract of verify_enr_ltp2.html - same terms",
+  "fetched": "2026-11-04"
+ },
+ "verify_dbia_ltp2.html": {
+  "url": "https://dbia.org/project/san-francisco-international-airport-long-term-garage/",
+  "licence": "third-party web page, all rights reserved - reference only, do not commit",
+  "fetched": "2026-11-04",
+  "by": "tools/buildings/landside_fetch.py (landside fact-check)"
+ },
+ "verify_dbia_ltp2.txt": {
+  "url": "https://dbia.org/project/san-francisco-international-airport-long-term-garage/",
+  "licence": "text extract of verify_dbia_ltp2.html - same terms",
+  "fetched": "2026-11-04"
+ },
+ "verify_langan_ltp2.html": {
+  "url": "https://www.langan.com/portfolio/sfo-parking-garage-2",
+  "licence": "third-party web page, all rights reserved - reference only, do not commit",
+  "fetched": "2026-11-04",
+  "by": "tools/buildings/landside_fetch.py (landside fact-check)"
+ },
+ "verify_langan_ltp2.txt": {
+  "url": "https://www.langan.com/portfolio/sfo-parking-garage-2",
+  "licence": "text extract of verify_langan_ltp2.html - same terms",
+  "fetched": "2026-11-04"
+ },
+ "verify_chs_ltp2.html": {
+  "url": "http://www.chsconsulting.net/portfolio/design-build-projects/san-francisco-international-airport-long-term-parking-garage-2/",
+  "licence": "third-party web page, all rights reserved - reference only, do not commit",
+  "fetched": "2026-11-04",
+  "by": "tools/buildings/landside_fetch.py (landside fact-check)"
+ },
+ "verify_chs_ltp2.txt": {
+  "url": "http://www.chsconsulting.net/portfolio/design-build-projects/san-francisco-international-airport-long-term-parking-garage-2/",
+  "licence": "text extract of verify_chs_ltp2.html - same terms",
+  "fetched": "2026-11-04"
+ },
+ "verify_hyatt_pr_2019.html": {
+  "url": "https://newsroom.hyatt.com/news-releases?item=123896",
+  "licence": "third-party web page, all rights reserved - reference only, do not commit",
+  "fetched": "2026-11-04",
+  "by": "tools/buildings/landside_fetch.py (landside fact-check)"
+ },
+ "verify_hyatt_pr_2019.txt": {
+  "url": "https://newsroom.hyatt.com/news-releases?item=123896",
+  "licence": "text extract of verify_hyatt_pr_2019.html - same terms",
+  "fetched": "2026-11-04"
+ },
+ "verify_hyatt_pr_2016.html": {
+  "url": "https://newsroom.hyatt.com/012216Hyatt-And-San-Francisco-International-Airport-Announce-Plans-For-A-Grand-Hyatt-Hotel",
+  "licence": "third-party web page, all rights reserved - reference only, do not commit",
+  "fetched": "2026-11-04",
+  "by": "tools/buildings/landside_fetch.py (landside fact-check)"
+ },
+ "verify_hyatt_pr_2016.txt": {
+  "url": "https://newsroom.hyatt.com/012216Hyatt-And-San-Francisco-International-Airport-Announce-Plans-For-A-Grand-Hyatt-Hotel",
+  "licence": "text extract of verify_hyatt_pr_2016.html - same terms",
+  "fetched": "2026-11-04"
+ },
+ "verify_dbia_hyatt.html": {
+  "url": "https://dbia.org/project/grand-hyatt-at-sfo/",
+  "licence": "third-party web page, all rights reserved - reference only, do not commit",
+  "fetched": "2026-11-04",
+  "by": "tools/buildings/landside_fetch.py (landside fact-check)"
+ },
+ "verify_dbia_hyatt.txt": {
+  "url": "https://dbia.org/project/grand-hyatt-at-sfo/",
+  "licence": "text extract of verify_dbia_hyatt.html - same terms",
+  "fetched": "2026-11-04"
+ },
+ "verify_webcor_hyatt.html": {
+  "url": "https://www.webcor.com/projects/grand-hyatt-at-san-francisco-international-airport-sfo",
+  "licence": "third-party web page, all rights reserved - reference only, do not commit",
+  "fetched": "2026-11-04",
+  "by": "tools/buildings/landside_fetch.py (landside fact-check)"
+ },
+ "verify_webcor_hyatt.txt": {
+  "url": "https://www.webcor.com/projects/grand-hyatt-at-san-francisco-international-airport-sfo",
+  "licence": "text extract of verify_webcor_hyatt.html - same terms",
+  "fetched": "2026-11-04"
+ },
+ "verify_aga_hyatt.html": {
+  "url": "https://www.aga-ca.com/portfolio/sfo-grand-hyatt/",
+  "licence": "third-party web page, all rights reserved - reference only, do not commit",
+  "fetched": "2026-11-04",
+  "by": "tools/buildings/landside_fetch.py (landside fact-check)"
+ },
+ "verify_aga_hyatt.txt": {
+  "url": "https://www.aga-ca.com/portfolio/sfo-grand-hyatt/",
+  "licence": "text extract of verify_aga_hyatt.html - same terms",
+  "fetched": "2026-11-04"
+ },
+ "verify_hw_hyatt.html": {
+  "url": "https://www.hornbergerworstell.com/projects/grand-hyatt-sfo/",
+  "licence": "third-party web page, all rights reserved - reference only, do not commit",
+  "fetched": "2026-11-04",
+  "by": "tools/buildings/landside_fetch.py (landside fact-check)"
+ },
+ "verify_hw_hyatt.txt": {
+  "url": "https://www.hornbergerworstell.com/projects/grand-hyatt-sfo/",
+  "licence": "text extract of verify_hw_hyatt.html - same terms",
+  "fetched": "2026-11-04"
+ },
+ "verify_sfchron_hyatt.html": {
+  "url": "https://www.sfchronicle.com/chris-mcginnis/article/Grand-Hyatt-hotel-SFO-construction-13276463.php",
+  "licence": "third-party web page, all rights reserved - reference only, do not commit",
+  "fetched": "2026-11-04",
+  "by": "tools/buildings/landside_fetch.py (landside fact-check)"
+ },
+ "verify_sfchron_hyatt.txt": {
+  "url": "https://www.sfchronicle.com/chris-mcginnis/article/Grand-Hyatt-hotel-SFO-construction-13276463.php",
+  "licence": "text extract of verify_sfchron_hyatt.html - same terms",
+  "fetched": "2026-11-04"
+ },
+ "verify_cavagnero_cac.html": {
+  "url": "https://www.cavagnero.com/project/sfo-consolidated-administration-campus/",
+  "licence": "third-party web page, all rights reserved - reference only, do not commit",
+  "fetched": "2026-11-04",
+  "by": "tools/buildings/landside_fetch.py (landside fact-check)"
+ },
+ "verify_cavagnero_cac.txt": {
+  "url": "https://www.cavagnero.com/project/sfo-consolidated-administration-campus/",
+  "licence": "text extract of verify_cavagnero_cac.html - same terms",
+  "fetched": "2026-11-04"
+ },
+ "verify_pw_cac.html": {
+  "url": "https://perkinswill.com/project/sfo-consolidated-administration-campus/",
+  "licence": "third-party web page, all rights reserved - reference only, do not commit",
+  "fetched": "2026-11-04",
+  "by": "tools/buildings/landside_fetch.py (landside fact-check)"
+ },
+ "verify_pw_cac.txt": {
+  "url": "https://perkinswill.com/project/sfo-consolidated-administration-campus/",
+  "licence": "text extract of verify_pw_cac.html - same terms",
+  "fetched": "2026-11-04"
+ },
+ "verify_webcor_cac.html": {
+  "url": "https://www.webcor.com/projects/sfo-consolidated-administration-campus",
+  "licence": "third-party web page, all rights reserved - reference only, do not commit",
+  "fetched": "2026-11-04",
+  "by": "tools/buildings/landside_fetch.py (landside fact-check)"
+ },
+ "verify_webcor_cac.txt": {
+  "url": "https://www.webcor.com/projects/sfo-consolidated-administration-campus",
+  "licence": "text extract of verify_webcor_cac.html - same terms",
+  "fetched": "2026-11-04"
+ },
+ "verify_mck_cac.html": {
+  "url": "https://www.mckinc.net/buildings-hospitality/sfo-cac",
+  "licence": "third-party web page, all rights reserved - reference only, do not commit",
+  "fetched": "2026-11-04",
+  "by": "tools/buildings/landside_fetch.py (landside fact-check)"
+ },
+ "verify_mck_cac.txt": {
+  "url": "https://www.mckinc.net/buildings-hospitality/sfo-cac",
+  "licence": "text extract of verify_mck_cac.html - same terms",
+  "fetched": "2026-11-04"
+ },
+ "verify_weitz_superbay.html": {
+  "url": "https://www.weitz.com/projects/san-francisco-international-airport-superbay-hangar/",
+  "licence": "third-party web page, all rights reserved - reference only, do not commit",
+  "fetched": "2026-11-04",
+  "by": "tools/buildings/landside_fetch.py (landside fact-check)"
+ },
+ "verify_weitz_superbay.txt": {
+  "url": "https://www.weitz.com/projects/san-francisco-international-airport-superbay-hangar/",
+  "licence": "text extract of verify_weitz_superbay.html - same terms",
+  "fetched": "2026-11-04"
+ },
+ "verify_weitz_superbay_story.html": {
+  "url": "https://www.weitz.com/building-a-legacy-sfo-superbay-hangar/",
+  "licence": "third-party web page, all rights reserved - reference only, do not commit",
+  "fetched": "2026-11-04",
+  "by": "tools/buildings/landside_fetch.py (landside fact-check)"
+ },
+ "verify_weitz_superbay_story.txt": {
+  "url": "https://www.weitz.com/building-a-legacy-sfo-superbay-hangar/",
+  "licence": "text extract of verify_weitz_superbay_story.html - same terms",
+  "fetched": "2026-11-04"
+ },
+ "verify_deep3ds_superbay.html": {
+  "url": "https://www.deep3ds.com/san-francisco-superbay-hangar-american-united-airlin/",
+  "licence": "third-party web page, all rights reserved - reference only, do not commit",
+  "fetched": "2026-11-04",
+  "by": "tools/buildings/landside_fetch.py (landside fact-check)"
+ },
+ "verify_deep3ds_superbay.txt": {
+  "url": "https://www.deep3ds.com/san-francisco-superbay-hangar-american-united-airlin/",
+  "licence": "text extract of verify_deep3ds_superbay.html - same terms",
+  "fetched": "2026-11-04"
+ },
+ "verify_sfom_superbay_neg.html": {
+  "url": "https://collection.sfomuseum.org/objects/1511948883/",
+  "licence": "third-party web page, all rights reserved - reference only, do not commit",
+  "fetched": "2026-11-04",
+  "by": "tools/buildings/landside_fetch.py (landside fact-check)"
+ },
+ "verify_sfom_superbay_neg.txt": {
+  "url": "https://collection.sfomuseum.org/objects/1511948883/",
+  "licence": "text extract of verify_sfom_superbay_neg.html - same terms",
+  "fetched": "2026-11-04"
+ },
+ "verify_pcad_united.html": {
+  "url": "https://pcad.lib.washington.edu/building/12969/",
+  "licence": "third-party web page, all rights reserved - reference only, do not commit",
+  "fetched": "2026-11-04",
+  "by": "tools/buildings/landside_fetch.py (landside fact-check)"
+ },
+ "verify_pcad_united.txt": {
+  "url": "https://pcad.lib.washington.edu/building/12969/",
+  "licence": "text extract of verify_pcad_united.html - same terms",
+  "fetched": "2026-11-04"
+ },
+ "verify_airlinereporter_2018.html": {
+  "url": "https://www.airlinereporter.com/2018/10/chix-fix-and-a-777-bbq-celebrating-family-day-with-united-airlines/",
+  "licence": "third-party web page, all rights reserved - reference only, do not commit",
+  "fetched": "2026-11-04",
+  "by": "tools/buildings/landside_fetch.py (landside fact-check)"
+ },
+ "verify_airlinereporter_2018.txt": {
+  "url": "https://www.airlinereporter.com/2018/10/chix-fix-and-a-777-bbq-celebrating-family-day-with-united-airlines/",
+  "licence": "text extract of verify_airlinereporter_2018.html - same terms",
+  "fetched": "2026-11-04"
+ }
+}

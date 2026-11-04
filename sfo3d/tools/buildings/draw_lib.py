@@ -119,6 +119,7 @@ class View:
 
     # primitives
     def poly(self, ring, tag='obs', fc='none', lw=None, z=2, closed=True, alpha=1.0, hatch=None, ls=None, ec=None):
+        self.sheet.used_tags.add(tag)
         T = tag_of(tag); q = self.P(np.asarray(ring, float))
         self.ax.add_patch(MPoly(q, closed=closed, fc=fc, ec=ec or T['c'], lw=lw or T['lw'], ls=ls or T['ls'], zorder=z,
                                 alpha=alpha, hatch=hatch, joinstyle='round'))
@@ -127,23 +128,41 @@ class View:
         q = self.P(np.asarray(ring, float))
         self.ax.add_patch(MPoly(q, closed=closed, fc=fc, ec=CTX['c'], lw=lw or CTX['lw'], zorder=z, ls=ls))
 
+    def ctx_holes(self, rings, fc='#eeeeee', z=1, lw=None):
+        """context polygon with holes (rings[0] outer, rest holes), filled by winding (holes reversed as needed)."""
+        from matplotlib.path import Path
+        from matplotlib.patches import PathPatch
+        verts, codes = [], []
+        for i, r in enumerate(rings):
+            q = self.P(np.asarray(r, float))
+            a = ring_area(q)
+            if (i == 0 and a < 0) or (i > 0 and a > 0): q = q[::-1]
+            verts += list(q) + [q[0]]; codes += [Path.MOVETO] + [Path.LINETO] * (len(q) - 1) + [Path.CLOSEPOLY]
+        self.ax.add_patch(PathPatch(Path(np.array(verts), codes), fc=fc, ec=CTX['c'], lw=lw or CTX['lw'], zorder=z))
+
     def line(self, pts, tag='obs', lw=None, z=3, color=None, ls=None, alpha=1.0):
+        self.sheet.used_tags.add(tag)
         T = tag_of(tag); q = self.P(np.asarray(pts, float))
         self.ax.plot(q[:, 0], q[:, 1], color=color or T['c'], lw=lw or T['lw'], ls=ls or T['ls'], zorder=z, alpha=alpha,
                      solid_capstyle='butt', dash_capstyle='butt')
 
     def circle(self, c, r, tag='obs', fc='none', lw=None, z=3, ls=None):
+        self.sheet.used_tags.add(tag)
         T = tag_of(tag)
         self.ax.add_patch(Circle(tuple(self.P(c)), r, fc=fc, ec=T['c'], lw=lw or T['lw'], ls=ls or T['ls'], zorder=z))
 
     def text(self, p, s, tag='pub', fs=4.8, ha='center', va='center', rot=0, bg=True, z=8, color=None, weight='normal',
              style=None):
+        self.sheet.used_tags.add(tag)
+        fs = fs * self.sheet.fk
         T = tag_of(tag); q = self.P(p)
         bb = dict(boxstyle='square,pad=0.12', fc='white', ec='none', alpha=0.85) if bg else None
         self.ax.text(q[0], q[1], s, fontsize=fs, ha=ha, va=va, rotation=rot, color=color or T['c'], fontstyle=style or T['st'],
                      zorder=z, bbox=bb, fontweight=weight, rotation_mode='anchor', clip_on=False)
 
     def dim(self, p0, p1, off_mm, s, tag='pub', fs=4.6, ext=True, z=7, text_off=1.0):
+        self.sheet.used_tags.add(tag)
+        fs = fs * self.sheet.fk
         """aligned dimension p0 -> p1, offset off_mm (paper) to the left of p0 -> p1 in plot space; slash ticks."""
         T = tag_of(tag); a, b = self.P(p0), self.P(p1)
         d = b - a; L = float(np.hypot(*d))
@@ -173,6 +192,8 @@ class View:
                      bbox=dict(boxstyle='square,pad=0.08', fc='white', ec='none', alpha=0.8))
 
     def level(self, u, h, s, tag='pub', side='right', len_mm=18, fs=4.6, z=7, u_line=None):
+        self.sheet.used_tags.add(tag)
+        fs = fs * self.sheet.fk
         """level mark at height h: a line from u over len_mm, a triangle, the text above it."""
         T = tag_of(tag); L = self.mm(len_mm) * (1 if side == 'right' else -1)
         u0 = u if u_line is None else u_line
@@ -183,6 +204,8 @@ class View:
                      bbox=dict(boxstyle='square,pad=0.08', fc='white', ec='none', alpha=0.8))
 
     def leader(self, p, dx_mm, dy_mm, s, tag='pub', fs=4.6, ha=None, z=8, va='center', wrap=None):
+        self.sheet.used_tags.add(tag)
+        fs = fs * self.sheet.fk
         T = tag_of(tag); q = self.P(p); e = q + np.array([self.mm(dx_mm), self.mm(dy_mm)])
         if wrap: s = '\n'.join(textwrap.wrap(s, wrap))
         self.ax.plot([q[0], e[0]], [q[1], e[1]], color=T['c'], lw=0.3, zorder=z)
@@ -192,6 +215,7 @@ class View:
                      bbox=dict(boxstyle='square,pad=0.12', fc='white', ec='none', alpha=0.85))
 
     def mark(self, p, tag='pub', marker='^', ms=3.2, z=9, fc=None):
+        self.sheet.used_tags.add(tag)
         T = tag_of(tag); q = self.P(p)
         self.ax.plot([q[0]], [q[1]], marker=marker, ms=ms, mfc=fc if fc is not None else T['c'], mec=T['c'], mew=0.5, zorder=z, ls='none')
 
@@ -233,8 +257,9 @@ class View:
     def background(self, res=None):
         """NAIP 2024 under the view (overlays only)."""
         x0, x1 = self.ax.get_xlim(); y0, y1 = self.ax.get_ylim()
-        img = naip_rgb(x0, -y1, x1, -y0, res or max(0.5, self.m * 25.4 / self.sheet.dpi))
-        self.ax.imshow(img, extent=[x0, x1, y0, y1], origin='upper', zorder=0.1, interpolation='bilinear')
+        img, (bx0, bz0, bx1, bz1) = naip_rgb(x0, -y1, x1, -y0, res or max(0.5, self.m * 25.4 / self.sheet.dpi), bounds=True)
+        # the crop is snapped outward to whole NAIP pixels: place it at its snapped bounds (not stretched to the view)
+        self.ax.imshow(img, extent=[bx0, bx1, -bz1, -bz0], origin='upper', zorder=0.1, interpolation='bilinear')
         self.ax.set_xlim(x0, x1); self.ax.set_ylim(y0, y1)
 
 
@@ -246,6 +271,7 @@ class Sheet:
         self.vw, self.vh = self.pw - 2 * BORDER - STRIP, self.ph - 2 * BORDER
         self.views, self.notes, self.sources, self.scales, self.has_plan = [], [], [], [], False
         self.used_tags = set()
+        self.fk = {'A3': 1.0, 'A2': 1.08, 'A1': 1.18}[paper]   # text scale with the paper size
 
     def view(self, x, y, w, h, scale, centre, title='', kind='plan', frame=True, title_side='bottom'):
         """view at (x, y) mm from the lower-left of the drawing area, w x h mm, true scale 1:scale, centred on centre
@@ -271,6 +297,25 @@ class Sheet:
     def note(self, s):
         self.notes.append(s)
 
+    def table(self, x, y, w, title, rows, fs=4.4, col=(0.50, 0.20)):
+        """key-value table in the drawing area: (x, y) = top-left in mm; rows = (item, value, tag, source)."""
+        ax = self.fig.add_axes([(BORDER + x) / self.pw, BORDER / self.ph, w / self.pw, (y) / self.ph])
+        ax.set_xlim(0, w); ax.set_ylim(0, y); ax.axis('off')
+        ty = y - 1
+        ax.text(0, ty, title, fontsize=fs + 1.4, fontweight='bold', va='top'); ty -= fs * 0.6 + 2.2
+        lh = fs * 0.42 + 1.0
+        for item, val, tag, src in rows:
+            T = tag_of(tag); self.used_tags.add(tag)
+            wi = textwrap.wrap(item, int(w * col[0] / (fs * 0.19))) or ['']
+            ws = textwrap.wrap(src, int(w * (1 - col[0] - col[1]) / (fs * 0.19))) or ['']
+            n = max(len(wi), len(ws))
+            ax.text(0, ty, '\n'.join(wi), fontsize=fs, va='top', linespacing=1.1)
+            ax.text(w * col[0], ty, val, fontsize=fs, va='top', color=T['c'], fontstyle=T['st'], fontweight='bold')
+            ax.text(w * (col[0] + col[1]), ty, f'[{tag}] ' + '\n'.join(ws), fontsize=fs - 0.4, va='top', color=T['c'], fontstyle=T['st'], linespacing=1.1)
+            ty -= lh * n + 0.9
+            ax.plot([0, w], [ty + 0.5, ty + 0.5], color='#dddddd', lw=0.3)
+        return ty
+
     def _strip(self, imagery):
         pw, ph = self.pw, self.ph
         sx = self.fig.add_axes([(pw - BORDER - STRIP + 2) / pw, BORDER / ph, (STRIP - 2) / pw, self.vh / ph])
@@ -289,7 +334,7 @@ class Sheet:
         # tag legend
         sx.text(2, top, 'Line / text style = where the value comes from', fontsize=5.0, fontweight='bold', va='top'); top -= 4.2
         for k in ('pub', 'obs', 'inf', 'unk', 'app'):
-            if k not in self.used_tags and k in ('app',): continue
+            if k == 'app' and k not in self.used_tags: continue
             T = TAGS[k]
             sx.plot([2, 9], [top - 1, top - 1], color=T['c'], lw=0.9, ls=T['ls'])
             sx.text(10.5, top - 1, '\n'.join(textwrap.wrap(T['txt'], 66)), fontsize=4.0, color=T['c'], fontstyle=T['st'], va='center', linespacing=1.1)
@@ -306,7 +351,7 @@ class Sheet:
                 sx.text(5.5, top, '\n'.join(wr), fontsize=3.9, va='top', linespacing=1.15)
                 top -= 1.6 * len(wr) + 1.4
         # title block
-        tb = 46; y0 = 1
+        tb = 52; y0 = 1
         sx.add_patch(Rectangle((0.5, y0), W - 1, tb, fc='white', ec='k', lw=0.8))
         sx.plot([0.5, W - 0.5], [y0 + tb - 13, y0 + tb - 13], color='k', lw=0.5)
         sx.text(2, y0 + tb - 2, 'SFO Live 3D - building drawings (2-D, drawn to verified dimensions)', fontsize=4.6, fontweight='bold', va='top')
@@ -325,8 +370,8 @@ class Sheet:
         ty = y0 + tb - 15
         for r in rows:
             if not r: continue
-            for ln in textwrap.wrap(r, 74):
-                sx.text(2, ty, ln, fontsize=3.9, va='top'); ty -= 3.1
+            for ln in textwrap.wrap(r, 80):
+                sx.text(2, ty, ln, fontsize=3.8, va='top'); ty -= 2.75
         return sx
 
     def finish(self, imagery='none (vector)', outdir=None, fmt=('svg', 'png')):
@@ -341,6 +386,10 @@ class Sheet:
         for f in fmt:
             kw = dict(pil_kwargs={'quality': 88}) if f == 'jpg' else {}
             self.fig.savefig(base + '.' + f, dpi=self.dpi, **kw); out.append(base + '.' + f)
+            if f == 'png':   # line art: a 160-colour palette keeps the anti-aliasing and cuts the file ~3x
+                from PIL import Image
+                im = Image.open(base + '.png').convert('RGB').quantize(colors=160, method=Image.Quantize.MEDIANCUT)
+                im.save(base + '.png', optimize=True)
         plt.close(self.fig)
         return out
 
@@ -360,8 +409,10 @@ def naip_available():
     return os.path.exists(os.path.join(NAIP_DIR, 'naip_2024_world_0.5m_bgr.npy'))
 
 
-def naip_rgb(x0, z0, x1, z1, res=0.5):
-    """RGB crop of the world window (z0 < z1), resampled to res m/px (area)."""
+def naip_rgb(x0, z0, x1, z1, res=0.5, bounds=False):
+    """RGB crop of the world window (z0 < z1), resampled to res m/px (area). The crop is snapped outward to whole NAIP
+    pixels (pixel c covers x0_r + c R .. x0_r + (c + 1) R, the convention of sample_lum); bounds=True also returns the
+    snapped world window (x0, z0, x1, z1) for placing the image."""
     import cv2
     A, T = _naip(); R = T['res']
     c0, r0 = int(math.floor((x0 - T['x0']) / R)), int(math.floor((z0 - T['z0']) / R))
@@ -374,7 +425,10 @@ def naip_rgb(x0, z0, x1, z1, res=0.5):
         f = R / res; img = cv2.resize(img, None, fx=f, fy=f, interpolation=cv2.INTER_AREA)
     img = img[:, :, ::-1]
     # lighten a little so the line work reads on top
-    return (img.astype(np.float32) * 0.78 + 255 * 0.22).astype(np.uint8)
+    img = (img.astype(np.float32) * 0.78 + 255 * 0.22).astype(np.uint8)
+    if bounds:
+        return img, (T['x0'] + c0 * R, T['z0'] + r0 * R, T['x0'] + c1 * R, T['z0'] + r1 * R)
+    return img
 
 
 def sample_lum(X, Z):

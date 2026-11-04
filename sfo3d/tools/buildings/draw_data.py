@@ -74,7 +74,8 @@ def min_rect(pts):
 
 
 def complex_rings():
-    return AIR['terminalComplex']
+    """all rings (outer + holes) of the SFO Museum terminal complex."""
+    return [r for poly in AIR['terminalComplex'] for r in poly]
 
 
 # ------------------------------------------------------------------------------------------------ relief (lean) models

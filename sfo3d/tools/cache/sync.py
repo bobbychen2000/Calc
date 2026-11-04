@@ -102,6 +102,9 @@ def classify(rel, path):
     ext = os.path.splitext(rel)[1].lower()
     src = sources_for(path)
     lic = (src or {}).get('licence') or (src or {}).get('license') or ''
+    if os.path.basename(rel) == 'SOURCES.json':
+        # provenance records always travel with the files they license (attribution for CC BY-SA / ODbL copies)
+        return 'commit', 'provenance (SOURCES.json)', src
     for pat, cls, why in RULES:
         if fnmatch.fnmatch(rel, pat):
             if cls == 'local?':

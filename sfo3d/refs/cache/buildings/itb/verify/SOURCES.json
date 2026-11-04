@@ -1,0 +1,11 @@
+{
+ "dof_itb_area_2026-11-02.json": {
+  "url": "https://aeronav.faa.gov/Obst_Data/DAILY_DOF_CSV.ZIP",
+  "licence": "public domain (US government work, FAA); extract by tools/buildings/itb_verify.py work"
+ },
+ "commons_photos.json": {
+  "url": "https://commons.wikimedia.org/w/api.php (imageinfo/extmetadata)",
+  "licence": "CC0 (Wikimedia structured metadata); licence records of the listed photos",
+  "fetched": "2026-11-04"
+ }
+}

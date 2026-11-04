@@ -1,0 +1,7 @@
+{
+ "*.geojson": {
+  "url": "https://raw.githubusercontent.com/sfomuseum-data/sfomuseum-data-architecture/main/data/",
+  "licence": "SFO Museum Who's On First architecture data (as data/sfo_airport.json: CDLA-Permissive-1.0 per tools/buildings/landside_common.py)",
+  "fetched": "2026-11-04"
+ }
+}

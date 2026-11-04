@@ -164,7 +164,23 @@ export class GateSystem {
 }
 
 // ----- vehicle meshes -----
-export function buildVehicleMeshes() {
+// Belt loader conveyor settings (top of the conveyor at the lower-deck cargo-door sill, m above the apron):
+//  - 'beltLoader' 1.55 m: Boeing 737 NG / MAX forward cargo door sill 1.30-1.45 m, aft 1.63-1.80 m (737NG ACAP Rev C and
+//    737 MAX ACAP Rev K §2.3 Ground Clearances, refs/cache/acap)
+//  - 'beltLoaderA' 2.05 m: Airbus A320 family aft cargo door sill 1.89-1.98 m, bulk cargo door 2.11-2.22 m (Airbus AC A321
+//    Rev 35 §2-3 Ground Clearances, refs/cache/acap/AC_A321_jul2026.pdf)
+// Conveyor length 8.0 m, 0.9 m wide, rear end 0.75 m up (typical of the airport belt loaders; inferred, no datasheet).
+export const BELT_SILL = { beltLoader: 1.55, beltLoaderA: 2.05 };
+// local shape (x forward to the aircraft end, y up, z right): conveyor box from (x0, y0) tilted by th about z; its top
+// surface ends at (xe, S); chassis -2.5..2.4 m up to chassisTop; cab on the left (-z) side up to 2.05 m
+export function beltShape(S) {
+  const x0 = -2.9, y0 = 0.75, len = 8.0, thick = 0.3, w = 0.9;
+  let th = 0; for (let i = 0; i < 40; i++) th = Math.asin(Math.max(-0.5, Math.min(0.9, (S - y0 - thick * Math.cos(th)) / len)));
+  return { x0, y0, len, thick, w, th, xe: x0 + len * Math.cos(th) - thick * Math.sin(th), S, chassisTop: 0.75, cabTop: 2.05 };
+}
+export function buildVehicleMeshes() { const M = vehicleGeos(); const out = {}; for (const k in M) out[k] = new Mesh(M[k].data()); return out; }
+// the vehicle geometries (Geo, local metres) - also read by the checkers
+export function vehicleGeos() {
   const T = (c) => [...c, 1];
   const paint = [0.9, 0.9, 0.9, 1], dark = [0.1, 0.1, 0.11, 1], glass = [0.05, 0.06, 0.07, 1];
   const E_PAINT = [0.45, 0, 20, 0], E_DARK = [0.8, 0, 0, 0], E_GLASS = [0.1, 0, 0, 0], E_METAL = [0.4, 0.8, 0, 0];
@@ -172,13 +188,18 @@ export function buildVehicleMeshes() {
   const M = {};
   { const g = new Geo(); g.box([-1.4, 0.35, -0.8], [1.4, 1.2, 0.8], paint, E_PAINT); g.box([-1.3, 1.2, -0.75], [-0.1, 2.0, 0.75], glass, E_GLASS); g.box([-1.35, 2.0, -0.8], [-0.05, 2.1, 0.8], paint, E_PAINT); wheels(g, [-0.9, 0.9], 0.8, 0.35); M.tug = g; }
   { const g = new Geo(); g.box([-1.5, 0.4, -0.85], [1.5, 0.55, 0.85], [0.3, 0.3, 0.32, 1], E_METAL); const bag = [[0.2, 0.2, 0.25], [0.5, 0.1, 0.1], [0.1, 0.2, 0.4], [0.35, 0.3, 0.2]]; for (let i = 0; i < 6; i++) g.box([-1.4 + (i % 3) * 0.95, 0.55, -0.8 + Math.floor(i / 3) * 0.8], [-0.55 + (i % 3) * 0.95, 1.0 + (i % 2) * 0.2, -0.05 + Math.floor(i / 3) * 0.8], T(bag[i % 4]), [0.8, 0, 20, 0]); g.box([-1.5, 1.3, -0.85], [1.5, 1.4, 0.85], [0.8, 0.8, 0.8, 1], E_METAL); wheels(g, [-1.0, 1.0], 0.85, 0.22, 0.15); M.cart = g; }
-  { const g = new Geo(); g.box([-2.5, 0.4, -1.0], [2.5, 1.3, 1.0], paint, E_PAINT); g.box([-2.4, 1.3, -0.9], [-1.2, 2.3, 0.9], glass, E_GLASS);
-    // inclined belt
-    const bl = m4.mul(m4.translate(-2.8, 1.2, 0), m4.rotZ(0.38)); g.box([0, 0, -0.45], [8.5, 0.35, 0.45], dark, E_DARK, bl); wheels(g, [-1.6, 1.6], 1.0); M.beltLoader = g; }
+  // belt loaders: one mesh per conveyor setting (BELT_SILL: the top of the conveyor at the cargo-door sill)
+  for (const [k, S] of Object.entries(BELT_SILL)) { const B = beltShape(S); const g = new Geo();
+    g.box([-2.5, 0.35, -1.05], [2.4, B.chassisTop, 1.05], paint, E_PAINT);                                  // chassis
+    g.box([-2.5, B.chassisTop, -1.05], [-1.25, 1.95, -0.52], glass, E_GLASS); g.box([-2.55, 1.95, -1.08], [-1.2, 2.05, -0.5], paint, E_PAINT); // driver's cab (left side)
+    const bm = m4.mul(m4.translate(B.x0, B.y0, 0), m4.rotZ(B.th)); g.box([0, 0, -B.w / 2], [B.len, B.thick, B.w / 2], dark, E_DARK, bm); // conveyor
+    for (const sz of [-1, 1]) { g.box([0, B.thick, sz * B.w / 2 - 0.03], [B.len, B.thick + 0.25, sz * B.w / 2 + 0.03], [0.85, 0.7, 0.1, 1], E_PAINT, bm); } // side rails
+    const xs = 1.6, ys = B.y0 + (xs - B.x0) * Math.tan(B.th); g.box([xs - 0.12, B.chassisTop, -0.3], [xs + 0.12, Math.max(B.chassisTop + 0.05, ys), 0.3], [0.3, 0.3, 0.32, 1], E_METAL); // lift strut
+    wheels(g, [-1.6, 1.6], 1.0); M[k] = g; }
   { const g = new Geo(); g.box([-3.5, 0.5, -1.1], [3.0, 1.6, 1.1], paint, E_PAINT); g.box([3.0, 0.5, -1.1], [4.5, 2.6, 1.1], paint, E_PAINT); g.box([3.9, 1.6, -1.05], [4.55, 2.4, 1.05], glass, E_GLASS);
     g.box([-3.4, 3.6, -1.2], [2.8, 6.2, 1.2], [0.95, 0.95, 0.95, 1], [0.5, 0, 2, 0]); g.box([-3.0, 1.6, -0.3], [2.4, 3.6, 0.3], [0.3, 0.3, 0.32, 1], E_METAL); wheels(g, [-2.4, 3.6], 1.1, 0.45); M.catering = g; }
   { const g = new Geo(); g.box([2.5, 0.5, -1.2], [4.5, 2.8, 1.2], paint, E_PAINT); g.box([3.9, 1.7, -1.15], [4.55, 2.6, 1.15], glass, E_GLASS); g.cylinder(1.2, 6.0, 16, [0.85, 0.85, 0.86, 1], [0.35, 0.6, 0, 0], m4.mul(m4.translate(-3.8, 2.0, 0), m4.rotZ(-Math.PI / 2))); wheels(g, [-3, -1.5, 3.5], 1.2, 0.5); M.fuel = g; }
   { const g = new Geo(); g.box([-1.2, 0.3, -0.7], [1.2, 1.5, 0.7], paint, E_PAINT); wheels(g, [-0.8, 0.8], 0.7, 0.28); M.gpu = g; }
   { const g = new Geo(); g.lathe([[0.22, 0], [0.05, 0.75]], 10, [0.95, 0.35, 0.05, 1], [0.6, 0, 0, 0], null, true); M.cone = g; }
-  const out = {}; for (const k in M) out[k] = new Mesh(M[k].data()); return out;
+  return M;
 }

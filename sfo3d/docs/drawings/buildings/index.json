@@ -1,0 +1,62 @@
+{
+ "BD-01": [
+  "docs/drawings/buildings/BD-01.svg",
+  "docs/drawings/buildings/BD-01.png"
+ ],
+ "BD-01n": [
+  "out/buildings/drawings/BD-01_naip.jpg"
+ ],
+ "BD-02": [
+  "docs/drawings/buildings/BD-02.svg",
+  "docs/drawings/buildings/BD-02.png"
+ ],
+ "BI-01": [
+  "docs/drawings/buildings/BI-01.svg",
+  "docs/drawings/buildings/BI-01.png"
+ ],
+ "BI-01n": [
+  "out/buildings/drawings/BI-01_naip.jpg"
+ ],
+ "BI-02": [
+  "docs/drawings/buildings/BI-02.svg",
+  "docs/drawings/buildings/BI-02.png"
+ ],
+ "BI-03": [
+  "docs/drawings/buildings/BI-03.svg",
+  "docs/drawings/buildings/BI-03.png"
+ ],
+ "BL-01": [
+  "docs/drawings/buildings/BL-01.svg",
+  "docs/drawings/buildings/BL-01.png"
+ ],
+ "BL-02": [
+  "docs/drawings/buildings/BL-02.svg",
+  "docs/drawings/buildings/BL-02.png"
+ ],
+ "BL-02n": [
+  "out/buildings/drawings/BL-02_naip.jpg"
+ ],
+ "BL-03": [
+  "docs/drawings/buildings/BL-03.svg",
+  "docs/drawings/buildings/BL-03.png"
+ ],
+ "BT-01": [
+  "docs/drawings/buildings/BT-01.svg",
+  "docs/drawings/buildings/BT-01.png"
+ ],
+ "BT-01n": [
+  "out/buildings/drawings/BT-01_naip.jpg"
+ ],
+ "BT-02": [
+  "docs/drawings/buildings/BT-02.svg",
+  "docs/drawings/buildings/BT-02.png"
+ ],
+ "BT-03": [
+  "docs/drawings/buildings/BT-03.svg",
+  "docs/drawings/buildings/BT-03.png"
+ ],
+ "BX-01": [
+  "docs/drawings/buildings/BX-01.svg",
+  "docs/drawings/buildings/BX-01.png"
+ ]
+}
