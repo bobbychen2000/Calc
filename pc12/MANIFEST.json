@@ -41,16 +41,12 @@
   "tool": "node cli.js",
   "method": "reorder + EXT_meshopt_compression on the build's quantisation"
  },
- "commit": "23197ab+dirty",
- "built": "2026-11-04T18:05:26+00:00",
+ "commit": "db39ac6+dirty",
+ "built": "2026-11-04T18:50:32+00:00",
  "files": {
   ".nojekyll": {
    "bytes": 0,
    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-  },
-  "MANIFEST.json": {
-   "bytes": 43,
-   "sha256": "d1350db1f57621d74ffbbb5523c2b78018cd8474495b1bb7b122de1ff9542573"
   },
   "assets/SOURCES.md": {
    "bytes": 1161,
