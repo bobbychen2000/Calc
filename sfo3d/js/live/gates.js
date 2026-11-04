@@ -6,9 +6,11 @@
 //    bogie on the outer tunnel, pre-conditioned-air unit, cab bubble with the rotating cab, bellows closure, service
 //    landing + stair, floodlight, beacon, gate-number signs on the tunnel
 //  - stand equipment: gate identification sign and visual docking guidance display (VDGS), placed on the stand
-//    centreline where no bridge part reaches it in any pose (rest, docking path, docked)
-//  - ground service vehicles placed around the actually parked aircraft, rejected if they would hit the aircraft,
-//    a bridge (its real solids) or a neighbouring aircraft
+//    centreline where no bridge part reaches it in any pose (rest, docking path, docked); on the terminal face only
+//    where a pier / hall wall stands behind it, else on its own post
+//  - ground service vehicles placed around the actually parked aircraft (belt loaders on the sourced cargo-door sills
+//    of the 737 / A320 families), their mesh hulls sampled against the aircraft (elliptical fuselage, wings, engines,
+//    tail), the neighbouring aircraft, the bridges' real solids, the terminal and each other
 //
 // Bridge kinematics (sources):
 //  * Oshkosh AeroTech, "Jetway Glass & Steel Truss Passenger Boarding Bridges" sell sheet (2025), cached
@@ -35,7 +37,14 @@
 //    direct path would pass through it, a retract-swing-extend path is used, and if none is clear the bridge stays at
 //    rest. The engine holds a departing aircraft until extension(g) is 0.
 //  * Rest pose: the data's `stowW` (tunnel end = cab pivot at rest, clear of every accepted type's envelope + 1 m, of
-//    the other bridges at rest and docked, of the building; cab straight on the tunnel).
+//    the other bridges at rest and docked, of the building; cab straight on the tunnel). After an undocking the cab
+//    settles from the door's height to the rest height (rest tunnel <= 1:12) at the sheet's lift rate.
+//  * Solid-body rules (review 2026-11-04): the drum is at least DRUM_MIN (1.5 m) - the corridor it carries is 2.4 m wide -
+//    with the rotunda moved off a neighbour's walkway / drum / the outline by the deficit (<= 2 m); the rotunda
+//    corridor, tunnels, drive column and cab never pass through another bridge's fixed walkway, drum or pedestal, nor
+//    the tunnels / column / cab through the bridge's own fixed walkway (jointOk / pathHits: such dockings stay at rest);
+//    twin heads (a walkway through one rotunda to a second 3.4 m on: F15, G12) share one floor level.
+//  * Fast retraction for a departing aircraft: hurryUndock(g, s, now) - the same path at the sheet's maximum rates.
 //  * Upper-deck bridges (`bridges_upper`, A6 / A11 / G13) dock the A380's U1L door: Airbus A380 Aircraft
 //    Characteristics (AC380, Dec 01/25, refs/cache/acap/airbus_AC_A380_20251201.pdf): U1L 20.94 m from the nose
 //    (FIGURE-2-7-0-991-002), sill 7.87-7.89 m at MRW (FIGURE-2-3-0-991-001).
@@ -405,6 +414,9 @@ export class LiveGateSystem {
     b._tgH = tg;
     const Hr = this.pickHr(g, [b], b._tgH, b.Hb - dh, b.Hb + dh);
     this.applyHeights(b, Hr, tg, b._tgH);
+    // (HrPinned: the rotunda floor sits on the edge of the walkway's 1:12 band from the INFERRED departure level - all
+    // 107 observed dockings steeper than 1:12 are on such bridges; tools may label their slopes "inferred heights")
+    b.HrPinned = tg.length > 0 && (Math.abs(b.Hr - (b.Hb - dh)) < 0.03 || Math.abs(b.Hr - (b.Hb + dh)) < 0.03);
     b._tg = tg; b.reach = b.e0;
   }
   // rotunda floor in [lo, hi] (on the walkway's 1:12 band) minimising the steepest docked tunnel slope of the targets,
@@ -576,7 +588,11 @@ export class LiveGateSystem {
     const m = b.m; const turn = CW * q.t / DEG; const opt = b.cabOption && /^optional/.test(b.cabOption);
     if (icao && b.dockTypesOut && b.dockTypesOut.includes(icao)) return { ok: false, why: 'dock_types_out' };
     // (reach: the sheet's operational range; up to 0.3 m short of the mechanical stop - fully extended minus the cab
-    // spacer - where a parked aircraft stands beyond it: the tunnels can travel there, the data's model is an inference)
+    // spacer - where a parked aircraft stands beyond it: the tunnels can travel there, the data's model is an inference.
+    // INFERRED allowance: review 2026-11-04 counted 199 of 3,282 dockings beyond the operational extension, by up to
+    // 1.05 m; the fix belongs to the data's model choice - docs/requests/bridges_closeout.md. The optional 185 deg cab
+    // split, CAB_OPT_HALF, is inferred too: 17 dockings turn it 38.7-48.2 deg ccw, on bridges whose data cab_option
+    // says "optional 185 deg cab needed (inferred)".)
     // (below the operational retraction the sections cannot telescope any further: sections() clamps there)
     if (q.e < m.opR - 1e-6 || q.e > Math.max(m.opE, m.mechE - 0.3)) return { ok: false, why: `extension ${q.e.toFixed(1)} m outside ${m.opR}-${m.opE} (mechanical ${m.mechE.toFixed(1)})` };
     if (opt ? Math.abs(turn) > CAB_OPT_HALF : (turn > CAB_CW || turn < -CAB_CCW)) return { ok: false, why: `cab turn ${turn.toFixed(0)} deg` };
@@ -714,9 +730,14 @@ export class LiveGateSystem {
     seg(b.rotR * 0.8, m.F, 2.4, 2.8, 'neck');
     const secs = this.sections(b, q.e);
     secs.forEach(([s0, s1, w, h], i) => seg(s0, s1, w, h, 'tunnel' + (i + 1)));
-    // drive column (legs + bogie) on the outer tunnel
-    const dc = this.driveAt(b, q.e); const cx = rot[0] + u[0] * dc, cz = rot[2] + u[2] * dc;
-    out.push({ c: [cx, cz], u: [u[0], u[2]], hl: 0.6, hw: 1.45, lo: G, hi: fl(dc), part: 'column' });
+    // drive column (legs + bogie + cross beam, +-1.55 m) on the outer tunnel, its control box on the right-hand leg, and
+    // the pre-conditioned-air unit + hose basket slung under the outer tunnel (as bridgeGeo draws them)
+    const dc = this.driveAt(b, q.e); const cx = rot[0] + u[0] * dc, cz = rot[2] + u[2] * dc; const rt = [-u[2], u[0]];
+    out.push({ c: [cx, cz], u: [u[0], u[2]], hl: 0.6, hw: 1.6, lo: G, hi: fl(dc), part: 'column' });
+    { const y = fl(dc) - 0.15; out.push({ c: [cx + rt[0] * 1.7, cz + rt[1] * 1.7], u: [u[0], u[2]], hl: 0.35, hw: 0.2, lo: y - 0.9, hi: y, part: 'drive_ctrl' }); }
+    { const ps = Math.max(secs[secs.length - 1][0] + 0.7, dc - 1.8); const y = fl(ps) - 0.15; const c = [rot[0] + u[0] * ps, rot[2] + u[2] * ps];
+      if (y - G > 1.8) out.push({ c, u: [u[0], u[2]], hl: 0.6, hw: 1.2, lo: y - 1.5, hi: y - 0.15, part: 'pca' });
+      if (y - G > 2.3) out.push({ c, u: [u[0], u[2]], hl: 0.45, hw: 0.5, lo: y - 2.0, hi: y - 1.5, part: 'pca_basket' }); }
     // cab (body + closure), about the pivot, facing q.a + q.t
     const fc = dirOf(q.a + q.t); const piv = [rot[0] + u[0] * q.e, rot[2] + u[2] * q.e]; const front = m.spacer - 0.45 + 0.45 + 0.15 * kk;
     out.push({ c: [piv[0] + fc[0] * (front - CAB_BACK) / 2, piv[1] + fc[2] * (front - CAB_BACK) / 2], u: [fc[0], fc[2]], hl: (front + CAB_BACK) / 2, hw: CAB_W / 2, lo: G + q.h - 0.3, hi: G + q.h + 3.6, part: 'cab' });

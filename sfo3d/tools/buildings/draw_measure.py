@@ -142,8 +142,8 @@ def run():
         E += measure_ring('Boarding Area A', r, h, lambda P, h=h: per_m_frame(P, h), 'frame', f'ba_a.height_roof {h} [obs]')
     h = D.IV['ba_g.height_roof']['value']
     for r in D.outer_rings('Boarding Area G', 'boardingAreas'):
-        kx = np.array([D.k_x_model(float(np.mean(np.asarray(r)[:, 0]))), 0.0])
-        E += measure_ring('Boarding Area G', r, h, kx, f'kmodel east k {kx[0]:.3f} (as spec ba_g.height_roof)', f'ba_g.height_roof {h} [obs]')
+        E += measure_ring('Boarding Area G', r, h, lambda P: np.array([D.k_x_model(float(P[0])), 0.0]),
+                          'kmodel: east k(x) per edge (as spec ba_g.height_roof)', f'ba_g.height_roof {h} [obs]')
         E += measure_ring('Boarding Area G (frame model, comparison only)', r, h, lambda P, h=h: per_m_frame(P, h), 'frame',
                           f'ba_g.height_roof {h} [obs]')
     # ------------------------------------------------------------------ domestic piers and halls

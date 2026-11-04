@@ -507,8 +507,12 @@ export class Traffic {
     const trk = !ground && a.track != null ? a.track * DEG : null;   // surface `track` is not trustworthy (audit s.4.3)
     const r = { t: tf, x, z, px: x, pz: z, y, ground, gs, gsKt: a.gs ?? null, th, trk, vs: a.baroRate != null ? a.baroRate * FT / 60 : (a.geomRate != null ? a.geomRate * FT / 60 : null),
       alt: a.altBaro, geom: a.altGeom, vr: a.baroRate ?? a.geomRate ?? null, roll: a.roll != null ? a.roll * DEG : null, hdReal: th != null };
-    let chord = null;
-    if (L) { const dx = x - L.x, dz = z - L.z, d = Math.hypot(dx, dz), dt = (tf - L.t) / 1000; if (d > (ground ? 3 : 20)) chord = vecHdg(dx, dz); if (r.gs == null && dt > 0) r.gs = d / dt; }
+    let chord = null, chordOk = true;
+    if (L) { const dx = x - L.x, dz = z - L.z, d = Math.hypot(dx, dz), dt = (tf - L.t) / 1000; if (d > (ground ? 3 : 20)) chord = vecHdg(dx, dz); if (r.gs == null && dt > 0) r.gs = d / dt;
+      // (a chord the reported speeds cannot explain -- <= 1.6 gs dt + 3 m, the motionConfirmed() test -- is a GNSS position
+      // jump, not motion: UAL1180 B77W creeping into G8 at 1.9 kt, 4 Nov 17:50:51.8 -> 53.2Z, jumped 12.3 m backward in
+      // 1.4 s and was turned into a push-back -- review 4 Nov, critical)
+      if (ground && chord != null && dt > 0) chordOk = d <= 1.6 * Math.max(r.gs ?? 0, L.gs ?? 0, 0.8) * Math.max(0.3, dt) + 3; }
     if (r.gs == null) r.gs = 0;
     r.chord = chord;
     // direction of motion and nose heading
@@ -523,9 +527,20 @@ export class Traffic {
       if (moving) {
         const wasPush = tr.pushback;
         if (th != null) {
-          // push-back: motion against the reported nose (audit s.6.9) -- reliable anywhere
-          if (chord != null && Math.abs(wrapPi(chord - th)) > 120 * DEG && r.gs < 8 * KT && r.gs > 0.5) tr.pushback = true;
+          // push-back: motion against the reported nose (audit s.6.9) -- reliable anywhere, once the motion is real:
+          // the chord must agree with the reported speed (chordOk), and a track that is MOVING forward (taxiing in or out)
+          // needs a second report that also moves against the nose (tr._pushCand; reports without a chord -- < 3 m apart --
+          // carry the candidate). A stopped track is confirmed by motionConfirmed() in groundLogic instead. Review 4 Nov:
+          // one 12 m jump of UAL1180 entering G8 at 1.9 kt made it a push-back -- never in-blocked, drawn in the terminal
+          const back = chord != null && Math.abs(wrapPi(chord - th)) > 120 * DEG && r.gs < 8 * KT && r.gs > 0.5;
+          if (back && !chordOk) { this.counters.pushChordRejected = (this.counters.pushChordRejected || 0) + 1; }
+          else if (back) {
+            const pc = tr._pushCand, ph0 = tr.m.phase;
+            if (wasPush || ph0 === 'still' || ph0 === 'new' || ph0 === 'pushback' || (pc && L && pc.last === L.t && tf - pc.t0 < 30000)) { tr.pushback = true; tr._pushCand = null; }
+            else { tr._pushCand = { t0: tf, last: tf }; this.counters.pushCand = (this.counters.pushCand || 0) + 1; }
+          }
           else if (tr.pushback && ((chord != null && Math.abs(wrapPi(chord - th)) < 60 * DEG) || r.gs > 10 * KT)) tr.pushback = false;
+          if (!back && tr._pushCand) { if (chord == null && L && tr._pushCand.last === L.t) tr._pushCand.last = tf; else tr._pushCand = null; }
         } else if (!tr.pushback) {
           // no heading reported: a push-back is inferred only for the FIRST movement out of a stand / parking position
           // (tr.pushOk, set while parked there), never on a taxiway or runway or once taxiing has begun (review round 1:
@@ -903,6 +918,8 @@ export class Traffic {
       // stationary: on a runway aligned = lined up; on a taxiway = holding; else parked (stand matched separately)
       let p = 'still';
       if (rp) { const R = alignedRunway(rp, r.hd ?? hdg, 20 * DEG); if (R && (tr.pushed || M.phase === 'taxi' || M.phase === 'lineup')) { p = 'lineup'; if (M.phase !== 'lineup') { this.setPhase(tr, 'lineup', t, R.name); this.event(tr, t, 'lineup', { rwy: R.name }); } return; } }
+      // (where the push-back ended: 'Push-back complete' is shown only near it, displayPhase)
+      if (M.phase === 'pushback') tr.pushEnd = [r.x, r.z];
       if (M.phase !== p) this.setPhase(tr, p, t, null);
       this.stationary(tr, r, t);
       return;
@@ -937,6 +954,7 @@ export class Traffic {
     if (wasStill && tr.pushOk && !tr.pushed && !creep && !wasSilent) { tr.pushed = true; this.event(tr, t, 'off-block', { stand: tr.gate ? tr.gate.name : null, forward: true }); }
     if (!creep) tr.pushOk = false;
     if (rp) { const R = alignedRunway(rp, hdg, 20 * DEG); if (R && M.phase === 'lineup') { this.setPhase(tr, 'lineup', t, R.name); return; } }
+    if (M.phase === 'pushback') tr.pushEnd = [r.x, r.z];   // (rolling forward straight out of the push-back)
     if (M.phase !== 'taxi') this.setPhase(tr, 'taxi', t, null, wasStill ? t0 : null);
     this.docking(tr, r, t);
   }
@@ -1159,7 +1177,7 @@ export class Traffic {
     this.updatePark(tr);
     // in-block: a new turn begins (its departure pushes from here; the arrival's runway no longer applies: review
     // round 1, SKW3007 reported the stale arrival runway at its departure)
-    tr.pushOk = !tr.pushback; tr.pushbackFrom = null; tr.pushG = null; tr.pushed = false; tr.inBlockAt = t ?? tr.lastFixT; tr.leaving = false; tr.leaveFast = false; tr.leaveHintT = null;
+    tr.pushOk = !tr.pushback; tr.pushbackFrom = null; tr.pushG = null; tr.pushed = false; tr.pushEnd = null; tr.inBlockAt = t ?? tr.lastFixT; tr.leaving = false; tr.leaveFast = false; tr.leaveHintT = null;
     if (tr.m.phase === 'still') tr.m.rwy = null;
     if (t != null) this.event(tr, t, 'in-block', { stand: g.name, src: tr.gateSrc || 'geo' });
     // the jet bridge docks later, from the display side, once the drawn aircraft has settled at this pose (syncBridge)
@@ -1346,8 +1364,10 @@ export class Traffic {
           if (!inAirport(lf.x, lf.z) || tr.vehicle) { gone(tr); continue; }   // (faded, not popped: review round 2 pop.remove.other_airfield)
           // transponder switched off on the ground: keep it where it is parked (at its gate if it was at one)
           // (switched off while docking: it completes the docking at the stand it was lining up with)
-          if (!tr.gate && (lf.gs || 0) < 8 * KT && !tr.pushed) { const p = tr.stillPos ? { x: tr.stillPos[0], z: tr.stillPos[1], hd: tr.stillHdg, hdReal: false, icao: tr.info.icao } : { x: lf.x, z: lf.z, hd: lf.hd, hdReal: false, icao: tr.info.icao };
-            const dg = tr.dock && tr.dock.g && (!tr.dock.g.occupant || tr.dock.g.occupant === tr.hex) && !this.blocked(tr.dock.g, tr) ? tr.dock.g : null;
+          // (also after a push-back: stopped and silent INSIDE a stand's limits it is parked there -- the transponder is off at
+          // a stand, not on a taxiway; review 4 Nov: UAL1180, a false push at G8, was deleted while parked at the gate)
+          if (!tr.gate && (lf.gs || 0) < 8 * KT && (!tr.pushed || tr.m.phase === 'still')) { const p = tr.stillPos ? { x: tr.stillPos[0], z: tr.stillPos[1], hd: tr.stillHdg, hdReal: false, icao: tr.info.icao } : { x: lf.x, z: lf.z, hd: lf.hd, hdReal: false, icao: tr.info.icao };
+            const dg = !tr.pushed && tr.dock && tr.dock.g && (!tr.dock.g.occupant || tr.dock.g.occupant === tr.hex) && !this.blocked(tr.dock.g, tr) ? tr.dock.g : null;
             const g = dg || (tr.m.phase === 'still' ? this.matchGate(tr, p) : null); if (g) { if (dg) { tr.stillPos = null; tr.stillHdg = g.w.hdg; tr.forceStand = true; tr.dockComplete = true; } this.occupy(tr, g, null); } }
           // ...but only a PARKED aircraft (at a stand, or stopped on a ramp): one that went silent while taxiing, pushing,
           // lined up or holding on a taxiway/runway is dropped -- a ghost there is driven through by every aircraft that
@@ -1834,8 +1854,12 @@ export class Traffic {
         // (stopped after its push-back -- engine start, tug disconnect -- not 'parked'; review round 2: DAL977 'Parked' at the
         // instant it left C3, SWR39 'Parked' after its push from G10)
         if (tr.m.phase === 'pushback') return 'pushback';
-        if (tr.pushed && !tr.stale && !tr.landedAt) return 'pushed';
-        if (tr.pushed && !tr.stale && tr.landedAt && tr.offBlock && tr.offBlock.t > tr.landedAt) return 'pushed';
+        // ('Push-back complete' only where the push ended -- within one fuselage length (>= 40 m) of it. Further on, a stopped
+        // departure is queueing or holding: review 4 Nov, 'pushed' was shown for 3,828 aircraft-seconds > 120 m from any
+        // stand -- SWA3086 for 16 min on taxiways L/M, AAL1732 at the A/A1 hold of 1R -- so the runway sheet's 'Holding
+        // short' list and the ATC tab (Ramp instead of Ground) missed them)
+        const dep = tr.pushed && !tr.stale && (!tr.landedAt || (tr.offBlock && tr.offBlock.t > tr.landedAt));
+        if (dep) { const E = tr.pushEnd, T = typeOf(tr); if (E && Math.hypot(tr.disp.x - E[0], tr.disp.z - E[1]) < Math.max(40, T ? T.L : 38)) return 'pushed'; return 'holding'; }
         const key = Math.round(tr.disp.x / 3) + ',' + Math.round(tr.disp.z / 3);
         if (tr._stillKey !== key) { tr._stillKey = key; tr._stillLbl = runwayAt(tr.disp.x, tr.disp.z) || inPolys(this.taxiways, tr.disp.x, tr.disp.z) || (this.net.ok && this.net.match(tr.disp.x, tr.disp.z, null, null, 6)) ? 'holding' : 'parked'; }
         return tr._stillLbl;

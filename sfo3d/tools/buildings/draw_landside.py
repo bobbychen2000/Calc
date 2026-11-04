@@ -239,22 +239,37 @@ def sheet_elev():
     S = Sheet('BL-03', 'Landside and support buildings: principal elevations (long faces) with levels and heights', 'A1',
               subtitle='Spec: tools/buildings/spec_landside.json; massing elevations - facade detail is not measured')
     L = lambda k: LB[k]['footprint']['min_rect']['length_m']
+
+    def proj(k, P):
+        """u of a DOF point projected on the long side of the outline's minimum rectangle, from its end opposite the
+        long-side heading (e.g. the SSW end for heading 27.8 deg)."""
+        mr = LB[k]['footprint']['min_rect']; ax = hdg_vec(mr['long_side_heading_deg'])
+        return float(np.dot(np.asarray(P, float) - np.asarray(mr['centre'], float), ax)) + mr['length_m'] / 2
+
+    def dof_items(k, h_from, lbl):
+        it = []
+        for d in LB[k]['dof']:
+            if d['type'] == 'TANK' or d['oas'] not in lbl: continue
+            u = proj(k, d['world'])
+            it += [('mast', u, h_from, d['agl_m'], 'pub'), ('mark', u, d['agl_m'], 'pub', lbl[d['oas']])]
+        return it
     rowh = 136
     V1 = S.view(0, 3 * rowh + 8, S.vw, rowh - 6, 1000, (300, 22), kind='elev', frame=False, title='1  CENTRAL PARKING GARAGE and INTERNATIONAL GARAGE A')
     x = 0; W = L('central_garage')
     lv = [24.69 * i / 5 for i in range(1, 5)]
     massing(V1, x, W, 'CENTRAL PARKING GARAGE (Bldg 195)', [('box', 24.69, 'pub', '+24.69  81 ft "five-level, 81-foot-tall" [pub]; what it measures is not stated'),
-                                                         ('levels', lv, 'unk'), ('mast', 120, 24.69, 33.2, 'pub'), ('mark', 120, 33.2, 'pub', '109 ft pole\n[pub DOF]'),
-                                                         ('mast', 180, 24.69, 30.8, 'pub'), ('mark', 180, 30.8, 'pub', '101 ft pole\n[pub DOF]'),
-                                                         ('mast', 230, 24.69, 39.6, 'pub'), ('mark', 230, 39.6, 'pub', '130 ft antenna\n[pub DOF 4D]'),
-                                                         ('text', W / 2, 12, 'unk', '5 levels [pub]; level lines = equal fifths (placeholder) [unk];\nAirTrain T1/T2/T3 stations on Level 5 [pub]')])
+                                                         ('levels', lv, 'unk')] +
+            dof_items('central_garage', 24.69, {'06-034812': '109 ft pole\n[pub DOF]', '06-034813': '101 ft pole\n[pub DOF]',
+                                                '06-039216': '130 ft antenna\n[pub DOF 4D, +-76 m]'}) +
+            [('text', W / 2, 12, 'unk', '5 levels [pub]; level lines = equal fifths (placeholder) [unk];\nAirTrain T1/T2/T3 stations on Level 5 [pub];\n'
+              'DOF points at their projected positions, u from the SSW end [pub]')])
     x = W + 40; W = L('garage_a')
-    massing(V1, x, W, 'INTERNATIONAL GARAGE A (Bldg 95)', [('band', 25, 41.5, '#cfe0f2'), ('box', 25.0, 'unk', '+25-41.5 roof deck range [obs, low] - deck NOT measured'),
+    massing(V1, x, W, 'INTERNATIONAL GARAGE A (Bldg 95)', [('band', 25, 41.5, '#cfe0f2'), ('box', 25.0, 'unk', '+25-41.5 roof deck: deck NOT measured; 25 = the DISPUTED AirTrain-photo reading,\n41.5 = drum-top upper bound [spec garage_a_height range]'),
                                                           ('mark', 12, 39.6, 'obs', 'helix drum top 39.6\n(38.0-41.5) [obs]'),
                                                           ('text', W / 2, 10, 'pub', '9 levels [pub]; AirTrain station from Level 7 [pub];\nclearance 8 ft 2 in [pub]; precast grid + perforated metal [obs]')])
     V2 = S.view(0, 2 * rowh + 8, S.vw, rowh - 6, 1000, (300, 22), kind='elev', frame=False, title='2  GARAGE G, GRAND HYATT, CONSOLIDATED ADMINISTRATION CAMPUS')
     x = 0; W = L('garage_g')
-    massing(V2, x, W, 'INTERNATIONAL GARAGE G (Bldg 495)', [('band', 25, 40.0, '#cfe0f2'), ('box', 25.0, 'unk', '+25-40 roof deck range [obs, low] - deck NOT measured'),
+    massing(V2, x, W, 'INTERNATIONAL GARAGE G (Bldg 495)', [('band', 25, 40.0, '#cfe0f2'), ('box', 25.0, 'unk', '+25-40 roof deck: deck NOT measured; 25 = the DISPUTED AirTrain-photo reading,\n40 = drum-top upper bound [spec garage_g_height range]'),
                                                            ('mark', 12, 37.6, 'obs', 'helix drum top 37.6\n(36.0-40.0) [obs]'),
                                                            ('text', W / 2, 10, 'pub', '9 levels [pub]; BART + AirTrain station from Level 7 [pub]')])
     x = W + 40; W = L('grand_hyatt')
@@ -268,10 +283,10 @@ def sheet_elev():
                                                            ('text', W / 2, 9, 'pub', '4 stories, 15 ft floor-to-floor [pub]')])
     V3 = S.view(0, rowh + 8, S.vw, rowh - 6, 1000, (300, 22), kind='elev', frame=False, title='3  LONG-TERM PARKING GARAGES 1 AND 2, RENTAL CAR CENTER')
     x = 0; W = L('ltp_garage_1')
-    massing(V3, x, W, 'LONG-TERM PARKING GARAGE 1 (Bldg 795)', [('box', 16.5, 'obs', '+16.5 north-end parapet (15.9-16.8) [obs, NAIP shadow]'),
-                                                               ('mast', 30, 16.5, 27.7, 'pub'), ('mark', 30, 27.7, 'pub', '91 ft [pub DOF]'),
-                                                               ('mast', 140, 16.5, 26.2, 'pub'), ('mark', 140, 26.2, 'pub', '86 ft [pub DOF]'),
-                                                               ('text', W / 2, 8, 'inf', '>= 5 levels [inf: AirTrain + LTP2 links at Level 5];\nDOF tops = towers / helix ~10 m above the parapet [inf]')])
+    massing(V3, x, W, 'LONG-TERM PARKING GARAGE 1 (Bldg 795)', [('box', 16.5, 'obs', '+16.5 north-end parapet (15.9-16.8) [obs, NAIP shadow]')] +
+            dof_items('ltp_garage_1', 16.5, {'06-035206': '91 ft [pub DOF]', '06-035207': '86 ft [pub DOF]'}) +
+            [('text', W / 2, 8, 'inf', '>= 5 levels [inf: AirTrain + LTP2 links at Level 5];\nDOF tops = towers / helix ~10 m above the parapet [inf];\n'
+              'DOF points at their projected positions, u from the NNW end [pub]')])
     x = W + 55; W = L('ltp_garage_2')
     massing(V3, x, W, 'LONG-TERM PARKING GARAGE 2 (Bldg 794)', [('box', 60 * FT, 'inf', '+18.29 deck = 5 x 12 ft [inf]'),
                                                                ('levels', [12 * FT * i for i in range(1, 5)], 'pub'),
@@ -280,8 +295,9 @@ def sheet_elev():
     x += W + 70; W = L('rental_car_center')
     massing(V3, x, W, 'RENTAL CAR CENTER (Bldg 780)', [('band', 54 * FT, 59 * FT, '#d9d9d9'), ('box', 54 * FT, 'pub', '+16.46 / 17.98 roof 54 / 59 ft [pub DOF]'),
                                                      ('lvl', 66 * FT, 'pub', '+20.12 "66-foot-tall" [pub]'),
-                                                     ('mark', 30, 60 * FT, 'pub', 'station tower\n60 ft [pub DOF]'),
-                                                     ('text', W / 2, 8, 'pub', '5 levels [pub]; 2,485 ready-return stalls [pub];\n66 ft is 7-12 ft above the DOF-surveyed roof edge (definition disputed)')])
+                                                     ('mark', proj('rental_car_center', next(d['world'] for d in LB['rental_car_center']['dof'] if d['type'] == 'TANK')),
+                                                      60 * FT, 'pub', 'DOF 06-034240 TANK 60 ft [pub]\n= station stair / elevator\ntower? [inf]'),
+                                                     ('text', W / 2, 8, 'pub', '5 levels [pub]; 2,485 ready-return stalls [pub];\n66 ft is 7-12 ft above the DOF-surveyed roof edge (definition disputed);\nTANK at its projected position, u from the SSW end')])
     V4 = S.view(0, 8, S.vw, rowh - 6, 1000, (300, 22), kind='elev', frame=False, title='4  SUPERBAY HANGAR (section across the spine) and UNITED MOC LARGE HANGAR')
     x = 0; W = 165.0
     massing(V4, x, W, 'SUPERBAY HANGAR (Bldg 1060), across the spine (WNW-ESE)', [
@@ -315,6 +331,9 @@ def sheet_elev():
     for V in (V1, V2, V3, V4): V.scalebar(y_mm=3)
     S.note('Massing elevations: width = the long side of the outline\'s minimum rectangle, height = the spec value with its tag; level lines '
            'only where a floor height is published. Facade modules (precast grid, perforated screens, curtain walls) are not dimensioned.')
-    S.note('Garages A / G: the roof deck is still unmeasured; the drawn band is the spec range (25 m from the 9 levels at ~2.8 m [inf] to the '
-           'drum top). Grand Hyatt: no published height.')
+    S.note('Garages A / G: the roof deck is still unmeasured; the drawn band is the spec range: its 25 m lower end is what remains of the '
+           'disputed "25-30 m" AirTrain-photo reading (spec garage_a/g_height: DISPUTED), the upper end the helix drum top. Grand Hyatt: no '
+           'published height.')
+    S.note('DOF points are drawn at their positions projected on the long side of each outline\'s minimum rectangle (u from the end '
+           'named on the elevation); the RCC "TANK" is identified with the station stair / elevator tower only by inference [inf].')
     return S.finish()

@@ -10,7 +10,10 @@ Ground truth used (details, URLs and terms: docs/research/gate_truth.md):
   * DataSF "SFO Gate and Stand Assignment Information" (chfu-j7tc, PDDL) for the official list of gate numbers.
 
 Our side (reimplemented exactly from the app, nothing imported from js/ at run time except the aircraft size table):
-  * js/geo.js llToEN (ARP 37.6188056 N, -122.3754167 E; 110990 m/deg lat; 111320*cos(lat) m/deg lon); world x = E, z = -N
+  * js/geo.js world frame `ltp-nad83-2011` through tools/geo_frame.py (= js/geo.js, docs/requests/geo_frame_switch.md):
+    ADS-B positions (WGS 84) with geo_frame.wgs84_to_world, the FAA runway ends (NAD83) with geo_frame.ll_to_world;
+    world x = E, z = S. (Until Nov 2026 this tool still used the legacy equirectangular llToEN -- 110990 m / deg lat,
+    111320 cos(lat) m / deg lon about the ARP -- 0.2-2.1 m off the app's frame at the piers: static_fixup.md s.1.1)
   * js/live/traffic.js gateScore/matchGate/standFits (antenna = nose - 0.2 L along the stand heading; lateral limit
     min(18, 0.35 span_max + 4) m, along limit 20 m, score |lat| + 0.35 |along|; heading gate 35 deg when a true heading
     is reported; remote stands: distance < 40 m, score d + 4); taxiway polygons and runways excluded as in the app.
@@ -42,12 +45,11 @@ DATASF_URL = 'https://data.sf.gov/resource/chfu-j7tc.json'
 UA = 'sfo-live-3d gatecheck/0.1 (personal non-commercial visualisation; occasional manual check)'
 MIN_FETCH_INTERVAL = 600  # s
 
-# ------------------------------------------------------------------ js/geo.js (exact)
-ARP_LAT, ARP_LON = 37.6188056, -122.3754167
-M_PER_DEG_LAT = 110990.0
-M_PER_DEG_LON = 111320.0 * math.cos(ARP_LAT * math.pi / 180)
-def ll_to_en(lat, lon): return ((lon - ARP_LON) * M_PER_DEG_LON, (lat - ARP_LAT) * M_PER_DEG_LAT)
-def ll_to_world(lat, lon): e, n = ll_to_en(lat, lon); return e, -n          # llToWorld -> [e, h, -n]
+# ------------------------------------------------------------------ js/geo.js (exact: tools/geo_frame.py is its Python twin)
+sys.path.insert(0, os.path.join(ROOT, 'tools'))
+import geo_frame  # noqa: E402
+ll_to_world = geo_frame.ll_to_world            # NAD83(2011) lat/lon (FAA runway ends) -> world (x E, z S)
+wgs84_to_world = geo_frame.wgs84_to_world      # WGS 84 (ADS-B) -> world
 dms = lambda d, m: d + m / 60
 RWY_ENDS = {  # js/geo.js RWY_ENDS (FAA / AirNav), only what runwayAt needs
     '10L': (dms(37, 37.724323), -dms(122, 23.603512)), '28R': (dms(37, 36.812017), -dms(122, 21.428467)),
@@ -58,8 +60,8 @@ RWY_ENDS = {  # js/geo.js RWY_ENDS (FAA / AirNav), only what runwayAt needs
 RWYS = []
 for a, b in (('10L', '28R'), ('10R', '28L'), ('1L', '19R'), ('1R', '19L')):
     for p, q in ((a, b), (b, a)):
-        fe, fn = ll_to_en(*RWY_ENDS[p]); te, tn = ll_to_en(*RWY_ENDS[q]); L = math.hypot(te - fe, tn - fn)
-        RWYS.append(((fe, -fn), ((te - fe) / L, -(tn - fn) / L), L))
+        fx, fz = ll_to_world(*RWY_ENDS[p]); tx, tz = ll_to_world(*RWY_ENDS[q]); L = math.hypot(tx - fx, tz - fz)
+        RWYS.append(((fx, fz), ((tx - fx) / L, (tz - fz) / L), L))
 def runway_at(x, z):  # traffic.js runwayAt
     for (sx, sz), (dx, dz), L in RWYS:
         rx, rz = x - sx, z - sz; a = rx * dx + rz * dz; c = -rx * dz + rz * dx
@@ -218,7 +220,7 @@ class Tracks:
                 d = r['d']; ac = d.get('aircraft') if 'aircraft' in d else d.get('ac')
                 for a in ac or []:
                     if 'lat' not in a or (a.get('seen_pos') or 0) > 30: continue
-                    x, z = ll_to_world(a['lat'], a['lon'])
+                    x, z = wgs84_to_world(a['lat'], a['lon'])
                     if math.hypot(x, z) > 6000: continue
                     tpos = round(r['t'] - (a.get('seen_pos') or 0), 1)
                     self.h.setdefault(a['hex'], {}).setdefault(tpos, dict(a, tpos=tpos, prov=prov, x=x, z=z))
@@ -266,7 +268,7 @@ def parked_at(tracks, T, window, stands, still_span=300):
             a = dict(a, x=xs[len(xs) // 2], z=zs[len(zs) // 2], n_pos=len(pts), spread=round(max(xs[-1] - xs[0], zs[-1] - zs[0]), 1))
             hs = [p['true_heading'] for p in pts if p.get('true_heading') is not None]
             if hs: a['true_heading'] = sorted(hs)[len(hs) // 2]
-            a['lat'] = ARP_LAT - a['z'] / M_PER_DEG_LAT; a['lon'] = ARP_LON + a['x'] / M_PER_DEG_LON
+            a['lat'], a['lon'] = geo_frame.world_to_wgs84(a['x'], a['z'])
         if min(math.hypot(a['x'] - g['x'], a['z'] - g['z']) for g in stands) > 150: continue
         out.append(a)
     return out

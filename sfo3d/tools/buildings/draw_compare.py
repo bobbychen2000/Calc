@@ -10,13 +10,13 @@ import numpy as np
 
 import draw_data as D
 from draw_lib import Sheet, BORDER, TAGS, FT
-from draw_tower import body_outline, H1, H2, S2, fam2
+from draw_tower import body_outline, FAM, F1, F2, F2LS, r_at, cab_outline
 
 TV, IV, DV, LV = D.TV, D.IV, D.DV, D.LV
 
 
 def rows():
-    A = D.app_tower(); cab = A['cab']
+    A = D.app_tower(); cab = A['cab']; c1, c2 = cab_outline(F1), cab_outline(F2)
     rim_app = cab['roof'][2][1]; glass = cab['glass']
     G = D.app_great_hall()
     sp = lambda nm: D.app_part(nm)['h']
@@ -24,16 +24,16 @@ def rows():
     R = [
         # (building / item, app, spec, tag, delta, note)
         ('Tower: shaft position', '(-740.9, 331.7) footprint centroid', 'axis (-740.5, 324.5); cab (-739, 323.5)', 'inf', '7.2 m S', 'cab z 323.5 +-2 [obs]'),
-        ('Tower: roof rim', f'{rim_app:.1f} m', f'{H1} m (63.0-67.6)', 'inf', f'{rim_app - H1:+.1f} m', '221 ft [pub], definition open'),
-        ('Tower: cab glass sill / head', f'{glass[0][1]:.1f} / {glass[1][1]:.1f} m', '61.8 / 64.7 m', 'inf', f'{glass[0][1] - 61.8:+.1f} m', 'photo stations'),
-        ('Tower: cab-roof diameter', f'{2 * cab["roof"][1][0]:.1f} m', '14.3 +-1.0 (14.75 +-0.5) m', 'obs', f'{2 * cab["roof"][1][0] - 14.3:+.1f} m', 'EXIF / panel scale'),
-        ('Tower: flare, widest', f'D {2 * 7.2:.1f} at 57.2 m', 'D 22.6 +-1.5 at 59.4 m', 'obs', f'{14.4 - 22.6:+.1f} m', ''),
-        ('Tower: waist', 'D 8.4 at 36-44 m', 'D 9.8 at 26.3 m', 'obs', '-1.4 m', ''),
-        ('Tower: mast tips / base-building roof', f'{cab["mast_top"]:.1f} / {A["ibf_roof"]:.1f} m', '70.7 / 14.2 (12.7-16.5) m', 'inf', f'{cab["mast_top"] - 70.7:+.1f} / {A["ibf_roof"] - 14.2:+.1f}', ''),
-        ('ITB hall: roof top', f'{min(hall_top):.1f}-{max(hall_top):.1f} m ("83 ft")', '34.9-40.1 m (DOF 131/132 ft)', 'pub', f'{max(hall_top) - 40.08:+.1f} m', '83 ft is the interior height'),
+        ('Tower: roof rim', f'{rim_app:.1f} m', f'{F1["rim"]} (F1) / {F2["rim"]} (F2) m', 'inf', f'{rim_app - F1["rim"]:+.1f} / {rim_app - F2["rim"]:+.1f} m', '221 ft [pub], definition open'),
+        ('Tower: cab glass sill / head', f'{glass[0][1]:.1f} / {glass[1][1]:.1f} m', f'{c1["glass_bottom"][1]:.1f} / {c1["glass_top"][1]:.1f} (F1); {c2["glass_bottom"][1]:.1f} / {c2["glass_top"][1]:.1f} (F2)', 'inf', f'{glass[0][1] - c1["glass_bottom"][1]:+.1f} / {glass[0][1] - c2["glass_bottom"][1]:+.1f} m', 'photo stations'),
+        ('Tower: cab-roof diameter', f'{2 * cab["roof"][1][0]:.1f} m', f'{F1["D"]} (F1) / {F2["D"]} (F2); meas. 14.3 +-1.0, EXIF 14.75 +-0.5', 'inf', f'{2 * cab["roof"][1][0] - F1["D"]:+.1f} / {2 * cab["roof"][1][0] - F2["D"]:+.1f} m', 'EXIF / panel scale'),
+        ('Tower: flare, widest', f'D {2 * 7.2:.1f} at 57.2 m', f'D {2 * r_at(59.4, F1):.1f} / {2 * r_at(59.4, F2):.1f} (1.58 D)', 'inf', f'{14.4 - 2 * r_at(59.4, F1):+.1f} / {14.4 - 2 * r_at(59.4, F2):+.1f} m', 'spec 22.6 +-1.5 at D 14.3'),
+        ('Tower: waist', 'D 8.4 at 36-44 m', f'D {2 * r_at(26.3, F1):.1f} / {2 * r_at(26.3, F2):.1f}', 'inf', f'{8.4 - 2 * r_at(26.3, F1):+.1f} / {8.4 - 2 * r_at(26.3, F2):+.1f} m', 'ratio x D'),
+        ('Tower: mast tips / base-building roof', f'{cab["mast_top"]:.1f} / {A["ibf_roof"]:.1f} m', f'70.9 / {F1["ibf"]:.1f} (F1); 67.4 / {F2["ibf"]:.1f} (F2)', 'inf', f'{cab["mast_top"] - 70.9:+.1f} / {A["ibf_roof"] - F1["ibf"]:+.1f} (F1)', ''),
+        ('ITB hall: roof top', f'{min(hall_top):.1f}-{max(hall_top) + 0.6:.1f} m ("83 ft" + 0.6 crown)', '34.9-40.1 m (DOF 131/132 ft)', 'pub', f'{max(hall_top) + 0.6 - 40.08:+.1f} m', '83 ft is the interior height'),
         ('ITB hall: roof size', f'{G["L"]:.1f} x {G["W"]:.1f} m', '252.9 x 65.4 m (860 ft pub)', 'obs', f'{G["L"] - 252.9:+.1f} / {G["W"] - 65.4:+.1f}', ''),
         ('ITB hall: roof centre / axis', f'({G["c"][0]:.1f}, {G["c"][1]:.1f}), SFOM hall-part axis', '(-1244.6, 365.4), 162.85 deg', 'obs', '35 m E, 2.9 deg', ''),
-        ('ITB hall: columns', '2 x 10 along the long edges', '5 truss lines x 4 at +-190 / +-270 ft', 'inf', 'layout', '20 from level 3 [pub]'),
+        ('ITB hall: columns', '2 rows of 10 ACROSS the width at s +-57.9 m', '5 truss lines x 4 at +-190 / +-270 ft', 'inf', 'layout', '20 from level 3 [pub]'),
         ('Boarding Area A', f'{sp("Boarding Area A")} m', '17.9 m (16.9-18.8); pod 1 25.9 m', 'obs', f'{sp("Boarding Area A") - 17.9:+.1f} m', 'pods not built'),
         ('Boarding Area G', f'{sp("Boarding Area G")} m', '17.0 m (13-20)', 'obs', f'{sp("Boarding Area G") - 17.0:+.1f} m', 'low'),
         ('Boarding Area B', f'{sp("Boarding Area B")} m flat', '13.1 outer / 19.0 raised centre', 'obs', f'{sp("Boarding Area B") - 13.14:+.1f} / {sp("Boarding Area B") - 19.04:+.1f}', 'stepped section'),
@@ -80,8 +80,8 @@ def sheet():
         ax.plot([0, 300], [y + 2.2, y + 2.2], color='#e0e0e0', lw=0.3)
     # ---------------- heights dot plot
     ax2 = fig.add_axes([(BORDER + 58) / pw, (BORDER + 10) / ph, 236 / pw, 150 / ph])
-    items = [('Tower roof rim', 61.9, H1, (63.0, 67.6), 'inf'), ('Tower base bldg', 14.0, 14.2, (12.7, 16.5), 'inf'),
-             ('ITB hall roof (max)', 26.5, 40.08, (34.9, 40.1), 'pub'), ('BA-A', 14.6, 17.9, (16.9, 18.8), 'obs'), ('BA-G', 14.6, 17.0, (13, 20), 'obs'),
+    items = [('Tower roof rim (F1 dot; F2 64.0)', 61.9, F1['rim'], (63.0, 67.6), 'inf'), ('Tower base bldg', 14.0, F1['ibf'], (12.7, 16.5), 'inf'),
+             ('ITB hall roof (max)', 27.1, 40.08, (34.9, 40.1), 'pub'), ('BA-A', 14.6, 17.9, (16.9, 18.8), 'obs'), ('BA-G', 14.6, 17.0, (13, 20), 'obs'),
              ('BA-B outer', 14.6, 13.14, (12.49, 13.81), 'obs'), ('BA-B centre', 14.6, 19.04, (18.1, 20.0), 'obs'), ('BA-C', 14.6, 7.2, (6.99, 7.53), 'obs'),
              ('BA-D', 14.6, 8.49, (8.07, 8.93), 'obs'), ('BA-E', 14.6, 12.85, (12.21, 13.51), 'obs'), ('BA-F', 14.6, 10.49, (9.97, 11.03), 'obs'),
              ('Central garage', 22, 24.69, None, 'pub'), ('Garage A (drum)', 21, 39.6, (25, 41.5), 'obs'), ('Garage G (drum)', 21, 37.6, (25, 40), 'obs'),
@@ -103,23 +103,23 @@ def sheet():
     V = S.view(318, 205, 170, 190, 500, (0, 36), kind='elev', frame=False, title='TOWER PROFILE (concentric; app axis is 7.2 m S)')
     b1 = body_outline(1)
     V.line([(-r, h) for r, h in b1], 'inf', lw=0.9); V.line([(r, h) for r, h in b1], 'inf', lw=0.9)
-    b2 = [(r * S2, fam2(h)) for r, h in b1 if fam2(h) > 13]
-    V.line([(-r, h) for r, h in b2], 'unk', lw=0.6); V.line([(r, h) for r, h in b2], 'unk', lw=0.6)
+    b2 = body_outline(2)
+    V.line([(-r, h) for r, h in b2], 'inf', lw=0.7, ls=F2LS); V.line([(r, h) for r, h in b2], 'inf', lw=0.7, ls=F2LS)
     A = D.app_tower()
     pa = [(r, h) for r, h in A['profile']] + A['cab']['floor'] + A['cab']['glass'] + A['cab']['roof']
     V.line([(-r, h) for r, h in pa], 'app', lw=0.9); V.line([(r, h) for r, h in pa], 'app', lw=0.9)
     V.line([(-30, 0), (30, 0)], 'pub', lw=0.6)
-    V.text((14, 66), 'spec (rim 67.36, D 14.3) [inf]', 'inf', fs=4.2, ha='left')
-    V.text((14, 61), 'family 2 (rim 64.0, D 14.5)', 'unk', fs=4.2, ha='left')
+    V.text((14, 66), 'family 1 (rim 67.36, D 15.2) [inf]', 'inf', fs=4.2, ha='left')
+    V.text((14, 61), 'family 2 (rim 64.0, D 14.5) [inf]', 'inf', fs=4.2, ha='left', style='normal')
     V.text((14, 56), 'app today (buildTower)', 'app', fs=4.2, ha='left')
     V.scalebar(y_mm=3, nice=20)
     # ---------------- ITB roof profile (diagram)
     ax3 = fig.add_axes([(BORDER + 326) / pw, (BORDER + 22) / ph, 160 / pw, 150 / ph])
     I = __import__('draw_itb')
     us = np.linspace(-I.HL, I.HL, 400)
-    ax3.plot(us, [I.crown(u) for u in us], color=TAGS['obs']['c'], lw=1.0, label='spec: eave profile + crown [obs / pub DOF]')
+    ax3.plot(us, [I.roof_line(u) for u in us], color=TAGS['obs']['c'], lw=1.0, label='spec: wing eave profile + centre arch [obs / pub DOF]')
     G = D.app_great_hall(); ss = np.linspace(-G['L'] / 2, G['L'] / 2, 200)
-    ax3.plot(ss, [G['top'](s) for s in ss], color=TAGS['app']['c'], lw=1.0, ls=TAGS['app']['ls'], label='app: greatHall top(s)')
+    ax3.plot(ss, [G['top'](s) + 0.6 for s in ss], color=TAGS['app']['c'], lw=1.0, ls=TAGS['app']['ls'], label='app: greatHall top(s) + 0.6 crown')
     ax3.plot([-131.06, 131.06], [1, 1], color='k', lw=2, alpha=0.4, label='published 860 ft length')
     ax3.plot([-I.HL, I.HL], [3, 3], color=TAGS['obs']['c'], lw=2, alpha=0.5, label='NAIP 252.9 m length')
     ax3.plot([-G['L'] / 2, G['L'] / 2], [5, 5], color=TAGS['app']['c'], lw=2, alpha=0.5, label='app 237.4 m length')
@@ -130,8 +130,9 @@ def sheet():
     for s_ in ax3.spines.values(): s_.set_linewidth(0.4)
     S.note('App values read from js/live/terminals.js (buildTerminals, greatHall, buildTower), js/live/airport.js (STRUCT_H_BY_NAME) and '
            'data/sfo_buildings.json part heights (tools/build_terminal_parts.py PIER_H 14.6 m, HALL_H). Nothing in js/ or data/ was changed.')
-    S.note('Deltas are app minus spec at the spec value; where the spec is a range, see the dot plot. The tower spec is itself uncertain by '
-           'the two height families (BT-02): the app is lower than both.')
-    S.note('Biggest gaps: ITB roof 13.6 m too low and 35 m too far east; tower cab 20.3 m wide (spec 14.3-14.75) and 5 m too low; every '
+    S.note('Deltas are app minus spec at the spec value; where the spec is a range, see the dot plot. The tower carries the two height '
+           'families of BT-02 (F1 / F2, neither preferred; the spec trio 67.36 / 14.3 / 14.2 is inconsistent): the app rim is lower than both.')
+    S.note('Biggest gaps: ITB roof 13 m too low (app max 27.1 m with its 0.6 m cross crown) and 35 m too far east; tower cab 20.3 m wide '
+           '(F1 15.2 / F2 14.5) and 2-5.5 m too low; every '
            'domestic pier at 14.6 m (measured 7.2-19.0); Superbay 7 m and RCC 6-8 m off; the MOC hangars are missing.')
     return S.finish()

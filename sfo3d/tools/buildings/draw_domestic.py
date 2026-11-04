@@ -17,6 +17,30 @@ DV = D.DV
 PIERS = ['Boarding Area B', 'Boarding Area C', 'Boarding Area D', 'Boarding Area E', 'Boarding Area F']
 HALLS = ['Harvey Milk Terminal 1', 'Terminal 2', 'Terminal 3']
 
+# ---- BA-D head roof features (NAIP 2024, imaged; measured 2026-11-04 for the drawings) [obs]
+# two drums: imaged roof circles (white rim, dark crescent = the drum's west wall seen obliquely, ~2.5-3 m wide)
+BAD_DRUMS_IMG = [((-535.3, 97.8), 9.6), ((-509.5, 187.6), 9.6)]     # centre (x, z), radius; +-1 m
+BAD_DRUM_RISE = 4.7          # crescent ~2.75 m / BA-D lean 0.58 m/m -> ~4-5 m above the adjacent roof [obs, low]
+BAD_DRUM_TOP = 8.49 + BAD_DRUM_RISE    # [inf]: adjacent roof = bad.h_roof (the head is not one level)
+BAD_LINES_IMG = [((-540, 110), (-559, 150)), ((-554, 137), (-527, 128)), ((-540, 110), (-505, 118))]   # roof-plane edges / skylights
+# ---- BA-F hub: regular octagon fitted to the SFO Museum level-2 outline (5 edges, residual 0.01 m) [obs]
+BAF_HUB_C, BAF_HUB_APO = np.array([-1069.36, -125.93]), 37.10      # edges parallel to the s / t grid and the diagonals
+BAF_LANTERN_APO = (9.7, 6.7)          # concentric octagonal rings 19.4 / 13.4 m across (NAIP profiles on 4 axes) [obs]
+BAF_LANTERN_IMG = np.array([-1061.3, -125.7])                      # imaged ring centre: 8.1 m E of the hub centre [obs]
+BAF_MONITOR_IMG = dict(a=(-1290.0, -243.0), b=(-1100.0, -158.0), s=(12.0, 190.0), d=(-6.5, 1.5))   # NW-arm light strip, imaged
+
+
+def octagon(c, apo, n0=343.0):
+    """regular octagon with edge normals at headings n0 + 45 k (world x, z)."""
+    R = apo / np.cos(np.radians(22.5))
+    return [np.asarray(c) + hdg_vec(n0 + 22.5 + 45 * k) * R for k in range(8)]
+
+
+def baf_monitor(shift):
+    M = BAF_MONITOR_IMG; a, b = np.array(M['a']), np.array(M['b']); t = unit(b - a); n = np.array([t[1], -t[0]])
+    s0, s1 = M['s']; d0, d1 = M['d']
+    return [a + t * s + n * d + shift for s, d in ((s0, d0), (s1, d0), (s1, d1), (s0, d1))]
+
 
 def fmt_h(rec):
     r = rec.get('range')
@@ -55,6 +79,27 @@ def sheet_plan(variant='vector', dev=None):
     band = [n_a + nn * 7.5, n_b + nn * 7.5]
     m2 = [m_b - nn * 14.0, m_a - nn * 14.0]
     V.poly([band[0], band[1], *sorted(m2, key=lambda p: np.dot(p - band[0], ti), reverse=True)], 'inf', fc='#f6e3cf' if not bg else 'none', z=5, lw=0.6)
+    # BA-D head: drums and roof-plane / skylight lines (imaged; moved back by the relief of an assumed height) [obs / inf]
+    lvD = D.dom_lean('D')[0]
+    for c, r in BAD_DRUMS_IMG:
+        V.circle(c, r, 'obs', z=6, lw=0.35, ls=(0, (1, 1.2)))
+        V.circle(np.array(c) - lvD * BAD_DRUM_TOP, r, 'inf', z=6, lw=0.7, fc='#f6e3cf' if not bg else 'none')
+    for p, q in BAD_LINES_IMG:
+        V.line([np.array(p) - lvD * D.DV['bad.h_roof']['value'], np.array(q) - lvD * D.DV['bad.h_roof']['value']], 'inf', lw=0.6, z=6)
+    V.leader(np.array(BAD_DRUMS_IMG[0][0]) - lvD * BAD_DRUM_TOP + [0, -9.6], -30, 26, 'BA-D head: two round drums D ~19 m [obs, NAIP roof circles,\n'
+             'dotted = as imaged]; drawn moved back by the relief of a ~13 m top\n(lean 0.58 m/m) [inf]; ~4-5 m above the adjacent roof [obs, low];\n'
+             'linear skylights / angular roof-plane edges (dashed, as imaged\nless the 8.5 m roof relief) [obs / inf]', 'obs', fs=4.0)
+    # BA-F hub: octagon, lantern rings, NW-arm roof monitor
+    lvF = D.dom_lean('F')[0]
+    V.poly(octagon(BAF_HUB_C, BAF_HUB_APO), 'obs', fc='none', z=5.5, lw=0.8)
+    for apo in BAF_LANTERN_APO:
+        V.poly(octagon(BAF_HUB_C, apo), 'inf', fc='#cfe3f3' if not bg else 'none', z=6, lw=0.6)
+    V.poly(baf_monitor(-lvF * 11.0), 'inf', fc='#cfe3f3' if not bg else 'none', z=5.6, lw=0.5)
+    V.leader(BAF_HUB_C + hdg_vec(208) * BAF_HUB_APO, -20, -20, 'BA-F hub: octagonal rotunda [pub CDR massing], 74.2 m across\n'
+             '(regular octagon fitted to the SFO Museum outline, residual 0.01 m) [obs];\n'
+             'octagonal lantern / skylight rings 19.4 / 13.4 m [obs, NAIP], drawn\nconcentric with the hub [inf]; heights unknown [unk]', 'obs', fs=4.0)
+    V.leader(baf_monitor(-lvF * 11.0)[1] * 0.5 + baf_monitor(-lvF * 11.0)[0] * 0.5 + [0, -4], -14, 22, 'BA-F NW arm: central roof monitor / light strip ~8 m wide\n'
+             '[obs, NAIP, low contrast]; drawn less the ~11 m roof relief [inf];\nheight unknown [unk]', 'obs', fs=4.0)
     # labels: piers
     L = [((-905, 905), -40, 24, 'Boarding Area B (south half, t -1238..-1176):\nouter roof edges ' + fmt_h(DV['bab.h_roof']) + ' [obs]\n'
           'raised central roof ' + fmt_h(DV['bab.h_roof_central']) + ' [obs, low]\nlean-free edges (thick blue): ESE 2.3 m outside, WNW 1.7 m\n'
@@ -153,6 +198,13 @@ def sheet_elev():
     V.text((x + 13.5, 34 * FT + 2.2), 'DOF 06-035331\n34 ft = 10.36 [pub]', 'pub', fs=3.7)
     pier_section(VD, 0, 'BOARDING AREA D (head)', 118.7, DV['bad.h_roof']['value'], DV['bad.h_roof']['range'], note=' between the measured faces [obs, low]')
     VD.text((59, 4.0), 'the two faces may belong to different roof levels\n[obs: parallax 0.5-7 m across the head]', 'unk', fs=3.7)
+    hD = DV['bad.h_roof']['value']
+    for xc, nm in ((39.4, 'S drum'), (104.3, 'N drum')):     # drum centres projected on the cut (from the ESE face) [inf]
+        VD.poly([(xc - 9.6, hD), (xc + 9.6, hD), (xc + 9.6, BAD_DRUM_TOP), (xc - 9.6, BAD_DRUM_TOP)], 'inf', fc='#f6e3cf', z=2.4)
+        VD.text((xc, BAD_DRUM_TOP + 1.6), f'{nm}: D ~19 m [obs]\ntop ~{BAD_DRUM_TOP:.0f} m [inf]', 'inf', fs=3.6)
+    VD.leader((104.3 + 9.6, BAD_DRUM_TOP - 1.5), 10, 12, 'drums: NAIP roof circles; west wall seen over ~2.5-3 m at the\n'
+              'D lean 0.58 m/m -> ~4-5 m above the adjacent roof [obs, low];\npositions projected onto the cut [inf]', 'obs', fs=3.7)
+    VD.text((0, -6.5), 'ESE face', 'obs', fs=3.6, ha='left'); VD.text((118.7, -6.5), 'WNW face', 'obs', fs=3.6, ha='right')
     VD.line([(-4, 14.6), (124, 14.6)], 'app', lw=0.6)
     VD.text((-3, 15.4), 'app today: 14.6 m', 'app', fs=4.0, ha='left')
     VD.scalebar(y_mm=4)
@@ -165,6 +217,27 @@ def sheet_elev():
     V.line([(-10, 14.6), (x + 50, 14.6)], 'app', lw=0.6)
     V.text((-9, 16.6), 'app today: every pier 14.6 m (tools/build_terminal_parts.py PIER_H)', 'app', fs=4.0, ha='left')
     V.scalebar(y_mm=4)
+    # ---------- 1c BA-F hub (section through the lantern) and the NW arm with its roof monitor
+    VF = S.view(345, 226, 390, 128, 500, (85, 12), title='1c  BOARDING AREA F: HUB (cut through the lantern) and NW ARM (cross-section)', kind='elev', frame=False)
+    hF = DV['baf.h_roof_ne_arm']['value']; W8 = 2 * BAF_HUB_APO
+    VF.ax.fill_between([-4, W8 + 70], [-1.5, -1.5], [0, 0], color='#dddddd', lw=0, zorder=1)
+    VF.line([(-4, 0), (W8 + 70, 0)], 'pub', lw=0.7)
+    VF.poly([(0, 0), (W8, 0), (W8, hF), (0, hF)], 'unk', fc='#f4f7fb', z=2)
+    for apo in BAF_LANTERN_APO[:1]:
+        VF.poly([(W8 / 2 - apo, hF), (W8 / 2 + apo, hF), (W8 / 2 + apo, hF + 4), (W8 / 2 - apo, hF + 4)], 'unk', fc='#cfe3f3', z=2.2)
+    VF.dim((0, 0), (W8, 0), -5, f'{W8:.1f} m across the flats [obs: SFOM octagon fit]', 'obs', fs=3.9)
+    VF.dim((W8 / 2 - BAF_LANTERN_APO[0], hF + 4), (W8 / 2 + BAF_LANTERN_APO[0], hF + 4), 3, '19.4 lantern [obs]', 'obs', fs=3.7)
+    VF.text((W8 / 2, hF / 2), 'hub roof drawn at the NE-arm height\n10.49 m [inf]; not measured [unk]', 'unk', fs=3.6)
+    VF.leader((W8 / 2 + BAF_LANTERN_APO[0], hF + 3), 8, 10, 'lantern rise unknown (dotted placeholder) [unk];\nits imaged centre is 8.1 m E of the hub centre:\n'
+              'if concentric, a top ~24 m at the 0.33 m/m lean\n[inf, unverified]', 'unk', fs=3.6)
+    x0 = W8 + 22; Wa = 37.5
+    VF.poly([(x0, 0), (x0 + Wa, 0), (x0 + Wa, hF), (x0, hF)], 'unk', fc='#f4f7fb', z=2)
+    m0 = x0 + Wa / 2 - 4.0
+    VF.poly([(m0, hF), (m0 + 8.0, hF), (m0 + 8.0, hF + 2.5), (m0, hF + 2.5)], 'unk', fc='#cfe3f3', z=2.2)
+    VF.dim((x0, 0), (x0 + Wa, 0), -5, f'~{Wa} m imaged roof width [obs, low]', 'obs', fs=3.8)
+    VF.dim((m0, hF + 2.5), (m0 + 8.0, hF + 2.5), 3, '~8 monitor [obs]', 'obs', fs=3.6)
+    VF.text((x0 + Wa / 2, hF / 2), 'NW arm: height not measured\n(drawn at 10.49 [inf])', 'unk', fs=3.6)
+    VF.scalebar(y_mm=3)
     # ---------- T3W wall sections
     V2 = S.view(0, 8, S.vw, 200, 200, (68, 9), title='2  TERMINAL 3 WEST: airside wall sections (CDR 95 % CD, Oct 2023) and T3 level datum', kind='elev', frame=False)
     ft = lambda f, i=0: (f + i / 12.0) * FT
@@ -181,10 +254,12 @@ def sheet_elev():
         V2.text((x0 + w / 2, -4.2), label, 'pub', fs=4.6, weight='bold', bg=False, color='#000000', style='normal')
     lvF = [(0.0, '+0.00 L1 arrivals'), (ft(16), "+4.88  16'-0\" L2 departures"), (ft(34), "+10.36  +18'-0\" international")]
     wall(0, 12, lvF, ft(56) - ft(3, 6), ft(56), 'FIELD WALL (CDR p.18)', "+17.07  56'-0\" top of parapet (3'-6\")")
-    for y0 in (ft(16) + ft(2), ft(16) + ft(14)):
-        V2.poly([(1.0, y0), (11.0, y0), (11.0, y0 + ft(10)), (1.0, y0 + ft(10))], 'inf', fc='#5f6d7a', z=3, lw=0.4)
-    V2.text((6, ft(16) + ft(13)), "2'-0\" band", 'inf', fs=3.4, color='#ffffff', bg=False)
-    V2.leader((11, ft(16) + ft(7)), 4, -26, "windows 10'-0\" x 2 with a 2'-0\" horizontal mullion band [pub];\nvertical position on the wall not dimensioned - placed at L2 [inf]", 'inf', fs=3.8)
+    for y0 in (ft(34), ft(46)):
+        V2.poly([(1.0, y0), (11.0, y0), (11.0, y0 + ft(10)), (1.0, y0 + ft(10))], 'pub', fc='#5f6d7a', z=3, lw=0.4)
+    V2.text((6, ft(45)), "2'-0\" band", 'pub', fs=3.4, color='#ffffff', bg=False)
+    V2.leader((11, ft(40)), 4, -26, "window wall 10'-0\" + 2'-0\" band + 10'-0\" = the 22'-0\" from the international level (34'-0\")\n"
+              "to the top of the parapet (56'-0\") [pub chain, spec t3w.wall_field verification]; which 10 ft is on top: as\n"
+              "printed order [inf]; the upper window runs in front of the 3'-6\" parapet [inf]", 'pub', fs=3.8)
     lvG = [(0.0, '+0.00 L1'), (ft(16, 9), "+5.11  16'-9\" L2"), (ft(16, 9) + ft(18), "+10.59  +18'-0\" L3")]
     wall(46, 12, lvG, ft(59, 7) - ft(8), ft(59, 7), 'GATEHOUSE WALL (CDR p.20)', "+18.16  59'-7\" top of the 8'-0\" penthouse screen")
     # T3 level datum column
