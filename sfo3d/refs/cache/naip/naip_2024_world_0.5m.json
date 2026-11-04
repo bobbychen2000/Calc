@@ -1,0 +1,26 @@
+{
+ "image": "naip_2024_world_0.5m.png",
+ "width": 9716,
+ "height": 9990,
+ "res": 0.5,
+ "x0": -2613.0,
+ "z0": -2353.0,
+ "x1": 2245.0,
+ "z1": 2642.0,
+ "convention": "col = (x - x0)/res - 0.5, row = (z - z0)/res - 0.5 (pixel centres); x east, z south, metres from ARP",
+ "frame": "ltp-nad83-2011",
+ "world_projection": "js/geo.js llToWorld = tools/geo_frame.py: exact local tangent plane (ENU, GRS80) at ARP 37.6188056,-122.3754167",
+ "world_datum": "NAD83(2011) = the world datum (FAA NASR, NAIP); no datum shift",
+ "source": "refs/cache/naip/naip_2024_sfo_utm10n.tif",
+ "source_crs": "EPSG:26910",
+ "source_res": 0.6,
+ "source_tags": {
+  "ITEMS": "m_3712230_nw_10_060_20240520,m_3712229_ne_10_060_20240520,m_3712222_sw_10_060_20240520,m_3712221_se_10_060_20240520",
+  "LICENCE": "USDA NAIP - public domain (see docs/research/imagery.md)",
+  "SOURCE": "USDA FPAC-BC-GEO NAIP image service https://apps.geo.fpac.usda.gov/geo-imagery/rest/services/naip/conus_naip/ImageServer",
+  "YEAR": "2024",
+  "AREA_OR_POINT": "Area"
+ },
+ "resampling": "bilinear (cv2.remap), exact per-pixel mapping via pyproj",
+ "licence": "USDA NAIP: public domain (U.S. Government work); credit requested: \"USDA Farm Production and Conservation - Business Center, Geospatial Enterprise Operations\" (see docs/research/imagery.md)"
+}

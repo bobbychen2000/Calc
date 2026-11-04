@@ -107,6 +107,18 @@ In the page, `window.SFO` exposes these debug hooks:
 
 The satellite pipeline lives in `tools/sat/`. The screenshots go in `tools/sat/screens/` (shipped separately as `sfo3d-satellite-screens.zip`); registrations are in `tools/sat/work/reg.json`.
 
+## Downloads, recordings and workflow state (persistence)
+
+A recreated container loses everything gitignored (2026-11-04: five weeks of downloads, the September ADS-B recordings
+and the workflow journals). The owner's rule since then: **commit the cached data**. Run `python3 tools/cache/sync.py`
+before every commit: it stages (`git add -f`) every file under `refs/cache/` we may redistribute in this PUBLIC repo
+(our own outputs, public-domain / ODbL / GPL / CC sources recorded in a `SOURCES.json` beside the file, ≤ 25 MB), a
+trimmed copy of each finished adsb.lol hour (`refs/cache/rec_pack/`), the workflow scripts and journals (`.wf/`), and
+lists every other file with its SHA-256 in `refs/MANIFEST.json` (NAIP rasters, manufacturer documents, photos without an
+open licence, the owner's Google screenshots, flysfo responses, adsb.fi recordings). After a container loss:
+`tools/cache/restore.sh [<session transcript dir>]` (NAIP re-fetch + hash check, ADS-B hours, journals for
+`Workflow resumeFromRunId`). Agents that save a third-party file record its URL and licence in `SOURCES.json`.
+
 ## Conventions
 
 - Keep files self-describing: a header comment stating the purpose, plus the source of every constant (FAA AC paragraph, AirNav, imagery measurement, etc.).

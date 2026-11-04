@@ -1,0 +1,48 @@
+{
+ "2020": {
+  "year": "2020",
+  "source": "https://naipeuwest.blob.core.windows.net/naip/v002/ca/2020/ca_060cm_2020/37122/m_3712229_ne_10_060_20200524.tif",
+  "item": "ca_m_3712229_ne_10_060_20200524",
+  "datetime": "2020-05-24T00:00:00Z",
+  "gsd": 0.6,
+  "window": {
+   "x0": -1360.0,
+   "x1": -440.0,
+   "z0": -300.0,
+   "z1": 970.0
+  },
+  "res_m": 0.25,
+  "frame": "ltp-nad83-2011",
+  "pixel_centre": "x = x0 + (col + 0.5) * res, z = z0 + (row + 0.5) * res"
+ },
+ "2024": {
+  "year": "2024",
+  "source": "local USDA mosaic refs/cache/naip/naip_2024_sfo_utm10n.tif",
+  "items": "m_3712229_ne_10_060_20240520 et al. (USDA image service, flown 2024-05-20)",
+  "window": {
+   "x0": -1360.0,
+   "x1": -440.0,
+   "z0": -300.0,
+   "z1": 970.0
+  },
+  "res_m": 0.25,
+  "frame": "ltp-nad83-2011",
+  "pixel_centre": "x = x0 + (col + 0.5) * res, z = z0 + (row + 0.5) * res"
+ },
+ "2022": {
+  "year": "2022",
+  "source": "https://naipeuwest.blob.core.windows.net/naip/v002/ca/2022/ca_060cm_2022/37122/m_3712229_ne_10_060_20220518.tif",
+  "item": "ca_m_3712229_ne_10_060_20220518",
+  "datetime": "2022-05-18T16:00:00Z",
+  "gsd": 0.6,
+  "window": {
+   "x0": -1360.0,
+   "x1": -440.0,
+   "z0": -300.0,
+   "z1": 970.0
+  },
+  "res_m": 0.25,
+  "frame": "ltp-nad83-2011",
+  "pixel_centre": "x = x0 + (col + 0.5) * res, z = z0 + (row + 0.5) * res"
+ }
+}

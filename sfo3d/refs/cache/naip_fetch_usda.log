@@ -1,0 +1,7 @@
+usda NAIP years available over AOI: ['2024'] -> using 2024 ['m_3712230_nw_10_060_20240520', 'm_3712229_ne_10_060_20240520', 'm_3712222_sw_10_060_20240520', 'm_3712221_se_10_060_20240520']
+output grid 8646 x 8876 px, E 552343.8..557531.4, N 4160896.8..4166222.4
+  m_3712230_nw_10_060_20240520: 4301x6223 px exported in 39 s
+  m_3712229_ne_10_060_20240520: 5096x6163 px exported in 38 s
+  m_3712222_sw_10_060_20240520: 4381x3384 px exported in 18 s
+  m_3712221_se_10_060_20240520: 5016x3444 px exported in 19 s
+wrote /home/user/Calc/sfo3d/refs/cache/naip/naip_2024_sfo_utm10n.tif 276.4 MB; empty px: 0
