@@ -17,6 +17,8 @@ curtain tile's transoms start at the band bottom and its verticals fall on the L
                                      vertical corrugation, a flat accent band every 1.4 m (BD-03 schematic) [inf]
   dom_n_pv         512    4 x 4 m    PV modules 1.0 x 2.0 m with frames (low-tilt racks) [inf]
   dom_c_<glass>    512    6 x 6 m    curtain glass colour + light aluminium caps on the dom_n_curtain grid [inf]
+  dom_c_glass_ec  1024x256 24 x 6 m  BA-B electrochromic glass: per-pane tint states (EC_STATES) + caps (review r1) [inf]
+  dom_n_curtain24 1024x256 24 x 6 m  the curtain caps on that tile
   dom_c_frit_grey  512    6 x 6 m    BA-E "clear glass with grey frit" [pub bae.facade]: horizontal frit lines [pattern inf]
   dom_c_frit_green 512x512 12 x 9 m  T1 Center landside upper tiers: green frit with the vertical striation of photo d1 and the
                                      tier transom 44 % up (draw_domestic.T1_SPLIT) [obs photo d1, schematic]; NO regular
@@ -40,6 +42,8 @@ TILES = {   # name: (metres along U, metres along V); must equal dom_geom.TILE f
     'dom_c_frit_green': (12.0, 9.0),
     'dom_c_t3w': (6.0, 5.8),
     'dom_c_pv': (4.0, 4.0),
+    'dom_c_glass_ec': (24.0, 6.0),
+    'dom_n_curtain24': (24.0, 6.0),
 }
 CURTAIN = (1.5, 3.0)            # vertical / transom pitch of the generic curtain grid [inf] (dom_geom.MULL = 1.5)
 T3W_GRID = (2.0, 3.5)           # T3W: vertical pitch 2.0 m (BD-03 schematic), transom 3.5 m above the band bottom [unk]
@@ -50,8 +54,13 @@ CURTAIN_GLASS = {   # base-colour curtain tiles: glass colour (sRGB, = the mater
     'dom_c_glass_ec': (44, 58, 70),        # BA-B electrochromic glass (tinted state varies; mid value) [pub glazing, colour inf]
     'dom_c_glass_lowe': (66, 82, 92),      # clerestories / lantern / monitor [inf]
     'dom_c_glass_tint': (40, 54, 58),      # generic tinted gate-room glass (BA-C / D / F, halls airside) [unk]
-    'dom_c_glass_clear': (30, 36, 40),     # clear glass under the T1 canopy / BA-E end wall (dark: unlit interior) [obs photos d1 / a1]
+    'dom_c_glass_clear': (30, 36, 40),     # clear glass: BA-E end wall (dark: unlit interior) [obs photo a1]
+    'dom_c_glass_lobby': (112, 120, 122),  # clear glass under the T1 canopy: the lit ticket hall seen through it reads mid-grey
+                                           # (photo d1; review r1 - it rendered black) [obs photo d1, value inf; as the ITB glass_hall]
 }
+# BA-B electrochromic glass (review r1: a uniform near-black band): every 1.5 x 3.0 m pane in one of four tint states (EC glass
+# is zoned and tints per pane / zone with the sun) [pub electrochromic, states inf]: sRGB per state and its share
+EC_STATES = (((86, 104, 114), 0.30), ((66, 82, 94), 0.35), ((50, 64, 76), 0.25), ((36, 46, 58), 0.10))
 
 
 def _normal_png(height, su, sv, path, strength=1.0):
@@ -116,11 +125,38 @@ def curtain(path, pitch, tile, size=512, phase_v=0.0):
     return _normal_png(cap, tu / u.shape[1], tv / v.shape[0], path)
 
 
+def curtain_rect(path, pitch, tile, w=1024, h=256):
+    """curtain caps normal map on a non-square tile (the 24 x 6 m EC glass tile)."""
+    tu, tv = tile
+    u, v = _grid(w, h, tu, tv)
+    cap = np.maximum(-_groove(_dist(u, pitch[0]), 0.05, 0.03), -_groove(_dist(v, pitch[1]), 0.05, 0.03))
+    return _normal_png(cap, tu / w, tv / h, path)
+
+
 def curtain_colour(path, glass_rgb, pitch=CURTAIN, tile=(6.0, 6.0), size=512, phase_v=0.0):
     tu, tv = tile
     u, v = _grid(size, size, tu, tv)          # square pixels not needed: 512 x 512 for any tile aspect
     cap = ((_dist(u, pitch[0]) < 0.03) | (_dist(v, pitch[1], phase_v) < 0.03)).astype(float)
     col = np.array(glass_rgb, float)[None, None, :] * (1 - cap[..., None]) + np.array(CAP_RGB, float)[None, None, :] * cap[..., None]
+    return _rgb_png(col, path)
+
+
+def ec_colour(path, w=1024, h=256, seed=23):
+    """BA-B electrochromic curtain glass, 24 x 6 m tile (16 x 2 panes on the 1.5 x 3.0 m grid): per-pane tint state
+    (EC_STATES), a faint vertical reflectance gradient per pane (+-4 %), light caps [inf]."""
+    tu, tv = TILES['dom_c_glass_ec']
+    u, v = _grid(w, h, tu, tv)
+    rng = np.random.default_rng(seed)
+    nu, nv = int(round(tu / CURTAIN[0])), int(round(tv / CURTAIN[1]))
+    cols = np.array([c for c, _ in EC_STATES], float); p = np.array([q for _, q in EC_STATES]); p = p / p.sum()
+    st = rng.choice(len(cols), size=(nv, nu), p=p)
+    iu = np.clip((u / CURTAIN[0]).astype(int), 0, nu - 1) + 0 * v.astype(int)
+    iv = np.clip((v / CURTAIN[1]).astype(int), 0, nv - 1) + 0 * u.astype(int)
+    col = cols[st[iv, iu]]
+    fv = np.mod(v, CURTAIN[1]) / CURTAIN[1] + 0 * u
+    col = col * (0.96 + 0.08 * fv)[..., None]
+    cap = ((_dist(u, CURTAIN[0]) < 0.03) | (_dist(v, CURTAIN[1]) < 0.03)).astype(float)
+    col = col * (1 - cap[..., None]) + np.array(CAP_RGB, float)[None, None, :] * cap[..., None]
     return _rgb_png(col, path)
 
 
@@ -182,7 +218,9 @@ def pv_colour(path, size=512):
 def make_all(out_dir):
     os.makedirs(out_dir, exist_ok=True)
     p = lambda k: os.path.join(out_dir, k + '.png')  # noqa: E731
-    out = {k: curtain_colour(p(k), rgb) for k, rgb in CURTAIN_GLASS.items()}
+    out = {k: curtain_colour(p(k), rgb) for k, rgb in CURTAIN_GLASS.items() if k != 'dom_c_glass_ec'}
+    out['dom_c_glass_ec'] = ec_colour(p('dom_c_glass_ec'))
+    out['dom_n_curtain24'] = curtain_rect(p('dom_n_curtain24'), CURTAIN, TILES['dom_n_curtain24'])
     out.update({
         'dom_n_membrane': membrane(p('dom_n_membrane')),
         'dom_n_panel': panel(p('dom_n_panel')),

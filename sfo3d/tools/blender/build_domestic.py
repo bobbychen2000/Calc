@@ -61,7 +61,7 @@ OUT = os.path.join(ROOT, 'out', 'buildings3d')
 WIP = os.path.join(OUT, 'wip')
 TEX = os.path.join(OUT, 'dom_tex')
 GROUND_Y = 3.0                      # js/geo.js GROUND_Y
-ATLAS = {'S': ('T1', 'BA_B', 'BA_C', 'T2'), 'N': ('BA_D', 'T3W', 'T3E', 'BA_E', 'BA_F')}
+ATLAS = {'S': ('T1', 'BA_B', 'BA_C', 'T2', 'C3C'), 'N': ('BA_D', 'T3W', 'T3E', 'BA_E', 'BA_F')}
 AO_RES = {'S': 2048, 'N': 2048, 'L2': 1024}
 AO_DIST = 10.0                      # AO ray length, m (wall bases, parapets, wells, overhangs) [our choice, as the ITB]
 T0 = time.time()
@@ -89,12 +89,20 @@ MATS = {
     'mullion_dark':   dict(rgb=(58, 62, 66), m=0.60, r=0.40, src='pub t3w.materials "vertical mullion fins (dark gray metallic)"; T1: obs photo d1 dark mullions'),
     'fascia_plain':   dict(rgb=(236, 237, 237), m=0.0, r=0.45, src='obs photo d1 (white "1" of the sign)'),
     'lettering':      dict(rgb=(34, 38, 42), m=0.20, r=0.45, src='obs photo d1 ("Harvey Milk Terminal / Terminal 1"); font inf'),
-    'glass_canopy':   dict(rgb=(150, 166, 168), r=0.08, src='pub t1c canopy (glass); value inf', **GL),
+    'glass_canopy':   dict(rgb=(188, 200, 200), m=0.0, r=0.30, src='pub t1c canopy (glass); reads light grey-green from above and below '
+                             '(photo d1; review r1: the coated dark glass read as a thin dark line): laminated / fritted, uncoated F0 0.04, rough; value inf'),
     'glass_sky':      dict(rgb=(72, 88, 98), r=0.06, src='obs NAIP skylights; glass inf', **GL),
-    'glass_ec':       dict(rgb=(44, 58, 70), r=0.05, tex='dom_c_glass_ec', nrm=('dom_n_curtain', 0.5), src='pub bab.glazing (electrochromic); tint inf', **GL),
+    'glass_ec':       dict(rgb=(58, 74, 86), r=0.05, tex='dom_c_glass_ec', nrm=('dom_n_curtain24', 0.5),
+                           src='pub bab.glazing (electrochromic); per-pane tint states (dom_tex.EC_STATES, review r1) inf', **GL),
     'glass_lowe':     dict(rgb=(66, 82, 92), r=0.05, tex='dom_c_glass_lowe', nrm=('dom_n_curtain', 0.5), src='inf (clerestory / lantern glass)', **GL),
     'glass_tint':     dict(rgb=(40, 54, 58), r=0.05, tex='dom_c_glass_tint', nrm=('dom_n_curtain', 0.5), src='unk (gate-room glass not described: generic tint)', **GL),
-    'glass_clear':    dict(rgb=(30, 36, 40), r=0.04, tex='dom_c_glass_clear', nrm=('dom_n_curtain', 0.5), src='obs photos d1 / a1 (dark clear glass)', **GL),
+    'glass_clear':    dict(rgb=(30, 36, 40), r=0.04, tex='dom_c_glass_clear', nrm=('dom_n_curtain', 0.5), src='obs photo a1 (BA-E end wall, dark clear glass)', **GL),
+    'glass_lobby':    dict(rgb=(112, 120, 122), r=0.06, tex='dom_c_glass_lobby', nrm=('dom_n_curtain', 0.5),
+                           src='obs photo d1 (T1 Center clear glass under the canopy: the lit hall seen through, mid-grey); value inf '
+                               '(as the ITB glass_hall; review r1)', **GL),
+    'unit':           dict(rgb=(178, 182, 184), m=0.45, r=0.50, nrm=('dom_n_panel', 0.5),
+                           src='inf (rooftop mechanical units: painted / galvanised metal casings; extents obs NAIP 2024, dom_roofobs.json)'),
+    'unit_top':       dict(rgb=(150, 154, 156), m=0.30, r=0.60, src='inf (unit tops: fans / grilles read darker than the casing)'),
     'glass_frit_grey': dict(rgb=(110, 118, 122), r=0.12, tex='dom_c_frit_grey', nrm=('dom_n_curtain', 0.4), src='pub bae.facade "clear glass with grey frit"; pattern inf', **GL),
     'glass_frit_green': dict(rgb=(165, 186, 172), m=0.0, r=0.22, tex='dom_c_frit_green', src='pub t1c.landside_facade (fritted glass); green obs photo d1; '
                              'the ceramic frit dominates: uncoated F0 0.04, rougher; pattern inf'),
@@ -104,8 +112,9 @@ MATS = {
 L2_MAP = {'glass_ec': 'glass_tint', 'glass_lowe': 'glass_tint', 'glass_clear': 'glass_tint', 'glass_sky': 'glass_tint',
           'glass_canopy': 'glass_tint', 'glass_t3w': 'glass_tint', 'coping': 'panel_light', 'fascia': 'panel_light', 'mullion': 'panel_light',
           'concrete': 'panel_light', 'panel_platinum': 'panel_light', 'panel_acm': 'panel_light', 'penthouse_corr': 'panel_light',
-          'soffit': 'panel_dark', 'door_dark': 'panel_dark', 'panel_acm_dark': 'panel_dark', 'planting': 'planting', 'lettering': 'panel_dark'}
-LEAN_OF = {'BA_B': 'B', 'BA_C': 'C', 'BA_D': 'D', 'BA_E': 'E', 'BA_F': 'F', 'T1': 'BC', 'T2': 'CD', 'T3W': 'EF', 'T3E': 'EF'}
+          'soffit': 'panel_dark', 'door_dark': 'panel_dark', 'panel_acm_dark': 'panel_dark', 'planting': 'planting', 'lettering': 'panel_dark',
+          'unit': 'panel_light', 'glass_lobby': 'glass_lobby'}
+LEAN_OF = {'BA_B': 'B', 'BA_C': 'C', 'BA_D': 'D', 'BA_E': 'E', 'BA_F': 'F', 'T1': 'BC', 'T2': 'CD', 'T3W': 'EF', 'T3E': 'EF', 'C3C': None}
 ROOF_CAP = 215                      # sRGB cap of a NAIP roof colour: NAIP saturates on the white membranes (>= 245); aged white
                                     # single-ply solar reflectance ~0.65-0.70 -> base colour <= sRGB 215 (linear 0.68) [inf]
 
@@ -134,24 +143,27 @@ def naip_colours(W):
         return None
     A, T = DL._naip(); R = T['res']
     lean = {k: float(DD.dom_lean(k)[0][0]) for k in 'BCDEF'}
-    pv = unary_union([q for r in (G.PV or {}).get('regions', {}) for q in G.pv_blocks(r)]) if G.PV else None
+    pv = unary_union([q for r in (G.PV or {}).get('regions', {}) for q in G.pv_block_outlines(r)]) if G.PV else None
+    us = unary_union([q for q, _, _ in G.roof_units(W, 0)]) if G.ROOFOBS else None
     out = {}
     for bld in G.BLD_INFO:
-        k = float(np.mean([lean[c] for c in LEAN_OF[bld]]))
+        k = float(np.mean([lean[c] for c in LEAN_OF[bld]])) if LEAN_OF.get(bld) else None
         pts = []
         for s in W.S:
             if s.bld != bld or not s.top or s.style in ('drum', 'lantern', 'monitor', 'penthouse', 'walk', 'vest'): continue
             g = s.roof.buffer(-2.0, join_style=2)
             if s.holes: g = g.difference(unary_union(s.holes).buffer(1.0))
             if pv is not None: g = g.difference(pv.buffer(1.5))
+            if us is not None and not us.is_empty: g = g.difference(us.buffer(1.5))
             if g.is_empty: continue
+            kk = k if k is not None else G.lean_x(G.Wp(*g.centroid.coords[0])[0])
             gp = shapely.prepared.prep(g)
             x0, y0, x1, y1 = g.bounds
             for X in np.arange(x0, x1, 2.5):
                 for Y in np.arange(y0, y1, 2.5):
                     if not gp.contains(Point(X, Y)): continue
                     x, z = G.Wp(X, Y)
-                    c = int(round((x + k * s.h - T['x0']) / R - 0.5)); r = int(round((z - T['z0']) / R - 0.5))
+                    c = int(round((x + kk * s.h - T['x0']) / R - 0.5)); r = int(round((z - T['z0']) / R - 0.5))
                     if 0 <= r < A.shape[0] and 0 <= c < A.shape[1]:
                         b_, g_, r_ = A[r, c]
                         pts.append((int(r_), int(g_), int(b_)))
@@ -161,7 +173,7 @@ def naip_colours(W):
         P = P[lum >= np.percentile(lum, 35)]          # membrane, not shadows / equipment / dirt (upper 65 %)
         rgb = np.median(P, 0)
         if rgb.max() > ROOF_CAP: rgb = rgb * ROOF_CAP / rgb.max()
-        out[bld] = dict(rgb=[int(round(v)) for v in rgb], n=len(pts), lean_m_per_m=round(k, 3),
+        out[bld] = dict(rgb=[int(round(v)) for v in rgb], n=len(pts), lean_m_per_m=round(k if k is not None else G.lean_x(-812.0), 3),
                         method='NAIP 2024 median of the upper 65 pct (luminance) at the imaged deck points, 2.5 m grid, 2 m inside, '
                                'off holes / PV; capped at sRGB ' + str(ROOF_CAP))
     return out

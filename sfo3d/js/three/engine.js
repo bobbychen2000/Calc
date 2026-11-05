@@ -5,6 +5,8 @@
 //   low (phones): one pass with MRT (colour, normal, velocity) -> half-resolution GTAO applied to the colour -> TRAA
 //                -> the same sprite / bloom / AgX / grade chain (bloom at a lower resolution)
 // Decisions and their sources: docs/research/engine.md (verified), docs/research/engine_impl.md (this port).
+// Environment step 3 (docs/research/environment_impl.md §3): a 64 x 36 luminance target of the pre-exposed HDR image
+// (this.meter) for the auto-exposure; `expo` is now the exposure divided by the pre-exposure (renderer3).
 // Review round 1 (25 Sep 2026) changes, each explained where it is made: bloom threshold in exposed (display) units
 // with a luminance clamp; AgX with a log-domain contrast look around 18 % grey instead of a display-linear S-curve;
 // vignette + dither; light sprites composited after TRAA; TRAA fed a correct reversed depth (vendored three patch,
@@ -323,6 +325,10 @@ export class Engine {
     // weighting, and sprites on moving aircraft took the velocity of the background behind them)
     const lp = pass(this.fxScene, this.fxCam); lp.name = 'lights'; this.lightPass = lp;
     hdr = hdr.rgb.add(lp.rgb);
+    // exposure metering (environment step 3, spec §8; js/env/atmo/exposure.js meter): the pre-exposed HDR luminance
+    // (scene + light sprites, before exposure) resampled to 64 x 36 for an asynchronous readback by renderer3
+    this.meter = TSL.rtt(vec4(luminance(hdr), 0.0, 0.0, 1.0), 64, 36, { type: THREE.HalfFloatType, depthBuffer: false, generateMipmaps: false });
+    this.meter.name = 'meter';
     // exposure (was renderer.toneMappingExposure inside the output transform)
     const exposed = hdr.mul(this.expo);
     let final = exposed;
@@ -352,7 +358,8 @@ export class Engine {
     const h = (p) => fract(sin(dot(p, vec2(12.9898, 78.233))).mul(43758.5453));
     const px = screenCoordinate.xy;
     const dith = h(px.mul(1.37)).sub(0.5).div(255.0).add(h(px.add(fract(G.time.mul(17.13)).mul(1000.0))).sub(0.5).mul(G.grain));
-    pipe.outputNode = vec4(enc.add(dith), 1.0);
+    // (+ 0 x the meter: keeps the metering pass in the output graph, so the pipeline runs it every frame, as the AO above)
+    pipe.outputNode = vec4(enc.add(dith).add(this.meter.sample(vec2(0.5, 0.5)).r.mul(0.0)), 1.0);
     if (Q.aa === 'fxaa' && !Q.traa) pipe.outputNode = THREE.fxaa(pipe.outputNode); // FXAA (display-referred input) instead of TRAA: inert hook for the deferred phone work (js/three/perf.js, docs/research/mobile_perf.md)
   }
   // rig camera {pos, target|dir, fov, near, far, shadowSplits} -> three camera + cascade splits

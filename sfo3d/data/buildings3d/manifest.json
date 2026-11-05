@@ -2538,9 +2538,9 @@
   },
   "family_note": "Two self-consistent height families (docs/research/buildings_tower.md 12.3). Default (3-D review round 1, 2026-11-05): F2 (D 14.5, rim 64.0) lies within the observations (cab-roof D 14.3 +-1.0 measured, 14.75 +-0.5 EXIF; rim 63.3-64.1 m for D 14.3, 65 +-2 m for D 14.75); F1 (D 15.2, rim 67.36 = 221 ft) needs D >= 15.1 and rests on the CTBUH classification of 221 ft (a database class, not a survey): kept as the published-height hypothesis (tower_f1.glb, ?b3dtower=f1). Settle with a surveyed ground photo, the NAIP shadow with the flight time, or an SFO / FAA elevation drawing.",
   "bytes": {
-   "F1": 3464528,
-   "F2": 3363408,
-   "lod2_only": 235848
+   "F1": 3454808,
+   "F2": 3380736,
+   "lod2_only": 236192
   },
   "placement": {
    "frame": "ltp-nad83-2011 (js/geo.js): x east, y up, z south, m from the ARP; ground GROUND_Y = 3.0",
@@ -2708,7 +2708,7 @@
      2048
     ],
     "mode": "L",
-    "bytes": 846901
+    "bytes": 860208
    },
    {
     "name": "tile_panel_tower",
@@ -2753,7 +2753,7 @@
      1024
     ],
     "mode": "L",
-    "bytes": 246410
+    "bytes": 246534
    },
    {
     "name": "tower_ao_L2_f2",
@@ -2762,7 +2762,7 @@
      512
     ],
     "mode": "L",
-    "bytes": 67915
+    "bytes": 68124
    }
   ],
   "texture_note": "AO atlases on TEXCOORD_1 (grey-scale PNG, sun-independent, Cycles); detail tiles on TEXCOORD_0 (procedural, tools/blender/tower_tex.py): the cladding base colour (joint lines, per-panel tone) + normal tile (4 x 2 panels), louvres, base-building panels. KTX2 / meshopt: later (tools/engine/glb_compress.mjs).",
@@ -3047,7 +3047,7 @@
      "first": [],
      "drawCalls": 73,
      "triangles": 47926,
-     "vertices": 41210
+     "vertices": 41245
     },
     "F2": {
      "validator": "2.0.0-dev.3.10",
@@ -3061,7 +3061,7 @@
      "first": [],
      "drawCalls": 73,
      "triangles": 46399,
-     "vertices": 40201
+     "vertices": 40277
     }
    },
    "file": "out/buildings3d/tower_verify.json",
@@ -3188,7 +3188,7 @@
     "centre_h": 38.0,
     "m_per_px": 0.08542,
     "view_bearing": 297.7,
-    "render_s": 28.2
+    "render_s": 17.9
    },
    "B": {
     "path": "out/buildings3d/tower_B.png",
@@ -3206,7 +3206,7 @@
     "centre_h": 38.0,
     "m_per_px": 0.08542,
     "view_bearing": 117.69999999999999,
-    "render_s": 29.5
+    "render_s": 17.5
    },
    "t2": {
     "path": "out/buildings3d/tower_t2.png",
@@ -3229,7 +3229,7 @@
     "f_px": 3223.4,
     "photo": "refs/cache/buildings/review_likeness/t2.jpg",
     "photo_credit": "Famartin 2025-08-12 11:57, CC BY-SA 4.0 (reference only)",
-    "render_s": 27.4
+    "render_s": 23.0
    },
    "t3": {
     "path": "out/buildings3d/tower_t3.png",
@@ -3252,7 +3252,7 @@
     "f_px": 3364.4,
     "photo": "refs/cache/buildings/review_likeness/t3.jpg",
     "photo_credit": "Famartin 2025-08-12 09:12, CC BY-SA 4.0 (reference only)",
-    "render_s": 28.3
+    "render_s": 17.9
    },
    "t4": {
     "path": "out/buildings3d/tower_t4.png",
@@ -3275,7 +3275,7 @@
     "f_px": 1195.0,
     "photo": "refs/cache/buildings/review_likeness/t4.jpg",
     "photo_credit": "Famartin 2025-08-12 09:10, CC BY-SA 4.0 (reference only)",
-    "render_s": 47.9
+    "render_s": 29.5
    },
    "_family": "F2",
    "_compare": {
@@ -3295,8 +3295,8 @@
     "tools/blender/tower3d_verify.py"
    ],
    "bpy": "5.0.1",
-   "git": "3d6ee7c+dirty",
-   "seconds": 542.4,
+   "git": "0a0d03b+dirty",
+   "seconds": 470.7,
    "ao_samples": 48,
    "date": "2026-11-05"
   }
@@ -11620,7 +11620,7 @@
    ],
    "bridges_checked": 131
   },
-  "generated": "2026-11-05T06:28:17Z",
+  "generated": "2026-11-05T08:09:27Z",
   "tool": "tools/blender/b3d_integrate.py",
   "doc": "docs/research/buildings3d.md (integration section)"
  }

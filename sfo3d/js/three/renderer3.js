@@ -18,6 +18,14 @@
 // luminance-only AgX look, floodlight spots for the masts nearest the view + the ground-bounce albedo, masts on their
 // own layer, unused canvas sign atlases released once the MSDF font is in, sharpening strength from the render scale,
 // a progress overlay until the first frame, instanced cars on the garage roofs.
+// Environment steps 3-4 (2026-11-05, docs/research/environment_impl.md §3; spec docs/research/environment_spec.md §7-8),
+// when the app hands over an EnvState (R.envState, js/env/state.js): the sun and sky calibrated to USNO Circular 171
+// (sky_model.js sunCalibration) and adjusted for the reported clouds (÷ D; beam through the per-layer coverage maps),
+// the night-sky floor and the Moon disc (and the Moon as the directional light at night, no shadows), fog slabs, up to
+// 6 cloud layers (sky shader + planes for the layers below 5,000 ft; the app's single 'cloud' slab items are ignored),
+// auto-exposure (64 x 36 luminance readback, js/env/atmo/exposure.js; ?ae=0 = the previous keyed exposure, ?ev=<EV100>
+// fixed), pre-exposure (every emitter x pre, the post exposure / pre; ?pre=1 pins it for the invariance check), rain /
+// drizzle particles (js/three/rain.js), lightning and wet pavement (ground.js).
 import { THREE, TSL } from './lib.js';
 import { Engine, QUALITY3 } from './engine.js';
 import { Sky } from './sky.js';
@@ -36,6 +44,11 @@ import { garageCars } from './objects.js';
 import { GROUND_Y } from '../geo.js';
 import { lampK } from './tsl/common.js';
 import { Buildings3D } from './buildings3d.js'; // Blender building assets (data/buildings3d/*.glb)
+import { Rain } from './rain.js';
+import { sunCalibration, cloudAdjust, nightSkyLuminance, moonDisc, renderSlabs, cloudLayers, histogram8, detailDistribution, sstep as sstepE } from '../env/atmo/sky_model.js';
+import { meter, adapt, clampEV, exposureForEV, evForExposure, ev100FromLuminance, preExposure } from '../env/atmo/exposure.js';
+import { rainParams, showerFactor, lightningFlashes, flashLevel, wetStep } from '../env/atmo/weather_fx.js';
+import { directionWorld } from '../env/ephemeris.js';
 
 const { uniform } = TSL;
 const T0 = performance.now();
@@ -71,6 +84,12 @@ const lum = (c) => 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
 // daylight factor of a deep, fully glazed concourse; HALL_LUX 200 lx is the usual design level of airport departure
 // halls (EN 12464-1 airports table, recalled, not re-checked here). Not SFO measurements.
 const HALL_DF = 0.05, HALL_LUX = 200;
+// Environment step 3 constants (I unless noted). K_TWILIGHT: the C171 calibration factor where C171's Sun term falls
+// below 0.05 lx (Sun ~ -9 deg; sky_model.js CAL_MIN_LUX), kept below that (M: 0.167 at predawn_fog, tools/env/test_sky.mjs).
+// MOON_COL: moonlight a little warmer than sunlight (~4,100 K, I). FLASH_COL / flash illuminance: lightning brightness is
+// NV (spec §4.6): 3 lx at 3 km, inverse square, 0.05-20 lx (I, QA-tuned). Rain radiance: 0.6 x the sky-up radiance (I).
+const K_TWILIGHT = 0.167, MOON_COL = [1.0, 0.95, 0.86], FLASH_COL = [0.86, 0.9, 1.0], RAIN_K = 0.6;
+const DEGR = Math.PI / 180;
 
 // tier: ?tier=ultra|high|medium|low overrides; otherwise the old app's choice, recognised from the options it passes
 // (js/live/app.js QUALITY: ultra = 4096 shadow map, high = 3072, low = 2x MSAA)
@@ -104,6 +123,9 @@ export class Renderer3 {
     // (also interiorE from sun + sky: glassABOld), y / z / w = weights of reflection, interior, frame. QA only.
     if (qs.get('glassab') === '1') { this.glassAB = uniform(new THREE.Vector4(0, 1, 1, 1)); this.glassABOld = false; }
     this.exposureScale = +(qs.get('expo') || 1.0);
+    // auto-exposure / pre-exposure state (environment step 3): ?ae=0 keyed exposure, ?ev=<EV100> fixed, ?pre=1 pinned
+    this.aeMode = qs.get('ae') === '0' ? 'off' : 'auto'; this.fixedEV = qs.get('ev') != null ? +qs.get('ev') : null; this.pinPre = qs.get('pre') != null ? +qs.get('pre') : null;
+    this.ae = { Lcd: null, t: 0, metered: null }; this.pre = 1; this._meterSnap = true; this.envState = null; this.sunK = null; this.wet = null; this.layers = [];
     this.initP = this.engine.init().then(() => this._onReady()).catch((e) => {
       this.failed = e; console.error('three.js renderer failed to start', e);
       // the browser is blamed only when it really lacks both APIs (review round 3: a TypeError in our own code was shown
@@ -189,10 +211,52 @@ export class Renderer3 {
   // sky model + ambient terms (synchronous, as js/renderer.js setupSky); GPU sky textures and the PMREM IBL follow at
   // the next frame, after the app has adjusted R.light (night floor)
   setupSky(env) {
-    this.env = env;
-    this.light = Sky.lightFor(env); this.baseLight = { ...this.light, skyUp: this.light.skyUp.slice() };
-    if (this.sky) this.sky.setEnv(env);
+    this.env = env; const st = this.envState;
+    if (st && st.sun && st.natural) {
+      // physical sky (environment step 3): sunI calibrated to C171, light adjusted for the reported clouds, night floor
+      const cal = sunCalibration(st); this.cal = cal;
+      if (cal.k != null) this.sunK = cal.k; else if (this.sunK == null) this.sunK = K_TWILIGHT;
+      const envP = { ...env, sunI: (env.sunI || 20) * this.sunK, physical: true }; this.envEff = envP;
+      const L = cloudAdjust(Sky.lightFor(envP), st);
+      const ns = nightSkyLuminance(st).units;
+      L.skyFloor = [ns, ns, ns]; L.skyUp = L.skyUp.map(v => Math.max(v, ns)); L.skyHorizon = L.skyHorizon.map(v => Math.max(v, ns));
+      this.light = L; this.physLight = { ...L, sunColor: L.sunColor.slice(), skyUp: L.skyUp.slice(), skyHorizon: L.skyHorizon.slice(), ground: L.ground.slice() };
+      this.baseLight = this.physLight;
+      const key = st.wx && st.wx.key; if (key !== this._wxKey || Math.abs(st.tEnv - (this._tEnv0 || 0)) > 600e3) this._meterSnap = true; this._wxKey = key; this._tEnv0 = st.tEnv;
+      if (this.sky) this._envSetup(st);
+    } else {
+      this.envEff = null; this.physLight = null;
+      this.light = Sky.lightFor(env); this.baseLight = { ...this.light, skyUp: this.light.skyUp.slice() };
+    }
+    if (this.sky) this.sky.setEnv(this.envEff || env);
     this.envDirty = true;
+  }
+  // EnvState -> sky uniforms: fog slabs, cloud layers, Moon (needs this.sky)
+  _envSetup(st) {
+    const S = this.sky, L = this.physLight; if (!S || !L) return;
+    const slabs = renderSlabs(st); this.slabs = slabs;
+    const fogCol = L.skyUp.map((v, k) => v * 0.8 + L.ground[k] * 0.2);   // dense-fog in-scatter: ambient sky + ground bounce (I)
+    S.setSlabs(slabs, fogCol, sstepE(2e-4, 2e-3, st.atm.sigmaSurface)); S.u.sunGlow.value = st.sunVisibleP ?? 1;
+    this.layers = this.cloudDist ? cloudLayers(st, this.cloudDist) : [];
+    S.setLayers(this.layers); S.u.cloud.value.x = 1 - (st.sunVisibleP ?? 1);
+    S.setMoon(st.moon && st.moon.el > -1 ? moonDisc(st) : null);
+    this._cloudPlanes();
+  }
+  // planes of the low cloud layers (base seen from below, top seen from above), built once (6 layers x 2)
+  _cloudPlanes() {
+    if (!this.cloudPlanes) {
+      if (!this.built || !this.sky) return;
+      const N = 64, pos = [], idx = []; const f = (x) => Math.sign(x) * Math.pow(Math.abs(x), 2.2); // denser near the camera (as js/live/app.js setClouds)
+      for (let j = 0; j <= N; j++) for (let i = 0; i <= N; i++) pos.push(f(i / N * 2 - 1), 0, f(j / N * 2 - 1));
+      for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) { const a = j * (N + 1) + i; idx.push(a, a + N + 1, a + 1, a + 1, a + N + 1, a + N + 2); }
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(pos), 3)); g.setIndex(idx);
+      this.cloudCentre = uniform(new THREE.Vector2(0, 0)); this.cloudPlanes = [];
+      for (let k = 0; k < 6; k++) for (const top of [false, true]) {
+        const m = new THREE.Mesh(g, this.sky.cloudSlabMaterial(k, top, this.cloudCentre)); m.frustumCulled = false; m.renderOrder = 5; m.matrixAutoUpdate = false; m.visible = false; m.userData = { k, top };
+        this.engine.scene.add(m); this.cloudPlanes.push(m);
+      }
+    }
+    for (const m of this.cloudPlanes) { const l = this.layers[m.userData.k]; m.visible = !!(l && l.slab && (!m.userData.top || l.thickness > 0)); }
   }
   // ------------------------------------------------------------ attachments from the compat modules
   attachWorld(world, sceneShim) {
@@ -209,7 +273,12 @@ export class Renderer3 {
     const cloudTex = textureOf(T.clouds); cloudTex.wrapS = cloudTex.wrapT = THREE.RepeatWrapping;
     this.sky = new Sky(this.engine, { cloudTex, noiseTex: this.noiseTex, baseRes: this.Q.skyRes });
     this.sky.u.night = this.nightE; this.sky.u.time = this.time; // ground.js city lights: nightE
-    if (this.env) this.sky.setEnv(this.env);
+    // cloud texture histogram -> coverage thresholds of the cloud layers (sky_model.js coverageThreshold; A-CLD)
+    { let rec = T.clouds; for (let i = 0; i < 3 && rec && !rec.isTexRecord; i++) rec = rec.tex;
+      if (rec && rec.data && rec.data.length) { const h = histogram8(rec.data); this.cloudDist = detailDistribution(h); this.cloudTexSum = rec.data.reduce((a, b) => a + b, 0); }
+      else { console.warn('[r3] cloud texture data not available: cloud coverage thresholds assume a uniform distribution'); const h = new Float64Array(256).fill(1 / 256); this.cloudDist = detailDistribution(h); } }
+    if (this.env) this.sky.setEnv(this.envEff || this.env);
+    if (this.envState && this.physLight) this._envSetup(this.envState);
     // apron floodlight field from the masts (before any material is compiled: the light node samples it). engine.flood
     // exists before init() resolves (js/three/engine.js constructor); this runs inside the app's synchronous start-up.
     const masts = (world.details && world.details.masts) || [];
@@ -301,6 +370,9 @@ export class Renderer3 {
     this.staticGroup = new THREE.Group(); this.staticGroup.name = 'world'; S.add(this.staticGroup);
     this.built = true; tlog('static scene built');
     this.b3d = new Buildings3D(this); this.b3d.start(); // loads after the static scene; first-pass buildings until then
+    // rain / drizzle particles in the light-sprite pass (js/three/rain.js) and the low cloud-layer planes (environment step 3)
+    this.rain = new Rain(60000, { depthNode: E.depthNode, groundY: GROUND_Y }); E.fxScene.add(this.rain.mesh);
+    this._cloudPlanes();
     // compile the scene's programs off the frame loop where the backend can (KHR_parallel_shader_compile / WebGPU
     // async pipelines); frames are held until then (at most 30 s) so the first frames do not stall one by one
     this._syncItems();
@@ -331,12 +403,7 @@ export class Renderer3 {
       } else if (p === 'mark') {
         const m = new THREE.Mesh(geometryOf(it.mesh), this.markMat); m.frustumCulled = false; m.receiveShadow = true; m.renderOrder = 1; m.matrixAutoUpdate = false; G.add(m);
       } else if (p === 'sign') this.pendingSigns.push(it);
-      else if (p === 'cloud') {
-        const L = { H: uniform(1000), extent: uniform(40000), layer: uniform(new THREE.Vector4()) };
-        const m = new THREE.Mesh(geometryOf(it.mesh), this.sky.cloudSlabMaterial(L)); m.frustumCulled = false; m.renderOrder = 5; m.matrixAutoUpdate = false;
-        m.onBeforeRender = () => { const u = typeof it.uniforms === 'function' ? it.uniforms() : it.uniforms; if (u) { L.H.value = u.uH; L.extent.value = u.uExtent; L.layer.value.fromArray(u.uLayer); } };
-        this.clouds.set(it, m); this.engine.scene.add(m);
-      }
+      else if (p === 'cloud') continue; // the EnvState cloud layers are drawn by _cloudPlanes and the sky shader (environment step 3); the app's single slab items are not used
       // 'decal' (stand centrelines) is off by default in js/live/world.js (standMarkings) and not ported
     }
     // cloud layers removed by the app (setClouds rebuilds them when the METAR changes)
@@ -393,52 +460,104 @@ export class Renderer3 {
     const E = this.engine;
     const C = this._camInfo(cam);
     if (!this.ready || !this.built || !this.compiled) { this._progress(); return C; }
-    const R = E.renderer, S = E.scene, L = this.light;
+    const R = E.renderer, S = E.scene, L = this.light, st = this.envState && this.physLight ? this.envState : null;
     // environment: GPU sky, sun, IBL (after the app's night-floor adjustment of R.light)
     if (this.envDirty) {
       this.envDirty = false;
+      if (st) {
+        // physical light (environment step 3): the app's lamp-unit night floor is replaced by the EnvState night sky
+        for (const k of ['sunColor', 'skyUp', 'skyHorizon', 'ground']) L[k] = this.physLight[k].slice();
+        L._lampScaled = true; L._albScaled = false; L._ground0 = null;
+      }
       // the app's night floor (moon / city glow, js/live/app.js applyEnv: max(sky, floor)) is in lamp units: keep the
       // physical sky and add LAMP_M x the part the floor raised
       const B0 = this.baseLight;
       if (B0 && !L._lampScaled) { for (const k of ['skyUp', 'skyHorizon', 'ground']) L[k] = L[k].map((v, i) => B0[k][i] + LAMP_M * Math.max(0, v - B0[k][i])); L._lampScaled = true; }
       if (this.groundAlb && !L._albScaled) { const a = this.groundAlb; if (!L._ground0) L._ground0 = L.ground.slice(); L.ground = L._ground0.map((g, k) => g / 0.16 * a[k]); L._albScaled = true; } // Sky.lightFor: ground = E x 0.16 / pi
+      if (!st) { const bu = this.baseLight ? this.baseLight.skyUp : L.skyUp; L.skyFloor = L.skyUp.map((v, k) => Math.max(0, v - bu[k])); }
       this.sky.applyLight(L);
-      const bu = this.baseLight ? this.baseLight.skyUp : L.skyUp;
-      this.sky.u.skyFloor.value.setRGB(...L.skyUp.map((v, k) => Math.max(0, v - bu[k])));
       this.sky.renderSky(R);
       this.sky.updateEnvironment(R, S);
-      E.setSun(L.sunDir, L.sunColor); this.sunRad.value.set(L.sunColor[0], L.sunColor[1], L.sunColor[2]);
-      { const sy = Math.max(0, L.sunDir[1]); const k = [0, 1, 2].map(c => { const sk = Math.PI * L.skyUp[c], su = L.sunColor[c] * sy; return sk + su > 1e-9 ? sk / (sk + su) : 1; }); this.shadeK.value.set(k[0], k[1], k[2]); }
+      { const sy = Math.max(0, L.sunDir[1]); const k = [0, 1, 2].map(c => { const sk = Math.PI * L.skyUp[c], su = L.sunColor[c] * sy; return sk + su > 1e-12 ? sk / (sk + su) : 1; }); this.shadeK.value.set(k[0], k[1], k[2]); }
     }
     const nightF = this.extraCommon.uNight || 0;
-    this.time.value = t; this.night.value = nightF; this.nightE.value = nightF * LAMP_M; lampK.value = Math.pow(LAMP_M, nightF);
-    E.flood.intensity = nightF * LAMP_M; // floodlights switch on with the app's night factor (sun below ~6 deg .. -4 deg)
-    this._floodSpots(cam, nightF * LAMP_M);
+    // ---- directional light: the Sun; at night the Moon, or a lightning flash (environment step 3/4; no shadows)
+    let ldir = L.sunDir, lcol = L.sunColor, lname = 'sun';
+    let flash = { level: 0, dir: [0, 1, 0], lux: 0 };
+    if (st) {
+      if (st.lightning && st.lightning.perMin > 0) {
+        const fl = flashLevel(lightningFlashes(st.lightning, t - 0.5, t + 0.01, 1), t);
+        if (fl.flash && fl.level > 0.01) {
+          const base = (this.layers.find(l => l.cover === 'BKN' || l.cover === 'OVC') || { baseY: 1500 }).baseY;
+          const el = Math.atan2(base - cam.pos[1], Math.max(fl.flash.dist, 300)) / DEGR;
+          flash = { level: fl.level, dir: directionWorld(fl.flash.az, el), lux: Math.min(20, Math.max(0.05, 3 * Math.pow(3000 / Math.max(fl.flash.dist, 500), 2))), az: fl.flash.az, dist: fl.flash.dist };
+        }
+      }
+      if (st.sun.el < 0 && flash.level > 0.01) { ldir = flash.dir; lcol = FLASH_COL.map(c => c * flash.lux * flash.level / LUX_PER_UNIT); lname = 'flash'; }
+      else if (st.sun.el < -1 && st.moon.el > 0) {
+        const En = st.natural.moon * st.natural.D / Math.max(Math.sin(st.moon.el * DEGR), 0.05) / LUX_PER_UNIT; // clear: the layers' coverage maps cut it
+        ldir = st.moon.dir; lcol = MOON_COL.map(c => c * En); lname = 'moon';
+      }
+      this.sky.setFlash(flash.dir, flash.level, FLASH_COL.map(c => c * flash.lux / Math.PI / LUX_PER_UNIT));
+      // wet surfaces: the state machine advances with the data clock (js/env/atmo/weather_fx.js wetStep)
+      if (st.tEnv !== this._wetT) { this.wet = wetStep(this.wet, st); this._wetT = st.tEnv; const U = this.sky.u; U.wetFilm.value = this.wet.film; U.wetPore.value = this.wet.pore; U.puddle.value = this.wet.puddle; }
+    }
+    this.lightName = lname; this.flash = flash;
+    // ---- exposure (spec §8): auto-exposure from the metered frame (EV100, clamp, compensation), else the keyed
+    // exposure of review rounds 1-3 (?ae=0; also until the first metering)
+    const el = Math.asin(Math.max(-1, Math.min(1, L.sunDir[1]))) * 180 / Math.PI; const dark = sstep(2, -10, el);
+    const pe = post.exposure ?? 0.45; const B = this.baseLight || L;
+    const eAmb = lum(B.sunColor) * Math.max(0, B.sunDir[1]) + Math.PI * lum(B.skyUp);
+    const eKey = eAmb + E_STAND * LAMP_M * nightF;
+    const expoKey = KEY_NIGHT * Math.PI / (RHO_CONC * Math.max(eKey, 1e-7));
+    const expoDay = dark < 0.999 ? Math.max(0, (pe - APP_NIGHT_EXPO * dark) / (1 - dark)) * DAY_GAIN : 0;
+    const expoKeyed = Math.max(expoDay, expoKey); this.eKey = eKey;
+    let expoTotal = expoKeyed, evUsed = null;
+    if (st && this.fixedEV != null) { evUsed = this.fixedEV; expoTotal = exposureForEV(evUsed); }
+    else if (st && this.aeMode === 'auto' && this.ae.Lcd != null) { evUsed = clampEV(ev100FromLuminance(this.ae.Lcd), st.sun.elTrue); expoTotal = exposureForEV(evUsed); }
+    expoTotal *= this.exposureScale; this.evUsed = evUsed; this.expoTotal = expoTotal; this.expoKeyed = expoKeyed;
+    // ---- pre-exposure: every emitter x pre, the post exposure = total / pre
+    const pre = this.pinPre != null ? this.pinPre : preExposure(this.pre, expoTotal);
+    if (pre !== this.pre) { this.pre = pre; this.sky.setPre(pre); this.sky.setEnv(this.envEff || this.env); this.envDirty = true; }
+    E.expo.value = expoTotal / pre;
+    S.environmentIntensity = pre / (this.sky.preEnv || pre);
+    E.setSun(ldir, lcol); if (lname !== 'sun') E.sun.castShadow = false;
+    this.sky.u.lightDir.value.set(...ldir);
+    this.sunRad.value.set(lcol[0] * pre, lcol[1] * pre, lcol[2] * pre);
+    const lampKraw = Math.pow(LAMP_M, nightF);
+    this.time.value = t; this.night.value = nightF; this.nightE.value = nightF * LAMP_M * pre; lampK.value = lampKraw * pre;
+    E.flood.intensity = nightF * LAMP_M * pre; // floodlights switch on with the app's night factor (sun below ~6 deg .. -4 deg)
+    this._floodSpots(cam, nightF * LAMP_M * pre);
     const wu = this.world.waterU; if (this.wMat && wu) { const u = this.wMat.userData; if (wu.uWind) u.uWind.value.set(wu.uWind[0], wu.uWind[1]); if (wu.uWaveAmp != null) u.uAmp.value = wu.uWaveAmp; }
     E.setCamera(cam, this.W, this.H);
     this.pxScale.value = 2 * Math.tan(cam.fov / 2) / Math.max(1, this.H);
+    // camera cut -> the meter snaps (no adaptation across a cut)
+    { const p = cam.pos, q = this._lastCamPos; if (!q || Math.hypot(p[0] - q[0], p[1] - q[1], p[2] - q[2]) > 30) this._meterSnap = true; this._lastCamPos = p.slice(); }
+    if (this.cloudCentre) this.cloudCentre.value.set(cam.pos[0], cam.pos[2]);
+    // rain / drizzle (js/three/rain.js; parameters js/env/atmo/weather_fx.js rainParams)
+    if (this.rain) {
+      let n = 0;
+      if (st && st.precip) {
+        const w = st.wind || {}; const fr = (w.fromTrue ?? 0) * DEGR, sp = w.speed || 0;
+        const P = rainParams(st.precip, this.tier, [-Math.sin(fr) * sp, Math.cos(fr) * sp]);
+        const deck = this.layers.find(l => l.cover === 'BKN' || l.cover === 'OVC'); const top = deck ? deck.baseY : 1e6;
+        const col = L.skyUp.map(v => v * RAIN_K * pre);
+        n = this.rain.update(P, cam, t, col, top, 2 * Math.tan(cam.fov / 2) / Math.max(1, this.H), P && P.showery ? showerFactor(t) : 1);
+      } else this.rain.update(null);
+      this.rainCount = n;
+    }
     // light sprites
     // aircraft position lights (the first fr.nAc records are aircraft lights, compat/scene.js) keep their physical
     // intensity by day (lights.js fixedK / isPositionLight; close-out round 2, engine-v3)
-    const sp = this.sprites; sp.fixedK = LAMP_M / ((0.5 + 0.5 * nightF) * lampK.value);
+    const sp = this.sprites; sp.fixedK = LAMP_M / ((0.5 + 0.5 * nightF) * lampKraw);
     // records with phys: true (environment step 2: airfield fixtures js/env/lighting/airfield.js, aircraft lights
     // js/env/aircraft_lights.js) carry physical intensities (cd x visibility x display gain, in lamp units at the night
     // calibration) and are drawn at that calibration day and night as well
     sp.begin(); const SL = fr && fr.sprites || [], nAc = fr && fr.nAc || 0; for (let k = 0; k < SL.length; k++) sp.put(SL[k], SL[k].phys === true || (k < nAc && Sprites.isPositionLight(SL[k]))); sp.end(E.camera, this.H);
-    // exposure and grade (the app's post settings: exposure, sat, bloom, vignette, grain)
-    const el = Math.asin(Math.max(-1, Math.min(1, L.sunDir[1]))) * 180 / Math.PI; const dark = sstep(2, -10, el);
-    // day: the app's exposure without its night term, x DAY_GAIN; lamps on / low sun: lit concrete at the key KEY_NIGHT
-    // under the total horizontal illuminance (sun + sky from the sky model, + floods); the larger of the two
-    const pe = post.exposure ?? 0.45; const B = this.baseLight || L;
-    const eAmb = lum(B.sunColor) * Math.max(0, B.sunDir[1]) + Math.PI * lum(B.skyUp);
-    const eKey = eAmb + E_STAND * LAMP_M * nightF;
     // terminal halls (objects.js id 1): the daylight factor applies to the sky's diffuse illuminance (CIE: overcast sky,
     // direct sun excluded; close-out round 2: it was applied to sun + sky, 3.5 klx in the hall instead of ~1 klx)
     const eSky = Math.PI * lum(B.skyUp);
-    this.interiorE.value = HALL_DF * (this.glassABOld ? eAmb : eSky) + (1 - nightF) * HALL_LUX / LUX_PER_UNIT;
-    const expoKey = KEY_NIGHT * Math.PI / (RHO_CONC * Math.max(eKey, 1e-7));
-    const expoDay = dark < 0.999 ? Math.max(0, (pe - APP_NIGHT_EXPO * dark) / (1 - dark)) * DAY_GAIN : 0;
-    E.expo.value = Math.max(expoDay, expoKey) * this.exposureScale; this.eKey = eKey;
+    this.interiorE.value = (HALL_DF * (this.glassABOld ? eAmb : eSky) + (1 - nightF) * HALL_LUX / LUX_PER_UNIT) * pre;
     const G = E.grade, lock = this.gradeLock || {};
     if (!lock.sat) G.sat.value = (post.sat ?? 1.1) / 1.1; // the app's 1.1 was tuned on top of ACES: 1.0 here; user changes stay relative
     if (!lock.vignette) G.vignette.value = post.vignette ?? 0.18;
@@ -447,7 +566,34 @@ export class Renderer3 {
     if (this.dbgNoCast) S.traverse(o => { if (o.isMesh) o.castShadow = false; });
     const tr0 = performance.now(); E.render(); this.frames++; if (this.frames === 1) this._progress(true);
     if (this.frames <= 3 || this.frames % 50 === 0) console.log('[r3] frame ' + this.frames + ' ' + (performance.now() - tr0).toFixed(0) + ' ms (t=' + ((performance.now() - T0) / 1000).toFixed(1) + ' s)');
+    this._meterRead();
     return C;
+  }
+  // auto-exposure metering: asynchronous readback of the 64 x 36 luminance target (js/three/engine.js meter), every 4th
+  // frame (and at once after a cut); js/env/atmo/exposure.js meter (50th-98th percentile, centre-weighted) + adapt
+  _meterRead() {
+    const E = this.engine; if (!this.envState || !E.meter || this._meterBusy || this.aeMode !== 'auto') return;
+    if (!this._meterSnap && this.frames % 4 !== 0) return;
+    this._meterBusy = true; const preAt = this.pre, snap = this._meterSnap; this._meterSnap = false;
+    const rt = E.meter.renderTarget; const w = rt.width, h = rt.height;
+    E.renderer.readRenderTargetPixelsAsync(rt, 0, 0, w, h).then((px) => {
+      const n = w * h, half = px instanceof Uint16Array, step = Math.max(1, Math.round(px.length / n));
+      const Lu = new Float32Array(n);
+      for (let i = 0; i < n; i++) { const v = px[i * step]; Lu[i] = Math.max(0, (half ? THREE.DataUtils.fromHalfFloat(v) : v)) / preAt; }
+      const m = meter(Lu, w, h); const now = performance.now();
+      this.ae.Lcd = adapt(this.ae.Lcd, m.Lcd, (now - (this.ae.t || now)) / 1000, snap || this.ae.Lcd == null);
+      this.ae.t = now; this.ae.metered = { ev100: +m.ev100.toFixed(2), Lcd: +m.Lcd.toPrecision(4), frame: this.frames, snap };
+    }).catch((e) => { this._meterErr = String(e && e.message || e); }).finally(() => { this._meterBusy = false; });
+  }
+  // QA: environment step 3 state (exposure, pre-exposure, calibration, layers, slabs, Moon, rain, wetness, flash)
+  envInfo() {
+    const r = (v, n = 3) => v == null ? null : +Number(v).toPrecision(n);
+    return { sunK: r(this.sunK), cal: this.cal ? { c171Lux: r(this.cal.c171Lux, 4), modelLux: r(this.cal.modelLux, 4) } : null,
+      ae: this.aeMode, metered: this.ae.metered, evUsed: r(this.evUsed, 4), evAdapted: this.ae.Lcd ? r(ev100FromLuminance(this.ae.Lcd), 4) : null, expoTotal: r(this.expoTotal, 4), expoKeyed: r(this.expoKeyed, 4), evKeyed: this.expoKeyed ? r(evForExposure(this.expoKeyed), 4) : null,
+      pre: this.pre, postExpo: r(this.engine.expo.value, 4), envIntensity: r(this.engine.scene.environmentIntensity, 4), light: this.lightName, sunRad: this.sunRad ? this.sunRad.value.toArray().map(v => r(v)) : null,
+      layers: this.layers.map(l => ({ cover: l.cover, baseFt: l.baseFt, own: r(l.own), thr: r(l.thr), slab: l.slab })), planes: this.cloudPlanes ? this.cloudPlanes.filter(m => m.visible).length : 0,
+      slabs: (this.slabs || []).map(s => [s.kind, r(s.y0, 4), r(s.y1, 4), r(s.sigma)]), moonL: this.sky ? r(this.sky.u.moonL.value) : null, rain: this.rainCount || 0, rainParams: this.rain && this.rain.params ? { kind: this.rain.params.kind, count: this.rain.params.count, streak: r(this.rain.params.streak), v: r(this.rain.params.vFall) } : null,
+      wet: this.wet ? { film: r(this.wet.film), pore: r(this.wet.pore), puddle: r(this.wet.puddle) } : null, flash: this.flash, meterErr: this._meterErr || null, cloudTexSum: this.cloudTexSum || null };
   }
   // floodlight spots: the masts that light the point the camera looks at most (horizontal irradiance there, the same
   // intensity distribution as the field), with hysteresis so the choice does not flip every frame
@@ -500,7 +646,7 @@ export class Renderer3 {
       texMB: +((I.memory.texturesSize || 0) / 1048576).toFixed(1), textures: I.memory.textures, renderTargets: I.memory.renderTargets, retainedImageMB: +(retainedImageBytes() / 1048576).toFixed(1),
       expo: +this.engine.expo.value.toFixed(3), eKeyLux: this.eKey != null ? Math.round(this.eKey * LUX_PER_UNIT * 10) / 10 : null, night: this.night.value, flood: this.engine.flood.stats || null, bakesPending: this.bakes ? this.bakes.pending : null, groundAlb: this.groundAlb || null, apronAlb: this.apronAlb || null, kG: this.kG.value.toArray().map(v => +v.toFixed(3)), shadeK: this.shadeK.value.toArray().map(v => +v.toFixed(3)), hallLux: Math.round(this.interiorE.value * LUX_PER_UNIT),
       canvas: this.canvas ? [this.canvas.width, this.canvas.height] : null, appCanvas: [this._appCW, this._appCH], step: this._step, spots: this.engine.spots.map(s => s.intensity > 0 ? [Math.round(s.position.x), Math.round(s.position.z), s.castShadow] : null),
-      livMB: this.acr && this.acr.livCache ? +this.acr.livCache.bytes().toFixed(1) : null };
+      livMB: this.acr && this.acr.livCache ? +this.acr.livCache.bytes().toFixed(1) : null, env: this.envState ? this.envInfo() : null };
     if (this.acr) { out.aircraft = []; for (const [ac, e] of this.acr.entries) { if (out.aircraft.length >= 3) break; out.aircraft.push({ id: ac.id, type: ac.type, real: !!(e.real && e.real.visible), liv: ac.liv && ac.liv.name }); } }
     return out;
   }

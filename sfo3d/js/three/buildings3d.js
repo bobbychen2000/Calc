@@ -188,6 +188,8 @@ export class Buildings3D {
           const b = (c.userData || {}).building; const key = b ? 'b:' + b : diag > 600 ? 'p:' + (c.name || '').replace(/^L\d_/, '') : 'all';
           const u = units.get(key) || { key, nodes: { 0: [], 1: [] }, box: new THREE.Box3(), cur: null }; units.set(key, u);
           u.nodes[k].push(c); u.box.union(new THREE.Box3().setFromObject(c));
+          // nodes with extras.max_dist_m (domestic mullion fins, review r1): hidden beyond that distance to their own box
+          if (k === 0 && (c.userData || {}).max_dist_m != null) (u.fade = u.fade || []).push({ node: c, d: +c.userData.max_dist_m * this.lodScale, box: new THREE.Box3().setFromObject(c) });
         }
       }
       S.units = [...units.values()];
@@ -211,8 +213,10 @@ export class Buildings3D {
       for (const u of S.units) {
         const du = u.box.distanceToPoint(p);
         const want = u.cur === 1 ? (du > s1 * (1 - HYST) ? 1 : 0) : (du > s1 * (1 + HYST) ? 1 : 0);
+        if (u.fade && want === 0 && want === u.cur && this.frame % 4 === 0) for (const f of u.fade) f.node.visible = f.box.distanceToPoint(p) <= f.d;
         if (want === u.cur) continue; u.cur = want;
         for (const n of u.nodes[0]) n.visible = want === 0; for (const n of u.nodes[1]) n.visible = want === 1;
+        if (u.fade && want === 0) for (const f of u.fade) f.node.visible = f.box.distanceToPoint(p) <= f.d;
         // parts present only in LOD0 (mullions, lettering, antennas) are dropped at LOD1 by design
       }
     }

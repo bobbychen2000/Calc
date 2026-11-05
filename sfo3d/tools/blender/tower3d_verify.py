@@ -347,6 +347,7 @@ def verify(glb, fam):
     res.append(chk('ribbon centre offset at its head, view B (u)', u_mid, DT.rib_shift(TW.ht, f, G.RIGHT_B), 'inf', note='BT-02 B -2.3 m'))
     # 6. SW wing tip (plan) at the flare level
     land = _pts(meshes, L0, ['landside'], ['louvre'])
+    bl = _brg(land); land = land[(bl > 180) & (bl < DT.RIB_BRG)]      # the SW wing (the louvred NE channel wall is NE of the ribbon)
     tl = land[land[:, 1] > TW.h_top - 0.02]
     rl = np.hypot(tl[:, 0], tl[:, 2]); k = int(np.argmax(rl))
     res.append(chk('SW wing tip radius (plan)', rl[k], DT.WING_TIP[1] * f['D'] / 15.2, 'inf', note='BT-01 254 deg / 14.0 m'))
@@ -725,7 +726,7 @@ REVIEW_R1 = [
     'the blade or the ribbon head): a first rebuild with the round-body shoulder there showed a sunlit facet above the NE blade.',
     '3 (major) cab an opaque black band - FIXED: tinted see-through glass (alpha 0.5, teal-grey; far-side panes and sky show '
     'through) with light 6-cm joints; glass / sky: Cycles t2 0.25 (photo 0.28), t3 0.16 (photo 0.10).',
-    '4 (major) shaft as bright as the sky in the app - CHECKED, albedo kept (APP_NOTE).',
+    '4 (major) shaft as bright as the sky in the app - CHECKED at the photo\'s sun, albedo kept: APP_NOTE.',
     '5 (minor) upper slots too wide / long slot right of centre - FIXED width and phase in the sheet (SLOT_W 1.4 -> 0.95 m, '
     'SLOT_PHASE 124 -> 127, t1 + t2 together); the long-slot offset is REJECTED: at the same three rows the t2 photo reads u/R '
     '+0.37 / +0.12 / -0.07, the render +0.34 / +0.07 / -0.11 (within 0.05 = ~3 deg); the review compared different rows.',
@@ -738,10 +739,18 @@ REVIEW_R1 = [
     'kept as station_2015); F2 restated as "221 ft at the 2015 mast station"; mesh vs spec 2025 value: F2 68.48 vs 68.50, F1 '
     '72.06 vs 72.08.',
     '9 (minor) tower camera / in-cab test on F1 values - FIXED: the loader takes eye and bounds from the loaded file\'s '
-    'anchors; app.js reads towerPos.eyeY (APP_EYE).',
+    'anchors (root extras); app.js reads towerPos.eyeY (one-line hook); APP_EYE.',
 ]
-APP_NOTE = 'see the integration numbers'
-APP_EYE = ''
+APP_NOTE = ('the review compared the app at the snapshot time (sun az 134 / el 42 behind the camera: cos 0.74 on the face) '
+            'with photo t2 (11:57 PDT, sun az 137 / el 62: cos 0.47). Same camera and sun as t2 (tools/blender/tower_app_job.mjs, '
+            'out/buildings3d/app/tapp_t2.png): lit shaft / sky 0.82 in the app, 0.77 in Cycles (tower_t2.png), photo 0.82 against '
+            'the blue sky / 0.70 against the fog; metalness 0 instead of 0.15: 0.83, base colour x 0.85: 0.62 (too dark). At the '
+            'snapshot time (t2like) 1.08. The clad albedo (~0.31 linear) also reproduces the photo\'s shaft / bridge-roof ratio, so '
+            'it is kept. The Cycles photo suns were typed in by hand in round 1 (t2 az 165, t3 110): now computed (NOAA; 137.4 / '
+            '95.5); the cab glass reads 0.12 of the sky in the app from 12 deg below (the unlit ceiling behind the upper half, the '
+            'sky through the lower half; Cycles 0.25 with interior bounce light; photos 0.28 / 0.10)')
+APP_EYE = ('app check: tower view eye at y 62.15 = GROUND_Y + 59.151 (F2), glass hidden inside the ring (tapp_towercam.png); '
+           'F1 file anchors: eye 62.2 above grade, glass head r 6.537')
 
 
 def doc_section(entry, ver):
@@ -806,7 +815,10 @@ def doc_section(entry, ver):
               '`tower_B.png` (the BT-02 elevations, orthographic; `tower_overlay_A/B.png` carry the sheet outlines in red), '
               '`tower_t2.png`, `tower_t3.png`, `tower_t4.png` (camera-matched to the reference photos t2 / t3 / t4, Famartin 2025, '
               'CC BY-SA 4.0; per family the focal length follows the rim width in pixels and the camera height the angle below the '
-              'rim; side-by-side comparisons `tower_compare_*.jpg` stay local).', '',
+              'rim, the sun is computed for the photo time; side-by-side comparisons `tower_compare_*.jpg` stay local). App views '
+              '(three.js, llvmpipe, `?b3donly=tower`, photo-matched camera and sun; `tools/blender/tower_app_job.mjs`): '
+              '`out/buildings3d/app/tapp_t2.png`, `tapp_t4.png`, `tapp_t4close.png`, `tapp_t2like.png`, `tapp_towercam.png` '
+              '(+ `tapp_t2_metal0.png` / `tapp_t2_col085.png`, material experiments), `tower_app_info.json`.', '',
               '**Observed vs inferred.** Per dimension in `manifest.json#tower.dimensions`; lists `inferred`, `unknown`, '
               '`not_modelled`, `conflicts` there. Node extras carry `src`, the spec keys and per-feature tags.', '',
               '**Review round 1 (2026-11-05).**'] + ['- ' + r.replace('APP_NOTE', APP_NOTE).replace('APP_EYE', APP_EYE) for r in REVIEW_R1] + [
@@ -814,6 +826,12 @@ def doc_section(entry, ver):
               '**Open (for the owner).**',
               '- The height family (F2 default / F1 hypothesis).',
               '- t2 camera match: the camera height and focal length are estimates (no EXIF here); a camera-model check only.',
+              '- For the domestic group: `tools/blender/dom_geom.py` leaves out the T2 walls that face the base building up to '
+              '14.07 m (the F1 roof). With F2 as the default, the base-building parapet tops at 13.83 m, so a 0.24-m slit opens in the '
+              'T2 wall above it. Take `anchors.ibf_parapet_h` of the loaded tower file, or the family minimum.',
+              '- NE channel wall: louvred like the SW wing (photos t3 / t4). In the sunny t4-matched render its upper part, '
+              'which faces bearing 40, catches the 09:10 sun (az 95) and reads bright against the shaded NW faces. The photo was '
+              'overcast, so the brightness cannot be compared.',
               '- Obstruction light: one red fixture (t5) is modelled in every LOD; at a few km it is sub-pixel, so a LOD-independent '
               'point sprite belongs to the environment\'s lighting layer (data/sfo_lighting.js lists the tower as obstruction '
               '06-323169, fixtures inferred from AC 70/7460-1N).',

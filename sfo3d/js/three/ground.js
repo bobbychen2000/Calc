@@ -15,6 +15,7 @@
 //     POINT (review round 1: the IBL cube built at a fixed point showed clouds that were not in the visible sky)
 // Geometry (terrain chunks, water grid) comes unchanged from js/live/world.js buildLiveWorld.
 import { THREE, TSL } from './lib.js';
+import { POROSITY, ROUGH_FILM, ROUGH_PUDDLE, PUDDLE_ALBEDO } from '../env/atmo/weather_fx.js';
 import { hash12, hash13, hash22, vnoise, fbm2, band } from './tsl/common.js';
 import { geometryOf, textureOf } from './convert.js';
 import { CITY_RECT, CITYFAR_RECT } from '../world/world.js';
@@ -467,17 +468,18 @@ export function groundMaterial(world, bakes, sky, Q) {
     const rk = texture(noiseTex, st.mul(0.35)).r.mul(0.6).add(texture(noiseTex, st.mul(1.1)).g.mul(0.4));
     albedo.assign(mix(albedo, vec3(0.3, 0.28, 0.26).mul(rk.mul(0.8).add(0.5)), rip));
     const R = runwayAt(st, fw, G, glyph);
+    const paintM = float(0).toVar(); // marking paint on the runways (no puddles on it; wet surfaces below)
     const n1 = texture(noiseTex, R.local.mul(vec2(0.0012, 0.02))).b, n2 = texture(noiseTex, R.local.mul(vec2(0.02, 0.5))).r;
     If(R.flag.greaterThan(1.5).and(inApt.greaterThan(0.5)), () => {
       const asph = vec3(0.105, 0.108, 0.118).mul(n1.mul(0.4).add(0.8)).mul(n2.mul(0.12).add(0.94));
       const yel = vec3(0.62, 0.42, 0.06).mul(n2.mul(0.15).add(0.85));
-      albedo.assign(mix(asph, yel, R.m)); rough.assign(mix(0.85, 0.65, R.m));
+      albedo.assign(mix(asph, yel, R.m)); rough.assign(mix(0.85, 0.65, R.m)); paintM.assign(R.m);
     }).ElseIf(R.flag.greaterThan(0.5).and(inApt.greaterThan(0.5)), () => {
       const asph = vec3(0.12, 0.12, 0.125).mul(n1.mul(0.4).add(0.8)).mul(n2.mul(0.12).add(0.94)).toVar();
       asph.mulAssign(smoothstep(8.0, 20.0, abs(R.local.y)).mul(0.08).add(0.95));
       asph.mulAssign(float(1.0).sub(R.rub.mul(0.62)));
       const paint = mix(vec3(0.74, 0.74, 0.72).mul(n2.mul(0.12).add(0.88)), asph, R.rub.mul(0.7));
-      albedo.assign(mix(asph, paint, R.m)); rough.assign(mix(0.8, 0.6, R.m));
+      albedo.assign(mix(asph, paint, R.m)); rough.assign(mix(0.8, 0.6, R.m)); paintM.assign(R.m);
     });
     // concrete joints close up (area-correct fade)
     const concMask = aux.b.mul(inApt).toVar();
@@ -487,6 +489,20 @@ export function groundMaterial(world, bakes, sky, Q) {
     albedo.mulAssign(float(1.0).sub(joint.mul(0.3).mul(float(1.0).sub(smoothstep(60.0, 220.0, dist))).mul(jOn)));
     const dd = texture(noiseTex, wp.xz.mul(0.9)).a.mul(0.6).add(texture(noiseTex, wp.xz.mul(3.7)).r.mul(0.4));
     albedo.mulAssign(mix(float(1.0), dd.mul(0.3).add(0.85), float(1.0).sub(smoothstep(100.0, 400.0, dist))));
+    // wet surfaces (environment step 4; spec §4.7 / §7.6, Lagarde 2013: albedo x lerp(1, lerp(1, 0.2, porosity), wet);
+    // js/env/atmo/weather_fx.js wetMaterial is the mirror the A-WET gate checks). sky.u.wetPore darkens every ground
+    // surface (porosity 0.5; concrete 0.3), sky.u.wetFilm smooths the paved surfaces (runway asphalt and the concrete
+    // mask), puddles (sky.u.puddle) form in a noise mask on paint-free paved surfaces: flat water, roughness 0.03, so
+    // the PMREM environment mirrors the sky (no slope data: the mask is I). Uniforms: js/three/renderer3.js
+    If(sky.u.wetPore.greaterThan(0.0).or(sky.u.puddle.greaterThan(0.0)), () => {
+      const paved = clamp(max(concMask, step(0.5, R.flag).mul(inApt)), 0.0, 1.0);
+      const por = mix(float(POROSITY.asphalt), float(POROSITY.concrete), concMask);
+      albedo.mulAssign(float(1.0).add(float(1.0).add(por.mul(0.2 - 1.0)).sub(1.0).mul(sky.u.wetPore)));
+      rough.assign(mix(rough, float(ROUGH_FILM), sky.u.wetFilm.mul(paved)));
+      const pm = smoothstep(0.58, 0.66, texture(noiseTex, st.mul(0.021)).g.mul(0.65).add(texture(noiseTex, st.mul(0.11)).r.mul(0.35))).mul(paved).mul(float(1.0).sub(paintM));
+      const pud = clamp(sky.u.puddle.mul(pm), 0.0, 1.0);
+      albedo.mulAssign(mix(float(1.0), float(PUDDLE_ALBEDO), pud)); rough.assign(mix(rough, float(ROUGH_PUDDLE), pud));
+    });
     return vec4(albedo, rough);
   }).once();
   // night light (emissive): street lights in the city (the apron floodlights are a light: js/three/flood.js)

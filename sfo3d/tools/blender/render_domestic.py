@@ -205,6 +205,21 @@ def view_eclose(args):
     return render(os.path.join(OUT, 'domestic_eclose%s.png' % args.suffix)),
 
 
+def view_roof(args):
+    """review r1: oblique close-up of the T1 Center east roof and the BA-B / BA-C roots from the east: PV rack tables with their
+    aisles, the NAIP rooftop units, skylights."""
+    sun_sky(205.0, 50.0)
+    camera('cam_roof', Wxz(-700.0, 385.0, 70.0), Wxz(-835.0, 440.0, 12.0), lens=35.0, res=(args.res, int(args.res * 0.5625)))
+    return render(os.path.join(OUT, 'domestic_roof%s.png' % args.suffix)),
+
+
+def view_c3c(args):
+    """review r1: the Courtyard 3 Connector office block over the T2 roof, from the NE (photo a1 direction, closer)."""
+    overcast()
+    camera('cam_c3c', Wxz(-640.0, -60.0, 55.0), Wxz(-805.0, 112.0, 18.0), lens=40.0, res=(args.res, int(args.res * 0.5625)))
+    return render(os.path.join(OUT, 'domestic_c3c%s.png' % args.suffix)),
+
+
 def qa_override(mode):
     """AO view (every material shows its baked occlusion; detail members without AO pink) or back-face view (front grey, BACK
     faces red: the asset is single-sided, so a red pixel is a face wound inwards or a hole showing an inner back face)."""

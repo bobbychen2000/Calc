@@ -49,7 +49,8 @@ def dimensions():
     add('BA-F NE arm roof height (hub, NW arm drawn at it)', H['F'], 'obs', 'spec baf.h_roof_ne_arm (DOF 10.36 m); hub band 10.4-12.1 obs low', HR['F'])
     add('BA-F roof edges from the outline (ESE / WNW)', '+1.83 / -1.15', 'obs', 'draw_data.dom_true_edges (BD-01 / BD-02: 27.0 m arm); see conflicts')
     add('BA-F lantern', 'octagon 19.4 / 13.4 m, centre ~3.3 m E of the hub centre', 'obs (size) / inf (centre)', 'draw_domestic BAF_LANTERN_APO, baf_lantern_centre(), dom_baf_hub.json')
-    add('BA-F lantern rise', float(DD.BH['ring_2020_shadow']['rise_upper_bound']), 'unk (upper bound)', 'NAIP 2020 cast shadow <= 5.2 m -> rise <= 4.6 m, drawn at the bound')
+    add('BA-F lantern rise', G.LANTERN_RISE, 'unk', 'review r1: minimal 1.0-m glazed upstand (conservative); the NAIP 2020 cast shadow '
+        '(<= 5.2 m) only bounds it', [0.0, G.LANTERN_RISE_BOUND])
     add('BA-F NW-arm monitor rise', 2.5, 'unk', 'placeholder; width ~8 m obs NAIP')
     add('T3 levels above L1 (L2 / L3 / R2 / T3W parapet / R3)', f"{lv['L2']:.2f} / {lv['L3']:.2f} / {lv['R2']:.2f} / {lv['PARAPET_W']:.2f} / {lv['R3']:.2f}",
         'pub (levels) / inf (subtraction)', 'CDR 95 % CD p.28-29 (Oct 2023); T3 L1 at the apron [inf]')
@@ -71,6 +72,18 @@ def dimensions():
     add('roof slab / parapet', f'{G.ROOF_THK} / {G.PARAPET}', 'inf', 'measured heights are the roof EDGES (coping top)')
     add('PV rack blocks', 'dom_pv.json', 'obs (extent, NAIP 2024 +-1 m) / inf (height 0.35-0.75 m)', 'tools/blender/dom_pv.py')
     add('elevated sky-bridge / connector parts', f'{G.INNER_Y0} - {G.INNER_TOP}', 'unk', 'the app convention (tools/build_terminal_parts.py walkway y0 6.0 / h 10.5)')
+    add('elevated BA-B parts entered by a bridge walkway (B10 / B11 / B11S / B15 / B16): underside', G.WALK_Y0_BRIDGE, 'inf',
+        'review r1: the vestibule floor (bridge floor 5.4 - 0.5) so that the app walkway (5.15-8.45 m) runs inside the part')
+    add('Courtyard 3 Connector office block: footprint', f'T2 outline NW end west of s {G.C3C_S_EAST:.1f} ({G.C3C_POLY.area:.0f} m2)', 'obs',
+        'SFO Museum T2 outline; the cut through its two outline jogs; NAIP 2024 imaged east roof edge less the relief on the same line')
+    add('Courtyard 3 Connector office block: height', G.C3C_H, 'inf', 'HOK: "Above the connector, a six-story office building" [pub] '
+        '-> >= 33.3 m; NAIP 2024 relief 12.9 m / 0.379 = 34.0 m; photo a1 (estimated camera) ~35 m; the conservative end', [32.0, 36.0])
+    add('NAIP 2024 lean (east, m/m) at world x', 'k24.n = 0.392 + 0.000432 (x + 800), / sin 117.83', 'inf',
+        'linear fit through the four two-epoch pier values (B / D / E / F, within 0.005); used for the C3C only')
+    add('PV rack tables (rows / tables with their aisles)', 'tools/blender/dom_roofobs.json pv_tables', 'obs (extent, NAIP 2024 +-0.5 m) / inf (modules)',
+        'tools/blender/dom_roofobs.py (review r1: discrete tables instead of one plate per block)')
+    add('rooftop mechanical units', 'tools/blender/dom_roofobs.json units', 'obs (extent, NAIP 2024 +-0.7 m) / inf (height 1.5 / 2.2 / 3.0 m by size)',
+        'tools/blender/dom_roofobs.py: compact dark objects with a shadow on their NNE side')
     add('bridge doors / vestibules / bulkheads', 'at the walkway attach points (data/sfo_stands.json)', 'inf', 'door 2.6 x 3.0 walkway section (gates.js)')
     add('roof colours', 'NAIP 2024 median per building, capped at sRGB 215', 'obs (low) / inf (cap)', 'build_domestic.naip_colours')
     return d
@@ -86,7 +99,14 @@ INFERRED = [
     'BA-B: north-half outer roof edges carried from the south half (offsets from the outline); roof wells 3 m deep (unk) with planting; '
     'well bridges 0.6 m slabs; skylight grids raised 0.3 m',
     'BA-E stepped section (raised plate with a tapered edge 1.5 m over a clerestory, lower flanks 4.4 m, step 3.0 m) from photo a1',
-    'BA-F lantern eccentric (~3.3 m E) at its rise bound 4.6 m; NW-arm monitor 2.5 m rise; hub and NW arm at the NE-arm height',
+    'BA-F lantern eccentric (~3.3 m E), a minimal 1.0-m glazed upstand (rise unknown, bound 4.6 m); NW-arm monitor 2.5 m rise; hub and '
+    'NW arm at the NE-arm height',
+    'Courtyard 3 Connector office block (review r1): 33.0 m (six published office storeys above the connector, NAIP relief, photo a1), '
+    'electrochromic ("dynamic") curtain glass on a 3-m module, the connector levels below as the piers',
+    'rooftop units: boxes on the decks at the NAIP extents, heights 1.5 / 2.2 / 3.0 m by plan size (< 12 / < 50 / >= 50 m2), light '
+    'metal casings; PV: rack tables 0.35-0.75 m above the deck at the NAIP table extents, modules in the PV tiles',
+    'BA-B electrochromic glass in four per-pane tint states (24 x 6 m tile); T1 clear glass under the canopy mid-grey (the lit hall '
+    'seen through, photo d1); the T1 canopy light, uncoated laminated glass',
     'BA-D drums ~4.7 m above the head roof; linear skylights 0.6 m',
     'T1 Center: curb canopy 4.0 m deep at curb + 4.0 m (glass top, aluminium edge, brackets), departures sidewalk deck at the curb; the '
     'landside facade 4.0 m behind the trimmed curb line; three 9 x 11 m skylights; the sign "Harvey Milk Terminal / Terminal 1" on the '
@@ -103,9 +123,15 @@ UNKNOWN = [
     'T1 Center and T2 hall heights (nothing published or measured): T1 = curb placeholder + 13.0 m wall head (photo d1), T2 = curb + 12 m',
     'the departures-curb height above the apron (T1 / T2): 4.88 m placeholder (T3 L1 -> L2 by analogy)',
     'the T3 project datum (L1 drawn at the apron); the T3 East landside facade (drawn with the published T3E materials, positions inf)',
-    'the BA-B roof-well depth and skylight heights; the BA-F lantern and monitor rises; the BA-B north-half outer roof height',
+    'the BA-B roof-well depth and skylight heights; the BA-F lantern (bound <= 4.6 m, modelled 1.0 m) and monitor rises; the BA-B '
+    'north-half outer roof height',
+    'the Courtyard 3 Connector height (modelled 33.0 m, range 32-36 m) and its roof penthouse (photo a1 shows a light box on the roof: '
+    'not resolved in NAIP 2024, not modelled)',
+    'rooftop unit heights and types (extents measured; NAIP 2024 resolves only compact dark units with a shadow; light units on light '
+    'membranes and units under 4 m2 are missed); no BA-B reference photo was found with an open licence (Wikimedia Commons searched '
+    '2026-11-05), so the BA-B facade materials remain unverified'
     'bay / mullion modules, gate-room glazing extents, the apron-level facades (service band only), parapet heights',
-    'the elevated sky-bridge / pod parts (app convention 6.0-10.5 m)',
+    'the elevated sky-bridge / pod parts (app convention 6.0-10.5 m; 4.9-10.5 m where a bridge walkway enters, review r1)',
     'which T3W state to model (under construction 2024-2029; the May 2026 change adds an airside storey): the asset shows the 95 % CD '
     'parapet 66\'-0" massing without the new storey',
 ]
@@ -114,10 +140,10 @@ NOT_MODELLED = [
     'courtyard links (pedestrian bridges over the curbside roadways to the garage / AirTrain stations) and the links that cross the '
     'AirTrain guideway: no known level (the app keeps its own parts there)',
     'the AirTrain guideway / stations and the garages (landside asset), the tower (tower asset), the ITB (itb asset)',
-    'T3W penthouses (positions / heights not dimensioned), roof equipment other than the PV racks, the T3E penthouse and the drums',
+    'T3W penthouses (positions / heights not dimensioned); rooftop equipment that NAIP 2024 does not resolve (see unknown)',
     'interiors (glass is opaque; no interior lighting)',
-    'door frames at the 6 bridges that attach into an elevated pod / sky-bridge part (B10, B11, B11S, B15, B16, F22): the bridge '
-    'floor 5.4 m vs the pod underside 6.0 m (both inf / unk) is left to the bridges work',
+    'F22: its walkway starts inside BA-F; no pod part (the five BA-B pod bridges B10 / B11 / B11S / B15 / B16 now get door surrounds on '
+    'the lowered pod parts, review r1)',
     'signage other than the T1 Center landside sign (gate numbers are drawn by the app on the bridges / stands)',
 ]
 
@@ -183,10 +209,12 @@ def entry(build, ver, parts, mats, roof_rgb, info):
                    root_translation=[G.OX, 3.0, G.OZ], ground_y=3.0, note='every building node is recentred on its plan bbox centre (its translation)'),
         lods=lods,
         lod_note='LOD groups are siblings under the root: show one per building. LOD0 / LOD1 hold one node per building and kind '
-                 '(L<k>_<bld>_shell / _detail / _pv, extras.building): choose the LOD per building from the camera distance to its node '
+                 '(L<k>_<bld>_shell / _detail / _fins / _pv, extras.building; _fins carry extras.max_dist_m 160: hide them beyond, the '
+                 'curtain caps of the glass tiles keep the rhythm): choose the LOD per building from the camera distance to its node '
                  '(the complex spans ~1.3 km). LOD1 shares the LOD0 shell meshes and atlases; LOD2 is one joined node (L2_domestic, '
-                 'extras.parts keeps the per-part tags) with its own atlas. Phone / far tier: data/buildings3d/domestic_lod2.glb holds '
-                 'the LOD2 subtree alone (same root transform).',
+                 'extras.parts keeps the per-part tags) with its own atlas; since review r1 it keeps the LOD0 outlines, wells, skylights, '
+                 'coping recess, rooftop units >= 15 m2, PV tables (tops) and the bridge vestibules / notches / bulkheads (the phone tier '
+                 'sees it up close). Phone / far tier: data/buildings3d/domestic_lod2.glb holds the LOD2 subtree alone (same root transform).',
         files=['data/buildings3d/domestic.glb', 'data/buildings3d/domestic_lod2.glb'], lod2_glb=build.get('lod2_glb'),
         textures=tex, materials=mat,
         material_note='glass: coated (IOR 1.9 -> F0 0.096, KHR_materials_ior + KHR_materials_specular), opaque (no interiors); single-sided, '

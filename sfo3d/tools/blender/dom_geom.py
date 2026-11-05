@@ -231,6 +231,35 @@ def _split_t3():
 
 T3W_POLY, T3E_POLY = _split_t3()
 
+# Courtyard 3 Connector (C3C) office block (review r1): the glazed block between the tower and BA-E in photo a1, at the NW
+# end of the T2 outline. [pub] HOK project page: "The project links Terminals 2 and 3 with a pre- and post-security
+# connector"; "Above the connector, a six-story office building"; 124,000 sq ft; "Dynamic glazing". Hensel Phelps: 100,000 SF
+# of office space. Footprint [obs]: the T2 outline (SFO Museum) west of the cut line through its two outline jogs at the
+# block's east wall (north face (-783.5, 101.05), south face notch (-804.8, 141.6)); NAIP 2024 check: the imaged roof's east
+# edge (x ~ -777 at z 115) less the relief (0.447 m/m x 33 m) falls on the same line (s -646.7). 1,932 m2 x 6 storeys =
+# 125,000 sq ft (the published 124,000 sq ft). Height [inf]: 33.0 m above the apron = the conservative end of three
+# estimates: six office storeys above the connector head (>= 6 x 3.8 + ~10.5 = 33.3); NAIP 2024 relief: the imaged WNW roof
+# edge lies 12.9 m (median of 9 stations) inside the outline face, / lean 0.379 m/m (k24.n = 0.392 + 0.000432 (x + 800):
+# linear in x through the four measured piers B / D / E / F to within 0.005) = 34.0 m; photo a1 with its estimated camera
+# ~35 m. Listed in the manifest (heights unk-to-inf, range 32-36 m).
+C3C_H = 33.0
+C3C_CUT = ((-783.5, 101.05), (-804.8, 141.6))       # east-wall line through the outline jogs [obs SFO Museum outline]
+
+
+def _c3c():
+    h = HALLS['T2']['hall']
+    (ax, az), (bx, bz) = C3C_CUT
+    sE = 0.5 * (float(w2st(ax, az)[0]) + float(w2st(bx, bz)[0]))
+    s0, t0 = w2st(-815.0, 110.0)
+    cut = Polygon([tuple(st2w(sE - 120, t0 - 60)), tuple(st2w(sE, t0 - 60)), tuple(st2w(sE, t0 + 60)), tuple(st2w(sE - 120, t0 + 60))])
+    c = max(polys_of(_clean(h.intersection(cut), 100.0)), key=lambda p: p.area)
+    rest = max(polys_of(_clean(h.difference(c.buffer(0.01, join_style=2)), 100.0)), key=lambda p: p.area)
+    return c, rest, sE
+
+
+C3C_POLY, _t2rest, C3C_S_EAST = _c3c()
+HALLS['T2']['hall'] = _t2rest
+
 
 FINGER_MAX = (160.0, 26.0)   # a finger: area <= 160 m2 and longest side <= 26 m (BA-B ESE stubs ~12 x 2-5 m) [inf]
 
@@ -269,15 +298,25 @@ DOOR = dict(w=3.2, z0=FLOOR2 - 0.2, z1=FLOOR2 + 3.2)   # bridge door frame aroun
 VEST = dict(w=3.2, z0=FLOOR2 - 0.5, z1=WALK_TOP + 0.3)  # vestibule from the facade to the app's walkway start [inf]
 WALK_W_APP = 2.6        # js/live/gates.js WALK_W
 MULL_T1 = (1.2, 2.4)    # T1 landside irregular mullions (draw_domestic.t1_mullions) [inf schematic of the pub pattern]
+LANTERN_RISE = 1.0      # BA-F hub lantern rise above the arm roof: minimal skylight upstand [unk] (review r1; was the bound)
+LANTERN_RISE_BOUND = float(BH['ring_2020_shadow']['rise_upper_bound'])   # <= 4.6 m (NAIP 2020 shadow, buildings_domestic.md r1-22)
+# elevated sky-bridge / pod parts that a jet bridge's fixed walkway enters (B10, B11, B11S, B15, B16, F22): the app's walkway
+# runs 5.15-8.45 m above the apron (gates.js DEPARTURE_LEVEL 5.4 - 0.25 floor .. + WALK_H 3.0 + 0.05), so the part's floor
+# comes down to the vestibule floor (review r1: the 6.0-m underside cut the walkways' lower 0.85 m) [inf]
+WALK_Y0_BRIDGE = FLOOR2 - 0.5
+FIN_MAX_M = 160.0       # LOD0 mullion fins: own node per building, extras.max_dist_m (the loader hides them beyond; review r1:
+                        # 6-cm fins every 1.5 m alias beyond ~150 m at phone / desktop resolutions) [our choice]
 
 # materials: key -> tile (metres per texture repeat of UV_detail, (u, v)) - must match tools/blender/dom_tex.py
 TILE = {'roof_membrane': (12.0, 12.0), 'roof_membrane_b': (12.0, 12.0), 'roof_membrane_t': (12.0, 12.0),
         'panel_light': (6.0, 6.0), 'panel_dark': (6.0, 6.0), 'panel_acm': (6.0, 6.0), 'panel_acm_dark': (6.0, 6.0),
         'panel_platinum': (6.0, 6.0), 'service': (6.0, 6.0), 'fascia': (6.0, 6.0), 'coping': (3.0, 3.0), 'soffit': (6.0, 6.0),
         'concrete': (6.0, 6.0), 'penthouse_corr': (3.0, 3.0), 'pv': (4.0, 4.0), 'planting': (8.0, 8.0), 'door_dark': (3.2, 3.2),
-        'mullion': (3.0, 3.0), 'mullion_dark': (3.0, 3.0), 'glass_canopy': (6.0, 6.0), 'glass_sky': (6.0, 6.0), 'lettering': (3.0, 3.0)}
-for _g in ('glass_ec', 'glass_lowe', 'glass_tint', 'glass_frit_grey', 'glass_clear'):
+        'mullion': (3.0, 3.0), 'mullion_dark': (3.0, 3.0), 'glass_canopy': (6.0, 6.0), 'glass_sky': (6.0, 6.0), 'lettering': (3.0, 3.0),
+        'unit': (6.0, 6.0), 'unit_top': (6.0, 6.0)}
+for _g in ('glass_ec', 'glass_lowe', 'glass_tint', 'glass_frit_grey', 'glass_clear', 'glass_lobby'):
     TILE[_g] = (6.0, 6.0)        # curtain grid 1.5 m verticals x 3.0 m transoms from the band bottom [inf]
+TILE['glass_ec'] = (24.0, 6.0)   # electrochromic panes in mixed tint states: 16 x 2 panes per tile (review r1: no 6-m repeat)
 TILE['glass_frit_green'] = (12.0, 9.0)   # T1 landside tiers: one tile = canopy line -> wall head (9.0 m), transom 3.96 m up
 TILE['glass_t3w'] = (6.0, 5.8)           # T3W window wall: 2.0-m verticals, band 5.8 m (BD-03 view 3 schematic)
 TILE['penthouse_corr'] = (3.0, 2.8)      # corrugation 0.2 m, accent bands every 1.4 m (BD-03 schematic)
@@ -327,14 +366,15 @@ def tagdim(value, tag, source):
 class Part:
     """one glTF node: mesh + tags. kind 'shell' = baked AO atlas (UV_ao); 'detail' = thin members / racks, no AO."""
 
-    def __init__(self, name, mb, kind, src, feature, spec=(), dims=None, note=''):
+    def __init__(self, name, mb, kind, src, feature, spec=(), dims=None, note='', extra=None):
         self.name, self.mb, self.kind, self.src, self.feature = name, mb, kind, src, feature
-        self.spec, self.dims, self.note = list(spec), dims or {}, note
+        self.spec, self.dims, self.note, self.extra = list(spec), dims or {}, note, dict(extra or {})
 
     def extras(self, lod):
         e = dict(src=self.src, feature=self.feature, spec=self.spec, lod=lod)
         if self.dims: e['dims'] = self.dims
         if self.note: e['note'] = self.note
+        e.update(self.extra)
         return e
 
 
@@ -355,9 +395,10 @@ STYLES = {
     'F': [(0.0, 4.6, 'service', 0), (4.6, 5.6, 'panel_dark', 0), (5.6, 8.8, 'glass_tint', 1.5), (8.8, None, 'panel_light', 0)],
     'hall': [(0.0, 4.6, 'service', 0), (4.6, 5.6, 'panel_dark', 0), (5.6, 11.0, 'glass_tint', 1.5), (11.0, None, 'panel_light', 0)],
     'conn': [(0.0, 4.6, 'service', 0), (4.6, 5.6, 'panel_dark', 0), (5.6, None, 'panel_light', 0)],
-    'walk': [(INNER_Y0, INNER_Y0 + 0.8, 'panel_light', 0), (INNER_Y0 + 0.8, INNER_TOP - 0.7, 'glass_tint', 1.5),
+    # (the first band from 0: clamped to the part's underside - 6.0, or 4.9 where a bridge enters, review r1)
+    'walk': [(0.0, INNER_Y0 + 0.8, 'panel_light', 0), (INNER_Y0 + 0.8, INNER_TOP - 0.7, 'glass_tint', 1.5),
              (INNER_Y0 + 0.8 + 3.0, None, 'panel_light', 0)],
-    'T1_land': [(0.0, CURB, 'service', 0), (CURB, T1_CANOPY_H, 'glass_clear', 1.5), (T1_CANOPY_H, None, 'glass_frit_green', -1)],
+    'T1_land': [(0.0, CURB, 'service', 0), (CURB, T1_CANOPY_H, 'glass_lobby', 1.5), (T1_CANOPY_H, None, 'glass_frit_green', -1)],
     'T2_land': [(0.0, CURB, 'service', 0), (CURB, None, 'panel_light', 0)],
     'T3W_land': [(0.0, CURB, 'service', 0), (CURB, CURB + 1.7, 'panel_acm_dark', 0), (CURB + 1.7, CURB + 7.5, 'glass_t3w', 2.0),
                  (CURB + 7.5, None, 'panel_acm', 0)],
@@ -365,6 +406,9 @@ STYLES = {
                 (T3_LV['L3'] + 10 * FT, T3_LV['L3'] + 12 * FT, 'panel_acm_dark', 0), (T3_LV['L3'] + 12 * FT, None, 'glass_ec', 1.5)],
     'T3E': [(0.0, 4.6, 'service', 0), (4.6, CURB + 0.7, 'panel_dark', 0), (CURB + 0.7, T3_LV['L3'], 'glass_frit_grey', 1.5),
             (T3_LV['L3'], None, 'panel_platinum', 0)],
+    # C3C: "Dynamic glazing" [pub HOK] -> the electrochromic curtain glass; the connector levels below (service base, dark
+    # spandrel at the departures floor) as the piers [inf]; photo a1: a dark glazed box with light frames, ~3-m module [obs, low]
+    'C3C': [(0.0, 4.6, 'service', 0), (4.6, 5.6, 'panel_dark', 0), (5.6, None, 'glass_ec', 3.0)],
     'clere_B': [(0.0, None, 'glass_lowe', 1.5)],
     'clere_E': [(0.0, H['E'] - 1.0, 'glass_lowe', 1.5), (H['E'] - 1.0, None, 'panel_dark', 0)],
     'drum': [(0.0, None, 'panel_light', 0)],
@@ -656,6 +700,16 @@ BRIDGE_WALKS = unary_union([LineString(b['walk']).buffer(1.6, cap_style=2) for s
                              if s_['letter'] in 'BCDEF' for b in s_['bridges'] + s_.get('bridges_upper', []) if len(b.get('walk') or []) >= 2])
 
 
+BRIDGE_LINES = unary_union([LineString(b['walk']) for s_ in json.load(open(os.path.join(ROOT, 'data', 'sfo_stands.json')))['stands']
+                            if s_['letter'] in 'BCDEF' for b in s_['bridges'] if len(b.get('walk') or []) >= 2])
+
+
+def walk_y0(w_local):
+    """underside of an elevated sky-bridge / pod part: the app convention 6.0 m, or the vestibule floor 4.9 m where a jet
+    bridge's walkway (data/sfo_stands.json walk polyline, +1.5 m: the walkway half width + 0.2) enters it (review r1)."""
+    return WALK_Y0_BRIDGE if wld(w_local).intersects(BRIDGE_LINES.buffer(1.5)) else INNER_Y0
+
+
 def split_walk(poly):
     """(body, [elevated walkway pieces]): the parts of an outline the app models as elevated walkways (thin sky bridges /
     corridors < ~14 m, tools/build_terminal_parts.py: 6.0 -> 10.5 m) [unk app convention]."""
@@ -683,6 +737,7 @@ def footprints():
     for k in ('T1', 'T2'):
         F[k] = dict(core=HALLS[k]['hall'], walks=[], links=[])
     F['T3W'] = dict(core=T3W_POLY, walks=[], links=[]); F['T3E'] = dict(core=T3E_POLY, walks=[], links=[])
+    F['C3C'] = dict(core=C3C_POLY, walks=[], links=[])
     for k in ('T1', 'T2', 'T3'):
         for c in HALLS[k]['conn']:
             if not c['modelled']: continue
@@ -709,10 +764,20 @@ def pv_regions(lB, lE, lF):
             ('E_centre', FP['BA_E']['core'].buffer(-DD.BAE_FLANK, join_style=2), H['E'], lE, 'obs (E lean, fascia 12.85 obs)'),
             ('T1', FP['T1']['core'], H['T1'], lT, 'inf (T1 height unk 17.88, lean = mean of B / C)'),
             ('T3W', FP['T3W']['core'].buffer(-2.5, join_style=2), H['T3W_parapet'], l3, 'inf (T3W 16.76 pub/inf, lean = mean of E / F)'),
-            ('T3E', FP['T3E']['core'].buffer(-2.5, join_style=2), H['T3E'], l3, 'inf (T3E 14.48 inf, lean = mean of E / F)')]
+            ('T3E', FP['T3E']['core'].buffer(-2.5, join_style=2), H['T3E'], l3, 'inf (T3E 14.48 inf, lean = mean of E / F)'),
+            ('C3C', FP['C3C']['core'].buffer(-1.5, join_style=2), C3C_H, lean_x(FP['C3C']['core'].centroid.x),
+             'inf (C3C 33.0 inf; lean linear in x through the B / D / E / F piers)')]
+
+
+def lean_x(x):
+    """NAIP 2024 east lean (m per m of height) at world x: the pier values (draw_data.dom_lean, two-epoch) follow
+    k24.n = 0.392 + 0.000432 (x + 800) along the ESE normal (B -905: 0.343 vs 0.347; D -520: 0.513; E -800: 0.392; F -1030:
+    0.294 vs 0.293) -> east = k24.n / sin(117.83 deg) [inf: a linear fit through four obs values]."""
+    return (0.392 + 0.000432 * (x + 800.0)) / math.sin(math.radians(117.83))
 
 
 PV = json.load(open(os.path.join(HERE, 'dom_pv.json'))) if os.path.exists(os.path.join(HERE, 'dom_pv.json')) else None
+ROOFOBS = json.load(open(os.path.join(HERE, 'dom_roofobs.json'))) if os.path.exists(os.path.join(HERE, 'dom_roofobs.json')) else None
 
 
 # ------------------------------------------------------------------------------------------------ helpers
@@ -752,8 +817,45 @@ def oct_local(c_world, apo, n0=343.0):
 
 
 def pv_blocks(region):
+    """the PV of a roof region as discrete rack tables (tools/blender/dom_roofobs.py: the rows / tables with their aisles inside
+    each NAIP block, review r1) - or the block outlines when the tables are not measured."""
+    if ROOFOBS is not None and region in ROOFOBS.get('pv_tables', {}) and ROOFOBS['pv_tables'][region]['tables']:
+        return [M.orient_all(Polygon([Lp(x, z) for x, z in t['ring']]).buffer(0)) for t in ROOFOBS['pv_tables'][region]['tables']]
     if PV is None or region not in PV['regions']: return []
     return [M.orient_all(Polygon([Lp(x, z) for x, z in b['ring']]).buffer(0)) for b in PV['regions'][region]['blocks']]
+
+
+def pv_block_outlines(region):
+    if PV is None or region not in PV['regions']: return []
+    return [M.orient_all(Polygon([Lp(x, z) for x, z in b['ring']]).buffer(0)) for b in PV['regions'][region]['blocks']]
+
+
+UNIT_LOD2_MIN = 15.0    # LOD2 keeps the rooftop units >= 15 m2 [our choice]
+
+
+def roof_units(W, lod):
+    """rooftop mechanical units measured on NAIP 2024 (tools/blender/dom_roofobs.py) on their host decks: [(local poly, host,
+    height)] [obs extents, inf heights]."""
+    if ROOFOBS is None: return []
+    sol = {s.key: s for s in W.S}
+    out = []
+    for key, rec in ROOFOBS.get('units', {}).items():
+        host = sol.get(key)
+        if host is None: continue
+        free = host.roof.buffer(-(PARAPET_T + 0.3), join_style=2)
+        if host.holes: free = free.difference(unary_union(host.holes).buffer(0.3, join_style=2))
+        for u in rec['units']:
+            q = loc(Polygon(u['ring']).buffer(0)).intersection(free)
+            for qq in M.polys(q, 2.0):
+                if lod == 2 and qq.area < UNIT_LOD2_MIN: continue
+                out.append((M.orient_all(qq), host, float(u['h'])))
+    return out
+
+
+def unit_boxes(mb, units):
+    for q, host, hu in units:
+        M.ring_walls(mb, q, host.deck, host.deck + hu, 'unit', tl('unit'))
+        M.cap(mb, q, host.deck + hu, 'unit_top', tl('unit_top'))
 
 
 # ------------------------------------------------------------------------------------------------ the world of solids
@@ -765,8 +867,10 @@ class Feat:
 
 
 def build_world(lod):
-    """all solids and features of the domestic complex for one LOD (0 / 1 share it; 2 = simplified)."""
-    simp = 1.0 if lod == 2 else 0.0
+    """all solids and features of the domestic complex for one LOD (0 / 1 share it). LOD2 (review r1: the phone tier sees it
+    up close) keeps the LOD0 outlines, roof wells, skylights, coping recess and the bridge vestibules / notches / bulkheads; it
+    drops only the thin members (fins, door frames, rack sides, brackets) and uses a reduced palette."""
+    simp = 0.0
     W = World(); feats = []; info = {}
 
     def S_(g):
@@ -792,7 +896,7 @@ def build_world(lod):
     info['B_band'] = band
     lB = float(D.dom_lean('B')[0][0])
     shB = np.array([-lB * H['B'], 0.0])
-    if lod < 2:
+    if True:
         free = wB.difference(band.buffer(1.5, join_style=2)).buffer(-1.0, join_style=2)
         wells = []
         for r in BROOF['wells']:
@@ -836,13 +940,13 @@ def build_world(lod):
     feats.append(Feat('BA_B', lambda mb, det, lod_, pv=pv: pv_racks(det, pv, lod_), kind='pv'))
     for k, w in walks:
         if k == 'BA_B':
-            W.add(Solid('BA_B_walk%d' % len(W.S), 'BA_B', w, INNER_TOP, z0=INNER_Y0, style='walk', parapet=0.0, thk=0.7, underside=True,
+            W.add(Solid('BA_B_walk%d' % len(W.S), 'BA_B', w, INNER_TOP, z0=walk_y0(w), style='walk', parapet=0.0, thk=0.7, underside=True,
                         tag='unk', feature='elevated walkway (the app\'s sky-bridge convention 6.0-10.5 m)', spec=['outline.level']))
 
     # ---------------- BA-C
     sC = W.add(Solid('BA_C_body', 'BA_C', core['BA_C'], H['C'], style='C', tag='obs', feature='Boarding Area C pier body',
                      spec=['bac.h_roof', 'bac.roof', 'outline.level']))
-    if lod < 2:
+    if True:
         lC = float(D.dom_lean('C')[0][0])
         q = loc(Polygon([(-678 - lC * H['C'], 412), (-672 - lC * H['C'], 412), (-672 - lC * H['C'], 418), (-678 - lC * H['C'], 418)]))
         q = M.orient_all(q.intersection(sC.poly.buffer(-1.0)))
@@ -856,12 +960,12 @@ def build_world(lod):
     drums = []
     for k, (c, r) in enumerate(DD.BAD_DRUMS_IMG):
         cl = Lp(c[0] - lD * DD.BAD_DRUM_TOP, c[1])
-        g = M.orient_all(circle(cl, r, 16 if lod == 2 else 48).intersection(wD.buffer(-0.3)))
+        g = M.orient_all(circle(cl, r, 48).intersection(wD.buffer(-0.3)))
         sd = W.add(Solid('BA_D_drum%d' % k, 'BA_D', g, DD.BAD_DRUM_TOP, z0=sD.deck, style='drum', thk=0.6, parapet=0.5, tag='inf',
                          feature='Boarding Area D head drum (NAIP roof circle, D ~19 m; top inf)', spec=['bad.roof']))
         sD.holes.append(g); drums.append(sd)
     info['D_drums'] = [(d.poly.centroid.coords[0], d.h) for d in drums]
-    if lod < 2:
+    if True:
         lines = []
         for p, q in DD.BAD_LINES_IMG:
             a = Lp(p[0] - lD * H['D'], p[1]); b = Lp(q[0] - lD * H['D'], q[1])
@@ -871,7 +975,7 @@ def build_world(lod):
         feats.append(Feat('BA_D', lambda mb, det, lod_, lines=lines, z=sD.deck: ridge_lights(mb, lines, z)))
     for k, w in walks:
         if k == 'BA_D':
-            W.add(Solid('BA_D_walk%d' % len(W.S), 'BA_D', w, INNER_TOP, z0=INNER_Y0, style='walk', parapet=0.0, thk=0.7, underside=True,
+            W.add(Solid('BA_D_walk%d' % len(W.S), 'BA_D', w, INNER_TOP, z0=walk_y0(w), style='walk', parapet=0.0, thk=0.7, underside=True,
                         tag='unk', feature='elevated connector T2 - BA-D (app sky-bridge convention)', spec=['outline.level']))
 
     # ---------------- BA-E (stepped section, BD-02 bae_section)
@@ -916,9 +1020,11 @@ def build_world(lod):
                      spec=['baf.h_roof_ne_arm', 'baf.roof_edges', 'baf.hub', 'outline.level']))
     lF = float(D.dom_lean('F')[0][0])
     lan = oct_local(DD.baf_lantern_centre(), DD.BAF_LANTERN_APO[0])
-    rise = float(BH['ring_2020_shadow']['rise_upper_bound'])
+    # review r1: the rise is unknown (the NAIP 2020 shadow only bounds it, <= 4.6 m): modelled conservatively as a 1.0-m
+    # glazed upstand [unk], the 4.6-m bound kept in the manifest (LANTERN_RISE_BOUND)
+    rise = LANTERN_RISE
     sL = W.add(Solid('BA_F_lantern', 'BA_F', lan, H['F'] + rise, z0=sF.deck, style='lantern', thk=0.6, parapet=0.0, tag='unk',
-                     feature='BA-F hub lantern (eccentric octagon 19.4 m [obs]; rise <= 4.6 m drawn at the bound [unk])', spec=['baf.hub']))
+                     feature='BA-F hub lantern (eccentric octagon 19.4 m [obs]; rise 1.0 m minimal upstand [unk], bound <= 4.6 m)', spec=['baf.hub']))
     sF.holes.append(lan)
     inner = oct_local(DD.baf_lantern_centre(), DD.BAF_LANTERN_APO[1])
     sL.holes.append(inner); sL.deck_extra.append((inner, sL.h + 0.25, 'glass_sky'))
@@ -930,7 +1036,7 @@ def build_world(lod):
     info['F_lantern'] = lan; info['F_monitor'] = sM.poly
     for k, w in walks:
         if k == 'BA_F':
-            W.add(Solid('BA_F_walk%d' % len(W.S), 'BA_F', w, INNER_TOP, z0=INNER_Y0, style='walk', parapet=0.0, thk=0.7, underside=True,
+            W.add(Solid('BA_F_walk%d' % len(W.S), 'BA_F', w, INNER_TOP, z0=walk_y0(w), style='walk', parapet=0.0, thk=0.7, underside=True,
                         tag='unk', feature='elevated F connector (app sky-bridge convention)', spec=['outline.level']))
 
     # ---------------- halls
@@ -940,6 +1046,10 @@ def build_world(lod):
     sT1 = W.add(Solid('T1_hall', 'T1', core['T1'], H['T1'], style=styleT1, tag='unk', feature='Harvey Milk Terminal 1 Center hall',
                       spec=['t1c.h_roof', 't1c.landside_facade', 't1c.roof_pv', 't1c.skylights_count']))
     sT2 = W.add(Solid('T2_hall', 'T2', core['T2'], H['T2'], style=styleT2, tag='unk', feature='Terminal 2 hall', spec=['t2.landside', 't2.daylight']))
+    # Courtyard 3 Connector office block (review r1; see C3C_H): node building 'C3C'
+    sC3 = W.add(Solid('C3C_block', 'C3C', core['C3C'], C3C_H, style='C3C', tag='inf',
+                      feature='Courtyard 3 Connector: six-storey office block above the T2-T3 connector (HOK [pub]); footprint T2 '
+                              'outline NW end [obs]; height 33.0 m [inf, range 32-36]', spec=[]))
     sT3W = W.add(Solid('T3W_hall', 'T3W', core['T3W'], H['T3W_parapet'], style=styleT3W, parapet=3.5 * FT, tag='pub',
                        feature='Terminal 3 West (95 % CD state: parapet 66\'-0")', spec=['t3.levels_datum', 't3w.wall_field', 't3w.materials']))
     sT3E = W.add(Solid('T3E_hall', 'T3E', core['T3E'], H['T3E'], style='T3E', tag='inf', feature='Terminal 3 East', spec=['t3.levels_datum', 't3e.facade']))
@@ -951,13 +1061,13 @@ def build_world(lod):
     sT3E.holes.append(pent); info['T3E_penthouse'] = pent
     for k, w in walks:
         if k in ('T1', 'T2', 'T3E'):
-            W.add(Solid('%s_walk%d' % (k, len(W.S)), k, w, INNER_TOP, z0=INNER_Y0, style='walk', parapet=0.0, thk=0.7, underside=True,
+            W.add(Solid('%s_walk%d' % (k, len(W.S)), k, w, INNER_TOP, z0=walk_y0(w), style='walk', parapet=0.0, thk=0.7, underside=True,
                         tag='unk', feature='elevated connector (app sky-bridge convention)', spec=['outline.level']))
     for k, w in links:
         hs = [s.h for s in W.S if s.z0 < 0.1 and s.poly.distance(w) < 0.6]
         W.add(Solid('%s_link%d' % (k, len(W.S)), k, w, min(hs) if hs else H['D'], style='conn', tag='inf',
                     feature='airside link at grade (height: the lower adjoining part)', spec=['outline.level']))
-    if lod < 2:
+    if True:
         lT = 0.5 * (lB + float(D.dom_lean('C')[0][0]))
         sky = []
         for p in ((-826, 460), (-815, 508), (-884, 530)):
@@ -967,7 +1077,7 @@ def build_world(lod):
                 qq = M.orient_all(qq); sT1.holes.append(qq); sky.append((qq, sT1.deck))
         info['T1_skylights'] = sky
         feats.append(Feat('T1', lambda mb, det, lod_, sky=sky: skylights(mb, det, lod_, sky)))
-    for reg, host, bld in (('T1', sT1, 'T1'), ('T3W', sT3W, 'T3W'), ('T3E', sT3E, 'T3E')):
+    for reg, host, bld in (('T1', sT1, 'T1'), ('T3W', sT3W, 'T3W'), ('T3E', sT3E, 'T3E'), ('C3C', sC3, 'C3C')):
         pv = [(q, host) for q in pv_blocks(reg)]
         feats.append(Feat(bld, lambda mb, det, lod_, pv=pv: pv_racks(det, pv, lod_), kind='pv'))
     # T1 curb canopy + departures sidewalk deck along the trimmed landside face [pub canopy; inf / unk heights]
@@ -976,7 +1086,7 @@ def build_world(lod):
     feats.append(Feat('T1', lambda mb, det, lod_, can=can: canopy(mb, det, lod_, can)))
 
     # ---------------- bridge doors / vestibules (jet-bridge attachment facades), overhang notches
-    doors = bridge_doors(W) if lod < 2 else []
+    doors = bridge_doors(W)
     info['doors'] = doors
     for d in doors:
         if d['notch'] is not None:
@@ -987,8 +1097,17 @@ def build_world(lod):
                     if cut.area > 0.05:
                         s.roof = M.orient_all(largest(_clean(s.roof.difference(cut.buffer(0.01, join_style=2)), 5.0)))
                         d['notched'] = d.get('notched', 0.0) + cut.area
+        if d['low']:
+            host = next(o for o in W.S if o.key == d['host'])
+            hole = bulkhead_hole(d).intersection(host.roof.buffer(-0.05, join_style=2))
+            if hole.area > 0.5: host.holes.append(M.orient_all(hole))
         bld = d['bld']
         feats.append(Feat(bld, lambda mb, det, lod_, d=d: door_geom(mb, det, lod_, d)))
+    # rooftop mechanical units (NAIP 2024, review r1)
+    units = roof_units(W, lod)
+    info['units'] = units
+    for bld in sorted({h.bld for _, h, _ in units}):
+        feats.append(Feat(bld, lambda mb, det, lod_, us=[u for u in units if u[1].bld == bld]: unit_boxes(mb, us)))
     W.finish()
     return W, feats, info
 
@@ -1024,7 +1143,7 @@ def pv_racks(det, pv, lod):
             uvf = lambda x, y, ax=ax, ay=ay: ((x * ax[0] + y * ax[1]) / tl('pv')[0], (x * ay[0] + y * ay[1]) / tl('pv')[1])
             z0, z1 = host.deck + PV_Z[0], host.deck + PV_Z[1]
             if lod == 2:
-                qq = M.orient_all(rr)
+                # (review r1: the minimum rectangle overhung the curved T3 roof edges - the clipped table is used)
                 M.cap(det, qq, z1, 'pv', uvf=uvf)
                 continue
             M.cap(det, qq, z1, 'pv', uvf=uvf)
@@ -1103,7 +1222,11 @@ def bridge_doors(W):
     walkway's section (+0.3 m) so that the app's walkway abuts it [inf]. Where a roof edge (or C's low roof) is below the
     walkway top, the overhang is notched / a bulkhead rises above the roof [inf]."""
     st = json.load(open(os.path.join(ROOT, 'data', 'sfo_stands.json')))['stands']
-    body = unary_union([s.poly for s in W.S if s.z0 < 0.1 and s.h > 6.0 and s.style not in ('drum', 'lantern', 'monitor', 'penthouse')])
+    # hosts: the buildings standing on the apron, and the elevated parts whose floor comes down to the vestibule floor where a
+    # bridge enters them (review r1: B10 / B11 / B11S / B15 / B16)
+    isHost = lambda o: (o.z0 < 0.1 and o.h > 6.0 and o.style not in ('drum', 'lantern', 'monitor', 'penthouse')) or \
+        (o.style == 'walk' and o.z0 <= WALK_Y0_BRIDGE + 0.01)
+    body = unary_union([s.poly for s in W.S if isHost(s)])
     bp = shapely.prepared.prep(body)
     app = shapely.prepared.prep(APP_BLD)
     out = []
@@ -1142,7 +1265,7 @@ def bridge_doors(W):
                 while t < 8.0 and not bp.contains(Point(El - d * t)): t += 0.05
                 if t >= 8.0: continue
                 X = El - d * t; pen = -t
-            host = next((o for o in W.S if o.z0 < 0.1 and o.poly.buffer(0.1).contains(Point(X))), None)
+            host = next((o for o in W.S if isHost(o) and o.poly.buffer(0.1).contains(Point(X))), None)
             if host is None: continue
             low = host.h < VEST['z1'] + 0.4                     # roof below the walkway head: bulkhead above the roof
             gap = max(0.0, -pen)
@@ -1152,11 +1275,26 @@ def bridge_doors(W):
     return out
 
 
+def bulkhead_back(d):
+    """how far a bulkhead reaches behind the facade: 2.5 m, or past the app walkway's start where that lies further inside
+    (review r1: the walkway top 8.45 m must not reach above a 7.9-m deck anywhere)"""
+    return max(2.5, float(d['penetration']) + 0.5)
+
+
+def bulkhead_hole(d):
+    """plan footprint (local) of a bulkhead: the host deck is cut there and the bulkhead's top closes it."""
+    X, El, dd = np.array(d['X']), np.array(d['E']), np.array(d['d'])
+    A = X - dd * bulkhead_back(d); Bp = El if d['gap'] > 0.12 else X
+    c = (A + Bp) / 2; L = float(np.hypot(*(Bp - A)))
+    n = np.array([dd[1], -dd[0]]); w = VEST['w'] / 2 - 0.02
+    return Polygon([tuple(c - dd * L / 2 - n * w), tuple(c + dd * L / 2 - n * w), tuple(c + dd * L / 2 + n * w), tuple(c - dd * L / 2 + n * w)])
+
+
 def door_geom(mb, det, lod, d):
     X, El, dd = np.array(d['X']), np.array(d['E']), np.array(d['d'])
     n = np.array([dd[1], -dd[0]])
     if d['gap'] > 0.12 or d['low']:
-        back = 2.5 if d['low'] else 0.15
+        back = bulkhead_back(d) if d['low'] else 0.15
         A = X - dd * back; Bp = El if d['gap'] > 0.12 else X          # ends on the facade plane: the walkway abuts it
         L = float(np.hypot(*(Bp - A)))
         c = (A + Bp) / 2
@@ -1180,7 +1318,8 @@ def door_geom(mb, det, lod, d):
 BLD_INFO = {
     'T1': ('Harvey Milk Terminal 1 Center', 'unk'), 'BA_B': ('Boarding Area B', 'obs'), 'BA_C': ('Boarding Area C', 'obs'),
     'T2': ('Terminal 2', 'unk'), 'BA_D': ('Boarding Area D', 'obs'), 'T3W': ('Terminal 3 West', 'pub'), 'T3E': ('Terminal 3 East', 'inf'),
-    'BA_E': ('Boarding Area E', 'obs'), 'BA_F': ('Boarding Area F', 'obs')}
+    'BA_E': ('Boarding Area E', 'obs'), 'BA_F': ('Boarding Area F', 'obs'),
+    'C3C': ('Courtyard 3 Connector office block', 'inf')}
 
 
 def build(lod):
@@ -1188,10 +1327,10 @@ def build(lod):
     W, feats, info = build_world(lod)
     out = {}
     for bld in BLD_INFO:
-        sh = MB(f'{bld}_shell'); det = MB(f'{bld}_detail'); pvm = MB(f'{bld}_pv')
+        sh = MB(f'{bld}_shell'); det = MB(f'{bld}_detail'); pvm = MB(f'{bld}_pv'); fin = MB(f'{bld}_fins')
         sol = [s for s in W.S if s.bld == bld]
         for s in sol:
-            emit_walls(sh, det, W, s, lod, mull_geom=(lod == 0))
+            emit_walls(sh, fin, W, s, lod, mull_geom=(lod == 0))
             emit_roof(sh, W, s, lod)
         for f in feats:
             if f.bld != bld: continue
@@ -1201,7 +1340,11 @@ def build(lod):
         dims = {s.key: dict(h=tagdim(s.h, s.tag, 'see spec keys'), z0=tagdim(s.z0, 'inf' if s.z0 else 'obs', 'apron / host deck')) for s in sol}
         P = [Part(f'{bld}_shell', sh, 'shell', tag, nm + ': walls, roofs, roof features', spec=sorted({k for s in sol for k in s.spec}), dims=dims)]
         if not det.empty():
-            P.append(Part(f'{bld}_detail', det, 'detail', 'inf', nm + ': mullion fins, bridge door frames, skylight frames, brackets'))
+            P.append(Part(f'{bld}_detail', det, 'detail', 'inf', nm + ': bridge door frames, skylight frames, canopy brackets'))
+        if not fin.empty():
+            P.append(Part(f'{bld}_fins', fin, 'detail', 'inf', nm + ': curtain-wall mullion fins (LOD0 only)',
+                          extra=dict(max_dist_m=FIN_MAX_M, max_dist_note='hide beyond this camera distance to the node bounding box '
+                                     '(sub-pixel fins alias; the curtain caps of the glass tiles carry the rhythm)')))
         if not pvm.empty():
             P.append(Part(f'{bld}_pv', pvm, 'detail', 'obs', nm + ': PV rack blocks (NAIP 2024 extents [obs]; rack height inf)',
                           spec=['bab.pv', 'bab.pv_layout', 't1c.roof_pv']))

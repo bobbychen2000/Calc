@@ -12,7 +12,7 @@ draw_domestic.py, draw_data.py, through tools/blender/dom_geom.py):
                  every 10 m along the straight pier; the widths 7.3 / 32.4 / 14.7 / 54.3 m (BD-02 view 1)
   roof edges     BA-B / BA-D / BA-F measured lean-free roof edge lines (dom_true_edges) vs the mesh's roof edge
   BA-E           stepped section: fascia 12.85, lower side roofs 9.85, flank 4.4, overhang 1.5 (BD-02)
-  BA-F / BA-D    lantern (19.4 m octagon at baf_lantern_centre, top 10.49 + 4.6), drums (D 19.2 m, top 13.19)
+  BA-F / BA-D    lantern (19.4 m octagon at baf_lantern_centre, top 10.49 + 1.0 minimal rise), drums (D 19.2 m, top 13.19)
   T3             T3W parapet 16.76, T3W airside window stack (L3 10.36, +10 ft glass, +2 ft band), T3E 14.48, penthouse 21.34
   T1             curb canopy soffit 8.88 (curb 4.88 + 4.0), depth 4.0; wall head 17.88; landside run lengths vs BD-03
   footprints     the walls lie on the SFO Museum level-2 outlines (except the documented trims / set-backs)
@@ -241,11 +241,11 @@ def run(path):
     drawn_h = [
         ('BA_B_body', 'bab.h_roof', 'obs (S half; N inf)'), ('BA_B_band', 'bab.h_roof_central', 'obs, low'), ('BA_C_body', 'bac.h_roof', 'obs, low'),
         ('BA_D_body', 'bad.h_roof', 'obs, low'), ('BA_E_centre', 'bae.h_roof', 'obs'), ('BA_E_body', 'BA-E lower side roofs = fascia - BAE_STEP', 'inf'),
-        ('BA_F_body', 'baf.h_roof_ne_arm', 'obs'), ('BA_F_lantern', 'hub lantern: roof + rise bound 4.6', 'unk (bound)'),
+        ('BA_F_body', 'baf.h_roof_ne_arm', 'obs'), ('BA_F_lantern', 'hub lantern: roof + 1.0 minimal upstand (bound 4.6)', 'unk'),
         ('BA_F_monitor', 'NW-arm monitor: roof + 2.5', 'unk'), ('BA_D_drum0', 'BAD_DRUM_TOP', 'inf'), ('BA_D_drum1', 'BAD_DRUM_TOP', 'inf'),
         ('T1_hall', 'curb 4.88 + wall head 13.0 (BD-03 v1)', 'unk / inf'), ('T2_hall', 'curb 4.88 + 12.0 (BD-03 v2)', 'unk'),
         ('T3W_hall', 'T3W parapet 66\'-0" - L1 (BD-02 / BD-03 v3)', 'pub / inf'), ('T3E_hall', 'R2 58\'-6" - L1', 'inf'),
-        ('T3E_penthouse', 'R3 81\'-0" - L1', 'inf')]
+        ('T3E_penthouse', 'R3 81\'-0" - L1', 'inf'), ('C3C_block', 'C3C: six office storeys above the connector (HOK) / NAIP relief / photo a1', 'inf')]
     heights = {}
     for key, src, tag in drawn_h:
         s = sol.get(key)

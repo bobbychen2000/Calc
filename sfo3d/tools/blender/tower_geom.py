@@ -543,7 +543,8 @@ class Tower:
     def landside(self, H, ins, L):
         land = Part('landside', dict(
             src='inf', feature='landside sector: SW wing (horizontally louvred, broad, rounded outer edge; tip 254 deg / 14.0 m '
-            'at the flare level), flat channel walls, NE blade (narrow facet, sharp tip 1.6 m proud at the flare level)',
+            'at the flare level), flat channel walls (both louvred), NE blade (narrow clad facet, sharp flat-topped tip 1.6 m proud '
+            'at the flare level, flush with the flare corner)',
             spec=['shaft_plan_shape', 'ribbon_width'], drawing='BT-01 (plan at the flare level), BT-02 B (draw_blades)',
             tags=dict(form='obs photos t3/t4', plan='unknown beyond the wing-tip point (schematic, BT-01)',
                       wing_tip='inf (reproduces t3/t4)', blade_proportions='inf (oblique photos)')), smooth=False)
@@ -558,7 +559,9 @@ class Tower:
             return dict(lobe=I['lobe'], sw=[I['lobe'][-1], I['e_sw']], rib=[I['e_sw'], I['mid'], I['e_ne']],
                         ne=[I['e_ne'], I['tip']], fac=[I['tip'], I['root']])
         segs = [seg_pts(I) for I in ins]
-        for key, mat, smooth in (('lobe', 'louvre', True), ('sw', 'louvre', False), ('ne', 'clad', False), ('fac', 'clad', False)):
+        # the NE channel wall (ribbon NE edge -> blade tip) is horizontally louvred like the SW wing [obs photos t3 / t4: the narrow
+        # strip beside the ribbon shows the same horizontal lines; draw_tower.NE_TIP note]; the blade's outer facet is clad
+        for key, mat, smooth in (('lobe', 'louvre', True), ('sw', 'louvre', False), ('ne', 'louvre', False), ('fac', 'clad', False)):
             rows = []
             for k, h in enumerate(H):
                 pts = segs[k][key]

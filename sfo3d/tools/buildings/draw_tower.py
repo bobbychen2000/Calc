@@ -108,7 +108,9 @@ NE_TIP = 0.0                 # NE blade top above the ribbon head (= the flare c
                              # (263 m, bearing 319): its top sits ~15 px (0.6 m) above the ribbon head on the image, ~2-3 m nearer the
                              # camera (perspective lifts it ~0.4 m), so level within ~0.3 m; t4 (81 m): level with the ribbon head;
                              # t5: the NE edge runs into the flare corner. Round 3 drew a pointed tip at deck + 1.2 (2.8 m above the
-                             # corner, F1) from t4 alone [obs low]: withdrawn (reviewer round 1 of the 3-D asset: t3 / t4 / t5 disagree)
+                             # corner, F1) from t4 alone [obs low]: withdrawn (reviewer round 1 of the 3-D asset: t3 / t4 / t5 disagree).
+                             # The NE channel wall (ribbon edge -> blade tip, facing ~40 deg: edge-on in BT-02 B) is horizontally
+                             # louvred like the SW wing face [obs t3 / t4]; finish only, no dimension
 
 # Review backlog (round 3, 2026-11-04), read on the same photos (t1-t5, refs/cache/buildings/review_likeness, reference only):
 # Flare shoulder [obs photo t1, near-orthographic from 1.75 km; 0.073 m/px; 1.6 deg roll removed]: no vertical lip - the top

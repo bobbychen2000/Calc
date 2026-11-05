@@ -322,6 +322,9 @@ exemption above): restore the 373de34 values (OSM) of `rotunda`, the walk's last
 | B27 L1 | -1009.07, 904.46 | -1008.15, 903.83 | - | 14.3 |
 
 **Checked** (scratch tree with exactly these nine reverted, today's other data, the new gates.js): prepGeom shifts 0 of
-131 rotundas; 3,278 dockings made / 109 refused, the same refusal list as without the revert; drums vs the 3-D asset
-footprints: the same 7 pre-existing overlaps (none at B), drums vs the drawn outline 0. B15 L1 (1.17 m) and B11S (1.37 m)
+131 rotundas; bcheck2: 0 issues, 3,278 dockings made / 109 refused, the same refusal list, slopes and observed pairs as
+without the revert; drums vs the 3-D asset footprints: the same 7 pre-existing overlaps (none at B), drums vs the drawn
+outline 0. One cost: B26 L1 (OSM rotunda 1.0 m nearer the pier) then reaches 13 types beyond its model's
+operational extension by 0.13-0.52 m (158 -> 171 such dockings, still >= 1.48 m short of the allowance) - the model question of
+bridges_closeout §1.3. B15 L1 (1.17 m) and B11S (1.37 m)
 keep their moves: their Museum pieces run only 1.5 / 3.0 m along the walkway and the asset draws 45-63 % of them.

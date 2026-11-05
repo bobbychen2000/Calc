@@ -167,8 +167,15 @@ export async function startApp(cfg) {
     const wdir = ((M && M.windDir) ?? 290) * DEG, wms = ((M && M.windKt) ?? 8) * 0.5144;
     const windTo = [-Math.sin(wdir), 0, Math.cos(wdir)];
     const lowSlab = main && main.ft < 5000 && (main.cover === 'BKN' || main.cover === 'OVC');
-    env = { sunDir, mie: 21e-6, sunI: 20, fog: [Math.min(3.912 / vis, 0.004) * 0.9, 1 / 700, 1.0, 0.97],
-      cloud: [main ? COVER[main.cover] : 0.12, main ? Math.max(150, main.ft * FT) : 1500, lowSlab ? 4200 : 14000, 0.5],
+    // old renderer, spec §9.1 items 2-3 (environment step 3): fog a = the EnvState surface extinction σ (ASOS inversion,
+    // day/night blend) at the ground, b = 1 / the fog or sub-cloud top, both caps removed (uFog.w = 1: no 3 % see-through);
+    // cloud cover = the layer's de-summed own coverage (JO 7900.5E summation amounts) at its real base (EnvState clouds;
+    // the three.js renderer draws every layer from the EnvState itself and ignores env.fog / env.cloud)
+    const fogTop = Math.max(5, ((E.atm.slabs[0] || {}).y1 ?? GROUND_Y + 914) - GROUND_Y);
+    const ownOf = (c) => { const L = c && E.clouds.find(l => l.cover === c.cover && l.baseFt === c.ft); return L ? L.own : c ? COVER[c.cover] : 0.12; };
+    const baseOf = (c) => { const L = c && E.clouds.find(l => l.cover === c.cover && l.baseFt === c.ft); return L ? L.base : c ? Math.max(150, c.ft * FT) : 1500; };
+    env = { sunDir, mie: 21e-6, sunI: 20, fog: [E.atm.sigmaSurface * Math.exp(GROUND_Y / fogTop), 1 / fogTop, 1.0, 1.0],
+      cloud: [ownOf(main), main ? Math.max(150, baseOf(main)) : 1500, lowSlab ? 4200 : 14000, 0.5], // (planes kept >= 150 m: a lower plane would cut the terminals; the fog draws lower decks)
       cloudWind: [windTo[0] * (wms * 2.5 + 1), windTo[2] * (wms * 2.5 + 1)], cloudTex: world.textures.clouds, noiseTex: world.textures.noise, refPos: [0, 60, 0],
       slab: !!lowSlab, wind: [windTo[0] * wms, windTo[2] * wms] };
     world.waterU.uWind = [windTo[0] * Math.max(wms, 1), windTo[2] * Math.max(wms, 1)]; world.waterU.uWaveAmp = Math.min(1.3, 0.45 + (wms / 0.5144) / 22);

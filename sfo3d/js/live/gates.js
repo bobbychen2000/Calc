@@ -207,10 +207,11 @@ const DRUM_MIN = 1.5;
 // not building: it neither drops the walkway's support columns nor pushes the drum along its own walkway, and the
 // moving parts are tested against the walkway slab itself (fixedHit) there. A Museum ring point is own-strip for a
 // bridge when, on the line across the bridge's mapped walkway polyline through the nearest centreline point (or a
-// point at most the lean, 2.1 m, further back - a strip ending short of the rotunda), it lies in a piece of the ring
-// at most STRIP_W wide that reaches within STRIP_HW of the centreline (the OSM line runs along one edge of most
-// strips: the lean); an outline edge is own-strip when all of it is (sampled every 0.25 m). The pier bodies are
-// 20 m and more across, so they never are.
+// point up to the lean, 2.1 m, along it - a strip ending short of the rotunda or starting beyond the facade), it lies in
+// a piece of the ring every point of which is within STRIP_W of the walkway polyline and some within STRIP_HW of the
+// centreline (the OSM line runs along one edge of most strips: the lean), and the walkway carries such pieces for at
+// least STRIP_MIN_L; an outline edge is own-strip when all of it is (sampled every 0.25 m). The pier bodies reach
+// further than STRIP_W from the walkway, so they never are.
 const STRIP_LEAN = 2.1;                                   // m, OSM / Museum roof lean (data bridge_geom_note: 1.3-2.1 m)
 const STRIP_W = WALK_W + 2 * STRIP_LEAN, STRIP_HW = STRIP_W / 2; // walkway slab + the lean on both sides
 // a walkway strip runs at least STRIP_MIN_L along the walkway: the Boarding Area B tip strips run 6.3-50.8 m, the
@@ -1123,7 +1124,9 @@ export class LiveGateSystem {
       let lo = t - 0.5, hi = t; for (let k = 0; k < 12; k++) { const m = (lo + hi) / 2; if (test(m)) hi = m; else lo = m; } return hi; };
     const td = first(t => { const p = P(t); return inBuilding(p[0], p[2], false, true); }, 1, 60);
     let tf = td;
-    if (td != null) { const t0 = Math.max(1, td - STRIP_LEAN); const tm = first(t => { const p = P(t); return inBuilding(p[0], p[2]); }, t0, td); if (tm != null && tm > t0 && tm < td) tf = tm; }
+    if (td != null) { const t0 = Math.max(1, td - STRIP_LEAN); const inC = (t) => { const p = P(t); return inBuilding(p[0], p[2]); }; const tm = first(inC, t0, td);
+      // (only a face continuous with the drawn wall: no gap between them - not a walkway strip crossing the centreline)
+      if (tm != null && tm > t0 && tm < td) { let ok = true; for (let t = tm + 0.05; t < td; t += 0.1) if (!inC(t)) { ok = false; break; } if (ok) tf = tm; } }
     const tmax = td == null ? 40 : 1 + Math.ceil((td - 1) / 0.5 - 1e-9) * 0.5 - 2.75; // (posts ~2.5 m off the drawn wall: as before, on its 0.5 m search grid)
     // a facade unit only where the drawn wall behind it (0.6-3 m) reaches above the unit (H0 + 4.2 m): the piers / halls,
     // not the 5 m ramp-level complex

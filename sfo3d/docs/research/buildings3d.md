@@ -127,6 +127,7 @@ generated-tangent warning is accepted). Khronos glTF-Validator 2.0.0-dev.3.10: *
 | `itb_plan.png` | BI-01 V2 / NAIP | north-up plan: tip bands, strips, lenses, core and bars as imaged |
 | `itb_ao_*.png` | — | AO: soffit near the walls, under the canopy, curb and pod bases; no leaks seen |
 | `itb_bf_*.png` | — | back-face QA (i4, i3, a2g, bag, east, top, baa × LOD0-2): 0 red pixels |
+| `itb_app_i4like.png`, `itb_app_i4far.png`, `itb_app_a2g.png` | the app (three.js, SOFTGL, `?b3donly=itb`) | i4-like at 330 m (LOD0): the fritted bays now read as horizontal bands - column-mean std of the bay 2.3 against 8.9 before r1 (row-mean 5.0 / 5.7); at 620 m (LOD1) the lettering and the dark crown cap stay; a2 camera at 800 m (LOD1): the BA-G gate rooms between the low bridge-head boxes, with the app's bridges docked at the boxes |
 
 ### Open items (also in the manifest's `unknown` / `conflicts`)
 - The ITB core block height (17.9 m placeholder) and its facades; the AirTrain stations at ITB level 4 inside the bars
@@ -149,7 +150,7 @@ generated-tangent warning is accepted). Khronos glTF-Validator 2.0.0-dev.3.10: *
 | 2 | piers read as blank boxes with small square glazed bays | **fixed (BA-G, obs); BA-A placeholder** | a2 re-measured with the solved camera (8.6 px/m at the facade): BA-G curtain walls fill the segments between the bump-outs under the pods, 63.6 × 10.1 m (4.6–14.7 m), bump-outs 6.5 m; 6 gate rooms. **Not done: the "continuous concourse window band"** - a2 shows none on BA-G (only two 2-lite windows per panel segment); the long green band in a2 is the building beyond the south apron (Garage G / BART station, landside asset) |
 | 3 | the BA-A check used a photo of BA-G | **valid; fixed** | `itb_a2_solve.py`: bearings of 5 features put the camera NNE of BA-G looking 203° (residuals ≤ 16 px), the 3-D fit (10 picks) gives x −1059.7, z −614.2, h 163.4 m, f 6,780 px (127 mm eq.), picks within 16.7 px mean; new view `a2g` (+ LOD1); `baa` is now render-only (no BA-A photo found) |
 | 4 | crown reads white from the curb; columns thinner than i3 | **crown fixed; columns kept** | i4: dark cap 10 px at 6.72 px/m = 1.5 m above the white fascia → lens vaults (1.9 m rise) and the cap; the crown now reads dark blue-grey in `itb_i4.png`. Columns: on i4 (frontal, 6.72 px/m at the wall), the two columns crossing the dark entrance glazing measure 9.3 / 10.3 px at half maximum and 12-13 px to the dark limb = 1.4-1.9 m, i.e. 1.6 ± 0.2 m: the drawn 1.5 m holds (inside the 0.5-m tolerance). i3's "~2 m" is perspective: its column stands 2.5 m in front of the wall, much nearer the camera than the wall it is compared with |
-| 5 | LOD1 drops lettering, mullions, eastern columns | **fixed** | LOD1 now has the flat lettering (276 tris), the mullions (west + end walls, one node, 858 tris) and all 20 columns (720 tris); +6.4k tris and +2 draw calls at LOD1. The inner columns stand inside the opaque envelope (not visible from outside) but the LOD sets now match |
+| 5 | LOD1 drops lettering, mullions, eastern columns | **fixed** | LOD1 now has the flat lettering (276 tris), the mullions (west + end walls, one node, 858 tris) and all 20 columns (720 tris): +1.6k tris and +2 draw calls at LOD1 (LOD1 total 34,976 with the +4k lens vaults of the shared roof). The inner columns stand inside the opaque envelope (not visible from outside) but the LOD sets now match |
 
 <!-- tower:begin (written by tools/blender/build_tower.py) -->
 ## Control tower (ATCT 2016) and base building: `data/buildings3d/tower.glb`
@@ -171,7 +172,7 @@ python3 tools/blender/tower3d_verify.py data/buildings3d/tower.glb 2   # re-meas
 | LOD1 | 350-1200 m | 10,591 / 10,895 | 1024 px | 136 columns, flat slots, dark seam joints, 24-facet cab, 15 whips + red light, plain base building with parapet |
 | LOD2 | > 1200 m; phone (`tower_lod2.glb`, F2) | 2,365 / 2,499 | 512 px | 68 columns, flat slots, 12-facet cab, 15 whips (3-sided) + red light, base building as a box |
 
-Files: `tower.glb` (F2) 3.36 MB, `tower_f1.glb` 3.46 MB, `tower_lod2.glb` (F2) 0.24 MB (PNG textures; KTX2 / meshopt later with `tools/engine/glb_compress.mjs`). Materials are PBR (our choices for the published "SFO Silver" ACM, glass, panels; `extras.src` on every material). The cladding carries a procedural base-colour + normal tile on TEXCOORD_0 (`tools/blender/tower_tex.py`, 4 joints x 2 panel rows per tile): dark helical and row joint lines (6.5 cm, 0.35 x the panel tone at the centre) and a +-5 % tone per panel, mip-mapped (no moire); the two circumferential seams are dark 0.10-m joint bands flush in the shell. The cab glass is tinted and see-through (alpha 0.5, double-sided, the far-side panes and the sky show through) with light 6-cm pane joints. Sun-independent AO baked by Cycles (48 samples, 8 m rays, ground plane as occluder). Every other surface is single-sided and wound outwards (back-face audit renders).
+Files: `tower.glb` (F2) 3.38 MB, `tower_f1.glb` 3.45 MB, `tower_lod2.glb` (F2) 0.24 MB (PNG textures; KTX2 / meshopt later with `tools/engine/glb_compress.mjs`). Materials are PBR (our choices for the published "SFO Silver" ACM, glass, panels; `extras.src` on every material). The cladding carries a procedural base-colour + normal tile on TEXCOORD_0 (`tools/blender/tower_tex.py`, 4 joints x 2 panel rows per tile): dark helical and row joint lines (6.5 cm, 0.35 x the panel tone at the centre) and a +-5 % tone per panel, mip-mapped (no moire); the two circumferential seams are dark 0.10-m joint bands flush in the shell. The cab glass is tinted and see-through (alpha 0.5, double-sided, the far-side panes and the sky show through) with light 6-cm pane joints. Sun-independent AO baked by Cycles (48 samples, 8 m rays, ground plane as occluder). Every other surface is single-sided and wound outwards (back-face audit renders).
 
 **Verification** (`out/buildings3d/tower_verify.json`, measured on the exported GLB against the sheet functions):
 - F2 (default): 110/110 checks within tolerance; tris {0: 33443, 1: 10591, 2: 2365}; plausibility clear of aircraft envelopes, bridges and taxilanes; the app's T2 hall / BA-D walkway parts overlap the base-building footprint (integration: cut them)
@@ -182,24 +183,26 @@ Files: `tower.glb` (F2) 3.36 MB, `tower_f1.glb` 3.46 MB, `tower_lod2.glb` (F2) 0
 
 **Integration.** The loader (`js/three/buildings3d.js`) reads the anchors from the loaded file's root extras: the app's tower view takes `world.towerPos.eyeY` = GROUND_Y + `cab_eye_h` of that family (js/live/app.js hook; GROUND_Y + 62 before a tower file is shown), and the alpha-blended cab glass is hidden while the camera is inside that family's glass ring (radius `glass_head_r` + 0.3, `cab_floor_h` - 0.5 .. `glass_head_h` + 0.5). The first-pass T2 hall / BA-D walkway parts over the base-building footprint are cut by `tools/blender/b3d_integrate.py`.
 
-**Renders** (Cycles CPU, 64 samples + OIDN, AgX; ours; of the default family F2): `out/buildings3d/tower_A.png`, `tower_B.png` (the BT-02 elevations, orthographic; `tower_overlay_A/B.png` carry the sheet outlines in red), `tower_t2.png`, `tower_t3.png`, `tower_t4.png` (camera-matched to the reference photos t2 / t3 / t4, Famartin 2025, CC BY-SA 4.0; per family the focal length follows the rim width in pixels and the camera height the angle below the rim; side-by-side comparisons `tower_compare_*.jpg` stay local).
+**Renders** (Cycles CPU, 64 samples + OIDN, AgX; ours; of the default family F2): `out/buildings3d/tower_A.png`, `tower_B.png` (the BT-02 elevations, orthographic; `tower_overlay_A/B.png` carry the sheet outlines in red), `tower_t2.png`, `tower_t3.png`, `tower_t4.png` (camera-matched to the reference photos t2 / t3 / t4, Famartin 2025, CC BY-SA 4.0; per family the focal length follows the rim width in pixels and the camera height the angle below the rim, the sun is computed for the photo time; side-by-side comparisons `tower_compare_*.jpg` stay local). App views (three.js, llvmpipe, `?b3donly=tower`, photo-matched camera and sun; `tools/blender/tower_app_job.mjs`): `out/buildings3d/app/tapp_t2.png`, `tapp_t4.png`, `tapp_t4close.png`, `tapp_t2like.png`, `tapp_towercam.png` (+ `tapp_t2_metal0.png` / `tapp_t2_col085.png`, material experiments), `tower_app_info.json`.
 
 **Observed vs inferred.** Per dimension in `manifest.json#tower.dimensions`; lists `inferred`, `unknown`, `not_modelled`, `conflicts` there. Node extras carry `src`, the spec keys and per-feature tags.
 
 **Review round 1 (2026-11-05).**
 - 1 (major) cladding read as flat grey plastic, seams as light raised bands - FIXED: procedural base-colour + normal tile (4 joints x 2 rows per tile) with dark helical and row joint lines; the two seams are dark 0.10-m joint bands flush in the shell (the light 0.03-m-proud band is withdrawn); material seam 98 / clad 150 sRGB (was 196 / 149).
-- 2 (major) NE blade spike above the flare rim - FIXED in the sheet first (draw_tower.NE_TIP = 0, BT-02 redrawn: flush with the flare corner and the ribbon head, photos t3 / t4 / t5 re-read), then in 3-D: prow top = flare corner, F2 55.93 m (F1 58.90; was 61.7 F1), verify check "NE blade top"; the blade tops are flat where they stand outside the round body (the flare-deck shoulder starts inside it; a first rebuild had a sunlit 0.3-m facet rising from the prow tip in the t4 render).
+- 2 (major) NE blade spike above the flare rim - FIXED in the sheet first (draw_tower.NE_TIP = 0, BT-02 redrawn: flush with the flare corner and the ribbon head, photos t3 / t4 / t5 re-read), then in 3-D: prow top = flare corner, F2 55.93 m (F1 58.90; was 61.7 F1), verify check "NE blade top". The deck over the landside sector (wing, ribbon head, NE blade) is now flat, then rises ~14 deg to the plinth (photos t3 / t4: flat blade tops; from t4, ~30 deg below, no deck shows above the blade or the ribbon head): a first rebuild with the round-body shoulder there showed a sunlit facet above the NE blade.
 - 3 (major) cab an opaque black band - FIXED: tinted see-through glass (alpha 0.5, teal-grey; far-side panes and sky show through) with light 6-cm joints; glass / sky: Cycles t2 0.25 (photo 0.28), t3 0.16 (photo 0.10).
-- 4 (major) shaft as bright as the sky in the app - CHECKED, albedo kept (see the integration numbers).
+- 4 (major) shaft as bright as the sky in the app - CHECKED at the photo's sun, albedo kept: the review compared the app at the snapshot time (sun az 134 / el 42 behind the camera: cos 0.74 on the face) with photo t2 (11:57 PDT, sun az 137 / el 62: cos 0.47). Same camera and sun as t2 (tools/blender/tower_app_job.mjs, out/buildings3d/app/tapp_t2.png): lit shaft / sky 0.82 in the app, 0.77 in Cycles (tower_t2.png), photo 0.82 against the blue sky / 0.70 against the fog; metalness 0 instead of 0.15: 0.83, base colour x 0.85: 0.62 (too dark). At the snapshot time (t2like) 1.08. The clad albedo (~0.31 linear) also reproduces the photo's shaft / bridge-roof ratio, so it is kept. The Cycles photo suns were typed in by hand in round 1 (t2 az 165, t3 110): now computed (NOAA; 137.4 / 95.5); the cab glass reads 0.12 of the sky in the app from 12 deg below (the unlit ceiling behind the upper half, the sky through the lower half; Cycles 0.25 with interior bounce light; photos 0.28 / 0.10).
 - 5 (minor) upper slots too wide / long slot right of centre - FIXED width and phase in the sheet (SLOT_W 1.4 -> 0.95 m, SLOT_PHASE 124 -> 127, t1 + t2 together); the long-slot offset is REJECTED: at the same three rows the t2 photo reads u/R +0.37 / +0.12 / -0.07, the render +0.34 / +0.07 / -0.11 (within 0.05 = ~3 deg); the review compared different rows.
 - 6 (major) red obstruction light only in LOD0, no masts in LOD2 - FIXED: the red-light fixture (material red_light, the app's beacon glow) is in LOD0 / LOD1 / LOD2 and in tower_lod2.glb, LOD2 carries the 15 whips (3-sided): the top is 68.48 m (F2) at every LOD.
 - 7 (major) F1 default - FIXED: tower.glb = F2 (default, within the observations), tower_f1.glb = F1 (the published-height hypothesis, ?b3dtower=f1); family_decided stays false.
 - 8 (minor) mast tips vs spec - FIXED: spec h_antenna_tips = 71.8 spec m (2025-08-12 obs ratio 0.30-0.31 D; 2015 station 70.7 kept as station_2015); F2 restated as "221 ft at the 2015 mast station"; mesh vs spec 2025 value: F2 68.48 vs 68.50, F1 72.06 vs 72.08.
-- 9 (minor) tower camera / in-cab test on F1 values - FIXED: the loader takes eye and bounds from the loaded file's anchors; app.js reads towerPos.eyeY ().
+- 9 (minor) tower camera / in-cab test on F1 values - FIXED: the loader takes eye and bounds from the loaded file's anchors (root extras); app.js reads towerPos.eyeY (one-line hook); app check: tower view eye at y 62.15 = GROUND_Y + 59.151 (F2), glass hidden inside the ring (tapp_towercam.png); F1 file anchors: eye 62.2 above grade, glass head r 6.537.
 
 **Open (for the owner).**
 - The height family (F2 default / F1 hypothesis).
 - t2 camera match: the camera height and focal length are estimates (no EXIF here); a camera-model check only.
+- For the domestic group: `tools/blender/dom_geom.py` leaves out the T2 walls that face the base building up to 14.07 m (the F1 roof). With F2 as the default, the base-building parapet tops at 13.83 m, so a 0.24-m slit opens in the T2 wall above it. Take `anchors.ibf_parapet_h` of the loaded tower file, or the family minimum.
+- NE channel wall: louvred like the SW wing (photos t3 / t4). In the sunny t4-matched render its upper part, which faces bearing 40, catches the 09:10 sun (az 95) and reads bright against the shaded NW faces. The photo was overcast, so the brightness cannot be compared.
 - Obstruction light: one red fixture (t5) is modelled in every LOD; at a few km it is sub-pixel, so a LOD-independent point sprite belongs to the environment's lighting layer (data/sfo_lighting.js lists the tower as obstruction 06-323169, fixtures inferred from AC 70/7460-1N).
 <!-- tower:end -->
 
@@ -319,6 +322,10 @@ python3 tools/blender/verify_domestic.py [glb]                          # 59 che
 flock out/.heavy.lock python3 tools/blender/render_domestic.py --views a1,d1,bab,plan,bclose,eclose     # Cycles references, ~2 min at 48 spp
 flock out/.heavy.lock python3 tools/blender/render_domestic.py --qa backface --views a1,bclose,eclose,d1,plan [--lod 1|2]   # back faces red
 python3 tools/blender/dom_pv.py                                         # (re)measure the PV rack blocks on NAIP 2024 -> tools/blender/dom_pv.json
+python3 tools/blender/dom_roofobs.py                                    # PV rack tables + rooftop units on NAIP 2024 -> tools/blender/dom_roofobs.json (review r1)
+python3 tools/blender/dom_roofobs_qa.py [x0 z0 x1 z1 scale out.png]     # QA overlay of the units / tables on NAIP (local)
+python3 tools/blender/verify_domestic_r1.py                             # the review-r1 probes (walkway gaps / clashes per LOD, LOD2 vs LOD0) -> out/buildings3d/domestic_verify_r1.json
+flock out/.heavy.lock python3 tools/blender/render_domestic.py --views roof,c3c [--lod 2 --suffix _lod2]   # review-r1 close-ups
 ```
 
 | File | Role |
@@ -327,6 +334,8 @@ python3 tools/blender/dom_pv.py                                         # (re)me
 | `tools/blender/dom_mesh.py` | Mesh builder + extrusion / cap / box / tube primitives (faces wound outwards) |
 | `tools/blender/dom_tex.py` | Our procedural tiles: normal maps (membrane laps, panel joints, curtain caps, corrugation, PV frames), curtain / frit / PV base colours |
 | `tools/blender/dom_pv.py`, `dom_pv.json` | PV rack blocks measured on NAIP 2024 (extents only; numbers, never a texture) |
+| `tools/blender/dom_roofobs.py`, `dom_roofobs.json` | review r1: the rack TABLES inside each PV block (rows with their aisles, local axis per sub-cell) and the rooftop units (compact dark objects with a shadow on their NNE side) on every deck, NAIP 2024 (numbers only); `dom_roofobs_qa.py` draws them on NAIP |
+| `tools/blender/verify_domestic_r1.py` | review r1: the reviewer's physics probes re-implemented on the exported files (walkway gaps / clashes at 6.0 / 7.5 m per LOD from the app's `scene2d.json` hulls; LOD2 vs LOD0 top-height rasters and plan Hausdorff) |
 | `tools/blender/build_domestic.py` | bpy build, NAIP roof-colour sampling, the T1 sign, AO bake, glTF export (WIP to `out/buildings3d/wip/`, `--final` copies to `data/`), manifest |
 | `tools/blender/dom_manifest.py` | Manifest entry (per-dimension tags, inferred / unknown / not modelled / conflicts, budgets, renders) |
 | `tools/blender/verify_domestic.py` | 59 checks against the sheets and the plausibility rules, measured on the exported mesh (top-surface probe) |
@@ -334,7 +343,8 @@ python3 tools/blender/dom_pv.py                                         # (re)me
 | `data/buildings3d/domestic.glb` (9.27 MB), `domestic_lod2.glb` (1.63 MB) | The asset; the LOD2 subtree alone for the far / phone tier |
 
 **Placement.** Root `domestic` at world (−896.5, 3.0, 336.5) (centre of the complex bbox, GROUND_Y). LOD0 / LOD1 hold one node
-per building and kind (`L<k>_<bld>_shell / _detail / _pv`, `extras.building` in T1, BA_B, BA_C, T2, BA_D, T3W, T3E, BA_E, BA_F),
+per building and kind (`L<k>_<bld>_shell / _detail / _fins / _pv`, `extras.building` in T1, BA_B, BA_C, T2, C3C, BA_D, T3W, T3E,
+BA_E, BA_F; the `_fins` nodes carry `extras.max_dist_m` 160: `js/three/buildings3d.js` hides them beyond, review r1),
 each recentred on its own plan bbox: the complex spans ~1.3 km, so **choose the LOD per building** from the camera distance to
 that node (switch 380 / 1300 m). LOD2 is one joined node.
 
@@ -347,13 +357,16 @@ that node (switch 380 / 1300 m). LOD2 is one joined node.
 | Heights (roof edge = coping top) | obs / inf / unk | BA-B 13.14 / band 19.04, BA-C 7.20, BA-D 8.49, BA-E 12.85 / flanks 9.85, BA-F 10.49, T3W parapet 16.76, T3E 14.48, penthouse 21.34; **T1 17.88 and T2 16.88 are placeholders [unk]** (curb 4.88 [unk] + the BD-03 heights) |
 | BA-B | obs / inf / unk | raised clerestory band s −391.0 / −423.4, t −1236..−946 (glazed both sides, low-E); 3 planted roof wells (depth 3 m [unk]), 2 bridges, 2 skylight grids, PV fields (NAIP); electrochromic gate glazing [pub] |
 | BA-E | obs / inf | raised PV plate 12.85 with its edge 1.5 m over the recessed clerestory, flanks 4.4 m at 9.85; NEW: the tip end bay (8 m) with the full-height glazed end wall recessed 1.5 m under the plate (photo a1) [inf] |
-| BA-F | obs / inf / unk | arms + octagonal hub on the outline; eccentric lantern 19.4 m at its 4.6-m rise bound [unk]; NW-arm monitor +2.5 m [unk] |
+| BA-F | obs / inf / unk | arms + octagonal hub on the outline; eccentric lantern 19.4 m as a minimal 1.0-m glazed upstand [unk] (the NAIP 2020 shadow only bounds the rise, <= 4.6 m: kept in the manifest; review r1); NW-arm monitor +2.5 m [unk] |
+| Courtyard 3 Connector office block (review r1) | pub / obs / inf | the glazed block between the tower and BA-E in photo a1: the T2 outline's NW end west of the line through its two outline jogs (1,971 m2) [obs]; "Above the connector, a six-story office building", "Dynamic glazing", 124,000 sq ft (HOK) [pub]; 33.0 m [inf, range 32-36: >= 6 x 3.8 m + the ~10.5-m connector head; NAIP 2024 relief 12.9 m / lean 0.379 = 34.0 m; photo a1 ~35 m]; electrochromic curtain glass on a 3-m module; node building `C3C` |
+| Rooftop units (review r1) | obs / inf | 31 boxes on 12 decks at their NAIP 2024 extents (`dom_roofobs.json`: compact dark objects 4-150 m2 with a shadow on the NNE side), heights 1.5 / 2.2 / 3.0 m by plan size [inf]; LOD2 keeps those >= 15 m2 |
+| PV (review r1) | obs / inf | discrete rack tables (rows / tables with their aisles) inside every NAIP block, 0.35-0.75 m above the deck, modules in the PV tiles; LOD2 the clipped table tops (the old LOD2 minimum rectangles overhung the curved T3 edges) |
 | BA-D | obs / inf | head with two drums D 19.2 m to 13.19 m [inf top]; linear skylights; ESE overhang notched at the doors (roof soffit 7.69 m < walkway head 8.4 m) |
 | T1 Center | pub / obs / inf / unk | landside face on the measured roof edge (trimmed curb line − 4.0 m); clear glass under a 4.0-m glass canopy (brackets), two-tier green fritted wall with dark irregular mullions and the tier transom (photo d1), sign "Harvey Milk Terminal / Terminal 1" with the circled 1 [obs text, size / font inf]; PV fan (NAIP); 3 skylights |
 | T3 | pub / inf | T3W airside window stack 10 + 2 + 10 ft above L3 [pub]; T3W landside ACM / fritted window wall / spandrel [pub materials, proportions inf]; T3E grey-frit glass / platinum panels; T3E penthouse (corrugated, accent bands) |
 | Facades elsewhere | inf / unk | service band 0–4.6 m, dark spandrel, concourse glazing from 5.4–5.6 m (the bridge floor), panel above; mullion fins every 1.5 m (LOD0) |
-| Bridge attachment | inf | at all 75 attach points of `data/sfo_stands.json` (B–F): a door surround (jambs + head around the 2.6 × 3.0 m walkway section) and a dark leaf; 63 vestibules (max 2.6 m) from the facade to the app's walkway start; 23 bulkheads where the roof edge is below the walkway head (BA-C / BA-D) |
-| Elevated sky-bridge / connector parts | unk | the app's convention 6.0–10.5 m (kept so the app's walkways and bridges stay consistent) |
+| Bridge attachment | inf | at all 80 attach points of `data/sfo_stands.json` (B–F, incl. the 5 BA-B pod bridges since review r1): a door surround (jambs + head around the 2.6 × 3.0 m walkway section, LOD0) and a dark leaf; 63 vestibules (max 2.6 m) from the facade to the app's walkway start; 23 bulkheads where the roof edge is below the walkway head (BA-C / BA-D), reaching 0.5 m past the walkway start inside the facade with the deck cut under them; **vestibules, notches and bulkheads at every LOD** (review r1) |
+| Elevated sky-bridge / connector parts | unk / inf | the app's convention 6.0–10.5 m; the two BA-B parts that the B10 / B11 / B11S / B15 / B16 walkways enter come down to 4.9 m (the vestibule floor: the walkway runs 5.15-8.45 m) [inf, review r1] |
 
 ### Budget, textures, AO
 
@@ -361,7 +374,7 @@ that node (switch 380 / 1300 m). LOD2 is one joined node.
 |---|---|---|---|---|
 | 0 | < 380 m | 69,757 | 115 | everything: mullion fins (~48k tris), door surrounds, PV rack boxes, canopy brackets, sign |
 | 1 | 380–1300 m | 21,501 | 91 | the LOD0 shell meshes and atlases; PV tops only; no fins / frames |
-| 2 | > 1300 m | 11,725 | 16 | one joined node, simplified outlines (1 m), reduced palette, own 1024 atlas; also `domestic_lod2.glb` |
+| 2 | > 1300 m | LOD2_TRIS | LOD2_CALLS | one joined node: the LOD0 outlines, wells, skylights, coping recess, units >= 15 m2, PV table tops, vestibules / notches / bulkheads (review r1: the phone tier sees it up close); reduced palette, own 1024 atlas; also `domestic_lod2.glb` |
 
 Textures (PNG, embedded): AO atlases S (T1 / BA-B / BA-C / T2) and N (BA-D / T3 / BA-E / BA-F) 2048² (1.33 / 1.30 MB, 8-bit
 greyscale), L2 1024² (0.42 MB); 48 spp, 10-m rays, ground plane, neighbours as occluders, white outside the islands; tiling

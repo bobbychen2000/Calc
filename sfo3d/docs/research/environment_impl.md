@@ -397,3 +397,71 @@ version just before them; both edits ran with 0 errors on the r186 page and in t
 5. Static data: the 19L EMAS (END_ZONES, 442 ft) extends ~37 m past the coarse land polygon `AIRPORT_LAND_ST`; the 19L
    approach pier is not modelled (lights on piles here).
 6. Fog aureole / forward scatter around lights (§4.10, I) and the physical exposure are step 3.
+
+## Steps 3–4 (sky, fog, clouds, exposure, rain, lightning, wetness), 2026-11-05, env:sky agent
+
+Spec §13 steps 3–4 in the new renderer (`live3.html`, `js/three/**`), the §9 cheap subset in the old one. Work in
+progress is logged here as it happens (container restarts).
+
+### 3.1 Renderer-agnostic models and their unit gates (`js/env/atmo/`, `tools/env/test_sky.mjs`)
+
+| Module | Content |
+|---|---|
+| `sky_model.js` | clear-sky model CPU half (moved `skyAmbientCPU` here from `js/three/sky.js`; `sunTransmittance` copy), C171 calibration of `sunI` (spec §7.2), cloud-adjusted light (÷ D, beam × coverage maps, rest diffuse), night-sky luminance (§4.9), Moon disc (direction, basis, Sun seen from the Moon, C171 luminance) and the JS mirror of its shader, render slabs (§4.4 / §7.3) and their optical depth (same geometry as the light sprites), N cloud layers with the coverage threshold solved from the cloud texture's histogram (A-CLD), shadow azimuth |
+| `exposure.js` | metering (centre-weighted log average between the 50th and 98th percentile), EV100, clamp [2, 16] with a night floor 4.6 below Sun −10° (compensation, I), adaptation τ 1.5 / 3.5 s, display calibration 2.12 (keeps the reviewed day grade at EV 15.0), pre-exposure (power of two, 2-stop hysteresis) |
+| `weather_fx.js` | Marshall–Palmer rain particles (count ∝ drops ≥ 0.5 mm, tier budget reached at 25 mm/h), drizzle mist, shower modulation; lightning sectors / distances (ALDARS) and a deterministic flash schedule; Lagarde wetness (porosity) with a film / pore / puddle state machine |
+
+`node tools/env/test_sky.mjs` (in `run_gates.sh`): **160/160**. Key numbers (**M**):
+- A-SUN render half: shadow azimuth = ephemeris (0°); the drawn disc (radius acos 0.99998918 = 0.2665°, semidiameter
+  0.2657°) has its upper limb on the horizon at 02:04:52Z, USNO sunset (−50′) 02:04:33Z: **+0.32 min**; its centre at
+  02:03:15Z (the spec's "centre at 19:04:33" mixes the two definitions).
+- A-MOON: lit fraction of the drawn disc vs ephemeris within 0.004 for the 6 presets with the Moon up (e.g. night_clear
+  0.9345 / 0.9344), bright limb within 1.4°, disc 1,100–1,700 cd/m² from C171 (Moon > 10°).
+- A-EXP unit half: uncalibrated fallback sky at noon 97,450 lx vs C171 91,090 lx clear (+7 %); calibrated GHI = C171 for
+  every preset with the Sun term > 0.05 lx (k 0.84–0.95 by day; **0.15–0.17 in twilight: the old sky was 6× too bright
+  at Sun −4…−9°**); EV100 targets match spec §10; clamp ≥ 2 (night floor 4.6).
+- A-FOG: ifr_mist_day black target at 1,207 m: contrast 0.0550; marine layer: T through the OVC005 deck 8.7e-11, 120 m
+  in cloud 0.008; predawn fog: T over 3 km 1e-23 (no 3 % cap).
+- A-CLD: drawn coverage within 0.012 of `own` for every layer of the 14 presets; mean sun transmittance within 0.012 of
+  `sunVisibleP`; layer count = reported (a layer at 000 ft is the fog's obscuration and is not drawn as a cloud).
+- A-RAIN: light (1 mm/h) / heavy (10 mm/h) count 0.281 = Marshall–Palmer 0.281; streaks v(D0)/60 s; drizzle no streaks.
+- A-WET: wet asphalt diffuse 0.60 of dry, concrete 0.76; puddle roughness 0.03; drying: film below ½ at 15 min while
+  the pores are at 0.73.
+- A-LTG: ts_evening (FRQ, SE, at the station) 17 flashes / 5 min, all in 112.5–157.5°; every 5-min window of an hour
+  stays in its class for OCNL / FRQ / CONS.
+
+### 3.2 New renderer (`js/three/**`): what is wired
+
+| Item (spec) | Where | What |
+|---|---|---|
+| Atmosphere (§7.1) | — | **takram not adopted** (Q12 default): its gate is a GPU render test on desktop + the owner's iPhone, impossible here (llvmpipe only, WebGPU in headless unverified, engine.md); the fallback `js/three/sky.js` is kept and extended (Moon disc, night floor; **no stars**: takram's `stars.bin` is not shipped (BSC5 terms unstated) and no starfield with verified open terms was found) |
+| Physical units (§7.2, §8) | `renderer3.setupSky`, `sky_model.sunCalibration / cloudAdjust` | sunI × k so the clear-sky global horizontal illuminance = C171 (k 0.84–0.95 by day, 0.15–0.17 in twilight, 0.167 kept below Sun ≈ −9°); clouds: total ÷ D, beam through the per-layer coverage maps, the rest diffuse and greyer; night floor = EnvState natural + artificial luminance; lamps keep the engine track's LAMP_M lux calibration at night (by day `lampK` = 1 stays a display choice of the engine track, I) |
+| Pre-exposure (§7.2) | `renderer3.render`, `sky.setPre`, `exposure.preExposure` | every emitter × pre (sun / Moon / flash light, sky textures (rendered at sunI × pre), sky light uniforms, fog colour, PMREM (environmentIntensity = pre / pre at bake), floods + spots, `nightE`, `lampK`, `interiorE`, sprites, rain); the post exposure = total / pre; pre = power of two, changed only beyond 2 stops (TRAA / bloom see one step); `?pre=1` pins it |
+| Auto-exposure (§8) | `engine.meter` (64 × 36 luminance RTT of the pre-exposed HDR incl. sprites), `renderer3._meterRead`, `exposure.meter / adapt / clampEV` | readback every 4th frame (at once after a camera cut > 30 m or a weather / clock jump), 50th–98th percentile centre-weighted log average, τ 1.5 / 3.5 s, clamp [2, 16] with the night floor rising to 4.6 below Sun −4…−10°; display calibration 2.12 (EV 15.0 → the reviewed 0.36). `?ae=0`: the keyed exposure of review rounds 1–3; `?ev=<EV100>` fixed |
+| Fog slabs (§4.4, §7.3) | `sky.fogNode`, `sky.bgTransmittance`, `sky_model.renderSlabs` | ≤ 6 slabs (y0, y1, σ, cloud) + clear air (3.3e-5) to 3 km, exact optical depth per fragment, **no caps**; background attenuated by the non-cloud slabs (excess over the sky model's clear air) and by a cloud slab the camera is in; in-scatter = blurred sky ↔ ambient (0.8 sky-up + 0.2 ground bounce) by σ (2e-4 … 2e-3 m⁻¹, I) + Mie sun glow × sunVisibleP |
+| N cloud layers + shadows (§4.5, §7.4) | `sky.layerDensity / cloudLayers / cloudShadow / cloudSlabMaterial`, `renderer3._cloudPlanes` | ≤ 6 layers, density from the app's cloud texture at two octaves with the threshold solved from its histogram (coverage = `own`), drift = METAR surface wind (not amplified); layers < 5,000 ft as two planes (base from below, top from above), higher layers in the sky shader (background, water reflections, IBL); the directional light × Π(1 − d) over the layers above each point; a layer at 000 ft is the fog's obscuration (not drawn as a cloud); the app's single 'cloud' slab items are ignored by the new renderer |
+| Moon (§4.9) | `sky.moonDisc`, `renderer3` light selection | disc at the EnvState direction, radius = angular diameter / 2, phase from the sphere normal · Sun-from-Moon, luminance from C171 (≈ 1,100–1,700 cd/m²); with the Sun below −1° and the Moon up, the directional light is the Moon (C171 normal illuminance, colour ~4,100 K I, **no shadows**: the floodlight spot shadows keep the shadow budget) |
+| Rain / drizzle (§4.6, §7.5) | `js/three/rain.js` | instanced streaks in the light-sprite pass (after TRAA), world-anchored lattice wrapped in a ±40 m camera box, velocity = fall speed (Gunn–Kinzer at D0) + METAR wind; streak v/60 s, ≥ 1 px with energy kept; count ∝ Marshall–Palmer drops ≥ 0.5 mm, tier budget at 25 mm/h; drizzle 1.5 m/s blobs; no rain above the lowest BKN/OVC base; showers modulated (I); radiance 0.6 × sky-up (I); occluded by the scene depth; no splashes (I) |
+| Lightning (§4.6, §7.5) | `weather_fx.lightningFlashes / flashLevel`, `sky.flash*`, `renderer3` | deterministic schedule per class (OCNL / FRQ / CONS), sector and ALDARS distance from the remark, 1–4 strokes; glow on the clouds around the flash direction + a sky-wide lift; at night the directional light becomes the flash (3 lx at 3 km, inverse square, 0.05–20 lx: **NV**, QA-tuned); no CG bolt geometry (I) |
+| Wet surfaces (§4.7, §7.6) | `ground.js groundMaterial`, `weather_fx.wetStep` | Lagarde porosity darkening on all ground (asphalt 0.5, concrete 0.3), film roughness 0.22 on paved, puddles (noise mask on paint-free paved surfaces, roughness 0.03, albedo × 0.35) mirror the PMREM sky; film / pore / water state machine on the data clock (constants NV, Q16); object materials not wetted (I) |
+| Obstruction lights (§5.8) | — | **not drawn**: of the 43 lighted DOF obstacles only the control tower stands on modelled geometry (`scratchpad env3/obst_check.mjs`: 1 of 43 within 6.1 m of a building footprint, roof heights do not match the others); the other 42 (poles, transmission towers, navaids, a dam) would float (owner rule). The tower's red light is modelled by the buildings track (its manifest lists the fixture type / count as unknown: DOF "R" + AC 70/7460-1N §5.6 say ≥ 3 L-864, their photo shows one); request below. EnvState `photocell.obstructionOn` (AC 70/7460-1N §5.3) and the L-864 timing (A-FLASH1) are ready for it |
+| DOF masts + floodlight map (§5.7) | — | **kept as is**: the floodlight field (`js/three/flood.js`, engine track) is already built from the real mast positions, which are the 70 OSM lighting masts checked on NAIP by the static track (review round 3); the DOF has 54 poles, 28 within 15 m of an OSM mast. What the DOF adds is the **height** (AGL 62–157 ft, median 105 ft, ±3 ft; the app uses 27 m = 89 ft for all, I) — a static-track change (`js/live/items.js MAST_H`, `buildMasts`) that the flood field must follow; request below |
+| Windsocks (§5.10) | — | **not drawn** (Q15 open: positions unpublished, survey not authorised); METAR true wind already drives the water and the rain slant |
+| Old renderer (§9.1 items 2–3) | `js/live/app.js applyEnv` | uFog a = σ_surface at the ground, b = 1 / (fog or sub-cloud top), **both caps removed** (w = 1); cloud cover = the layer's de-summed `own` at its real base (planes kept ≥ 150 m so they never cut the terminals). Item 6 (exposure from the EV100 target) **deferred**: the old renderer's lamps are not in physical ratio to its sky (lamp units unscaled), so an EV-keyed exposure would wreck its night look; needs the owner's visual QA loop |
+
+### 3.3 Requests to other tracks (not this track's files)
+
+- **Buildings track (tower model, `js/three/buildings3d.js`):** the control tower is the only lighted DOF obstacle on
+  modelled geometry (DOF 06-323169, CTRL TWR, 245 ft AGL, lighting "R"). Please drive the tower's obstruction-light
+  material (`extras.obstruction_light`) from `R.envState.photocell.obstructionOn` (AC 70/7460-1N §5.3 photocell, V + I)
+  and, if it is the flashing L-864 type, flash it at 30 fpm with `js/env/lighting/photometry.js flashGain`
+  (Blondel–Rey at the real frame time; the L-864 timing passes A-FLASH1: 30.0/min). Fixture type and count stay NV
+  (DOF "R" + AC 70/7460-1N §5.6: ≥ 3 L-864 at the top + a steady L-810 level; your photo t5 shows one).
+- **Static track (`js/live/items.js` MAST_H / buildMasts, `data/sfo_details.js` masts):** 28 of the 70 OSM floodlight
+  masts have a DOF pole within 15 m (`tools/env/lighting_spec.json apron_masts`, public domain, accuracy 1A: ±20 ft H,
+  ±3 ft V) with AGL 62–157 ft (median 105 ft); the app draws every mast at 27 m (89 ft, inferred). Per-mast heights
+  from the DOF would be a verified improvement; `js/three/flood.js` (LAMP_H = MAST_H − 0.3) must then take the height
+  per mast (this track can do that once the data carries it).
+- **Engine track (look):** the new renderer's exposure is now metered (spec §8). The day calibration keeps the reviewed
+  grade (0.36 at the snapshot, see §3.4 for the measured offset at the reference views); `?ae=0` restores the keyed
+  exposure of review rounds 1–3 for A/B.
