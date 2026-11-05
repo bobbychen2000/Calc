@@ -254,6 +254,22 @@ class Archive(unittest.TestCase):
         self.assertEqual(d['rmk']['wx_events'], [{'wx': 'GR', 'event': 'begin', 'time': '47'},
                                                  {'wx': 'TS', 'event': 'begin', 'time': '30'}, {'wx': 'TS', 'event': 'end', 'time': '48'}])
         self.assertEqual(d['rmk']['phenomena'], [{'what': 'TS', 'loc': 'DSIPTD'}])
+        # GRRA = rain for the particles / rate / wetting, with a hail flag (environment review truth1-10)
+        pr = M.render_params(d)['precip']
+        self.assertEqual((pr['kind'], pr['hail']), ('rain', 'GR'))
+        self.assertGreater(pr['fall_speed_m_s'], 3.0)
+        self.assertIsNotNone(pr['drops_per_m3_gt_0p5mm'])
+        ph = M.render_params(M.decode_metar('KSFO 020448Z 20012KT 3SM GR BR BKN020 10/08 A2990'))['precip']
+        self.assertEqual((ph['kind'], ph['hail'], ph['fall_speed_m_s']), ('hail', 'GR', None))
+
+    def test_layer_repeated_class(self):
+        # a second layer of the same summation class gets a floor (INFERRED; environment review truth1-11)
+        L = M.render_params(M.decode_metar('KSFO 171624Z 00000KT 1SM BR FEW003 FEW008 BKN016 18/16 A2998'))['cloud_layers']
+        self.assertAlmostEqual(L[1]['summation'], round(1.25 / 8 + (2 / 8 - 1.25 / 8) / 2, 3))
+        self.assertGreater(L[1]['own_fraction'], 0.04)
+        L = M.render_params(M.decode_metar('KSFO 260022Z 28010KT 10SM BKN027 BKN045 15/10 A3000'))['cloud_layers']
+        self.assertAlmostEqual(L[1]['summation'], 0.8125, places=3)
+        self.assertAlmostEqual(L[1]['own_fraction'], 0.25, places=3)
 
     def test_drizzle(self):
         d, _ = self.d('301456Z')

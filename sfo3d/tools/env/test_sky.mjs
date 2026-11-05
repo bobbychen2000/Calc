@@ -120,9 +120,47 @@ if (run('A-FOG')) {
   // predawn fog M1/4SM VV002: fog top 200 ft; no see-through cap: T -> 0 over long paths
   { const st = env('predawn_fog'); const S = SM.renderSlabs(st); const T = SM.fogTransmittance(S, [0, 5, 0], [3000, 5, 0]);
     r.predawnFog = { slabs: S.map(s => [s.kind, +s.y0.toFixed(1), +s.y1.toFixed(1), +s.sigma.toExponential(3)]), T3km: T };
-    ok(T < 1e-6, `no residual see-through (T over 3 km ${T.toExponential(2)}; the old cap kept 3 %)`); ok(Math.abs(S[0].y1 - (3 + 200 * 0.3048)) < 0.01, 'fog top at VV 200 ft'); }
+    ok(T < 1e-6, `no residual see-through (T over 3 km ${T.toExponential(2)}; the old cap kept 3 %)`); ok(Math.abs(S[0].y1 - (3 + 200 * 0.3048)) < 0.01, 'surface fog to the VV height 200 ft (the obscuration above it)'); }
   // clear day: 10SM is a lower bound -> clear air (sigma <= 1.8e-4, spec §4.3)
   { const st = env('noon'); r.noonSigma = st.atm.sigmaSurface; ok(st.atm.sigmaSurface <= 1.8e-4, 'noon sigma is the clear-air bound'); }
+  // ---- review round 1 (truth1-3/-5/-6, look1-2): one σ field, partial obscuration, VV obscuration, horizontal structure
+  const at = (raw, t = '2026-01-26T12:43:00Z') => buildEnvState(Date.parse(t), { mode: 'snapshot', overridden: true, reports: [raw], live: true, groundY: 3 });
+  const Th = (S, az, d, y = 5) => SM.fogTransmittance(S, [0, y, 0], [d * Math.sin(az * Math.PI / 180), y, -d * Math.cos(az * Math.PI / 180)]);
+  const rangeOf = (S, I, ET, eyeY = 8) => { let lo = 1, hi = 20000; const E = (d) => I * Math.exp(-SM.slabTau(S, [0, eyeY, 0], [d, 3.3, 0])) / (d * d + (eyeY - 3.3) ** 2); if (E(lo) < ET) return 0; for (let k = 0; k < 100; k++) { const m = Math.sqrt(lo * hi); if (E(m) > ET) lo = m; else hi = m; } return lo; };
+  // FG BKN000 (night_fog): the 000 layer is the fog's partial obscuration, no cloud slab; a 2,500 cd light reaches the
+  // same 536 m as in predawn_fog (same M1/4SM fog; spec §4.10 example; was 198 m with the BKN000 slab)
+  { const st = env('night_fog'), st2 = env('predawn_fog'); const S = SM.renderSlabs(st), S2 = SM.renderSlabs(st2);
+    const rN = rangeOf(S, 2500, st.lightVis.ET), rP = rangeOf(S2, 2500, st2.lightVis.ET); r.nightFog = { slabs: S.map(s => [s.kind, +s.y0.toFixed(1), +s.y1.toFixed(1), +s.sigma.toExponential(3)]), range2500cd: Math.round(rN) };
+    ok(!S.some(s => s.isCloud) && S.length === 1 && Math.abs(S[0].y1 - (3 + 200 * 0.3048)) < 0.01, 'night_fog FG BKN000: one fog slab to 200 ft, no cloud slab at the ground');
+    ok(Math.abs(rN - 536) < 6 && Math.abs(rN - rP) < 1, `night_fog HIRL step 4 (2,500 cd) visual range ${Math.round(rN)} m = predawn_fog ${Math.round(rP)} m (spec 536 m)`); }
+  // FG with a low ceiling: the fog reaches the ceiling (no clear gap under BKN003)
+  { const S = SM.renderSlabs(at('KSFO 261256Z 00000KT 1/4SM FG BKN003 09/09 A3030'));
+    ok(Math.abs(S[0].y1 - (3 + 300 * 0.3048)) < 0.01 && S[1] && Math.abs(S[1].y0 - S[0].y1) < 0.01, `FG BKN003: fog to 300 ft, the cloud slab starts there (${S.map(s => s.kind + ' ' + s.y0.toFixed(0) + '-' + s.y1.toFixed(0)).join(', ')})`); }
+  // VV002 (predawn_fog): the sky, the Moon disc and the Moon light are hidden by the obscuration above the VV height
+  { const st = env('predawn_fog'); const S = SM.renderSlabs(st); const ob = S.find(s => /^obscuration/.test(s.kind));
+    const bg = (cy, el) => { let tau = 0; S.forEach((s, k) => { const y0 = k === 0 ? -1e6 : s.y0; const inside = cy >= y0 && cy < s.y1; if (!s.isCloud || inside) { const sg = s.isCloud ? s.sigma : Math.max(s.sigma - SM.SIGMA_CLEAR, 0); tau += sg * Math.max(s.y1 - Math.max(cy, y0), 0) / Math.max(Math.sin(el * Math.PI / 180), 1e-4); } }); return Math.exp(-tau); };
+    const Tz = bg(7.5, 90), Tm = bg(7.5, st.moon.el), Tb = SM.fogBeamT(S, st.moon.el);
+    r.vv = { obscuration: ob && [+ob.y0.toFixed(1), +ob.y1.toFixed(1), +ob.sigma.toExponential(3)], bgZenith: Tz, bgMoon: Tm, moonBeamT: Tb };
+    ok(ob && Math.abs(ob.sigma - 3 / (200 * 0.3048)) < 1e-6, 'VV002: obscuration slab above 200 ft with σ = 3 / VV');
+    ok(Tz < 1e-3 && Tm < 1e-3 && Tb < 1e-3, `VV002: sky from the ground T ${Tz.toExponential(1)} (was 0.37), Moon direction ${Tm.toExponential(1)} (was 0.28), Moon beam ${Tb.toExponential(1)}`); }
+  // horizontal structure: BCFG + VIS NW 1/2 (10SM prevailing) is not clear air; NW at 1 km denser than SE
+  { const st = at('KSFO 261243Z 19003KT 10SM BCFG FEW002 BKN004 09/08 A3030 RMK AO2 VIS NW 1/2 T00890078'); const S = SM.renderSlabs(st);
+    let m = 0; for (let a = 0; a < 360; a += 10) m += Th(S, a, 1000) / 36; const tNW = Th(S, 315, 1000), tSE = Th(S, 135, 1000);
+    r.bcfg = { horiz: st.atm.horiz && { patch: st.atm.horiz.patch, lobes: st.atm.horiz.lobes.map(l => l.what) }, meanT1km: +m.toFixed(3), tNW: +tNW.toExponential(2), tSE: +tSE.toFixed(3) };
+    ok(st.atm.horiz && st.atm.horiz.patch && st.atm.horiz.lobes.length === 1 && m < 0.9 && tNW < 0.05 && tSE > 10 * tNW, `10SM BCFG VIS NW 1/2: mean T over 1 km ${f(m)} (was 0.97 clear air), NW ${tNW.toExponential(1)}, SE ${f(tSE)}`); }
+  { const st = at('KSFO 070925Z COR 02004KT 3SM R28R/1600VP6000FT PRFG BKN000 11/11 A3019 RMK AO2 VIS NE E M1/4 PRFG BKN000 T01110111', '2025-01-07T09:25:00Z'); const S = SM.renderSlabs(st);
+    const tE = Th(S, 67.5, 600), tW = Th(S, 247.5, 600); r.prfg = { tE: +tE.toExponential(2), tW: +tW.toFixed(3), slabs: S.map(s => s.kind) };
+    ok(!S.some(s => s.isCloud) && tE < 1e-3 && tW > 30 * tE, `3SM PRFG BKN000 VIS NE E M1/4: toward ENE over 600 m T ${tE.toExponential(1)}, toward WSW ${f(tW)} (no BKN000 cloud slab)`); }
+  { const st = at('KSFO 150256Z 29021KT 9SM VCFG FEW003 14/12 A2989 RMK AO2 SLP120 FG IN GAP W T01390117 55000', '2016-08-15T02:56:00Z'); const S = SM.renderSlabs(st);
+    const tW = Th(S, 270, 8000, 30), tE = Th(S, 90, 8000, 30), tW2 = Th(S, 270, 2500, 30); r.gap = { tW8km: +tW.toExponential(2), tE8km: +tE.toFixed(3), tW2500m: +tW2.toFixed(3) };
+    ok(tW < 1e-3 && tE > 0.2 && tW2 > 0.2, `FG IN GAP W: a bank to the W beyond 3 km (T over 8 km W ${tW.toExponential(1)}, E ${f(tE)}; 2.5 km W ${f(tW2)})`); }
+  { const st = at('KSFO 131956Z 03007KT 1/2SM R28R/2200VP6000FT BCFG VV002 16/14 A3017 RMK AO2 TWR VIS 6 SLP216 T01610139', '2016-11-13T19:56:00Z'); const S = SM.renderSlabs(st);
+    r.twrVis = S.map(s => [s.kind, +s.y0.toFixed(1), +s.y1.toFixed(1), +s.sigma.toExponential(2)]);
+    ok(S.length >= 3 && S[0].sigma > 5 * S[1].sigma && Math.abs(S[0].y1 - 33) < 0.01, `TWR VIS 6 over a 1/2SM surface: σ ${S[0].sigma.toExponential(1)} below 30 m, ${S[1].sigma.toExponential(1)} above (cab level)`); }
+  { const raw = 'KSFO 171624Z 00000KT 1SM R28R/3000VP6000FT BR FEW003 FEW008 BKN016 18/16 A2998 RMK AO2 VIS 1/2V2 1/2 VIS 3SM VIS E 1SM T01780161';
+    const sg = []; for (let k = 0; k <= 10; k++) sg.push(at(raw, new Date(Date.parse('2020-09-17T16:24:00Z') + k * 60e3).toISOString()).atm.sigmaSurface);
+    const lo = Math.min(...sg), hi = Math.max(...sg); r.visVariable = { sigmaMin: +lo.toExponential(2), sigmaMax: +hi.toExponential(2) };
+    ok(hi / lo > 3, `VIS 1/2V2 1/2: σ swings ${lo.toExponential(1)} .. ${hi.toExponential(1)} over 10 min of data time`); }
   out['A-FOG'] = r;
 }
 
@@ -189,6 +227,7 @@ if (run('A-WET')) {
   const W1 = { film: 1, pore: 1, puddle: 0 };
   for (const [s, por] of Object.entries(WX.POROSITY)) { const m = WX.wetMaterial(0.85, por, W1); r[s] = m; ok(m.albedoK >= 0.2 && m.albedoK <= 0.9, `wet ${s} diffuse albedo ${f(m.albedoK)} of dry (0.2-0.9)`); ok(m.rough < 0.85, `wet ${s} smoother`); }
   const P = WX.wetMaterial(0.85, 0.5, { film: 1, pore: 1, puddle: 1 }); r.puddle = P; ok(P.rough <= 0.05, `puddle roughness ${P.rough} (mirror: PMREM level 0)`);
+  const Fm = WX.wetMaterial(0.85, 0.5, W1); ok(P.albedoK >= Fm.albedoK - 1e-9, `puddle diffuse ${f(P.albedoK)} not below the wet film's ${f(Fm.albedoK)} (review look1-3: puddles never darker than the film)`);
   // drying after rain: the specular (film) fades before the diffuse (pores)
   const st0 = env('rain_day'); let W = WX.wetStep(null, st0); const dry = { ...st0, precip: null, surface: { wet: 0 } };
   const trace = []; for (let k = 1; k <= 12; k++) { W = WX.wetStep(W, { ...dry, tEnv: st0.tEnv + k * 5 * 60e3 }); trace.push([k * 5, +W.film.toFixed(3), +W.pore.toFixed(3), +W.puddle.toFixed(3)]); }

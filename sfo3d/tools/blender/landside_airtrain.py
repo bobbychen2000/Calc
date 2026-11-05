@@ -460,6 +460,13 @@ def station(mb, det, F, key, lev, lod=0, exclude=None):
             cut_ = min(tu + rt, Lr - 6.0); c0 = c0 + ua * cut_; Lr -= cut_
         else:
             Lr = max(tu - rt, 6.0)
+        # ... and across: nothing west of the tower at canopy height (l5: sky right of the tower; the canopy's west part is hidden
+        # behind it) -> the canopy ends at the tower's centre line on the tower side
+        tv = float((np.array(RCC_TOWER['world']) - c0) @ ub)
+        if 0.0 < tv < Wr / 2:
+            c0 = c0 + ub * tv; Wr -= tv
+        elif Wr / 2 <= tv < Wr:
+            Wr = tv
     loc = lambda u, v: F.L(*(c0 + ua * u + ub * v))
     zr0 = hz + ENCL_H
     if kind == 'vault':

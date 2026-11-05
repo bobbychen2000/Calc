@@ -41,15 +41,20 @@ export class Sprites {
     g.setAttribute('position', new THREE.BufferAttribute(new Float32Array([-1, -1, 0, 1, -1, 0, 1, 1, 0, -1, 1, 0]), 3));
     g.setIndex([0, 1, 2, 0, 2, 3]);
     this.aP = new THREE.InstancedBufferAttribute(new Float32Array(maxN * 4), 4); this.aC = new THREE.InstancedBufferAttribute(new Float32Array(maxN * 4), 4); this.aD = new THREE.InstancedBufferAttribute(new Float32Array(maxN * 4), 4);
-    for (const a of [this.aP, this.aC, this.aD]) a.setUsage(THREE.DynamicDrawUsage);
-    g.setAttribute('iP', this.aP); g.setAttribute('iC', this.aC); g.setAttribute('iD', this.aD); g.instanceCount = 0;
+    // iA = (aureole energy in the record's lamp units, aureole angular radius rad, lobe floor, 0) (environment review
+    // look1-1 / look1-5: fog aureole; side / back floor of the directional lobe for lamps whose housing and lens glare
+    // are seen from behind)
+    this.aA = new THREE.InstancedBufferAttribute(new Float32Array(maxN * 4), 4);
+    for (const a of [this.aP, this.aC, this.aD, this.aA]) a.setUsage(THREE.DynamicDrawUsage);
+    g.setAttribute('iP', this.aP); g.setAttribute('iC', this.aC); g.setAttribute('iD', this.aD); g.setAttribute('iA', this.aA); g.instanceCount = 0;
     this.camRight = uniform(new THREE.Vector3(1, 0, 0)); this.camUp = uniform(new THREE.Vector3(0, 1, 0)); this.fovScale = uniform(0.001);
     this.depthOn = uniform(1); // QA: 0 turns the occlusion test off (SFO.R.sprites.depthOn.value = 0) to tell an occluded light from a missing one
     const expo = opts.expo || uniform(1.0), night = opts.night || uniform(1.0);
     const m = new THREE.MeshBasicNodeMaterial({ transparent: true, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide });
     m.fog = false;
-    const iP = attribute('iP', 'vec4'), iC = attribute('iC', 'vec4'), iD = attribute('iD', 'vec4'), q = attribute('position', 'vec3');
+    const iP = attribute('iP', 'vec4'), iC = attribute('iC', 'vec4'), iD = attribute('iD', 'vec4'), iA = attribute('iA', 'vec4'), q = attribute('position', 'vec3');
     const vI = varying(float(0), 'vSprI'), vZ = varying(float(0), 'vSprZ'), vTol = varying(float(0), 'vSprTol');
+    const vRat = varying(float(1), 'vSprRat'), vAL = varying(float(0), 'vSprAL'), vAr = varying(float(1), 'vSprAr');
     m.positionNode = Fn(() => {
       const p = iP.xyz, size = iP.w; const toC = cameraPosition.sub(p); const d = length(toC); const tc = toC.div(max(d, 1e-3));
       // branchless (review round 3): with the If / ElseIf size clamp, every sprite between 2.2 and 12 px (neither branch:
@@ -57,16 +62,23 @@ export class Sprites {
       // only the sub-2.2 px ones were (observed: js/three/dev/envtest.html?sprites=1, row of lights at 20 m: 0 lit pixels,
       // at 175 m: 101; in the app a test sprite 12 m in front of the camera: nothing in the light pass). Same math:
       const cl = max(dot(normalize(iD.xyz), tc), 0.0);
-      const lobe = select(iD.w.greaterThan(0.0), pow(cl, max(iD.w, 1e-3)).mul(0.97).add(cl.mul(0.03)), float(1.0));
+      const lobe = max(select(iD.w.greaterThan(0.0), pow(cl, max(iD.w, 1e-3)).mul(0.97).add(cl.mul(0.03)), float(1.0)), iA.z);
       const mk = select(iD.w.lessThan(-0.5), smoothstep(60.0, 150.0, d), float(1.0)); // marker fade
       const pxSize = max(size.div(d.mul(this.fovScale)), 1e-4);
       const kUp = max(float(2.2).div(pxSize), 1.0), kDown = min(float(12.0).div(pxSize), 1.0); // >= 2.2 px (energy kept), <= 12 px
       const s = size.mul(kUp).mul(kDown).mul(1.6);
-      const I = iC.w.mul(mix(float(0.5), float(1.0), night)).mul(lampK).mul(lobe).mul(mk).div(kUp.mul(kUp)).div(1.6 * 1.6 * 0.35); // lamp units (tsl/common.js)
+      const kk = mix(float(0.5), float(1.0), night).mul(lampK).mul(lobe).mul(mk);
+      const I = iC.w.mul(kk).div(kUp.mul(kUp)).div(1.6 * 1.6 * 0.35); // lamp units (tsl/common.js)
       vI.assign(I);
+      // fog aureole: a Gaussian of angular radius iA.y carrying the energy iA.x x k x 0.408 size^2 / d^2 at the eye (the
+      // core's energy formula, header); the quad grows to 2 aureole radii, the core keeps its size (vRat = quad / core)
+      const aOn = iA.x.greaterThan(0.0).and(iA.y.greaterThan(0.0));
+      const sQ = select(aOn, max(s, iA.y.mul(d).mul(2.0)), s);
+      vRat.assign(sQ.div(s)); vAr.assign(max(iA.y.mul(d).div(sQ), 1e-4));
+      vAL.assign(select(aOn, iA.x.mul(kk).mul(0.408).mul(size.mul(size)).div(d.mul(d)).div(iA.y.mul(iA.y).mul(Math.PI)), float(0.0)));
       const c = p.add(tc.mul(min(2.0, d.mul(0.05))));
       vZ.assign(cameraViewMatrix.mul(vec4(c, 1.0)).z); vTol.assign(d.mul(0.01).add(0.5));
-      return c.add(this.camRight.mul(q.x).add(this.camUp.mul(q.y)).mul(s));
+      return c.add(this.camRight.mul(q.x).add(this.camUp.mul(q.y)).mul(sQ));
     })();
     const vQ = varying(q.xy, 'vSprQ'), vC = varying(iC.xyz, 'vSprC');
     m.colorNode = Fn(() => {
@@ -77,8 +89,10 @@ export class Sprites {
         if (opts.debugDepth) return vec4(sd.mul(100.0), sceneZ.negate().div(1000.0), vZ.negate().div(1000.0), 1.0);
         If(sceneZ.greaterThan(vZ.add(vTol)).and(this.depthOn.greaterThan(0.5)), () => { Discard(); }); // a surface in front of the light
       }
-      const halo = min(vI.mul(0.08), float(0.5).div(max(expo, 1e-3))).mul(exp(r2.mul(-6.0)));
-      return vec4(vC.mul(vI.mul(exp(r2.mul(-22.0))).add(halo)), 1.0);
+      const rc2 = r2.mul(vRat.mul(vRat)); const inCore = select(rc2.lessThan(1.0), float(1.0), float(0.0)); // core radius in its own units
+      const halo = min(vI.mul(0.08), float(0.5).div(max(expo, 1e-3))).mul(exp(rc2.mul(-6.0)));
+      const aur = vAL.mul(exp(r2.div(vAr.mul(vAr)).negate()));
+      return vec4(vC.mul(vI.mul(exp(rc2.mul(-22.0))).add(halo).mul(inCore).add(aur)), 1.0);
     })();
     this.mesh = new THREE.Mesh(g, m); this.mesh.frustumCulled = false; this.mesh.renderOrder = 10; this.mesh.name = 'sprites';
     this.n = 0; this.fixedK = 1;
@@ -91,16 +105,20 @@ export class Sprites {
   // night (aircraft position lights, isPositionLight); its record intensity is scaled by fixedK (renderer3: LAMP_M / the
   // shader's day / night factor), so it keeps the night calibration (lamp units x LAMP_M = sky units) by day too
   // kI: an extra intensity factor (renderer3: the fog transmittance camera -> light for records that do not carry it)
-  put(s, fixed = false, kI = 1) {
-    if (this.n >= this.max) return; const i = this.n++ * 4; const P = this.aP.array, C = this.aC.array, D = this.aD.array;
+  // aur: aureole energy (lamp units, as s.i) and aurR its angular radius (rad), for records that do not carry them
+  // (renderer3: non-photometric lamps in fog); records' own s.aur / s.aurR otherwise
+  put(s, fixed = false, kI = 1, aur = null, aurR = 0) {
+    if (this.n >= this.max) return; const i = this.n++ * 4; const P = this.aP.array, C = this.aC.array, D = this.aD.array, A = this.aA.array;
+    const au = aur != null ? aur : (s.aur || 0), ar = aur != null ? aurR : (s.aurR || 0);
+    A[i] = au > 0 && ar > 0 ? au * (fixed ? this.fixedK : 1) : 0; A[i + 1] = ar; A[i + 2] = s.floor || 0; A[i + 3] = 0;
     P[i] = s.p[0]; P[i + 1] = s.p[1]; P[i + 2] = s.p[2]; P[i + 3] = s.s;
     C[i] = s.c[0]; C[i + 1] = s.c[1]; C[i + 2] = s.c[2]; C[i + 3] = (fixed ? s.i * this.fixedK : s.i) * kI;
     const d = s.dir; if (d) { D[i] = d[0]; D[i + 1] = d[1]; D[i + 2] = d[2]; D[i + 3] = s.k || 4; }
-    else { D[i] = 0; D[i + 1] = 1; D[i + 2] = 0; D[i + 3] = (s.marker || s.s >= 0.6) ? -1 : 0; }
+    else { D[i] = 0; D[i + 1] = 1; D[i + 2] = 0; D[i + 3] = (s.marker || (s.marker == null && s.s >= 0.6)) ? -1 : 0; }   // (marker: false = never a marker: renderer3's lamp reflections)
   }
   end(camera, heightPx) {
     const g = this.mesh.geometry; g.instanceCount = this.n;
-    for (const a of [this.aP, this.aC, this.aD]) { a.clearUpdateRanges(); a.addUpdateRange(0, this.n * 4); a.needsUpdate = true; }
+    for (const a of [this.aP, this.aC, this.aD, this.aA]) { a.clearUpdateRanges(); a.addUpdateRange(0, this.n * 4); a.needsUpdate = true; }
     const e = camera.matrixWorld.elements; this.camRight.value.set(e[0], e[1], e[2]).normalize(); this.camUp.value.set(e[4], e[5], e[6]).normalize();
     this.fovScale.value = 2 * Math.tan(camera.fov * Math.PI / 360) / Math.max(1, heightPx);
   }

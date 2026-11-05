@@ -29,13 +29,16 @@ export function rainParams(precip, tier = 'high', windToMS = [0, 0]) {
   const budget = RAIN_BUDGET[tier] || RAIN_BUDGET.high;
   if (precip.kind === 'drizzle') {
     return { kind: 'drizzle', count: Math.round(budget * DRIZZLE_FRAC), D0mm: DRIZZLE_D, vFall: DRIZZLE_V, streak: 0, streaks: false,
-      rate: precip.rateMmH, wind: windToMS, half: BOX_HALF, densityPerM3: null, tag: 'I (drizzle count / speed)' };
+      rate: precip.rateMmH, wind: windToMS, half: BOX_HALF, densityPerM3: null, density: budget / RAIN_BUDGET.high, tag: 'I (drizzle count / speed)' };
   }
   const R = Math.max(0.05, precip.rateMmH || 1);
   const n = dropsAbove(R), nRef = dropsAbove(REF_RATE);
   const D0 = medianVolumeDiameter(R), v = fallSpeed(D0);
   return { kind: 'rain', count: Math.round(budget * Math.min(1, n / nRef)), capped: n > nRef, D0mm: D0, vFall: v, streak: v * STREAK_T, streaks: true,
-    rate: R, showery: !!precip.showery, wind: windToMS, half: BOX_HALF, densityPerM3: n, tag: 'V (Marshall–Palmer Λ, v) + 2nd (N0) + I (budget scale)' };
+    rate: R, showery: !!precip.showery, wind: windToMS, half: BOX_HALF, densityPerM3: n,
+    // density: this tier's share of the high-tier count; js/three/rain.js divides each streak's weight by it, so the
+    // drawn rain looks equally dense on every tier (review look1-8, I)
+    density: budget / RAIN_BUDGET.high, tag: 'V (Marshall–Palmer Λ, v) + 2nd (N0) + I (budget scale)' };
 }
 /** Shower modulation (spec §4.6 "cellular: modulate rate in space and time", I): a slow 0.35..1 factor (cells passing
  *  over the airport every ~4 min). */
@@ -130,7 +133,10 @@ export function wetStep(prev, st) {
 export const puddleOf = (mm) => sstep(PUDDLE_START_MM, PUDDLE_FULL_MM, mm);
 /** Material response (JS mirror of the ground shader, js/three/ground.js): albedo factor, roughness for a dry
  *  roughness r0, and the puddle state, for a surface of the given porosity. */
-export const ROUGH_FILM = 0.22, ROUGH_PUDDLE = 0.03, PUDDLE_ALBEDO = 0.35;
+// PUDDLE_ALBEDO: the diffuse under standing water = the wet (porosity-darkened) albedo, i.e. no further darkening (Lagarde
+// 2013 "flooded" state keeps the wet diffuse and adds the water's specular, V for the model, the value I). Review look1-3:
+// the former 0.35 made puddles dark stains, darker than the wet film where they should mirror the sky / lamps.
+export const ROUGH_FILM = 0.22, ROUGH_PUDDLE = 0.03, PUDDLE_ALBEDO = 1.0;
 export function wetMaterial(r0, porosity, W, puddleMask = 1) {
   const pud = clamp(W.puddle * puddleMask, 0, 1);
   const albedoK = diffuseFactor(porosity, W.pore) * (1 + (PUDDLE_ALBEDO - 1) * pud);

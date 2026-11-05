@@ -11,5 +11,19 @@
   "fetched": "2026-11-05",
   "sha256": "314a4af875a3293b4666558ae256123ca3d1ad2376f3a22d5775dee13d77fcc1",
   "note": "\"Runway Status Lights at San Francisco (SFO)\" graphic, 1 page; 28 REL taxiway labels (pdftotext -bbox); tools/env/rwsl_graphic_fit.py"
+ },
+ "FAA_Order_6850.2C.pdf": {
+  "url": "https://www.faa.gov/documentLibrary/media/Order/FAA_Order_6850.2C.pdf",
+  "licence": "public domain (US government work, FAA)",
+  "fetched": "2026-11-05",
+  "sha256": "2161710494426ded9cecfbe548638f6bfd0cc2b9d52add82284fd8362230ed21",
+  "note": "JO 6850.2C Visual Guidance Lighting Systems; para 200c (SSALR: RAIL of five sequenced flashers 1,600-2,400 ft every 200 ft) used by js/env/lighting/airfield.js SSALR_RAIL_FT (environment review truth1-8); fetched by the review agent into its scratchpad, copied here"
+ },
+ "AC-150-5345-46F-Fixtures.pdf": {
+  "url": "https://www.faa.gov/documentLibrary/media/Advisory_Circular/AC-150-5345-46F-Fixtures.pdf",
+  "licence": "public domain (US government work, FAA)",
+  "fetched": "2026-11-05",
+  "sha256": "0c85b3c60bbd88b4db18f2128a28c9c53cbaed4ea42eb74b2c073249f2b699d8",
+  "note": "AC 150/5345-46F Specification for Runway and Taxiway Light Fixtures (Tables 3-1..3-3 photometry, L-861T blue 2 cd minimum); fetched by the review agent, copied here"
  }
 }

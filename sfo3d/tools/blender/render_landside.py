@@ -289,9 +289,12 @@ def view_l1(args):
     import landside_airtrain as AT
     import landside_geom as LG
     eye = AT.NET_LEVEL + LG.WALKWAY_H + 1.6
-    # b -14.6: on the walkway deck between the tracks, beside the north track (r1: -16.5 stood over the crossover strip)
-    p0 = G['c'] + a * (Lb - L / 2 + 30.5) - b * 14.6
-    return persp('l1', p0, eye, G['c'] + a * (Lb - L / 2 - 20) - b * 14.0, eye + 6.5, 27.0, (960, 720), (150.0, 50.0), 'l1')
+    # b -14.6: on the walkway deck between the tracks, beside the north track (r1: -16.5 stood over the crossover strip);
+    # 28.0 m east of the face and pitch 5.3 deg (r1 comparison: at 30.5 m / 7.3 deg the block face came out 0.92 x the photo's width
+    # and 25 px low)
+    p0 = G['c'] + a * (Lb - L / 2 + 28.0) - b * 14.6
+    return persp('l1', p0, eye, G['c'] + a * (Lb - L / 2 - 20) - b * 14.0, eye + 48.0 * math.tan(math.radians(5.3)), 27.0, (960, 720),
+                 (150.0, 50.0), 'l1')
 
 
 def view_l5(args):

@@ -16,8 +16,8 @@ for (const id of ['dusk', 'night_clear', 'predawn_fog', 'ifr_mist_day', 'marine_
   const p = presetById(id);
   const E = buildEnvState(Date.parse(p.time_utc), { mode: 'preset', overridden: true, reports: [p.metar], rwyOverride: presetRunway(p) });
   for (const [vn, cam] of Object.entries(views)) {
-    const S = AL.update(E, cam, 100); const by = {}; for (const s of S) by[s.sys] = (by[s.sys] || 0) + 1;
-    console.log(id.padEnd(13) + ' ' + vn.padEnd(27) + ' lit ' + String(S.length).padStart(4) + ' (below E_T ' + String(AL.stats.invisible).padStart(4) + ')  ' + Object.entries(by).map(([k, v]) => k + ' ' + v).join(', '));
+    const S = AL.update(E, cam, 100).filter(s => s.i > 0); const by = {}; for (const s of S) by[s.sys] = (by[s.sys] || 0) + 1;   // core visible (aureole-only records counted apart)
+    console.log(id.padEnd(13) + ' ' + vn.padEnd(27) + ' lit ' + String(S.length).padStart(4) + ' (below E_T ' + String(AL.stats.invisible).padStart(4) + ', fog aureoles ' + String(AL.stats.aureoles).padStart(4) + ')  ' + Object.entries(by).map(([k, v]) => k + ' ' + v).join(', '));
   }
 }
 const s1 = visualRange(15, 3.3e-5, 6.99e-7), s1o = visualRange(0.075, 3.3e-5, 6.99e-7), twy = visualRange(2, 3.3e-5, 6.99e-7);

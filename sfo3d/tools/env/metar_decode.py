@@ -600,6 +600,11 @@ def _layer_coverages(sky):
             continue
         lo, hi = COVER_OKTAS[s['cover']]
         tot = max(prev, (lo + hi) / 2 / 8.0)
+        if tot <= prev and hi / 8.0 > prev:
+            # INFERRED floor for a second layer of the same class (FEW003 FEW008, BKN027 BKN045): the total rises halfway
+            # from the layers below to the class's upper bound (with midpoints the upper layer had own 0 and was drawn
+            # invisible although reported; environment review finding truth1-11)
+            tot = prev + (hi / 8.0 - prev) / 2
         own = 1.0 if prev >= 1.0 else max(0.0, 1.0 - (1.0 - tot) / (1.0 - prev))
         out.append({**s, 'summation': round(tot, 3), 'own_fraction': round(own, 3)})
         prev = tot
@@ -663,7 +668,11 @@ def render_params(d, night=False, marine_layer_depth_ft=None, routine_minute=56)
     p['precip'] = None
     if pr:
         w0 = pr[0]
-        kind = 'drizzle' if w0['precip'] == ['DZ'] else ('hail' if 'GR' in w0['precip'] or 'GS' in w0['precip'] else 'rain')
+        # hail / snow pellets WITH rain ('GRRA', 3 KSFO reports 2016-2025) is rain for the particles, the rate and the
+        # wetting, with a hail flag; hail alone is 'hail' with no drop parameters (not drawn: fall speed / size NV)
+        # (environment review finding truth1-10: GRRA became 'hail' with drizzle parameters and the rain was dropped)
+        hail = 'GR' if 'GR' in w0['precip'] else ('GS' if 'GS' in w0['precip'] else None)
+        kind = 'drizzle' if w0['precip'] == ['DZ'] else ('hail' if hail and 'RA' not in w0['precip'] else 'rain')
         inten = w0['intensity']
         # [7900] Table 9-4 (rain rate classes, in/h -> mm/h); drizzle intensity is visibility-based (Table 9-5).
         rate_cls = {'light': (0.1, 2.54), 'moderate': (2.8, 7.62), 'heavy': (7.62, 25.0)}[inten or 'moderate']
@@ -681,11 +690,11 @@ def render_params(d, night=False, marine_layer_depth_ft=None, routine_minute=56)
         lam = 4.1 * rate ** -0.21            # Marshall-Palmer slope, per mm of diameter [GN07]: 8200 h^-0.21 per m of radius
         n0 = 8000.0                          # m^-3 mm^-1
         p['precip'] = {'kind': kind, 'intensity': inten, 'showery': w0['descriptor'] == 'SH',
-                       'thunder': w0['descriptor'] == 'TS', 'rate_mm_h': round(rate, 2),
+                       'thunder': w0['descriptor'] == 'TS', 'hail': hail, 'rate_mm_h': round(rate, 2),
                        'rate_basis': 'Prrrr remark' if hp else 'intensity class midpoint (INFERRED)',
                        'drops_per_m3_gt_0p5mm': round(n0 / lam * math.exp(-lam * 0.5), 0) if kind == 'rain' else None,
-                       'median_volume_diameter_mm': round(3.67 / lam, 2) if kind == 'rain' else 0.3,
-                       'fall_speed_m_s': round(200.0 * math.sqrt(3.67 / lam / 2 / 1000.0), 2) if kind == 'rain' else 1.0}
+                       'median_volume_diameter_mm': round(3.67 / lam, 2) if kind == 'rain' else (0.3 if kind == 'drizzle' else None),
+                       'fall_speed_m_s': round(200.0 * math.sqrt(3.67 / lam / 2 / 1000.0), 2) if kind == 'rain' else (1.0 if kind == 'drizzle' else None)}
     # ---- wetness (INFERRED state machine inputs; the renderer integrates over time)
     evs = d['rmk'].get('wx_events', [])
     p['surface'] = {'precip_now': bool(pr),

@@ -58,7 +58,8 @@ REVIEW_R1 = [
                 'falls inside the RCC; the SFO Museum station polygon has the tower as a 4.7-m lobe 1.8 m west of the DOF point -> camera '
                 'on the east walkway 19.4 m from the tower; platform 8.0 m (DOF top 8.6 m above the eye); louvres every 0.2 m; raked '
                 'perforated hood (2.5 m rake, open top); twin tracks with running pads, guide rail and the walkway; the RCC canopy starts '
-                'behind the tower (l5: open sky and the exit cabin beside it)'),
+                'behind the tower and ends at its centre line on the west (l5: open sky and the exit cabin beside the tower; 5.5 m wide, '
+                'was the 10.9-m polygon rectangle)'),
     dict(n=6, item='AirTrain guideway section', disposition='fixed',
          change='trough walls 0.9 m (was 1.1), low guide rail 0.3 m (was a 0.8-m beam), concrete running pads, the twin-section walkway '
                 '+0.9 m with galvanised handrails (LOD0), weathered darker concrete (streak texture)'),

@@ -7199,9 +7199,9 @@
  },
  "landside": {
   "asset": "data/buildings3d/landside.glb",
-  "bytes": 19633416,
-  "built": "2026-11-05T12:52:06+00:00",
-  "git": "9e10039",
+  "bytes": 20324692,
+  "built": "2026-11-05T14:52:44+00:00",
+  "git": "3d817d7",
   "generator": "tools/blender/build_landside.py (bpy 5.0.1, Cycles CPU AO bake); geometry landside_geom.py / landside_airtrain.py / landside_cars.py; textures landside_tex.py",
   "reference": "2-D sheets BL-01..03 (docs/drawings/buildings/README.md), drawn by tools/buildings/draw_landside.py, imported by landside_geom.py",
   "spec": "tools/buildings/spec_landside.json (+ landside_naip_measurements.json)",
@@ -7221,24 +7221,24 @@
   "lods": {
    "0": {
     "switch_m": 0.0,
-    "tris": 155138,
+    "tris": 162038,
     "instanced_car_tris": 93420,
-    "verts": 354112,
-    "draw_calls": 343
+    "verts": 370428,
+    "draw_calls": 350
    },
    "1": {
     "switch_m": 450.0,
-    "tris": 77746,
+    "tris": 81462,
     "instanced_car_tris": 65740,
-    "verts": 195022,
-    "draw_calls": 304
+    "verts": 204842,
+    "draw_calls": 310
    },
    "2": {
     "switch_m": 1500.0,
-    "tris": 14980,
+    "tris": 15552,
     "instanced_car_tris": 0,
-    "verts": 36578,
-    "draw_calls": 105
+    "verts": 37998,
+    "draw_calls": 107
    }
   },
   "files": [
@@ -7247,14 +7247,14 @@
   ],
   "lod2_glb": {
    "path": "data/buildings3d/landside_lod2.glb",
-   "bytes": 2033596
+   "bytes": 2101792
   },
   "textures": [
    {
     "name": "landside_ao_B",
     "px": 2048,
     "mime": "image/jpeg",
-    "bytes": 1181712,
+    "bytes": 1161502,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    },
    {
@@ -7275,7 +7275,7 @@
     "name": "landside_ao_C",
     "px": 1024,
     "mime": "image/jpeg",
-    "bytes": 284348,
+    "bytes": 290265,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    },
    {
@@ -7317,7 +7317,7 @@
     "name": "landside_ao_A",
     "px": 2048,
     "mime": "image/jpeg",
-    "bytes": 1353349,
+    "bytes": 1342732,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    },
    {
@@ -7552,6 +7552,34 @@
     "normal_tile": null,
     "base_tile": null,
     "naip": "deck_rim"
+   },
+   "void_floor": {
+    "rgb_srgb": [
+     170,
+     172,
+     170
+    ],
+    "metallic": 0.0,
+    "roughness": 0.9,
+    "ior": 1.5,
+    "src": "obs NAIP 2024 (central-garage void floor, sunlit north half: median colour); stall lines inf",
+    "normal_tile": null,
+    "base_tile": "ls_c_deck",
+    "naip": "void_floor"
+   },
+   "cg_box_roof": {
+    "rgb_srgb": [
+     140,
+     140,
+     138
+    ],
+    "metallic": 0.0,
+    "roughness": 0.85,
+    "ior": 1.5,
+    "src": "obs NAIP 2024 (central-garage rooftop stair / plant box roofs: median colour)",
+    "normal_tile": null,
+    "base_tile": null,
+    "naip": "box_roof"
    },
    "bart_panel": {
     "rgb_srgb": [
@@ -8258,9 +8286,9 @@
   "ao": {
    "A": {
     "res": 2048,
-    "bake_s": 61.0,
-    "mean": 0.402,
-    "p2": 0.008,
+    "bake_s": 67.2,
+    "mean": 0.406,
+    "p2": 0.007,
     "samples": 40,
     "distance_m": 8.0,
     "objects": 17,
@@ -8269,7 +8297,7 @@
    },
    "B": {
     "res": 2048,
-    "bake_s": 74.0,
+    "bake_s": 85.1,
     "mean": 0.581,
     "p2": 0.0,
     "samples": 40,
@@ -8280,8 +8308,8 @@
    },
    "C": {
     "res": 1024,
-    "bake_s": 30.8,
-    "mean": 0.63,
+    "bake_s": 34.3,
+    "mean": 0.625,
     "p2": 0.0,
     "samples": 40,
     "distance_m": 8.0,
@@ -8459,6 +8487,30 @@
      0.0
     ]
    },
+   "box_roof.central_garage": {
+    "rgb": [
+     196,
+     197,
+     194
+    ],
+    "n": 1808,
+    "shift": [
+     4.0,
+     0.0
+    ]
+   },
+   "void_floor.central_garage": {
+    "rgb": [
+     205,
+     206,
+     201
+    ],
+    "n": 686,
+    "shift": [
+     0.0,
+     0.0
+    ]
+   },
    "superbay.superbay": {
     "rgb": [
      236,
@@ -8608,7 +8660,7 @@
     "deviations_from_sheets": [],
     "anchors": {
      "r1": {
-      "lobes_m2": 5012.8,
+      "lobes_m2": 8135.0,
       "rims_m2": 2270.0,
       "boxes": [
        {
@@ -8810,14 +8862,14 @@
     ],
     "tris": {
      "0": {
-      "tris": 15973,
+      "tris": 16813,
       "instanced_tris": 18522,
-      "draws": 27
+      "draws": 31
      },
      "1": {
-      "tris": 11587,
+      "tris": 12427,
       "instanced_tris": 13034,
-      "draws": 26
+      "draws": 30
      },
      "2": {
       "tris": 610,
@@ -9382,12 +9434,12 @@
     ],
     "tris": {
      "0": {
-      "tris": 20798,
+      "tris": 21718,
       "instanced_tris": 4968,
       "draws": 43
      },
      "1": {
-      "tris": 5088,
+      "tris": 5288,
       "instanced_tris": 3496,
       "draws": 39
      },
@@ -9824,12 +9876,12 @@
     ],
     "tris": {
      "0": {
-      "tris": 24372,
+      "tris": 25902,
       "instanced_tris": 4050,
       "draws": 28
      },
      "1": {
-      "tris": 6484,
+      "tris": 6790,
       "instanced_tris": 2850,
       "draws": 27
      },
@@ -11179,12 +11231,12 @@
       "source": "OSM min_height 4; photo a2 ratio ~0.20 of the face (4.3)"
      },
      "glazed_band": {
-      "v": [
-       15.2,
-       18.15
-      ],
-      "tag": "inf",
-      "source": "photo a2 ratios 0.127-0.273 of the face"
+      "v": {
+       "below_top": 1.6,
+       "height": 3.9
+      },
+      "tag": "obs",
+      "source": "photo a2 proportions 0.08 / 0.19 of the face (r1: follows the top) [low]"
      },
      "bart_track": {
       "v": 14.1,
@@ -11196,7 +11248,7 @@
      "top 1.6 m below the AirTrain deck top",
      "colonnade 4.3 m, columns every 9 m, 3-m dark recess",
      "white metal / precast panels (colour inf)",
-     "glazed band 15.2 m to the top",
+     "glazed band 3.9 m tall, 1.6 m below the top (follows the level field)",
      "flat roof where no AirTrain deck covers it"
     ],
     "unknown": [
@@ -11219,8 +11271,8 @@
      ],
      "colonnade": 4.0,
      "band": [
-      15.2,
-      18.15
+      10.01,
+      16.53
      ],
      "top_min": 15.51,
      "top_max": 18.13
@@ -11263,12 +11315,12 @@
         "source": "OSM min_height 4; photo a2 ratio ~0.20 of the face (4.3)"
        },
        "glazed_band": {
-        "v": [
-         15.2,
-         18.15
-        ],
-        "tag": "inf",
-        "source": "photo a2 ratios 0.127-0.273 of the face"
+        "v": {
+         "below_top": 1.6,
+         "height": 3.9
+        },
+        "tag": "obs",
+        "source": "photo a2 proportions 0.08 / 0.19 of the face (r1: follows the top) [low]"
        },
        "bart_track": {
         "v": 14.1,
@@ -11290,12 +11342,12 @@
     ],
     "tris": {
      "0": {
-      "tris": 1160,
+      "tris": 1172,
       "instanced_tris": 0,
       "draws": 7
      },
      "1": {
-      "tris": 80,
+      "tris": 92,
       "instanced_tris": 0,
       "draws": 6
      },
@@ -11465,19 +11517,19 @@
     },
     "airtrain_-4_1": {
      "0": {
-      "tris": 5475,
+      "tris": 8761,
       "instanced_tris": 0,
-      "draws": 13
+      "draws": 14
      },
      "1": {
-      "tris": 3874,
+      "tris": 5976,
       "instanced_tris": 0,
-      "draws": 11
+      "draws": 12
      },
      "2": {
-      "tris": 1201,
+      "tris": 1729,
       "instanced_tris": 0,
-      "draws": 7
+      "draws": 8
      }
     },
     "airtrain_-3_0": {
@@ -11499,19 +11551,19 @@
     },
     "airtrain_-3_1": {
      "0": {
-      "tris": 1977,
+      "tris": 2289,
+      "instanced_tris": 0,
+      "draws": 7
+     },
+     "1": {
+      "tris": 1807,
       "instanced_tris": 0,
       "draws": 5
      },
-     "1": {
-      "tris": 1551,
+     "2": {
+      "tris": 575,
       "instanced_tris": 0,
       "draws": 4
-     },
-     "2": {
-      "tris": 531,
-      "instanced_tris": 0,
-      "draws": 3
      }
     },
     "airtrain_-2_0": {
@@ -11616,7 +11668,7 @@
      "note": "photo l5 (see RCC_PLATFORM); BL-03 placeholder 12.35 m [unk]",
      "kind": "canopy",
      "roof": 12.5,
-     "L": 61.9,
+     "L": 56.7,
      "W": 10.9
     },
     {
@@ -11829,10 +11881,11 @@
   "verification": {
    "tool": "tools/blender/verify_landside.py",
    "report": "out/buildings3d/landside_verify.json (local)",
-   "n_checks": 179,
-   "n_fail": 1,
+   "n_checks": 181,
+   "n_fail": 2,
    "failed": [
-    "BART station: north face vs the NAIP 2024 shadow line (max distance of the OSM north edge)"
+    "central_garage: roof footprint outside the drawn outline",
+    "CG: void diameter (equal-area circle)"
    ],
    "tolerance": "0.5 m or 2 % unless stated",
    "checks": [
@@ -12324,10 +12377,10 @@
     },
     {
      "check": "central_garage: roof footprint outside the drawn outline",
-     "model": 0.0,
+     "model": 2654.761,
      "drawing": 0.0,
      "tol": 1287.835,
-     "ok": true,
+     "ok": false,
      "src": "BL-02 outline Central Parking Garage; ",
      "unit": "m2"
     },
@@ -12342,10 +12395,10 @@
     },
     {
      "check": "CG: void diameter (equal-area circle)",
-     "model": 58.72,
+     "model": 0.0,
      "drawing": 58.9,
      "tol": 1.178,
-     "ok": true,
+     "ok": false,
      "src": "BL-02 A void 58.9 m [obs]",
      "unit": "m"
     },
@@ -12575,21 +12628,21 @@
      "unit": "m"
     },
     {
-     "check": "BART station: glazed band bottom (photo a2 ratio)",
-     "model": 15.2,
-     "drawing": 15.2,
+     "check": "BART station: glazed band top below the body top (photo a2 ratio; r1: follows the level field)",
+     "model": 1.6,
+     "drawing": 1.6,
      "tol": 0.05,
      "ok": true,
-     "src": "photo a2 [inf]",
+     "src": "photo a2 [obs, low]",
      "unit": "m"
     },
     {
-     "check": "BART station: north face vs the NAIP 2024 shadow line (max distance of the OSM north edge)",
-     "model": 6.57,
+     "check": "BART station: OSM north face vs the NAIP 2024 north wall line (max distance along the line)",
+     "model": 2.336,
      "drawing": 0.0,
-     "tol": 2.0,
-     "ok": false,
-     "src": "NAIP obs vs OSM",
+     "tol": 2.5,
+     "ok": true,
+     "src": "NAIP pick +-2 m (relief estimate) combined with OSM +-1 m",
      "unit": "m"
     },
     {
@@ -12684,7 +12737,7 @@
     },
     {
      "check": "CG: roof rims / lobes present (NAIP 2024)",
-     "model": 4467.0,
+     "model": 5565.0,
      "drawing": 1.0,
      "tol": null,
      "ok": true,
@@ -13196,6 +13249,24 @@
      "unit": "m2"
     },
     {
+     "check": "AirTrain: inter-track walkway outside the SFO Museum Garage A outline tail (r1, photo l1)",
+     "model": 0.0,
+     "drawing": 0.0,
+     "tol": 2.0,
+     "ok": true,
+     "src": "SFO Museum Garage A outline [obs]",
+     "unit": "m2"
+    },
+    {
+     "check": "AirTrain: inter-track walkway area vs the tail between the tracks",
+     "model": 661.275,
+     "drawing": 656.273,
+     "tol": 19.688,
+     "ok": true,
+     "src": "SFO Museum [obs]",
+     "unit": "m2"
+    },
+    {
      "check": "AirTrain T1: track deck level at the station",
      "model": 19.751,
      "drawing": 19.751,
@@ -13450,9 +13521,9 @@
    ],
    "plans": {
     "central_garage": {
-     "model_area": 64403.0,
+     "model_area": 67111.0,
      "outline_area": 64391.8,
-     "outside": 0.0,
+     "outside": 2654.8,
      "missing": 0.0
     },
     "ltp_garage_1": {
@@ -13513,33 +13584,33 @@
      "n": 1,
      "item": "Garage A station block",
      "disposition": "fixed (block); conflict raised (garage deck)",
-     "change": "separate low block over the tracks: top 12.0 m above the guideway deck (l1: 11.1 m above the walkway), two long slots at +7.4 m (none over the central pier), open hall under its soffit over both tracks and to the south on round columns; >= 27 m deep (l1 sightline; 30 m drawn); the curved NE garage end next to it stays at the drum ring [unk, BL-03]",
+     "change": "separate low block over the tracks: top 12.0 m above the guideway deck (l1: 11.1 m above the walkway), two long slots at +7.4 m (none over the central pier), open hall under its soffit over both tracks and to the south on round columns; >= 27 m deep (l1 sightline; 30 m drawn), its east face one precast wall from grade to the top with the two track portals; the walkway deck between the tracks east of the block (SFO Museum Garage A outline tail between the track polygons [obs], photo l1: the camera stands on it); the curved NE garage end next to it stays at the drum ring [unk, BL-03]",
      "open": "photo l1 puts the curved NE garage parapet ~12.9 m above the deck (~32.7 m), not the 39.6-m ring [obs, low]: the garage deck / ring conflict goes to the drawings group (BL-03 is the reference; not changed here)"
     },
     {
      "n": 2,
      "item": "Garages A / G drums, screens, towers",
      "disposition": "fixed",
-     "change": "drums in smooth light metal panels with five long horizontal slots and an open top band, recessed 0.8 m (i2 heights); screens as full-bay perforated panels between thin mullions covering the lower 62 % of each level (l1); white precast stair / elevator towers with small square windows at both ends of each drum (NAIP boxes at the outline notches, top ring + 3.0 m [obs i2, low])"
+     "change": "drums in smooth light metal panels with five long horizontal slots and an open top band, recessed 0.8 m (i2 heights); screens as full-bay perforated panels between thin mullions covering the lower 62 % of each level (l1); white precast stair / elevator towers with small square windows at both ends of each drum (NAIP boxes at the outline notches, top ring + 3.0 m [obs i2, low]); screen panels also on edges <= 4 m (curved ends); i2 comparison with a solved camera (four bearings, on the guideway east edge, residuals <= 1.3 deg)"
     },
     {
      "n": 3,
      "item": "SFO BART station / Garage G station roof",
      "disposition": "fixed (station); approach not modelled (reason given)",
-     "change": "new node bart_station: plan = OSM way 221663595 (ODbL) checked against the NAIP 2024 north wall line; open ground storey (OSM min_height 4) on columns, white panels, green glazed band (a2 ratios), top carrying the AirTrain deck; the Garage G AirTrain station roof is now a white barrel vault over platform and tracks (NAIP white roof, a2)",
+     "change": "new node bart_station: plan = OSM way 221663595 (ODbL) checked against the NAIP 2024 north wall line; open ground storey (OSM min_height 4) on columns, white panels, green glazed band 3.9 m tall 1.6 m below the top, following the level field (a2 proportions), top carrying the AirTrain deck; the Garage G AirTrain station roof is now a white barrel vault over platform and tracks (NAIP white roof, a2)",
      "open": "the three-track approach shares the corridor the SFO Museum AirTrain polygon covers (x -1920..-1592) and continues 2+ km west to the wye: not separated / not modelled; the spec / sheet item is requested from the drawings group"
     },
     {
      "n": 4,
      "item": "Central garage roof",
      "disposition": "fixed",
-     "change": "NAIP-traced beige rims (0.15 m, nature unk) and stall-free lobes (own material), 11 rooftop stair / elevator / plant boxes (NAIP plan, heights inf), the void ring as a helix (level lines rising one pitch per turn), 216 cars at their NAIP 2024 positions + 127 white / silver ones next to them by fleet share"
+     "change": "NAIP-traced beige rims (0.15 m, nature unk) and stall-free lobes (own material), 11 rooftop stair / elevator / plant boxes (NAIP plan and roof colour, heights inf), the stall-free helix ring road round the void (r 43.5 m [obs NAIP]), the void wall as a helix (level lines rising one pitch per turn), the void floor at grade with stall marks [obs NAIP], 216 cars at their NAIP 2024 positions (blob colours un-mixed against the deck, blue sky cast removed) + 127 white / silver ones next to them by fleet share"
     },
     {
      "n": 5,
      "item": "l5 comparison",
      "disposition": "fixed (camera solved, comparison redone)",
-     "change": "camera solved from the tower width, the guideway vanishing point and the horizon: with the BL-02 tower D 6.5 the camera falls inside the RCC; the SFO Museum station polygon has the tower as a 4.7-m lobe 1.8 m west of the DOF point -> camera on the east walkway 19.4 m from the tower; platform 8.0 m (DOF top 8.6 m above the eye); louvres every 0.2 m; raked perforated hood (2.5 m rake, open top); twin tracks with running pads, guide rail and the walkway"
+     "change": "camera solved from the tower width, the guideway vanishing point and the horizon: with the BL-02 tower D 6.5 the camera falls inside the RCC; the SFO Museum station polygon has the tower as a 4.7-m lobe 1.8 m west of the DOF point -> camera on the east walkway 19.4 m from the tower; platform 8.0 m (DOF top 8.6 m above the eye); louvres every 0.2 m; raked perforated hood (2.5 m rake, open top); twin tracks with running pads, guide rail and the walkway; the RCC canopy starts behind the tower (l5: open sky and the exit cabin beside it)"
     },
     {
      "n": 6,
@@ -14195,7 +14266,7 @@
    "bridges / realtime: gates.js prepGeom walkway start and drum limits from the 3-D facades (integration.json footprints / tiers), then the domestic vestibules can go (review r1 finding 8)",
    "stands: F10 CRJ2 1.40 m from the BA-F body tier (SFO Museum outline 1.43 m): a stand pose item, not the building"
   ],
-  "generated": "2026-11-05T14:30:44Z",
+  "generated": "2026-11-05T15:09:24Z",
   "tool": "tools/blender/b3d_integrate.py",
   "doc": "docs/research/buildings3d.md (integration section)"
  },
@@ -14203,7 +14274,7 @@
   "asset": "roadways (elevated landside roadways: departures decks, viaducts, approach ramps)",
   "owner": "integration (review round 1, finding 1)",
   "generator": "tools/blender/build_roadways.py + roadways_net.py",
-  "built": "2026-11-05T14:26:55Z",
+  "built": "2026-11-05T15:05:31Z",
   "files": {
    "full": "data/buildings3d/roadways.glb",
    "lod2": "data/buildings3d/roadways_lod2.glb"
@@ -14309,14 +14380,14 @@
     "itb": 6.0,
     "domestic": 84.6,
     "roadways": 0,
-    "landside": 300.3
+    "landside": 300.4
    },
    "columns": {
     "tried": 332,
     "placed": 296
    },
    "tris": {
-    "0": 46698,
+    "0": 46700,
     "1": 14420,
     "2": 6856
    },
@@ -14506,7 +14577,7 @@
    "crossings": 33,
    "asset_cut_m2": 480.7,
    "bytes": {
-    "full": 4345044,
+    "full": 4345124,
     "lod2": 438004
    }
   }

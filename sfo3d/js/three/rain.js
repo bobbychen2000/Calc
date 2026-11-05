@@ -21,12 +21,18 @@ export class Rain {
     const r = () => { s ^= s << 13; s >>>= 0; s ^= s >> 17; s ^= s << 5; s >>>= 0; return s / 4294967296; };
     for (let i = 0; i < maxN * 4; i++) seeds[i] = r();
     g.setAttribute('iS', new THREE.InstancedBufferAttribute(seeds, 4)); g.instanceCount = 0;
-    this.u = { vel: uniform(new THREE.Vector3(0, -5, 0)), half: uniform(40), streak: uniform(0.08), width: uniform(0.0014), col: uniform(new THREE.Color(0, 0, 0)), time: uniform(0), fovScale: uniform(0.001), top: uniform(1e6), groundY: uniform(opts.groundY ?? 3) };
+    this.u = { vel: uniform(new THREE.Vector3(0, -5, 0)), half: uniform(40), streak: uniform(0.08), width: uniform(0.0014), col: uniform(new THREE.Color(0, 0, 0)), time: uniform(0), fovScale: uniform(0.001), top: uniform(1e6), groundY: uniform(opts.groundY ?? 3),
+      // floodlit drops (review look1-4: at night the streaks took only the sky radiance and vanished under 20-lx floods):
+      // a drop refracts its surroundings (Garg & Nayar 2007: the drop's radiance is a weighted mean of the environment over
+      // its ~165° field of view), so under the floods it adds E_flood / π (the lit surroundings' mean radiance, I) with the
+      // same display weight as the sky term: floodC = flood colour x floods' intensity x RAIN_K / π (renderer3)
+      floodC: uniform(new THREE.Color(0, 0, 0)), density: uniform(1) };
     const U = this.u;
     const m = new THREE.MeshBasicNodeMaterial({ transparent: true, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide });
     m.fog = false;
     const iS = attribute('iS', 'vec4'), q = attribute('position', 'vec3');
-    const vI = varying(float(0), 'vRainI'), vZ = varying(float(0), 'vRainZ'), vQ = varying(vec2(0), 'vRainQ');
+    const vI = varying(float(0), 'vRainI'), vZ = varying(float(0), 'vRainZ'), vQ = varying(vec2(0), 'vRainQ'), vCol = varying(vec3(0), 'vRainC');
+    const field = opts.floodField || null;   // (p) -> scalar floodlight irradiance (lamp units), js/three/sky.js floodField
     m.positionNode = Fn(() => {
       const box = U.half.mul(2.0);
       const lo = cameraPosition.sub(vec3(U.half));
@@ -41,7 +47,8 @@ export class Rain {
       // physical per-drop width factor would leave no rain visible at all: run 2, rain_day render; I, display weight)
       const k = max(U.streak, U.width).div(len);
       const above = select(pw.y.greaterThan(U.top).or(pw.y.lessThan(U.groundY)), float(0.0), float(1.0));
-      vI.assign(k.mul(above).mul(max(float(1.0).sub(d.div(U.half.mul(1.2))), 0.0)));
+      vI.assign(k.mul(above).mul(max(float(1.0).sub(d.div(U.half.mul(1.2))), 0.0)).mul(U.density));
+      vCol.assign(field ? U.col.add(U.floodC.mul(field(pw))) : U.col);
       const c = pw.sub(dirS.mul(len.mul(q.y))).add(side.mul(w.mul(q.x)));
       vZ.assign(cameraViewMatrix.mul(vec4(pw, 1.0)).z); vQ.assign(q.xy);
       return c;
@@ -52,14 +59,19 @@ export class Rain {
         const sceneZ = perspectiveDepthToViewZ(opts.depthNode.sample(screenUV).r, cameraNear, cameraFar);
         If(sceneZ.greaterThan(vZ.add(0.3)), () => { Discard(); });
       }
-      return vec4(U.col.mul(vI).mul(exp(vQ.x.mul(vQ.x).mul(-2.0))), 1.0);
+      return vec4(vCol.mul(vI).mul(exp(vQ.x.mul(vQ.x).mul(-2.0))), 1.0);
     })();
     this.mesh = new THREE.Mesh(g, m); this.mesh.frustumCulled = false; this.mesh.renderOrder = 9; this.mesh.name = 'rain'; this.mesh.visible = false;
     this.params = null;
   }
   // P = rainParams(...) or null; t (s); colour = raw sky units x pre; top = rain ceiling (world y)
-  update(P, cam, t, colour, top, fovScale, showerK = 1) {
+  update(P, cam, t, colour, top, fovScale, showerK = 1, floodC = null) {
     const g = this.mesh.geometry, U = this.u; this.params = P;
+    if (floodC) U.floodC.value.setRGB(floodC[0], floodC[1], floodC[2]); else U.floodC.value.setRGB(0, 0, 0);
+    // per-streak weight: the drawn count is the tier budget's share of the high-tier count (weather_fx.js rainParams
+    // P.density = count_tier / count_high); the weight is divided by it so the rain's visual density does not change with
+    // the tier (review look1-8: the phone tier drew 5x fewer streaks of the same weight)
+    U.density.value = P && P.density > 0 ? 1 / P.density : 1;
     if (!P || !(P.count > 0)) { this.mesh.visible = false; g.instanceCount = 0; return 0; }
     const n = Math.min(this.max, Math.round(P.count * showerK));
     g.instanceCount = n; this.mesh.visible = n > 0;

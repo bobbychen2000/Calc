@@ -240,7 +240,8 @@ def main(write_json=False):
         sig = (1 - w) * sd + w * sn if sd else None
         v_sm = (vis['sm'] * (0.99 if vis.get('prefix') == 'M' else 1.0)) if vis else 10.0
         rv = [r for r in d.get('rvr', []) if r['runway'] == '28R']
-        rvr = rv[0]['min_ft'] if rv else None
+        # 'P' = greater than the value (JO 7900.5E 13.12: P6000FT > 6,000 ft), 'M' = less than (review truth1-9)
+        rvr = (rv[0]['min_ft'] + (1 if rv[0].get('min_prefix') == 'P' else -1 if rv[0].get('min_prefix') == 'M' else 0)) if rv else None
         ctl = controller(night_tower, v_sm, rvr, d.get('ceiling_ft'), rwy)
         pr = render_params(d, night=w >= 0.5)
         if pr['precip'] and pr['precip']['kind'] == 'rain':

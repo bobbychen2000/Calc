@@ -27,6 +27,12 @@
 // SFO facility directives may override all of this (NV).
 
 export const HIRL_PCT = { 5: 100, 4: 25, 3: 5, 2: 1.2, 1: 0.15 };          // AC 150/5340-30J 2.6.4.1 (V)
+// The taxiway lights the app draws are the outline-derived blue edge lights (spec §5.9, Q4 default: L-861T, inf), a
+// medium-intensity (MITL) 3-step system: 100 / 30 / 10 % (AC 150/5340-30J 2.6.4.2, V). The tower's TBL 3-4-12 step
+// (5-step reference output, `taxiway`) maps to it as steps 3-5 -> 100 %, 2 -> 30 %, 1 -> 10 % (I); the drawn percentage
+// is carried in the controller output as `taxiwayDrawn` (review finding truth1-15: the HUD showed the 5-step 5 % while
+// the renderer drew 100 %).
+export const MITL_PCT = { 5: 100, 4: 100, 3: 100, 2: 30, 1: 10 };
 export const ALSF2_PCT = { 5: 100, 4: 20, 3: 4, 2: 0.8, 1: 0.16 };         // JO 6850.2C Table 2-3 (V)
 export const MALS_PCT = { 3: 100, 2: 20, 1: 4 };                           // JO 6850.2C Table 2-3 (V)
 export const ALSF2_SFL = { 5: 100, 4: 100, 3: 20, 2: 2.3, 1: 2.3 };        // T2-3 flashers high / medium / low (V)
@@ -97,6 +103,13 @@ export function controller(night, vis, rvr28r, ceil, rwy) {
   return out;
 }
 
+/** The lowest 28R RVR (ft) as the tables compare it: a 'P' prefix means "greater than" the value (JO 7900.5E 13.12:
+ *  P6000FT = RVR above 6,000 ft, the highest reportable value), so P6000 must not satisfy "RVR 6,000 ft or less"
+ *  (TBL 3-4-5): value + 1; an 'M' prefix ("less than") value − 1 (as the M visibilities, −1 %). Review finding truth1-9. */
+export function rvrValue(rv) {
+  if (!rv || rv.min_ft == null) return null;
+  return rv.min_prefix === 'P' ? rv.min_ft + 1 : rv.min_prefix === 'M' ? rv.min_ft - 1 : rv.min_ft;
+}
 /** Controller inputs from an EnvState (js/env/state.js): tower night (USNO −50′), prevailing visibility (M values
  *  reduced by 1 %, none -> 10 SM as in the reference), lowest 28R RVR, ceiling, runway configuration (§3.5). */
 export function controllerInputs(env) {
@@ -105,7 +118,7 @@ export function controllerInputs(env) {
   const vis = v && v.sm != null ? v.sm * (v.prefix === 'M' ? 0.99 : 1.0) : 10.0;
   const rv = (d.rvr || []).find(r => r.runway === '28R');
   const rwy = env && env.runway ? { arr: env.runway.arr || {}, dep: env.runway.dep || [] } : { arr: {}, dep: [] };
-  return { night: !!(env && env.towerNight), vis, rvr28r: rv ? rv.min_ft : null, ceil: d.ceiling_ft ?? null, rwy };
+  return { night: !!(env && env.towerNight), vis, rvr28r: rvrValue(rv), ceil: d.ceiling_ft ?? null, rwy };
 }
 
 /** Controller output for an EnvState, plus the PAPI mode from the PAPI photocell (AC 150/5345-28H 3.3.6; EnvState
@@ -115,7 +128,8 @@ export function controllerFromEnv(env) {
   const inp = controllerInputs(env);
   const out = controller(inp.night, inp.vis, inp.rvr28r, inp.ceil, inp.rwy);
   const papiNight = env && env.photocell ? !!env.photocell.papiNight : inp.night;
-  return { out, inputs: inp, papi: { night: papiNight, pct: papiNight ? 20 : 100 } };
+  const ts = out.taxiway.step;
+  return { out, inputs: inp, papi: { night: papiNight, pct: papiNight ? 20 : 100 }, taxiwayDrawn: { system: 'MITL L-861T (Q4 default, inf)', step: ts, pct: ts > 0 ? MITL_PCT[ts] : 0 } };
 }
 
 /** One HUD line per system (?qa=env, spec §11.4: "the controller's steps"). */
@@ -126,6 +140,6 @@ export function controllerHud(ctl) {
     else if (k.startsWith('ALS ')) parts.push(v.on ? `${k} ${v.mode} st${v.step} ${v.pct}%${v.SFL ? ' SFL ' + v.SFL_pct + '%' : ''}` : `${k} off`);
     else if (k.startsWith('REIL ')) parts.push(`${k} st${v.step} ${v.cd_eff} cd`);
   }
-  parts.push(`PAPI ${ctl.papi.night ? 'night' : 'day'} ${ctl.papi.pct}%`, `taxiway ${o.taxiway.step ? 'st' + o.taxiway.step : 'off'}`, `beacon ${o.beacon.on ? 'on (not drawn, Q1)' : 'off'}`);
+  parts.push(`PAPI ${ctl.papi.night ? 'night' : 'day'} ${ctl.papi.pct}%`, `taxiway ${o.taxiway.step ? 'st' + o.taxiway.step + (ctl.taxiwayDrawn ? ' → MITL ' + ctl.taxiwayDrawn.pct + '% [I]' : '') : 'off'}`, `beacon ${o.beacon.on ? 'on (not drawn, Q1)' : 'off'}`);
   return parts.join(' · ');
 }

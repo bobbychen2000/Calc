@@ -131,14 +131,23 @@ for (const g of papiGroups) {
   }
   check('A-NAV1', 'aircraft sprites: only the permitted position-light colour from every azimuth (synthetic aircraft, viewer at 400 m)', badS.length === 0, badS.slice(0, 5).join('; '));
   const st = (o) => Object.entries(o).filter(([, v]) => v).map(([k]) => k).join('+') || 'none';
+  // the DISPLAY phases js/live/app.js passes (tr.phase = js/live/traffic.js displayPhase: gate / parked / pushed /
+  // holding / pushback / taxi / lineup / takeoff / departure / final / landing / enroute; review finding truth1-1), plus
+  // the classifier's internal names (still / climb / flare / rollout), which the light logic accepts too
   const cases = [
-    [{ phase: 'still', ground: true, gs: 0 }, 'none'], [{ phase: 'pushback', ground: true, gs: 2 }, 'nav+beacon'],
+    [{ phase: 'gate', ground: true, gs: 0 }, 'none'], [{ phase: 'parked', ground: true, gs: 0 }, 'none'],
+    [{ phase: 'still', ground: true, gs: 0 }, 'none'], [{ phase: 'gate', ground: true, gs: 3 }, 'nav+beacon+taxi'],
+    [{ phase: 'pushback', ground: true, gs: 2 }, 'nav+beacon'], [{ phase: 'pushed', ground: true, gs: 0 }, 'nav+beacon'],
+    [{ phase: 'holding', ground: true, gs: 0 }, 'nav+beacon'],
     [{ phase: 'taxi', ground: true, gs: 15 }, 'nav+beacon+taxi'], [{ phase: 'taxi', ground: true, gs: 0 }, 'nav+beacon'],
     [{ phase: 'lineup', ground: true, gs: 5 }, 'nav+beacon+strobe+taxi'], [{ phase: 'lineup', ground: true, gs: 0 }, 'nav+beacon+strobe'],
-    [{ phase: 'takeoff', ground: true, gs: 120 }, 'nav+beacon+strobe+landing'], [{ phase: 'climb', ground: false, altAgl: 2000 }, 'nav+beacon+strobe+landing'],
-    [{ phase: 'climb', ground: false, altAgl: 3500 }, 'nav+beacon+strobe'], [{ phase: 'final', ground: false, altAgl: 300 }, 'nav+beacon+strobe+landing'],
+    [{ phase: 'takeoff', ground: true, gs: 120 }, 'nav+beacon+strobe+landing'], [{ phase: 'departure', ground: false, altAgl: 2000 }, 'nav+beacon+strobe+landing'],
+    [{ phase: 'departure', ground: false, altAgl: 3500 }, 'nav+beacon+strobe'], [{ phase: 'climb', ground: false, altAgl: 2000 }, 'nav+beacon+strobe+landing'],
+    [{ phase: 'enroute', ground: false, altAgl: 3500 }, 'nav+beacon+strobe'], [{ phase: 'final', ground: false, altAgl: 300 }, 'nav+beacon+strobe+landing'],
+    [{ phase: 'final', ground: true, gs: 130 }, 'nav+beacon+strobe+landing'],
+    [{ phase: 'landing', ground: true, gs: 120 }, 'nav+beacon+strobe+landing'], [{ phase: 'landing', ground: true, gs: 20 }, 'nav+beacon+strobe+taxi'],
     [{ phase: 'rollout', ground: true, gs: 80 }, 'nav+beacon+strobe+landing'], [{ phase: 'rollout', ground: true, gs: 20 }, 'nav+beacon+strobe+taxi'],
-    [{ phase: 'taxi', ground: true, gs: 10, stale: true }, 'none'],
+    [{ phase: 'taxi', ground: true, gs: 10, stale: true }, 'none'], [{ phase: 'vehicle', ground: true, gs: 10 }, 'none'],
   ];
   const badP = cases.filter(([i, w]) => st(aircraftLightStates(i)) !== w).map(([i, w]) => `${i.phase}/${i.gs ?? i.altAgl}: ${st(aircraftLightStates(i))} != ${w}`);
   check('A-NAV1', 'light states per phase (AIM 4-3-24; parked off, Q11 default)', badP.length === 0, badP.join('; ') || `${cases.length} cases`);
@@ -179,6 +188,9 @@ for (const g of papiGroups) {
   // SFL sequence: outermost first, each flasher twice per second, equal spacing within the 0.5 s cycle (airfield module)
   const AL = new AirfieldLighting(LIGHTING_FIXTURES, LIGHTING_SPEC, { groundY: 3 });
   const seq = AL.flasherSequence('28R');
+  const seqS = AL.flasherSequence('28R', 'SSALR');
+  check('A-FLASH1', '28R SSALR RAIL: five flashers 2,400 / 2,200 / 2,000 / 1,800 / 1,600 ft, sequenced among themselves in 0.5 s (JO 6850.2C 200c; review truth1-8)',
+    seqS.length === 5 && seqS.map(s => s.station).join(',') === '2400,2200,2000,1800,1600' && seqS.every((s, i) => Math.abs(s.phase - i * 0.5 / 5) < 1e-9), seqS.map(s => s.station + '@' + s.phase.toFixed(2)).join(','));
   check('A-FLASH1', '28R SFL sequence: 15 flashers, outermost (2,400 ft) first, toward the threshold, phases equally spaced in 0.5 s',
     seq.length === 15 && seq[0].station === 2400 && seq[14].station === 1000 && seq.every((s, i) => Math.abs(s.phase - i * 0.5 / 15) < 1e-9), seq.map(s => s.station).join(','));
 }
@@ -199,6 +211,9 @@ for (const g of papiGroups) {
   const R2 = AL.relGroups.filter(g => g.runway === '10R/28L');
   check('A-RWSL1', `arrival 28L: 2 NM out none, 0.9 NM out all ${R2.length} arrays of 10R/28L`, fin2[0].length === 0 && fin2[1].length === R2.length, `${fin2[1].length} on`);
   const r60 = at('rollout', '28R', 1500, 60), r30 = at('rollout', '28R', 1500, 30), r90 = at('rollout', '28R', 1500, 90);
+  // the app passes the DISPLAY phase: the landing roll is 'landing' (review finding truth1-2: 0 of 5 arrays lit at touchdown)
+  const l120 = at('landing', '28R', 600 + 91.44, 120), r120 = at('rollout', '28R', 600 + 91.44, 120), f120 = at('final', '28R', 600 + 91.44, 120, true);
+  check('A-RWSL1', "landing roll 28R at 120 kt with the display phase 'landing' (or 'final' on the ground) = the internal 'rollout'", l120.length > 0 && JSON.stringify(l120) === JSON.stringify(r120) && JSON.stringify(f120) === JSON.stringify(r120), `landing ${l120.length}, rollout ${r120.length}, final on ground ${f120.length}`);
   check('A-RWSL1', 'rollout 28R: 90 kt all ahead, 60 kt only within 30 s, 30 kt none', r30.length === 0 && r60.length <= r90.length && r90.length > 0, `90 kt ${r90.length}, 60 kt ${r60.length}`);
   check('A-RWSL1', 'the NV-flagged REL arrays (between-runway F1 / G / H: runway assignment ambiguous) are never lit', !LIGHTING_FIXTURES.groups.some((g, i) => g.runway_nv && AL.relGroups.some(r => r.id === i)));
 }

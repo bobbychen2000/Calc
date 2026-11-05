@@ -418,7 +418,21 @@ function cityNight(xz, fw, urb, albedo) {
   const spot2 = exp(d2.mul(d2).negate().div(r2.mul(r2))).mul(float(e2 / Math.PI).div(r2.mul(r2))).mul(on2);
   const lum2 = mix(spot2, float(e2 * 0.45 / (S2 * S2)), smoothstep(S2 * 0.25, S2 * 0.45, fw));
   const lc2 = mix(vec3(1.0, 0.72, 0.45), vec3(1.0, 0.92, 0.8), step(0.8, h2));
-  return albedo.mul(lc).mul(poolE.mul(1.0 / Math.PI)).add(lc.mul(lum)).add(lc2.mul(lum2)).mul(urb);
+  // environment review look1-7 (night views from the airfield: the shoreline and hills read as a uniform brown band,
+  // brighter than the sky, with no discrete lights): far away (pixel footprint >= ~20 m) the uniform pool / street-level
+  // glow keeps FAR_UNIFORM of its energy, and the rest goes into a third, sparse layer of bright point clusters
+  // (commercial centres, major intersections, lots: a 520 m jittered grid, 60 % of the cells, I) that stays point-like
+  // (>= 1 px, energy kept) out to the horizon, so distant land is dark between lights. Total far emission unchanged
+  // (cluster energy = the removed share of the far glow, ~0.012 units per m², I; city-light layout not surveyed, NV).
+  const FAR_UNIFORM = 0.4, S3 = 520.0, E3 = 0.012 * S3 * S3 / 0.6;
+  const farU = mix(float(1.0), float(FAR_UNIFORM), smoothstep(12.0, 40.0, fw));
+  const g3 = xz.div(S3); const c3 = floor(g3); const f3 = fract(g3).sub(0.5);
+  const h3 = hash12(c3.mul(2.31).add(17.0)); const off3 = vec2(hash12(c3.add(4.7)), hash12(c3.add(9.3))).sub(0.5).mul(0.7);
+  const d3 = length(f3.sub(off3)).mul(S3); const on3 = step(0.4, h3);
+  const r3 = max(float(3.0), fw.mul(1.0));
+  const lum3 = exp(d3.mul(d3).negate().div(r3.mul(r3))).mul(float(E3 / Math.PI).div(r3.mul(r3))).mul(on3).mul(smoothstep(12.0, 40.0, fw));
+  const lc3 = mix(vec3(1.0, 0.7, 0.42), vec3(1.0, 0.93, 0.82), step(0.75, h3));
+  return albedo.mul(lc).mul(poolE.mul(1.0 / Math.PI)).mul(farU).add(lc.mul(lum).mul(farU)).add(lc2.mul(lum2)).add(lc3.mul(lum3)).mul(urb);
 }
 
 // ---------------------------------------------------------------- ground material (GROUND_FS)
@@ -493,7 +507,9 @@ export function groundMaterial(world, bakes, sky, Q) {
     // js/env/atmo/weather_fx.js wetMaterial is the mirror the A-WET gate checks). sky.u.wetPore darkens every ground
     // surface (porosity 0.5; concrete 0.3), sky.u.wetFilm smooths the paved surfaces (runway asphalt and the concrete
     // mask), puddles (sky.u.puddle) form in a noise mask on paint-free paved surfaces: flat water, roughness 0.03, so
-    // the PMREM environment mirrors the sky (no slope data: the mask is I). Uniforms: js/three/renderer3.js
+    // the PMREM environment mirrors the sky (no slope data: the mask is I), over the wet diffuse (PUDDLE_ALBEDO 1: review
+    // look1-3, puddles were dark stains); lamps are mirrored by renderer3's reflected light sprites (no SSR). Uniforms:
+    // js/three/renderer3.js
     If(sky.u.wetPore.greaterThan(0.0).or(sky.u.puddle.greaterThan(0.0)), () => {
       const paved = clamp(max(concMask, step(0.5, R.flag).mul(inApt)), 0.0, 1.0);
       const por = mix(float(POROSITY.asphalt), float(POROSITY.concrete), concMask);

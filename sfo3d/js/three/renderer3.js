@@ -39,16 +39,17 @@ import { AircraftRenderer } from './aircraft.js';
 import { geometryOf, textureOf, retainedImageBytes } from './convert.js';
 import { glCanvas, setMaxTextureSize, imageHooks } from './compat/gl.js';
 import { disposeRecord } from './convert.js';
-import { floodField, E_STAND, mastE, mastAim, MAST_LAYER } from './flood.js';
+import { floodField, E_STAND, mastE, mastAim, MAST_LAYER, FLOOD_COLOR } from './flood.js';
 import { garageCars } from './objects.js';
 import { GROUND_Y } from '../geo.js';
 import { lampK } from './tsl/common.js';
 import { Buildings3D } from './buildings3d.js'; // Blender building assets (data/buildings3d/*.glb)
 import { Rain } from './rain.js';
-import { sunCalibration, cloudAdjust, nightSkyLuminance, moonDisc, renderSlabs, cloudLayers, histogram8, detailDistribution, fogTransmittance, sstep as sstepE } from '../env/atmo/sky_model.js';
+import { sunCalibration, cloudAdjust, nightSkyLuminance, moonDisc, renderSlabs, cloudLayers, histogram8, detailDistribution, fogTransmittance, fogBeamT, sstep as sstepE } from '../env/atmo/sky_model.js';
 import { meter, adapt, clampEV, exposureForEV, evForExposure, ev100FromLuminance, preExposure, METER_BIAS } from '../env/atmo/exposure.js';
 import { rainParams, showerFactor, lightningFlashes, flashLevel, wetStep } from '../env/atmo/weather_fx.js';
 import { directionWorld } from '../env/ephemeris.js';
+import { aureole } from '../env/lighting/photometry.js';
 
 const { uniform } = TSL;
 const T0 = performance.now();
@@ -90,6 +91,8 @@ const HALL_DF = 0.05, HALL_LUX = 200;
 // NV (spec §4.6): 3 lx at 3 km, inverse square, 0.05-20 lx (I, QA-tuned). Rain radiance: 0.25 x the sky-up radiance per
 // 1-px streak (I, display weight; js/three/rain.js).
 const K_TWILIGHT = 0.167, MOON_COL = [1.0, 0.95, 0.86], FLASH_COL = [0.86, 0.9, 1.0], RAIN_K = 0.25, FLASH_GLOW_CDM2 = 50;
+const MAST_LOBE_FLOOR = 0.25;   // floodlight lamps seen from the side / behind: fraction of the on-axis intensity (I / NV, Q7; attachWorld)
+const REFL_MAX_M = 600, REFL_K = 0.7;   // lamp reflections on wet pavement: range, share of the Fresnel energy in the image (I)
 const DEGR = Math.PI / 180;
 
 // tier: ?tier=ultra|high|medium|low overrides; otherwise the old app's choice, recognised from the options it passes
@@ -215,10 +218,16 @@ export class Renderer3 {
     this.env = env; const st = this.envState;
     if (st && st.sun && st.natural) {
       // physical sky (environment step 3): sunI calibrated to C171, light adjusted for the reported clouds, night floor
-      const cal = sunCalibration(st); this.cal = cal;
+      // below the horizon the sky model takes the GEOMETRIC Sun (review look1-10: the ephemeris clamps refraction at
+      // its -1° value, so the apparent Sun of a deep twilight sits 0.65° high; twilight is defined geometrically, USNO),
+      // blended from the apparent direction between apparent el -1° and -2° (no jump at the switch)
+      let sunDirSky = env.sunDir;
+      { const wG = sstep(-1, -2, st.sun.el); if (wG > 0) { const g = directionWorld(st.sun.az, st.sun.elTrue), a = env.sunDir; const v = [0, 1, 2].map(i => a[i] * (1 - wG) + g[i] * wG); const l = Math.hypot(...v) || 1; sunDirSky = v.map(c => c / l); } }
+      const cal = sunCalibration(st, 21e-6, sunDirSky); this.cal = cal;
       if (cal.k != null) this.sunK = cal.k; else if (this.sunK == null) this.sunK = K_TWILIGHT;
-      const envP = { ...env, sunI: (env.sunI || 20) * this.sunK, physical: true }; this.envEff = envP;
-      const L = cloudAdjust(Sky.lightFor(envP), st);
+      const envP = { ...env, sunDir: sunDirSky, sunI: (env.sunI || 20) * this.sunK, physical: true }; this.envEff = envP;
+      // the direct beam through the fog / mist / VV obscuration (fogBeamT; review truth1-5), the loss moved to the diffuse
+      const L = cloudAdjust(Sky.lightFor(envP), st, fogBeamT(renderSlabs(st), st.sun.el));
       const ns = nightSkyLuminance(st).units;
       L.skyFloor = [ns, ns, ns]; L.skyUp = L.skyUp.map(v => Math.max(v, ns)); L.skyHorizon = L.skyHorizon.map(v => Math.max(v, ns));
       this.light = L; this.physLight = { ...L, sunColor: L.sunColor.slice(), skyUp: L.skyUp.slice(), skyHorizon: L.skyHorizon.slice(), ground: L.ground.slice() };
@@ -239,7 +248,7 @@ export class Renderer3 {
     const fogCol = L.skyUp.map((v, k) => v * 0.8 + L.ground[k] * 0.2);   // dense-fog in-scatter: ambient sky + ground bounce (I)
     S.setSlabs(slabs, fogCol, sstepE(2e-4, 2e-3, st.atm.sigmaSurface)); S.u.sunGlow.value = st.sunVisibleP ?? 1;
     this.layers = this.cloudDist ? cloudLayers(st, this.cloudDist) : [];
-    S.setLayers(this.layers); S.u.cloud.value.x = 1 - (st.sunVisibleP ?? 1);
+    S.setLayers(this.layers); this.layers = S.layers; S.u.cloud.value.x = 1 - (st.sunVisibleP ?? 1);   // (the tier's layer count)
     S.setMoon(st.moon && st.moon.el > -1 ? moonDisc(st) : null);
     this._cloudPlanes();
   }
@@ -272,7 +281,7 @@ export class Renderer3 {
     const T = world.textures;
     this.noiseTex = textureOf(T.noise, { anisotropy: this.Q.aniso }); this.noiseTex.wrapS = this.noiseTex.wrapT = THREE.RepeatWrapping;
     const cloudTex = textureOf(T.clouds); cloudTex.wrapS = cloudTex.wrapT = THREE.RepeatWrapping;
-    this.sky = new Sky(this.engine, { cloudTex, noiseTex: this.noiseTex, baseRes: this.Q.skyRes });
+    this.sky = new Sky(this.engine, { cloudTex, noiseTex: this.noiseTex, baseRes: this.Q.skyRes, horizSamples: this.tier === 'low' ? 4 : 8, maxSlabs: this.tier === 'low' ? 4 : 6, maxLayers: this.tier === 'low' ? 4 : 6 }); // look1-12: fewer fog-structure samples, slab and layer loops on the phone tier
     this.sky.u.night = this.nightE; this.sky.u.time = this.time; // ground.js city lights: nightE
     // cloud texture histogram -> coverage thresholds of the cloud layers (sky_model.js coverageThreshold; A-CLD)
     { let rec = T.clouds; for (let i = 0; i < 3 && rec && !rec.isTexRecord; i++) rec = rec.tex;
@@ -286,6 +295,12 @@ export class Renderer3 {
     const t0 = performance.now(); const f = floodField(masts, { res: this.tier === 'low' ? 5 : 3 });
     if (f) { this.engine.flood.setField(f); this.floodScale = f.scale; tlog('flood field ' + f.w + 'x' + f.h + 'x' + f.d + ' in ' + (performance.now() - t0).toFixed(0) + ' ms (' + JSON.stringify(f.stats) + ')'); }
     this.masts = masts.map(([x, z]) => { const [ax, az] = mastAim(x, z); return { x, z, ax, az }; }); this.spotSel = [];
+    // floodlight-mast lamp sprites (js/live/items.js: i 900, s 0.5 = ~2,970 cd on the aim axis, NV; lobe (0,-1,0.3)^2):
+    // a side / back floor of MAST_LOBE_FLOOR of the on-axis intensity for the lit housing and lens glare (review
+    // look1-5: the lobe was 0 for 58-73 % of the lamps from the approach, the gate and the bay, while SFO photos from the
+    // bay at dusk show every mast's lamps as bright points (refs/cache/env_ref/sfo_dusk_lights_fog_2016_960.jpg, CC BY
+    // 4.0, obs): saturated points at EV100 2.66 from ~6 km mean >= ~70 cd toward the bay (M, rough); the value I / NV, Q7)
+    for (const sp of world.mastSprites || []) sp.floor = MAST_LOBE_FLOOR;
   }
   // js/world/world.js bakeGround(R, world, log, opts) (compat/world.js): queued as tiles, rendered in frameScene
   requestBake(world, opts = {}) {
@@ -357,6 +372,7 @@ export class Renderer3 {
   _buildStatic() {
     const E = this.engine, S = E.scene, W = this.world, Q = this.Q;
     const sky = this.sky;
+    sky.setFlood(E.flood); // the floodlight field for the fog in-scatter (review look1-1; set in attachWorld before this)
     S.backgroundNode = sky.backgroundNode(); S.fogNode = sky.fogNode();
     // sun radiance x cloud shadow (the old shaders' getShadow() * cloudShadow(wp)); three multiplies the CSM term in
     this.sunRad = uniform(new THREE.Vector3(1, 1, 1));
@@ -372,7 +388,7 @@ export class Renderer3 {
     this.built = true; tlog('static scene built');
     this.b3d = new Buildings3D(this); this.b3d.start(); // loads after the static scene; first-pass buildings until then
     // rain / drizzle particles in the light-sprite pass (js/three/rain.js) and the low cloud-layer planes (environment step 3)
-    this.rain = new Rain(60000, { depthNode: E.depthNode, groundY: GROUND_Y }); E.fxScene.add(this.rain.mesh);
+    this.rain = new Rain(60000, { depthNode: E.depthNode, groundY: GROUND_Y, floodField: (p) => sky.floodField(p) }); E.fxScene.add(this.rain.mesh); // floodlit drops (look1-4)
     this._cloudPlanes();
     // compile the scene's programs off the frame loop where the backend can (KHR_parallel_shader_compile / WebGPU
     // async pipelines); frames are held until then (at most 30 s) so the first frames do not stall one by one
@@ -482,8 +498,15 @@ export class Renderer3 {
       { const sy = Math.max(0, L.sunDir[1]); const k = [0, 1, 2].map(c => { const sk = Math.PI * L.skyUp[c], su = L.sunColor[c] * sy; return sk + su > 1e-12 ? sk / (sk + su) : 1; }); this.shadeK.value.set(k[0], k[1], k[2]); }
     }
     const nightF = this.extraCommon.uNight || 0;
+    // apron floods (field, spots, the exposure key): the EnvState flood photocell (E < 32.3 lx, spec §4.2; review
+    // truth1-12: they followed the app's sun-elevation ramp nightF, unsourced, while the HUD showed the photocell) with a
+    // 0.5 s lamp ramp (I); without an EnvState the old ramp. (Window / city / sign lamps keep nightF: engine track.)
+    { const on = st && st.photocell ? (st.photocell.floodsOn ? 1 : 0) : nightF; const now = performance.now();
+      const dtw = this._fT ? Math.min(1, (now - this._fT) / 1000) : 1; this._fT = now;
+      this.floodK = this.floodK == null ? on : this.floodK + (on - this.floodK) * Math.min(1, dtw / 0.5); }
+    const floodK = this.floodK;
     // ---- directional light: the Sun; at night the Moon, or a lightning flash (environment step 3/4; no shadows)
-    let ldir = L.sunDir, lcol = L.sunColor, lname = 'sun';
+    let ldir = L.sunDir, lcol = L.beamT != null && L.beamT < 1 ? L.sunColor.map(c => c * L.beamT) : L.sunColor, lname = 'sun';
     let flash = { level: 0, dir: [0, 1, 0], lux: 0 };
     if (st) {
       if (st.lightning && st.lightning.perMin > 0) {
@@ -499,7 +522,8 @@ export class Renderer3 {
       }
       if (st.sun.el < 0 && flash.level > 0.01) { ldir = flash.dir; lcol = FLASH_COL.map(c => c * flash.lux * flash.level / LUX_PER_UNIT); lname = 'flash'; }
       else if (st.sun.el < -1 && st.moon.el > 0) {
-        const En = st.natural.moon * st.natural.D / Math.max(Math.sin(st.moon.el * DEGR), 0.05) / LUX_PER_UNIT; // clear: the layers' coverage maps cut it
+        // clear-sky normal illuminance: the cloud layers' coverage maps cut it; the fog / VV obscuration by fogBeamT
+        const En = st.natural.moon * st.natural.D / Math.max(Math.sin(st.moon.el * DEGR), 0.05) / LUX_PER_UNIT * fogBeamT(this.slabs || renderSlabs(st), st.moon.el);
         ldir = st.moon.dir; lcol = MOON_COL.map(c => c * En); lname = 'moon';
       }
       // cloud glow at the flash: FLASH_GLOW_CDM2 x (5 km / distance)^2, 5-500 cd/m2 at the peak of sky.cloudLayers'
@@ -516,7 +540,7 @@ export class Renderer3 {
     const el = Math.asin(Math.max(-1, Math.min(1, L.sunDir[1]))) * 180 / Math.PI; const dark = sstep(2, -10, el);
     const pe = post.exposure ?? 0.45; const B = this.baseLight || L;
     const eAmb = lum(B.sunColor) * Math.max(0, B.sunDir[1]) + Math.PI * lum(B.skyUp);
-    const eKey = eAmb + E_STAND * LAMP_M * nightF;
+    const eKey = eAmb + E_STAND * LAMP_M * floodK;
     const expoKey = KEY_NIGHT * Math.PI / (RHO_CONC * Math.max(eKey, 1e-7));
     const expoDay = dark < 0.999 ? Math.max(0, (pe - APP_NIGHT_EXPO * dark) / (1 - dark)) * DAY_GAIN : 0;
     const expoKeyed = Math.max(expoDay, expoKey); this.eKey = eKey;
@@ -534,14 +558,20 @@ export class Renderer3 {
     this.sunRad.value.set(lcol[0] * pre, lcol[1] * pre, lcol[2] * pre);
     const lampKraw = Math.pow(LAMP_M, nightF);
     this.time.value = t; this.night.value = nightF; this.nightE.value = nightF * LAMP_M * pre; lampK.value = lampKraw * pre;
-    E.flood.intensity = nightF * LAMP_M * pre; // floodlights switch on with the app's night factor (sun below ~6 deg .. -4 deg)
-    this._floodSpots(cam, nightF * LAMP_M * pre);
+    E.flood.intensity = floodK * LAMP_M * pre; // floodlights: the flood photocell (above)
+    // floodlight in-scatter in the fog (sky.floodScatter; review look1-1): on while the floods are and the lowest slab is
+    // denser than clean air (σ > 1e-4 m⁻¹: below that the glow is < 1 % of the lit apron's luminance, M)
+    { const s0 = this.slabs && this.slabs[0] ? this.slabs[0].sigma : 0; this.sky.u.floodI.value = floodK * LAMP_M * pre; this.sky.u.floodFog.value = floodK > 0 && s0 > 1e-4 ? s0 : 0; }
+    this._floodSpots(cam, floodK * LAMP_M * pre);
     const wu = this.world.waterU; if (this.wMat && wu) { const u = this.wMat.userData; if (wu.uWind) u.uWind.value.set(wu.uWind[0], wu.uWind[1]); if (wu.uWaveAmp != null) u.uAmp.value = wu.uWaveAmp; }
     E.setCamera(cam, this.W, this.H);
     this.pxScale.value = 2 * Math.tan(cam.fov / 2) / Math.max(1, this.H);
     // camera cut -> the meter snaps (no adaptation across a cut)
     { const p = cam.pos, q = this._lastCamPos; if (!q || Math.hypot(p[0] - q[0], p[1] - q[1], p[2] - q[2]) > 30) this._meterSnap = true; this._lastCamPos = p.slice(); }
     if (this.cloudCentre) this.cloudCentre.value.set(cam.pos[0], cam.pos[2]);
+    // only the cloud-plane side the camera can see is drawn (review look1-12: the hidden side rasterised full-screen at
+    // opacity 0): the base plane from below, the top plane from above
+    if (this.cloudPlanes) for (const m of this.cloudPlanes) { const l = this.layers[m.userData.k]; m.visible = !!(l && l.slab && (m.userData.top ? l.thickness > 0 && cam.pos[1] > l.baseY + l.thickness : cam.pos[1] < l.baseY)); }
     // rain / drizzle (js/three/rain.js; parameters js/env/atmo/weather_fx.js rainParams)
     if (this.rain) {
       let n = 0;
@@ -550,7 +580,8 @@ export class Renderer3 {
         const P = rainParams(st.precip, this.tier, [-Math.sin(fr) * sp, Math.cos(fr) * sp]);
         const deck = this.layers.find(l => l.cover === 'BKN' || l.cover === 'OVC'); const top = deck ? deck.baseY : 1e6;
         const col = L.skyUp.map(v => v * RAIN_K * pre);
-        n = this.rain.update(P, cam, t, col, top, 2 * Math.tan(cam.fov / 2) / Math.max(1, this.H), P && P.showery ? showerFactor(t) : 1);
+        const fc = FLOOD_COLOR.map(c => c * floodK * LAMP_M * pre * RAIN_K / Math.PI);   // drops under the floods (rain.js floodC)
+        n = this.rain.update(P, cam, t, col, top, 2 * Math.tan(cam.fov / 2) / Math.max(1, this.H), P && P.showery ? showerFactor(t) : 1, fc);
       } else this.rain.update(null);
       this.rainCount = n;
     }
@@ -564,11 +595,51 @@ export class Renderer3 {
     // records without physical photometry (floodlight-mast lamps, bridge / stand lights, js/live/app.js mastSprites and
     // gateSys.sprites) get the fog transmittance camera -> light of the slabs (environment step 3; the phys records
     // already carry it through their Allard factor; markers are UI and stay visible). Found in the predawn-fog render:
-    // the mast lamps 1-2 km away shone through M1/4SM fog.
-    const fogS = st && this.slabs && this.slabs.length && st.atm.sigmaSurface > 2e-4 ? this.slabs : null, cp = cam.pos;
+    // the mast lamps 1-2 km away shone through M1/4SM fog. Always applied (review truth1-4: it was gated on the surface
+    // σ > 2e-4, so under a 10SM BKN010 deck the mast lamps shone through the cloud at full brightness from above)
+    const fogS = st && this.slabs && this.slabs.length ? this.slabs : null, cp = cam.pos;
+    // fog aureoles (review look1-1): the phys records carry theirs (js/env/lighting/airfield.js, js/env/aircraft_lights.js:
+    // photometry.js aureole); the non-photometric lamps get one from the same transmittance here, while the lowest slab is
+    // fog / mist (σ > 1e-4). Any aureole whose peak would display below ~1/1000 of white is dropped (fill rate, I).
+    const fogAur = fogS && fogS[0].sigma > 1e-4, expD = expoTotal / pre; let nAur = 0;
+    const aurVisible = (au, ar, ss, p) => { const d2 = (p[0] - cp[0]) ** 2 + (p[1] - cp[1]) ** 2 + (p[2] - cp[2]) ** 2; return au * LAMP_M * pre * 0.408 * ss * ss / Math.max(d2, 1) / (Math.PI * ar * ar) * expD > 1e-3; };
     sp.begin(); const SL = fr && fr.sprites || [], nAc = fr && fr.nAc || 0;
-    for (let k = 0; k < SL.length; k++) { const s = SL[k]; const phys = s.phys === true || (k < nAc && Sprites.isPositionLight(s)); sp.put(s, phys, fogS && !phys && !s.marker && !(s.s >= 0.6 && !s.dir) ? fogTransmittance(fogS, cp, s.p) : 1); }
-    sp.end(E.camera, this.H);
+    for (let k = 0; k < SL.length; k++) {
+      const s = SL[k]; const phys = s.phys === true || (k < nAc && Sprites.isPositionLight(s));
+      const fogged = fogS && !phys && !s.marker && !(s.s >= 0.6 && !s.dir); const T = fogged ? fogTransmittance(fogS, cp, s.p) : 1;
+      let au = phys ? (s.aur || 0) : 0, ar = phys ? (s.aurR || 0) : 0;
+      if (fogged && fogAur) { const A = aureole(T); if (A) { au = s.i * A.f; ar = A.theta; } }
+      if (au > 0 && !aurVisible(au, ar, s.s || 0.3, s.p)) au = 0; if (au > 0) nAur++;
+      sp.put(s, phys, T, au, ar);
+    }
+    // wet pavement mirrors the lamps (review look1-3: puddles were dark holes under the floods; no SSR / planar
+    // reflection here): every light more than 1 m above the ground within REFL_MAX_M gets its mirror image, drawn where the
+    // ray to the image meets the ground (so the scene depth test hides it behind objects), at the image's distance (size
+    // and energy), Fresnel of water (Schlick, F0 0.02) at that incidence x the wet state (film / puddle) x REFL_K, spread
+    // by the film roughness (1 + 2 film, energy kept), the lobe mirrored. Approximations (I): flat ground at GROUND_Y,
+    // also where the hit is not paved; the record's beam toward the camera stands for the one toward the image.
+    let nRefl = 0;
+    const wetR = this.wet && st ? Math.max(this.wet.film, this.wet.puddle) : 0;
+    if (wetR > 0.2 && cp[1] - GROUND_Y > 0.3) {
+      const G = GROUND_Y, pool = this._refl || (this._refl = []);
+      for (let k = 0; k < SL.length && sp.n < sp.max; k++) {
+        const s = SL[k]; if (s.marker || (s.s >= 0.6 && !s.dir) || !(s.i > 0)) continue;
+        const h = s.p[1] - G; if (h < 1) continue;
+        const dx = s.p[0] - cp[0], dz = s.p[2] - cp[2]; if (dx * dx + dz * dz > REFL_MAX_M * REFL_MAX_M) continue;
+        const Py = G - h, t = (cp[1] - G) / (cp[1] - Py);
+        const hit = [cp[0] + t * dx, G + 0.05, cp[2] + t * dz];
+        const dH = Math.hypot(hit[0] - cp[0], hit[1] - cp[1], hit[2] - cp[2]), dV = Math.hypot(dx, Py - cp[1], dz);
+        const cosI = Math.min(1, (cp[1] - G) / Math.max(dH, 1e-3)); const F = 0.02 + 0.98 * Math.pow(1 - cosI, 5);
+        const spread = 1 + 2 * this.wet.film; const R = F * wetR * REFL_K;
+        const phys = s.phys === true || (k < nAc && Sprites.isPositionLight(s));
+        const Tv = fogS && !phys ? fogTransmittance(fogS, cp, [s.p[0], Py, s.p[2]]) : 1;
+        let o = pool[nRefl]; if (!o) o = pool[nRefl] = { p: [0, 0, 0], c: null, i: 0, s: 0.3, dir: null, k: 4, floor: 0, marker: false };
+        o.p[0] = hit[0]; o.p[1] = hit[1]; o.p[2] = hit[2]; o.c = s.c; o.s = (s.s || 0.3) * dH / Math.max(dV, 1e-3) * spread;
+        o.i = s.i * R / (spread * spread); o.dir = s.dir ? [s.dir[0], -s.dir[1], s.dir[2]] : null; o.k = s.k; o.floor = s.floor || 0;
+        if (o.i * Tv > 1e-6) { sp.put(o, phys, Tv); nRefl++; }
+      }
+    }
+    sp.end(E.camera, this.H); this.nAur = nAur; this.nRefl = nRefl;
     // terminal halls (objects.js id 1): the daylight factor applies to the sky's diffuse illuminance (CIE: overcast sky,
     // direct sun excluded; close-out round 2: it was applied to sun + sky, 3.5 klx in the hall instead of ~1 klx)
     const eSky = Math.PI * lum(B.skyUp);
@@ -610,7 +681,7 @@ export class Renderer3 {
       pre: this.pre, postExpo: r(this.engine.expo.value, 4), envIntensity: r(this.engine.scene.environmentIntensity, 4), light: this.lightName, sunRad: this.sunRad ? this.sunRad.value.toArray().map(v => r(v)) : null,
       layers: this.layers.map(l => ({ cover: l.cover, baseFt: l.baseFt, own: r(l.own), thr: r(l.thr), slab: l.slab })), planes: this.cloudPlanes ? this.cloudPlanes.filter(m => m.visible).length : 0,
       slabs: (this.slabs || []).map(s => [s.kind, r(s.y0, 4), r(s.y1, 4), r(s.sigma)]), moonL: this.sky ? r(this.sky.u.moonL.value) : null, rain: this.rainCount || 0, rainParams: this.rain && this.rain.params ? { kind: this.rain.params.kind, count: this.rain.params.count, streak: r(this.rain.params.streak), v: r(this.rain.params.vFall) } : null,
-      wet: this.wet ? { film: r(this.wet.film), pore: r(this.wet.pore), puddle: r(this.wet.puddle) } : null, flash: this.flash, meterErr: this._meterErr || null, cloudTexSum: this.cloudTexSum || null };
+      wet: this.wet ? { film: r(this.wet.film), pore: r(this.wet.pore), puddle: r(this.wet.puddle) } : null, flash: this.flash, aureoles: this.nAur || 0, reflections: this.nRefl || 0, floodK: this.floodK, meterErr: this._meterErr || null, cloudTexSum: this.cloudTexSum || null };
   }
   // floodlight spots: the masts that light the point the camera looks at most (horizontal irradiance there, the same
   // intensity distribution as the field), with hysteresis so the choice does not flip every frame

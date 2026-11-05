@@ -473,7 +473,10 @@ function layerCoverages(sky) {
   for (const s of sky) {
     if (!(s.cover in COVER_OKTAS)) continue;
     const [lo, hi] = COVER_OKTAS[s.cover];
-    const tot = Math.max(prev, (lo + hi) / 2 / 8.0);
+    let tot = Math.max(prev, (lo + hi) / 2 / 8.0);
+    // INFERRED floor for a second layer of the same class (FEW003 FEW008): halfway from the layers below to the class's
+    // upper bound (review truth1-11; = tools/env/metar_decode.py)
+    if (tot <= prev && hi / 8.0 > prev) tot = prev + (hi / 8.0 - prev) / 2;
     const own = prev >= 1.0 ? 1.0 : Math.max(0.0, 1.0 - (1.0 - tot) / (1.0 - prev));
     out.push({ ...s, summation: pyRound(tot, 3), own_fraction: pyRound(own, 3) });
     prev = tot;
@@ -530,7 +533,10 @@ export function renderParams(d, night = false, marineLayerDepthFt = null, routin
   p.precip = null;
   if (pr.length) {
     const w0 = pr[0];
-    const kind = (w0.precip.length === 1 && w0.precip[0] === 'DZ') ? 'drizzle' : ((w0.precip.includes('GR') || w0.precip.includes('GS')) ? 'hail' : 'rain');
+    // GRRA = rain (particles, rate, wetting) with a hail flag; hail alone has no drop parameters (not drawn; review
+    // truth1-10; = tools/env/metar_decode.py)
+    const hail = w0.precip.includes('GR') ? 'GR' : w0.precip.includes('GS') ? 'GS' : null;
+    const kind = (w0.precip.length === 1 && w0.precip[0] === 'DZ') ? 'drizzle' : (hail && !w0.precip.includes('RA') ? 'hail' : 'rain');
     const inten = w0.intensity;
     // [7900] Table 9-4 rain-rate classes (in/h -> mm/h); drizzle intensity is visibility-based (Table 9-5)
     const rateCls = { light: [0.1, 2.54], moderate: [2.8, 7.62], heavy: [7.62, 25.0] }[inten || 'moderate'];
@@ -545,11 +551,11 @@ export function renderParams(d, night = false, marineLayerDepthFt = null, routin
     if (rate == null) rate = kind !== 'drizzle' ? Math.sqrt(Math.max(rateCls[0], 0.1) * rateCls[1]) : 0.25;   // INFERRED mid-class
     const lam = 4.1 * Math.pow(rate, -0.21);      // Marshall-Palmer slope per mm of diameter [GN07]
     const n0 = 8000.0;                            // m^-3 mm^-1 (2nd/NV, spec §4.6)
-    p.precip = { kind, intensity: inten, showery: w0.descriptor === 'SH', thunder: w0.descriptor === 'TS', rate_mm_h: pyRound(rate, 2),
+    p.precip = { kind, intensity: inten, showery: w0.descriptor === 'SH', thunder: w0.descriptor === 'TS', hail, rate_mm_h: pyRound(rate, 2),
       rate_basis: hp ? 'Prrrr remark' : 'intensity class midpoint (INFERRED)',
       drops_per_m3_gt_0p5mm: kind === 'rain' ? pyRound(n0 / lam * Math.exp(-lam * 0.5), 0) : null,
-      median_volume_diameter_mm: kind === 'rain' ? pyRound(3.67 / lam, 2) : 0.3,
-      fall_speed_m_s: kind === 'rain' ? pyRound(200.0 * Math.sqrt(3.67 / lam / 2 / 1000.0), 2) : 1.0 };
+      median_volume_diameter_mm: kind === 'rain' ? pyRound(3.67 / lam, 2) : kind === 'drizzle' ? 0.3 : null,
+      fall_speed_m_s: kind === 'rain' ? pyRound(200.0 * Math.sqrt(3.67 / lam / 2 / 1000.0), 2) : kind === 'drizzle' ? 1.0 : null };
   }
   // wetness (INFERRED state-machine inputs; the renderer integrates over time)
   const evs = d.rmk.wx_events || [];

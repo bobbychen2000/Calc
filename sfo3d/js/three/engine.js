@@ -401,7 +401,10 @@ export class Engine {
     const s = this.sun; s.position.set(dir[0] * 1000, dir[1] * 1000, dir[2] * 1000); s.target.position.set(0, 0, 0);
     const m = Math.max(color[0], color[1], color[2], 1e-6);
     s.color.setRGB(color[0] / m, color[1] / m, color[2] / m, THREE.LinearSRGBColorSpace); s.intensity = m * intensityScale;
-    s.castShadow = dir[1] > 0.02; s.updateMatrixWorld(); s.target.updateMatrixWorld();
+    // shadows whenever the (apparent) Sun is above the horizon (environment review truth1-14: the 0.02 threshold, Sun
+    // ~1.15 deg, left the 5-8 min around sunrise / sunset with a drawn Sun and no shadows; at grazing light the horizontal
+    // ground gets ~sin(el) of the beam, so acne there is invisible; the cascades' normal bias holds for the vertical faces)
+    s.castShadow = dir[1] > 0; s.updateMatrixWorld(); s.target.updateMatrixWorld();
     const l = Math.hypot(dir[0], dir[1], dir[2]) || 1; this.sunDirU.value.set(dir[0] / l, dir[1] / l, dir[2] / l);
   }
   // floodlight spots: list = [{x, z, ax, az} | null] per spot; on = lamps on (0..1 x LAMP_M), scale = field level factor.

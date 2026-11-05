@@ -3,7 +3,8 @@
 // intensities, airfield §12 defects 1-8) with the 3,633 fixture faces of data/sfo_lighting.js (js/env/lighting/fixtures.js)
 // switched by the JO 7110.65 controller (js/env/lighting/controller.js) and drawn at their photometric intensity:
 //   I_view = cd(type, colour) × step % × B(θh, θv) × k_cd                       (spec §5.4; AC 150/5345-46F minima, V)
-//   T = exp(−optical depth through the EnvState slabs), E = I_view·T/d², v = visibility factor (E / E_T)   (§4.10)
+//   T = exp(−optical depth through the renderer's slabs: sky_model.js renderSlabs + slabTau, the scene fog's σ field),
+//   E = I_view·T/d², v = visibility factor (E / E_T)   (§4.10)
 //   sprite intensity i = lampUnits(I_view·T·v·G, s), phys: true                 (js/env/lighting/photometry.js)
 // G = DAY_GAIN^(1 − w) (w = ASOS night weight): display gain by day (I). A 2-px sprite drawn at its physical energy cannot
 // reach the eye's daylight contrast threshold on a display (spec §4.10 "Rendering the threshold on a display"): with the
@@ -19,7 +20,8 @@
 //    Tables 2-1 / 2-2 via lighting_spec.json als_detail, V); flashers aimed 6° (fixture aim_up).
 //  - SSALR mode of the 28R ALSF-2 (3-4-9; JO 6850.2C 200c via lighting_spec.json rules.ssalr, V): centreline bars at
 //    200..1400 ft every 200 ft, the 1000-ft bar reduced to 70 ft (the inner lights within ±35 ft, I), no red side rows,
-//    no 500-ft bar, flashers 1600..2400 ft only (RAIL); the threshold bar stays (I).
+//    no 500-ft bar, RAIL = five flashers at 1600..2400 ft every 200 ft, sequenced among themselves (JO 6850.2C 200c, V);
+//    the threshold bar stays (I).
 //  - ALS positions: fixture station and lateral offset, placed on the structures by js/anim/lights.js alsPlacement
 //    (NAIP-imaged stations over the water, inset on pavement, low mounts on land) so no light floats (owner rule).
 //  - Taxiway edge lights: the app's outline-derived blue lights (spec §5.9 / Q4: kept, inf) at L-861T 2 cd (AC 150/5345-46F
@@ -31,8 +33,11 @@
 //  - L-862 white also emits >= 50 cd omnidirectionally up to 15° elevation (46F Table 3-2 note (c), V), × step %.
 //  - k_cd = 1 (46F allows the average up to 3× the minimum, §3.3: calibrate on owner night photos, Q7).
 import { loadFixtures, COLOUR_NAME } from './fixtures.js';
-import { controllerFromEnv, RUNWAY_OF } from './controller.js';
-import { beamOf, beamFactor, papiWhite, papiCd, opticalDepth, visibilityFactor, flashGain, lampUnits } from './photometry.js';
+import { controllerFromEnv, RUNWAY_OF, MITL_PCT } from './controller.js';
+import { beamOf, beamFactor, papiWhite, papiCd, visibilityFactor, flashGain, lampUnits, aureole } from './photometry.js';
+// one σ field for the scene fog and the lights (spec §4.10; review truth1-3 / look1-2): the renderer's slabs (BKN at its
+// mean transmittance, the VV obscuration, the lowest slab's horizontal structure) and the same optical depth
+import { renderSlabs, slabTau } from '../atmo/sky_model.js';
 
 const DEG = Math.PI / 180, FT = 0.3048;
 export const SIGMA_CLEAR_AIR = 3.3e-5;          // = js/env/state.js SIGMA_CLEAR (clear air of the sky model, spec §4.10, M)
@@ -40,7 +45,8 @@ export const DAY_GAIN = 30;                     // I (header)
 export const K_CD = 1.0;                        // I (46F §3.3: average up to 3× the minimum)
 export const ALS_PROVISIONAL_CD = { W: 10000, R: 2000, G: 3200 };   // I on NV (header)
 export const ALS_BEAM_H = 10, ALS_V_SPREAD = 12;                    // NV / JO 6850.2C 206a (V)
-export const TAXI_EDGE_CD = 2, MITL_PCT = { 5: 100, 4: 100, 3: 100, 2: 30, 1: 10 };
+export const TAXI_EDGE_CD = 2;                  // L-861T blue minimum (AC 150/5345-46F Table 3-3, V); MITL steps: controller.js MITL_PCT
+export { MITL_PCT };
 // Flashes (js/env/lighting/photometry.js flashGain): SFL each flasher 2 flashes/s, sequence outermost -> threshold
 // (JO 6850.2C 200b, V), equal spacing in the 0.5 s cycle (I), effective intensity provisional (NV) = 10,000 cd × the
 // flasher step %; REIL 120 fpm, both units in sync (AC 150/5345-51B 3.4.2, V; style E unidirectional, SFO style NV);
@@ -48,6 +54,9 @@ export const TAXI_EDGE_CD = 2, MITL_PCT = { 5: 100, 4: 100, 3: 100, 2: 30, 1: 10
 // ms, V range; 1.0 s chosen, I), 2,000 cd effective (V). Flash lamps: short (xenon / LED, duration NV): one frame.
 export const FLASH = { SFL: { cd: 10000, P: 0.5, on: 0.002 }, REIL: { fpm: 120, on: 0.002 }, L864: { fpm: 30, on: 1.0, cd: 2000 } };
 const SSALR_BAR_HALF_FT = 35;                   // 70-ft crossbar (rules.ssalr, V) -> inner lights (I)
+// SSALR RAIL: five flashers at 1,600 / 1,800 / 2,000 / 2,200 / 2,400 ft (JO 6850.2C 200c, V)
+export const SSALR_RAIL_FT = [1600, 1800, 2000, 2200, 2400];
+const isSsalrRail = (q) => SSALR_RAIL_FT.includes(q.station);
 
 /** Runway CL lines from LIGHTING_SPEC (runway_end world points): {runway: {a: [x, z], u: [ux, uz]}}. */
 function runwayLines(SPEC) {
@@ -139,10 +148,16 @@ export class AirfieldLighting {
     }
     // sequenced flashers: per end, outermost first, phase j × 0.5 s / N
     this.seq = {};
+    // (SSALR mode of the 28R ALSF-2: the RAIL is five flashers, 1,600-2,400 ft every 200 ft, sequenced among themselves:
+    // JO 6850.2C 200c "five sequenced flashers ... the first being located 200 feet beyond the approach end of the last
+    // steady-burning light bar with successive flasher units at each 200-foot interval out to 2,400 feet", V; review
+    // finding truth1-8: all 9 ALSF-2 flashers >= 1,600 ft were kept, at 100-ft spacing)
+    this.seqS = {};
     for (const e of new Set(recs.filter(q => q.system === 'als_flasher').map(q => q.end))) {
       const F = recs.filter(q => q.system === 'als_flasher' && q.end === e).sort((a, b) => b.station - a.station);
       F.forEach((q, j) => { q.phase = j * FLASH.SFL.P / F.length; });
       this.seq[e] = F;
+      const FS = F.filter(isSsalrRail); FS.forEach((q, j) => { q.phaseS = j * FLASH.SFL.P / FS.length; }); this.seqS[e] = FS;
     }
     // taxiway edge lights (inf): omnidirectional blue
     const blue = (SPEC.colours.blue && SPEC.colours.blue.lin_srgb) || [0, 0.16, 1];
@@ -150,7 +165,7 @@ export class AirfieldLighting {
     this.recs = recs; this.out = []; this.pool = []; this.env = null; this.state = null; this.tPrev = null; this.rwsl = null;
   }
   /** The 28R / 28L / 19L flasher sequence (QA, test): [{station, phase}], outermost first. */
-  flasherSequence(end) { return (this.seq[end] || []).map(q => ({ station: q.station, phase: q.phase })); }
+  flasherSequence(end, mode) { return mode === 'SSALR' ? (this.seqS[end] || []).map(q => ({ station: q.station, phase: q.phaseS })) : (this.seq[end] || []).map(q => ({ station: q.station, phase: q.phase })); }
   /** Mount groups for js/anim/lights.js buildMountGeometry: the ALS lights placed on land ('land') or over the water
    *  without an imaged structure ('water'), grouped per end, station and lateral cluster (6 m buckets): one post under the
    *  group's centre and a bar under its lights; plus a lamp housing behind each PAPI LHA (box). `right` is passed as the LEFT of the outward axis because the geometry's
@@ -178,11 +193,16 @@ export class AirfieldLighting {
   /** REL arrays lit by the traffic (AIM 2-1-6, V via spec §5.3): on a runway with a departure past ~30 kt or an arrival
    *  within ~1 mile of the landing threshold; each array goes out ~3-4 s before the aircraft reaches it (3.5 s, I); an
    *  arrival below ~80 kt keeps only the arrays within 30 s of its forward path, below ~34 kt none; an airborne departure
-   *  none. tracks: iterable of {phase, rwy (end name, e.g. '28L'), x, z, gs (m/s), ground}. Returns the Set (also set). */
+   *  none. tracks: iterable of {phase, rwy (end name, e.g. '28L'), x, z, gs (m/s), ground}. Returns the Set (also set).
+   *  phase: the internal classifier names (takeoff / final / flare / rollout) or the DISPLAY names js/live/app.js passes
+   *  (js/live/traffic.js displayPhase: the landing roll is 'landing', the flare 'final'; review finding truth1-2: with
+   *  the display names the arrival arrays went dark at touchdown). */
   rwslFromTraffic(tracks) {
     const KT = 0.514444, on = new Set();
     for (const t of tracks) {
-      const ph = t.phase; if (!t.rwy || !['takeoff', 'final', 'flare', 'rollout'].includes(ph)) continue;
+      let ph = t.phase === 'landing' ? 'rollout' : t.phase;
+      if ((ph === 'final' || ph === 'flare') && t.ground) ph = 'rollout';
+      if (!t.rwy || !['takeoff', 'final', 'flare', 'rollout'].includes(ph)) continue;
       const rid = RUNWAY_OF[t.rwy]; const ln = this.lines[rid]; if (!ln) continue;
       const sgn = ln.ends[0] === t.rwy ? 1 : -1;                         // motion along u from the end t.rwy
       const aAc = (t.x - ln.a[0]) * ln.u[0] + (t.z - ln.a[1]) * ln.u[1];
@@ -210,13 +230,16 @@ export class AirfieldLighting {
       else if (k.startsWith('REIL ')) S[k] = { pct: 100, cdEff: v.cd_eff };
     }
     S.PAPI = { pct: ctl.papi.pct };
-    S.TWY = { pct: o.taxiway.step > 0 ? MITL_PCT[o.taxiway.step] : 0 };
+    S.TWY = { pct: ctl.taxiwayDrawn ? ctl.taxiwayDrawn.pct : o.taxiway.step > 0 ? MITL_PCT[o.taxiway.step] : 0 };   // = the HUD's drawn MITL % (truth1-15)
     S.RWSL = { pct: 100 };
     this.ctl = ctl; this.state = S; this.env = env;
     const w = env.photocell ? env.photocell.asosNightW : 1;
     this.gain = Math.pow(this.dayGain, 1 - w);
     this.ET = env.lightVis ? env.lightVis.ET : 6.99e-7;
-    this.slabs = env.atm ? env.atm.slabs : null;
+    this.slabs = env.atm ? renderSlabs(env) : null;
+    // fog aureoles only with droplets in the air (the lowest slab denser than clean air, σ > 1e-4 m⁻¹: mist / fog / haze,
+    // I); clear-air scattering (Rayleigh + fine aerosol) is not forward-peaked and makes no aureole
+    this.fogAur = !!(this.slabs && this.slabs[0] && this.slabs[0].sigma > 1e-4);
   }
   /** Sprite records for this frame: env = EnvState, cam = camera position [x, y, z], t = time (s). */
   update(env, cam, t) {
@@ -225,7 +248,7 @@ export class AirfieldLighting {
     const tPrev = this.tPrev != null && t > this.tPrev && t - this.tPrev < 0.5 ? this.tPrev : t - 1 / 60; this.tPrev = t;
     const S = this.state, out = this.out; out.length = 0; let n = 0;
     const reilG = flashGain(tPrev, t, 60 / FLASH.REIL.fpm, 0, FLASH.REIL.on);
-    this.stats = { lit: 0, culled: 0, invisible: 0 };
+    this.stats = { lit: 0, aureoles: 0, drawn: 0, culled: 0, invisible: 0 };   // lit = core visible; drawn = records (incl. aureole-only)
     for (let k = 0; k < this.recs.length; k++) {
       const r = this.recs[k]; const st = S[r.sys]; if (!st || !(st.pct > 0)) continue;
       let cd = r.cd, pct = st.pct;
@@ -235,9 +258,9 @@ export class AirfieldLighting {
           if (sys === 'als_side_row' || sys === 'als_500ft_bar') continue;
           if (sys === 'als_centreline_bar' && (r.station > 1400 || r.station % 200 !== 0)) continue;
           if (sys === 'als_1000ft_bar' && Math.abs(r.lat) > SSALR_BAR_HALF_FT * FT + 0.3) continue;
-          if (sys === 'als_flasher' && r.station < 1600) continue;
+          if (sys === 'als_flasher' && !isSsalrRail(r)) continue;
         }
-        if (sys === 'als_flasher') { if (!st.sfl) continue; const g = flashGain(tPrev, t, FLASH.SFL.P, r.phase, FLASH.SFL.on); if (!g) continue; pct = st.sflPct * g; }
+        if (sys === 'als_flasher') { if (!st.sfl) continue; const g = flashGain(tPrev, t, FLASH.SFL.P, st.mode === 'SSALR' ? r.phaseS : r.phase, FLASH.SFL.on); if (!g) continue; pct = st.sflPct * g; }
       } else if (r.sys.startsWith('REIL ')) { if (!reilG) continue; cd = st.cdEff * reilG; pct = 100; }
       else if (r.sys === 'RWSL') { if (r.system !== 'rwsl_rel' || !this.rwsl || !this.rwsl.has(r.grp)) continue; }
       const p = r.p; const vx = cam[0] - p[0], vy = cam[1] - p[1], vz = cam[2] - p[2];
@@ -266,14 +289,19 @@ export class AirfieldLighting {
         if (r.ftype === 'L-862' && r.colour === 'W' && dv >= 0 && dv <= 15 && Math.abs(dh) <= 90) I = Math.max(I, 50 * pct / 100);
         if (!(I > 0)) continue;
       }
-      const T = Math.exp(-opticalDepth(cam, p, this.slabs, SIGMA_CLEAR_AIR));
+      const T = this.slabs ? Math.exp(-slabTau(this.slabs, cam, p)) : Math.exp(-SIGMA_CLEAR_AIR * d);
       const E = I * T / (d * d); const v = visibilityFactor(E, this.ET);
-      if (!(v > 0)) { this.stats.invisible++; continue; }
+      // fog aureole (photometry.js aureole; review look1-1): drawn while its energy at the eye reaches E_T, also when the
+      // direct core is below threshold (in dense fog the glow is seen before the point)
+      const A = this.fogAur ? aureole(T) : null; const aurOn = A && I * A.f / (d * d) >= this.ET;
+      if (!(v > 0) && !aurOn) { this.stats.invisible++; continue; }
       let o = this.pool[n]; if (!o) o = this.pool[n] = { p: null, c: null, i: 0, s: 0.3, phys: true };
-      o.p = p; o.c = col; o.s = r.s || 0.3; o.i = lampUnits(I * T * v * this.gain, o.s); o.sys = r.system; o.code = r.colour; o.cd = I * T; o.v = v;
+      o.p = p; o.c = col; o.s = r.s || 0.3; o.i = v > 0 ? lampUnits(I * T * v * this.gain, o.s) : 0; o.sys = r.system; o.code = r.colour; o.cd = I * T; o.v = v;
+      o.aur = aurOn ? lampUnits(I * A.f * this.gain, o.s) : 0; o.aurR = aurOn ? A.theta : 0;
+      if (aurOn) this.stats.aureoles++; if (v > 0) this.stats.lit++;
       out.push(o); n++;
     }
-    this.stats.lit = n;
+    this.stats.drawn = n;
     return out;
   }
 }

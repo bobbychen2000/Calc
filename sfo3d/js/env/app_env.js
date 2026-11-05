@@ -65,6 +65,7 @@ export class AppEnv {
     const L = envHudLines(this.state);
     if (this.provCounts) L.push(`?qa=prov: pub/obs ${this.provCounts.pub} green · std ${this.provCounts.std} blue · inf ${this.provCounts.inf} orange · NV ${this.provCounts.NV} red (photometry NV ${this.provCounts.photometryNV})`);
     L.push('owner-question defaults [I]: ' + OPEN_QUESTION_SHORT);
+    if (this.rendererNote) L.push(this.rendererNote);   // known limits of the renderer in use (js/live/app.js)
     this.hudEl.textContent = L.join('\n');
   }
   /** ?qa=prov: fixture records -> sprite records tinted by provenance (omnidirectional, fixed intensity, day and night). */

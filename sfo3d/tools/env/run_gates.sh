@@ -8,7 +8,7 @@
 cd "$(dirname "$0")/../.." || exit 1
 rc=0
 run() { name=$1; shift; out=$("$@" 2>&1); r=$?; echo "$out" | tail -1 | sed "s/^/$name: /"; [ $r -ne 0 ] && { echo "$out" | grep -E '^FAIL' | head -20; rc=1; }; }
-run "python decoder (38 tests)" python3 tools/env/test_metar_decode.py
+run "python decoder (39 tests)" python3 tools/env/test_metar_decode.py
 run "A-SUN ephemeris (32 checks)" node --no-warnings tools/env/test_ephemeris.mjs
 run "A-FIX fixtures" node --no-warnings tools/env/test_fixtures.mjs
 run "A-WX JS decoder" node --no-warnings tools/env/test_metar_js.mjs

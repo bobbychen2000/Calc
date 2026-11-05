@@ -10,7 +10,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { controller, controllerFromEnv, controllerInputs } from '../../js/env/lighting/controller.js';
+import { controller, controllerFromEnv, controllerInputs, rvrValue, MITL_PCT } from '../../js/env/lighting/controller.js';
 import { buildEnvState } from '../../js/env/state.js';
 import { presetById, presetRunway } from '../../js/env/presets.js';
 
@@ -58,5 +58,13 @@ check('ALS only for arrival ends; REIL only with the runway lights on (end in us
   !('ALS 19L' in controller(true, 10, null, null, W)) && !('REIL 10L' in controller(true, 10, null, null, W)) && 'REIL 1L' in controller(true, 10, null, null, W) && !('REIL 1L' in controller(false, 10, null, null, W)));
 check('beacon by day below basic VFR (91.155: ceiling < 1,000 ft or visibility < 3 SM)',
   controller(false, 2.9, null, null, W).beacon.on && controller(false, 10, null, 900, W).beacon.on && !controller(false, 3, null, 1000, W).beacon.on);
+// review finding truth1-9: 'P6000FT' = RVR greater than 6,000 ft (JO 7900.5E 13.12) must not satisfy "RVR 6,000 ft or less"
+{ const d = buildEnvState(Date.parse('2026-01-10T14:00:00Z'), { reports: ['METAR KSFO 101356Z 00000KT 1SM R28R/P6000FT BR OVC004 08/08 A3001'], rwyOverride: { arr: { '28R': 'instrument' }, dep: [] } });
+  const ci = controllerInputs(d); const a = controller(false, 1.0, ci.rvr28r, 400, { arr: { '28R': 'instrument' }, dep: [] })['ALS 28R'];
+  check("TBL 3-4-5 with R28R/P6000FT at 1 SM by day: step 4 (20 %), as without RVR; RVR 6,000 -> step 5", rvrValue({ min_ft: 6000, min_prefix: 'P' }) === 6001 && ci.rvr28r === 6001 && a.step === 4 &&
+    controller(false, 1.0, 6000, 400, { arr: { '28R': 'instrument' }, dep: [] })['ALS 28R'].step === 5 && rvrValue({ min_ft: 600, min_prefix: 'M' }) === 599, `P6000 -> ${ci.rvr28r}, step ${a.step}`); }
+// review finding truth1-15: the drawn taxiway percentage (MITL 3-step) is carried in the controller output and the HUD
+{ const night = controllerFromEnv(buildEnvState(Date.parse('2026-09-24T06:56:00Z'), { reports: ['METAR KSFO 240656Z 29005KT 10SM CLR 15/10 A2992'] }));
+  check('taxiway: TBL 3-4-12 step 3 at night (5-step reference 5 %) is drawn as MITL 100 % and the HUD says so', night.out.taxiway.step === 3 && night.taxiwayDrawn.pct === MITL_PCT[3] && MITL_PCT[3] === 100, JSON.stringify(night.taxiwayDrawn)); }
 console.log(`\nA-CTL: ${n - fails}/${n} checks passed`);
 process.exit(fails ? 1 : 0);

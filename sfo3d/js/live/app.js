@@ -17,6 +17,7 @@ import { loadFixtures, provCounts, PROV_TINT } from '../env/lighting/fixtures.js
 import { AirfieldLighting, DAY_GAIN } from '../env/lighting/airfield.js';
 import { LIGHTING_SPEC, LIGHTING_FIXTURES } from '../../data/sfo_lighting.js';
 import { aircraftLightStates, setLightViewer, setLightFrame, setLightEnv } from '../env/aircraft_lights.js';
+import { renderSlabs, fogTransmittance } from '../env/atmo/sky_model.js';   // old renderer: fog on non-photometric sprites (look1-6)
 import { LiveAircraft, TYPE_MODELS } from './aircraft.js';
 import { footprint } from './gates.js';
 import { MODEL_SOURCES } from './models.js';
@@ -123,11 +124,19 @@ export async function startApp(cfg) {
   const relIn = [];   // RWSL REL activation from the traffic (AIM 2-1-6; js/env/lighting/airfield.js rwslFromTraffic)
   scene.staticLights.push((t) => {
     const T = envCore.clock.traffic; relIn.length = 0;
-    if (T) for (const tr of T.tracks.values()) { const ph = tr.phase; if (ph === 'takeoff' || ph === 'final' || ph === 'flare' || ph === 'rollout') relIn.push({ phase: ph, rwy: tr.m && tr.m.rwy, x: tr.disp.x, z: tr.disp.z, gs: tr.disp.gs, ground: tr.disp.ground }); }
+    // (tr.phase is the DISPLAY phase: the landing roll is 'landing'; rwslFromTraffic maps it, review truth1-2)
+    if (T) for (const tr of T.tracks.values()) { const ph = tr.phase; if (ph === 'takeoff' || ph === 'final' || ph === 'landing' || ph === 'flare' || ph === 'rollout') relIn.push({ phase: ph, rwy: tr.m && tr.m.rwy, x: tr.disp.x, z: tr.disp.z, gs: tr.disp.gs, ground: tr.disp.ground }); }
     airfield.rwslFromTraffic(relIn);
     return airfield.update(envCore.state, camPos, t);
   });
-  scene.staticLights.push(() => nightF > 0.25 ? world.mastSprites : []);
+  // floodlight-mast lamps and bridge / stand floods switch on the EnvState flood photocell (E < 32.3 lx, spec §4.2;
+  // review truth1-12: they followed the unsourced nightF ramp while the HUD showed 'floods off'); without an EnvState the
+  // old ramp. Old renderer (live.html): these non-photometric records get the slabs' fog transmittance camera -> light
+  // (review look1-6; renderer3 applies it itself, js/three/renderer3.js render)
+  const floodsOn = () => { const E = envCore.state; return E && E.photocell ? E.photocell.floodsOn : nightF > 0.25; };
+  const oldFog = typeof R.frameScene === 'function' ? (a) => a : (a) => { const E = envCore.state; if (!E || !a.length) return a; if (E !== oldFog.E) { oldFog.E = E; oldFog.S = renderSlabs(E); }
+    return a.map(s => { const T = fogTransmittance(oldFog.S, camPos, s.p); return T >= 0.999 ? s : { ...s, i: s.i * T }; }); };
+  scene.staticLights.push(() => floodsOn() ? oldFog(world.mastSprites) : []);
   {
     // over-water structures (NAIP-imaged piers, lowered to the light plane) + low mounts under the land ALS lights
     // (js/anim/lights.js buildMountGeometry; the builder's land posts are replaced: they stood 1.3 m tall under lights now
@@ -143,6 +152,8 @@ export async function startApp(cfg) {
   // (replaces js/world/textures.js solarPosition) and the light-mode instants from sunEvents (replaces the hard-coded
   // UTC-7 presets). `metar` is the compact view of the CURRENT report by data clock (js/env/wx/metar.js decoder).
   const envCore = new AppEnv({ mode: cfg.mode, relayInfo: cfg.relayInfo, snapshotNow: cfg.snapshot && cfg.snapshot.now, snapshotMetar: cfg.metar || '', search: location.search, groundY: GROUND_Y });
+  // the old renderer's known limits on the ?qa=env HUD (spec §9.1; review look1-13: owner decision, kept deferred)
+  if (typeof R.frameScene !== 'function') envCore.rendererNote = 'old renderer (live.html) limits [I]: §9.1 item 6 EV100 exposure deferred (keyed exposure), no wetness (item 7), fog = one exponential (no slabs / VV obscuration / patches / sectors), one cloud deck; floods & windows on the sun-elevation ramp except the mast / bridge sprites';
   envCore.setLightMode(lightMode); envCore.attachHud(root);
   // ?qa=prov (spec §11.4): every airfield fixture face of data/sfo_lighting.js tinted by provenance (pub/obs green, std
   // blue, inf orange, NV red), day and night, on top of the current lights; counts in the ?qa=env HUD
@@ -157,12 +168,17 @@ export async function startApp(cfg) {
     // el = apparent (Bennett) for the sun direction / bake key; elN = geometric, for the night heuristics below (the
     // ephemeris clamps refraction at its -1 deg value, +0.65 deg, below the horizon; twilight is defined geometrically, USNO)
     const sp = { az: E.sun.az, el: E.sun.el }, elN = E.sun.elTrue;
-    const key = sp.az.toFixed(1) + ':' + sp.el.toFixed(1) + ':' + (metar ? metar.raw : '');
+    // (+ the surface σ: a 'VIS vnVvx' swing or the 60 s transition after a new report reaches the renderer's slabs)
+    const key = sp.az.toFixed(1) + ':' + sp.el.toFixed(1) + ':' + (metar ? metar.raw : '') + ':' + E.atm.sigmaSurface.toPrecision(2);
     if (!force && key === lastSunKey) return; lastSunKey = key;
     const sunDir = E.sun.dir;
     const M = metar; const layers = M ? M.clouds.slice().sort((a, b) => a.ft - b.ft) : [];
     const COVER = { FEW: 0.14, SCT: 0.4, BKN: 0.68, OVC: 0.95 };
-    const main = layers.find(c => c.cover !== 'FEW') || layers[0];
+    // spec §9.1 item 3: the lowest BKN/OVC layer <= 5,000 ft at its METAR base (review truth1-13: the first non-FEW layer,
+    // SCT included, at >= 150 m); a layer below 100 ft (FG BKN000) is the fog's partial obscuration, not a cloud (look1-2);
+    // without such a deck the lowest reported layer as the sky clouds
+    const cl = layers.filter(c => c.ft >= 100);
+    const main = cl.find(c => (c.cover === 'BKN' || c.cover === 'OVC') && c.ft <= 5000) || cl[0];
     // 10SM / P6SM (TAF forecast) are lower bounds ("10 miles or greater", ASOS; "P6SM" = more than 6 SM, AIM 7-1-28)
     const vis = M && M.visSM != null ? (M.visSM >= 10 || M.visPrefix === 'P' ? 40000 : Math.max(800, M.visSM * 1609)) : 40000;
     const wdir = ((M && M.windDir) ?? 290) * DEG, wms = ((M && M.windKt) ?? 8) * 0.5144;
@@ -172,12 +188,14 @@ export async function startApp(cfg) {
     // day/night blend) at the ground, b = 1 / the fog or sub-cloud top, both caps removed (uFog.w = 1: no 3 % see-through);
     // cloud cover = the layer's de-summed own coverage (JO 7900.5E summation amounts) at its real base (EnvState clouds;
     // the three.js renderer draws every layer from the EnvState itself and ignores env.fog / env.cloud)
-    const fogTop = Math.max(5, ((E.atm.slabs[0] || {}).y1 ?? GROUND_Y + 914) - GROUND_Y);
+    const surf = E.atm.slabs.filter(sl => !/^(cloud|obscuration)/.test(sl.kind || ''));   // the surface layer (a TWR / SFC VIS split is two slabs)
+    const fogTop = Math.max(5, (surf.length ? Math.max(...surf.map(sl => sl.y1)) : GROUND_Y + 914) - GROUND_Y);
     const ownOf = (c) => { const L = c && E.clouds.find(l => l.cover === c.cover && l.baseFt === c.ft); return L ? L.own : c ? COVER[c.cover] : 0.12; };
-    const baseOf = (c) => { const L = c && E.clouds.find(l => l.cover === c.cover && l.baseFt === c.ft); return L ? L.base : c ? Math.max(150, c.ft * FT) : 1500; };
+    const baseOf = (c) => { const L = c && E.clouds.find(l => l.cover === c.cover && l.baseFt === c.ft); return L ? L.base : c ? GROUND_Y + c.ft * FT : 1500; };
     env = { sunDir, mie: 21e-6, sunI: 20, fog: [E.atm.sigmaSurface * Math.exp(GROUND_Y / fogTop), 1 / fogTop, 1.0, 1.0],
-      cloud: [ownOf(main), main ? Math.max(150, baseOf(main)) : 1500, lowSlab ? 4200 : 14000, 0.5], // (planes kept >= 150 m: a lower plane would cut the terminals; the fog draws lower decks)
-      cloudWind: [windTo[0] * (wms * 2.5 + 1), windTo[2] * (wms * 2.5 + 1)], cloudTex: world.textures.clouds, noiseTex: world.textures.noise, refPos: [0, 60, 0],
+      cloud: [ownOf(main), main ? baseOf(main) : 1500, lowSlab ? 4200 : 14000, 0.5], // (at the METAR base: the mist / fog slab reaches it, no clear gap)
+      // drift = the METAR surface wind, not amplified (spec §4.5: the former 2.5 x surface + 1 m/s is unsourced)
+      cloudWind: [windTo[0] * wms, windTo[2] * wms], cloudTex: world.textures.clouds, noiseTex: world.textures.noise, refPos: [0, 60, 0],
       slab: !!lowSlab, wind: [windTo[0] * wms, windTo[2] * wms] };
     world.waterU.uWind = [windTo[0] * Math.max(wms, 1), windTo[2] * Math.max(wms, 1)]; world.waterU.uWaveAmp = Math.min(1.3, 0.45 + (wms / 0.5144) / 22);
     R.setupSky(env);
@@ -299,7 +317,7 @@ export async function startApp(cfg) {
     }
     return out;
   };
-  scene.staticLights.push((t) => { const S = []; for (const s of gateSys.sprites) { if (s.night) { if (nightF > 0.3) S.push(s); } else if (s.beacon) { if (s.moving) { const k = Math.pow(Math.max(0, Math.sin(t * 6.3)), 6); S.push({ ...s, i: 40 + 400 * k }); } } else S.push(s); } return S; });
+  scene.staticLights.push((t) => { const S = []; const fl = floodsOn(); for (const s of gateSys.sprites) { if (s.night) { if (fl) S.push(s); } else if (s.beacon) { if (s.moving) { const k = Math.pow(Math.max(0, Math.sin(t * 6.3)), 6); S.push({ ...s, i: 40 + 400 * k }); } } else S.push(s); } return oldFog(S); });   // (floods photocell, old-renderer fog: see floodsOn / oldFog)
   const views = new Map(); // hex -> LiveAircraft | 'marker'
   function makeView(tr) {
     const m = tr.model;

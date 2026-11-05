@@ -100,29 +100,97 @@ export function runwayConfigFrom(d, observed, override) {
   return { arr, dep: P[1], plan, source: kt != null && kt >= 5 ? 'METAR wind, JO 7110.65 3-5-1' : 'calm/light wind: SFO West Plan', tag: plan === 'west' || plan === 'southeast' ? 'V+I' : 'I' };
 }
 
-/** Vertical σ(y) profile (§4.4): piecewise-constant slabs in world y (m) = groundY + ft × 0.3048. */
-function slabsFor(d, p, sigmaSurface, groundY) {
+// ---------------------------------------------------------------------------------------------- vertical structure
+// Review round 1 (truth1-3/-5, look1-2) changes, all I unless stated:
+//  - a layer reported below MIN_CLOUD_FT (e.g. 'FG BKN000', 'PRFG BKN000': a partial obscuration by the surface fog, not a
+//    cloud and not a ceiling, JO 7900.5E 9.3 / spec §4.4 'FG without VV') is no cloud slab: the fog slab is it (it used to
+//    become a 1,000-ft cloud slab from the ground, σ 0.04, overlapping the fog: the lights died 2.5× short of the RVR);
+//  - FG with a ceiling at or below STRATUS_DEPTH_FT: the fog reaches the ceiling (the decoder's top_ft_min: no clear gap
+//    under a low deck); otherwise FOG_TOP_FT (200 ft) without VV;
+//  - VV (indefinite ceiling, "sky obscured", JO 7900.5E 10.x: VV = the vertical visibility INTO the obscuration): the
+//    surface layer reaches the VV height with the horizontal σ (it sets the lights' range, spec §4.10), and above it an
+//    obscuration slab of σ = max(3 / VV, σ_surface) (Koschmieder: a vertical visual range of VV needs an optical depth of
+//    ~3 within VV; the surface σ alone gave τ 1.07 over VV002, the Moon disc showed at 28 % through it) and
+//    STRATUS_DEPTH_FT deep: the sky, the Sun / Moon disc and the Sun / Moon light are hidden by it;
+//  - TWR VIS / SFC VIS (JO 7900.5E 8.3, 13.24; "the lower value ... prevailing ... the other value must be a remark"): the
+//    surface layer splits at TWR_SPLIT_M (below the tower cab eye, 59 m in the buildings track's tower model,
+//    data/buildings3d/manifest.json tower anchors cab_eye_h, I): surface visibility below, tower visibility above.
+export const MIN_CLOUD_FT = 100, TWR_SPLIT_M = 30;
+// Horizontal structure of the surface layer (spec §4.4 / §7.3; review truth1-6). It modulates the LOWEST slab only, in the
+// same form in the scene fog (js/three/sky.js fogNode / bgTransmittance) and the lights' optical depth
+// (js/env/atmo/sky_model.js slabTau, horizTau):
+//  - BCFG / PRFG (JO 7900.5E: "may be reported when visibility is equal to or greater than 7 miles", via weather.md §2,
+//    V): fog patches around the station (within PATCH_R_M of the ARP, sky_model.js; I), area cover BC 0.15 / PR 0.3 (I:
+//    "patches" vs "a substantial part"), patch scale ~300-700 m (I, spec 200-500 m), σ in a patch = the fog bound
+//    σ(5/8 SM) ("FG reduces horizontal visibility to less than 5/8 SM", V; the value I); the clear parts keep the
+//    prevailing σ. Consistency with a 10SM prevailing visibility (M on I): the mean optical depth the BC patches add along
+//    a radial at night, 0.15 × σ(5/8 SM) 6.1e-3 × ~1,750 m = 1.6, stays below the 10SM bound 2.9 − clear air 0.53;
+//    with 0.25 over 2.5 km it was 3.8 (patches thicker than the report);
+//  - sector visibility 'VIS NE E M1/4' (13.26) and 'VIS LWR W' (no value: 2 × the prevailing σ, I): a cosine lobe ±45°
+//    about each sector direction seen from the station (ARP, I), from the station outwards;
+//  - 'FG IN GAP W' (96 KSFO reports, spec §4.4, M): a fog bank in that direction from GAP_R0_M out (I: the San Bruno Gap
+//    opens ~3-6 km W of the field), σ(5/8 SM), top STRATUS_DEPTH_FT (I);
+//  - 'VIS 1/2V2 1/2' (13.25): the prevailing σ swings log-linearly between the two values with a VIS_VAR_PERIOD_S period
+//    in data time (I).
+export const PATCH_VIS_SM = 5 / 8, PATCH_COVER = { BC: 0.15, PR: 0.3 }, GAP_R0_M = 3000, VIS_VAR_PERIOD_S = 600, LWR_FACTOR = 2;
+const DIR16 = { N: 0, NNE: 22.5, NE: 45, ENE: 67.5, E: 90, ESE: 112.5, SE: 135, SSE: 157.5, S: 180, SSW: 202.5, SW: 225, WSW: 247.5, W: 270, WNW: 292.5, NW: 315, NNW: 337.5 };
+/** Horizontal modulation of the surface slab: {patch: {cover, sigma} | null, lobes: [{az (deg true), sigma, r0 (m), top (y), what}]}. */
+function horizontalFor(d, sigmaSurface, night, groundY, topY) {
+  const r = d.rmk || {}; const wx = d.weather || [];
+  const sig = (sm) => Math.max(sigmaSurface, extinctionFromVisibility(sm * SM_M, night));
+  const lobes = [];
+  for (const s of r.vis_sector || []) for (const dd of s.dirs || []) if (DIR16[dd] != null) lobes.push({ az: DIR16[dd], sigma: sig(s.sm * (s.prefix === 'M' ? 0.99 : 1)), r0: 0, top: topY, what: 'VIS ' + dd + ' ' + (s.prefix || '') + s.sm });
+  for (const l of r.lower_toward || []) if (l.what === 'VIS' && DIR16[l.dir] != null) lobes.push({ az: DIR16[l.dir], sigma: LWR_FACTOR * sigmaSurface, r0: 0, top: topY, what: 'VIS LWR ' + l.dir });
+  if (r.fog_in_gap) { const dir = String(r.fog_in_gap).split(/\s+/).pop(); if (DIR16[dir] != null) lobes.push({ az: DIR16[dir], sigma: sig(PATCH_VIS_SM), r0: GAP_R0_M, top: groundY + STRATUS_DEPTH_FT * FT_M, what: 'FG IN GAP ' + dir }); }
+  let patch = null;
+  const pf = wx.find(w => !w.vicinity && (w.phenomena || []).includes('FG') && (w.descriptor === 'BC' || w.descriptor === 'PR'));
+  if (pf) patch = { kind: pf.descriptor + 'FG', cover: PATCH_COVER[pf.descriptor], sigma: sig(PATCH_VIS_SM) };
+  return (patch || lobes.length) ? { patch, lobes: lobes.slice(0, 4), tag: 'V (remarks, JO 7900.5E 13.25/13.26) + I (lobe ±45°, patch cover/scale/σ, gap distance)' } : null;
+}
+
+/** Vertical σ(y) profile (§4.4): piecewise-constant slabs in world y (m) = groundY + ft × 0.3048, sorted, non-overlapping. */
+function slabsFor(d, p, sigmaSurface, groundY, night) {
   const y = (ft) => groundY + ft * FT_M;
   const S = [];
   const wx = d.weather || [];
-  const desc = new Set(wx.map(w => w.descriptor));
-  const vv = (d.sky || []).find(s => s.cover === 'VV');
+  const desc = new Set(wx.filter(w => !w.vicinity).map(w => w.descriptor));
+  const vv = (d.sky || []).find(s => s.cover === 'VV' && s.height_ft != null);
   const ceil = d.ceiling_ft;
   const fog = p.fog;
-  let top = ceil != null ? ceil : null;            // sub-cloud slab up to the ceiling (or VV)
+  let top = ceil != null && ceil > 0 ? ceil : null;            // sub-cloud slab up to the ceiling (or VV)
+  let surf;
   if (fog && fog.kind === 'fog') {
-    top = desc.has('MI') ? MIFG_TOP_FT : (vv && vv.height_ft != null ? vv.height_ft : (top != null && top > 0 ? Math.min(top, FOG_TOP_FT) : FOG_TOP_FT));
-    S.push({ y0: groundY, y1: y(top), sigma: sigmaSurface, kind: desc.has('MI') ? 'MIFG' : (desc.has('BC') || desc.has('PR')) ? 'patchy fog' : 'fog',
-      patchy: desc.has('BC') || desc.has('PR'), tag: vv ? 'V meaning, I depth' : 'I (top 200 ft without VV)' });
+    top = desc.has('MI') ? MIFG_TOP_FT : vv ? vv.height_ft : (top != null && top <= STRATUS_DEPTH_FT ? top : FOG_TOP_FT);
+    surf = { y0: groundY, y1: y(top), sigma: sigmaSurface, kind: desc.has('MI') ? 'MIFG' : (desc.has('BC') || desc.has('PR')) ? 'patchy fog' : 'fog',
+      patchy: desc.has('BC') || desc.has('PR'), tag: vv ? 'V meaning, I depth' : top === FOG_TOP_FT ? 'I (top 200 ft without VV)' : 'I (to the ceiling, decoder top_ft_min)' };
   } else {
-    S.push({ y0: groundY, y1: top != null ? y(top) : y(3000), sigma: sigmaSurface, kind: fog ? 'mist' : 'sub-cloud', tag: 'I' });
+    surf = { y0: groundY, y1: top != null ? y(top) : y(3000), sigma: sigmaSurface, kind: fog ? 'mist' : 'sub-cloud', tag: 'I' };
+  }
+  // TWR VIS / SFC VIS: surface visibility below TWR_SPLIT_M, tower visibility above (I)
+  const r = d.rmk || {}; const vis = d.visibility;
+  if (!desc.has('MI') && vis && vis.sm != null && (r.tower_vis_sm != null || r.surface_vis_sm != null) && surf.y1 > groundY + TWR_SPLIT_M) {
+    const sOf = (sm) => sm >= 10 ? Math.min(SIGMA_CLEAR, sigmaSurface) : extinctionFromVisibility(sm * SM_M, night);
+    const twrSm = r.tower_vis_sm != null ? r.tower_vis_sm : vis.sm, sfcSm = r.surface_vis_sm != null ? r.surface_vis_sm : vis.sm;
+    const lo = r.surface_vis_sm != null ? sOf(sfcSm) : sigmaSurface, hi = r.tower_vis_sm != null ? sOf(twrSm) : sigmaSurface;
+    S.push({ ...surf, y1: groundY + TWR_SPLIT_M, sigma: lo, kind: surf.kind + ' (SFC VIS ' + sfcSm + ')', tag: 'V (JO 7900.5E 8.3) + I (split height)' });
+    S.push({ ...surf, y0: groundY + TWR_SPLIT_M, sigma: hi, kind: surf.kind + ' (TWR VIS ' + twrSm + ')', patchy: false, tag: 'V (JO 7900.5E 8.3) + I (split height)' });
+  } else S.push(surf);
+  const surfTop = S[S.length - 1].y1;
+  // VV: an obscuration above the surface layer (I; header)
+  if (vv && !desc.has('MI')) {
+    const vvM = Math.max(vv.height_ft * FT_M, 15);
+    S.push({ y0: Math.max(surfTop, y(vv.height_ft)), y1: Math.max(surfTop, y(vv.height_ft)) + STRATUS_DEPTH_FT * FT_M, sigma: Math.max(3 / vvM, sigmaSurface), kind: 'obscuration VV' + String(vv.height_ft / 100).padStart(3, '0'),
+      obscuration: true, tag: 'V (VV = vertical visibility into the obscuration) + I (σ = 3/VV, depth 1,000 ft)' });
   }
   for (const L of p.cloud_layers) {
-    if (L.cover === 'VV' || L.height_ft == null || !['BKN', 'OVC'].includes(L.cover)) continue;
+    if (L.cover === 'VV' || L.height_ft == null || L.height_ft < MIN_CLOUD_FT || !['BKN', 'OVC'].includes(L.cover)) continue;
     const depth = L.thickness_m_guess != null ? L.thickness_m_guess : STRATUS_DEPTH_FT * FT_M;
     S.push({ y0: y(L.height_ft), y1: y(L.height_ft) + depth, sigma: SIGMA_CLOUD, kind: 'cloud ' + L.cover, tag: 'I (σ_c 0.04, depth ' + (L.thickness_m_guess != null ? 'marine layer' : 'default') + ')' });
   }
-  return S;
+  // sorted and non-overlapping (photometry.opticalDepth / the shader assume it): a slab starts where the one below ends
+  S.sort((a, b) => a.y0 - b.y0);
+  for (let i = 1; i < S.length; i++) { if (S[i].y0 < S[i - 1].y1) S[i].y0 = Math.min(S[i - 1].y1, S[i].y1); }
+  return S.filter((s, i) => i === 0 || s.y1 > s.y0);
 }
 
 /** Build EnvState for data time tEnv. in: {mode, overridden, reports [{raw, obsTime?, receiptTime?} | raw],
@@ -174,6 +242,14 @@ export function buildEnvState(tEnv, inp = {}) {
   const sigmaASOS = sigmaDay != null ? (1 - w) * sigmaDay + w * sigmaNight : null;
   const visLowerBound = pr.visibility_is_lower_bound;
   let sigmaSurface = sigmaASOS == null ? SIGMA_CLEAR : visLowerBound ? Math.min(SIGMA_CLEAR, sigmaASOS, SIGMA_10SM_DAY) : sigmaASOS;
+  // 'VIS vnVvx' (13.25): the prevailing σ swings between the two values in data time (I; header of slabsFor)
+  const vVar = d.rmk && d.rmk.vis_variable_sm;
+  let visSwing = null;
+  if (vVar && !visLowerBound && sigmaASOS != null) {
+    const sOf = (sm) => (1 - w) * extinctionFromVisibility(sm * SM_M, false) + w * extinctionFromVisibility(sm * SM_M, true);
+    const k = 0.5 - 0.5 * Math.cos(2 * Math.PI * (tEnv / 1000) / VIS_VAR_PERIOD_S);
+    sigmaSurface = Math.exp((1 - k) * Math.log(sOf(vVar[1])) + k * Math.log(sOf(vVar[0]))); visSwing = { lo: vVar[0], hi: vVar[1], k };
+  }
   // 60 s data-time transition after a new report (§3.3, I): σ blends (log-linear) from the value shown when the report
   // changed to the new one; a jump of the data clock (light mode, ?t=, replay seek) > 10 min or backwards cancels it
   let transition = null;
@@ -188,10 +264,12 @@ export function buildEnvState(tEnv, inp = {}) {
     else if (dt < 0 || dt >= 600e3) sw = { at: null, sigmaFrom: null, fromRaw: null };
   }
   const atm = { sigmaSurface, sigmaASOS, sigmaDay, sigmaNight, visM, visLowerBound, visPrefix: vis ? vis.prefix : null,
-    slabs: slabsFor(d, pr, sigmaSurface, groundY), fog: pr.fog, aerosol: pr.aerosol,
+    slabs: slabsFor(d, pr, sigmaSurface, groundY, w >= 0.5), fog: pr.fog, aerosol: pr.aerosol, visSwing,
     sectors: (d.rmk.vis_sector || []).map(s => ({ dirs: s.dirs, sm: s.sm, sigma: extinctionFromVisibility(s.sm * SM_M, w >= 0.5) })),
     lowerToward: d.rmk.lower_toward || [], visVariable: d.rmk.vis_variable_sm || null, towerVisSM: d.rmk.tower_vis_sm ?? null, surfaceVisSM: d.rmk.surface_vis_sm ?? null,
     fogInGap: d.rmk.fog_in_gap || null, transition };
+  atm.horiz = horizontalFor(d, sigmaSurface, w >= 0.5, groundY, atm.slabs[0] ? atm.slabs[0].y1 : groundY + 914);
+  if (atm.horiz) atm.slabs[0].horiz = atm.horiz;     // the lowest slab carries it (renderSlabs / slabTau / the shader)
   // ---- clouds (§4.5)
   const windTo = (d.wind && d.wind.dir_true_deg != null) ? [-Math.sin(d.wind.dir_true_deg * DEG), Math.cos(d.wind.dir_true_deg * DEG)] : [0, 0];
   const spd = pr.wind.speed_m_s;
@@ -207,7 +285,8 @@ export function buildEnvState(tEnv, inp = {}) {
     const P = pr.precip; let rate = P.rate_mm_h;
     if (P.kind === 'rain') { const [lo, hi] = { light: [0, 2.54], moderate: [2.8, 7.62], heavy: [7.62, 1e9] }[P.intensity || 'moderate']; rate = Math.round(clamp(rate, lo, hi) * 100) / 100; }
     precip = { kind: P.kind, intensity: P.intensity, rateMmH: rate, rateRaw: P.rate_mm_h, rateBasis: P.rate_basis + (rate !== P.rate_mm_h ? '; clamped into the coded class (X9, I)' : ''),
-      dropsPerM3: P.drops_per_m3_gt_0p5mm, D0mm: P.median_volume_diameter_mm, vFall: P.fall_speed_m_s, showery: P.showery, thunder: P.thunder };
+      dropsPerM3: P.drops_per_m3_gt_0p5mm, D0mm: P.median_volume_diameter_mm, vFall: P.fall_speed_m_s, showery: P.showery, thunder: P.thunder,
+      hail: P.hail || null, hailTag: P.hail ? (P.kind === 'rain' ? 'with rain: drawn as the rain (hail stones not drawn, size / fall speed NV)' : 'not drawn (size / fall speed NV)') : null };
   }
   const lightning = { perMin: pr.lightning.flashes_per_min, atStation: pr.lightning.at_station, vicinity: pr.lightning.vicinity,
     where: pr.lightning.reports.map(r => ({ types: r.types, loc: r.loc })) };
@@ -270,6 +349,10 @@ export function envHudLines(st) {
   L.push(`report ${st.wx.raw || '—'} · age ${f(st.wx.ageMin, 0)} min${st.wx.stale ? ' · STALE' : ''} [V]`);
   if (st.wx.forecast) L.push(`FORECAST TAF ${st.wx.forecast.issued} ${st.wx.forecast.applied.join('+')}: ${st.wx.forecast.text}${st.wx.forecast.groups.length ? ' (not rendered: ' + st.wx.forecast.groups.join(', ') + ')' : ''} [I]`);
   L.push(`σ surface ${st.atm.sigmaSurface.toExponential(2)} m⁻¹${st.atm.visLowerBound ? ` (${st.atm.visPrefix === 'P' ? 'P' : ''}${f(st.atm.visM / 1609.344, 0)}SM lower bound → clear air)` : ''} · ASOS ${st.atm.sigmaASOS != null ? st.atm.sigmaASOS.toExponential(2) : '—'} · E_T ${st.lightVis.ET.toExponential(2)} lx [M+I]`);
+  { const sl = st.atm.slabs.map(s => `${s.kind} ${f(s.y0 - (st.atm.slabs[0] ? st.atm.slabs[0].y0 : 0), 0)}-${f(s.y1 - (st.atm.slabs[0] ? st.atm.slabs[0].y0 : 0), 0)} m σ ${s.sigma.toExponential(1)}`).join(' | ');
+    const H = st.atm.horiz; const hz = H ? ` · structure${H.patch ? ' ' + H.patch.kind + ' patches ' + f(H.patch.cover, 2) + ' (σ ' + H.patch.sigma.toExponential(1) + ')' : ''}${H.lobes.length ? ' lobes ' + H.lobes.map(l => l.what).join(', ') : ''}` : '';
+    const sw = st.atm.visSwing ? ` · VIS ${st.atm.visSwing.lo}V${st.atm.visSwing.hi} swing ${f(st.atm.visSwing.k, 2)}` : '';
+    L.push(`slabs ${sl}${hz}${sw} [V+I]`); }
   L.push(`clouds ${st.clouds.map(c => `${c.cover}${String(c.baseFt / 100).padStart(3, '0')} own ${f(c.own, 2)}`).join(' ') || 'none'} · sun visible P ${f(st.sunVisibleP, 2)} [V+I]`);
   L.push(`wind ${st.wind.fromTrue == null ? (st.wind.calm ? 'calm' : 'VRB') : f(st.wind.fromTrue, 0) + '°T'} ${f(st.wind.speed / KT_MS, 0)} kt${st.wind.gust ? ' G' + f(st.wind.gust / KT_MS, 0) : ''} · sock ${f(st.wind.sockExt, 2)} [V+I]`);
   if (st.precip) L.push(`precip ${st.precip.kind} ${st.precip.intensity} ${f(st.precip.rateMmH, 2)} mm/h (${st.precip.rateBasis}) [V+I]`);
@@ -279,10 +362,10 @@ export function envHudLines(st) {
 }
 
 // Short form for the HUD (one line): the same defaults
-export const OPEN_QUESTION_SHORT = 'Q7 flood colour/bridge beacon unchanged NV · Q2 FAA ALS stations · Q1 no beacon · Q3 RCL all runways · Q4 blue edges inf · Q10 TBL 3-4-7 · Q5/6 REIL style E NV, PAPI HG4 20 % · Q8 ?wx= only · Q9 ADS-B>METAR>West · Q12 no takram/stars · Q13 photographic · Q11 parked nav off · Q14 3 mcd/m² · Q15 no socks · Q16 NV';
+export const OPEN_QUESTION_SHORT = 'Q7 flood colour/bridge beacon unchanged NV, mast lamps 2,970 cd + side floor 25 % NV · Q2 FAA ALS stations · Q1 no beacon · Q3 RCL all runways · Q4 blue edges inf · Q10 TBL 3-4-7 · Q5/6 REIL style E NV, PAPI HG4 20 % · Q8 ?wx= only · Q9 ADS-B>METAR>West · Q12 no takram/stars · Q13 photographic · Q11 parked nav off · Q14 3 mcd/m² (×5 at the horizon) · Q15 no socks · Q16 NV';
 // Open owner questions (spec §12): the default used for each until the owner answers (all I), shown in the ?qa=env HUD.
 export const OPEN_QUESTION_DEFAULTS = [
-  'Q7 night photos: apron flood colour / bridge beacon / glazing glow unchanged (parameters, NV)',
+  'Q7 night photos: apron flood colour / bridge beacon / glazing glow unchanged (parameters, NV); mast lamps 2,970 cd on axis with a 25 % side / back floor (NV)',
   'Q2 pier ALS stations: FAA stations from the landing threshold (fixtures std)',
   'Q1 rotating beacon: not drawn (position unknown)',
   'Q3 RCL: on all four runways (CS + NASR)',
@@ -293,6 +376,6 @@ export const OPEN_QUESTION_DEFAULTS = [
   'Q9 runway config: ADS-B flow, else METAR wind (3-5-1), else West Plan; no D-ATIS',
   'Q12 takram atmosphere: not adopted (no GPU test here); no stars.bin, no starfield',
   'Q13 night look: photographic (auto-exposed)',
-  'Q11 parked aircraft (phase still, not moving): position / logo lights off (91.209(a)(2) "clearly illuminated")',
-  'Q14 artificial sky 3 mcd/m2 (parameter); Q15 windsocks not drawn; Q16 wetness constants NV',
+  'Q11 parked aircraft (display phase gate / parked, internal still; not moving): position / logo lights off (91.209(a)(2) "clearly illuminated")',
+  'Q14 artificial sky 3 mcd/m2 at the zenith, x5 toward the horizon (parameters); Q15 windsocks not drawn; Q16 wetness constants NV',
 ];

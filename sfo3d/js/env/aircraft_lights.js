@@ -19,14 +19,15 @@
 //   when commencing takeoff roll" and "when operating below 10,000 feet".
 // Choices (I, shown in docs/research/environment_impl.md): intensities = 2 × the regulatory minima (spec §6 default);
 // no spill outside a sector beyond a 2° anti-aliasing ramp (within the 25.1395 maxima: no limit is set within 10° of the
-// boundary, 0 cd elsewhere); parked aircraft (phase 'still', not moving) have position lights OFF (owner Q11 default;
+// boundary, 0 cd elsewhere); parked aircraft (display phase gate / parked, internal 'still'; not moving) have position lights OFF (owner Q11 default;
 // 91.209(a)(2) "clearly illuminated" suffices at a floodlit stand); the beacon runs from pushback to parking (engines
 // in operation); strobes from line-up until the runway is vacated (rollout) and in flight; landing lights on the take-off
 // roll, in flight below 10,000 ft (3,048 m) and on the landing roll above 30 kt; taxi light only when moving under own
 // power on the ground (≥ 1 kt, not during pushback); logo lights are not drawn (no anchors on the models, photometry NV);
 // landing light 770,000 cd in 15° × 16° (Honeywell LED example for 737NG/757/767/777, spec §6, V for those types; NV for
 // others); taxi light 50,000 cd (parameter, NV: not regulated).
-import { clamp, flashGain, lampUnits, opticalDepth, visibilityFactor } from './lighting/photometry.js';
+import { clamp, flashGain, lampUnits, visibilityFactor, aureole } from './lighting/photometry.js';
+import { renderSlabs, slabTau } from './atmo/sky_model.js';   // one σ field with the scene fog (review truth1-3)
 export { lampUnits };
 
 const DEG = Math.PI / 180;
@@ -74,20 +75,42 @@ export function navIntensity(colour, az, el) {
 /** Which dihedral angle (25.1387) a direction lies in: 'L' (left, 0–110°), 'R' (right), 'A' (aft, beyond 110°). */
 export const dihedral = (az) => { const a = ((az % 360) + 540) % 360 - 180; return Math.abs(a) > 110 ? 'A' : a < 0 ? 'L' : 'R'; };
 
-/** Light states from the traffic phase (AIM 4-3-24, 91.209; choices above). in: {phase, ground, gs (kt), altAgl (m),
- *  stale}. */
+/** The traffic phase as the light logic needs it. js/live/app.js passes the DISPLAY phase (js/live/traffic.js
+ *  displayPhase, the label at the display time: tr.phase), whose names differ from the classifier's internal ones
+ *  (tr.m.phase): 'still' is shown as gate / parked / holding / pushed / pushback, 'rollout' as 'landing' (or 'taxi' once
+ *  the body is > 40 m off the centreline), 'flare' as 'final', 'climb' as 'departure', 'new' as holding / parked /
+ *  enroute (review finding truth1-1: the logic checked internal names only, so every parked aircraft at a gate counted as
+ *  operating). Both vocabularies map to: 'parked' (engines off), 'stopped' (stationary with engines running: pushed,
+ *  holding short, queueing), 'pushback', 'taxi', 'lineup', 'takeoff', 'air' (climb, enroute, approach, final, flare,
+ *  go-around), 'rollout' (landing roll), 'vehicle'. */
+export function lightPhase(phase, ground) {
+  switch (phase) {
+    case 'gate': case 'parked': case 'still': return 'parked';
+    case 'pushed': case 'holding': return 'stopped';
+    case 'new': return ground ? 'stopped' : 'air';
+    case 'landing': case 'rollout': return 'rollout';
+    case 'flare': case 'final': return ground ? 'rollout' : 'air';
+    case 'departure': case 'climb': case 'enroute': case 'approach': case 'goaround': return ground ? 'taxi' : 'air';
+    case 'pushback': case 'taxi': case 'lineup': case 'takeoff': case 'vehicle': return phase;
+    default: return ground ? 'stopped' : 'air';       // ground-other ('other'), unknown labels
+  }
+}
+/** Light states from the traffic phase (AIM 4-3-24, 91.209; choices above). in: {phase (display or internal name, see
+ *  lightPhase), ground, gs (kt), altAgl (m), stale}. A parked aircraft that moves (towed, or a silent docking still
+ *  driving in) counts as operating. */
 export function aircraftLightStates({ phase, ground, gs = 0, altAgl = 0, stale = false }) {
   const moving = !ground || gs > 0.5;
-  const parked = stale || ((phase === 'still' || phase === 'new' || phase === 'vehicle') && !moving);
-  const operating = !parked;                             // engines in operation: pushback .. parked
+  const ph = lightPhase(phase, ground);
+  const parked = stale || ((ph === 'parked' || ph === 'vehicle') && !moving);
+  const operating = !parked && ph !== 'vehicle';      // engines in operation: pushback .. parked
   const air = !ground;
-  const onRunwayPhase = phase === 'lineup' || phase === 'takeoff' || phase === 'rollout';
+  const onRunwayPhase = ph === 'lineup' || ph === 'takeoff' || ph === 'rollout';
   return {
     nav: operating,                                      // AIM: before taxi; 91.209(a)(1) at night; parked: off (Q11, I)
     beacon: operating,                                   // AIM 4-3-24 / 91.209(b)
-    strobe: !stale && (air || onRunwayPhase || phase === 'final' || phase === 'flare'),
-    landing: !stale && ((air && altAgl < ALT_LANDING_M) || phase === 'takeoff' || phase === 'flare' || (phase === 'rollout' && gs > 30)),
-    taxi: !stale && ground && gs >= 1 && phase !== 'pushback' && phase !== 'takeoff' && !(phase === 'rollout' && gs > 30),
+    strobe: !stale && operating && (air || onRunwayPhase),   // line-up until the runway is vacated (rollout ends off the CL)
+    landing: !stale && operating && ((air && altAgl < ALT_LANDING_M) || ph === 'takeoff' || (ph === 'rollout' && gs > 30)),
+    taxi: !stale && operating && ground && gs >= 1 && ph !== 'pushback' && ph !== 'takeoff' && !(ph === 'rollout' && gs > 30),
   };
 }
 
@@ -98,14 +121,15 @@ let viewer = null;
 export function setLightViewer(p) { viewer = p; }
 export const lightViewer = () => viewer;
 let frameT = { prev: null, t: null };
-// Viewing conditions (spec §4.10, as for the airfield lights): EnvState slabs (optical depth), E_T and the day display
+// Viewing conditions (spec §4.10, as for the airfield lights): the renderer's slabs (renderSlabs + slabTau), E_T and the day display
 // gain (js/env/lighting/airfield.js DAY_GAIN, I); null = no attenuation (tests).
 let viewEnv = null;
 /** Set from the EnvState once per environment update (js/live/app.js applyEnv): {slabs, ET, gain}. */
 export function setLightEnv(env, dayGain) {
   if (!env) { viewEnv = null; return; }
   const w = env.photocell ? env.photocell.asosNightW : 1;
-  viewEnv = { slabs: env.atm ? env.atm.slabs : null, ET: env.lightVis ? env.lightVis.ET : 6.99e-7, gain: Math.pow(dayGain ?? 1, 1 - w) };
+  const slabs = env.atm ? renderSlabs(env) : null;
+  viewEnv = { slabs, ET: env.lightVis ? env.lightVis.ET : 6.99e-7, gain: Math.pow(dayGain ?? 1, 1 - w), fogAur: !!(slabs && slabs[0] && slabs[0].sigma > 1e-4) };   // aureoles only in mist / fog (airfield.js)
 }
 /** Frame clock for the flash scheduler (seconds; set once per frame by js/live/app.js). */
 export function setLightFrame(t) { if (frameT.t !== t) { frameT.prev = frameT.t; frameT.t = t; } }
@@ -125,13 +149,15 @@ export function aircraftSprites(L, axes, on, seed, t, gearDown = 1) {
   const { fwd, right, up } = axes;
   const put = (p, c, cd, s, extra) => {
     if (!p || !(cd > 0)) return;
-    let k = 1;
+    let k = 1, aur = 0, aurR = 0;
     if (viewEnv && viewer) {                     // Allard visibility through the EnvState slabs (spec §4.10)
       const d = Math.hypot(viewer[0] - p[0], viewer[1] - p[1], viewer[2] - p[2]) || 1;
-      const T = Math.exp(-opticalDepth(viewer, p, viewEnv.slabs, 3.3e-5)); const v = visibilityFactor(cd * T / (d * d), viewEnv.ET);
-      if (!(v > 0)) return; k = T * v * viewEnv.gain;
+      const T = viewEnv.slabs ? Math.exp(-slabTau(viewEnv.slabs, viewer, p)) : Math.exp(-3.3e-5 * d); const v = visibilityFactor(cd * T / (d * d), viewEnv.ET);
+      // fog aureole (photometry.js aureole; review look1-1), also when the core is below threshold
+      const A = viewEnv.fogAur ? aureole(T) : null; if (A && cd * A.f / (d * d) >= viewEnv.ET) { aur = lampUnits(cd * A.f * viewEnv.gain, s); aurR = A.theta; }
+      if (!(v > 0) && !aur) return; k = T * v * viewEnv.gain;
     }
-    S.push({ p, c, i: lampUnits(cd * k, s), s, phys: true, ...extra });
+    S.push({ p, c, i: lampUnits(cd * k, s), s, phys: true, aur, aurR, ...extra });
   };
   if (on.nav) {
     for (const [p, c, name] of [[L.navL, AV_RED, 'red'], [L.navR, AV_GREEN, 'green'], [L.tail, AV_WHITE, 'white']]) {

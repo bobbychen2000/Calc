@@ -114,11 +114,12 @@ def allP(nodes, mat=None, lod=0):
     return np.vstack(ps) if ps else np.zeros((0, 3))
 
 
-def footprint(nodes, up_only=True, mats=None):
+def footprint(nodes, up_only=True, mats=None, skip=()):
     polys = []
     for m in nodes:
         for p in m['prims']:
             if mats and p['mat'].split('@')[0].split('.')[0] not in mats: continue
+            if skip and p['mat'].split('@')[0].split('.')[0] in skip: continue
             P = p['P']
             for t in p['T']:
                 q = P[t]
@@ -194,8 +195,10 @@ def run(path):
             if d['type'] != 'POLE': continue
             sel = np.hypot(poles[:, 0] - d['world'][0], poles[:, 2] - d['world'][1]) < 2.0
             C.add(f'CG: roof pole {d["oas"]} top', float(H(poles[sel]).max()) if sel.any() else -1.0, float(d['agl_m']), 0.3, 'FAA DOF 1A')
-        fp = footprint(L0n(k, 'cg_body') + L0n(k, 'cg_plinth'))
+        fp = footprint(L0n(k, 'cg_body') + L0n(k, 'cg_plinth'), skip=('void_floor',))      # r1: the void floor at grade is not roof
         outline_check(k, 'Central Parking Garage', fp, sfom('Central Parking Garage'))
+        vf = allP(body, 'void_floor')
+        C.add('CG: void floor at grade (r1, NAIP 2024: stalls and cars in the void)', float(H(vf).max()) if len(vf) else -1.0, 0.03, 0.02, 'NAIP obs [level low]')
         # the void
         hole = Polygon(sfom('Central Parking Garage').interiors[0]) if sfom('Central Parking Garage').geom_type == 'Polygon' else None
         if hole is not None:

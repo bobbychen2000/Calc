@@ -546,7 +546,7 @@ bias; its rain render is therefore 0.68 EV darker than the final code would draw
 
 | Gate | Status | Evidence |
 |---|---|---|
-| A-SUN (render half) | pass | renderer light = EnvState `sun.dir` (diff 0, 7 day steps); shadow azimuth = ephemeris; drawn disc upper limb on the horizon +0.32 min from USNO sunset, radius 0.2665° vs 0.2657° (unit, `test_sky.mjs`) |
+| A-SUN (render half) | **numeric only** (corrected in review round 1, truth1-7: no rendered pole shadow was measured) | renderer light = EnvState `sun.dir` (diff 0, 7 day steps, page probe); shadow azimuth computed from that vector (unit mirror, not a rendered shadow); drawn disc upper limb on the horizon +0.32 min from USNO sunset, radius 0.2665° vs 0.2657° (unit, `test_sky.mjs`) |
 | A-MOON | pass | drawn Moon 0.013° from its ephemeris direction (render diagnostic), bright limb 237.8° vs 236.9°, lit fraction of the shader mirror within 0.004 of the ephemeris for 6 presets (Horizons accuracy of the ephemeris itself: A-SUN unit gate) |
 | A-EXP | partly | fallback sky GHI = C171 (noon uncalibrated +7 %, calibrated 0.0 %); clamp holds at night (EV 4.6 floor, AE = reviewed night key within 0.1 EV); metered by day after the 0.68 bias: gate 15.00 / tower 15.81 / noon overview 15.05 vs targets 14.98 / 14.98 / 15.28; **marine-layer tower +1.62 EV** (outside ±1); "airfield lights bloom" not judged (no scored review); pre-exposure invariance inconclusive (animation between shots) |
 | A-FOG | partly | unit: ifr_mist_day black target at 1,207 m contrast 0.0550; marine deck T 8.7e-11; 3 km of M1/4SM fog 1e-23 (no caps; old renderer w = 1, a = 0.01849, b = 1/61 m measured in the page); fog sprites: 0 of 551 distant lamps visible; render: predawn fog view shows the ALS fading within ~0.4 km; the pixel test on a black target was not rendered |
@@ -574,3 +574,118 @@ bias; its rain render is therefore 0.68 EV darker than the final code would draw
    coverage at grazing distances (A-CLD was measured at level 0).
 7. Not done here, requests in §3.3: tower obstruction light (buildings track), DOF mast heights (static track).
 8. Old renderer: exposure from the EV100 target (§9.1 item 6) deferred (its lamps are not in physical ratio to its sky).
+
+## Review round 1 fixes (adversarial truth + look review), 2026-11-05, env fix agent
+
+The review (findings truth1-1..15, look1-1..13; scratch scripts in the session scratchpad `envrev/`) found the gates
+passing while the app fed the light logic names it never checks, the lights and the scene using different σ fields,
+and the night / fog / rain look unphysical. Every finding is dispositioned below; numbers before → after come from the
+reviewers' own scripts re-run on the new code (scratchpad `env4/before`, `env4/after`) and the extended Node gates.
+
+### R1.1 Light logic fed by the app's DISPLAY phases (truth1-1, truth1-2)
+
+`js/live/app.js` passes `tr.phase` = `traffic.js displayPhase` (gate / parked / pushed / holding / pushback / taxi /
+lineup / takeoff / departure / final / landing / enroute), not the classifier's internal names (still / flare / rollout /
+climb). `js/env/aircraft_lights.js lightPhase()` now maps both vocabularies (gate, parked, still → parked; pushed,
+holding → stopped with engines running; landing → rollout; final / flare on the ground → rollout; departure / climb →
+air), and `rwslFromTraffic` accepts 'landing' (and 'final' on the ground); the app's REL filter passes 'landing' too.
+A-NAV1 now runs 24 cases with the display names (gate / parked → none, pushed / holding → nav + beacon, landing 120 kt →
+strobe + landing, landing 20 kt → strobe + taxi, …); A-RWSL1 adds the landing-roll case.
+
+| Check (reviewer repro) | Before | After |
+|---|---|---|
+| `aircraftLightStates({phase: 'gate', ground, gs 0})` | nav + beacon (engines "running" at every gate) | none (Q11 default) |
+| `'landing'` at 20 kt | taxi only (strobes and landing lights off at touchdown) | strobe + taxi (landing lights > 30 kt) |
+| REL arrays 10L/28R, arrival 28R 120 kt 600 m past the threshold, phase 'landing' (`rwsl.mjs`) | 0 of 5 | 4 of 5 (= 'rollout') |
+
+### R1.2 One σ field for scene and lights; partial obscuration; VV; horizontal structure (truth1-3/-4/-5/-6, look1-2/-6)
+
+- `js/env/state.js slabsFor`: a layer below 100 ft (FG BKN000, PRFG BKN000) is the fog's partial obscuration, never a
+  cloud slab; FG with a ceiling ≤ 1,000 ft fills up to it (decoder `top_ft_min`, no clear gap under BKN003); **VV**: the
+  surface layer to the VV height with the horizontal σ, then an obscuration slab σ = max(3 / VV, σ_surface), 1,000 ft
+  deep (Koschmieder: τ ≈ 3 within VV), which hides the sky, the Moon disc and (through `sky_model.fogBeamT`) the Sun /
+  Moon light; slabs are sorted and made non-overlapping; TWR VIS / SFC VIS split the surface layer at 30 m (below the cab
+  eye, 59 m in the buildings track's tower model; JO 7900.5E 8.3).
+- The airfield and aircraft lights use `renderSlabs(st)` + `slabTau` (the scene's slabs, BKN at its mean transmittance)
+  instead of the raw EnvState slabs; renderer3 attenuates the non-photometric lamps (masts, bridges, stands) always (the
+  σ_surface > 2e-4 gate is gone); the old renderer does the same in `app.js` (`oldFog`: `fogTransmittance(renderSlabs)`).
+- Horizontal structure of the lowest slab (`state.js horizontalFor`, `sky_model.js horizDelta / horizTau`, shader
+  `sky.js horizDelta / horizTau` in the fog factor and the background): BCFG / PRFG patches over the aerodrome
+  (deterministic four-wave mask, cover BC 0.15 / PR 0.3, σ(5/8 SM), within 1.5–2 km of the ARP; BC kept within the
+  10SM bound: mean added radial τ 1.6 < 2.9 − 0.53), sector lobes ±45° for
+  `VIS NE E M1/4` / `VIS NW 1/2` / `VIS LWR W` (2 × prevailing), the `FG IN GAP W` bank from 3 km out (σ(5/8 SM), top
+  1,000 ft), `VIS 1/2V2 1/2` swinging σ over 10 min of data time; 8 stratified samples per ray (4 on the phone tier);
+  the same integral on the CPU for the lights. HUD line `slabs …` shows the slabs, the structure and the swing. All
+  constants I (header of `slabsFor`); remarks V (JO 7900.5E 13.25 / 13.26).
+
+| Check | Before | After |
+|---|---|---|
+| night_fog (`M1/4SM … FG BKN000`) slabs | fog 3–64 m + "cloud BKN" 3–308 m | fog 3–64 m only |
+| night_fog HIRL step 4 (2,500 cd) visual range, eye 8 m (`fogvis.mjs`) | 198 m lights / 443 m scene | 536 m both (= predawn_fog, spec §4.10 value) |
+| night_fog 0.6 / 0.3 NM: ALS lights drawn (`num3.mjs`) | 0 / 0 | 26 / 103 |
+| ifr_mist_day 150 m → 2 km τ: lights / scene | 64.6 / 22.4 | one value (the lights use the scene's slabs) |
+| low_ceiling_night overview: mast-lamp T applied (`deck.mjs`) | 1 (gate off) | 0.040 (scene slabs, always applied) |
+| predawn_fog VV002: sky T from the ground zenith / Moon direction (`vv.mjs`) | 0.371 / 0.277 | < 1e-3 / < 1e-3 |
+| predawn_fog Moon light (fogBeamT) | 0.063 lx uncut | × 9e-10 (hidden) |
+| 10SM BCFG … VIS NW 1/2 (night), eye 5 m: T over 1 km mean of 36 azimuths / NW / SE (`env4/horiz_num.mjs`) | 0.968 / 0.968 / 0.968 (clear air everywhere) | 0.297 / 3.6e-4 / 0.697 |
+| 3SM PRFG BKN000 VIS NE E M1/4: T over 600 m ENE / WSW | 0.037 / 0.037 (uniform, plus the BKN000 cloud slab) | 3.5e-7 / 0.197 (no cloud slab) |
+| FG IN GAP W (9SM VCFG), eye 30 m: T over 8 km W / E | 0.201 / 0.201 | 3e-7 / 0.201 |
+
+### R1.3 Controller and decoder (truth1-8/-9/-10/-11/-15)
+
+- SSALR RAIL = five flashers 1,600 / 1,800 / 2,000 / 2,200 / 2,400 ft sequenced among themselves (JO 6850.2C 200c, V;
+  the PDF now cached in `refs/cache/lighting/FAA_Order_6850.2C.pdf`, SOURCES.json): was 9 flashers at 100-ft spacing.
+- RVR `P6000FT` = greater than 6,000 ft (`controller.js rvrValue`: P → value + 1, M → value − 1), JS and Python
+  reference: 1 SM day with R28R/P6000FT → ALSF-2 step 4 (was 5).
+- Taxiway lights: the controller output carries `taxiwayDrawn` (MITL 3-step % the renderer uses, I); the HUD prints
+  `taxiway st3 → MITL 100% [I]` instead of the silent 5-step 5 %.
+- `GRRA` → precip `rain` with `hail: 'GR'` (particles, Prrrr clamp and wetting from the rain; hail stones not drawn,
+  size / fall speed NV); hail alone → `hail` without drop parameters. Python `metar_decode.py` and the JS port changed
+  identically; golden vectors regenerated (A-WX 875 calls, bit-identical); `env_presets.json` regenerated (only
+  `precip.hail: null` added to the four precipitation presets).
+- Repeated summation class (FEW003 FEW008, BKN027 BKN045): the upper layer's total rises halfway to the class's upper
+  bound (I) → own 0.056 / 0.25 instead of 0 (two new Python tests).
+
+### R1.4 Floods, old renderer, shadows (truth1-12/-13/-14, look1-9/-13)
+
+- Floods, flood spots, the exposure key and the mast / bridge-flood sprites switch on `EnvState.photocell.floodsOn`
+  (E < 32.3 lx) with a 0.5 s ramp (renderer3) — the HUD and the scene agree; window / city / sign lamps keep `nightF`
+  (engine track).
+- Old renderer (§9.1 item 3): the lowest BKN/OVC ≤ 5,000 ft at its METAR base (no 150 m clamp; a < 100 ft layer is
+  never the deck), fog top = the surface layer's top, cloud drift = surface wind unamplified. Its known limits (EV100
+  exposure deferred, no wetness, one exponential fog, one deck) are printed on the `?qa=env` HUD (owner decision).
+- `js/three/engine.js setSun`: shadows whenever the apparent Sun is above the horizon (was > 1.15°).
+
+### R1.5 Night / fog / rain look (look1-1, -3, -4, -5, -7, -8, -10, -11, -12)
+
+| Finding | Change (all I unless noted; constants in the module headers) | Number (scratchpad `env4/look_num.mjs`) |
+|---|---|---|
+| look1-1 fog black at night | (a) flood in-scatter: single scattering of the 3-D floodlight field along each view ray below the lamp height, isotropic phase, through the lowest slab (`sky.js floodScatter`, fog factor and background); (b) per-light fog aureole ∝ I (1 − T) e^(−(1−g)τ), g = 0.85, Gaussian 1.5° √(1+τ) ≤ 5° (`photometry.js aureole`; airfield, aircraft and the non-photometric lamps; also when the core is below E_T), only in mist / fog (σ > 1e-4) and only above 1/1000 of white on screen | gate B26, night_fog, glow toward the apron 0.58 cd/m² (19 % of mid-grey at EV 4.6; lit concrete 2.4); squall 0.09, drizzle 0.07; ALS from 0.3 NM: 103 lit cores + 623 aureoles |
+| look1-3 puddles dark | puddle diffuse = the wet diffuse (PUDDLE_ALBEDO 0.35 → 1, Lagarde's flooded state); every light > 1 m high within 600 m is mirrored on wet pavement (image at the ray's ground hit, Fresnel F0 0.02 × wet × 0.7, film spread) | A-WET: puddle diffuse ≥ film |
+| look1-4 rain invisible at night | a drop adds E_flood / π (Garg & Nayar: drops refract their surroundings) with the sky term's display weight, sampled from the flood field at the drop | squall at gate: streak radiance 1.97 cd/m² (was 0.0075) |
+| look1-5 mast lamps dark from most views | 25 % side / back lobe floor (housing + lens glare; the 2016 dusk photo from the bay shows every mast lit: ≥ ~70 cd toward the bay, M rough); on-axis 2,970 cd unchanged (NV, Q7) | lobe 0 for 306 / 288 / 243 of 420 lamps → 0 (≥ 743 cd) |
+| look1-7 uniform land band, black sky | far field: the uniform city glow keeps 40 %, the rest goes into sparse bright point clusters (520 m grid) that stay ≥ 1 px to the horizon; the night-sky floor rises to 5 × toward the horizon (Q14) | — (render) |
+| look1-8 rain sparser on phones | per-streak weight × high / tier count (`rainParams.density`) | visual density 35,629 on every tier (was 35,629 / 17,815 / 7,126) |
+| look1-10 dusk sky from the refracted Sun | the sky precompute and its C171 calibration take the geometric direction below apparent −1° (blend to −2°) | dusk: −5.87° (was −5.23°) |
+| look1-11 warm marine base | base: the direct-sun term × the open fraction, ground bounce as luminance | — |
+| look1-12 tier cost | hidden cloud-plane side not drawn; phone tier: 4 slabs / 4 layers / 4 structure samples compiled | — |
+
+### R1.6 §11.3 render acceptance: what is and is not demonstrated (truth1-7)
+
+Corrected statuses (the step-3 table claimed more than was measured):
+
+| Gate | Status after round 1 |
+|---|---|
+| A-SUN (render) | numeric only: the renderer's light vector = EnvState `sun.dir` (page probe) and the shadow azimuth computed from it; no rendered pole shadow measured |
+| A-MOON | render diagnostic (step 3): disc position 0.013°, limb 237.8° vs 236.9° |
+| A-EXP | partly; **fails** at the marine-layer tower view (+1.62 EV, outside ±1) — open, needs the scored loop to tune the meter bias |
+| A-FOG, A-CLD | unit / CPU-mirror numbers (A-FOG 17 checks incl. the round-1 cases); pixel tests not rendered |
+| A-VIS | not run: `lighttest:` needs a synthetic one-light page (not built) |
+| A-PAPI | not run as renders; `tools/env/qa_views.mjs` now provides the `papi:<end>,<angle>,<dist>` (all 30 C2 views) and `thr:` kinds for a job; unit A-PAPI1 covers the patterns |
+| A-COL, A-GEO, A-RWSL, A-NAV | not run as renders (A-NAV: the step-2 C5 render was inconclusive); unit halves A-NAV1 / A-RWSL1 pass with the app's display phases |
+| A-PERF | not run (no GPU here) |
+| A-WIND | not drawn (Q15) |
+| lightning glow / meter bias (§3.4) | still not run in a browser |
+
+The three round-1 renders (below) only confirm the visual fixes (fog glow, aureoles, floodlit rain, lamp reflections,
+twilight sky, mast lamps); they are not acceptance renders and nothing is scored.

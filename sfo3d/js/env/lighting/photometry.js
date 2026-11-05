@@ -141,3 +141,18 @@ export const CD_PER_LAMP_S2 = (133300 / 20) * ((20 / (133300 / 20)) / 0.62) * (0
 export const I_CAP = 20000;
 export const lampUnits = (cd, s) => Math.min(I_CAP, cd / (CD_PER_LAMP_S2 * s * s));
 export { DEG };
+// ------------------------------------------------------------------------------------------------ 7. fog aureole
+// Spec §4.10: "Fog adds a forward-scatter aureole ∝ I·(1 − T) with angular radius growing with optical depth" (I,
+// QA-tuned; review finding look1-1: the light sprites had no aureole, lights in fog looked as on a clear night). The part
+// of the light scattered out of the direct beam (1 − T) that still travels towards the eye: fog droplets scatter
+// strongly forward (asymmetry g ≈ 0.85 for ~10 µm droplets: textbook Mie value, I), so after an optical depth τ the
+// forward-scattered light keeps ≈ exp(−(1 − g) τ) (transport / diffusion approximation, I); drawn as a Gaussian of
+// angular radius 1.5° × √(1 + τ) (the forward lobe widening with multiple scattering, I), at most 5° (fill-rate cap, I),
+// only while T < 0.97. Returns {f, theta (rad), tau} or null; aureole energy at the eye = I × f / d².
+export const AUR_G = 0.85, AUR_R0_DEG = 1.5, AUR_RMAX_DEG = 5, AUR_T_MAX = 0.97;
+export function aureole(T) {
+  if (!(T < AUR_T_MAX)) return null;
+  const tau = -Math.log(Math.max(T, 1e-300)); const f = (1 - T) * Math.exp(-(1 - AUR_G) * tau);
+  if (!(f > 1e-6)) return null;
+  return { f, tau, theta: Math.min(AUR_RMAX_DEG, AUR_R0_DEG * Math.sqrt(1 + tau)) * DEG };
+}

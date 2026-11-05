@@ -91,9 +91,10 @@ export function modelLight(sunDir, mie, sunI) {
  *  where C171's Sun term falls under 0.05 lx (deep nautical twilight, where C171 is outside its fitted range: "from the
  *  zenith down to nautical twilight") the factor of that limit is kept. Returns {k, modelLux, c171Lux}. */
 export const CAL_MIN_LUX = 0.05;
-export function sunCalibration(st, mie = 21e-6) {
+export function sunCalibration(st, mie = 21e-6, dir = null) {
+  // dir: the Sun direction the sky model is evaluated at (renderer3: geometric below the horizon, look1-10)
   const c171 = st.natural.sun * st.natural.D;
-  const m = modelLight(st.sun.dir, mie, 20);
+  const m = modelLight(dir || st.sun.dir, mie, 20);
   const modelLux = m.ghi * LUX_PER_UNIT;
   let k = c171 > CAL_MIN_LUX && modelLux > 1e-6 ? c171 / modelLux : null;
   return { k: k == null ? null : clamp(k, 0.1, 10), modelLux, c171Lux: c171 };
@@ -104,18 +105,27 @@ export function sunCalibration(st, mie = 21e-6) {
  *  natural.D: 1 / Kasten–Czeplak, or 10 with TS/CB; I on 2nd); the beam keeps its clear radiance (the renderer's
  *  per-layer coverage maps remove it where a cloud is, their area mean = sunVisibleP); the diffuse sky takes the rest:
  *  π·skyUp' = E_clear / D − P·E_beam (≥ 0), and turns grey with the cloud cover (I). light = modelLight-like terms. */
-export function cloudAdjust(light, st) {
+export function cloudAdjust(light, st, Tf = 1) {
+  // Tf: the direct beam's transmittance through the fog / mist / VV obscuration (fogBeamT; review truth1-5): the beam lost
+  // there goes to the diffuse sky, so the global horizontal illuminance stays C171 ÷ D (I)
   const P = st.sunVisibleP != null ? st.sunVisibleP : 1, D = st.natural.D || 1;
   const sy = Math.max(0, st.sun.dir[1]);
   const beam = lum(light.sunColor) * sy, diff = Math.PI * lum(light.skyUp);
   const target = (beam + diff) / D;
-  const diffT = Math.max(target - P * beam, 0.25 * diff / D);
+  const diffT = Math.max(target - P * Tf * beam, 0.25 * diff / D);
   const s = diff > 1e-12 ? diffT / diff : 1;
   const grey = clamp(1 - P, 0, 1) * 0.8;   // overcast sky colour toward neutral (I)
   const tint = (c) => { const l = lum(c); return c.map(v => (v + (l - v) * grey) * s); };
   const skyUp = tint(light.skyUp), skyHorizon = tint(light.skyHorizon);
-  const Eh = P * beam + Math.PI * lum(skyUp);
-  return { ...light, skyUp, skyHorizon, ground: [Eh * 0.16 / Math.PI, Eh * 0.16 / Math.PI, Eh * 0.16 / Math.PI], P, D, ghi: Eh };
+  const Eh = P * Tf * beam + Math.PI * lum(skyUp);
+  return { ...light, skyUp, skyHorizon, ground: [Eh * 0.16 / Math.PI, Eh * 0.16 / Math.PI, Eh * 0.16 / Math.PI], P, D, ghi: Eh, beamT: Tf };
+}
+/** Direct-beam transmittance of the Sun / Moon through the NON-cloud render slabs (fog, mist, the VV obscuration: excess
+ *  over the sky model's clear air) from the ground up at elevation elDeg; the cloud layers cut the beam through their
+ *  own coverage maps (review truth1-5: under VV002 the Moon stayed the directional light at its clear-sky illuminance). */
+export function fogBeamT(slabs, elDeg) {
+  let tau = 0; for (const s of slabs || []) if (!s.isCloud) tau += Math.max(0, s.sigma - SIGMA_CLEAR) * Math.max(0, s.y1 - s.y0);
+  return Math.exp(-tau / Math.max(Math.sin(elDeg * DEG), 0.05));
 }
 
 // ------------------------------------------------------------------------------------------------ 4. night sky, Moon
@@ -191,14 +201,63 @@ export function renderSlabs(st) {
       const c = clouds.find(c => Math.abs(c.base - s.y0) < 0.5); const own = c ? c.own : 0.75; const L = Math.max(1, s.y1 - s.y0);
       sigma = -Math.log((1 - own) + own * Math.exp(-s.sigma * L)) / L;
     }
-    out.push({ y0: s.y0, y1: s.y1, sigma, isCloud, kind: s.kind });
+    const o = { y0: s.y0, y1: s.y1, sigma, isCloud, kind: s.kind }; if (s.horiz) o.horiz = s.horiz;
+    out.push(o);
   }
   out.sort((a, b) => a.y0 - b.y0);
   return out.slice(0, MAX_SLABS);
 }
-/** Optical depth of a path a -> b through the render slabs (+ clear air above the slabs up to CLEAR_TOP). Same
- *  geometry as js/env/lighting/photometry.js opticalDepth (which the light sprites use), so the scene and the lights
- *  see one σ field (spec §4.10). */
+// ---- horizontal structure of the lowest slab (js/env/state.js horizontalFor; review truth1-6). Same functions in the
+// shader (js/three/sky.js horizSigma): a patch mask from four incommensurate plane waves (deterministic, identical on CPU
+// and GPU; wavelengths 290-640 m, I: spec "patch scale ~200-500 m"), cosine lobes ±45° about each sector direction seen
+// from the station (ARP), a radial ramp over 500 m from r0, a height limit; the extra optical depth along a path is
+// integrated with HORIZ_SAMPLES stratified samples over the path's part inside the slab.
+export const PATCH_WAVES = [[640, 17, 0.3], [470, 74, 1.7], [380, 131, 4.1], [290, 166, 2.6]];   // [λ m, θ deg, φ rad]
+export const PATCH_RAMP = 0.06, LOBE_RAMP_M = 500, HORIZ_SAMPLES = 8, PATCH_R_M = 1500, PATCH_FADE_M = 500;   // patches within 1.5-2 km of the ARP (around the station, I; js/env/state.js horizontalFor)
+export function patchNoise(x, z) { let n = 0; for (const [l, t, f] of PATCH_WAVES) n += Math.sin(2 * Math.PI * (x * Math.cos(t * DEG) + z * Math.sin(t * DEG)) / l + f); return 0.5 + 0.125 * n; }
+const thrCache = new Map();
+/** Threshold of the patch mask smoothstep(thr ± PATCH_RAMP, n) whose area mean is `cover` (bisection on a 6 km grid). */
+export function patchThreshold(cover) {
+  const key = cover.toFixed(4); if (thrCache.has(key)) return thrCache.get(key);
+  const N = 160, span = 6000, vals = new Float64Array(N * N);
+  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) vals[j * N + i] = patchNoise(i / N * span - 3000 + 0.37, j / N * span - 3000 + 0.61);
+  const mean = (thr) => { let m = 0; for (let k = 0; k < vals.length; k++) m += sstep(thr - PATCH_RAMP, thr + PATCH_RAMP, vals[k]); return m / vals.length; };
+  let a = -0.2, b = 1.2; for (let it = 0; it < 50; it++) { const c = (a + b) / 2; if (mean(c) > cover) a = c; else b = c; }
+  const thr = (a + b) / 2; thrCache.set(key, thr); return thr;
+}
+/** Patch mask in [0, 1] at world (x, z): the noise mask over the aerodrome (fading out beyond PATCH_R_M). */
+export const patchMask = (x, z, thr) => sstep(thr - PATCH_RAMP, thr + PATCH_RAMP, patchNoise(x, z)) * (1 - sstep(PATCH_R_M, PATCH_R_M + PATCH_FADE_M, Math.hypot(x, z)));
+/** Lobe weight of a sector lobe {az, r0} at world (x, z) seen from the station at the ARP (x east, z south). */
+export function lobeWeight(L, x, z) {
+  const r = Math.hypot(x, z); if (r < 1e-6) return L.r0 > 0 ? 0 : 1;
+  const az = Math.atan2(x, -z) / DEG; const dd = ((az - L.az) % 360 + 540) % 360 - 180;
+  const ang = Math.abs(dd) < 45 ? Math.cos(2 * dd * DEG) : 0;
+  return ang * (L.r0 > 0 ? sstep(L.r0, L.r0 + LOBE_RAMP_M, r) : 1);
+}
+/** Extra extinction (m⁻¹) of the horizontal structure H at p over the slab's base σ0 (≥ SIGMA_CLEAR − σ0). */
+export function horizDelta(H, sigma0, p) {
+  if (!H) return 0;
+  let pd = 0; if (H.patch) { if (H._thr == null) H._thr = patchThreshold(H.patch.cover); pd = patchMask(p[0], p[2], H._thr) * (H.patch.sigma - sigma0); }
+  let ld = 0; for (const L of H.lobes || []) if (p[1] < L.top) ld += lobeWeight(L, p[0], p[2]) * (L.sigma - sigma0);
+  return Math.max(Math.max(pd, ld), SIGMA_CLEAR - sigma0);
+}
+/** Extra optical depth of the lowest slab's horizontal structure along a -> b (stratified samples over the part of the
+ *  segment below the slab top). */
+export function horizTau(slabs, a, b) {
+  const S = slabs && slabs[0]; if (!S || !S.horiz) return 0;
+  const y1 = S.y1, dy = b[1] - a[1];
+  let s0 = 0, s1 = 1;
+  if (Math.abs(dy) < 1e-9) { if (a[1] >= y1) return 0; }
+  else { const sc = (y1 - a[1]) / dy; if (dy > 0) s1 = Math.min(1, sc); else s0 = Math.max(0, sc); }
+  if (s1 <= s0) return 0;
+  const L = Math.hypot(b[0] - a[0], dy, b[2] - a[2]) * (s1 - s0); let sum = 0;
+  for (let k = 0; k < HORIZ_SAMPLES; k++) { const s = s0 + (s1 - s0) * (k + 0.5) / HORIZ_SAMPLES; sum += horizDelta(S.horiz, S.sigma, [a[0] + (b[0] - a[0]) * s, a[1] + dy * s, a[2] + (b[2] - a[2]) * s]); }
+  return sum / HORIZ_SAMPLES * L;
+}
+/** Optical depth of a path a -> b through the render slabs (+ clear air above the slabs up to CLEAR_TOP, + the
+ *  horizontal structure of the lowest slab). The light sprites (js/env/lighting/airfield.js, js/env/aircraft_lights.js)
+ *  and the CPU mirror of the shader's fog use THIS function on renderSlabs(st): the scene and the lights see one σ field
+ *  (spec §4.10; review truth1-3: the lights used the raw EnvState slabs). */
 export function slabTau(slabs, a, b) {
   const tau = opticalDepth(a, b, slabs.map(s => ({ y0: s.y0, y1: s.y1, sigma: s.sigma })), 0);
   // clear air above the top slab, below CLEAR_TOP
@@ -206,7 +265,7 @@ export function slabTau(slabs, a, b) {
   const L = Math.hypot(b[0] - a[0], b[1] - a[1], b[2] - a[2]);
   const ylo = Math.min(a[1], b[1]), yhi = Math.max(a[1], b[1]), h = yhi - ylo;
   const f = h < 1e-6 ? (a[1] >= top && a[1] < CLEAR_TOP ? 1 : 0) : Math.max(0, Math.min(yhi, CLEAR_TOP) - Math.max(ylo, top)) / h;
-  return tau + SIGMA_CLEAR * f * L;
+  return tau + SIGMA_CLEAR * f * L + horizTau(slabs, a, b);
 }
 /** JS mirror of the shader's fog: transmittance camera -> point and the apparent contrast of a black target against
  *  the fog-coloured horizon (Koschmieder: C = T when the background is the in-scatter colour; spec A-FOG). */
