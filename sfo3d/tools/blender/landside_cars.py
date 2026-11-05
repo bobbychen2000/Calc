@@ -96,7 +96,28 @@ def place_positions(deck, F, layout_fn, seed=0):
         dk, al = np.asarray(deck['unmix'][0], float), deck['unmix'][1]
         um = np.clip(dk + (np.array([p_[3] for p_ in deck['positions']], float) - dk) / al, 0, 255)
         um[:, 2] = np.clip(um[:, 2] - float(np.median(np.maximum(um[:, 2] - um[:, :2].max(1), 0.0))), 0, 255)
+    # review r2 (finding 4): snap each observed car to the nearest free stall of the deck layout (position and orientation of
+    # the stall; the per-blob NAIP heading is noise at 0.5 m/px) within deck['snap'] m; the NAIP position / colour are kept as the
+    # choice of stall / paint [obs]; a car with no stall within reach keeps its position with the yaw snapped to the stall axis
+    snap = deck.get('snap')
+    slots0 = layout_fn(P, deck['axis'], np.array(F.L(*deck['origin'])), False) if snap else []
+    S0 = np.array([[s_[0], s_[1]] for s_ in slots0]) if slots0 else np.zeros((0, 2))
+    used = set(); n_snapped = 0
+    ax_yaw = math.atan2(*(np.array([math.sin(math.radians(deck['axis'])), math.cos(math.radians(deck['axis']))]))[::-1]) if snap else 0.0
     for ip, (x, y, yaw, rgb) in enumerate(deck['positions']):
+        if snap and len(S0):
+            dd = np.hypot(S0[:, 0] - x, S0[:, 1] - y)
+            hit = False
+            for j in np.argsort(dd)[:8]:
+                if dd[j] > snap: break
+                if j in used: continue
+                sx, sy = float(S0[j, 0]), float(S0[j, 1])
+                if not free(sx, sy) or (excl is not None and excl.intersects(Point(sx, sy).buffer(1.2))): continue
+                x, y, yaw = sx, sy, slots0[j][2] + (math.pi if rng.random() < 0.15 else 0.0)    # ~15 % backed in [inf]
+                used.add(int(j)); n_snapped += 1; hit = True
+                break
+            if not hit:
+                yaw = ax_yaw + round((yaw - ax_yaw) / (math.pi / 2)) * (math.pi / 2)
         ok = inner.contains(Point(x, y)) and (excl is None or not excl.intersects(Point(x, y).buffer(1.2))) and free(x, y)
         if not ok:
             dropped += 1; continue
@@ -124,6 +145,7 @@ def place_positions(deck, F, layout_fn, seed=0):
             cars.append((x, y, deck['z'] + 0.01, yaw + math.radians(rng.normal(0, 1.5)), int(rng.choice(len(SHAPES), p=sw)), int(wi[rng.choice(len(wi), p=ww)])))
     area = P.area
     info = dict(deck_area_m2=round(area, 1), slots=len(slots), cars=len(cars), observed=n_obs, observed_dropped=dropped, added_light=len(cars) - n_obs,
+                snapped=n_snapped, snap_m=snap,
                 density_per_1000m2=round(1000 * len(cars) / area, 2) if area else 0, axis_deg=deck['axis'], lanes=False,
                 count_src=deck.get('count_src'), axis_src=deck.get('axis_src'))
     return cars, info

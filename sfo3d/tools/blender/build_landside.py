@@ -65,7 +65,7 @@ MATS = {
     'red_light':      dict(rgb=(214, 22, 18), m=0.0, r=0.40, obstruction_light=dict(colour='red', dof='06-001451', lighting='R (FAA DOF)', fixture='L-810 [inf]'),
                            src='pub FAA DOF 06-001451 lighting R (red obstruction light at the 135-ft point); fixture inf'),
     'deck_plain':     dict(rgb=(228, 228, 224), m=0.0, r=0.88, naip='deck_plain', src='obs NAIP 2024 (central-garage roof lobes without stall marks: median colour)'),
-    'deck_rim':       dict(rgb=(196, 178, 146), m=0.0, r=0.90, naip='deck_rim', src='obs NAIP 2024 (beige rims / curbs round the roof lobes: median colour); nature unk'),
+    'deck_rim':       dict(rgb=(196, 178, 146), m=0.0, r=0.90, naip='deck_rim', src='obs NAIP 2024 (beige rims / curbs round the roof lobes: median of the beige pixels, r2); nature unk'),
     'void_floor':     dict(rgb=(170, 172, 170), m=0.0, r=0.90, tex='ls_c_deck', naip='void_floor', src='obs NAIP 2024 (central-garage void floor, sunlit north half: median colour); stall lines inf'),
     'cg_box_roof':    dict(rgb=(140, 140, 138), m=0.0, r=0.85, naip='box_roof', src='obs NAIP 2024 (central-garage rooftop stair / plant box roofs: median colour)'),
     'bart_panel':     dict(rgb=(226, 226, 220), m=0.0, r=0.70, nrm=('ls_n_precast', 0.5), src='obs photo a2 (white panelled BART station body); material inf'),
@@ -73,7 +73,7 @@ MATS = {
     'vault_roof':     dict(rgb=(236, 238, 238), m=0.50, r=0.35, double=True, src='obs NAIP 2024 / photo a2 (white curved roof over the Garage G / BART AirTrain station)'),
     'guide_rail':     dict(rgb=(150, 154, 158), m=0.70, r=0.45, src='obs photos l1 / l5 (low galvanised guide / power rail)'),
     'running_pad':    dict(rgb=(176, 174, 166), m=0.0, r=0.85, tex='ls_c_weather', src='obs photos l1 / l5 (concrete running pads)'),
-    'walkway':        dict(rgb=(150, 146, 136), m=0.0, r=0.85, tex='ls_c_weather', src='obs photo l1 (walkway between the tracks)'),
+    'walkway':        dict(rgb=(150, 146, 136), m=0.0, r=0.85, tex='ls_c_weather', src='obs photo l1 (emergency walkway beside the trough)'),
     'handrail':       dict(rgb=(168, 172, 176), m=0.70, r=0.40, double=True, src='obs photos l1 / l5 (galvanised handrails)'),
     'concrete':       dict(rgb=(188, 185, 177), m=0.0, r=0.85, nrm=('ls_n_concrete', 0.4), src='inf (cast concrete spandrels)'),
     'concrete_lt':    dict(rgb=(204, 202, 194), m=0.0, r=0.82, nrm=('ls_n_concrete', 0.4), src='obs photo l2 (LTP 2 exposed frame) / l4 (Hyatt sign pier)'),
@@ -89,7 +89,7 @@ MATS = {
     'deck_lanes':     dict(rgb=(170, 168, 162), m=0.0, r=0.90, tex='ls_c_lanes', naip='deck', src='obs NAIP 2024 deck colour; lane lines obs NAIP / spacing inf'),
     'deck_far':       dict(rgb=(160, 158, 152), m=0.0, r=0.90, naip='deck_far', src='obs NAIP 2024 deck colour incl. cars (LOD2)'),
     'coping':         dict(rgb=(206, 204, 198), m=0.0, r=0.70, double=True, src='inf'),
-    'glass_hyatt':    dict(rgb=(255, 255, 255), m=0.0, r=0.08, ior=1.9, tex='ls_c_hyatt', src='obs photo l4 (saturated blue reflective unitised curtain wall, one spandrel per floor; r1 retint: photo mean (38, 113, 150))'),
+    'glass_hyatt':    dict(rgb=(255, 255, 255), m=0.0, r=0.05, ior=1.5, tex='ls_c_hyatt', src='obs photo l4 (saturated deep cyan-blue unitised curtain wall, one spandrel per floor; glass median sRGB (37, 117, 154)); r2: per-pane tint / reflection tile, IOR 1.5 (the 1.9 coat reflected the sky grey-white: render red channel 3x the photo)'),
     'glass_band':     dict(rgb=(255, 255, 255), m=0.0, r=0.08, ior=1.9, tex='ls_c_glassband', src='obs photo l4 (banded curved end bay)'),
     'metal_dark':     dict(rgb=(66, 69, 74), m=0.55, r=0.45, src='obs photo l4 (dark metal podium / penthouse)'),
     'cac_wall':       dict(rgb=(255, 255, 255), m=0.0, r=0.60, tex='ls_c_cac', src='inf (panels + window bands; reduced window-to-wall ratio [pub])'),
@@ -116,7 +116,8 @@ MATS = {
     'station_roof':   dict(rgb=(198, 202, 206), m=0.60, r=0.40, double=True, src='obs photos l1 / l5 (light metal roofs)'),
     'station_soffit': dict(rgb=(150, 154, 158), m=0.50, r=0.50, double=True, src='inf'),
     'station_glass':  dict(rgb=(255, 255, 255), m=0.0, r=0.06, ior=1.9, tex='ls_c_glass', src='obs photos (glazed enclosures / door cabins)'),
-    'perf_tower':     dict(rgb=(255, 255, 255), m=0.50, r=0.55, tex='ls_c_perf', double=True, src='obs photo l5 (perforated metal cylinder, open raked top)'),
+    'perf_tower':     dict(rgb=(255, 255, 255), m=0.50, r=0.55, tex='ls_c_perf', double=True, alpha_tex=True,
+                           src='obs photo l5 (see-through expanded-mesh cylinder, raked open top); r2: alpha-blended (texture alpha 0.45 mesh / 1.0 frame [open area inf])'),
     'car':            dict(rgb=(255, 255, 255), m=0.40, r=0.35, vcol=True, src='inf (fleet colours, landside_cars.COLOURS) - vertex colours'),
 }
 TEX_SCALE = {}   # none
@@ -171,10 +172,14 @@ def naip_colours(bldgs):
         out['deck_far.' + k] = dict(rgb=s.mean(0).round().astype(int).tolist(), n=len(s), shift=sh)
     if 'central_garage' in by:
         b = by['central_garage']; rf = G.R1['cg_roof']; sh = tuple(rf['roof_shift'])
+        rf2 = G.R2['cg_roof']
         for nm, key in (('deck_plain', 'lobes'), ('deck_rim', 'rims')):
-            Pz = shapely.union_all([Polygon(q).buffer(-0.6) for q in rf[key]])
+            Pz = shapely.union_all([Polygon(q).buffer(-0.6) for q in rf2[key]])
             s_ = sample(affinity.translate(Pz, *sh), step=1.0) if not Pz.is_empty else None
             if s_ is not None and len(s_) > 20: out[nm + '.central_garage'] = dict(rgb=np.median(s_, 0).round().astype(int).tolist(), n=len(s_), shift=sh)
+        # r2: the rim colour from the beige pixels themselves (landside_r2_measure: the median over the 0.6-m-inset bands mixed in
+        # the deck) [obs NAIP]
+        out['deck_rim.central_garage'] = dict(rgb=list(rf2['rim_rgb']), n=rf2['stats']['core_px'], shift=sh, src='landside_r2_obs.json cg_roof.rim_rgb')
         # rooftop boxes (roof shift of the deck) and the void floor at grade (no relief shift; sunlit north half, r < 24 m)
         Pb = shapely.union_all([shapely.box(*bx['rect']).buffer(-1.0) for bx in rf['boxes']])
         s_ = sample(affinity.translate(Pb, *sh), step=1.0) if not Pb.is_empty else None
@@ -273,6 +278,13 @@ def make_material(name, atlas, tex_imgs, ao_img):
             nt.links.new(mul.outputs[2], b.inputs['Base Color'])
         else:
             nt.links.new(t.outputs['Color'], b.inputs['Base Color'])
+        if spec.get('alpha_tex'):
+            # review r2: see-through mesh - texture alpha -> Principled Alpha, blended (glTF alphaMode BLEND)
+            nt.links.new(t.outputs['Alpha'], b.inputs['Alpha'])
+            try: m.surface_render_method = 'BLENDED'
+            except Exception: pass  # noqa: E701
+            try: m.blend_method = 'BLEND'
+            except Exception: pass  # noqa: E701
     if spec.get('nrm'):
         t = nt.nodes.new('ShaderNodeTexImage'); t.image = tex_imgs[spec['nrm'][0]]
         uvn = nt.nodes.new('ShaderNodeUVMap'); uvn.uv_map = 'UV_detail'
@@ -633,6 +645,21 @@ def main():
                 e = next(x for l_, x in lod_empties if l_ == lod and x.parent == be)
                 add_cars(B, e, lod, cmeshes, cars, inf)
             cars_all += cars
+            # review r2 (finding 9): a cheap LOD2 impostor of the same cars (one roof quad each, paint colour in COLOR_0) so the
+            # parked cars do not vanish at the LOD2 switch (840 m on the phone tier)
+            if cars:
+                e2 = next(x for l_, x in lod_empties if l_ == 2 and x.parent == be)
+                imb = G.MB(f'L2_{B.key}_cars{di}'); vc = []
+                for (x, y, z, yaw, si, ci) in cars:
+                    Lc, Wc, Hc = C.SHAPES[si][1], C.SHAPES[si][2], C.SHAPES[si][3]
+                    ca_, sa_ = math.cos(yaw), math.sin(yaw)
+                    pts = [(x + ca_ * u_ - sa_ * v_, y + sa_ * u_ + ca_ * v_, z + Hc) for u_, v_ in ((-Lc / 2, -Wc / 2), (Lc / 2, -Wc / 2), (Lc / 2, Wc / 2), (-Lc / 2, Wc / 2))]
+                    imb.face(pts, 'car', [(0, 0), (1, 0), (1, 1), (0, 1)])
+                    vc.append(srgb2lin(C.COLOURS[ci][1]))
+                me = mesh_from_mb(f'L2_{B.key}_cars{di}', imb, None, tex_imgs, None, B.key, vcols=vc)
+                ob = new_object(f'L2_{B.key}_cars{di}', me, e2, dict(src='obs/inf', feature='parked cars, LOD2 impostor (one roof quad per car, paint colour)', lod=2,
+                                                                     instances=len(cars)))
+                objs[2].append(ob)
     log('objects: %s; cars %d' % ({l: len(o) for l, o in objs.items()}, len(cars_all)))
     car_objs = [o for o in bpy.data.objects if '_cars_' in o.name and o.type == 'MESH']
 

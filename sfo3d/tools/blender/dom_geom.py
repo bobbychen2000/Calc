@@ -190,6 +190,29 @@ HALLS = _hall_split()
 # exclusion_footprint_world) stands inside the T2 outline; the AirTrain guideway polygon (SFO Museum 'AirTrain Rail')
 # grazes the T1 hall outline (151 m2) - both are cut out so that no two assets / structures share a volume [inf]
 TOWER_EXCL = Polygon([[-742.5, 305.5], [-763.4, 345.3], [-739.3, 357.9], [-718.5, 318.1]])
+
+
+def _tower_ibf_roof():
+    """review r2 (findings 3 / 6): the height up to which the walls facing the tower base building (IBF) are interior = the
+    LOWEST IBF roof deck over the tower families the app may load (manifest.json#tower anchors_f1 / anchors_f2 / anchors
+    ibf_roof_h: F2 13.13, F1 14.068 on 2026-11-05), less a 0.10-m tuck: the T2 wall then always reaches down behind the
+    IBF parapet (F2 parapet top 13.83) - the old fixed 14.07 (the F1 roof) left a 0.24-m open slot above the default F2
+    parapet. Fallback 13.13 (F2) when the tower entry is missing."""
+    try:
+        t = json.load(open(os.path.join(ROOT, 'data', 'buildings3d', 'manifest.json'))).get('tower', {})
+        hs = [float(t[k]['ibf_roof_h']) for k in ('anchors', 'anchors_f1', 'anchors_f2') if isinstance(t.get(k), dict) and 'ibf_roof_h' in t[k]]
+        return (min(hs) if hs else 13.13), sorted(set(hs))
+    except Exception:  # noqa: BLE001
+        return 13.13, []
+
+
+TOWER_IBF_ROOF, TOWER_IBF_ROOFS = _tower_ibf_roof()
+TOWER_TUCK = 0.10
+TOWER_Z1 = TOWER_IBF_ROOF - TOWER_TUCK      # occupancy top of the IBF for the wall clipping (13.03 m with F2)
+TOWER_GAP = 0.3                             # the halls / piers are cut 0.3 m off the IBF outline (below) [our choice]
+TOWER_JOINT = 0.15                          # review r2: the flashing over that gap stops 0.15 m off the IBF wall (clear of its 0.12-m
+                                            # curtain mullions, tower_geom): an expansion joint; the domestic walls facing the IBF are
+                                            # emitted full height behind it (no view into an open interior) [our choice]
 RAIL = unary_union([_poly(p) for s_ in D.AIR['structures'] if s_['name'] == 'AirTrain Rail' for p in s_['polys']])
 for _k, _v in HALLS.items():
     _h = _clean(_v['hall'].difference(TOWER_EXCL.buffer(0.3, join_style=2)).difference(RAIL.buffer(1.0)), 50.0)
@@ -244,6 +267,32 @@ T3W_POLY, T3E_POLY = _split_t3()
 # ~35 m. Listed in the manifest (heights unk-to-inf, range 32-36 m).
 C3C_H = 33.0
 C3C_CUT = ((-783.5, 101.05), (-804.8, 141.6))       # east-wall line through the outline jogs [obs SFO Museum outline]
+# review r2 (finding 1): the office curtain wall. Six office storeys [pub HOK "six-story office building"] of 3.8 m [inf: the
+# storey height already used for C3C_H] ending at the roof edge -> the office glass starts at 33.0 - 6 x 3.8 = 10.2 m (below:
+# the connector levels as the piers). Photo a1 (reference only, 8x zoom of the NNE face): storey-height panes, the vertical
+# mullions STAGGERED from floor to floor (pane widths ~1.2-4.5 m, no common grid), light frames (thin horizontals at the
+# floor lines), very dark green glass (photo median sRGB 22 / 32 / 31; frames ~125 / 132 / 132 under overcast) [obs, low]
+C3C_STOREY, C3C_STOREYS = 3.8, 6
+C3C_OFFICE_Z0 = C3C_H - C3C_STOREYS * C3C_STOREY    # 10.2 m [inf]
+# review r2: the rooftop penthouse (photo a1: a light box set back from the NNE face with a dark louvre band; NAIP 2024: its
+# imaged WNW wall is a 2.5-m (FWHM) grey band on the C3C roof, i.e. ~5.7 m above the deck at the 0.437 m/m lean) [obs, low].
+# Frame: u along the NNE face from its ESE end (-783.1, 100.3) towards (-815.1, 83.4) [SFO Museum outline], w inwards (SSW).
+# Extent u 9.9 .. 32.4 m (photo a1: 23 % .. 77 % of the face; NAIP: the WNW wall at u 32.4, 3 rows z 100 / 105 / 110),
+# w 4.4 .. 30.4 m (NAIP: the imaged NW / SW wall ends moved back by the relief); top 38.0 m = roof edge + 5.0 (photo a1:
+# 4.4-5.3 m visible above the roof edge; NAIP 5.7 above the deck) [obs, low]. Louvre band on its NNE wall u 11.2 .. 20.6,
+# the lower ~80 % of the visible face (photo a1) [obs, low].
+C3C_FACE_E = (-783.1, 100.3); C3C_FACE_W = (-815.1, 83.4)
+C3C_PENT_U, C3C_PENT_W = (9.9, 32.4), (4.4, 30.4)
+C3C_PENT_TOP = C3C_H + 5.0
+C3C_LOUVRE_U, C3C_LOUVRE_Z = (11.2, 20.6), (C3C_H + 0.2, C3C_H + 4.0)
+
+
+def c3c_uw(u, w):
+    """world (x, z) of the C3C face frame point (u along the NNE face from its ESE end, w inwards)."""
+    e, f = np.array(C3C_FACE_E), np.array(C3C_FACE_W)
+    uh = (f - e) / np.hypot(*(f - e)); wh = np.array([uh[1], -uh[0]])
+    if wh[1] < 0: wh = -wh                         # inwards = south-ish (+z)
+    return tuple(e + uh * u + wh * w)
 
 
 def _c3c():
@@ -320,6 +369,8 @@ TILE['glass_ec'] = (24.0, 6.0)   # electrochromic panes in mixed tint states: 16
 TILE['glass_frit_green'] = (12.0, 9.0)   # T1 landside tiers: one tile = canopy line -> wall head (9.0 m), transom 3.96 m up
 TILE['glass_t3w'] = (6.0, 5.8)           # T3W window wall: 2.0-m verticals, band 5.8 m (BD-03 view 3 schematic)
 TILE['penthouse_corr'] = (3.0, 2.8)      # corrugation 0.2 m, accent bands every 1.4 m (BD-03 schematic)
+TILE['glass_c3c'] = (24.0, C3C_STOREYS * C3C_STOREY)   # review r2: 6 storeys x 24 m, staggered panes (dom_tex.c3c_colour)
+TILE['louvre'] = (3.0, 3.0)              # review r2: C3C penthouse louvre blades 0.15 m (dom_tex)
 # (tile sizes: tools/blender/dom_tex.py TILES)
 GLASS = {k for k in TILE if k.startswith('glass')}
 
@@ -406,9 +457,15 @@ STYLES = {
                 (T3_LV['L3'] + 10 * FT, T3_LV['L3'] + 12 * FT, 'panel_acm_dark', 0), (T3_LV['L3'] + 12 * FT, None, 'glass_ec', 1.5)],
     'T3E': [(0.0, 4.6, 'service', 0), (4.6, CURB + 0.7, 'panel_dark', 0), (CURB + 0.7, T3_LV['L3'], 'glass_frit_grey', 1.5),
             (T3_LV['L3'], None, 'panel_platinum', 0)],
-    # C3C: "Dynamic glazing" [pub HOK] -> the electrochromic curtain glass; the connector levels below (service base, dark
-    # spandrel at the departures floor) as the piers [inf]; photo a1: a dark glazed box with light frames, ~3-m module [obs, low]
-    'C3C': [(0.0, 4.6, 'service', 0), (4.6, 5.6, 'panel_dark', 0), (5.6, None, 'glass_ec', 3.0)],
+    # C3C (review r2): the six office storeys from C3C_OFFICE_Z0 in the storey-height, staggered-mullion dark-green curtain
+    # glass (glass_c3c: "Dynamic glazing" [pub HOK], look obs photo a1; frames in the tile, no fins); the connector levels
+    # below as the piers (service base, dark spandrel, tinted concourse glass, dark band at the office floor) [inf]
+    'C3C': [(0.0, 4.6, 'service', 0), (4.6, 5.6, 'panel_dark', 0), (5.6, C3C_OFFICE_Z0 - 0.6, 'glass_tint', 1.5),
+            (C3C_OFFICE_Z0 - 0.6, C3C_OFFICE_Z0, 'panel_dark', 0), (C3C_OFFICE_Z0, None, 'glass_c3c', 0)],
+    'pent_c3c': [(0.0, None, 'panel_light', 0)],
+    # BA-E tip end wall (review r2: photo a1 shows the apron-facing end wall glazed over ~80-90 % of its height: a dark base
+    # 0-2.0 m, then clear glass to the wall head, profile ratios of photo a1 at the end wall [obs, low])
+    'E_endwall': [(0.0, 2.0, 'panel_dark', 0), (2.0, None, 'glass_clear', 1.5)],
     'clere_B': [(0.0, None, 'glass_lowe', 1.5)],
     'clere_E': [(0.0, H['E'] - 1.0, 'glass_lowe', 1.5), (H['E'] - 1.0, None, 'panel_dark', 0)],
     'drum': [(0.0, None, 'panel_light', 0)],
@@ -463,7 +520,11 @@ class World:
         self.occ = []     # (geom, z0, z1, solid)
         # neighbouring assets: the ITB (data/buildings3d/itb.glb: piers 17.0-17.9 m, core 17.9 m placeholder) and the tower
         # base building (tower.glb) - walls facing them are interior and not emitted (they would be hidden / z-fight)
-        for g, z1 in ((ITB.buffer(0.05, join_style=2), 17.0), (TOWER_EXCL.buffer(0.35, join_style=2), 14.07)):   # tower anchors.ibf_roof_h
+        # (review r2: the walls facing the tower base building are no longer clipped - the IBF occupancy (up to the LOWEST
+        # family's IBF roof less a tuck, TOWER_Z1) reaches only TOWER_JOINT - 0.02 m out, so the T2 / BA-D / T1 walls 0.3 m off
+        # the IBF are emitted full height (before: clipped up to 14.07 m, the F1 roof, leaving a 0.24-m slot above the default F2
+        # parapet and an open view into T2); the gap between them is covered by a flashing, tower_flashing())
+        for g, z1 in ((ITB.buffer(0.05, join_style=2), 17.0), (TOWER_EXCL.buffer(TOWER_JOINT - 0.02, join_style=2), TOWER_Z1)):
             self.occ.append((loc(g), 0.0, z1, None))
         for s in self.S:
             # a solid with a parapet occupies up to its DECK: along a taller neighbour its coping ring is cut away (emit_roof), so
@@ -530,6 +591,9 @@ def exposed_pieces(W, s, a, b, lo, hi):
     return m
 
 
+IBF_L = loc(TOWER_EXCL)   # the tower base building outline (local)
+
+
 def emit_walls(mb, det, W, s, lod, mull_geom=True):
     """facade walls of solid s (poly rings) from z0 to the slab underside, banded by its style, clipped by neighbours;
     LOD0 mullion fins on glazed bands into the detail mesh det."""
@@ -542,6 +606,10 @@ def emit_walls(mb, det, W, s, lod, mull_geom=True):
                 L = math.hypot(b[0] - a[0], b[1] - a[1])
                 if L < 0.05: continue
                 bands, st = s.bands(a, b)
+                # review r2: a wall 0.3 m off the tower base building (emitted full height behind the flashing joint) is a blank
+                # panel wall - no glazing, no fins (they would reach the IBF mullions)
+                if IBF_L.distance(Point((a[0] + b[0]) / 2, (a[1] + b[1]) / 2)) < TOWER_GAP + 0.1:
+                    bands, st = [(0.0, None, 'panel_light', 0)], 'ibf_side'
                 for t0, t1, iv in exposed_pieces(W, s, a, b, s.z0, head):
                     pa = (a[0] + (b[0] - a[0]) * t0, a[1] + (b[1] - a[1]) * t0)
                     pb = (a[0] + (b[0] - a[0]) * t1, a[1] + (b[1] - a[1]) * t1)
@@ -780,6 +848,7 @@ def lean_x(x):
 
 PV = json.load(open(os.path.join(HERE, 'dom_pv.json'))) if os.path.exists(os.path.join(HERE, 'dom_pv.json')) else None
 ROOFOBS = json.load(open(os.path.join(HERE, 'dom_roofobs.json'))) if os.path.exists(os.path.join(HERE, 'dom_roofobs.json')) else None
+PV_R2 = json.load(open(os.path.join(HERE, 'dom_pv_r2.json'))) if os.path.exists(os.path.join(HERE, 'dom_pv_r2.json')) else None
 
 
 # ------------------------------------------------------------------------------------------------ helpers
@@ -818,13 +887,20 @@ def oct_local(c_world, apo, n0=343.0):
     return M.orient_all(Polygon([Lp(*p) for p in DD.octagon(c_world, apo, n0)]))
 
 
-def pv_blocks(region):
+def pv_blocks(region, world=False):
     """the PV of a roof region as discrete rack tables (tools/blender/dom_roofobs.py: the rows / tables with their aisles inside
-    each NAIP block, review r1) - or the block outlines when the tables are not measured."""
+    each NAIP block, review r1) - or the block outlines when the tables are not measured; plus the arrays that dom_pv.py
+    missed (tools/blender/dom_pv_r2.py, review r2: the BA-E plate). world=True: world (x, z) polygons (lean-free)."""
+    rings = []
     if ROOFOBS is not None and region in ROOFOBS.get('pv_tables', {}) and ROOFOBS['pv_tables'][region]['tables']:
-        return [M.orient_all(Polygon([Lp(x, z) for x, z in t['ring']]).buffer(0)) for t in ROOFOBS['pv_tables'][region]['tables']]
-    if PV is None or region not in PV['regions']: return []
-    return [M.orient_all(Polygon([Lp(x, z) for x, z in b['ring']]).buffer(0)) for b in PV['regions'][region]['blocks']]
+        rings = [t['ring'] for t in ROOFOBS['pv_tables'][region]['tables']]
+    elif PV is not None and region in PV['regions']:
+        rings = [b['ring'] for b in PV['regions'][region]['blocks']]
+    if PV_R2 is not None and region in PV_R2.get('regions', {}):
+        rings += [t['ring'] for t in PV_R2['regions'][region]['tables']]
+    if world:
+        return [Polygon(r).buffer(0) for r in rings]
+    return [M.orient_all(Polygon([Lp(x, z) for x, z in r]).buffer(0)) for r in rings]
 
 
 def pv_block_outlines(region):
@@ -1005,7 +1081,7 @@ def build_world(lod):
         roof_c = M.orient_all(largest(_clean(plate.difference(roof_b.buffer(0.001, join_style=2)), 50.0)))
         sEf.poly = M.orient_all(largest(_clean(wE.difference(bay.buffer(0.001, join_style=2)), 50.0)))
         sEf.roof = sEf.poly
-        sEb = W.add(Solid('BA_E_endbay', 'BA_E', bay_wall, H['E'], roof=roof_b, style='E_end', thk=0.8, parapet=0.0, tag='inf',
+        sEb = W.add(Solid('BA_E_endbay', 'BA_E', bay_wall, H['E'], roof=roof_b, style='E_endwall', thk=0.8, parapet=0.0, tag='inf',
                           feature='Boarding Area E tip: full-height glazed end wall recessed under the tapered plate (photo a1)',
                           spec=['bae.roof', 'bae.facade']))
         info['E_endbay'] = bay_wall
@@ -1052,6 +1128,15 @@ def build_world(lod):
     sC3 = W.add(Solid('C3C_block', 'C3C', core['C3C'], C3C_H, style='C3C', tag='inf',
                       feature='Courtyard 3 Connector: six-storey office block above the T2-T3 connector (HOK [pub]); footprint T2 '
                               'outline NW end [obs]; height 33.0 m [inf, range 32-36]', spec=[]))
+    # its rooftop penthouse (review r2, see C3C_PENT_*) with the louvre band on the NNE wall
+    pent_c = loc(Polygon([c3c_uw(u, w) for u, w in ((C3C_PENT_U[0], C3C_PENT_W[0]), (C3C_PENT_U[1], C3C_PENT_W[0]),
+                                                    (C3C_PENT_U[1], C3C_PENT_W[1]), (C3C_PENT_U[0], C3C_PENT_W[1]))]))
+    pent_c = M.orient_all(largest(_clean(pent_c.intersection(sC3.poly.buffer(-(PARAPET_T + 0.5), join_style=2)), 20.0)))
+    sC3p = W.add(Solid('C3C_penthouse', 'C3C', pent_c, C3C_PENT_TOP, z0=sC3.deck, style='pent_c3c', thk=0.6, parapet=0.4, tag='obs',
+                       feature='Courtyard 3 Connector rooftop penthouse (photo a1 light box with a dark louvre band; NAIP 2024 WNW wall '
+                               'band) [obs, low]; top 38.0 m [obs, low]', spec=[]))
+    sC3.holes.append(sC3p.poly); info['C3C_penthouse'] = sC3p.poly
+    feats.append(Feat('C3C', lambda mb, det, lod_: c3c_louvre(mb, det, lod_)))
     sT3W = W.add(Solid('T3W_hall', 'T3W', core['T3W'], H['T3W_parapet'], style=styleT3W, parapet=3.5 * FT, tag='pub',
                        feature='Terminal 3 West (95 % CD state: parapet 66\'-0")', spec=['t3.levels_datum', 't3w.wall_field', 't3w.materials']))
     sT3E = W.add(Solid('T3E_hall', 'T3E', core['T3E'], H['T3E'], style='T3E', tag='inf', feature='Terminal 3 East', spec=['t3.levels_datum', 't3e.facade']))
@@ -1080,13 +1165,15 @@ def build_world(lod):
         info['T1_skylights'] = sky
         feats.append(Feat('T1', lambda mb, det, lod_, sky=sky: skylights(mb, det, lod_, sky)))
     for reg, host, bld in (('T1', sT1, 'T1'), ('T3W', sT3W, 'T3W'), ('T3E', sT3E, 'T3E'), ('C3C', sC3, 'C3C')):
-        pv = [(q, host) for q in pv_blocks(reg)]
+        pv = [(q, host) for q in pv_blocks(reg)] if reg != 'C3C' else c3c_pv(sC3, sC3p)
         feats.append(Feat(bld, lambda mb, det, lod_, pv=pv: pv_racks(det, pv, lod_), kind='pv'))
     # T1 curb canopy + departures sidewalk deck along the trimmed landside face [pub canopy; inf / unk heights]
     can = t1_canopy(sT1)
     info['T1_canopy'] = can
     feats.append(Feat('T1', lambda mb, det, lod_, can=can: canopy(mb, det, lod_, can)))
 
+    # ---------------- review r2: facades notched around the app's rotunda drums (finding 8)
+    info['drum_notches'] = drum_notches(W)
     # ---------------- bridge doors / vestibules (jet-bridge attachment facades), overhang notches
     doors = bridge_doors(W)
     info['doors'] = doors
@@ -1110,6 +1197,11 @@ def build_world(lod):
     info['units'] = units
     for bld in sorted({h.bld for _, h, _ in units}):
         feats.append(Feat(bld, lambda mb, det, lod_, us=[u for u in units if u[1].bld == bld]: unit_boxes(mb, us)))
+    # review r2 (findings 3 / 6): flashing over the 0.3-m gap to the tower base building
+    fl = tower_flashing(W)
+    info['tower_flashing'] = fl
+    for bld, g, z in fl:
+        feats.append(Feat(bld, lambda mb, det, lod_, g=g, z=z: M.cap(mb, g, z, 'coping', tl('coping'))))
     W.finish()
     return W, feats, info
 
@@ -1216,6 +1308,101 @@ def t3e_penthouse(t3e):
     return M.orient_all(largest(g))
 
 
+# ------------------------------------------------------------------------------------------------ review r2 features
+def c3c_louvre(mb, det, lod):
+    """the dark louvre band on the C3C penthouse NNE wall (photo a1) [obs, low]: a 0.08-m deep box 0.02 m off the wall."""
+    u0, u1 = C3C_LOUVRE_U
+    a = np.array(Lp(*c3c_uw(u0, C3C_PENT_W[0]))); b = np.array(Lp(*c3c_uw(u1, C3C_PENT_W[0])))
+    d = (b - a) / np.hypot(*(b - a)); n = np.array([d[1], -d[0]])
+    inw = np.array(Lp(*c3c_uw(0.5 * (u0 + u1), C3C_PENT_W[0] + 1.0))) - (a + b) / 2
+    if np.dot(n, inw) > 0: n = -n                       # n: outwards from the penthouse wall (NNE)
+    c = (a + b) / 2 + n * 0.06
+    M.boxm(det, tuple(c), tuple(d), float(np.hypot(*(b - a))), 0.08, C3C_LOUVRE_Z, 'louvre', tl('louvre'), top=True, bottom=True)
+
+
+def c3c_pv(block, pent):
+    """the C3C PV tables (dom_roofobs.json, measured with the relief of the 33.0-m roof): a table whose position moved back by
+    the penthouse's extra relief (lean x 5.0 m, ~2.2 m west) lies on the penthouse roof is hosted there (NAIP shows the
+    tables on the raised box), the others stay on the block deck (review r2)."""
+    k = lean_x(C3C_POLY.centroid.x)
+    out = []
+    pw = wld(pent.poly)
+    for q in pv_blocks('C3C', world=True):
+        q2 = affinity.translate(q, -k * (C3C_PENT_TOP - C3C_H), 0.0)
+        if pw.buffer(0.5).contains(q2.centroid):
+            out.append((M.orient_all(loc(q2)), pent))
+        else:
+            out.append((M.orient_all(loc(q)), block))
+    return out
+
+
+DRUM_R_APP, DRUM_MIN_APP = 2.45, 1.5        # js/live/gates.js: drum radius clampN(min(2.45, rotundaMaxR - 0.25), DRUM_MIN 1.5, 2.45)
+DRUM_CLEAR = 0.10                           # facade clearance to the largest drum the app can draw [review r2: 0.1 m]
+DRUM_BAND = (FLOOR2 - 0.6, WALK_TOP + 0.3)  # the app's drum: floor - 0.3 .. + 3.3 (scene2d.json cyl 4.95-8.55 m) + margins
+
+
+def rotunda_drums():
+    """the app's rotunda drums of the B-F bridges: centre = data/sfo_stands.json rotunda (gates.js b.rot; rotShift 0 today),
+    radius = the LARGEST the app can draw for that bridge, max(DRUM_MIN, min(2.45, rotunda_max_r - 0.25)) (the other gates.js
+    limits only shrink it; checked against all 332 drum solids of out/buildings3d/integ/draw/scene2d.json: none larger)."""
+    st = json.load(open(os.path.join(ROOT, 'data', 'sfo_stands.json')))['stands']
+    out = []
+    for s_ in st:
+        if s_['letter'] not in 'BCDEF': continue
+        for b in s_['bridges'] + s_.get('bridges_upper', []):
+            r = b.get('rotunda')
+            if not r: continue
+            rm = b.get('rotunda_max_r')
+            rr = max(DRUM_MIN_APP, min(DRUM_R_APP, (rm if rm is not None else 2.7) - 0.25))
+            out.append(dict(stand=s_['name'], door=b.get('door'), c=Lp(*r), r=rr, rc=rr + DRUM_CLEAR))
+    return out
+
+
+DRUMS = rotunda_drums()
+
+
+def drum_notches(W):
+    """review r2 (finding 8): every solid whose height range meets the drum band is notched around each drum (radius + 0.1 m)
+    that reaches into it; the roof is notched too where its underside is below the drum top (else it overhangs the notch,
+    with a soffit). -> [dict(stand, door, solid, r_app_max, notched_m2, depth_m)]."""
+    out = []
+    for s in W.S:
+        if s.z0 > DRUM_BAND[1] or s.h < DRUM_BAND[0]: continue
+        hit = [d for d in DRUMS if s.poly.distance(Point(d['c'])) < d['rc'] - 0.005]
+        if not hit: continue
+        cut = unary_union([circle(d['c'], d['rc'], 64) for d in hit]).buffer(0.001)
+        orig = s.poly
+        low_roof = (s.h - s.thk) < DRUM_BAND[1] + 0.1        # roof underside below the drum top: the roof is notched too
+        if low_roof:
+            s.roof = M.orient_all(largest(_clean(s.roof.difference(cut), 5.0)))
+        s.poly = M.orient_all(largest(_clean(orig.difference(cut), 5.0)))
+        if low_roof and s.roof.area > s.poly.area - 0.01 and s.roof.difference(s.poly).area < 0.01: s.roof = s.poly
+        for d in hit:
+            pc = Point(d['c'])
+            depth = d['rc'] - pc.distance(orig.exterior) if not orig.contains(pc) else d['rc'] + pc.distance(orig.exterior)
+            out.append(dict(stand=d['stand'], door=d['door'], solid=s.key, r_app_max=round(d['r'], 2),
+                            notched_m2=round(orig.intersection(circle(d['c'], d['rc'], 64)).area, 2), depth_m=round(depth, 2),
+                            roof_notched=bool(low_roof)))
+    return out
+
+
+def tower_flashing(W):
+    """review r2 (finding 6): caps over the TOWER_GAP gap between the solids cut off the tower base building (IBF) and the IBF
+    walls (looking down into it showed the open inside of T2): per solid standing next to it, the gap band along its stretch
+    at min(solid top, TOWER_Z1), stopping TOWER_JOINT off the IBF wall (clear of its mullions; no shared volume); the domestic
+    walls behind it run full height, so the joint shows wall faces, not an open interior."""
+    ex = loc(TOWER_EXCL)
+    band = ex.buffer(TOWER_GAP + 0.02, join_style=2).difference(ex.buffer(TOWER_JOINT, join_style=2))   # a joint at the IBF wall
+    out = []
+    for s in W.S:
+        if s.z0 > TOWER_Z1 or s.roof.distance(ex) > TOWER_GAP + 0.1: continue
+        g = band.intersection(s.roof.buffer(TOWER_GAP + 0.15, join_style=2)).difference(s.roof)
+        g = _clean(g, 0.05)
+        if g.is_empty: continue
+        out.append((s.bld, M.orient_all(g), round(min(s.h, TOWER_Z1), 3)))
+    return out
+
+
 # ------------------------------------------------------------------------------------------------ bridge doors
 def bridge_doors(W):
     """jet-bridge attachment facades: for every bridge of the domestic stands (data/sfo_stands.json walk), the point X where
@@ -1272,8 +1459,11 @@ def bridge_doors(W):
             low = host.h < VEST['z1'] + 0.4                     # roof below the walkway head: bulkhead above the roof
             gap = max(0.0, -pen)
             notch = LineString([tuple(X - d * 0.1), tuple(X + d * (gap + 6.0))]).buffer(VEST['w'] / 2 + 0.4, cap_style=2)
+            # review r2: the app's rotunda drums within reach (any bridge's: twin heads) - door parts are clipped / culled there
+            dc = [circle(dr['c'], dr['rc'], 64) for dr in DRUMS if math.dist(dr['c'], tuple(X)) < dr['rc'] + 8.0]
             out.append(dict(stand=s['name'], gate=br.get('gate'), door=br.get('door'), X=tuple(X), E=tuple(El), d=tuple(d), gap=round(gap, 3),
-                            penetration=round(max(0.0, pen), 3), host=host.key, bld=host.bld, low=low, h_host=host.h, notch=notch))
+                            penetration=round(max(0.0, pen), 3), host=host.key, bld=host.bld, low=low, h_host=host.h, notch=notch,
+                            drum_cut=unary_union(dc) if dc else None))
     return out
 
 
@@ -1284,36 +1474,67 @@ def bulkhead_back(d):
 
 
 def bulkhead_hole(d):
-    """plan footprint (local) of a bulkhead: the host deck is cut there and the bulkhead's top closes it."""
+    """plan footprint (local) of a bulkhead: the host deck is cut there and the bulkhead's top closes it (review r2: less the
+    app's rotunda drums, as the bulkhead itself)."""
     X, El, dd = np.array(d['X']), np.array(d['E']), np.array(d['d'])
     A = X - dd * bulkhead_back(d); Bp = El if d['gap'] > 0.12 else X
     c = (A + Bp) / 2; L = float(np.hypot(*(Bp - A)))
     n = np.array([dd[1], -dd[0]]); w = VEST['w'] / 2 - 0.02
-    return Polygon([tuple(c - dd * L / 2 - n * w), tuple(c + dd * L / 2 - n * w), tuple(c + dd * L / 2 + n * w), tuple(c - dd * L / 2 + n * w)])
+    g = Polygon([tuple(c - dd * L / 2 - n * w), tuple(c + dd * L / 2 - n * w), tuple(c + dd * L / 2 + n * w), tuple(c - dd * L / 2 + n * w)])
+    if d.get('drum_cut') is not None: g = largest(_clean(g.difference(d['drum_cut']), 0.05))
+    return g
+
+
+def vest_poly(d):
+    """plan footprint (local) of the vestibule / bulkhead box of a door, less the app's rotunda drums (review r2)."""
+    X, El, dd = np.array(d['X']), np.array(d['E']), np.array(d['d'])
+    back = bulkhead_back(d) if d['low'] else 0.15
+    A = X - dd * back; Bp = El if d['gap'] > 0.12 else X
+    c = (A + Bp) / 2; L = float(np.hypot(*(Bp - A)))
+    n = np.array([dd[1], -dd[0]]); w = VEST['w'] / 2
+    g = Polygon([tuple(c - dd * L / 2 - n * w), tuple(c + dd * L / 2 - n * w), tuple(c + dd * L / 2 + n * w), tuple(c - dd * L / 2 + n * w)])
+    if d.get('drum_cut') is not None: g = largest(_clean(g.difference(d['drum_cut']), 0.05))
+    return M.orient_all(g) if not g.is_empty else g
 
 
 def door_geom(mb, det, lod, d):
     X, El, dd = np.array(d['X']), np.array(d['E']), np.array(d['d'])
     n = np.array([dd[1], -dd[0]])
+    dcut = d.get('drum_cut')
     if d['gap'] > 0.12 or d['low']:
         back = bulkhead_back(d) if d['low'] else 0.15
         A = X - dd * back; Bp = El if d['gap'] > 0.12 else X          # ends on the facade plane: the walkway abuts it
         L = float(np.hypot(*(Bp - A)))
         c = (A + Bp) / 2
         z1 = VEST['z1'] if not d['low'] else max(VEST['z1'], d['h_host'] + 1.0)
-        M.boxm(mb, tuple(c), tuple(dd), L, VEST['w'], (VEST['z0'], z1), 'panel_light', tl('panel_light'), top=True, bottom=True,
-               top_mat='coping')
+        vp = vest_poly(d) if dcut is not None else None
+        if vp is None:
+            M.boxm(mb, tuple(c), tuple(dd), L, VEST['w'], (VEST['z0'], z1), 'panel_light', tl('panel_light'), top=True, bottom=True,
+                   top_mat='coping')
+        elif not vp.is_empty and vp.area > 0.3:
+            # (review r2: clipped around the app's rotunda drum, the drum closes the walkway end there)
+            M.prism(mb, vp, VEST['z0'], z1, 'panel_light', top_mat='coping', bottom_mat='panel_light', tile=tl('panel_light'))
     if lod == 0:
         # door surround on the facade (or on the vestibule end) AROUND the walkway section (gates.js WALK_W 2.6 x WALK_H 3.0
         # at DEPARTURE_LEVEL): two jambs and a head 0.12 m proud, clear of the walkway, and a dark leaf 0.02 m proud inside
         # it (the closed door behind the docked bridge's end) [inf]
         P = np.array(d['E']) if d['gap'] > 0.12 else X
         wj = 0.25; off = WALK_W_APP / 2 + 0.05 + wj / 2
+
+        def clear(c, w, h):
+            """review r2: a surround member is left out where it would stand inside an app rotunda drum (+0.1 m)."""
+            if dcut is None: return True
+            q = Polygon([tuple(c + n * w / 2 + dd * h / 2), tuple(c - n * w / 2 + dd * h / 2), tuple(c - n * w / 2 - dd * h / 2), tuple(c + n * w / 2 - dd * h / 2)])
+            return not q.intersects(dcut)
         for sg in (-1, 1):
-            M.boxm(det, tuple(P + dd * 0.06 + n * sg * off), tuple(n), wj, 0.12, (DOOR['z0'], WALK_TOP + 0.4), 'mullion', (3.0, 3.0), top=True)
-        M.boxm(det, tuple(P + dd * 0.06), tuple(n), WALK_W_APP + 0.1 + 2 * wj, 0.12, (WALK_TOP + 0.08, WALK_TOP + 0.4), 'mullion', (3.0, 3.0), top=True,
-               bottom=True)
-        M.boxm(det, tuple(P + dd * 0.01), tuple(n), WALK_W_APP + 0.1, 0.02, (FLOOR2, WALK_TOP + 0.08), 'door_dark', (3.0, 3.0), top=False)
+            cj = P + dd * 0.06 + n * sg * off
+            if clear(cj, wj, 0.12):
+                M.boxm(det, tuple(cj), tuple(n), wj, 0.12, (DOOR['z0'], WALK_TOP + 0.4), 'mullion', (3.0, 3.0), top=True)
+        if clear(P + dd * 0.06, WALK_W_APP + 0.1 + 2 * wj, 0.12):
+            M.boxm(det, tuple(P + dd * 0.06), tuple(n), WALK_W_APP + 0.1 + 2 * wj, 0.12, (WALK_TOP + 0.08, WALK_TOP + 0.4), 'mullion', (3.0, 3.0), top=True,
+                   bottom=True)
+        if clear(P + dd * 0.01, WALK_W_APP + 0.1, 0.02):
+            M.boxm(det, tuple(P + dd * 0.01), tuple(n), WALK_W_APP + 0.1, 0.02, (FLOOR2, WALK_TOP + 0.08), 'door_dark', (3.0, 3.0), top=False)
 
 
 # ------------------------------------------------------------------------------------------------ parts per building

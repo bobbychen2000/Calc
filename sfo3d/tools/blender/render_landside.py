@@ -16,7 +16,7 @@ tools/buildings/draw_landside.py, not from the mesh) and the measured render sil
              door head, 138-m roof (BL-03 row 4)
 Perspectives approximating the reference photos (camera positions estimated, not surveyed):
   l4  Grand Hyatt from the airfield (east), long lens        l1  Garage A east portal from the guideway (photo l1)
-  l5  RCC west wall + station tower from the north (l5)      a2  aerial from the ESE over the ITB at Garage G / Hyatt (a2)
+  l5  RCC west wall + station tower from the north (l5)      a2  photo a2 with its SOLVED camera (out/buildings3d/itb_a2_camera.json; r2) - with --itb --roadways
   overview  oblique aerial over the whole landside group
 --itb also imports data/buildings3d/itb.glb (context for a2). Sun + physical sky, AgX, OIDN; <= 960 px, <= 64 spp.
 """
@@ -316,9 +316,13 @@ def view_i2(args):
     + 2.4 m (train window); pitch -1.05 deg puts the Garage A drum ring (39.6 [unk]) at the photo's drum top (y 564 of 1440).
     Render with --itb (the ITB is the photo's centre)."""
     import math as _m
+    import landside_geom as LG
     cam = (-1721.1, 476.0); yaw = _m.radians(79.1); eye = 19.22 + 2.4; D_ = 300.0
     tgt = (cam[0] + D_ * _m.sin(yaw), cam[1] - D_ * _m.cos(yaw))
-    return persp('i2', cam, eye, tgt, eye - D_ * _m.tan(_m.radians(1.05)), 27.0, (960, 720), (200.0, 55.0), 'i2')
+    # r2: pitch from the drum ring at its a2 height (the r1 -1.05 deg had put a 39.6-m ring at the photo's drum top, y 564 / 1440)
+    dc = DL.ggeom('garage_a')['drum_c']; Dd = _m.hypot(dc[0] - cam[0], dc[1] - cam[1]) - DL.ggeom('garage_a')['R']
+    pitch = _m.degrees(_m.atan2(LG.GAR_R2['garage_a']['ring'] - eye, Dd) - _m.atan2(720 - 564, 1440.0))
+    return persp('i2', cam, eye, tgt, eye + D_ * _m.tan(_m.radians(pitch)), 27.0, (960, 720), (200.0, 55.0), 'i2')
 
 
 def view_bart(args):
@@ -351,11 +355,20 @@ def view_cg_top(args):
 
 
 def view_a2(args):
-    """aerial from the ESE over the ITB at Garage G / Grand Hyatt (photo a2 direction)."""
-    Gg = DL.ggeom('garage_g')
-    tgt = Gg['c'] + np.array([20.0, 60.0])
-    d = np.array([math.sin(math.radians(32.0)), -math.cos(math.radians(32.0))])     # camera NNE of the target, looking SSW [est.]
-    return persp('a2', tgt + d * 1000.0, 420.0, tgt, 10.0, 62.0, (960, 640), (200.0, 55.0), 'a2')
+    """photo a2 with its SOLVED camera (review r2, finding 2: the r1 view used an unmatched ESE oblique and could not catch the
+    garage heights): out/buildings3d/itb_a2_camera.json (tools/blender/itb_a2_solve.py; BA-G picks + the Hyatt top 44 m [inf]),
+    1920 x 1280 -> 960 x 640. Render with --itb --roadways for the context of the photo."""
+    from mathutils import Quaternion
+    c = json.load(open(os.path.join(OUT, 'itb_a2_camera.json')))['camera']
+    a, e = math.radians(c['az']), math.radians(c['el'])
+    loc = Wxz(c['x'], c['z'], c['h'])
+    fwd = Vector((math.sin(a) * math.cos(e), math.cos(a) * math.cos(e), math.sin(e)))
+    sun_sky(215.0, 50.0)       # a2: bright overcast, soft shadows toward the camera (as render_itb view_a2g) [est.]
+    co = camera('cam_a2', loc, loc + fwd * 1000.0, lens=c['f_px'] / 1920.0 * 36.0, res=(960, 640))
+    co.rotation_mode = 'QUATERNION'
+    co.rotation_quaternion = co.rotation_euler.to_quaternion() @ Quaternion((0.0, 0.0, 1.0), math.radians(c['roll']))
+    pr = render(os.path.join(OUT, 'landside_a2.png'))
+    return dict(render=pr, compare=side_by_side(pr, os.path.join(REF, 'a2.jpg'), f'landside_cmp_a2{SUFFIX}.png'), camera='itb_a2_camera.json (solved)')
 
 
 def view_overview(args):
@@ -405,6 +418,7 @@ def main():
     ap.add_argument('--threads', type=int, default=3)
     ap.add_argument('--lod', type=int, default=0)
     ap.add_argument('--itb', action='store_true')
+    ap.add_argument('--roadways', action='store_true', help='also import data/buildings3d/roadways.glb (a2 context)')
     ap.add_argument('--backface', action='store_true', help='back-face QA renders (red = inward faces), 8 spp, suffix _bf')
     args = ap.parse_args()
     if args.backface:
@@ -412,7 +426,8 @@ def main():
         global SUFFIX
         SUFFIX = '_bf'
     os.makedirs(OUT, exist_ok=True)
-    glbs = [args.glb] + ([os.path.join(ROOT, 'data', 'buildings3d', 'itb.glb')] if args.itb else [])
+    glbs = [args.glb] + ([os.path.join(ROOT, 'data', 'buildings3d', 'itb.glb')] if args.itb else []) + \
+        ([os.path.join(ROOT, 'data', 'buildings3d', 'roadways.glb')] if args.roadways else [])
     done = {}
     for v in args.views.split(','):
         setup(glbs, args.threads, args.samples, args.lod)      # fresh scene per view (views hide buildings)

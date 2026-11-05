@@ -63,19 +63,23 @@ CG_L5 = 81 * FT * 4 / 5
 NET_LEVEL = CG_L5
 ITB_L4 = 16.5        # ITB Level 4 [unk]: ITB L3 = 11.5 m [obs, spec_itb]; 16.5 keeps the guideway (deck + 1.1 m wall) inside
 #                      the ITB core block of data/buildings3d/itb.glb (17.9 m placeholder)
-RCC_PLATFORM = 8.0   # RCC station platform [obs l5 + DOF, low] (round 1: the l5 camera solved from the tower and the guideway
+RCC_PLATFORM = 8.84  # review r2: the l5 tower-top silhouette fit (landside_r2_obs.json l5_rake, rms 2.3 px) puts the high point of the
+#                      raked top on the near (north) side, 17.05 m from the camera instead of 19.4: with the top at the DOF value
+#                      the eye / platform is 0.84 m higher than the r1 solve [obs l5 + DOF, low]
+#                    RCC station platform [obs l5 + DOF, low] (round 1: the l5 camera solved from the tower and the guideway
 #                      vanishing point, landside_r1_obs.json photos.l5_camera: tower top (DOF TANK 18.3) 8.6 m above the eye, eye
 #                      1.7 m above the platform); was 5.8 [inf] with the BL-02 tower D 6.5 (which puts the l5 camera inside the
 #                      RCC); BL-03 draws a 3/4-of-54-ft placeholder (12.35 m [unk])
 LTP_LEVEL = 50 * FT  # Long-Term Parking station: the extension runs "50 feet above a public roadway" [pub]; LTP garage Level 5
 #                      (bridge) [pub], height unknown
 
-# key: (sfom id, deck-top level, tag, note, station type)  ('dom' glazed enclosure + single-pitch roof; 'canopy' curved
+# key: (sfom id, deck-top level, tag, note, station type)  ('dom' glazed enclosure + single-pitch roof; 'barrel' / 'vault' white
+# barrel roof over the platform (vault: and the tracks) [obs NAIP]; 'canopy' curved
 # canopy + door cabins; None = no station built (inside another asset))
 STATIONS = {
-    'T1': (1729791955, CG_L5, 'unk', 'central garage Level 5 [pub], 4/5 of 81 ft (BL-03 placeholder)', 'dom'),
-    'T2': (1729791959, CG_L5, 'unk', 'central garage Level 5 [pub], 4/5 of 81 ft (BL-03 placeholder)', 'dom'),
-    'T3': (1729791957, CG_L5, 'unk', 'central garage Level 5 [pub], 4/5 of 81 ft (BL-03 placeholder)', 'dom'),
+    'T1': (1729791955, CG_L5, 'unk', 'central garage Level 5 [pub], 4/5 of 81 ft (BL-03 placeholder)', 'barrel'),
+    'T2': (1729791959, CG_L5, 'unk', 'central garage Level 5 [pub], 4/5 of 81 ft (BL-03 placeholder)', 'barrel'),
+    'T3': (1729791957, CG_L5, 'unk', 'central garage Level 5 [pub], 4/5 of 81 ft (BL-03 placeholder)', 'barrel'),
     'ITB_A': (1729791961, ITB_L4, 'unk', 'ITB Level 4 [pub]; height placeholder inside the itb.glb core block', None),
     'ITB_G': (1729791965, ITB_L4, 'unk', 'ITB Level 4 [pub]; height placeholder inside the itb.glb core block', None),
     'GAR_A': (1729791949, NET_LEVEL, 'inf', 'Garage A Level 7 [pub]; network level (BL-03 placeholder 29.7 m deviates: grade)', None),
@@ -86,7 +90,11 @@ STATIONS = {
     'RCC': (1729791943, RCC_PLATFORM, 'inf', 'photo l5 (see RCC_PLATFORM); BL-03 placeholder 12.35 m [unk]', 'canopy'),
     'LTP': (1730051431, LTP_LEVEL, 'pub', '"50 feet above a public roadway" (extension) [pub]; LTP Level 5 bridge [pub]', 'canopy'),
 }
-RCC_TOWER = dict(D=4.7, top=None, centre=(-2280.5, -1073.7), rake=2.5, high_bearing=236.0)
+import json as _json  # noqa: E402
+_L5R = _json.load(open(os.path.join(HERE, 'landside_r2_obs.json')))['l5_rake']
+RCC_TOWER = dict(D=4.7, top=None, centre=(-2280.5, -1073.7), rake=float(_L5R['rake']), high_bearing=float(_L5R['high_bearing']))
+#   review r2 (finding 5): rake 2.55 m, highest toward bearing 353 (toward the l5 camera, north) - fitted to the photo-l5 top
+#   silhouette (an arch highest mid-left, rms 2.3 px; r1's 2.5 m toward 236 deg gave a straight rising edge, rms 74 px)
 #   D 4.7 at (-2280.5, -1073.7): the round lobe of the SFO Museum RCC station polygon (x -2282.8..-2278.1) [obs] - BL-02 E draws
 #   D 6.5 [inf] at the DOF point (1.8 m east, inside the 1A +-6 m accuracy); the top cut by a raked plane, 2.5 m lower at the
 #   front, highest toward bearing 236 deg (photo l5: the curved perforated hood rises to the right-back) [obs l5, low]; top = the DOF
@@ -349,41 +357,46 @@ def guide_beams(mb, F, poly_w, lev, seg=4.0, lod=0, rails=None):
 
 
 def inter_walk(mb, rails, F, lev, walk_w, lod=0):
-    """walkway deck between two single-track decks (round 1, photo l1: the camera stands on a walkway between the tracks east of
-    the Garage A station block; plan = the SFO Museum Garage A outline tail between the track polygons [obs]): a solid strip
-    from the deck bottom to the walkway level (+WALKWAY_H, level with the trough-wall tops), down-facing soffit, handrails on
-    its long edges (LOD0: galvanised posts every 3 m, top + mid rail [obs l1; spacing inf])."""
+    """emergency walkways beside the single-track troughs east of the Garage A station (review r2, finding 1; photo l1: a narrow
+    walkway ~1.5-2 m wide beside the camera's track with a galvanised cable rail on its open edge, open air below and beyond it):
+    a 0.25-m slab cantilevered from the trough at the walkway level (+WALKWAY_H, level with the trough-wall tops), its open edge
+    with posts every 1.5 m, a top rail and four cables [obs l1; post spacing / cable count from l1, low]. The strip between the
+    walkways stays open (r1 had a 656-m2 deck at track level there)."""
     from landside_mesh import tri_poly
     walk_w = orient_all(walk_w.buffer(0))
     if walk_w.is_empty: return 0.0
-    _strip(mb, F, lev, walk_w, -DECK_T, DECK_T + WALKWAY_H, 'guideway', top_mat='walkway', seg=4.0)
+    SL = 0.25
+    _strip(mb, F, lev, walk_w, WALKWAY_H - SL, SL, 'walkway', top_mat='walkway', seg=4.0)
     H = lambda X, Y: float(lev.h(*F.W(X, Y)))
     Lp = F.poly(orient_all(shapely.segmentize(walk_w, 4.0)))
     for p in polys(Lp):
         if p.area < 0.2: continue
         for t in tri_poly(p):
-            mb.face([(q[0], q[1], H(*q) - DECK_T) for q in t][::-1], 'guideway', [(q[0] / 4.0, q[1] / 4.0) for q in t][::-1])
+            mb.face([(q[0], q[1], H(*q) + WALKWAY_H - SL) for q in t][::-1], 'guideway', [(q[0] / 4.0, q[1] / 4.0) for q in t][::-1])
     if lod != 0 or rails is None: return float(walk_w.area)
+    rail_near = RAIL.buffer(0.3, join_style=2)
     for p in polys(walk_w):
         if p.area < 4.0: continue
         ring = np.array(p.exterior.coords)
         for i in range(len(ring) - 1):
             a, b = ring[i], ring[i + 1]
             Ls = float(np.hypot(*(b - a)))
-            if Ls < 6.0: continue                      # long edges only (along the tracks)
-            ts = np.arange(0.3, Ls - 0.29, 3.0)
+            if Ls < 3.0: continue
+            if rail_near.contains(Point(*(0.5 * (a + b)))): continue          # the edge against the trough: no rail
+            ts = np.arange(0.2, Ls - 0.19, 1.5)
             d = (b - a) / Ls; nrm = np.array([d[1], -d[0]])
-            pts = [a + d * t + nrm * 0.15 for t in ts] + [b - d * 0.3 + nrm * 0.15]
+            if p.contains(Point(*(0.5 * (a + b) + nrm * 0.3))): nrm = -nrm
+            pts = [a + d * t - nrm * 0.08 for t in ts] + [b - d * 0.2 - nrm * 0.08]
             for q in pts:
                 X, Y = F.L(*q); h0 = H(X, Y) + WALKWAY_H
-                for dx, dy in ((0.03, 0.0), (0.0, 0.03)):
+                for dx, dy in ((0.04, 0.0), (0.0, 0.04)):
                     rails.face([(X - dx, Y - dy, h0), (X + dx, Y + dy, h0), (X + dx, Y + dy, h0 + 1.07), (X - dx, Y - dy, h0 + 1.07)], 'handrail',
                                [(0, 0), (1, 0), (1, 1), (0, 1)])
             for j in range(len(pts) - 1):
                 A_ = F.L(*pts[j]); B_ = F.L(*pts[j + 1])
                 ha, hb = H(*A_) + WALKWAY_H, H(*B_) + WALKWAY_H
-                for zr in (1.07, 0.55):
-                    rails.face([(A_[0], A_[1], ha + zr - 0.05), (B_[0], B_[1], hb + zr - 0.05), (B_[0], B_[1], hb + zr), (A_[0], A_[1], ha + zr)],
+                for zr, th in ((1.07, 0.05), (0.85, 0.012), (0.65, 0.012), (0.45, 0.012), (0.25, 0.012)):
+                    rails.face([(A_[0], A_[1], ha + zr - th), (B_[0], B_[1], hb + zr - th), (B_[0], B_[1], hb + zr), (A_[0], A_[1], ha + zr)],
                                'handrail', [(0, 0), (1, 0), (1, 0.1), (0, 0.1)])
     return float(walk_w.area)
 
@@ -469,7 +482,9 @@ def station(mb, det, F, key, lev, lod=0, exclude=None):
             Wr = tv
     loc = lambda u, v: F.L(*(c0 + ua * u + ub * v))
     zr0 = hz + ENCL_H
-    if kind == 'vault':
+    if kind in ('vault', 'barrel'):
+        # 'barrel' (review r2, finding 4): the T1 / T2 / T3 stations on the central garage carry white barrel roofs in NAIP 2024
+        # (long rounded white roofs with a bright crown line) [obs NAIP], not flat boxes - same section as the Garage G vault
         # barrel vault across the station: eaves at the enclosure top, rise W / 8 [inf], 8 facets, 0.35-m roof, soffit; glazed
         # enclosure walls on the platform outline up to the vault soffit [obs a2: glazing under the white roof]
         nseg = 8; rise = Wr / 8.0
@@ -478,7 +493,7 @@ def station(mb, det, F, key, lev, lod=0, exclude=None):
         for j in range(nseg):
             v0, v1 = vv[j], vv[j + 1]
             q = [(*loc(-0.6, v0), zc(v0) + 0.35), (*loc(Lr + 0.6, v0), zc(v0) + 0.35), (*loc(Lr + 0.6, v1), zc(v1) + 0.35), (*loc(-0.6, v1), zc(v1) + 0.35)]
-            mb.face_dir(q, 'vault_roof', [(0, v0 / 3), (Lr / 6, v0 / 3), (Lr / 6, v1 / 3), (0, v1 / 3)], (0, 0, 1))
+            mb.face_dir(q, 'vault_roof', [(0, v0 / 3), (Lr / 6, v0 / 3), (Lr / 6, v1 / 3), (0, v1 / 3)], (0, 0, 1), smooth=True, grp=('vault', key))
             qd = [(*loc(-0.6, v0), zc(v0)), (*loc(-0.6, v1), zc(v1)), (*loc(Lr + 0.6, v1), zc(v1)), (*loc(Lr + 0.6, v0), zc(v0))]
             mb.face_dir(qd, 'station_soffit', [(0, v0 / 3), (0, v1 / 3), (Lr / 6, v1 / 3), (Lr / 6, v0 / 3)], (0, 0, -1))
         cu = np.array(loc(Lr / 2, Wr / 2))
@@ -600,8 +615,10 @@ def _v_of(F, p_local, c0, ub):
 
 def rcc_tower(mb, F, lod=0):
     """RCC station stair / elevator tower: free-standing cylinder of perforated metal (D 4.7 [obs SFO Museum polygon lobe]) to the
-    DOF TANK 60 ft [pub; identity inf], its top cut by a raked plane (2.5 m lower at the front, highest toward bearing 236 deg)
-    with an open, doubleSided perforated skin, frame rings, and a dark landing roof inside [obs photo l5] - BL-02 E / BL-03 row 3."""
+    DOF TANK 60 ft [pub; identity inf], its top cut by a raked plane (RCC_TOWER rake / high_bearing, fitted to photo l5), a
+    see-through doubleSided expanded-mesh skin (alpha-blended 'perf_tower', review r2), frame rings and posts, and inside a dark
+    stair core with switch-back flights and landings every 3 m [obs l5: the stair seen through the mesh; layout inf] -
+    BL-02 E / BL-03 row 3."""
     c = F.L(*RCC_TOWER['world'])
     n = 28 if lod == 0 else (14 if lod == 1 else 10)
     r, top, rake = RCC_TOWER['D'] / 2, RCC_TOWER['top'], RCC_TOWER['rake']
@@ -626,6 +643,23 @@ def rcc_tower(mb, F, lod=0):
     # landing roof inside, below the lowest point of the rake (dark, seen through the open top)
     zl = top - rake - 0.6
     mb.face([(c[0] + (r - 0.05) * math.cos(t), c[1] + (r - 0.05) * math.sin(t), zl) for t in ang[:-1]], 'soffit', [(0.5, 0.5)] * n)
+    if lod < 2:
+        # r2: what the mesh shows inside (l5): a dark core (lift / stair well, 1.6 m square) and switch-back flights with landings
+        # every 3 m, galvanised [obs l5; sizes inf]; posts between the frame rings every 1/8 turn
+        boxm(mb, c, (1, 0), 1.6, 1.6, (0.0, zl), 'metal_dark', (2.0, 2.0), top=False)
+        for zf in np.arange(0.0, zl - 0.1, 3.0):
+            for side in (0, 1):
+                ya, yb = (-1.6, 1.6) if side == 0 else (1.6, -1.6)
+                xo = 1.2 if side == 0 else -1.2
+                z0f, z1f = zf + 1.5 * side, zf + 1.5 * (side + 1)
+                if z1f > zl: continue
+                q = [(c[0] + xo - 0.4, c[1] + ya, z0f), (c[0] + xo + 0.4, c[1] + ya, z0f), (c[0] + xo + 0.4, c[1] + yb, z1f), (c[0] + xo - 0.4, c[1] + yb, z1f)]
+                mb.face(q, 'handrail', [(0, 0), (1, 0), (1, 1), (0, 1)])
+            mb.face([(c[0] - 1.1, c[1] + 0.8, zf + 1.5), (c[0] + 1.1, c[1] + 0.8, zf + 1.5), (c[0] + 1.1, c[1] + 2.0, zf + 1.5), (c[0] - 1.1, c[1] + 2.0, zf + 1.5)],
+                    'handrail', [(0, 0), (1, 0), (1, 1), (0, 1)])
+        for t in np.linspace(0, 2 * math.pi, 9)[:-1]:
+            p_ = (c[0] + (r + 0.05) * math.cos(t), c[1] + (r + 0.05) * math.sin(t))
+            boxm(mb, p_, (math.cos(t), math.sin(t)), 0.10, 0.18, (0.0, ztop(t) - 0.1), 'steel', (1.0, 1.0))
 
 
 # ------------------------------------------------------------------------------------------------ assembly

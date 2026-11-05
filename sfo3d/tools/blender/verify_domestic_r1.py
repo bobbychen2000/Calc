@@ -155,6 +155,9 @@ def run(full, lod2):
                                        only_lod2_cells=int(only2[win].sum()))
     fp0 = V.footprint(S, 0, names=[n for n in S if S[n]['lod'] == 0 and '_shell' in n])
     fp2 = V.footprint(S2, 2)
+    # (review r2: close zero-area seam rings of the triangle unions - 0.0000-m2 interior rings 9-41 m long between coplanar
+    # deck triangles of BA-B appeared and dominated the Hausdorff distance; they are not openings)
+    fp0 = fp0.buffer(0.01, join_style=2).buffer(-0.01, join_style=2); fp2 = fp2.buffer(0.01, join_style=2).buffer(-0.01, join_style=2)
     res['lod2_vs_lod0']['plan_hausdorff_m'] = round(fp0.boundary.hausdorff_distance(fp2.boundary), 2)
     res['lod2_vs_lod0']['plan_sym_diff_m2'] = round(fp0.symmetric_difference(fp2).area, 1)
     os.makedirs(OUT, exist_ok=True)

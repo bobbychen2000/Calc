@@ -16,7 +16,7 @@ One tile spans the metres given in landside_geom.TILES of UV_detail (the geometr
   ls_n_corrugated   2 x 2 m      trapezoidal metal cladding, 0.20 m pitch, vertical ribs [inf]
   ls_c/n_louvre     3 x 1 m      canted louvre screen: horizontal green-grey blades with dark gaps [obs photo l5]
   ls_c_ribbon       3 x 3 m      ribbon windows: dark glass, mullions every 1.5 m, transom at 2.2 m [obs l5; inf]
-  ls_c_hyatt        1.5 x 3.33 m one curtain-wall pane x one floor: blue-green glass, spandrel band, caps [obs photo l4]
+  ls_c_hyatt        6 x 10 m     4 curtain-wall panes x 3 floors: deep cyan-blue glass with per-pane tint / reflection, spandrels [obs l4]
   ls_c_glassband    3 x 1.11 m   curved end bay of the Hyatt: horizontal glass bands [obs l4]
   ls_c_cac          3 x 4.572 m  CAC: light panels, one 1.8-m window band per 15-ft floor (reduced window-to-wall [pub]) [inf]
   ls_c_deck         10.4 x 18.6  parking deck: 4 stalls (2.6 m) x one module (5.5 + 7.6 + 5.5 m), white stall lines [inf]
@@ -25,7 +25,7 @@ One tile spans the metres given in landside_geom.TILES of UV_detail (the geometr
   ls_n_roof         6 x 6 m      standing-seam metal roof, seams every 0.6 m [inf]
   ls_c_pv           4 x 4 m      PV modules 1.0 x 2.0 m, cells [pub PV; layout inf]
   ls_c_glass        3 x 3 m      station glazing: mullions 1.5 m, transom 2.4 m [obs photos; inf]
-  ls_c_perf         3 x 3 m      perforated-metal tower skin with frame members [obs photo l5]
+  ls_c_perf         3 x 3 m      see-through expanded-mesh tower skin (RGBA, alpha 0.45; frame opaque) [obs photo l5]
   ls_c_spine        3 x 3.6 m    Superbay spine end faces: one office floor, window band [pub 6 levels; inf]
   ls_n_concrete     8 x 8 m      cast concrete: faint pour joints [inf]
 """
@@ -49,6 +49,12 @@ def _normal_png(height, su, sv, path, strength=1.0):
 
 def _rgb_png(col, path):
     Image.fromarray(np.clip(np.round(col), 0, 255).astype(np.uint8), 'RGB').save(path, optimize=True)
+    return path
+
+
+def _rgba_png(col, alpha, path):
+    a = np.clip(np.round(alpha * 255), 0, 255)[..., None]
+    Image.fromarray(np.concatenate([np.clip(np.round(col), 0, 255), a], -1).astype(np.uint8), 'RGBA').save(path, optimize=True)
     return path
 
 
@@ -138,14 +144,25 @@ def make_all(out):
     u, v = _grid(256, 256, 3.0, 3.0)
     cap = ((_dist(u, 1.5) < 0.05) | (_dist(v, 3.0) < 0.06) | (np.abs(v - 2.2) < 0.04)).astype(float)
     T['ls_c_ribbon'] = _rgb_png(mix((40, 50, 56), (150, 156, 160), cap) + 6 * _noise(256, 256, 6, 7)[..., None], P('ls_c_ribbon'))
-    # --- Hyatt curtain wall (1.5 x 3.333 m): spandrel 0.95 m at the floor line, glass above, caps 5 cm
+    # --- Hyatt curtain wall, review r2 (finding 7): 4 panes x 3 floors (6.0 x 10.0 m) so each pane gets its own tint / reflection:
+    # deep saturated cyan-blue glass (photo l4 glass median sRGB (37, 117, 154); the r1 tile (30, 92, 140) rendered (95-110, 134-147,
+    # 163-173) under the sky reflection), per-pane brightness +-10 % and a soft vertical reflection gradient, spandrel 0.95 m at
+    # the floor line, caps 5 cm [obs l4 colour; variation inf]
     p = 44.0 / 13.2
-    u, v = _grid(128, 256, 1.5, p)
-    sp = (v < 0.95).astype(float)
-    capm = ((_dist(u, 1.5) < 0.03) | (_dist(v, p) < 0.04) | (np.abs(v - 0.95) < 0.02)).astype(float)
-    glass = (30, 92, 140); spand = (24, 64, 100); capc = (146, 162, 174)     # r1: saturated blue reflective glass (photo l4 mean (38, 113, 150))
-    col = mix(glass, spand, sp)
-    col = col * (1 - capm[..., None]) + np.array(capc)[None, None, :] * capm[..., None]
+    u, v = _grid(256, 512, 6.0, 3 * p)
+    sp = (np.mod(v, p) < 0.95).astype(float)
+    capm = ((_dist(u, 1.5) < 0.03) | (_dist(v, p) < 0.04) | (np.abs(np.mod(v, p) - 0.95) < 0.02)).astype(float)
+    rng = np.random.default_rng(42)
+    pane = (np.floor(u / 1.5).astype(int) + 4 * np.floor(v / p).astype(int))
+    k_b = 1.0 + 0.10 * rng.uniform(-1, 1, 12)[pane]                        # per-pane brightness
+    k_h = rng.uniform(-1, 1, 12)[pane]                                      # per-pane hue lean (greener / bluer)
+    fv = np.mod(v, p) / p
+    refl = 1.0 + 0.12 * (fv - 0.5) * rng.choice([-1.0, 1.0], 12)[pane]      # sky-reflection gradient within the pane
+    glass = np.stack([28 + 0 * u, 104 + 8 * k_h, 150 - 8 * k_h], -1) * (k_b * refl)[..., None]
+    spand = np.array([22, 70, 106], float)[None, None, :] * k_b[..., None]
+    col = glass * (1 - sp[..., None]) + spand * sp[..., None]
+    capc = np.array([146, 162, 174], float)
+    col = col * (1 - capm[..., None]) + capc[None, None, :] * capm[..., None]
     T['ls_c_hyatt'] = _rgb_png(col, P('ls_c_hyatt'))
     u, v = _grid(256, 128, 3.0, p / 3)
     band = (_dist(v, p / 3) < 0.05).astype(float)
@@ -189,10 +206,13 @@ def make_all(out):
     u, v = _grid(256, 256, 3.0, 3.0)
     cap = ((_dist(u, 1.5) < 0.04) | (np.abs(v - 2.4) < 0.04) | (v < 0.08)).astype(float)
     T['ls_c_glass'] = _rgb_png(mix((70, 92, 100), (190, 194, 196), cap), P('ls_c_glass'))
-    # --- perforated tower skin (3 x 3 m): perforation = mid-grey, frame members every 1.5 m / 3 m (lighter)
+    # --- perforated tower skin (3 x 3 m), review r2 (finding 5): see-through expanded mesh - RGBA, the mesh warm grey / bronze at
+    # alpha 0.45 (photo l5: the stair and the sky show through), the frame members every 1.5 m / 3 m opaque light steel [obs l5;
+    # open area inf]
     u, v = _grid(256, 256, 3.0, 3.0)
     fr = ((_dist(u, 1.5) < 0.05) | (_dist(v, 3.0) < 0.06)).astype(float)
-    T['ls_c_perf'] = _rgb_png(mix((132, 128, 116), (196, 198, 198), fr) + 6 * _noise(256, 256, 24, 12)[..., None], P('ls_c_perf'))
+    col = mix((124, 118, 102), (196, 198, 198), fr) + 6 * _noise(256, 256, 24, 12)[..., None]
+    T['ls_c_perf'] = _rgba_png(col, 0.45 + 0.55 * fr, P('ls_c_perf'))
     # --- Superbay spine end face: office floor 3.6 m, window band 1.0-2.6 m
     u, v = _grid(256, 256, 3.0, 3.6)
     win = ((v > 1.0) & (v < 2.6)).astype(float)

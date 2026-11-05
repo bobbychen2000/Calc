@@ -12,7 +12,8 @@ Views (out/buildings3d/domestic_<view>.png; comparison sheets domestic_cmp_<view
         points (tower cab rim, BA-D north drum top, BA-E end-wall top) at an assumed 60 m altitude: world (-529, 60, -384),
         heading 204 deg, pitch -4.1 deg, 36.5 mm on 36 mm [inf: estimated, not surveyed]
   d1    T1 Center landside face from the AirTrain / garage side (photo d1, Famartin 2025-08-12, CC BY-SA 4.0; BD-03 view 1):
-        the west run with the curb canopy, the two-tier green fritted wall and the sign [camera estimated]
+        the west run with the curb canopy, the two-tier green fritted wall and the sign [camera SOLVED from the photo's facade
+        lines, review r2: D1_SOLVE]
   bab   orthographic Boarding Area B cross-section, looking NNE along the pier axis (+t) from beyond its tip, far clip at
         t = -1150 (the stretch where BD-02's typical section and the measured outer edges apply): the BD-02 view 1 frame (s to the right, height up). The comparison draws the BD-02
         lines (outer roof edges s -383.73 / -438.04 at 13.14 m, raised band s -391.0 / -423.4 at 19.04 m) and the
@@ -159,15 +160,34 @@ def view_a1(args):
     return render(os.path.join(OUT, 'domestic_a1%s.png' % args.suffix)),
 
 
+# review r2 (finding 4): the d1 camera SOLVED from the photo's facade lines (was estimated at 21 m: above the roof edge).
+# Photo d1 (1920 x 1440): the glass-head, tier-transom and canopy-at-wall lines (robust line fits over 94 columns, sd 3-7 px)
+# meet at the vanishing point x 9031 / 9379 / 8683, y 520 / 524 / 533 -> horizon y 525 +- 10 px. At the image centre the
+# canopy line (top of the canopy at the wall, 9.23 m in the model) lies 300.4 px below the horizon and the glass head
+# (17.08 m) 104.3 px above it -> the camera is 5.83 m above the canopy line: 15.06 m in the model frame (curb placeholder
+# 4.88 + 10.2), 2.0 m BELOW the glass head and 2.8 m below the roof edge (the photo cannot see the roof deck at the edge).
+# Facade scale 51.6 px/m there (7.85 m in 404.7 px; persons on the sidewalk 2-4 m nearer ~59 px/m); the sign centre is
+# 445 px right of the image centre -> the axis meets the facade 8.6 m east of the sign centre. The focal length is not in
+# the file (no EXIF): the photo was taken from the AirTrain ("viewed from AirTrain SFO"), whose guideway polygon (SFO Museum
+# 'AirTrain Rail') the view ray enters 48-52 m from the facade -> axis distance 51.5 m -> f = 51.6 x 51.5 = 2657 px (49.8 mm
+# on 36 mm), yaw from the VP atan(f / 8071) -> 18.2 deg west of the facade normal, pitch atan(195 / f) = 4.2 deg down [inf].
+D1_SOLVE = dict(h_cam=15.06, along_e=8.6, dist=51.5, yaw=18.2, pitch=4.2, lens=49.8)
+
+
 def view_d1(args):
     overcast()
-    # facade of the west run (longest landside edge -940.4,463.5 -> -978.8,455.3), seen from ~68 m in front, ~20 m up
-    c = np.array([-959.6, 459.4]); d = np.array([-38.4, -8.2]); d /= np.hypot(*d)
-    n = np.array([-d[1], d[0]])
-    if n[1] > 0: n = -n                               # towards the garage (north)
-    cam = c + n * 68.0 + d * -6.0
-    camera('cam_d1', Wxz(cam[0], cam[1], 21.0), Wxz(c[0] - d[0] * 6.0, c[1] - d[1] * 6.0, 11.0), lens=50.0,
-           res=(args.res, int(args.res * 0.75)))
+    # facade of the west run (longest landside edge -940.4,463.5 -> -978.8,455.3)
+    A = np.array([-940.4, 463.5]); B = np.array([-978.8, 455.3])
+    c = (A + B) / 2; e = (A - B) / np.hypot(*(A - B))        # e: towards the east end
+    n = np.array([e[1], -e[0]])
+    if n[1] > 0: n = -n                                       # towards the garage (north)
+    S = D1_SOLVE
+    T = c + e * S['along_e']
+    a = math.radians(S['yaw'])
+    fwd = -n * math.cos(a) - e * math.sin(a)                  # looking south, turned towards the west end
+    cam = T - fwd * S['dist'] * math.cos(math.radians(S['pitch']))
+    tz = S['h_cam'] - S['dist'] * math.sin(math.radians(S['pitch']))
+    camera('cam_d1', Wxz(cam[0], cam[1], S['h_cam']), Wxz(T[0], T[1], tz), lens=S['lens'], res=(args.res, int(args.res * 0.75)))
     return render(os.path.join(OUT, 'domestic_d1%s.png' % args.suffix)),
 
 
@@ -218,6 +238,14 @@ def view_c3c(args):
     overcast()
     camera('cam_c3c', Wxz(-640.0, -60.0, 55.0), Wxz(-805.0, 112.0, 18.0), lens=40.0, res=(args.res, int(args.res * 0.5625)))
     return render(os.path.join(OUT, 'domestic_c3c%s.png' % args.suffix)),
+
+
+def view_ibf(args):
+    """review r2 (findings 3 / 6): the T2 / tower base building (IBF) junction from above the IBF roof (NNE): the T2 wall rising
+    full height behind the IBF parapet, the flashing over the gap with its 0.15-m joint (the tower asset in context)."""
+    overcast()
+    camera('cam_ibf', Wxz(-733.0, 368.0, 34.0), Wxz(-753.0, 334.0, 13.0), lens=35.0, res=(args.res, int(args.res * 0.5625)))
+    return render(os.path.join(OUT, 'domestic_ibf%s.png' % args.suffix)),
 
 
 def qa_override(mode):

@@ -76,7 +76,7 @@ function glowKind(m) {
   if (ex.led) return 'led';
   if (n === 'cab_glass') return 'cab';
   if (/^(glass_roof|glass_roof_under|glass_sky|glass_canopy)$/.test(n)) return 'roofglass';
-  if (/^(glass_hyatt|glass_band|cac_wall|slot|slot_glass|ribbon)$/.test(n) || /^ibf_(curtain|glass)/.test(n)) return 'office';
+  if (/^(glass_hyatt|glass_band|cac_wall|slot|slot_glass|ribbon|glass_c3c)$/.test(n) || /^ibf_(curtain|glass)/.test(n)) return 'office'; // glass_c3c: domestic C3C office block (review r2)
   if (/^station_glass$/.test(n)) return 'station';
   if (/glass|curtain/.test(n)) return 'hall';
   if (/soffit/.test(n)) return 'soffit';

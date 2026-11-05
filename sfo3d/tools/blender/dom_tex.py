@@ -25,6 +25,13 @@ curtain tile's transoms start at the band bottom and its verticals fall on the L
                                      verticals (the irregular mullions are LOD0 fins, draw_domestic.t1_mullions)
   dom_c_t3w        512    6 x 5.8 m  T3 West fritted IGU window wall (light blue-grey) with its caps [pub materials, module unk]
   dom_c_pv         512    4 x 4 m    PV cells (dark blue) with silver module frames [inf]
+  dom_c_glass_c3c 1024    24 x 22.8 m  Courtyard 3 Connector office curtain wall (review r2): six storeys of storey-height panes,
+                                     the vertical mullions STAGGERED from floor to floor (pane widths 1.2-4.5 m, a new random
+                                     sequence per storey), light frames (0.24-m floor-line horizontals, 0.10-m verticals), very
+                                     dark green glass with a subtle per-pane variation (+-4 %) [obs photo a1: rhythm and colours;
+                                     widths inf]
+  dom_n_c3c       1024    24 x 22.8 m  its frame caps
+  dom_n_louvre     256    3 x 3 m    C3C penthouse louvre band: horizontal blades every 0.15 m [inf; band obs photo a1]
 """
 import os
 
@@ -44,6 +51,9 @@ TILES = {   # name: (metres along U, metres along V); must equal dom_geom.TILE f
     'dom_c_pv': (4.0, 4.0),
     'dom_c_glass_ec': (24.0, 6.0),
     'dom_n_curtain24': (24.0, 6.0),
+    'dom_c_glass_c3c': (24.0, 22.8),     # review r2: C3C office curtain wall, 6 storeys x 3.8 m (dom_geom.C3C_STOREY)
+    'dom_n_c3c': (24.0, 22.8),
+    'dom_n_louvre': (3.0, 3.0),           # review r2: C3C penthouse louvre blades
 }
 CURTAIN = (1.5, 3.0)            # vertical / transom pitch of the generic curtain grid [inf] (dom_geom.MULL = 1.5)
 T3W_GRID = (2.0, 3.5)           # T3W: vertical pitch 2.0 m (BD-03 schematic), transom 3.5 m above the band bottom [unk]
@@ -160,6 +170,75 @@ def ec_colour(path, w=1024, h=256, seed=23):
     return _rgb_png(col, path)
 
 
+C3C_GLASS = (26, 40, 35)            # sRGB: very dark green (photo a1 median of the glazed face 22 / 32 / 31 incl. ~10 % frames,
+                                    # overcast) [obs, low]
+C3C_FRAME = (184, 190, 188)         # light aluminium frames (photo a1 ~125 / 132 / 132 under overcast, ~0.7 of the light panels) [obs, low]
+C3C_PANES = ((1.2, 0.25), (2.4, 0.30), (3.0, 0.25), (3.6, 0.12), (4.5, 0.08))   # pane width (m), share [inf: photo a1 8x zoom]
+C3C_FRAME_H, C3C_FRAME_V = 0.24, 0.10
+
+
+def c3c_layout(seed=31, storeys=6, storey=3.8, tu=24.0):
+    """per storey: the mullion positions (m, 0..tu, wrapping) - a random pane-width sequence with a random start, so that the
+    verticals do not line up from floor to floor (photo a1); the last pane is stretched to close the tile seamlessly."""
+    rng = np.random.default_rng(seed)
+    ws = np.array([w for w, _ in C3C_PANES]); p = np.array([q for _, q in C3C_PANES]); p = p / p.sum()
+    out = []
+    for k in range(storeys):
+        xs, x = [], 0.0
+        while x < tu - 1.0:
+            xs.append(x); x += float(rng.choice(ws, p=p))
+        off = float(rng.uniform(0, tu))
+        out.append(sorted(((xx + off) % tu) for xx in xs))
+    return out
+
+
+def _c3c_fields(w, h, seed=31):
+    tu, tv = TILES['dom_c_glass_c3c']
+    u, v = _grid(w, h, tu, tv)
+    st = 3.8
+    lay = c3c_layout(seed)
+    k = np.clip((v / st).astype(int), 0, len(lay) - 1) + 0 * u.astype(int)          # storey index (v from the band bottom)
+    hz = (_dist(v, st) < C3C_FRAME_H / 2).astype(float) + 0 * u                       # floor-line frames
+    vert = np.zeros(k.shape); pane = np.zeros(k.shape, int)
+    for i, xs in enumerate(lay):
+        m = (k == i)
+        X = np.array(xs)
+        uu = np.broadcast_to(u, k.shape)[m]
+        d = np.abs(((uu[:, None] - X[None, :]) + tu / 2) % tu - tu / 2).min(1)
+        vert[m] = (d < C3C_FRAME_V / 2).astype(float)
+        idx = np.searchsorted(X, uu, side='right') % len(X)
+        pane[m] = idx + 100 * i
+    return u, v, hz, vert, pane
+
+
+def c3c_colour(path, w=1024, h=1024, seed=31):
+    u, v, hz, vert, pane = _c3c_fields(w, h, seed)
+    rng = np.random.default_rng(seed + 1)
+    var = {p_: 1.0 + rng.uniform(-0.04, 0.04) for p_ in np.unique(pane)}
+    f = np.vectorize(var.get)(pane)
+    fv = np.mod(v, 3.8) / 3.8 + 0 * u
+    col = np.array(C3C_GLASS, float)[None, None, :] * (f * (1.03 - 0.06 * fv))[..., None]     # slightly lighter low in a pane
+    fr = np.clip(hz + vert, 0, 1)
+    col = col * (1 - fr[..., None]) + np.array(C3C_FRAME, float)[None, None, :] * fr[..., None]
+    return _rgb_png(col, path)
+
+
+def c3c_normal(path, w=1024, h=1024, seed=31):
+    u, v, hz, vert, pane = _c3c_fields(w, h, seed)
+    tu, tv = TILES['dom_n_c3c']
+    hgt = 0.03 * np.clip(hz + vert, 0, 1)
+    import cv2
+    hgt = cv2.GaussianBlur(hgt.astype(np.float32), (5, 5), 1.0)
+    return _normal_png(hgt, tu / w, tv / h, path)
+
+
+def louvre_normal(path, size=256):
+    tu, tv = TILES['dom_n_louvre']
+    u, v = _grid(size, size, tu, tv)
+    h = 0.03 * (np.mod(v, 0.15) / 0.15) + 0 * u        # sawtooth: blades tilted down-out
+    return _normal_png(h, tu / size, tv / size, path)
+
+
 def frit_grey(path, size=512):
     """BA-E: clear glass with grey frit [pub]: 6-cm frit lines every 0.15 m over the glass (light grey), caps on the curtain
     grid [pattern inf]; reads light grey from a distance (photo a1)."""
@@ -232,6 +311,9 @@ def make_all(out_dir):
         'dom_c_frit_green': frit_green(p('dom_c_frit_green')),
         'dom_c_t3w': curtain_colour(p('dom_c_t3w'), (98, 114, 124), T3W_GRID, TILES['dom_c_t3w'], phase_v=T3W_GRID[1]),
         'dom_c_pv': pv_colour(p('dom_c_pv')),
+        'dom_c_glass_c3c': c3c_colour(p('dom_c_glass_c3c')),
+        'dom_n_c3c': c3c_normal(p('dom_n_c3c')),
+        'dom_n_louvre': louvre_normal(p('dom_n_louvre')),
     })
     return out
 

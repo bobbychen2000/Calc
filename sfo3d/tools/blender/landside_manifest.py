@@ -80,6 +80,58 @@ REVIEW_R1 = [
 ]
 
 
+REVIEW_R2 = [
+    dict(n=1, item='inter-track deck east of the Garage A station (r1 addition, 656 m2)', disposition='fixed',
+         change='deck removed; a 1.6-m emergency walkway cantilevered from each single-track trough at the walkway level (0.25-m slab) '
+                'with a galvanised cable rail on its open edge (posts 1.5 m, top rail + 4 cables) [obs l1 for the camera\'s track, the other by '
+                'symmetry inf]; the 5.9-m strip between them open to grade (the SFO Museum tail polygon is a footprint at grade: structure '
+                '[unk]). The blotchy streaks were the AO bake of the 9.1-m deck (gone with it)'),
+    dict(n=2, item='Garage A / G parapets 39.6 / 37.6 m', disposition='fixed (re-measured on a2 with the solved camera)',
+         change='near parapet edge found column by column on a2 and solved for the height of the body outline: Garage A 29.1 m '
+                '(9 columns 28.85-29.5), Garage G 27.5 m (4 columns); the a2 level rows (25.3 / 22.0 / 18.6 / 15.3 m, same at every '
+                'column over 270 px) give a 3.34-m pitch -> roof deck = Level 9 = 26.7 m (the penthouse base and the roof cars sit on '
+                'that line), Level 7 = 20.0 m (network level 19.75). Camera sensitivity: the a2 camera rests on the Hyatt top 44 m '
+                '[inf]; 40 / 48 m move the garages -2.4 / +2.4 m. The reviewer estimated ~33 / 30-31: his render-vs-photo offsets were '
+                'read on other columns (the far parapet / rotunda); at x 415 the photo edge is at y 398 vs the 39.6-m render at 338 '
+                '(-10.5 m). i2 agrees once its scale comes from the level pitch (32 px per level for both the tower windows and the drum '
+                'slots; tower 85 px = 8.9 m) instead of the drum width (5.7 px/m made the levels 5.6 m and the towers 15 m). The NAIP '
+                'drum band (13.25 m east lean, BL-03 39.6 with the ITB pole k 0.334) then implies k 0.43 here: listed as a conflict, '
+                'raised with the drawings group. The Garage A station block top = the parapet (a2 shows nothing above the roof at the SE '
+                'corner; NAIP: stalls over it) - l1\'s door-cabin scale (31.75 m) conflicts, listed. landside_cmp_a2 now uses the solved camera'),
+    dict(n=3, item='Garage A roof massing', disposition='fixed, with one correction',
+         change='rotunda D 16.5 m, top 36.5 m (a2: 94 px at 5.8 px/m, top rim vs 32 / 34 / 36-m overlays; NAIP 2024 disc lean-corrected) - '
+                'on the curved NE (EAST) end: a2 looks SSW, so the left end of Garage A in the photo is its east end; the west end is the '
+                'helix drum, whose ring rises ~1.9 m over the parapet (31.0 m) with nothing above it (the r1 4-m core cylinder over the '
+                'ring removed: the NAIP dark disc is the helix eye -> guard ring round a dark opening). Penthouse: base on the deck, open '
+                'braced storey to 29.6, solid to 36.0 m (a2), plan = the NAIP box lean-corrected with the measured lean (18 x 12 m; r1 '
+                'shifted the whole imaged box: 24.6 m long)'),
+    dict(n=4, item='central-garage roof cars / bands / station roofs', disposition='fixed',
+         change='every observed car snapped to the nearest free stall of the 117.8-deg layout within 3 m (position and orientation of '
+                'the stall, ~15 % backed in [inf]); the rest keep their NAIP position with the yaw snapped to the stall axis; NAIP colour '
+                'kept. Rims / lobes re-contoured from the same NAIP masks blurred 1.2 / 3 px on a 4x grid (smooth curved edges), rim colour '
+                '= median of the beige pixels; the T1 / T2 / T3 AirTrain stations get white barrel roofs (NAIP) like the Garage G vault'),
+    dict(n=5, item='RCC station tower rake / skin', disposition='fixed',
+         change='cut plane fitted to the l5 top silhouette (sky boundary per column, r1 l5 camera): rake 2.55 m, highest toward bearing '
+                '353 (toward the camera), rms 2.3 px (r1 2.5 m toward 236: 74 px; flat: 89 px); the high point at the DOF top puts the '
+                'platform 0.84 m higher (8.84 m, the RCC_PLATFORM anchor). Skin alpha-blended (texture alpha 0.45, frame opaque, '
+                'doubleSided) with a dark core, switch-back flights and landings inside, posts every 1/8 turn'),
+    dict(n=6, item='BART glazed band', disposition='fixed (a2 solved camera)',
+         change='band 9.2-13.5 m, white spandrel 5.9-9.2, colonnade top 5.9 m, body top 17.6 m at four columns (x 1100-1700) -> band '
+                '4.1 m below the top, 4.3 m tall; colonnade 5.9 (OSM min_height 4 listed)'),
+    dict(n=7, item='Grand Hyatt glass', disposition='fixed',
+         change='4-pane x 3-floor tile with per-pane brightness / hue and a reflection gradient, deep cyan-blue (28, ~104, ~150) and '
+                'IOR 1.5 (the 1.9 coat reflected the grey sky: red channel 3x the photo)'),
+    dict(n=8, item='Garage A curved NE end faceted', disposition='fixed',
+         change='landside_geom.smooth_arcs: outline vertex runs that follow a circle (< 0.6 m) replaced by the fitted arc at 1.2-m chords '
+                '(Garage A: drum + NE end; Garage G: 3 arcs); walls and screens on the arcs share vertices with smooth normals, the '
+                'screen panels run on across the vertices (no inset, no end faces) with mullions every 4.05 m of arc length'),
+    dict(n=9, item='LOD2', disposition='fixed',
+         change='central garage LOD2 keeps the void floor, the Level-5 garage edges beside the guideway (to the trough-wall top) and the '
+                'two DOF roof poles; every deck carries a LOD2 car impostor (one roof quad per car in its paint colour, COLOR_0) so the '
+                'cars do not pop at the switch; LTP 1 / 2, RCC, Hyatt, CAC and MOC LOD2 roofs at the LOD0 roof level inside a coping ring'),
+]
+
+
 def entry(build, ver, bldgs, tiles, mats):
     st = build['glb']
     comps = {}
@@ -130,9 +182,10 @@ def entry(build, ver, bldgs, tiles, mats):
                  'data/buildings3d/landside_lod2.glb = every LOD2 subtree with the same node transforms.',
         lods=lods, files=['data/buildings3d/landside.glb', 'data/buildings3d/landside_lod2.glb'], lod2_glb=build.get('lod2_glb'),
         textures=tex, materials=mat,
-        material_note='glass coated (IOR 1.9 -> F0 0.096: KHR_materials_ior + _specular), opaque; deck / roof colours are NAIP 2024 '
+        material_note='glass coated (IOR 1.9 -> F0 0.096: KHR_materials_ior + _specular; Hyatt 1.5 since r2), opaque; the RCC tower skin '
+                      'alpha-blended (perf_tower, r2); deck / roof colours are NAIP 2024 '
                       'medians at the imaged (relief-shifted) roof positions (naip_colours); single-sided (faces wound outwards); cars: '
-                      'one material, paint / glass / skirt in COLOR_0. No TANGENT attribute (tiling normal maps).',
+                      'one material, paint / glass / skirt in COLOR_0 (LOD2 impostor: one quad per car). No TANGENT attribute (tiling normal maps).',
         ao=build.get('ao'), naip_colours=build.get('naip_colours'),
         buildings=comps,
         airtrain=dict(tiles=tiles_tris, levels=at.get('anchors'), max_grade=at.get('max_grade'), piers=at.get('piers'), stations=at.get('stations'),
@@ -159,6 +212,13 @@ def entry(build, ver, bldgs, tiles, mats):
                                              '(top, slots, depth) on BL-03', 'SFO BART station (plan, levels) as a spec item + sheet',
                                              'RCC station tower D 4.7 at the polygon lobe and the RCC platform 8.0 m (l5 camera solve)',
                                              'drum stair / elevator towers (positions / heights)', 'central-garage roof rims / lobes / boxes']),
+        review_r2=dict(findings=REVIEW_R2, observations='tools/blender/landside_r2_obs.json (tools/blender/landside_r2_measure.py): photo a2 with '
+                       'the solved camera (out/buildings3d/itb_a2_camera.json), i2 in level pitches, l5 top-silhouette fit, NAIP 2024 rims / lobes',
+                       requests_to_drawings=['Garage A / G heights: BL-03 draws the NAIP drum ring 39.6 / 37.6; photo a2 (solved camera) gives parapet '
+                                             '29.1 / 27.5, deck 26.7 / 25.3, 9 levels at 3.34 m, drum ring 31.0 (A) - conflict with the NAIP lean '
+                                             'model to resolve on the sheet', 'Garage A NE rotunda and penthouse (a2)', 'the walkways east of the '
+                                             'Garage A station (l1) and the open gap; the tail polygon\'s structure [unk]', 'RCC tower rake (l5 fit) '
+                                             'and platform 8.84 m', 'BART band / colonnade (a2)']),
         scene_not_modelled=dict(note='large airport buildings outside every asset (OpenStreetMap, ODbL 1.0, (c) OpenStreetMap contributors; '
                                      'refs/cache/osm): no spec / sheet yet - for a later spec round', buildings=G.R1.get('osm', {}).get('not_modelled', [])),
     )

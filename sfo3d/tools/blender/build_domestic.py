@@ -88,7 +88,7 @@ MATS = {
     'mullion':        dict(rgb=(170, 175, 180), m=0.60, r=0.40, src='inf (aluminium fins / frames)'),
     'mullion_dark':   dict(rgb=(58, 62, 66), m=0.60, r=0.40, src='pub t3w.materials "vertical mullion fins (dark gray metallic)"; T1: obs photo d1 dark mullions'),
     'fascia_plain':   dict(rgb=(236, 237, 237), m=0.0, r=0.45, src='obs photo d1 (white "1" of the sign)'),
-    'lettering':      dict(rgb=(34, 38, 42), m=0.20, r=0.45, src='obs photo d1 ("Harvey Milk Terminal / Terminal 1"); font inf'),
+    'lettering':      dict(rgb=(20, 22, 24), m=0.10, r=0.55, src='obs photo d1 ("Harvey Milk Terminal / Terminal 1": near-black, review r2); font inf'),
     'glass_canopy':   dict(rgb=(188, 200, 200), m=0.0, r=0.30, src='pub t1c canopy (glass); reads light grey-green from above and below '
                              '(photo d1; review r1: the coated dark glass read as a thin dark line): laminated / fritted, uncoated F0 0.04, rough; value inf'),
     'glass_sky':      dict(rgb=(72, 88, 98), r=0.06, src='obs NAIP skylights; glass inf', **GL),
@@ -107,13 +107,18 @@ MATS = {
     'glass_frit_green': dict(rgb=(165, 186, 172), m=0.0, r=0.22, tex='dom_c_frit_green', src='pub t1c.landside_facade (fritted glass); green obs photo d1; '
                              'the ceramic frit dominates: uncoated F0 0.04, rougher; pattern inf'),
     'glass_t3w':      dict(rgb=(98, 114, 124), r=0.08, tex='dom_c_t3w', nrm=('dom_n_t3w', 0.5), src='pub t3w.materials (fritted IGU window wall); module unk', **GL),
+    'glass_c3c':      dict(rgb=(26, 40, 35), r=0.05, tex='dom_c_glass_c3c', nrm=('dom_n_c3c', 0.5),
+                           src='C3C office curtain wall (review r2): "Dynamic glazing" [pub HOK]; storey-height panes with staggered mullions, '
+                               'very dark green glass, light frames [obs photo a1, low]; pane widths inf', **GL),
+    'louvre':         dict(rgb=(72, 76, 82), m=0.40, r=0.50, nrm=('dom_n_louvre', 0.8),
+                           src='C3C penthouse louvre band (review r2): dark grey [obs photo a1, low]; blades inf'),
 }
 # LOD2 (far / phone): reduced palette, no detail maps (they average out at > 1.3 km); per-building roofs kept
 L2_MAP = {'glass_ec': 'glass_tint', 'glass_lowe': 'glass_tint', 'glass_clear': 'glass_tint', 'glass_sky': 'glass_tint',
           'glass_canopy': 'glass_tint', 'glass_t3w': 'glass_tint', 'coping': 'panel_light', 'fascia': 'panel_light', 'mullion': 'panel_light',
           'concrete': 'panel_light', 'panel_platinum': 'panel_light', 'panel_acm': 'panel_light', 'penthouse_corr': 'panel_light',
           'soffit': 'panel_dark', 'door_dark': 'panel_dark', 'panel_acm_dark': 'panel_dark', 'planting': 'planting', 'lettering': 'panel_dark',
-          'unit': 'panel_light', 'glass_lobby': 'glass_lobby'}
+          'unit': 'panel_light', 'glass_lobby': 'glass_lobby', 'louvre': 'panel_dark'}
 LEAN_OF = {'BA_B': 'B', 'BA_C': 'C', 'BA_D': 'D', 'BA_E': 'E', 'BA_F': 'F', 'T1': 'BC', 'T2': 'CD', 'T3W': 'EF', 'T3E': 'EF', 'C3C': None}
 ROOF_CAP = 215                      # sRGB cap of a NAIP roof colour: NAIP saturates on the white membranes (>= 245); aged white
                                     # single-ply solar reflectance ~0.65-0.70 -> base colour <= sRGB 215 (linear 0.68) [inf]
@@ -294,9 +299,19 @@ def recentre(me):
     return tuple(float(x) for x in c)
 
 
+SIGN_FONT = '/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf'   # SIL OFL 1.1 (glyph outlines baked into the mesh)
+# review r2 (finding 4): sign sizes / heights measured on photo d1 with its solved camera (render_domestic.view_d1: the
+# facade scale 48.8 px/m at the sign from the canopy line -> glass head span, 7.85 m): line 1 bbox incl. the descender 1.41 m,
+# 14.0 m wide, centre 14.03 m above the apron (= canopy soffit + 5.15); line 2 "Terminal" cap height 0.79 m, 4.15 m wide,
+# the disc 1.10 m with the flagged white "1" (0.66 of the disc), centre 12.10 m (= soffit + 3.22) [obs photo d1, low].
+# Typeface: the real one (a humanist semi-bold sans) is not identified -> Liberation Sans Bold, 0.93 horizontal scale (it is
+# ~7 % wider than the photo's letters at the same height) [inf]
+SIGN = dict(l1_h=1.41, l1_z=5.15, l2_h=0.79, l2_z=3.22, disc_d=1.10, one_k=0.66, x_scale=0.93)
+
+
 def lettering_t1(parent, lod, W):
     """'Harvey Milk Terminal' / 'Terminal 1' on the T1 Center landside face (photo d1; BD-03 view 1 signage zone on the
-    east run of the developed face) [obs photo d1 text and position on the face; size / font inf]. Placed on the longest
+    east run of the developed face) [obs photo d1 text, position, sizes (review r2); font inf]. Placed on the longest
     landside facade edge of the west run (BD-03: the right-hand run looking SE), centred, 0.28 m in front of the glass,
     0.06 m deep."""
     s = next(o for o in W.S if o.key == 'T1_hall')
@@ -314,10 +329,13 @@ def lettering_t1(parent, lod, W):
     d = (b - a) / L; n = np.array([d[1], -d[0]])
     import bmesh
 
-    def text_mesh(txt, height):
-        """Blender built-in font (regular: thickening the outline breaks the glyph corners); -> (co (x along, y up, z out),
-        mesh) with the bbox scaled to `height` and centred."""
+    fnt = bpy.data.fonts.load(SIGN_FONT, check_existing=True) if os.path.exists(SIGN_FONT) else None
+
+    def text_mesh(txt, height, xs=SIGN['x_scale']):
+        """Liberation Sans Bold (review r2: the built-in regular font read thin and grey, and its "1" is a plain bar) -> (co
+        (x along, y up, z out), mesh) with the bbox scaled to `height` (x by xs more) and centred."""
         cu = bpy.data.curves.new('t1_txt', 'FONT')
+        if fnt is not None: cu.font = fnt
         cu.body = txt; cu.align_x = 'CENTER'; cu.size = 1.0; cu.extrude = 0.03
         tmp = bpy.data.objects.new('tmp_text', cu); bpy.context.scene.collection.objects.link(tmp)
         dg = bpy.context.evaluated_depsgraph_get()
@@ -326,19 +344,19 @@ def lettering_t1(parent, lod, W):
         co = np.zeros(len(me_.vertices) * 3, np.float32); me_.vertices.foreach_get('co', co); co = co.reshape(-1, 3)
         lo, hi = co.min(0), co.max(0)
         sc = height / (hi[1] - lo[1])
-        co[:, 0] = (co[:, 0] - 0.5 * (lo[0] + hi[0])) * sc; co[:, 1] = (co[:, 1] - 0.5 * (lo[1] + hi[1])) * sc
+        co[:, 0] = (co[:, 0] - 0.5 * (lo[0] + hi[0])) * sc * xs; co[:, 1] = (co[:, 1] - 0.5 * (lo[1] + hi[1])) * sc
         return co, me_
 
     parts = []          # (co, mesh, (u0, zc, out), material index)
-    # (text, bbox height incl. descenders, centre height): photo d1 scaled by the 9.0-m tier (canopy line -> wall head):
-    # line 1 ~6.0 m above the canopy line, line 2 ~3.2 m (just under the tier transom 3.96 m); line 2 = "Terminal" + the white
-    # "1" in a dark disc [inf, photo d1, low]
-    co1, m1 = text_mesh('Harvey Milk Terminal', 1.6); parts.append((co1, m1, (0.0, G.T1_CANOPY_H + 6.0, 0.28), 0))
-    h2 = 1.0
+    # (text, bbox height, centre height): SIGN (photo d1, review r2); line 2 = "Terminal" + the white flagged "1" in a dark
+    # disc, the group centred under line 1 (photo d1)
+    co1, m1 = text_mesh('Harvey Milk Terminal', SIGN['l1_h']); parts.append((co1, m1, (0.0, G.T1_CANOPY_H + SIGN['l1_z'], 0.28), 0))
+    h2 = SIGN['l2_h']
     co2, m2 = text_mesh('Terminal', h2)
-    w2 = np.ptp(co2[:, 0]); R_ = 0.62 * h2; gap = 0.32 * h2
-    u_t = -(R_ + gap / 2); parts.append((co2, m2, (u_t, G.T1_CANOPY_H + 3.2, 0.28), 0))
-    u_d = u_t + w2 / 2 + gap + R_
+    w2 = np.ptp(co2[:, 0]); R_ = SIGN['disc_d'] / 2; gap = 0.30 * h2
+    grp_w = w2 + gap + 2 * R_
+    u_t = -grp_w / 2 + w2 / 2; parts.append((co2, m2, (u_t, G.T1_CANOPY_H + SIGN['l2_z'], 0.28), 0))
+    u_d = grp_w / 2 - R_
     bm = bmesh.new()
     seg = bmesh.ops.create_circle(bm, cap_ends=True, radius=R_, segments=32)
     bmesh.ops.extrude_face_region(bm, geom=[f for f in bm.faces])
@@ -351,8 +369,8 @@ def lettering_t1(parent, lod, W):
     if topf.normal.z < 0: bmesh.ops.reverse_faces(bm, faces=list(bm.faces))     # outward (back-face QA)
     md = bpy.data.meshes.new('t1_disc'); bm.to_mesh(md); bm.free()
     cod = np.zeros(len(md.vertices) * 3, np.float32); md.vertices.foreach_get('co', cod); cod = cod.reshape(-1, 3)
-    parts.append((cod, md, (u_d, G.T1_CANOPY_H + 3.2, 0.28), 0))
-    co3, m3 = text_mesh('1', 0.78 * h2); parts.append((co3, m3, (u_d, G.T1_CANOPY_H + 3.2, 0.315), 1))
+    parts.append((cod, md, (u_d, G.T1_CANOPY_H + SIGN['l2_z'], 0.28), 0))
+    co3, m3 = text_mesh('1', SIGN['one_k'] * SIGN['disc_d'], xs=1.0); parts.append((co3, m3, (u_d, G.T1_CANOPY_H + SIGN['l2_z'], 0.315), 1))
     c0 = (a + b) / 2
     bm = bmesh.new(); mids = []
     for co, me_, (u0, zc, out), mi in parts:
@@ -373,10 +391,13 @@ def lettering_t1(parent, lod, W):
     c = recentre(me)
     ob = new_object(me.name, me, parent, dict(src='obs', building='T1', lod=lod, feature='T1 Center landside sign "Harvey Milk Terminal / Terminal 1"',
                                               spec=['t1c.landside_facade'],
-                                              dims=dict(text_height_1=G.tagdim(1.6, 'inf', 'photo d1 proportions (incl. descenders)'),
-                                                        text_height_2=G.tagdim(1.05, 'inf', 'photo d1 proportions'),
+                                              dims=dict(text_height_1=G.tagdim(SIGN['l1_h'], 'obs', 'photo d1 with its solved camera (review r2; incl. the descender), low'),
+                                                        text_height_2=G.tagdim(SIGN['l2_h'], 'obs', 'photo d1 cap height (review r2), low'),
+                                                        disc=G.tagdim(SIGN['disc_d'], 'obs', 'photo d1 (review r2), low'),
+                                                        centre_heights=G.tagdim('%.2f / %.2f' % (G.T1_CANOPY_H + SIGN['l1_z'], G.T1_CANOPY_H + SIGN['l2_z']), 'obs',
+                                                                                'photo d1 (review r2) above the curb placeholder'),
                                                         position=G.tagdim('west run of the landside face, upper tier', 'obs', 'photo d1 / BD-03 view 1'),
-                                                        font=G.tagdim('Blender built-in', 'inf', 'real typeface not identified'))))
+                                                        font=G.tagdim('Liberation Sans Bold (SIL OFL 1.1), x 0.93', 'inf', 'real typeface not identified'))))
     ob.location = c
     return ob
 

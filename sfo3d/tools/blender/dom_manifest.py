@@ -86,6 +86,28 @@ def dimensions():
         'tools/blender/dom_roofobs.py: compact dark objects with a shadow on their NNE side')
     add('bridge doors / vestibules / bulkheads', 'at the walkway attach points (data/sfo_stands.json)', 'inf', 'door 2.6 x 3.0 walkway section (gates.js)')
     add('roof colours', 'NAIP 2024 median per building, capped at sRGB 215', 'obs (low) / inf (cap)', 'build_domestic.naip_colours')
+    # review round 2
+    add('C3C office curtain wall (review r2)', f'{G.C3C_STOREYS} storeys x {G.C3C_STOREY} m from {G.C3C_OFFICE_Z0:.1f} m; storey-height panes, '
+        'staggered mullions (widths 1.2-4.5 m, new sequence per storey), light frames, very dark green glass', 'pub (6 storeys, dynamic glazing) / '
+        'obs (rhythm, colours: photo a1, low) / inf (storey height, pane widths)', 'HOK; photo a1 8x zoom; dom_tex.c3c_colour')
+    add('C3C rooftop penthouse (review r2)', f'u {G.C3C_PENT_U[0]}-{G.C3C_PENT_U[1]} / w {G.C3C_PENT_W[0]}-{G.C3C_PENT_W[1]} m on the NNE-face '
+        f'frame ({G.C3C_PENT_U[1] - G.C3C_PENT_U[0]:.1f} x {G.C3C_PENT_W[1] - G.C3C_PENT_W[0]:.1f} m); top {G.C3C_PENT_TOP:.1f} m', 'obs (low)',
+        'photo a1 (23-77 % of the NNE face, 4.4-5.3 m visible above the roof edge); NAIP 2024 (its imaged WNW wall band, FWHM 2.5 m / lean '
+        '0.438 = 5.7 m above the deck); the 8 C3C PV tables stand on it (NAIP)')
+    add('C3C penthouse louvre band (review r2)', f'u {G.C3C_LOUVRE_U[0]}-{G.C3C_LOUVRE_U[1]} m, {G.C3C_LOUVRE_Z[0]:.1f}-{G.C3C_LOUVRE_Z[1]:.1f} m',
+        'obs (low)', 'photo a1 (dark band on the penthouse NNE wall)')
+    add('BA-E tip end wall glazing (review r2)', 'dark base 0-2.0 m, clear glass 2.0 m to the wall head (83 % of the wall)', 'obs (low)',
+        'photo a1 profile at the end wall (glass 746-790 px of a 736-~802 px wall, x 1335-1450)')
+    add('BA-E plate PV arrays added (review r2)', 'tools/blender/dom_pv_r2.json (8 arrays, 484 m2)', 'obs (extent, NAIP 2024 +-0.5 m) / inf (modules)',
+        'tools/blender/dom_pv_r2.py: the WNW-half arrays dom_pv.py merged with the edge shadow')
+    add('walls facing the tower base building (review r2)', 'full height, 0.3 m off the IBF; flashing over the gap at min(top, %.2f m), '
+        'a %.2f-m joint at the IBF wall' % (G.TOWER_Z1, G.TOWER_JOINT), 'inf', 'the flashing height: the LOWEST IBF roof over the tower families '
+        f'({G.TOWER_IBF_ROOFS} m, manifest.json#tower anchors / anchors_f1 / anchors_f2) less 0.10 m (below the parapet of either family)')
+    add('facade notches around the app rotunda drums (review r2)', f'radius max(1.5, min(2.45, rotunda_max_r - 0.25)) + {G.DRUM_CLEAR} m around '
+        'data/sfo_stands.json rotunda', 'inf', 'js/live/gates.js drum radius rule (the largest drum the app can draw); 9 facades notched '
+        '(B10, D4, D5, D14, D15, D16, E6, E9, E11); door surrounds / vestibules within reach of a drum (36 doors) clipped or left out')
+    add('T1 sign sizes (review r2)', 'line 1 1.41 m (incl. descender) x 14.0 m at 14.03 m; line 2 cap 0.79 m, disc 1.10 m at 12.10 m',
+        'obs (low)', 'photo d1 with the solved camera (render_domestic.D1_SOLVE); font Liberation Sans Bold x 0.93 [inf]')
     return d
 
 
@@ -101,8 +123,13 @@ INFERRED = [
     'BA-E stepped section (raised plate with a tapered edge 1.5 m over a clerestory, lower flanks 4.4 m, step 3.0 m) from photo a1',
     'BA-F lantern eccentric (~3.3 m E), a minimal 1.0-m glazed upstand (rise unknown, bound 4.6 m); NW-arm monitor 2.5 m rise; hub and '
     'NW arm at the NE-arm height',
-    'Courtyard 3 Connector office block (review r1): 33.0 m (six published office storeys above the connector, NAIP relief, photo a1), '
-    'electrochromic ("dynamic") curtain glass on a 3-m module, the connector levels below as the piers',
+    'Courtyard 3 Connector office block (review r1): 33.0 m (six published office storeys above the connector, NAIP relief, photo a1); '
+    'review r2: six 3.8-m office storeys of storey-height panes with staggered mullions (pane widths, storey height inf; rhythm / colour obs '
+    'photo a1), the connector levels below as the piers; the rooftop penthouse 5.0 m above the roof edge with a louvre band [obs low]',
+    'review r2: facades notched (radius + 0.1 m) around the largest rotunda drum the app can draw at a bridge, roof notched where its '
+    'underside is below the drum top; door surrounds / vestibules clipped there; the walls facing the tower base building full height '
+    '0.3 m off it, a coping flashing over the gap at min(top, 13.03 m) with a 0.15-m joint at the IBF wall',
+    'review r2: BA-E tip end wall glazed from 2.0 m (dark base below) [photo a1 profile, low]',
     'rooftop units: boxes on the decks at the NAIP extents, heights 1.5 / 2.2 / 3.0 m by plan size (< 12 / < 50 / >= 50 m2), light '
     'metal casings; PV: rack tables 0.35-0.75 m above the deck at the NAIP table extents, modules in the PV tiles',
     'BA-B electrochromic glass in four per-pane tint states (24 x 6 m tile); T1 clear glass under the canopy mid-grey (the lit hall '
@@ -125,11 +152,13 @@ UNKNOWN = [
     'the T3 project datum (L1 drawn at the apron); the T3 East landside facade (drawn with the published T3E materials, positions inf)',
     'the BA-B roof-well depth and skylight heights; the BA-F lantern (bound <= 4.6 m, modelled 1.0 m) and monitor rises; the BA-B '
     'north-half outer roof height',
-    'the Courtyard 3 Connector height (modelled 33.0 m, range 32-36 m) and its roof penthouse (photo a1 shows a light box on the roof: '
-    'not resolved in NAIP 2024, not modelled)',
+    'the Courtyard 3 Connector height (modelled 33.0 m, range 32-36 m); its rooftop penthouse is modelled since review r2 from photo a1 and '
+    'the NAIP 2024 wall band [obs, low] (top 38.0 m, +-1 m); the office storey height and pane widths',
+    'the T1 Center roof profile: photo d1 shows PV rows above the landside coping while its solved camera is 2.8 m BELOW the coping, so the '
+    'roof rises behind the landside edge (or the edge is lower than the hall roof); modelled flat at the 17.88-m placeholder [unk]',
     'rooftop unit heights and types (extents measured; NAIP 2024 resolves only compact dark units with a shadow; light units on light '
     'membranes and units under 4 m2 are missed); no BA-B reference photo was found with an open licence (Wikimedia Commons searched '
-    '2026-11-05), so the BA-B facade materials remain unverified'
+    '2026-11-05), so the BA-B facade materials remain unverified',
     'bay / mullion modules, gate-room glazing extents, the apron-level facades (service band only), parapet heights',
     'the elevated sky-bridge / pod parts (app convention 6.0-10.5 m; 4.9-10.5 m where a bridge walkway enters, review r1)',
     'which T3W state to model (under construction 2024-2029; the May 2026 change adds an airside storey): the asset shows the 95 % CD '
@@ -159,11 +188,54 @@ CONFLICTS = [
               'trimmed edge (overlay checked 2026-11-05); heights follow BD-03'),
     dict(item='T3W parapet', model='16.76 m = 66\'-0" - T3 L1 11\'-0" (BD-02 / BD-03)', other='spec t3.heights_above_L1 16.99 m '
          '(66\'-0" - T3W L1 10\'-3")', note='datum choice; 0.23 m'),
-    dict(item='BA-D overhang vs bridges', model='overhang +2.40 m notched at the doors (roof underside 7.69 m < walkway head 8.4 m)',
-         other='bad.h_roof 8.49 m [obs, low] with a bridge floor 5.4 m (gates.js)', note='a real bridge cannot pass under a 7.7 m soffit: '
-         'either the head roof is higher there or the edge is local; the notch keeps both values'),
-    dict(item='BA-C roof vs bridges', model='bulkheads above the 7.2 m roof at the doors', other='bac.h_roof 7.2 m [obs, low] below the '
-         'walkway head 8.4 m', note='as BA-D'),
+    dict(item='BA-C / BA-D roofs vs the app concourse floor 5.4 m (OPEN PLAUSIBILITY CONFLICT, review r2 finding 5)', status='open',
+         model='BA-C roof edge 7.20 m (deck 6.60, slab underside 6.40) and BA-D 8.49 m (deck 7.89, underside 7.69) kept as measured '
+               '[obs, low]; 9 BA-C bulkheads (top 8.70 m, 1.50 m above the BA-C roof edge) and 14 BA-D bulkheads (top 9.49 m, 1.00 m above '
+               'its roof edge) enclose the app walkways where they reach above the roof; the BA-D overhang notched at the doors',
+         other='js/live/gates.js DEPARTURE_LEVEL 5.4 m [inf] for every pier: walkways 5.15-8.45 m',
+         numbers=dict(BA_C=dict(deck_m=6.6, clear_floor_to_deck_m=1.2, clear_under_0p8m_roof_structure_m=0.4),
+                      BA_D=dict(deck_m=7.89, clear_floor_to_deck_m=2.49, clear_under_0p8m_roof_structure_m=1.69),
+                      needed_m='>= ~3.0 clear (a concourse) + ~0.8 roof structure + 0.6 parapet above the floor'),
+         evidence='photo a1 (ratios, camera-independent): at the BA-D near end the facade reads roof edge (763.5 px) / fascia to 773.5 / '
+                  'glazing 773.5-790.5 / light sill band to 795.5 / shadowed apron level to ~812: the concourse glazing spans 0.44-0.79 of '
+                  'the roof-edge height, and the walkways enter at that band with about one walkway height (~3 m) of facade above them '
+                  '(D14 / D15 and the D head). At the measured 8.49 m that puts the BA-D concourse floor near 3.5-3.8 m and the walkway '
+                  'top near 6.7 m; with the app floor kept at 5.4 m the roof edge would have to be 10.7-11.7 m, outside the measured '
+                  '8.07-8.93 m. BA-C (photo a1 at ~800 m, 2.4 px/m) shows the same layout, too small to measure. The aircraft-scaled '
+                  'vertical scale of photo a1 at D11-D16 gives the near-end roof edge 9.1 +- 1 m [low]: consistent with the NAIP value',
+         request='bridges / realtime owners: a per-pier departure level for BA-C and BA-D (about 3.5-4.0 m above the apron, to be '
+                 'verified against photos with the walkway at the glazing band); domestic then drops the 23 bulkheads, moves the BA-C / '
+                 'BA-D concourse glazing to the photo ratios (0.44-0.79 of the roof edge) and lowers its door surrounds',
+         note='until then both values are kept and the conflict stays open: the bulkheads are a stop-gap, not a modelled structure'),
+    dict(item='photo d1 camera vs the AirTrain guideway level', model='d1 camera solved from the facade lines (render_domestic.D1_SOLVE): '
+         '10.2 m above the T1 departures curb (15.06 m in the model frame with the 4.88-m curb placeholder)',
+         other='landside asset: T1 AirTrain station deck CG_L5 19.75 m [unk placeholder]', note='a car-borne camera ~2.5 m above the deck '
+         'would put the deck ~7.6 m above the curb; both the curb and the station level are placeholders - information for the landside '
+         'group, no change here'),
+]
+
+DEVIATIONS_FROM_SHEETS = [   # review r2 finding 7: what the 3-D asset has that the 2-D set BD-01..03 (2026-11-05 02:42Z) does not show
+    dict(item='Courtyard 3 Connector office block (C3C)', sheets='not drawn (tools/buildings/draw_domestic.py has no C3C)',
+         model='T2 outline NW end west of s %.1f (%.0f m2) [obs], 33.0 m [inf, range 32-36], six office storeys (glass from 10.2 m), rooftop '
+               'penthouse %.0f m2 to 38.0 m [obs low]' % (G.C3C_S_EAST, G.C3C_POLY.area, 585.0), why='review r1 / r2 (photo a1, HOK [pub])'),
+    dict(item='rooftop mechanical units', sheets='not drawn', model='31 boxes on 9 decks at their NAIP 2024 extents (dom_roofobs.json), '
+         'heights 1.5 / 2.2 / 3.0 m by size [inf]', why='review r1'),
+    dict(item='PV rack tables', sheets='BD-01 shows the roofs without PV tables', model='discrete tables inside the NAIP PV blocks '
+         '(dom_roofobs.json) + 8 BA-E plate arrays (dom_pv_r2.json, review r2); the 8 C3C tables on the C3C penthouse', why='review r1 / r2'),
+    dict(item='BA-E tip end wall', sheets='BD-02: "end wall: full-height recessed glass [obs photo a1]"', model='glazed from 2.0 m above a '
+         'dark base (photo a1 profile, review r2) under the plate; the end bay 8 m [inf]', why='review r2 finding 2'),
+    dict(item='BA-F hub lantern rise', sheets='BD-02: rise <= 4.6 m (the 2020 shadow bound)', model='1.0-m glazed upstand [unk]', why='review r1'),
+    dict(item='BA-B pod parts entered by a bridge walkway', sheets='app convention 6.0-10.5 m', model='underside 4.9 m (B10 / B11 / B11S / '
+         'B15 / B16)', why='review r1: the app walkways 5.15-8.45 m run inside them'),
+    dict(item='jet-bridge attachment', sheets='not drawn', model='door surrounds at 80 doors, 54 vestibules, 23 bulkheads above the BA-C / '
+         'BA-D roofs (open conflict, see conflicts), BA-D overhang notches, facade notches around 9 rotunda drums (review r2)',
+         why='physical fit with the app bridges (js/live/gates.js)'),
+    dict(item='tower base building junction', sheets='T2 drawn up to the IBF outline', model='T2 / BA-D / T1 cut 0.3 m off the IBF outline; '
+         'their walls facing it full height and a flashing over the gap at min(top, 13.03 m), 0.15-m joint (review r2)', why='review r2 findings 3 / 6'),
+    dict(item='T1 Center landside face', sheets='BD-03 view 1 develops it along the SFO Museum outline', model='on the measured roof edge: '
+         'the trimmed curb line less 4.0 m (see conflicts)', why='NAIP 2024'),
+    dict(item='T1 sign', sheets='BD-03 view 1: signage zone, extent schematic', model='measured sizes / heights from photo d1 (review r2), '
+         'Liberation Sans Bold', why='review r2 finding 4'),
 ]
 
 
@@ -222,6 +294,9 @@ def entry(build, ver, parts, mats, roof_rgb, info):
                       'attribute (tiling normal maps; the runtime derives the tangent frame)',
         ao=build.get('ao'), naip_colours=build.get('naip_colours'),
         dimensions=dimensions(), components=comps, inferred=INFERRED, unknown=UNKNOWN, not_modelled=NOT_MODELLED, conflicts=CONFLICTS,
+        deviations_from_sheets=DEVIATIONS_FROM_SHEETS,
+        deviations_note='the 2-D set BD-01..03 is owned by the drawings group (tools/buildings/draw_domestic.py); these 3-D-only items are '
+                        'recorded here instead of redrawing (review r2 finding 7)',
         bridges=dict(doors=len(doors), vestibules=sum(1 for d in doors if d['gap'] > 0.12), bulkheads=sum(1 for d in doors if d['low']),
                      notched=sum(1 for d in doors if d.get('notched')),
                      note='every bridge of data/sfo_stands.json (B-F) gets a door surround where its walkway meets the 3-D facade; where the '
@@ -236,7 +311,7 @@ def entry(build, ver, parts, mats, roof_rgb, info):
 
 
 def keep_renders(old, new):
-    for k in ('renders', 'render_check', 'renders_updated', 'renders_args', 'renders_note', 'qa', 'validator', 'neighbours', 'review_r1'):
+    for k in ('renders', 'render_check', 'renders_updated', 'renders_args', 'renders_note', 'qa', 'validator', 'neighbours', 'review_r1', 'review_r2'):
         if old and old.get(k):
             new[k] = old[k]
     return new
@@ -312,3 +387,58 @@ def add_review_r1(after_path, before_path=None):
         return old
     return merge(upd)
 
+
+
+def add_review_r2(after_path, before_path=None, extra=None):
+    """manifest.json#domestic.review_r2: the round-2 findings, their dispositions and the probe summaries
+    (tools/blender/verify_domestic_r2.py) before / after."""
+    import datetime
+    A = json.load(open(after_path)); B = json.load(open(before_path)) if before_path and os.path.exists(before_path) else None
+
+    def summ(R):
+        if not R: return None
+        o = {}
+        for k in ('tower', 'drums'):
+            o[k] = {l: {kk: vv for kk, vv in R[k][l].items() if kk not in ('worst', 'open_examples', 'worst_max_r')} for l in ('lod0', 'lod2')}
+        for k in ('c3c', 'bae', 'sign', 'plausibility_bac_bad'):
+            if k in R: o[k] = R[k]
+        return o
+
+    def upd(old):
+        old = old or {}
+        old['review_r2'] = dict(
+            updated=datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='seconds'),
+            probe='tools/blender/verify_domestic_r2.py (out/buildings3d/domestic_verify_r2.json, local)', after=summ(A), before=summ(B),
+            integration_status='data/buildings3d/integration.json (b3d_integrate.py, 2026-11-05T16:35Z) lists 2 open conflicts, not 0: the E9 '
+                               'rotunda drum vs BA_E (fixed here: 0 contacts at every pose / LOD, needs a re-run of tools/blender/b3d_integrate.py '
+                               'by its owner) and the BART-station taxilane OFA (landside asset)',
+            dispositions=[
+                dict(item=1, severity='major', finding='C3C facade a tiled cube; penthouse missing', status='fixed',
+                     note='six 3.8-m storeys of storey-height panes with staggered mullions, very dark green glass, light frames (glass_c3c, '
+                          'own 24 x 22.8 m tile, no fins), connector levels below; penthouse 585 m2 to 38.0 m with the louvre band [obs low: '
+                          'photo a1 + NAIP wall band]; the 8 C3C PV tables moved onto it'),
+                dict(item=2, severity='minor', finding='BA-E end wall glazed only above 5.6 m; plate PV incomplete', status='fixed',
+                     note='end wall glazed from 2.0 m (83 % of the wall, photo a1 profile); 8 NAIP arrays added (dom_pv_r2.py, 484 m2): '
+                          'plate PV tops 269 -> 753 m2'),
+                dict(item=3, severity='minor', finding='TOWER_EXCL z1 14.07 (F1 roof) leaves a slot above the F2 parapet', status='fixed',
+                     note='the walls facing the IBF are emitted full height (0.3 m off it) instead of from 14.07 m; the flashing over the '
+                          'gap sits at min(top, the lowest family IBF roof - 0.10 = 13.03 m) (manifest.json#tower anchors)'),
+                dict(item=4, severity='minor', finding='T1 sign "1" a bar, thin grey letters; d1 camera above the roof edge', status='fixed',
+                     note='Liberation Sans Bold (flagged 1), near-black lettering, sizes / heights measured on photo d1; d1 camera solved '
+                          'from the photo facade lines: 2.8 m below the coping (render_domestic.D1_SOLVE)'),
+                dict(item=5, severity='major', finding='BA-C / BA-D roofs below the 5.4-m concourse / bulkheads above the roofs',
+                     status='open (tagged; request to the bridges / realtime owners)',
+                     note='the conflict "BA-C / BA-D roofs vs the app concourse floor" (status open) carries the clearance numbers (BA-C 0.4 m, BA-D 1.69 m under a 0.8-m roof structure) and the '
+                          'photo a1 evidence that the BA-D concourse sits ~1.5-2 m lower than the app floor; the roofs stay as measured'),
+                dict(item=6, severity='minor', finding='0.24-m slit + 0.35-m crack above the IBF parapet', status='fixed',
+                     note='walls full height behind the parapet of either family and a coping flashing over the gap (T2 / T1 / BA-D walk) '
+                          'with a 0.15-m joint at the IBF wall (clear of its mullions)'),
+                dict(item=7, severity='minor', finding='C3C / roof equipment only in 3-D', status='fixed (recorded)',
+                     note='manifest deviations_from_sheets (the BD sheets belong to the drawings group)'),
+                dict(item=8, severity='minor', finding='rotunda drums E9 (F8 / F7 / E3) inside BA_E / BA_F / T3E surfaces', status='fixed',
+                     note='facades notched around the largest drum the app can draw (+0.1 m) at 9 stands; the door parts of the 36 doors near a drum clipped / left out there; '
+                          'scene2d drums 20 contacts / 4 conflicts -> 0 / 0 (LOD0), max-radius drums 13 / 10 -> 0 / 0'),
+            ])
+        if extra: old['review_r2'].update(extra)
+        return old
+    return merge(upd)

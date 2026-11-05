@@ -208,10 +208,17 @@ def run(path):
     for k in ('garage_a', 'garage_g'):
         if k not in by: continue
         g = DL.GAR[k]; Gg = DL.ggeom(k)
+        import landside_geom as LGr
+        r2 = LGr.GAR_R2[k]
         body = L0n(k, f'{k}_body'); P = allP(body)
-        C.add(f'{k}: parapet top = drum ring (BL-03, deck unk)', float(H(P).max()), float(g['drum']), src='BL-03 rows 1-2')
+        # review r2: heights from photo a2 (solved camera) instead of the BL-03 drum ring (39.6 / 37.6) - listed as deviations
+        C.add(f'{k}: body top = drum ring (r2: photo a2)', float(H(P).max()), float(r2['ring']), src='landside_r2_obs.json garages [obs a2, low]')
+        pc = allP(body, 'precast')
+        C.add(f'{k}: parapet top (r2: photo a2 solved camera)', float(H(pc).max()) if len(pc) else -1, float(r2['parapet']), src='landside_r2_obs.json [obs a2, low]')
+        dk = allP(body, 'deck')
+        C.add(f'{k}: roof deck = Level 9 (8 x a2 pitch)', float(np.median(H(dk))) if len(dk) else -1, float(r2['deck']), src='a2 level rows [obs / inf]')
         core = allP(L0n(k, f'{k}_core'))
-        C.add(f'{k}: core cylinder top (drawn 4 m above the ring)', float(H(core).max()), float(g['drum']) + 4.0, src='BL-03')
+        C.add(f'{k}: helix-eye guard ring top (deck + 42 in; a2 / i2: nothing above the ring)', float(H(core).max()), float(r2['deck']) + 3.5 * FT, src='r2')
         cxz = core[:, [0, 2]]
         cc = cxz.mean(0); rr = np.hypot(*(cxz - cc).T)
         C.add(f'{k}: core diameter', float(2 * np.median(rr)), DL.GAR_CORE_D, src='BL-02 B GAR_CORE_D (obs NAIP)')
@@ -231,14 +238,23 @@ def run(path):
         C.add(f'{k}: garage body end u = Lb', float(u.max()), float(Gg['Lb']), src='BL-02 B dashed line')
         if Gg['box']:
             bx = allP(L0n(k, f'{k}_rooftop_box'))
-            C.add(f'{k}: rooftop box top (drawn 3.5 m)', float(H(bx).max()), float(g['drum']) + 3.5, src='BL-03 row 1')
-            ub = (bx[:, [0, 2]] - Gg['c']) @ Gg['a'] + Gg['L'] / 2
-            C.add(f'{k}: rooftop box u start', float(ub.min()), float(Gg['box'][0]), src='BL-02 B (NAIP, lean-corrected)')
-            C.add(f'{k}: rooftop box u end', float(ub.max()), float(Gg['box'][1]), src='BL-02 B')
+            C.add(f'{k}: penthouse top (r2: photo a2)', float(H(bx).max()), float(LGr.PH_A['top']), src='landside_r2_obs.json [obs a2, low]')
+            (ix0, iz0), (ix1, iz1) = LGr.PH_BOX_IMG
+            C.add(f'{k}: penthouse west face (NAIP box, base lean removed)', float(bx[:, 0].min()), ix0 - LGr.NAIP_LEAN_GA * float(r2['deck']), 0.8, 'NAIP 2024 + measured lean')
+            C.add(f'{k}: penthouse east face (NAIP box, top lean removed)', float(bx[:, 0].max()), ix1 - LGr.NAIP_LEAN_GA * float(LGr.PH_A['top']), 0.8, 'NAIP 2024 + measured lean')
+        if k == 'garage_a':
+            rt = allP(L0n(k, f'{k}_rotunda'))
+            C.add(f'{k}: NE rotunda top (r2: photo a2)', float(H(rt).max()) if len(rt) else -1, float(LGr.ROT_A['top']), src='[obs a2 / NAIP, low]')
+            if len(rt):
+                cxz_ = rt[:, [0, 2]]; cc_ = 0.5 * (cxz_.min(0) + cxz_.max(0))
+                C.add(f'{k}: NE rotunda centre', float(np.hypot(*(cc_ - np.array(LGr.ROT_A['centre'])))), 0.0, 0.3, '[obs a2 / NAIP]')
+                C.add(f'{k}: NE rotunda inside the body outline', footprint(L0n(k, f'{k}_rotunda')).difference(sfom(g['nm']).buffer(0.1)).area, 0.0, 0.5, 'plausibility', 'm2')
         allowed = unary_union([sfom(g['nm']), rail]) if g['rail_near'] else sfom(g['nm'])
-        out = footprint(body).difference(allowed.buffer(0.3)).area
-        C.add(f'{k}: body footprint outside the SFO Museum outline (Garage A: + the guideway strips run inside it)', out, 0.0, 5.0,
-              src='BL-02 B', unit='m2')
+        out = footprint(body).difference(allowed.buffer(0.6)).area
+        C.add(f'{k}: body footprint outside the SFO Museum outline + 0.6 m (r2: the curved ends follow the fitted arc, up to the 0.6-m fit '
+              'tolerance outside the outline\'s chords; Garage A: + the guideway strips run inside it)', out, 0.0, 5.0, src='BL-02 B', unit='m2')
+        if not g['rail_near']:
+            C.add(f'{k}: body clear of the guideway polygon (0.3 m)', footprint(body).intersection(rail.buffer(0.3)).area, 0.0, 1.0, 'plausibility', 'm2')
     # ---------------- round-1 review items (landside_r1_obs.json; photo / NAIP / OSM measurements of the 3-D group)
     import landside_airtrain as AT
     import landside_geom as LG
@@ -247,21 +263,21 @@ def run(path):
         if k not in by: continue
         g = DL.GAR[k]
         tw = allP(L0n(k, f'{k}_towers'))
-        C.add(f'{k}: drum stair / elevator towers top (ring + 3.0, photo i2)', float(H(tw).max()) if len(tw) else -1, float(g['drum']) + 3.0, 0.3,
-              'r1 photos.i2_drums [obs, low]')
+        C.add(f'{k}: drum stair / elevator towers top (parapet + %.1f, r2: a2 / i2)' % LG.TOWER_ABOVE_PARAPET, float(H(tw).max()) if len(tw) else -1,
+              float(LG.GAR_R2[k]['parapet']) + LG.TOWER_ABOVE_PARAPET, 0.3, 'landside_r2_obs.json [obs, low]')
         dm = allP(L0n(k, f'{k}_body'), 'drum_metal')
         C.add(f'{k}: drum in smooth metal panels (drum_metal vertices)', float(len(dm)), 1.0, ok=len(dm) > 50, src='photo i2', unit='')
         sb = allP(L0n(k, f'{k}_body'), 'interior')
-        sc = float(g['drum']) / 39.6
-        for t in R1['photos']['i2_drums']['slot_tops_below_ring'][:1]:
-            zt_ = float(g['drum']) - t * sc
+        r2_ = LG.GAR_R2[k]
+        for t in LG.I2_LEV['slot_centres_below_ring'][:1]:
+            zt_ = r2_['ring'] - (t - LG.DRUM_SLOT_H / 2) * r2_['pitch']
             near = sb[np.abs(H(sb) - zt_) < 0.05] if len(sb) else sb
             C.add(f'{k}: drum slot (top {zt_:.2f} m) recessed (interior faces at its top)', float(len(near)), 1.0, ok=len(near) > 8, src='photo i2', unit='')
     if 'garage_a' in by:
         k = 'garage_a'
         blk = allP(L0n(k, 'garage_a_station_block'))
-        C.add('garage_a: station block top (network level + 12.0, photo l1)', float(H(blk).max()) if len(blk) else -1,
-              AT.NET_LEVEL + LG.STATION_BLOCK_H, 0.05, 'r1 photos.l1_station_block [obs, low]')
+        C.add('garage_a: station block top = parapet (r2: a2 - nothing above the roof; l1 read +12.0 [conflict])', float(H(blk).max()) if len(blk) else -1,
+              float(LG.GAR_R2['garage_a']['parapet']), 0.05, 'landside_r2_obs.json [obs a2, low]')
         sl = allP(L0n(k, 'garage_a_station_block_det'), 'slot')
         zs = sorted({round(float(v), 2) for v in H(sl)}) if len(sl) else []
         C.add('garage_a: station block slots at one level (+7.4 m, two long runs)', float(np.mean(H(sl))) if len(sl) else -1,
@@ -288,7 +304,12 @@ def run(path):
     if len(tr):
         xz = tr[:, [0, 2]]; cc = xz.mean(0)
         C.add('RCC station tower centre on the SFO Museum polygon lobe', float(np.hypot(*(cc - np.array(AT.RCC_TOWER['centre'])))), 0.0, 0.3, 'SFO Museum RCC station polygon [obs]')
-        C.add('RCC station tower raked top: lowest rim (top - 2.5, photo l5)', float(np.percentile(H(tr), 100) - 2.5), AT.RCC_TOWER['top'] - AT.RCC_TOWER['rake'], 0.3, 'photo l5 [obs, low]')
+        C.add('RCC station tower raked top: rake (highest - lowest rim, r2 l5 fit 2.55)', float(H(tr).max() - np.percentile(H(tr)[H(tr) > AT.RCC_TOWER['top'] - 4.0], 0)),
+              AT.RCC_TOWER['rake'], 0.15, 'landside_r2_obs.json l5_rake [obs l5]')
+        hi = tr[np.argmax(H(tr))]
+        brg = math.degrees(math.atan2(hi[0] - cc[0], -(hi[2] - cc[1]))) % 360
+        C.add('RCC station tower raked top: bearing of the high side (r2 l5 fit 353 deg)', float(min(abs(brg - AT.RCC_TOWER['high_bearing']), 360 - abs(brg - AT.RCC_TOWER['high_bearing']))),
+              0.0, 15.0, 'landside_r2_obs.json l5_rake [obs l5]', 'deg')
     cp = allP([m for nm, m in at0.items() if nm.endswith('_deck')], 'coping')
     gd = allP([m for nm, m in at0.items() if nm.endswith('_deck')], 'guideway_deck')
     if len(cp) and len(gd):
@@ -321,8 +342,8 @@ def run(path):
             from scipy.spatial import cKDTree
             O = np.array([[c['x'], c['z']] for c in cars_obs])
             d_, _ = cKDTree(X[:, [0, 2]]).query(O)
-            C.add('CG: NAIP-detected cars reproduced (share with a model car within 1.5 m)', float(np.mean(d_ < 1.5)), 0.8, ok=float(np.mean(d_ < 1.5)) >= 0.75,
-                  src='landside_r1_obs.json cg_roof.cars [obs NAIP]', unit='')
+            C.add('CG: NAIP-detected cars reproduced (share with a model car within 3.2 m = the r2 stall-snap radius)', float(np.mean(d_ < 3.2)), 0.8,
+                  ok=float(np.mean(d_ < 3.2)) >= 0.75, src='landside_r1_obs.json cg_roof.cars [obs NAIP]', unit='')
         bx = allP(L0n(k, 'cg_roof_boxes'))
         C.add('CG: rooftop stair / elevator heads (deck + 4.5 [inf])', float(H(bx).max()) if len(bx) else -1, 81 * FT - 3.5 * FT + 4.5, 0.05, 'NAIP plan [obs]')
         rim = allP(L0n(k, 'cg_body'), 'deck_rim'); lob = allP(L0n(k, 'cg_body'), 'deck_plain')
@@ -331,11 +352,12 @@ def run(path):
     L2n = lambda k: [m for nm, m in by.get(k, []) if m['lod'] == 2 and m['inst'] is None]
     for k in by:
         if k.startswith('airtrain'): continue
-        P0 = allP([m for nm, m in by.get(k, []) if m['lod'] == 0 and m['inst'] is None and not nm.endswith('_poles')]); P2 = allP(L2n(k))
+        P0 = allP([m for nm, m in by.get(k, []) if m['lod'] == 0 and m['inst'] is None]); P2 = allP(L2n(k))
         if not len(P0) or not len(P2): continue
         t0 = float(H(P0).max()); t2 = float(H(P2).max())
-        C.add(f'LOD2 {k}: top = LOD0 top (light poles excepted)', t2, t0, 0.5, 'BL-03 heights (LOD0 verified above)')
-    for k, deck in (('central_garage', 81 * FT - 3.5 * FT), ('garage_a', DL.GAR['garage_a']['drum'] - 3.5 * FT), ('garage_g', DL.GAR['garage_g']['drum'] - 3.5 * FT)):
+        C.add(f'LOD2 {k}: top = LOD0 top (r2: the roof poles kept in LOD2)', t2, t0, 0.5, 'BL-03 heights (LOD0 verified above)')
+    import landside_geom as LGd
+    for k, deck in (('central_garage', 81 * FT - 3.5 * FT), ('garage_a', LGd.GAR_R2['garage_a']['deck']), ('garage_g', LGd.GAR_R2['garage_g']['deck'])):
         if k not in by: continue
         Pd2 = allP(L2n(k), 'deck_far')
         C.add(f'LOD2 {k}: deck recessed below the parapet (deck_far median)', float(np.median(H(Pd2))) if len(Pd2) else -1, float(deck), 0.05, 'BL-03 deck = parapet - 1.07')
@@ -353,7 +375,7 @@ def run(path):
             C.add('LOD2 AirTrain vertices inside the solid LOD2 Garage A body (guideway portals / station hall left open)', float(inside.sum()), 0.0, 0.0,
                   'review r1 (#11)', '')
         P2 = allP(L2n('garage_a'))
-        C.add('LOD2 garage_a: core / box / towers present (max height = tower top)', float(H(P2).max()), DL.GAR['garage_a']['drum'] + 4.0, 0.5, 'BL-03 core')
+        C.add('LOD2 garage_a: rotunda / penthouse present (max height = rotunda top, r2)', float(H(P2).max()), float(LG.ROT_A['top']), 0.5, 'r2 a2')
     # ---------------- LTP 1 / 2
     k = 'ltp_garage_1'
     if k in by:
@@ -454,9 +476,11 @@ def run(path):
         if not fpw.is_empty:
             import landside_geom as LG_
             tail = LG_.ga_tail_walk()
-            C.add('AirTrain: inter-track walkway outside the SFO Museum Garage A outline tail (r1, photo l1)', fpw.difference(tail.buffer(0.3)).area, 0.0, 2.0,
-                  'SFO Museum Garage A outline [obs]', 'm2')
-            C.add('AirTrain: inter-track walkway area vs the tail between the tracks', fpw.area, tail.area, 0.03 * tail.area, 'SFO Museum [obs]', 'm2')
+            C.add('AirTrain: trough walkways east of Garage A outside their 1.6-m strips (r2, photo l1)', fpw.difference(tail.buffer(0.3)).area, 0.0, 2.0,
+                  'SFO Museum Garage A outline + photo l1 [obs]', 'm2')
+            C.add('AirTrain: trough walkway area (2 x 1.6-m strips; r1 deck 656 m2)', fpw.area, tail.area, 0.03 * tail.area, 'photo l1 [obs]', 'm2')
+            C.add('AirTrain: the gap between the tracks east of Garage A left open (r2: no deck)', LG_.ga_tail_gap_area() - fpw.area, 200.0,
+                  ok=LG_.ga_tail_gap_area() - fpw.area > 200.0, src='photo l1: open air between the guideways', unit='m2')
         for kk, v in AT.STATIONS.items():
             if v[1] is None or v[4] is None: continue
             Pst = AT.ST_POLY[kk]
