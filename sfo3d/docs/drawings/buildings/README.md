@@ -113,13 +113,15 @@ not drawn. Both self-consistent families are drawn, and neither is preferred:
 - Cab centre offset 1.8 m (1.5 E, 1.0 N) from the axis; 1.6 m in the BT-02 / BT-03 view plane.
 - Cab-roof z spread over the four epochs: 322.4–325.3 (±1.45 m about 323.85; the spec's "±1.2" was corrected).
 - Landside blades: the glass ribbon (facing bearing 310, the middle of the 300–320 photo range) sits in a flat-faced
-  channel between a narrow, sharp NE blade (pointed tip at about the flare rim; photos read 0–2.4 m above it) and a broad
+  channel between a narrow, sharp NE blade (its top flush with the flare corner and the ribbon head, t3 / t4 / t5; the
+  round-3 pointed tip at deck + 1.2 was withdrawn on 2026-11-05) and a broad
   SW wing with a horizontally louvred face, a flat top and a rounded corner; both run full height with creases (photos
   t3 / t4, Famartin 2025, CC BY-SA 4.0). The SW wing tip at 254° / 14.0 m from the axis (2 m outside the flare) is the one
   plan point that reproduces both oblique photos (t3: 14.5 m right of the cab centre and 7.0 m beyond the ribbon; t4:
   15.7 / 6.6 m; model 14.5 / 7.6 and 15.7 / 5.8). From the BT-02 B bearing (297.7°) it projects at u +9.7, inside the
   round flare (12.0); only a wing wrapping south to ~208° (not excluded by the photos) would reach u +13.6.
-- Slots (photos t1 / t2): the upper band is ~13 discrete slots (27.7° apart, ~1.4 m wide, each sweeping ~20° between
+- Slots (photos t1 / t2): the upper band is ~13 discrete slots (27.7° apart from 127°, ~0.95 m wide (re-read on t1 + t2
+  together, 2026-11-05; round 3: 124° / 1.4 m from t1 alone), each sweeping ~20° between
   the band seams, tops towards the NNE; none drawn in the landside sector 230–335°); the long slot is a helix from
   bearing 137 (foot) to 93 (head), ~44°.
 - Plinth: a dark ring D 10.8 m, ~0.7 m high, under the cab glass on the flare shoulder [obs photo t1].

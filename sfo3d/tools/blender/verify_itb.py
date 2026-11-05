@@ -172,19 +172,36 @@ def run(path):
     for k, c in cw.items():
         devs.append(float(np.min(np.hypot(Pw[:, 0] - c[0], Pw[:, 1] - c[1]))))
     C.add('roof corners vs spec roof.corners_obs (max)', max(devs), 0.0, 0.5, 'spec corners NW/NE/SE/SW [obs]')
-    # top surface: per u station, the highest vertex vs roof_line
-    top = P[P[:, 2] > np.array([I.roof_line(u) for u in P[:, 0]]) - 0.3]
-    d = top[:, 2] - np.array([I.roof_line(u) for u in top[:, 0]])
-    C.add('roof top vs roof_line(u), max |dev| over %d vertices' % len(top), float(np.abs(d).max()), 0.0, 0.5, 'BI-02 profile [obs]')
-    for uu, lab in ((0.0, 'crown 40.1'), (27.0, 'notch 35.7'), (67.0, 'hump 40.08'), (100.0, '|u| 100: 36.4'), (G.HL, 'tip 34.4')):
-        sel = top[np.abs(np.abs(top[:, 0]) - uu) < 1.2]
+    # top surface: the deck = roof_line(u) less the centre-section lens cap (itb_geom.roof_top; review r1); the lens vaults rise
+    # above it. Deck vertices = top-surface vertices that are not raised lens-vault vertices.
+    RT = np.array([G.roof_top(u) for u in P[:, 0]])
+    top = P[P[:, 2] > RT - 0.3]
+    rt = np.array([G.roof_top(u) for u in top[:, 0]])
+    deck = top[top[:, 2] < rt + 0.005]
+    d = deck[:, 2] - np.array([G.roof_top(u) for u in deck[:, 0]])
+    C.add('roof deck top vs roof_line(u) - crown_cap(u), max |dev| over %d vertices' % len(deck), float(np.abs(d).max()), 0.0, 0.5,
+          'BI-02 profile [obs]; centre cap %.1f m [obs photo i4]' % G.CROWN_CAP)
+    for uu, lab in ((0.0, 'crown 40.1 - cap 1.5'), (27.0, 'notch 35.7'), (67.0, 'hump 40.08'), (100.0, '|u| 100: 36.4'), (G.HL, 'tip 34.4')):
+        sel = deck[np.abs(np.abs(deck[:, 0]) - uu) < 1.2]
         if len(sel):
-            C.add('roof top at |u| %.0f (%s)' % (uu, lab), float(np.median(sel[:, 2])), float(I.roof_line(uu)), None, 'BI-02')
-    bot = P[P[:, 2] < np.array([I.roof_line(u) for u in P[:, 0]]) - 0.3]
-    C.add('roof deck thickness (median)', float(np.median(np.array([I.roof_line(u) for u in bot[:, 0]]) - bot[:, 2])), G.ROOF_THK, 0.05, 'inf 0.6 m')
+            C.add('roof deck at |u| %.0f (%s)' % (uu, lab), float(np.median(sel[:, 2])), float(G.roof_top(uu)), None, 'BI-02 / itb_geom.roof_top')
+    # silhouette from the west over the centre section = highest point per station (deck or lens vault) vs roof_line
+    sil = []
+    for uu in np.arange(-20.0, 20.01, 2.0):
+        q = top[np.abs(top[:, 0] - uu) < 0.6]
+        if len(q): sil.append(float(q[:, 2].max()) - float(I.roof_line(uu)))
+    C.add('centre silhouette (lens vault tops) vs roof_line, |u| <= 20: max |dev|', float(np.max(np.abs(sil))), 0.0, 0.5,
+          'BI-02 roof_line = the west silhouette (crown 40.1 photo i4, +-2) [obs]')
+    bot = P[P[:, 2] < RT - 0.3]
+    C.add('roof deck thickness (median)', float(np.median(np.array([G.roof_top(u) for u in bot[:, 0]]) - bot[:, 2])), G.ROOF_THK, 0.05, 'inf 0.6 m')
     # glass on the top surface
     g = to_uvh(allP(R, 'glass_roof'))
-    g = g[g[:, 2] > np.array([I.roof_line(u) for u in g[:, 0]]) - 0.3]
+    g = g[g[:, 2] > np.array([G.roof_top(u) for u in g[:, 0]]) - 0.3]
+    for L in G.LENSES:
+        q = g[(np.abs(g[:, 0] - L['uc']) < 2.0) & (np.abs(g[:, 1] - L['vc']) < 1.0)]
+        if len(q):
+            C.add('lens %d vault rise above the deck (max)' % L['k'], float(q[:, 2].max() - G.roof_top(L['uc'])), G.LENS_RISE, 0.1,
+                  'review r1: raised lens glass (photos i4 / i2 dark cap; NAIP vault shading) [inf]')
     (n0, n1), (s0, s1) = I.tip_bands()
     tipN = g[(g[:, 0] < -100) & (np.abs(g[:, 1]) > 30)]; tipS = g[(g[:, 0] > 100) & (np.abs(g[:, 1]) > 30)]   # full-width glass only
     if len(tipN):
@@ -207,7 +224,7 @@ def run(path):
         Q = to_uvh(p['P'])
         for t in p['T']:
             q = Q[t]
-            if np.all(q[:, 2] > np.array([I.roof_line(x) for x in q[:, 0]]) - 0.3) and np.all(np.abs(q[:, 0]) < 40):
+            if np.all(q[:, 2] > np.array([G.roof_top(x) for x in q[:, 0]]) - 0.3) and np.all(np.abs(q[:, 0]) < 40):
                 tri_uv.append(Polygon(q[:, :2]))
     gl = unary_union([t for t in tri_uv if t.area > 1e-6])
     for L in G.LENSES:
@@ -320,6 +337,48 @@ def run(path):
             C.add('pod %s plan area vs NAIP trace' % p['id'], gpoly.area, Polygon(p['ring_true_xz']).area,
                   max(5.0, 0.02 * Polygon(p['ring_true_xz']).area), 'clipped to the body - 0.5 m', 'm2')
         C.add('BA-%s pods inside the body' % key, footprint(Pd).difference(outlines[key].buffer(0.05)).area, 0.0, 0.5, 'containment', 'm2')
+    # gate-room curtain walls (review r1: photo a2 = the BA-G NNE face) and the BA-G bridge-head bump-outs
+    for key in ('A', 'G'):
+        k = key.lower(); Bd = S['L0_ba_%s_body' % k]
+        gl = [p for p in Bd['prims'] if p['mat'].split('@')[0] == 'glass_gate']
+        Pg = np.vstack([p['P'] for p in gl]) if gl else np.zeros((0, 3))
+        if len(Pg):
+            C.add('BA-%s gate-room glazing foot' % key, float(Pg[:, 1].min() - GROUND_Y), G.GLAZE_BOT, 0.05, 'photo a2 BA-G [obs]' + (' (BA-A by analogy [inf])' if key == 'A' else ''))
+            C.add('BA-%s gate-room glazing head' % key, float(Pg[:, 1].max() - GROUND_Y), G.GLAZE_TOP2, 0.05, 'photo a2 BA-G [obs]')
+        if key == 'G':
+            rooms = G.gate_rooms('G')
+            # glazed extent per gate room, measured on the mesh: the s range of the glass vertices on that face segment
+            Qs = np.array([G.pier_st('G', x, z) for x, z in Pg[:, [0, 2]]])
+            segs = []
+            for fc, s0, s1, pid, ov in rooms:
+                t0, kk = G.pier_faces('G')[fc][:2]
+                sel = Qs[(np.abs(Qs[:, 1] - (t0 + kk * Qs[:, 0])) < 0.3) & (Qs[:, 0] > s0 - 0.5) & (Qs[:, 0] < s1 + 0.5)]
+                segs.append((round(float(sel[:, 0].max() - sel[:, 0].min()), 2) if len(sel) else 0.0, round(s1 - s0, 2)))
+            C.add('BA-G gate rooms (segments between bump-outs under a pod)', len(rooms), 6, 0, 'six double-gated gate rooms [pub tutor_bag]')
+            C.add('BA-G gate-room glazing length vs segment (max |dev|)', max(abs(a - b) for a, b in segs), 0.0, 0.5,
+                  'photo a2: the curtain wall fills the segment between the bump-outs (s 9.6..73.2 = 63.6 m) [obs]')
+            bo = G.bumpouts('G')
+            Pb = allP(Bd)
+            hb = []
+            faces = G.pier_faces('G')
+            Qb = np.array([G.pier_st('G', x, z) for x, z in Pb[:, [0, 2]]])
+            for b in bo:
+                t0, kk = faces[b[0]][:2]; sg = -1 if b[0] == 0 else 1
+                # vertices of the bump-out away from the main face (> 1 m out), inside its plan
+                m = ((Qb[:, 1] - (t0 + kk * Qb[:, 0])) * sg > 1.0) & (Qb[:, 0] > b[1] - 0.05) & (Qb[:, 0] < b[2] + 0.05)
+                m &= np.array([b[3].buffer(0.05).contains(Point(x, z)) for x, z in Pb[:, [0, 2]]])
+                if m.any(): hb.append(float(Pb[m, 1].max() - GROUND_Y))
+            C.add('BA-G bridge-head bump-outs: count', len(bo), 10, 0, 'SFO Museum outline (15.7 x 8.7 m boxes)')
+            C.add('BA-G bump-out tops (max |dev| from 6.5)', max(abs(h - G.BUMP_H_G) for h in hb) if hb else 99.0, 0.0, 0.05,
+                  'photo a2: B1 top 57 / 148 px of the 17.0 m facade [obs, low]')
+    for nm in ('L1_hall_lettering', 'L1_hall_mullions'):
+        C.add('LOD1 has %s (review r1: no LOD pop at 450 m)' % nm, int(nm in S), 1, 0, 'manifest switch 450 m')
+    if 'L1_hall_lettering' in S:
+        Lt = to_uvh(allP(S['L1_hall_lettering']))
+        C.add('LOD1 lettering width', float(Lt[:, 0].max() - Lt[:, 0].min()), 2 * I.LETTER_HW, None, 'BI-02 (+-33 m) [obs photos]')
+        C.add('LOD1 lettering triangles (<= 1/3 of LOD0)', sum(len(p['T']) for p in S['L1_hall_lettering']['prims']),
+              sum(len(p['T']) for p in S['L0_hall_lettering']['prims']) / 3.0,
+              ok=sum(len(p['T']) for p in S['L1_hall_lettering']['prims']) <= sum(len(p['T']) for p in S['L0_hall_lettering']['prims']) / 3.0, src='budget')
     Bx = allP(S['L0_ba_g_box'])
     C.add('BA-G end box top', float(Bx[:, 1].max() - GROUND_Y), float(G.POD['G3-box']['top_m']), None, 'itb_pods.json 32.0 (30.5-33.4) [obs, low]')
     C.add('BA-G end box base = pod G3 top', float(Bx[:, 1].min() - GROUND_Y), float(G.POD['G3']['top_m']), None, 'BI-04 V4')

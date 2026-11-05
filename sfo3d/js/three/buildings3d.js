@@ -6,7 +6,8 @@
 // per group: data/buildings3d/integration.js, tools/blender/b3d_integrate.py). Until a group has loaded, or if it fails,
 // the first-pass buildings stay: the scene never has a hole.
 //
-// Files (manifest.json#<group>.files): full = tower.glb (F1; ?b3dtower=f2 -> tower_f2.glb), itb.glb, domestic.glb,
+// Files (manifest.json#<group>.files): full = tower.glb (height family F2, the default since the tower review round 1;
+// ?b3dtower=f1 -> tower_f1.glb, the published-height hypothesis), itb.glb, domestic.glb,
 // landside.glb (LOD0-2 each); lod2 = the *_lod2.glb subtrees alone (far / phone tier). The low tier (phones) loads the
 // lod2 files; ?b3d=full|lod2|0 overrides (0 = first-pass buildings only, for old-vs-new comparisons). The artifact build
 // serves them renamed (window.SFO_B3D_BASE, default 'data/buildings3d/'; window.SFO_B3D_EXT, default '.glb'; the phone
@@ -72,14 +73,15 @@ export class Buildings3D {
     this.R = R; this.E = R.engine;
     const q = qs.get('b3d');
     this.mode = q === '0' || q === 'off' ? 'off' : q === 'lod2' || q === 'full' ? q : (R.tier === 'low' ? 'lod2' : 'full');
-    this.towerFamily = qs.get('b3dtower') === 'f2' ? 'f2' : 'f1';
+    this.towerFamily = qs.get('b3dtower') === 'f1' ? 'f1' : 'f2'; // tower.glb = F2 (default), tower_f1.glb = F1 (manifest.json#tower)
     this.base = window.SFO_B3D_BASE || 'data/buildings3d/'; this.ext = window.SFO_B3D_EXT || '.glb';
     this.lodScale = (R.Q && R.Q.lod ? R.Q.lod : LOD_REF) / LOD_REF;
     this.group = new THREE.Group(); this.group.name = 'buildings3d'; this.E.scene.add(this.group);
     this.loaded = {}; this.failed = {}; this.sets = []; this.cabGlass = []; this.stats = { files: {}, ms: {} };
     this.glow = {}; for (const [k, [c, v]] of Object.entries(GLOW_DEF)) this.glow[k] = { color: uniform(new THREE.Color(...c)), k: uniform(v) };
     this.done = this.mode === 'off'; this.frame = 0; this._tmpV = new THREE.Vector3(); this._tex = new Map();
-    this.tower = B3D_INTEGRATION.tower || null;
+    this.tower = B3D_INTEGRATION.tower || null; // fallback anchors; replaced by the loaded tower file's own (root extras.anchors)
+    const only = qs.get('b3donly'); this.groups = only ? B3D_GROUPS.filter(g => only.split(',').includes(g)) : B3D_GROUPS; // QA: ?b3donly=tower
   }
   start() {
     if (this.mode === 'off') { console.log('[b3d] off (?b3d=0): first-pass buildings'); return; }
@@ -87,19 +89,20 @@ export class Buildings3D {
   }
   url(g) {
     let f = FILES[this.mode][g];
-    if (g === 'tower' && this.mode === 'full' && this.towerFamily === 'f2') f = 'tower_f2';
+    if (g === 'tower' && this.mode === 'full' && this.towerFamily === 'f1') f = 'tower_f1';
     return this.base + f + this.ext;
   }
   async _loadAll() {
     // sequential: one decode + upload + compile at a time (phones; the main thread stalls once per group, not four
     // times at once); the tower first (smallest, and the tower view), the landside last (largest, mostly far away)
     const loader = new THREE.GLTFLoader();
-    for (const g of B3D_GROUPS) {
+    for (const g of this.groups) {
       const t0 = performance.now();
       try {
         const gltf = await loader.loadAsync(this.url(g));
         const root = gltf.scene; root.name = 'b3d_' + g;
         this._prepare(g, root);
+        if (g === 'tower') this._towerAnchors(root);
         const t1 = performance.now();
         await this._compile(root);
         this.group.add(root); this.loaded[g] = root;
@@ -215,8 +218,10 @@ export class Buildings3D {
     }
     // in-cab tower camera: the alpha-blended cab glass would darken the whole view (manifest.json#tower.integration)
     if (this.cabGlass.length && this.tower && this.tower.cab_centre_world_xz) {
-      const c = this.tower.cab_centre_world_xz, g = 3.0; // GROUND_Y
-      const inCab = Math.hypot(p.x - c[0], p.z - c[1]) < 9.0 && p.y > g + (this.tower.cab_floor_h || 60) - 0.5 && p.y < g + (this.tower.glass_h ? this.tower.glass_h[1] : 65) + 1.5;
+      // bounds of the loaded family (_towerAnchors): inside the glass ring, cab floor - 0.5 .. glass head + 0.5
+      const T = this.tower, c = T.cab_centre_world_xz, g = 3.0; // GROUND_Y
+      const rIn = T.glass_head_r != null ? T.glass_head_r + 0.3 : 9.0;
+      const inCab = Math.hypot(p.x - c[0], p.z - c[1]) < rIn && p.y > g + (T.cab_floor_h || 60) - 0.5 && p.y < g + (T.glass_h ? T.glass_h[1] : 65) + 0.5;
       if (inCab !== this._inCab) { this._inCab = inCab; for (const o of this.cabGlass) o.material.visible = !inCab; }
     }
   }
@@ -230,11 +235,20 @@ export class Buildings3D {
     }
     return hid;
   }
-  // the app's tower view (js/live/app.js: rig.setTower at GROUND_Y + 62 over world.towerPos) moves to the asset's cab
-  // eye (x, z); towerPos is read when the view is chosen, so the array is updated in place
+  // the loaded tower file's own anchors (root node extras.anchors, heights above grade): the tower camera and the in-cab
+  // glass test follow the family on screen (F2 tower.glb / tower_lod2.glb, F1 tower_f1.glb), not the integration table
+  _towerAnchors(root) {
+    let an = null; root.traverse(o => { if (!an && o.userData && o.userData.anchors && o.userData.anchors.cab_eye_h != null) an = o.userData.anchors; });
+    if (!an) return;
+    const c = an.cab_centre_world_xz || (this.tower && this.tower.cab_centre_world_xz); if (!c) return;
+    this.tower = { ...(this.tower || {}), cab_centre_world_xz: c, cab_floor_h: an.cab_floor_h, cab_eye_h: an.cab_eye_h,
+      glass_h: [an.glass_sill_h, an.glass_head_h], glass_head_r: an.glass_head_r, family: an.family, eye_world: [c[0], 3.0 + an.cab_eye_h, c[1]] };
+  }
+  // the app's tower view (js/live/app.js: rig.setTower over world.towerPos, at towerPos.eyeY when set, else GROUND_Y + 62)
+  // moves to the loaded family's cab eye; towerPos is read when the view is chosen, so the array is updated in place
   _towerCamera() {
     const W = this.R.world, T = this.tower; if (!W || !W.towerPos || !T || !T.eye_world) return;
-    W.towerPos[0] = T.eye_world[0]; W.towerPos[2] = T.eye_world[2];
+    W.towerPos[0] = T.eye_world[0]; W.towerPos[2] = T.eye_world[2]; W.towerPos.eyeY = T.eye_world[1];
   }
   // environment hook: retune a glow kind at run time (kind: hall | office | station | roofglass | cab | led | beacon | soffit;
   // color: linear RGB, k: level in lamp units x nightE); returns the current values

@@ -702,3 +702,18 @@ are in `tools/buildings/draw_tower.py` (block "Review backlog (round 3)").
 | Base building, airside | t2 (frontal to the SE face, 0.0299 m/px at 244 m): below the parapet a 1.50 m metal panel band, then a continuous dark glazing band 3.83 m tall; seen from u −12.9 (BT-02 A) to the NE end, hidden further SW by a foreground building; the lower face is hidden by the gates. | obs (heights relative to the parapet; absolute inherits F1) |
 | Base building, landside | t4: a full-height curtain-wall bay (5 bays, transoms ~1.2 m) in the plane of the NW face's metal panels. Its edge rays (0.0184°/px from the shaft limb and the ribbon base) meet the NW face 8.1 and 29.2 m from its N corner → BT-02 B u −7.8 … +13.3, ±5 m (phone GPS, 40° oblique). It is not centred on the ribbon: in t4 its NE edge lines up with the ribbon only by perspective (the face is 6.3 m in front of the ribbon). Seen ≥ 9.6 m down from its head; its foot is below the frame. t5 (2018, GPS unreliable per the spec) grazes the face at 72° and cannot place it. | obs; extent inf |
 | Not the base building | The tall dark louvred block beside the shaft (t1 left of it, t2 / t3 right of it) triangulates from the three photos to (−804.3, 259.4), residual 1.3 m: 91 m NW of the axis, at the SE end of the SFO Museum "Terminal 2 AirTrain Station" polygon. The thin "canopy plates" of t1 lie on the rays of that station's platform roof (the V-strut roof in the t3 foreground). No rooftop volumes of the base building are confirmed (NAIP 2024: the leaning shaft image covers the NE part of the roof). | obs (triangulation) |
+
+## Drawing round 4 (2026-11-05): readings changed after the 3-D review (round 1)
+
+The 3-D asset (`data/buildings3d/tower.glb`, docs/research/buildings3d.md) was compared with the same photos by an
+independent reviewer; three sheet values changed first (the sheets are the reference), measured again here on the
+1920-px thumbnails (reference only). Constants and derivations: `tools/buildings/draw_tower.py` (NE_TIP, SLOT_PHASE, SLOT_W).
+
+| Item | Reading | Tag |
+|---|---|---|
+| NE blade top | Flush with the flare corner and the ribbon head, no spike. t3 (263 m, bearing 319): the blade top lies ~15 px (0.6 m) above the ribbon head on the image while standing ~2-3 m nearer the camera (+0.4 m of perspective), so level within ~0.3 m; t4 (81 m): level with the ribbon head; t5 (2018): the NE edge runs into the flare corner. Round 3's pointed tip at deck + 1.2 (2.8 m above the corner in F1) came from t4 alone and is withdrawn. | obs photos t3 / t4 / t5 |
+| Upper-slot width | 0.95 m (+-0.1) horizontal arc: t1 13-15 px at 0.0745 m/px (rim 204 px = D 15.2) = 0.97-1.12 m; t2 29-32 px at 0.0321 m/px = 0.93-1.03 m (frontal slots); the same edge finder reads a 1.40-m slot of the 3-D render as 1.50 m (x 1.07). Round 3: 1.4 m from t1 alone. | obs photos t1 + t2 |
+| Upper-slot phase | 127 deg (was 124): slot centres between the silhouette edges at the mid-band rows, u/R -> bearing: frontal slots t1 127.1 / 157.4, t2 126.7 / 155.7 (+2.7..+5.7 deg from 124 / 151.7); limb slots -2.3..+0.9 (+-2-3 deg); weighted mean +3.0. The photo spacings vary 22-30 deg: pitch 27.7 kept. | obs photos t1 + t2; count inf |
+| Long slot | Unchanged (137 -> 93). Checked against the t2 render at the same three rows: photo u/R +0.37 / +0.12 / -0.07, render +0.34 / +0.07 / -0.11 (within 0.05, ~3 deg). | check |
+| Mast tips | spec `h_antenna_tips` now holds the 2025 observation (tallest landside whips 4.5-4.7 m above the rim = 0.30-0.31 D: 71.8 spec m, obs 2025-08-12); the 2015 station (70.7) moved to `station_2015`. F2 reads "221 ft at the 2015 mast station". | obs (ratio), inf (absolute) |
+

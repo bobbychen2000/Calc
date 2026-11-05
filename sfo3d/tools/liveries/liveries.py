@@ -349,13 +349,16 @@ FG_SRC = {'b738': ('737-800', '9126249', 'Models/Liveries-800/{}.png')}
 
 def fg_texture(model, name):
     """a FlightGear livery texture (GPL-2.0) for a model built from that FlightGear model (same UV layout), read from the
-    pinned commit of the FGMEMBERS clone in refs/cache/src/fg/ (docs/ATTRIBUTION_models.md)"""
+    plain export of the pinned FGMEMBERS commit in refs/cache/src/fg/<repo> (committed, SOURCES.json there; review 5 Nov
+    2026 aircraft-v6: the export replaced a blob-less git clone, whose .git could not be committed), else from a git
+    clone at that path (docs/ATTRIBUTION_models.md)"""
     import subprocess, io as _io, os
     from PIL import Image
     import common
     repo, commit, pat = FG_SRC[model]
-    data = subprocess.run(['git', 'show', f'{commit}:{pat.format(name)}'], cwd=os.path.join(common.ROOT, 'refs', 'cache', 'src', 'fg', repo),
-                          capture_output=True, check=True).stdout
+    d = os.path.join(common.ROOT, 'refs', 'cache', 'src', 'fg', repo); fp = os.path.join(d, pat.format(name))
+    if os.path.exists(fp): return Image.open(fp)
+    data = subprocess.run(['git', 'show', f'{commit}:{pat.format(name)}'], cwd=d, capture_output=True, check=True).stdout
     return Image.open(_io.BytesIO(data))
 
 

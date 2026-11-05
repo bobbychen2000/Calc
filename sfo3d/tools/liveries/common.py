@@ -142,12 +142,12 @@ def apply_stretch(P, Z, st):
         c = st['tipCut']; m = (np.abs(P[:, 2]) > c['z0']) & (P[:, 1] > c['y0'])
         P[m, 1] = c['yTo']; P[m, 2] = np.sign(P[m, 2]) * np.minimum(np.abs(P[m, 2]), c['zTo'])
     if st.get('engScale'):                                    # nacelles scaled radially (737 MAX)
-        k = st['engScale']['k']
+        k = st['engScale']['k']; top = st['engScale'].get('keep') == 'top'      # (keep 'top': the pylon line stays)
         for sg in (-1, 1):
             m = (np.asarray(Z) == 2) & (np.sign(P[:, 2]) == sg)
             if not m.any(): continue
             y0, y1 = P[m, 1].min(), P[m, 1].max(); yc = (y0 + y1) / 2; zc = P[m, 2].mean()
-            P[m, 1] = yc + (P[m, 1] - yc) * k + (k - 1) * (yc - y0); P[m, 2] = zc + (P[m, 2] - zc) * k
+            P[m, 1] = yc + (P[m, 1] - yc) * k + (k - 1) * (yc - (y1 if top else y0)); P[m, 2] = zc + (P[m, 2] - zc) * k
     if W:
         az = np.abs(P[:, 2]); m = (P[:, 0] >= W['xMin']) & (az > W['z0'])
         add = np.where(az >= W['z1'], W['dz'], (az - W['z0']) * W['dz'] / (W['z1'] - W['z0']))
@@ -166,6 +166,9 @@ def apply_stretch(P, Z, st):
         P[m, 1] += q['t'] * (az[m] - q['z0'])
     if st.get('squash'):                                      # vertical compression below the centre line (engine clearance)
         q = st['squash']; m = P[:, 1] < q['y0']; P[m, 1] = q['y0'] + (P[m, 1] - q['y0']) * q['k']
+    if st.get('noseExt'):                                     # nose-leg extension (737 MAX stance, js/aircraft/stretch.js)
+        q = st['noseExt']; m = (np.asarray(Z) == 3) & (P[:, 0] > q['xMin']) & (P[:, 1] < q['yTop'])
+        P[m, 1] -= q['e'] * np.minimum(1.0, (q['yTop'] - P[m, 1]) / (q['yTop'] - q['yBot']))
     if st.get('gearUp'):                                      # oleo compression of the model's own gear (zone 3)
         P[np.asarray(Z) == 3, 1] += st['gearUp']
     if st.get('cut1') is not None:

@@ -122,8 +122,12 @@ Where the artist's window glass or openings did not match these drawings, they w
 models of §1 and is covered by the same corresponding-source statement. Likewise (5 Nov 2026) the FlightGear 737-800's
 door 1L and the skin opening around it are re-fitted by `tools/convert_models.py` (`door_fit`, a spatial deformation of
 the converted mesh) so its sill matches the 737NG ACAP (D6-58325-7 Rev C §2.3.2 / §2.7.1), and the 757 model's blended
-winglet is canted out to the published winglet span (`js/aircraft/fit.js` WINGLET); the source checkout is restored in
-`refs/cache/src/fg/737-800` (blob-less sparse clone of FGMEMBERS/737-800 @9126249, `refs/cache/src/fg/SOURCES.json`).
+winglet is canted out to the published winglet span (`js/aircraft/fit.js` WINGLET); the 737 MAX types are drawn on the
+FlightGear 737-800 with its nose leg stretched at run time (`js/aircraft/stretch.js` noseExt, `js/aircraft/fit.js` NOSE_LEG)
+so they stand nose-up as in the 737 MAX ACAP (D6-38A004 Rev K §2.3). The corresponding source is committed with the repo:
+`refs/cache/src/fg/737-800` is a plain export of FGMEMBERS/737-800 @9126249 (LICENSE, README.md, the `Models/*.ac|*.png|*.xml`
+files the converter reads and the `Models/Liveries-800/N563AS` livery; each file's git blob hash is in
+`refs/cache/src/fg/SOURCES.json`, so the export can be checked against the upstream commit).
 The Boeing 757 ACAP D6-58327 Rev H (Dec 2024, `refs/cache/acap/757_Rev_H.pdf`, Boeing copyright, not redistributed)
 gives the plain-wing span 124 ft 10 in (38.05 m, §2.2.1 p.2-10) the 757 wing is fitted to.
 

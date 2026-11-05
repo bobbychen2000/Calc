@@ -73,6 +73,31 @@ APRON_BAND = 5.2         # BA-A glazed gate-room bays ~5.2-17.2 m AGL (photo a2,
 GLAZE_TOP = 17.2
 GATEROOM_W = 24.0        # glazed bay width, centred on each stand's bridge attach points (data/sfo_stands.json) [inf]
 SWITCH_M = {0: 0.0, 1: 450.0, 2: 1600.0}   # LOD switch distances (camera to root), m [our choice]
+# Centre-section lens skylights as raised vaults (review r1, 2026-11-05). draw_itb.roof_line(u) is the SILHOUETTE seen from
+# the west (BI-02; the crown 40.1 is the topmost photo-i4 pixel, itb_photo_skyline.json). Photos i4 / i2 show that silhouette
+# formed by dark lens glass rising above the white fascia: at the crown the dark cap is 10 px of i4 at 6.72 px/m = 1.5 m
+# (+-0.3), tapering to nothing towards the notches; NAIP 2024 shades each lens like a vault (bright east half). So the deck and
+# fascia of the centre section run CROWN_CAP below roof_line (crown_cap(u), a parabola over the lens row) and each lens vaults LENS_RISE above
+# the deck: the i4 camera (~20 m up, ~430 m out, 2.7 deg up) loses 0.047 m per m behind the fascia, 0.40 m for lens 0 at
+# 8.45 m, so 1.5 + 0.4 = 1.9 m puts the lens top on roof_line as seen from i4 (the orthographic west silhouette then sits
+# <= 0.4 m above roof_line at the crown, inside the 0.5-m tolerance). Vault form: rise R (1 - x^2) (1 - (dv / hw)^2) on
+# the pointed-lens planform (x = (u - uc) / a) [inf].
+CROWN_CAP = 1.5          # [obs photo i4, low]
+LENS_RISE = 1.9          # [inf: CROWN_CAP + the i4 line-of-sight drop to lens 0]
+LENS_NV = 6              # lens strips across v (LOD0 / LOD1); LOD2: 2
+# Boarding Area G apron facade, re-measured on photo a2 (review r1; a2 looks SSW over the BA-G NNE face - camera solved in
+# render_itb.view_a2g). On a2 the bridge-head bump-outs of the outline (15.7 x 8.7 m) are low boxes: B1 (s -69.6..-53.8) top at
+# 57 of the 148 px between the facade base and the 17.0 m roof edge -> 6.5 m; B2 / B3 the same by eye [obs, low]. The two-storey
+# gate-room curtain walls fill the main-face segments BETWEEN the bump-outs under the pods (s 9.6..73.2 = 538 px for 63.6 m, and
+# the west end of -133.1..-69.6), from 12.4 m to 2.3 m below the roof edge (8.6 px/m at the facade: 4.6..14.7 m); below them a
+# light 1.6 m band and the dark recessed apron level (0..3.0 m); the panel segments between (s -53.8..-6.2, 88.9..120.8) carry only
+# two isolated 2-lite windows (not modelled). The SSW face is not imaged: same rule [inf] -> six gate rooms = "six double-gated
+# gate rooms" [pub tutor_bag].
+BUMP_H_G = 6.5           # BA-G bridge-head bump-outs [obs photo a2, low]
+APRON_TOP = 3.0          # dark recessed apron level [obs photo a2]
+GLAZE_BOT, GLAZE_TOP2 = 4.6, 14.7   # gate-room curtain wall foot / head [obs photo a2 (BA-G); BA-A by analogy, inf]
+GATE_POD_MIN = 35.0      # a main-face segment is a gate room where one pod overlaps it by >= 35 m [inf; selects 6 on BA-G]
+GATE_TILE = (15.9, 10.1) # itb_c_curtain_gate tile (a quarter of the 63.6-m bay x the glazing height)
 
 PODS = I.PODS
 POD = I.POD
@@ -87,8 +112,20 @@ def head(u):
     return WH + I.BAY_HEAD * (I.BAY_HW - a) / (I.BAY_HW - UN)
 
 
+def crown_cap(u):
+    """depth of the centre-section deck / fascia below the silhouette roof_line(u): CROWN_CAP at the lens row's middle,
+    tapering with the lens vaults (mean lens centre / half-length of the five lenses: u -1.8 +- 23.98 m) to 0 at their ends,
+    so the vault tops (LENS_RISE (1 - x^2)) carry the silhouette everywhere (first cut: tapered to the notches, which left
+    the silhouette up to 0.55 m low where the lenses end, out of tolerance)."""
+    uc = float(np.mean([L['uc'] for L in LENSES])); a = float(np.mean([L['a'] for L in LENSES]))
+    x = (u - uc) / a
+    return CROWN_CAP * (1.0 - x * x) if abs(x) < 1.0 else 0.0
+
+
 def roof_top(u):
-    return float(I.roof_line(max(-HL, min(HL, u))))
+    """top of the roof deck and fascia (the silhouette roof_line(u) less the lens cap over the centre section)."""
+    u = max(-HL, min(HL, u))
+    return float(I.roof_line(u)) - crown_cap(u)
 
 
 def roof_us(u):
@@ -304,7 +341,15 @@ def lens_hw(L, u):
     return max(0.0, L['b'] * (1 - x * x)) if abs(x) < 1 else 0.0
 
 
-def roof_stations(step):
+def lens_rise(L, u, v):
+    """height of lens L's vaulted glass above the deck at (u, v) [inf form, see LENS_RISE]."""
+    hw = lens_hw(L, u)
+    if hw <= 0: return 0.0
+    x = (u - L['uc']) / L['a']; d = (v - L['vc']) / hw
+    return LENS_RISE * (1 - x * x) * max(0.0, 1 - d * d)
+
+
+def roof_stations(step, lens_n=13):
     st = set(np.arange(-HL, HL + 1e-6, step).round(4).tolist())
     st |= {-HL, HL, N0, N1, S0, S1, -UN, UN, -CENTRE_HALF, CENTRE_HALF}
     for L in LENSES:
@@ -312,7 +357,7 @@ def roof_stations(step):
         if L['b'] > STRIP_W / 2:
             dx = L['a'] * math.sqrt(1 - (STRIP_W / 2) / L['b'])
             st |= {L['uc'] - dx, L['uc'] + dx}
-        for f in np.linspace(-1, 1, 13):    # refine the lens edges (parabolic)
+        for f in np.linspace(-1, 1, lens_n):    # refine the lens edges (parabolic) and the vault
             st.add(L['uc'] + f * L['a'])
     st = sorted(x for x in st if -HL - 1e-6 <= x <= HL + 1e-6)
     out = [st[0]]
@@ -323,25 +368,25 @@ def roof_stations(step):
 
 
 def roof_intervals(um, detail=True):
-    """material intervals across v at u = um: list of (lo(u), hi(u), material) with callables."""
+    """material intervals across v at u = um: list of (lo(u), hi(u), material, lens or None) with callables; the lens is
+    given where the interval carries (part of) a vaulted lens skylight (lens_rise > 0). detail=False (LOD2): tip bands and
+    the lenses only (no truss-line strips)."""
     cst = lambda c: (lambda u: c)  # noqa: E731
     if (N0 <= um <= N1) or (S0 <= um <= S1):
-        return [(cst(-HW), cst(HW), 'glass_roof')]
-    if not detail:
-        return [(cst(-HW), cst(HW), 'roof_membrane')]
+        return [(cst(-HW), cst(HW), 'glass_roof', None)]
     glass = []
     for L in LENSES:
         k = L['k']; vc = L['vc']; hw = lens_hw(L, um)
-        if hw > STRIP_W / 2 or not (N1 <= um <= S0):
+        if hw > STRIP_W / 2 or not (N1 <= um <= S0) or not detail:
             if hw > 0:
-                glass.append(((lambda u, L=L: L['vc'] - lens_hw(L, u)), (lambda u, L=L: L['vc'] + lens_hw(L, u))))
+                glass.append(((lambda u, L=L: L['vc'] - lens_hw(L, u)), (lambda u, L=L: L['vc'] + lens_hw(L, u)), L))
         else:
-            glass.append((cst(vc - STRIP_W / 2), cst(vc + STRIP_W / 2)))
+            glass.append((cst(vc - STRIP_W / 2), cst(vc + STRIP_W / 2), L if hw > 0 else None))
     glass.sort(key=lambda g: g[0](um))
     out, cur = [], cst(-HW)
-    for lo, hi in glass:
-        out.append((cur, lo, 'roof_membrane')); out.append((lo, hi, 'glass_roof')); cur = hi
-    out.append((cur, cst(HW), 'roof_membrane'))
+    for lo, hi, L in glass:
+        out.append((cur, lo, 'roof_membrane', None)); out.append((lo, hi, 'glass_roof', L)); cur = hi
+    out.append((cur, cst(HW), 'roof_membrane', None))
     return out
 
 
@@ -350,19 +395,29 @@ def hall_roof(step=2.0, detail=True):
     [unk]); 5 glazed truss-line strips, 5 lens skylights (pointed-lens planform as drawn, [inf]), glazed tip bands [obs];
     underside ROOF_THK lower (soffit, dark grey panels: photo i3), fascia all round."""
     mb = MB('hall_roof')
-    st = roof_stations(step)
+    st = roof_stations(step, 13 if detail else 5)
     soff = {'roof_membrane': 'soffit', 'glass_roof': 'glass_roof_under'}
+    nv = LENS_NV if detail else 2
     for u0, u1 in zip(st[:-1], st[1:]):
         um = 0.5 * (u0 + u1)
         iv = roof_intervals(um, detail)
         t0, t1 = roof_top(u0), roof_top(u1)
-        for lo, hi, mat in iv:
+        for lo, hi, mat, L in iv:
             a0, a1, b0, b1 = lo(u0), lo(u1), hi(u0), hi(u1)
             if max(b0 - a0, b1 - a1) < 1e-4: continue
             tl = 12.0 if mat == 'roof_membrane' else 3.0
-            P = [Buv(u0, a0, t0), Buv(u1, a1, t1), Buv(u1, b1, t1), Buv(u0, b0, t0)]
-            UVs = [(u0 / tl, a0 / tl), (u1 / tl, a1 / tl), (u1 / tl, b1 / tl), (u0 / tl, b0 / tl)]
-            mb.face(P, mat, UVs, True, 'top')
+            if L is not None:
+                # vaulted lens: nv strips across, vertices raised by lens_rise (0 on the lens edge -> watertight with the deck)
+                for j in range(nv):
+                    f0, f1 = j / nv, (j + 1) / nv
+                    vv = [a0 + (b0 - a0) * f0, a1 + (b1 - a1) * f0, a1 + (b1 - a1) * f1, a0 + (b0 - a0) * f1]
+                    uu = [u0, u1, u1, u0]; tt = [t0, t1, t1, t0]
+                    P = [Buv(x, y, z + lens_rise(L, x, y)) for x, y, z in zip(uu, vv, tt)]
+                    mb.face(P, mat, [(x / tl, y / tl) for x, y in zip(uu, vv)], True, 'top')
+            else:
+                P = [Buv(u0, a0, t0), Buv(u1, a1, t1), Buv(u1, b1, t1), Buv(u0, b0, t0)]
+                UVs = [(u0 / tl, a0 / tl), (u1 / tl, a1 / tl), (u1 / tl, b1 / tl), (u0 / tl, b0 / tl)]
+                mb.face(P, mat, UVs, True, 'top')
             P2 = [Buv(u0, a0, t0 - ROOF_THK), Buv(u0, b0, t0 - ROOF_THK), Buv(u1, b1, t1 - ROOF_THK), Buv(u1, a1, t1 - ROOF_THK)]
             mb.face(P2, soff[mat], [(u0 / 6.096, a0 / 6.096), (u0 / 6.096, b0 / 6.096), (u1 / 6.096, b1 / 6.096), (u1 / 6.096, a1 / 6.096)], True, 'bot')
         for v, sg in ((-HW, -1), (HW, 1)):     # fascia: west (normal -v) / east (normal +v)
@@ -464,7 +519,8 @@ def hall_columns(lod=0):
                     tgt = Buv(u + du, -HW + 1.5, roof_us(u + du) - 0.02)
                 tube(mb, [Buv(u, v, WH - 0.3), tgt], 0.28 if du else 0.32, 8 if lod == 0 else 4, 'steel_white')
         else:
-            if lod > 0: continue
+            # inner lines at LOD0 and LOD1 (review r1: LOD1 kept only the west line; inside the opaque envelope they are not
+            # seen from outside, but the LOD sets now match)
             top = bottom_chord_line(LINES_V.index(v), u)
             tube(mb, [Buv(u, v, L3), Buv(u, v, top - 0.4)], COL_R, sides, 'steel_white', cap=True)
     return mb
@@ -725,6 +781,12 @@ def extruded_block(name, poly_world, h, wall_bands, roof_mat='roof_membrane_pier
                     pb = (a[0] + (b[0] - a[0]) * t1 / L, a[1] + (b[1] - a[1]) * t1 / L)
                     for z0, z1, mat, glmat in wall_bands:
                         m = glmat if (gl and glmat) else mat
+                        if m == 'glass_gate':
+                            # gate-room curtain wall: tile origin at the bay start and the glazing foot (itb_c_curtain_gate)
+                            tu, tv = GATE_TILE; Lq = t1 - t0
+                            mb.face([(pa[0], pa[1], z0), (pb[0], pb[1], z0), (pb[0], pb[1], z1), (pa[0], pa[1], z1)], m,
+                                    [(0.0, 0.0), (Lq / tu, 0.0), (Lq / tu, (z1 - z0) / tv), (0.0, (z1 - z0) / tv)])
+                            continue
                         mb.quad_wall(pa, pb, z0, z1, z0, z1, m, s + t0, grp_tile if 'glass' not in m else (6.096, 4.4))
                 s += L
         if parapet:
@@ -769,15 +831,144 @@ def glaze_fn(groups, width=GATEROOM_W, tol=2.5):
     return f
 
 
+def pier_st(key, x, z):
+    """world (x, z) -> pier frame (s along the pier, t across) of itb_pods.json piers[key]."""
+    P = PIERS[key]; c = np.asarray(P['centre_xz'], float)
+    d = np.array([x, z], float) - c
+    return float(d @ np.asarray(P['s_axis'], float)), float(d @ np.asarray(P['t_axis'], float))
+
+
+def pier_faces(key):
+    """the two main faces of a pier as lines t = t0 + k s fitted to the outline vertices that lie on them (BA-G: t ~ -0.8 /
+    37.5; BA-A: -17.4 / 21.4), the vertices outside the root connector and the tip."""
+    poly = PIER_A if key == 'A' else PIER_G
+    R = np.asarray(largest(poly).exterior.coords)
+    st = np.array([pier_st(key, *p) for p in R])
+    # edges running along the pier (|dt| < 0.5, > 3 m), binned by t: the main faces carry the most edge length (BA-G NNE:
+    # ~270 m against ~79 m of bump-out fronts)
+    lev = {}
+    for p, q in zip(st[:-1], st[1:]):
+        if abs(q[1] - p[1]) < 0.5 and abs(q[0] - p[0]) > 3.0:
+            b = int(round((p[1] + q[1]) / 2))
+            lev[b] = lev.get(b, 0.0) + abs(q[0] - p[0])
+    tmid = np.median(st[:, 1])
+    out = []
+    for side in (-1, 1):
+        cand = {b: L for b, L in lev.items() if (b - tmid) * side > 0}
+        b = max(cand, key=cand.get)
+        sel = st[np.abs(st[:, 1] - b) < 1.5]
+        k, t0 = np.polyfit(sel[:, 0], sel[:, 1], 1)
+        out.append((float(t0), float(k), float(sel[:, 0].min()), float(sel[:, 0].max())))
+    return out    # [(t0, k, s_min, s_max)] for the -t face and the +t face
+
+
+def bumpouts(key):
+    """bridge-head bump-outs of a pier outline: the pieces of the outline outside the band between the two main-face lines,
+    10-22 m along the face and 6-14 m deep (BA-G: 10 incl. the root and tip ones, BA-A: 8), as [(face 0/1, s0, s1, polygon
+    world)]."""
+    poly = largest(PIER_A if key == 'A' else PIER_G)
+    P = PIERS[key]; c = np.asarray(P['centre_xz'], float); sa = np.asarray(P['s_axis'], float); ta = np.asarray(P['t_axis'], float)
+    (ta0, ka, sa_min, sa_max), (tb0, kb, sb_min, sb_max) = pier_faces(key)
+    W = lambda s, t: tuple(c + sa * s + ta * t)  # noqa: E731
+    out = []
+    for face, (t0, k, smin, smax), sg in ((0, (ta0, ka, sa_min, sa_max), -1), (1, (tb0, kb, sb_min, sb_max), 1)):
+        S0, S1 = smin - 2.0, smax + 2.0
+        # cut 0.5 m outside the fitted face line (the face vertices scatter +-0.2 m), then rebuild each piece over its s-range
+        # from the face line itself, so the body / bump-out boundary is the straight face line
+        off = sg * 0.5
+        half = Polygon([W(S0, t0 + k * S0 + off), W(S1, t0 + k * S1 + off), W(S1, t0 + k * S1 + sg * 20), W(S0, t0 + k * S0 + sg * 20)])
+        g = poly.intersection(half)
+        for q in (g.geoms if hasattr(g, 'geoms') else [g]):
+            if not isinstance(q, Polygon) or q.area < 50: continue
+            st = np.array([pier_st(key, *p) for p in np.asarray(q.exterior.coords)])
+            s0, s1 = st[:, 0].min(), st[:, 0].max()
+            w = s1 - s0; dpt = np.abs(st[:, 1] - (t0 + k * st[:, 0])).max()
+            if 10.0 <= w <= 22.0 and 6.0 <= dpt <= 14.0 and q.area < 300:
+                rect = Polygon([W(s0, t0 + k * s0), W(s1, t0 + k * s1), W(s1, t0 + k * s1 + sg * 20), W(s0, t0 + k * s0 + sg * 20)])
+                full = largest(poly.intersection(rect))
+                out.append((face, float(s0), float(s1), full))
+    return sorted(out, key=lambda b: (b[0], b[1]))
+
+
+def gate_rooms(key):
+    """main-face segments between consecutive bump-outs that one roof pod overlaps by >= GATE_POD_MIN (BA-G: 3 per face = the
+    six double-gated gate rooms [pub]): [(face, s0, s1, pod id, overlap m)]."""
+    pods = []
+    for p, g in pod_polys(key):
+        st = np.array([pier_st(key, *q) for q in np.asarray(g.exterior.coords)])
+        pods.append((p['id'], st[:, 0].min(), st[:, 0].max()))
+    out = []
+    bo = bumpouts(key); faces = pier_faces(key)
+    for face in (0, 1):
+        # segment ends: the bump-outs and the two ends of the face line (root connector, tip)
+        b = [(None, None, faces[face][2], None)] + [x for x in bo if x[0] == face] + [(None, faces[face][3], None, None)]
+        for (_, _, e0, _), (_, s1, _, _) in zip(b[:-1], b[1:]):
+            if s1 - e0 < 10: continue
+            best = max(((pid, min(e0b, s1) - max(e0, s0b)) for pid, s0b, e0b in pods), key=lambda x: x[1])
+            if best[1] >= GATE_POD_MIN:
+                out.append((face, e0, s1, best[0], round(float(best[1]), 1)))
+    return out
+
+
+def gate_glaze_fn(key):
+    """edge splitter for the main body: the parts of a main-face edge (Blender XY a->b) inside a gate-room segment."""
+    faces = pier_faces(key); rooms = gate_rooms(key)
+
+    def f(a, b, L):
+        xa, za = a[0] + OX, OZ - a[1]; xb, zb = b[0] + OX, OZ - b[1]
+        sa_, ta_ = pier_st(key, xa, za); sb_, tb_ = pier_st(key, xb, zb)
+        if abs(sb_ - sa_) < 0.5: return [(0.0, L, False)]
+        for face, (t0, k, _, _) in enumerate(faces):
+            if abs(ta_ - (t0 + k * sa_)) < 0.3 and abs(tb_ - (t0 + k * sb_)) < 0.3:
+                break
+        else:
+            return [(0.0, L, False)]
+        iv = []
+        for fc, s0, s1, _, _ in rooms:
+            if fc != face: continue
+            lo, hi = sorted(((s0 - sa_) / (sb_ - sa_) * L, (s1 - sa_) / (sb_ - sa_) * L))
+            lo, hi = max(0.0, lo), min(L, hi)
+            if hi - lo > 0.5: iv.append((lo, hi))
+        out, cur = [], 0.0
+        for t0_, t1_ in sorted(iv):
+            if t0_ > cur: out.append((cur, t0_, False))
+            out.append((t0_, t1_, True)); cur = t1_
+        if cur < L: out.append((cur, L, False))
+        return out
+    return f
+
+
 def pier_body(key, lod=0):
+    """pier body extruded from the SFO Museum outline [obs]. Facade bands (review r1, photo a2 = the BA-G NNE face): dark
+    apron level 0..APRON_TOP, light band, gate-room curtain walls GLAZE_BOT..GLAZE_TOP2 (glass_gate), metal panels above.
+    BA-G: the bridge-head bump-outs are low boxes (BUMP_H_G) [obs a2] and the curtain walls fill the gate-room segments
+    between them (gate_rooms) [obs a2 NNE face, inf SSW face]. BA-A: no reference photo of its facades (a2 shows BA-G):
+    bump-outs kept at the full outline height and the round-0 bays (24 m centred on the bridge attach points) kept [unk],
+    with the BA-G band heights [inf, analogy]."""
     P = PIERS[key]; h = float(P['h_main_roof'])
     poly = PIER_A if key == 'A' else PIER_G
     if lod == 2:
         poly = largest(poly.simplify(1.0).intersection(poly))
+        if key == 'G':
+            bo = unary_union([b[3] for b in bumpouts('G')]).buffer(0.01)
+            body = largest(poly.difference(bo))
+            mb = extruded_block('ba_g_body', body, h, [(0, h, 'alu_panel', None)], parapet=False)
+            for b in bumpouts('G'):
+                mb.merge(extruded_block('bump', b[3].intersection(poly).buffer(-0.02, join_style=2), BUMP_H_G, [(0, BUMP_H_G, 'alu_panel', None)], parapet=False))
+            return mb
         return extruded_block('ba_%s_body' % key.lower(), poly, h, [(0, h, 'alu_panel', None)], parapet=False)
-    gt = min(GLAZE_TOP, h - 0.7)     # BA-A 17.2 [obs photo a2]; BA-G (roof 17.0): 0.7 m under the roof edge [inf]
-    bands = [(0, APRON_BAND, 'service_dark', None), (APRON_BAND, gt, 'alu_panel', 'glass_pier'), (gt, h, 'alu_panel', None)]
-    return extruded_block('ba_%s_body' % key.lower(), poly, h, bands, glaze=glaze_fn(attach_groups(key)))
+    bands = [(0, APRON_TOP, 'service_dark', None), (APRON_TOP, GLAZE_BOT, 'alu_panel', None),
+             (GLAZE_BOT, GLAZE_TOP2, 'alu_panel', 'glass_gate'), (GLAZE_TOP2, h, 'alu_panel', None)]
+    if key == 'A':
+        return extruded_block('ba_a_body', poly, h, bands, glaze=glaze_fn(attach_groups('A')))
+    bo = bumpouts('G')
+    body = largest(poly.difference(unary_union([b[3] for b in bo]).buffer(0.01)))
+    body = body.buffer(0.01, join_style=2).buffer(-0.01, join_style=2).intersection(poly)
+    mb = extruded_block('ba_g_body', largest(body), h, bands, glaze=gate_glaze_fn('G'))
+    for b in bo:
+        mb.merge(extruded_block('bump', b[3], BUMP_H_G, [(0, APRON_TOP, 'service_dark', None), (APRON_TOP, BUMP_H_G, 'alu_panel', None)],
+                                parapet=False, roof_mat='roof_membrane_pier'))
+    return mb
 
 
 def pod_polys(key):
@@ -902,6 +1093,12 @@ def build(lod):
                                   dict(module=dim(20 * FT, 'obs', 'photo i4 ~6.1 m (low)'), transoms=dim(2.2, 'obs', 'photo i4 (low)')))
         P['hall_end_mullions'] = Part('hall_end_mullions', hall_end_mullions(), 'detail', 'unk', 'end wall mullions', ['facade.end_walls'],
                                       dict(module=dim([6.096, 4.4], 'unk', 'not published')))
+    elif lod == 1:
+        # review r1 (LOD pop at 450 m): the same mullions, west + end walls joined into one node (one draw call)
+        mm = hall_mullions(); mm.merge(hall_end_mullions()); mm.name = 'hall_mullions'
+        P['hall_mullions'] = Part('hall_mullions', mm, 'detail', 'obs', 'west wall + end wall mullions (joined)', ['facade.west', 'facade.end_walls'],
+                                  dict(module=dim(20 * FT, 'obs', 'photo i4 ~6.1 m (low)'), transoms=dim(2.2, 'obs', 'photo i4 (low)'),
+                                       end_module=dim([6.096, 4.4], 'unk', 'not published')))
     if lod < 2:
         P['hall_hangers'] = Part('hall_hangers', hall_hangers(lod), 'detail', 'obs', 'canopy hangers and posts', ['facade.west'],
                                  dict(u=dim([round(u, 2) for u in I.HANGER_U], 'obs', 'photo i4: 40-ft grid + +-30 / +-90 ft'),
@@ -916,8 +1113,14 @@ def build(lod):
                                    dict(outline=dim('SFO Museum %s' % Pk['name'], 'obs', 'data/sfo_airport.json'),
                                         h=dim(Pk['h_main_roof'], 'obs', 'NAIP relief / shadow band, range %s' % Pk['h_main_range']),
                                         parapet=dim(PARAPET, 'inf', 'roof deck 1 m below the measured roof edge'),
-                                        glazing=dim([APRON_BAND, GLAZE_TOP], 'obs' if key == 'A' else 'inf', 'photo a2 (BA-A); BA-G "tinted glazed curtain wall" [pub]'),
-                                        bays=dim(GATEROOM_W, 'inf', 'centred on the bridge attach points of data/sfo_stands.json')))
+                                        glazing=dim([GLAZE_BOT, GLAZE_TOP2], 'obs' if key == 'G' else 'inf',
+                                                    'photo a2 = the BA-G NNE face (camera solved, review r1)' if key == 'G' else
+                                                    'no BA-A photo: the BA-G heights by analogy'),
+                                        apron_level=dim([0.0, APRON_TOP], 'obs' if key == 'G' else 'inf', 'photo a2 (BA-G)'),
+                                        bays=(dim('main-face segments between the bump-outs under a pod (>= %.0f m overlap): %d rooms' % (GATE_POD_MIN, len(gate_rooms('G'))),
+                                                  'obs', 'photo a2 NNE face (s 9.6..73.2, -133.1..-69.6 imaged); SSW face and G3 inf') if key == 'G' else
+                                              dim(GATEROOM_W, 'unk', 'round-0 placeholder: 24 m centred on the bridge attach points (no BA-A photo)')),
+                                        **({'bumpouts': dim(BUMP_H_G, 'obs', 'photo a2: bridge-head boxes 6.5 m (B1 measured, low)')} if key == 'G' else {})))
         P['ba_%s_pods' % k] = Part('ba_%s_pods' % k, pier_pods(key, lod), 'shell', 'obs', 'Boarding Area %s roof pods' % key,
                                    ['ba_%s.pods' % k] + (['ba_a.dof_pod'] if key == 'A' else []),
                                    dict(outline=dim('itb_pods.json ring_true_xz', 'obs', 'NAIP 2024 trace, relief-corrected'),

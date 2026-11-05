@@ -1,4 +1,4 @@
-// aircraft track QA (4 Nov 2026 close-out): nose-down stance of the gear-carrying models (737 / 777) and the L1 bridge at
+// aircraft track QA (4 Nov 2026 close-out; 737 MAX nose-up stance on an extended nose leg since round 2 of 5 Nov): nose-down stance of the gear-carrying models (737 / 777) and the L1 bridge at
 // a docked 737. Prints, per parked aircraft on its own gear, the pitch and the world height of the nose / main tyre bottom
 // (model tyre contacts from data/models/manifest.js MODEL_FEATURES.contact through the app's own placement() matrix), then
 // renders a side view of a 737's nose gear and the docked bridge at B13.
@@ -17,7 +17,8 @@ export default async ({ page, shot, base }) => {
       const st = ac.T.fit.stretch;   // (the nose gear is ahead of the fuselage plugs; the main contact after the plugs is pitch.x0)
       const P = m4.mul(ac.matrix(), ac.placement());
       const p = ac.T.fit.pitch; const mainX = p ? p.x0 : -C.main.st;
-      const nose = m4.xform(P, [-C.nose.st, C.nose.y + ((st && st.gearUp) || 0), 0]), main = m4.xform(P, [mainX, C.main.y + ((st && st.gearUp) || 0), 0]);
+      const nose = m4.xform(P, [-C.nose.st, C.nose.y + ((st && st.gearUp) || 0) - ((st && st.noseExt && st.noseExt.e) || 0), 0]),   // (737 MAX: nose leg extended by noseExt.e)
+            main = m4.xform(P, [mainX, C.main.y + ((st && st.gearUp) || 0), 0]);
       const g = ac.pos[1];
       out.push({ id: ac.id, type: ac.type, model: ac.modelKey, pitchDeg: p ? +(p.a * 180 / Math.PI).toFixed(2) : 0, noseTyre: +(nose[1] - g).toFixed(3), mainTyre: +(main[1] - g).toFixed(3), nosePos: nose, hdg: ac.fwd });
     }

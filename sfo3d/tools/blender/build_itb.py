@@ -20,8 +20,8 @@ Outputs:
 glTF layout: root node "itb" at world (OX, GROUND_Y, OZ) = the relief-corrected roof centre (app frame: x east, y up,
 z south, metres from the ARP; GROUND_Y = 3.0 per js/geo.js), children LOD0 / LOD1 / LOD2 (extras.lod, extras.switch_m),
 each holding the nodes of itb_geom.build(lod). LOD0 and LOD1 share the shell meshes (one glTF mesh, two nodes) and their
-baked AO atlas; LOD1 has lighter trusses / columns / hangers and no mullions or lettering; LOD2 is a coarse shell with its
-own 512 px atlas. Every node carries extras {src, feature, spec (spec_itb.json keys), dims (per-dimension tags), lod}.
+baked AO atlas; LOD1 has lighter trusses / columns / hangers, the mullions joined into one node and a flat low-poly lettering
+(review r1: no LOD pop of the landside signature at 450 m); LOD2 is a coarse shell with its own 512 px atlas. Every node carries extras {src, feature, spec (spec_itb.json keys), dims (per-dimension tags), lod}.
 Materials are PBR (baseColor / metallic / roughness, coated glass IOR 1.9 -> F0 0.096 via KHR_materials_ior); tiling detail
 normal maps on TEXCOORD_0 (UV_detail, metres / tile); sun-independent AO baked by Cycles on TEXCOORD_1 (UV_ao,
 occlusionTexture.texCoord = 1). KTX2 / meshopt compression is a later step (tools/engine/glb_compress.mjs).
@@ -68,8 +68,9 @@ MATS = {
     'steel_grey':         dict(rgb=(96, 100, 105), m=0.30, r=0.50, src='obs photo i3 (dark outriggers, hangers)'),
     'glass_clear':        dict(rgb=(26, 32, 36), m=0.0, r=0.04, ior=1.9, nrm=('itb_n_curtain', 0.5), src='obs photo i4 (dark clear strip above the canopy)'),
     'glass_entrance':     dict(rgb=(34, 40, 44), m=0.0, r=0.05, ior=1.9, nrm=('itb_n_curtain', 0.5), src='obs photos i3 / i4 (clear glazing under the canopy)'),
-    'glass_frit':         dict(rgb=(214, 218, 220), m=0.0, r=0.22, ior=1.9, tex='itb_c_frit', nrm=('itb_n_curtain', 0.4),
-                               src='pub "three layers of ceramic frit"; white banded look obs photos i1 / i4; pattern inf'),
+    'glass_frit':         dict(rgb=(214, 218, 220), m=0.0, r=0.22, ior=1.9, tex='itb_c_frit', nrm=('itb_n_frit', 0.35),
+                               src='pub "three layers of ceramic frit"; white banded look obs photos i1 / i4; pattern inf; own '
+                                   'normal tile itb_n_frit (review r1: itb_n_curtain on the 3.6-m frit tile put caps every 0.9 m)'),
     'glass_hall':         dict(rgb=(118, 130, 136), m=0.0, r=0.06, ior=1.9, nrm=('itb_n_curtain', 0.5),
                                src='obs photos i1 / i4 (clear central bay reads light: the lit hall seen through); value inf'),
     'mullion':            dict(rgb=(178, 182, 186), m=0.60, r=0.40, src='inf (aluminium mullion caps)'),
@@ -84,8 +85,9 @@ MATS = {
     'alu_panel_pod':      dict(rgb=(206, 208, 209), m=0.40, r=0.45, nrm=('itb_n_panel', 0.7), src='obs photo a2 (light grey pods); finish inf'),
     'coping':             dict(rgb=(200, 202, 204), m=0.50, r=0.40, src='inf'),
     'service_dark':       dict(rgb=(78, 81, 84), m=0.10, r=0.70, nrm=('itb_n_panel', 0.4), src='obs photo a2 (dark apron level); detail unk'),
-    'glass_pier':         dict(rgb=(36, 50, 52), m=0.0, r=0.05, ior=1.9, nrm=('itb_n_curtain', 0.5), tex='itb_c_curtain_pier',
-                               src='pub BA-G "tinted energy-efficient glazed curtain wall"; BA-A obs photo a2; bay positions inf'),
+    'glass_gate':         dict(rgb=(38, 54, 56), m=0.0, r=0.05, ior=1.9, tex='itb_c_curtain_gate',
+                               src='pub BA-G "tinted energy-efficient glazed curtain wall"; colour, mullion rhythm and extents obs '
+                                   'photo a2 (BA-G NNE face, a2 median sRGB 39 / 56 / 59); BA-A: no photo (positions unk, heights inf)'),
     'lettering':          dict(rgb=(38, 42, 46), m=0.30, r=0.40, src='obs photos i1 / i3 / i4 ("SAN FRANCISCO INTERNATIONAL"); font inf'),
 }
 
@@ -237,10 +239,15 @@ def recentre(me):
 
 def lettering(parent, lod):
     """'SAN FRANCISCO INTERNATIONAL' on the clear central bay (BI-02 V1: +-33 m wide, 2.8 m tall, 25.8-28.6 m) [obs photos
-    i1 / i4 extents; font: Blender's built-in, inf]; letters 0.5 m in front of the glass, 0.08 m deep."""
+    i1 / i4 extents; font: Blender's built-in, inf]; letters 0.5 m in front of the glass, 0.08 m deep (LOD0) / flat (LOD1)."""
     cu = bpy.data.curves.new('itb_lettering_curve', 'FONT')
     cu.body = 'SAN FRANCISCO INTERNATIONAL'
-    cu.align_x = 'CENTER'; cu.size = 1.0; cu.extrude = 0.04
+    cu.align_x = 'CENTER'; cu.size = 1.0
+    if lod == 0:
+        cu.extrude = 0.04
+    else:
+        # LOD1: flat front faces only (facing west, single-sided), coarse curve resolution: ~1/5 of the LOD0 triangles
+        cu.extrude = 0.0; cu.resolution_u = 2
     tmp = bpy.data.objects.new('tmp_text', cu); bpy.context.scene.collection.objects.link(tmp)
     dg = bpy.context.evaluated_depsgraph_get()
     me = bpy.data.meshes.new_from_object(tmp.evaluated_get(dg))
@@ -476,9 +483,10 @@ def main():
             if part.kind == 'shell' and not (lod == 1 and name in shared):
                 shells[atlas].append(ob)
             stats_parts.setdefault(name, {})[lod] = part.mb.tris()
-        if lod == 0:
-            objs[0].append(lettering(e, 0))
-            stats_parts['hall_lettering'] = {0: len(objs[0][-1].data.polygons)}
+        if lod < 2:
+            objs[lod].append(lettering(e, lod))
+            me_ = objs[lod][-1].data
+            stats_parts.setdefault('hall_lettering', {})[lod] = sum(len(p.vertices) - 2 for p in me_.polygons)
     log('objects built', {l: len(o) for l, o in objs.items()})
     # LOD2 (far / phone tier): all parts joined into one node -> one primitive per material (fewer draw calls); the per-part
     # tags move into its extras.parts
@@ -503,6 +511,10 @@ def main():
         for a, lods in (('A', (0,)), ('B', (2,))):
             t = time.time(); unwrap_ao(shells[a]); log(f'atlas {a}: UV_ao packed over {len(shells[a])} objects in {time.time() - t:.1f} s')
             hide = [o for l in (0, 1, 2) if l not in lods for o in objs[l]]
+            # review r1: the 0.4-m mullion fins (and the lettering) are below the atlas texel (~0.3-0.5 m on the west wall) and
+            # baked ~1-m dark bands beside every mullion - vertical stripes on the frit, and on LOD1 (same atlas) even where it
+            # has no mullion; they are left out of the occluders (columns, trusses, canopy, hangers stay)
+            hide += [o for l in (0, 1) for o in objs[l] if o.name.split('_', 1)[1] in ('hall_mullions', 'hall_end_mullions', 'hall_lettering')]
             dt = bake_ao(shells[a], hide, ao_imgs[a], args.ao_samples)
             mean, p2 = smooth_ao(ao_imgs[a])
             ao_info[a] = dict(res=AO_RES[a], lods=[0, 1] if a == 'A' else [2], bake_s=round(dt, 1), mean=round(mean, 3), p2=round(p2, 3),

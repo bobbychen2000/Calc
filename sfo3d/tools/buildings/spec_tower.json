@@ -388,13 +388,33 @@
   {
    "id": "h_antenna_tips",
    "group": "height",
-   "value": 70.7,
+   "value": 71.8,
    "unit": "m",
-   "range": [70.3, 71.2],
-   "tag": "inf",
-   "confidence": "low",
-   "src": ["photos", "h_top_published"],
-   "note": "Mast tips 3.0-3.35 m above the roof rim in the 2015 (A380) and 2025 (Famartin 11:57) photos, scaled by the cab-roof diameter; ~232 ft, cf. 231 ft in AviationPros. Mast count/heights change over time (2015: ~8 masts; 2025: ~12 masts + camera poles).",
+   "range": [71.5, 72.1],
+   "tag": "obs",
+   "observed": "2025-08-12 (photos t2 11:57 / t3 09:12, Famartin, refs/cache/buildings/review_likeness, reference only)",
+   "confidence": "medium",
+   "src": [
+    "photos",
+    "h_top_published"
+   ],
+   "note": "2025 set: tallest (landside) whips 4.5-4.7 m above the roof rim in F1 metres (rim = D 15.2) = 0.30-0.31 x d_cab_roof = 4.2-4.4 spec m (anchor 67.36 / D 14.3); airside whips 2.3-3.5 m; 15 whips + 9 camera / lamp poles (draw_tower.MASTS / POLES, BT-02). The ratio to D is observed [obs, dated]; the absolute value inherits h_roof_top [inf]. Mast count/heights change over time (2015: ~8 masts; 2025: 15 whips + camera poles).",
+   "station_2015": {
+    "value": 70.7,
+    "range": [70.3, 71.2],
+    "tag": "inf",
+    "note": "the 2015 mast station (photo t1, A380, Basil D Soufi; and the airside whips of t2): tips 3.0-3.35 spec m above the rim; ~232 ft, cf. 231 ft in AviationPros. Height family F2 ('221 ft at the masts', buildings_tower.md 12.3) refers to this station: F2 rim 64.0 + 3.0-3.35 x 14.5 / 14.3 = 67.0-67.4 m."
+   },
+   "corrected": {
+    "field": "value, range, tag, note (+ station_2015)",
+    "previous": {
+     "value": 70.7,
+     "range": [70.3, 71.2],
+     "tag": "inf",
+     "confidence": "low"
+    },
+    "reason": "3-D review round 1 (2026-11-05): the 2025 landside whips (draw_tower.MASTS, t3) stand 1.3-1.4 m above the 2015 station the value described; the old value is kept as station_2015"
+   },
    "verification": {
     "verdict": "RATIOS CONFIRMED; ABSOLUTE INHERITS h_roof_top",
     "evidence": "Every photo station is h_roof_top - k x d_cab_roof. Re-measured independently on the Famartin 11:57 photo with EXIF scale + GPS and pinhole perspective: seams at 44.0-44.5 and 29.8-30.7 m when anchored at 67.36 (A380: 44.3 / 29.5). The stated tolerance ignores the h_roof_top range (63.0-67.6): all stations may sit up to ~4 m lower."

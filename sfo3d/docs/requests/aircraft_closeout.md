@@ -104,7 +104,7 @@ rests on the numeric checks above.
 
 ### 4. Open (aircraft track)
 
-1. **737 MAX stance** (found while adding the aft-door rows): the app stands every 737 on the FG 737-800 model's gear,
+1. **737 MAX stance** (done in Round 3 below; found while adding the aft-door rows): the app stands every 737 on the FG 737-800 model's gear,
    nose-down 0.5-0.7 deg; the MAX ACAP (D6-38A004 Rev K §2.3) shows the MAX nose-up at rest (forward door 2.77-3.07 m, aft
    passenger door 2.49-2.90 m, against the NG's 2.59-2.74 / 2.97-3.12 m: its taller nose gear). Rendered MAX aft door 3.15 m:
    0.26-0.33 m above the range (flagged, explained in check_dims); door 1 is within +-3 in. Fix: a MAX nose-gear extension
@@ -112,3 +112,51 @@ rests on the numeric checks above.
 2. Still open from round 1: missing bakes for FDX / CAL / EVA B77L, ACA-X CRJ7, AAR A388, CSG and JSX (now unblocked for the
    FG 737 only; the FAM / FG 777 sources are not restored yet: `refs/cache/models_orig` holds only b738), A321neo ACF
    layouts, E175 windows, 767-300ER winglets, A333 belly at 0.5 L.
+
+## Round 3 (verifier findings of review round 1, 5 Nov 2026: aircraft round 2, v1 .. v6)
+
+Checks: `python3 tools/models/check_dims.py` before 22 flagged / 21 explained / 1 unexplained -> after 27 / 26 / 1 (the three
+MAX aft-door flags are gone; new and explained: the MAX fuselage-top row x4, §3, and the new 737NG engine row x4, §1; the
+unexplained one is still the A333 belly at 0.5 L); `node tools/models/dock_foot.mjs` (re-run: 67 doors, 0 stale; only the
+eight 737 door-1 grids changed); headless docking census of the 737 family (real `LiveGateSystem.planFor`, the verifier's g78 scripts);
+the converter's new door-fit self-check; one headless llvmpipe page load (800 x 450, `out/review_aircraft/acr2_*.png`: the
+parked 737-8 on its extended nose leg, tyre on the apron; a UAL 737-800's door 1L with no band at the sill; the UAL 737-9
+docked at D10 with the cab at the raised sill and the LEAP nacelle hanging below its pylon; all parked 737s report nose /
+main tyre 0.000 m above the apron through the app's own placement()). The D10 tunnel sign still reads mirrored (bridges,
+round 1 request (b)).
+
+### 1. What changed for everybody who reads `TYPES` or draws the models
+
+| Field / API | Change |
+|---|---|
+| 737 MAX stance (`b37m/b38m/b39m/b3xm`) | **v3.** The MAX now stands nose-UP on an extended nose leg, as D6-38A004 Rev K §2.3.1-2.3.4 shows it (forward door B 2.77-3.07 m above aft passenger door M 2.49-2.90 m on the 737-8; the NG's door 1 is 0.38 m below its door 2). `js/aircraft/fit.js` fits the pitch (least squares) to the MAXIMUM column of rows B and M (read as the OEW condition, like the NG document's "MAX (AT OEW)" column the NG stance already matches: inf) about the main-gear contact (the NG main gear, unchanged), then extends the nose leg until the nose tyre touches: new stretch op `noseExt {xMin, yTop, yBot, e}` (`js/aircraft/stretch.js`; Python port `tools/liveries/common.py`): gear-zone vertices ahead of xMin between the outer strut's bottom and the wheels are stretched, the wheels move down rigidly (`fit.js NOSE_LEG`, measured on the FG nosegear objects). `T.fit.pitch.a` is now negative for the MAX (nose-up; `placement()` already takes any sign). Result (rendered, m; ACAP OEW / range in brackets): 737-7 0.73 deg nose-up, leg +0.34, door 1 3.06 (2.77-3.07), aft door 2.90 (2.49-2.92); 737-8 0.66 deg, +0.35, 3.07 (2.77-3.07), 2.90 (2.49-2.90); 737-9 0.74 deg, +0.39, 3.11 (2.79-3.07: +0.04), 2.87 (2.51-2.82: +0.05); 737-10 0.61 deg, +0.36, 3.08 (2.77-3.07), 2.89 (2.54-2.87); nose and main tyres 0.00; fin top within 0.03 of H (the fin fit takes the pitch); fuselage top at the main gear 5.57-5.58 (5.51 / 5.54). Before: nose-down 0.51-0.60 deg, aft door 3.15-3.16 (+0.26-0.33). The rotation also moves the drawn door-1 centre aft: `T.dockX1` 5.21 -> 5.29 m (artist's door; ACAP 5.03, inside 1 % of L). `T.dockSill` of the MAX: 2.74 -> 3.06-3.11 m (bridge cab floor = the drawn door). The NG types are unchanged (2.74 m). |
+| `SPEC.b37m/b38m/b39m/b3xm.sillAft` | New: row M of §2.3.1-2.3.4 ([min, max], pub). |
+| 737 MAX nacelles (`stretch.engScale`) | Found with v3: the LEAP-1B nacelle (`ENG_SCALE` 1.14, fan 69.4 / 61 in) was scaled about its lowest line, so its top rose 0.27 m over the pylon junction and its bottom stayed the CFM56's: 0.86 m in the nose-up stance against row E 0.43-0.56 m (the NG's row D is 0.48-0.64 m: the bigger fan hangs lower). New option `engScale.keep: 'top'` (JS + Python port): scaled about the pylon line, the bottom renders 0.57-0.58 m. `SPEC.engClr` added for the 737 family (MAX row E, NG row D), so check_dims now shows the engine row; the NG's 0.75-0.77 m (+0.13-0.15 over its OEW max) is the artist's nacelle position, explained, not re-fitted (open). |
+| FG 737-800 door 1L (`data/models/b738.sfom`, `refs/cache/models_orig/b738.sfom`, 32 b738 livery bakes) | **v2.** `tools/convert_models.py door_fit`: the station range now takes in the two skin columns that close the opening (x -4.54 / -5.77, the apices of the skin fan below the sill) with a 0.3 m linear fade-out (`ramp`) and only the side skin (`zMin` 1.0: the nose-gear well's aft wall at x -4.54 stays). The fan no longer folds over the door's bottom panel. New self-check in the converter: every triangle with a moved vertex is compared before / after; any that turns over (> 90 deg) stops the conversion (`RuntimeError`), > 45 deg is reported. Self-check now: 605 triangles touched, 0 folded, 3 turned > 45 deg (door-handle relief facets of 1e-5..4e-4 m2: the lower door is stretched 14 % in height); with the old range: 4 folded (fuselage t300-303, the fan under the sill) and 14 > 45 deg, which now raises. Final mesh (atlas output): inward-facing skin triangles around door 1L 46 / 0.072 m2 -> 45 / 0.0084 m2 (the rest are the artist's sub-0.001 m2 facets, as before the door fit); the verifier's horizontal ray probes (x -5.6 / -5.2 / -4.9, y -0.69 .. -0.55) hit one surface, the door panel, instead of three coincident ones. Topology unchanged (nv 76921, ni 82284, 13801 atlas triangles in 84 charts); `model_features.py` re-run: only b738 `sec` changed; the livery manifest diff is byte counts only (all 96 referenced b738 webp re-baked). Bridge closure on the 737s after the re-fit: skin through the outline <= 0.022 m, gap <= 0.014 m, drawn vertices inside <= 0.033 m. Re-atlased (`tools/liveries/atlas.py b738`) and all b738 liveries re-baked (`tools/liveries/build.py --models b738`). |
+| check_dims winglet rows | **v4.** The 757 plain-wing span at the winglet root is measured on the stretched mesh (`winglet_root`: per side the upper-skin profile in 0.1 m bins of \|z\|, a dihedral line fitted over 0.6-0.85 of the semi-span, the root where the 3-bin median first stays > 0.10 m above it). Rendered 38.14 m (ACAP 38.05) and winglet 1.46 m a side (APB 1.51); sensitivity: the pre-v3 wing stretch would read 40.01 m (flagged), the model without the winglet cant 38.33 m / span 39.16 m (span flagged). |
+| check_dims stance rows | Gear models are seated on `dims.low` (+ gearUp), as `placement()` does (an extended nose tyre is not the seat). New row for nose-up stances: fuselage top at the main-gear station (see §3). |
+| `refs/cache/src/fg/737-800` | **v6.** Now a plain export (no `.git`) of FGMEMBERS/737-800 @9126249: the 35 files of the old sparse checkout (each verified byte-identical to its blob at the commit) plus `Models/Liveries-800/N563AS.png/.xml` (the Alaska tail that `fg_texture` samples); 8.7 MB, GPL-2.0. `refs/cache/src/fg/SOURCES.json` is keyed `737-800/*` (so `tools/cache/sync.py` classifies every file as GPL and stages it) and lists each file's git blob SHA-1. The 103 `src/fg/737-800/...` entries (81 of them `.git` internals) were removed from `refs/MANIFEST.json`; `sync.py --dry-run` now plans 37 files there for commit. `tools/liveries/liveries.py fg_texture` and `tools/liveries/atlas.py` read the plain files (git only as a fallback; atlas.py now warns instead of silently dropping the source texture). The `.git` of the old clone is kept outside the repo (scratchpad) only. |
+
+### 2. Requests
+
+| File (owner) | Request |
+|---|---|
+| `js/live/gates.js` / stand data (bridges) | **v1 (major, not fixed here: bridge geometry).** G7 b0 and G8 b0 still dock no 737NG (b738 / b737 at the ACAP OEW sill 2.74 m: tunnel 1:4.0 / 1:3.7 against the 1:4 limit, AC 150/5220-21C; rotunda floor Hr 5.227 / 5.225 m, inferred), and F5 b0 docks nothing (1:2.0-1:2.7 for every type, also the A320). The 737 sill was not raised (the verifier's instruction): please re-derive Hr / h0 / rest extension of G7 / G8 bridge 0 and the F5 bridge from a source, or record the gap in bridges_closeout. With the MAX stance (v3) the MAX now docks at G7 / G8 (slope 0.213-0.237) (census, docked bridges over all stands accepting the type: b38m 93 -> 95, b37m 92, b39m 96, b3xm 94; b738 95, b737 90, b736 90, b739 94 unchanged). |
+| `tools/drawing/common.py` (owner of tools/drawing this round: bridges) | **v5 (not fixed here: not this track's file).** `_stretch` ports only `wing`, `fin` and the plugs, so a 757 is drawn with the artist's plain tip (span ~39.2 m, near-vertical winglet) against the 41.06 m rendered, and the MAX without its nose leg; nor does it apply `T.fit.pitch` (737 / 777 stance). Cheapest fix: replace the body of `_stretch` by `tools/liveries/common.apply_stretch` (it ports every op of js/aircraft/stretch.js, incl. `tipShear` and the new `noseExt`, in the same order) and rotate by `T.fit.pitch` about `(x0, y0)` as `tools/models/check_dims.py rendered()` does (now with either sign of `a`). |
+| `tools/cache/sync.py` (lead) | Nothing needed for v6: with the `737-800/*` key the existing rules stage the GPL files. If a blob-less clone is ever placed under refs/cache again, a RULES entry `('*/.git/*', 'local', ...)` would keep its internals out of the manifest. |
+
+### 3. Rejected / deferred in this round
+
+- **v3, fuselage top row (explained, not fitted):** in the nose-up stance the highest fuselage top over 0.1-0.5 L (the
+  row's definition) is the forward cabin top, 5.68-5.73 m against row A 5.51-5.54 m. D6-38A004 rows A, B and M cannot all
+  hold there on one rigid fuselage: on the model the top 1-3 m aft of door 1 is 2.6-2.7 m above the door-1 sill, so with
+  door 1 at row B's 3.07 m it is ~5.7 m. Row A matches the top at the main-gear station (new row: 5.57 against 5.51-5.54,
+  within +-3 in). The sills are what the bridges dock to, so they are fitted.
+- **v3, nose-leg length:** the fitted extension is 0.34-0.39 m (737-8: 0.35 m). It follows from the ACAP sills with the NG
+  main gear unchanged: the two documents' OEW heights, MAX minus NG, are +0.33 m at door 1 (5.03 m) and -0.22 m at the aft
+  door (31.88 m), a rotation about 21.1 m, 1.4 m aft of the main gear (the cargo-door and stabiliser rows move the same
+  way: up forward, down aft). No primary source for the MAX nose-gear strut length is in the cache, so the extension is
+  not checked against one (inf).
+- **737NG engine row (new, explained):** 0.75-0.77 m against row D's OEW 0.61 / 0.64 m (+0.13-0.15): the FG nacelle hangs
+  higher than the real one while crown, sills and fin fit the OEW stance. Moving it would part it from its pylon; open.
+- **v1, v5:** other tracks' files (§2).

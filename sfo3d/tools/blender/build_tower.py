@@ -3,15 +3,18 @@
 """Build the 3-D asset of the SFO air traffic control tower (2016) and its base building with Blender (bpy 5.0, Cycles CPU):
 
     python3 tools/blender/build_tower.py                 # both families, AO bake, export, manifest, verification
-    python3 tools/blender/build_tower.py --render        # + Cycles reference renders of F1 (out/buildings3d/tower_*.png)
-    python3 tools/blender/build_tower.py --family 1 --no-bake --render --samples 16 --res 480    # quick look
+    python3 tools/blender/build_tower.py --render        # + Cycles reference renders of the default family (out/buildings3d/tower_*.png)
+    python3 tools/blender/build_tower.py --family 2 --no-bake --render --samples 16 --res 480    # quick look
 
 Inputs (all in the repo, read through tools/blender/tower_geom.py):
   tools/buildings/draw_tower.py + spec_tower.json   the approved 2-D sheets BT-01..03 (the reference geometry)
   data/sfo_airport.json                             SFO Museum footprint of the base building
 Outputs:
-  data/buildings3d/tower.glb       family F1 (D 15.2, rim 67.36 = 221 ft)      } the sheets draw both families and prefer
-  data/buildings3d/tower_f2.glb    family F2 (D 14.5, rim 64.0, 221 ft at masts) } neither: the app must not treat F1 as fact
+  data/buildings3d/tower.glb       the DEFAULT family, F2 (D 14.5, rim 64.0, 221 ft at the 2015 mast station): the family
+                                   anchored on the observed cab-roof diameter (14.3 +-1.0, EXIF 14.75 +-0.5)  } the sheets draw
+  data/buildings3d/tower_f1.glb    F1 (D 15.2, rim 67.36 = 221 ft): the published-height hypothesis (CTBUH        } both; the
+                                   classification, not a survey; ?b3dtower=f1 in the app)                         } owner decides
+  data/buildings3d/tower_lod2.glb  LOD2 of the default family (phones / far)
   data/buildings3d/manifest.json   key "tower" (merged; other groups own their keys)
   out/buildings3d/tower_*.png      Cycles reference renders (local), tower_verify.json (numbers)
 
@@ -50,23 +53,36 @@ AO_RES = {0: 2048, 1: 1024, 2: 512}
 AO_FLAG = {}                         # object name -> receives the baked AO (thin details, glass and masts do not)
 AO_DIST = 8.0                        # AO ray length, m
 RENDER = dict(sun=3.0, sky=0.05, exposure=-0.3)   # reference-render lighting (set by --sun / --sky / --exposure)
+DEFAULT_FAM = TV.DEFAULT_FAM          # 2 (review round 1, 2026-11-05: F2 lies within the observations; F1 rests on a database class)
 
 # PBR materials: sRGB base colour, metallic, roughness, extras. Values are our choices for the published materials
 # (tags in the manifest); no texture is taken from imagery.
 MATS = {
-    'clad':          dict(rgb=(150, 154, 160), m=0.15, r=0.50, nrm=('tile_panel_tower', 1.5),
-                          src='pub material (4-mm Alucobond Plus, custom "SFO Silver", MCN 2017); colour / finish inf'),
+    # clad: panel colour of the base-colour tile (tower_tex.clad_color: dark joint lines + +-5 % per-panel tone; mean ~(150, 154,
+    # 160) as round 1, linear albedo ~0.31: with the t2 geometry (sunlit face at cos 0.37 vs a horizontal white bridge roof at
+    # cos 0.88) this reproduces the photo's shaft / bridge display ratio ~0.5, so the albedo is not lowered for the app view)
+    'clad':          dict(rgb=(152, 156, 162), m=0.15, r=0.50, nrm=('tile_panel_tower', 1.0), tex='tile_clad_color',
+                          src='pub material (4-mm Alucobond Plus, custom "SFO Silver", MCN 2017); colour / finish inf; dark joint '
+                          'lines obs photos t2 / t4 (width / tone inf)'),
+    'clad_deck':     dict(rgb=(150, 154, 160), m=0.15, r=0.50, src='as clad (flare-top shoulder, no joint tile: its UVs are not '
+                          'panel-aligned); colour = the clad tile mean'),
     'louvre':        dict(rgb=(132, 136, 142), m=0.15, r=0.55, nrm=('tile_louvre', 1.0),
                           src='obs photos t3/t4 (horizontally louvred SW wing); finish inf'),
-    'seam':          dict(rgb=(196, 198, 200), m=0.15, r=0.45, src='obs photos (light circumferential seams); finish inf'),
+    'seam':          dict(rgb=(98, 101, 106), m=0.15, r=0.60, src='obs photos t2 / t4 (the two circumferential seams read as dark '
+                          'recessed joints, darker than the row joints); width 0.10 m and tone inf'),
     'slot':          dict(rgb=(52, 58, 64), m=0.20, r=0.65, src='obs photos (dark, perforated-looking slots); finish inf'),
     'slot_glass':    dict(rgb=(150, 175, 190), m=0.0, r=0.08, src='obs photos t3/t4 (glazed lowest pane)'),
     'ribbon_glass':  dict(rgb=(150, 182, 175), m=0.0, r=0.06, src='pub (Guardian SNX 62/27 IGUs, LED-backlit); daytime tint obs photos '
                           't3/t4; emissive off by day (extras.led)', led=True),
     'mullion':       dict(rgb=(85, 88, 92), m=0.70, r=0.40, src='inf'),
     'plinth':        dict(rgb=(60, 70, 80), m=0.40, r=0.45, src='obs photo t1 (dark ring under the cab glass)'),
-    'cab_glass':     dict(rgb=(10, 14, 18), m=0.0, r=0.04, alpha=0.65, src='pub (clear laminated frameless glass, Fentress); '
-                          'seen dark from outside (photos); alpha blend so the app tower view looks out', blend=True),
+    # cab glass: tinted, see-through. Photos: glass / sky display 0.31 (t1, near-level view: the sky shows through the far-side
+    # panes, teal tint, dark consoles below and a dark band above), 0.28 (t2), 0.10 (t3, 12 deg below the rim: the ceiling
+    # behind). Alpha 0.5 per pane (two panes: 25 % of the sky) with a teal-grey tint reproduces ~0.3 in a level view
+    'cab_glass':     dict(rgb=(55, 70, 74), m=0.0, r=0.04, alpha=0.5, src='pub (clear laminated frameless glass, Fentress); tint '
+                          'and see-through look obs photos t1 / t2 (glass / sky 0.28-0.31); alpha blend (0.5 inf)', blend=True),
+    'cab_joint':     dict(rgb=(180, 183, 186), m=0.30, r=0.35, src='obs photos t1 / t2 / t3 (light vertical pane joints); width '
+                          '6 cm inf (a butt joint with its silicone and reflection)'),
     'cab_interior':  dict(rgb=(42, 42, 44), m=0.0, r=0.80, src='unknown (dark placeholder interior)'),
     'roof_deck':     dict(rgb=(205, 205, 200), m=0.0, r=0.85, src='obs NAIP 2024 (white membrane, saturated: albedo inf)'),
     'coping':        dict(rgb=(176, 178, 180), m=0.15, r=0.45, src='inf'),
@@ -143,6 +159,12 @@ def make_material(key, lod, tex_imgs, ao_img):
         except Exception:  # noqa: BLE001
             pass
         m.use_backface_culling = False
+    if spec.get('tex'):                                   # base-colour tile (sRGB) on UV_detail; the factor stays white
+        b.inputs['Base Color'].default_value = (1.0, 1.0, 1.0, 1.0)
+        tc = nt.nodes.new('ShaderNodeTexImage'); tc.image = tex_imgs[spec['tex']]; tc.interpolation = 'Linear'
+        uvc = nt.nodes.new('ShaderNodeUVMap'); uvc.uv_map = 'UV_detail'
+        nt.links.new(uvc.outputs['UV'], tc.inputs['Vector'])
+        nt.links.new(tc.outputs['Color'], b.inputs['Base Color'])
     if spec.get('nrm'):
         tex = nt.nodes.new('ShaderNodeTexImage'); tex.image = tex_imgs[spec['nrm'][0]]
         tex.interpolation = 'Linear'
@@ -272,7 +294,8 @@ def build_family(fam, args, tex_paths):
     model, TW = G.build(fam)
     tex_imgs = {}
     for k, p in tex_paths.items():
-        im = bpy.data.images.load(p); im.colorspace_settings.name = 'Non-Color'; im.name = k
+        if k.startswith('_'): continue
+        im = bpy.data.images.load(p); im.colorspace_settings.name = 'sRGB' if k == 'tile_clad_color' else 'Non-Color'; im.name = k
         tex_imgs[k] = im
     root = bpy.data.objects.new('tower', None)
     sc.collection.objects.link(root)
@@ -335,7 +358,7 @@ def build_family(fam, args, tex_paths):
     bpy.data.objects.remove(ground, do_unlink=True)
     # export
     os.makedirs(DATA, exist_ok=True)
-    glb = os.path.join(DATA, 'tower.glb' if fam == 1 else 'tower_f2.glb')
+    glb = os.path.join(DATA, TV.FILE[fam])
     bpy.ops.object.select_all(action='DESELECT')
     root.select_set(True)
     for lod, (e, objs, img) in lod_objs.items():
@@ -348,14 +371,14 @@ def build_family(fam, args, tex_paths):
                               export_animations=False)
     log(f'F{fam}: exported {glb} in {time.time() - t:.1f} s')
     info = TV.postprocess(glb, fam, TW, stats, ao_info, MATS)
-    # phone / far-field file: LOD2 only (F1 only; same root placement and extras)
-    if fam == 1:
+    # phone / far-field file: LOD2 only (default family only; same root placement and extras)
+    if fam == DEFAULT_FAM:
         bpy.ops.object.select_all(action='DESELECT')
         root.select_set(True)
         e2, objs2, _ = lod_objs[2]
         e2.select_set(True)
         for o in objs2: o.select_set(True)
-        glb2 = os.path.join(DATA, 'tower_lod2.glb')
+        glb2 = os.path.join(DATA, TV.LOD2_FILE)
         bpy.ops.export_scene.gltf(filepath=glb2, export_format='GLB', use_selection=True, export_extras=True, export_yup=True,
                                   export_apply=False, export_texcoords=True, export_normals=True, export_tangents=True,
                                   export_materials='EXPORT', export_image_format='AUTO', export_cameras=False, export_lights=False,
@@ -445,9 +468,13 @@ PHOTO_VIEWS = {
 
 
 def render_views(res_obj, args):
-    """Cycles reference renders of F1 LOD0: the two BT-02 elevations (orthographic) and two photo-matched perspectives."""
+    """Cycles reference renders of the default family's LOD0: the two BT-02 elevations (orthographic) and the photo-matched
+    perspectives. The photo cameras are family-dependent: the focal length comes from the rim width in pixels (f1920 was
+    fitted with D 15.2: f x 15.2 / D) and the camera height from the angle below the rim (h - (rim_F1 - rim)), so each family
+    is seen as the photo would show it if that family were the real tower."""
     sc = bpy.context.scene
     TW = res_obj['tower']
+    kD = 15.2 / TW.f['D']; dh = G.DT.FAM[1]['rim'] - TW.rim_h
     for lod, (e, objs, img) in res_obj['lod_objs'].items():
         for o in objs: o.hide_render = lod != 0
     add_ground()
@@ -486,14 +513,15 @@ def render_views(res_obj, args):
         res = (args.res * 3 // 4, args.res) if pv['size'][1] > pv['size'][0] else (args.res, args.res * 3 // 4)
         cl = np.array([pv['cam_world'][0] - G.AXIS[0], -(pv['cam_world'][1] - G.AXIS[1])])
         rim = np.array([G.CAB[0], G.CAB[1], TW.rim_h])
-        dv = rim - np.array([cl[0], cl[1], pv['h']])
+        hc = pv['h'] - dh
+        dv = rim - np.array([cl[0], cl[1], hc])
         yaw0 = math.degrees(math.atan2(dv[0], dv[1])); el0 = math.degrees(math.atan2(dv[2], math.hypot(dv[0], dv[1])))
-        f = pv['f1920']; W0, H0 = pv['size']
+        f = pv['f1920'] * kD; W0, H0 = pv['size']
         yaw = yaw0 - math.degrees(math.atan((pv['rim_px'][0] - W0 / 2) / f))
         pitch = el0 - math.degrees(math.atan((H0 / 2 - pv['rim_px'][1]) / f))
         fp = f * res[0] / W0
-        views.append((nm, camera(f'cam_{nm}', W(cl, pv['h']), yaw, pitch, f_px=fp, res=res), res,
-                      dict(sun=pv['sun'], cam_world=list(pv['cam_world']), cam_h=pv['h'], yaw=round(yaw, 2), pitch=round(pitch, 2),
+        views.append((nm, camera(f'cam_{nm}', W(cl, hc), yaw, pitch, f_px=fp, res=res), res,
+                      dict(sun=pv['sun'], cam_world=list(pv['cam_world']), cam_h=round(hc, 2), yaw=round(yaw, 2), pitch=round(pitch, 2),
                            f_px=round(fp, 1), photo=pv['photo'], photo_credit=pv['credit'])))
     outs = {}
     sun = None
@@ -621,25 +649,28 @@ def main():
     ap.add_argument('--sky', type=float, default=RENDER['sky'])
     ap.add_argument('--exposure', type=float, default=RENDER['exposure'])
     ap.add_argument('--views', default='A,B,t2,t3,t4')
-    ap.add_argument('--audit', action='store_true', help='back-face audit renders of F1 (out/buildings3d/tower_audit_*.png)')
+    ap.add_argument('--audit', action='store_true', help='back-face audit renders of the default family (out/buildings3d/tower_audit_*.png)')
     args = ap.parse_args([a for a in sys.argv[1:]])
     args.res = min(args.res, 960); args.samples = min(args.samples, 64)
     RENDER.update(sun=args.sun, sky=args.sky, exposure=args.exposure)
     os.makedirs(OUT, exist_ok=True)
-    tex_paths = tower_tex.make_all(os.path.join(OUT, 'tex'))
+    tex_paths = tower_tex.make_all(os.path.join(OUT, 'tex'), clad_rgb=MATS['clad']['rgb'])
+    log('clad tile mean sRGB', tex_paths.get('_clad_mean'))
     fams = (1, 2) if args.family == 'all' else (int(args.family),)
     results = {}
     t0 = time.time()
-    # F2 first so that the session ends on F1 (renders are of F1)
-    for fam in sorted(fams, reverse=True):
+    # the other family first so that the session ends on the default family (the renders and the audit are of it)
+    for fam in sorted(fams, key=lambda f_: f_ == DEFAULT_FAM):
         results[fam] = build_family(fam, args, tex_paths)
     renders = {}
-    if args.render and 1 in results:
-        renders = render_views(results[1], args)
-        renders['_compare'] = TV.compare_images(renders, results[1]['tower'])
-    audit = backface_audit(results[1]) if (args.audit and 1 in results) else None
+    D_ = DEFAULT_FAM
+    if args.render and D_ in results:
+        renders = render_views(results[D_], args)
+        renders['_family'] = f'F{D_}'
+        renders['_compare'] = TV.compare_images(renders, results[D_]['tower'])
+    audit = backface_audit(results[D_]) if (args.audit and D_ in results) else None
     ver = {fam: TV.verify(r['glb'], fam) for fam, r in results.items()}
-    if audit: ver[1]['backface_audit'] = audit
+    if audit: ver[D_]['backface_audit'] = audit
     for fam, r in results.items():
         ver[fam]['gltf_validator'] = validate(r['glb'])
         log(f'F{fam}: glTF-Validator', ver[fam]['gltf_validator'])
@@ -648,7 +679,7 @@ def main():
     log('verification ->', vpath)
     for fam, v in ver.items():
         log(f'F{fam}: {v["summary"]}')
-    if not args.no_manifest and 1 in results:
+    if not args.no_manifest and len(results) == 2:
         if not renders:                     # keep the last reference renders (they do not depend on the AO bake)
             try:
                 renders = json.load(open(os.path.join(DATA, 'manifest.json')))['tower'].get('renders', {})

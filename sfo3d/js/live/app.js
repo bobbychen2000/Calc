@@ -318,7 +318,7 @@ export async function startApp(cfg) {
     else if (name === 'final28') { const a = thr('28L'), b = thr('28R'); const t = mid(a.thr, b.thr); rig.flyTo({ target: [t[0] + a.dir[0] * 400, GROUND_Y + 20, t[2] + a.dir[1] * 400], dist: 4200, yaw: (a.hdg / DEG + 180) * DEG, pitch: 5 * DEG, fov: 45 * DEG }); }
     else if (name === 'runways1') { const a = thr('1L'), b = thr('1R'); const t = mid(a.thr, b.thr); rig.flyTo({ target: [t[0] + a.dir[0] * 900, GROUND_Y, t[2] + a.dir[1] * 900], dist: 2600, yaw: (a.hdg / DEG + 75) * DEG, pitch: 14 * DEG, fov: 50 * DEG }); }
     else if (name === 'top') rig.flyTo({ target: [-450, GROUND_Y, 150], dist: 8200, yaw: 180 * DEG, pitch: 88 * DEG, fov: 50 * DEG });
-    else if (name === 'tower') rig.setTower([tower[0], GROUND_Y + 62, tower[2]], { yaw: 70 * DEG, pitch: -6 * DEG, fov: 58 * DEG });
+    else if (name === 'tower') rig.setTower([tower[0], tower.eyeY || GROUND_Y + 62, tower[2]], { yaw: 70 * DEG, pitch: -6 * DEG, fov: 58 * DEG }); // eyeY: the 3-D tower's cab eye (js/three/buildings3d.js)
     ui.root.querySelectorAll('#views [data-view]').forEach(b => b.classList.toggle('on', b.dataset.view === name));
   }
   const followFn = (hex) => () => { const tr = traffic.tracks.get(hex); if (!tr || !tr.disp.valid) return null; const D = tr.disp; const T = tr.model && TYPES[tr.model.t] || TYPES.a20n; return { p: [D.x, D.y + T.Hc * 0.8, D.z], hdg: D.hdg, L: T.L }; };

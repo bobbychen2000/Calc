@@ -8,7 +8,8 @@ Heights: every vertical photo station is h_rim - k x D (k from the photos, D = c
 {rim 67.36 m, D 14.3 m, base-building roof 14.2 m} fails the photo-span / NAIP-ratio test of buildings_tower.md 12.3 by
 ~3 m: it is NOT a family and is not drawn. The two self-consistent families of 12.3 are drawn, neither preferred:
   family 1  D 15.2 m (15.1-15.3), rim 67.36 m = 221 ft;       base-building roof = rim - (3.46 D + 0.7) = 14.1 m
-  family 2  D 14.5 m (14.3-14.75), rim 64.0 m (63-65), 221 ft at the mast tips;  base-building roof 13.1 m
+  family 2  D 14.5 m (14.3-14.75), rim 64.0 m (63-65), 221 ft at the 2015 mast station (2025 whips reach ~4.5 m above the
+            rim);  base-building roof 13.1 m
 Station h of the spec (anchored 67.36, D 14.3) -> family f: rim_f - (67.36 - h) x D_f / 14.3. Radii: A380 width ratios
 x D_f, divided by 1.015 (shaft_profile_ratio_A380 verification: the ratios are ~1.5 % high); cab glass / roof radii
 (Famartin pixel ratios) x D_f / 14.3.
@@ -24,7 +25,7 @@ H_SPEC, D_SPEC = 67.36, 14.3            # the spec's anchor (rim, cab-roof D) of
 RAT = 1.015                             # A380 ratios ~1.5 % high (verification of shaft_profile_ratio_A380)
 SPAN_K, PARAPET = 3.46, 0.7             # photo span rim -> base-building airside parapet = 3.46 D; roof ~0.7 m below it
 FAM = {1: dict(D=15.2, rim=67.36, short='F1', label='family 1: D 15.2, rim 67.36 = 221 ft'),
-       2: dict(D=14.5, rim=64.0, short='F2', label='family 2: D 14.5, rim 64.0, 221 ft at the masts')}
+       2: dict(D=14.5, rim=64.0, short='F2', label='family 2: D 14.5, rim 64.0, 221 ft at the 2015 mast station')}
 for _f in FAM.values():
     _f['s'] = _f['D'] / D_SPEC
     _f['ibf'] = _f['rim'] - (SPAN_K * _f['D'] + PARAPET)
@@ -81,9 +82,16 @@ def body_outline(fam=1):
 # bearings are from the shaft axis, clockwise from north; every slot runs with its top towards smaller bearings (NNE on the
 # airside face).
 SLOT_PITCH = 27.7            # upper slots: azimuth spacing at mid-band, t1 row profiles 24-34 deg (mean 27.7) [obs photo t1]
-SLOT_PHASE = 124.0           # one slot centred at bearing ~124 at mid-band (t1: 212 / 178 / 154 / 124 / 99 / 72) [obs photo t1]
+SLOT_PHASE = 127.0           # one slot centred at bearing ~127 at mid-band [obs photos t1 + t2]: t1 (bearing 142) read 212 / 178 / 154 /
+                             # 124 / 99 / 72 (round 1); re-read 2026-11-05 on t1 AND t2 together (slot centres between the silhouette
+                             # edges, u/R -> bearing, at the mid-band rows): the two frontal slots sit at 127.1 / 157.4 (t1) and 126.7 /
+                             # 155.7 (t2), +2.7..+5.7 deg from the 124 / 151.7 positions; the limb slots (|u/R| ~0.8, +-2-3 deg) read
+                             # -2.3..+0.9; weighted mean +3.0 deg -> 127 [obs; pitch kept: the photo spacings vary 22-30 deg]
 SLOT_SWEEP = 20.0            # each upper slot sweeps ~20 deg of azimuth over the band [obs photo t1, rows 240-320: 13 deg / 6 m]
-SLOT_W = 1.4                 # upper-slot width, m (t1: 15-25 px at 0.074 m/px) [obs photo t1]
+SLOT_W = 0.95                # upper-slot width (horizontal arc), m [obs photos t1 + t2, re-read 2026-11-05]: t1 13-15 px at 0.0745
+                             # m/px (rim 204 px = D 15.2) = 0.97-1.12 m; t2 29-32 px at 0.0321 m/px (rim 474 px) for the frontal slots
+                             # = 0.93-1.03 m; the same edge finder on the 3-D render of a 1.40-m slot reads 1.50 m (x 1.07), so ~0.95 m
+                             # (+-0.1). Round 1 read 1.4 (15-25 px) from the hazy t1 alone
 SLOT_SKIP = (230.0, 335.0)   # no slots drawn in the landside ribbon / SW-wing sector (t4: only the 3 NE-flank slots show; the
                              # position at ~235 deg is hidden by the wing in t3 / t4 and outside t1 / t2: not confirmed) [obs photo t3 / t4]
 LONG_SLOT = (137.0, 93.0)    # long slot: bearing at its foot / head (t1: u/R +0.13 -> +0.78 from 142; t2: -0.22 -> +0.52 from
@@ -95,6 +103,12 @@ WING_TIP = (254.0, 14.0)     # SW wing outer tip in plan (bearing, m from the ax
                              # BOTH oblique photos - t3: 14.5 m right of the cab centre and 7.0 m beyond the ribbon edge;
                              # t4: 15.7 m and 6.6 m (model: 14.5 / 7.6 and 15.7 / 5.8) [inf from obs photos t3 / t4]
 RIB_BRG = 310.0              # ribbon facing, middle of the 300-320 deg photo range [obs photos]
+NE_TIP = 0.0                 # NE blade top above the ribbon head (= the flare corner), m [obs photos t3 / t4 (2025), t5 (2018);
+                             # re-read 2026-11-05]: the blade ends flush with the flare corner and the ribbon head, with no spike. t3
+                             # (263 m, bearing 319): its top sits ~15 px (0.6 m) above the ribbon head on the image, ~2-3 m nearer the
+                             # camera (perspective lifts it ~0.4 m), so level within ~0.3 m; t4 (81 m): level with the ribbon head;
+                             # t5: the NE edge runs into the flare corner. Round 3 drew a pointed tip at deck + 1.2 (2.8 m above the
+                             # corner, F1) from t4 alone [obs low]: withdrawn (reviewer round 1 of the 3-D asset: t3 / t4 / t5 disagree)
 
 # Review backlog (round 3, 2026-11-04), read on the same photos (t1-t5, refs/cache/buildings/review_likeness, reference only):
 # Flare shoulder [obs photo t1, near-orthographic from 1.75 km; 0.073 m/px; 1.6 deg roll removed]: no vertical lip - the top
@@ -232,9 +246,9 @@ def draw_blades(V, f, hb, ht, w0, w1, right):
     for k in range(1, 25):
         h = hb + (ht - hb) * k / 25; w = w0 + (w1 - w0) * k / 25
         V.line(S([(-w / 2, h), (w / 2, h)]), 'obs', lw=0.25, z=5.2, color='#9fb3c8')
-    # NE blade: narrow, sharp-edged, a full-height strip beside the ribbon ending in a pointed tip at about the flare rim
-    tip = deck + 1.2
-    ne = [(-w0 / 2, hb), (-w0 / 2 - 1.0, hb), (-w1 / 2 - 1.8, ht), (-w1 / 2 - 1.0, tip), (-w1 / 2, ht)]
+    # NE blade: narrow, sharp-edged, a full-height strip beside the ribbon ending flush with the flare corner (NE_TIP)
+    tip = ht + NE_TIP
+    ne = [(-w0 / 2, hb), (-w0 / 2 - 1.0, hb), (-w1 / 2 - 1.8, ht)] + ([(-w1 / 2 - 1.0, tip)] if NE_TIP > 0.05 else []) + [(-w1 / 2, ht)]
     V.poly(S(ne), 'inf', fc='#c9d2dc', z=5.1)
     V.line(S([(-w0 / 2 - 0.5, hb), (-w1 / 2 - 0.9, ht)]), 'inf', lw=0.3, z=5.2)           # crease
     # SW wing: broad, horizontally louvred face, flat top, rounded outer corner, a crease diverging upwards; its outer tip in
@@ -257,8 +271,8 @@ def draw_blades(V, f, hb, ht, w0, w1, right):
     V.line([(up, pt - 0.2), (up - 1.6, ht)], 'obs', lw=0.25, z=5.8, ls='-')
     V.leader((up, pt), 14, 10, f'post with a stay on the SW wing top, ~{WING_POST} m [obs photos t3 / t4 2025, t5 2018;\n'
              'position inf]', 'obs', fs=3.9)
-    V.leader(sh(-w1 / 2 - 1.0, tip), -20, 60, f'NE blade: narrow, sharp-edged; pointed tip at about the flare rim\n'
-             f'(+{tip:.1f}; photos read 0-2.4 m above it) [obs photo t4, low]', 'inf', fs=4.0)
+    V.leader(sh(-w1 / 2 - 1.4, tip), -20, 60, f'NE blade: narrow, sharp-edged; its top ends flush with the flare corner\n'
+             f'and the ribbon head (+{tip:.1f}), no spike [obs photos t3 / t4 2025, t5 2018]', 'obs', fs=4.0)
     V.leader((wt - 1.5, ht - 6), 22, 8, f'SW wing: broad blade, horizontally louvred face, flat top, rounded outer\ncorner [obs photo t3 / t4]. '
              f'Outer tip drawn at u {wt:+.1f}: the projection of the plan tip\n{WING_TIP[0]:.0f} deg / {WING_TIP[1]:.1f} m from the axis, the point '
              'that reproduces both\noblique photos (t3: 14.5 m right of the cab centre, 7.0 m beyond the\nribbon; t4: 15.7 / 6.6 m) [inf]. From this '
@@ -391,8 +405,8 @@ def draw_tower_elev(V, right, ribbon=False):
         V.leader((mast_u(um[0], F1, right, uo), rim + um[1] * F1['D'] / 15.2 - 0.3), -24, 8,
              f'roof masts (both views), 2025 set: {len(MASTS)} whips + {len(POLES)} camera / lamp / bracket poles (dots), on a ring at '
              f'{MAST_K} x the rim radius\n[count obs photos t2 / t3, Famartin 2025; bearings / heights inf, each from the photo '
-             'that sees it on its near half].\nLandside whips up to ~4.7 m above the rim, airside 2.3-3.5 m; the levels\' '
-             '"mast tips" = the spec station (2015 masts,\n~3.3-3.6 m in t1). The 2015 jib davit on the SW deck (t1) is not in '
+             'that sees it on its near half].\nLandside whips up to ~4.7 m above the rim, airside 2.3-3.5 m (levels: "2025 whips" '
+             '[obs 2025-08-12]; "2015 mast station"\n= the 2015 masts, ~3.3-3.6 m in t1). The 2015 jib davit on the SW deck (t1) is not in '
              'the 2025 photos: not drawn', 'inf', fs=3.9)
     for h in T['h_seams']['value']:
         r = r_at(h, F1); V.line([(-r, hf(h, F1)), (r, hf(h, F1))], 'inf', lw=0.4, z=4)
@@ -441,8 +455,10 @@ def draw_tower_elev(V, right, ribbon=False):
     V.level(sx, T['h_dof_envelope']['value_m'], '+74.68  245 ft AGL = FAA DOF / 2008 envelope [pub] - upper bound, not as-built', 'pub', len_mm=3, fs=fsl, u_line=12.0)
 
     def lv(f, side):
-        c = cab_outline(f); m = c['roof_rim'][1] + (T['h_antenna_tips']['value'] - H_SPEC) * f['s']
-        L = [(m, f'+{m:.1f} mast tips' + (' = 221 ft' if f is F2 else ' (233 ft)')), (c['roof_rim'][1], f'+{c["roof_rim"][1]:.2f} roof rim' + (' = 221 ft' if f is F1 else '')),
+        c = cab_outline(f); m = c['roof_rim'][1] + (T['h_antenna_tips']['station_2015']['value'] - H_SPEC) * f['s']
+        m25 = c['roof_rim'][1] + (T['h_antenna_tips']['value'] - H_SPEC) * f['s']
+        L = [(m25, f'+{m25:.1f} tallest whip, 2025 ({m25 / FT:.0f} ft)'),
+             (m, f'+{m:.1f} mast tips, 2015 station' + (' = 221 ft' if f is F2 else f' ({m / FT:.0f} ft)')), (c['roof_rim'][1], f'+{c["roof_rim"][1]:.2f} roof rim' + (' = 221 ft' if f is F1 else '')),
              (c['glass_top'][1], f'+{c["glass_top"][1]:.1f} cab glass head'), (c['glass_bottom'][1], f'+{c["glass_bottom"][1]:.1f} cab glass sill'),
              (hf(61.0, f), f'+{hf(61.0, f):.1f} cab floor (sill band)'), (hf(59.4, f), f'+{hf(59.4, f):.1f} flare, widest'),
              (hf(56.8, f), f'+{hf(49.2, f):.1f}-{hf(56.8, f):.1f} band of inclined slots'), (hf(44.3, f), f'+{hf(44.3, f):.1f} seam'),
@@ -686,7 +702,7 @@ def sheet_section():
                      (h_ibf, f'+{h_ibf:.1f} IBF roof (F1) / {F2["ibf"]:.1f} (F2) [inf]', 'inf'), (0.0, '+0.0 grade (site 13 ft AMSL [pub OE/AAA])', 'pub')):
         V.level(13.5 if h > 20 else u1, h, s, tg, len_mm=4, fs=3.6)
     V.dim((-24, 0), (-24, rim[1]), 0, f'F1: {rim[1]:.2f} m rim = 221 ft [pub number; definition unverified]', 'inf', fs=3.8)
-    V.dim((-30, 0), (-30, c2['roof_rim'][1]), 0, f'F2: {c2["roof_rim"][1]:.1f} m rim, 221 ft at the masts', 'inf', fs=3.8)
+    V.dim((-30, 0), (-30, c2['roof_rim'][1]), 0, f'F2: {c2["roof_rim"][1]:.1f} m rim, 221 ft at the 2015 mast station', 'inf', fs=3.8)
     V.scalebar(y_mm=4)
     S.note('Cut through the shaft axis along the base building\'s long axis (27.7 deg). The section shows what is published as text '
            '(core type, mat, steel flare and cab, TMDs); no structural drawing was found, so wall thicknesses, core diameter, floor levels '

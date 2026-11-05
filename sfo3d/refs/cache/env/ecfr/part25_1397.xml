@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<DIV8 N="25.1397" TYPE="SECTION" hierarchy_metadata="{&quot;path&quot;:&quot;/on/_SUBSTITUTE_DATE_/title-14/section-25.1397&quot;,&quot;citation&quot;:&quot;14 CFR 25.1397&quot;,&quot;alternate_reference&quot;:&quot;FAR 25.1397&quot;}">
+<HEAD>§ 25.1397 Color specifications.</HEAD>
+<P>Each position light color must have the applicable International Commission on Illumination chromaticity coordinates as follows:</P>
+<P>(a) <I>Aviation red</I>—</P>
+<EXTRACT>
+<FP-2><I>y</I> is not greater than 0.335; and
+</FP-2>
+<FP-2><I>z</I> is not greater than 0.002.</FP-2></EXTRACT>
+<P>(b) <I>Aviation green</I>—</P>
+<EXTRACT>
+<FP-2><I>x</I> is not greater than 0.440−0.320<I>y</I> ;
+</FP-2>
+<FP-2><I>x</I> is not greater than <I>y</I>−0.170; and
+</FP-2>
+<FP-2><I>y</I> is not less than 0.390−0.170<I>x</I>.</FP-2></EXTRACT>
+<P>(c) <I>Aviation white</I>—</P>
+<EXTRACT>
+<FP-2><I>x</I> is not less than 0.300 and not greater than 0.540;
+</FP-2>
+<FP-2><I>y</I> is not less than <I>x</I>−0.040; or <I>y</I><E T="52">0</E>−0.010, whichever is the smaller; and
+</FP-2>
+<FP-2><I>y</I> is not greater than <I>x</I> + 0.020 nor 0.636−0.400<I>x</I>;
+</FP-2>
+<FP>Where <I>y</I><E T="52">0</E> is the <I>y</I> coordinate of the Planckian radiator for the value of <I>x</I> considered.</FP></EXTRACT>
+<CITA TYPE="N">[Doc. No. 5066, 29 FR 18291, Dec. 24, 1964, as amended by Amdt. 25-27, 36 FR 12972, July 10, 1971]
+</CITA>
+</DIV8>

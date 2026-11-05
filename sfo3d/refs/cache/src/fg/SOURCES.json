@@ -1,10 +1,49 @@
 {
- "737-800/": {
+ "737-800/*": {
   "url": "https://github.com/FGMEMBERS/737-800",
   "commit": "9126249dd0236479ad723f3e7c4c7139455c7d81",
   "licence": "GPL-2.0 (737-800/LICENSE)",
   "fetched": "2026-11-05",
-  "how": "git clone --filter=blob:none --no-checkout; sparse checkout of /LICENSE, /README.md, /Models/*.ac, /Models/*.png, /Models/*.xml (the files tools/convert_models.py AC_MODELS['b738'] reads, and their textures)",
-  "used_by": "tools/convert_models.py b738 (FG738_DIR default), tools/models/model_features.py (source door objects), tools/liveries/atlas.py (source textures)"
+  "how": "plain export (no .git) of the pinned commit, 5 Nov 2026 (review aircraft-v6: the earlier blob-less sparse clone kept 81 .git internals in refs/MANIFEST.json and could not be committed): LICENSE, README.md, Models/*.ac|*.png|*.xml (the files tools/convert_models.py AC_MODELS['b738'] reads and their textures) and Models/Liveries-800/N563AS.png|.xml (the Alaska livery tools/liveries/liveries.py fg_texture samples). Each file is byte-identical to the blob at the commit: \"blob_sha1\" = git hash-object of the file = git rev-parse <commit>:<path>. Re-fetch: git clone https://github.com/FGMEMBERS/737-800 && git -C 737-800 checkout 9126249dd0236479ad723f3e7c4c7139455c7d81.",
+  "used_by": "tools/convert_models.py b738 (FG738_DIR default), tools/models/model_features.py (source door objects), tools/liveries/atlas.py (source textures), tools/liveries/liveries.py fg_texture (Alaska tail)",
+  "blob_sha1": {
+   "LICENSE": "8cdb8451d9b90c1d4000c6f22eb86471a4568be6",
+   "README.md": "d0ef0a6091c3c14cad46659da74346a7b33cef86",
+   "Models/737-800.ac": "dc518f97e7ec290030b9242985778a04f6dfb279",
+   "Models/737-800.png": "1259ce4ab21ec856e66886176285bd75d23f0813",
+   "Models/737-model-common.xml": "ff595aa2cd27dc837f6a8b1e73bd60d7a13575d0",
+   "Models/737-panel.png": "34283466eecdb4a9a13aeeba9a08f103b99feb69",
+   "Models/738.xml": "1bf699b323e97b347846d345be1f801c89f6a572",
+   "Models/HorzStab.ac": "80bbeb49e56499287adc4962b766d409242c10d6",
+   "Models/HorzStab.xml": "ca55563aa4273af4bd232b5c4cbdd203543fae8a",
+   "Models/LWing.ac": "c5c94a3cc971319b95a92bc87f70ed5c2e7b9942",
+   "Models/LWing.xml": "53e537f33977ae8bce9f65ed32ec36c75eb37883",
+   "Models/NoseGear.xml": "b14f62ac9a72010485fe29a5c6124311e6ff001c",
+   "Models/OH-PANEL.png": "36257d37342dd5dab617ffcb030dbf5dcb355622",
+   "Models/RWing.ac": "6e53d0af981d6d6560cdde6207a095abccd515eb",
+   "Models/RWing.xml": "2c9f4edc4d7d158daf99b8db5b17fa2d55d464ad",
+   "Models/VertStab.ac": "742e54c284bfa37cd9f7c051c8ea20d32a575242",
+   "Models/VertStab.xml": "7a2349a6416257a17ee76955189720d7da62ed3c",
+   "Models/cent-panel.png": "5f6fd09e428e0c2716400aac21395af0ca6673a0",
+   "Models/cockpit.ac": "ad0fb04541a3e68da11b2889bdf275655afb5d2f",
+   "Models/cockpit.xml": "0794d3b2e93ff7b35701ff0a77f888a60590e6c9",
+   "Models/digits2.png": "1562f2c9dec304506e4578dfa6130066890284c4",
+   "Models/du-panel.png": "9944c26b3048ea780efdecfe60087af36f23dcbc",
+   "Models/flightdesk.ac": "39941ea4999c8f76d5f66eeb130b50317e8e376d",
+   "Models/flightdesk.xml": "ec264031f9eb3e526cc38eaa439a41a7db8a1864",
+   "Models/landinglight.ac": "905672e1341eb7de6bb17993a54c0470545280cc",
+   "Models/landinglight.png": "5eb7f9c243cfa5272ee8237e8debda391394444a",
+   "Models/lights.png": "df56b786363145d10e771a06b8f80670350e40f0",
+   "Models/nosegear.ac": "420a6c339d0c609e672489f54079519ccbf04e81",
+   "Models/oh-panel.ac": "9d76ab35e0b81fda47fef517761cb96214ec8f39",
+   "Models/pedals.ac": "c6fa2067bd76f49e423c99653576356604f9a039",
+   "Models/pedals.xml": "e475edf0cc25b197b684f060806e4141f830ccde",
+   "Models/pedestal.ac": "39e7fa22af2cb460212e8dfa79adb899c0cf7b27",
+   "Models/pedestal.xml": "0fe07297be6de6d4439814b69a003d8f9de1f840",
+   "Models/winglet.ac": "f5ea1ecf701e0102a6f411ac3db520a46e763b10",
+   "Models/winglet.xml": "24eb6c80ce46f8a97e550506c23126a4cf54abd7",
+   "Models/Liveries-800/N563AS.png": "26cddace69cb485f1dc756f3ae56da3c311b6214",
+   "Models/Liveries-800/N563AS.xml": "184868f866c1781dbf5aca2f5c7a67d808429a1b"
+  }
  }
 }

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<DIV8 N="25.1395" TYPE="SECTION" hierarchy_metadata="{&quot;path&quot;:&quot;/on/_SUBSTITUTE_DATE_/title-14/section-25.1395&quot;,&quot;citation&quot;:&quot;14 CFR 25.1395&quot;,&quot;alternate_reference&quot;:&quot;FAR 25.1395&quot;}">
+<HEAD>§ 25.1395 Maximum intensities in overlapping beams of forward and rear position lights.</HEAD>
+<P>No position light intensity may exceed the applicable values in the following table, except as provided in § 25.1389(b)(3).</P>
+<DIV width="100%"><DIV class="gpotbl_div">
+<TABLE border="1" cellpadding="1" cellspacing="1" class="gpo_table" frame="void" width="100%">
+<THEAD>
+<TR>
+<TH rowspan="2" class="center border-top-single border-bottom-single border-right-single">Overlaps</TH>
+<TH colspan="2" class="center border-top-single border-bottom-single">Maximum intensity</TH>
+</TR>
+<TR>
+<TH class="center border-bottom-single border-right-single">Area A (candles)</TH>
+<TH class="center border-bottom-single">Area B (candles)</TH>
+</TR>
+</THEAD>
+<TBODY>
+<TR>
+<TD class="left border-right-single">Green in dihedral angle <E T="03">L</E></TD>
+<TD class="right border-right-single">10</TD>
+<TD class="right">1</TD>
+</TR>
+<TR>
+<TD class="left border-right-single">Red in dihedral angle <E T="03">R</E></TD>
+<TD class="right border-right-single">10</TD>
+<TD class="right">1</TD>
+</TR>
+<TR>
+<TD class="left border-right-single">Green in dihedral angle <E T="03">A</E></TD>
+<TD class="right border-right-single">5</TD>
+<TD class="right">1</TD>
+</TR>
+<TR>
+<TD class="left border-right-single">Red in dihedral angle <E T="03">A</E></TD>
+<TD class="right border-right-single">5</TD>
+<TD class="right">1</TD>
+</TR>
+<TR>
+<TD class="left border-right-single">Rear white in dihedral angle <E T="03">L</E></TD>
+<TD class="right border-right-single">5</TD>
+<TD class="right">1</TD>
+</TR>
+<TR>
+<TD class="left border-bottom-single border-right-single">Rear white in dihedral angle <E T="03">R</E></TD>
+<TD class="right border-bottom-single border-right-single">5</TD>
+<TD class="right border-bottom-single">1</TD>
+</TR>
+</TBODY>
+</TABLE>
+</DIV></DIV>
+<FP>Where—
+</FP>
+<P>(a) Area A includes all directions in the adjacent dihedral angle that pass through the light source and intersect the common boundary plane at more than 10 degrees but less than 20 degrees; and</P>
+<P>(b) Area B includes all directions in the adjacent dihedral angle that pass through the light source and intersect the common boundary plane at more than 20 degrees.</P>
+</DIV8>

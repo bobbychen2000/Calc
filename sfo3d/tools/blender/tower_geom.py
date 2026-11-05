@@ -16,11 +16,14 @@ rim 64.0, 221 ft at the mast tips). The sheets draw both and prefer neither; bui
 writes tower.glb (F1) and tower_f2.glb (F2) and the manifest says that the choice is open.
 
 Level of detail (one geometry generator, three tessellations; LOD0 is the close-up asset):
-  LOD0  272 helical columns (4 per cladding joint), half-panel rows, recessed slots with glazed panes, light seams,
-        24 frameless cab panes with joints, ribbon mullions, roof masts / poles / obstruction light, base-building
+  LOD0  272 helical columns (4 per cladding joint), half-panel rows, recessed slots with glazed panes, dark seam joints,
+        24 frameless cab panes with light joints, ribbon mullions, roof masts / poles / obstruction light, base-building
         mullions, parapet coping, railings, rooftop unit, sunken roof garden;
-  LOD1  136 columns, panel rows, flat slots, 24-facet cab, 15 whips, plain base building with parapet;
-  LOD2  68 columns, every second panel row, flat slots, 12-facet cab, no masts, base building as a box (phone / far).
+  LOD1  136 columns, panel rows, flat slots, dark seam joints, 24-facet cab, 15 whips, red light, plain base building;
+  LOD2  68 columns, every second panel row, flat slots, 12-facet cab, 15 whips (3-sided), red light, base building as a
+        box (phone / far).
+Cladding joints (helical and row) are a base-colour + normal tile on UV0 (tools/blender/tower_tex.py), 4 x 2 panels per
+tile: UV0 u = joint index / CLAD_TU, v = panel row / CLAD_TV.
 """
 import math
 import os
@@ -67,6 +70,10 @@ GARDEN = (37.0, 8.5)
 AHU = dict(s=22.0, t=5.5, L=3.1, W=2.0, H=1.8)
 IBF_PANEL = (3.0, 1.2)                                # base-building metal panel module (w, h) [inf: t4 / t2 rough]
 GLAZING_MULLION = 1.5                                 # airside glazing band mullion pitch [inf]
+CLAD_TU, CLAD_TV = 4, 2                               # cladding tile = 4 joints x 2 panel rows (tower_tex.clad_*: per-panel tone)
+SEAM_W = 0.10                                         # the two circumferential seams: a dark recessed joint band, flush in the
+                                                      # shell (its own rows) [obs photos t2 / t4: darker than the row joints, a
+                                                      # thin light lip above; width ~2-3 px at 0.032 m/px (t2) -> ~0.1 m inf]
 
 
 def bvec(b):
@@ -202,11 +209,11 @@ LODS = {
     0: dict(m_sub=4, rows='half', lobe_n=14, shoulder=(0, 0.01, 0.03, 0.05, 0.076, 0.12, 0.167, 0.3, 0.515, 0.75, 1.0),
             recess=True, seams=True, panes=True, cab_n=CAB_PANES, round_n=96, joints=True, masts=6, poles=True, mullions=True,
             ibf='full', switch_m=(0, 350)),
-    1: dict(m_sub=2, rows='full', lobe_n=8, shoulder=(0, 0.03, 0.076, 0.167, 0.515, 1.0), recess=False, seams=False,
+    1: dict(m_sub=2, rows='full', lobe_n=8, shoulder=(0, 0.03, 0.076, 0.167, 0.515, 1.0), recess=False, seams=True,
             panes=False, cab_n=CAB_PANES, round_n=48, joints=False, masts=3, poles=False, mullions=False, ibf='plain',
             switch_m=(350, 1200)),
     2: dict(m_sub=1, rows='half_density', lobe_n=5, shoulder=(0, 0.076, 0.515, 1.0), recess=False, seams=False,
-            panes=False, cab_n=12, round_n=24, joints=False, masts=0, poles=False, mullions=False, ibf='box',
+            panes=False, cab_n=12, round_n=24, joints=False, masts=3, poles=False, mullions=False, ibf='box',
             switch_m=(1200, None)),
 }
 
@@ -237,7 +244,8 @@ class Tower:
         self.cab = c
         self.floor_h = DT.hf(61.0, f)                 # cab floor (sill band) station [inf]
         self.rim_h = c['roof_rim'][1]
-        self.tip_h = self.deck_h + 1.2                # NE blade tip (draw_blades: deck + 1.2) [obs photo t4, low]
+        self.tip_h = self.ht + DT.NE_TIP              # NE blade top: flush with the flare corner / ribbon head (draw_blades,
+                                                      # NE_TIP) [obs photos t3 / t4 / t5]
         self.slot_band = tuple(DT.hf(x, f) for x in T['h_upper_slots']['value'])
         self.long_band = tuple(DT.hf(x, f) for x in T['h_lower_slot']['value'])
         self.seams = [DT.hf(x, f) for x in T['h_seams']['value']]
@@ -276,6 +284,15 @@ class Tower:
 
     def uv_v(self, h):
         return (self.hs(h) - DT.ROW0) / DT.ROW_PITCH          # panel rows at integer v (spec pitch 2.467 m)
+
+    def uv_clad(self, psi, h):
+        """UV0 of the cladding tile at the helical coordinate psi (deg) and height h: joints at u = k / CLAD_TU, rows at
+        v = k / CLAD_TV (one tile = 4 joints x 2 panel rows)."""
+        return (psi / (360.0 / DT.N_JOINTS) / CLAD_TU, self.uv_v(h) / CLAD_TV)
+
+    def in_seam(self, h0, h1):
+        """True if the row band [h0, h1] lies inside one of the dark seam bands (SEAM_W)."""
+        return any(hs - SEAM_W / 2 - 1e-4 <= h0 and h1 <= hs + SEAM_W / 2 + 1e-4 for hs in self.seams)
 
     # ---------------------------------------------------------------- landside insert at one height
     def insert(self, h, lobe_n):
@@ -339,6 +356,8 @@ class Tower:
         elif L['rows'] == 'half_density':
             rows = rows[::2]
         key = [self.h_bot, self.ibf, self.ht, self.h_top] + list(self.slot_band) + list(self.long_band) + self.seams
+        if L['seams']:
+            key += [h + d for h in self.seams for d in (-SEAM_W / 2, SEAM_W / 2)]
         if L['panes']:
             for h0 in (self.slot_band[0],):
                 key += [h0 + 0.25 * self.f['s'], DT.hf(DT.h2spec(h0, self.f) + DT.ROW_PITCH, self.f) - 0.25 * self.f['s']]
@@ -373,11 +392,13 @@ class Tower:
     def shell(self, H, ins, L):
         part = Part('shaft', dict(
             src='inf', feature='round airside body: radius r(h) = A380 width ratios / 1.015 x D, stations rim - k D; helical '
-            'panel joints (UV); upper slot band + long helical slot', spec=['shaft_profile_ratio_A380', 'd_flare_max',
+            'panel joints and panel rows (UV0 base-colour + normal tile, 4 x 2 panels); two dark seam joint bands (0.10 m, flush); '
+            'upper slot band + long helical slot', spec=['shaft_profile_ratio_A380', 'd_flare_max',
             'd_shaft_waist', 'd_shaft_at_ibf_roof', 'h_flare_max', 'h_upper_slots', 'h_lower_slot', 'h_seams', 'cladding'],
             drawing='BT-02 A/B, BT-03 (shaft_outline, draw_slots, draw_cladding_grid)',
             tags=dict(radii='inf (photo ratios x D)', stations='inf', slots='inf from obs photos t1/t2 (count, phase inf)',
-                      slot_glazing='obs photos t3/t4', joints='spacing obs t2; count / twist inf; phase unknown')),
+                      slot_glazing='obs photos t3/t4', joints='spacing obs t2; count / twist inf; phase unknown; dark joint lines '
+                      'obs t2/t4 (width / contrast inf)', seams='dark joint bands obs t2/t4; width inf')),
             smooth=True)
         m = L['m_sub']; n = 68 * m; dpsi = 360.0 / n
         psi0 = DT.LONG_SLOT[0]
@@ -421,7 +442,7 @@ class Tower:
             thb, tha = ins[k]['th_b'], ins[k]['th_a'] + 360.0
             pB = thb + c
             items = []
-            idB = part.v((R * bvec(thb))[0:2].tolist() + [h], (pB / (360 / 68), self.uv_v(h)))
+            idB = part.v((R * bvec(thb))[0:2].tolist() + [h], self.uv_clad(pB, h))
             items.append((pB, idB, 'B'))
             span = tha - thb
             margin = 0.35 * dpsi
@@ -431,10 +452,10 @@ class Tower:
                 if pu - pB < margin or pu - pB > span - margin: continue
                 th = pu - c
                 p = R * bvec(th)
-                vid = part.v((p[0], p[1], h), (pu / (360 / 68), self.uv_v(h)))
+                vid = part.v((p[0], p[1], h), self.uv_clad(pu, h))
                 items.append((pu, vid, j))
             pA = tha + c
-            idA = part.v((R * bvec(tha)).tolist() + [h], (pA / (360 / 68), self.uv_v(h)))
+            idA = part.v((R * bvec(tha)).tolist() + [h], self.uv_clad(pA, h))
             items.append((pA, idA, 'A'))
             items.sort(key=lambda x: x[0])
             lists.append(items)
@@ -451,28 +472,27 @@ class Tower:
         for k in range(len(H) - 1):
             A, B = lists[k], lists[k + 1]
             i = j = 0
+            cm = 'seam' if (L['seams'] and self.in_seam(H[k], H[k + 1])) else 'clad'
             while i < len(A) - 1 or j < len(B) - 1:
                 if (i < len(A) - 1 and j < len(B) - 1 and isinstance(A[i][2], int) and isinstance(A[i + 1][2], int)
                         and A[i][2] == B[j][2] and A[i + 1][2] == B[j + 1][2] and (A[i + 1][2] - A[i][2]) % n == 1):
                     s = in_slot(k, A[i][2])
                     ids = [A[i][1], B[j][1], B[j + 1][1], A[i + 1][1]]
                     if s is None:
-                        part.f(ids, 'clad')
+                        part.f(ids, cm)
                     elif L['recess']:
                         holes.setdefault(s['name'], []).append((k, A[i][2], ids))
                     else:
                         part.f(ids, 'slot')
                     i += 1; j += 1; continue
                 if j >= len(B) - 1 or (i < len(A) - 1 and A[i + 1][0] <= B[j + 1][0]):
-                    part.f([A[i][1], B[j][1], A[i + 1][1]], 'clad'); i += 1
+                    part.f([A[i][1], B[j][1], A[i + 1][1]], cm); i += 1
                 else:
-                    part.f([A[i][1], B[j][1], B[j + 1][1]], 'clad'); j += 1
+                    part.f([A[i][1], B[j][1], B[j + 1][1]], cm); j += 1
         if L['recess']:
             self.slot_pockets(part, H, holes, slots, L)
-        if L['seams']:
-            self.seam_rings(part, H, ins, slots, out=self._detail('shaft_seams', dict(
-                src='inf', feature='two light circumferential seams (0.15 m band, 0.03 m proud) on the round body',
-                spec=['h_seams'], drawing='BT-02', tags=dict(stations='inf', look='obs photos t1/t2'))))
+        # the two seams (h_seams) are dark joint bands SEAM_W wide in the shell itself (material 'seam', LOD0 / LOD1); the
+        # round-1 light band standing 0.03 m proud (seam_rings) is withdrawn: the photos show dark joints
         return part
 
     def slot_pockets(self, part, H, holes, slots, L):
@@ -519,44 +539,6 @@ class Tower:
             bc = s['centre']((g0 + g1) / 2)
             orient(part, ids, 'slot_glass', outside_dir=np.append(bvec(bc), 0.0))
 
-    def seam_rings(self, part, H, ins, slots, out=None):
-        """the two light circumferential seams [inf stations, obs photos]: a 0.15 m band standing 0.03 m proud, on the round
-        arc only, interrupted at the slots."""
-        for hsm in self.seams:
-            k = int(np.argmin([abs(h - hsm) for h in H]))
-            items = self.shell_lists[k]
-            pts = []
-            for pu, vid, j in items:
-                p = np.array(part.V[vid]); pts.append((pu, p, j))
-            # skip columns inside a slot at this height
-            blocked = []
-            for s in slots:
-                if s['h0'] <= hsm <= s['h1']:
-                    c = self.psi(s['centre'](hsm), hsm); hw = math.degrees(s['w'] / 2 / self.R(hsm)) + 0.3
-                    blocked.append((c - hw, c + hw))
-
-            def free(pu):
-                for lo, hi in blocked:
-                    if ((pu - lo) % 360.0) < (hi - lo): return False
-                return True
-            seg = []
-            segs = []
-            for pu, p, j in pts:
-                if free(pu): seg.append(p)
-                else:
-                    if len(seg) > 1: segs.append(seg)
-                    seg = []
-            if len(seg) > 1: segs.append(seg)
-            for seg in segs:
-                lo_, hi_ = [], []
-                for p in seg:
-                    r = math.hypot(p[0], p[1]); dxy = p[0:2] / r * (r + 0.03)
-                    lo_.append(out.v((dxy[0], dxy[1], hsm - 0.075), (0, 0)))
-                    hi_.append(out.v((dxy[0], dxy[1], hsm + 0.075), (0, 1)))
-                for a in range(len(seg) - 1):
-                    od = np.append(seg[a][0:2] + seg[a + 1][0:2], 0.0)
-                    orient(out, [lo_[a], lo_[a + 1], hi_[a + 1], hi_[a]], 'seam', outside_dir=od)
-
     # ---------------------------------------------------------------- landside: blades, channel, ribbon
     def landside(self, H, ins, L):
         land = Part('landside', dict(
@@ -582,10 +564,10 @@ class Tower:
                 pts = segs[k][key]
                 s = [0.0]
                 for a in range(1, len(pts)): s.append(s[-1] + float(np.linalg.norm(pts[a] - pts[a - 1])))
-                uw = 1.5 if mat == 'louvre' else 0.9
-                vh = 1.2 if mat == 'louvre' else DT.ROW_PITCH * self.f['s']
-                vv = h / vh if mat == 'louvre' else self.uv_v(h)
-                rows.append([land.v((p[0], p[1], h), (s[a] / uw, vv)) for a, p in enumerate(pts)])
+                if mat == 'louvre':
+                    rows.append([land.v((p[0], p[1], h), (s[a] / 1.5, h / 1.2)) for a, p in enumerate(pts)])
+                else:                             # cladding tile: a joint every 0.9 m along the facet [inf], panel rows
+                    rows.append([land.v((p[0], p[1], h), (s[a] / 0.9 / CLAD_TU, self.uv_v(h) / CLAD_TV)) for a, p in enumerate(pts)])
             self._strip(land, rows, mat, ins, H)
         # ribbon: glass between hb and ht, clad below (buried) and above (if capped)
         rows = []
@@ -678,14 +660,16 @@ class Tower:
         for r in range(len(rings) - 1):
             for i in range(npt):
                 ids = [rings[r][i], rings[r][(i + 1) % npt], rings[r + 1][(i + 1) % npt], rings[r + 1][i]]
-                orient(part, ids, 'clad', outside_dir=(0, 0, 1))
-        # NE blade tip: wedge on the prow (root, tip, ribbon NE edge) rising to the pointed tip [obs photo t4, low]
-        R0 = np.append(I['root'], self.h_top); T0 = np.append(I['tip'], self.h_top); E0 = np.append(I['e_ne'], self.h_top)
-        T1 = T0.copy(); T1[2] = self.tip_h
-        ids = [part.v(p) for p in (R0, T0, E0, T1)]
-        cen = (R0 + T0 + E0) / 3; cen[2] = self.h_top + 0.2
-        for tri in ((0, 1, 3), (1, 2, 3), (2, 0, 3)):
-            orient(part, [ids[t] for t in tri], 'clad', inside_pt=cen)
+                orient(part, ids, 'clad_deck', outside_dir=(0, 0, 1))
+        # NE blade top: flush with the flare corner (DT.NE_TIP = 0) [obs photos t3 / t4 / t5]; a wedge only if the sheet
+        # draws the tip above the corner
+        if self.tip_h > self.h_top + 0.05:
+            R0 = np.append(I['root'], self.h_top); T0 = np.append(I['tip'], self.h_top); E0 = np.append(I['e_ne'], self.h_top)
+            T1 = T0.copy(); T1[2] = self.tip_h
+            ids = [part.v(p) for p in (R0, T0, E0, T1)]
+            cen = (R0 + T0 + E0) / 3; cen[2] = self.h_top + 0.2
+            for tri in ((0, 1, 3), (1, 2, 3), (2, 0, 3)):
+                orient(part, [ids[t] for t in tri], 'clad_deck', inside_pt=cen)
         if L['poles']:
             rp = self._detail('deck_rails', dict(src='obs', feature='post with a stay on the SW wing top; railing on the '
                               'flare deck around the plinth', spec=['roof_equipment'], drawing='BT-02 B (WING_POST)',
@@ -730,7 +714,8 @@ class Tower:
                       centre='inf', roof_curb='inf (NAIP rims obs)', interior='unknown (dark placeholder floor / ceiling)'),
             anchors=dict(cab_floor_h=self.floor_h, eye_h=self.floor_h + 1.6)), smooth=True)
         glass = Part('cab_glass', dict(
-            src='inf', feature=f'cab glass: {L["cab_n"]} flat frameless panes leaning out, full ring',
+            src='inf', feature=f'cab glass: {L["cab_n"]} flat frameless panes leaning out, full ring; light butt joints (LOD0); '
+            'tinted, see-through (alpha 0.5: the far-side panes and the sky show through, photos t1 / t2)',
             spec=['cab_glass_panels', 'cab_glass_slope', 'cab_glass_type', 'cab_view_angle'], drawing='BT-02, BT-03',
             tags=dict(panes='pub ENR 24 x 6 ft x 11 ft (slant 3.32 m here = 10.9 ft)', arc='inf: glass on both sides in photos '
                       't2/t3/t4; 220/235/270 deg published as view / column-free angles (conflict)', phase='unknown')),
@@ -750,7 +735,9 @@ class Tower:
         disc(part, CAB, gt[0], gt[1] - 0.01, n, 'cab_interior', up=False)
         # roof fascia (inverted cone) glass head -> rim, coping, inner face, deck, curb
         rf = rim[0]
-        lathe(part, [(gt[0], gt[1]), (rf, rim[1])], CAB, n, 'clad', uv_u=32, uv_v=3.1)     # ~32 radial joints [obs t1/t2]
+        # fascia: ~32 radial joints [obs t1/t2] = 8 cladding tiles around; v kept inside one panel row (no row joint seen)
+        sl = math.hypot(rf - gt[0], rim[1] - gt[1])
+        lathe(part, [(gt[0], gt[1]), (rf, rim[1])], CAB, n, 'clad', uv_u=32 / CLAD_TU, uv_v=sl / 0.46)
         lathe(part, [(rf, rim[1]), (rf - COPING_W, rim[1]), (rf - COPING_W, rim[1] - ROOF_DROP)], CAB, n, 'coping',
               uv_u=n / 4, uv_v=1.0, outward=True)
         disc(part, CAB, rf - COPING_W, rim[1] - ROOF_DROP, n, 'roof_deck', up=True)
@@ -782,7 +769,7 @@ class Tower:
                 tang = np.array([math.cos(math.radians(b)), -math.sin(math.radians(b)), 0.0])
                 rad = np.cross(ax / np.linalg.norm(ax), tang)
                 if np.dot(rad[0:2], bvec(b)) < 0: rad = -rad
-                box(glass, c + rad * 0.01, ax, tang * 0.02, rad * 0.015, 'mullion')
+                box(glass, c + rad * 0.01, ax, tang * 0.03, rad * 0.015, 'cab_joint')
         return part, glass
 
     # ---------------------------------------------------------------- roof masts, poles, red light
@@ -809,10 +796,13 @@ class Tower:
                 tube(part, [p, top], 0.04, 6, 'pole')
                 # head: dome camera / lamp / bracket (schematic) [inf]
                 box(part, top + np.array([0, 0, 0.08]), np.array([0.13, 0, 0]), np.array([0, 0.13, 0]), np.array([0, 0, 0.08]), 'pole')
-            d = bvec(RED_LIGHT_BRG); rl = rim[0] - COPING_W / 2
-            p = np.array([CAB[0] + rl * d[0], CAB[1] + rl * d[1], rim[1]])
-            tube(part, [p, p + np.array([0, 0, 0.12])], 0.06, 8, 'pole')
-            tube(part, [p + np.array([0, 0, 0.12]), p + np.array([0, 0, 0.30])], 0.09, 8, 'red_light', r_top=0.04)
+        # red obstruction light on the rim (FAA: required, DOF lighting R [pub]; one fixture seen, photo t5 [obs]) in EVERY LOD:
+        # it is what is seen from afar at night (the app's beacon glow keys on the material); LOD1 / LOD2 coarser
+        nl = 8 if L['poles'] else 4
+        d = bvec(RED_LIGHT_BRG); rl = rim[0] - COPING_W / 2
+        p = np.array([CAB[0] + rl * d[0], CAB[1] + rl * d[1], rim[1]])
+        tube(part, [p, p + np.array([0, 0, 0.12])], 0.06, nl, 'pole')
+        tube(part, [p + np.array([0, 0, 0.12]), p + np.array([0, 0, 0.30])], 0.09, nl, 'red_light', r_top=0.04)
         return part
 
     # ---------------------------------------------------------------- base building (IBF)

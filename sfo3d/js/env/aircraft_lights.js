@@ -1,0 +1,147 @@
+// Aircraft exterior lights (docs/research/environment_spec.md §6; step 2, gates A-NAV1 / A-FLASH1). Renderer-agnostic,
+// no DOM: which lights are on in which flight phase, the position-light sectors and intensities, the anti-collision
+// flashes, and the sprite records both renderers draw (js/aircraft/fleet.js lightSprites delegates here).
+// Sources (cached, public domain, refs/cache/env/ecfr + refs/cache/env/aim, SOURCES.json):
+//   14 CFR 25.1387 (dihedral angles L / R = 0–110° left / right of dead ahead, A = ±70° about dead aft),
+//   25.1391 (minimum horizontal intensities: L and R (forward red and green) 40 cd 0–10°, 30 cd 10–20°, 5 cd 20–110°;
+//   A (rear white) 20 cd 110–180°), 25.1393 (vertical factors 1.00 at 0°, 0.90 0–5°, 0.80 5–10°, 0.70 10–15°, 0.50
+//   15–20°, 0.30 20–30°, 0.10 30–40°, 0.05 40–90°), 25.1395 (maximum intensities in overlaps: Area A 10–20° past the
+//   common boundary plane 10 cd (5 cd for the aft overlaps), Area B > 20° 1 cd), 25.1397 (aviation red / green / white),
+//   25.1401 (anticollision: 40–100 cycles/min; effective intensity 400 cd 0–5°, 240 5–10°, 80 10–20°, 40 20–30°,
+//   20 30–75° above or below the horizontal plane; Blondel–Rey effective intensity, (e)) — eCFR point in time 2026-11-01;
+//   14 CFR 91.209 (position lights sunset to sunrise when operating; parked: clearly illuminated, OR position lights, OR
+//   an area marked by obstruction lights; anticollision lights whenever operating) — eCFR 2026-11-01;
+//   AIM 4-3-24 "Use of Aircraft Lights" (FAA AIM HTML fetched 2026-11-05): rotating beacon "anytime their aircraft
+//   engines are in operation"; "Prior to commencing taxi, it is recommended to turn on navigation, position,
+//   anti-collision, and logo lights"; taxi light on "when the aircraft is moving or intending to move on the ground"
+//   and off "when stopped or yielding"; "When entering the departure runway for takeoff or 'line up and wait,' all
+//   lights, except for landing lights, should be illuminated"; landing lights "when takeoff clearance is received or
+//   when commencing takeoff roll" and "when operating below 10,000 feet".
+// Choices (I, shown in docs/research/environment_impl.md): intensities = 2 × the regulatory minima (spec §6 default);
+// no spill outside a sector beyond a 2° anti-aliasing ramp (within the 25.1395 maxima: no limit is set within 10° of the
+// boundary, 0 cd elsewhere); parked aircraft (phase 'still', not moving) have position lights OFF (owner Q11 default;
+// 91.209(a)(2) "clearly illuminated" suffices at a floodlit stand); the beacon runs from pushback to parking (engines
+// in operation); strobes from line-up until the runway is vacated (rollout) and in flight; landing lights on the take-off
+// roll, in flight below 10,000 ft (3,048 m) and on the landing roll above 30 kt; taxi light only when moving under own
+// power on the ground (≥ 1 kt, not during pushback); logo lights are not drawn (no anchors on the models, photometry NV);
+// landing light 770,000 cd in 15° × 16° (Honeywell LED example for 737NG/757/767/777, spec §6, V for those types; NV for
+// others); taxi light 50,000 cd (parameter, NV: not regulated).
+import { clamp, flashGain } from './lighting/photometry.js';
+
+const DEG = Math.PI / 180;
+export const NAV_H = [[10, 40], [20, 30], [110, 5]];                      // 25.1391 forward red / green (V)
+export const NAV_REAR_CD = 20;                                            // 25.1391 rear white (V)
+export const NAV_V = [[0, 1.0], [5, 0.9], [10, 0.8], [15, 0.7], [20, 0.5], [30, 0.3], [40, 0.1], [90, 0.05]];   // 25.1393 (V)
+export const ACL_V = [[5, 400], [10, 240], [20, 80], [30, 40], [75, 20]];   // 25.1401(f) effective cd (V)
+export const OVERLAP_MAX = { A: { fwd: 10, aft: 5 }, B: 1 };               // 25.1395 (V)
+export const MINIMA_FACTOR = 2;                                           // spec §6: default = 2 × minima (I)
+export const SPILL_RAMP_DEG = 2;                                          // anti-aliasing ramp past a sector boundary (I)
+export const LANDING_CD = 770000, LANDING_BEAM = [15, 16];                // Honeywell LED example (spec §6; V for 737NG/757/767/777)
+export const TAXI_CD = 50000;                                             // NV parameter (not regulated)
+export const ALT_LANDING_M = 3048;                                        // 10,000 ft (AIM 4-3-24)
+// Anti-collision flashing (25.1401(c): effective flash frequency 40–100 cycles/min): red beacons 60 cycles/min with a
+// 0.15 s pulse (LED beacon pulse length NV, I); white wing-tip strobes: one double flash per cycle at 66 cycles/min
+// (the app's existing rates, spec §6 "comply"), the two flashes 0.12 s apart (I), each a short (xenon / LED) flash.
+export const BEACON = { fpm: 60, on: 0.15 }, STROBE = { fpm: 66, gap: 0.12, on: 0.002 };
+// Aviation colours as linear sRGB (EB 67D box centroids gamut-clipped, data/sfo_lighting.js LIGHTING_SPEC.colours,
+// = 25.1397 boxes, spec §4.11): red 1/0/0, green 0/1/0.036, white 1/0.614/0.411
+export const AV_RED = [1, 0, 0], AV_GREEN = [0, 1, 0.0358], AV_WHITE = [1, 0.6137, 0.4107];
+
+const tbl = (T, x) => { for (const [lim, v] of T) if (x <= lim) return v; return 0; };
+/** 25.1393 vertical factor at |el| deg (0° -> 1.00; (0, 5] -> 0.90; ...; > 90 -> 0). */
+export const navVertical = (elDeg) => { const a = Math.abs(elDeg); return a === 0 ? 1.0 : a <= 90 ? tbl(NAV_V.slice(1), a) : 0; };
+/** 25.1401(f) minimum effective anticollision intensity at |el| (0 beyond 75°). */
+export const aclMinimum = (elDeg) => tbl(ACL_V, Math.abs(elDeg));
+const ramp = (past) => clamp(1 - past / SPILL_RAMP_DEG, 0, 1);
+/** Position-light intensity (cd) of colour 'red' | 'green' | 'white' seen at azimuth az (deg from dead ahead, positive to
+ *  the RIGHT, −180..180) and elevation el (deg from the aircraft's horizontal plane), at MINIMA_FACTOR × the minima. */
+export function navIntensity(colour, az, el) {
+  const a = ((az % 360) + 540) % 360 - 180;            // −180..180
+  let h = 0;
+  if (colour === 'red' || colour === 'green') {
+    const s = colour === 'red' ? -a : a;                // angle into the light's own side (L for red, R for green)
+    const ab = Math.abs(a);
+    if (s >= 0 && ab <= 110) h = tbl(NAV_H, ab);
+    else if (s >= 0) h = NAV_H[2][1] * ramp(ab - 110);  // past the aft boundary (110°)
+    else h = NAV_H[0][1] * ramp(-s);                    // past the forward boundary (dead ahead) into the other side
+  } else {
+    const ab = Math.abs(a);
+    h = ab >= 110 ? NAV_REAR_CD : NAV_REAR_CD * ramp(110 - ab);
+  }
+  return MINIMA_FACTOR * h * navVertical(el);
+}
+/** Which dihedral angle (25.1387) a direction lies in: 'L' (left, 0–110°), 'R' (right), 'A' (aft, beyond 110°). */
+export const dihedral = (az) => { const a = ((az % 360) + 540) % 360 - 180; return Math.abs(a) > 110 ? 'A' : a < 0 ? 'L' : 'R'; };
+
+/** Light states from the traffic phase (AIM 4-3-24, 91.209; choices above). in: {phase, ground, gs (kt), altAgl (m),
+ *  stale}. */
+export function aircraftLightStates({ phase, ground, gs = 0, altAgl = 0, stale = false }) {
+  const moving = !ground || gs > 0.5;
+  const parked = stale || ((phase === 'still' || phase === 'new' || phase === 'vehicle') && !moving);
+  const operating = !parked;                             // engines in operation: pushback .. parked
+  const air = !ground;
+  const onRunwayPhase = phase === 'lineup' || phase === 'takeoff' || phase === 'rollout';
+  return {
+    nav: operating,                                      // AIM: before taxi; 91.209(a)(1) at night; parked: off (Q11, I)
+    beacon: operating,                                   // AIM 4-3-24 / 91.209(b)
+    strobe: !stale && (air || onRunwayPhase || phase === 'final' || phase === 'flare'),
+    landing: !stale && ((air && altAgl < ALT_LANDING_M) || phase === 'takeoff' || phase === 'flare' || (phase === 'rollout' && gs > 30)),
+    taxi: !stale && ground && gs >= 1 && phase !== 'pushback' && phase !== 'takeoff' && !(phase === 'rollout' && gs > 30),
+  };
+}
+
+// ------------------------------------------------------------------------------------------------ sprites
+// Sprite intensity units (shared with js/env/lighting/airfield.js): a record {p, c, i, s} drawn by js/three/lights.js
+// gives the eye illuminance E = i × LAMP_M × 0.408 s² / d² sky units at the night calibration, i.e. i × 13.16 s² cd
+// (js/three/renderer3.js LAMP_M = (20 lx / 6,665 lx per unit) / 0.62, core integral 0.143 / 0.35 = 0.408; M, code read).
+export const CD_PER_LAMP_S2 = (133300 / 20) * ((20 / (133300 / 20)) / 0.62) * (0.143 / 0.35);
+export const I_CAP = 20000;   // lamp units: RGBA16F headroom of the old renderer's sprite pass (I; step 3 pre-exposure lifts it)
+export const lampUnits = (cd, s) => Math.min(I_CAP, cd / (CD_PER_LAMP_S2 * s * s));
+
+let viewer = null;
+/** The camera position for the direction-dependent intensities (set once per frame by js/live/app.js). */
+export function setLightViewer(p) { viewer = p; }
+export const lightViewer = () => viewer;
+let frameT = { prev: null, t: null };
+/** Frame clock for the flash scheduler (seconds; set once per frame by js/live/app.js). */
+export function setLightFrame(t) { if (frameT.t !== t) { frameT.prev = frameT.t; frameT.t = t; } }
+
+function angles(p, fwd, right, up) {
+  if (!viewer) return { az: 0, el: 0 };
+  const v = [viewer[0] - p[0], viewer[1] - p[1], viewer[2] - p[2]]; const d = Math.hypot(v[0], v[1], v[2]) || 1;
+  const f = v[0] * fwd[0] + v[1] * fwd[1] + v[2] * fwd[2], r = v[0] * right[0] + v[1] * right[1] + v[2] * right[2], u = v[0] * up[0] + v[1] * up[1] + v[2] * up[2];
+  return { az: Math.atan2(r, f) / DEG, el: Math.asin(clamp(u / d, -1, 1)) / DEG };
+}
+/** Sprite records for one aircraft. L = world light anchors {navL, navR, tail, beaconTop, beaconBot, strobeL, strobeR,
+ *  landL, landR, taxi}, axes = {fwd, right, up} world unit vectors, on = light states, seed = per-aircraft phase offset (s),
+ *  t = time (s). All records carry phys: true (physical intensity day and night: js/three/renderer3.js draws them at
+ *  the night calibration; js/three/lights.js `fixed`). */
+export function aircraftSprites(L, axes, on, seed, t, gearDown = 1) {
+  const S = []; const tPrev = frameT.t === t && frameT.prev != null ? frameT.prev : t - 1 / 60;
+  const { fwd, right, up } = axes;
+  const put = (p, c, cd, s, extra) => { if (p && cd > 0) S.push({ p, c, i: lampUnits(cd, s), s, phys: true, ...extra }); };
+  if (on.nav) {
+    for (const [p, c, name] of [[L.navL, AV_RED, 'red'], [L.navR, AV_GREEN, 'green'], [L.tail, AV_WHITE, 'white']]) {
+      if (!p) continue; const a = angles(p, fwd, right, up); put(p, c, navIntensity(name, a.az, a.el), 0.22, { nav: name });
+    }
+  }
+  if (on.beacon) {
+    const g = flashGain(tPrev, t, 60 / BEACON.fpm, seed % (60 / BEACON.fpm), BEACON.on);
+    if (g > 0) for (const p of [L.beaconTop, L.beaconBot]) { if (!p) continue; const a = angles(p, fwd, right, up); put(p, AV_RED, MINIMA_FACTOR * aclMinimum(a.el) * g, 0.25, { flash: 'beacon' }); }
+  }
+  if (on.strobe) {
+    const P = 60 / STROBE.fpm, ph = (seed * 0.37) % P;
+    const g = Math.max(flashGain(tPrev, t, P, ph, STROBE.on), flashGain(tPrev, t, P, ph + STROBE.gap, STROBE.on));
+    if (g > 0) for (const p of [L.strobeL, L.strobeR]) { if (!p) continue; const a = angles(p, fwd, right, up); put(p, AV_WHITE, MINIMA_FACTOR * aclMinimum(a.el) * g, 0.3, { flash: 'strobe' }); }
+  }
+  const beamCd = (p, dir, cd, hw, vw) => {
+    if (!viewer) return cd;
+    const v = [viewer[0] - p[0], viewer[1] - p[1], viewer[2] - p[2]]; const d = Math.hypot(v[0], v[1], v[2]) || 1;
+    const c = (v[0] * dir[0] + v[1] * dir[1] + v[2] * dir[2]) / d; const off = Math.acos(clamp(c, -1, 1)) / DEG;
+    const half = (hw + vw) / 4;                                           // mean half-angle of the beam (I: circular)
+    return off <= half ? cd : off <= 3 * half ? cd * Math.pow(10, -2 * (off - half) / (2 * half)) : 0;   // −20 dB at 3× (I)
+  };
+  if (on.landing && axes.landDir) for (const p of [L.landL, L.landR]) put(p, [1, 0.95, 0.85], beamCd(p, axes.landDir, LANDING_CD, LANDING_BEAM[0], LANDING_BEAM[1]), 0.35, { beam: 'landing' });
+  if (on.taxi && gearDown > 0.5 && axes.taxiDir && L.taxi) put(L.taxi, [1, 0.96, 0.9], beamCd(L.taxi, axes.taxiDir, TAXI_CD, 20, 20), 0.3, { beam: 'taxi' });
+  return S;
+}

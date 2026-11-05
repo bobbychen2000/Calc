@@ -25,7 +25,10 @@ CONFLICTS = [
 INFERRED = [
     'roof deck + fascia 0.6 m thick (BI-02 top-chord line); cross camber flat (unknown)',
     'glazed truss-line strips 1.5 m wide (NAIP 2024 dark lines, rough)',
-    'lens skylights drawn as pointed lenses flush with the centre arch (NAIP shows D shapes: vaulted lens or D plan, not settled)',
+    'lens skylights: pointed-lens planform (NAIP shows D shapes: vaulted lens or D plan, not settled), raised as vaults 1.9 m '
+    'above the deck (review r1: photos i4 / i2 show the crown capped by dark lens glass, 1.5 m above the white fascia at the '
+    'crown in i4 [obs, low]; the deck / fascia of the centre section runs crown_cap(u) = 1.5 (1 - ((u + 1.8) / 24.0)^2) m below the '
+    'BI-02 silhouette roof_line(u), and the lens tops form that silhouette as seen from i4; vault form and rise inf)',
     'truss form: three-chord (2 top chords 2.4 m apart, 1 bottom chord), webs on a 20-ft node grid offset 10 ft; depth taper (BI-03); '
     'the west chord is level with the glass head (BI-02) except between the inner column line and the notch, where it follows the '
     'BI-03 taper (up to ~3.4 m above the BI-02 line; photos i3 / i4 show the sweep up to the notch: a deliberate deviation from '
@@ -40,8 +43,15 @@ INFERRED = [
     'upper glazing behind the exposed west truss (photo i3) and a head closure; end walls from level 3 to the roof underside; east '
     'clerestory 1 m inside the east eave',
     'departures curb sidewalk 7 m wide at level 3 with a 1.1 m upstand',
-    'pier parapet 1.0 m (roof deck below the measured roof edge); BA-G glazing top 0.7 m under its 17.0 m roof',
-    'pier gate-room glazing bays 24 m wide centred on the bridge attach points of data/sfo_stands.json; 5.2-17.2 m from photo a2 (BA-A)',
+    'pier parapet 1.0 m (roof deck below the measured roof edge)',
+    'BA-G facade (review r1; photo a2 = the BA-G NNE face, camera solved): gate-room curtain walls 4.6-14.7 m filling the main-face '
+    'segments between the bridge-head bump-outs that a roof pod overlaps by >= 35 m (6 rooms = the six double-gated gate rooms '
+    '[pub]); obs on the NNE face (s 9.6..73.2 m and -133.1..-69.6 m imaged), inf on the SSW face and at G3 (outside a2); dark '
+    'apron level 0-3.0 m and a light band 3.0-4.6 m [obs a2]; bridge-head bump-outs 6.5 m high [obs a2 B1, low; the others by '
+    'eye / analogy]; curtain-wall rhythm (15.9-m bays, light mullion at mid-bay, ~1.7-m transoms, floor band) [obs a2, low]',
+    'BA-A facade: NO reference photo (round 0 read a2 as BA-A; a2 shows BA-G): the round-0 glazed bays (24 m centred on the '
+    'bridge attach points) are kept as placeholders [unk] with the BA-G band heights [inf, analogy]; bump-outs at the full '
+    'outline height [unk]; the BA-G gate-room rule does not transfer (BA-A pods sit over its bump-outs)',
     'BA-G end box: window band top-2.6..top-1.2, three antennas (schematic, photo d2); function ramp-control cab (unconfirmed)',
     'materials / colours: our reading of the reference photos (no texture from imagery); roof colours sampled from NAIP 2024',
 ]
@@ -51,7 +61,10 @@ UNKNOWN = [
     '(no source; set equal to the BA-A main roof); facade a metal-panel / window-band placeholder',
     'levels 1-2 under the hall (podium): faces only, concrete / dark band placeholder',
     'end-wall outline and mullions, the central section bottom chord form, fascia depth, mullion module of the end walls',
-    'pier floor heights, gate-room bay positions (inferred from bridges), parapets, roof equipment (none modelled)',
+    'pier floor heights, BA-A gate-room bay positions (placeholders at the bridge heads), parapets, roof equipment (none '
+    'modelled); the two isolated 2-lite windows per panel segment on the BA-G NNE face (photo a2) are not modelled',
+    'no continuous concourse window band on BA-G: a2 shows none on the pier (the long green band in a2 belongs to the building '
+    'beyond the south apron = Garage G / BART station, landside asset)',
     'the 2024-26 roof (new membrane, ~1,400 kW PV): not imaged; the asset shows the NAIP 2024 roof',
     'departures roadway beyond the 7 m curb, the arrivals roadway, the AirTrain guideway through the ITB: not part of this asset',
 ]
@@ -65,7 +78,7 @@ def entry(build, ver, parts, mats):
                           lods=[l for l in (0, 1, 2) if name in parts[l]], kind=p.kind))
     comps.append(dict(node='L0_hall_lettering', feature='west-wall lettering "SAN FRANCISCO INTERNATIONAL"', src='obs', spec=['facade.west'],
                       dims=dict(width=G.dim(66.0, 'obs', 'photos i1 / i4'), height=G.dim(2.8, 'obs', 'BI-02 V1'), font=G.dim('Blender built-in', 'inf', '')),
-                      lods=[0], kind='detail'))
+                      lods=[0, 1], kind='detail', note='LOD1 (L1_hall_lettering): flat front faces, coarse curves (review r1)'))
     lods = []
     for lod in (0, 1, 2):
         L = st['lods'].get('LOD%d' % lod, {})

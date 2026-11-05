@@ -404,8 +404,16 @@ def door_fit(prims, f):
     (yTop, -dTop), (yTop + above, 0), and |z| is rescaled by the skin half width at the new height over that at the old
     one (planar cuts of the base-zone mesh before the move), so moved points stay on the fuselage contour. Being a function
     of the position only, coincident vertices of different objects move together: the skin stays closed, the opening keeps
-    fitting the door, and the texture (UVs unchanged) follows the geometry. Vertices outside [x0, x1] do not move."""
-    x0, x1, side = f['x0'], f['x1'], f['side']
+    fitting the door, and the texture (UVs unchanged) follows the geometry.
+    [x0, x1] must take in the skin columns that close the opening (the fan apices of the skin below the sill): review
+    5 Nov 2026 (round 2, aircraft-v2 follow-up): with [x0, x1] at the door object only, the sill edge loop moved below the
+    two unmoved apices 2-3 cm outside the range and the fan between them folded over (4 triangles inverted, a 1.2 m x 6-8 cm
+    band coincident with the door panel: z-fighting). Outside [x0, x1] the move fades out linearly over `ramp` (model m;
+    w(x) = 1 - distance / ramp), so the deformation is continuous in x; for each x the map y -> y + w g(y) is monotonic
+    (dSill < below), so a triangle can only fold where w changes across it. Self-check: every triangle with a moved
+    vertex is compared before / after; any whose normal turns by more than 90 deg (folded) stops the conversion, and
+    turns beyond 45 deg are reported."""
+    x0, x1, side = f['x0'], f['x1'], f['side']; ramp = f.get('ramp', 0.0); zMin = f.get('zMin', 0.0)   # (zMin: skin side only, not a gear well)
     yS, yT, dS, dT = f['ySill'], f['yTop'], f['dSill'], f['dTop']; ya, yb = yS - f.get('below', 0.5), yT + f.get('above', 0.3)
     def g(y): return np.interp(y, [ya, yS, yT, yb], [0.0, -dS, -dT, 0.0], left=0.0, right=0.0)
     # outer skin half width of the base-zone mesh (all prims that are not glass / gear / interior) at (x, y)
@@ -413,7 +421,7 @@ def door_fit(prims, f):
     for p in prims:
         if re.search(f.get('skinSkip', r'^$'), p['node'].split('|')[0]): continue
         P = p['pos']; I = p['idx'].reshape(-1, 3); c = P[I]
-        m = (c[:, :, 0].max(1) >= x0 - 0.1) & (c[:, :, 0].min(1) <= x1 + 0.1) & ((c[:, :, 2] * side).max(1) > 0.5)
+        m = (c[:, :, 0].max(1) >= x0 - ramp - 0.1) & (c[:, :, 0].min(1) <= x1 + ramp + 0.1) & ((c[:, :, 2] * side).max(1) > 0.5)
         tris.append(c[m])
     T = np.concatenate(tris)
     def cut(x):
@@ -436,22 +444,35 @@ def door_fit(prims, f):
             z = z0[m] + (y - y0[m]) / (y1[m] - y0[m]) * (z1[m] - z0[m]); z = z[z * side > 0]
             if len(z): out[j] = np.abs(z).max()
         return out
-    xs = np.linspace(x0, x1, 11); ys = np.arange(ya - 0.05, yb + 0.0501, 0.025)
+    xA, xB = x0 - ramp, x1 + ramp                         # station range of the half-width grid (incl. the fade-out)
+    xs = np.linspace(xA, xB, 11 + 2 * int(np.ceil(ramp / 0.1))); ys = np.arange(ya - 0.05, yb + 0.0501, 0.025)
     H = np.array([hw_col(x, ys) for x in xs])
     for i in range(len(xs)):                              # fill gaps (a cut through a seam) along the column
         r = H[i]; ok = ~np.isnan(r)
         if ok.sum() >= 2: H[i] = np.interp(ys, ys[ok], r[ok])
     def hwi(x, y):
-        u = np.clip((x - x0) / (x1 - x0) * (len(xs) - 1), 0, len(xs) - 1); i = np.minimum(np.floor(u).astype(int), len(xs) - 2); a = u - i
+        u = np.clip((x - xA) / (xB - xA) * (len(xs) - 1), 0, len(xs) - 1); i = np.minimum(np.floor(u).astype(int), len(xs) - 2); a = u - i
         v0 = np.array([np.interp(yy, ys, H[ii]) for ii, yy in zip(i, y)]); v1 = np.array([np.interp(yy, ys, H[ii + 1]) for ii, yy in zip(i, y)])
         return (1 - a) * v0 + a * v1
-    n = 0
+    def w(x):
+        out = np.maximum(np.maximum(x0 - x, x - x1), 0.0)
+        return np.clip(1.0 - out / ramp, 0.0, 1.0) if ramp > 0 else (out <= 0).astype(float)
+    def tri_n(P, I):
+        c = P[I]; nn = np.cross(c[:, 1] - c[:, 0], c[:, 2] - c[:, 0]); return nn / np.maximum(np.linalg.norm(nn, axis=1), 1e-12)[:, None]
+    n = 0; nt = 0; fold = []; turn = 0
     for p in prims:
-        P = p['pos']; m = (P[:, 0] >= x0) & (P[:, 0] <= x1) & (P[:, 2] * side > 0) & (P[:, 1] > ya) & (P[:, 1] < yb)
+        P = p['pos']; m = (P[:, 0] >= x0 - ramp) & (P[:, 0] <= x1 + ramp) & (P[:, 2] * side > zMin) & (P[:, 1] > ya) & (P[:, 1] < yb)
         if not m.any(): continue
-        y = P[m, 1]; y2 = y + g(y); r = hwi(P[m, 0], y2) / hwi(P[m, 0], y)
+        I = p['idx'].reshape(-1, 3); tm = m[I].any(1); Ib = I[tm]
+        ok = np.linalg.norm(np.cross(P[Ib][:, 1] - P[Ib][:, 0], P[Ib][:, 2] - P[Ib][:, 0]), axis=1) > 1e-10   # (skip degenerate)
+        N0 = tri_n(P, Ib)
+        wx = w(P[m, 0]); y = P[m, 1]; y2 = y + wx * g(y); r = hwi(P[m, 0], y2) / hwi(P[m, 0], y)
         P[m, 1] = y2; P[m, 2] = P[m, 2] * np.where(np.isfinite(r), r, 1.0); n += int(m.sum())
-    print(f"  door fit {f.get('name', '')}: {n} vertices moved (sill {yS:.3f} -> {yS - dS:.3f}, top {yT:.3f} -> {yT - dT:.3f}, model frame)")
+        d = (N0 * tri_n(P, Ib)).sum(1); nt += int(ok.sum())
+        fold += [(p['node'], int(t)) for t in np.where(tm)[0][ok & (d < 0)]]; turn += int((ok & (d < np.cos(np.radians(45)))).sum())
+    print(f"  door fit {f.get('name', '')}: {n} vertices moved (sill {yS:.3f} -> {yS - dS:.3f}, top {yT:.3f} -> {yT - dT:.3f}, model frame); "
+          f"self-check: {nt} triangles touched, {turn} turned > 45 deg, {len(fold)} folded (> 90 deg)")
+    if fold: raise RuntimeError(f"door fit {f.get('name', '')}: {len(fold)} skin triangles fold over (first: {fold[:6]}); widen [x0, x1] / ramp")
 
 
 def mean_texel(t):
@@ -530,9 +551,10 @@ def ac_model(files, skip=None):
 
 REFS = os.environ.get('SFO_REFS', os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'refs'))
 FAM = os.environ.get('FAM_DIR', os.path.join(REFS, 'fam3d'))            # github.com/Ysurac/FlightAirMap-3dmodels @0906d9b
-# github.com/FGMEMBERS/737-800 @9126249 (GPL-2.0, LICENSE in the repository): restored 5 Nov 2026 as a blob-less sparse
-# clone (LICENSE, README.md, Models/*.ac|*.png|*.xml checked out; other blobs fetched on demand by `git show`, e.g. the
-# Alaska livery of tools/liveries/liveries.py fg_texture) in refs/cache/src/fg/737-800 (SOURCES.json in refs/cache/src/fg)
+# github.com/FGMEMBERS/737-800 @9126249 (GPL-2.0, LICENSE in the repository): a plain export of the pinned commit (LICENSE,
+# README.md, Models/*.ac|*.png|*.xml, and Models/Liveries-800/N563AS.* for the Alaska livery of tools/liveries/liveries.py
+# fg_texture; each file's git blob hash in refs/cache/src/fg/SOURCES.json) in refs/cache/src/fg/737-800, committed with the
+# repo (GPL-2.0; round 2 of 5 Nov 2026: it replaced a blob-less git clone whose .git could not be committed)
 _FG738_CACHE = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'refs', 'cache', 'src', 'fg', '737-800', 'Models')
 FG738 = os.environ.get('FG738_DIR', _FG738_CACHE if os.path.isdir(_FG738_CACHE) else os.path.join(REFS, 'fg_737-800', 'Models'))
 # github.com/FGMEMBERS/777 @371a354 (FlightGear 777 series; GPL-2.0: LICENSE in the FGAddon original,
@@ -575,8 +597,12 @@ AC_MODELS = {
                   # fin 12.60 m, door 2 sill 3.15 m against the ACAP's OEW 5.56 / 12.62 / 3.12 m, D6-58325-7 Rev C §2.3.2). The
                   # ACAP's OEW door-1 sill is 2.74 m (9 ft 0 in) and the door 34 x 72 in (0.86 x 1.83 m, §2.7.1 p.2-33): the sill
                   # comes down by (2.967 - 2.74) / s = 0.227 model m (s 1.00125), the top stays (rendered 4.61 m against 4.57: 1.87 m
-                  # tall), i.e. the lower door and its opening are stretched down over the skin below it
-                  doorFit=[dict(name='doorLF', side=-1, x0=-5.745, x1=-4.735, ySill=-0.472, yTop=1.167, dSill=0.227, dTop=0.0, below=0.5, above=0.0,
+                  # tall), i.e. the lower door and its opening are stretched down over the skin below it. Station range: the door
+                  # object spans -5.745 .. -4.735; [x0, x1] takes in the skin columns that close the opening (x -4.54 and -5.77, the
+                  # apices of the fan below the sill; round 2: without them the fan folded over the door's bottom panel), ramp 0.3:
+                  # the fade-out beyond them (no vertex lies within 1.2 m of either column, so it only makes the map continuous);
+                  # zMin 1.0: only the side skin and the door move (the nose-gear well's aft wall at x -4.54, |z| < 0.75, stays)
+                  doorFit=[dict(name='doorLF', side=-1, x0=-5.775, x1=-4.535, ramp=0.3, zMin=1.0, ySill=-0.472, yTop=1.167, dSill=0.227, dTop=0.0, below=0.5, above=0.0,
                                 skinSkip=r'^(windows|windowslh|windowsrh|ngww|lhww|rhww)$')])),
     # Boeing 777-300ER and 777-200ER (FlightGear 777 series, see FG777 above): full airframe incl. gear
     # (the default paint1 textures carry an old JAL (-300) / British Airways (-200) livery: its titles, tail art, blue belly

@@ -21,7 +21,7 @@ for f in glob.glob(f'{S}/data/liveries/*/*-lo.webp'):
 b3d = os.environ.get('B3D', 'all'); nb = 0
 for f in sorted(glob.glob(f'{S}/data/buildings3d/*.glb')):
     if b3d == 'none' or (b3d == 'lod2' and not f.endswith('_lod2.glb')): continue
-    if f.endswith('_f2.glb') and 'f2' not in b3d: continue  # the tower's second height family (?b3dtower=f2): B3D=all+f2
+    if f.endswith(('_f1.glb', '_f2.glb')) and 'alt' not in b3d: continue  # the tower's alternative height family (tower_f1.glb, ?b3dtower=f1): B3D=all+alt
     sz = os.path.getsize(f); assert sz < 15 * 1024 * 1024, f + ' is over the 15 MB per-file artifact limit'
     os.makedirs(f'{O}/data/buildings3d', exist_ok=True); shutil.copy(f, f'{O}/data/buildings3d/' + os.path.basename(f)[:-4] + '.wasm'); nb += sz
 print('buildings3d:', b3d, '%.1f MB' % (nb / 1e6))

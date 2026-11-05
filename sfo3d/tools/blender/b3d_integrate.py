@@ -61,7 +61,7 @@ D3 = os.path.join(ROOT, 'data', 'buildings3d')
 OUTD = os.path.join(ROOT, 'out', 'buildings3d', 'integ')
 GROUND_Y = 3.0
 GROUPS = ['tower', 'itb', 'domestic', 'landside']
-FILES = {'tower': ['tower.glb', 'tower_f2.glb', 'tower_lod2.glb'], 'itb': ['itb.glb', 'itb_lod2.glb'],
+FILES = {'tower': ['tower.glb', 'tower_f1.glb', 'tower_lod2.glb'], 'itb': ['itb.glb', 'itb_lod2.glb'],  # tower.glb = F2 (default), tower_f1.glb = F1
          'domestic': ['domestic.glb', 'domestic_lod2.glb'], 'landside': ['landside.glb', 'landside_lod2.glb']}
 COVER_BUF, EDGE_BUF, COVER_MIN = 2.0, 3.0, 0.5
 # landside nodes that are hangars (aircraft may stand inside: js/live/ground.js buildingGrid skips kind 'hangar')
@@ -531,8 +531,8 @@ def main(argv):
         rules=dict(cover_buffer_m=COVER_BUF, edge_buffer_m=EDGE_BUF, cover_min=COVER_MIN, hangars_not_blocking=sorted(HANGARS)),
         replace=rep,
         tower=dict(axis_world_xz=T['placement']['root_translation'][0::2], eye_world=tw.get('eye_world'), cab_eye_h=an.get('cab_eye_h'), cab_floor_h=an.get('cab_floor_h'),
-                   glass_h=[an.get('glass_sill_h'), an.get('glass_head_h')], cab_centre_world_xz=an.get('cab_centre_world_xz'), family=T.get('default'), family_decided=T.get('family_decided'),
-                   note='app tower camera: js/live/app.js uses GROUND_Y + 62 at world.towerPos; the loader moves towerPos to the asset cab eye (x, z) once tower.glb is shown'),
+                   glass_h=[an.get('glass_sill_h'), an.get('glass_head_h')], glass_head_r=an.get('glass_head_r'), cab_centre_world_xz=an.get('cab_centre_world_xz'), family=T.get('default'), family_decided=T.get('family_decided'),
+                   note='fallback (default family); the loader takes the eye and the in-cab bounds from the loaded tower file\'s root extras.anchors and sets world.towerPos (x, z) and towerPos.eyeY (js/live/app.js tower view)'),
         table=[dict(el=t[0], i=t[1], kind=t[2], name=t[3], group=t[4], cover=t[5], by=t[6], rest=t[7]) for t in table],
         footprints=fps, plausibility=res)
     out['physics'] = dict(rings=phys, note='blocking footprints for js/live/ground.js buildingGrid (not wired: the realtime tools import ground.js; hangars and the elevated guideway excluded as the app excludes hangars and rail)')
@@ -549,7 +549,7 @@ def main(argv):
     merge_manifest(dict(
         loader='js/three/buildings3d.js (GLTFLoader from vendor/three/three.module.js, tools/build3/three-entry.js); hooks: js/three/renderer3.js, js/live/world.js, js/live/airport.js, js/live/terminals.js',
         files=dict(full=['data/buildings3d/' + f + '.glb' for f in ('tower', 'itb', 'domestic', 'landside')], phone_lod2=['data/buildings3d/' + f + '_lod2.glb' for f in ('tower', 'itb', 'domestic', 'landside')],
-                   tower_f2='data/buildings3d/tower_f2.glb (?b3dtower=f2)', table='data/buildings3d/integration.js (app) / integration.json (footprints, plausibility)'),
+                   tower_f1='data/buildings3d/tower_f1.glb (?b3dtower=f1; tower.glb is F2)', table='data/buildings3d/integration.js (app) / integration.json (footprints, plausibility)'),
         replaces=dict(parts=len(rep['parts']), walkway_rest_pieces=nrest, structures=len(rep['structures']), atc=rep['atc'], rail=rep['rail'],
                       complex_edge_runs=sum(len(v) for v in rep['complexEdges'].values())),
         plausibility=dict(conflicts=len(res['conflicts']), notes=len(res['notes']), nearest_envelopes=res['stats']['nearest_envelopes'][:3], bridges_checked=res['stats']['bridges_checked']),

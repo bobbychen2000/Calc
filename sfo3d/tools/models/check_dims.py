@@ -22,7 +22,10 @@ What it does
      about the main contact, js/live/aircraft.js placement()); the nose / main tyre bottoms must touch the ground. The
      fuselage top is measured as fit.js crownOf defines it (centre-plane section cuts, 5 m median: not an antenna).
      Heights above the ground (incl. the overall height, review 5 Nov 2026) are flagged beyond +-0.08 m (the ACAPs'
-     nominal +-3 in), not 1 % of the length.
+     nominal +-3 in), not 1 % of the length. The 737 MAX stands nose-up on an extended nose leg (fit.js NOSE_LEG, round 2
+     of the 5 Nov review): gear models are seated on their main tyres (dims.low), and for a nose-up stance the fuselage top
+     at the main-gear station is reported next to the crown row. The 757 plain span at the winglet root is measured on the
+     stretched mesh (winglet_root).
   7. Bridge closure (review 5 Nov 2026): the bellows drawn at every docking door (js/aircraft/dock.js, fitted to the skin
      measured by tools/models/dock_foot.mjs) against planar cuts of the rendered mesh (tools/models/dock_check.mjs): skin
      outside the closure outline, gap on the outline, drawn vertices inside the skin; flagged beyond 0.05 m.
@@ -345,21 +348,49 @@ def pose_of(fitd):
     return f
 
 
-def crown_of(Q, Z, I, L, dx=1.0, win=5.0):
+def crown_of(Q, Z, I, L, dx=1.0, win=5.0, at=None):
     """fuselage top over 0.1-0.5 L as js/aircraft/fit.js crownOf defines it, measured on the rendered mesh: the top of the
     centre-plane section (planar cuts of the body / fin triangles, tools/models/model_features.py sections) every dx,
-    median-filtered over 5 m (an antenna or dorsal fairing is not the fuselage top), then the maximum"""
+    median-filtered over 5 m (an antenna or dorsal fairing is not the fuselage top), then the maximum. at = a station
+    (model units aft of the nose): also return the median-filtered top there (None if no complete section)"""
     sys.path.insert(0, os.path.join(ROOT, 'tools', 'models'))
     import model_features as mf
     S = mf.sections(Q, Z, I, L, dx)
     ok = [t is not None and b is not None and h is not None and h >= 0.3 * (t - b) / 2 for t, b, h in zip(S['top'], S['bot'], S['hw'])]
     w = max(1, int(round(win / 2 / dx))); best = None
+    def med(j):
+        v = sorted(S['top'][i] for i in range(max(0, j - w), min(len(ok), j + w + 1)) if ok[i])
+        return v[len(v) >> 1] if v else None
     for j in range(int(np.ceil(0.1 * L / dx)), int(0.5 * L / dx) + 1):
         if j >= len(ok) or not ok[j]: continue
-        v = sorted(S['top'][i] for i in range(max(0, j - w), min(len(ok), j + w + 1)) if ok[i])
-        m = v[len(v) >> 1]
+        m = med(j)
         if best is None or m > best: best = m
-    return best
+    if at is None: return best
+    j = int(round(at / dx)); return best, (med(j) if 0 <= j < len(ok) else None)
+
+
+WL_RISE = 0.10   # model m above the outer-wing upper-skin line: the winglet root (the profile's noise there is +-0.06)
+
+
+def winglet_root(Q, Z, L, rise=WL_RISE, dz=0.1):
+    """twice the mean |z| (model units) of the winglet root on both sides of the stretched mesh Q (see rendered())"""
+    m = (Z == 0) & (Q[:, 0] > -0.8 * L); roots = []
+    for side in (1, -1):
+        q = Q[m & (Q[:, 2] * side > 0)]; az = np.abs(q[:, 2]); semi = float(az.max())
+        b = np.floor(az / dz).astype(int); top = {}
+        for k, y in zip(b, q[:, 1]):
+            if y > top.get(k, -1e9): top[k] = y
+        ks = np.array(sorted(top)); zs = (ks + 0.5) * dz; ys = np.array([top[k] for k in ks])
+        ref = (zs > 0.6 * semi) & (zs < 0.85 * semi); c = np.polyfit(zs[ref], ys[ref], 1)
+        dev = ys - np.polyval(c, zs)
+        sm = np.array([np.median(dev[max(0, i - 1):i + 2]) for i in range(len(dev))])   # 3-bin median (sparse tip mesh)
+        out = None
+        for i in range(len(zs)):
+            if zs[i] <= 0.85 * semi or sm[i] <= rise or not (sm[i:] > rise).all(): continue
+            out = zs[i - 1] + (zs[i] - zs[i - 1]) * (rise - sm[i - 1]) / (sm[i] - sm[i - 1]) if i and sm[i] != sm[i - 1] else zs[i]
+            break
+        roots.append(out if out is not None else semi)
+    return 2 * float(np.mean(roots))
 
 
 def rendered(P, Z, head, fitd, T, full=None):
@@ -368,7 +399,9 @@ def rendered(P, Z, head, fitd, T, full=None):
     st = fitd['stretch']; s = fitd['s']; Q = apply_stretch(P, Z, st)
     d = head['dims']; hasGear = d['hasGear']
     L = float(Q[:, 0].max() - Q[:, 0].min())
-    Hc = -float(Q[:, 1].min()) * s if hasGear else T['Hc']     # placement(): gear models on their wheels, else T.Hc
+    # placement(): gear models on their main wheels (dims.low, raised by an oleo compression gearUp; a nose-leg extension
+    # noseExt puts the unpitched nose tyre below them and is not the seat), else T.Hc
+    Hc = -(float(d['low']) + float((st or {}).get('gearUp') or 0.0)) * s if hasGear else T['Hc']
     pt = fitd.get('pitch')
     if hasGear and pt and pt.get('a'):                         # placement(): nose-down rotation about the main contact
         ca, sa = np.cos(pt['a']), np.sin(pt['a']); dx = Q[:, 0] - pt['x0']; dy = Q[:, 1] - pt['y0']
@@ -379,10 +412,13 @@ def rendered(P, Z, head, fitd, T, full=None):
         if hasGear and pt and pt.get('a'):
             dx = Qf[:, 0] - pt['x0']; dy = Qf[:, 1] - pt['y0']; Qf = Qf.copy()
             Qf[:, 0] = pt['x0'] + dx * ca + dy * sa; Qf[:, 1] = pt['y0'] + dy * ca - dx * sa
-        Qf[:, 0] -= Qf[:, 0].max()                             # nose at 0 for the station grid
-        cr = crown_of(Qf, Zf, If, L)
+        x_nose = Qf[:, 0].max(); Qf[:, 0] -= x_nose            # nose at 0 for the station grid
+        if hasGear and pt and pt.get('a', 0) < 0:               # nose-up stance (737 MAX): also the top at the main-gear station
+            cr, crm = crown_of(Qf, Zf, If, L, at=x_nose - pt['x0'])
+        else: cr = crown_of(Qf, Zf, If, L)
     out = dict(L=L * s, span=float(Q[:, 2].max() - Q[:, 2].min()) * s, H=Hc + float(Q[:, 1].max()) * s, Hc=Hc,
                crown=Hc + cr * s if cr is not None else None)
+    if full is not None and hasGear and pt and pt.get('a', 0) < 0 and crm is not None: out['crownMain'] = Hc + crm * s
     # clearances: lowest engine point (nacelle zone, else the lowest skin outboard of 1.4 fuselage half widths ahead of
     # 0.75 L), belly at 0.5 L (lowest body point within 1 m), wing tip and tailplane tip (mean height of the outermost 2 %)
     R0 = float(np.percentile(np.abs(Q[(Z == 0) & (np.abs(Q[:, 1]) < 0.5) & (Q[:, 0] < -0.3 * L) & (Q[:, 0] > -0.5 * L), 2]), 20)) if ((Z == 0) & (np.abs(Q[:, 1]) < 0.5)).any() else 2.0
@@ -394,13 +430,13 @@ def rendered(P, Z, head, fitd, T, full=None):
     out['tipY'] = Hc + float(Q[wg & (np.abs(Q[:, 2]) > 0.98 * zmax), 1].mean()) * s
     ht = (Q[:, 0] < -0.8 * L) & ~np.isin(Z, (1,)); hz = np.abs(Q[ht, 2]).max() if ht.any() else 0
     out['htY'] = Hc + float(Q[ht & (np.abs(Q[:, 2]) > 0.97 * hz), 1].mean()) * s if hz else None
-    # winglet root (review 5 Nov 2026, aircraft-v3): the model's winglet root (js/aircraft/fit.js WINGLET zr, where the
-    # wing's upper skin starts to rise, measured on the model) taken through the renderer's stretch (the Python port), so
-    # the row shows where the drawn plain wing ends; the plain-wing span is twice that |z|. (A profile-based detection on
-    # the mesh was tried: the 757 model's sparse wing-tip mesh made it jump by +-1 m.)
+    # winglet root, measured on the stretched mesh (review 5 Nov 2026 round 2, aircraft-v4: the row used to push the fit's own
+    # WINGLET zr through the stretch, so it reported the fit by construction): per side, the upper skin (highest zone-0
+    # vertex ahead of the tailplane) in 0.1 m bins of |z|, a straight line (dihedral) fitted over 0.6-0.85 of the semi-span,
+    # and the root where the profile, smoothed over 3 bins, first stays more than RISE above that line (linear between
+    # bins); the plain-wing span is twice the mean root |z|
     if fitd.get('winglet'):
-        wl = fitd['winglet']; q = apply_stretch(np.array([[-0.5 * L, wl['y0'], wl['zr']]]), np.zeros(1, np.uint8), st)
-        out['wingletRoot'] = 2 * abs(float(q[0, 2])) * s
+        out['wingletRoot'] = winglet_root(Q, Z, L) * s
     if hasGear:
         g = Q[Z == 3]; bottom = g[g[:, 1] < g[:, 1].min() + 0.35]
         mains = bottom[bottom[:, 0] < -0.3 * L]; noses = bottom[bottom[:, 0] > -0.3 * L]
@@ -428,11 +464,21 @@ _E175_DOOR = ('source model: the FAM E175 has no door object; its door is the E1
 _B738_GEAR = ('source model: the FlightGear 737-800 model\'s own main gear is 0.43 m aft of the ACAP station (nose gear +0.23 m); '
               'TYPES, ground physics and gear contact use the ACAP station, the rendered wheels are the artist\'s')
 EXPLAINED = {('E75L', 'door'): _E175_DOOR, ('E75L', 'dock'): _E175_DOOR, ('E75S', 'door'): _E175_DOOR, ('E75S', 'dock'): _E175_DOOR}
-_MAX_STANCE = ('737 MAX on the FG 737-800 model: the app stands every 737 on the NG model\'s own gear, nose-down 0.5-0.7 deg; the MAX '
-               'ACAP shows the MAX nose-UP at rest (forward door 2.77-3.07 m, aft door 2.49-2.90 m against the NG\'s 2.59-2.74 / '
-               '2.97-3.12 m: its taller nose gear), so the aft door renders 0.25-0.3 m above the MAX range while door 1 is within '
-               '+-3 in of it. Needs a MAX nose-gear extension and a nose-up stance in js/aircraft/fit.js (open, aircraft track; found '
-               'in review round 1, 5 Nov 2026, with this row)')
+_MAX_STANCE = ('737 MAX stance (js/aircraft/fit.js, round 2 of the 5 Nov 2026 review): nose-up on an extended nose leg, the pitch '
+               'fitted (least squares) to the MAXIMUM (OEW) column of rows B and M (forward / aft passenger door) of D6-38A004 Rev K '
+               '§2.3.x about the NG main gear; with one angle for two sills the 737-9 / -10 keep a residual of up to 0.05 m')
+_MAX_CROWN = ('737 MAX in its nose-up stance: this row takes the highest fuselage top over 0.1-0.5 L, which for a nose-up '
+              'airframe is the forward cabin top. D6-38A004 Rev K §2.3.x rows A, B and M cannot all hold at that station on one '
+              'rigid fuselage: on the model the top 1-3 m aft of door 1 is 2.6-2.7 m above the door-1 sill (inf, measured), so with '
+              'door 1 at 3.07 m (row B) the forward cabin top is ~5.7 m against row A 5.51 m; row A agrees with the top at the '
+              'main-gear station (next row, within +-3 in). The door sills are fitted (the bridge docks there); the crown row is '
+              'explained, not fitted')
+for _k in ('B37M', 'B38M', 'B39M', 'B3XM'): EXPLAINED[(_k, 'crown')] = _MAX_CROWN
+_NG_ENG = ('source model: the FG 737-800 nacelle (CFM56-7B) renders its lowest point 0.13-0.15 m above row D of D6-58325-7 '
+           'Rev C §2.3.1-2.3.3 (MAX (AT OEW) 0.61 / 0.64 m) while the OEW stance matches the crown, the door sills and the fin '
+           '(rows A, B, G, J): the artist hung the nacelle higher under the wing. Row added in round 2 of the 5 Nov 2026 review; '
+           'not re-fitted (moving the nacelle away from its pylon would open a gap; open, aircraft track)')
+for _k in ('B736', 'B737', 'B738', 'B739'): EXPLAINED[(_k, 'engclr')] = _NG_ENG
 for _k in ('B38M', 'B39M', 'B3XM'): EXPLAINED[(_k, 'aftsill')] = _MAX_STANCE
 # (737NG door-1 sill: re-fitted in tools/convert_models.py doorFit, review 5 Nov 2026; no longer flagged)
 for _k in ('B736', 'B737', 'B738', 'B739', 'B37M', 'B38M', 'B39M', 'B3XM'): EXPLAINED[(_k, 'mgear')] = _B738_GEAR
@@ -488,9 +534,11 @@ def main():
             add('wingspan (rendered, after span fit' + (', + ' + f['tipAdd'] if f.get('tipAdd') else '') + ')', rd['span'] + (2 * {'sharklet': 0.55, 'split': 0.5}[f['tipAdd']] if f.get('tipAdd') else 0), R['span'], key='span')
             add('height (rendered fin top)', rd['H'], R.get('H'), key='H', vert=True)   # (review 5 Nov 2026: a height, +-0.08 m)
             if rd.get('wingletRoot') is not None:    # the plain wing out to the winglet root vs the ACAP plain span
-                add('wing span at the winglet root (rendered plain wing, fit WINGLET root)', rd['wingletRoot'], R.get('spanPlain') or S.get('spanPlain'), key='spanplain')
+                add('wing span at the winglet root (rendered mesh: upper skin > 0.1 m above the outer-wing line)', rd['wingletRoot'], R.get('spanPlain') or S.get('spanPlain'), key='spanplain')
                 add('winglet lateral extent a side (rendered)', (rd['span'] - rd['wingletRoot']) / 2, ((R['span'] - (R.get('spanPlain') or S.get('spanPlain'))) / 2) if (R.get('spanPlain') or S.get('spanPlain')) else None, pos=True, key='winglat', tolm=0.1)
             add('fuselage top above ground (rendered)', rd['crown'], R.get('crown'), pos=True, key='crown', vert=True)
+            if rd.get('crownMain') is not None:      # nose-up stance: the top at the main gear (see _MAX_CROWN)
+                add('fuselage top at the main-gear station (rendered)', rd['crownMain'], R.get('crown'), pos=True, key='crownmain', vert=True)
             add('lowest engine point above ground (rendered)', rd['engClear'], S.get('engClr'), pos=True, key='engclr', vert=True)
             add('belly at 0.5 L above ground (rendered)', rd['belly'], S.get('bellyClr'), pos=True, key='belly', vert=True)
             add('wing tip height (rendered)', rd['tipY'], S.get('tipClr'), pos=True, key='tipy', vert=True)

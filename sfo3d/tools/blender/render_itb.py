@@ -11,8 +11,13 @@ Views (out/buildings3d/itb_<view>.png; comparison sheets itb_cmp_<view>.png, loc
          level 3, the column and hanger stations) on the render, and the silhouette of the render is measured against
          roof_line(u) (out/buildings3d/itb_render_check.json)
   i4     perspective from the landside roadways approximating photo i4 (DimiCalifornia 2005, public domain)
-  baa    aerial from the east-south-east over the apron at Boarding Area A approximating photo a2 (Pi.1415926535 2025,
-         CC BY-SA 4.0); the BI-04 view 2 face
+  a2g    photo a2 (Pi.1415926535 2025, CC BY-SA 4.0, "Aerial view of San Francisco International Airport station") with its
+         camera SOLVED (review r1): a2 looks SSW over the Boarding Area G NNE face (Garage G and the BART / AirTrain station
+         roof behind it, Garage A and the Grand Hyatt further back, the ITB north tip at the left edge) - not Boarding Area A
+         as round 0 assumed. Camera from 11 image <-> world correspondences (BA-G roof edge / base at the bump-outs, bump-out
+         edges, pod ends, ITB NW roof corner, Garage G east end, Grand Hyatt): out/buildings3d/itb_a2_camera.json
+  baa    aerial from the east-south-east over the apron at Boarding Area A (BI-04 view 2 face). NO reference photo of
+         BA-A is cached (a2 shows BA-G; a Commons search 2026-11-05 found none identifiable): render only
   bag    aerial from the north-north-east at Boarding Area G with the pod-3 end box (photo d2 direction; BI-04 view 1)
 Lighting: a sun lamp + Hosek-Wilkie sky (sun from the WSW in the afternoon for the landside views, as in i1 / i4); AgX;
 OIDN denoise. LOD0 only. Renders are small (<= 960 px, <= 64 spp) on the shared CPUs.
@@ -170,10 +175,43 @@ def view_baa_cam():
 
 
 def view_baa(args):
-    """aerial over the apron ESE of Boarding Area A, looking WNW at its apron face and pods (photo a2 direction)."""
+    """aerial over the apron ESE of Boarding Area A, looking WNW at its apron face and pods (no reference photo of BA-A)."""
     sun_sky(200.0, 55.0)
     view_baa_cam()
     return render(os.path.join(OUT, 'itb_baa.png')),
+
+
+# photo a2 camera (1920 x 1280) from tools/blender/itb_a2_solve.py (review r1, 2026-11-05: plan bearings of 5 features, then a
+# soft-L1 fit on 10 picks; residuals <= ~20 px, the pod ends are the loosest picks; the ITB NW roof corner and the Garage G
+# east end, not used, land within 25 / 40 px). x, z (south), h in the app frame; az from north clockwise; el; roll; f px.
+A2_CAM = dict(x=-1059.7, z=-614.2, h=163.4, az=203.22, el=-8.51, roll=1.03, f_px=6780.0, w=1920, h_px=1280)
+
+
+def view_a2g(args):
+    """photo a2 view (solved camera): the BA-G NNE face, its gate-room curtain walls, low bridge-head boxes and pods."""
+    from mathutils import Quaternion
+    sun_sky(215.0, 50.0)      # a2: overcast-bright, soft shadows falling towards the camera side (sun behind the pier) [est.]
+    c = A2_CAM; a, e = math.radians(c['az']), math.radians(c['el'])
+    loc = Wxz(c['x'], c['z'], c['h'])
+    fwd = Vector((math.sin(a) * math.cos(e), math.cos(a) * math.cos(e), math.sin(e)))
+    co = camera('cam_a2g', loc, loc + fwd * 1000.0, lens=c['f_px'] / c['w'] * 36.0, res=(960, 640))
+    co.rotation_mode = 'QUATERNION'
+    co.rotation_quaternion = co.rotation_euler.to_quaternion() @ Quaternion((0.0, 0.0, 1.0), math.radians(c['roll']))
+    # projection check of the photo picks (pixel coordinates of a2 at 1920 x 1280)
+    from bpy_extras.object_utils import world_to_camera_view
+    bpy.context.view_layer.update()
+    P = G.PIERS['G']; cc = np.array(P['centre_xz']); sa = np.array(P['s_axis']); ta = np.array(P['t_axis'])
+    picks = [((-69.6, -0.7, 17.0), (372, 864)), ((73.2, -0.7, 17.0), (1593, 923)), ((-69.6, -0.7, 0.0), (372, 1012)),
+             ((-53.8, -9.4, 6.5), (507, 955)), ((88.9, -9.4, 6.5), (1735, 1003))]
+    err = []
+    for (s_, t_, h_), (px, py) in picks:
+        q = cc + sa * s_ + ta * t_
+        v = world_to_camera_view(bpy.context.scene, co, Wxz(q[0], q[1], h_))
+        X, Y = v.x * 1920, (1 - v.y) * 1280
+        err.append(math.hypot(X - px, Y - py))
+        log('a2 pick s %.1f t %.1f h %.1f: photo (%d, %d) render (%.0f, %.0f)' % (s_, t_, h_, px, py, X, Y))
+    log('a2 picks: mean error %.1f px (1920 px frame)' % (sum(err) / len(err)))
+    return render(os.path.join(OUT, 'itb_a2g.png')),
 
 
 def view_plan(args):
@@ -279,8 +317,8 @@ def main():
             side_by_side(r[0], os.path.join(REF, 'i4.jpg'), 'itb_cmp_i4.png')
         elif v == 'i3':
             side_by_side(r[0], os.path.join(REF, 'i3.jpg'), 'itb_cmp_i3.png')
-        elif v == 'baa':
-            side_by_side(r[0], os.path.join(REF, 'a2.jpg'), 'itb_cmp_baa.png')
+        elif v == 'a2g':
+            side_by_side(r[0], os.path.join(REF, 'a2.jpg'), 'itb_cmp_a2g.png')
         elif v == 'bag':
             side_by_side(r[0], os.path.join(REF, 'd2.jpg'), 'itb_cmp_bag.png')
     json.dump({k: v for k, v in done.items()}, open(os.path.join(OUT, 'itb_render.json'), 'w'), indent=1, default=str)

@@ -130,41 +130,40 @@ generated-tangent warning is accepted). Khronos glTF-Validator 2.0.0-dev.3.10: *
 
 ```bash
 python3 tools/blender/build_tower.py --render --audit   # both families, AO bake, export, manifest, verification, renders (~16 min, 4 CPUs)
-python3 tools/blender/tower3d_verify.py data/buildings3d/tower.glb   # re-measure an exported file
+python3 tools/blender/tower3d_verify.py data/buildings3d/tower.glb 2   # re-measure an exported file (tower.glb = F2, tower_f1.glb = F1)
 ```
 
-**Source of the geometry.** Everything is generated from the approved sheets BT-01..03: `tools/blender/tower_geom.py` imports `tools/buildings/draw_tower.py` (and through it `spec_tower.json` and the SFO Museum footprint) and uses its functions and constants (`shaft_outline`, `cab_outline`, `plinth`, `SHOULDER`, slot / mast / pole bearings, `WING_TIP`, `RIB_BRG`, `IBF_AIR_BAND`, `IBF_CW`, rows / twist of the cladding). Nothing is typed in twice. The one new measurement is the roof-garden outline (NAIP 2024 vegetated pixels, lean-corrected). No imagery is used as a texture.
+**Source of the geometry.** Everything is generated from the approved sheets BT-01..03: `tools/blender/tower_geom.py` imports `tools/buildings/draw_tower.py` (and through it `spec_tower.json` and the SFO Museum footprint) and uses its functions and constants (`shaft_outline`, `cab_outline`, `plinth`, `SHOULDER`, slot / mast / pole bearings, `WING_TIP`, `NE_TIP`, `RIB_BRG`, `IBF_AIR_BAND`, `IBF_CW`, rows / twist of the cladding). Nothing is typed in twice. The one new measurement is the roof-garden outline (NAIP 2024 vegetated pixels, lean-corrected). No imagery is used as a texture.
 
-**Height family.** The sheets draw two self-consistent families and prefer neither (buildings_tower.md 12.3). Both are built: `tower.glb` = F1 (D 15.2, rim 67.36 = 221 ft), `tower_f2.glb` = F2 (D 14.5, rim 64.0, 221 ft at the masts). F1 is the default file only because CTBUH classifies 221 ft as a height without antennae (not a survey). `manifest.json#tower.family_decided = false`.
+**Height family.** The sheets draw two self-consistent families (buildings_tower.md 12.3). Default (3-D review round 1, 2026-11-05): `tower.glb` = F2 (D 14.5, rim 64.0; 221 ft at the 2015 mast station), the family that lies within the observations (cab-roof D 14.3 +-1.0 measured, 14.75 +-0.5 EXIF; rim 63.3-64.1 m for D 14.3 and 65 +-2 m for D 14.75 in the `h_roof_top` test). `tower_f1.glb` = F1 (D 15.2, rim 67.36 = 221 ft at the rim) is the published-height hypothesis: it needs D >= ~15.1 and rests on the CTBUH classification of 221 ft (a database class, not a survey); `?b3dtower=f1` loads it. `manifest.json#tower.family_decided = false`: the owner decides.
 
-**Placement.** Root node `tower` at world (-740.5, GROUND_Y, 324.5) = the inferred shaft axis at grade (x east, y up, z south, js/geo.js). Cab-floor / eye heights and the other anchors are in the root extras and the manifest (F1: floor 60.6 m, eye 62.2 m, glass 61.45-64.533 m, rim 67.36 m, highest mast 72.06 m).
+**Placement.** Root node `tower` at world (-740.5, GROUND_Y, 324.5) = the inferred shaft axis at grade (x east, y up, z south, js/geo.js). Cab-floor / eye heights and the other anchors are in the root extras of each file and the manifest (F2: floor 57.551 m, eye 59.151 m, glass 58.362-61.303 m, rim 64.0 m, highest whip 68.484 m; F1: floor 60.6, eye 62.2, glass 61.45-64.533, rim 67.36, whip 72.06 m).
 
-| LOD | Use (suggested camera distance) | Triangles F1 / F2 | AO atlas (TEXCOORD_1) | Content |
+| LOD | Use (suggested camera distance) | Triangles F2 / F1 | AO atlas (TEXCOORD_1) | Content |
 |---|---|---|---|---|
-| LOD0 | < 350 m (close-up, tower view) | 33,631 / 32,564 | 2048 px | 272 helical columns, recessed slots with glazed panes, seams, 24 cab panes + joints, ribbon mullions, 15 whips + 9 poles + red light, base-building mullions, coping, rails, rooftop unit, sunken garden |
-| LOD1 | 350-1200 m | 9,956 / 9,666 | 1024 px | 136 columns, flat slots, 24-facet cab, 15 whips, plain base building with parapet |
-| LOD2 | > 1200 m; phone (`tower_lod2.glb`) | 2,382 / 2,248 | 512 px | 68 columns, flat slots, 12-facet cab, no masts, base building as a box |
+| LOD0 | < 350 m (close-up, tower view) | 33,443 / 34,532 | 2048 px | 272 helical columns, recessed slots with glazed panes, dark seam joints, 24 tinted cab panes + light joints, ribbon mullions, 15 whips + 9 poles + red light, base-building mullions, coping, rails, rooftop unit, sunken garden |
+| LOD1 | 350-1200 m | 10,591 / 10,895 | 1024 px | 136 columns, flat slots, dark seam joints, 24-facet cab, 15 whips + red light, plain base building with parapet |
+| LOD2 | > 1200 m; phone (`tower_lod2.glb`, F2) | 2,365 / 2,499 | 512 px | 68 columns, flat slots, 12-facet cab, 15 whips (3-sided) + red light, base building as a box |
 
-Files: `tower.glb` 3.47 MB, `tower_f2.glb` 3.37 MB, `tower_lod2.glb` 0.23 MB (PNG textures; KTX2 / meshopt later with `tools/engine/glb_compress.mjs`). Materials are PBR constants (our choices for the published "SFO Silver" ACM, glass, panels; `extras.src` on every material); detail normal tiles on TEXCOORD_0 (`tools/blender/tower_tex.py`: panel joints, louvres, base-building panels, mip-mapped: no moire); sun-independent AO baked by Cycles (48 samples, 8 m rays, ground plane as occluder). Glass of the cab is alpha-blended and double-sided; every other surface is single-sided and wound outwards (back-face audit renders: 0 back-face pixels in 6 views per LOD).
+Files: `tower.glb` (F2) 3.36 MB, `tower_f1.glb` 3.46 MB, `tower_lod2.glb` (F2) 0.24 MB (PNG textures; KTX2 / meshopt later with `tools/engine/glb_compress.mjs`). Materials are PBR (our choices for the published "SFO Silver" ACM, glass, panels; `extras.src` on every material). The cladding carries a procedural base-colour + normal tile on TEXCOORD_0 (`tools/blender/tower_tex.py`, 4 joints x 2 panel rows per tile): dark helical and row joint lines (5 cm, ~0.42 x the panel tone at the centre) and a +-3 % tone per panel, mip-mapped (no moire); the two circumferential seams are dark 0.10-m joint bands flush in the shell. The cab glass is tinted and see-through (alpha 0.5, double-sided, the far-side panes and the sky show through) with light 6-cm pane joints. Sun-independent AO baked by Cycles (48 samples, 8 m rays, ground plane as occluder). Every other surface is single-sided and wound outwards (back-face audit renders).
 
 **Verification** (`out/buildings3d/tower_verify.json`, measured on the exported GLB against the sheet functions):
-- F1: 109/109 checks within tolerance; tris {0: 33631, 1: 9956, 2: 2382}; plausibility clear of aircraft envelopes, bridges and taxilanes; the app's T2 hall / BA-D walkway parts overlap the base-building footprint (integration: cut them)
-- F2: 109/109 checks within tolerance; tris {0: 32564, 1: 9666, 2: 2248}; plausibility clear of aircraft envelopes, bridges and taxilanes; the app's T2 hall / BA-D walkway parts overlap the base-building footprint (integration: cut them)
-- largest deviation of a length: 0.047 m (tolerance 0.5 m / 2 %); 0 failures.
-- Khronos glTF-Validator F1: 0 errors, 0 warnings, 32 infos (info:UNUSED_OBJECT); F2: 0 errors, 0 warnings, 32 infos (info:UNUSED_OBJECT)
-- plausibility: clear of aircraft envelopes, bridges and taxilanes; the app's T2 hall / BA-D walkway parts overlap the base-building footprint (integration: cut them); nearest aircraft envelope 15.6 m (C3), bridge 37.2 m, taxiway centreline 85.3 m.
+- F2 (default): 110/110 checks within tolerance; tris {0: 33443, 1: 10591, 2: 2365}; plausibility clear of aircraft envelopes, bridges and taxilanes; the app's T2 hall / BA-D walkway parts overlap the base-building footprint (integration: cut them)
+- F1: 110/110 checks within tolerance; tris {0: 34532, 1: 10895, 2: 2499}; plausibility clear of aircraft envelopes, bridges and taxilanes; the app's T2 hall / BA-D walkway parts overlap the base-building footprint (integration: cut them)
+- largest deviation of a length: 0.362 m (tolerance 0.5 m / 2 %); 0 failures.
+- Khronos glTF-Validator F1: 0 errors, 0 warnings, 37 infos (info:UNUSED_OBJECT); F2: 0 errors, 0 warnings, 37 infos (info:UNUSED_OBJECT)
+- plausibility (F2): clear of aircraft envelopes, bridges and taxilanes; the app's T2 hall / BA-D walkway parts overlap the base-building footprint (integration: cut them); nearest aircraft envelope 15.6 m (C3), bridge 37.2 m, taxiway centreline 85.3 m.
 
-**Integration (for the app owner).** Parts of the app's `data/sfo_buildings.json` overlap the asset below 20 m: "Boarding Area D walkway" (walkway, 10.5 m) 66.3 m2; "Terminal 2" (hall, 19.0 m) 1123.3 m2. The base building would be swallowed by the T2 hall box. Cut the footprint (`manifest.json#tower.integration.exclusion_footprint_world`) out of those parts, replace `buildTower()`, and put the tower camera at `anchors.cab_eye_h` (the app uses GROUND_Y + 62).
+**Integration.** The loader (`js/three/buildings3d.js`) reads the anchors from the loaded file's root extras: the app's tower view takes `world.towerPos.eyeY` = GROUND_Y + `cab_eye_h` of that family (js/live/app.js hook; GROUND_Y + 62 before a tower file is shown), and the alpha-blended cab glass is hidden while the camera is inside that family's glass ring (radius `glass_head_r` + 0.3, `cab_floor_h` - 0.5 .. `glass_head_h` + 0.5). The first-pass T2 hall / BA-D walkway parts over the base-building footprint are cut by `tools/blender/b3d_integrate.py`.
 
-**Renders** (Cycles CPU, 64 samples + OIDN, AgX; ours): `out/buildings3d/tower_A.png`, `tower_B.png` (the BT-02 elevations, orthographic; `tower_overlay_A/B.png` carry the sheet outlines in red), `tower_t2.png`, `tower_t3.png`, `tower_t4.png` (camera-matched to the reference photos t2 / t3 / t4, Famartin 2025, CC BY-SA 4.0; side-by-side comparisons `tower_compare_*.jpg` stay local).
+**Renders** (Cycles CPU, 64 samples + OIDN, AgX; ours; of the default family F2): `out/buildings3d/tower_A.png`, `tower_B.png` (the BT-02 elevations, orthographic; `tower_overlay_A/B.png` carry the sheet outlines in red), `tower_t2.png`, `tower_t3.png`, `tower_t4.png` (camera-matched to the reference photos t2 / t3 / t4, Famartin 2025, CC BY-SA 4.0; per family the focal length follows the rim width in pixels and the camera height the angle below the rim; side-by-side comparisons `tower_compare_*.jpg` stay local).
 
 **Observed vs inferred.** Per dimension in `manifest.json#tower.dimensions`; lists `inferred`, `unknown`, `not_modelled`, `conflicts` there. Node extras carry `src`, the spec keys and per-feature tags.
 
 **Open (for the owner).**
-- The height family (F1 / F2).
-- NE blade tip: drawn at deck + 1.2 (61.7 m F1, obs low). In the t3 / t4 comparisons the model's tip stands ~2-3 m higher than the photographed tip (perspective-corrected estimate from t3: the prow top is near the flare corner, ~58-59 m). Not changed: the sheet is the reference.
-- t2 camera match: with the rim registered, the base-building parapet renders ~90 px (~2.9 m) higher than in the photo; the camera height (11.5 m) and focal length are estimates (no EXIF here), so this is a camera-model check only, but the parapet / roof station (rim - 3.46 D - 0.7) comes from the same photo.
-- Slot 345.5 deg: its top corner falls on the NE blade root; clipped 0.3 m clear of the crease (the sheet lets the blade cover it).
+- The height family (F2 default / F1 hypothesis).
+- t2 camera match: the camera height and focal length are estimates (no EXIF here); a camera-model check only.
+- Obstruction light: one red fixture (t5) is modelled in every LOD; at a few km it is sub-pixel, so a LOD-independent point sprite belongs to the environment's lighting layer (data/sfo_lighting.js lists the tower as obstruction 06-323169, fixtures inferred from AC 70/7460-1N).
 <!-- tower:end -->
 
 <!-- landside:begin (tools/blender/build_landside.py; numbers from out/buildings3d/landside_verify.json) -->
@@ -408,7 +407,9 @@ another (tower, ITB, domestic, landside: one decode / upload / program compile a
 before the group is shown, so a LOD switch later does not stall). Until a group is on screen, or if its file fails, the
 first-pass extrusions stay: the scene never has a hole. Tiers: high / medium / ultra load the full files (LOD0-2), the low
 tier (phones) the `*_lod2.glb` files (3.6 MB together); `?b3d=0` shows the first-pass buildings only, `?b3d=lod2|full`
-forces a set, `?b3dtower=f2` the tower's second height family (manifest `family_decided: false`; F1 stays the default).
+forces a set, `?b3dtower=f1` the tower's alternative height family F1 (`tower_f1.glb`; manifest `family_decided: false`;
+F2 `tower.glb` is the default since the tower review round 1, see the tower section), `?b3donly=tower,...` loads only the
+listed groups (QA).
 
 **LOD.** As each group's manifest says: a "LOD set" is a node whose children are LOD0 / LOD1 / LOD2 (tower, ITB, domestic:
 the root; landside: every building node). LOD2 (one joined mesh with its own small atlas) is shown when the camera is beyond
@@ -447,10 +448,11 @@ different `Geo`s. live.html is unaffected (it draws every item, the rests are no
 | terminal-complex ramp-level walls (G..G+5) | per edge where an asset occupies the band within 3 m: 15 runs (domestic, ITB, tower) | the edges along the courtyard links and connectors |
 | `sfo_airport.json` structures (36) | landside 30 (garages, RCC, CAC, Hyatt, Superbay, AirTrain stations, guideway slab + columns), ITB 4 (ITB AirTrain stations: inside the ITB core block), tower 1 (`buildTower`) | none |
 
-The app's tower view (`js/live/app.js`: GROUND_Y + 62 over `world.towerPos`) moves to the asset's cab eye (x, z) once
-tower.glb is shown (manifest `tower.integration.tower_camera`: eye (-739.0, 65.2, 323.5); GROUND_Y + 62 = 65.0 is 0.2 m
-from the F1 eye height, so the height is kept). Inside the cab the alpha-blended glass is hidden (it would darken the whole
-view); from outside it is drawn.
+The app's tower view (`js/live/app.js`: `world.towerPos`, height `towerPos.eyeY`, GROUND_Y + 62 before a tower file is
+shown) moves to the loaded tower file's cab eye: the loader reads the anchors from the file's root extras (`userData.anchors`),
+so F2 (`tower.glb`, `tower_lod2.glb`) puts the eye at GROUND_Y + 59.15 = 62.15 and F1 (`tower_f1.glb`) at 65.2 (tower review
+round 1: the fixed GROUND_Y + 62 sat in the F2 roof fascia). Inside that family's glass ring (`glass_head_r` + 0.3, cab floor
+- 0.5 .. glass head + 0.5) the alpha-blended glass is hidden (it would darken the whole view); from outside it is drawn.
 
 **Physical plausibility of the integrated set** (`integration.json#plausibility`; every LOD of every file, unsimplified
 footprints):
@@ -496,7 +498,7 @@ are the renderer's; WebGLRenderer is tree-shaken out). `vendor/three/three.modul
 a rebuild without the change reproduced the old file byte for byte first. Phone-test artifact (`tools/build3/phone_artifact.sh`):
 artifacts serve standard web types only, and the aircraft models already ship as `.wasm` (application/wasm) fetched as bytes,
 so the GLBs ship the same way (`data/buildings3d/*.wasm`, `window.SFO_B3D_EXT = '.wasm'`; `B3D=all|lod2|none`, default all
-without the tower's F2 file). A test build from the working tree: 218 files, 59.0 MB (the GLBs 36.8 MB; limits: 15 MB per
+without the tower's alternative family file `tower_f1.glb`; `B3D=all+alt` adds it). A test build from the working tree: 218 files, 59.0 MB (the GLBs 36.8 MB; limits: 15 MB per
 binary file - landside.glb is 14.87 MB -, 255 files and 64 MB per publish), the app bundle 4.58 MB with GLTFLoader and the
 loader in it. `integration.js` is bundled (6 kB); `integration.json` is not shipped.
 
@@ -550,9 +552,8 @@ What the renders show, and what was done about it:
   22 / 46 / 41 / 327 s (tower / ITB / domestic / landside; WebGL 2 without parallel compile blocks the main thread, the
   landside has 97 materials and 160 instanced car nodes); on GPUs with `KHR_parallel_shader_compile` / WebGPU async
   pipelines it is not blocking, but merging the landside materials would cut it (not done here: the assets are the groups').
-- The tower camera keeps the app's eye height (GROUND_Y + 62 = 65.0 m world) 0.2 m under the F1 anchor (`cab_eye_h` 62.2 m
-  above grade); app.js is another workflow's file. F2 (`?b3dtower=f2`) has a different cab floor: the eye is then
-  not re-anchored (open while `family_decided` is false).
+- The tower camera follows the loaded family's `cab_eye_h` (tower review round 1; one-line hook in app.js:
+  `tower.eyeY || GROUND_Y + 62`).
 - Ground physics: the 3-D footprints are not in `ground.js buildingGrid` yet (above); the realtime owner's call.
 - KTX2 / meshopt compression (`tools/engine/glb_compress.mjs`) is still a later step: it needs the KTX2 transcoder and the
   meshopt decoder in the vendored bundle and the artifact (WASM policy unverified, engine.md 5).

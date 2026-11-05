@@ -174,21 +174,24 @@ const NG_CL = { crown: [5.41, 5.56], sill: [2.59, 2.74] };            // NG §2.
 const A32F = { crown: [5.86, 5.97], sill: [3.38, 3.48] };             // AC A320 FIG-2-3-0-991-032 (A320neo): fuselage top, D1
 export const SPEC = {
   // ---- Boeing 737 (NG: §2.2 general dims, §2.3 ground clearances, §2.7.1 door 1 "16 ft 6 in (5.03 m)"; MAX: §2.2, §2.3, §2.7.1 p.2-26 table)
-  b736: { doc: 'NG', L: 31.24, span: 34.32, H: [12.45, 12.70], crown: [5.38, 5.54], sill: [2.59, 2.74], nose: 4.09, main: [15.32], track: 5.72, doors: [5.03, 23.65],
+  // (engClr: NG §2.3.1-2.3.3 row D 'engine' [MIN (AT MTW), MAX (AT OEW)]; MAX §2.3.1-2.3.4 row E)
+  // (MAX sillAft: §2.3.1-2.3.4 row M 'aft passenger door, left & right' [MINIMUM, MAXIMUM]; js/aircraft/fit.js fits the MAX stance to
+  // the MAXIMUM column of sill (row B) and sillAft, read as the OEW condition like the NG document's 'MAX (AT OEW)' column, inf)
+  b736: { doc: 'NG', engClr: [0.46, 0.61], L: 31.24, span: 34.32, H: [12.45, 12.70], crown: [5.38, 5.54], sill: [2.59, 2.74], nose: 4.09, main: [15.32], track: 5.72, doors: [5.03, 23.65],
     src: '§2.2.1 p.2-9 (L, span without winglets, nose gear 13 ft 5 in, wheelbase 36 ft 10 in, track 18 ft 9 in), §2.3.1 p.2-17', inf: ['doors[1]: aft door = MAX aft-door-to-tail distance 7.59 m'] },
-  b737: { doc: 'NG', L: 33.63, span: 35.79, H: [12.45, 12.67], ...NG_CL, nose: 4.09, main: [16.69], track: 5.72, doors: [5.03, 26.04],
+  b737: { doc: 'NG', engClr: [0.46, 0.61], L: 33.63, span: 35.79, H: [12.45, 12.67], ...NG_CL, nose: 4.09, main: [16.69], track: 5.72, doors: [5.03, 26.04],
     src: '§2.2.4 p.2-12 (-700W; without winglets 34.32), §2.3.3 p.2-19', inf: ['doors[1] (as b736)'] },
-  b738: { doc: 'NG', L: 39.47, span: 35.79, H: [12.37, 12.62], ...NG_CL, nose: 4.09, main: [19.69], track: 5.72, doors: [5.03, 31.88],
+  b738: { doc: 'NG', engClr: [0.48, 0.64], L: 39.47, span: 35.79, H: [12.37, 12.62], ...NG_CL, nose: 4.09, main: [19.69], track: 5.72, doors: [5.03, 31.88],
     src: '§2.2.6 p.2-14 (-800W), §2.3.3 p.2-19', inf: ['doors[1] = 737-8 aft door (same fuselage, MAX §2.7.1)'] },
-  b739: { doc: 'NG', L: 42.11, span: 35.79, H: [12.37, 12.62], crown: [5.44, 5.59], sill: [2.59, 2.74], nose: 4.09, main: [21.26], track: 5.72, doors: [5.03, 34.52],
+  b739: { doc: 'NG', engClr: [0.48, 0.64], L: 42.11, span: 35.79, H: [12.37, 12.62], crown: [5.44, 5.59], sill: [2.59, 2.74], nose: 4.09, main: [21.26], track: 5.72, doors: [5.03, 34.52],
     src: '§2.2.8 p.2-16 (-900ERW), §2.3.3 p.2-19', inf: ['doors[1] = 737-9 aft door'] },
-  b37m: { doc: 'MAX', L: 35.56, span: 35.92, H: [11.84, 12.50], crown: [5.05, 5.51], sill: [2.77, 3.07], nose: 4.09, main: [17.45], track: 5.72, doors: [5.03, 27.97],
+  b37m: { doc: 'MAX', engClr: [0.43, 0.56], L: 35.56, span: 35.92, H: [11.84, 12.50], crown: [5.05, 5.51], sill: [2.77, 3.07], sillAft: [2.49, 2.92], nose: 4.09, main: [17.45], track: 5.72, doors: [5.03, 27.97],
     src: '§2.2.1 p.2-9 (nose gear 13 ft 5 in, wheelbase 43 ft 10 in), §2.3.1 p.2-13 (A, B, P), §2.7.1 p.2-26 (B, H)' },
-  b38m: { doc: 'MAX', L: 39.47, span: 35.92, H: [11.86, 12.45], crown: [5.08, 5.51], sill: [2.77, 3.07], nose: 4.09, main: [19.69], track: 5.72, doors: [5.03, 31.88],
+  b38m: { doc: 'MAX', engClr: [0.43, 0.56], L: 39.47, span: 35.92, H: [11.86, 12.45], crown: [5.08, 5.51], sill: [2.77, 3.07], sillAft: [2.49, 2.90], nose: 4.09, main: [19.69], track: 5.72, doors: [5.03, 31.88],
     src: '§2.2.2 p.2-10, §2.3.2 p.2-14, §2.7.1 p.2-26' },
-  b39m: { doc: 'MAX', L: 42.11, span: 35.92, H: [11.89, 12.40], crown: [5.08, 5.51], sill: [2.79, 3.07], nose: 4.09, main: [21.26], track: 5.72, doors: [5.03, 34.52],
+  b39m: { doc: 'MAX', engClr: [0.43, 0.56], L: 42.11, span: 35.92, H: [11.89, 12.40], crown: [5.08, 5.51], sill: [2.79, 3.07], sillAft: [2.51, 2.82], nose: 4.09, main: [21.26], track: 5.72, doors: [5.03, 34.52],
     src: '§2.2.3 p.2-11, §2.3.3 p.2-15, §2.7.1 p.2-26' },
-  b3xm: { doc: 'MAX', L: 43.79, span: 35.92, H: [11.91, 12.45], crown: [5.08, 5.54], sill: [2.77, 3.07], nose: 4.09, main: [22.43], track: 5.72, doors: [5.03, 36.20],
+  b3xm: { doc: 'MAX', engClr: [0.43, 0.56], L: 43.79, span: 35.92, H: [11.91, 12.45], crown: [5.08, 5.54], sill: [2.77, 3.07], sillAft: [2.54, 2.87], nose: 4.09, main: [22.43], track: 5.72, doors: [5.03, 36.20],
     src: '§2.2.4 p.2-12 (preliminary), §2.3.4 p.2-16, §2.7.1 p.2-26' },
   // ---- Boeing 757 (§2.3: A fuselage top, C door 1 sill; letters identified on the figure)
   // span: with the APB blended winglets the model carries, 134 ft 9 in = 41.07 m (Boeing Airport Technology 'Wingspan

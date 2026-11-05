@@ -611,11 +611,15 @@ def source_images(key):
                     if os.path.basename(n) not in out and os.path.exists(tp): out[os.path.basename(n)] = Image.open(tp)
     elif key == 'b738':
         import subprocess
+        # plain export of FGMEMBERS/737-800 @9126249 (refs/cache/src/fg/SOURCES.json; before 5 Nov 2026 a git clone there)
         repo = os.path.join(common.ROOT, 'refs', 'cache', 'src', 'fg', '737-800')
+        fp = os.path.join(repo, 'Models', '737-800.png')
         try:
-            data = subprocess.run(['git', 'show', 'HEAD:Models/737-800.png'], cwd=repo, capture_output=True, check=True).stdout
-            out['737-800.png'] = Image.open(io.BytesIO(data))
-        except Exception: pass
+            if os.path.exists(fp): out['737-800.png'] = Image.open(fp)
+            else:
+                data = subprocess.run(['git', 'show', 'HEAD:Models/737-800.png'], cwd=repo, capture_output=True, check=True).stdout
+                out['737-800.png'] = Image.open(io.BytesIO(data))
+        except Exception: print('  WARNING: FG 737-800 source texture Models/737-800.png not found in', repo)
     return out
 
 

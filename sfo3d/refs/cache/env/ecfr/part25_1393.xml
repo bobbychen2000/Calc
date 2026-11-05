@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<DIV8 N="25.1393" TYPE="SECTION" hierarchy_metadata="{&quot;path&quot;:&quot;/on/_SUBSTITUTE_DATE_/title-14/section-25.1393&quot;,&quot;citation&quot;:&quot;14 CFR 25.1393&quot;,&quot;alternate_reference&quot;:&quot;FAR 25.1393&quot;}">
+<HEAD>§ 25.1393 Minimum intensities in any vertical plane of forward and rear position lights.</HEAD>
+<P>Each position light intensity must equal or exceed the applicable values in the following table:</P>
+<DIV width="100%"><DIV class="gpotbl_div">
+<TABLE border="1" cellpadding="1" cellspacing="1" class="gpo_table" frame="void" width="100%">
+<THEAD>
+<TR>
+<TH class="center border-top-single border-bottom-single border-right-single">Angle above or below the horizontal plane</TH>
+<TH class="center border-top-single border-bottom-single">Intensity, <E T="03">l</E></TH>
+</TR>
+</THEAD>
+<TBODY>
+<TR>
+<TD class="left border-right-single">0°</TD>
+<TD class="right">1.00</TD>
+</TR>
+<TR>
+<TD class="left border-right-single">0° to 5°</TD>
+<TD class="right">0.90</TD>
+</TR>
+<TR>
+<TD class="left border-right-single">5° to 10°</TD>
+<TD class="right">0.80</TD>
+</TR>
+<TR>
+<TD class="left border-right-single">10° to 15°</TD>
+<TD class="right">0.70</TD>
+</TR>
+<TR>
+<TD class="left border-right-single">15° to 20°</TD>
+<TD class="right">0.50</TD>
+</TR>
+<TR>
+<TD class="left border-right-single">20° to 30°</TD>
+<TD class="right">0.30</TD>
+</TR>
+<TR>
+<TD class="left border-right-single">30° to 40°</TD>
+<TD class="right">0.10</TD>
+</TR>
+<TR>
+<TD class="left border-bottom-single border-right-single">40° to 90°</TD>
+<TD class="right border-bottom-single">0.05</TD>
+</TR>
+</TBODY>
+</TABLE>
+</DIV></DIV>
+</DIV8>

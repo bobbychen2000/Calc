@@ -10,9 +10,20 @@ One tile spans TILE metres of UV_detail (itb_geom lays UV_detail out in metres /
   itb_n_curtain   512 x 512   6.096 x 4.4 curtain-wall caps: verticals every 1.524 m (5 ft), horizontals every 2.2 m
                                           [obs photo i4: ~2.2 m transoms, low; 5-ft panes inf]
   itb_c_curtain_* 512 x 512   6.096 x 4.4 curtain-wall base colour (glass + light 6-cm caps on the itb_n_curtain grid) [inf]
+                              (tinted end walls / clerestory, dark window bands; the round-0 pier tile is replaced by
+                              itb_c_curtain_gate)
   itb_c_frit      256 x 256   3.6 x 3.6 m fritted glass: white frit bands on a 0.9-m period with a narrow clearer joint
                                           (BI-02 V1 draws the bands every 0.9 m) and a pane joint every 1.8 m [obs photo
                                           i4 banding, values inf]
+  itb_n_frit      512 x 512   3.6 x 3.6 m normal map of the fritted bays, on the frit's own tile (review r1: the bays used
+                                          itb_n_curtain, whose 1.524-m verticals land every 0.9 m on the 3.6-m frit tile and
+                                          read as vertical stripes): horizontal transom caps at the 1.8-m pane joints, shallow
+                                          vertical butt joints every 1.8 m (photo i3: horizontal frit bands and transoms,
+                                          thin verticals ~2 bands apart) [obs photo i3, values inf]
+  itb_c_curtain_gate 512 x 512 15.9 x 10.1 m BA-G gate-room curtain wall (photo a2, review r1): one tile = a quarter of the
+                                          63.6-m bay x the full 4.6-14.7 m glazing; heavy mullion at the tile edge, a light
+                                          one at mid-width, transoms every ~1.7 m and a deeper floor band at mid-height
+                                          [obs photo a2, low]; glass = the material colour (a2 median sRGB 39 / 56 / 59)
 """
 import os
 
@@ -24,6 +35,8 @@ TILES = {   # name: (metres along U, metres along V)
     'itb_n_panel': (6.096, 6.096),
     'itb_n_curtain': (6.096, 4.4),
     'itb_c_frit': (3.6, 3.6),
+    'itb_n_frit': (3.6, 3.6),
+    'itb_c_curtain_gate': (15.9, 10.1),
 }
 
 
@@ -94,11 +107,33 @@ def frit(path, size=256):
     return path
 
 
+def frit_normal(path, size=512):
+    """normal map on the frit tile (3.6 x 3.6 m): raised 5-cm transom caps every 1.8 m (horizontal pane joints, 2 bands
+    per pane) and 1-cm-deep, 2-cm butt joints every 1.8 m (vertical, structural-silicone glazing). The vertical relief is
+    kept small on purpose: horizontal structure dominates as in photos i3 / i4."""
+    tu, tv = TILES['itb_n_frit']
+    u, v = _grid(size, size, tu, tv)
+    h = np.maximum(-_groove(_dist(v, 1.8), 0.05, 0.02), 0.0) + _groove(_dist(u, 1.8), 0.02, 0.004)
+    return _normal_png(h, tu / size, tv / size, path)
+
+
+def curtain_gate(path, glass_rgb, size=512, cap_rgb=(150, 156, 160)):
+    """BA-G gate-room curtain wall tile (15.9 x 10.1 m, UV origin at the bay start / glazing foot): heavy mullion 0.30 m at
+    u 0, light 0.12 m at u 7.95, transoms 0.08 m every 10.1 / 6 m, floor band 0.35 m at mid-height (photo a2) [obs, low]."""
+    tu, tv = TILES['itb_c_curtain_gate']
+    u, v = _grid(size, size, tu, tv)
+    cap = ((_dist(u, tu) < 0.15) | (np.abs(u - tu / 2) < 0.06) | (_dist(v, tv / 6) < 0.04) | (np.abs(v - tv / 2) < 0.175))
+    cap = cap.astype(float)
+    col = np.array(glass_rgb, float)[None, None, :] * (1 - cap[..., None]) + np.array(cap_rgb, float)[None, None, :] * cap[..., None]
+    Image.fromarray(np.clip(col, 0, 255).astype(np.uint8), 'RGB').save(path, optimize=True)
+    return path
+
+
 CURTAIN_GLASS = {   # base-colour curtain-wall tiles: glass colour (sRGB, = the material's) with light mullion caps
-    'itb_c_curtain_pier': (36, 50, 52),
     'itb_c_curtain_tinted': (42, 56, 60),
     'itb_c_curtain_dark': (28, 33, 38),
 }
+GATE_GLASS = (38, 54, 56)   # glass_gate (photo a2 median 39 / 56 / 59) - build_itb.MATS['glass_gate']
 
 
 def curtain_colour(path, glass_rgb, size=512, cap_rgb=(176, 180, 184)):
@@ -120,6 +155,8 @@ def make_all(out_dir):
         'itb_n_panel': panel(os.path.join(out_dir, 'itb_n_panel.png')),
         'itb_n_curtain': curtain(os.path.join(out_dir, 'itb_n_curtain.png')),
         'itb_c_frit': frit(os.path.join(out_dir, 'itb_c_frit.png')),
+        'itb_n_frit': frit_normal(os.path.join(out_dir, 'itb_n_frit.png')),
+        'itb_c_curtain_gate': curtain_gate(os.path.join(out_dir, 'itb_c_curtain_gate.png'), GATE_GLASS),
     }
 
 

@@ -21,7 +21,9 @@
 //             (777) up, review 4 Nov 2026; the ACAPs show both types nose-down at rest, e.g. 737-800 entry door 1 sill
 //             2.59-2.74 m vs door 2 2.97-3.12 m, D6-58325-7 Rev C §2.3.2 p.2-18: ~0.8 deg); gear-less models are placed so the door the bridge meets is where the documents put it: on the door-1 sill
 //             when the source model has a door object (A320 family, A220-100, CRJ700/900, E-Jets), else on the published
-//             fuselage top at door 1, else on the published overall height. The 737-800 model has its own gear.
+//             fuselage top at door 1, else on the published overall height. The 737-800 model has its own gear. The 737 MAX
+//             family stands nose-up on an extended nose leg, its pitch fitted to the published door-1 and aft-door sills
+//             (round 2 of the 5 Nov 2026 review; NOSE_LEG and the stance fit in fitType).
 //   docking   the jet bridge docks at the rendered door: the model's own door object where it has one (rendered station,
 //             including scale and plugs), else the published door centre; floor at the published sill; the cab stops at the
 //             rendered fuselage side at the door's station: the widest skin over the door opening (sill to sill + 1.9 m),
@@ -105,8 +107,18 @@ const TIP_CUT = { b738: { z0: 17.5, y0: 0.75, zTo: 17.62, yTo: 0.6 } };
 // published winglet span (SPEC span). The winglet keeps the artist's height (no published value here).
 const WINGLET = { b752: { zr: 18.6, y0: 0.25, yt: 2.88 } };
 // 737 MAX: LEAP-1B nacelles in place of the model's CFM56-7B ones, scaled radially by the fan-diameter ratio (69.4 in / 61 in,
-// CFM International LEAP-1B and CFM56-7B data) about the nacelle's lowest line, so the ground clearance stays the model's
+// CFM International LEAP-1B and CFM56-7B data) about the nacelle's TOP line (the pylon attachment: keep 'top'). Round 2 of
+// the 5 Nov 2026 review: scaled about the lowest line, the nacelle top rose 0.27 m over its pylon junction and its bottom
+// rendered 0.86 m in the nose-up MAX stance against row E 0.43-0.56 m (D6-38A004 Rev K §2.3.x; the NG's row D is 0.48-0.64 m,
+// D6-58325-7 §2.3.2: the bigger fan hangs lower although the MAX stands nose-up); about the top line it renders 0.58 m
 const ENG_SCALE = { b37m: 1.14, b38m: 1.14, b39m: 1.14, b3xm: 1.14 };
+// nose leg of a model on its own gear that a type's stance may extend (737 MAX on the FG 737-800, stance fit in fitType):
+// model units, measured on the FG nosegear.ac objects in data/models/b738.sfom (zone 3): outer strut (nouterstrut) y -2.574
+// .. -1.817, piston (nlowerstrut) -3.148 .. -2.495, torque links -3.105 .. -2.355, tyres -3.426 .. -2.705, all at x -4.70 ..
+// -3.95; the main gear is at x -20. noseExt (js/aircraft/stretch.js) stretches the gear zone ahead of xMin between yTop
+// (the outer strut's bottom) and yBot (just above the tyres), so the piston and links lengthen and the wheels move down
+// rigidly by e; the strut, steering collar, well and doors stay
+const NOSE_LEG = { b738: { xMin: -6.0, yTop: -2.58, yBot: -2.70 } };
 
 // A380 upper-deck door U1L: Airbus AC A380 Dec 01/25 FIGURE-2-7-0-991-002 (U1 20.94 m from the nose) and
 // FIGURE-2-3-0-991-001 (U1 sill 7.87-7.89 m at MRW, fwd / aft CG; docs/requests/bridges_aircraft.md)
@@ -223,7 +235,7 @@ export function fitType(t, m) {
   // long, +4.3 % against the ACAP; now the plain wing ends at spanPlain and the winglet is canted out, WINGLET above)
   const cut = TIP_ADD[t] && TIP_CUT[m];
   if (cut) stretch.tipCut = cut;
-  if (ENG_SCALE[t] && TIP_CUT[m]) stretch.engScale = { k: ENG_SCALE[t] };
+  if (ENG_SCALE[t] && TIP_CUT[m]) stretch.engScale = { k: ENG_SCALE[t], keep: 'top' };
   const WL = !cut && WINGLET[m] && S.spanPlain ? WINGLET[m] : null;  // (the span fit then ends at the winglet root)
   const semi = cut ? cut.zTo : WL ? WL.zr : F ? F.wing.semi : d.span / 2;
   const want = ((WL ? S.spanPlain : S.span) / 2 - (TIP_ADD[t] ? TIP_LAT[TIP_ADD[t]] : 0)) / s; let wing = null;
@@ -252,6 +264,26 @@ export function fitType(t, m) {
     const xn = xOf(C.nose.st), xm = xOf(C.main.st), dy = C.nose.y - C.main.y;
     if (dy > 0.005 && xn > xm) pitch = { a: +Math.atan2(dy, xn - xm).toFixed(6), x0: +xm.toFixed(3), y0: C.main.y };
   }
+  // 737 MAX stance (review 5 Nov 2026, round 2): the MAX stands nose-UP at rest (D6-38A004 Rev K §2.3.1-2.3.4: forward door
+  // B 2.77-3.07 m above aft passenger door M 2.49-2.90 m on the 737-8; the NG's door 1 is 0.38 m BELOW its door 2, D6-58325-7
+  // §2.3.2), on a taller nose gear; drawn on the NG model's gear it stood nose-down and its aft door rendered 0.26-0.33 m above
+  // the range. Types whose SPEC gives the aft door sill (sillAft) and whose model stands on its own gear with door objects
+  // fore and aft get the pitch angle that fits the rendered door-1 and aft-door sills to the published MAXIMUM column (the
+  // OEW condition, as the NG stance above: the NG document labels that column 'MAX (AT OEW)', the MAX document only
+  // 'MAXIMUM': inf), least squares, about the main-gear contact (the main gear is the NG's: unchanged), and the nose gear is
+  // extended (stretch noseExt: its oleo stretched between the strut bottom and the wheels, NOSE_LEG) until its tyre
+  // touches in that stance. 737-8: 0.66 deg nose-up, nose leg +0.35 m (the ACAPs' OEW MAX-vs-NG height changes, +0.33 m at
+  // door 1 (5.03 m) and -0.22 m at the aft door (31.88 m), put the axis of that rotation at 21.1 m, 1.4 m aft of the ACAP
+  // main gear: consistent with a pitch about the main gear).
+  const dmF = doorMesh(m), dmA = S.sillAft && F && (F.doors || []).find(q => q.side === 'L' && q.x > 0.5 * d.L);
+  if (pitch && dmF && dmA && S.sill && NOSE_LEG[m]) {
+    const ys = (a, q) => -d.low * s + (pitch.y0 + (q.ySill - pitch.y0) * Math.cos(a) - (xOf(q.x) - pitch.x0) * Math.sin(a)) * s;
+    const err = (a) => (ys(a, dmF) - S.sill[1]) ** 2 + (ys(a, dmA) - S.sillAft[1]) ** 2;
+    let lo = -0.06, hi = 0.03;
+    for (let it = 0; it < 100; it++) { const u = lo + (hi - lo) / 3, v = hi - (hi - lo) / 3; if (err(u) < err(v)) hi = v; else lo = u; }
+    const a = +((lo + hi) / 2).toFixed(6), e = (C.nose.y - pitch.y0) - (xOf(C.nose.st) - pitch.x0) * Math.tan(a);
+    if (a < pitch.a && e > 0.005) { pitch.a = a; stretch.noseExt = { ...NOSE_LEG[m], e: +e.toFixed(4) }; }
+  }
   // model point (station st, height y) -> [x, y] of the stretched, pitched model (model units)
   const pose = (st, y) => {
     const x = xOf(st); if (!pitch) return [x, y];
@@ -272,7 +304,8 @@ export function fitType(t, m) {
       const ex = Hc + top0 * s - (S.crown[0] + S.crown[1]) / 2;
       if (ex > 0.15) { stretch.gearUp = +(ex / s).toFixed(3); Hc -= ex; seat = 'gear (oleos compressed ' + ex.toFixed(2) + ' m)'; }
     }
-    if (pitch) { pitch.y0 = +(C.main.y + (stretch.gearUp || 0)).toFixed(3); seat += ', nose-down ' + (pitch.a * 180 / Math.PI).toFixed(2) + ' deg'; }
+    if (pitch) { pitch.y0 = +(C.main.y + (stretch.gearUp || 0)).toFixed(3); seat += (pitch.a >= 0 ? ', nose-down ' : ', nose-up ') + Math.abs(pitch.a * 180 / Math.PI).toFixed(2) + ' deg'
+      + (stretch.noseExt ? ', nose leg +' + (stretch.noseExt.e * s).toFixed(2) + ' m' : ''); }
   }
   else if (dm && T.sill != null) { Hc = T.sill - dm.ySill * s; seat = 'sill'; }
   else if (T.crown != null && crownOf(F, d.L) != null) { Hc = T.crown - crownOf(F, d.L) * s; seat = 'crown'; }
