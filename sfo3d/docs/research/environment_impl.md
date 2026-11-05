@@ -184,3 +184,26 @@ show the fixture faces tinted orange (inf: edge / RCL / threshold groups, whose 
 TDZ, ALS bars), green (pub/obs: PAPI LHAs; the 14 red NV faces, the flagged between-runway REL arrays on 1L/19R, are outside these
 views) on top of the current
 `js/live/lights.js` lights; HUD with 12 lines. (QA overlay only, not a scored visual review.)
+
+### 1.5 Gates (steps 0–1) and open points
+
+`tools/env/run_gates.sh` (no GPU, no network): Python decoder 38/38 · **A-SUN** (unit) 32/32 · **A-FIX** 50/50 ·
+**A-WX** 864/864 deep-equal, 0 numeric difference, regex parser gone · **A-CLK** + EnvState presets 43/43 · relay
+smoke 15/15. The render halves of A-SUN (pole shadow azimuth, disc at sunset) belong to the step-3 render tests.
+
+Owner-question defaults in force (all **I**, listed in the `?qa=env` HUD): Q8 archived presets only via `?wx=`; Q12
+takram not adopted (its GPU test cannot run here) and no starfield (takram `stars.bin` not shipped, no source with
+verified open terms found); Q13 photographic night look; Q9 runway configuration from ADS-B flow → METAR wind (3-5-1)
+→ West Plan, no D-ATIS; Q7 / Q14 / Q16 parameters unchanged (NV); Q1 no beacon, Q15 no windsocks drawn.
+
+Open points found in this step:
+1. A-SUN render criterion: 19:04:33 PDT is the USNO (−50′ geometric) sunset; the apparent Sun centre is on the horizon
+   at 19:03:15 PDT (Bennett). The step-3 render test should name which one it means.
+2. `ephemeris.js` clamps refraction below −1° at +0.65°; the sky model should use the geometric direction there
+   (step 3). The renderers' night heuristics already use `sun.elTrue`.
+3. REL: whether the relocated W crossing of 1L/1R has RELs (the 2017 FAA graphic shows the retired F1 crossing) is NV;
+   the between-runway F1/G/H assignment is NV; the CL side of the arrays is inf; 5 lights of the taxiway R array sit
+   0.3–1.7 m outside the pavement polygons because the polygons and the NAIP-snapped centreline disagree by ~1 m there
+   (static data).
+4. The light-mode menu (`js/live/ui.js`, not this track's file) has no "Dawn" entry; `SFO.setLight('dawn')` works.
+5. D3 quotes AC 70/7460-1N §5.6 through the verifier's notes (the AC PDF is not cached any more); as-built tower lights NV.

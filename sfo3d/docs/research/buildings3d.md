@@ -523,7 +523,7 @@ What the renders show, and what was done about it:
   tower, garage cars and AirTrain slab are gone where the assets stand (`b3dLod` per view: 15-36 units at LOD0).
 - **Textures +185 MB** (1,088 -> 1,273 MB in every day view, as estimated from the images) after the texture dedupe; the
   first run without it had 4,054 MB.
-- **Draw calls x 1.8-3.2** (shadow cascades and the depth / normal pre-pass multiply the meshes): 949-2,497 per frame at
+- **Draw calls x 1.8-3.2** (shadow cascades and the depth / normal pre-pass multiply the meshes): 949-2,512 per frame at
   the high tier. Triangles are flat or lower (the first-pass buildings were one mesh, never culled). Merging the LOD0 /
   LOD1 meshes per material at load time (the ITB manifest suggests it for phones) is the next step if a device is
   draw-call bound.
