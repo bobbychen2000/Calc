@@ -315,10 +315,10 @@ def guide_beams(mb, F, poly_w, lev, seg=4.0, lod=0, rails=None):
     clipz = poly_w.buffer(-1.2)
     if lod == 0:
         strip = orient_all(lines.buffer(BEAM_W / 2, cap_style=2, join_style=2).intersection(clipz).buffer(0))
-        _strip(mb, F, lev, strip, 0.0, BEAM_H, 'guide_rail', seg=seg)
+        _strip(mb, F, lev, strip, 0.0, BEAM_H, 'guide_rail', seg=max(seg, 6.0))
     outer = lines.buffer(PAD_OFF + PAD_W / 2, cap_style=2, join_style=2).difference(lines.buffer(PAD_OFF - PAD_W / 2, cap_style=2, join_style=2))
     pads = orient_all(outer.intersection(poly_w.buffer(-0.35)).buffer(0))
-    _strip(mb, F, lev, pads, 0.0, PAD_H, 'running_pad', seg=seg, sides=(lod == 0))
+    _strip(mb, F, lev, pads, 0.0, PAD_H, 'running_pad', seg=max(seg, 8.0), sides=False)     # 0.12-m pads: top faces only
     walk = poly_w.buffer(-3.7, join_style=2)
     walk = orient_all(walk.buffer(0.4, join_style=2).intersection(poly_w.buffer(-3.3, join_style=2)).buffer(0)) if not walk.is_empty else walk
     if walk.is_empty: return

@@ -146,6 +146,10 @@ if (gsys.pushClearEta) { traffic.pushClearEta = (g) => gsys.pushClearEta(bridgeG
 const restBridges = GROUNDJS.bridgeGrid && gsys.solids ? (() => { const boxes = []; for (const g of gates) for (const b of g.bridges || []) boxes.push(...gsys.solids(g, b, 0)); return GROUNDJS.bridgeGrid(boxes, GROUND_Y); })() : null;
 const physics = new GroundPhysics({ paved: apt.paved, building, net: traffic.net, bridges: restBridges });
 traffic.restBridgeAt = restBridges;   // (as app.js)
+// (as app.js: can the stand's L1 bridge dock this aircraft at that drawn pose -- gates.js makePlan; traffic.js restDockOk)
+const poseAt = (T, P) => { const h = hdgVec(P.hdg); const k = antOf(T); const n = worldToST(P.x + h[0] * k, P.z + h[1] * k), o = worldToST(0, 0), d = worldToST(h[0], h[1]); return { nose: n, dir: [d[0] - o[0], d[1] - o[1]] }; };
+if (gsys.makePlan && gsys.bridgesOf) traffic.canDock = (g, tr, P) => { const G = bridgeGate(g); const ty = tr.model && TYPES[tr.model.t] ? tr.model.t : null; if (!ty) return true;
+  const gp = { ...G, acType: ty, _lastType: ty, dockType: tr.info.icao || null, dock: poseAt(TYPES[ty], P) }; return gsys.bridgesOf(G).some(b => b.door === 1 && !b.upper && gsys.makePlan(gp, b).ok); };
 const pavedMask = apt.paved, pavedAll = pavedUnion(apt.paved, traffic.net);
 globalThis.__inv = { traffic, gsys, gates, physics, bridgeGate, now: () => simNow };   // (for wrapper scripts: hooks, dumps)
 

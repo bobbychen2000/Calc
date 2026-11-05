@@ -285,6 +285,10 @@ export async function startApp(cfg) {
   const restBridges = (() => { if (!gateSys.solids) return null; const boxes = []; try { for (const g of world.gates) for (const b of g.bridges || []) boxes.push(...gateSys.solids(g, b, 0)); } catch (e) { console.warn('bridge solids', e); return null; } return bridgeGrid(boxes, GROUND_Y); })();
   const physics = new GroundPhysics({ paved: pavedMask, building: buildingAt, net: traffic.net, bridges: restBridges });
   traffic.restBridgeAt = restBridges;   // (traffic.js fusInRestBridge: no rest pose accepted past a stop inside a bridge)
+  // can the stand's L1 bridge dock this aircraft at that drawn pose (gates.js makePlan; traffic.js restDockOk keeps a rest
+  // pose off the parked pose only where it can -- round 3)
+  if (gateSys.makePlan && gateSys.bridgesOf) traffic.canDock = (g, tr, P) => { const G = bridgeGate(g); const ty = tr.model && TYPES[tr.model.t] ? tr.model.t : null; if (!ty) return true;
+    const gp = { ...G, acType: ty, _lastType: ty, dockType: tr.info.icao || null, dock: poseST({ model: tr.model, dockPose: P }) }; return gateSys.bridgesOf(G).some(b => b.door === 1 && !b.upper && gateSys.makePlan(gp, b).ok); };
   // footprints of aircraft on the ground (vehicles around a stand must not hit them)
   gateSys.aircraftFootprints = () => {
     const out = [];

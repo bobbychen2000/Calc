@@ -327,10 +327,10 @@ def run(path):
     L2n = lambda k: [m for nm, m in by.get(k, []) if m['lod'] == 2 and m['inst'] is None]
     for k in by:
         if k.startswith('airtrain'): continue
-        P0 = allP(L0(k)); P2 = allP(L2n(k))
+        P0 = allP([m for nm, m in by.get(k, []) if m['lod'] == 0 and m['inst'] is None and not nm.endswith('_poles')]); P2 = allP(L2n(k))
         if not len(P0) or not len(P2): continue
         t0 = float(H(P0).max()); t2 = float(H(P2).max())
-        C.add(f'LOD2 {k}: top = LOD0 top', t2, t0, 0.5, 'BL-03 heights (LOD0 verified above)')
+        C.add(f'LOD2 {k}: top = LOD0 top (light poles excepted)', t2, t0, 0.5, 'BL-03 heights (LOD0 verified above)')
     for k, deck in (('central_garage', 81 * FT - 3.5 * FT), ('garage_a', DL.GAR['garage_a']['drum'] - 3.5 * FT), ('garage_g', DL.GAR['garage_g']['drum'] - 3.5 * FT)):
         if k not in by: continue
         Pd2 = allP(L2n(k), 'deck_far')

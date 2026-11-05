@@ -738,3 +738,35 @@ Numbers, dispositions and requests: `docs/requests/realtime_closeout.md` "Round 
    body still reverses; a same-number turn's card shows the record of the stand the aircraft is at (or the pending arrival).
 7. **GroundPhysics.** A body not yet at its stand pose (driving in) is a moving body (ghosts in its way are removed); an
    arrival heading into a stand where a silent aircraft is still drawn removes it early (its bridge retracts first).
+
+# Step 8 — close-out review round 2, fix round 2 (5 Nov 2026): verifier findings v1–v9
+
+Numbers, dispositions and requests: `docs/requests/realtime_closeout.md` "Round 2 — fix round 2". Replay: every
+recorded hour (4 Nov 17:43 – 5 Nov 09:00Z, 15.2 h at 10 Hz). New checker classes (tools/live/invariants.mjs):
+`bridge.parked_undocked`, `bridge.refused`, `bridge.dock_flap` (+ `meta.flap`), and `rwy.lineup_hdg` now reads the
+engine's phase, not the label.
+
+1. **One tolerance for rest and lock** (v2). The lock keeps the parked-pose estimate it was accepted against
+   (`lock.ref`); it is released only when the estimate has moved by more than LOCK_M / LOCK_DEG since then and is not
+   within them of the lock either. A silent docking waits DOCK_WAIT_MS like any arrival before its bridge moves.
+2. **Bridge reach** (found with the new classes). A rest pose with a residual at a contact stand is kept only where the
+   stand's L1 bridge can dock it, or cannot dock the parked pose either (`restDockOk`, app.js / invariants.mjs
+   `traffic.canDock` = gates.js `makePlan` on that pose); a lock the bridge cannot reach while the parked pose it can is
+   released (`lockOutOfReach`); the reports' along-position up to 15 m short of the stop is replaced by the stop when only
+   the stop is in reach (`updatePark`, inferred: an aircraft at a contact stand is where its bridge reaches).
+3. **Silent docking** (v3, v4). Already at the stop (±3 m along, < 3 m lateral, < 15° off): docked there (`path.here`).
+   Dead reckoning of an arrival stops at the stop mark of the contact stand whose lead-in it is on (`drStand`), with or
+   without a dock / stand. The drive is checked against every aircraft drawn on the ground (planforms every 3 m, 1 m
+   margin, `driveConflict`); a conflict refuses the docking, one that appears later holds the drive (`silentHold`).
+4. **Ghost ahead** (v1). A silent occupant is removed ahead of an arrival only when the arrival is on that stand's
+   lead-in close to the stop (`onLeadInClose`) and SFO's plan says the occupant has gone (`stalePlanGone`: actual
+   block-out past, all its stand windows there ended, or the stand allocated to the arrival now with no window of the
+   occupant there).
+5. **Stand rules** (v5). `excl_types` no longer block or remove (contradicted by the recording); they steer a silent
+   docking's geometric candidates only and are logged (`excl-type-conflict`). `types_ok` accepts a smaller member of a
+   listed type's stop-point family (`typesOkHas`: B38M under B39M). Refused SFO allocations are logged
+   (`sfo-stand-refused`).
+6. **Minors.** Early-undock 'silent' cancel only after XPDR_OFF_MS of silence, without blocking the next signal (v6); the
+   first ground report below 8 kt has no velocity until a chord gives the direction (v8); the tow pivot only while the
+   push-back phase or TOW_MS after it (v9); a re-placement waits for its bridges only while the data is within
+   CUT_HOLD_M (v9).

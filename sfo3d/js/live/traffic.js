@@ -691,10 +691,13 @@ export class Traffic {
       }
     }
     const v = hdgVec(r.dir); r.vx = v[0] * r.gs; r.vz = v[1] * r.gs;
-    // (round 3, review realtime-v8: the FIRST report of a track on the ground below 8 kt has no direction of motion yet -- the
+    // (round 3, review realtime-v8: the first reports of a track on the ground below 8 kt have no direction of motion yet -- the
     // surface track is not used and there is no chord: it moves neither forward nor back until the next report gives the
     // chord. UAL2322, first seen at B2 already pushing, rolled forward 3.3 m along its nose for 5 s, then reversed)
-    if (!L && ground && r.gs < 8 * KT) { r.vx = r.vz = 0; r.dirUnknown = true; }
+    // (...and the next ones too, while no report of the track has given a chord yet: a push of 1-2 m between reports moves
+    // under the 3 m chord threshold, and the second report of UAL2322 still sent the body 1.4 m forward)
+    if (chord != null) tr._chordSeen = true;
+    if (ground && r.gs < 8 * KT && chord == null && !tr._chordSeen && !tr.pushback) { r.vx = r.vz = 0; r.dirUnknown = true; }
     r.turn = 0;
     if (L && L.dir != null && r.dir != null) { const dt = (tf - L.t) / 1000; if (dt > 0.3 && dt < 6) { const w = wrapPi(r.dir - L.dir) / dt; r.turn = Math.abs(w) < (ground ? 12 : 4) * DEG ? w : 0; } }
     return r;
@@ -1419,7 +1422,17 @@ export class Traffic {
       const rx = sp[0] - g.w.x, rz = sp[1] - g.w.z; const lat = -rx * g.w.dz + rz * g.w.dx;
       const fa = stopAlong(g, tr.info.icao), hasFs = !!(g.typeStops && g.typeStops[familyOf(tr.info.icao)]);
       const ownA = clamp((rx * g.w.dx + rz * g.w.dz) + antOf(T, L), -25, 0);
-      const noseAlong = tr.dockComplete || tr.shortBlocked || (hasFs && Math.abs(ownA - fa) < 6) ? fa : ownA;
+      let noseAlong = tr.dockComplete || tr.shortBlocked || (hasFs && Math.abs(ownA - fa) < 6) ? fa : ownA;
+      // (round 3: the reports' own along-position up to 15 m short of the stop is replaced by the stop when the stand's jet
+      // bridge cannot reach the aircraft there but can at the stop -- an aircraft at a contact stand is where its bridge reaches
+      // [inf]. Replay 4 Nov: E-Jets parked 6.7-12 m short at F5 / F8 / F9 had no bridge for their whole turn; the static
+      // track measured E-Jet reports 13.4 m behind the nose against the app's 0.2 L = 6.3 m, static_fixup.md s.1.6 [obs])
+      if (noseAlong === ownA && ownA < fa - 1 && fa - ownA <= 15 && this.canDock && T) {
+        const key = g.name + '|' + T.name + '|' + Math.round(ownA * 2) + '|' + fa;
+        if (!tr._reachA || tr._reachA.key !== key) { const at = (al) => { const a = al - antOf(T, L); return { x: g.w.x + g.w.dx * a, z: g.w.z + g.w.dz * a, hdg: g.w.hdg }; };
+          const v = !this.canDock(g, tr, at(ownA)) && this.canDock(g, tr, at(fa)); tr._reachA = { key, v }; if (v) this.counters.parkAtStopReach = (this.counters.parkAtStopReach || 0) + 1; }
+        if (tr._reachA.v) noseAlong = fa;
+      }
       tr.parkAlong = noseAlong; tr.stopAlong = fa;
       // own pose vs stand pose, with hysteresis so that the report scatter does not flip it (data: > 8 deg or > 6 m off the
       // lead-in; back to the stand pose below 5 deg and 4 m)
@@ -1766,6 +1779,10 @@ export class Traffic {
       }
     }
     if (tr.leaving) this.undock(tr, !!tr.leaveFast);
+    // (round 3: docked to a pose its bridge does not reach -- nothing extends 45 s after the dock -- while the current parked
+    // pose is reachable: undocked and unlocked, the body goes there and the bridge docks again; checked every 30 s)
+    else if (tr.bridgeOn && tr.lock && tr.gate && this.canDock && tDisp - (tr._dockT ?? tDisp) > 45000 && (tr._reachT == null || tDisp - tr._reachT > 30000) && !(this.bridgeK && this.bridgeK(tr.gate) > 0.01)) {
+      tr._reachT = tDisp; if (this.lockOutOfReach(tr, tr.gate)) { this.undock(tr); tr.lock = null; this.counters.unlockReach = (this.counters.unlockReach || 0) + 1; } }
     // the early departure signal (realtime-v6) while docked; cancelled when no push follows
     if (tr.bridgeOn && tr.gate && !tr.leaving && !tr.earlyUndock) { const why = this.departureSignal(tr, tDisp); if (why) this.earlyUndock(tr, tDisp, why); }
     // (round 3, review realtime-v6: 'silent' only after XPDR_OFF_MS without a position at the stand -- the transponder switched
@@ -1803,9 +1820,32 @@ export class Traffic {
     if (tr.lock && g && !wait && !tr.bridgeOn && !tr.leaving && !tr.earlyUndock && (g.bridge || g.sharesBridgesOf) && typeOf(tr) && (!tr.bridgeGate || tr.bridgeGate === g)) {
       const why = this.departureSignal(tr, tDisp);
       if (why) { tr.earlyUndock = { t: tDisp, why, g, hurried: true, nodock: true }; this.counters.earlyNoDock = (this.counters.earlyNoDock || 0) + 1; this.event(tr, tDisp, 'early-undock', { stand: g.name, why, nodock: true }); return; }
-      tr.bridgeOn = true; tr.bridgeGate = g; tr.dockPose = { x: tr.lock.x, z: tr.lock.z, hdg: tr.lock.hdg };
+      // (round 3: a lock its jet bridge cannot reach while the parked pose it can -- the estimate moved by < LOCK_M after the
+      // body came to rest: the body goes to the parked pose first, ctlGround / restDockOk)
+      if (this.lockOutOfReach(tr, g)) { tr.lock = null; this.counters.unlockReach = (this.counters.unlockReach || 0) + 1; return; }
+      tr.bridgeOn = true; tr.bridgeGate = g; tr.dockPose = { x: tr.lock.x, z: tr.lock.z, hdg: tr.lock.hdg }; tr._dockT = tDisp;
       this.counters.docks = (this.counters.docks || 0) + 1; this.onGateChange && this.onGateChange(g, tr);
     }
+  }
+  // the lock of tr at contact stand g is out of its jet bridge's reach while its current parked pose (>= 0.6 m / 1 deg away) is
+  // within it (traffic.canDock, the app's gates.js makePlan); cached per lock and parked pose (round 3)
+  lockOutOfReach(tr, g) {
+    const K = tr.lock, P = tr.parkPos; if (!this.canDock || !K || !P || !(g.bridge || g.sharesBridgesOf) || !typeOf(tr)) return false;
+    const H = tr.parkHdg ?? K.hdg; if (Math.hypot(P[0] - K.x, P[1] - K.z) < 0.6 && Math.abs(wrapPi(H - K.hdg)) < 1 * DEG) return false;
+    const key = [K.x, K.z, K.hdg, P[0], P[1], H].map(v => Math.round(v * 10)).join(','); if (tr._reach && tr._reach.key === key) return tr._reach.out;
+    const out = !this.canDock(g, tr, { x: K.x, z: K.z, hdg: K.hdg }) && this.canDock(g, tr, { x: P[0], z: P[1], hdg: H });
+    tr._reach = { key, out }; return out;
+  }
+  // a rest pose with a residual (ctlGround) at a contact stand is kept only when the stand's jet bridge can dock the drawn
+  // pose -- or cannot dock the parked pose either (then re-placing gains nothing). traffic.canDock(g, tr, pose) is set by the
+  // app (gates.js makePlan on that pose); without it, true. Cached per target pose (round 3)
+  restDockOk(tr, c, o) {
+    const g = tr.gate; if (!g || !(g.bridge || g.sharesBridgesOf) || !this.canDock || !typeOf(tr)) return true;
+    const key = Math.round(o.x * 2) + ',' + Math.round(o.z * 2) + ',' + Math.round((o.hd ?? 0) / DEG) + '|' + Math.round(c.x * 2) + ',' + Math.round(c.z * 2) + ',' + Math.round(c.psi / DEG);
+    if (c._dockOk && c._dockOk.key === key) return c._dockOk.ok;
+    let ok = this.canDock(g, tr, { x: c.x, z: c.z, hdg: c.psi });
+    if (!ok) { ok = !this.canDock(g, tr, { x: o.x, z: o.z, hdg: o.hd ?? c.psi }); if (!ok) this.counters.restNoBridge = (this.counters.restNoBridge || 0) + 1; }
+    c._dockOk = { key, ok }; return ok;
   }
   // the fuselage of type T (reference point x, z, heading psi) over a jet bridge at rest: its forward 60 % sampled every 1 m on
   // the centreline and both sides (traffic.restBridgeAt: footprints of the rest bridges' low solids, js/live/ground.js
@@ -2151,7 +2191,7 @@ export class Traffic {
       // median of the reports -- lies further out than where the body stopped on the lead-in; it stays rather than backing up
       // 9 m at 0.4 m/s -- SKW5970 at F5, realtime-v4)
       const shortOfMark = !!(tr.gate && tr.gate.bridge && (() => { const g = tr.gate, sa = stopAlong(g, tr.info.icao), kk = antOf(T, T ? T.L : 38); return (c.x - g.w.x) * g.w.dx + (c.z - g.w.z) * g.w.dz + kk - sa <= 2; })());
-      if (tr.gate && !c.towing && !o.lineup && gA < 0 && (gA > -2 || (shortOfMark && gA > -12)) && Math.abs(gL) < 1 && Math.abs(dh) < 3 * DEG && !this.fusInRestBridge(T, c.x, c.z, c.psi)) {
+      if (tr.gate && !c.towing && !o.lineup && gA < 0 && (gA > -2 || (shortOfMark && gA > -12)) && Math.abs(gL) < 1 && Math.abs(dh) < 3 * DEG && !this.fusInRestBridge(T, c.x, c.z, c.psi) && this.restDockOk(tr, c, o)) {
         const key = Math.round(o.x * 2) + ',' + Math.round(o.z * 2) + ',' + Math.round((o.hd ?? 0) / DEG);
         if (c.acceptKey !== key) { c.acceptKey = key; this.counters.restAcceptedPast = (this.counters.restAcceptedPast || 0) + 1; } c.stuckT = 0; return; }
       // (off a stand, the stop point BEHIND the body -- it dead-reckoned past where the aircraft stopped in a coverage gap --
@@ -2178,7 +2218,10 @@ export class Traffic {
         // across a stand (review round 1: a0f566 A321 drove an S-curve across B26 and then sat 6.5 m / 21 deg off its pose)
         // (at a stand up to 4 m / 15 deg: the stand / own-pose estimate of a parked aircraft moves by that much -- DAL668 at C8
         // 3.4 m / 11 deg, N38257 at E10 2.6 m / 12 deg were re-placed, realtime-v5 -- unless the drawn pose is in a bridge at rest)
-        if (c.stuckT <= 10 && dist <= (tr.gate ? 4 : 3) && Math.abs(dh) <= (tr.gate ? 15 : 10) * DEG && !o.lineup && !o.dockDrive && !(tr.gate && this.fusInRestBridge(T, c.x, c.z, c.psi))) {
+        // (round 3: and at a contact stand only where its jet bridge can dock the drawn pose, or cannot dock the parked pose
+        // either -- restDockOk; a 4 m / 3-11 deg residual left DAL977 at C6, UAL1372 at D8, SKW5479 at F9 without a bridge for
+        // their whole turn, 4 Nov replay: bridge.refused)
+        if (c.stuckT <= 10 && dist <= (tr.gate ? 4 : 3) && Math.abs(dh) <= (tr.gate ? 15 : 10) * DEG && !o.lineup && !o.dockDrive && !(tr.gate && this.fusInRestBridge(T, c.x, c.z, c.psi)) && this.restDockOk(tr, c, o)) {
           const key = Math.round(o.x * 2) + ',' + Math.round(o.z * 2) + ',' + Math.round((o.hd ?? 0) / DEG);
           if (c.acceptKey !== key) { c.acceptKey = key; this.counters.restAccepted = (this.counters.restAccepted || 0) + 1; }
           c.towing = false; c.stuckT = 0; return;

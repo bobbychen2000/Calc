@@ -535,7 +535,42 @@ bias; its rain render is therefore 0.68 EV darker than the final code would draw
 - Forced lightning flash (ts_evening, `R.qaForceFlash`): level 0.85, azimuth **114.0°** (sector SE 112.5–157.5°),
   6.6 km (VC: at the station ≤ 5 NM band), 0.62 lx at the airport, directional light = the flash; the night sky rose
   only from 0.35 to 0.50 display levels (glow = E/π too faint at the night key) → final code: cloud glow 50 cd/m² ×
-  (5 km / d)², 5–500 cd/m² (I, NV, QA-tuned); checked in run 4.
+  (5 km / d)², 5–500 cd/m² (I, NV, QA-tuned). **Not checked in a browser**: the run-4 smoke test (meter bias + this
+  glow) waited > 50 min behind other tracks' heavy jobs and was cancelled; both edits are small arithmetic changes,
+  syntax-checked, and the Node gates pass.
 - `env3_rain_day_gate.png` re-rendered with the rain display weight (0.25 × sky-up per 1-px streak, I): streaks now
   visible as short light dashes against the grey apron; puddles (0.156 at the start rule) barely show under the
   uniform overcast (they mirror the PMREM sky only: no SSR here, spec §7.6 'high tier').
+
+### 3.5 Gates (steps 3–4)
+
+| Gate | Status | Evidence |
+|---|---|---|
+| A-SUN (render half) | pass | renderer light = EnvState `sun.dir` (diff 0, 7 day steps); shadow azimuth = ephemeris; drawn disc upper limb on the horizon +0.32 min from USNO sunset, radius 0.2665° vs 0.2657° (unit, `test_sky.mjs`) |
+| A-MOON | pass | drawn Moon 0.013° from its ephemeris direction (render diagnostic), bright limb 237.8° vs 236.9°, lit fraction of the shader mirror within 0.004 of the ephemeris for 6 presets (Horizons accuracy of the ephemeris itself: A-SUN unit gate) |
+| A-EXP | partly | fallback sky GHI = C171 (noon uncalibrated +7 %, calibrated 0.0 %); clamp holds at night (EV 4.6 floor, AE = reviewed night key within 0.1 EV); metered by day after the 0.68 bias: gate 15.00 / tower 15.81 / noon overview 15.05 vs targets 14.98 / 14.98 / 15.28; **marine-layer tower +1.62 EV** (outside ±1); "airfield lights bloom" not judged (no scored review); pre-exposure invariance inconclusive (animation between shots) |
+| A-FOG | partly | unit: ifr_mist_day black target at 1,207 m contrast 0.0550; marine deck T 8.7e-11; 3 km of M1/4SM fog 1e-23 (no caps; old renderer w = 1, a = 0.01849, b = 1/61 m measured in the page); fog sprites: 0 of 551 distant lamps visible; render: predawn fog view shows the ALS fading within ~0.4 km; the pixel test on a black target was not rendered |
+| A-CLD | partly | unit: layer count = report, bases = METAR ft × 0.3048 + GROUND_Y, drawn coverage within 0.012 of `own`, sun transmittance within 0.012 of `sunVisibleP`; page: planes 4 / 6 for the low layers, sky-shader layers above 5,000 ft; no pixel coverage measurement |
+| A-PERF | deferred | needs a real GPU and the owner's phone (llvmpipe here: ~0.3 fps at 640 × 360 for the whole app). Added cost: ≤ 12 cloud planes (6 layers × base / top, 64² grid), 1 instanced rain draw (≤ 60k quads, high tier), a 64 × 36 meter pass + async readback every 4th frame, ≤ 6 slab and ≤ 6 layer loops (2 cloud-texture taps each) in the fog / light / sky shaders |
+| A-RAIN | pass (unit) | count ratio 1 / 10 mm/h 0.281 = Marshall–Palmer 0.281; streak = v(D0)/60 s (0.067–0.088 m); drizzle no streaks; render: 35,673 streaks drawn at rain_day (visible after the display-weight fix) |
+| A-WET | pass (unit) | wet asphalt 0.60, concrete 0.76 of dry; puddle roughness 0.03 (PMREM mirror); drying: film < ½ at 15 min with the pores at 0.73; page: film 1 / pores 1 / puddle 0.156 at rain_day, squall, drizzle (start rule) |
+| A-WIND | partly | unit: windsock law 0 / 0.83 / 1 at 3 / 13 / 36 kt, rain drifts towards METAR true + 180°; **windsocks not drawn** (Q15) |
+| A-LTG | partly | unit: ts_evening FRQ 3.4 / min over 5 min, all in the SE sector, every 5-min window of an hour in its class (OCNL / FRQ / CONS); render: one forced flash at 114° in the sector, the light and the sky glow switch; a 5-min capture is not possible on llvmpipe (simulated time ≤ 0.1 s per frame) |
+
+### 3.6 Open points (steps 3–4)
+
+1. Owner-question defaults in force (I, in the `?qa=env` HUD line): Q12 no takram, no stars; Q13 photographic
+   auto-exposure; Q15 no windsocks; Q16 wetness constants NV; Q14 artificial sky 3 mcd/m² (×10 under a low deck);
+   Q7 floodlight colour unchanged; Q1 no beacon.
+2. A-EXP: the marine-layer tower view meters +1.6 EV over the natural target (white tower / glass / terminals in the
+   bright half); the 0.68 EV meter bias is one view's calibration; the night floor 4.6 makes the night exposure the
+   reviewed key. Needs the owner's scored loop (on hold) to tune bias, floor and τ.
+3. Dense-fog in-scatter is the ambient sky only: at night the fog is black around the floodlights (spec E7 "flood
+   domes" not modelled; would need the flood field in the fog in-scatter).
+4. Lightning brightness (50 cd/m² cloud glow at 5 km, 3 lx at 3 km on the ground), rain display weight (0.25), drizzle
+   visibility, puddle mask and all wetness time constants are I / NV, QA-tuned only by the formulas here.
+5. Puddles and wet pavement reflect the PMREM sky only (no SSR); object materials do not get wet.
+6. Cloud planes for FEW / SCT low layers use a 300 m default thickness (the top plane); the cloud texture's mips blur
+   coverage at grazing distances (A-CLD was measured at level 0).
+7. Not done here, requests in §3.3: tower obstruction light (buildings track), DOF mast heights (static track).
+8. Old renderer: exposure from the EV100 target (§9.1 item 6) deferred (its lamps are not in physical ratio to its sky).

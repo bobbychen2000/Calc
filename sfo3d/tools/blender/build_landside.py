@@ -660,9 +660,12 @@ def main():
     common = dict(export_format='GLB', use_selection=True, export_extras=True, export_yup=True, export_apply=False, export_texcoords=True,
                   export_normals=True, export_tangents=False, export_materials='EXPORT', export_image_format='AUTO', export_cameras=False,
                   export_lights=False, export_animations=False, export_gpu_instances=True, export_vertex_color='MATERIAL')
-    bpy.ops.export_scene.gltf(filepath=args.out, **common)
-    log(f'exported {args.out} in {time.time() - t:.1f} s')
+    # export to temporary files and move both into place at the end (a job killed mid-export leaves the published files intact)
+    out_tmp = args.out[:-4] + '.tmp.glb'
+    bpy.ops.export_scene.gltf(filepath=out_tmp, **common)
+    log(f'exported {out_tmp} in {time.time() - t:.1f} s')
     lod2_path = os.path.join(os.path.dirname(args.out), os.path.basename(args.out).replace('.glb', '_lod2.glb'))
+    lod2_tmp = lod2_path[:-4] + '.tmp.glb'
     bpy.ops.object.select_all(action='DESELECT')
     root.select_set(True)
     for B in bldgs + tiles:
@@ -671,8 +674,9 @@ def main():
             if l_ == 2 and e.parent == be:
                 e.select_set(True)
                 for o in e.children_recursive: o.select_set(True)
-    bpy.ops.export_scene.gltf(filepath=lod2_path, **common)
-    log(f'exported {lod2_path}')
+    bpy.ops.export_scene.gltf(filepath=lod2_tmp, **common)
+    os.replace(out_tmp, args.out); os.replace(lod2_tmp, lod2_path)
+    log(f'exported {args.out} + {lod2_path}')
     if args.blend:
         bpy.ops.wm.save_as_mainfile(filepath=os.path.join(OUT, 'wip', 'landside.blend'))
     st = glb_stats(args.out)
