@@ -8724,9 +8724,9 @@
  },
  "landside": {
   "asset": "data/buildings3d/landside.glb",
-  "bytes": 20815412,
-  "built": "2026-11-05T22:56:38+00:00",
-  "git": "701f216+dirty",
+  "bytes": 20969556,
+  "built": "2026-11-05T23:26:49+00:00",
+  "git": "f491265+dirty",
   "generator": "tools/blender/build_landside.py (bpy 5.0.1, Cycles CPU AO bake); geometry landside_geom.py / landside_airtrain.py / landside_cars.py; textures landside_tex.py",
   "reference": "2-D sheets BL-01..03 (docs/drawings/buildings/README.md), drawn by tools/buildings/draw_landside.py, imported by landside_geom.py",
   "spec": "tools/buildings/spec_landside.json (+ landside_naip_measurements.json)",
@@ -8746,24 +8746,24 @@
   "lods": {
    "0": {
     "switch_m": 0.0,
-    "tris": 160693,
+    "tris": 159741,
     "instanced_car_tris": 93582,
-    "verts": 368537,
+    "verts": 366671,
     "draw_calls": 363
    },
    "1": {
     "switch_m": 450.0,
-    "tris": 85211,
+    "tris": 84979,
     "instanced_car_tris": 65854,
-    "verts": 212657,
+    "verts": 212231,
     "draw_calls": 323
    },
    "2": {
     "switch_m": 1500.0,
-    "tris": 20450,
+    "tris": 21720,
     "instanced_car_tris": 0,
-    "verts": 48232,
-    "draw_calls": 120
+    "verts": 52008,
+    "draw_calls": 122
    }
   },
   "files": [
@@ -8772,14 +8772,14 @@
   ],
   "lod2_glb": {
    "path": "data/buildings3d/landside_lod2.glb",
-   "bytes": 2624584
+   "bytes": 2845672
   },
   "textures": [
    {
     "name": "landside_ao_B",
     "px": 2048,
     "mime": "image/jpeg",
-    "bytes": 1172044,
+    "bytes": 1164154,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    },
    {
@@ -8807,14 +8807,14 @@
     "name": "landside_ao_C",
     "px": 1024,
     "mime": "image/jpeg",
-    "bytes": 310196,
+    "bytes": 317074,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    },
    {
     "name": "ls_c_perf",
     "px": null,
     "mime": "image/png",
-    "bytes": 7675,
+    "bytes": 60052,
     "kind": "base colour, tiling, TEXCOORD_0"
    },
    {
@@ -8842,7 +8842,7 @@
     "name": "landside_ao_A",
     "px": 2048,
     "mime": "image/jpeg",
-    "bytes": 1341467,
+    "bytes": 1349798,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    },
    {
@@ -9784,10 +9784,10 @@
      255,
      255
     ],
-    "metallic": 0.5,
-    "roughness": 0.55,
+    "metallic": 0.25,
+    "roughness": 0.8,
     "ior": 1.5,
-    "src": "obs photo l5 (see-through expanded-mesh cylinder, raked open top); r2: alpha-blended (texture alpha 0.45 mesh / 1.0 frame [open area inf])",
+    "src": "obs photo l5 (see-through expanded-mesh cylinder, raked open top); r2: alpha-blended (expanded-metal diamonds: strands 1.0 / openings 0.5, mean ~0.75; frame 1.0 [open area inf]); rough (0.80) - the sheet of small expanded-metal facets scatters, it does not mirror the sky (the first r2 render at m 0.50 / r 0.55 read as glass)",
     "normal_tile": null,
     "base_tile": "ls_c_perf",
     "naip": null
@@ -9811,9 +9811,9 @@
   "ao": {
    "A": {
     "res": 2048,
-    "bake_s": 52.9,
-    "mean": 0.411,
-    "p2": 0.0,
+    "bake_s": 49.1,
+    "mean": 0.412,
+    "p2": 0.001,
     "samples": 40,
     "distance_m": 8.0,
     "objects": 18,
@@ -9822,8 +9822,8 @@
    },
    "B": {
     "res": 2048,
-    "bake_s": 61.4,
-    "mean": 0.583,
+    "bake_s": 58.4,
+    "mean": 0.586,
     "p2": 0.0,
     "samples": 40,
     "distance_m": 8.0,
@@ -9833,8 +9833,8 @@
    },
    "C": {
     "res": 1024,
-    "bake_s": 23.8,
-    "mean": 0.631,
+    "bake_s": 21.5,
+    "mean": 0.644,
     "p2": 0.0,
     "samples": 40,
     "distance_m": 8.0,
@@ -10398,9 +10398,9 @@
       "draws": 30
      },
      "2": {
-      "tris": 1565,
+      "tris": 2783,
       "instanced_tris": 0,
-      "draws": 6
+      "draws": 8
      }
     },
     "cars": {
@@ -10416,7 +10416,7 @@
      "axis_deg": 117.8,
      "lanes": false,
      "count_src": "cg_roof_cars: 254 dark / coloured cars at their NAIP 2024 positions [obs] + white / silver cars (not separable from the light deck) by the fleet share 37 % next to the detected clusters [inf]; spec visual 300 +-100",
-     "axis_src": "r2: every car snapped to the nearest free stall of the deck layout (axis 117.8 deg [obs NAIP rows], <= 3 m) - the per-blob NAIP headings are noise at 0.5 m/px (deviation from the stall axis: median 18, p90 42 deg = uniform random); NAIP position and colour kept [obs]"
+     "axis_src": "r2: each observed car snapped to the nearest free stall of the deck layout within 3 m (axis 117.8 deg [obs NAIP rows]; 125 of 217; the rest keep their NAIP position with the yaw on the stall axis) - the per-blob NAIP headings are noise at 0.5 m/px (deviation from the stall axis: median 18, p90 42 deg = uniform random); NAIP position and colour kept [obs]"
     }
    },
    "garage_a": {
@@ -10624,7 +10624,7 @@
       ],
       "R": 16.2
      },
-     "body_area": 7758.4,
+     "body_area": 7758.5,
      "drum_slots": [
       [
        22.25,
@@ -11062,23 +11062,23 @@
     ],
     "tris": {
      "0": {
-      "tris": 21445,
+      "tris": 20591,
       "instanced_tris": 5076,
       "draws": 50
      },
      "1": {
-      "tris": 6143,
+      "tris": 6009,
       "instanced_tris": 3572,
       "draws": 46
      },
      "2": {
-      "tris": 571,
+      "tris": 569,
       "instanced_tris": 0,
       "draws": 9
      }
     },
     "cars": {
-     "deck_area_m2": 7533.3,
+     "deck_area_m2": 7533.4,
      "slots": 227,
      "cars": 96,
      "target": 96,
@@ -13162,17 +13162,17 @@
     },
     "airtrain_-4_1": {
      "0": {
-      "tris": 8858,
+      "tris": 8760,
       "instanced_tris": 0,
       "draws": 14
      },
      "1": {
-      "tris": 5875,
+      "tris": 5777,
       "instanced_tris": 0,
       "draws": 12
      },
      "2": {
-      "tris": 1914,
+      "tris": 1968,
       "instanced_tris": 0,
       "draws": 8
      }
@@ -13503,10 +13503,10 @@
      "axis_deg": 117.8,
      "lanes": false,
      "count_src": "cg_roof_cars: 254 dark / coloured cars at their NAIP 2024 positions [obs] + white / silver cars (not separable from the light deck) by the fleet share 37 % next to the detected clusters [inf]; spec visual 300 +-100",
-     "axis_src": "r2: every car snapped to the nearest free stall of the deck layout (axis 117.8 deg [obs NAIP rows], <= 3 m) - the per-blob NAIP headings are noise at 0.5 m/px (deviation from the stall axis: median 18, p90 42 deg = uniform random); NAIP position and colour kept [obs]"
+     "axis_src": "r2: each observed car snapped to the nearest free stall of the deck layout within 3 m (axis 117.8 deg [obs NAIP rows]; 125 of 217; the rest keep their NAIP position with the yaw on the stall axis) - the per-blob NAIP headings are noise at 0.5 m/px (deviation from the stall axis: median 18, p90 42 deg = uniform random); NAIP position and colour kept [obs]"
     },
     "garage_a": {
-     "deck_area_m2": 7533.3,
+     "deck_area_m2": 7533.4,
      "slots": 227,
      "cars": 96,
      "target": 96,
@@ -15488,7 +15488,7 @@
      "n": 5,
      "item": "RCC station tower rake / skin",
      "disposition": "fixed",
-     "change": "cut plane fitted to the l5 top silhouette (sky boundary per column, r1 l5 camera): rake 2.55 m, highest toward bearing 353 (toward the camera), rms 2.3 px (r1 2.5 m toward 236: 74 px; flat: 89 px); the high point at the DOF top puts the platform 0.84 m higher (8.84 m, the RCC_PLATFORM anchor). Skin alpha-blended (texture alpha 0.45, frame opaque, doubleSided) with a dark core, switch-back flights and landings inside, posts every 1/8 turn"
+     "change": "cut plane fitted to the l5 top silhouette (sky boundary per column, r1 l5 camera): rake 2.55 m, highest toward bearing 353 (toward the camera), rms 2.3 px (r1 2.5 m toward 236: 74 px; flat: 89 px); the high point at the DOF top puts the platform 0.84 m higher (8.84 m, the RCC_PLATFORM anchor). Skin alpha-blended (texture alpha 0.72, frame opaque, doubleSided, metallic 0.25 / roughness 0.80, expanded-metal diamonds 0.19 x 0.09 m [inf] in the texture, strands opaque / openings alpha 0.5, so it reads as mesh, not glass) with a dark core, switch-back flights and landings inside, posts every 1/8 turn"
     },
     {
      "n": 6,
@@ -15518,7 +15518,7 @@
      "n": 9,
      "item": "LOD2",
      "disposition": "fixed",
-     "change": "central garage LOD2 keeps the void floor, the Level-5 garage edges beside the guideway (to the trough-wall top) and the two DOF roof poles; every deck carries a LOD2 car impostor (one roof quad per car in its paint colour, COLOR_0) so the cars do not pop at the switch; LTP 1 / 2, RCC, Hyatt, CAC and MOC LOD2 roofs at the LOD0 roof level inside a coping ring"
+     "change": "central garage LOD2 keeps the void floor, the Level-5 garage edges beside the guideway (to the trough-wall top) and the two DOF roof poles, and the NAIP roof lobes / beige rims (cut out of the LOD2 deck, no coplanar overlap); every deck carries a LOD2 car impostor (one roof quad per car in its paint colour, COLOR_0) so the cars do not pop at the switch; LTP 1 / 2, RCC, Hyatt, CAC and MOC LOD2 roofs at the LOD0 roof level inside a coping ring"
     }
    ],
    "observations": "tools/blender/landside_r2_obs.json (tools/blender/landside_r2_measure.py): photo a2 with the solved camera (out/buildings3d/itb_a2_camera.json), i2 in level pitches, l5 top-silhouette fit, NAIP 2024 rims / lobes",
@@ -15874,7 +15874,7 @@
    ]
   },
   "renders": {
-   "tool": "tools/blender/render_landside.py (Cycles CPU, <= 960 px, 48 spp + OIDN, AgX; back-face QA 8 spp)",
+   "tool": "tools/blender/render_landside.py (Cycles CPU, <= 960 px, 32-48 spp + OIDN, AgX; back-face QA 8 spp)",
    "note": "out/buildings3d/landside_*.png (local); landside_cmp_*.png overlay the BL-03 lines (orthographic) or sit beside the reference photo (perspective; photo pixels, local only)",
    "views": {
     "gar_a": {
@@ -16007,6 +16007,10 @@
     },
     "overview_lod2": {
      "render": "out/buildings3d/landside_overview_lod2.png"
+    },
+    "cg_top_lod2": {
+     "render": "out/buildings3d/landside_cg_top_lod2.png",
+     "compare": "out/buildings3d/landside_cmp_cg_top_lod2.png"
     }
    }
   }

@@ -134,14 +134,14 @@ def mesh_nodes(path):
     def walk(i, M, chain):
         nd = js['nodes'][i]; W = M @ node_matrix(nd); ch = chain + [nd]
         if 'mesh' in nd and 'EXT_mesh_gpu_instancing' not in nd.get('extensions', {}):
-            tris = []
+            tris = []; mats = []
             for pr in js['meshes'][nd['mesh']]['primitives']:
                 if pr.get('mode', 4) != 4: continue
                 P = accessor(js, bin_, pr['attributes']['POSITION'])
                 I = accessor(js, bin_, pr['indices']).astype(np.int64).reshape(-1, 3) if 'indices' in pr else np.arange(len(P)).reshape(-1, 3)
                 Pw = P @ W[:3, :3].T + W[:3, 3]
-                tris.append(Pw[I])
-            if tris: out.append(dict(name=nd.get('name', ''), extras=nd.get('extras', {}), chain=ch, tris=np.concatenate(tris)))
+                tris.append(Pw[I]); mats += [js['materials'][pr['material']].get('name', '') if 'material' in pr else ''] * len(I)
+            if tris: out.append(dict(name=nd.get('name', ''), extras=nd.get('extras', {}), chain=ch, tris=np.concatenate(tris), mats=np.array(mats)))
         for c in nd.get('children', []): walk(c, W, ch)
     for r in sc['nodes']: walk(r, np.eye(4), [])
     return out
@@ -197,6 +197,9 @@ def plan_geom(tris):
 
 
 # ------------------------------------------------------------------------------------------------ footprints
+SPLIT_MARGIN = 1.0   # m: the joined LOD2 meshes are split by containment in each unit's LOD0 / LOD1 footprint + this
+
+
 def footprints(log):
     F = {}  # group -> unit -> lod -> {'geom', 'y'}
     TR = {}  # group -> all triangles (every LOD and file; x, y, z) for the height-aware occupancy tests
@@ -223,10 +226,23 @@ def footprints(log):
                 for (u, l), T in list(acc.items()):
                     if u != '*' and l < 2 and u not in near: near[u] = plan_geom(np.concatenate(T))
                 if near:
+                    # review round 2 (finding 6): by containment, not by centroid-in-first-footprint: a triangle goes to
+                    # the unit whose LOD0 / LOD1 footprint + SPLIT_MARGIN holds all three of its vertices (several: the one
+                    # whose own footprint holds the centroid, else the smallest); the round-1 rule handed big T1 roof
+                    # triangles whose centroid fell in BA-C's footprint to BA-C (its "top +9 m")
                     names = list(near); geoms = [near[u] for u in names]
                     cen = shapely.points(Tj[:, :, [0, 2]].mean(1)); own = np.full(len(Tj), -1)
+                    V = Tj[:, :, [0, 2]].reshape(-1, 2); ok = np.zeros((len(Tj), len(geoms)), bool); inc = np.zeros((len(Tj), len(geoms)), bool)
                     for k, gg in enumerate(geoms):
-                        shapely.prepare(gg); own[(own < 0) & shapely.contains(gg, cen)] = k
+                        gb = gg.buffer(SPLIT_MARGIN); shapely.prepare(gb); shapely.prepare(gg)
+                        ok[:, k] = shapely.contains_xy(gb, V[:, 0], V[:, 1]).reshape(-1, 3).all(1); inc[:, k] = shapely.contains(gg, cen)
+                    area = np.array([g_.area for g_ in geoms])
+                    for i in np.nonzero(ok.any(1))[0]:
+                        ks = np.nonzero(ok[i])[0]
+                        if len(ks) == 1: own[i] = ks[0]; continue
+                        kc = [k for k in ks if inc[i, k]]
+                        own[i] = kc[0] if len(kc) == 1 else ks[np.argmin(area[ks])]
+                    for k, gg in enumerate(geoms): own[(own < 0) & inc[:, k]] = k   # straddling triangles: by centroid
                     rest = np.nonzero(own < 0)[0]
                     if len(rest):
                         d = np.stack([shapely.distance(gg, cen[rest]) for gg in geoms], 1); k = d.argmin(1)
@@ -255,6 +271,60 @@ def footprints(log):
     TR['_units'] = {k: np.concatenate(v) for k, v in TU.items()}
     TR['_lods'] = {k: np.concatenate(v) for k, v in TL.items()}
     return F, TR, files
+
+
+WALL_MIN_M2 = 1.0   # enclosure test: wall triangles at least this large [our choice: the shells' wall quads are 10-500 m2]
+
+
+def axis_hits(T, P, ax):
+    """for each point of P (n, 3), the triangles of T (m, 3, 3) crossed by the line through the point along axis ax
+    (0 = x, 1 = y, 2 = z): the number of crossings on the + side and on the - side of the point (axis-aligned rays:
+    a 2-D point-in-triangle test in the plane of the other two axes, then the crossing coordinate by barycentrics)"""
+    b, c = [k for k in (0, 1, 2) if k != ax]
+    A2 = T[:, :, [b, c]]; lo, hi = A2.min(1), A2.max(1)
+    plus = np.zeros(len(P), int); minus = np.zeros(len(P), int)
+    for i, p in enumerate(P):
+        m = (lo[:, 0] <= p[b]) & (hi[:, 0] >= p[b]) & (lo[:, 1] <= p[c]) & (hi[:, 1] >= p[c])
+        if not m.any(): continue
+        t = T[m]; a0, a1, a2 = t[:, 0], t[:, 1], t[:, 2]
+        v0 = a2[:, [b, c]] - a0[:, [b, c]]; v1 = a1[:, [b, c]] - a0[:, [b, c]]; v2 = np.array([p[b], p[c]]) - a0[:, [b, c]]
+        d00 = (v0 * v0).sum(1); d01 = (v0 * v1).sum(1); d11 = (v1 * v1).sum(1); d20 = (v2 * v0).sum(1); d21 = (v2 * v1).sum(1)
+        den = d00 * d11 - d01 * d01; ok = np.abs(den) > 1e-12
+        uu = np.where(ok, (d11 * d20 - d01 * d21) / np.where(ok, den, 1), -1); vv = np.where(ok, (d00 * d21 - d01 * d20) / np.where(ok, den, 1), -1)
+        ins = ok & (uu >= 0) & (vv >= 0) & (uu + vv <= 1)
+        if not ins.any(): continue
+        x = (a0[:, ax] + uu * (a2[:, ax] - a0[:, ax]) + vv * (a1[:, ax] - a0[:, ax]))[ins]
+        plus[i] = int((x > p[ax]).sum()); minus[i] = int((x < p[ax]).sum())
+    return plus, minus
+
+
+def enclosed(T, P, max_gap_deg=45.0):
+    """review round 2 (finding 3): points of P (world, n x 3) that lie INSIDE the building whose triangles are T: a roof
+    (any triangle) above and walls all around (eight horizontal rays, no open sector wider than max_gap_deg). Hits, not
+    parity: the exported shells are not closed (door gaps, shared walls, open undersides). A road beside a facade or under
+    a curb canopy sees the building over at most ~180 deg: outside; a deck running through the hall sees it all round."""
+    if not len(P) or not len(T): return np.zeros(len(P), bool)
+    up, _ = axis_hits(T, P, 1)
+    # walls only for the side tests: near-vertical triangles of >= WALL_MIN_M2 (a curtain wall, a shell band); the slim
+    # structure around a roof overhang (the ITB's cantilevered columns, column fans and canopy hangers over its curb)
+    # is made of small tube facets and does not enclose anything
+    n = np.cross(T[:, 1] - T[:, 0], T[:, 2] - T[:, 0]); a = 0.5 * np.linalg.norm(n, axis=1)
+    W = T[(np.abs(n[:, 1]) < 0.3 * (2 * a + 1e-12)) & (a >= WALL_MIN_M2)]
+    # eight horizontal directions (each rotation gives a ray pair): enclosed = no open sector wider than max_gap_deg
+    # (a point beside a straight facade has >= 180 deg open, in a concave corner of two buildings under a canopy 90 deg;
+    # inside a shell with a door gap, <= 45 deg)
+    hit = np.zeros((len(P), 8), bool)
+    for k, th in enumerate(np.radians([0.0, 45.0, 90.0, 135.0])):
+        c, s_ = math.cos(th), math.sin(th)
+        def rot(A):
+            B = A.copy(); B[..., 0] = c * A[..., 0] + s_ * A[..., 2]; B[..., 2] = -s_ * A[..., 0] + c * A[..., 2]; return B
+        pl, mi = axis_hits(rot(W), rot(P), 0)
+        hit[:, k] = pl > 0; hit[:, k + 4] = mi > 0
+    order = [0, 1, 2, 3, 4, 5, 6, 7]   # directions th, th + 45 ... th + 315 (the - rays of k are at th_k + 180)
+    gap = np.zeros(len(P), int); run = np.zeros(len(P), int)
+    for j in order + order:          # longest run of directions without a hit, cyclic
+        run = np.where(hit[:, j], 0, run + 1); gap = np.maximum(gap, run)
+    return (up > 0) & (gap * 45.0 <= max_gap_deg)
 
 
 def elevated(g, u):
@@ -597,7 +667,145 @@ def plausibility(F, TR, rep, log):
     res['stats']['kept_vs_assets'] = kept
     for k in kept:
         res['notes'].append(dict(check='kept first-pass part vs asset', **k))
+    deck_checks(F, TR, res, log)
     return res
+
+
+ROAD_CLEAR = 4.6   # m, vertical clearance over a road deck (Caltrans HDM 309.2, 15 ft; roadways_net.CLEAR_MIN) [inf]
+
+
+def deck_points(step=1.0):
+    """the roadways' LOD0 road surfaces (materials deck_* / island / kerb_red / paint_*: not parapets, fascia or columns)
+    sampled on a ~step-m barycentric grid: (points (n, 3) world, unit name per point, area per point)"""
+    p = os.path.join(D3, 'roadways.glb')
+    if not os.path.exists(p): return np.zeros((0, 3)), np.array([]), np.zeros(0)
+    pts, units, area = [], [], []
+    for r in mesh_nodes(p):
+        if lod_of(r) != 0: continue
+        sel = np.array([m.startswith('deck') or m in ('island', 'kerb_red') or m.startswith('paint') for m in r['mats']], bool)
+        for t in r['tris'][sel]:
+            k = int(max(1, math.ceil(max(np.linalg.norm(t[1] - t[0]), np.linalg.norm(t[2] - t[1]), np.linalg.norm(t[0] - t[2])) / step)))
+            ij = np.array([(i, j) for i in range(k) for j in range(k - i)], float)
+            q = t[0] + ((ij[:, :1] + 1 / 3) / k) * (t[1] - t[0]) + ((ij[:, 1:] + 1 / 3) / k) * (t[2] - t[0])   # cell centroids (upright cells)
+            a = 0.5 * np.linalg.norm(np.cross(t[1] - t[0], t[2] - t[0]))
+            pts.append(q); units += [r['extras'].get('building', '?')] * len(q); area.append(np.full(len(q), a / max(1, k * k)))
+    if not pts: return np.zeros((0, 3)), np.array([]), np.zeros(0)
+    return np.concatenate(pts), np.array(units), np.concatenate(area)
+
+
+def deck_checks(F, TR, res, log):
+    """review round 2 (findings 3 and 5): the road decks against the buildings as SOLIDS and against everything over them.
+      inside   every road-surface point 2 m above the deck tested against each domestic / ITB / tower / landside building
+               unit whose footprint holds it (enclosed(): a roof above and walls all round) - the per-2-m-band surface
+               test cannot see a deck inside a hollow shell or one crossing a wall; CONFLICT above 1 m2
+      clear    the lowest triangle of any other group (and of the roadways themselves, the deck's own parapets and kerbs
+               excluded: > 1.0 m up) over each point: CONFLICT below ROAD_CLEAR under the AirTrain guideway or another deck,
+               NOTE below it under a building part (curb canopies, eaves: their owner's call)
+      curb     along the ITB departures curb (ITB roof frame), the void between the curb top (ITB asset) and the deck top
+               (roadways), outward from the kerb, per 0.5 m: CONFLICT above 0.3 m"""
+    P, U, A = deck_points()
+    st = res['stats']; st['deck_points'] = int(len(P))
+    if not len(P): return
+    # inside
+    ins = {}
+    for g in ('domestic', 'itb', 'tower', 'landside'):
+        for u, L in F.get(g, {}).items():
+            if u in ('*', 'all') or (g == 'landside' and u.startswith('airtrain')): continue
+            T = TR['_lods'].get((g, u, 0))
+            if T is None: continue
+            fp = unary_union([e['geom'] for l, e in L.items() if l < 2] or [e['geom'] for e in L.values()])
+            m = shapely.contains_xy(fp, P[:, 0], P[:, 2])
+            if not m.any(): continue
+            Q = P[m].copy(); Q[:, 1] += 2.0
+            e = enclosed(T, Q)
+            if e.any():
+                ii = np.nonzero(m)[0][e]
+                ins['%s/%s' % (g, u)] = dict(area_m2=round(float(A[ii].sum()), 1), units=sorted(set(U[ii].tolist())), at=[round(float(P[ii[0], 0]), 1), round(float(P[ii[0], 2]), 1)])
+    st['deck_inside_buildings'] = ins
+    for k, v in ins.items():
+        res['conflicts' if v['area_m2'] > 1.0 else 'notes'].append(dict(check='road deck inside a building (solid test)', building=k, **v))
+    # clearance
+    rows = []
+    for g in GROUPS:
+        if g not in TR: continue
+        T = TR[g]['all']['T']
+        if g == 'roadways':
+            n = np.cross(T[:, 1] - T[:, 0], T[:, 2] - T[:, 0]); T = T[np.abs(n[:, 1]) > 1e-6]   # decks / soffits, not walls
+        xz = T[:, :, [0, 2]]; lo, hi = xz.min(1), xz.max(1)
+        cand = (P[:, 0] > lo[:, 0].min()) & (P[:, 0] < hi[:, 0].max()) & (P[:, 2] > lo[:, 1].min()) & (P[:, 2] < hi[:, 1].max())
+        for i in np.nonzero(cand)[0]:
+            q = P[i]
+            mm = (lo[:, 0] <= q[0]) & (hi[:, 0] >= q[0]) & (lo[:, 1] <= q[2]) & (hi[:, 1] >= q[2]) & (T[:, :, 1].max(1) > q[1] + 1.0)
+            if not mm.any(): continue
+            pl, _ = axis_hits(T[mm], q[None], 1)
+            if not pl[0]: continue
+            t = T[mm]; a0, a1, a2 = t[:, 0], t[:, 1], t[:, 2]
+            v0 = a2[:, [0, 2]] - a0[:, [0, 2]]; v1 = a1[:, [0, 2]] - a0[:, [0, 2]]; v2 = q[[0, 2]] - a0[:, [0, 2]]
+            d00 = (v0 * v0).sum(1); d01 = (v0 * v1).sum(1); d11 = (v1 * v1).sum(1); d20 = (v2 * v0).sum(1); d21 = (v2 * v1).sum(1)
+            den = d00 * d11 - d01 * d01; ok = np.abs(den) > 1e-12
+            uu = np.where(ok, (d11 * d20 - d01 * d21) / np.where(ok, den, 1), -1); vv = np.where(ok, (d00 * d21 - d01 * d20) / np.where(ok, den, 1), -1)
+            insd = ok & (uu >= 0) & (vv >= 0) & (uu + vv <= 1)
+            y = (a0[:, 1] + uu * (a2[:, 1] - a0[:, 1]) + vv * (a1[:, 1] - a0[:, 1]))[insd]; y = y[y > q[1] + 1.0]
+            if len(y): rows.append((float(y.min() - q[1]), g, U[i], float(A[i]), q))
+    def summ(sel):
+        if not sel: return None
+        sel.sort(key=lambda r: r[0]); r0 = sel[0]
+        return dict(points=len(sel), min_m=round(r0[0], 2), at=[round(float(r0[4][0]), 1), round(float(r0[4][2]), 1)], deck_m=round(float(r0[4][1]) - GROUND_Y, 2), unit=r0[2],
+                    below_m2=round(sum(r[3] for r in sel if r[0] < ROAD_CLEAR), 1))
+    guide = [r for r in rows if r[1] == 'landside']   # the AirTrain guideway is the only elevated landside structure over the decks
+    st['deck_clearance'] = {g: summ([r for r in rows if r[1] == g]) for g in GROUPS if any(r[1] == g for r in rows)}
+    for g, v in st['deck_clearance'].items():
+        if v and v['below_m2'] > 0:
+            res['conflicts' if g in ('landside', 'roadways') else 'notes'].append(dict(check='vertical clearance over a road deck (< %.1f m)' % ROAD_CLEAR, over=g, **v))
+    # the ITB curb
+    st['itb_curb_gap'] = itb_curb_gap(P, TR, log)
+    if st['itb_curb_gap'] and st['itb_curb_gap']['over_limit'] > 0:
+        res['conflicts'].append(dict(check='ITB curb to departures deck void (> 0.3 m)', **st['itb_curb_gap']))
+    log('deck checks: %d road-surface points; inside buildings %s; clearance %s; ITB curb %s' % (len(P), {k: v['area_m2'] for k, v in ins.items()} or 'none',
+        {g: (v['min_m'], v['below_m2']) for g, v in st['deck_clearance'].items() if v}, st['itb_curb_gap']))
+
+
+def itb_curb_gap(P, TR, log):
+    """the void between the ITB departures curb top and the road deck top, per 0.5 m along the curb (ITB roof frame,
+    manifest.json#itb.frame.roof_frame), outward from the kerb face to 12 m: plan polygons of the curb's top triangles
+    (ITB LOD0) and of the roadways' LOD0 road-surface triangles within 0.6 m of the curb level"""
+    man = json.load(open(os.path.join(D3, 'manifest.json')))
+    rf = man['itb']['frame']['roof_frame']; C = np.array(rf['centre_xz'], float); du = np.array(rf['u_axis_xz'], float); du /= np.linalg.norm(du); dv = np.array([du[1], -du[0]])
+    T = TR['_lods'].get(('itb', 'hall', 0))
+    if T is None or not os.path.exists(os.path.join(D3, 'roadways.glb')): return None
+    n = np.cross(T[:, 1] - T[:, 0], T[:, 2] - T[:, 0]); n /= np.linalg.norm(n, axis=1, keepdims=True) + 1e-12
+    flat = (n[:, 1] > 0.95) & (np.ptp(T[:, :, 1], axis=1) < 0.02)
+    up = T[flat]; c = up.mean(1)[:, [0, 2]] - C; uvc = np.c_[c @ du, c @ dv]
+    cs = up[(uvc[:, 1] < -27.0) & (uvc[:, 1] > -36.0)]                       # the west curb sidewalk tops
+    if not len(cs): return None
+    hc = float(np.median(cs[:, :, 1])); cs = cs[np.abs(cs[:, :, 1] - hc).max(1) < 0.05]
+    curb = unary_union([Polygon(t[:, [0, 2]]).buffer(0.005) for t in cs if Polygon(t[:, [0, 2]]).area > 1e-5])
+    D = []
+    for r in mesh_nodes(os.path.join(D3, 'roadways.glb')):
+        if lod_of(r) != 0: continue
+        sel = np.array([m.startswith('deck') or m in ('island', 'kerb_red') for m in r['mats']], bool)
+        t = r['tris'][sel]; t = t[np.abs(t[:, :, 1].mean(1) - hc) < 0.6]
+        D += [Polygon(x[:, [0, 2]]).buffer(0.005) for x in t if Polygon(x[:, [0, 2]]).area > 1e-5]
+    if not D: return None
+    both = unary_union([curb] + D)
+    cuv = np.c_[(cs.reshape(-1, 3)[:, [0, 2]] - C) @ du, (cs.reshape(-1, 3)[:, [0, 2]] - C) @ dv]
+    u0, u1 = cuv[:, 0].min() + 0.5, cuv[:, 0].max() - 0.5; vk = float(cuv[:, 1].min())
+    gaps = []
+    for u in np.arange(u0, u1, 0.5):
+        ln = LineString([tuple(C + du * u + dv * (vk + 0.8)), tuple(C + du * u + dv * (vk - 12.0))])
+        cov = ln.intersection(both); segs = [g for g in (getattr(cov, 'geoms', None) or [cov]) if not g.is_empty and g.length > 0]
+        ivs = sorted([sorted(float(np.dot(np.array(cc) - C, dv)) for cc in g.coords) for g in segs], key=lambda x: -x[1])
+        gap = None
+        if ivs:
+            lo = ivs[0][0]
+            for a, b in ivs[1:]:
+                if b < lo - 1e-3: gap = lo - b; break
+                lo = min(lo, a)
+            if gap is None: gap = max(0.0, min(a for a, b in ivs) - (vk - 12.0))
+        else: gap = 12.8
+        gaps.append((round(float(u), 1), round(gap, 3)))
+    g = np.array([x[1] for x in gaps]); w = max(gaps, key=lambda x: x[1])
+    return dict(stations=len(gaps), kerb_v=round(vk, 2), curb_top_m=round(hc - GROUND_Y, 2), max_void_m=float(w[1]), at_u=w[0], over_limit=int((g > 0.3).sum()), limit_m=0.3)
 
 
 # ------------------------------------------------------------------------------------------------ outputs
@@ -643,6 +851,33 @@ def tiers(T, geo, y):
         claimed = unary_union([claimed, reg])
         rr = rings_of(reg, 0.1)
         if rr: out.append(dict(part='over', y=[round(float(sel[:, :, 1].min()), 2), round(y[1], 2)], rings=rr))
+    return out
+
+
+def requests_of(res):
+    """requests to the other groups, from this run's results (review round 2: the list was hard-coded and kept items the
+    groups had closed, and two LOD2 items that were checker artefacts)"""
+    out = []
+    for c in res['conflicts']:
+        if 'drum' in c.get('check', '') or 'walkway' in c.get('check', ''):
+            out.append('%s: %s' % (c.get('group', 'domestic'), json.dumps(c)[:300]))
+    ins = res['stats'].get('deck_inside_buildings', {})
+    out.append('domestic: Terminal 2 landside face (integration review r2, finding 3). NAIP 2024 shows the departures roadway open to the sky, with '
+               'traffic, between the modelled T2 west wall and the glass curb canopy, and the T2 roof edge (NAIP relief-corrected for 16.3 m, frame model '
+               'draw_data.lean_frame) 17-18 m east of that wall: x -750.5 at z 200, -745 at z 220, -739 at z 240 (+-1 m; the dark line just west of it is the '
+               'canopy edge), against the modelled wall at x -768 (z 200) / -756 (z 240): the T2 shell follows the SFO Museum outline over '
+               'the curb roadway, as T1 Center did before the domestic round-1 move of its face (manifest.json#domestic.conflicts "T1 Center landside face"). '
+               'Please move the T2 landside face to the measured roof edge (the canopy in front of it); roadways.glb is cut where its deck ran inside '
+               'the shell (enclosure test, %s m2 of deck) and the cut lifts by itself on the next build_roadways run'
+               % ({k: v['area_m2'] for k, v in ins.items()} or 'see build_roadways.json'))
+    out.append('landside: parked cars - wheels / skirt at LOD0 and a third shape (review r1 finding 4; landside_cars.py is the landside group\'s)')
+    out.append('bridges / realtime: gates.js prepGeom walkway start and drum limits from the 3-D facades (integration.json footprints / tiers), then the domestic vestibules can go (review r1 finding 8)')
+    tl = [c for c in res['conflicts'] if c.get('check', '').startswith('taxilane')]
+    for c in tl: out.append('%s: %s %.1f m from taxilane centreline %s (ADG %s inferred: %.1f m); SFO Museum outline %.1f m' % (c['group'], c['unit'], c['dist_m'], c['lane'], c['adg'], c['need_m'], c['museum_outline_m']))
+    try:
+        L2 = json.load(open(os.path.join(OUTD, 'lod2_check.json')))
+        if L2.get('flagged'): out.append('LOD2 vs LOD0 (tools/blender/b3d_lod2_check.py, %s): %s' % (L2.get('generated'), '; '.join(L2['flagged'])))
+    except (OSError, ValueError): pass
     return out
 
 
@@ -710,11 +945,27 @@ def main(argv):
         table=[dict(el=t[0], i=t[1], kind=t[2], name=t[3], group=t[4], cover=t[5], by=t[6], rest=t[7]) for t in table],
         footprints=fps, plausibility=res)
     out['physics'] = dict(rings=phys, note='blocking footprints for js/live/ground.js buildingGrid (not wired: the realtime tools import ground.js; hangars and the elevated guideway excluded as the app excludes hangars and rail)')
-    json.dump(out, open(os.path.join(D3, 'integration.json'), 'w'), indent=None, separators=(',', ':'))
     # physics (review round 1, finding 8): the blocking footprints also go to the app (js/live/app.js buildingGrid extra),
     # simplified to 0.25 m and rounded to 0.1 m (the grid is 2 m)
     phys_js = [[[[round(x, 1), round(z, 1)] for x, z in r] for r in poly] for poly in phys]
-    js = dict(replace=rep, tower=out['tower'], physics=dict(rings=phys_js, note='3-D asset footprints for js/live/ground.js buildingGrid (hangars, guideway, roadways excluded)'))
+    # landside per building (review round 2, finding 4): the unit files and their boxes for js/three/buildings3d.js
+    units = {}
+    try:
+        import b3d_split
+        idx = b3d_split.split(log=log); ul = []
+        for e in idx:
+            L = F['landside'].get(e['unit'])
+            if not L: continue
+            Ln = {l: v for l, v in L.items() if l < 2} or L
+            x0, z0, x1, z1 = unary_union([v['geom'] for v in Ln.values()]).bounds
+            y0, y1 = min(v['y'][0] for v in Ln.values()), max(v['y'][1] for v in Ln.values())
+            ul.append(dict(unit=e['unit'], file=e['file'], bytes=e['bytes'], switch1_m=e['switch1_m'], switch2_m=e['switch2_m'], box=[round(v, 1) for v in (x0, y0, z0, x1, y1, z1)]))
+        units['landside'] = ul
+    except Exception as ex:  # the loader falls back to landside.glb when the index is missing
+        log('landside split failed (%s): the app loads landside.glb whole' % ex)
+    out['units'] = units
+    json.dump(out, open(os.path.join(D3, 'integration.json'), 'w'), indent=None, separators=(',', ':'))
+    js = dict(replace=rep, tower=out['tower'], units=units, physics=dict(rings=phys_js, note='3-D asset footprints for js/live/ground.js buildingGrid (hangars, guideway, roadways excluded)'))
     with open(os.path.join(D3, 'integration.js'), 'w') as f:
         f.write('// Generated by tools/blender/b3d_integrate.py from data/buildings3d/*.glb + manifest.json (do not edit). The\n'
                 '// first-pass app buildings each Blender asset replaces (routed into their own items by js/live/world.js so the\n'
@@ -732,13 +983,9 @@ def main(argv):
                       complex_edge_runs=sum(len(v) for v in rep['complexEdges'].values())),
         plausibility=dict(conflicts=len(res['conflicts']), notes=len(res['notes']), nearest_envelopes=res['stats']['nearest_envelopes'][:3], bridges_checked=res['stats']['bridges_checked'],
                           conflict_list=res['conflicts'][:20], walkway_drum_tests=res['stats'].get('walkway_drum_tests'), bridge_solids=res['stats'].get('bridge_solids'),
-                          taxilane=list(res['stats'].get('taxilane_clearance', {}).items())[:5]),
-        requests=['domestic: BA_E drum E9 - 0.39 m2 of BA_E surfaces 0.32 m inside the rotunda drum (current pose, LOD0; app solids of 2026-11-05T03:56)',
-                  'landside: parked cars - wheels / skirt at LOD0 and a third shape (review r1 finding 4; landside_cars.py is the landside group\'s)',
-                  'bridges / realtime: gates.js prepGeom walkway start and drum limits from the 3-D facades (integration.json footprints / tiers), then the domestic vestibules can go (review r1 finding 8)',
-                  'stands: F10 CRJ2 1.40 m from the BA-F body tier (SFO Museum outline 1.43 m): a stand pose item, not the building',
-                  'landside: BART station 36.7 m from taxilane centreline 302 (ADG V inferred: 42.1 m), 0.6 m nearer than the SFO Museum structure',
-                  'landside / ITB: LOD2 vs LOD0 (tools/blender/b3d_lod2_check.py): ITB BA-G top -5.0 m, Central Garage top -5.1 m, RCC roof median 4.6 m; domestic BA_C split / top +9 m to check'],
+                          taxilane=list(res['stats'].get('taxilane_clearance', {}).items())[:5],
+                          deck_inside_buildings=res['stats'].get('deck_inside_buildings'), deck_clearance=res['stats'].get('deck_clearance'), itb_curb_gap=res['stats'].get('itb_curb_gap')),
+        requests=requests_of(res),
         generated=out['generated'], tool='tools/blender/b3d_integrate.py', doc='docs/research/buildings3d.md (integration section)'))
     log('wrote data/buildings3d/integration.json (%.0f kB), integration.js (%.0f kB) in %.0f s' % (os.path.getsize(os.path.join(D3, 'integration.json')) / 1e3, os.path.getsize(os.path.join(D3, 'integration.js')) / 1e3, time.time() - t0))
     return 1 if res['conflicts'] else 0

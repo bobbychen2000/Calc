@@ -113,8 +113,8 @@ REVIEW_R2 = [
     dict(n=5, item='RCC station tower rake / skin', disposition='fixed',
          change='cut plane fitted to the l5 top silhouette (sky boundary per column, r1 l5 camera): rake 2.55 m, highest toward bearing '
                 '353 (toward the camera), rms 2.3 px (r1 2.5 m toward 236: 74 px; flat: 89 px); the high point at the DOF top puts the '
-                'platform 0.84 m higher (8.84 m, the RCC_PLATFORM anchor). Skin alpha-blended (texture alpha 0.45, frame opaque, '
-                'doubleSided) with a dark core, switch-back flights and landings inside, posts every 1/8 turn'),
+                'platform 0.84 m higher (8.84 m, the RCC_PLATFORM anchor). Skin alpha-blended (texture alpha 0.72, frame opaque, '
+                'doubleSided, metallic 0.25 / roughness 0.80, expanded-metal diamonds 0.19 x 0.09 m [inf] in the texture, strands opaque / openings alpha 0.5, so it reads as mesh, not glass) with a dark core, switch-back flights and landings inside, posts every 1/8 turn'),
     dict(n=6, item='BART glazed band', disposition='fixed (a2 solved camera)',
          change='band 9.2-13.5 m, white spandrel 5.9-9.2, colonnade top 5.9 m, body top 17.6 m at four columns (x 1100-1700) -> band '
                 '4.1 m below the top, 4.3 m tall; colonnade 5.9 (OSM min_height 4 listed)'),
@@ -133,7 +133,7 @@ REVIEW_R2 = [
                 '(as l1 shows: the curved NE wall stands EAST of the block face, nearer the camera); the l1 render camera moved with the face'),
     dict(n=9, item='LOD2', disposition='fixed',
          change='central garage LOD2 keeps the void floor, the Level-5 garage edges beside the guideway (to the trough-wall top) and the '
-                'two DOF roof poles; every deck carries a LOD2 car impostor (one roof quad per car in its paint colour, COLOR_0) so the '
+                'two DOF roof poles, and the NAIP roof lobes / beige rims (cut out of the LOD2 deck, no coplanar overlap); every deck carries a LOD2 car impostor (one roof quad per car in its paint colour, COLOR_0) so the '
                 'cars do not pop at the switch; LTP 1 / 2, RCC, Hyatt, CAC and MOC LOD2 roofs at the LOD0 roof level inside a coping ring'),
 ]
 
@@ -261,7 +261,7 @@ def add_renders(render_json_path, verify_json_path=None):
         fcntl.flock(lf, fcntl.LOCK_EX)
         cur = json.load(open(path))
         cur.setdefault('landside', {})['renders'] = dict(
-            tool='tools/blender/render_landside.py (Cycles CPU, <= 960 px, 48 spp + OIDN, AgX; back-face QA 8 spp)',
+            tool='tools/blender/render_landside.py (Cycles CPU, <= 960 px, 32-48 spp + OIDN, AgX; back-face QA 8 spp)',
             note='out/buildings3d/landside_*.png (local); landside_cmp_*.png overlay the BL-03 lines (orthographic) or sit beside '
                  'the reference photo (perspective; photo pixels, local only)', views=out)
         tmp = path + '.landside.tmp'

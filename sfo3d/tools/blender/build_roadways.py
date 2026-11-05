@@ -41,6 +41,7 @@ HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.abspath(os.pat
 sys.path.insert(0, HERE); sys.path.insert(0, os.path.join(ROOT, 'tools'))
 import roadways_net as RN  # noqa: E402
 import b3d_integrate as BI  # noqa: E402
+import roadways_itb_plate as RP  # noqa: E402
 
 D3 = os.path.join(ROOT, 'data', 'buildings3d'); OUTD = os.path.join(ROOT, 'out', 'buildings3d')
 GROUND_Y = 3.0
@@ -129,8 +130,44 @@ def units_of(P):
     return sorted(set(names.values()))
 
 
-def trim(P, TR, log):
-    """same-level overlaps go to the higher-priority piece; then every piece minus the assets' occupancy in its band"""
+ENC_STEP, ENC_DY = 1.0, 2.0   # enclosure test grid (m) and height of the test points above the deck top (m)
+
+
+def enclosure_cuts(P, TR, F0, log):
+    """review round 2 (finding 3: the domestic departures deck ran 115 m inside the Terminal 2 shell, and 1-3 m inside T1
+    / T3; the surface-band test cannot see a deck inside a hollow shell): every deck is sampled on an ENC_STEP grid where
+    it overlaps a domestic / ITB / tower unit's footprint, ENC_DY above its top, and each point is tested with
+    b3d_integrate.enclosed (a roof above and walls on >= 3 of 4 sides: inside the building). The enclosed cells, grown by
+    one cell and clipped to the footprint, are cut from the deck. Overhangs (curb canopies, eaves) are not enclosures,
+    so a road under a canopy stays. Returns {(group, unit): plan region} for the trim and the report."""
+    out = {}
+    for g in ('domestic', 'itb', 'tower'):
+        for u, L in F0.get(g, {}).items():
+            if u in ('*', 'all'): continue
+            T = TR['_lods'].get((g, u, 0))
+            if T is None: continue
+            fp = unary_union([e['geom'] for l, e in L.items() if l < 2] or [e['geom'] for e in L.values()]); fpb = fp.buffer(1.0); shapely.prepare(fpb)
+            cells = []
+            for p in P:
+                if not p['rib'].intersects(fpb): continue
+                X = p['rib'].intersection(fpb)
+                if X.area < 1.0: continue
+                x0, z0, x1, z1 = X.bounds; xs = np.arange(x0 + ENC_STEP / 2, x1, ENC_STEP); zs = np.arange(z0 + ENC_STEP / 2, z1, ENC_STEP)
+                if not len(xs) or not len(zs): continue
+                XX, ZZ = np.meshgrid(xs, zs); q = np.c_[XX.ravel(), ZZ.ravel()]; q = q[shapely.contains_xy(X, q[:, 0], q[:, 1])]
+                if not len(q): continue
+                h = hp(p, q); P3 = np.c_[q[:, 0], GROUND_Y + h + ENC_DY, q[:, 1]]
+                e = BI.enclosed(T, P3)
+                if e.any(): cells += [box(a - ENC_STEP / 2, b - ENC_STEP / 2, a + ENC_STEP / 2, b + ENC_STEP / 2) for a, b in q[e]]
+            if cells:
+                out[(g, u)] = unary_union(cells).buffer(ENC_STEP, join_style='mitre').intersection(fp)
+    log('decks inside buildings (enclosure test, review r2): %s' % (', '.join('%s/%s %.0f m2' % (g, u, v.area) for (g, u), v in sorted(out.items())) or 'none'))
+    return out
+
+
+def trim(P, TR, log, BODY=None):
+    """same-level overlaps go to the higher-priority piece; then every piece minus the assets' occupancy in its band and
+    minus the parts that run inside a building (enclosure_cuts, review round 2)"""
     order = sorted(range(len(P)), key=lambda i: (P[i]['anchor'] is None, P[i]['src'] == 'ramp', -P[i]['w'], P[i]['id']))
     kept = []
     for r, i in enumerate(order):
@@ -146,7 +183,15 @@ def trim(P, TR, log):
             dh = np.abs(hp(p, pts) - hp(q, pts))
             if np.median(dh) < 1.0: g = g.difference(q['geom'].buffer(0.02))
         p['geom'] = g; kept.append(i)
-    # assets: occupancy (triangles) in the piece's band, chunk by chunk along it (a ramp spans 0-11 m)
+    # assets: occupancy (triangles) in the piece's band, chunk by chunk along it (a ramp spans 0-11 m). Review r2: the
+    # other assets' LOD0 / LOD1 triangles only (their LOD2 shells are coarser - the ITB curb's by ~3 m at its ends - and
+    # are drawn only beyond 1.2-1.6 km, where this asset shows its own LOD2): a LOD2 box no longer notches the near deck
+    TRN = {}
+    for g in BI.GROUPS:
+        if g not in TR: continue
+        Tn = [T for (gg, u), T in TR['_units'].items() if gg == g]
+        Tn = np.concatenate(Tn) if Tn else np.zeros((0, 3, 3))
+        TRN[g] = dict(solid=TR[g]['solid'], T=TR[g]['T'], all=dict(T=Tn, lo=Tn[:, :, [0, 2]].min(1), hi=Tn[:, :, [0, 2]].max(1), ylo=Tn[:, :, 1].min(1), yhi=Tn[:, :, 1].max(1)))
     nt = 0
     for p in P:
         L = p['line'].length; n = max(1, int(math.ceil(L / 12.0))); cut = []; bygrp = {}; p['cut_by'] = {}
@@ -157,13 +202,16 @@ def trim(P, TR, log):
             hh = np.interp([a, b], p['s'], p['h']); y0 = GROUND_Y + min(hh) - (RN.DECK_DEPTH if min(hh) >= FILL_H else min(hh)) - 0.1; y1 = GROUND_Y + max(hh) + PARAPET_H + 0.2
             for g in BI.GROUPS:
                 if g not in TR: continue
-                o = BI.occupancy(TR, g, ch.bounds, y0, y1, pad=0.5, tri_only=True)
+                o = BI.occupancy(TRN, g, ch.bounds, y0, y1, pad=0.5, tri_only=True)
                 if not o.is_empty: cut.append(o.intersection(ch)); bygrp.setdefault(g, []).append(o.intersection(ch))
         # the landside buildings as solids too (garages, RCC, hotel, CAC: a ramp that runs into a garage ends at its
         # facade; their surfaces alone miss a deck that passes between two of a garage's floors)
         if 'landside' in TR and not TR['landside']['solid'].is_empty:
             sol = TR['landside']['solid'].intersection(p['rib'].buffer(0.5))
             if not sol.is_empty: cut.append(sol); bygrp.setdefault('landside', []).append(sol)
+        for (g, u), bd in (BODY or {}).items():
+            sol = bd.intersection(p['rib'].buffer(0.5))
+            if not sol.is_empty and sol.area > 0.05: cut.append(sol); bygrp.setdefault(g + '/' + u + ' inside', []).append(sol)
         if cut:
             C = unary_union(cut).buffer(0.10)
             before = p['geom'].area; p['geom'] = p['geom'].difference(C); p['asset_cut_m2'] = round(before - p['geom'].area, 2)
@@ -183,7 +231,7 @@ def trim(P, TR, log):
 CORE = box(-2150.0, -50.0, -550.0, 1050.0)
 
 
-def overhead_of(TR, F):
+def overhead_of(TR, F=None):
     """the AirTrain guideway (landside airtrain units, elevated) as overhead structures: plan polygons and the soffit level
     (the lowest non-vertical guideway triangle over a point, >= 4 m above grade) for roadways_net.solve_levels"""
     T = TR['landside']['T'] if 'landside' in TR else np.zeros((0, 3, 3))
@@ -204,7 +252,7 @@ def overhead_of(TR, F):
         if not inside.any(): return None
         y = a[:, 1] + u * (c[:, 1] - a[:, 1]) + v * (b[:, 1] - a[:, 1])
         return float(y[inside].min()) - GROUND_Y
-    polys = unary_union([g for (grp, u), g in F.items() if grp == 'landside' and u.startswith('airtrain')])
+    polys = BI.plan_geom(T) if len(T) else Polygon()   # the guideway's own triangles (review r2: not the stored footprints)
     return [(polys, soff)] if not polys.is_empty else []
 
 
@@ -266,15 +314,17 @@ def bottom_of(h):
     return np.where(h >= FILL_H, h - RN.DECK_DEPTH, 0.0)
 
 
-def build_piece(mb, p, P_all, lod, mat_deck):
+def build_piece(mb, p, P_all, lod, mat_deck, top=True):
     geom = p['geom'].simplify({0: 0.05, 1: 0.35, 2: 1.0}[lod])
     if geom.is_empty: return
     V, I = tri_polys(geom, {0: 6.0, 1: 16.0, 2: 30.0}[lod])
     if not len(I): return
-    h = hp(p, V); lat, s = lateral(p, V)
-    Pt = np.c_[V[:, 0], GROUND_Y + h, V[:, 1]]
-    T = np.c_[0.5 + lat / max(p['lanes'] * RN.LANE_W, 1.0), s / DASH_CYCLE]
-    mb.tris(p['unit'], lod, mat_deck, Pt, vnormals(Pt, I), T, I)
+    h = hp(p, V)
+    if top:   # the plate's top is built by build_plate_top (bands, islands, crosswalks)
+        lat, s = lateral(p, V)
+        Pt = np.c_[V[:, 0], GROUND_Y + h, V[:, 1]]
+        T = np.c_[0.5 + lat / max(p['lanes'] * RN.LANE_W, 1.0), s / DASH_CYCLE]
+        mb.tris(p['unit'], lod, mat_deck, Pt, vnormals(Pt, I), T, I)
     # soffit (where the deck is on columns)
     hb = bottom_of(h); up = hb > 0.01
     if up.any():
@@ -335,6 +385,224 @@ def build_piece(mb, p, P_all, lod, mat_deck):
                         f = np.cross(qq[1] - qq[0], qq[2] - qq[0])
                         if f @ nn < 0: qq = qq[[1, 0, 3, 2]]
                         mb.tris(p['unit'], lod, 'concrete', qq, np.repeat(nn[None], 4, 0), np.array([[0, 0], [L / 4, 0], [L / 4, H / 4], [0, H / 4]]), np.array([[0, 1, 2], [0, 2, 3]]))
+
+
+# ------------------------------------------------------------------------------------------------ ITB deck plate (review r2)
+ISLAND_H = 0.15       # raised islands: 6-in kerb (as the ITB curb's KERB_H) [inf]
+RED_KERB_W = 0.45     # red-painted kerb along island B's roadway edge [obs NAIP 2024: R - G peak 0.5-1 m wide incl. blur]
+XWALK = dict(width=3.0, bar=0.6, gap=0.6, lift=0.03)   # continental crosswalk bars (MUTCD 3B.18: 12-24 in bars) [inf
+                                                       # pattern]; stations: the ITB curb ramps (itb_geom.CROSSWALK_U, obs NAIP)
+try:
+    import itb_geom as _IG  # noqa: E402  (the ITB group's curb ramp stations; same values as RP.measure's default)
+    CROSSWALK_U = tuple(_IG.CROSSWALK_U)
+except Exception:  # pragma: no cover - the ITB module needs its own inputs; fall back to the values it holds
+    CROSSWALK_U = (-52.8, -15.8, -4.7, 2.5, 14.0, 49.5)
+
+
+def plate_outline(M, ways, log):
+    """the deck plate: the measured outline (kerb to the imaged outer edge) less the lower outer roadway - the elevated
+    layer-1 OSM ways running across the outline (their ribbon + 1.5 m) and, on the straight section, everything west of
+    island B's west edge - keeping the part connected to the kerb. Returns (the lower ways' ids, the plate polygon)."""
+    C, du, dv = np.array(M['frame']['centre']), np.array(M['frame']['du']), np.array(M['frame']['dv'])
+    lower = {}
+    for w in ways:
+        if w['layer'] >= 2: continue
+        ln = LineString(w['pts'])
+        if ln.intersection(M['poly']).length > 20.0: lower[w['id']] = ln.buffer(w['w'] / 2 + SHOULDER + 1.5, cap_style='flat')
+    s0, s1 = M['straight']; vg = M['gutter_v']
+    strip = Polygon(RP.xz_of(np.array([[M['stations'][0] - 5, M['v_cap'] - 5], [M['stations'][-1] + 5, M['v_cap'] - 5], [M['stations'][-1] + 5, vg], [M['stations'][0] - 5, vg]]), C, du, dv))
+    st = Polygon(RP.xz_of(np.array([[s0, M['v_cap'] - 5], [s1, M['v_cap'] - 5], [s1, vg], [s0, vg]]), C, du, dv))
+    g = M['poly'].difference(unary_union(list(lower.values()) + [st]))
+    # the part connected to the kerb strip
+    ks = Polygon(RP.xz_of(np.array([[M['stations'][0], M['v_kerb'] - 2], [M['stations'][-1], M['v_kerb'] - 2], [M['stations'][-1], M['v_kerb'] + 2], [M['stations'][0], M['v_kerb'] + 2]]), C, du, dv))
+    parts = [q for q in (getattr(g, 'geoms', None) or [g]) if isinstance(q, Polygon) and q.intersects(ks)]
+    g = unary_union(parts).buffer(0.5, join_style='mitre').buffer(-0.5, join_style='mitre')
+    log('ITB deck plate: measured outline %.0f m2 less the lower outer roadway (OSM layer-1 ways %s) = %.0f m2' % (M['poly'].area, sorted(lower), g.area))
+    return set(lower), g
+
+
+def widen_lower(P, lower, M, log):
+    """the lower outer roadway on the straight section spans the imaged band from its outer edge to island B's west edge
+    (corrected from the plate's relief height to its own level: an edge at height h is imaged (H_EDGE - h) x the lean
+    further out in the plate's frame); its OSM ribbon (2 lanes, 8.4 m) left a gap under the plate's edge"""
+    import draw_data as DD
+    C, du, dv = np.array(M['frame']['centre']), np.array(M['frame']['du']), np.array(M['frame']['dv'])
+    s0, s1 = M['straight']; kv = float(DD.lean_frame(C[None], 1.0)[0] @ dv)
+    for p in P:
+        if p['src'] != 'deck' or p['id'] not in lower: continue
+        uv = RP.uv_of(p['pts'], C, du, dv); on = (uv[:, 0] > s0) & (uv[:, 0] < s1) & (np.abs(uv[:, 1] - M['outer']['v'][0]) < 15)
+        if not on.any(): continue
+        h = float(np.median(p['h'][on]))
+        v_out = M['v_edge_median'] + (M['h_edge'] - (h + PARAPET_H)) * kv
+        band = Polygon(RP.xz_of(np.array([[s0, v_out], [s1, v_out], [s1, M['gutter_v'] + 0.3], [s0, M['gutter_v'] + 0.3]]), C, du, dv))
+        before = p['rib'].area; p['rib'] = unary_union([p['rib'], band.intersection(p['line'].buffer(25.0))])
+        M.setdefault('lower', []).append(dict(id=p['id'], h_m=round(h, 2), v_out_true=round(v_out, 2), added_m2=round(p['rib'].area - before, 1)))
+        log('lower outer roadway (way %s, %.2f m on the straight): widened to the imaged band v %.2f .. %.2f (+%.0f m2), under the plate edge'
+            % (p['id'], h, v_out, M['gutter_v'] + 0.3, p['rib'].area - before))
+
+
+def plate_piece(M, h):
+    """the measured ITB departures deck as one road piece (src 'plate'): level h (the ITB L3 deck top), a centreline
+    along the roof axis through the middle of the plate (levels and lateral coordinates are taken on it), anchored"""
+    C, du, dv = np.array(M['frame']['centre']), np.array(M['frame']['du']), np.array(M['frame']['dv'])
+    u0, u1 = M['stations'][0] - 2.0, M['stations'][-1] + 2.0; vm = (M['v_kerb'] + M['v_cap']) / 2
+    pts = RP.xz_of(np.array([[u0, vm], [u1, vm]]), C, du, dv)
+    ln = LineString(pts); s = np.array([0.0, ln.length])
+    half = (M['v_kerb'] - M['v_cap']) / 2 + 3.0
+    return dict(id='itb_plate', src='plate', w=2 * half, lanes=0, oneway=True, anchor='itb', layer=2, pts=pts, s=s, h=np.array([h, h]), nodes=[],
+                name='ITB departures deck (NAIP 2024 plate)', kind='plate', line=ln, half=half, rib=M['plate_poly'], hmin=h, hmax=h, M=M)
+
+
+def band_lanes(b):
+    """lanes painted on a measured band: OSM lanes as a minimum (inner: 2 + the parallel kerb lane, OSM parking:lane:right;
+    middle: 2; outer: 2), else the measured width / 3.6 m [inf]"""
+    w = abs(b['v'][1] - b['v'][0]); osm = {'inner': 3, 'middle': 2, 'outer': 2}.get(b['name'], 1)
+    return max(osm, int(w // RN.LANE_W))
+
+
+def build_plate_top(mb, p, lod, mats):
+    """the plate's top: per band on the straight section (lane tiles, raised islands with the red kerb, crosswalk bars at
+    the curb ramps) and plain asphalt on the rest of the plate; travel is towards -u on all three roadways (OSM node
+    order of 38853045 / 38853121 / 41015123), so the right of travel is +v (the kerb side)"""
+    M = p['M']; C, du, dv = np.array(M['frame']['centre']), np.array(M['frame']['du']), np.array(M['frame']['dv'])
+    geom = p['geom'].simplify({0: 0.05, 1: 0.35, 2: 1.0}[lod])
+    if geom.is_empty: return
+    s0, s1 = M['straight']; seg = {0: 6.0, 1: 16.0, 2: 30.0}[lod]
+    def W(uv): return Polygon(RP.xz_of(np.asarray(uv), C, du, dv))
+    def UV(V): return RP.uv_of(V, C, du, dv)
+    straight = W([(s0, M['v_cap'] - 5), (s1, M['v_cap'] - 5), (s1, M['v_kerb'] + 5), (s0, M['v_kerb'] + 5)])
+    def top(g, mat, lift, Tfn):
+        if g.is_empty: return
+        V, I = tri_polys(g, seg)
+        if not len(I): return
+        Pt = np.c_[V[:, 0], np.full(len(V), GROUND_Y + p['hmin'] + lift), V[:, 1]]
+        mb.tris(p['unit'], lod, mat, Pt, vnormals(Pt, I), Tfn(V), I)
+    plainT = lambda V: np.c_[V[:, 0] / 4, V[:, 1] / 4]
+    top(geom.difference(straight), 'deck_plain', 0.0, plainT)
+    rest = geom.intersection(straight)
+    for b in M['bands']:
+        va, vb = sorted(b['v']); g = rest.intersection(W([(s0, va), (s1, va), (s1, vb), (s0, vb)]))
+        if g.is_empty: continue
+        if b['kind'] == 'island':
+            top(g, 'island', ISLAND_H, plainT)
+            if lod < 2:   # kerb faces on the long sides (the island's ends stop at the straight section's ends)
+                for poly in (getattr(g, 'geoms', None) or [g]):
+                    if not isinstance(poly, Polygon): continue
+                    R = np.array(poly.exterior.coords); A, B = R[:-1], R[1:]
+                    for a, c in zip(A, B):
+                        e = c - a; Lm = float(np.linalg.norm(e))
+                        if Lm < 0.2: continue
+                        nrm = np.array([e[1], -e[0]]) / Lm
+                        if poly.contains(Point(*(0.5 * (a + c) + 0.05 * nrm))): nrm = -nrm
+                        y0, y1 = GROUND_Y + p['hmin'], GROUND_Y + p['hmin'] + ISLAND_H
+                        q = np.array([[a[0], y0, a[1]], [c[0], y0, c[1]], [c[0], y1, c[1]], [a[0], y1, a[1]]]); n3 = np.array([nrm[0], 0.0, nrm[1]])
+                        if np.cross(q[1] - q[0], q[2] - q[0]) @ n3 < 0: q = q[[1, 0, 3, 2]]
+                        mb.tris(p['unit'], lod, 'island', q, np.repeat(n3[None], 4, 0), np.array([[0, 0], [Lm / 4, 0], [Lm / 4, 0.04], [0, 0.04]]), np.array([[0, 1, 2], [0, 2, 3]]))
+            if b['name'] == 'islandB' and lod == 0:   # the red-painted kerb along its roadway (+v) edge [obs NAIP]
+                top(g.intersection(W([(s0, vb - RED_KERB_W), (s1, vb - RED_KERB_W), (s1, vb), (s0, vb)])), 'kerb_red', ISLAND_H + 0.005, plainT)
+            continue
+        n = band_lanes(b); vc = 0.5 * (va + vb); span = n * RN.LANE_W
+        mat = ('deck_light_%do' if b['kind'] == 'road_light' else 'deck_%do') % n if lod < 2 else ('deck_plain_light' if b['kind'] == 'road_light' else 'deck_plain')
+        mats.setdefault(mat, None)
+        top(g, mat, 0.0, lambda V: np.c_[0.5 + (UV(V)[:, 1] - vc) / span, -UV(V)[:, 0] / DASH_CYCLE])
+        if b['name'] == 'inner' and lod == 0:   # crosswalk bars at the curb ramps, kerb to island A
+            for uc in CROSSWALK_U:
+                if not (s0 + 2 < uc < s1 - 2): continue
+                v = vb - 0.3
+                while v - XWALK['bar'] > va + 0.3:
+                    bar = rest.intersection(W([(uc - XWALK['width'] / 2, v - XWALK['bar']), (uc + XWALK['width'] / 2, v - XWALK['bar']), (uc + XWALK['width'] / 2, v), (uc - XWALK['width'] / 2, v)]))
+                    top(bar, 'paint_white', XWALK['lift'], plainT); v -= XWALK['bar'] + XWALK['gap']
+
+
+def plate_columns(p, P, TR, log):
+    """columns under the plate on lines under the two islands and 1.5 m inside the outer edge, every COL_SPACING along u,
+    each kept only where it stands clear of every asset from grade to the soffit and inside the built deck [inf]"""
+    M = p['M']; C, du, dv = np.array(M['frame']['centre']), np.array(M['frame']['du']), np.array(M['frame']['dv'])
+    lines = [0.5 * sum(b['v']) for b in M['bands'] if b['kind'] == 'island'] + [M['v_cap'] + 2.0]
+    inner = p['geom'].buffer(-(D_COL / 2 + 0.6)); out = []
+    for v in lines:
+        for u in np.arange(M['stations'][0] + 6.0, M['stations'][-1] - 3.0, COL_SPACING):
+            q = RP.xz_of(np.array([[u, v]]), C, du, dv)[0]; disk = Point(q).buffer(D_COL / 2 + 0.3)
+            if not inner.contains(Point(q)): continue
+            soff = p['hmin'] - RN.DECK_DEPTH
+            if any(not BI.occupancy(TR, g, disk.bounds, GROUND_Y + 0.05, GROUND_Y + soff, pad=0.2, tri_only=True).intersection(disk).is_empty for g in BI.GROUPS if g in TR): continue
+            if any(o is not p and o['geom'].intersects(disk) and float(hp(o, q[None])[0]) < soff - 0.1 for o in P): continue
+            out.append(dict(unit=p['unit'], xz=q, soffit=soff, way=p['id']))
+    log('plate columns: %d (lines at v %s, every %.0f m) [inf]' % (len(out), [round(v, 1) for v in lines], COL_SPACING))
+    return out
+
+
+def curb_gap_check(P, TR, M, curb_h, log):
+    """review round 2 check: along the ITB curb (every 0.5 m of u), the void between the curb's top (ITB asset) and the
+    departures deck top (this asset, within 0.3 m of the deck level), measured outward from the kerb; must be <= 0.3 m"""
+    C, du, dv = np.array(M['frame']['centre']), np.array(M['frame']['du']), np.array(M['frame']['dv'])
+    T = TR['_lods'][('itb', 'hall', 0)]
+    n = np.cross(T[:, 1] - T[:, 0], T[:, 2] - T[:, 0]); n /= np.linalg.norm(n, axis=1, keepdims=True) + 1e-12
+    cs = T[(n[:, 1] > 0.95) & (np.abs(T[:, :, 1] - (GROUND_Y + curb_h)).max(1) < 0.06)]
+    curb = unary_union([Polygon(t[:, [0, 2]]).buffer(0.005) for t in cs if Polygon(t[:, [0, 2]]).area > 1e-4])
+    h = M.get('h_deck', 11.35)
+    deck = unary_union([q['geom'] for q in P if not q['geom'].is_empty and abs(float(np.median(q['h'])) - h) < 0.3])
+    both = unary_union([curb, deck]); gaps = []
+    for u in np.arange(M['stations'][0] + 0.5, M['stations'][-1] - 0.5, 0.5):
+        ln = LineString(RP.xz_of(np.array([[u, M['v_kerb'] + 0.8], [u, M['v_kerb'] - 12.0]]), C, du, dv))
+        cover = ln.intersection(both); segs = [g for g in (getattr(cover, 'geoms', None) or [cover]) if not g.is_empty and g.length > 0]
+        ivs = sorted([sorted(float(np.dot(np.array(c) - C, dv)) for c in g.coords) for g in segs], key=lambda x: -x[1])
+        # from the kerb outward: the first void after the curb
+        gap = None
+        if ivs:
+            lo = ivs[0][0]
+            for a, b in ivs[1:]:
+                if b < lo - 1e-3: gap = lo - b; break      # the first void outward from the kerb
+                lo = min(lo, a)
+            if gap is None: gap = max(0.0, min(a for a, b in ivs) - (M['v_kerb'] - 12.0))   # deck missing to 12 m out
+        else: gap = 12.8
+        gaps.append((round(float(u), 1), round(gap, 3)))
+    g = np.array([x[1] for x in gaps]); worst = max(gaps, key=lambda x: x[1])
+    res = dict(stations=len(gaps), max_void_m=round(float(g.max()), 3), at_u=worst[0], over_0_3m=int((g > 0.3).sum()), limit_m=0.3)
+    log('ITB curb to departures deck: %d stations, largest void %.3f m (u %.1f), %d over 0.3 m' % (res['stations'], res['max_void_m'], res['at_u'], res['over_0_3m']))
+    return res
+
+
+def clearance_check(mb, TR, log, limit=RN.CLEAR_MIN):
+    """review round 2 check (finding 5): the deck tops (LOD0 road surfaces) against the AirTrain guideway triangles above
+    them: per deck vertex and triangle centroid, the lowest guideway triangle over it; clearance = that - the deck top"""
+    T = TR['landside']['T'] if 'landside' in TR else np.zeros((0, 3, 3))
+    if not len(T): return dict(points=0)
+    xz = T[:, :, [0, 2]]; lo, hi = xz.min(1), xz.max(1)
+    pts = []
+    for (u, l, mat), b in mb.d.items():
+        if l != 0 or not (mat.startswith('deck') or mat in ('island', 'paint_white', 'kerb_red')) or not b['P']: continue
+        off = 0
+        for P, I in zip(b['P'], b['I']):
+            if len(I):   # every top triangle sampled on a ~1-m barycentric grid (vertices, edges and interior)
+                Tq = P[I - off]
+                for t in Tq:
+                    k = int(max(1, math.ceil(max(np.linalg.norm(t[1] - t[0]), np.linalg.norm(t[2] - t[1]), np.linalg.norm(t[0] - t[2])) / 1.0)))
+                    ij = np.array([(i, j) for i in range(k + 1) for j in range(k + 1 - i)], float) / k
+                    pts.append(t[0] + ij[:, :1] * (t[1] - t[0]) + ij[:, 1:] * (t[2] - t[0]))
+            off += len(P)
+    if not pts: return dict(points=0)
+    Q = np.concatenate(pts)
+    Q = Q[(Q[:, 0] > lo[:, 0].min() - 1) & (Q[:, 0] < hi[:, 0].max() + 1) & (Q[:, 2] > lo[:, 1].min() - 1) & (Q[:, 2] < hi[:, 1].max() + 1)]
+    out = []
+    for q in Q:
+        m = (lo[:, 0] <= q[0]) & (hi[:, 0] >= q[0]) & (lo[:, 1] <= q[2]) & (hi[:, 1] >= q[2])
+        if not m.any(): continue
+        t = T[m]; a, b, c = t[:, 0], t[:, 1], t[:, 2]
+        v0 = c[:, [0, 2]] - a[:, [0, 2]]; v1 = b[:, [0, 2]] - a[:, [0, 2]]; v2 = q[[0, 2]] - a[:, [0, 2]]
+        d00 = (v0 * v0).sum(1); d01 = (v0 * v1).sum(1); d11 = (v1 * v1).sum(1); d20 = (v2 * v0).sum(1); d21 = (v2 * v1).sum(1)
+        den = d00 * d11 - d01 * d01; ok = np.abs(den) > 1e-12
+        uu = np.where(ok, (d11 * d20 - d01 * d21) / np.where(ok, den, 1), -1); vv = np.where(ok, (d00 * d21 - d01 * d20) / np.where(ok, den, 1), -1)
+        ins = (uu >= -1e-6) & (vv >= -1e-6) & (uu + vv <= 1 + 1e-6)
+        if not ins.any(): continue
+        y = (a[:, 1] + uu * (c[:, 1] - a[:, 1]) + vv * (b[:, 1] - a[:, 1]))[ins]; y = y[y > q[1] + 1.0]
+        if len(y): out.append((float(y.min() - q[1]), q[0], q[2], q[1] - GROUND_Y))
+    if not out: return dict(points=0)
+    out.sort(); cl = np.array([o[0] for o in out])
+    res = dict(points=len(out), min_m=round(out[0][0], 2), at=[round(out[0][1], 1), round(out[0][2], 1)], deck_m=round(out[0][3], 2), below_limit=int((cl < limit - 1e-3).sum()), limit_m=limit)
+    log('guideway clearance over the deck tops (LOD0 top triangles sampled at ~1 m under the guideway): %d points, min %.2f m at %s (deck %.2f m), %d below %.1f m'
+        % (res['points'], res['min_m'], res['at'], res['deck_m'], res['below_limit'], limit))
+    return res
 
 
 def cylinder(mb, unit, lod, c, y0, y1, r, nseg):
@@ -431,6 +699,20 @@ def naip_asphalt(P):
     v = np.concatenate(vals); med = np.median(v, 0)
     lin = srgb2lin(med) * NAIP_ALBEDO; srgb = np.where(lin <= 0.0031308, lin * 12.92, 1.055 * lin ** (1 / 2.4) - 0.055) * 255
     return [int(round(x)) for x in med], [int(round(x)) for x in srgb], int(len(v))
+
+
+KERB_RED = (168, 52, 44)   # red curb paint, sRGB [inf: NAIP shows red there (R - G 70-80), not its albedo]
+
+
+def naip_band(plate, name):
+    """NAIP 2024 median colour over one band of the plate's straight section, and the base colour (x NAIP_ALBEDO linear)"""
+    M = plate['M']; b = name if isinstance(name, dict) else [x for x in M['bands'] if x['name'] == name][0]
+    C, du, dv = np.array(M['frame']['centre']), np.array(M['frame']['du']), np.array(M['frame']['dv'])
+    s0, s1 = M['straight']; va, vb = sorted(b['v'])
+    us = np.arange(s0, s1, 1.0); vs = np.arange(va + 0.8, vb - 0.8, 0.5); V, U = np.meshgrid(vs, us)
+    px = RP.sample(U, V, M['h_edge'], C, du, dv).reshape(-1, 3)[:, ::-1]
+    med = np.median(px, 0); lin = srgb2lin(med) * NAIP_ALBEDO; srgb = np.where(lin <= 0.0031308, lin * 12.92, 1.055 * lin ** (1 / 2.4) - 0.055) * 255
+    return [int(round(x)) for x in med], [int(round(x)) for x in srgb]
 
 
 # ------------------------------------------------------------------------------------------------ glTF writer
@@ -560,51 +842,109 @@ def main(argv):
     LV = RN.asset_levels()
     # the other assets' triangles (every LOD and file), as b3d_integrate measures them
     groups0 = list(BI.GROUPS); BI.GROUPS[:] = [g for g in groups0 if g != 'roadways']
-    _, TR, files = BI.footprints(lambda s: None)
+    F0, TR, files = BI.footprints(lambda s: None)
     log('asset triangles read (%s)' % ', '.join(sorted(files)))
-    ways, grade, F, st = RN.network(log)
-    sol = RN.solve_levels(ways, grade, F, LV, log, overhead=overhead_of(TR, F))
+    Fd = {(g, u): unary_union([e['geom'] for l, e in L.items() if l < 2] or [e['geom'] for e in L.values()]) for g in F0 for u, L in F0[g].items() if u != '*'}
+    ways, grade, F, st = RN.network(log, F=Fd)
+    # the ITB departures deck plate (review round 2, finding 1): measured on NAIP 2024 from the ITB asset's kerb outward
+    h_itb = LV['itb']['curb'] - RN.KERB_M
+    kerb = RP.kerb_from_asset(TR['_lods'][('itb', 'hall', 0)], LV['itb']['curb'], *RP.frame())
+    M, mimg = RP.measure(h_itb, kerb, log, CROSSWALK_U); M['h_deck'] = h_itb
+    lower, M['plate_poly'] = plate_outline(M, ways, log)
+    sol = RN.solve_levels(ways, grade, F, LV, log, overhead=overhead_of(TR), plates=[dict(poly=M['plate_poly'], h=h_itb, why='ITB L3 deck plate (NAIP 2024)')])
     for u in sol['unresolved']: log('  UNRESOLVED ' + json.dumps(u))
     chk = RN.checks(ways, sol['ramps'], log)
     P = pieces_of(ways, sol['ramps'])
     out = [p for p in P if not CORE.contains(Point(p['pts'].mean(0)))]
     P = [p for p in P if CORE.contains(Point(p['pts'].mean(0)))]
     log('outside the core box %s: %d pieces (%.0f m) not built (ground footprint only, as before)' % (CORE.bounds, len(out), sum(p['line'].length for p in out)))
+    plate = plate_piece(M, h_itb); P.insert(0, plate)
+    widen_lower(P, lower, M, log)
     units = units_of(P)
-    log('pieces %d (decks %d, ramp parts %d), units %s' % (len(P), sum(1 for p in P if p['src'] == 'deck'), sum(1 for p in P if p['src'] == 'ramp'), units))
-    trim(P, TR, log)
-    cols, cst = columns(P, TR, log)
+    log('pieces %d (decks %d, ramp parts %d, plate 1), units %s' % (len(P), sum(1 for p in P if p['src'] == 'deck'), sum(1 for p in P if p['src'] == 'ramp'), units))
+    BODY = enclosure_cuts(P, TR, F0, log)
+    trim(P, TR, log, BODY)
+    body_cut = {}
+    for p in P:
+        for k, a in p['cut_by'].items():
+            if k.endswith(' inside'): body_cut[k[:-7]] = round(body_cut.get(k[:-7], 0) + a, 1)
+    for _ in range(2):   # the grid edge: cut again what a second pass on the trimmed decks still finds enclosed
+        left = enclosure_cuts([dict(q, rib=q['geom']) for q in P if not q['geom'].is_empty], TR, F0, lambda m: None)
+        if not left: break
+        LU = unary_union(list(left.values())).buffer(0.5)
+        for q in P:
+            if q['geom'].intersects(LU):
+                q['geom'] = unary_union([g for g in (getattr(q['geom'].difference(LU), 'geoms', None) or [q['geom'].difference(LU)]) if isinstance(g, Polygon) and g.area > 0.5])
+                q['against'] = unary_union([q.get('against', Polygon()), LU])
+    body_left = round(sum(v.area for v in left.values()), 2)
+    log('decks cut where they ran inside a building: %s m2; deck area still enclosed after the cut: %.2f m2' % (body_cut, body_left))
+    cols, cst = columns([p for p in P if p['src'] != 'plate'], TR, log)
+    pcols = plate_columns(plate, P, TR, log); cols += pcols; cst['plate'] = len(pcols)
     BI.GROUPS[:] = groups0
-    asph_naip, asph, nsamp = naip_asphalt(P)
+    asph_naip, asph, nsamp = naip_asphalt([p for p in P if p['src'] != 'plate'])
     log('asphalt: NAIP 2024 median sRGB %s over %d samples -> base colour %s (x %.2f linear)' % (asph_naip, nsamp, asph, NAIP_ALBEDO))
+    lite_naip, lite = naip_band(plate, M['outer'])
+    log('outer light-concrete roadway: NAIP 2024 median sRGB %s -> base colour %s' % (lite_naip, lite))
     mats = {'concrete': dict(rgb=CONCRETE, rough=0.85, extras=dict(src='inf', note='cast-in-place concrete, light grey'))}
     for p in P:
-        nm = 'deck_%d%s' % (p['lanes'], 'o' if p['oneway'] else 't'); p['mat'] = nm
-        if nm not in mats: mats[nm] = dict(rgb=(255, 255, 255), rough=0.9, png=lane_tile(p['lanes'], p['oneway'], asph), extras=dict(src='obs colour (NAIP 2024) / inf markings', lanes=p['lanes'], oneway=p['oneway']))
-    mats['deck_plain'] = dict(rgb=asph, rough=0.9, extras=dict(src='obs colour (NAIP 2024)', note='LOD2: no markings'))
+        if p['src'] == 'plate': p['mat'] = None; continue
+        light = p['src'] == 'deck' and p['id'] in lower
+        nm = ('deck_light_%d%s' if light else 'deck_%d%s') % (p['lanes'], 'o' if p['oneway'] else 't'); p['mat'] = nm
+        if nm not in mats: mats[nm] = dict(rgb=(255, 255, 255), rough=0.9, png=lane_tile(p['lanes'], p['oneway'], lite if light else asph), extras=dict(src='obs colour (NAIP 2024) / inf markings' + (' (the outer light-concrete roadway along the ITB)' if light else ''), lanes=p['lanes'], oneway=p['oneway']))
+    for b in M['bands']:
+        if b['kind'] == 'island': continue
+        n = band_lanes(b); light = b['kind'] == 'road_light'; nm = ('deck_light_%do' if light else 'deck_%do') % n
+        if nm not in mats: mats[nm] = dict(rgb=(255, 255, 255), rough=0.9, png=lane_tile(n, True, lite if light else asph), extras=dict(src='obs colour (NAIP 2024) / inf markings (ITB deck plate band %s)' % b['name'], lanes=n, oneway=True))
+    mats['deck_plain'] = dict(rgb=asph, rough=0.9, extras=dict(src='obs colour (NAIP 2024)', note='no markings (LOD2; the plate beyond its straight section)'))
+    mats['deck_plain_light'] = dict(rgb=lite, rough=0.88, extras=dict(src='obs colour (NAIP 2024, the outer light-concrete roadway)', note='LOD2'))
+    mats['island'] = dict(rgb=CONCRETE, rough=0.85, extras=dict(src='obs extent (NAIP 2024) / inf height %.2f m' % ISLAND_H, note='raised islands of the ITB deck plate'))
+    mats['kerb_red'] = dict(rgb=KERB_RED, rough=0.7, extras=dict(src='obs (NAIP 2024 R - G peak) / inf colour', note='red-painted kerb (no stopping)'))
+    mats['paint_white'] = dict(rgb=(226, 226, 220), rough=0.6, extras=dict(src='inf', note='crosswalk bars at the ITB curb ramps'))
     mb = MB()
     for l in (0, 1, 2):
-        for p in P: build_piece(mb, p, P, l, p['mat'] if l < 2 else 'deck_plain')
+        for p in P:
+            if p['src'] == 'plate': build_piece(mb, p, P, l, None, top=False); build_plate_top(mb, p, l, mats)
+            else: build_piece(mb, p, P, l, p['mat'] if l < 2 else 'deck_plain')
         for c in cols: cylinder(mb, c['unit'], l, c['xz'], GROUND_Y - 0.05, GROUND_Y + c['soffit'] + 0.05, D_COL / 2, {0: 12, 1: 6, 2: 4}[l])
+    gapchk = curb_gap_check(P, TR, M, LV['itb']['curb'], log)
+    clr = clearance_check(mb, TR, log)
     allxz = np.concatenate([p['pts'] for p in P]); rc = [round(float(v), 1) for v in allxz.mean(0)]
     ntri = {l: sum(int(sum(len(i) for i in b['I'])) for (u, ll, m), b in mb.d.items() if ll == l) for l in (0, 1, 2)}
     log('triangles per LOD: %s' % ntri)
     tags = dict(network='obs (OSM ODbL topology, centrelines)', widths='osm lanes x 3.6 / class default [inf]', itb_level='%s %s' % (LV['itb']['tag'], LV['itb']['source']),
                 domestic_level='%s %s' % (LV['domestic']['tag'], LV['domestic']['source']), other_levels='inf (roadways_net.py solve)', structure='inf (deck depth, parapets, columns, fill)')
-    ux = {u: dict(src='inf', levels=sorted({p['anchor'] or 'solved' for p in P if p['unit'] == u}), osm_ways=sorted({p['id'] for p in P if p['unit'] == u})[:60]) for u in units}
+    ux = {u: dict(src='inf', levels=sorted({p['anchor'] or 'solved' for p in P if p['unit'] == u}), osm_ways=sorted({p['id'] for p in P if p['unit'] == u and isinstance(p['id'], int)})[:60], plate=any(p['src'] == 'plate' for p in P if p['unit'] == u)) for u in units}
     extras = dict(asset='roadways', frame='ltp-nad83-2011', ground_y=GROUND_Y, generator='tools/blender/build_roadways.py', tags=tags)
     full = os.path.join(D3, 'roadways.glb'); l2 = os.path.join(D3, 'roadways_lod2.glb')
     nb = export(full, mb, units, (0, 1, 2), mats, rc, extras, ux)
-    nb2 = export(l2, mb, units, (2,), {k: v for k, v in mats.items() if k in ('concrete', 'deck_plain')}, rc, extras, ux)
+    used2 = {m for (u, l, m), b in mb.d.items() if l == 2 and b['P']}
+    nb2 = export(l2, mb, units, (2,), {k: v for k, v in mats.items() if k in used2}, rc, extras, ux)
     log('wrote %s (%.2f MB), %s (%.2f MB)' % (full, nb / 1e6, l2, nb2 / 1e6))
     gr = sorted(chk['grade'], key=lambda g: -g['max_pct'])
     stats = dict(ways=st, levels=dict(anchored=sol['anchored'], constraints=sol['constraints'], crossings=sol['crossings'], unresolved=len(sol['unresolved'])),
                  ramps=len(sol['ramps']), pieces=len(P), outside_core=dict(pieces=len(out), length_m=round(sum(p['line'].length for p in out))), unresolved=sol['unresolved'], overhead_nodes=sol['overhead'],
                  cut_by_group={g: round(sum(p['cut_by'].get(g, 0) for p in P), 1) for g in BI.GROUPS}, columns=cst, tris=ntri, grade_max=gr[0] if gr else None,
                  grades_over_8pct=[g for g in gr if g['max_pct'] > 8][:20], low_crossings=chk['low'], crossings=len(chk['crossings']),
-                 asset_cut_m2=round(sum(p['asset_cut_m2'] for p in P), 1), bytes=dict(full=nb, lod2=nb2))
+                 asset_cut_m2=round(sum(p['asset_cut_m2'] for p in P), 1), bytes=dict(full=nb, lod2=nb2),
+                 itb_plate=dict(area_m2=round(plate['geom'].area, 1), measured_m2=round(M['poly'].area, 1), straight_u=M['straight'], v_kerb=round(M['v_kerb'], 2), v_edge_median=M['v_edge_median'],
+                                v_cap=M['v_cap'], bands=[dict(name=b['name'], v=[round(x, 2) for x in b['v']], kind=b['kind'], lanes=band_lanes(b) if b['kind'] != 'island' else None) for b in M['bands']],
+                                gaps=M['gaps'], plate_nodes=sol.get('plate_nodes'), columns=len(pcols), outer_roadway_colour=dict(naip_srgb=lite_naip, base_srgb=lite),
+                                lower_outer_roadway=dict(osm_ways=sorted(lower), imaged_band_v=[round(x, 2) for x in M['outer']['v']], widened=M.get('lower', []),
+                                                         note='OSM layer 1, passes under the anchored departures leg 20-30 m past the straight: kept as the lower deck (solved level)')),
+                 curb_gap=gapchk, guideway_clearance=clr, body_cut_m2=body_cut, deck_inside_body_m2=body_left)
     sheet(P, cols, os.path.join(OUTD, 'roadways_plan.png'), LV, dict(pieces=len(P), columns=cst, low=len(chk['low'])))
     log('check sheet out/buildings3d/roadways_plan.png')
+    Cf, duf, dvf = np.array(M['frame']['centre']), np.array(M['frame']['du']), np.array(M['frame']['dv'])
+    def to_uv(g):
+        if g.is_empty: return g
+        return unary_union([Polygon(RP.uv_of(np.array(q.exterior.coords), Cf, duf, dvf)) for q in (getattr(g, 'geoms', None) or [g]) if isinstance(q, Polygon)])
+    box_uv = box(M['img']['us'][0], M['img']['vs'][0], M['img']['us'][1], M['img']['vs'][1])
+    RP.sheet(M, mimg, [to_uv(p['geom']).intersection(box_uv) for p in P if p['unit'] == 'itb_departures' and not p['geom'].is_empty],
+             [RP.uv_of(np.array([c['xz']]), Cf, duf, dvf)[0] for c in cols if c['unit'] == 'itb_departures'], os.path.join(OUTD, 'roadways_itb_plate.png'),
+             'BR-02  ITB departures deck (review r2, finding 1): NAIP 2024 (public domain) in the ITB roof frame, relief-corrected for %.2f m (deck + parapet); '
+             'measured outline (yellow), built deck after trimming at the ITB curb (magenta), bands on the straight section (cyan), columns. '
+             'Curb-to-deck void max %.3f m (limit 0.3).' % (M['h_edge'], gapchk['max_void_m']))
+    log('check sheet out/buildings3d/roadways_itb_plate.png')
     entry = dict(asset='roadways (elevated landside roadways: departures decks, viaducts, approach ramps)', owner='integration (review round 1, finding 1)',
                  generator='tools/blender/build_roadways.py + roadways_net.py', built=time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
                  files=dict(full='data/buildings3d/roadways.glb', lod2='data/buildings3d/roadways_lod2.glb'), frame='ltp-nad83-2011', root_translation=[rc[0], GROUND_Y, rc[1]],
@@ -613,15 +953,24 @@ def main(argv):
                              solve=dict(layer_prior_m=RN.LAYER_H, ell_m=RN.ELL, ell_grade_m=RN.ELL_G, clearance_m=RN.CLEAR_MIN, deck_depth_m=RN.DECK_DEPTH, tag='inf')),
                  materials=dict(asphalt=dict(naip_median_srgb=asph_naip, base_srgb=asph, naip_albedo=NAIP_ALBEDO, src='obs colour / inf scale'), concrete=dict(srgb=CONCRETE, src='inf'),
                                 markings='own painted tiles (MUTCD 3A.06 dash cycle 40 ft, 10-ft dashes) [inf]'),
+                 observed=['ITB departures deck plate: outline (kerb to the outer edge, the structural gap at the south end), island extents, the red kerb - NAIP 2024 relief-corrected (roadways_itb_plate.py, sheet BR-02)',
+                           'network topology / centrelines: OSM (ODbL)', 'asphalt and light-concrete colours: NAIP 2024 medians'],
                  inferred=['deck depth 1.2 m, shoulders 0.6 m, parapets 0.40 x 0.85 m, fill below a 3.2 m deck top, round columns 1.4 m at ~30 m (positions where clear)',
+                           'ITB deck plate level: the ITB L3 deck top %.2f m (spec_itb level3.floor 11.5 [inf] - 0.15 kerb); the outer light-concrete roadway on the same deck '
+                           '(no imaged step face; OSM tags way 41015123 layer 1 - open item); island height 0.15 m; lane counts (OSM minimum / width / 3.6 m); plate columns under the islands and the outer edge' % h_itb,
                            'levels other than the two curbs: screened solve with layer priors %s m and clearance %.1f m (roadways_net.py)' % (RN.LAYER_H, RN.CLEAR_MIN),
                            'approach ramps: at-grade OSM roads lifted by the solve (ELL_G %.0f m)' % RN.ELL_G, 'lane counts / widths where OSM has none (class defaults)',
                            'lane markings (pattern, colours)'],
                  unknown=['the domestic departures-curb height (%.3f m is the domestic asset placeholder [unk])' % LV['domestic']['curb'],
                           'every viaduct level: no structural drawings or survey; OSM gives only the layer order',
-                          'the ITB arrivals roadway level (OSM layer 1 west of the ITB is solved, not anchored)'],
+                          'the ITB arrivals roadway level (OSM layer 1 west of the ITB is solved, not anchored)',
+                          'whether the outer light-concrete roadway along the ITB is on the departures deck (modelled) or a lower deck (OSM layer 1); NAIP 2020 / 2024 parallax of its edge is inconclusive (the 2020 lean at this spot is not calibrated)'],
                  deviations=['decks over at-grade roads with less than %.1f m clearance: the anchored domestic loop (soffit %.2f m) - the curb placeholder, kept as the domestic asset has it'
-                             % (RN.CLEAR_MIN, sol['h_dom'] - RN.DECK_DEPTH)],
+                             % (RN.CLEAR_MIN, sol['h_dom'] - RN.DECK_DEPTH),
+                             'decks trimmed at the buildings\' bodies (review r2, finding 3): %s m2; Terminal 2: NAIP 2024 shows the departures roadway open to the sky with traffic between the '
+                             'modelled T2 west wall and the glass curb canopy (T2 roof edge 14-20 m east of that wall), i.e. the T2 shell follows the SFO Museum outline over the curb roadway as T1 Center did '
+                             'before the domestic group moved its face (manifest.json#domestic.conflicts); the roadway is therefore cut at the T2 body until the domestic group moves the T2 landside face - '
+                             'the cut lifts by itself on the next build (request in manifest.json#integration.requests)' % body_cut],
                  verification=stats)
     BI.merge_manifest(entry, key='roadways')
     open(os.path.join(OUTD, 'roadways_build.log'), 'w').write('\n'.join(lines) + '\n')

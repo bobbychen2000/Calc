@@ -42,8 +42,17 @@ export default async ({ page, shot, base, OUT }) => {
       await page.waitForFunction(() => { const B = SFO.R.b3d; return !B || !B.settled || (SFO.R.frames > window.__b3dF + 12 && B.settled()); }, null, { timeout: 0, polling: 500 });
       const f0 = await page.evaluate(() => SFO.R.frames); const n = +(process.env.FRAMES || 8);
       await page.waitForFunction(([f, n]) => SFO.R.frames >= f + n, [f0, n], { timeout: 0, polling: 200 });
-      const di = await page.evaluate(() => ({ r: SFO.R.debugInfo(), b3d: SFO.R.b3d ? SFO.R.b3d.info() : null }));
-      (info[mode] = info[mode] || {})[name] = { view: v, drawCalls: di.r.drawCalls, tris: di.r.tris, texMB: di.r.texMB, b3dLod: di.b3d && di.b3d.unitsAtLod };
+      const di = await page.evaluate(() => {
+        const B = SFO.R.b3d; let b3dTris = 0, b3dGeoMB = 0;
+        // the buildings' own share (review round 2, finding 4): triangles drawn by visible b3d meshes and their geometry bytes
+        if (B) B.group.traverse(o => { if (!o.isMesh) return; let vis = true; for (let q = o; q; q = q.parent) if (!q.visible) { vis = false; break; }
+          const g = o.geometry; for (const a of Object.values(g.attributes)) b3dGeoMB += a.array.byteLength / 1048576; if (g.index) b3dGeoMB += g.index.array.byteLength / 1048576;
+          if (vis) b3dTris += (g.index ? g.index.count : g.attributes.position.count) / 3 * (o.isInstancedMesh ? o.count : 1); });
+        const mem = performance.memory ? { jsHeapMB: +(performance.memory.usedJSHeapSize / 1048576).toFixed(1) } : {};
+        return { r: SFO.R.debugInfo(), b3d: B ? B.info() : null, b3dTris: Math.round(b3dTris), b3dGeoMB: +b3dGeoMB.toFixed(1), mem };
+      });
+      (info[mode] = info[mode] || {})[name] = { view: v, drawCalls: di.r.drawCalls, tris: di.r.tris, texMB: di.r.texMB, b3dLod: di.b3d && di.b3d.unitsAtLod,
+        b3dTris: di.b3dTris, b3dGeoMB: di.b3dGeoMB, ...di.mem, kind: di.b3d && di.b3d.kind, landsideUnits: di.b3d && di.b3d.landsideUnits };
       console.log(mode, name, JSON.stringify(info[mode][name]));
       await shot('cmp_' + mode + '_' + name);
     }

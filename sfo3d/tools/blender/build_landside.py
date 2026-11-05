@@ -116,8 +116,10 @@ MATS = {
     'station_roof':   dict(rgb=(198, 202, 206), m=0.60, r=0.40, double=True, src='obs photos l1 / l5 (light metal roofs)'),
     'station_soffit': dict(rgb=(150, 154, 158), m=0.50, r=0.50, double=True, src='inf'),
     'station_glass':  dict(rgb=(255, 255, 255), m=0.0, r=0.06, ior=1.9, tex='ls_c_glass', src='obs photos (glazed enclosures / door cabins)'),
-    'perf_tower':     dict(rgb=(255, 255, 255), m=0.50, r=0.55, tex='ls_c_perf', double=True, alpha_tex=True,
-                           src='obs photo l5 (see-through expanded-mesh cylinder, raked open top); r2: alpha-blended (texture alpha 0.45 mesh / 1.0 frame [open area inf])'),
+    'perf_tower':     dict(rgb=(255, 255, 255), m=0.25, r=0.80, tex='ls_c_perf', double=True, alpha_tex=True,
+                           src='obs photo l5 (see-through expanded-mesh cylinder, raked open top); r2: alpha-blended (expanded-metal diamonds: strands 1.0 / openings 0.5, mean ~0.75; frame 1.0 '
+                               '[open area inf]); rough (0.80) - the sheet of small expanded-metal facets scatters, it does not mirror the sky (the '
+                               'first r2 render at m 0.50 / r 0.55 read as glass)'),
     'car':            dict(rgb=(255, 255, 255), m=0.40, r=0.35, vcol=True, src='inf (fleet colours, landside_cars.COLOURS) - vertex colours'),
 }
 TEX_SCALE = {}   # none

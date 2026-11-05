@@ -688,7 +688,13 @@ def central_garage():
         for r in rings_of(q):
             for i in range(len(r)):
                 cm2.quad_wall(r[(i + 1) % len(r)], r[i], deck, top, deck, top, 'coping', 0.0, (3.0, 3.0))
-        cap(cm2, q, deck, 'deck_far', 12.0)
+        q_ = q.difference(unary_union([lobes_l, rims_l]).buffer(0.2).simplify(0.6))   # r2 (finding 9): the roof lobes + rims stay at
+        for qq in polys(q_):                                                           # LOD2 (cut out of the deck, no coplanar overlap)
+            cap(cm2, orient_all(qq), deck, 'deck_far', 12.0)
+    for q in polys(orient_all(lobes_l.buffer(0.2).simplify(0.6).intersection(inner2))):
+        cap(cm2, q, deck, 'deck_plain', 12.0)
+    for q in polys(orient_all(rims_l.buffer(0.2).simplify(0.6).difference(lobes_l.buffer(0.2).simplify(0.6)).intersection(inner2))):
+        cap(cm2, q, deck + 0.15, 'deck_rim', 12.0)
     for b_ in boxes:
         walls(cm2, b_['poly'].simplify(0.3), deck, b_['top'], 'concrete', (6.0, 6.0)); cap(cm2, b_['poly'].simplify(0.3), b_['top'], 'coping', 6.0)
     for q in polys(under):
@@ -898,7 +904,8 @@ def garage_ag(k):
         strip = unary_union([ub_(2.0, u_se, -30.0, -17.5), ub_(2.0, u_n, -17.5, -7.0)])
         body_w = largest(unary_union([body_w, RAIL.intersection(strip).buffer(0.3, join_style=2)]).buffer(0.05).buffer(-0.05))
         gap = unary_union([ub_(u_se, Lb + 5, -60.0, -14.4), ub_(u_n, Lb + 5, -14.4, -13.0)])
-        body_w = largest(body_w.difference(gap))      # the tail gap between the tracks east of the block: open (finding 1)
+        body_w = largest(body_w.difference(gap).buffer(-0.05, join_style=2).buffer(0.05, join_style=2))   # the tail gap between the
+        #                                                tracks east of the block: open (finding 1); the buffer pair drops zero-width spikes
     body_w = body_w.simplify(0.05, preserve_topology=True)
     body_w, arcs_w = smooth_arcs(body_w)            # r2: curved drum / NE end as 1.2-m chords (smooth facades)
     if not g['rail_near']:

@@ -22,9 +22,14 @@ for f in glob.glob(f'{S}/data/liveries/*/*-lo.webp'):
 # loader) -, 64 MB per publish (publish in two calls if the total says so).
 PART_MB = 12
 b3d = os.environ.get('B3D', 'all'); nb = 0; parts = {}
+# integration review round 2 (finding 4): the landside asset ships per building (lsu_<unit>.glb, tools/blender/b3d_split.py,
+# loaded per unit by buildings3d.js in every mode) with its shared images as plain files (lsu_img_*.png / .jpg, referenced
+# by URI): landside.glb itself is then not shipped
+units = glob.glob(f'{S}/data/buildings3d/lsu_*.glb')
 for f in sorted(glob.glob(f'{S}/data/buildings3d/*.glb')):
     if b3d == 'none' or (b3d == 'lod2' and not f.endswith('_lod2.glb')): continue
     if f.endswith(('_f1.glb', '_f2.glb')) and 'alt' not in b3d: continue  # the tower's alternative height family (tower_f1.glb, ?b3dtower=f1): B3D=all+alt
+    if units and os.path.basename(f) == 'landside.glb': continue
     sz = os.path.getsize(f); name = os.path.basename(f)[:-4]
     os.makedirs(f'{O}/data/buildings3d', exist_ok=True)
     if sz >= 14 * 1024 * 1024:
@@ -33,6 +38,8 @@ for f in sorted(glob.glob(f'{S}/data/buildings3d/*.glb')):
         parts[name] = n
     else: shutil.copy(f, f'{O}/data/buildings3d/' + name + '.wasm')
     nb += sz
+if units and b3d != 'none' and b3d != 'lod2':
+    for f in glob.glob(f'{S}/data/buildings3d/lsu_img_*'): shutil.copy(f, f'{O}/data/buildings3d/'); nb += os.path.getsize(f)
 if parts:
     h = f'{O}/sfo_phone_test.html'; t = open(h).read(); k = "window.SFO_B3D_EXT = '.wasm';"; assert k in t
     open(h, 'w').write(t.replace(k, k + ' window.SFO_B3D_PARTS = ' + json.dumps(parts) + ';', 1))

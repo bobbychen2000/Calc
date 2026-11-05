@@ -25,7 +25,7 @@ One tile spans the metres given in landside_geom.TILES of UV_detail (the geometr
   ls_n_roof         6 x 6 m      standing-seam metal roof, seams every 0.6 m [inf]
   ls_c_pv           4 x 4 m      PV modules 1.0 x 2.0 m, cells [pub PV; layout inf]
   ls_c_glass        3 x 3 m      station glazing: mullions 1.5 m, transom 2.4 m [obs photos; inf]
-  ls_c_perf         3 x 3 m      see-through expanded-mesh tower skin (RGBA, alpha 0.45; frame opaque) [obs photo l5]
+  ls_c_perf         3 x 3 m      see-through expanded-mesh tower skin (RGBA: diamond strands opaque, openings alpha 0.5, mean ~0.72; frame opaque) [obs photo l5]
   ls_c_spine        3 x 3.6 m    Superbay spine end faces: one office floor, window band [pub 6 levels; inf]
   ls_n_concrete     8 x 8 m      cast concrete: faint pour joints [inf]
 """
@@ -207,12 +207,17 @@ def make_all(out):
     cap = ((_dist(u, 1.5) < 0.04) | (np.abs(v - 2.4) < 0.04) | (v < 0.08)).astype(float)
     T['ls_c_glass'] = _rgb_png(mix((70, 92, 100), (190, 194, 196), cap), P('ls_c_glass'))
     # --- perforated tower skin (3 x 3 m), review r2 (finding 5): see-through expanded mesh - RGBA, the mesh warm grey / bronze at
-    # alpha 0.45 (photo l5: the stair and the sky show through), the frame members every 1.5 m / 3 m opaque light steel [obs l5;
+    # alpha 0.72 (photo l5: the stair and the sky show through, but the skin still reads as a dense mesh, not glass), the frame members every 1.5 m / 3 m opaque light steel [obs l5;
     # open area inf]
-    u, v = _grid(256, 256, 3.0, 3.0)
+    # the expanded-metal diamonds (0.1875 x 0.094 m [inf]; r2 look: 0.375-m diamonds read coarser than photo l5; strands opaque, the openings alpha 0.5 = the finer sub-mesh seen edge-on)
+    # so the skin reads as a lattice close up and averages to alpha ~0.72 in the mips
+    u, v = _grid(512, 512, 3.0, 3.0)
     fr = ((_dist(u, 1.5) < 0.05) | (_dist(v, 3.0) < 0.06)).astype(float)
-    col = mix((124, 118, 102), (196, 198, 198), fr) + 6 * _noise(256, 256, 24, 12)[..., None]
-    T['ls_c_perf'] = _rgba_png(col, 0.45 + 0.55 * fr, P('ls_c_perf'))
+    st = ((np.minimum(_dist(u / 0.1875 + v / 0.09375, 1.0), _dist(u / 0.1875 - v / 0.09375, 1.0)) < 0.13)).astype(float)
+    col = mix((96, 92, 82), (138, 131, 114), st)
+    col = col * (1 + 0.05 * (np.floor(v / 0.09375) % 2))[..., None]           # alternate strand rows catch the light differently
+    col = col * (1 - fr[..., None]) + np.array([196, 198, 198.0])[None, None, :] * fr[..., None] + 6 * _noise(512, 512, 24, 12)[..., None]
+    T['ls_c_perf'] = _rgba_png(col, np.maximum(0.5 + 0.5 * st, fr), P('ls_c_perf'))
     # --- Superbay spine end face: office floor 3.6 m, window band 1.0-2.6 m
     u, v = _grid(256, 256, 3.0, 3.6)
     win = ((v > 1.0) & (v < 2.6)).astype(float)

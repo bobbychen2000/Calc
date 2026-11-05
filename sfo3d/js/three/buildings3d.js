@@ -55,6 +55,7 @@ const { uniform, vec2, vec3, float, mix, smoothstep, sin, floor, fract, position
 export const B3D_GROUPS = ['tower', 'itb', 'domestic', 'roadways', 'landside'];
 const FILE_FULL = { tower: 'tower', itb: 'itb', domestic: 'domestic', roadways: 'roadways', landside: 'landside' };
 const HYST = 0.05, LOD_REF = 1800; // QUALITY3.high.lod
+const RELEASE = 1.3, RELEASE_S = 8; // near mode: a unit / group file is released beyond RELEASE x its trigger + 100 m for RELEASE_S s
 // night glow per kind (lamp units, x renderer3 nightE): colour of the light behind the glass and its mean level.
 // Round 1 (finding 2): hall 0.8 -> 0.30 etc.: at the keyed night exposure (renderer3 NIGHT_EXPOSURE) one lamp unit x nightE
 // is exposed to KEY_NIGHT x pi / (RHO_CONC x E_STAND) = 2.2, so 0.8 x (1 +- 15 %) gave ~1.8-2.0, and with the frame-metered
@@ -97,6 +98,10 @@ export class Buildings3D {
     this.lodScale = (R.Q && R.Q.lod ? R.Q.lod : LOD_REF) / LOD_REF;
     this.group = new THREE.Group(); this.group.name = 'buildings3d'; this.E.scene.add(this.group);
     this.loaded = {}; this.kind = {}; this.failed = {}; this.sets = []; this.cabGlass = []; this.near = {}; this.pending = null;
+    // landside per building (review round 2, finding 4): data/buildings3d/lsu_<unit>.glb (tools/blender/b3d_split.py), index
+    // in integration.js; loaded per unit near the camera (near mode) or all (full mode), released when far again
+    this.unitIdx = (B3D_INTEGRATION.units && B3D_INTEGRATION.units.landside) || null; this.units = {}; this.unitFar = {}; this.far = {};
+    this.texRef = new Map(); // shared textures (named 'lsu:<image>' by the split): one GPU texture per image, refcounted
     this.stats = { files: {}, ms: {}, ao: [], merged: {} };
     this.glow = {}; for (const [k, [c, v]] of Object.entries(GLOW_DEF)) this.glow[k] = { color: uniform(new THREE.Color(...c)), k: uniform(v) };
     this.glowCap = uniform(GLOW_CAP);
@@ -127,7 +132,10 @@ export class Buildings3D {
     // sequential: one decode + upload + compile at a time (phones; the main thread stalls once per group, not four
     // times at once); the tower first (smallest, and the tower view), the landside last (largest, mostly far away)
     const kind = this.mode === 'full' ? 'full' : 'lod2';
-    for (const g of this.groups) await this._loadGroup(g, kind);
+    for (const g of this.groups) {
+      if (g === 'landside' && this.unitIdx && this.mode !== 'lod2') { await this._loadLandsideUnits(kind); continue; }
+      await this._loadGroup(g, kind);
+    }
     if (this.mode === 'near') console.log('[b3d] near mode: lod2 files shown; full files load as the camera comes near (' + Object.keys(this.near).join(', ') + ')');
   }
   async _loadGroup(g, kind) {
@@ -140,9 +148,9 @@ export class Buildings3D {
       const t1 = performance.now();
       await this._compile(root);
       const old = this.loaded[g];
-      this.group.add(root); this.loaded[g] = root; this.kind[g] = kind;
-      if (old) this._drop(old);
-      if (kind === 'lod2' && this.mode === 'near') this._nearTriggers(g, root);
+      if (g === 'landside' && this.unitIdx && this.lsBox) { this.lsBox.add(root); this.lsLod2 = root; this.loaded[g] = this.lsBox; this.kind[g] = 'units'; }
+      else { this.group.add(root); this.loaded[g] = root; this.kind[g] = kind; if (old) this._drop(old); }
+      if (kind === 'lod2' && this.mode === 'near' && !(g === 'landside' && this.unitIdx)) this._nearTriggers(g, root);
       this._swapOld();
       if (g === 'tower') this._towerCamera();
       const key = g + (kind === 'full' ? '' : '_lod2'); this.stats.ms[key] = [Math.round(t1 - t0), Math.round(performance.now() - t1)];
@@ -152,11 +160,55 @@ export class Buildings3D {
   }
   // remove a replaced root (the lod2 file once the group's full file is on screen): its sets, cab glass and GPU data
   _drop(root) {
-    this.group.remove(root);
+    if (root.parent) root.parent.remove(root);
     this.sets = this.sets.filter(S => S.root !== root); this.cabGlass = this.cabGlass.filter(o => o.userData.b3dRoot !== root);
-    const tex = new Set();
-    root.traverse(o => { if (!o.isMesh) return; o.geometry.dispose(); for (const m of [].concat(o.material)) { for (const k of ['map', 'normalMap', 'aoMap', 'roughnessMap', 'metalnessMap', 'emissiveMap']) if (m[k]) tex.add(m[k]); m.dispose(); } });
-    for (const t of tex) { t.dispose(); for (const [k, v] of this._tex) if (v === t) this._tex.delete(k); }
+    const mats = new Set();
+    root.traverse(o => { if (!o.isMesh) return; o.geometry.dispose(); for (const m of [].concat(o.material)) mats.add(m); });
+    // one reference per material slot (as _material counts them); a texture shared with files still on screen (the split
+    // landside units' common images) stays until its last user goes
+    for (const m of mats) {
+      for (const k of ['map', 'normalMap', 'aoMap', 'roughnessMap', 'metalnessMap', 'emissiveMap']) {
+        const t = m[k]; if (!t) continue;
+        const n = (this.texRef.get(t) || 1) - 1; if (n > 0) { this.texRef.set(t, n); continue; }
+        this.texRef.delete(t); t.dispose(); for (const [kk, v] of this._tex) if (v === t) this._tex.delete(kk);
+      }
+      m.dispose();
+    }
+  }
+  // landside per unit (review round 2, finding 4): full mode loads every unit file; near mode the lod2 file, then the
+  // units near the camera (per-unit triggers: the LOD1 switch on the low tier - phones show the landside LOD2 out to
+  // the LOD1 distance -, the LOD2 switch on the medium tier; x the tier's range, + 10 % + 60 m), released when far again
+  async _loadLandsideUnits(kind) {
+    this.lsBox = new THREE.Group(); this.lsBox.name = 'b3d_landside'; this.group.add(this.lsBox);
+    if (kind === 'lod2') {
+      await this._loadGroup('landside', 'lod2');
+      const tLod = this.R.tier === 'low' ? 'switch1_m' : 'switch2_m';
+      this.unitTrig = this.unitIdx.map(e => ({ e, box: new THREE.Box3(new THREE.Vector3(...e.box.slice(0, 3)), new THREE.Vector3(...e.box.slice(3))), d: (e[tLod] != null ? e[tLod] : 1400) * this.lodScale * 1.1 + 60 }));
+      console.log('[b3d] landside: ' + this.unitIdx.length + ' unit files on demand (trigger ' + tLod + ')');
+      return;
+    }
+    this.lsBox.visible = false;   // full mode: the first-pass landside stays until every unit is in (no hole, no overlap)
+    for (const e of this.unitIdx) await this._loadUnit(e);
+    this.lsBox.visible = true; this.loaded.landside = this.lsBox; this.kind.landside = 'units'; this._swapOld();
+  }
+  async _loadUnit(e) {
+    const t0 = performance.now(), loader = this._loader || (this._loader = new THREE.GLTFLoader());
+    try {
+      const gltf = await loader.loadAsync(this.base + e.file + this.ext);
+      const root = gltf.scene; root.name = 'b3d_ls_' + e.unit; root.userData.b3dKind = 'unit';
+      this._prepare('landside', root, 'unit:' + e.unit);
+      const t1 = performance.now(); await this._compile(root);
+      this.lsBox.add(root); this.units[e.unit] = root; delete this.unitFar[e.unit];
+      const n = this.lsLod2 && this.lsLod2.getObjectByName(e.unit); if (n && n !== root) n.visible = false;
+      const fs = this.stats.files['landside_unit:' + e.unit]; this.stats.ms['unit:' + e.unit] = [Math.round(t1 - t0), Math.round(performance.now() - t1)];
+      console.log('[b3d] landside unit ' + e.unit + ' shown: ' + Math.round(t1 - t0) + ' + ' + Math.round(performance.now() - t1) + ' ms; ' + (fs ? fs.tris + ' tris' : ''));
+    } catch (err) { this.failed['unit:' + e.unit] = String(err && err.message || err); console.warn('[b3d] landside unit ' + e.unit + ' failed (LOD2 kept):', err); }
+  }
+  _dropUnit(name) {
+    const r = this.units[name]; if (!r) return;
+    this._drop(r); delete this.units[name]; delete this.unitFar[name]; delete this.stats.files['landside_unit:' + name];
+    const n = this.lsLod2 && this.lsLod2.getObjectByName(name); if (n) n.visible = true;
+    console.log('[b3d] landside unit ' + name + ' released (far)');
   }
   // near mode: the lod2 file's LOD2 subtrees with their switch distances (scaled by the tier); update() loads the full
   // file once the camera is within one of them (+10 %, + 60 m: the file is on screen before the units would switch)
@@ -167,14 +219,35 @@ export class Buildings3D {
   }
   _nearUpdate(p) {
     if (this.mode !== 'near' || !this.done || this.pending) return;
-    let best = null;
+    let best = null; const now = performance.now();
     for (const g of this.groups) {
       if (this.kind[g] !== 'lod2' || this.failed[g] || !this.near[g]) continue;
       for (const t of this.near[g]) { const d = t.box.distanceToPoint(p); if (d < t.d && (!best || d - t.d < best[1])) best = [g, d - t.d]; }
     }
-    if (!best) return;
-    const g = best[0]; this.pending = g;
-    this._loadGroup(g, 'full').finally(() => { this.pending = null; });
+    for (const t of this.unitTrig || []) {
+      if (this.units[t.e.unit] || this.failed['unit:' + t.e.unit]) continue;
+      const d = t.box.distanceToPoint(p); if (d < t.d && (!best || d - t.d < best[1])) best = ['unit', d - t.d, t.e];
+    }
+    if (best) {
+      this.pending = best[0] === 'unit' ? 'landside:' + best[2].unit : best[0];
+      (best[0] === 'unit' ? this._loadUnit(best[2]) : this._loadGroup(best[0], 'full')).finally(() => { this.pending = null; });
+      return;
+    }
+    // release (review round 2, finding 4: a full file was never released): a unit / group whose triggers are all farther
+    // than RELEASE x their distance + 100 m for RELEASE_S goes back to its LOD2 (the unit file dropped; a group's lod2 file
+    // reloaded, which drops the full one)
+    for (const t of this.unitTrig || []) {
+      if (!this.units[t.e.unit]) continue;
+      if (t.box.distanceToPoint(p) > t.d * RELEASE + 100) { const f = this.unitFar[t.e.unit] || (this.unitFar[t.e.unit] = now); if (now - f > RELEASE_S * 1000) { this._dropUnit(t.e.unit); return; } }
+      else delete this.unitFar[t.e.unit];
+    }
+    for (const g of this.groups) {
+      if (this.kind[g] !== 'full' || !this.near[g]) continue;
+      if (this.near[g].every(t => t.box.distanceToPoint(p) > t.d * RELEASE + 100)) {
+        const f = this.far[g] || (this.far[g] = now);
+        if (now - f > RELEASE_S * 1000) { delete this.far[g]; this.pending = g; this._loadGroup(g, 'lod2').finally(() => { this.pending = null; }); return; }
+      } else delete this.far[g];
+    }
   }
   // QA (tools/blender/b3d_views_job.mjs): nothing loading and no group waiting for its full file at this camera
   settled(camPos = this._lastCam) {
@@ -182,13 +255,18 @@ export class Buildings3D {
     if (this.mode !== 'near' || !camPos) return true;
     const p = new THREE.Vector3(camPos[0], camPos[1], camPos[2]);
     for (const g of this.groups) if (this.kind[g] === 'lod2' && !this.failed[g] && (this.near[g] || []).some(t => t.box.distanceToPoint(p) < t.d)) return false;
+    for (const t of this.unitTrig || []) if (!this.units[t.e.unit] && !this.failed['unit:' + t.e.unit] && t.box.distanceToPoint(p) < t.d) return false;
     return true;
   }
   // compile the group's programs before it is shown (all LODs and units, whatever the current view), so the first
   // frames after a LOD switch do not stall
+  // Low tier (review round 2, finding 4): only the LOD each unit shows at the current camera, with frustum culling as
+  // set - forcing every LOD visible with culling off uploaded all three LODs' geometry and textures of a file at once; a
+  // later LOD switch compiles its programs then (one short stall on a phone instead of the whole file's GPU memory)
   async _compile(root) {
-    const E = this.E; const saved = [];
-    root.traverse(o => { saved.push([o, o.visible, o.frustumCulled]); o.visible = true; o.frustumCulled = false; });
+    const E = this.E; const saved = []; const low = this.R.tier === 'low';
+    if (low) { if (this._lastCam) { const p = new THREE.Vector3(...this._lastCam); for (const S of this.sets) if (S.root === root) this._setLod(S, p); } }
+    else root.traverse(o => { saved.push([o, o.visible, o.frustumCulled]); o.visible = true; o.frustumCulled = false; });
     try { await Promise.race([E.renderer.compileAsync(root, E.camera, E.scene), new Promise(r => setTimeout(r, 20000))]); }
     catch (e) { console.warn('[b3d] compileAsync', e); }
     for (const [o, v, f] of saved) { o.visible = v; o.frustumCulled = f; }
@@ -212,7 +290,8 @@ export class Buildings3D {
     const nMerged = this._lodSets(g, root);
     let tris = 0, meshes = 0;
     root.traverse(o => { if (!o.isMesh) return; meshes++; const idx = o.geometry.index; tris += (idx ? idx.count : o.geometry.attributes.position.count) / 3 * (o.isInstancedMesh ? o.count : 1); });
-    this.stats.files[g + (kind === 'full' ? '' : '_lod2')] = { url: this.url(g, kind), tris: Math.round(tris), meshes, materials: mats.size, merged: nMerged };
+    const key = String(kind).startsWith('unit:') ? 'landside_' + kind : g + (kind === 'full' ? '' : '_lod2');
+    this.stats.files[key] = { url: String(kind).startsWith('unit:') ? kind : this.url(g, kind), tris: Math.round(tris), meshes, materials: mats.size, merged: nMerged };
   }
   // glTF material -> node material with the night emission hook; textures get the tier's anisotropy
   _material(m0, Q) {
@@ -224,11 +303,13 @@ export class Buildings3D {
     // were uploaded once per material (first headless run: 4.05 GB of textures for ~0.2 GB of images)
     for (const k of ['map', 'normalMap', 'aoMap', 'roughnessMap', 'metalnessMap', 'emissiveMap']) {
       const t = m[k]; if (!t || !t.source) continue;
-      if (k === 'aoMap') { m[k] = this._aoTex(t, Q); continue; }
+      if (k === 'aoMap') { m[k] = this._aoTex(t, Q); this.texRef.set(m[k], (this.texRef.get(m[k]) || 0) + 1); continue; }
       this._otherSrc.add(t.source);
-      const key = t.source.uuid + '|' + t.channel + '|' + t.colorSpace + '|' + t.wrapS + t.wrapT + '|' + t.offset.toArray() + t.repeat.toArray() + t.rotation;
+      const id = /^lsu:/.test(t.name || '') ? 'n:' + t.name : t.source.uuid;   // the split landside units share images by name
+      const key = id + '|' + t.channel + '|' + t.colorSpace + '|' + t.wrapS + t.wrapT + '|' + t.offset.toArray() + t.repeat.toArray() + t.rotation;
       let c = this._tex.get(key); if (!c) { c = t; c.anisotropy = Math.max(c.anisotropy || 1, Q.aniso || 4); this._tex.set(key, c); }
-      m[k] = c;
+      else if (c !== t) t.dispose();
+      m[k] = c; this.texRef.set(c, (this.texRef.get(c) || 0) + 1);
     }
     // interior placeholders behind glass (material extras.ambient_only; the tower cab floor / consoles / shade band / ceiling,
     // tower review round 2, finding 3): sky light (IBL x AO) only. The alpha-blended glass casts no shadow, so the sun
@@ -265,7 +346,7 @@ export class Buildings3D {
   // AO atlas -> R8 texture (one per image and sampling), capped at the tier's maxTex; the original is used where the
   // image cannot be read back (no 2-D canvas)
   _aoTex(t, Q) {
-    const key = 'ao|' + t.source.uuid + '|' + t.channel + '|' + t.wrapS + t.wrapT; let c = this._tex.get(key); if (c) return c;
+    const key = 'ao|' + (/^lsu:/.test(t.name || '') ? 'n:' + t.name : t.source.uuid) + '|' + t.channel + '|' + t.wrapS + t.wrapT; let c = this._tex.get(key); if (c) { if (c !== t) t.dispose(); return c; }
     const img = t.image; const w = img && img.width, h = img && img.height; const max = Q.maxTex || 0;
     c = t;
     if (w > 0 && h > 0 && typeof document !== 'undefined') {
@@ -303,7 +384,9 @@ export class Buildings3D {
           const u = units.get(key) || { key, nodes: { 0: [], 1: [] }, box: new THREE.Box3(), cur: null }; units.set(key, u);
           u.nodes[k].push(c); u.box.union(new THREE.Box3().setFromObject(c));
           // nodes with extras.max_dist_m (domestic mullion fins, review r1): hidden beyond that distance to their own box
-          if (k === 0 && (c.userData || {}).max_dist_m != null) (u.fade = u.fade || []).push({ node: c, d: +c.userData.max_dist_m * this.lodScale, box: new THREE.Box3().setFromObject(c) });
+          // review round 2 (finding 2): not scaled by the tier's LOD range - the limit is the fins' size in pixels, which the
+          // tier does not change (the phone tier dropped them at 89 m, so BA-B at the B20 gate view read as a black slab)
+          if (k === 0 && (c.userData || {}).max_dist_m != null) (u.fade = u.fade || []).push({ node: c, d: +c.userData.max_dist_m, box: new THREE.Box3().setFromObject(c) });
         }
       }
       S.units = [...units.values()];
@@ -354,22 +437,7 @@ export class Buildings3D {
     const p = this._tmpV.set(camPos[0], camPos[1], camPos[2]);
     if (this.frame % 10 === 0) this._nearUpdate(p.clone());
     if (!this.sets.length) return;
-    for (const S of this.sets) {
-      const d = S.box.distanceToPoint(p); const s2 = S.sw[2];
-      const far = s2 != null && S.lods[2] ? (S.cur2 ? d > s2 * (1 - HYST) : d > s2 * (1 + HYST)) : false;
-      if (far !== S.cur2) { S.cur2 = far; if (S.lods[2]) S.lods[2].visible = far; if (S.lods[0]) S.lods[0].visible = !far; if (S.lods[1]) S.lods[1].visible = !far; }
-      if (far) continue;
-      const s1 = S.sw[1] != null ? S.sw[1] : Infinity;
-      for (const u of S.units) {
-        const du = u.box.distanceToPoint(p);
-        const want = u.cur === 1 ? (du > s1 * (1 - HYST) ? 1 : 0) : (du > s1 * (1 + HYST) ? 1 : 0);
-        if (u.fade && want === 0 && want === u.cur && this.frame % 4 === 0) for (const f of u.fade) f.node.visible = f.box.distanceToPoint(p) <= f.d;
-        if (want === u.cur) continue; u.cur = want;
-        for (const n of u.nodes[0]) n.visible = want === 0; for (const n of u.nodes[1]) n.visible = want === 1;
-        if (u.fade && want === 0) for (const f of u.fade) f.node.visible = f.box.distanceToPoint(p) <= f.d;
-        // parts present only in LOD0 (mullions, lettering, antennas) are dropped at LOD1 by design
-      }
-    }
+    for (const S of this.sets) this._setLod(S, p);
     // in-cab tower camera: the alpha-blended cab glass would darken the whole view (manifest.json#tower.integration)
     if (this.cabGlass.length && this.tower && this.tower.cab_centre_world_xz) {
       // bounds of the loaded family (_towerAnchors): inside the glass ring, cab floor - 0.5 .. glass head + 0.5
@@ -377,6 +445,22 @@ export class Buildings3D {
       const rIn = T.glass_head_r != null ? T.glass_head_r + 0.3 : 9.0;
       const inCab = Math.hypot(p.x - c[0], p.z - c[1]) < rIn && p.y > g + (T.cab_floor_h || 60) - 0.5 && p.y < g + (T.glass_h ? T.glass_h[1] : 65) + 0.5;
       if (inCab !== this._inCab || this._cabN !== this.cabGlass.length) { this._inCab = inCab; this._cabN = this.cabGlass.length; for (const o of this.cabGlass) o.material.visible = !inCab; }
+    }
+  }
+  _setLod(S, p) {
+    const d = S.box.distanceToPoint(p); const s2 = S.sw[2];
+    const far = s2 != null && S.lods[2] ? (S.cur2 ? d > s2 * (1 - HYST) : d > s2 * (1 + HYST)) : false;
+    if (far !== S.cur2) { S.cur2 = far; if (S.lods[2]) S.lods[2].visible = far; if (S.lods[0]) S.lods[0].visible = !far; if (S.lods[1]) S.lods[1].visible = !far; }
+    if (far) return;
+    const s1 = S.sw[1] != null ? S.sw[1] : Infinity;
+    for (const u of S.units) {
+      const du = u.box.distanceToPoint(p);
+      const want = u.cur === 1 ? (du > s1 * (1 - HYST) ? 1 : 0) : (du > s1 * (1 + HYST) ? 1 : 0);
+      if (u.fade && want === 0 && want === u.cur && this.frame % 4 === 0) for (const f of u.fade) f.node.visible = f.box.distanceToPoint(p) <= f.d;
+      if (want === u.cur) continue; u.cur = want;
+      for (const n of u.nodes[0]) n.visible = want === 0; for (const n of u.nodes[1]) n.visible = want === 1;
+      if (u.fade && want === 0) for (const f of u.fade) f.node.visible = f.box.distanceToPoint(p) <= f.d;
+      // parts present only in LOD0 (mullions, lettering, antennas) are dropped at LOD1 by design
     }
   }
   // hide the first-pass items of every shown group, show the walkway rests (js/live/world.js b3d / b3dRest)
@@ -414,7 +498,8 @@ export class Buildings3D {
   }
   info() {
     const lod = { 0: 0, 1: 0, 2: 0 }; for (const S of this.sets) { if (S.cur2) lod[2]++; else for (const u of S.units) lod[u.cur || 0]++; }
-    return { mode: this.mode, tower: this.towerFamily, loaded: Object.keys(this.loaded), kind: { ...this.kind }, pending: this.pending, failed: this.failed, done: this.done, sets: this.sets.length, unitsAtLod: lod, stats: this.stats };
+    return { mode: this.mode, tower: this.towerFamily, loaded: Object.keys(this.loaded), kind: { ...this.kind }, pending: this.pending, failed: this.failed, done: this.done, sets: this.sets.length, unitsAtLod: lod,
+      landsideUnits: Object.keys(this.units), stats: this.stats };
   }
 }
 

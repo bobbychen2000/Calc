@@ -80,11 +80,13 @@ def footprints():
     return F
 
 
-def network(log=print):
+def network(log=print, F=None):
+    """F: {(group, unit): plan footprint}; default the stored integration.json footprints (build_roadways passes the ones
+    it measured on the current GLBs)"""
     d = json.load(open(OSM)); L = json.load(open(os.path.join(ROOT, 'data', 'sfo_landside.json')))
     kept_elev = {r['osm_id'] for r in L['roads'] if r['elevated'] and not r.get('elevated_why')}
     why = {r['osm_id']: r['elevated_why'] for r in L['roads'] if r.get('elevated_why')}
-    F = footprints()
+    F = footprints() if F is None else F
     land = unary_union([g for (grp, u), g in F.items() if grp == 'landside' and not u.startswith('airtrain')])
     ways, grade_nodes, stats = [], set(), dict(osm_elevated=0, not_in_app=0, garage_aisles=0, inside_landside_building=0)
     grade_ways = []
@@ -135,9 +137,14 @@ def _insert(w, s_new, key):
 
 ELL_G = 45.0       # m, screening length of the at-grade roads' prior (h = 0): how fast a road leaving a bridge end returns to grade [inf]
 NEAR_M = 260.0     # at-grade roads within this distance of an elevated way take part in the solve (farther ones stay at grade)
+# guideway clearance (review round 2, finding 5): bound sampled every UB_STEP along a way, UB_NX points across its ribbon
+# (half width = carriageway / 2 + 0.6 m shoulder + 0.4 m parapet), a margin for the deck triangulation (the deck top is
+# linear between the solve's nodes and across the triangles)
+UB_STEP, UB_NX, UB_MARGIN = 2.0, 5, 0.05
+def ub_half(w): return w / 2 + 0.6 + 0.4
 
 
-def solve_levels(ways, grade, F, LV, log=print, overhead=None):
+def solve_levels(ways, grade, F, LV, log=print, overhead=None, plates=None):
     """deck-top level of every node of the elevated ways AND of the at-grade roads near them, in one screened solve (the
     header): elevated ways pulled to their layer prior (ELL), at-grade roads to grade (ELL_G), so the road leaving a bridge
     end rises to it (an approach ramp on fill) instead of the deck dropping to grade at the end; anchored curbs fixed.
@@ -171,20 +178,27 @@ def solve_levels(ways, grade, F, LV, log=print, overhead=None):
             I = lines[i].intersection(lines[j])
             for p in (getattr(I, 'geoms', None) or ([I] if not I.is_empty else [])):
                 if p.geom_type == 'Point': X.append((i, j, p))
-    # overhead structures (the AirTrain guideway, landside asset): overhead = [(plan polygon, soffit_fn(x, z) -> world-y
-    # above grade or None)]; every elevated way under one gets nodes there with an upper bound (deck top + CLEAR_MIN <= soffit)
+    # overhead structures (the AirTrain guideway, landside asset): overhead = [(plan polygon, soffit_fn(x, z) -> height
+    # above grade or None)]; every way under one gets nodes there with an upper bound (deck top + CLEAR_MIN <= soffit).
+    # Integration review round 2 (finding 5: decks 4.22-4.56 m under the guideway soffit, 150 m2 below 4.6 m): the bound was
+    # sampled at three points per crossing on the centreline only, so between them (the deck is linear between nodes, the
+    # soffit is not) and across the ribbon (the guideway slopes and turns over a 10-m deck) it was not enforced. Now a
+    # hard bound every UB_STEP along the way wherever any of UB_NX points across the ribbon (deck edge + parapet
+    # included) lies under the guideway, with the LOWEST soffit across the section; at-grade roads lifted into ramps too.
     UB = []
     for poly, soff in (overhead or []):
-        for i, a in enumerate(ways):
+        pb = poly.buffer(ub_half(30.0)) if not poly.is_empty else poly
+        for i, a in enumerate(allw):
             la = LineString(a['pts'])
-            if not la.intersects(poly): continue
-            I = la.intersection(poly)
-            for seg in (getattr(I, 'geoms', None) or [I]):
-                if seg.is_empty or seg.length < 0.5: continue
-                for f in (0.0, 0.5, 1.0):
-                    q = seg.interpolate(f, normalized=True); so = soff(q.x, q.y)
-                    if so is None: continue
-                    UB.append((i, la.project(q), so - CLEAR_MIN, [round(q.x, 1), round(q.y, 1)], so))
+            if not la.intersects(pb): continue
+            half = ub_half(a['w']); L = la.length
+            for sq in np.arange(0.0, L + 1e-6, UB_STEP) if L > 0 else []:
+                q = la.interpolate(sq); q2 = la.interpolate(min(L, sq + 0.5)); q1 = la.interpolate(max(0.0, sq - 0.5))
+                t = np.array([q2.x - q1.x, q2.y - q1.y]); t /= max(np.linalg.norm(t), 1e-9); nrm = np.array([-t[1], t[0]])
+                so = [soff(q.x + nrm[0] * o, q.y + nrm[1] * o) for o in np.linspace(-half, half, UB_NX)]
+                so = [s for s in so if s is not None]
+                if not so: continue
+                UB.append((i, sq, min(so) - CLEAR_MIN - UB_MARGIN, [round(q.x, 1), round(q.y, 1)], min(so)))
     cons = []
     for k, (i, j, p) in enumerate(X):
         ka = _insert(allw[i], LineString(allw[i]['pts']).project(p), ('X', k))
@@ -203,6 +217,17 @@ def solve_levels(ways, grade, F, LV, log=print, overhead=None):
             for n in w['nodes']:
                 if n in grade_nodes: continue  # where an anchored way meets an at-grade road its end follows the solve
                 fixed[nid[n]] = h_dom if w['anchor'] == 'domestic' else h_itb; why[nid[n]] = 'domestic curb' if w['anchor'] == 'domestic' else 'ITB L3'
+    # deck plates (review round 2, finding 1: the ITB departures deck measured on NAIP 2024, build_roadways.itb_plate):
+    # every node of an elevated way inside a plate is held at the plate's level, so the ways that run onto it (the outer
+    # light-concrete roadway, OSM layer 1) leave it at that level and their ends are solved as before
+    nplate = 0
+    for pl in (plates or []):
+        pg = pl['poly'].buffer(0.5)
+        for w in ways:
+            for n, p in zip(w['nodes'], w['pts']):
+                if n in grade_nodes or not pg.contains(Point(p)): continue
+                if nid[n] not in fixed: nplate += 1
+                fixed[nid[n]] = pl['h']; why[nid[n]] = pl['why']
     anch = set(fixed)
     # at-grade roads that do not touch an elevated way stay at grade (only the way leaving a bridge end becomes its ramp)
     enodes = {n for w in ways for n in w['nodes']}
@@ -240,7 +265,7 @@ def solve_levels(ways, grade, F, LV, log=print, overhead=None):
         h = np.zeros(N); h[fx] = hv
         if len(free): h[free] = spl.spsolve(A[free][:, free].tocsc(), rhs0[free] - (A[free][:, fx] @ hv if len(fx) else 0))
         return h
-    SEP = DECK_DEPTH + CLEAR_MIN; unresolved = []
+    SEP = DECK_DEPTH + CLEAR_MIN; unresolved = []; ub_bad = {}
     for it in range(10):
         h = solve(); changed = False
         for ka, kb, i, j, at in cons:
@@ -264,9 +289,15 @@ def solve_levels(ways, grade, F, LV, log=print, overhead=None):
         for a, ub, at, so, i in ubn:
             q = nid[a]
             if h[q] <= ub + 1e-3: continue
-            if q in anch: unresolved.append(dict(kind='under the guideway', at=at, deck=round(h[q], 2), soffit=round(so, 2))); continue
+            if q in anch or (q in fixed and fixed[q] <= max(0.0, ub) + 1e-6):
+                ub_bad[q] = dict(kind='under the guideway', at=at, deck=round(float(h[q]), 2), soffit=round(so, 2), anchored=q in anch); continue
             fixed[q] = max(0.0, ub); why[q] = 'clearance under the AirTrain guideway'; changed = True
         if not changed: break
+    # the guideway bounds the solve could not meet (anchored decks; a node held by another constraint), final values only
+    ubq = {}
+    for a, ub, *_ in ubn: ubq[nid[a]] = min(ub, ubq.get(nid[a], 1e9))
+    unresolved += [u for q, u in ub_bad.items() if h[q] > ubq[q] + 1e-3]
+    unresolved = list({(u.get('kind', 'crossing'), tuple(u['at'])): u for u in unresolved}.values())  # last (final) entry per place
     for w in allw:
         w['h'] = np.array([h[nid[n]] for n in w['nodes']])
         w['s'] = np.concatenate([[0.0], np.cumsum(np.hypot(*np.diff(w['pts'], axis=0).T))])
@@ -275,10 +306,10 @@ def solve_levels(ways, grade, F, LV, log=print, overhead=None):
     for g in ramps:
         g['ramp'] = True; g['name'] = None
         g['w_src'] = 'the at-grade OSM way\'s own width (lanes x 3.6 / class default)'
-    log('levels: %d nodes (%d crossing nodes, %d under the guideway), %d anchored (%.2f m domestic curb, %.2f m ITB L3), %d held at grade, %d clearance '
+    log('levels: %d nodes (%d crossing nodes, %d guideway bound samples), %d anchored (%.2f m domestic curb, %.2f m ITB L3, %d on deck plates), %d held at grade, %d clearance '
         'constraints, %d solved; unresolved %d; approach ramps (the at-grade way leaving a bridge end, lifted > 0.3 m) %d'
-        % (N, len(X), len(UB), len(anch), h_dom, h_itb, grade_fixed, len(fixed) - len(anch) - grade_fixed, N - len(fixed), len(unresolved), len(ramps)))
-    return dict(h_dom=h_dom, h_itb=h_itb, N=N, anchored=len(anch), constraints=len(fixed) - len(anch), crossings=len(X), overhead=len(UB), unresolved=unresolved, ramps=ramps)
+        % (N, len(X), len(UB), len(anch), h_dom, h_itb, nplate, grade_fixed, len(fixed) - len(anch) - grade_fixed, N - len(fixed), len(unresolved), len(ramps)))
+    return dict(h_dom=h_dom, h_itb=h_itb, N=N, anchored=len(anch), plate_nodes=nplate, constraints=len(fixed) - len(anch), crossings=len(X), overhead=len(UB), unresolved=unresolved, ramps=ramps)
 
 
 def h_at(w, s):
