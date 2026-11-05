@@ -8,9 +8,10 @@ tools/buildings/dom_bab_roof.json).
 Method (per roof level, all heights / leans from the sheets' inputs, tools/buildings/draw_data.py):
   1. imaged roof = the true roof polygon (tools/blender/dom_geom.py) shifted by the level's NAIP 2024 relief: lean (m/m,
      east; draw_data.dom_lean, the per-pier two-epoch value) x the roof height; eroded 1.5 m (parapet shadows, fascia)
-  2. PV pixel: luminance below PV_LUM x the roof's median luminance and not green / brown (planted roof wells, B > G - 6)
+  2. PV pixel: luminance PV_DROP below the local membrane brightness (9-m max filter), not green / brown (planted
+     roof wells, B > G - 6), not teal (glazing seen obliquely, B - R < 25); kept where >= 40 % of a 3 x 3 m window is PV
   3. morphological open 1.0 m (thin shadows, joints), close 1.5 m (cells / rows of one rack block), components >= 20 m2
-  4. each component -> its minimum rotated rectangle when it fills >= 70 % of it, else the outline simplified at 0.6 m
+  4. components narrower than 3.5 m (min rectangle) or filling < 45 % of it are dropped (facade / parapet strips); each -> its minimum rotated rectangle when it fills >= 70 % of it, else the outline simplified at 0.6 m
   5. moved back by the relief (lean x height) to the lean-free roof, clipped to the true roof deck less 0.8 m
 Tags: extents [obs, NAIP 2024 2024-05-20, +-1 m]; positions lean-corrected [inf where the roof height is inf / unk: T1 hall,
 T3]; rack height / tilt [inf]. PV existence: BA-B [pub bab.pv 1.0 MW], T1 Center [obs t1c.roof_pv], BA-E [obs photo a1],
@@ -31,8 +32,12 @@ import dom_geom as G  # noqa: E402
 import draw_lib as DL  # noqa: E402
 import draw_data as D  # noqa: E402
 
-PV_LUM = 0.80          # PV pixel: luminance < 0.80 x the roof median [inf, tuned on the B / T1 / T3 / E crops]
-OPEN_M, CLOSE_M = 1.0, 1.5
+PV_DROP, BG_M = 14.0, 9.0   # PV pixel: luminance >= 14 below the local membrane brightness (9-m max filter) [inf, tuned on the
+                             # B / T1 / T3 / E crops: racks 190-230 on a 245-255 membrane]
+TEAL = 25.0            # not glazing seen obliquely (teal, B - R >= 25) [inf]
+MIN_W, MIN_FILL = 3.5, 0.45   # rack blocks: minimum-rectangle short side >= 3.5 m and fill >= 0.45 (rejects facade / parapet strips) [inf]
+DENS_M, DENS = 3.0, 0.40   # rack blocks: share of PV pixels in a 3 x 3 m window >= 0.40 (rows + joints) [inf]
+OPEN_M, CLOSE_M = 1.0, 2.0
 A_MIN = 20.0
 OUT_JSON = os.path.join(HERE, 'dom_pv.json')
 OUT_QA = os.path.join(G.ROOT, 'out', 'buildings3d')
@@ -65,8 +70,13 @@ def detect(name, poly, h, k):
             cv2.fillPoly(mask, [np.array([[(x - X0) / R, (z - Z0) / R] for x, z in r.coords], np.int32)], 0)
     f = rgb.astype(float)
     lum = 0.299 * f[..., 0] + 0.587 * f[..., 1] + 0.114 * f[..., 2]
-    med = float(np.median(lum[mask > 0]))
-    pv = (lum < PV_LUM * med) & (f[..., 2] > f[..., 1] - 6) & (mask > 0)
+    # local membrane brightness: a 9-m max filter (the bright membrane between the racks), smoothed over 9 m
+    kb = max(3, int(round(BG_M / R)) | 1)
+    bg = cv2.blur(cv2.dilate(lum.astype(np.float32), np.ones((kb, kb), np.uint8)), (kb, kb))
+    pv = (lum < bg - PV_DROP) & (f[..., 2] > f[..., 1] - 6) & (f[..., 2] - f[..., 0] < TEAL) & (mask > 0)
+    kd = max(1, int(round(DENS_M / R)))
+    dens = cv2.blur(pv.astype(np.float32), (kd, kd))
+    pv = (dens >= DENS) & (mask > 0)
     ko = max(1, int(round(OPEN_M / R))); kc = max(1, int(round(CLOSE_M / R)))
     m = cv2.morphologyEx(pv.astype(np.uint8), cv2.MORPH_OPEN, np.ones((ko, ko), np.uint8))
     m = cv2.morphologyEx(m, cv2.MORPH_CLOSE, np.ones((kc, kc), np.uint8)) & mask
@@ -82,6 +92,9 @@ def detect(name, poly, h, k):
         g = Polygon(pts).buffer(0.25 * R / 0.5, join_style=2).buffer(0)
         if g.is_empty: continue
         rr = g.minimum_rotated_rectangle
+        e = list(rr.exterior.coords)
+        wmin = min(math.dist(e[0], e[1]), math.dist(e[1], e[2]))
+        if wmin < MIN_W or g.area / max(rr.area, 1e-6) < MIN_FILL: continue
         g = rr if g.area / max(rr.area, 1e-6) >= 0.70 else g.simplify(0.6, preserve_topology=True)
         g = affinity.translate(g, -shift[0], -shift[1]).intersection(deck)
         for q in G.polys_of(g):
@@ -94,7 +107,7 @@ def detect(name, poly, h, k):
 
 def main():
     res = dict(generated_by='tools/blender/dom_pv.py', image='NAIP 2024 world raster 0.5 m (refs/cache/naip/naip_2024_world_0.5m.png), '
-               'public domain; used as a measurement only', params=dict(pv_lum=PV_LUM, open_m=OPEN_M, close_m=CLOSE_M, a_min_m2=A_MIN),
+               'public domain; used as a measurement only', params=dict(min_w=MIN_W, min_fill=MIN_FILL, pv_drop=PV_DROP, bg_m=BG_M, teal=TEAL, dens_m=DENS_M, dens=DENS, open_m=OPEN_M, close_m=CLOSE_M, a_min_m2=A_MIN),
                frame='ltp-nad83-2011 world (x east, z south), lean-free (relief removed with the listed lean x height)', regions={})
     os.makedirs(OUT_QA, exist_ok=True)
     from PIL import Image, ImageDraw

@@ -6,12 +6,13 @@ From: owner of `live3.html`, `js/three/**`, `vendor/**`, `tools/build3/**`, `too
 
 ## 0. Lead: commit state and the phone artifact
 
-The WIP snapshot 0e92158 caught this track mid-way (the two start-up fixes, chevrons, denoise, glass, tiers). The
-working tree has the rest: persistent shadow nodes (`engine.js CSM3.dispose`, `flood.js MastSpot`), the spot share at
-the field's clamped height (`flood.js spotShare`), the branchless light-sprite clamp (`lights.js`), and the docs. Commit
-them together: 0e92158 alone crashes after a night -> day -> night switch and draws no aircraft nav lights. The phone
-test artifact is built from a commit (`git archive`), and the published one carries the start-up crash: rebuild it after
-the commit with `sh tools/build3/phone_artifact.sh`. `tools/blender/` (untracked) was not created by this track.
+(Updated 5 Nov 2026, close-out round 2, review finding engine-v4.) Everything listed here in round 3 is committed: the
+start-up fixes, chevrons, denoise, glass, tiers in 0e92158, and the persistent shadow nodes (`engine.js CSM3.dispose`,
+`flood.js MastSpot`), the spot share (`flood.js spotShare`), the branchless light sprites (`lights.js`) and the docs in
+40a32e3. The round-2 work below (glass, position lights, dev page, jobs) was picked up by the WIP commits 7921394,
+32dc769 and d1927ab and the next hourly commit. What remains for the lead: rebuild and republish the phone test artifact
+from a commit that contains all of it (`sh tools/build3/phone_artifact.sh`); the published one still has the round-3
+start-up crash. `tools/blender/` was not created by this track.
 
 ## 1. Lead / repository owner: Playwright version in `package.json` (minor)
 

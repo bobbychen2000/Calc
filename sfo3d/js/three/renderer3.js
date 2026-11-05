@@ -414,9 +414,10 @@ export class Renderer3 {
     E.setCamera(cam, this.W, this.H);
     this.pxScale.value = 2 * Math.tan(cam.fov / 2) / Math.max(1, this.H);
     // light sprites
-    // aircraft lights (fr.nAc, compat/scene.js) keep their physical intensity by day (lights.js fixedK; close-out round 2)
+    // aircraft position lights (the first fr.nAc records are aircraft lights, compat/scene.js) keep their physical
+    // intensity by day (lights.js fixedK / isPositionLight; close-out round 2, engine-v3)
     const sp = this.sprites; sp.fixedK = LAMP_M / ((0.5 + 0.5 * nightF) * lampK.value);
-    sp.begin(); const SL = fr && fr.sprites || [], nAc = fr && fr.nAc || 0; for (let k = 0; k < SL.length; k++) sp.put(SL[k], k < nAc); sp.end(E.camera, this.H);
+    sp.begin(); const SL = fr && fr.sprites || [], nAc = fr && fr.nAc || 0; for (let k = 0; k < SL.length; k++) sp.put(SL[k], k < nAc && Sprites.isPositionLight(SL[k])); sp.end(E.camera, this.H);
     // exposure and grade (the app's post settings: exposure, sat, bloom, vignette, grain)
     const el = Math.asin(Math.max(-1, Math.min(1, L.sunDir[1]))) * 180 / Math.PI; const dark = sstep(2, -10, el);
     // day: the app's exposure without its night term, x DAY_GAIN; lamps on / low sun: lit concrete at the key KEY_NIGHT

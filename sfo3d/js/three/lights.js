@@ -16,14 +16,19 @@
 // which only the markers have) fade out between 150 m and 60 m from the camera.
 // Fragment: core exp(-22 r^2) + halo 0.08 exp(-6 r^2); the halo is capped at 0.5 in exposed units, so a light never
 // spreads into a saturated disk whatever the exposure.
-// Aircraft lights by day (close-out round 2, review finding engine-v3: the green position light at 38 m saturated to
-// white with a halo, brighter than sunlit white paint). The day factor 0.5 x lampK (= 1 by day) is ~100x the night
-// calibration (lamp units x LAMP_M); it stands in for the higher daytime intensity steps of airfield lighting, but
-// aircraft lights have one intensity day and night (14 CFR 25.1391: forward position lights >= 40 cd within 10 deg of
-// dead ahead, rear white 20 cd; eCFR, read 5 Nov 2026; the records use i = 40 / 25: js/aircraft/fleet.js). put(s, true)
-// keeps them at the night calibration, which matches a 40 cd point source within ~1.6x (the core integrates to
-// i x LAMP_M x 0.143 (s_eff / d)^2 against I / d^2): by day a nav light is a faint coloured point and its halo
-// (0.08 x the core) vanishes; strobes, beacons and landing lights stay visible flashes / beams by day.
+// Aircraft position lights by day (close-out round 2, review finding engine-v3: the green position light at 38 m
+// saturated to white with a halo, brighter than sunlit white paint). The day factor 0.5 x lampK (= 1 by day) is ~100x
+// the night calibration (lamp units x LAMP_M); it stands in for the higher daytime intensity steps of airfield lighting,
+// but a position light has one intensity day and night (14 CFR 25.1391, eCFR read 5 Nov 2026: forward red / green
+// >= 40 cd from 0 to 10 deg off dead ahead, 30 cd to 20 deg, 5 cd to 110 deg; rear white >= 20 cd). Energy of a sprite:
+// the core exp(-22 r^2) over the quad integrates to 0.143 x (s_eff / d)^2 sr, so a record gives
+// E = i x k x 0.408 s^2 / d^2 (sky units; k = the day / night factor x lampK), i.e. at the night calibration
+// (k = LAMP_M) i x 13.2 s^2 cd: the position-light records (js/aircraft/fleet.js: i 40, s 0.22; tail i 25, s 0.2) give
+// 26 cd and 13 cd, within 1.6x of the rule's 40 / 20 cd, while the day factor made them ~2,600 cd. put(s, true) keeps
+// them at the night calibration by day (renderer3: isPositionLight -> fixedK): a faint coloured point, the halo (0.08 x
+// the core) below visibility. Strobes, beacons and landing / taxi lights keep the day factor: their records are tuned
+// for the night look and ~100x below real units (landing light i 900, s 0.35: 1,450 cd at the night calibration
+// against ~1e5 cd for real landing lights, inferred), and the day factor brings them into that range (~150,000 cd).
 import { THREE, TSL } from './lib.js';
 import { lampK } from './tsl/common.js';
 const { Fn, attribute, vec2, vec3, vec4, float, max, min, pow, length, normalize, dot, exp, uniform, cameraPosition, cameraViewMatrix, cameraNear, cameraFar, Discard, If, varying, select, mix, smoothstep, screenUV, perspectiveDepthToViewZ } = TSL;
@@ -79,9 +84,12 @@ export class Sprites {
     this.n = 0; this.fixedK = 1;
   }
   begin() { this.n = 0; }
-  // fixed: a light whose intensity does not change between day and night (aircraft position, anti-collision, landing
-  // and taxi lights); its record intensity is scaled by fixedK (renderer3: LAMP_M / the shader's day / night factor), so
-  // it keeps the night calibration (lamp units x LAMP_M = sky units) by day too
+  // aircraft position-light records (js/aircraft/fleet.js lightSprites: nav i 40 s 0.22, tail i 25 s 0.2; no direction).
+  // Beacons (s 0.25), strobes (s 0.3) and the directional landing / taxi lights are not.
+  static isPositionLight(s) { return !s.dir && s.s <= 0.22 && s.i <= 40; }
+  // fixed: a light whose record is physical at the night calibration and whose intensity does not change between day and
+  // night (aircraft position lights, isPositionLight); its record intensity is scaled by fixedK (renderer3: LAMP_M / the
+  // shader's day / night factor), so it keeps the night calibration (lamp units x LAMP_M = sky units) by day too
   put(s, fixed = false) {
     if (this.n >= this.max) return; const i = this.n++ * 4; const P = this.aP.array, C = this.aC.array, D = this.aD.array;
     P[i] = s.p[0]; P[i + 1] = s.p[1]; P[i + 2] = s.p[2]; P[i + 3] = s.s;
