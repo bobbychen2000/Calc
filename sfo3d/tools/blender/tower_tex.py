@@ -12,6 +12,12 @@ Cladding tile = 4 joints x 2 panel rows (UV0 of the shaft: joints at u = k / 4, 
                     tones in t2 / t4) [obs look; line 6.5 cm (u: of a 0.70-m mean panel; 4.3 cm at the waist, 10 cm at the
                     flare) with 0.35 x the panel tone at its centre, and the per-panel tone, are inf: tuned so that the t4
                     render at 0.071 m/px shows the ~30 % dips of the photo]
+  tile_slot_color   1024 x 1024  base colour (sRGB) of the flare-slot screens on the same 4 x 2 cladding tile (UV0 of the slot
+                    cells): perforated metal, a staggered grid of round holes (dark: the void behind) on a mid-grey sheet
+                    [perforated screen obs photo t4 (Famartin 2025-08-12 09:10, 81 m: a fine dot grid in every slot above its
+                    glazed lowest pane); hole pitch ~0.05 m and diameter 0.022 m inf (the grid is ~2 px at 0.027 m/px); tone
+                    tuned so that the slot / panel display ratio of the t2-matched render meets the photo's ~0.6-0.7 (review
+                    round 2, finding 1: the slots rendered as black gashes, 0.1-0.3)]
   tile_louvre       256 x 256  SW wing: 4 horizontal louvre blades per 1.2 m (0.3 m pitch) + a joint every 1.5 m
                     [horizontally louvred face: obs photos t3 / t4; pitch inf]
   tile_panel_ibf    256 x 128  base-building metal panels 3.0 x 1.2 m [module inf]
@@ -83,6 +89,32 @@ def clad_color(path, rgb, size=(1024, 1024), line_w=0.065, line_k=0.35, tone=0.0
     return path, [round(float(x), 1) for x in mean]
 
 
+def slot_color(path, rgb, size=(1024, 1024), n_u=56, n_v=104, hole_d=0.022, hole_k=0.18):
+    """base-colour tile (sRGB PNG) of the perforated slot screens on the 4 x 2 cladding tile (2.8 x 5.24 m): sheet colour
+    rgb (sRGB 0-255), round holes on a staggered grid (n_u x n_v per tile: ~0.05 m pitch; alternate rows shifted by half a
+    pitch), linear colour x hole_k inside a hole (the dark void behind), anti-aliased over one texel. Integer counts per
+    tile so that the tile repeats seamlessly. Returns the path and the tile's mean colour (sRGB)."""
+    W, H = size
+    lin = lambda c: np.where(c <= 0.04045, c / 12.92, ((c + 0.055) / 1.055) ** 2.4)
+    srgb = lambda c: np.where(c <= 0.0031308, c * 12.92, 1.055 * np.power(np.clip(c, 0, None), 1 / 2.4) - 0.055)
+    su, sv = PANEL_W * CLAD_TU / W, PANEL_H * CLAD_TV / H          # metres per texel
+    pu, pv = PANEL_W * CLAD_TU / n_u, PANEL_H * CLAD_TV / n_v       # hole pitch along u / v, m
+    x = (np.arange(W) + 0.5) * su; y = (np.arange(H) + 0.5) * sv
+    X, Y = np.meshgrid(x, y)
+    row = np.floor(Y / pv)
+    fx = ((X / pu - 0.5 * (row % 2)) % 1.0 - 0.5) * pu
+    fy = ((Y / pv) % 1.0 - 0.5) * pv
+    d = np.hypot(fx, fy)
+    aa = 0.75 * max(su, sv)
+    hole = np.clip((hole_d / 2 + aa - d) / (2 * aa), 0, 1)
+    base = lin(np.asarray(rgb, float) / 255.0)
+    img = base[None, None, :] * (1 - (1 - hole_k) * hole)[..., None]
+    out = np.clip(np.round(srgb(img) * 255), 0, 255).astype(np.uint8)
+    Image.fromarray(out, 'RGB').save(path, optimize=True)
+    mean = srgb(img.reshape(-1, 3).mean(0)) * 255
+    return path, [round(float(c), 1) for c in mean]
+
+
 def louvre(path, size=(256, 256), w=1.5, h=1.2, blades=4, joint_w=0.02, depth=0.035):
     W, H = size
     u = (np.arange(W) + 0.5) / W; v = 1 - (np.arange(H) + 0.5) / H
@@ -103,9 +135,9 @@ def panel_ibf(path, size=(256, 128), w=3.0, h=1.2, joint_w=0.02, depth=0.008):
     return _normal_png(hgt, w / W, h / H, path)
 
 
-def make_all(out_dir, clad_rgb=None):
-    """normal tiles (+ the cladding base-colour tile when clad_rgb is given); returns {name: path} and, under '_clad_mean',
-    the cladding tile's mean sRGB colour."""
+def make_all(out_dir, clad_rgb=None, slot_rgb=None):
+    """normal tiles (+ the cladding / slot-screen base-colour tiles when clad_rgb / slot_rgb are given); returns {name: path}
+    and, under '_clad_mean' / '_slot_mean', the tiles' mean sRGB colours."""
     import os
     os.makedirs(out_dir, exist_ok=True)
     out = {
@@ -115,9 +147,11 @@ def make_all(out_dir, clad_rgb=None):
     }
     if clad_rgb is not None:
         out['tile_clad_color'], out['_clad_mean'] = clad_color(os.path.join(out_dir, 'tile_clad_color.png'), clad_rgb)
+    if slot_rgb is not None:
+        out['tile_slot_color'], out['_slot_mean'] = slot_color(os.path.join(out_dir, 'tile_slot_color.png'), slot_rgb)
     return out
 
 
 if __name__ == '__main__':
     import sys
-    print(make_all(sys.argv[1] if len(sys.argv) > 1 else 'out/buildings3d/tex', clad_rgb=(150, 154, 160)))
+    print(make_all(sys.argv[1] if len(sys.argv) > 1 else 'out/buildings3d/tex', clad_rgb=(150, 154, 160), slot_rgb=(112, 116, 121)))

@@ -189,6 +189,8 @@ def postprocess(glb, fam, TW, stats, ao_info, mats=None):
         if spec:
             ex['src'] = spec['src']
             if spec.get('led'): ex['led'] = True
+            if spec.get('led_color'): ex['led_color'] = [round(float(c), 4) for c in spec['led_color']]
+            if spec.get('led_color_obs'): ex['led_color_obs'] = spec['led_color_obs']
             if spec.get('light'): ex['obstruction_light'] = True
         if 'occlusionTexture' in m:
             assert m['occlusionTexture'].get('texCoord', 0) == 1, (m['name'], m['occlusionTexture'])
@@ -312,7 +314,7 @@ def verify(glb, fam):
     pl = np.concatenate([p for m, p, i in cab if m == 'plinth'])
     res.append(chk('plinth diameter', 2 * np.hypot(pl[:, 0] - cabC[0], pl[:, 2] - cabC[1]).max(), 2 * TW.plinth_r, 'obs'))
     res.append(chk('plinth top (= glass sill)', pl[:, 1].max(), TW.sill_h, 'inf'))
-    fl = np.concatenate([p for m, p, i in cab if m == 'cab_interior'])
+    fl = np.concatenate([p for m, p, i in cab if m == 'cab_floor'])
     res.append(chk('cab floor', fl[:, 1].min(), TW.floor_h, 'inf'))
     # 4. flare widest, shoulder top, NE tip
     sh = _pts(meshes, L0, ['shaft'])
@@ -363,7 +365,7 @@ def verify(glb, fam):
                        note='BT-02 B draw_blades outer line = projection of the wing tip; the rounded edge beyond the tip '
                        f'reaches u {ub[m2].max():.2f}, inside the round-body silhouette {TW.R(hsel):.2f}'))
     # 7. slots: centre bearings at mid-band (drawn: bm) and the long slot ends
-    sl = _pts(meshes, L0, ['shaft'], ['slot'])
+    sl = _pts(meshes, L0, ['shaft'], ['slot_pocket', 'slot_reveal'])
     rs = np.hypot(sl[:, 0], sl[:, 2])
     a, b_ = TW.slot_band; hm_ = sl[np.argmin(np.abs(sl[:, 1] - (a + b_) / 2)), 1]
     mm = (np.abs(sl[:, 1] - hm_) < 0.02)
@@ -534,7 +536,7 @@ def compare_images(renders, TW):
             dr.line(out_line, fill=(230, 140, 0), width=1)
         for hh in (TW.rim_h, TW.cab['glass_top'][1], TW.cab['glass_bottom'][1], TW.h_top, TW.ibf):
             x0_, y0_ = P(14.5, hh); dr.line([(x0_, y0_), (x0_ + 12, y0_)], fill=(220, 40, 40))
-        p = os.path.join(ROOT, 'out', 'buildings3d', f'tower_overlay_{nm}.png')
+        p = os.path.join(os.environ.get('TOWER_OUT_DIR') or os.path.join(ROOT, 'out', 'buildings3d'), f'tower_overlay_{nm}.png')
         im.save(p); out[f'overlay_{nm}'] = os.path.relpath(p, ROOT)
     for nm in ('t2', 't3', 't4'):
         r = renders.get(nm)
@@ -542,12 +544,28 @@ def compare_images(renders, TW):
         a = Image.open(os.path.join(ROOT, r['photo'])).convert('RGB'); b = Image.open(os.path.join(ROOT, r['path'])).convert('RGB')
         a = a.resize(b.size)
         c = Image.new('RGB', (a.width * 2 + 8, a.height), (255, 255, 255)); c.paste(a, (0, 0)); c.paste(b, (a.width + 8, 0))
-        p = os.path.join(ROOT, 'out', 'buildings3d', f'tower_compare_{nm}.jpg')
+        p = os.path.join(os.environ.get('TOWER_OUT_DIR') or os.path.join(ROOT, 'out', 'buildings3d'), f'tower_compare_{nm}.jpg')
         c.save(p, quality=88); out[f'compare_{nm}'] = os.path.relpath(p, ROOT) + ' (local only: contains a third-party photo)'
     return out
 
 
 # ------------------------------------------------------------------------------------------------ manifest
+def _night_glow(glb):
+    """the app's night-glow inputs as exported (material extras): the LED ribbon colour and the obstruction light."""
+    js, _ = read_glb(glb)
+    out = dict(note='js/three/buildings3d.js glowKind / GLOW_DEF: the LED ribbon glows in its material colour extras.led_color '
+                    '(linear RGB, x GLOW_DEF.led colour / level); the cab glass glows as kind "cab" (GLOW_DEF.cab, inf); '
+                    'red_light is the steady red obstruction light (beacon kind)')
+    for m in js.get('materials', []):
+        ex = m.get('extras') or {}
+        if ex.get('led_color'):
+            out['led'] = dict(material=m['name'], led_color_linear=ex['led_color'], obs=ex.get('led_color_obs'),
+                              tag='obs photo t5 (Varnum 2018-04, dusk: the ribbon lit saturated blue) as the default; the array is '
+                                  'programmable (pub: LED-backlit), so the colour on any other night is unknown: an inferred, '
+                                  'configurable value (material extras.led_color; GLOW_DEF.led tints / scales it)')
+    return out
+
+
 def manifest_entry(results, ver, renders, args, rev, secs):
     D_ = DEFAULT_FAM; A_ = 3 - D_
     rD = results[D_]; TW = rD['tower']; f = TW.f
@@ -608,7 +626,15 @@ def manifest_entry(results, ver, renders, args, rev, secs):
         'landside plan: ribbon 1 m inside the round body, facing 310; NE blade root / tip widths; SW wing lobe shape between the '
         'BT-01 plan points; wing protrusion 0.5 m at the foot',
         'cab glass ring 360 deg (photos show glass on both sides; the published 220 / 235 / 270 deg are view / column-free angles); '
-        'its transparency (alpha 0.5) and tint',
+        'its transparency (alpha 0.6, review round 2: was 0.5) and tint; the pane butt joints (0.03 m, dark: the published '
+        'frameless butt glazing, photo t2) and the dark shade band inside the glass head (from 0.62 of the slant; obs t1, nature '
+        'and tone inf)',
+        'slot screens (review round 2): a perforated sheet 0.06 m behind the cladding face over every slot cell above the glazed '
+        'lowest pane (obs photo t4: a dot grid); hole pitch ~0.05 m, hole 0.022 m, sheet tone sRGB 112-121 (tuned to the t2 '
+        'slot / panel display ratio ~0.6-0.7) and the void behind are inf',
+        'LED ribbon night colour: the observed photo-t5 blue (median sRGB 82 / 137 / 209) as the default of a programmable '
+        'array (material extras.led_color, linear (0.21, 0.62, 1.59) at the loader\'s previous mean level); any other night '
+        'colour or animation is unknown (manifest night_glow)',
         'cab roof deck 0.30 m below the rim coping; inner curb r 4.75 m, 0.3 m high',
         'mast / pole bearings and heights (+-5 deg / +-0.3 m); pole heads schematic; red-light bearing (225, SW)',
         'base-building panel module 3.0 x 1.2 m, glazing-band mullions 1.5 m, parapet 0.7 m',
@@ -619,7 +645,9 @@ def manifest_entry(results, ver, renders, args, rev, secs):
     unknown = [
         'what the published 221 ft measures (rim or mast tips)',
         'blade / channel plan depth beyond the BT-01 wing-tip point; channel wall geometry',
-        'cab glazing pane phase; cab interior (floor / ceiling / console ring are dark placeholders)',
+        'cab glazing pane phase; cab interior: floor (sRGB 74), console ring (0.9 m high, 0.8 m deep, 0.25 m inside the sill; '
+        'sRGB 112) and ceiling (sRGB 62) are neutral placeholders (no source for the furniture; 13 positions in a snippet, '
+        'unverified)',
         'obstruction-light fixture type (L-810 steady / L-864 flashing) and count (one seen, t5)',
         'core diameter, floor levels (not visible; not modelled)',
         'airside face of the base building SW of u -12.9 (hidden in photo t2): drawn as plain panels',
@@ -671,10 +699,12 @@ def manifest_entry(results, ver, renders, args, rev, secs):
         lods=lods, textures=tex,
         texture_note='AO atlases on TEXCOORD_1 (grey-scale PNG, sun-independent, Cycles); detail tiles on TEXCOORD_0 (procedural, '
                      'tools/blender/tower_tex.py): the cladding base colour (joint lines, per-panel tone) + normal tile (4 x 2 panels), '
+                     'the slot-screen base colour (perforated sheet: a staggered hole grid on the same 4 x 2 tile, review round 2), '
                      'louvres, base-building panels. KTX2 / meshopt: later (tools/engine/glb_compress.mjs).',
+        night_glow=_night_glow(rD['glb']),
         dimensions=dims, inferred=inferred, unknown=unknown, not_modelled=not_modelled, conflicts=[c for c in conflicts if c],
         node_extras='every node: extras {src, feature, spec (spec_tower.json keys), drawing, tags}; materials: extras.src '
-                    '(+ led / obstruction_light flags for the app)',
+                    '(+ led / led_color / obstruction_light for the app)',
         verification=dict(**{f'F{fam}': ver[fam]['summary'] for fam in ver},
                           max_abs_dev_m=max(abs(c['dev']) for fam in ver for c in ver[fam]['checks'] if c['unit'] == 'm'),
                           gltf_validator={f'F{fam}': ver[fam].get('gltf_validator') for fam in ver}, file='out/buildings3d/tower_verify.json',
@@ -780,9 +810,10 @@ def doc_section(entry, ver):
              f'glass {aA.get("glass_sill_h")}-{aA.get("glass_head_h")}, rim {aA.get("roof_rim_h")}, whip {aA.get("mast_tip_max_h")} m).', '',
              f'| LOD | Use (suggested camera distance) | Triangles F2 / F1 | AO atlas (TEXCOORD_1) | Content |', '|---|---|---|---|---|']
     use = {0: '< 350 m (close-up, tower view)', 1: '350-1200 m', 2: '> 1200 m; phone (`tower_lod2.glb`, F2)'}
-    cont = {0: '272 helical columns, recessed slots with glazed panes, dark seam joints, 24 tinted cab panes + light joints, ribbon '
+    cont = {0: '272 helical columns, recessed slots with perforated screens and glazed lowest panes, dark seam joints, 24 tinted '
+               'cab panes + slim dark joints, cab interior (floor, console ring, shade band, ceiling), ribbon '
                'mullions, 15 whips + 9 poles + red light, base-building mullions, coping, rails, rooftop unit, sunken garden',
-            1: '136 columns, flat slots, dark seam joints, 24-facet cab, 15 whips + red light, plain base building with parapet',
+            1: '136 columns, flat slots (screen tone), dark seam joints, 24-facet cab, 15 whips + red light, plain base building with parapet',
             2: '68 columns, flat slots, 12-facet cab, 15 whips (3-sided) + red light, base building as a box'}
     for l in L:
         lod = int(l['node'][3:])
@@ -794,8 +825,11 @@ def doc_section(entry, ver):
               '`extras.src` on every material). The cladding carries a procedural base-colour + normal tile on TEXCOORD_0 '
               '(`tools/blender/tower_tex.py`, 4 joints x 2 panel rows per tile): dark helical and row joint lines (6.5 cm, 0.35 x the '
               'panel tone at the centre) and a +-5 % tone per panel, mip-mapped (no moire); the two circumferential seams are dark '
-              '0.10-m joint bands flush in the shell. The cab glass is tinted and see-through (alpha 0.5, double-sided, the far-side '
-              'panes and the sky show through) with light 6-cm pane joints. Sun-independent AO baked by Cycles (48 samples, 8 m '
+              '0.10-m joint bands flush in the shell. The slots are recessed pockets with a perforated screen 0.06 m behind the face '
+              '(base-colour tile: a staggered hole grid on a mid-grey sheet) and a light reveal. The cab glass is tinted and '
+              'see-through (alpha 0.6, double-sided: the far-side panes and the sky show through in a level view) with slim dark '
+              '3-cm butt joints; behind it a neutral placeholder interior (floor, console ring, a dark shade band inside the glass '
+              'head, mid-dark ceiling). Sun-independent AO baked by Cycles (48 samples, 8 m '
               'rays, ground plane as occluder). Every other surface is single-sided and wound outwards (back-face audit renders).', '',
               '**Verification** (`out/buildings3d/tower_verify.json`, measured on the exported GLB against the sheet functions):',
               f"- F2 (default): {ver[2]['summary']}" if 2 in ver else '', f"- F1: {ver[1]['summary']}" if 1 in ver else '',

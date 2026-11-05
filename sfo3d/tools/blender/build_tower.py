@@ -46,8 +46,9 @@ import tower_tex  # noqa: E402
 import tower3d_verify as TV  # noqa: E402
 
 ROOT = G.ROOT
-DATA = os.path.join(ROOT, 'data', 'buildings3d')
-OUT = os.path.join(ROOT, 'out', 'buildings3d')
+# TOWER_DATA_DIR / TOWER_OUT_DIR: write the files of a quick look elsewhere (the app and other agents read data/buildings3d)
+DATA = os.environ.get('TOWER_DATA_DIR') or os.path.join(ROOT, 'data', 'buildings3d')
+OUT = os.environ.get('TOWER_OUT_DIR') or os.path.join(ROOT, 'out', 'buildings3d')
 GROUND_Y = 3.0                       # js/geo.js GROUND_Y (nominal airfield elevation; the app's ground plane)
 AO_RES = {0: 2048, 1: 1024, 2: 512}
 AO_FLAG = {}                         # object name -> receives the baked AO (thin details, glass and masts do not)
@@ -70,20 +71,44 @@ MATS = {
                           src='obs photos t3/t4 (horizontally louvred SW wing); finish inf'),
     'seam':          dict(rgb=(98, 101, 106), m=0.15, r=0.60, src='obs photos t2 / t4 (the two circumferential seams read as dark '
                           'recessed joints, darker than the row joints); width 0.10 m and tone inf'),
-    'slot':          dict(rgb=(52, 58, 64), m=0.20, r=0.65, src='obs photos (dark, perforated-looking slots); finish inf'),
+    # slots (review round 2, finding 1: near-black pockets read as black gashes, t2 display ratio slot / panel 0.1-0.3 vs the
+    # photo's 0.6-0.7): a perforated screen (base-colour tile tower_tex.slot_color: holes on a mid-grey sheet) SCREEN_INSET
+    # behind the face; the pocket behind it is only seen around the glazed lowest panes
+    'slot_screen':   dict(rgb=(112, 116, 121), m=0.15, r=0.60, tex='tile_slot_color',
+                          src='obs photo t4 (perforated screen, a fine dot grid, in every slot above its glazed lowest pane); '
+                          'tone tuned to the t2 photo (slot / panel display ratio ~0.6-0.7); hole grid and finish inf'),
+    'slot_pocket':   dict(rgb=(40, 44, 48), m=0.0, r=0.85, src='inf (the void behind the screen and the glazed pane)'),
+    'slot_reveal':   dict(rgb=(132, 136, 142), m=0.15, r=0.55, src='inf (panel return around the screen: obs photo t4, a thin '
+                          'light reveal)'),
     'slot_glass':    dict(rgb=(150, 175, 190), m=0.0, r=0.08, src='obs photos t3/t4 (glazed lowest pane)'),
+    # led_color: the app's night glow colour of the ribbon (material extras.led_color, linear RGB; js/three/buildings3d.js led
+    # glow): the hue of photo t5 (Varnum 2018-04, dusk; median of 91k ribbon pixels sRGB (82, 137, 209), IQR R 65-93 / G 125-145
+    # / B 194-226 -> linear (0.084, 0.250, 0.638)), scaled to the luminance of the loader's previous blue-cyan wave mean
+    # (0.605) so the tuned night level is kept. The array is programmable (pub: LED-backlit): this is the observed default,
+    # an inferred choice for every other night (review round 2, finding 4: the ribbon glowed near-white)
     'ribbon_glass':  dict(rgb=(150, 182, 175), m=0.0, r=0.06, src='pub (Guardian SNX 62/27 IGUs, LED-backlit); daytime tint obs photos '
-                          't3/t4; emissive off by day (extras.led)', led=True),
+                          't3/t4; emissive off by day (extras.led); night colour obs photo t5 (extras.led_color: the observed '
+                          'default of a programmable array, inf for any other night)', led=True,
+                          led_color=(0.210, 0.623, 1.588), led_color_obs=dict(photo='t5', srgb_median=(82, 137, 209))),
     'mullion':       dict(rgb=(85, 88, 92), m=0.70, r=0.40, src='inf'),
     'plinth':        dict(rgb=(60, 70, 80), m=0.40, r=0.45, src='obs photo t1 (dark ring under the cab glass)'),
     # cab glass: tinted, see-through. Photos: glass / sky display 0.31 (t1, near-level view: the sky shows through the far-side
     # panes, teal tint, dark consoles below and a dark band above), 0.28 (t2), 0.10 (t3, 12 deg below the rim: the ceiling
-    # behind). Alpha 0.5 per pane (two panes: 25 % of the sky) with a teal-grey tint reproduces ~0.3 in a level view
-    'cab_glass':     dict(rgb=(55, 70, 74), m=0.0, r=0.04, alpha=0.5, src='pub (clear laminated frameless glass, Fentress); tint '
-                          'and see-through look obs photos t1 / t2 (glass / sky 0.28-0.31); alpha blend (0.5 inf)', blend=True),
-    'cab_joint':     dict(rgb=(180, 183, 186), m=0.30, r=0.35, src='obs photos t1 / t2 / t3 (light vertical pane joints); width '
-                          '6 cm inf (a butt joint with its silicone and reflection)'),
-    'cab_interior':  dict(rgb=(42, 42, 44), m=0.0, r=0.80, src='unknown (dark placeholder interior)'),
+    # behind). Review round 2 (finding 2): from below, round 1 (alpha 0.5, black ceiling) read two-tone, the upper part ~0.5x
+    # the photo (the black ceiling behind), the lower third ~1.8x (sky through both panes); the photo is a uniform dark tint.
+    # Now alpha 0.6 (two panes: 16 % of the sky), a mid-dark ceiling and the dark shade band inside the glass head (obs t1),
+    # which from 12 deg below hides the far side's sky
+    'cab_glass':     dict(rgb=(48, 60, 64), m=0.0, r=0.04, alpha=0.6, src='pub (clear laminated frameless glass, Fentress); tint '
+                          'and see-through look obs photos t1 / t2 / t3 (glass / sky 0.28-0.31 level, uniform dark from below); '
+                          'alpha blend (0.6 inf)', blend=True),
+    'cab_joint':     dict(rgb=(38, 40, 43), m=0.30, r=0.50, src='pub cab_glass_type (frameless butt-glazed); obs photo t2 (thin dark '
+                          'joint lines; review round 2, finding 3: round 1 had light 6-cm joints); width 0.03 m and tone inf'),
+    # interior (review round 2, findings 2 / 3): neutral mid-dark placeholders instead of one near-black material
+    'cab_floor':     dict(rgb=(74, 74, 76), m=0.0, r=0.90, src='unknown (neutral placeholder floor)'),
+    'cab_console':   dict(rgb=(112, 112, 110), m=0.0, r=0.70, src='unknown (neutral placeholder console ring)'),
+    'cab_ceiling':   dict(rgb=(62, 62, 64), m=0.0, r=0.90, src='unknown (mid-dark placeholder ceiling)'),
+    'cab_shade':     dict(rgb=(52, 54, 58), m=0.0, r=0.85, src='obs photo t1 (dark band over the top ~0.35-0.4 of the glass, all '
+                          'round); nature (sun shades / valance) and tone inf'),
     'roof_deck':     dict(rgb=(205, 205, 200), m=0.0, r=0.85, src='obs NAIP 2024 (white membrane, saturated: albedo inf)'),
     'coping':        dict(rgb=(176, 178, 180), m=0.15, r=0.45, src='inf'),
     'ibf_panel':     dict(rgb=(140, 144, 148), m=0.15, r=0.50, nrm=('tile_panel_ibf', 1.2),
@@ -295,7 +320,7 @@ def build_family(fam, args, tex_paths):
     tex_imgs = {}
     for k, p in tex_paths.items():
         if k.startswith('_'): continue
-        im = bpy.data.images.load(p); im.colorspace_settings.name = 'sRGB' if k == 'tile_clad_color' else 'Non-Color'; im.name = k
+        im = bpy.data.images.load(p); im.colorspace_settings.name = 'sRGB' if k.endswith('_color') else 'Non-Color'; im.name = k
         tex_imgs[k] = im
     root = bpy.data.objects.new('tower', None)
     sc.collection.objects.link(root)
@@ -671,8 +696,8 @@ def main():
     args.res = min(args.res, 960); args.samples = min(args.samples, 64)
     RENDER.update(sun=args.sun, sky=args.sky, exposure=args.exposure)
     os.makedirs(OUT, exist_ok=True)
-    tex_paths = tower_tex.make_all(os.path.join(OUT, 'tex'), clad_rgb=MATS['clad']['rgb'])
-    log('clad tile mean sRGB', tex_paths.get('_clad_mean'))
+    tex_paths = tower_tex.make_all(os.path.join(OUT, 'tex'), clad_rgb=MATS['clad']['rgb'], slot_rgb=MATS['slot_screen']['rgb'])
+    log('clad tile mean sRGB', tex_paths.get('_clad_mean'), 'slot screen tile mean sRGB', tex_paths.get('_slot_mean'))
     fams = (1, 2) if args.family == 'all' else (int(args.family),)
     results = {}
     t0 = time.time()

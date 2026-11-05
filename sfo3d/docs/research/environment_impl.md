@@ -689,3 +689,46 @@ Corrected statuses (the step-3 table claimed more than was measured):
 
 The three round-1 renders (below) only confirm the visual fixes (fog glow, aureoles, floodlit rain, lamp reflections,
 twilight sky, mast lamps); they are not acceptance renders and nothing is scored.
+
+### R1.7 Renders (live3.html, three.js r186 WebGL 2, llvmpipe 640 × 360, high tier, one Chromium through `out/.heavy.lock`)
+
+Job: scratchpad `env4/job_fix1.mjs` → `out/env/fix1/fix1_check.json` + 3 PNGs (lock 16:25–17:01Z, waited ~1 h behind
+the buildings track's jobs). live3 ready in 8.1 s, **0 page errors** on all three steps; then `live.html?wx=ifr_mist_day`
+(old renderer, no render) ready in 93 s, **0 page errors**. Same cameras as the review renders, so the pixel statistics
+compare directly (scratchpad `env4/png_stats.py`; not a scored review):
+
+| View | Review render (before) | Round-1 render (after) | Probe |
+|---|---|---|---|
+| E7 night_fog 28R 0.6 NM | `rev_E7`: 100 % of pixels black, 0 ALS lights, 1 point | `fix1_E7_nightfog_06nm`: 90 % black, 13 point lights, the ALS glow (aureoles) below the camera; the hills and their lights above the 61-m fog top are seen over it (correct: the camera is above the fog) | slabs = fog 3–64 m only; airfield 25 cores lit + 742 aureoles (47 above the display floor); EV 4.6 |
+| E9 squall_night gate B26 | `rev_E9`: 32 % black, sky rows 7.7, rain invisible | `fix1_E9_squall_gate`: 15 % black, sky rows 43.4, floodlit rain dots over the apron, mast-lamp halos, lamp images on the wet apron | 34,790 drops, 153 lamp reflections, 555 aureoles, flood in-scatter on (σ 1.55e-3) |
+| E3 dusk 28R 2 NM | `rev_E3`: top 30 % mean 211, B − R −21.7, 29 points | `fix1_E3_dusk_28R_2nm`: 207, B − R −21.9, 38 points | geometric Sun −5.87° in the sky; EV 4.45; mast lamps with the lobe floor (420) |
+| old renderer, ifr_mist_day (probe) | cloud deck at 150 m, drift 2.5 × wind + 1 | deck at 64.0 m (BKN002), fog top 61 m, drift = wind | `R.env.cloud` [0.75, 63.96, …] |
+
+Found in these renders and fixed afterwards (code only, **not rendered**: the 3-render budget was used):
+1. `fix1_E9`: the flood in-scatter of the background drew horizontal bands (6 fixed stratified samples over up to
+   2.6 km of the ray at lamp height); now the sample offsets are jittered per pixel and frame (interleaved gradient
+   noise, TRAA resolves it), 8 samples for the background, the range capped at 1.5 km; the fog-structure samples are
+   jittered the same way.
+2. `fix1_E7`: the far city clusters on the hills, seen at grazing angles, were drawn as horizontal streaks (their radius
+   followed the isotropic pixel footprint); now the across-view footprint.
+
+Remaining look observations (I, for the owner's scored loop): in `fix1_E9` the mirror puddles inside the floodlight's
+broad film glare stay darker than the glare (a mirror reflects the dark sky there, the lamp image is the reflected
+sprite: physically expected, but the reviewer asked for "never darker than the film"; with no SSR the lamp images are
+point sprites, not streaks); the dusk sky is still warm-white toward the sunset with no blue up to ~20° (geometric Sun
+in, the single-scattering sky model and the ground-weighted metering remain; open).
+
+### R1.8 Gates after round 1
+
+`sh tools/env/run_gates.sh`: Python decoder 39/39 · A-SUN 32/32 · A-FIX 50/50 · A-WX 875/875 (bit-identical) · A-CLK +
+presets 43/43 · TAF 29/29 · relay 15/15 · A-CTL 37/37 (+2: RVR P-prefix, MITL) · A-VIS1 / A-PAPI1 / A-NAV1 / A-FLASH1 /
+A-RWSL1 74/74 (+2: SSALR RAIL, landing-roll REL; A-NAV1 now 24 display-phase cases) · sky / fog / clouds / rain / wet /
+lightning 178/178 (+11: BKN000, FG BKN003, VV, BCFG / PRFG / gap / TWR VIS / VIS swing, puddle diffuse). Before: the same
+suites 38 / 32 / 50 / 864 / 43 / 29 / 15 / 35 / 72 / 167, all passing — while the app-level defects above existed.
+
+Open points after round 1 (owner questions use the spec defaults, tagged I and shown on the `?qa=env` HUD): Q7 mast
+lamp intensity / side floor and flood colour; Q14 horizon glow factor; Q16 wetness constants and the lamp-reflection
+strength; patch cover / scale (BCFG/PRFG), lobe width, gap distance, the VV obscuration depth / σ, the TWR / SFC split
+height, the aureole g / radius and the isotropic flood-scatter phase (all I); A-EXP marine-layer +1.6 EV; A-VIS, A-PAPI,
+A-COL, A-GEO, A-RWSL, A-NAV, A-PERF render tests not run (§R1.6); the dusk sky colour; SSR / planar reflections not
+available (puddles mirror the PMREM sky + the reflected light sprites).

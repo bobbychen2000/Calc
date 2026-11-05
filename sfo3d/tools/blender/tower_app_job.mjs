@@ -9,6 +9,9 @@
 // 'clad:metalness=0' or 'clad:color=0.85' on every tower material whose name starts with the prefix). Default: the t2 and t4
 // photo cameras at the photo times (F2 heights), the review's airside view at the snapshot time (t2like) and the tower view.
 // FRAMES: TRAA frames per view (default 8).
+// Experiments (review round 2): 'engine:aoAmount=0' sets a uniform of SFO.R.engine (here: GTAO off), and
+// '<prefix>:receiveShadow=0' / ':castShadow=0' set the flag on the tower meshes whose material name starts with prefix.
+// Near mode (low / medium tier): every view waits until the full tower file is on screen (Buildings3D.settled).
 // Output: <OUT>/tapp_<name>.png and <OUT>/tower_app_info.json (b3d info, tower anchors, towerPos / eyeY, camera, in-cab state).
 import fs from 'fs'; import path from 'path';
 const DEF = [
@@ -37,7 +40,12 @@ export default async ({ page, shot, base, OUT }) => {
   for (const [name, t, l, mat] of views) {
     const r = await page.evaluate(([t, l, mat]) => {
       const root = SFO.R.b3d && SFO.R.b3d.loaded.tower; window.__matUndo = [];
-      if (mat && root) { const [pre, kv] = mat.split(':'); const [k, v] = kv.split('='); const seen = new Set();
+      if (mat && mat.startsWith('engine:')) { const [k, v] = mat.slice(7).split('='); const E = SFO.R.engine; const u = E[k];
+        if (u && u.value !== undefined) { window.__matUndo.push([u, 'value', u.value]); u.value = +v; } }
+      else if (mat && root && /:(receiveShadow|castShadow)=/.test(mat)) { const [pre, kv] = mat.split(':'); const [k, v] = kv.split('=');
+        root.traverse(o => { const m = o.material; if (!o.isMesh || !m || !(m.name || '').startsWith(pre)) return;
+          window.__matUndo.push([o, k, o[k]]); o[k] = v === '1'; m.needsUpdate = true; }); }
+      else if (mat && root) { const [pre, kv] = mat.split(':'); const [k, v] = kv.split('='); const seen = new Set();
         root.traverse(o => { const m = o.material; if (!o.isMesh || !m || seen.has(m) || !(m.name || '').startsWith(pre)) return; seen.add(m);
           if (k === 'color') { window.__matUndo.push([m, 'color', m.color.clone()]); m.color.multiplyScalar(+v); }
           else { window.__matUndo.push([m, k, m[k]]); m[k] = +v; } }); }
@@ -46,6 +54,8 @@ export default async ({ page, shot, base, OUT }) => {
       else { const a = l.split(',').map(Number); SFO.qa.look([a[0], a[1], a[2]], a[3], a[4], a[5], a[6] || 50); }
       const st = SFO.env(); return { sun: st && st.sun ? { az: st.sun.az, el: st.sun.el } : null, matChanged: window.__matUndo.length };
     }, [t, l, mat]);
+    await page.evaluate(() => { window.__b3dF = SFO.R.frames; });
+    await page.waitForFunction(() => { const B = SFO.R.b3d; return !B || !B.settled || (SFO.R.frames > window.__b3dF + 4 && B.settled()); }, null, { timeout: 0, polling: 500 });
     const f0 = await page.evaluate(() => SFO.R.frames); const n = +(process.env.FRAMES || 8);
     await page.waitForFunction(([f, n]) => SFO.R.frames >= f + n, [f0, n], { timeout: 0, polling: 200 });
     const cam = await page.evaluate(() => { const c = SFO.R.engine && SFO.R.engine.camera; const b = SFO.R.b3d;

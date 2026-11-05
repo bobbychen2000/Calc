@@ -252,8 +252,9 @@ export class Sky {
         const s0 = select(dy.lessThan(0.0), clamp(sc, 0.0, 1.0), float(0.0)), s1 = select(dy.greaterThan(0.0), clamp(sc, 0.0, 1.0), select(a.y.lessThan(y1).or(dy.lessThan(0.0)), float(1.0), float(0.0)));
         const span = max(s1.sub(s0), 0.0);
         If(span.greaterThan(0.0), () => {
-          const sum = float(0).toVar();
-          for (let k = 0; k < N; k++) sum.addAssign(this.horizDelta(a.add(dir.mul(len.mul(s0.add(span.mul((k + 0.5) / N)))))));
+          const sum = float(0).toVar();   // (jittered per pixel / frame as floodScatter; the CPU mirror takes the midpoints)
+          const jit = TSL.interleavedGradientNoise(TSL.screenCoordinate.xy.add(fract(U.time.mul(5.31)).mul(64.0)));
+          for (let k = 0; k < N; k++) sum.addAssign(this.horizDelta(a.add(dir.mul(len.mul(s0.add(span.mul(jit.add(k).div(N))))))));
           out.assign(sum.div(N).mul(len).mul(span));
         });
       });
@@ -279,6 +280,8 @@ export class Sky {
     const f = texture3D(L.fieldTex, vec3(u, v, w)).level(0);   // explicit LOD: also sampled in the rain's vertex stage
     return length(vec2(max(f.y, 0.0), max(f.w, 0.0))).mul(inside).mul(above);
   }
+  // (sample offsets jittered per pixel and frame: interleaved gradient noise, resolved by TRAA; the fixed stratified
+  // offsets drew horizontal bands across the background in the first render, fix1_E9_squall_gate, 2026-11-05)
   floodScatter(a, dir, len, N = 6) {
     const U = this.u; if (!this.flood) return vec3(0.0);
     return Fn(() => {
@@ -296,12 +299,13 @@ export class Sky {
           const S = U.slab[k];
           If(U.nSlabs.greaterThan(k + 0.5).and(a.y.greaterThan(S.x)), () => { tauAbove.addAssign(S.z.mul(max(min(a.y, S.y).sub(max(y1, S.x)), 0.0)).div(max(abs(dir.y), 0.02))); });
         }
-        const sEnd = min(s1, max(s0, sIn).add(float(4.0).div(sig).div(len)));
+        const sEnd = min(s1, max(s0, sIn).add(min(float(4.0).div(sig), 1500.0).div(len)));   // <= 4 mean free paths, <= 1.5 km
         const span = max(sEnd.sub(s0), 0.0);
         If(span.greaterThan(0.0), () => {
           const sum = float(0).toVar();
+          const jit = TSL.interleavedGradientNoise(TSL.screenCoordinate.xy.add(fract(U.time.mul(7.13)).mul(64.0)));
           for (let k = 0; k < N; k++) {
-            const sk = s0.add(span.mul((k + 0.5) / N));
+            const sk = s0.add(span.mul(jit.add(k).div(N)));
             const p = a.add(dir.mul(len.mul(sk)));
             sum.addAssign(this.floodField(p).mul(exp(sig.mul(len).mul(max(sk.sub(sIn), 0.0)).add(tauAbove).negate())));
           }
@@ -355,7 +359,7 @@ export class Sky {
       // sun disc above the horizon only (below it the terrain / bay hides it; the ground of the sky dome is no surface)
       If(mu.greaterThan(sunR).and(rd.y.greaterThan(-0.002)), () => { const r = sqrt(max(0.0, float(1.0).sub(float(1.0).sub(mu).div(1.0 - sunR)))); col.addAssign(U.sunColor.mul(900.0).mul(r.mul(0.6).add(0.4)).mul(this.cloudShadowSky(cameraPosition, rd))); });
       const T = this.bgTransmittance(cameraPosition, rd);
-      return mix(this.fogInscatter(rd), col, T).add(this.floodScatter(cameraPosition, rd, float(3000.0)));
+      return mix(this.fogInscatter(rd), col, T).add(this.floodScatter(cameraPosition, rd, float(3000.0), 8));
     })();
   }
   // transmittance of the sky-shader layers along rd (for the sun disc: a cloud in front of it hides it)

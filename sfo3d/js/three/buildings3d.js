@@ -242,6 +242,9 @@ export class Buildings3D {
       if (kind === 'led') { // objects.js id 16: a blue-cyan wave running down the ribbon
         const wave = sin(P.y.mul(0.21).sub((R.time || uniform(0)).mul(0.9))).mul(0.45).add(0.55);
         lvl = wave.mul(0.8).add(1.4).div(1.8); col = mix(vec3(0.15, 0.45, 1.0), vec3(0.2, 0.9, 0.9), wave).mul(G.color);
+        // the asset's own LED colour (material extras.led_color, linear RGB; tower: the observed photo-t5 blue, an inferred
+        // default of a programmable array, manifest.json#tower): the wave then modulates the level only; GLOW.led.color tints it
+        const lc = m.userData.led_color; if (Array.isArray(lc) && lc.length === 3) col = vec3(+lc[0], +lc[1], +lc[2]).mul(G.color);
       }
       if (kind === 'beacon' || kind === 'cab') lvl = float(1.0);
       // soft cap (lamp units): k x lvl -> cap x (1 - exp(-k x lvl / cap)) ~ k x lvl below ~cap / 3; the beacon is a lamp

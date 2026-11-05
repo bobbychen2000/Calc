@@ -16,10 +16,11 @@ rim 64.0, 221 ft at the mast tips). The sheets draw both and prefer neither; bui
 writes tower.glb (F1) and tower_f2.glb (F2) and the manifest says that the choice is open.
 
 Level of detail (one geometry generator, three tessellations; LOD0 is the close-up asset):
-  LOD0  272 helical columns (4 per cladding joint), half-panel rows, recessed slots with glazed panes, dark seam joints,
-        24 frameless cab panes with light joints, ribbon mullions, roof masts / poles / obstruction light, base-building
+  LOD0  272 helical columns (4 per cladding joint), half-panel rows, recessed slots (perforated screens, glazed lowest
+        panes), dark seam joints, 24 frameless cab panes with slim dark joints, cab interior (floor, consoles, shade band,
+        ceiling), ribbon mullions, roof masts / poles / obstruction light, base-building
         mullions, parapet coping, railings, rooftop unit, sunken roof garden;
-  LOD1  136 columns, panel rows, flat slots, dark seam joints, 24-facet cab, 15 whips, red light, plain base building;
+  LOD1  136 columns, panel rows, flat slots (screen tone), dark seam joints, 24-facet cab, 15 whips, red light, plain base building;
   LOD2  68 columns, every second panel row, flat slots, 12-facet cab, 15 whips (3-sided), red light, base building as a
         box (phone / far).
 Cladding joints (helical and row) are a base-colour + normal tile on UV0 (tools/blender/tower_tex.py), 4 x 2 panels per
@@ -51,12 +52,23 @@ RIB_W0, RIB_W1 = T['ribbon_width']['value']           # 3.2 -> 6.8 m [obs, low]
 RIB_ROWS = 25                                         # ribbon rows [obs photos t3 / t4: ~25] (draw_blades)
 RIB_INSET = 1.0                                       # ribbon face 1 m inside the round-body radius (draw_tower.rib_shift)
 SLOT_DEPTH = 0.25                                     # slot recess depth [inf: photos show dark recessed slots; depth unknown]
+SCREEN_INSET = 0.06                                   # perforated slot screen behind the cladding face [obs photo t4: a
+                                                      # perforated (dot-grid) screen fills every slot above its glazed lowest
+                                                      # pane, with a thin reveal; inset inf] (review round 2, finding 1)
 PARAPET = DT.PARAPET                                  # 0.7 m: base-building parapet above its roof (spec photo_constraint, assumed)
 PARAPET_T = 0.30                                      # parapet / coping thickness [inf]
 CAB_PANES = 24                                        # cab glass panes [pub ENR: 24 panels 6 ft x 11 ft]; ring 360 deg [inf]
 ROOF_DROP = 0.30                                      # cab roof deck below the rim coping [inf]
 COPING_W = 0.15                                       # cab-roof rim coping width [inf: photos show a thin top rim]
 CURB_R, CURB_H = 4.75, 0.30                           # cab-roof inner curb ring [inf from NAIP / Google top-view rims r 4.5-5 obs]
+# cab interior (review round 2, findings 2 / 3): seen through the glass and from the app's tower view
+SHADE_F = 0.62                                        # dark band inside the glass head from 0.62 of the glass slant to the
+SHADE_OFF = 0.12                                      # head, 0.12 m inside the glass [obs photo t1 (near-level view): a dark
+                                                      # band over the top ~0.35-0.4 of the glass all round, sky through the
+                                                      # middle, dark consoles below; nature inf (sun shades / valance)]
+CONSOLE_H, CONSOLE_D, CONSOLE_GAP = 0.9, 0.8, 0.25   # controller console ring: height, depth, gap to the glass sill [unknown]
+JOINT_W = 0.03                                        # cab pane butt joint (silicone + glass edges) width [inf; the spec
+                                                      # cab_glass_type 'frameless butt-glazed' [pub]; photo t2: thin dark lines]
 RAIL_H = 1.07                                         # guard rails, 42 in [inf: OSHA 1910.29 top-rail height]
 RED_LIGHT_BRG = 225.0                                 # red obstruction light on the cab-roof rim, SW side [obs photo t5 (Varnum
                                                       # 0463, dusk); bearing inf]; DOF lighting code R [pub]
@@ -483,7 +495,7 @@ class Tower:
                     elif L['recess']:
                         holes.setdefault(s['name'], []).append((k, A[i][2], ids))
                     else:
-                        part.f(ids, 'slot')
+                        part.f(ids, 'slot_screen')          # flat (LOD1 / LOD2): the screen tone (review round 2, finding 1)
                     i += 1; j += 1; continue
                 if j >= len(B) - 1 or (i < len(A) - 1 and A[i + 1][0] <= B[j + 1][0]):
                     part.f([A[i][1], B[j][1], A[i + 1][1]], cm); i += 1
@@ -496,29 +508,37 @@ class Tower:
         return part
 
     def slot_pockets(self, part, H, holes, slots, L):
-        """recessed slot pockets (LOD0): floor = the slot cells moved SLOT_DEPTH inwards, walls around the opening;
-        glazed pane in the lowest panel row of the NE-flank slots (draw_slots) [obs photos t3 / t4]."""
+        """recessed slot pockets (LOD0): floor = the slot cells moved SLOT_DEPTH inwards (dark void), walls around the
+        opening (the panel return), a perforated screen SCREEN_INSET behind the face over every cell [obs photo t4] except
+        the glazed lowest panel row of the NE-flank slots (draw_slots), which keeps its recessed pane [obs photos t3 / t4].
+        Review round 2, finding 1: the round-1 pockets were near-black (material 'slot', 52-64 sRGB, and the pocket's own
+        shadow), so the slots read as black gashes (t2 display ratio slot / panel 0.1-0.3, photo 0.6-0.7)."""
         byname = {s['name']: s for s in slots}
         for name, cells in holes.items():
             s = byname[name]
-            vmap = {}
+            vmap, smap = {}, {}
 
-            def inner(vid):
-                if vid not in vmap:
+            def moved(vid, depth, cache):
+                if vid not in cache:
                     p = np.array(part.V[vid]); r = math.hypot(p[0], p[1])
-                    q = p.copy(); q[0:2] *= (r - SLOT_DEPTH) / r
-                    vmap[vid] = part.v(q, part.UV[vid])
-                return vmap[vid]
+                    q = p.copy(); q[0:2] *= (r - depth) / r
+                    cache[vid] = part.v(q, part.UV[vid])
+                return cache[vid]
+            inner = lambda vid: moved(vid, SLOT_DEPTH, vmap)
+            glazed = s['glazed'] and L['panes']
+            g_top = DT.hf(DT.h2spec(s['h0'], self.f) + DT.ROW_PITCH, self.f) if glazed else -1e9
             edges = {}
             for k, j, ids in cells:
-                part.f([inner(i) for i in ids], 'slot')
+                part.f([inner(i) for i in ids], 'slot_pocket')
+                if H[k + 1] > g_top + 1e-3:                       # screen over every cell above the glazed row
+                    part.f([moved(i, SCREEN_INSET, smap) for i in ids], 'slot_screen')
                 for a, b in zip(ids, ids[1:] + ids[:1]):
                     edges[(a, b)] = edges.get((a, b), 0) + 1
             # boundary edges = edges whose reverse is not in the set -> walls
             for (a, b) in list(edges):
                 if (b, a) in edges: continue
-                part.f([b, inner(b), inner(a), a], 'slot')       # faces into the pocket (audited: tower3d_verify.orientation)
-            if s['glazed'] and L['panes']:
+                part.f([b, inner(b), inner(a), a], 'slot_reveal')   # faces into the pocket (audited: tower3d_verify.orientation)
+            if glazed:
                 self.slot_pane(part, s)
 
     def slot_pane(self, part, s):
@@ -726,17 +746,21 @@ class Tower:
     # ---------------------------------------------------------------- cab
     def cab_parts(self, L):
         part = Part('cab', dict(
-            src='inf', feature='cab on its inferred centre (1.5 E, 1.0 N of the axis): dark plinth ring, floor, inverted-cone '
-            'roof fascia, roof deck with rim coping and inner curb, ceiling (interior dark)',
+            src='inf', feature='cab on its inferred centre (1.5 E, 1.0 N of the axis): dark plinth ring, inverted-cone roof fascia, '
+            'roof deck with rim coping and inner curb; interior: floor, console ring, dark shade band inside the glass head, '
+            'ceiling (mid-dark tones, review round 2)',
             spec=['d_cab_roof', 'd_cab_glass_top', 'd_cab_glass_bottom', 'cab_roof_fascia_height', 'h_roof_top',
                   'h_cab_glass_top', 'h_cab_glass_bottom', 'h_cab_floor', 'position_cab_roof_centre', 'cab_offset'],
             drawing='BT-02, BT-03 (cab_outline, plinth)',
             tags=dict(diameters='inf (family D; measured 14.3 +-1.0 / EXIF 14.75 +-0.5 obs)', plinth='obs photo t1',
-                      centre='inf', roof_curb='inf (NAIP rims obs)', interior='unknown (dark placeholder floor / ceiling)'),
+                      centre='inf', roof_curb='inf (NAIP rims obs)',
+                      interior='unknown: floor, console ring (0.9 m high, 0.8 m deep) and ceiling are neutral placeholders in '
+                      'mid-dark tones; shade band inside the glass head obs photo t1 (dark top ~0.35-0.4 of the glass), nature inf'),
             anchors=dict(cab_floor_h=self.floor_h, eye_h=self.floor_h + 1.6)), smooth=True)
         glass = Part('cab_glass', dict(
-            src='inf', feature=f'cab glass: {L["cab_n"]} flat frameless panes leaning out, full ring; light butt joints (LOD0); '
-            'tinted, see-through (alpha 0.5: the far-side panes and the sky show through, photos t1 / t2)',
+            src='inf', feature=f'cab glass: {L["cab_n"]} flat frameless panes leaning out, full ring; slim dark butt joints (LOD0, '
+            f'{JOINT_W} m); tinted, see-through (alpha blend: the far-side panes and the sky show through in a level view, photo t1; '
+            'from below the dark interior reads through it, photos t2 / t3)',
             spec=['cab_glass_panels', 'cab_glass_slope', 'cab_glass_type', 'cab_view_angle'], drawing='BT-02, BT-03',
             tags=dict(panes='pub ENR 24 x 6 ft x 11 ft (slant 3.32 m here = 10.9 ft)', arc='inf: glass on both sides in photos '
                       't2/t3/t4; 220/235/270 deg published as view / column-free angles (conflict)', phase='unknown')),
@@ -746,14 +770,23 @@ class Tower:
         # plinth ring: deck -> sill [obs photo t1]; top ledge to the glass sill
         lathe(part, [(self.plinth_r, self.deck_h - 0.05), (self.plinth_r, self.sill_h), (gb[0], self.sill_h), (gb[0], self.floor_h)],
               CAB, n, 'plinth', uv_u=n / 4, uv_v=1.0)        # outer face, sill ledge, inner face down to the cab floor
-        disc(part, CAB, gb[0], self.floor_h, n, 'cab_interior', up=True)
+        disc(part, CAB, gb[0], self.floor_h, n, 'cab_floor', up=True)
         if L['ibf'] != 'box':
-            # controller consoles: a dark ring 0.9 m high, 0.8 m deep inside the glass [unknown: placeholder only; 13 positions
-            # (snippet, unverified); photos t1 / t2 show a dark lower band behind the glass]
-            rc = gb[0] - 0.25
-            lathe(part, [(rc, self.floor_h), (rc, self.floor_h + 0.9), (rc - 0.8, self.floor_h + 0.9), (rc - 0.8, self.floor_h)],
-                  CAB, max(24, n // 2), 'cab_interior', uv_u=24, uv_v=1.0)
-        disc(part, CAB, gt[0], gt[1] - 0.01, n, 'cab_interior', up=False)
+            # controller consoles: a ring CONSOLE_H high, CONSOLE_D deep inside the glass [unknown: placeholder only; 13 positions
+            # (snippet, unverified); photo t1 shows a dark lower band behind the glass]; neutral grey (review round 2, finding 3:
+            # the tower view's lower ~45 % was a black void)
+            rc = gb[0] - CONSOLE_GAP
+            lathe(part, [(rc, self.floor_h), (rc, self.floor_h + CONSOLE_H), (rc - CONSOLE_D, self.floor_h + CONSOLE_H),
+                         (rc - CONSOLE_D, self.floor_h)], CAB, max(24, n // 2), 'cab_console', uv_u=24, uv_v=1.0)
+        # shade band inside the glass head [obs t1: dark top band; nature inf]: a band parallel to the glass, SHADE_OFF inside it,
+        # from SHADE_F of the glass slant to the head; seen from outside (faces out) and from the cab (faces in). From photo-t2
+        # angles (12 deg below the rim) the far side's band hides the sky that the round-1 cab showed through the lower third
+        # of the glass (review round 2, finding 2)
+        hs = gb[1] + SHADE_F * (gt[1] - gb[1]); rs_ = gb[0] + SHADE_F * (gt[0] - gb[0])
+        sh_prof = [(rs_ - SHADE_OFF, hs), (gt[0] - SHADE_OFF, gt[1] - 0.012)]
+        lathe(part, sh_prof, CAB, n, 'cab_shade', uv_u=n / 4, uv_v=1.0, outward=True)
+        lathe(part, [(r - 0.01, h) for r, h in sh_prof], CAB, n, 'cab_shade', uv_u=n / 4, uv_v=1.0, outward=False)
+        disc(part, CAB, gt[0], gt[1] - 0.01, n, 'cab_ceiling', up=False)
         # roof fascia (inverted cone) glass head -> rim, coping, inner face, deck, curb
         rf = rim[0]
         # fascia: ~32 radial joints [obs t1/t2] = 8 cladding tiles around; v kept inside one panel row (no row joint seen)
@@ -790,7 +823,7 @@ class Tower:
                 tang = np.array([math.cos(math.radians(b)), -math.sin(math.radians(b)), 0.0])
                 rad = np.cross(ax / np.linalg.norm(ax), tang)
                 if np.dot(rad[0:2], bvec(b)) < 0: rad = -rad
-                box(glass, c + rad * 0.01, ax, tang * 0.03, rad * 0.015, 'cab_joint')
+                box(glass, c + rad * 0.01, ax, tang * (JOINT_W / 2), rad * 0.015, 'cab_joint')
         return part, glass
 
     # ---------------------------------------------------------------- roof masts, poles, red light
