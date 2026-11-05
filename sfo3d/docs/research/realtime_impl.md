@@ -756,17 +756,22 @@ engine's phase, not the label.
    the stop is in reach (`updatePark`, inferred: an aircraft at a contact stand is where its bridge reaches).
 3. **Silent docking** (v3, v4). Already at the stop (±3 m along, < 3 m lateral, < 15° off): docked there (`path.here`).
    Dead reckoning of an arrival stops at the stop mark of the contact stand whose lead-in it is on (`drStand`), with or
-   without a dock / stand. The drive is checked against every aircraft drawn on the ground (planforms every 3 m, 1 m
+   without a dock / stand. The drive is checked against every aircraft drawn on the ground (planforms every 3 m, no
    margin, `driveConflict`); a conflict refuses the docking, one that appears later holds the drive (`silentHold`).
 4. **Ghost ahead** (v1). A silent occupant is removed ahead of an arrival only when the arrival is on that stand's
    lead-in close to the stop (`onLeadInClose`) and SFO's plan says the occupant has gone (`stalePlanGone`: actual
    block-out past, all its stand windows there ended, or the stand allocated to the arrival now with no window of the
-   occupant there).
+   occupant there). Without that evidence the occupant stays drawn and only its bridge starts back, at the sheet's maximum
+   rates (`retractAhead`, event `bridge-ahead`); it docks again AHEAD_HOLD_MS (90 s) after the arrival was last seen on that
+   lead-in — so a ghost that GroundPhysics removes when the arrival really drives in leaves no extended bridge behind.
 5. **Stand rules** (v5). `excl_types` no longer block or remove (contradicted by the recording); they steer a silent
    docking's geometric candidates only and are logged (`excl-type-conflict`). `types_ok` accepts a smaller member of a
    listed type's stop-point family (`typesOkHas`: B38M under B39M). Refused SFO allocations are logged
    (`sfo-stand-refused`).
-6. **Minors.** Early-undock 'silent' cancel only after XPDR_OFF_MS of silence, without blocking the next signal (v6); the
-   first ground report below 8 kt has no velocity until a chord gives the direction (v8); the tow pivot only while the
-   push-back phase or TOW_MS after it (v9); a re-placement waits for its bridges only while the data is within
-   CUT_HOLD_M (v9).
+6. **Other physical guards found on the replay.** A parked aircraft at a nose-in contact stand cannot move forward past its
+   stop mark: such a 'motion' is a GNSS jump (`intoTerminal`). A ground body dead-reckoned through a gap (> 10 s) that the
+   next report puts ≥ 25 m behind or beside it is re-placed with a fade instead of being driven back in a U-turn (SFO only,
+   `drOvershoot`). The first reports of a track below 8 kt carry no velocity until one gives a chord (v8).
+7. **Minors.** Early-undock 'silent' cancel only after XPDR_OFF_MS of silence, without blocking the next signal (v6); the
+   tow pivot only while the push-back phase or TOW_MS after it (v9); a re-placement waits for its bridges only while the
+   data is within CUT_HOLD_M (v9).

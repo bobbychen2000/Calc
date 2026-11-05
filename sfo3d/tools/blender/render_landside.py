@@ -269,7 +269,7 @@ def persp(name, cam_xz, cam_h, tgt_xz, tgt_h, lens, res, sun, photo=None):
     sun_sky(*sun)
     camera('cam_' + name, Wxz(*cam_xz, cam_h), Wxz(*tgt_xz, tgt_h), lens=lens, res=res)
     pr = render(os.path.join(OUT, f'landside_{name}.png'))
-    cmp_p = side_by_side(pr, os.path.join(REF, photo + '.jpg'), f'landside_cmp_{name}.png') if photo else None
+    cmp_p = side_by_side(pr, os.path.join(REF, photo + '.jpg'), f'landside_cmp_{name}{SUFFIX}.png') if photo else None
     return dict(render=pr, compare=cmp_p)
 
 
@@ -277,7 +277,8 @@ def view_l4(args):
     """Grand Hyatt east face from the airfield (photo l4 = 7391, long lens ~243 mm equivalent, from the east)."""
     mr = LB['grand_hyatt']['footprint']['min_rect']; c = np.array(mr['centre'])
     ax = hdg_vec(mr['long_side_heading_deg']); e = np.array([ax[1], -ax[0]]); e = e if e[0] > 0 else -e
-    return persp('l4', c + e * 620 + ax * 10, 6.0, c + ax * 5, 22.0, 220.0, (960, 640), (160.0, 55.0), 'l4')
+    # lens 176 (r1: at 220 the facade came out 1.25 x the photo's, roof-to-base 430 vs 345 px at 960 px width)
+    return persp('l4', c + e * 620 + ax * 10, 6.0, c + ax * 5, 22.0, 176.0, (960, 640), (160.0, 55.0), 'l4')
 
 
 def view_l1(args):
@@ -288,8 +289,9 @@ def view_l1(args):
     import landside_airtrain as AT
     import landside_geom as LG
     eye = AT.NET_LEVEL + LG.WALKWAY_H + 1.6
-    p0 = G['c'] + a * (Lb - L / 2 + 30.5) - b * 16.5
-    return persp('l1', p0, eye, G['c'] + a * (Lb - L / 2 - 20) - b * 15.0, eye + 6.5, 27.0, (960, 720), (150.0, 50.0), 'l1')
+    # b -14.6: on the walkway deck between the tracks, beside the north track (r1: -16.5 stood over the crossover strip)
+    p0 = G['c'] + a * (Lb - L / 2 + 30.5) - b * 14.6
+    return persp('l1', p0, eye, G['c'] + a * (Lb - L / 2 - 20) - b * 14.0, eye + 6.5, 27.0, (960, 720), (150.0, 50.0), 'l1')
 
 
 def view_l5(args):
@@ -305,8 +307,15 @@ def view_l5(args):
 
 
 def view_i2(args):
-    """Garages A / G from the AirTrain west of them, looking east to the ITB (photo i2, approximate camera)."""
-    return persp('i2', (-1735.0, 440.0), 24.0, (-1300.0, 430.0), 20.0, 27.0, (960, 720), (200.0, 55.0), 'i2')
+    """Garages A / G from the AirTrain west of them, looking east to the ITB (photo i2, 2014). Camera solved from four bearings
+    (ITB roof centre -88 px, the old tower cab +80 px, the Garage A drum centre +816 px, Garage A NE corner +304 px; f 1442 px on
+    1920) with the camera held on the guideway east edge: (-1721.1, 476.0), yaw 79.1 deg, residuals <= 1.3 deg; eye = deck 19.22
+    + 2.4 m (train window); pitch -1.05 deg puts the Garage A drum ring (39.6 [unk]) at the photo's drum top (y 564 of 1440).
+    Render with --itb (the ITB is the photo's centre)."""
+    import math as _m
+    cam = (-1721.1, 476.0); yaw = _m.radians(79.1); eye = 19.22 + 2.4; D_ = 300.0
+    tgt = (cam[0] + D_ * _m.sin(yaw), cam[1] - D_ * _m.cos(yaw))
+    return persp('i2', cam, eye, tgt, eye - D_ * _m.tan(_m.radians(1.05)), 27.0, (960, 720), (200.0, 55.0), 'i2')
 
 
 def view_bart(args):
@@ -332,7 +341,7 @@ def view_cg_top(args):
         im = Image.fromarray(np.ascontiguousarray(np.asarray(A[r0:r0 + n, c0:c0 + n])[:, :, ::-1])).resize((900, 900))
         a_ = Image.open(pr).convert('RGB')
         out = Image.new('RGB', (1806, 900), (255, 255, 255)); out.paste(im, (0, 0)); out.paste(a_, (906, 0))
-        cmp_p = os.path.join(OUT, 'landside_cmp_cg_top.png'); out.save(cmp_p)
+        cmp_p = os.path.join(OUT, f'landside_cmp_cg_top{SUFFIX}.png'); out.save(cmp_p)
     except Exception as e:  # noqa: BLE001
         log('NAIP compare failed', e)
     return dict(render=pr, compare=cmp_p)

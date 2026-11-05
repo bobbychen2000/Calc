@@ -272,10 +272,11 @@ def run(path):
         C.add('BART station: top <= AirTrain deck bottom (carries the guideway)', float(H(Pb).max()), AT.NET_LEVEL - AT.DECK_T, ok=float(H(Pb).max()) <= AT.NET_LEVEL - AT.DECK_T + 0.01,
               src='inf (photo a2)')
         gl = allP(L0n(k, 'bart_body'), 'glass_bart')
-        C.add('BART station: glazed band bottom (photo a2 ratio)', float(H(gl).min()) if len(gl) else -1, R1['bart']['levels']['band'][0], 0.05, 'photo a2 [inf]')
-        nb = NAIPline = LineString(R1['bart']['north'])
-        C.add('BART station: north face vs the NAIP 2024 shadow line (max distance of the OSM north edge)',
-              max(nb.distance(Point(x, z)) for x, z in osm.exterior.coords if nb.distance(Point(x, z)) < 8.0), 0.0, 2.0, 'NAIP obs vs OSM')
+        C.add('BART station: glazed band top below the body top (photo a2 ratio; r1: follows the level field)',
+              float(H(Pb).max() - H(gl).max()) if len(gl) else -1, LG.BART_BAND_UP, 0.05, 'photo a2 [obs, low]')
+        nb = LineString(R1['bart']['north'])
+        ds = [osm.exterior.distance(nb.interpolate(t)) for t in np.arange(0.0, nb.length, 5.0)]
+        C.add('BART station: OSM north face vs the NAIP 2024 north wall line (max distance along the line)', float(max(ds)), 0.0, 2.5, 'NAIP pick +-2 m (relief estimate) combined with OSM +-1 m')
     at0 = {nm: m for nm, m in S.items() if (m['bldg'] or '').startswith('airtrain') and m['lod'] == 0}
     vr = allP([m for nm, m in at0.items() if nm.endswith('_deck')], 'vault_roof')
     if len(vr):
@@ -445,6 +446,14 @@ def run(path):
         Pd = allP(decks, 'guideway_deck')
         fpd = footprint(decks, mats=['guideway_deck'])
         C.add('AirTrain: deck outside the SFO Museum polygon', fpd.difference(rail.buffer(0.3)).area, 0.0, 5.0, 'BL-01 / BL-02 guideway polygon', 'm2')
+        # r1: the walkway deck between the tracks east of the Garage A block: inside the SFO Museum Garage A outline tail
+        fpw = footprint(decks, mats=['walkway'])
+        if not fpw.is_empty:
+            import landside_geom as LG_
+            tail = LG_.ga_tail_walk()
+            C.add('AirTrain: inter-track walkway outside the SFO Museum Garage A outline tail (r1, photo l1)', fpw.difference(tail.buffer(0.3)).area, 0.0, 2.0,
+                  'SFO Museum Garage A outline [obs]', 'm2')
+            C.add('AirTrain: inter-track walkway area vs the tail between the tracks', fpw.area, tail.area, 0.03 * tail.area, 'SFO Museum [obs]', 'm2')
         for kk, v in AT.STATIONS.items():
             if v[1] is None or v[4] is None: continue
             Pst = AT.ST_POLY[kk]

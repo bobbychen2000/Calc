@@ -348,6 +348,46 @@ def guide_beams(mb, F, poly_w, lev, seg=4.0, lod=0, rails=None):
                                [(0, 0), (1, 0), (1, 0.1), (0, 0.1)])
 
 
+def inter_walk(mb, rails, F, lev, walk_w, lod=0):
+    """walkway deck between two single-track decks (round 1, photo l1: the camera stands on a walkway between the tracks east of
+    the Garage A station block; plan = the SFO Museum Garage A outline tail between the track polygons [obs]): a solid strip
+    from the deck bottom to the walkway level (+WALKWAY_H, level with the trough-wall tops), down-facing soffit, handrails on
+    its long edges (LOD0: galvanised posts every 3 m, top + mid rail [obs l1; spacing inf])."""
+    from landside_mesh import tri_poly
+    walk_w = orient_all(walk_w.buffer(0))
+    if walk_w.is_empty: return 0.0
+    _strip(mb, F, lev, walk_w, -DECK_T, DECK_T + WALKWAY_H, 'guideway', top_mat='walkway', seg=4.0)
+    H = lambda X, Y: float(lev.h(*F.W(X, Y)))
+    Lp = F.poly(orient_all(shapely.segmentize(walk_w, 4.0)))
+    for p in polys(Lp):
+        if p.area < 0.2: continue
+        for t in tri_poly(p):
+            mb.face([(q[0], q[1], H(*q) - DECK_T) for q in t][::-1], 'guideway', [(q[0] / 4.0, q[1] / 4.0) for q in t][::-1])
+    if lod != 0 or rails is None: return float(walk_w.area)
+    for p in polys(walk_w):
+        if p.area < 4.0: continue
+        ring = np.array(p.exterior.coords)
+        for i in range(len(ring) - 1):
+            a, b = ring[i], ring[i + 1]
+            Ls = float(np.hypot(*(b - a)))
+            if Ls < 6.0: continue                      # long edges only (along the tracks)
+            ts = np.arange(0.3, Ls - 0.29, 3.0)
+            d = (b - a) / Ls; nrm = np.array([d[1], -d[0]])
+            pts = [a + d * t + nrm * 0.15 for t in ts] + [b - d * 0.3 + nrm * 0.15]
+            for q in pts:
+                X, Y = F.L(*q); h0 = H(X, Y) + WALKWAY_H
+                for dx, dy in ((0.03, 0.0), (0.0, 0.03)):
+                    rails.face([(X - dx, Y - dy, h0), (X + dx, Y + dy, h0), (X + dx, Y + dy, h0 + 1.07), (X - dx, Y - dy, h0 + 1.07)], 'handrail',
+                               [(0, 0), (1, 0), (1, 1), (0, 1)])
+            for j in range(len(pts) - 1):
+                A_ = F.L(*pts[j]); B_ = F.L(*pts[j + 1])
+                ha, hb = H(*A_) + WALKWAY_H, H(*B_) + WALKWAY_H
+                for zr in (1.07, 0.55):
+                    rails.face([(A_[0], A_[1], ha + zr - 0.05), (B_[0], B_[1], hb + zr - 0.05), (B_[0], B_[1], hb + zr), (A_[0], A_[1], ha + zr)],
+                               'handrail', [(0, 0), (1, 0), (1, 0.1), (0, 0.1)])
+    return float(walk_w.area)
+
+
 def pier(mb, F, site, lev, sides=10, cap_box=True):
     """single-column T-pier: column from grade to the cap, cap beam across the deck under its bottom."""
     x, z, w, d = site['x'], site['z'], site['w'], site['dir']
@@ -412,6 +452,14 @@ def station(mb, det, F, key, lev, lod=0, exclude=None):
     Lr, Wr = float(np.linalg.norm(e0)), float(np.linalg.norm(e1))
     ua, ub = e0 / Lr, e1 / Wr
     c0 = cs[0]
+    if key == 'RCC':
+        # the station polygon includes the stair-tower lobe; the canopy starts behind the tower (photo l5: open sky and the exit
+        # cabin beside the tower, the curved roof beyond it) [obs l5, low]: trim the roof rectangle at the tower's far side + 0.6 m
+        tu = float((np.array(RCC_TOWER['world']) - c0) @ ua); rt = RCC_TOWER['D'] / 2 + 0.6
+        if tu < Lr / 2:
+            cut_ = min(tu + rt, Lr - 6.0); c0 = c0 + ua * cut_; Lr -= cut_
+        else:
+            Lr = max(tu - rt, 6.0)
     loc = lambda u, v: F.L(*(c0 + ua * u + ub * v))
     zr0 = hz + ENCL_H
     if kind == 'vault':
@@ -574,13 +622,15 @@ def rcc_tower(mb, F, lod=0):
 
 
 # ------------------------------------------------------------------------------------------------ assembly
-def build(clip_world, building_outlines, Bldg, Part, dim, station_exclude=None):
+def build(clip_world, building_outlines, Bldg, Part, dim, station_exclude=None, walks_world=None):
     """-> (list of Bldg tiles, info). clip_world: polygons where the guideway is NOT built (held by another asset / inside a
-    building body); building_outlines: polygons where no pier is placed (the guideway is carried by the building)."""
+    building body); building_outlines: polygons where no pier is placed (the guideway is carried by the building);
+    walks_world: walkway decks between the tracks (inter_walk, round 1)."""
     region = unary_union([RAIL] + [ST_POLY[k] for k in STATIONS])
     lev = Levels(region)
     clip = unary_union(clip_world) if clip_world else Polygon()
     rail_b = orient_all(RAIL.difference(clip).buffer(0))
+    walks = orient_all(unary_union(walks_world).difference(RAIL.buffer(0.05, join_style=2)).difference(clip).buffer(0)) if walks_world else None
     # skeleton -> pier sites
     sk = skeleton(lev.mask & ~_raster(lev, clip))
     rail_mask = _raster(lev, RAIL)
@@ -651,6 +701,11 @@ def build(clip_world, building_outlines, Bldg, Part, dim, station_exclude=None):
             if not part.is_empty:
                 guide_beams(trk0, F, part, lev, lod=0, rails=rails0)
                 guide_beams(trk1, F, part, lev, seg=8.0, lod=1)
+            if walks:
+                wk = orient_all(walks.intersection(box).buffer(0))
+                if not wk.is_empty and wk.area > 1.0:
+                    info['walkway_m2'] = round(info.get('walkway_m2', 0.0) + inter_walk(sh, rails0, F, lev, wk, 0), 1)
+                    inter_walk(coarse, None, F, lev, wk.simplify(0.6, preserve_topology=True), 2)
             n_p = 0
             for s in sites:
                 if not box.contains(Point(s['x'], s['z'])): continue

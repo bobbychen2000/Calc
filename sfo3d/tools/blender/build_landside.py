@@ -66,6 +66,8 @@ MATS = {
                            src='pub FAA DOF 06-001451 lighting R (red obstruction light at the 135-ft point); fixture inf'),
     'deck_plain':     dict(rgb=(228, 228, 224), m=0.0, r=0.88, naip='deck_plain', src='obs NAIP 2024 (central-garage roof lobes without stall marks: median colour)'),
     'deck_rim':       dict(rgb=(196, 178, 146), m=0.0, r=0.90, naip='deck_rim', src='obs NAIP 2024 (beige rims / curbs round the roof lobes: median colour); nature unk'),
+    'void_floor':     dict(rgb=(170, 172, 170), m=0.0, r=0.90, tex='ls_c_deck', naip='void_floor', src='obs NAIP 2024 (central-garage void floor, sunlit north half: median colour); stall lines inf'),
+    'cg_box_roof':    dict(rgb=(140, 140, 138), m=0.0, r=0.85, naip='box_roof', src='obs NAIP 2024 (central-garage rooftop stair / plant box roofs: median colour)'),
     'bart_panel':     dict(rgb=(226, 226, 220), m=0.0, r=0.70, nrm=('ls_n_precast', 0.5), src='obs photo a2 (white panelled BART station body); material inf'),
     'glass_bart':     dict(rgb=(255, 255, 255), m=0.0, r=0.08, ior=1.9, tex='ls_c_glassbart', src='obs photo a2 (green glazed band of the BART station)'),
     'vault_roof':     dict(rgb=(236, 238, 238), m=0.50, r=0.35, double=True, src='obs NAIP 2024 / photo a2 (white curved roof over the Garage G / BART AirTrain station)'),
@@ -173,6 +175,14 @@ def naip_colours(bldgs):
             Pz = shapely.union_all([Polygon(q).buffer(-0.6) for q in rf[key]])
             s_ = sample(affinity.translate(Pz, *sh), step=1.0) if not Pz.is_empty else None
             if s_ is not None and len(s_) > 20: out[nm + '.central_garage'] = dict(rgb=np.median(s_, 0).round().astype(int).tolist(), n=len(s_), shift=sh)
+        # rooftop boxes (roof shift of the deck) and the void floor at grade (no relief shift; sunlit north half, r < 24 m)
+        Pb = shapely.union_all([shapely.box(*bx['rect']).buffer(-1.0) for bx in rf['boxes']])
+        s_ = sample(affinity.translate(Pb, *sh), step=1.0) if not Pb.is_empty else None
+        if s_ is not None and len(s_) > 20: out['box_roof.central_garage'] = dict(rgb=np.median(s_, 0).round().astype(int).tolist(), n=len(s_), shift=sh)
+        vc_ = (-930.8, 275.5)
+        Pv = shapely.Point(*vc_).buffer(24.0).intersection(shapely.box(vc_[0] - 30, vc_[1] - 30, vc_[0] + 30, vc_[1] - 4))
+        s_ = sample(Pv, step=1.0)
+        if s_ is not None and len(s_) > 20: out['void_floor.central_garage'] = dict(rgb=np.median(s_, 0).round().astype(int).tolist(), n=len(s_), shift=[0.0, 0.0])
     if 'superbay' in by:
         b = by['superbay']; sh = (-7.0, -7.5)
         a0, s0_, s1_, a1 = b.anchors['a']; T_ = b.anchors['t'][1]

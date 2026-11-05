@@ -7,7 +7,7 @@ Orientation: the measured 'car_row_axis_heading_deg' is the long axis of the det
 dominate, see landside_naip_measure.py) -> the car axis. 90-degree stalls on 18.6-m modules (landside_geom.car_layout)
 except the Rental Car Center (nose-to-tail ready-return lanes [obs NAIP]). Which stalls are taken is random (seeded):
 NAIP gives counts and axes, not positions [inf] - except the central garage (round 1): its dark / coloured cars stand at their
-NAIP 2024 blob positions (landside_r1_obs.json cg_roof.cars [obs]), white / silver ones are added next to them by fleet share. Colours: US fleet shares, white 25 / black 22 / grey 19 / silver 12 /
+NAIP 2024 blob positions (landside_r1_obs.json cg_roof.cars [obs]; blob colours un-mixed against the deck, deck['unmix']), white / silver ones are added next to them by fleet share. Colours: US fleet shares, white 25 / black 22 / grey 19 / silver 12 /
 blue 10 / red 9 / other 3 % (industry surveys) [inf]; shapes 60 % sedan / 40 % SUV [inf].
 """
 import math
@@ -89,11 +89,20 @@ def place_positions(deck, F, layout_fn, seed=0):
     def free(x, y, r=2.35):
         return all((x - qx) ** 2 + (y - qy) ** 2 >= r * r for qx, qy in pts)
     dropped = 0
-    for x, y, yaw, rgb in deck['positions']:
+    um = None
+    if deck.get('unmix'):
+        # un-mix each blob against the deck (car share alpha), then remove the common blue cast of dark roofs / glass under the
+        # sky (median blue excess over all blobs) before choosing the nearest fleet colour [inf]
+        dk, al = np.asarray(deck['unmix'][0], float), deck['unmix'][1]
+        um = np.clip(dk + (np.array([p_[3] for p_ in deck['positions']], float) - dk) / al, 0, 255)
+        um[:, 2] = np.clip(um[:, 2] - float(np.median(np.maximum(um[:, 2] - um[:, :2].max(1), 0.0))), 0, 255)
+    for ip, (x, y, yaw, rgb) in enumerate(deck['positions']):
         ok = inner.contains(Point(x, y)) and (excl is None or not excl.intersects(Point(x, y).buffer(1.2))) and free(x, y)
         if not ok:
             dropped += 1; continue
         pts.append((x, y))
+        if um is not None:
+            rgb = um[ip]
         cars.append((x, y, deck['z'] + 0.01, yaw, int(rng.choice(len(SHAPES), p=sw)), nearest_colour(rgb)))
     n_obs = len(cars)
     n_extra = int(round(deck.get('extra_share', 0.0) * n_obs))

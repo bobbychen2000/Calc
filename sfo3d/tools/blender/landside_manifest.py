@@ -29,29 +29,36 @@ REVIEW_R1 = [
     dict(n=1, item='Garage A station block', disposition='fixed (block); conflict raised (garage deck)',
          change='separate low block over the tracks: top 12.0 m above the guideway deck (l1: 11.1 m above the walkway), two long slots at +7.4 m '
                 '(none over the central pier), open hall under its soffit over both tracks and to the south on round columns; >= 27 m deep '
-                '(l1 sightline; 30 m drawn); the curved NE garage end next to it stays at the drum ring [unk, BL-03]',
+                '(l1 sightline; 30 m drawn), its east face one precast wall from grade to the top with the two track portals; the walkway deck '
+                'between the tracks east of the block (SFO Museum Garage A outline tail between the track polygons [obs], photo l1: the '
+                'camera stands on it); the curved NE garage end next to it stays at the drum ring [unk, BL-03]',
          open='photo l1 puts the curved NE garage parapet ~12.9 m above the deck (~32.7 m), not the 39.6-m ring [obs, low]: the garage '
               'deck / ring conflict goes to the drawings group (BL-03 is the reference; not changed here)'),
     dict(n=2, item='Garages A / G drums, screens, towers', disposition='fixed',
          change='drums in smooth light metal panels with five long horizontal slots and an open top band, recessed 0.8 m (i2 heights); '
                 'screens as full-bay perforated panels between thin mullions covering the lower 62 % of each level (l1); white precast '
                 'stair / elevator towers with small square windows at both ends of each drum (NAIP boxes at the outline notches, top '
-                'ring + 3.0 m [obs i2, low])'),
+                'ring + 3.0 m [obs i2, low]); screen panels also on edges <= 4 m (curved ends); i2 comparison with a solved camera (four '
+                'bearings, on the guideway east edge, residuals <= 1.3 deg)'),
     dict(n=3, item='SFO BART station / Garage G station roof', disposition='fixed (station); approach not modelled (reason given)',
          change='new node bart_station: plan = OSM way 221663595 (ODbL) checked against the NAIP 2024 north wall line; open ground '
-                'storey (OSM min_height 4) on columns, white panels, green glazed band (a2 ratios), top carrying the AirTrain deck; the '
+                'storey (OSM min_height 4) on columns, white panels, green glazed band 3.9 m tall 1.6 m below the top, following the level '
+                'field (a2 proportions), top carrying the AirTrain deck; the '
                 'Garage G AirTrain station roof is now a white barrel vault over platform and tracks (NAIP white roof, a2)',
          open='the three-track approach shares the corridor the SFO Museum AirTrain polygon covers (x -1920..-1592) and continues 2+ km '
               'west to the wye: not separated / not modelled; the spec / sheet item is requested from the drawings group'),
     dict(n=4, item='Central garage roof', disposition='fixed',
          change='NAIP-traced beige rims (0.15 m, nature unk) and stall-free lobes (own material), 11 rooftop stair / elevator / plant '
-                'boxes (NAIP plan, heights inf), the void ring as a helix (level lines rising one pitch per turn), 216 cars at their '
-                'NAIP 2024 positions + 127 white / silver ones next to them by fleet share'),
+                'boxes (NAIP plan and roof colour, heights inf), the stall-free helix ring road round the void (r 43.5 m [obs NAIP]), the void '
+                'wall as a helix (level lines rising one pitch per turn), the void floor at grade with stall marks [obs NAIP], 216 cars at '
+                'their NAIP 2024 positions (blob colours un-mixed against the deck, blue sky cast removed) + 127 white / silver ones next to '
+                'them by fleet share'),
     dict(n=5, item='l5 comparison', disposition='fixed (camera solved, comparison redone)',
          change='camera solved from the tower width, the guideway vanishing point and the horizon: with the BL-02 tower D 6.5 the camera '
                 'falls inside the RCC; the SFO Museum station polygon has the tower as a 4.7-m lobe 1.8 m west of the DOF point -> camera '
                 'on the east walkway 19.4 m from the tower; platform 8.0 m (DOF top 8.6 m above the eye); louvres every 0.2 m; raked '
-                'perforated hood (2.5 m rake, open top); twin tracks with running pads, guide rail and the walkway'),
+                'perforated hood (2.5 m rake, open top); twin tracks with running pads, guide rail and the walkway; the RCC canopy starts '
+                'behind the tower (l5: open sky and the exit cabin beside it)'),
     dict(n=6, item='AirTrain guideway section', disposition='fixed',
          change='trough walls 0.9 m (was 1.1), low guide rail 0.3 m (was a 0.8-m beam), concrete running pads, the twin-section walkway '
                 '+0.9 m with galvanised handrails (LOD0), weathered darker concrete (streak texture)'),
