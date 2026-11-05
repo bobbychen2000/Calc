@@ -312,6 +312,30 @@ penthouse steps, masts and framed bay.
   the Superbay fold amplitude and door leaves, the CAC cladding: placeholders / inferred, as tagged.
 - Guideway over the T1 / T2 / T3 terminal outlines (skybridge parts at Level 3 below it): check against the domestic asset.
 - KTX2 / meshopt (tools/engine/glb_compress.mjs) and the js/three loader are later steps.
+### Review round 1 (5 Nov 2026): what changed, and why
+
+Measurements the sheets do not carry yet are in `tools/blender/landside_r1_obs.json` (written by
+`tools/blender/landside_r1_measure.py`; NAIP 2024 plan positions / colours, OSM (ODbL) for the BART station, numbers read off
+photos l1 / i2 / l5 / a2, each with its tag). They are listed per finding in `manifest.json#landside.review_r1` and raised with
+the drawings group (end of this section).
+
+| # | Finding | Disposition | What the model does now (evidence) |
+|---|---|---|---|
+| 1 | Garage A station block was the full-height face with three stacked slots | fixed (block); conflict raised | A separate block over both tracks: top 12.0 m above the deck (l1: 11.1 m above the walkway, scaled from the 2.2-m platform-door cabin, +-15 %), two long slots at +7.4 m (none over the central pier), open hall under its soffit over the tracks and to the south on round columns, 30 m deep (l1 sightline: the sky above the block needs >= 27 m). The curved NE garage end beside it stays at the 39.6-m ring [unk, BL-03], although l1 puts its parapet ~12.9 m above the deck (~32.7 m): CONFLICT for the drawings group |
+| 2 | Drums / screens read as square punched panels; no stair towers | fixed | Drums: `drum_metal` (smooth light panels) with five long horizontal slots and an open top band, recessed 0.8 m (heights from i2, scaled from the drum width). Screens: full-bay perforated panels between thin mullions (4.05 m), covering the lower 62 % of each level with a dark strip above (l1). White precast stair / elevator towers (8 x 8 m [inf]) with a column of small square windows at both ends of each drum (NAIP bright boxes at the outline notches), top = ring + 3.0 m [obs i2, low] |
+| 3 | No SFO BART station; Garage G station roof flat | fixed (station); approach not modelled | New node `bart_station`: plan = OSM way 221663595 `train_station` (ODbL; its north edge within ~1.5 m of the NAIP 2024 shadow line), open ground storey on columns (OSM `min_height` 4, a2), white panels, green glazed band from 15.2 m (a2 ratios), the top carrying the AirTrain deck (follows the level field). The Garage G AirTrain station roof is a white barrel vault over platform and tracks (NAIP white roof, a2). The three-track approach shares the corridor the SFO Museum AirTrain polygon covers (x -1920..-1592) and continues 2+ km west to the wye: not separable from NAIP, listed as not modelled |
+| 4 | Central-garage roof: uniform stall field, 300 random cars, waffle void | fixed | NAIP-traced beige rims (0.15 m raised; nature unk) and stall-free lobes (own NAIP colour), 11 rooftop stair / elevator / plant boxes (NAIP plan +-2 m; heights inf), the void's level lines rise one pitch per turn (helix), 216 cars at their NAIP 2024 blob positions + 127 white / silver cars next to them (fleet share 37 %, not separable from the light deck) |
+| 5 | l5 camera 75 m off; claims not supported | fixed: camera solved, comparison redone | The tower subtends 350 px; with the BL-02 D 6.5 [inf] the solution falls inside the RCC; the SFO Museum station polygon has the tower as a 4.7-m round lobe 1.8 m west of the DOF point -> camera on the east walkway 19.4 m from the tower (yaw 185.5, pitch +4, 26-mm equivalent); the DOF top 8.6 m above the eye gives the platform 8.0 m [obs, low] (was 5.8 [inf]). Louvres every 0.2 m (were 0.6), raked perforated hood (2.5 m rake, open top, doubleSided skin), twin tracks with pads / guide rail / walkway |
+| 6 | Guideway: tall white trough, guide beam as a wall | fixed | Trough walls 0.9 m (were 1.1), guide rail 0.30 m (was 0.80), concrete running pads, the twin-section walkway (+0.9 m) with galvanised handrails (LOD0), weathered darker concrete (`ls_c_weather`) |
+| 7 | Hyatt re-entrant notch; grey-mint glass | fixed | The slab face behind the podium continues the outline's east face from its notch corner along the relief-corrected NAIP slab-roof edge (no return face); glass retinted (texture glass (30, 92, 140), photo mean (38, 113, 150)) |
+| 8 | Superbay two-tone roof, doors over the whole face | partly rejected, with evidence | l3 is the Superbay seen from the NW: the NNE end face (165 m, plain walls, the darker spine end under the hipped spine roof) on the left, the WNW door face (138 m, sawtooth fold eave, door leaves over its whole length) on the right - what the model has. NAIP 2024 at noon: one light colour on both cantilevers, medians (238, 238, 229) / (242, 242, 234): the grey-green / tan of l3 (~2008, low sun from the W) is the lighting of the two 11-deg roof planes. Doors stay [inf] |
+| 9 | Other hangars / cargo missing | listed | `manifest.json#landside.scene_not_modelled`: 26 large airport buildings outside every asset (OSM ODbL ways, centres, areas: United Buildings 84 / 15 / 68, United Cargo, the West Field cargo row, ...) for a later spec round |
+| 10 | Superbay red light not lit | fixed | Own material `red_light` with `extras.obstruction_light` (glowKind -> beacon), in LOD0 / 1 / 2 |
+| 11 | LOD2 differs from LOD0, guideway into blank walls | fixed | Garage LOD2: parapet recess, core, rooftop box, towers, drum slot bands, station block, portals with dark backs; Hyatt penthouse; MOC barrels to the crown; AirTrain LOD2 trough walls; LOD2 checks in `verify_landside.py`. LOD2 has no parked cars by design (>= 1500 m: sub-pixel; `deck_far` carries the NAIP deck + car mean) |
+
+**Requests to the drawings group** (the 3-D now carries these as `obs` / `osm` / `inf` round-1 items): the Garage A / G deck vs
+the drum ring (l1), the Garage A station block on BL-03, the SFO BART station as a spec item and sheet, the RCC tower D 4.7 /
+platform 8.0 (l5 solve), the drum towers, the central-garage roof rims / lobes / boxes.
 <!-- landside:end -->
 
 <!-- domestic:begin (tools/blender/build_domestic.py; numbers from out/buildings3d/domestic_verify.json / _verify_r1.json, 2026-11-05, review round 1) -->
@@ -342,7 +366,7 @@ flock out/.heavy.lock python3 tools/blender/render_domestic.py --views roof,c3c 
 | `tools/blender/dom_manifest.py` | Manifest entry (per-dimension tags, inferred / unknown / not modelled / conflicts, budgets, renders) |
 | `tools/blender/verify_domestic.py` | 60 checks against the sheets and the plausibility rules, measured on the exported mesh (top-surface probe) |
 | `tools/blender/render_domestic.py` | Cycles references of the exported glb (+ tower / ITB assets for context), AO and back-face QA modes |
-| `data/buildings3d/domestic.glb` (10.37 MB), `domestic_lod2.glb` (2.66 MB) | The asset; the LOD2 subtree alone for the far / phone tier |
+| `data/buildings3d/domestic.glb` (10.35 MB), `domestic_lod2.glb` (2.66 MB) | The asset; the LOD2 subtree alone for the far / phone tier |
 
 **Placement.** Root `domestic` at world (−896.5, 3.0, 336.5) (centre of the complex bbox, GROUND_Y). LOD0 / LOD1 hold one node
 per building and kind (`L<k>_<bld>_shell / _detail / _fins / _pv`, `extras.building` in T1, BA_B, BA_C, T2, C3C, BA_D, T3W, T3E,
@@ -374,11 +398,11 @@ that node (switch 380 / 1300 m). LOD2 is one joined node.
 
 | LOD | switch | triangles | draw calls | content |
 |---|---|---|---|---|
-| 0 | < 380 m | 70,193 | 147 | everything: mullion fins (~48k tris, own `_fins` nodes, `max_dist_m` 160), door surrounds, PV table boxes, units, canopy brackets, sign |
-| 1 | 380–1300 m | 21,635 | 114 | the LOD0 shell meshes and atlases; PV table tops only; no fins / frames |
-| 2 | > 1300 m | 21,455 | 20 | one joined node: the LOD0 outlines, wells, skylights, coping recess, units >= 15 m2, PV table tops, vestibules / notches / bulkheads (review r1: the phone tier sees it up close); reduced palette, own 1024 atlas; also `domestic_lod2.glb` |
+| 0 | < 380 m | 70,327 | 147 | everything: mullion fins (~48k tris, own `_fins` nodes, `max_dist_m` 160), door surrounds, PV table boxes, units, canopy brackets, sign |
+| 1 | 380–1300 m | 21,661 | 114 | the LOD0 shell meshes and atlases; PV table tops only; no fins / frames |
+| 2 | > 1300 m | 21,481 | 20 | one joined node: the LOD0 outlines, wells, skylights, coping recess, units >= 15 m2, PV table tops, vestibules / notches / bulkheads (review r1: the phone tier sees it up close); reduced palette, own 1024 atlas; also `domestic_lod2.glb` |
 
-Textures (PNG, embedded): AO atlases S (T1 / BA-B / BA-C / T2 / C3C) and N (BA-D / T3 / BA-E / BA-F) 2048² (1.36 / 1.33 MB, 8-bit
+Textures (PNG, embedded): AO atlases S (T1 / BA-B / BA-C / T2 / C3C) and N (BA-D / T3 / BA-E / BA-F) 2048² (1.35 / 1.31 MB, 8-bit
 greyscale), L2 1024² (0.47 MB); 48 spp, 10-m rays, ground plane, neighbours as occluders, white outside the islands; tiling
 normal maps 512² (membrane, panels, curtain, T3W window wall, corrugation, PV) and base colours 512² (4 curtain glasses, grey
 frit, green frit, T3W, PV, lobby glass) and the BA-B electrochromic tile 1024 x 256 (24 x 6 m, per-pane tint states, review r1) with its caps normal map, 1.5–24 kB each. Roofs: NAIP 2024 median per building; the white membranes saturate, so the base colour
@@ -415,9 +439,11 @@ T1 frit uncoated (F0 0.04, rougher: the ceramic frit dominates). Single-sided; n
   4.1-8.45 m: its floor is 5.15 m at the building end) and the facade crossing (~0.27 m² per bridge). LOD2 vs LOD0 (1-m top
   rasters): |dz| > 0.5 m over 11,866 -> **161 m²** (the units < 15 m² LOD2 leaves out), > 2.5 m 1,477 -> 0, the T3E / T3W strips
   roofed at PV height 92 / 110 cells -> 0; plan Hausdorff 8.19 -> **0.05 m**, symmetric difference 1,596 -> 0 m².
-- Back-face QA (Cycles, single-sided): 0 red pixels in bclose / d1 (LOD0) and plan (LOD2), roof 1 px (LOD0, LOD2); a1 49 px (LOD0)
-  / 128 px (LOD2) and eclose 85 px: the T1 – BA-A connector's walls on the ITB boundary are left to the ITB asset (seen open only
-  when the ITB is not loaded); c3c 467 px (LOD0): BACKFACE_C3C_NOTE.
+- Back-face QA (Cycles, single-sided, without the neighbouring assets): 0 red pixels in bclose / d1 (LOD0) and plan (LOD2), roof
+  1 px; a1 127 px (LOD0 and LOD2) and eclose 201 px: the T1 – BA-A connector (`T1_walk23`) whose walls along the ITB core
+  boundary are left to the ITB asset (seen open only when the ITB is not loaded; the pre-r1 QA counted 49 / 85 px there - the
+  connector's exposed walls are unchanged, 324.6 m² before and after the r1 occupancy change); c3c 259 px (LOD0, LOD2 258;
+  the pre-r1 asset 432 px in the same view): slits along the BA-E stepped section and the T3E penthouse base, pre-existing.
 - Render check (orthographic BA-B section, `domestic_render_check.json`, 0.1 m/px): band edges −0.13 / +0.17 m, heights +0.13 m
   (pixel); the outer WNW silhouette −1.6 m comes from the tip's end walls (t < −1236), not the typical stretch.
 

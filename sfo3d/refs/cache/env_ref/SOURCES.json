@@ -1,0 +1,27 @@
+{
+  "_about": "Reference photos for the environment adversarial LOOK review (round 1, 2026-11-05). Reference only (never textures). 960-px thumbnails from Wikimedia Commons; licences as stated on each Commons file page (read 2026-11-05).",
+  "files": {
+    "sfo_night_commons_960.jpg": {
+      "commons": "https://commons.wikimedia.org/wiki/File:San_Francisco_International_Airport_at_night.jpg",
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d6/San_Francisco_International_Airport_at_night.jpg/960px-San_Francisco_International_Airport_at_night.jpg",
+      "author": "Andrew Choy (Flickr druchoy), https://www.flickr.com/photos/druchoy/64148838",
+      "taken": "2005-11-16 23:02 local (EXIF)",
+      "licence": "CC BY-SA 2.0",
+      "use": "clear night, aerial: floodlit aprons vs dark airfield, landside sodium lighting"
+    },
+    "sfo_dusk_lights_fog_2016_960.jpg": {
+      "commons": "https://commons.wikimedia.org/wiki/File:San_Francisco_International_Airport_dusk,_lights,_fog_DSC_0674.jpg",
+      "author": "wbaiv (Bill Abbott), https://www.flickr.com/photos/9998127@N06/51953851754/",
+      "taken": "2016-05-03 19:57:30 PDT (EXIF); Nikon D40X 55 mm 1/5 s f/4.5 ISO 1600 (EV100 2.66); Sun el 0.0 deg (js/env/ephemeris.js)",
+      "licence": "CC BY 4.0",
+      "use": "dusk / blue hour from the bay: floodlight mast lamps, tower, fog bank over San Bruno Mountain"
+    },
+    "sfo_night_2023_960.jpg": {
+      "commons": "https://commons.wikimedia.org/wiki/File:San_Francisco_International_Airport_Night_2023.jpg",
+      "author": "Immanuelle (own work)",
+      "taken": "2023-08-11 21:05:43 PDT (EXIF); iPhone 11 Pro Max 1/49 s f/1.8 ISO 500 (EV100 4.99); Sun el -11.4 deg",
+      "licence": "CC BY-SA 4.0",
+      "use": "phone night exposure level (landside ITB facade; not airside)"
+    }
+  }
+}

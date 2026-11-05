@@ -3303,9 +3303,9 @@
  },
  "domestic": {
   "asset": "data/buildings3d/domestic.glb",
-  "bytes": 10372152,
-  "built": "2026-11-05T08:53:26+00:00",
-  "git": "40bc24f",
+  "bytes": 10353180,
+  "built": "2026-11-05T10:54:28+00:00",
+  "git": "238279d",
   "generator": "tools/blender/build_domestic.py (bpy 5.0.1, Cycles CPU AO bake); geometry tools/blender/dom_geom.py + dom_mesh.py; textures dom_tex.py",
   "reference": "2-D sheets BD-01..03 (docs/drawings/buildings/README.md), drawn by tools/buildings/draw_domestic.py, imported by dom_geom.py",
   "spec": "tools/buildings/spec_domestic.json (+ dom_bab_band.json, dom_baf_hub.json, dom_bab_roof.json; tools/blender/dom_pv.json)",
@@ -3368,8 +3368,8 @@
     "lod": 0,
     "node": "LOD0",
     "switch_m": 0.0,
-    "tris": 70193,
-    "verts": 146458,
+    "tris": 70327,
+    "verts": 146726,
     "draw_calls": 147,
     "ao_atlas": "dom_ao_S / dom_ao_N (shared by the LOD0 / LOD1 shell meshes)"
    },
@@ -3377,8 +3377,8 @@
     "lod": 1,
     "node": "LOD1",
     "switch_m": 380.0,
-    "tris": 21635,
-    "verts": 50979,
+    "tris": 21661,
+    "verts": 51031,
     "draw_calls": 114,
     "ao_atlas": "dom_ao_S / dom_ao_N (shared by the LOD0 / LOD1 shell meshes)"
    },
@@ -3386,8 +3386,8 @@
     "lod": 2,
     "node": "LOD2",
     "switch_m": 1300.0,
-    "tris": 21455,
-    "verts": 50583,
+    "tris": 21481,
+    "verts": 50635,
     "draw_calls": 20,
     "ao_atlas": "dom_ao_L2"
    }
@@ -3399,7 +3399,7 @@
   ],
   "lod2_glb": {
    "path": "data/buildings3d/domestic_lod2.glb",
-   "bytes": 2657780
+   "bytes": 2658376
   },
   "textures": [
    {
@@ -3439,7 +3439,7 @@
      2048
     ],
     "mime": "image/png",
-    "bytes": 1363302,
+    "bytes": 1350337,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    },
    {
@@ -3509,7 +3509,7 @@
      2048
     ],
     "mime": "image/png",
-    "bytes": 1328015,
+    "bytes": 1310797,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    },
    {
@@ -3589,7 +3589,7 @@
      1024
     ],
     "mime": "image/png",
-    "bytes": 474064,
+    "bytes": 472421,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    }
   ],
@@ -4069,8 +4069,8 @@
      "T2",
      "C3C"
     ],
-    "bake_s": 40.9,
-    "mean": 0.671,
+    "bake_s": 44.7,
+    "mean": 0.668,
     "p2": 0.004,
     "samples": 48,
     "distance_m": 10.0,
@@ -4089,8 +4089,8 @@
      "BA_E",
      "BA_F"
     ],
-    "bake_s": 39.1,
-    "mean": 0.709,
+    "bake_s": 43.0,
+    "mean": 0.703,
     "p2": 0.006,
     "samples": 48,
     "distance_m": 10.0,
@@ -4104,9 +4104,9 @@
     "buildings": [
      "all"
     ],
-    "bake_s": 4.4,
-    "mean": 0.708,
-    "p2": 0.07,
+    "bake_s": 4.2,
+    "mean": 0.705,
+    "p2": 0.063,
     "samples": 48,
     "distance_m": 10.0,
     "ground_plane": true
@@ -6714,7 +6714,7 @@
    ],
    "note": "silhouette = topmost opaque pixel per column of the alpha pass (LOD0); the parapet / coping top is the measured roof edge"
   },
-  "renders_updated": "2026-11-05T08:57:19+00:00",
+  "renders_updated": "2026-11-05T10:58:33+00:00",
   "renders_args": {
    "glb": "data/buildings3d/domestic.glb",
    "res": 960,
@@ -6767,7 +6767,7 @@
    }
   },
   "review_r1": {
-   "updated": "2026-11-05T09:22:46+00:00",
+   "updated": "2026-11-05T10:56:37+00:00",
    "probe": "tools/blender/verify_domestic_r1.py (out/buildings3d/domestic_verify_r1.json, local)",
    "after": {
     "summary_lod0": {

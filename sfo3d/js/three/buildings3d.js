@@ -1,57 +1,73 @@
 // Blender building assets (data/buildings3d/*.glb; docs/research/buildings3d.md) in the three.js renderer: loads the
-// four groups (control tower, International Terminal, domestic terminals, landside), switches their levels of detail
-// per building from the camera distance, applies the baked ambient occlusion (glTF occlusionTexture on TEXCOORD_1),
-// casts and receives shadows, adds the night hooks (lit glazing, the tower's LED ribbon, obstruction lights) and hides
-// the first-pass extrusions each group replaces once that group is on screen (js/live/world.js routes them into one item
-// per group: data/buildings3d/integration.js, tools/blender/b3d_integrate.py). Until a group has loaded, or if it fails,
-// the first-pass buildings stay: the scene never has a hole.
+// groups (control tower, International Terminal, domestic terminals, elevated landside roadways, landside), switches their
+// levels of detail per building from the camera distance, applies the baked ambient occlusion (glTF occlusionTexture on
+// TEXCOORD_1), casts and receives shadows, adds the night hooks (lit glazing, the tower's LED ribbon, obstruction lights)
+// and hides the first-pass extrusions each group replaces once that group is on screen (js/live/world.js routes them into
+// one item per group: data/buildings3d/integration.js, tools/blender/b3d_integrate.py). Until a group has loaded, or if it
+// fails, the first-pass buildings stay: the scene never has a hole.
 //
 // Files (manifest.json#<group>.files): full = tower.glb (height family F2, the default since the tower review round 1;
-// ?b3dtower=f1 -> tower_f1.glb, the published-height hypothesis), itb.glb, domestic.glb,
-// landside.glb (LOD0-2 each); lod2 = the *_lod2.glb subtrees alone (far / phone tier). The low tier (phones) loads the
-// lod2 files; ?b3d=full|lod2|0 overrides (0 = first-pass buildings only, for old-vs-new comparisons). The artifact build
-// serves them renamed (window.SFO_B3D_BASE, default 'data/buildings3d/'; window.SFO_B3D_EXT, default '.glb'; the phone
-// artifact uses '.wasm' like the aircraft models, tools/build3/phone_artifact_page.py).
+// ?b3dtower=f1 -> tower_f1.glb, the published-height hypothesis), itb.glb, domestic.glb, roadways.glb, landside.glb
+// (LOD0-2 each); lod2 = the *_lod2.glb subtrees alone (the far LOD). The artifact build serves them renamed
+// (window.SFO_B3D_BASE, default 'data/buildings3d/'; window.SFO_B3D_EXT, default '.glb'; the phone artifact uses '.wasm'
+// like the aircraft models, tools/build3/phone_artifact_page.py; window.SFO_B3D_PARTS = {file: n}: a file the artifact
+// split into n pieces (<name>.part<i><ext>, the 15-MB per-file limit) is fetched in pieces and joined).
+// Modes (?b3d=full|near|lod2|0): high / medium / ultra tiers 'full' (every group's full file); the low tier (phones)
+// 'near' (integration review round 1, finding 5: phones used to show only LOD2 at every distance, gate and tower views
+// included): the lod2 files first (3.6 MB, the whole airport at once), then each group's full file when the camera comes
+// within that group's LOD2 switch distance (the tier's tighter range) of it, one file at a time; the full file replaces
+// the lod2 one, so near units show LOD0 / LOD1 as on the desktop. 'lod2' = the far files only (QA), '0' = the first-pass
+// buildings only (old-vs-new comparisons).
 //
 // LOD (each group's manifest lod rule; switch distances from the LOD nodes' extras.switch_m, scaled by the quality tier's
-// `lod` range relative to the high tier's 1800 m): a "LOD set" is a node whose children are LOD0 / LOD1 / LOD2 nodes
-// (tower, ITB and domestic: the root; landside: every building node). LOD2 is shown when the camera is beyond its switch
-// distance from the set's bounding box; otherwise LOD0 or LOD1 per unit (domestic: extras.building; ITB: per part, the
-// group spans 650 m; tower and landside buildings: the whole set), from the distance to the unit's bounding box (the
-// nearest point, not the node origin: a 400-m pier seen from its tip is near), with 5 % hysteresis.
+// `lod` range relative to the high tier's 1800 m: low 0.56, medium 0.72): a "LOD set" is a node whose children are LOD0 /
+// LOD1 / LOD2 nodes (tower, ITB, domestic and roadways: the root; landside: every building node). LOD2 is shown when the
+// camera is beyond its switch distance from the set's bounding box; otherwise LOD0 or LOD1 per unit (domestic and
+// roadways: extras.building; ITB: per part, the group spans 650 m; tower and landside buildings: the whole set), from
+// the distance to the unit's bounding box (the nearest point, not the node origin: a 400-m pier seen from its tip is
+// near), with 5 % hysteresis. Within a unit the static meshes of one material are merged at load (review finding 10:
+// landside 286 -> ~190 LOD0 primitives, tower 30 -> 23; ITB / domestic units already hold one mesh per material).
 //
 // Materials: glTF PBR as exported (GLTFLoader: MeshStandard / MeshPhysical with KHR_materials_ior / _specular), turned
-// into node materials so an emission term can be added: night glow = nightE (renderer3: night factor x LAMP_M, lamp
-// units -> sky units) x GLOW[kind].color x GLOW[kind].k x per-bay variation (+-15 %, 3-m cells, as objects.js does for
-// the concourses), masked to the panes where the glass has a base-colour tile (mullions / frit stay dark). Kinds by
-// material name / extras (the assets' own tags): hall (terminal glazing), office (hotel, CAC, station-block window bands,
-// the tower's base building and shaft slots: 55 % of the bays lit, as objects.js punched windows), station (AirTrain
-// station glass), roofglass (skylights, glazed roof lines, the T1 glass canopy: lit from below, weaker), cab (tower cab:
-// dim, controllers keep it dark), led (tower ribbon, extras.led: the LED waterfall as objects.js id 16), beacon (red
-// obstruction light, extras.obstruction_light), soffit (garage slab undersides, canopy and station ceilings: the
-// first-pass garages' night level).
-// GLOW values are uniforms (Buildings3D.glow) so the environment work can retune them; inferred, not measured.
+// into node materials so an emission term can be added. AO atlases (single-channel data) are repacked at load as R8
+// textures (RedFormat), capped at the tier's maxTex (low 1024, medium 2048): review finding 10, six 2048-px atlases were
+// ~134 MB as RGBA8 with mips, ~34 MB as R8. Night glow = nightE (renderer3: night factor x LAMP_M, lamp units -> sky
+// units) x GLOW[kind].color x GLOW[kind].k x an interior pattern (review finding 2: the gate-room glazing read as
+// saturated white cards): per 3 m x 4 m cell a level 0.6-1.25 (lit bays), within each 4-m storey a vertical gradient
+// (floor 0.72 .. ceiling 1.08, the lamps are on the ceiling), office-type cells 55 % lit; the product is soft-capped at
+// GLOW_CAP lamp units (x nightE: exposed ~0.9 at the keyed night exposure, below the grade's shoulder). Masked to the
+// panes where the glass has a base-colour tile (mullions / frit stay dark). Kinds by material name / extras (the assets'
+// own tags): hall (terminal glazing), office (hotel, CAC, station-block window bands, the tower's base building and shaft
+// slots), station (AirTrain station glass), roofglass (skylights, glazed roof lines, the T1 glass canopy: lit from below,
+// weaker), cab (tower cab: dim, controllers keep it dark), led (tower ribbon, extras.led: the LED waterfall as objects.js
+// id 16), beacon (red obstruction light, extras.obstruction_light: a lamp, not capped), soffit (garage slab undersides,
+// canopy and station ceilings). GLOW values are uniforms (Buildings3D.glow / setGlow) so the environment work can retune
+// them; inferred, not measured.
 //
 // Physical plausibility: the assets were checked against the stands, bridges, aircraft envelopes and taxiways by their
 // groups and together by tools/blender/b3d_integrate.py (data/buildings3d/integration.json#plausibility).
 import { THREE, TSL } from './lib.js';
 import { hash12 } from './tsl/common.js';
 import { B3D_INTEGRATION } from '../../data/buildings3d/integration.js';
-const { uniform, vec2, vec3, float, mix, smoothstep, sin, floor, positionWorld, luminance, texture, uv, materialEmissive } = TSL;
+const { uniform, vec2, vec3, float, mix, smoothstep, sin, floor, fract, min, positionWorld, luminance, texture, uv, materialEmissive } = TSL;
 
-export const B3D_GROUPS = ['tower', 'itb', 'domestic', 'landside'];
-const FILES = { full: { tower: 'tower', itb: 'itb', domestic: 'domestic', landside: 'landside' }, lod2: { tower: 'tower_lod2', itb: 'itb_lod2', domestic: 'domestic_lod2', landside: 'landside_lod2' } };
+export const B3D_GROUPS = ['tower', 'itb', 'domestic', 'roadways', 'landside'];
+const FILE_FULL = { tower: 'tower', itb: 'itb', domestic: 'domestic', roadways: 'roadways', landside: 'landside' };
 const HYST = 0.05, LOD_REF = 1800; // QUALITY3.high.lod
-// night glow per kind (lamp units, x renderer3 nightE): colour of the light behind the glass and its level. hall = the
-// concourse level of objects.js (vec3(1, 0.9, 0.76) x ~0.45-2.2 x 0.8, mean ~0.8); office / station / roof / cab / LED /
-// beacon as objects.js ids 6, 1, 5, 12, 16, 14. Inferred (no measured SFO night luminances).
+// night glow per kind (lamp units, x renderer3 nightE): colour of the light behind the glass and its mean level.
+// Round 1 (finding 2): hall 0.8 -> 0.30 etc.: at the keyed night exposure (renderer3 NIGHT_EXPOSURE) one lamp unit x nightE
+// is exposed to KEY_NIGHT x pi / (RHO_CONC x E_STAND) = 2.2, so 0.8 x (1 +- 15 %) gave ~1.8-2.0, and with the frame-metered
+// exposure and bloom the gate-room panes clipped to white. The first-pass concourse (objects.js concourse()) spans
+// 0.36-1.76 over floor / walls / ceiling lamps; the assets have no interior, so the mean is lowered and the pattern below
+// stands for it. Inferred (no measured SFO night luminances).
 const GLOW_DEF = {
-  hall: [[1.0, 0.9, 0.76], 0.8], office: [[1.0, 0.82, 0.6], 0.9], station: [[0.95, 0.95, 1.0], 0.9], roofglass: [[1.0, 0.9, 0.76], 0.35],
-  cab: [[0.25, 0.4, 0.35], 0.25], led: [[1.0, 1.0, 1.0], 1.0], beacon: [[1.0, 0.06, 0.04], 40.0],
+  hall: [[1.0, 0.9, 0.76], 0.30], office: [[1.0, 0.82, 0.6], 0.34], station: [[0.95, 0.95, 1.0], 0.32], roofglass: [[1.0, 0.9, 0.76], 0.14],
+  cab: [[0.25, 0.4, 0.35], 0.25], led: [[1.0, 1.0, 1.0], 0.30], beacon: [[1.0, 0.06, 0.04], 40.0],
   // slab undersides of the garages, canopy and station ceilings: the first-pass garages' night level (objects.js id 3:
-  // vec3(0.9, 0.95, 1.0) x 0.35 over the open bays), carried over so the garages do not go dark at night (inferred)
-  soffit: [[0.9, 0.95, 1.0], 0.35],
+  // vec3(0.9, 0.95, 1.0) x 0.35 over the open bays), lowered with the others (inferred)
+  soffit: [[0.9, 0.95, 1.0], 0.22],
 };
+const GLOW_CAP = 0.42; // lamp units: soft cap of every glow kind but the beacon (exposed ~0.9 at the keyed night exposure)
 
 function glowKind(m) {
   const n = (m.name || '').replace(/@.*$/, '').replace(/\.L\d$/, ''); const ex = m.userData || {};
@@ -65,6 +81,8 @@ function glowKind(m) {
   if (/soffit/.test(n)) return 'soffit';
   return null;
 }
+const lodIx = (o) => { const ex = o.userData || {}; if (Number.isInteger(ex.lod)) return ex.lod; const m = /^LOD(\d)(_|$)/.exec(o.name || ''); return m ? +m[1] : null; };
+const swOf = (o) => { const s = (o.userData || {}).switch_m; return Array.isArray(s) ? +s[0] : (s != null ? +s : null); };
 
 export class Buildings3D {
   // R: js/three/renderer3.js Renderer3 (engine, staticGroup, nightE, time, Q, tier, world)
@@ -72,13 +90,15 @@ export class Buildings3D {
     const qs = new URLSearchParams(location.search);
     this.R = R; this.E = R.engine;
     const q = qs.get('b3d');
-    this.mode = q === '0' || q === 'off' ? 'off' : q === 'lod2' || q === 'full' ? q : (R.tier === 'low' ? 'lod2' : 'full');
+    this.mode = q === '0' || q === 'off' ? 'off' : q === 'lod2' || q === 'full' || q === 'near' ? q : (R.tier === 'low' ? 'near' : 'full');
     this.towerFamily = qs.get('b3dtower') === 'f1' ? 'f1' : 'f2'; // tower.glb = F2 (default), tower_f1.glb = F1 (manifest.json#tower)
-    this.base = window.SFO_B3D_BASE || 'data/buildings3d/'; this.ext = window.SFO_B3D_EXT || '.glb';
+    this.base = window.SFO_B3D_BASE || 'data/buildings3d/'; this.ext = window.SFO_B3D_EXT || '.glb'; this.parts = window.SFO_B3D_PARTS || {};
     this.lodScale = (R.Q && R.Q.lod ? R.Q.lod : LOD_REF) / LOD_REF;
     this.group = new THREE.Group(); this.group.name = 'buildings3d'; this.E.scene.add(this.group);
-    this.loaded = {}; this.failed = {}; this.sets = []; this.cabGlass = []; this.stats = { files: {}, ms: {} };
+    this.loaded = {}; this.kind = {}; this.failed = {}; this.sets = []; this.cabGlass = []; this.near = {}; this.pending = null;
+    this.stats = { files: {}, ms: {}, ao: [], merged: {} };
     this.glow = {}; for (const [k, [c, v]] of Object.entries(GLOW_DEF)) this.glow[k] = { color: uniform(new THREE.Color(...c)), k: uniform(v) };
+    this.glowCap = uniform(GLOW_CAP);
     this.done = this.mode === 'off'; this.frame = 0; this._tmpV = new THREE.Vector3(); this._tex = new Map();
     this.tower = B3D_INTEGRATION.tower || null; // fallback anchors; replaced by the loaded tower file's own (root extras.anchors)
     const only = qs.get('b3donly'); this.groups = only ? B3D_GROUPS.filter(g => only.split(',').includes(g)) : B3D_GROUPS; // QA: ?b3donly=tower
@@ -87,31 +107,81 @@ export class Buildings3D {
     if (this.mode === 'off') { console.log('[b3d] off (?b3d=0): first-pass buildings'); return; }
     this._p = this._loadAll().catch(e => console.warn('[b3d] load', e)).finally(() => { this.done = true; });
   }
-  url(g) {
-    let f = FILES[this.mode][g];
-    if (g === 'tower' && this.mode === 'full' && this.towerFamily === 'f1') f = 'tower_f1';
-    return this.base + f + this.ext;
+  file(g, kind) {
+    let f = FILE_FULL[g];
+    if (g === 'tower' && kind === 'full' && this.towerFamily === 'f1') f = 'tower_f1';
+    return kind === 'lod2' ? f + '_lod2' : f;
+  }
+  url(g, kind = this.mode === 'full' ? 'full' : 'lod2') { return this.base + this.file(g, kind) + this.ext; }
+  async _fetchGlb(g, kind) {
+    // a file the artifact split into pieces (window.SFO_B3D_PARTS[file] = n): fetched in order and joined
+    const f = this.file(g, kind), n = +(this.parts[f] || 0);
+    const loader = this._loader || (this._loader = new THREE.GLTFLoader());
+    if (!n) return loader.loadAsync(this.url(g, kind));
+    const bufs = []; for (let i = 0; i < n; i++) { const r = await fetch(this.base + f + '.part' + i + this.ext); if (!r.ok) throw new Error(f + '.part' + i + ': HTTP ' + r.status); bufs.push(new Uint8Array(await r.arrayBuffer())); }
+    const all = new Uint8Array(bufs.reduce((a, b) => a + b.length, 0)); let o = 0; for (const b of bufs) { all.set(b, o); o += b.length; }
+    return loader.parseAsync(all.buffer, this.base);
   }
   async _loadAll() {
     // sequential: one decode + upload + compile at a time (phones; the main thread stalls once per group, not four
     // times at once); the tower first (smallest, and the tower view), the landside last (largest, mostly far away)
-    const loader = new THREE.GLTFLoader();
+    const kind = this.mode === 'full' ? 'full' : 'lod2';
+    for (const g of this.groups) await this._loadGroup(g, kind);
+    if (this.mode === 'near') console.log('[b3d] near mode: lod2 files shown; full files load as the camera comes near (' + Object.keys(this.near).join(', ') + ')');
+  }
+  async _loadGroup(g, kind) {
+    const t0 = performance.now(), url = this.url(g, kind);
+    try {
+      const gltf = await this._fetchGlb(g, kind);
+      const root = gltf.scene; root.name = 'b3d_' + g; root.userData.b3dKind = kind;
+      this._prepare(g, root, kind);
+      if (g === 'tower') this._towerAnchors(root);
+      const t1 = performance.now();
+      await this._compile(root);
+      const old = this.loaded[g];
+      this.group.add(root); this.loaded[g] = root; this.kind[g] = kind;
+      if (old) this._drop(old);
+      if (kind === 'lod2' && this.mode === 'near') this._nearTriggers(g, root);
+      this._swapOld();
+      if (g === 'tower') this._towerCamera();
+      const key = g + (kind === 'full' ? '' : '_lod2'); this.stats.ms[key] = [Math.round(t1 - t0), Math.round(performance.now() - t1)];
+      const fs = this.stats.files[key];
+      console.log('[b3d] ' + g + ' (' + url + ') shown: load+prepare ' + this.stats.ms[key][0] + ' ms, compile ' + this.stats.ms[key][1] + ' ms; ' + fs.tris + ' tris in ' + fs.meshes + ' meshes (' + fs.merged + ' merged away), ' + fs.materials + ' materials');
+    } catch (e) { this.failed[g + (kind === 'full' ? '' : '_lod2')] = String(e && e.message || e); console.warn('[b3d] ' + g + ' (' + kind + ') failed, ' + (this.loaded[g] ? 'previous file kept' : 'first-pass buildings kept') + ':', e); }
+  }
+  // remove a replaced root (the lod2 file once the group's full file is on screen): its sets, cab glass and GPU data
+  _drop(root) {
+    this.group.remove(root);
+    this.sets = this.sets.filter(S => S.root !== root); this.cabGlass = this.cabGlass.filter(o => o.userData.b3dRoot !== root);
+    const tex = new Set();
+    root.traverse(o => { if (!o.isMesh) return; o.geometry.dispose(); for (const m of [].concat(o.material)) { for (const k of ['map', 'normalMap', 'aoMap', 'roughnessMap', 'metalnessMap', 'emissiveMap']) if (m[k]) tex.add(m[k]); m.dispose(); } });
+    for (const t of tex) { t.dispose(); for (const [k, v] of this._tex) if (v === t) this._tex.delete(k); }
+  }
+  // near mode: the lod2 file's LOD2 subtrees with their switch distances (scaled by the tier); update() loads the full
+  // file once the camera is within one of them (+10 %, + 60 m: the file is on screen before the units would switch)
+  _nearTriggers(g, root) {
+    const T = []; root.updateMatrixWorld(true);
+    root.traverse(P => { for (const c of P.children) if (lodIx(c) === 2) { const s = swOf(c); T.push({ box: new THREE.Box3().setFromObject(c), d: (s != null ? s : 1400) * this.lodScale * 1.1 + 60 }); } });
+    this.near[g] = T;
+  }
+  _nearUpdate(p) {
+    if (this.mode !== 'near' || !this.done || this.pending) return;
+    let best = null;
     for (const g of this.groups) {
-      const t0 = performance.now();
-      try {
-        const gltf = await loader.loadAsync(this.url(g));
-        const root = gltf.scene; root.name = 'b3d_' + g;
-        this._prepare(g, root);
-        if (g === 'tower') this._towerAnchors(root);
-        const t1 = performance.now();
-        await this._compile(root);
-        this.group.add(root); this.loaded[g] = root;
-        this._swapOld();
-        if (g === 'tower') this._towerCamera();
-        this.stats.ms[g] = [Math.round(t1 - t0), Math.round(performance.now() - t1)];
-        console.log('[b3d] ' + g + ' (' + this.url(g) + ') shown: load+prepare ' + this.stats.ms[g][0] + ' ms, compile ' + this.stats.ms[g][1] + ' ms; ' + this.stats.files[g].tris + ' tris in ' + this.stats.files[g].meshes + ' meshes');
-      } catch (e) { this.failed[g] = String(e && e.message || e); console.warn('[b3d] ' + g + ' failed, first-pass buildings kept:', e); }
+      if (this.kind[g] !== 'lod2' || this.failed[g] || !this.near[g]) continue;
+      for (const t of this.near[g]) { const d = t.box.distanceToPoint(p); if (d < t.d && (!best || d - t.d < best[1])) best = [g, d - t.d]; }
     }
+    if (!best) return;
+    const g = best[0]; this.pending = g;
+    this._loadGroup(g, 'full').finally(() => { this.pending = null; });
+  }
+  // QA (tools/blender/b3d_views_job.mjs): nothing loading and no group waiting for its full file at this camera
+  settled(camPos) {
+    if (!this.done || this.pending) return false;
+    if (this.mode !== 'near' || !camPos) return true;
+    const p = new THREE.Vector3(camPos[0], camPos[1], camPos[2]);
+    for (const g of this.groups) if (this.kind[g] === 'lod2' && !this.failed[g] && (this.near[g] || []).some(t => t.box.distanceToPoint(p) < t.d)) return false;
+    return true;
   }
   // compile the group's programs before it is shown (all LODs and units, whatever the current view), so the first
   // frames after a LOD switch do not stall
@@ -122,22 +192,25 @@ export class Buildings3D {
     catch (e) { console.warn('[b3d] compileAsync', e); }
     for (const [o, v, f] of saved) { o.visible = v; o.frustumCulled = f; }
   }
-  _prepare(g, root) {
-    const R = this.R, Q = R.Q || {}; let tris = 0, meshes = 0; const mats = new Map();
+  _prepare(g, root, kind) {
+    const R = this.R, Q = R.Q || {}; const mats = new Map(); this._aoSrc = new Map(); this._otherSrc = new Set();
     root.updateMatrixWorld(true);
     root.traverse(o => {
       o.matrixAutoUpdate = false;
       if (!o.isMesh) return;
-      meshes++; const idx = o.geometry.index; tris += (idx ? idx.count : o.geometry.attributes.position.count) / 3 * (o.isInstancedMesh ? o.count : 1);
       const m0 = o.material; let m = mats.get(m0);
       if (!m) { m = this._material(m0, Q); mats.set(m0, m); }
-      o.material = m;
+      o.material = m; o.userData.b3dRoot = root;
       const transp = m.transparent || m.blending !== THREE.NormalBlending && m.blending !== THREE.NoBlending;
       o.castShadow = !transp && !(o.isInstancedMesh && R.tier === 'low'); o.receiveShadow = true;
       if (/^cab_glass/.test(m0.name || '')) this.cabGlass.push(o);
     });
-    this.stats.files[g] = { url: this.url(g), tris: Math.round(tris), meshes, materials: mats.size };
-    this._lodSets(g, root);
+    // the original AO images (repacked as R8) are released unless another slot samples them
+    for (const [src, img] of this._aoSrc) if (!this._otherSrc.has(src) && img && img.close) { try { img.close(); } catch (e) { /* not a bitmap */ } }
+    const nMerged = this._lodSets(g, root);
+    let tris = 0, meshes = 0;
+    root.traverse(o => { if (!o.isMesh) return; meshes++; const idx = o.geometry.index; tris += (idx ? idx.count : o.geometry.attributes.position.count) / 3 * (o.isInstancedMesh ? o.count : 1); });
+    this.stats.files[g + (kind === 'full' ? '' : '_lod2')] = { url: this.url(g, kind), tris: Math.round(tris), meshes, materials: mats.size, merged: nMerged };
   }
   // glTF material -> node material with the night emission hook; textures get the tier's anisotropy
   _material(m0, Q) {
@@ -149,6 +222,8 @@ export class Buildings3D {
     // were uploaded once per material (first headless run: 4.05 GB of textures for ~0.2 GB of images)
     for (const k of ['map', 'normalMap', 'aoMap', 'roughnessMap', 'metalnessMap', 'emissiveMap']) {
       const t = m[k]; if (!t || !t.source) continue;
+      if (k === 'aoMap') { m[k] = this._aoTex(t, Q); continue; }
+      this._otherSrc.add(t.source);
       const key = t.source.uuid + '|' + t.channel + '|' + t.colorSpace + '|' + t.wrapS + t.wrapT + '|' + t.offset.toArray() + t.repeat.toArray() + t.rotation;
       let c = this._tex.get(key); if (!c) { c = t; c.anisotropy = Math.max(c.anisotropy || 1, Q.aniso || 4); this._tex.set(key, c); }
       m[k] = c;
@@ -156,28 +231,57 @@ export class Buildings3D {
     const kind = glowKind(m0); m.userData.b3dGlow = kind;
     if (kind) {
       const G = this.glow[kind], R = this.R; const night = R.nightE || uniform(0);
-      const cell = floor(positionWorld.xz.div(3.0)); const hv = hash12(cell.add(vec2(13.0, 7.0)));
-      let k = G.k.mul(night).mul(hv.mul(0.3).add(0.85)); let col = G.color;
-      if (kind === 'office') k = k.mul(smoothstep(0.43, 0.47, hash12(cell.add(vec2(3.0, 29.0)))));
+      // interior pattern (header): 3 m cells along the facade x 4 m storeys, each its own level; a gradient up the storey
+      const P = positionWorld; const cy = floor(P.y.div(4.0));
+      const cell = floor(P.xz.div(3.0)).add(vec2(cy.mul(31.0), cy.mul(17.0)));
+      const hv = hash12(cell.add(vec2(13.0, 7.0)));
+      const grad = mix(float(0.72), float(1.08), smoothstep(0.05, 0.95, fract(P.y.div(4.0))));
+      let lvl = hv.mul(0.65).add(0.6).mul(grad); let col = G.color;
+      if (kind === 'office') lvl = lvl.mul(smoothstep(0.43, 0.47, hash12(cell.add(vec2(3.0, 29.0)))));
       if (kind === 'led') { // objects.js id 16: a blue-cyan wave running down the ribbon
-        const wave = sin(positionWorld.y.mul(0.21).sub((R.time || uniform(0)).mul(0.9))).mul(0.45).add(0.55);
-        k = k.mul(wave.mul(0.8).add(1.4)); col = mix(vec3(0.15, 0.45, 1.0), vec3(0.2, 0.9, 0.9), wave).mul(G.color);
+        const wave = sin(P.y.mul(0.21).sub((R.time || uniform(0)).mul(0.9))).mul(0.45).add(0.55);
+        lvl = wave.mul(0.8).add(1.4).div(1.8); col = mix(vec3(0.15, 0.45, 1.0), vec3(0.2, 0.9, 0.9), wave).mul(G.color);
       }
+      if (kind === 'beacon' || kind === 'cab') lvl = float(1.0);
+      // soft cap (lamp units): k x lvl -> cap x (1 - exp(-k x lvl / cap)) ~ k x lvl below ~cap / 3; the beacon is a lamp
+      let kk = G.k.mul(lvl);
+      if (kind !== 'beacon') kk = this.glowCap.mul(float(1.0).sub(kk.div(this.glowCap).negate().exp()));
       // panes only: a base-colour tile carries the frames / frit (lighter); untextured glass glows over its whole face
       const mask = m.map ? float(1.0).sub(smoothstep(0.12, 0.35, luminance(texture(m.map, uv(m.map.channel || 0)).rgb))) : float(1.0);
-      m.emissiveNode = materialEmissive.add(col.mul(k).mul(mask));
+      m.emissiveNode = materialEmissive.add(col.mul(kk).mul(night).mul(mask));
     }
     return m;
   }
-  // LOD sets and units (see the header)
+  // AO atlas -> R8 texture (one per image and sampling), capped at the tier's maxTex; the original is used where the
+  // image cannot be read back (no 2-D canvas)
+  _aoTex(t, Q) {
+    const key = 'ao|' + t.source.uuid + '|' + t.channel + '|' + t.wrapS + t.wrapT; let c = this._tex.get(key); if (c) return c;
+    const img = t.image; const w = img && img.width, h = img && img.height; const max = Q.maxTex || 0;
+    c = t;
+    if (w > 0 && h > 0 && typeof document !== 'undefined') {
+      try {
+        const s = max && Math.max(w, h) > max ? max / Math.max(w, h) : 1, W = Math.max(1, Math.round(w * s)), H = Math.max(1, Math.round(h * s));
+        const cv = typeof OffscreenCanvas !== 'undefined' ? new OffscreenCanvas(W, H) : Object.assign(document.createElement('canvas'), { width: W, height: H });
+        const cx = cv.getContext('2d', { willReadFrequently: true }); cx.imageSmoothingQuality = 'high'; cx.drawImage(img, 0, 0, W, H);
+        const px = cx.getImageData(0, 0, W, H).data; const r8 = new Uint8Array(W * H); for (let i = 0, j = 0; i < r8.length; i++, j += 4) r8[i] = px[j];
+        const d = new THREE.DataTexture(r8, W, H, THREE.RedFormat, THREE.UnsignedByteType);
+        d.flipY = t.flipY; d.wrapS = t.wrapS; d.wrapT = t.wrapT; d.magFilter = THREE.LinearFilter; d.minFilter = THREE.LinearMipmapLinearFilter;
+        d.generateMipmaps = true; d.unpackAlignment = 1; d.channel = t.channel; d.colorSpace = THREE.NoColorSpace; d.anisotropy = Math.max(1, Math.min(4, Q.aniso || 4));
+        d.offset.copy(t.offset); d.repeat.copy(t.repeat); d.rotation = t.rotation; d.center.copy(t.center); d.name = (t.name || 'ao') + '_r8';
+        d.needsUpdate = true; c = d; this._aoSrc.set(t.source, img);
+        this.stats.ao.push([t.name || '', w, h, W, H]);
+      } catch (e) { console.warn('[b3d] AO repack failed, RGBA kept', e); c = t; }
+    }
+    this._tex.set(key, c); return c;
+  }
+  // LOD sets and units (see the header); returns the number of meshes merged away
   _lodSets(g, root) {
-    const lodIx = (o) => { const ex = o.userData || {}; if (Number.isInteger(ex.lod)) return ex.lod; const m = /^LOD(\d)(_|$)/.exec(o.name || ''); return m ? +m[1] : null; };
-    const sw = (o) => { const s = (o.userData || {}).switch_m; return Array.isArray(s) ? +s[0] : (s != null ? +s : null); };
+    let merged = 0;
     root.traverse(P => {
       const lods = {}; for (const c of P.children) { const k = lodIx(c); if (k != null && /^LOD\d/.test(c.name || '')) lods[k] = c; }
       if (Object.keys(lods).length < 2) return;
-      const S = { group: g, node: P, lods, sw: {}, box: new THREE.Box3(), units: [], cur2: null };
-      for (const [k, n] of Object.entries(lods)) S.sw[k] = (sw(n) ?? { 0: 0, 1: 400, 2: 1400 }[k]) * this.lodScale;
+      const S = { group: g, root, node: P, lods, sw: {}, box: new THREE.Box3(), units: [], cur2: null };
+      for (const [k, n] of Object.entries(lods)) S.sw[k] = (swOf(n) ?? { 0: 0, 1: 400, 2: 1400 }[k]) * this.lodScale;
       for (const n of Object.values(lods)) S.box.union(new THREE.Box3().setFromObject(n));
       // units inside LOD0 / LOD1: by extras.building, else per part when the set is large, else the whole set
       const diag = S.box.getSize(this._tmpV).length();
@@ -193,17 +297,52 @@ export class Buildings3D {
         }
       }
       S.units = [...units.values()];
+      for (const u of S.units) for (const k of [0, 1]) if (lods[k] && u.nodes[k].length) merged += this._mergeUnit(u, k, lods[k]);
       // start: everything hidden except LOD2 (update() sets the real state on the next frame)
       for (const [k, n] of Object.entries(lods)) n.visible = +k === 2;
       this.sets.push(S);
     });
+    return merged;
+  }
+  // merge the static meshes of one unit and LOD that share a material and vertex layout into one mesh under the LOD
+  // node (review finding 10: draw calls). Kept apart: instanced meshes (cars), fading nodes (extras.max_dist_m), nodes
+  // flagged led / obstruction_light, the cab glass (hidden in the cab), transparent materials (sorted per object)
+  _mergeUnit(u, k, lodNode) {
+    const skip = (o) => { const e = o.userData || {}; return e.max_dist_m != null || e.led || e.obstruction_light; };
+    const groups = new Map();
+    const visit = (o) => {
+      if (skip(o)) return;
+      if (o.isMesh && !o.isInstancedMesh && !o.isSkinnedMesh && !o.morphTargetInfluences && o.geometry.index && !this.cabGlass.includes(o) && !o.material.transparent) {
+        const G = o.geometry; const names = Object.keys(G.attributes).sort();
+        const sig = names.map(n => { const a = G.attributes[n]; return n + a.itemSize + (a.normalized ? 'n' : '') + (a.array && a.array.constructor.name) + (a.isInterleavedBufferAttribute ? 'i' : ''); }).join(',');
+        const key = o.material.uuid + '|' + sig + '|' + o.castShadow + o.receiveShadow + o.renderOrder;
+        (groups.get(key) || groups.set(key, []).get(key)).push(o);
+      }
+      for (const c of o.children) visit(c);
+    };
+    for (const n of u.nodes[k]) visit(n);
+    let gone = 0; const inv = new THREE.Matrix4().copy(lodNode.matrixWorld).invert(); let holder = null;
+    for (const list of groups.values()) {
+      if (list.length < 2) continue;
+      const geo = mergeInto(list, inv); if (!geo) continue;
+      const m = new THREE.Mesh(geo, list[0].material); m.name = 'merged_' + list[0].material.name; m.castShadow = list[0].castShadow; m.receiveShadow = list[0].receiveShadow; m.renderOrder = list[0].renderOrder;
+      m.matrixAutoUpdate = false; m.userData.b3dRoot = list[0].userData.b3dRoot; m.userData.mergedFrom = list.length;
+      if (!holder) { holder = new THREE.Group(); holder.name = 'merged_' + u.key + '_L' + k; holder.matrixAutoUpdate = false; lodNode.add(holder); u.nodes[k].push(holder); }
+      holder.add(m);
+      for (const o of list) { o.parent && o.parent.remove(o); o.geometry.dispose(); }
+      gone += list.length - 1;
+    }
+    if (holder) holder.updateMatrixWorld(true);
+    return gone;
   }
   // per frame (renderer3 frameScene): LOD switching; the cab glass is hidden while the camera is inside the cab
   update(camPos) {
     this.frame++;
     if (this.frame % 120 === 0 && Object.keys(this.loaded).length) this._swapOld(); // items synced later
-    if (!camPos || !this.sets.length) return;
+    if (!camPos) return;
     const p = this._tmpV.set(camPos[0], camPos[1], camPos[2]);
+    if (this.frame % 10 === 0) this._nearUpdate(p.clone());
+    if (!this.sets.length) return;
     for (const S of this.sets) {
       const d = S.box.distanceToPoint(p); const s2 = S.sw[2];
       const far = s2 != null && S.lods[2] ? (S.cur2 ? d > s2 * (1 - HYST) : d > s2 * (1 + HYST)) : false;
@@ -226,7 +365,7 @@ export class Buildings3D {
       const T = this.tower, c = T.cab_centre_world_xz, g = 3.0; // GROUND_Y
       const rIn = T.glass_head_r != null ? T.glass_head_r + 0.3 : 9.0;
       const inCab = Math.hypot(p.x - c[0], p.z - c[1]) < rIn && p.y > g + (T.cab_floor_h || 60) - 0.5 && p.y < g + (T.glass_h ? T.glass_h[1] : 65) + 0.5;
-      if (inCab !== this._inCab) { this._inCab = inCab; for (const o of this.cabGlass) o.material.visible = !inCab; }
+      if (inCab !== this._inCab || this._cabN !== this.cabGlass.length) { this._inCab = inCab; this._cabN = this.cabGlass.length; for (const o of this.cabGlass) o.material.visible = !inCab; }
     }
   }
   // hide the first-pass items of every shown group, show the walkway rests (js/live/world.js b3d / b3dRest)
@@ -255,14 +394,44 @@ export class Buildings3D {
     W.towerPos[0] = T.eye_world[0]; W.towerPos[2] = T.eye_world[2]; W.towerPos.eyeY = T.eye_world[1];
   }
   // environment hook: retune a glow kind at run time (kind: hall | office | station | roofglass | cab | led | beacon | soffit;
-  // color: linear RGB, k: level in lamp units x nightE); returns the current values
-  setGlow(kind, { color, k } = {}) {
+  // color: linear RGB, k: level in lamp units x nightE; cap: the soft cap of all kinds but the beacon); returns the values
+  setGlow(kind, { color, k, cap } = {}) {
+    if (cap != null) this.glowCap.value = cap;
     const G = this.glow[kind]; if (!G) return null;
     if (color) G.color.value.setRGB(color[0], color[1], color[2]); if (k != null) G.k.value = k;
-    return { color: G.color.value.toArray(), k: G.k.value };
+    return { color: G.color.value.toArray(), k: G.k.value, cap: this.glowCap.value };
   }
   info() {
     const lod = { 0: 0, 1: 0, 2: 0 }; for (const S of this.sets) { if (S.cur2) lod[2]++; else for (const u of S.units) lod[u.cur || 0]++; }
-    return { mode: this.mode, tower: this.towerFamily, loaded: Object.keys(this.loaded), failed: this.failed, done: this.done, sets: this.sets.length, unitsAtLod: lod, stats: this.stats };
+    return { mode: this.mode, tower: this.towerFamily, loaded: Object.keys(this.loaded), kind: { ...this.kind }, pending: this.pending, failed: this.failed, done: this.done, sets: this.sets.length, unitsAtLod: lod, stats: this.stats };
   }
+}
+
+// one geometry from meshes of one vertex layout, in the frame `inv` (the LOD node's inverse world matrix): positions
+// and tangents by the matrix, normals by its normal matrix, triangle order flipped for mirrored meshes
+function mergeInto(list, inv) {
+  const G0 = list[0].geometry; const names = Object.keys(G0.attributes);
+  let nv = 0, ni = 0; for (const o of list) { nv += o.geometry.attributes.position.count; ni += o.geometry.index.count; }
+  const out = new THREE.BufferGeometry(); const arrs = {};
+  for (const n of names) { const a = G0.attributes[n]; const C = a.array.constructor; arrs[n] = new THREE.BufferAttribute(new C(nv * a.itemSize), a.itemSize, a.normalized); }
+  const idx = nv > 65535 ? new Uint32Array(ni) : new Uint16Array(ni);
+  const M = new THREE.Matrix4(), N = new THREE.Matrix3(), v = new THREE.Vector3();
+  let ov = 0, oi = 0;
+  for (const o of list) {
+    const G = o.geometry; M.multiplyMatrices(inv, o.matrixWorld); N.getNormalMatrix(M); const flip = M.determinant() < 0;
+    const cnt = G.attributes.position.count;
+    for (const n of names) {
+      const a = G.attributes[n], b = arrs[n], s = a.itemSize;
+      if (n === 'position') for (let i = 0; i < cnt; i++) { v.fromBufferAttribute(a, i).applyMatrix4(M); b.setXYZ(ov + i, v.x, v.y, v.z); }
+      else if (n === 'normal') for (let i = 0; i < cnt; i++) { v.fromBufferAttribute(a, i).applyMatrix3(N).normalize(); b.setXYZ(ov + i, v.x, v.y, v.z); }
+      else if (n === 'tangent') for (let i = 0; i < cnt; i++) { v.set(a.getX(i), a.getY(i), a.getZ(i)).transformDirection(M); b.setXYZW(ov + i, v.x, v.y, v.z, a.getW(i) * (flip ? -1 : 1)); }
+      else for (let i = 0; i < cnt; i++) for (let c = 0; c < s; c++) b.setComponent(ov + i, c, a.getComponent(i, c));
+    }
+    const I = G.index;
+    for (let i = 0; i < I.count; i += 3) { const a = I.getX(i), b = I.getX(i + 1), c = I.getX(i + 2); idx[oi++] = ov + a; idx[oi++] = ov + (flip ? c : b); idx[oi++] = ov + (flip ? b : c); }
+    ov += cnt;
+  }
+  for (const n of names) out.setAttribute(n, arrs[n]);
+  out.setIndex(new THREE.BufferAttribute(idx, 1)); out.computeBoundingBox(); out.computeBoundingSphere();
+  return out;
 }
