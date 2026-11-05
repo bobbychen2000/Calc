@@ -203,11 +203,13 @@ def source_objects(key, fam):
     cy = (np.percentile(col[:, 1], 99.5) + np.percentile(col[:, 1], 0.5)) / 2; Rf = (np.percentile(col[:, 1], 99.5) - np.percentile(col[:, 1], 0.5)) / 2
     near = allp[(np.abs(allp[:, 2] - zc) < 0.6) & (np.abs(allp[:, 1] - cy) < Rf)]
     shift = np.array([float(near[:, 0].max()), cy, zc])
+    for p in prims: p['pos'] = p['pos'] - shift
+    for f in cfg.get('doorFit', []): cm.door_fit(prims, f)     # the converter's door re-fit (FG 737-800 door 1L)
     objs = {}
     for p in prims:
         name = p['node'].split('|')[0]
         kind = 'pax' if DOOR_PAX.search(name) else 'nose' if DOOR_GEAR_NOSE.search(name) else 'main' if DOOR_GEAR_MAIN.search(name) else None
-        if kind: objs.setdefault((kind, name), []).append(p['pos'] - shift)
+        if kind: objs.setdefault((kind, name), []).append(p['pos'])
     doors, gear = [], []
     for (kind, name), qs in objs.items():
         q = np.concatenate(qs)

@@ -63,22 +63,24 @@ MATS = {
     'concrete':       dict(rgb=(188, 185, 177), m=0.0, r=0.85, nrm=('ls_n_concrete', 0.4), src='inf (cast concrete spandrels)'),
     'concrete_lt':    dict(rgb=(204, 202, 194), m=0.0, r=0.82, nrm=('ls_n_concrete', 0.4), src='obs photo l2 (LTP 2 exposed frame) / l4 (Hyatt sign pier)'),
     'concrete_board': dict(rgb=(180, 176, 166), m=0.0, r=0.88, nrm=('ls_n_board', 0.8), src='obs photo l5 (board-formed concrete)'),
-    'screen':         dict(rgb=(255, 255, 255), m=0.55, r=0.45, tex='ls_c_screen', nrm=('ls_n_screen', 0.6), src='obs photo l1 (perforated metal panels, horizontal slots)'),
+    'screen':         dict(rgb=(236, 238, 238), m=0.15, r=0.55, tex='ls_c_screen', nrm=('ls_n_screen', 0.6), src='obs photo l1 (perforated metal panels, horizontal slots); reads mid-grey at a distance (photo a2)'),
+    'slot':           dict(rgb=(30, 32, 34), m=0.0, r=0.30, src='obs photo l1 (dark window slots of the station block)'),
+    'guide_beam':     dict(rgb=(176, 174, 168), m=0.0, r=0.80, src='obs photos l1 / l5 (centre guide beam)'),
     'screen_edge':    dict(rgb=(200, 202, 202), m=0.60, r=0.45, src='inf'),
-    'interior':       dict(rgb=(40, 41, 43), m=0.0, r=0.95, src='inf (shaded parking interior behind the openings)'),
+    'interior':       dict(rgb=(40, 41, 43), m=0.0, r=0.95, double=True, src='inf (shaded parking interior behind the openings)'),
     'sill':           dict(rgb=(118, 118, 114), m=0.0, r=0.90, src='inf (slab top inside the openings)'),
     'soffit':         dict(rgb=(92, 92, 90), m=0.0, r=0.90, src='inf (slab underside)'),
     'soffit_lt':      dict(rgb=(176, 176, 172), m=0.0, r=0.85, src='inf'),
     'deck':           dict(rgb=(170, 168, 162), m=0.0, r=0.90, tex='ls_c_deck', naip='deck', src='obs NAIP 2024 deck colour (factor); stall lines inf'),
     'deck_lanes':     dict(rgb=(170, 168, 162), m=0.0, r=0.90, tex='ls_c_lanes', naip='deck', src='obs NAIP 2024 deck colour; lane lines obs NAIP / spacing inf'),
     'deck_far':       dict(rgb=(160, 158, 152), m=0.0, r=0.90, naip='deck_far', src='obs NAIP 2024 deck colour incl. cars (LOD2)'),
-    'coping':         dict(rgb=(206, 204, 198), m=0.0, r=0.70, src='inf'),
+    'coping':         dict(rgb=(206, 204, 198), m=0.0, r=0.70, double=True, src='inf'),
     'glass_hyatt':    dict(rgb=(255, 255, 255), m=0.0, r=0.08, ior=1.9, tex='ls_c_hyatt', src='obs photo l4 (blue-green unitised curtain wall, one spandrel per floor)'),
     'glass_band':     dict(rgb=(255, 255, 255), m=0.0, r=0.08, ior=1.9, tex='ls_c_glassband', src='obs photo l4 (banded curved end bay)'),
     'metal_dark':     dict(rgb=(66, 69, 74), m=0.55, r=0.45, src='obs photo l4 (dark metal podium / penthouse)'),
     'cac_wall':       dict(rgb=(255, 255, 255), m=0.0, r=0.60, tex='ls_c_cac', src='inf (panels + window bands; reduced window-to-wall ratio [pub])'),
-    'louvre':         dict(rgb=(255, 255, 255), m=0.45, r=0.50, tex='ls_c_louvre', nrm=('ls_n_louvre', 0.6), src='obs photo l5 (green-grey canted louvre screen)'),
-    'louvre_blade':   dict(rgb=(128, 146, 140), m=0.45, r=0.45, src='obs photo l5 (green-grey blades)'),
+    'louvre':         dict(rgb=(255, 255, 255), m=0.45, r=0.50, tex='ls_c_louvre', nrm=('ls_n_louvre', 0.6), double=True, src='obs photo l5 (green-grey canted louvre screen)'),
+    'louvre_blade':   dict(rgb=(128, 146, 140), m=0.45, r=0.45, double=True, src='obs photo l5 (green-grey blades)'),
     'ribbon':         dict(rgb=(255, 255, 255), m=0.0, r=0.12, ior=1.9, tex='ls_c_ribbon', src='obs photo l5 (ribbon windows)'),
     'hangar_wall':    dict(rgb=(216, 212, 198), m=0.25, r=0.60, nrm=('ls_n_corrugated', 0.5), src='obs photo l3 (light hangar walls); cladding inf'),
     'hangar_door':    dict(rgb=(255, 255, 255), m=0.35, r=0.50, tex='ls_c_door', nrm=('ls_n_door', 0.6), src='obs photo l3 (grey door leaves); leaves inf'),
@@ -97,8 +99,8 @@ MATS = {
     'guideway':       dict(rgb=(186, 184, 178), m=0.0, r=0.85, nrm=('ls_n_concrete', 0.4), src='obs photos l1 / l5 (light concrete)'),
     'guideway_deck':  dict(rgb=(136, 136, 132), m=0.0, r=0.85, src='obs photos l1 / l5 (darker running surfaces)'),
     'platform':       dict(rgb=(168, 168, 164), m=0.0, r=0.80, src='inf'),
-    'station_roof':   dict(rgb=(198, 202, 206), m=0.60, r=0.40, src='obs photos l1 / l5 (light metal roofs)'),
-    'station_soffit': dict(rgb=(150, 154, 158), m=0.50, r=0.50, src='inf'),
+    'station_roof':   dict(rgb=(198, 202, 206), m=0.60, r=0.40, double=True, src='obs photos l1 / l5 (light metal roofs)'),
+    'station_soffit': dict(rgb=(150, 154, 158), m=0.50, r=0.50, double=True, src='inf'),
     'station_glass':  dict(rgb=(255, 255, 255), m=0.0, r=0.06, ior=1.9, tex='ls_c_glass', src='obs photos (glazed enclosures / door cabins)'),
     'perf_tower':     dict(rgb=(255, 255, 255), m=0.50, r=0.55, tex='ls_c_perf', src='obs photo l5 (perforated metal cylinder)'),
     'car':            dict(rgb=(255, 255, 255), m=0.40, r=0.35, vcol=True, src='inf (fleet colours, landside_cars.COLOURS) - vertex colours'),
@@ -227,7 +229,7 @@ def make_material(name, atlas, tex_imgs, ao_img):
     if spec.get('ior'):
         b.inputs['Specular IOR Level'].default_value = 0.499      # exports KHR_materials_specular + _ior (see build_itb.py)
         m['ior'] = spec['ior']
-    m.use_backface_culling = True
+    m.use_backface_culling = not spec.get('double', False)     # doubleSided only for see-through thin screens
     if spec.get('vcol'):
         ca = nt.nodes.new('ShaderNodeVertexColor'); ca.layer_name = 'Col'
         nt.links.new(ca.outputs['Color'], b.inputs['Base Color'])

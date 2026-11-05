@@ -3012,9 +3012,9 @@
  },
  "domestic": {
   "asset": "data/buildings3d/domestic.glb",
-  "bytes": 11472556,
-  "built": "2026-11-05T01:22:19+00:00",
-  "git": "17979db+dirty",
+  "bytes": 8845952,
+  "built": "2026-11-05T02:16:58+00:00",
+  "git": "ba7a2d1+dirty",
   "generator": "tools/blender/build_domestic.py (bpy 5.0.1, Cycles CPU AO bake); geometry tools/blender/dom_geom.py + dom_mesh.py; textures dom_tex.py",
   "reference": "2-D sheets BD-01..03 (docs/drawings/buildings/README.md), drawn by tools/buildings/draw_domestic.py, imported by dom_geom.py",
   "spec": "tools/buildings/spec_domestic.json (+ dom_bab_band.json, dom_baf_hub.json, dom_bab_roof.json; tools/blender/dom_pv.json)",
@@ -3073,17 +3073,17 @@
     "lod": 0,
     "node": "LOD0",
     "switch_m": 0.0,
-    "tris": 67428,
-    "verts": 143631,
-    "draw_calls": 113,
+    "tris": 67563,
+    "verts": 140376,
+    "draw_calls": 115,
     "ao_atlas": "dom_ao_S / dom_ao_N (shared by the LOD0 / LOD1 shell meshes)"
    },
    {
     "lod": 1,
     "node": "LOD1",
     "switch_m": 380.0,
-    "tris": 19698,
-    "verts": 46234,
+    "tris": 19805,
+    "verts": 46545,
     "draw_calls": 91,
     "ao_atlas": "dom_ao_S / dom_ao_N (shared by the LOD0 / LOD1 shell meshes)"
    },
@@ -3091,8 +3091,8 @@
     "lod": 2,
     "node": "LOD2",
     "switch_m": 1300.0,
-    "tris": 10114,
-    "verts": 23730,
+    "tris": 10248,
+    "verts": 24090,
     "draw_calls": 16,
     "ao_atlas": "dom_ao_L2"
    }
@@ -3104,7 +3104,7 @@
   ],
   "lod2_glb": {
    "path": "data/buildings3d/domestic_lod2.glb",
-   "bytes": 1765272
+   "bytes": 1454560
   },
   "textures": [
    {
@@ -3144,7 +3144,7 @@
      2048
     ],
     "mime": "image/png",
-    "bytes": 2392785,
+    "bytes": 1319280,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    },
    {
@@ -3204,18 +3204,8 @@
      2048
     ],
     "mime": "image/png",
-    "bytes": 2331569,
+    "bytes": 1278803,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
-   },
-   {
-    "name": "dom_c_glass_clear",
-    "px": [
-     512,
-     512
-    ],
-    "mime": "image/png",
-    "bytes": 1547,
-    "kind": "base colour, tiling, TEXCOORD_0"
    },
    {
     "name": "dom_c_frit_grey",
@@ -3228,13 +3218,23 @@
     "kind": "base colour, tiling, TEXCOORD_0"
    },
    {
+    "name": "dom_c_glass_clear",
+    "px": [
+     512,
+     512
+    ],
+    "mime": "image/png",
+    "bytes": 1547,
+    "kind": "base colour, tiling, TEXCOORD_0"
+   },
+   {
     "name": "dom_c_frit_green",
     "px": [
      512,
      512
     ],
     "mime": "image/png",
-    "bytes": 2577,
+    "bytes": 2572,
     "kind": "base colour, tiling, TEXCOORD_0"
    },
    {
@@ -3274,7 +3274,7 @@
      1024
     ],
     "mime": "image/png",
-    "bytes": 728469,
+    "bytes": 402516,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    }
   ],
@@ -3487,6 +3487,32 @@
     "normal_tile": null,
     "base_tile": null
    },
+   "mullion_dark": {
+    "rgb_srgb": [
+     58,
+     62,
+     66
+    ],
+    "metallic": 0.6,
+    "roughness": 0.4,
+    "ior": 1.5,
+    "src": "pub t3w.materials \"vertical mullion fins (dark gray metallic)\"; T1: obs photo d1 dark mullions",
+    "normal_tile": null,
+    "base_tile": null
+   },
+   "fascia_plain": {
+    "rgb_srgb": [
+     236,
+     237,
+     237
+    ],
+    "metallic": 0.0,
+    "roughness": 0.45,
+    "ior": 1.5,
+    "src": "obs photo d1 (white \"1\" of the sign)",
+    "normal_tile": null,
+    "base_tile": null
+   },
    "lettering": {
     "rgb_srgb": [
      34,
@@ -3593,14 +3619,14 @@
    },
    "glass_frit_green": {
     "rgb_srgb": [
-     150,
-     170,
-     160
+     165,
+     186,
+     172
     ],
     "metallic": 0.0,
-    "roughness": 0.12,
-    "ior": 1.9,
-    "src": "pub t1c.landside_facade (fritted glass); green obs photo d1; pattern inf",
+    "roughness": 0.22,
+    "ior": 1.5,
+    "src": "pub t1c.landside_facade (fritted glass); green obs photo d1; the ceramic frit dominates: uncoated F0 0.04, rougher; pattern inf",
     "normal_tile": null,
     "base_tile": "dom_c_frit_green"
    },
@@ -3655,7 +3681,7 @@
       215
      ],
      "BA_E": [
-      214,
+      213,
       215,
       212
      ],
@@ -3683,9 +3709,9 @@
      "BA_C",
      "T2"
     ],
-    "bake_s": 23.9,
-    "mean": 0.616,
-    "p2": 0.0,
+    "bake_s": 24.2,
+    "mean": 0.644,
+    "p2": 0.001,
     "samples": 48,
     "distance_m": 10.0,
     "ground_plane": true
@@ -3703,9 +3729,9 @@
      "BA_E",
      "BA_F"
     ],
-    "bake_s": 24.4,
-    "mean": 0.672,
-    "p2": 0.0,
+    "bake_s": 24.9,
+    "mean": 0.699,
+    "p2": 0.004,
     "samples": 48,
     "distance_m": 10.0,
     "ground_plane": true
@@ -3718,9 +3744,9 @@
     "buildings": [
      "all"
     ],
-    "bake_s": 3.4,
-    "mean": 0.647,
-    "p2": 0.0,
+    "bake_s": 3.5,
+    "mean": 0.667,
+    "p2": 0.002,
     "samples": 48,
     "distance_m": 10.0,
     "ground_plane": true
@@ -3799,11 +3825,11 @@
    },
    "BA_E": {
     "rgb": [
-     214,
+     213,
      215,
      212
     ],
-    "n": 631,
+    "n": 610,
     "lean_m_per_m": 0.443,
     "method": "NAIP 2024 median of the upper 65 pct (luminance) at the imaged deck points, 2.5 m grid, 2 m inside, off holes / PV; capped at sRGB 215"
    },
@@ -4116,7 +4142,7 @@
        "source": "apron / host deck"
       }
      },
-     "T1_walk21": {
+     "T1_walk22": {
       "h": {
        "v": 10.5,
        "tag": "unk",
@@ -4332,7 +4358,7 @@
        "source": "apron / host deck"
       }
      },
-     "T2_link22": {
+     "T2_link23": {
       "h": {
        "v": 16.877,
        "tag": "inf",
@@ -4602,6 +4628,18 @@
        "source": "apron / host deck"
       }
      },
+     "BA_E_endbay": {
+      "h": {
+       "v": 12.85,
+       "tag": "inf",
+       "source": "see spec keys"
+      },
+      "z0": {
+       "v": 0.0,
+       "tag": "obs",
+       "source": "apron / host deck"
+      }
+     },
      "BA_E_centre": {
       "h": {
        "v": 12.85,
@@ -4700,7 +4738,7 @@
        "source": "apron / host deck"
       }
      },
-     "BA_F_walk14": {
+     "BA_F_walk15": {
       "h": {
        "v": 10.5,
        "tag": "unk",
@@ -4712,7 +4750,7 @@
        "source": "apron / host deck"
       }
      },
-     "BA_F_walk15": {
+     "BA_F_walk16": {
       "h": {
        "v": 10.5,
        "tag": "unk",
@@ -4913,7 +4951,7 @@
     },
     {
      "group": "heights",
-     "check": "BA_E_centre: roof edge top (median of 118 probes, p10 12.85 / p90 12.85)",
+     "check": "BA_E_centre: roof edge top (median of 124 probes, p10 12.85 / p90 12.85)",
      "model": 12.85,
      "drawing": 12.85,
      "dev": 0.0,
@@ -4923,7 +4961,7 @@
     },
     {
      "group": "heights",
-     "check": "BA_E_body: roof edge top (median of 79 probes, p10 9.85 / p90 9.85)",
+     "check": "BA_E_body: roof edge top (median of 80 probes, p10 9.85 / p90 9.85)",
      "model": 9.85,
      "drawing": 9.85,
      "dev": 0.0,
@@ -5204,9 +5242,9 @@
     {
      "group": "BA-E",
      "check": "BA-E total roof width (median of the sections)",
-     "model": 42.8,
+     "model": 42.9,
      "drawing": 42.9,
-     "dev": 0.1,
+     "dev": 0.0,
      "tol": 0.858,
      "ok": true,
      "src": "BD-02 (research 5.3, 42.9 m) [inf]"
@@ -5214,9 +5252,9 @@
     {
      "group": "BA-E",
      "check": "BA-E raised plate width (median of the sections)",
-     "model": 37.0,
+     "model": 37.1,
      "drawing": 37.1,
-     "dev": 0.1,
+     "dev": 0.0,
      "tol": 0.7419999999999999,
      "ok": true,
      "src": "width - 2 x flank 4.4 + 2 x overhang 1.5 [inf]"
@@ -5344,9 +5382,9 @@
     {
      "group": "footprints",
      "check": "apron-level walls (0.5-5 m) outside the SFO Museum outlines (bridge vestibules excluded)",
-     "model": 108.679,
+     "model": 108.886,
      "drawing": 0.0,
-     "dev": 108.679,
+     "dev": 108.886,
      "tol": null,
      "ok": true,
      "src": "m2: the vestibules reach from the facade to the app walkway start (bridges)"
@@ -5354,9 +5392,9 @@
     {
      "group": "footprints",
      "check": "LOD0 plan area outside the SFO Museum outlines (roof overhangs, canopy, vestibules)",
-     "model": 1063.229,
+     "model": 1062.813,
      "drawing": 0.0,
-     "dev": 1063.229,
+     "dev": 1062.813,
      "tol": null,
      "ok": true,
      "src": "BA-B / BA-D ESE overhangs +2.3 / +2.4 m [obs], T1 canopy 4 m [inf], vestibules [inf]"
@@ -5374,9 +5412,9 @@
     {
      "group": "plausibility",
      "check": "bridge attachments: walkway first 1.5 m beyond the facade touching 3-D geometry (79 bridges; INFO)",
-     "model": 28.23,
+     "model": 28.32,
      "drawing": 0.0,
-     "dev": 28.23,
+     "dev": 28.32,
      "tol": null,
      "ok": true,
      "src": "door frames / vestibule ends / walkways meeting the facade at an angle (stand data vs SFO Museum outline, as the ITB rotunda contacts)"
@@ -5414,9 +5452,9 @@
     {
      "group": "plausibility",
      "check": "ITB outline (the ITB asset) inside the 3-D footprint",
-     "model": 0.0,
+     "model": 0.021,
      "drawing": 0.0,
-     "dev": 0.0,
+     "dev": 0.021,
      "tol": 0.5,
      "ok": true,
      "src": "SFO Museum ITB + BA-A / BA-G"
@@ -5496,7 +5534,7 @@
       "B11S",
       "B11",
       1,
-      0.28
+      0.41
      ],
      [
       "B12",
@@ -5520,7 +5558,7 @@
       "B15",
       "B15",
       1,
-      0.13
+      0.11
      ],
      [
       "B17",
@@ -5796,7 +5834,7 @@
       "E13",
       "E13",
       1,
-      0.4
+      0.38
      ],
      [
       "F5",
@@ -5949,13 +5987,13 @@
      "median": 12.85,
      "p10": 12.85,
      "p90": 12.85,
-     "n": 118
+     "n": 124
     },
     "BA_E_body": {
      "median": 9.85,
      "p10": 9.85,
      "p90": 9.85,
-     "n": 79
+     "n": 80
     },
     "BA_F_body": {
      "median": 10.49,
@@ -6016,6 +6054,5176 @@
      "p10": 21.336,
      "p90": 21.336,
      "n": 44
+    }
+   }
+  },
+  "renders": {
+   "a1": [
+    "out/buildings3d/domestic_a1.png"
+   ],
+   "d1": [
+    "out/buildings3d/domestic_d1.png"
+   ],
+   "bab": [
+    "out/buildings3d/domestic_bab.png",
+    "out/buildings3d/domestic_bab_alpha.png"
+   ],
+   "plan": [
+    "out/buildings3d/domestic_plan.png"
+   ],
+   "bclose": [
+    "out/buildings3d/domestic_bclose.png"
+   ],
+   "eclose": [
+    "out/buildings3d/domestic_eclose.png"
+   ]
+  },
+  "render_check": {
+   "px_per_m": 10.0,
+   "m_per_px": 0.1,
+   "view": "orthographic along +t (NNE) from t -1700, far clip t -1150",
+   "rows": [
+    {
+     "item": "band_wnw_s",
+     "render": -423.53,
+     "drawing": -423.4,
+     "dev": -0.13
+    },
+    {
+     "item": "band_ese_s",
+     "render": -390.83,
+     "drawing": -391.0,
+     "dev": 0.17
+    },
+    {
+     "item": "outer_wnw_s",
+     "render": -439.63,
+     "drawing": -438.04,
+     "dev": -1.59
+    },
+    {
+     "item": "outer_ese_s",
+     "render": -383.74,
+     "drawing": -383.73,
+     "dev": -0.0
+    },
+    {
+     "item": "band_top",
+     "render": 19.17,
+     "drawing": 19.04,
+     "dev": 0.13
+    },
+    {
+     "item": "outer_top_ese",
+     "render": 13.27,
+     "drawing": 13.14,
+     "dev": 0.13
+    },
+    {
+     "item": "outer_top_wnw",
+     "render": 13.27,
+     "drawing": 13.14,
+     "dev": 0.13
+    }
+   ],
+   "note": "silhouette = topmost opaque pixel per column of the alpha pass (LOD0); the parapet / coping top is the measured roof edge"
+  },
+  "renders_updated": "2026-11-05T02:00:37+00:00"
+ },
+ "landside": {
+  "asset": "data/buildings3d/landside.glb",
+  "bytes": 14866608,
+  "built": "2026-11-05T02:10:30+00:00",
+  "git": "ba7a2d1+dirty",
+  "generator": "tools/blender/build_landside.py (bpy 5.0.1, Cycles CPU AO bake); geometry landside_geom.py / landside_airtrain.py / landside_cars.py; textures landside_tex.py",
+  "reference": "2-D sheets BL-01..03 (docs/drawings/buildings/README.md), drawn by tools/buildings/draw_landside.py, imported by landside_geom.py",
+  "spec": "tools/buildings/spec_landside.json (+ landside_naip_measurements.json)",
+  "frame": {
+   "id": "ltp-nad83-2011",
+   "axes": "x east, y up, z south, metres from the ARP (js/geo.js)",
+   "root_node": "landside",
+   "root_translation": [
+    0.0,
+    3.0,
+    0.0
+   ],
+   "ground_y": 3.0,
+   "building_nodes": "one child per building / AirTrain tile, translated to its origin (origin_world_xz); heights above local grade"
+  },
+  "lod_rule": "per building node: LOD0 / LOD1 / LOD2 children; show exactly one: camera distance to the building node >= switch_m of that LOD and < switch_m of the next. LOD0 / LOD1 share the shell meshes and their AO atlas (A: parking structures, B: the other buildings + AirTrain); LOD2 is one joined node per building with atlas C. Parked cars (EXT_mesh_gpu_instancing, one node per deck x shape x colour) under LOD0 and LOD1. Phone / far tier: data/buildings3d/landside_lod2.glb = every LOD2 subtree with the same node transforms.",
+  "lods": {
+   "0": {
+    "switch_m": 0.0,
+    "tris": 116792,
+    "instanced_car_tris": 91638,
+    "verts": 272062,
+    "draw_calls": 286
+   },
+   "1": {
+    "switch_m": 450.0,
+    "tris": 62959,
+    "instanced_car_tris": 64486,
+    "verts": 158341,
+    "draw_calls": 258
+   },
+   "2": {
+    "switch_m": 1500.0,
+    "tris": 8757,
+    "instanced_car_tris": 0,
+    "verts": 21005,
+    "draw_calls": 74
+   }
+  },
+  "files": [
+   "data/buildings3d/landside.glb",
+   "data/buildings3d/landside_lod2.glb"
+  ],
+  "lod2_glb": {
+   "path": "data/buildings3d/landside_lod2.glb",
+   "bytes": 1258872
+  },
+  "textures": [
+   {
+    "name": "landside_ao_B",
+    "px": 2048,
+    "mime": "image/jpeg",
+    "bytes": 1165338,
+    "kind": "AO (occlusionTexture, TEXCOORD_1)"
+   },
+   {
+    "name": "ls_n_concrete",
+    "px": null,
+    "mime": "image/png",
+    "bytes": 5909,
+    "kind": "normal map, tiling, TEXCOORD_0"
+   },
+   {
+    "name": "landside_ao_C",
+    "px": 1024,
+    "mime": "image/jpeg",
+    "bytes": 224564,
+    "kind": "AO (occlusionTexture, TEXCOORD_1)"
+   },
+   {
+    "name": "ls_c_glass",
+    "px": null,
+    "mime": "image/png",
+    "bytes": 623,
+    "kind": "base colour, tiling, TEXCOORD_0"
+   },
+   {
+    "name": "ls_c_perf",
+    "px": null,
+    "mime": "image/png",
+    "bytes": 7290,
+    "kind": "base colour, tiling, TEXCOORD_0"
+   },
+   {
+    "name": "ls_c_cac",
+    "px": null,
+    "mime": "image/png",
+    "bytes": 928,
+    "kind": "base colour, tiling, TEXCOORD_0"
+   },
+   {
+    "name": "landside_ao_A",
+    "px": 2048,
+    "mime": "image/jpeg",
+    "bytes": 1328337,
+    "kind": "AO (occlusionTexture, TEXCOORD_1)"
+   },
+   {
+    "name": "ls_c_deck",
+    "px": null,
+    "mime": "image/png",
+    "bytes": 17188,
+    "kind": "base colour, tiling, TEXCOORD_0"
+   },
+   {
+    "name": "ls_n_precast",
+    "px": null,
+    "mime": "image/png",
+    "bytes": 994,
+    "kind": "normal map, tiling, TEXCOORD_0"
+   },
+   {
+    "name": "ls_n_band",
+    "px": null,
+    "mime": "image/png",
+    "bytes": 950,
+    "kind": "normal map, tiling, TEXCOORD_0"
+   },
+   {
+    "name": "ls_n_screen",
+    "px": null,
+    "mime": "image/png",
+    "bytes": 1420,
+    "kind": "normal map, tiling, TEXCOORD_0"
+   },
+   {
+    "name": "ls_c_screen",
+    "px": null,
+    "mime": "image/png",
+    "bytes": 775,
+    "kind": "base colour, tiling, TEXCOORD_0"
+   },
+   {
+    "name": "ls_c_hyatt",
+    "px": null,
+    "mime": "image/png",
+    "bytes": 474,
+    "kind": "base colour, tiling, TEXCOORD_0"
+   },
+   {
+    "name": "ls_c_glassband",
+    "px": null,
+    "mime": "image/png",
+    "bytes": 347,
+    "kind": "base colour, tiling, TEXCOORD_0"
+   },
+   {
+    "name": "ls_c_pv",
+    "px": null,
+    "mime": "image/png",
+    "bytes": 853,
+    "kind": "base colour, tiling, TEXCOORD_0"
+   },
+   {
+    "name": "ls_c_lanes",
+    "px": null,
+    "mime": "image/png",
+    "bytes": 11078,
+    "kind": "base colour, tiling, TEXCOORD_0"
+   },
+   {
+    "name": "ls_n_board",
+    "px": null,
+    "mime": "image/png",
+    "bytes": 10476,
+    "kind": "normal map, tiling, TEXCOORD_0"
+   },
+   {
+    "name": "ls_c_ribbon",
+    "px": null,
+    "mime": "image/png",
+    "bytes": 2960,
+    "kind": "base colour, tiling, TEXCOORD_0"
+   },
+   {
+    "name": "ls_n_louvre",
+    "px": null,
+    "mime": "image/png",
+    "bytes": 389,
+    "kind": "normal map, tiling, TEXCOORD_0"
+   },
+   {
+    "name": "ls_c_louvre",
+    "px": null,
+    "mime": "image/png",
+    "bytes": 440,
+    "kind": "base colour, tiling, TEXCOORD_0"
+   },
+   {
+    "name": "ls_n_door",
+    "px": null,
+    "mime": "image/png",
+    "bytes": 1733,
+    "kind": "normal map, tiling, TEXCOORD_0"
+   },
+   {
+    "name": "ls_c_door",
+    "px": null,
+    "mime": "image/png",
+    "bytes": 3936,
+    "kind": "base colour, tiling, TEXCOORD_0"
+   },
+   {
+    "name": "ls_n_corrugated",
+    "px": null,
+    "mime": "image/png",
+    "bytes": 781,
+    "kind": "normal map, tiling, TEXCOORD_0"
+   },
+   {
+    "name": "ls_n_roof",
+    "px": null,
+    "mime": "image/png",
+    "bytes": 6266,
+    "kind": "normal map, tiling, TEXCOORD_0"
+   },
+   {
+    "name": "ls_c_spine",
+    "px": null,
+    "mime": "image/png",
+    "bytes": 605,
+    "kind": "base colour, tiling, TEXCOORD_0"
+   }
+  ],
+  "materials": {
+   "precast": {
+    "rgb_srgb": [
+     214,
+     210,
+     198
+    ],
+    "metallic": 0.0,
+    "roughness": 0.8,
+    "ior": 1.5,
+    "src": "obs photo l1 (light architectural precast, square grid); colour inf",
+    "normal_tile": "ls_n_precast",
+    "base_tile": null,
+    "naip": null
+   },
+   "precast_band": {
+    "rgb_srgb": [
+     214,
+     210,
+     198
+    ],
+    "metallic": 0.0,
+    "roughness": 0.8,
+    "ior": 1.5,
+    "src": "obs photos l1 / a2 (banded helix drum)",
+    "normal_tile": "ls_n_band",
+    "base_tile": null,
+    "naip": null
+   },
+   "concrete": {
+    "rgb_srgb": [
+     188,
+     185,
+     177
+    ],
+    "metallic": 0.0,
+    "roughness": 0.85,
+    "ior": 1.5,
+    "src": "inf (cast concrete spandrels)",
+    "normal_tile": "ls_n_concrete",
+    "base_tile": null,
+    "naip": null
+   },
+   "concrete_lt": {
+    "rgb_srgb": [
+     204,
+     202,
+     194
+    ],
+    "metallic": 0.0,
+    "roughness": 0.82,
+    "ior": 1.5,
+    "src": "obs photo l2 (LTP 2 exposed frame) / l4 (Hyatt sign pier)",
+    "normal_tile": "ls_n_concrete",
+    "base_tile": null,
+    "naip": null
+   },
+   "concrete_board": {
+    "rgb_srgb": [
+     180,
+     176,
+     166
+    ],
+    "metallic": 0.0,
+    "roughness": 0.88,
+    "ior": 1.5,
+    "src": "obs photo l5 (board-formed concrete)",
+    "normal_tile": "ls_n_board",
+    "base_tile": null,
+    "naip": null
+   },
+   "screen": {
+    "rgb_srgb": [
+     236,
+     238,
+     238
+    ],
+    "metallic": 0.15,
+    "roughness": 0.55,
+    "ior": 1.5,
+    "src": "obs photo l1 (perforated metal panels, horizontal slots); reads mid-grey at a distance (photo a2)",
+    "normal_tile": "ls_n_screen",
+    "base_tile": "ls_c_screen",
+    "naip": null
+   },
+   "slot": {
+    "rgb_srgb": [
+     30,
+     32,
+     34
+    ],
+    "metallic": 0.0,
+    "roughness": 0.3,
+    "ior": 1.5,
+    "src": "obs photo l1 (dark window slots of the station block)",
+    "normal_tile": null,
+    "base_tile": null,
+    "naip": null
+   },
+   "guide_beam": {
+    "rgb_srgb": [
+     176,
+     174,
+     168
+    ],
+    "metallic": 0.0,
+    "roughness": 0.8,
+    "ior": 1.5,
+    "src": "obs photos l1 / l5 (centre guide beam)",
+    "normal_tile": null,
+    "base_tile": null,
+    "naip": null
+   },
+   "screen_edge": {
+    "rgb_srgb": [
+     200,
+     202,
+     202
+    ],
+    "metallic": 0.6,
+    "roughness": 0.45,
+    "ior": 1.5,
+    "src": "inf",
+    "normal_tile": null,
+    "base_tile": null,
+    "naip": null
+   },
+   "interior": {
+    "rgb_srgb": [
+     40,
+     41,
+     43
+    ],
+    "metallic": 0.0,
+    "roughness": 0.95,
+    "ior": 1.5,
+    "src": "inf (shaded parking interior behind the openings)",
+    "normal_tile": null,
+    "base_tile": null,
+    "naip": null
+   },
+   "sill": {
+    "rgb_srgb": [
+     118,
+     118,
+     114
+    ],
+    "metallic": 0.0,
+    "roughness": 0.9,
+    "ior": 1.5,
+    "src": "inf (slab top inside the openings)",
+    "normal_tile": null,
+    "base_tile": null,
+    "naip": null
+   },
+   "soffit": {
+    "rgb_srgb": [
+     92,
+     92,
+     90
+    ],
+    "metallic": 0.0,
+    "roughness": 0.9,
+    "ior": 1.5,
+    "src": "inf (slab underside)",
+    "normal_tile": null,
+    "base_tile": null,
+    "naip": null
+   },
+   "soffit_lt": {
+    "rgb_srgb": [
+     176,
+     176,
+     172
+    ],
+    "metallic": 0.0,
+    "roughness": 0.85,
+    "ior": 1.5,
+    "src": "inf",
+    "normal_tile": null,
+    "base_tile": null,
+    "naip": null
+   },
+   "deck": {
+    "rgb_srgb": [
+     170,
+     168,
+     162
+    ],
+    "metallic": 0.0,
+    "roughness": 0.9,
+    "ior": 1.5,
+    "src": "obs NAIP 2024 deck colour (factor); stall lines inf",
+    "normal_tile": null,
+    "base_tile": "ls_c_deck",
+    "naip": "deck"
+   },
+   "deck_lanes": {
+    "rgb_srgb": [
+     170,
+     168,
+     162
+    ],
+    "metallic": 0.0,
+    "roughness": 0.9,
+    "ior": 1.5,
+    "src": "obs NAIP 2024 deck colour; lane lines obs NAIP / spacing inf",
+    "normal_tile": null,
+    "base_tile": "ls_c_lanes",
+    "naip": "deck"
+   },
+   "deck_far": {
+    "rgb_srgb": [
+     160,
+     158,
+     152
+    ],
+    "metallic": 0.0,
+    "roughness": 0.9,
+    "ior": 1.5,
+    "src": "obs NAIP 2024 deck colour incl. cars (LOD2)",
+    "normal_tile": null,
+    "base_tile": null,
+    "naip": "deck_far"
+   },
+   "coping": {
+    "rgb_srgb": [
+     206,
+     204,
+     198
+    ],
+    "metallic": 0.0,
+    "roughness": 0.7,
+    "ior": 1.5,
+    "src": "inf",
+    "normal_tile": null,
+    "base_tile": null,
+    "naip": null
+   },
+   "glass_hyatt": {
+    "rgb_srgb": [
+     255,
+     255,
+     255
+    ],
+    "metallic": 0.0,
+    "roughness": 0.08,
+    "ior": 1.9,
+    "src": "obs photo l4 (blue-green unitised curtain wall, one spandrel per floor)",
+    "normal_tile": null,
+    "base_tile": "ls_c_hyatt",
+    "naip": null
+   },
+   "glass_band": {
+    "rgb_srgb": [
+     255,
+     255,
+     255
+    ],
+    "metallic": 0.0,
+    "roughness": 0.08,
+    "ior": 1.9,
+    "src": "obs photo l4 (banded curved end bay)",
+    "normal_tile": null,
+    "base_tile": "ls_c_glassband",
+    "naip": null
+   },
+   "metal_dark": {
+    "rgb_srgb": [
+     66,
+     69,
+     74
+    ],
+    "metallic": 0.55,
+    "roughness": 0.45,
+    "ior": 1.5,
+    "src": "obs photo l4 (dark metal podium / penthouse)",
+    "normal_tile": null,
+    "base_tile": null,
+    "naip": null
+   },
+   "cac_wall": {
+    "rgb_srgb": [
+     255,
+     255,
+     255
+    ],
+    "metallic": 0.0,
+    "roughness": 0.6,
+    "ior": 1.5,
+    "src": "inf (panels + window bands; reduced window-to-wall ratio [pub])",
+    "normal_tile": null,
+    "base_tile": "ls_c_cac",
+    "naip": null
+   },
+   "louvre": {
+    "rgb_srgb": [
+     255,
+     255,
+     255
+    ],
+    "metallic": 0.45,
+    "roughness": 0.5,
+    "ior": 1.5,
+    "src": "obs photo l5 (green-grey canted louvre screen)",
+    "normal_tile": "ls_n_louvre",
+    "base_tile": "ls_c_louvre",
+    "naip": null
+   },
+   "louvre_blade": {
+    "rgb_srgb": [
+     128,
+     146,
+     140
+    ],
+    "metallic": 0.45,
+    "roughness": 0.45,
+    "ior": 1.5,
+    "src": "obs photo l5 (green-grey blades)",
+    "normal_tile": null,
+    "base_tile": null,
+    "naip": null
+   },
+   "ribbon": {
+    "rgb_srgb": [
+     255,
+     255,
+     255
+    ],
+    "metallic": 0.0,
+    "roughness": 0.12,
+    "ior": 1.9,
+    "src": "obs photo l5 (ribbon windows)",
+    "normal_tile": null,
+    "base_tile": "ls_c_ribbon",
+    "naip": null
+   },
+   "hangar_wall": {
+    "rgb_srgb": [
+     216,
+     212,
+     198
+    ],
+    "metallic": 0.25,
+    "roughness": 0.6,
+    "ior": 1.5,
+    "src": "obs photo l3 (light hangar walls); cladding inf",
+    "normal_tile": "ls_n_corrugated",
+    "base_tile": null,
+    "naip": null
+   },
+   "hangar_door": {
+    "rgb_srgb": [
+     255,
+     255,
+     255
+    ],
+    "metallic": 0.35,
+    "roughness": 0.5,
+    "ior": 1.5,
+    "src": "obs photo l3 (grey door leaves); leaves inf",
+    "normal_tile": "ls_n_door",
+    "base_tile": "ls_c_door",
+    "naip": null
+   },
+   "hangar_roof": {
+    "rgb_srgb": [
+     176,
+     172,
+     160
+    ],
+    "metallic": 0.25,
+    "roughness": 0.6,
+    "ior": 1.5,
+    "src": "obs NAIP 2024 roof colour",
+    "normal_tile": "ls_n_roof",
+    "base_tile": null,
+    "naip": "superbay"
+   },
+   "spine_roof": {
+    "rgb_srgb": [
+     214,
+     214,
+     208
+    ],
+    "metallic": 0.2,
+    "roughness": 0.6,
+    "ior": 1.5,
+    "src": "obs NAIP 2024 (bright spine)",
+    "normal_tile": "ls_n_roof",
+    "base_tile": null,
+    "naip": "superbay_spine"
+   },
+   "spine_wall": {
+    "rgb_srgb": [
+     255,
+     255,
+     255
+    ],
+    "metallic": 0.0,
+    "roughness": 0.6,
+    "ior": 1.5,
+    "src": "inf (office floors in the spine [pub 6 levels])",
+    "normal_tile": null,
+    "base_tile": "ls_c_spine",
+    "naip": null
+   },
+   "fascia": {
+    "rgb_srgb": [
+     198,
+     196,
+     188
+    ],
+    "metallic": 0.3,
+    "roughness": 0.5,
+    "ior": 1.5,
+    "src": "obs photo l3 (light roof edge)",
+    "normal_tile": null,
+    "base_tile": null,
+    "naip": null
+   },
+   "moc_wall": {
+    "rgb_srgb": [
+     200,
+     202,
+     200
+    ],
+    "metallic": 0.35,
+    "roughness": 0.55,
+    "ior": 1.5,
+    "src": "inf (no MOC photo)",
+    "normal_tile": "ls_n_corrugated",
+    "base_tile": null,
+    "naip": null
+   },
+   "moc_roof": {
+    "rgb_srgb": [
+     200,
+     200,
+     196
+    ],
+    "metallic": 0.1,
+    "roughness": 0.75,
+    "ior": 1.5,
+    "src": "obs NAIP 2024 roof colour",
+    "normal_tile": "ls_n_roof",
+    "base_tile": null,
+    "naip": "moc"
+   },
+   "barrel_roof": {
+    "rgb_srgb": [
+     160,
+     146,
+     120
+    ],
+    "metallic": 0.3,
+    "roughness": 0.55,
+    "ior": 1.5,
+    "src": "obs NAIP 2024 roof colour",
+    "normal_tile": "ls_n_roof",
+    "base_tile": null,
+    "naip": "moc_barrel"
+   },
+   "roof_membrane": {
+    "rgb_srgb": [
+     214,
+     214,
+     210
+    ],
+    "metallic": 0.0,
+    "roughness": 0.85,
+    "ior": 1.5,
+    "src": "obs NAIP 2024 roof colour",
+    "normal_tile": null,
+    "base_tile": null,
+    "naip": "roof"
+   },
+   "steel": {
+    "rgb_srgb": [
+     150,
+     154,
+     158
+    ],
+    "metallic": 0.8,
+    "roughness": 0.4,
+    "ior": 1.5,
+    "src": "inf (galvanised / painted steel)",
+    "normal_tile": null,
+    "base_tile": null,
+    "naip": null
+   },
+   "mullion": {
+    "rgb_srgb": [
+     176,
+     184,
+     188
+    ],
+    "metallic": 0.7,
+    "roughness": 0.35,
+    "ior": 1.5,
+    "src": "inf (aluminium frame)",
+    "normal_tile": null,
+    "base_tile": null,
+    "naip": null
+   },
+   "sign_red": {
+    "rgb_srgb": [
+     196,
+     32,
+     32
+    ],
+    "metallic": 0.0,
+    "roughness": 0.5,
+    "ior": 1.5,
+    "src": "obs photo l4 (red vertical sign), DOF red light",
+    "normal_tile": null,
+    "base_tile": null,
+    "naip": null
+   },
+   "pv": {
+    "rgb_srgb": [
+     255,
+     255,
+     255
+    ],
+    "metallic": 0.2,
+    "roughness": 0.25,
+    "ior": 1.5,
+    "src": "pub (PV canopies); module layout inf",
+    "normal_tile": null,
+    "base_tile": "ls_c_pv",
+    "naip": null
+   },
+   "guideway": {
+    "rgb_srgb": [
+     186,
+     184,
+     178
+    ],
+    "metallic": 0.0,
+    "roughness": 0.85,
+    "ior": 1.5,
+    "src": "obs photos l1 / l5 (light concrete)",
+    "normal_tile": "ls_n_concrete",
+    "base_tile": null,
+    "naip": null
+   },
+   "guideway_deck": {
+    "rgb_srgb": [
+     136,
+     136,
+     132
+    ],
+    "metallic": 0.0,
+    "roughness": 0.85,
+    "ior": 1.5,
+    "src": "obs photos l1 / l5 (darker running surfaces)",
+    "normal_tile": null,
+    "base_tile": null,
+    "naip": null
+   },
+   "platform": {
+    "rgb_srgb": [
+     168,
+     168,
+     164
+    ],
+    "metallic": 0.0,
+    "roughness": 0.8,
+    "ior": 1.5,
+    "src": "inf",
+    "normal_tile": null,
+    "base_tile": null,
+    "naip": null
+   },
+   "station_roof": {
+    "rgb_srgb": [
+     198,
+     202,
+     206
+    ],
+    "metallic": 0.6,
+    "roughness": 0.4,
+    "ior": 1.5,
+    "src": "obs photos l1 / l5 (light metal roofs)",
+    "normal_tile": null,
+    "base_tile": null,
+    "naip": null
+   },
+   "station_soffit": {
+    "rgb_srgb": [
+     150,
+     154,
+     158
+    ],
+    "metallic": 0.5,
+    "roughness": 0.5,
+    "ior": 1.5,
+    "src": "inf",
+    "normal_tile": null,
+    "base_tile": null,
+    "naip": null
+   },
+   "station_glass": {
+    "rgb_srgb": [
+     255,
+     255,
+     255
+    ],
+    "metallic": 0.0,
+    "roughness": 0.06,
+    "ior": 1.9,
+    "src": "obs photos (glazed enclosures / door cabins)",
+    "normal_tile": null,
+    "base_tile": "ls_c_glass",
+    "naip": null
+   },
+   "perf_tower": {
+    "rgb_srgb": [
+     255,
+     255,
+     255
+    ],
+    "metallic": 0.5,
+    "roughness": 0.55,
+    "ior": 1.5,
+    "src": "obs photo l5 (perforated metal cylinder)",
+    "normal_tile": null,
+    "base_tile": "ls_c_perf",
+    "naip": null
+   },
+   "car": {
+    "rgb_srgb": [
+     255,
+     255,
+     255
+    ],
+    "metallic": 0.4,
+    "roughness": 0.35,
+    "ior": 1.5,
+    "src": "inf (fleet colours, landside_cars.COLOURS) - vertex colours",
+    "normal_tile": null,
+    "base_tile": null,
+    "naip": null
+   }
+  },
+  "material_note": "glass coated (IOR 1.9 -> F0 0.096: KHR_materials_ior + _specular), opaque; deck / roof colours are NAIP 2024 medians at the imaged (relief-shifted) roof positions (naip_colours); single-sided (faces wound outwards); cars: one material, paint / glass / skirt in COLOR_0. No TANGENT attribute (tiling normal maps).",
+  "ao": {
+   "A": {
+    "res": 2048,
+    "bake_s": 29.5,
+    "mean": 0.363,
+    "p2": 0.0,
+    "samples": 40,
+    "distance_m": 8.0,
+    "objects": 13,
+    "ground_plane": true,
+    "cars_as_occluders": true
+   },
+   "B": {
+    "res": 2048,
+    "bake_s": 42.5,
+    "mean": 0.63,
+    "p2": 0.0,
+    "samples": 40,
+    "distance_m": 8.0,
+    "objects": 21,
+    "ground_plane": true,
+    "cars_as_occluders": false
+   },
+   "C": {
+    "res": 1024,
+    "bake_s": 17.2,
+    "mean": 0.632,
+    "p2": 0.0,
+    "samples": 40,
+    "distance_m": 8.0,
+    "objects": 23,
+    "ground_plane": true,
+    "cars_as_occluders": false
+   }
+  },
+  "naip_colours": {
+   "deck.central_garage": {
+    "rgb": [
+     229,
+     232,
+     227
+    ],
+    "n": 13292,
+    "shift": [
+     4.0,
+     0.0
+    ]
+   },
+   "deck_far.central_garage": {
+    "rgb": [
+     222,
+     224,
+     220
+    ],
+    "n": 13292,
+    "shift": [
+     4.0,
+     0.0
+    ]
+   },
+   "deck.garage_a": {
+    "rgb": [
+     224,
+     222,
+     210
+    ],
+    "n": 1768,
+    "shift": [
+     13.0,
+     0.0
+    ]
+   },
+   "deck_far.garage_a": {
+    "rgb": [
+     221,
+     219,
+     209
+    ],
+    "n": 1768,
+    "shift": [
+     13.0,
+     0.0
+    ]
+   },
+   "deck.garage_g": {
+    "rgb": [
+     229,
+     226,
+     214
+    ],
+    "n": 1114,
+    "shift": [
+     12.0,
+     0.0
+    ]
+   },
+   "deck_far.garage_g": {
+    "rgb": [
+     225,
+     222,
+     212
+    ],
+    "n": 1114,
+    "shift": [
+     12.0,
+     0.0
+    ]
+   },
+   "deck.ltp_garage_1": {
+    "rgb": [
+     237,
+     242,
+     237
+    ],
+    "n": 3189,
+    "shift": [
+     5.5,
+     0.0
+    ]
+   },
+   "deck_far.ltp_garage_1": {
+    "rgb": [
+     227,
+     230,
+     226
+    ],
+    "n": 3189,
+    "shift": [
+     5.5,
+     0.0
+    ]
+   },
+   "deck.ltp_garage_2": {
+    "rgb": [
+     222,
+     225,
+     221
+    ],
+    "n": 4310,
+    "shift": [
+     1.5,
+     1.5
+    ]
+   },
+   "deck_far.ltp_garage_2": {
+    "rgb": [
+     204,
+     211,
+     211
+    ],
+    "n": 4310,
+    "shift": [
+     1.5,
+     1.5
+    ]
+   },
+   "deck.rental_car_center": {
+    "rgb": [
+     223,
+     219,
+     207
+    ],
+    "n": 7191,
+    "shift": [
+     3.0,
+     0.0
+    ]
+   },
+   "deck_far.rental_car_center": {
+    "rgb": [
+     212,
+     209,
+     202
+    ],
+    "n": 7191,
+    "shift": [
+     3.0,
+     0.0
+    ]
+   },
+   "superbay.superbay": {
+    "rgb": [
+     236,
+     236,
+     227
+    ],
+    "n": 1843,
+    "shift": [
+     -7.0,
+     -7.5
+    ]
+   },
+   "superbay_spine.superbay": {
+    "rgb": [
+     255,
+     255,
+     255
+    ],
+    "n": 817,
+    "shift": [
+     -7.0,
+     -7.5
+    ]
+   },
+   "roof.cac": {
+    "rgb": [
+     255,
+     255,
+     255
+    ],
+    "n": 928,
+    "shift": [
+     6.144768,
+     0.0
+    ]
+   },
+   "roof.grand_hyatt": {
+    "rgb": [
+     219,
+     220,
+     219
+    ],
+    "n": 528,
+    "shift": [
+     13.326100801398448,
+     0.0
+    ]
+   },
+   "moc.united_moc": {
+    "rgb": [
+     223,
+     227,
+     224
+    ],
+    "n": 3903,
+    "shift": "imaged corners"
+   },
+   "moc_barrel.united_moc": {
+    "rgb": [
+     219,
+     211,
+     194
+    ],
+    "n": 2271,
+    "shift": "imaged corners"
+   }
+  },
+  "buildings": {
+   "central_garage": {
+    "name": "Central Parking Garage (Bldg 195)",
+    "node": "central_garage",
+    "origin_world_xz": [
+     -938.2,
+     274.1
+    ],
+    "src": "pub",
+    "spec": [
+     "cg_identity",
+     "cg_levels",
+     "cg_height",
+     "cg_void",
+     "cg_void_obs",
+     "cg_footprint",
+     "cg_airtrain_level",
+     "cg_dof",
+     "cg_roof_cars"
+    ],
+    "dims": {
+     "footprint": {
+      "v": "SFO Museum outline with the void (58.9 m)",
+      "tag": "obs",
+      "source": "BL-02 A"
+     },
+     "parapet_top": {
+      "v": 24.689,
+      "tag": "pub",
+      "source": "81 ft [pub]; definition (deck / parapet / towers) not stated [unk]"
+     },
+     "deck": {
+      "v": 23.622,
+      "tag": "inf",
+      "source": "81 ft - 42-in guard"
+     },
+     "levels": {
+      "v": [
+       4.94,
+       9.88,
+       14.81,
+       19.75
+      ],
+      "tag": "unk",
+      "source": "5 levels [pub] drawn as equal fifths (BL-03 placeholder)"
+     },
+     "level5": {
+      "v": 19.751,
+      "tag": "unk",
+      "source": "AirTrain ring / stations on Level 5 [pub], 4/5 of 81 ft (BL-03)"
+     },
+     "roof_poles": {
+      "v": {
+       "06-034812": 33.2,
+       "06-034813": 30.8
+      },
+      "tag": "pub",
+      "source": "FAA DOF 1A"
+     }
+    },
+    "inferred": [
+     "deck = 81 ft - 1.07 m guard",
+     "open parking levels with spandrels 0.30 / 0.95 m, piers every 9 m",
+     "garage structure under the AirTrain ring / stations up to the guideway deck"
+    ],
+    "unknown": [
+     "what 81 ft measures",
+     "level heights (equal fifths)",
+     "facade module"
+    ],
+    "conflicts": [],
+    "not_modelled": [
+     "roof ramp \"petals\" and the helix ring round the void [obs NAIP, not measured]",
+     "other roof light poles (positions not measured)",
+     "DOF 06-039216 antenna 130 ft (4D: +-250 ft horizontal)",
+     "Level-3 skybridges to the terminals (domestic group)"
+    ],
+    "deviations_from_sheets": [],
+    "anchors": {
+     "parapet_top": 24.689,
+     "deck": 23.622,
+     "level5": 19.751,
+     "levels": [
+      4.938,
+      9.876,
+      14.813,
+      19.751
+     ],
+     "void_centre": [
+      -930.8,
+      275.5
+     ],
+     "poles": {
+      "06-034812": {
+       "top": 33.2,
+       "world": [
+        -877.9,
+        305.0
+       ]
+      },
+      "06-034813": {
+       "top": 30.8,
+       "world": [
+        -908.1,
+        203.8
+       ]
+      }
+     },
+     "main_area": 55645.6,
+     "under_area": 6468.0,
+     "sliver_area": 2278.1
+    },
+    "parts": [
+     {
+      "node": "L0_cg_body",
+      "feature": "garage body: concrete spandrels, dark open levels, deck + parapet, void",
+      "src": "pub",
+      "spec": [
+       "cg_footprint",
+       "cg_void_obs",
+       "cg_height"
+      ],
+      "kind": "shell",
+      "dims": {
+       "footprint": {
+        "v": "SFO Museum outline with the void (58.9 m)",
+        "tag": "obs",
+        "source": "BL-02 A"
+       },
+       "parapet_top": {
+        "v": 24.689,
+        "tag": "pub",
+        "source": "81 ft [pub]; definition (deck / parapet / towers) not stated [unk]"
+       },
+       "deck": {
+        "v": 23.622,
+        "tag": "inf",
+        "source": "81 ft - 42-in guard"
+       },
+       "levels": {
+        "v": [
+         4.94,
+         9.88,
+         14.81,
+         19.75
+        ],
+        "tag": "unk",
+        "source": "5 levels [pub] drawn as equal fifths (BL-03 placeholder)"
+       },
+       "level5": {
+        "v": 19.751,
+        "tag": "unk",
+        "source": "AirTrain ring / stations on Level 5 [pub], 4/5 of 81 ft (BL-03)"
+       },
+       "roof_poles": {
+        "v": {
+         "06-034812": 33.2,
+         "06-034813": 30.8
+        },
+        "tag": "pub",
+        "source": "FAA DOF 1A"
+       }
+      }
+     },
+     {
+      "node": "L0_cg_plinth",
+      "feature": "garage structure under / beside the AirTrain ring (to the guideway deck)",
+      "src": "inf",
+      "spec": [
+       "cg_airtrain_level"
+      ],
+      "kind": "shell",
+      "dims": {}
+     },
+     {
+      "node": "L0_cg_body_piers",
+      "feature": "facade piers / perforated screens (module inf)",
+      "src": "inf",
+      "spec": [
+       "cg_footprint",
+       "cg_void_obs",
+       "cg_height"
+      ],
+      "kind": "detail",
+      "dims": {}
+     },
+     {
+      "node": "L0_cg_poles",
+      "feature": "roof light poles at the FAA DOF points (tops 101 / 109 ft)",
+      "src": "pub",
+      "spec": [
+       "cg_dof"
+      ],
+      "kind": "detail",
+      "dims": {}
+     }
+    ],
+    "tris": {
+     "0": {
+      "tris": 13453,
+      "instanced_tris": 16200,
+      "draws": 27
+     },
+     "1": {
+      "tris": 9199,
+      "instanced_tris": 11400,
+      "draws": 26
+     },
+     "2": {
+      "tris": 332,
+      "instanced_tris": 0,
+      "draws": 2
+     }
+    },
+    "cars": {
+     "deck_area_m2": 55329.3,
+     "slots": 2195,
+     "cars": 300,
+     "target": 300,
+     "density_per_1000m2": 5.42,
+     "axis_deg": 117.8,
+     "lanes": false,
+     "count_src": "cg_roof_cars: about 300 (+-100) cars [obs, low, visual]; the detector (1,000) is inflated by kerbs",
+     "axis_src": "grid-aligned straight rows in each quadrant [obs]; axis 117.8 deg [inf] (detector coherence 0.04)"
+    }
+   },
+   "garage_a": {
+    "name": "International Garage A (Bldg 95)",
+    "node": "garage_a",
+    "origin_world_xz": [
+     -1455.6,
+     533.6
+    ],
+    "src": "obs",
+    "spec": [
+     "garage_a_footprint",
+     "garage_a_height",
+     "garage_a_levels",
+     "garage_a_airtrain_level",
+     "garage_ag_facade",
+     "garage_a_roof_cars"
+    ],
+    "dims": {
+     "footprint": {
+      "v": "SFO Museum outline up to u = 150.8 (garage body)",
+      "tag": "obs",
+      "source": "BL-02 B / draw_landside.ggeom"
+     },
+     "parapet_top": {
+      "v": 39.6,
+      "tag": "unk",
+      "source": "drum-ring value 39.6 m [obs, low] (range (38.0, 41.5)); the roof deck is NOT measured: drawn dotted at the drum ring on BL-03"
+     },
+     "deck": {
+      "v": 38.53,
+      "tag": "unk",
+      "source": "parapet top - 1.07 m (42-in guard) [inf]"
+     },
+     "levels": {
+      "v": "9 [pub]; level lines at equal ninths of the drum ring (BL-03 placeholder)",
+      "tag": "unk",
+      "source": "BL-03"
+     },
+     "drum": {
+      "v": {
+       "centre": [
+        -1514.5,
+        543.75
+       ],
+       "D": 32.4
+      },
+      "tag": "obs",
+      "source": "circle fit to the outline arc (BL-02 B)"
+     },
+     "core": {
+      "v": {
+       "D": 13.0,
+       "top": 43.6
+      },
+      "tag": "obs/unk",
+      "source": "D ~13 m [obs NAIP]; height above the deck unk (BL-03 draws 4 m)"
+     },
+     "airtrain_level": {
+      "v": 19.75,
+      "tag": "inf",
+      "source": "network level (landside_airtrain.NET_LEVEL); BL-03 placeholder 29.7 m"
+     },
+     "long_face_m": {
+      "v": 150.8,
+      "tag": "obs",
+      "source": "garage body to the start of the guideway tail"
+     }
+    },
+    "inferred": [
+     "deck = drawn parapet top - 1.07 m guard",
+     "facade module: precast piers every 8.1 m, perforated screens between, spandrels 0.30 / 0.95 m about each level line",
+     "drum: precast bands, open band only under the top deck (arched openings [obs spec] drawn as an open band)"
+    ],
+    "unknown": [
+     "roof deck height (candidates 24.4-28.0 / 25-30 [disputed] / 35.7 [NAIP 2-D shift] / 39.6 drum ring)",
+     "level heights (equal ninths placeholder)",
+     "core cylinder height (drawn 4 m)",
+     "rooftop box height (drawn 3.5 m)"
+    ],
+    "conflicts": [],
+    "not_modelled": [
+     "square stair / elevator towers above the parapet [obs spec, positions not measured]",
+     "roof light poles"
+    ],
+    "deviations_from_sheets": [
+     "AirTrain level 19.75 m (network level) instead of the BL-03 Level-7 placeholder 29.7 m (6/8 of the drum ring, [unk]): the Grand Hyatt station is 40 m along the same track; 19.75 m is inside the sheet's own [inf] range 18.3-21.0 m"
+    ],
+    "anchors": {
+     "drum_ring": 39.6,
+     "deck": 38.53,
+     "core_top": 43.6,
+     "levels": [
+      4.4,
+      8.8,
+      13.2,
+      17.6,
+      22.0,
+      26.4,
+      30.8,
+      35.2
+     ],
+     "Lb": 150.8,
+     "u_axis_world": [
+      0.9552783621223436,
+      -0.2957080500440467
+     ],
+     "u0_world": [
+      -1527.5987212230382,
+      555.8652642512062
+     ],
+     "portal_spans": 4,
+     "airtrain_level": 19.751,
+     "drum": {
+      "c": [
+       -1514.5030637895204,
+       543.7466576809188
+      ],
+      "R": 16.2
+     },
+     "body_area": 8022.7
+    },
+    "parts": [
+     {
+      "node": "L0_garage_a_body",
+      "feature": "garage body: precast spandrels, perforated screens, dark open levels, deck + parapet",
+      "src": "obs",
+      "spec": [
+       "garage_ag_facade",
+       "garage_a_footprint"
+      ],
+      "kind": "shell",
+      "dims": {
+       "footprint": {
+        "v": "SFO Museum outline up to u = 150.8 (garage body)",
+        "tag": "obs",
+        "source": "BL-02 B / draw_landside.ggeom"
+       },
+       "parapet_top": {
+        "v": 39.6,
+        "tag": "unk",
+        "source": "drum-ring value 39.6 m [obs, low] (range (38.0, 41.5)); the roof deck is NOT measured: drawn dotted at the drum ring on BL-03"
+       },
+       "deck": {
+        "v": 38.53,
+        "tag": "unk",
+        "source": "parapet top - 1.07 m (42-in guard) [inf]"
+       },
+       "levels": {
+        "v": "9 [pub]; level lines at equal ninths of the drum ring (BL-03 placeholder)",
+        "tag": "unk",
+        "source": "BL-03"
+       },
+       "drum": {
+        "v": {
+         "centre": [
+          -1514.5,
+          543.75
+         ],
+         "D": 32.4
+        },
+        "tag": "obs",
+        "source": "circle fit to the outline arc (BL-02 B)"
+       },
+       "core": {
+        "v": {
+         "D": 13.0,
+         "top": 43.6
+        },
+        "tag": "obs/unk",
+        "source": "D ~13 m [obs NAIP]; height above the deck unk (BL-03 draws 4 m)"
+       },
+       "airtrain_level": {
+        "v": 19.75,
+        "tag": "inf",
+        "source": "network level (landside_airtrain.NET_LEVEL); BL-03 placeholder 29.7 m"
+       },
+       "long_face_m": {
+        "v": 150.8,
+        "tag": "obs",
+        "source": "garage body to the start of the guideway tail"
+       }
+      }
+     },
+     {
+      "node": "L0_garage_a_core",
+      "feature": "helix core cylinder above the deck (D obs NAIP; height unk, drawn 4 m)",
+      "src": "obs",
+      "spec": [
+       "garage_ag_facade"
+      ],
+      "kind": "shell",
+      "dims": {
+       "D": {
+        "v": 13.0,
+        "tag": "obs",
+        "source": "NAIP dark disc, approx"
+       },
+       "top": {
+        "v": 43.6,
+        "tag": "unk",
+        "source": "BL-03 drawn 4 m"
+       }
+      }
+     },
+     {
+      "node": "L0_garage_a_rooftop_box",
+      "feature": "rooftop box (NAIP, lean-corrected; stair / elevator tower over the station? [inf])",
+      "src": "obs",
+      "spec": [
+       "garage_a_height"
+      ],
+      "kind": "shell",
+      "dims": {
+       "plan": {
+        "v": "u 52-77",
+        "tag": "obs",
+        "source": "BL-02 B"
+       },
+       "top": {
+        "v": 43.1,
+        "tag": "unk",
+        "source": "BL-03 drawn 3.5 m"
+       }
+      }
+     },
+     {
+      "node": "L0_garage_a_portal",
+      "feature": "AirTrain portal into the garage station (guideway crossing [obs polygons]; opening at the network level [inf])",
+      "src": "obs",
+      "spec": [
+       "garage_a_airtrain_level",
+       "at_section"
+      ],
+      "kind": "shell",
+      "dims": {}
+     },
+     {
+      "node": "L0_garage_a_body_piers",
+      "feature": "facade piers / perforated screens (module inf)",
+      "src": "inf",
+      "spec": [
+       "garage_ag_facade",
+       "garage_a_footprint"
+      ],
+      "kind": "detail",
+      "dims": {}
+     },
+     {
+      "node": "L0_garage_a_drum_openings",
+      "feature": "drum top openings (arched openings [obs spec]; drawn as a dark band)",
+      "src": "obs",
+      "spec": [
+       "garage_ag_facade"
+      ],
+      "kind": "detail",
+      "dims": {}
+     }
+    ],
+    "tris": {
+     "0": {
+      "tris": 11148,
+      "instanced_tris": 5400,
+      "draws": 31
+     },
+     "1": {
+      "tris": 2694,
+      "instanced_tris": 3800,
+      "draws": 27
+     },
+     "2": {
+      "tris": 61,
+      "instanced_tris": 0,
+      "draws": 2
+     }
+    },
+    "cars": {
+     "deck_area_m2": 7895.4,
+     "slots": 268,
+     "cars": 100,
+     "target": 100,
+     "density_per_1000m2": 12.67,
+     "axis_deg": 66.0,
+     "lanes": false,
+     "count_src": "garage_a_roof_cars: 91 detected (+-30 %), 12.7 per 1,000 m2 [obs, low]",
+     "axis_src": "car long axis 66 deg [obs NAIP, coherence 0.08]"
+    }
+   },
+   "garage_g": {
+    "name": "International Garage G (Bldg 495)",
+    "node": "garage_g",
+    "origin_world_xz": [
+     -1515.0,
+     344.0
+    ],
+    "src": "obs",
+    "spec": [
+     "garage_g_footprint",
+     "garage_g_height",
+     "garage_g_levels",
+     "garage_g_airtrain_level",
+     "garage_ag_facade",
+     "garage_g_roof_cars"
+    ],
+    "dims": {
+     "footprint": {
+      "v": "SFO Museum outline up to u = 149.8 (garage body)",
+      "tag": "obs",
+      "source": "BL-02 B / draw_landside.ggeom"
+     },
+     "parapet_top": {
+      "v": 37.6,
+      "tag": "unk",
+      "source": "drum-ring value 37.6 m [obs, low] (range (36.0, 40.0)); the roof deck is NOT measured: drawn dotted at the drum ring on BL-03"
+     },
+     "deck": {
+      "v": 36.53,
+      "tag": "unk",
+      "source": "parapet top - 1.07 m (42-in guard) [inf]"
+     },
+     "levels": {
+      "v": "9 [pub]; level lines at equal ninths of the drum ring (BL-03 placeholder)",
+      "tag": "unk",
+      "source": "BL-03"
+     },
+     "drum": {
+      "v": {
+       "centre": [
+        -1569.92,
+        367.73
+       ],
+       "D": 30.4
+      },
+      "tag": "obs",
+      "source": "circle fit to the outline arc (BL-02 B)"
+     },
+     "core": {
+      "v": {
+       "D": 13.0,
+       "top": 41.6
+      },
+      "tag": "obs/unk",
+      "source": "D ~13 m [obs NAIP]; height above the deck unk (BL-03 draws 4 m)"
+     },
+     "airtrain_level": {
+      "v": 19.75,
+      "tag": "inf",
+      "source": "network level (landside_airtrain.NET_LEVEL); BL-03 placeholder 28.2 m"
+     },
+     "long_face_m": {
+      "v": 149.8,
+      "tag": "obs",
+      "source": "garage body to the start of the guideway tail"
+     }
+    },
+    "inferred": [
+     "deck = drawn parapet top - 1.07 m guard",
+     "facade module: precast piers every 8.1 m, perforated screens between, spandrels 0.30 / 0.95 m about each level line",
+     "drum: precast bands, open band only under the top deck (arched openings [obs spec] drawn as an open band)"
+    ],
+    "unknown": [
+     "roof deck height (candidates 24.4-28.0 / 25-30 [disputed] / 34.7 [NAIP 2-D shift] / 37.6 drum ring)",
+     "level heights (equal ninths placeholder)",
+     "core cylinder height (drawn 4 m)"
+    ],
+    "conflicts": [],
+    "not_modelled": [
+     "square stair / elevator towers above the parapet [obs spec, positions not measured]",
+     "roof light poles"
+    ],
+    "deviations_from_sheets": [
+     "AirTrain level 19.75 m (network level) instead of the BL-03 Level-7 placeholder 28.2 m (6/8 of the drum ring, [unk]): the Grand Hyatt station is 40 m along the same track; 19.75 m is inside the sheet's own [inf] range 18.3-21.0 m"
+    ],
+    "anchors": {
+     "drum_ring": 37.6,
+     "deck": 36.53,
+     "core_top": 41.6,
+     "levels": [
+      4.18,
+      8.36,
+      12.53,
+      16.71,
+      20.89,
+      25.07,
+      29.24,
+      33.42
+     ],
+     "Lb": 149.8,
+     "u_axis_world": [
+      0.8957117602394129,
+      -0.4446351791849275
+     ],
+     "u0_world": [
+      -1582.129714957793,
+      377.2602555419525
+     ],
+     "portal_spans": 0,
+     "airtrain_level": 19.751,
+     "drum": {
+      "c": [
+       -1569.9170991481367,
+       367.72982261189463
+      ],
+      "R": 15.2
+     },
+     "body_area": 5392.8
+    },
+    "parts": [
+     {
+      "node": "L0_garage_g_body",
+      "feature": "garage body: precast spandrels, perforated screens, dark open levels, deck + parapet",
+      "src": "obs",
+      "spec": [
+       "garage_ag_facade",
+       "garage_g_footprint"
+      ],
+      "kind": "shell",
+      "dims": {
+       "footprint": {
+        "v": "SFO Museum outline up to u = 149.8 (garage body)",
+        "tag": "obs",
+        "source": "BL-02 B / draw_landside.ggeom"
+       },
+       "parapet_top": {
+        "v": 37.6,
+        "tag": "unk",
+        "source": "drum-ring value 37.6 m [obs, low] (range (36.0, 40.0)); the roof deck is NOT measured: drawn dotted at the drum ring on BL-03"
+       },
+       "deck": {
+        "v": 36.53,
+        "tag": "unk",
+        "source": "parapet top - 1.07 m (42-in guard) [inf]"
+       },
+       "levels": {
+        "v": "9 [pub]; level lines at equal ninths of the drum ring (BL-03 placeholder)",
+        "tag": "unk",
+        "source": "BL-03"
+       },
+       "drum": {
+        "v": {
+         "centre": [
+          -1569.92,
+          367.73
+         ],
+         "D": 30.4
+        },
+        "tag": "obs",
+        "source": "circle fit to the outline arc (BL-02 B)"
+       },
+       "core": {
+        "v": {
+         "D": 13.0,
+         "top": 41.6
+        },
+        "tag": "obs/unk",
+        "source": "D ~13 m [obs NAIP]; height above the deck unk (BL-03 draws 4 m)"
+       },
+       "airtrain_level": {
+        "v": 19.75,
+        "tag": "inf",
+        "source": "network level (landside_airtrain.NET_LEVEL); BL-03 placeholder 28.2 m"
+       },
+       "long_face_m": {
+        "v": 149.8,
+        "tag": "obs",
+        "source": "garage body to the start of the guideway tail"
+       }
+      }
+     },
+     {
+      "node": "L0_garage_g_core",
+      "feature": "helix core cylinder above the deck (D obs NAIP; height unk, drawn 4 m)",
+      "src": "obs",
+      "spec": [
+       "garage_ag_facade"
+      ],
+      "kind": "shell",
+      "dims": {
+       "D": {
+        "v": 13.0,
+        "tag": "obs",
+        "source": "NAIP dark disc, approx"
+       },
+       "top": {
+        "v": 41.6,
+        "tag": "unk",
+        "source": "BL-03 drawn 4 m"
+       }
+      }
+     },
+     {
+      "node": "L0_garage_g_body_piers",
+      "feature": "facade piers / perforated screens (module inf)",
+      "src": "inf",
+      "spec": [
+       "garage_ag_facade",
+       "garage_g_footprint"
+      ],
+      "kind": "detail",
+      "dims": {}
+     },
+     {
+      "node": "L0_garage_g_drum_openings",
+      "feature": "drum top openings (arched openings [obs spec]; drawn as a dark band)",
+      "src": "obs",
+      "spec": [
+       "garage_ag_facade"
+      ],
+      "kind": "detail",
+      "dims": {}
+     }
+    ],
+    "tris": {
+     "0": {
+      "tris": 16722,
+      "instanced_tris": 4158,
+      "draws": 27
+     },
+     "1": {
+      "tris": 4504,
+      "instanced_tris": 2926,
+      "draws": 24
+     },
+     "2": {
+      "tris": 109,
+      "instanced_tris": 0,
+      "draws": 2
+     }
+    },
+    "cars": {
+     "deck_area_m2": 5262.4,
+     "slots": 178,
+     "cars": 79,
+     "target": 79,
+     "density_per_1000m2": 15.01,
+     "axis_deg": 66.0,
+     "lanes": false,
+     "count_src": "garage_g_roof_cars: 77 detected (+-30 %), 15.0 per 1,000 m2 [obs, low]",
+     "axis_src": "car long axis 66 deg [obs NAIP, coherence 0.13]"
+    }
+   },
+   "ltp_garage_1": {
+    "name": "Long-Term Parking Garage 1 (Bldg 795)",
+    "node": "ltp_garage_1",
+    "origin_world_xz": [
+     -2220.1,
+     -1981.0
+    ],
+    "src": "obs",
+    "spec": [
+     "ltp1_identity",
+     "ltp1_parapet_obs",
+     "ltp1_dof",
+     "ltp1_levels",
+     "ltp1_footprint",
+     "ltp1_roof_cars",
+     "ltp1_team"
+    ],
+    "dims": {
+     "footprint": {
+      "v": "SFO Museum outline",
+      "tag": "obs",
+      "source": "BL-02 C"
+     },
+     "parapet_top": {
+      "v": 16.5,
+      "tag": "obs",
+      "source": "north-end parapet, NAIP shadow (15.9-16.8)"
+     },
+     "deck": {
+      "v": 15.43,
+      "tag": "inf",
+      "source": "parapet - 1.07 m"
+     },
+     "levels": {
+      "v": [
+       3.86,
+       7.72,
+       11.57
+      ],
+      "tag": "unk",
+      "source": ">= 5 levels [inf]; L5 = the deck, equal quarters (placeholder)"
+     },
+     "towers": {
+      "v": {
+       "06-035206": 27.7,
+       "06-035207": 26.2
+      },
+      "tag": "pub",
+      "source": "FAA DOF 1A tops; tower identity / size inf"
+     }
+    },
+    "inferred": [
+     "deck = parapet - 1.07 m",
+     "DOF tops = stair / elevator towers 7 x 7 m",
+     "precast spandrels (architectural precast by Willis [pub])"
+    ],
+    "unknown": [
+     "number of levels",
+     "level heights"
+    ],
+    "conflicts": [],
+    "not_modelled": [
+     "helix ramp interiors",
+     "Level-5 links to LTP 2 and the AirTrain bridge (positions not measured)"
+    ],
+    "deviations_from_sheets": [],
+    "anchors": {
+     "parapet_top": 16.5,
+     "deck": 15.433,
+     "levels": [
+      3.858,
+      7.717,
+      11.575
+     ],
+     "towers": {
+      "06-035206": {
+       "top": 27.7,
+       "centre_local": [
+        40.28,
+        -72.09
+       ],
+       "world": [
+        -2176.4,
+        -1903.6
+       ]
+      },
+      "06-035207": {
+       "top": 26.2,
+       "centre_local": [
+        -44.3,
+        34.0
+       ],
+       "world": [
+        -2264.4,
+        -2015.0
+       ]
+      }
+     }
+    },
+    "parts": [
+     {
+      "node": "L0_ltp1_body",
+      "feature": "garage body: precast spandrels, open levels, deck + parapet",
+      "src": "obs",
+      "spec": [
+       "ltp1_footprint"
+      ],
+      "kind": "shell",
+      "dims": {
+       "footprint": {
+        "v": "SFO Museum outline",
+        "tag": "obs",
+        "source": "BL-02 C"
+       },
+       "parapet_top": {
+        "v": 16.5,
+        "tag": "obs",
+        "source": "north-end parapet, NAIP shadow (15.9-16.8)"
+       },
+       "deck": {
+        "v": 15.43,
+        "tag": "inf",
+        "source": "parapet - 1.07 m"
+       },
+       "levels": {
+        "v": [
+         3.86,
+         7.72,
+         11.57
+        ],
+        "tag": "unk",
+        "source": ">= 5 levels [inf]; L5 = the deck, equal quarters (placeholder)"
+       },
+       "towers": {
+        "v": {
+         "06-035206": 27.7,
+         "06-035207": 26.2
+        },
+        "tag": "pub",
+        "source": "FAA DOF 1A tops; tower identity / size inf"
+       }
+      }
+     },
+     {
+      "node": "L0_ltp1_towers",
+      "feature": "stair / elevator towers to the DOF tops 86 / 91 ft (identity / size inf)",
+      "src": "pub",
+      "spec": [
+       "ltp1_dof"
+      ],
+      "kind": "shell",
+      "dims": {}
+     },
+     {
+      "node": "L0_ltp1_body_piers",
+      "feature": "facade piers / perforated screens (module inf)",
+      "src": "inf",
+      "spec": [
+       "ltp1_footprint"
+      ],
+      "kind": "detail",
+      "dims": {}
+     }
+    ],
+    "tris": {
+     "0": {
+      "tris": 8303,
+      "instanced_tris": 14904,
+      "draws": 23
+     },
+     "1": {
+      "tris": 5015,
+      "instanced_tris": 10488,
+      "draws": 22
+     },
+     "2": {
+      "tris": 207,
+      "instanced_tris": 0,
+      "draws": 3
+     }
+    },
+    "cars": {
+     "deck_area_m2": 14208.7,
+     "slots": 494,
+     "cars": 276,
+     "target": 276,
+     "density_per_1000m2": 19.42,
+     "axis_deg": 73.0,
+     "lanes": false,
+     "count_src": "ltp1_roof_cars: 240 detected, 19.4 per 1,000 m2 [obs, low]",
+     "axis_src": "car long axis 73 deg [obs NAIP; \"cars at about 70 deg\"]"
+    }
+   },
+   "ltp_garage_2": {
+    "name": "Long-Term Parking Garage 2 (Bldg 794)",
+    "node": "ltp_garage_2",
+    "origin_world_xz": [
+     -2322.2,
+     -1883.0
+    ],
+    "src": "pub",
+    "spec": [
+     "ltp2_identity",
+     "ltp2_levels",
+     "ltp2_floor_height",
+     "ltp2_roof_deck_h",
+     "ltp2_roof_pv",
+     "ltp2_facade",
+     "ltp2_footprint",
+     "ltp2_roof_cars",
+     "ltp2_structure"
+    ],
+    "dims": {
+     "footprint": {
+      "v": "SFO Museum outline",
+      "tag": "obs",
+      "source": "BL-02 C"
+     },
+     "deck": {
+      "v": 18.288,
+      "tag": "inf",
+      "source": "5 x 12 ft [pub pitch, L1 at grade inf]"
+     },
+     "levels": {
+      "v": [
+       3.658,
+       7.315,
+       10.973,
+       14.63
+      ],
+      "tag": "pub",
+      "source": "12 ft floor-to-floor [pub]"
+     },
+     "parapet_top": {
+      "v": 19.355,
+      "tag": "inf",
+      "source": "deck + 1.07 m"
+     },
+     "pv_canopy": {
+      "v": 21.79,
+      "tag": "unk",
+      "source": "BL-03 dotted at the deck + 3.5 m"
+     }
+    },
+    "inferred": [
+     "exposed frame: columns every 9.1 m, spandrels 0.30 / 1.10 m",
+     "PV canopy rows over the stall rows (layout inf)"
+    ],
+    "unknown": [
+     "PV canopy height and layout"
+    ],
+    "conflicts": [],
+    "not_modelled": [
+     "central lightwell [pub, position not measured]",
+     "elevator tower with the Morse-code glass, louvred corner towers [pub, positions not measured]",
+     "Level-5 links (positions not measured)"
+    ],
+    "deviations_from_sheets": [],
+    "anchors": {
+     "deck": 18.288,
+     "parapet_top": 19.355,
+     "levels": [
+      3.658,
+      7.315,
+      10.973,
+      14.63
+     ],
+     "pv_top": 21.79,
+     "pv_rows": 9
+    },
+    "parts": [
+     {
+      "node": "L0_ltp2_body",
+      "feature": "exposed concrete frame, deep spandrels, open bays, deck + parapet",
+      "src": "obs",
+      "spec": [
+       "ltp2_facade",
+       "ltp2_footprint"
+      ],
+      "kind": "shell",
+      "dims": {
+       "footprint": {
+        "v": "SFO Museum outline",
+        "tag": "obs",
+        "source": "BL-02 C"
+       },
+       "deck": {
+        "v": 18.288,
+        "tag": "inf",
+        "source": "5 x 12 ft [pub pitch, L1 at grade inf]"
+       },
+       "levels": {
+        "v": [
+         3.658,
+         7.315,
+         10.973,
+         14.63
+        ],
+        "tag": "pub",
+        "source": "12 ft floor-to-floor [pub]"
+       },
+       "parapet_top": {
+        "v": 19.355,
+        "tag": "inf",
+        "source": "deck + 1.07 m"
+       },
+       "pv_canopy": {
+        "v": 21.79,
+        "tag": "unk",
+        "source": "BL-03 dotted at the deck + 3.5 m"
+       }
+      }
+     },
+     {
+      "node": "L0_ltp2_body_piers",
+      "feature": "facade piers / perforated screens (module inf)",
+      "src": "inf",
+      "spec": [
+       "ltp2_facade",
+       "ltp2_footprint"
+      ],
+      "kind": "detail",
+      "dims": {}
+     },
+     {
+      "node": "L0_ltp2_pv",
+      "feature": "PV canopies on the roof [pub]; height / layout inf-unk",
+      "src": "pub",
+      "spec": [
+       "ltp2_roof_pv"
+      ],
+      "kind": "detail",
+      "dims": {}
+     }
+    ],
+    "tris": {
+     "0": {
+      "tris": 5992,
+      "instanced_tris": 17172,
+      "draws": 23
+     },
+     "1": {
+      "tris": 2444,
+      "instanced_tris": 12084,
+      "draws": 22
+     },
+     "2": {
+      "tris": 106,
+      "instanced_tris": 0,
+      "draws": 3
+     }
+    },
+    "cars": {
+     "deck_area_m2": 18610.7,
+     "slots": 715,
+     "cars": 318,
+     "target": 318,
+     "density_per_1000m2": 17.09,
+     "axis_deg": 71.0,
+     "lanes": false,
+     "count_src": "ltp2_roof_cars: 289 detected, 17.1 per 1,000 m2 [obs, low; PV hides cars]",
+     "axis_src": "car long axis 71 deg [obs NAIP]"
+    }
+   },
+   "rental_car_center": {
+    "name": "Rental Car Center (Bldg 780)",
+    "node": "rental_car_center",
+    "origin_world_xz": [
+     -2210.1,
+     -1056.3
+    ],
+    "src": "pub",
+    "spec": [
+     "rcc_identity",
+     "rcc_levels",
+     "rcc_height",
+     "rcc_dof",
+     "rcc_facade",
+     "rcc_footprint",
+     "rcc_roof_cars",
+     "rcc_height_check"
+    ],
+    "dims": {
+     "footprint": {
+      "v": "SFO Museum outline",
+      "tag": "obs",
+      "source": "BL-02 E"
+     },
+     "parapet_top": {
+      "v": 16.459,
+      "tag": "pub",
+      "source": "DOF roof-outline points 54 ft (x3)"
+     },
+     "deck": {
+      "v": 15.392,
+      "tag": "inf",
+      "source": "54 ft - 1.07 m"
+     },
+     "levels": {
+      "v": [
+       4.11,
+       8.23,
+       12.34
+      ],
+      "tag": "unk",
+      "source": "equal quarters (BL-03)"
+     },
+     "west_wall": {
+      "v": {
+       "ribbon": [
+        5.4,
+        8.4
+       ],
+       "band_top": 10.2,
+       "louvre_lean": 1.2
+      },
+      "tag": "inf",
+      "source": "photo l5 order (BL-03 wall key); heights inf"
+     },
+     "tower_59ft": {
+      "v": 17.983,
+      "tag": "pub",
+      "source": "DOF 06-035204 (raised element; tower form inf)"
+     }
+    },
+    "inferred": [
+     "west-wall band heights",
+     "canted louvre screen lean 1.2 m",
+     "other faces: open parking levels (not photographed)",
+     "rental lanes 3.0 m / cars every 5.6 m"
+    ],
+    "unknown": [
+     "what \"66 ft\" measures",
+     "level heights",
+     "facades other than the west wall"
+    ],
+    "conflicts": [
+     "DOF 06-035328 BLDG 34 ft (10.4 m) inside the east part of the outline: not modelled as a lower part (outline drawn at 54 ft)",
+     "RCC station platform: BL-03 placeholder 12.35 m vs photo l5 (~5-6 m: see landside_airtrain.RCC_PLATFORM)"
+    ],
+    "not_modelled": [
+     "the \"66-foot-tall\" element (definition disputed)",
+     "QTA building 782"
+    ],
+    "deviations_from_sheets": [
+     "west wall / station platform at 5.8 m (photo l5) instead of the BL-03 L4 placeholder 12.35 m [unk]"
+    ],
+    "anchors": {
+     "parapet_top": 16.459,
+     "deck": 15.392,
+     "levels": [
+      4.115,
+      8.23,
+      12.344
+     ],
+     "platform": 5.8,
+     "ribbon": [
+      5.3999999999999995,
+      8.4
+     ],
+     "band_top": 10.2,
+     "tower59": {
+      "top": 18.0,
+      "centre_local": [
+       -50.1,
+       -14.0
+      ]
+     },
+     "west_chord": [
+      [
+       -2260.7,
+       -1187.1
+      ],
+      [
+       -2258.3,
+       -966.3
+      ]
+     ]
+    },
+    "parts": [
+     {
+      "node": "L0_rcc_body",
+      "feature": "garage body: concrete spandrels, open levels, deck + parapet (rental lanes)",
+      "src": "obs",
+      "spec": [
+       "rcc_footprint"
+      ],
+      "kind": "shell",
+      "dims": {
+       "footprint": {
+        "v": "SFO Museum outline",
+        "tag": "obs",
+        "source": "BL-02 E"
+       },
+       "parapet_top": {
+        "v": 16.459,
+        "tag": "pub",
+        "source": "DOF roof-outline points 54 ft (x3)"
+       },
+       "deck": {
+        "v": 15.392,
+        "tag": "inf",
+        "source": "54 ft - 1.07 m"
+       },
+       "levels": {
+        "v": [
+         4.11,
+         8.23,
+         12.34
+        ],
+        "tag": "unk",
+        "source": "equal quarters (BL-03)"
+       },
+       "west_wall": {
+        "v": {
+         "ribbon": [
+          5.4,
+          8.4
+         ],
+         "band_top": 10.2,
+         "louvre_lean": 1.2
+        },
+        "tag": "inf",
+        "source": "photo l5 order (BL-03 wall key); heights inf"
+       },
+       "tower_59ft": {
+        "v": 17.983,
+        "tag": "pub",
+        "source": "DOF 06-035204 (raised element; tower form inf)"
+       }
+      }
+     },
+     {
+      "node": "L0_rcc_tower59",
+      "feature": "raised element at the 59-ft DOF point (stair / elevator tower, form inf)",
+      "src": "pub",
+      "spec": [
+       "rcc_dof"
+      ],
+      "kind": "shell",
+      "dims": {}
+     },
+     {
+      "node": "L0_rcc_body_piers",
+      "feature": "facade piers / perforated screens (module inf)",
+      "src": "inf",
+      "spec": [
+       "rcc_footprint"
+      ],
+      "kind": "detail",
+      "dims": {}
+     },
+     {
+      "node": "L0_rcc_louvres",
+      "feature": "louvre blades and pilasters of the west wall (photo l5; module inf)",
+      "src": "obs",
+      "spec": [
+       "rcc_facade"
+      ],
+      "kind": "detail",
+      "dims": {}
+     }
+    ],
+    "tris": {
+     "0": {
+      "tris": 2581,
+      "instanced_tris": 33804,
+      "draws": 28
+     },
+     "1": {
+      "tris": 717,
+      "instanced_tris": 23788,
+      "draws": 25
+     },
+     "2": {
+      "tris": 59,
+      "instanced_tris": 0,
+      "draws": 2
+     }
+    },
+    "cars": {
+     "deck_area_m2": 30222.4,
+     "slots": 1677,
+     "cars": 626,
+     "target": 626,
+     "density_per_1000m2": 20.71,
+     "axis_deg": 126.0,
+     "lanes": true,
+     "count_src": "rcc_roof_cars: 588 detected, 20.7 per 1,000 m2 (densest roof) [obs, low]",
+     "axis_src": "nose-to-tail lanes at 126 deg [obs NAIP; \"115-125 deg\"]"
+    }
+   },
+   "grand_hyatt": {
+    "name": "Grand Hyatt at SFO (Bldg 55)",
+    "node": "grand_hyatt",
+    "origin_world_xz": [
+     -1641.4,
+     651.3
+    ],
+    "src": "inf",
+    "spec": [
+     "gh_identity",
+     "gh_stories",
+     "gh_height",
+     "gh_plan_shape",
+     "gh_facade",
+     "gh_footprint",
+     "gh_lobby_level"
+    ],
+    "dims": {
+     "footprint": {
+      "v": "SFO Museum outline (crescent incl. podium / connector)",
+      "tag": "obs",
+      "source": "BL-02 B"
+     },
+     "parapet_top": {
+      "v": 44.0,
+      "tag": "inf",
+      "source": "13.2 pitches x 3.33 m (photo l4); 40-48 m; NOT published"
+     },
+     "podium": {
+      "v": 10.67,
+      "tag": "inf",
+      "source": "3.2 pitches"
+     },
+     "colonnade_top": {
+      "v": 14.0,
+      "tag": "inf",
+      "source": "4.2 pitches"
+     },
+     "face_fractions": {
+      "v": {
+       "podium": 0.47,
+       "colonnade": [
+        0.02,
+        0.1
+       ],
+       "end_bay": 0.049,
+       "framed": [
+        0.615,
+        0.842
+       ],
+       "penthouse": [
+        [
+         0.518,
+         0.692
+        ],
+        [
+         0.615,
+         0.742
+        ]
+       ],
+       "masts": [
+        -0.008,
+        0.027,
+        0.905,
+        0.961
+       ]
+      },
+      "tag": "obs",
+      "source": "photo l4 fractions (BL-03 hyatt_elev)"
+     }
+    },
+    "inferred": [
+     "height 44 m",
+     "floor pitch 3.33 m",
+     "mullion module 1.5 m (BL-03 schematic 3 m with an intermediate)",
+     "west (convex) face: same curtain wall",
+     "penthouse depth: the slab minus 4 m each side",
+     "podium / colonnade wrap on the south-facing faces of the podium zone"
+    ],
+    "unknown": [
+     "height (40-48)",
+     "slab vs podium plan (the outline includes both)"
+    ],
+    "conflicts": [
+     "spec \"taller straight block at the north end\" vs photo l4 (one parapet level): drawn at the common parapet (BL-03)"
+    ],
+    "not_modelled": [
+     "roof PV (NAIP shows arrays; layout not measured)",
+     "porte-cochere, enclosed AirTrain bridge"
+    ],
+    "deviations_from_sheets": [],
+    "anchors": {
+     "parapet_top": 44.0,
+     "podium": 10.667,
+     "colonnade_top": 14.0,
+     "pitch": 3.3333,
+     "penthouse": [
+      {
+       "f": [
+        0.518,
+        0.692
+       ],
+       "top": 48.67
+      },
+      {
+       "f": [
+        0.615,
+        0.742
+       ],
+       "top": 46.17
+      }
+     ],
+     "W": 107.4,
+     "axis_heading": 25.7,
+     "mast_top": 46.667,
+     "end_pier_top": 42.416
+    },
+    "parts": [
+     {
+      "node": "L0_gh_body",
+      "feature": "curtain wall slab, podium, colonnade recess, roof, end pier",
+      "src": "obs",
+      "spec": [
+       "gh_plan_shape",
+       "gh_facade"
+      ],
+      "kind": "shell",
+      "dims": {
+       "height": {
+        "v": 44.0,
+        "tag": "inf",
+        "source": "BL-03"
+       }
+      }
+     },
+     {
+      "node": "L0_gh_podium",
+      "feature": "podium east of the slab along the south part (outline [obs]; slab set-back 17.0 m from the relief-corrected NAIP roof [obs, approx]); top 3.2 pitches [inf]",
+      "src": "obs",
+      "spec": [
+       "gh_plan_shape"
+      ],
+      "kind": "shell",
+      "dims": {}
+     },
+     {
+      "node": "L0_gh_penthouse",
+      "feature": "dark stepped mechanical penthouse (photo l4 fractions; depth inf)",
+      "src": "obs",
+      "spec": [
+       "gh_facade"
+      ],
+      "kind": "shell",
+      "dims": {}
+     },
+     {
+      "node": "L0_gh_detail",
+      "feature": "colonnade columns, masts, framed-bay frame, red sign (photo l4)",
+      "src": "obs",
+      "spec": [
+       "gh_facade"
+      ],
+      "kind": "detail",
+      "dims": {}
+     }
+    ],
+    "tris": {
+     "0": {
+      "tris": 1274,
+      "instanced_tris": 0,
+      "draws": 15
+     },
+     "1": {
+      "tris": 1274,
+      "instanced_tris": 0,
+      "draws": 15
+     },
+     "2": {
+      "tris": 203,
+      "instanced_tris": 0,
+      "draws": 3
+     }
+    },
+    "cars": null
+   },
+   "cac": {
+    "name": "Consolidated Administration Campus",
+    "node": "cac",
+    "origin_world_xz": [
+     -2017.5,
+     -465.7
+    ],
+    "src": "inf",
+    "spec": [
+     "cac_identity",
+     "cac_stories",
+     "cac_floor_height",
+     "cac_height",
+     "cac_form",
+     "cac_footprint"
+    ],
+    "dims": {
+     "footprint": {
+      "v": "SFO Museum outline",
+      "tag": "obs",
+      "source": "BL-02 F"
+     },
+     "roof": {
+      "v": 18.288,
+      "tag": "inf",
+      "source": "4 x 15 ft"
+     },
+     "parapet_top": {
+      "v": 19.507,
+      "tag": "inf",
+      "source": "~64 ft (NAIP shadow 17.4-19.2 [obs])"
+     },
+     "floors": {
+      "v": 4.572,
+      "tag": "pub",
+      "source": "15 ft"
+     }
+    },
+    "inferred": [
+     "parapet 64 ft",
+     "window band 1.8 m per floor (reduced window-to-wall ratio [pub])",
+     "louvre fins every 1.5 m, 0.6 m deep (S / W faces)",
+     "light panel cladding (colour inf)"
+    ],
+    "unknown": [
+     "cladding material / colour",
+     "window layout"
+    ],
+    "conflicts": [],
+    "not_modelled": [
+     "interior stair tower / light well",
+     "Phase II buildings (build status unverified)"
+    ],
+    "deviations_from_sheets": [],
+    "anchors": {
+     "roof": 18.288,
+     "parapet_top": 19.507,
+     "floors": [
+      4.572,
+      9.144,
+      13.716
+     ]
+    },
+    "parts": [
+     {
+      "node": "L0_cac_body",
+      "feature": "four-storey bar, window bands, parapet, membrane roof",
+      "src": "inf",
+      "spec": [
+       "cac_form",
+       "cac_footprint"
+      ],
+      "kind": "shell",
+      "dims": {
+       "footprint": {
+        "v": "SFO Museum outline",
+        "tag": "obs",
+        "source": "BL-02 F"
+       },
+       "roof": {
+        "v": 18.288,
+        "tag": "inf",
+        "source": "4 x 15 ft"
+       },
+       "parapet_top": {
+        "v": 19.507,
+        "tag": "inf",
+        "source": "~64 ft (NAIP shadow 17.4-19.2 [obs])"
+       },
+       "floors": {
+        "v": 4.572,
+        "tag": "pub",
+        "source": "15 ft"
+       }
+      }
+     },
+     {
+      "node": "L0_cac_louvres",
+      "feature": "exterior louvres S / W (module inf)",
+      "src": "pub",
+      "spec": [
+       "cac_form"
+      ],
+      "kind": "detail",
+      "dims": {}
+     }
+    ],
+    "tris": {
+     "0": {
+      "tris": 1059,
+      "instanced_tris": 0,
+      "draws": 4
+     },
+     "1": {
+      "tris": 469,
+      "instanced_tris": 0,
+      "draws": 4
+     },
+     "2": {
+      "tris": 64,
+      "instanced_tris": 0,
+      "draws": 2
+     }
+    },
+    "cars": null
+   },
+   "superbay": {
+    "name": "Superbay hangar (Bldg 1060)",
+    "node": "superbay",
+    "origin_world_xz": [
+     -93.9,
+     -860.1
+    ],
+    "src": "pub",
+    "spec": [
+     "sb_identity",
+     "sb_height_dof",
+     "sb_height_pub",
+     "sb_interior_h",
+     "sb_cantilever",
+     "sb_layout",
+     "sb_roof_bays_obs",
+     "sb_footprint",
+     "sb_bays"
+    ],
+    "dims": {
+     "spine_top": {
+      "v": 41.148,
+      "tag": "pub",
+      "source": "DOF 06-001451 135 ft, red light"
+     },
+     "spine": {
+      "v": [
+       -14.0,
+       18.0
+      ],
+      "tag": "obs",
+      "source": "a from the outline centre (NAIP)"
+     },
+     "roof_a": {
+      "v": [
+       -80.5,
+       84.5
+      ],
+      "tag": "obs",
+      "source": "roof 165 m overall (BL-02 G)"
+     },
+     "roof_t": {
+      "v": [
+       -69.0,
+       69.0
+      ],
+      "tag": "obs",
+      "source": "8 x 17.25 m (138 m) vs outline 134.5 m"
+     },
+     "root": {
+      "v": 39.648,
+      "tag": "inf",
+      "source": "spine top - 1.5 m (BL-03)"
+     },
+     "tip": {
+      "v": 27.0,
+      "tag": "inf",
+      "source": "photo l3 ratio, 22-32 [low]"
+     },
+     "fold": {
+      "v": 1.5,
+      "tag": "unk",
+      "source": "BL-03 drawn 1.5 m at the tip"
+     },
+     "hips": {
+      "v": {
+       "nne": 10.3,
+       "ssw": 6.0,
+       "ridge_a": [
+        -2.5,
+        6.3
+       ]
+      },
+      "tag": "obs",
+      "source": "NAIP, approx"
+     },
+     "door_head": {
+      "v": 24.0,
+      "tag": "unk",
+      "source": "tip - 3 m (BL-03)"
+     },
+     "door_bays": {
+      "v": 67.0,
+      "tag": "inf",
+      "source": "two per face (four 747 bays [pub])"
+     }
+    },
+    "inferred": [
+     "tip height 27 m",
+     "fold tapers to 0 at the root",
+     "roof thickness 1.2 m at the eaves",
+     "door bays 67 m, 8 leaves",
+     "spine-end facets fall to the cantilever-root level (no step at the roof corners)",
+     "spine end-face office windows (6 bands)",
+     "hangar walls clipped 1 m inside the roof tips (outline 2.4 m beyond the WNW tip, BL-02)"
+    ],
+    "unknown": [
+     "fold amplitude",
+     "door head / leaf division",
+     "interior height 120 ft position"
+    ],
+    "conflicts": [
+     "roof 138 m along the spine vs outline 134.5 m (1.75 m overhang per end [inf] or outline error [unk])",
+     "17.3 m roof bays [obs] vs 50 ft structural bays [pub]",
+     "\"140-ft roof\" [pub] vs DOF 135 ft"
+    ],
+    "not_modelled": [
+     "roof ribs / skylights",
+     "apron-side annexes"
+    ],
+    "deviations_from_sheets": [
+     "spine-end facets: BL-03 V4 draws the spine line falling to the tip level (+28.5) at the roof ends [inf]; the model falls to the cantilever-root level 39.65 so the spine roof meets the cantilever roofs without an 11-m step (plan = BL-02)"
+    ],
+    "anchors": {
+     "spine_top": 41.148,
+     "root": 39.648,
+     "tip": 27.0,
+     "fold": 1.5,
+     "a": [
+      -80.5,
+      -14.0,
+      18.0,
+      84.5
+     ],
+     "t": [
+      -69.0,
+      69.0
+     ],
+     "hips": {
+      "nne": 10.3,
+      "ssw": 6.0,
+      "ridge_a": [
+       -2.5,
+       6.3
+      ]
+     },
+     "door_head": 24.0,
+     "doors_s": [
+      [
+       0.71,
+       66.71
+      ],
+      [
+       67.71,
+       133.71
+      ]
+     ],
+     "red_light_local": [
+      -12.01,
+      -60.24
+     ],
+     "walls_area": 21794.6
+    },
+    "parts": [
+     {
+      "node": "L0_sb_roof",
+      "feature": "folded cantilever roofs, spine roof with hipped ends",
+      "src": "pub",
+      "spec": [
+       "sb_layout",
+       "sb_roof_bays_obs",
+       "sb_height_dof"
+      ],
+      "kind": "shell",
+      "dims": {}
+     },
+     {
+      "node": "L0_sb_walls",
+      "feature": "hangar walls on the outline, door openings",
+      "src": "obs",
+      "spec": [
+       "sb_footprint",
+       "sb_bays"
+      ],
+      "kind": "shell",
+      "dims": {}
+     },
+     {
+      "node": "L0_sb_doors",
+      "feature": "door leaves (8 per bay), red light",
+      "src": "inf",
+      "spec": [
+       "sb_bays"
+      ],
+      "kind": "detail",
+      "dims": {}
+     }
+    ],
+    "tris": {
+     "0": {
+      "tris": 1378,
+      "instanced_tris": 0,
+      "draws": 11
+     },
+     "1": {
+      "tris": 1378,
+      "instanced_tris": 0,
+      "draws": 11
+     },
+     "2": {
+      "tris": 14,
+      "instanced_tris": 0,
+      "draws": 3
+     }
+    },
+    "cars": null
+   },
+   "united_moc": {
+    "name": "United Airlines MOC: large hangar block + barrel-vault hangars",
+    "node": "united_moc",
+    "origin_world_xz": [
+     -1615.1,
+     -1924.9
+    ],
+    "src": "obs",
+    "spec": [
+     "moc_identity",
+     "moc_large_hangar",
+     "moc_large_hangar_h",
+     "moc_barrel_hangars",
+     "moc_other_dof"
+    ],
+    "dims": {
+     "large_plan": {
+      "v": "imaged roof corners shifted 11.7 m west (lean 0.315 x 37.1 m)",
+      "tag": "inf",
+      "source": "BL-02 D (imaged, +-3 m)"
+     },
+     "parts": {
+      "v": {
+       "06-035289": 40.2,
+       "06-035290": 35.7,
+       "06-035288": 35.4
+      },
+      "tag": "pub",
+      "source": "DOF 1A points; part extents inf"
+     },
+     "barrel": {
+      "v": {
+       "eave": 14.0,
+       "crown": 24.0
+      },
+      "tag": "unk",
+      "source": "no DOF / no source: placeholders"
+     }
+    },
+    "inferred": [
+     "footprint = imaged roof - North-Field lean x mean DOF height (37.1 m)",
+     "part extents between the imaged roof steps",
+     "corrugated metal walls, flat roofs, 1-m parapet",
+     "barrel hangars: two vaults spanning N-S (shading), axes E-W"
+    ],
+    "unknown": [
+     "section heights between the DOF points",
+     "barrel hangar heights (placeholders 14 / 24 m)",
+     "hangar doors (positions / sizes)"
+    ],
+    "conflicts": [],
+    "not_modelled": [
+     "hangar doors (not verified)",
+     "other MOC buildings (DOF 107 / 92 / 79 / 75 / 74 / 70 ft, not identified)"
+    ],
+    "deviations_from_sheets": [],
+    "anchors": {
+     "shift_large": [
+      -11.69,
+      0.0
+     ],
+     "parts": [
+      {
+       "oas": "06-035290",
+       "top": 35.7,
+       "u": [
+        0.0,
+        101.7
+       ],
+       "area": 8120.6
+      },
+      {
+       "oas": "06-035289",
+       "top": 40.2,
+       "u": [
+        101.7,
+        158.4
+       ],
+       "area": 4699.4
+      },
+      {
+       "oas": "06-035288",
+       "top": 35.4,
+       "u": [
+        158.4,
+        241.3
+       ],
+       "area": 6444.6
+      }
+     ],
+     "barrel_shift": -6.3,
+     "vaults": [
+      {
+       "L": 90.2,
+       "span": 76.5,
+       "eave": 14.0,
+       "crown": 24.0
+      },
+      {
+       "L": 94.9,
+       "span": 73.5,
+       "eave": 14.0,
+       "crown": 24.0
+      }
+     ],
+     "imaged_corners": [
+      [
+       -1683,
+       -2025
+      ],
+      [
+       -1606,
+       -2048
+      ],
+      [
+       -1528,
+       -1837
+      ],
+      [
+       -1604,
+       -1797
+      ]
+     ]
+    },
+    "parts": [
+     {
+      "node": "L0_moc_large",
+      "feature": "large hangar block: three parts at the DOF heights",
+      "src": "pub",
+      "spec": [
+       "moc_large_hangar",
+       "moc_large_hangar_h"
+      ],
+      "kind": "shell",
+      "dims": {}
+     },
+     {
+      "node": "L0_moc_barrel",
+      "feature": "two barrel-vault hangars (plan obs imaged; heights unk placeholders)",
+      "src": "obs",
+      "spec": [
+       "moc_barrel_hangars"
+      ],
+      "kind": "shell",
+      "dims": {}
+     }
+    ],
+    "tris": {
+     "0": {
+      "tris": 190,
+      "instanced_tris": 0,
+      "draws": 5
+     },
+     "1": {
+      "tris": 190,
+      "instanced_tris": 0,
+      "draws": 5
+     },
+     "2": {
+      "tris": 40,
+      "instanced_tris": 0,
+      "draws": 3
+     }
+    },
+    "cars": null
+   }
+  },
+  "airtrain": {
+   "tiles": {
+    "airtrain_-6_-5": {
+     "0": {
+      "tris": 1462,
+      "instanced_tris": 0,
+      "draws": 8
+     },
+     "1": {
+      "tris": 1166,
+      "instanced_tris": 0,
+      "draws": 7
+     },
+     "2": {
+      "tris": 364,
+      "instanced_tris": 0,
+      "draws": 5
+     }
+    },
+    "airtrain_-6_-4": {
+     "0": {
+      "tris": 3742,
+      "instanced_tris": 0,
+      "draws": 5
+     },
+     "1": {
+      "tris": 2125,
+      "instanced_tris": 0,
+      "draws": 4
+     },
+     "2": {
+      "tris": 476,
+      "instanced_tris": 0,
+      "draws": 2
+     }
+    },
+    "airtrain_-6_-3": {
+     "0": {
+      "tris": 5031,
+      "instanced_tris": 0,
+      "draws": 9
+     },
+     "1": {
+      "tris": 3117,
+      "instanced_tris": 0,
+      "draws": 8
+     },
+     "2": {
+      "tris": 776,
+      "instanced_tris": 0,
+      "draws": 7
+     }
+    },
+    "airtrain_-6_-2": {
+     "0": {
+      "tris": 7817,
+      "instanced_tris": 0,
+      "draws": 5
+     },
+     "1": {
+      "tris": 5062,
+      "instanced_tris": 0,
+      "draws": 4
+     },
+     "2": {
+      "tris": 1072,
+      "instanced_tris": 0,
+      "draws": 2
+     }
+    },
+    "airtrain_-6_-1": {
+     "0": {
+      "tris": 2932,
+      "instanced_tris": 0,
+      "draws": 11
+     },
+     "1": {
+      "tris": 2021,
+      "instanced_tris": 0,
+      "draws": 8
+     },
+     "2": {
+      "tris": 576,
+      "instanced_tris": 0,
+      "draws": 5
+     }
+    },
+    "airtrain_-5_-1": {
+     "0": {
+      "tris": 1927,
+      "instanced_tris": 0,
+      "draws": 5
+     },
+     "1": {
+      "tris": 1109,
+      "instanced_tris": 0,
+      "draws": 4
+     },
+     "2": {
+      "tris": 244,
+      "instanced_tris": 0,
+      "draws": 2
+     }
+    },
+    "airtrain_-5_0": {
+     "0": {
+      "tris": 6304,
+      "instanced_tris": 0,
+      "draws": 5
+     },
+     "1": {
+      "tris": 3809,
+      "instanced_tris": 0,
+      "draws": 4
+     },
+     "2": {
+      "tris": 808,
+      "instanced_tris": 0,
+      "draws": 2
+     }
+    },
+    "airtrain_-5_1": {
+     "0": {
+      "tris": 2543,
+      "instanced_tris": 0,
+      "draws": 5
+     },
+     "1": {
+      "tris": 1492,
+      "instanced_tris": 0,
+      "draws": 4
+     },
+     "2": {
+      "tris": 308,
+      "instanced_tris": 0,
+      "draws": 2
+     }
+    },
+    "airtrain_-4_0": {
+     "0": {
+      "tris": 6003,
+      "instanced_tris": 0,
+      "draws": 10
+     },
+     "1": {
+      "tris": 4428,
+      "instanced_tris": 0,
+      "draws": 9
+     },
+     "2": {
+      "tris": 848,
+      "instanced_tris": 0,
+      "draws": 6
+     }
+    },
+    "airtrain_-4_1": {
+     "0": {
+      "tris": 4871,
+      "instanced_tris": 0,
+      "draws": 10
+     },
+     "1": {
+      "tris": 3224,
+      "instanced_tris": 0,
+      "draws": 9
+     },
+     "2": {
+      "tris": 690,
+      "instanced_tris": 0,
+      "draws": 6
+     }
+    },
+    "airtrain_-3_0": {
+     "0": {
+      "tris": 7212,
+      "instanced_tris": 0,
+      "draws": 7
+     },
+     "1": {
+      "tris": 4464,
+      "instanced_tris": 0,
+      "draws": 6
+     },
+     "2": {
+      "tris": 800,
+      "instanced_tris": 0,
+      "draws": 4
+     }
+    },
+    "airtrain_-3_1": {
+     "0": {
+      "tris": 1978,
+      "instanced_tris": 0,
+      "draws": 5
+     },
+     "1": {
+      "tris": 1415,
+      "instanced_tris": 0,
+      "draws": 4
+     },
+     "2": {
+      "tris": 312,
+      "instanced_tris": 0,
+      "draws": 2
+     }
+    },
+    "airtrain_-2_0": {
+     "0": {
+      "tris": 2870,
+      "instanced_tris": 0,
+      "draws": 7
+     },
+     "1": {
+      "tris": 1643,
+      "instanced_tris": 0,
+      "draws": 6
+     },
+     "2": {
+      "tris": 288,
+      "instanced_tris": 0,
+      "draws": 4
+     }
+    }
+   },
+   "levels": {
+    "T1": {
+     "level": 19.75,
+     "tag": "unk",
+     "note": "central garage Level 5 [pub], 4/5 of 81 ft (BL-03 placeholder)"
+    },
+    "T2": {
+     "level": 19.75,
+     "tag": "unk",
+     "note": "central garage Level 5 [pub], 4/5 of 81 ft (BL-03 placeholder)"
+    },
+    "T3": {
+     "level": 19.75,
+     "tag": "unk",
+     "note": "central garage Level 5 [pub], 4/5 of 81 ft (BL-03 placeholder)"
+    },
+    "ITB_A": {
+     "level": 16.5,
+     "tag": "unk",
+     "note": "ITB Level 4 [pub]; height placeholder inside the itb.glb core block"
+    },
+    "ITB_G": {
+     "level": 16.5,
+     "tag": "unk",
+     "note": "ITB Level 4 [pub]; height placeholder inside the itb.glb core block"
+    },
+    "GAR_A": {
+     "level": 19.75,
+     "tag": "inf",
+     "note": "Garage A Level 7 [pub]; network level (BL-03 placeholder 29.7 m deviates: grade)"
+    },
+    "GAR_G": {
+     "level": 19.75,
+     "tag": "inf",
+     "note": "Garage G Level 7 [pub]; network level (BL-03 placeholder 28.2 m deviates: grade)"
+    },
+    "HYATT": {
+     "level": 19.75,
+     "tag": "inf",
+     "note": "hotel 4th floor via an enclosed bridge [pub]; network level (40 m from Garage A station)"
+    },
+    "WFR_IN": {
+     "level": null,
+     "tag": "unk",
+     "note": "West Field Road: no level source (interpolated)"
+    },
+    "WFR_OUT": {
+     "level": null,
+     "tag": "unk",
+     "note": "West Field Road: no level source (interpolated)"
+    },
+    "RCC": {
+     "level": 5.8,
+     "tag": "inf",
+     "note": "photo l5 (see RCC_PLATFORM); BL-03 placeholder 12.35 m [unk]"
+    },
+    "LTP": {
+     "level": 15.24,
+     "tag": "pub",
+     "note": "\"50 feet above a public roadway\" (extension) [pub]; LTP Level 5 bridge [pub]"
+    }
+   },
+   "max_grade": 0.042,
+   "piers": 99,
+   "stations": [
+    {
+     "key": "LTP",
+     "sid": 1730051431,
+     "level": 15.24,
+     "tag": "pub",
+     "note": "\"50 feet above a public roadway\" (extension) [pub]; LTP Level 5 bridge [pub]",
+     "kind": "canopy",
+     "roof": 19.74,
+     "L": 100.9,
+     "W": 28.3
+    },
+    {
+     "key": "RCC",
+     "sid": 1729791943,
+     "level": 5.8,
+     "tag": "inf",
+     "note": "photo l5 (see RCC_PLATFORM); BL-03 placeholder 12.35 m [unk]",
+     "kind": "canopy",
+     "roof": 10.3,
+     "L": 61.9,
+     "W": 10.9
+    },
+    {
+     "key": "WFR_IN",
+     "sid": 1729791953,
+     "level": 11.32,
+     "tag": "unk",
+     "note": "West Field Road: no level source (interpolated)",
+     "kind": "canopy",
+     "roof": 15.82,
+     "L": 96.1,
+     "W": 8.4
+    },
+    {
+     "key": "WFR_OUT",
+     "sid": 1729791951,
+     "level": 11.22,
+     "tag": "unk",
+     "note": "West Field Road: no level source (interpolated)",
+     "kind": "canopy",
+     "roof": 15.72,
+     "L": 65.2,
+     "W": 31.4
+    },
+    {
+     "key": "GAR_G",
+     "sid": 1729791947,
+     "level": 19.75,
+     "tag": "inf",
+     "note": "Garage G Level 7 [pub]; network level (BL-03 placeholder 28.2 m deviates: grade)",
+     "kind": "dom",
+     "roof": 24.25,
+     "L": 127.3,
+     "W": 26.6
+    },
+    {
+     "key": "HYATT",
+     "sid": 1729791967,
+     "level": 19.75,
+     "tag": "inf",
+     "note": "hotel 4th floor via an enclosed bridge [pub]; network level (40 m from Garage A station)",
+     "kind": "dom",
+     "roof": 24.25,
+     "L": 73.4,
+     "W": 21.0
+    },
+    {
+     "key": "T1",
+     "sid": 1729791955,
+     "level": 19.75,
+     "tag": "unk",
+     "note": "central garage Level 5 [pub], 4/5 of 81 ft (BL-03 placeholder)",
+     "kind": "dom",
+     "roof": 24.25,
+     "L": 68.9,
+     "W": 13.2
+    },
+    {
+     "key": "T3",
+     "sid": 1729791957,
+     "level": 19.75,
+     "tag": "unk",
+     "note": "central garage Level 5 [pub], 4/5 of 81 ft (BL-03 placeholder)",
+     "kind": "dom",
+     "roof": 24.25,
+     "L": 68.9,
+     "W": 13.1
+    },
+    {
+     "key": "T2",
+     "sid": 1729791959,
+     "level": 19.75,
+     "tag": "unk",
+     "note": "central garage Level 5 [pub], 4/5 of 81 ft (BL-03 placeholder)",
+     "kind": "dom",
+     "roof": 24.25,
+     "L": 68.9,
+     "W": 13.1
+    }
+   ],
+   "clipped_m2": 6748.3,
+   "rcc_tower": {
+    "D": 6.5,
+    "top": 18.3,
+    "oas": "06-034240",
+    "world": [
+     -2278.7,
+     -1074.0
+    ]
+   },
+   "level_method": "deck top = harmonic (Laplace) interpolation on the 1-m cells of the guideway polygon between the station platforms fixed at their levels: linear between stations, continuous through junctions",
+   "clip": "not built inside the ITB outline (itb.glb core block holds it, ITB L4 placeholder 16.5 m keeps it inside) and inside the Garage A body (portals at both faces)",
+   "deviations": [
+    "Garage A / G stations at the network level 19.75 m, not the BL-03 Level-7 placeholders 29.7 / 28.2 m (grade to the Grand Hyatt station 40 m away)",
+    "RCC platform 5.8 m from photo l5, not the BL-03 placeholder 12.35 m [unk]"
+   ]
+  },
+  "cars": {
+   "total": 1699,
+   "per_deck": {
+    "central_garage": {
+     "deck_area_m2": 55329.3,
+     "slots": 2195,
+     "cars": 300,
+     "target": 300,
+     "density_per_1000m2": 5.42,
+     "axis_deg": 117.8,
+     "lanes": false,
+     "count_src": "cg_roof_cars: about 300 (+-100) cars [obs, low, visual]; the detector (1,000) is inflated by kerbs",
+     "axis_src": "grid-aligned straight rows in each quadrant [obs]; axis 117.8 deg [inf] (detector coherence 0.04)"
+    },
+    "garage_a": {
+     "deck_area_m2": 7895.4,
+     "slots": 268,
+     "cars": 100,
+     "target": 100,
+     "density_per_1000m2": 12.67,
+     "axis_deg": 66.0,
+     "lanes": false,
+     "count_src": "garage_a_roof_cars: 91 detected (+-30 %), 12.7 per 1,000 m2 [obs, low]",
+     "axis_src": "car long axis 66 deg [obs NAIP, coherence 0.08]"
+    },
+    "garage_g": {
+     "deck_area_m2": 5262.4,
+     "slots": 178,
+     "cars": 79,
+     "target": 79,
+     "density_per_1000m2": 15.01,
+     "axis_deg": 66.0,
+     "lanes": false,
+     "count_src": "garage_g_roof_cars: 77 detected (+-30 %), 15.0 per 1,000 m2 [obs, low]",
+     "axis_src": "car long axis 66 deg [obs NAIP, coherence 0.13]"
+    },
+    "ltp_garage_1": {
+     "deck_area_m2": 14208.7,
+     "slots": 494,
+     "cars": 276,
+     "target": 276,
+     "density_per_1000m2": 19.42,
+     "axis_deg": 73.0,
+     "lanes": false,
+     "count_src": "ltp1_roof_cars: 240 detected, 19.4 per 1,000 m2 [obs, low]",
+     "axis_src": "car long axis 73 deg [obs NAIP; \"cars at about 70 deg\"]"
+    },
+    "ltp_garage_2": {
+     "deck_area_m2": 18610.7,
+     "slots": 715,
+     "cars": 318,
+     "target": 318,
+     "density_per_1000m2": 17.09,
+     "axis_deg": 71.0,
+     "lanes": false,
+     "count_src": "ltp2_roof_cars: 289 detected, 17.1 per 1,000 m2 [obs, low; PV hides cars]",
+     "axis_src": "car long axis 71 deg [obs NAIP]"
+    },
+    "rental_car_center": {
+     "deck_area_m2": 30222.4,
+     "slots": 1677,
+     "cars": 626,
+     "target": 626,
+     "density_per_1000m2": 20.71,
+     "axis_deg": 126.0,
+     "lanes": true,
+     "count_src": "rcc_roof_cars: 588 detected, 20.7 per 1,000 m2 (densest roof) [obs, low]",
+     "axis_src": "nose-to-tail lanes at 126 deg [obs NAIP; \"115-125 deg\"]"
+    }
+   }
+  },
+  "inferred": [
+   "parking structures: open levels as a 3-m dark recess behind the facade plane, spandrels 0.30 / 0.95 m about each level line, facade piers 0.6 m wide (spacing per building, landside_geom.PIER_DX), 42-in (1.07 m) deck guard",
+   "parking modules: 2.6 x 5.5 m stalls, 7.6 m aisles (18.6-m module); RCC lanes 3.0 m with cars every 5.6 m",
+   "parked cars: counts / densities and car axes from NAIP 2024 (landside_naip_measurements roof_cars; central garage: the visual estimate 300); which stalls are taken is random (seeded); fleet colours / shapes inf (landside_cars)",
+   "stair / elevator towers at DOF roof points: 7 x 7 m boxes to the DOF top (LTP 1 x2, RCC 59-ft point), moved inside the outline within the 1A horizontal accuracy",
+   "materials / colours: our reading of the reference photos (no imagery as texture); deck and roof colours sampled from NAIP 2024"
+  ],
+  "unknown": [
+   "Garage A / G roof decks (drawn at the drum ring), the central garage / RCC \"81 ft\" / \"66 ft\" definitions, the Hyatt height, the LTP 1 level count, the CAC parapet, the Superbay tips / folds / doors, the MOC section heights and barrel hangar heights",
+   "AirTrain level along the guideway (see airtrain.levels: placeholders, interpolated between stations)",
+   "facade modules of every building (schematic)"
+  ],
+  "integration": {
+   "replaces": "js/live/airport.js STRUCT_H_BY_NAME boxes for these buildings and its AirTrain guideway slab / columns",
+   "overlaps_with_other_assets": [
+    "AirTrain guideway crosses the SFO Museum terminal outlines of T1 / T2 / T3 (skybridge parts, ~300-640 m2 each, at Level 3 below the guideway): check against the domestic asset",
+    "ITB core block (itb.glb) holds the guideway / ITB stations inside the ITB outline"
+   ],
+   "note": "the guideway is part of this asset; the app's guideway (G + 9.0..10.6 slab) must be removed with it"
+  },
+  "verification": {
+   "tool": "tools/blender/verify_landside.py",
+   "report": "out/buildings3d/landside_verify.json (local)",
+   "n_checks": 140,
+   "n_fail": 0,
+   "failed": [],
+   "tolerance": "0.5 m or 2 % unless stated",
+   "checks": [
+    {
+     "check": "root at GROUND_Y",
+     "model": 3.0,
+     "drawing": 3.0,
+     "tol": 0.001,
+     "ok": true,
+     "src": "js/geo.js",
+     "unit": "m"
+    },
+    {
+     "check": "airtrain_-2_0: node origin x",
+     "model": -813.9,
+     "drawing": -813.9,
+     "tol": 0.01,
+     "ok": true,
+     "src": "manifest origin",
+     "unit": "m"
+    },
+    {
+     "check": "airtrain_-2_0: node origin z",
+     "model": 259.5,
+     "drawing": 259.5,
+     "tol": 0.01,
+     "ok": true,
+     "src": "manifest origin",
+     "unit": "m"
+    },
+    {
+     "check": "airtrain_-3_0: node origin x",
+     "model": -977.4,
+     "drawing": -977.4,
+     "tol": 0.01,
+     "ok": true,
+     "src": "manifest origin",
+     "unit": "m"
+    },
+    {
+     "check": "airtrain_-3_0: node origin z",
+     "model": 244.6,
+     "drawing": 244.6,
+     "tol": 0.01,
+     "ok": true,
+     "src": "manifest origin",
+     "unit": "m"
+    },
+    {
+     "check": "airtrain_-3_1: node origin x",
+     "model": -1082.6,
+     "drawing": -1082.6,
+     "tol": 0.01,
+     "ok": true,
+     "src": "manifest origin",
+     "unit": "m"
+    },
+    {
+     "check": "airtrain_-3_1: node origin z",
+     "model": 442.8,
+     "drawing": 442.8,
+     "tol": 0.01,
+     "ok": true,
+     "src": "manifest origin",
+     "unit": "m"
+    },
+    {
+     "check": "airtrain_-4_0: node origin x",
+     "model": -1509.9,
+     "drawing": -1509.9,
+     "tol": 0.01,
+     "ok": true,
+     "src": "manifest origin",
+     "unit": "m"
+    },
+    {
+     "check": "airtrain_-4_0: node origin z",
+     "model": 316.0,
+     "drawing": 316.0,
+     "tol": 0.01,
+     "ok": true,
+     "src": "manifest origin",
+     "unit": "m"
+    },
+    {
+     "check": "airtrain_-4_1: node origin x",
+     "model": -1457.7,
+     "drawing": -1457.7,
+     "tol": 0.01,
+     "ok": true,
+     "src": "manifest origin",
+     "unit": "m"
+    },
+    {
+     "check": "airtrain_-4_1: node origin z",
+     "model": 552.8,
+     "drawing": 552.8,
+     "tol": 0.01,
+     "ok": true,
+     "src": "manifest origin",
+     "unit": "m"
+    },
+    {
+     "check": "airtrain_-5_-1: node origin x",
+     "model": -2064.9,
+     "drawing": -2064.9,
+     "tol": 0.01,
+     "ok": true,
+     "src": "manifest origin",
+     "unit": "m"
+    },
+    {
+     "check": "airtrain_-5_-1: node origin z",
+     "model": -115.2,
+     "drawing": -115.2,
+     "tol": 0.01,
+     "ok": true,
+     "src": "manifest origin",
+     "unit": "m"
+    },
+    {
+     "check": "airtrain_-5_0: node origin x",
+     "model": -1885.1,
+     "drawing": -1885.1,
+     "tol": 0.01,
+     "ok": true,
+     "src": "manifest origin",
+     "unit": "m"
+    },
+    {
+     "check": "airtrain_-5_0: node origin z",
+     "model": 267.8,
+     "drawing": 267.8,
+     "tol": 0.01,
+     "ok": true,
+     "src": "manifest origin",
+     "unit": "m"
+    },
+    {
+     "check": "airtrain_-5_1: node origin x",
+     "model": -1721.6,
+     "drawing": -1721.6,
+     "tol": 0.01,
+     "ok": true,
+     "src": "manifest origin",
+     "unit": "m"
+    },
+    {
+     "check": "airtrain_-5_1: node origin z",
+     "model": 519.3,
+     "drawing": 519.3,
+     "tol": 0.01,
+     "ok": true,
+     "src": "manifest origin",
+     "unit": "m"
+    },
+    {
+     "check": "airtrain_-6_-1: node origin x",
+     "model": -2126.6,
+     "drawing": -2126.6,
+     "tol": 0.01,
+     "ok": true,
+     "src": "manifest origin",
+     "unit": "m"
+    },
+    {
+     "check": "airtrain_-6_-1: node origin z",
+     "model": -325.6,
+     "drawing": -325.6,
+     "tol": 0.01,
+     "ok": true,
+     "src": "manifest origin",
+     "unit": "m"
+    },
+    {
+     "check": "airtrain_-6_-2: node origin x",
+     "model": -2189.4,
+     "drawing": -2189.4,
+     "tol": 0.01,
+     "ok": true,
+     "src": "manifest origin",
+     "unit": "m"
+    },
+    {
+     "check": "airtrain_-6_-2: node origin z",
+     "model": -615.3,
+     "drawing": -615.3,
+     "tol": 0.01,
+     "ok": true,
+     "src": "manifest origin",
+     "unit": "m"
+    },
+    {
+     "check": "airtrain_-6_-3: node origin x",
+     "model": -2276.2,
+     "drawing": -2276.2,
+     "tol": 0.01,
+     "ok": true,
+     "src": "manifest origin",
+     "unit": "m"
+    },
+    {
+     "check": "airtrain_-6_-3: node origin z",
+     "model": -1051.7,
+     "drawing": -1051.7,
+     "tol": 0.01,
+     "ok": true,
+     "src": "manifest origin",
+     "unit": "m"
+    },
+    {
+     "check": "airtrain_-6_-4: node origin x",
+     "model": -2160.3,
+     "drawing": -2160.3,
+     "tol": 0.01,
+     "ok": true,
+     "src": "manifest origin",
+     "unit": "m"
+    },
+    {
+     "check": "airtrain_-6_-4: node origin z",
+     "model": -1473.4,
+     "drawing": -1473.4,
+     "tol": 0.01,
+     "ok": true,
+     "src": "manifest origin",
+     "unit": "m"
+    },
+    {
+     "check": "airtrain_-6_-5: node origin x",
+     "model": -2169.5,
+     "drawing": -2169.5,
+     "tol": 0.01,
+     "ok": true,
+     "src": "manifest origin",
+     "unit": "m"
+    },
+    {
+     "check": "airtrain_-6_-5: node origin z",
+     "model": -1737.6,
+     "drawing": -1737.6,
+     "tol": 0.01,
+     "ok": true,
+     "src": "manifest origin",
+     "unit": "m"
+    },
+    {
+     "check": "cac: node origin x",
+     "model": -2017.5,
+     "drawing": -2017.5,
+     "tol": 0.01,
+     "ok": true,
+     "src": "manifest origin",
+     "unit": "m"
+    },
+    {
+     "check": "cac: node origin z",
+     "model": -465.7,
+     "drawing": -465.7,
+     "tol": 0.01,
+     "ok": true,
+     "src": "manifest origin",
+     "unit": "m"
+    },
+    {
+     "check": "central_garage: node origin x",
+     "model": -938.2,
+     "drawing": -938.2,
+     "tol": 0.01,
+     "ok": true,
+     "src": "manifest origin",
+     "unit": "m"
+    },
+    {
+     "check": "central_garage: node origin z",
+     "model": 274.1,
+     "drawing": 274.1,
+     "tol": 0.01,
+     "ok": true,
+     "src": "manifest origin",
+     "unit": "m"
+    },
+    {
+     "check": "garage_a: node origin x",
+     "model": -1455.6,
+     "drawing": -1455.6,
+     "tol": 0.01,
+     "ok": true,
+     "src": "manifest origin",
+     "unit": "m"
+    },
+    {
+     "check": "garage_a: node origin z",
+     "model": 533.6,
+     "drawing": 533.6,
+     "tol": 0.01,
+     "ok": true,
+     "src": "manifest origin",
+     "unit": "m"
+    },
+    {
+     "check": "garage_g: node origin x",
+     "model": -1515.0,
+     "drawing": -1515.0,
+     "tol": 0.01,
+     "ok": true,
+     "src": "manifest origin",
+     "unit": "m"
+    },
+    {
+     "check": "garage_g: node origin z",
+     "model": 344.0,
+     "drawing": 344.0,
+     "tol": 0.01,
+     "ok": true,
+     "src": "manifest origin",
+     "unit": "m"
+    },
+    {
+     "check": "grand_hyatt: node origin x",
+     "model": -1641.4,
+     "drawing": -1641.4,
+     "tol": 0.01,
+     "ok": true,
+     "src": "manifest origin",
+     "unit": "m"
+    },
+    {
+     "check": "grand_hyatt: node origin z",
+     "model": 651.3,
+     "drawing": 651.3,
+     "tol": 0.01,
+     "ok": true,
+     "src": "manifest origin",
+     "unit": "m"
+    },
+    {
+     "check": "ltp_garage_1: node origin x",
+     "model": -2220.1,
+     "drawing": -2220.1,
+     "tol": 0.01,
+     "ok": true,
+     "src": "manifest origin",
+     "unit": "m"
+    },
+    {
+     "check": "ltp_garage_1: node origin z",
+     "model": -1981.0,
+     "drawing": -1981.0,
+     "tol": 0.01,
+     "ok": true,
+     "src": "manifest origin",
+     "unit": "m"
+    },
+    {
+     "check": "ltp_garage_2: node origin x",
+     "model": -2322.2,
+     "drawing": -2322.2,
+     "tol": 0.01,
+     "ok": true,
+     "src": "manifest origin",
+     "unit": "m"
+    },
+    {
+     "check": "ltp_garage_2: node origin z",
+     "model": -1883.0,
+     "drawing": -1883.0,
+     "tol": 0.01,
+     "ok": true,
+     "src": "manifest origin",
+     "unit": "m"
+    },
+    {
+     "check": "rental_car_center: node origin x",
+     "model": -2210.1,
+     "drawing": -2210.1,
+     "tol": 0.01,
+     "ok": true,
+     "src": "manifest origin",
+     "unit": "m"
+    },
+    {
+     "check": "rental_car_center: node origin z",
+     "model": -1056.3,
+     "drawing": -1056.3,
+     "tol": 0.01,
+     "ok": true,
+     "src": "manifest origin",
+     "unit": "m"
+    },
+    {
+     "check": "superbay: node origin x",
+     "model": -93.9,
+     "drawing": -93.9,
+     "tol": 0.01,
+     "ok": true,
+     "src": "manifest origin",
+     "unit": "m"
+    },
+    {
+     "check": "superbay: node origin z",
+     "model": -860.1,
+     "drawing": -860.1,
+     "tol": 0.01,
+     "ok": true,
+     "src": "manifest origin",
+     "unit": "m"
+    },
+    {
+     "check": "united_moc: node origin x",
+     "model": -1615.1,
+     "drawing": -1615.1,
+     "tol": 0.01,
+     "ok": true,
+     "src": "manifest origin",
+     "unit": "m"
+    },
+    {
+     "check": "united_moc: node origin z",
+     "model": -1924.9,
+     "drawing": -1924.9,
+     "tol": 0.01,
+     "ok": true,
+     "src": "manifest origin",
+     "unit": "m"
+    },
+    {
+     "check": "CG: parapet top (81 ft)",
+     "model": 24.689,
+     "drawing": 24.689,
+     "tol": 0.5,
+     "ok": true,
+     "src": "BL-03 row 1 (81 ft [pub])",
+     "unit": "m"
+    },
+    {
+     "check": "CG: deck",
+     "model": 23.622,
+     "drawing": 23.622,
+     "tol": 0.5,
+     "ok": true,
+     "src": "81 ft - 42-in guard [inf]",
+     "unit": "m"
+    },
+    {
+     "check": "CG: garage structure under the ring = Level 5 - guideway deck",
+     "model": 20.851,
+     "drawing": 20.851,
+     "tol": 0.6,
+     "ok": true,
+     "src": "BL-03 Level 5 = 4/5 of 81 ft (+ trough wall top on the slivers)",
+     "unit": "m"
+    },
+    {
+     "check": "CG: roof pole 06-034812 top",
+     "model": 33.2,
+     "drawing": 33.2,
+     "tol": 0.3,
+     "ok": true,
+     "src": "FAA DOF 1A",
+     "unit": "m"
+    },
+    {
+     "check": "CG: roof pole 06-034813 top",
+     "model": 30.8,
+     "drawing": 30.8,
+     "tol": 0.3,
+     "ok": true,
+     "src": "FAA DOF 1A",
+     "unit": "m"
+    },
+    {
+     "check": "central_garage: roof footprint outside the drawn outline",
+     "model": 0.0,
+     "drawing": 0.0,
+     "tol": 1287.835,
+     "ok": true,
+     "src": "BL-02 outline Central Parking Garage; ",
+     "unit": "m2"
+    },
+    {
+     "check": "central_garage: drawn outline not covered by the roof footprint",
+     "model": 0.0,
+     "drawing": 0.0,
+     "tol": 1287.835,
+     "ok": true,
+     "src": "BL-02 outline Central Parking Garage",
+     "unit": "m2"
+    },
+    {
+     "check": "CG: void diameter (equal-area circle)",
+     "model": 58.72,
+     "drawing": 58.9,
+     "tol": 1.178,
+     "ok": true,
+     "src": "BL-02 A void 58.9 m [obs]",
+     "unit": "m"
+    },
+    {
+     "check": "garage_a: parapet top = drum ring (BL-03, deck unk)",
+     "model": 39.6,
+     "drawing": 39.6,
+     "tol": 0.792,
+     "ok": true,
+     "src": "BL-03 rows 1-2",
+     "unit": "m"
+    },
+    {
+     "check": "garage_a: core cylinder top (drawn 4 m above the ring)",
+     "model": 43.6,
+     "drawing": 43.6,
+     "tol": 0.872,
+     "ok": true,
+     "src": "BL-03",
+     "unit": "m"
+    },
+    {
+     "check": "garage_a: core diameter",
+     "model": 13.004,
+     "drawing": 13.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "BL-02 B GAR_CORE_D (obs NAIP)",
+     "unit": "m"
+    },
+    {
+     "check": "garage_a: core centre on the drum centre",
+     "model": 0.162,
+     "drawing": 0.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "BL-02 B drum fit",
+     "unit": "m"
+    },
+    {
+     "check": "garage_a: drum radius (circle fit to the drum wall)",
+     "model": 16.208,
+     "drawing": 16.2,
+     "tol": 0.5,
+     "ok": true,
+     "src": "BL-02 B outline-arc fit",
+     "unit": "m"
+    },
+    {
+     "check": "garage_a: drum centre",
+     "model": 0.032,
+     "drawing": 0.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "BL-02 B",
+     "unit": "m"
+    },
+    {
+     "check": "garage_a: garage body end u = Lb",
+     "model": 151.1,
+     "drawing": 150.8,
+     "tol": 3.016,
+     "ok": true,
+     "src": "BL-02 B dashed line",
+     "unit": "m"
+    },
+    {
+     "check": "garage_a: rooftop box top (drawn 3.5 m)",
+     "model": 43.1,
+     "drawing": 43.1,
+     "tol": 0.862,
+     "ok": true,
+     "src": "BL-03 row 1",
+     "unit": "m"
+    },
+    {
+     "check": "garage_a: rooftop box u start",
+     "model": 52.333,
+     "drawing": 52.333,
+     "tol": 1.047,
+     "ok": true,
+     "src": "BL-02 B (NAIP, lean-corrected)",
+     "unit": "m"
+    },
+    {
+     "check": "garage_a: rooftop box u end",
+     "model": 76.898,
+     "drawing": 76.898,
+     "tol": 1.538,
+     "ok": true,
+     "src": "BL-02 B",
+     "unit": "m"
+    },
+    {
+     "check": "garage_a: body footprint outside the SFO Museum outline (Garage A: + the guideway strips run inside it)",
+     "model": 0.534,
+     "drawing": 0.0,
+     "tol": 5.0,
+     "ok": true,
+     "src": "BL-02 B",
+     "unit": "m2"
+    },
+    {
+     "check": "garage_g: parapet top = drum ring (BL-03, deck unk)",
+     "model": 37.6,
+     "drawing": 37.6,
+     "tol": 0.752,
+     "ok": true,
+     "src": "BL-03 rows 1-2",
+     "unit": "m"
+    },
+    {
+     "check": "garage_g: core cylinder top (drawn 4 m above the ring)",
+     "model": 41.6,
+     "drawing": 41.6,
+     "tol": 0.832,
+     "ok": true,
+     "src": "BL-03",
+     "unit": "m"
+    },
+    {
+     "check": "garage_g: core diameter",
+     "model": 12.986,
+     "drawing": 13.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "BL-02 B GAR_CORE_D (obs NAIP)",
+     "unit": "m"
+    },
+    {
+     "check": "garage_g: core centre on the drum centre",
+     "model": 0.101,
+     "drawing": 0.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "BL-02 B drum fit",
+     "unit": "m"
+    },
+    {
+     "check": "garage_g: drum radius (circle fit to the drum wall)",
+     "model": 15.167,
+     "drawing": 15.2,
+     "tol": 0.5,
+     "ok": true,
+     "src": "BL-02 B outline-arc fit",
+     "unit": "m"
+    },
+    {
+     "check": "garage_g: drum centre",
+     "model": 0.0,
+     "drawing": 0.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "BL-02 B",
+     "unit": "m"
+    },
+    {
+     "check": "garage_g: garage body end u = Lb",
+     "model": 149.8,
+     "drawing": 149.8,
+     "tol": 2.996,
+     "ok": true,
+     "src": "BL-02 B dashed line",
+     "unit": "m"
+    },
+    {
+     "check": "garage_g: body footprint outside the SFO Museum outline (Garage A: + the guideway strips run inside it)",
+     "model": 0.0,
+     "drawing": 0.0,
+     "tol": 5.0,
+     "ok": true,
+     "src": "BL-02 B",
+     "unit": "m2"
+    },
+    {
+     "check": "LTP1: parapet top",
+     "model": 16.5,
+     "drawing": 16.5,
+     "tol": 0.5,
+     "ok": true,
+     "src": "BL-03 row 3 (NAIP shadow)",
+     "unit": "m"
+    },
+    {
+     "check": "LTP1: tower top at DOF 06-035206",
+     "model": 27.7,
+     "drawing": 27.7,
+     "tol": 0.3,
+     "ok": true,
+     "src": "FAA DOF 1A (tower identity inf)",
+     "unit": "m"
+    },
+    {
+     "check": "LTP1: tower top at DOF 06-035207",
+     "model": 26.2,
+     "drawing": 26.2,
+     "tol": 0.3,
+     "ok": true,
+     "src": "FAA DOF 1A (tower identity inf)",
+     "unit": "m"
+    },
+    {
+     "check": "ltp_garage_1: roof footprint outside the drawn outline",
+     "model": 0.0,
+     "drawing": 0.0,
+     "tol": 288.579,
+     "ok": true,
+     "src": "BL-02 outline Long-Term Parking Garage 1; ",
+     "unit": "m2"
+    },
+    {
+     "check": "ltp_garage_1: drawn outline not covered by the roof footprint",
+     "model": 0.0,
+     "drawing": 0.0,
+     "tol": 288.579,
+     "ok": true,
+     "src": "BL-02 outline Long-Term Parking Garage 1",
+     "unit": "m2"
+    },
+    {
+     "check": "LTP2: deck = 5 x 12 ft",
+     "model": 18.288,
+     "drawing": 18.288,
+     "tol": 0.5,
+     "ok": true,
+     "src": "BL-03 row 3 [inf]",
+     "unit": "m"
+    },
+    {
+     "check": "LTP2: parapet top",
+     "model": 19.355,
+     "drawing": 19.355,
+     "tol": 0.5,
+     "ok": true,
+     "src": "deck + 42 in [inf]",
+     "unit": "m"
+    },
+    {
+     "check": "LTP2: PV canopy top (BL-03 dotted deck + 3.5)",
+     "model": 21.788,
+     "drawing": 21.788,
+     "tol": 0.5,
+     "ok": true,
+     "src": "BL-03 [unk]",
+     "unit": "m"
+    },
+    {
+     "check": "ltp_garage_2: roof footprint outside the drawn outline",
+     "model": 0.0,
+     "drawing": 0.0,
+     "tol": 376.389,
+     "ok": true,
+     "src": "BL-02 outline Long-Term Parking Garage 2; ",
+     "unit": "m2"
+    },
+    {
+     "check": "ltp_garage_2: drawn outline not covered by the roof footprint",
+     "model": 0.0,
+     "drawing": 0.0,
+     "tol": 376.389,
+     "ok": true,
+     "src": "BL-02 outline Long-Term Parking Garage 2",
+     "unit": "m2"
+    },
+    {
+     "check": "RCC: roof outline (54 ft DOF)",
+     "model": 16.459,
+     "drawing": 16.459,
+     "tol": 0.5,
+     "ok": true,
+     "src": "BL-03 row 3 [pub DOF]",
+     "unit": "m"
+    },
+    {
+     "check": "RCC: raised element at the 59-ft DOF point",
+     "model": 18.0,
+     "drawing": 17.983,
+     "tol": 0.3,
+     "ok": true,
+     "src": "FAA DOF 06-035204",
+     "unit": "m"
+    },
+    {
+     "check": "rental_car_center: roof footprint outside the drawn outline",
+     "model": 205.681,
+     "drawing": 0.0,
+     "tol": 608.858,
+     "ok": true,
+     "src": "BL-02 outline Rental Car Center; ",
+     "unit": "m2"
+    },
+    {
+     "check": "rental_car_center: drawn outline not covered by the roof footprint",
+     "model": 0.0,
+     "drawing": 0.0,
+     "tol": 608.858,
+     "ok": true,
+     "src": "BL-02 outline Rental Car Center",
+     "unit": "m2"
+    },
+    {
+     "check": "RCC: canted louvre screen top outside the west wall (lean)",
+     "model": 1.106,
+     "drawing": 1.2,
+     "tol": 0.3,
+     "ok": true,
+     "src": "BL-03 wall key (canted; amount inf)",
+     "unit": "m"
+    },
+    {
+     "check": "RCC: louvre screen foot on the wall plane",
+     "model": 0.0,
+     "drawing": 0.0,
+     "tol": 0.1,
+     "ok": true,
+     "src": "BL-03 wall key",
+     "unit": "m"
+    },
+    {
+     "check": "Hyatt: parapet (13.2 pitches)",
+     "model": 44.0,
+     "drawing": 44.0,
+     "tol": 0.88,
+     "ok": true,
+     "src": "BL-03 row 2 [inf 44 m]",
+     "unit": "m"
+    },
+    {
+     "check": "Hyatt: podium extent along the east face (fraction)",
+     "model": 0.47,
+     "drawing": 0.47,
+     "tol": 0.02,
+     "ok": true,
+     "src": "BL-03 hyatt_elev (photo l4)",
+     "unit": ""
+    },
+    {
+     "check": "Hyatt: podium top",
+     "model": 10.667,
+     "drawing": 10.667,
+     "tol": 0.5,
+     "ok": true,
+     "src": "BL-03 (3.2 pitches)",
+     "unit": "m"
+    },
+    {
+     "check": "Hyatt: penthouse upper step top",
+     "model": 48.667,
+     "drawing": 48.667,
+     "tol": 0.973,
+     "ok": true,
+     "src": "BL-03 (1.4 pitches)",
+     "unit": "m"
+    },
+    {
+     "check": "grand_hyatt: roof footprint outside the drawn outline",
+     "model": 5.496,
+     "drawing": 0.0,
+     "tol": 66.227,
+     "ok": true,
+     "src": "BL-02 outline Grand Hyatt Hotel; ",
+     "unit": "m2"
+    },
+    {
+     "check": "grand_hyatt: drawn outline not covered by the roof footprint",
+     "model": 0.878,
+     "drawing": 0.0,
+     "tol": 66.227,
+     "ok": true,
+     "src": "BL-02 outline Grand Hyatt Hotel",
+     "unit": "m2"
+    },
+    {
+     "check": "CAC: parapet ~64 ft",
+     "model": 19.507,
+     "drawing": 19.507,
+     "tol": 0.5,
+     "ok": true,
+     "src": "BL-03 row 2 [inf]",
+     "unit": "m"
+    },
+    {
+     "check": "CAC: roof 4 x 15 ft",
+     "model": 18.288,
+     "drawing": 18.288,
+     "tol": 0.5,
+     "ok": true,
+     "src": "BL-03 [inf]",
+     "unit": "m"
+    },
+    {
+     "check": "cac: roof footprint outside the drawn outline",
+     "model": 0.0,
+     "drawing": 0.0,
+     "tol": 95.049,
+     "ok": true,
+     "src": "BL-02 outline Consolidated Administration Campus; ",
+     "unit": "m2"
+    },
+    {
+     "check": "cac: drawn outline not covered by the roof footprint",
+     "model": 0.0,
+     "drawing": 0.0,
+     "tol": 95.049,
+     "ok": true,
+     "src": "BL-02 outline Consolidated Administration Campus",
+     "unit": "m2"
+    },
+    {
+     "check": "Superbay: spine top (DOF 135 ft)",
+     "model": 41.148,
+     "drawing": 41.148,
+     "tol": 0.823,
+     "ok": true,
+     "src": "BL-03 row 4 [pub]",
+     "unit": "m"
+    },
+    {
+     "check": "Superbay: roof WNW tip a",
+     "model": -80.5,
+     "drawing": -80.5,
+     "tol": 1.61,
+     "ok": true,
+     "src": "BL-02 G",
+     "unit": "m"
+    },
+    {
+     "check": "Superbay: roof ESE tip a",
+     "model": 84.5,
+     "drawing": 84.5,
+     "tol": 1.69,
+     "ok": true,
+     "src": "BL-02 G",
+     "unit": "m"
+    },
+    {
+     "check": "Superbay: roof along the spine t (8 x 17.25)",
+     "model": 138.0,
+     "drawing": 138.0,
+     "tol": 2.76,
+     "ok": true,
+     "src": "BL-02 G [obs]",
+     "unit": "m"
+    },
+    {
+     "check": "Superbay: tip eave (valleys)",
+     "model": 27.0,
+     "drawing": 27.0,
+     "tol": 0.54,
+     "ok": true,
+     "src": "BL-03 row 4 [inf]",
+     "unit": "m"
+    },
+    {
+     "check": "Superbay: tip eave (fold ridges)",
+     "model": 28.5,
+     "drawing": 28.5,
+     "tol": 0.57,
+     "ok": true,
+     "src": "BL-03 row 4 [unk fold]",
+     "unit": "m"
+    },
+    {
+     "check": "Superbay: cantilever root at the spine",
+     "model": 39.648,
+     "drawing": 39.648,
+     "tol": 0.793,
+     "ok": true,
+     "src": "BL-03 row 4",
+     "unit": "m"
+    },
+    {
+     "check": "Superbay: door head",
+     "model": 24.0,
+     "drawing": 24.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "BL-03 row 4 [unk]",
+     "unit": "m"
+    },
+    {
+     "check": "MOC: part top near DOF 06-035289 (lean-corrected position)",
+     "model": 40.2,
+     "drawing": 40.2,
+     "tol": 0.3,
+     "ok": true,
+     "src": "FAA DOF 1A; part extents inf",
+     "unit": "m"
+    },
+    {
+     "check": "MOC: part top near DOF 06-035290 (lean-corrected position)",
+     "model": 35.7,
+     "drawing": 35.7,
+     "tol": 0.3,
+     "ok": true,
+     "src": "FAA DOF 1A; part extents inf",
+     "unit": "m"
+    },
+    {
+     "check": "MOC: part top near DOF 06-035288 (lean-corrected position)",
+     "model": 35.4,
+     "drawing": 35.4,
+     "tol": 0.3,
+     "ok": true,
+     "src": "FAA DOF 1A; part extents inf",
+     "unit": "m"
+    },
+    {
+     "check": "AirTrain: deck outside the SFO Museum polygon",
+     "model": 0.0,
+     "drawing": 0.0,
+     "tol": 5.0,
+     "ok": true,
+     "src": "BL-01 / BL-02 guideway polygon",
+     "unit": "m2"
+    },
+    {
+     "check": "AirTrain T1: track deck level at the station",
+     "model": 19.751,
+     "drawing": 19.751,
+     "tol": 0.15,
+     "ok": true,
+     "src": "unk",
+     "unit": "m"
+    },
+    {
+     "check": "AirTrain T2: track deck level at the station",
+     "model": 19.751,
+     "drawing": 19.751,
+     "tol": 0.15,
+     "ok": true,
+     "src": "unk",
+     "unit": "m"
+    },
+    {
+     "check": "AirTrain T3: track deck level at the station",
+     "model": 19.751,
+     "drawing": 19.751,
+     "tol": 0.15,
+     "ok": true,
+     "src": "unk",
+     "unit": "m"
+    },
+    {
+     "check": "AirTrain GAR_G: platform level",
+     "model": 19.751,
+     "drawing": 19.751,
+     "tol": 0.1,
+     "ok": true,
+     "src": "inf: Garage G Level 7 [pub]; network level (BL-03 placeholder 28.2 m deviates: grade)",
+     "unit": "m"
+    },
+    {
+     "check": "AirTrain GAR_G: track deck level at the station",
+     "model": 19.751,
+     "drawing": 19.751,
+     "tol": 0.15,
+     "ok": true,
+     "src": "inf",
+     "unit": "m"
+    },
+    {
+     "check": "AirTrain HYATT: platform level",
+     "model": 19.751,
+     "drawing": 19.751,
+     "tol": 0.1,
+     "ok": true,
+     "src": "inf: hotel 4th floor via an enclosed bridge [pub]; network level (40 m from Garage A station)",
+     "unit": "m"
+    },
+    {
+     "check": "AirTrain HYATT: track deck level at the station",
+     "model": 19.751,
+     "drawing": 19.751,
+     "tol": 0.15,
+     "ok": true,
+     "src": "inf",
+     "unit": "m"
+    },
+    {
+     "check": "AirTrain RCC: track deck level at the station",
+     "model": 5.813,
+     "drawing": 5.8,
+     "tol": 0.15,
+     "ok": true,
+     "src": "inf",
+     "unit": "m"
+    },
+    {
+     "check": "AirTrain LTP: platform level",
+     "model": 15.24,
+     "drawing": 15.24,
+     "tol": 0.1,
+     "ok": true,
+     "src": "pub: \"50 feet above a public roadway\" (extension) [pub]; LTP Level 5 bridge [pub]",
+     "unit": "m"
+    },
+    {
+     "check": "AirTrain LTP: track deck level at the station",
+     "model": 15.24,
+     "drawing": 15.24,
+     "tol": 0.15,
+     "ok": true,
+     "src": "pub",
+     "unit": "m"
+    },
+    {
+     "check": "AirTrain: max deck grade between vertices 2-6 m apart",
+     "model": 0.039,
+     "drawing": 0.06,
+     "tol": null,
+     "ok": true,
+     "src": "plausibility: rubber-tyred APM grades <= 6 % [inf]",
+     "unit": ""
+    },
+    {
+     "check": "AirTrain RCC station tower top (DOF TANK 60 ft)",
+     "model": 18.3,
+     "drawing": 18.3,
+     "tol": 0.3,
+     "ok": true,
+     "src": "FAA DOF 06-034240 [pub]; identity inf",
+     "unit": "m"
+    },
+    {
+     "check": "AirTrain RCC station tower diameter",
+     "model": 6.503,
+     "drawing": 6.5,
+     "tol": 0.5,
+     "ok": true,
+     "src": "BL-02 E [inf]",
+     "unit": "m"
+    },
+    {
+     "check": "cars central_garage: min centre spacing (no overlap: car width <= 1.95 m + 0.15 m)",
+     "model": 2.401,
+     "drawing": 2.1,
+     "tol": null,
+     "ok": true,
+     "src": "landside_cars stall grid (2.6 m stalls)",
+     "unit": "m"
+    },
+    {
+     "check": "cars central_garage: on the deck (median height - deck)",
+     "model": 0.01,
+     "drawing": 0.01,
+     "tol": 0.05,
+     "ok": true,
+     "src": "deck level",
+     "unit": "m"
+    },
+    {
+     "check": "cars garage_a: min centre spacing (no overlap: car width <= 1.95 m + 0.15 m)",
+     "model": 2.414,
+     "drawing": 2.1,
+     "tol": null,
+     "ok": true,
+     "src": "landside_cars stall grid (2.6 m stalls)",
+     "unit": "m"
+    },
+    {
+     "check": "cars garage_a: on the deck (median height - deck)",
+     "model": 0.01,
+     "drawing": 0.01,
+     "tol": 0.05,
+     "ok": true,
+     "src": "deck level",
+     "unit": "m"
+    },
+    {
+     "check": "cars garage_g: min centre spacing (no overlap: car width <= 1.95 m + 0.15 m)",
+     "model": 2.466,
+     "drawing": 2.1,
+     "tol": null,
+     "ok": true,
+     "src": "landside_cars stall grid (2.6 m stalls)",
+     "unit": "m"
+    },
+    {
+     "check": "cars garage_g: on the deck (median height - deck)",
+     "model": 0.01,
+     "drawing": 0.01,
+     "tol": 0.05,
+     "ok": true,
+     "src": "deck level",
+     "unit": "m"
+    },
+    {
+     "check": "cars ltp_garage_1: min centre spacing (no overlap: car width <= 1.95 m + 0.15 m)",
+     "model": 2.394,
+     "drawing": 2.1,
+     "tol": null,
+     "ok": true,
+     "src": "landside_cars stall grid (2.6 m stalls)",
+     "unit": "m"
+    },
+    {
+     "check": "cars ltp_garage_1: on the deck (median height - deck)",
+     "model": 0.01,
+     "drawing": 0.01,
+     "tol": 0.05,
+     "ok": true,
+     "src": "deck level",
+     "unit": "m"
+    },
+    {
+     "check": "cars ltp_garage_2: min centre spacing (no overlap: car width <= 1.95 m + 0.15 m)",
+     "model": 2.401,
+     "drawing": 2.1,
+     "tol": null,
+     "ok": true,
+     "src": "landside_cars stall grid (2.6 m stalls)",
+     "unit": "m"
+    },
+    {
+     "check": "cars ltp_garage_2: on the deck (median height - deck)",
+     "model": 0.01,
+     "drawing": 0.01,
+     "tol": 0.05,
+     "ok": true,
+     "src": "deck level",
+     "unit": "m"
+    },
+    {
+     "check": "cars rental_car_center: min centre spacing (no overlap: car width <= 1.95 m + 0.15 m)",
+     "model": 2.806,
+     "drawing": 2.1,
+     "tol": null,
+     "ok": true,
+     "src": "landside_cars stall grid (2.6 m stalls)",
+     "unit": "m"
+    },
+    {
+     "check": "cars rental_car_center: on the deck (median height - deck)",
+     "model": 0.01,
+     "drawing": 0.01,
+     "tol": 0.05,
+     "ok": true,
+     "src": "deck level",
+     "unit": "m"
+    },
+    {
+     "check": "stand envelopes (all 108 stands, app planforms): min distance to the landside footprint (A4)",
+     "model": 28.934,
+     "drawing": 2.0,
+     "tol": null,
+     "ok": true,
+     "src": "check_stands.py criterion >= 2.0 m",
+     "unit": "m"
+    },
+    {
+     "check": "bridge walkways / rotundas: min distance to the landside footprint (A4)",
+     "model": 55.847,
+     "drawing": 2.0,
+     "tol": null,
+     "ok": true,
+     "src": "no contact",
+     "unit": "m"
+    },
+    {
+     "check": "SFO Museum taxiway polygons inside the landside footprint",
+     "model": 0.0,
+     "drawing": 0.0,
+     "tol": 1.0,
+     "ok": true,
+     "src": "data/sfo_airport.json taxiways",
+     "unit": "m2"
+    }
+   ],
+   "plans": {
+    "central_garage": {
+     "model_area": 64403.0,
+     "outline_area": 64391.8,
+     "outside": 0.0,
+     "missing": 0.0
+    },
+    "ltp_garage_1": {
+     "model_area": 14436.3,
+     "outline_area": 14428.9,
+     "outside": 0.0,
+     "missing": 0.0
+    },
+    "ltp_garage_2": {
+     "model_area": 18826.4,
+     "outline_area": 18819.4,
+     "outside": 0.0,
+     "missing": 0.0
+    },
+    "rental_car_center": {
+     "model_area": 30722.3,
+     "outline_area": 30442.9,
+     "outside": 205.7,
+     "missing": 0.0
+    },
+    "grand_hyatt": {
+     "model_area": 3316.1,
+     "outline_area": 3311.3,
+     "outside": 5.5,
+     "missing": 0.9
+    },
+    "cac": {
+     "model_area": 4756.1,
+     "outline_area": 4752.5,
+     "outside": 0.0,
+     "missing": 0.0
+    }
+   },
+   "plausibility": {
+    "stand_min_m": 28.93,
+    "stand_worst": "A4",
+    "bridge_min_m": 55.85,
+    "bridge_worst": "A4",
+    "taxiway_overlap_m2": {},
+    "taxiway_min_m": {
+     "cac": 296.0,
+     "central_garage": 331.6,
+     "garage_a": 639.8,
+     "garage_g": 460.1,
+     "grand_hyatt": 760.8,
+     "ltp_garage_1": 703.0,
+     "ltp_garage_2": 674.6,
+     "rental_car_center": 203.8,
+     "superbay": 212.1,
+     "united_moc": 211.9
+    }
+   }
+  },
+  "renders": {
+   "tool": "tools/blender/render_landside.py (Cycles CPU, <= 960 px, 48 spp + OIDN, AgX; back-face QA 8 spp)",
+   "note": "out/buildings3d/landside_*.png (local); landside_cmp_*.png overlay the BL-03 lines (orthographic) or sit beside the reference photo (perspective; photo pixels, local only)",
+   "views": {
+    "gar_a": {
+     "render": "out/buildings3d/landside_gar_a.png",
+     "compare": "out/buildings3d/landside_cmp_gar_a.png",
+     "silhouette_vs_sheet": {
+      "n": 316,
+      "px_m": 0.333,
+      "max_abs_dev_m": 0.733,
+      "p95_abs_dev_m": 0.733,
+      "mean_dev_m": 0.417
+     }
+    },
+    "hyatt": {
+     "render": "out/buildings3d/landside_hyatt.png",
+     "compare": "out/buildings3d/landside_cmp_hyatt.png",
+     "silhouette_vs_sheet": {
+      "n": 492,
+      "px_m": 0.135,
+      "max_abs_dev_m": 0.042,
+      "p95_abs_dev_m": 0.042,
+      "mean_dev_m": 0.009
+     }
+    },
+    "superbay": {
+     "render": "out/buildings3d/landside_superbay.png",
+     "compare": "out/buildings3d/landside_cmp_superbay.png",
+     "silhouette_vs_sheet": {
+      "n": 652,
+      "px_m": 0.177,
+      "max_abs_dev_m": 0.067,
+      "p95_abs_dev_m": 0.067,
+      "mean_dev_m": -0.032
+     }
+    },
+    "l4": {
+     "render": "out/buildings3d/landside_l4.png",
+     "compare": "out/buildings3d/landside_cmp_l4.png"
+    },
+    "l1": {
+     "render": "out/buildings3d/landside_l1.png",
+     "compare": "out/buildings3d/landside_cmp_l1.png"
+    },
+    "l5": {
+     "render": "out/buildings3d/landside_l5.png",
+     "compare": "out/buildings3d/landside_cmp_l5.png"
+    },
+    "overview": {
+     "render": "out/buildings3d/landside_overview.png",
+     "compare": null
+    },
+    "a2": {
+     "render": "out/buildings3d/landside_a2.png",
+     "compare": "out/buildings3d/landside_cmp_a2.png"
+    },
+    "gar_a_bf": {
+     "render": "out/buildings3d/landside_gar_a_bf.png",
+     "backface_red_px": [
+      0,
+      0.0
+     ]
+    },
+    "hyatt_bf": {
+     "render": "out/buildings3d/landside_hyatt_bf.png",
+     "backface_red_px": [
+      610,
+      0.00122
+     ]
+    },
+    "superbay_bf": {
+     "render": "out/buildings3d/landside_superbay_bf.png",
+     "backface_red_px": [
+      0,
+      0.0
+     ]
+    },
+    "l1_bf": {
+     "render": "out/buildings3d/landside_l1_bf.png",
+     "backface_red_px": [
+      2085,
+      0.00302
+     ]
+    },
+    "l5_bf": {
+     "render": "out/buildings3d/landside_l5_bf.png",
+     "backface_red_px": [
+      537,
+      0.00078
+     ]
+    },
+    "overview_bf": {
+     "render": "out/buildings3d/landside_overview_bf.png",
+     "backface_red_px": [
+      0,
+      0.0
+     ]
+    },
+    "a2_bf": {
+     "render": "out/buildings3d/landside_a2_bf.png",
+     "backface_red_px": [
+      6,
+      1e-05
+     ]
     }
    }
   }

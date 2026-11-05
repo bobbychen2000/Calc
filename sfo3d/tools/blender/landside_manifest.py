@@ -106,3 +106,46 @@ def keep_renders(old, new):
         if old and old.get(k):
             new[k] = old[k]
     return new
+
+
+def add_renders(render_json_path, verify_json_path=None):
+    """merge the render list (out/buildings3d/landside_render.json, written by render_landside.py) into
+    manifest.json#landside.renders under the manifest lock (no bpy)."""
+    import fcntl
+    import json
+    import os
+    root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+    path = os.path.join(root, 'data', 'buildings3d', 'manifest.json')
+    R = json.load(open(render_json_path))
+    rel = lambda p: os.path.relpath(p, root) if isinstance(p, str) and p.startswith('/') else p
+    out = {}
+    for v, d in R.items():
+        if not isinstance(d, dict): continue
+        e = {k: rel(x) for k, x in d.items() if k in ('render', 'compare')}
+        if d.get('silhouette_vs_sheet'):
+            e['silhouette_vs_sheet'] = {k: d['silhouette_vs_sheet'][k] for k in ('n', 'px_m', 'max_abs_dev_m', 'p95_abs_dev_m', 'mean_dev_m')}
+        if d.get('red_px') is not None:
+            e['backface_red_px'] = d['red_px']
+        out[v] = e
+    lock = path + '.lock'
+    with open(lock, 'a') as lf:
+        fcntl.flock(lf, fcntl.LOCK_EX)
+        cur = json.load(open(path))
+        cur.setdefault('landside', {})['renders'] = dict(
+            tool='tools/blender/render_landside.py (Cycles CPU, <= 960 px, 48 spp + OIDN, AgX; back-face QA 8 spp)',
+            note='out/buildings3d/landside_*.png (local); landside_cmp_*.png overlay the BL-03 lines (orthographic) or sit beside '
+                 'the reference photo (perspective; photo pixels, local only)', views=out)
+        tmp = path + '.landside.tmp'
+        json.dump(cur, open(tmp, 'w'), indent=1)
+        os.replace(tmp, path)
+        fcntl.flock(lf, fcntl.LOCK_UN)
+    try:
+        os.remove(lock)
+    except OSError:
+        pass
+    return path
+
+
+if __name__ == '__main__':
+    import sys
+    print(add_renders(sys.argv[1] if len(sys.argv) > 1 else 'out/buildings3d/landside_render.json'))

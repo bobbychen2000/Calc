@@ -86,6 +86,8 @@ MATS = {
     'planting':       dict(rgb=(84, 104, 66), m=0.0, r=0.95, src='obs NAIP (green roof wells, BA-B) [pub "roof wells"]; value inf'),
     'door_dark':      dict(rgb=(46, 50, 54), m=0.30, r=0.50, src='inf (bridge door leaf)'),
     'mullion':        dict(rgb=(170, 175, 180), m=0.60, r=0.40, src='inf (aluminium fins / frames)'),
+    'mullion_dark':   dict(rgb=(58, 62, 66), m=0.60, r=0.40, src='pub t3w.materials "vertical mullion fins (dark gray metallic)"; T1: obs photo d1 dark mullions'),
+    'fascia_plain':   dict(rgb=(236, 237, 237), m=0.0, r=0.45, src='obs photo d1 (white "1" of the sign)'),
     'lettering':      dict(rgb=(34, 38, 42), m=0.20, r=0.45, src='obs photo d1 ("Harvey Milk Terminal / Terminal 1"); font inf'),
     'glass_canopy':   dict(rgb=(150, 166, 168), r=0.08, src='pub t1c canopy (glass); value inf', **GL),
     'glass_sky':      dict(rgb=(72, 88, 98), r=0.06, src='obs NAIP skylights; glass inf', **GL),
@@ -94,7 +96,8 @@ MATS = {
     'glass_tint':     dict(rgb=(40, 54, 58), r=0.05, tex='dom_c_glass_tint', nrm=('dom_n_curtain', 0.5), src='unk (gate-room glass not described: generic tint)', **GL),
     'glass_clear':    dict(rgb=(30, 36, 40), r=0.04, tex='dom_c_glass_clear', nrm=('dom_n_curtain', 0.5), src='obs photos d1 / a1 (dark clear glass)', **GL),
     'glass_frit_grey': dict(rgb=(110, 118, 122), r=0.12, tex='dom_c_frit_grey', nrm=('dom_n_curtain', 0.4), src='pub bae.facade "clear glass with grey frit"; pattern inf', **GL),
-    'glass_frit_green': dict(rgb=(150, 170, 160), r=0.12, tex='dom_c_frit_green', src='pub t1c.landside_facade (fritted glass); green obs photo d1; pattern inf', **GL),
+    'glass_frit_green': dict(rgb=(165, 186, 172), m=0.0, r=0.22, tex='dom_c_frit_green', src='pub t1c.landside_facade (fritted glass); green obs photo d1; '
+                             'the ceramic frit dominates: uncoated F0 0.04, rougher; pattern inf'),
     'glass_t3w':      dict(rgb=(98, 114, 124), r=0.08, tex='dom_c_t3w', nrm=('dom_n_t3w', 0.5), src='pub t3w.materials (fritted IGU window wall); module unk', **GL),
 }
 # LOD2 (far / phone): reduced palette, no detail maps (they average out at > 1.3 km); per-building roofs kept
@@ -297,40 +300,63 @@ def lettering_t1(parent, lod, W):
     if best is None: return None
     a, b, L = best
     d = (b - a) / L; n = np.array([d[1], -d[0]])
-    objs = []
-    # (text, bbox height incl. descenders, centre height): photo d1 scaled by the 9.0-m tier (canopy line -> wall head):
-    # line 1 ~6.0 m above the canopy line, line 2 ~3.7 m (just under the tier transom 3.96 m) [inf, photo d1, low]
-    for k, (txt, cap, zc) in enumerate((('Harvey Milk Terminal', 1.6, G.T1_CANOPY_H + 6.0), ('Terminal 1', 1.05, G.T1_CANOPY_H + 3.7))):
-        cu = bpy.data.curves.new(f't1_lettering_{k}', 'FONT')
+    import bmesh
+
+    def text_mesh(txt, height):
+        """Blender built-in font (regular: thickening the outline breaks the glyph corners); -> (co (x along, y up, z out),
+        mesh) with the bbox scaled to `height` and centred."""
+        cu = bpy.data.curves.new('t1_txt', 'FONT')
         cu.body = txt; cu.align_x = 'CENTER'; cu.size = 1.0; cu.extrude = 0.03
         tmp = bpy.data.objects.new('tmp_text', cu); bpy.context.scene.collection.objects.link(tmp)
         dg = bpy.context.evaluated_depsgraph_get()
-        me = bpy.data.meshes.new_from_object(tmp.evaluated_get(dg))
+        me_ = bpy.data.meshes.new_from_object(tmp.evaluated_get(dg))
         bpy.data.objects.remove(tmp); bpy.data.curves.remove(cu)
-        co = np.zeros(len(me.vertices) * 3, np.float32); me.vertices.foreach_get('co', co); co = co.reshape(-1, 3)
+        co = np.zeros(len(me_.vertices) * 3, np.float32); me_.vertices.foreach_get('co', co); co = co.reshape(-1, 3)
         lo, hi = co.min(0), co.max(0)
-        sc = cap / (hi[1] - lo[1])
+        sc = height / (hi[1] - lo[1])
         co[:, 0] = (co[:, 0] - 0.5 * (lo[0] + hi[0])) * sc; co[:, 1] = (co[:, 1] - 0.5 * (lo[1] + hi[1])) * sc
-        c = (a + b) / 2 + n * 0.28
-        P = np.zeros_like(co)
-        P[:, 0] = c[0] + co[:, 0] * d[0] + co[:, 2] * n[0]
-        P[:, 1] = c[1] + co[:, 0] * d[1] + co[:, 2] * n[1]
-        P[:, 2] = zc + co[:, 1]
-        me.vertices.foreach_set('co', P.astype(np.float32).ravel())
-        objs.append(me)
-    me = objs[0]
-    bm_all = objs
-    # join the two meshes
-    import bmesh
+        return co, me_
+
+    parts = []          # (co, mesh, (u0, zc, out), material index)
+    # (text, bbox height incl. descenders, centre height): photo d1 scaled by the 9.0-m tier (canopy line -> wall head):
+    # line 1 ~6.0 m above the canopy line, line 2 ~3.2 m (just under the tier transom 3.96 m); line 2 = "Terminal" + the white
+    # "1" in a dark disc [inf, photo d1, low]
+    co1, m1 = text_mesh('Harvey Milk Terminal', 1.6); parts.append((co1, m1, (0.0, G.T1_CANOPY_H + 6.0, 0.28), 0))
+    h2 = 1.0
+    co2, m2 = text_mesh('Terminal', h2)
+    w2 = np.ptp(co2[:, 0]); R_ = 0.62 * h2; gap = 0.32 * h2
+    u_t = -(R_ + gap / 2); parts.append((co2, m2, (u_t, G.T1_CANOPY_H + 3.2, 0.28), 0))
+    u_d = u_t + w2 / 2 + gap + R_
     bm = bmesh.new()
-    for m_ in bm_all:
-        bm.from_mesh(m_)
+    seg = bmesh.ops.create_circle(bm, cap_ends=True, radius=R_, segments=32)
+    bmesh.ops.extrude_face_region(bm, geom=[f for f in bm.faces])
+    # extrude along +z by 0.03 (the duplicated cap is selected: move it)
+    top = [v for v in bm.verts if v.is_valid][len(bm.verts) // 2:]
+    for v in top: v.co.z += 0.03
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    bm.normal_update()
+    topf = max(bm.faces, key=lambda f: f.calc_center_median().z)
+    if topf.normal.z < 0: bmesh.ops.reverse_faces(bm, faces=list(bm.faces))     # outward (back-face QA)
+    md = bpy.data.meshes.new('t1_disc'); bm.to_mesh(md); bm.free()
+    cod = np.zeros(len(md.vertices) * 3, np.float32); md.vertices.foreach_get('co', cod); cod = cod.reshape(-1, 3)
+    parts.append((cod, md, (u_d, G.T1_CANOPY_H + 3.2, 0.28), 0))
+    co3, m3 = text_mesh('1', 0.78 * h2); parts.append((co3, m3, (u_d, G.T1_CANOPY_H + 3.2, 0.315), 1))
+    c0 = (a + b) / 2
+    bm = bmesh.new(); mids = []
+    for co, me_, (u0, zc, out), mi in parts:
+        P = np.zeros_like(co)
+        P[:, 0] = c0[0] + (co[:, 0] + u0) * d[0] + (co[:, 2] + out) * n[0]
+        P[:, 1] = c0[1] + (co[:, 0] + u0) * d[1] + (co[:, 2] + out) * n[1]
+        P[:, 2] = zc + co[:, 1]
+        me_.vertices.foreach_set('co', P.astype(np.float32).ravel())
+        me_.update()
+        mids += [mi] * len(me_.polygons)          # (a mesh without material slots clamps material_index: set after the join)
+        bm.from_mesh(me_)
+        bpy.data.meshes.remove(me_)
     me = bpy.data.meshes.new(f'L{lod}_T1_lettering'); bm.to_mesh(me); bm.free()
-    for m_ in bm_all: bpy.data.meshes.remove(m_)
     while me.uv_layers: me.uv_layers.remove(me.uv_layers[0])
-    me.uv_layers.new(name='UV_detail')
-    me.materials.clear(); me.materials.append(make_material('lettering', None, {}, None))
-    me.polygons.foreach_set('material_index', np.zeros(len(me.polygons), np.int32))
+    me.materials.clear(); me.materials.append(make_material('lettering', None, {}, None)); me.materials.append(make_material('fascia_plain', None, {}, None))
+    me.polygons.foreach_set('material_index', np.array(mids, np.int32))
     me.update()
     c = recentre(me)
     ob = new_object(me.name, me, parent, dict(src='obs', building='T1', lod=lod, feature='T1 Center landside sign "Harvey Milk Terminal / Terminal 1"',
@@ -612,10 +638,21 @@ def main():
     else:
         for a in shells:
             unwrap_ao(shells[a])
-    for a, im in ao_imgs.items():
-        im.filepath_raw = os.path.join(TEX, f'dom_ao_{a}.png'); im.file_format = 'PNG'
-        im.save()
-        im.colorspace_settings.name = 'Non-Color'
+    for a, im in list(ao_imgs.items()):
+        # 8-bit GREYSCALE PNG (the occlusion texture reads R; a grey PNG decodes as R = G = B): ~1/3 of Blender's RGB PNG. The
+        # file is loaded back and swapped into the materials, so the exporter embeds these bytes
+        from PIL import Image as PImage
+        w, h = im.size
+        px = np.array(im.pixels[:], np.float32).reshape(h, w, 4)[::-1, :, 0]
+        path = os.path.join(TEX, f'dom_ao_{a}.png')
+        PImage.fromarray(np.clip(np.round(px * 255), 0, 255).astype(np.uint8), 'L').save(path, optimize=True)
+        im2 = bpy.data.images.load(path); im2.colorspace_settings.name = 'Non-Color'
+        for m in bpy.data.materials:
+            if not m.use_nodes: continue
+            for n in m.node_tree.nodes:
+                if n.type == 'TEX_IMAGE' and n.image == im: n.image = im2
+        name = im.name; bpy.data.images.remove(im); im2.name = name
+        ao_imgs[a] = im2
 
     # ---- export (WIP first; data/ only with --final)
     t = time.time()

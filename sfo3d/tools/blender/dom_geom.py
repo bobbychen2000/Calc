@@ -94,6 +94,7 @@ FLOOR2 = 5.4            # concourse (departure) floor: js/live/gates.js DEPARTUR
 WALK_TOP = FLOOR2 + 3.0 # app walkway top at the facade (gates.js WALK_H 3.0) - roof overhangs are notched below it
 CORE_OPEN = 3.0         # morphological opening radius: outline features < 6 m wide = bridge-head fingers [inf]
 FINGER_Z = (FLOOR2 - 0.6, WALK_TOP + 0.3)   # fingers / vestibules: an elevated box round the walkway end [inf]
+E_END_D = 8.0           # BA-E tip end bay depth behind the glazed end wall (photo a1: the tall glass spans ~1 structural bay) [inf]
 DOOR_W = 3.2            # bridge door opening on the facade at every attach point [inf]
 MULL = 1.5              # curtain-wall mullion module (no source) [inf]
 SWITCH_M = {0: 0.0, 1: 380.0, 2: 1300.0}   # LOD switch distances (camera to the building group node), m [our choice]
@@ -274,7 +275,7 @@ TILE = {'roof_membrane': (12.0, 12.0), 'roof_membrane_b': (12.0, 12.0), 'roof_me
         'panel_light': (6.0, 6.0), 'panel_dark': (6.0, 6.0), 'panel_acm': (6.0, 6.0), 'panel_acm_dark': (6.0, 6.0),
         'panel_platinum': (6.0, 6.0), 'service': (6.0, 6.0), 'fascia': (6.0, 6.0), 'coping': (3.0, 3.0), 'soffit': (6.0, 6.0),
         'concrete': (6.0, 6.0), 'penthouse_corr': (3.0, 3.0), 'pv': (4.0, 4.0), 'planting': (8.0, 8.0), 'door_dark': (3.2, 3.2),
-        'mullion': (3.0, 3.0), 'glass_canopy': (6.0, 6.0), 'glass_sky': (6.0, 6.0), 'lettering': (3.0, 3.0)}
+        'mullion': (3.0, 3.0), 'mullion_dark': (3.0, 3.0), 'glass_canopy': (6.0, 6.0), 'glass_sky': (6.0, 6.0), 'lettering': (3.0, 3.0)}
 for _g in ('glass_ec', 'glass_lowe', 'glass_tint', 'glass_frit_grey', 'glass_clear'):
     TILE[_g] = (6.0, 6.0)        # curtain grid 1.5 m verticals x 3.0 m transoms from the band bottom [inf]
 TILE['glass_frit_green'] = (12.0, 9.0)   # T1 landside tiers: one tile = canopy line -> wall head (9.0 m), transom 3.96 m up
@@ -418,7 +419,7 @@ class World:
         self.occ = []     # (geom, z0, z1, solid)
         # neighbouring assets: the ITB (data/buildings3d/itb.glb: piers 17.0-17.9 m, core 17.9 m placeholder) and the tower
         # base building (tower.glb) - walls facing them are interior and not emitted (they would be hidden / z-fight)
-        for g, z1 in ((ITB.buffer(0.3, join_style=2), 17.0), (TOWER_EXCL.buffer(0.3, join_style=2), 14.07)):   # tower anchors.ibf_roof_h
+        for g, z1 in ((ITB.buffer(0.05, join_style=2), 17.0), (TOWER_EXCL.buffer(0.35, join_style=2), 14.07)):   # tower anchors.ibf_roof_h
             self.occ.append((loc(g), 0.0, z1, None))
         for s in self.S:
             self.occ.append((s.poly, s.z0, s.h, s))
@@ -527,13 +528,14 @@ def fins(det, a, b, s0, z0, z1, mod, s, st):
         k0 = math.ceil((s0 + 0.3) / mod); k1 = math.floor((s0 + L - 0.3) / mod)
         xs = [k * mod - s0 for k in range(k0, k1 + 1)]
     w, pr = FIN
+    fm = 'mullion_dark' if st in ('T1_land', 'T3W_land', 'T3W_air') else 'mullion'   # T3W dark grey fins [pub]; T1 dark [obs photo d1]
     for x in xs:
         c = (a[0] + d[0] * x, a[1] + d[1] * x)
         p0 = (c[0] - d[0] * w / 2, c[1] - d[1] * w / 2); p1 = (c[0] + d[0] * w / 2, c[1] + d[1] * w / 2)
         q0 = (p0[0] + n[0] * pr, p0[1] + n[1] * pr); q1 = (p1[0] + n[0] * pr, p1[1] + n[1] * pr)
-        det.quad_wall(p0, q0, z0, z1, z0, z1, 'mullion', 0, (3.0, 3.0))
-        det.quad_wall(q0, q1, z0, z1, z0, z1, 'mullion', 0, (3.0, 3.0))
-        det.quad_wall(q1, p1, z0, z1, z0, z1, 'mullion', 0, (3.0, 3.0))
+        det.quad_wall(p0, q0, z0, z1, z0, z1, fm, 0, (3.0, 3.0))
+        det.quad_wall(q0, q1, z0, z1, z0, z1, fm, 0, (3.0, 3.0))
+        det.quad_wall(q1, p1, z0, z1, z0, z1, fm, 0, (3.0, 3.0))
         # (no top cap: 6 x 18 cm, seen only from above; the band head / slab closes it in most views) [budget]
 
 
@@ -582,7 +584,8 @@ def emit_roof(mb, W, s, lod):
                     if L < 0.02: continue
                     mid = ((a[0] + b[0]) / 2 + (b[1] - a[1]) / L * 0.05, (a[1] + b[1]) / 2 - (b[0] - a[0]) / L * 0.05)
                     if rp.contains(Point(mid)):
-                        mb.quad_wall(a, b, s.deck, zt, s.deck, zt, 'coping', 0.0, (3.0, 3.0))
+                        # the inner face of the parapet faces the deck (left of a->b): wound b->a (back-face QA)
+                        mb.quad_wall(b, a, s.deck, zt, s.deck, zt, 'coping', 0.0, (3.0, 3.0))
             M.cap(mb, q, s.deck, s.deck_mat, tl(s.deck_mat))
     for g, z, mat in s.deck_extra:
         M.cap(mb, g, z, mat, tl(mat))
@@ -628,8 +631,13 @@ def face_offsets(L_, poly_l, others_l):
     # the strips are per outline face: close the gaps between collinear strips (short jogs < 3 m and the roots of the
     # bridge-head fingers cut off by core_and_fingers) so that the roof edge runs straight along the measured line, as drawn
     # (BD-01 draws one continuous lean-free edge per side) [inf]
-    if add: add = [M.orient_all(_clean(unary_union(add).buffer(EDGE_CLOSE, join_style=2).buffer(-EDGE_CLOSE, join_style=2), 0.5))]
-    if sub: sub = [M.orient_all(_clean(unary_union(sub).buffer(EDGE_CLOSE, join_style=2).buffer(-EDGE_CLOSE, join_style=2), 0.5))]
+    # (limited to the offset band of the outline: the closing must not cut / add deeper than |offset| at concave jogs)
+    if add:
+        band = poly_l.buffer(off_n + 0.02, join_style=2).difference(poly_l)
+        add = [M.orient_all(_clean(unary_union(add).buffer(EDGE_CLOSE, join_style=2).buffer(-EDGE_CLOSE, join_style=2).intersection(band), 0.5))]
+    if sub:
+        band = poly_l.difference(poly_l.buffer(-abs(off_m) - 0.02, join_style=2))
+        sub = [M.orient_all(_clean(unary_union(sub).buffer(EDGE_CLOSE, join_style=2).buffer(-EDGE_CLOSE, join_style=2).intersection(band), 0.5))]
     wall = poly_l.difference(unary_union(sub).buffer(0.001)) if sub else poly_l
     wall = largest(_clean(wall, 5.0))
     roof = unary_union([wall] + add) if add else wall
@@ -877,10 +885,28 @@ def build_world(lod):
                       feature='Boarding Area E body and lower side roofs (~3 m below the raised centre)', spec=['bae.roof', 'bae.facade', 'outline.level']))
     centre = M.orient_all(largest(_clean(wE.difference(strip_faces(wE, longf, -DD.BAE_FLANK).buffer(0.001)), 50.0)))
     plate = M.orient_all(largest(_clean(unary_union([centre, strip_faces(centre, longf, DD.BAE_OVER)]).intersection(wE.buffer(-0.05)), 50.0)))
-    sEc = W.add(Solid('BA_E_centre', 'BA_E', centre, H['E'], z0=sEf.deck, roof=plate, style='clere_E', thk=0.8, parapet=0.0, tag='obs',
+    # end bay at the NNE tip (photo a1, BD-02: "a recessed full-height glass end wall" under the tapered plate): the last
+    # E_END_D m of the raised centre stand on the apron (no flank roof across the end), the glass wall recessed BAE_OVER
+    # inside the outline under the plate (the plate edge stays on the outline: nothing outside the level-2 footprint) [inf]
+    endf = lambda h: angd(h, 27.83) < 35
+    bay = largest(_clean(centre.intersection(strip_faces(centre, endf, -E_END_D).buffer(0.001)), 20.0))
+    roof_c = plate
+    if bay.area > 50:
+        bay = M.orient_all(bay)
+        bay_wall = M.orient_all(largest(_clean(bay.difference(strip_faces(bay, endf, -DD.BAE_OVER).buffer(0.001)), 20.0)))
+        bay_ext = unary_union([bay, strip_faces(bay, longf, DD.BAE_OVER + 0.05)])
+        roof_b = M.orient_all(largest(_clean(plate.intersection(bay_ext), 20.0)))
+        roof_c = M.orient_all(largest(_clean(plate.difference(roof_b.buffer(0.001, join_style=2)), 50.0)))
+        sEf.poly = M.orient_all(largest(_clean(wE.difference(bay.buffer(0.001, join_style=2)), 50.0)))
+        sEf.roof = sEf.poly
+        sEb = W.add(Solid('BA_E_endbay', 'BA_E', bay_wall, H['E'], roof=roof_b, style='E_end', thk=0.8, parapet=0.0, tag='inf',
+                          feature='Boarding Area E tip: full-height glazed end wall recessed under the tapered plate (photo a1)',
+                          spec=['bae.roof', 'bae.facade']))
+        info['E_endbay'] = bay_wall
+    cen2 = M.orient_all(largest(_clean(centre.difference(bay.buffer(0.001, join_style=2)), 50.0))) if bay.area > 50 else centre
+    sEc = W.add(Solid('BA_E_centre', 'BA_E', cen2, H['E'], z0=sEf.deck, roof=roof_c, style='clere_E', thk=0.8, parapet=0.0, tag='obs',
                       feature='Boarding Area E raised PV roof, tapered edge overhanging the clerestory', spec=['bae.h_roof', 'bae.roof']))
-    sEc.taper = H['E'] - 0.15
-    sEf.holes.append(centre)
+    sEf.holes.append(cen2)
     info['E_centre'] = centre; info['E_plate'] = plate
     feats.append(Feat('BA_E', lambda mb, det, lod_, pv=[(q, sEc) for q in pv_blocks('E_centre')]: pv_racks(det, pv, lod_), kind='pv'))
 

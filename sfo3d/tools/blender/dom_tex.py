@@ -146,8 +146,8 @@ def frit_green(path, w=512, h=512):
     stri = 0.06 * np.sin(2 * np.pi * u / 0.35) + 0.04 * (_noise(w, 1, (1, 48), 5) - 0.5)
     shade = 1.0 + stri + 0 * v
     col = base[None, None, :] * shade[..., None]
-    tr = (np.abs(v - T1_TRANSOM) < 0.05).astype(float) + 0 * u
-    col = col * (1 - tr[..., None]) + np.array([62, 74, 68.0])[None, None, :] * tr[..., None]
+    tr = (np.abs(v - T1_TRANSOM) < 0.08).astype(float) + 0 * u
+    col = col * (1 - tr[..., None]) + np.array([52, 60, 56.0])[None, None, :] * tr[..., None]
     return _rgb_png(col, path)
 
 

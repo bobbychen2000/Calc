@@ -1,0 +1,10 @@
+{
+ "737-800/": {
+  "url": "https://github.com/FGMEMBERS/737-800",
+  "commit": "9126249dd0236479ad723f3e7c4c7139455c7d81",
+  "licence": "GPL-2.0 (737-800/LICENSE)",
+  "fetched": "2026-11-05",
+  "how": "git clone --filter=blob:none --no-checkout; sparse checkout of /LICENSE, /README.md, /Models/*.ac, /Models/*.png, /Models/*.xml (the files tools/convert_models.py AC_MODELS['b738'] reads, and their textures)",
+  "used_by": "tools/convert_models.py b738 (FG738_DIR default), tools/models/model_features.py (source door objects), tools/liveries/atlas.py (source textures)"
+ }
+}

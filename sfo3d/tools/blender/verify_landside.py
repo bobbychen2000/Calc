@@ -264,10 +264,14 @@ def run(path):
         outline_check(k, 'Rental Car Center', footprint(L0n(k, 'rcc_body')), sfom('Rental Car Center'))
         lv = allP(L0n(k, 'rcc_body'), 'louvre')
         if len(lv):
-            pn, ps = np.array(DL.RCC_N), np.array(DL.RCC_S); e = (ps - pn) / np.linalg.norm(ps - pn); nrm = np.array([-e[1], e[0]])
-            off = (lv[:, [0, 2]] - pn) @ nrm
-            C.add('RCC: canted louvre screen leans out of the west chord (top)', float(np.abs(off[H(lv) > 16.0]).max() if (H(lv) > 16).any() else 0), 1.2, 0.6,
+            ol = sfom('Rental Car Center')
+            top = lv[H(lv) > 16.0]
+            off = np.array([ol.exterior.distance(Point(x, z)) for x, z in top[:, [0, 2]]]) if len(top) else np.zeros(1)
+            C.add('RCC: canted louvre screen top outside the west wall (lean)', float(np.median(off)), 1.2, 0.3,
                   src='BL-03 wall key (canted; amount inf)')
+            bot = lv[H(lv) < 16.0]
+            C.add('RCC: louvre screen foot on the wall plane', float(np.median([ol.exterior.distance(Point(x, z)) for x, z in bot[:, [0, 2]]])) if len(bot) else -1, 0.0, 0.1,
+                  src='BL-03 wall key')
     # ---------------- Grand Hyatt
     k = 'grand_hyatt'
     if k in by:

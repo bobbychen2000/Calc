@@ -16,7 +16,8 @@ is on the island pavement between taxiway fillets); extra pavement within 60 m o
 inferred apron (data/sfo_details.json) - or inside OSM aprons / within 40 m of OSM taxi centrelines (review round 3), or
 within 60 m of an aircraft parking position / ADS-B parked stay (static close-out 2026-11-04: north cargo aprons; inside a
 position's own footprint every pixel that is not vegetation / bare soil / building counts, so parked aircraft, GSE and
-ULDs do not leave holes) -,
+ULDs do not leave holes; round 2, 2026-11-05: only AIRCRAFT stays - an ICAO type that is no vehicle pseudo-type, or an
+SFO flight / stand match - and bare soil / dry grass (R - B > 38, R > 110) is rejected in the footprints too) -,
 outside them and outside buildings (SFO Museum structures, terminal
 complex, boarding areas; OSM buildings are not used), components >= 300 m2 after a 1.5 m opening, holes (parked
 aircraft, vehicles, shadows) < 3000 m2 filled. Roofs of hangars that SFO Museum does not map can classify as

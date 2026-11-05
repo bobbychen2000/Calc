@@ -40,7 +40,8 @@ from landside_mesh import MB, Frame, boxm, cap, orient_all, polys, rings_of, tub
 DECK_T = 1.6          # guideway deck depth (the app's 9.0-10.6 m slab, js/live/airport.js) [inf]
 WALL_H = 1.1          # trough side wall above the deck top (photos l1 / l5: walkway wall + railing) [inf]
 WALL_T = 0.30         # side wall thickness [inf]
-PORTAL_H = 6.0        # clear height of the AirTrain portal into Garage A (CX-100 car + guide beam + headroom) [inf]
+PORTAL_H = 4.2        # clear height of the AirTrain portal into Garage A above the deck: CX-100 car ~3.4 m + headroom; photo l1
+#                       shows a low opening at the track level [obs shape; height inf]
 PIER_DX = 30.0        # pier spacing along the guideway [inf]; "single-column T-piers along the extension" [obs at_section]
 PIER_D = 1.8          # pier column diameter (single track) [inf]; twin decks (width > 8 m): 2.4 m [inf]
 CAP_D = 1.4           # pier cap depth below the deck [inf]
@@ -216,7 +217,7 @@ def skeleton(mask):
 
 
 # ------------------------------------------------------------------------------------------------ meshes
-def deck_shell(mb, F, poly_w, lev, mat_top='guideway_deck', mat_side='guideway', walls=True, seg=4.0):
+def deck_shell(mb, F, poly_w, lev, mat_top='guideway_deck', mat_side='guideway', walls=True, seg=4.0, open_line=None):
     """guideway deck on a world polygon: top at lev.h, bottom DECK_T below, trough side walls WALL_H high on every edge.
     poly_w: world polygon (may have holes). Faces outward; all vertices follow the level field."""
     from landside_mesh import tri_poly
@@ -243,6 +244,8 @@ def deck_shell(mb, F, poly_w, lev, mat_top='guideway_deck', mat_side='guideway',
                 L = math.hypot(b[0] - a[0], b[1] - a[1])
                 if L < 1e-3: continue
                 ha, hb = H(*a), H(*b)
+                if open_line is not None and open_line.distance(Point(*F.W(0.5 * (a[0] + b[0]), 0.5 * (a[1] + b[1])))) < 0.05:
+                    s += L; continue          # cut by another asset (the deck continues inside it): no end face
                 mb.face([(a[0], a[1], ha - DECK_T), (b[0], b[1], hb - DECK_T), (b[0], b[1], hb + top_off), (a[0], a[1], ha + top_off)], mat_side,
                         [(s / 4.0, -DECK_T / 4.0), ((s + L) / 4.0, -DECK_T / 4.0), ((s + L) / 4.0, top_off / 4.0), (s / 4.0, top_off / 4.0)])
                 s += L
@@ -258,9 +261,40 @@ def deck_shell(mb, F, poly_w, lev, mat_top='guideway_deck', mat_side='guideway',
             for i in range(n):
                 a, b = ring[i], ring[(i + 1) % n]
                 if math.hypot(b[0] - a[0], b[1] - a[1]) < 1e-3: continue
+                if open_line is not None and open_line.distance(Point(*F.W(0.5 * (a[0] + b[0]), 0.5 * (a[1] + b[1])))) < WALL_T + 0.05:
+                    continue
                 ha, hb = H(*a), H(*b)
                 mb.face([(b[0], b[1], hb), (a[0], a[1], ha), (a[0], a[1], ha + WALL_H), (b[0], b[1], hb + WALL_H)], mat_side,
                         [(0, 0), (1, 0), (1, 0.3), (0, 0.3)])
+
+
+BEAM_IN, BEAM_W, BEAM_H = 2.4, 0.30, 0.80   # centre guide beam: 2.4 m in from the deck edge (track centre of a 4.8-m single track),
+#                                           0.30 m wide, 0.80 m above the deck [obs photos l1 / l5 shape; sizes inf]
+
+
+def guide_beams(mb, F, poly_w, lev, seg=4.0):
+    """centre guide beams (LOD0): the boundary of the deck polygon offset BEAM_IN inwards = the track centre lines of single
+    and twin sections alike (a single 4.8-m track collapses to one line), as a BEAM_W strip from the deck to BEAM_H."""
+    inner = poly_w.buffer(-BEAM_IN, join_style=2)
+    if inner.is_empty: return
+    lines = inner.boundary
+    strip = orient_all(lines.buffer(BEAM_W / 2, cap_style=2, join_style=2).intersection(poly_w.buffer(-1.2)).buffer(0))
+    strip = orient_all(shapely.segmentize(strip, seg))
+    Lp = F.poly(strip)
+    H = lambda X, Y: float(lev.h(*F.W(X, Y)))
+    from landside_mesh import tri_poly
+    for p in polys(Lp):
+        if p.area < 0.3: continue
+        for t in tri_poly(p):
+            mb.face([(q[0], q[1], H(*q) + BEAM_H) for q in t], 'guide_beam', [(q[0] / 4.0, q[1] / 4.0) for q in t])
+        for ring in rings_of(p):
+            n = len(ring)
+            for i in range(n):
+                a, b = ring[i], ring[(i + 1) % n]
+                if math.hypot(b[0] - a[0], b[1] - a[1]) < 1e-3: continue
+                ha, hb = H(*a), H(*b)
+                mb.face([(a[0], a[1], ha), (b[0], b[1], hb), (b[0], b[1], hb + BEAM_H), (a[0], a[1], ha + BEAM_H)], 'guide_beam',
+                        [(0, 0), (1, 0), (1, 0.2), (0, 0.2)])
 
 
 def pier(mb, F, site, lev, sides=10, cap_box=True):
@@ -468,11 +502,13 @@ def build(clip_world, building_outlines, Bldg, Part, dim, station_exclude=None):
             F = B.F
             sh = MB(key + '_deck')
             if not part.is_empty:
-                deck_shell(sh, F, part, lev)
+                deck_shell(sh, F, part, lev, open_line=clip.boundary if not clip.is_empty else None)
             det0, det1 = MB(key + '_piers0'), MB(key + '_piers1')
             coarse = MB(key + '_L2')
             if not part.is_empty:
                 deck_shell(coarse, F, part.simplify(0.6, preserve_topology=True), lev, walls=False, seg=12.0)
+            if not part.is_empty:
+                guide_beams(det0, F, part, lev)
             n_p = 0
             for s in sites:
                 if not box.contains(Point(s['x'], s['z'])): continue

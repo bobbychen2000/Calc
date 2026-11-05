@@ -51,15 +51,17 @@ PARAPET_H = 3.5 * FT       # 1.07 m: parking-deck parapet / guard height above t
 PARAPET_T = 0.30           # parapet thickness [inf]
 RECESS = 3.0               # depth of the dark interior behind the open parking levels (seen through the openings) [inf]
 SPANDREL_DN, SPANDREL_UP = 0.30, 0.95   # spandrel / slab edge band around each level line [inf]
-PIER_W = 0.8               # facade pier width [inf]
+PIER_W = 0.6               # facade pier width [inf]
 PIER_DX = {'cg': 9.0, 'gar': 8.1, 'gar_end': 9.0, 'ltp1': 9.0, 'ltp2': 9.1, 'rcc': 9.0}   # pier spacing [inf] (LTP2 9.1:
 #                            the exposed frame of photo l2 / spec ltp2_facade, bay size inf; Garages A / G: half the 16.2 m
 #                            screen module of photo l1 (two screen panels per bay) [inf])
-SCREEN_OUT, SCREEN_GAP = 0.15, 0.35   # perforated screen: 0.15 m proud of the facade, 0.35 m dark gap above / below [inf]
+SCREEN_OUT, SCREEN_GAP = 0.15, 0.10   # perforated screen: 0.15 m proud of the facade, 0.10 m gap above / below (photo l1: the
+#                                       panels fill the opening between the spandrels) [inf]
 STALL_W, STALL_L, AISLE = 2.6, 5.5, 7.6   # parking module (90-degree stalls): 2.6 x 5.5 m stalls, 7.6 m aisle [inf, typical]
 MODULE = 2 * STALL_L + AISLE              # 18.6 m
 LANE_W, LANE_PITCH = 3.0, 5.6             # RCC ready-return lanes: 3.0 m lanes, cars nose-to-tail every 5.6 m [inf]
 TOWER_SIDE = 7.0           # stair / elevator tower at a DOF roof point: 7 x 7 m [inf]
+STATION_BLOCK_W = 12.0     # Garage A station block: solid precast faces within 12 m of the guideway strips (photo l1) [inf]
 GH_PODIUM_D = 17.0         # Grand Hyatt: podium depth in front of the slab along the south part (NAIP slab roof with the 13.4-m
 #                            relief shift vs the outline's east edge, ~17-20 m) [obs NAIP, approx]
 
@@ -204,6 +206,15 @@ def garage_facade(mb, P, bands, style, tiles, recess=RECESS, gdetail=None):
         if not eb: continue
         if st['kind'] == 'solid':
             holed_wall(mb, a, b, eb[0][0], eb[-1][1], st.get('holes', []), st['solid'], s0, tiles[st['solid']])
+            if st.get('slots') and L > 6.0:
+                # dark horizontal window slots, 1.2 m high, one per level band above the AirTrain level (photo l1), 1.5 m in from
+                # the edge ends, 2 cm proud of the wall
+                d = (B - A) / L
+                for z0, z1, kind in eb:
+                    if kind != 'open' or z0 < AT.NET_LEVEL + AT.PORTAL_H: continue
+                    zc = 0.5 * (z0 + z1)
+                    pa_, pb_ = A + d * 1.5 + n * 0.02, B - d * 1.5 + n * 0.02
+                    gd.quad_wall(tuple(pa_), tuple(pb_), zc - 0.6, zc + 0.6, zc - 0.6, zc + 0.6, 'slot', 0.0, (3.0, 1.2))
             continue
         for z0, z1, kind in eb:
             if kind == 'solid':
@@ -239,12 +250,11 @@ def garage_facade(mb, P, bands, style, tiles, recess=RECESS, gdetail=None):
                         za, zb = z0 + SCREEN_GAP, z1 - SCREEN_GAP
                         if zb - za < 0.6: continue
                         gd.quad_wall(tuple(pa), tuple(pb), za, zb, za, zb, 'screen', 0.0, (sb - sa, zb - za), v0=za)
-                        gd.face([(pa[0], pa[1], zb), (pb[0], pb[1], zb), (fb[0], fb[1], zb), (fa[0], fa[1], zb)], 'screen_edge',
-                                [(0, 0), (1, 0), (1, 0.05), (0, 0.05)])
-                        gd.face([(fa[0], fa[1], za), (fb[0], fb[1], za), (pb[0], pb[1], za), (pa[0], pa[1], za)], 'screen_edge',
-                                [(0, 0), (1, 0), (1, 0.05), (0, 0.05)])
-                        gd.quad_wall(tuple(fa), tuple(pa), za, zb, za, zb, 'screen_edge', 0.0, (1.0, 1.0))
-                        gd.quad_wall(tuple(pb), tuple(fb), za, zb, za, zb, 'screen_edge', 0.0, (1.0, 1.0))
+                        uvq = [(0, 0), (1, 0), (1, 0.05), (0, 0.05)]
+                        gd.face_dir([(pa[0], pa[1], zb), (pb[0], pb[1], zb), (fb[0], fb[1], zb), (fa[0], fa[1], zb)], 'screen_edge', uvq, (0, 0, 1))
+                        gd.face_dir([(fa[0], fa[1], za), (fb[0], fb[1], za), (pb[0], pb[1], za), (pa[0], pa[1], za)], 'screen_edge', uvq, (0, 0, -1))
+                        gd.face_dir([(fa[0], fa[1], za), (pa[0], pa[1], za), (pa[0], pa[1], zb), (fa[0], fa[1], zb)], 'screen_edge', uvq, (-d[0], -d[1], 0))
+                        gd.face_dir([(pb[0], pb[1], za), (fb[0], fb[1], za), (fb[0], fb[1], zb), (pb[0], pb[1], zb)], 'screen_edge', uvq, (d[0], d[1], 0))
     if not open_quads:
         return
     bnd = P.boundary
@@ -340,7 +350,7 @@ def parking_structure(B, P, top, deck, slabs, style, car_axis, deck_origin, tile
 TILES = {'precast': (6.0, 3.0), 'precast_band': (6.0, 1.6), 'concrete': (4.0, 4.0), 'concrete_board': (4.0, 2.4), 'screen': (3.0, 1.6),
          'screen_edge': (1.0, 1.0), 'interior': (6.0, 6.0), 'hangar_wall': (2.0, 2.0), 'moc_wall': (2.0, 2.0), 'glass_hyatt': (1.5, DL.GH_P),
          'metal_dark': (3.0, 3.0), 'podium': (3.0, 3.0), 'cac_wall': (3.0, 15 * FT), 'glass_band': (3.0, DL.GH_P / 3), 'coping': (3.0, 3.0),
-         'ribbon': (3.0, 3.0), 'louvre': (3.0, 1.0), 'hangar_door': (8.375, 8.0), 'spine_wall': (3.0, 3.6), 'concrete_lt': (4.0, 4.0)}
+         'ribbon': (3.0, 3.0), 'louvre': (3.0, 1.0), 'slot': (3.0, 1.2), 'hangar_door': (8.375, 8.0), 'spine_wall': (3.0, 3.6), 'concrete_lt': (4.0, 4.0)}
 
 
 def car_layout(P_local, car_axis, origin_local, lanes=False):
@@ -539,20 +549,24 @@ def garage_ag(k):
     ad = np.array([a[0], -a[1]])
     rail_edge = RAIL.buffer(0.6, join_style=2)
 
+    # Garage A station block (photo l1): the faces across the tracks are solid precast (panel grid, a dark window slot above the
+    # portal) for STATION_BLOCK_W m either side of the guideway strips [obs l1; extent inf]
+    rail_strip_l = F.poly(RAIL.intersection(body_w).buffer(0)) if g['rail_near'] else Polygon()
+
     def style(pa, pb):
-        mid = Point(0.5 * (pa[0] + pb[0]), 0.5 * (pa[1] + pb[1]))
+        seg = LineString([pa, pb])
         for pl in portal_lines:
-            if pl.distance(mid) < 0.5 and LineString([pa, pb]).length > 0.5:
-                s_a = LineString([pa, pb]).project(Point(pl.coords[0])); s_b = LineString([pa, pb]).project(Point(pl.coords[-1]))
-                return dict(kind='solid', solid='precast', holes=[(min(s_a, s_b) + 0.6, max(s_a, s_b) - 0.6, zt - AT.DECK_T - 0.3, zt + AT.PORTAL_H)])
+            if seg.length > 0.5 and seg.distance(Point(pl.coords[0])) < 0.5 and seg.distance(Point(pl.coords[-1])) < 0.5:
+                s_a = seg.project(Point(pl.coords[0])); s_b = seg.project(Point(pl.coords[-1]))
+                return dict(kind='solid', solid='precast', slots=True,
+                            holes=[(min(s_a, s_b) + 0.6, max(s_a, s_b) - 0.6, zt - AT.DECK_T - 0.3, zt + AT.PORTAL_H)])
         if on_circle(pa, pb, F, circ):
             return dict(kind='solid', solid='precast_band')
         d = np.array(pb, float) - np.array(pa, float); d /= np.linalg.norm(d)
-        if not g['rail_near'] and rail_edge.contains(Point(*F.W(mid.x, mid.y))):
-            return dict(kind='screen', pier_dx=PIER_DX['gar'], solid='precast', z0=0.0)
-        if abs(d @ ad) > 0.85:
-            return dict(kind='screen', pier_dx=PIER_DX['gar'], solid='precast')
-        return dict(kind='open', pier_dx=PIER_DX['gar_end'], solid='precast')
+        if g['rail_near'] and abs(d @ ad) < 0.5 and rail_strip_l.distance(seg) < STATION_BLOCK_W:
+            return dict(kind='solid', solid='precast', slots=True)
+        # every other face: open levels behind the perforated screens [obs spec garage_ag_facade, photos l1 / a2]
+        return dict(kind='screen', pier_dx=PIER_DX['gar'] if abs(d @ ad) > 0.85 else PIER_DX['gar_end'], solid='precast')
     axis = float(LB[k]['roof_cars']['car_row_axis_heading_deg'])
     inner, bands = parking_structure(B, P, hd, deck, slabs, style, axis, (float(c[0]), float(c[1])), name=f'{k}_body',
                                      feature='garage body: precast spandrels, perforated screens, dark open levels, deck + parapet',
@@ -598,13 +612,21 @@ def garage_ag(k):
         z0, z1 = zt - AT.DECK_T - 0.3, zt + AT.PORTAL_H
         d = (pb - pa) / Le
         pa2, pb2 = pa + d * 0.6, pb - d * 0.6
-        tn.quad_wall(tuple(pa2 + din), tuple(pb2 + din), z0, z1, z0, z1, 'interior', 0, (6, 6))
-        tn.quad_wall(tuple(pa2), tuple(pa2 + din), z0, z1, z0, z1, 'interior', 0, (6, 6))
-        tn.quad_wall(tuple(pb2 + din), tuple(pb2), z0, z1, z0, z1, 'interior', 0, (6, 6))
+        zf = z0 + AT.DECK_T + 0.3
+        # tunnel faces seen from inside: every normal points into the tunnel box (towards its axis / the opening)
+        cen = np.r_[0.5 * (pa2 + pb2) + din * 0.5, 0.5 * (zf + z1)]
+        uvq = [(0, 0), (1, 0), (1, 1), (0, 1)]
+
+        def inward(pts, mat, z_c=None):
+            P_ = np.asarray(pts, float); c_ = P_.mean(0)
+            tn.face_dir(pts, mat, uvq, cen - c_)
+        inward([(*(pa2 + din), z0), (*(pb2 + din), z0), (*(pb2 + din), z1), (*(pa2 + din), z1)], 'interior')     # back wall
+        inward([(*pa2, z0), (*(pa2 + din), z0), (*(pa2 + din), z1), (*pa2, z1)], 'interior')                        # sides
+        inward([(*pb2, z0), (*(pb2 + din), z0), (*(pb2 + din), z1), (*pb2, z1)], 'interior')
         q = [pa2, pb2, pb2 + din, pa2 + din]
-        tn.face([(p[0], p[1], z1) for p in q[::-1]], 'interior', [(0, 0), (1, 0), (1, 1), (0, 1)])
-        tn.face([(p[0], p[1], z0 + AT.DECK_T + 0.3) for p in q], 'guideway_deck', [(0, 0), (1, 0), (1, 1), (0, 1)])
-        tn.quad_wall(tuple(pb2), tuple(pa2), z0, z0 + AT.DECK_T + 0.3, z0, z0 + AT.DECK_T + 0.3, 'guideway', 0, (4, 4))
+        inward([(p[0], p[1], z1) for p in q], 'interior')                                                          # soffit
+        tn.face_dir([(p[0], p[1], zf) for p in q], 'guideway_deck', uvq, (0, 0, 1))                                # track deck
+        tn.face_dir([(*pa2, z0), (*pb2, z0), (*pb2, zf), (*pa2, zf)], 'guideway', uvq, (-din[0], -din[1], 0))      # deck edge
     if not tn.empty():
         B.shells.append(Part(f'{k}_portal', tn, 'shell', 'obs', 'AirTrain portal into the garage station (guideway crossing [obs polygons]; '
                              'opening at the network level [inf])', [f'{k}_airtrain_level', 'at_section']))
@@ -764,11 +786,17 @@ def rcc():
              deviations=['west wall / station platform at %.1f m (photo l5) instead of the BL-03 L4 placeholder 12.35 m [unk]' % hp])
     F = B.F
     P = F.poly(full)
-    pn, ps = np.array(F.L(*DL.RCC_N)), np.array(F.L(*DL.RCC_S))
-    west = LineString([pn, ps])
+    # the west (AirTrain) wall: the outline between its N-most corner RCC_N and its SW corner RCC_S (BL-03 projects it on that
+    # chord; the outline bulges 20 m west of the chord at z -1140)
+    ring_w = [tuple(q) for q in np.array(full.exterior.coords)[:-1]]
+    iN = int(np.argmin([math.dist(q, DL.RCC_N) for q in ring_w])); iS = int(np.argmin([math.dist(q, DL.RCC_S) for q in ring_w]))
+    seq = [ring_w[(iN + i) % len(ring_w)] for i in range(((iS - iN) % len(ring_w)) + 1)]
+    seq2 = [ring_w[(iS + i) % len(ring_w)] for i in range(((iN - iS) % len(ring_w)) + 1)]
+    wline_w = LineString(seq if min(q[0] for q in seq) < min(q[0] for q in seq2) else seq2)
+    west = LineString([F.L(*q) for q in wline_w.coords])
 
     def is_west(a, b):
-        return west.distance(Point(*a)) < 2.5 and west.distance(Point(*b)) < 2.5 and LineString([a, b]).length > 3.0
+        return west.distance(Point(*a)) < 0.3 and west.distance(Point(*b)) < 0.3 and LineString([a, b]).length > 1.0
 
     def style(a, b):
         if is_west(a, b):
@@ -796,10 +824,11 @@ def rcc():
             off = n * (lean * t + 0.02)
             p0 = np.array(a) + off; p1 = np.array(b) + off
             q0 = p0 + n * 0.25; q1 = p1 + n * 0.25
-            lv.face([(p0[0], p0[1], z), (p1[0], p1[1], z), (q1[0], q1[1], z - 0.12), (q0[0], q0[1], z - 0.12)], 'louvre_blade',
-                    [(0, 0), (L / 3, 0), (L / 3, 0.1), (0, 0.1)])
-            lv.face([(q0[0], q0[1], z - 0.12), (q1[0], q1[1], z - 0.12), (p1[0], p1[1], z - 0.14), (p0[0], p0[1], z - 0.14)], 'louvre_blade',
-                    [(0, 0), (L / 3, 0), (L / 3, 0.1), (0, 0.1)])
+            uvb = [(0, 0), (L / 3, 0), (L / 3, 0.1), (0, 0.1)]
+            lv.face_dir([(p0[0], p0[1], z), (p1[0], p1[1], z), (q1[0], q1[1], z - 0.12), (q0[0], q0[1], z - 0.12)], 'louvre_blade', uvb,
+                        (n[0] * 0.12, n[1] * 0.12, 0.25))
+            lv.face_dir([(q0[0], q0[1], z - 0.12), (q1[0], q1[1], z - 0.12), (p1[0], p1[1], z - 0.14), (p0[0], p0[1], z - 0.14)], 'louvre_blade', uvb,
+                        (-n[0] * 0.02, -n[1] * 0.02, -0.25))
         # board-formed concrete pilasters between the ribbon windows every 9 m (LOD0)
         for s in np.arange(4.5, L - 1.0, 9.0):
             d = (np.array(b) - np.array(a)) / L; cc = np.array(a) + d * s + n * 0.15
@@ -860,7 +889,14 @@ def hyatt():
         if float(n_ @ east) > 0.3 and f_of(0.5 * (np.array(a_) + np.array(b_))) < 0.47:
             eb.append(LineString([a_, b_]))
     half_s = Polygon([o + ax * (-W) - east * 300, o + ax * (0.47 * W - W / 2) - east * 300, o + ax * (0.47 * W - W / 2) + east * 300, o + ax * (-W) + east * 300])
-    zone = orient_all(Pfull.intersection(unary_union(eb).buffer(GH_PODIUM_D, cap_style=2)).intersection(half_s)) if eb else Polygon()
+    from shapely.ops import linemerge
+    zone = Polygon()
+    if eb:
+        ml = linemerge(unary_union(eb))
+        strips = [g.buffer(GH_PODIUM_D, single_sided=True, cap_style=2, join_style=2) for g in getattr(ml, 'geoms', [ml])]
+        # single-sided buffer to the LEFT of the CCW exterior = the inside; keep the side that overlaps the outline most
+        strips = [g if g.intersection(Pfull).area > 0.5 * g.area else g.buffer(0) for g in strips]
+        zone = orient_all(Pfull.intersection(unary_union(strips)).intersection(half_s).buffer(0))
     P = largest(Pfull.difference(zone.buffer(0.01)))
     P = orient_all(P.simplify(0.05))
     podium = [orient_all(q) for q in polys(zone) if q.area > 20]
@@ -906,10 +942,11 @@ def hyatt():
                 if inset > 0:
                     qa, qb = pa - n * inset, pb - n * inset
                     sh.quad_wall(tuple(qa), tuple(qb), z0, z1, z0, z1, 'glass_hyatt', s0 + ss[i], TILES['glass_hyatt'], v0=z0)
-                    sh.face([(pa[0], pa[1], z1), (pb[0], pb[1], z1), (qb[0], qb[1], z1), (qa[0], qa[1], z1)][::-1], 'soffit_lt', [(0, 0), (1, 0), (1, 1), (0, 1)])
-                    sh.face([(pa[0], pa[1], z0), (pb[0], pb[1], z0), (qb[0], qb[1], z0), (qa[0], qa[1], z0)], 'concrete_lt', [(0, 0), (1, 0), (1, 1), (0, 1)])
-                    sh.quad_wall(tuple(qa), tuple(pa), z0, z1, z0, z1, 'metal_dark', 0, (2, 2))
-                    sh.quad_wall(tuple(pb), tuple(qb), z0, z1, z0, z1, 'metal_dark', 0, (2, 2))
+                    uvq = [(0, 0), (1, 0), (1, 1), (0, 1)]
+                    sh.face_dir([(pa[0], pa[1], z1), (pb[0], pb[1], z1), (qb[0], qb[1], z1), (qa[0], qa[1], z1)], 'soffit_lt', uvq, (0, 0, -1))
+                    sh.face_dir([(pa[0], pa[1], z0), (pb[0], pb[1], z0), (qb[0], qb[1], z0), (qa[0], qa[1], z0)], 'concrete_lt', uvq, (0, 0, 1))
+                    sh.face_dir([(qa[0], qa[1], z0), (pa[0], pa[1], z0), (pa[0], pa[1], z1), (qa[0], qa[1], z1)], 'metal_dark', uvq, (d[0], d[1], 0))
+                    sh.face_dir([(pb[0], pb[1], z0), (qb[0], qb[1], z0), (qb[0], qb[1], z1), (pb[0], pb[1], z1)], 'metal_dark', uvq, (-d[0], -d[1], 0))
                     for cf in np.linspace(0, 1, 5)[1:-1]:                       # colonnade columns
                         cc = pa + (pb - pa) * cf - n * 0.5
                         boxm(det, cc, d, 0.7, 0.7, (z0, z1), 'concrete_lt', (2, 2), top=False)
@@ -1122,14 +1159,14 @@ def superbay():
                 n = np.cross(np.array(f[1]) - np.array(f[0]), np.array(f[3]) - np.array(f[0]))
                 if n[:2] @ (np.array(tl) * np.sign(t_end)) < 0: f = f[::-1]
                 sh.face(f, 'fascia', [(0, 0), (1, 0), (1, 0.1), (0, 0.1)])
-        # soffit under the roof (flat at the fascia bottom per sample) - one quad strip per side
-        for j in range(8):
-            pa, pb = aa[j], aa[j + 1]
-            za = min(zroof(pa, t) for t in tt) - 1.2; zb = min(zroof(pb, t) for t in tt) - 1.2
-            q = [(*W(pa, -T), za), (*W(pb, -T), zb), (*W(pb, T), zb), (*W(pa, T), za)]
-            n = np.cross(np.array(q[1]) - np.array(q[0]), np.array(q[2]) - np.array(q[0]))
-            if n[2] > 0: q = q[::-1]
-            sh.face(q, 'soffit', [(0, 0), (1, 0), (1, 1), (0, 1)])
+        # soffit: the folded roof 1.2 m lower, facing down (visible beyond the walls at the tips and roof ends)
+        for i in range(16):
+            for j in range(8):
+                ta, tb = tt[i], tt[i + 1]; pa, pb = aa[j], aa[j + 1]
+                q = [(pa, ta), (pb, ta), (pb, tb), (pa, tb)]
+                pts = [(*W(a, t), zroof(a, t) - 1.2) for a, t in q]
+                uv = [(a / 6.0, t / 6.0) for a, t in q]
+                sh.face_dir(pts[:3], 'soffit', uv[:3], (0, 0, -1)); sh.face_dir([pts[0], pts[2], pts[3]], 'soffit', [uv[0], uv[2], uv[3]], (0, 0, -1))
     # spine roof with hipped ends: ridge a -2.5..6.3 at hs, corners (s0 / s1, +-T) at the root level
     ra, rb = hip['ridge_a']
     tn, ts_ = T - hip['nne'], -(T - hip['ssw'])          # +t = NNE
@@ -1191,8 +1228,15 @@ def superbay():
                 dl.quad_wall(tuple(pB), tuple(np.array(a) + d * sB), 0.0, door_h, 0.0, door_h, 'hangar_wall', 0, (2, 2))
             # wall with the door holes, top following the roof: split into the part below door_h and a sloped top quad
             holed_wall(wl, a, b, 0.0, door_h, holes, 'hangar_wall', s0, TILES['hangar_wall'])
-            wl.face([(a[0], a[1], door_h), (b[0], b[1], door_h), (b[0], b[1], zb), (a[0], a[1], za)], 'hangar_wall',
-                    [(s0 / 2, door_h / 2), ((s0 + L) / 2, door_h / 2), ((s0 + L) / 2, zb / 2), (s0 / 2, za / 2)])
+            # wall above the doors up to the folded soffit: one quad per quarter bay (the top follows the folds)
+            m_ = max(1, int(math.ceil(L / (17.25 / 4))))
+            for i in range(m_):
+                p0 = np.array(a) + (np.array(b) - np.array(a)) * i / m_; p1 = np.array(a) + (np.array(b) - np.array(a)) * (i + 1) / m_
+                u0, t0 = inv(*p0); u1, t1 = inv(*p1)
+                z0, z1 = zroof(u0, t0) - 1.2, zroof(u1, t1) - 1.2
+                sa_, sb_ = s0 + L * i / m_, s0 + L * (i + 1) / m_
+                wl.face([(p0[0], p0[1], door_h), (p1[0], p1[1], door_h), (p1[0], p1[1], z1), (p0[0], p0[1], z0)], 'hangar_wall',
+                        [(sa_ / 2, door_h / 2), (sb_ / 2, door_h / 2), (sb_ / 2, z1 / 2), (sa_ / 2, z0 / 2)])
         else:
             # end walls (NNE / SSW): sample the roof line every ~8 m
             m_ = max(1, int(L / 8.0))

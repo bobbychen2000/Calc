@@ -21,7 +21,11 @@ What it does
   6. Stance (review 4 Nov 2026): models on their own gear are rendered with js/aircraft/fit.js T.fit.pitch (nose-down
      about the main contact, js/live/aircraft.js placement()); the nose / main tyre bottoms must touch the ground. The
      fuselage top is measured as fit.js crownOf defines it (centre-plane section cuts, 5 m median: not an antenna).
-     Heights above the ground are flagged beyond +-0.08 m (the ACAPs' nominal +-3 in), not 1 % of the length.
+     Heights above the ground (incl. the overall height, review 5 Nov 2026) are flagged beyond +-0.08 m (the ACAPs'
+     nominal +-3 in), not 1 % of the length.
+  7. Bridge closure (review 5 Nov 2026): the bellows drawn at every docking door (js/aircraft/dock.js, fitted to the skin
+     measured by tools/models/dock_foot.mjs) against planar cuts of the rendered mesh (tools/models/dock_check.mjs): skin
+     outside the closure outline, gap on the outline, drawn vertices inside the skin; flagged beyond 0.05 m.
   4. Compares what the app renders / uses against REF (below), transcribed by hand from the manufacturer documents.
      Every value carries its document, page and figure. Values marked 'inf' are inferred (e.g. a door centre derived
      from a dimensioned door edge + door width, or scaled off a drawing) and are not treated as hard references.
@@ -85,25 +89,25 @@ CRJ9 = 'Bombardier CSP C-020 Rev 11 CRJ900 APM (Dec 17/2015)'
 REF = {
     # ---- Boeing 737
     'B737': dict(crown=(5.41, 5.56), doc=B737NG, name='737-700 (winglets)', L=33.63, span=35.79, H=(12.45, 12.67), nose=4.09, main=4.09 + 12.60, track=5.72,
-                 doors={1: 5.03}, sill1=(2.59, 2.74),
-                 src='§2.2.4 p.2-12 (dims), §2.3.3 p.2-19 (J vertical tail, B entry door 1), §2.7.1 p.2-33 (door 1: 16 ft 6 in)'),
+                 doors={1: 5.03}, sill1=(2.59, 2.74), sillAft=(2.95, 3.10),
+                 src='§2.2.4 p.2-12 (dims), §2.3.3 p.2-19 (J vertical tail, B entry door 1), §2.7.1 p.2-33 (door 1: 16 ft 6 in), §2.3.1 p.2-17 (G entry door 2)'),
     'B738': dict(crown=(5.41, 5.56), doc=B737NG, name='737-800 (winglets)', L=39.47, span=35.79, H=(12.37, 12.62), nose=4.09, main=4.09 + 15.60, track=5.72,
-                 doors={1: 5.03}, sill1=(2.59, 2.74), src='§2.2.6 p.2-14, §2.3.3 p.2-19, §2.7.1 p.2-33'),
+                 doors={1: 5.03}, sill1=(2.59, 2.74), sillAft=(2.97, 3.12), src='§2.2.6 p.2-14, §2.3.3 p.2-19, §2.7.1 p.2-33, §2.3.2 p.2-18 (G entry door 2)'),
     'B739': dict(crown=(5.41, 5.59), doc=B737NG, name='737-900ER (winglets)', L=42.11, span=35.79, H=(12.37, 12.62), nose=4.09, main=4.09 + 17.17, track=5.72,
-                 doors={1: 5.03}, sill1=(2.59, 2.74), src='§2.2.8 p.2-16, §2.3.3 p.2-19, §2.7.1 p.2-33'),
+                 doors={1: 5.03}, sill1=(2.59, 2.74), sillAft=(2.97, 3.12), src='§2.2.8 p.2-16, §2.3.3 p.2-19, §2.7.1 p.2-33, §2.3.2 p.2-18 (G entry door 2)'),
     'B38M': dict(crown=(5.08, 5.51), doc=B737MAX, name='737-8', L=39.47, span=35.92, H=(11.86, 12.45), nose=4.09, main=4.09 + 15.60, track=5.72,
-                 doors={1: 5.03, 2: 31.88}, sill1=(2.77, 3.07),
-                 src='§2.2.2 p.2-10 (plan length 129 ft 6 in), §2.3.2 p.2-14 (P, B), §2.7.1 p.2-26 table (B, H)'),
+                 doors={1: 5.03, 2: 31.88}, sill1=(2.77, 3.07), sillAft=(2.49, 2.90),
+                 src='§2.2.2 p.2-10 (plan length 129 ft 6 in), §2.3.2 p.2-14 (P, B, M aft passenger door), §2.7.1 p.2-26 table (B, H)'),
     'B39M': dict(crown=(5.08, 5.51), doc=B737MAX, name='737-9', L=42.11, span=35.92, H=(11.89, 12.40), nose=4.09, main=4.09 + 17.17, track=5.72,
-                 doors={1: 5.03, 2: 34.52}, sill1=(2.79, 3.07), src='§2.2.3 p.2-11, §2.3.3 p.2-15, §2.7.1 p.2-26'),
+                 doors={1: 5.03, 2: 34.52}, sill1=(2.79, 3.07), sillAft=(2.51, 2.82), src='§2.2.3 p.2-11, §2.3.3 p.2-15 (M aft passenger door), §2.7.1 p.2-26'),
     'B3XM': dict(crown=(5.08, 5.54), doc=B737MAX, name='737-10', L=43.79, span=35.92, H=(11.91, 12.45), nose=4.09, main=4.09 + 18.34, track=5.72,
-                 doors={1: 5.03, 2: 36.20}, sill1=(2.77, 3.07), src='§2.2.4 p.2-12, §2.3.4 p.2-16, §2.7.1 p.2-26 (preliminary)'),
+                 doors={1: 5.03, 2: 36.20}, sill1=(2.77, 3.07), sillAft=(2.54, 2.87), src='§2.2.4 p.2-12, §2.3.4 p.2-16 (M aft passenger door), §2.7.1 p.2-26 (preliminary)'),
     # ---- Boeing 757
     # span with the APB blended winglets the model carries (WINGLETS doc: 134 ft 9 in; ACAP plain wing 38.05 / 38.06 m)
-    'B752': dict(doc=B757, name='757-200 (blended winglets: span from WINGLETS)', L=47.32, span=41.07, H=(13.49, 13.74), nose=5.89, main=5.89 + 18.29, track=7.32,
+    'B752': dict(doc=B757, name='757-200 (blended winglets: span from WINGLETS)', L=47.32, span=41.07, spanPlain=38.05, H=(13.49, 13.74), nose=5.89, main=5.89 + 18.29, track=7.32,
                  doors={1: 5.05, 2: 13.99, 4: 38.23},
                  src='§2.2.1 p.2-10, §2.3.1 p.2-12 (K; letter->vertical tail inferred from magnitude), §2.7.1 p.2-21 table ("nose to center of door")'),
-    'B753': dict(doc=B757, name='757-300 (blended winglets: span from WINGLETS)', L=54.43, span=41.07, H=(13.56, 13.64), nose=5.89, main=5.89 + 22.35, track=7.32,
+    'B753': dict(doc=B757, name='757-300 (blended winglets: span from WINGLETS)', L=54.43, span=41.07, spanPlain=38.05, H=(13.56, 13.64), nose=5.89, main=5.89 + 22.35, track=7.32,
                  doors={1: 5.05, 2: 13.99, 3: 35.99, 4: 45.34}, src='§2.2.2 p.2-11, §2.3.2 p.2-13 (K), §2.7.1 p.2-21'),
     # ---- Boeing 767
     'B763': dict(doc=B767, name='767-300/-300ER', L=54.94, span=47.57, H=(15.39, 16.03), nose=4.55, main=4.55 + 22.76, track=9.30,
@@ -295,7 +299,7 @@ for (const k in TYPES) { const T = TYPES[k]; if (k !== T.key) continue; const f 
     nose: T.gear.nose.x, xMain: T.xMain, doors: T.doors, dock2: T.dock2, dockX1: T.dockX1, dockX2: T.dockX2, dockSill: T.dockSill,
     dockSill2: T.dockSill2, dockHW: T.dockHW, dockX3: T.dockX3 ?? null, dockSill3: T.dockSill3 ?? null, dockHW3: T.dockHW3 ?? null, spec: SPEC[k] || null,
     fit: f && { model: f.model, base: f.base, s: f.s, plugs: f.plugs, stretch: f.stretch, seat: f.seat, door: f.door, renderedSpan: f.renderedSpan, renderedH: f.renderedH,
-      engClear: f.engClear, gearTop: f.gearTop, tipAdd: f.tipAdd, pitch: f.pitch, renderedCrown: f.renderedCrown } };
+      engClear: f.engClear, gearTop: f.gearTop, tipAdd: f.tipAdd, pitch: f.pitch, renderedCrown: f.renderedCrown, winglet: f.winglet || null } };
 }
 console.log(JSON.stringify(o));
 """
@@ -390,6 +394,13 @@ def rendered(P, Z, head, fitd, T, full=None):
     out['tipY'] = Hc + float(Q[wg & (np.abs(Q[:, 2]) > 0.98 * zmax), 1].mean()) * s
     ht = (Q[:, 0] < -0.8 * L) & ~np.isin(Z, (1,)); hz = np.abs(Q[ht, 2]).max() if ht.any() else 0
     out['htY'] = Hc + float(Q[ht & (np.abs(Q[:, 2]) > 0.97 * hz), 1].mean()) * s if hz else None
+    # winglet root (review 5 Nov 2026, aircraft-v3): the model's winglet root (js/aircraft/fit.js WINGLET zr, where the
+    # wing's upper skin starts to rise, measured on the model) taken through the renderer's stretch (the Python port), so
+    # the row shows where the drawn plain wing ends; the plain-wing span is twice that |z|. (A profile-based detection on
+    # the mesh was tried: the 757 model's sparse wing-tip mesh made it jump by +-1 m.)
+    if fitd.get('winglet'):
+        wl = fitd['winglet']; q = apply_stretch(np.array([[-0.5 * L, wl['y0'], wl['zr']]]), np.zeros(1, np.uint8), st)
+        out['wingletRoot'] = 2 * abs(float(q[0, 2])) * s
     if hasGear:
         g = Q[Z == 3]; bottom = g[g[:, 1] < g[:, 1].min() + 0.35]
         mains = bottom[bottom[:, 0] < -0.3 * L]; noses = bottom[bottom[:, 0] > -0.3 * L]
@@ -406,6 +417,7 @@ def pct(a, b): return None if a is None or b is None or not b else 100.0 * (a - 
 
 
 VTOL = 0.08   # m, heights above the ground (ACAP nominal +-3 in)
+CLOSE_TOL = 0.05  # m, bridge closure on the skin: skin through / gap on the closure outline (contact; inferred)
 
 
 # explanations of flags that remain after the fixes (docs/research/aircraft_models_check.md §11 has the sources)
@@ -415,13 +427,15 @@ _E175_DOOR = ('source model: the FAM E175 has no door object; its door is the E1
               'The bridge docks at the painted door; the 3.1 m bellows covers both')
 _B738_GEAR = ('source model: the FlightGear 737-800 model\'s own main gear is 0.43 m aft of the ACAP station (nose gear +0.23 m); '
               'TYPES, ground physics and gear contact use the ACAP station, the rendered wheels are the artist\'s')
-_B738_SILL = ('737NG: with the nose-down stance (both gear units on the ground, js/aircraft/fit.js pitch) the FG 737-800 artist\'s '
-              'door 1L sill renders 2.97 m, 0.23 m above the NG ACAP 2.59-2.74 m (0.15 m beyond +-3 in; level stance: 3.12 m). The '
-              'door object fills its opening in the skin (one skin layer at the door station), so lowering it needs the skin re-cut '
-              'in the FG source model (not restored in this container) and a re-bake of every b738 livery; until then the bridge '
-              'meets the drawn door (js/aircraft/fit.js dockSill of gear-seated models with a door object). 737 MAX: within 2.77-3.07')
 EXPLAINED = {('E75L', 'door'): _E175_DOOR, ('E75L', 'dock'): _E175_DOOR, ('E75S', 'door'): _E175_DOOR, ('E75S', 'dock'): _E175_DOOR}
-for _k in ('B736', 'B737', 'B738', 'B739', 'B37M', 'B38M', 'B39M', 'B3XM'): EXPLAINED[(_k, 'mgear')] = _B738_GEAR; EXPLAINED[(_k, 'sill')] = _B738_SILL; EXPLAINED[(_k, 'doorsill')] = _B738_SILL
+_MAX_STANCE = ('737 MAX on the FG 737-800 model: the app stands every 737 on the NG model\'s own gear, nose-down 0.5-0.7 deg; the MAX '
+               'ACAP shows the MAX nose-UP at rest (forward door 2.77-3.07 m, aft door 2.49-2.90 m against the NG\'s 2.59-2.74 / '
+               '2.97-3.12 m: its taller nose gear), so the aft door renders 0.25-0.3 m above the MAX range while door 1 is within '
+               '+-3 in of it. Needs a MAX nose-gear extension and a nose-up stance in js/aircraft/fit.js (open, aircraft track; found '
+               'in review round 1, 5 Nov 2026, with this row)')
+for _k in ('B38M', 'B39M', 'B3XM'): EXPLAINED[(_k, 'aftsill')] = _MAX_STANCE
+# (737NG door-1 sill: re-fitted in tools/convert_models.py doorFit, review 5 Nov 2026; no longer flagged)
+for _k in ('B736', 'B737', 'B738', 'B739', 'B37M', 'B38M', 'B39M', 'B3XM'): EXPLAINED[(_k, 'mgear')] = _B738_GEAR
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -438,6 +452,10 @@ def main():
         if fn.endswith('.sfom'):
             k = fn[:-5]; head, P, Z = load_sfom(os.path.join(MODELS_DIR, fn)); models[k] = (head, P, Z)
             _h, Pf, Zf, If = mf.load(os.path.join(MODELS_DIR, fn)); fulls[k] = (Pf, Zf, If)
+    # bridge closure vs skin per (TYPES key, door): tools/models/dock_foot.mjs --check (tools/models/dock_check.mjs)
+    rr = subprocess.run(['node', '--no-warnings', os.path.join(ROOT, 'tools', 'models', 'dock_foot.mjs'), '--check'], cwd=ROOT, capture_output=True, text=True)
+    if rr.returncode: raise RuntimeError(rr.stderr)
+    DOCK = {(x['t'], x['door']): x for x in json.loads(rr.stdout)}
     rows, flags = [], []
     for icao in sorted(set(MAP) | set(REF)):
         tm = MAP.get(icao); ref = REF.get(icao)
@@ -449,14 +467,15 @@ def main():
                         crown=S.get('crown'), nose=S.get('nose'), main=(S.get('main') or [None])[0], track=S.get('track'),
                         doors={i + 1: x for i, x in enumerate(S.get('doors') or [])}, sill1=S.get('sill'))
         r = dict(icao=icao, t=t, m=mk, ref=R['name'], refsrc=refsrc, cmp=[])
-        def add(what, got, want, pos=False, key=None, inf=False, vert=False):
+        def add(what, got, want, pos=False, key=None, inf=False, vert=False, tolm=None):
             # vert: a height above the ground, flagged beyond VTOL (the ACAPs' nominal +-3 in for loading, oleo and tyre
-            # variations, D6-58325-7 §2.3 notes; review 4 Nov 2026: 1 % of the length let a 0.38 m sill error pass)
+            # variations, D6-58325-7 §2.3 notes; review 4 Nov 2026: 1 % of the length let a 0.38 m sill error pass);
+            # tolm: an absolute tolerance in metres (bridge closure contact)
             if got is None or want is None: return
             if isinstance(want, (list, tuple)):
                 lo, hi = want; want = lo if got < lo else hi if got > hi else got
             dv = got - want; p = pct(got, want)
-            bad = abs(dv) > VTOL if vert else abs(dv) > 0.01 * tol * R['L'] if pos else (abs(p) > tol if p is not None else abs(dv) > VTOL)
+            bad = abs(dv) > tolm if tolm is not None else abs(dv) > VTOL if vert else abs(dv) > 0.01 * tol * R['L'] if pos else (abs(p) > tol if p is not None else abs(dv) > VTOL)
             c = dict(what=what, got=round(got, 2), ref=round(want, 2), delta=round(dv, 2), pct=None if pos else round(p, 1), flag=bool(bad), inf=inf)
             if bad: c['why'] = EXPLAINED.get((icao, key)) or EXPLAINED.get((icao, what))
             r['cmp'].append(c)
@@ -467,7 +486,10 @@ def main():
             add('length (rendered)', rd['L'], R['L'])
             # + the procedural tip device (js/aircraft/fit.js TIP_ADD / TIP_LAT: sharklet 0.55 m, 737 MAX split tip 0.5 m a side)
             add('wingspan (rendered, after span fit' + (', + ' + f['tipAdd'] if f.get('tipAdd') else '') + ')', rd['span'] + (2 * {'sharklet': 0.55, 'split': 0.5}[f['tipAdd']] if f.get('tipAdd') else 0), R['span'], key='span')
-            add('height (rendered fin top)', rd['H'], R.get('H'), key='H')
+            add('height (rendered fin top)', rd['H'], R.get('H'), key='H', vert=True)   # (review 5 Nov 2026: a height, +-0.08 m)
+            if rd.get('wingletRoot') is not None:    # the plain wing out to the winglet root vs the ACAP plain span
+                add('wing span at the winglet root (rendered plain wing, fit WINGLET root)', rd['wingletRoot'], R.get('spanPlain') or S.get('spanPlain'), key='spanplain')
+                add('winglet lateral extent a side (rendered)', (rd['span'] - rd['wingletRoot']) / 2, ((R['span'] - (R.get('spanPlain') or S.get('spanPlain'))) / 2) if (R.get('spanPlain') or S.get('spanPlain')) else None, pos=True, key='winglat', tolm=0.1)
             add('fuselage top above ground (rendered)', rd['crown'], R.get('crown'), pos=True, key='crown', vert=True)
             add('lowest engine point above ground (rendered)', rd['engClear'], S.get('engClr'), pos=True, key='engclr', vert=True)
             add('belly at 0.5 L above ground (rendered)', rd['belly'], S.get('bellyClr'), pos=True, key='belly', vert=True)
@@ -492,6 +514,10 @@ def main():
                 r['modelDoor'] = dict(name=dm['name'], x=round(po(dm['x'], (dm['ySill'] + dm['yTop']) / 2)[0], 3), sill=round(rd['Hc'] + po(dm['x'], dm['ySill'])[1] * f['s'], 3))
                 add(f"model's own L1 door object {dm['name']} (rendered centre)", r['modelDoor']['x'], R.get('doors', {}).get(1), pos=True, key='door', inf=src_inf)
                 add(f"model's own L1 door sill (rendered)", r['modelDoor']['sill'], R.get('sill1'), pos=True, key='doorsill', vert=True)
+                # the model's own aft door (review 5 Nov 2026: the stance of a gear model sets both sills)
+                dmA = next((d for d in F.get('doors', []) if d['side'] == 'L' and d['x'] > 0.5 * head['dims']['L']), None)
+                if dmA and R.get('sillAft'):
+                    add(f"model's own aft door {dmA['name']} sill (rendered)", rd['Hc'] + po(dmA['x'], dmA['ySill'])[1] * f['s'], R['sillAft'], pos=True, key='aftsill', vert=True)
                 add('bridge dock x = rendered door object', T['dockX1'], r['modelDoor']['x'], pos=True, key='dockmesh')
                 add('bridge cab floor = rendered door-1 sill', T['dockSill'], r['modelDoor']['sill'], pos=True, key='dockfloor', vert=True)
         else:
@@ -510,6 +536,16 @@ def main():
             if T['dock2'] == 2: add('bridge 2 cab floor vs published door-2L sill', T['dockSill2'], R.get('sill2'), pos=True, key='sill2', vert=True)
         if T['cls'] in ('E', 'F') and not T['dock2']: r['note'] = 'wide-body without a documented second-bridge door: one bridge'
         add('bridge cab floor vs published door-1L sill', T['dockSill'], R.get('sill1'), pos=True, key='sill', vert=True)
+        # bridge closure (js/aircraft/dock.js, tools/models/dock_check.mjs) against the rendered skin over the whole bellows
+        # footprint (review 5 Nov 2026, aircraft-v1: the flat front cut 0.17-0.26 m into the nose skin of every widebody)
+        for dr_ in sorted(k for k in DOCK if k[0] == t):
+            d_ = DOCK[dr_]; nm = {1: '1L', 2: '%dL (bridge 2)' % (T['dock2'] or 2), 3: 'U1L'}[dr_[1]]
+            if d_['stale'] or d_['penEdge'] is None:
+                r['cmp'].append(dict(what=f'bridge closure door {nm}: data/models/dock_foot.js stale (re-run tools/models/dock_foot.mjs)', got=1.0, ref=0.0, delta=1.0, pct=None, flag=True, inf=False))
+                continue
+            add(f'bridge closure door {nm}: skin outside its outline (flat front {d_["flatPen"]:+.2f})', d_['penEdge'], [-9.0, 0.0], pos=True, key='closepen', tolm=CLOSE_TOL)
+            add(f'bridge closure door {nm}: widest gap on its outline', d_['gapEdge'], [0.0, 0.0], pos=True, key='closegap', tolm=CLOSE_TOL)
+            add(f'bridge closure door {nm}: drawn mesh inside the skin (max)', d_['drawnPen'], [-9.0, 0.0], pos=True, key='closemesh', tolm=2 * CLOSE_TOL)
         if refsrc == 'SPEC':
             for c in r['cmp']: c['self'] = True
             r['note'] = (r.get('note') + '; ' if r.get('note') else '') + 'no independent REF: rows checked against SPEC itself (self)'
@@ -517,7 +553,9 @@ def main():
             if c['flag']: flags.append((icao, c))
         rows.append(r)
     # ---- print
-    print(f'ICAO type checks (rendered / used by the app vs the manufacturer documents; flag: |%| > {tol} % or position error > {tol} % of L)')
+    print(f'ICAO type checks (rendered / used by the app vs the manufacturer documents; flag: lengths / spans |%| > {tol} %, stations '
+          f'(door, gear x) error > {tol} % of L, heights above the ground (fin top, fuselage top, sills, clearances, tyres) |d| > {VTOL} m '
+          f'(ACAP +-3 in), bridge closure vs skin > {CLOSE_TOL} m)')
     for r in rows:
         if 'cmp' not in r: print(f"  {r['icao']}: {r.get('note')}"); continue
         f = r.get('fit') or {}

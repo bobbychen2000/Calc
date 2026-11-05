@@ -70,6 +70,7 @@ import { rng, m4, v3 } from '../math.js';
 import { stToWorld, worldToST, GROUND_Y } from '../geo.js';
 import { TYPES, ICAO_TYPES } from '../aircraft/types.js';
 import '../aircraft/fit.js'; // fits the imported models to the published dimensions: T.dockX1/2, T.dockSill/2, T.dockHW
+import { bellowsShape, bellowsGeo } from '../aircraft/dock.js'; // the bellows closure fitted to the drawn fuselage skin
 import { inst, buildVehicleMeshes, beltShape, beltFamily, beltSill, cateringFloor, cateringBoxes } from '../world/gates.js';
 import { makeAtlas } from './signs.js';
 import { familyOf } from './traffic.js';
@@ -964,7 +965,10 @@ export class LiveGateSystem {
     geo.box([-CAB_BACK, -0.1, -CAB_W / 2], [fr, 3.2, CAB_W / 2], C.cab, C.cabE, cabM);
     geo.box([-CAB_BACK - 0.1, 3.2, -CAB_W / 2 - 0.15], [fr + 0.15, 3.4, CAB_W / 2 + 0.15], C.steel, C.steelE, cabM);
     const bell = 0.45 + 0.15 * P.kk;
-    for (let i = 0; i < 5; i++) geo.box([fr + i * bell / 5, 0.05, -1.55 - (i % 2) * 0.05], [fr + (i + 1) * bell / 5, 3.0, 1.55 + (i % 2) * 0.05], C.dark, C.darkE, cabM);
+    // closure: fitted to the drawn fuselage skin while it deploys (js/aircraft/dock.js; aircraft track), else flat
+    const shp = P.kk > 0 && P.plan && P.plan.ok ? bellowsShape(P.T, b.upper ? 3 : (b.door || 1), P.kk) : null;
+    if (shp) bellowsGeo(geo, cabM, fr, bell, shp, C.dark, C.darkE);
+    else for (let i = 0; i < 5; i++) geo.box([fr + i * bell / 5, 0.05, -1.55 - (i % 2) * 0.05], [fr + (i + 1) * bell / 5, 3.0, 1.55 + (i % 2) * 0.05], C.dark, C.darkE, cabM);
     // floodlight on the cab roof, amber beacon
     geo.box([fr - 0.6, 3.4, -0.35], [fr - 0.2, 3.65, 0.35], C.dark, C.darkE, cabM);
     geo.box([fr - 0.22, 3.42, -0.3], [fr - 0.19, 3.62, 0.3], C.lamp, C.lampE, cabM);

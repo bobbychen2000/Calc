@@ -10,6 +10,8 @@ import { plugShift } from './fit.js';
 //   wing {z0, z1, dz, xMin}  span fit: outboard of z0 the wing is stretched spanwise, linearly up to z1, and everything
 //                        outboard of z1 (the tip device) moves rigidly by dz (only vertices ahead of xMin: not the tailplane)
 //   tipCut {z0, y0, zTo, yTo}  vertices outboard of z0 and above y0 (the model's winglet) folded to (zTo, yTo)
+//   tipShear {z0, y0, yt, k, p, xMin}  winglet cant: vertices ahead of xMin, outboard of z0 and above y0 move out by
+//                        k (y - y0) ((y - y0) / (yt - y0))^(p - 1): k (yt - y0) at the tip height yt
 //   engScale {k}         nacelles scaled radially by k about their axis, the lowest line kept (737 MAX LEAP-1B)
 //   wingLift {z0, t, xMin} / htLift {z0, t, xMax}  wing / tailplane sheared up by t per unit |z| outboard of z0
 //   squash {y0, k}       everything below y0 compressed vertically by k (engine ground clearance fit)
@@ -40,6 +42,11 @@ export function applyStretch(pos, zone, nv, st, dims) {
       pos[i * 3 + 2] = z + Math.sign(z) * (az >= z1 ? dz : (az - z0) * sc);
     }
     dims.span += 2 * dz;
+  }
+  if (st.tipShear) {                 // winglet cant (js/aircraft/fit.js WINGLET): outboard of z0 and above y0, |z| grows by k per unit height
+    const { z0, y0, yt, k, xMin } = st.tipShear; const e = st.tipShear.p ?? 1;   // e: 2 = the cant grows from 0 at y0 (no kink at the blend)
+    for (let i = 0; i < nv; i++) { if (pos[i * 3] < xMin) continue; const z = pos[i * 3 + 2], y = pos[i * 3 + 1]; if (Math.abs(z) > z0 && y > y0) pos[i * 3 + 2] = z + Math.sign(z) * k * (y - y0) * Math.pow((y - y0) / (yt - y0), e - 1); }
+    dims.span += 2 * k * (yt - y0);
   }
   if (Fn) {
     const { yF, xF, k } = Fn; let top = -1e9;

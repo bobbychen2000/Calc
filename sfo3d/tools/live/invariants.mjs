@@ -125,7 +125,10 @@ function bridgeK(g, b) { const a = gsys.anims.get(g.id); if (a) return gsys.dock
 function animStep(now) { if (gsys.step) { gsys.step(now); return; } for (const [id, a] of gsys.anims) { const u = Math.min(1, Math.max(0, (now - a.t0) / a.dur)); a.k = a.from + (a.to - a.from) * u; if (u >= 1) gsys.anims.delete(id); } }
 
 const traffic = new Traffic({ gates, airport: AIRPORT, persist: false, centerlines: DETAILS.centerlines, taxigraph: TAXIGRAPH, stands: STANDS, onGateChange: (g, tr, opt) => applyGate(g, tr, opt) });
-traffic.buildingAt = building; if (process.env.LOCKLOG) traffic.lockLog = []; if (process.env.CANDLOG) traffic.candLog = []; if (TRACE) { traffic.debug = TRACES.size === 1 ? TRACE : null; traffic.debugSet = TRACES; traffic.onEvent = (e) => { if (TRACES.has(e.hex)) console.error('EVENT', new Date(e.t).toISOString().slice(11, 21), e.kind, JSON.stringify(e).slice(0, 200)); }; }
+// (every engine event is kept here: traffic.events is a rolling buffer of 5,000, shorter than a full-day replay)
+const ALLEV = [];
+traffic.buildingAt = building; if (process.env.LOCKLOG) traffic.lockLog = []; if (process.env.CANDLOG) traffic.candLog = []; if (TRACE) { traffic.debug = TRACES.size === 1 ? TRACE : null; traffic.debugSet = TRACES; }
+traffic.onEvent = (e) => { ALLEV.push(e); if (TRACE && TRACES.has(e.hex)) console.error('EVENT', new Date(e.t).toISOString().slice(11, 21), e.kind, JSON.stringify(e).slice(0, 200)); };
 traffic.bridgeK = (g) => { const G = bridgeGate(g); if (gsys.extension) return gsys.extension(G); const a = gsys.anims.get(G.id); return a ? a.k : (G.acType ? 1 : 0); };   // (as app.js)
 // (as js/live/app.js: the jet bridges at rest are obstacles for aircraft parked off a stand)
 const restBridges = GROUNDJS.bridgeGrid && gsys.solids ? (() => { const boxes = []; for (const g of gates) for (const b of g.bridges || []) boxes.push(...gsys.solids(g, b, 0)); return GROUNDJS.bridgeGrid(boxes, GROUND_Y); })() : null;
@@ -295,7 +298,11 @@ const phaseHist = new Map(); // hex -> [times of display-phase changes]
 const surfCache = new Map(), pairCache = new Map(), offCells = new Map();
 
 async function* readLines(f) { const rl = readline.createInterface({ input: fs.createReadStream(f).pipe(zlib.createGunzip()), crlfDelay: Infinity }); for await (const l of rl) if (l) yield l; }
-const plans = []; if (GATES && fs.existsSync(GATES)) for await (const l of readLines(GATES)) plans.push(JSON.parse(l));
+// SFO plans (relay /api/gates payloads, one per minute): read lazily -- a full-day gates_full file is ~1 MB of JSON per
+// minute, too much to hold in memory at once
+const planIt = GATES && fs.existsSync(GATES) ? readLines(GATES)[Symbol.asyncIterator]() : null;
+let nextPlan = null; const pullPlan = async () => { if (!planIt) { nextPlan = null; return; } const r = await planIt.next(); nextPlan = r.done ? null : JSON.parse(r.value); };
+await pullPlan();
 const evIt = readLines(STREAM)[Symbol.asyncIterator]();
 let nextEv = null; const pull = async () => { const r = await evIt.next(); nextEv = r.done ? null : JSON.parse(r.value); };
 await pull();
@@ -311,7 +318,7 @@ const wall0 = Date.now();
 
 
 while (simNow < tEnd && (nextEv || simNow < tStart + 1)) {
-  while (p < plans.length && (plans[p].T + LAT) * 1000 <= simNow) { traffic.setPlan(plans[p].gates); p++; }
+  while (nextPlan && (nextPlan.T + LAT) * 1000 <= simNow) { traffic.setPlan(nextPlan.gates); p++; await pullPlan(); }
   while (nextEv && (nextEv.T + LAT) * 1000 <= simNow) {
     const P = parsePayload(nextEv.p, nextEv.T * 1000);
     if (simNow >= checkFrom - 1800e3) for (const a of P.aircraft) rawTruth(a, a.t);
@@ -519,7 +526,7 @@ while (simNow < tEnd && (nextEv || simNow < tStart + 1)) {
 
 // ---------------------------------------------------------------- truth comparison (events within the checked window)
 const inWin = (t) => t >= checkFrom && t <= simNow - 120000;
-const EV = traffic.events.filter(e => inWin(e.t));
+const EV = ALLEV.filter(e => inWin(e.t));
 const byKind = (k) => EV.filter(e => e.kind === k);
 const match = (list, ev, tol = 120000) => { const out = { matched: 0, rwyAgree: 0, rwyDiff: [], missed: [], extra: [] }; const used = new Set();
   for (const T of list.filter(q => inWin(q.t))) { const e = ev.find((q, i) => !used.has(i) && q.hex === T.hex && Math.abs(q.t - T.t) < tol); if (!e) { out.missed.push({ ...T, t: iso(T.t) }); continue; } used.add(ev.indexOf(e)); out.matched++; if (!T.rwy || e.rwy === T.rwy) out.rwyAgree++; else out.rwyDiff.push({ hex: T.hex, flight: T.flight, t: iso(T.t), truth: T.rwy, engine: e.rwy, how: e.how || null }); }

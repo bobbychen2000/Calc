@@ -48,6 +48,16 @@ class MB:
         if np.linalg.norm(n) < 1e-7: return
         self.F.append(out); self.M.append(mat); self.UV.append([(float(t[0]), float(t[1])) for t in ouv]); self.S.append(smooth)
 
+    def face_dir(self, pts, mat, uvs, want, smooth=False, grp=None):
+        """face whose normal points along `want` (3-vector): the polygon is reversed if its winding normal opposes it."""
+        P = np.asarray(pts, float)
+        n = np.zeros(3)
+        for i in range(len(P)):
+            n += np.cross(P[i], P[(i + 1) % len(P)])
+        if float(n @ np.asarray(want, float)) < 0:
+            pts, uvs = list(pts)[::-1], list(uvs)[::-1]
+        self.face(pts, mat, uvs, smooth, grp)
+
     def quad_wall(self, a, b, z0a, z1a, z0b, z1b, mat, s0=0.0, tile=(3.0, 3.0), grp=None, smooth=False, v0=0.0):
         """vertical quad from plan point a to b; outward normal = right of a->b. UV = (along / tu, (z - v0) / tv)."""
         L = math.hypot(b[0] - a[0], b[1] - a[1]); tu, tv = tile

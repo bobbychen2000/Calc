@@ -334,7 +334,10 @@ export function paintAirportMapReal(data, gates, res = APT_RECT.res, details = n
     apron();
     if (!details) APRONS.filter(farFromTerminal).forEach(a => { polyST(a.pts); cx.fill(); });
     RWY.forEach(r => { const hw = RWY_W / 2 + 7.5; const pts = r.axis === 0 ? [[r.a0 - 60, r.c - hw], [r.a1, r.c - hw], [r.a1, r.c + hw], [r.a0 - 60, r.c + hw]] : [[r.c - hw, r.a0 - 60], [r.c + hw, r.a0 - 60], [r.c + hw, r.a1 + 60], [r.c - hw, r.a1 + 60]]; polyST(pts); cx.fill(); });
-    for (const t of data.taxiways) for (const poly of t.polys) { pathRings(poly); cx.fill('evenodd'); cx.lineWidth = 3.0 / res; cx.stroke(); }
+    // round 2 (2026-11-05): SFO Museum taxiway polygons that no longer exist (details.pavementRetired: the old W / F1
+    // crossing of 1L / 1R, FAA AL-375 cycle 2611) are not paved
+    const retired = new Set(((details && details.pavementRetired) || []).filter(r => r.layer === 'taxiways').map(r => r.name + '#' + r.poly));
+    for (const t of data.taxiways) t.polys.forEach((poly, i) => { if (retired.has(t.name + '#' + i)) return; pathRings(poly); cx.fill('evenodd'); cx.lineWidth = 3.0 / res; cx.stroke(); });
     for (const r of data.runways) for (const poly of r.polys) { pathRings(poly); cx.fill('evenodd'); }
     landsidePave();
     // blast pads / EMAS beds beyond the runway ends, and the paved islands carrying the green no-taxi paint

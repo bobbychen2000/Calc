@@ -14,7 +14,7 @@ Views (out/buildings3d/domestic_<view>.png; comparison sheets domestic_cmp_<view
   d1    T1 Center landside face from the AirTrain / garage side (photo d1, Famartin 2025-08-12, CC BY-SA 4.0; BD-03 view 1):
         the west run with the curb canopy, the two-tier green fritted wall and the sign [camera estimated]
   bab   orthographic Boarding Area B cross-section, looking NNE along the pier axis (+t) from beyond its tip, far clip at
-        t = -946 (the straight pier only): the BD-02 view 1 frame (s to the right, height up). The comparison draws the BD-02
+        t = -1150 (the stretch where BD-02's typical section and the measured outer edges apply): the BD-02 view 1 frame (s to the right, height up). The comparison draws the BD-02
         lines (outer roof edges s -383.73 / -438.04 at 13.14 m, raised band s -391.0 / -423.4 at 19.04 m) and the
         silhouette of the render is measured against them (out/buildings3d/domestic_render_check.json)
   plan  orthographic roof plan, north up (BD-01 frame), LOD0
@@ -44,7 +44,7 @@ OX, OZ = -896.5, 336.5           # dom_geom.OX / OZ (asset root)
 T0 = time.time()
 EXPOSURE = -4.0
 # BD-02 view 1 (BA-B typical section) [draw_domestic.bab_band / BAB_OUTER_S, spec bab.h_roof / bab.h_roof_central]
-BAB = dict(outer=(-383.73, -438.04), band=(-391.0, -423.4), h_outer=13.14, h_band=19.04, t_far=-946.0, t_cam=-1700.0)
+BAB = dict(outer=(-383.73, -438.04), band=(-391.0, -423.4), h_outer=13.14, h_band=19.04, t_far=-1150.0, t_cam=-1700.0)
 
 
 def log(*a):
@@ -104,6 +104,16 @@ def sun_sky(az_deg, el_deg, exposure=None):
     sc.view_settings.exposure = EXPOSURE if exposure is None else exposure
 
 
+def overcast(strength=1.0, exposure=-0.3):
+    """uniform light-grey overcast sky (photos a1 / d1 were taken under cloud): no sun disc, neutral light."""
+    sc = bpy.context.scene
+    w = sc.world or bpy.data.worlds.new('w'); sc.world = w; w.use_nodes = True
+    nt = w.node_tree; nt.nodes.clear()
+    bg = nt.nodes.new('ShaderNodeBackground'); bg.inputs['Color'].default_value = (0.78, 0.80, 0.83, 1); bg.inputs['Strength'].default_value = strength
+    out = nt.nodes.new('ShaderNodeOutputWorld'); nt.links.new(bg.outputs['Background'], out.inputs['Surface'])
+    sc.view_settings.exposure = exposure
+
+
 def camera(name, loc, target, lens=None, ortho=None, res=(960, 540), clip=(1.0, 9000.0)):
     sc = bpy.context.scene
     cd = bpy.data.cameras.new(name)
@@ -142,7 +152,7 @@ def heading_target(cam, yaw, pitch, dist=1000.0):
 
 # ------------------------------------------------------------------------------------------------ views
 def view_a1(args):
-    sun_sky(205.0, 48.0)
+    overcast()
     cam = (-529.3, 60.0, -384.2)
     tx, th, tz = heading_target(cam, 203.8, 4.1)
     camera('cam_a1', Wxz(cam[0], cam[2], cam[1]), Wxz(tx, tz, th), lens=36.5, res=(args.res, int(args.res * 2 / 3)))
@@ -150,7 +160,7 @@ def view_a1(args):
 
 
 def view_d1(args):
-    sun_sky(200.0, 55.0)
+    overcast()
     # facade of the west run (longest landside edge -940.4,463.5 -> -978.8,455.3), seen from ~68 m in front, ~20 m up
     c = np.array([-959.6, 459.4]); d = np.array([-38.4, -8.2]); d /= np.hypot(*d)
     n = np.array([-d[1], d[0]])

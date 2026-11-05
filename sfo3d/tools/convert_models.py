@@ -233,6 +233,7 @@ def convert(key, prims, mats, images, textures, cfg):
     allp = np.concatenate([p['pos'] for p in prims]); lo, hi = allp.min(0), allp.max(0)
     tailX = float(lo[0])
     crown -= cy; belly -= cy
+    for f in cfg.get('doorFit', []): door_fit(prims, f)
     dims = dict(L=float(-tailX), span=float(hi[2] - lo[2]), H=float(hi[1]), low=float(lo[1]), noseX=0.0, tailX=tailX,
                 R=Rf, Rz=Rz, crown=crown, belly=belly, hasGear=bool(cfg.get('hasGear')))
     print(f'  {key}: L={dims["L"]:.2f} span={dims["span"]:.2f} finTop={dims["H"]:.2f} low={dims["low"]:.2f} R={Rf:.2f} Rz={Rz:.2f}')
@@ -394,6 +395,65 @@ def convert(key, prims, mats, images, textures, cfg):
     return head
 
 
+def door_fit(prims, f):
+    """Re-fit a passenger door the artist drew too high (review 5 Nov 2026, aircraft-v2: the FG 737-800 door 1L sill
+    rendered 2.97 m against the 737NG ACAP 2.59-2.74 m). Works in the normalised model frame (after convert()'s orient /
+    scale / shift; source_objects in tools/models/model_features.py applies it the same way). A spatial deformation of
+    every vertex on the door's side within its station range [x0, x1] (the door object, the skin edge loop of its
+    opening, the skin below it): y moves by g(y), piecewise linear through (ySill - below, 0), (ySill, -dSill),
+    (yTop, -dTop), (yTop + above, 0), and |z| is rescaled by the skin half width at the new height over that at the old
+    one (planar cuts of the base-zone mesh before the move), so moved points stay on the fuselage contour. Being a function
+    of the position only, coincident vertices of different objects move together: the skin stays closed, the opening keeps
+    fitting the door, and the texture (UVs unchanged) follows the geometry. Vertices outside [x0, x1] do not move."""
+    x0, x1, side = f['x0'], f['x1'], f['side']
+    yS, yT, dS, dT = f['ySill'], f['yTop'], f['dSill'], f['dTop']; ya, yb = yS - f.get('below', 0.5), yT + f.get('above', 0.3)
+    def g(y): return np.interp(y, [ya, yS, yT, yb], [0.0, -dS, -dT, 0.0], left=0.0, right=0.0)
+    # outer skin half width of the base-zone mesh (all prims that are not glass / gear / interior) at (x, y)
+    tris = []
+    for p in prims:
+        if re.search(f.get('skinSkip', r'^$'), p['node'].split('|')[0]): continue
+        P = p['pos']; I = p['idx'].reshape(-1, 3); c = P[I]
+        m = (c[:, :, 0].max(1) >= x0 - 0.1) & (c[:, :, 0].min(1) <= x1 + 0.1) & ((c[:, :, 2] * side).max(1) > 0.5)
+        tris.append(c[m])
+    T = np.concatenate(tris)
+    def cut(x):
+        """segments (y, z) of the planar cut x = const of the region's triangles"""
+        X = T[:, :, 0] - x; out = []
+        for a, b in ((0, 1), (1, 2), (2, 0)):
+            m = (X[:, a] < 0) != (X[:, b] < 0); u = np.where(m, X[:, a] / np.where(m, X[:, a] - X[:, b], 1), 0)
+            out.append((m, T[:, a, 1:] + u[:, None] * (T[:, b, 1:] - T[:, a, 1:])))
+        M = np.stack([o[0] for o in out], 1); Pt = np.stack([o[1] for o in out], 1)    # (n, 3 edges), (n, 3, 2)
+        keep = M.sum(1) == 2; segs = [Pt[k][M[k]] for k in np.where(keep)[0]]
+        return np.array(segs) if segs else np.zeros((0, 2, 2))
+    def hw_col(x, ys):
+        """outermost |z| on the door's side at heights ys (nan: no skin)"""
+        S = cut(x); out = np.full(len(ys), np.nan)
+        if not len(S): return out
+        y0, z0, y1, z1 = S[:, 0, 0], S[:, 0, 1], S[:, 1, 0], S[:, 1, 1]
+        for j, y in enumerate(ys):
+            m = ((y0 - y) * (y1 - y) <= 0) & (y0 != y1)
+            if not m.any(): continue
+            z = z0[m] + (y - y0[m]) / (y1[m] - y0[m]) * (z1[m] - z0[m]); z = z[z * side > 0]
+            if len(z): out[j] = np.abs(z).max()
+        return out
+    xs = np.linspace(x0, x1, 11); ys = np.arange(ya - 0.05, yb + 0.0501, 0.025)
+    H = np.array([hw_col(x, ys) for x in xs])
+    for i in range(len(xs)):                              # fill gaps (a cut through a seam) along the column
+        r = H[i]; ok = ~np.isnan(r)
+        if ok.sum() >= 2: H[i] = np.interp(ys, ys[ok], r[ok])
+    def hwi(x, y):
+        u = np.clip((x - x0) / (x1 - x0) * (len(xs) - 1), 0, len(xs) - 1); i = np.minimum(np.floor(u).astype(int), len(xs) - 2); a = u - i
+        v0 = np.array([np.interp(yy, ys, H[ii]) for ii, yy in zip(i, y)]); v1 = np.array([np.interp(yy, ys, H[ii + 1]) for ii, yy in zip(i, y)])
+        return (1 - a) * v0 + a * v1
+    n = 0
+    for p in prims:
+        P = p['pos']; m = (P[:, 0] >= x0) & (P[:, 0] <= x1) & (P[:, 2] * side > 0) & (P[:, 1] > ya) & (P[:, 1] < yb)
+        if not m.any(): continue
+        y = P[m, 1]; y2 = y + g(y); r = hwi(P[m, 0], y2) / hwi(P[m, 0], y)
+        P[m, 1] = y2; P[m, 2] = P[m, 2] * np.where(np.isfinite(r), r, 1.0); n += int(m.sum())
+    print(f"  door fit {f.get('name', '')}: {n} vertices moved (sill {yS:.3f} -> {yS - dS:.3f}, top {yT:.3f} -> {yT - dT:.3f}, model frame)")
+
+
 def mean_texel(t):
     """UV of the texel whose colour is closest to the texture's mean colour (what a triangle with garbage UVs, spanning
     hundreds of texture repeats, shows through the smallest mip level)"""
@@ -470,7 +530,11 @@ def ac_model(files, skip=None):
 
 REFS = os.environ.get('SFO_REFS', os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'refs'))
 FAM = os.environ.get('FAM_DIR', os.path.join(REFS, 'fam3d'))            # github.com/Ysurac/FlightAirMap-3dmodels @0906d9b
-FG738 = os.environ.get('FG738_DIR', os.path.join(REFS, 'fg_737-800', 'Models'))  # github.com/FGMEMBERS/737-800 @9126249
+# github.com/FGMEMBERS/737-800 @9126249 (GPL-2.0, LICENSE in the repository): restored 5 Nov 2026 as a blob-less sparse
+# clone (LICENSE, README.md, Models/*.ac|*.png|*.xml checked out; other blobs fetched on demand by `git show`, e.g. the
+# Alaska livery of tools/liveries/liveries.py fg_texture) in refs/cache/src/fg/737-800 (SOURCES.json in refs/cache/src/fg)
+_FG738_CACHE = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'refs', 'cache', 'src', 'fg', '737-800', 'Models')
+FG738 = os.environ.get('FG738_DIR', _FG738_CACHE if os.path.isdir(_FG738_CACHE) else os.path.join(REFS, 'fg_737-800', 'Models'))
 # github.com/FGMEMBERS/777 @371a354 (FlightGear 777 series; GPL-2.0: LICENSE in the FGAddon original,
 # svn trunk/Aircraft/777/LICENSE r19240, https://sourceforge.net/p/flightgear/fgaddon/HEAD/tree/trunk/Aircraft/777/LICENSE).
 # The clone is blob-less; the model files are exported with `git show HEAD:Models/<file>` into <dir>/Models.
@@ -505,7 +569,15 @@ MODELS = {
 
 AC_MODELS = {
     'b738': ([f'{FG738}/737-800.ac', f'{FG738}/LWing.ac', f'{FG738}/RWing.ac', f'{FG738}/HorzStab.ac', f'{FG738}/VertStab.ac', f'{FG738}/winglet.ac', f'{FG738}/nosegear.ac'],
-             dict(name='Boeing 737-800', length=39.47, hasGear=True, skip=r'^a-light|^Circle\\.006$', gearRe=r'^(mg|ng[rtw]|mglh|mgrh|collar|.*steercyl|nlink|nlower|nouter|noseaxle|.*dragstrut|sidestrut|mgouter)', source='FGMEMBERS/737-800 (FlightGear)')),
+             dict(name='Boeing 737-800', length=39.47, hasGear=True, skip=r'^a-light|^Circle\\.006$', gearRe=r'^(mg|ng[rtw]|mglh|mgrh|collar|.*steercyl|nlink|nlower|nouter|noseaxle|.*dragstrut|sidestrut|mgouter)', source='FGMEMBERS/737-800 (FlightGear)',
+                  # door 1L (review 5 Nov 2026, aircraft-v2): the artist's door object doorLF (stations 4.74-5.74, sill y -0.472,
+                  # top 1.167, 1.64 m tall) renders its sill at 2.97 m in the fitted stance, which is the OEW stance (crown 5.56 m,
+                  # fin 12.60 m, door 2 sill 3.15 m against the ACAP's OEW 5.56 / 12.62 / 3.12 m, D6-58325-7 Rev C §2.3.2). The
+                  # ACAP's OEW door-1 sill is 2.74 m (9 ft 0 in) and the door 34 x 72 in (0.86 x 1.83 m, §2.7.1 p.2-33): the sill
+                  # comes down by (2.967 - 2.74) / s = 0.227 model m (s 1.00125), the top stays (rendered 4.61 m against 4.57: 1.87 m
+                  # tall), i.e. the lower door and its opening are stretched down over the skin below it
+                  doorFit=[dict(name='doorLF', side=-1, x0=-5.745, x1=-4.735, ySill=-0.472, yTop=1.167, dSill=0.227, dTop=0.0, below=0.5, above=0.0,
+                                skinSkip=r'^(windows|windowslh|windowsrh|ngww|lhww|rhww)$')])),
     # Boeing 777-300ER and 777-200ER (FlightGear 777 series, see FG777 above): full airframe incl. gear
     # (the default paint1 textures carry an old JAL (-300) / British Airways (-200) livery: its titles, tail art, blue belly
     # and nacelles are erased before neutralising, boxes as fractions of the texture measured on the 2048 px images)

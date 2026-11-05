@@ -13,6 +13,8 @@
 //             engines) is stretched spanwise and the wing tip device translated rigidly (E175 long wing on the short-wing
 //             model, A320neo family sharklet span on the fence-tip models, A330neo, 767-400ER, CRJ900 late build, ...).
 //             The tip shape itself is the model's (a fence stays a fence): see docs/research/aircraft_models_check.md.
+//             A model's blended winglet (WINGLET: 757) is not stretched with the wing: the plain wing is fitted to the
+//             plain span and the winglet canted out to the published winglet span.
 //   seating   models with their own gear stand on it (FG 737-800, 777; the 777's extended oleos compressed to the published
 //             fuselage height), pitched nose-down about the main-gear contact so the nose tyre touches the ground too (T.fit.pitch,
 //             applied by js/live/aircraft.js placement(); the FG models stand level with the nose tyre 0.165 m (737) / 0.18 m
@@ -93,6 +95,15 @@ const TIP_LAT = { sharklet: 0.55, split: 0.5 };
 // the 737-800 model's blended winglet (FG winglet.ac): vertices outboard of |z| 17.5 and above y 0.75 (model units; the
 // upper-skin profile of the tip rises from 0.72 at 17.45 to 2.47 at 17.85) are folded onto the tip
 const TIP_CUT = { b738: { z0: 17.5, y0: 0.75, zTo: 17.62, yTo: 0.6 } };
+// blended winglets the source model carries, in model units measured on data/models/<m>.sfom (FAM 757-200: the wing's
+// upper skin is flat at y ~0.2 out to |z| 18.5 and rises from 18.6 (0.29) through 18.8 (0.71) and 19.0 (2.35) to the tip
+// at |z| 19.18, y 2.88: a near-vertical winglet adding 0.64 m of span a side, review 5 Nov 2026 aircraft-v3). The APB
+// winglet adds 1.51 m a side (124 ft 10 in -> 134 ft 9 in, Boeing 'Wingspan Increases Due to the Addition of Winglets') and
+// does not lengthen the wing, so the span fit puts the winglet root zr at the plain-wing span (SPEC spanPlain, ACAP) and
+// the winglet is canted outward from its root (tipShear, p 2: the outward shift grows with the square of the height above
+// y0, so the blend at the root keeps its shape and the cant grows towards the tip) until its tip (height yt) meets the
+// published winglet span (SPEC span). The winglet keeps the artist's height (no published value here).
+const WINGLET = { b752: { zr: 18.6, y0: 0.25, yt: 2.88 } };
 // 737 MAX: LEAP-1B nacelles in place of the model's CFM56-7B ones, scaled radially by the fan-diameter ratio (69.4 in / 61 in,
 // CFM International LEAP-1B and CFM56-7B data) about the nacelle's lowest line, so the ground clearance stays the model's
 const ENG_SCALE = { b37m: 1.14, b38m: 1.14, b39m: 1.14, b3xm: 1.14 };
@@ -207,19 +218,26 @@ export function fitType(t, m) {
   // (stations inside a removed section map onto the plug station or the blend, plugShift above)
   const sh = (st, a, dd, bl = 0) => -plugShift(-st, -a, dd, bl);
   const rx = (xm) => s * (xm + (pl ? sh(xm, pl.at1 / s0, pl.d1 / s0) + sh(xm, pl.at2 / s0, pl.d2 / s0, pl.bl2 / s0) : 0));
-  // wing span fit (757: SPEC span is the blended-winglet span the model carries, 41.07 m, Boeing / APB; the outer wing is
-  // stretched and the winglet translated rigidly. Review 4 Nov 2026: the earlier fit to the plain-wing 38.05 m up to the
-  // winglet root drew 39.16 m, 1.9 m short of the published winglet span)
+  // wing span fit (757: SPEC span is the blended-winglet span, 41.07 m, Boeing / APB, spanPlain the ACAP's 38.05 m; review
+  // 5 Nov 2026: stretching the plain wing 0.95 m a side to reach the winglet span drew the wing to the winglet root 39.7 m
+  // long, +4.3 % against the ACAP; now the plain wing ends at spanPlain and the winglet is canted out, WINGLET above)
   const cut = TIP_ADD[t] && TIP_CUT[m];
   if (cut) stretch.tipCut = cut;
   if (ENG_SCALE[t] && TIP_CUT[m]) stretch.engScale = { k: ENG_SCALE[t] };
-  const semi = cut ? cut.zTo : F ? F.wing.semi : d.span / 2;
-  const want = (S.span / 2 - (TIP_ADD[t] ? TIP_LAT[TIP_ADD[t]] : 0)) / s; let wing = null;
+  const WL = !cut && WINGLET[m] && S.spanPlain ? WINGLET[m] : null;  // (the span fit then ends at the winglet root)
+  const semi = cut ? cut.zTo : WL ? WL.zr : F ? F.wing.semi : d.span / 2;
+  const want = ((WL ? S.spanPlain : S.span) / 2 - (TIP_ADD[t] ? TIP_LAT[TIP_ADD[t]] : 0)) / s; let wing = null;
   if (Math.abs(want / semi - 1) > SPAN_TOL) {
     const e = T.eng && T.eng.length ? T.eng[T.eng.length - 1] : null;
     const engOut = Math.max(F && F.wing.engOut ? F.wing.engOut : 0, e ? (e.z + e.r) / s : 0);
     const z0 = Math.max(engOut + 0.5 / s, 0.35 * semi), z1 = semi - TIP;
     if (z1 > z0 + 1) { wing = { z0: +z0.toFixed(3), z1: +z1.toFixed(3), dz: +(want - semi).toFixed(3), xMin: -0.8 * d.L }; stretch.wing = wing; }
+  }
+  // winglet cant (WINGLET above): the tip from the model's semi-span (after the span fit) out to the published span
+  let shear = null;
+  if (WL && F) {
+    const tipNow = F.wing.semi + (wing ? wing.dz : 0), k = (S.span / 2 / s - tipNow) / (WL.yt - WL.y0);
+    if (Math.abs(k) > 1e-3) { shear = { z0: +(WL.zr + (wing ? wing.dz : 0)).toFixed(3), y0: WL.y0, yt: WL.yt, k: +k.toFixed(4), p: 2, xMin: +(-0.8 * d.L).toFixed(3) }; stretch.tipShear = shear; }
   }
   // stance of a model on its own gear: the FG 737-800 / 777 models stand level with the nose tyre above the main-tyre
   // bottom (F.contact, tools/models/model_features.py). The model is pitched nose-down by a about the main-gear contact
@@ -298,12 +316,11 @@ export function fitType(t, m) {
   // rendered door object: centre station at mid height, sill (pitched on gear models)
   const doorR = dm ? { x: +(-pose(dm.x, (dm.ySill + dm.yTop) / 2)[0] * s).toFixed(3), sill: +(Hc + pose(dm.x, dm.ySill)[1] * s).toFixed(3) } : null;
   const dockX1 = dm ? doorR.x : T.doors[0];
-  // cab floor: the published sill, except on a model standing on its own gear whose door object sits elsewhere (FG
-  // 737-800: with the nose-down stance the artist's door 1L sill renders 2.97 m (level: 3.12 m), 0.23 m above the
-  // published 2.59-2.74 m (D6-58325-7 Rev C §2.3.2; +-3 in nominal). The door object fills its opening in the skin (a
-  // section at the door station has one skin layer), so it cannot be moved without re-cutting the skin, which needs the
-  // FG source model and a re-bake of every b738 livery: the bridge meets the door that is drawn (rendered sill), so cab
-  // floor and door outline agree; the deviation is recorded by check_dims
+  // cab floor: the published sill, except on a model standing on its own gear, whose stance sets where its door object
+  // is: there the bridge meets the door that is drawn (rendered sill), so cab floor and door outline agree. FG 737-800:
+  // the artist's door 1L sill rendered 2.97 m in the nose-down OEW stance, 0.23 m above the ACAP's 2.59-2.74 m
+  // (D6-58325-7 Rev C §2.3.2); tools/convert_models.py now re-fits door 1L and its skin opening to the OEW sill 2.74 m and
+  // the 72 in door (review 5 Nov 2026, aircraft-v2), so the rendered sill is 2.74 m; check_dims records both
   const dockSill = (d.hasGear && dm) ? doorR.sill : T.sill != null ? T.sill : Hc - 0.3 * d.R * s;
   // rendered half width of the fuselage at a door (station st, model units), at door mid height (sill + 0.95 m): model
   // height of a rendered height at that station (the stance pitch undone)
@@ -346,7 +363,8 @@ export function fitType(t, m) {
   const topR = pitch ? crownOf(F, d.L, tyP) : top;
   const fit = { model: m, base, s: +s.toFixed(5), s0: +s0.toFixed(5), plugs: pl, wing, stretch: Object.keys(stretch).length ? stretch : null, rx,
     Hc, seat, pitch, fin, squash, tipAdd: TIP_ADD[t] || null, door: dm ? { name: dm.name, from: dm.from, x: dockX1, sill: doorR.sill } : null,
-    renderedSpan: +(2 * ((cut ? cut.zTo : F ? F.wing.semi : d.span / 2) + (wing ? wing.dz : 0)) * s + (TIP_ADD[t] ? 2 * TIP_LAT[TIP_ADD[t]] : 0)).toFixed(3), renderedL: +((d.L + plugM) * s).toFixed(3), renderedH: +(Hc + (finTop + finRise) * s).toFixed(3),
+    renderedSpan: +(2 * ((cut ? cut.zTo : F ? F.wing.semi : d.span / 2) + (wing ? wing.dz : 0) + (shear ? shear.k * (shear.yt - shear.y0) : 0)) * s + (TIP_ADD[t] ? 2 * TIP_LAT[TIP_ADD[t]] : 0)).toFixed(3),
+    winglet: WL ? { zr: WL.zr, y0: WL.y0, root: +(2 * (WL.zr + (wing ? wing.dz : 0)) * s).toFixed(3), lat: +((F.wing.semi - WL.zr + (shear ? shear.k * (shear.yt - shear.y0) : 0)) * s).toFixed(3), k: shear ? shear.k : 0 } : null, renderedL: +((d.L + plugM) * s).toFixed(3), renderedH: +(Hc + (finTop + finRise) * s).toFixed(3),
     renderedCrown: topR != null ? +(Hc + topR * s).toFixed(3) : null };
   // rendered engine clearance and the skin above the main gear (the procedural struts of gear-less models reach into it)
   fit.engClear = eL != null ? +(Hc + yR(eL) * s).toFixed(3) : null;
@@ -390,8 +408,10 @@ export function seatType(t, m) { const T = TYPES[t]; if (T && !T.uniform && (!T.
 // Characteristics Database (https://www.faa.gov/airports/engineering/aircraft_char_database, aircraft_data .xlsx, fetched
 // 4 Nov 2026: refs/cache/faa/faa_aircraft_char_database.xlsx, tools/models/faa_acd.py). Review 4 Nov 2026: the span had
 // been the CRJ200's scaled by the length ratio (GLEX 24.0 m against 28.65 m) and the lengths were not re-verified (GA5C /
-// GA6C were 1.6 / 1.1 m too long). E135: the ACD row covers the ERJ-135/-140 (length of the -140). Trijets (FA50, F900, FA7X,
-// FA8X: 3 engines) are drawn with the CRJ's two (typeForIcao flags them: engines 3).
+// GA6C were 1.6 / 1.1 m too long). E135: the ACD's E135 row 'Embraer ERJ 135/140/Legacy' gives the ERJ-140's length
+// (28.47 m), so the ERJ-135 length is the ACD's E35L row 'Embraer 135BJ Legacy 600' (the ERJ-135 airframe): 26.33 m (review
+// 5 Nov 2026, aircraft-v4); span (no winglets) and tail height from the E135 row. Trijets (FA50, F900, FA7X, FA8X: 3
+// engines) are drawn with the CRJ's two (typeForIcao flags them: engines 3).
 export const BIZ = {
   GLF4: [26.91, 23.71, 7.44, 2], GLF5: [29.38, 28.50, 7.89, 2], GLF6: [30.42, 30.39, 7.86, 2], G280: [20.36, 19.20, 6.49, 2], GALX: [18.99, 17.71, 6.52, 2],
   GA5C: [27.79, 26.32, 7.77, 2], GA6C: [29.29, 28.70, 7.71, 2], GLEX: [30.30, 28.65, 7.77, 2], GL5T: [29.50, 28.65, 7.77, 2], GL7T: [33.71, 31.79, 8.14, 2],
@@ -399,7 +419,7 @@ export const BIZ = {
   C56X: [15.79, 17.16, 5.24, 2], C68A: [18.99, 22.04, 6.37, 2], C700: [22.31, 21.00, 5.91, 2], C750: [22.04, 19.39, 5.88, 2],
   C25A: [14.54, 15.18, 4.27, 2], C25B: [15.61, 16.25, 4.63, 2], C25C: [16.25, 15.48, 4.69, 2], C560: [14.90, 16.49, 4.57, 2],
   E55P: [15.64, 15.91, 5.12, 2], E545: [19.69, 20.24, 6.43, 2], E550: [20.73, 20.27, 6.43, 2], E35L: [26.33, 21.09, 6.77, 2],
-  E135: [28.47, 20.06, 6.77, 2], E145: [29.87, 20.06, 6.77, 2],
+  E135: [26.33, 20.06, 6.77, 2], E145: [29.87, 20.06, 6.77, 2],
   LJ45: [17.68, 14.57, 4.30, 2], LJ60: [17.89, 13.35, 4.48, 2], LJ75: [17.68, 15.51, 4.27, 2],
   FA7X: [23.20, 26.21, 7.83, 3], FA8X: [24.44, 26.30, 7.96, 3], F900: [20.21, 19.32, 7.56, 3], F2TH: [20.21, 19.32, 7.07, 2], FA50: [18.53, 18.87, 6.98, 3],
   H25B: [15.61, 15.67, 5.52, 2], PC24: [16.86, 17.01, 5.39, 2], BE40: [14.75, 13.26, 4.24, 2],

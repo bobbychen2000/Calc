@@ -29,6 +29,20 @@
    "sha256": "4154dfedd3951769afb3c65adc7557e10a69c88e7260c7cf431163a3f4c007e2",
    "url": "pdftotext -layout of the PDFs above"
   },
+  "acap/757_Rev_H.pdf": {
+   "class": "local",
+   "why": "manufacturer airport-planning documents (copyright)",
+   "bytes": 9620693,
+   "sha256": "7f2dde89ecbdecbc8d3254cd4c028d8ece96aae4aa56f8a314406dd996dc4079",
+   "url": "https://www.boeing.com/content/dam/boeing/v2/airports/acaps/757_Rev_H.pdf"
+  },
+  "acap/757_Rev_H.txt": {
+   "class": "local",
+   "why": "manufacturer airport-planning documents (copyright)",
+   "bytes": 161220,
+   "sha256": "1858dd4f9d38c7a35e91aa92957119991a521f696ff857a586fe417d3907ad4e",
+   "url": "pdftotext -layout of the PDFs above"
+  },
   "acap/777-200-200ER-300_Rev_E.pdf": {
    "class": "local",
    "why": "manufacturer airport-planning documents (copyright)",
@@ -1140,6 +1154,48 @@
    "why": "image / document without an open licence in SOURCES.json",
    "bytes": 721044,
    "sha256": "7ce3ec04ee63f140dba365f4d9b55c099ef39217a7d1b732611dbe3973da64b3"
+  },
+  "fonts/Kanit-700i.ttf": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 179332,
+   "sha256": "4b08f403fd98bf9b233b9ad70e24a6fb83816628de11d648cea0257ca2c1c469"
+  },
+  "fonts/LibreBaskerville-700.ttf": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 106752,
+   "sha256": "8b008ffdae31b314657cb8e28d822da09893035d06bad9b1ab53ea762549cbd1"
+  },
+  "fonts/Montserrat-500.ttf": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 180036,
+   "sha256": "637639da93fdd9178e52662cce4bd5a59a544eb60677bb6ef9f89bc472607e5d"
+  },
+  "fonts/Montserrat-600.ttf": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 180584,
+   "sha256": "c535bb158e8cfc3c27654f73aa68a87732899e7d9b10d8496b68605a56d947a7"
+  },
+  "fonts/Montserrat-700.ttf": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 181028,
+   "sha256": "247f052d2f5b84a5bbe7831c3b08a71ca391ff54f1dfb9be88a3d3da569e3a38"
+  },
+  "fonts/Montserrat-800.ttf": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 183604,
+   "sha256": "f0123e28dc0c4cac86559d1ffe587dded6ec57a4819956f56fcf6ad31d696eed"
+  },
+  "fonts/Nunito-900.ttf": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 125376,
+   "sha256": "9caa6d5464d4438c3092a05d47952099e208862cacd5f655acb64012a1a15e78"
   },
   "gate_truth/app_types.json": {
    "class": "local",
@@ -7022,8 +7078,14 @@
   "rec/adsbfi_20261105_01.jsonl.gz": {
    "class": "local",
    "why": "adsb.fi terms: personal non-commercial use, not to be licensed on",
-   "bytes": 9179397,
-   "sha256": "afa813ec802d19b672cf17d17aa23386d28fa52082840a6dbbbfbcbbe16cc891"
+   "bytes": 18741312,
+   "sha256": "92b66848038ebe663e845bf90740ef5693428f038006561212ab65b74b780b94"
+  },
+  "rec/adsbfi_20261105_02.jsonl.gz": {
+   "class": "local",
+   "why": "adsb.fi terms: personal non-commercial use, not to be licensed on",
+   "bytes": 6372081,
+   "sha256": "9d6808a18ed10a1165003a0e3c0f6175f36996280d8b42faf7f21b3f731be0bb"
   },
   "rec/adsblol_20261104_17.jsonl.gz": {
    "class": "pack",
@@ -7076,8 +7138,14 @@
   "rec/adsblol_20261105_01.jsonl.gz": {
    "class": "pack",
    "why": "ODbL (adsb.lol); trimmed copy in rec_pack/",
-   "bytes": 2588491,
-   "sha256": "39e8dfb0933c7141e3acf10b4999800e2f3373a78e5a92bc41f72a904b03c25b"
+   "bytes": 5130725,
+   "sha256": "683db13676a031446dbb4728cd32a9acc8cddc670a0ee331c710d866f4f908d7"
+  },
+  "rec/adsblol_20261105_02.jsonl.gz": {
+   "class": "pack",
+   "why": "ODbL (adsb.lol); trimmed copy in rec_pack/",
+   "bytes": 1785429,
+   "sha256": "9c06f66ced3928f978dedb4670bd52e14a0bd5de3bcc68fb3482e63090f78250"
   },
   "rec/recorder.log": {
    "class": "local",
@@ -7088,8 +7156,8 @@
   "rec/recorder.out": {
    "class": "local",
    "why": "recorder state",
-   "bytes": 2827,
-   "sha256": "a4b04e475e378d405c996bdb329a250fa5f21c5163ed880816ec8e492ca70685"
+   "bytes": 4926,
+   "sha256": "e51dd9996689f71ffed2f20ef5b5ac4e88d4a59fd4c05b731c58eca67f957216"
   },
   "rec/recorder.pid": {
    "class": "local",
@@ -7114,6 +7182,624 @@
    "why": "unclassified binary",
    "bytes": 4500164,
    "sha256": "b41b7eb70ac93a88f735417bb6e85f3d68309a063872e6e13826ab2f128c6c2d"
+  },
+  "src/fg/737-800/.git/HEAD": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 23,
+   "sha256": "f6f2b945f6c411b02ba3da9c7ace88dcf71b6af65ba2e0d89aa82900042b5a10"
+  },
+  "src/fg/737-800/.git/config": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 346,
+   "sha256": "1080207f4ff4b9931fe735896ba45ab152c7ebe2e252f3872e51a2506a8be4dc"
+  },
+  "src/fg/737-800/.git/config.worktree": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 58,
+   "sha256": "97997ba84fd1c44263deb6f412fc3bef4b05e0103d00c5a97a97ca928299aa13"
+  },
+  "src/fg/737-800/.git/description": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 73,
+   "sha256": "85ab6c163d43a17ea9cf7788308bca1466f1b0a8d1cc92e26e9bf63da4062aee"
+  },
+  "src/fg/737-800/.git/hooks/applypatch-msg.sample": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 478,
+   "sha256": "0223497a0b8b033aa58a3a521b8629869386cf7ab0e2f101963d328aa62193f7"
+  },
+  "src/fg/737-800/.git/hooks/commit-msg.sample": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 896,
+   "sha256": "1f74d5e9292979b573ebd59741d46cb93ff391acdd083d340b94370753d92437"
+  },
+  "src/fg/737-800/.git/hooks/fsmonitor-watchman.sample": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 4726,
+   "sha256": "e0549964e93897b519bd8e333c037e51fff0f88ba13e086a331592bf801fa1d0"
+  },
+  "src/fg/737-800/.git/hooks/post-update.sample": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 189,
+   "sha256": "81765af2daef323061dcbc5e61fc16481cb74b3bac9ad8a174b186523586f6c5"
+  },
+  "src/fg/737-800/.git/hooks/pre-applypatch.sample": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 424,
+   "sha256": "e15c5b469ea3e0a695bea6f2c82bcf8e62821074939ddd85b77e0007ff165475"
+  },
+  "src/fg/737-800/.git/hooks/pre-commit.sample": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 1643,
+   "sha256": "f9af7d95eb1231ecf2eba9770fedfa8d4797a12b02d7240e98d568201251244a"
+  },
+  "src/fg/737-800/.git/hooks/pre-merge-commit.sample": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 416,
+   "sha256": "d3825a70337940ebbd0a5c072984e13245920cdf8898bd225c8d27a6dfc9cb53"
+  },
+  "src/fg/737-800/.git/hooks/pre-push.sample": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 1374,
+   "sha256": "ecce9c7e04d3f5dd9d8ada81753dd1d549a9634b26770042b58dda00217d086a"
+  },
+  "src/fg/737-800/.git/hooks/pre-rebase.sample": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 4898,
+   "sha256": "4febce867790052338076f4e66cc47efb14879d18097d1d61c8261859eaaa7b3"
+  },
+  "src/fg/737-800/.git/hooks/pre-receive.sample": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 544,
+   "sha256": "a4c3d2b9c7bb3fd8d1441c31bd4ee71a595d66b44fcf49ddb310252320169989"
+  },
+  "src/fg/737-800/.git/hooks/prepare-commit-msg.sample": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 1492,
+   "sha256": "e9ddcaa4189fddd25ed97fc8c789eca7b6ca16390b2392ae3276f0c8e1aa4619"
+  },
+  "src/fg/737-800/.git/hooks/push-to-checkout.sample": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 2783,
+   "sha256": "a53d0741798b287c6dd7afa64aee473f305e65d3f49463bb9d7408ec3b12bf5f"
+  },
+  "src/fg/737-800/.git/hooks/sendemail-validate.sample": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 2308,
+   "sha256": "44ebfc923dc5466bc009602f0ecf067b9c65459abfe8868ddc49b78e6ced7a92"
+  },
+  "src/fg/737-800/.git/hooks/update.sample": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 3650,
+   "sha256": "8d5f2fa83e103cf08b57eaa67521df9194f45cbdbcb37da52ad586097a14d106"
+  },
+  "src/fg/737-800/.git/index": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 31037,
+   "sha256": "5d1b3d7d2686a2083d52785ed0362f60181f62e546657632bd7b05859443af63"
+  },
+  "src/fg/737-800/.git/info/exclude": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 240,
+   "sha256": "6671fe83b7a07c8932ee89164d1f2793b2318058eb8b98dc5c06ee0a5a3b0ec1"
+  },
+  "src/fg/737-800/.git/info/refs": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 1068,
+   "sha256": "8c5dcde7f1e81f95fd558301b8959be5e67bbaefaa3c239e27ea8ec065918676"
+  },
+  "src/fg/737-800/.git/info/sparse-checkout": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 61,
+   "sha256": "c0baa13f2ceaaf43ddbc17d3e388287486a1a97ae44c18a93ee85e260a77044c"
+  },
+  "src/fg/737-800/.git/logs/HEAD": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 179,
+   "sha256": "d496fbac5a0977b27cb9e5a7a14a1c696c15401fe8d6a7212ed544a334165d35"
+  },
+  "src/fg/737-800/.git/logs/refs/heads/master": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 179,
+   "sha256": "d496fbac5a0977b27cb9e5a7a14a1c696c15401fe8d6a7212ed544a334165d35"
+  },
+  "src/fg/737-800/.git/logs/refs/remotes/origin/HEAD": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 179,
+   "sha256": "d496fbac5a0977b27cb9e5a7a14a1c696c15401fe8d6a7212ed544a334165d35"
+  },
+  "src/fg/737-800/.git/objects/info/commit-graph": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 15512,
+   "sha256": "2cc147d9d0a6ad2b3c4bc26815d4e44785bf0c8a8ae4c24a4f99a21ec092ba04"
+  },
+  "src/fg/737-800/.git/objects/info/packs": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 372,
+   "sha256": "4b7003cffe7ee85eb435637fe384440f5ac7a3b398814e118862948917f9b67a"
+  },
+  "src/fg/737-800/.git/objects/pack/pack-090fab083ffcf3298ab10047e4958515c875edea.idx": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 35820,
+   "sha256": "43c6a58f55038949f097be169254d6432b5728b29b90d195484d8f2488e749b9"
+  },
+  "src/fg/737-800/.git/objects/pack/pack-090fab083ffcf3298ab10047e4958515c875edea.pack": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 45903285,
+   "sha256": "afa56acd725258fc8ee5c7757b5c52d140bcc0978c10eb993496fdff8be1f625"
+  },
+  "src/fg/737-800/.git/objects/pack/pack-090fab083ffcf3298ab10047e4958515c875edea.promisor": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 0,
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "src/fg/737-800/.git/objects/pack/pack-090fab083ffcf3298ab10047e4958515c875edea.rev": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 5016,
+   "sha256": "3026d875148bab9385743aff1c4895d66ab6aa2f51f097c8bae2cd8395b4387f"
+  },
+  "src/fg/737-800/.git/objects/pack/pack-1d8592d395dce939581cad71931195a9b9ec179f.idx": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 1100,
+   "sha256": "29451f45522298d74d321c691ca8d77199d45e6ad4f29f4558e7896117353551"
+  },
+  "src/fg/737-800/.git/objects/pack/pack-1d8592d395dce939581cad71931195a9b9ec179f.pack": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 2425,
+   "sha256": "274b6e5a43f8151cc2e0545fa1acd177df9bc58e731711ecc4c0f682d83ffad8"
+  },
+  "src/fg/737-800/.git/objects/pack/pack-1d8592d395dce939581cad71931195a9b9ec179f.promisor": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 0,
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "src/fg/737-800/.git/objects/pack/pack-1d8592d395dce939581cad71931195a9b9ec179f.rev": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 56,
+   "sha256": "aae7bbd31f5a346713a67b88312a540e89a06aca592a27ef1d93f8bf96b4cfd4"
+  },
+  "src/fg/737-800/.git/objects/pack/pack-36b9e2922400f4ae57ab7b21008bd2c295870bc4.idx": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 1100,
+   "sha256": "8a8286ad1cfa65510c8ea037598c875e7b5178e3f3a2b0514f9e5b778f062284"
+  },
+  "src/fg/737-800/.git/objects/pack/pack-36b9e2922400f4ae57ab7b21008bd2c295870bc4.pack": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 449,
+   "sha256": "7c46bed3be95951f90aaad1675c3d91d61a8d9b75fc0e878d343932015ec58ba"
+  },
+  "src/fg/737-800/.git/objects/pack/pack-36b9e2922400f4ae57ab7b21008bd2c295870bc4.promisor": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 0,
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "src/fg/737-800/.git/objects/pack/pack-36b9e2922400f4ae57ab7b21008bd2c295870bc4.rev": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 56,
+   "sha256": "4a5c04668e5eb701a944709b1d36c4eaf5511c3a5228fd06f41085782c3317f2"
+  },
+  "src/fg/737-800/.git/objects/pack/pack-37871e5a761304c9fd9c9c24bdb3cb4933c80447.idx": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 1100,
+   "sha256": "04da417c5f351fdeb74c87ac16b418654d45510de86dde12312e4032217f8d56"
+  },
+  "src/fg/737-800/.git/objects/pack/pack-37871e5a761304c9fd9c9c24bdb3cb4933c80447.pack": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 914,
+   "sha256": "73468fcce256f7d27d0321d2689b864fefd67488319fc92fed977918df3ce09e"
+  },
+  "src/fg/737-800/.git/objects/pack/pack-37871e5a761304c9fd9c9c24bdb3cb4933c80447.promisor": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 0,
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "src/fg/737-800/.git/objects/pack/pack-37871e5a761304c9fd9c9c24bdb3cb4933c80447.rev": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 56,
+   "sha256": "7feaa2fe1a5f870be40c3def8b1b96ff64f5677259986ce68e70f13c912afb9e"
+  },
+  "src/fg/737-800/.git/objects/pack/pack-521d9115bfeceda1fccefd302635771d759e8545.idx": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 1100,
+   "sha256": "fdeed875b30e02c40b09655c661ccd1c83430bffcacbaa9cd729ae3b7b2f5dff"
+  },
+  "src/fg/737-800/.git/objects/pack/pack-521d9115bfeceda1fccefd302635771d759e8545.pack": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 1306,
+   "sha256": "809dca92f29d291f055af285997be95ac0f04cbb7f793735d3c8d4a119383142"
+  },
+  "src/fg/737-800/.git/objects/pack/pack-521d9115bfeceda1fccefd302635771d759e8545.promisor": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 0,
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "src/fg/737-800/.git/objects/pack/pack-521d9115bfeceda1fccefd302635771d759e8545.rev": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 56,
+   "sha256": "d6abcc2ab197c17a50e68841929328b7939c8a35b6e825eeb10f475a0eb8c902"
+  },
+  "src/fg/737-800/.git/objects/pack/pack-70f4dac56b5d06d5bfb0255ea99960938857a6c6.idx": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 1100,
+   "sha256": "a176f91df1bd8868c4a71032c4ab38ad58ff50dcc23fef5fd4b31171fb17039d"
+  },
+  "src/fg/737-800/.git/objects/pack/pack-70f4dac56b5d06d5bfb0255ea99960938857a6c6.pack": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 9560,
+   "sha256": "284c537f15cee03a47f7030943ad384197468c8412018b0b0ed45df5e82ae5cf"
+  },
+  "src/fg/737-800/.git/objects/pack/pack-70f4dac56b5d06d5bfb0255ea99960938857a6c6.promisor": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 0,
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "src/fg/737-800/.git/objects/pack/pack-70f4dac56b5d06d5bfb0255ea99960938857a6c6.rev": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 56,
+   "sha256": "eccc7f77cd942c7cc32b25394f840402e0b7389ca91198648dfadefbbf97fafc"
+  },
+  "src/fg/737-800/.git/objects/pack/pack-85f023cf500d2ac90d32589835c405f38cf22d61.idx": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 1100,
+   "sha256": "d9ea95808cbc8c77dd9bf6252479eb3168f979af8eeb7cfe0800cbc8f49a6dd2"
+  },
+  "src/fg/737-800/.git/objects/pack/pack-85f023cf500d2ac90d32589835c405f38cf22d61.pack": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 281,
+   "sha256": "9fce2de9b626924f7d6c1c787814c212e2bee5295ace9ed897f8a638991bba7b"
+  },
+  "src/fg/737-800/.git/objects/pack/pack-85f023cf500d2ac90d32589835c405f38cf22d61.promisor": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 0,
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "src/fg/737-800/.git/objects/pack/pack-85f023cf500d2ac90d32589835c405f38cf22d61.rev": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 56,
+   "sha256": "1ae35f2a1c242a082cd7eef1ed339b90b3458f734eada819929e53d90f99d1e0"
+  },
+  "src/fg/737-800/.git/objects/pack/pack-8d41c6056cecf7146f0c42ffc4f27b43ad03dc5d.idx": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 1100,
+   "sha256": "9696d1a9be304da689d3561a523fd5d7f188d344d8c11dda71006d981e189d82"
+  },
+  "src/fg/737-800/.git/objects/pack/pack-8d41c6056cecf7146f0c42ffc4f27b43ad03dc5d.pack": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 1024,
+   "sha256": "12441ff35f2a15a94e52d70ad2043d9cccbf561a0e1c5891e3f7d19e2b805cd6"
+  },
+  "src/fg/737-800/.git/objects/pack/pack-8d41c6056cecf7146f0c42ffc4f27b43ad03dc5d.promisor": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 0,
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "src/fg/737-800/.git/objects/pack/pack-8d41c6056cecf7146f0c42ffc4f27b43ad03dc5d.rev": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 56,
+   "sha256": "c7db7d3e320f5ad3621d10478074f2551eeb8b850b99a395b8ac817730179216"
+  },
+  "src/fg/737-800/.git/objects/pack/pack-8f4b3a55fd86ab6a6997763c5620ba9af3ac9d9a.idx": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 1100,
+   "sha256": "c8ca327687a6e40010b9eb765e4e2be07e5cad499d45ef316cdec7fda0053e0e"
+  },
+  "src/fg/737-800/.git/objects/pack/pack-8f4b3a55fd86ab6a6997763c5620ba9af3ac9d9a.pack": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 1236,
+   "sha256": "fb615660a4885d468bd611409e4157d05e028bad592725f2855df0c492c19d8f"
+  },
+  "src/fg/737-800/.git/objects/pack/pack-8f4b3a55fd86ab6a6997763c5620ba9af3ac9d9a.promisor": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 0,
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "src/fg/737-800/.git/objects/pack/pack-8f4b3a55fd86ab6a6997763c5620ba9af3ac9d9a.rev": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 56,
+   "sha256": "f61f5eeef018d16bfb4d83dd0784cfc631fa4ff31c587147d07a4a7fdf6c4dd5"
+  },
+  "src/fg/737-800/.git/objects/pack/pack-918639e124dc7e5a036d907d2d27f9e576e62053.idx": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 1100,
+   "sha256": "d6e42ab362a2a002c656a3895b015991837e24215a835ad398520a8e3c464a2e"
+  },
+  "src/fg/737-800/.git/objects/pack/pack-918639e124dc7e5a036d907d2d27f9e576e62053.pack": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 431,
+   "sha256": "8d1f624291e6e361930a3caa9e665ff501312bd4066253023e78c840dc369bc7"
+  },
+  "src/fg/737-800/.git/objects/pack/pack-918639e124dc7e5a036d907d2d27f9e576e62053.promisor": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 0,
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "src/fg/737-800/.git/objects/pack/pack-918639e124dc7e5a036d907d2d27f9e576e62053.rev": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 56,
+   "sha256": "8bb6eb27589fd55ed5b197ef8826a32161ef9dfb8ad125212721b5cb16933d1c"
+  },
+  "src/fg/737-800/.git/objects/pack/pack-e6c7f16ae2199f4ecf28bbf972d0fd80de57a628.idx": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 1100,
+   "sha256": "253ec3b2f09425898e9ec5eb49a7d23a2b1f28624009f869d0ded47b9413ac50"
+  },
+  "src/fg/737-800/.git/objects/pack/pack-e6c7f16ae2199f4ecf28bbf972d0fd80de57a628.pack": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 936,
+   "sha256": "f013cc89d7576d9958e0b05299595c24a0e89673cb6b58fe083724cd24519484"
+  },
+  "src/fg/737-800/.git/objects/pack/pack-e6c7f16ae2199f4ecf28bbf972d0fd80de57a628.promisor": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 0,
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "src/fg/737-800/.git/objects/pack/pack-e6c7f16ae2199f4ecf28bbf972d0fd80de57a628.rev": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 56,
+   "sha256": "742834c82426eaa4a4c82ab4fa3f6a020a86bb9146aac73fd4a1461ec3c3f5d3"
+  },
+  "src/fg/737-800/.git/objects/pack/pack-ed978504bc026afef8609abb7da274e09e8c4691.idx": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 1100,
+   "sha256": "07eea22021c68452937cd1ac5f40964782a6e9dca1825b734c5781a924827320"
+  },
+  "src/fg/737-800/.git/objects/pack/pack-ed978504bc026afef8609abb7da274e09e8c4691.pack": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 840,
+   "sha256": "276ee69a109973c9afe54972f4eb1df64070c5ff7367824ceefb603c4bed2bef"
+  },
+  "src/fg/737-800/.git/objects/pack/pack-ed978504bc026afef8609abb7da274e09e8c4691.promisor": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 0,
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "src/fg/737-800/.git/objects/pack/pack-ed978504bc026afef8609abb7da274e09e8c4691.rev": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 56,
+   "sha256": "272cd009774fb957cae085162c49f1a32508a6820e39cb59bb7c39abc629d5aa"
+  },
+  "src/fg/737-800/.git/objects/pack/pack-f855b88200ee098c627db99c6b6fa806f671b53c.idx": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 1100,
+   "sha256": "ca0bc33ead2d0f4b2340f17e38ced33159d4a5e04db4bf1940f6609d8126e992"
+  },
+  "src/fg/737-800/.git/objects/pack/pack-f855b88200ee098c627db99c6b6fa806f671b53c.pack": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 1252,
+   "sha256": "f588782993a89a376f690356aec9df3df97293f7e6d2c48b7011c71f9786a6d9"
+  },
+  "src/fg/737-800/.git/objects/pack/pack-f855b88200ee098c627db99c6b6fa806f671b53c.promisor": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 0,
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "src/fg/737-800/.git/objects/pack/pack-f855b88200ee098c627db99c6b6fa806f671b53c.rev": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 56,
+   "sha256": "665fd00c54c7989a91f970d9890a36583005877a6b846cd507cd2e07f5f7c972"
+  },
+  "src/fg/737-800/.git/packed-refs": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 924,
+   "sha256": "2ac6e12e09e655f2ebe95ee1e0b6ff5cea577baef8f985fd5b40daabafaa74a2"
+  },
+  "src/fg/737-800/.git/refs/remotes/origin/HEAD": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 32,
+   "sha256": "cdc65e67690c4c6475174e5ec662b70655246a2f3924354778835ab3be70aa76"
+  },
+  "src/fg/737-800/LICENSE": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 18047,
+   "sha256": "c03cea027b4b40e4402fabd08557736727ec3d5bc54ad64ab6472de432198cad"
+  },
+  "src/fg/737-800/Models/737-800.ac": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 700543,
+   "sha256": "41c4d99099a607866504ca0af33d926e32ecbd5b2b9346b039e5ba9c8f338c81"
+  },
+  "src/fg/737-800/Models/737-800.png": {
+   "class": "local",
+   "why": "image / document without an open licence in SOURCES.json",
+   "bytes": 221672,
+   "sha256": "0e8e285ad0b98c499d15aff82e1f6537f30312af2ea7612960cd845e537d239a"
+  },
+  "src/fg/737-800/Models/737-panel.png": {
+   "class": "local",
+   "why": "image / document without an open licence in SOURCES.json",
+   "bytes": 460751,
+   "sha256": "297b0cd4574b80aa03986cc4521bfb0cb3ff88901dd010cbcd21acb0dd67ef2f"
+  },
+  "src/fg/737-800/Models/HorzStab.ac": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 15715,
+   "sha256": "c9102107c5f43e189101ac568ee2d05e1d852d52f7fe190a5e2b1dcd547c9bbc"
+  },
+  "src/fg/737-800/Models/LWing.ac": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 386296,
+   "sha256": "452e8c5d43f38780fec10b6f520287ff0ed5a1e452b143c14404c1466fd3de35"
+  },
+  "src/fg/737-800/Models/OH-PANEL.png": {
+   "class": "local",
+   "why": "image / document without an open licence in SOURCES.json",
+   "bytes": 687153,
+   "sha256": "de02a3593076bebbc2e75799f17c50a2a1dfe02214e3da7ac52d06566dc809ec"
+  },
+  "src/fg/737-800/Models/RWing.ac": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 394135,
+   "sha256": "17a43824710b0d4f46ad361124b9aa01cbae728ad96f826966af300a14292435"
+  },
+  "src/fg/737-800/Models/VertStab.ac": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 24816,
+   "sha256": "ff51151c4df9c48a3482c5b2fa47c3ca6905a7bc34ecfd9e600dccbcbbaa758b"
+  },
+  "src/fg/737-800/Models/cent-panel.png": {
+   "class": "local",
+   "why": "image / document without an open licence in SOURCES.json",
+   "bytes": 293894,
+   "sha256": "eb5fcf6f12e973a55cda007fb99141dad7ae08e3334208c25355dea4ce06c288"
+  },
+  "src/fg/737-800/Models/cockpit.ac": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 575146,
+   "sha256": "014d41df04373bd0c5d6097cd95d29afc4c9e054df8c63eb61aab380618655cd"
+  },
+  "src/fg/737-800/Models/digits2.png": {
+   "class": "local",
+   "why": "image / document without an open licence in SOURCES.json",
+   "bytes": 5921,
+   "sha256": "23bcbc1f3ae8eed492a7b234dfefd180678c32b7a70d1d3bd6e52ca3ca0b3532"
+  },
+  "src/fg/737-800/Models/du-panel.png": {
+   "class": "local",
+   "why": "image / document without an open licence in SOURCES.json",
+   "bytes": 56446,
+   "sha256": "4760b9d7e47a9a916192f33dac3cc556a56109e2f6250edb8d86ccf34fbf7413"
+  },
+  "src/fg/737-800/Models/flightdesk.ac": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 388138,
+   "sha256": "76c2da3b6c1ae5a5dfb4b05a41e0b587f22d0846bcde1e8057ca93e6d6093121"
+  },
+  "src/fg/737-800/Models/landinglight.ac": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 30409,
+   "sha256": "62115caa340ff7ecf9174aa23952f864b93171d309218b64aff786b9703e2ce9"
+  },
+  "src/fg/737-800/Models/landinglight.png": {
+   "class": "local",
+   "why": "image / document without an open licence in SOURCES.json",
+   "bytes": 852219,
+   "sha256": "952dc1e17e8511d6bdd0c8ed23a2b1bb38b382046810ef79ce89c2f675656d8d"
+  },
+  "src/fg/737-800/Models/lights.png": {
+   "class": "local",
+   "why": "image / document without an open licence in SOURCES.json",
+   "bytes": 214409,
+   "sha256": "044cec9a4df3faac10fcd64e1874fb74305f1032c65dfdf93d610ed68e1be3d7"
+  },
+  "src/fg/737-800/Models/nosegear.ac": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 171454,
+   "sha256": "f33bbeb01770070b1309dd49c79a9cf53e092aa5c32aa2b4297e6710449faca4"
+  },
+  "src/fg/737-800/Models/oh-panel.ac": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 394290,
+   "sha256": "0e5094e9c42abdd48a5afc16c4c0701ebd452869172c9be236c5c0da9908fb05"
+  },
+  "src/fg/737-800/Models/pedals.ac": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 39277,
+   "sha256": "0e5f21e0069aef0ab8f2abcdba938251c92feda228ed43490d174659dca17855"
+  },
+  "src/fg/737-800/Models/pedestal.ac": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 1104265,
+   "sha256": "ae9ab9344f71573370e409535922ceb22bf9d3ea13858dfdbc314d249c7ed0ce"
+  },
+  "src/fg/737-800/Models/winglet.ac": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 626016,
+   "sha256": "0804f42dbd096068b138bcbb348bca52296a29036f38e67710b1f9b2096e0e12"
   }
  }
 }

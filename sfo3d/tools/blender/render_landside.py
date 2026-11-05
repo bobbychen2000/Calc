@@ -45,6 +45,7 @@ GROUND_Y = 3.0
 LB = D.LANDM['buildings']
 T0 = time.time()
 EXPOSURE = -4.0
+SUFFIX = ''        # '_bf' in the back-face QA mode (keeps the comparison sheets of the beauty renders)
 
 
 def log(*a):
@@ -148,7 +149,7 @@ def overlay(p_rgb, p_alpha, lines, name, px, k, u_range, top_fn=None, H_c=0.0):
     im = Image.open(p_rgb).convert('RGB'); dr = ImageDraw.Draw(im)
     for pts, col, w in lines:
         dr.line([px(u, h) for u, h in pts], fill=col, width=w)
-    out_p = os.path.join(OUT, f'landside_cmp_{name}.png'); im.save(out_p)
+    out_p = os.path.join(OUT, f'landside_cmp_{name}{SUFFIX}.png'); im.save(out_p)
     res = None
     if top_fn is not None and p_alpha:
         A = np.array(Image.open(p_alpha))[..., 3].astype(float) / 255.0
@@ -291,7 +292,8 @@ def view_l5(args):
     """RCC west wall and the station tower from the guideway north of the station, looking south (photo l5)."""
     import landside_airtrain as AT
     tk = AT.RCC_TOWER['world']
-    return persp('l5', (tk[0] + 3.0, tk[1] - 75.0), AT.RCC_PLATFORM + 2.5, (tk[0] + 2.0, tk[1] + 10.0), AT.RCC_PLATFORM + 6.0, 26.0, (960, 720), (140.0, 55.0), 'l5')
+    # on the east track's walkway 75 m north of the tower (the guideway runs as two single tracks at x -2296 / -2286 there)
+    return persp('l5', (tk[0] - 4.5, tk[1] - 75.0), 6.9 + 1.8, (tk[0] + 1.0, tk[1] + 10.0), AT.RCC_PLATFORM + 6.0, 24.0, (960, 720), (140.0, 55.0), 'l5')
 
 
 def view_a2(args):
@@ -303,7 +305,7 @@ def view_a2(args):
 
 
 def view_overview(args):
-    return persp('overview', (-600.0, 900.0), 900.0, (-1500.0, -600.0), 0.0, 32.0, (960, 640), (200.0, 55.0), None)
+    return persp('overview', (-300.0, 1300.0), 1500.0, (-1250.0, -500.0), 0.0, 30.0, (960, 640), (200.0, 55.0), None)
 
 
 def side_by_side(render_p, photo, out_name):
@@ -317,6 +319,29 @@ def side_by_side(render_p, photo, out_name):
     return p
 
 
+def backface_materials():
+    """QA: every material -> grey diffuse on front faces, pure red emission on back faces (the asset is single-sided: a red
+    pixel = a face wound inwards that the runtime would cull)."""
+    for m in bpy.data.materials:
+        if m.name == 'ground': continue
+        double = not m.use_backface_culling          # glTF doubleSided materials (thin see-through screens): both sides valid
+        m.use_nodes = True; nt = m.node_tree; nt.nodes.clear()
+        geo = nt.nodes.new('ShaderNodeNewGeometry')
+        dif = nt.nodes.new('ShaderNodeBsdfDiffuse'); dif.inputs['Color'].default_value = (0.6, 0.6, 0.6, 1)
+        em = nt.nodes.new('ShaderNodeEmission'); em.inputs['Color'].default_value = (1, 0, 0, 1) if not double else (0.6, 0.6, 0.6, 1)
+        em.inputs['Strength'].default_value = 5.0 if not double else 0.3
+        mix = nt.nodes.new('ShaderNodeMixShader'); out = nt.nodes.new('ShaderNodeOutputMaterial')
+        nt.links.new(geo.outputs['Backfacing'], mix.inputs['Fac']); nt.links.new(dif.outputs['BSDF'], mix.inputs[1])
+        nt.links.new(em.outputs['Emission'], mix.inputs[2]); nt.links.new(mix.outputs['Shader'], out.inputs['Surface'])
+
+
+def red_fraction(path):
+    from PIL import Image
+    a = np.asarray(Image.open(path).convert('RGB')).astype(int)
+    red = (a[..., 0] > 90) & (a[..., 0] > 2.2 * a[..., 1]) & (a[..., 0] > 2.2 * a[..., 2])
+    return int(red.sum()), round(float(red.mean()), 5)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--glb', default=os.path.join(ROOT, 'data', 'buildings3d', 'landside.glb'))
@@ -326,14 +351,30 @@ def main():
     ap.add_argument('--threads', type=int, default=3)
     ap.add_argument('--lod', type=int, default=0)
     ap.add_argument('--itb', action='store_true')
+    ap.add_argument('--backface', action='store_true', help='back-face QA renders (red = inward faces), 8 spp, suffix _bf')
     args = ap.parse_args()
+    if args.backface:
+        args.samples = 8
+        global SUFFIX
+        SUFFIX = '_bf'
     os.makedirs(OUT, exist_ok=True)
     glbs = [args.glb] + ([os.path.join(ROOT, 'data', 'buildings3d', 'itb.glb')] if args.itb else [])
     done = {}
     for v in args.views.split(','):
         setup(glbs, args.threads, args.samples, args.lod)      # fresh scene per view (views hide buildings)
+        if args.backface:
+            backface_materials()
+            global render
+            _r = render
+            def render(path, transparent=False, _r=_r):  # noqa: E306
+                p = _r(path.replace('.png', '_bf.png'), transparent)
+                return p
         done[v] = globals()['view_' + v](args)
-        log(v, json.dumps(done[v], default=str)[:600])
+        if args.backface:
+            done[v + '_bf'] = dict(render=done[v]['render'], red_px=red_fraction(done[v]['render']))
+            del done[v]
+            render = _r
+        log(v, json.dumps(done.get(v, done.get(v + '_bf')), default=str)[:600])
     pj = os.path.join(OUT, 'landside_render.json')
     old = json.load(open(pj)) if os.path.exists(pj) else {}
     old.update(done)

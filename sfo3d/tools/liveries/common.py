@@ -152,6 +152,9 @@ def apply_stretch(P, Z, st):
         az = np.abs(P[:, 2]); m = (P[:, 0] >= W['xMin']) & (az > W['z0'])
         add = np.where(az >= W['z1'], W['dz'], (az - W['z0']) * W['dz'] / (W['z1'] - W['z0']))
         P[m, 2] += np.sign(P[m, 2]) * add[m]
+    if st.get('tipShear'):                                    # winglet cant (js/aircraft/stretch.js, js/aircraft/fit.js WINGLET)
+        q = st['tipShear']; m = (P[:, 0] >= q['xMin']) & (np.abs(P[:, 2]) > q['z0']) & (P[:, 1] > q['y0'])
+        u = P[m, 1] - q['y0']; P[m, 2] += np.sign(P[m, 2]) * q['k'] * u * (u / (q['yt'] - q['y0'])) ** (q.get('p', 1) - 1)
     if F:
         m = (P[:, 0] < F['xF']) & (P[:, 1] > F['yF']) & ~np.isin(Z, ZONE_NOFIN)
         P[m, 1] = F['yF'] + (P[m, 1] - F['yF']) * F['k']

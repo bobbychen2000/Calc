@@ -119,7 +119,13 @@ stations, pitch, size, height) are in the repository. The drawings stay in the g
 
 Where the artist's window glass or openings did not match these drawings, they were removed from the converted models
 (the openings closed with skin triangles) and the measured row is painted instead; this is a modification of the GPL
-models of §1 and is covered by the same corresponding-source statement.
+models of §1 and is covered by the same corresponding-source statement. Likewise (5 Nov 2026) the FlightGear 737-800's
+door 1L and the skin opening around it are re-fitted by `tools/convert_models.py` (`door_fit`, a spatial deformation of
+the converted mesh) so its sill matches the 737NG ACAP (D6-58325-7 Rev C §2.3.2 / §2.7.1), and the 757 model's blended
+winglet is canted out to the published winglet span (`js/aircraft/fit.js` WINGLET); the source checkout is restored in
+`refs/cache/src/fg/737-800` (blob-less sparse clone of FGMEMBERS/737-800 @9126249, `refs/cache/src/fg/SOURCES.json`).
+The Boeing 757 ACAP D6-58327 Rev H (Dec 2024, `refs/cache/acap/757_Rev_H.pdf`, Boeing copyright, not redistributed)
+gives the plain-wing span 124 ft 10 in (38.05 m, §2.2.1 p.2-10) the 757 wing is fitted to.
 
 ## 5. Reference photographs for the livery QA (measurement and render check only; not shipped)
 

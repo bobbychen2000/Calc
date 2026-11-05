@@ -54,6 +54,15 @@ def car_mesh(shape, lod=0):
     from landside_mesh import cap
     deck = sg.Polygon(plan).difference(sg.Polygon(lo).buffer(0.0))
     cap(mb, deck, zs, 'paint', 1.0)
+    # the car is convex in section: every face must point away from the body centre (single-sided materials)
+    c = np.array([0.0, 0.0, 0.5 * H])
+    for i, f in enumerate(mb.F):
+        P = np.array([mb.V[k] for k in f])
+        n = np.zeros(3)
+        for a in range(len(P)):
+            n += np.cross(P[a], P[(a + 1) % len(P)])
+        if float(n @ (P.mean(0) - c)) < 0:
+            mb.F[i] = f[::-1]; mb.UV[i] = mb.UV[i][::-1]
     return mb
 
 

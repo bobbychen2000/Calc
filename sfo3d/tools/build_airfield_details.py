@@ -19,9 +19,13 @@ Outputs data/sfo_details.json (+ debug PNGs in out/details/):
   roads          empty since the static close-out (2026-11-04): the former inferred offset lines of the terminal face are gone
                  (roadsNote)
   centerlineRetired / osmBase   OSM ways / NAIP traces retired by OSM_UPDATES, and the pinned OSM base + update extract
+  pavementRetired  SFO Museum taxiway polygons that no longer exist (PAVEMENT_RETIRE, with evidence): skipped by the app
 Static close-out (2026-11-04): the OSM base is pinned (database 2026-09-24T09:07:42Z, tools/xcheck/fetch_osm.py); later OSM
 edits enter only through OSM_UPDATES (relocated W + its inferred holds, the 10L/28R / 10R/28L crossing arcs); edges reject
 white paint and the runway edge zone; polyline hygiene (cusps, back-tracks, spikes, loops); `drawn` per stretch.
+Round 2 (2026-11-05): the old W / F1 crossing's SFO Museum pavement is retired too (pavementRetired: no edges; the app does
+not pave it), the companion edits of changeset 189525528 (J re-mapped, J / two connectors deleted) are applied, edges are
+split where NAIP shows no paint over >= 16 m, short hooks are removed, and the on-runway arcs need b* >= 12 paint.
 World frame (matches js/geo.js): x = east, z = south (m), origin = ARP; projection/datum from tools/geo_frame.py
 (exact GRS80 local tangent plane, NAD83(2011)). The ADS-B snapshot (WGS 84) is used only for the debug image (review round 3).
 Also writes data/sfo_details.js (the same JSON as an ES module).
@@ -50,6 +54,27 @@ def fillpolys(mask, polys, holes=True):
             for h in poly[1:]: cv2.fillPoly(mask, [np.round(px(h) * 16).astype(np.int32)], 0, lineType=cv2.LINE_8, shift=4)
     return mask
 def newmask(): return np.zeros((H, W), np.uint8)
+
+# ---- round 2 (2026-11-05, review static-v3): SFO Museum taxiway polygons of the RETIRED old W / F1 crossing of 1L / 1R.
+# Its centreline and holds were retired in the close-out (OSM changeset 189525528, FAA AL-375 cycle 2611, ADS-B), but its
+# edge lines and pavement were still drawn: a second crossing without markings. FAA AL-375 cycle 2611 (refs/cache/faa,
+# rendered at 1200 dpi, registered on the runway ends / intersections, residual 6-17 px = 7-20 m) draws ONE paved band
+# between 1L and 1R near W, crossing the runways at 86 deg (the relocated W 1562117372: 89.9 deg; the old F1 crossing:
+# 65-69 deg), and no pavement between F and that band where F1 lay. NAIP 2024 predates the rebuild. So the F1 polygons are
+# retired: no edge lines along them (here) and not paved (js/live/airport.js skips `pavementRetired`). The junction polygons
+# 'Taxiway B/A/F1' and 'Taxiway F/F1/L' are part of A / B and F / L and stay.
+PAVEMENT_RETIRE = {('Taxiway F1', i): 'old W / F1 crossing of 1L / 1R (%s): FAA AL-375 cycle 2611 shows no pavement there (one crossing, '
+                                       'at the relocated W); OSM changeset 189525528 deleted the old W; ADS-B 4 Nov 2026: no aircraft along it'
+                                       % part for i, part in enumerate(('between the runways', 'west of 1L', 'east of 1R'))}
+PAVEMENT_RETIRED = []
+for _t in D['taxiways']:
+    for _i, _poly in enumerate(_t['polys']):
+        if (_t['name'], _i) in PAVEMENT_RETIRE:
+            _a = abs(cv2.contourArea(np.array(_poly[0], np.float32)))
+            PAVEMENT_RETIRED.append({'layer': 'taxiways', 'name': _t['name'], 'id': _t.get('id'), 'poly': _i, 'area_m2': round(float(_a)),
+                                     'why': PAVEMENT_RETIRE[(_t['name'], _i)]})
+assert len(PAVEMENT_RETIRED) == len(PAVEMENT_RETIRE), 'SFO Museum polygons to retire not found: %s' % PAVEMENT_RETIRED
+def is_retired(t, i): return (t['name'], i) in PAVEMENT_RETIRE
 
 # ---------------------------------------------------------------- base masks
 TW = newmask()
@@ -84,7 +109,9 @@ lab, n = ndi.label(apron | REM)
 keep = set(np.unique(lab[(dT <= 60) | (REM > 0)])) - {0}
 apron = np.isin(lab, list(keep)).astype(np.uint8) & (1 - TC)
 apron = ndi.binary_opening(apron, iterations=3).astype(np.uint8)
-PAVED = ((apron | TW | RW | REM) > 0).astype(np.uint8)
+TW_ACT = newmask()       # round 2: active taxiway pavement (without PAVEMENT_RETIRE) - edges border unpaved ground of THIS
+for t in D['taxiways']: fillpolys(TW_ACT, [p for i, p in enumerate(t['polys']) if not is_retired(t, i)], holes=False)
+PAVED = ((apron | TW_ACT | RW | REM) > 0).astype(np.uint8)
 print('apron px', apron.sum())
 
 def contours(mask, tol):
@@ -160,13 +187,23 @@ _ARC_WHY = ('painted lead-on / lead-off arcs at the 10L/28R and 10R/28L crossing
             '"update taxiways"), checked on NAIP 2024 paint like every OSM way (static review 2026-11-04: paint on 70-100 % of each). '
             'They run ON the runway (from its edge to its centreline: FAA AC 150/5340-1M taxiway lead-on / lead-off lines), so they '
             'are not cut at the runway edge; peaks that are not yellow (b* < BSTAR_MIN: runway white paint) are not used')
+_J_WHY = ('round 2 (2026-11-05, review static-v3): companion edit of the W relocation, OSM changeset 189525528 (25 Sep 2026): '
+          'way 1562117374 (J) is the eastern 97 m of the deleted J 155476380, on the same nodes (100 %% within 3 m), checked on NAIP '
+          '2024 paint like every OSM way; the western 153 m of the old J (to the old W) and the connectors 671167438 / 1511792223 '
+          'were deleted with the old W. The other new way of that changeset, 1562117373 (B), is a split of the base way B '
+          '363803227 (its northern 521 m, 100 %% within 3 m): not added - the base B already draws it')
 OSM_UPDATES = {
     'add': {1562117372: {'naip': False, 'ref': 'W', 'width_m': 75 * 0.3048, 'why': _W_WHY},
+            1562117374: {'naip': True, 'ref': 'J', 'why': _J_WHY},
             **{i: {'naip': True, 'on_runway': True, 'why': _ARC_WHY} for i in range(1571228365, 1571228382)}},
     # old W (deleted in OSM changeset 189525528) and the NAIP-traced old crossing of 1L / 1R (SFO Museum polygon 'F1'):
     # superseded by the relocated W (evidence above); their holds go to holdsDropped
     'retire': {155476502: 'old taxiway W alignment, deleted in OSM changeset 189525528 (W relocated 62-64 m; see the W entry of OSM_UPDATES)',
-               155476504: 'old taxiway W alignment, deleted in OSM changeset 189525528 (W relocated)'},
+               155476504: 'old taxiway W alignment, deleted in OSM changeset 189525528 (W relocated)',
+               # round 2 (review static-v3): the other ways deleted by changeset 189525528
+               155476380: 'taxiway J (250 m), deleted in OSM changeset 189525528 with the old W; its eastern 97 m is the new way 1562117374 (added)',
+               671167438: 'unnamed taxiway connector (46 m) at the old W / B junction, deleted in OSM changeset 189525528',
+               1511792223: 'unnamed taxiway connector (65 m) at the old W / B junction, deleted in OSM changeset 189525528'},
     'retire_traces': {'painted E-W taxiway crossing 1L/19R and 1R/19L, no OSM way':
                       'old W crossing of 1L / 1R (NAIP 2024 paint): FAA AL-375 cycle 2611 shows one W crossing, at the relocated W; '
                       'ADS-B 4 Nov 2026: no aircraft along it (6 along the new W)'},
@@ -234,7 +271,13 @@ def window_corr(ss, offs, min_shift=0.5, mad_max=0.4, clip=None, strict_big=True
 BSTAR_MIN = 9.0     # static close-out: b* calibration in paintline.Yellow.bstar (rejects ~7 % of yellow peaks, most white ones)
 
 
-def measure(P, S, T, ss, half=3.5, avg=4.0, thr=0.6, skip=None, white_reject=False):
+BSTAR_ARC = 11.0    # round 2 (review static-v4): lead-on / lead-off arcs lie ON the runway among white markings (b* ~7):
+                    # their peaks must be clearly yellow to count as paint. Measured on the 17 arcs: the painted ones' peaks
+                    # are 12-40, the ambiguous ones 9-11 (1571228374: 9.3 / 9.9 / 10.2 counted at 9 -> 4/15 = 27 %, drawn;
+                    # at 11: 1/15) - 11 separates them (1571228375 keeps 4/14 at 11.7-15.1)
+
+
+def measure(P, S, T, ss, half=3.5, avg=4.0, thr=0.6, skip=None, white_reject=False, bmin=None):
     """paint offset per sample; `skip` (prepared shapely geometry): samples inside it are not measured (review round 4:
     the taxiway edge runs were pulled 2-3 m onto the runway holding-position ladders and their sign boxes);
     `white_reject` (static close-out 2026-11-04, taxiway edges): a peak whose colour is not yellow (b* < BSTAR_MIN) is not
@@ -245,7 +288,7 @@ def measure(P, S, T, ss, half=3.5, avg=4.0, thr=0.6, skip=None, white_reject=Fal
         t /= max(1e-9, np.hypot(*t))
         if skip is not None and skip.contains(_SPt0(float(p[0]), float(p[1]))): offs[i] = np.inf; continue   # masked (inf)
         r = YEL.cross_peak(p, t, half=half, avg=avg, step=0.1, min_contrast=10.0)
-        if r and r[2] < thr * r[1] and (not white_reject or YEL.bstar(p, t, r[0], avg) >= BSTAR_MIN): offs[i] = r[0]
+        if r and r[2] < thr * r[1] and (not white_reject or YEL.bstar(p, t, r[0], avg) >= (bmin or BSTAR_MIN)): offs[i] = r[0]
     return offs
 
 
@@ -279,22 +322,32 @@ def _turn(u, v):
 def _plen(A): return float(sum(np.linalg.norm(np.asarray(A[i + 1]) - np.asarray(A[i])) for i in range(len(A) - 1)))
 
 
+HOOK_LEN, HOOK_TURN = 2.0, 120.0      # round 2 (review static-v4): a turn > 120 deg with a leg < 2 m is a hook, not geometry
+
+
 def hygiene(A, spike_len=3.0, max_turn=150.0, loop_max=40.0, min_len=6.0):
     """-> list of clean polylines: a vertex where the line reverses (turn > max_turn) is dropped when one of its legs is
     shorter than spike_len (a spike), else the line is split there (a cusp / back-track); a piece that runs back over
     another piece of the same line (>= 80 % of it within 2 m) is dropped; a self-intersection closes a loop shorter than
-    loop_max at the crossing point, a longer one splits the line there; pieces shorter than min_len are dropped"""
+    loop_max at the crossing point, a longer one splits the line there; pieces shorter than min_len are dropped.
+    Round 2 (review static-v4): hooks - a turn > HOOK_TURN with a leg < HOOK_LEN - lose that leg's vertex: at a line end
+    the end vertex goes, inside the line the turning vertex (46 such hooks on the edges, 35 at an end)"""
     A = [np.asarray(p, float) for p in A]
     changed = True
-    while changed and len(A) >= 3:            # zero-length legs and spikes, repeatedly
+    while changed and len(A) >= 3:            # zero-length legs, spikes and hooks, repeatedly
         changed = False
         B = [A[0]]
         for q in A[1:]:
             if np.linalg.norm(q - B[-1]) > 1e-6: B.append(q)
         A = B
+        if len(A) < 3: break
+        if _turn(A[1] - A[0], A[2] - A[1]) > HOOK_TURN and np.linalg.norm(A[1] - A[0]) < HOOK_LEN:
+            del A[0]; changed = True; continue                  # end hook (start)
+        if _turn(A[-2] - A[-3], A[-1] - A[-2]) > HOOK_TURN and np.linalg.norm(A[-1] - A[-2]) < HOOK_LEN:
+            del A[-1]; changed = True; continue                 # end hook (end)
         for i in range(1, len(A) - 1):
-            u = A[i] - A[i - 1]; v = A[i + 1] - A[i]
-            if _turn(u, v) > max_turn and min(np.linalg.norm(u), np.linalg.norm(v)) < spike_len:
+            u = A[i] - A[i - 1]; v = A[i + 1] - A[i]; tu = _turn(u, v); ml = min(np.linalg.norm(u), np.linalg.norm(v))
+            if (tu > max_turn and ml < spike_len) or (tu > HOOK_TURN and ml < HOOK_LEN):
                 del A[i]; changed = True; break
     if len(A) < 2: return []
     pieces, cur = [], [A[0]]
@@ -426,7 +479,7 @@ for w in OSM['taxiways'] + UPD_WAYS:
         if upd and not upd['naip']:
             offs = np.full(len(ss), np.nan)        # built after NAIP 2024: no paint to snap to (OSM_UPDATES)
         else:
-            offs = measure(P, S, T, ss, white_reject=wr_); n_samp += len(ss); n_peak += int((~np.isnan(offs)).sum())
+            offs = measure(P, S, T, ss, white_reject=wr_, bmin=BSTAR_ARC if wr_ else None); n_samp += len(ss); n_peak += int((~np.isnan(offs)).sum())
         # (review round 2, centreline 24 / OSM 23718492: a correction above 1.5 m needs the full 7-sample window (24 m)
         # with paint and MAD < 0.25 m - inside window_corr)
         corr = window_corr(ss, offs, 0.5)
@@ -457,12 +510,12 @@ for w in OSM['taxiways'] + UPD_WAYS:
         # review round 4: second pass on the corrected line (the +-3.5 m search is now centred on it): residual offsets
         # the first pass could not reach (a curve drifting > 3.5 m, windows split by a gap) are corrected the same way
         if np.any(np.abs(c_pts) > 0.01):
-            S2 = arclen(Q); T2 = tangents(Q); o2 = measure(Q, S2, T2, ss, white_reject=wr_); c2 = window_corr(ss, o2, 0.5)
+            S2 = arclen(Q); T2 = tangents(Q); o2 = measure(Q, S2, T2, ss, white_reject=wr_, bmin=BSTAR_ARC if wr_ else None); c2 = window_corr(ss, o2, 0.5)
             if np.any(np.abs(c2) > 0.01):
                 c2p = np.interp(S2, ss, c2) if len(ss) > 1 else np.full(len(S2), c2[0])
                 Q = Q + np.stack([-T2[:, 1], T2[:, 0]], 1) * c2p[:, None]; c_pts = c_pts + c2p; corr = corr + c2
         tot_len += S[-1]; corr_len += float(np.sum((np.abs(c_pts[1:]) > 0.01) * np.diff(S)))
-        o3 = measure(Q, arclen(Q), tangents(Q), ss, white_reject=wr_) if np.any(np.abs(c_pts) > 0.01) else offs      # review round 4: residual on the final line
+        o3 = measure(Q, arclen(Q), tangents(Q), ss, white_reject=wr_, bmin=BSTAR_ARC if wr_ else None) if np.any(np.abs(c_pts) > 0.01) else offs      # review round 4: residual on the final line
         g3 = ~np.isnan(o3)
         resid_before += list(np.abs(offs[good])); resid_after += list(np.abs(o3[g3]))
         # review round 4: a line with paint in < 25 % of its samples (or naip_unverified) is kept for routing but not
@@ -797,7 +850,9 @@ for g in groups:
 # taxiway (inferred width, OSM_UPDATES width_m), sign text copied from the retired crossing's hold on the same side of the
 # same runway. src 'inf'.
 from shapely.geometry import LineString as _LS_h, Point as _P_h
-_ret = [_LS_h([geo_frame.wgs84_to_world(la, lo) for la, lo in w['pts']]) for w in OSM['taxiways'] if w['id'] in OSM_UPDATES['retire']]
+_addU = _suu0([_LS_h([geo_frame.wgs84_to_world(la, lo) for la, lo in w['pts']]).buffer(3.0) for w in UPD_WAYS])
+_ret = [_LS_h([geo_frame.wgs84_to_world(la, lo) for la, lo in w['pts']]).difference(_addU) for w in OSM['taxiways'] if w['id'] in OSM_UPDATES['retire']]
+_ret = [g for g in _ret if not g.is_empty]      # round 2: a retired way's part re-mapped by an added way (J) keeps its holds
 _ret += [_LS_h([r['trace'][0], r['trace'][1]]) for r in centerline_retired if r.get('trace')]
 _kept, _gone = [], []
 for h in holds:
@@ -846,7 +901,8 @@ print('holds', HOLD_STATS)
 # ---------------------------------------------------------------- taxiway edges bordering unpaved ground
 edges = []
 for t in D['taxiways']:
-    for poly in t['polys']:
+    for i_poly, poly in enumerate(t['polys']):
+        if is_retired(t, i_poly): continue          # round 2: no edge lines along retired pavement (PAVEMENT_RETIRE)
         for ring in poly:
             run = []
             n = len(ring)
@@ -897,6 +953,8 @@ print('edge runs (SFO Museum outline)', len(edges))
 edge_meta, edges_out = [], []
 E_before, E_after = [], []
 N_HYG = [0]
+EDGE_GAP = 8          # round 2: >= 8 samples (16 m) without paint / > 1.5 m off it split an edge run
+N_CUT = [0.0]
 # review round 4: no paint measurement within 7 m of a runway holding-position bar (the 4-line ladder and the sign boxes
 # next to it pulled the edge runs 143 / 242 / 302 ... 2-3 m inwards over 10-20 m); the run keeps its neighbours' offset
 HOLD_ZONE = _prep0(_suu0([_SLS0([tuple(h['a']), tuple(h['b'])]).buffer(7.0) for h in holds]))
@@ -953,8 +1011,24 @@ for e in edges:
     m_ = {'src': 'naip' if np.any(np.abs(c_pts) > 0.01) else 'outline', 'len': round(float(S[-1]), 1), 'paint_frac': round(frac, 2),
           'naip_med_abs_off_before': round(float(np.median(np.abs(offs[good]))), 2) if good.any() else None,
           'naip_med_abs_off_after': round(float(np.median(np.abs(o3[np.isfinite(o3)]))), 2) if np.isfinite(o3).any() else None}
+    # round 2 (review static-v4: edge 323 ran straight along the middle of a taxiway, 13 runs / 250 m >= 15 m more than
+    # 1.5 m off the paint): a stretch of >= EDGE_GAP samples (2 m) whose final line has no paint within the search (nan) or
+    # sits > 1.5 m off it is not drawn - the run is split there (hold-bar zones, inf, are neither)
+    bad_ = ~np.isinf(o3) & (np.isnan(o3) | (np.abs(np.where(np.isinf(o3), 0, o3)) > 1.5))
+    cut_, k = [], 0
+    while k < len(ss):
+        if not bad_[k]: k += 1; continue
+        j = k
+        while j + 1 < len(ss) and bad_[j + 1]: j += 1
+        if j - k + 1 >= EDGE_GAP: cut_.append((ss[k - 1] + 1.0 if k > 0 else -1.0, ss[j + 1] - 1.0 if j + 1 < len(ss) else S[-1] + 1.0))
+        k = j + 1
+    pieces_, prev_ = [], -1.0
+    for lo_, hi_ in cut_ + [(S[-1] + 1.0, None)]:
+        sel_ = (S >= prev_) & (S <= lo_)
+        if sel_.sum() >= 2: pieces_.append(Q[sel_].tolist())
+        if hi_ is not None: prev_ = hi_; N_CUT[0] += max(0.0, min(hi_, S[-1]) - max(lo_, 0.0))
     # static close-out: hairpin spikes (legs up to 12 m) and loops removed (hygiene); a split run keeps its meta per piece
-    parts_ = hygiene(simplify(Q.tolist(), 0.2), spike_len=15.0, min_len=4.0)
+    parts_ = [pl for pc_ in pieces_ for pl in hygiene(simplify(pc_, 0.2), spike_len=15.0, min_len=4.0)]
     if not parts_: edge_meta.append(None); continue
     N_HYG[0] += len(parts_) - 1
     for k_, pl in enumerate(parts_):
@@ -962,6 +1036,7 @@ for e in edges:
 EDGE_STATS = {'runs_outline': len(edges), 'runs_kept': len(edges_out), 'dropped_no_paint': sum(1 for m in edge_meta if m is None),   # (incl. round 4: weak paint and > 1 m off)
               'km_kept': round(sum(_plen(e) for e in edges_out) / 1000, 2),
               'white_reject_bstar_min': BSTAR_MIN, 'runway_zone_m': round(RWY_HW + 3.0, 2), 'runs_split_by_hygiene': N_HYG[0],
+              'm_cut_unpainted': round(N_CUT[0]), 'unpainted_split_samples': EDGE_GAP,
               'snapped_runs': sum(1 for m in edge_meta if m and m['src'] == 'naip'),
               'paint_offset_before': {'median': round(float(np.median(E_before)), 2), 'gt1.5': round(float((np.array(E_before) > 1.5).mean()), 3)} if E_before else None,
               'paint_offset_after': {'median': round(float(np.median(E_after)), 2), 'gt1.5': round(float((np.array(E_after) > 1.5).mean()), 3)} if E_after else None}
@@ -1045,7 +1120,7 @@ out = {'attribution': 'Taxiway centrelines: OpenStreetMap aeroway=taxiway ways (
                                     'check': 'NAIP 2024: all 70 viewed on contact sheets (base of an imaged mast; at the terminal on the facade line), review round 3',
                                     'height': 'not in OSM; js/live/items.js MAST_H is inferred',
                                     'clear_of_buildings_m': MAST_CLEAR, 'moved': mast_moved, 'near_taxiway': mast_near_tw},
-       'roads': roads, 'roadsNote': ROADS_NOTE, 'centerlineRetired': centerline_retired,
+       'roads': roads, 'roadsNote': ROADS_NOTE, 'centerlineRetired': centerline_retired, 'pavementRetired': PAVEMENT_RETIRED,
        'osmBase': {'base': OSM['osm_base'], 'updates': {'date': OSM_UPDATE_DATE, 'file': os.path.basename(_upd_fn),
                                                          'added': sorted(OSM_UPDATES['add']), 'retired': sorted(OSM_UPDATES['retire'])}}}
 json.dump(out, open(os.path.join(ROOT, 'data', 'sfo_details.json'), 'w'), separators=(',', ':'))

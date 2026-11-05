@@ -166,3 +166,109 @@ Files: `tower.glb` 3.47 MB, `tower_f2.glb` 3.37 MB, `tower_lod2.glb` 0.23 MB (PN
 - t2 camera match: with the rim registered, the base-building parapet renders ~90 px (~2.9 m) higher than in the photo; the camera height (11.5 m) and focal length are estimates (no EXIF here), so this is a camera-model check only, but the parapet / roof station (rim - 3.46 D - 0.7) comes from the same photo.
 - Slot 345.5 deg: its top corner falls on the NE blade root; clipped 0.3 m clear of the crease (the sheet lets the blade cover it).
 <!-- tower:end -->
+
+<!-- landside:begin (tools/blender/build_landside.py; numbers from out/buildings3d/landside_verify.json) -->
+## Landside: garages, AirTrain, Grand Hyatt, RCC, CAC, Superbay, United MOC (key `landside`, 5 Nov 2026)
+
+```bash
+flock out/.heavy.lock python3 tools/blender/build_landside.py     # ~2 min: geometry, textures, NAIP colours, 3 AO bakes, export, verify, manifest
+python3 tools/blender/verify_landside.py                            # numbers only (no bpy) -> out/buildings3d/landside_verify.json
+flock out/.heavy.lock python3 tools/blender/render_landside.py --views gar_a,hyatt,superbay,l4,l1,l5,overview
+flock out/.heavy.lock python3 tools/blender/render_landside.py --views a2 --itb          # with itb.glb as context
+flock out/.heavy.lock python3 tools/blender/render_landside.py --views gar_a,l1,l5 --backface   # red = inward faces
+python3 tools/blender/landside_manifest.py                          # merge the render list into manifest.json#landside
+```
+
+| File | Role |
+|---|---|
+| `tools/blender/landside_geom.py` | Buildings (numpy / shapely). Imports `draw_landside.py` / `draw_data.py`: GAR / ggeom (Garages A / G), SB_* (Superbay), GH_* + the l4 fractions (Hyatt), RCC_N / RCC_S / RCC_TOWER_D, the BL-03 level placeholders |
+| `tools/blender/landside_airtrain.py` | Guideway on the SFO Museum polygon, level field, piers, guide beams, stations, the RCC station tower |
+| `tools/blender/landside_cars.py` | Parked cars on the deck stall grids (count / axis from NAIP), two low-poly shapes |
+| `tools/blender/landside_mesh.py`, `landside_tex.py` | Mesh primitives (MB, facade / cap / tube, `face_dir`); procedural tiles (normal + base colour) |
+| `tools/blender/build_landside.py`, `landside_manifest.py` | bpy build, NAIP colour sampling, AO bakes, export, manifest entry |
+| `tools/blender/verify_landside.py`, `render_landside.py` | 140 checks on the exported glb; Cycles references with the sheet lines drawn over them; back-face QA |
+| `data/buildings3d/landside.glb` (14.9 MB), `landside_lod2.glb` (1.26 MB) | The asset; the LOD2 subtrees alone (far / phone tier) |
+
+**Layout.** Root `landside` at world (0, 3.0, 0); one child per building / AirTrain tile at its own origin (`origin_world_xz`
+in the node extras), each with `LOD0_*` / `LOD1_*` / `LOD2_*` children: switch 0 / 450 / 1500 m **from that building node**
+(the group spans 2.4 x 2.8 km, so one root LOD would not work). LOD0 / LOD1 share the shell meshes and their AO atlas
+(A 2048 px: the six parking structures; B 2048 px: the other buildings and the AirTrain); LOD2 = one joined node per building
+with atlas C (1024 px). Parked cars: 1,699 instances, one node per deck x shape x colour with `EXT_mesh_gpu_instancing`
+(one material, paint / glass / skirt in COLOR_0), under LOD0 and LOD1.
+
+| LOD | triangles (non-instanced) | instanced car triangles | draw calls (all buildings) |
+|---|---|---|---|
+| 0 | 116.8k | 91.6k | 286 (12 car groups per deck) |
+| 1 | 63.0k | 64.5k | 258 |
+| 2 | 8.8k | none | 74 (`landside_lod2.glb`: 1.26 MB) |
+
+### What is modelled, and from what (per-dimension tags in the node extras and `manifest.json#landside.buildings`)
+
+| Building | Plan | Heights | Facade / detail |
+|---|---|---|---|
+| Central garage | SFO Museum outline with the 58.9-m void [obs]; the AirTrain ring and T1 / T2 / T3 station polygons cut out above Level 5, garage structure under them to the guideway deck | parapet 81 ft = 24.69 [pub, definition unk]; deck 23.62 [inf]; levels = equal fifths, Level 5 = 19.75 [unk, BL-03] | open levels (3-m dark recess, spandrels, piers 9 m [inf]); roof light poles at the two DOF points 30.8 / 33.2 [pub]; 300 cars [obs visual] |
+| Garages A / G | outline up to the body end Lb 150.8 / 149.8 [obs]; drum = outline arc (R 16.2 / 15.2, fit residual < 0.6) [obs]; Garage A: the guideway strips inside the body, portals at both faces; Garage G: guideway cut out | parapet = drum ring 39.6 / 37.6 [unk: the deck is not measured]; core cylinder D 13 to +4 m [obs / unk]; Garage A rooftop box to +3.5 [obs / unk]; nine levels as equal ninths [unk] | precast spandrels + perforated screens on every face [obs spec, l1, a2]; banded drum with the top openings; Garage A station block: solid precast with dark slots (photo l1); 100 / 77 cars [obs NAIP] |
+| LTP 1 / LTP 2 | outlines [obs] | LTP 1 parapet 16.5 [obs shadow], towers to the DOF tops 26.2 / 27.7 [pub, form inf]; LTP 2 deck 60 ft [inf], levels 12 ft [pub], PV canopies at deck + 3.5 [unk] | precast / exposed frame; PV rows over the stall modules [pub, layout inf]; 276 / 318 cars |
+| Rental Car Center | outline [obs]; west wall = the outline between RCC_N and RCC_S | roof outline 54 ft [pub DOF]; 59-ft element at its DOF point [pub, form inf] | west wall per photo l5: board-formed concrete, ribbon windows at the platform, band, canted louvre screen (1.2 m lean [inf]); 626 cars in nose-to-tail lanes [obs NAIP] |
+| Grand Hyatt | outline; the podium zone (17 m east of the slab along the south part, from the relief-corrected NAIP roof [obs, approx]) | 44 m [inf, 13.2 pitches]; podium 10.67, colonnade 14.0 [inf]; penthouse +1.4 / +0.65 pitches [obs l4] | l4 face fractions (podium 0.47, colonnade 0.02-0.10, end bay, framed bay 0.615-0.842, masts, sign pier) |
+| CAC | outline | roof 60 ft, parapet 64 ft [inf] | window band per 15-ft floor [inf]; louvre fins on the S / W faces [pub] |
+| Superbay | spine a -14..+18, roof a -80.5..+84.5, t +-69 [obs NAIP]; walls on the outline, 1 m inside the roof | spine 41.15 [pub DOF], root 39.65, tips 27.0 [inf], folds 1.5 [unk], door head 24.0 [unk] | 8 folded bays per side, hipped spine ends (plan BL-02), 2 x 67-m door bays per long face (8 leaves) [inf], red light at the DOF point |
+| United MOC | imaged roof corners shifted west by 0.315 x 37.1 m (North-Field lean) [inf]; barrel hangars likewise | parts 35.7 / 40.2 / 35.4 at the DOF points [pub, extents inf]; barrel eave 14 / crown 24 [unk placeholders] | corrugated walls; no doors (not verified) |
+| AirTrain | SFO Museum polygon (7.8 km of centreline), clipped inside the ITB outline and the Garage A body | deck top from station anchors (see below), harmonic interpolation, max grade 3.9 % | trough walls 1.1 m, guide beams, 99 single-column T-piers every 30 m (not inside buildings), 9 stations (glazed enclosures / curved canopies), RCC perforated tower D 6.5 to the DOF TANK 18.3 [pub, identity inf] |
+
+**Station levels (deck top).** T1 / T2 / T3 19.75 (BL-03 Level 5 placeholder [unk]); ITB A / G 16.5 (ITB Level 4 [unk], keeps the
+guideway inside the itb.glb core block); Garages A / G and the Hyatt station 19.75 [inf]; RCC 5.8 [inf, photo l5]; LTP 15.24
+("50 ft above a public roadway" [pub]); West Field Road interpolated (11.3). **Two deliberate deviations from the BL-03
+placeholders** (both [unk] on the sheets; listed in the manifest): the Garage A / G stations at 19.75 instead of 6/8 of the drum
+ring (29.7 / 28.2 m) - the Grand Hyatt station is 40 m along the same track, so the sheet value would need a > 20 % grade - and
+inside the sheet's own [inf] range 18.3-21.0 m; the RCC platform at 5.8 m (photo l5: ribbon windows at the platform, band and
+louvres above to the 54-ft roof; the tower ~2 D above the platform) instead of 12.35 m. Also: the Superbay spine-end facets fall
+to the cantilever-root level (BL-02 plan) rather than to the tip level (BL-03 V4 line, which would leave an 11-m step).
+
+### Verification (verify_landside.py on the exported glb: 140 checks, 0 failed; tolerance 0.5 m or 2 %)
+- Placement of all 23 nodes exact (0.01 m); root at GROUND_Y.
+- Heights = the sheet values to < 0.01 m: CG 24.69 / deck 23.62 / poles 33.2, 30.8; Garages A / G ring 39.6 / 37.6, cores 43.6 /
+  41.6, box 43.1; LTP 1 16.5, towers 27.7 / 26.2; LTP 2 18.29 / 19.36 / PV 21.79; RCC 16.46, 59-ft element 17.98; Hyatt 44.0,
+  podium 10.67, penthouse 48.67; CAC 18.29 / 19.51; Superbay spine 41.15, root 39.65, tips 27.0 / 28.5, door head 24.0; MOC
+  40.2 / 35.7 / 35.4; RCC tower 18.3, D 6.50.
+- Plans: CG, LTP 1 / 2, RCC, CAC roof footprints = the outlines (0 m2 outside / missing; RCC: the canted louvres overhang the
+  west wall by 1.1 m = 206 m2, by design); Hyatt 5.5 m2 outside (parapet buffering); drum fits R 16.21 / 15.17 (sheet 16.2 / 15.2),
+  centres within 0.03 m; body ends 151.1 / 149.8 (150.8 / 149.8); rooftop box u 52.3-76.9 (exact); CG void 58.7 m (58.9);
+  Superbay roof a -80.5 / +84.5, 138.0 m along the spine; Hyatt podium to f 0.470.
+- AirTrain: deck inside the SFO Museum polygon (0 m2 outside); every anchored platform / track at its level within 0.02 m;
+  99.9th-percentile grade between deck vertices 2-6 m apart 3.9 %.
+- Cars: per deck = NAIP density x deck area (CG: the visual 300); minimum centre spacing 2.39 m (2.6-m stalls), all on the deck.
+- Render silhouettes (orthographic, alpha pass) vs the sheet lines: Hyatt parapet max 0.04 m (0.135 m/px); Superbay spine
+  max 0.07 m (0.177 m/px); Garage A ring max 0.73 m (0.333 m/px): SUVs on the deck stand 0.7 m above the 1.07-m guard, the ring
+  itself is exact in the verification.
+- Back-face QA (red = an inward face): gar_a, superbay, overview 0 px; a2 6 px; l5 537 px (0.08 %), Hyatt 610 px (0.12 %: the
+  colonnade recess at the curved south end), l1 2,085 px (0.3 %: inside the Garage A portal openings) - small residuals, left
+  open.
+- **Plausibility**: nearest stand envelope (108 stands, app planforms) 28.9 m (A4, the guideway at the ITB); nearest bridge
+  walkway / rotunda 56.0 m; no SFO Museum taxiway polygon inside any footprint (nearest 204 m, RCC; Superbay / MOC 212 m).
+  Integration: the MOC has no SFO Museum outline, so the app's ground physics does not know it - add its footprint
+  (`manifest.json#landside.buildings.united_moc`) to the obstacle list.
+- Khronos glTF-Validator 2.0.0-dev.3.10: 0 errors (both files); warnings only MESH_PRIMITIVE_GENERATED_TANGENT_SPACE (no
+  TANGENT attribute, accepted as for the ITB).
+- Thin see-through plates (louvres, station roofs, coping) and the dark garage interiors are `doubleSided`; everything else is
+  single-sided and wound outwards (`landside_mesh.MB.face_dir` where the winding is not implied by a ring).
+
+### Renders (out/buildings3d/, local; comparison sheets with photo pixels stay local)
+`landside_gar_a.png` / `landside_cmp_gar_a.png` (BL-03 row 1 lines over the orthographic SSE face), `landside_hyatt.png` /
+`_cmp_hyatt` (BL-03 row 2, l4 fractions), `landside_superbay.png` / `_cmp_superbay` (BL-03 row 4 door face), `landside_l1`,
+`landside_l4`, `landside_l5`, `landside_a2` (camera-matched to the photos; `_cmp_*` side by side), `landside_overview.png`.
+Self-review: a2 reproduces the layout (Garage G with its station canopy along the NNW face, Garage A behind with the rooftop box
+and core, the Hyatt beyond, the guideway curves); l1 the station block with its slots and portals, the curved NE corner with
+screens; l5 the board-formed west wall, ribbon windows, canted louvres and the perforated tower; l4 the podium, colonnade,
+penthouse steps, masts and framed bay.
+
+### Open items (also in the manifest's `unknown` / `conflicts` / `deviations_from_sheets`)
+- Garage A / G roof decks (drawn at the drum ring). Photo l1 shows the Garage A station block rising only ~9 m above the
+  guideway, with the curved garage wall behind it higher: consistent with a lower block or a lower deck at the east end - not
+  changed (BL-03 is the reference; the deck is [unk]).
+- Station enclosure / canopy heights, the stair / elevator towers of the terminal-area stations, the Hyatt bridge, the LTP links.
+- The RCC "66 ft", the DOF 10.4-m point inside the RCC outline (conflict), the MOC section extents and barrel-vault heights,
+  the Superbay fold amplitude and door leaves, the CAC cladding: placeholders / inferred, as tagged.
+- Guideway over the T1 / T2 / T3 terminal outlines (skybridge parts at Level 3 below it): check against the domestic asset.
+- KTX2 / meshopt (tools/engine/glb_compress.mjs) and the js/three loader are later steps.
+<!-- landside:end -->

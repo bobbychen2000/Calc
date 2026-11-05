@@ -98,7 +98,7 @@ def make_all(out):
     # --- perforated screen panel (UV 0..1 = one panel): frame 4 % of the panel, horizontal slots (dark) every 1/14
     u, v = _grid(256, 256, 1.0, 1.0)
     fr = (np.minimum(np.minimum(u, 1 - u), np.minimum(v, 1 - v)) < 0.035).astype(float)
-    slot = ((_dist(v, 1 / 14.0, 0.5 / 14) < 0.026) & (_dist(u, 1 / 6.0, 1 / 12.0) < 0.078)).astype(float) * (1 - fr)
+    slot = ((_dist(v, 1 / 14.0, 0.5 / 14) < 0.022) & (_dist(u, 1 / 6.0, 1 / 12.0) < 0.078)).astype(float) * (1 - fr)
     # perforation (fine holes, unresolved) darkens the metal between the slots: the dark interior shows through [obs l1 / a2]
     T['ls_c_screen'] = _rgb_png(mix((196, 198, 198), (40, 42, 45), slot * 0.95) * (1 - 0.04 * fr[..., None]), P('ls_c_screen'))
     T['ls_n_screen'] = _normal_png(-0.01 * slot + 0.006 * fr, 3 / 256, 1.6 / 256, P('ls_n_screen'))

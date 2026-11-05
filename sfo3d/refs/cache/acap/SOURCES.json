@@ -1,10 +1,48 @@
 {
-  "737NG_REV_C.pdf": {"url": "https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737NG_REV_C.pdf", "licence": "Boeing copyright (airport planning document, not redistributable here)", "fetched": "2026-11-04"},
-  "737MAX_RevK.pdf": {"url": "https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737MAX_RevK.pdf", "licence": "Boeing copyright (not redistributable here)", "fetched": "2026-11-04"},
-  "777-200LR-300ER-F_Rev_G.pdf": {"url": "https://www.boeing.com/content/dam/boeing/v2/airports/acaps/777-200LR-300ER-F_Rev_G.pdf", "licence": "Boeing copyright (not redistributable here)", "fetched": "2026-11-04"},
-  "777-200-200ER-300_Rev_E.pdf": {"url": "https://www.boeing.com/content/dam/boeing/v2/airports/acaps/777-200-200ER-300_Rev_E.pdf", "licence": "Boeing copyright (not redistributable here)", "fetched": "2026-11-04"},
-  "787_ACAP_Rev_Q.pdf": {"url": "https://www.boeing.com/content/dam/boeing/v2/airports/acaps/787_ACAP_Rev_Q.pdf", "licence": "Boeing copyright (not redistributable here)", "fetched": "2026-11-04"},
-  "wingletspans.pdf": {"url": "https://www.boeing.com/content/dam/boeing/v2/airports/faq/wingletspans.pdf", "licence": "Boeing copyright (not redistributable here)", "fetched": "2026-11-04"},
-  "AC_A321_jul2026.pdf": {"url": "https://mediaassets.airbus.com/pm_38_916_916230-7u6neg4lfg.pdf?fileName=aca32101-jul-2026.pdf", "licence": "Airbus copyright (not redistributable here)", "fetched": "2026-11-04", "note": "Revision No. 35, Jul 01/26 (check_dims cites the Jul 15/25 revision)"},
-  "*.txt": {"url": "pdftotext -layout of the PDFs above", "licence": "derived from the copyrighted PDFs (not redistributable here)"}
+ "737NG_REV_C.pdf": {
+  "url": "https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737NG_REV_C.pdf",
+  "licence": "Boeing copyright (airport planning document, not redistributable here)",
+  "fetched": "2026-11-04"
+ },
+ "737MAX_RevK.pdf": {
+  "url": "https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737MAX_RevK.pdf",
+  "licence": "Boeing copyright (not redistributable here)",
+  "fetched": "2026-11-04"
+ },
+ "777-200LR-300ER-F_Rev_G.pdf": {
+  "url": "https://www.boeing.com/content/dam/boeing/v2/airports/acaps/777-200LR-300ER-F_Rev_G.pdf",
+  "licence": "Boeing copyright (not redistributable here)",
+  "fetched": "2026-11-04"
+ },
+ "777-200-200ER-300_Rev_E.pdf": {
+  "url": "https://www.boeing.com/content/dam/boeing/v2/airports/acaps/777-200-200ER-300_Rev_E.pdf",
+  "licence": "Boeing copyright (not redistributable here)",
+  "fetched": "2026-11-04"
+ },
+ "787_ACAP_Rev_Q.pdf": {
+  "url": "https://www.boeing.com/content/dam/boeing/v2/airports/acaps/787_ACAP_Rev_Q.pdf",
+  "licence": "Boeing copyright (not redistributable here)",
+  "fetched": "2026-11-04"
+ },
+ "wingletspans.pdf": {
+  "url": "https://www.boeing.com/content/dam/boeing/v2/airports/faq/wingletspans.pdf",
+  "licence": "Boeing copyright (not redistributable here)",
+  "fetched": "2026-11-04"
+ },
+ "AC_A321_jul2026.pdf": {
+  "url": "https://mediaassets.airbus.com/pm_38_916_916230-7u6neg4lfg.pdf?fileName=aca32101-jul-2026.pdf",
+  "licence": "Airbus copyright (not redistributable here)",
+  "fetched": "2026-11-04",
+  "note": "Revision No. 35, Jul 01/26 (check_dims cites the Jul 15/25 revision)"
+ },
+ "*.txt": {
+  "url": "pdftotext -layout of the PDFs above",
+  "licence": "derived from the copyrighted PDFs (not redistributable here)"
+ },
+ "757_Rev_H.pdf": {
+  "url": "https://www.boeing.com/content/dam/boeing/v2/airports/acaps/757_Rev_H.pdf",
+  "licence": "Boeing copyright (not redistributable here)",
+  "fetched": "2026-11-05",
+  "note": "D6-58327 Rev H (Dec 2024); \u00a72.2.1 p.2-10: 757-200 span 124 ft 10 in (38.05 m), no winglets drawn (aircraft-v3)"
+ }
 }
