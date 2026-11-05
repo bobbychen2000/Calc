@@ -291,7 +291,7 @@ export class Renderer3 {
     this.sunRad = uniform(new THREE.Vector3(1, 1, 1));
     E.sun.colorNode = this.sunRad.mul(sky.cloudShadow(TSL.positionWorld));
     this.gMat = groundMaterial(W, this.bakes, sky, Q); this.wMat = waterMaterial(W, this.bakes, sky);
-    const common = { noiseTex: this.noiseTex, night: this.nightE, time: this.time, interiorE: this.interiorE, sunDir: E.sunDirU, shadeK: this.shadeK, kG: this.kG, glassAB: this.glassAB }; // objects.js night emissions: nightE
+    const common = { noiseTex: this.noiseTex, night: this.nightE, time: this.time, interiorE: this.interiorE, sunDir: E.sunDirU, shadeK: this.shadeK, kG: this.kG, envGround: sky.u.ground, glassAB: this.glassAB }; // objects.js night emissions: nightE; envGround: curtain-wall local reflection
     this.objMat = objectMaterial(common); this.vehMat = objectMaterial({ ...common, instanced: true });
     this.carMat = objectMaterial({ ...common, instanced: true, carFade: true }); // garage-roof cars: distance fade to their mean colour
     this.markMat = markingMaterial({ noiseTex: this.noiseTex, pxScale: this.pxScale, reversed: E.reversed });

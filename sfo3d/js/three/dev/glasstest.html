@@ -5,8 +5,10 @@
      js/live/terminals.js layers) on a concrete plane, sun and sky of the recorded snapshot (23 Sep 2026 10:51 PDT),
      camera as the app's gate:B20,130,1,24 view relative to the B20 facade (63 deg off the facade normal, 24 deg down,
      130 m), the IBL ground scaled by the airfield bake's mean albedo as renderer3 does. ?ab=x,y,z,w sets the
-     ?glassab switches (x 1 = round-3 inputs, y / z / w = reflection / interior / frame weights); ?n= frames.
-     window.__probe: mean / darker-60 % display colour of the pane box, sunlit and shaded concrete. -->
+     ?glassab switches (x 1 = round-3 inputs, y / z / w = reflection / interior / frame weights); ?n= frames;
+     ?galb= IBL ground albedo, ?conc= concrete albedo (the plane and renderer3 apronAlb).
+     window.__probe: the light inputs (lux, shadeK, kG, IBL ground). window.__glass.set({ ab, galb, n }) switches the A/B
+     weights / IBL ground in the same page and renders n frames (tools/build3/job_glass.mjs measures the screenshots). -->
 <style>html,body{margin:0;height:100%;background:#000}canvas{display:block;width:100%;height:100%}</style></head>
 <body>
 <script type="module">
@@ -31,18 +33,20 @@ try {
   const sunDir = sunVector(sp.az - 283.23 + 90, sp.el);
   const env = { sunDir, mie: 21e-6, sunI: 20, fog: [0.0001, 1 / 700, 1, 0.97], cloud: [0.14, 800 * 0.3048, 14000, 0.5], cloudWind: [1, 1], refPos: [0, 60, 0], slab: false };
   sky.setEnv(env); const L = Sky.lightFor(env);
-  const gA = (q.get('galb') || '0.3027,0.2749,0.2106').split(',').map(Number); L.ground = L.ground.map((g, k) => g / 0.16 * gA[k]); // renderer3: IBL ground = airfield bake mean
-  sky.applyLight(L); S.backgroundNode = sky.backgroundNode(); S.fogNode = sky.fogNode(); sky.renderSky(E.renderer); sky.updateEnvironment(E.renderer, S);
+  const ground0 = L.ground.slice(); let gA = (q.get('galb') || '0.3027,0.2749,0.2106').split(',').map(Number);
+  const setGround = (a) => { gA = a; L.ground = ground0.map((g, k) => g / 0.16 * a[k]); sky.applyLight(L); sky.renderSky(E.renderer); sky.updateEnvironment(E.renderer, S); }; // renderer3: IBL ground = airfield bake mean
+  S.backgroundNode = sky.backgroundNode(); S.fogNode = sky.fogNode(); setGround(gA);
   E.setSun(L.sunDir, L.sunColor); E.expo.value = 0.36; // the app's day exposure (0.45 x DAY_GAIN 0.8)
   const lum = (v) => 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2];
   const sy = Math.max(0, L.sunDir[1]); const shadeK = new THREE.Vector3(...[0, 1, 2].map(k => { const a = Math.PI * L.skyUp[k], b = L.sunColor[k] * sy; return a / (a + b); }));
   const eAmb = lum(L.sunColor) * sy + Math.PI * lum(L.skyUp), eSky = Math.PI * lum(L.skyUp), LUX = 133300 / 20;
   const ab = (q.get('ab') || '0,1,1,1').split(',').map(Number);
-  const interiorE = TSL.uniform(0.05 * (ab[0] ? eAmb : eSky) + 200 / LUX);
+  const interiorE = TSL.uniform(0), kG = TSL.uniform(new THREE.Vector3(1, 1, 1)), AB = TSL.uniform(new THREE.Vector4(...ab));
   const concA = (q.get('conc') || '0.345,0.335,0.312').split(',').map(Number); // concrete mean (renderer3 apronAlb; ?conc= from the app's debugInfo)
-  const kG = TSL.uniform(new THREE.Vector3(...concA.map((v, k) => v / gA[k])));
-  out.inputs = { sunLux: Math.round(lum(L.sunColor) * sy * LUX), skyLux: Math.round(eSky * LUX), hallLux: Math.round(interiorE.value * LUX), shadeK: shadeK.toArray().map(v => +v.toFixed(3)), kG: kG.value.toArray().map(v => +v.toFixed(3)), ground: L.ground.map(v => +v.toFixed(4)) };
-  const mat = objectMaterial({ noiseTex: noise, night: TSL.uniform(0), time: TSL.uniform(0), interiorE, sunDir: E.sunDirU, shadeK: TSL.uniform(shadeK), kG, glassAB: TSL.uniform(new THREE.Vector4(...ab)) });
+  const inputs = () => { interiorE.value = 0.05 * (AB.value.x ? eAmb : eSky) + 200 / LUX; kG.value.set(...concA.map((v, k) => v / gA[k]));
+    return { ab: AB.value.toArray(), sunLux: Math.round(lum(L.sunColor) * sy * LUX), skyLux: Math.round(eSky * LUX), hallLux: Math.round(interiorE.value * LUX), shadeK: shadeK.toArray().map(v => +v.toFixed(3)), kG: kG.value.toArray().map(v => +v.toFixed(3)), galb: gA, ground: L.ground.map(v => +v.toFixed(4)) }; };
+  out.inputs = inputs();
+  const mat = objectMaterial({ noiseTex: noise, night: TSL.uniform(0), time: TSL.uniform(0), interiorE, sunDir: E.sunDirU, shadeK: TSL.uniform(shadeK), kG, envGround: sky.u.ground, glassAB: AB });
   // ground (concrete, linear albedo) and the pier
   const g = new THREE.Mesh(new THREE.PlaneGeometry(4000, 4000), new THREE.MeshStandardNodeMaterial({ roughness: 0.9 })); g.material.colorNode = TSL.vec3(...concA);
   g.rotation.x = -Math.PI / 2; g.position.y = GROUND_Y; g.receiveShadow = true; S.add(g);
@@ -57,7 +61,9 @@ try {
   const yaw = (+(q.get('yaw') || 63.4)) * Math.PI / 180, pit = (+(q.get('pitch') || 24)) * Math.PI / 180, dist = +(q.get('dist') || 130);
   const tgt = [15 + 30, G + 4, 0]; const cp = [tgt[0] + Math.cos(yaw) * Math.cos(pit) * dist, tgt[1] + Math.sin(pit) * dist, tgt[2] - Math.sin(yaw) * Math.cos(pit) * dist];
   const cam = { pos: cp, target: tgt, fov: 50 * Math.PI / 180, near: 0.5, far: 50000, shadowSplits: [80, 300, 1200] };
-  for (let i = 0; i < +(q.get('n') || 8); i++) { E.setCamera(cam, innerWidth, innerHeight); E.render(); await new Promise(r => setTimeout(r, 20)); }
+  const frames = async (n) => { for (let i = 0; i < n; i++) { E.setCamera(cam, innerWidth, innerHeight); E.render(); await new Promise(r => setTimeout(r, 20)); } };
+  await frames(+(q.get('n') || 8));
+  window.__glass = { async set(o) { if (o.ab) AB.value.set(...o.ab); if (o.galb) setGround(o.galb); const r = inputs(); await frames(o.n || 8); return r; } };
   out.cam = cp.map(v => +v.toFixed(1));
   out.ok = true;
 } catch (e) { out.err = String(e && e.stack || e); }
