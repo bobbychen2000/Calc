@@ -3012,9 +3012,9 @@
  },
  "domestic": {
   "asset": "data/buildings3d/domestic.glb",
-  "bytes": 9267572,
-  "built": "2026-11-05T02:28:44+00:00",
-  "git": "ba7a2d1+dirty",
+  "bytes": 9265476,
+  "built": "2026-11-05T02:33:53+00:00",
+  "git": "8b7c168+dirty",
   "generator": "tools/blender/build_domestic.py (bpy 5.0.1, Cycles CPU AO bake); geometry tools/blender/dom_geom.py + dom_mesh.py; textures dom_tex.py",
   "reference": "2-D sheets BD-01..03 (docs/drawings/buildings/README.md), drawn by tools/buildings/draw_domestic.py, imported by dom_geom.py",
   "spec": "tools/buildings/spec_domestic.json (+ dom_bab_band.json, dom_baf_hub.json, dom_bab_roof.json; tools/blender/dom_pv.json)",
@@ -3073,8 +3073,8 @@
     "lod": 0,
     "node": "LOD0",
     "switch_m": 0.0,
-    "tris": 69817,
-    "verts": 145788,
+    "tris": 69757,
+    "verts": 145716,
     "draw_calls": 115,
     "ao_atlas": "dom_ao_S / dom_ao_N (shared by the LOD0 / LOD1 shell meshes)"
    },
@@ -3144,7 +3144,7 @@
      2048
     ],
     "mime": "image/png",
-    "bytes": 1330634,
+    "bytes": 1330627,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    },
    {
@@ -3709,7 +3709,7 @@
      "BA_C",
      "T2"
     ],
-    "bake_s": 24.1,
+    "bake_s": 24.0,
     "mean": 0.641,
     "p2": 0.001,
     "samples": 48,
@@ -3729,7 +3729,7 @@
      "BA_E",
      "BA_F"
     ],
-    "bake_s": 26.5,
+    "bake_s": 26.2,
     "mean": 0.694,
     "p2": 0.004,
     "samples": 48,
@@ -3744,7 +3744,7 @@
     "buildings": [
      "all"
     ],
-    "bake_s": 4.7,
+    "bake_s": 4.0,
     "mean": 0.665,
     "p2": 0.002,
     "samples": 48,
@@ -5392,9 +5392,9 @@
     {
      "group": "footprints",
      "check": "LOD0 plan area outside the SFO Museum outlines (roof overhangs, canopy, vestibules)",
-     "model": 1035.769,
+     "model": 1035.577,
      "drawing": 0.0,
-     "dev": 1035.769,
+     "dev": 1035.577,
      "tol": null,
      "ok": true,
      "src": "BA-B / BA-D ESE overhangs +2.3 / +2.4 m [obs], T1 canopy 4 m [inf], vestibules [inf]"
@@ -5462,9 +5462,9 @@
     {
      "group": "plausibility",
      "check": "AirTrain guideway (SFO Museum \"AirTrain Rail\") inside the 3-D footprint",
-     "model": 0.978,
+     "model": 0.0,
      "drawing": 0.0,
-     "dev": 0.978,
+     "dev": 0.0,
      "tol": 1.0,
      "ok": true,
      "src": "cut out of the T1 hall / canopy (+1 m)"
@@ -6128,7 +6128,57 @@
    ],
    "note": "silhouette = topmost opaque pixel per column of the alpha pass (LOD0); the parapet / coping top is the measured roof edge"
   },
-  "renders_updated": "2026-11-05T02:00:37+00:00"
+  "renders_updated": "2026-11-05T02:36:25+00:00",
+  "renders_args": {
+   "glb": "data/buildings3d/domestic.glb",
+   "res": 960,
+   "samples": 48,
+   "lod": 0
+  },
+  "renders_note": "Cycles CPU, AgX, OIDN, <= 960 px / <= 64 spp; photo comparison sheets (domestic_cmp_*.png) hold photo pixels and stay local (out/ is not committed)",
+  "neighbours": {
+   "tool": "tools/blender/verify_domestic.py --neighbours",
+   "method": "LOD0 triangles of both assets: plan overlap where the height ranges overlap (conservative triangle-bbox test)",
+   "result": {
+    "landside.glb": {
+     "overlap_m2": 0,
+     "pairs": {}
+    },
+    "itb.glb": {
+     "overlap_m2": 0.765,
+     "pairs": {
+      "L0_T1_shell / L0_itb_core": 0.511,
+      "L0_T3W_shell / L0_itb_core": 0.123,
+      "L0_T3W_detail / L0_itb_core": 0.073,
+      "L0_T1_detail / L0_itb_core": 0.035,
+      "L0_T3W_shell / L0_ba_g_body": 0.023
+     }
+    },
+    "tower.glb": {
+     "overlap_m2": 0,
+     "pairs": {}
+    }
+   },
+   "note": "itb: slivers along the shared T1 / T3W - ITB core boundary (~1 cm; coplanar adjacency, no volume shared)"
+  },
+  "validator": {
+   "tool": "Khronos glTF-Validator 2.0.0-dev.3.10 (node tools/blender/tower_validate.mjs)",
+   "domestic.glb": {
+    "errors": 0,
+    "warnings": 77,
+    "infos": 39,
+    "codes": {
+     "warning:MESH_PRIMITIVE_GENERATED_TANGENT_SPACE": 77,
+     "info:UNUSED_OBJECT": 39
+    }
+   },
+   "domestic_lod2.glb": {
+    "errors": 0,
+    "warnings": 0,
+    "infos": 16
+   },
+   "note": "no TANGENT attribute by choice (tiling normal maps; the runtime derives the tangent frame), as the ITB asset"
+  }
  },
  "landside": {
   "asset": "data/buildings3d/landside.glb",
@@ -11227,5 +11277,60 @@
     }
    }
   }
+ },
+ "integration": {
+  "loader": "js/three/buildings3d.js (GLTFLoader from vendor/three/three.module.js, tools/build3/three-entry.js); hooks: js/three/renderer3.js, js/live/world.js, js/live/airport.js, js/live/terminals.js",
+  "files": {
+   "full": [
+    "data/buildings3d/tower.glb",
+    "data/buildings3d/itb.glb",
+    "data/buildings3d/domestic.glb",
+    "data/buildings3d/landside.glb"
+   ],
+   "phone_lod2": [
+    "data/buildings3d/tower_lod2.glb",
+    "data/buildings3d/itb_lod2.glb",
+    "data/buildings3d/domestic_lod2.glb",
+    "data/buildings3d/landside_lod2.glb"
+   ],
+   "tower_f2": "data/buildings3d/tower_f2.glb (?b3dtower=f2)",
+   "table": "data/buildings3d/integration.js (app) / integration.json (footprints, plausibility)"
+  },
+  "replaces": {
+   "parts": 28,
+   "walkway_rest_pieces": 7,
+   "structures": 34,
+   "atc": "tower",
+   "rail": "landside",
+   "complex_edge_runs": 15
+  },
+  "plausibility": {
+   "conflicts": 0,
+   "notes": 6,
+   "nearest_envelopes": [
+    {
+     "stand": "F12",
+     "dist_m": 2.78,
+     "unit": "domestic/BA_F/LOD0",
+     "old_outline_dist_m": 2.81
+    },
+    {
+     "stand": "F17",
+     "dist_m": 3.07,
+     "unit": "domestic/BA_F/LOD0",
+     "old_outline_dist_m": 3.38
+    },
+    {
+     "stand": "G7",
+     "dist_m": 5.2,
+     "unit": "itb/BA-G/LOD0",
+     "old_outline_dist_m": 5.35
+    }
+   ],
+   "bridges_checked": 131
+  },
+  "generated": "2026-11-05T03:14:15Z",
+  "tool": "tools/blender/b3d_integrate.py",
+  "doc": "docs/research/buildings3d.md (integration section)"
  }
 }

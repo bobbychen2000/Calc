@@ -61,6 +61,7 @@
 // Usage: CANVAS_MODULE=/abs/node_modules/@napi-rs/canvas/index.js node tools/live/invariants.mjs --stream S.jsonl.gz
 //          [--gates G.jsonl.gz] [--from ISO|epoch] [--until ISO|epoch] [--warm 600] [--root <code root>] [--out R.json]
 //          [--fast] (skip surface/pair/bridge checks) [--trace <hex>] (per-0.5 s display/target/park state to stderr)
+//          [--events E.json] (every engine event; gates_full.jsonl.gz -- the plan the app gets -- is read lazily)
 // --from/--until bound the CHECKED window; the replay starts --warm seconds earlier (tracks, stands, delay settle).
 // --root runs another copy of the code (e.g. a frozen snapshot) with the same data layout.
 import fs from 'fs'; import path from 'path'; import zlib from 'zlib'; import readline from 'readline'; import { fileURLToPath } from 'url';
@@ -75,6 +76,7 @@ const FAST = argv.includes('--fast'); // skip the surface / pair / bridge checks
 const TRACE = opt('trace', null); // hex[,hex...]: print those aircraft's display/target/park state every 0.5 s to stderr
 const TRACES = new Set(TRACE ? TRACE.split(',') : []);
 const OUTF = opt('out', STREAM ? STREAM.replace(/stream\.jsonl\.gz$/, 'invariants.json') : 'invariants.json');
+const EVOUT = opt('events', null); // --events E.json: every engine event of the replay (data time), for offline analyses
 if (!STREAM) { console.error('--stream required'); process.exit(1); }
 
 let createCanvas;
@@ -115,11 +117,13 @@ const gateByName = new Map(gates.map(g => [g.name, g]));
 const bridgeGate = (g) => (g.sharesBridgesOf && !(g.bridges && g.bridges.length) && gateByName.get(g.sharesBridgesOf)) || g;
 const occ = new Map(); // physical gate name -> occupant track (as the bridge system was told)
 const undocking = new Map(); // physical gate name -> the occupant whose bridge is retracting (its cab leaves its door)
-function applyGate(g, tr, opt) { const G = bridgeGate(g); const ty = tr && tr.model && TYPES[tr.model.t] ? tr.model.t : null; const prev = occ.get(G.name); if (!ty && prev) undocking.set(G.name, prev); else if (ty) undocking.delete(G.name); occ.set(G.name, ty ? tr : null); gsys.setOccupant(G, ty, booted, simNow, tr ? poseST(tr) : null, tr ? tr.info.icao : null);
-  if (!tr && opt && opt.fast) hurryUndock(G, opt.s || 5, simNow); }
-// (as js/live/app.js hurryUndock: a departing / removed aircraft's bridge retracts in opt.s seconds)
-function hurryUndock(G, s, now) { if (gsys.hurryUndock) return gsys.hurryUndock(G, s, now); const a = gsys.anims.get(G.id); if (!a || a.to !== 0) return;
-  const u = a.dur > 0 ? Math.min(1, Math.max(0, (now - a.t0) / a.dur)) : 1; const k = a.from + (a.to - a.from) * u; const dur = s * 1000 * Math.max(0.2, k); if (a.t0 + a.dur > now + dur) { a.from = k; a.k = k; a.t0 = now; a.dur = dur; } }
+// (opt.early, traffic.js undockEarly: the departure is known before its push -- gates.js undockEarly() retracts at the sheet's
+// rates while the aircraft stays parked; a later onGateChange(g, tr) with the same type and pose is redock(). opt.fast: the
+// push is seen with the bridge still out -- gates.js hurryUndock(), the sheet's maximum rates; bridges_closeout.md Round 2)
+function applyGate(g, tr, opt) { const G = bridgeGate(g); const ty = tr && tr.model && TYPES[tr.model.t] ? tr.model.t : null; const prev = occ.get(G.name); if (!ty && prev) undocking.set(G.name, prev); else if (ty) undocking.delete(G.name); occ.set(G.name, ty ? tr : null);
+  if (!tr && opt && opt.early && gsys.undockEarly) { gsys.undockEarly(G, simNow); return; }
+  gsys.setOccupant(G, ty, booted, simNow, tr ? poseST(tr) : null, tr ? tr.info.icao : null);
+  if (!tr && opt && opt.fast && gsys.hurryUndock) gsys.hurryUndock(G, opt.s || 5, simNow); }
 function bridgeK(g, b) { const a = gsys.anims.get(g.id); if (a) return gsys.docks(g, b) ? a.k : 0; return g.acType && gsys.docks(g, b) ? 1 : 0; }
 // (gates.js step(): the app's own animation step -- it also records the height a retracted bridge rests at)
 function animStep(now) { if (gsys.step) { gsys.step(now); return; } for (const [id, a] of gsys.anims) { const u = Math.min(1, Math.max(0, (now - a.t0) / a.dur)); a.k = a.from + (a.to - a.from) * u; if (u >= 1) gsys.anims.delete(id); } }
@@ -130,9 +134,13 @@ const ALLEV = [];
 traffic.buildingAt = building; if (process.env.LOCKLOG) traffic.lockLog = []; if (process.env.CANDLOG) traffic.candLog = []; if (TRACE) { traffic.debug = TRACES.size === 1 ? TRACE : null; traffic.debugSet = TRACES; }
 traffic.onEvent = (e) => { ALLEV.push(e); if (TRACE && TRACES.has(e.hex)) console.error('EVENT', new Date(e.t).toISOString().slice(11, 21), e.kind, JSON.stringify(e).slice(0, 200)); };
 traffic.bridgeK = (g) => { const G = bridgeGate(g); if (gsys.extension) return gsys.extension(G); const a = gsys.anims.get(G.id); return a ? a.k : (G.acType ? 1 : 0); };   // (as app.js)
+// (as app.js: seconds until the stand's bridges are clear of the occupant's straight push-back, gates.js pushClearEta; and the
+// seconds the whole retraction still takes, undockEta)
+if (gsys.pushClearEta) { traffic.pushClearEta = (g) => gsys.pushClearEta(bridgeGate(g), simNow); traffic.undockEta = (g) => gsys.undockEta(bridgeGate(g), simNow); }
 // (as js/live/app.js: the jet bridges at rest are obstacles for aircraft parked off a stand)
 const restBridges = GROUNDJS.bridgeGrid && gsys.solids ? (() => { const boxes = []; for (const g of gates) for (const b of g.bridges || []) boxes.push(...gsys.solids(g, b, 0)); return GROUNDJS.bridgeGrid(boxes, GROUND_Y); })() : null;
 const physics = new GroundPhysics({ paved: apt.paved, building, net: traffic.net, bridges: restBridges });
+traffic.restBridgeAt = restBridges;   // (as app.js)
 const pavedMask = apt.paved, pavedAll = pavedUnion(apt.paved, traffic.net);
 
 // ---------------------------------------------------------------- geometry helpers
@@ -376,7 +384,9 @@ while (simNow < tEnd && (nextEv || simNow < tStart + 1)) {
       // body is what the user sees, the target is where the data says the aircraft is (display delay excluded)
       if (!(D.alpha != null && D.alpha < 1) && tr.reps && tr.reps.length) {
         const o = traffic.target(tr, traffic.displayTime(simNow), {}); const lag = Math.hypot(o.x - D.x, o.z - D.z);
-        const roll = ph === 'takeoff' || ph === 'landing';
+        // (a target already rolling while the label still says lined up -- the back-dated roll start of a roll the data showed
+        // late, traffic.js runwayTarget rollStart -- is a take-off roll: its lag is roll lag; review 4 Nov realtime-v8)
+        const roll = ph === 'takeoff' || ph === 'landing' || !!o.rollStart;
         if (D.ground && o.ground && !roll && lag > 30) viol(inAirport(D.x, D.z) ? 'lag.gnd_30m' : 'lag.gnd_30m.other_airfield', tr, lag, { lag: Math.round(lag), tgtV: +o.gs.toFixed(1), v: +D.gs.toFixed(1), bridge: tr.bridgeOn || (tr.bridgeGate && traffic.bridgeK(tr.bridgeGate) > 0.01) ? 1 : 0, leaving: tr.leaving ? 1 : 0 });
         if (D.ground && roll && lag > 100) viol('lag.roll_100m', tr, lag, { lag: Math.round(lag), tgtV: +o.gs.toFixed(1), v: +D.gs.toFixed(1) });
         if (!D.ground && !o.ground && lag > 150 && Math.hypot(D.x, D.z) < 15000) viol('lag.air_150m', tr, lag, { lag: Math.round(lag), tgtV: +o.gs.toFixed(1), v: +D.gs.toFixed(1), cat: tr.info.category || null });
@@ -554,5 +564,6 @@ for (const [cls, v] of [...V.entries()].sort()) {
 report.offpaveCells = [...offCells.entries()].sort((a, b) => b[1].hex.size - a[1].hex.size || b[1].frames - a[1].frames).slice(0, 25).map(([k, v]) => { const [x, z] = k.split(',').map(Number); const ll = toLL(x, z); return { x, z, lat: +ll[0].toFixed(6), lon: +ll[1].toFixed(6), frames: v.frames, movingFrames: v.moving, aircraft: v.hex.size, who: [...v.hex].slice(0, 8) }; });
 if (traffic.candLog) report.candLog = traffic.candLog;
 fs.writeFileSync(OUTF, JSON.stringify(report, null, 1));
+if (EVOUT) fs.writeFileSync(EVOUT, JSON.stringify(ALLEV));
 console.log(`${OUTF}: checked ${checkedFrames} frames (${(checkedFrames * DT / 3600).toFixed(2)} h) in ${report.meta.wallS}s`);
 for (const [cls, c] of Object.entries(report.classes)) console.log(cls.padEnd(28), String(c.frames).padStart(8), 'frames', String(c.episodes).padStart(6), 'episodes', String(c.keys).padStart(5), 'keys');

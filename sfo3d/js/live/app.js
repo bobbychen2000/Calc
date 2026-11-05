@@ -4,13 +4,14 @@ import '../shaders/common.js';
 import '../shaders/ground.js';
 import { Renderer } from '../renderer.js';
 import { bakeGround } from '../world/world.js';
-import { solarPosition, sunVector } from '../world/textures.js';
 import * as GEO from '../geo.js';
 const { ARP, GROUND_Y, worldToST, stToWorld } = GEO;
 import { Scene } from '../scene.js';
 import { TYPES } from '../aircraft/types.js';
 import { CLOUD_VS, CLOUD_FS } from '../shaders/env.js';
-import { parseMetar } from '../livedata.js';
+// environment core (docs/research/environment_spec.md §3): data clock, METAR/TAF, ephemeris -> EnvState for both renderers
+import { AppEnv } from '../env/app_env.js';
+import { loadFixtures, provCounts, PROV_TINT } from '../env/lighting/fixtures.js';
 import { LiveAircraft, TYPE_MODELS } from './aircraft.js';
 import { footprint } from './gates.js';
 import { MODEL_SOURCES } from './models.js';
@@ -19,8 +20,8 @@ import { LiveGateSystem } from './gates.js';
 import { buildLiveLights, lightSpriteFn, buildPierGeometry } from './lights.js';
 import { Traffic, category, hdgVec, RWY, phaseLabel, antOf, DELAY_MS } from './traffic.js';
 import { GroundPhysics, buildingGrid, bridgeGrid } from './ground.js';
-import { Feed, StreamFeed, Routes, fetchMetar, fetchGates, parsePayload, SOURCES } from './feed.js';
-import { runwayStats, statsLine, statsHtml, runwayQueue } from './stats.js';
+import { Feed, StreamFeed, Routes, fetchMetar, fetchTaf, fetchGates, parsePayload, SOURCES } from './feed.js';
+import { runwayStats, statsLine, statsHtml, runwayQueue, runwayConfig } from './stats.js';
 import { atcRoles, onFeed, roleChip, FEEDS, FEED_BY } from './atc.js';
 import { CameraRig } from './controls.js';
 import { UI } from './ui.js';
@@ -108,18 +109,30 @@ export async function startApp(cfg) {
   // markers for aircraft without a 3D model (light aircraft, helicopters, unknown types)
   scene.staticLights.push(() => markerSprites());
   // ---------------------------------------------------------------- environment
-  let metar = cfg.metar ? parseMetar(cfg.metar.split('\n')[0]) : null;
+  // Sun / Moon / time / weather from the EnvState (js/env/state.js; 2026-11-05 environment track): the data clock (live =
+  // traffic display time, replay = relay dataNow, snapshot = cfg.snapshot.now, ?t= / ?wx= overrides), the ephemeris
+  // (replaces js/world/textures.js solarPosition) and the light-mode instants from sunEvents (replaces the hard-coded
+  // UTC-7 presets). `metar` is the compact view of the CURRENT report by data clock (js/env/wx/metar.js decoder).
+  const envCore = new AppEnv({ mode: cfg.mode, relayInfo: cfg.relayInfo, snapshotNow: cfg.snapshot && cfg.snapshot.now, snapshotMetar: cfg.metar || '', search: location.search, groundY: GROUND_Y });
+  envCore.setLightMode(lightMode); envCore.attachHud(root);
+  // ?qa=prov (spec §11.4): every airfield fixture face of data/sfo_lighting.js tinted by provenance (pub/obs green, std
+  // blue, inf orange, NV red), day and night, on top of the current lights; counts in the ?qa=env HUD
+  if (envCore.qa.has('prov')) import('../../data/sfo_lighting.js').then(({ LIGHTING_SPEC, LIGHTING_FIXTURES }) => {
+    const L = loadFixtures(LIGHTING_FIXTURES, LIGHTING_SPEC, { groundY: GROUND_Y }); const S = envCore.provSprites(L.records, PROV_TINT, provCounts(L.records));
+    scene.staticLights.push(() => S);
+  }).catch(e => console.warn('qa=prov', e));
+  let metar = null;
   let env = null, lastSunKey = '', lastBakeSun = null, nightF = 0, exposure = 0.45, cloudItems = [];
-  const lightDate = (now) => {
-    if (lightMode === 'real') return new Date(cfg.mode === 'snapshot' ? cfg.snapshot.now : now);
-    const d = new Date(now); const pdt = { day: 13.0, dusk: 19.45, night: 22.5 }[lightMode]; // local solar-ish times
-    const utcH = pdt + 7; d.setUTCHours(Math.floor(utcH) % 24, Math.round((utcH % 1) * 60), 0, 0); return d;
-  };
   function applyEnv(now, force) {
-    const date = lightDate(now); const sp = solarPosition(date, ARP.lat, ARP.lon);
+    const T = envCore.clock.traffic; // set once traffic exists (below); observed runway flow = stats.js runwayConfig (spec §3.5)
+    const E = envCore.update(now, T && T.events ? runwayConfig(T.events, T.displayTime(now)) : null);
+    metar = envCore.summary(); R.envState = E;   // the full EnvState for the renderers (both read sun / time below)
+    // el = apparent (Bennett) for the sun direction / bake key; elN = geometric, for the night heuristics below (the
+    // ephemeris clamps refraction at its -1 deg value, +0.65 deg, below the horizon; twilight is defined geometrically, USNO)
+    const sp = { az: E.sun.az, el: E.sun.el }, elN = E.sun.elTrue;
     const key = sp.az.toFixed(1) + ':' + sp.el.toFixed(1) + ':' + (metar ? metar.raw : '');
     if (!force && key === lastSunKey) return; lastSunKey = key;
-    const sunDir = sunVector(sp.az, sp.el);
+    const sunDir = E.sun.dir;
     const M = metar; const layers = M ? M.clouds.slice().sort((a, b) => a.ft - b.ft) : [];
     const COVER = { FEW: 0.14, SCT: 0.4, BKN: 0.68, OVC: 0.95 };
     const main = layers.find(c => c.cover !== 'FEW') || layers[0];
@@ -134,7 +147,7 @@ export async function startApp(cfg) {
     world.waterU.uWind = [windTo[0] * Math.max(wms, 1), windTo[2] * Math.max(wms, 1)]; world.waterU.uWaveAmp = Math.min(1.3, 0.45 + (wms / 0.5144) / 22);
     R.setupSky(env);
     // night: keep a faint moon/city-glow ambient so silhouettes stay readable
-    const nf = sstep(3, -9, sp.el);
+    const nf = sstep(3, -9, elN);
     const floorUp = [0.010, 0.012, 0.018].map(v => v * nf), floorHz = [0.012, 0.011, 0.012].map(v => v * nf);
     R.light.skyUp = R.light.skyUp.map((v, i) => Math.max(v, floorUp[i])); R.light.skyHorizon = R.light.skyHorizon.map((v, i) => Math.max(v, floorHz[i]));
     R.light.ground = R.light.ground.map((v, i) => Math.max(v, floorHz[i] * 0.5));
@@ -144,9 +157,9 @@ export async function startApp(cfg) {
       if (first) releaseAirportMap(world);
       lastBakeSun = sp;
     }
-    nightF = sstep(6, -4, sp.el);
-    const dark = sstep(2, -10, sp.el);
-    exposure = (0.45 + 0.25 * (env.cloud[0] > 0.6 ? 1 : 0) * (1 - dark)) * (1 - dark) + 2.4 * dark + sstep(8, 2, sp.el) * (1 - dark) * 0.25;
+    nightF = sstep(6, -4, elN);
+    const dark = sstep(2, -10, elN);
+    exposure = (0.45 + 0.25 * (env.cloud[0] > 0.6 ? 1 : 0) * (1 - dark)) * (1 - dark) + 2.4 * dark + sstep(8, 2, elN) * (1 - dark) * 0.25;
     R.extraCommon = { uNight: nightF };
     setClouds(lowSlab ? { H: env.cloud[1], cov: env.cloud[0] } : null);
     envInfo = { sun: sp, metar: M };
@@ -184,30 +197,29 @@ export async function startApp(cfg) {
     const n = worldToST(P.x + h[0] * k, P.z + h[1] * k), o = worldToST(0, 0), d = worldToST(h[0], h[1]); return { nose: n, dir: [d[0] - o[0], d[1] - o[1]] }; };
   const traffic = new Traffic({ gates: world.gates, airport: cfg.airport, persist: cfg.mode === 'live', centerlines: cfg.details ? cfg.details.centerlines : null, taxigraph: cfg.taxigraph || null, stands: cfg.stands || null,
     onGateChange: (g, tr, opt) => applyGate(g, tr, opt) });
+  envCore.setTraffic(traffic);
   // the physical bridges of a stand: its own, or -- for an alternative (MARS) position without bridges of its own, e.g.
   // B5S / B16S / C9V (data/sfo_stands.json shares_bridges_of) -- those of its base stand, which dock to the aircraft there
   const gateByName = new Map(world.gates.map(g => [g.name, g]));
   const bridgeGate = (g) => (g.sharesBridgesOf && !(g.bridges && g.bridges.length) && gateByName.get(g.sharesBridgesOf)) || g;
   // jet-bridge docking follows the scene: traffic.js calls this at display time (docks once the drawn aircraft has come to
   // rest; retracts when it is leaving, before it moves) and only for aircraft with a 3-D airframe
-  // opt.fast (traffic.js undock of a departing / removed aircraft): the retraction takes opt.s seconds instead of the
-  // datasheet rates -- the data shows a departure only once the push-back has begun, when the real bridge is already
-  // retracted (traffic.js FAST_UNDOCK_S): gates.js hurryUndock() (requested in docs/requests/realtime_round2.md s.1a; it keeps
-  // the datasheet's rates as the floor). The fallback below only serves an older gates.js without it
+  // opt.early (traffic.js earlyUndock, realtime-v6): the departure is known before its push -- gates.js undockEarly() retracts
+  // at the sheet's rates while the aircraft stays parked; a later onGateChange(g, tr) with the same type and pose re-docks it
+  // (gates.js redock). opt.fast (traffic.js undock of a departing / removed aircraft seen only with its push): gates.js
+  // hurryUndock(), the rest of the retraction at the sheet's maximum rates (docs/requests/bridges_closeout.md Round 2 API)
   function applyGate(g, tr, opt) {
     const G = bridgeGate(g); const now = Date.now();
+    if (!tr && opt && opt.early && gateSys.undockEarly) { gateSys.undockEarly(G, now); return; }
     gateSys.setOccupant(G, tr && tr.model && TYPES[tr.model.t] ? tr.model.t : null, booted(), now, tr ? poseST(tr) : null, tr ? tr.info.icao : null);
-    if (!tr && opt && opt.fast) hurryUndock(G, opt.s || 5, now);
-  }
-  function hurryUndock(G, s, now) {
-    if (gateSys.hurryUndock) return gateSys.hurryUndock(G, s, now);
-    const a = gateSys.anims.get(G.id); if (!a || a.to !== 0) return;
-    const u = a.dur > 0 ? clamp((now - a.t0) / a.dur, 0, 1) : 1; const k = a.from + (a.to - a.from) * u; const dur = s * 1000 * Math.max(0.2, k);
-    if (a.t0 + a.dur > now + dur) { a.from = k; a.k = k; a.t0 = now; a.dur = dur; }
+    if (!tr && opt && opt.fast && gateSys.hurryUndock) gateSys.hurryUndock(G, opt.s || 5, now);
   }
   // extension (0 retracted .. 1 docked) of a stand's bridges, for the engine's hold-until-clear (gates.js extension(): 1
   // only when a bridge actually docks the occupant)
   traffic.bridgeK = (g) => { const G = bridgeGate(g); if (gateSys.extension) return gateSys.extension(G); const a = gateSys.anims.get(G.id); return a ? a.k : (G.acType ? 1 : 0); };
+  // seconds until the stand's bridges are clear of the occupant's straight push-back (the body's hold) and until they are
+  // fully retracted (gates.js pushClearEta / undockEta)
+  if (gateSys.pushClearEta) { traffic.pushClearEta = (g) => gateSys.pushClearEta(bridgeGate(g), Date.now()); traffic.undockEta = (g) => gateSys.undockEta(bridgeGate(g), Date.now()); }
   const buildingAt = buildingGrid(cfg.airport); traffic.buildingAt = buildingAt;
   // ---------------------------------------------------------------- ATC (atc.js): tuned LiveATC feed + audio delay (per device)
   let atcTuned = store.get('atc.mount', null); if (atcTuned && !FEED_BY.has(atcTuned)) atcTuned = null;
@@ -237,6 +249,7 @@ export async function startApp(cfg) {
   // (the jet bridges at rest are obstacles for aircraft parked off a stand: gates.js solids(g, b, 0), ground.js bridgeGrid)
   const restBridges = (() => { if (!gateSys.solids) return null; const boxes = []; try { for (const g of world.gates) for (const b of g.bridges || []) boxes.push(...gateSys.solids(g, b, 0)); } catch (e) { console.warn('bridge solids', e); return null; } return bridgeGrid(boxes, GROUND_Y); })();
   const physics = new GroundPhysics({ paved: pavedMask, building: buildingAt, net: traffic.net, bridges: restBridges });
+  traffic.restBridgeAt = restBridges;   // (traffic.js fusInRestBridge: no rest pose accepted past a stop inside a bridge)
   // footprints of aircraft on the ground (vehicles around a stand must not hit them)
   gateSys.aircraftFootprints = () => {
     const out = [];
@@ -329,7 +342,7 @@ export async function startApp(cfg) {
     if (best) select(best, true); else if (selected) select(null);
   }
   function setting(k, v) {
-    if (k === 'light') { lightMode = v; store.set('light', v); applyEnv(Date.now(), true); }
+    if (k === 'light') { lightMode = v; store.set('light', v); envCore.setLightMode(v); applyEnv(Date.now(), true); }
     else if (k === 'quality') { store.set('quality', v); location.reload(); }
     else if (k === 'others') { showOthers = v; store.set('others', v); ui.renderList(true, [...traffic.tracks.values()]); }
     else if (k === 'clearParked') { traffic.clearParked(); for (const tr of [...traffic.tracks.values()]) if (tr.stale) traffic.remove(tr); }
@@ -359,7 +372,7 @@ export async function startApp(cfg) {
   } else {
     const relay = !!cfg.relay;
     let lastSrc = null, fails = 0, fellBack = false;
-    const onData = (p, src) => { firstData(); lastSrc = p.source || src.name; traffic.ingest(p, Date.now()); fails = 0; if (fellBack) { fellBack = false; } };
+    const onData = (p, src) => { firstData(); lastSrc = p.source || src.name; if (p.dataNow != null) envCore.setDataNow(p.dataNow, Date.now()); traffic.ingest(p, Date.now()); fails = 0; if (fellBack) { fellBack = false; } };
     const onStatus = (s) => {
       const nAc = () => [...traffic.tracks.values()].filter(t => !t.vehicle && !t.stale).length;
       if (s.ok) feedState = { state: 'live', text: 'Live', n: nAc(), src: s.source.name };
@@ -390,8 +403,11 @@ export async function startApp(cfg) {
       await routes.request(pl);
       for (const t of need) { const r = routes.get(t.cs.callsign); if (r !== undefined || routes.cache.has(t.cs.callsign)) traffic.setRoute(t, r || null); }
     }, 6000);
-    const wx = async () => { const m = await fetchMetar('KSFO', relay ? '/api/metar?ids=KSFO' : null); if (m) { metar = parseMetar(m); if (metar.altim) traffic.metarQnh = metar.altim * 33.8639; applyEnv(Date.now(), false); } };
-    wx(); setInterval(wx, 10 * 60000);
+    // relay METAR (JSON, last 3 h) every 60 s -- the relay's conditional, scheduled upstream cache makes this free and a
+    // SPECI shows within a minute (environment_spec.md §3.3); TAF every 10 min. No relay: SNAPSHOT_METAR only.
+    const wx = async () => { const L = await fetchMetar('KSFO', relay ? '/api/metar?ids=KSFO&format=json' : null); if (L) { envCore.setReports(L); applyEnv(Date.now(), false); if (metar && metar.altim) traffic.metarQnh = metar.altim * 33.8639; } };
+    const taf = async () => { if (relay && cfg.relayInfo && cfg.relayInfo.features && cfg.relayInfo.features.taf) { const t = await fetchTaf('/api/taf?format=json'); if (t) envCore.setTaf(t); } };
+    wx(); setInterval(wx, 60000); taf(); setInterval(taf, 10 * 60000);
     ui.statusSource = () => lastSrc;
   }
   // ---------------------------------------------------------------- loop
@@ -428,7 +444,7 @@ export async function startApp(cfg) {
     const txt = s.state === 'live' ? `Live · ${lag.toFixed(1)} s` : s.state === 'snap' ? s.text + (atcDelayS ? ` · +${atcDelayS} s` : '') : s.text;
     ui.setStatus({ state: s.state, text: txt, sub: s.state === 'snap' ? '' : provs, title: s.err ? 'Last error: ' + s.err : s.state === 'live' ? `${s.n ?? ''} aircraft · scene ${lag.toFixed(1)} s behind real time (interpolation ${(traffic.delay / 1000).toFixed(1)} s${traffic.audioDelay ? ` + ATC audio delay ${(traffic.audioDelay / 1000).toFixed(0)} s` : ''}) · positions from ${provs || 'the relay'}` : '' });
     const M = metar; const wx = M ? `${M.windDir != null ? String(M.windDir).padStart(3, '0') + '°' : 'VRB'} ${M.windKt ?? 0} kt · ${M.visSM ?? '—'} SM${M.clouds.length ? ' · ' + M.clouds.map(c => c.cover + String(c.ft / 100).padStart(3, '0')).join(' ') : ''}` : '';
-    ui.setClock(new Date(cfg.mode === 'snapshot' ? cfg.snapshot.now : traffic.audioDelay ? traffic.displayTime(now) : now), wx);
+    ui.setClock(new Date(cfg.mode === 'snapshot' ? cfg.snapshot.now : traffic.audioDelay ? traffic.displayTime(now) : now), wx + envCore.clockNote());
     const tD = traffic.displayTime(now);
     ui.setStats(statsLine(runwayStats(traffic.events, tD), tD)); statsSheet(now); atcUpdate(now);
   }
@@ -487,6 +503,6 @@ export async function startApp(cfg) {
     gatesOccupied: () => world.gates.filter(g => g.acType).map(g => g.name),
     tracks: () => [...traffic.tracks.values()].map(t => ({ hex: t.hex, flight: t.info.flight, icao: t.info.icao, phase: t.phase, gate: t.gate && t.gate.name, ground: t.disp.ground })),
   };
-  window.SFO = { R, scene, traffic, physics, rig, ui, world, gateSys, select, view, applyEnv, qa, stats: () => runwayStats(traffic.events, traffic.displayTime(Date.now())), atc: () => ({ tuned: atcTuned, delayS: atcDelayS, roles: Object.fromEntries(atcRolesBy), likely: Object.fromEntries(atcLikely) }), atcCmd: (a, v) => atcCmd(a, v), setLight: (m) => setting('light', m), frameNow: () => { last = performance.now() - 16; tick(); } };
+  window.SFO = { R, scene, traffic, physics, rig, ui, world, gateSys, select, view, applyEnv, qa, env: () => envCore.state, envCore, stats: () => runwayStats(traffic.events, traffic.displayTime(Date.now())), atc: () => ({ tuned: atcTuned, delayS: atcDelayS, roles: Object.fromEntries(atcRolesBy), likely: Object.fromEntries(atcLikely) }), atcCmd: (a, v) => atcCmd(a, v), setLight: (m) => setting('light', m), frameNow: () => { last = performance.now() - 16; tick(); } };
   return window.SFO;
 }

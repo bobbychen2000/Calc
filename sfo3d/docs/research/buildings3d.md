@@ -272,3 +272,111 @@ penthouse steps, masts and framed bay.
 - Guideway over the T1 / T2 / T3 terminal outlines (skybridge parts at Level 3 below it): check against the domestic asset.
 - KTX2 / meshopt (tools/engine/glb_compress.mjs) and the js/three loader are later steps.
 <!-- landside:end -->
+
+<!-- domestic:begin (tools/blender/build_domestic.py; numbers from out/buildings3d/domestic_verify.json, 2026-11-05) -->
+## Domestic terminals: T1 Center, T2, T3 West / East and Boarding Areas B-F (key `domestic`, 5 Nov 2026)
+
+```bash
+flock out/.heavy.lock python3 tools/blender/build_domestic.py --final   # ~70 s: geometry, textures, AO bake (2 x 2048 + 1024), export, verification, manifest
+python3 tools/blender/build_domestic.py --no-bake                       # quick WIP build -> out/buildings3d/wip/ (white occlusion)
+python3 tools/blender/verify_domestic.py [glb]                          # 59 checks, reads the glb back (no bpy) -> out/buildings3d/domestic_verify.json
+flock out/.heavy.lock python3 tools/blender/render_domestic.py --views a1,d1,bab,plan,bclose,eclose     # Cycles references, ~2 min at 48 spp
+flock out/.heavy.lock python3 tools/blender/render_domestic.py --qa backface --views a1,bclose,eclose,d1,plan [--lod 1|2]   # back faces red
+python3 tools/blender/dom_pv.py                                         # (re)measure the PV rack blocks on NAIP 2024 -> tools/blender/dom_pv.json
+```
+
+| File | Role |
+|---|---|
+| `tools/blender/dom_geom.py` | Geometry (numpy / shapely, no bpy). Imports `tools/buildings/draw_domestic.py` / `draw_data.py` (the sheets' functions and constants, not copies): footprints from the SFO Museum level-2 outlines, measured roof edges, BA-B band, BA-E section, BA-F hub / lantern / monitor, BA-D drums, T1 / T3 landside, bridge doors |
+| `tools/blender/dom_mesh.py` | Mesh builder + extrusion / cap / box / tube primitives (faces wound outwards) |
+| `tools/blender/dom_tex.py` | Our procedural tiles: normal maps (membrane laps, panel joints, curtain caps, corrugation, PV frames), curtain / frit / PV base colours |
+| `tools/blender/dom_pv.py`, `dom_pv.json` | PV rack blocks measured on NAIP 2024 (extents only; numbers, never a texture) |
+| `tools/blender/build_domestic.py` | bpy build, NAIP roof-colour sampling, the T1 sign, AO bake, glTF export (WIP to `out/buildings3d/wip/`, `--final` copies to `data/`), manifest |
+| `tools/blender/dom_manifest.py` | Manifest entry (per-dimension tags, inferred / unknown / not modelled / conflicts, budgets, renders) |
+| `tools/blender/verify_domestic.py` | 59 checks against the sheets and the plausibility rules, measured on the exported mesh (top-surface probe) |
+| `tools/blender/render_domestic.py` | Cycles references of the exported glb (+ tower / ITB assets for context), AO and back-face QA modes |
+| `data/buildings3d/domestic.glb` (9.27 MB), `domestic_lod2.glb` (1.63 MB) | The asset; the LOD2 subtree alone for the far / phone tier |
+
+**Placement.** Root `domestic` at world (−896.5, 3.0, 336.5) (centre of the complex bbox, GROUND_Y). LOD0 / LOD1 hold one node
+per building and kind (`L<k>_<bld>_shell / _detail / _pv`, `extras.building` in T1, BA_B, BA_C, T2, BA_D, T3W, T3E, BA_E, BA_F),
+each recentred on its own plan bbox: the complex spans ~1.3 km, so **choose the LOD per building** from the camera distance to
+that node (switch 380 / 1300 m). LOD2 is one joined node.
+
+### What is modelled, and from what (tags per dimension in `manifest.json#domestic.dimensions`)
+
+| Part | Source | Notes |
+|---|---|---|
+| Pier / hall footprints | obs | SFO Museum level-2 outlines; bridge-head fingers and the fixed-walkway strips at the BA-B tip are left to the app's bridges; the tower base building and the ITB are excluded (0 m²) |
+| Roof edges | obs | measured lean-free lines (`dom_true_edges`): BA-B ESE +2.27 / WNW −1.66 m, BA-D +2.40 / −1.36, BA-F +1.83 / −1.15 (see conflicts), BA-E WNW −2.0; continuous along each side (gaps at the finger roots closed, limited to the offset band) |
+| Heights (roof edge = coping top) | obs / inf / unk | BA-B 13.14 / band 19.04, BA-C 7.20, BA-D 8.49, BA-E 12.85 / flanks 9.85, BA-F 10.49, T3W parapet 16.76, T3E 14.48, penthouse 21.34; **T1 17.88 and T2 16.88 are placeholders [unk]** (curb 4.88 [unk] + the BD-03 heights) |
+| BA-B | obs / inf / unk | raised clerestory band s −391.0 / −423.4, t −1236..−946 (glazed both sides, low-E); 3 planted roof wells (depth 3 m [unk]), 2 bridges, 2 skylight grids, PV fields (NAIP); electrochromic gate glazing [pub] |
+| BA-E | obs / inf | raised PV plate 12.85 with its edge 1.5 m over the recessed clerestory, flanks 4.4 m at 9.85; NEW: the tip end bay (8 m) with the full-height glazed end wall recessed 1.5 m under the plate (photo a1) [inf] |
+| BA-F | obs / inf / unk | arms + octagonal hub on the outline; eccentric lantern 19.4 m at its 4.6-m rise bound [unk]; NW-arm monitor +2.5 m [unk] |
+| BA-D | obs / inf | head with two drums D 19.2 m to 13.19 m [inf top]; linear skylights; ESE overhang notched at the doors (roof soffit 7.69 m < walkway head 8.4 m) |
+| T1 Center | pub / obs / inf / unk | landside face on the measured roof edge (trimmed curb line − 4.0 m); clear glass under a 4.0-m glass canopy (brackets), two-tier green fritted wall with dark irregular mullions and the tier transom (photo d1), sign "Harvey Milk Terminal / Terminal 1" with the circled 1 [obs text, size / font inf]; PV fan (NAIP); 3 skylights |
+| T3 | pub / inf | T3W airside window stack 10 + 2 + 10 ft above L3 [pub]; T3W landside ACM / fritted window wall / spandrel [pub materials, proportions inf]; T3E grey-frit glass / platinum panels; T3E penthouse (corrugated, accent bands) |
+| Facades elsewhere | inf / unk | service band 0–4.6 m, dark spandrel, concourse glazing from 5.4–5.6 m (the bridge floor), panel above; mullion fins every 1.5 m (LOD0) |
+| Bridge attachment | inf | at all 75 attach points of `data/sfo_stands.json` (B–F): a door surround (jambs + head around the 2.6 × 3.0 m walkway section) and a dark leaf; 63 vestibules (max 2.6 m) from the facade to the app's walkway start; 23 bulkheads where the roof edge is below the walkway head (BA-C / BA-D) |
+| Elevated sky-bridge / connector parts | unk | the app's convention 6.0–10.5 m (kept so the app's walkways and bridges stay consistent) |
+
+### Budget, textures, AO
+
+| LOD | switch | triangles | draw calls | content |
+|---|---|---|---|---|
+| 0 | < 380 m | 69,757 | 115 | everything: mullion fins (~48k tris), door surrounds, PV rack boxes, canopy brackets, sign |
+| 1 | 380–1300 m | 21,501 | 91 | the LOD0 shell meshes and atlases; PV tops only; no fins / frames |
+| 2 | > 1300 m | 11,725 | 16 | one joined node, simplified outlines (1 m), reduced palette, own 1024 atlas; also `domestic_lod2.glb` |
+
+Textures (PNG, embedded): AO atlases S (T1 / BA-B / BA-C / T2) and N (BA-D / T3 / BA-E / BA-F) 2048² (1.33 / 1.30 MB, 8-bit
+greyscale), L2 1024² (0.42 MB); 48 spp, 10-m rays, ground plane, neighbours as occluders, white outside the islands; tiling
+normal maps 512² (membrane, panels, curtain, T3W window wall, corrugation, PV) and base colours 512² (4 curtain glasses, grey
+frit, green frit, T3W, PV), 1.5–24 kB each. Roofs: NAIP 2024 median per building; the white membranes saturate, so the base colour
+is capped at sRGB 215 (aged single-ply reflectance ~0.65–0.70) [inf]. Glass coated (IOR 1.9 → F0 0.096, as the ITB / tower), the
+T1 frit uncoated (F0 0.04, rougher: the ceramic frit dominates). Single-sided; no TANGENT. KTX2 / meshopt: later
+(`tools/engine/glb_compress.mjs`).
+
+### Verification (verify_domestic.py: 59 checks, 0 failed; tolerance 0.5 m or 2 %)
+
+- Placement exact. Every roof edge (median of 16–302 probes on the top surface 0.12 m inside the roof outline): deviation 0.000 m.
+- BA-B (28 stations every 10 m): band edges max 0.05 / 0.10 m; outer roof edges (t < −1150, the stretch of the measured lines and
+  the BD-02 typical section) 0.10 / 0.11 m; widths 7.35 / 32.2 / 14.69 / 54.24 m vs 7.3 / 32.4 / 14.7 / 54.3.
+- Measured roof-edge lines: BA-B, BA-D, BA-F within 0.15 m at every station; BA-F NE arm 27.15 m vs 27.0 (BD-02).
+- BA-E (13 sections): plate 12.85, flanks 9.85, widths 42.8 / 37.0 vs 42.9 / 37.1. BA-F lantern 20.90 vs 21.00 m across the
+  corners; BA-D drums r 9.57 vs 9.6.
+- T3W window stack L3 10.36 / 13.41 / 14.02 m (0.003 m); T1 fritted tiers 8.88–17.08, canopy soffit 8.88, canopy depth 4.0.
+- **Plausibility.** Nearest B–F stand envelope (app planforms, all accepted types) 2.93 m from the 3-D footprint (F12; criterion
+  ≥ 2.0); bridge walkways beyond the attachment (app-drawn part, 4.8–8.7 m band) 0.0 m² of contact with the asset (83 bridges);
+  SFO Museum taxiways 0 m²; tower base building 0 m²; ITB 0.02 m²; AirTrain guideway 0 m². INFO: the first 1.5 m beyond the
+  facade touch the door surrounds / the facade where the stand data meets the outline at an angle (79 bridges, 28 m² total,
+  e.g. C9, D14), as in the ITB rotunda contacts.
+- Khronos glTF-Validator 2.0.0-dev.3.10: **0 errors** on both files (domestic.glb: 77 warnings MESH_PRIMITIVE_GENERATED_TANGENT_SPACE,
+  accepted as for the ITB: no TANGENT attribute by choice; 39 infos UNUSED_OBJECT).
+- Neighbouring assets (`verify_domestic.py --neighbours`, LOD0 triangles whose height ranges overlap): landside 0 m², tower
+  0 m², ITB 0.77 m² (slivers along the shared T1 / T3W – ITB core boundary, ~1 cm; no shared volume).
+- Back-face QA (Cycles, single-sided): 0 red pixels in bclose / d1 / plan (LOD0, LOD1, LOD2); a1 49 px and eclose 85 px: the T1 –
+  BA-A connector's walls on the ITB boundary are left to the ITB asset (seen open only when the ITB is not loaded).
+- Render check (orthographic BA-B section, `domestic_render_check.json`, 0.1 m/px): band edges −0.13 / +0.17 m, heights +0.13 m
+  (pixel); the outer WNW silhouette −1.6 m comes from the tip's end walls (t < −1236), not the typical stretch.
+
+### Renders and self-review (out/buildings3d/, local; comparison sheets hold photo pixels and stay local)
+
+| View | Compared with | Reading |
+|---|---|---|
+| `domestic_a1.png`, `_cmp_a1` | photo a1 (camera solved from 3 points, 60 m, 36.5 mm) | tower, BA-D head with the drums, T2 behind, BA-E with its PV plate and glazed tip fall where the photo has them; missing: aircraft, bridges, apron, the C3C office building and landside (other assets / not in the sheets) |
+| `domestic_d1.png`, `_cmp_d1` | photo d1, BD-03 view 1 | green fritted two-tier wall with dark irregular mullions and the transom, sign with the circled 1, glass canopy, clear glass below: reads as the T1 Center landside; the curb roadway in front is not part of this asset |
+| `domestic_bab.png`, `_cmp_bab` | BD-02 view 1 | stepped section: clerestory band 19.04 over the 13.14 outer roof, ESE overhang, door surrounds at the concourse level |
+| `domestic_plan.png` | BD-01 / NAIP | PV fan on T1, BA-B wells / PV / skylights, BA-F hub and lantern, T3E penthouse |
+| `domestic_bclose.png`, `domestic_eclose.png` | photo a1 detail | BA-B band, PV, skylight grid, electrochromic gate glazing; BA-E plate overhanging the clerestory, the recessed glazed end |
+
+### Open items (also in the manifest's `unknown` / `conflicts`)
+- T1 Center and T2 hall heights and the departures-curb height (placeholders); the T3 datum; the BA-B well depth; the BA-F lantern
+  and monitor rises; the T3W state (95 % CD massing, without the May 2026 storey).
+- **Conflict for the drawings group:** BA-F ESE roof edge — the drawn line is 1.83 m outside the outline along the face (BD-02
+  draws 27.0 m between the lines); the spec / README note "on the outline" was measured at the line ends only. The asset follows
+  the drawn line.
+- BA-D / BA-C roofs below the bridge walkway head (notches / bulkheads); 6 bridges that attach into elevated pod parts (B10, B11,
+  B11S, B15, B16, F22) have no door surround.
+- Not modelled: courtyard links over the roadways / across the guideway, the curb roadways, the Courtyard 3 Connector building,
+  T3W penthouses, roof equipment other than PV / penthouse, interiors.
+- Integration (js/three loader replacing the `terminals.js` extrusions of these parts, per-building LOD) is not part of this step.
+<!-- domestic:end -->

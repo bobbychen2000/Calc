@@ -560,5 +560,43 @@ def run(path):
     return res
 
 
+def neighbours(path):
+    """3-D contact with the neighbouring assets (LOD0 of each): plan overlap of triangles whose height ranges overlap (a
+    conservative triangle-bbox test) -> out/buildings3d/domestic_neighbours.json. Slow (~3 min): run with --neighbours."""
+    from shapely.strtree import STRtree
+
+    def tri_polys(S, pref):
+        out = []
+        for n, m in S.items():
+            if not (n.startswith(pref) or m.get('lod') == 0): continue
+            for p in m['prims']:
+                P = p['P']
+                for t in p['T']:
+                    q = P[t]; pg = Polygon(q[:, [0, 2]])
+                    g = pg if pg.area > 1e-4 else LineString(q[:, [0, 2]]).buffer(0.025, cap_style=2)
+                    out.append((n, g, q[:, 1].min(), q[:, 1].max()))
+        return out
+    jd, bd, _ = load_glb(path); D_ = tri_polys(scene_meshes(jd, bd), 'L0_')
+    res = {}
+    for f in ('landside.glb', 'itb.glb', 'tower.glb'):
+        fp = os.path.join(ROOT, 'data', 'buildings3d', f)
+        if not os.path.exists(fp): continue
+        j, b, _ = load_glb(fp); L = tri_polys(scene_meshes(j, b), 'L0_')
+        tree = STRtree([g for _, g, _, _ in L]); hits = {}
+        for n, g, z0, z1 in D_:
+            for i in tree.query(g):
+                ln, lg, lz0, lz1 = L[i]
+                if lz1 < z0 + 0.05 or lz0 > z1 - 0.05: continue
+                a = g.intersection(lg).area
+                if a > 1e-3: hits[n + ' / ' + ln] = hits.get(n + ' / ' + ln, 0) + a
+        res[f] = dict(n_tris=len(L), overlap_m2=round(sum(hits.values()), 3), pairs={k: round(v, 3) for k, v in sorted(hits.items(), key=lambda x: -x[1])[:20]})
+        print(f, res[f]['overlap_m2'], list(res[f]['pairs'].items())[:5])
+    json.dump(res, open(os.path.join(OUT, 'domestic_neighbours.json'), 'w'), indent=1)
+    return res
+
+
 if __name__ == '__main__':
-    run(sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, 'data', 'buildings3d', 'domestic.glb'))
+    args = [a for a in sys.argv[1:] if not a.startswith('--')]
+    glb = args[0] if args else os.path.join(ROOT, 'data', 'buildings3d', 'domestic.glb')
+    if '--neighbours' in sys.argv: neighbours(glb)
+    else: run(glb)

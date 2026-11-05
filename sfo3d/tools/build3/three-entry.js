@@ -9,4 +9,7 @@ export { traa, default as TRAANode } from 'three/addons/tsl/display/TRAANode.js'
 export { bloom, default as BloomNode } from 'three/addons/tsl/display/BloomNode.js';
 export { fxaa } from 'three/addons/tsl/display/FXAANode.js';
 export { smaa } from 'three/addons/tsl/display/SMAANode.js';
+// glTF 2.0 loader for the Blender-built building assets (js/three/buildings3d.js, data/buildings3d/*.glb); it imports
+// 'three' (build/three.module.js), which shares build/three.core.js with three/webgpu, so its classes are the same ones
+export { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 export const THREE_REVISION_PINNED = '186';

@@ -409,7 +409,37 @@ def _buildings():
             out.append(dict(cx[0], id=f'complex{i}', rings=[o] + hs))
     else: out += cx
     out += [b for b in S['buildings'] if b['kind'] != 'apron-level' and not b.get('notBuilt')]
-    return out
+    return _b3d_buildings(S, out)
+
+
+def _b3d_buildings(S, out):
+    """the Blender building assets (data/buildings3d/integration.json of the app the scene came from; written by
+    tools/blender/b3d_integrate.py from the exported GLBs): the first-pass parts / structures they replace are marked
+    notBuilt (the three.js app hides them), the walkway spans that stay are added as walkways, and every asset unit is
+    added with its measured footprint (all LODs, max extent) and height range. B3D_FOOTPRINTS=0: first-pass only."""
+    p = os.path.join(app_root(S), 'data', 'buildings3d', 'integration.json')
+    if os.environ.get('B3D_FOOTPRINTS', '1') == '0' or not os.path.exists(p): return out
+    I = json.load(open(p)); R = I['replace']
+    gone = {f'part{e[0]}': e for e in R['parts']}; gone.update({f'struct{e[0]}': e for e in R['structures']})
+    res = []
+    for b in out:
+        e = gone.get(b['id'])
+        rail = b['kind'] == 'rail' and R.get('rail'); atc = b['id'] == 'tower' and R.get('atc')
+        if (e and e[1] == b['name']) or rail or atc:
+            res.append(dict(b, notBuilt='replaced by the Blender asset ' + (e[2] if e else rail or atc)))
+            for k, q in enumerate(e[3] if e and len(e) > 3 else []):
+                res.append(dict(b, id=b['id'] + f'rest{k}', rings=q, src='walkway span kept next to the asset (data/buildings3d/integration.json)'))
+            continue
+        res.append(b)
+    kind = {'tower': 'atc', 'itb': 'pier', 'domestic': 'pier', 'landside': 'b3d'}
+    for grp, U in I['footprints'].items():
+        for u, f in U.items():
+            if u in ('*', 'all'): continue  # joined LOD2 nodes: inside the per-unit footprints
+            for k, rings in enumerate(f['rings']):
+                kd = 'rail' if u.startswith('airtrain') else kind.get(grp, 'b3d')  # the elevated guideway passes over / under other buildings
+                res.append(dict(id=f'b3d:{grp}/{u}#{k}', kind=kd, name=f'{grp} asset {u}', rings=rings, y0=f['y'][0], y1=f['y'][1],
+                                src='data/buildings3d/integration.json footprints (measured on the exported GLB, all LODs)'))
+    return res
 
 
 def buildings():

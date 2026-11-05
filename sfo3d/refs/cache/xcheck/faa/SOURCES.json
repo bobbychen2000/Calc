@@ -1,0 +1,10 @@
+{
+ "03_Sep_2026_APT_CSV.zip": {
+  "url": "https://nfdc.faa.gov/webContent/28DaySub/extra/03_Sep_2026_APT_CSV.zip",
+  "landing_page": "https://www.faa.gov/air_traffic/flight_info/aeronav/aero_data/NASR_Subscription/",
+  "licence": "public domain (US government work, FAA NASR 28-day subscription)",
+  "fetched": "2026-11-05",
+  "sha256": "d5e4c999d4c96ab4d66d8ce9a387de8ea59b5226a6144ea1ba58758ff29bbbd9",
+  "note": "NASR APT CSV, cycle effective 2026-09-03 (the cycle docs/research/airfield_lighting.md used); input of tools/env/build_lighting_spec.py (read straight from the zip). The NFDC server answers HTTP 503 without a User-Agent header. Checked 2026-11-05 against cycle 29_Oct_2026: the SFO rows of APT_RWY_END/APT_RWY/APT_BASE differ only in pavement classification (PCR) and LAST_INSPECTION, nothing lighting-related."
+ }
+}

@@ -30,9 +30,10 @@ const M = {
 const ringArea = (r) => { let a = 0; for (let i = 0; i < r.length; i++) { const p = r[i], q = r[(i + 1) % r.length]; a += p[0] * q[1] - q[0] * p[1]; } return a / 2; };
 
 // walls of one ring between yb (per-edge, from the exposed-wall analysis) and y1; hole rings face into the hole
-function walls(g, ring, bases, isHole, y0, y1, mat, splits = null) {
+function walls(g0, ring, bases, isHole, y0, y1, mat, splits = null, pick = null) {
   const n = ring.length; const pos = ringArea(ring) > 0;
   for (let i = 0; i < n; i++) {
+    const g = (pick && pick(i)) || g0; // pick: per-edge Geo (js/three/buildings3d.js routing, buildTerminals `route`)
     const a = ring[i], b = ring[(i + 1) % n];
     const dx = b[0] - a[0], dz = b[1] - a[1], L = Math.hypot(dx, dz); if (L < 0.05) continue;
     let nx = -dz / L, nz = dx / L; // left normal: inward for positive-area rings
@@ -102,18 +103,24 @@ function skylights(g, part, y) {
   }
 }
 
-export function buildTerminals(B, gIn = null) {
-  const g = gIn || new Geo(); seed = 11;
+// route (optional; js/live/airport.js buildLiveBuildings from data/buildings3d/integration.js): { edge(ring) -> (i) ->
+// Geo | null, part(index, part) -> { g, rest: [{ g, rings }] } | null }. Routed geometry goes into the given Geo instead
+// of g (the three.js renderer hides it once the Blender asset that replaces it is shown); `rest` = the open span of a
+// walkway outside the asset, built again from its clipped rings (shown only with the asset). Same geometry, same order.
+export function buildTerminals(B, gIn = null, route = null) {
+  const g0 = gIn || new Geo(); seed = 11;
   // apron (ramp) level of the whole complex
   const big = B.complex.reduce((a, r) => Math.abs(ringArea(r)) > Math.abs(ringArea(a)) ? r : a, B.complex[0]); const sgn = Math.sign(ringArea(big));
-  for (const r of B.complex) walls(g, r, null, Math.sign(ringArea(r)) !== sgn, G, G + 5.0, M.apron);
+  B.complex.forEach((r, ri) => walls(g0, r, null, Math.sign(ringArea(r)) !== sgn, G, G + 5.0, M.apron, null, route ? route.edge(ri) : null));
   const itb = B.parts.filter(p => p.kind === 'hall' && /International/.test(p.name)).sort((a, b) => b.area - a.area)[0];
-  for (const p of B.parts) {
-    const top = G + p.h;
+  let gItb = g0;
+  for (const [pi, p] of B.parts.entries()) {
+    const top = G + p.h; const rt = route ? route.part(pi, p) : null; const g = (rt && rt.g) || g0; if (p === itb) gItb = g;
     if (p.kind === 'walkway') {
       const y0 = G + (p.y0 || 6), y1 = G + p.h;
-      p.rings.forEach((r, i) => walls(g, r, null, i > 0, y0, y1, M.glass, [[y0, y0 + 0.8, M.fascia], [y0 + 0.8, y1 - 0.7, M.glass], [y1 - 0.7, y1, M.fascia]]));
-      cap(g, p.rings, y1, M.roofMetal); cap(g, p.rings, y0, M.fascia, true);
+      const tube = (gg, rings) => { rings.forEach((r, i) => walls(gg, r, null, i > 0, y0, y1, M.glass, [[y0, y0 + 0.8, M.fascia], [y0 + 0.8, y1 - 0.7, M.glass], [y1 - 0.7, y1, M.fascia]])); cap(gg, rings, y1, M.roofMetal); cap(gg, rings, y0, M.fascia, true); };
+      tube(g, p.rings);
+      if (rt && rt.rest) for (const q of rt.rest) tube(q.g, q.rings);
       continue;
     }
     const isITB = p === itb;
@@ -126,8 +133,8 @@ export function buildTerminals(B, gIn = null) {
     if (p.kind === 'pier') { skylights(g, p, roofY); rooftop(g, p, roofY); }
     else if (!isITB) rooftop(g, p, roofY);
   }
-  if (itb) greatHall(g, itb);
-  return gIn ? null : g.data();
+  if (itb) greatHall(gItb, itb);
+  return gIn ? null : g0.data();
 }
 
 // International Terminal great hall under its wing roof (published: 705 x 210 ft hall, up to 83 ft; trusses up to 29 ft

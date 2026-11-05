@@ -4,5 +4,12 @@
   "licence": "public domain (US government work, FAA)",
   "fetched": "2026-11-04",
   "note": "DOF.CSV dated 2026-11-02"
+ },
+ "rwsl_SFO.pdf": {
+  "url": "https://www.faa.gov/air_traffic/technology/rwsl/media/SFO.pdf",
+  "licence": "public domain (US government work, FAA)",
+  "fetched": "2026-11-05",
+  "sha256": "314a4af875a3293b4666558ae256123ca3d1ad2376f3a22d5775dee13d77fcc1",
+  "note": "\"Runway Status Lights at San Francisco (SFO)\" graphic, 1 page; 28 REL taxiway labels (pdftotext -bbox); tools/env/rwsl_graphic_fit.py"
  }
 }

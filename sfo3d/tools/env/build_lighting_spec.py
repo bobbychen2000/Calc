@@ -6,6 +6,16 @@ measurements, keeping the provenance of every value:
 
   tools/env/lighting_spec.json      rules, photometry, colours, operating logic, per-runway-end facts + anchors
   tools/env/lighting_fixtures.json  the rules expanded into individual fixtures (world x/z, height, colour per face)
+  data/sfo_lighting.js              both of the above as one ES module for the browser (LIGHTING_SPEC, LIGHTING_FIXTURES)
+
+Regenerated 2026-11-05 (environment track, docs/research/environment_spec.md 5.1 D1-D3, environment_impl.md):
+  D1 REL: the 28th label (taxiway N, 10R/28L) added; every snapped REL label expanded into an L-852S array
+     (AC 150/5340-30J App. G) along the app taxiway centreline; the between-runway second F1/G/H labels flagged
+     runway_nv; the two F1 labels of the retired F1 crossing of 1L/1R are kept but not expanded.
+  D2 28R pier far end note: NAIP grid ends ~2650 ft, pile caps to ~2600 ft (verifier).
+  D3 obstruction lights on solid structures > 150 ft AGL (the tower): AC 70/7460-1N 5.6, not 5.5.
+  Inputs restored after the 2026-11-04 container loss: NASR cycle 2026-09-03 zip (read directly), RWSL graphic; the
+  DOF zip in the cache is the 2026-11-02 edition (was 2026-09-18).
 
 Provenance codes (field "src" / "prov"):
   pub  published SFO fact: FAA NASR APT_*.csv cycle 2026-09-03, Chart Supplement SW 3 SEP-29 OCT 2026, d-TPP 2609
@@ -34,6 +44,7 @@ import geo_frame as GF  # noqa: E402
 FT = 0.3048
 OUT_SPEC = os.path.join(ROOT, 'tools', 'env', 'lighting_spec.json')
 OUT_FIX = os.path.join(ROOT, 'tools', 'env', 'lighting_fixtures.json')
+OUT_JS = os.path.join(ROOT, 'data', 'sfo_lighting.js')
 NASR_DIR = os.path.join(ROOT, 'refs', 'cache', 'xcheck', 'faa')
 DOF_ZIP = os.path.join(ROOT, 'refs', 'cache', 'lighting', 'DAILY_DOF_CSV.ZIP')
 OSM_JSON = os.path.join(ROOT, 'refs', 'cache', 'osm', 'overpass_ksfo_latest.json')
@@ -208,7 +219,7 @@ PAPI_OBS = {
 # read visually from runway-aligned 0.25 m resamples (refs/cache/lighting/naip/zoom_28.png, als_19.png).
 ALS_PIERS_OBS = {
     '28R': dict(shoreline_ft=-650, crossmembers_ft=[700, 800, 900, 1000, 1100, 1200, 1300], crossmember_width_ft=110,
-                far_end_ft='beyond NAIP coverage (> ~2350 ft)', pile_caps_every_ft=100,
+                far_end_ft='beyond NAIP coverage: the NAIP 2024 world grid ends at ~2650 ft on the 28R centreline; pile caps visible every 100 ft to ~2600 ft (D2 2026-11-05: verifier correction, docs/research/airfield_lighting.md 6.3 / 15 V30; was "> ~2350 ft")', pile_caps_every_ft=100,
                 note='7 crossmembers of equal width; equipment platforms at ~1150 and ~1390 ft'),
     '28L': dict(shoreline_ft=-650, crossmembers_ft=[1000, 1300], crossmember_width_ft={'1000': 82, '1300': 103},
                 far_end_ft='> 3000 ft (continues past the NAIP edge)', pile_caps_every_ft=100),
@@ -222,12 +233,17 @@ RWSL_REL = [('R', '10L/28R'), ('E', '10L/28R'), ('E', '10L/28R'), ('L', '10L/28R
             ('Q', '10R/28L'), ('K', '10R/28L'), ('D', '10R/28L'), ('T', '10R/28L'), ('E', '10R/28L'), ('L', '10R/28L'), ('P', '10R/28L'),
             ('F2', '10R/28L'), ('C', '10R/28L'), ('F', '10R/28L'),
             ('M', '1L/19R'), ('H', '1L/19R'), ('H', '1L/19R'), ('G', '1L/19R'), ('G', '1L/19R'), ('F1', '1L/19R'), ('F1', '1L/19R'), ('F', '1L/19R'), ('C', '1L/19R'),
-            ('F', '1R/19L'), ('C', '1R/19L'), ('E', '1R/19L')]
+            ('F', '1R/19L'), ('C', '1R/19L'), ('E', '1R/19L'),
+            ('N', '10R/28L')]      # D1 (2026-11-05): the 28th label (verifier, airfield_lighting.md 15 V23) - south of 10R/28L between P and the 28L THL
 # label anchor positions in the world frame from an 8-point affine fit of the graphic's runway polygons to the NASR ends
 # (residual 40-80 m - the graphic is schematic); used only to pick the nearest same-name hold.
 RWSL_REL_XY = [[-1206, -935], [-165, -230], [-89, -339], [386, 61], [1601, 557], [-1145, -621], [-858, -469], [-648, -357], [-553, -330],
                [-358, -42], [269, 283], [608, 465], [1290, 828], [1534, 676], [1419, 894], [-597, 1222], [-613, 1015], [-444, 1010],
-               [-318, 719], [-426, 658], [-243, 305], [-111, 332], [-181, 171], [102, -338], [30, 255], [288, -234], [715, -745]]
+               [-318, 719], [-426, 658], [-243, 305], [-111, 332], [-181, 171], [102, -338], [30, 255], [288, -234], [715, -745],
+               [759, 596]]   # N: tools/env/rwsl_graphic_fit.py (affine from the 27 labels' PDF word boxes to the anchors above, residual median 56 m)
+# REL entries whose runway assignment the graphic does not settle: labels between 1L/19R and 1R/19L with their tab pointing
+# toward 1R/19L (verifier, airfield_lighting.md 8.1) -> NV, detected geometrically below (between the two centrelines)
+REL_AMBIGUOUS_PAIR = ('1L/19R', '1R/19L')
 
 
 # ============================================================================================== helpers
@@ -235,13 +251,24 @@ def rd(v, n=2):
     return round(v, n)
 
 
+NASR_ZIP = os.path.join(NASR_DIR, '03_Sep_2026_APT_CSV.zip')   # https://nfdc.faa.gov/webContent/28DaySub/extra/03_Sep_2026_APT_CSV.zip
+
+
 def load_nasr():
+    """SFO rows of the NASR APT CSVs, read from the extracted CSVs or (2026-11-05) straight from the cycle zip, so only
+    the 8 MB zip needs caching (refs/cache/xcheck/faa/SOURCES.json; re-fetched 2026-11-05 with a User-Agent header -
+    the NFDC server answers 503 without one)."""
     ends, rwys, base = {}, {}, None
+    zf = zipfile.ZipFile(NASR_ZIP) if os.path.exists(NASR_ZIP) else None
     for fn in ('APT_RWY_END.csv', 'APT_RWY.csv', 'APT_BASE.csv'):
         p = os.path.join(NASR_DIR, fn)
-        if not os.path.exists(p):
-            sys.exit('missing %s - download the NASR APT CSV zip (cycle 2026-09-03) into refs/cache/xcheck/faa/' % p)
-        for r in csv.DictReader(open(p, encoding='latin-1')):
+        if os.path.exists(p):
+            fh = open(p, encoding='latin-1')
+        elif zf is not None:
+            fh = io.TextIOWrapper(zf.open(fn), encoding='latin-1')
+        else:
+            sys.exit('missing %s - download the NASR APT CSV zip (cycle 2026-09-03) into refs/cache/xcheck/faa/' % NASR_ZIP)
+        for r in csv.DictReader(fh):
             if r['ARPT_ID'] != 'SFO':
                 continue
             if fn == 'APT_RWY_END.csv':
@@ -466,18 +493,32 @@ def build():
         pts = [xz(F.at((375 + 100 * k) * FT, s * 6 * FT)) + [0.0] for k in range(16) for s in (1, -1)]
         group('rwsl_thl', E, 'L-850T', 'pub+std+inf', {'red': dict(seen_by=E, emit_dir=[rd(-F.u[0], 4), rd(-F.u[1], 4)])}, pts,
               note='THL presence from the FAA SFO RWSL graphic (pub); geometry std; reference point inf')
-    holds = []
+    holds, centerlines, retired = [], [], []
     if os.path.exists(DETAILS_JS):
-        s = open(DETAILS_JS).read(); holds = [h for h in json.loads(s[s.find('{'):s.rfind('}') + 1])['holds'] if h.get('kind') == 'runway']
+        s_ = open(DETAILS_JS).read(); dd = json.loads(s_[s_.find('{'):s_.rfind('}') + 1])
+        holds = [h for h in dd['holds'] if h.get('kind') == 'runway']
+        centerlines = dd.get('centerlines', [])
+        retired = [h for h in dd.get('holdsDropped', []) if 'retired' in str(h.get('status', ''))]
     rel = []
     for (tw, rwy), P in zip(RWSL_REL, RWSL_REL_XY):
         cands = [h for h in holds if h.get('rwy') == rwy and h.get('twy') and tw in h['twy'].replace('/', ' ').split()]
         best = min(cands, key=lambda h: math.hypot(h['p'][0] - P[0], h['p'][1] - P[1])) if cands else None
-        rel.append(dict(taxiway=tw, runway=rwy, graphic_xy=P, hold=(dict(p=best['p'], text=best.get('text'), twy=best['twy'], dist_m=rd(math.hypot(best['p'][0] - P[0], best['p'][1] - P[1]), 0)) if best else None)))
+        ent = dict(taxiway=tw, runway=rwy, graphic_xy=P, hold=(dict(p=best['p'], text=best.get('text'), twy=best['twy'], dist_m=rd(math.hypot(best['p'][0] - P[0], best['p'][1] - P[1]), 0)) if best else None))
+        if best is None:
+            gone = [h for h in retired if h.get('rwy') == rwy and tw in str(h.get('twy') or '').replace('/', ' ').split()]
+            ent['status'] = ('crossing retired: data/sfo_details.js holdsDropped "%s" (FAA AL-375 cycle 2611 shows no pavement there); whether the relocated crossing has RELs is NV' % gone[0]['status']) if gone else 'no matching hold in data/sfo_details.js - not expanded'
+        # D1: second F1/G/H labels between 1L/19R and 1R/19L - runway assignment NV
+        if rwy in REL_AMBIGUOUS_PAIR:
+            la = [(P[0] - FR[e].R[0]) * FR[e].l[0] + (P[1] - FR[e].R[1]) * FR[e].l[1] for e in ('1L', '1R')]
+            if la[0] * la[1] < 0 and sum(1 for t_, r_ in RWSL_REL if t_ == tw and r_ == rwy) > 1:
+                ent['runway_nv'] = 'label lies between the 1L/19R and 1R/19L centrelines with its tab toward 1R/19L: runway assignment ambiguous (NV, verifier airfield_lighting.md 8.1)'
+        rel.append(ent)
+    rel_arrays = _rel_arrays(group, rel, FR, centerlines)
     spec['rwsl'] = dict(src='pub rwsl graphic (schematic, 2017) + nasr/CS/AD remark "in operation"', thl_ends=RWSL_THL_ENDS, thl_rule=thl_rule,
                         rel_rule=dict(type='L-852S red', first='2 ft before the hold marking (holding side)', lateral='2 ft from taxiway CL, opposite side of the CL lights', spacing_ft='<= 50, >= 12.5, equidistant',
                                       next_to_last='2 ft before the runway edge stripe', last='2 ft beside the runway CL lights toward the taxiway', min_count=6, src='ac30j G.2.1-G.2.3, Fig G-1/G-2'),
-                        rel=rel, rel_note='one entry per label on the FAA graphic, snapped to the nearest app hold (data/sfo_details.js) with the same taxiway and runway; which side/which of two parallel holds is lit is not resolvable from the graphic (dist_m shows the schematic offset)')
+                        rel=rel, rel_count=len(rel), rel_arrays=rel_arrays,
+                        rel_note='one entry per label on the FAA graphic (28 labels, D1 2026-11-05), snapped to the nearest app hold (data/sfo_details.js) with the same taxiway and runway; which side/which of two parallel holds is lit is not resolvable from the graphic (dist_m shows the schematic offset). Arrays expanded along the app taxiway centreline from the snapped hold (rel_arrays; geometry std + inf choices listed there)')
 
     # --------------------------------------------------------------------------------------- rules not tied to SFO survey
     spec['rules'] = RULES
@@ -487,6 +528,100 @@ def build():
     spec['conflicts'] = CONFLICTS
     spec['open_questions'] = OPEN_Q
     return spec, fixtures
+
+
+REL_MARK_HALF_FT = 3.5     # inf: half of a runway holding-position marking 4 x 12-in lines with 12-in gaps (7 ft, AC 150/5340-1M Fig A-3); hold p = marking centre
+REL_LAT_FT = 2.0           # ac30j G.2.1: 2 ft from the taxiway centreline
+REL_EDGE_FT = 100.0 + 2.0  # next-to-last 2 ft before the runway edge stripe: 200-ft runway, stripe outer edge at the pavement edge (std)
+REL_LAST_FT = 2.0          # last light 2 ft beside the runway centreline lights (RCL fixtures here lie on the CL)
+
+
+def _rel_arrays(group, rel, FR, centerlines):
+    """D1: expand each snapped REL label into an L-852S array per AC 150/5340-30J App. G (G.2.1-G.2.3, Fig G-1/G-2):
+    first light 2 ft before the hold marking (holding side), next-to-last 2 ft before the runway edge stripe, last 2 ft
+    beside the RCL, >= 6 lights, equidistant 12.5-50 ft between first and next-to-last, 2 ft off the taxiway CL.
+    Path = the app taxiway centreline polyline through the hold (data/sfo_details.js centerlines, NAIP-checked), else a
+    straight line along the hold normal (flagged). Side of the CL (left of travel toward the runway) is inf: SFO's taxiway
+    CL-light side is unpublished. Emission: unidirectional red toward the taxiing aircraft (minus the path tangent)."""
+    out = []
+    for ent in rel:
+        h = ent['hold']
+        if not h:
+            out.append(dict(taxiway=ent['taxiway'], runway=ent['runway'], n=0, status=ent.get('status')))
+            continue
+        F = FR[ent['runway'].split('/')[0]]
+        lat = lambda q: abs((q[0] - F.R[0]) * F.l[0] + (q[1] - F.R[1]) * F.l[1])   # distance from the runway CL (m)
+        P = h['p']
+        # nearest centreline polyline (within 4 m of the hold point)
+        best = None
+        for ci, pl in enumerate(centerlines):
+            for k in range(len(pl) - 1):
+                a, b = pl[k], pl[k + 1]; dx, dz = b[0] - a[0], b[1] - a[1]; L2 = dx * dx + dz * dz
+                if L2 < 1e-6: continue
+                t = max(0.0, min(1.0, ((P[0] - a[0]) * dx + (P[1] - a[1]) * dz) / L2))
+                d = math.hypot(a[0] + t * dx - P[0], a[1] + t * dz - P[1])
+                if best is None or d < best[0]: best = (d, ci, k, t)
+        path_src = 'centreline'
+        if best and best[0] < 4.0:
+            _, ci, k, t = best; pl = centerlines[ci]
+            q0 = [pl[k][0] + t * (pl[k + 1][0] - pl[k][0]), pl[k][1] + t * (pl[k + 1][1] - pl[k][1])]
+            fwd = [q0] + [list(p) for p in pl[k + 1:]]; bwd = [q0] + [list(p) for p in pl[k::-1]]
+            # walk the direction that approaches the runway CL
+            path = fwd if lat(fwd[min(1, len(fwd) - 1)]) < lat(bwd[min(1, len(bwd) - 1)]) else bwd
+            back = bwd if path is fwd else fwd
+        else:
+            path_src = 'straight along the hold normal (no centreline within 4 m) - inf'
+            un = h.get('dir') or [-F.l[0], -F.l[1]]
+            path = [P, [P[0] + un[0] * 200, P[1] + un[1] * 200]]; back = [P, [P[0] - un[0] * 20, P[1] - un[1] * 20]]
+        # the app centrelines stop at the runway edge: continue straight along the last tangent onto the runway (inf) so
+        # the last light can sit 2 ft beside the RCL
+        if lat(path[-1]) > REL_LAST_FT * FT:
+            a, b = path[-2], path[-1]; L = math.hypot(b[0] - a[0], b[1] - a[1]) or 1.0
+            path = path + [[b[0] + (b[0] - a[0]) / L * 150.0, b[1] + (b[1] - a[1]) / L * 150.0]]
+            path_src += ' + straight extension across the runway edge (inf)'
+        # resample to 0.1 m: arc length s >= 0 toward the runway, s < 0 behind the hold
+        def resample(pl):
+            pts = [pl[0]]
+            for a, b in zip(pl, pl[1:]):
+                L = math.hypot(b[0] - a[0], b[1] - a[1]); n = max(1, int(L / 0.1))
+                pts += [[a[0] + (b[0] - a[0]) * j / n, a[1] + (b[1] - a[1]) * j / n] for j in range(1, n + 1)]
+            return pts
+        S = resample(path)
+        Bk = resample(back)
+        s_first = -(REL_MARK_HALF_FT + 2.0) * FT
+        def at(s_m):
+            arr, ss = (S, s_m) if s_m >= 0 else (Bk, -s_m)
+            i = min(len(arr) - 1, int(round(ss / 0.1)))
+            j = min(len(arr) - 1, i + 1) if s_m >= 0 else max(0, i - 1)
+            p = arr[i]; q = arr[j] if j != i else arr[max(0, i - 1)]
+            tx, tz = (q[0] - p[0], q[1] - p[1]) if s_m >= 0 else (p[0] - q[0], p[1] - q[1])
+            if j == i: tx, tz = -tx, -tz
+            n = math.hypot(tx, tz) or 1.0
+            return p, (tx / n, tz / n)
+        def s_where(target_m):
+            for i in range(1, len(S)):
+                if lat(S[i]) <= target_m: return i * 0.1
+            return None
+        s_ntl, s_last = s_where(REL_EDGE_FT * FT), s_where(REL_LAST_FT * FT)
+        if s_ntl is None or s_last is None or s_ntl <= s_first:
+            out.append(dict(taxiway=ent['taxiway'], runway=ent['runway'], n=0, status='path does not reach the runway CL (%s)' % path_src))
+            continue
+        span_ft = (s_ntl - s_first) / FT
+        n_int = max(4, math.ceil(span_ft / 50.0))         # <= 50 ft spacing; >= 6 lights with the last one (5 + 1)
+        if span_ft / n_int < 12.5: n_int = max(1, math.floor(span_ft / 12.5))
+        ss = [s_first + (s_ntl - s_first) * j / n_int for j in range(n_int + 1)] + [s_last]
+        pts = []
+        for s_m in ss:
+            p, (tx, tz) = at(s_m)
+            lx, lz = tz, -tx                                 # left of travel toward the runway (x east, z south)
+            pts.append([rd(p[0] + lx * REL_LAT_FT * FT), rd(p[1] + lz * REL_LAT_FT * FT), 0.0, rd(-tx, 4), rd(-tz, 4)])
+        flag = {}
+        if ent.get('runway_nv'): flag['runway_nv'] = ent['runway_nv']
+        group('rwsl_rel', ent['runway'], 'L-852S', 'pub+std+inf', {'red': dict(seen_by='taxiway %s toward %s' % (ent['taxiway'], ent['runway']), emit_dir='per point (pts[i][3:5])')}, pts,
+              note='REL array (ac30j App. G): point = [x, z, h, emit_x, emit_z]; presence pub (FAA graphic), geometry std, path/side/marking-centre inf (%s)' % path_src,
+              taxiway=ent['taxiway'], hold=h['p'], spacing_ft=rd(span_ft / n_int, 1), **flag)
+        out.append(dict(taxiway=ent['taxiway'], runway=ent['runway'], n=len(pts), spacing_ft=rd(span_ft / n_int, 1), path=path_src, **flag))
+    return out
 
 
 def _als(group, F, E, als, u_back, W_ft, e):
@@ -559,7 +694,12 @@ RULES = {
     'stop_bar': dict(src='ac30j 4.5; AIM 2-1-5', rule='in-pavement red L-852S 2 ft on the holding side of the hold marking, 9 ft 10 in centres + elevated red L-862S each side <= 10 ft outside the edge; required below 600 RVR on lit taxiways to active runways', sfo_status='SFO SMGCS plan / low-visibility routes not found - unverified'),
     'clearance_bar': dict(src='ac30j 4.7', rule='3 in-pavement yellow lights on 5-ft centres, 2 ft on the holding side of a taxiway/taxiway hold'),
     'beacon': dict(src='ac30j 6.1; ac12f; AIM', rule='white/green alternating, 24-30 flashes/min (installation AC & AIM) / 22-26 fpm (equipment spec), beam centre 5 deg, mounted above surrounding obstructions'),
-    'obstruction': dict(src='ac7460 5.2, 5.5; ac43j', rule='<= 150 ft AGL: steady red L-810 (double at top); > 150 ft: flashing red L-864 (2000 cd, 30 fpm) at top, L-810(F) flashing at intermediate levels (150-350 ft), all synchronised'),
+    # D3 (2026-11-05, environment_spec.md 5.1/5.8): AC 70/7460-1N 5.5 covers "Poles, Towers, and Similar Skeletal Structures";
+    # solid buildings (the control tower) fall under 5.6: 5.6.2.2 "At least three L-864 lights should be installed" at the
+    # top, 5.6.3 150-350 ft AGL "should have a second level of steady-burning red-light units installed approximately at
+    # the midpoint", 5.6.1 three units per level (four if the top is 20-100 ft across). Quotes: airfield_lighting.md 7.4
+    # verifier note [2nd: the AC PDF is not in the cache today]; as-built SFO lighting NV.
+    'obstruction': dict(src='ac7460 5.2, 5.5, 5.6; ac43j', rule='<= 150 ft AGL: steady red L-810 (double at top); > 150 ft skeletal structures (5.5: poles, towers): flashing red L-864 (2000 cd, 30 fpm) at top, L-810(F) flashing at intermediate levels (150-350 ft), all synchronised; > 150 ft solid structures/buildings (5.6, e.g. the control tower): >= 3 L-864 at the top (5.6.2.2; 3 per level, 4 if the top is 20-100 ft across, 5.6.1), 150-350 ft AGL: a second level of steady-burning red units at about the midpoint (5.6.3)'),
     'apron_flood': dict(src='ac5360 7.5 (current, no numbers; refers to IES RP-37-15); cancelled AC 150/5360-13 (1988) para 52 + Table 4-1', rule='mounted floodlights preferred, aimed/shielded against glare to pilots and ATC, overlapping sources from several directions; cancelled 1988 guidance: 5.0 fc (54 lx) at apron areas, 0.15 fc (1.6 lx) general AOA, mounts 25-50 ft at <= 200 ft spacing',
                         sfo='DOF-surveyed poles 60-157 ft AGL around the aprons (high masts), see apron_masts'),
     'wind_cone': dict(src='ac30j 6.6', rule='lit wind cones required for night air-carrier ops; constant illumination independent of lighting step; SFO: NASR "Y-L" (lighted), positions not FAA-published'),
@@ -584,6 +724,11 @@ OPEN_Q = [
     'Apron floodlight fixture photometry and aiming at SFO (no public source); DOF gives pole positions/heights only.',
     'SFO tower facility directives for lighting steps (JO 7110.65 tables are the default).',
 ]
+
+
+# DOF TYPE codes treated as solid structures (AC 70/7460-1N 5.6) rather than skeletal ones (5.5) [I: the DOF type list
+# is FAA's, the 5.5/5.6 assignment is ours]
+SOLID_DOF_TYPES = ('CTRL TWR', 'BLDG', 'BLDG-TWR')
 
 
 def _dof():
@@ -612,8 +757,18 @@ def _dof():
             rec = dict(oas=r['OAS'], type=typ, agl_ft=agl, amsl_ft=int(r['AMSL']), lighting=lt, marking=r['MARKING'].strip(), accuracy=r['ACCURACY'].strip(),
                        verified=r['VERIFIED STATUS'].strip() == 'O', world=[rd(x, 1), rd(zz, 1)], dist_m=round(dist), study=r['FAA STUDY'].strip() or None, jdate=r['JDATE'].strip())
             if lt not in ('U', 'N'):
-                std = ('L-864 flashing red at top (+ L-810(F) intermediate), inf from AC 70/7460-1N 5.5' if agl > 150 else 'L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1') if lt == 'R' else None
+                if lt != 'R':
+                    std = None
+                elif agl <= 150:
+                    std = 'L-810 steady red (double at top), std from AC 70/7460-1N 5.2.2.1'
+                elif typ in SOLID_DOF_TYPES:      # D3: buildings / control tower -> 5.6, not 5.5
+                    std = ('>= 3 L-864 flashing red (2000 cd, 30 fpm) at the top + a steady red level at about mid-height (%d ft AGL), std from AC 70/7460-1N 5.6.2.2 / 5.6.3; as-built NV' % round(agl / 2))
+                else:
+                    std = 'L-864 flashing red at top (+ L-810(F) intermediate), std from AC 70/7460-1N 5.5 (skeletal structures)'
                 rec['fixture_inferred'] = std
+                if typ in SOLID_DOF_TYPES and lt == 'R' and agl > 150:
+                    rec['fixture_inferred_levels'] = [dict(h_ft=agl, type='L-864', n_min=3, flash_fpm=30, cd_eff=2000, src='ac7460 5.6.2.2, ac43j 3.4.1.2'),
+                                                      dict(h_ft=round(agl / 2), type='L-810', steady=True, cd=32.5, src='ac7460 5.6.3, ac43j 3.4.1.5')]
                 obst.append(rec)
             if typ == 'POLE' and agl >= 60 and dist < 3000:
                 near = min((math.hypot((la - a) * 110574, (lo - b) * 111320 * math.cos(math.radians(lat0))) for a, b in osm_masts), default=None)
@@ -633,7 +788,17 @@ def main():
     fx = dict(schema='sfo3d.airfield_lighting_fixtures.v1', generated=spec['generated'], frame=spec['frame'], spec='tools/env/lighting_spec.json',
               colour_codes={k: v for k, v in COL.items()} | {'-': 'none/blanked'}, groups=groups)
     json.dump(fx, open(OUT_FIX, 'w'), separators=(',', ':'))
-    print('wrote', OUT_SPEC, os.path.getsize(OUT_SPEC), 'bytes;', OUT_FIX, os.path.getsize(OUT_FIX), 'bytes')
+    # data/sfo_lighting.js: the same two files as one ES module for the browser (environment_spec.md 3.1; generated,
+    # never hand-edited). Licence: FAA NASR/DOF/RWSL/TPP facts and NAIP measurements are public domain; the REL array
+    # paths follow the app taxiway centrelines of data/sfo_details.js, which contain OpenStreetMap data (ODbL 1.0).
+    with open(OUT_JS, 'w') as fh:
+        fh.write('// generated by tools/env/build_lighting_spec.py (%s) from tools/env/lighting_spec.json + lighting_fixtures.json - do not edit.\n'
+                 '// FAA NASR / DOF / RWSL graphic / d-TPP facts and USDA NAIP 2024 measurements: public domain. REL array paths follow\n'
+                 '// the taxiway centrelines of data/sfo_details.js, which contain information from OpenStreetMap (c) OpenStreetMap\n'
+                 '// contributors, ODbL 1.0 - docs/ATTRIBUTION.md. Provenance per fixture group: prov (pub/std/obs/inf), see LIGHTING_SPEC.provenance.\n' % spec['generated'])
+        fh.write('export const LIGHTING_SPEC = ' + json.dumps(spec, separators=(',', ':')) + ';\n')
+        fh.write('export const LIGHTING_FIXTURES = ' + json.dumps(fx, separators=(',', ':')) + ';\n')
+    print('wrote', OUT_SPEC, os.path.getsize(OUT_SPEC), 'bytes;', OUT_FIX, os.path.getsize(OUT_FIX), 'bytes;', OUT_JS, os.path.getsize(OUT_JS), 'bytes')
     print('fixture counts', spec['fixture_counts'], 'total', sum(spec['fixture_counts'].values()))
 
 

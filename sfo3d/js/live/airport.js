@@ -175,11 +175,23 @@ const HALL_H = { 'Harvey Milk Terminal 1': 21, 'Terminal 2': 19, 'Terminal 3': 2
 const STRUCT_H = { atc: 10, garage: 18, building: 18, hangar: 32, hotel: 36, airtrain: 13 };
 const STRUCT_H_BY_NAME = { 'Central Parking Garage': 22, 'Garage A': 21, 'Garage G': 21, 'Long-Term Parking Garage 1': 16, 'Long-Term Parking Garage 2': 16, 'Rental Car Center': 26, 'Consolidated Administration Campus': 20, 'Grand Hyatt Hotel': 38, 'Super Bay Hangar Building': 34 };
 
-export function buildLiveBuildings(data, parts = null) {
+// b3d (optional): data/buildings3d/integration.js B3D_INTEGRATION.replace (tools/blender/b3d_integrate.py): the first-pass
+// buildings each Blender asset group replaces go into their own Geo per group (returned as `split`, drawn as separate
+// items that js/three/buildings3d.js hides once the asset is shown; js/live/world.js), the open spans of clipped walkways
+// into `rest` (drawn only with the asset). Entries are matched by index AND name: a renamed part stays in the main Geo.
+export function buildLiveBuildings(data, parts = null, b3d = null) {
   const g = new Geo();
+  const split = {}, rest = {}; const sg = (o, k) => k ? (o[k] || (o[k] = new Geo())) : null;
+  const R = b3d && b3d.replace;
+  const partMap = new Map(), structMap = new Map(); if (R) { for (const e of R.parts || []) partMap.set(e[0], e); for (const e of R.structures || []) structMap.set(e[0], e); }
+  const route = R && parts ? {
+    edge: (ri) => { const runs = (R.complexEdges || {})[ri]; return runs && runs.length ? (i) => { for (const [a, c, k] of runs) if (i >= a && i <= c) return sg(split, k); return null; } : null; },
+    part: (pi, p) => { const e = partMap.get(pi); if (!e || e[1] !== p.name) return null; return { g: sg(split, e[2]), rest: e[3] ? e[3].map(rings => ({ g: sg(rest, e[2]), rings })) : null }; },
+  } : null;
+  const structG = (si, s) => { if (!R) return g; if (s.kind === 'atc') return sg(split, R.atc) || g; if (s.kind === 'rail') return sg(split, R.rail) || g; const e = structMap.get(si); return e && e[1] === s.name ? sg(split, e[2]) : g; };
   if (parts) {
     // terminal complex part by part (see terminals.js)
-    buildTerminals(parts, g);
+    buildTerminals(parts, g, route);
   } else {
     // terminal complex: concourse level + glass upper storey
     for (const poly of data.terminalComplex) {
@@ -198,21 +210,22 @@ export function buildLiveBuildings(data, parts = null) {
   // structures
   const tower = data.structures.find(s => s.kind === 'atc');
   const seen = new Set();
-  for (const s of data.structures) {
+  for (const [si, s] of data.structures.entries()) {
     if (s.kind === 'rail' || s.kind === 'atc') continue;
     const key = s.name.replace(/\s+/g, ' ').toLowerCase().replace(/garaga/, 'garage');
     if (s.kind === 'airtrain') { if (seen.has(key)) continue; seen.add(key); }
     const h = STRUCT_H_BY_NAME[s.name] || STRUCT_H[s.kind] || 12;
     const wall = s.kind === 'garage' ? MAT.garage : s.kind === 'hangar' ? MAT.corrugated : s.kind === 'hotel' ? MAT.hotel : s.kind === 'airtrain' ? MAT.concrete : MAT.concrete;
     const roof = s.kind === 'garage' ? MAT.parkRoof : s.kind === 'hangar' ? MAT.metalRoof : MAT.roof;
+    const gs = structG(si, s);
     for (const poly of s.polys) {
-      if (s.kind === 'airtrain') { extrudePoly(g, poly, G + 7.5, G + h, MAT.glass, MAT.metalRoof); extrudePoly(g, poly.map(r => shrink(r, 0.35)), G, G + 7.5, MAT.concrete, null); }
-      else extrudePoly(g, poly, G, G + h, wall, roof);
+      if (s.kind === 'airtrain') { extrudePoly(gs, poly, G + 7.5, G + h, MAT.glass, MAT.metalRoof); extrudePoly(gs, poly.map(r => shrink(r, 0.35)), G, G + 7.5, MAT.concrete, null); }
+      else extrudePoly(gs, poly, G, G + h, wall, roof);
     }
   }
   // control tower (lathe) at the ATC footprint
   let towerPos = null;
-  if (tower && parts) { const T = buildTower(g, tower.polys[0][0]); towerPos = T.cab; }
+  if (tower && parts) { const T = buildTower(structG(data.structures.indexOf(tower), tower), tower.polys[0][0]); towerPos = T.cab; }
   else if (tower) {
     const c = centroid(tower.polys[0][0]); towerPos = [c[0], G, c[1]];
     extrudePoly(g, tower.polys[0], G, G + 10, MAT.concrete, MAT.roof);
@@ -226,13 +239,15 @@ export function buildLiveBuildings(data, parts = null) {
   // AirTrain guideway: thin elevated deck from the rail footprint, on columns sampled along its outline
   const rail = data.structures.find(s => s.kind === 'rail');
   if (rail) {
+    const gr = structG(data.structures.indexOf(rail), rail);
     for (const poly of rail.polys) {
-      extrudePoly(g, poly, G + 9.0, G + 10.6, MAT.concrete, MAT.concrete);
+      extrudePoly(gr, poly, G + 9.0, G + 10.6, MAT.concrete, MAT.concrete);
       const r = poly[0]; let acc = 0;
-      for (let i = 0; i < r.length; i++) { const a = r[i], b = r[(i + 1) % r.length]; const L = Math.hypot(b[0] - a[0], b[1] - a[1]); acc += L; if (acc > 45) { acc = 0; g.box([a[0] - 0.8, G, a[1] - 0.8], [a[0] + 0.8, G + 9.0, a[1] + 0.8], MAT.concrete.c, MAT.concrete.e); } }
+      for (let i = 0; i < r.length; i++) { const a = r[i], b = r[(i + 1) % r.length]; const L = Math.hypot(b[0] - a[0], b[1] - a[1]); acc += L; if (acc > 45) { acc = 0; gr.box([a[0] - 0.8, G, a[1] - 0.8], [a[0] + 0.8, G + 9.0, a[1] + 0.8], MAT.concrete.c, MAT.concrete.e); } }
     }
   }
-  return { geo: g.data(), towerPos };
+  const data_ = (o) => Object.fromEntries(Object.entries(o).filter(([, v]) => v.idx.length).map(([k, v]) => [k, v.data()]));
+  return { geo: g.data(), towerPos, split: data_(split), rest: data_(rest) };
 }
 function shrink(ring, f) { const c = centroid(ring); return ring.map(p => [c[0] + (p[0] - c[0]) * (1 - f * 0.1), c[1] + (p[1] - c[1]) * (1 - f * 0.1)]); }
 

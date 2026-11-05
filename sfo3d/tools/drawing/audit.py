@@ -148,7 +148,7 @@ def static_objects():
     if S.get('itbRoof'):
         itb = [b for b in buildings() if b['kind'] == 'hall' and 'International' in b['name']]
         over = hull_poly(S['itbRoof']['hull']).difference(unary_union([poly_rings(b['rings']) for b in itb]).buffer(0.5))
-        for i, p in enumerate(polys_of(over)):
+        for i, p in enumerate(polys_of(over) if not any(b.get('notBuilt') for b in itb) else []):  # replaced by the ITB asset (common.py _b3d_buildings)
             if p.area > 5: out.append(Obj('building', f'itb-roof-overhang{i}', p, g + 20.7, S['itbRoof']['y'][1], label='ITB wing-roof overhang (underside >= 20.7 m, terminals.js greatHall)', extra=dict(kind='roof')))
     for i, m in enumerate(S['masts']):
         if m['removed']: continue

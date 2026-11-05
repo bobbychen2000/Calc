@@ -1,18 +1,11 @@
 // Parse a live snapshot (METAR + ADS-B) into simulation inputs. Pure JS (runs in Node and browser).
 import { llToWorld, ARP, runwayByEnd } from './geo.js';
 import { ICAO_MAP } from './aircraft/types.js';
+// METAR decoding: js/env/wx/metar.js (port of tools/env/metar_decode.py, gate A-WX). The old regex parser that lived
+// here read `M1/4SM` as 4 SM (environment_spec.md §1.3) and was removed (2026-11-05, environment track).
+import { decodeMetar, metarSummary } from './env/wx/metar.js';
 
 const FT = 0.3048, KT = 0.514444;
-export function parseMetar(line) {
-  const out = { raw: line.trim() };
-  const m = /(\d{2})(\d{2})(\d{2})Z/.exec(line); if (m) out.time = { day: +m[1], h: +m[2], min: +m[3] };
-  const w = /\b(\d{3}|VRB)(\d{2,3})(G\d{2,3})?KT\b/.exec(line); if (w) { out.windDir = w[1] === 'VRB' ? null : +w[1]; out.windKt = +w[2]; }
-  const v = /\b(\d{1,2})SM\b/.exec(line); if (v) out.visSM = +v[1];
-  out.clouds = []; const re = /\b(FEW|SCT|BKN|OVC)(\d{3})\b/g; let c; while ((c = re.exec(line))) out.clouds.push({ cover: c[1], ft: +c[2] * 100 });
-  const t = /\b(M?\d{2})\/(M?\d{2})\b/.exec(line); if (t) { out.tempC = +t[1].replace('M', '-'); out.dewC = +t[2].replace('M', '-'); }
-  const a = /\bA(\d{4})\b/.exec(line); if (a) out.altim = +a[1] / 100;
-  return out;
-}
 export function parseAdsb(csv) {
   const lines = csv.trim().split(/\r?\n/); const hdr = lines[0].split(',');
   return lines.slice(1).map(l => { const f = l.split(','); const o = {}; hdr.forEach((h, i) => o[h] = f[i]); return o; }).map(o => ({
@@ -31,7 +24,7 @@ const COVER = { FEW: 0.14, SCT: 0.4, BKN: 0.68, OVC: 0.95 };
 const TYPE_NAMES = { B39M: 'Boeing 737 MAX 9', B38M: 'Boeing 737 MAX 8', B738: 'Boeing 737-800', B739: 'Boeing 737-900ER', B737: 'Boeing 737-700', B789: 'Boeing 787-9', B772: 'Boeing 777-200', B77W: 'Boeing 777-300ER', B753: 'Boeing 757-300', B752: 'Boeing 757-200', A319: 'Airbus A319', A320: 'Airbus A320', A321: 'Airbus A321', A21N: 'Airbus A321neo', E75L: 'Embraer E175', CRJ2: 'Bombardier CRJ200', BCS3: 'Airbus A220-300' };
 
 export function buildLive(metarText, adsbCsv, nowMs) {
-  const metars = metarText.trim().split(/\r?\n/).map(parseMetar);
+  const metars = metarText.trim().split(/\r?\n/).map(l => metarSummary(decodeMetar(l)));
   const M = metars[0]; // latest
   const ac = parseAdsb(adsbCsv);
   const now = new Date(nowMs);

@@ -208,7 +208,7 @@ def entry(build, ver, parts, mats, roof_rgb, info):
 
 
 def keep_renders(old, new):
-    for k in ('renders', 'render_check', 'renders_updated', 'qa'):
+    for k in ('renders', 'render_check', 'renders_updated', 'renders_args', 'renders_note', 'qa', 'validator', 'neighbours'):
         if old and old.get(k):
             new[k] = old[k]
     return new

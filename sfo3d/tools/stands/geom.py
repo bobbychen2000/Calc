@@ -116,7 +116,9 @@ def accepted_types(s, app_rule=False):
     without winglets, span <= maxSpan + 0.6 and L <= maxLen + 2, and the A380 / 747-8 clause only on the stands the data
     marks `a380`; the old 'maxSpan >= 64' clause is gone)"""
     sp, L = limits(s); out = []
-    if s.get('types_ok') and not app_rule: return [t for t in s['types_ok'] if t in APP]
+    # (round 2 of the 4 Nov close-out, realtime orch-2: traffic.js standFits now applies types_ok on SFO's path too where
+    # the data sets types_ok_all_paths -- F19 / F20)
+    if s.get('types_ok') and (not app_rule or s.get('types_ok_all_paths')): return [t for t in s['types_ok'] if t in APP]
     a380 = s.get('a380', s.get('cls') == 'F')
     for t, r in APP.items():
         if r['span'] is None: continue

@@ -35,6 +35,7 @@ import { floodField, E_STAND, mastE, mastAim, MAST_LAYER } from './flood.js';
 import { garageCars } from './objects.js';
 import { GROUND_Y } from '../geo.js';
 import { lampK } from './tsl/common.js';
+import { Buildings3D } from './buildings3d.js'; // Blender building assets (data/buildings3d/*.glb)
 
 const { uniform } = TSL;
 const T0 = performance.now();
@@ -299,6 +300,7 @@ export class Renderer3 {
     this.acr = new AircraftRenderer(S, { noiseTex: this.noiseTex, Q: this.Q, renderer: E.renderer });
     this.staticGroup = new THREE.Group(); this.staticGroup.name = 'world'; S.add(this.staticGroup);
     this.built = true; tlog('static scene built');
+    this.b3d = new Buildings3D(this); this.b3d.start(); // loads after the static scene; first-pass buildings until then
     // compile the scene's programs off the frame loop where the backend can (KHR_parallel_shader_compile / WebGPU
     // async pipelines); frames are held until then (at most 30 s) so the first frames do not stall one by one
     this._syncItems();
@@ -319,12 +321,13 @@ export class Renderer3 {
       } else if (p === 'obj') {
         const m = new THREE.Mesh(geometryOf(it.mesh), this.objMat); m.castShadow = !!it.castShadow; m.receiveShadow = true;
         m.matrixAutoUpdate = false; if (it.model) { m.matrix.fromArray(it.model); } G.add(m);
+        if (it.b3d || it.b3dRest) { m.userData.b3d = it.b3d; m.userData.b3dRest = it.b3dRest; if (it.b3dRest) m.visible = false; } // js/three/buildings3d.js swaps them
         // the floodlight masts (js/live/items.js buildMasts: its first vertex is the first mast's base) on their own layer:
         // the floodlight spot lights sit inside the mast heads and must not see them (js/three/flood.js MastSpot)
         const P = it.mesh.data && it.mesh.data.pos, m0 = this.masts && this.masts[0];
         if (P && m0 && Math.hypot(P[0] - m0.x, P[2] - m0.z) < 1.5 && Math.abs(P[1] - GROUND_Y) < 1.0) m.layers.set(MAST_LAYER);
         // cars on the garage roofs as instanced boxes (review round 2: a mosaic of flat squares read as confetti)
-        const cars = garageCars(it.mesh.data, it.model, this.carMat, this.tier); if (cars) G.add(cars);
+        const cars = garageCars(it.mesh.data, it.model, this.carMat, this.tier); if (cars) { if (it.b3d) cars.userData.b3d = it.b3d; G.add(cars); }
       } else if (p === 'mark') {
         const m = new THREE.Mesh(geometryOf(it.mesh), this.markMat); m.frustumCulled = false; m.receiveShadow = true; m.renderOrder = 1; m.matrixAutoUpdate = false; G.add(m);
       } else if (p === 'sign') this.pendingSigns.push(it);
@@ -383,6 +386,7 @@ export class Renderer3 {
       this.bridges.update(Date.now()); sc.gateSys.sprites = this.bridges.sprites;
     }
     this.acr.sync(sc.aircraft, camPos);
+    if (this.b3d) this.b3d.update(camPos);
   }
   // ------------------------------------------------------------ render (fr = compat Scene.frame result)
   render(fr, cam, t, post = {}) {

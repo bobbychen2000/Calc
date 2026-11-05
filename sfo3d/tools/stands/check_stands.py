@@ -85,6 +85,13 @@ def main(quiet=False, app=True):
     S = d['stands']; SN = {s['name']: s for s in S}
     D = load_airport()
     bld = unary_union([Polygon(p[0], p[1:]).buffer(0) for p in list(D['terminalComplex']) + [q for b in D['boardingAreas'] for q in b['polys']]])
+    # the Blender building assets as drawn (data/buildings3d/integration.json: footprints measured on the exported GLBs,
+    # every LOD, max extent; tools/blender/b3d_integrate.py) also count for the aircraft-envelope test (1.): measured roof
+    # edges lie up to 2.4 m outside the SFO Museum outlines. The bridge tests keep the outlines (bridges enter them).
+    bldA = bld; f3 = os.path.join(ROOT, 'data', 'buildings3d', 'integration.json')
+    if os.path.exists(f3) and os.environ.get('B3D_FOOTPRINTS', '1') != '0':
+        F3 = json.load(open(f3))['footprints']
+        bldA = unary_union([bld] + [Polygon(r[0], r[1:]).buffer(0) for U in F3.values() for u in U.values() for r in u['rings']])
     import cv2, numpy as np, shapely
     from common import Naip
     N = Naip()
@@ -103,7 +110,7 @@ def main(quiet=False, app=True):
     issues, notes, warns, app_issues = [], [], [], []
     for s in S:
         p = ENV[s['name']]
-        ov = p.intersection(bld).area; db = p.distance(bld)
+        ov = p.intersection(bldA).area; db = p.distance(bldA)
         if ov > 0.5: issues.append((s['name'], 'aircraft envelope overlaps the building %.1f m2' % ov))
         elif db < 2.0: issues.append((s['name'], 'aircraft envelope %.2f m from the building (< 2.0 m)' % db))
         elif db < 3.5: notes.append((s['name'], 'aircraft envelope %.1f m from the building' % db))

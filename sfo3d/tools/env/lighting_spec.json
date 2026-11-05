@@ -1,6 +1,6 @@
 {
  "schema": "sfo3d.airfield_lighting.v1",
- "generated": "2026-09-24T20:16Z",
+ "generated": "2026-11-05T03:02Z",
  "generator": "tools/env/build_lighting_spec.py",
  "report": "docs/research/airfield_lighting.md",
  "frame": {
@@ -1575,7 +1575,7 @@
         1300
        ],
        "crossmember_width_ft": 110,
-       "far_end_ft": "beyond NAIP coverage (> ~2350 ft)",
+       "far_end_ft": "beyond NAIP coverage: the NAIP 2024 world grid ends at ~2650 ft on the 28R centreline; pile caps visible every 100 ft to ~2600 ft (D2 2026-11-05: verifier correction, docs/research/airfield_lighting.md 6.3 / 15 V30; was \"> ~2350 ft\")",
        "pile_caps_every_ft": 100,
        "note": "7 crossmembers of equal width; equipment platforms at ~1150 and ~1390 ft"
       },
@@ -2507,8 +2507,8 @@
     ],
     "hold": {
      "p": [
-      -640.57,
-      -430.94
+      -640.28,
+      -430.78
      ],
      "text": "28L-10R",
      "twy": "D",
@@ -2524,12 +2524,12 @@
     ],
     "hold": {
      "p": [
-      -515.06,
-      -381.62
+      -514.75,
+      -387.58
      ],
      "text": "28L-10R",
      "twy": "T",
-     "dist_m": 64.0
+     "dist_m": 69.0
     }
    },
    {
@@ -2683,7 +2683,8 @@
      "text": "1L-19R",
      "twy": "H",
      "dist_m": 97.0
-    }
+    },
+    "runway_nv": "label lies between the 1L/19R and 1R/19L centrelines with its tab toward 1R/19L: runway assignment ambiguous (NV, verifier airfield_lighting.md 8.1)"
    },
    {
     "taxiway": "G",
@@ -2694,13 +2695,14 @@
     ],
     "hold": {
      "p": [
-      -275.27,
-      636.38
+      -275.23,
+      636.31
      ],
      "text": "1L-19R",
      "twy": "G",
      "dist_m": 93.0
-    }
+    },
+    "runway_nv": "label lies between the 1L/19R and 1R/19L centrelines with its tab toward 1R/19L: runway assignment ambiguous (NV, verifier airfield_lighting.md 8.1)"
    },
    {
     "taxiway": "G",
@@ -2726,15 +2728,8 @@
      -243,
      305
     ],
-    "hold": {
-     "p": [
-      -234.39,
-      234.86
-     ],
-     "text": "19R-1L",
-     "twy": "B/A/F1",
-     "dist_m": 71.0
-    }
+    "hold": null,
+    "status": "crossing retired: data/sfo_details.js holdsDropped \"retired crossing (OSM_UPDATES): old W / F1 crossing of 1L / 1R\" (FAA AL-375 cycle 2611 shows no pavement there); whether the relocated crossing has RELs is NV"
    },
    {
     "taxiway": "F1",
@@ -2743,15 +2738,9 @@
      -111,
      332
     ],
-    "hold": {
-     "p": [
-      -70.48,
-      255.51
-     ],
-     "text": "1L-19R",
-     "twy": "F1",
-     "dist_m": 87.0
-    }
+    "hold": null,
+    "status": "crossing retired: data/sfo_details.js holdsDropped \"retired crossing (OSM_UPDATES): old W / F1 crossing of 1L / 1R\" (FAA AL-375 cycle 2611 shows no pavement there); whether the relocated crossing has RELs is NV",
+    "runway_nv": "label lies between the 1L/19R and 1R/19L centrelines with its tab toward 1R/19L: runway assignment ambiguous (NV, verifier airfield_lighting.md 8.1)"
    },
    {
     "taxiway": "F",
@@ -2837,9 +2826,225 @@
      "twy": "E",
      "dist_m": 53.0
     }
+   },
+   {
+    "taxiway": "N",
+    "runway": "10R/28L",
+    "graphic_xy": [
+     759,
+     596
+    ],
+    "hold": {
+     "p": [
+      806.53,
+      503.07
+     ],
+     "text": "10R-28L",
+     "twy": "N",
+     "dist_m": 104.0
+    }
    }
   ],
-  "rel_note": "one entry per label on the FAA graphic, snapped to the nearest app hold (data/sfo_details.js) with the same taxiway and runway; which side/which of two parallel holds is lit is not resolvable from the graphic (dist_m shows the schematic offset)"
+  "rel_count": 28,
+  "rel_arrays": [
+   {
+    "taxiway": "R",
+    "runway": "10L/28R",
+    "n": 6,
+    "spacing_ft": 45.3,
+    "path": "centreline + straight extension across the runway edge (inf)"
+   },
+   {
+    "taxiway": "E",
+    "runway": "10L/28R",
+    "n": 6,
+    "spacing_ft": 46.6,
+    "path": "centreline + straight extension across the runway edge (inf)"
+   },
+   {
+    "taxiway": "E",
+    "runway": "10L/28R",
+    "n": 7,
+    "spacing_ft": 46.5,
+    "path": "centreline + straight extension across the runway edge (inf)"
+   },
+   {
+    "taxiway": "L",
+    "runway": "10L/28R",
+    "n": 6,
+    "spacing_ft": 37.5,
+    "path": "centreline + straight extension across the runway edge (inf)"
+   },
+   {
+    "taxiway": "C",
+    "runway": "10L/28R",
+    "n": 6,
+    "spacing_ft": 45.6,
+    "path": "centreline + straight extension across the runway edge (inf)"
+   },
+   {
+    "taxiway": "Q",
+    "runway": "10R/28L",
+    "n": 7,
+    "spacing_ft": 47.5,
+    "path": "centreline + straight extension across the runway edge (inf)"
+   },
+   {
+    "taxiway": "K",
+    "runway": "10R/28L",
+    "n": 6,
+    "spacing_ft": 38.0,
+    "path": "centreline + straight extension across the runway edge (inf)"
+   },
+   {
+    "taxiway": "D",
+    "runway": "10R/28L",
+    "n": 6,
+    "spacing_ft": 37.9,
+    "path": "centreline + straight extension across the runway edge (inf)"
+   },
+   {
+    "taxiway": "T",
+    "runway": "10R/28L",
+    "n": 11,
+    "spacing_ft": 47.8,
+    "path": "centreline + straight extension across the runway edge (inf)"
+   },
+   {
+    "taxiway": "E",
+    "runway": "10R/28L",
+    "n": 6,
+    "spacing_ft": 40.7,
+    "path": "centreline + straight extension across the runway edge (inf)"
+   },
+   {
+    "taxiway": "L",
+    "runway": "10R/28L",
+    "n": 6,
+    "spacing_ft": 38.8,
+    "path": "centreline + straight extension across the runway edge (inf)"
+   },
+   {
+    "taxiway": "P",
+    "runway": "10R/28L",
+    "n": 6,
+    "spacing_ft": 37.7,
+    "path": "centreline + straight extension across the runway edge (inf)"
+   },
+   {
+    "taxiway": "F2",
+    "runway": "10R/28L",
+    "n": 6,
+    "spacing_ft": 37.6,
+    "path": "centreline + straight extension across the runway edge (inf)"
+   },
+   {
+    "taxiway": "C",
+    "runway": "10R/28L",
+    "n": 6,
+    "spacing_ft": 40.6,
+    "path": "centreline + straight extension across the runway edge (inf)"
+   },
+   {
+    "taxiway": "F",
+    "runway": "10R/28L",
+    "n": 6,
+    "spacing_ft": 37.9,
+    "path": "centreline + straight extension across the runway edge (inf)"
+   },
+   {
+    "taxiway": "M",
+    "runway": "1L/19R",
+    "n": 6,
+    "spacing_ft": 38.2,
+    "path": "centreline + straight extension across the runway edge (inf)"
+   },
+   {
+    "taxiway": "H",
+    "runway": "1L/19R",
+    "n": 6,
+    "spacing_ft": 38.0,
+    "path": "centreline + straight extension across the runway edge (inf)"
+   },
+   {
+    "taxiway": "H",
+    "runway": "1L/19R",
+    "n": 8,
+    "spacing_ft": 48.4,
+    "path": "centreline + straight extension across the runway edge (inf)",
+    "runway_nv": "label lies between the 1L/19R and 1R/19L centrelines with its tab toward 1R/19L: runway assignment ambiguous (NV, verifier airfield_lighting.md 8.1)"
+   },
+   {
+    "taxiway": "G",
+    "runway": "1L/19R",
+    "n": 6,
+    "spacing_ft": 37.6,
+    "path": "centreline + straight extension across the runway edge (inf)",
+    "runway_nv": "label lies between the 1L/19R and 1R/19L centrelines with its tab toward 1R/19L: runway assignment ambiguous (NV, verifier airfield_lighting.md 8.1)"
+   },
+   {
+    "taxiway": "G",
+    "runway": "1L/19R",
+    "n": 6,
+    "spacing_ft": 37.9,
+    "path": "centreline + straight extension across the runway edge (inf)"
+   },
+   {
+    "taxiway": "F1",
+    "runway": "1L/19R",
+    "n": 0,
+    "status": "crossing retired: data/sfo_details.js holdsDropped \"retired crossing (OSM_UPDATES): old W / F1 crossing of 1L / 1R\" (FAA AL-375 cycle 2611 shows no pavement there); whether the relocated crossing has RELs is NV"
+   },
+   {
+    "taxiway": "F1",
+    "runway": "1L/19R",
+    "n": 0,
+    "status": "crossing retired: data/sfo_details.js holdsDropped \"retired crossing (OSM_UPDATES): old W / F1 crossing of 1L / 1R\" (FAA AL-375 cycle 2611 shows no pavement there); whether the relocated crossing has RELs is NV"
+   },
+   {
+    "taxiway": "F",
+    "runway": "1L/19R",
+    "n": 6,
+    "spacing_ft": 38.0,
+    "path": "centreline + straight extension across the runway edge (inf)"
+   },
+   {
+    "taxiway": "C",
+    "runway": "1L/19R",
+    "n": 6,
+    "spacing_ft": 37.9,
+    "path": "centreline + straight extension across the runway edge (inf)"
+   },
+   {
+    "taxiway": "F",
+    "runway": "1R/19L",
+    "n": 6,
+    "spacing_ft": 38.0,
+    "path": "centreline + straight extension across the runway edge (inf)"
+   },
+   {
+    "taxiway": "C",
+    "runway": "1R/19L",
+    "n": 6,
+    "spacing_ft": 38.0,
+    "path": "centreline + straight extension across the runway edge (inf)"
+   },
+   {
+    "taxiway": "E",
+    "runway": "1R/19L",
+    "n": 6,
+    "spacing_ft": 45.1,
+    "path": "centreline + straight extension across the runway edge (inf)"
+   },
+   {
+    "taxiway": "N",
+    "runway": "10R/28L",
+    "n": 6,
+    "spacing_ft": 41.3,
+    "path": "centreline + straight extension across the runway edge (inf)"
+   }
+  ],
+  "rel_note": "one entry per label on the FAA graphic (28 labels, D1 2026-11-05), snapped to the nearest app hold (data/sfo_details.js) with the same taxiway and runway; which side/which of two parallel holds is lit is not resolvable from the graphic (dist_m shows the schematic offset). Arrays expanded along the app taxiway centreline from the snapped hold (rel_arrays; geometry std + inf choices listed there)"
  },
  "rules": {
   "runway_edge": {
@@ -2960,8 +3165,8 @@
    "rule": "white/green alternating, 24-30 flashes/min (installation AC & AIM) / 22-26 fpm (equipment spec), beam centre 5 deg, mounted above surrounding obstructions"
   },
   "obstruction": {
-   "src": "ac7460 5.2, 5.5; ac43j",
-   "rule": "<= 150 ft AGL: steady red L-810 (double at top); > 150 ft: flashing red L-864 (2000 cd, 30 fpm) at top, L-810(F) flashing at intermediate levels (150-350 ft), all synchronised"
+   "src": "ac7460 5.2, 5.5, 5.6; ac43j",
+   "rule": "<= 150 ft AGL: steady red L-810 (double at top); > 150 ft skeletal structures (5.5: poles, towers): flashing red L-864 (2000 cd, 30 fpm) at top, L-810(F) flashing at intermediate levels (150-350 ft), all synchronised; > 150 ft solid structures/buildings (5.6, e.g. the control tower): >= 3 L-864 at the top (5.6.2.2; 3 per level, 4 if the top is 20-100 ft across, 5.6.1), 150-350 ft AGL: a second level of steady-burning red units at about the midpoint (5.6.3)"
   },
   "apron_flood": {
    "src": "ac5360 7.5 (current, no numbers; refers to IES RP-37-15); cancelled AC 150/5360-13 (1988) para 52 + Table 4-1",
@@ -2990,7 +3195,7 @@
    "dist_m": 253,
    "study": null,
    "jdate": "2013289",
-   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+   "fixture_inferred": "L-810 steady red (double at top), std from AC 70/7460-1N 5.2.2.1"
   },
   {
    "oas": "06-001451",
@@ -3008,7 +3213,7 @@
    "dist_m": 807,
    "study": null,
    "jdate": "2011356",
-   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+   "fixture_inferred": "L-810 steady red (double at top), std from AC 70/7460-1N 5.2.2.1"
   },
   {
    "oas": "06-323169",
@@ -3026,7 +3231,24 @@
    "dist_m": 814,
    "study": "2008AWP00286NR",
    "jdate": "2025084",
-   "fixture_inferred": "L-864 flashing red at top (+ L-810(F) intermediate), inf from AC 70/7460-1N 5.5"
+   "fixture_inferred": ">= 3 L-864 flashing red (2000 cd, 30 fpm) at the top + a steady red level at about mid-height (122 ft AGL), std from AC 70/7460-1N 5.6.2.2 / 5.6.3; as-built NV",
+   "fixture_inferred_levels": [
+    {
+     "h_ft": 245,
+     "type": "L-864",
+     "n_min": 3,
+     "flash_fpm": 30,
+     "cd_eff": 2000,
+     "src": "ac7460 5.6.2.2, ac43j 3.4.1.2"
+    },
+    {
+     "h_ft": 122,
+     "type": "L-810",
+     "steady": true,
+     "cd": 32.5,
+     "src": "ac7460 5.6.3, ac43j 3.4.1.5"
+    }
+   ]
   },
   {
    "oas": "06-041718",
@@ -3044,7 +3266,7 @@
    "dist_m": 912,
    "study": null,
    "jdate": "2018135",
-   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+   "fixture_inferred": "L-810 steady red (double at top), std from AC 70/7460-1N 5.2.2.1"
   },
   {
    "oas": "06-034690",
@@ -3062,7 +3284,7 @@
    "dist_m": 1073,
    "study": null,
    "jdate": "2013289",
-   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+   "fixture_inferred": "L-810 steady red (double at top), std from AC 70/7460-1N 5.2.2.1"
   },
   {
    "oas": "06-033970",
@@ -3080,7 +3302,7 @@
    "dist_m": 1107,
    "study": null,
    "jdate": "2013289",
-   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+   "fixture_inferred": "L-810 steady red (double at top), std from AC 70/7460-1N 5.2.2.1"
   },
   {
    "oas": "06-034691",
@@ -3098,7 +3320,7 @@
    "dist_m": 1139,
    "study": null,
    "jdate": "2013289",
-   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+   "fixture_inferred": "L-810 steady red (double at top), std from AC 70/7460-1N 5.2.2.1"
   },
   {
    "oas": "06-034632",
@@ -3116,7 +3338,7 @@
    "dist_m": 1340,
    "study": null,
    "jdate": "2013289",
-   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+   "fixture_inferred": "L-810 steady red (double at top), std from AC 70/7460-1N 5.2.2.1"
   },
   {
    "oas": "06-034633",
@@ -3134,7 +3356,7 @@
    "dist_m": 1364,
    "study": null,
    "jdate": "2013289",
-   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+   "fixture_inferred": "L-810 steady red (double at top), std from AC 70/7460-1N 5.2.2.1"
   },
   {
    "oas": "06-034441",
@@ -3152,7 +3374,7 @@
    "dist_m": 1653,
    "study": null,
    "jdate": "2013289",
-   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+   "fixture_inferred": "L-810 steady red (double at top), std from AC 70/7460-1N 5.2.2.1"
   },
   {
    "oas": "06-033961",
@@ -3170,7 +3392,7 @@
    "dist_m": 1658,
    "study": null,
    "jdate": "2013289",
-   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+   "fixture_inferred": "L-810 steady red (double at top), std from AC 70/7460-1N 5.2.2.1"
   },
   {
    "oas": "06-028381",
@@ -3188,7 +3410,7 @@
    "dist_m": 1774,
    "study": "2012AWP07578OE",
    "jdate": "2013067",
-   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+   "fixture_inferred": "L-810 steady red (double at top), std from AC 70/7460-1N 5.2.2.1"
   },
   {
    "oas": "06-001440",
@@ -3206,7 +3428,7 @@
    "dist_m": 1805,
    "study": null,
    "jdate": "2011352",
-   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+   "fixture_inferred": "L-810 steady red (double at top), std from AC 70/7460-1N 5.2.2.1"
   },
   {
    "oas": "06-028376",
@@ -3224,7 +3446,7 @@
    "dist_m": 1819,
    "study": "2012AWP07574OE",
    "jdate": "2013067",
-   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+   "fixture_inferred": "L-810 steady red (double at top), std from AC 70/7460-1N 5.2.2.1"
   },
   {
    "oas": "06-035340",
@@ -3242,7 +3464,7 @@
    "dist_m": 1834,
    "study": null,
    "jdate": "2013289",
-   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+   "fixture_inferred": "L-810 steady red (double at top), std from AC 70/7460-1N 5.2.2.1"
   },
   {
    "oas": "06-034144",
@@ -3260,7 +3482,7 @@
    "dist_m": 1853,
    "study": null,
    "jdate": "2013289",
-   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+   "fixture_inferred": "L-810 steady red (double at top), std from AC 70/7460-1N 5.2.2.1"
   },
   {
    "oas": "06-028382",
@@ -3278,7 +3500,7 @@
    "dist_m": 1865,
    "study": "2012AWP07575OE",
    "jdate": "2016295",
-   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+   "fixture_inferred": "L-810 steady red (double at top), std from AC 70/7460-1N 5.2.2.1"
   },
   {
    "oas": "06-001425",
@@ -3314,7 +3536,7 @@
    "dist_m": 1908,
    "study": "2012AWP07568OE",
    "jdate": "2013066",
-   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+   "fixture_inferred": "L-810 steady red (double at top), std from AC 70/7460-1N 5.2.2.1"
   },
   {
    "oas": "06-033964",
@@ -3332,7 +3554,7 @@
    "dist_m": 1909,
    "study": null,
    "jdate": "2013289",
-   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+   "fixture_inferred": "L-810 steady red (double at top), std from AC 70/7460-1N 5.2.2.1"
   },
   {
    "oas": "06-028375",
@@ -3350,7 +3572,7 @@
    "dist_m": 1957,
    "study": "2012AWP07573OE",
    "jdate": "2013067",
-   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+   "fixture_inferred": "L-810 steady red (double at top), std from AC 70/7460-1N 5.2.2.1"
   },
   {
    "oas": "06-001452",
@@ -3368,7 +3590,7 @@
    "dist_m": 1991,
    "study": null,
    "jdate": "2014152",
-   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+   "fixture_inferred": "L-810 steady red (double at top), std from AC 70/7460-1N 5.2.2.1"
   },
   {
    "oas": "06-034222",
@@ -3386,7 +3608,7 @@
    "dist_m": 2019,
    "study": "2012AWP07501OE",
    "jdate": "2015035",
-   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+   "fixture_inferred": "L-810 steady red (double at top), std from AC 70/7460-1N 5.2.2.1"
   },
   {
    "oas": "06-233654",
@@ -3404,7 +3626,7 @@
    "dist_m": 2029,
    "study": "2022AWP12181OE",
    "jdate": "2024019",
-   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+   "fixture_inferred": "L-810 steady red (double at top), std from AC 70/7460-1N 5.2.2.1"
   },
   {
    "oas": "06-279521",
@@ -3422,7 +3644,7 @@
    "dist_m": 2068,
    "study": "2022AWP12245OE",
    "jdate": "2023121",
-   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+   "fixture_inferred": "L-810 steady red (double at top), std from AC 70/7460-1N 5.2.2.1"
   },
   {
    "oas": "06-034155",
@@ -3440,7 +3662,7 @@
    "dist_m": 2104,
    "study": "2012AWP07576OE",
    "jdate": "2014079",
-   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+   "fixture_inferred": "L-810 steady red (double at top), std from AC 70/7460-1N 5.2.2.1"
   },
   {
    "oas": "06-034142",
@@ -3458,7 +3680,7 @@
    "dist_m": 2111,
    "study": null,
    "jdate": "2013289",
-   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+   "fixture_inferred": "L-810 steady red (double at top), std from AC 70/7460-1N 5.2.2.1"
   },
   {
    "oas": "06-235854",
@@ -3476,7 +3698,7 @@
    "dist_m": 2112,
    "study": "2022AWP12247OE",
    "jdate": "2024019",
-   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+   "fixture_inferred": "L-810 steady red (double at top), std from AC 70/7460-1N 5.2.2.1"
   },
   {
    "oas": "06-034143",
@@ -3494,7 +3716,7 @@
    "dist_m": 2121,
    "study": null,
    "jdate": "2013289",
-   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+   "fixture_inferred": "L-810 steady red (double at top), std from AC 70/7460-1N 5.2.2.1"
   },
   {
    "oas": "06-034631",
@@ -3512,7 +3734,7 @@
    "dist_m": 2134,
    "study": "2012AWP07577OE",
    "jdate": "2014079",
-   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+   "fixture_inferred": "L-810 steady red (double at top), std from AC 70/7460-1N 5.2.2.1"
   },
   {
    "oas": "06-241243",
@@ -3530,7 +3752,7 @@
    "dist_m": 2147,
    "study": "2022AWP12248OE",
    "jdate": "2024019",
-   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+   "fixture_inferred": "L-810 steady red (double at top), std from AC 70/7460-1N 5.2.2.1"
   },
   {
    "oas": "06-034259",
@@ -3548,7 +3770,7 @@
    "dist_m": 2300,
    "study": null,
    "jdate": "2013289",
-   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+   "fixture_inferred": "L-810 steady red (double at top), std from AC 70/7460-1N 5.2.2.1"
   },
   {
    "oas": "06-033971",
@@ -3566,7 +3788,7 @@
    "dist_m": 2325,
    "study": null,
    "jdate": "2013289",
-   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+   "fixture_inferred": "L-810 steady red (double at top), std from AC 70/7460-1N 5.2.2.1"
   },
   {
    "oas": "06-001450",
@@ -3584,7 +3806,7 @@
    "dist_m": 2682,
    "study": null,
    "jdate": "2012342",
-   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+   "fixture_inferred": "L-810 steady red (double at top), std from AC 70/7460-1N 5.2.2.1"
   },
   {
    "oas": "06-035243",
@@ -3602,7 +3824,7 @@
    "dist_m": 2872,
    "study": null,
    "jdate": "2013289",
-   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+   "fixture_inferred": "L-810 steady red (double at top), std from AC 70/7460-1N 5.2.2.1"
   },
   {
    "oas": "06-314302",
@@ -3620,7 +3842,7 @@
    "dist_m": 3602,
    "study": "2019AWP01913OE",
    "jdate": "2025263",
-   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+   "fixture_inferred": "L-810 steady red (double at top), std from AC 70/7460-1N 5.2.2.1"
   },
   {
    "oas": "06-307863",
@@ -3638,7 +3860,7 @@
    "dist_m": 3605,
    "study": "2022AWP09113OE",
    "jdate": "2025057",
-   "fixture_inferred": "L-864 flashing red at top (+ L-810(F) intermediate), inf from AC 70/7460-1N 5.5"
+   "fixture_inferred": "L-864 flashing red at top (+ L-810(F) intermediate), std from AC 70/7460-1N 5.5 (skeletal structures)"
   },
   {
    "oas": "06-307887",
@@ -3656,7 +3878,7 @@
    "dist_m": 3665,
    "study": "2022AWP09117OE",
    "jdate": "2025263",
-   "fixture_inferred": "L-864 flashing red at top (+ L-810(F) intermediate), inf from AC 70/7460-1N 5.5"
+   "fixture_inferred": "L-864 flashing red at top (+ L-810(F) intermediate), std from AC 70/7460-1N 5.5 (skeletal structures)"
   },
   {
    "oas": "06-001448",
@@ -3674,7 +3896,7 @@
    "dist_m": 4001,
    "study": "0067_WE03643OE",
    "jdate": "2016133",
-   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+   "fixture_inferred": "L-810 steady red (double at top), std from AC 70/7460-1N 5.2.2.1"
   },
   {
    "oas": "06-021147",
@@ -3692,7 +3914,7 @@
    "dist_m": 4015,
    "study": "2010AWP01713OE",
    "jdate": "2010343",
-   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+   "fixture_inferred": "L-810 steady red (double at top), std from AC 70/7460-1N 5.2.2.1"
   },
   {
    "oas": "06-001420",
@@ -3710,7 +3932,24 @@
    "dist_m": 4297,
    "study": "0080_WE00675OE",
    "jdate": "2011350",
-   "fixture_inferred": "L-864 flashing red at top (+ L-810(F) intermediate), inf from AC 70/7460-1N 5.5"
+   "fixture_inferred": ">= 3 L-864 flashing red (2000 cd, 30 fpm) at the top + a steady red level at about mid-height (86 ft AGL), std from AC 70/7460-1N 5.6.2.2 / 5.6.3; as-built NV",
+   "fixture_inferred_levels": [
+    {
+     "h_ft": 173,
+     "type": "L-864",
+     "n_min": 3,
+     "flash_fpm": 30,
+     "cd_eff": 2000,
+     "src": "ac7460 5.6.2.2, ac43j 3.4.1.2"
+    },
+    {
+     "h_ft": 86,
+     "type": "L-810",
+     "steady": true,
+     "cd": 32.5,
+     "src": "ac7460 5.6.3, ac43j 3.4.1.5"
+    }
+   ]
   },
   {
    "oas": "06-318009",
@@ -3728,7 +3967,7 @@
    "dist_m": 4396,
    "study": "2021AWP22054OE",
    "jdate": "2025329",
-   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+   "fixture_inferred": "L-810 steady red (double at top), std from AC 70/7460-1N 5.2.2.1"
   },
   {
    "oas": "06-305561",
@@ -3746,7 +3985,7 @@
    "dist_m": 4440,
    "study": "2021AWP22046OE",
    "jdate": "2024095",
-   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+   "fixture_inferred": "L-810 steady red (double at top), std from AC 70/7460-1N 5.2.2.1"
   }
  ],
  "apron_masts": [
@@ -4781,6 +5020,7 @@
   "als_1000ft_bar": 36,
   "als_threshold_bar": 105,
   "als_flasher": 23,
-  "rwsl_thl": 192
+  "rwsl_thl": 192,
+  "rwsl_rel": 165
  }
 }

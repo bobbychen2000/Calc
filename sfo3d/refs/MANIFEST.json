@@ -1209,6 +1209,12 @@
    "bytes": 360490,
    "sha256": "4d84853234bd150237bf3945d3b15f9ba34f43dbfd3b05b2cc416b941eabcf1b"
   },
+  "gate_truth/flysfo_api_flight-status_20261105T024944Z.json.gz": {
+   "class": "local",
+   "why": "flysfo.com responses: no published terms",
+   "bytes": 212726,
+   "sha256": "0d01bd8c58cca0ccedfdac3b85a314a8b953343bd76330d57c606c41209de2db"
+  },
   "lighting/DAILY_DOF_CSV.ZIP": {
    "class": "local",
    "why": "bulk archive, re-fetchable (extracts are committed)",
@@ -7084,8 +7090,14 @@
   "rec/adsbfi_20261105_02.jsonl.gz": {
    "class": "local",
    "why": "adsb.fi terms: personal non-commercial use, not to be licensed on",
-   "bytes": 6886985,
-   "sha256": "6471b7be0f9a70f84f446a796d9d0a7f1185b4f07b9cee832e9a48c7bbe4bbfa"
+   "bytes": 13455091,
+   "sha256": "ef5133a930fb304ba90cca326b929693fe18313b85073927d16ba093a2b9e679"
+  },
+  "rec/adsbfi_20261105_03.jsonl.gz": {
+   "class": "local",
+   "why": "adsb.fi terms: personal non-commercial use, not to be licensed on",
+   "bytes": 6205184,
+   "sha256": "13dec5ef7b626e0f9ce0fe4fc6055026b6ce56f38c572b5b5fa1e6638183e69c"
   },
   "rec/adsblol_20261104_17.jsonl.gz": {
    "class": "pack",
@@ -7144,8 +7156,14 @@
   "rec/adsblol_20261105_02.jsonl.gz": {
    "class": "pack",
    "why": "ODbL (adsb.lol); trimmed copy in rec_pack/",
-   "bytes": 1921908,
-   "sha256": "e80f98671aae3c802cea359de017e1e2feb0709d24b63296f6079534c5432221"
+   "bytes": 3639951,
+   "sha256": "9b626c3b7ed383fd2595a45e3f0c3953bd61d9653fff485b0ce92f0e739ef4b3"
+  },
+  "rec/adsblol_20261105_03.jsonl.gz": {
+   "class": "pack",
+   "why": "ODbL (adsb.lol); trimmed copy in rec_pack/",
+   "bytes": 1790836,
+   "sha256": "0daccb6b1044fa26a22c9d31c95a1f508fe270bb33319ae29ccef1ac63e8907d"
   },
   "rec/recorder.log": {
    "class": "local",
@@ -7156,8 +7174,8 @@
   "rec/recorder.out": {
    "class": "local",
    "why": "recorder state",
-   "bytes": 4926,
-   "sha256": "e51dd9996689f71ffed2f20ef5b5ac4e88d4a59fd4c05b731c58eca67f957216"
+   "bytes": 7038,
+   "sha256": "c47d961517017d497254b0498128d4d9d492fe4353f93c2d1971dfbf55725f98"
   },
   "rec/recorder.pid": {
    "class": "local",
@@ -7800,6 +7818,13 @@
    "why": "unclassified binary",
    "bytes": 626016,
    "sha256": "0804f42dbd096068b138bcbb348bca52296a29036f38e67710b1f9b2096e0e12"
+  },
+  "xcheck/faa/03_Sep_2026_APT_CSV.zip": {
+   "class": "local",
+   "why": "bulk archive, re-fetchable (extracts are committed)",
+   "bytes": 8043752,
+   "sha256": "d5e4c999d4c96ab4d66d8ce9a387de8ea59b5226a6144ea1ba58758ff29bbbd9",
+   "url": "https://nfdc.faa.gov/webContent/28DaySub/extra/03_Sep_2026_APT_CSV.zip"
   }
  }
 }

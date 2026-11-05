@@ -130,9 +130,14 @@ export class GroundPhysics {
       const D = tr.disp; if (!D.valid || !D.ground || tr.vehicle || tr.dropping) { tr.physOff = null; continue; }
       // (silent: transponder off (stale), or stopped off a stand with no position for a while (traffic.js tr.quiet))
       const sil = tr.stale || tr.quiet;
-      if (tr.gate && tr.gate.bridge && tr.parkPos && (tr.m.phase === 'still' || tr.stale)) {
+      // (a silent docking still driving in -- its body more than 2 m from the stand pose -- is a MOVING aircraft here: a ghost
+      // in its way is removed before the contact, and it is not checked at a pose it has not reached. Replay 4-5 Nov: EVA028
+      // driving into A1 through the silent EVA018 still drawn there, 1,283 m2 for 35 s; overlap.gnd)
+      const S0 = tr.gate && tr.gate.bridge && tr.parkPos && (tr.m.phase === 'still' || tr.stale) ? (traffic.shownPark ? traffic.shownPark(tr) : { x: tr.parkPos[0], z: tr.parkPos[1], hdg: tr.parkHdg }) : null;
+      const driving = !!(S0 && tr.silentDockG && !tr.lock && Math.hypot(D.x - S0.x, D.z - S0.z) > 2);
+      if (S0 && !driving) {
         // the pose it is drawn in: its lock (where it came to rest, the pose its bridge docked to), else the parked pose
-        const S = traffic.shownPark ? traffic.shownPark(tr) : { x: tr.parkPos[0], z: tr.parkPos[1], hdg: tr.parkHdg };
+        const S = S0;
         const B = this.body(tr, { x: S.x, z: S.z, hdg: S.hdg }); if (!B) continue;
         if (tr.parkMode === 'data' && !tr._poseChecked) { tr._poseChecked = true; const Bp = this.body(tr, { x: tr.parkPos[0], z: tr.parkPos[1], hdg: tr.parkHdg }); if (!this.valid(Bp, fixed, false)) { tr.forceStand = true; traffic.updatePark(tr); continue; } }
         // two aircraft at neighbouring stands must not touch: an own-pose (data) parking yields to the stand pose
@@ -147,7 +152,7 @@ export class GroundPhysics {
           else conflicts++;
         }
         fixed.push(B); tr.physOff = null; if (sil) silent.push(B);
-      } else { const B = this.body(tr); if (!B) continue; if ((D.gs || 0) < 0.3 && (tr.m.phase === 'still' || tr.stale)) { free.push(B); if (sil) silent.push(B); } else moving.push(B); }
+      } else { const B = this.body(tr); if (!B) continue; if (!driving && (D.gs || 0) < 0.3 && (tr.m.phase === 'still' || tr.stale)) { free.push(B); if (sil) silent.push(B); } else moving.push(B); }
     }
     // stationary aircraft off the surveyed stands: nearest valid pose (once per pose), within the report scatter (6 m),
     // widened to 15 m when nothing nearer is clear of buildings / neighbours (review round 1: DAL1053 and UAL1881 were

@@ -15,6 +15,7 @@ import { RWY_W } from '../world/airfield.js';
 import { MARK_VS, MARK_FS, buildMarkings, buildStandMarks } from './markings.js';
 import { SIGN_VS, SIGN_FS, buildSigns, SIGN_STATS } from './signs.js';
 import { buildMasts } from './items.js';
+import { B3D_INTEGRATION } from '../../data/buildings3d/integration.js'; // Blender building assets: what they replace (js/three/buildings3d.js)
 
 // world pose of a stand (nose point, unit heading vector) from its airport-grid description
 function gateWorld(g) {
@@ -96,9 +97,14 @@ export function buildLiveWorld(R, airport, log = console.log, opts = {}) {
   }
   // EMAS beds (engineered materials arresting systems) at the 1L/1R/19L/19R ends: raised cellular-block beds
   { const E = buildEMAS().data(); items.push({ mesh: new Mesh(E), prog: 'obj', model: new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]), bbox: E.bbox, castShadow: true, uniforms: { uEmissiveBoost: 1 } }); }
-  const B = buildLiveBuildings(airport, opts.buildings || null);
+  const B = buildLiveBuildings(airport, opts.buildings || null, B3D_INTEGRATION);
   const I4 = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
   items.push({ mesh: new Mesh(B.geo), prog: 'obj', model: I4, bbox: B.geo.bbox, castShadow: true, uniforms: { uEmissiveBoost: 1 } });
+  // first-pass buildings a Blender asset replaces, one item per asset group (b3d: hidden by js/three/buildings3d.js once
+  // the group's glb is shown; drawn as before otherwise and by live.html), and the walkway spans that stay next to the
+  // assets (b3dRest: only the three.js renderer (R.requestBake) draws them, and only with the asset)
+  for (const [k, geo] of Object.entries(B.split || {})) items.push({ mesh: new Mesh(geo), prog: 'obj', model: I4, bbox: geo.bbox, castShadow: true, uniforms: { uEmissiveBoost: 1 }, b3d: k });
+  if (R && R.requestBake) for (const [k, geo] of Object.entries(B.rest || {})) items.push({ mesh: new Mesh(geo), prog: 'obj', model: I4, bbox: geo.bbox, castShadow: true, uniforms: { uEmissiveBoost: 1 }, b3dRest: k });
   log('buildings ' + (B.geo.idx.length / 3) + ' tris ' + (performance.now() - t0).toFixed(0) + 'ms');
   return { terrain, items, gates, towerPos: B.towerPos, textures: { regionTex, aptTex, paintTex, glyphs, waves, clouds, noise }, groundU, waterU, aptPoly, paved: apt.paved, details, mastSprites: opts._mastSprites || [] };
 }

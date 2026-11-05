@@ -1069,7 +1069,10 @@ def t1_canopy(sT1):
     g = unary_union(strips).difference(sT1.poly.buffer(0.01)).difference(loc(RAIL).buffer(1.0))
     g = M.orient_all(_clean(g, 5.0))
     walk = g
-    return dict(poly=g, walk=walk, brackets=[b for b in br if g.buffer(0.5).contains(Point(b[0]))] if False else br)
+    # brackets only where the canopy exists (it is cut back 1 m from the AirTrain guideway): bracket midpoint over the canopy
+    gp = shapely.prepared.prep(g.buffer(0.05))
+    br = [b for b in br if gp.contains(Point(b[0][0] + b[1][0] * T1_CANOPY_D / 2, b[0][1] + b[1][1] * T1_CANOPY_D / 2))]
+    return dict(poly=g, walk=walk, brackets=br)
 
 
 def t3e_penthouse(t3e):

@@ -14,4 +14,15 @@ for f in glob.glob(f'{S}/data/models/*.sfom'):
     os.makedirs(f'{O}/data/models', exist_ok=True); shutil.copy(f, f'{O}/data/models/' + os.path.basename(f)[:-5] + '.wasm')
 for f in glob.glob(f'{S}/data/liveries/*/*-lo.webp'):
     d = os.path.join(O, os.path.relpath(os.path.dirname(f), S)); os.makedirs(d, exist_ok=True); shutil.copy(f, d)
-print('files:', sum(len(fs) for _, _, fs in os.walk(O)))
+# Blender building assets (js/three/buildings3d.js): renamed .glb -> .wasm like the models (artifacts serve standard web
+# types only; the loader fetches the bytes, window.SFO_B3D_EXT = '.wasm' in the template). B3D=all (default: the phone's
+# low tier loads the *_lod2 files, a desktop browser the full ones) | lod2 | none. Artifact limits: 15 MB per binary
+# file (landside.glb is 14.9 MB), 64 MB per publish (publish in two calls if the total says so); all = 36.8 MB.
+b3d = os.environ.get('B3D', 'all'); nb = 0
+for f in sorted(glob.glob(f'{S}/data/buildings3d/*.glb')):
+    if b3d == 'none' or (b3d == 'lod2' and not f.endswith('_lod2.glb')): continue
+    if f.endswith('_f2.glb') and 'f2' not in b3d: continue  # the tower's second height family (?b3dtower=f2): B3D=all+f2
+    sz = os.path.getsize(f); assert sz < 15 * 1024 * 1024, f + ' is over the 15 MB per-file artifact limit'
+    os.makedirs(f'{O}/data/buildings3d', exist_ok=True); shutil.copy(f, f'{O}/data/buildings3d/' + os.path.basename(f)[:-4] + '.wasm'); nb += sz
+print('buildings3d:', b3d, '%.1f MB' % (nb / 1e6))
+print('files:', sum(len(fs) for _, _, fs in os.walk(O)), '%.1f MB' % (sum(os.path.getsize(os.path.join(r, f)) for r, _, fs in os.walk(O) for f in fs) / 1e6))

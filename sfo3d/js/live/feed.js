@@ -36,7 +36,8 @@ export function parsePayload(json, fallbackNow = Date.now()) {
   const list = json.ac || json.aircraft || [];
   const n = num(json.now), c = num(json.ctime);
   const now = n != null ? (n > 1e12 ? n : n * 1000) : c != null ? c : fallbackNow;
-  return { now, source: json._source || null, aircraft: list.map(a => normalizeAircraft(a, now)).filter(Boolean) };
+  // dataNow (ms): the relay's data clock (the recording's time in replay; environment_spec.md §3.2) for js/env/clock.js
+  return { now, dataNow: num(json.dataNow), source: json._source || null, aircraft: list.map(a => normalizeAircraft(a, now)).filter(Boolean) };
 }
 
 export class Feed {
@@ -82,7 +83,7 @@ export class StreamFeed {
   stop() { this.running = false; if (this.es) this.es.close(); this.es = null; clearTimeout(this.timer); }
   emit(head) {
     this.lastOk = Date.now(); this.fails = 0; this.head = head;
-    const json = { ac: [...this.map.values()], now: head.now, _source: head._source };
+    const json = { ac: [...this.map.values()], now: head.now, dataNow: head.dataNow, _source: head._source };
     const p = parsePayload(json);
     this.onStatus && this.onStatus({ ok: true, source: { name: head._source || 'local relay' }, count: p.aircraft.length, mode: this.mode });
     this.onData && this.onData(p, { name: 'local relay' });
@@ -143,9 +144,20 @@ export class Routes {
   }
 }
 
+// METAR / TAF through the local relay only (environment_spec.md §3.3): aviationweather.gov sends no CORS header
+// ("Cross-origin resource sharing is not permitted at this time", V), so the old direct browser fallback could never
+// succeed and was removed (2026-11-05). Without a relay (snapshot / artifact) the app uses SNAPSHOT_METAR.
+// fetchMetar -> the relay's JSON list [{obsTime (s), receiptTime, rawOb, ...}] newest first (last 3 h), or null.
 export async function fetchMetar(station = 'KSFO', url = null) {
+  if (!url) return null;
   try {
-    const r = await fetch(url || `https://aviationweather.gov/api/data/metar?ids=${station}&format=raw&hours=2`, { cache: 'no-store' });
-    if (!r.ok) return null; const t = (await r.text()).trim(); return t ? t.split('\n')[0].trim() : null;
+    const r = await fetch(url, { cache: 'no-store' });
+    if (!r.ok) return null; const t = (await r.text()).trim(); if (!t) return null;
+    // JSON list from this relay; raw lines (older relays, the livetest.mjs mock) become [{rawOb}] (obsTime from DDhhmmZ)
+    if (t[0] === '[') { const j = JSON.parse(t); return Array.isArray(j) ? j : null; }
+    return t.split(/\r?\n/).map(l => l.trim()).filter(Boolean).map(rawOb => ({ rawOb }));
   } catch (e) { return null; }
+}
+export async function fetchTaf(url = 'api/taf?format=json') {
+  try { const r = await fetch(url, { cache: 'no-store' }); if (!r.ok) return null; const j = await r.json(); return Array.isArray(j) && j.length ? j[0] : null; } catch (e) { return null; }
 }

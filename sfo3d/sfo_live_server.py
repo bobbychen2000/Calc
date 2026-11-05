@@ -19,7 +19,10 @@ Endpoints
   /api/gates         SFO's own gate/stand plan from flysfo.com, parsed: {flights, byCallsign, aliases, byStand, ...}
                      ?cs=SKW5339,RPA3456 adds regional callsigns to map (besides those currently on ADS-B)
   /api/routeset      POST {"planes": [{"callsign", "lat", "lng"}]} -> adsb.lol routeset format (origin/destination)
-  /api/metar?ids=KSFO[&format=json]   aviationweather.gov METAR (raw text by default; cached 60 s)
+  /api/metar?ids=KSFO[&format=json]   aviationweather.gov METARs of the last 3 h, newest first (raw lines by default;
+                     conditional upstream polls: 60 s around hh:56, 5 min otherwise; replay: only reports observed
+                     at or before the replay time); header X-Data-Now
+  /api/taf[?format=json]              aviationweather.gov KSFO TAF (replay: a cached TAF in force at the replay time)
   /api/status        provider health, latency, 429s, merge/hygiene counters, gates/routes state
 
 Data sources, terms and measured behaviour: docs/research/realtime_feeds.md (ADS-B), gate_truth.md (flysfo),
@@ -506,6 +509,11 @@ class Clock:
 class Hub:
     """Latest snapshot per provider -> per-aircraft merge + hygiene -> JSON payloads and SSE fan-out."""
 
+    def data_now_ms(self, wall=None):
+        """The data clock (ms): the recording's time in replay (Clock.to_src), wall time live (environment_spec.md 3.2)."""
+        w = time.time() if wall is None else wall
+        return int((self.clock.to_src(w) if self.clock is not None else w) * 1000)
+
     def __init__(self, mode='live'):
         self.mode = mode
         self.lock = threading.RLock()
@@ -524,6 +532,7 @@ class Hub:
         self.clients = 0
         self.wakes = []          # one Event per poller, set when a client shows up
         self.replay_pos = None
+        self.clock = None        # replay: the Clock mapping wall -> recording time (data_now_ms); live: None (identity)
         self.counters = dict(merges=0, mlat_held=0, mlat_jump=0, ground_track_dropped=0, ground_mlat_fields_dropped=0,
                              same_report_fills=0, pos_to_lastPosition=0, db_type_disagree=0)
         self.fresher = {}        # provider short -> count of merged aircraft whose position it supplied (last merge)
@@ -615,7 +624,7 @@ class Hub:
         if publish:                  # a duplicate snapshot (nothing new) is not pushed to streams
             self.seq += 1
         used = sorted({s['name'] for s in self.snaps.values() if wall - s['recv'] <= SNAP_TTL})
-        head = {'now': int(wall * 1000), 'seq': self.seq, 'total': len(out), '_source': '+'.join(used) or None, 'msg': 'No error'}
+        head = {'now': int(wall * 1000), 'dataNow': self.data_now_ms(wall), 'seq': self.seq, 'total': len(out), '_source': '+'.join(used) or None, 'msg': 'No error'}
         full = dict(head, ac=[r for _, r in out])
         self.latest = full
         self.full = json.dumps(full, separators=(',', ':')).encode()
@@ -1390,24 +1399,65 @@ class Gates:
                 'demand_age_s': round(time.time() - self.demand) if self.demand else None}
 
 
-# ------------------------------------------------------------------------------------------------ METAR
+# ------------------------------------------------------------------------------------------------ METAR / TAF
+# docs/research/environment_spec.md 3.3 (weather.md 5.1; environment_impl.md): one upstream JSON fetch per kind serves
+# raw text and JSON; METAR as JSON (obsTime + receiptTime; the app always decodes rawOb with js/env/wx/metar.js) with
+# hours=3; TAF from taf?format=json (issueTime, validTimeFrom/To, rawTAF). Polling: on demand (the app asks every 60 s),
+# with a cache TTL of 60 s from hh:59 to hh:03 and 300 s otherwise -- KSFO routine METARs are at hh:56 and reach the API
+# 4.1-4.4 min later (p10-p90, M) -- never below the upstream "cache-control: max-age" (60 s, M 2026-11-05), and
+# conditional (If-None-Match with the upstream ETag; 304 keeps the cached body). Far under the documented "100 requests
+# per minute" (https://aviationweather.gov/data/api/, V). Upstream errors keep the last good body (header
+# X-Wx-Upstream-Error); the app flags staleness from obsTime vs its data clock (> 90 min, spec 3.3).
+# Replay: only reports observed at or before the replay time (never today's weather): the replay_wx.py / analyze_feeds.py
+# caches for METARs, cached TAFs (refs/cache/replay/wx/taf_ksfo_*.json, saved by this relay in live mode whenever a new
+# TAF is issued) issued at or before the replay time.
+# Terms: NWS content is public domain with the conditions of https://www.weather.gov/disclaimer (V); credit
+# "Weather: NOAA/NWS Aviation Weather Center" (ATTRIBUTION['metar']).
+AWC = 'https://aviationweather.gov/api/data/'
+
+
+def wx_ttl(now=None):
+    """Upstream cache TTL (s) by minute of the hour: 60 s from hh:59 to hh:03, else 300 s (spec 3.3, I schedule)."""
+    m = time.gmtime(time.time() if now is None else now).tm_min
+    return 60 if (m >= 59 or m <= 3) else 300
+
+
 class Metar:
     def __init__(self, replay_clock=None):
         self.cache, self.replay = {}, replay_clock
         self.lock = threading.Lock()
+        self.up = {}               # kind -> dict(t, ttl, etag, body(list), err)
 
-    def _cached_obs(self, T):
-        """Replay: the latest cached KSFO METAR observed at or before recording time T (aviationweather JSON files
-        saved by tools/live/replay_wx.py and analyze_feeds.py)."""
-        best = None
+    # ---------------------------------------------------------------- replay caches
+    def _cached_list(self, T, hours=3):
+        """Replay: cached KSFO METARs observed at or before recording time T, newest first, the last `hours` hours."""
+        seen = {}
         for p in glob.glob(os.path.join(CACHE_DIR, 'replay', 'wx', 'metar_*.json')) + glob.glob(os.path.join(CACHE_DIR, 'feeds', 'metar_ksfo*.json')):
             try:
                 for m in json.load(open(p)):
-                    if m.get('obsTime') and m['obsTime'] <= T and (best is None or m['obsTime'] > best['obsTime']):
-                        best = m
+                    if m.get('obsTime') and T - hours * 3600 <= m['obsTime'] <= T and m.get('rawOb'):
+                        seen[(m['obsTime'], m['rawOb'])] = m
             except Exception:
                 pass
-        return best
+        return [seen[k] for k in sorted(seen, reverse=True)]
+
+    def _cached_obs(self, T):
+        """Replay: the latest cached KSFO METAR observed at or before recording time T."""
+        L = self._cached_list(T, hours=24 * 3650)
+        return L[0] if L else None
+
+    def _cached_taf(self, T):
+        """Replay: the latest cached KSFO TAF issued at or before T and valid at T (live-mode saves, see above)."""
+        best = None
+        for p in glob.glob(os.path.join(CACHE_DIR, 'replay', 'wx', 'taf_ksfo_*.json')):
+            try:
+                for t in json.load(open(p)):
+                    it = dt.datetime.strptime(t['issueTime'][:19], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=dt.timezone.utc).timestamp()
+                    if it <= T and t.get('validTimeFrom', 0) <= T <= t.get('validTimeTo', 0) and (best is None or it > best[0]):
+                        best = (it, t)
+            except Exception:
+                pass
+        return best[1] if best else None
 
     def _fill_cache(self):
         """Replay of a recent recording with no cached METAR near its time: save the last 24 h of KSFO METARs once
@@ -1416,7 +1466,7 @@ class Metar:
             return
         self._filled = time.time()
         try:
-            code, _, body = http_get('https://aviationweather.gov/api/data/metar?ids=KSFO&format=json&hours=24', timeout=20)
+            code, _, body = http_get(AWC + 'metar?ids=KSFO&format=json&hours=24', timeout=20)
             if code == 200 and body.strip().startswith(b'['):
                 d = os.path.join(CACHE_DIR, 'replay', 'wx')
                 os.makedirs(d, exist_ok=True)
@@ -1424,28 +1474,97 @@ class Metar:
         except Exception as e:
             print('metar cache fill failed:', e, file=sys.stderr)
 
+    # ---------------------------------------------------------------- live upstream (conditional, scheduled)
+    def _upstream(self, kind):
+        url = AWC + ('metar?ids=KSFO&format=json&hours=3' if kind == 'metar' else 'taf?ids=KSFO&format=json')
+        now = time.time()
+        with self.lock:
+            c = self.up.get(kind)
+            if c and now - c['t'] < c['ttl']:
+                return c
+            etag = c['etag'] if c else None
+        hdr = {'If-None-Match': etag} if etag else {}
+        try:
+            code, hd, body = http_get(url, timeout=15, headers=hdr)
+        except Exception as e:
+            code, hd, body = None, {}, str(e).encode()
+        mx = re.search(r'max-age=(\d+)', hd.get('cache-control', '') or '')
+        ttl = max(wx_ttl(now), int(mx.group(1)) if mx else 0)
+        with self.lock:
+            c = self.up.get(kind)
+            if code == 304 and c:
+                c.update(t=now, ttl=ttl, err=None, not_modified=c.get('not_modified', 0) + 1)
+                return c
+            if code == 200 and body.strip().startswith(b'['):
+                lst = json.loads(body)
+                key = 'obsTime' if kind == 'metar' else 'issueTime'
+                lst.sort(key=lambda m: m.get(key) or 0, reverse=True)
+                c = dict(t=now, ttl=ttl, etag=hd.get('etag'), body=lst, err=None, fetched=now)
+                self.up[kind] = c
+                if kind == 'taf' and lst:
+                    self._save_taf(lst)
+                return c
+            err = f'HTTP {code}' if code else body.decode(errors='replace')[:120]
+            if c:                                   # keep the last good report; retry after 60 s
+                c.update(t=now, ttl=60, err=err)
+                return c
+            raise IOError(err)
+
+    def _save_taf(self, lst):
+        """Live mode: keep each newly issued KSFO TAF for later replays (one small JSON file per issue time)."""
+        try:
+            it = re.sub(r'[^0-9T]', '', (lst[0].get('issueTime') or '')[:16])
+            d = os.path.join(CACHE_DIR, 'replay', 'wx')
+            p = os.path.join(d, f'taf_ksfo_{it}Z.json')
+            if it and self.replay is None and not os.path.exists(p):
+                os.makedirs(d, exist_ok=True)
+                json.dump(lst[:1], open(p, 'w'))
+        except Exception as e:
+            print('taf save failed:', e, file=sys.stderr)
+
+    # ---------------------------------------------------------------- endpoints
     def get(self, ids, fmt):
+        """/api/metar: KSFO -> JSON list (newest first) or raw lines; other stations pass through (raw, 60 s cache)."""
         if self.replay is not None and ids == 'KSFO':
             T = self.replay.to_src(time.time())
-            m = self._cached_obs(T)
-            if (m is None or T - m['obsTime'] > 5400) and time.time() - T < 23 * 3600:
+            L = self._cached_list(T)
+            if (not L or T - L[0]['obsTime'] > 5400) and time.time() - T < 23 * 3600:
                 self._fill_cache()
-                m = self._cached_obs(T)
-            if m and T - m['obsTime'] <= 5400:   # METARs are hourly (xx56Z); older than 90 min: none is better
-                return (json.dumps([m]).encode(), 'application/json') if fmt == 'json' else (m['rawOb'].encode(), 'text/plain')
+                L = self._cached_list(T)
+            if L and T - L[0]['obsTime'] <= 5400:   # METARs are hourly (xx56Z); older than 90 min: none is better
+                return (json.dumps(L).encode(), 'application/json') if fmt == 'json' else ('\n'.join(m['rawOb'] for m in L).encode(), 'text/plain')
             raise IOError('no cached KSFO METAR within 90 min of the replay time')   # never today's weather in a replay
+        if ids == 'KSFO':
+            c = self._upstream('metar')
+            hdr = {'X-Wx-Fetched': str(int(c.get('fetched', 0))), 'X-Wx-Upstream-Error': c['err']} if c.get('err') else {}
+            if fmt == 'json':
+                return json.dumps(c['body']).encode(), 'application/json', hdr
+            return '\n'.join(m['rawOb'] for m in c['body'] if m.get('rawOb')).encode(), 'text/plain', hdr
         key = (ids, fmt)
         with self.lock:
             c = self.cache.get(key)
             if c and time.time() - c[0] < 60:
                 return c[1], c[2]
-        code, hd, body = http_get(f'https://aviationweather.gov/api/data/metar?ids={urllib.parse.quote(ids)}&format={fmt}&hours=2', timeout=15)
+        code, hd, body = http_get(f'{AWC}metar?ids={urllib.parse.quote(ids)}&format={fmt}&hours=2', timeout=15)
         if code != 200:
             raise IOError(f'HTTP {code}')
         ctype = 'application/json' if fmt == 'json' else 'text/plain'
         with self.lock:
             self.cache[key] = (time.time(), body, ctype)
         return body, ctype
+
+    def taf(self, fmt):
+        """/api/taf: the current KSFO TAF (live) or the one in force at the replay time (cached only)."""
+        if self.replay is not None:
+            t = self._cached_taf(self.replay.to_src(time.time()))
+            if not t:
+                raise IOError('no cached KSFO TAF in force at the replay time')
+            lst = [t]
+        else:
+            lst = self._upstream('taf')['body']
+        if fmt == 'json':
+            return json.dumps(lst).encode(), 'application/json'
+        return '\n'.join(t['rawTAF'] for t in lst[:1] if t.get('rawTAF')).encode(), 'text/plain'
 
 
 # ------------------------------------------------------------------------------------------------ replay
@@ -1583,8 +1702,11 @@ def make_handler(app):
             q = urllib.parse.parse_qs(u.query)
             try:
                 if u.path == '/api/ping':
+                    # dataNow (ms): the data clock -- the recording's time in replay, wall time live (environment_spec.md
+                    # 3.2: the app places the Sun from it); also in every ADS-B payload (Hub._merge)
                     return self._json({'sfolive': 1, 'v': VERSION, 'mode': hub.mode, 'stream': True, 'delta': True,
-                                       'features': {'gates': gates.enabled, 'routes': routes.mode != 'off', 'metar': True,
+                                       'dataNow': hub.data_now_ms(),
+                                       'features': {'gates': gates.enabled, 'routes': routes.mode != 'off', 'metar': True, 'taf': True,
                                                     'replay': app.get('replay_info')},
                                        'providers': [PROVIDERS[p]['name'] for p in PROVIDERS], 'attribution': ATTRIBUTION})
                 if u.path == '/api/adsb':
@@ -1607,7 +1729,14 @@ def make_handler(app):
                     ids = re.sub(r'[^A-Za-z0-9,]', '', q.get('ids', ['KSFO'])[0])[:32] or 'KSFO'
                     fmt = 'json' if q.get('format', ['raw'])[0] == 'json' else 'raw'
                     try:
-                        body, ctype = metar.get(ids, fmt)
+                        r = metar.get(ids, fmt)
+                    except Exception as e:
+                        return self._json({'error': str(e)[:200]}, 502)
+                    return self._send(r[0], r[1], extra=dict(r[2], **{'X-Data-Now': str(hub.data_now_ms())}) if len(r) > 2 else {'X-Data-Now': str(hub.data_now_ms())})
+                if u.path == '/api/taf':
+                    fmt = 'json' if q.get('format', ['raw'])[0] == 'json' else 'raw'
+                    try:
+                        body, ctype = metar.taf(fmt)
                     except Exception as e:
                         return self._json({'error': str(e)[:200]}, 502)
                     return self._send(body, ctype)
@@ -1750,6 +1879,7 @@ def main():
     routes = Routes('off' if a.routes == 'off' else a.routes)
     gates = Gates(enabled=not a.no_sfo_gates, hub=hub, routes=routes, replay_clock=replay_clock)
     metar = Metar(replay_clock)
+    hub.clock = replay_clock         # dataNow in /api/ping and the ADS-B payloads (environment_spec.md 3.2)
     app = {'hub': hub, 'gates': gates, 'routes': routes, 'metar': metar, 't_start': time.time(), 'quiet': a.quiet}
     writer = None
     if a.record:

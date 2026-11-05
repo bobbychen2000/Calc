@@ -42,6 +42,7 @@ html,body{height:100%;background:#0b0f14;color:#e7edf3;color-scheme:dark}
 window.SFO_MODE = 'snapshot';
 window.SFO_LIVERY_RES = 'lo';
 window.SFO_MODEL_EXT = '.wasm'; // the model files are .sfom renamed: artifacts serve only standard web types, fetch() reads the bytes
+window.SFO_B3D_EXT = '.wasm'; // the building assets (data/buildings3d/*.glb) renamed the same way (js/three/buildings3d.js)
 (function () {
   var t0 = performance.now(), info = { backend: null, tier: null, load: null, err: null };
   var $ = function (id) { return document.getElementById(id); };

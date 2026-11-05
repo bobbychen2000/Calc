@@ -4,6 +4,7 @@
 # Output: <outdir>/pub/sfo_phone_test.html (app bundle inlined, live.css inlined, test card) + supporting files:
 #   assets/ (MSDF sign atlas), data/models/*.wasm (the .sfom models renamed: artifacts serve only standard web types,
 #   and the app fetches the bytes with SFO_MODEL_EXT='.wasm'), data/liveries/*/*-lo.webp (low-resolution livery set).
+#   data/buildings3d/*.wasm: the Blender building assets (.glb renamed, SFO_B3D_EXT='.wasm'; B3D=all|lod2|none, default all).
 # Publish with the Artifact tool: file_path=<outdir>/pub/sfo_phone_test.html, root=<outdir>/pub, files=every other file.
 # First published 26 Sep 2026 as https://claude.ai/artifact/2ekxFtAwbF4vVMKSxTrkEY (private).
 set -e
