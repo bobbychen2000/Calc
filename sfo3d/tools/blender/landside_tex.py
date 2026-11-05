@@ -8,7 +8,11 @@ One tile spans the metres given in landside_geom.TILES of UV_detail (the geometr
   ls_n_precast      6 x 3 m      architectural precast panels 3.0 x 1.5 m, 2-cm joints [obs photo l1 grid; module inf]
   ls_n_band         6 x 1.6 m    helix-drum bands: horizontal joints every 1.6 m, verticals every 3 m [obs l1 / a2; inf]
   ls_n_board        4 x 2.4 m    board-formed concrete: 0.15-m boards, faint form-tie dots [obs photo l5; module inf]
-  ls_c/n_screen     1 panel      perforated metal panel with horizontal slots and a frame [obs photo l1; slot pitch inf]
+  ls_c/n_screen     1 panel      full-bay perforated metal panel: fine field of short horizontal slots, thin frame [obs photo l1; pitch inf]
+  ls_n_drum         3 x 1.5 m    helix drum: smooth metal panels, faint joints [obs photo i2]
+  ls_n_ribs         4 x 3 m      white precast stair / elevator towers: horizontal ribs every 0.6 m [obs photo i2]
+  ls_c_weather      4 x 4 m      weathered guideway concrete: streaks + mottling (factor) [obs photos l1 / l5]
+  ls_c_glassbart    3 x 2.95 m   BART station glazed band: green glass, mullions 1.5 m [obs photo a2; module inf]
   ls_n_corrugated   2 x 2 m      trapezoidal metal cladding, 0.20 m pitch, vertical ribs [inf]
   ls_c/n_louvre     3 x 1 m      canted louvre screen: horizontal green-grey blades with dark gaps [obs photo l5]
   ls_c_ribbon       3 x 3 m      ribbon windows: dark glass, mullions every 1.5 m, transom at 2.2 m [obs l5; inf]
@@ -95,16 +99,36 @@ def make_all(out):
     u, v = _grid(256, 256, 8.0, 8.0)
     T['ls_n_concrete'] = _normal_png(np.minimum(_groove(_dist(u, 8.0), 0.012, 0.006), _groove(_dist(v, 8.0), 0.012, 0.006)) + 0.002 * _noise(256, 256, 12, 5),
                                      8 / 256, 8 / 256, P('ls_n_concrete'))
-    # --- perforated screen panel (UV 0..1 = one panel): frame 4 % of the panel, horizontal slots (dark) every 1/14
-    u, v = _grid(256, 256, 1.0, 1.0)
-    fr = (np.minimum(np.minimum(u, 1 - u), np.minimum(v, 1 - v)) < 0.035).astype(float)
-    slot = ((_dist(v, 1 / 14.0, 0.5 / 14) < 0.022) & (_dist(u, 1 / 6.0, 1 / 12.0) < 0.078)).astype(float) * (1 - fr)
-    # perforation (fine holes, unresolved) darkens the metal between the slots: the dark interior shows through [obs l1 / a2]
-    T['ls_c_screen'] = _rgb_png(mix((196, 198, 198), (40, 42, 45), slot * 0.95) * (1 - 0.04 * fr[..., None]), P('ls_c_screen'))
-    T['ls_n_screen'] = _normal_png(-0.01 * slot + 0.006 * fr, 3 / 256, 1.6 / 256, P('ls_n_screen'))
-    # --- louvre screen (3 x 1 m): blades 0.42 m, gaps 0.18 m (two blades per metre is too fine at 1:1000; l5: ~0.6 m pitch)
+    # --- perforated screen panel (UV 0..1 = one full-bay panel ~4 x 2.8 m, round 1): a thin frame and a fine field of short
+    #     horizontal slots, 32 x 24 per panel (photo l1: rows of small slots; the dark interior shows through) - mip-mapped it
+    #     averages to the mid-grey the panels read at a distance (photos a2 / i2)
+    u, v = _grid(512, 512, 1.0, 1.0)
+    fr = (np.minimum(np.minimum(u, 1 - u), np.minimum(v, 1 - v)) < 0.012).astype(float)
+    slot = ((_dist(v, 1 / 24.0, 0.5 / 24) < 0.0075) & (_dist(u, 1 / 32.0, 1 / 64.0) < 0.0105)).astype(float) * (1 - fr)
+    T['ls_c_screen'] = _rgb_png(mix((206, 208, 208), (34, 36, 38), slot * 0.95) * (1 - 0.06 * fr[..., None]), P('ls_c_screen'))
+    T['ls_n_screen'] = _normal_png(-0.004 * slot + 0.004 * fr, 4.0 / 512, 2.8 / 512, P('ls_n_screen'))
+    # --- helix drum (3 x 1.5 m): smooth metal panels, faint joints every 1.5 m both ways [obs photo i2]
+    u, v = _grid(256, 128, 3.0, 1.5)
+    T['ls_n_drum'] = _normal_png(np.minimum(_groove(_dist(u, 1.5), 0.012, 0.004), _groove(_dist(v, 1.5), 0.012, 0.004)), 3 / 256, 1.5 / 128, P('ls_n_drum'))
+    # --- white precast stair / elevator towers (4 x 3 m): fine horizontal ribs every 0.6 m, panel joints 4 x 3 m [obs photo i2]
+    u, v = _grid(256, 192, 4.0, 3.0)
+    T['ls_n_ribs'] = _normal_png(np.minimum(_groove(_dist(v, 0.6), 0.03, 0.008), _groove(_dist(u, 4.0), 0.02, 0.01)), 4 / 256, 3 / 192, P('ls_n_ribs'))
+    # --- weathered guideway concrete (4 x 4 m): run-off streaks and mottling, factor texture (white = the material colour) [obs l1 / l5]
+    u, v = _grid(256, 256, 4.0, 4.0)
+    rng = np.random.default_rng(21)
+    streak = np.zeros_like(u)
+    for _ in range(18):
+        x0 = rng.uniform(0, 4); w = rng.uniform(0.04, 0.25); a = rng.uniform(0.04, 0.12)
+        streak += a * np.exp(-((_dist(u, 4.0, x0)) / w) ** 2) * np.clip(1.2 - (4.0 - v) / rng.uniform(1.5, 4.0), 0, 1)
+    g = np.clip(0.92 - streak + 0.05 * _noise(256, 256, 14, 22) + 0.03 * _noise(256, 256, 40, 23), 0.55, 1.0)
+    T['ls_c_weather'] = _rgb_png(np.repeat((g * 255)[..., None], 3, -1), P('ls_c_weather'))
+    # --- BART station glazed band (3 x 2.95 m): green glass, mullions every 1.5 m, one transom [obs photo a2: green band; module inf]
+    u, v = _grid(256, 256, 3.0, 2.95)
+    capb = ((_dist(u, 1.5) < 0.04) | (_dist(v, 2.95) < 0.05) | (np.abs(v - 1.9) < 0.03)).astype(float)
+    T['ls_c_glassbart'] = _rgb_png(mix((58, 104, 88), (176, 182, 180), capb) + 4 * _noise(256, 256, 6, 24)[..., None], P('ls_c_glassbart'))
+    # --- louvre screen (3 x 1 m): fine blades every 0.2 m (photo l5, r1), dark gaps 25 %
     u, v = _grid(256, 128, 3.0, 1.0)
-    ph = np.mod(v, 0.6) / 0.6
+    ph = np.mod(v, 0.2) / 0.2
     gap = (ph < 0.25).astype(float)
     shade = 0.85 + 0.15 * ph
     col = mix((128, 146, 140), (30, 34, 34), gap) * np.where(gap > 0, 1.0, shade)[..., None]
@@ -119,13 +143,13 @@ def make_all(out):
     u, v = _grid(128, 256, 1.5, p)
     sp = (v < 0.95).astype(float)
     capm = ((_dist(u, 1.5) < 0.03) | (_dist(v, p) < 0.04) | (np.abs(v - 0.95) < 0.02)).astype(float)
-    glass = (58, 112, 116); spand = (44, 78, 82); capc = (150, 166, 168)
+    glass = (30, 92, 140); spand = (24, 64, 100); capc = (146, 162, 174)     # r1: saturated blue reflective glass (photo l4 mean (38, 113, 150))
     col = mix(glass, spand, sp)
     col = col * (1 - capm[..., None]) + np.array(capc)[None, None, :] * capm[..., None]
     T['ls_c_hyatt'] = _rgb_png(col, P('ls_c_hyatt'))
     u, v = _grid(256, 128, 3.0, p / 3)
     band = (_dist(v, p / 3) < 0.05).astype(float)
-    T['ls_c_glassband'] = _rgb_png(mix((96, 140, 146), (170, 186, 188), band), P('ls_c_glassband'))
+    T['ls_c_glassband'] = _rgb_png(mix((52, 112, 152), (166, 182, 192), band), P('ls_c_glassband'))
     # --- CAC panels with a window band per 15-ft floor (3 x 4.572 m)
     u, v = _grid(256, 384, 3.0, 4.572)
     win = ((v > 1.1) & (v < 2.9)).astype(float)

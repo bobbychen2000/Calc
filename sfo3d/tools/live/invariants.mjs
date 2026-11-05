@@ -49,6 +49,11 @@
 //                         without a ground report; runway = nearest centreline at the lowest point). Limitation: E175
 //                         landings flagged airborne down to ~50 kt can be missed by the landing detector.
 //   rwy.lineup_hdg        (round 2) lined up (stationary, on the assigned runway) with the body > 15 deg off the runway heading
+//                         (round 3: the engine's phase at display time, whatever the label; .label = the displayed label only)
+//   bridge.parked_undocked (round 3) at rest at a contact stand > 180 s, its bridges < 50 % extended, not signalled / leaving
+//                         (bridge.refused: gates.js docks none of the stand's bridges to that type -- data, not engine);
+//   bridge.dock_flap      (round 3) a dock within 30 s of the previous undock at the same stand (one count per event;
+//                         meta.flap: docks / undocks / locks / unlocks / flaps per track)
 //   rwy.roll_hdg          (round 2) take-off / landing roll > 20 m/s with the body > 8 deg off the runway heading
 //   lag.gnd_30m / lag.roll_100m / lag.air_150m  (round 2) drawn body vs the engine's own target at display time (where the
 //                         data says the aircraft is): > 30 m taxiing / parked (.other_airfield: off SFO), > 100 m on a runway roll, > 150 m airborne within 15 km
@@ -142,6 +147,7 @@ const restBridges = GROUNDJS.bridgeGrid && gsys.solids ? (() => { const boxes = 
 const physics = new GroundPhysics({ paved: apt.paved, building, net: traffic.net, bridges: restBridges });
 traffic.restBridgeAt = restBridges;   // (as app.js)
 const pavedMask = apt.paved, pavedAll = pavedUnion(apt.paved, traffic.net);
+globalThis.__inv = { traffic, gsys, gates, physics, bridgeGate, now: () => simNow };   // (for wrapper scripts: hooks, dumps)
 
 // ---------------------------------------------------------------- geometry helpers
 const DEG = Math.PI / 180, KT = 0.514444, FT = 0.3048;
@@ -302,6 +308,34 @@ const cutFrom = new Map(); // hex -> last visible pose before a fade-out (cut.* 
 // in 16 s); the engine allows 5 m/s^2 for them (traffic.js ctlGround)
 const EXC = { gAccRoll: 3.5, gAccRollLight: 5.5, gAccTaxi: 2.0, gLat: 3.0, gJerk: 6.0, gYaw: 25, slip: 5, aAcc: 3.0, aLat: 6.0, aVacc: 3.0, aTurn: 7 };
 const finalRwy = new Map(); // hex -> {rwy, t}
+// (round 3, review realtime-v2) the bridge state of every track, read from the engine's own flags (root-independent):
+// docks / undocks / locks / unlocks; bridge.dock_flap = a dock within 30 s of the previous undock at the same stand (one
+// count per event; a lock within 5 s of an unlock is counted in meta.flap.lockFlaps); bridge.parked_undocked = at rest at a
+// contact stand for > 180 s (DOCK_WAIT 20 s + gates.js DOCK_DELAY 12 s + the docking itself) with its bridges < 50 %
+// extended, not signalled / leaving / pushing; bridge.refused = the same where gates.js docks none of the stand's bridges
+// to that type at that pose (data / geometry, not the engine)
+const BS = new Map(); const FLAP = { docks: 0, undocks: 0, locks: 0, unlocks: 0, dockFlaps: 0, lockFlaps: 0, per: new Map() };
+function bridgeState(tr, D, T) {
+  let s = BS.get(tr.hex); if (!s) BS.set(tr.hex, s = { b: !!tr.bridgeOn, l: !!tr.lock, tU: -1e15, tUl: -1e15, gU: null, park: null });
+  const b = !!tr.bridgeOn, l = !!tr.lock, g = tr.gate ? tr.gate.name : (tr.bridgeGate ? tr.bridgeGate.name : null);
+  if (checking()) {
+    const per = () => { let p = FLAP.per.get(tr.hex); if (!p) FLAP.per.set(tr.hex, p = { fl: tr.info.flight, ty: tr.info.icao, dock: 0, undock: 0, lock: 0, unlock: 0, dockFlap: 0, lockFlap: 0, st: {} }); if (g) p.st[g] = 1; return p; };
+    if (b && !s.b) { FLAP.docks++; const p = per(); p.dock++; if (simNow - s.tU < 30000 && s.gU === g) { FLAP.dockFlaps++; p.dockFlap++; viol('bridge.dock_flap', tr, 1, { stand: g }); } }
+    if (!b && s.b) { FLAP.undocks++; per().undock++; }
+    if (l && !s.l) { FLAP.locks++; const p = per(); p.lock++; if (simNow - s.tUl < 5000) { FLAP.lockFlaps++; p.lockFlap++; } }
+    if (!l && s.l) { FLAP.unlocks++; per().unlock++; }
+  }
+  if (!b && s.b) { s.tU = simNow; s.gU = g; } if (!l && s.l) s.tUl = simNow;
+  s.b = b; s.l = l;
+  const G0 = tr.gate; const contact = !!(G0 && (G0.bridge || G0.sharesBridgesOf));
+  const parked = contact && !!T && D.ground && D.gs < 0.05 && !tr.leaving && !tr.earlyUndock && !tr.pushback && !tr.dropping && !tr.fadeOut && !(D.alpha != null && D.alpha < 1);
+  if (!parked) { s.park = null; return; }
+  if (!s.park || s.park.g !== G0.name) s.park = { g: G0.name, t: simNow };
+  if (simNow - s.park.t < 180000 || !checking()) return;
+  const G = bridgeGate(G0); const ext = traffic.bridgeK(G0); if (ext >= 0.5) return;
+  const refused = !!(tr.bridgeOn && G.acType && gsys.bridgesOf && !gsys.bridgesOf(G).some(bb => gsys.docks(G, bb)));
+  viol(refused ? 'bridge.refused' : 'bridge.parked_undocked', tr, (simNow - s.park.t) / 1000, { stand: G0.name, ext: +ext.toFixed(2), bridgeOn: tr.bridgeOn ? 1 : 0, lock: tr.lock ? 1 : 0, stale: tr.stale ? 1 : 0, mode: tr.parkMode || null });
+}
 const phaseHist = new Map(); // hex -> [times of display-phase changes]
 const surfCache = new Map(), pairCache = new Map(), offCells = new Map();
 
@@ -374,11 +408,16 @@ while (simNow < tEnd && (nextEv || simNow < tStart + 1)) {
       }
       // (round 2) runway alignment of the drawn body: lined up (stationary) more than 15 deg off the runway heading, or
       // rolling (> 20 m/s, take-off / landing roll on the runway) more than 8 deg off it
-      if (D.ground && tr.m.rwy && (ph === 'lineup' || ph === 'takeoff' || ph === 'landing')) {
-        const R = RW.find(q => q.name === tr.m.rwy);
-        if (R) { const dA = Math.abs(wrapD((D.hdg - R.hdg) / DEG));
-          if (ph === 'lineup' && D.gs < 0.5 && runwaysAt(D.x, D.z).includes(R) && dA > 15) viol('rwy.lineup_hdg', tr, dA, { rwy: R.name, dHdg: Math.round(dA) });
-          if (ph !== 'lineup' && D.gs > 20 && dA > 8) viol('rwy.roll_hdg', tr, dA, { rwy: R.name, dHdg: Math.round(dA), gs: Math.round(D.gs / KT), c: Math.round(rwyPhys(R, D.x, D.z)[1]) }); }
+      // (round 3, review realtime-v7: the line-up test reads the ENGINE's phase at display time, not the displayed label --
+      // the label says 'Taxiing' while the body is still > 15 deg off the runway heading, so a label-based count is 0 by
+      // construction; the label-based count is kept as rwy.lineup_hdg.label)
+      const tq = tr.phaseAt ? tr.phaseAt(traffic.displayTime(simNow)) : null; const mph = tq ? tq[1] : tr.m.phase;
+      if (D.ground && tr.m.rwy && (ph === 'lineup' || mph === 'lineup' || ph === 'takeoff' || ph === 'landing')) {
+        const R = RW.find(q => q.name === ((mph === 'lineup' && tq && tq[2]) || tr.m.rwy));
+        if (R) { const dA = Math.abs(wrapD((D.hdg - R.hdg) / DEG)); const onIt = runwaysAt(D.x, D.z).includes(R);
+          if ((ph === 'lineup' || mph === 'lineup') && D.gs < 0.5 && onIt && dA > 15) viol('rwy.lineup_hdg', tr, dA, { rwy: R.name, dHdg: Math.round(dA), label: ph });
+          if (ph === 'lineup' && D.gs < 0.5 && onIt && dA > 15) viol('rwy.lineup_hdg.label', tr, dA, { rwy: R.name, dHdg: Math.round(dA) });
+          if (ph !== 'lineup' && (ph === 'takeoff' || ph === 'landing') && D.gs > 20 && dA > 8) viol('rwy.roll_hdg', tr, dA, { rwy: R.name, dHdg: Math.round(dA), gs: Math.round(D.gs / KT), c: Math.round(rwyPhys(R, D.x, D.z)[1]) }); }
       }
       // (round 2) real-time lag: the drawn body vs the engine's own target at display time (reports + phase logic): the
       // body is what the user sees, the target is where the data says the aircraft is (display delay excluded)
@@ -445,6 +484,7 @@ while (simNow < tEnd && (nextEv || simNow < tStart + 1)) {
       K.set(tr.hex, { x: PX, z: PZ, rx: D.x, rz: D.z, rvx: rdx / DT, rvz: rdz / DT, n0: (s.n0 || 0) + 1, y: D.y, vx, vz, vy, hdg: D.hdg, g: D.ground, n: s.g === D.ground ? s.n + 1 : 1, ax: s.g === D.ground && s.n >= 2 ? (vx - s.vx) / DT : null, az: s.g === D.ground && s.n >= 2 ? (vz - s.vz) / DT : null, ph: tr.phase, agl });
     } else K.set(tr.hex, { x: PX, z: PZ, rx: D.x, rz: D.z, rvx: 0, rvz: 0, n0: 0, y: D.y, vx: 0, vz: 0, vy: 0, hdg: D.hdg, g: D.ground, n: 1, ax: null, az: null, ph: tr.phase, agl });
     tr._reset = null;
+    if (!veh) bridgeState(tr, D, T);
     if (!veh) { const q = K.get(tr.hex); if (q) { q.vis = 1; q.fl = tr.info.flight; q.ty = tr.info.icao; q.st = tr.stale; } }
     // bodies for the surface checks
     if (!veh && T && Math.abs(D.x) < 3200 && Math.abs(D.z) < 3200) {
@@ -562,6 +602,8 @@ for (const [cls, v] of [...V.entries()].sort()) {
   report.classes[cls] = { frames: v.frames, episodes: v.eps, keys: aircraft, worst: who.slice(0, 12).map(w => ({ ...w.ex, frames: w.n })), longest: who.slice().sort((a, b) => b.n - a.n).slice(0, 6).map(w => ({ ...w.ex, frames: w.n })) };
 }
 report.offpaveCells = [...offCells.entries()].sort((a, b) => b[1].hex.size - a[1].hex.size || b[1].frames - a[1].frames).slice(0, 25).map(([k, v]) => { const [x, z] = k.split(',').map(Number); const ll = toLL(x, z); return { x, z, lat: +ll[0].toFixed(6), lon: +ll[1].toFixed(6), frames: v.frames, movingFrames: v.moving, aircraft: v.hex.size, who: [...v.hex].slice(0, 8) }; });
+report.meta.flap = { docks: FLAP.docks, undocks: FLAP.undocks, locks: FLAP.locks, unlocks: FLAP.unlocks, dockFlaps: FLAP.dockFlaps, lockFlaps: FLAP.lockFlaps,
+  top: [...FLAP.per.entries()].sort((a, b) => (b[1].dockFlap + b[1].lockFlap) - (a[1].dockFlap + a[1].lockFlap) || (b[1].lock - a[1].lock)).slice(0, 20).map(([hex, p]) => ({ hex, ...p, st: Object.keys(p.st).join(' ') })) };
 if (traffic.candLog) report.candLog = traffic.candLog;
 fs.writeFileSync(OUTF, JSON.stringify(report, null, 1));
 if (EVOUT) fs.writeFileSync(EVOUT, JSON.stringify(ALLEV));

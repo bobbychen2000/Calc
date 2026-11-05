@@ -90,10 +90,11 @@ export class Sprites {
   // fixed: a light whose record is physical at the night calibration and whose intensity does not change between day and
   // night (aircraft position lights, isPositionLight); its record intensity is scaled by fixedK (renderer3: LAMP_M / the
   // shader's day / night factor), so it keeps the night calibration (lamp units x LAMP_M = sky units) by day too
-  put(s, fixed = false) {
+  // kI: an extra intensity factor (renderer3: the fog transmittance camera -> light for records that do not carry it)
+  put(s, fixed = false, kI = 1) {
     if (this.n >= this.max) return; const i = this.n++ * 4; const P = this.aP.array, C = this.aC.array, D = this.aD.array;
     P[i] = s.p[0]; P[i + 1] = s.p[1]; P[i + 2] = s.p[2]; P[i + 3] = s.s;
-    C[i] = s.c[0]; C[i + 1] = s.c[1]; C[i + 2] = s.c[2]; C[i + 3] = fixed ? s.i * this.fixedK : s.i;
+    C[i] = s.c[0]; C[i + 1] = s.c[1]; C[i + 2] = s.c[2]; C[i + 3] = (fixed ? s.i * this.fixedK : s.i) * kI;
     const d = s.dir; if (d) { D[i] = d[0]; D[i + 1] = d[1]; D[i + 2] = d[2]; D[i + 3] = s.k || 4; }
     else { D[i] = 0; D[i + 1] = 1; D[i + 2] = 0; D[i + 3] = (s.marker || s.s >= 0.6) ? -1 : 0; }
   }

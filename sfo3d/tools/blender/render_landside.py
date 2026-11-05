@@ -281,19 +281,61 @@ def view_l4(args):
 
 
 def view_l1(args):
-    """Garage A east portal from the guideway walkway, looking west (photo l1)."""
+    """Garage A station block from the guideway walkway east of it, looking west (photo l1). Camera ~30 m east of the block face
+    (scale from the platform-door cabin, landside_r1_obs.json photos.l1_station_block), on the walkway between the tracks, eye
+    1.6 m above it; 26-mm-equivalent lens (27 mm on the 36-mm sensor width)."""
     G = DL.ggeom('garage_a'); a, b, L, Lb = G['a'], G['b'], G['L'], G['Lb']
     import landside_airtrain as AT
-    p0 = G['c'] + a * (Lb - L / 2 + 38) - b * 14.5
-    return persp('l1', p0, AT.NET_LEVEL + 1.7, G['c'] + a * (Lb - L / 2 - 20) - b * 14.0, AT.NET_LEVEL + 6.0, 24.0, (960, 720), (150.0, 50.0), 'l1')
+    import landside_geom as LG
+    eye = AT.NET_LEVEL + LG.WALKWAY_H + 1.6
+    p0 = G['c'] + a * (Lb - L / 2 + 30.5) - b * 16.5
+    return persp('l1', p0, eye, G['c'] + a * (Lb - L / 2 - 20) - b * 15.0, eye + 6.5, 27.0, (960, 720), (150.0, 50.0), 'l1')
 
 
 def view_l5(args):
-    """RCC west wall and the station tower from the guideway north of the station, looking south (photo l5)."""
+    """RCC west wall and the station tower from the guideway walkway north of the station, looking SSW (photo l5): the camera
+    SOLVED from the photo (landside_r1_obs.json photos.l5_camera): tower subtends 350 px (D 4.7 at the SFO Museum polygon lobe),
+    the guideway / wall vanishing point 313 px left of the centre, the horizon 100 px below it -> camera (-2276.6, -1092.7),
+    19.4 m from the tower, eye 1.73 m above the platform, yaw 185.5 deg, pitch +4.0 deg, 26-mm-equivalent lens (f 1442 px)."""
     import landside_airtrain as AT
-    tk = AT.RCC_TOWER['world']
-    # on the east track's walkway 75 m north of the tower (the guideway runs as two single tracks at x -2296 / -2286 there)
-    return persp('l5', (tk[0] - 4.5, tk[1] - 75.0), 6.9 + 1.8, (tk[0] + 1.0, tk[1] + 10.0), AT.RCC_PLATFORM + 6.0, 24.0, (960, 720), (140.0, 55.0), 'l5')
+    cam = np.array([-2276.6, -1092.7]); yaw, pitch = math.radians(185.5), math.radians(4.0)
+    d = np.array([math.sin(yaw), -math.cos(yaw)])
+    eye = AT.RCC_PLATFORM + 1.73
+    return persp('l5', tuple(cam), eye, tuple(cam + d * 50.0), eye + 50.0 * math.tan(pitch), 1442.0 * 36.0 / 1920.0, (960, 720), (140.0, 55.0), 'l5')
+
+
+def view_i2(args):
+    """Garages A / G from the AirTrain west of them, looking east to the ITB (photo i2, approximate camera)."""
+    return persp('i2', (-1735.0, 440.0), 24.0, (-1300.0, 430.0), 20.0, 27.0, (960, 720), (200.0, 55.0), 'i2')
+
+
+def view_bart(args):
+    """the BART station / Garage G AirTrain station from the NNE over the BA-G apron (photo a2 direction, closer)."""
+    return persp('bart', (-1395.0, 120.0), 95.0, (-1480.0, 300.0), 12.0, 50.0, (960, 640), (200.0, 55.0), 'a2')
+
+
+def view_cg_top(args):
+    """Central garage roof, orthographic from above (compare: the NAIP 2024 crop beside it, public domain; local only)."""
+    import landside_geom as LG
+    full = LG.sfom_union('Central Parking Garage'); c = full.centroid
+    sun_sky(186.5, 72.5)
+    camera('cam_cg_top', Wxz(c.x, c.y, 400.0), Wxz(c.x, c.y - 0.001, 0.0), ortho=320.0, res=(900, 900))
+    only(['central_garage', 'airtrain'])
+    pr = render(os.path.join(OUT, 'landside_cg_top.png'))
+    cmp_p = None
+    try:
+        import draw_lib as DLb
+        from PIL import Image
+        A, T = DLb._naip(); R = T['res']
+        x0, z0 = c.x - 160, c.y - 160
+        c0 = int((x0 - T['x0']) / R); r0 = int((z0 - T['z0']) / R); n = int(320 / R)
+        im = Image.fromarray(np.ascontiguousarray(np.asarray(A[r0:r0 + n, c0:c0 + n])[:, :, ::-1])).resize((900, 900))
+        a_ = Image.open(pr).convert('RGB')
+        out = Image.new('RGB', (1806, 900), (255, 255, 255)); out.paste(im, (0, 0)); out.paste(a_, (906, 0))
+        cmp_p = os.path.join(OUT, 'landside_cmp_cg_top.png'); out.save(cmp_p)
+    except Exception as e:  # noqa: BLE001
+        log('NAIP compare failed', e)
+    return dict(render=pr, compare=cmp_p)
 
 
 def view_a2(args):

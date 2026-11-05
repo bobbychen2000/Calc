@@ -25,7 +25,7 @@ import sys
 
 import numpy as np
 import shapely
-from shapely.geometry import MultiPolygon, Point, Polygon
+from shapely.geometry import LineString, MultiPolygon, Point, Polygon
 from shapely.ops import unary_union
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -38,8 +38,13 @@ from draw_lib import FT  # noqa: E402
 from landside_mesh import MB, Frame, boxm, cap, orient_all, polys, rings_of, tube  # noqa: E402
 
 DECK_T = 1.6          # guideway deck depth (the app's 9.0-10.6 m slab, js/live/airport.js) [inf]
-WALL_H = 1.1          # trough side wall above the deck top (photos l1 / l5: walkway wall + railing) [inf]
-WALL_T = 0.30         # side wall thickness [inf]
+WALL_H = 0.9          # trough side wall above the running surface (= deck top): level with the walkway (photos l1 / l5) [obs, low];
+#                       r1: was 1.1 m ("tall thick white trough walls")
+WALL_T = 0.25         # side wall thickness [inf]
+WALKWAY_H = 0.9       # emergency walkway between the two tracks of twin sections, above the running surface [obs l1]; handrails
+#                       1.07 m above it (posts every 3 m, top + mid rail, galvanised) [obs l1 / l5; spacing inf]
+PAD_W, PAD_H, PAD_OFF = 0.60, 0.12, 0.95   # concrete running pads under the rubber tyres: 0.6 m wide, 0.12 m high, +-0.95 m from the
+#                                            track centre [obs l1 / l5 two pads + a centre guide rail; sizes inf]
 PORTAL_H = 4.2        # clear height of the AirTrain portal into Garage A above the deck: CX-100 car ~3.4 m + headroom; photo l1
 #                       shows a low opening at the track level [obs shape; height inf]
 PIER_DX = 30.0        # pier spacing along the guideway [inf]; "single-column T-piers along the extension" [obs at_section]
@@ -58,9 +63,10 @@ CG_L5 = 81 * FT * 4 / 5
 NET_LEVEL = CG_L5
 ITB_L4 = 16.5        # ITB Level 4 [unk]: ITB L3 = 11.5 m [obs, spec_itb]; 16.5 keeps the guideway (deck + 1.1 m wall) inside
 #                      the ITB core block of data/buildings3d/itb.glb (17.9 m placeholder)
-RCC_PLATFORM = 5.8   # RCC station platform [inf, photo l5]: the ribbon windows of the west wall are level with the platform,
-#                      with a concrete band and the canted louvre screen above them to the 54-ft roof outline, and the station
-#                      tower (DOF TANK 60 ft) stands ~2 D above the platform; BL-03 draws a 3/4-of-54-ft placeholder (12.35 m [unk])
+RCC_PLATFORM = 8.0   # RCC station platform [obs l5 + DOF, low] (round 1: the l5 camera solved from the tower and the guideway
+#                      vanishing point, landside_r1_obs.json photos.l5_camera: tower top (DOF TANK 18.3) 8.6 m above the eye, eye
+#                      1.7 m above the platform); was 5.8 [inf] with the BL-02 tower D 6.5 (which puts the l5 camera inside the
+#                      RCC); BL-03 draws a 3/4-of-54-ft placeholder (12.35 m [unk])
 LTP_LEVEL = 50 * FT  # Long-Term Parking station: the extension runs "50 feet above a public roadway" [pub]; LTP garage Level 5
 #                      (bridge) [pub], height unknown
 
@@ -73,14 +79,18 @@ STATIONS = {
     'ITB_A': (1729791961, ITB_L4, 'unk', 'ITB Level 4 [pub]; height placeholder inside the itb.glb core block', None),
     'ITB_G': (1729791965, ITB_L4, 'unk', 'ITB Level 4 [pub]; height placeholder inside the itb.glb core block', None),
     'GAR_A': (1729791949, NET_LEVEL, 'inf', 'Garage A Level 7 [pub]; network level (BL-03 placeholder 29.7 m deviates: grade)', None),
-    'GAR_G': (1729791947, NET_LEVEL, 'inf', 'Garage G Level 7 [pub]; network level (BL-03 placeholder 28.2 m deviates: grade)', 'dom'),
+    'GAR_G': (1729791947, NET_LEVEL, 'inf', 'Garage G Level 7 [pub]; network level (BL-03 placeholder 28.2 m deviates: grade)', 'vault'),
     'HYATT': (1729791967, NET_LEVEL, 'inf', 'hotel 4th floor via an enclosed bridge [pub]; network level (40 m from Garage A station)', 'dom'),
     'WFR_IN': (1729791953, None, 'unk', 'West Field Road: no level source (interpolated)', 'canopy'),
     'WFR_OUT': (1729791951, None, 'unk', 'West Field Road: no level source (interpolated)', 'canopy'),
     'RCC': (1729791943, RCC_PLATFORM, 'inf', 'photo l5 (see RCC_PLATFORM); BL-03 placeholder 12.35 m [unk]', 'canopy'),
     'LTP': (1730051431, LTP_LEVEL, 'pub', '"50 feet above a public roadway" (extension) [pub]; LTP Level 5 bridge [pub]', 'canopy'),
 }
-RCC_TOWER = dict(D=DL.RCC_TOWER_D, top=None)   # top = DOF TANK agl (set below)
+RCC_TOWER = dict(D=4.7, top=None, centre=(-2280.5, -1073.7), rake=2.5, high_bearing=236.0)
+#   D 4.7 at (-2280.5, -1073.7): the round lobe of the SFO Museum RCC station polygon (x -2282.8..-2278.1) [obs] - BL-02 E draws
+#   D 6.5 [inf] at the DOF point (1.8 m east, inside the 1A +-6 m accuracy); the top cut by a raked plane, 2.5 m lower at the
+#   front, highest toward bearing 236 deg (photo l5: the curved perforated hood rises to the right-back) [obs l5, low]; top = the DOF
+#   TANK 60 ft [pub] (set below)
 
 
 def struct_poly(sid):
@@ -93,7 +103,8 @@ ST_POLY = {k: struct_poly(v[0]) for k, v in STATIONS.items()}
 ITB_OUTLINE = unary_union([Polygon(p[0], p[1:]).buffer(0) for t in D.AIR['terminals'] if t['name'] == 'International Terminal'
                            for p in t['polys']])
 _tk = next(d for d in D.LANDM['buildings']['rental_car_center']['dof'] if d['type'] == 'TANK')
-RCC_TOWER['top'] = float(_tk['agl_m']); RCC_TOWER['world'] = [float(v) for v in _tk['world']]; RCC_TOWER['oas'] = _tk['oas']
+RCC_TOWER['top'] = float(_tk['agl_m']); RCC_TOWER['world'] = list(RCC_TOWER['centre']); RCC_TOWER['dof_world'] = [float(v) for v in _tk['world']]
+RCC_TOWER['oas'] = _tk['oas']
 
 
 # ------------------------------------------------------------------------------------------------ level field
@@ -268,33 +279,73 @@ def deck_shell(mb, F, poly_w, lev, mat_top='guideway_deck', mat_side='guideway',
                         [(0, 0), (1, 0), (1, 0.3), (0, 0.3)])
 
 
-BEAM_IN, BEAM_W, BEAM_H = 2.4, 0.30, 0.80   # centre guide beam: 2.4 m in from the deck edge (track centre of a 4.8-m single track),
-#                                           0.30 m wide, 0.80 m above the deck [obs photos l1 / l5 shape; sizes inf]
+BEAM_IN, BEAM_W, BEAM_H = 2.4, 0.22, 0.30   # centre guide rail: on the track centre line 2.4 m in from the deck edge (a 4.8-m single
+#                                           track), 0.22 m wide, 0.30 m above the running surface (photos l1 / l5: a low steel guide /
+#                                           power rail between the running pads; r1: was a 0.8-m beam that read as a wall) [obs, sizes inf]
 
 
-def guide_beams(mb, F, poly_w, lev, seg=4.0):
-    """centre guide beams (LOD0): the boundary of the deck polygon offset BEAM_IN inwards = the track centre lines of single
-    and twin sections alike (a single 4.8-m track collapses to one line), as a BEAM_W strip from the deck to BEAM_H."""
-    inner = poly_w.buffer(-BEAM_IN, join_style=2)
-    if inner.is_empty: return
-    lines = inner.boundary
-    strip = orient_all(lines.buffer(BEAM_W / 2, cap_style=2, join_style=2).intersection(poly_w.buffer(-1.2)).buffer(0))
-    strip = orient_all(shapely.segmentize(strip, seg))
-    Lp = F.poly(strip)
-    H = lambda X, Y: float(lev.h(*F.W(X, Y)))
+def _strip(mb, F, lev, strip_w, z_off, h, mat, top_mat=None, seg=4.0, sides=True):
+    """raised strip on the deck (world polygon) from the deck top + z_off to + z_off + h, following the level field."""
     from landside_mesh import tri_poly
+    strip_w = orient_all(shapely.segmentize(strip_w, seg))
+    Lp = F.poly(strip_w)
+    H = lambda X, Y: float(lev.h(*F.W(X, Y)))
     for p in polys(Lp):
-        if p.area < 0.3: continue
+        if p.area < 0.2: continue
         for t in tri_poly(p):
-            mb.face([(q[0], q[1], H(*q) + BEAM_H) for q in t], 'guide_beam', [(q[0] / 4.0, q[1] / 4.0) for q in t])
+            mb.face([(q[0], q[1], H(*q) + z_off + h) for q in t], top_mat or mat, [(q[0] / 4.0, q[1] / 4.0) for q in t])
+        if not sides: continue
         for ring in rings_of(p):
             n = len(ring)
             for i in range(n):
                 a, b = ring[i], ring[(i + 1) % n]
                 if math.hypot(b[0] - a[0], b[1] - a[1]) < 1e-3: continue
                 ha, hb = H(*a), H(*b)
-                mb.face([(a[0], a[1], ha), (b[0], b[1], hb), (b[0], b[1], hb + BEAM_H), (a[0], a[1], ha + BEAM_H)], 'guide_beam',
+                mb.face([(a[0], a[1], ha + z_off), (b[0], b[1], hb + z_off), (b[0], b[1], hb + z_off + h), (a[0], a[1], ha + z_off + h)], mat,
                         [(0, 0), (1, 0), (1, 0.2), (0, 0.2)])
+
+
+def guide_beams(mb, F, poly_w, lev, seg=4.0, lod=0, rails=None):
+    """track furniture (LOD0 / LOD1): centre guide rail (LOD0) + two running pads per track on the track centre lines (the deck
+    boundary offset BEAM_IN inwards: single and twin sections alike); on twin sections the walkway between the tracks (the deck
+    offset 3.7 m inwards, raised WALKWAY_H) with handrails on both edges (LOD0, into `rails`)."""
+    inner = poly_w.buffer(-BEAM_IN, join_style=2)
+    if inner.is_empty: return
+    lines = inner.boundary
+    clipz = poly_w.buffer(-1.2)
+    if lod == 0:
+        strip = orient_all(lines.buffer(BEAM_W / 2, cap_style=2, join_style=2).intersection(clipz).buffer(0))
+        _strip(mb, F, lev, strip, 0.0, BEAM_H, 'guide_rail', seg=seg)
+    outer = lines.buffer(PAD_OFF + PAD_W / 2, cap_style=2, join_style=2).difference(lines.buffer(PAD_OFF - PAD_W / 2, cap_style=2, join_style=2))
+    pads = orient_all(outer.intersection(poly_w.buffer(-0.35)).buffer(0))
+    _strip(mb, F, lev, pads, 0.0, PAD_H, 'running_pad', seg=seg, sides=(lod == 0))
+    walk = poly_w.buffer(-3.7, join_style=2)
+    walk = orient_all(walk.buffer(0.4, join_style=2).intersection(poly_w.buffer(-3.3, join_style=2)).buffer(0)) if not walk.is_empty else walk
+    if walk.is_empty: return
+    _strip(mb, F, lev, walk, 0.0, WALKWAY_H, 'walkway', top_mat='walkway', seg=seg)
+    if lod != 0 or rails is None: return
+    H = lambda X, Y: float(lev.h(*F.W(X, Y)))
+    for p in polys(walk):
+        if p.area < 4.0: continue
+        for ring in [p.exterior] + list(p.interiors):
+            ln = LineString(ring.coords).buffer(0).exterior if False else LineString(ring.coords)
+            L = ln.length
+            if L < 3.0: continue
+            ts = np.arange(0.0, L, 3.0)
+            pts = [ln.interpolate(t) for t in ts]
+            # posts (two crossed quads) and two rails as thin vertical strips (doubleSided 'handrail')
+            for q in pts:
+                X, Y = F.L(q.x, q.y); h0 = H(X, Y) + WALKWAY_H
+                for dx, dy in ((0.03, 0.0), (0.0, 0.03)):
+                    rails.face([(X - dx, Y - dy, h0), (X + dx, Y + dy, h0), (X + dx, Y + dy, h0 + 1.07), (X - dx, Y - dy, h0 + 1.07)], 'handrail',
+                               [(0, 0), (1, 0), (1, 1), (0, 1)])
+            for i in range(len(pts)):
+                q0, q1 = pts[i], pts[(i + 1) % len(pts)] if i + 1 < len(pts) else ln.interpolate(L)
+                A = F.L(q0.x, q0.y); Bq = F.L(q1.x, q1.y)
+                ha, hb = H(*A) + WALKWAY_H, H(*Bq) + WALKWAY_H
+                for zr in (1.07, 0.55):
+                    rails.face([(A[0], A[1], ha + zr - 0.05), (Bq[0], Bq[1], hb + zr - 0.05), (Bq[0], Bq[1], hb + zr), (A[0], A[1], ha + zr)], 'handrail',
+                               [(0, 0), (1, 0), (1, 0.1), (0, 0.1)])
 
 
 def pier(mb, F, site, lev, sides=10, cap_box=True):
@@ -333,8 +384,27 @@ def station(mb, det, F, key, lev, lod=0, exclude=None):
                 n = len(ring)
                 for i in range(n):
                     mb.quad_wall(ring[i], ring[(i + 1) % n], hz - DECK_T, hz + 0.02, hz - DECK_T, hz + 0.02, 'guideway', 0.0, (4.0, 4.0))
-    # roof over the whole station polygon (minimum rectangle), single pitch (dom) or curved (canopy)
+    # roof over the whole station polygon (minimum rectangle), single pitch (dom) or curved (canopy); 'vault' (Garage G / BART
+    # station, round 1): one white barrel over the platform AND the tracks (NAIP 2024 white roof over both, photo a2) [obs]
     mr = P.minimum_rotated_rectangle
+    if kind == 'vault':
+        cs_ = np.array(mr.exterior.coords)[:4]; e0_, e1_ = cs_[1] - cs_[0], cs_[2] - cs_[1]
+        if np.linalg.norm(e0_) < np.linalg.norm(e1_): cs_ = np.roll(cs_, -1, axis=0); e0_, e1_ = cs_[1] - cs_[0], cs_[2] - cs_[1]
+        w_ = e1_ / np.linalg.norm(e1_) * 14.0
+        band = Polygon([cs_[0] - w_, cs_[1] - w_, cs_[2] + w_, cs_[3] + w_])        # widened across only (not along the platform)
+        mr = unary_union([P, RAIL.intersection(band)]).minimum_rotated_rectangle
+        if exclude is not None and not exclude.is_empty:
+            # keep the vault off the host garage: pull the long side nearest to it in until there is no overlap
+            for _ in range(40):
+                if mr.intersection(exclude).area < 0.5: break
+                cs_ = np.array(mr.exterior.coords)[:4]; e0_, e1_ = cs_[1] - cs_[0], cs_[2] - cs_[1]
+                if np.linalg.norm(e0_) < np.linalg.norm(e1_): cs_ = np.roll(cs_, -1, axis=0); e1_ = cs_[2] - cs_[1]
+                u_ = e1_ / np.linalg.norm(e1_)
+                side0 = Polygon([cs_[0], cs_[1], cs_[1] + u_ * 2, cs_[0] + u_ * 2]).intersection(exclude).area
+                side1 = Polygon([cs_[3], cs_[2], cs_[2] - u_ * 2, cs_[3] - u_ * 2]).intersection(exclude).area
+                if side0 >= side1: cs_[0] = cs_[0] + u_ * 0.25; cs_[1] = cs_[1] + u_ * 0.25
+                else: cs_[2] = cs_[2] - u_ * 0.25; cs_[3] = cs_[3] - u_ * 0.25
+                mr = Polygon(cs_)
     cs = np.array(mr.exterior.coords)[:4]
     e0, e1 = cs[1] - cs[0], cs[2] - cs[1]
     if np.linalg.norm(e0) < np.linalg.norm(e1):
@@ -344,6 +414,53 @@ def station(mb, det, F, key, lev, lod=0, exclude=None):
     c0 = cs[0]
     loc = lambda u, v: F.L(*(c0 + ua * u + ub * v))
     zr0 = hz + ENCL_H
+    if kind == 'vault':
+        # barrel vault across the station: eaves at the enclosure top, rise W / 8 [inf], 8 facets, 0.35-m roof, soffit; glazed
+        # enclosure walls on the platform outline up to the vault soffit [obs a2: glazing under the white roof]
+        nseg = 8; rise = Wr / 8.0
+        vv = np.linspace(-0.6, Wr + 0.6, nseg + 1)
+        zc = lambda v: zr0 + rise * math.sin(math.pi * min(max((v + 0.6) / (Wr + 1.2), 0), 1))
+        for j in range(nseg):
+            v0, v1 = vv[j], vv[j + 1]
+            q = [(*loc(-0.6, v0), zc(v0) + 0.35), (*loc(Lr + 0.6, v0), zc(v0) + 0.35), (*loc(Lr + 0.6, v1), zc(v1) + 0.35), (*loc(-0.6, v1), zc(v1) + 0.35)]
+            mb.face_dir(q, 'vault_roof', [(0, v0 / 3), (Lr / 6, v0 / 3), (Lr / 6, v1 / 3), (0, v1 / 3)], (0, 0, 1))
+            qd = [(*loc(-0.6, v0), zc(v0)), (*loc(-0.6, v1), zc(v1)), (*loc(Lr + 0.6, v1), zc(v1)), (*loc(Lr + 0.6, v0), zc(v0))]
+            mb.face_dir(qd, 'station_soffit', [(0, v0 / 3), (0, v1 / 3), (Lr / 6, v1 / 3), (Lr / 6, v0 / 3)], (0, 0, -1))
+        cu = np.array(loc(Lr / 2, Wr / 2))
+        for u in (-0.6, Lr + 0.6):
+            for j in range(nseg):
+                v0, v1 = vv[j], vv[j + 1]
+                a0, a1 = loc(u, v0), loc(u, v1)
+                f = [(a0[0], a0[1], zc(v0)), (a1[0], a1[1], zc(v1)), (a1[0], a1[1], zc(v1) + 0.35), (a0[0], a0[1], zc(v0) + 0.35)]
+                out = np.array(a0) - cu
+                mb.face_dir(f, 'vault_roof', [(0, 0), (1, 0), (1, 0.05), (0, 0.05)], (out[0], out[1], 0))
+                # gable glazing under the vault ends (above the enclosure / track clearance)
+                g = [(a0[0], a0[1], zr0), (a1[0], a1[1], zr0), (a1[0], a1[1], zc(v1)), (a0[0], a0[1], zc(v0))]
+                mb.face_dir(g, 'station_glass', [(0, 0), (1, 0), (1, 0.3), (0, 0.3)], (out[0], out[1], 0))
+        for v in (vv[0], vv[-1]):
+            a0, a1 = loc(-0.6, v), loc(Lr + 0.6, v)
+            f = [(a0[0], a0[1], zc(v)), (a1[0], a1[1], zc(v)), (a1[0], a1[1], zc(v) + 0.35), (a0[0], a0[1], zc(v) + 0.35)]
+            out = np.array(loc(Lr / 2, v)) - cu
+            mb.face_dir(f, 'vault_roof', [(0, 0), (1, 0), (1, 0.05), (0, 0.05)], (out[0], out[1], 0))
+        for p in plats:
+            for q in polys(F.poly(p)):
+                for ring in rings_of(q):
+                    n = len(ring); s = 0.0
+                    for i in range(n):
+                        a, b = ring[i], ring[(i + 1) % n]
+                        L = math.hypot(b[0] - a[0], b[1] - a[1])
+                        if L < 0.5: continue
+                        mb.face([(a[0], a[1], hz + 0.02), (b[0], b[1], hz + 0.02), (b[0], b[1], zr0), (a[0], a[1], zr0)], 'station_glass',
+                                [(s / 3.0, 0), ((s + L) / 3.0, 0), ((s + L) / 3.0, (zr0 - hz) / 3.0), (s / 3.0, 0)])
+                        s += L
+        if det is not None:
+            # vault ribs / posts along both long eaves every 6 m (LOD0 / LOD1)
+            for v in (-0.3, Wr + 0.3):
+                for u in np.arange(1.5, Lr - 1.0, 6.0):
+                    c = loc(u, v)
+                    boxm(det, c, (1, 0), 0.3, 0.3, (hz + 0.02, zr0), 'steel', (2.0, 2.0))
+        return dict(key=key, sid=sid, level=round(hz, 2), tag=tag, note=note, kind=kind, roof=round(zr0, 2), crown=round(zr0 + rise + 0.35, 2),
+                    L=round(Lr, 1), W=round(Wr, 1), rect=[[round(float(x), 2) for x in c0 + ua * u + ub * v] for u, v in ((0, 0), (Lr, 0), (Lr, Wr), (0, Wr))])
     if kind == 'dom':
         # single-pitch roof: ENCL_H at one long side, + 0.8 m at the other [obs photo shape; heights unk]
         zr = lambda v: zr0 + 0.8 * v / Wr
@@ -427,13 +544,33 @@ def _v_of(F, p_local, c0, ub):
 
 
 def rcc_tower(mb, F, lod=0):
-    """RCC station stair / elevator tower: free-standing cylinder of perforated metal at the DOF TANK point (D 6.5 [inf],
-    top = DOF 60 ft [pub]; identity inf) - BL-02 E / BL-03 row 3."""
+    """RCC station stair / elevator tower: free-standing cylinder of perforated metal (D 4.7 [obs SFO Museum polygon lobe]) to the
+    DOF TANK 60 ft [pub; identity inf], its top cut by a raked plane (2.5 m lower at the front, highest toward bearing 236 deg)
+    with an open, doubleSided perforated skin, frame rings, and a dark landing roof inside [obs photo l5] - BL-02 E / BL-03 row 3."""
     c = F.L(*RCC_TOWER['world'])
-    from landside_mesh import cyl
-    n = 28 if lod == 0 else 14
-    cyl(mb, c, RCC_TOWER['D'] / 2, 0.0, RCC_TOWER['top'] - 0.3, n, 'perf_tower', (3.0, 3.0), top='coping', smooth=True)
-    cyl(mb, c, RCC_TOWER['D'] / 2 + 0.08, RCC_TOWER['top'] - 0.3, RCC_TOWER['top'], n, 'steel', (3.0, 3.0), top='coping', smooth=True)
+    n = 28 if lod == 0 else (14 if lod == 1 else 10)
+    r, top, rake = RCC_TOWER['D'] / 2, RCC_TOWER['top'], RCC_TOWER['rake']
+    th_hi = math.radians(90.0 - RCC_TOWER['high_bearing'])          # bearing -> local XY angle (X east, Y north)
+    ztop = lambda t: top - rake * (1 - math.cos(t - th_hi)) / 2
+    ang = np.linspace(0, 2 * math.pi, n + 1)
+    g = ('rcc_tower', lod)
+    for i in range(n):
+        t0, t1 = ang[i], ang[i + 1]
+        a = (c[0] + r * math.cos(t0), c[1] + r * math.sin(t0)); b = (c[0] + r * math.cos(t1), c[1] + r * math.sin(t1))
+        u0, u1 = r * t0 / 3.0, r * t1 / 3.0
+        mb.face([(a[0], a[1], 0.0), (b[0], b[1], 0.0), (b[0], b[1], ztop(t1)), (a[0], a[1], ztop(t0))], 'perf_tower',
+                [(u0, 0), (u1, 0), (u1, ztop(t1) / 3.0), (u0, ztop(t0) / 3.0)], True, g)
+        if lod < 2:
+            # frame rings every 3 m + the raked top ring (slightly proud, steel)
+            for zr in list(np.arange(3.0, top - rake - 0.5, 3.0)):
+                a2 = (c[0] + (r + 0.06) * math.cos(t0), c[1] + (r + 0.06) * math.sin(t0)); b2 = (c[0] + (r + 0.06) * math.cos(t1), c[1] + (r + 0.06) * math.sin(t1))
+                mb.face([(a2[0], a2[1], zr), (b2[0], b2[1], zr), (b2[0], b2[1], zr + 0.15), (a2[0], a2[1], zr + 0.15)], 'steel', [(0, 0), (1, 0), (1, 0.05), (0, 0.05)])
+            a2 = (c[0] + (r + 0.06) * math.cos(t0), c[1] + (r + 0.06) * math.sin(t0)); b2 = (c[0] + (r + 0.06) * math.cos(t1), c[1] + (r + 0.06) * math.sin(t1))
+            mb.face([(a2[0], a2[1], ztop(t0) - 0.2), (b2[0], b2[1], ztop(t1) - 0.2), (b2[0], b2[1], ztop(t1)), (a2[0], a2[1], ztop(t0))], 'steel',
+                    [(0, 0), (1, 0), (1, 0.05), (0, 0.05)])
+    # landing roof inside, below the lowest point of the rake (dark, seen through the open top)
+    zl = top - rake - 0.6
+    mb.face([(c[0] + (r - 0.05) * math.cos(t), c[1] + (r - 0.05) * math.sin(t), zl) for t in ang[:-1]], 'soffit', [(0.5, 0.5)] * n)
 
 
 # ------------------------------------------------------------------------------------------------ assembly
@@ -492,11 +629,12 @@ def build(clip_world, building_outlines, Bldg, Part, dim, station_exclude=None):
                      ['at_rail_polygon', 'at_section', 'at_station_domestic', 'at_stations', 'at_height_ext', 'at_height_general'],
                      dict(plan=dim('SFO Museum AirTrain Rail polygon', 'obs', 'BL-01 / BL-02'),
                           level=dim('station anchors (see airtrain_levels in the manifest), geodesic interpolation', 'inf', 'landside_airtrain.STATIONS'),
-                          deck=dim(DECK_T, 'inf', 'app slab depth'), side_wall=dim(WALL_H, 'inf', 'photos l1 / l5')),
+                          deck=dim(DECK_T, 'inf', 'app slab depth'), side_wall=dim(WALL_H, 'obs', 'photos l1 / l5 (level with the walkway) [low]')),
                      inferred=['guideway level between stations (interpolated)', 'deck depth %.1f m, side walls %.1f m' % (DECK_T, WALL_H),
+                               'running pads %.2f x %.2f m at +-%.2f m, guide rail %.2f x %.2f m, twin walkway +%.1f m' % (PAD_W, PAD_H, PAD_OFF, BEAM_W, BEAM_H, WALKWAY_H),
                                'pier spacing %.0f m, column D %.1f / 2.4 m, cap %.1f m' % (PIER_DX, PIER_D, CAP_D)],
                      unknown=['station platform levels (see airtrain_levels)', 'enclosure / canopy heights'],
-                     not_modelled=['running surfaces / centre guide beams (deck colour only)', 'railings, lamp posts',
+                     not_modelled=['walkways / railings of single-track sections', 'lamp posts, cable trays, power-rail details',
                                    'stair / elevator towers of the terminal-area stations (positions not measured)',
                                    'Grand Hyatt enclosed bridge, LTP pedestrian bridge (positions not measured)'])
             F = B.F
@@ -504,11 +642,15 @@ def build(clip_world, building_outlines, Bldg, Part, dim, station_exclude=None):
             if not part.is_empty:
                 deck_shell(sh, F, part, lev, open_line=clip.boundary if not clip.is_empty else None)
             det0, det1 = MB(key + '_piers0'), MB(key + '_piers1')
+            trk0, trk1, rails0 = MB(key + '_track0'), MB(key + '_track1'), MB(key + '_rails0')
             coarse = MB(key + '_L2')
             if not part.is_empty:
-                deck_shell(coarse, F, part.simplify(0.6, preserve_topology=True), lev, walls=False, seg=12.0)
+                # LOD2 keeps the trough walls (review r1: the LOD2 tiles were 1.1 m low without them)
+                deck_shell(coarse, F, part.simplify(0.6, preserve_topology=True), lev, walls=True, seg=12.0,
+                           open_line=clip.boundary if not clip.is_empty else None)
             if not part.is_empty:
-                guide_beams(det0, F, part, lev)
+                guide_beams(trk0, F, part, lev, lod=0, rails=rails0)
+                guide_beams(trk1, F, part, lev, seg=8.0, lod=1)
             n_p = 0
             for s in sites:
                 if not box.contains(Point(s['x'], s['z'])): continue
@@ -529,6 +671,11 @@ def build(clip_world, building_outlines, Bldg, Part, dim, station_exclude=None):
             if not det0.empty():
                 B.details[0].append(Part(key + '_piers', det0, 'detail', 'inf', 'single-column T-piers every %.0f m (inf)' % PIER_DX, ['at_section']))
                 B.details[1].append(Part(key + '_piers', det1, 'detail', 'inf', 'piers (6-sided)', ['at_section']))
+            if not trk0.empty():
+                B.details[0].append(Part(key + '_track', trk0, 'detail', 'obs', 'running pads, low centre guide rail, twin-section walkway (photos l1 / l5)', ['at_section']))
+                B.details[1].append(Part(key + '_track', trk1, 'detail', 'obs', 'running pads, walkway (LOD1)', ['at_section']))
+            if not rails0.empty():
+                B.details[0].append(Part(key + '_handrails', rails0, 'detail', 'obs', 'walkway handrails: galvanised posts every 3 m, top + mid rail [obs l1; spacing inf]', ['at_section']))
             if not sdet0.empty():
                 B.details[0].append(Part(key + '_stdet', sdet0, 'detail', 'obs', 'station posts, X-bracing, platform-door cabins', ['at_station_domestic', 'at_section']))
                 B.details[1].append(Part(key + '_stdet', sdet1, 'detail', 'obs', 'station posts', ['at_station_domestic']))

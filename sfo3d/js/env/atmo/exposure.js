@@ -22,6 +22,11 @@ export const EV_NIGHT_FLOOR = 4.6;
 // app's 0.45 = exposure 0.36 in sky units at the snapshot, whose natural target is EV100 15.0, spec §10) is kept:
 // exposure = DISPLAY_K · LUX_PER_UNIT / (1.2 · 2^EV100) with DISPLAY_K = 0.36 · 1.2 · 2^15 / LUX_PER_UNIT = 2.12.
 export const DISPLAY_K = 0.36 * 1.2 * Math.pow(2, 15.0) / LUX_PER_UNIT;
+// Meter bias (M + I): the meter averages the brighter half of the geometry (sunlit concrete, white fuselages), so at
+// the reference view (gate B26, snapshot, the view the reviewed grade was tuned on) it reads 15.68 where the natural
+// 18 % grey target is 14.98 (run 3, docs/research/environment_impl.md §3.4). The bias is taken off the metered value
+// before the clamp, so the reference view keeps the reviewed exposure 0.36 and the night clamp is unchanged.
+export const METER_BIAS = 0.68;
 
 export const ev100FromLuminance = (Lcd) => Math.log2(Math.max(Lcd, 1e-9) * 100 / K_METER);
 export const luminanceFromEV100 = (ev) => Math.pow(2, ev) * K_METER / 100;
@@ -30,11 +35,12 @@ export const exposureForEV = (ev) => DISPLAY_K * LUX_PER_UNIT / (1.2 * Math.pow(
 export const evForExposure = (x) => Math.log2(DISPLAY_K * LUX_PER_UNIT / (1.2 * x));
 
 /** Meter a w×h array of luminances (sky units, linear): centre-weighted log average of the pixels between the 50th
- *  and the 98th percentile. Weight = 1 + 2·(1 − r²) inside the inscribed ellipse (r = normalised distance from the
+ *  and the 98th percentile (of the pixels not in `exclude`: renderer3 leaves the sky out, I). Weight = 1 + 2·(1 − r²) inside the inscribed ellipse (r = normalised distance from the
  *  centre), 1 outside (I). Returns {Lcd, ev100, n}. */
-export function meter(lumUnits, w, h) {
-  const n = w * h; const idx = new Array(n);
-  for (let i = 0; i < n; i++) idx[i] = i;
+export function meter(lumUnits, w, h, exclude = null) {
+  const n0 = w * h; const idx = [];
+  for (let i = 0; i < n0; i++) if (!exclude || !exclude[i]) idx.push(i);
+  const n = idx.length;
   idx.sort((a, b) => lumUnits[a] - lumUnits[b]);
   const i0 = Math.floor(n * EXCL_LOW), i1 = Math.max(i0 + 1, Math.ceil(n * (1 - EXCL_HIGH)));
   let s = 0, ws = 0;

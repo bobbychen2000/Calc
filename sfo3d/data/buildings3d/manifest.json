@@ -3303,9 +3303,9 @@
  },
  "domestic": {
   "asset": "data/buildings3d/domestic.glb",
-  "bytes": 9265476,
-  "built": "2026-11-05T02:33:53+00:00",
-  "git": "8b7c168+dirty",
+  "bytes": 10372152,
+  "built": "2026-11-05T08:53:26+00:00",
+  "git": "40bc24f",
   "generator": "tools/blender/build_domestic.py (bpy 5.0.1, Cycles CPU AO bake); geometry tools/blender/dom_geom.py + dom_mesh.py; textures dom_tex.py",
   "reference": "2-D sheets BD-01..03 (docs/drawings/buildings/README.md), drawn by tools/buildings/draw_domestic.py, imported by dom_geom.py",
   "spec": "tools/buildings/spec_domestic.json (+ dom_bab_band.json, dom_baf_hub.json, dom_bab_roof.json; tools/blender/dom_pv.json)",
@@ -3345,6 +3345,10 @@
    "BA_F": {
     "name": "Boarding Area F",
     "tag": "obs"
+   },
+   "C3C": {
+    "name": "Courtyard 3 Connector office block",
+    "tag": "inf"
    }
   },
   "frame": {
@@ -3364,38 +3368,38 @@
     "lod": 0,
     "node": "LOD0",
     "switch_m": 0.0,
-    "tris": 69757,
-    "verts": 145716,
-    "draw_calls": 115,
+    "tris": 70193,
+    "verts": 146458,
+    "draw_calls": 147,
     "ao_atlas": "dom_ao_S / dom_ao_N (shared by the LOD0 / LOD1 shell meshes)"
    },
    {
     "lod": 1,
     "node": "LOD1",
     "switch_m": 380.0,
-    "tris": 21501,
-    "verts": 50841,
-    "draw_calls": 91,
+    "tris": 21635,
+    "verts": 50979,
+    "draw_calls": 114,
     "ao_atlas": "dom_ao_S / dom_ao_N (shared by the LOD0 / LOD1 shell meshes)"
    },
    {
     "lod": 2,
     "node": "LOD2",
     "switch_m": 1300.0,
-    "tris": 11725,
-    "verts": 27899,
-    "draw_calls": 16,
+    "tris": 21455,
+    "verts": 50583,
+    "draw_calls": 20,
     "ao_atlas": "dom_ao_L2"
    }
   ],
-  "lod_note": "LOD groups are siblings under the root: show one per building. LOD0 / LOD1 hold one node per building and kind (L<k>_<bld>_shell / _detail / _pv, extras.building): choose the LOD per building from the camera distance to its node (the complex spans ~1.3 km). LOD1 shares the LOD0 shell meshes and atlases; LOD2 is one joined node (L2_domestic, extras.parts keeps the per-part tags) with its own atlas. Phone / far tier: data/buildings3d/domestic_lod2.glb holds the LOD2 subtree alone (same root transform).",
+  "lod_note": "LOD groups are siblings under the root: show one per building. LOD0 / LOD1 hold one node per building and kind (L<k>_<bld>_shell / _detail / _fins / _pv, extras.building; _fins carry extras.max_dist_m 160: hide them beyond, the curtain caps of the glass tiles keep the rhythm): choose the LOD per building from the camera distance to its node (the complex spans ~1.3 km). LOD1 shares the LOD0 shell meshes and atlases; LOD2 is one joined node (L2_domestic, extras.parts keeps the per-part tags) with its own atlas; since review r1 it keeps the LOD0 outlines, wells, skylights, coping recess, rooftop units >= 15 m2, PV tables (tops) and the bridge vestibules / notches / bulkheads (the phone tier sees it up close). Phone / far tier: data/buildings3d/domestic_lod2.glb holds the LOD2 subtree alone (same root transform).",
   "files": [
    "data/buildings3d/domestic.glb",
    "data/buildings3d/domestic_lod2.glb"
   ],
   "lod2_glb": {
    "path": "data/buildings3d/domestic_lod2.glb",
-   "bytes": 1634688
+   "bytes": 2657780
   },
   "textures": [
    {
@@ -3435,17 +3439,17 @@
      2048
     ],
     "mime": "image/png",
-    "bytes": 1330627,
+    "bytes": 1363302,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    },
    {
-    "name": "dom_n_curtain",
+    "name": "dom_n_curtain24",
     "px": [
      512,
      512
     ],
     "mime": "image/png",
-    "bytes": 2009,
+    "bytes": 1585,
     "kind": "normal map, tiling, TEXCOORD_0"
    },
    {
@@ -3455,7 +3459,7 @@
      512
     ],
     "mime": "image/png",
-    "bytes": 1549,
+    "bytes": 2447,
     "kind": "base colour, tiling, TEXCOORD_0"
    },
    {
@@ -3466,6 +3470,16 @@
     ],
     "mime": "image/png",
     "bytes": 24397,
+    "kind": "normal map, tiling, TEXCOORD_0"
+   },
+   {
+    "name": "dom_n_curtain",
+    "px": [
+     512,
+     512
+    ],
+    "mime": "image/png",
+    "bytes": 2009,
     "kind": "normal map, tiling, TEXCOORD_0"
    },
    {
@@ -3495,7 +3509,7 @@
      2048
     ],
     "mime": "image/png",
-    "bytes": 1299026,
+    "bytes": 1328015,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    },
    {
@@ -3516,6 +3530,16 @@
     ],
     "mime": "image/png",
     "bytes": 1547,
+    "kind": "base colour, tiling, TEXCOORD_0"
+   },
+   {
+    "name": "dom_c_glass_lobby",
+    "px": [
+     512,
+     512
+    ],
+    "mime": "image/png",
+    "bytes": 1549,
     "kind": "base colour, tiling, TEXCOORD_0"
    },
    {
@@ -3565,7 +3589,7 @@
      1024
     ],
     "mime": "image/png",
-    "bytes": 421424,
+    "bytes": 474064,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    }
   ],
@@ -3819,14 +3843,14 @@
    },
    "glass_canopy": {
     "rgb_srgb": [
-     150,
-     166,
-     168
+     188,
+     200,
+     200
     ],
     "metallic": 0.0,
-    "roughness": 0.08,
-    "ior": 1.9,
-    "src": "pub t1c canopy (glass); value inf",
+    "roughness": 0.3,
+    "ior": 1.5,
+    "src": "pub t1c canopy (glass); reads light grey-green from above and below (photo d1; review r1: the coated dark glass read as a thin dark line): laminated / fritted, uncoated F0 0.04, rough; value inf",
     "normal_tile": null,
     "base_tile": null
    },
@@ -3845,15 +3869,15 @@
    },
    "glass_ec": {
     "rgb_srgb": [
-     44,
      58,
-     70
+     74,
+     86
     ],
     "metallic": 0.0,
     "roughness": 0.05,
     "ior": 1.9,
-    "src": "pub bab.glazing (electrochromic); tint inf",
-    "normal_tile": "dom_n_curtain",
+    "src": "pub bab.glazing (electrochromic); per-pane tint states (dom_tex.EC_STATES, review r1) inf",
+    "normal_tile": "dom_n_curtain24",
     "base_tile": "dom_c_glass_ec"
    },
    "glass_lowe": {
@@ -3891,9 +3915,48 @@
     "metallic": 0.0,
     "roughness": 0.04,
     "ior": 1.9,
-    "src": "obs photos d1 / a1 (dark clear glass)",
+    "src": "obs photo a1 (BA-E end wall, dark clear glass)",
     "normal_tile": "dom_n_curtain",
     "base_tile": "dom_c_glass_clear"
+   },
+   "glass_lobby": {
+    "rgb_srgb": [
+     112,
+     120,
+     122
+    ],
+    "metallic": 0.0,
+    "roughness": 0.06,
+    "ior": 1.9,
+    "src": "obs photo d1 (T1 Center clear glass under the canopy: the lit hall seen through, mid-grey); value inf (as the ITB glass_hall; review r1)",
+    "normal_tile": "dom_n_curtain",
+    "base_tile": "dom_c_glass_lobby"
+   },
+   "unit": {
+    "rgb_srgb": [
+     178,
+     182,
+     184
+    ],
+    "metallic": 0.45,
+    "roughness": 0.5,
+    "ior": 1.5,
+    "src": "inf (rooftop mechanical units: painted / galvanised metal casings; extents obs NAIP 2024, dom_roofobs.json)",
+    "normal_tile": "dom_n_panel",
+    "base_tile": null
+   },
+   "unit_top": {
+    "rgb_srgb": [
+     150,
+     154,
+     156
+    ],
+    "metallic": 0.3,
+    "roughness": 0.6,
+    "ior": 1.5,
+    "src": "inf (unit tops: fans / grilles read darker than the casing)",
+    "normal_tile": null,
+    "base_tile": null
    },
    "glass_frit_grey": {
     "rgb_srgb": [
@@ -3954,7 +4017,7 @@
      "T2": [
       213,
       215,
-      211
+      210
      ],
      "BA_D": [
       213,
@@ -3980,6 +4043,11 @@
       215,
       215,
       215
+     ],
+     "C3C": [
+      215,
+      215,
+      213
      ]
     },
     "src": "NAIP 2024 per building (capped)",
@@ -3998,11 +4066,12 @@
      "T1",
      "BA_B",
      "BA_C",
-     "T2"
+     "T2",
+     "C3C"
     ],
-    "bake_s": 24.0,
-    "mean": 0.641,
-    "p2": 0.001,
+    "bake_s": 40.9,
+    "mean": 0.671,
+    "p2": 0.004,
     "samples": 48,
     "distance_m": 10.0,
     "ground_plane": true
@@ -4020,9 +4089,9 @@
      "BA_E",
      "BA_F"
     ],
-    "bake_s": 26.2,
-    "mean": 0.694,
-    "p2": 0.004,
+    "bake_s": 39.1,
+    "mean": 0.709,
+    "p2": 0.006,
     "samples": 48,
     "distance_m": 10.0,
     "ground_plane": true
@@ -4035,9 +4104,9 @@
     "buildings": [
      "all"
     ],
-    "bake_s": 4.0,
-    "mean": 0.665,
-    "p2": 0.002,
+    "bake_s": 4.4,
+    "mean": 0.708,
+    "p2": 0.07,
     "samples": 48,
     "distance_m": 10.0,
     "ground_plane": true
@@ -4050,7 +4119,7 @@
      215,
      215
     ],
-    "n": 1860,
+    "n": 1824,
     "lean_m_per_m": 0.394,
     "method": "NAIP 2024 median of the upper 65 pct (luminance) at the imaged deck points, 2.5 m grid, 2 m inside, off holes / PV; capped at sRGB 215"
    },
@@ -4060,7 +4129,7 @@
      215,
      215
     ],
-    "n": 1194,
+    "n": 1159,
     "lean_m_per_m": 0.387,
     "method": "NAIP 2024 median of the upper 65 pct (luminance) at the imaged deck points, 2.5 m grid, 2 m inside, off holes / PV; capped at sRGB 215"
    },
@@ -4070,7 +4139,7 @@
      215,
      211
     ],
-    "n": 790,
+    "n": 777,
     "lean_m_per_m": 0.4,
     "method": "NAIP 2024 median of the upper 65 pct (luminance) at the imaged deck points, 2.5 m grid, 2 m inside, off holes / PV; capped at sRGB 215"
    },
@@ -4078,9 +4147,9 @@
     "rgb": [
      213,
      215,
-     211
+     210
     ],
-    "n": 2531,
+    "n": 2226,
     "lean_m_per_m": 0.49,
     "method": "NAIP 2024 median of the upper 65 pct (luminance) at the imaged deck points, 2.5 m grid, 2 m inside, off holes / PV; capped at sRGB 215"
    },
@@ -4090,7 +4159,7 @@
      215,
      210
     ],
-    "n": 2221,
+    "n": 2193,
     "lean_m_per_m": 0.581,
     "method": "NAIP 2024 median of the upper 65 pct (luminance) at the imaged deck points, 2.5 m grid, 2 m inside, off holes / PV; capped at sRGB 215"
    },
@@ -4100,7 +4169,7 @@
      213,
      215
     ],
-    "n": 621,
+    "n": 585,
     "lean_m_per_m": 0.387,
     "method": "NAIP 2024 median of the upper 65 pct (luminance) at the imaged deck points, 2.5 m grid, 2 m inside, off holes / PV; capped at sRGB 215"
    },
@@ -4120,7 +4189,7 @@
      215,
      212
     ],
-    "n": 604,
+    "n": 561,
     "lean_m_per_m": 0.443,
     "method": "NAIP 2024 median of the upper 65 pct (luminance) at the imaged deck points, 2.5 m grid, 2 m inside, off holes / PV; capped at sRGB 215"
    },
@@ -4130,8 +4199,18 @@
      215,
      215
     ],
-    "n": 2669,
+    "n": 2659,
     "lean_m_per_m": 0.332,
+    "method": "NAIP 2024 median of the upper 65 pct (luminance) at the imaged deck points, 2.5 m grid, 2 m inside, off holes / PV; capped at sRGB 215"
+   },
+   "C3C": {
+    "rgb": [
+     215,
+     215,
+     213
+    ],
+    "n": 177,
+    "lean_m_per_m": 0.437,
     "method": "NAIP 2024 median of the upper 65 pct (luminance) at the imaged deck points, 2.5 m grid, 2 m inside, off holes / PV; capped at sRGB 215"
    }
   },
@@ -4276,9 +4355,13 @@
    },
    {
     "key": "BA-F lantern rise",
-    "value": 4.6,
-    "tag": "unk (upper bound)",
-    "source": "NAIP 2020 cast shadow <= 5.2 m -> rise <= 4.6 m, drawn at the bound"
+    "value": 1.0,
+    "tag": "unk",
+    "source": "review r1: minimal 1.0-m glazed upstand (conservative); the NAIP 2020 cast shadow (<= 5.2 m) only bounds it",
+    "range": [
+     0.0,
+     4.6
+    ]
    },
    {
     "key": "BA-F NW-arm monitor rise",
@@ -4395,6 +4478,46 @@
     "source": "the app convention (tools/build_terminal_parts.py walkway y0 6.0 / h 10.5)"
    },
    {
+    "key": "elevated BA-B parts entered by a bridge walkway (B10 / B11 / B11S / B15 / B16): underside",
+    "value": 4.9,
+    "tag": "inf",
+    "source": "review r1: the vestibule floor (bridge floor 5.4 - 0.5) so that the app walkway (5.15-8.45 m) runs inside the part"
+   },
+   {
+    "key": "Courtyard 3 Connector office block: footprint",
+    "value": "T2 outline NW end west of s -645.9 (1971 m2)",
+    "tag": "obs",
+    "source": "SFO Museum T2 outline; the cut through its two outline jogs; NAIP 2024 imaged east roof edge less the relief on the same line"
+   },
+   {
+    "key": "Courtyard 3 Connector office block: height",
+    "value": 33.0,
+    "tag": "inf",
+    "source": "HOK: \"Above the connector, a six-story office building\" [pub] -> >= 33.3 m; NAIP 2024 relief 12.9 m / 0.379 = 34.0 m; photo a1 (estimated camera) ~35 m; the conservative end",
+    "range": [
+     32.0,
+     36.0
+    ]
+   },
+   {
+    "key": "NAIP 2024 lean (east, m/m) at world x",
+    "value": "k24.n = 0.392 + 0.000432 (x + 800), / sin 117.83",
+    "tag": "inf",
+    "source": "linear fit through the four two-epoch pier values (B / D / E / F, within 0.005); used for the C3C only"
+   },
+   {
+    "key": "PV rack tables (rows / tables with their aisles)",
+    "value": "tools/blender/dom_roofobs.json pv_tables",
+    "tag": "obs (extent, NAIP 2024 +-0.5 m) / inf (modules)",
+    "source": "tools/blender/dom_roofobs.py (review r1: discrete tables instead of one plate per block)"
+   },
+   {
+    "key": "rooftop mechanical units",
+    "value": "tools/blender/dom_roofobs.json units",
+    "tag": "obs (extent, NAIP 2024 +-0.7 m) / inf (height 1.5 / 2.2 / 3.0 m by size)",
+    "source": "tools/blender/dom_roofobs.py: compact dark objects with a shadow on their NNE side"
+   },
+   {
     "key": "bridge doors / vestibules / bulkheads",
     "value": "at the walkway attach points (data/sfo_stands.json)",
     "tag": "inf",
@@ -4433,7 +4556,7 @@
        "source": "apron / host deck"
       }
      },
-     "T1_walk22": {
+     "T1_walk23": {
       "h": {
        "v": 10.5,
        "tag": "unk",
@@ -4456,7 +4579,19 @@
    {
     "node": "L0_T1_detail",
     "building": "T1",
-    "feature": "Harvey Milk Terminal 1 Center: mullion fins, bridge door frames, skylight frames, brackets",
+    "feature": "Harvey Milk Terminal 1 Center: bridge door frames, skylight frames, canopy brackets",
+    "src": "inf",
+    "spec": [],
+    "dims": {},
+    "kind": "detail",
+    "lods": [
+     0
+    ]
+   },
+   {
+    "node": "L0_T1_fins",
+    "building": "T1",
+    "feature": "Harvey Milk Terminal 1 Center: curtain-wall mullion fins (LOD0 only)",
     "src": "inf",
     "spec": [],
     "dims": {},
@@ -4528,7 +4663,7 @@
        "source": "see spec keys"
       },
       "z0": {
-       "v": 6.0,
+       "v": 4.9,
        "tag": "inf",
        "source": "apron / host deck"
       }
@@ -4540,7 +4675,7 @@
        "source": "see spec keys"
       },
       "z0": {
-       "v": 6.0,
+       "v": 4.9,
        "tag": "inf",
        "source": "apron / host deck"
       }
@@ -4556,7 +4691,19 @@
    {
     "node": "L0_BA_B_detail",
     "building": "BA_B",
-    "feature": "Boarding Area B: mullion fins, bridge door frames, skylight frames, brackets",
+    "feature": "Boarding Area B: bridge door frames, skylight frames, canopy brackets",
+    "src": "inf",
+    "spec": [],
+    "dims": {},
+    "kind": "detail",
+    "lods": [
+     0
+    ]
+   },
+   {
+    "node": "L0_BA_B_fins",
+    "building": "BA_B",
+    "feature": "Boarding Area B: curtain-wall mullion fins (LOD0 only)",
     "src": "inf",
     "spec": [],
     "dims": {},
@@ -4617,7 +4764,19 @@
    {
     "node": "L0_BA_C_detail",
     "building": "BA_C",
-    "feature": "Boarding Area C: mullion fins, bridge door frames, skylight frames, brackets",
+    "feature": "Boarding Area C: bridge door frames, skylight frames, canopy brackets",
+    "src": "inf",
+    "spec": [],
+    "dims": {},
+    "kind": "detail",
+    "lods": [
+     0
+    ]
+   },
+   {
+    "node": "L0_BA_C_fins",
+    "building": "BA_C",
+    "feature": "Boarding Area C: curtain-wall mullion fins (LOD0 only)",
     "src": "inf",
     "spec": [],
     "dims": {},
@@ -4649,7 +4808,7 @@
        "source": "apron / host deck"
       }
      },
-     "T2_link23": {
+     "T2_link24": {
       "h": {
        "v": 16.877,
        "tag": "inf",
@@ -4670,9 +4829,9 @@
     ]
    },
    {
-    "node": "L0_T2_detail",
+    "node": "L0_T2_fins",
     "building": "T2",
-    "feature": "Terminal 2: mullion fins, bridge door frames, skylight frames, brackets",
+    "feature": "Terminal 2: curtain-wall mullion fins (LOD0 only)",
     "src": "inf",
     "spec": [],
     "dims": {},
@@ -4752,7 +4911,19 @@
    {
     "node": "L0_BA_D_detail",
     "building": "BA_D",
-    "feature": "Boarding Area D: mullion fins, bridge door frames, skylight frames, brackets",
+    "feature": "Boarding Area D: bridge door frames, skylight frames, canopy brackets",
+    "src": "inf",
+    "spec": [],
+    "dims": {},
+    "kind": "detail",
+    "lods": [
+     0
+    ]
+   },
+   {
+    "node": "L0_BA_D_fins",
+    "building": "BA_D",
+    "feature": "Boarding Area D: curtain-wall mullion fins (LOD0 only)",
     "src": "inf",
     "spec": [],
     "dims": {},
@@ -4793,9 +4964,9 @@
     ]
    },
    {
-    "node": "L0_T3W_detail",
+    "node": "L0_T3W_fins",
     "building": "T3W",
-    "feature": "Terminal 3 West: mullion fins, bridge door frames, skylight frames, brackets",
+    "feature": "Terminal 3 West: curtain-wall mullion fins (LOD0 only)",
     "src": "inf",
     "spec": [],
     "dims": {},
@@ -4868,7 +5039,19 @@
    {
     "node": "L0_T3E_detail",
     "building": "T3E",
-    "feature": "Terminal 3 East: mullion fins, bridge door frames, skylight frames, brackets",
+    "feature": "Terminal 3 East: bridge door frames, skylight frames, canopy brackets",
+    "src": "inf",
+    "spec": [],
+    "dims": {},
+    "kind": "detail",
+    "lods": [
+     0
+    ]
+   },
+   {
+    "node": "L0_T3E_fins",
+    "building": "T3E",
+    "feature": "Terminal 3 East: curtain-wall mullion fins (LOD0 only)",
     "src": "inf",
     "spec": [],
     "dims": {},
@@ -4954,7 +5137,19 @@
    {
     "node": "L0_BA_E_detail",
     "building": "BA_E",
-    "feature": "Boarding Area E: mullion fins, bridge door frames, skylight frames, brackets",
+    "feature": "Boarding Area E: bridge door frames, skylight frames, canopy brackets",
+    "src": "inf",
+    "spec": [],
+    "dims": {},
+    "kind": "detail",
+    "lods": [
+     0
+    ]
+   },
+   {
+    "node": "L0_BA_E_fins",
+    "building": "BA_E",
+    "feature": "Boarding Area E: curtain-wall mullion fins (LOD0 only)",
     "src": "inf",
     "spec": [],
     "dims": {},
@@ -5007,7 +5202,7 @@
      },
      "BA_F_lantern": {
       "h": {
-       "v": 15.09,
+       "v": 11.49,
        "tag": "unk",
        "source": "see spec keys"
       },
@@ -5064,13 +5259,82 @@
    {
     "node": "L0_BA_F_detail",
     "building": "BA_F",
-    "feature": "Boarding Area F: mullion fins, bridge door frames, skylight frames, brackets",
+    "feature": "Boarding Area F: bridge door frames, skylight frames, canopy brackets",
     "src": "inf",
     "spec": [],
     "dims": {},
     "kind": "detail",
     "lods": [
      0
+    ]
+   },
+   {
+    "node": "L0_BA_F_fins",
+    "building": "BA_F",
+    "feature": "Boarding Area F: curtain-wall mullion fins (LOD0 only)",
+    "src": "inf",
+    "spec": [],
+    "dims": {},
+    "kind": "detail",
+    "lods": [
+     0
+    ]
+   },
+   {
+    "node": "L0_C3C_shell",
+    "building": "C3C",
+    "feature": "Courtyard 3 Connector office block: walls, roofs, roof features",
+    "src": "inf",
+    "spec": [],
+    "dims": {
+     "C3C_block": {
+      "h": {
+       "v": 33.0,
+       "tag": "inf",
+       "source": "see spec keys"
+      },
+      "z0": {
+       "v": 0.0,
+       "tag": "obs",
+       "source": "apron / host deck"
+      }
+     }
+    },
+    "kind": "shell",
+    "lods": [
+     0,
+     1,
+     2
+    ]
+   },
+   {
+    "node": "L0_C3C_fins",
+    "building": "C3C",
+    "feature": "Courtyard 3 Connector office block: curtain-wall mullion fins (LOD0 only)",
+    "src": "inf",
+    "spec": [],
+    "dims": {},
+    "kind": "detail",
+    "lods": [
+     0
+    ]
+   },
+   {
+    "node": "L0_C3C_pv",
+    "building": "C3C",
+    "feature": "Courtyard 3 Connector office block: PV rack blocks (NAIP 2024 extents [obs]; rack height inf)",
+    "src": "obs",
+    "spec": [
+     "bab.pv",
+     "bab.pv_layout",
+     "t1c.roof_pv"
+    ],
+    "dims": {},
+    "kind": "detail",
+    "lods": [
+     0,
+     1,
+     2
     ]
    },
    {
@@ -5093,7 +5357,10 @@
    "mullion fins every 1.5 m on the glazed bands (0.06 x 0.18 m), T1 landside irregular rhythm 1.2-2.4 m (schematic of the published \"Redwood trees\" pattern)",
    "BA-B: north-half outer roof edges carried from the south half (offsets from the outline); roof wells 3 m deep (unk) with planting; well bridges 0.6 m slabs; skylight grids raised 0.3 m",
    "BA-E stepped section (raised plate with a tapered edge 1.5 m over a clerestory, lower flanks 4.4 m, step 3.0 m) from photo a1",
-   "BA-F lantern eccentric (~3.3 m E) at its rise bound 4.6 m; NW-arm monitor 2.5 m rise; hub and NW arm at the NE-arm height",
+   "BA-F lantern eccentric (~3.3 m E), a minimal 1.0-m glazed upstand (rise unknown, bound 4.6 m); NW-arm monitor 2.5 m rise; hub and NW arm at the NE-arm height",
+   "Courtyard 3 Connector office block (review r1): 33.0 m (six published office storeys above the connector, NAIP relief, photo a1), electrochromic (\"dynamic\") curtain glass on a 3-m module, the connector levels below as the piers",
+   "rooftop units: boxes on the decks at the NAIP extents, heights 1.5 / 2.2 / 3.0 m by plan size (< 12 / < 50 / >= 50 m2), light metal casings; PV: rack tables 0.35-0.75 m above the deck at the NAIP table extents, modules in the PV tiles",
+   "BA-B electrochromic glass in four per-pane tint states (24 x 6 m tile); T1 clear glass under the canopy mid-grey (the lit hall seen through, photo d1); the T1 canopy light, uncoated laminated glass",
    "BA-D drums ~4.7 m above the head roof; linear skylights 0.6 m",
    "T1 Center: curb canopy 4.0 m deep at curb + 4.0 m (glass top, aluminium edge, brackets), departures sidewalk deck at the curb; the landside facade 4.0 m behind the trimmed curb line; three 9 x 11 m skylights; the sign \"Harvey Milk Terminal / Terminal 1\" on the west run (photo d1; size / font inf)",
    "T3: L1 at the apron; T3W deck = parapet - 3'-6\"; T3E roof at R2; penthouse at R3; T3W / T3E split along the AirTrain connector gap",
@@ -5105,17 +5372,18 @@
    "T1 Center and T2 hall heights (nothing published or measured): T1 = curb placeholder + 13.0 m wall head (photo d1), T2 = curb + 12 m",
    "the departures-curb height above the apron (T1 / T2): 4.88 m placeholder (T3 L1 -> L2 by analogy)",
    "the T3 project datum (L1 drawn at the apron); the T3 East landside facade (drawn with the published T3E materials, positions inf)",
-   "the BA-B roof-well depth and skylight heights; the BA-F lantern and monitor rises; the BA-B north-half outer roof height",
-   "bay / mullion modules, gate-room glazing extents, the apron-level facades (service band only), parapet heights",
-   "the elevated sky-bridge / pod parts (app convention 6.0-10.5 m)",
+   "the BA-B roof-well depth and skylight heights; the BA-F lantern (bound <= 4.6 m, modelled 1.0 m) and monitor rises; the BA-B north-half outer roof height",
+   "the Courtyard 3 Connector height (modelled 33.0 m, range 32-36 m) and its roof penthouse (photo a1 shows a light box on the roof: not resolved in NAIP 2024, not modelled)",
+   "rooftop unit heights and types (extents measured; NAIP 2024 resolves only compact dark units with a shadow; light units on light membranes and units under 4 m2 are missed); no BA-B reference photo was found with an open licence (Wikimedia Commons searched 2026-11-05), so the BA-B facade materials remain unverifiedbay / mullion modules, gate-room glazing extents, the apron-level facades (service band only), parapet heights",
+   "the elevated sky-bridge / pod parts (app convention 6.0-10.5 m; 4.9-10.5 m where a bridge walkway enters, review r1)",
    "which T3W state to model (under construction 2024-2029; the May 2026 change adds an airside storey): the asset shows the 95 % CD parapet 66'-0\" massing without the new storey"
   ],
   "not_modelled": [
    "courtyard links (pedestrian bridges over the curbside roadways to the garage / AirTrain stations) and the links that cross the AirTrain guideway: no known level (the app keeps its own parts there)",
    "the AirTrain guideway / stations and the garages (landside asset), the tower (tower asset), the ITB (itb asset)",
-   "T3W penthouses (positions / heights not dimensioned), roof equipment other than the PV racks, the T3E penthouse and the drums",
+   "T3W penthouses (positions / heights not dimensioned); rooftop equipment that NAIP 2024 does not resolve (see unknown)",
    "interiors (glass is opaque; no interior lighting)",
-   "door frames at the 6 bridges that attach into an elevated pod / sky-bridge part (B10, B11, B11S, B15, B16, F22): the bridge floor 5.4 m vs the pod underside 6.0 m (both inf / unk) is left to the bridges work",
+   "F22: its walkway starts inside BA-F; no pod part (the five BA-B pod bridges B10 / B11 / B11S / B15 / B16 now get door surrounds on the lowered pod parts, review r1)",
    "signage other than the T1 Center landside sign (gate numbers are drawn by the app on the bridges / stands)"
   ],
   "conflicts": [
@@ -5151,7 +5419,7 @@
    }
   ],
   "bridges": {
-   "doors": 75,
+   "doors": 80,
    "vestibules": 54,
    "bulkheads": 23,
    "notched": 2,
@@ -5165,7 +5433,7 @@
   "verification": {
    "tool": "tools/blender/verify_domestic.py",
    "report": "out/buildings3d/domestic_verify.json (local)",
-   "n_checks": 59,
+   "n_checks": 60,
    "n_fail": 0,
    "failed": [],
    "tolerance": "0.5 m or 2 % of the drawn value (whichever is larger) unless stated",
@@ -5272,13 +5540,13 @@
     },
     {
      "group": "heights",
-     "check": "BA_F_lantern: roof edge top (median of 17 probes, p10 15.09 / p90 15.09)",
-     "model": 15.09,
-     "drawing": 15.09,
+     "check": "BA_F_lantern: roof edge top (median of 17 probes, p10 11.49 / p90 11.49)",
+     "model": 11.49,
+     "drawing": 11.49,
      "dev": 0.0,
      "tol": 0.5,
      "ok": true,
-     "src": "hub lantern: roof + rise bound 4.6 [unk (bound)]"
+     "src": "hub lantern: roof + 1.0 minimal upstand (bound 4.6) [unk]"
     },
     {
      "group": "heights",
@@ -5322,7 +5590,7 @@
     },
     {
      "group": "heights",
-     "check": "T2_hall: roof edge top (median of 204 probes, p10 16.88 / p90 16.88)",
+     "check": "T2_hall: roof edge top (median of 170 probes, p10 16.88 / p90 16.88)",
      "model": 16.877,
      "drawing": 16.877,
      "dev": 0.0,
@@ -5359,6 +5627,16 @@
      "tol": 0.5,
      "ok": true,
      "src": "R3 81'-0\" - L1 [inf]"
+    },
+    {
+     "group": "heights",
+     "check": "C3C_block: roof edge top (median of 44 probes, p10 33.00 / p90 33.00)",
+     "model": 33.0,
+     "drawing": 33.0,
+     "dev": 0.0,
+     "tol": 0.66,
+     "ok": true,
+     "src": "C3C: six office storeys above the connector (HOK) / NAIP relief / photo a1 [inf]"
     },
     {
      "group": "BA-B section",
@@ -5683,9 +5961,9 @@
     {
      "group": "footprints",
      "check": "LOD0 plan area outside the SFO Museum outlines (roof overhangs, canopy, vestibules)",
-     "model": 1035.577,
+     "model": 1036.313,
      "drawing": 0.0,
-     "dev": 1035.577,
+     "dev": 1036.313,
      "tol": null,
      "ok": true,
      "src": "BA-B / BA-D ESE overhangs +2.3 / +2.4 m [obs], T1 canopy 4 m [inf], vestibules [inf]"
@@ -5702,10 +5980,10 @@
     },
     {
      "group": "plausibility",
-     "check": "bridge attachments: walkway first 1.5 m beyond the facade touching 3-D geometry (79 bridges; INFO)",
-     "model": 28.23,
+     "check": "bridge attachments: walkway first 1.5 m beyond the facade touching 3-D geometry (81 bridges; INFO)",
+     "model": 29.57,
      "drawing": 0.0,
-     "dev": 28.23,
+     "dev": 29.57,
      "tol": null,
      "ok": true,
      "src": "door frames / vestibule ends / walkways meeting the facade at an angle (stand data vs SFO Museum outline, as the ITB rotunda contacts)"
@@ -5819,13 +6097,19 @@
       "B10",
       "B10",
       1,
-      0.06
+      0.38
+     ],
+     [
+      "B11",
+      "B11",
+      1,
+      0.38
      ],
      [
       "B11S",
       "B11",
       1,
-      0.41
+      0.62
      ],
      [
       "B12",
@@ -5849,7 +6133,13 @@
       "B15",
       "B15",
       1,
-      0.11
+      0.29
+     ],
+     [
+      "B16",
+      "B16",
+      1,
+      0.25
      ],
      [
       "B17",
@@ -6243,7 +6533,7 @@
      ]
     ],
     "doors": {
-     "n": 75,
+     "n": 80,
      "vestibules": 54,
      "max_gap_bridged_m": 2.6,
      "bulkheads": 23
@@ -6293,9 +6583,9 @@
      "n": 305
     },
     "BA_F_lantern": {
-     "median": 15.09,
-     "p10": 15.09,
-     "p90": 15.09,
+     "median": 11.49,
+     "p10": 11.49,
+     "p90": 11.49,
      "n": 17
     },
     "BA_F_monitor": {
@@ -6326,7 +6616,7 @@
      "median": 16.877,
      "p10": 16.877,
      "p90": 16.877,
-     "n": 204
+     "n": 170
     },
     "T3W_hall": {
      "median": 16.764,
@@ -6345,6 +6635,12 @@
      "p10": 21.336,
      "p90": 21.336,
      "n": 44
+    },
+    "C3C_block": {
+     "median": 33.0,
+     "p10": 33.0,
+     "p90": 33.0,
+     "n": 44
     }
    }
   },
@@ -6355,18 +6651,17 @@
    "d1": [
     "out/buildings3d/domestic_d1.png"
    ],
-   "bab": [
-    "out/buildings3d/domestic_bab.png",
-    "out/buildings3d/domestic_bab_alpha.png"
-   ],
-   "plan": [
-    "out/buildings3d/domestic_plan.png"
-   ],
    "bclose": [
     "out/buildings3d/domestic_bclose.png"
    ],
-   "eclose": [
-    "out/buildings3d/domestic_eclose.png"
+   "roof": [
+    "out/buildings3d/domestic_roof.png"
+   ],
+   "c3c": [
+    "out/buildings3d/domestic_c3c.png"
+   ],
+   "plan": [
+    "out/buildings3d/domestic_plan.png"
    ]
   },
   "render_check": {
@@ -6419,7 +6714,7 @@
    ],
    "note": "silhouette = topmost opaque pixel per column of the alpha pass (LOD0); the parapet / coping top is the measured roof edge"
   },
-  "renders_updated": "2026-11-05T02:36:25+00:00",
+  "renders_updated": "2026-11-05T08:57:19+00:00",
   "renders_args": {
    "glb": "data/buildings3d/domestic.glb",
    "res": 960,
@@ -6427,48 +6722,479 @@
    "lod": 0
   },
   "renders_note": "Cycles CPU, AgX, OIDN, <= 960 px / <= 64 spp; photo comparison sheets (domestic_cmp_*.png) hold photo pixels and stay local (out/ is not committed)",
-  "neighbours": {
-   "tool": "tools/blender/verify_domestic.py --neighbours",
-   "method": "LOD0 triangles of both assets: plan overlap where the height ranges overlap (conservative triangle-bbox test)",
-   "result": {
-    "landside.glb": {
-     "overlap_m2": 0,
-     "pairs": {}
-    },
-    "itb.glb": {
-     "overlap_m2": 0.765,
-     "pairs": {
-      "L0_T1_shell / L0_itb_core": 0.511,
-      "L0_T3W_shell / L0_itb_core": 0.123,
-      "L0_T3W_detail / L0_itb_core": 0.073,
-      "L0_T1_detail / L0_itb_core": 0.035,
-      "L0_T3W_shell / L0_ba_g_body": 0.023
-     }
-    },
-    "tower.glb": {
-     "overlap_m2": 0,
-     "pairs": {}
-    }
-   },
-   "note": "itb: slivers along the shared T1 / T3W - ITB core boundary (~1 cm; coplanar adjacency, no volume shared)"
-  },
   "validator": {
    "tool": "Khronos glTF-Validator 2.0.0-dev.3.10 (node tools/blender/tower_validate.mjs)",
    "domestic.glb": {
     "errors": 0,
-    "warnings": 77,
-    "infos": 39,
+    "warnings": 92,
+    "infos": 53,
     "codes": {
-     "warning:MESH_PRIMITIVE_GENERATED_TANGENT_SPACE": 77,
-     "info:UNUSED_OBJECT": 39
+     "warning:MESH_PRIMITIVE_GENERATED_TANGENT_SPACE": 92,
+     "info:UNUSED_OBJECT": 53
     }
    },
    "domestic_lod2.glb": {
     "errors": 0,
     "warnings": 0,
-    "infos": 16
+    "infos": 20,
+    "codes": {
+     "info:UNUSED_OBJECT": 20
+    }
    },
-   "note": "no TANGENT attribute by choice (tiling normal maps; the runtime derives the tangent frame), as the ITB asset"
+   "note": "no TANGENT attribute by choice (tiling normal maps; the runtime derives the tangent frame), as the ITB asset; re-run after review r1"
+  },
+  "neighbours": {
+   "landside.glb": {
+    "n_tris": 121112,
+    "overlap_m2": 0,
+    "pairs": {}
+   },
+   "itb.glb": {
+    "n_tris": 64344,
+    "overlap_m2": 0.765,
+    "pairs": {
+     "L0_T1_shell / L0_itb_core": 0.511,
+     "L0_T3W_shell / L0_itb_core": 0.123,
+     "L0_T3W_fins / L0_itb_core": 0.073,
+     "L0_T1_fins / L0_itb_core": 0.035,
+     "L0_T3W_shell / L0_ba_g_body": 0.023
+    }
+   },
+   "tower.glb": {
+    "n_tris": 33443,
+    "overlap_m2": 0,
+    "pairs": {}
+   }
+  },
+  "review_r1": {
+   "updated": "2026-11-05T09:22:46+00:00",
+   "probe": "tools/blender/verify_domestic_r1.py (out/buildings3d/domestic_verify_r1.json, local)",
+   "after": {
+    "summary_lod0": {
+     "n": 83,
+     "branches": [
+      "F11",
+      "F13",
+      "F15",
+      "F22"
+     ],
+     "gap_gt_0_5": 0,
+     "gap_gt_1_0": 0,
+     "gap_max": 0.02,
+     "worst_gap": [
+      [
+       "E8",
+       0.02
+      ],
+      [
+       "B2",
+       0.0
+      ],
+      [
+       "B3",
+       0.0
+      ],
+      [
+       "B4",
+       0.0
+      ],
+      [
+       "B5",
+       0.0
+      ],
+      [
+       "B6",
+       0.0
+      ],
+      [
+       "B7",
+       0.0
+      ],
+      [
+       "B8",
+       0.0
+      ]
+     ],
+     "clash_gt_0_5": 31,
+     "clash_max": 2.32,
+     "worst_clash": [
+      [
+       "B16",
+       2.32
+      ],
+      [
+       "B11",
+       1.72
+      ],
+      [
+       "C8",
+       1.09
+      ],
+      [
+       "C4",
+       1.01
+      ],
+      [
+       "B3",
+       0.98
+      ],
+      [
+       "B4",
+       0.98
+      ],
+      [
+       "B6",
+       0.98
+      ],
+      [
+       "B7",
+       0.98
+      ]
+     ]
+    },
+    "summary_lod2": {
+     "n": 83,
+     "branches": [
+      "F11",
+      "F13",
+      "F15",
+      "F22"
+     ],
+     "gap_gt_0_5": 0,
+     "gap_gt_1_0": 0,
+     "gap_max": 0.02,
+     "worst_gap": [
+      [
+       "E8",
+       0.02
+      ],
+      [
+       "B2",
+       0.0
+      ],
+      [
+       "B3",
+       0.0
+      ],
+      [
+       "B4",
+       0.0
+      ],
+      [
+       "B5",
+       0.0
+      ],
+      [
+       "B6",
+       0.0
+      ],
+      [
+       "B7",
+       0.0
+      ],
+      [
+       "B8",
+       0.0
+      ]
+     ],
+     "clash_gt_0_5": 31,
+     "clash_max": 2.32,
+     "worst_clash": [
+      [
+       "B16",
+       2.32
+      ],
+      [
+       "B11",
+       1.72
+      ],
+      [
+       "C8",
+       1.09
+      ],
+      [
+       "C4",
+       1.01
+      ],
+      [
+       "B3",
+       0.98
+      ],
+      [
+       "B4",
+       0.98
+      ],
+      [
+       "B6",
+       0.98
+      ],
+      [
+       "B7",
+       0.98
+      ]
+     ]
+    },
+    "lod2_vs_lod0": {
+     "raster_m": 1.0,
+     "area_both": 148635,
+     "dz_gt_0_5_m2": 161,
+     "dz_gt_2_5_m2": 0,
+     "dz_pos_gt_0_5_m2": 0,
+     "dz_neg_gt_0_5_m2": 161,
+     "only_lod0_m2": 0,
+     "only_lod2_m2": 1,
+     "T3E strip": {
+      "lod0_top": 14.48,
+      "lod2_top": 14.48,
+      "only_lod2_cells": 0
+     },
+     "T3W strip": {
+      "lod0_top": 16.76,
+      "lod2_top": 16.76,
+      "only_lod2_cells": 0
+     },
+     "plan_hausdorff_m": 0.05,
+     "plan_sym_diff_m2": 0.0
+    }
+   },
+   "before": {
+    "summary_lod0": {
+     "n": 83,
+     "branches": [
+      "F11",
+      "F13",
+      "F15",
+      "F22"
+     ],
+     "gap_gt_0_5": 5,
+     "gap_gt_1_0": 5,
+     "gap_max": 23.62,
+     "worst_gap": [
+      [
+       "B10",
+       23.62
+      ],
+      [
+       "B15",
+       18.8
+      ],
+      [
+       "B11S",
+       17.35
+      ],
+      [
+       "B11",
+       10.48
+      ],
+      [
+       "B16",
+       9.25
+      ],
+      [
+       "E8",
+       0.02
+      ],
+      [
+       "B2",
+       0.0
+      ],
+      [
+       "B3",
+       0.0
+      ]
+     ],
+     "clash_gt_0_5": 40,
+     "clash_max": 5.57,
+     "worst_clash": [
+      [
+       "B10",
+       5.57
+      ],
+      [
+       "D15",
+       3.76
+      ],
+      [
+       "D5",
+       2.9
+      ],
+      [
+       "D14",
+       2.63
+      ],
+      [
+       "B15",
+       2.35
+      ],
+      [
+       "B16",
+       2.32
+      ],
+      [
+       "D4",
+       2.1
+      ],
+      [
+       "D16",
+       2.06
+      ]
+     ]
+    },
+    "summary_lod2": {
+     "n": 83,
+     "branches": [
+      "F11",
+      "F13",
+      "F15",
+      "F22"
+     ],
+     "gap_gt_0_5": 30,
+     "gap_gt_1_0": 19,
+     "gap_max": 159.91,
+     "worst_gap": [
+      [
+       "C11",
+       159.91
+      ],
+      [
+       "C10",
+       157.06
+      ],
+      [
+       "C9",
+       138.03
+      ],
+      [
+       "C8",
+       133.64
+      ],
+      [
+       "C7",
+       124.28
+      ],
+      [
+       "C6",
+       111.48
+      ],
+      [
+       "C5",
+       73.66
+      ],
+      [
+       "C4",
+       69.85
+      ]
+     ],
+     "clash_gt_0_5": 14,
+     "clash_max": 8.33,
+     "worst_clash": [
+      [
+       "D7",
+       8.33
+      ],
+      [
+       "D6",
+       7.73
+      ],
+      [
+       "B10",
+       5.55
+      ],
+      [
+       "D15",
+       3.67
+      ],
+      [
+       "D5",
+       2.83
+      ],
+      [
+       "D14",
+       2.53
+      ],
+      [
+       "B16",
+       2.34
+      ],
+      [
+       "B15",
+       2.24
+      ]
+     ]
+    },
+    "lod2_vs_lod0": {
+     "raster_m": 1.0,
+     "area_both": 148227,
+     "dz_gt_0_5_m2": 11866,
+     "dz_gt_2_5_m2": 1477,
+     "dz_pos_gt_0_5_m2": 11414,
+     "dz_neg_gt_0_5_m2": 452,
+     "only_lod0_m2": 400,
+     "only_lod2_m2": 1187,
+     "T3E strip": {
+      "lod0_top": 14.48,
+      "lod2_top": 14.63,
+      "only_lod2_cells": 92
+     },
+     "T3W strip": {
+      "lod0_top": 16.76,
+      "lod2_top": 16.76,
+      "only_lod2_cells": 110
+     },
+     "plan_hausdorff_m": 8.19,
+     "plan_sym_diff_m2": 1596.2
+    }
+   },
+   "dispositions": [
+    {
+     "item": 1,
+     "finding": "roofs empty apart from PV; Courtyard 3 Connector missing",
+     "status": "fixed",
+     "note": "C3C block 33.0 m [inf] on the T2 outline NW end [obs]; 31 rooftop units (NAIP 2024, dom_roofobs.json) [obs extents, inf heights]"
+    },
+    {
+     "item": 2,
+     "finding": "PV blobs with one texture",
+     "status": "fixed",
+     "note": "303 rack tables with aisles (dom_roofobs.json pv_tables)"
+    },
+    {
+     "item": 3,
+     "finding": "BA-B facade uniform / fins alias",
+     "status": "fixed (unverified look)",
+     "note": "EC panes in four tint states; _fins nodes with extras.max_dist_m 160 (js/three/buildings3d.js hides them beyond); no open-licence BA-B photo found"
+    },
+    {
+     "item": 4,
+     "finding": "T1 clear glass black, canopy dark line",
+     "status": "fixed",
+     "note": "glass_lobby 112/120/122; light uncoated canopy glass"
+    },
+    {
+     "item": 5,
+     "finding": "LOD2 without vestibules / notches / bulkheads",
+     "status": "fixed",
+     "note": "bridge attachment at every LOD"
+    },
+    {
+     "item": 6,
+     "finding": "walkways through the 6.0-m floor of the BA-B pod parts",
+     "status": "fixed",
+     "note": "the parts entered by B10 / B11 / B11S / B15 / B16 come down to 4.9 m with their walls; door surrounds added"
+    },
+    {
+     "item": 7,
+     "finding": "BA-F lantern at its 4.6-m bound",
+     "status": "fixed",
+     "note": "1.0-m upstand [unk]; bound kept in dimensions"
+    },
+    {
+     "item": 8,
+     "finding": "LOD2 outlines / roofs differ from LOD0",
+     "status": "fixed",
+     "note": "LOD0 outlines, wells, coping, clipped PV at LOD2"
+    }
+   ]
   }
  },
  "landside": {

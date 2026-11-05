@@ -45,8 +45,8 @@ import { GROUND_Y } from '../geo.js';
 import { lampK } from './tsl/common.js';
 import { Buildings3D } from './buildings3d.js'; // Blender building assets (data/buildings3d/*.glb)
 import { Rain } from './rain.js';
-import { sunCalibration, cloudAdjust, nightSkyLuminance, moonDisc, renderSlabs, cloudLayers, histogram8, detailDistribution, sstep as sstepE } from '../env/atmo/sky_model.js';
-import { meter, adapt, clampEV, exposureForEV, evForExposure, ev100FromLuminance, preExposure } from '../env/atmo/exposure.js';
+import { sunCalibration, cloudAdjust, nightSkyLuminance, moonDisc, renderSlabs, cloudLayers, histogram8, detailDistribution, fogTransmittance, sstep as sstepE } from '../env/atmo/sky_model.js';
+import { meter, adapt, clampEV, exposureForEV, evForExposure, ev100FromLuminance, preExposure, METER_BIAS } from '../env/atmo/exposure.js';
 import { rainParams, showerFactor, lightningFlashes, flashLevel, wetStep } from '../env/atmo/weather_fx.js';
 import { directionWorld } from '../env/ephemeris.js';
 
@@ -87,8 +87,9 @@ const HALL_DF = 0.05, HALL_LUX = 200;
 // Environment step 3 constants (I unless noted). K_TWILIGHT: the C171 calibration factor where C171's Sun term falls
 // below 0.05 lx (Sun ~ -9 deg; sky_model.js CAL_MIN_LUX), kept below that (M: 0.167 at predawn_fog, tools/env/test_sky.mjs).
 // MOON_COL: moonlight a little warmer than sunlight (~4,100 K, I). FLASH_COL / flash illuminance: lightning brightness is
-// NV (spec §4.6): 3 lx at 3 km, inverse square, 0.05-20 lx (I, QA-tuned). Rain radiance: 0.6 x the sky-up radiance (I).
-const K_TWILIGHT = 0.167, MOON_COL = [1.0, 0.95, 0.86], FLASH_COL = [0.86, 0.9, 1.0], RAIN_K = 0.6;
+// NV (spec §4.6): 3 lx at 3 km, inverse square, 0.05-20 lx (I, QA-tuned). Rain radiance: 0.25 x the sky-up radiance per
+// 1-px streak (I, display weight; js/three/rain.js).
+const K_TWILIGHT = 0.167, MOON_COL = [1.0, 0.95, 0.86], FLASH_COL = [0.86, 0.9, 1.0], RAIN_K = 0.25, FLASH_GLOW_CDM2 = 50;
 const DEGR = Math.PI / 180;
 
 // tier: ?tier=ultra|high|medium|low overrides; otherwise the old app's choice, recognised from the options it passes
@@ -486,7 +487,10 @@ export class Renderer3 {
     let flash = { level: 0, dir: [0, 1, 0], lux: 0 };
     if (st) {
       if (st.lightning && st.lightning.perMin > 0) {
-        const fl = flashLevel(lightningFlashes(st.lightning, t - 0.5, t + 0.01, 1), t);
+        // (QA: R.qaForceFlash = true evaluates the next scheduled flash 10 ms into its first stroke: on a software
+        // rasteriser the app's simulated time advances <= 0.1 s per frame, so a flash is rarely hit by chance)
+        let tl = t; if (this.qaForceFlash) { const nx = lightningFlashes(st.lightning, t, t + 600, 1)[0]; if (nx) tl = nx.t + 0.01; }
+        const fl = flashLevel(lightningFlashes(st.lightning, tl - 0.5, tl + 0.01, 1), tl);
         if (fl.flash && fl.level > 0.01) {
           const base = (this.layers.find(l => l.cover === 'BKN' || l.cover === 'OVC') || { baseY: 1500 }).baseY;
           const el = Math.atan2(base - cam.pos[1], Math.max(fl.flash.dist, 300)) / DEGR;
@@ -498,7 +502,11 @@ export class Renderer3 {
         const En = st.natural.moon * st.natural.D / Math.max(Math.sin(st.moon.el * DEGR), 0.05) / LUX_PER_UNIT; // clear: the layers' coverage maps cut it
         ldir = st.moon.dir; lcol = MOON_COL.map(c => c * En); lname = 'moon';
       }
-      this.sky.setFlash(flash.dir, flash.level, FLASH_COL.map(c => c * flash.lux / Math.PI / LUX_PER_UNIT));
+      // cloud glow at the flash: FLASH_GLOW_CDM2 x (5 km / distance)^2, 5-500 cd/m2 at the peak of sky.cloudLayers'
+      // lobe (3.4 x flashCol). The illuminance at the airport alone (E/pi, ~0.2 cd/m2 at 6.6 km) left the flash invisible at
+      // the night exposure (run 3: sky +0.15 display levels); brightness NV (spec §4.6), I, QA-tuned
+      const glow = flash.level > 0 ? Math.min(500, Math.max(5, FLASH_GLOW_CDM2 * Math.pow(5000 / Math.max(flash.dist || 5000, 500), 2))) : 0;
+      this.sky.setFlash(flash.dir, flash.level, FLASH_COL.map(c => c * glow / 3.4 / LUX_PER_UNIT));
       // wet surfaces: the state machine advances with the data clock (js/env/atmo/weather_fx.js wetStep)
       if (st.tEnv !== this._wetT) { this.wet = wetStep(this.wet, st); this._wetT = st.tEnv; const U = this.sky.u; U.wetFilm.value = this.wet.film; U.wetPore.value = this.wet.pore; U.puddle.value = this.wet.puddle; }
     }
@@ -514,7 +522,7 @@ export class Renderer3 {
     const expoKeyed = Math.max(expoDay, expoKey); this.eKey = eKey;
     let expoTotal = expoKeyed, evUsed = null;
     if (st && this.fixedEV != null) { evUsed = this.fixedEV; expoTotal = exposureForEV(evUsed); }
-    else if (st && this.aeMode === 'auto' && this.ae.Lcd != null) { evUsed = clampEV(ev100FromLuminance(this.ae.Lcd), st.sun.elTrue); expoTotal = exposureForEV(evUsed); }
+    else if (st && this.aeMode === 'auto' && this.ae.Lcd != null) { evUsed = clampEV(ev100FromLuminance(this.ae.Lcd) - METER_BIAS, st.sun.elTrue); expoTotal = exposureForEV(evUsed); }
     expoTotal *= this.exposureScale; this.evUsed = evUsed; this.expoTotal = expoTotal; this.expoKeyed = expoKeyed;
     // ---- pre-exposure: every emitter x pre, the post exposure = total / pre
     const pre = this.pinPre != null ? this.pinPre : preExposure(this.pre, expoTotal);
@@ -553,7 +561,14 @@ export class Renderer3 {
     // records with phys: true (environment step 2: airfield fixtures js/env/lighting/airfield.js, aircraft lights
     // js/env/aircraft_lights.js) carry physical intensities (cd x visibility x display gain, in lamp units at the night
     // calibration) and are drawn at that calibration day and night as well
-    sp.begin(); const SL = fr && fr.sprites || [], nAc = fr && fr.nAc || 0; for (let k = 0; k < SL.length; k++) sp.put(SL[k], SL[k].phys === true || (k < nAc && Sprites.isPositionLight(SL[k]))); sp.end(E.camera, this.H);
+    // records without physical photometry (floodlight-mast lamps, bridge / stand lights, js/live/app.js mastSprites and
+    // gateSys.sprites) get the fog transmittance camera -> light of the slabs (environment step 3; the phys records
+    // already carry it through their Allard factor; markers are UI and stay visible). Found in the predawn-fog render:
+    // the mast lamps 1-2 km away shone through M1/4SM fog.
+    const fogS = st && this.slabs && this.slabs.length && st.atm.sigmaSurface > 2e-4 ? this.slabs : null, cp = cam.pos;
+    sp.begin(); const SL = fr && fr.sprites || [], nAc = fr && fr.nAc || 0;
+    for (let k = 0; k < SL.length; k++) { const s = SL[k]; const phys = s.phys === true || (k < nAc && Sprites.isPositionLight(s)); sp.put(s, phys, fogS && !phys && !s.marker && !(s.s >= 0.6 && !s.dir) ? fogTransmittance(fogS, cp, s.p) : 1); }
+    sp.end(E.camera, this.H);
     // terminal halls (objects.js id 1): the daylight factor applies to the sky's diffuse illuminance (CIE: overcast sky,
     // direct sun excluded; close-out round 2: it was applied to sun + sky, 3.5 klx in the hall instead of ~1 klx)
     const eSky = Math.PI * lum(B.skyUp);
@@ -578,11 +593,13 @@ export class Renderer3 {
     const rt = E.meter.renderTarget; const w = rt.width, h = rt.height;
     E.renderer.readRenderTargetPixelsAsync(rt, 0, 0, w, h).then((px) => {
       const n = w * h, half = px instanceof Uint16Array, step = Math.max(1, Math.round(px.length / n));
-      const Lu = new Float32Array(n);
-      for (let i = 0; i < n; i++) { const v = px[i * step]; Lu[i] = Math.max(0, (half ? THREE.DataUtils.fromHalfFloat(v) : v)) / preAt; }
-      const m = meter(Lu, w, h); const now = performance.now();
+      const f16 = (v) => half ? THREE.DataUtils.fromHalfFloat(v) : v;
+      // the sky (G = 1) is left out when at least 10 % of the frame is geometry (engine.js meter; I)
+      const Lu = new Float32Array(n), sky = new Uint8Array(n); let nGeo = 0;
+      for (let i = 0; i < n; i++) { Lu[i] = Math.max(0, f16(px[i * step])) / preAt; sky[i] = step > 1 && f16(px[i * step + 1]) > 0.5 ? 1 : 0; if (!sky[i]) nGeo++; }
+      const m = meter(Lu, w, h, nGeo >= 0.1 * n ? sky : null); m.skyFrac = 1 - nGeo / n; const now = performance.now();
       this.ae.Lcd = adapt(this.ae.Lcd, m.Lcd, (now - (this.ae.t || now)) / 1000, snap || this.ae.Lcd == null);
-      this.ae.t = now; this.ae.metered = { ev100: +m.ev100.toFixed(2), Lcd: +m.Lcd.toPrecision(4), frame: this.frames, snap };
+      this.ae.t = now; this.ae.metered = { ev100: +m.ev100.toFixed(2), Lcd: +m.Lcd.toPrecision(4), frame: this.frames, snap, skyFrac: +m.skyFrac.toFixed(3), n: m.n };
     }).catch((e) => { this._meterErr = String(e && e.message || e); }).finally(() => { this._meterBusy = false; });
   }
   // QA: environment step 3 state (exposure, pre-exposure, calibration, layers, slabs, Moon, rain, wetness, flash)

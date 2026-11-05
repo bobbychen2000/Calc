@@ -5,8 +5,8 @@
 // streak along its velocity (fall speed + the METAR wind, true direction), drizzle a short blob that falls at 1.5 m/s.
 // Drawn in the light-sprite pass (js/three/engine.js fxScene: after TRAA, additive, scene depth for occlusion as
 // js/three/lights.js), because TRAA's history rejects thin fast streaks. Radiance (I): a drop refracts its
-// surroundings, so a streak adds ~ the ambient sky radiance (skyUp) × its coverage of the pixel (energy kept when the
-// streak is narrower than a pixel: width and length floored at 1 px with the intensity scaled down). No rain above
+// surroundings, so a streak adds a fraction of the ambient sky radiance (skyUp × RAIN_K in renderer3), drawn at least
+// 1 px wide and long (length energy kept; see k below). No rain above
 // the base of the lowest BKN/OVC layer (rainTop). Splash sprites on the pavement are not drawn (I).
 import { THREE, TSL } from './lib.js';
 const { Fn, attribute, vec2, vec3, vec4, float, max, min, length, normalize, cross, dot, exp, uniform, mod, cameraPosition, cameraViewMatrix, cameraNear, cameraFar, Discard, If, varying, screenUV, perspectiveDepthToViewZ, select } = TSL;
@@ -36,7 +36,10 @@ export class Rain {
       const dirS = normalize(U.vel); const side = normalize(cross(dirS, toC.div(d)));
       const px = d.mul(U.fovScale);                                   // metres per pixel at the drop
       const w = max(U.width, px).mul(0.5), len = max(U.streak, px);   // >= 1 px wide and long
-      const k = U.width.div(w.mul(2.0)).mul(max(U.streak, U.width).div(len)); // energy kept (coverage of the drawn quad)
+      // energy kept along the streak (a sub-pixel streak is drawn 1 px long at its length / px); across it the 1-px
+      // streak stands for the drops of its pixel column (the drawn count is ~1e-4 of the physical one, so the
+      // physical per-drop width factor would leave no rain visible at all: run 2, rain_day render; I, display weight)
+      const k = max(U.streak, U.width).div(len);
       const above = select(pw.y.greaterThan(U.top).or(pw.y.lessThan(U.groundY)), float(0.0), float(1.0));
       vI.assign(k.mul(above).mul(max(float(1.0).sub(d.div(U.half.mul(1.2))), 0.0)));
       const c = pw.sub(dirS.mul(len.mul(q.y))).add(side.mul(w.mul(q.x)));

@@ -236,7 +236,7 @@ def entry(build, ver, parts, mats, roof_rgb, info):
 
 
 def keep_renders(old, new):
-    for k in ('renders', 'render_check', 'renders_updated', 'renders_args', 'renders_note', 'qa', 'validator', 'neighbours'):
+    for k in ('renders', 'render_check', 'renders_updated', 'renders_args', 'renders_note', 'qa', 'validator', 'neighbours', 'review_r1'):
         if old and old.get(k):
             new[k] = old[k]
     return new
@@ -280,3 +280,35 @@ def add_renders(done, args_dict):
                                'pixels and stay local (out/ is not committed)')
         return old
     return merge(upd)
+
+
+def add_review_r1(after_path, before_path=None):
+    """manifest.json#domestic.review_r1: the round-1 findings, their dispositions and the probe summaries
+    (tools/blender/verify_domestic_r1.py) before / after."""
+    import datetime
+    A = json.load(open(after_path)); B = json.load(open(before_path)) if before_path and os.path.exists(before_path) else None
+
+    def summ(R):
+        return {k: R[k] for k in ('summary_lod0', 'summary_lod2', 'lod2_vs_lod0')} if R else None
+
+    def upd(old):
+        old = old or {}
+        old['review_r1'] = dict(
+            updated=datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='seconds'),
+            probe='tools/blender/verify_domestic_r1.py (out/buildings3d/domestic_verify_r1.json, local)', after=summ(A), before=summ(B),
+            dispositions=[
+                dict(item=1, finding='roofs empty apart from PV; Courtyard 3 Connector missing', status='fixed',
+                     note='C3C block 33.0 m [inf] on the T2 outline NW end [obs]; 31 rooftop units (NAIP 2024, dom_roofobs.json) [obs extents, inf heights]'),
+                dict(item=2, finding='PV blobs with one texture', status='fixed', note='303 rack tables with aisles (dom_roofobs.json pv_tables)'),
+                dict(item=3, finding='BA-B facade uniform / fins alias', status='fixed (unverified look)',
+                     note='EC panes in four tint states; _fins nodes with extras.max_dist_m 160 (js/three/buildings3d.js hides them beyond); no open-licence BA-B photo found'),
+                dict(item=4, finding='T1 clear glass black, canopy dark line', status='fixed', note='glass_lobby 112/120/122; light uncoated canopy glass'),
+                dict(item=5, finding='LOD2 without vestibules / notches / bulkheads', status='fixed', note='bridge attachment at every LOD'),
+                dict(item=6, finding='walkways through the 6.0-m floor of the BA-B pod parts', status='fixed',
+                     note='the parts entered by B10 / B11 / B11S / B15 / B16 come down to 4.9 m with their walls; door surrounds added'),
+                dict(item=7, finding='BA-F lantern at its 4.6-m bound', status='fixed', note='1.0-m upstand [unk]; bound kept in dimensions'),
+                dict(item=8, finding='LOD2 outlines / roofs differ from LOD0', status='fixed', note='LOD0 outlines, wells, coping, clipped PV at LOD2'),
+            ])
+        return old
+    return merge(upd)
+

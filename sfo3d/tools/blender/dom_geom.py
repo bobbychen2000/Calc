@@ -466,7 +466,9 @@ class World:
         for g, z1 in ((ITB.buffer(0.05, join_style=2), 17.0), (TOWER_EXCL.buffer(0.35, join_style=2), 14.07)):   # tower anchors.ibf_roof_h
             self.occ.append((loc(g), 0.0, z1, None))
         for s in self.S:
-            self.occ.append((s.poly, s.z0, s.h, s))
+            # a solid with a parapet occupies up to its DECK: along a taller neighbour its coping ring is cut away (emit_roof), so
+            # the neighbour's wall must come down to the deck there (review r1: a 0.6-m slot showed between the T2 deck and the C3C)
+            self.occ.append((s.poly, s.z0, s.deck if s.parapet > 0 else s.h, s))
             ov = s.roof.difference(s.poly.buffer(0.01, join_style=2))
             if ov.area > 0.5: self.occ.append((ov, s.h - s.thk, s.h, s))
         self.tree = STRtree([o[0] for o in self.occ])

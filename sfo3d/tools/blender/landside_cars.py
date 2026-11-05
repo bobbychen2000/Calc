@@ -6,7 +6,8 @@ the visual estimate of spec cg_roof_cars), and two low-poly car shapes. Pure num
 Orientation: the measured 'car_row_axis_heading_deg' is the long axis of the detected car blobs (0.5-m blur: single cars
 dominate, see landside_naip_measure.py) -> the car axis. 90-degree stalls on 18.6-m modules (landside_geom.car_layout)
 except the Rental Car Center (nose-to-tail ready-return lanes [obs NAIP]). Which stalls are taken is random (seeded):
-NAIP gives counts and axes, not positions [inf]. Colours: US fleet shares, white 25 / black 22 / grey 19 / silver 12 /
+NAIP gives counts and axes, not positions [inf] - except the central garage (round 1): its dark / coloured cars stand at their
+NAIP 2024 blob positions (landside_r1_obs.json cg_roof.cars [obs]), white / silver ones are added next to them by fleet share. Colours: US fleet shares, white 25 / black 22 / grey 19 / silver 12 /
 blue 10 / red 9 / other 3 % (industry surveys) [inf]; shapes 60 % sedan / 40 % SUV [inf].
 """
 import math
@@ -70,9 +71,60 @@ def _area(r):
     return 0.5 * sum(r[i][0] * r[(i + 1) % len(r)][1] - r[(i + 1) % len(r)][0] * r[i][1] for i in range(len(r)))
 
 
+def nearest_colour(rgb):
+    """index of the fleet colour nearest to a NAIP blob colour (sRGB)."""
+    c = np.asarray(rgb, float)
+    return int(np.argmin([np.sum((np.asarray(col, float) - c) ** 2) for _, col, _ in COLOURS]))
+
+
+def place_positions(deck, F, layout_fn, seed=0):
+    """cars at observed positions (deck['positions']: local (x, y, yaw, rgb) from NAIP) + extra_share x n cars (colours not
+    separable on the light deck: white / silver) on free stall slots within 8 m of the observed ones [inf]."""
+    P = deck['poly']; inner = P.buffer(-0.4)
+    excl = unary_union(deck.get('exclude') or []) if deck.get('exclude') else None
+    rng = np.random.default_rng(seed)
+    sw = np.array([s[4] for s in SHAPES]); sw = sw / sw.sum()
+    cars, pts = [], []
+
+    def free(x, y, r=2.35):
+        return all((x - qx) ** 2 + (y - qy) ** 2 >= r * r for qx, qy in pts)
+    dropped = 0
+    for x, y, yaw, rgb in deck['positions']:
+        ok = inner.contains(Point(x, y)) and (excl is None or not excl.intersects(Point(x, y).buffer(1.2))) and free(x, y)
+        if not ok:
+            dropped += 1; continue
+        pts.append((x, y))
+        cars.append((x, y, deck['z'] + 0.01, yaw, int(rng.choice(len(SHAPES), p=sw)), nearest_colour(rgb)))
+    n_obs = len(cars)
+    n_extra = int(round(deck.get('extra_share', 0.0) * n_obs))
+    slots = layout_fn(P, deck['axis'], np.array(F.L(*deck['origin'])), False)
+    if slots and n_extra:
+        S = np.array([[s_[0], s_[1]] for s_ in slots]); O = np.array(pts) if pts else np.zeros((0, 2))
+        from scipy.spatial import cKDTree
+        dmin = cKDTree(O).query(S)[0] if len(O) else np.full(len(S), 1e9)
+        cand = [i for i in np.argsort(dmin) if 2.4 < dmin[i] < 8.0]
+        rng.shuffle(cand)
+        wi = [i for i, c in enumerate(COLOURS) if c[0] in ('white', 'silver')]
+        ww = np.array([COLOURS[i][2] for i in wi]); ww /= ww.sum()
+        for i in cand:
+            if n_extra <= 0: break
+            x, y, yaw = slots[i][0], slots[i][1], slots[i][2]
+            if excl is not None and excl.intersects(Point(x, y).buffer(1.2)): continue
+            if not free(x, y): continue
+            pts.append((x, y)); n_extra -= 1
+            cars.append((x, y, deck['z'] + 0.01, yaw + math.radians(rng.normal(0, 1.5)), int(rng.choice(len(SHAPES), p=sw)), int(wi[rng.choice(len(wi), p=ww)])))
+    area = P.area
+    info = dict(deck_area_m2=round(area, 1), slots=len(slots), cars=len(cars), observed=n_obs, observed_dropped=dropped, added_light=len(cars) - n_obs,
+                density_per_1000m2=round(1000 * len(cars) / area, 2) if area else 0, axis_deg=deck['axis'], lanes=False,
+                count_src=deck.get('count_src'), axis_src=deck.get('axis_src'))
+    return cars, info
+
+
 def place(deck, F, layout_fn, seed=0):
-    """cars on one deck: deck = dict(poly (local), z, axis, origin (world), density | count, lanes, exclude [local]) ->
-    (cars [(x, y, z, yaw, shape, colour)], info)."""
+    """cars on one deck: deck = dict(poly (local), z, axis, origin (world), density | count | positions, lanes, exclude [local])
+    -> (cars [(x, y, z, yaw, shape, colour)], info)."""
+    if deck.get('positions'):
+        return place_positions(deck, F, layout_fn, seed)
     P = deck['poly']
     excl = unary_union(deck.get('exclude') or []) if deck.get('exclude') else None
     o = np.array(F.L(*deck['origin']))

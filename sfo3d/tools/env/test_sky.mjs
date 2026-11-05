@@ -88,6 +88,11 @@ if (run('A-EXP')) {
     const B = A.slice(); for (let i = 0; i < n / 2; i++) B[i] = 0; for (let i = n / 2; i < n / 2 + 20; i++) B[i] = 1e4; const m2 = EX.meter(B, 64, 36);
     r.meterGrey = +m1.ev100.toFixed(3); r.meterGreyBlackHalfSun = +m2.ev100.toFixed(3);
     ok(Math.abs(m1.ev100 - 15.0) < 0.05, `meter: 18 % grey at 71 klx = EV ${f(m1.ev100)} (15.0)`); ok(Math.abs(m2.ev100 - 15.0) < 0.05, `meter ignores the black half and the sun disc (${f(m2.ev100)})`); }
+  // sky exclusion (renderer3 leaves out the background when >= 10 % of the frame is geometry): 60 % bright sky
+  { const E = 8725, n = 64 * 36; const Lg = 0.18 * E / Math.PI / SM.LUX_PER_UNIT; const A = new Float32Array(n).fill(Lg), X = new Uint8Array(n);
+    for (let i = 0; i < n * 0.6; i++) { A[i] = 5.5 * Lg; X[i] = 1; } const all = EX.meter(A, 64, 36), geo = EX.meter(A, 64, 36, X);
+    r.meterSkyIncluded = +all.ev100.toFixed(2); r.meterSkyExcluded = +geo.ev100.toFixed(2);
+    ok(Math.abs(geo.ev100 - 11.97) < 0.05 && all.ev100 > geo.ev100 + 2, `sky excluded: ${f(geo.ev100, 2)} (target 11.97) vs included ${f(all.ev100, 2)}`); }
   // display calibration: EV 15.0 -> the reviewed day exposure 0.36
   ok(Math.abs(EX.exposureForEV(15.0) - 0.36) < 1e-9, 'display calibration');
   // pre-exposure keeps the night-sky floor (0.0005 lx -> luminance 0.0005/pi cd/m2 on 18 %... the sky floor itself

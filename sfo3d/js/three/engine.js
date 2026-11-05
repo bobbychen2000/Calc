@@ -327,7 +327,12 @@ export class Engine {
     hdr = hdr.rgb.add(lp.rgb);
     // exposure metering (environment step 3, spec §8; js/env/atmo/exposure.js meter): the pre-exposed HDR luminance
     // (scene + light sprites, before exposure) resampled to 64 x 36 for an asynchronous readback by renderer3
-    this.meter = TSL.rtt(vec4(luminance(hdr), 0.0, 0.0, 1.0), 64, 36, { type: THREE.HalfFloatType, depthBuffer: false, generateMipmaps: false });
+    // G = 1 marks the sky (no geometry: view depth beyond 90 % of the far plane), which the meter leaves out (renderer3:
+    // the spec §10 EV100 targets are for 18 % grey under the natural illuminance; a bright sky or cloud deck would
+    // otherwise set the exposure, e.g. +2.8 EV under the marine layer in run 2 of docs/research/environment_impl.md §3.4)
+    this.meterNear = uniform(0.5); this.meterFar = uniform(180000);
+    const vzM = TSL.perspectiveDepthToViewZ(depth.sample(screenUV).r, this.meterNear, this.meterFar);
+    this.meter = TSL.rtt(vec4(luminance(hdr), TSL.select(vzM.lessThan(this.meterFar.mul(-0.9)), float(1.0), float(0.0)), 0.0, 1.0), 64, 36, { type: THREE.HalfFloatType, depthBuffer: false, generateMipmaps: false });
     this.meter.name = 'meter';
     // exposure (was renderer.toneMappingExposure inside the output transform)
     const exposed = hdr.mul(this.expo);
@@ -371,7 +376,7 @@ export class Engine {
     const fovDeg = c.fov * 180 / Math.PI; const near = Math.max(0.2, c.near * (this.reversed ? 1 : 2)), far = c.far || 180000;
     const changed = Math.abs(cam.fov - fovDeg) > 1e-4 || Math.abs(cam.near - near) > 1e-3 || cam.far !== far || Math.abs(cam.aspect - W / H) > 1e-4;
     if (changed) { cam.fov = fovDeg; cam.near = near; cam.far = far; cam.aspect = W / H; cam.updateProjectionMatrix(); }
-    cam.updateMatrixWorld(); this.syncAOCamera();
+    cam.updateMatrixWorld(); this.syncAOCamera(); if (this.meterNear) { this.meterNear.value = cam.near; this.meterFar.value = cam.far; }
     // cascades: the rig's [1.4d, 5d, 16d] (clamped, js/live/controls.js camera().shadowSplits). The 2-cascade tier used
     // to take the first two (the shadow range collapsed to 5 x the orbit distance, e.g. 300 m at a gate: review round
     // 1); it now keeps the first split and ends at the tier's shadow distance (or the rig's middle split, if larger).

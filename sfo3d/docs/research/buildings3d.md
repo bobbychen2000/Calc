@@ -312,13 +312,13 @@ penthouse steps, masts and framed bay.
 - KTX2 / meshopt (tools/engine/glb_compress.mjs) and the js/three loader are later steps.
 <!-- landside:end -->
 
-<!-- domestic:begin (tools/blender/build_domestic.py; numbers from out/buildings3d/domestic_verify.json, 2026-11-05) -->
+<!-- domestic:begin (tools/blender/build_domestic.py; numbers from out/buildings3d/domestic_verify.json / _verify_r1.json, 2026-11-05, review round 1) -->
 ## Domestic terminals: T1 Center, T2, T3 West / East and Boarding Areas B-F (key `domestic`, 5 Nov 2026)
 
 ```bash
-flock out/.heavy.lock python3 tools/blender/build_domestic.py --final   # ~70 s: geometry, textures, AO bake (2 x 2048 + 1024), export, verification, manifest
+flock out/.heavy.lock python3 tools/blender/build_domestic.py --final   # ~165 s: geometry, textures, AO bake (2 x 2048 + 1024), export, verification, manifest
 python3 tools/blender/build_domestic.py --no-bake                       # quick WIP build -> out/buildings3d/wip/ (white occlusion)
-python3 tools/blender/verify_domestic.py [glb]                          # 59 checks, reads the glb back (no bpy) -> out/buildings3d/domestic_verify.json
+python3 tools/blender/verify_domestic.py [glb] [--neighbours]           # 60 checks, reads the glb back (no bpy) -> out/buildings3d/domestic_verify.json
 flock out/.heavy.lock python3 tools/blender/render_domestic.py --views a1,d1,bab,plan,bclose,eclose     # Cycles references, ~2 min at 48 spp
 flock out/.heavy.lock python3 tools/blender/render_domestic.py --qa backface --views a1,bclose,eclose,d1,plan [--lod 1|2]   # back faces red
 python3 tools/blender/dom_pv.py                                         # (re)measure the PV rack blocks on NAIP 2024 -> tools/blender/dom_pv.json
@@ -338,9 +338,9 @@ flock out/.heavy.lock python3 tools/blender/render_domestic.py --views roof,c3c 
 | `tools/blender/verify_domestic_r1.py` | review r1: the reviewer's physics probes re-implemented on the exported files (walkway gaps / clashes at 6.0 / 7.5 m per LOD from the app's `scene2d.json` hulls; LOD2 vs LOD0 top-height rasters and plan Hausdorff) |
 | `tools/blender/build_domestic.py` | bpy build, NAIP roof-colour sampling, the T1 sign, AO bake, glTF export (WIP to `out/buildings3d/wip/`, `--final` copies to `data/`), manifest |
 | `tools/blender/dom_manifest.py` | Manifest entry (per-dimension tags, inferred / unknown / not modelled / conflicts, budgets, renders) |
-| `tools/blender/verify_domestic.py` | 59 checks against the sheets and the plausibility rules, measured on the exported mesh (top-surface probe) |
+| `tools/blender/verify_domestic.py` | 60 checks against the sheets and the plausibility rules, measured on the exported mesh (top-surface probe) |
 | `tools/blender/render_domestic.py` | Cycles references of the exported glb (+ tower / ITB assets for context), AO and back-face QA modes |
-| `data/buildings3d/domestic.glb` (9.27 MB), `domestic_lod2.glb` (1.63 MB) | The asset; the LOD2 subtree alone for the far / phone tier |
+| `data/buildings3d/domestic.glb` (10.37 MB), `domestic_lod2.glb` (2.66 MB) | The asset; the LOD2 subtree alone for the far / phone tier |
 
 **Placement.** Root `domestic` at world (−896.5, 3.0, 336.5) (centre of the complex bbox, GROUND_Y). LOD0 / LOD1 hold one node
 per building and kind (`L<k>_<bld>_shell / _detail / _fins / _pv`, `extras.building` in T1, BA_B, BA_C, T2, C3C, BA_D, T3W, T3E,
@@ -359,7 +359,7 @@ that node (switch 380 / 1300 m). LOD2 is one joined node.
 | BA-E | obs / inf | raised PV plate 12.85 with its edge 1.5 m over the recessed clerestory, flanks 4.4 m at 9.85; NEW: the tip end bay (8 m) with the full-height glazed end wall recessed 1.5 m under the plate (photo a1) [inf] |
 | BA-F | obs / inf / unk | arms + octagonal hub on the outline; eccentric lantern 19.4 m as a minimal 1.0-m glazed upstand [unk] (the NAIP 2020 shadow only bounds the rise, <= 4.6 m: kept in the manifest; review r1); NW-arm monitor +2.5 m [unk] |
 | Courtyard 3 Connector office block (review r1) | pub / obs / inf | the glazed block between the tower and BA-E in photo a1: the T2 outline's NW end west of the line through its two outline jogs (1,971 m2) [obs]; "Above the connector, a six-story office building", "Dynamic glazing", 124,000 sq ft (HOK) [pub]; 33.0 m [inf, range 32-36: >= 6 x 3.8 m + the ~10.5-m connector head; NAIP 2024 relief 12.9 m / lean 0.379 = 34.0 m; photo a1 ~35 m]; electrochromic curtain glass on a 3-m module; node building `C3C` |
-| Rooftop units (review r1) | obs / inf | 31 boxes on 12 decks at their NAIP 2024 extents (`dom_roofobs.json`: compact dark objects 4-150 m2 with a shadow on the NNE side), heights 1.5 / 2.2 / 3.0 m by plan size [inf]; LOD2 keeps those >= 15 m2 |
+| Rooftop units (review r1) | obs / inf | 31 boxes on 9 decks at their NAIP 2024 extents (`dom_roofobs.json`: compact dark objects 4-150 m2 with a shadow on the NNE side), heights 1.5 / 2.2 / 3.0 m by plan size [inf]; LOD2 keeps those >= 15 m2 |
 | PV (review r1) | obs / inf | discrete rack tables (rows / tables with their aisles) inside every NAIP block, 0.35-0.75 m above the deck, modules in the PV tiles; LOD2 the clipped table tops (the old LOD2 minimum rectangles overhung the curved T3 edges) |
 | BA-D | obs / inf | head with two drums D 19.2 m to 13.19 m [inf top]; linear skylights; ESE overhang notched at the doors (roof soffit 7.69 m < walkway head 8.4 m) |
 | T1 Center | pub / obs / inf / unk | landside face on the measured roof edge (trimmed curb line − 4.0 m); clear glass under a 4.0-m glass canopy (brackets), two-tier green fritted wall with dark irregular mullions and the tier transom (photo d1), sign "Harvey Milk Terminal / Terminal 1" with the circled 1 [obs text, size / font inf]; PV fan (NAIP); 3 skylights |
@@ -372,21 +372,22 @@ that node (switch 380 / 1300 m). LOD2 is one joined node.
 
 | LOD | switch | triangles | draw calls | content |
 |---|---|---|---|---|
-| 0 | < 380 m | 69,757 | 115 | everything: mullion fins (~48k tris), door surrounds, PV rack boxes, canopy brackets, sign |
-| 1 | 380–1300 m | 21,501 | 91 | the LOD0 shell meshes and atlases; PV tops only; no fins / frames |
-| 2 | > 1300 m | LOD2_TRIS | LOD2_CALLS | one joined node: the LOD0 outlines, wells, skylights, coping recess, units >= 15 m2, PV table tops, vestibules / notches / bulkheads (review r1: the phone tier sees it up close); reduced palette, own 1024 atlas; also `domestic_lod2.glb` |
+| 0 | < 380 m | 70,193 | 147 | everything: mullion fins (~48k tris, own `_fins` nodes, `max_dist_m` 160), door surrounds, PV table boxes, units, canopy brackets, sign |
+| 1 | 380–1300 m | 21,635 | 114 | the LOD0 shell meshes and atlases; PV table tops only; no fins / frames |
+| 2 | > 1300 m | 21,455 | 20 | one joined node: the LOD0 outlines, wells, skylights, coping recess, units >= 15 m2, PV table tops, vestibules / notches / bulkheads (review r1: the phone tier sees it up close); reduced palette, own 1024 atlas; also `domestic_lod2.glb` |
 
-Textures (PNG, embedded): AO atlases S (T1 / BA-B / BA-C / T2) and N (BA-D / T3 / BA-E / BA-F) 2048² (1.33 / 1.30 MB, 8-bit
-greyscale), L2 1024² (0.42 MB); 48 spp, 10-m rays, ground plane, neighbours as occluders, white outside the islands; tiling
+Textures (PNG, embedded): AO atlases S (T1 / BA-B / BA-C / T2 / C3C) and N (BA-D / T3 / BA-E / BA-F) 2048² (1.36 / 1.33 MB, 8-bit
+greyscale), L2 1024² (0.47 MB); 48 spp, 10-m rays, ground plane, neighbours as occluders, white outside the islands; tiling
 normal maps 512² (membrane, panels, curtain, T3W window wall, corrugation, PV) and base colours 512² (4 curtain glasses, grey
-frit, green frit, T3W, PV), 1.5–24 kB each. Roofs: NAIP 2024 median per building; the white membranes saturate, so the base colour
+frit, green frit, T3W, PV, lobby glass) and the BA-B electrochromic tile 1024 x 256 (24 x 6 m, per-pane tint states, review r1) with its caps normal map, 1.5–24 kB each. Roofs: NAIP 2024 median per building; the white membranes saturate, so the base colour
 is capped at sRGB 215 (aged single-ply reflectance ~0.65–0.70) [inf]. Glass coated (IOR 1.9 → F0 0.096, as the ITB / tower), the
 T1 frit uncoated (F0 0.04, rougher: the ceramic frit dominates). Single-sided; no TANGENT. KTX2 / meshopt: later
 (`tools/engine/glb_compress.mjs`).
 
-### Verification (verify_domestic.py: 59 checks, 0 failed; tolerance 0.5 m or 2 %)
+### Verification (verify_domestic.py: 60 checks, 0 failed; tolerance 0.5 m or 2 %)
 
-- Placement exact. Every roof edge (median of 16–302 probes on the top surface 0.12 m inside the roof outline): deviation 0.000 m.
+- Placement exact. Every roof edge (median of 16–302 probes on the top surface 0.12 m inside the roof outline): deviation 0.000 m
+  (incl. the C3C 33.00 m over 44 probes and the BA-F lantern 11.49 m).
 - BA-B (28 stations every 10 m): band edges max 0.05 / 0.10 m; outer roof edges (t < −1150, the stretch of the measured lines and
   the BD-02 typical section) 0.10 / 0.11 m; widths 7.35 / 32.2 / 14.69 / 54.24 m vs 7.3 / 32.4 / 14.7 / 54.3.
 - Measured roof-edge lines: BA-B, BA-D, BA-F within 0.15 m at every station; BA-F NE arm 27.15 m vs 27.0 (BD-02).
@@ -396,14 +397,25 @@ T1 frit uncoated (F0 0.04, rougher: the ceramic frit dominates). Single-sided; n
 - **Plausibility.** Nearest B–F stand envelope (app planforms, all accepted types) 2.93 m from the 3-D footprint (F12; criterion
   ≥ 2.0); bridge walkways beyond the attachment (app-drawn part, 4.8–8.7 m band) 0.0 m² of contact with the asset (83 bridges);
   SFO Museum taxiways 0 m²; tower base building 0 m²; ITB 0.02 m²; AirTrain guideway 0 m². INFO: the first 1.5 m beyond the
-  facade touch the door surrounds / the facade where the stand data meets the outline at an angle (79 bridges, 28 m² total,
-  e.g. C9, D14), as in the ITB rotunda contacts.
-- Khronos glTF-Validator 2.0.0-dev.3.10: **0 errors** on both files (domestic.glb: 77 warnings MESH_PRIMITIVE_GENERATED_TANGENT_SPACE,
-  accepted as for the ITB: no TANGENT attribute by choice; 39 infos UNUSED_OBJECT).
+  facade touch the door surrounds / the facade where the stand data meets the outline at an angle (81 bridges, 29.6 m² total,
+  e.g. C9, D14), as in the ITB rotunda contacts. 80 doors (54 vestibules > 0.12 m, max 2.6 m; 23 bulkheads).
+- Khronos glTF-Validator 2.0.0-dev.3.10: **0 errors** on both files (domestic.glb: 92 warnings MESH_PRIMITIVE_GENERATED_TANGENT_SPACE,
+  accepted as for the ITB: no TANGENT attribute by choice; 53 infos UNUSED_OBJECT; domestic_lod2.glb 0 warnings).
 - Neighbouring assets (`verify_domestic.py --neighbours`, LOD0 triangles whose height ranges overlap): landside 0 m², tower
-  0 m², ITB 0.77 m² (slivers along the shared T1 / T3W – ITB core boundary, ~1 cm; no shared volume).
-- Back-face QA (Cycles, single-sided): 0 red pixels in bclose / d1 / plan (LOD0, LOD1, LOD2); a1 49 px and eclose 85 px: the T1 –
-  BA-A connector's walls on the ITB boundary are left to the ITB asset (seen open only when the ITB is not loaded).
+  0 m², ITB 0.77 m² (slivers along the shared T1 / T3W – ITB core boundary, ~1 cm; no shared volume); the C3C is 41.9 m from the
+  nearest landside triangle.
+- **Review-r1 probes** (`verify_domestic_r1.py`, the app's walkway hulls from `out/buildings3d/integ/draw/scene2d.json`, 83 B–F
+  bridges; the four second doors F11 / F13 / F15 / F22 whose walkway branches off door 1's bridge are not facade attachments):
+  walkways ending > 0.5 m from the building at 6.0 / 7.5 m: LOD0 5 -> **0**, LOD2 30 -> **0** (max 0.02 m; B19 1.42, E4 1.25, E13
+  1.16, B18 1.06, B21 1.06, E6 0.98, B17 0.83 m -> 0.00, the reviewer's values reproduced). Walkway / rotunda hulls vs triangles in
+  their height band: B10 5.57 -> 0.14 m², D6 / D7 at LOD2 7.73 / 8.33 -> 0.14 / 0.17 m², C4 1.96 -> 1.01, D15 3.76 -> < 0.98; the
+  rest (<= 2.32 m², B16 / B11) is the 4.9-m pod / vestibule floor inside the box the probe draws for a SLOPED walkway (hull y
+  4.1-8.45 m: its floor is 5.15 m at the building end) and the facade crossing (~0.27 m² per bridge). LOD2 vs LOD0 (1-m top
+  rasters): |dz| > 0.5 m over 11,866 -> **161 m²** (the units < 15 m² LOD2 leaves out), > 2.5 m 1,477 -> 0, the T3E / T3W strips
+  roofed at PV height 92 / 110 cells -> 0; plan Hausdorff 8.19 -> **0.05 m**, symmetric difference 1,596 -> 0 m².
+- Back-face QA (Cycles, single-sided): 0 red pixels in bclose / d1 (LOD0) and plan (LOD2), roof 1 px (LOD0, LOD2); a1 49 px (LOD0)
+  / 128 px (LOD2) and eclose 85 px: the T1 – BA-A connector's walls on the ITB boundary are left to the ITB asset (seen open only
+  when the ITB is not loaded); c3c 467 px (LOD0): BACKFACE_C3C_NOTE.
 - Render check (orthographic BA-B section, `domestic_render_check.json`, 0.1 m/px): band edges −0.13 / +0.17 m, heights +0.13 m
   (pixel); the outer WNW silhouette −1.6 m comes from the tip's end walls (t < −1236), not the typical stretch.
 
@@ -415,19 +427,36 @@ T1 frit uncoated (F0 0.04, rougher: the ceramic frit dominates). Single-sided; n
 | `domestic_d1.png`, `_cmp_d1` | photo d1, BD-03 view 1 | green fritted two-tier wall with dark irregular mullions and the transom, sign with the circled 1, glass canopy, clear glass below: reads as the T1 Center landside; the curb roadway in front is not part of this asset |
 | `domestic_bab.png`, `_cmp_bab` | BD-02 view 1 | stepped section: clerestory band 19.04 over the 13.14 outer roof, ESE overhang, door surrounds at the concourse level |
 | `domestic_plan.png` | BD-01 / NAIP | PV fan on T1, BA-B wells / PV / skylights, BA-F hub and lantern, T3E penthouse |
-| `domestic_bclose.png`, `domestic_eclose.png` | photo a1 detail | BA-B band, PV, skylight grid, electrochromic gate glazing; BA-E plate overhanging the clerestory, the recessed glazed end |
+| `domestic_bclose.png`, `domestic_eclose.png` | photo a1 detail | BA-B band, PV tables, skylight grid, electrochromic gate glazing in mixed tint states; BA-E plate overhanging the clerestory, the recessed glazed end |
+| `domestic_roof.png` (+ `_lod2`) | NAIP 2024 (`dom_roofobs_qa.png`) | review r1: T1 Center east roof: PV rack tables in rows with aisles, two rooftop units, skylights; LOD2 the same tops |
+| `domestic_c3c.png` (+ `_lod2`) | photo a1 | review r1: the C3C glazed block standing ~16 m above the T2 roof, PV / units on its roof, T2 units; in `_cmp_a1` it falls at x 545-620 px (photo 527-601) with its top at the photo's |
+
+### Review round 1 (5 Nov 2026): dispositions (numbers from `domestic_verify_r1.json`, before -> after)
+
+| # | Finding | Disposition | Evidence after the fix |
+|---|---|---|---|
+| 1 major | roofs flat and empty apart from PV; the Courtyard 3 Connector missing | **fixed**: C3C office block (33.0 m, footprint and height sources in the table above); 31 NAIP-measured rooftop units (541 m2) on 9 decks (`dom_roofobs.py`: compact dark objects 4-150 m2 with a measurable shadow; the strict shadow test was needed because most dark objects on these roofs are PV fields that `dom_pv.py` did not catch); the t1 photo's units at the tower foot (2015) are not resolved in NAIP 2024 and are not modelled | `domestic_c3c.png`, `domestic_roof.png`, `domestic_cmp_a1.png`; QA overlay `out/buildings3d/dom_roofobs_qa.png` |
+| 2 minor | PV blobs with one texture | **fixed**: 303 discrete rack tables (19,547 m² inside the 29,212 m² of NAIP blocks: rows / tables with their aisles, local axis per sub-cell so the T1 / T3 fans keep their radial rows; the block area between tables is membrane) | `domestic_roof.png`; tables on NAIP: `dom_roofobs_qa.png` |
+| 3 minor | BA-B facade a uniform near-black band; fins alias | **fixed (unverified)**: electrochromic panes in four tint states on a 24 x 6 m tile (no 6-m repeat); fins in their own `_fins` nodes with `extras.max_dist_m` 160, hidden beyond by `js/three/buildings3d.js` (4 added lines); no openly licensed BA-B photo found (Commons API search / categories, 5 Nov 2026), so the look stays [inf] | `domestic_bclose.png` |
+| 4 minor | T1 clear glass black under the canopy; canopy a dark line | **fixed**: `glass_lobby` (the lit hall seen through, sRGB 112 / 120 / 122, as the ITB `glass_hall`); the canopy light uncoated laminated glass (188 / 200 / 200, rough 0.3) | `domestic_cmp_d1.png` |
+| 5 major | LOD2 without vestibules / notches / bulkheads: walkways float, C walkways above the roof, D walkways / drums through the eave | **fixed**: the bridge attachment is emitted at every LOD; bulkheads reach 0.5 m past the walkway start inside the facade with the deck cut under them | LOD2 walkways > 0.5 m from the building 30 -> 0 (max 0.02 m); D6 / D7 eave + drum overlaps 7.73 / 8.33 -> 0.14 / 0.17 m² (the facade crossing); C walkways: bulkheads at LOD2 (C4 1.96 -> 1.01 m², the coping inside its closed bulkhead) |
+| 6 major | the app walkways (5.15-8.45 m) run into the 6.0-m floor of the BA-B elevated parts (B10 5.65 m2 ...) | **fixed**: the two parts these walkways enter come down to 4.9 m (and their walls with them: the walk style's first band starts at the part's underside), door surrounds added there (80 doors) | B10 5.57 -> 0.14 m², B15 2.35 -> 0.14, B11S 1.51 -> 0.14; B16 / B11 2.32 / 1.72: the probe's box of the sloped walkway, see Verification; walkway-to-building gaps 9-24 m -> 0 |
+| 7 minor | BA-F lantern at its 4.6-m upper bound | **fixed**: 1.0-m glazed upstand [unk], the bound kept in the manifest (`dimensions`, range 0-4.6); top 11.49 m | `verify_domestic.py` heights |
+| 8 minor | LOD2 outlines / roofs differ from LOD0 by > tolerance | **fixed**: LOD2 keeps the LOD0 outlines (no 1-m simplification), wells, skylights, coping recess; PV table tops clipped to the deck | plan Hausdorff 8.19 -> 0.05 m; |dz| > 0.5 m 11,866 -> 161 m² (small units); T3 strips 0 |
 
 ### Open items (also in the manifest's `unknown` / `conflicts`)
 - T1 Center and T2 hall heights and the departures-curb height (placeholders); the T3 datum; the BA-B well depth; the BA-F lantern
-  and monitor rises; the T3W state (95 % CD massing, without the May 2026 storey).
+  (1.0 m modelled, bound 4.6) and monitor rises; the C3C height (33.0, range 32-36) and its roof penthouse (photo a1, not in NAIP);
+  rooftop unit heights / types and the units NAIP 2024 does not resolve; the T3W state (95 % CD massing, without the May 2026 storey).
+- BA-B facade: no openly licensed reference photo found (Commons, 5 Nov 2026): the EC tint states are [inf].
 - **Conflict for the drawings group:** BA-F ESE roof edge — the drawn line is 1.83 m outside the outline along the face (BD-02
   draws 27.0 m between the lines); the spec / README note "on the outline" was measured at the line ends only. The asset follows
   the drawn line.
-- BA-D / BA-C roofs below the bridge walkway head (notches / bulkheads); 6 bridges that attach into elevated pod parts (B10, B11,
-  B11S, B15, B16, F22) have no door surround.
-- Not modelled: courtyard links over the roadways / across the guideway, the curb roadways, the Courtyard 3 Connector building,
-  T3W penthouses, roof equipment other than PV / penthouse, interiors.
-- Integration (js/three loader replacing the `terminals.js` extrusions of these parts, per-building LOD) is not part of this step.
+- BA-D / BA-C roofs below the bridge walkway head (notches / bulkheads, every LOD). The BA-B pod parts that bridges enter come down
+  to 4.9 m [inf] (the app's convention 6.0 m elsewhere); F22's second door attaches to door 1's bridge (app side).
+- Not modelled: courtyard links over the roadways / across the guideway, the curb roadways, T3W penthouses, rooftop equipment that
+  NAIP 2024 does not resolve, interiors.
+- Integration: `js/three/buildings3d.js` (per-building LOD; since review r1 it also hides nodes beyond `extras.max_dist_m`).
 <!-- domestic:end -->
 
 <!-- integration:begin (tools/blender/b3d_integrate.py, js/three/buildings3d.js; 5 Nov 2026) -->

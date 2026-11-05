@@ -59,13 +59,25 @@ T0 = time.time()
 # reference photos (l1-l5, a2: reference only) and NAIP 2024 for decks / roofs (factors per building, naip_colours()).
 MATS = {
     'precast':        dict(rgb=(214, 210, 198), m=0.0, r=0.80, nrm=('ls_n_precast', 0.6), src='obs photo l1 (light architectural precast, square grid); colour inf'),
-    'precast_band':   dict(rgb=(214, 210, 198), m=0.0, r=0.80, nrm=('ls_n_band', 0.6), src='obs photos l1 / a2 (banded helix drum)'),
+    'precast_band':   dict(rgb=(214, 210, 198), m=0.0, r=0.80, nrm=('ls_n_band', 0.6), src='obs photos l1 / a2 (banded core cylinder)'),
+    'drum_metal':     dict(rgb=(212, 218, 226), m=0.45, r=0.38, nrm=('ls_n_drum', 0.5), src='obs photo i2 (helix drums in smooth light metal panels with long horizontal slots); colour obs i2 / inf'),
+    'precast_white':  dict(rgb=(232, 231, 225), m=0.0, r=0.75, nrm=('ls_n_ribs', 0.6), src='obs photo i2 (white precast stair / elevator towers, fine horizontal ribs)'),
+    'red_light':      dict(rgb=(214, 22, 18), m=0.0, r=0.40, obstruction_light=dict(colour='red', dof='06-001451', lighting='R (FAA DOF)', fixture='L-810 [inf]'),
+                           src='pub FAA DOF 06-001451 lighting R (red obstruction light at the 135-ft point); fixture inf'),
+    'deck_plain':     dict(rgb=(228, 228, 224), m=0.0, r=0.88, naip='deck_plain', src='obs NAIP 2024 (central-garage roof lobes without stall marks: median colour)'),
+    'deck_rim':       dict(rgb=(196, 178, 146), m=0.0, r=0.90, naip='deck_rim', src='obs NAIP 2024 (beige rims / curbs round the roof lobes: median colour); nature unk'),
+    'bart_panel':     dict(rgb=(226, 226, 220), m=0.0, r=0.70, nrm=('ls_n_precast', 0.5), src='obs photo a2 (white panelled BART station body); material inf'),
+    'glass_bart':     dict(rgb=(255, 255, 255), m=0.0, r=0.08, ior=1.9, tex='ls_c_glassbart', src='obs photo a2 (green glazed band of the BART station)'),
+    'vault_roof':     dict(rgb=(236, 238, 238), m=0.50, r=0.35, double=True, src='obs NAIP 2024 / photo a2 (white curved roof over the Garage G / BART AirTrain station)'),
+    'guide_rail':     dict(rgb=(150, 154, 158), m=0.70, r=0.45, src='obs photos l1 / l5 (low galvanised guide / power rail)'),
+    'running_pad':    dict(rgb=(176, 174, 166), m=0.0, r=0.85, tex='ls_c_weather', src='obs photos l1 / l5 (concrete running pads)'),
+    'walkway':        dict(rgb=(150, 146, 136), m=0.0, r=0.85, tex='ls_c_weather', src='obs photo l1 (walkway between the tracks)'),
+    'handrail':       dict(rgb=(168, 172, 176), m=0.70, r=0.40, double=True, src='obs photos l1 / l5 (galvanised handrails)'),
     'concrete':       dict(rgb=(188, 185, 177), m=0.0, r=0.85, nrm=('ls_n_concrete', 0.4), src='inf (cast concrete spandrels)'),
     'concrete_lt':    dict(rgb=(204, 202, 194), m=0.0, r=0.82, nrm=('ls_n_concrete', 0.4), src='obs photo l2 (LTP 2 exposed frame) / l4 (Hyatt sign pier)'),
     'concrete_board': dict(rgb=(180, 176, 166), m=0.0, r=0.88, nrm=('ls_n_board', 0.8), src='obs photo l5 (board-formed concrete)'),
     'screen':         dict(rgb=(236, 238, 238), m=0.15, r=0.55, tex='ls_c_screen', nrm=('ls_n_screen', 0.6), src='obs photo l1 (perforated metal panels, horizontal slots); reads mid-grey at a distance (photo a2)'),
     'slot':           dict(rgb=(30, 32, 34), m=0.0, r=0.30, src='obs photo l1 (dark window slots of the station block)'),
-    'guide_beam':     dict(rgb=(176, 174, 168), m=0.0, r=0.80, src='obs photos l1 / l5 (centre guide beam)'),
     'screen_edge':    dict(rgb=(200, 202, 202), m=0.60, r=0.45, src='inf'),
     'interior':       dict(rgb=(40, 41, 43), m=0.0, r=0.95, double=True, src='inf (shaded parking interior behind the openings)'),
     'sill':           dict(rgb=(118, 118, 114), m=0.0, r=0.90, src='inf (slab top inside the openings)'),
@@ -75,7 +87,7 @@ MATS = {
     'deck_lanes':     dict(rgb=(170, 168, 162), m=0.0, r=0.90, tex='ls_c_lanes', naip='deck', src='obs NAIP 2024 deck colour; lane lines obs NAIP / spacing inf'),
     'deck_far':       dict(rgb=(160, 158, 152), m=0.0, r=0.90, naip='deck_far', src='obs NAIP 2024 deck colour incl. cars (LOD2)'),
     'coping':         dict(rgb=(206, 204, 198), m=0.0, r=0.70, double=True, src='inf'),
-    'glass_hyatt':    dict(rgb=(255, 255, 255), m=0.0, r=0.08, ior=1.9, tex='ls_c_hyatt', src='obs photo l4 (blue-green unitised curtain wall, one spandrel per floor)'),
+    'glass_hyatt':    dict(rgb=(255, 255, 255), m=0.0, r=0.08, ior=1.9, tex='ls_c_hyatt', src='obs photo l4 (saturated blue reflective unitised curtain wall, one spandrel per floor; r1 retint: photo mean (38, 113, 150))'),
     'glass_band':     dict(rgb=(255, 255, 255), m=0.0, r=0.08, ior=1.9, tex='ls_c_glassband', src='obs photo l4 (banded curved end bay)'),
     'metal_dark':     dict(rgb=(66, 69, 74), m=0.55, r=0.45, src='obs photo l4 (dark metal podium / penthouse)'),
     'cac_wall':       dict(rgb=(255, 255, 255), m=0.0, r=0.60, tex='ls_c_cac', src='inf (panels + window bands; reduced window-to-wall ratio [pub])'),
@@ -96,13 +108,13 @@ MATS = {
     'mullion':        dict(rgb=(176, 184, 188), m=0.70, r=0.35, src='inf (aluminium frame)'),
     'sign_red':       dict(rgb=(196, 32, 32), m=0.0, r=0.50, src='obs photo l4 (red vertical sign), DOF red light'),
     'pv':             dict(rgb=(255, 255, 255), m=0.20, r=0.25, tex='ls_c_pv', src='pub (PV canopies); module layout inf'),
-    'guideway':       dict(rgb=(186, 184, 178), m=0.0, r=0.85, nrm=('ls_n_concrete', 0.4), src='obs photos l1 / l5 (light concrete)'),
-    'guideway_deck':  dict(rgb=(136, 136, 132), m=0.0, r=0.85, src='obs photos l1 / l5 (darker running surfaces)'),
+    'guideway':       dict(rgb=(164, 161, 152), m=0.0, r=0.88, tex='ls_c_weather', nrm=('ls_n_concrete', 0.4), src='obs photos l1 / l5 (weathered concrete, r1: was a light white)'),
+    'guideway_deck':  dict(rgb=(118, 118, 114), m=0.0, r=0.88, src='obs photos l1 / l5 (dark track bed between the pads)'),
     'platform':       dict(rgb=(168, 168, 164), m=0.0, r=0.80, src='inf'),
     'station_roof':   dict(rgb=(198, 202, 206), m=0.60, r=0.40, double=True, src='obs photos l1 / l5 (light metal roofs)'),
     'station_soffit': dict(rgb=(150, 154, 158), m=0.50, r=0.50, double=True, src='inf'),
     'station_glass':  dict(rgb=(255, 255, 255), m=0.0, r=0.06, ior=1.9, tex='ls_c_glass', src='obs photos (glazed enclosures / door cabins)'),
-    'perf_tower':     dict(rgb=(255, 255, 255), m=0.50, r=0.55, tex='ls_c_perf', src='obs photo l5 (perforated metal cylinder)'),
+    'perf_tower':     dict(rgb=(255, 255, 255), m=0.50, r=0.55, tex='ls_c_perf', double=True, src='obs photo l5 (perforated metal cylinder, open raked top)'),
     'car':            dict(rgb=(255, 255, 255), m=0.40, r=0.35, vcol=True, src='inf (fleet colours, landside_cars.COLOURS) - vertex colours'),
 }
 TEX_SCALE = {}   # none
@@ -155,6 +167,12 @@ def naip_colours(bldgs):
         if s is None: continue
         out['deck.' + k] = dict(rgb=np.median(s, 0).round().astype(int).tolist(), n=len(s), shift=sh)
         out['deck_far.' + k] = dict(rgb=s.mean(0).round().astype(int).tolist(), n=len(s), shift=sh)
+    if 'central_garage' in by:
+        b = by['central_garage']; rf = G.R1['cg_roof']; sh = tuple(rf['roof_shift'])
+        for nm, key in (('deck_plain', 'lobes'), ('deck_rim', 'rims')):
+            Pz = shapely.union_all([Polygon(q).buffer(-0.6) for q in rf[key]])
+            s_ = sample(affinity.translate(Pz, *sh), step=1.0) if not Pz.is_empty else None
+            if s_ is not None and len(s_) > 20: out[nm + '.central_garage'] = dict(rgb=np.median(s_, 0).round().astype(int).tolist(), n=len(s_), shift=sh)
     if 'superbay' in by:
         b = by['superbay']; sh = (-7.0, -7.5)
         a0, s0_, s1_, a1 = b.anchors['a']; T_ = b.anchors['t'][1]
@@ -263,6 +281,8 @@ def make_material(name, atlas, tex_imgs, ao_img):
         for n in nt.nodes: n.select = False
         t.select = True; nt.nodes.active = t
     m['src'] = spec['src']
+    if spec.get('obstruction_light'):
+        m['obstruction_light'] = spec['obstruction_light']       # js/three/buildings3d.js glowKind -> 'beacon' (lit at night)
     if spec.get('naip') and bkey and (spec['naip'] + '.' + bkey) in NAIP_C:
         m['naip_rgb'] = list(NAIP_C[spec['naip'] + '.' + bkey]['rgb'])
     return m

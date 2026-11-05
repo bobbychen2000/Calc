@@ -465,3 +465,77 @@ progress is logged here as it happens (container restarts).
 - **Engine track (look):** the new renderer's exposure is now metered (spec §8). The day calibration keeps the reviewed
   grade (0.36 at the snapshot, see §3.4 for the measured offset at the reference views); `?ae=0` restores the keyed
   exposure of review rounds 1–3 for A/B.
+
+### 3.4 Headless runs (live3.html, three.js r186 WebGL 2 backend, llvmpipe 640 × 360, one Chromium, `out/.heavy.lock`)
+
+Scratchpad `env3/job_skytest.mjs` (dev page `js/three/dev/skytest.html`: Engine + Sky + EnvState of a preset, no
+airport) compiled every new TSL graph (fog slabs, N layers in the sky shader and as planes, Moon, rain, meter) on the
+WebGL 2 backend in 5 s per preset, 0 errors (marine_layer, night_clear, rain_day). Run 2 (`env3/job_env3.mjs` →
+`out/env/step3/env3_check.json`, 25 min, ready in 7.6 s, **0 page errors** on both renderers; not a scored review):
+
+| Step | EV100 target (§10) | metered (sky included) | used | keyed (review rounds 1–3) | notes |
+|---|---|---|---|---|---|
+| snapshot overview | 14.98 | 16.97 | 16 (clamp) | 15.0 | the sunlit FEW004 / SCT008 cloud tops fill the top half of the frame |
+| noon overview | 15.28 | 15.81 | 15.81 | 15.0 | **+0.53 EV** |
+| marine_layer tower | 11.97 | 14.77 | 14.77 | 14.36 | **+2.8 EV**: the overcast sky / cloud underside is metered |
+| marine_layer 1 NM below / 2 NM inside the deck | 11.97 | 14.50 / 15.44 | | 14.36 | |
+| dusk 28R 2 NM | 0.67 | 5.76 | 6.54 (adapting) | 4.93 | the Moon is the directional light (Sun −5.23°) |
+| night_clear 28R 2 NM / gate B26 | −4.96 | −4.55 / 3.76 | **4.6** (night floor) | 4.70 / 4.70 | AE = the reviewed night key within 0.1 EV |
+| predawn_fog 0.6 / 0.3 NM | −6.14 | −2.18 / −4.22 | 4.57 | 4.71 | |
+| rain_day gate | 13.49 | 15.35 | 15.35 | 14.36 | 35,673 streaks (0.088 m, 5.26 m/s); wet film 1, pores 1, puddle 0.156 |
+| squall_night / drizzle_night gate | −14.1 | 3.32 / 3.43 | 4.6 | 4.71 | 34,790 streaks / 36,000 drizzle dots |
+
+Fix after run 2: the meter now **leaves the sky out** (`engine.meter` G channel = view depth beyond 0.9 × far; used when
+≥ 10 % of the frame is geometry), because the spec's EV100 targets are for 18 % grey under the natural illuminance
+(unit check: 60 % bright sky, ground at the marine-layer target → 11.97 with, 14.4 without the exclusion).
+
+Other run-2 numbers: renderer light direction = EnvState `sun.dir` (max component difference 0) in all 7 day steps
+(A-SUN render half); C171 factor k 0.913 (snapshot), 0.935 (noon), 0.835 (marine layer), 0.150 (dusk), 0.167 kept at
+night; pre-exposure 0.25 by day, 128–512 at night; cloud planes 4 (snapshot, marine layer), 6 (rain_day); slabs as the
+unit gates. **Moon diagnostic** (first-person 4° view at the night_clear Moon, `env3/diag_moon.png`): disc centroid
+1.2 px = **0.013°** from the image centre (A-MOON position < 0.5°), lit-centroid direction **237.8°** from up vs the
+ephemeris bright limb 236.9°, disc radius 23.2 px = 0.258° (ephemeris 0.258°); the thresholded lit fraction (0.98 vs
+0.934) is biased by bloom / saturation at EV 4.6, the shader mirror gives 0.9345. **Pre-exposure invariance** (pinned
+pre = 1 vs auto, 5 s apart): day mean display level 108.8 vs 110.7 (1.7 %), night 1.17 vs 0.93 — inconclusive as a
+strict test: traffic, water waves and TRAA history change between the two shots (17 % of the day pixels differ by > 8
+levels, mostly the bay). **Lightning**: no flash was sampled in 22 s — on llvmpipe the app's simulated time advances
+≤ 0.1 s per frame at ~0.3 fps, so a 0.2–0.4 s flash is rarely hit; run 3 forces one (`R.qaForceFlash`).
+
+Renders (`out/env/step3/`, no HUD): `env3_dusk_28R_2nm.png` (civil-twilight glow over the bay, FEW200 cirrus dark
+against the glow: at 6 km the Sun at −5.2° is below the geometric dip of 2.5°, so those clouds are in the Earth's
+shadow; airfield lights faint at HIRL step 1), `env3_night_clear_28R_2nm.png` (EV 4.6: black sky — no stars (Q12) and
+the 3 mcd/m² floor is far below the key —, the city glow band, the airport lights), `env3_predawn_fog_28R_03nm.png`
+(inside the M1/4SM fog: ALSF-2 centreline barrettes and the 1,000-ft bar fading within ~0.4 km; **defect found**: a
+row of floodlight-mast lamps 1–2 km away shone through the fog, because the non-photometric sprites (mast lamps,
+bridge / stand lights) carried no fog term; fixed: they get the slab transmittance camera → light; the fog itself is
+black: its in-scatter at night is the ambient sky only, the floodlit "domes" (spec E7) are not modelled),
+`env3_rain_day_gate.png` (3/4 SM +RA BR under OVC: flat grey, misty; **defect**: no visible streaks — each drawn drop
+kept only its physical width share of a pixel, ~2 % of the sky radiance; fixed with a display weight, run 3).
+
+Run 3 (`env3/job_env3b.mjs` → `out/env/step3/env3b_check.json`, after the run-2 fixes; metering waits for ≥ 4
+frames after the view change; 0 page errors):
+
+| Step | target | metered, sky left out (sky share of the frame) | − bias 0.68 (final code) | keyed |
+|---|---|---|---|---|
+| snapshot gate B26 (reference) | 14.98 | 15.68 (21.6 %) | **15.00** | 15.0 |
+| snapshot tower | 14.98 | 16.49 (27.8 %) | 15.81 (+0.83) | 15.0 |
+| noon overview | 15.28 | 15.73 (8.3 %) | 15.05 (−0.23) | 15.0 |
+| marine_layer tower | 11.97 | 14.27 (27.8 %) | 13.59 (**+1.62**) | 14.36 |
+| rain_day gate B26 | 13.49 | 15.00 (21.5 %) | 14.32 (+0.83) | 14.36 |
+| predawn_fog 0.3 NM | −6.14 | −3.63 | 4.57 (night floor) | 4.71 |
+
+The meter averages the brighter half of the geometry (sunlit concrete, white aircraft and buildings), so the final
+code takes a bias of 0.68 EV (the reference view's offset, **M**) off the metered value before the clamp: the
+reference view keeps the reviewed exposure 0.36 and the night clamp is unchanged. Under the marine layer the tower view
+(white tower, glass, terminals) still meters +1.6 EV over the natural target (outside ±1 EV). Run 3 ran before the
+bias; its rain render is therefore 0.68 EV darker than the final code would draw it.
+
+- Non-photometric sprites in fog (predawn fog, 0.3 NM): 551 mast / bridge / stand lamps, all > 500 m away, **0** with a
+  slab transmittance above 0.01 (before the fix they were drawn at full intensity).
+- Forced lightning flash (ts_evening, `R.qaForceFlash`): level 0.85, azimuth **114.0°** (sector SE 112.5–157.5°),
+  6.6 km (VC: at the station ≤ 5 NM band), 0.62 lx at the airport, directional light = the flash; the night sky rose
+  only from 0.35 to 0.50 display levels (glow = E/π too faint at the night key) → final code: cloud glow 50 cd/m² ×
+  (5 km / d)², 5–500 cd/m² (I, NV, QA-tuned); checked in run 4.
+- `env3_rain_day_gate.png` re-rendered with the rain display weight (0.25 × sky-up per 1-px streak, I): streaks now
+  visible as short light dashes against the grey apron; puddles (0.156 at the start rule) barely show under the
+  uniform overcast (they mirror the PMREM sky only: no SSR here, spec §7.6 'high tier').
