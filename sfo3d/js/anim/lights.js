@@ -73,7 +73,10 @@ export function buildAirfieldLights(level = 1, opts = {}) {
     // 1000-ft crossbar, sequenced flashers from 1000 ft out; MALS(R/F) bars every 200 ft to 1400 ft with the 1000-ft
     // crossbar; MALSF flashers on the three outer bars (1000-1400 ft); MALSR RAIL = flashers only, 1600-2400 ft.
     const step = (A.type === 'ALSF2' ? 100 : 200), n = Math.floor(A.len / (step * 0.3048) + 1e-6);
-    const hLight = GROUND_Y + 0.8; // lights approx level with threshold
+    // lights approx level with threshold. opts.lightPlane {end: world y} (environment step 2, js/live/app.js): the imaged
+    // over-water structures are built 0.1 m below the ALS light plane (threshold elevation, JO 6850.2C 201a), so the
+    // fixture lights of data/sfo_lighting.js (js/env/lighting/airfield.js, placed by alsPlacement below) sit on them
+    const hLight = opts.lightPlane && opts.lightPlane[A.end] != null ? opts.lightPlane[A.end] - 0.6 : GROUND_Y + 0.8;
     // paved ground beyond the threshold: the displaced runway (F.disp) plus the blast pad / EMAS bed of that end
     // (js/live/airport.js END_ZONES, NAIP-measured). Lights there are semi-flush inset lights (no post, at the surface);
     // review round 3: they had floated 1.4 m above the pavement.
