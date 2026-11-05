@@ -790,7 +790,25 @@ APP_EYE = ('app check: tower view eye at y 62.15 = GROUND_Y + 59.151 (F2), glass
 R2N = dict(
     slot_c='Cycles t2, display ratio slot / neighbouring panels: upper band 0.64-0.74 (photo 0.69-0.76; round 1 0.10-0.20), '
            'long slot 0.73 (photo 0.62-0.72; round 1 0.30); a first pass with the sheet at sRGB 112-121 gave 0.56-0.65 / 0.66.',
-    slot_app='R2_SLOT_APP', glass_c='R2_GLASS_C', glass_app='R2_GLASS_APP', moire='R2_MOIRE', led='R2_LED', towercam='R2_TOWERCAM')
+    slot_app='App (out/buildings3d/app/r2/tapp_t2.png, photo-t2 camera and sun): 0.63-0.68 across the middle of the upper band '
+             '(0.44-0.56 at the grazing flanks), long slot 0.70; round 1 0.02-0.08 / 0.10.',
+    glass_c='Cycles t2, vertical profile through the cab centre (grey levels): 24-34 over the whole glass height, mean 32 (photo '
+            '26-41, mean 34; round 1 11-20 over the upper three quarters, then 47-96); glass / sky 0.21 (photo 0.26). Variants in '
+            'one Blender session: tint (48, 60, 64) mean 26 with the upper part 18 (0.5x the photo), (80, 98, 106) at alpha 0.7 mean '
+            '38, (100, 122, 130) at 0.7 mean 50. t3 (overcast photo): uniform 15-16 against the photo\'s 3-33.',
+    glass_app='App t2: 23-42 over the glass height (mean 33; round 1: 1-4 over the upper two thirds, then 22-64); glass / '
+              'fascia 0.34 (photo 0.38, Cycles 0.38).',
+    moire='After (low tier, rebuilt file, out/buildings3d/app/r2/low/tapp_lowcam.png): floor high-pass 0.65 (was 50.5), '
+          'console 1.8 (was 15.2); floor 112 / console 90 grey levels, 3 % of the window area clipped.',
+    towercam='Tower view (high tier, out/buildings3d/app/r2/tapp_towercam.png): console ring mean 109 and floor 113 grey levels '
+             '(round 1: 0 / 1, the black void), slim dark joints, no blotches. A first pass with the interior in the baked-AO atlas '
+             '(r2/pass1/) showed the Cycles AO noise as blotches on floor and consoles, and with the frame-metered auto-exposure '
+             'that the environment work added at ~18:43Z (js/three/renderer3.js meter: centre-weighted 50-98th percentile of the '
+             'geometry, the sky left out) the darker interior pushed 83 % of the window area to clipping; now 6 % (window mean '
+             '234). That an interior view meters on the interior is the environment work\'s to settle (noted for it).',
+    led='App night render (21:30 PDT, out/buildings3d/app/r2/tapp_t4night.png): ribbon median sRGB (93, 146, 211), hue 213 / '
+        'saturation 0.57 (photo t5 (82, 137, 209), 214 / 0.58; the first pass with the photo-linear colour, r2/pass1/: '
+        '(104, 144, 182), 209 / 0.35).')
 REVIEW_R2 = [
     '1 (major) slots read as black gashes - FIXED: every slot cell above its glazed lowest pane carries a perforated screen '
     '0.06 m behind the cladding face (obs photo t4: a dot grid; base-colour tile tower_tex.slot_color, a staggered hole grid '

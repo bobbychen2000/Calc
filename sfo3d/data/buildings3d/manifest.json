@@ -2,9 +2,9 @@
  "_about": "SFO Live 3D building assets (glTF 2.0, built with Blender from the verified 2-D sheets); one key per asset group; frame ltp-nad83-2011 (x east, y up, z south, m from the ARP); see docs/research/buildings3d.md",
  "itb": {
   "asset": "data/buildings3d/itb.glb",
-  "bytes": 6466140,
-  "built": "2026-11-05T20:06:04+00:00",
-  "git": "c5eb796+dirty",
+  "bytes": 6466848,
+  "built": "2026-11-05T21:39:18+00:00",
+  "git": "17bbd9b+dirty",
   "generator": "tools/blender/build_itb.py (bpy 5.0.1, Cycles CPU AO bake); geometry tools/blender/itb_geom.py",
   "reference": "2-D sheets BI-01..04 (docs/drawings/buildings/README.md), drawn by tools/buildings/draw_itb.py, imported by itb_geom.py",
   "spec": "tools/buildings/spec_itb.json (+ itb_naip_measurements.json, itb_pods.json)",
@@ -64,7 +64,7 @@
   ],
   "lod2_glb": {
    "path": "data/buildings3d/itb_lod2.glb",
-   "bytes": 578464
+   "bytes": 578712
   },
   "textures": [
    {
@@ -412,14 +412,14 @@
    },
    "glass_hall": {
     "rgb_srgb": [
-     52,
-     60,
-     66
+     100,
+     110,
+     116
     ],
     "metallic": 0.0,
-    "roughness": 0.06,
-    "ior": 1.9,
-    "src": "obs photos i1 / i4 (clear central bay: the lit hall seen through); review r2: i4 centre / side bay ~0.7 (photo) against 0.88 rendered at 118 / 130 / 136 -> darker; value inf",
+    "roughness": 0.1,
+    "ior": 1.5,
+    "src": "obs photos i1 / i4 (clear central bay: the lit hall seen through); review r2: i4 centre / side bay ~0.7 (photo) against 0.88 in Cycles at 118 / 130 / 136 with the coated-glass F0 0.096 - the sky reflection dominated; the clear bay is uncoated clear glass: IOR 1.5 (F0 0.04), rough 0.10, base 100 / 110 / 116 (a base of 60 / 68 / 74 with F0 0.096 gave 0.77 in Cycles but 0.32 in the app under the snapshot sky, where the base colour dominates: r1 base 0.64); values inf",
     "normal_tile": "itb_n_curtain",
     "base_tile": null
    },
@@ -560,9 +560,9 @@
      20
     ],
     "metallic": 0.0,
-    "roughness": 0.6,
+    "roughness": 0.95,
     "ior": 1.5,
-    "src": "obs photos i1 / i3 / i4 (\"SAN FRANCISCO INTERNATIONAL\"); review r2: near-black (i4 darkest letter pixels 53 against 102 rendered at 38 / 42 / 46, metallic 0.3); font inf",
+    "src": "obs photos i1 / i3 / i4 (\"SAN FRANCISCO INTERNATIONAL\"); review r2: near-black (i4 darkest letter pixels 53 against 102 rendered at 38 / 42 / 46, metallic 0.3); matt (rough 0.95, specular level 0.1 -> specularFactor 0.2): under the frontal i4 sun a 4 % specular lobe kept the letters mid-grey; font inf",
     "normal_tile": null,
     "base_tile": null
    }
@@ -575,7 +575,7 @@
      0,
      1
     ],
-    "bake_s": 66.2,
+    "bake_s": 255.2,
     "mean": 0.672,
     "p2": 0.0,
     "samples": 48,
@@ -587,7 +587,7 @@
     "lods": [
      2
     ],
-    "bake_s": 2.9,
+    "bake_s": 11.9,
     "mean": 0.694,
     "p2": 0.0,
     "samples": 48,
@@ -3379,9 +3379,9 @@
   },
   "family_note": "Two self-consistent height families (docs/research/buildings_tower.md 12.3). Default (3-D review round 1, 2026-11-05): F2 (D 14.5, rim 64.0) lies within the observations (cab-roof D 14.3 +-1.0 measured, 14.75 +-0.5 EXIF; rim 63.3-64.1 m for D 14.3, 65 +-2 m for D 14.75); F1 (D 15.2, rim 67.36 = 221 ft) needs D >= 15.1 and rests on the CTBUH classification of 221 ft (a database class, not a survey): kept as the published-height hypothesis (tower_f1.glb, ?b3dtower=f1). Settle with a surveyed ground photo, the NAIP shadow with the flight time, or an SFO / FAA elevation drawing.",
   "bytes": {
-   "F1": 3662488,
-   "F2": 3597112,
-   "lod2_only": 342748
+   "F1": 3560468,
+   "F2": 3457016,
+   "lod2_only": 330932
   },
   "placement": {
    "frame": "ltp-nad83-2011 (js/geo.js): x east, y up, z south, m from the ARP; ground GROUND_Y = 3.0",
@@ -3489,8 +3489,9 @@
      "landside": 1734,
      "ribbon": 204,
      "flare_deck": 4400,
-     "cab": 2400,
+     "cab": 1536,
      "cab_glass": 336,
+     "cab_interior": 864,
      "roof_masts": 928,
      "ibf": 54,
      "ibf_equipment": 10,
@@ -3514,8 +3515,9 @@
      "landside": 792,
      "ribbon": 144,
      "flare_deck": 1140,
-     "cab": 1200,
+     "cab": 768,
      "cab_glass": 48,
+     "cab_interior": 432,
      "roof_masts": 122,
      "ibf": 54
     }
@@ -3534,8 +3536,9 @@
      "landside": 192,
      "ribbon": 48,
      "flare_deck": 366,
-     "cab": 456,
+     "cab": 312,
      "cab_glass": 24,
+     "cab_interior": 144,
      "roof_masts": 122,
      "ibf": 24
     }
@@ -3549,7 +3552,7 @@
      2048
     ],
     "mode": "L",
-    "bytes": 896738
+    "bytes": 811479
    },
    {
     "name": "tile_panel_tower",
@@ -3603,7 +3606,7 @@
      1024
     ],
     "mode": "L",
-    "bytes": 248720
+    "bytes": 234624
    },
    {
     "name": "tower_ao_L2_f2",
@@ -3612,7 +3615,7 @@
      512
     ],
     "mode": "L",
-    "bytes": 71115
+    "bytes": 62820
    }
   ],
   "texture_note": "AO atlases on TEXCOORD_1 (grey-scale PNG, sun-independent, Cycles); detail tiles on TEXCOORD_0 (procedural, tools/blender/tower_tex.py): the cladding base colour (joint lines, per-panel tone) + normal tile (4 x 2 panels), the slot-screen base colour (perforated sheet: a staggered hole grid on the same 4 x 2 tile, review round 2), louvres, base-building panels. KTX2 / meshopt: later (tools/engine/glb_compress.mjs).",
@@ -3621,9 +3624,9 @@
    "led": {
     "material": "ribbon_glass",
     "led_color_linear": [
-     0.21,
-     0.623,
-     1.588
+     0.077,
+     0.536,
+     2.848
     ],
     "obs": {
      "photo": "t5",
@@ -3631,7 +3634,13 @@
       82,
       137,
       209
-     ]
+     ],
+     "linear": [
+      0.084,
+      0.25,
+      0.638
+     ],
+     "note": "input chroma compensated for the app tone mapping (round-2 night render: photo-linear colour gave hue 209 / sat 0.35 vs the photo 214 / 0.58)"
     },
     "tag": "obs photo t5 (Varnum 2018-04, dusk: the ribbon lit saturated blue) as the default; the array is programmable (pub: LED-backlit), so the colour on any other night is unknown: an inferred, configurable value (material extras.led_color; GLOW_DEF.led tints / scales it)"
    }
@@ -3870,7 +3879,7 @@
    "landside plan: ribbon 1 m inside the round body, facing 310; NE blade root / tip widths; SW wing lobe shape between the BT-01 plan points; wing protrusion 0.5 m at the foot",
    "cab glass ring 360 deg (photos show glass on both sides; the published 220 / 235 / 270 deg are view / column-free angles); its transparency (alpha 0.6, review round 2: was 0.5) and tint; the pane butt joints (0.03 m, dark: the published frameless butt glazing, photo t2) and the dark shade band inside the glass head (from 0.62 of the slant; obs t1, nature and tone inf)",
    "slot screens (review round 2): a perforated sheet 0.06 m behind the cladding face over every slot cell above the glazed lowest pane (obs photo t4: a dot grid); hole pitch ~0.05 m, hole 0.022 m, sheet tone sRGB 122-131 (tuned to the t2 slot / panel display ratio ~0.6-0.7) and the void behind are inf",
-   "LED ribbon night colour: the observed photo-t5 blue (median sRGB 82 / 137 / 209) as the default of a programmable array (material extras.led_color, linear (0.21, 0.62, 1.59) at the loader's previous mean level); any other night colour or animation is unknown (manifest night_glow)",
+   "LED ribbon night colour: the observed photo-t5 blue (median sRGB 82 / 137 / 209) as the default of a programmable array (material extras.led_color, linear (0.077, 0.536, 2.848): the photo chroma compensated for the app's tone mapping, at the loader's previous mean level); any other night colour or animation is unknown (manifest night_glow)",
    "cab roof deck 0.30 m below the rim coping; inner curb r 4.75 m, 0.3 m high",
    "mast / pole bearings and heights (+-5 deg / +-0.3 m); pole heads schematic; red-light bearing (225, SW)",
    "base-building panel module 3.0 x 1.2 m, glazing-band mullions 1.5 m, parapet 0.7 m",
@@ -3881,7 +3890,7 @@
   "unknown": [
    "what the published 221 ft measures (rim or mast tips)",
    "blade / channel plan depth beyond the BT-01 wing-tip point; channel wall geometry",
-   "cab glazing pane phase; cab interior: floor (sRGB 74), console ring (0.9 m high, 0.8 m deep, 0.25 m inside the sill; sRGB 112) and ceiling (sRGB 62) are neutral placeholders (no source for the furniture; 13 positions in a snippet, unverified)",
+   "cab glazing pane phase; cab interior: floor (sRGB 74), console ring (0.9 m high, 0.8 m deep, 0.25 m inside the sill; sRGB 96) and ceiling (sRGB 62) are neutral placeholders (no source for the furniture; 13 positions in a snippet, unverified)",
    "obstruction-light fixture type (L-810 steady / L-864 flashing) and count (one seen, t5)",
    "core diameter, floor levels (not visible; not modelled)",
    "airside face of the base building SW of u -12.9 (hidden in photo t2): drawn as plain panels",
@@ -3911,29 +3920,29 @@
      "validator": "2.0.0-dev.3.10",
      "errors": 0,
      "warnings": 0,
-     "infos": 44,
+     "infos": 33,
      "hints": 0,
      "codes": {
-      "info:UNUSED_OBJECT": 44
+      "info:UNUSED_OBJECT": 33
      },
      "first": [],
      "drawCalls": 83,
      "triangles": 49530,
-     "vertices": 42651
+     "vertices": 42543
     },
     "F2": {
      "validator": "2.0.0-dev.3.10",
      "errors": 0,
      "warnings": 0,
-     "infos": 44,
+     "infos": 33,
      "hints": 0,
      "codes": {
-      "info:UNUSED_OBJECT": 44
+      "info:UNUSED_OBJECT": 33
      },
      "first": [],
      "drawCalls": 83,
      "triangles": 48033,
-     "vertices": 41680
+     "vertices": 41578
     }
    },
    "file": "out/buildings3d/tower_verify.json",
@@ -4060,7 +4069,7 @@
     "centre_h": 38.0,
     "m_per_px": 0.08542,
     "view_bearing": 297.7,
-    "render_s": 21.9
+    "render_s": 24.0
    },
    "B": {
     "path": "out/buildings3d/tower_B.png",
@@ -4078,7 +4087,7 @@
     "centre_h": 38.0,
     "m_per_px": 0.08542,
     "view_bearing": 117.69999999999999,
-    "render_s": 20.9
+    "render_s": 23.9
    },
    "t2": {
     "path": "out/buildings3d/tower_t2.png",
@@ -4101,7 +4110,7 @@
     "f_px": 3223.4,
     "photo": "refs/cache/buildings/review_likeness/t2.jpg",
     "photo_credit": "Famartin 2025-08-12 11:57, CC BY-SA 4.0 (reference only)",
-    "render_s": 25.9
+    "render_s": 31.3
    },
    "t3": {
     "path": "out/buildings3d/tower_t3.png",
@@ -4124,7 +4133,7 @@
     "f_px": 3364.4,
     "photo": "refs/cache/buildings/review_likeness/t3.jpg",
     "photo_credit": "Famartin 2025-08-12 09:12, CC BY-SA 4.0 (reference only)",
-    "render_s": 19.2
+    "render_s": 22.6
    },
    "t4": {
     "path": "out/buildings3d/tower_t4.png",
@@ -4147,7 +4156,7 @@
     "f_px": 1195.0,
     "photo": "refs/cache/buildings/review_likeness/t4.jpg",
     "photo_credit": "Famartin 2025-08-12 09:10, CC BY-SA 4.0 (reference only)",
-    "render_s": 31.1
+    "render_s": 36.0
    },
    "_family": "F2",
    "_compare": {
@@ -4167,8 +4176,8 @@
     "tools/blender/tower3d_verify.py"
    ],
    "bpy": "5.0.1",
-   "git": "a5e8f6f+dirty",
-   "seconds": 521.9,
+   "git": "17bbd9b",
+   "seconds": 512.9,
    "ao_samples": 48,
    "date": "2026-11-05"
   }

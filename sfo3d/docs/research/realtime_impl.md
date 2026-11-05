@@ -739,10 +739,10 @@ Numbers, dispositions and requests: `docs/requests/realtime_closeout.md` "Round 
 7. **GroundPhysics.** A body not yet at its stand pose (driving in) is a moving body (ghosts in its way are removed); an
    arrival heading into a stand where a silent aircraft is still drawn removes it early (its bridge retracts first).
 
-# Step 8 — close-out review round 2, fix round 2 (5 Nov 2026): verifier findings v1–v9
+# Step 8 — close-out review round 2, fix round 2 (5 Nov 2026): verifier findings v1–v10
 
-Numbers, dispositions and requests: `docs/requests/realtime_closeout.md` "Round 2 — fix round 2". Replay: every
-recorded hour (4 Nov 17:43 – 5 Nov 09:00Z, 15.2 h at 10 Hz). New checker classes (tools/live/invariants.mjs):
+Numbers, dispositions and requests: `docs/requests/realtime_closeout.md`, "Round 2 of closeout2". The replay covers every
+hour recorded when the round started: 4 Nov 17:43 – 5 Nov 09:00Z, 15.2 h at 10 Hz. New checker classes (tools/live/invariants.mjs):
 `bridge.parked_undocked`, `bridge.refused`, `bridge.dock_flap` (+ `meta.flap`), and `rwy.lineup_hdg` now reads the
 engine's phase, not the label.
 
