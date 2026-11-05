@@ -15,8 +15,10 @@ import { antOf } from './traffic.js';
 
 const hv = (h) => [Math.sin(h), -Math.cos(h)];
 
-// building occupancy grid (2 m) from the airport's building footprints
-export function buildingGrid(airport, res = 2) {
+// building occupancy grid (2 m) from the airport's building footprints; extra (optional): more footprints as polygons
+// [[ring, hole...], ...] - the Blender building assets' measured footprints (data/buildings3d/integration.js physics,
+// tools/blender/b3d_integrate.py: hangars and the elevated guideway / roadways left out, as here), unioned with the outlines
+export function buildingGrid(airport, res = 2, extra = null) {
   const x0 = -2600, z0 = -2300, x1 = 1800, z1 = 1800;
   const W = Math.ceil((x1 - x0) / res), H = Math.ceil((z1 - z0) / res);
   const cv = document.createElement('canvas'); cv.width = W; cv.height = H; const cx = cv.getContext('2d', { willReadFrequently: true });
@@ -26,6 +28,7 @@ export function buildingGrid(airport, res = 2) {
   for (const p of airport.terminalComplex || []) poly(p);
   for (const b of airport.boardingAreas || []) for (const p of b.polys) poly(p);
   for (const s of airport.structures || []) { if (s.kind === 'rail' || s.kind === 'hangar') continue; for (const p of s.polys) poly(p); } // aircraft may stand inside hangars
+  for (const p of (extra && extra.rings) || extra || []) if (Array.isArray(p) && p.length) poly(p);
   const d = cx.getImageData(0, 0, W, H).data; const m = new Uint8Array(W * H);
   for (let i = 0; i < W * H; i++) m[i] = d[i * 4] > 127 ? 1 : 0;
   cv.width = cv.height = 1;

@@ -12,9 +12,10 @@
 // (window.SFO_B3D_BASE, default 'data/buildings3d/'; window.SFO_B3D_EXT, default '.glb'; the phone artifact uses '.wasm'
 // like the aircraft models, tools/build3/phone_artifact_page.py; window.SFO_B3D_PARTS = {file: n}: a file the artifact
 // split into n pieces (<name>.part<i><ext>, the 15-MB per-file limit) is fetched in pieces and joined).
-// Modes (?b3d=full|near|lod2|0): high / medium / ultra tiers 'full' (every group's full file); the low tier (phones)
-// 'near' (integration review round 1, finding 5: phones used to show only LOD2 at every distance, gate and tower views
-// included): the lod2 files first (3.6 MB, the whole airport at once), then each group's full file when the camera comes
+// Modes (?b3d=full|near|lod2|0): high / ultra tiers 'full' (every group's full file); the low tier (phones) and the
+// medium tier (deviceMemory <= 4 GB; review finding 10) 'near' (integration review round 1, finding 5: phones used to show
+// only LOD2 at every distance, gate and tower views included): the lod2 files first (~4 MB, the whole airport at once),
+// then each group's full file when the camera comes
 // within that group's LOD2 switch distance (the tier's tighter range) of it, one file at a time; the full file replaces
 // the lod2 one, so near units show LOD0 / LOD1 as on the desktop. 'lod2' = the far files only (QA), '0' = the first-pass
 // buildings only (old-vs-new comparisons).
@@ -90,7 +91,7 @@ export class Buildings3D {
     const qs = new URLSearchParams(location.search);
     this.R = R; this.E = R.engine;
     const q = qs.get('b3d');
-    this.mode = q === '0' || q === 'off' ? 'off' : q === 'lod2' || q === 'full' || q === 'near' ? q : (R.tier === 'low' ? 'near' : 'full');
+    this.mode = q === '0' || q === 'off' ? 'off' : q === 'lod2' || q === 'full' || q === 'near' ? q : (R.tier === 'low' || R.tier === 'medium' ? 'near' : 'full');
     this.towerFamily = qs.get('b3dtower') === 'f1' ? 'f1' : 'f2'; // tower.glb = F2 (default), tower_f1.glb = F1 (manifest.json#tower)
     this.base = window.SFO_B3D_BASE || 'data/buildings3d/'; this.ext = window.SFO_B3D_EXT || '.glb'; this.parts = window.SFO_B3D_PARTS || {};
     this.lodScale = (R.Q && R.Q.lod ? R.Q.lod : LOD_REF) / LOD_REF;

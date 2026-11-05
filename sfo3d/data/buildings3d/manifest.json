@@ -12302,14 +12302,17 @@
     "data/buildings3d/tower.glb",
     "data/buildings3d/itb.glb",
     "data/buildings3d/domestic.glb",
+    "data/buildings3d/roadways.glb",
     "data/buildings3d/landside.glb"
    ],
-   "phone_lod2": [
+   "lod2": [
     "data/buildings3d/tower_lod2.glb",
     "data/buildings3d/itb_lod2.glb",
     "data/buildings3d/domestic_lod2.glb",
+    "data/buildings3d/roadways_lod2.glb",
     "data/buildings3d/landside_lod2.glb"
    ],
+   "modes": "high / ultra: full files; low (phones) and medium: ?b3d=near - the lod2 files first, then each group's full file when the camera comes within its LOD2 switch distance (review r1 finding 5)",
    "tower_f1": "data/buildings3d/tower_f1.glb (?b3dtower=f1; tower.glb is F2)",
    "table": "data/buildings3d/integration.js (app) / integration.json (footprints, plausibility)"
   },
@@ -12319,11 +12322,11 @@
    "structures": 34,
    "atc": "tower",
    "rail": "landside",
-   "complex_edge_runs": 15
+   "complex_edge_runs": 11
   },
   "plausibility": {
-   "conflicts": 0,
-   "notes": 6,
+   "conflicts": 1,
+   "notes": 10,
    "nearest_envelopes": [
     {
      "stand": "F12",
@@ -12344,10 +12347,411 @@
      "old_outline_dist_m": 5.35
     }
    ],
-   "bridges_checked": 131
+   "bridges_checked": 131,
+   "conflict_list": [
+    {
+     "check": "rotunda drum: host building surfaces inside it",
+     "stand": "E9",
+     "gate": "E9",
+     "door": 1,
+     "group": "domestic",
+     "unit": "BA_E",
+     "lod": 0,
+     "pose": "current",
+     "overlap_m2": 0.39,
+     "depth_m": 0.32
+    }
+   ],
+   "walkway_drum_tests": 393,
+   "bridge_solids": "out/buildings3d/integ/draw/scene2d.json (generated 2026-11-05T03:56:14.689Z, 4af5ad5+dirty)",
+   "taxilane": [
+    [
+     "domestic/BA_F",
+     {
+      "dist_m": 27.1,
+      "lane": 162,
+      "ref": "9",
+      "adg": 5,
+      "span_m": 64.8,
+      "need_m": 42.1,
+      "margin_m": -15.0,
+      "museum_outline_m": 27.3
+     }
+    ],
+    [
+     "landside/airtrain_-4_0",
+     {
+      "dist_m": 38.2,
+      "lane": 302,
+      "ref": null,
+      "adg": 5,
+      "span_m": 60.9,
+      "need_m": 42.1,
+      "margin_m": -3.9,
+      "museum_outline_m": 37.3
+     }
+    ],
+    [
+     "itb/BA-G",
+     {
+      "dist_m": 38.6,
+      "lane": 302,
+      "ref": null,
+      "adg": 5,
+      "span_m": 60.9,
+      "need_m": 42.1,
+      "margin_m": -3.5,
+      "museum_outline_m": 37.3
+     }
+    ],
+    [
+     "itb/hall",
+     {
+      "dist_m": 48.2,
+      "lane": 302,
+      "ref": null,
+      "adg": 5,
+      "span_m": 60.9,
+      "need_m": 42.1,
+      "margin_m": 6.1,
+      "museum_outline_m": 37.3
+     }
+    ],
+    [
+     "domestic/BA_D",
+     {
+      "dist_m": 42.7,
+      "lane": 295,
+      "ref": "5B",
+      "adg": 4,
+      "span_m": 50.9,
+      "need_m": 34.3,
+      "margin_m": 8.4,
+      "museum_outline_m": 41.9
+     }
+    ]
+   ]
   },
-  "generated": "2026-11-05T08:09:27Z",
+  "requests": [
+   "domestic: BA_E drum E9 - 0.39 m2 of BA_E surfaces 0.32 m inside the rotunda drum (current pose, LOD0; app solids of 2026-11-05T03:56)",
+   "landside: parked cars - wheels / skirt at LOD0 and a third shape (review r1 finding 4; landside_cars.py is the landside group's)",
+   "bridges / realtime: gates.js prepGeom walkway start and drum limits from the 3-D facades (integration.json footprints / tiers), then the domestic vestibules can go (review r1 finding 8)",
+   "stands: F10 CRJ2 1.40 m from the BA-F body tier (SFO Museum outline 1.43 m): a stand pose item, not the building"
+  ],
+  "generated": "2026-11-05T12:36:37Z",
   "tool": "tools/blender/b3d_integrate.py",
   "doc": "docs/research/buildings3d.md (integration section)"
+ },
+ "roadways": {
+  "asset": "roadways (elevated landside roadways: departures decks, viaducts, approach ramps)",
+  "owner": "integration (review round 1, finding 1)",
+  "generator": "tools/blender/build_roadways.py + roadways_net.py",
+  "built": "2026-11-05T12:32:51Z",
+  "files": {
+   "full": "data/buildings3d/roadways.glb",
+   "lod2": "data/buildings3d/roadways_lod2.glb"
+  },
+  "frame": "ltp-nad83-2011",
+  "root_translation": [
+   -1481.2,
+   3.0,
+   441.1
+  ],
+  "lod_rule": "root children LOD0 / LOD1 / LOD2 (extras.switch_m {0: 0.0, 1: 400.0, 2: 1400.0}); units by extras.building",
+  "levels": {
+   "itb": {
+    "deck_top": 11.35,
+    "curb": 11.5,
+    "tag": "inf",
+    "source": "tools/buildings/spec_itb.json level3.floor (DOF roof top (40.1 m) minus \"90 ft\" (smith_emery, upper value) = 12.7 m, minus \"100 ft\" (sfgate2000) = 9.6 m; midpoint; +-1.5 m; no drawing or survey found - see open questions)"
+   },
+   "domestic": {
+    "deck_top": 4.727,
+    "curb": 4.877,
+    "tag": "unk",
+    "source": "manifest.json#domestic.dimensions: departures curb above the apron (T1 / T2) (placeholder: T3 L1 -> L2 rise by analogy)"
+   },
+   "solve": {
+    "layer_prior_m": {
+     "1": 6.5,
+     "2": 12.5,
+     "3": 18.5,
+     "4": 24.5
+    },
+    "ell_m": 100.0,
+    "ell_grade_m": 45.0,
+    "clearance_m": 4.6,
+    "deck_depth_m": 1.2,
+    "tag": "inf"
+   }
+  },
+  "materials": {
+   "asphalt": {
+    "naip_median_srgb": [
+     213,
+     210,
+     202
+    ],
+    "base_srgb": [
+     166,
+     163,
+     157
+    ],
+    "naip_albedo": 0.5714285714285714,
+    "src": "obs colour / inf scale"
+   },
+   "concrete": {
+    "srgb": [
+     172,
+     170,
+     163
+    ],
+    "src": "inf"
+   },
+   "markings": "own painted tiles (MUTCD 3A.06 dash cycle 40 ft, 10-ft dashes) [inf]"
+  },
+  "inferred": [
+   "deck depth 1.2 m, shoulders 0.6 m, parapets 0.40 x 0.85 m, fill below a 3.2 m deck top, round columns 1.4 m at ~30 m (positions where clear)",
+   "levels other than the two curbs: screened solve with layer priors {1: 6.5, 2: 12.5, 3: 18.5, 4: 24.5} m and clearance 4.6 m (roadways_net.py)",
+   "approach ramps: at-grade OSM roads lifted by the solve (ELL_G 45 m)",
+   "lane counts / widths where OSM has none (class defaults)",
+   "lane markings (pattern, colours)"
+  ],
+  "unknown": [
+   "the domestic departures-curb height (4.877 m is the domestic asset placeholder [unk])",
+   "every viaduct level: no structural drawings or survey; OSM gives only the layer order",
+   "the ITB arrivals roadway level (OSM layer 1 west of the ITB is solved, not anchored)"
+  ],
+  "deviations": [
+   "decks over at-grade roads with less than 4.6 m clearance: the anchored domestic loop (soffit 3.53 m) - the curb placeholder, kept as the domestic asset has it"
+  ],
+  "verification": {
+   "ways": {
+    "osm_elevated": 147,
+    "not_in_app": 32,
+    "garage_aisles": 0,
+    "inside_landside_building": 6,
+    "kept": 109
+   },
+   "levels": {
+    "anchored": 224,
+    "constraints": 5110,
+    "crossings": 152,
+    "unresolved": 0
+   },
+   "ramps": 43,
+   "pieces": 115,
+   "outside_core": {
+    "pieces": 38,
+    "length_m": 5780
+   },
+   "unresolved": [],
+   "overhead_nodes": 38,
+   "cut_by_group": {
+    "tower": 0,
+    "itb": 6.0,
+    "domestic": 84.6,
+    "roadways": 0,
+    "landside": 126.7
+   },
+   "columns": {
+    "tried": 332,
+    "placed": 296
+   },
+   "tris": {
+    "0": 46930,
+    "1": 14550,
+    "2": 6924
+   },
+   "grade_max": {
+    "id": 27425666,
+    "ramp": false,
+    "max_pct": 13.2,
+    "at": [
+     -2378.4,
+     -1467.0
+    ]
+   },
+   "grades_over_8pct": [
+    {
+     "id": 27425666,
+     "ramp": false,
+     "max_pct": 13.2,
+     "at": [
+      -2378.4,
+      -1467.0
+     ]
+    },
+    {
+     "id": 41015033,
+     "ramp": false,
+     "max_pct": 12.1,
+     "at": [
+      -1560.1,
+      473.3
+     ]
+    },
+    {
+     "id": 28162298,
+     "ramp": true,
+     "max_pct": 11.3,
+     "at": [
+      -2946.5,
+      -1720.2
+     ]
+    },
+    {
+     "id": 35157100,
+     "ramp": false,
+     "max_pct": 10.3,
+     "at": [
+      -1577.7,
+      446.4
+     ]
+    },
+    {
+     "id": 41015056,
+     "ramp": false,
+     "max_pct": 10.3,
+     "at": [
+      -1556.6,
+      484.2
+     ]
+    },
+    {
+     "id": 41015044,
+     "ramp": false,
+     "max_pct": 10.1,
+     "at": [
+      -1558.4,
+      478.7
+     ]
+    },
+    {
+     "id": 1205493778,
+     "ramp": false,
+     "max_pct": 9.9,
+     "at": [
+      -1371.6,
+      297.1
+     ]
+    },
+    {
+     "id": 392505479,
+     "ramp": true,
+     "max_pct": 9.8,
+     "at": [
+      -2375.5,
+      -1423.9
+     ]
+    },
+    {
+     "id": 27425734,
+     "ramp": false,
+     "max_pct": 9.6,
+     "at": [
+      -2501.9,
+      -1347.6
+     ]
+    },
+    {
+     "id": 392512314,
+     "ramp": false,
+     "max_pct": 9.6,
+     "at": [
+      -2499.5,
+      -1360.4
+     ]
+    },
+    {
+     "id": 417955691,
+     "ramp": false,
+     "max_pct": 9.5,
+     "at": [
+      -2350.1,
+      -1408.8
+     ]
+    },
+    {
+     "id": 186398854,
+     "ramp": false,
+     "max_pct": 9.4,
+     "at": [
+      -2020.6,
+      443.3
+     ]
+    },
+    {
+     "id": 392512319,
+     "ramp": true,
+     "max_pct": 9.4,
+     "at": [
+      -2510.8,
+      -1345.6
+     ]
+    },
+    {
+     "id": 619248862,
+     "ramp": true,
+     "max_pct": 9.3,
+     "at": [
+      -2503.6,
+      -1359.4
+     ]
+    },
+    {
+     "id": 395622941,
+     "ramp": true,
+     "max_pct": 9.1,
+     "at": [
+      -1589.6,
+      482.0
+     ]
+    },
+    {
+     "id": 27425658,
+     "ramp": false,
+     "max_pct": 9.0,
+     "at": [
+      -2714.0,
+      -1667.9
+     ]
+    },
+    {
+     "id": 41015036,
+     "ramp": true,
+     "max_pct": 9.0,
+     "at": [
+      -1545.5,
+      469.0
+     ]
+    },
+    {
+     "id": 392512312,
+     "ramp": true,
+     "max_pct": 8.5,
+     "at": [
+      -2331.2,
+      -1416.8
+     ]
+    },
+    {
+     "id": 41014851,
+     "ramp": false,
+     "max_pct": 8.4,
+     "at": [
+      -1574.2,
+      503.1
+     ]
+    }
+   ],
+   "low_crossings": [],
+   "crossings": 33,
+   "asset_cut_m2": 316.9,
+   "bytes": {
+    "full": 4374944,
+    "lod2": 442948
+   }
+  }
  }
 }

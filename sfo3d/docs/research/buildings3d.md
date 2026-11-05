@@ -514,12 +514,15 @@ flock out/.heavy.lock env SOFTGL=1 W=960 H=540 OUT=out/buildings3d VIEWS="..." n
 | `tools/blender/b3d_views_job.mjs` | livetest job: the same views with `?b3d=0` (first-pass) and the assets -> `out/buildings3d/cmp_*.png` |
 | hooks | `js/three/renderer3.js` (+5 lines), `js/live/world.js` (+import, +2 items loops), `js/live/airport.js` / `js/live/terminals.js` (optional routing parameter; same geometry, same order), `tools/build3/three-entry.js` (+GLTFLoader), `tools/build3/phone_artifact*` (ships the GLBs), `tools/stands/check_stands.py` and `tools/drawing/common.py` / `audit.py` (use the 3-D footprints) |
 
-**Loading.** `Renderer3._buildStatic` starts `Buildings3D` once the static scene exists; the four groups load one after
-another (tower, ITB, domestic, landside: one decode / upload / program compile at a time, `compileAsync` over every LOD
-before the group is shown, so a LOD switch later does not stall). Until a group is on screen, or if its file fails, the
-first-pass extrusions stay: the scene never has a hole. Tiers: high / medium / ultra load the full files (LOD0-2), the low
-tier (phones) the `*_lod2.glb` files (3.6 MB together); `?b3d=0` shows the first-pass buildings only, `?b3d=lod2|full`
-forces a set, `?b3dtower=f1` the tower's alternative height family F1 (`tower_f1.glb`; manifest `family_decided: false`;
+**Loading.** `Renderer3._buildStatic` starts `Buildings3D` once the static scene exists; the five groups load one after
+another (tower, ITB, domestic, roadways, landside: one decode / upload / program compile at a time, `compileAsync` over every
+LOD before the group is shown, so a LOD switch later does not stall). Until a group is on screen, or if its file fails, the
+first-pass extrusions stay: the scene never has a hole. Tiers (review round 1, finding 5): high / ultra load the full files
+(LOD0-2); the low tier (phones) and the medium tier use `near` mode: the `*_lod2.glb` files first (4.0 MB together, the
+whole airport at once), then a group's full file as soon as the camera comes within that group's LOD2 switch distance
+(x the tier's range, + 10 % + 60 m) of one of its LOD2 subtrees, one file at a time; the full file replaces the lod2 one
+(its GPU data released), so the units near the camera show LOD0 / LOD1 as on the desktop. `?b3d=0` shows the first-pass
+buildings only, `?b3d=lod2|full|near` forces a mode, `?b3dtower=f1` the tower's alternative height family F1 (`tower_f1.glb`; manifest `family_decided: false`;
 F2 `tower.glb` is the default since the tower review round 1, see the tower section), `?b3donly=tower,...` loads only the
 listed groups (QA).
 
@@ -528,17 +531,26 @@ the root; landside: every building node). LOD2 (one joined mesh with its own sma
 the LOD2 switch distance from the set's bounding box; nearer, LOD0 or LOD1 per unit: domestic per building
 (`extras.building`), ITB per part (the group spans 650 m), tower and each landside building as a whole. Distances are to the
 unit's bounding box (the nearest point; a 400-m pier seen from its tip is near), 5 % hysteresis, and the switch distances
-(extras `switch_m`) are scaled by the tier's `lod` range relative to the high tier (ultra 2.2x, medium 0.72x).
+(extras `switch_m`) are scaled by the tier's `lod` range relative to the high tier (ultra 2.2x, medium 0.72x, low 0.56x:
+phones show LOD0 within ~195-250 m and LOD2 beyond ~670-890 m). Within a unit and LOD, the static meshes of one material are
+merged at load (`_mergeUnit`; instanced cars, fading fins, the LED / obstruction-light nodes, the cab glass and transparent
+materials stay apart): landside LOD0 286 -> 189 primitives, LOD1 258 -> 161, tower 30 -> 23 / 23 -> 18; the ITB and domestic
+units already hold one mesh per material (no change).
 
 **Materials, AO, shadows.** The glTF PBR materials are used as exported (MeshStandard / MeshPhysical with
 `KHR_materials_ior` / `_specular`), converted to node materials the way three does it internally, so an emission term can be
 added. The baked AO (`occlusionTexture`, TEXCOORD_1) is the material's `aoMap` (ambient / IBL term only); GTAO adds the
-screen-space contact term on top as for every object. Every opaque mesh casts and receives shadows (CSM); the alpha-blended
+screen-space contact term on top as for every object. The AO atlases are single-channel data: they are repacked at load into
+R8 textures (`RedFormat`, mipmapped), capped at the tier's `maxTex` (low 1024, medium 2048), and the decoded RGBA bitmaps are
+released (review round 1, finding 10): decoded texture memory of the full set 200 -> 90 MB (66 MB with the 1024 cap; lod2
+set 36 -> 26 MB). Every opaque mesh casts and receives shadows (CSM); the alpha-blended
 cab glass does not cast. Tiling normal / base-colour tiles get the tier's anisotropy.
 
 **Night hooks (for the environment work).** Emission = the material's own + `nightE` (renderer3: night factor x LAMP_M) x
-`glow[kind].color` x `glow[kind].k` x a +-15 % variation per 3-m cell, masked to the panes where the glass has a base-colour
-tile (frames and frit stay dark). Kinds from the assets' own material names and extras: `hall` (terminal glazing, the
+`glow[kind].color` x a soft-capped level `cap x (1 - exp(-k x lvl / cap))` (cap 0.42 lamp units, about 0.9 exposed at the
+keyed night exposure, every kind but the beacon), with `lvl` an interior pattern standing for the lit hall behind the glass
+(review round 1, finding 2): per 3 m x 4 m cell a level 0.6-1.25, a gradient up each 4-m storey (0.72 at the floor ..
+1.08 under the ceiling lamps), masked to the panes where the glass has a base-colour tile (frames and frit stay dark). Kinds from the assets' own material names and extras: `hall` (terminal glazing, the
 concourse level of objects.js), `office` (hotel, CAC, station-block windows: 55 % of the cells lit), `station` (AirTrain
 station glass), `roofglass` (skylights, glazed roof lines: weaker), `cab` (tower cab: dim), `led` (the tower ribbon,
 `extras.led`: the objects.js LED wave), `beacon` (red obstruction light, `extras.obstruction_light`). The `glow` entries are
@@ -567,13 +579,16 @@ round 1: the fixed GROUND_Y + 62 sat in the F2 roof fascia). Inside that family'
 - 0.5 .. glass head + 0.5) the alpha-blended glass is hidden (it would darken the whole view); from outside it is drawn.
 
 **Physical plausibility of the integrated set** (`integration.json#plausibility`; every LOD of every file, unsimplified
-footprints):
+footprints; the bullets below are the first run of 5 Nov 03:00-04:45Z - the review round 1 checks and their results are in
+"Review round 1" at the end of this section):
 - Aircraft envelopes (every accepted type at every one of the 108 stands, `tools/stands/geom.py stand_env`, the envelope
   `check_stands.py` tests): **0 conflicts** (overlap > 0.5 m2 or < 2.0 m). Notes (< 3.5 m): F12 2.91 m (SFO Museum outline
   2.81 m), F17 3.15 m (outline 3.38 m: BA-F's measured roof edge, 0.23 m nearer). Next: G7 5.2, F5 5.5, E4 / F9 6.6 m.
 - Jet bridges (128, incl. 3 upper deck): docked and stowed tunnel + cab beyond 3 m of the rotunda vs every footprint, fixed
-  walkway + rotunda vs other buildings: **0 conflicts**.
-- Taxiways: no footprint inside an SFO Museum taxiway polygon; nearest taxiway centreline 27.0 m (BA-F), then 38 m.
+  walkway + rotunda vs other buildings: **0 conflicts**. (Review round 1, finding 6: this never tested the walkway and drum
+  against their own building, and skipped the LOD2 joined units: added, see the round-1 section.)
+- Taxiways: no footprint inside an SFO Museum taxiway polygon; nearest taxiway centreline 27.0 m (BA-F), then 38 m. (The
+  12.3-m note threshold was half of 81 ft twice over - finding 7; replaced by the per-lane ADG distance, round-1 section.)
 - Assets against each other, per 2-m height band on the triangles: largest core overlap 0.6 m2 (ITB hall / guideway tile
   at the ITB, band 16-18 m; below the 2 m2 note threshold); tower / T2, ITB / T1 / T3W: coplanar shared walls only.
 - What stays of the first-pass buildings (walkway rests, the kept walkway, kept ramp-level edges) against the assets in
@@ -669,4 +684,58 @@ What the renders show, and what was done about it:
 - Ground physics: the 3-D footprints are not in `ground.js buildingGrid` yet (above); the realtime owner's call.
 - KTX2 / meshopt compression (`tools/engine/glb_compress.mjs`) is still a later step: it needs the KTX2 transcoder and the
   meshopt decoder in the vendored bundle and the artifact (WASM policy unverified, engine.md 5).
+
+### Elevated landside roadways (key `roadways`, integration review round 1, 5 Nov 2026)
+
+```bash
+python3 tools/blender/build_roadways.py     # ~2 min: network + levels (roadways_net.py), clash trimming against the other
+                                            # assets' triangles, columns, GLB (LOD0-2 + roadways_lod2.glb), check sheet,
+                                            # manifest.json#roadways; then b3d_integrate.py (the roadways are a group there)
+```
+
+Finding 1 ("none of the elevated roadways exist in 3-D ... nobody owns this"): the integration step owns them. The 2-D check
+sheet comes first (`out/buildings3d/roadways_plan.png`, BR-01: plan on dimmed NAIP 2024 with the deck levels and columns,
+and the deck / soffit profiles of the two anchored structures), drawn from the same pieces the 3-D export uses.
+
+| What | From what | Tag |
+|---|---|---|
+| network | OSM ways (pinned extract of 2026-09-26, ODbL) with their node topology; the selection of `tools/build_landside.py` (bridge / layer >= 1), only ids the app keeps as elevated in `data/sfo_landside.json`, without the 6 ways that run inside a landside building (garage ramps: that asset's) | obs |
+| widths | OSM lanes x 3.6 m or the class default (`w_src`), + 0.6 m shoulders | osm / inf |
+| ITB departures deck | the layer-2 loop along the ITB west wall at `spec_itb.json level3.floor` 11.5 m (+-1.5 m) less a 0.15 m kerb = 11.35 m | inf |
+| domestic departures loop | OSM `Departures` layer-1 ways within 60 m of the domestic asset at its curb, `manifest.json#domestic` "departures curb above the apron (T1 / T2)" 4.877 m less the kerb = 4.73 m | unk (the domestic placeholder) |
+| other levels | one screened solve over the elevated ways and the at-grade roads touching them (`roadways_net.solve_levels`): layer prior 6.5 / 12.5 / 18.5 m (Caltrans HDM 309.2 15-ft clearance + ~1.5-1.9 m structure, recalled), ELL 100 m; the at-grade way leaving a bridge end pulled to grade with ELL_G 45 m (it becomes the approach ramp on fill), all other at-grade roads held at grade; crossings (no shared node) get clearance constraints: deck over deck / deck over road >= 1.2 + 4.6 m (the upper deck is raised; anchored levels kept), deck under the AirTrain guideway <= guideway soffit - 4.6 m (soffit measured on the landside asset's triangles) | inf |
+| structure | deck 1.2 m deep, concrete barriers 0.40 x 0.85 m on the outer edges, solid fill where the deck top is below 3.2 m, round columns D 1.4 m at ~30 m, each placed only where it stands clear of at-grade carriageways (+0.3 m), lower decks and every asset (tried on the centreline, across the deck and +-6 m along; else omitted) | inf |
+| clash trimming | every ribbon minus the other assets' occupancy in its own height band (12-m chunks): the ITB L3 curb sidewalk, the domestic curb decks, garage walls, AirTrain columns; same-level overlaps (merges) go to the higher-priority ribbon | - |
+| surface | asphalt: NAIP 2024 median over the deck tops (sRGB 213, 210, 202) x 0.57 linear (the NAIP-to-albedo factor of the integration note) -> 166, 163, 157; own lane-marking tiles (MUTCD 3A.06 10-ft dashes on 40-ft cycles, yellow left edge on one-way roads); concrete 172, 170, 163 | obs colour / inf |
+
+Results (`out/buildings3d/roadways_build.json`, `roadways_build.log`): 147 elevated OSM ways, 109 kept (32 outside the app's
+landside / airside clip, 6 inside landside buildings); 6,447 level nodes, 224 anchored, 152 crossing nodes, 38 under the
+guideway, 64 clearance constraints, **0 unresolved, 0 crossings below 4.6 m**; 43 at-grade roads lifted into approach ramps;
+built inside the terminal-core box x -2150..-550, z -50..1050 (115 pieces in 9 units: `itb_departures`,
+`domestic_departures`, 7 `interchange_*`; 38 pieces / 5.8 km beyond it - the US 101 / I-380 ramps 1-2 km away - keep their
+ground footprint as before); 317 m2 trimmed against assets (ITB 6, domestic 85, landside 127); 296 of 332 column positions
+placed; LOD0 / 1 / 2 46.9k / 14.6k / 6.9k triangles, `roadways.glb` 4.37 MB, `roadways_lod2.glb` 0.44 MB. Steep: 12 decks
+above 8 % (in the core box at most 12.1 %, the short motorway links west of the ITB that must clear the at-grade roads under
+them; the US 101 side 13.2 %) and 7 ramps - reported, not hidden. Below the domestic loop the soffit is 3.53 m over the
+arrivals roads: the domestic curb placeholder [unk], kept as the domestic asset has it (manifest `deviations`).
+Plausibility in `b3d_integrate.py` (the roadways are a group: elevated, so tested by their triangles in each height band;
+not in the ground physics, aircraft never reach them): no aircraft envelope, bridge or taxiway conflict; against the other
+assets the largest core overlap is 1.6 m2 (ITB approach ramp at Garage G, band 15-17 m: a ramp meeting the garage wall, below
+the 2 m2 note threshold).
+
+### Review round 1 (5 Nov 2026): dispositions
+
+| # | Finding | Disposition | Evidence |
+|---|---|---|---|
+| 1 | elevated roadways missing (major) | **fixed**: new asset `roadways.glb` owned by the integration step (above), loaded as a fifth group | BR-01 sheet; renders `integ/r3/high/cmp_new_itbwest.png`, `cmp_new_i3like.png`, `cmp_new_domcurb.png` |
+| 2 | night glow: white cards on the piers (major) | **fixed** (levels and pattern): every glow kind but the beacon soft-capped at 0.42 lamp units, hall 0.8 -> 0.30, office 0.9 -> 0.34, station 0.9 -> 0.32, roof glass 0.35 -> 0.14, soffit 0.35 -> 0.22, LED 1.0 -> 0.30; per 3 x 4 m cell levels 0.6-1.25 and a storey gradient 0.72 -> 1.08. **Not done**: a glow along a concourse band on BA-A / BA-G - the ITB asset has no glazing there ("no continuous concourse window band on BA-G: a2 shows none on the pier", manifest.json#itb), and lighting metal panels would invent windows | `integ/r3/high/cmp_new_itbnight.png` |
+| 3 | white slab at the ITB west wall (minor) | **fixed**: it was the first-pass ramp-level wall (terminal complex ring 2, edges 46-50, 64 m, G..G+5) 4.1-5.6 m in front of the ITB asset, just beyond the 3-m edge buffer; new gap rule: an uncovered edge next to a group's edges and within 8 m of that group goes to it (10 edges in all: ITB 5, domestic 5) | `integration.js replace.gap_edges`; `cmp_new_itbwest.png` |
+| 4 | parked cars: 2 shapes, no wheels (minor) | **routed to the landside group** (not fixed here): the cars are made by `tools/blender/landside_cars.py` and exported by `build_landside.py`, both the landside group's, whose round-1 rebuild was queued on the heavy lock during this work; the request (wheels / skirt at LOD0, a third shape, the black / grey paint with metallic 0.4 -> a clear-coat dielectric) is in manifest.json#integration.requests | - |
+| 5 | phones show LOD2 everywhere (critical) | **fixed**: low and medium tiers use `near` mode (Loading, above); LOD2 now appears on a phone only beyond ~670-890 m. LOD2 checked against LOD0 per building: `tools/blender/b3d_lod2_check.py` -> `out/buildings3d/integ/lod2_check.json` (domestic: all within limits but BA_C; flagged: the landside garages / RCC / MOC LOD2 roofs (median 1.6-11.8 m off), garage A / G / Hyatt tops, ITB BA-G top -5 m, domestic BA_C); `b3d_integrate.py` now tests the LOD2 meshes split per building (below) | `integ/r3/low/cmp_new_pierG.png` / `cmp_lod2_pierG.png`, `cmp_new_towercam.png` / `cmp_lod2_towercam.png`, `cmp_new_tower.png` |
+| 6 | plausibility never tested walkway / drum vs host; LOD2 joined units skipped (major) | **fixed**: (b') walkway and drum against their own building at every LOD and pose, on the app's own bridge solids (`scene2d.json` of 03:56Z; the facade crossing allowed within 2.5 m of the attach point; CONFLICT > 0.3 m2 and > 0.10 m deep), (d) with the joined LOD2 meshes split per building (domestic's `building: 'all'` included). Result: 393 tests, **1 conflict** - drum E9: 0.39 m2 of BA_E surfaces 0.32 m inside the drum (current pose, LOD0) - and 1 note (F8 drum 0.40 m2 touching, depth 0.00); B10 walkways and the D6 / D7 drums in the LOD2 eave the reviewer found are clear after the domestic round-1 rebuild (domestic.glb 10:54Z); the domestic-ITB LOD2 overlap is now below the note threshold (largest asset pair core 1.6 m2, roadways / Garage G) | `integration.json#plausibility.stats.walkway_drum_vs_host`, `asset_pairs`; requests: domestic (E9) |
+| 7 | taxilane threshold halved twice (minor) | **fixed**: distance per lane design group (AC 150/5300-13A Table 4-1 taxilane centreline to object: ADG III 24.7 / IV 34.3 / V 42.1 m), a lane's ADG = the largest wingspan among the stands whose envelope is within 45 m of it. Notes: BA-F 27.1 m to lane 9 (ADG V, needs 42.1 m), BA-G 38.6 m and the guideway 38.2 m to lane 302 (ADG V): in each case the SFO Museum geometry is as close (27.3 / 37.3 m) - existing condition, not the assets; the real lane is likely restricted (not verified) | `integration.json#plausibility.stats.taxilane_clearance` |
+| 8 | app collision data from first-pass outlines (minor) | **partly fixed**: `integration.js` now carries `physics.rings` (26 asset footprints, hangars / guideway / roadways out) and `js/live/app.js` passes them to `ground.js buildingGrid` (additive third parameter): off-stand aircraft now avoid the measured roof edges. **Not done**: `gates.js prepGeom` from the asset facades (walkway start / drum limits) - that changes every bridge and the bridges group's verification while it closes out; requested, with the vestibule removal (domestic) after it. The F10 CRJ2 1.40 m from BA-F (SFO Museum outline 1.43 m) is a stand-pose item (stands) | requests in manifest.json#integration |
+| 9 | phone artifact ships full GLBs near the 15-MB limit (minor) | **changed premise / fixed limit**: phones now load the full files near the camera, so the artifact keeps them (B3D=all); any file >= 14 MB is split into 12-MB pieces (`<name>.part<i>.wasm`, `window.SFO_B3D_PARTS`) and joined by the loader, so the landside file can grow | `tools/build3/phone_artifact_page.py` |
+| 10 | desktop budget: RGBA AO, draw calls, medium tier (minor) | **fixed**: AO repacked as R8 (200 -> 90 MB decoded, 66 MB at the 1024 cap); per-unit per-material merge (landside 286 -> 189 / 258 -> 161, tower 30 -> 23 / 23 -> 18 primitives; ITB / domestic already one mesh per material); medium tier in `near` mode | `integ/r3/*/cmp_info.json` |
+
 <!-- integration:end -->

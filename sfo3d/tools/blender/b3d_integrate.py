@@ -60,10 +60,28 @@ ROOT = os.path.abspath(os.path.join(HERE, '..', '..'))
 D3 = os.path.join(ROOT, 'data', 'buildings3d')
 OUTD = os.path.join(ROOT, 'out', 'buildings3d', 'integ')
 GROUND_Y = 3.0
-GROUPS = ['tower', 'itb', 'domestic', 'landside']
+GROUPS = ['tower', 'itb', 'domestic', 'roadways', 'landside']
 FILES = {'tower': ['tower.glb', 'tower_f1.glb', 'tower_lod2.glb'], 'itb': ['itb.glb', 'itb_lod2.glb'],  # tower.glb = F2 (default), tower_f1.glb = F1
-         'domestic': ['domestic.glb', 'domestic_lod2.glb'], 'landside': ['landside.glb', 'landside_lod2.glb']}
+         'domestic': ['domestic.glb', 'domestic_lod2.glb'], 'roadways': ['roadways.glb', 'roadways_lod2.glb'],  # roadways: tools/blender/build_roadways.py (review r1)
+         'landside': ['landside.glb', 'landside_lod2.glb']}
+# groups that replace first-pass app buildings (the roadways replace nothing: the app drew no elevated roads)
+REPL_GROUPS = ['tower', 'itb', 'domestic', 'landside']
 COVER_BUF, EDGE_BUF, COVER_MIN = 2.0, 3.0, 0.5
+# review round 1 (finding 3): a ramp-level wall edge not covered within EDGE_BUF but within EDGE_GAP of the group that
+# covers the edges next to it (a gap in a run, or the run's continuation in front of a set-back facade: the ITB west wall
+# stands 4-6 m behind the SFO Museum ring, which follows the curb) goes to that group too
+EDGE_GAP = 8.0
+# review round 1 (finding 7): building to taxilane-centreline distance per the lane's design group (FAA AC 150/5300-13A
+# Table 4-1, taxilane centreline to fixed or movable object = half the taxilane OFA: ADG II 57.5 ft, III 81, IV 112.5,
+# V 138, VI 167.5 ft); a lane's group is the largest of the stands it serves (stands whose envelope is within LANE_SERVE_M),
+# by wingspan (ADG II < 79 ft, III < 118, IV < 171, V < 214, VI < 262 ft; AC 150/5300-13A Table 1-1)
+ADG_CL_OBJ = {2: 17.5, 3: 24.7, 4: 34.3, 5: 42.1, 6: 51.1}
+ADG_SPAN = [(24.0, 2), (36.0, 3), (52.0, 4), (65.0, 5), (80.0, 6)]
+LANE_SERVE_M = 45.0
+# review round 1 (finding 6): fixed walkway and rotunda drum vs the building they serve, in their own height band (gates.js:
+# walkway floor DEPARTURE_LEVEL 5.4 m at the building .. the rotunda floor, WALK_H 3.0 m tall; the drum from grade to the
+# walkway roof); the facade crossing allowed: the first WALK_ENTRY_M of the walkway from its start (tools/stands/geom.py walk)
+WALK_BAND = (4.2, 8.6); DRUM_BAND = (0.3, 8.6); WALK_ENTRY_M = 2.5
 # landside nodes that are hangars (aircraft may stand inside: js/live/ground.js buildingGrid skips kind 'hangar')
 HANGARS = {'superbay', 'united_moc'}  # the MOC node holds the large hangar block + barrel-vault hangars (manifest)
 CT = {5126: ('f', 4), 5125: ('I', 4), 5123: ('H', 2), 5121: ('B', 1), 5122: ('h', 2), 5120: ('b', 1)}
@@ -148,10 +166,13 @@ def unit_of(group, rec):
         return 'BA-A' if nm.startswith('ba_a') else 'BA-G' if nm.startswith('ba_g') else 'hall'
     if group == 'domestic':
         b = rec['extras'].get('building')
-        return b if b else '*'
+        return b if b and b != 'all' else '*'  # the joined LOD2 mesh carries building 'all' (split per building below)
     if group == 'landside':
         # the building node is the root's direct child
         return rec['chain'][1].get('name') if len(rec['chain']) > 1 else '*'
+    if group == 'roadways':
+        b = rec['extras'].get('building')
+        return b if b else '*'
     return '*'
 
 
@@ -180,6 +201,7 @@ def footprints(log):
     F = {}  # group -> unit -> lod -> {'geom', 'y'}
     TR = {}  # group -> all triangles (every LOD and file; x, y, z) for the height-aware occupancy tests
     TU = {}  # (group, unit) -> LOD0 / LOD1 triangles (the audit tiers)
+    TL = {}  # (group, unit, lod) -> triangles (walkway / drum vs host, per LOD)
     files = {}
     for g in GROUPS:
         F[g] = {}; TR[g] = []
@@ -192,8 +214,30 @@ def footprints(log):
             acc = {}
             for r in recs:
                 key = (unit_of(g, r), lod_of(r)); acc.setdefault(key, []).append(r['tris'])
+            # review round 1 (finding 6): the joined LOD2 meshes ('*', what phones showed at every distance) split per
+            # building (each triangle to the unit whose LOD0 / LOD1 footprint holds its centroid, else the nearest within
+            # 6 m), so the asset-vs-asset and walkway / drum checks see the LOD2 outline of each building
+            if ('*', 2) in acc and len([u for (u, l) in acc if u != '*']) or ('*', 2) in acc and F[g]:
+                Tj = np.concatenate(acc.pop(('*', 2)))
+                near = {u: unary_union([e['geom'] for l, e in L.items() if l < 2]) for u, L in F[g].items() if u != '*'}
+                for (u, l), T in list(acc.items()):
+                    if u != '*' and l < 2 and u not in near: near[u] = plan_geom(np.concatenate(T))
+                if near:
+                    names = list(near); geoms = [near[u] for u in names]
+                    cen = shapely.points(Tj[:, :, [0, 2]].mean(1)); own = np.full(len(Tj), -1)
+                    for k, gg in enumerate(geoms):
+                        shapely.prepare(gg); own[(own < 0) & shapely.contains(gg, cen)] = k
+                    rest = np.nonzero(own < 0)[0]
+                    if len(rest):
+                        d = np.stack([shapely.distance(gg, cen[rest]) for gg in geoms], 1); k = d.argmin(1)
+                        own[rest] = np.where(d[np.arange(len(rest)), k] < 6.0, k, -1)
+                    for k, u in enumerate(names):
+                        if (own == k).any(): acc.setdefault((u, 2), []).append(Tj[own == k])
+                    if (own < 0).any(): acc[('*', 2)] = [Tj[own < 0]]
+                else: acc[('*', 2)] = [Tj]
             for (u, l), T in acc.items():
                 T = np.concatenate(T); geom = plan_geom(T); TR[g].append((u, T)); TU.setdefault((g, u), []).append(T) if l < 2 else None
+                TL.setdefault((g, u, l), []).append(T)
                 ent = F[g].setdefault(u, {}).setdefault(l, dict(geom=Polygon(), y=[1e9, -1e9], files=[]))
                 ent['geom'] = unary_union([ent['geom'], geom]) if not ent['geom'].is_empty else geom
                 ent['y'] = [min(ent['y'][0], float(T[:, :, 1].min())), max(ent['y'][1], float(T[:, :, 1].max()))]
@@ -209,11 +253,13 @@ def footprints(log):
         TR[g]['all'] = dict(T=TA, lo=TA[:, :, [0, 2]].min(1), hi=TA[:, :, [0, 2]].max(1), ylo=TA[:, :, 1].min(1), yhi=TA[:, :, 1].max(1))
         shapely.prepare(TR[g]['solid'])
     TR['_units'] = {k: np.concatenate(v) for k, v in TU.items()}
+    TR['_lods'] = {k: np.concatenate(v) for k, v in TL.items()}
     return F, TR, files
 
 
 def elevated(g, u):
-    return g == 'landside' and u.startswith('airtrain')
+    # decks on columns, open below: occupied only where their triangles are (the guideway; the roadways, review r1)
+    return (g == 'landside' and u.startswith('airtrain')) or g == 'roadways'
 
 
 def occupancy(TR, g, bounds, y0, y1, pad=6.0, tri_only=False):
@@ -248,6 +294,7 @@ def replacement(F, TR, log):
     B = json.load(open(os.path.join(ROOT, 'data', 'sfo_buildings.json')))
     A = json.load(open(os.path.join(ROOT, 'data', 'sfo_airport.json')))
     G = GROUND_Y
+    GROUPS = REPL_GROUPS
     GP = {g: unary_union([e['geom'] for L in F[g].values() for e in L.values()]).buffer(COVER_BUF) for g in GROUPS}
     for g in GROUPS: shapely.prepare(GP[g])
     def occ_all(geo, y0, y1):
@@ -276,20 +323,36 @@ def replacement(F, TR, log):
                 f = fw
         table.append(('part', i, p['kind'], p['name'], g, round(f, 3), {k: round(v, 3) for k, v in fr.items() if v > 0.01}, len(rest) if rest is not None else None))
         if g: rep['parts'].append([i, p['name'], g] + ([rest] if rest else []))
+    gap_log = []
     for ri, r in enumerate(B['complex']):
-        runs = []; n = len(r); ring = LineString(list(r) + [r[0]])
+        runs = []; n = len(r); ring = LineString(list(r) + [r[0]]); gap_from = set()
         O = occ_all(ring, G, G + 5.0); OE = {k: O[k].buffer(EDGE_BUF) for k in GROUPS}
         for k in GROUPS: shapely.prepare(OE[k])
-        Lg = {k: 0.0 for k in GROUPS}; L = 0.0
+        Lg = {k: 0.0 for k in GROUPS}; L = 0.0; eg = [None] * n; segs = []
         for i in range(n):
-            a, b = r[i], r[(i + 1) % n]; seg = LineString([a, b]); L += seg.length
+            a, b = r[i], r[(i + 1) % n]; seg = LineString([a, b]); L += seg.length; segs.append(seg)
             if seg.length < 0.05: continue
             fr = {k: seg.intersection(OE[k]).length / seg.length for k in GROUPS}; g = max(fr, key=fr.get)
-            g = g if fr[g] >= COVER_MIN else None
-            if g:
-                Lg[g] += seg.length
-                if runs and runs[-1][2] == g and runs[-1][1] == i - 1: runs[-1][1] = i
-                else: runs.append([i, i, g])
+            eg[i] = g if fr[g] >= COVER_MIN else None
+        # gap rule (EDGE_GAP, review r1 finding 3): uncovered edges next to a group's edges, within EDGE_GAP of it
+        OG = {k: O[k].buffer(EDGE_GAP) for k in GROUPS}
+        for k in GROUPS: shapely.prepare(OG[k])
+        gap_added = 0
+        for _ in range(n):
+            ch = False
+            for i in range(n):
+                if eg[i] is not None or segs[i].length < 0.05: continue
+                for j in ((i - 1) % n, (i + 1) % n):
+                    g = eg[j]
+                    if g and segs[i].intersection(OG[g]).length / segs[i].length >= COVER_MIN: eg[i] = g; gap_from.add(i); gap_added += 1; ch = True; break
+            if not ch: break
+        for i in range(n):
+            g = eg[i]
+            if not g: continue
+            Lg[g] += segs[i].length
+            if runs and runs[-1][2] == g and runs[-1][1] == i - 1: runs[-1][1] = i
+            else: runs.append([i, i, g])
+        if gap_added: gap_log.append((ri, sorted(gap_from), gap_added))
         rep['complexEdges'][str(ri)] = runs
         table.append(('complex-ring', ri, 'apron-level', 'Terminal complex ramp level (walls G..G+5)', None, round(sum(Lg.values()) / L, 3), {k: round(v / L, 3) for k, v in Lg.items() if v > 0}, None))
     for i, s in enumerate(A['structures']):
@@ -306,6 +369,8 @@ def replacement(F, TR, log):
             if g: rep['atc' if s['kind'] == 'atc' else 'rail'] = g
         elif g: rep['structures'].append([i, s['name'], g])
         table.append(('structure', i, s['kind'], s['name'], g, round(f, 3), {k: round(v, 3) for k, v in fr.items() if v > 0.01}, None))
+    for ri, ix, k in gap_log: log('  ramp-level ring %d: %d edge(s) %s routed by the gap rule (within %.0f m of the group covering their neighbours)' % (ri, k, ix, EDGE_GAP))
+    rep['gap_edges'] = {str(ri): ix for ri, ix, k in gap_log}
     log('replacement table (element, index, kind, name, -> group, coverage, coverage by group, kept walkway pieces):')
     for t in table: log('  %-12s %3d %-10s %-44s -> %-9s %.3f %s%s' % (t[0], t[1], t[2], t[3][:44], t[4] or 'KEEP', t[5], t[6], '' if t[7] is None else '  rest %d' % t[7]))
     return rep, table
@@ -368,28 +433,136 @@ def plausibility(F, TR, rep, log):
                 ov = fw.intersection(fp).area
                 if ov > 0.3: res['notes'].append(dict(check='fixed walkway', stand=s['name'], gate=b['gate'], group=g, unit=u, lod=l, overlap_m2=round(ov, 2)))
     res['stats']['bridges_checked'] = nb
+    # b'. (review round 1, finding 6) the fixed walkway and the rotunda drum against the building they serve (the units
+    #     whose footprint is within 4 m of the bridge's attach point), at every LOD (LOD2 split per building): the plan area
+    #     of that building's surfaces inside each part's volume (its triangles clipped to the part's height band, vertical
+    #     ones as 5-cm strips, intersected with the part's plan). The facade crossing is allowed: the first WALK_ENTRY_M
+    #     around the attach point (vestibules / door surrounds). Parts: the app's own bridge solids at every pose
+    #     (out/buildings3d/integ/draw/scene2d.json, jobs/extract2d.mjs: walkway tube and slabs, pedestal and rotunda drum),
+    #     else tools/stands/geom.py bridge_parts (walkway 2.6 m wide, drum r 2.45 m) in WALK_BAND / DRUM_BAND
+    scene = None
+    for cand in (os.environ.get('SCENE2D'), os.path.join(ROOT, 'out', 'draw', 'scene2d.json'), os.path.join(OUTD, 'draw', 'scene2d.json')):
+        if cand and os.path.exists(cand): scene = cand; break
+    parts_of = {}
+    if scene:
+        SC = json.load(open(scene))
+        for b in SC['bridges']:
+            L = []
+            for pk, P_ in b['poses'].items():
+                rc = P_['pose'].get('rc') or b.get('rc'); att = P_['pose'].get('attach') or b['attach']
+                wline = LineString([att, rc]) if rc and math.dist(att, rc) > 0.5 else None
+                for pr in P_['parts']:
+                    hull = Polygon(pr['hull']); c = hull.centroid
+                    if pr['part'] in ('walkway', 'box') and wline is not None and wline.distance(c) < 2.5: L.append((pk, 'walkway', hull, pr['y']))
+                    elif pr['part'] == 'pedestal' or (pr['part'] == 'cyl' and rc and math.dist([c.x, c.y], rc) < 0.6): L.append((pk, 'drum', hull, pr['y']))
+            parts_of[(b['stand'], b['gate'], str(b['door']))] = (L, b['attach'])
+        res['stats']['bridge_solids'] = os.path.relpath(scene, ROOT) + ' (generated %s, %s)' % (SC['meta'].get('generated'), SC['meta'].get('git'))
+    else: res['stats']['bridge_solids'] = 'tools/stands/geom.py bridge_parts (no scene2d.json)'
+    def clip_plan(T, y0, y1):
+        """plan polygons of the triangles T clipped to y0 <= y <= y1 (vertical pieces as 5-cm strips)"""
+        out = []
+        for t in T:
+            poly = [tuple(v) for v in t]
+            for lim, keep in ((y0, lambda v: v[1] >= y0), (y1, lambda v: v[1] <= y1)):
+                if not poly: break
+                res_ = []
+                for k in range(len(poly)):
+                    a, b_ = poly[k], poly[(k + 1) % len(poly)]
+                    ia, ib = keep(a), keep(b_)
+                    if ia: res_.append(a)
+                    if ia != ib:
+                        f = (lim - a[1]) / (b_[1] - a[1]); res_.append(tuple(a[q] + f * (b_[q] - a[q]) for q in range(3)))
+                poly = res_
+            if len(poly) < 3: continue
+            xz = [(v[0], v[2]) for v in poly]; P_ = Polygon(xz)
+            if P_.is_valid and P_.area > 1e-4: out.append(P_)
+            else:
+                xs = np.array(xz); d = np.linalg.norm(xs[:, None] - xs[None], axis=2); a, b_ = np.unravel_index(d.argmax(), d.shape)
+                if d[a, b_] > 0.02: out.append(LineString([xz[a], xz[b_]]).buffer(0.025, cap_style='flat'))
+        return unary_union(out) if out else Polygon()
+    hosts_of = {}
+    for g, u, l, fp, y in units:
+        if g in REPL_GROUPS: hosts_of.setdefault((g, u), {})[l] = fp
+    wd = []
+    for s in S:
+        for b in s['bridges'] + s.get('bridges_upper', []):
+            key = (s['name'], b['gate'], str(b['door']))
+            if key in parts_of: PL, att = parts_of[key]
+            else:
+                wl, rot, tc = GM.bridge_parts(b, b['cab']); att = b['attach']
+                PL = [('model', 'walkway', wl, [GROUND_Y + WALK_BAND[0], GROUND_Y + WALK_BAND[1]])] + ([('model', 'drum', rot, [GROUND_Y + DRUM_BAND[0], GROUND_Y + DRUM_BAND[1]])] if b.get('rotunda') else [])
+            at = Point(att); allow = at.buffer(WALK_ENTRY_M)
+            host = [(g, u) for (g, u), L in hosts_of.items() if any(fp.distance(at) < 4.0 for fp in L.values())]
+            for g, u in host:
+                for l in sorted(hosts_of[(g, u)]):
+                    T = TR['_lods'].get((g, u, l))
+                    if T is None or not len(T): continue
+                    lo, hi = T[:, :, [0, 2]].min(1), T[:, :, [0, 2]].max(1); ylo, yhi = T[:, :, 1].min(1), T[:, :, 1].max(1)
+                    worst = {'walkway': (0.0, None, 0.0), 'drum': (0.0, None, 0.0)}
+                    for pk, kind, hull, (y0, y1) in PL:
+                        x0, z0, x1, z1 = hull.bounds
+                        m = (hi[:, 0] > x0) & (lo[:, 0] < x1) & (hi[:, 1] > z0) & (lo[:, 1] < z1) & (yhi > y0 + 0.02) & (ylo < y1 - 0.02)
+                        if not m.any(): continue
+                        o = clip_plan(T[m], y0 + 0.02, y1 - 0.02).intersection(hull)
+                        if kind == 'walkway': o = o.difference(allow)
+                        a = o.area
+                        if a > 0.05:
+                            # penetration depth: the farthest point of the overlap from the part's outline
+                            pts = shapely.get_coordinates(o); dep = float(shapely.distance(hull.exterior, shapely.points(pts)).max()) if len(pts) else 0.0
+                        else: dep = 0.0
+                        if a > worst[kind][0]: worst[kind] = (a, pk, dep)
+                    rec = dict(stand=s['name'], gate=b['gate'], door=b['door'], group=g, unit=u, lod=l, walkway_m2=round(worst['walkway'][0], 2), walkway_pose=worst['walkway'][1], walkway_depth_m=round(worst['walkway'][2], 2),
+                               drum_m2=round(worst['drum'][0], 2), drum_pose=worst['drum'][1], drum_depth_m=round(worst['drum'][2], 2))
+                    wd.append(rec)
+                    # CONFLICT: > 0.3 m2 of surface inside and deeper than 0.10 m (a wall that only touches the outline is a
+                    # contact, e.g. the domestic door surrounds meet the drums by design); NOTE: > 0.3 m2 at <= 0.10 m
+                    for kind, lab in (('walkway', 'fixed walkway: host building surfaces inside it (beyond the facade crossing)'), ('drum', 'rotunda drum: host building surfaces inside it')):
+                        a, pk, dep = worst[kind]
+                        if a > 0.3: res['conflicts' if dep > 0.10 else 'notes'].append(dict(check=lab, stand=s['name'], gate=b['gate'], door=b['door'], group=g, unit=u, lod=l, pose=pk, overlap_m2=round(a, 2), depth_m=round(dep, 2)))
+    res['stats']['walkway_drum_vs_host'] = sorted([w for w in wd if w['walkway_m2'] > 0.05 or w['drum_m2'] > 0.05], key=lambda w: -(w['walkway_m2'] + w['drum_m2']))[:60]
+    res['stats']['walkway_drum_tests'] = len(wd)
     # c. taxiways
     tw = unary_union([ring_poly(pp) for t in A['taxiways'] for pp in t['polys']]); shapely.prepare(tw)
     for g, u, l, fp, y in units:
         ov = fp.intersection(tw).area
         if ov > 0.5: res['conflicts'].append(dict(check='taxiway polygon', group=g, unit=u, lod=l, overlap_m2=round(ov, 1)))
-    cl = unary_union([LineString(c) for c in DT['centerlines'] if len(c) >= 2])
+    # taxilane centreline to building per the lane's design group (ADG_CL_OBJ; review round 1, finding 7: the old 12.3 m
+    # was half of 81 ft, itself already the centreline-to-object distance). A lane's ADG = the largest wingspan among the
+    # stands it serves (stand envelope within LANE_SERVE_M of the lane), else ADG III (the smallest jet group at SFO)
+    CLs = [(i, LineString(c), (DT['centerlineMeta'][i] or {}).get('ref') if i < len(DT.get('centerlineMeta', [])) else None) for i, c in enumerate(DT['centerlines']) if len(c) >= 2]
+    def span_of(st):
+        t = st.get('largest_type'); r = GM.APP.get(t) if t else None
+        return (r or {}).get('span') or 0.0
+    lane = []
+    for i, ln, ref in CLs:
+        spans = [span_of(st) for st in S if env[st['name']].distance(ln) < LANE_SERVE_M]
+        sp = max(spans, default=0.0); adg = next((a for lim, a in ADG_SPAN if sp < lim), 6) if sp else 3
+        lane.append((i, ln, ref, max(adg, 3), sp))
+    # the same place in the SFO Museum geometry: terminal complex, boarding areas and the structures (garages, the AirTrain
+    # rail slab, stations, hangars) - what the asset was modelled on
+    oldo = unary_union([old] + [ring_poly(pp) for st in A['structures'] for pp in st['polys']])
     dmin = {}
     for g, u, l, fp, y in units:
-        d = fp.distance(cl); k = (g, u)
-        if k not in dmin or d < dmin[k]: dmin[k] = d
-    res['stats']['taxiway_centreline_min_m'] = {f'{g}/{u}': round(d, 1) for (g, u), d in sorted(dmin.items(), key=lambda kv: kv[1])}
-    for (g, u), d in dmin.items():
-        # FAA AC 150/5300-13B Table 4-1 / 4-2 (taxilane object free area, ADG III: 81 ft = 24.7 m wide -> 12.3 m from the
-        # centreline): a building closer than that to a centreline the app's traffic uses is reported (only the apron
-        # taxilanes between piers come close; the stand checks above are the binding ones)
-        if d < 12.3: res['notes'].append(dict(check='taxiway centreline', group=g, unit=u, dist_m=round(d, 1), note='< 12.3 m (ADG III taxilane OFA half-width)'))
+        if g == 'roadways': continue
+        for i, ln, ref, adg, sp in lane:
+            d = fp.distance(ln)
+            if d > 60: continue
+            k = (g, u); need = ADG_CL_OBJ[adg]
+            if k not in dmin or d - need < dmin[k]['margin_m']:
+                dmin[k] = dict(dist_m=round(d, 1), lane=i, ref=ref, adg=adg, span_m=round(sp, 1), need_m=need, margin_m=round(d - need, 1), museum_outline_m=round(oldo.distance(ln), 1))
+    res['stats']['taxilane_clearance'] = {f'{g}/{u}': v for (g, u), v in sorted(dmin.items(), key=lambda kv: kv[1]['margin_m'])}
+    res['stats']['taxiway_centreline_min_m'] = {f'{g}/{u}': v['dist_m'] for (g, u), v in sorted(dmin.items(), key=lambda kv: kv[1]['dist_m'])}
+    for (g, u), v in dmin.items():
+        if v['margin_m'] < 0:
+            # a NOTE when the SFO Museum outline is as close (the real building; the asset did not introduce it), else CONFLICT
+            if v['museum_outline_m'] <= v['dist_m'] + 0.5: res['notes'].append(dict(check='taxilane OFA (ADG %d)' % v['adg'], group=g, unit=u, **v, note='the surveyed SFO Museum outline is as close: existing condition, not the asset'))
+            else: res['conflicts'].append(dict(check='taxilane OFA (ADG %d)' % v['adg'], group=g, unit=u, **v))
     # d. groups against each other, height-aware: in the plan overlap of two units of different groups, the plan
     #    occupancy of each group per 2-m height band (triangles meeting the band); the largest band overlap counts.
     #    Strips narrower than 0.6 m are coplanar shared walls (no volume shared)
     ext = {}
     for g, u, l, fp, y in units:
-        if u in ('*', 'all'): continue
+        if u in ('*', 'all'): continue  # '*' = LOD2 triangles no building claims (split above)
         k = (g, u); e = ext.setdefault(k, [Polygon(), [1e9, -1e9]]); e[0] = unary_union([e[0], fp]); e[1] = [min(e[1][0], y[0]), max(e[1][1], y[1])]
     ks = list(ext); pairs = []
     for i, a in enumerate(ks):
@@ -524,7 +697,8 @@ def main(argv):
             if u == '*': continue  # joined LOD2 nodes: their extent is inside the per-unit footprints (checked above)
             if g == 'landside' and u in HANGARS: continue
             if g == 'landside' and u.startswith('airtrain'): continue  # elevated guideway: aircraft never reach it (landside)
-            phys += rings_of(geo, 0.5)
+            if g == 'roadways': continue  # landside roadways: aircraft never reach them
+            phys += rings_of(geo, 0.25)
     out = dict(
         about='Integration of data/buildings3d/*.glb into the app (tools/blender/b3d_integrate.py; docs/research/buildings3d.md, integration section)',
         generated=time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()), files=files,
@@ -537,7 +711,10 @@ def main(argv):
         footprints=fps, plausibility=res)
     out['physics'] = dict(rings=phys, note='blocking footprints for js/live/ground.js buildingGrid (not wired: the realtime tools import ground.js; hangars and the elevated guideway excluded as the app excludes hangars and rail)')
     json.dump(out, open(os.path.join(D3, 'integration.json'), 'w'), indent=None, separators=(',', ':'))
-    js = dict(replace=rep, tower=out['tower'])
+    # physics (review round 1, finding 8): the blocking footprints also go to the app (js/live/app.js buildingGrid extra),
+    # simplified to 0.25 m and rounded to 0.1 m (the grid is 2 m)
+    phys_js = [[[[round(x, 1), round(z, 1)] for x, z in r] for r in poly] for poly in phys]
+    js = dict(replace=rep, tower=out['tower'], physics=dict(rings=phys_js, note='3-D asset footprints for js/live/ground.js buildingGrid (hangars, guideway, roadways excluded)'))
     with open(os.path.join(D3, 'integration.js'), 'w') as f:
         f.write('// Generated by tools/blender/b3d_integrate.py from data/buildings3d/*.glb + manifest.json (do not edit). The\n'
                 '// first-pass app buildings each Blender asset replaces (routed into their own items by js/live/world.js so the\n'
@@ -548,11 +725,18 @@ def main(argv):
     nrest = sum(len(e[3]) for e in rep['parts'] if len(e) > 3)
     merge_manifest(dict(
         loader='js/three/buildings3d.js (GLTFLoader from vendor/three/three.module.js, tools/build3/three-entry.js); hooks: js/three/renderer3.js, js/live/world.js, js/live/airport.js, js/live/terminals.js',
-        files=dict(full=['data/buildings3d/' + f + '.glb' for f in ('tower', 'itb', 'domestic', 'landside')], phone_lod2=['data/buildings3d/' + f + '_lod2.glb' for f in ('tower', 'itb', 'domestic', 'landside')],
+        files=dict(full=['data/buildings3d/' + f + '.glb' for f in ('tower', 'itb', 'domestic', 'roadways', 'landside')], lod2=['data/buildings3d/' + f + '_lod2.glb' for f in ('tower', 'itb', 'domestic', 'roadways', 'landside')],
+                   modes='high / ultra: full files; low (phones) and medium: ?b3d=near - the lod2 files first, then each group\'s full file when the camera comes within its LOD2 switch distance (review r1 finding 5)',
                    tower_f1='data/buildings3d/tower_f1.glb (?b3dtower=f1; tower.glb is F2)', table='data/buildings3d/integration.js (app) / integration.json (footprints, plausibility)'),
         replaces=dict(parts=len(rep['parts']), walkway_rest_pieces=nrest, structures=len(rep['structures']), atc=rep['atc'], rail=rep['rail'],
                       complex_edge_runs=sum(len(v) for v in rep['complexEdges'].values())),
-        plausibility=dict(conflicts=len(res['conflicts']), notes=len(res['notes']), nearest_envelopes=res['stats']['nearest_envelopes'][:3], bridges_checked=res['stats']['bridges_checked']),
+        plausibility=dict(conflicts=len(res['conflicts']), notes=len(res['notes']), nearest_envelopes=res['stats']['nearest_envelopes'][:3], bridges_checked=res['stats']['bridges_checked'],
+                          conflict_list=res['conflicts'][:20], walkway_drum_tests=res['stats'].get('walkway_drum_tests'), bridge_solids=res['stats'].get('bridge_solids'),
+                          taxilane=list(res['stats'].get('taxilane_clearance', {}).items())[:5]),
+        requests=['domestic: BA_E drum E9 - 0.39 m2 of BA_E surfaces 0.32 m inside the rotunda drum (current pose, LOD0; app solids of 2026-11-05T03:56)',
+                  'landside: parked cars - wheels / skirt at LOD0 and a third shape (review r1 finding 4; landside_cars.py is the landside group\'s)',
+                  'bridges / realtime: gates.js prepGeom walkway start and drum limits from the 3-D facades (integration.json footprints / tiers), then the domestic vestibules can go (review r1 finding 8)',
+                  'stands: F10 CRJ2 1.40 m from the BA-F body tier (SFO Museum outline 1.43 m): a stand pose item, not the building'],
         generated=out['generated'], tool='tools/blender/b3d_integrate.py', doc='docs/research/buildings3d.md (integration section)'))
     log('wrote data/buildings3d/integration.json (%.0f kB), integration.js (%.0f kB) in %.0f s' % (os.path.getsize(os.path.join(D3, 'integration.json')) / 1e3, os.path.getsize(os.path.join(D3, 'integration.js')) / 1e3, time.time() - t0))
     return 1 if res['conflicts'] else 0

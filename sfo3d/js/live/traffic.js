@@ -77,6 +77,9 @@ const XPDR_OFF_MS = 10 * 60000;
 // the tug of a push-back is assumed connected this long after the push stopped (towOn: the pivot about the main gear onto
 // the reported heading) [inferred design value]
 const TOW_MS = 90000;
+// a silent occupant's bridge retracted ahead of an arrival on its lead-in docks again this long after the arrival was last
+// seen there (retractAhead) [design value: an arrival on the lead-in reaches the stop within ~1 min at 1-2 m/s]
+const AHEAD_HOLD_MS = 90000;
 const REACQ_PARK_M = 15;         // a parked aircraft heard again within this distance of its parked pose has not moved
 const STORE_KEY = 'sfolive.parked.v4'; // v4: stand names back to gate numbers, new stands (static_geometry_round1.md #4)
 // audit s.6.4-6.6 (ft/min, kt/s, ft, ft/min). DECEL_TD: flare deceleration before touchdown was 0.4-0.8 kt/s at night
@@ -1019,7 +1022,14 @@ export class Traffic {
         // push, 25 Sep 18:40Z -- was confirmed only by the report 32 m out)
         strongPush = r.push && r.th != null && d >= 4 && back >= 0.9 * d && Math.abs(lat) <= 3 && (r.gsKt ?? 0) >= 0.8;
       }
+      // (round 3: a parked aircraft at a nose-in contact stand cannot move forward past its stop mark -- the terminal is there:
+      // such a 'motion' is a GNSS jump. UAL888 B772 at G3, 4 Nov 19:39:37Z, reported 1-2 m/s along its nose for 4 s, 11 m
+      // toward the building and back; with its bridge already retracted on the departure signal nothing held the body, and
+      // its fuselage was drawn in the terminal for 16 s)
+      const intoTerminal = cand && ref && !r.push && !tr.pushback && tr.gate && tr.gate.bridge && tr.inBlockAt != null && (() => { const g = tr.gate, dx = r.x - ref[0], dz = r.z - ref[1], d = Math.hypot(dx, dz), fwd = dx * g.w.dx + dz * g.w.dz;
+        const T = typeOf(tr); const past = (r.x - g.w.x) * g.w.dx + (r.z - g.w.z) * g.w.dz + antOf(T, T ? T.L : 38) - stopAlong(g, tr.info.icao); return d > 2.5 && fwd > 0.6 * d && past > 2; })();
       if (!cand) tr.mvCand = null;
+      else if (intoTerminal) { moving = false; r.noise = true; tr.mvCand = null; this.counters.intoTerminal = (this.counters.intoTerminal || 0) + 1; }
       else if (strongPush) { moving = true; r.mv = true; tr.mvCand = null; this.counters.pushEarly = (this.counters.pushEarly || 0) + 1; }
       else if (!this.motionConfirmed(tr, r, ref)) { moving = false; r.noise = true; if (tr._pushSetAt === r.t) { tr.pushback = false; r.push = false; } this.counters.motionHeld = (this.counters.motionHeld || 0) + 1; }
       else moving = true;
@@ -1092,7 +1102,19 @@ export class Traffic {
       if ((g.bridge || g.sharesBridgesOf) && g.occupant && g.occupant !== tr.hex) { const o = this.tracks.get(g.occupant);
         if (o && o.stale && !o.dropping && !o.removed && this.onLeadInClose(tr, g, r)) { const why = this.stalePlanGone(o, tr, g, t);
           if (why) { this.event(o, t, 'stale-replaced', { by: tr.hex, ahead: g.name, why }); this.fadeRemove(o, 'replaced'); this.counters.ghostAhead = (this.counters.ghostAhead || 0) + 1; }
-          else this.counters.ghostAheadKept = (this.counters.ghostAheadKept || 0) + 1; } } }
+          // (no evidence: the occupant stays drawn, but its jet bridge starts back now, at the sheet's maximum rates -- if the
+          // arrival really drives in, GroundPhysics removes the ghost with the bridge already clear instead of leaving it
+          // extended at an empty stand for 10-16 s (bridge.orphan); if the arrival stops short or turns away, the bridge docks
+          // again AHEAD_HOLD_MS after the arrival was last seen on the lead-in (gates.js redock))
+          else { this.counters.ghostAheadKept = (this.counters.ghostAheadKept || 0) + 1; this.retractAhead(o, t, tr); } } } }
+  }
+  // the bridge of a silent occupant o retracts ahead of arrival tr (see groundLogic); refreshed while tr stays on the lead-in
+  retractAhead(o, t, tr) {
+    const E = o.earlyUndock; if (E) { if (E.why === 'ahead') E.t = t; return; }
+    if (!o.bridgeOn || !o.bridgeGate || o.leaving) return;
+    o.bridgeOn = false; o.earlyUndock = { t, why: 'ahead', g: o.bridgeGate, hurried: true, by: tr.hex };
+    this.counters.bridgeAhead = (this.counters.bridgeAhead || 0) + 1; this.event(o, t, 'bridge-ahead', { stand: o.gate ? o.gate.name : null, by: tr.hex });
+    if (this.onGateChange) { this.onGateChange(o.bridgeGate, null, { early: true, why: 'ahead' }); this.onGateChange(o.bridgeGate, null, { fast: true, s: FAST_UNDOCK_S }); }
   }
   // a moving report r on stand g's lead-in, close to the stop mark (round 3, see groundLogic)
   onLeadInClose(tr, g, r) {
@@ -1491,7 +1513,7 @@ export class Traffic {
   // cleared) and the next time it comes on is a new one, not blocked: round 3, review realtime-v6)
   cancelEarly(tr, t, why) {
     const E = tr.earlyUndock; if (!E) return; tr.earlyUndock = null;
-    if (why === 'silent') tr.xpdrOnAt = null; else tr._earlyBlock = { why: E.why, t };
+    if (why === 'silent') tr.xpdrOnAt = null; else if (E.why !== 'ahead') tr._earlyBlock = { why: E.why, t };
     this.counters.earlyCancelled = (this.counters.earlyCancelled || 0) + 1; this.event(tr, t, 'early-cancel', { stand: tr.gate ? tr.gate.name : null, why, signal: E.why });
     // (syncBridge docks it again from its lock -- onGateChange(g, tr) with the same type and pose = gates.js redock)
   }
@@ -1556,7 +1578,7 @@ export class Traffic {
       if (!path && bOut > -3 && bOut < 3 && bLat < 3 && Math.abs(wrapPi(c0.psi - g.w.hdg)) < 15 * DEG) { path = { here: true }; this.counters.silentDockHere = (this.counters.silentDockHere || 0) + 1; }
       if (!path) { this.counters.silentDockBehind = (this.counters.silentDockBehind || 0) + 1; return false; }
       // (round 3, review realtime-v4: the drive must be clear of every other aircraft drawn on the ground -- planforms every 3 m
-      // of the drive, 1 m margin. Review 4 Nov: UAL2225 A319, silent at 20:00:09Z, was driven ~105 m into E9 through UAL1554
+      // of the drive, no margin (with 1 m, EVA018 B77W into A1 was refused for a wingtip pass and dead-reckoned 40 m past). Review 4 Nov: UAL2225 A319, silent at 20:00:09Z, was driven ~105 m into E9 through UAL1554
       // B38M holding there after its push from D12 with live data, overlap.gnd 36 m2 for 77 frames; the real aircraft was 65 m
       // back. Such a drive is not invented -- the data decides)
       if (path.pts) { const hit = this.driveConflict(tr, path.pts, path.hd, 0, Infinity, g); if (hit) { this.counters.silentDockConflict = (this.counters.silentDockConflict || 0) + 1; if (this.lockLog) this.lockLog.push([tDisp, tr.hex, 'silent-conflict', g.name, hit.hex, hit.info.flight]); return false; } }
@@ -1593,7 +1615,7 @@ export class Traffic {
   // the stop mark of stand g for this aircraft, in the report frame (where its antenna is when its nose is at the family's stop)
   stopRef(tr, g) { const T = typeOf(tr), L = T ? T.L : 38; const sa = stopAlong(g, tr.info.icao) - antOf(T, L); return [g.w.x + g.w.dx * sa, g.w.z + g.w.dz * sa]; }
   // the first aircraft drawn on the ground (not this one, not being removed, not the silent occupant of the stand g that this
-  // docking replaces) whose planform the body of tr would overlap (1 m margin) somewhere along the drive pts / hd (antenna
+  // docking replaces) whose planform the body of tr would overlap (no margin: GroundPhysics' ghost test) somewhere along the drive pts / hd (antenna
   // points, headings) between arc lengths d0 and d1, sampled every 3 m; null = clear (round 3, review realtime-v4)
   driveConflict(tr, pts, hd, d0 = 0, d1 = Infinity, g = null) {
     const T = typeOf(tr); if (!T || !pts || pts.length < 2) return null;
@@ -1611,7 +1633,7 @@ export class Traffic {
     for (let i = 1; i < pts.length; i++) {
       const a = pts[i - 1], b = pts[i], l = Math.hypot(b[0] - a[0], b[1] - a[1]); const ha = hd ? hd[i - 1] : vecHdg(b[0] - a[0], b[1] - a[1]), hb = hd ? hd[i] : ha;
       while (next <= acc + l && next <= d1) { const u = l > 1e-9 ? (next - acc) / l : 1; const B = bodyOf(T, a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u, lerpAng(ha, hb, u));
-        for (const q of others) if (overlaps(B, q.B, 1.0)) return q.o;
+        for (const q of others) if (overlaps(B, q.B, 0)) return q.o;
         next += 3; }
       acc += l; if (acc > d1) break;
     }
@@ -1788,6 +1810,7 @@ export class Traffic {
     // (round 3, review realtime-v6: 'silent' only after XPDR_OFF_MS without a position at the stand -- the transponder switched
     // off again. One reporting gap (75 s: tr.stale) took the signal back, the bridge re-docked and the push often followed
     // within seconds: 37 cancels, 18 followed by the push within 30 min -- UAL1986 E5 16 s after the re-dock, UAL901 G4 18 s)
+    else if (tr.earlyUndock && tr.earlyUndock.why === 'ahead') { if (tDisp - tr.earlyUndock.t > AHEAD_HOLD_MS) this.cancelEarly(tr, tDisp, 'arrival gone'); }
     else if (tr.earlyUndock && !tr.leaving && !tr.pushback) { const E = tr.earlyUndock; if (tDisp - E.t > EARLY_MAX_MS) this.cancelEarly(tr, tDisp, 'no push'); else if (tr.stale && tDisp - (tr.lastFixT || 0) > XPDR_OFF_MS) this.cancelEarly(tr, tDisp, 'silent'); }
     if (tr.bridgeGate && !tr.bridgeOn && !(this.bridgeK && this.bridgeK(tr.bridgeGate) > 0.01)) { tr.bridgeGate = null; tr._hurried = null; }
     if (tr.bridgeOn) tr._hurried = null;

@@ -25,6 +25,7 @@ import { LiveGateSystem } from './gates.js';
 import { buildLiveLights, buildPierGeometry, alsPlacement, buildMountGeometry } from './lights.js';
 import { Traffic, category, hdgVec, RWY, phaseLabel, antOf, DELAY_MS } from './traffic.js';
 import { GroundPhysics, buildingGrid, bridgeGrid } from './ground.js';
+import { B3D_INTEGRATION } from '../../data/buildings3d/integration.js'; // 3-D building footprints for the ground physics (buildingGrid)
 import { Feed, StreamFeed, Routes, fetchMetar, fetchTaf, fetchGates, parsePayload, SOURCES } from './feed.js';
 import { runwayStats, statsLine, statsHtml, runwayQueue, runwayConfig } from './stats.js';
 import { atcRoles, onFeed, roleChip, FEEDS, FEED_BY } from './atc.js';
@@ -255,7 +256,7 @@ export async function startApp(cfg) {
   // seconds until the stand's bridges are clear of the occupant's straight push-back (the body's hold) and until they are
   // fully retracted (gates.js pushClearEta / undockEta)
   if (gateSys.pushClearEta) { traffic.pushClearEta = (g) => gateSys.pushClearEta(bridgeGate(g), Date.now()); traffic.undockEta = (g) => gateSys.undockEta(bridgeGate(g), Date.now()); }
-  const buildingAt = buildingGrid(cfg.airport); traffic.buildingAt = buildingAt;
+  const buildingAt = buildingGrid(cfg.airport, 2, B3D_INTEGRATION.physics); traffic.buildingAt = buildingAt; // + the 3-D assets' footprints (integration review r1)
   // ---------------------------------------------------------------- ATC (atc.js): tuned LiveATC feed + audio delay (per device)
   let atcTuned = store.get('atc.mount', null); if (atcTuned && !FEED_BY.has(atcTuned)) atcTuned = null;
   let atcDelayS = clamp(+store.get('atc.delay', 0) || 0, 0, 30); traffic.setAudioDelay(atcDelayS * 1000);
