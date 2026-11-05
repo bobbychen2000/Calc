@@ -4,7 +4,8 @@
 // VIEWS: name=view pairs separated by ';' (name optional), view as in tools/build3/job_views.mjs:
 //   look:x,y,z,yaw,pitch,dist[,fov] | gate:<stand>,<dist>,<side>,<pitch> | tower[:dist,yaw,pitch] | view:<name> | towercam
 //   | light:<preset> (SFO.setLight, no shot; applies to the following views)
-// MODES: comma list of b3d modes (default 'old,new'; old = ?b3d=0, new = default files, lod2 = ?b3d=lod2)
+// MODES: comma list of b3d modes (default 'old,new'; old = ?b3d=0, new = default files, lod2 = ?b3d=lod2, near = ?b3d=near)
+// near-mode views wait until the full files near the camera are on screen (Buildings3D.settled)
 // QS: extra query (default mode=snapshot&res=1); FRAMES: frames accumulated per view (TRAA; default 8).
 // ROOT (livetest.mjs): serve a snapshot instead of the working tree (other workflows' half-done edits can break the page).
 // Output: <OUT>/cmp_<mode>_<name>.png, and <OUT>/cmp_info.json (renderer + b3d stats per view).
@@ -36,6 +37,9 @@ export default async ({ page, shot, base, OUT }) => {
       }, [kind, arg]);
       if (!ok) { console.log('view failed', v); continue; }
       if (kind === 'light') continue;
+      // near mode (low tier, ?b3d=near): the full files load once the camera is near; wait until none is pending
+      await page.evaluate(() => { window.__b3dF = SFO.R.frames; });
+      await page.waitForFunction(() => { const B = SFO.R.b3d; return !B || !B.settled || (SFO.R.frames > window.__b3dF + 12 && B.settled()); }, null, { timeout: 0, polling: 500 });
       const f0 = await page.evaluate(() => SFO.R.frames); const n = +(process.env.FRAMES || 8);
       await page.waitForFunction(([f, n]) => SFO.R.frames >= f + n, [f0, n], { timeout: 0, polling: 200 });
       const di = await page.evaluate(() => ({ r: SFO.R.debugInfo(), b3d: SFO.R.b3d ? SFO.R.b3d.info() : null }));

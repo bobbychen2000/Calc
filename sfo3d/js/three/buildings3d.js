@@ -49,7 +49,7 @@
 import { THREE, TSL } from './lib.js';
 import { hash12 } from './tsl/common.js';
 import { B3D_INTEGRATION } from '../../data/buildings3d/integration.js';
-const { uniform, vec2, vec3, float, mix, smoothstep, sin, floor, fract, min, positionWorld, luminance, texture, uv, materialEmissive } = TSL;
+const { uniform, vec2, vec3, float, mix, smoothstep, sin, floor, fract, positionWorld, luminance, texture, uv, materialEmissive } = TSL;
 
 export const B3D_GROUPS = ['tower', 'itb', 'domestic', 'roadways', 'landside'];
 const FILE_FULL = { tower: 'tower', itb: 'itb', domestic: 'domestic', roadways: 'roadways', landside: 'landside' };
@@ -176,7 +176,7 @@ export class Buildings3D {
     this._loadGroup(g, 'full').finally(() => { this.pending = null; });
   }
   // QA (tools/blender/b3d_views_job.mjs): nothing loading and no group waiting for its full file at this camera
-  settled(camPos) {
+  settled(camPos = this._lastCam) {
     if (!this.done || this.pending) return false;
     if (this.mode !== 'near' || !camPos) return true;
     const p = new THREE.Vector3(camPos[0], camPos[1], camPos[2]);
@@ -340,6 +340,7 @@ export class Buildings3D {
     this.frame++;
     if (this.frame % 120 === 0 && Object.keys(this.loaded).length) this._swapOld(); // items synced later
     if (!camPos) return;
+    this._lastCam = [camPos[0], camPos[1], camPos[2]];
     const p = this._tmpV.set(camPos[0], camPos[1], camPos[2]);
     if (this.frame % 10 === 0) this._nearUpdate(p.clone());
     if (!this.sets.length) return;
