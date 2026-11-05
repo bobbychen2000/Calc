@@ -6950,6 +6950,27 @@
    "bytes": 1067,
    "sha256": "bbe49c7f47f8bd590de0166f4951f295c2ec68c247bea11a70d5e1f9bc321aa8"
   },
+  "pbb/AC_150_5220-21C.pdf": {
+   "class": "local",
+   "why": "manufacturer datasheets (copyright)",
+   "bytes": 812605,
+   "sha256": "30ed46c491185d8d06af9e7fdef6c5b381f33f2650121bd41e744100947b2471",
+   "url": "https://www.faa.gov/documentLibrary/media/Advisory_Circular/150_5220_21c.pdf"
+  },
+  "pbb/oshkosh_jetway_steelglass_2025.pdf": {
+   "class": "local",
+   "why": "manufacturer datasheets (copyright)",
+   "bytes": 2121224,
+   "sha256": "b712968edb9d7e4c26811005e6325b67c3e843abfcaaf9af75de6b369ff7e60d",
+   "url": "https://oshkoshaerotech.com/hubfs/images/Jetway%20SteelGlass_Truss_Sell-Sheet_2025.pdf"
+  },
+  "pbb/oshkosh_jetway_steelglass_2025.txt": {
+   "class": "local",
+   "why": "manufacturer datasheets (copyright)",
+   "bytes": 16369,
+   "sha256": "bf6f229b43226e827e0f5d9942062648b0cdf0c3380213e43b875fc09971b347",
+   "url": "pdftotext -layout of the PDF above"
+  },
   "rec/adsbfi_20261104_17.jsonl.gz": {
    "class": "local",
    "why": "adsb.fi terms: personal non-commercial use, not to be licensed on",
@@ -6989,8 +7010,14 @@
   "rec/adsbfi_20261104_23.jsonl.gz": {
    "class": "local",
    "why": "adsb.fi terms: personal non-commercial use, not to be licensed on",
-   "bytes": 17002352,
-   "sha256": "4f13db7b93ff45579b857b14eb6b2fde00c791f3c6a319c7a6581c99d3da7d3e"
+   "bytes": 19272272,
+   "sha256": "1d05386655d820283228e85bd19e4fd454b445f372782093b5ed845c6ba020b4"
+  },
+  "rec/adsbfi_20261105_00.jsonl.gz": {
+   "class": "local",
+   "why": "adsb.fi terms: personal non-commercial use, not to be licensed on",
+   "bytes": 4048590,
+   "sha256": "bd43b032603a524db50e75849353b880e1cb283c444ffdb61dd244ca719cd6c1"
   },
   "rec/adsblol_20261104_17.jsonl.gz": {
    "class": "pack",
@@ -7031,20 +7058,32 @@
   "rec/adsblol_20261104_23.jsonl.gz": {
    "class": "pack",
    "why": "ODbL (adsb.lol); trimmed copy in rec_pack/",
-   "bytes": 4765081,
-   "sha256": "8b4cc4e0996ab98dd51c4a0075a976ad3554824d4bf88838a56a8b49f984127b"
+   "bytes": 5371708,
+   "sha256": "2843c7992aecb34e1bd6d59fbecbe15707bc40122fb205b44075d59c2cc9a45d"
+  },
+  "rec/adsblol_20261105_00.jsonl.gz": {
+   "class": "pack",
+   "why": "ODbL (adsb.lol); trimmed copy in rec_pack/",
+   "bytes": 1217660,
+   "sha256": "d4d8306b56dc7ae0620071f3841ecb0225ec5938de1c64fd25da91dadf86a8ac"
   },
   "rec/recorder.log": {
    "class": "local",
    "why": "recorder state",
-   "bytes": 12814,
-   "sha256": "6ac51bca0ccc0eb3ddea9f095ac20e3924f85365b9902f5c7d5849a7777a6c23"
+   "bytes": 13522,
+   "sha256": "5b8f00bf52fb4dfcc7d327150344426e8cf0b3838cbda9dffc3485fb9032a818"
+  },
+  "rec/recorder.out": {
+   "class": "local",
+   "why": "recorder state",
+   "bytes": 302,
+   "sha256": "5580e39785686530476b2e00dd7ba9d622fb1beb2fd754a537db61a5b1938e46"
   },
   "rec/recorder.pid": {
    "class": "local",
    "why": "recorder state",
    "bytes": 3,
-   "sha256": "42f0bec3310ddd8a55e8d62817337ca49c55a898c14ab073d07c16dee24d73d4"
+   "sha256": "ea5b27556fbb134def2c2fbf944d9cdda3dbdb6b10473a1aec59f6f170c4ca3a"
   },
   "replay/reports.pkl": {
    "class": "local",

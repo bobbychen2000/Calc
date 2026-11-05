@@ -12,8 +12,9 @@ export class Scene {
     if (this.R.frameScene) this.R.frameScene(this, t, camPos); // bridges / GSE / aircraft objects; sets gateSys.sprites
     const sprites = [];
     for (const ac of this.aircraft) { const s = ac.lightSprites(t); for (let i = 0; i < s.length; i++) sprites.push(s[i]); }
+    const nAc = sprites.length; // aircraft lights first: fixed intensity day and night (js/three/lights.js put)
     for (const L of this.staticLights) { if (typeof L === 'function') { const s = L(t); for (let i = 0; i < s.length; i++) sprites.push(s[i]); } else sprites.push(L); }
-    return { sprites, t };
+    return { sprites, nAc, t };
   }
   commit() { for (const ac of this.aircraft) ac.commit(); }
 }

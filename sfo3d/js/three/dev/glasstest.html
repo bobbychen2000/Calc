@@ -1,0 +1,65 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>curtain-wall glass test</title>
+<!-- Dev check of the terminal curtain wall (js/three/objects.js material id 1) without the airport (close-out round 2,
+     docs/research/engine_impl.md §4.8): a 30 m wide pier (apron level 0-5 m, glass 5-13.4 m, fascia to 14.6 m, the
+     js/live/terminals.js layers) on a concrete plane, sun and sky of the recorded snapshot (23 Sep 2026 10:51 PDT),
+     camera as the app's gate:B20,130,1,24 view relative to the B20 facade (63 deg off the facade normal, 24 deg down,
+     130 m), the IBL ground scaled by the airfield bake's mean albedo as renderer3 does. ?ab=x,y,z,w sets the
+     ?glassab switches (x 1 = round-3 inputs, y / z / w = reflection / interior / frame weights); ?n= frames.
+     window.__probe: mean / darker-60 % display colour of the pane box, sunlit and shaded concrete. -->
+<style>html,body{margin:0;height:100%;background:#000}canvas{display:block;width:100%;height:100%}</style></head>
+<body>
+<script type="module">
+import { THREE, TSL } from '../lib.js';
+import { Engine, QUALITY3 } from '../engine.js';
+import { Sky } from '../sky.js';
+import { objectMaterial } from '../objects.js';
+import { makeNoiseTexture, makeCloudTexture, sunVector, solarPosition } from '../../world/textures.js';
+import { textureOf } from '../convert.js';
+import { GROUND_Y } from '../../geo.js';
+const q = new URLSearchParams(location.search); const out = {};
+try {
+  const c = document.createElement('canvas'); document.body.appendChild(c);
+  const E = await new Engine(document.body, QUALITY3[q.get('tier') || 'high'], { canvas: c }).init(); E.resize(innerWidth, innerHeight, 1);
+  const S = E.scene;
+  const noise = textureOf(makeNoiseTexture()); noise.wrapS = noise.wrapT = THREE.RepeatWrapping;
+  const clouds = textureOf(makeCloudTexture()); clouds.wrapS = clouds.wrapT = THREE.RepeatWrapping;
+  const sky = new Sky(E, { cloudTex: clouds, noiseTex: noise, baseRes: 512 });
+  // snapshot sun, rotated so that the B20 facade (outward normal azimuth 283.2 deg: stand heading 103.23 deg, nose-in)
+  // faces +x (azimuth 90) here
+  const sp = solarPosition(new Date('2026-09-23T17:51:00Z'), 37.6188056, -122.3754167); out.sun = { az: +sp.az.toFixed(1), el: +sp.el.toFixed(1) };
+  const sunDir = sunVector(sp.az - 283.23 + 90, sp.el);
+  const env = { sunDir, mie: 21e-6, sunI: 20, fog: [0.0001, 1 / 700, 1, 0.97], cloud: [0.14, 800 * 0.3048, 14000, 0.5], cloudWind: [1, 1], refPos: [0, 60, 0], slab: false };
+  sky.setEnv(env); const L = Sky.lightFor(env);
+  const gA = (q.get('galb') || '0.3027,0.2749,0.2106').split(',').map(Number); L.ground = L.ground.map((g, k) => g / 0.16 * gA[k]); // renderer3: IBL ground = airfield bake mean
+  sky.applyLight(L); S.backgroundNode = sky.backgroundNode(); S.fogNode = sky.fogNode(); sky.renderSky(E.renderer); sky.updateEnvironment(E.renderer, S);
+  E.setSun(L.sunDir, L.sunColor); E.expo.value = 0.36; // the app's day exposure (0.45 x DAY_GAIN 0.8)
+  const lum = (v) => 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2];
+  const sy = Math.max(0, L.sunDir[1]); const shadeK = new THREE.Vector3(...[0, 1, 2].map(k => { const a = Math.PI * L.skyUp[k], b = L.sunColor[k] * sy; return a / (a + b); }));
+  const eAmb = lum(L.sunColor) * sy + Math.PI * lum(L.skyUp), eSky = Math.PI * lum(L.skyUp), LUX = 133300 / 20;
+  const ab = (q.get('ab') || '0,1,1,1').split(',').map(Number);
+  const interiorE = TSL.uniform(0.05 * (ab[0] ? eAmb : eSky) + 200 / LUX);
+  const concA = (q.get('conc') || '0.345,0.335,0.312').split(',').map(Number); // concrete mean (renderer3 apronAlb; ?conc= from the app's debugInfo)
+  const kG = TSL.uniform(new THREE.Vector3(...concA.map((v, k) => v / gA[k])));
+  out.inputs = { sunLux: Math.round(lum(L.sunColor) * sy * LUX), skyLux: Math.round(eSky * LUX), hallLux: Math.round(interiorE.value * LUX), shadeK: shadeK.toArray().map(v => +v.toFixed(3)), kG: kG.value.toArray().map(v => +v.toFixed(3)), ground: L.ground.map(v => +v.toFixed(4)) };
+  const mat = objectMaterial({ noiseTex: noise, night: TSL.uniform(0), time: TSL.uniform(0), interiorE, sunDir: E.sunDirU, shadeK: TSL.uniform(shadeK), kG, glassAB: TSL.uniform(new THREE.Vector4(...ab)) });
+  // ground (concrete, linear albedo) and the pier
+  const g = new THREE.Mesh(new THREE.PlaneGeometry(4000, 4000), new THREE.MeshStandardNodeMaterial({ roughness: 0.9 })); g.material.colorNode = TSL.vec3(...concA);
+  g.rotation.x = -Math.PI / 2; g.position.y = GROUND_Y; g.receiveShadow = true; S.add(g);
+  const { Geo } = await import('../../geom.js'); const G = GROUND_Y, gb = new Geo();
+  gb.box([-30, G, -200], [15, G + 5, 200], [0.66, 0.67, 0.68, 1], [0.75, 0.1, 15, 0]);          // apron level (service facade)
+  gb.box([-30, G + 5, -200], [15, G + 13.4, 200], [0.1, 0.1, 0.1, 1], [0.1, 0, 1, 0]);           // curtain wall
+  gb.box([-30, G + 13.4, -200], [15, G + 14.6, 200], [0.88, 0.89, 0.9, 1], [0.35, 0.35, 0, 0]);  // fascia
+  gb.box([-30, G + 14.6, -200], [15, G + 15.2, 200], [0.56, 0.57, 0.56, 1], [0.9, 0, 5, 0]);     // roof + parapet
+  const d = gb.data(); const bg = new THREE.BufferGeometry(); for (const [k, n, s] of [['position', 'pos', 3], ['normal', 'nrm', 3], ['uv', 'uv', 2], ['color', 'col', 4], ['extra', 'extra', 4]]) bg.setAttribute(k, new THREE.BufferAttribute(new Float32Array(d[n]), s)); bg.setIndex(Array.from(d.idx));
+  const bm = new THREE.Mesh(bg, mat); bm.castShadow = bm.receiveShadow = true; S.add(bm);
+  // camera: target 30 m in front of the facade (the B20 door), 130 m away at 63.4 deg off the facade normal, 24 deg down
+  const yaw = (+(q.get('yaw') || 63.4)) * Math.PI / 180, pit = (+(q.get('pitch') || 24)) * Math.PI / 180, dist = +(q.get('dist') || 130);
+  const tgt = [15 + 30, G + 4, 0]; const cp = [tgt[0] + Math.cos(yaw) * Math.cos(pit) * dist, tgt[1] + Math.sin(pit) * dist, tgt[2] - Math.sin(yaw) * Math.cos(pit) * dist];
+  const cam = { pos: cp, target: tgt, fov: 50 * Math.PI / 180, near: 0.5, far: 50000, shadowSplits: [80, 300, 1200] };
+  for (let i = 0; i < +(q.get('n') || 8); i++) { E.setCamera(cam, innerWidth, innerHeight); E.render(); await new Promise(r => setTimeout(r, 20)); }
+  out.cam = cp.map(v => +v.toFixed(1));
+  out.ok = true;
+} catch (e) { out.err = String(e && e.stack || e); }
+window.__probe = out;
+</script></body></html>

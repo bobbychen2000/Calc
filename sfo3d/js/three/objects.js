@@ -31,10 +31,30 @@
 // illuminance (renderer3 interiorE: daylight factor x the exterior horizontal illuminance + the hall lamps by day; the
 // night term below as before), T the pane's one-way visible transmittance (0.48 / 0.52 / 0.54, VLT ~0.51, blue-green;
 // typical tinted low-e IGU VLT 0.4-0.7: inferred, not an SFO specification) and F Schlick's Fresnel with the pane's F0.
-// What a pane reflects from an elevated view is the apron in front of it (a vertical mirror keeps the ray's downward
-// slope), and the IBL's lower hemisphere is the SUNLIT average airfield (warm). In front of a facade that faces away
-// from the sun that strip lies in the building's own shadow, lit by the sky only: there the pane's specular colour is
-// scaled per channel by shadeK = E_sky / (E_sun + E_sky) (horizontal irradiances, renderer3). No other local reflection.
+// Close-out round 2 (5 Nov 2026; the round-3 fix above still read matte khaki: pane (49,47,41) display, B-R -7.6).
+// Root cause, measured term by term with the ?glassab=1 A/B switches (docs/research/engine_impl.md §4.8), four inputs:
+//   1. the reflected ground: from an elevated view a pane mirrors the apron in front of it, and the IBL's lower hemisphere
+//      is the WHOLE-airfield mean albedo (renderer3 groundAlb (0.30, 0.27, 0.21): grass and sand, warm) where the pane
+//      faces the concrete apron. Now the IBL ground term is re-coloured per channel by kG = concrete mean / IBL ground
+//      (renderer3 apronAlb: the airfield bake averaged over the aux bake's concrete mask) for the downward part of the
+//      reflection (the env's ground blend, sky.js envColor: smoothstep(0, -0.35, R.y)). Only this material: the IBL of
+//      every other object is unchanged (the global switch is an open question, §4.8);
+//   2. the facade's own shadow in that reflection never applied: spec was overwritten two statements after the shadeK
+//      factor (review finding engine-v2). Now applied after the tint, with the pier height (sfo_buildings.json piers
+//      h 14.6 m + 0.6 m parapet = 15.2 m; js/live/terminals.js glass to G + 13.4 m, so the top is >= 1.8 m above any
+//      pane) and the sky view factor (1 + cos t) / 2 of the shaded strip next to the wall (t = elevation of the wall top);
+//   3. the hall behind the glass: interiorE applied the 5 % daylight factor to sun + sky (3.5 klx); a daylight factor is
+//      defined under the overcast sky, direct sun excluded (CIE). renderer3 now uses the sky's horizontal illuminance;
+//   4. the frame: mullions / transoms anti-aliased by widening (gridLine), which is not area-preserving: at 130 m the
+//      0.07 m mullion on a 1.8 m module covered ~18 % of the facade instead of 3.9 %, and the frame (albedo 0.28,
+//      metalness 0.8: F0 ~0.25) mirrored the warm ground at 2.5x the glass's reflectance. Now box-filtered (gridLineA).
+// The glass itself: a tinted low-e IGU (Boarding Area G: "a tinted energy-efficient glazed curtainwall", Tutor Perini
+// project page, pub; the 2025 aerial photo refs/cache/buildings/review_likeness/a2.jpg shows the pier glazing dark teal,
+// darker 60 % of the panes (31, 44, 46) display next to apron concrete (182, 173, 159), obs). Optics, inferred (no SFO
+// glazing specification found): outer lite n = 1.52 (R1 = 0.043), single-pass body tint tau = (0.62, 0.81, 0.80)
+// (blue-green float), low-e coating reflectance Rc = 0.08, clear inner lite x 0.90. R_out = R1 + (1 - R1)^2 tau^2 Rc =
+// GLASS_F0 (0.071, 0.091, 0.090), VLT = (1 - R1) tau (1 - Rc) 0.90 = GLASS_T (0.49, 0.64, 0.63) (typical tinted low-e
+// IGUs: VLT 0.4-0.7, R_out 0.07-0.11). F90 = 1 (the uncoated outer surface at grazing incidence).
 import { THREE, TSL } from './lib.js';
 import { hash12, lampK } from './tsl/common.js';
 import { Geo } from '../geom.js';
@@ -42,6 +62,17 @@ import { GROUND_Y, DIR_S, DIR_T } from '../geo.js';
 const { Fn, uniform, attribute, vec2, vec3, vec4, float, texture, dot, abs, max, min, mix, smoothstep, step, clamp, normalize, length, floor, fract, sin, atan, select, If, fwidth, positionWorld, cameraPosition, normalWorld, cameraViewMatrix, modelWorldMatrixInverse, exp, normalWorldGeometry, reflect } = TSL;
 
 const gridLine = (x, period, w) => { const f = abs(fract(x.div(period).add(0.5)).sub(0.5)).mul(period); const fw = fwidth(x).mul(0.8); return float(1.0).sub(smoothstep(w, fw.add(w), f)); };
+// box-filtered grid line (area-preserving): coverage of lines 2w wide every `period` over the pixel footprint fw, from
+// the integral I(y) = floor(y / p) 2w + min(fract(y / p) p, 2w) of the line indicator (y = x + w: lines at multiples of p)
+const gridLineA = (x, period, w) => {
+  const fw = max(fwidth(x), 1e-4), y = x.add(w);
+  const I = (z) => floor(z.div(period)).mul(2 * w).add(min(fract(z.div(period)).mul(period), 2 * w));
+  return clamp(I(y.add(fw.mul(0.5))).sub(I(y.sub(fw.mul(0.5)))).div(fw), 0.0, 1.0);
+};
+// tinted low-e IGU (see the header): reflectance at normal incidence per channel and visible transmittance
+const GLASS_F0 = [0.071, 0.091, 0.090], GLASS_T = [0.49, 0.64, 0.63], F0_IOR2 = 1 / 9; // ((2 - 1) / (2 + 1))^2
+// pier walls: top (parapet) 15.2 m above the apron, glass up to 1.8 m below it (sfo_buildings.json, js/live/terminals.js)
+const WALL_TOP = 15.2, TOP_ABOVE_GLASS = 1.8;
 
 // Concourse hall behind a terminal curtain-wall pane (interior mapping in the object's local frame = world for the
 // terminals): floor at the concourse level (GROUND_Y + 5 m: the piers' apron level is 0-5 m, js/live/terminals.js; panes
@@ -139,6 +170,7 @@ export function garageCars(data, model, vehMat, tier) {
 export function objectMaterial(opts) {
   const { noiseTex, night, time } = opts; const interiorE = opts.interiorE || uniform(0.03); // hall illuminance (sky units; renderer3)
   const sunDir = opts.sunDir || uniform(new THREE.Vector3(0, 1, 0)), shadeK = opts.shadeK || uniform(new THREE.Vector3(1, 1, 1)); // renderer3: sun direction; sky / (sun + sky) horizontal irradiance per channel
+  const kG = opts.kG || uniform(new THREE.Vector3(1, 1, 1)); // renderer3: concrete mean albedo / IBL ground albedo per channel (curtain-wall reflections)
   const mat = new THREE.MeshPhysicalNodeMaterial({ side: THREE.DoubleSide });
   const core = () => {
     const col = opts.instColor ? attribute('iCol', 'vec4') : attribute('color', 'vec4'); const ext = opts.instColor ? attribute('iExt', 'vec4') : attribute('extra', 'vec4');
@@ -149,7 +181,7 @@ export function objectMaterial(opts) {
     if (opts.instanced && !opts.instColor) albedo.assign(mix(albedo, idata.rgb, step(0.5, idata.w).mul(step(19.5, ext.z)).mul(step(ext.z, 20.5))));
     const wt = normalize(vec2(LN.z.negate(), LN.x).add(1e-5));
     const u = dot(LP.xz, wt).toVar(), v = LP.y.toVar();
-    const ao = float(1.0).toVar(); const extraEmis = vec3(0).toVar(); const nPert = vec3(0).toVar(); const ior = float(1.5).toVar(); const spec = vec3(1.0).toVar();
+    const ao = float(1.0).toVar(); const extraEmis = vec3(0).toVar(); const nPert = vec3(0).toVar(); const ior = float(1.5).toVar(); const spec = vec3(1.0).toVar(); const specI = float(1.0).toVar();
     const isWall = float(1.0).sub(abs(LN.y));
     // noise samples used by several ids (sampled once, outside the branches)
     const nConc = texture(noiseTex, vec2(u, v).mul(0.05)).b, nGrime = texture(noiseTex, vec2(u.mul(0.1), 0.5)).g;
@@ -158,29 +190,42 @@ export function objectMaterial(opts) {
     const nRoof = texture(noiseTex, wp.xz.mul(0.01)).b;
     const nWin = texture(noiseTex, vec2(floor(u.div(3.2)).mul(0.173), floor(v.div(3.5)).mul(0.311))).g;
     const nLeaf = texture(noiseTex, LP.xz.mul(0.4).add(LP.y.mul(0.3)).add(idata.xy)).g, nLeafN = texture(noiseTex, LP.xz.mul(0.9).add(LP.y)).rgb;
-    If(matId.equal(1), () => { // glass curtain wall: coated pane over a parallax room, mullions, spandrels
-      const mull = max(gridLine(u, 1.8, 0.035), gridLine(v, 3.9, 0.06)).mul(float(1.0).sub(smoothstep(150.0, 600.0, dist).mul(0.7)));
-      const spandrel = step(fract(v.div(3.9)), 0.12);
+    If(matId.equal(1), () => { // glass curtain wall: tinted low-e IGU over the concourse hall, mullions, spandrels
+      // AB (?glassab=1 only, renderer3 glassAB): x 1 = the round-3 inputs (gridLine frame, untinted F0 0.111 x (0.9,
+      // 0.96, 1), T (0.48, 0.52, 0.54), no ground / shadow correction); y, z, w = weights of reflection, interior, frame
+      const AB = opts.glassAB || null;
+      let mull = max(gridLineA(u, 1.8, 0.035), gridLineA(v, 3.9, 0.06)); let spandrel = step(fract(v.div(3.9)), 0.12);
+      if (AB) { mull = mix(mull, max(gridLine(u, 1.8, 0.035), gridLine(v, 3.9, 0.06)).mul(float(1.0).sub(smoothstep(150.0, 600.0, dist).mul(0.7))), AB.x).mul(AB.w); spandrel = spandrel.mul(AB.w); }
       const frame = max(mull, spandrel.mul(0.5)).mul(isWall);
       const pane = vec2(floor(u.div(1.8)), floor(v.div(3.9)));
       const hP = hash12(pane.add(vec2(17.0, 3.0))), hQ = hash12(pane.add(vec2(5.0, 41.0))), hR = hash12(pane.add(vec2(29.0, 7.0)));
       const room = concourse(u, v, LP, LN, wt);
       albedo.assign(mix(vec3(0.0), vec3(0.28, 0.29, 0.3), frame)); // the pane itself: no diffuse (review round 3); mullions / spandrels opaque
-      // the hall behind the pane as emission (see the header): rho x E_hall / pi x T x (1 - F); F = Schlick with F0 = 0.111 (IOR 2.0)
+      // the hall behind the pane as emission (see the header): rho x E_hall / pi x T x (1 - F), F per channel (Schlick, F0 = GLASS_F0, F90 = 1)
       // geometry normal, NOT normalWorld: core() also feeds mat.normalNode, and normalWorld depends on it (that cycle turned every object black)
-      const cosV = abs(dot(normalize(cameraPosition.sub(wp)), normalWorldGeometry)); const fr = float(0.111).add(float(0.889).mul(float(1.0).sub(cosV).pow(5.0)));
-      extraEmis.addAssign(room.day.mul(vec3(0.48, 0.52, 0.54)).mul(interiorE.mul(1.0 / Math.PI)).mul(float(1.0).sub(fr)).mul(float(1.0).sub(frame)).mul(isWall));
-      // the facade's own shadow in its reflection (see the header): a downward reflection hits the apron at dN in front
-      // of the pane; if the sun is behind the facade and dN is inside the building's shadow (top assumed 4 m above the
-      // pane, at least 12 m: inferred), that ground is lit by the sky only, so the IBL's sunlit ground is scaled by shadeK
+      const cosV = abs(dot(normalize(cameraPosition.sub(wp)), normalWorldGeometry)); const f5 = float(1.0).sub(cosV).pow(5.0);
+      let F0 = vec3(...GLASS_F0), T = vec3(...GLASS_T), tint = vec3(...GLASS_F0.map(f => f / F0_IOR2));
+      if (AB) { F0 = mix(F0, vec3(F0_IOR2), AB.x); T = mix(T, vec3(0.48, 0.52, 0.54), AB.x); tint = mix(tint, vec3(0.9, 0.96, 1.0), AB.x); }
+      const fr = F0.add(vec3(1.0).sub(F0).mul(f5));
+      const hall = room.day.mul(T).mul(interiorE.mul(1.0 / Math.PI)).mul(vec3(1.0).sub(fr)).mul(float(1.0).sub(frame)).mul(isWall);
+      extraEmis.addAssign(AB ? hall.mul(AB.z) : hall);
+      // what the pane mirrors below the horizon: the apron dN in front of it (a vertical mirror keeps the ray's downward
+      // slope). The IBL ground there is re-coloured to the concrete mean (kG), and if the sun is behind the facade and dN
+      // lies in the building's own shadow (top: WALL_TOP, or TOP_ABOVE_GLASS over the pane), lit by the sky only (shadeK)
+      // through the part of the sky the wall leaves open (sky view factor (1 + cos t) / 2, tan t = top / dN)
       const nxz = normalize(vec2(normalWorldGeometry.x, normalWorldGeometry.z).add(1e-5));
       const Rw = reflect(normalize(wp.sub(cameraPosition)), normalWorldGeometry); const hG = max(wp.y.sub(GROUND_Y), 0.5);
       const dN = hG.mul(max(dot(vec2(Rw.x, Rw.z), nxz), 0.0)).div(max(Rw.y.negate(), 1e-3));
-      const shLen = max(hG.add(4.0), 12.0).mul(max(dot(vec2(sunDir.x, sunDir.z), nxz).negate(), 0.0)).div(max(sunDir.y, 0.02)).max(1e-3);
-      const own = float(1.0).sub(smoothstep(shLen.mul(0.8), shLen, dN)).mul(float(1.0).sub(smoothstep(-0.05, 0.0, Rw.y))).mul(float(1.0).sub(frame)).mul(isWall);
-      spec.assign(spec.mul(mix(vec3(1.0), shadeK, own)));
+      const hTop = max(hG.add(TOP_ABOVE_GLASS), WALL_TOP);
+      const shLen = hTop.mul(max(dot(vec2(sunDir.x, sunDir.z), nxz).negate(), 0.0)).div(max(sunDir.y, 0.02)).max(1e-3);
+      const own = float(1.0).sub(smoothstep(shLen.mul(0.8), shLen, dN));
+      const svf = dN.div(length(vec2(dN, hTop))).mul(0.5).add(0.5);
+      const gW = smoothstep(0.0, -0.35, Rw.y).mul(float(1.0).sub(frame)).mul(isWall); // the env's ground blend (sky.js envColor)
+      let kRefl = mix(vec3(1.0), kG.mul(mix(vec3(1.0), shadeK.mul(svf), own)), gW);
+      if (AB) kRefl = mix(kRefl, vec3(1.0), AB.x);
       rough.assign(mix(hP.mul(0.05).add(0.03), 0.4, mull)); metal.assign(mix(0.0, 0.8, mull));
-      ior.assign(mix(2.0, 1.5, frame)); spec.assign(mix(vec3(0.9, 0.96, 1.0), vec3(1.0), frame));
+      ior.assign(mix(2.0, 1.5, frame)); spec.assign(mix(tint, vec3(1.0), frame).mul(kRefl)); // tint x 1/9 = GLASS_F0 (three: F0 = min(((ior-1)/(ior+1))^2 x specularColor, 1))
+      if (AB) specI.assign(mix(float(1.0), AB.y, float(1.0).sub(frame).mul(isWall))); // reflection weight (F0 and F90)
       nPert.assign(vec3(wt.x, 0.0, wt.y).mul(hQ.sub(0.5)).add(vec3(0.0, hR.sub(0.5), 0.0)).mul(0.03).mul(float(1.0).sub(frame)).mul(isWall));
       extraEmis.addAssign(room.night.mul(night).mul(float(1.0).sub(mull)).mul(float(1.0).sub(spandrel)).mul(isWall));
     }).ElseIf(matId.equal(2), () => { // concrete panels
@@ -266,7 +311,7 @@ export function objectMaterial(opts) {
     // per-vertex emission (lamp heads etc.) in lamp units x lampK; the night terms above already carry nightE (opts.night)
     if (opts.carFade) { const k = smoothstep(CAR_FADE[0], CAR_FADE[1], dist); albedo.assign(mix(albedo, vec3(...CAR_MEAN), k)); rough.assign(mix(rough, 0.5, k)); metal.assign(mix(metal, 0.0, k)); }
     const emissive = albedo.mul(emis).mul(lampK).add(extraEmis);
-    return { albedo, rough, metal, ao, emissive, nPert, ior, spec };
+    return { albedo, rough, metal, ao, emissive, nPert, ior, spec, specI };
   };
   // one evaluation shared by several material slots: A runs core() once per shader build (Fn.once) and keeps its
   // nodes in R; B and C call A() first so they read the nodes of the same build (pattern tested in dev/oncetest.html)
@@ -277,6 +322,7 @@ export function objectMaterial(opts) {
   const D = Fn(() => { A(); return vec4(R.spec, R.ior); }).once();
   mat.colorNode = vec4(A().xyz, 1.0); mat.roughnessNode = A().w; mat.metalnessNode = B().w; mat.emissiveNode = B().xyz;
   mat.aoNode = C().w; mat.iorNode = D().w; mat.specularColorNode = D().xyz;
+  if (opts.glassAB) { const F = Fn(() => { A(); return R.specI; }).once(); mat.specularIntensityNode = F(); } // A/B builds only
   mat.normalNode = normalize(cameraViewMatrix.mul(vec4(normalize(normalWorld.add(C().xyz)), 0.0)).xyz); // normalWorld is already flipped on back faces (as the old gl_FrontFacing flip)
   return mat;
 }

@@ -14,16 +14,20 @@
 //
 // Bridge kinematics (sources):
 //  * Oshkosh AeroTech, "Jetway Glass & Steel Truss Passenger Boarding Bridges" sell sheet (2025), cached
-//    refs/cache/sun_night/oshkosh_jetway_steelglass.pdf (https://oshkoshaerotech.com/hubfs/images/Jetway%20SteelGlass_
+//    refs/cache/pbb/oshkosh_jetway_steelglass_2025.pdf (+ .txt; https://oshkoshaerotech.com/hubfs/images/Jetway%20SteelGlass_
 //    Truss_Sell-Sheet_2025.pdf): models AT2 (two tunnels) / AT3 (three tunnels) "41/55" ... "72/150"; fully retracted /
 //    fully extended lengths "from the center of the rotunda to the end of the cab spacer", operational retraction /
 //    extension "from the center of the rotunda to the center of the cab pivot" (table PBB below); rotunda swing 175 deg
-//    (87.5 cw / 87.5 ccw of centerline); cab rotation 125 deg (92.5 cw / 32.5 ccw), optional 185 deg; cab rotation speed
-//    145 deg/min; vertical rate 3.5 ft/min (1.09 m/min); horizontal travel 0-90 ft/min (0-27 m/min); service door,
+//    (87.5 cw / 87.5 ccw of centerline); cab rotation 125 deg (92.5 cw / 32.5 ccw), "optional 185 deg available" (no
+//    cw / ccw split given); cab rotation speed 145 deg/min; "Vertical rate of travel/lift 3.5'/min (1.09 m/min)";
+//    "Horizontal rate of travel 0 to 90'/min (0-27 m/min)" - the sheet names no reference point, so every path keeps
+//    the cab pivot, the fastest point of the horizontal drive (it is further out than the drive column), at or under
+//    27 m/min at every instant (segPeak: each segment is timed by its peak, not its mean speed); service door,
 //    landing and stairs: option C/D "right/left-hand side of outboard telescoping tunnel aft of cab bubble"; minimum
 //    interior cab width 3.10 m. Pivot -> end of cab spacer = fully retracted - operational retraction (2.378 m AT2,
 //    2.225 m AT3). Which bridge model each SFO bridge is (`model`, `ext_range`) is the stand data's inference.
-//  * FAA AC 150/5220-21C "Aircraft Boarding Equipment" (2012), cached refs/cache/pbb/AC_150_5220-21C.pdf: §3.3.b
+//  * FAA AC 150/5220-21C "Aircraft Boarding Equipment" (2012), cached refs/cache/pbb/AC_150_5220-21C.pdf (public domain,
+//    https://www.faa.gov/documentLibrary/media/Advisory_Circular/150_5220_21c.pdf): §3.3.b
 //    "telescoping tunnels ... rectangular in cross section, with the largest cross section located closest to the
 //    aircraft"; §3.4.b(1)(a)(ii) cab rotation 0-4 deg/s; §3.4.h(2)(a) vertical pre-positioning before the aircraft
 //    arrives; slopes §2.2.d(3)(b) / Figure 6: recommended 1:16-1:20, max 1:12 for unassisted access, 1:8 for runs of
@@ -35,7 +39,13 @@
 //    to a stand-off point 1.5 m out on the door normal, then creeps in to the door; setOccupant(g, null) retracts along
 //    the same path (back off on the door normal first). The joint path is checked against the parked aircraft; if the
 //    direct path would pass through it, a retract-swing-extend path is used, and if none is clear the bridge stays at
-//    rest. The engine holds a departing aircraft until extension(g) is 0.
+//    rest. Departures (engine API, docs/requests/bridges_closeout.md "Round 2 API for realtime"): the real bridge is
+//    retracted before the push-back, so the engine starts it on its earliest departure signal with undockEarly(g, now)
+//    (the sheet's rates, the aircraft stays on the stand; redock(g, now) undoes a false signal); a departure seen only
+//    once the push has begun gets hurryUndock(g, s, now) (the sheet's maximum rates, 16-93 s - never squeezed). The
+//    engine reads pushClearEta(g, now) (seconds until every bridge is clear of the aircraft's straight push-back: the cab
+//    backed off the door, about 3-6 s at the maximum rates) and undockEta(g, now) (seconds until the tunnels are back at
+//    rest, extension(g) 0); it does not have to hold the body for the full retraction.
 //  * Rest pose: the data's `stowW` (tunnel end = cab pivot at rest, clear of every accepted type's envelope + 1 m, of
 //    the other bridges at rest and docked, of the building; cab straight on the tunnel). After an undocking the cab
 //    settles from the door's height to the rest height (rest tunnel <= 1:12) at the sheet's lift rate.
@@ -662,13 +672,19 @@ export class LiveGateSystem {
   // a segment at the sheet's maximum rates, without the 3 s allowance per motion and with the back-off from the door at
   // the drive speed (the engine's fast retraction: hurryUndock)
   segTimeMin(b, A, B) {
-    let L = 0, pp = null; for (let i = 0; i <= 12; i++) { const q = this.qLerp(b, A, B, i / 12); const p = [b.rot[0] + Math.cos(q.a) * q.e, b.rot[2] + Math.sin(q.a) * q.e]; if (pp) L += Math.hypot(p[0] - pp[0], p[1] - pp[1]); pp = p; }
-    return Math.max(0.5, L / DRIVE_V, Math.abs(B.t - A.t) / CAB_RATE, Math.abs(B.h - A.h) / LIFT_RATE);
+    return Math.max(0.5, this.segPeak(b, A, B) / DRIVE_V, Math.abs(B.t - A.t) / CAB_RATE, Math.abs(B.h - A.h) / LIFT_RATE);
   }
   segTime(b, A, B, approach) {
-    if (approach) return Math.max(2, Math.hypot(B.e - A.e, wrap(B.a - A.a) * B.e) / APPROACH_V, Math.abs(B.h - A.h) / LIFT_RATE);
-    let L = 0, pp = null; for (let i = 0; i <= 12; i++) { const q = this.qLerp(b, A, B, i / 12); const p = [b.rot[0] + Math.cos(q.a) * q.e, b.rot[2] + Math.sin(q.a) * q.e]; if (pp) L += Math.hypot(p[0] - pp[0], p[1] - pp[1]); pp = p; }
-    return 3 + Math.max(L / DRIVE_V, Math.abs(B.t - A.t) / CAB_RATE, Math.abs(B.h - A.h) / LIFT_RATE);
+    if (approach) return Math.max(2, this.segPeak(b, A, B) / APPROACH_V, Math.abs(B.h - A.h) / LIFT_RATE);
+    return 3 + Math.max(this.segPeak(b, A, B) / DRIVE_V, Math.abs(B.t - A.t) / CAB_RATE, Math.abs(B.h - A.h) / LIFT_RATE);
+  }
+  // peak horizontal speed of the cab pivot along a segment per unit of the segment parameter (m): qLerp moves the angle
+  // and the extension linearly, so |dp/du| = hypot(de, e(u) * da) peaks at the longer end - exact, no sampling. Timing a
+  // segment by it keeps the pivot (and the drive column, which is nearer the rotunda: always slower) at or under the
+  // sheet's 27 m/min at every instant (review 2026-11-04: timed by the mean, the drive column peaked at 0.486 m/s)
+  segPeak(b, A, B) {
+    const oa = wrap(A.a - b.ac), ob = wrap(B.a - b.ac);
+    return Math.hypot(B.e - A.e, Math.max(A.e, B.e) * (ob - oa));
   }
   qLerp(b, A, B, u) {
     const oa = wrap(A.a - b.ac), ob = wrap(B.a - b.ac); // rotunda angle relative to its centreline (stays inside the swing)

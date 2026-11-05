@@ -1,0 +1,18 @@
+{
+ "oshkosh_jetway_steelglass_2025.pdf": {
+  "url": "https://oshkoshaerotech.com/hubfs/images/Jetway%20SteelGlass_Truss_Sell-Sheet_2025.pdf",
+  "licence": "Oshkosh AeroTech copyright (manufacturer sell sheet, not redistributable here)",
+  "fetched": "2026-11-05",
+  "note": "Jetway Glass & Steel Truss PBB sell sheet: model table AT2 / AT3, rotunda swing, cab rotation 125 deg (92.5 cw / 32.5 ccw, optional 185), cab rotation speed 145 deg/min, vertical 3.5 ft/min, horizontal rate of travel 0-90 ft/min (0-27 m/min); re-fetched after the 2026-11-04 container loss (js/live/gates.js header)"
+ },
+ "*.txt": {
+  "url": "pdftotext -layout of the PDF above",
+  "licence": "derived from the copyrighted PDF (not redistributable here)"
+ },
+ "AC_150_5220-21C.pdf": {
+  "url": "https://www.faa.gov/documentLibrary/media/Advisory_Circular/150_5220_21c.pdf",
+  "licence": "US Government work (FAA advisory circular), public domain",
+  "fetched": "2026-11-05",
+  "note": "Aircraft Boarding Equipment: slopes (Figure 6), cab rotation 0-4 deg/s, telescoping tunnel cross-sections (js/live/gates.js header)"
+ }
+}

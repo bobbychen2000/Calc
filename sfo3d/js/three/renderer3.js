@@ -98,6 +98,10 @@ export class Renderer3 {
     this.pxScale = uniform(0.001); this.time = uniform(0); this.night = uniform(0); this.nightE = uniform(0); // nightE: night-only lamp emission scale (nightF x LAMP_M)
     this.interiorE = uniform(HALL_LUX / LUX_PER_UNIT); // terminal-hall illuminance behind the curtain walls (sky units; render())
     this.shadeK = uniform(new THREE.Vector3(1, 1, 1)); // sky / (sun + sky) horizontal irradiance per channel (objects.js curtain-wall reflections)
+    this.kG = uniform(new THREE.Vector3(1, 1, 1)); // concrete mean albedo / IBL ground albedo per channel (objects.js curtain-wall reflections; _groundAlbedo)
+    // ?glassab=1: curtain-wall A/B switches (objects.js id 1; docs/research/engine_impl.md §4.8): x 1 = round-3 inputs
+    // (also interiorE from sun + sky: glassABOld), y / z / w = weights of reflection, interior, frame. QA only.
+    if (qs.get('glassab') === '1') { this.glassAB = uniform(new THREE.Vector4(0, 1, 1, 1)); this.glassABOld = false; }
     this.exposureScale = +(qs.get('expo') || 1.0);
     this.initP = this.engine.init().then(() => this._onReady()).catch((e) => {
       this.failed = e; console.error('three.js renderer failed to start', e);
@@ -243,17 +247,40 @@ export class Renderer3 {
   }
   // mean colour of the airfield bake (coverage-weighted), read back once: the IBL ground below the horizon (review
   // round 1: the grey sky-coloured ground made shade on the apron blue; sunlit concrete bounces warm light)
+  // Also the mean albedo of the airfield's CONCRETE (the bake weighted by the aux bake's concrete mask, 64 x 64 cells):
+  // what a terminal curtain wall mirrors (close-out round 2: the pane reflected the warm whole-field mean), kept apart
+  // from the IBL ground so no other object's ambient changes (objects.js kG).
   _groundAlbedo() {
-    const R = this.engine.renderer; const rt = new THREE.RenderTarget(16, 16, { depthBuffer: false, generateMipmaps: false });
-    const m = new THREE.NodeMaterial(); m.blending = THREE.NoBlending; m.depthTest = m.depthWrite = false;
-    m.colorNode = TSL.texture(this.bakes.apt.texture, TSL.uv()).level(8.0);
-    const q = new THREE.QuadMesh(m); const prev = R.getRenderTarget(); R.setRenderTarget(rt); q.render(R); R.setRenderTarget(prev);
-    this._albP = R.readRenderTargetPixelsAsync(rt, 0, 0, 16, 16).then((px) => {
-      let r = 0, g = 0, b = 0, w = 0; const s = px.BYTES_PER_ELEMENT === 1 ? 1 / 255 : 1;
-      for (let i = 0; i < px.length; i += 4) { const a = px[i + 3] * s; r += px[i] * s * a; g += px[i + 1] * s * a; b += px[i + 2] * s * a; w += a; }
-      const lin = (c) => c; // the bake target is linear (NoColorSpace, UnsignedByte)
-      if (w > 0) { this.groundAlb = [lin(r / w), lin(g / w), lin(b / w)]; this.envDirty = true; this.engine.flood.bounce.set(...this.groundAlb); tlog('IBL ground albedo ' + this.groundAlb.map(v => v.toFixed(3)).join(',')); }
-    }).catch(e => console.warn('ground albedo readback', e)).finally(() => { rt.dispose(); m.dispose(); });
+    const R = this.engine.renderer, B = this.bakes;
+    const read = (n, colorNode) => {
+      const rt = new THREE.RenderTarget(n, n, { depthBuffer: false, generateMipmaps: false });
+      const m = new THREE.NodeMaterial(); m.blending = THREE.NoBlending; m.depthTest = m.depthWrite = false; m.colorNode = colorNode;
+      const q = new THREE.QuadMesh(m); const prev = R.getRenderTarget(); R.setRenderTarget(rt); q.render(R); R.setRenderTarget(prev);
+      return R.readRenderTargetPixelsAsync(rt, 0, 0, n, n).then((px) => { // weighted mean of rgb by alpha (the bake targets are linear: NoColorSpace, UnsignedByte)
+        let r = 0, g = 0, b = 0, w = 0; const s = px.BYTES_PER_ELEMENT === 1 ? 1 / 255 : 1;
+        for (let i = 0; i < px.length; i += 4) { const a = px[i + 3] * s; r += px[i] * s * a; g += px[i + 1] * s * a; b += px[i + 2] * s * a; w += a; }
+        return w > 0 ? [r / w, g / w, b / w] : null;
+      }).finally(() => { rt.dispose(); m.dispose(); });
+    };
+    const uvN = TSL.uv(); const lv = (w) => Math.max(0, Math.log2(w / 64));
+    const conc = TSL.texture(B.aux.texture, uvN).level(lv(B.aux.width)).b; // concrete mask (ground.js auxMaterial)
+    this._albP = Promise.all([
+      read(16, TSL.texture(B.apt.texture, uvN).level(8.0)),
+      // alpha = mask, rgb = albedo (premultiplied by the mask afterwards: the readback weights rgb by alpha)
+      read(64, TSL.vec4(TSL.texture(B.apt.texture, uvN).level(lv(B.aw)).rgb, conc)),
+    ]).then(([all, cm]) => {
+      if (all) { this.groundAlb = all; this.envDirty = true; this.engine.flood.bounce.set(...all); tlog('IBL ground albedo ' + all.map(v => v.toFixed(3)).join(',')); }
+      if (cm) { this.apronAlb = cm; tlog('concrete mean albedo ' + cm.map(v => v.toFixed(3)).join(',')); }
+      this._kG();
+    }).catch(e => console.warn('ground albedo readback', e));
+  }
+  _kG() { const a = this.apronAlb, g = this.groundAlb; if (a && g) this.kG.value.set(...a.map((v, k) => g[k] > 1e-3 ? v / g[k] : 1)); else this.kG.value.set(1, 1, 1); }
+  // QA (close-out round 2 A/B): IBL ground albedo override (null = the airfield bake's mean again); every object's light
+  // from below and the floodlight bounce follow, the curtain walls keep reflecting the concrete (kG)
+  setIBLGround(alb) {
+    if (!this._groundAlbBake) this._groundAlbBake = this.groundAlb;
+    this.groundAlb = alb || this._groundAlbBake; this.engine.flood.bounce.set(...this.groundAlb); this._kG();
+    this.light._albScaled = false; this.envDirty = true;
   }
   // scene objects, built once the world, the sky and the first bake exist
   _buildStatic() {
@@ -264,7 +291,7 @@ export class Renderer3 {
     this.sunRad = uniform(new THREE.Vector3(1, 1, 1));
     E.sun.colorNode = this.sunRad.mul(sky.cloudShadow(TSL.positionWorld));
     this.gMat = groundMaterial(W, this.bakes, sky, Q); this.wMat = waterMaterial(W, this.bakes, sky);
-    const common = { noiseTex: this.noiseTex, night: this.nightE, time: this.time, interiorE: this.interiorE, sunDir: E.sunDirU, shadeK: this.shadeK }; // objects.js night emissions: nightE
+    const common = { noiseTex: this.noiseTex, night: this.nightE, time: this.time, interiorE: this.interiorE, sunDir: E.sunDirU, shadeK: this.shadeK, kG: this.kG, glassAB: this.glassAB }; // objects.js night emissions: nightE
     this.objMat = objectMaterial(common); this.vehMat = objectMaterial({ ...common, instanced: true });
     this.carMat = objectMaterial({ ...common, instanced: true, carFade: true }); // garage-roof cars: distance fade to their mean colour
     this.markMat = markingMaterial({ noiseTex: this.noiseTex, pxScale: this.pxScale, reversed: E.reversed });
@@ -370,7 +397,7 @@ export class Renderer3 {
       // physical sky and add LAMP_M x the part the floor raised
       const B0 = this.baseLight;
       if (B0 && !L._lampScaled) { for (const k of ['skyUp', 'skyHorizon', 'ground']) L[k] = L[k].map((v, i) => B0[k][i] + LAMP_M * Math.max(0, v - B0[k][i])); L._lampScaled = true; }
-      if (this.groundAlb && !L._albScaled) { const a = this.groundAlb; L.ground = L.ground.map((g, k) => g / 0.16 * a[k]); L._albScaled = true; } // Sky.lightFor: ground = E x 0.16 / pi
+      if (this.groundAlb && !L._albScaled) { const a = this.groundAlb; if (!L._ground0) L._ground0 = L.ground.slice(); L.ground = L._ground0.map((g, k) => g / 0.16 * a[k]); L._albScaled = true; } // Sky.lightFor: ground = E x 0.16 / pi
       this.sky.applyLight(L);
       const bu = this.baseLight ? this.baseLight.skyUp : L.skyUp;
       this.sky.u.skyFloor.value.setRGB(...L.skyUp.map((v, k) => Math.max(0, v - bu[k])));
@@ -387,7 +414,9 @@ export class Renderer3 {
     E.setCamera(cam, this.W, this.H);
     this.pxScale.value = 2 * Math.tan(cam.fov / 2) / Math.max(1, this.H);
     // light sprites
-    const sp = this.sprites; sp.begin(); for (const s of fr && fr.sprites || []) sp.put(s); sp.end(E.camera, this.H);
+    // aircraft lights (fr.nAc, compat/scene.js) keep their physical intensity by day (lights.js fixedK; close-out round 2)
+    const sp = this.sprites; sp.fixedK = LAMP_M / ((0.5 + 0.5 * nightF) * lampK.value);
+    sp.begin(); const SL = fr && fr.sprites || [], nAc = fr && fr.nAc || 0; for (let k = 0; k < SL.length; k++) sp.put(SL[k], k < nAc); sp.end(E.camera, this.H);
     // exposure and grade (the app's post settings: exposure, sat, bloom, vignette, grain)
     const el = Math.asin(Math.max(-1, Math.min(1, L.sunDir[1]))) * 180 / Math.PI; const dark = sstep(2, -10, el);
     // day: the app's exposure without its night term, x DAY_GAIN; lamps on / low sun: lit concrete at the key KEY_NIGHT
@@ -395,7 +424,10 @@ export class Renderer3 {
     const pe = post.exposure ?? 0.45; const B = this.baseLight || L;
     const eAmb = lum(B.sunColor) * Math.max(0, B.sunDir[1]) + Math.PI * lum(B.skyUp);
     const eKey = eAmb + E_STAND * LAMP_M * nightF;
-    this.interiorE.value = HALL_DF * eAmb + (1 - nightF) * HALL_LUX / LUX_PER_UNIT; // terminal halls (objects.js id 1)
+    // terminal halls (objects.js id 1): the daylight factor applies to the sky's diffuse illuminance (CIE: overcast sky,
+    // direct sun excluded; close-out round 2: it was applied to sun + sky, 3.5 klx in the hall instead of ~1 klx)
+    const eSky = Math.PI * lum(B.skyUp);
+    this.interiorE.value = HALL_DF * (this.glassABOld ? eAmb : eSky) + (1 - nightF) * HALL_LUX / LUX_PER_UNIT;
     const expoKey = KEY_NIGHT * Math.PI / (RHO_CONC * Math.max(eKey, 1e-7));
     const expoDay = dark < 0.999 ? Math.max(0, (pe - APP_NIGHT_EXPO * dark) / (1 - dark)) * DAY_GAIN : 0;
     E.expo.value = Math.max(expoDay, expoKey) * this.exposureScale; this.eKey = eKey;
@@ -458,7 +490,7 @@ export class Renderer3 {
     const out = { meshes: nObj, visible: nVis, backend: this.engine.backend, tier: this.tier, W: this.W, H: this.H,
       drawCalls: I.render.drawCalls, frameCalls: I.render.frameCalls, tris: I.render.triangles, renderCallsTotal: I.render.calls, frames: this.frames,
       texMB: +((I.memory.texturesSize || 0) / 1048576).toFixed(1), textures: I.memory.textures, renderTargets: I.memory.renderTargets, retainedImageMB: +(retainedImageBytes() / 1048576).toFixed(1),
-      expo: +this.engine.expo.value.toFixed(3), eKeyLux: this.eKey != null ? Math.round(this.eKey * LUX_PER_UNIT * 10) / 10 : null, night: this.night.value, flood: this.engine.flood.stats || null, bakesPending: this.bakes ? this.bakes.pending : null, groundAlb: this.groundAlb || null,
+      expo: +this.engine.expo.value.toFixed(3), eKeyLux: this.eKey != null ? Math.round(this.eKey * LUX_PER_UNIT * 10) / 10 : null, night: this.night.value, flood: this.engine.flood.stats || null, bakesPending: this.bakes ? this.bakes.pending : null, groundAlb: this.groundAlb || null, apronAlb: this.apronAlb || null, kG: this.kG.value.toArray().map(v => +v.toFixed(3)), shadeK: this.shadeK.value.toArray().map(v => +v.toFixed(3)), hallLux: Math.round(this.interiorE.value * LUX_PER_UNIT),
       canvas: this.canvas ? [this.canvas.width, this.canvas.height] : null, appCanvas: [this._appCW, this._appCH], step: this._step, spots: this.engine.spots.map(s => s.intensity > 0 ? [Math.round(s.position.x), Math.round(s.position.z), s.castShadow] : null),
       livMB: this.acr && this.acr.livCache ? +this.acr.livCache.bytes().toFixed(1) : null };
     if (this.acr) { out.aircraft = []; for (const [ac, e] of this.acr.entries) { if (out.aircraft.length >= 3) break; out.aircraft.push({ id: ac.id, type: ac.type, real: !!(e.real && e.real.visible), liv: ac.liv && ac.liv.name }); } }
