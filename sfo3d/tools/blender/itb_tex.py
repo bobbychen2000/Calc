@@ -20,8 +20,8 @@ One tile spans TILE metres of UV_detail (itb_geom lays UV_detail out in metres /
                                           read as vertical stripes): horizontal transom caps at the 1.8-m pane joints, shallow
                                           vertical butt joints every 1.8 m (photo i3: horizontal frit bands and transoms,
                                           thin verticals ~2 bands apart) [obs photo i3, values inf]
-  itb_c_panel /    512 x 512   7.32 x 6.096 BA-G composite panels 3.66 x 1.524 m (photo a2 joints, review r2): base colour
-  itb_n_panel_a2                          with dark reveals and per-panel tone + its normal map (alu_panel walls)
+  itb_c_panel /    512 x 512   7.32 x 6.096 BA-G composite panels 7.32 x 3.048 m with faint halving lines (photo a2 joints,
+  itb_n_panel_a2                          review r2): base colour with dark reveals and per-panel tone + its normal map
   itb_c_curtain_gate 512 x 512 15.9 x 10.1 m BA-G gate-room curtain wall (photo a2, review r1): one tile = a quarter of the
                                           63.6-m bay x the full 4.6-14.7 m glazing; heavy mullion at the tile edge, a light
                                           one at mid-width, transoms every ~1.7 m and a deeper floor band at mid-height
@@ -161,26 +161,30 @@ PANEL_RGB = (190, 193, 196)   # build_itb.MATS['alu_panel'] (white tiles multipl
 
 
 def panel_colour(path, size=512):
-    """BA-G composite-panel wall (review r2, photo a2): 12 x 5 ft panels (3.66 x 1.524 m; a2: vertical joints every 3.7 m,
-    horizontal every 1.5 m) on a 7.32 x 6.096 m tile (2 x 4 panels): 7-cm dark reveals (0.55x - the shadow line a2 shows as
-    1-px dark lines at ~9 px/m) and a +-3 % tone per panel (a2: faint panel-to-panel variation) [obs a2 module, values inf]."""
+    """BA-G composite-panel wall (review r2, photo a2 zoomed on the solid segment B1-B2, ~9 px/m): STRONG reveals every 67 px
+    along the face (7.3 m) and every ~26 px up it (2.9 m) - the "4 horizontal rows" below the roof edge - with FAINT
+    subdivisions halfway (3.7 m / 1.45 m) -> on a 7.32 x 6.096 m tile: strong 8-cm reveals (0.5x) at u = 0 and v = 0 / 3.048,
+    faint 4-cm lines (0.82x) at u = 3.66 and v = 1.524 / 4.572; +-3 % tone per 7.32 x 3.048 panel [obs a2 module +-0.3 m,
+    values inf]."""
     tu, tv = TILES['itb_c_panel']
     u, v = _grid(size, size, tu, tv)
-    pu, pv = tu / 2, tv / 4
-    iu = np.floor(u / pu).astype(int) + 0 * v.astype(int); iv = np.floor(v / pv).astype(int) + 0 * u.astype(int)
-    rng = np.random.default_rng(11); tone = 1.0 + 0.03 * rng.uniform(-1, 1, (2, 4))
-    t = tone[np.clip(iu, 0, 1), np.clip(iv, 0, 3)]
-    j = ((_dist(u, pu) < 0.035) | (_dist(v, pv) < 0.035)).astype(float)
-    col = np.array(PANEL_RGB, float)[None, None, :] * (t * (1 - 0.45 * j))[..., None]
+    iu = np.floor(u / tu).astype(int) + 0 * v.astype(int); iv = np.floor(v / (tv / 2)).astype(int) + 0 * u.astype(int)
+    rng = np.random.default_rng(11); tone = 1.0 + 0.03 * rng.uniform(-1, 1, (1, 2))
+    t = tone[np.clip(iu, 0, 0), np.clip(iv, 0, 1)]
+    strong = ((_dist(u, tu) < 0.04) | (_dist(v, tv / 2) < 0.04)).astype(float)
+    faint = ((np.abs(u - tu / 2) < 0.02) | (np.abs(_dist(v, tv / 2) - tv / 4) < 0.02)).astype(float)
+    f = 1 - np.maximum(0.5 * strong, 0.18 * faint)
+    col = np.array(PANEL_RGB, float)[None, None, :] * (t * f)[..., None]
     Image.fromarray(np.clip(col, 0, 255).astype(np.uint8), 'RGB').save(path, optimize=True)
     return path
 
 
 def panel_a2_normal(path, size=512):
-    """normal map on the panel tile: 7-cm, 1.5-cm-deep reveals on the 3.66 x 1.524 m module."""
+    """normal map on the panel tile: 8-cm, 1.5-cm-deep reveals at the strong joints, 4-cm, 0.5-cm at the faint ones."""
     tu, tv = TILES['itb_n_panel_a2']
     u, v = _grid(size, size, tu, tv)
-    h = np.minimum(_groove(_dist(u, tu / 2), 0.035, 0.015), _groove(_dist(v, tv / 4), 0.035, 0.015))
+    h = np.minimum(_groove(_dist(u, tu), 0.04, 0.015), _groove(_dist(v, tv / 2), 0.04, 0.015))
+    h = np.minimum(h, np.minimum(_groove(u - tu / 2, 0.02, 0.005), _groove(np.abs(_dist(v, tv / 2) - tv / 4), 0.02, 0.005)))
     return _normal_png(h, tu / size, tv / size, path)
 
 

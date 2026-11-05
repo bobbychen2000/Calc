@@ -245,7 +245,11 @@ export class Renderer3 {
   _envSetup(st) {
     const S = this.sky, L = this.physLight; if (!S || !L) return;
     const slabs = renderSlabs(st); this.slabs = slabs;
-    const fogCol = L.skyUp.map((v, k) => v * 0.8 + L.ground[k] * 0.2);   // dense-fog in-scatter: ambient sky + ground bounce (I)
+    // dense-fog in-scatter: ambient sky + ground bounce (I); under a cloud cover the radiance field in the fog is nearly
+    // isotropic: half sky (the deck's mean = skyUp), half ground (review look2-8: 0.8 skyUp made the haze under the
+    // marine deck brighter than the deck's base towards the horizon); cover = 1 − sunVisibleP
+    const cov = 1 - (st.sunVisibleP ?? 1);
+    const fogCol = L.skyUp.map((v, k) => v * (0.8 - 0.3 * cov) + L.ground[k] * (0.2 + 0.3 * cov));
     S.setSlabs(slabs, fogCol, sstepE(2e-4, 2e-3, st.atm.sigmaSurface)); S.u.sunGlow.value = st.sunVisibleP ?? 1;
     this.layers = this.cloudDist ? cloudLayers(st, this.cloudDist) : [];
     S.setLayers(this.layers); this.layers = S.layers; S.u.cloud.value.x = 1 - (st.sunVisibleP ?? 1);   // (the tier's layer count)
@@ -281,7 +285,7 @@ export class Renderer3 {
     const T = world.textures;
     this.noiseTex = textureOf(T.noise, { anisotropy: this.Q.aniso }); this.noiseTex.wrapS = this.noiseTex.wrapT = THREE.RepeatWrapping;
     const cloudTex = textureOf(T.clouds); cloudTex.wrapS = cloudTex.wrapT = THREE.RepeatWrapping;
-    this.sky = new Sky(this.engine, { cloudTex, noiseTex: this.noiseTex, baseRes: this.Q.skyRes, horizSamples: this.tier === 'low' ? 4 : 8, maxSlabs: this.tier === 'low' ? 4 : 6, maxLayers: this.tier === 'low' ? 4 : 6 }); // look1-12: fewer fog-structure samples, slab and layer loops on the phone tier
+    this.sky = new Sky(this.engine, { cloudTex, noiseTex: this.noiseTex, baseRes: this.Q.skyRes, horizSamples: this.tier === 'low' ? 4 : 8, maxSlabs: this.tier === 'low' ? 4 : 6, maxLayers: this.tier === 'low' ? 4 : 6, floodSamples: this.tier === 'low' ? 3 : 6, floodSamplesBg: this.tier === 'low' ? 4 : 8 }); // look1-12 / look2-10: fewer fog-structure / flood in-scatter samples, slab and layer loops on the phone tier
     this.sky.u.night = this.nightE; this.sky.u.time = this.time; // ground.js city lights: nightE
     // cloud texture histogram -> coverage thresholds of the cloud layers (sky_model.js coverageThreshold; A-CLD)
     { let rec = T.clouds; for (let i = 0; i < 3 && rec && !rec.isTexRecord; i++) rec = rec.tex;
