@@ -747,16 +747,22 @@ class Tower:
     def cab_parts(self, L):
         part = Part('cab', dict(
             src='inf', feature='cab on its inferred centre (1.5 E, 1.0 N of the axis): dark plinth ring, inverted-cone roof fascia, '
-            'roof deck with rim coping and inner curb; interior: floor, console ring, dark shade band inside the glass head, '
-            'ceiling (mid-dark tones, review round 2)',
+            'roof deck with rim coping and inner curb (the interior is node cab_interior)',
             spec=['d_cab_roof', 'd_cab_glass_top', 'd_cab_glass_bottom', 'cab_roof_fascia_height', 'h_roof_top',
                   'h_cab_glass_top', 'h_cab_glass_bottom', 'h_cab_floor', 'position_cab_roof_centre', 'cab_offset'],
             drawing='BT-02, BT-03 (cab_outline, plinth)',
             tags=dict(diameters='inf (family D; measured 14.3 +-1.0 / EXIF 14.75 +-0.5 obs)', plinth='obs photo t1',
-                      centre='inf', roof_curb='inf (NAIP rims obs)',
-                      interior='unknown: floor, console ring (0.9 m high, 0.8 m deep) and ceiling are neutral placeholders in '
-                      'mid-dark tones; shade band inside the glass head obs photo t1 (dark top ~0.35-0.4 of the glass), nature inf'),
+                      centre='inf', roof_curb='inf (NAIP rims obs)'),
             anchors=dict(cab_floor_h=self.floor_h, eye_h=self.floor_h + 1.6)), smooth=True)
+        # interior: its own node without baked AO (review round 2: the Cycles AO of this enclosed space is noisy at the bake's
+        # sample count and read as blotches at the tower view's 1-6 m); in the app it is lit by the sky only (materials
+        # ambient_only: tools/blender/build_tower.py MATS, js/three/buildings3d.js)
+        inner = Part('cab_interior', dict(
+            src='unknown', feature='cab interior placeholders: floor, controller console ring, shade band inside the glass head, '
+            'ceiling (neutral mid-dark tones, review round 2)', spec=['h_cab_floor'], drawing='BT-02 (cab floor level)',
+            tags=dict(interior='unknown: floor, console ring (0.9 m high, 0.8 m deep, 0.25 m inside the sill) and ceiling are '
+                      'neutral placeholders; shade band inside the glass head obs photo t1 (dark top ~0.35-0.4 of the glass), nature '
+                      'and tone inf')), smooth=True, ao=False)
         glass = Part('cab_glass', dict(
             src='inf', feature=f'cab glass: {L["cab_n"]} flat frameless panes leaning out, full ring; slim dark butt joints (LOD0, '
             f'{JOINT_W} m); tinted, see-through (alpha blend: the far-side panes and the sky show through in a level view, photo t1; '
@@ -770,13 +776,13 @@ class Tower:
         # plinth ring: deck -> sill [obs photo t1]; top ledge to the glass sill
         lathe(part, [(self.plinth_r, self.deck_h - 0.05), (self.plinth_r, self.sill_h), (gb[0], self.sill_h), (gb[0], self.floor_h)],
               CAB, n, 'plinth', uv_u=n / 4, uv_v=1.0)        # outer face, sill ledge, inner face down to the cab floor
-        disc(part, CAB, gb[0], self.floor_h, n, 'cab_floor', up=True)
+        disc(inner, CAB, gb[0], self.floor_h, n, 'cab_floor', up=True)
         if L['ibf'] != 'box':
             # controller consoles: a ring CONSOLE_H high, CONSOLE_D deep inside the glass [unknown: placeholder only; 13 positions
             # (snippet, unverified); photo t1 shows a dark lower band behind the glass]; neutral grey (review round 2, finding 3:
             # the tower view's lower ~45 % was a black void)
             rc = gb[0] - CONSOLE_GAP
-            lathe(part, [(rc, self.floor_h), (rc, self.floor_h + CONSOLE_H), (rc - CONSOLE_D, self.floor_h + CONSOLE_H),
+            lathe(inner, [(rc, self.floor_h), (rc, self.floor_h + CONSOLE_H), (rc - CONSOLE_D, self.floor_h + CONSOLE_H),
                          (rc - CONSOLE_D, self.floor_h)], CAB, max(24, n // 2), 'cab_console', uv_u=24, uv_v=1.0)
         # shade band inside the glass head [obs t1: dark top band; nature inf]: a band parallel to the glass, SHADE_OFF inside it,
         # from SHADE_F of the glass slant to the head; seen from outside (faces out) and from the cab (faces in). From photo-t2
@@ -784,9 +790,9 @@ class Tower:
         # of the glass (review round 2, finding 2)
         hs = gb[1] + SHADE_F * (gt[1] - gb[1]); rs_ = gb[0] + SHADE_F * (gt[0] - gb[0])
         sh_prof = [(rs_ - SHADE_OFF, hs), (gt[0] - SHADE_OFF, gt[1] - 0.012)]
-        lathe(part, sh_prof, CAB, n, 'cab_shade', uv_u=n / 4, uv_v=1.0, outward=True)
-        lathe(part, [(r - 0.01, h) for r, h in sh_prof], CAB, n, 'cab_shade', uv_u=n / 4, uv_v=1.0, outward=False)
-        disc(part, CAB, gt[0], gt[1] - 0.01, n, 'cab_ceiling', up=False)
+        lathe(inner, sh_prof, CAB, n, 'cab_shade', uv_u=n / 4, uv_v=1.0, outward=True)
+        lathe(inner, [(r - 0.01, h) for r, h in sh_prof], CAB, n, 'cab_shade', uv_u=n / 4, uv_v=1.0, outward=False)
+        disc(inner, CAB, gt[0], gt[1] - 0.01, n, 'cab_ceiling', up=False)
         # roof fascia (inverted cone) glass head -> rim, coping, inner face, deck, curb
         rf = rim[0]
         # fascia: ~32 radial joints [obs t1/t2] = 8 cladding tiles around; v kept inside one panel row (no row joint seen)
@@ -824,7 +830,7 @@ class Tower:
                 rad = np.cross(ax / np.linalg.norm(ax), tang)
                 if np.dot(rad[0:2], bvec(b)) < 0: rad = -rad
                 box(glass, c + rad * 0.01, ax, tang * (JOINT_W / 2), rad * 0.015, 'cab_joint')
-        return part, glass
+        return part, glass, inner
 
     # ---------------------------------------------------------------- roof masts, poles, red light
     def masts(self, L):
@@ -1032,8 +1038,8 @@ def build(fam=1, lods=(0, 1, 2)):
         land, rib = T_.landside(H, ins, L)
         parts['landside'] = land; parts['ribbon'] = rib
         parts['flare_deck'] = T_.deck(H, ins, L)
-        cab, glass = T_.cab_parts(L)
-        parts['cab'] = cab; parts['cab_glass'] = glass
+        cab, glass, inner = T_.cab_parts(L)
+        parts['cab'] = cab; parts['cab_glass'] = glass; parts['cab_interior'] = inner
         if L['masts'] or L['poles']:
             parts['roof_masts'] = T_.masts(L)
         parts['ibf'] = T_.base_building(L)

@@ -21,22 +21,25 @@ export const sstep = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); re
 // ------------------------------------------------------------------------------------------------ 1. clear-sky model
 // Single-scattering Rayleigh + Mie sky of js/shaders/common.js SKY_PRECOMPUTE_FS (the old renderer) and js/three/sky.js
 // precomputeNode: Re 6360 km, Ra 6420 km, Rayleigh βR (5.8, 13.5, 33.1)e-6 m⁻¹ at Hr 7994 m, Mie at Hm 1200 m (×1.1
-// extinction), ozone (0.65, 1.881, 0.085)e-6 × 1.8, g 0.76, 32 view / 8 light steps (Bruneton & Neyret 2008 constants
-// as used there; values copied, not re-derived).
+// extinction), g 0.76, 32 view / 8 light steps (Bruneton & Neyret 2008 constants as used there; values copied, not
+// re-derived). Ozone (review look2-11): absorption (0.65, 1.881, 0.085)e-6 m⁻¹ on its own tent profile, density 1 at
+// 25 km falling to 0 at 10 / 40 km (Bruneton 2017 demo constants, 2nd); was × 1.8 on the Rayleigh profile (same column).
 const Re = 6360e3, Ra = 6420e3, Hr = 7994.0, Hm = 1200.0;
-const bRc = [5.8e-6, 13.5e-6, 33.1e-6], bOc = [0.65e-6 * 1.8, 1.881e-6 * 1.8, 0.085e-6 * 1.8];
+const bRc = [5.8e-6, 13.5e-6, 33.1e-6], bOc = [0.65e-6, 1.881e-6, 0.085e-6];
+export const OZ_H = 25000, OZ_W = 15000;
+const ozone = (h) => Math.max(0, 1 - Math.abs(h - OZ_H) / OZ_W);
 const rs = (ro, rd, r) => { const b = ro[0] * rd[0] + ro[1] * rd[1] + ro[2] * rd[2], c = ro[0] * ro[0] + ro[1] * ro[1] + ro[2] * ro[2] - r * r; const d = b * b - c; if (d < 0) return [-1, -1]; const q = Math.sqrt(d); return [-b - q, -b + q]; };
 
 /** Sun transmittance from the camera to the top of the atmosphere (same as js/renderer.js sunTransmittance). */
 export function sunTransmittanceCPU(sunDir, mie, camH = 30) {
   const ro = [0, Re + camH, 0]; const t = rs(ro, sunDir, Ra)[1];
-  const N = 64; let odR = 0, odM = 0; const seg = t / N;
+  const N = 64; let odR = 0, odM = 0, odO = 0; const seg = t / N;
   for (let i = 0; i < N; i++) {
     const p = [sunDir[0] * seg * (i + 0.5), Re + camH + sunDir[1] * seg * (i + 0.5), sunDir[2] * seg * (i + 0.5)]; const h = Math.hypot(...p) - Re;
     if (h < 0) return [0, 0, 0];
-    odR += Math.exp(-h / Hr) * seg; odM += Math.exp(-h / Hm) * seg;
+    odR += Math.exp(-h / Hr) * seg; odM += Math.exp(-h / Hm) * seg; odO += ozone(h) * seg;
   }
-  return bRc.map((br, k) => Math.exp(-((br + bOc[k]) * odR + mie * 1.1 * odM)));
+  return bRc.map((br, k) => Math.exp(-(br * odR + bOc[k] * odO + mie * 1.1 * odM)));
 }
 
 /** CPU evaluation of the sky precompute on a 32x16 equirect grid and the ambient integration of js/renderer.js
@@ -52,17 +55,17 @@ export function skyAmbientCPU(sunDir, mie, sunI, camH = 30) {
     let rd = d.slice(); if (rd[1] < 0.02) { rd[1] = 0.02 + (0.02 - rd[1]) * 0.02; const l = Math.hypot(...rd); rd = rd.map(v => v / l); }
     const ro = [0, Re + camH, 0];
     let tmax = rs(ro, rd, Ra)[1]; const tg = rs(ro, rd, Re); if (tg[0] > 0) tmax = Math.min(tmax, tg[0]);
-    const N = 32, seg = tmax / N; let t = 0; const sumR = [0, 0, 0], sumM = [0, 0, 0], msR = [0, 0, 0], msM = [0, 0, 0]; let odR = 0, odM = 0;
+    const N = 32, seg = tmax / N; let t = 0; const sumR = [0, 0, 0], sumM = [0, 0, 0], msR = [0, 0, 0], msM = [0, 0, 0]; let odR = 0, odM = 0, odO = 0;
     const mu = rd[0] * sunDir[0] + rd[1] * sunDir[1] + rd[2] * sunDir[2];
     const pR = 3 / (16 * Math.PI) * (1 + mu * mu), pM = 3 / (8 * Math.PI) * ((1 - g * g) * (1 + mu * mu)) / ((2 + g * g) * Math.pow(1 + g * g - 2 * g * mu, 1.5));
     for (let i = 0; i < N; i++) {
       const p = [ro[0] + rd[0] * (t + seg * 0.5), ro[1] + rd[1] * (t + seg * 0.5), ro[2] + rd[2] * (t + seg * 0.5)]; const h = Math.hypot(...p) - Re;
-      const hr = Math.exp(-h / Hr) * seg, hm = Math.exp(-h / Hm) * seg; odR += hr; odM += hm;
-      const sl = rs(p, sunDir, Ra)[1] / 8; let odlR = 0, odlM = 0, ok = true;
-      for (let j = 0; j < 8; j++) { const q = [p[0] + sunDir[0] * sl * (j + 0.5), p[1] + sunDir[1] * sl * (j + 0.5), p[2] + sunDir[2] * sl * (j + 0.5)]; const hq = Math.hypot(...q) - Re; if (hq < 0) { ok = false; break; } odlR += Math.exp(-hq / Hr) * sl; odlM += Math.exp(-hq / Hm) * sl; }
+      const hr = Math.exp(-h / Hr) * seg, hm = Math.exp(-h / Hm) * seg; odR += hr; odM += hm; odO += ozone(h) * seg;
+      const sl = rs(p, sunDir, Ra)[1] / 8; let odlR = 0, odlM = 0, odlO = 0, ok = true;
+      for (let j = 0; j < 8; j++) { const q = [p[0] + sunDir[0] * sl * (j + 0.5), p[1] + sunDir[1] * sl * (j + 0.5), p[2] + sunDir[2] * sl * (j + 0.5)]; const hq = Math.hypot(...q) - Re; if (hq < 0) { ok = false; break; } odlR += Math.exp(-hq / Hr) * sl; odlM += Math.exp(-hq / Hm) * sl; odlO += ozone(hq) * sl; }
       for (let k = 0; k < 3; k++) {
-        if (ok) { const att = Math.exp(-((bRc[k] + bOc[k]) * (odR + odlR) + mie * 1.1 * (odM + odlM))); sumR[k] += att * hr; sumM[k] += att * hm; }
-        const tv = Math.exp(-((bRc[k] + bOc[k]) * odR + mie * 1.1 * odM)); msR[k] += tv * hr; msM[k] += tv * hm;
+        if (ok) { const att = Math.exp(-(bRc[k] * (odR + odlR) + bOc[k] * (odO + odlO) + mie * 1.1 * (odM + odlM))); sumR[k] += att * hr; sumM[k] += att * hm; }
+        const tv = Math.exp(-(bRc[k] * odR + bOc[k] * odO + mie * 1.1 * odM)); msR[k] += tv * hr; msM[k] += tv * hm;
       }
       t += seg;
     }

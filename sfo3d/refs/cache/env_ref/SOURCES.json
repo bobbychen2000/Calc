@@ -14,7 +14,8 @@
       "author": "wbaiv (Bill Abbott), https://www.flickr.com/photos/9998127@N06/51953851754/",
       "taken": "2016-05-03 19:57:30 PDT (EXIF); Nikon D40X 55 mm 1/5 s f/4.5 ISO 1600 (EV100 2.66); Sun el 0.0 deg (js/env/ephemeris.js)",
       "licence": "CC BY 4.0",
-      "use": "dusk / blue hour from the bay: floodlight mast lamps, tower, fog bank over San Bruno Mountain"
+      "use": "OVERCAST / FOG dusk (not a clear-dusk colour reference): floodlight mast lamps, tower, fog bank over San Bruno Mountain",
+      "caveat": "Environment review round 2 (look2-13, M): EV100 2.66 at Sun 0.0 deg puts mid-grey at 12.5 x 2^2.66 / 100 = 0.79 cd/m2, ~2 orders of magnitude below a clear sunset sky (10^2-10^3 cd/m2, js/env/atmo/sky_model.js CPU mirror): the scene was under an overcast / fog deck (the title says fog) and its saturated blue may be white balance. Do not judge the clear-sky E3 dusk colour against it; a clear civil-twilight photo looking west at SFO is still missing (owner request, docs/research/environment_impl.md R2)."
     },
     "sfo_night_2023_960.jpg": {
       "commons": "https://commons.wikimedia.org/wiki/File:San_Francisco_International_Airport_Night_2023.jpg",

@@ -315,7 +315,7 @@ def verify(glb, fam):
     pl = np.concatenate([p for m, p, i in cab if m == 'plinth'])
     res.append(chk('plinth diameter', 2 * np.hypot(pl[:, 0] - cabC[0], pl[:, 2] - cabC[1]).max(), 2 * TW.plinth_r, 'obs'))
     res.append(chk('plinth top (= glass sill)', pl[:, 1].max(), TW.sill_h, 'inf'))
-    fl = np.concatenate([p for m, p, i in cab if m == 'cab_floor'])
+    fl = np.concatenate([p for m, p, i in meshes[L0].get('cab_interior', cab) if m == 'cab_floor'])
     res.append(chk('cab floor', fl[:, 1].min(), TW.floor_h, 'inf'))
     # 4. flare widest, shoulder top, NE tip
     sh = _pts(meshes, L0, ['shaft'])
@@ -560,7 +560,7 @@ def _night_glow(glb):
     for m in js.get('materials', []):
         ex = m.get('extras') or {}
         if ex.get('led_color'):
-            out['led'] = dict(material=m['name'], led_color_linear=ex['led_color'], obs=ex.get('led_color_obs'),
+            out['led'] = dict(material=m['name'].split('.')[0], led_color_linear=ex['led_color'], obs=ex.get('led_color_obs'),
                               tag='obs photo t5 (Varnum 2018-04, dusk: the ribbon lit saturated blue) as the default; the array is '
                                   'programmable (pub: LED-backlit), so the colour on any other night is unknown: an inferred, '
                                   'configurable value (material extras.led_color; GLOW_DEF.led tints / scales it)')
@@ -634,7 +634,8 @@ def manifest_entry(results, ver, renders, args, rev, secs):
         'lowest pane (obs photo t4: a dot grid); hole pitch ~0.05 m, hole 0.022 m, sheet tone sRGB 122-131 (tuned to the t2 '
         'slot / panel display ratio ~0.6-0.7) and the void behind are inf',
         'LED ribbon night colour: the observed photo-t5 blue (median sRGB 82 / 137 / 209) as the default of a programmable '
-        'array (material extras.led_color, linear (0.21, 0.62, 1.59) at the loader\'s previous mean level); any other night '
+        'array (material extras.led_color, linear (0.077, 0.536, 2.848): the photo chroma compensated for the app\'s tone '
+        'mapping, at the loader\'s previous mean level); any other night '
         'colour or animation is unknown (manifest night_glow)',
         'cab roof deck 0.30 m below the rim coping; inner curb r 4.75 m, 0.3 m high',
         'mast / pole bearings and heights (+-5 deg / +-0.3 m); pole heads schematic; red-light bearing (225, SW)',
@@ -647,7 +648,7 @@ def manifest_entry(results, ver, renders, args, rev, secs):
         'what the published 221 ft measures (rim or mast tips)',
         'blade / channel plan depth beyond the BT-01 wing-tip point; channel wall geometry',
         'cab glazing pane phase; cab interior: floor (sRGB 74), console ring (0.9 m high, 0.8 m deep, 0.25 m inside the sill; '
-        'sRGB 112) and ceiling (sRGB 62) are neutral placeholders (no source for the furniture; 13 positions in a snippet, '
+        'sRGB 96) and ceiling (sRGB 62) are neutral placeholders (no source for the furniture; 13 positions in a snippet, '
         'unverified)',
         'obstruction-light fixture type (L-810 steady / L-864 flashing) and count (one seen, t5)',
         'core diameter, floor levels (not visible; not modelled)',
@@ -783,6 +784,40 @@ APP_NOTE = ('the review compared the app at the snapshot time (sun az 134 / el 4
 APP_EYE = ('app check: tower view eye at y 62.15 = GROUND_Y + 59.151 (F2), glass hidden inside the ring (tapp_towercam.png); '
            'F1 file anchors: eye 62.2 above grade, glass head r 6.537')
 
+# Review round 2 of the 3-D asset (2026-11-05, 4 items). Numbers measured on the final renders: Cycles = the photo|render
+# comparisons tower_compare_t2/t3.jpg (grey levels, meas: slot runs < 0.8 x the local median along rows 260 / 530; cab:
+# vertical profile through the cab centre); app = out/buildings3d/app/r2/*.png (three.js, llvmpipe)
+R2N = dict(
+    slot_c='R2_SLOT_C', slot_app='R2_SLOT_APP', glass_c='R2_GLASS_C', glass_app='R2_GLASS_APP', moire='R2_MOIRE',
+    led='R2_LED', towercam='R2_TOWERCAM')
+REVIEW_R2 = [
+    '1 (major) slots read as black gashes - FIXED: every slot cell above its glazed lowest pane carries a perforated screen '
+    '0.06 m behind the cladding face (obs photo t4: a dot grid; base-colour tile tower_tex.slot_color, a staggered hole grid '
+    '~0.05 m pitch on a sheet sRGB 122-131: tile linear albedo 0.56 x the cladding tile), a light reveal (the panel return) '
+    'and the dark pocket behind; LOD1 / LOD2 flat slots take the screen tone (material slot_screen). {slot_c} {slot_app} '
+    'At night the screens stay dark (photo t5); only the glazed lowest panes keep the office glow.',
+    '2 (major) cab glass an empty jar from below, two-tone - FIXED: a dark shade band inside the glass head (obs photo t1: the '
+    'top ~0.35-0.4 of the glass dark all round; from 0.62 of the slant, 0.12 m inside the glass) hides the far side\'s sky that '
+    'showed through the lower third; the ceiling is mid-dark (sRGB 62), the glass a lighter teal-grey tint (80, 98, 106) at '
+    'alpha 0.6 (two panes pass 16 % of the sky). {glass_c} {glass_app}',
+    '3 (minor) light joints, black in-cab void, floor moire - FIXED: pane butt joints 0.03 m and dark (sRGB 38-43; the '
+    'published frameless butt glazing, the thin dark joints of t2; were light 0.06 m); a neutral console ring (0.9 m high, '
+    '0.8 m deep, sRGB 96) and floor (sRGB 74) as unknown placeholders, in their own node cab_interior without baked AO (the Cycles AO of the enclosed cab was noisy and read as blotches in the tower view). Floor moire: root cause measured on the low tier '
+    '(tools/blender/tower_app_job.mjs experiments, old file, out/buildings3d/app/r2exp/): high-pass of the floor 50.5 grey '
+    'levels per pixel, 50.0 with GTAO off (aoAmount 0), 0.65 with the floor\'s receiveShadow off: the sun shadow test, not AO '
+    'or a texture. The alpha-blended glass casts no shadow, so the sun reached the whole floor through the glass ring and '
+    'the floor sat in the PCF penumbra of the 1024-px low-tier cascade, whose per-pixel rotated taps TRAA did not average. The '
+    'interior placeholders (floor, consoles, shade band, ceiling) are now lit by the sky only (material extras.ambient_only: '
+    'the loader gives them an empty lights node, no sun, no shadow lookup; IBL x baked AO stays). {moire} {towercam}',
+    '4 (minor) LED ribbon glows white at night - FIXED: the ribbon material carries extras.led_color = the observed photo-t5 '
+    'blue (median sRGB 82 / 137 / 209 of the lit ribbon, Varnum 2018-04 dusk; linear (0.084, 0.250, 0.638)), scaled to '
+    'the loader\'s previous mean level and compensated for the app\'s AgX desaturation (a first night render with the '
+    'photo-linear colour showed hue 209 / saturation 0.35 against the photo\'s 214 / 0.58; display ratios fit out = in^0.56, '
+    'so the input is (0.077, 0.536, 2.848)); the loader glows in that colour (the wave modulates the level only; GLOW_DEF.led / '
+    'setGlow(\'led\') tint and scale it at run time) and the manifest lists it under night_glow as the observed default of a '
+    'programmable array, inferred for any other night. {led}',
+]
+
 
 def doc_section(entry, ver):
     """the tower section of docs/research/buildings3d.md, from the manifest entry and the verification."""
@@ -853,10 +888,14 @@ def doc_section(entry, ver):
               'rim, the sun is computed for the photo time; side-by-side comparisons `tower_compare_*.jpg` stay local). App views '
               '(three.js, llvmpipe, `?b3donly=tower`, photo-matched camera and sun; `tools/blender/tower_app_job.mjs`): '
               '`out/buildings3d/app/tapp_t2.png`, `tapp_t4.png`, `tapp_t4close.png`, `tapp_t2like.png`, `tapp_towercam.png` '
-              '(+ `tapp_t2_metal0.png` / `tapp_t2_col085.png`, material experiments), `tower_app_info.json`.', '',
+              '(+ `tapp_t2_metal0.png` / `tapp_t2_col085.png`, material experiments), `tower_app_info.json` (round 1). Round 2: '
+              '`out/buildings3d/app/r2/tapp_t2.png`, `tapp_t4.png`, `tapp_towercam.png`, `tapp_t4night.png` (21:30 PDT: the LED '
+              'ribbon), `r2/low/tapp_lowcam.png` (low tier, tower view); the floor-moire experiments (old file, low tier) in '
+              '`out/buildings3d/app/r2exp/`.', '',
               '**Observed vs inferred.** Per dimension in `manifest.json#tower.dimensions`; lists `inferred`, `unknown`, '
               '`not_modelled`, `conflicts` there. Node extras carry `src`, the spec keys and per-feature tags.', '',
               '**Review round 1 (2026-11-05).**'] + ['- ' + r.replace('APP_NOTE', APP_NOTE).replace('APP_EYE', APP_EYE) for r in REVIEW_R1] + [
+              '', '**Review round 2 (2026-11-05).**'] + ['- ' + r.format(**R2N) for r in REVIEW_R2] + [
               '',
               '**Open (for the owner).**',
               '- The height family (F2 default / F1 hypothesis).',

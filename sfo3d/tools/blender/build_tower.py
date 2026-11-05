@@ -87,11 +87,17 @@ MATS = {
     # glow): the hue of photo t5 (Varnum 2018-04, dusk; median of 91k ribbon pixels sRGB (82, 137, 209), IQR R 65-93 / G 125-145
     # / B 194-226 -> linear (0.084, 0.250, 0.638)), scaled to the luminance of the loader's previous blue-cyan wave mean
     # (0.605) so the tuned night level is kept. The array is programmable (pub: LED-backlit): this is the observed default,
-    # an inferred choice for every other night (review round 2, finding 4: the ribbon glowed near-white)
+    # an inferred choice for every other night (review round 2, finding 4: the ribbon glowed near-white).
+    # Tone-mapping compensation: with the photo's own linear colour (0.21, 0.623, 1.588) the app's night render
+    # (out/buildings3d/app/r2/tapp_t4night.png, 21:30 PDT) showed the ribbon at median sRGB (104, 144, 182): hue 209 /
+    # saturation 0.35 against the photo's 214 / 0.58 (AgX desaturates). The display ratios fit out = in^0.56 (R/B and G/B), so
+    # the input chroma is set to the ratios that map onto the photo's (R/B 0.027, G/B 0.188), at the same luminance 0.605
     'ribbon_glass':  dict(rgb=(150, 182, 175), m=0.0, r=0.06, src='pub (Guardian SNX 62/27 IGUs, LED-backlit); daytime tint obs photos '
                           't3/t4; emissive off by day (extras.led); night colour obs photo t5 (extras.led_color: the observed '
                           'default of a programmable array, inf for any other night)', led=True,
-                          led_color=(0.210, 0.623, 1.588), led_color_obs=dict(photo='t5', srgb_median=(82, 137, 209))),
+                          led_color=(0.077, 0.536, 2.848), led_color_obs=dict(photo='t5', srgb_median=(82, 137, 209), linear=(0.084, 0.250, 0.638),
+                          note='input chroma compensated for the app tone mapping (round-2 night render: photo-linear colour '
+                          'gave hue 209 / sat 0.35 vs the photo 214 / 0.58)')),
     'mullion':       dict(rgb=(85, 88, 92), m=0.70, r=0.40, src='inf'),
     'plinth':        dict(rgb=(60, 70, 80), m=0.40, r=0.45, src='obs photo t1 (dark ring under the cab glass)'),
     # cab glass: tinted, see-through. Photos: glass / sky display 0.31 (t1, near-level view: the sky shows through the far-side
@@ -112,7 +118,7 @@ MATS = {
     # alpha-blended glass casts no shadow, so the sun lit the whole floor through it and the floor sat in the PCF penumbra:
     # a per-pixel checker on the low tier, finding 3); Cycles renders them physically
     'cab_floor':     dict(rgb=(74, 74, 76), m=0.0, r=0.90, ambient_only=True, src='unknown (neutral placeholder floor)'),
-    'cab_console':   dict(rgb=(112, 112, 110), m=0.0, r=0.70, ambient_only=True, src='unknown (neutral placeholder console ring)'),
+    'cab_console':   dict(rgb=(96, 96, 94), m=0.0, r=0.70, ambient_only=True, src='unknown (neutral placeholder console ring)'),
     'cab_ceiling':   dict(rgb=(62, 62, 64), m=0.0, r=0.90, ambient_only=True, src='unknown (mid-dark placeholder ceiling)'),
     'cab_shade':     dict(rgb=(52, 54, 58), m=0.0, r=0.85, ambient_only=True, src='obs photo t1 (dark band over the top ~0.35-0.4 of the glass, all '
                           'round); nature (sun shades / valance) and tone inf'),

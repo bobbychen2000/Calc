@@ -92,6 +92,7 @@ const HALL_DF = 0.05, HALL_LUX = 200;
 // with the drop radiance, "over" the scene colour (I, display weight; js/three/rain.js, review look2-7).
 const K_TWILIGHT = 0.167, MOON_COL = [1.0, 0.95, 0.86], FLASH_COL = [0.86, 0.9, 1.0], RAIN_K = 0.25, FLASH_GLOW_CDM2 = 50;
 const MAST_LOBE_FLOOR = 0.25;   // floodlight lamps seen from the side / behind: fraction of the on-axis intensity (I / NV, Q7; attachWorld)
+const AUR_LOW_MAX_N = 64, AUR_LOW_MAX_DEG = 2.5;   // phone-tier aureole caps (I; look2-10)
 const REFL_MAX_M = 600, REFL_K = 0.7;   // lamp reflections on wet pavement: range, share of the Fresnel energy in the image (I)
 const DEGR = Math.PI / 180;
 
@@ -614,7 +615,10 @@ export class Renderer3 {
       const fogged = fogS && !phys && !s.marker && !(s.s >= 0.6 && !s.dir); const T = fogged ? fogTransmittance(fogS, cp, s.p) : 1;
       let au = phys ? (s.aur || 0) : 0, ar = phys ? (s.aurR || 0) : 0;
       if (fogged && fogAur) { const A = aureole(T); if (A) { au = s.i * A.f; ar = A.theta; } }
-      if (au > 0 && !aurVisible(au, ar, s.s || 0.3, s.p)) au = 0; if (au > 0) nAur++;
+      if (au > 0 && !aurVisible(au, ar, s.s || 0.3, s.p)) au = 0;
+      // phone tier (review look2-10): aureole radius <= AUR_LOW_MAX_DEG and at most AUR_LOW_MAX_N of them (fill rate, I)
+      if (au > 0 && this.tier === 'low') { if (nAur >= AUR_LOW_MAX_N) au = 0; else ar = Math.min(ar, AUR_LOW_MAX_DEG * DEGR); }
+      if (au > 0) nAur++;
       sp.put(s, phys, T, au, ar);
     }
     // wet pavement mirrors the lamps (review look1-3: puddles were dark holes under the floods; no SSR / planar

@@ -218,7 +218,11 @@ Priority (weather §4.5, **I** built on **V** facts):
 2. D-ATIS text (atis.info) only if the owner accepts a source with no published terms (weather Q3).
 3. Fallback (snapshot start, empty history): METAR **true** wind with JO 7110.65 3-5-1 ("most nearly aligned with the
    wind when 5 knots or more", **V**); below 5 kt, SFO's West Plan (arrive 28L/R, depart 1L/R; "95-98% of the time",
-   flysfo.com, **V**). SFO's formal "calm wind runway" is **NV**.
+   flysfo.com, **V**). SFO's formal "calm wind runway" is **NV**. **Revised 2026-11-05 (environment review truth2-1):**
+   3-5-1's "most nearly aligned" rule gave north / east plans SFO does not publish (21 of 58 fixture reports) and
+   instrument arrivals to 1L/1R (no IAP), while the 4 Nov ADS-B recording shows the West Plan in those winds; the
+   fallback is now the West Plan unless the 28-tailwind is ≥ 5 kt (or the 28-crosswind ≥ 20 kt with a 19 headwind),
+   then the Southeast Plan (**I**; implementation and evidence: environment_impl.md R2.1).
 4. Approach type per arrival end: instrument whenever the METAR is below the charted visual-approach minima "SFO
    2500'/5" (Quiet Bridge / Tipp Toe charts, d-TPP 2609, **V**); otherwise unknown (visual or ILS; the D-ATIS showed ILS
    at night in VFR, **M**). The controller only needs "instrument approaches are being made" for the flasher rule, and
@@ -843,7 +847,7 @@ PAPI row centres 28R (1132.4, 406.7), 28L (1026.0, 608.6), 19L (597.7, −555.9)
 | A-VIS | In `lighttest` scenes, each Table B-1 light is visible (core ≥ 3 code values above the local background) at 0.9 × the tabled distance and invisible (< 1 code value) at 1.1 ×; at night (night_clear) HIRL at step 1 is visible from the 2 NM approach view only if its modelled E ≥ E_T. |
 | A-CTL | Every system on/off state and relative brightness in E1–E10 matches the controller output (e.g. SSALR vs ALSF-2 station count in C1: 28R SSALR shows no red side rows and no 500-ft bar; ALSF-2 shows 54 red lights). |
 | A-PAPI | The five-angle patterns of C2 in the rendered images for all six ends. |
-| A-COL | At night, the halo hue of threshold/wing-bar lights lies in 90–170° (HSV), red 345–15°, yellow caution 40–65°, blue taxiway 200–250°; the core may saturate to white. |
+| A-COL | At night, the halo hue of threshold/wing-bar lights lies in 90–170° (HSV), red 345–15°, yellow caution **20–36°**, blue taxiway 200–250°; the core may saturate to white. (Corrected 2026-11-05, environment review truth2-10, **M**: the EB 67D yellow box gamut-clipped to sRGB spans hue 20.4–35.1°, centroid 28.2°; the former "40–65°" lay outside the verified colour data, so no correct render could pass.) |
 | A-GEO | Light positions project within 1 px (at 1 m/px plan views) of the fixture coordinates; ALS stations and pier crossmembers match the NAIP crops; the 28R PAPI is at 1,369 ft, not 1,298 ft. |
 | A-CLD | Cloud bases at the METAR height ± the Table 13-6 resolution; the number of layers equals the report's; coverage within ±0.1 of `own_fraction` over a large area. |
 | A-RAIN | Streak length within ±25 % of v × 1/60 s at the D₀ fall speed; the drop count ratio between light (1 mm/h) and heavy (10 mm/h) within ±25 % of the Marshall–Palmer ratio; drizzle shows no streaks. |

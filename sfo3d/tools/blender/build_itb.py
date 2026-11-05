@@ -81,7 +81,7 @@ MATS = {
                                src='pub "three layers of ceramic frit"; white banded look obs photos i1 / i4; pattern inf; own '
                                    'normal tile itb_n_frit (review r1: itb_n_curtain on the 3.6-m frit tile put caps every 0.9 m); review r2: '
                                    'albedo 214 -> 184 (white band) / 92 -> 62 (clear band), roughness 0.22 -> 0.12 (reads as glass in shade, i3)'),
-    'glass_hall':         dict(rgb=(60, 68, 74), m=0.0, r=0.06, ior=1.9, nrm=('itb_n_curtain', 0.5),
+    'glass_hall':         dict(rgb=(52, 60, 66), m=0.0, r=0.06, ior=1.9, nrm=('itb_n_curtain', 0.5),
                                src='obs photos i1 / i4 (clear central bay: the lit hall seen through); review r2: i4 centre / side bay '
                                    '~0.7 (photo) against 0.88 rendered at 118 / 130 / 136 -> darker; value inf'),
     'mullion':            dict(rgb=(178, 182, 186), m=0.60, r=0.40, src='inf (aluminium mullion caps)'),
@@ -258,7 +258,10 @@ def lettering(parent, lod):
     cu.body = 'SAN FRANCISCO INTERNATIONAL'
     cu.align_x = 'CENTER'; cu.size = 1.0
     try:
-        cu.offset = 0.03       # review r2: bolder strokes (i4: near-black letters; the built-in font is light) [inf]
+        # review r2 (photo i4): near-black letters with wide tracking and medium strokes; the built-in font is light and tight -
+        # letter spacing 1.35 and a 0.02 outline offset (then rescaled into the BI-02 box as before) [inf]
+        cu.space_character = 1.35
+        cu.offset = 0.02
     except Exception:  # noqa: BLE001
         pass
     if lod == 0:

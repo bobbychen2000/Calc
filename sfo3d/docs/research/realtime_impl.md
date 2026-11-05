@@ -786,9 +786,13 @@ engine's phase, not the label.
    at its last report: UAL1372 at D8, 19:14:49Z). A body that is being removed but still waits for its bridge (fadeRemove:
    it fades once the bridge is ≤ 30 % extended) fades at once when a live aircraft drives into it (ground.js
    `dropWaitCut`): the occupant of G7 replaced ahead of UAL900 at 20:39:40Z was driven through for 35 s.
-   The ghost-ahead bridge retraction (item 4) is skipped when SFO puts the arrival at another stand (its own arrival
-   record) or lists the occupant at that stand around now (`planAt`): 26 of 57 such retractions were for arrivals that
-   went on to another stand (7 at E3, whose lead-in lies along the E-pier alley), the bridge docking again 90 s later.
+   The ghost-ahead bridge retraction (item 4) is skipped when SFO's plan contradicts it on both counts: SFO puts the
+   arrival at another stand (its own arrival record) AND lists the occupant at that stand around now (`planAt`).
+   - On the replay, 26 of 57 such retractions were for arrivals that went on to another stand, and the bridge docked
+     again 90 s later. UAL1114 at E3 was hit three times in 35 min; E3's lead-in lies along the E-pier alley.
+   - Either signal alone also dropped retractions that were needed, so a single signal is not enough. SFO's stand for
+     the arrival was another one at G1, G13, B26 and F16, and SFO still listed the occupant at F16, G8, E8 and G6
+     after it had left. The all-hours run with either signal alone had bridge.orphan 5,965 frames.
 7. **Minors.** Early-undock 'silent' cancel only after XPDR_OFF_MS of silence, without blocking the next signal (v6); the
    tow pivot only while the push-back phase or TOW_MS after it (v9); a re-placement waits for its bridges only while the
    data is within CUT_HOLD_M (v9).

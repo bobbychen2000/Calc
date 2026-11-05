@@ -121,10 +121,11 @@ APRON_TOP = 3.0          # dark recessed apron level [obs photo a2]
 GLAZE_BOT, GLAZE_TOP2 = 4.6, 14.7   # gate-room curtain wall foot / head [obs photo a2 (BA-G); BA-A by analogy, inf]
 GATE_POD_MIN = 35.0      # a main-face segment is a gate room where one pod overlaps it by >= 35 m [inf; selects 6 on BA-G]
 GATE_TILE = (15.9, 10.1) # itb_c_curtain_gate tile (a quarter of the 63.6-m bay x the glazing height)
-# Review r2: the BA-G walls read as blank white. Photo a2 (solved camera, ~9.0 px/m along the NNE face): vertical panel joints
-# every 33.5 px (3.7 m), horizontal joints every 13 px (1.5 m) over the solid segments -> a 12 x 5 ft (3.66 x 1.524 m)
-# composite-panel module [obs a2, +-0.3 m], drawn as a base-colour tile (dark reveals + per-panel tone) with its own normal
-# map (itb_c_panel / itb_n_panel_a2, tile 2 x 4 panels); used on every alu_panel wall (BA-G obs; BA-A / core by analogy, inf)
+# Review r2: the BA-G walls read as blank white. Photo a2 (solved camera, ~9.0 px/m along the NNE face, solid segment B1-B2
+# zoomed): strong vertical joints every 67 px (7.3 m) and strong horizontal joints every ~26 px (2.9 m: four rows below the
+# roof edge), with faint lines halfway (3.7 m / 1.45 m) -> a 7.32 x 3.048 m (24 x 10 ft) composite-panel module with faint
+# halving lines [obs a2, +-0.3 m], drawn as a base-colour tile (dark reveals + per-panel tone) with its own normal map
+# (itb_c_panel / itb_n_panel_a2, tile 7.32 x 6.096 m); used on every alu_panel wall (BA-G obs; BA-A / core by analogy, inf)
 PANEL_TILE = (7.32, 6.096)
 # isolated 2-lite windows on the BA-G NNE face (photo a2; review r1 noted them, r2 asks for them): pixel boxes inverted onto
 # the face plane with the solved camera (s, +-2 m) and heights read per column between the facade's roof edge (17.0 m) and the

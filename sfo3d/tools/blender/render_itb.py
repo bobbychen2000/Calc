@@ -159,6 +159,15 @@ def view_i4(args):
     return render(os.path.join(OUT, 'itb_i4.png')),
 
 
+def view_i4z(args):
+    """the i4 camera with a 2x lens on the centre (review r2): the render at ~4.4 px/m, the resolution of the full-size photo
+    i4, to compare the lettering, the crown and the truss lattice pixel for pixel (Cycles stays <= 960 px)."""
+    sun_sky(255.0, 32.0)
+    loc = W(4.0, -430.0, 20.0); tgt = W(4.0, 0.0, 24.0)
+    camera('cam_i4z', loc, tgt, lens=116.0, res=(960, 487))
+    return render(os.path.join(OUT, 'itb_i4z.png')),
+
+
 def view_i3(args):
     """close-up from the departures curb island looking SSE along the facade (photo i3, Elizabeth K. Joseph 2017,
     CC BY 2.0; camera estimated): columns with their fans, the exposed truss, soffit outriggers, canopy and hangers.
@@ -351,6 +360,9 @@ def main():
             done['west_check'] = west_overlay(*r)
         elif v == 'i4':
             side_by_side(r[0], os.path.join(REF, 'i4.jpg'), 'itb_cmp_i4.png')
+        elif v == 'i4z':
+            # the matching centre of the full-resolution photo (the i4 camera's 2x crop: 1920 x 974 -> the middle 960 x 487)
+            side_by_side(r[0], os.path.join(REF, 'i4.jpg'), 'itb_cmp_i4z.png', crop=(480, 243, 1440, 730))
         elif v == 'i3':
             side_by_side(r[0], os.path.join(REF, 'i3.jpg'), 'itb_cmp_i3.png')
         elif v == 'a2g':

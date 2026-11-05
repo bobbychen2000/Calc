@@ -10,6 +10,7 @@ PATH = os.path.join(ROOT, 'data', 'buildings3d', 'manifest.json')
 VIEWS = {
     'west': 'orthographic west elevation, BI-02 view 1 frame; itb_cmp_west.png overlays the BI-02 lines',
     'i4': 'landside perspective approximating photo i4 (DimiCalifornia 2005, PD); itb_cmp_i4.png side by side',
+    'i4z': 'review r2: the i4 camera with a 2x lens (~4.4 px/m, the full-size photo resolution); itb_cmp_i4z.png pairs the photo centre',
     'i3': 'curb close-up approximating photo i3 (E. K. Joseph 2017, CC BY 2.0); itb_cmp_i3.png side by side',
     'a2g': 'photo a2 view (camera solved, review r1): the BA-G NNE face; itb_cmp_a2g.png side by side',
     'baa': 'aerial from the ESE over Boarding Area A (BI-04 view 2); no reference photo of BA-A (a2 shows BA-G)',

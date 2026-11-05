@@ -182,7 +182,7 @@ export class FloodLightNode extends THREE.AnalyticLightNode {
   // field minus the spot masts' share (they are drawn as shadow-casting MastSpot lights)
   residual() {
     const { f, g } = this.fields(); let Ev = f.xyz, S = f.w;
-    for (let k = 0; k < this.spotUs.length; k++) { const e = spotShare(this.spotUs[k], this.scaleU.mul(this.spotOnU[k])); Ev = Ev.sub(e.xyz); S = S.sub(e.w); }
+    for (let k = 0; k < this.spotUs.length; k++) { const e = spotShare(this.spotUs[k], this.scaleU.mul(this.spotOnU[k]).mul(SPOT_SHARE)); Ev = Ev.sub(e.xyz); S = S.sub(e.w); }
     return { Ev: vec3(Ev.x, max(Ev.y, 0.0), Ev.z), S: max(S, 0.0), g };
   }
   setupDirect() {
@@ -202,6 +202,11 @@ export class FloodLightNode extends THREE.AnalyticLightNode {
   }
 }
 
+// SPOT_SHARE (review look2-9): the shadow-casting spot carries this share of its mast's field, the rest stays in the
+// unshadowed residual. A stand is lit from several masts / directions to limit shadows (ICAO Annex 14 Vol I 5.3.24,
+// recalled, NV), but only the 1-2 strongest masts cast shadows here and the dominant one carried ~87 % of the local field,
+// so an A330 wing left a near-black (0.13) shadow; with 0.5 a shadow keeps >= ~50 % of the lit level (I).
+export const SPOT_SHARE = 0.5;
 // one mast as a shadow-casting spot light (see 3. above). mast = vec4(x, z, aim x, aim z); intensity = lamps on x LAMP_M
 // (renderer3), level = the field's level factor (floodField().scale), so that spot k + FloodLightNode's residual = field.
 export class MastSpot extends THREE.SpotLight {
@@ -210,7 +215,9 @@ export class MastSpot extends THREE.SpotLight {
     this.isMastSpot = true; this.type = 'MastSpot';
     this.mast = new THREE.Vector4(1e6, 1e6, 1, 0); this.level = 1;
     this.shadow.mapSize.set(mapSize, mapSize); this.shadow.camera.near = 0.5; this.shadow.camera.far = 320;
-    this.shadow.bias = -0.00002; this.shadow.normalBias = 0.06; this.shadow.radius = 2;
+    // PCF radius 5 texels (review look2-9, I): the penumbra of a luminaire cluster ~2.5 m wide at 27 m behind a wing ~5 m
+    // up is ~0.57 m on the ground (2.5 x 5 / 22); a 1,024 map over the 80° cone spans ~5 cm per texel at 30 m (was 2)
+    this.shadow.bias = -0.00002; this.shadow.normalBias = 0.06; this.shadow.radius = 5;
     // everything but the masts (MAST_LAYER). Layer 0 plus SPOT_SHADOW_LAYER, which no object uses (review round 3, major:
     // three r186 ShadowNode.updateShadow REPLACES a shadow-camera mask that has only bit 0 set with the main camera's
     // mask, which includes MAST_LAYER, so `layers.set(0)` alone was a no-op. The mast's own head ring (r 1.25 m, 16
@@ -230,7 +237,7 @@ export class MastSpot extends THREE.SpotLight {
 export class MastSpotNode extends THREE.SpotLightNode {
   static get type() { return 'MastSpotNode'; }
   constructor(light = null) { super(light); this.mastU = uniform(new THREE.Vector4(1e6, 1e6, 1, 0)); this.scaleU = uniform(1); }
-  update(frame) { super.update(frame); if (this.light) { this.mastU.value.copy(this.light.mast); this.scaleU.value = this.light.level; } }
+  update(frame) { super.update(frame); if (this.light) { this.mastU.value.copy(this.light.mast); this.scaleU.value = this.light.level * SPOT_SHARE; } }
   setupDirect() {
     const e = spotShare(this.mastU, this.scaleU); const E = e.xyz.add(vec3(0.0, 1e-7, 0.0));
     return { lightDirection: normalize(cameraViewMatrix.mul(vec4(E, 0.0)).xyz), lightColor: this.colorNode.mul(length(E)) };

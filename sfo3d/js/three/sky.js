@@ -495,6 +495,9 @@ export class Sky {
         const hz = max(this.baseTex.sample(vec2(dirToEquirect(rd).x, 0.49)).rgb.mul(U.preRel), U.skyFloor);
         col.assign(mix(hz, U.ground.mul(0.9), smoothstep(0.0, -0.35, rd.y)));
       });
+      // the fog / mist slabs between refPos and the sky (review look2-4: wet surfaces and puddles mirrored the deck
+      // un-veiled while the viewer sees it through the mist; also the sky light that lights objects in mist)
+      If(rd.y.greaterThan(0.0), () => { col.assign(mix(this.fogInscatter(rd), col, this.bgTransmittance(U.refPos, rd))); });
       return col;
     })();
   }

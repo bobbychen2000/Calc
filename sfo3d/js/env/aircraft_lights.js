@@ -45,9 +45,16 @@ export const ALT_LANDING_M = 3048;                                        // 10,
 // 0.15 s pulse (LED beacon pulse length NV, I); white wing-tip strobes: one double flash per cycle at 66 cycles/min
 // (the app's existing rates, spec §6 "comply"), the two flashes 0.12 s apart (I), each a short (xenon / LED) flash.
 export const BEACON = { fpm: 60, on: 0.15 }, STROBE = { fpm: 66, gap: 0.12, on: 0.002 };
-// Aviation colours as linear sRGB (EB 67D box centroids gamut-clipped, data/sfo_lighting.js LIGHTING_SPEC.colours,
-// = 25.1397 boxes, spec §4.11): red 1/0/0, green 0/1/0.036, white 1/0.614/0.411
-export const AV_RED = [1, 0, 0], AV_GREEN = [0, 1, 0.0358], AV_WHITE = [1, 0.6137, 0.4107];
+// Aircraft light colours as linear sRGB, each an inferred point (I) INSIDE the 14 CFR 25.1397 box (eCFR text cached in
+// refs/cache/env/ecfr/part25_1397.xml, V), gamut-clipped. They are not the airfield EB 67D boxes (review truth2-10: the
+// former header said "= 25.1397 boxes", but 25.1397(a) aviation red needs z <= 0.002 while the EB 67D restricted-red
+// centroid (0.685, 0.305) has z = 0.010, and 25.1397(c) white spans x 0.300-0.540 against EB 67D's 0.32-0.44):
+//   red   (0.700, 0.299): y <= 0.335, z = 0.001 <= 0.002                             -> lin 1 / 0 / 0
+//   green (0.180, 0.665): x <= 0.440 - 0.320 y, x <= y - 0.170, y >= 0.390 - 0.170 x -> lin 0 / 1 / 0.035
+//   white (0.313, 0.329): 0.300 <= x <= 0.540, y within x - 0.040 .. x + 0.020        -> lin 1 / 0.996 / 0.996
+//     (strobes and the tail light: xenon / LED sources near 6,500 K, I; the warm EB 67D airfield-white centroid
+//      1 / 0.614 / 0.411 used before is a 2,800 K-like incandescent white)
+export const AV_RED = [1, 0, 0], AV_GREEN = [0, 1, 0.0354], AV_WHITE = [1, 0.9959, 0.9959];
 
 const tbl = (T, x) => { for (const [lim, v] of T) if (x <= lim) return v; return 0; };
 /** 25.1393 vertical factor at |el| deg (0° -> 1.00; (0, 5] -> 0.90; ...; > 90 -> 0). */

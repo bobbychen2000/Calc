@@ -177,7 +177,8 @@ export async function startApp(cfg) {
     // spec §9.1 item 3: the lowest BKN/OVC layer <= 5,000 ft at its METAR base (review truth1-13: the first non-FEW layer,
     // SCT included, at >= 150 m); a layer below 100 ft (FG BKN000) is the fog's partial obscuration, not a cloud (look1-2);
     // without such a deck the lowest reported layer as the sky clouds
-    const cl = layers.filter(c => c.ft >= 100);
+    // (only layers EnvState draws as clouds: not VV, not smoke / haze aloft 'FU FEW004', review truth2-4)
+    const cl = layers.filter(c => c.ft >= 100 && E.clouds.some(l => l.cover === c.cover && l.baseFt === c.ft));
     const main = cl.find(c => (c.cover === 'BKN' || c.cover === 'OVC') && c.ft <= 5000) || cl[0];
     // 10SM / P6SM (TAF forecast) are lower bounds ("10 miles or greater", ASOS; "P6SM" = more than 6 SM, AIM 7-1-28)
     const vis = M && M.visSM != null ? (M.visSM >= 10 || M.visPrefix === 'P' ? 40000 : Math.max(800, M.visSM * 1609)) : 40000;
@@ -190,7 +191,9 @@ export async function startApp(cfg) {
     // the three.js renderer draws every layer from the EnvState itself and ignores env.fog / env.cloud)
     const surf = E.atm.slabs.filter(sl => !/^(cloud|obscuration)/.test(sl.kind || ''));   // the surface layer (a TWR / SFC VIS split is two slabs)
     const fogTop = Math.max(5, (surf.length ? Math.max(...surf.map(sl => sl.y1)) : GROUND_Y + 914) - GROUND_Y);
-    const ownOf = (c) => { const L = c && E.clouds.find(l => l.cover === c.cover && l.baseFt === c.ft); return L ? L.own : c ? COVER[c.cover] : 0.12; };
+    // no reported layer (CLR / SKC / only a < 100-ft fog obscuration): cover 0 (spec §9.1 item 3, review look2-12: it drew
+    // a default 12 % layer at 1,500 m)
+    const ownOf = (c) => { const L = c && E.clouds.find(l => l.cover === c.cover && l.baseFt === c.ft); return L ? L.own : c ? COVER[c.cover] : 0; };
     const baseOf = (c) => { const L = c && E.clouds.find(l => l.cover === c.cover && l.baseFt === c.ft); return L ? L.base : c ? GROUND_Y + c.ft * FT : 1500; };
     env = { sunDir, mie: 21e-6, sunI: 20, fog: [E.atm.sigmaSurface * Math.exp(GROUND_Y / fogTop), 1 / fogTop, 1.0, 1.0],
       cloud: [ownOf(main), main ? baseOf(main) : 1500, lowSlab ? 4200 : 14000, 0.5], // (at the METAR base: the mist / fog slab reaches it, no clear gap)

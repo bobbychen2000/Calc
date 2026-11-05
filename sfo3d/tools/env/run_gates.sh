@@ -20,4 +20,7 @@ run "A-CTL controller (14 presets x 2 paths + table edges)" node --no-warnings t
 run "A-VIS1, A-PAPI1, A-NAV1, A-FLASH1" node --no-warnings tools/env/test_lights.mjs
 # steps 3-4 (sky, fog, clouds, exposure, rain, wetness, lightning: unit halves on the shader mirrors, js/env/atmo/)
 run "A-SUN render, A-MOON, A-EXP, A-FOG, A-CLD, A-RAIN, A-WET, A-LTG, A-WIND (unit)" node --no-warnings tools/env/test_sky.mjs
+# review round 2 regressions (runway fallback, RAIL, precip / wet start, smoke aloft, MIFG, snapshot weather, in-pavement
+# lights, aircraft colours, cirrus)
+run "review round 2 regressions" node --no-warnings tools/env/test_review2.mjs
 exit $rc

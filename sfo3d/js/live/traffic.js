@@ -1125,10 +1125,13 @@ export class Traffic {
       // extended at an empty stand for 10-16 s (bridge.orphan, 23 -> 37 stands without the round-2 removals); if it stops
       // short or turns away, the bridge docks again AHEAD_HOLD_MS after the arrival was last seen heading in (gates.js redock).
       // A bridge moving at a parked aircraft is harmless; removing the aircraft was not)
-      // (...and not when SFO puts the arrival at another stand -- its own arrival record -- or lists the occupant at this stand
-      // around now: 26 of 57 retractions on the 4-5 Nov replay were for arrivals that went on to another stand, the bridge
-      // docking again 90 s later -- 7 at E3, whose lead-in lies along the E-pier alley; round 3)
-      const aS = this.arrStand(tr, t); if ((aS && aS !== g) || this.planAt(o, g, t)) { this.counters.aheadSkipPlan = (this.counters.aheadSkipPlan || 0) + 1; continue; }
+      // (...and not when SFO's plan contradicts it on both counts: it puts the arrival at another stand (its own arrival record)
+      // AND lists the occupant at this stand around now. 26 of 57 retractions on the 4-5 Nov replay were for arrivals that went
+      // on to another stand, the bridge docking again 90 s later -- UAL1114 at E3 three times in 35 min, E3's lead-in lying
+      // along the E-pier alley. Either signal alone also dropped retractions that were needed: SFO's stand for the arrival
+      // was another one at G1, G13, B26, E11, F16, and SFO still listed the (gone) occupant at F16, G8, E8, G6; round 3)
+      const aS = this.arrStand(tr, t), sameSt = (a, b) => a === b || a.sharesBridgesOf === b.name || b.sharesBridgesOf === a.name;
+      if (aS && !sameSt(aS, g) && this.planAt(o, g, t)) { this.counters.aheadSkipPlan = (this.counters.aheadSkipPlan || 0) + 1; continue; }
       const S = this.stopRef(tr, g); if (Math.hypot(r.x - S[0], r.z - S[1]) <= AHEAD_M && this.intoStand(tr, g, r.x, r.z, r.dir)) { this.counters.ghostAheadKept = (this.counters.ghostAheadKept || 0) + 1; this.retractAhead(o, t, tr); } }
   }
   // SFO's plan lists track o at stand g with a window around t (+-10 min) (round 3)

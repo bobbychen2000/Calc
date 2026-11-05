@@ -69,8 +69,9 @@ INFERRED = [
     'bridge attach points) are kept as placeholders [unk] with the BA-G band heights [inf, analogy]; bump-outs at the full '
     'outline height [unk]; the BA-G gate-room rule does not transfer (BA-A pods sit over its bump-outs)',
     'BA-G end box: window band top-2.6..top-1.2, three antennas (schematic, photo d2); function ramp-control cab (unconfirmed)',
-    'BA-G walls (review r2): composite panels 3.66 x 1.524 m (photo a2: vertical joints every 3.7 m, horizontal every 1.5 m) as a '
-    'base-colour tile with dark reveals and +-3 % panel tone + normal tile; the same module on BA-A and the core [inf]; four imaged '
+    'BA-G walls (review r2): composite panels 7.32 x 3.048 m with faint halving lines (photo a2: strong joints every 7.3 m along '
+    'the face and every 2.9 m up it - four rows below the roof edge - faint ones halfway) as a base-colour tile with dark reveals '
+    'and +-3 % panel tone + normal tile; the same module on BA-A and the core [inf]; four imaged '
     '2-lite windows on the NNE face (a2, s +-2 m, heights +-1.5 m) [obs, low]; gate-room glass teal (base 16 / 92 / 96) [obs a2 hue]',
     'rooftop units: extents from NAIP 2024 (tools/blender/itb_roofobs.py: dark-object / shadow detection on the BA-A, BA-G and bump-out '
     'roofs, +-0.7 m) [obs]; heights 1.2 / 1.8 / 2.4 m by plan size, colour and louvre band [inf]',
@@ -124,7 +125,7 @@ DEVIATIONS_FROM_SHEETS = [   # 3-D vs the 2-D sheets BI-01..04 (dated 2026-11-05
          model='BA-G: 6 gate-room curtain walls 4.6-14.7 m filling the main-face segments between the bump-outs under a pod (63.5 m '
                'wide); BA-A: 24-m placeholder bays 4.6-14.7 m at the bridge attach points', tag='obs a2 (BA-G NNE), inf (SSW, BA-A)'),
     dict(sheet='BI-04', item='BA-G wall detail', drawn='panels / curtain wall named, layout unk',
-         model='3.66 x 1.524-m panel module (tile), four 2-lite windows (NNE face), NAIP roof units', tag='obs a2 / NAIP (low)'),
+         model='7.32 x 3.048-m panel module with faint halving lines (tile), four 2-lite windows (NNE face), NAIP roof units', tag='obs a2 / NAIP (low)'),
     dict(sheet='BI-01 V1', item='ITB core north bar', drawn='outline only (no height)', model='elevated connector 10.5-17.9 m with 7 '
          'columns; the core block cut back from OSM road footprints (-144 m2)', tag='inf (review r2)'),
 ]

@@ -14,6 +14,7 @@ import { THREE, TSL } from '../lib.js';
 import { Engine, QUALITY3 } from '../engine.js';
 import { Sky } from '../sky.js';
 import { Rain } from '../rain.js';
+import { Sprites } from '../lights.js';
 import { makeNoiseTexture, makeCloudTexture } from '../../world/textures.js';
 import { textureOf } from '../convert.js';
 import { buildEnvState } from '../../env/state.js';
@@ -33,6 +34,7 @@ try {
   const p = presetById(q.get('wx') || 'marine_layer');
   const st = buildEnvState(Date.parse(p.time_utc), { mode: 'snapshot', overridden: true, reports: [p.metar], live: true, rwyOverride: presetRunway(p), groundY: 3 });
   const sky = new Sky(E, { cloudTex: clouds, noiseTex: noise, baseRes: 256 });
+  sky.setFlood(E.flood);   // flood in-scatter + fog-top glow graphs (environment review round 2: compile check)
   const cal = SM.sunCalibration(st); const k = cal.k ?? 0.167;
   const env = { sunDir: st.sun.dir, mie: 21e-6, sunI: 20 * k, fog: [0, 1, 1, 1], cloud: [0, 1000, 4000, 0.5], cloudWind: [0, 0], refPos: [0, 60, 0], slab: false, physical: true };
   const L = SM.cloudAdjust(Sky.lightFor(env), st); const ns = SM.nightSkyLuminance(st).units; L.skyFloor = [ns, ns, ns];
@@ -52,7 +54,11 @@ try {
   for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) { const a = j * (N + 1) + i; idx.push(a, a + N + 1, a + 1, a + 1, a + N + 1, a + N + 2); }
   const pg = new THREE.BufferGeometry(); pg.setAttribute('position', new THREE.BufferAttribute(new Float32Array(pos), 3)); pg.setIndex(idx);
   layers.forEach((l, k) => { if (!l.slab) return; for (const top of [false, true]) { const m = new THREE.Mesh(pg, sky.cloudSlabMaterial(k, top, centre)); m.frustumCulled = false; m.renderOrder = 5; S.add(m); planes++; } });
-  const rain = new Rain(20000, { depthNode: E.depthNode }); E.fxScene.add(rain.mesh);
+  const rain = new Rain(20000, { depthNode: E.depthNode, colorNode: E.sceneColorNode || null }); E.fxScene.add(rain.mesh);
+  // light sprites with the per-sprite occlusion test and depth-fraction aureoles (lights.js, review round 2)
+  const spr = new Sprites(64, { depthNode: E.depthNode, expo: E.expo, night: TSL.uniform(1), slopeTaps: q.get('tier') === 'low' ? 2 : 4 }); E.fxScene.add(spr.mesh);
+  spr.begin(); for (let i = 0; i < 12; i++) spr.put({ p: [-200 + i * 40, 3.4, -150 - i * 60], c: [1, 0.8, 0.6], i: 400, s: 0.3, aur: 200, aurR: 0.04 }, true, 1);
+  if (st.atm.sigmaSurface > 1e-4) { sky.u.floodFog.value = st.atm.slabs[0].sigma; sky.u.floodI.value = 1; }
   const RP = WX.rainParams(st.precip || { kind: 'rain', rateMmH: 4 }, 'low', [2, 1]);
   const cam = (q.get('cam') || '0,40,400,0,4').split(',').map(Number);
   const yaw = cam[3] * Math.PI / 180, pit = cam[4] * Math.PI / 180;
@@ -61,14 +67,15 @@ try {
   const t0 = performance.now(); const nF = +(q.get('n') || 3);
   for (let f = 0; f < nF; f++) {
     E.setCamera({ pos: cam.slice(0, 3), dir, fov: 50 * Math.PI / 180, near: 0.5, far: 180000 }, innerWidth, innerHeight);
-    rain.update(RP, { pos: cam.slice(0, 3) }, f / 60, L.skyUp.map(v => v * 0.6 * pre), 1e6, 2 * Math.tan(25 * Math.PI / 180) / innerHeight);
+    rain.update(RP, { pos: cam.slice(0, 3) }, f / 60, L.skyUp.map(v => v * 0.6 * pre), 1e6, 2 * Math.tan(25 * Math.PI / 180) / innerHeight, 1, null, 0.25);
+    spr.end(E.camera, innerHeight);
     E.render();
   }
   const rt = E.meter.renderTarget; const px = await E.renderer.readRenderTargetPixelsAsync(rt, 0, 0, rt.width, rt.height);
   const n = rt.width * rt.height, half = px instanceof Uint16Array, stp = Math.round(px.length / n); const Lu = new Float32Array(n);
   for (let i = 0; i < n; i++) { const v = px[i * stp]; Lu[i] = (half ? THREE.DataUtils.fromHalfFloat(v) : v) / pre; }
   const m = EX.meter(Lu, rt.width, rt.height);
-  Object.assign(out, { ok: true, ms: Math.round(performance.now() - t0), backend: E.backend, preset: p.id, pre, expo, ev100Target: st.exposure.ev100Target, metered: m, pxType: px.constructor.name, pxLen: px.length, layers: layers.length, planes, slabs: slabs.length, rain: RP.count, k });
+  Object.assign(out, { sprites: spr.n, twi: sky.u.twi.value, ok: true, ms: Math.round(performance.now() - t0), backend: E.backend, preset: p.id, pre, expo, ev100Target: st.exposure.ev100Target, metered: m, pxType: px.constructor.name, pxLen: px.length, layers: layers.length, planes, slabs: slabs.length, rain: RP.count, k });
 } catch (e) { out.err = String(e && e.stack || e); console.error(e); }
 window.__skytest = out; console.log('SKYTEST ' + JSON.stringify(out));
 </script>
