@@ -828,3 +828,34 @@ caveat; a clear civil-twilight photo looking west at SFO is still needed (owner 
   the "= 25.1397 boxes" claim is gone (the EB 67D airfield white stays for airfield lights).
 - Spec §11.3 A-COL yellow: 40–65° → **20–36°** (the EB 67D yellow box gamut-clipped spans 20.4–35.1°, centroid 28.2°, M).
 - §3.5 / R1.6: A-MOON "pass" → **partly** (position and limb rendered; lit fraction from the unit mirror only).
+
+### R2.8 Confirmation renders (live3.html, r186 WebGL 2, llvmpipe 640 × 360, high tier, b3d LOD2, one Chromium, `out/.heavy.lock`)
+
+Job: scratchpad `envfix2/job_fix2.mjs` → `out/env/fix2/fix2_check.json` + 3 PNGs (lock 19:33–20:04Z after ~45 min behind
+the buildings track's tower jobs). First a compile check of every changed TSL graph on `js/three/dev/skytest.html`
+(extended this round with the flood field, the sprites' occlusion / aureole path and the rain's "over" colour input):
+night_fog / marine_layer / dusk high tier, rain_day low tier → all ok, **0 errors**; then live3 ready 7.4 s, b3d 863 s,
+**0 page errors** on every step. Same cameras as the review renders (`out/env/look2/`), pixel regions of the review notes
+(scratchpad `envfix2/measure.py`); not a scored review:
+
+| View | Review render (before) | Round-2 render (after) |
+|---|---|---|
+| E7 night_fog 28R 0.3 NM | glow under the ALS cut in one-row steps: column 300–340 mean 160→106, 105→72, 72→6 (max row step 62.7, 15 steps > 15) | smooth decay 192 → 93 over rows 242–299, max row step 19.1 (a bar of lamps), 2 steps > 15; airfield 103 lit / 631 aureoles as before; EV 4.6 (floor). No arrival in this frame (traffic timing), so the aircraft-in-glow case (look2-5) is confirmed by construction (F ≈ 1 for a body at its own lamps' depth), not by this render |
+| E3 dusk 28R 2 NM | hills (214,161,115) vs sky above (251,214,171): display ratio 0.77, no silhouette; top 20 % (204,196,188) | hills (92,74,71) vs (254,232,206): ratio **0.33**, a dark land silhouette against the sunset band; top 20 % (221,200,213): violet-blue above the band (ozone, purple light); EV metered 4.73 (was 5.13), used 4.05 vs target 0.67 (night floor, A-EXP open) |
+| E5 marine layer, tower | deck rows 0→90 luminance 127→158 uniform-flat, no structure; water rows 102–117 (right half) 209–226 = the brightest band | deck mottled, 157→176; water rows 108–117 200→160 (below the deck's 170s); EV metered 13.93 (was 14.30), used 13.25 vs target 11.97: **+1.28 EV** (was +1.65; A-EXP still outside ±1). The remaining bright line at rows 99–105 is the clear background revealed where the planes fade out at 20–38 km: fixed after this render (`skyAlong` mode 2 for the background, mode 1 without fade for reflections: the deck continues to the horizon); **not rendered** under a deck (3-render budget) — the code compiled and drew without errors in the buildings track's live3 run that loaded it at 20:11Z (`out/buildings3d/app/itb_r2/run.log`, day sky normal in `cmp_new_i3like.png`) |
+
+Temporal stability (frame + 1): E7 0.81 % of pixels > 20 levels (ALS flashers), E3 0.12 %, E5 0.08 %.
+
+### R2.9 Gates after round 2 and open points
+
+`sh tools/env/run_gates.sh`: decoder 39/39 · A-SUN 32/32 · A-FIX 50/50 · A-WX 875/875 (bit-identical, golden regenerated
+for the aerosol split) · A-CLK + presets 43/43 · TAF 29/29 · relay 15/15 · A-CTL 37/37 (presets regenerated for the
+MALSR RAIL) · A-VIS1 / A-PAPI1 / A-NAV1 / A-FLASH1 / A-RWSL1 74/74 · sky / fog / clouds / rain / wet / lightning 178/178 ·
+**review round 2 regressions 23/23 (new)**. Before: the same suites passed while the defects above existed.
+
+Open (owner / later rounds; all choices I and shown on the `?qa=env` HUD): the runway fallback thresholds (tailwind 5 kt
+M-calibrated, crosswind 20 kt NV) until ADS-B flow or D-ATIS (Q9); AEROSOL_TAU / depth and the smoke tint; the MIFG σ
+lower bound; in-pavement style (½ in); aircraft white at 6,500 K; CIE overcast mottle ±12 %; fog-top glow 0.3; the
+spot share 0.5 and PCF radius; phone-tier caps (A-PERF unmeasured); look2-4 SSR / planar reflections; A-EXP marine
+layer +1.28 EV; a clear civil-twilight reference photo (look2-13); the aircraft-in-glow case (look2-5) and the far-deck
+horizon (look2-8) are not render-confirmed.

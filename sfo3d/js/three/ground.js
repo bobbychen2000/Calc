@@ -613,7 +613,7 @@ export function waterMaterial(world, bakes, sky) {
     // the low decks (planes) are part of the reflected sky, with the fog slabs on the way (skyAlong withSlabs; review
     // look2-3); the rough-water blur turns to the overcast mean with the cloud cover U.cloud.x = 1 − sunVisibleP, its sun
     // term scaled by the open fraction (was the clear beam x 0.2 and at most 80 % overcast)
-    const sharp = sky.skyAlong(wp, Rr, true);
+    const sharp = sky.skyAlong(wp, Rr, 1);
     const cl = U.sunColor.mul(0.2).mul(float(1.0).sub(U.cloud.x)).add(U.skyUp.mul(0.55)).add(U.skyHorizon.mul(0.15));
     const blur = mix(sky.skyEnvBlur(Rr), cl, U.cloud.x);
     return mix(sharp, blur, smoothstep(0.08, 0.45, wrough()));

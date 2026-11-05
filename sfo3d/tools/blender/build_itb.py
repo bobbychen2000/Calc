@@ -81,9 +81,12 @@ MATS = {
                                src='pub "three layers of ceramic frit"; white banded look obs photos i1 / i4; pattern inf; own '
                                    'normal tile itb_n_frit (review r1: itb_n_curtain on the 3.6-m frit tile put caps every 0.9 m); review r2: '
                                    'albedo 214 -> 184 (white band) / 92 -> 62 (clear band), roughness 0.22 -> 0.12 (reads as glass in shade, i3)'),
-    'glass_hall':         dict(rgb=(52, 60, 66), m=0.0, r=0.06, ior=1.9, nrm=('itb_n_curtain', 0.5),
-                               src='obs photos i1 / i4 (clear central bay: the lit hall seen through); review r2: i4 centre / side bay '
-                                   '~0.7 (photo) against 0.88 rendered at 118 / 130 / 136 -> darker; value inf'),
+    'glass_hall':         dict(rgb=(100, 110, 116), m=0.0, r=0.10, ior=1.5, nrm=('itb_n_curtain', 0.5),
+                               src='obs photos i1 / i4 (clear central bay: the lit hall seen through); review r2: i4 centre / side bay ~0.7 '
+                                   '(photo) against 0.88 in Cycles at 118 / 130 / 136 with the coated-glass F0 0.096 - the sky reflection '
+                                   'dominated; the clear bay is uncoated clear glass: IOR 1.5 (F0 0.04), rough 0.10, base 100 / 110 / 116 '
+                                   '(a base of 60 / 68 / 74 with F0 0.096 gave 0.77 in Cycles but 0.32 in the app under the snapshot sky, '
+                                   'where the base colour dominates: r1 base 0.64); values inf'),
     'mullion':            dict(rgb=(178, 182, 186), m=0.60, r=0.40, src='inf (aluminium mullion caps)'),
     'canopy_top':         dict(rgb=(150, 152, 150), m=0.0, r=0.75, src='inf'),
     'concrete':           dict(rgb=(166, 164, 158), m=0.0, r=0.85, src='inf (curb, podium)'),
@@ -101,8 +104,9 @@ MATS = {
                                src='pub BA-G "tinted energy-efficient glazed curtain wall"; colour, mullion rhythm and extents obs '
                                    'photo a2 (BA-G NNE face); review r2: teal base 16 / 92 / 96 (a2 glass 52-66 / 69-85 / 68-86 incl. the sky '
                                    'reflection; the round-1 base 38 / 54 / 56 rendered neutral 60 / 63 / 64); BA-A: no photo (positions unk, heights inf)'),
-    'lettering':          dict(rgb=(16, 18, 20), m=0.0, r=0.60, src='obs photos i1 / i3 / i4 ("SAN FRANCISCO INTERNATIONAL"); review r2: near-black '
-                               '(i4 darkest letter pixels 53 against 102 rendered at 38 / 42 / 46, metallic 0.3); font inf'),
+    'lettering':          dict(rgb=(16, 18, 20), m=0.0, r=0.95, spec=0.1, src='obs photos i1 / i3 / i4 ("SAN FRANCISCO INTERNATIONAL"); review r2: near-black '
+                               '(i4 darkest letter pixels 53 against 102 rendered at 38 / 42 / 46, metallic 0.3); matt (rough 0.95, specular level 0.1 -> '
+                               'specularFactor 0.2): under the frontal i4 sun a 4 % specular lobe kept the letters mid-grey; font inf'),
 }
 
 
@@ -185,6 +189,8 @@ def make_material(key, atlas, tex_imgs, ao_img):
     b.inputs['Metallic'].default_value = spec['m']
     b.inputs['Roughness'].default_value = spec['r']
     b.inputs['IOR'].default_value = spec.get('ior', 1.5)
+    if spec.get('spec') is not None:
+        b.inputs['Specular IOR Level'].default_value = spec['spec']   # exported as KHR_materials_specular
     if spec.get('ior'):
         # the glTF exporter writes KHR_materials_ior only together with KHR_materials_specular / transmission: a specular
         # level of 0.499 exports KHR_materials_specular (specularFactor 0.998) and with it the coated-glass IOR 1.9

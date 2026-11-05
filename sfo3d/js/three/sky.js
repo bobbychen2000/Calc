@@ -408,7 +408,7 @@ export class Sky {
     const U = this.u;
     return Fn(() => {
       const rd = normalize(positionWorldDirection).toVar();
-      const col = this.skyAlong(cameraPosition, rd).toVar();
+      const col = this.skyAlong(cameraPosition, rd, 2).toVar();
       const mu = dot(rd, U.sunDir); const sunR = 0.99998918;
       // sun disc above the horizon only (below it the terrain / bay hides it; the ground of the sky dome is no surface)
       If(mu.greaterThan(sunR).and(rd.y.greaterThan(-0.002)), () => { const r = sqrt(max(0.0, float(1.0).sub(float(1.0).sub(mu).div(1.0 - sunR)))); col.addAssign(U.sunColor.mul(900.0).mul(r.mul(0.6).add(0.4)).mul(this.cloudShadowSky(cameraPosition, rd))); });
@@ -434,7 +434,11 @@ export class Sky {
   // layers, the night floor (EnvState natural + artificial luminance, a little stronger and warmer towards the horizon,
   // where the Bay Area's light pollution sits: inferred) and, below the horizon, the horizon colour fading to the
   // ground. Used for the background (ro = camera) and for the water's reflections (ro = the water point).
-  skyAlong(ro, rdIn, withSlabs = false) {
+  // slabs: 0 = sky-shader layers only; 1 = also the plane (low) layers to the horizon + the fog slabs on the way (a
+  // reflection: no plane geometry behind it); 2 = the plane layers only beyond the planes' 20-38 km fade (the background
+  // behind the drawn planes: the deck continues to the horizon instead of revealing the clear sky; review look2-8)
+  skyAlong(ro, rdIn, slabs = 0) {
+    const withSlabs = !!slabs;
     const U = this.u;
     return Fn(() => {
       const rd = normalize(rdIn).toVar();
@@ -459,10 +463,11 @@ export class Sky {
           If(U.nLayers.greaterThan(k + 0.5).and(C.y.lessThan(0.5)).and(ru.y.greaterThan(0.002)).and(ro.y.lessThan(A.x)), () => {
             const t = A.x.sub(ro.y).div(ru.y); const p = ro.xz.add(ru.xz.mul(t));
             const B = this.slabBase(k, p, ru.y);
-            col.assign(mix(col, B.col, B.d.mul(float(1.0).sub(smoothstep(20000.0, 38000.0, t.mul(length(ru.xz)))))));
+            const far = smoothstep(20000.0, 38000.0, t.mul(length(ru.xz)));   // the planes' own distance fade
+            col.assign(mix(col, B.col, B.d.mul(slabs === 2 ? far : float(1.0))));
           });
         }
-        col.assign(mix(this.fogInscatter(ru), col, this.bgTransmittance(ro, ru)));
+        if (slabs === 1) col.assign(mix(this.fogInscatter(ru), col, this.bgTransmittance(ro, ru)));
       }
       If(rd.y.lessThan(0.0), () => { col.assign(mix(col, U.ground.mul(0.9), smoothstep(0.0, -0.35, rd.y))); });
       return col;

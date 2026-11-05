@@ -788,8 +788,9 @@ APP_EYE = ('app check: tower view eye at y 62.15 = GROUND_Y + 59.151 (F2), glass
 # comparisons tower_compare_t2/t3.jpg (grey levels, meas: slot runs < 0.8 x the local median along rows 260 / 530; cab:
 # vertical profile through the cab centre); app = out/buildings3d/app/r2/*.png (three.js, llvmpipe)
 R2N = dict(
-    slot_c='R2_SLOT_C', slot_app='R2_SLOT_APP', glass_c='R2_GLASS_C', glass_app='R2_GLASS_APP', moire='R2_MOIRE',
-    led='R2_LED', towercam='R2_TOWERCAM')
+    slot_c='Cycles t2, display ratio slot / neighbouring panels: upper band 0.64-0.74 (photo 0.69-0.76; round 1 0.10-0.20), '
+           'long slot 0.73 (photo 0.62-0.72; round 1 0.30); a first pass with the sheet at sRGB 112-121 gave 0.56-0.65 / 0.66.',
+    slot_app='R2_SLOT_APP', glass_c='R2_GLASS_C', glass_app='R2_GLASS_APP', moire='R2_MOIRE', led='R2_LED', towercam='R2_TOWERCAM')
 REVIEW_R2 = [
     '1 (major) slots read as black gashes - FIXED: every slot cell above its glazed lowest pane carries a perforated screen '
     '0.06 m behind the cladding face (obs photo t4: a dot grid; base-colour tile tower_tex.slot_color, a staggered hole grid '
