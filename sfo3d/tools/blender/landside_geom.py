@@ -887,8 +887,15 @@ def garage_ag(k):
         # Garage A: the two single tracks run through the body along its SSE half from the west face (u ~2.6) to the east cut
         # (u = Lb), through the station (BL-03 "along the SSE side, behind this face"): the track strips are united with the
         # body so the tracks are inside it end to end (the guideway is clipped there; portals at both faces)
-        strip = Polygon([c + a * (2.0 - L / 2) - b * 30, c + a * (Lb - L / 2) - b * 30, c + a * (Lb - L / 2) - b * 7, c + a * (2.0 - L / 2) - b * 7])
+        # r2: the tracks leave the body at its SE corner (outline u_se ~134.8 / the north-track face at ~139.8), not at the NE end's
+        # u = Lb: east of it they run in the open between the curved NE end and the tail gap (photo l1: the curved NE wall stands
+        # EAST of the block face, nearer the camera; a2: nothing of a block shows east of the NE end) - r1 had united the strips up
+        # to Lb, which put a 16-m block over open track
+        u_se = ga_east_u()
+        strip = Polygon([c + a * (2.0 - L / 2) - b * 30, c + a * (u_se - L / 2) - b * 30, c + a * (u_se - L / 2) - b * 7, c + a * (2.0 - L / 2) - b * 7])
         body_w = largest(unary_union([body_w, RAIL.intersection(strip).buffer(0.3, join_style=2)]).buffer(0.05).buffer(-0.05))
+        gap = Polygon([c + a * (u_se - L / 2) - b * 13.75, c + a * (Lb + 5 - L / 2) - b * 13.75, c + a * (Lb + 5 - L / 2) - b * 60, c + a * (u_se - L / 2) - b * 60])
+        body_w = largest(body_w.difference(gap))      # the tail gap between the tracks east of the block: open (finding 1)
     body_w = body_w.simplify(0.05, preserve_topology=True)
     body_w, arcs_w = smooth_arcs(body_w)            # r2: curved drum / NE end as 1.2-m chords (smooth facades)
     if not g['rail_near']:
@@ -903,10 +910,10 @@ def garage_ag(k):
         # north edge: 0.4 m north of the north track at the east face (photo l1: the curved NE garage wall starts there)
         eastx = [np.array(q.coords) for q in getattr(body_w.exterior.intersection(RAIL.buffer(0.2)), 'geoms', [])
                  if q.geom_type == 'LineString' and q.length > 2.0]
-        bs = [float((p_ - c) @ b) for q in eastx for p_ in q if float((p_ - c) @ a + L / 2) > Lb - 5]
+        bs = [float((p_ - c) @ b) for q in eastx for p_ in q if float((p_ - c) @ a + L / 2) > u_se - 5]
         bn = (max(bs) + 0.4) if bs else G['st_b'][1]
-        zone = Polygon([c + a * (Lb - STATION_BLOCK_D - L / 2) + b * bn, c + a * (Lb - L / 2 + 5) + b * bn,
-                        c + a * (Lb - L / 2 + 5) + b * (bn - 80), c + a * (Lb - STATION_BLOCK_D - L / 2) + b * (bn - 80)])
+        zone = Polygon([c + a * (u_se - STATION_BLOCK_D - L / 2) + b * bn, c + a * (Lb - L / 2 + 5) + b * bn,
+                        c + a * (Lb - L / 2 + 5) + b * (bn - 80), c + a * (u_se - STATION_BLOCK_D - L / 2) + b * (bn - 80)])
         blk_w = largest(body_w.intersection(zone))
         blk_w = orient_all(blk_w.simplify(0.05))
     main_w = largest(body_w.difference(unary_union(towers_w + ([blk_w] if not blk_w.is_empty else [])).buffer(0.01)))
@@ -927,9 +934,9 @@ def garage_ag(k):
             if seg.geom_type != 'LineString' or seg.length < 2.0: continue
             q = np.array(seg.coords); dd = q[-1] - q[0]
             if abs(dd @ a) / (np.hypot(*dd) or 1) < 0.3:                  # faces across the tracks only (u ~2.6 and u = Lb)
-                portal_w.append((q[0], q[-1], 'east' if float((q[0] - c) @ a + L / 2) > Lb - 5 else 'west'))
+                portal_w.append((q[0], q[-1], 'east' if float((q[0] - c) @ a + L / 2) > u_se - 5 else 'west'))
         if not blk_w.is_empty:
-            ub = Lb - STATION_BLOCK_D
+            ub = u_se - STATION_BLOCK_D
             ln = LineString([c + a * (ub - L / 2) - b * 200, c + a * (ub - L / 2) + b * 200]).intersection(rail_in.buffer(0.01))
             for seg in getattr(ln, 'geoms', [ln]):
                 if seg.geom_type == 'LineString' and seg.length > 2.0:
@@ -2148,6 +2155,17 @@ TAIL_WALK_W = 1.6   # emergency walkway beside each single-track trough east of 
 #                     cable rail on its open edge [obs l1 (the camera's track); the other track by symmetry inf] (review r2, finding 1)
 
 
+def ga_east_u():
+    """Garage A: u of the body's SE corner on the SFO Museum outline (largest u of the outline vertices south of b -20 m, ~134.8):
+    where the south track leaves the garage (the north track at the step ~5 m further east) - review r2."""
+    G = DL.ggeom('garage_a'); c, a, b, L, Lb = G['c'], G['a'], G['b'], G['L'], G['Lb']
+    ring = np.array(sfom_union(DL.GAR['garage_a']['nm']).exterior.coords) if sfom_union(DL.GAR['garage_a']['nm']).geom_type == 'Polygon' else \
+        np.array(largest(sfom_union(DL.GAR['garage_a']['nm'])).exterior.coords)
+    u = (ring - c) @ a + L / 2; bb = (ring - c) @ b
+    sel = (bb < -20.0) & (u < Lb + 0.5)
+    return float(min(u[sel].max(), Lb)) if sel.any() else float(Lb)
+
+
 def ga_tail_walk():
     """walkways in the gap between the two single tracks east of Garage A (review r2, finding 1): photo l1 shows a narrow
     emergency walkway (~1.5-2 m, galvanised cable rail) beside the camera's track and open air down to grade beyond it, the other
@@ -2155,8 +2173,11 @@ def ga_tail_walk():
     footprint at grade: what it is [unk]; r1 had filled it with a 656-m2 deck at track level. -> the TAIL_WALK_W strips along
     both tracks inside the tail (world polygon)."""
     G = DL.ggeom('garage_a'); c, a, b, L, Lb = G['c'], G['a'], G['b'], G['L'], G['Lb']
-    cutter = Polygon([c + a * (Lb - L / 2) + b * 200, c + a * (Lb - L / 2 + 600) + b * 200, c + a * (Lb - L / 2 + 600) - b * 200,
-                      c + a * (Lb - L / 2) - b * 200])
+    u0 = ga_east_u()
+    cutter = Polygon([c + a * (u0 - L / 2) - b * 13.75, c + a * (Lb - L / 2 + 600) - b * 13.75, c + a * (Lb - L / 2 + 600) - b * 200,
+                      c + a * (u0 - L / 2) - b * 200])
+    cutter = unary_union([cutter, Polygon([c + a * (Lb - L / 2) + b * 200, c + a * (Lb - L / 2 + 600) + b * 200, c + a * (Lb - L / 2 + 600) - b * 200,
+                                           c + a * (Lb - L / 2) - b * 200])])
     tail = sfom_union(DL.GAR['garage_a']['nm']).intersection(cutter)
     gap = tail.difference(RAIL.buffer(0.05, join_style=2)).buffer(-0.02).buffer(0.02)
     walk = gap.intersection(RAIL.buffer(TAIL_WALK_W + 0.05, join_style=2))
@@ -2165,8 +2186,11 @@ def ga_tail_walk():
 
 def ga_tail_gap_area():
     G = DL.ggeom('garage_a'); c, a, b, L, Lb = G['c'], G['a'], G['b'], G['L'], G['Lb']
-    cutter = Polygon([c + a * (Lb - L / 2) + b * 200, c + a * (Lb - L / 2 + 600) + b * 200, c + a * (Lb - L / 2 + 600) - b * 200,
-                      c + a * (Lb - L / 2) - b * 200])
+    u0 = ga_east_u()
+    cutter = unary_union([Polygon([c + a * (u0 - L / 2) - b * 13.75, c + a * (Lb - L / 2 + 600) - b * 13.75, c + a * (Lb - L / 2 + 600) - b * 200,
+                                   c + a * (u0 - L / 2) - b * 200]),
+                          Polygon([c + a * (Lb - L / 2) + b * 200, c + a * (Lb - L / 2 + 600) + b * 200, c + a * (Lb - L / 2 + 600) - b * 200,
+                                   c + a * (Lb - L / 2) - b * 200])])
     tail = sfom_union(DL.GAR['garage_a']['nm']).intersection(cutter)
     return float(tail.difference(RAIL.buffer(0.05, join_style=2)).area)
 
