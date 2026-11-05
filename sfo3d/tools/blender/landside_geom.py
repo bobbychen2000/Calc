@@ -672,7 +672,8 @@ def central_garage():
                         unmix=(CG_DECK_RGB, CG_CAR_ALPHA),
                         count_src='cg_roof_cars: %d dark / coloured cars at their NAIP 2024 positions [obs] + white / silver cars (not separable '
                                   'from the light deck) by the fleet share 37 %% next to the detected clusters [inf]; spec visual 300 +-100' % len(pos),
-                        axis_src='r2: every car snapped to the nearest free stall of the deck layout (axis 117.8 deg [obs NAIP rows], <= 3 m) - the '
+                        axis_src='r2: each observed car snapped to the nearest free stall of the deck layout within 3 m (axis 117.8 deg [obs NAIP rows]; '
+                                 '125 of 217; the rest keep their NAIP position with the yaw on the stall axis) - the '
                                  'per-blob NAIP headings are noise at 0.5 m/px (deviation from the stall axis: median 18, p90 42 deg = uniform random); '
                                  'NAIP position and colour kept [obs]',
                         exclude=excl_cg))
@@ -735,7 +736,8 @@ def smooth_arcs(P, tol=0.6, chord=1.2, max_turn=24.0, min_total=30.0):
     if n < 6: return P, []
     d_in = ring - np.roll(ring, 1, 0); d_out = np.roll(ring, -1, 0) - ring
     turn = np.degrees(np.arctan2(d_in[:, 0] * d_out[:, 1] - d_in[:, 1] * d_out[:, 0], (d_in * d_out).sum(1)))
-    smooth = (np.abs(turn) < max_turn) & (np.abs(turn) > 0.5)
+    le_in = np.hypot(*d_in.T); le_out = np.hypot(*d_out.T)
+    smooth = (np.abs(turn) < max_turn) & (np.abs(turn) > 0.5) & (le_in < 8.0) & (le_out < 8.0)   # curves come as short chords
     if smooth.all() or not smooth.any(): return P, []
     st = int(np.argmin(smooth))                   # start the scan at a corner
     runs, cur = [], []
@@ -891,10 +893,11 @@ def garage_ag(k):
         # u = Lb: east of it they run in the open between the curved NE end and the tail gap (photo l1: the curved NE wall stands
         # EAST of the block face, nearer the camera; a2: nothing of a block shows east of the NE end) - r1 had united the strips up
         # to Lb, which put a 16-m block over open track
-        u_se = ga_east_u()
-        strip = Polygon([c + a * (2.0 - L / 2) - b * 30, c + a * (u_se - L / 2) - b * 30, c + a * (u_se - L / 2) - b * 7, c + a * (2.0 - L / 2) - b * 7])
+        u_se, u_n = ga_east_u(), ga_east_u(north=True)
+        ub_ = lambda u0, u1, b0, b1: Polygon([c + a * (u0 - L / 2) + b * b0, c + a * (u1 - L / 2) + b * b0, c + a * (u1 - L / 2) + b * b1, c + a * (u0 - L / 2) + b * b1])
+        strip = unary_union([ub_(2.0, u_se, -30.0, -17.5), ub_(2.0, u_n, -17.5, -7.0)])
         body_w = largest(unary_union([body_w, RAIL.intersection(strip).buffer(0.3, join_style=2)]).buffer(0.05).buffer(-0.05))
-        gap = Polygon([c + a * (u_se - L / 2) - b * 13.75, c + a * (Lb + 5 - L / 2) - b * 13.75, c + a * (Lb + 5 - L / 2) - b * 60, c + a * (u_se - L / 2) - b * 60])
+        gap = unary_union([ub_(u_se, Lb + 5, -60.0, -14.4), ub_(u_n, Lb + 5, -14.4, -13.0)])
         body_w = largest(body_w.difference(gap))      # the tail gap between the tracks east of the block: open (finding 1)
     body_w = body_w.simplify(0.05, preserve_topology=True)
     body_w, arcs_w = smooth_arcs(body_w)            # r2: curved drum / NE end as 1.2-m chords (smooth facades)
@@ -2155,15 +2158,18 @@ TAIL_WALK_W = 1.6   # emergency walkway beside each single-track trough east of 
 #                     cable rail on its open edge [obs l1 (the camera's track); the other track by symmetry inf] (review r2, finding 1)
 
 
-def ga_east_u():
-    """Garage A: u of the body's SE corner on the SFO Museum outline (largest u of the outline vertices south of b -20 m, ~134.8):
-    where the south track leaves the garage (the north track at the step ~5 m further east) - review r2."""
+def ga_east_u(north=False):
+    """Garage A: u of the body's east faces on the SFO Museum outline where the tracks leave the garage (review r2): the SE corner
+    (largest u of the outline vertices south of b -20 m, ~134.8; south track) or, north=True, the step face of the north track
+    (outline vertices at b -14..-7 east of it, ~139.8)."""
     G = DL.ggeom('garage_a'); c, a, b, L, Lb = G['c'], G['a'], G['b'], G['L'], G['Lb']
-    ring = np.array(sfom_union(DL.GAR['garage_a']['nm']).exterior.coords) if sfom_union(DL.GAR['garage_a']['nm']).geom_type == 'Polygon' else \
-        np.array(largest(sfom_union(DL.GAR['garage_a']['nm'])).exterior.coords)
+    ring = np.array(largest(sfom_union(DL.GAR['garage_a']['nm'])).exterior.coords)
     u = (ring - c) @ a + L / 2; bb = (ring - c) @ b
     sel = (bb < -20.0) & (u < Lb + 0.5)
-    return float(min(u[sel].max(), Lb)) if sel.any() else float(Lb)
+    u_se = float(min(u[sel].max(), Lb)) if sel.any() else float(Lb)
+    if not north: return u_se
+    seln = (bb > -14.5) & (bb < -6.5) & (u > u_se) & (u < Lb - 1.0)
+    return float(np.median(u[seln])) if seln.any() else u_se
 
 
 def ga_tail_walk():

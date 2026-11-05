@@ -125,6 +125,12 @@ REVIEW_R2 = [
          change='landside_geom.smooth_arcs: outline vertex runs that follow a circle (< 0.6 m) replaced by the fitted arc at 1.2-m chords '
                 '(Garage A: drum + NE end; Garage G: 3 arcs); walls and screens on the arcs share vertices with smooth normals, the '
                 'screen panels run on across the vertices (no inset, no end faces) with mullions every 4.05 m of arc length'),
+    dict(n='r2-self', item='Garage A station block plan (found in the r2 a2 render)', disposition='fixed',
+         change='r1 had united the track strips with the body up to the NE end (u = Lb 150.8), which put a 16-m block over open track: '
+                'in the solved-camera a2 render it stood east of the curved NE end where the photo shows the apron. The SFO Museum '
+                'outline ends the body south of the NE end at u 134.8 (south track) / 139.8 (north track face): the strips now stop '
+                'there, the block east faces are those two outline faces, the tracks run in the open east of them beside the NE end '
+                '(as l1 shows: the curved NE wall stands EAST of the block face, nearer the camera); the l1 render camera moved with the face'),
     dict(n=9, item='LOD2', disposition='fixed',
          change='central garage LOD2 keeps the void floor, the Level-5 garage edges beside the guideway (to the trough-wall top) and the '
                 'two DOF roof poles; every deck carries a LOD2 car impostor (one roof quad per car in its paint colour, COLOR_0) so the '

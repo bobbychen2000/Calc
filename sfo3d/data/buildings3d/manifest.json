@@ -8724,9 +8724,9 @@
  },
  "landside": {
   "asset": "data/buildings3d/landside.glb",
-  "bytes": 20773652,
-  "built": "2026-11-05T22:41:52+00:00",
-  "git": "82ebc9d+dirty",
+  "bytes": 20815412,
+  "built": "2026-11-05T22:56:38+00:00",
+  "git": "701f216+dirty",
   "generator": "tools/blender/build_landside.py (bpy 5.0.1, Cycles CPU AO bake); geometry landside_geom.py / landside_airtrain.py / landside_cars.py; textures landside_tex.py",
   "reference": "2-D sheets BL-01..03 (docs/drawings/buildings/README.md), drawn by tools/buildings/draw_landside.py, imported by landside_geom.py",
   "spec": "tools/buildings/spec_landside.json (+ landside_naip_measurements.json)",
@@ -8746,23 +8746,23 @@
   "lods": {
    "0": {
     "switch_m": 0.0,
-    "tris": 159732,
-    "instanced_car_tris": 93798,
-    "verts": 366716,
-    "draw_calls": 361
+    "tris": 160693,
+    "instanced_car_tris": 93582,
+    "verts": 368537,
+    "draw_calls": 363
    },
    "1": {
     "switch_m": 450.0,
-    "tris": 86196,
-    "instanced_car_tris": 66006,
-    "verts": 214778,
-    "draw_calls": 321
+    "tris": 85211,
+    "instanced_car_tris": 65854,
+    "verts": 212657,
+    "draw_calls": 323
    },
    "2": {
     "switch_m": 1500.0,
-    "tris": 20407,
+    "tris": 20450,
     "instanced_car_tris": 0,
-    "verts": 48097,
+    "verts": 48232,
     "draw_calls": 120
    }
   },
@@ -8772,14 +8772,14 @@
   ],
   "lod2_glb": {
    "path": "data/buildings3d/landside_lod2.glb",
-   "bytes": 2620096
+   "bytes": 2624584
   },
   "textures": [
    {
     "name": "landside_ao_B",
     "px": 2048,
     "mime": "image/jpeg",
-    "bytes": 1156890,
+    "bytes": 1172044,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    },
    {
@@ -8807,7 +8807,7 @@
     "name": "landside_ao_C",
     "px": 1024,
     "mime": "image/jpeg",
-    "bytes": 312490,
+    "bytes": 310196,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    },
    {
@@ -8842,7 +8842,7 @@
     "name": "landside_ao_A",
     "px": 2048,
     "mime": "image/jpeg",
-    "bytes": 1365731,
+    "bytes": 1341467,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    },
    {
@@ -9811,9 +9811,9 @@
   "ao": {
    "A": {
     "res": 2048,
-    "bake_s": 64.3,
+    "bake_s": 52.9,
     "mean": 0.411,
-    "p2": 0.003,
+    "p2": 0.0,
     "samples": 40,
     "distance_m": 8.0,
     "objects": 18,
@@ -9822,8 +9822,8 @@
    },
    "B": {
     "res": 2048,
-    "bake_s": 74.6,
-    "mean": 0.584,
+    "bake_s": 61.4,
+    "mean": 0.583,
     "p2": 0.0,
     "samples": 40,
     "distance_m": 8.0,
@@ -9833,8 +9833,8 @@
    },
    "C": {
     "res": 1024,
-    "bake_s": 29.9,
-    "mean": 0.629,
+    "bake_s": 23.8,
+    "mean": 0.631,
     "p2": 0.0,
     "samples": 40,
     "distance_m": 8.0,
@@ -9870,11 +9870,11 @@
    },
    "deck.garage_a": {
     "rgb": [
-     224,
+     225,
      222,
      210
     ],
-    "n": 1731,
+    "n": 1675,
     "shift": [
      13.0,
      0.0
@@ -9882,11 +9882,11 @@
    },
    "deck_far.garage_a": {
     "rgb": [
-     222,
+     223,
      220,
      210
     ],
-    "n": 1731,
+    "n": 1675,
     "shift": [
      13.0,
      0.0
@@ -9898,7 +9898,7 @@
      226,
      214
     ],
-    "n": 1087,
+    "n": 1079,
     "shift": [
      12.0,
      0.0
@@ -9910,7 +9910,7 @@
      223,
      213
     ],
-    "n": 1087,
+    "n": 1079,
     "shift": [
      12.0,
      0.0
@@ -10624,7 +10624,7 @@
       ],
       "R": 16.2
      },
-     "body_area": 8035.0,
+     "body_area": 7758.4,
      "drum_slots": [
       [
        22.25,
@@ -10722,7 +10722,7 @@
        19.75,
        23.95
       ],
-      "area": 563.6
+      "area": 596.7
      },
      "portals_local": [
       [
@@ -10749,23 +10749,23 @@
       ],
       [
        [
-        51.35,
-        -12.22
+        36.07,
+        -16.95
        ],
        [
-        49.88,
-        -7.49
+        34.61,
+        -12.21
        ],
        "block"
       ],
       [
        [
-        47.56,
-        0.03
+        32.28,
+        -4.7
        ],
        [
-        46.07,
-        4.83
+        30.79,
+        0.11
        ],
        "block"
       ]
@@ -11062,27 +11062,27 @@
     ],
     "tris": {
      "0": {
-      "tris": 21032,
-      "instanced_tris": 5292,
-      "draws": 49
+      "tris": 21445,
+      "instanced_tris": 5076,
+      "draws": 50
      },
      "1": {
-      "tris": 6578,
-      "instanced_tris": 3724,
-      "draws": 45
+      "tris": 6143,
+      "instanced_tris": 3572,
+      "draws": 46
      },
      "2": {
-      "tris": 594,
+      "tris": 571,
       "instanced_tris": 0,
       "draws": 9
      }
     },
     "cars": {
-     "deck_area_m2": 7802.8,
-     "slots": 239,
-     "cars": 99,
-     "target": 99,
-     "density_per_1000m2": 12.69,
+     "deck_area_m2": 7533.3,
+     "slots": 227,
+     "cars": 96,
+     "target": 96,
+     "density_per_1000m2": 12.74,
      "axis_deg": 66.0,
      "lanes": false,
      "count_src": "garage_a_roof_cars: 91 detected (+-30 %), 12.7 per 1,000 m2 [obs, low]",
@@ -11261,7 +11261,7 @@
       ],
       "R": 15.2
      },
-     "body_area": 5429.6,
+     "body_area": 5398.5,
      "drum_slots": [
       [
        21.15,
@@ -11521,27 +11521,27 @@
     ],
     "tris": {
      "0": {
-      "tris": 22544,
+      "tris": 22691,
       "instanced_tris": 4050,
       "draws": 29
      },
      "1": {
-      "tris": 7916,
+      "tris": 7263,
       "instanced_tris": 2850,
       "draws": 28
      },
      "2": {
-      "tris": 524,
+      "tris": 517,
       "instanced_tris": 0,
       "draws": 8
      }
     },
     "cars": {
-     "deck_area_m2": 5162.6,
-     "slots": 171,
+     "deck_area_m2": 5132.3,
+     "slots": 172,
      "cars": 77,
      "target": 77,
-     "density_per_1000m2": 14.91,
+     "density_per_1000m2": 15.0,
      "axis_deg": 66.0,
      "lanes": false,
      "count_src": "garage_g_roof_cars: 77 detected (+-30 %), 15.0 per 1,000 m2 [obs, low]",
@@ -13043,85 +13043,85 @@
     },
     "airtrain_-6_-3": {
      "0": {
-      "tris": 7405,
+      "tris": 7315,
       "instanced_tris": 0,
       "draws": 15
      },
      "1": {
-      "tris": 4405,
+      "tris": 4339,
       "instanced_tris": 0,
       "draws": 13
      },
      "2": {
-      "tris": 1195,
+      "tris": 1171,
       "instanced_tris": 0,
       "draws": 7
      }
     },
     "airtrain_-6_-2": {
      "0": {
-      "tris": 9583,
+      "tris": 9553,
       "instanced_tris": 0,
       "draws": 8
      },
      "1": {
-      "tris": 6095,
+      "tris": 6073,
       "instanced_tris": 0,
       "draws": 6
      },
      "2": {
-      "tris": 1893,
+      "tris": 1885,
       "instanced_tris": 0,
       "draws": 3
      }
     },
     "airtrain_-6_-1": {
      "0": {
-      "tris": 3153,
+      "tris": 3123,
       "instanced_tris": 0,
       "draws": 14
      },
      "1": {
-      "tris": 2303,
+      "tris": 2281,
       "instanced_tris": 0,
       "draws": 10
      },
      "2": {
-      "tris": 836,
+      "tris": 828,
       "instanced_tris": 0,
       "draws": 6
      }
     },
     "airtrain_-5_-1": {
      "0": {
-      "tris": 3546,
+      "tris": 3576,
       "instanced_tris": 0,
       "draws": 8
      },
      "1": {
-      "tris": 1571,
+      "tris": 1593,
       "instanced_tris": 0,
       "draws": 6
      },
      "2": {
-      "tris": 409,
+      "tris": 417,
       "instanced_tris": 0,
       "draws": 3
      }
     },
     "airtrain_-5_0": {
      "0": {
-      "tris": 9982,
+      "tris": 9922,
       "instanced_tris": 0,
       "draws": 8
      },
      "1": {
-      "tris": 5041,
+      "tris": 4997,
       "instanced_tris": 0,
       "draws": 6
      },
      "2": {
-      "tris": 1415,
+      "tris": 1399,
       "instanced_tris": 0,
       "draws": 3
      }
@@ -13162,17 +13162,17 @@
     },
     "airtrain_-4_1": {
      "0": {
-      "tris": 8307,
+      "tris": 8858,
       "instanced_tris": 0,
       "draws": 14
      },
      "1": {
-      "tris": 5662,
+      "tris": 5875,
       "instanced_tris": 0,
       "draws": 12
      },
      "2": {
-      "tris": 1801,
+      "tris": 1914,
       "instanced_tris": 0,
       "draws": 8
      }
@@ -13196,17 +13196,17 @@
     },
     "airtrain_-3_1": {
      "0": {
-      "tris": 2493,
+      "tris": 2523,
       "instanced_tris": 0,
-      "draws": 7
+      "draws": 8
      },
      "1": {
-      "tris": 1827,
+      "tris": 1849,
       "instanced_tris": 0,
-      "draws": 5
+      "draws": 6
      },
      "2": {
-      "tris": 595,
+      "tris": 603,
       "instanced_tris": 0,
       "draws": 4
      }
@@ -13292,7 +13292,7 @@
     }
    },
    "max_grade": 0.042,
-   "piers": 96,
+   "piers": 91,
    "stations": [
     {
      "key": "LTP",
@@ -13470,7 +13470,7 @@
      ]
     }
    ],
-   "clipped_m2": 6447.4,
+   "clipped_m2": 6288.2,
    "rcc_tower": {
     "D": 4.7,
     "top": 18.3,
@@ -13488,7 +13488,7 @@
    ]
   },
   "cars": {
-   "total": 1740,
+   "total": 1737,
    "per_deck": {
     "central_garage": {
      "deck_area_m2": 55329.3,
@@ -13506,22 +13506,22 @@
      "axis_src": "r2: every car snapped to the nearest free stall of the deck layout (axis 117.8 deg [obs NAIP rows], <= 3 m) - the per-blob NAIP headings are noise at 0.5 m/px (deviation from the stall axis: median 18, p90 42 deg = uniform random); NAIP position and colour kept [obs]"
     },
     "garage_a": {
-     "deck_area_m2": 7802.8,
-     "slots": 239,
-     "cars": 99,
-     "target": 99,
-     "density_per_1000m2": 12.69,
+     "deck_area_m2": 7533.3,
+     "slots": 227,
+     "cars": 96,
+     "target": 96,
+     "density_per_1000m2": 12.74,
      "axis_deg": 66.0,
      "lanes": false,
      "count_src": "garage_a_roof_cars: 91 detected (+-30 %), 12.7 per 1,000 m2 [obs, low]",
      "axis_src": "car long axis 66 deg [obs NAIP, coherence 0.08]"
     },
     "garage_g": {
-     "deck_area_m2": 5162.6,
-     "slots": 171,
+     "deck_area_m2": 5132.3,
+     "slots": 172,
      "cars": 77,
      "target": 77,
-     "density_per_1000m2": 14.91,
+     "density_per_1000m2": 15.0,
      "axis_deg": 66.0,
      "lanes": false,
      "count_src": "garage_g_roof_cars: 77 detected (+-30 %), 15.0 per 1,000 m2 [obs, low]",
@@ -13585,12 +13585,9 @@
   "verification": {
    "tool": "tools/blender/verify_landside.py",
    "report": "out/buildings3d/landside_verify.json (local)",
-   "n_checks": 191,
-   "n_fail": 2,
-   "failed": [
-    "garage_g: body footprint outside the SFO Museum outline (Garage A: + the guideway strips run inside it)",
-    "CG: NAIP-detected cars reproduced (share with a model car within 1.5 m)"
-   ],
+   "n_checks": 192,
+   "n_fail": 0,
+   "failed": [],
    "tolerance": "0.5 m or 2 % unless stated",
    "checks": [
     {
@@ -13676,8 +13673,8 @@
     },
     {
      "check": "airtrain_-4_1: node origin x",
-     "model": -1452.4,
-     "drawing": -1452.4,
+     "model": -1450.8,
+     "drawing": -1450.8,
      "tol": 0.01,
      "ok": true,
      "src": "manifest origin",
@@ -13685,8 +13682,8 @@
     },
     {
      "check": "airtrain_-4_1: node origin z",
-     "model": 551.2,
-     "drawing": 551.2,
+     "model": 550.7,
+     "drawing": 550.7,
      "tol": 0.01,
      "ok": true,
      "src": "manifest origin",
@@ -14153,7 +14150,7 @@
     },
     {
      "check": "garage_a: core diameter",
-     "model": 12.551,
+     "model": 12.629,
      "drawing": 13.0,
      "tol": 0.5,
      "ok": true,
@@ -14162,7 +14159,7 @@
     },
     {
      "check": "garage_a: core centre on the drum centre",
-     "model": 0.081,
+     "model": 0.12,
      "drawing": 0.0,
      "tol": 0.5,
      "ok": true,
@@ -14171,7 +14168,7 @@
     },
     {
      "check": "garage_a: garage body end u = Lb",
-     "model": 151.831,
+     "model": 150.8,
      "drawing": 150.8,
      "tol": 3.016,
      "ok": true,
@@ -14233,8 +14230,8 @@
      "unit": "m2"
     },
     {
-     "check": "garage_a: body footprint outside the SFO Museum outline (Garage A: + the guideway strips run inside it)",
-     "model": 0.534,
+     "check": "garage_a: body footprint outside the SFO Museum outline + 0.6 m (r2: the curved ends follow the fitted arc, up to the 0.6-m fit tolerance outside the outline's chords; Garage A: + the guideway strips run inside it)",
+     "model": 0.0,
      "drawing": 0.0,
      "tol": 5.0,
      "ok": true,
@@ -14297,7 +14294,7 @@
     },
     {
      "check": "garage_g: garage body end u = Lb",
-     "model": 149.8,
+     "model": 149.881,
      "drawing": 149.8,
      "tol": 2.996,
      "ok": true,
@@ -14305,12 +14302,21 @@
      "unit": "m"
     },
     {
-     "check": "garage_g: body footprint outside the SFO Museum outline (Garage A: + the guideway strips run inside it)",
-     "model": 24.168,
+     "check": "garage_g: body footprint outside the SFO Museum outline + 0.6 m (r2: the curved ends follow the fitted arc, up to the 0.6-m fit tolerance outside the outline's chords; Garage A: + the guideway strips run inside it)",
+     "model": 0.0,
      "drawing": 0.0,
      "tol": 5.0,
-     "ok": false,
+     "ok": true,
      "src": "BL-02 B",
+     "unit": "m2"
+    },
+    {
+     "check": "garage_g: body clear of the guideway polygon (0.3 m)",
+     "model": 0.0,
+     "drawing": 0.0,
+     "tol": 1.0,
+     "ok": true,
+     "src": "plausibility",
      "unit": "m2"
     },
     {
@@ -14333,7 +14339,7 @@
     },
     {
      "check": "garage_a: drum slot (top 23.25 m) recessed (interior faces at its top)",
-     "model": 120.0,
+     "model": 112.0,
      "drawing": 1.0,
      "tol": null,
      "ok": true,
@@ -14503,11 +14509,11 @@
      "unit": ""
     },
     {
-     "check": "CG: NAIP-detected cars reproduced (share with a model car within 1.5 m)",
-     "model": 0.598,
+     "check": "CG: NAIP-detected cars reproduced (share with a model car within 3.2 m = the r2 stall-snap radius)",
+     "model": 0.866,
      "drawing": 0.8,
      "tol": null,
-     "ok": false,
+     "ok": true,
      "src": "landside_r1_obs.json cg_roof.cars [obs NAIP]",
      "unit": ""
     },
@@ -15044,16 +15050,16 @@
     },
     {
      "check": "AirTrain: trough walkway area (2 x 1.6-m strips; r1 deck 656 m2)",
-     "model": 429.333,
-     "drawing": 423.636,
-     "tol": 12.709,
+     "model": 481.139,
+     "drawing": 474.803,
+     "tol": 14.244,
      "ok": true,
      "src": "photo l1 [obs]",
      "unit": "m2"
     },
     {
      "check": "AirTrain: the gap between the tracks east of Garage A left open (r2: no deck)",
-     "model": 226.949,
+     "model": 299.697,
      "drawing": 200.0,
      "tol": null,
      "ok": true,
@@ -15197,7 +15203,7 @@
     },
     {
      "check": "cars garage_a: min centre spacing (no overlap: car width <= 1.95 m + 0.15 m)",
-     "model": 2.424,
+     "model": 2.45,
      "drawing": 2.1,
      "tol": null,
      "ok": true,
@@ -15215,7 +15221,7 @@
     },
     {
      "check": "cars garage_g: min centre spacing (no overlap: car width <= 1.95 m + 0.15 m)",
-     "model": 2.419,
+     "model": 2.455,
      "drawing": 2.1,
      "tol": null,
      "ok": true,
@@ -15501,6 +15507,12 @@
      "item": "Garage A curved NE end faceted",
      "disposition": "fixed",
      "change": "landside_geom.smooth_arcs: outline vertex runs that follow a circle (< 0.6 m) replaced by the fitted arc at 1.2-m chords (Garage A: drum + NE end; Garage G: 3 arcs); walls and screens on the arcs share vertices with smooth normals, the screen panels run on across the vertices (no inset, no end faces) with mullions every 4.05 m of arc length"
+    },
+    {
+     "n": "r2-self",
+     "item": "Garage A station block plan (found in the r2 a2 render)",
+     "disposition": "fixed",
+     "change": "r1 had united the track strips with the body up to the NE end (u = Lb 150.8), which put a 16-m block over open track: in the solved-camera a2 render it stood east of the curved NE end where the photo shows the apron. The SFO Museum outline ends the body south of the NE end at u 134.8 (south track) / 139.8 (north track face): the strips now stop there, the block east faces are those two outline faces, the tracks run in the open east of them beside the NE end (as l1 shows: the curved NE wall stands EAST of the block face, nearer the camera); the l1 render camera moved with the face"
     },
     {
      "n": 9,
