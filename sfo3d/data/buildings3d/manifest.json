@@ -3012,8 +3012,8 @@
  },
  "domestic": {
   "asset": "data/buildings3d/domestic.glb",
-  "bytes": 8845952,
-  "built": "2026-11-05T02:16:58+00:00",
+  "bytes": 9267572,
+  "built": "2026-11-05T02:28:44+00:00",
   "git": "ba7a2d1+dirty",
   "generator": "tools/blender/build_domestic.py (bpy 5.0.1, Cycles CPU AO bake); geometry tools/blender/dom_geom.py + dom_mesh.py; textures dom_tex.py",
   "reference": "2-D sheets BD-01..03 (docs/drawings/buildings/README.md), drawn by tools/buildings/draw_domestic.py, imported by dom_geom.py",
@@ -3073,8 +3073,8 @@
     "lod": 0,
     "node": "LOD0",
     "switch_m": 0.0,
-    "tris": 67563,
-    "verts": 140376,
+    "tris": 69817,
+    "verts": 145788,
     "draw_calls": 115,
     "ao_atlas": "dom_ao_S / dom_ao_N (shared by the LOD0 / LOD1 shell meshes)"
    },
@@ -3082,8 +3082,8 @@
     "lod": 1,
     "node": "LOD1",
     "switch_m": 380.0,
-    "tris": 19805,
-    "verts": 46545,
+    "tris": 21501,
+    "verts": 50841,
     "draw_calls": 91,
     "ao_atlas": "dom_ao_S / dom_ao_N (shared by the LOD0 / LOD1 shell meshes)"
    },
@@ -3091,8 +3091,8 @@
     "lod": 2,
     "node": "LOD2",
     "switch_m": 1300.0,
-    "tris": 10248,
-    "verts": 24090,
+    "tris": 11725,
+    "verts": 27899,
     "draw_calls": 16,
     "ao_atlas": "dom_ao_L2"
    }
@@ -3104,7 +3104,7 @@
   ],
   "lod2_glb": {
    "path": "data/buildings3d/domestic_lod2.glb",
-   "bytes": 1454560
+   "bytes": 1634688
   },
   "textures": [
    {
@@ -3144,7 +3144,7 @@
      2048
     ],
     "mime": "image/png",
-    "bytes": 1319280,
+    "bytes": 1330634,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    },
    {
@@ -3204,7 +3204,7 @@
      2048
     ],
     "mime": "image/png",
-    "bytes": 1278803,
+    "bytes": 1299026,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    },
    {
@@ -3274,7 +3274,7 @@
      1024
     ],
     "mime": "image/png",
-    "bytes": 402516,
+    "bytes": 421424,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    }
   ],
@@ -3681,7 +3681,7 @@
       215
      ],
      "BA_E": [
-      213,
+      214,
       215,
       212
      ],
@@ -3709,8 +3709,8 @@
      "BA_C",
      "T2"
     ],
-    "bake_s": 24.2,
-    "mean": 0.644,
+    "bake_s": 24.1,
+    "mean": 0.641,
     "p2": 0.001,
     "samples": 48,
     "distance_m": 10.0,
@@ -3729,8 +3729,8 @@
      "BA_E",
      "BA_F"
     ],
-    "bake_s": 24.9,
-    "mean": 0.699,
+    "bake_s": 26.5,
+    "mean": 0.694,
     "p2": 0.004,
     "samples": 48,
     "distance_m": 10.0,
@@ -3744,8 +3744,8 @@
     "buildings": [
      "all"
     ],
-    "bake_s": 3.5,
-    "mean": 0.667,
+    "bake_s": 4.7,
+    "mean": 0.665,
     "p2": 0.002,
     "samples": 48,
     "distance_m": 10.0,
@@ -3769,7 +3769,7 @@
      215,
      215
     ],
-    "n": 1186,
+    "n": 1194,
     "lean_m_per_m": 0.387,
     "method": "NAIP 2024 median of the upper 65 pct (luminance) at the imaged deck points, 2.5 m grid, 2 m inside, off holes / PV; capped at sRGB 215"
    },
@@ -3799,7 +3799,7 @@
      215,
      210
     ],
-    "n": 2220,
+    "n": 2221,
     "lean_m_per_m": 0.581,
     "method": "NAIP 2024 median of the upper 65 pct (luminance) at the imaged deck points, 2.5 m grid, 2 m inside, off holes / PV; capped at sRGB 215"
    },
@@ -3825,11 +3825,11 @@
    },
    "BA_E": {
     "rgb": [
-     213,
+     214,
      215,
      212
     ],
-    "n": 610,
+    "n": 604,
     "lean_m_per_m": 0.443,
     "method": "NAIP 2024 median of the upper 65 pct (luminance) at the imaged deck points, 2.5 m grid, 2 m inside, off holes / PV; capped at sRGB 215"
    },
@@ -3839,7 +3839,7 @@
      215,
      215
     ],
-    "n": 2677,
+    "n": 2669,
     "lean_m_per_m": 0.332,
     "method": "NAIP 2024 median of the upper 65 pct (luminance) at the imaged deck points, 2.5 m grid, 2 m inside, off holes / PV; capped at sRGB 215"
    }
@@ -4861,7 +4861,7 @@
   ],
   "bridges": {
    "doors": 75,
-   "vestibules": 56,
+   "vestibules": 54,
    "bulkheads": 23,
    "notched": 2,
    "note": "every bridge of data/sfo_stands.json (B-F) gets a door surround where its walkway meets the 3-D facade; where the app's walkway (js/live/gates.js) starts outside the facade a vestibule closes the gap"
@@ -4911,7 +4911,7 @@
     },
     {
      "group": "heights",
-     "check": "BA_B_body: roof edge top (median of 232 probes, p10 13.14 / p90 13.14)",
+     "check": "BA_B_body: roof edge top (median of 240 probes, p10 13.14 / p90 13.14)",
      "model": 13.14,
      "drawing": 13.14,
      "dev": 0.0,
@@ -4941,7 +4941,7 @@
     },
     {
      "group": "heights",
-     "check": "BA_D_body: roof edge top (median of 178 probes, p10 8.49 / p90 8.49)",
+     "check": "BA_D_body: roof edge top (median of 183 probes, p10 8.49 / p90 8.49)",
      "model": 8.49,
      "drawing": 8.49,
      "dev": 0.0,
@@ -4951,7 +4951,7 @@
     },
     {
      "group": "heights",
-     "check": "BA_E_centre: roof edge top (median of 124 probes, p10 12.85 / p90 12.85)",
+     "check": "BA_E_centre: roof edge top (median of 136 probes, p10 12.85 / p90 12.85)",
      "model": 12.85,
      "drawing": 12.85,
      "dev": 0.0,
@@ -4961,7 +4961,7 @@
     },
     {
      "group": "heights",
-     "check": "BA_E_body: roof edge top (median of 80 probes, p10 9.85 / p90 9.85)",
+     "check": "BA_E_body: roof edge top (median of 81 probes, p10 9.85 / p90 9.85)",
      "model": 9.85,
      "drawing": 9.85,
      "dev": 0.0,
@@ -4971,7 +4971,7 @@
     },
     {
      "group": "heights",
-     "check": "BA_F_body: roof edge top (median of 302 probes, p10 10.49 / p90 10.49)",
+     "check": "BA_F_body: roof edge top (median of 305 probes, p10 10.49 / p90 10.49)",
      "model": 10.49,
      "drawing": 10.49,
      "dev": 0.0,
@@ -5242,9 +5242,9 @@
     {
      "group": "BA-E",
      "check": "BA-E total roof width (median of the sections)",
-     "model": 42.9,
+     "model": 42.8,
      "drawing": 42.9,
-     "dev": 0.0,
+     "dev": 0.1,
      "tol": 0.858,
      "ok": true,
      "src": "BD-02 (research 5.3, 42.9 m) [inf]"
@@ -5252,9 +5252,9 @@
     {
      "group": "BA-E",
      "check": "BA-E raised plate width (median of the sections)",
-     "model": 37.1,
+     "model": 37.0,
      "drawing": 37.1,
-     "dev": 0.0,
+     "dev": 0.1,
      "tol": 0.7419999999999999,
      "ok": true,
      "src": "width - 2 x flank 4.4 + 2 x overhang 1.5 [inf]"
@@ -5382,9 +5382,9 @@
     {
      "group": "footprints",
      "check": "apron-level walls (0.5-5 m) outside the SFO Museum outlines (bridge vestibules excluded)",
-     "model": 108.886,
+     "model": 108.942,
      "drawing": 0.0,
-     "dev": 108.886,
+     "dev": 108.942,
      "tol": null,
      "ok": true,
      "src": "m2: the vestibules reach from the facade to the app walkway start (bridges)"
@@ -5392,9 +5392,9 @@
     {
      "group": "footprints",
      "check": "LOD0 plan area outside the SFO Museum outlines (roof overhangs, canopy, vestibules)",
-     "model": 1062.813,
+     "model": 1035.769,
      "drawing": 0.0,
-     "dev": 1062.813,
+     "dev": 1035.769,
      "tol": null,
      "ok": true,
      "src": "BA-B / BA-D ESE overhangs +2.3 / +2.4 m [obs], T1 canopy 4 m [inf], vestibules [inf]"
@@ -5412,9 +5412,9 @@
     {
      "group": "plausibility",
      "check": "bridge attachments: walkway first 1.5 m beyond the facade touching 3-D geometry (79 bridges; INFO)",
-     "model": 28.32,
+     "model": 28.23,
      "drawing": 0.0,
-     "dev": 28.32,
+     "dev": 28.23,
      "tol": null,
      "ok": true,
      "src": "door frames / vestibule ends / walkways meeting the facade at an angle (stand data vs SFO Museum outline, as the ITB rotunda contacts)"
@@ -5498,7 +5498,7 @@
       "B5",
       "B5",
       1,
-      0.26
+      0.27
      ],
      [
       "B6",
@@ -5696,13 +5696,13 @@
       "D3",
       "D3",
       1,
-      0.41
+      0.42
      ],
      [
       "D4",
       "D4",
       1,
-      0.38
+      0.39
      ],
      [
       "D5",
@@ -5762,7 +5762,7 @@
       "D15",
       "D15",
       1,
-      0.38
+      0.39
      ],
      [
       "D16",
@@ -5798,7 +5798,7 @@
       "E6",
       "E6",
       1,
-      0.38
+      0.25
      ],
      [
       "E7",
@@ -5953,8 +5953,8 @@
     ],
     "doors": {
      "n": 75,
-     "vestibules": 56,
-     "max_gap_bridged_m": 6.65,
+     "vestibules": 54,
+     "max_gap_bridged_m": 2.6,
      "bulkheads": 23
     }
    },
@@ -5963,7 +5963,7 @@
      "median": 13.14,
      "p10": 13.14,
      "p90": 13.14,
-     "n": 232
+     "n": 240
     },
     "BA_B_band": {
      "median": 19.04,
@@ -5981,25 +5981,25 @@
      "median": 8.49,
      "p10": 8.49,
      "p90": 8.49,
-     "n": 178
+     "n": 183
     },
     "BA_E_centre": {
      "median": 12.85,
      "p10": 12.85,
      "p90": 12.85,
-     "n": 124
+     "n": 136
     },
     "BA_E_body": {
      "median": 9.85,
      "p10": 9.85,
      "p90": 9.85,
-     "n": 80
+     "n": 81
     },
     "BA_F_body": {
      "median": 10.49,
      "p10": 10.49,
      "p90": 10.49,
-     "n": 302
+     "n": 305
     },
     "BA_F_lantern": {
      "median": 15.09,

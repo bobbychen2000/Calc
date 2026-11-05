@@ -108,10 +108,12 @@ const icaoN = (icao) => icao ? (TYPE_ALIAS[icao] || icao) : null;
 export const familyOf = (icao) => FAMILY[icaoN(icao)] || null;
 // does an aircraft of type T (ICAO designator icao) fit a stand: its class limits / span_max / len_max; the stand's
 // `types_ok` whitelist where the data sets one (E10/E12, F19/F20: only with the types SFO parks there do the neighbours
-// clear each other -- static_geometry_round2.md #2; `strict` false = SFO's own allocation, which is followed); the
-// A380 / 747-8 / 777-9 only on the stands the data marks `a380` (A6, A11, G13: round2 #1). Unknown types are allowed.
+// clear each other -- static_geometry_round2.md #2; `strict` false = SFO's own allocation, which is followed, except where
+// the data sets `types_ok_all_paths`: F19 / F20, whose class limits alone let two aircraft park 1.9 m apart -- tools/sat/
+// check.py APP ISSUES, static_geometry_round4.md s.2, orch-2); the A380 / 747-8 / 777-9 only on the stands the data marks
+// `a380` (A6, A11, G13: round2 #1). Unknown types are allowed.
 function standFits(g, T, icao = null, strict = true) {
-  if (strict && g.typesOk && g.typesOk.length && icao && !g.typesOk.includes(icaoN(icao))) return false;
+  if ((strict || g.typesOkAllPaths) && g.typesOk && g.typesOk.length && icao && !g.typesOk.includes(icaoN(icao))) return false;
   if (!T || g.remote || !g.maxSpan) return true;
   const span = T.wing ? T.wing.span : 36;
   if (span <= g.maxSpan + 0.6 && T.L <= g.maxLen + 2) return true;
@@ -1203,16 +1205,36 @@ export class Traffic {
   // (liveOnly: an aircraft that is silent (remembered) there does not block -- SFO's allocation replaces it)
   blocked(g, tr, liveOnly = false) {
     for (const n of g.excl || []) { const o = this.gateBy.get(n); if (o && o.occupant && o.occupant !== tr.hex) { const q = liveOnly && this.tracks.get(o.occupant); if (!(q && q.stale)) return true; } } // mutually exclusive stands (SFO MARS)
+    if (this.exclTypeHits(g, tr, liveOnly).length) return true;
     for (const o of this.gates) {
       if (o === g || !o.occupant || o.occupant === tr.hex || !o.oversize) continue;
       if (Math.hypot(o.w.x - g.w.x, o.w.z - g.w.z) < 0.5 * (o.maxSpan + g.maxSpan) + 8) return true;
     }
     return false;
   }
+  // conditional exclusions per type (data `excl_types`, static_closeout.md s.1.1 / R2.2, static-v6): {neighbour: [types]} --
+  // while this stand holds one of those ICAO types the neighbour stays free, and entries '@N:T' block this stand while the
+  // neighbour N holds a T (F19 B772 -> F18, F20; C9 B763 -> C11; C8 B752 -> C10: each type comes within the ICAO stand
+  // clearance of the neighbour's envelope, and SFO's 4 Nov plan never overlaps them). The occupants of the neighbours
+  // that conflict with this aircraft on stand g (liveOnly: a silent remembered one does not count -- SFO's allocation
+  // replaces it, occupy())
+  exclTypeHits(g, tr, liveOnly = false) {
+    const X = g.exclTypes; if (!X) return [];
+    const my = icaoN(tr.info && tr.info.icao); const out = [];
+    for (const n of Object.keys(X)) {
+      const o = this.gateBy.get(n); if (!o || !o.occupant || o.occupant === tr.hex) continue;
+      const q = this.tracks.get(o.occupant); if (liveOnly && q && q.stale) continue;
+      const ot = q ? icaoN(q.info && q.info.icao) : null;
+      if (X[n].some(e => e[0] === '@' ? !!ot && e === '@' + n + ':' + ot : !!my && e === my)) out.push(q || null);
+    }
+    return out;
+  }
   occupy(tr, g, t) {
     if (g.occupant && g.occupant !== tr.hex) { const o = this.tracks.get(g.occupant); if (o) { if (o.stale) this.fadeRemove(o, 'replaced'); else this.releaseGate(o); } }
     // a silent aircraft remembered on a mutually exclusive stand (B5 / B5S ...) has left: this one stands there now
     for (const n of g.excl || []) { const q = this.gateBy.get(n); const o = q && q.occupant && q.occupant !== tr.hex ? this.tracks.get(q.occupant) : null; if (o && o.stale && !o.dropping) { this.event(o, t ?? tr.lastFixT, 'stale-replaced', { by: tr.hex, excl: g.name }); this.fadeRemove(o, 'replaced'); } }
+    // ...and the same for a silent one on a neighbour this aircraft's type excludes (excl_types: SFO never plans them together)
+    for (const o of this.exclTypeHits(g, tr)) if (o && o.stale && !o.dropping) { this.event(o, t ?? tr.lastFixT, 'stale-replaced', { by: tr.hex, exclType: g.name }); this.fadeRemove(o, 'replaced'); }
     // (a body that came to rest before the stand was recognised is re-settled onto the stand pose: its free-parking lock,
     // up to 8 m off, would otherwise be kept while within LOCK_M of the stand pose -- review round 2: UAL822 at G7 drawn
     // 5.6 m off the stand for the whole turn, its bridge docked there)
@@ -1389,6 +1411,9 @@ export class Traffic {
       const past = tr.dock && tr.dock.g === g ? -20 : -3;
       if (along < past || along > 60 || Math.abs(lat) > (pg ? 14 : 8) + Math.max(0, along) * 0.15) continue;
       if (Math.abs(wrapPi(r.dir - g.w.hdg)) > (pg ? 55 : 30) * DEG) continue;   // SFO's own allocation: turning in
+      // (a stand a neighbour's aircraft excludes -- excl / excl_types / an oversize neighbour -- is not docked to either:
+      // matchGate() would refuse it once the aircraft stopped there; orch-2)
+      if (this.blocked(g, tr, !!pg)) continue;
       const s = Math.abs(lat) + 0.1 * along; if (s < bd) { bd = s; best = g; }
     }
     tr.dock = best ? { g: best, t } : null;
