@@ -143,6 +143,64 @@ export function buildAirfieldLights(level = 1, opts = {}) {
   return { L, flashers, papis, piers };
 }
 
+// ALS light placement on the approach-light structures (environment step 2, docs/research/environment_impl.md §2):
+// returns place(stationFt, latM) -> {p: [x, y, z], kind: 'inset' | 'pier' | 'land' | 'water'} for a fixture `stationFt`
+// ft out from the landing threshold (FAA nominal station, data/sfo_lighting.js) and `latM` m right of the OUTWARD axis.
+// Same frame, station snapping and pavement test as the builder above, so the lights stand on the geometry it makes:
+// over the water the station moves to the nearest NAIP-imaged station within 51 ft (js/geo.js APPROACH_STRUCTURES, obs)
+// at the light plane `planeY` (threshold elevation, JO 6850.2C 201a); on the displaced runway / blast pad / EMAS the
+// light is a semi-flush inset light at the surface (EMAS: its rising top); over the bay without an imaged structure
+// ('water': 19L, whose pier is not in APPROACH_STRUCTURES) at the light plane on piles (buildMountGeometry); elsewhere on
+// land on a low frangible mount at max(planeY, GROUND_Y + 0.35 m) (I: the app's terrain is flat at field level, above
+// the 12.6-12.9 ft light plane of 28L/28R and 2.6 ft above that of 19L). isWater(x, z): optional land/water test.
+export function alsPlacement(end, planeY) {
+  const A = APPROACH_LIGHTS.find(a => a.end === end); if (!A) return null;
+  const F = runwayFrame(end); const back = v3.mul(F.dir, -1);
+  const ST = APPROACH_STRUCTURES[end] || null;
+  const ri = RWY.findIndex(r => r.name.includes(end));
+  const ez = ri >= 0 ? END_ZONES.find(z => z.rw === ri && z.end === (RWY[ri].name[0] === end ? 0 : 1)) : null;
+  const pavedM = (F.disp || 0) + (ez ? (ez.type === 2 ? EMAS_SETBACK + ez.len : ez.len) : 0);
+  const yMount = Math.max(planeY, GROUND_Y + 0.35);
+  return (stationFt, latM, isWater) => {
+    let dft = stationFt;
+    if (ST && dft > ST.seawallFt) { let e = 51; for (const s of ST.stationsFt) if (Math.abs(s - stationFt) < e) { e = Math.abs(s - stationFt); dft = s; } }
+    const d = dft * 0.3048;
+    const p = v3.add(v3.add(F.thr, v3.mul(back, d)), v3.mul(F.right, -latM));
+    let kind;
+    if (d <= pavedM + 1.0) {
+      const uE = ez && ez.type === 2 ? d - (F.disp || 0) - EMAS_SETBACK : -1;
+      p[1] = GROUND_Y + 0.12 + (uE >= 0 && uE <= ez.len ? 0.25 + 0.35 * uE / ez.len : 0); kind = 'inset';
+    } else if (ST && dft > ST.seawallFt && dft <= ST.stationsFt[ST.stationsFt.length - 1] + 1) { p[1] = planeY; kind = 'pier'; }
+    else if (isWater && isWater(p[0], p[2])) { p[1] = planeY; kind = 'water'; }   // piles from the water (no imaged pier)
+    else { p[1] = yMount; kind = 'land'; }
+    return { p, kind, dft };
+  };
+}
+// Low mounts under the land / unsupported ALS lights (environment step 2; replaces the builder's land 'post' piers when
+// the fixture lights are used): one post per light group (station, side cluster) from the ground (land) or 2 m below
+// the water surface (piles, 'water') up to 6 cm under the lights, and a bar carrying the group's lights.
+// groups: [{x, z, yTop, lo, hi, right: [x, y, z], water}] (lo / hi: lateral extent along `right`, m); {box: true}:
+// a PAPI lamp housing behind the light (local x = cross(right, up) = the beam direction).
+export function buildMountGeometry(groups) {
+  const g = new Geo(); const col = [0.35, 0.33, 0.3, 1], ext = [0.7, 0.4, 0, 0];
+  for (const G of groups) {
+    const f = v3.norm(v3.cross(G.right, [0, 1, 0]));
+    const M = m4.basis(f, [0, 1, 0], [G.x, 0, G.z]);
+    if (G.box) {   // PAPI lamp housing (L-880 LHA; size NV, I: 0.9 m along the beam x 0.6 m) behind the light, on two legs
+      const yb = G.yTop + 0.12, ya = G.yTop - 0.25;
+      g.box([-0.95, ya, -0.3], [-0.05, yb, 0.3], [0.55, 0.55, 0.5, 1], ext, M);
+      for (const x of [-0.8, -0.2]) g.box([x - 0.05, GROUND_Y, -0.05], [x + 0.05, ya, 0.05], col, ext, M);
+      continue;
+    }
+    const y0 = G.water ? -2.0 : GROUND_Y, top = G.yTop - 0.06;
+    if (top <= y0 + 0.02) continue;
+    const mid = (G.lo + G.hi) / 2;
+    g.box([-0.07, y0, mid - 0.07], [0.07, top, mid + 0.07], col, ext, M);
+    if (G.hi - G.lo > 0.3) g.box([-0.06, top - 0.1, G.lo - 0.15], [0.06, top, G.hi + 0.15], col, ext, M);
+  }
+  return g.data();
+}
+
 export function lightSpriteFn(sys) {
   return (t, camPos) => {
     const out = sys.L.slice();

@@ -2,9 +2,9 @@
  "_about": "SFO Live 3D building assets (glTF 2.0, built with Blender from the verified 2-D sheets); one key per asset group; frame ltp-nad83-2011 (x east, y up, z south, m from the ARP); see docs/research/buildings3d.md",
  "itb": {
   "asset": "data/buildings3d/itb.glb",
-  "bytes": 6010592,
-  "built": "2026-11-05T06:21:44+00:00",
-  "git": "cc69c8e+dirty",
+  "bytes": 6000812,
+  "built": "2026-11-05T07:26:55+00:00",
+  "git": "3d6ee7c+dirty",
   "generator": "tools/blender/build_itb.py (bpy 5.0.1, Cycles CPU AO bake); geometry tools/blender/itb_geom.py",
   "reference": "2-D sheets BI-01..04 (docs/drawings/buildings/README.md), drawn by tools/buildings/draw_itb.py, imported by itb_geom.py",
   "spec": "tools/buildings/spec_itb.json (+ itb_naip_measurements.json, itb_pods.json)",
@@ -37,7 +37,7 @@
     "node": "LOD0",
     "switch_m": 0.0,
     "tris": 64344,
-    "verts": 67835,
+    "verts": 67837,
     "ao_atlas": "itb_ao_A (shared by LOD0 / LOD1 shell meshes)"
    },
    {
@@ -45,7 +45,7 @@
     "node": "LOD1",
     "switch_m": 450.0,
     "tris": 34976,
-    "verts": 39532,
+    "verts": 39534,
     "ao_atlas": "itb_ao_A (shared by LOD0 / LOD1 shell meshes)"
    },
    {
@@ -53,7 +53,7 @@
     "node": "LOD2",
     "switch_m": 1600.0,
     "tris": 5256,
-    "verts": 7676,
+    "verts": 7660,
     "ao_atlas": "itb_ao_B"
    }
   ],
@@ -64,7 +64,7 @@
   ],
   "lod2_glb": {
    "path": "data/buildings3d/itb_lod2.glb",
-   "bytes": 567148
+   "bytes": 563896
   },
   "textures": [
    {
@@ -84,7 +84,7 @@
      2048
     ],
     "mime": "image/png",
-    "bytes": 2059789,
+    "bytes": 2053126,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    },
    {
@@ -94,7 +94,7 @@
      512
     ],
     "mime": "image/png",
-    "bytes": 1617,
+    "bytes": 1683,
     "kind": "base colour (glass + mullion caps), tiling, TEXCOORD_0"
    },
    {
@@ -154,7 +154,7 @@
      256
     ],
     "mime": "image/png",
-    "bytes": 718,
+    "bytes": 715,
     "kind": "base colour, tiling, TEXCOORD_0"
    },
    {
@@ -164,7 +164,7 @@
      512
     ],
     "mime": "image/png",
-    "bytes": 158226,
+    "bytes": 155631,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    }
   ],
@@ -477,8 +477,8 @@
      0,
      1
     ],
-    "bake_s": 61.2,
-    "mean": 0.649,
+    "bake_s": 67.9,
+    "mean": 0.65,
     "p2": 0.0,
     "samples": 48,
     "distance_m": 10.0,
@@ -489,8 +489,8 @@
     "lods": [
      2
     ],
-    "bake_s": 2.4,
-    "mean": 0.657,
+    "bake_s": 2.7,
+    "mean": 0.672,
     "p2": 0.0,
     "samples": 48,
     "distance_m": 10.0,
@@ -1294,7 +1294,7 @@
   "inferred": [
    "roof deck + fascia 0.6 m thick (BI-02 top-chord line); cross camber flat (unknown)",
    "glazed truss-line strips 1.5 m wide (NAIP 2024 dark lines, rough)",
-   "lens skylights: pointed-lens planform (NAIP shows D shapes: vaulted lens or D plan, not settled), raised as vaults 1.9 m above the deck (review r1: photos i4 / i2 show the crown capped by dark lens glass, 1.5 m above the white fascia at the crown in i4 [obs, low]; the deck / fascia of the centre section runs crown_cap(u) = 1.5 (1 - (u / 27)^2) m below the BI-02 silhouette roof_line(u), and the lens tops form that silhouette as seen from i4; vault form and rise inf)",
+   "lens skylights: pointed-lens planform (NAIP shows D shapes: vaulted lens or D plan, not settled), raised as vaults 1.9 m above the deck (review r1: photos i4 / i2 show the crown capped by dark lens glass, 1.5 m above the white fascia at the crown in i4 [obs, low]; the deck / fascia of the centre section runs crown_cap(u) = 1.5 (1 - ((u + 1.8) / 24.0)^2) m below the BI-02 silhouette roof_line(u), and the lens tops form that silhouette as seen from i4; vault form and rise inf)",
    "truss form: three-chord (2 top chords 2.4 m apart, 1 bottom chord), webs on a 20-ft node grid offset 10 ft; depth taper (BI-03); the west chord is level with the glass head (BI-02) except between the inner column line and the notch, where it follows the BI-03 taper (up to ~3.4 m above the BI-02 line; photos i3 / i4 show the sweep up to the notch: a deliberate deviation from BI-02 V1, both lines inf); centre section: a sagging bowstring chord from the deck at the notches to the clear bay head (photos i3 / i4; BI-03 draws the form as unknown); tube radii 0.50 / 0.32 / 0.20 m",
    "eave outriggers under the soffit at every truss node (photo i3: regular spacing)",
    "column positions +-190 / +-270 ft x 5 truss lines; west line 2.5 m in front of the glass; fan of 5 members (count obs, geometry inf); radius 0.75 m",
@@ -1412,7 +1412,7 @@
      "src": "spec corners NW/NE/SE/SW [obs]"
     },
     {
-     "check": "roof deck top vs roof_line(u) - crown_cap(u), max |dev| over 4507 vertices",
+     "check": "roof deck top vs roof_line(u) - crown_cap(u), max |dev| over 4499 vertices",
      "model": 0.0,
      "drawing": 0.0,
      "dev": 0.0,
@@ -1422,10 +1422,10 @@
     },
     {
      "check": "roof deck at |u| 0 (crown 40.1 - cap 1.5)",
-     "model": 38.599,
-     "drawing": 38.6,
-     "dev": 0.001,
-     "tol": 0.772,
+     "model": 38.604,
+     "drawing": 38.608,
+     "dev": 0.005,
+     "tol": 0.7721680249739855,
      "ok": true,
      "src": "BI-02 / itb_geom.roof_top"
     },
@@ -1467,9 +1467,9 @@
     },
     {
      "check": "centre silhouette (lens vault tops) vs roof_line, |u| <= 20: max |dev|",
-     "model": 0.461,
+     "model": 0.434,
      "drawing": 0.0,
-     "dev": 0.461,
+     "dev": 0.434,
      "tol": 0.5,
      "ok": true,
      "src": "BI-02 roof_line = the west silhouette (crown 40.1 photo i4, +-2) [obs]"
@@ -1485,45 +1485,45 @@
     },
     {
      "check": "lens 0 vault rise above the deck (max)",
-     "model": 1.906,
+     "model": 1.917,
      "drawing": 1.9,
-     "dev": 0.006,
+     "dev": 0.017,
      "tol": 0.1,
      "ok": true,
      "src": "review r1: raised lens glass (photos i4 / i2 dark cap; NAIP vault shading) [inf]"
     },
     {
      "check": "lens 1 vault rise above the deck (max)",
-     "model": 1.904,
+     "model": 1.913,
      "drawing": 1.9,
-     "dev": 0.004,
+     "dev": 0.013,
      "tol": 0.1,
      "ok": true,
      "src": "review r1: raised lens glass (photos i4 / i2 dark cap; NAIP vault shading) [inf]"
     },
     {
      "check": "lens 2 vault rise above the deck (max)",
-     "model": 1.906,
+     "model": 1.916,
      "drawing": 1.9,
-     "dev": 0.006,
+     "dev": 0.016,
      "tol": 0.1,
      "ok": true,
      "src": "review r1: raised lens glass (photos i4 / i2 dark cap; NAIP vault shading) [inf]"
     },
     {
      "check": "lens 3 vault rise above the deck (max)",
-     "model": 1.906,
+     "model": 1.916,
      "drawing": 1.9,
-     "dev": 0.006,
+     "dev": 0.016,
      "tol": 0.1,
      "ok": true,
      "src": "review r1: raised lens glass (photos i4 / i2 dark cap; NAIP vault shading) [inf]"
     },
     {
      "check": "lens 4 vault rise above the deck (max)",
-     "model": 1.909,
+     "model": 1.922,
      "drawing": 1.9,
-     "dev": 0.009,
+     "dev": 0.022,
      "tol": 0.1,
      "ok": true,
      "src": "review r1: raised lens glass (photos i4 / i2 dark cap; NAIP vault shading) [inf]"
@@ -2434,7 +2434,7 @@
     "view": "i4",
     "file": "out/buildings3d/itb_i4.png",
     "what": "landside perspective approximating photo i4 (DimiCalifornia 2005, PD); itb_cmp_i4.png side by side",
-    "samples": 32,
+    "samples": 48,
     "note": "local (out/ is gitignored); comparison sheets with photo pixels stay local"
    },
    {
@@ -2469,6 +2469,20 @@
     "view": "a2g",
     "file": "out/buildings3d/itb_a2g.png",
     "what": "photo a2 view (camera solved, review r1): the BA-G NNE face; itb_cmp_a2g.png side by side",
+    "samples": 48,
+    "note": "local (out/ is gitignored); comparison sheets with photo pixels stay local"
+   },
+   {
+    "view": "i4_lod1",
+    "file": "out/buildings3d/itb_i4_lod1.png",
+    "what": "landside perspective approximating photo i4 (DimiCalifornia 2005, PD); itb_cmp_i4.png side by side (LOD1)",
+    "samples": 32,
+    "note": "local (out/ is gitignored); comparison sheets with photo pixels stay local"
+   },
+   {
+    "view": "a2g_lod1",
+    "file": "out/buildings3d/itb_a2g_lod1.png",
+    "what": "photo a2 view (camera solved, review r1): the BA-G NNE face; itb_cmp_a2g.png side by side (LOD1)",
     "samples": 32,
     "note": "local (out/ is gitignored); comparison sheets with photo pixels stay local"
    }
@@ -2478,10 +2492,10 @@
    "n": 888,
    "wing_max_abs_dev_m": 0.208,
    "wing_mean_dev_m": -0.018,
-   "centre_max_abs_dev_m": 0.554,
+   "centre_max_abs_dev_m": 0.433,
    "note": "silhouette = topmost opaque pixel of the orthographic west render (LOD0, alpha pass) vs BI-02 roof_line(u); resolution 1 px = 0.28 m; in the centre the lens glass / arch form the top"
   },
-  "renders_updated": "2026-11-05T06:31:36+00:00",
+  "renders_updated": "2026-11-05T07:31:47+00:00",
   "qa": {
    "gltf_validator": {
     "tool": "Khronos glTF-Validator 2.0.0-dev.3.10 (node tools/blender/tower_validate.mjs <glb>)",
@@ -2524,9 +2538,9 @@
   },
   "family_note": "Two self-consistent height families (docs/research/buildings_tower.md 12.3). Default (3-D review round 1, 2026-11-05): F2 (D 14.5, rim 64.0) lies within the observations (cab-roof D 14.3 +-1.0 measured, 14.75 +-0.5 EXIF; rim 63.3-64.1 m for D 14.3, 65 +-2 m for D 14.75); F1 (D 15.2, rim 67.36 = 221 ft) needs D >= 15.1 and rests on the CTBUH classification of 221 ft (a database class, not a survey): kept as the published-height hypothesis (tower_f1.glb, ?b3dtower=f1). Settle with a surveyed ground photo, the NAIP shadow with the flight time, or an SFO / FAA elevation drawing.",
   "bytes": {
-   "F1": 3459992,
-   "F2": 3356004,
-   "lod2_only": 236628
+   "F1": 3464528,
+   "F2": 3363408,
+   "lod2_only": 235848
   },
   "placement": {
    "frame": "ltp-nad83-2011 (js/geo.js): x east, y up, z south, m from the ARP; ground GROUND_Y = 3.0",
@@ -2694,7 +2708,7 @@
      2048
     ],
     "mode": "L",
-    "bytes": 843785
+    "bytes": 846901
    },
    {
     "name": "tile_panel_tower",
@@ -2712,7 +2726,7 @@
      1024
     ],
     "mode": "RGB",
-    "bytes": 5029
+    "bytes": 5405
    },
    {
     "name": "tile_panel_ibf",
@@ -2739,7 +2753,7 @@
      1024
     ],
     "mode": "L",
-    "bytes": 241221
+    "bytes": 246410
    },
    {
     "name": "tower_ao_L2_f2",
@@ -2748,7 +2762,7 @@
      512
     ],
     "mode": "L",
-    "bytes": 68470
+    "bytes": 67915
    }
   ],
   "texture_note": "AO atlases on TEXCOORD_1 (grey-scale PNG, sun-independent, Cycles); detail tiles on TEXCOORD_0 (procedural, tools/blender/tower_tex.py): the cladding base colour (joint lines, per-panel tone) + normal tile (4 x 2 panels), louvres, base-building panels. KTX2 / meshopt: later (tools/engine/glb_compress.mjs).",
@@ -2989,7 +3003,7 @@
    "mast / pole bearings and heights (+-5 deg / +-0.3 m); pole heads schematic; red-light bearing (225, SW)",
    "base-building panel module 3.0 x 1.2 m, glazing-band mullions 1.5 m, parapet 0.7 m",
    "roof-garden level (1.7 m below the roof); rooftop unit position (photo t4, +-5 m)",
-   "joint line width / tone, seam band width (0.10 m), per-panel tone (+-3 %)",
+   "joint line width / tone (6.5 cm, 0.35 x), seam band width (0.10 m), per-panel tone (+-5 %)",
    "all materials / finishes (colours chosen to match the reference photos; no photo pixels used)"
   ],
   "unknown": [
@@ -3019,7 +3033,7 @@
   "verification": {
    "F1": "110/110 checks within tolerance; tris {0: 34532, 1: 10895, 2: 2499}; plausibility clear of aircraft envelopes, bridges and taxilanes; the app's T2 hall / BA-D walkway parts overlap the base-building footprint (integration: cut them)",
    "F2": "110/110 checks within tolerance; tris {0: 33443, 1: 10591, 2: 2365}; plausibility clear of aircraft envelopes, bridges and taxilanes; the app's T2 hall / BA-D walkway parts overlap the base-building footprint (integration: cut them)",
-   "max_abs_dev_m": 0.362,
+   "max_abs_dev_m": 0.047,
    "gltf_validator": {
     "F1": {
      "validator": "2.0.0-dev.3.10",
@@ -3033,7 +3047,7 @@
      "first": [],
      "drawCalls": 73,
      "triangles": 47926,
-     "vertices": 41200
+     "vertices": 41210
     },
     "F2": {
      "validator": "2.0.0-dev.3.10",
@@ -3047,7 +3061,7 @@
      "first": [],
      "drawCalls": 73,
      "triangles": 46399,
-     "vertices": 40219
+     "vertices": 40201
     }
    },
    "file": "out/buildings3d/tower_verify.json",
@@ -3174,7 +3188,7 @@
     "centre_h": 38.0,
     "m_per_px": 0.08542,
     "view_bearing": 297.7,
-    "render_s": 15.4
+    "render_s": 28.2
    },
    "B": {
     "path": "out/buildings3d/tower_B.png",
@@ -3192,7 +3206,7 @@
     "centre_h": 38.0,
     "m_per_px": 0.08542,
     "view_bearing": 117.69999999999999,
-    "render_s": 14.9
+    "render_s": 29.5
    },
    "t2": {
     "path": "out/buildings3d/tower_t2.png",
@@ -3202,8 +3216,8 @@
     ],
     "samples": 64,
     "sun": [
-     165,
-     62
+     137.4,
+     61.7
     ],
     "cam_world": [
      -527.4,
@@ -3215,7 +3229,7 @@
     "f_px": 3223.4,
     "photo": "refs/cache/buildings/review_likeness/t2.jpg",
     "photo_credit": "Famartin 2025-08-12 11:57, CC BY-SA 4.0 (reference only)",
-    "render_s": 18.9
+    "render_s": 27.4
    },
    "t3": {
     "path": "out/buildings3d/tower_t3.png",
@@ -3225,8 +3239,8 @@
     ],
     "samples": 64,
     "sun": [
-     110,
-     35
+     95.5,
+     32.3
     ],
     "cam_world": [
      -911.4,
@@ -3238,7 +3252,7 @@
     "f_px": 3364.4,
     "photo": "refs/cache/buildings/review_likeness/t3.jpg",
     "photo_credit": "Famartin 2025-08-12 09:12, CC BY-SA 4.0 (reference only)",
-    "render_s": 13.3
+    "render_s": 28.3
    },
    "t4": {
     "path": "out/buildings3d/tower_t4.png",
@@ -3248,8 +3262,8 @@
     ],
     "samples": 64,
     "sun": [
-     100,
-     30
+     95.2,
+     31.9
     ],
     "cam_world": [
      -769.2,
@@ -3261,7 +3275,7 @@
     "f_px": 1195.0,
     "photo": "refs/cache/buildings/review_likeness/t4.jpg",
     "photo_credit": "Famartin 2025-08-12 09:10, CC BY-SA 4.0 (reference only)",
-    "render_s": 22.1
+    "render_s": 47.9
    },
    "_family": "F2",
    "_compare": {
@@ -3281,8 +3295,8 @@
     "tools/blender/tower3d_verify.py"
    ],
    "bpy": "5.0.1",
-   "git": "cc69c8e+dirty",
-   "seconds": 404.8,
+   "git": "3d6ee7c+dirty",
+   "seconds": 542.4,
    "ao_samples": 48,
    "date": "2026-11-05"
   }

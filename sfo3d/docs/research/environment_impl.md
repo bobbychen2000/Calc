@@ -264,3 +264,136 @@ renderer Sun = EnvState `sun.dir` (−0.8713, −0.389, −0.2992), HUD `FORECAS
 Real: the SPECI 231722Z, no forecast. Render `out/env/final/fc_r3_night.png` (HUD only; not a scored review).
 Gates after the change: decoder 38/38 · A-SUN 32/32 · A-FIX 50/50 · A-WX 864/864 · A-CLK + presets 43/43 · TAF 29/29 ·
 relay 15/15.
+
+
+## Step 2 (lighting controller, fixture sprites, visibility, aircraft lights), 2026-11-05, env:lights agent
+
+Spec §13 step 2: JO 7110.65 lighting controller (§5.3, runway configuration §3.5), fixture sprites from
+`data/sfo_lighting.js` with the Allard visibility factor calibrated to the FAA table (§4.10), aircraft-light logic (§6),
+in the new renderer, and the §9 cheap subset in the old one. Both renderers consume the same sprite records (built in
+`js/live/app.js` for `scene.staticLights` and `js/aircraft/fleet.js lightSprites`), so one implementation serves both.
+
+### 2.1 Modules (renderer-agnostic, no DOM, Node-tested)
+
+| Module | Content |
+|---|---|
+| `js/env/lighting/controller.js` | Port of the reference `controller()` of `tools/env/env_spec_checks.py` (same keys / values); `controllerInputs(EnvState)` (tower night, visibility with M −1 %, 28R RVR, ceiling, runway config) and `controllerFromEnv` (+ the PAPI mode from the PAPI photocell, §4.2). `EnvState.lighting` is now filled by `js/env/state.js`; the `?qa=env` HUD has a `lights …` line with every system's step |
+| `js/env/lighting/photometry.js` | Allard E and visual range, visibility factor v = smoothstep(0, 1, log₁₀(E/E_T)/0.3), optical depth through the EnvState slabs, AC 150/5345-46F beam ellipses (main → 10 % log-linear, I), PAPI colour (3′ → 5′ transition, AC 150/5345-28H 3.2.1) and isocandela stadiums (Fig 3-1 via `lighting_spec.json`), Blondel–Rey flash scheduler (14 CFR 25.1401(e)), sprite units (cd → lamp units at the renderer3 night calibration: i × 13.16 s² cd, from `LAMP_M` and the sprite core integral, **M** code read) |
+| `js/env/lighting/airfield.js` | `AirfieldLighting`: the 3,633 fixture faces (PAPI W/R pairs merged per LHA) + the app's blue taxiway-edge positions; per frame I = cd × step % × B(θh, θv) × k_cd, T through the slabs, E = I·T/d², v; drawn only when v > 0; ALS on the structures (`js/anim/lights.js alsPlacement`), sequenced flashers, REIL, PAPI |
+| `js/env/aircraft_lights.js` | 14 CFR 25.1387 / 1391 / 1393 / 1395 / 1401 sectors, minima and overlaps, light states per phase (AIM 4-3-24, 91.209), Blondel–Rey anti-collision flashes, Allard visibility; `js/aircraft/fleet.js lightSprites` delegates to it in the live app (the cinematic `index.html` keeps the old sprites: no viewer set) |
+
+Wiring (small local edits): `js/live/app.js` builds `AirfieldLighting` (replaces `lightSpriteFn` / `nightScale` of the
+old builder), sets the viewer and frame time for the aircraft lights each frame, `setLightEnv` in `applyEnv`, and the
+light states per phase via `aircraftLightStates` (replaces the inline rules: e.g. the beacon used to go OFF when a taxiing
+aircraft stopped, and landing lights used 3,000 m instead of 10,000 ft); `?qa=prov` now tints the fixtures at their drawn
+positions. `js/three/renderer3.js`: records with `phys: true` are drawn at the night calibration day and night (the
+existing `fixed` path of `js/three/lights.js`). `js/live/lights.js` / `js/anim/lights.js`: the approach-light piers are
+built at the ALS light plane (`opts.lightPlane`), `alsPlacement` and `buildMountGeometry` (low mounts, 19L piles, PAPI
+housings). Sources cached (public domain, SOURCES.json beside them): `refs/cache/env/ecfr/` (eCFR point in time
+2026-11-01: 25.1387, 1389, 1391, 1393, 1395, 1397, 1401, 91.209; 25.1385 not fetched — the eCFR API answered "IP address
+blocked" to the first call of the batch), `refs/cache/env/aim/aim_chap4_section_3.html` (AIM 4-3-24, quoted in the module
+header).
+
+### 2.2 Unit gates (no GPU) — all pass
+
+`tools/env/run_gates.sh` now also runs the step-2 gates:
+
+| Gate | Result | Evidence |
+|---|---|---|
+| **A-CTL** | **35/35** (`node tools/env/test_controller.mjs`) | the 14 presets deep-equal to `env_presets.json lights` twice: (a) `controller()` with the fixture's inputs, (b) preset → `buildEnvState` → `controllerFromEnv` (the renderers' path), whose PAPI photocell mode equals the reference's tower-night mode in all 14; plus 7 table edges (TBL 3-4-8 "3 to 5 inclusive", 3-4-10 day < 2 SM, 3-4-9 ALSF-2 at ¾ SM / RVR 4,000, 3-4-5 day ALS with a 900-ft ceiling, 3-4-7 flashers with ILS / instrument / observed vs visual arrivals, REIL only with lit runway lights, beacon below basic VFR 91.155) |
+| **A-VIS1** | **pass** (`node tools/env/test_lights.mjs A-VIS1`) | Table B-1 + B.3: all 10 rows within ±5 % (max 3.2 %: day 1 SM 100,000 cd 1.356 vs 1.4 SM); twilight 20,000 cd: V 1 SM w=0 1.006 SM (+0.6 %) / w=1 1.494 SM (−0.4 %), V 3 SM 1.807 (+0.4 %) / 4.202 (0.0 %); sprite factor > 0.5 at 0.9 × every tabled distance (0.62–1.00) and 0 at 1.1 ×; v = 0 at E_T, 1 at 2 E_T, monotone |
+| **A-PAPI1** | **pass** | 6 ends × {standard, HG4} × 5 angles from 1,852 m with the fixture LHAs: 4R / 1W3R / 2W2R / 3W1R / 4W, whites on the outer LHAs, no pink (28R/10L/10R/19L at 2.3/2.6/3.0/3.4/3.7°, 28L at 2.15…3.55°, 19R at 2.45…3.85°); fixture aims = HG4 set; isocandela 30,000/15,000 on axis, 20,000/10,000 at 3.5°, 0 beyond the LED ±10.5° and above ±4°; transition 3′ at the centre, 5′ at the edge |
+| **A-NAV1** | **pass** | 721 azimuths × 8 elevations: red only 0–110° left, green only right, white only ±70° aft (beyond a 2° anti-alias ramp), ≥ 25.1391 minima × 25.1393 factor inside each angle, 25.1395 Area A / B maxima respected (0 cd); 25.1393 factors and 25.1401(f) minima tabled exactly; a synthetic aircraft's sprites from 72 azimuths show only the permitted colour; 13 phase cases (parked → none; pushback → nav + beacon; taxi stopped → no taxi light, beacon on; line-up → strobes; take-off roll → landing; climb 2,000 m → landing, 3,500 m → off; rollout 80 / 20 kt) |
+| **A-FLASH1** | **pass** | at 30 / 60 / 120 fps for 120 s each, effective intensity (25.1401(e): Σ I dt / (0.2 + n dt)) of every drawn flash ≥ target: SFL 1.000 (120/min per flasher), REIL 1.000 (120/min), L-864 1.000 (30.0/min, ≤ +25 %), aircraft beacon 1.000–1.136 (60/min), strobe 1.000 (66 double flashes/min, within 40–100); 400 cd eff = 5,200 cd for one 60 Hz frame / 2,800 cd for two; 28R SFL sequence 2,400 → 1,000 ft, phases j × 0.5/15 s |
+
+### 2.3 Choices (I) and unverified inputs (NV), all listed in the module headers and the HUD
+
+- Display gain by day `DAY_GAIN` = 30 (renderer3; ÷258 for the WebGL2 renderer, whose sprites are lamp units at its day
+  exposure 0.45): a 2-px sprite at its physical energy is below the display's daylight contrast threshold (estimate
+  from the exposure and the sprite solid angle, ~10–40 × E_T at 640×360). Blended by the ASOS night weight (1 at night).
+  QA-tuned by the A-VIS render test (step 3 with the physical exposure). The visibility factor itself is physical.
+- ALS steady lamps / green bars / SFL photometry NV → provisional L-862 white 10,000, red 2,000, L-862E green 3,200 cd
+  (× step %), SFL 10,000 cd effective; ALS beams ±10° azimuth (NV), 12° vertical about the Table 2-1/2-2 setting (V).
+- SSALR mode: CL bars 200…1,400 ft every 200 ft, 1,000-ft bar lights within ±35 ft (70-ft bar), no side rows, no 500-ft
+  bar, RAIL flashers ≥ 1,600 ft; threshold bar unchanged (I).
+- Beam outside the 10 % curve: 0 after a fade over half its radius (spec "0 outside", fade I); L-862 white keeps its
+  ≥ 50 cd omni to 15° (× step %). Consequence (**M**, `tools/env/lights_views.mjs`, §2.5): from the tower cab at night with HIRL
+  step 1 (> 5 SM, TBL 3-4-8) the runway edge lights are below E_T (omni 0.075 cd: visual range 326 m); only the blue
+  taxiway edges (2 cd: 1.65 km) remain. Real fixtures emit more than the minima off-beam (NV): owner photos (Q7) decide.
+- Taxiway blue edges (Q4 default, inf) at the L-861T 2 cd minimum, full output for controller steps ≥ 3 (MITL 3-step
+  100/30/10 %, I mapping); k_cd = 1 for every fixture (46F allows up to 3×).
+- REIL style E unidirectional (Q5 default), PAPI HG4 + night 20 % (Q6), MALSR TBL 3-4-7 (Q10).
+- Aircraft: 2 × the regulatory minima; position lights off when parked (Q11 default, 91.209(a)(2)); beacon from
+  pushback to parking, 60 cpm, 0.15 s pulse (NV); strobes 66 double flashes/min; landing 770,000 cd 15° × 16° (Honeywell
+  example, V for 737NG/757/767/777 only) and taxi 50,000 cd (NV) — both capped at `I_CAP` = 20,000 lamp units (≈ 32,000
+  cd at s 0.35) for the WebGL2 renderer's half-float sprite pass (step 3 pre-exposure lifts the cap); logo lights not
+  drawn (no anchors, NV).
+- RWSL REL (165 lights, 26 arrays; AIM 2-1-6 via spec §5.3): `rwslFromTraffic` lights a runway's arrays for a
+  departure past 30 kt or an arrival within 1 mile of the landing threshold, each array out 3.5 s before the aircraft
+  reaches it (I within "3-4 s"), an arrival below 80 kt keeps only the arrays within 30 s, below 34 kt none, an airborne
+  departure none (unit checks A-RWSL1 4/4 in `test_lights.mjs`; the A-RWSL render test on a replayed departure is still
+  open). The NV-flagged between-runway arrays never light; THLs (192) stay dark (their rule needs a second aircraft on
+  the runway ahead: not implemented, I).
+- Obstruction lights (43 DOF obstacles, tower L-864) and the beacon: not drawn (spec step 4; Q1). The L-864 timing is
+  covered by A-FLASH1.
+
+### 2.4 Physical checks (owner rule: nothing floats, nothing clips)
+
+`node tools/env/check_als_placement.mjs` (**M**): the fixture ALS lights sit at the light plane (threshold elevation − field
+elevation: 28R −0.06 m, 28L −0.15 m, 19L −0.79 m below `GROUND_Y`) and were placed on the same frame and the same
+NAIP-imaged stations as the pier geometry (snapped within 51 ft, like the old lights): **inset 204 / pier 174 / water 38,
+0 unsupported**; the over-water structures are now built 0.1 m under the light plane (tops 2.84 / 2.75 m, were
+`GROUND_Y + 1.3` = 4.3 m, which would have put the lights inside the deck); every pier light is within the station beam
+(±2.6 m) or an imaged crossbar; 19L (no imaged pier in `js/geo.js APPROACH_STRUCTURES`) gets 9 pile groups from the
+water to the light plane (I: the real 19L pier, NAIP ~500–1,400 ft, is not modelled). The old land posts (1.3 m tall)
+are no longer built: no ALS light stands on unpaved land at SFO in this layout. PAPI LHAs get a housing on two legs
+(size NV, I) instead of floating at 0.8 m. Data note for the static track: the five 19L lights at 400 ft lie on the
+NAIP-measured EMAS bed (`END_ZONES`, to 442 ft) where the coarse land polygon `AIRPORT_LAND_ST` already shows water
+(polygon ends ~325 ft past the 19L end).
+
+### 2.5 What each QA view draws (numeric: `node tools/env/lights_views.mjs`, the module with each preset's EnvState)
+
+| Preset | 28R 2 NM (E3/E4) | C3 28R CL, eye 5 m | C1 28R 1,000 ft out, 100 ft up | Tower cab |
+|---|---|---|---|---|
+| dusk / night_clear (SSALR st 1, HIRL st 1) | 151: edge 30, PAPI 8, ALS CL 70 (28R + 28L), 1,000-ft bars 20, 28L green 23; no side rows, no 500-ft bar, no flashers | 491: edge 127, RCL 188, TDZ 174, PAPI 2 | 568 (incl. the 59 green 28R threshold-bar lights) | 0 runway lights (below E_T, §2.3); the app's blue taxiway edges (2 cd, visible to 1.65 km) are not in this tool |
+| predawn_fog (ALSF-2 st 3, SFL 20 %, HIRL st 4) | 0 (visual range ~0.5 km) | 140 | 211: side rows 42, 500-ft bar 8 (ALSF-2 mode) | 0 (cab above the 200-ft fog, path through it) |
+| ifr_mist_day (ALSF-2 st 5) | 0 | 229 | 343 | 0 |
+| marine_layer (SSALR st 2 by day, 80 cd) | 0 (spec E5: fades beyond ~0.42 km) | PAPI 2 | 19 | 0 |
+| drizzle_night (HIRL st 3) | 54 incl. 2 flashers in that frame | 556 | 626 | 333 runway edges (omni 2.5 cd) |
+| noon | PAPI 7 | PAPI 2 | PAPI 4 | 0 |
+
+### 2.6 Headless check of both renderers + 3 small renders (llvmpipe 640×360, one Chromium, through `out/.heavy.lock`)
+
+`livetest.mjs` + scratchpad `env2/job_lights.mjs` → `out/env/step2/lights_check.json`, 2026-11-05 ~07:40Z (waited ~40 min
+for the lock behind the buildings track's ITB renders). Not a scored visual review (on hold).
+
+| Page | Ready | Page errors | Probe (what the airfield module drew from the camera) |
+|---|---|---|---|
+| `live.html?mode=snapshot&wx=night_clear&qa=env` (WebGL2) | 84 s | **0** | 28R 2 NM: 151 lit (edge W 30, PAPI 8, ALS CL 70, 1,000-ft bars 20, 28L green 23), 1,570 below E_T; runtime switch to predawn_fog, C1: 211 lit incl. **ALSF-2** side rows R 42 and the 500-ft bar 8, σ 1.76e-2; HUD `lights HIRL 10L/28R st1 0.15% · … · ALS 28R SSALR st1 0.16% · ALS 28L MALSR st1 4% · PAPI night 20% · taxiway st3 · beacon on (not drawn, Q1)` |
+| `live3.html?mode=snapshot&wx=night_clear&qa=env&webgl=1` (three.js r186) | 12 s | **0** | C3: 641 lit (edge W 122 / Y 5, RCL W 183 / R 4, TDZ 174, PAPI 2, blue taxiway edges 151); C1 (predawn_fog): 211 lit, the same ALSF-2 set as the WebGL2 page; C5: UAL875 B772 phase taxi at 0 kt → nav + beacon on, taxi light off (stopped, AIM 4-3-24), from 90° left only the red position-light record (8 cd = 2 × 5 cd × 0.8 at 8° elevation) |
+
+Renders (`out/env/step2/`, HUD on): `lights_c3_28R_cl_night_clear.png` (C3: RCL converging to the far end, the two TDZ
+rows, edge rows, red RCL and yellow caution-zone edges at the far end: 13 red / 3 yellow / 5 blue pixels; no green: the
+threshold lights are behind the eye), `lights_c1_28R_als_predawn_fog.png` (C1: ALSF-2 with red side-row barrettes, the
+500-ft bar, green threshold and wing bars, fading with distance in M1/4SM fog: 105 red / 18 green pixels; the scene
+itself is black — the fog has no in-scatter / aureole at night yet, step 3), `lights_c5_aircraft_night.png`
+(**inconclusive**: no aircraft and no red pixel in the frame, lower half black; the camera was placed 60 m abeam
+without a collision check and the cause, likely an occluding structure, was not established; the light logic is covered
+numerically by A-NAV1 and the probe above, the C5 render must be redone with a checked camera). C2 (PAPI patterns),
+C4 (RWSL) and C6 (obstruction lights, step 4) were not rendered (3-render budget). Code versions: the r186 page loaded
+after the last code edit (final code); the WebGL2 page loaded while the last two renderer-independent edits were being
+made (the REL hook in `app.js` 06:46:55Z, the back-face / omni fix in `airfield.js` 06:48:03Z), so it may have run the
+version just before them; both edits ran with 0 errors on the r186 page and in the Node gates.
+
+### 2.7 Open points of step 2
+
+1. The day display gain (30, I) and the off-beam emission (0 outside the 46F 10 % curve, spec) decide how many lights
+   a viewer sees by day / from the tower / from overview heights; both need the A-VIS render test and owner night
+   photos (Q7). At HIRL step 1 the runway edge lights are invisible from the tower cab (§2.3) — physically consistent
+   with the minima, but to be confirmed.
+2. ALS, flasher and green-bar photometry are provisional (NV); k_cd = 1.
+3. RWSL: REL logic unit-tested only (A-RWSL1); THLs dark; the A-RWSL render test on a replayed departure is open.
+4. C5 render to be redone; C2 / C4 / C6 renders not done.
+5. Static data: the 19L EMAS (END_ZONES, 442 ft) extends ~37 m past the coarse land polygon `AIRPORT_LAND_ST`; the 19L
+   approach pier is not modelled (lights on piles here).
+6. Fog aureole / forward scatter around lights (§4.10, I) and the physical exposure are step 3.

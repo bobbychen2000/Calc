@@ -10,5 +10,11 @@
   "licence": "US Government work (FAA, 17 U.S.C. 105), public domain",
   "fetched": "2026-11-04",
   "note": "FAA Aircraft Characteristics Database (ACD_Data sheet); read by tools/models/faa_acd.py: business-jet / ERJ lengths, spans and tail heights of js/aircraft/fit.js BIZ, 757 / 767 winglet spans (cross-check)"
+ },
+ "al375_2611_oldJ.json": {
+  "url": null,
+  "licence": "own output (sfo3d) derived from FAA AL-375 cycle 2611 (US Government work, public domain) and OSM ways (ODbL 1.0: the old-J trace)",
+  "made_by": "tools/xcheck/faa_al375_mask.py (2026-11-05)",
+  "note": "chart registration on the runway-centreline crossings, chart classes (grey / white) under the old-J remainder and controls, the white (island) regions touching it; read by tools/build_airfield_details.py (pavementRetiredParts)"
  }
 }

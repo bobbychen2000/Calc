@@ -21,6 +21,9 @@ Static close-out (2026-11-04): access=no service paths on the airfield -> `airsi
 on NAIP 2024; were drawn as 4 m landside asphalt); `level` > 0 / 'Level N' names / aisles inside multi-storey garages are
 elevated (only their footprint is paved ground). The OSM extract is pinned (tools/xcheck/fetch_osm.py, database
 2026-09-26T03:03:01Z).
+Round 3 (2026-11-05, review static r2 v1): roads wider than the narrow-band window (the asphalt perimeter road along the
+Bay, apron / cargo service roads) are measured as a wide paved run (measure_road), gaps of a road bridged (inferred), drawn
+paths clipped at SFO Museum runway / taxiway pavement, `material` = OSM surface (asphalt / concrete) or concrete (inferred).
 Frame: tools/geo_frame.py (= js/geo.js) world x east / z south.
 Usage: python3 tools/build_landside.py
 """
@@ -61,6 +64,65 @@ def _naip():
         m = json.load(open(os.path.join(ROOT, 'refs', 'cache', 'naip', 'naip_2024_world_0.5m.json')))
         _NAIP.update(m=m, im=np.load(os.path.join(ROOT, 'refs', 'cache', 'naip', 'naip_2024_world_0.5m_bgr.npy'), mmap_mode='r'))
     return _NAIP
+
+
+def _profile(p, t, half, step=0.25):
+    """NAIP 2024 grey level / channel spread across the line through p (direction t): offsets -half..+half (step m), each
+    sample averaged over 3 m along the line -> (o, g, sat, tex = grey-level std over those 3 m) or None outside the raster"""
+    from scipy.ndimage import map_coordinates
+    N = _naip(); m = N['m']; res, x0, z0 = m['res'], m['x0'], m['z0']
+    t = np.asarray(t, float) / np.linalg.norm(t); n = np.array([-t[1], t[0]])
+    o = np.arange(-half, half + 1e-9, step); a = np.linspace(-1.5, 1.5, 7)
+    O, Aa = np.meshgrid(o, a); X = p[0] + O * n[0] + Aa * t[0]; Z = p[1] + O * n[1] + Aa * t[1]
+    r = (Z - z0) / res - 0.5; c = (X - x0) / res - 0.5
+    r0, c0 = int(np.floor(r.min())) - 1, int(np.floor(c.min())) - 1
+    if r0 < 0 or c0 < 0: return None
+    sub = np.asarray(N['im'][r0:int(np.ceil(r.max())) + 2, c0:int(np.ceil(c.max())) + 2], np.float32)
+    chf = [map_coordinates(sub[..., k], [r - r0, c - c0], order=1, mode='nearest') for k in range(3)]
+    ch = [v.mean(0) for v in chf]
+    return o, (ch[0] + ch[1] + ch[2]) / 3, np.max(ch, 0) - np.min(ch, 0), ((chf[0] + chf[1] + chf[2]) / 3).std(0)
+
+
+ROAD_HALF = 14.0         # m: half window of the road profile (wider than the widest perimeter / service road + its offset)
+ROAD_SAT = 34.0          # NAIP max-min channel spread below which a sample can be pavement: the asphalt perimeter road 8-31
+                         # (dusty lanes 25-31), concrete 3-17; dry grass / soil 40-70 on the same profiles (measured, round 3)
+ROAD_TEX = 3.5           # grey-level std over the 3 m along the line below which a sample can be pavement: the road 0-1.5,
+                         # light infield soil 4-28, rip-rap 5-28 (same profiles)
+ROAD_G = 150.0           # NAIP grey level above which ...: the road 160-215; Bay water 95-130 and the dark rip-rap 100-140
+ROAD_GAP = 1.0           # m: darker gaps this short inside the run (lane / edge paint, joints, a vehicle shadow) are closed
+ROAD_NEAR = 3.0          # m: the run must reach this close to the OSM line (or to the narrow band, when one was found)
+ROAD_W_MIN = 3.0         # m: narrower runs are bands / strips (measure_band's domain)
+ROAD_WIDER = 1.5         # m: a road run this much wider than the narrow band replaces it (the band was an edge strip on it)
+
+
+def measure_road(p, t, seed=0.0, half=ROAD_HALF, step=0.25):
+    """round 3 (review static r2 v1): a WIDE paved band across the line through p - the asphalt perimeter / service roads
+    (6-12 m) that measure_band's +-6 m window cannot hold (it returned None, 'band wider than the window', or the 1.75 m
+    light edge strip on the road). Samples with channel spread < ROAD_SAT and grey > ROAD_G (pavement, not dry grass / soil /
+    water / dark rip-rap), gaps <= ROAD_GAP closed; the run through the sample nearest `seed` (within ROAD_NEAR); its edges
+    refined to the half-maximum between the run's median grey and the 1.5 m beyond each edge (a blurred step's edge).
+    -> (centre offset m (+ = right of t, measure_band's normal), width m, median channel spread) | 'wide' (the run reaches
+    the window: the road lies inside wider pavement / light ground) | None"""
+    r = _profile(p, t, half, step)
+    if r is None: return None
+    o, g, sat, tex = r
+    pv = (sat < ROAD_SAT) & (g > ROAD_G) & (tex < ROAD_TEX)
+    idx = np.where(pv)[0]
+    if not len(idx): return None
+    k = int(round(ROAD_GAP / step))
+    for a, b in zip(idx[:-1], idx[1:]):
+        if 1 < b - a <= k + 1: pv[a:b] = True
+    near = np.where(pv & (np.abs(o - seed) <= ROAD_NEAR))[0]
+    if not len(near): return None
+    c = near[np.argmin(np.abs(o[near] - seed))]; i0 = i1 = c
+    while i0 > 0 and pv[i0 - 1]: i0 -= 1
+    while i1 < len(o) - 1 and pv[i1 + 1]: i1 += 1
+    if i0 == 0 or i1 == len(o) - 1: return 'wide'
+    core = float(np.median(g[i0:i1 + 1])); fl = int(round(1.5 / step))
+    thl = (core + float(np.median(g[max(0, i0 - fl):i0]))) / 2; thr = (core + float(np.median(g[i1 + 1:i1 + 1 + fl]))) / 2
+    while i0 < c and g[i0] < thl: i0 += 1
+    while i1 > c and g[i1] < thr: i1 -= 1
+    return float((o[i0] + o[i1]) / 2), float(o[i1] - o[i0] + step), float(np.median(sat[i0:i1 + 1]))
 
 
 def measure_band(p, t, half=6.0, step=0.25, info=False):
@@ -105,19 +167,36 @@ FLANK_SAT = 22.0         # NAIP max-min channel spread below which a flank count
                          # dry grass / soil 30-50 on the profiles of round 2; measured, tools/build_landside.py notes)
 
 
+ROAD_OUTLIER = 2.0       # m: road stations whose centre is this far from the local median (+-20 m) are dropped (edge noise)
+ROAD_W_OUTLIER = 2.5     # m: ... or whose width is this far from the local median road width (a light shoulder / apron)
+ROAD_BRIDGE = 250.0      # m: longest 'inside wider pavement' / 'light line' gap of a road that is bridged (inferred continuity)
+ROAD_BRIDGE_ANY = 30.0   # m: any shorter gap between two road pieces is bridged
+W_STEP = 1.5             # m: a drawn stretch is cut where its running median width changes by more (one width per entry)
+W_PIECE = 25.0           # m: shortest such piece
+SURFACES = {'asphalt': 'asphalt', 'concrete': 'concrete', 'concrete:plates': 'concrete', 'concrete:lanes': 'concrete'}
+
+
 def measure_path(e, ls, t):
-    """airside service path -> list of stretches (dicts). NAIP 2024 profiles every PATH_STEP m (measure_band); outliers
-    off the local median dropped; the drawn centre = OSM station + running-median band offset along the SAME normal
-    measure_band uses (n = [-t_z, t_x], + = right of travel in the x-east / z-south world frame); drawn only where NAIP
-    images the band (stretches; gaps < PATH_GAP m bridged), width = median band width of the stretch.
+    """airside service path -> list of stretches (dicts). NAIP 2024 profiles every PATH_STEP m: the narrow bright band
+    (measure_band, +-6 m: the 2-3 m concrete infield paths) and the wide paved run (measure_road, +-14 m: the 6-12 m
+    asphalt perimeter / service roads); per station the road run replaces the band when it is >= ROAD_WIDER m wider (the
+    band was a light strip ON the road) or when there is no band. Outliers off the local median dropped; the drawn centre =
+    OSM station + running-median offset along the SAME normal measure_band uses (n = [-t_z, t_x], + = right of travel in
+    the x-east / z-south world frame); drawn only where NAIP images the band / road (stretches; gaps < PATH_GAP m bridged),
+    width = median width of each near-constant-width piece of the stretch, `kind_naip` 'band' | 'road' by the stretch
+    majority; road gaps bridged (inferred, `bridged`); material = OSM surface where tagged (obs), else concrete (inferred,
+    as round 1: a light neutral band / run on NAIP).
     Round 2 (2026-11-05, review static-v1): the round-1 code moved the whole way by ONE median offset with shapely
     parallel_offset, whose 'right' is right in a y-UP frame = LEFT in this z-south frame - the drawn bands ended ~2x the
-    offset from the imaged path. Shapely's side convention is no longer used."""
+    offset from the imaged path. Shapely's side convention is no longer used.
+    Round 3 (2026-11-05, review static r2 v1): the asphalt perimeter road along the Bay (OSM 112508632, 6-12 m) was wider
+    than measure_band's window: 4.06 of its 4.91 km were not drawn (3.57 km on no other paved source) and the rest were
+    1.75 m edge strips. measure_road measures it (and every other road wider than measure_band's window)."""
     from shapely.ops import substring
     L = ls.length
     S = np.arange(PATH_STEP / 2, L, PATH_STEP) if L > PATH_STEP else np.array([L / 2])
     Q = np.zeros((len(S), 2)); N = np.zeros((len(S), 2)); O = np.full(len(S), np.nan); Wd = np.full(len(S), np.nan)
-    LINE = np.zeros(len(S), bool)
+    LINE = np.zeros(len(S), bool); ROAD = np.zeros(len(S), bool); WIDE = np.zeros(len(S), bool)
     for i, s_ in enumerate(S):
         q0 = ls.interpolate(max(0, s_ - 2)); q1 = ls.interpolate(min(L, s_ + 2)); q = ls.interpolate(s_)
         tt = np.array([q1.x - q0.x, q1.y - q0.y]); Q[i] = (q.x, q.y)
@@ -125,14 +204,25 @@ def measure_path(e, ls, t):
         if nt < 1e-6: continue
         tt /= nt; N[i] = (-tt[1], tt[0])                       # measure_band's normal
         r = measure_band((q.x, q.y), tt, info=True)
-        if r and (r[2] or r[1] < PATH_W_MIN): LINE[i] = True   # a light line inside wider pavement / a paint line: not a path band
-        elif r: O[i], Wd[i] = r[0], r[1]
+        band = r if (r and not r[2] and r[1] >= PATH_W_MIN) else None
+        rr = measure_road((q.x, q.y), tt, seed=r[0] if r else 0.0)
+        WIDE[i] = rr == 'wide'
+        if isinstance(rr, tuple) and rr[1] >= ROAD_W_MIN and (band is None or rr[1] >= band[1] + ROAD_WIDER):
+            O[i], Wd[i] = rr[0], rr[1]; ROAD[i] = True
+        elif band: O[i], Wd[i] = band[0], band[1]
+        elif r: LINE[i] = True                                 # a light line inside wider pavement / a paint line: not a path band
     ok = ~np.isnan(O)
     for _ in range(2):                                         # drop profiles that caught another bright feature
         idx = np.where(ok)[0]
         if not len(idx): break
-        med = np.array([np.median(O[idx[np.abs(S[idx] - S[i]) <= 20.0]]) for i in idx])
-        ok[idx[np.abs(O[idx] - med) > PATH_OUTLIER]] = False
+        loc = [idx[np.abs(S[idx] - S[i]) <= 20.0] for i in idx]
+        med = np.array([np.median(O[l_]) for l_ in loc])
+        tol = np.where(ROAD[idx], ROAD_OUTLIER, PATH_OUTLIER)
+        bad = np.abs(O[idx] - med) > tol
+        for j, (i, l_) in enumerate(zip(idx, loc)):            # road widths: a station off the local road median width
+            lr = l_[ROAD[l_]]
+            if ROAD[i] and len(lr) >= 3 and abs(Wd[i] - np.median(Wd[lr])) > ROAD_W_OUTLIER: bad[j] = True
+        ok[idx[bad]] = False
     idx = np.where(ok)[0]
     n_ok = len(idx); frac = n_ok / len(S)
     # stretches: stations within 2 profiles of an accepted one; runs merged across gaps < PATH_GAP
@@ -150,37 +240,127 @@ def measure_path(e, ls, t):
         if merged and (S[r[0]] - S[merged[-1][1]]) < PATH_GAP: merged[-1][1] = r[1]
         else: merged.append(r)
     good = [r for r in merged if S[r[1]] - S[r[0]] + PATH_STEP >= PATH_MIN and ok[r[0]:r[1] + 1].sum() >= 3]
-    base = {'osm_id': e['id'], 'kind': 'airside_path', 'material': 'concrete', 'surface_osm': t.get('surface'), 'access': t.get('access'),
+    surf = SURFACES.get(t.get('surface'))
+    base = {'osm_id': e['id'], 'kind': 'airside_path', 'surface_osm': t.get('surface'), 'access': t.get('access'),
             'naip_frac': round(frac, 2)}
     out, cur = [], 0.0
     def undrawn(a, b):
         if b - a < 1.0: return
         g = substring(ls, a, b)
         if g.geom_type != 'LineString' or g.length < 1.0: return
-        k = (S >= a) & (S <= b); fl = float(LINE[k].mean()) if k.any() else 0.0
-        out.append({**base, 'part': len(out), 'w': None, 'offset_m': 0.0, 'drawn': False,
+        k = (S >= a) & (S <= b); fl = float(LINE[k].mean()) if k.any() else 0.0; fw = float(WIDE[k].mean()) if k.any() else 0.0
+        out.append({**base, 'material': surf or 'concrete', 'part': len(out), 'w': None, 'offset_m': 0.0, 'drawn': False,
                     'w_src': ('NAIP: a light line inside wider pavement (%.0f %% of the profiles) - a wider road / apron edge, not a path '
-                              'band; not drawn, the road itself is not measured here' % (100 * fl)) if fl >= 0.3 else 'NAIP shows no band here: not drawn',
-                    **({'paved_line_frac': round(fl, 2)} if fl > 0 else {}),
-                    'pts': [[round(x, 1), round(z, 1)] for x, z in g.simplify(0.3).coords]})
+                              'band; not drawn' % (100 * fl)) if fl >= 0.3 else
+                             ('NAIP: the paved run reaches +-%.0f m (%.0f %% of the profiles) - inside wider pavement / light ground; '
+                              'not drawn' % (ROAD_HALF, 100 * fw)) if fw >= 0.3 else 'NAIP shows no band here: not drawn',
+                    **({'paved_line_frac': round(fl, 2)} if fl > 0 else {}), **({'wide_frac': round(fw, 2)} if fw > 0 else {}),
+                    'pts': [[round(x, 1), round(z, 1)] for x, z in g.simplify(0.3).coords], '_s': (a, b), '_f': fl + fw})
+    def material(road):
+        return (surf, 'osm surface=%s' % t['surface']) if surf else ('concrete', 'inferred: OSM untagged; a light neutral band / run on NAIP 2024 (as round 1)')
     for a, b in good:
         sa = 0.0 if a == 0 else S[a] - PATH_STEP / 2; sb = L if b == len(S) - 1 else S[b] + PATH_STEP / 2
         undrawn(cur, sa); cur = sb
         ii = np.arange(a, b + 1); acc = idx[(idx >= a) & (idx <= b)]
+        road = bool(ROAD[acc].mean() >= 0.5)
+        acc = acc[ROAD[acc] == road]                           # the stretch's majority kind only
         sm = np.array([np.median(O[acc[np.abs(S[acc] - S[k]) <= PATH_SMOOTH]]) if np.any(np.abs(S[acc] - S[k]) <= PATH_SMOOTH) else np.nan for k in acc])
-        off = np.interp(S[ii], S[acc], sm)                     # piecewise offset, flat beyond the first / last profile
+        sS = S[ii]; off = np.interp(sS, S[acc], sm)            # piecewise offset, flat beyond the first / last profile
         P = Q[ii] + off[:, None] * N[ii]
-        w = float(np.median(Wd[acc]))
-        g = LineString(P).simplify(0.3)
-        out.append({**base, 'part': len(out), 'w': round(w, 2), 'offset_m': round(float(np.median(off)), 2),
-                    'offset_range': [round(float(off.min()), 2), round(float(off.max()), 2)], 'drawn': True,
-                    'naip_frac_part': round(len(acc) / len(ii), 2),
-                    'w_src': 'NAIP 2024 median band width (%d of %d profiles of this stretch)' % (len(acc), len(ii)),
-                    'pts': [[round(x, 1), round(z, 1)] for x, z in g.coords]})
+        # pieces of near-constant width (one width per drawn entry): cut where the running median width (+-2 PATH_SMOOTH)
+        # leaves the piece's median by > W_STEP; pieces >= W_PIECE m
+        wm = np.array([np.median(Wd[acc[np.abs(S[acc] - S[k]) <= 2 * PATH_SMOOTH]]) for k in acc])
+        cuts, st = [], 0
+        for j in range(1, len(acc)):
+            if abs(wm[j] - np.median(wm[st:j])) > W_STEP and S[acc[j]] - S[acc[st]] >= W_PIECE and S[acc[-1]] - S[acc[j]] >= W_PIECE:
+                cuts.append(j); st = j
+        bounds = [0] + cuts + [len(acc)]
+        mat, msrc = material(road)
+        for q_, (j0, j1) in enumerate(zip(bounds[:-1], bounds[1:])):
+            s0 = sS[0] if q_ == 0 else (S[acc[j0 - 1]] + S[acc[j0]]) / 2
+            s1 = sS[-1] if j1 == len(acc) else (S[acc[j1 - 1]] + S[acc[j1]]) / 2
+            kk = (sS > s0 + 1e-6) & (sS < s1 - 1e-6)
+            ends = [np.array([[np.interp(v, sS, P[:, 0]), np.interp(v, sS, P[:, 1])]]) for v in (s0, s1)]
+            Pq = np.vstack([ends[0], P[kk], ends[1]])
+            aq = acc[j0:j1]; oq = np.concatenate([[np.interp(s0, sS, off)], off[kk], [np.interp(s1, sS, off)]])
+            w = float(np.median(Wd[aq]))
+            g = LineString(Pq).simplify(0.3)
+            out.append({**base, 'material': mat, 'material_src': msrc, 'part': len(out), 'w': round(w, 2), 'offset_m': round(float(np.median(oq)), 2),
+                        'offset_range': [round(float(oq.min()), 2), round(float(oq.max()), 2)], 'drawn': True,
+                        'kind_naip': 'road' if road else 'band', 'naip_frac_part': round(len(aq) / max(1, int(((sS >= s0) & (sS <= s1)).sum())), 2),
+                        'w_src': ('NAIP 2024 median width of the paved run (measure_road, %d profiles)' if road else
+                                  'NAIP 2024 median band width (%d profiles)') % len(aq),
+                        'pts': [[round(x, 1), round(z, 1)] for x, z in g.coords], '_s': (s0, s1), '_o': (oq[0], oq[-1])})
     undrawn(cur, L)
+    # round 3: a ROAD continues where NAIP shows it inside wider light pavement / ground (the run reaches the window) or a
+    # light line on it, and across short gaps - the OSM way is continuous. Such undrawn gaps between two road pieces of the
+    # way (<= ROAD_BRIDGE m; any gap <= ROAD_BRIDGE_ANY m), and at the way's ends next to a road piece, are drawn along the
+    # OSM line with the offset interpolated between the neighbours' end offsets and the narrower neighbour width, capped
+    # at the way's median road width at an end (width / position inferred; `bridged` true)
+    rw = [o_['w'] for o_ in out if o_['drawn'] and o_['kind_naip'] == 'road']
+    w_way = float(np.median(rw)) if rw else None
+    def isroad(o_): return o_ is not None and o_['drawn'] and o_.get('kind_naip') == 'road'
+    for k, o_ in enumerate(out):
+        if o_['drawn']: continue
+        a_, b_ = o_['_s']; prv = out[k - 1] if k > 0 else None; nxt = out[k + 1] if k + 1 < len(out) else None
+        inner = isroad(prv) and isroad(nxt); end = (k == 0 and isroad(nxt)) or (k == len(out) - 1 and isroad(prv))
+        if not (inner or end) or not ((b_ - a_ <= ROAD_BRIDGE and o_['_f'] >= 0.5) or (inner and b_ - a_ <= ROAD_BRIDGE_ANY)): continue
+        o0 = prv['_o'][1] if isroad(prv) else nxt['_o'][0]; o1 = nxt['_o'][0] if isroad(nxt) else prv['_o'][1]
+        w = min(x['w'] for x in (prv, nxt) if isroad(x)) if inner else min(w_way, (prv if isroad(prv) else nxt)['w'])
+        ss = np.linspace(a_, b_, max(2, int(np.ceil((b_ - a_) / PATH_STEP)) + 1)); P = []
+        for v in ss:
+            q0 = ls.interpolate(max(0, v - 2)); q1 = ls.interpolate(min(L, v + 2)); q = ls.interpolate(v)
+            tt = np.array([q1.x - q0.x, q1.y - q0.y]); tt /= max(1e-9, np.linalg.norm(tt)); nn = np.array([-tt[1], tt[0]])
+            P.append(np.array([q.x, q.y]) + np.interp(v, [a_, b_], [o0, o1]) * nn)
+        mat, msrc = material(True)
+        out[k] = {**base, 'material': mat, 'material_src': msrc, 'part': k, 'w': round(w, 2), 'offset_m': round(float((o0 + o1) / 2), 2),
+                  'offset_range': [round(float(min(o0, o1)), 2), round(float(max(o0, o1)), 2)], 'drawn': True, 'kind_naip': 'road', 'bridged': True,
+                  'w_src': 'inferred: the road continues (OSM way; NAIP %s); width = the narrower neighbouring piece%s, offset interpolated' % (
+                      o_['w_src'].replace('; not drawn', '').replace('NAIP: ', '').replace('NAIP ', ''), '' if inner else ' capped at the way median'),
+                  'pts': [[round(x, 1), round(z, 1)] for x, z in LineString(P).simplify(0.3).coords], '_s': (a_, b_), '_o': (o0, o1)}
+    for k, o_ in enumerate(out):
+        o_['part'] = k; o_.pop('_s', None); o_.pop('_o', None); o_.pop('_f', None)
     if not out:
-        out.append({**base, 'part': 0, 'w': None, 'offset_m': 0.0, 'drawn': False, 'w_src': 'NAIP shows no band: not drawn',
+        out.append({**base, 'material': surf or 'concrete', 'part': 0, 'w': None, 'offset_m': 0.0, 'drawn': False, 'w_src': 'NAIP shows no band: not drawn',
                     'pts': [[round(x, 1), round(z, 1)] for x, z in ls.simplify(0.3).coords]})
+    return out
+
+
+def clip_paved(paths, clip):
+    """round 3: drawn airside paths stop at SFO Museum runway / taxiway pavement (the runway / taxiway surface is drawn by
+    that layer; a service road crossing a taxiway is part of its pavement): the part of a drawn centreline inside `clip`
+    becomes an undrawn entry. 'part' is renumbered along each way."""
+    from shapely.ops import substring
+    from shapely.prepared import prep
+    pc = prep(clip); out = []
+    for r in paths:
+        ls = LineString(r['pts'])
+        if not r['drawn'] or not pc.intersects(ls) or ls.intersection(clip).length < 1.0: out.append(r); continue
+        # stations every 0.5 m: inside / outside, runs -> pieces (shorter than 2 m drawn runs merge into the clipped part)
+        n = max(2, int(ls.length / 0.5)); ss = np.linspace(0, ls.length, n + 1); mid = (ss[:-1] + ss[1:]) / 2
+        ins = np.array([clip.contains(ls.interpolate(v)) for v in mid])
+        runs, i = [], 0
+        while i < len(ins):
+            j = i
+            while j + 1 < len(ins) and ins[j + 1] == ins[i]: j += 1
+            runs.append([bool(ins[i]), ss[i], ss[j + 1]]); i = j + 1
+        for k_ in range(len(runs)):                            # drawn slivers < 2 m between clipped runs: clipped
+            if not runs[k_][0] and runs[k_][2] - runs[k_][1] < 2.0 and len(runs) > 1: runs[k_][0] = True
+        mergedr = []
+        for q in runs:
+            if mergedr and mergedr[-1][0] == q[0]: mergedr[-1][2] = q[2]
+            else: mergedr.append(q)
+        for inside, a, b in mergedr:
+            g = substring(ls, a, b)
+            if g.geom_type != 'LineString' or g.length < 0.5: continue
+            pts = [[round(x, 1), round(z, 1)] for x, z in g.coords]
+            if inside:
+                out.append({**{k: v for k, v in r.items() if k not in ('w', 'offset_range', 'naip_frac_part', 'kind_naip', 'bridged', 'material_src')},
+                            'w': None, 'drawn': False, 'pts': pts,
+                            'w_src': 'on SFO Museum runway / taxiway pavement (that layer draws the surface): not drawn'})
+            else: out.append({**r, 'pts': pts})
+    cnt = {}
+    for r in out: r['part'] = cnt.get(r['osm_id'], 0); cnt[r['osm_id']] = r['part'] + 1
     return out
 
 
@@ -263,6 +443,20 @@ def main():
                 if g.is_empty or g.area < 50: continue
                 parks.append({'osm_id': e['id'], 'kind': 'garage' if t.get('parking') == 'multi-storey' else 'parking', 'access': t.get('access'),
                               'pts': [[round(x, 1), round(z, 1)] for x, z in list(g.simplify(0.5).exterior.coords)[:-1]]})
+    retired = {(r_['name'], r_['poly']) for r_ in json.load(open(os.path.join(ROOT, 'data', 'sfo_details.json'))).get('pavementRetired', []) if r_['layer'] == 'taxiways'}
+    clip = unary_union([Polygon(poly[0], poly[1:]).buffer(0) for r_ in A['runways'] for poly in r_['polys']] +
+                       [Polygon(poly[0], poly[1:]).buffer(0) for t_ in A['taxiways'] for i_, poly in enumerate(t_['polys']) if (t_['name'], i_) not in retired])
+    paths = clip_paved(paths, clip)
+    # round 3: NAIP 2024 grey level (0-255, median along the drawn centreline, every 2 m) per drawn path - the imaged tone
+    # for the renderer (the OSM-asphalt perimeter road images as light as the concrete paths: medians ~198 vs ~206)
+    N_ = _naip(); m_ = N_['m']
+    for r_ in paths:
+        if not r_['drawn']: continue
+        ls_ = LineString(r_['pts']); v_ = []
+        for s_ in np.arange(0, ls_.length + 1e-9, 2.0):
+            q_ = ls_.interpolate(s_); rr_ = int((q_.y - m_['z0']) / m_['res']); cc_ = int((q_.x - m_['x0']) / m_['res'])
+            if 0 <= rr_ < N_['im'].shape[0] and 0 <= cc_ < N_['im'].shape[1]: v_.append(float(np.asarray(N_['im'][rr_, cc_], np.float32).mean()))
+        if v_: r_['naip_grey'] = round(float(np.median(v_)))
     res = {'frame': GF.FRAME_ID,
            'licence': 'ODbL 1.0 - contains information from OpenStreetMap (c) OpenStreetMap contributors, '
                       'https://www.openstreetmap.org/copyright; see docs/ATTRIBUTION.md',
@@ -279,7 +473,13 @@ def main():
                                   'NAIP 2024 images the band (measure_band every %.1f m across the OSM line; gaps < %.0f m bridged), its centre '
                                   'moved by the running-median band offset (+-%.1f m; offset_m = stretch median, offset_range) along '
                                   'measure_band\'s own normal, w = median band width; drawn false where NAIP shows no band (static close-out '
-                                  '2026-11-04; piecewise offset with the corrected side, round 2 2026-11-05)' % (AIRFIELD_M, AIRFIELD_TW_M, PATH_STEP, PATH_GAP, PATH_SMOOTH))}
+                                  '2026-11-04; piecewise offset with the corrected side, round 2 2026-11-05). Round 3 (2026-11-05): roads '
+                                  'wider than the band window measured as a paved run across +-%.0f m (kind_naip road; one width per '
+                                  'near-constant-width piece), road gaps inside wider pavement / light ground or < %.0f m bridged along the OSM '
+                                  'line (bridged, inferred), drawn parts clipped at SFO Museum runway / taxiway pavement; material = OSM '
+                                  'surface (asphalt / concrete; obs) else concrete (inferred) - only concrete goes into the concrete layer; naip_grey = NAIP 2024 grey '
+                                  'level (0-255) along the drawn line, the imaged tone' % (
+                                      AIRFIELD_M, AIRFIELD_TW_M, PATH_STEP, PATH_GAP, PATH_SMOOTH, ROAD_HALF, ROAD_BRIDGE_ANY))}
     json.dump(res, open(os.path.join(ROOT, 'data', 'sfo_landside.json'), 'w'), separators=(',', ':'))
     open(os.path.join(ROOT, 'data', 'sfo_landside.js'), 'w').write(
         '// generated by tools/build_landside.py - ODbL 1.0: contains information from OpenStreetMap (c) OpenStreetMap '

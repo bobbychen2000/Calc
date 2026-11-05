@@ -50,7 +50,7 @@ check('A-VIS1', `max |error| over the 10 Table B-1 rows ≤ 5 %`, worst <= 0.05,
 
 // ============================================================================================== A-PAPI1
 const papiEnds = {}; for (const R of LIGHTING_SPEC.runways) for (const [E, e] of Object.entries(R.ends)) if (e.papi) papiEnds[E] = e.papi;
-const C2 = { 3.00: [2.3, 2.6, 3.0, 3.4, 3.7], 2.85: [2.15, 2.45, 2.85, 3.25, 3.55], 3.15: [2.45, 2.75, 3.15, 3.55, 3.85] };
+const C2 = { '3.00': [2.3, 2.6, 3.0, 3.4, 3.7], '2.85': [2.15, 2.45, 2.85, 3.25, 3.55], '3.15': [2.45, 2.75, 3.15, 3.55, 3.85] };
 const papiGroups = LIGHTING_FIXTURES.groups.filter(g => g.system === 'papi');
 check('A-PAPI1', 'six PAPI ends in the fixtures', papiGroups.length === 6, papiGroups.map(g => g.end).join(' '));
 for (const g of papiGroups) {
@@ -83,7 +83,7 @@ for (const g of papiGroups) {
   check('A-PAPI1', 'isocandela: 30,000/15,000 cd on the axis, 20,000/10,000 at 3.5° az, 0 beyond the LED ±10.5°, 0 above ±4°',
     c0.white === 30000 && c0.red === 15000 && c1.white === 20000 && c1.red === 10000 && c2.white === 0 && c3.white === 0, JSON.stringify([c0, c1, c2, c3]));
   check('A-PAPI1', 'transition 3′ wide at the beam centre (white 0.5 at the aim, 1 at +1.5′, 0 at −1.5′), 5′ at the edge',
-    Math.abs(papiWhite(3, 3, 0) - 0.5) < 1e-9 && papiWhite(3, 3 + 1.5 / 60, 0) === 1 && papiWhite(3, 3 - 1.5 / 60, 0) === 0 && papiWhite(3, 3 + 1.5 / 60, 10) < 1 && papiWhite(3, 3 + 2.5 / 60, 10) === 1);
+    Math.abs(papiWhite(3, 3, 0) - 0.5) < 1e-9 && papiWhite(3, 3 + 1.5 / 60, 0) > 0.9999 && papiWhite(3, 3 - 1.5 / 60, 0) < 1e-4 && papiWhite(3, 3 + 1.5 / 60, 10) < 0.9 && papiWhite(3, 3 + 2.5 / 60, 10) > 0.9999 && papiWhite(3, 3 - 2.5 / 60, 10) < 1e-4);
 }
 
 // ============================================================================================== A-NAV1
@@ -156,14 +156,16 @@ for (const g of papiGroups) {
   ];
   for (const [name, target, P, ph, on, perMin, upper] of types) {
     for (const fps of [30, 60, 120]) {
-      const dt = 1 / fps, T = 120; let tPrev = 0.0137, runs = [], cur = null, frames = 0;
-      for (let t = tPrev + dt; t < T; t += dt) {
+      // frames at a steady rate (t_k = t0 + k/fps, no accumulated rounding); a flash = a run of consecutive lit frames,
+      // each frame shown for dt; effective intensity per 25.1401(e): I_e = Σ I_f·dt / (0.2 + n·dt)
+      const dt = 1 / fps, T = 120, t0 = 0.0137; let runs = [], cur = null;
+      for (let k = 1; t0 + k * dt < T; k++) {
+        const tPrev = t0 + (k - 1) * dt, t = t0 + k * dt;
         let g = flashGain(tPrev, t, P, ph, on);
         if (name.includes('strobe')) g = Math.max(g, flashGain(tPrev, t, P, ph + STROBE.gap, on));
-        if (g > 0) { if (cur && cur.last === frames - 1 && cur.g === g) { cur.n++; cur.last = frames; } else { cur = { g, n: 1, last: frames }; runs.push(cur); } }
-        tPrev = t; frames++;
+        if (g > 0) { if (cur && cur.last === k - 1) { cur.n++; cur.last = k; cur.E += target * g * dt; } else { cur = { g, n: 1, last: k, E: target * g * dt }; runs.push(cur); } }
       }
-      const effs = runs.map(r => effectiveIntensity(target * r.g, r.n * dt) / target);
+      const effs = runs.map(r => r.E / (BR_C + r.n * dt) / target);
       const minE = Math.min(...effs), maxE = Math.max(...effs);
       const cycles = name.includes('strobe') ? runs.length / 2 : runs.length;
       const rate = cycles / (T / 60);
@@ -179,6 +181,26 @@ for (const g of papiGroups) {
   const seq = AL.flasherSequence('28R');
   check('A-FLASH1', '28R SFL sequence: 15 flashers, outermost (2,400 ft) first, toward the threshold, phases equally spaced in 0.5 s',
     seq.length === 15 && seq[0].station === 2400 && seq[14].station === 1000 && seq.every((s, i) => Math.abs(s.phase - i * 0.5 / 15) < 1e-9), seq.map(s => s.station).join(','));
+}
+// ============================================================================================== RWSL (REL) logic, unit part of A-RWSL
+{
+  const AL = new AirfieldLighting(LIGHTING_FIXTURES, LIGHTING_SPEC, { groundY: 3 });
+  const ln = AL.lines['10L/28R'], KT = 0.514444;
+  const along = (end, m) => { const e = LIGHTING_SPEC.runways[0].ends[end].runway_end.world; const sg = ln.ends[0] === end ? 1 : -1; return [e[0] + ln.u[0] * sg * m, e[1] + ln.u[1] * sg * m]; };
+  const R = AL.relGroups.filter(g => g.runway === '10L/28R');
+  const at = (ph, end, m, kt, ground = true) => { const p = along(end, m); return [...AL.rwslFromTraffic([{ phase: ph, rwy: end, x: p[0], z: p[1], gs: kt * KT, ground }])]; };
+  const dep20 = at('takeoff', '28R', 300, 20), dep40 = at('takeoff', '28R', 300, 40), air = at('takeoff', '28R', 2500, 150, false);
+  // arrays ahead of the departure (ETA > 3.5 s) on, the ones behind / about to be reached off
+  const sgn = ln.ends[0] === '28R' ? 1 : -1; const pA = along('28R', 300); const aAc = (pA[0] - ln.a[0]) * ln.u[0] + (pA[1] - ln.a[1]) * ln.u[1];
+  const ahead = R.filter(g => (g.a - aAc) * sgn / (40 * KT) > 3.5).map(g => g.id).sort();
+  check('A-RWSL1', `REL 10L/28R (${R.length} arrays): departure 28R at 20 kt none; at 40 kt the ${ahead.length} arrays ahead (> 3.5 s) only; airborne none`,
+    dep20.length === 0 && JSON.stringify(dep40.sort()) === JSON.stringify(ahead) && ahead.length > 0 && ahead.length < R.length && air.length === 0, `40 kt: ${dep40.length} on`);
+  const fin2 = (() => { const th = LIGHTING_SPEC.runways[1].ends['28L'].landing_threshold.world; const L2 = AL.lines['10R/28L']; const sg = L2.ends[0] === '28L' ? 1 : -1; const mk = (m) => [...AL.rwslFromTraffic([{ phase: 'final', rwy: '28L', x: th[0] - L2.u[0] * sg * m, z: th[1] - L2.u[1] * sg * m, gs: 70, ground: false }])]; return [mk(2 * 1852), mk(0.9 * 1852)]; })();
+  const R2 = AL.relGroups.filter(g => g.runway === '10R/28L');
+  check('A-RWSL1', `arrival 28L: 2 NM out none, 0.9 NM out all ${R2.length} arrays of 10R/28L`, fin2[0].length === 0 && fin2[1].length === R2.length, `${fin2[1].length} on`);
+  const r60 = at('rollout', '28R', 1500, 60), r30 = at('rollout', '28R', 1500, 30), r90 = at('rollout', '28R', 1500, 90);
+  check('A-RWSL1', 'rollout 28R: 90 kt all ahead, 60 kt only within 30 s, 30 kt none', r30.length === 0 && r60.length <= r90.length && r90.length > 0, `90 kt ${r90.length}, 60 kt ${r60.length}`);
+  check('A-RWSL1', 'the NV-flagged REL arrays (between-runway F1 / G / H: runway assignment ambiguous) are never lit', !LIGHTING_FIXTURES.groups.some((g, i) => g.runway_nv && AL.relGroups.some(r => r.id === i)));
 }
 console.log(`\nstep-2 unit gates${only ? ' (' + only + ')' : ''}: ${n - fails}/${n} checks passed`);
 process.exit(fails ? 1 : 0);

@@ -1,6 +1,7 @@
 #!/bin/sh
 # Environment core gates (docs/research/environment_spec.md §11.3, steps 0-1; docs/research/environment_impl.md):
-# A-FIX, A-WX, A-SUN (unit), A-CLK + the relay smoke test and the reference Python decoder tests. No GPU, no network.
+# A-FIX, A-WX, A-SUN (unit), A-CLK + the relay smoke test and the reference Python decoder tests; step 2: A-CTL,
+# A-VIS1, A-PAPI1, A-NAV1, A-FLASH1. No GPU, no network.
 # Regenerate the inputs first when the sources change:
 #   python3 tools/env/build_lighting_spec.py && python3 tools/env/build_metar_golden.py && python3 tools/env/build_env_presets_js.py
 cd "$(dirname "$0")/../.." || exit 1
@@ -13,4 +14,7 @@ run "A-WX JS decoder" node --no-warnings tools/env/test_metar_js.mjs
 run "A-CLK + EnvState presets" node --no-warnings tools/env/test_env_state.mjs
 run "TAF forecast beyond the latest METAR (spec 3.3)" node --no-warnings tools/env/test_taf.mjs
 run "relay smoke (A-CLK relay)" python3 tools/env/test_relay_wx.py
+# step 2 (lighting controller, photometry, aircraft lights)
+run "A-CTL controller (14 presets x 2 paths + table edges)" node --no-warnings tools/env/test_controller.mjs
+run "A-VIS1, A-PAPI1, A-NAV1, A-FLASH1" node --no-warnings tools/env/test_lights.mjs
 exit $rc

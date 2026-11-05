@@ -187,16 +187,21 @@ def view_baa(args):
 A2_CAM = dict(x=-1059.7, z=-614.2, h=163.4, az=203.22, el=-8.51, roll=1.03, f_px=6780.0, w=1920, h_px=1280)
 
 
-def view_a2g(args):
-    """photo a2 view (solved camera): the BA-G NNE face, its gate-room curtain walls, low bridge-head boxes and pods."""
+def a2g_cam():
     from mathutils import Quaternion
-    sun_sky(215.0, 50.0)      # a2: overcast-bright, soft shadows falling towards the camera side (sun behind the pier) [est.]
     c = A2_CAM; a, e = math.radians(c['az']), math.radians(c['el'])
     loc = Wxz(c['x'], c['z'], c['h'])
     fwd = Vector((math.sin(a) * math.cos(e), math.cos(a) * math.cos(e), math.sin(e)))
     co = camera('cam_a2g', loc, loc + fwd * 1000.0, lens=c['f_px'] / c['w'] * 36.0, res=(960, 640))
     co.rotation_mode = 'QUATERNION'
     co.rotation_quaternion = co.rotation_euler.to_quaternion() @ Quaternion((0.0, 0.0, 1.0), math.radians(c['roll']))
+    return co
+
+
+def view_a2g(args):
+    """photo a2 view (solved camera): the BA-G NNE face, its gate-room curtain walls, low bridge-head boxes and pods."""
+    sun_sky(215.0, 50.0)      # a2: overcast-bright, soft shadows falling towards the camera side (sun behind the pier) [est.]
+    co = a2g_cam()
     # projection check of the photo picks (pixel coordinates of a2 at 1920 x 1280)
     from bpy_extras.object_utils import world_to_camera_view
     bpy.context.view_layer.update()
@@ -223,12 +228,16 @@ def view_plan(args):
     return render(os.path.join(OUT, 'itb_plan.png')),
 
 
-def view_bag(args):
-    sun_sky(200.0, 55.0)
+def bag_cam():
     P = G.PIERS['G']; c = np.array(P['centre_xz']); t = np.array(P['t_axis']); s = np.array(P['s_axis'])
     bx = np.mean(np.asarray(G.POD['G3-box']['ring_true_xz']), 0)
     cam = bx - t * 260 + s * 40       # t_axis of G points SSW, the apron face looked at is NNE: camera on -t
-    camera('cam_bag', Wxz(cam[0], cam[1], 95.0), Wxz(bx[0] - s[0] * 90, bx[1] - s[1] * 90, 15.0), lens=40.0, res=(960, 600))
+    return camera('cam_bag', Wxz(cam[0], cam[1], 95.0), Wxz(bx[0] - s[0] * 90, bx[1] - s[1] * 90, 15.0), lens=40.0, res=(960, 600))
+
+
+def view_bag(args):
+    sun_sky(200.0, 55.0)
+    bag_cam()
     return render(os.path.join(OUT, 'itb_bag.png')),
 
 

@@ -713,6 +713,37 @@ def manifest_entry(results, ver, renders, args, rev, secs):
 DOC_BEGIN, DOC_END = '<!-- tower:begin (written by tools/blender/build_tower.py) -->', '<!-- tower:end -->'
 
 
+# Review round 1 of the 3-D asset (2026-11-05, 9 items): what was done, with the evidence (numbers re-measured after the fix)
+REVIEW_R1 = [
+    '1 (major) cladding read as flat grey plastic, seams as light raised bands - FIXED: procedural base-colour + normal tile '
+    '(4 joints x 2 rows per tile) with dark helical and row joint lines; the two seams are dark 0.10-m joint bands flush in the '
+    'shell (the light 0.03-m-proud band is withdrawn); material seam 98 / clad 150 sRGB (was 196 / 149).',
+    '2 (major) NE blade spike above the flare rim - FIXED in the sheet first (draw_tower.NE_TIP = 0, BT-02 redrawn: flush with '
+    'the flare corner and the ribbon head, photos t3 / t4 / t5 re-read), then in 3-D: prow top = flare corner, F2 55.93 m '
+    '(F1 58.90; was 61.7 F1), verify check "NE blade top". The deck over the landside sector (wing, ribbon head, NE blade) is '
+    'now flat, then rises ~14 deg to the plinth (photos t3 / t4: flat blade tops; from t4, ~30 deg below, no deck shows above '
+    'the blade or the ribbon head): a first rebuild with the round-body shoulder there showed a sunlit facet above the NE blade.',
+    '3 (major) cab an opaque black band - FIXED: tinted see-through glass (alpha 0.5, teal-grey; far-side panes and sky show '
+    'through) with light 6-cm joints; glass / sky: Cycles t2 0.25 (photo 0.28), t3 0.16 (photo 0.10).',
+    '4 (major) shaft as bright as the sky in the app - CHECKED, albedo kept (APP_NOTE).',
+    '5 (minor) upper slots too wide / long slot right of centre - FIXED width and phase in the sheet (SLOT_W 1.4 -> 0.95 m, '
+    'SLOT_PHASE 124 -> 127, t1 + t2 together); the long-slot offset is REJECTED: at the same three rows the t2 photo reads u/R '
+    '+0.37 / +0.12 / -0.07, the render +0.34 / +0.07 / -0.11 (within 0.05 = ~3 deg); the review compared different rows.',
+    '6 (major) red obstruction light only in LOD0, no masts in LOD2 - FIXED: the red-light fixture (material red_light, the '
+    'app\'s beacon glow) is in LOD0 / LOD1 / LOD2 and in tower_lod2.glb, LOD2 carries the 15 whips (3-sided): the top is 68.48 m '
+    '(F2) at every LOD.',
+    '7 (major) F1 default - FIXED: tower.glb = F2 (default, within the observations), tower_f1.glb = F1 (the published-height '
+    'hypothesis, ?b3dtower=f1); family_decided stays false.',
+    '8 (minor) mast tips vs spec - FIXED: spec h_antenna_tips = 71.8 spec m (2025-08-12 obs ratio 0.30-0.31 D; 2015 station 70.7 '
+    'kept as station_2015); F2 restated as "221 ft at the 2015 mast station"; mesh vs spec 2025 value: F2 68.48 vs 68.50, F1 '
+    '72.06 vs 72.08.',
+    '9 (minor) tower camera / in-cab test on F1 values - FIXED: the loader takes eye and bounds from the loaded file\'s '
+    'anchors; app.js reads towerPos.eyeY (APP_EYE).',
+]
+APP_NOTE = 'see the integration numbers'
+APP_EYE = ''
+
+
 def doc_section(entry, ver):
     """the tower section of docs/research/buildings3d.md, from the manifest entry and the verification."""
     D_ = DEFAULT_FAM; A_ = 3 - D_
@@ -778,6 +809,8 @@ def doc_section(entry, ver):
               'rim; side-by-side comparisons `tower_compare_*.jpg` stay local).', '',
               '**Observed vs inferred.** Per dimension in `manifest.json#tower.dimensions`; lists `inferred`, `unknown`, '
               '`not_modelled`, `conflicts` there. Node extras carry `src`, the spec keys and per-feature tags.', '',
+              '**Review round 1 (2026-11-05).**'] + ['- ' + r.replace('APP_NOTE', APP_NOTE).replace('APP_EYE', APP_EYE) for r in REVIEW_R1] + [
+              '',
               '**Open (for the owner).**',
               '- The height family (F2 default / F1 hypothesis).',
               '- t2 camera match: the camera height and focal length are estimates (no EXIF here); a camera-model check only.',

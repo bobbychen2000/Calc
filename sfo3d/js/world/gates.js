@@ -171,15 +171,20 @@ export class GateSystem {
 //  - Airbus A320 family: forward cargo door C1 1.81-1.93, aft C2 1.91-2.08 (Airbus AC A321 §2-3 Ground Clearances,
 //    refs/cache/acap/AC_A321_jul2026.txt lines 3869-3874; the A319 / A320 take the A321's values - inferred, their AC is
 //    not cached)
-// The conveyor is set to the middle of the range, but never below 0.3 m above the RENDERED model's lowest skin: a real
-// loader is raised to the door it meets, and the fitted 737 models sit 0.2-0.3 m above the published sills (bridges_
-// closeout §5, aircraft track) - review 2026-11-04: at a fixed 1.55 m the 737 conveyor ended 0.37 m below the skin. To
-// 0.05 m (one mesh per setting). Conveyor length 8.0 m, 0.9 m wide, rear end 0.75 m up (inferred, no datasheet).
+// The conveyor is set to the middle of the range, but never so low that its top end would pass under the RENDERED
+// model's belly: its underside (top - BELT_THICK, the conveyor's own depth) stays at or above the lowest skin, so the end
+// meets the side of the lower lobe (derived from the drawn geometry; review round 2 v8: the "0.3 m" is that depth). A
+// real loader is raised to the door it meets; the fitted 737 / A320 models sit 0.2-0.6 m above the published sills
+// (bridges_closeout §5 / §R2.4, aircraft track), so today this floor, not BELT_PUB, sets every conveyor (737 family
+// 1.90-1.95 m, A320 family 2.05-2.10 m) - review 2026-11-04: at a fixed 1.55 m the 737 conveyor ended 0.37 m below the
+// skin. To 0.05 m (one mesh per setting). Conveyor length 8.0 m, 0.9 m wide, 0.3 m deep, rear end 0.75 m up (inferred,
+// no datasheet).
+const BELT_THICK = 0.3;
 export const BELT_PUB = { b737: { fwd: [1.30, 1.45], aft: [1.63, 1.80] }, a320: { fwd: [1.81, 1.93], aft: [1.91, 2.08] } };
 export const beltFamily = (k) => /^b73\d$|^b3[789x]m$/.test(k) ? 'b737' : /^a3(18|19|20|21)$|^a(19|20|21)n$/.test(k) ? 'a320' : null;
 // the rendered model's lowest skin (elliptical section: half heights crown - Hc above and below the centre)
 export function lowSkin(T) { const crown = (T.fit && T.fit.renderedCrown) || T.Hc + T.R; return T.Hc - (crown - T.Hc); }
-export function beltSill(T, fam, door) { const r = BELT_PUB[fam] && BELT_PUB[fam][door]; if (!r) return null; return Math.round(Math.max((r[0] + r[1]) / 2, lowSkin(T) + 0.3) * 20) / 20; }
+export function beltSill(T, fam, door) { const r = BELT_PUB[fam] && BELT_PUB[fam][door]; if (!r) return null; return Math.round(Math.max((r[0] + r[1]) / 2, lowSkin(T) + BELT_THICK) * 20) / 20; }
 export const beltKey = (S) => 'belt' + Math.round(S * 100);
 // catering truck: its box is lifted to the floor of the door it serves (the second door, R2): the rendered door-2 sill
 // (T.dockSill2, else door 1's rendered sill raised by the model's nose-down pitch over the door spacing), to 0.2 m; at
@@ -211,7 +216,7 @@ const LEGACY_SET = { belts: { beltLoader: 1.55 }, caterings: { catering: 3.6 } }
 // local shape (x forward to the aircraft end, y up, z right): conveyor box from (x0, y0) tilted by th about z; its top
 // surface ends at (xe, S); chassis -2.5..2.4 m up to chassisTop; cab on the left (-z) side up to 2.05 m
 export function beltShape(S) {
-  const x0 = -2.9, y0 = 0.75, len = 8.0, thick = 0.3, w = 0.9;
+  const x0 = -2.9, y0 = 0.75, len = 8.0, thick = BELT_THICK, w = 0.9;
   let th = 0; for (let i = 0; i < 40; i++) th = Math.asin(Math.max(-0.5, Math.min(0.9, (S - y0 - thick * Math.cos(th)) / len)));
   return { x0, y0, len, thick, w, th, xe: x0 + len * Math.cos(th) - thick * Math.sin(th), S, chassisTop: 0.75, cabTop: 2.05 };
 }

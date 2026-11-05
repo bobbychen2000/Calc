@@ -17,7 +17,8 @@ inferred apron (data/sfo_details.json) - or inside OSM aprons / within 40 m of O
 within 60 m of an aircraft parking position / ADS-B parked stay (static close-out 2026-11-04: north cargo aprons; inside a
 position's own footprint every pixel that is not vegetation / bare soil / building counts, so parked aircraft, GSE and
 ULDs do not leave holes; round 2, 2026-11-05: only AIRCRAFT stays - an ICAO type that is no vehicle pseudo-type, or an
-SFO flight / stand match - and bare soil / dry grass (R - B > 38, R > 110) is rejected in the footprints too) -,
+airline callsign (round 3: no flysfo field) - and bare soil / dry grass (R - B > 38, R > 110) is rejected in the footprints too; round 3:
+the vehicle stays seed the 60 m candidate region again, never footprints) -,
 outside them and outside buildings (SFO Museum structures, terminal
 complex, boarding areas; OSM buildings are not used), components >= 300 m2 after a 1.5 m opening, holes (parked
 aircraft, vehicles, shadows) < 3000 m2 filled. Roofs of hangars that SFO Museum does not map can classify as
@@ -26,7 +27,7 @@ pavement (grey); they are listed by area in the log for review.
     python3 tools/imagery/paint_pave_naip.py          # writes data/sfo_paint.* and data/sfo_pavement.*
     python3 tools/imagery/paint_pave_naip.py --preview   # + refs/cache/naip/paint_pave_preview.jpg (NAIP pixels; stays local)
 """
-import json, math, os, sys
+import json, math, os, re, sys
 import numpy as np, cv2
 from scipy import ndimage as ndi
 
@@ -116,8 +117,14 @@ def main(preview=False):
     pts_ = [[q['x'], q['z']] for q in St.get('positions', []) + St.get('remote', []) if 'x' in q]
     stays = aircraft_stays()
     pts_ += [[v['x'], v['z']] for v in stays]
+    # round 3 (2026-11-05, review static r2 v4): the VEHICLE stays (airport-operations / ARFF / service vehicles) seed the
+    # candidate region again - vehicles park on pavement, and dropping them in round 2 also dropped ~0.6 ha of real
+    # grey pavement round them (the ARFF apron (-1569, -600), a concrete apron (-1373, -1412)). They only widen where NAIP
+    # may decide (grey + smooth, which excludes soil / dry grass: S < 32 means R - B < 32); they are NOT footprints (no
+    # 25 m disc paved regardless of grey) and NOT parking points for the 12000 m2 hole limit - both stay aircraft-only.
+    vstays = vehicle_stays()
     N_PARK = 0
-    for q in pts_:
+    for q in pts_ + [[v['x'], v['z']] for v in vstays]:
         if not q: continue
         c_ = P([q])[0]
         if 0 <= c_[0] < W and 0 <= c_[1] < H: cv2.circle(park, (int(c_[0]), int(c_[1])), int(60 / RES), 1, -1); N_PARK += 1
@@ -163,8 +170,8 @@ def main(preview=False):
     Bc, Rc = img[..., 0].astype(np.int16), img[..., 2].astype(np.int16)
     soilc = ndi.binary_opening((Rc - Bc > 38) & (Rc > 110), iterations=2)
     addf = (foot > 0) & ~vegc & ~soilc & (bld == 0) & (pav == 0) & (V > 40)
-    print('parking footprints: +%.1f ha pavement (not vegetation / soil, not building); ADS-B stays used %d of %d (aircraft only)' % (
-        (addf & ~p).sum() * RES * RES / 1e4, len(stays), N_STAYS[0]))
+    print('parking footprints: +%.1f ha pavement (not vegetation / soil, not building); ADS-B stays used %d of %d (aircraft; + %d vehicle stays as candidate seeds only)' % (
+        (addf & ~p).sum() * RES * RES / 1e4, len(stays), N_STAYS[0], len(vstays)))
     p |= addf
     pave_polys, conc = [], []
     lab, n = ndi.label(p)
@@ -221,17 +228,41 @@ NOT_AIRCRAFT = {'SERV', 'GRND', 'EMER', 'TWR', 'BALL', 'UAV', 'SHIP', 'GYRO', 'U
 N_STAYS = [0]
 
 
-def aircraft_stays():
-    """refs/cache/stands/adsb_parked.json stays that are AIRCRAFT: an ICAO aircraft type (not a vehicle pseudo-type) or a
-    match to an SFO flight / stand. Round 2 (2026-11-05, review static-v2): the airport-operations vehicles (OPS12 / 14 /
-    15 / 31 / 38 / 40 / 44, FM8, R41, R88 - no type, or SERV) and typeless unmatched stays had become 25 m pavement discs
-    on the infield soil."""
+def _stays():
     try:
         st = json.load(open(os.path.join(ROOT, 'refs', 'cache', 'stands', 'adsb_parked.json')))['stays']
     except (OSError, KeyError, ValueError):
         return []
     N_STAYS[0] = len(st)
-    return [v for v in st if (v.get('type') and v['type'] not in NOT_AIRCRAFT) or v.get('stand') or v.get('flight') or v.get('sfo_type')]
+    return st
+
+
+def _typed(v): return bool(v.get('type') and v['type'] not in NOT_AIRCRAFT)
+def _prefix(c):
+    m = re.match(r'^([A-Z]{3})\d', c or ''); return m.group(1) if m else None
+
+
+def _is_aircraft(v, stays):
+    """an ICAO aircraft type in the feed, or a callsign whose 3-letter operator prefix flies a TYPED aircraft among the
+    stays (an airline designator seen on real aircraft: DAL, UAL ...; the airport vehicles OPS / R / FM / KOW never carry
+    a type). Round 3: no flysfo-derived field (stand / flight / sfo_type of adsb_parked.py's SFO match) is read, so the
+    pavement does not depend on the local flysfo snapshot; same 159 of 177 stays as the round-2 rule (typed or SFO-matched)"""
+    ops = {_prefix(c) for w in stays if _typed(w) for c in w.get('callsigns') or []} - {None}
+    return _typed(v) or any(_prefix(c) in ops for c in v.get('callsigns') or [])
+
+
+def aircraft_stays():
+    """refs/cache/stands/adsb_parked.json stays that are AIRCRAFT (_is_aircraft: an ICAO aircraft type, not a vehicle
+    pseudo-type, or an airline callsign). Round 2 (2026-11-05, review static-v2): the airport-operations vehicles (OPS12 / 14 /
+    15 / 31 / 38 / 40 / 44, FM8, R41, R88 - no type, or SERV) and typeless unmatched stays had become 25 m pavement discs
+    on the infield soil."""
+    st = _stays(); return [v for v in st if _is_aircraft(v, st)]
+
+
+def vehicle_stays():
+    """the other stays (vehicle pseudo-type, or no type and no airline callsign): candidate-region seeds only
+    (round 3, review static r2 v4)"""
+    st = _stays(); return [v for v in st if not _is_aircraft(v, st)]
 
 
 def contours(mask, tol_px, min_area, world):

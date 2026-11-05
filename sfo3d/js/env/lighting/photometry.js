@@ -130,4 +130,14 @@ export function flashGain(tPrev, t, P, phase, on) {
 }
 /** Is the light lit at time t (for QA counting): t within [tk, tk + on). */
 export const flashLit = (t, P, phase, on) => { const k = Math.floor((t - phase) / P); return t - (k * P + phase) < on; };
+// ------------------------------------------------------------------------------------------------ 6. sprite units
+// A sprite record {p, c, i, s} drawn by js/three/lights.js gives the eye illuminance E = i × LAMP_M × 0.408 s² / d² sky
+// units at the night calibration, i.e. i × 13.16 s² cd (js/three/renderer3.js LAMP_M = (20 lx / 6,665 lx per sky unit) /
+// 0.62; the core exp(−22 r²) integrates to 0.143 of the quad, divided by the shader's 1.6² × 0.35: 0.408; M, code read).
+// Physical records (phys: true) are drawn at that calibration day and night by renderer3 (lights.js `fixed`).
+export const CD_PER_LAMP_S2 = (133300 / 20) * ((20 / (133300 / 20)) / 0.62) * (0.143 / 0.35);
+// cap (lamp units): RGBA16F headroom of the old renderer's sprite pass, which draws lamp units unscaled (I; the step-3
+// pre-exposure lifts it). It only binds for landing lights pointing at the camera (> ~32,000 cd at s = 0.35).
+export const I_CAP = 20000;
+export const lampUnits = (cd, s) => Math.min(I_CAP, cd / (CD_PER_LAMP_S2 * s * s));
 export { DEG };

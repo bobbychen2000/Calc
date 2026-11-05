@@ -26,7 +26,8 @@
 // power on the ground (≥ 1 kt, not during pushback); logo lights are not drawn (no anchors on the models, photometry NV);
 // landing light 770,000 cd in 15° × 16° (Honeywell LED example for 737NG/757/767/777, spec §6, V for those types; NV for
 // others); taxi light 50,000 cd (parameter, NV: not regulated).
-import { clamp, flashGain } from './lighting/photometry.js';
+import { clamp, flashGain, lampUnits, opticalDepth, visibilityFactor } from './lighting/photometry.js';
+export { lampUnits };
 
 const DEG = Math.PI / 180;
 export const NAV_H = [[10, 40], [20, 30], [110, 5]];                      // 25.1391 forward red / green (V)
@@ -91,18 +92,21 @@ export function aircraftLightStates({ phase, ground, gs = 0, altAgl = 0, stale =
 }
 
 // ------------------------------------------------------------------------------------------------ sprites
-// Sprite intensity units (shared with js/env/lighting/airfield.js): a record {p, c, i, s} drawn by js/three/lights.js
-// gives the eye illuminance E = i × LAMP_M × 0.408 s² / d² sky units at the night calibration, i.e. i × 13.16 s² cd
-// (js/three/renderer3.js LAMP_M = (20 lx / 6,665 lx per unit) / 0.62, core integral 0.143 / 0.35 = 0.408; M, code read).
-export const CD_PER_LAMP_S2 = (133300 / 20) * ((20 / (133300 / 20)) / 0.62) * (0.143 / 0.35);
-export const I_CAP = 20000;   // lamp units: RGBA16F headroom of the old renderer's sprite pass (I; step 3 pre-exposure lifts it)
-export const lampUnits = (cd, s) => Math.min(I_CAP, cd / (CD_PER_LAMP_S2 * s * s));
-
+// Sprite intensity units: js/env/lighting/photometry.js lampUnits (cd -> lamp units at the night calibration).
 let viewer = null;
 /** The camera position for the direction-dependent intensities (set once per frame by js/live/app.js). */
 export function setLightViewer(p) { viewer = p; }
 export const lightViewer = () => viewer;
 let frameT = { prev: null, t: null };
+// Viewing conditions (spec §4.10, as for the airfield lights): EnvState slabs (optical depth), E_T and the day display
+// gain (js/env/lighting/airfield.js DAY_GAIN, I); null = no attenuation (tests).
+let viewEnv = null;
+/** Set from the EnvState once per environment update (js/live/app.js applyEnv): {slabs, ET, gain}. */
+export function setLightEnv(env, dayGain) {
+  if (!env) { viewEnv = null; return; }
+  const w = env.photocell ? env.photocell.asosNightW : 1;
+  viewEnv = { slabs: env.atm ? env.atm.slabs : null, ET: env.lightVis ? env.lightVis.ET : 6.99e-7, gain: Math.pow(dayGain ?? 1, 1 - w) };
+}
 /** Frame clock for the flash scheduler (seconds; set once per frame by js/live/app.js). */
 export function setLightFrame(t) { if (frameT.t !== t) { frameT.prev = frameT.t; frameT.t = t; } }
 
@@ -119,7 +123,16 @@ function angles(p, fwd, right, up) {
 export function aircraftSprites(L, axes, on, seed, t, gearDown = 1) {
   const S = []; const tPrev = frameT.t === t && frameT.prev != null ? frameT.prev : t - 1 / 60;
   const { fwd, right, up } = axes;
-  const put = (p, c, cd, s, extra) => { if (p && cd > 0) S.push({ p, c, i: lampUnits(cd, s), s, phys: true, ...extra }); };
+  const put = (p, c, cd, s, extra) => {
+    if (!p || !(cd > 0)) return;
+    let k = 1;
+    if (viewEnv && viewer) {                     // Allard visibility through the EnvState slabs (spec §4.10)
+      const d = Math.hypot(viewer[0] - p[0], viewer[1] - p[1], viewer[2] - p[2]) || 1;
+      const T = Math.exp(-opticalDepth(viewer, p, viewEnv.slabs, 3.3e-5)); const v = visibilityFactor(cd * T / (d * d), viewEnv.ET);
+      if (!(v > 0)) return; k = T * v * viewEnv.gain;
+    }
+    S.push({ p, c, i: lampUnits(cd * k, s), s, phys: true, ...extra });
+  };
   if (on.nav) {
     for (const [p, c, name] of [[L.navL, AV_RED, 'red'], [L.navR, AV_GREEN, 'green'], [L.tail, AV_WHITE, 'white']]) {
       if (!p) continue; const a = angles(p, fwd, right, up); put(p, c, navIntensity(name, a.az, a.el), 0.22, { nav: name });

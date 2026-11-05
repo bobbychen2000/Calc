@@ -4,9 +4,11 @@
 // the PNGs, numbers in docs/research/buildings3d.md), and the app's tower view (eye height, in-cab glass state of the loaded family).
 //   flock out/.heavy.lock env SOFTGL=1 W=960 H=540 OUT=out/buildings3d/app QS="mode=snapshot&res=1&b3donly=tower" \
 //     node livetest.mjs tools/blender/tower_app_job.mjs
-// VIEWS: ';'-separated name=t|look (t: ISO time of the environment clock or '-' to keep it; look: x,y,z,yaw,pitch,dist,fov as
-// SFO.qa.look, or 'towercam' for the app's tower view). Default: the t2 and t4 photo cameras at the photo times (F2 heights),
-// the airside view of the review (t2like) and the tower view. FRAMES: TRAA frames per view (default 8).
+// VIEWS: ';'-separated name=t|look[|mat] (t: ISO time of the environment clock or '-' to keep it; look: x,y,z,yaw,pitch,dist,fov
+// as SFO.qa.look, or 'towercam' for the app's tower view; mat: a material experiment for this shot only, e.g.
+// 'clad:metalness=0' or 'clad:color=0.85' on every tower material whose name starts with the prefix). Default: the t2 and t4
+// photo cameras at the photo times (F2 heights), the review's airside view at the snapshot time (t2like) and the tower view.
+// FRAMES: TRAA frames per view (default 8).
 // Output: <OUT>/tapp_<name>.png and <OUT>/tower_app_info.json (b3d info, tower anchors, towerPos / eyeY, camera, in-cab state).
 import fs from 'fs'; import path from 'path';
 const DEF = [
@@ -16,11 +18,11 @@ const DEF = [
   // t4: camera (-769.2, 248.6), 81.1 m at bearing 339.3, ~16.6 m (F2); target 38 m: dist 83.9, pitch -14.8; fov 44 -> 46
   't4=2025-08-12T16:10:05Z|-740.5,41,324.5,339.3,-14.8,83.9,46',
   // the review's airside view at the snapshot time (sun behind the camera)
-  't2like=-|-740.5,33,324.5,126.6,-5.5,193,30',
+  't2like=2026-09-23T17:51:00Z|-740.5,33,324.5,126.6,-5.5,193,30',
   'towercam=-|towercam',
 ];
 export default async ({ page, shot, base, OUT }) => {
-  const views = (process.env.VIEWS ? process.env.VIEWS.split(';') : DEF).filter(Boolean).map(v => { const i = v.indexOf('='); const [t, l] = v.slice(i + 1).split('|'); return [v.slice(0, i), t, l]; });
+  const views = (process.env.VIEWS ? process.env.VIEWS.split(';') : DEF).filter(Boolean).map(v => { const i = v.indexOf('='); const [t, l, m] = v.slice(i + 1).split('|'); return [v.slice(0, i), t, l, m || '']; });
   const t0 = Date.now();
   await page.goto(base + 'live3.html?' + (process.env.QS || 'mode=snapshot&res=1&b3donly=tower'));
   await page.waitForFunction(() => window.__sfoReady || window.__sfoError, null, { timeout: 900000 });
@@ -32,20 +34,26 @@ export default async ({ page, shot, base, OUT }) => {
     tower: await page.evaluate(() => SFO.R.b3d ? SFO.R.b3d.tower : null),
     towerPos: await page.evaluate(() => SFO.world.towerPos ? { xyz: [...SFO.world.towerPos], eyeY: SFO.world.towerPos.eyeY } : null), views: {} };
   console.log('ready', JSON.stringify(info));
-  for (const [name, t, l] of views) {
-    const r = await page.evaluate(([t, l]) => {
+  for (const [name, t, l, mat] of views) {
+    const r = await page.evaluate(([t, l, mat]) => {
+      const root = SFO.R.b3d && SFO.R.b3d.loaded.tower; window.__matUndo = [];
+      if (mat && root) { const [pre, kv] = mat.split(':'); const [k, v] = kv.split('='); const seen = new Set();
+        root.traverse(o => { const m = o.material; if (!o.isMesh || !m || seen.has(m) || !(m.name || '').startsWith(pre)) return; seen.add(m);
+          if (k === 'color') { window.__matUndo.push([m, 'color', m.color.clone()]); m.color.multiplyScalar(+v); }
+          else { window.__matUndo.push([m, k, m[k]]); m[k] = +v; } }); }
       if (t && t !== '-') { SFO.envCore.clock.overrideT = Date.parse(t); SFO.applyEnv(Date.now(), true); }
       if (l === 'towercam') { SFO.view('tower'); SFO.rig.anim && (SFO.rig.anim.t = 99); SFO.rig.update(0); }
       else { const a = l.split(',').map(Number); SFO.qa.look([a[0], a[1], a[2]], a[3], a[4], a[5], a[6] || 50); }
-      const st = SFO.env(); return { sun: st && st.sun ? { az: st.sun.az, el: st.sun.el } : null };
-    }, [t, l]);
+      const st = SFO.env(); return { sun: st && st.sun ? { az: st.sun.az, el: st.sun.el } : null, matChanged: window.__matUndo.length };
+    }, [t, l, mat]);
     const f0 = await page.evaluate(() => SFO.R.frames); const n = +(process.env.FRAMES || 8);
     await page.waitForFunction(([f, n]) => SFO.R.frames >= f + n, [f0, n], { timeout: 0, polling: 200 });
     const cam = await page.evaluate(() => { const c = SFO.R.engine && SFO.R.engine.camera; const b = SFO.R.b3d;
       return { pos: c ? c.position.toArray().map(v => +v.toFixed(2)) : null, inCab: b ? !!b._inCab : null, glassVisible: b && b.cabGlass.length ? b.cabGlass.map(o => o.material.visible) : null }; });
-    info.views[name] = { t, look: l, ...r, ...cam };
+    info.views[name] = { t, look: l, mat, ...r, ...cam };
     console.log(name, JSON.stringify(info.views[name]));
     await shot('tapp_' + name);
+    await page.evaluate(() => { for (const [m, k, v] of window.__matUndo || []) { if (k === 'color') m.color.copy(v); else m[k] = v; } window.__matUndo = []; });
   }
   fs.writeFileSync(path.join(OUT, 'tower_app_info.json'), JSON.stringify(info, null, 1));
 };

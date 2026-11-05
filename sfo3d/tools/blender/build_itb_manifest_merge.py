@@ -20,10 +20,11 @@ VIEWS = {
 
 def add_renders(done, args):
     lst = []
+    suf = getattr(args, 'suffix', '') or ''
     for v, r in done.items():
         if v not in VIEWS: continue
-        lst.append(dict(view=v, file='out/buildings3d/itb_%s.png' % v, what=VIEWS[v], samples=args.samples,
-                        note='local (out/ is gitignored); comparison sheets with photo pixels stay local'))
+        lst.append(dict(view=v + suf, file='out/buildings3d/itb_%s%s.png' % (v, suf), what=VIEWS[v] + (' (LOD%d)' % args.lod if getattr(args, 'lod', 0) else ''),
+                        samples=args.samples, note='local (out/ is gitignored); comparison sheets with photo pixels stay local'))
     with open(PATH + '.lock', 'a') as lf:
         fcntl.flock(lf, fcntl.LOCK_EX)
         cur = json.load(open(PATH)) if os.path.exists(PATH) else {}

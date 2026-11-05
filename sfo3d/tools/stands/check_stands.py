@@ -7,8 +7,10 @@ table and dock2 - and iterates over every ICAO designator the app knows. Two vie
   DATA   what the data specifies: every type the stand accepts (class limits, span_max / len_max, types_ok whitelist),
          each at its per-family stop point (type_stops, ADS-B evidence) - ISSUES here are defects of the data.
   APP    what js/live/traffic.js does with it (review round 4: the working tree of 25 Sep 2026). For SFO's own allocation
-         standFits(g, T, icao, strict=false) ignores types_ok, so every type within the class limits / span_max / len_max
-         (types.js spans, no winglets) can be put there; the A380 / 747-8 clause applies only on `a380` stands; aircraft
+         standFits(g, T, icao, strict=false) ignores types_ok - except where the data sets types_ok_all_paths (F19 / F20;
+         realtime round 2, 2026-11-05: traffic.js applies the whitelist on SFO's path there too) -, so every type within the
+         class limits / span_max / len_max (types.js spans, no winglets) can be put there; the A380 / 747-8 clause applies
+         only on `a380` stands; aircraft
          are placed at their per-family stop (stopAlong: type_stops). A pose short of the stop that would touch an occupied
          neighbour is sent to the stop at runtime (updatePark: tr.shortBlocked, set by GroundPhysics), so the old
          'stop-short' combinations are no longer checked. Bridges as rendered by js/live/gates.js (derived rotundas / rest

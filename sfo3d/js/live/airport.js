@@ -315,9 +315,11 @@ export function paintAirportMapReal(data, gates, res = APT_RECT.res, details = n
   // OSM landside (data/sfo_landside.js): at-grade roads (width from OSM width / lanes / class default) and surface car
   // parks; elevated roads' footprints and multi-storey garages count as paved ground only (not asphalt road paint)
   // static close-out (2026-11-04): airside_paths = the infield / perimeter vehicle paths (OSM access=no on the airfield),
-  // concrete, width and position measured on NAIP 2024 by tools/build_landside.py - paved + concrete, never asphalt;
-  // paths NAIP does not show (drawn false) add nothing
-  const airsidePaths = () => { for (const r of LANDSIDE.airside_paths || []) if (r.drawn && r.w) lineW(r.pts, r.w); };
+  // width and position measured on NAIP 2024 by tools/build_landside.py (narrow bands and, round 3, the wide asphalt
+  // perimeter / service roads); paths NAIP does not show (drawn false) add nothing. Round 3 (2026-11-05, review static r2
+  // v1): the concrete layer takes only `material` 'concrete' (OSM surface=concrete, or untagged = inferred); OSM
+  // surface=asphalt paths are paved asphalt
+  const airsidePaths = (concOnly) => { for (const r of LANDSIDE.airside_paths || []) if (r.drawn && r.w && (!concOnly || (r.material || 'concrete') === 'concrete')) lineW(r.pts, r.w); };
   const landsidePave = () => { for (const r of LANDSIDE.roads) lineW(r.pts, r.w); for (const p of LANDSIDE.parking) { pathRings([p.pts]); cx.fill(); } airsidePaths(); };
   const landsideCat = () => {
     cx.fillStyle = cx.strokeStyle = '#fff'; for (const r of LANDSIDE.roads) if (!r.elevated) lineW(r.pts, r.w);
@@ -353,6 +355,10 @@ export function paintAirportMapReal(data, gates, res = APT_RECT.res, details = n
     // crossing of 1L / 1R, FAA AL-375 cycle 2611) are not paved
     const retired = new Set(((details && details.pavementRetired) || []).filter(r => r.layer === 'taxiways').map(r => r.name + '#' + r.poly));
     for (const t of data.taxiways) t.polys.forEach((poly, i) => { if (retired.has(t.name + '#' + i)) return; pathRings(poly); cx.fill('evenodd'); cx.lineWidth = 3.0 / res; cx.stroke(); });
+    // round 3 (2026-11-05): PARTS of SFO Museum taxiway polygons that no longer exist (details.pavementRetiredParts: the
+    // western remainder of the old J, an island on FAA AL-375 cycle 2611) are cut out of the taxiway pavement just drawn
+    const parts = (details && details.pavementRetiredParts) || [];
+    if (parts.length) { cx.fillStyle = '#000'; for (const r of parts) { pathRings([r.ring]); cx.fill(); } cx.fillStyle = '#fff'; }
     for (const r of data.runways) for (const poly of r.polys) { pathRings(poly); cx.fill('evenodd'); }
     landsidePave();
     // blast pads / EMAS beds beyond the runway ends, and the paved islands carrying the green no-taxi paint
@@ -364,7 +370,7 @@ export function paintAirportMapReal(data, gates, res = APT_RECT.res, details = n
   const conc = layer(() => {
     apron(); if (!details) APRONS.filter(a => a.conc && farFromTerminal(a)).forEach(a => { polyST(a.pts); cx.fill(); });
     const P2 = extra.pavement; if (P2) P2.polys.forEach((poly, i) => { if (P2.conc && P2.conc[i]) { pathRings(poly); cx.fill('evenodd'); } });
-    airsidePaths();
+    airsidePaths(true);
   });
   const wear = layer(() => {
     // tyre and oil wear on the surveyed stands: nose-gear track along the lead-in line, stains under the main gear

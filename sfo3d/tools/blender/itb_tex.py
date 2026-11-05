@@ -102,7 +102,7 @@ def frit(path, size=256):
     j = (_dist(u, 1.8) < 0.025).astype(float)
     base_w, base_c = np.array([214, 218, 220.0]), np.array([92, 104, 110.0])
     col = base_c[None, None, :] + (base_w - base_c)[None, None, :] * band[..., None]
-    col = col * (1 - 0.35 * j[..., None])
+    col = col * (1 - 0.15 * j[..., None])     # pane joints faint (review r1: horizontal structure dominates, photos i3 / i4)
     Image.fromarray(np.clip(col, 0, 255).astype(np.uint8), 'RGB').save(path, optimize=True)
     return path
 
@@ -118,12 +118,14 @@ def frit_normal(path, size=512):
 
 
 def curtain_gate(path, glass_rgb, size=512, cap_rgb=(150, 156, 160)):
-    """BA-G gate-room curtain wall tile (15.9 x 10.1 m, UV origin at the bay start / glazing foot): heavy mullion 0.30 m at
-    u 0, light 0.12 m at u 7.95, transoms 0.08 m every 10.1 / 6 m, floor band 0.35 m at mid-height (photo a2) [obs, low]."""
+    """BA-G gate-room curtain wall tile (15.9 x 10.1 m, UV origin at the bay start / glazing foot), read on photo a2 [obs, low]:
+    the verticals dominate - heavy mullion 0.36 m at the bay edge, 0.16 m at mid-bay - with a head transom 2.3 m below the top;
+    the other transoms (every 10.1 / 6 m, 0.05 m) and the floor band at mid-height (0.2 m) are faint (half contrast)."""
     tu, tv = TILES['itb_c_curtain_gate']
     u, v = _grid(size, size, tu, tv)
-    cap = ((_dist(u, tu) < 0.15) | (np.abs(u - tu / 2) < 0.06) | (_dist(v, tv / 6) < 0.04) | (np.abs(v - tv / 2) < 0.175))
-    cap = cap.astype(float)
+    strong = (_dist(u, tu) < 0.18) | (np.abs(u - tu / 2) < 0.08) | (np.abs(v - (tv - 2.3)) < 0.07)
+    faint = (_dist(v, tv / 6) < 0.025) | (np.abs(v - tv / 2) < 0.10)
+    cap = np.where(strong, 1.0, np.where(faint, 0.5, 0.0))
     col = np.array(glass_rgb, float)[None, None, :] * (1 - cap[..., None]) + np.array(cap_rgb, float)[None, None, :] * cap[..., None]
     Image.fromarray(np.clip(col, 0, 255).astype(np.uint8), 'RGB').save(path, optimize=True)
     return path

@@ -17,25 +17,26 @@ Common conventions (shared by the groups):
 
 ---------------------------------------------------------------------------------------------------------------------
 
-## International Terminal: main hall, Boarding Areas A and G (key `itb`, 4 Nov 2026)
+## International Terminal: main hall, Boarding Areas A and G (key `itb`, 4 Nov 2026; review round 1 5 Nov)
 
 ```bash
 python3 tools/blender/build_itb.py          # ~2.5 min: geometry, textures, AO bake (2048 + 512), export, verification, manifest
 python3 tools/blender/verify_itb.py         # numbers only, reads the glb back (no bpy) -> out/buildings3d/itb_verify.json
-python3 tools/blender/render_itb.py --views west,i4,i3,baa,bag,plan     # Cycles references, ~4 min at 48 spp
+python3 tools/blender/render_itb.py --views west,i4,i3,a2g,baa,bag,plan # Cycles references, ~3 min at 48 spp
+python3 tools/blender/itb_a2_solve.py       # camera of photo a2 (BA-G NNE face) from 10 picks -> out/buildings3d/itb_a2_camera.json
 python3 tools/blender/ao_view_itb.py        # QA view of the baked AO (emission of the occlusion texture)
-python3 tools/blender/ao_view_itb.py --backface --lod 0   # back faces red: the asset is single-sided
+python3 tools/blender/ao_view_itb.py --backface --lod 0 --views i4,i3,a2g,bag,east,top,baa   # back faces red (single-sided)
 ```
 
 | File | Role |
 |---|---|
 | `tools/blender/itb_geom.py` | Geometry (numpy / shapely, no bpy). Imports `tools/buildings/draw_itb.py` / `draw_data.py`: the drawn functions are the reference, not copies. |
-| `tools/blender/itb_tex.py` | Our procedural tiles: normal maps (membrane seams, panel joints, curtain-wall caps), frit and curtain-wall base colours |
+| `tools/blender/itb_tex.py` | Our procedural tiles: normal maps (membrane seams, panel joints, curtain-wall caps, frit transoms), frit, curtain-wall and BA-G gate-room base colours |
 | `tools/blender/build_itb.py` | bpy build, NAIP roof-colour sampling, AO bake, glTF export, manifest |
 | `tools/blender/itb_manifest.py`, `build_itb_manifest_merge.py` | Manifest entry (tags, inferred / unknown / conflicts, budgets); render list |
-| `tools/blender/verify_itb.py` | 92 checks against the sheets and the plausibility rules |
-| `tools/blender/render_itb.py`, `ao_view_itb.py` | Reference renders of the exported glb; AO and back-face QA views |
-| `data/buildings3d/itb.glb` (5.62 MB), `itb_lod2.glb` (0.48 MB) | The asset; the LOD2 subtree alone for the far / phone tier |
+| `tools/blender/verify_itb.py` | 110 checks against the sheets and the plausibility rules |
+| `tools/blender/render_itb.py`, `ao_view_itb.py`, `itb_a2_solve.py` | Reference renders of the exported glb; AO and back-face QA views; the photo-a2 camera solve |
+| `data/buildings3d/itb.glb` (6.00 MB), `itb_lod2.glb` (0.56 MB) | The asset; the LOD2 subtree alone for the far / phone tier |
 
 **Placement.** Root `itb` at world (−1244.555, 3.0, 365.405), the relief-corrected roof centre (`draw_itb.F`, frame-model
 corners of `roof.corners_obs`). Roof frame: u along heading 162.85° (+ towards BA-A), v across (+ ENE).
@@ -44,16 +45,16 @@ corners of `roof.corners_obs`). Roof frame: u along heading 162.85° (+ towards 
 
 | Node | Source | Notes |
 |---|---|---|
-| `hall_roof` | obs | 252.87 × 65.40 m slab on the spec corners; top = `roof_line(u)` (BI-02: notches 35.7, humps 40.08, crown 40.1, tips 34.4 held non-increasing); flat across (camber unknown); 0.6 m deck + fascia [inf]; glazed tip bands 18.75 / 15.75 m set 1.6 / 3.6 m inside the fascia [obs]; 5 glazed truss-line strips 1.5 m [obs, rough]; 5 lens skylights from `lens_poly` (size obs, pointed-lens planform inf); dark soffit (photo i3) |
+| `hall_roof` | obs | 252.87 × 65.40 m slab on the spec corners; silhouette = `roof_line(u)` (BI-02: notches 35.7, humps 40.08, crown 40.1, tips 34.4 held non-increasing); flat across (camber unknown); 0.6 m deck + fascia [inf]; glazed tip bands 18.75 / 15.75 m set 1.6 / 3.6 m inside the fascia [obs]; 5 glazed truss-line strips 1.5 m [obs, rough]; 5 lens skylights from `lens_poly` (size obs, pointed-lens planform inf) **raised as vaults 1.9 m above the deck**, the centre deck / fascia `crown_cap(u)` (1.5 m at the lens row's middle, 0 at the lens ends) below `roof_line`, so the dark lens glass forms the crown silhouette as in photos i4 / i2 (review r1; cap obs i4, rise / form inf); dark soffit (photo i3) |
 | `hall_trusses` | inf | 5 three-chord trusses on the truss lines (12.12 m [obs]); depth 29 ft over the supports [pub] with the BI-03 taper; webs on the 20-ft grid offset 10 ft (it carries the column lines and the canopy hangers) |
 | `hall_columns` | inf | 20 columns (5 lines × ±190 / ±270 ft); the west line 2.5 m in front of the glass, branching into 5 members (count obs, i3 / i4) |
 | `hall_outriggers` | inf | eave outriggers under the soffit at every truss node (photo i3) |
-| `hall_west_wall`, `hall_mullions` | inf / obs | wall at v −25.8 (middle of the band −28.3..−23.3) over the 705-ft hall [pub]; L3 11.5, head 30.8 [obs photo], clear central bay ±40 m with its head 2 m higher [obs, tentative]; fritted side bays; mullions on the 20-ft grid, transoms 2.2 m [obs, low]; upper glazing behind the exposed west truss (photo i3) |
-| `hall_lettering` | obs | "SAN FRANCISCO INTERNATIONAL", 66 × 2.8 m at 25.8–28.6 m (BI-02 box); font inf (Blender built-in) |
+| `hall_west_wall`, `hall_mullions` | inf / obs | wall at v −25.8 (middle of the band −28.3..−23.3) over the 705-ft hall [pub]; L3 11.5, head 30.8 [obs photo], clear central bay ±40 m with its head 2 m higher [obs, tentative]; fritted side bays (horizontal 0.9-m frit bands, own normal tile `itb_n_frit`); mullions on the 20-ft grid, transoms 2.2 m [obs, low]; upper glazing behind the exposed west truss (photo i3); LOD1 keeps the mullions (west + end walls joined) |
+| `hall_lettering` | obs | "SAN FRANCISCO INTERNATIONAL", 66 × 2.8 m at 25.8–28.6 m (BI-02 box); font inf (Blender built-in); LOD1: flat, coarse curves (276 tris vs 3,812) |
 | `hall_canopy`, `hall_hangers`, `hall_curb` | inf / obs | canopy L3 + 5 m, 5 m deep [inf; exists pub]; hangers / posts at `HANGER_U` (40-ft grid + ±30 / ±90 ft) [obs photo i4]; 7-m curb at L3 [inf] |
 | `hall_end_walls`, `hall_east_clerestory`, `hall_podium` | inf / unk | end curtain walls at ±107.4 m up to the roof (outline unk); east clerestory 1 m inside the east eave; levels 1–2 as faces only |
 | `itb_core` | unk | SFO Museum ITB outline − piers − hall: east block and north / south bars, **17.9 m placeholder** (no source) |
-| `ba_a_body`, `ba_g_body` | obs | SFO Museum outlines at 17.9 / 17.0 m [obs]; 1 m parapet [inf]; gate-room glazing 5.2–17.2 m (a2) centred on the bridge attach points, 24 m wide [inf] |
+| `ba_a_body`, `ba_g_body` | obs | SFO Museum outlines at 17.9 / 17.0 m [obs]; 1 m parapet [inf]. **BA-G (review r1, photo a2 = its NNE face, camera solved):** the 10 bridge-head bump-outs of the outline are 6.5-m boxes [obs a2, low]; the two-storey gate-room curtain walls (4.6–14.7 m, 63.5 m wide, `glass_gate` with the a2 mullion rhythm) fill the main-face segments between the bump-outs that a roof pod overlaps by ≥ 35 m: 6 rooms = the "six double-gated gate rooms" [pub] (NNE face obs, SSW face and G3 inf); dark apron level 0–3.0 m and a light band to 4.6 m [obs a2]. **BA-A:** no reference photo (a2 is BA-G): the round-0 bays (24 m centred on the bridge attach points) stay as placeholders [unk], with the BA-G band heights [inf] |
 | `ba_a_pods`, `ba_g_pods`, `ba_g_box` | obs (low) | `itb_pods.json` rings (relief-corrected NAIP traces) to tops 23.6 / 23.6 / 23.3 and 22.4 / 22.2 / 23.2 m; the G3 end box to 32.0 m with a window band and antennas (schematic, photo d2; function inf) |
 
 **Two deliberate choices where the sheets are inferred and disagree** (both in the manifest):
@@ -68,25 +69,32 @@ corners of `roof.corners_obs`). Roof frame: u along heading 162.85° (+ towards 
 
 | LOD | switch | triangles | draw calls | content |
 |---|---|---|---|---|
-| 0 | < 450 m | 59,497 | 50 | everything; trusses 8-sided chords with webs (36k tris), mullions, lettering, antennas |
-| 1 | 450–1600 m | 28,547 | 46 | shared shells (same meshes / atlas as LOD0); 4-sided trusses, lighter columns and hangers |
-| 2 | > 1600 m | 3,728 | 19 | one joined node (8-m roof stations, simplified outlines), own 512-px atlas; also `itb_lod2.glb` |
+| 0 | < 450 m | 64,344 | 50 | everything; trusses 8-sided chords with webs (36k tris), mullions, lettering, antennas; lens vaults (+4k) |
+| 1 | 450–1600 m | 34,976 | 48 | shared shells (same meshes / atlas as LOD0); 4-sided trusses, lighter columns (all 20) and hangers, mullions (one node), flat lettering |
+| 2 | > 1600 m | 5,256 | 19 | one joined node (8-m roof stations, coarse lens vaults, BA-G bump-outs, simplified outlines), own 512-px atlas; also `itb_lod2.glb` |
 
 Textures (PNG, embedded): AO atlas A 2048² (2.06 MB; LOD0 / LOD1 shells, 48 spp, 10-m rays, ground plane, white outside
-the islands so mip levels do not bleed black), AO atlas B 512² (0.16 MB); tiling normal maps 512² (membrane, panels,
-curtain caps; 2–28 kB); base colours 256–512² (frit, three curtain-wall glasses). Glass is coated (IOR 1.9 → F0 0.096:
+the islands so mip levels do not bleed black; the thin mullion fins and the lettering are left out of the occluders since
+review r1 - below the texel they baked ~1-m dark bands beside every mullion), AO atlas B 512² (0.16 MB); tiling normal maps
+512² (membrane, panels, curtain caps, frit transoms; 2–28 kB); base colours 256–512² (frit, two curtain-wall glasses, the
+BA-G gate-room wall). Glass is coated (IOR 1.9 → F0 0.096:
 `KHR_materials_ior`, which Blender's exporter writes only together with `KHR_materials_specular`, here specularFactor
 0.998; the IOR is also in the material extras) and opaque; `glass_hall` carries the brightness of the lit hall behind the
 clear bay. Materials are single-sided (`doubleSided` false): every face is wound outwards, checked by the back-face QA
-render (0 red pixels in 5 views × 3 LODs, after capping the open truss-chord ends). No TANGENT attribute (saves 1.3 MB; the validator's
+render (0 red pixels in 7 views × 3 LODs, after capping the open truss-chord ends; r1: the new NNE view found the glass-head
+closure wound inwards since round 0 - fixed - and the wall tops now end 0.1 m inside the deck, as the soffit is piecewise
+linear between the roof stations; the AO view `under` stands inside the core block and is not a back-face view). No TANGENT attribute (saves 1.3 MB; the validator's
 generated-tangent warning is accepted). Khronos glTF-Validator 2.0.0-dev.3.10: **0 errors** on both files.
 
-### Verification (verify_itb.py: 92 checks, 0 failed; tolerance 0.5 m or 2 %)
+### Verification (verify_itb.py: 110 checks, 0 failed; tolerance 0.5 m or 2 %)
 
 - Placement exact; roof extent 252.872 × 65.397 m = the drawing; corners within 0.001 m of `roof.corners_obs`.
-- Roof top vs `roof_line(u)` at all 4,380 top vertices: max 0.000 m (the mesh is sampled on the function). At the named
-  stations: crown 40.10, notch 35.79 (station 0.5 m off the notch), hump 40.07, |u| 100 36.33 (36.40), tip 34.40.
-- Rendered silhouette (orthographic west render, 0.28 m/px) vs `roof_line`: wings max 0.21 m, mean −0.02 m; centre 0.15 m.
+- Roof deck vs `roof_line(u) − crown_cap(u)` at all 4,507 deck vertices: max 0.000 m (the mesh is sampled on the function).
+  At the named stations: crown deck 38.60 (silhouette 40.1 − cap 1.5), notch 35.79 (station 0.5 m off the notch), hump
+  40.07, |u| 100 36.33 (36.40), tip 34.40. Lens vault rise 1.90-1.91 m (5 lenses); centre silhouette (vault tops) vs
+  `roof_line` within 0.46 m (|u| ≤ 20).
+- Rendered silhouette (orthographic west render, 0.28 m/px) vs `roof_line`: wings max 0.21 m, mean −0.02 m; centre 0.43 m
+  (the lens tops seen horizontally, up to 0.4 m above the line they form from the i4 camera 2.7° below).
 - Tip bands 18.75 / 15.75 m at 1.6 / 3.6 m; strips on the truss lines (0.00 m); lenses: length, width, centre within
   0.06 m, planform within 0.02 m of `lens_poly`.
 - Trusses: bottom chords over the supports within 0.001 m of BI-03 (west: of the chosen max line); 20 columns at
@@ -94,8 +102,10 @@ generated-tangent warning is accepted). Khronos glTF-Validator 2.0.0-dev.3.10: *
 - West wall v −25.768, foot 11.5, head 30.8, central head 32.8, ±40 m bay, 214.88 m long, glazed area 4,281.3 m² = the
   drawn outline (this check was added after the back-face QA found the entrance band built as triangles - fixed);
   canopy 16.5 / 5.0 m; lettering 66.0 × 25.8–28.6 m.
-- Piers 17.9 / 17.0 m; footprints = the SFO Museum outlines (area difference 0.001 m², 0 m² outside); all six pod tops and
-  the box top (32.0) exact; pod plans = the NAIP traces (none needed clipping).
+- Piers 17.9 / 17.0 m; footprints = the SFO Museum outlines (area difference 0.001 / 1.6 m², 0 m² outside); all six pod
+  tops and the box top (32.0) exact; pod plans = the NAIP traces (none needed clipping). BA-G: 10 bump-outs at 6.5 m, 6 gate
+  rooms, curtain walls 4.6–14.7 m filling their segments (max 0.02 m short); BA-A placeholder glazing 4.6–14.7 m.
+- LOD1 holds `L1_hall_lettering` (66.0 m wide, 276 tris) and `L1_hall_mullions`.
 - **Plausibility.** The airside footprint of every LOD lies inside the SFO Museum terminal / boarding-area outlines that
   `tools/stands/check_stands.py` tests all stands and bridges against (0 m² outside), so its results carry over: the nearest
   A / G stand envelope (app planforms, all accepted types) is 5.35 m away (G7; criterion ≥ 2.0 m); no SFO Museum taxiway
@@ -109,21 +119,37 @@ generated-tangent warning is accepted). Khronos glTF-Validator 2.0.0-dev.3.10: *
 | View | Compared with | Reading |
 |---|---|---|
 | `itb_west.png`, `itb_cmp_west.png` | BI-02 V1 lines drawn over the render | roof line, truss chord, glass head, canopy, L3, column and hanger stations fall on the drawing |
-| `itb_i4.png`, `itb_cmp_i4.png` | photo i4 | two wings and the crown, exposed trusses, column fans, fritted side bays, clear central bay with the lettering, canopy line: reads as the building. The photo's crown reads darker (lens glass seen at grazing angle); the departures roadway in front is not part of this asset |
-| `itb_i3.png`, `itb_cmp_i3.png` | photo i3 | column + fan, exposed truss over the head, dark soffit with outriggers, canopy with hangers, the centre arch at the notch. Photo columns look thicker (~2 m) than the drawn 1.5 m: kept to the drawing |
-| `itb_baa.png` | photo a2, BI-04 V2 | flat-topped pods on the pier roof, glazed gate-room bays with a mullion grid, dark apron level |
-| `itb_bag.png` | photo d2, BI-04 V1 | the pod-3 end box with its window band and antennas |
+| `itb_i4.png`, `itb_cmp_i4.png`, `itb_i4_lod1.png` | photo i4 | two wings and the crown capped by dark lens glass (r1), exposed trusses, column fans, fritted side bays with horizontal bands, clear central bay with the lettering (also at LOD1), canopy line; the departures roadway in front is not part of this asset |
+| `itb_i3.png`, `itb_cmp_i3.png` | photo i3 | column + fan, exposed truss over the head, dark soffit with outriggers, canopy with hangers, the centre arch at the notch, horizontal frit bands |
+| `itb_a2g.png`, `itb_cmp_a2g.png`, `itb_a2g_lod1.png` | photo a2 (solved camera, r1) | the BA-G NNE face: pods G1 / G2, the two gate-room curtain walls and the three low bump-outs land on the photo's (bays 528–798 / 0–195 px vs 527–797 / 0–187 at 960 px) |
+| `itb_baa.png` | BI-04 V2 (no photo of BA-A) | flat-topped pods on the pier roof, placeholder glazed bays at the bridge heads, dark apron level |
+| `itb_bag.png` | photo d2, BI-04 V1 | the pod-3 end box with its window band and antennas; the BA-G gate rooms and low bump-outs |
 | `itb_plan.png` | BI-01 V2 / NAIP | north-up plan: tip bands, strips, lenses, core and bars as imaged |
 | `itb_ao_*.png` | — | AO: soffit near the walls, under the canopy, curb and pod bases; no leaks seen |
-| `itb_bf_*.png` | — | back-face QA (i4, i3, baa, east, top × LOD0-2): 0 red pixels |
+| `itb_bf_*.png` | — | back-face QA (i4, i3, a2g, bag, east, top, baa × LOD0-2): 0 red pixels |
 
 ### Open items (also in the manifest's `unknown` / `conflicts`)
 - The ITB core block height (17.9 m placeholder) and its facades; the AirTrain stations at ITB level 4 inside the bars
   and the guideway are not modelled here (landside group / integration).
 - The 2024–26 roof (new membrane, ~1.4 MW PV) is not imaged; the asset shows the NAIP 2024 roof.
 - Conflicts carried from the sheets: 860 ft vs 252.9 m length; the 210-ft hall width; BA-A pod 1 NAIP 23.6 vs DOF 25.91 m.
-- LOD1 has 46 draw calls (shared shells, one primitive per material per node): merge per material at load time on phones.
-- Integration (js/three loader, replacing `terminals.js` greatHall / pier extrusions) is not part of this step.
+- LOD1 has 48 draw calls (shared shells, one primitive per material per node): merge per material at load time on phones.
+- **BA-A facades have no reference photo** (round 0 compared BA-A with a2, which shows BA-G): its glazing is a placeholder.
+  A Commons search (2026-11-05, rate-limited) found no exterior photo identifiable as BA-A; an owner photo of the BA-A apron
+  faces (WNW / ESE) would settle it. BA-A's pods sit over its bump-outs, so the BA-G rule does not transfer.
+- The two isolated 2-lite windows per panel segment of the BA-G NNE face (a2) are not modelled.
+- `data/buildings3d/integration.json` records the itb.glb sha1 of the integration run; re-run `tools/blender/b3d_integrate.py`
+  (integration owner) to refresh it - the plan footprint is unchanged, so its physics / plausibility tables stay valid.
+
+### Review round 1 (2026-11-05): dispositions
+
+| # | Finding | Disposition | Evidence / change |
+|---|---|---|---|
+| 1 | frit bays show ~1-m vertical stripes; "UVs turned 90°" | **fixed; the cause was not the UVs** | glb TEXCOORD_0 of `glass_frit`: u = along / 3.6 m (0.212 over 0.762 m), v = height / 3.6 m (3.556 over 12.8 m), the base tile has horizontal bands (row-mean std 46 vs column 12) - so the mapping was right. The stripes came from (a) the `itb_n_curtain` normal tile reused on the frit's 3.6-m tile: its 1.524-m verticals land every 0.9 m (near Nyquist at 330 m in the app: moiré), (b) the AO bake: the 0.4-m mullion fins darkened ~1-m bands beside every mullion (and on LOD1, which shares the atlas, even without mullions), (c) 35 % pane-joint lines in the base tile. Now: own `itb_n_frit` (horizontal transom caps, 4-mm verticals), mullions / lettering out of the AO occluders, joints 15 % |
+| 2 | piers read as blank boxes with small square glazed bays | **fixed (BA-G, obs); BA-A placeholder** | a2 re-measured with the solved camera (8.6 px/m at the facade): BA-G curtain walls fill the segments between the bump-outs under the pods, 63.6 × 10.1 m (4.6–14.7 m), bump-outs 6.5 m; 6 gate rooms. **Not done: the "continuous concourse window band"** - a2 shows none on BA-G (only two 2-lite windows per panel segment); the long green band in a2 is the building beyond the south apron (Garage G / BART station, landside asset) |
+| 3 | the BA-A check used a photo of BA-G | **valid; fixed** | `itb_a2_solve.py`: bearings of 5 features put the camera NNE of BA-G looking 203° (residuals ≤ 16 px), the 3-D fit (10 picks) gives x −1059.7, z −614.2, h 163.4 m, f 6,780 px (127 mm eq.), picks within 16.7 px mean; new view `a2g` (+ LOD1); `baa` is now render-only (no BA-A photo found) |
+| 4 | crown reads white from the curb; columns thinner than i3 | **crown fixed; columns kept** | i4: dark cap 10 px at 6.72 px/m = 1.5 m above the white fascia → lens vaults (1.9 m rise) and the cap; the crown now reads dark blue-grey in `itb_i4.png`. Columns: on i4 (frontal, 6.72 px/m at the wall), the two columns crossing the dark entrance glazing measure 9.3 / 10.3 px at half maximum and 12-13 px to the dark limb = 1.4-1.9 m, i.e. 1.6 ± 0.2 m: the drawn 1.5 m holds (inside the 0.5-m tolerance). i3's "~2 m" is perspective: its column stands 2.5 m in front of the wall, much nearer the camera than the wall it is compared with |
+| 5 | LOD1 drops lettering, mullions, eastern columns | **fixed** | LOD1 now has the flat lettering (276 tris), the mullions (west + end walls, one node, 858 tris) and all 20 columns (720 tris); +6.4k tris and +2 draw calls at LOD1. The inner columns stand inside the opaque envelope (not visible from outside) but the LOD sets now match |
 
 <!-- tower:begin (written by tools/blender/build_tower.py) -->
 ## Control tower (ATCT 2016) and base building: `data/buildings3d/tower.glb`
@@ -145,12 +171,12 @@ python3 tools/blender/tower3d_verify.py data/buildings3d/tower.glb 2   # re-meas
 | LOD1 | 350-1200 m | 10,591 / 10,895 | 1024 px | 136 columns, flat slots, dark seam joints, 24-facet cab, 15 whips + red light, plain base building with parapet |
 | LOD2 | > 1200 m; phone (`tower_lod2.glb`, F2) | 2,365 / 2,499 | 512 px | 68 columns, flat slots, 12-facet cab, 15 whips (3-sided) + red light, base building as a box |
 
-Files: `tower.glb` (F2) 3.36 MB, `tower_f1.glb` 3.46 MB, `tower_lod2.glb` (F2) 0.24 MB (PNG textures; KTX2 / meshopt later with `tools/engine/glb_compress.mjs`). Materials are PBR (our choices for the published "SFO Silver" ACM, glass, panels; `extras.src` on every material). The cladding carries a procedural base-colour + normal tile on TEXCOORD_0 (`tools/blender/tower_tex.py`, 4 joints x 2 panel rows per tile): dark helical and row joint lines (5 cm, ~0.42 x the panel tone at the centre) and a +-3 % tone per panel, mip-mapped (no moire); the two circumferential seams are dark 0.10-m joint bands flush in the shell. The cab glass is tinted and see-through (alpha 0.5, double-sided, the far-side panes and the sky show through) with light 6-cm pane joints. Sun-independent AO baked by Cycles (48 samples, 8 m rays, ground plane as occluder). Every other surface is single-sided and wound outwards (back-face audit renders).
+Files: `tower.glb` (F2) 3.36 MB, `tower_f1.glb` 3.46 MB, `tower_lod2.glb` (F2) 0.24 MB (PNG textures; KTX2 / meshopt later with `tools/engine/glb_compress.mjs`). Materials are PBR (our choices for the published "SFO Silver" ACM, glass, panels; `extras.src` on every material). The cladding carries a procedural base-colour + normal tile on TEXCOORD_0 (`tools/blender/tower_tex.py`, 4 joints x 2 panel rows per tile): dark helical and row joint lines (6.5 cm, 0.35 x the panel tone at the centre) and a +-5 % tone per panel, mip-mapped (no moire); the two circumferential seams are dark 0.10-m joint bands flush in the shell. The cab glass is tinted and see-through (alpha 0.5, double-sided, the far-side panes and the sky show through) with light 6-cm pane joints. Sun-independent AO baked by Cycles (48 samples, 8 m rays, ground plane as occluder). Every other surface is single-sided and wound outwards (back-face audit renders).
 
 **Verification** (`out/buildings3d/tower_verify.json`, measured on the exported GLB against the sheet functions):
 - F2 (default): 110/110 checks within tolerance; tris {0: 33443, 1: 10591, 2: 2365}; plausibility clear of aircraft envelopes, bridges and taxilanes; the app's T2 hall / BA-D walkway parts overlap the base-building footprint (integration: cut them)
 - F1: 110/110 checks within tolerance; tris {0: 34532, 1: 10895, 2: 2499}; plausibility clear of aircraft envelopes, bridges and taxilanes; the app's T2 hall / BA-D walkway parts overlap the base-building footprint (integration: cut them)
-- largest deviation of a length: 0.362 m (tolerance 0.5 m / 2 %); 0 failures.
+- largest deviation of a length: 0.047 m (tolerance 0.5 m / 2 %); 0 failures.
 - Khronos glTF-Validator F1: 0 errors, 0 warnings, 37 infos (info:UNUSED_OBJECT); F2: 0 errors, 0 warnings, 37 infos (info:UNUSED_OBJECT)
 - plausibility (F2): clear of aircraft envelopes, bridges and taxilanes; the app's T2 hall / BA-D walkway parts overlap the base-building footprint (integration: cut them); nearest aircraft envelope 15.6 m (C3), bridge 37.2 m, taxiway centreline 85.3 m.
 
@@ -159,6 +185,17 @@ Files: `tower.glb` (F2) 3.36 MB, `tower_f1.glb` 3.46 MB, `tower_lod2.glb` (F2) 0
 **Renders** (Cycles CPU, 64 samples + OIDN, AgX; ours; of the default family F2): `out/buildings3d/tower_A.png`, `tower_B.png` (the BT-02 elevations, orthographic; `tower_overlay_A/B.png` carry the sheet outlines in red), `tower_t2.png`, `tower_t3.png`, `tower_t4.png` (camera-matched to the reference photos t2 / t3 / t4, Famartin 2025, CC BY-SA 4.0; per family the focal length follows the rim width in pixels and the camera height the angle below the rim; side-by-side comparisons `tower_compare_*.jpg` stay local).
 
 **Observed vs inferred.** Per dimension in `manifest.json#tower.dimensions`; lists `inferred`, `unknown`, `not_modelled`, `conflicts` there. Node extras carry `src`, the spec keys and per-feature tags.
+
+**Review round 1 (2026-11-05).**
+- 1 (major) cladding read as flat grey plastic, seams as light raised bands - FIXED: procedural base-colour + normal tile (4 joints x 2 rows per tile) with dark helical and row joint lines; the two seams are dark 0.10-m joint bands flush in the shell (the light 0.03-m-proud band is withdrawn); material seam 98 / clad 150 sRGB (was 196 / 149).
+- 2 (major) NE blade spike above the flare rim - FIXED in the sheet first (draw_tower.NE_TIP = 0, BT-02 redrawn: flush with the flare corner and the ribbon head, photos t3 / t4 / t5 re-read), then in 3-D: prow top = flare corner, F2 55.93 m (F1 58.90; was 61.7 F1), verify check "NE blade top"; the blade tops are flat where they stand outside the round body (the flare-deck shoulder starts inside it; a first rebuild had a sunlit 0.3-m facet rising from the prow tip in the t4 render).
+- 3 (major) cab an opaque black band - FIXED: tinted see-through glass (alpha 0.5, teal-grey; far-side panes and sky show through) with light 6-cm joints; glass / sky: Cycles t2 0.25 (photo 0.28), t3 0.16 (photo 0.10).
+- 4 (major) shaft as bright as the sky in the app - CHECKED, albedo kept (see the integration numbers).
+- 5 (minor) upper slots too wide / long slot right of centre - FIXED width and phase in the sheet (SLOT_W 1.4 -> 0.95 m, SLOT_PHASE 124 -> 127, t1 + t2 together); the long-slot offset is REJECTED: at the same three rows the t2 photo reads u/R +0.37 / +0.12 / -0.07, the render +0.34 / +0.07 / -0.11 (within 0.05 = ~3 deg); the review compared different rows.
+- 6 (major) red obstruction light only in LOD0, no masts in LOD2 - FIXED: the red-light fixture (material red_light, the app's beacon glow) is in LOD0 / LOD1 / LOD2 and in tower_lod2.glb, LOD2 carries the 15 whips (3-sided): the top is 68.48 m (F2) at every LOD.
+- 7 (major) F1 default - FIXED: tower.glb = F2 (default, within the observations), tower_f1.glb = F1 (the published-height hypothesis, ?b3dtower=f1); family_decided stays false.
+- 8 (minor) mast tips vs spec - FIXED: spec h_antenna_tips = 71.8 spec m (2025-08-12 obs ratio 0.30-0.31 D; 2015 station 70.7 kept as station_2015); F2 restated as "221 ft at the 2015 mast station"; mesh vs spec 2025 value: F2 68.48 vs 68.50, F1 72.06 vs 72.08.
+- 9 (minor) tower camera / in-cab test on F1 values - FIXED: the loader takes eye and bounds from the loaded file's anchors; app.js reads towerPos.eyeY ().
 
 **Open (for the owner).**
 - The height family (F2 default / F1 hypothesis).

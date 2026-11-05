@@ -4,6 +4,7 @@ import '../shaders/common.js';
 import '../shaders/ground.js';
 import { Renderer } from '../renderer.js';
 import { bakeGround } from '../world/world.js';
+import { polySDF } from '../world/terrain.js';
 import * as GEO from '../geo.js';
 const { ARP, GROUND_Y, worldToST, stToWorld } = GEO;
 import { Scene } from '../scene.js';
@@ -12,12 +13,16 @@ import { CLOUD_VS, CLOUD_FS } from '../shaders/env.js';
 // environment core (docs/research/environment_spec.md §3): data clock, METAR/TAF, ephemeris -> EnvState for both renderers
 import { AppEnv } from '../env/app_env.js';
 import { loadFixtures, provCounts, PROV_TINT } from '../env/lighting/fixtures.js';
+// environment step 2: airfield-lighting fixtures + JO 7110.65 controller, aircraft lights (14 CFR 25 / AIM 4-3-24)
+import { AirfieldLighting, DAY_GAIN } from '../env/lighting/airfield.js';
+import { LIGHTING_SPEC, LIGHTING_FIXTURES } from '../../data/sfo_lighting.js';
+import { aircraftLightStates, setLightViewer, setLightFrame, setLightEnv } from '../env/aircraft_lights.js';
 import { LiveAircraft, TYPE_MODELS } from './aircraft.js';
 import { footprint } from './gates.js';
 import { MODEL_SOURCES } from './models.js';
 import { buildLiveWorld, releaseAirportMap } from './world.js';
 import { LiveGateSystem } from './gates.js';
-import { buildLiveLights, lightSpriteFn, buildPierGeometry } from './lights.js';
+import { buildLiveLights, buildPierGeometry, alsPlacement, buildMountGeometry } from './lights.js';
 import { Traffic, category, hdgVec, RWY, phaseLabel, antOf, DELAY_MS } from './traffic.js';
 import { GroundPhysics, buildingGrid, bridgeGrid } from './ground.js';
 import { Feed, StreamFeed, Routes, fetchMetar, fetchTaf, fetchGates, parsePayload, SOURCES } from './feed.js';
@@ -101,11 +106,34 @@ export async function startApp(cfg) {
   const gateSys = new LiveGateSystem(world.gates, { atlasExtra: Object.keys(TYPE_MODELS) }); scene.gateSys = gateSys;
   ui.progress(0.45, 'Airfield lighting…'); await nextFrame();
   const pavedMask = world.paved; // keep it for GroundPhysics (it used to be nulled before use: traffic_audit F6)
-  const lsys = buildLiveLights(cfg.airport, world.paved); world.paved = null;
-  const lfn = lightSpriteFn(lsys); let camPos = [0, 100, 0];
-  scene.staticLights.push((t) => nightScale(lfn(t, camPos)));
+  // Airfield lighting (environment step 2, docs/research/environment_impl.md §2): the 3,633 fixture faces of
+  // data/sfo_lighting.js switched by the JO 7110.65 controller of the EnvState and drawn at cd x step x beam x Allard
+  // visibility (js/env/lighting/airfield.js); js/live/lights.js now gives only the approach-light structures (built at the
+  // ALS light plane = landing-threshold elevation, JO 6850.2C 201a) and the blue taxiway-edge positions (inf, Q4).
+  const alsPlane = {}; for (const R of LIGHTING_SPEC.runways) for (const [E, e] of Object.entries(R.ends)) if (e.als && e.landing_threshold) alsPlane[E] = GROUND_Y + (e.landing_threshold.elev_ft - 13.1) * FT;
+  const lsys = buildLiveLights(cfg.airport, world.paved, { lightPlane: alsPlane }); world.paved = null;
+  let camPos = [0, 100, 0];
+  const airfield = new AirfieldLighting(LIGHTING_FIXTURES, LIGHTING_SPEC, { groundY: GROUND_Y, taxiEdges: lsys.L.slice(lsys.L.length - (lsys.taxiCount || 0)),
+    // over the bay = outside the airport land polygon (js/geo.js AIRPORT_LAND_ST, the terrain's water mask)
+    alsPlace: Object.fromEntries(Object.entries(alsPlane).map(([E, y]) => { const f = alsPlacement(E, y); return [E, (st, lat) => f(st, lat, (x, z) => { const q = worldToST(x, z); return polySDF(q[0], q[1], GEO.AIRPORT_LAND_ST) < 0; })]; })),
+    // day display gain (I): renderer3 draws physical records at the night calibration; the WebGL2 renderer draws lamp units
+    // unscaled at its day exposure 0.45 (~258 x renderer3's 0.36 x LAMP_M), so its gain is divided by that ratio
+    dayGain: typeof R.frameScene === 'function' ? DAY_GAIN : DAY_GAIN / 258 });
+  const relIn = [];   // RWSL REL activation from the traffic (AIM 2-1-6; js/env/lighting/airfield.js rwslFromTraffic)
+  scene.staticLights.push((t) => {
+    const T = envCore.clock.traffic; relIn.length = 0;
+    if (T) for (const tr of T.tracks.values()) { const ph = tr.phase; if (ph === 'takeoff' || ph === 'final' || ph === 'flare' || ph === 'rollout') relIn.push({ phase: ph, rwy: tr.m && tr.m.rwy, x: tr.disp.x, z: tr.disp.z, gs: tr.disp.gs, ground: tr.disp.ground }); }
+    airfield.rwslFromTraffic(relIn);
+    return airfield.update(envCore.state, camPos, t);
+  });
   scene.staticLights.push(() => nightF > 0.25 ? world.mastSprites : []);
-  { const pd = buildPierGeometry(lsys.piers); const I4 = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]); world.items.push({ mesh: new Mesh(pd), prog: 'obj', model: I4, bbox: pd.bbox, castShadow: true, uniforms: { uEmissiveBoost: 1 } }); }
+  {
+    // over-water structures (NAIP-imaged piers, lowered to the light plane) + low mounts under the land ALS lights
+    // (js/anim/lights.js buildMountGeometry; the builder's land posts are replaced: they stood 1.3 m tall under lights now
+    // at the light plane)
+    const pd = buildPierGeometry(lsys.piers.filter(P => P.water)); const I4 = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]); world.items.push({ mesh: new Mesh(pd), prog: 'obj', model: I4, bbox: pd.bbox, castShadow: true, uniforms: { uEmissiveBoost: 1 } });
+    const md = buildMountGeometry(airfield.mountGroups()); if (md.bbox) world.items.push({ mesh: new Mesh(md), prog: 'obj', model: I4, bbox: md.bbox, castShadow: true, uniforms: { uEmissiveBoost: 1 } });
+  }
   // markers for aircraft without a 3D model (light aircraft, helicopters, unknown types)
   scene.staticLights.push(() => markerSprites());
   // ---------------------------------------------------------------- environment
@@ -117,10 +145,8 @@ export async function startApp(cfg) {
   envCore.setLightMode(lightMode); envCore.attachHud(root);
   // ?qa=prov (spec §11.4): every airfield fixture face of data/sfo_lighting.js tinted by provenance (pub/obs green, std
   // blue, inf orange, NV red), day and night, on top of the current lights; counts in the ?qa=env HUD
-  if (envCore.qa.has('prov')) import('../../data/sfo_lighting.js').then(({ LIGHTING_SPEC, LIGHTING_FIXTURES }) => {
-    const L = loadFixtures(LIGHTING_FIXTURES, LIGHTING_SPEC, { groundY: GROUND_Y }); const S = envCore.provSprites(L.records, PROV_TINT, provCounts(L.records));
-    scene.staticLights.push(() => S);
-  }).catch(e => console.warn('qa=prov', e));
+  // (positions as drawn: ALS lights on their structures, js/env/lighting/airfield.js; counts over all fixture faces)
+  if (envCore.qa.has('prov')) { const S = envCore.provSprites(airfield.recs, PROV_TINT, provCounts(airfield.loaded.records)); scene.staticLights.push(() => S); }
   let metar = null;
   let env = null, lastSunKey = '', lastBakeSun = null, nightF = 0, exposure = 0.45, cloudItems = [];
   function applyEnv(now, force) {
@@ -162,6 +188,7 @@ export async function startApp(cfg) {
     const dark = sstep(2, -10, elN);
     exposure = (0.45 + 0.25 * (env.cloud[0] > 0.6 ? 1 : 0) * (1 - dark)) * (1 - dark) + 2.4 * dark + sstep(8, 2, elN) * (1 - dark) * 0.25;
     R.extraCommon = { uNight: nightF };
+    setLightEnv(E, typeof R.frameScene === 'function' ? DAY_GAIN : DAY_GAIN / 258);   // aircraft lights: Allard visibility (spec §4.10)
     setClouds(lowSlab ? { H: env.cloud[1], cov: env.cloud[0] } : null);
     envInfo = { sun: sp, metar: M };
   }
@@ -292,10 +319,8 @@ export async function startApp(cfg) {
       v.pitch = D.pitch; v.roll = D.roll; v.gear = D.gear; v.flaps = D.flaps; v.spoilers = D.spoilers;
       if (v.liv !== tr.livery) { v.liv = tr.livery; v._pu = null; }
       const moving = !D.ground || D.gs > 0.5, air = !D.ground, ph = tr.phase;
-      v.lightsOn.nav = !tr.stale || nightF < 0.5; v.lightsOn.beacon = !tr.stale && (moving || ph === 'pushback' || ph === 'pushed' || ph === 'holding' || ph === 'lineup');
-      v.lightsOn.strobe = air || ph === 'takeoff' || ph === 'landing' || ph === 'lineup';  // strobes on entering the runway
-      v.lightsOn.landing = (air && D.y - GROUND_Y < 3000) || ph === 'takeoff' || (ph === 'landing' && D.gs > 30);
-      v.lightsOn.taxi = D.ground && (ph === 'taxi' || ph === 'holding' || ph === 'lineup') && !tr.stale;
+      // exterior lights per phase (environment step 2: AIM 4-3-24, 14 CFR 91.209; js/env/aircraft_lights.js)
+      Object.assign(v.lightsOn, aircraftLightStates({ phase: ph, ground: !air, gs: (D.gs || 0) / 0.514444, altAgl: D.y - GROUND_Y, stale: tr.stale }));   // disp.gs m/s -> kt
       v.cabin = nightF * (tr.stale ? 0.15 : 1) * 0.9; v.selected = tr.hex === selected ? 1 : 0; v.dirt = 0.35;
     }
   }
@@ -426,7 +451,7 @@ export async function startApp(cfg) {
     try {
       traffic.update(now, dt); physics.resolve(traffic, dt); syncViews(now); rig.update(dt);
       if ((tEnv += wall) > 30) { tEnv = 0; applyEnv(now, false); }
-      const cam = rig.camera(); camPos = cam.pos;
+      const cam = rig.camera(); camPos = cam.pos; setLightViewer(camPos); setLightFrame(simT);   // aircraft light sectors / flashes
       const fr = scene.frame(simT, cam.pos);
       post.exposure = exposure;
       const C = R.render(fr, cam, simT, post); scene.commit(); R.present(canvas.width, canvas.height);
@@ -504,6 +529,6 @@ export async function startApp(cfg) {
     gatesOccupied: () => world.gates.filter(g => g.acType).map(g => g.name),
     tracks: () => [...traffic.tracks.values()].map(t => ({ hex: t.hex, flight: t.info.flight, icao: t.info.icao, phase: t.phase, gate: t.gate && t.gate.name, ground: t.disp.ground })),
   };
-  window.SFO = { R, scene, traffic, physics, rig, ui, world, gateSys, select, view, applyEnv, qa, env: () => envCore.state, envCore, stats: () => runwayStats(traffic.events, traffic.displayTime(Date.now())), atc: () => ({ tuned: atcTuned, delayS: atcDelayS, roles: Object.fromEntries(atcRolesBy), likely: Object.fromEntries(atcLikely) }), atcCmd: (a, v) => atcCmd(a, v), setLight: (m) => setting('light', m), frameNow: () => { last = performance.now() - 16; tick(); } };
+  window.SFO = { R, scene, traffic, physics, rig, ui, world, gateSys, select, view, applyEnv, qa, env: () => envCore.state, envCore, airfield, stats: () => runwayStats(traffic.events, traffic.displayTime(Date.now())), atc: () => ({ tuned: atcTuned, delayS: atcDelayS, roles: Object.fromEntries(atcRolesBy), likely: Object.fromEntries(atcLikely) }), atcCmd: (a, v) => atcCmd(a, v), setLight: (m) => setting('light', m), frameNow: () => { last = performance.now() - 16; tick(); } };
   return window.SFO;
 }

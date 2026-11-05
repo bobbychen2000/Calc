@@ -421,7 +421,10 @@ export class Renderer3 {
     // aircraft position lights (the first fr.nAc records are aircraft lights, compat/scene.js) keep their physical
     // intensity by day (lights.js fixedK / isPositionLight; close-out round 2, engine-v3)
     const sp = this.sprites; sp.fixedK = LAMP_M / ((0.5 + 0.5 * nightF) * lampK.value);
-    sp.begin(); const SL = fr && fr.sprites || [], nAc = fr && fr.nAc || 0; for (let k = 0; k < SL.length; k++) sp.put(SL[k], k < nAc && Sprites.isPositionLight(SL[k])); sp.end(E.camera, this.H);
+    // records with phys: true (environment step 2: airfield fixtures js/env/lighting/airfield.js, aircraft lights
+    // js/env/aircraft_lights.js) carry physical intensities (cd x visibility x display gain, in lamp units at the night
+    // calibration) and are drawn at that calibration day and night as well
+    sp.begin(); const SL = fr && fr.sprites || [], nAc = fr && fr.nAc || 0; for (let k = 0; k < SL.length; k++) sp.put(SL[k], SL[k].phys === true || (k < nAc && Sprites.isPositionLight(SL[k]))); sp.end(E.camera, this.H);
     // exposure and grade (the app's post settings: exposure, sat, bloom, vignette, grain)
     const el = Math.asin(Math.max(-1, Math.min(1, L.sunDir[1]))) * 180 / Math.PI; const dark = sstep(2, -10, el);
     // day: the app's exposure without its night term, x DAY_GAIN; lamps on / low sun: lit concrete at the key KEY_NIGHT

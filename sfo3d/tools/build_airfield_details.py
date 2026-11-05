@@ -20,12 +20,16 @@ Outputs data/sfo_details.json (+ debug PNGs in out/details/):
                  (roadsNote)
   centerlineRetired / osmBase   OSM ways / NAIP traces retired by OSM_UPDATES, and the pinned OSM base + update extract
   pavementRetired  SFO Museum taxiway polygons that no longer exist (PAVEMENT_RETIRE, with evidence): skipped by the app
+  pavementRetiredParts  round 3: PARTS of SFO Museum taxiway polygons that no longer exist ({layer, name, poly, ring, why};
+                 the old-J remainder, FAA AL-375 2611): the app masks the ring out of the pavement
 Static close-out (2026-11-04): the OSM base is pinned (database 2026-09-24T09:07:42Z, tools/xcheck/fetch_osm.py); later OSM
 edits enter only through OSM_UPDATES (relocated W + its inferred holds, the 10L/28R / 10R/28L crossing arcs); edges reject
 white paint and the runway edge zone; polyline hygiene (cusps, back-tracks, spikes, loops); `drawn` per stretch.
 Round 2 (2026-11-05): the old W / F1 crossing's SFO Museum pavement is retired too (pavementRetired: no edges; the app does
 not pave it), the companion edits of changeset 189525528 (J re-mapped, J / two connectors deleted) are applied, edges are
 split where NAIP shows no paint over >= 16 m, short hooks are removed, and the on-runway arcs need b* >= 12 paint.
+Round 3 (2026-11-05): edge pieces left by the cut that are mostly hold-bar zone or short without paint are dropped; the
+old-J remainder's pavement is retired where FAA AL-375 2611 shows an island (pavementRetiredParts).
 World frame (matches js/geo.js): x = east, z = south (m), origin = ARP; projection/datum from tools/geo_frame.py
 (exact GRS80 local tangent plane, NAD83(2011)). The ADS-B snapshot (WGS 84) is used only for the debug image (review round 3).
 Also writes data/sfo_details.js (the same JSON as an ES module).
@@ -75,6 +79,34 @@ for _t in D['taxiways']:
                                      'why': PAVEMENT_RETIRE[(_t['name'], _i)]})
 assert len(PAVEMENT_RETIRED) == len(PAVEMENT_RETIRE), 'SFO Museum polygons to retire not found: %s' % PAVEMENT_RETIRED
 def is_retired(t, i): return (t['name'], i) in PAVEMENT_RETIRE
+# ---- round 3 (2026-11-05, review static r2 v3): the western ~150 m of the old J 155476380 (deleted by the same changeset
+# 189525528; only its eastern 97 m were re-mapped as 1562117374) ran through the SFO Museum junction polygons 'Taxiway A/F1'
+# and 'Taxiway A/B/F' between the two green-painted islands west of the old W. On FAA AL-375 cycle 2611, registered on the
+# four runway-centreline crossings (tools/xcheck/faa_al375_mask.py -> refs/cache/faa/al375_2611_oldJ.json; same chart as
+# the F1 retirement), its corridor is a white island (no taxi surface): middle 60 % of the trace 61 % white / 27 % grey
+# (controls: retired F1 #0 / #1 89 / 91 % white, relocated W 2 % white); one island that also takes in the two painted
+# islands. ADS-B over all recorded hours: 0 ground fixes within 6 m of its middle (review r2). So the part of those
+# polygons inside the corridor (+-12 m) AND the chart's white region is retired (pavementRetiredParts: the app does not
+# pave it; no edge line may lie mostly inside it). INFERRED: whether the new island there is grass or green no-taxi paint
+# (like the two islands it joins) is not imaged (NAIP 2024 predates the rebuild); drawn unpaved like F1.
+_FAA_J = json.load(open(os.path.join(ROOT, 'refs', 'cache', 'faa', 'al375_2611_oldJ.json')))
+from shapely.geometry import Polygon as _SPolyR, LineString as _SLSR
+from shapely.ops import unary_union as _suuR
+_J_CORR = _SLSR(_FAA_J['old_j_remainder']).buffer(_FAA_J['corridor_m'], cap_style=2)
+_J_WHITE = _suuR([_SPolyR(q) for q in _FAA_J['white_polys']])
+PAVEMENT_RETIRED_PARTS = []
+for _t in D['taxiways']:
+    for _i, _poly in enumerate(_t['polys']):
+        if is_retired(_t, _i): continue
+        _pt = _SPolyR(_poly[0], _poly[1:]).buffer(0).intersection(_J_CORR).intersection(_J_WHITE)
+        for _g in [g_ for g_ in getattr(_pt, 'geoms', [_pt]) if g_.geom_type == 'Polygon' and g_.area >= 50]:
+            PAVEMENT_RETIRED_PARTS.append({'layer': 'taxiways', 'name': _t['name'], 'id': _t.get('id'), 'poly': _i, 'area_m2': round(_g.area),
+                                           'ring': [[round(x, 2), round(z, 2)] for x, z in _g.simplify(0.3).exterior.coords],
+                                           'why': 'western remainder of the old J 155476380 (deleted in OSM changeset 189525528): FAA AL-375 cycle 2611 '
+                                                  'shows an island (no taxi surface) there (refs/cache/faa/al375_2611_oldJ.json); ADS-B: no ground traffic '
+                                                  'along it; island surface (grass or green paint) inferred: unpaved'})
+RETIRED_PART_U = _suuR([_SPolyR(r_['ring']) for r_ in PAVEMENT_RETIRED_PARTS]) if PAVEMENT_RETIRED_PARTS else None
+print('pavement retired parts', [(r_['name'], r_['poly'], r_['area_m2']) for r_ in PAVEMENT_RETIRED_PARTS])
 
 # ---------------------------------------------------------------- base masks
 TW = newmask()
@@ -188,10 +220,10 @@ _ARC_WHY = ('painted lead-on / lead-off arcs at the 10L/28R and 10R/28L crossing
             'They run ON the runway (from its edge to its centreline: FAA AC 150/5340-1M taxiway lead-on / lead-off lines), so they '
             'are not cut at the runway edge; peaks that are not yellow (b* < BSTAR_MIN: runway white paint) are not used')
 _J_WHY = ('round 2 (2026-11-05, review static-v3): companion edit of the W relocation, OSM changeset 189525528 (25 Sep 2026): '
-          'way 1562117374 (J) is the eastern 97 m of the deleted J 155476380, on the same nodes (100 %% within 3 m), checked on NAIP '
+          'way 1562117374 (J) is the eastern 97 m of the deleted J 155476380, on the same nodes (100 % within 3 m), checked on NAIP '
           '2024 paint like every OSM way; the western 153 m of the old J (to the old W) and the connectors 671167438 / 1511792223 '
           'were deleted with the old W. The other new way of that changeset, 1562117373 (B), is a split of the base way B '
-          '363803227 (its northern 521 m, 100 %% within 3 m): not added - the base B already draws it')
+          '363803227 (its northern 521 m, 100 % within 3 m): not added - the base B already draws it')
 OSM_UPDATES = {
     'add': {1562117372: {'naip': False, 'ref': 'W', 'width_m': 75 * 0.3048, 'why': _W_WHY},
             1562117374: {'naip': True, 'ref': 'J', 'why': _J_WHY},
@@ -957,7 +989,10 @@ EDGE_GAP = 8          # round 2: >= 8 samples (16 m) without paint / > 1.5 m off
 N_CUT = [0.0]
 # review round 4: no paint measurement within 7 m of a runway holding-position bar (the 4-line ladder and the sign boxes
 # next to it pulled the edge runs 143 / 242 / 302 ... 2-3 m inwards over 10-20 m); the run keeps its neighbours' offset
-HOLD_ZONE = _prep0(_suu0([_SLS0([tuple(h['a']), tuple(h['b'])]).buffer(7.0) for h in holds]))
+HOLD_ZONE_G = _suu0([_SLS0([tuple(h['a']), tuple(h['b'])]).buffer(7.0) for h in holds]); HOLD_ZONE = _prep0(HOLD_ZONE_G)
+EDGE_FRAG_HZ = 0.5    # round 3 (review static r2 v2): a piece left by the cut with more than this share of its length in a
+EDGE_FRAG_LEN = 15.0  # hold-bar zone, or shorter than EDGE_FRAG_LEN m with no painted sample, is not drawn
+N_FRAG = [0, 0.0]
 for e in edges:
     P = densify(e, 1.0); S = arclen(P); T = tangents(P)
     if S[-1] < 4: continue
@@ -1012,8 +1047,8 @@ for e in edges:
           'naip_med_abs_off_before': round(float(np.median(np.abs(offs[good]))), 2) if good.any() else None,
           'naip_med_abs_off_after': round(float(np.median(np.abs(o3[np.isfinite(o3)]))), 2) if np.isfinite(o3).any() else None}
     # round 2 (review static-v4: edge 323 ran straight along the middle of a taxiway, 13 runs / 250 m >= 15 m more than
-    # 1.5 m off the paint): a stretch of >= EDGE_GAP samples (2 m) whose final line has no paint within the search (nan) or
-    # sits > 1.5 m off it is not drawn - the run is split there (hold-bar zones, inf, are neither)
+    # 1.5 m off the paint): a stretch of >= EDGE_GAP samples (2 m apart, i.e. >= 16 m) whose final line has no paint within
+    # the search (nan) or sits > 1.5 m off it is not drawn - the run is split there (hold-bar zones, inf, are neither)
     bad_ = ~np.isinf(o3) & (np.isnan(o3) | (np.abs(np.where(np.isinf(o3), 0, o3)) > 1.5))
     cut_, k = [], 0
     while k < len(ss):
@@ -1029,6 +1064,24 @@ for e in edges:
         if hi_ is not None: prev_ = hi_; N_CUT[0] += max(0.0, min(hi_, S[-1]) - max(lo_, 0.0))
     # static close-out: hairpin spikes (legs up to 12 m) and loops removed (hygiene); a split run keeps its meta per piece
     parts_ = [pl for pc_ in pieces_ for pl in hygiene(simplify(pc_, 0.2), spike_len=15.0, min_len=4.0)]
+    # round 3 (review static r2 v2: the hold-bar zone is never measured (inf), so where the unpainted runs on BOTH sides of
+    # a hold bar were cut, the zone's part survived as a 5-13 m yellow dash across the bar on open pavement - 13 pieces,
+    # 123 m): a piece mostly inside a hold-bar zone, or short with no painted sample of its own (measured on the piece:
+    # b* yellow ridge within 1.5 m), is dropped
+    if len(parts_) > 1 or cut_ or (RETIRED_PART_U is not None and _SLS0([tuple(q) for q in Q.tolist()]).distance(RETIRED_PART_U) < 5.0):
+        keep_ = []
+        for pl in parts_:
+            ls_ = _SLS0([tuple(q) for q in pl]); Lp = ls_.length
+            if Lp <= 0: continue
+            hz_ = ls_.intersection(HOLD_ZONE_G).length / Lp
+            Pp = densify(pl, 1.0); Sp = arclen(Pp)
+            ssp = np.arange(1.0, Sp[-1] - 0.5, 2.0) if Sp[-1] > 3 else np.array([Sp[-1] / 2])
+            op = measure(Pp, Sp, tangents(Pp), ssp, avg=3.0, thr=0.7, skip=HOLD_ZONE, white_reject=True)
+            npaint = int(np.sum(np.isfinite(op) & (np.abs(np.where(np.isfinite(op), op, 0)) <= 1.5)))
+            if hz_ > EDGE_FRAG_HZ or (Lp < EDGE_FRAG_LEN and npaint == 0): N_FRAG[0] += 1; N_FRAG[1] += Lp; continue
+            if RETIRED_PART_U is not None and ls_.intersection(RETIRED_PART_U.buffer(3.0)).length > 0.5 * Lp: N_FRAG[0] += 1; N_FRAG[1] += Lp; continue
+            keep_.append(pl)
+        parts_ = keep_
     if not parts_: edge_meta.append(None); continue
     N_HYG[0] += len(parts_) - 1
     for k_, pl in enumerate(parts_):
@@ -1037,6 +1090,7 @@ EDGE_STATS = {'runs_outline': len(edges), 'runs_kept': len(edges_out), 'dropped_
               'km_kept': round(sum(_plen(e) for e in edges_out) / 1000, 2),
               'white_reject_bstar_min': BSTAR_MIN, 'runway_zone_m': round(RWY_HW + 3.0, 2), 'runs_split_by_hygiene': N_HYG[0],
               'm_cut_unpainted': round(N_CUT[0]), 'unpainted_split_samples': EDGE_GAP,
+              'fragments_dropped': {'n': N_FRAG[0], 'm': round(N_FRAG[1]), 'rule': '> %d %% in a hold-bar zone, or < %.0f m without paint' % (100 * EDGE_FRAG_HZ, EDGE_FRAG_LEN)},
               'snapped_runs': sum(1 for m in edge_meta if m and m['src'] == 'naip'),
               'paint_offset_before': {'median': round(float(np.median(E_before)), 2), 'gt1.5': round(float((np.array(E_before) > 1.5).mean()), 3)} if E_before else None,
               'paint_offset_after': {'median': round(float(np.median(E_after)), 2), 'gt1.5': round(float((np.array(E_after) > 1.5).mean()), 3)} if E_after else None}
@@ -1120,7 +1174,7 @@ out = {'attribution': 'Taxiway centrelines: OpenStreetMap aeroway=taxiway ways (
                                     'check': 'NAIP 2024: all 70 viewed on contact sheets (base of an imaged mast; at the terminal on the facade line), review round 3',
                                     'height': 'not in OSM; js/live/items.js MAST_H is inferred',
                                     'clear_of_buildings_m': MAST_CLEAR, 'moved': mast_moved, 'near_taxiway': mast_near_tw},
-       'roads': roads, 'roadsNote': ROADS_NOTE, 'centerlineRetired': centerline_retired, 'pavementRetired': PAVEMENT_RETIRED,
+       'roads': roads, 'roadsNote': ROADS_NOTE, 'centerlineRetired': centerline_retired, 'pavementRetired': PAVEMENT_RETIRED, 'pavementRetiredParts': PAVEMENT_RETIRED_PARTS,
        'osmBase': {'base': OSM['osm_base'], 'updates': {'date': OSM_UPDATE_DATE, 'file': os.path.basename(_upd_fn),
                                                          'added': sorted(OSM_UPDATES['add']), 'retired': sorted(OSM_UPDATES['retire'])}}}
 json.dump(out, open(os.path.join(ROOT, 'data', 'sfo_details.json'), 'w'), separators=(',', ':'))

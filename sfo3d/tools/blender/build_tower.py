@@ -456,13 +456,30 @@ def camera(name, loc, yaw, pitch, ortho=None, f_px=None, res=(640, 960)):
 # photo-matched views: camera_world from spec_tower.json photos (EXIF GPS), camera ~12 deg below the rim at 263 m (draw_tower
 # masts note) -> 11.5 m; f in px of the 1920-px thumbnail from the rim width (t2 474 px, t3 371 px for D 15.2 at 263 m);
 # rim-centre pixel read on the thumbnails (refs/cache/buildings/review_likeness, reference only)
+def sun_pos(utc, lat=37.6188, lon=-122.3754):
+    """sun (azimuth from north, elevation) in deg at the ISO UTC time `utc` (NOAA GML 'General Solar Position Calculations',
+    ~0.1 deg; agrees with js/env/ephemeris.js to 0.7 deg at the photo times). Round 1 typed the photo suns in by hand and had
+    t2 at azimuth 165 (true 137.4) and t3 at 110 (95.5)."""
+    t = datetime.datetime.fromisoformat(utc)
+    doy = t.timetuple().tm_yday; hr = t.hour + t.minute / 60 + t.second / 3600
+    g = 2 * math.pi / 365 * (doy - 1 + (hr - 12) / 24)
+    eqt = 229.18 * (0.000075 + 0.001868 * math.cos(g) - 0.032077 * math.sin(g) - 0.014615 * math.cos(2 * g) - 0.040849 * math.sin(2 * g))
+    dec = (0.006918 - 0.399912 * math.cos(g) + 0.070257 * math.sin(g) - 0.006758 * math.cos(2 * g) + 0.000907 * math.sin(2 * g)
+           - 0.002697 * math.cos(3 * g) + 0.00148 * math.sin(3 * g))
+    ha = math.radians((hr * 60 + eqt + 4 * lon) / 4 - 180); la = math.radians(lat)
+    z = math.acos(math.sin(la) * math.sin(dec) + math.cos(la) * math.cos(dec) * math.cos(ha))
+    az = math.degrees(math.atan2(math.sin(ha), math.cos(ha) * math.sin(la) - math.tan(dec) * math.cos(la))) + 180
+    return (round(az % 360, 1), round(90 - math.degrees(z), 1))
+
+
+# photo times: the file names (local PDT = UTC - 7), refs/cache/buildings/review_likeness/manifest.json
 PHOTO_VIEWS = {
-    't2': dict(cam_world=(-527.4, 479.9), h=11.5, f1920=8200.0, size=(1920, 2560), rim_px=(930, 314), sun=(165, 62),
+    't2': dict(cam_world=(-527.4, 479.9), h=11.5, f1920=8200.0, size=(1920, 2560), rim_px=(930, 314), sun=sun_pos('2025-08-12T18:57:15'),
                photo='refs/cache/buildings/review_likeness/t2.jpg', credit='Famartin 2025-08-12 11:57, CC BY-SA 4.0 (reference only)'),
-    't3': dict(cam_world=(-911.4, 124.4), h=11.5, f1920=6419.0, size=(1920, 1440), rim_px=(1202, 155), sun=(110, 35),
+    't3': dict(cam_world=(-911.4, 124.4), h=11.5, f1920=6419.0, size=(1920, 1440), rim_px=(1202, 155), sun=sun_pos('2025-08-12T16:12:13'),
                photo='refs/cache/buildings/review_likeness/t3.jpg', credit='Famartin 2025-08-12 09:12, CC BY-SA 4.0 (reference only)'),
     # t4: 81 m from the axis; camera height ~20 m and f ~3040 px fitted to the rim width (493 px) and the rim-to-shaft-foot span
-    't4': dict(cam_world=(-769.2, 248.6), h=20.0, f1920=3040.0, size=(1920, 2560), rim_px=(1014, 224), sun=(100, 30),
+    't4': dict(cam_world=(-769.2, 248.6), h=20.0, f1920=3040.0, size=(1920, 2560), rim_px=(1014, 224), sun=sun_pos('2025-08-12T16:10:05'),
                photo='refs/cache/buildings/review_likeness/t4.jpg', credit='Famartin 2025-08-12 09:10, CC BY-SA 4.0 (reference only)'),
 }
 

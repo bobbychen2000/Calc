@@ -32,7 +32,8 @@ Patches (static review 2026-11-04):
      D3 / D4 / D9) is src inf; rotunda_src of a moved OSM node says 'inferred'.
   P5 ADS-B stops BEYOND the model nose (build_stands dropped positive family residuals): from the 4 Nov stays, per
      family, median antenna along minus the family reference (build_stands, stands_rebuild s.15) > +1.5 m with the
-     aircraft on the axis (|lateral| <= 1.5 m, heading within 10 deg) -> conflict_along {with: adsb, beyond: true} when
+     aircraft on the axis (|lateral| <= 1.5 m, heading within 10 deg; round 3: stays selected by that geometry and their
+     ADS-B type alone, no flysfo match) -> conflict_along {with: adsb, beyond: true} when
      n >= 2 or the 24-25 Sep build's residual of the stand agrees (> 1.5 m beyond), else `adsb_beyond` (evidence only).
   P6 (round 2, 2026-11-05) drum clearance as js/live/gates.js prepGeom: a rotunda closer than its 1.5 m drum + 0.2 m to
      a clearance outline (data/sfo_buildings + SFO Museum terminal / boarding areas + sky bridges), + 1.7 m to another
@@ -51,7 +52,9 @@ obs_types_aodb2, obs_types, cls, cls_src, span_max, len_max, types_ok, excl_type
 is written to P12_REPLAY (refs/cache/stands/, committed). Without the snapshot (or with --replay) those recorded values
 are applied instead; P3-P5 always run. The replay holds nothing that data/sfo_stands.json does not publish already, and
 it names the snapshot (file + SHA-256) it came from; if the owner rules the flysfo-derived fields out, P12_REPLAY and
-those fields go together. --check runs P1 / P2 on the snapshot and compares them with the replay.
+those fields go together. --check runs P1 / P2 on the snapshot and compares them with the replay. Exactly which committed
+values derive from flysfo (base, replay, adsb_parked.json): tools/stands/flysfo_provenance.py ->
+refs/cache/stands/flysfo_provenance.json (round 3).
 Usage: python3 tools/stands/patch_stands.py [--replay | --check]   (then python3 tools/stands/check_stands.py)
 """
 import datetime as dt, gzip, json, math, os, sys
@@ -471,11 +474,12 @@ def p5_beyond(D, log):
     D['_recheck'] = {}
     fam = lambda t: GM.FAMILY.get(ALIAS_T.get(t, t))
     for s in D['stands']:
-        names = set(s.get('aodb') or []) | {s['name']}
         per = {}
         for v in st['stays']:
-            if v.get('stand') not in names: continue
-            t = v.get('type') if dims(v.get('type') or '') else v.get('sfo_type')
+            # round 3 (2026-11-05): stays are selected by GEOMETRY only (on this stand's lead-in: the gate below) with the
+            # ADS-B type - not by adsb_parked.py's flysfo stand match / sfo_type, so P5 needs no flysfo-derived value
+            # (tools/stands/flysfo_provenance.py). Was: v['stand'] in the stand's AODB names, type else sfo_type.
+            t = v.get('type') if dims(v.get('type') or '') else None
             fm = fam(t) if t else None
             if fm not in FAM_REF: continue
             a, c = local((v['x'], v['z']), s['nose'], s['hdg'])

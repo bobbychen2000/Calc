@@ -1,0 +1,15 @@
+{
+  "about": "14 CFR sections used by js/env/aircraft_lights.js (environment step 2). eCFR versioner API, point in time 2026-11-01, fetched 2026-11-05 by the env:lights agent.",
+  "licence": "US Government work (Code of Federal Regulations): public domain in the United States; eCFR is an editorial compilation by the Office of the Federal Register / GPO, https://www.ecfr.gov/reader-aids/understanding-the-ecfr/terms-of-use",
+  "files": {
+    "part25_1387.xml": "https://www.ecfr.gov/api/versioner/v1/full/2026-11-01/title-14.xml?part=25&section=25.1387",
+    "part25_1389.xml": "https://www.ecfr.gov/api/versioner/v1/full/2026-11-01/title-14.xml?part=25&section=25.1389",
+    "part25_1391.xml": "https://www.ecfr.gov/api/versioner/v1/full/2026-11-01/title-14.xml?part=25&section=25.1391",
+    "part25_1393.xml": "https://www.ecfr.gov/api/versioner/v1/full/2026-11-01/title-14.xml?part=25&section=25.1393",
+    "part25_1395.xml": "https://www.ecfr.gov/api/versioner/v1/full/2026-11-01/title-14.xml?part=25&section=25.1395",
+    "part25_1397.xml": "https://www.ecfr.gov/api/versioner/v1/full/2026-11-01/title-14.xml?part=25&section=25.1397",
+    "part25_1401.xml": "https://www.ecfr.gov/api/versioner/v1/full/2026-11-01/title-14.xml?part=25&section=25.1401",
+    "part91_209.xml": "https://www.ecfr.gov/api/versioner/v1/full/2026-11-01/title-14.xml?part=91&section=91.209"
+  },
+  "not_fetched": "25.1385 (the eCFR API answered 403 'IP address has been blocked' to the first request of the batch; the colours per side are in the 25.1391 table heading 'L and R (forward red and green)')"
+}

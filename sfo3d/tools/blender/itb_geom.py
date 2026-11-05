@@ -552,18 +552,20 @@ def hall_west_wall():
             bands += [(CANOPY, h0, CANOPY, h1, 'glass_hall')]
         for z0a, z1a, z0b, z1b, mat in bands:
             mb.quad_wall(a, b, z0a, z1a, z0b, z1b, mat, u0, (6.096, 4.4) if mat != 'glass_frit' else (3.6, 3.6), grp='w')
-    # head closure (alu): from V_W to V_UP at the head, 0.4 m deep
+    # head closure (alu): from V_W to V_UP at the head, 0.4 m deep. (u, v) is counter-clockwise in Blender XY, so the top
+    # runs u0 -> u1 at V_W first (normal up) and the underside the other way (normal down); round 0 had both inverted - seen
+    # as 2-4 back-face pixels under the north roof tip from the NNE (bag view, review r1)
     for u0, u1 in zip(U[:-1], U[1:]):
         h0, h1 = head(u0), head(u1)
-        P = [Buv(u0, V_W, h0), Buv(u0, V_UP, h0), Buv(u1, V_UP, h1), Buv(u1, V_W, h1)]
+        P = [Buv(u0, V_W, h0), Buv(u1, V_W, h1), Buv(u1, V_UP, h1), Buv(u0, V_UP, h0)]
         mb.face(P, 'mullion', [(0, 0), (1, 0), (1, 1), (0, 1)], False, 'ct')
-        P = [Buv(u0, V_W, h0 - 0.4), Buv(u1, V_W, h1 - 0.4), Buv(u1, V_UP, h1 - 0.4), Buv(u0, V_UP, h0 - 0.4)]
+        P = [Buv(u0, V_W, h0 - 0.4), Buv(u0, V_UP, h0 - 0.4), Buv(u1, V_UP, h1 - 0.4), Buv(u1, V_W, h1 - 0.4)]
         mb.face(P, 'mullion', [(0, 0), (1, 0), (1, 1), (0, 1)], False, 'cb')
     # upper glazing behind the exposed west truss, from the head to the roof underside
     U2 = sorted(set(U) | set(np.arange(-HALL_HL, HALL_HL, 3.0).round(3).tolist()))
     for u0, u1 in zip(U2[:-1], U2[1:]):
         a, b = Buv(u0, V_UP, 0), Buv(u1, V_UP, 0)
-        mb.quad_wall(a, b, head(u0), roof_us(u0), head(u1), roof_us(u1), 'glass_hall', u0, (6.096, 4.4), grp='up')
+        mb.quad_wall(a, b, head(u0), roof_us(u0) + TUCK, head(u1), roof_us(u1) + TUCK, 'glass_hall', u0, (6.096, 4.4), grp='up')
     return mb
 
 
@@ -663,8 +665,12 @@ def hall_podium():
     return mb
 
 
+TUCK = 0.1    # walls that meet the soffit end 0.1 m INSIDE the 0.6-m deck: the soffit is piecewise linear between the roof
+              # stations, so a wall top exactly on roof_us(u) at other stations leaves mm slits (back-face QA, view bag, r1)
+
+
 def end_wall_poly(u):
-    top = roof_us(u)           # up to the soffit (edge contact, no slit)
+    top = roof_us(u) + TUCK    # up into the deck slab (no slit under the soffit)
     return [(V_W, L3), (V_E, L3), (V_E, top), (V_UP, top), (V_UP, head(u)), (V_W, head(u))]
 
 
@@ -706,7 +712,7 @@ def hall_east_clerestory():
     U = sorted(set(wall_u_breaks()) | set(np.arange(-HALL_HL, HALL_HL, 3.0).round(3).tolist()))
     for u0, u1 in zip(U[:-1], U[1:]):
         a, b = Buv(u0, V_E, 0), Buv(u1, V_E, 0)
-        mb.quad_wall(b, a, H_CORE, roof_us(u1), H_CORE, roof_us(u0), 'glass_tinted', -u1, (6.096, 4.4), grp='c')
+        mb.quad_wall(b, a, H_CORE, roof_us(u1) + TUCK, H_CORE, roof_us(u0) + TUCK, 'glass_tinted', -u1, (6.096, 4.4), grp='c')
     return mb
 
 

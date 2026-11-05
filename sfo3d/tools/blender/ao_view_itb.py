@@ -53,7 +53,7 @@ def main():
         sc.world.node_tree.nodes.clear()
         cam = {'i4': lambda: R.camera('c', R.W(4.0, -430.0, 20.0), R.W(4.0, 0.0, 24.0), lens=58.0, res=(960, 487)),
                'i3': lambda: R.camera('c', R.W(-95.0, -46.0, R.G.L3 + 1.7), R.W(-10.0, -24.0, 26.0), lens=24.0, res=(960, 540)),
-               'baa': lambda: R.view_baa_cam(), 'under': lambda: R.camera('c', R.W(-118.0, -45.0, 14.0), R.W(-60.0, 0.0, 30.0), lens=28.0, res=(960, 540)),
+               'baa': lambda: R.view_baa_cam(), 'a2g': lambda: R.a2g_cam(), 'bag': lambda: R.bag_cam(), 'under': lambda: R.camera('c', R.W(-118.0, -45.0, 14.0), R.W(-60.0, 0.0, 30.0), lens=28.0, res=(960, 540)),
                'east': lambda: R.camera('c', R.W(30.0, 300.0, 60.0), R.W(0.0, 0.0, 20.0), lens=35.0, res=(960, 540)),
                'top': lambda: R.camera('c', R.W(-60.0, -80.0, 150.0), R.W(0.0, 0.0, 30.0), lens=30.0, res=(960, 540))}[v]
         cam()

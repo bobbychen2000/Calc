@@ -3,11 +3,12 @@
 // (js/env/ephemeris.js) and the runway configuration (§3.5). Pure ES module, no DOM: Node tests in
 // tools/env/test_env_state.mjs reproduce the environment fields of the 14 real-weather presets
 // (tools/env/fixtures/env_presets.json, written by tools/env/env_spec_checks.py).
-// Not computed here (later steps): the lighting controller (§5.3, step 2: `lighting` stays null), slab/cloud/rain
-// rendering (step 3-4). Every field carries its provenance tag in `prov` (V / M / I / 2nd / NV, spec tag table).
+// `lighting` = the JO 7110.65 controller output for this state (js/env/lighting/controller.js, step 2, gate A-CTL).
+// Not computed here (later steps): slab/cloud/rain rendering (step 3-4). Every field carries its provenance tag in `prov` (V / M / I / 2nd / NV, spec tag table).
 import { skyState, naturalIlluminanceAt, ev100ForIlluminance, SFO } from './ephemeris.js';
 import { decodeMetar, decodeTaf, renderParams, extinctionFromVisibility, FT_M, KT_MS, SM_M } from './wx/metar.js';
 import { tafAt } from './wx/taf.js';
+import { controllerFromEnv, controllerHud } from './lighting/controller.js';
 
 const DEG = Math.PI / 180;
 // ---------------------------------------------------------------------------------------------------- constants
@@ -241,7 +242,7 @@ export function buildEnvState(tEnv, inp = {}) {
       taf, forecast, key: wxKey, sw, reports: idx.length },
     atm, clouds, sunVisibleP: pr.sun_visible_probability, kcRatio: pr.global_irradiance_ratio,
     precip, lightning, surface, wind, nightSky, lightVis, exposure,
-    lighting: null,                                  // step 2: JO 7110.65 controller (js/env/lighting/controller.js)
+    lighting: null,                                  // set below: JO 7110.65 controller (js/env/lighting/controller.js)
     runway,
     prov: {
       sun: 'V/T (ephemeris.mjs vs JPL Horizons ≤ 0.01°)', moon: 'V/T', phase: 'V (USNO)', towerNight: 'V (USNO −50′; JO 7110.65 "sunset to sunrise")',
@@ -249,9 +250,10 @@ export function buildEnvState(tEnv, inp = {}) {
       wx: fc ? 'I (forecast: prevailing TAF conditions, AIM 7-1-28; latest METAR stale or none)' : 'V (METAR, JO 7900.5E decoding)', atm: 'V (ASOS inversion, 2nd constants) + I (day/night blend, slabs, 10SM clear air)', clouds: 'V (heights, summation) + I (overlap, thickness, drift)',
       sunVisibleP: 'I', kcRatio: '2nd (Kasten & Czeplak 1980)', precip: 'V (Table 9-4, Prrrr) + I (clamp, mid-class)', lightning: 'V (Table 13-7) + I (midpoints)',
       surface: 'I (constants NV)', wind: 'V (true wind) + I (sock shape)', nightSky: 'V (Falchi, Kyba) + I (3 mcd/m², ×10)', lightVis: 'M (Table B-1 fit)',
-      exposure: 'M (EV targets) + I (clamp)', lighting: 'step 2', runway: runway.tag || 'I',
+      exposure: 'M (EV targets) + I (clamp)', lighting: 'V (JO 7110.65BB 3-4 tables) + I (Q10 TBL 3-4-7, Q6 PAPI 20 %, flasher rule for non-visual arrivals)', runway: runway.tag || 'I',
     },
   };
+  st.lighting = controllerFromEnv(st);
   return st;
 }
 
@@ -272,11 +274,12 @@ export function envHudLines(st) {
   L.push(`wind ${st.wind.fromTrue == null ? (st.wind.calm ? 'calm' : 'VRB') : f(st.wind.fromTrue, 0) + '°T'} ${f(st.wind.speed / KT_MS, 0)} kt${st.wind.gust ? ' G' + f(st.wind.gust / KT_MS, 0) : ''} · sock ${f(st.wind.sockExt, 2)} [V+I]`);
   if (st.precip) L.push(`precip ${st.precip.kind} ${st.precip.intensity} ${f(st.precip.rateMmH, 2)} mm/h (${st.precip.rateBasis}) [V+I]`);
   L.push(`runway arr ${Object.keys(st.runway.arr).join(',') || '—'} dep ${st.runway.dep.join(',') || '—'} (${st.runway.source}) [${st.runway.tag || 'I'}]`);
+  if (st.lighting) L.push(`lights ${controllerHud(st.lighting)} [V+I]`);
   return L;
 }
 
 // Short form for the HUD (one line): the same defaults
-export const OPEN_QUESTION_SHORT = 'Q7 flood colour/bridge beacon unchanged NV · Q2 FAA ALS stations · Q1 no beacon · Q3 RCL all runways · Q4 blue edges inf · Q10 TBL 3-4-7 · Q5/6 REIL NV, PAPI HG4 20 % · Q8 ?wx= only · Q9 ADS-B>METAR>West · Q12 no takram/stars · Q13 photographic · Q11 step 2 · Q14 3 mcd/m² · Q15 no socks · Q16 NV';
+export const OPEN_QUESTION_SHORT = 'Q7 flood colour/bridge beacon unchanged NV · Q2 FAA ALS stations · Q1 no beacon · Q3 RCL all runways · Q4 blue edges inf · Q10 TBL 3-4-7 · Q5/6 REIL style E NV, PAPI HG4 20 % · Q8 ?wx= only · Q9 ADS-B>METAR>West · Q12 no takram/stars · Q13 photographic · Q11 parked nav off · Q14 3 mcd/m² · Q15 no socks · Q16 NV';
 // Open owner questions (spec §12): the default used for each until the owner answers (all I), shown in the ?qa=env HUD.
 export const OPEN_QUESTION_DEFAULTS = [
   'Q7 night photos: apron flood colour / bridge beacon / glazing glow unchanged (parameters, NV)',
@@ -290,6 +293,6 @@ export const OPEN_QUESTION_DEFAULTS = [
   'Q9 runway config: ADS-B flow, else METAR wind (3-5-1), else West Plan; no D-ATIS',
   'Q12 takram atmosphere: not adopted (no GPU test here); no stars.bin, no starfield',
   'Q13 night look: photographic (auto-exposed)',
-  'Q11 parked nav/logo lights: unchanged until the step-2 aircraft-light logic',
+  'Q11 parked aircraft (phase still, not moving): position / logo lights off (91.209(a)(2) "clearly illuminated")',
   'Q14 artificial sky 3 mcd/m2 (parameter); Q15 windsocks not drawn; Q16 wetness constants NV',
 ];

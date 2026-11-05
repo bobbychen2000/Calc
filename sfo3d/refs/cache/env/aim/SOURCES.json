@@ -1,0 +1,5 @@
+{
+  "about": "FAA Aeronautical Information Manual chapter 4 section 3 (4-3-24 Use of Aircraft Lights), used by js/env/aircraft_lights.js. Fetched 2026-11-05 by the env:lights agent.",
+  "licence": "US Government work (FAA publication): public domain in the United States",
+  "files": { "aim_chap4_section_3.html": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_3.html" }
+}

@@ -47,6 +47,8 @@ from shapely.ops import unary_union
 from common import (scene, OUT, buildings, poly_rings, hull_poly, circle, AcGeom, ac_instance_geom, plan_world, model_geom, body_geom,
                     stand_W, gear_points_world, m4, G, polys_of, w2st, NetPaved, provenance, phys_gear_points, app_root)
 from measure import PaveMask
+# terminal departure level at the fixed walkways (js/live/gates.js DEPARTURE_LEVEL: INFERRED, not sourced)
+DEPARTURE_LEVEL_INF = 5.4
 
 SCEN_SAME_STAND_SKIP = {'DOCK-REF', 'DOCK-MAX', 'ENVELOPE'}   # one aircraft per stand by construction there; never in LIVE
 ICAO = {'A': 3.0, 'B': 3.0, 'C': 4.5, 'CL': 4.5, 'D': 7.5, 'E': 7.5, 'EL': 7.5, 'F': 7.5}  # Annex 14 3.13.6
@@ -589,12 +591,18 @@ def run():
         if ch > 0.1:
             au.add('KINEMATICS', 'tunnel-stretch', 'WARNING', ref, dict(cat='code', id='gates.js bridgeGeo', label='gates.js bridgeGeo() tunnel sections'), loc=b['rc'],
                    note=f'tunnel sections {"/".join(f"{x:.1f}" for x in l0)} m parked -> {"/".join(f"{x:.1f}" for x in l1)} m docked to {Dk["type"]}: sections scale with the extension instead of telescoping')
-        # slope of the docked tunnel floor (rotunda floor -> door sill)
+        # slope of the docked tunnel floor (rotunda floor -> door sill). The rotunda floor comes from gates.js pickHr on the
+        # fixed walkway's 1:12 band from the terminal departure level, which is INFERRED (gates.js DEPARTURE_LEVEL 5.4 m,
+        # not sourced: bridges_closeout §1.5 / static track); where the floor sits on that band's edge (gates.js
+        # b.HrPinned) the slope is the inferred level's, and the record says so (review round 2 bridges-v4)
         cab = np.array(Dk['pose']['cab']); rc = np.array(Dk['pose']['rc']); fl = Dk['pose']['floorY']
         run = math.hypot(cab[0] - rc[0], cab[2] - rc[1]); drop = fl - cab[1]
         if run > 1 and abs(drop) / run > 1 / 12:
+            hr, band = fl - g, b.get('fixedLen', 0) / 12
+            pinned = b.get('HrPinned', min(abs(hr - (DEPARTURE_LEVEL_INF - band)), abs(hr - (DEPARTURE_LEVEL_INF + band))) < 0.03)
             au.add('KINEMATICS', 'tunnel-slope', 'WARNING', ref, dict(cat='rule', id='1:12', label='PBB slope limit 1:12 (ADA / ABA 410.1)'), loc=b['rc'],
-                   note=f'docked to {Dk["type"]}: floor {fl - g:.1f} m at the rotunda -> {cab[1] - g:.1f} m at the cab over {run:.1f} m = 1:{run / max(abs(drop), 1e-3):.1f}')
+                   note=f'docked to {Dk["type"]}: floor {fl - g:.1f} m at the rotunda -> {cab[1] - g:.1f} m at the cab over {run:.1f} m = 1:{run / max(abs(drop), 1e-3):.1f}'
+                        + (f' [inferred heights: the rotunda floor is on the 1:12 band of the INFERRED {DEPARTURE_LEVEL_INF} m departure level]' if pinned else ''))
     raw = au.items
     per_scen = collections.Counter(f'{x["scenario"]}|{x["severity"]}' for x in raw)
     au.meta = dict(seconds=time.time() - t0, tested={f'{k[0]}|{k[1]}': v for k, v in au.stats.items()}, per_scenario=dict(per_scen),

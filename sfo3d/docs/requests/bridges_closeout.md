@@ -10,12 +10,26 @@ not for the whole retraction. `gateSys` = app.js's `LiveGateSystem`; `G` = `brid
 | Call | Returns | Meaning |
 |---|---|---|
 | `undockEarly(G, now)` | s until `extension(G)` is 0 | The engine's EARLIEST departure signal, while the aircraft is still parked (end of SFO's allocation window, the transponder / callsign appearing at the stand, ... - your choice). Starts the normal retraction at the sheet's rates (incl. the 3 s per-motion allowance). Afterwards `G.acType` is null, `G._early` holds the occupant (type, pose, icao) and the GSE has left. |
-| `redock(G, now)` | s until docked | A false signal: the running retraction reverses along its own path (no jump). `setOccupant(G, sameType, true, now, samePose, icao)` while an early retraction runs calls it for you. A hurried retraction is reversed to where it was hurried, then on along the original path. |
+| `redock(G, now)` | s until docked | A false signal: every bridge reverses from where it is along the way it came (no jump); a hurried one along its tail (the rest of the path it was hurried on, kept through a second hurry). Second pass: it is `setOccupant(G, sameType, true, now, samePose, icao)`, which does the same after ANY undocking (early, normal or hurried) - see the note below the table. |
 | `hurryUndock(G, s, now)` | s the retraction takes | The push is seen with the bridge still out: the retraction continues from where it is, along the same path, at the sheet's MAXIMUM rates - cab pivot <= 27 m/min at every instant (segPeak), cab 145 deg/min, lift 1.09 m/min, no per-motion allowance. From docked 16-91 s, p50 27 s. `s` is only a slower floor (never squeezed). Already called by app.js `applyGate` after `setOccupant(G, null)` with `opt.fast`. |
 | `pushClearEta(G, now)` | s until every bridge is clear of the occupant's straight push-back | **The only hold the body needs.** Body = gates.js `acHit` (fuselage box section with the tapered nose, wings, engines, swept tailplane; `boxHitsSwept`) swept backward along its heading by L + 15 m, 0.3 m clearance, against every bridge part along its running retraction (or, with none running, the one `hurryUndock` would start now). From docked at the maximum rates over 2,883 stand x type dockings: p50 1.0 s, p90 1.6 s, p99 4.7 s, max 25.2 s (F13 L2 A333 / A339; F15 B779 24.4 s; B11S B736 11.3 s); 0 dockings clear only at rest. |
 | `undockEta(G, now)` | s until `extension(G)` is 0 | The whole retraction (running, or the one `hurryUndock` would start now) - for display / releasing the gate, not for holding the body. |
 | `dockEta(G, now)` | s until docked | 0 when no docking runs. |
 | `extension(G)` | 0 .. 1 | Unchanged: 0 as soon as the tunnels are back at rest (the cab's height settle afterwards, `gateSys.settles`, needs no hold). |
+
+**Second pass (2026-11-05, review round 2 v5): no docking ever jumps.** `setOccupant(G, type, true, now, pose, icao)` while
+the bridges are not at rest - a retraction running (early, normal, hurried), a docking to another pose running, or docked
+to another occupant (a replacement without a `null` in between) - goes on from where each bridge is (`dockFrom`): the
+same occupant (type, designator, freighter flag, pose within 5 cm / 0.1 deg, angle wrapped) back along the way it came,
+at once; another pose / aircraft after the usual 12 s, straight to its new stand-off point and in to the door when that
+path is clear of the aircraft, else back to rest and along its normal docking path; a bridge that does not dock it goes
+back to rest. Every new plan starts at rest (so an undocking / hurry during it retracts along the same path) and runs at
+the sheet's rates, never faster. Contract (scratch `jump.mjs` of the verifier, every stand x accepted type at its stop,
+2,875 dockings): early undock -> 40 % -> re-dock with the pose 10 cm off; normal undock -> 30 % -> same occupant; undock
+-> hurry -> same occupant; early -> hurry(5) -> hurry(600) -> redock: 0 pose jumps > 5 cm in all four (HEAD code on the
+same files: 2,874 / 2,086 / 2,875 jumps, max 8.26 / 2.56 / 9.63 m; the fourth had 0.25 s steps of up to 10.5 m in all
+2,875), steps <= 0.11 m per 0.25 s;
+`api.mjs` unchanged (0 jumps; pushClearEta p50 0.96 / p99 4.67 / max 25.19 s). No engine change is needed.
 
 Integration (traffic.js / app.js / tools/live/invariants.mjs are yours):
 1. Hold: replace `holdBridge = bridgeK(gate) > 0.01` + `HOLD_CAP_MS` with `pushClearEta(G, now) > 0` (expose it like
@@ -151,6 +165,10 @@ cab height is the published sill (bridges_aircraft.md: `T.dockX3` / `dockSill3` 
 
 # Round 2 (fix round of wf_41410c83, 2026-11-05): what changed, numbers, requests
 
+(The numbers below are as of that fix. Since then the static track moved the 31 rotundas in the data (P6) and the
+aircraft track re-cut the 737 door-1 sill / MAX stance; on today's files they are superseded by "Round 2, second pass"
+at the end of this file - review round 2 bridges-v11.)
+
 Numbers: the verifier's `bcheck2.mjs` (131 bridges, every accepted type at its `type_stops` stop), `hurry_peak.mjs`,
 `ownneck.mjs`, the mesh-sampled `gse.mjs` (scenario A: every stand with its largest type; B: a 737 / A320-family type),
 the departure-API contract test `api.mjs` and `tools/sat/check.py`. Before = gates.js of 373de34 (the round-1 result)
@@ -180,13 +198,13 @@ on today's data; after = the working tree. Scratch scripts are not committed.
 |---|---|
 | Departure API | `undockEarly`, `redock`, `pushClearEta`, `undockEta`, `dockEta` (top of this file); `hurryUndock` keeps its contract. |
 | Path timing (bridges-v6) | `segPeak`: every segment is timed by the cab pivot's PEAK speed (exact for the linear angle / extension interpolation), so pivot and drive column stay <= 27 m/min at every instant. |
-| Building clearance (orch-1) | The SFO Museum terminal-complex and boarding-area outlines (data/sfo_airport.js; what the 3-D ITB / domestic assets are built from) are clearance outlines for every moving part (`bldHit`, in `jointOk`, `pathHits`, the rest-pose check) and for the drums (`drumLimits`): 31 rotundas move off them by the deficit for a 1.5 m drum + 0.2 m (<= 2 m, list in static_closeout.md); their rest cab stays at the data's stow (moving it with the rotunda put B15 L1's cab in B16 L1's B744 path). Exact tests (edge grid + Liang-Barsky, no sampling): start-up 0.66 s. `inBuilding(x, z, all, drawn)`, `solidInBuilding(box)` are exported for tools. |
+| Building clearance (orch-1) | The SFO Museum terminal-complex and boarding-area outlines (data/sfo_airport.js; what the 3-D ITB / domestic assets are built from) are clearance outlines for every moving part (`bldHit`, in `jointOk`, `pathHits`, the rest-pose check) and for the drums (`drumLimits`): 31 rotundas move off them by the deficit for a 1.5 m drum + 0.2 m (<= 2 m, list in static_closeout.md; since P6 the data carries the moves and gates.js shifts 0 - a guard; second pass: a bridge's own walkway strip in those outlines is not building, `ownStrip`); their rest cab stays at the data's stow (moving it with the rotunda put B15 L1's cab in B16 L1's B744 path). Exact tests (edge grid + Liang-Barsky, no sampling): start-up 0.66 s. `inBuilding(x, z, all, drawn)`, `solidInBuilding(box)` are exported for tools. |
 | Known clip (bridges-v3) | `b.ownClip = {rest, docked, poses}` (exact plan overlap of the rotunda corridor with the bridge's own walkway outside the drum): A12 L1 0.32 / 0.47 m2 (37/37 poses), F5 L1 0.18 (1/25), F14 L1 0.40 (6/27), F17 L1 0.45 / 0.46 (6/27), F19 L1 0.45 / 0.52 (6/14), F21 L1 0.56 (5/26). Listed as a data clip, not an accepted junction (static_closeout.md). |
 | Stair side | penalties weighted by how long a pose lasts (rest x10, docked x4, path sample x1): G7 L1 (rotunda moved 0.8 m) no longer rests its stair in G7 L2's drum. |
 | Tailplane solid | `acHit` 'tail' beside the fuselage is the swept, tapered planform (was the whole rectangle from the root LE station aft): catering trucks at narrow-body door 2 are possible (0 -> 28 in scenario B), 0 mesh conflicts. |
 | Belt loaders (bridges-v7) | per family AND door (published sills, `BELT_PUB`: 737 fwd 1.30-1.45 / aft 1.63-1.80; A320 family fwd 1.81-1.93 / aft 1.91-2.08), raised to at least 0.3 m above the rendered model's lowest skin (`beltSill`), one mesh per 0.05 m setting (`belt190`, `belt195`, `belt205`, `belt210` today: the fitted models' skin decides, see §R2.4). Keys `beltLoader` / `beltLoaderA` are gone (the old offline `GateSystem` keeps `beltLoader` / `catering`). |
 | Catering trucks (bridges-v7) | box lifted to the door-2 floor (`cateringFloor`: T.dockSill2, else door 1's rendered sill + the model's nose-down pitch over the door spacing; 0.2 m steps, >= 2.8 m), hull = chassis, cab, column, box (`cateringBoxes`); 10 mesh keys `catering300` ... `catering520`. Before: one box at 3.6-6.2 m - 1.4 m under a 777's door 2. |
-| VDGS | the facade is the drawn outline (`inBuilding(.., drawn)`); a unit / post must also clear the Museum outlines and sky bridges (`solidInBuilding`). |
+| VDGS | the facade is the drawn outline (`inBuilding(.., drawn)`); a unit / post must also clear the Museum outlines and sky bridges (`solidInBuilding`). (Second pass: the unit goes on the OUTER face - the Museum ring where it lies in front of the drawn wall - with a bracket back into the drawn wall.) |
 | Comments (bridges-v9) | header, `extension()`, `setOccupant` (undocking: door height only within 1:4, then the settle), `hurryUndock` (measured 16-91 s; the hold is `pushClearEta`). |
 
 ## R2.1 Static (also written to docs/requests/static_closeout.md "From bridges, round 2")

@@ -1,0 +1,1779 @@
+{
+ "what": "committed values derived from flysfo.com (SFO AODB) responses; tool tools/stands/flysfo_provenance.py (see its header)",
+ "snapshots_local": {
+  "september_base": "flysfo_api_flight-status_202609{24,25}*.json.gz (14 snapshots; LOST 2026-11-04)",
+  "patch_P1_P2": [
+   "flysfo_api_flight-status_20261104T180142Z.json.gz"
+  ]
+ },
+ "data/sfo_stands.json": {
+  "stands_with_flysfo_fields": 108,
+  "of": 108,
+  "per_stand": {
+   "A1": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "base (Sep snapshots, lost): SFO final-plan types UNION ADS-B parked types",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types"
+   },
+   "A2": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "obs_types_aodb2": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)"
+   },
+   "A4": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "base (Sep snapshots, lost): SFO final-plan types UNION ADS-B parked types",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types"
+   },
+   "A5": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "base (Sep snapshots, lost): SFO final-plan types UNION ADS-B parked types",
+    "superseded_types": "base (Sep snapshots, lost): types of superseded SFO plans",
+    "below_icao": "base (Sep snapshots, lost): simultaneously planned pairs below the ICAO clearance",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types"
+   },
+   "A6": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "base (Sep snapshots, lost): SFO final-plan types UNION ADS-B parked types",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types"
+   },
+   "A8": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "base (Sep snapshots, lost): SFO final-plan types UNION ADS-B parked types",
+    "superseded_types": "base (Sep snapshots, lost): types of superseded SFO plans",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types"
+   },
+   "A9": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "base (Sep snapshots, lost): SFO final-plan types UNION ADS-B parked types",
+    "superseded_types": "base (Sep snapshots, lost): types of superseded SFO plans",
+    "below_icao": "base (Sep snapshots, lost): simultaneously planned pairs below the ICAO clearance",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types"
+   },
+   "A10": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "superseded_types": "base (Sep snapshots, lost): types of superseded SFO plans",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "obs_types_aodb2": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)"
+   },
+   "A11": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "base (Sep snapshots, lost): SFO final-plan types UNION ADS-B parked types",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types"
+   },
+   "A12": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "base (Sep snapshots, lost): SFO final-plan types UNION ADS-B parked types",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types"
+   },
+   "A13": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "base (Sep snapshots, lost): SFO final-plan types UNION ADS-B parked types",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types"
+   },
+   "A15": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "cls": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "span_max": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "len_max": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "obs_types_aodb2": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)",
+    "fixup": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)"
+   },
+   "B2": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "obs_types_aodb2": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)"
+   },
+   "B3": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "obs_types_aodb2": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)"
+   },
+   "B4": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "superseded_types": "base (Sep snapshots, lost): types of superseded SFO plans",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "obs_types_aodb2": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)"
+   },
+   "B5": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "obs_types_aodb2": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)"
+   },
+   "B5S": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "base (Sep snapshots, lost): SFO final-plan types UNION ADS-B parked types",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types"
+   },
+   "B6": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "base (Sep snapshots, lost): SFO final-plan types UNION ADS-B parked types",
+    "superseded_types": "base (Sep snapshots, lost): types of superseded SFO plans",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types"
+   },
+   "B7": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "base (Sep snapshots, lost): SFO final-plan types UNION ADS-B parked types",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types"
+   },
+   "B8": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "base (Sep snapshots, lost): SFO final-plan types UNION ADS-B parked types",
+    "superseded_types": "base (Sep snapshots, lost): types of superseded SFO plans",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types"
+   },
+   "B9": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "base (Sep snapshots, lost): SFO final-plan types UNION ADS-B parked types",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types"
+   },
+   "B10": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "obs_types_aodb2": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)"
+   },
+   "B11": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "base (Sep snapshots, lost): SFO final-plan types UNION ADS-B parked types",
+    "superseded_types": "base (Sep snapshots, lost): types of superseded SFO plans",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types"
+   },
+   "B11S": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "base (Sep snapshots, lost): SFO final-plan types UNION ADS-B parked types",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types"
+   },
+   "B12": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "superseded_types": "base (Sep snapshots, lost): types of superseded SFO plans",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "obs_types_aodb2": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)"
+   },
+   "B13": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "base (Sep snapshots, lost): SFO final-plan types UNION ADS-B parked types",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types"
+   },
+   "B14": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "superseded_types": "base (Sep snapshots, lost): types of superseded SFO plans",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "obs_types_aodb2": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)"
+   },
+   "B15": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "superseded_types": "base (Sep snapshots, lost): types of superseded SFO plans",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "obs_types_aodb2": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)"
+   },
+   "B16": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "obs_types_aodb2": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)"
+   },
+   "B16S": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "superseded_types": "base (Sep snapshots, lost): types of superseded SFO plans",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "obs_types_aodb2": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)"
+   },
+   "B17": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "base (Sep snapshots, lost): SFO final-plan types UNION ADS-B parked types",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types"
+   },
+   "B18": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "obs_types_aodb2": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)"
+   },
+   "B19": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "obs_types_aodb2": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)"
+   },
+   "B20": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "base (Sep snapshots, lost): SFO final-plan types UNION ADS-B parked types",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types"
+   },
+   "B21": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "obs_types_aodb2": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)"
+   },
+   "B22": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "superseded_types": "base (Sep snapshots, lost): types of superseded SFO plans",
+    "type_stops": "base (Sep snapshots, lost): ADS-B stops of stays matched to SFO windows",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "obs_types_aodb2": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)"
+   },
+   "B23": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "base (Sep snapshots, lost): SFO final-plan types UNION ADS-B parked types",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types"
+   },
+   "B24": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "obs_types_aodb2": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)"
+   },
+   "B25": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "base (Sep snapshots, lost): SFO final-plan types UNION ADS-B parked types",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types"
+   },
+   "B26": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "obs_types_aodb2": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)"
+   },
+   "B27": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "base (Sep snapshots, lost): SFO final-plan types UNION ADS-B parked types",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types"
+   },
+   "C1": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "base (Sep snapshots, lost): SFO final-plan types UNION ADS-B parked types",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types"
+   },
+   "C3": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "superseded_types": "base (Sep snapshots, lost): types of superseded SFO plans",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "obs_types_aodb2": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)"
+   },
+   "C4": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "base (Sep snapshots, lost): SFO final-plan types UNION ADS-B parked types",
+    "superseded_types": "base (Sep snapshots, lost): types of superseded SFO plans",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types"
+   },
+   "C5": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "below_icao": "base (Sep snapshots, lost): simultaneously planned pairs below the ICAO clearance",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "obs_types_aodb2": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)"
+   },
+   "C6": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "below_icao": "base (Sep snapshots, lost): simultaneously planned pairs below the ICAO clearance",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "obs_types_aodb2": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)"
+   },
+   "C7": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "superseded_types": "base (Sep snapshots, lost): types of superseded SFO plans",
+    "below_icao": "base (Sep snapshots, lost): simultaneously planned pairs below the ICAO clearance",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "obs_types_aodb2": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)"
+   },
+   "C8": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "below_icao": "base (Sep snapshots, lost): simultaneously planned pairs below the ICAO clearance",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "obs_types_aodb2": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)",
+    "excl_types": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)",
+    "fixup": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)"
+   },
+   "C9": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "below_icao": "base (Sep snapshots, lost): simultaneously planned pairs below the ICAO clearance",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "span_max": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "len_max": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "obs_types_aodb2": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)",
+    "fixup": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)",
+    "excl_types": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)"
+   },
+   "C9V": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "base (Sep snapshots, lost): SFO final-plan types UNION ADS-B parked types",
+    "superseded_types": "base (Sep snapshots, lost): types of superseded SFO plans",
+    "types_ok": "base (Sep snapshots, lost): whitelist from neighbours SFO plans simultaneously",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types"
+   },
+   "C10": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "below_icao": "base (Sep snapshots, lost): simultaneously planned pairs below the ICAO clearance",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "obs_types_aodb2": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)",
+    "excl_types": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)",
+    "fixup": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)"
+   },
+   "C11": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "superseded_types": "base (Sep snapshots, lost): types of superseded SFO plans",
+    "types_ok": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "below_icao": "base (Sep snapshots, lost): simultaneously planned pairs below the ICAO clearance",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "obs_types_aodb2": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)",
+    "fixup": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)",
+    "excl_types": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)"
+   },
+   "D1": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "base (Sep snapshots, lost): SFO final-plan types UNION ADS-B parked types",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types"
+   },
+   "D3": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "base (Sep snapshots, lost): SFO final-plan types UNION ADS-B parked types",
+    "conflict_superseded": "base (Sep snapshots, lost): superseded SFO plans vs the class",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types"
+   },
+   "D4": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "base (Sep snapshots, lost): SFO final-plan types UNION ADS-B parked types",
+    "conflict_superseded": "base (Sep snapshots, lost): superseded SFO plans vs the class",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types"
+   },
+   "D5": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "superseded_types": "base (Sep snapshots, lost): types of superseded SFO plans",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "cls": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "span_max": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "len_max": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "obs_types_aodb2": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)",
+    "fixup": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)"
+   },
+   "D6": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "obs_types_aodb2": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)"
+   },
+   "D7": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "base (Sep snapshots, lost): SFO final-plan types UNION ADS-B parked types",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types"
+   },
+   "D8": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "superseded_types": "base (Sep snapshots, lost): types of superseded SFO plans",
+    "conflict": "base (Sep snapshots, lost): ADS-B stays matched to SFO windows disagree",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "obs_types_aodb2": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)"
+   },
+   "D9": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "superseded_types": "base (Sep snapshots, lost): types of superseded SFO plans",
+    "conflict_superseded": "base (Sep snapshots, lost): superseded SFO plans vs the class",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "obs_types_aodb2": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)"
+   },
+   "D10": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "base (Sep snapshots, lost): SFO final-plan types UNION ADS-B parked types",
+    "type_stops": "base (Sep snapshots, lost): ADS-B stops of stays matched to SFO windows",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types"
+   },
+   "D11": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "base (Sep snapshots, lost): SFO final-plan types UNION ADS-B parked types",
+    "type_stops": "base (Sep snapshots, lost): ADS-B stops of stays matched to SFO windows",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types"
+   },
+   "D12": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "base (Sep snapshots, lost): SFO final-plan types UNION ADS-B parked types",
+    "type_stops": "base (Sep snapshots, lost): ADS-B stops of stays matched to SFO windows",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types"
+   },
+   "D14": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "base (Sep snapshots, lost): SFO final-plan types UNION ADS-B parked types",
+    "superseded_types": "base (Sep snapshots, lost): types of superseded SFO plans",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types"
+   },
+   "D15": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "superseded_types": "base (Sep snapshots, lost): types of superseded SFO plans",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "obs_types_aodb2": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)"
+   },
+   "D16": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "base (Sep snapshots, lost): SFO final-plan types UNION ADS-B parked types",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types"
+   },
+   "E2": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "base (Sep snapshots, lost): SFO final-plan types UNION ADS-B parked types",
+    "superseded_types": "base (Sep snapshots, lost): types of superseded SFO plans",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types"
+   },
+   "E3": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "base (Sep snapshots, lost): SFO final-plan types UNION ADS-B parked types",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types"
+   },
+   "E4": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "superseded_types": "base (Sep snapshots, lost): types of superseded SFO plans",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "obs_types_aodb2": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)"
+   },
+   "E5": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "superseded_types": "base (Sep snapshots, lost): types of superseded SFO plans",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "obs_types_aodb2": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)"
+   },
+   "E6": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "superseded_types": "base (Sep snapshots, lost): types of superseded SFO plans",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "obs_types_aodb2": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)"
+   },
+   "E7": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "base (Sep snapshots, lost): SFO final-plan types UNION ADS-B parked types",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types"
+   },
+   "E8": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "base (Sep snapshots, lost): SFO final-plan types UNION ADS-B parked types",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types"
+   },
+   "E9": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "base (Sep snapshots, lost): SFO final-plan types UNION ADS-B parked types",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types"
+   },
+   "E10": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "base (Sep snapshots, lost): SFO final-plan types UNION ADS-B parked types",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types"
+   },
+   "E11": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "base (Sep snapshots, lost): SFO final-plan types UNION ADS-B parked types",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types"
+   },
+   "E12": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "base (Sep snapshots, lost): SFO final-plan types UNION ADS-B parked types",
+    "superseded_types": "base (Sep snapshots, lost): types of superseded SFO plans",
+    "type_stops": "base (Sep snapshots, lost): ADS-B stops of stays matched to SFO windows",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types"
+   },
+   "E13": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "obs_types_aodb2": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)"
+   },
+   "F5": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "base (Sep snapshots, lost): SFO final-plan types UNION ADS-B parked types",
+    "type_stops": "base (Sep snapshots, lost): ADS-B stops of stays matched to SFO windows",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types"
+   },
+   "F6": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "superseded_types": "base (Sep snapshots, lost): types of superseded SFO plans",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "obs_types_aodb2": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)"
+   },
+   "F7": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "superseded_types": "base (Sep snapshots, lost): types of superseded SFO plans",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "obs_types_aodb2": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)"
+   },
+   "F8": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "superseded_types": "base (Sep snapshots, lost): types of superseded SFO plans",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "obs_types_aodb2": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)"
+   },
+   "F9": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "superseded_types": "base (Sep snapshots, lost): types of superseded SFO plans",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "obs_types_aodb2": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)"
+   },
+   "F10": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "base (Sep snapshots, lost): SFO final-plan types UNION ADS-B parked types",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types"
+   },
+   "F11": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "superseded_types": "base (Sep snapshots, lost): types of superseded SFO plans",
+    "type_stops": "base (Sep snapshots, lost): ADS-B stops of stays matched to SFO windows",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "obs_types_aodb2": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)"
+   },
+   "F12": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "base (Sep snapshots, lost): SFO final-plan types UNION ADS-B parked types",
+    "type_stops": "base (Sep snapshots, lost): ADS-B stops of stays matched to SFO windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types"
+   },
+   "F13": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "base (Sep snapshots, lost): SFO final-plan types UNION ADS-B parked types",
+    "superseded_types": "base (Sep snapshots, lost): types of superseded SFO plans",
+    "below_icao": "base (Sep snapshots, lost): simultaneously planned pairs below the ICAO clearance",
+    "type_stops": "base (Sep snapshots, lost): ADS-B stops of stays matched to SFO windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types"
+   },
+   "F14": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "base (Sep snapshots, lost): SFO final-plan types UNION ADS-B parked types",
+    "type_stops": "base (Sep snapshots, lost): ADS-B stops of stays matched to SFO windows",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types"
+   },
+   "F15": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "base (Sep snapshots, lost): SFO final-plan types UNION ADS-B parked types",
+    "superseded_types": "base (Sep snapshots, lost): types of superseded SFO plans",
+    "below_icao": "base (Sep snapshots, lost): simultaneously planned pairs below the ICAO clearance",
+    "type_stops": "base (Sep snapshots, lost): ADS-B stops of stays matched to SFO windows",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types"
+   },
+   "F16": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "superseded_types": "base (Sep snapshots, lost): types of superseded SFO plans",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "obs_types_aodb2": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)"
+   },
+   "F17": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "superseded_types": "base (Sep snapshots, lost): types of superseded SFO plans",
+    "type_stops": "base (Sep snapshots, lost): ADS-B stops of stays matched to SFO windows",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "obs_types_aodb2": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)"
+   },
+   "F18": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "base (Sep snapshots, lost): SFO final-plan types UNION ADS-B parked types",
+    "below_icao": "base (Sep snapshots, lost): simultaneously planned pairs below the ICAO clearance",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "excl_types": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)",
+    "fixup": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)"
+   },
+   "F19": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "superseded_types": "base (Sep snapshots, lost): types of superseded SFO plans",
+    "types_ok": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "types_ok_all_paths": "base (Sep snapshots, lost): whitelist applies on SFO's allocation path",
+    "tight_with": "base (Sep snapshots, lost): neighbours SFO plans simultaneously",
+    "below_icao": "base (Sep snapshots, lost): simultaneously planned pairs below the ICAO clearance",
+    "type_stops": "base (Sep snapshots, lost): ADS-B stops of stays matched to SFO windows",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "obs_types_aodb2": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)",
+    "fixup": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)",
+    "excl_types": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)"
+   },
+   "F20": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "superseded_types": "base (Sep snapshots, lost): types of superseded SFO plans",
+    "types_ok": "base (Sep snapshots, lost): whitelist from neighbours SFO plans simultaneously",
+    "types_ok_all_paths": "base (Sep snapshots, lost): whitelist applies on SFO's allocation path",
+    "tight_with": "base (Sep snapshots, lost): neighbours SFO plans simultaneously",
+    "below_icao": "base (Sep snapshots, lost): simultaneously planned pairs below the ICAO clearance",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "obs_types_aodb2": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)",
+    "fixup": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)",
+    "excl_types": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)"
+   },
+   "F21": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "superseded_types": "base (Sep snapshots, lost): types of superseded SFO plans",
+    "below_icao": "base (Sep snapshots, lost): simultaneously planned pairs below the ICAO clearance",
+    "type_stops": "base (Sep snapshots, lost): ADS-B stops of stays matched to SFO windows",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "obs_types_aodb2": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)"
+   },
+   "F22": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "base (Sep snapshots, lost): SFO final-plan types UNION ADS-B parked types",
+    "below_icao": "base (Sep snapshots, lost): simultaneously planned pairs below the ICAO clearance",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types"
+   },
+   "G1": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "base (Sep snapshots, lost): SFO final-plan types UNION ADS-B parked types",
+    "superseded_types": "base (Sep snapshots, lost): types of superseded SFO plans",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types"
+   },
+   "G2": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "superseded_types": "base (Sep snapshots, lost): types of superseded SFO plans",
+    "below_icao": "base (Sep snapshots, lost): simultaneously planned pairs below the ICAO clearance",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "obs_types_aodb2": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)"
+   },
+   "G3": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "obs_types_aodb2": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)"
+   },
+   "G4": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "obs_types_aodb2": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)"
+   },
+   "G5": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "superseded_types": "base (Sep snapshots, lost): types of superseded SFO plans",
+    "below_icao": "base (Sep snapshots, lost): simultaneously planned pairs below the ICAO clearance",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "obs_types_aodb2": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)"
+   },
+   "G6": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "superseded_types": "base (Sep snapshots, lost): types of superseded SFO plans",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "obs_types_aodb2": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)"
+   },
+   "G7": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "below_icao": "base (Sep snapshots, lost): simultaneously planned pairs below the ICAO clearance",
+    "stops_rejected": "base (Sep snapshots, lost): ADS-B stops of stays matched to SFO windows",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "obs_types_aodb2": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)"
+   },
+   "G8": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "superseded_types": "base (Sep snapshots, lost): types of superseded SFO plans",
+    "below_icao": "base (Sep snapshots, lost): simultaneously planned pairs below the ICAO clearance",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "obs_types_aodb2": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)"
+   },
+   "G9": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "superseded_types": "base (Sep snapshots, lost): types of superseded SFO plans",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "obs_types_aodb2": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)"
+   },
+   "G10": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "base (Sep snapshots, lost): SFO final-plan types UNION ADS-B parked types",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types"
+   },
+   "G12": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "base (Sep snapshots, lost): SFO final-plan types UNION ADS-B parked types",
+    "superseded_types": "base (Sep snapshots, lost): types of superseded SFO plans",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types"
+   },
+   "G13": {
+    "aodb": "base (Sep snapshots, lost): SFO AODB stand names served by the stand",
+    "name_src": "base (Sep snapshots, lost): SFO AODB stand name (with DataSF gate number)",
+    "cls_src": "base (Sep snapshots, lost): class from the largest type SFO plans (cls_src starts with \"sfo\")",
+    "largest_type": "base (Sep snapshots, lost): largest SFO-planned type",
+    "obs_types": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json) - P1 / P2 change",
+    "superseded_types": "base (Sep snapshots, lost): types of superseded SFO plans",
+    "resid.adsb": "base: ADS-B stays matched to SFO stand windows",
+    "verified_by": "base: \"adsb\" = stays matched to SFO stand windows",
+    "cls": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "span_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "len_max": "base (Sep snapshots, lost): class / limits from SFO-planned types",
+    "obs_types_aodb2": "4 Nov snapshot (local; replayed from refs/cache/stands/patch_p1p2_replay.json)"
+   }
+  },
+  "other": [
+   "fixups[] entries of P1 / P2",
+   "remote[] / unplaced[] names and types (AODB stand list)"
+  ]
+ },
+ "refs/cache/stands/patch_p1p2_replay.json": "whole file (P1 / P2 results incl. SFO flight numbers in obs_types_aodb2)",
+ "refs/cache/stands/sfo_stands_built_20260926.json": "the base: the fields of A. (header)",
+ "refs/cache/stands/adsb_parked.json": {
+  "fields": [
+   "stand",
+   "gate",
+   "flight",
+   "callsign",
+   "match",
+   "win",
+   "overlap_s",
+   "sfo_type"
+  ],
+  "stays_with_sfo_match": 140,
+  "of": 177,
+  "read_by_generators": "none since round 3 (patch_stands P5 geometric; paint_pave_naip identity by ADS-B)"
+ },
+ "p1_types_adsb_corroborated": {
+  "n": 3,
+  "of": 66,
+  "rows": [
+   {
+    "stand": "A10",
+    "type": "B789",
+    "adsb_geometric": false
+   },
+   {
+    "stand": "A15",
+    "type": "A332",
+    "adsb_geometric": false
+   },
+   {
+    "stand": "A2",
+    "type": "A35K",
+    "adsb_geometric": false
+   },
+   {
+    "stand": "A2",
+    "type": "B738",
+    "adsb_geometric": false
+   },
+   {
+    "stand": "A2",
+    "type": "B772",
+    "adsb_geometric": false
+   },
+   {
+    "stand": "B10",
+    "type": "E75L",
+    "adsb_geometric": false
+   },
+   {
+    "stand": "B12",
+    "type": "B738",
+    "adsb_geometric": false
+   },
+   {
+    "stand": "B14",
+    "type": "A21N",
+    "adsb_geometric": false
+   },
+   {
+    "stand": "B15",
+    "type": "B739",
+    "adsb_geometric": false
+   },
+   {
+    "stand": "B16",
+    "type": "A319",
+    "adsb_geometric": false
+   },
+   {
+    "stand": "B16S",
+    "type": "A333",
+    "adsb_geometric": false
+   },
+   {
+    "stand": "B18",
+    "type": "A21N",
+    "adsb_geometric": false
+   },
+   {
+    "stand": "B19",
+    "type": "B738",
+    "adsb_geometric": false
+   },
+   {
+    "stand": "B2",
+    "type": "E75L",
+    "adsb_geometric": false
+   },
+   {
+    "stand": "B21",
+    "type": "A21N",
+    "adsb_geometric": true
+   },
+   {
+    "stand": "B22",
+    "type": "A321",
+    "adsb_geometric": false
+   },
+   {
+    "stand": "B24",
+    "type": "E75L",
+    "adsb_geometric": false
+   },
+   {
+    "stand": "B26",
+    "type": "E75L",
+    "adsb_geometric": false
+   },
+   {
+    "stand": "B3",
+    "type": "B738",
+    "adsb_geometric": false
+   },
+   {
+    "stand": "B4",
+    "type": "A321",
+    "adsb_geometric": false
+   },
+   {
+    "stand": "B5",
+    "type": "B39M",
+    "adsb_geometric": false
+   },
+   {
+    "stand": "C10",
+    "type": "A320",
+    "adsb_geometric": false
+   },
+   {
+    "stand": "C11",
+    "type": "B738",
+    "adsb_geometric": false
+   },
+   {
+    "stand": "C3",
+    "type": "A320",
+    "adsb_geometric": false
+   },
+   {
+    "stand": "C3",
+    "type": "A321",
+    "adsb_geometric": false
+   },
+   {
+    "stand": "C3",
+    "type": "B738",
+    "adsb_geometric": false
+   },
+   {
+    "stand": "C5",
+    "type": "A321",
+    "adsb_geometric": false
+   },
+   {
+    "stand": "C6",
+    "type": "BCS3",
+    "adsb_geometric": false
+   },
+   {
+    "stand": "C7",
+    "type": "A21N",
+    "adsb_geometric": false
+   },
+   {
+    "stand": "C8",
+    "type": "B752",
+    "adsb_geometric": false
+   },
+   {
+    "stand": "C9",
+    "type": "B763",
+    "adsb_geometric": false
+   },
+   {
+    "stand": "D15",
+    "type": "A319",
+    "adsb_geometric": false
+   },
+   {
+    "stand": "D5",
+    "type": "B763",
+    "adsb_geometric": false
+   },
+   {
+    "stand": "D6",
+    "type": "A319",
+    "adsb_geometric": false
+   },
+   {
+    "stand": "D8",
+    "type": "B39M",
+    "adsb_geometric": false
+   },
+   {
+    "stand": "D9",
+    "type": "B738",
+    "adsb_geometric": false
+   },
+   {
+    "stand": "E13",
+    "type": "A319",
+    "adsb_geometric": false
+   },
+   {
+    "stand": "E4",
+    "type": "A319",
+    "adsb_geometric": false
+   },
+   {
+    "stand": "E5",
+    "type": "A319",
+    "adsb_geometric": false
+   },
+   {
+    "stand": "E6",
+    "type": "B739",
+    "adsb_geometric": false
+   },
+   {
+    "stand": "F11",
+    "type": "B38M",
+    "adsb_geometric": false
+   },
+   {
+    "stand": "F11",
+    "type": "B739",
+    "adsb_geometric": false
+   },
+   {
+    "stand": "F16",
+    "type": "A21N",
+    "adsb_geometric": false
+   },
+   {
+    "stand": "F17",
+    "type": "A21N",
+    "adsb_geometric": false
+   },
+   {
+    "stand": "F19",
+    "type": "B752",
+    "adsb_geometric": false
+   },
+   {
+    "stand": "F19",
+    "type": "B772",
+    "adsb_geometric": false
+   },
+   {
+    "stand": "F20",
+    "type": "A21N",
+    "adsb_geometric": false
+   },
+   {
+    "stand": "F21",
+    "type": "A320",
+    "adsb_geometric": false
+   },
+   {
+    "stand": "F21",
+    "type": "B38M",
+    "adsb_geometric": false
+   },
+   {
+    "stand": "F6",
+    "type": "CRJ2",
+    "adsb_geometric": false
+   },
+   {
+    "stand": "F7",
+    "type": "CRJ2",
+    "adsb_geometric": false
+   },
+   {
+    "stand": "F8",
+    "type": "CRJ2",
+    "adsb_geometric": false
+   },
+   {
+    "stand": "F9",
+    "type": "CRJ2",
+    "adsb_geometric": false
+   },
+   {
+    "stand": "G13",
+    "type": "B772",
+    "adsb_geometric": true
+   },
+   {
+    "stand": "G2",
+    "type": "A320",
+    "adsb_geometric": false
+   },
+   {
+    "stand": "G2",
+    "type": "B789",
+    "adsb_geometric": false
+   },
+   {
+    "stand": "G3",
+    "type": "B738",
+    "adsb_geometric": false
+   },
+   {
+    "stand": "G4",
+    "type": "B38M",
+    "adsb_geometric": false
+   },
+   {
+    "stand": "G5",
+    "type": "A359",
+    "adsb_geometric": false
+   },
+   {
+    "stand": "G5",
+    "type": "B38M",
+    "adsb_geometric": false
+   },
+   {
+    "stand": "G6",
+    "type": "B39M",
+    "adsb_geometric": false
+   },
+   {
+    "stand": "G6",
+    "type": "B738",
+    "adsb_geometric": false
+   },
+   {
+    "stand": "G7",
+    "type": "A320",
+    "adsb_geometric": false
+   },
+   {
+    "stand": "G8",
+    "type": "E75L",
+    "adsb_geometric": false
+   },
+   {
+    "stand": "G9",
+    "type": "A359",
+    "adsb_geometric": true
+   },
+   {
+    "stand": "G9",
+    "type": "B39M",
+    "adsb_geometric": false
+   }
+  ]
+ },
+ "needs_local_snapshot_to_regenerate": [
+  "patch_stands.py P1 / P2 live mode (--check); otherwise replayed",
+  "tools/stands/adsb_parked.py (the SFO match fields of C.)",
+  "tools/stands/build_stands.py (also needs the lost Sep snapshots / recording)"
+ ]
+}

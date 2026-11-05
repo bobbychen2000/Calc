@@ -6,8 +6,8 @@ Aircraft (review round 2: the app's own geometry, not a class shape)
       rootC, tipC, sweep), tailplane, left main-deck doors, dock2.
   accepted_types(s, app_rule): every APP designator the app lets park on the stand - js/live/traffic.js standFits:
       span <= maxSpan + 0.6 and L <= maxLen + 2 (maxSpan / maxLen = js/live/airport.js CLASS_MAX limited by span_max /
-      len_max); app_rule=True: traffic.js's path for SFO's own allocation (no types_ok; A380 / 747-8 only on `a380`
-      stands - review round 4 updated this to the current standFits).
+      len_max); app_rule=True: traffic.js's path for SFO's own allocation (no types_ok, except where types_ok_all_paths:
+      F19 / F20, realtime round 2; A380 / 747-8 only on `a380` stands - review round 4 updated this to the current standFits).
   planform(nose, hdg, t): the ground-physics collision shape of js/live/ground.js inside(): fuselage rectangle
       (0..L, +-R), wing trapezoid (LE = rootLE + |y| tan(sweep), chord rootC -> tipC at the tip), tailplane rectangle
       (hstab.x .. L, +-span/2). envelope(): union over the accepted types, all with the nose at the stand's nose point.
@@ -112,7 +112,8 @@ def app(t):
 def accepted_types(s, app_rule=False):
     """types the stand accepts. app_rule=False: the data's rule (class limits, span_max / len_max, and the whitelist
     types_ok where the builder set one); app_rule=True: what js/live/traffic.js standFits(g, T, icao, strict=false)
-    does for SFO's own allocation (review round 4: the working tree of 25 Sep - no types_ok on that path, types.js spans
+    does for SFO's own allocation (review round 4: the working tree of 25 Sep - no types_ok on that path except where
+    types_ok_all_paths is set (F19 / F20, realtime round 2), types.js spans
     without winglets, span <= maxSpan + 0.6 and L <= maxLen + 2, and the A380 / 747-8 clause only on the stands the data
     marks `a380`; the old 'maxSpan >= 64' clause is gone)"""
     sp, L = limits(s); out = []

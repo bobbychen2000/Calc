@@ -3,6 +3,7 @@ import { Mesh } from '../gl.js';
 import { m4, v3 } from '../math.js';
 import { buildAircraft, TYPES } from './model.js';
 import { cockpitPanes } from './cockpit.js';
+import { aircraftSprites, lightViewer } from '../env/aircraft_lights.js';
 const COCK_STYLE = { boeing: 0, airbus: 1, '787': 2, a350: 3 };
 
 export const LIVERIES = [
@@ -121,6 +122,14 @@ export class Aircraft {
     const M = this.matrix(); const S = []; const Lt = this.M.A.lights; const on = this.lightsOn;
     const W = (p) => m4.xform(M, p); const D = (d) => v3.norm(m4.xdir(M, d));
     if (!this.visible) return S;
+    // live app (environment step 2): 14 CFR 25.1385-1401 sectors / intensities, Blondel-Rey flashes, Allard visibility
+    // (js/env/aircraft_lights.js; the viewer is set by js/live/app.js each frame). Other pages keep the sprites below.
+    if (lightViewer()) {
+      const P = (k) => Lt[k] ? W(Lt[k]) : null; const L = { navL: P('navL'), navR: P('navR'), tail: P('tail'), beaconTop: P('beaconTop'), beaconBot: P('beaconBot'), strobeL: P('strobeL'), strobeR: P('strobeR'), landL: P('landL'), landR: P('landR'), taxi: P('taxi') };
+      const right = L.navL && L.navR ? v3.norm(v3.sub(L.navR, L.navL)) : D([0, 0, 1]);
+      if (this._lseed == null) this._lseed = [...(this.id || 'x')].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 9973, 7) / 997;
+      return aircraftSprites(L, { fwd: D([1, 0, 0]), right, up: D([0, 1, 0]), landDir: D([1, -0.12, 0]), taxiDir: D([1, -0.15, 0]) }, on, this._lseed, t, this.gear);
+    }
     if (on.nav) { S.push({ p: W(Lt.navL), c: [1, 0.06, 0.04], i: 40, s: 0.22 }); S.push({ p: W(Lt.navR), c: [0.1, 1, 0.3], i: 40, s: 0.22 }); S.push({ p: W(Lt.tail), c: [1, 1, 1], i: 25, s: 0.2 }); }
     if (on.beacon) { const f = Math.max(0, Math.sin(t * Math.PI * 2 * 1.0 + this.id.length)); const k = Math.pow(f, 8); S.push({ p: W(Lt.beaconTop), c: [1, 0.05, 0.02], i: 250 * k + 3, s: 0.25 }); S.push({ p: W(Lt.beaconBot), c: [1, 0.05, 0.02], i: 250 * k + 3, s: 0.25 }); }
     if (on.strobe) { const ph = (t * 1.1 + (this.id.length * 0.37)) % 1; const k = ph < 0.05 ? 1 : (ph > 0.12 && ph < 0.16 ? 1 : 0); if (k) { S.push({ p: W(Lt.strobeL), c: [1, 1, 1], i: 1500, s: 0.3 }); S.push({ p: W(Lt.strobeR), c: [1, 1, 1], i: 1500, s: 0.3 }); } }

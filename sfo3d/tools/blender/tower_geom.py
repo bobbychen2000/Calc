@@ -622,7 +622,9 @@ class Tower:
             src='inf', feature='flare top: rounded shoulder from the widest corner up to the plinth foot (t1 profile '
             'fractions of the spec rise); NE blade pointed tip; post with a stay on the SW wing top; railing around the plinth',
             spec=['h_flare_max', 'h_cab_floor', 'd_flare_max'], drawing='BT-02, BT-03 (SHOULDER, draw_blades)',
-            tags=dict(shoulder='shape obs photo t1, stations inf', ne_tip='obs photo t4, low', post='obs photos t3/t4/t5, position inf',
+            tags=dict(shoulder='shape obs photo t1, stations inf; landside sector flat, then a linear ~14-deg rise (obs t3/t4: flat '
+                      'blade tops, no deck visible above them from 30 deg below)', ne_tip='flush with the flare corner, obs photos t3/t4/t5',
+                      post='obs photos t3/t4/t5, position inf',
                       railing='obs photo t3, dimensions inf')), smooth=True)
         k = len(H) - 1
         I = ins[k]
@@ -648,12 +650,28 @@ class Tower:
         tgt = [np.array([CAB[0] + self.plinth_r * bvec(b)[0], CAB[1] + self.plinth_r * bvec(b)[1], self.deck_h]) for b in brg]
         runs = np.array([a for a, b in DT.SHOULDER]); rises = np.array([b for a, b in DT.SHOULDER])
         rise_of = PchipInterpolator(runs, rises)
+        # landside sector (SW wing, ribbon head, NE blade): flat tops [obs photos t3 / t4: the wing's "flat top", the NE blade
+        # ends in a sharp flat corner; from t4 (81 m, ~30 deg below) no deck shows above the blade or the ribbon head, from t3
+        # (263 m, ~12 deg below) a thin band does]: the deck stays at the flare corner over the part outside the round body
+        # and at least LAND_FLAT of the run, then rises linearly (~14 deg) to the plinth foot, so it hides below a 30-deg
+        # sight line and shows as a sliver at 12 deg. The round body keeps the t1 SHOULDER (rounded, ~37 deg at the edge).
+        # Round 1 used the SHOULDER everywhere: a sunlit ~0.3-0.5 m facet stood above the NE blade in the t4 render.
+        LAND_FLAT = 0.25
+        a0 = []
+        for i in range(npt):
+            ex = max(0.0, math.hypot(loop[i][0], loop[i][1]) - self.r_top)
+            run = max(1e-6, math.hypot(loop[i][0] - CAB[0], loop[i][1] - CAB[1]) - self.plinth_r)
+            a0.append(min(0.6, max(LAND_FLAT, ex / run)) if i >= len(sh) else None)
         rings = []
         for a in L['shoulder']:
             ring = []
             for i in range(npt):
                 p = loop[i] * (1 - a) + tgt[i] * a
-                p[2] = self.h_top + (self.deck_h - self.h_top) * float(rise_of(a))
+                if a0[i] is None:
+                    rz = float(rise_of(a))
+                else:
+                    rz = max(0.0, (a - a0[i]) / (1.0 - a0[i]))
+                p[2] = self.h_top + (self.deck_h - self.h_top) * rz
                 rr = math.hypot(p[0] - CAB[0], p[1] - CAB[1])
                 ring.append(part.v(p, (i / 6.0, rr / 2.0)))
             rings.append(ring)

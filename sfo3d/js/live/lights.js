@@ -1,11 +1,14 @@
 // Airfield lighting for the live scene: runway/approach lighting (surveyed runway ends) + blue taxiway edge lights
 // along the real taxiway outlines wherever the outline borders unpaved ground.
-import { buildAirfieldLights, lightSpriteFn, buildPierGeometry } from '../anim/lights.js';
+// Since the environment step 2 (js/live/app.js) only the approach-light STRUCTURES (piers, opts.lightPlane: built at the
+// ALS light plane) and the blue taxiway-edge positions (the last sys.taxiCount records of sys.L) are used from here; the
+// runway / approach / PAPI sprites come from data/sfo_lighting.js via js/env/lighting/airfield.js.
+import { buildAirfieldLights, lightSpriteFn, buildPierGeometry, alsPlacement, buildMountGeometry } from '../anim/lights.js';
 import { GROUND_Y } from '../geo.js';
 
 const BLUE = [0.2, 0.35, 1];
-export function buildLiveLights(airport, paved) {
-  const sys = buildAirfieldLights(1.0, { taxiways: false });
+export function buildLiveLights(airport, paved, opts = {}) {
+  const sys = buildAirfieldLights(1.0, { taxiways: false, lightPlane: opts.lightPlane });
   let n = 0;
   if (paved) for (const t of airport.taxiways) for (const poly of t.polys) for (const ring of poly) {
     let acc = 22;
@@ -26,4 +29,4 @@ export function buildLiveLights(airport, paved) {
   sys.taxiCount = n;
   return sys;
 }
-export { lightSpriteFn, buildPierGeometry };
+export { lightSpriteFn, buildPierGeometry, alsPlacement, buildMountGeometry };
