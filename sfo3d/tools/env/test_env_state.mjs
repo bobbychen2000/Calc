@@ -95,6 +95,49 @@ const oc = OC.now();
 check('?t= override: environment time moves, traffic time stays, overridden flag', oc.tEnv === q.t && oc.tTraffic === tSnap && oc.overridden);
 check('?wx=<id>: 14 presets available, dusk preset time + runway input', ENV_PRESETS.length === 14 && presetById('dusk').time_utc === '2026-09-24T02:30:00Z' && presetRunway(presetById('dusk')).arr['28L'] === 'visual');
 
+// snapshot TAF (spec §3.4)
+{
+  const { AppEnv } = await import('../../js/env/app_env.js');
+  const A = new AppEnv({ mode: 'snapshot', snapshotNow: tSnap, snapshotMetar: SNAPSHOT_METAR, search: '' });
+  const S = A.update(Date.now());
+  const P0 = S.wx.taf && S.wx.taf.periods;
+  check('snapshot TAF in force at 17:51Z decoded (TAF KSFO 231727Z, 6 periods, base VRB05KT P6SM SCT200)', !!P0 && /231727Z/.test(S.wx.taf.raw) && P0.length === 6 && P0[0].wind.variable && P0[0].visibility.prefix === 'P' && P0[0].sky[0].height_ft === 20000,
+    P0 ? P0.map(p => p.change + (p.from || '')).join(' ') : 'none');
+}
+
+// 60 s weather transition after a new report (§3.3, I)
+{
+  const A = 'METAR KSFO 081256Z 20003KT 10SM CLR 14/14 A3001 RMK AO2', B = 'METAR KSFO 081356Z 20003KT M1/4SM FG VV002 14/14 A3001 RMK AO2';
+  const t = Date.parse('2025-11-08T13:57:00Z');
+  const S1 = buildEnvState(t, { reports: [A], live: true });
+  const S2 = buildEnvState(t + 1000, { reports: [A, B], live: true, prev: S1 });
+  const S3 = buildEnvState(t + 31000, { reports: [A, B], live: true, prev: S2 });
+  const S4 = buildEnvState(t + 61000, { reports: [A, B], live: true, prev: S3 });
+  const target = buildEnvState(t + 61000, { reports: [B], live: true }).atm.sigmaSurface;
+  const mid = Math.exp(0.5 * Math.log(S1.atm.sigmaSurface) + 0.5 * Math.log(target));
+  check('60 s σ transition: starts at the old value, log-midpoint at 30 s, new value at 60 s', Math.abs(S2.atm.sigmaSurface / S1.atm.sigmaSurface - 1) < 1e-9 && Math.abs(S3.atm.sigmaSurface / mid - 1) < 1e-9 && S4.atm.sigmaSurface === target && S4.atm.transition === null,
+    `${S1.atm.sigmaSurface.toExponential(2)} -> ${S3.atm.sigmaSurface.toExponential(2)} -> ${S4.atm.sigmaSurface.toExponential(2)}`);
+  const Sj = buildEnvState(t - 3600e3, { reports: [A, B], live: true, prev: S2 });
+  check('a data-clock jump backwards cancels the transition', Sj.atm.transition === null);
+  const Sf = buildEnvState(t, { reports: [A, B], live: true, prev: S1 });
+  check('fixed data clock (snapshot / override): a report change applies at once', Sf.atm.transition === null && Sf.atm.sigmaSurface === target);
+}
+
+// PAPI photocell (AC 150/5345-28H §3.3.6: night below 25-35 fc, 45-75 s delay; 30 fc / 60 s used, I)
+{
+  let prev = null, tc = null, tf = null;
+  for (let t = Date.parse('2026-09-24T01:30:00Z'); t <= Date.parse('2026-09-24T02:20:00Z'); t += 30e3) {
+    const S = buildEnvState(t, { reports: snapReports.slice(0, 1), live: true, prev });
+    if (tc == null && S.photocell.northSkyFc < 30) tc = t;
+    if (tf == null && S.photocell.papiNight) tf = t;
+    prev = S;
+  }
+  check('PAPI photocell: night mode 60-90 s after the north sky drops below 30 fc (running clock, 30 s updates)', tc != null && tf != null && tf - tc >= 60e3 && tf - tc <= 90e3, `${new Date(tc).toISOString().slice(11, 19)}Z -> ${new Date(tf).toISOString().slice(11, 19)}Z`);
+  const day = buildEnvState(Date.parse('2026-09-23T20:00:00Z'), { reports: snapReports.slice(0, 1) });
+  const jump = buildEnvState(Date.parse('2026-09-24T04:00:00Z'), { reports: snapReports.slice(0, 1), prev: day });
+  check('PAPI photocell: a clock jump (light mode Day -> Night) switches at once', !day.photocell.papiNight && jump.photocell.papiNight);
+}
+
 // ---------------------------------------------------------------------------------------------- 3. light modes
 check('UTC offset from Intl: PDT −7 on 23 Sep 2026, PST −8 on 7 Jan 2025', utcOffsetHours(tSnap) === -7 && utcOffsetHours(Date.parse('2025-01-07T09:39:00Z')) === -8);
 const ld = localDate(Date.parse('2026-09-24T02:30:00Z'));

@@ -11310,26 +11310,26 @@
    "nearest_envelopes": [
     {
      "stand": "F12",
-     "dist_m": 2.78,
+     "dist_m": 2.91,
      "unit": "domestic/BA_F/LOD0",
      "old_outline_dist_m": 2.81
     },
     {
      "stand": "F17",
-     "dist_m": 3.07,
+     "dist_m": 3.15,
      "unit": "domestic/BA_F/LOD0",
      "old_outline_dist_m": 3.38
     },
     {
      "stand": "G7",
-     "dist_m": 5.2,
+     "dist_m": 5.31,
      "unit": "itb/BA-G/LOD0",
      "old_outline_dist_m": 5.35
     }
    ],
    "bridges_checked": 131
   },
-  "generated": "2026-11-05T03:14:15Z",
+  "generated": "2026-11-05T04:15:11Z",
   "tool": "tools/blender/b3d_integrate.py",
   "doc": "docs/research/buildings3d.md (integration section)"
  }

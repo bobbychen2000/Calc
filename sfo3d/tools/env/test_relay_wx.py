@@ -78,6 +78,8 @@ def main():
     check('dataNow live = wall clock', abs(h.data_now_ms() - time.time() * 1000) < 1000)
     clk = S.Clock(wall0=time.time(), src0=1790185885.0, speed=1.0)
     h.clock = clk
+    check('dataNow replay before the first replayed record = None (placeholder clock)', h.data_now_ms() is None)
+    h.replay_pos = 1790185885.0
     check('dataNow replay = recording clock (Clock.to_src)', abs(h.data_now_ms() - 1790185885000) < 2000, h.data_now_ms())
     # ---- replay: never a report observed after the replay time (A-CLK)
     os.makedirs(os.path.join(tmp, 'replay', 'wx'), exist_ok=True)

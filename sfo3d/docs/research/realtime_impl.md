@@ -708,3 +708,33 @@ Unchanged or worse, with the reason:
 - `lag.gnd_30m.other_airfield` 7,546 → 8,310: N52SG TBM9 parked at another field with ±12 m GNSS scatter at 0–0.1 kt
   — before, a false push-back from that scatter reversed the body around it; now it stays put (the target is the scatter).
 - `offpave.*`: static data (FBO ramp, taxi routes south of pier B, taxiway W across 1L/1R) — `realtime_closeout.md` §1.
+
+# Step 7 — close-out review round 2 (5 Nov 2026): departures and jet bridges, docking drives, stand rules
+
+Numbers, dispositions and requests: `docs/requests/realtime_closeout.md` "Round 2". Replay: every recorded hour
+(4 Nov 17:43 – 5 Nov 02:30Z, 8.7 h at 10 Hz), plus the 4 Nov review window traced.
+
+1. **Departures and bridges.** Measured: 87 % of the 257 push-backs from contact stands were made by aircraft whose
+   transponder came on again at the stand after > 10 min of silence, p50 138 s before the push (callsign / squawk appear
+   with it; SFO's off-block times are not early or exact enough). `departureSignal()` → `earlyUndock()` → gates.js
+   `undockEarly()`; `cancelEarly()` after 30 min without a push or when it falls silent again (→ `redock`). Fallback:
+   the body is held until gates.js `pushClearEta()` is 0 and the extension ≤ 0.5 (`HOLD_MAX_MS` 60 s), the retraction
+   hurried (`hurryBridge` → `hurryUndock`); re-placements wait for it too. app.js / invariants.mjs map `opt.early`.
+2. **Silent-docking drive** (`dockPath`): the body's own unicycle drive — (straight,) a turn of R 12–60 m, (straight,) a
+   turn back, along the lead-in — chosen by least turn / length / tightness, aligned ≥ max(8 m, 0.25 L) before the stop;
+   no fit → a straight drive when the stop is ≤ 30° off the nose, else the data decides. The target carries the drive's
+   heading (`o.nh`) and a pure-pursuit look-ahead on it (`o.look`, 0.5 R + 4 m). The speed profile never exceeds the
+   0.5 m/s² braking curve to the stop; dead reckoning into a stop mark brakes at 0.5 m/s² too.
+3. **Stands.** `standFits` applies `types_ok` on SFO's path where `types_ok_all_paths`; `blocked()` honours `excl_types`
+   (`exclTypeHits`, both directions; a silent neighbour is replaced, like `excl`); `docking()` skips blocked stands;
+   `gateByName` prefers the exact stand name (SFO's C9V was mapped to C9).
+4. **Rest poses at stands.** A body that stopped past its pose is accepted only outside the rest bridges
+   (`fusInRestBridge`, traffic.restBridgeAt = app.js's rest-bridge grid); up to 12 m behind the data's pose while not
+   > 2 m past the stop mark; up to 4 m / 15° residual at a stand. A push end is finished by a tow pivot about the main gear
+   (≤ 1.5°/s). The parked lock is kept once the departure is signalled; ×1.5 heading tolerance while docked.
+5. **Push-back recognition.** A track never seen moving forward is a push-back on its first chord against the nose; the
+   off-block names the stand found later in the push; a push candidate moves the way it was seen moving.
+6. **Labels / cards.** 'Lined up' only once the drawn body is within 15° of the runway heading; 'Pushback' while the drawn
+   body still reverses; a same-number turn's card shows the record of the stand the aircraft is at (or the pending arrival).
+7. **GroundPhysics.** A body not yet at its stand pose (driving in) is a moving body (ghosts in its way are removed); an
+   arrival heading into a stand where a silent aircraft is still drawn removes it early (its bridge retracts first).

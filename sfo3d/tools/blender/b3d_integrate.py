@@ -9,7 +9,7 @@ check of all four groups against the surveyed stands, bridges, taxiways and airc
 What it measures (everything from the exported GLBs, read back with the reader below: what the app draws):
   footprints   plan projection of every triangle of every LOD (LOD0..2 and the *_lod2.glb phone files), per asset unit
                (tower; ITB hall / BA-A / BA-G; domestic extras.building; landside top-level building nodes), unioned
-               and simplified by 0.1 m (outward-safe: the union is buffered by +0.1 m first). Vertical faces count as
+               and simplified by 0.02 m (after a +0.02 m buffer that closes the seams). Vertical faces count as
                0.05 m strips, so free-standing walls / screens are included. Instanced cars (EXT_mesh_gpu_instancing)
                stand on the decks inside the footprints and are skipped.
   replacement  every first-pass app building (js/live/terminals.js buildTerminals parts of data/sfo_buildings.json,
@@ -172,13 +172,14 @@ def plan_geom(tris):
         if len(segs): polys += list(shapely.buffer(shapely.linestrings(segs), 0.025, cap_style='flat'))
     if not polys: return Polygon()
     g = shapely.union_all(shapely.make_valid(np.array(polys, dtype=object)), grid_size=0.01)
-    return g.buffer(0.1, join_style='mitre').simplify(0.1)
+    return g.buffer(0.02, join_style='mitre').simplify(0.02)
 
 
 # ------------------------------------------------------------------------------------------------ footprints
 def footprints(log):
     F = {}  # group -> unit -> lod -> {'geom', 'y'}
     TR = {}  # group -> all triangles (every LOD and file; x, y, z) for the height-aware occupancy tests
+    TU = {}  # (group, unit) -> LOD0 / LOD1 triangles (the audit tiers)
     files = {}
     for g in GROUPS:
         F[g] = {}; TR[g] = []
@@ -192,7 +193,7 @@ def footprints(log):
             for r in recs:
                 key = (unit_of(g, r), lod_of(r)); acc.setdefault(key, []).append(r['tris'])
             for (u, l), T in acc.items():
-                T = np.concatenate(T); geom = plan_geom(T); TR[g].append((u, T))
+                T = np.concatenate(T); geom = plan_geom(T); TR[g].append((u, T)); TU.setdefault((g, u), []).append(T) if l < 2 else None
                 ent = F[g].setdefault(u, {}).setdefault(l, dict(geom=Polygon(), y=[1e9, -1e9], files=[]))
                 ent['geom'] = unary_union([ent['geom'], geom]) if not ent['geom'].is_empty else geom
                 ent['y'] = [min(ent['y'][0], float(T[:, :, 1].min())), max(ent['y'][1], float(T[:, :, 1].max()))]
@@ -207,6 +208,7 @@ def footprints(log):
         TR[g] = dict(solid=unary_union(solid) if solid else Polygon(), T=T, lo=T[:, :, [0, 2]].min(1) if len(T) else np.zeros((0, 2)), hi=T[:, :, [0, 2]].max(1) if len(T) else np.zeros((0, 2)), ylo=T[:, :, 1].min(1) if len(T) else np.zeros(0), yhi=T[:, :, 1].max(1) if len(T) else np.zeros(0))
         TR[g]['all'] = dict(T=TA, lo=TA[:, :, [0, 2]].min(1), hi=TA[:, :, [0, 2]].max(1), ylo=TA[:, :, 1].min(1), yhi=TA[:, :, 1].max(1))
         shapely.prepare(TR[g]['solid'])
+    TR['_units'] = {k: np.concatenate(v) for k, v in TU.items()}
     return F, TR, files
 
 
@@ -384,7 +386,7 @@ def plausibility(F, TR, rep, log):
         if d < 12.3: res['notes'].append(dict(check='taxiway centreline', group=g, unit=u, dist_m=round(d, 1), note='< 12.3 m (ADG III taxilane OFA half-width)'))
     # d. groups against each other, height-aware: in the plan overlap of two units of different groups, the plan
     #    occupancy of each group per 2-m height band (triangles meeting the band); the largest band overlap counts.
-    #    Strips narrower than 0.6 m are the +0.1 m safe buffers of coplanar shared walls (no volume shared)
+    #    Strips narrower than 0.6 m are coplanar shared walls (no volume shared)
     ext = {}
     for g, u, l, fp, y in units:
         if u in ('*', 'all'): continue
@@ -436,6 +438,41 @@ def rings_of(geo, tol=0.25):
     return out
 
 
+def tiers(T, geo, y):
+    """the unit as two prisms for the 2-D audit (tools/drawing/common.py), which models buildings as footprint x height
+    range: `body` = the plan area enclosed by what stands on the ground (triangles within 0.5-3 m above grade: walls,
+    columns; their rings filled), from grade to the top; `over` = the rest of the footprint (roof eaves, canopies, the
+    flare of the tower, skybridge vestibules), from the lowest triangle over it to the top. Without the split a bridge
+    rotunda under a roof eave reads as inside the building."""
+    g0 = y[0]
+    m = (T[:, :, 1].min(1) < g0 + 3.0) & (T[:, :, 1].max(1) > g0 + 0.5)
+    body = Polygon()
+    if m.any():
+        occ = plan_geom(T[m])
+        body = unary_union([Polygon(p.exterior) for p in (getattr(occ, 'geoms', None) or [occ]) if isinstance(p, Polygon) and not p.is_empty])
+    body = body.intersection(geo) if not body.is_empty else body
+    over = geo.difference(body.buffer(0.05)) if not body.is_empty else geo
+    out = []
+    if not body.is_empty and body.area > 1.0: out.append(dict(part='body', y=[round(y[0], 2), round(y[1], 2)], rings=rings_of(body, 0.1)))
+    # the overhang as height bands of its undersides: every triangle over the overhang is binned by its lowest point
+    # (1-m bins, lowest first); a bin claims the part of the overhang its triangles cover that no lower bin claimed, as a
+    # prism from the bin's lowest point to the top (an eave over a rotunda is not the vestibule beside it)
+    if over.is_empty or over.area < 0.5: return out
+    lo, hi = T[:, :, [0, 2]].min(1), T[:, :, [0, 2]].max(1); x0, z0, x1, z1 = over.bounds
+    mm = (hi[:, 0] > x0) & (lo[:, 0] < x1) & (hi[:, 1] > z0) & (lo[:, 1] < z1) & (T[:, :, 1].min(1) > g0 + 0.5)
+    Tm = T[mm]; yl = Tm[:, :, 1].min(1); claimed = Polygon()
+    for b0 in np.unique(np.floor(yl)):
+        sel = Tm[(yl >= b0) & (yl < b0 + 1)]
+        reg = plan_geom(sel).intersection(over)
+        if not claimed.is_empty: reg = reg.difference(claimed)
+        reg = unary_union([q for q in (getattr(reg, 'geoms', None) or [reg]) if isinstance(q, Polygon) and q.area > 0.25])
+        if reg.is_empty: continue
+        claimed = unary_union([claimed, reg])
+        rr = rings_of(reg, 0.1)
+        if rr: out.append(dict(part='over', y=[round(float(sel[:, :, 1].min()), 2), round(y[1], 2)], rings=rr))
+    return out
+
+
 def merge_manifest(entry, key='integration'):
     """manifest.json#integration under the manifest's file lock (the asset groups own their keys)"""
     import fcntl
@@ -476,9 +513,14 @@ def main(argv):
     for g in GROUPS:
         fps[g] = {}
         for u, L in F[g].items():
-            geo = unary_union([e['geom'] for e in L.values()]); y = [min(e['y'][0] for e in L.values()), max(e['y'][1] for e in L.values())]
-            lods = sorted(L)
+            # LOD0 / LOD1 (what is drawn within 1.2-1.6 km); LOD2 (simplified 1-m outlines, drawn beyond that) is checked
+            # in the plausibility pass above but not stored: the stand / audit checks work at the near LODs
+            Ln = {l: e for l, e in L.items() if l < 2} or L
+            geo = unary_union([e['geom'] for e in Ln.values()]); y = [min(e['y'][0] for e in Ln.values()), max(e['y'][1] for e in Ln.values())]
+            lods = sorted(Ln)
             fps[g][u] = dict(y=[round(y[0], 2), round(y[1], 2)], lods=lods, area_m2=round(geo.area, 1), rings=rings_of(geo, 0.1))
+            TT = TR['_units'].get((g, u))
+            if TT is not None and u not in ('*', 'all'): fps[g][u]['tiers'] = tiers(TT, geo, y)
             if u == '*': continue  # joined LOD2 nodes: their extent is inside the per-unit footprints (checked above)
             if g == 'landside' and u in HANGARS: continue
             if g == 'landside' and u.startswith('airtrain'): continue  # elevated guideway: aircraft never reach it (landside)

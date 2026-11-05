@@ -130,11 +130,12 @@ export class GroundPhysics {
       const D = tr.disp; if (!D.valid || !D.ground || tr.vehicle || tr.dropping) { tr.physOff = null; continue; }
       // (silent: transponder off (stale), or stopped off a stand with no position for a while (traffic.js tr.quiet))
       const sil = tr.stale || tr.quiet;
-      // (a silent docking still driving in -- its body more than 2 m from the stand pose -- is a MOVING aircraft here: a ghost
+      // (a body still driving in -- a silent docking, or the data already stopped at the stand while the drawn body is on its way,
+      // more than 2 m from the stand pose and not locked -- is a MOVING aircraft here: a ghost
       // in its way is removed before the contact, and it is not checked at a pose it has not reached. Replay 4-5 Nov: EVA028
       // driving into A1 through the silent EVA018 still drawn there, 1,283 m2 for 35 s; overlap.gnd)
       const S0 = tr.gate && tr.gate.bridge && tr.parkPos && (tr.m.phase === 'still' || tr.stale) ? (traffic.shownPark ? traffic.shownPark(tr) : { x: tr.parkPos[0], z: tr.parkPos[1], hdg: tr.parkHdg }) : null;
-      const driving = !!(S0 && tr.silentDockG && !tr.lock && Math.hypot(D.x - S0.x, D.z - S0.z) > 2);
+      const driving = !!(S0 && !tr.lock && Math.hypot(D.x - S0.x, D.z - S0.z) > 2);   // (any body not yet at its stand pose)
       if (S0 && !driving) {
         // the pose it is drawn in: its lock (where it came to rest, the pose its bridge docked to), else the parked pose
         const S = S0;

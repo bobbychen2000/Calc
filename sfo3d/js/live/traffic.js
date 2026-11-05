@@ -1054,6 +1054,15 @@ export class Traffic {
     if (M.phase === 'pushback') tr.pushEnd = [r.x, r.z];   // (rolling forward straight out of the push-back)
     if (M.phase !== 'taxi') this.setPhase(tr, 'taxi', t, null, wasStill ? t0 : null);
     this.docking(tr, r, t);
+    // an arrival on its way into a contact stand -- SFO's stand for it, or the lead-in it is docking to -- where a SILENT aircraft
+    // (no position for >= 2 min) is still drawn: that one has left unseen. It is removed now, its jet bridge retracting first
+    // (fadeRemove 'replaced'), not when the arrival drives into it (GroundPhysics ghost: removed at once with its bridge still
+    // docked -- bridge.orphan at G7, G13, E8, G1 for 17-24 s after ANZ8, UAL875, UAL1385, ... were replaced, 4-5 Nov replay)
+    if (tr.landedAt && !tr.pushed && !tr.gate) for (const g of [this.gateByName(this.planStand(tr)), tr.dock && tr.dock.g]) {
+      if (!g || !(g.bridge || g.sharesBridgesOf) || !g.occupant || g.occupant === tr.hex) continue; const o = this.tracks.get(g.occupant);
+      if (!o || !o.stale || o.dropping || o.removed || (this._lastRecv || t) - (o.lastRecv || 0) < 120000) continue;
+      if (Math.hypot(r.x - g.w.x, r.z - g.w.z) > 400 || !this.intoStand(tr, g, r.x, r.z, r.dir)) continue;
+      this.event(o, t, 'stale-replaced', { by: tr.hex, ahead: g.name }); this.fadeRemove(o, 'replaced'); this.counters.ghostAhead = (this.counters.ghostAhead || 0) + 1; }
   }
   // SFO lists this callsign's own ARRIVAL and its block-in (actual, else estimated / scheduled -- flysfo `blk`; else its stand
   // window's start) was less than 10 min ago or lies ahead, and the aircraft has not been in-blocked since it was first seen:
@@ -2207,6 +2216,9 @@ export class Traffic {
         // (stopped after its push-back -- engine start, tug disconnect -- not 'parked'; review round 2: DAL977 'Parked' at the
         // instant it left C3, SWR39 'Parked' after its push from G10)
         if (tr.m.phase === 'pushback') return 'pushback';
+        // (the drawn body still being pushed -- it follows the data a few seconds behind, e.g. after waiting for its jet bridge --
+        // while the data has already stopped: 'Pushback' until it has come to rest)
+        if (c && c.v < -0.3 && tr.pushed) return 'pushback';
         // ('Push-back complete' only where the push ended -- within one fuselage length (>= 40 m) of it. Further on, a stopped
         // departure is queueing or holding: review 4 Nov, 'pushed' was shown for 3,828 aircraft-seconds > 120 m from any
         // stand -- SWA3086 for 16 min on taxiways L/M, AAL1732 at the A/A1 hold of 1R -- so the runway sheet's 'Holding

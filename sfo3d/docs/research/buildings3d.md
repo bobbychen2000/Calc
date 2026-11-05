@@ -380,3 +380,177 @@ T1 frit uncoated (F0 0.04, rougher: the ceramic frit dominates). Single-sided; n
   T3W penthouses, roof equipment other than PV / penthouse, interiors.
 - Integration (js/three loader replacing the `terminals.js` extrusions of these parts, per-building LOD) is not part of this step.
 <!-- domestic:end -->
+
+<!-- integration:begin (tools/blender/b3d_integrate.py, js/three/buildings3d.js; 5 Nov 2026) -->
+---------------------------------------------------------------------------------------------------------------------
+
+## Integration into the three.js app (key `integration`, 5 Nov 2026)
+
+```bash
+python3 tools/buildings/draw.py                 # 2-D sheets first (38 s, clean: only dates / clip ids changed, BD-01 profile, BX-01)
+python3 tools/blender/b3d_integrate.py          # ~1 min: footprints from the GLBs, replacement table, plausibility, manifest key
+python3 tools/sat/check.py                      # stands / bridges, now with the 3-D footprints (B3D_FOOTPRINTS=0: outlines only)
+node tools/build3/build.mjs                     # vendored three.js bundle, now with GLTFLoader (tools/build3/three-entry.js)
+flock out/.heavy.lock env SOFTGL=1 W=960 H=540 OUT=out/buildings3d VIEWS="..." node livetest.mjs tools/blender/b3d_views_job.mjs
+```
+
+| File | Role |
+|---|---|
+| `js/three/buildings3d.js` | Loader: GLTFLoader, per-building LOD switching, node materials with the night hooks, shadows, the swap of the first-pass items, the tower camera |
+| `tools/blender/b3d_integrate.py` | Footprints measured on the exported GLBs (every LOD and file), the replacement table, the combined plausibility check, `manifest.json#integration` |
+| `data/buildings3d/integration.js` | What the app imports (js/live/world.js): replacement table + tower camera anchor (6 kB) |
+| `data/buildings3d/integration.json` | Footprints per asset unit (LOD0 / LOD1) with height ranges and body / overhang tiers, the table with coverages, the plausibility results (every LOD), the physics set |
+| `tools/blender/b3d_views_job.mjs` | livetest job: the same views with `?b3d=0` (first-pass) and the assets -> `out/buildings3d/cmp_*.png` |
+| hooks | `js/three/renderer3.js` (+5 lines), `js/live/world.js` (+import, +2 items loops), `js/live/airport.js` / `js/live/terminals.js` (optional routing parameter; same geometry, same order), `tools/build3/three-entry.js` (+GLTFLoader), `tools/build3/phone_artifact*` (ships the GLBs), `tools/stands/check_stands.py` and `tools/drawing/common.py` / `audit.py` (use the 3-D footprints) |
+
+**Loading.** `Renderer3._buildStatic` starts `Buildings3D` once the static scene exists; the four groups load one after
+another (tower, ITB, domestic, landside: one decode / upload / program compile at a time, `compileAsync` over every LOD
+before the group is shown, so a LOD switch later does not stall). Until a group is on screen, or if its file fails, the
+first-pass extrusions stay: the scene never has a hole. Tiers: high / medium / ultra load the full files (LOD0-2), the low
+tier (phones) the `*_lod2.glb` files (3.6 MB together); `?b3d=0` shows the first-pass buildings only, `?b3d=lod2|full`
+forces a set, `?b3dtower=f2` the tower's second height family (manifest `family_decided: false`; F1 stays the default).
+
+**LOD.** As each group's manifest says: a "LOD set" is a node whose children are LOD0 / LOD1 / LOD2 (tower, ITB, domestic:
+the root; landside: every building node). LOD2 (one joined mesh with its own small atlas) is shown when the camera is beyond
+the LOD2 switch distance from the set's bounding box; nearer, LOD0 or LOD1 per unit: domestic per building
+(`extras.building`), ITB per part (the group spans 650 m), tower and each landside building as a whole. Distances are to the
+unit's bounding box (the nearest point; a 400-m pier seen from its tip is near), 5 % hysteresis, and the switch distances
+(extras `switch_m`) are scaled by the tier's `lod` range relative to the high tier (ultra 2.2x, medium 0.72x).
+
+**Materials, AO, shadows.** The glTF PBR materials are used as exported (MeshStandard / MeshPhysical with
+`KHR_materials_ior` / `_specular`), converted to node materials the way three does it internally, so an emission term can be
+added. The baked AO (`occlusionTexture`, TEXCOORD_1) is the material's `aoMap` (ambient / IBL term only); GTAO adds the
+screen-space contact term on top as for every object. Every opaque mesh casts and receives shadows (CSM); the alpha-blended
+cab glass does not cast. Tiling normal / base-colour tiles get the tier's anisotropy.
+
+**Night hooks (for the environment work).** Emission = the material's own + `nightE` (renderer3: night factor x LAMP_M) x
+`glow[kind].color` x `glow[kind].k` x a +-15 % variation per 3-m cell, masked to the panes where the glass has a base-colour
+tile (frames and frit stay dark). Kinds from the assets' own material names and extras: `hall` (terminal glazing, the
+concourse level of objects.js), `office` (hotel, CAC, station-block windows: 55 % of the cells lit), `station` (AirTrain
+station glass), `roofglass` (skylights, glazed roof lines: weaker), `cab` (tower cab: dim), `led` (the tower ribbon,
+`extras.led`: the objects.js LED wave), `beacon` (red obstruction light, `extras.obstruction_light`). The `glow` entries are
+uniforms (`SFO.R.b3d.glow.hall.k.value = ...`): levels inferred, no measured SFO night luminances.
+
+**What the assets replace.** `b3d_integrate.py` measures every asset unit's footprint on the exported meshes (every LOD and
+file, plan union of the triangles, vertical faces as 5-cm strips, +0.02 m) and assigns each first-pass app building to the
+group that covers it (+2 m: the SFO Museum outlines are +-5 m). Piers, halls and structures go wholly to the group covering
+>= 50 % of them; elevated walkways are tested in their own height band (the guideway deck is elevated: a skybridge passing
+under or over it is not covered) and are clipped instead: the part is hidden with the asset and the open span outside the
+asset's occupancy (- 0.3 m, slivers < 3 m wide dropped) stays as a "rest" item. `js/live/world.js` routes the replaced
+geometry into one item per group (`b3d`) and the rests into `b3dRest` items (three.js renderer only); `buildLiveBuildings` /
+`buildTerminals` build exactly the same geometry in the same order (the rooftop-plant random sequence is unchanged), only into
+different `Geo`s. live.html is unaffected (it draws every item, the rests are not created for it).
+
+| First-pass element (app) | Replaced by | Kept |
+|---|---|---|
+| `sfo_buildings.json` parts (29) | domestic 15 (T1, T2, T3 halls, BA-B..F, their walkways), ITB 6 (hall + great-hall roof, BA-A, BA-G, 3 walkways), landside 7 (garage / station walkways) | Terminal 3 walkway #26 (outside every asset); 7 walkway spans as rests (T1 / T2 / T3 skybridges to the Central Garage and the AirTrain stations: 35-528 m2 each) |
+| terminal-complex ramp-level walls (G..G+5) | per edge where an asset occupies the band within 3 m: 15 runs (domestic, ITB, tower) | the edges along the courtyard links and connectors |
+| `sfo_airport.json` structures (36) | landside 30 (garages, RCC, CAC, Hyatt, Superbay, AirTrain stations, guideway slab + columns), ITB 4 (ITB AirTrain stations: inside the ITB core block), tower 1 (`buildTower`) | none |
+
+The app's tower view (`js/live/app.js`: GROUND_Y + 62 over `world.towerPos`) moves to the asset's cab eye (x, z) once
+tower.glb is shown (manifest `tower.integration.tower_camera`: eye (-739.0, 65.2, 323.5); GROUND_Y + 62 = 65.0 is 0.2 m
+from the F1 eye height, so the height is kept). Inside the cab the alpha-blended glass is hidden (it would darken the whole
+view); from outside it is drawn.
+
+**Physical plausibility of the integrated set** (`integration.json#plausibility`; every LOD of every file, unsimplified
+footprints):
+- Aircraft envelopes (every accepted type at every one of the 108 stands, `tools/stands/geom.py stand_env`, the envelope
+  `check_stands.py` tests): **0 conflicts** (overlap > 0.5 m2 or < 2.0 m). Notes (< 3.5 m): F12 2.91 m (SFO Museum outline
+  2.81 m), F17 3.15 m (outline 3.38 m: BA-F's measured roof edge, 0.23 m nearer). Next: G7 5.2, F5 5.5, E4 / F9 6.6 m.
+- Jet bridges (128, incl. 3 upper deck): docked and stowed tunnel + cab beyond 3 m of the rotunda vs every footprint, fixed
+  walkway + rotunda vs other buildings: **0 conflicts**.
+- Taxiways: no footprint inside an SFO Museum taxiway polygon; nearest taxiway centreline 27.0 m (BA-F), then 38 m.
+- Assets against each other, per 2-m height band on the triangles: largest core overlap 0.6 m2 (ITB hall / guideway tile
+  at the ITB, band 16-18 m; below the 2 m2 note threshold); tower / T2, ITB / T1 / T3W: coplanar shared walls only.
+- What stays of the first-pass buildings (walkway rests, the kept walkway, kept ramp-level edges) against the assets in
+  its own height band: 0 m2.
+- `tools/sat/check.py` / `check_bridges.py` (one run; `check_stands.py` now unions the 3-D footprints into the aircraft-
+  envelope test, `B3D_FOOTPRINTS=0` for the outlines only): ISSUES 0 before and after, WARNINGS 17 both, APP ISSUES 0; the
+  only change is the F17 note (3.4 -> 3.2 m).
+- 2-D audit (`tools/drawing/run_all.sh`): `common.py buildings()` now marks the replaced first-pass parts / structures
+  `notBuilt`, adds the walkway rests and every asset unit as prisms from `integration.json` (`tiers`: the body standing on
+  the ground, grade to top; the overhangs - eaves, canopies, the tower flare, bridge vestibules - binned by the height of
+  their undersides; `B3D_FOOTPRINTS=0` reverts); `audit.py` drops the old ITB wing-roof overhang object when the ITB hall is
+  replaced. Run on a fresh extraction (`jobs/extract2d.mjs`, 213 s) of the working tree with the other workflows'
+  half-done files at HEAD, `audit.py` before / after (through a wrapper that aliases the renamed GSE kinds `belt210` /
+  `belt195` / `belt190` / `catering340`: `audit.py` stops on them since the bridges round renamed them - pre-existing,
+  for the drawing-system owner): COLLISION 18 -> 21, CLEARANCE 45 -> 45, WARNING 161 -> 142. The 25 building-building
+  warnings that go are the first-pass duplicates (stations listed twice, stations inside garages, the tower inside T2). New:
+  3 COLLISION (rotunda drums E9 / F8 / F7 against the BA-E / BA-F vestibule prisms, 0.11-0.63 m2): measured on the
+  triangles no asset surface lies inside any rotunda drum (deepest < 1 mm; the domestic door surrounds and vestibules meet
+  the drums by design), so these are prism-model artefacts; 2 WARNING touching (E3, D10: 5-8 cm); and the CRJ2 the
+  snapshot parks at F10 is 1.40 m from the BA-F body: the SFO Museum outline is 1.43 m from it too (the first-pass pier part
+  was drawn 3.77 m away, so the old audit missed it): a stands / realtime item, not a change of the building.
+- Ground physics (`js/live/ground.js buildingGrid`): not changed. The asset footprints (hangars and the elevated guideway
+  excluded, as the app excludes its hangars and rail) add 1,783 m2 to the building mask, all in strips 2-4 m wide along
+  the measured roof edges (largest 365 m2); the MOC (no SFO Museum outline) is a hangar block and stays out as the
+  Superbay does. `integration.json#physics.rings` holds the set for the realtime owner (tools/live/*.mjs import ground.js
+  from repository copies, so the hook belongs to that workflow).
+
+**Bundle and delivery.** The vendored three.js bundle had no glTF loader: `tools/build3/three-entry.js` now also exports
+`GLTFLoader` (three r186 addon; it imports `three`, which shares `build/three.core.js` with `three/webgpu`, so its classes
+are the renderer's; WebGLRenderer is tree-shaken out). `vendor/three/three.module.js` 1,338,635 -> 1,383,650 B (+45 kB);
+a rebuild without the change reproduced the old file byte for byte first. Phone-test artifact (`tools/build3/phone_artifact.sh`):
+artifacts serve standard web types only, and the aircraft models already ship as `.wasm` (application/wasm) fetched as bytes,
+so the GLBs ship the same way (`data/buildings3d/*.wasm`, `window.SFO_B3D_EXT = '.wasm'`; `B3D=all|lod2|none`, default all
+without the tower's F2 file). A test build from the working tree: 218 files, 59.0 MB (the GLBs 36.8 MB; limits: 15 MB per
+binary file - landside.glb is 14.87 MB -, 255 files and 64 MB per publish), the app bundle 4.58 MB with GLTFLoader and the
+loader in it. `integration.js` is bundled (6 kB); `integration.json` is not shipped.
+
+**GPU memory (found in the first headless run).** GLTFLoader clones a texture for every material that reads it on
+TEXCOORD_1 (`assignTexture`: `texCoord > 0 -> texture.clone()`), and the WebGPU / WebGL 2 backends upload every clone as
+its own GPU texture: the AO atlases were uploaded once per material, **4,054 MB** of textures in the tower view. The loader
+now keeps one Texture per image and sampling (source, channel, colour space, wrap, transform); the unique images of the
+four full files decode to ~185 MB with mips (tower 29, ITB 31, domestic 67, landside 58 MB).
+
+**Renders, old vs new** (`tools/blender/b3d_views_job.mjs`, live3.html headless on llvmpipe, 960 x 540, high tier, 8 TRAA
+frames per view; `out/buildings3d/cmp_old_*.png` = `?b3d=0`, `cmp_new_*.png` = the assets; served from a snapshot of the working
+tree with the other workflows' half-done files at HEAD, `ROOT=`):
+
+| View (camera) | First-pass (`cmp_old_*`) | Assets (`cmp_new_*`) | Draw calls / triangles / textures (old -> new) |
+|---|---|---|---|
+| `tower` look (-740.5, 35, 324.5) yaw 235 pitch 11 170 m | lathe tower on the old footprint centroid, terminal boxes with plant | Fentress shaft with flare, slots and cab at the asset axis; T2 / BA-D with PV and the BA-B band; Central Garage deck with the guideway | 765 / 4.93 M / 1,088 MB -> 1,855 / 4.79 M / 1,273 MB |
+| `itb` look (-1244.6, 15, 365.4) yaw 72.85 pitch 9 620 m (from the ENE: the Central Garage in front) | ring garage with a dense car field, flat ITB roof | the garage's void and Level-5 ring, the ITB wing roof behind, T1 / T3 PV | 791 / 4.81 M -> 2,497 / 4.77 M |
+| `pierB` gate B20 110 m | white fascia + glass extrusion, rooftop plant | BA-B dark curtain band and service base; bridges dock as before (unchanged geometry) | 519 / 3.62 M -> 949 / 2.89 M |
+| `pierG` gate G7 120 m | glass extrusion; Garage G box behind | BA-G panels with gate-room glazing at the bridge heads, pods, ITB trusses and the guideway | 823 / 5.51 M -> 1,895 / 5.10 M |
+| `garage` look (-938, 25, 274) yaw 200 pitch 32 230 m | old deck with ~60 % of the stalls taken | Central Garage deck, NAIP car density, void | 662 / 4.68 M -> 2,004 / 4.85 M |
+| `towercam` (app tower view) | inside the old lathe cab | inside the asset cab at its eye: glass hidden, joints and rim visible, dark interior (the asset's placeholder) | 813 / 5.24 M -> 1,831 / 4.97 M |
+| `itbwest` look (-1244.6, 18, 365.4) yaw 252.85 pitch 8 520 m (landside, second run) | Garages A / G as boxes with dense cars, flat ITB | Garages A / G with their helix drums and station blocks, the ITB west facade, wing-roof trusses and curb canopy, the guideway | 924 / 5.87 M -> 2,512 / 5.82 M |
+| `itbnight` look from the WSW, `light:night` | garages lit through every open bay | ITB west glazing lit (central bay brightest), canopy band, tower LED ribbon; garages dark (below) | 531 / 3.83 M -> 1,165 / 2.94 M |
+
+What the renders show, and what was done about it:
+- **No interpenetration** between the assets, the kept first-pass parts, the bridges and the aircraft in any view; the old
+  tower, garage cars and AirTrain slab are gone where the assets stand (`b3dLod` per view: 15-36 units at LOD0).
+- **Textures +185 MB** (1,088 -> 1,273 MB in every day view, as estimated from the images) after the texture dedupe; the
+  first run without it had 4,054 MB.
+- **Draw calls x 1.8-3.2** (shadow cascades and the depth / normal pre-pass multiply the meshes): 949-2,497 per frame at
+  the high tier. Triangles are flat or lower (the first-pass buildings were one mesh, never culled). Merging the LOD0 /
+  LOD1 meshes per material at load time (the ITB manifest suggests it for phones) is the next step if a device is
+  draw-call bound.
+- **Garages dark at night**: the first-pass garages glowed through painted openings (objects.js id 3); the assets have
+  real openings and no night term. Added the `soffit` glow kind (slab undersides, canopy and station ceilings) at the
+  first-pass level (0.35 x nightE, colour (0.9, 0.95, 1.0)); the second run (`out/buildings3d/integ/r2/`, `cmp_new_itbnight`
+  replaced) shows it does not reach an elevated camera, which sees the decks from above, not the ceilings. Still open for
+  the environment work: lighting the inner decks needs the landside asset to split the inner-deck material from the roof
+  deck (same material today), then a `setGlow` kind for it.
+- **Garage decks read near-white** (display ~214 against ~181 for the first-pass deck): the landside deck base colour is
+  the NAIP 2024 DN taken as sRGB albedo (229, 232, 227 -> linear 0.78). On the same scale NAIP gives the apron concrete
+  (196, 200, 196) -> linear 0.56, where the app's own airfield bake has 0.32 (renderer3 `concrete mean albedo`), i.e. NAIP
+  DN-as-albedo is ~1.75x too bright against the app's ground; the white roof membranes (TPO, real solar reflectance
+  ~0.7-0.8) are plausible, the concrete decks (~0.45 after the same factor) are not. Left as built (the colours are the
+  landside / domestic / ITB groups' tagged `obs` values) and reported to them: the NAIP-to-albedo factor should be applied
+  where NAIP sets a base colour.
+
+**Inferred / open (integration only; each asset's own lists are in its manifest key).**
+- Night glow levels and colours (`GLOW_DEF`): inferred from the objects.js concourse / window terms; for the environment work.
+- LOD switch distances: the groups' suggestions scaled by the tier; not tuned on a device. Program compile on llvmpipe took
+  22 / 46 / 41 / 327 s (tower / ITB / domestic / landside; WebGL 2 without parallel compile blocks the main thread, the
+  landside has 97 materials and 160 instanced car nodes); on GPUs with `KHR_parallel_shader_compile` / WebGPU async
+  pipelines it is not blocking, but merging the landside materials would cut it (not done here: the assets are the groups').
+- The tower camera keeps the app's eye height (GROUND_Y + 62 = 65.0 m world) 0.2 m under the F1 anchor (`cab_eye_h` 62.2 m
+  above grade); app.js is another workflow's file. F2 (`?b3dtower=f2`) has a different cab floor: the eye is then
+  not re-anchored (open while `family_decided` is false).
+- Ground physics: the 3-D footprints are not in `ground.js buildingGrid` yet (above); the realtime owner's call.
+- KTX2 / meshopt compression (`tools/engine/glb_compress.mjs`) is still a later step: it needs the KTX2 transcoder and the
+  meshopt decoder in the vendored bundle and the artifact (WASM policy unverified, engine.md 5).
+<!-- integration:end -->

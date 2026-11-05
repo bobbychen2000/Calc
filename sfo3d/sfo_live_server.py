@@ -510,8 +510,11 @@ class Hub:
     """Latest snapshot per provider -> per-aircraft merge + hygiene -> JSON payloads and SSE fan-out."""
 
     def data_now_ms(self, wall=None):
-        """The data clock (ms): the recording's time in replay (Clock.to_src), wall time live (environment_spec.md 3.2)."""
+        """The data clock (ms): the recording's time in replay (Clock.to_src), wall time live (environment_spec.md 3.2).
+        None in replay until the first record is replayed (the Clock is still the placeholder identity then)."""
         w = time.time() if wall is None else wall
+        if self.clock is not None and self.replay_pos is None:
+            return None
         return int((self.clock.to_src(w) if self.clock is not None else w) * 1000)
 
     def __init__(self, mode='live'):
@@ -1732,7 +1735,8 @@ def make_handler(app):
                         r = metar.get(ids, fmt)
                     except Exception as e:
                         return self._json({'error': str(e)[:200]}, 502)
-                    return self._send(r[0], r[1], extra=dict(r[2], **{'X-Data-Now': str(hub.data_now_ms())}) if len(r) > 2 else {'X-Data-Now': str(hub.data_now_ms())})
+                    dn = {'X-Data-Now': str(hub.data_now_ms())} if hub.data_now_ms() is not None else {}
+                    return self._send(r[0], r[1], extra=dict(r[2], **dn) if len(r) > 2 else dn)
                 if u.path == '/api/taf':
                     fmt = 'json' if q.get('format', ['raw'])[0] == 'json' else 'raw'
                     try:

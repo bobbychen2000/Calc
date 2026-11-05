@@ -27,7 +27,8 @@
 // the tower's base building and shaft slots: 55 % of the bays lit, as objects.js punched windows), station (AirTrain
 // station glass), roofglass (skylights, glazed roof lines, the T1 glass canopy: lit from below, weaker), cab (tower cab:
 // dim, controllers keep it dark), led (tower ribbon, extras.led: the LED waterfall as objects.js id 16), beacon (red
-// obstruction light, extras.obstruction_light).
+// obstruction light, extras.obstruction_light), soffit (garage slab undersides, canopy and station ceilings: the
+// first-pass garages' night level).
 // GLOW values are uniforms (Buildings3D.glow) so the environment work can retune them; inferred, not measured.
 //
 // Physical plausibility: the assets were checked against the stands, bridges, aircraft envelopes and taxiways by their
@@ -46,6 +47,9 @@ const HYST = 0.05, LOD_REF = 1800; // QUALITY3.high.lod
 const GLOW_DEF = {
   hall: [[1.0, 0.9, 0.76], 0.8], office: [[1.0, 0.82, 0.6], 0.9], station: [[0.95, 0.95, 1.0], 0.9], roofglass: [[1.0, 0.9, 0.76], 0.35],
   cab: [[0.25, 0.4, 0.35], 0.25], led: [[1.0, 1.0, 1.0], 1.0], beacon: [[1.0, 0.06, 0.04], 40.0],
+  // slab undersides of the garages, canopy and station ceilings: the first-pass garages' night level (objects.js id 3:
+  // vec3(0.9, 0.95, 1.0) x 0.35 over the open bays), carried over so the garages do not go dark at night (inferred)
+  soffit: [[0.9, 0.95, 1.0], 0.35],
 };
 
 function glowKind(m) {
@@ -57,6 +61,7 @@ function glowKind(m) {
   if (/^(glass_hyatt|glass_band|cac_wall|slot|slot_glass|ribbon)$/.test(n) || /^ibf_(curtain|glass)/.test(n)) return 'office';
   if (/^station_glass$/.test(n)) return 'station';
   if (/glass|curtain/.test(n)) return 'hall';
+  if (/soffit/.test(n)) return 'soffit';
   return null;
 }
 
@@ -231,7 +236,7 @@ export class Buildings3D {
     const W = this.R.world, T = this.tower; if (!W || !W.towerPos || !T || !T.eye_world) return;
     W.towerPos[0] = T.eye_world[0]; W.towerPos[2] = T.eye_world[2];
   }
-  // environment hook: retune a glow kind at run time (kind: hall | office | station | roofglass | cab | led | beacon;
+  // environment hook: retune a glow kind at run time (kind: hall | office | station | roofglass | cab | led | beacon | soffit;
   // color: linear RGB, k: level in lamp units x nightE); returns the current values
   setGlow(kind, { color, k } = {}) {
     const G = this.glow[kind]; if (!G) return null;

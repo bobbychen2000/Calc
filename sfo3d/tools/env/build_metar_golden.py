@@ -65,6 +65,14 @@ def main():
         extra.append({'fn': 'decode_metar', 'args': [raw, _ser(ref)], 'kwargs': {}, 'result': d1, 'from': 'fixture'})
         for night in (False, True):
             extra.append({'fn': 'render_params', 'args': [copy.deepcopy(d1)], 'kwargs': {'night': night}, 'result': M.render_params(d1, night=night), 'from': 'fixture'})
+    # TAFs: the live AWC sample (tools/env/fixtures) and the 11 KSFO TAFs of 23 Sep 2026 (IEM AFOS archive, if cached)
+    import re
+    tafs = [t['rawTAF'] for t in json.load(open(os.path.join(HERE, 'fixtures', 'awc_taf_ksfo_20261105T0300Z.json')))]
+    iem = os.path.join(HERE, '..', '..', 'refs', 'cache', 'weather', 'iem_afos_TAFSFO_20260923.txt')
+    if os.path.exists(iem):
+        tafs += [' '.join(m.group(1).split()) for m in re.finditer(r'(TAF(?: AMD| COR)?\s+KSFO\s+\d{6}Z.*?)=', open(iem, errors='replace').read(), re.S)]
+    for raw in tafs:
+        extra.append({'fn': 'decode_taf', 'args': [raw], 'kwargs': {}, 'result': M.decode_taf(raw), 'from': 'fixture'})
     out = {'schema': 'sfo3d.metar_golden.v1', 'generator': 'tools/env/build_metar_golden.py', 'reference': 'tools/env/metar_decode.py',
            'tests_run': n_tests, 'fixture_reports': len(T.RECENT) + len(T.ARCHIVE), 'preset_reports': len(presets),
            'calls': CALLS + extra}

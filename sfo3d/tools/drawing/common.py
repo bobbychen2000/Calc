@@ -435,10 +435,14 @@ def _b3d_buildings(S, out):
     for grp, U in I['footprints'].items():
         for u, f in U.items():
             if u in ('*', 'all'): continue  # joined LOD2 nodes: inside the per-unit footprints
-            for k, rings in enumerate(f['rings']):
-                kd = 'rail' if u.startswith('airtrain') else kind.get(grp, 'b3d')  # the elevated guideway passes over / under other buildings
-                res.append(dict(id=f'b3d:{grp}/{u}#{k}', kind=kd, name=f'{grp} asset {u}', rings=rings, y0=f['y'][0], y1=f['y'][1],
-                                src='data/buildings3d/integration.json footprints (measured on the exported GLB, all LODs)'))
+            kd = 'rail' if u.startswith('airtrain') else kind.get(grp, 'b3d')  # the elevated guideway passes over / under other buildings
+            # tiers: the body standing on the ground (grade .. top) and the overhangs (eaves, canopies, flare, bridge
+            # vestibules: their lowest triangle .. top), so a rotunda under a roof eave is not inside the building
+            parts = [(t['part'], t['rings'], t['y']) for t in f['tiers']] if f.get('tiers') else [('all', f['rings'], f['y'])]
+            for pn, rings_l, yy in parts:
+                for k, rings in enumerate(rings_l):
+                    res.append(dict(id=f'b3d:{grp}/{u}:{pn}#{k}', kind=kd, name=f'{grp} asset {u} ({pn})', rings=rings, y0=yy[0], y1=yy[1],
+                                    src='data/buildings3d/integration.json footprints (measured on the exported GLB, LOD0 / LOD1)'))
     return res
 
 

@@ -145,6 +145,9 @@ export function buildEnvState(tEnv, inp = {}) {
   const E = E_clear / D;
   const w = asosNightWeight(E);
   const pr = renderParams(d, w >= 0.5);
+  // the data clock "runs" when it moved forward by < 10 min since the previous state (live / replay); a fixed (snapshot,
+  // override) or jumping clock (light mode, ?t=, seek) applies photocell switches and new reports at once
+  const running = !!(inp.prev && tEnv > inp.prev.tEnv && tEnv - inp.prev.tEnv < 600e3);
   // ---- photocells (hysteresis + delay from prev)
   const Ev_fc = E / 2 / FC_LUX;
   const prevPC = inp.prev && inp.prev.photocell;
@@ -152,7 +155,7 @@ export function buildEnvState(tEnv, inp = {}) {
   let papiPending = prevPC ? prevPC.papiPendingSince : null;
   const want = Ev_fc < PAPI_NIGHT_FC ? true : Ev_fc > PAPI_DAY_FC ? false : papiNight;
   if (want !== papiNight) {
-    if (!prevPC) papiNight = want;
+    if (!prevPC || !running) { papiNight = want; papiPending = null; }
     else if (papiPending == null) papiPending = tEnv;
     else if (tEnv - papiPending >= PAPI_DELAY_MS) { papiNight = want; papiPending = null; }
   } else papiPending = null;
@@ -163,11 +166,18 @@ export function buildEnvState(tEnv, inp = {}) {
   const sigmaASOS = sigmaDay != null ? (1 - w) * sigmaDay + w * sigmaNight : null;
   const visLowerBound = pr.visibility_is_lower_bound;
   let sigmaSurface = sigmaASOS == null ? SIGMA_CLEAR : visLowerBound ? Math.min(SIGMA_CLEAR, sigmaASOS, SIGMA_10SM_DAY) : sigmaASOS;
-  // 60 s data-time transition after a new report (§3.3, I): numeric fields blend from the previous report's values
+  // 60 s data-time transition after a new report (§3.3, I): σ blends (log-linear) from the value shown when the report
+  // changed to the new one; a jump of the data clock (light mode, ?t=, replay seek) > 10 min or backwards cancels it
   let transition = null;
-  if (inp.prev && inp.prev.wx && inp.prev.wx.raw && cur && inp.prev.wx.raw !== cur.raw) {
-    const t0 = inp.prev.wx.switchedAt ?? tEnv; const k = clamp((tEnv - t0) / 60e3, 0, 1);
-    if (k < 1) { sigmaSurface = Math.exp((1 - k) * Math.log(inp.prev.atm.sigmaSurface) + k * Math.log(sigmaSurface)); transition = { from: inp.prev.wx.raw, k, t0 }; }
+  const prevW = inp.prev && inp.prev.wx;
+  let sw = { at: null, sigmaFrom: null, fromRaw: null };
+  // only while the data clock runs forward (live / replay); a fixed or jumping clock (snapshot, override) switches at once
+  if (running && prevW && cur && prevW.raw && prevW.raw !== cur.raw) sw = { at: tEnv, sigmaFrom: inp.prev.atm.sigmaSurface, fromRaw: prevW.raw };
+  else if (prevW && cur && prevW.raw === cur.raw && prevW.sw) sw = prevW.sw;
+  if (sw.at != null && sw.sigmaFrom != null) {
+    const dt = tEnv - sw.at, k = clamp(dt / 60e3, 0, 1);
+    if (dt >= 0 && dt < 600e3 && k < 1) { sigmaSurface = Math.exp((1 - k) * Math.log(sw.sigmaFrom) + k * Math.log(sigmaSurface)); transition = { from: sw.fromRaw, k, t0: sw.at }; }
+    else if (dt < 0 || dt >= 600e3) sw = { at: null, sigmaFrom: null, fromRaw: null };
   }
   const atm = { sigmaSurface, sigmaASOS, sigmaDay, sigmaNight, visM, visLowerBound, visPrefix: vis ? vis.prefix : null,
     slabs: slabsFor(d, pr, sigmaSurface, groundY), fog: pr.fog, aerosol: pr.aerosol,
@@ -194,8 +204,8 @@ export function buildEnvState(tEnv, inp = {}) {
   const lightning = { perMin: pr.lightning.flashes_per_min, atStation: pr.lightning.at_station, vicinity: pr.lightning.vicinity,
     where: pr.lightning.reports.map(r => ({ types: r.types, loc: r.loc })) };
   // ---- wetness initial state (§4.7, I; the state machine integrates in later steps)
-  const surface = inp.prev && inp.prev.surface && !transition ? inp.prev.surface
-    : { wet: pr.surface.precip_now ? 1 : pr.surface.precip_ended_this_hour ? 0.5 : 0, puddle: 0, tag: 'I (constants NV)' };
+  // (the §4.7 state machine that integrates rain rate / drying over time is step 4; until then the start rule only)
+  const surface = { wet: pr.surface.precip_now ? 1 : pr.surface.precip_ended_this_hour ? 0.5 : 0, puddle: 0, tag: 'I (start rule; constants NV)' };
   // ---- wind (§4.8; METAR wind is TRUE, JO 7900.5E 13.10)
   const W = d.wind || {};
   const wind = { fromTrue: W.dir_true_deg ?? null, speed: pr.wind.speed_m_s, gust: pr.wind.gust_m_s, peak: pr.wind.peak_since_last_metar_kt != null ? pr.wind.peak_since_last_metar_kt * KT_MS : null,
@@ -223,7 +233,7 @@ export function buildEnvState(tEnv, inp = {}) {
     natural: { E_clear, D, E, sun: ill.sun / D, moon: ill.moon / D },
     photocell: { asosNightW: w, papiNight, papiPendingSince: papiPending, obstructionOn: Ev_fc < OBSTRUCTION_ON_FC, floodsOn: E < FLOODS_ON_LUX, northSkyFc: Ev_fc },
     wx: { raw: cur ? cur.raw : null, obsTime: cur ? cur.obsMs : null, ageMin, stale: ageMin != null ? ageMin > STALE_MIN : true, decoded: cur ? d : null, params: cur ? pr : null,
-      taf, forecast, switchedAt: transition ? transition.t0 : (inp.prev && inp.prev.wx && inp.prev.wx.raw === (cur && cur.raw) ? inp.prev.wx.switchedAt : tEnv), reports: idx.length },
+      taf, forecast, sw, reports: idx.length },
     atm, clouds, sunVisibleP: pr.sun_visible_probability, kcRatio: pr.global_irradiance_ratio,
     precip, lightning, surface, wind, nightSky, lightVis, exposure,
     lighting: null,                                  // step 2: JO 7110.65 controller (js/env/lighting/controller.js)
@@ -250,7 +260,7 @@ export function envHudLines(st) {
   L.push(`Moon az ${f(st.moon.az, 1)}° el ${f(st.moon.el, 1)}° lit ${f(st.moon.lit * 100, 0)} % [V/T]`);
   L.push(`E clear ${f(st.natural.E_clear, 3)} lx ÷ D ${f(st.natural.D, 2)} = ${f(st.natural.E, 3)} lx [V+I] · EV100 ${f(st.exposure.ev100Target, 1)} → ${f(st.exposure.ev100, 1)} [M+I]`);
   L.push(`ASOS night w ${f(st.photocell.asosNightW, 2)} · PAPI ${st.photocell.papiNight ? 'night' : 'day'} · floods ${st.photocell.floodsOn ? 'on' : 'off'} · obstr ${st.photocell.obstructionOn ? 'on' : 'off'} [V+I]`);
-  L.push(`METAR ${st.wx.raw || '—'} · age ${f(st.wx.ageMin, 0)} min${st.wx.stale ? ' · STALE' : ''}${st.wx.forecast ? ' · forecast (TAF)' : ''} [V]`);
+  L.push(`report ${st.wx.raw || '—'} · age ${f(st.wx.ageMin, 0)} min${st.wx.stale ? ' · STALE' : ''}${st.wx.forecast ? ' · forecast (TAF)' : ''} [V]`);
   L.push(`σ surface ${st.atm.sigmaSurface.toExponential(2)} m⁻¹${st.atm.visLowerBound ? ' (10SM bound → clear air)' : ''} · ASOS ${st.atm.sigmaASOS != null ? st.atm.sigmaASOS.toExponential(2) : '—'} · E_T ${st.lightVis.ET.toExponential(2)} lx [M+I]`);
   L.push(`clouds ${st.clouds.map(c => `${c.cover}${String(c.baseFt / 100).padStart(3, '0')} own ${f(c.own, 2)}`).join(' ') || 'none'} · sun visible P ${f(st.sunVisibleP, 2)} [V+I]`);
   L.push(`wind ${st.wind.fromTrue == null ? (st.wind.calm ? 'calm' : 'VRB') : f(st.wind.fromTrue, 0) + '°T'} ${f(st.wind.speed / KT_MS, 0)} kt${st.wind.gust ? ' G' + f(st.wind.gust / KT_MS, 0) : ''} · sock ${f(st.wind.sockExt, 2)} [V+I]`);
@@ -259,6 +269,8 @@ export function envHudLines(st) {
   return L;
 }
 
+// Short form for the HUD (one line): the same defaults
+export const OPEN_QUESTION_SHORT = 'Q7 flood colour/bridge beacon unchanged NV · Q2 FAA ALS stations · Q1 no beacon · Q3 RCL all runways · Q4 blue edges inf · Q10 TBL 3-4-7 · Q5/6 REIL NV, PAPI HG4 20 % · Q8 ?wx= only · Q9 ADS-B>METAR>West · Q12 no takram/stars · Q13 photographic · Q11 step 2 · Q14 3 mcd/m² · Q15 no socks · Q16 NV';
 // Open owner questions (spec §12): the default used for each until the owner answers (all I), shown in the ?qa=env HUD.
 export const OPEN_QUESTION_DEFAULTS = [
   'Q7 night photos: apron flood colour / bridge beacon / glazing glow unchanged (parameters, NV)',

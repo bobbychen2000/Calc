@@ -6,9 +6,9 @@
 // Inputs by mode: snapshot / artifact = SNAPSHOT_METAR (3 reports, selected by data clock); live / replay = the relay's
 // /api/metar?format=json list (polled every 60 s) and /api/taf; ?wx=<preset> / ?metar=<raw> / ?t= / ?rwy= overrides.
 import { DataClock, parseEnvQuery } from './clock.js';
-import { buildEnvState, envHudLines, OPEN_QUESTION_DEFAULTS } from './state.js';
+import { buildEnvState, envHudLines, OPEN_QUESTION_SHORT } from './state.js';
 import { metarSummary, splitReports } from './wx/metar.js';
-import { presetById, presetRunway } from './presets.js';
+import { presetById, presetRunway, SNAPSHOT_TAF } from './presets.js';
 
 export class AppEnv {
   /** opts: {mode: 'live'|'snapshot', relayInfo, snapshotNow, snapshotMetar (text), search (location.search), groundY} */
@@ -24,7 +24,9 @@ export class AppEnv {
     this.forced = !!(this.preset || this.q.metar);              // a fixed report: always the current one
     this.reports = this.q.metar ? [this.q.metar] : this.preset ? [this.preset.metar] : splitReports(opts.snapshotMetar);
     this.rwyOverride = this.q.rwy || (this.preset ? presetRunway(this.preset) : null);
-    this.taf = null; this.state = null; this.hudEl = null; this.provCounts = null;
+    // snapshot / artifact: the TAF in force at the snapshot time (spec §3.4); live / replay: the relay's /api/taf
+    this.taf = opts.mode === 'snapshot' && !this.forced && SNAPSHOT_TAF ? SNAPSHOT_TAF.raw : null;
+    this.state = null; this.hudEl = null; this.provCounts = null;
   }
   setTraffic(traffic) { this.clock.traffic = traffic; }
   setDataNow(ms, wall = Date.now()) { if (ms != null) this.clock.setDataNow(ms, wall); }
@@ -53,13 +55,13 @@ export class AppEnv {
   attachHud(root) {
     if (!this.qa.has('env') || typeof document === 'undefined') return;
     const el = document.createElement('pre'); el.id = 'qa-env';
-    el.style.cssText = 'position:absolute;left:8px;top:8px;z-index:50;max-width:min(96vw,980px);margin:0;padding:6px 8px;background:rgba(0,0,0,.62);color:#e8f0ff;font:11px/1.35 "IBM Plex Mono",monospace;white-space:pre-wrap;pointer-events:none;border-radius:4px';
+    el.style.cssText = 'position:absolute;left:6px;top:6px;z-index:50;max-width:min(72vw,820px);max-height:46vh;overflow:hidden;margin:0;padding:4px 6px;background:rgba(0,0,0,.55);color:#e8f0ff;font:10px/1.25 "IBM Plex Mono",monospace;white-space:pre-wrap;pointer-events:none;border-radius:3px';
     root.appendChild(el); this.hudEl = el; if (this.state) this.renderHud();
   }
   renderHud() {
     const L = envHudLines(this.state);
-    if (this.provCounts) L.push(`?qa=prov fixtures: pub/obs ${this.provCounts.pub} green · std ${this.provCounts.std} blue · inf ${this.provCounts.inf} orange · NV ${this.provCounts.NV} red · photometry NV ${this.provCounts.photometryNV}`);
-    L.push('open-question defaults [I]: ' + OPEN_QUESTION_DEFAULTS.join(' | '));
+    if (this.provCounts) L.push(`?qa=prov: pub/obs ${this.provCounts.pub} green · std ${this.provCounts.std} blue · inf ${this.provCounts.inf} orange · NV ${this.provCounts.NV} red (photometry NV ${this.provCounts.photometryNV})`);
+    L.push('owner-question defaults [I]: ' + OPEN_QUESTION_SHORT);
     this.hudEl.textContent = L.join('\n');
   }
   /** ?qa=prov: fixture records -> sprite records tinted by provenance (omnidirectional, fixed intensity, day and night). */
