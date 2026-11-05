@@ -73,8 +73,10 @@ MATS = {
                           'recessed joints, darker than the row joints); width 0.10 m and tone inf'),
     # slots (review round 2, finding 1: near-black pockets read as black gashes, t2 display ratio slot / panel 0.1-0.3 vs the
     # photo's 0.6-0.7): a perforated screen (base-colour tile tower_tex.slot_color: holes on a mid-grey sheet) SCREEN_INSET
-    # behind the face; the pocket behind it is only seen around the glazed lowest panes
-    'slot_screen':   dict(rgb=(112, 116, 121), m=0.15, r=0.60, tex='tile_slot_color',
+    # behind the face; the pocket behind it is only seen around the glazed lowest panes. Sheet sRGB 122-131 (tile mean 114-123,
+    # linear albedo 0.56 x the cladding tile): Cycles t2 display ratio slot / panel 0.64-0.73 (upper band, photo 0.69-0.76) and
+    # 0.74 (long slot, photo 0.62-0.72); a first pass at sheet 112-121 gave 0.56-0.65 / 0.66
+    'slot_screen':   dict(rgb=(122, 126, 131), m=0.15, r=0.60, tex='tile_slot_color',
                           src='obs photo t4 (perforated screen, a fine dot grid, in every slot above its glazed lowest pane); '
                           'tone tuned to the t2 photo (slot / panel display ratio ~0.6-0.7); hole grid and finish inf'),
     'slot_pocket':   dict(rgb=(40, 44, 48), m=0.0, r=0.85, src='inf (the void behind the screen and the glazed pane)'),
@@ -97,8 +99,10 @@ MATS = {
     # behind). Review round 2 (finding 2): from below, round 1 (alpha 0.5, black ceiling) read two-tone, the upper part ~0.5x
     # the photo (the black ceiling behind), the lower third ~1.8x (sky through both panes); the photo is a uniform dark tint.
     # Now alpha 0.6 (two panes: 16 % of the sky), a mid-dark ceiling and the dark shade band inside the glass head (obs t1),
-    # which from 12 deg below hides the far side's sky
-    'cab_glass':     dict(rgb=(48, 60, 64), m=0.0, r=0.04, alpha=0.6, src='pub (clear laminated frameless glass, Fentress); tint '
+    # which from 12 deg below hides the far side's sky, and a lighter teal-grey tint: Cycles t2 vertical profile through the
+    # cab centre 24-35 (mean 33, uniform) vs the photo 26-41 (mean 34); variants (one session): tint (48, 60, 64) mean 26
+    # (upper 18, 0.5x), (80, 98, 106) at alpha 0.7 mean 38, (100, 122, 130) at 0.7 mean 50
+    'cab_glass':     dict(rgb=(80, 98, 106), m=0.0, r=0.04, alpha=0.6, src='pub (clear laminated frameless glass, Fentress); tint '
                           'and see-through look obs photos t1 / t2 / t3 (glass / sky 0.28-0.31 level, uniform dark from below); '
                           'alpha blend (0.6 inf)', blend=True),
     'cab_joint':     dict(rgb=(38, 40, 43), m=0.30, r=0.50, src='pub cab_glass_type (frameless butt-glazed); obs photo t2 (thin dark '

@@ -5,7 +5,13 @@
 // streak along its velocity (fall speed + the METAR wind, true direction), drizzle a short blob that falls at 1.5 m/s.
 // Drawn in the light-sprite pass (js/three/engine.js fxScene: after TRAA, additive, scene depth for occlusion as
 // js/three/lights.js), because TRAA's history rejects thin fast streaks. Radiance (I): a drop refracts its
-// surroundings, so a streak adds a fraction of the ambient sky radiance (skyUp × RAIN_K in renderer3), drawn at least
+// surroundings (Garg & Nayar 2007: the drop's radiance ≈ the mean of the environment over its ~165° field of view), so a
+// streak covers a fraction a of its pixel (RAIN_K display coverage x energy kept) and shows the drop radiance there:
+// pixel = background + a (L_drop − background), "over" compositing. The light pass is added to the scene HDR
+// (js/three/engine.js), so the streak writes the signed difference a (L_drop − background) with the scene colour
+// (pre-TRAA) as the background: a drop can be darker than a bright overcast sky behind it and brighter than the
+// ground (review look2-7: additive streaks were always brighter than the background and read as snow). L_drop =
+// 0.6 sky-up + 0.4 ground radiance (I) + the floodlit surroundings at night (E_flood / π). Drawn at least
 // 1 px wide and long (length energy kept; see k below). No rain above
 // the base of the lowest BKN/OVC layer (rainTop). Splash sprites on the pavement are not drawn (I).
 import { THREE, TSL } from './lib.js';
@@ -26,7 +32,7 @@ export class Rain {
       // a drop refracts its surroundings (Garg & Nayar 2007: the drop's radiance is a weighted mean of the environment over
       // its ~165° field of view), so under the floods it adds E_flood / π (the lit surroundings' mean radiance, I) with the
       // same display weight as the sky term: floodC = flood colour x floods' intensity x RAIN_K / π (renderer3)
-      floodC: uniform(new THREE.Color(0, 0, 0)), density: uniform(1) };
+      floodC: uniform(new THREE.Color(0, 0, 0)), density: uniform(1), cover: uniform(0.25) };
     const U = this.u;
     const m = new THREE.MeshBasicNodeMaterial({ transparent: true, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide });
     m.fog = false;
@@ -59,13 +65,18 @@ export class Rain {
         const sceneZ = perspectiveDepthToViewZ(opts.depthNode.sample(screenUV).r, cameraNear, cameraFar);
         If(sceneZ.greaterThan(vZ.add(0.3)), () => { Discard(); });
       }
-      return vec4(vCol.mul(vI).mul(exp(vQ.x.mul(vQ.x).mul(-2.0))), 1.0);
+      const a = min(vI.mul(U.cover).mul(exp(vQ.x.mul(vQ.x).mul(-2.0))), 1.0);   // coverage of this pixel by the streak
+      // signed "over" difference against the scene colour (header); without the scene colour: additive (old behaviour)
+      const bg = opts.colorNode ? opts.colorNode.sample(screenUV).rgb : vec3(0.0);
+      return vec4(vCol.sub(bg).mul(a), 1.0);
     })();
     this.mesh = new THREE.Mesh(g, m); this.mesh.frustumCulled = false; this.mesh.renderOrder = 9; this.mesh.name = 'rain'; this.mesh.visible = false;
     this.params = null;
   }
-  // P = rainParams(...) or null; t (s); colour = raw sky units x pre; top = rain ceiling (world y)
-  update(P, cam, t, colour, top, fovScale, showerK = 1, floodC = null) {
+  // P = rainParams(...) or null; t (s); colour = the drop radiance (raw sky units x pre); top = rain ceiling (world y);
+  // cover = display coverage of a 1-px streak (renderer3 RAIN_K)
+  update(P, cam, t, colour, top, fovScale, showerK = 1, floodC = null, cover = null) {
+    if (cover != null) this.u.cover.value = cover;
     const g = this.mesh.geometry, U = this.u; this.params = P;
     if (floodC) U.floodC.value.setRGB(floodC[0], floodC[1], floodC[2]); else U.floodC.value.setRGB(0, 0, 0);
     // per-streak weight: the drawn count is the tier budget's share of the high-tier count (weather_fx.js rainParams

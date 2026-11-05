@@ -53,7 +53,7 @@ export const OCC_MOUNT_M = 0.5, OCC_PREC = 2e-4;
 const erfcPoly = (x) => { const t = float(1.0).div(x.mul(0.3275911).add(1.0)); return t.mul(t.mul(t.mul(t.mul(t.mul(1.061405429).sub(1.453152027)).add(1.421413741)).sub(0.284496736)).add(0.254829592)); };
 
 export class Sprites {
-  // opts: { depthNode (scene depth texture node), expo (exposure uniform), night (uniform 0..1) }
+  // opts: { depthNode (scene depth texture node), expo (exposure uniform), night (uniform 0..1), slopeTaps (2 | 4) }
   constructor(maxN = 24000, opts = {}) {
     this.max = maxN;
     const g = new THREE.InstancedBufferGeometry();
@@ -113,8 +113,10 @@ export class Sprites {
         const zC = zAt(vUVc);
         if (opts.debugDepth) return vec4(zC.negate().div(1000.0), vZ.negate().div(1000.0), 0.0, 1.0);
         // core: one test at the light's own pixel, tolerance = local depth slope + mount + precision (header)
-        const slope = max(max(abs(zAt(vUVc.add(vec2(0.0, tx.y))).sub(zC)), abs(zAt(vUVc.sub(vec2(0.0, tx.y))).sub(zC))),
-          max(abs(zAt(vUVc.add(vec2(tx.x, 0.0))).sub(zC)), abs(zAt(vUVc.sub(vec2(tx.x, 0.0))).sub(zC))));
+        // (the phone tier, opts.slopeTaps 2, takes the vertical neighbours only: a grazing ground plane's slope is vertical
+        // on screen; review look2-10)
+        const vSl = max(abs(zAt(vUVc.add(vec2(0.0, tx.y))).sub(zC)), abs(zAt(vUVc.sub(vec2(0.0, tx.y))).sub(zC)));
+        const slope = opts.slopeTaps === 2 ? vSl : max(vSl, max(abs(zAt(vUVc.add(vec2(tx.x, 0.0))).sub(zC)), abs(zAt(vUVc.sub(vec2(tx.x, 0.0))).sub(zC))));
         const hidden = zC.greaterThan(vZ.add(vTol).add(slope)).and(this.depthOn.greaterThan(0.5));
         vis = select(hidden, float(0.0), float(1.0));
         // aureole: the part of the forward scatter in front of the surface at THIS pixel (header)

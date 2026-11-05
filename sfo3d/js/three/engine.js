@@ -299,6 +299,7 @@ export class Engine {
       color = vec4(c.rgb.add(aoN.getTextureNode().sample(screenUV).r.mul(0.0)), c.a); this.scenePass = sp;
     }
     this.depthNode = depth; // scene depth for the light sprites' occlusion test (lights.js)
+    this.sceneColorNode = this.scenePass.getTextureNode('output'); // scene colour (pre-TRAA) for the rain's "over" compositing (rain.js, environment look2-7)
     let hdr = color;
     this.expo = uniform(0.45); // exposure: set per frame by renderer3
     this.casAmount = uniform(0.35);
@@ -324,7 +325,7 @@ export class Engine {
     // light sprites after TRAA (review round 1: a 1-frame strobe flash kept ~3-5 % of its energy through TRAA's history
     // weighting, and sprites on moving aircraft took the velocity of the background behind them)
     const lp = pass(this.fxScene, this.fxCam); lp.name = 'lights'; this.lightPass = lp;
-    hdr = hdr.rgb.add(lp.rgb);
+    hdr = max(hdr.rgb.add(lp.rgb), vec3(0.0)); // (the rain writes signed "over" differences: rain.js)
     // exposure metering (environment step 3, spec §8; js/env/atmo/exposure.js meter): the pre-exposed HDR luminance
     // (scene + light sprites, before exposure) resampled to 64 x 36 for an asynchronous readback by renderer3
     // G = 1 marks the sky (no geometry: view depth beyond 90 % of the far plane), which the meter leaves out (renderer3:

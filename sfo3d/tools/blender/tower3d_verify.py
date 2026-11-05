@@ -631,7 +631,7 @@ def manifest_entry(results, ver, renders, args, rev, secs):
         'frameless butt glazing, photo t2) and the dark shade band inside the glass head (from 0.62 of the slant; obs t1, nature '
         'and tone inf)',
         'slot screens (review round 2): a perforated sheet 0.06 m behind the cladding face over every slot cell above the glazed '
-        'lowest pane (obs photo t4: a dot grid); hole pitch ~0.05 m, hole 0.022 m, sheet tone sRGB 112-121 (tuned to the t2 '
+        'lowest pane (obs photo t4: a dot grid); hole pitch ~0.05 m, hole 0.022 m, sheet tone sRGB 122-131 (tuned to the t2 '
         'slot / panel display ratio ~0.6-0.7) and the void behind are inf',
         'LED ribbon night colour: the observed photo-t5 blue (median sRGB 82 / 137 / 209) as the default of a programmable '
         'array (material extras.led_color, linear (0.21, 0.62, 1.59) at the loader\'s previous mean level); any other night '

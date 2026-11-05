@@ -88,8 +88,8 @@ const HALL_DF = 0.05, HALL_LUX = 200;
 // Environment step 3 constants (I unless noted). K_TWILIGHT: the C171 calibration factor where C171's Sun term falls
 // below 0.05 lx (Sun ~ -9 deg; sky_model.js CAL_MIN_LUX), kept below that (M: 0.167 at predawn_fog, tools/env/test_sky.mjs).
 // MOON_COL: moonlight a little warmer than sunlight (~4,100 K, I). FLASH_COL / flash illuminance: lightning brightness is
-// NV (spec §4.6): 3 lx at 3 km, inverse square, 0.05-20 lx (I, QA-tuned). Rain radiance: 0.25 x the sky-up radiance per
-// 1-px streak (I, display weight; js/three/rain.js).
+// NV (spec §4.6): 3 lx at 3 km, inverse square, 0.05-20 lx (I, QA-tuned). Rain: a 1-px streak covers 0.25 of its pixel
+// with the drop radiance, "over" the scene colour (I, display weight; js/three/rain.js, review look2-7).
 const K_TWILIGHT = 0.167, MOON_COL = [1.0, 0.95, 0.86], FLASH_COL = [0.86, 0.9, 1.0], RAIN_K = 0.25, FLASH_GLOW_CDM2 = 50;
 const MAST_LOBE_FLOOR = 0.25;   // floodlight lamps seen from the side / behind: fraction of the on-axis intensity (I / NV, Q7; attachWorld)
 const REFL_MAX_M = 600, REFL_K = 0.7;   // lamp reflections on wet pavement: range, share of the Fresnel energy in the image (I)
@@ -386,13 +386,13 @@ export class Renderer3 {
     this.objMat = objectMaterial(common); this.vehMat = objectMaterial({ ...common, instanced: true });
     this.carMat = objectMaterial({ ...common, instanced: true, carFade: true }); // garage-roof cars: distance fade to their mean colour
     this.markMat = markingMaterial({ noiseTex: this.noiseTex, pxScale: this.pxScale, reversed: E.reversed });
-    this.sprites = new Sprites(24000, { depthNode: E.depthNode, expo: E.expo, night: this.night }); E.fxScene.add(this.sprites.mesh);
+    this.sprites = new Sprites(24000, { depthNode: E.depthNode, expo: E.expo, night: this.night, slopeTaps: this.tier === 'low' ? 2 : 4 }); E.fxScene.add(this.sprites.mesh);
     this.acr = new AircraftRenderer(S, { noiseTex: this.noiseTex, Q: this.Q, renderer: E.renderer });
     this.staticGroup = new THREE.Group(); this.staticGroup.name = 'world'; S.add(this.staticGroup);
     this.built = true; tlog('static scene built');
     this.b3d = new Buildings3D(this); this.b3d.start(); // loads after the static scene; first-pass buildings until then
     // rain / drizzle particles in the light-sprite pass (js/three/rain.js) and the low cloud-layer planes (environment step 3)
-    this.rain = new Rain(60000, { depthNode: E.depthNode, groundY: GROUND_Y, floodField: (p) => sky.floodField(p) }); E.fxScene.add(this.rain.mesh); // floodlit drops (look1-4)
+    this.rain = new Rain(60000, { depthNode: E.depthNode, colorNode: E.sceneColorNode || null, groundY: GROUND_Y, floodField: (p) => sky.floodField(p) }); E.fxScene.add(this.rain.mesh); // floodlit drops (look1-4); "over" against the scene colour (look2-7)
     this._cloudPlanes();
     // compile the scene's programs off the frame loop where the backend can (KHR_parallel_shader_compile / WebGPU
     // async pipelines); frames are held until then (at most 30 s) so the first frames do not stall one by one
@@ -583,9 +583,10 @@ export class Renderer3 {
         const w = st.wind || {}; const fr = (w.fromTrue ?? 0) * DEGR, sp = w.speed || 0;
         const P = rainParams(st.precip, this.tier, [-Math.sin(fr) * sp, Math.cos(fr) * sp]);
         const deck = this.layers.find(l => l.cover === 'BKN' || l.cover === 'OVC'); const top = deck ? deck.baseY : 1e6;
-        const col = L.skyUp.map(v => v * RAIN_K * pre);
-        const fc = FLOOD_COLOR.map(c => c * floodK * LAMP_M * pre * RAIN_K / Math.PI);   // drops under the floods (rain.js floodC)
-        n = this.rain.update(P, cam, t, col, top, 2 * Math.tan(cam.fov / 2) / Math.max(1, this.H), P && P.showery ? showerFactor(t) : 1, fc);
+        // drop radiance: mean of its surroundings (rain.js header; review look2-7), coverage RAIN_K per 1-px streak
+        const col = L.skyUp.map((v, k) => (0.6 * v + 0.4 * L.ground[k]) * pre);
+        const fc = FLOOD_COLOR.map(c => c * floodK * LAMP_M * pre / Math.PI);   // drops under the floods (rain.js floodC)
+        n = this.rain.update(P, cam, t, col, top, 2 * Math.tan(cam.fov / 2) / Math.max(1, this.H), P && P.showery ? showerFactor(t) : 1, fc, RAIN_K);
       } else this.rain.update(null);
       this.rainCount = n;
     }

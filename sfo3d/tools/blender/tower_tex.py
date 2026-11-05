@@ -154,4 +154,4 @@ def make_all(out_dir, clad_rgb=None, slot_rgb=None):
 
 if __name__ == '__main__':
     import sys
-    print(make_all(sys.argv[1] if len(sys.argv) > 1 else 'out/buildings3d/tex', clad_rgb=(150, 154, 160), slot_rgb=(112, 116, 121)))
+    print(make_all(sys.argv[1] if len(sys.argv) > 1 else 'out/buildings3d/tex', clad_rgb=(152, 156, 162), slot_rgb=(122, 126, 131)))
