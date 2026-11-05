@@ -7,6 +7,7 @@
 // rendering (step 3-4). Every field carries its provenance tag in `prov` (V / M / I / 2nd / NV, spec tag table).
 import { skyState, naturalIlluminanceAt, ev100ForIlluminance, SFO } from './ephemeris.js';
 import { decodeMetar, decodeTaf, renderParams, extinctionFromVisibility, FT_M, KT_MS, SM_M } from './wx/metar.js';
+import { tafAt } from './wx/taf.js';
 
 const DEG = Math.PI / 180;
 // ---------------------------------------------------------------------------------------------------- constants
@@ -135,10 +136,16 @@ export function buildEnvState(tEnv, inp = {}) {
   // ---- weather
   const idx = indexReports(inp.reports, tEnv);
   const cur = selectReport(idx, tEnv, !!inp.live);
-  const d = cur ? cur.d : decodeMetar('');
   const ageMin = cur && cur.obsMs != null ? (tEnv - cur.obsMs) / 60000 : null;
+  // Beyond the latest METAR (§3.3, I): no report, or the latest older than 90 min -> the prevailing conditions of the
+  // TAF in force (issued <= t_env, valid at t_env; js/env/wx/taf.js, AIM 7-1-28 FM / BECMG), labelled "forecast"
+  let taf = null;
+  if (inp.taf) { try { taf = decodeTaf(inp.taf); } catch (e) { taf = { raw: inp.taf, error: String(e) }; } }
+  const fc = taf && (!cur || (ageMin != null && ageMin > STALE_MIN)) ? tafAt(taf, tEnv) : null;
+  const d = fc ? fc.d : cur ? cur.d : decodeMetar('');
+  const wxKey = fc ? fc.key : cur ? cur.raw : null;     // what the weather fields come from (transition key)
   const p0 = renderParams(d, false);
-  const D = cur ? cloudDivisor(d, p0) : 1.0;
+  const D = cur || fc ? cloudDivisor(d, p0) : 1.0;
   // ---- natural light (USNO Circular 171, V; divisor I)
   const ill = naturalIlluminanceAt(date, SFO, 1);
   const E_clear = ill.total;
@@ -172,8 +179,8 @@ export function buildEnvState(tEnv, inp = {}) {
   const prevW = inp.prev && inp.prev.wx;
   let sw = { at: null, sigmaFrom: null, fromRaw: null };
   // only while the data clock runs forward (live / replay); a fixed or jumping clock (snapshot, override) switches at once
-  if (running && prevW && cur && prevW.raw && prevW.raw !== cur.raw) sw = { at: tEnv, sigmaFrom: inp.prev.atm.sigmaSurface, fromRaw: prevW.raw };
-  else if (prevW && cur && prevW.raw === cur.raw && prevW.sw) sw = prevW.sw;
+  if (running && prevW && wxKey && prevW.key && prevW.key !== wxKey) sw = { at: tEnv, sigmaFrom: inp.prev.atm.sigmaSurface, fromRaw: prevW.key };
+  else if (prevW && wxKey && prevW.key === wxKey && prevW.sw) sw = prevW.sw;
   if (sw.at != null && sw.sigmaFrom != null) {
     const dt = tEnv - sw.at, k = clamp(dt / 60e3, 0, 1);
     if (dt >= 0 && dt < 600e3 && k < 1) { sigmaSurface = Math.exp((1 - k) * Math.log(sw.sigmaFrom) + k * Math.log(sigmaSurface)); transition = { from: sw.fromRaw, k, t0: sw.at }; }
@@ -220,11 +227,9 @@ export function buildEnvState(tEnv, inp = {}) {
   // ---- exposure (§8): natural-light target before the clamp; at night the clamp + artificial light set it
   const ev = ev100ForIlluminance(E);
   const exposure = { ev100Target: ev, ev100: clamp(ev, EV_MIN, EV_MAX), min: EV_MIN, max: EV_MAX, ec: 0, ecTag: 'I (compensation below Sun −4°: step 3, QA-tuned)' };
-  // ---- TAF
-  let taf = null;
-  if (inp.taf) { try { taf = decodeTaf(inp.taf); } catch (e) { taf = { raw: inp.taf, error: String(e) }; } }
-  const forecast = !!(taf && cur && ageMin != null && ageMin > STALE_MIN);
-  const runway = runwayConfigFrom(cur ? d : null, inp.observedFlow, inp.rwyOverride);
+  // ---- forecast label (TAF in use, above)
+  const forecast = fc ? { issued: taf.issued, applied: fc.applied, text: fc.text, groups: fc.groups.map(g => g.id), validFrom: fc.validFromMs, validTo: fc.validToMs, tag: 'I (prevailing TAF conditions; TEMPO/PROB not rendered)' } : null;
+  const runway = runwayConfigFrom(cur || fc ? d : null, inp.observedFlow, inp.rwyOverride);
   const st = {
     tEnv, mode: inp.mode || 'live', overridden: !!inp.overridden,
     sun: { az: sun.az, el: sun.el, elTrue: sun.elTrue, dir: sk.sunDir, semidiameter: sun.semidiameter },
@@ -232,8 +237,8 @@ export function buildEnvState(tEnv, inp = {}) {
     phase: sk.phase, towerNight,
     natural: { E_clear, D, E, sun: ill.sun / D, moon: ill.moon / D },
     photocell: { asosNightW: w, papiNight, papiPendingSince: papiPending, obstructionOn: Ev_fc < OBSTRUCTION_ON_FC, floodsOn: E < FLOODS_ON_LUX, northSkyFc: Ev_fc },
-    wx: { raw: cur ? cur.raw : null, obsTime: cur ? cur.obsMs : null, ageMin, stale: ageMin != null ? ageMin > STALE_MIN : true, decoded: cur ? d : null, params: cur ? pr : null,
-      taf, forecast, sw, reports: idx.length },
+    wx: { raw: cur ? cur.raw : null, obsTime: cur ? cur.obsMs : null, ageMin, stale: ageMin != null ? ageMin > STALE_MIN : true, decoded: cur || fc ? d : null, params: cur || fc ? pr : null,
+      taf, forecast, key: wxKey, sw, reports: idx.length },
     atm, clouds, sunVisibleP: pr.sun_visible_probability, kcRatio: pr.global_irradiance_ratio,
     precip, lightning, surface, wind, nightSky, lightVis, exposure,
     lighting: null,                                  // step 2: JO 7110.65 controller (js/env/lighting/controller.js)
@@ -241,7 +246,7 @@ export function buildEnvState(tEnv, inp = {}) {
     prov: {
       sun: 'V/T (ephemeris.mjs vs JPL Horizons ≤ 0.01°)', moon: 'V/T', phase: 'V (USNO)', towerNight: 'V (USNO −50′; JO 7110.65 "sunset to sunrise")',
       natural: 'V (USNO C171) + I (divisor D)', photocell: 'V (ASOS 0.5-3 fc; AC 150/5345-28H; AC 70/7460-1N) + I (thresholds, vertical = E/2)',
-      wx: 'V (METAR, JO 7900.5E decoding)', atm: 'V (ASOS inversion, 2nd constants) + I (day/night blend, slabs, 10SM clear air)', clouds: 'V (heights, summation) + I (overlap, thickness, drift)',
+      wx: fc ? 'I (forecast: prevailing TAF conditions, AIM 7-1-28; latest METAR stale or none)' : 'V (METAR, JO 7900.5E decoding)', atm: 'V (ASOS inversion, 2nd constants) + I (day/night blend, slabs, 10SM clear air)', clouds: 'V (heights, summation) + I (overlap, thickness, drift)',
       sunVisibleP: 'I', kcRatio: '2nd (Kasten & Czeplak 1980)', precip: 'V (Table 9-4, Prrrr) + I (clamp, mid-class)', lightning: 'V (Table 13-7) + I (midpoints)',
       surface: 'I (constants NV)', wind: 'V (true wind) + I (sock shape)', nightSky: 'V (Falchi, Kyba) + I (3 mcd/m², ×10)', lightVis: 'M (Table B-1 fit)',
       exposure: 'M (EV targets) + I (clamp)', lighting: 'step 2', runway: runway.tag || 'I',
@@ -260,8 +265,9 @@ export function envHudLines(st) {
   L.push(`Moon az ${f(st.moon.az, 1)}° el ${f(st.moon.el, 1)}° lit ${f(st.moon.lit * 100, 0)} % [V/T]`);
   L.push(`E clear ${f(st.natural.E_clear, 3)} lx ÷ D ${f(st.natural.D, 2)} = ${f(st.natural.E, 3)} lx [V+I] · EV100 ${f(st.exposure.ev100Target, 1)} → ${f(st.exposure.ev100, 1)} [M+I]`);
   L.push(`ASOS night w ${f(st.photocell.asosNightW, 2)} · PAPI ${st.photocell.papiNight ? 'night' : 'day'} · floods ${st.photocell.floodsOn ? 'on' : 'off'} · obstr ${st.photocell.obstructionOn ? 'on' : 'off'} [V+I]`);
-  L.push(`report ${st.wx.raw || '—'} · age ${f(st.wx.ageMin, 0)} min${st.wx.stale ? ' · STALE' : ''}${st.wx.forecast ? ' · forecast (TAF)' : ''} [V]`);
-  L.push(`σ surface ${st.atm.sigmaSurface.toExponential(2)} m⁻¹${st.atm.visLowerBound ? ' (10SM bound → clear air)' : ''} · ASOS ${st.atm.sigmaASOS != null ? st.atm.sigmaASOS.toExponential(2) : '—'} · E_T ${st.lightVis.ET.toExponential(2)} lx [M+I]`);
+  L.push(`report ${st.wx.raw || '—'} · age ${f(st.wx.ageMin, 0)} min${st.wx.stale ? ' · STALE' : ''} [V]`);
+  if (st.wx.forecast) L.push(`FORECAST TAF ${st.wx.forecast.issued} ${st.wx.forecast.applied.join('+')}: ${st.wx.forecast.text}${st.wx.forecast.groups.length ? ' (not rendered: ' + st.wx.forecast.groups.join(', ') + ')' : ''} [I]`);
+  L.push(`σ surface ${st.atm.sigmaSurface.toExponential(2)} m⁻¹${st.atm.visLowerBound ? ` (${st.atm.visPrefix === 'P' ? 'P' : ''}${f(st.atm.visM / 1609.344, 0)}SM lower bound → clear air)` : ''} · ASOS ${st.atm.sigmaASOS != null ? st.atm.sigmaASOS.toExponential(2) : '—'} · E_T ${st.lightVis.ET.toExponential(2)} lx [M+I]`);
   L.push(`clouds ${st.clouds.map(c => `${c.cover}${String(c.baseFt / 100).padStart(3, '0')} own ${f(c.own, 2)}`).join(' ') || 'none'} · sun visible P ${f(st.sunVisibleP, 2)} [V+I]`);
   L.push(`wind ${st.wind.fromTrue == null ? (st.wind.calm ? 'calm' : 'VRB') : f(st.wind.fromTrue, 0) + '°T'} ${f(st.wind.speed / KT_MS, 0)} kt${st.wind.gust ? ' G' + f(st.wind.gust / KT_MS, 0) : ''} · sock ${f(st.wind.sockExt, 2)} [V+I]`);
   if (st.precip) L.push(`precip ${st.precip.kind} ${st.precip.intensity} ${f(st.precip.rateMmH, 2)} mm/h (${st.precip.rateBasis}) [V+I]`);

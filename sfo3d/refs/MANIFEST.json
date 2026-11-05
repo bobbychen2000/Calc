@@ -7102,8 +7102,14 @@
   "rec/adsbfi_20261105_04.jsonl.gz": {
    "class": "local",
    "why": "adsb.fi terms: personal non-commercial use, not to be licensed on",
-   "bytes": 2086588,
-   "sha256": "4b86ce68c697dd158e062905d1cb6961d78a481f5b11558b1cf461b260bab37a"
+   "bytes": 5048316,
+   "sha256": "7b8d8c2ef8dac53bb2ec1d1b02c34c68be3631916a3c2276a67406ca305edd8a"
+  },
+  "rec/adsbfi_20261105_05.jsonl.gz": {
+   "class": "local",
+   "why": "adsb.fi terms: personal non-commercial use, not to be licensed on",
+   "bytes": 2062575,
+   "sha256": "3cb9a22a3b275017c1ff14053f5e06dab02391b2da20c3605e93d83164bebbda"
   },
   "rec/adsblol_20261104_17.jsonl.gz": {
    "class": "pack",
@@ -7174,8 +7180,14 @@
   "rec/adsblol_20261105_04.jsonl.gz": {
    "class": "pack",
    "why": "ODbL (adsb.lol); trimmed copy in rec_pack/",
-   "bytes": 586072,
-   "sha256": "74c94ad3ed0ccbb752c5fe92fda58dd4e24b6931523c471d9002030e6158fa33"
+   "bytes": 1143804,
+   "sha256": "c8a882b6e7b01c99e704eec6540841dc2301c5b0c18fc15b24b5f26e49dc0f51"
+  },
+  "rec/adsblol_20261105_05.jsonl.gz": {
+   "class": "pack",
+   "why": "ODbL (adsb.lol); trimmed copy in rec_pack/",
+   "bytes": 564673,
+   "sha256": "0779ea43bca27cc9919a33e711712e684893895f24e458f07a20440c00f7127a"
   },
   "rec/recorder.log": {
    "class": "local",
@@ -7186,14 +7198,14 @@
   "rec/recorder.out": {
    "class": "local",
    "why": "recorder state",
-   "bytes": 9150,
-   "sha256": "8b3b43040f2081f739299f489e9d3af72d420697cd746f297514453cee5b3fcf"
+   "bytes": 10980,
+   "sha256": "33b49d031bb8fcabac26e446f954d4ec2c52f8446af1711c035c29e751ccbb6a"
   },
   "rec/recorder.pid": {
    "class": "local",
    "why": "recorder state",
    "bytes": 3,
-   "sha256": "70260742c2952154c84e2ea9f68b1a7397f49b6d343da1ed284093c0bd72c742"
+   "sha256": "4a8596a7790b5ca9e067da401c018b3206befbcf95c38121854d1a0158e7678a"
   },
   "replay/reports.pkl": {
    "class": "local",
@@ -7830,6 +7842,13 @@
    "why": "unclassified binary",
    "bytes": 626016,
    "sha256": "0804f42dbd096068b138bcbb348bca52296a29036f38e67710b1f9b2096e0e12"
+  },
+  "weather/aim/aim_chap7_section_1.html": {
+   "class": "local",
+   "why": "fetched third-party page (copyright) unless SOURCES.json says open",
+   "bytes": 399186,
+   "sha256": "ba0db458a7422d1d90c812de79abaf41bba5cb9023ba18a284a566ca38a02b89",
+   "url": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap7_section_1.html"
   },
   "xcheck/faa/03_Sep_2026_APT_CSV.zip": {
    "class": "local",

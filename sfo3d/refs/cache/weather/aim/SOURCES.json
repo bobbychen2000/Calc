@@ -1,0 +1,9 @@
+{
+ "aim_chap7_section_1.html": {
+  "url": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap7_section_1.html",
+  "licence": "FAA Aeronautical Information Manual: U.S. Government work, public domain (17 U.S.C. 105)",
+  "fetched": "2026-11-05",
+  "sha256": "ba0db458a7422d1d90c812de79abaf41bba5cb9023ba18a284a566ca38a02b89",
+  "note": "AIM 7-1-28 TAF key + 'Forecast Change Indicators' (FM / BECMG / TEMPO / PROB / NSW semantics) quoted in js/env/wx/taf.js; the page text carries no edition line (weather.md cites 'Effective 7/9/2026, Change 3' for the AIM index)"
+ }
+}

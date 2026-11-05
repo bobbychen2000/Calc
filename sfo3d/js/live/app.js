@@ -136,7 +136,8 @@ export async function startApp(cfg) {
     const M = metar; const layers = M ? M.clouds.slice().sort((a, b) => a.ft - b.ft) : [];
     const COVER = { FEW: 0.14, SCT: 0.4, BKN: 0.68, OVC: 0.95 };
     const main = layers.find(c => c.cover !== 'FEW') || layers[0];
-    const vis = M && M.visSM != null ? (M.visSM >= 10 ? 40000 : Math.max(800, M.visSM * 1609)) : 40000;
+    // 10SM / P6SM (TAF forecast) are lower bounds ("10 miles or greater", ASOS; "P6SM" = more than 6 SM, AIM 7-1-28)
+    const vis = M && M.visSM != null ? (M.visSM >= 10 || M.visPrefix === 'P' ? 40000 : Math.max(800, M.visSM * 1609)) : 40000;
     const wdir = ((M && M.windDir) ?? 290) * DEG, wms = ((M && M.windKt) ?? 8) * 0.5144;
     const windTo = [-Math.sin(wdir), 0, Math.cos(wdir)];
     const lowSlab = main && main.ft < 5000 && (main.cover === 'BKN' || main.cover === 'OVC');
@@ -443,7 +444,7 @@ export async function startApp(cfg) {
     const s = feedState; const lag = (traffic.delay + (traffic.audioDelay || 0)) / 1000; const provs = s.src ? String(s.src).split('+').join(' + ') : '';
     const txt = s.state === 'live' ? `Live · ${lag.toFixed(1)} s` : s.state === 'snap' ? s.text + (atcDelayS ? ` · +${atcDelayS} s` : '') : s.text;
     ui.setStatus({ state: s.state, text: txt, sub: s.state === 'snap' ? '' : provs, title: s.err ? 'Last error: ' + s.err : s.state === 'live' ? `${s.n ?? ''} aircraft · scene ${lag.toFixed(1)} s behind real time (interpolation ${(traffic.delay / 1000).toFixed(1)} s${traffic.audioDelay ? ` + ATC audio delay ${(traffic.audioDelay / 1000).toFixed(0)} s` : ''}) · positions from ${provs || 'the relay'}` : '' });
-    const M = metar; const wx = M ? `${M.windDir != null ? String(M.windDir).padStart(3, '0') + '°' : 'VRB'} ${M.windKt ?? 0} kt · ${M.visSM ?? '—'} SM${M.clouds.length ? ' · ' + M.clouds.map(c => c.cover + String(c.ft / 100).padStart(3, '0')).join(' ') : ''}` : '';
+    const M = metar; const wx = M ? `${M.windDir != null ? String(M.windDir).padStart(3, '0') + '°' : 'VRB'} ${M.windKt ?? 0} kt · ${M.visPrefix === 'P' ? 'P' : ''}${M.visSM ?? '—'} SM${M.clouds.length ? ' · ' + M.clouds.map(c => c.cover + String(c.ft / 100).padStart(3, '0')).join(' ') : ''}` : '';
     ui.setClock(new Date(cfg.mode === 'snapshot' ? cfg.snapshot.now : traffic.audioDelay ? traffic.displayTime(now) : now), wx + envCore.clockNote());
     const tD = traffic.displayTime(now);
     ui.setStats(statsLine(runwayStats(traffic.events, tD), tD)); statsSheet(now); atcUpdate(now);

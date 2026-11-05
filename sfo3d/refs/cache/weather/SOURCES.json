@@ -4,6 +4,6 @@
   "licence": "NWS text products (KMTR FTUS46 TAFSFO): U.S. Government work, public domain (https://www.weather.gov/disclaimer); archive by the Iowa Environmental Mesonet, attribution appreciated (https://mesonet.agron.iastate.edu/disclaimer.php)",
   "fetched": "2026-11-05",
   "sha256": "d8f154db86aa52aff4f53e63de4b61565dd9696a43ddcbebc7986c5f6bdccc21",
-  "note": "11 KSFO TAFs issued 2026-09-23 (AWC keeps 30 days only, environment_spec.md 3.4); the one in force at the snapshot time 17:51Z is KSFO 231727Z 2318/2424 -> data/sfo_env_presets.js SNAPSHOT_TAF (tools/env/build_env_presets_js.py)"
+  "note": "10 KSFO TAFs issued 2026-09-23 (AWC keeps 30 days only, environment_spec.md 3.4); the one in force at the snapshot time 17:51Z is KSFO 231727Z 2318/2424 -> data/sfo_env_presets.js SNAPSHOT_TAF (tools/env/build_env_presets_js.py)"
  }
 }

@@ -380,8 +380,8 @@ export function decodeMetar(raw, ref = null) {
   return out;
 }
 
-/** Ceiling, flight category, precise temperatures, relative humidity. */
-function derive(out) {
+/** Ceiling, flight category, precise temperatures, relative humidity (exported for js/env/wx/taf.js forecasts). */
+export function derive(out) {
   const sky = out.sky || [];
   // [7900] 10.4a: ceiling = lowest BKN/OVC layer or VV into a surface obscuration ('BKN000' is not a ceiling)
   let ceil = null;

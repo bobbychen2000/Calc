@@ -72,7 +72,7 @@ prov on every record.
 - Browser fallback removed: `js/live/feed.js fetchMetar` now needs the relay URL (aviationweather.gov sends no CORS
   header, **V**) and returns the relay's JSON list; `fetchTaf` added.
 
-**Relay smoke test: PASS 14/14** (`python3 tools/env/test_relay_wx.py`, offline, fake upstream serving the real AWC
+**Relay smoke test: PASS 15/15** (`python3 tools/env/test_relay_wx.py`, offline, fake upstream serving the real AWC
 responses saved 2026-11-05 in `tools/env/fixtures/awc_*_ksfo_20261105T0300Z.json`): schedule, conditional request,
 304, last good, raw ordering, TAF, dataNow live/replay, and **0 reports after the replay time over 25 replay instants**.
 
@@ -119,7 +119,7 @@ snapshot, override, light mode - applies new reports and photocell switches at o
   menu until the owner decides).
 
 **EnvState preset vectors: PASS 14/14** (25 fields each, at the fixture's rounding; Sun max |Δel| 0.005°, |Δaz| 0.045°
-vs the fixture's 2-/1-decimal values). **A-CLK: PASS** (`node tools/env/test_env_state.mjs`, 42/42 incl. light modes,
+vs the fixture's 2-/1-decimal values). **A-CLK: PASS** (`node tools/env/test_env_state.mjs`, 43/43 with the 14 preset vectors, incl. light modes,
 clocks, the 60 s σ transition and the PAPI photocell delay): at 2026-09-23 17:51Z the current report is `SPECI KSFO 231722Z …`; 0 of 301 minutes select a report observed
 after t_env; 19:00Z → stale at 98 min; plus the relay part above (replay never serves a later report).
 
@@ -207,3 +207,60 @@ Open points found in this step:
    (static data).
 4. The light-mode menu (`js/live/ui.js`, not this track's file) has no "Dawn" entry; `SFO.setLight('dawn')` works.
 5. D3 quotes AC 70/7460-1N §5.6 through the verifier's notes (the AC PDF is not cached any more); as-built tower lights NV.
+6. `js/main.js` (the `index.html` cinematic director, not one of the two live renderers and not this track's file)
+   still takes its Sun from `js/world/textures.js solarPosition` (geometric NOAA formulae, no refraction) at its
+   `cfg.env.utc`; switching it to `js/env/ephemeris.js` would move its shots' Sun by ≤ 0.04° by day (§1.3 comparison).
+
+### 1.6 Re-verification after the 04:31Z restart, and the TAF forecast (2026-11-05, env:core restart agent)
+
+The previous env:core agent was killed by the ~04:31Z container restart after finishing its five tasks; its work is in
+the WIP commits 4af5ad5 / 3f0a682 / 58ef89b and the working tree was clean for every environment file. Checked again:
+
+- **Gates** (`tools/env/run_gates.sh`, 04:34Z): decoder 38/38 · A-SUN 32/32 · A-FIX 50/50 · A-WX 864/864 (max relative
+  difference 0) · A-CLK + presets 43/43 · relay smoke 15/15 — all pass, as recorded above.
+- **Reproducibility (M)**: `build_lighting_spec.py` re-run on today's inputs (`data/sfo_details.js` 02:03Z,
+  `data/sfo_pavement.json` 01:30Z, both older than the 03:02Z outputs) reproduces `lighting_spec.json`,
+  `lighting_fixtures.json` and `data/sfo_lighting.js` byte for byte except the generation timestamp (the committed files
+  were restored); `build_env_presets_js.py` and `build_metar_golden.py` reproduce theirs byte for byte.
+- **Headless, both renderers, committed code** (`out/env/final/env_check.json`, 640×360 llvmpipe, through
+  `out/.heavy.lock`, 04:37–04:46Z): `live.html?mode=snapshot&qa=env,prov` ready 61.9 s, `live3.html?…&wx=dusk&webgl=1`
+  ready 11.0 s; **0 page errors** on both; renderer `R.light.sunDir` (and `engine.sunDirU` on r186) = EnvState
+  `sun.dir` at the snapshot (0.5385, 0.6645, 0.5181), the dusk preset (−0.9934, −0.0911, −0.0695) and light mode
+  Night (Sun −22.89°).
+
+**Found and fixed: "forecast (TAF)" was a label only.** Beyond the latest METAR (report > 90 min old, or none) the
+EnvState printed "forecast (TAF)" but kept rendering the stale report: in snapshot light mode Night (24 Sep 04:01Z) the
+scene showed the 17:22Z SPECI's 090° 4 kt, FEW004 SCT008 10.6 h later. Spec §3.3 asks for the TAF period in force.
+`js/env/wx/taf.js` (new) `tafAt(taf, t)` builds the prevailing forecast as a METAR-shaped decoded object, from the
+change-group definitions of the AIM (7-1-28 key and "Forecast Change Indicators", FAA `aim_html/chap7_section_1.html`
+fetched 2026-11-05 into `refs/cache/weather/aim/`, public domain, SOURCES.json; quotes in the module header, **V**):
+FM replaces every element from its time ("Each 'FM' group contains all the required elements"; omitted weather = none);
+BECMG merges only its elements ("The omitted conditions are carried over"), applied at the END of its window (**I**:
+"at an unspecified time within this time period"; "The NWS does not use BECMG"); TEMPO / PROB are listed in the HUD, not
+rendered (**I**: a deterministic scene shows the prevailing forecast); NSW clears the weather only; valid end "DD24" =
+00Z of the next day; never a TAF issued after t or outside its valid period (the relay's replay rule, `_cached_taf`:
+issued ≤ T and valid at T). `state.js` uses it only when the current report is stale or missing, tags `prov.wx` **I**,
+keys the 60 s σ transition on the source (report or TAF group), adds a `FORECAST TAF … [I]` HUD line, and the UI clock
+note shows "(TAF 231727Z forecast)". Snapshot / artifact: `SNAPSHOT_TAF` is the latest TAF issued ≤ the snapshot time
+(231727Z, valid 2318/2424): the forecast known at that time (**I**); the AMDs issued later that day (2033Z, 2128Z,
+2320Z, in the IEM file) are not used, because archived weather after the snapshot is owner question Q8.
+`P6SM` (TAF) is a lower bound like `10SM`: `applyEnv` (both renderers) used 6 SM (σ ≈ 3.6e-4 m⁻¹ haze) and the clock
+showed "6 SM"; now clear air (EnvState already treated `P` as a bound) and "P6 SM".
+
+**TAF test: PASS 29/29** (`node tools/env/test_taf.mjs`, added to `run_gates.sh`): the snapshot TAF hour by hour
+(17:00Z / 17:51Z → none, 18Z base VRB05KT P6SM SCT200, 20Z FM232000 29015KT P6SM FEW200, 24 Sep 11:30Z FM241100
+BKN010 = ceiling 1,000 ft MVFR, 25 Sep 00Z expired), the AIM's own example TAF KORD 051130Z (TEMPO / PROB40 listed
+not applied, BECMG 0606/0608 complete at 08Z: 21015KT P6SM SCT040 with NSW clearing SHRA), a month rollover, a sweep over
+the 11 cached KSFO TAFs (the 10 of 23 Sep + the AWC sample of 5 Nov; 313 valid hours, a prevailing wind + visibility every hour after issue) and EnvState: 17:51Z
+SPECI current (prov V); 18:52:30Z SPECI 90.5 min old → forecast base; light mode Night → wind 290°T 15 kt, FEW200,
+stars visible, σ clear air, runway West by 3-5-1, prov I; 25 Sep 01Z TAF expired → stale SPECI kept and flagged.
+
+Headless check of the forecast path (`out/env/final/env_fc.json`, scratchpad `env/job_env_fc.mjs`, 640×360 llvmpipe,
+through `out/.heavy.lock`, 04:46–04:52Z), snapshot mode → light mode Night → Real, on **both** renderers
+(`live.html`, ready 6.1 s; `live3.html?webgl=1`, ready 10.9 s): **0 page errors**; at 24 Sep 04:01:07Z the stale SPECI
+(639 min) is kept in `wx.raw`, the weather is `FM232000 29015KT P6SM FEW200` (prov I), wind 290° 15 kt, σ 3.3e-5 m⁻¹,
+renderer Sun = EnvState `sun.dir` (−0.8713, −0.389, −0.2992), HUD `FORECAST TAF 231727Z FM232000: 29015KT P6SM FEW200
+[I]`, UI clock `290° 15 kt · P6 SM · FEW200 (TAF 231727Z forecast) · env 2026-09-24 04:01Z (night) ≠ traffic`; back to
+Real: the SPECI 231722Z, no forecast. Render `out/env/final/fc_r3_night.png` (HUD only; not a scored review).
+Gates after the change: decoder 38/38 · A-SUN 32/32 · A-FIX 50/50 · A-WX 864/864 · A-CLK + presets 43/43 · TAF 29/29 ·
+relay 15/15.

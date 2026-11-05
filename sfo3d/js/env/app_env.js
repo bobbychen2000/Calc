@@ -47,9 +47,12 @@ export class AppEnv {
   summary() { return this.state && this.state.wx.decoded ? metarSummary(this.state.wx.decoded) : null; }
   /** "environment time ≠ traffic time" note for the UI clock (spec §3.2). */
   clockNote() {
-    const s = this.state; if (!s || !s.overridden) return '';
+    const s = this.state; if (!s) return '';
+    // beyond the latest METAR the weather is the TAF's prevailing forecast (spec §3.3: label the scene "forecast")
+    const fc = s.wx && s.wx.forecast ? ` (TAF ${s.wx.forecast.issued} forecast)` : '';
+    if (!s.overridden) return fc;
     const t = new Date(s.tEnv).toISOString().slice(0, 16).replace('T', ' ') + 'Z';
-    return ` · env ${t}${this.preset ? ' (' + this.preset.id + ')' : s.lightMode && s.lightMode !== 'real' ? ' (' + s.lightMode + ')' : ''} ≠ traffic`;
+    return fc + ` · env ${t}${this.preset ? ' (' + this.preset.id + ')' : s.lightMode && s.lightMode !== 'real' ? ' (' + s.lightMode + ')' : ''} ≠ traffic`;
   }
   // ------------------------------------------------------------------------------------------------ QA overlays
   attachHud(root) {

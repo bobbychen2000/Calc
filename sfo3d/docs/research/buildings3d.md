@@ -467,6 +467,9 @@ footprints):
 - `tools/sat/check.py` / `check_bridges.py` (one run; `check_stands.py` now unions the 3-D footprints into the aircraft-
   envelope test, `B3D_FOOTPRINTS=0` for the outlines only): ISSUES 0 before and after, WARNINGS 17 both, APP ISSUES 0; the
   only change is the F17 note (3.4 -> 3.2 m).
+- Re-run after the 04:31Z container restart (04:45Z, inputs and GLBs unchanged: `integration.json` file hashes match):
+  `b3d_integrate.py --check` 0 conflicts / 6 notes and `check.py` / `check_bridges.py` ISSUES 0 / WARNINGS 17, identical
+  to the reports above.
 - 2-D audit (`tools/drawing/run_all.sh`): `common.py buildings()` now marks the replaced first-pass parts / structures
   `notBuilt`, adds the walkway rests and every asset unit as prisms from `integration.json` (`tiers`: the body standing on
   the ground, grade to top; the overhangs - eaves, canopies, the tower flare, bridge vestibules - binned by the height of

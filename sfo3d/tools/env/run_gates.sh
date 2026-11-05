@@ -11,5 +11,6 @@ run "A-SUN ephemeris (32 checks)" node --no-warnings tools/env/test_ephemeris.mj
 run "A-FIX fixtures" node --no-warnings tools/env/test_fixtures.mjs
 run "A-WX JS decoder" node --no-warnings tools/env/test_metar_js.mjs
 run "A-CLK + EnvState presets" node --no-warnings tools/env/test_env_state.mjs
+run "TAF forecast beyond the latest METAR (spec 3.3)" node --no-warnings tools/env/test_taf.mjs
 run "relay smoke (A-CLK relay)" python3 tools/env/test_relay_wx.py
 exit $rc

@@ -31,6 +31,7 @@ with open(path, 'w') as f:
             '// Real archived KSFO reports: IEM ASOS archive (public domain) / aviationweather.gov Data API (US Government work);\n'
             '// "Weather: NOAA/NWS Aviation Weather Center; IEM ASOS archive (Iowa Environmental Mesonet)". QA presets (?wx=<id>).\n')
     f.write('export const ENV_PRESETS = ' + json.dumps(out, separators=(',', ':')) + ';\n')
-    f.write('// the KSFO TAF in force at the data/snapshot.js time (environment_spec.md 3.4); NWS product, public domain\n')
+    f.write('// the latest KSFO TAF issued at or before the data/snapshot.js time = the forecast known then (environment_spec.md 3.4;\n'
+            '// used by js/env/wx/taf.js beyond the latest METAR, from its valid start); NWS product, public domain\n')
     f.write('export const SNAPSHOT_TAF = ' + json.dumps(snapshot_taf, separators=(',', ':')) + ';\n')
 print('wrote', path, os.path.getsize(path), 'bytes,', len(out), 'presets; SNAPSHOT_TAF', snapshot_taf and snapshot_taf['raw'][:60])
