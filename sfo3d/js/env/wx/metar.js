@@ -174,6 +174,7 @@ function parseBody(tokens, out, taf = false) {
 }
 
 // ------------------------------------------------------------------------------------------------------ remarks
+const AEROSOL_ALOFT = ['FU', 'HZ', 'DU', 'SA', 'VA'];   // = metar_decode.py AEROSOL_ALOFT (truth2-4)
 const OBSC_RE = new RegExp('^(MI|PR|BC)?(' + OBSCUR.join('|') + ')$');
 const EVT_FULL = /^(?:[A-Z]{2,6}?(?:[BE](?:\d{4}|\d{2}|MM))+)+$/;
 const EVT_ITER = /([A-Z]{2,6}?)((?:[BE](?:\d{4}|\d{2}|MM))+)/g;
@@ -520,9 +521,15 @@ export function renderParams(d, night = false, marineLayerDepthFt = null, routin
     // INFERRED thickness: low stratus = marine-layer depth (MIT LL ATC-319 "usually less than 1000 feet"); else unknown
     L.thickness_m_guess = (h != null && h < 3000 && ['BKN', 'OVC', 'SCT'].includes(L.cover)) ? depthFt * FT_M : null;
   }
-  p.cloud_layers = layers;
+  // obscuration aloft by smoke / haze / dust / sand / volcanic ash ('FU FEW004', [7900] 13.35): an aerosol layer, not a
+  // water cloud - kept in the summation, moved to aerosol_layers (= tools/env/metar_decode.py; review truth2-4)
+  const aer = new Map((d.rmk.obscuration_layers || []).filter(o => AEROSOL_ALOFT.includes(o.wx)).map(o => [o.cover + '|' + o.height_ft, o.wx]));
+  for (const L of layers) L.aerosol = aer.get(L.cover + '|' + L.height_ft) ?? null;
+  p.aerosol_layers = layers.filter(L => L.aerosol);
+  p.cloud_layers = layers.filter(L => !L.aerosol);
+  const cl = p.cloud_layers;
   p.ceiling_m = d.ceiling_ft == null ? null : d.ceiling_ft * FT_M;
-  let clear = 1.0; for (const L of layers) clear *= (1.0 - L.own_fraction);
+  let clear = 1.0; for (const L of cl) clear *= (1.0 - L.own_fraction);
   p.sun_visible_probability = pyRound(clear, 3);        // INFERRED (random overlap)
   const nOk = 8.0 * (1.0 - clear);
   // Kasten & Czeplak (1980) G(N)/G(0) = 1 - 0.75 (N/8)^3.4 [2nd, weather.md 3.4]

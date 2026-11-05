@@ -62,8 +62,21 @@ V_UP = LINES_V[0] + TRUSS_HALF + R_TOP + 0.35   # upper glazing behind the expos
 V_E = HW - 1.0           # east clerestory line, 1 m inside the east eave ("clerestories" [pub SOM]; position [inf])
 COL_R = 0.75             # column radius (BI-02 / BI-03 draw 1.5 m) [inf]
 V_COL = V_W - 2.5        # west column line: in front of the glass (photos i3 / i4), 2.5 m as drawn [inf]
-CURB_W = 7.0             # departures curb sidewalk under the canopy, from the wall [inf] (BI-02 draws the curb band at L3)
+# Departures curb (review r2, 2026-11-05): the sidewalk meets the roadway at a low kerb with bollards (photo i3: cars and a bus
+# stopped at the curb, luggage carts at the road edge) - round 0/1 had a 1.1-m upstand along the edge (a walled-off balcony).
+# Kerb line measured on NAIP 2024 resampled in the roof frame with the frame-model relief of a point 11.35 m up
+# (draw_data.lean_frame): the yellow detectable-warning strips at the crosswalk ramps (u -52.8, -15.8, -4.7 / 2.5, 14.0, 49.5)
+# centre at v -29.8 (0.6-m strips, saturation 47-58 against 10-15), the lane-1 car roofs at v -31.0..-32.3 -> kerb face at
+# v -30.1 +- 0.4 [obs NAIP], i.e. 4.3 m in front of the (inferred) wall line. The roadway beyond the kerb is the integration
+# group's roadways.glb (unit itb_departures; its deck currently starts 6.2 m further out, at v -36.3: reported to them).
+KERB_V = -30.1           # [obs NAIP 2024, +-0.4]
+CURB_W = V_W - KERB_V    # sidewalk from the wall to the kerb (4.33 m)
 CURB_THK = 1.2           # BI-02: band L3 - 1.2 .. L3
+KERB_H = 0.15            # kerb face above the roadway (roadways_net.KERB_M: deck at L3 - 0.15) [inf]
+CROSSWALK_U = (-52.8, -15.8, -4.7, 2.5, 14.0, 49.5)   # crosswalk ramps (NAIP warning strips) [obs]: no bollards within 2.5 m
+BOLLARD = dict(r=0.15, h=0.9, inset=0.6, pitch=3.048)  # photo i3: grey cylinders ~0.3 x 0.9 m [obs form]; 10-ft pitch, 0.6 m
+                                                     # behind the kerb face [inf]
+GUARD_H = 1.07           # guard at the curb end returns (open edge): 42 in (IBC 1015.3) [inf]
 CANOPY_THK = 0.6         # [inf]
 H_CORE = 17.9            # ITB core block (east block, north / south bars): NO SOURCE [unk]; placeholder = the adjoining
                          # Boarding Area A main roof 17.9 m [obs] (the ITB has 5 levels [pub]: it may be taller)
@@ -82,8 +95,18 @@ SWITCH_M = {0: 0.0, 1: 450.0, 2: 1600.0}   # LOD switch distances (camera to roo
 # 8.45 m, so 1.5 + 0.4 = 1.9 m puts the lens top on roof_line as seen from i4 (the orthographic west silhouette then sits
 # <= 0.4 m above roof_line at the crown, inside the 0.5-m tolerance). Vault form: rise R (1 - x^2) (1 - (dv / hw)^2) on
 # the pointed-lens planform (x = (u - uc) / a) [inf].
-CROWN_CAP = 1.5          # [obs photo i4, low]
-LENS_RISE = 1.9          # [inf: CROWN_CAP + the i4 line-of-sight drop to lens 0]
+# Review r2 (2026-11-05): the dark cap was narrower than in i4 (59 % vs 73 % of the notch-to-notch span). Re-measured on i4
+# (full res, column scan x 797..1230 between the notches): the dark band between the sky and the white fascia is 11-12 px at
+# the crown (~7.2 px/m there: 1.6 m) and stays >= 3 px from x 845 to 1205, i.e. over 83 % of the span, thinning like
+# 1.6 (1 - (u / 27)^2)^0.7 (fit of 15 columns, +-1 px). The lens row (NAIP planform, u -25.8..22.2) is the only glass there, so
+# crown_cap(u) takes a flat-topped profile over the lens row, 1.6 (1 - |x|^3)^0.7 (x = lens-row coordinate), which reproduces
+# that thinning inside the lenses and reaches 0 at the lens tips (a profile running to the notches would leave a 0.5-m dip of
+# plain fascia beyond the south lens tips); each lens vault rises crown_cap(u) + LOS_DROP above the deck along its centre
+# line (closing to 0 at the lens tips by (1 - x^8)), which keeps the vault tops 0.4 m above roof_line where the cap is full.
+CROWN_CAP = 1.6          # [obs photo i4, re-measured r2; +-0.2]
+CAP_EXP = 0.7            # [obs photo i4 profile fit]
+LOS_DROP = 0.4           # i4 line of sight (2.7 deg up) loses 0.047 m per m behind the fascia: lens 0 at 8.45 m [inf]
+LENS_RISE = CROWN_CAP + LOS_DROP   # vault rise at the crown [inf]
 LENS_NV = 6              # lens strips across v (LOD0 / LOD1); LOD2: 2
 # Boarding Area G apron facade, re-measured on photo a2 (review r1; a2 looks SSW over the BA-G NNE face - camera solved in
 # render_itb.view_a2g). On a2 the bridge-head bump-outs of the outline (15.7 x 8.7 m) are low boxes: B1 (s -69.6..-53.8) top at
@@ -98,6 +121,21 @@ APRON_TOP = 3.0          # dark recessed apron level [obs photo a2]
 GLAZE_BOT, GLAZE_TOP2 = 4.6, 14.7   # gate-room curtain wall foot / head [obs photo a2 (BA-G); BA-A by analogy, inf]
 GATE_POD_MIN = 35.0      # a main-face segment is a gate room where one pod overlaps it by >= 35 m [inf; selects 6 on BA-G]
 GATE_TILE = (15.9, 10.1) # itb_c_curtain_gate tile (a quarter of the 63.6-m bay x the glazing height)
+# Review r2: the BA-G walls read as blank white. Photo a2 (solved camera, ~9.0 px/m along the NNE face): vertical panel joints
+# every 33.5 px (3.7 m), horizontal joints every 13 px (1.5 m) over the solid segments -> a 12 x 5 ft (3.66 x 1.524 m)
+# composite-panel module [obs a2, +-0.3 m], drawn as a base-colour tile (dark reveals + per-panel tone) with its own normal
+# map (itb_c_panel / itb_n_panel_a2, tile 2 x 4 panels); used on every alu_panel wall (BA-G obs; BA-A / core by analogy, inf)
+PANEL_TILE = (7.32, 6.096)
+# isolated 2-lite windows on the BA-G NNE face (photo a2; review r1 noted them, r2 asks for them): pixel boxes inverted onto
+# the face plane with the solved camera (s, +-2 m) and heights read per column between the facade's roof edge (17.0 m) and the
+# local features (light band / bump-out roof) (+-1.5 m) [obs a2, low]; only the four imaged ones (SSW face / BA-A: not imaged)
+BAG_WINDOWS = [   # (face, s0, s1, z0, z1, note)
+    (0, -19.5, -10.6, 4.6, 7.2, 'low, on the light band, segment B1-B2 (a2 x 810-885)'),
+    (0, -3.6, 5.3, 9.8, 12.1, 'above bump-out B2 (a2 x 945-1020)'),
+    (0, 76.2, 84.9, 6.9, 9.2, 'just above bump-out B3 (a2 x 1625-1700)'),
+    (0, 92.1, 101.4, 4.6, 7.2, 'low, on the light band, segment B3-B4 (a2 x 1760-1840)'),
+]
+ROOFOBS = os.path.join(HERE, 'itb_roofobs.json')   # rooftop units measured on NAIP 2024 (tools/blender/itb_roofobs.py)
 
 PODS = I.PODS
 POD = I.POD
@@ -113,13 +151,13 @@ def head(u):
 
 
 def crown_cap(u):
-    """depth of the centre-section deck / fascia below the silhouette roof_line(u): CROWN_CAP at the lens row's middle,
-    tapering with the lens vaults (mean lens centre / half-length of the five lenses: u -1.8 +- 23.98 m) to 0 at their ends,
-    so the vault tops (LENS_RISE (1 - x^2)) carry the silhouette everywhere (first cut: tapered to the notches, which left
-    the silhouette up to 0.55 m low where the lenses end, out of tolerance)."""
+    """depth of the centre-section deck / fascia below the silhouette roof_line(u): the visible dark cap of photo i4,
+    CROWN_CAP (1 - |x|^3)^CAP_EXP over the lens row (x = (u - uc) / a of the mean lens: u -1.8 +- 24.0) - flat-topped, so the
+    dark crown spans ~80 % of the notch-to-notch width as in i4 (review r2; round 1's parabola gave 59 %), and 0 at the lens
+    tips, so the deck meets roof_line where no lens carries the silhouette. The lens vaults (lens_rise) form the silhouette."""
     uc = float(np.mean([L['uc'] for L in LENSES])); a = float(np.mean([L['a'] for L in LENSES]))
-    x = (u - uc) / a
-    return CROWN_CAP * (1.0 - x * x) if abs(x) < 1.0 else 0.0
+    x = abs(u - uc) / a
+    return CROWN_CAP * (1.0 - x ** 3) ** CAP_EXP if x < 1.0 else 0.0
 
 
 def roof_top(u):
@@ -342,11 +380,13 @@ def lens_hw(L, u):
 
 
 def lens_rise(L, u, v):
-    """height of lens L's vaulted glass above the deck at (u, v) [inf form, see LENS_RISE]."""
+    """height of lens L's vaulted glass above the deck at (u, v) [inf form]: along the lens centre line crown_cap(u) + LOS_DROP
+    (= LENS_RISE at the crown; the vault top stays 0.4 m above roof_line while the cap is full), closed at the lens tips by
+    (1 - x^8), across the lens (1 - d^2) (review r2)."""
     hw = lens_hw(L, u)
     if hw <= 0: return 0.0
     x = (u - L['uc']) / L['a']; d = (v - L['vc']) / hw
-    return LENS_RISE * (1 - x * x) * max(0.0, 1 - d * d)
+    return (crown_cap(u) + LOS_DROP) * (1 - x ** 8) * max(0.0, 1 - d * d)
 
 
 def roof_stations(step, lens_n=13):
@@ -438,9 +478,10 @@ def truss_nodes():
 
 def hall_trusses(lod=0):
     """5 three-chord 'football' trusses on the truss lines [pub form, obs lines]: two top chords under the deck, one bottom
-    chord (bottom_chord_line), webs on the 20-ft node grid: in each side plane a diagonal per panel (alternating) and at
-    every node a V of two posts in the cross-section [inf, photos i3 / i4]. LOD1: bottom chord + one top chord + the
-    diagonals in the truss's mid plane."""
+    chord (bottom_chord_line), webs on the 20-ft node grid: in each side plane a diagonal per panel, the two planes opposite
+    (an X per panel seen from the west, photo i4, review r2) and at every node a V of two posts in the cross-section (the
+    verticals on the 20-ft grid) [inf form, obs rhythm photos i3 / i4]. LOD1: bottom chord + one top chord + the diagonals in
+    the truss's mid plane (alternating)."""
     mb = MB('hall_trusses')
     U = sorted(truss_nodes())
     sides = 8 if lod == 0 else 4
@@ -471,22 +512,53 @@ def hall_trusses(lod=0):
                         tube(mb, [Buv(u, vk, zb(u) + R_BOT * 0.6), Buv(u, vt, zt(u) - R_TOP * 0.6)], R_WEB, ws, 'steel_white')
                 if i + 1 < len(seg):
                     u2 = seg[i + 1]
-                    a, b = (u, u2) if i % 2 == 0 else (u2, u)
-                    for vt in tops:   # diagonal: bottom node a -> top node b
+                    # review r2 (photo i4: an X in every 20-ft panel between the verticals): the two side planes carry
+                    # opposite diagonals - plane 0 bottom node u -> top node u2, plane 1 bottom u2 -> top u (alternating by
+                    # panel) - so seen from the west each panel reads as an X, not one N-web (round 1 drew both planes alike)
+                    for j, vt in enumerate(tops):
+                        a, b = (u, u2) if (i + j) % 2 == 0 else (u2, u)
                         tube(mb, [Buv(a, vk, zb(a) + R_BOT * 0.6), Buv(b, vt, zt(b) - R_TOP * 0.6)], R_WEB, ws, 'steel_white')
     return mb
 
 
 def hall_outriggers(lod=0):
-    """outrigger beams under the eave soffit from the outer truss lines to the eaves, one per truss node (photo i3: dark
-    I-beams at regular spacing under the soffit) [inf: spacing / depth]; east side stops at the clerestory."""
+    """outrigger beams under the eave soffit from the outer truss lines to the eaves, one per truss node [inf: spacing / depth].
+    Review r2: photos i3 / i4 show WHITE outrigger brackets in a regular rhythm against the dark soffit (i4 wing tips: light
+    blocks under the eave every panel; i3: white arms from the truss to the eave) - round 1 drew 0.3 x 0.6 m dark-grey beams
+    that vanished against the soffit; now white, 0.35 x 0.9 m [inf]. East side stops at the clerestory."""
     mb = MB('hall_outriggers')
     for u in truss_nodes():
         for v0, v1 in ((LINES_V[0] - TRUSS_HALF, -HW + 0.3), (LINES_V[-1] + TRUSS_HALF, V_E - 0.3)):
             us = roof_us(u)
             d = np.array(Buv(u, v1, 0)[:2]) - np.array(Buv(u, v0, 0)[:2]); L = float(np.linalg.norm(d)); d /= L
             c = (np.array(Buv(u, v0, 0)[:2]) + np.array(Buv(u, v1, 0)[:2])) / 2
-            boxm(mb, c, d, L, 0.3, (us - 0.6, us), 'steel_grey', top=False, bottom=True)
+            boxm(mb, c, d, L, OUTRIG_W, (us - OUTRIG_D, us), 'steel_white', top=False, bottom=True)
+    return mb
+
+
+OUTRIG_W, OUTRIG_D = 0.35, 0.9    # [inf, photos i3 / i4: white brackets readable at the i4 distance]
+BRACKET = dict(w=1.7, h=1.4, r=0.09, dv=0.35)   # wall-head brackets (photo i4: dark inverted V ~12 x 10 px at ~7.2 px/m) [obs
+                                                # size, low; form inf]
+
+
+def bracket_us():
+    """wall-head bracket stations: mid-panel of the 20-ft truss grid (u = k 20 ft), over the hall (photo i4: the dark inverted
+    V hangers sit between the truss verticals) [obs rhythm, low]."""
+    return [k * 20 * FT for k in range(-17, 18) if abs(k * 20 * FT) < HALL_HL - 1.0]
+
+
+def hall_brackets(lod=0):
+    """dark inverted-V brackets hanging off the glass-wall head under the west truss's bottom chord (photo i4: a regular row of
+    dark 'A' hangers under the chord, in front of the frit), 1.7 m wide, 1.4 m tall, 0.35 m in front of the glass [obs size /
+    rhythm, low; form inf] (review r2: round 1 showed only the plain white head beam there)."""
+    mb = MB('hall_brackets')
+    for u in bracket_us():
+        h0 = head(u); v = V_W - BRACKET['dv']
+        apex = Buv(u, v, h0 - 0.05)
+        for du in (-BRACKET['w'] / 2, BRACKET['w'] / 2):
+            tube(mb, [apex, Buv(u + du, v, h0 - BRACKET['h'])], BRACKET['r'], 6 if lod == 0 else 4, 'steel_dark', cap=True)
+        tube(mb, [Buv(u - BRACKET['w'] / 2, v, h0 - BRACKET['h']), Buv(u + BRACKET['w'] / 2, v, h0 - BRACKET['h'])],
+             BRACKET['r'] * 0.8, 6 if lod == 0 else 4, 'steel_dark', cap=True)
     return mb
 
 
@@ -502,22 +574,25 @@ def column_points():
 
 def hall_columns(lod=0):
     """20 columns (5 truss lines x 4 at +-190 / +-270 ft) [pub count, inf positions]; the west line stands in front of the
-    glass (photos i3 / i4) and branches at the glass head into 5 members: a post to the roof, two to the west truss and
-    two to the eave soffit (BI-02 V1: post + 2 per side at +-5 / +-10 m) [obs count, inf geometry]. Inner lines: columns
-    from level 3 to the bottom chords (spherical bearings [pub msc2000], drawn as a cap)."""
+    glass (photos i3 / i4) and branches at the glass head into 5 members [obs count, inf geometry]. Review r2: i4 shows the
+    column continuing as a vertical up through the truss to the roof, with only slender struts at its neck (i3: 4-6 members
+    of web size) - round 1's +-10-m arms to the eave read as thick Y branches two bays wide that i4 does not show. Now: the
+    post to the roof (r 0.30), two struts to the west bottom-chord nodes one panel either side (r 0.18) and two short struts
+    out to the eave soffit (+-2 m, r 0.16) [inf]. Inner lines: columns from level 3 to the bottom chords (spherical bearings
+    [pub msc2000], drawn as a cap)."""
     mb = MB('hall_columns')
     sides = 16 if lod == 0 else 8
     for u, v, kind in column_points():
         if kind == 'west':
             tube(mb, [Buv(u, v, L3), Buv(u, v, WH)], COL_R, sides, 'steel_white', cap=True)
-            for du in (-10.0, -5.0, 0.0, 5.0, 10.0):
+            for du, r in ((-20 * FT, 0.18), (-2.0, 0.16), (0.0, 0.30), (2.0, 0.16), (20 * FT, 0.18)):
                 if du == 0:
                     tgt = Buv(u, v, roof_us(u) - 0.02)
-                elif abs(du) < 7:
+                elif abs(du) > 3:
                     tgt = Buv(u + du, LINES_V[0], bottom_chord_line(0, u + du) + R_BOT)
                 else:
-                    tgt = Buv(u + du, -HW + 1.5, roof_us(u + du) - 0.02)
-                tube(mb, [Buv(u, v, WH - 0.3), tgt], 0.28 if du else 0.32, 8 if lod == 0 else 4, 'steel_white')
+                    tgt = Buv(u + du, -HW + 2.0, roof_us(u + du) - 0.02)
+                tube(mb, [Buv(u, v, WH - 0.3), tgt], r, 8 if lod == 0 else 4, 'steel_white')
         else:
             # inner lines at LOD0 and LOD1 (review r1: LOD1 kept only the west line; inside the opaque envelope they are not
             # seen from outside, but the LOD sets now match)
@@ -624,14 +699,21 @@ def hall_hangers(lod=0):
         apex = Buv(uh, V_W - 0.25, CANOPY + I.HANGER_H)
         for du in (-0.4, I.HANGER_L):
             tube(mb, [apex, Buv(uh + du, V_W - CANOPY_D + 0.3, CANOPY)], 0.1, 6 if lod == 0 else 4, 'steel_grey')
-        tube(mb, [Buv(uh, V_W - CANOPY_D + 0.5, L3), Buv(uh, V_W - CANOPY_D + 0.5, CANOPY - CANOPY_THK)], 0.18, 8 if lod == 0 else 4, 'steel_white')
+        # review r2: the posts stand on the sidewalk, 0.45 m behind the measured kerb (round 1: 0.5 m inside the canopy edge,
+        # which is 0.2 m beyond the kerb, i.e. on the roadway) [inf]
+        tube(mb, [Buv(uh, POST_V, L3), Buv(uh, POST_V, CANOPY - CANOPY_THK)], 0.18, 8 if lod == 0 else 4, 'steel_white')
     return mb
 
 
+POST_V = KERB_V + 0.45    # canopy posts on the sidewalk [inf]
+
+
 def hall_curb():
-    """departures curb sidewalk at level 3 in front of the wall (BI-02: band L3 - 1.2 .. L3) [inf width]."""
+    """departures curb sidewalk at level 3 in front of the wall, from the wall to the kerb line KERB_V [obs NAIP] (BI-02: band
+    L3 - 1.2 .. L3). Review r2: no upstand - the roadway (integration's roadways.glb, deck at L3 - KERB_H) meets the
+    sidewalk at a 0.15-m kerb (photo i3); the slab edge below the kerb is the curb structure (hidden where the deck abuts)."""
     mb = MB('hall_curb')
-    v0, v1 = V_W - CURB_W, V_W
+    v0, v1 = KERB_V, V_W
     U = wall_u_breaks()
     z0, z1 = L3 - CURB_THK, L3
     for u0, u1 in zip(U[:-1], U[1:]):
@@ -639,14 +721,40 @@ def hall_curb():
                 [(u0 / 4, v0 / 4), (u1 / 4, v0 / 4), (u1 / 4, v1 / 4), (u0 / 4, v1 / 4)], False, 't')
         mb.face([Buv(u0, v0, z0), Buv(u1, v0, z0), Buv(u1, v1, z0), Buv(u0, v1, z0)][::-1], 'concrete',
                 [(u0 / 4, v0 / 4), (u1 / 4, v0 / 4), (u1 / 4, v1 / 4), (u0 / 4, v1 / 4)][::-1], False, 'b')
-        mb.quad_wall(Buv(u0, v0, 0), Buv(u1, v0, 0), z0, z1 + 1.1, z0, z1 + 1.1, 'concrete', u0, (4, 4), grp='e')
-        # 1.1 m upstand (parapet / railing base) along the curb edge [inf]: inner face and cap
-        mb.quad_wall(Buv(u1, v0 + 0.3, 0), Buv(u0, v0 + 0.3, 0), z1, z1 + 1.1, z1, z1 + 1.1, 'concrete', -u1, (4, 4), grp='r')
-        mb.face([Buv(u0, v0, z1 + 1.1), Buv(u1, v0, z1 + 1.1), Buv(u1, v0 + 0.3, z1 + 1.1), Buv(u0, v0 + 0.3, z1 + 1.1)], 'concrete',
-                [(0, 0), (1, 0), (1, 1), (0, 1)], False, 'rc')
+        # kerb face (L3 - KERB_H .. L3, granite-grey) and the slab edge below it
+        mb.quad_wall(Buv(u0, v0, 0), Buv(u1, v0, 0), z1 - KERB_H, z1, z1 - KERB_H, z1, 'kerb', u0, (4, 4), grp='k')
+        mb.quad_wall(Buv(u0, v0, 0), Buv(u1, v0, 0), z0, z1 - KERB_H, z0, z1 - KERB_H, 'concrete', u0, (4, 4), grp='e')
     for u, sg in ((-HALL_HL, -1), (HALL_HL, 1)):
         a, b = (Buv(u, v1, 0), Buv(u, v0, 0)) if sg < 0 else (Buv(u, v0, 0), Buv(u, v1, 0))
         mb.quad_wall(a, b, z0, z1, z0, z1, 'concrete', 0, (4, 4))
+    return mb
+
+
+def bollard_us():
+    """bollard stations along the kerb: the 10-ft pitch over the hall, none within 2.5 m of a crosswalk ramp [obs NAIP ramps]
+    or of a canopy post (HANGER_U) [inf]."""
+    out = []
+    for u in np.arange(-HALL_HL + 1.5, HALL_HL - 1.0, BOLLARD['pitch']):
+        if any(abs(u - c) < 2.5 for c in CROSSWALK_U): continue
+        if any(abs(u - h) < 0.8 for h in I.HANGER_U): continue
+        out.append(float(u))
+    return out
+
+
+def hall_bollards(lod=0):
+    """kerb furniture (review r2, photo i3): bollards BOLLARD['inset'] behind the kerb face on the 10-ft pitch (gaps at the
+    crosswalks) and a guard (posts + two rails, GUARD_H) only at the two curb end returns, where the sidewalk edge is open to
+    a drop [form obs i3; positions inf]."""
+    mb = MB('hall_bollards')
+    vb = KERB_V + BOLLARD['inset']
+    for u in bollard_us():
+        tube(mb, [Buv(u, vb, L3), Buv(u, vb, L3 + BOLLARD['h'])], BOLLARD['r'], 10 if lod == 0 else 6, 'bollard', cap=True)
+    for u, sg in ((-HALL_HL, -1), (HALL_HL, 1)):
+        ug = u - sg * 0.15
+        for v in np.linspace(KERB_V + 0.1, V_W - 0.3, 4):
+            tube(mb, [Buv(ug, v, L3), Buv(ug, v, L3 + GUARD_H)], 0.04, 6, 'bollard', cap=True)
+        for z in (L3 + 0.5, L3 + GUARD_H):
+            tube(mb, [Buv(ug, KERB_V + 0.1, z), Buv(ug, V_W - 0.3, z)], 0.03 if z < L3 + 1 else 0.04, 6, 'bollard', cap=True)
     return mb
 
 
@@ -793,7 +901,8 @@ def extruded_block(name, poly_world, h, wall_bands, roof_mat='roof_membrane_pier
                             mb.face([(pa[0], pa[1], z0), (pb[0], pb[1], z0), (pb[0], pb[1], z1), (pa[0], pa[1], z1)], m,
                                     [(0.0, 0.0), (Lq / tu, 0.0), (Lq / tu, (z1 - z0) / tv), (0.0, (z1 - z0) / tv)])
                             continue
-                        mb.quad_wall(pa, pb, z0, z1, z0, z1, m, s + t0, grp_tile if 'glass' not in m else (6.096, 4.4))
+                        tile_m = PANEL_TILE if m == 'alu_panel' else (grp_tile if 'glass' not in m else (6.096, 4.4))
+                        mb.quad_wall(pa, pb, z0, z1, z0, z1, m, s + t0, tile_m)
                 s += L
         if parapet:
             inner = Pi.buffer(-PARAPET_T, join_style=2)
@@ -974,6 +1083,45 @@ def pier_body(key, lod=0):
     for b in bo:
         mb.merge(extruded_block('bump', b[3], BUMP_H_G, [(0, APRON_TOP, 'service_dark', None), (APRON_TOP, BUMP_H_G, 'alu_panel', None)],
                                 parapet=False, roof_mat='roof_membrane_pier'))
+    mb.merge(bag_windows())
+    return mb
+
+
+def bag_windows():
+    """the four imaged 2-lite windows of the BA-G NNE face (BAG_WINDOWS) as two dark-teal lites 0.04 m proud of the panel wall,
+    split by a 0.3-m mullion (the wall shows through) [obs a2, low]."""
+    mb = MB('bag_windows')
+    P = PIERS['G']; c = np.asarray(P['centre_xz'], float); sa = np.asarray(P['s_axis'], float); ta = np.asarray(P['t_axis'], float)
+    faces = pier_faces('G')
+    for face, s0, s1, z0, z1, _ in BAG_WINDOWS:
+        t0, k = faces[face][:2]; sg = -1 if face == 0 else 1
+        mid = 0.5 * (s0 + s1)
+        for a, b in ((s0, mid - 0.15), (mid + 0.15, s1)):
+            pa = c + sa * a + ta * (t0 + k * a + sg * 0.04); pb = c + sa * b + ta * (t0 + k * b + sg * 0.04)
+            A, Bp = B(pa[0], pa[1], 0), B(pb[0], pb[1], 0)
+            pts = [(A[0], A[1], z0), (Bp[0], Bp[1], z0), (Bp[0], Bp[1], z1), (A[0], A[1], z1)]
+            # outward = away from the pier centre line
+            n = np.cross(np.subtract(pts[1], pts[0]), np.subtract(pts[3], pts[0]))
+            out = np.array(B(*(c + ta * (t0 + sg * 5.0)), 0)[:2]) - np.array(B(*c, 0)[:2])
+            if n[0] * out[0] + n[1] * out[1] < 0: pts = pts[::-1]
+            mb.face(pts, 'glass_win', [(0, 0), (1, 0), (1, 1), (0, 1)])
+    return mb
+
+
+def roof_units(lod=0):
+    """rooftop mechanical units on the BA-A / BA-G roofs and the BA-G bump-out roofs: plan rectangles measured on NAIP 2024
+    (tools/blender/itb_roofobs.json) [obs extents +-0.7 m], heights by plan size [inf]; light metal boxes with a darker
+    louvre band (photo a2 shows such units on the bump-out roofs and behind the NNE parapet) [inf]. LOD0 / LOD1."""
+    mb = MB('ba_roof_units')
+    if not os.path.exists(ROOFOBS): return mb
+    d = json.load(open(ROOFOBS))
+    for name, dk in d['decks'].items():
+        for u in dk['units']:
+            g = Polygon(u['ring'])
+            if g.area < 1.0: continue
+            z0 = dk['deck_h']; z1 = z0 + u['h']
+            bands = [(z0, z1 - 0.35, 'hvac', None), (z1 - 0.35, z1, 'hvac_louvre', None)] if lod == 0 else [(z0, z1, 'hvac', None)]
+            mb.merge(extruded_block('u', g, z1, bands, parapet=False, roof_mat='hvac'))
     return mb
 
 
@@ -1024,13 +1172,90 @@ def g3_box_antennas():
     return mb
 
 
+# Core bars over roads (review r2): the SFO Museum ITB outline includes a 157-m, 5-14-m-wide bar north of the core block
+# (x -1222..-1068, z 159..209) that crosses the domestic departures viaduct (roadways.glb deck top 5.6-5.9 m) and at-grade
+# roads (OSM, data/sfo_landside.json). Round 1 extruded it from grade as a 17.9-m solid (an unknown modelled "conservatively"
+# that the roads ran through). A bar that roads pass under must be an elevated connector: its underside is put at the
+# departures level less the structure, CONNECTOR_US = L3 - 1.0 = 10.5 m [inf], i.e. 4.6 m over the highest deck under it
+# (5.88 m; verified against roadways.glb by verify_itb.py) - the Caltrans / FHWA minimum vertical clearance over a local
+# road is 15 ft = 4.57 m [pub]; top still the H_CORE placeholder [unk]; round columns where clear of every road footprint
+# (+1.5 m) [inf]. The core block itself is cut back where OSM road footprints graze its outline (<= 5 m deep; the outline is
+# +-5 m) - the roads pass, the building face stands beside them.
+CONNECTOR_US = L3 - 1.0      # [inf]
+ROAD_CLEAR = 4.6             # [pub: 15 ft minimum vertical clearance, local roads]
+BAR_MAX_W = 15.0             # a core part whose mean width (area / length) is <= 15 m is a bar (connector) [inf]
+CONNECTOR_COL = dict(r=0.6, pitch=24.0, margin=1.5)   # [inf]
+
+
+def road_footprints(buffer=0.5):
+    """OSM roads of data/sfo_landside.json (ODbL; centrelines x the inferred lane widths) as footprints, + buffer m."""
+    land = json.load(open(os.path.join(ROOT, 'data', 'sfo_landside.json')))
+    return [(r, shapely.LineString(r['pts']).buffer(r['w'] / 2 + buffer)) for r in land['roads'] if len(r['pts']) >= 2]
+
+
+def core_parts():
+    """core_polys() split into ('block', polygon) parts cut back by the road footprints that graze them, and ('bar',
+    polygon) connector parts that roads cross (elevated)."""
+    roads = road_footprints(0.5)
+    out = []
+    for g in core_polys():
+        hit = [fp for r, fp in roads if fp.intersects(g) and fp.intersection(g).area > 0.5]
+        mrr = g.minimum_rotated_rectangle
+        X = np.asarray(mrr.exterior.coords)
+        mean_w = g.area / max(np.linalg.norm(X[i + 1] - X[i]) for i in range(4))   # the north bar kinks: its rectangle is 29 m
+        if hit and mean_w <= BAR_MAX_W:
+            out.append(('bar', g))
+        elif hit:
+            cut = g.difference(unary_union(hit))
+            for q in (cut.geoms if hasattr(cut, 'geoms') else [cut]):
+                if isinstance(q, Polygon) and q.area > 150:
+                    out.append(('block', orient(q.buffer(0.01).buffer(-0.01).simplify(0.05), 1.0)))
+        else:
+            out.append(('block', g))
+    return out
+
+
+def connector_columns(g):
+    """column stations under an elevated bar: along its long axis every CONNECTOR_COL['pitch'] m, at the middle of the
+    bar's cross section, kept where the column (+ margin) clears every road footprint and stays inside the bar."""
+    roads = unary_union([fp for r, fp in road_footprints(CONNECTOR_COL['margin']) if fp.distance(g) < 30])
+    mrr = np.asarray(g.minimum_rotated_rectangle.exterior.coords)
+    e = [np.linalg.norm(mrr[i + 1] - mrr[i]) for i in range(4)]; k = int(np.argmax(e))
+    d = (mrr[k + 1] - mrr[k]) / e[k]; n = np.array([-d[1], d[0]])
+    c = np.asarray(g.centroid.coords[0]); s = (np.asarray(g.exterior.coords) - c) @ d
+    out = []
+    for ss in np.arange(s.min() + 4.0, s.max() - 3.0, 2.0):
+        p = c + d * ss
+        seg = shapely.LineString([p - n * 30, p + n * 30]).intersection(g)
+        if seg.is_empty or seg.length < 3.0: continue
+        m = np.asarray(seg.interpolate(0.5, normalized=True).coords[0])
+        disc = shapely.Point(*m).buffer(CONNECTOR_COL['r'])
+        if roads.intersects(disc) or not g.buffer(-0.3).contains(disc): continue
+        if out and np.hypot(*(m - out[-1])) < CONNECTOR_COL['pitch']: continue
+        out.append(m)
+    return out
+
+
 def core_block(lod=0):
     """ITB core outside the hall (east block, north / south bars): extruded to H_CORE [unk]; metal panels with a window
-    band at the departures level [unk]."""
+    band at the departures level [unk]. Bars that roads cross are elevated connectors from CONNECTOR_US (review r2)."""
     mb = MB('itb_core')
-    for g in core_polys():
+    for kind, g in core_parts():
         if lod == 2:
             g = largest(g.simplify(1.0).intersection(g))
+        if kind == 'bar':
+            bands = [(CONNECTOR_US, H_CORE, 'alu_panel', None)] if lod == 2 else \
+                [(CONNECTOR_US, CONNECTOR_US + 1.2, 'alu_panel', None), (CONNECTOR_US + 1.2, L3 + 3.5, 'glass_dark', None),
+                 (L3 + 3.5, H_CORE, 'alu_panel', None)]
+            sub = extruded_block('c', g, H_CORE, bands, parapet=(lod < 2))
+            P = to_blender_poly(g)
+            for Pi in (P.geoms if hasattr(P, 'geoms') else [P]):
+                cap(sub, Pi, CONNECTOR_US, 'soffit', 6.096, down=True)
+            if lod < 2:
+                for m in connector_columns(g):
+                    x, y, _ = B(m[0], m[1], 0)
+                    tube(sub, [(x, y, 0.0), (x, y, CONNECTOR_US + 0.05)], CONNECTOR_COL['r'], 12, 'concrete')
+        elif lod == 2:
             sub = extruded_block('c', g, H_CORE, [(0, H_CORE, 'alu_panel', None)], parapet=False)
         else:
             sub = extruded_block('c', g, H_CORE, [(0, L3 - 0.5, 'alu_panel', None), (L3 - 0.5, L3 + 3.5, 'glass_dark', None),
@@ -1069,7 +1294,12 @@ def build(lod):
                                       panel=dim(20 * FT, 'inf', '20-ft node grid offset 10 ft (columns, hangers on it)'),
                                       tube_radii=dim([R_BOT, R_TOP, R_WEB], 'inf', 'photos i3 / i4')))
         P['hall_outriggers'] = Part('hall_outriggers', hall_outriggers(lod), 'detail', 'inf', 'eave outriggers under the soffit',
-                                    ['roof.form'], dict(spacing=dim(20 * FT, 'inf', 'photo i3 (regular spacing)')))
+                                    ['roof.form'], dict(spacing=dim(20 * FT, 'inf', 'photo i3 (regular spacing)'),
+                                                        section=dim([OUTRIG_W, OUTRIG_D], 'inf', 'white brackets readable from i4 (review r2)')))
+        P['hall_brackets'] = Part('hall_brackets', hall_brackets(lod), 'detail', 'obs', 'wall-head brackets under the west truss',
+                                  ['facade.west'], dict(rhythm=dim(20 * FT, 'obs', 'photo i4: mid-panel of the 20-ft grid (low)'),
+                                                        size=dim([BRACKET['w'], BRACKET['h']], 'obs', 'photo i4 ~12 x 10 px (low)'),
+                                                        form=dim('inverted V + tie', 'inf', 'schematic')))
         P['hall_columns'] = Part('hall_columns', hall_columns(lod), 'detail', 'inf', '20 columns, west line branching into 5 members',
                                  ['roof.columns', 'roof.col_positions_inf', 'roof.rhythm_inf'],
                                  dict(count=dim(20, 'pub', 'SEAONC'), u=dim([57.9, 82.3], 'inf', '+-190 / +-270 ft (spec roof.col_positions_inf)'),
@@ -1086,8 +1316,17 @@ def build(lod):
     P['hall_canopy'] = Part('hall_canopy', hall_canopy(), 'shell', 'inf', 'curb (entrance) canopy',
                             ['facade.west'], dict(top=dim(CANOPY, 'inf', 'L3 + 5 (photos i3 / i4)'), depth=dim(CANOPY_D, 'inf', 'photos'),
                                                   exists=dim(True, 'pub', 'SEAONC "entrance canopy"')))
-    P['hall_curb'] = Part('hall_curb', hall_curb(), 'shell', 'inf', 'departures curb sidewalk (L3)', ['level3.floor'],
-                          dict(width=dim(CURB_W, 'inf', 'under the canopy + 2 m'), level=dim(L3, 'inf', 'level3.floor')))
+    P['hall_curb'] = Part('hall_curb', hall_curb(), 'shell', 'inf', 'departures curb sidewalk (L3) with a 0.15-m kerb', ['level3.floor'],
+                          dict(kerb_v=dim(KERB_V, 'obs', 'NAIP 2024: crosswalk warning strips v -29.8, lane-1 cars (review r2)'),
+                               width=dim(round(CURB_W, 2), 'inf', 'wall line [inf] to the kerb [obs]'),
+                               kerb=dim(KERB_H, 'inf', 'roadways_net.KERB_M (deck at L3 - 0.15)'),
+                               upstand=dim('none (review r2)', 'obs', 'photo i3: low kerb, cars at the curb'),
+                               level=dim(L3, 'inf', 'level3.floor')))
+    if lod == 0:
+        P['hall_bollards'] = Part('hall_bollards', hall_bollards(lod), 'detail', 'inf', 'kerb bollards + guards at the curb end returns',
+                                  ['level3.floor'], dict(bollard=dim([2 * BOLLARD['r'], BOLLARD['h']], 'obs', 'photo i3 (form)'),
+                                                         pitch=dim(BOLLARD['pitch'], 'inf', '10 ft, gaps at the NAIP crosswalks'),
+                                                         guard=dim(GUARD_H, 'inf', 'IBC 42 in, end returns only (open edge)')))
     P['hall_podium'] = Part('hall_podium', hall_podium(), 'shell', 'unk', 'levels 1-2 under the hall (faces only)', ['itb.levels'],
                             dict(levels=dim('L1 services, L2 arrivals', 'pub', 'sfgate2000'), facade=dim('concrete / glazing band', 'unk', 'not dimensioned')))
     P['hall_end_walls'] = Part('hall_end_walls', hall_end_walls(), 'shell', 'inf', 'end curtain walls (u = +-107.4)', ['facade.end_walls', 'hall.size_snippet'],
@@ -1111,7 +1350,14 @@ def build(lod):
                                       apex=dim(I.HANGER_H, 'obs', 'photo i4, rough'), form=dim('inclined pair + post', 'inf', 'schematic')))
     P['itb_core'] = Part('itb_core', core_block(lod), 'shell', 'unk', 'ITB core: east block and north / south bars',
                          ['itb.stories', 'itb.levels'], dict(outline=dim('SFO Museum International Terminal - piers - hall', 'obs', 'data/sfo_airport.json'),
-                                                           height=dim(H_CORE, 'unk', 'no source; = BA-A main roof [obs] as placeholder')))
+                                                           height=dim(H_CORE, 'unk', 'no source; = BA-A main roof [obs] as placeholder'),
+                                                           road_cut=dim('block cut back where OSM road footprints graze it (<= 5 m)', 'inf', 'review r2'),
+                                                           connector_underside=dim(CONNECTOR_US, 'inf', 'north bar over the roads: L3 - 1.0, >= 4.6 m [pub '
+                                                                                   'clearance] over the 5.9-m deck (review r2)')))
+    if lod < 2:
+        P['ba_roof_units'] = Part('ba_roof_units', roof_units(lod), 'detail', 'obs', 'rooftop units on the BA-A / BA-G roofs and bump-outs',
+                                  ['ba_g.facade'], dict(extents=dim('NAIP 2024 (tools/blender/itb_roofobs.json)', 'obs', '+-0.7 m'),
+                                                        heights=dim('1.2 / 1.8 / 2.4 m by plan size', 'inf', 'not measurable at 0.5 m/px')))
     for key in ('A', 'G'):
         Pk = PIERS[key]; k = key.lower()
         P['ba_%s_body' % k] = Part('ba_%s_body' % k, pier_body(key, lod), 'shell', 'obs', 'Boarding Area %s pier body' % key,

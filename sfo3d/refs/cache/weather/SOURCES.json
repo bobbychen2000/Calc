@@ -5,5 +5,12 @@
   "fetched": "2026-11-05",
   "sha256": "d8f154db86aa52aff4f53e63de4b61565dd9696a43ddcbebc7986c5f6bdccc21",
   "note": "10 KSFO TAFs issued 2026-09-23 (AWC keeps 30 days only, environment_spec.md 3.4); the one in force at the snapshot time 17:51Z is KSFO 231727Z 2318/2424 -> data/sfo_env_presets.js SNAPSHOT_TAF (tools/env/build_env_presets_js.py)"
+ },
+ "iem_ksfo_20260922T18_20260923T18_metar.csv": {
+  "url": "https://mesonet.agron.iastate.edu/cgi-bin/request/asos.py?station=SFO&data=metar&year1=2026&month1=9&day1=22&hour1=18&minute1=0&year2=2026&month2=9&day2=23&hour2=18&minute2=0&tz=Etc/UTC&format=onlycomma&latlon=no&missing=M&trace=T&direct=no&report_type=3&report_type=4",
+  "licence": "NWS/FAA ASOS observations (METAR/SPECI): U.S. Government work, public domain (https://www.weather.gov/disclaimer); archive by the Iowa Environmental Mesonet, attribution appreciated (https://mesonet.agron.iastate.edu/disclaimer.php)",
+  "fetched": "2026-11-05",
+  "sha256": "e52bb9859b7a2987fa11a79b5474ba2b4bb38cf138abe757c30094f3b1512f77",
+  "note": "31 KSFO METAR/SPECI 2026-09-22 18:35Z .. 2026-09-23 17:56Z; the reports observed at or before the snapshot time (17:51:25Z) ship as SNAPSHOT_METARS in data/sfo_env_presets.js (tools/env/build_env_presets_js.py): light mode Dawn / ?t= before 15:56Z had no report (environment review truth2-7)"
  }
 }

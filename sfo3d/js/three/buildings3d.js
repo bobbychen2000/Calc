@@ -39,7 +39,7 @@
 // GLOW_CAP lamp units (x nightE: exposed ~0.9 at the keyed night exposure, below the grade's shoulder). Masked to the
 // panes where the glass has a base-colour tile (mullions / frit stay dark). Kinds by material name / extras (the assets'
 // own tags): hall (terminal glazing), office (hotel, CAC, station-block window bands, the tower's base building and shaft
-// slots), station (AirTrain station glass), roofglass (skylights, glazed roof lines, the T1 glass canopy: lit from below,
+// slot panes: slot_glass; the tower's perforated slot screens stay dark, photo t5), station (AirTrain station glass), roofglass (skylights, glazed roof lines, the T1 glass canopy: lit from below,
 // weaker), cab (tower cab: dim, controllers keep it dark), led (tower ribbon, extras.led: the LED waterfall as objects.js
 // id 16), beacon (red obstruction light, extras.obstruction_light: a lamp, not capped), soffit (garage slab undersides,
 // canopy and station ceilings). GLOW values are uniforms (Buildings3D.glow / setGlow) so the environment work can retune
@@ -204,6 +204,7 @@ export class Buildings3D {
       o.material = m; o.userData.b3dRoot = root;
       const transp = m.transparent || m.blending !== THREE.NormalBlending && m.blending !== THREE.NoBlending;
       o.castShadow = !transp && !(o.isInstancedMesh && R.tier === 'low'); o.receiveShadow = true;
+      if (m.userData.ambient_only) o.receiveShadow = false; // sky light only (_material): no sun, so no shadow lookup
       if (/^cab_glass/.test(m0.name || '')) this.cabGlass.push(o);
     });
     // the original AO images (repacked as R8) are released unless another slot samples them
@@ -229,6 +230,11 @@ export class Buildings3D {
       let c = this._tex.get(key); if (!c) { c = t; c.anisotropy = Math.max(c.anisotropy || 1, Q.aniso || 4); this._tex.set(key, c); }
       m[k] = c;
     }
+    // interior placeholders behind glass (material extras.ambient_only; the tower cab floor / consoles / shade band / ceiling,
+    // tower review round 2, finding 3): sky light (IBL x AO) only. The alpha-blended glass casts no shadow, so the sun
+    // reached the whole floor through the glass ring and the floor sat in the PCF penumbra (low tier: a per-pixel checker;
+    // tools/blender/tower_app_job.mjs experiment: GTAO off unchanged, receiveShadow off removes it)
+    if (m.userData.ambient_only) m.lightsNode = TSL.lights([]);
     const kind = glowKind(m0); m.userData.b3dGlow = kind;
     if (kind) {
       const G = this.glow[kind], R = this.R; const night = R.nightE || uniform(0);

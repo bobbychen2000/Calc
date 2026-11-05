@@ -38,6 +38,7 @@ Run:  python3 tools/env/build_lighting_spec.py
 import csv, io, json, math, os, sys, zipfile, datetime
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+HERE_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(ROOT, 'tools'))
 import geo_frame as GF  # noqa: E402
 
@@ -314,6 +315,50 @@ def xz(p):
     return [rd(p[0]), rd(p[1])]
 
 
+# ---- in-pavement test (environment review finding truth2-8): edge / threshold / end / wing-bar lights that stand on
+# full-strength paved surface are the in-pavement (semiflush) types the data already names - L-850C edge "where on other runway/taxiway
+# pavement", L-850D threshold/end "in pavement" - drawn at IN_PAVEMENT_H above the pavement with that photometry, not as
+# elevated L-862 / L-862E at ELEVATED_H. Paved = another runway's 200-ft rectangle (NASR ends x RWY_WIDTH), the SFO Museum
+# taxiway polygons (data/sfo_airport.json) and the runway end zones of the
+# app (blast pads; the EMAS setback over the runway width: tools/env/end_zones.json from js/live/airport.js END_ZONES).
+# The own runway is not "other pavement" for its edge lights (10 ft outside it by construction; shoulders are not
+# full-strength pavement: elevated lights stand there, ac30j 2.3.1.2.1 [std]).
+ELEVATED_H = 0.36          # m: L-862 / L-862E height used so far (<= 14 in, ac30j; inf)
+IN_PAVEMENT_H = 0.0127     # m: 1/2 in = the Style 1 / Style 2 boundary of AC 150/5345-46F 1.2.4 ("total height above
+                           # finished grade": Style 1 1/2-1 in, only L-850 C/D/E; Style 2 1/4-1/2 in); SFO's style NV -> I
+
+
+def _in_ring(pt, ring):
+    x, z = pt; ins = False; n = len(ring)
+    for i in range(n):
+        x1, z1 = ring[i]; x2, z2 = ring[(i + 1) % n]
+        if (z1 > z) != (z2 > z) and x < (x2 - x1) * (z - z1) / (z2 - z1) + x1:
+            ins = not ins
+    return ins
+
+
+def load_paved():
+    """[(name, outer ring, [holes])] of the non-runway pavement (taxiways, aprons, end zones), world [x, z]."""
+    out = []
+    try:
+        A = json.load(open(os.path.join(ROOT, 'data', 'sfo_airport.json')))
+        for f_ in A.get('taxiways', []):
+            for poly in f_['polys']:
+                out.append(('taxiway ' + f_.get('name', ''), poly[0], poly[1:]))
+    except OSError:
+        pass
+    # data/sfo_pavement.json is NOT used: its NAIP grey-pixel classes include runway shoulders ("cargo/maintenance aprons,
+    # service roads, shoulders", its note), where edge / threshold lights stand elevated (first run: 232 of 392 edge
+    # lights fell in it)
+    try:
+        Z = json.load(open(os.path.join(HERE_DIR, 'end_zones.json')))
+        for z in Z['zones']:
+            out.append((z['type'] + ' ' + z['end'], z['poly'], []))
+    except OSError:
+        pass
+    return out
+
+
 # ============================================================================================== build
 def build():
     ends, rwys, base = load_nasr()
@@ -321,6 +366,35 @@ def build():
     FR = {}
     for a, b in pairs:
         FR[a] = Frame(ends, a, b); FR[b] = Frame(ends, b, a)
+    PAVED = load_paved()
+    RUNWAY_ID = {e: a + '/' + b for a, b in pairs for e in (a, b)}
+    RW_RECT = {}
+    for a, b in pairs:
+        hw = float(rwys[a + '/' + b]['RWY_WIDTH']) / 2 * FT
+        RW_RECT[a + '/' + b] = [FR[a].at(0, hw), FR[a].at(FR[a].L, hw), FR[a].at(FR[a].L, -hw), FR[a].at(0, -hw)]
+    inpav_stats = {}
+
+    def paved_at(pt, own_rwy, own_counts=False):
+        """name of the pavement under pt (x, z) or None; own_rwy's rectangle counts only when own_counts."""
+        for rid, rect in RW_RECT.items():
+            if (rid != own_rwy or own_counts) and _in_ring(pt, rect):
+                return 'runway ' + rid
+        for name, outer, holes in PAVED:
+            if _in_ring(pt, outer) and not any(_in_ring(pt, h_) for h_ in holes):
+                return name
+        return None
+
+    def classify(pts, own_rwy, own_counts, system):
+        """set h (pts[i][2]) to IN_PAVEMENT_H for points on pavement; returns the in-pavement flags (or None)."""
+        flags = []
+        for q in pts:
+            w = paved_at((q[0], q[1]), own_rwy, own_counts)
+            flags.append(1 if w else 0)
+            q[2] = IN_PAVEMENT_H if w else ELEVATED_H
+            if w:
+                inpav_stats.setdefault(system, {}).setdefault(w.split(' ')[0] if not w.startswith('runway') else 'runway', 0)
+                inpav_stats[system][w.split(' ')[0] if not w.startswith('runway') else 'runway'] += 1
+        return flags if any(flags) else None
 
     spec = dict(schema='sfo3d.airfield_lighting.v1', generated=datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%MZ'),
                 generator='tools/env/build_lighting_spec.py', report='docs/research/airfield_lighting.md',
@@ -378,8 +452,10 @@ def build():
             for side in (1, -1):
                 p = Fa.at(s_ft * FT, side * edge_lat * FT)
                 pts.append(xz(p) + [0.36] + cols)
+        fl = classify(pts, a + '/' + b, False, 'runway_edge')
         group('runway_edge', a + '/' + b, 'L-862 (L-850C where on other runway/taxiway pavement)', 'std+inf',
               {'face0': dict(seen_by=a, emit_dir=[rd(-Fa.u[0], 4), rd(-Fa.u[1], 4)]), 'face1': dict(seen_by=b, emit_dir=[rd(Fa.u[0], 4), rd(Fa.u[1], 4)])}, pts,
+              **(dict(inpav=fl, inpav_type='L-850C') if fl else {}),
               note='point = [x, z, h, colour seen by face0 traffic, colour seen by face1 traffic]; red = before that direction\'s displaced threshold, yellow = caution zone min(2000 ft, L/2) for instrument ends (ac30j 2.3.1.1.2, 2.3.2.1.2, Fig A-7/A-9)')
         # ---- runway centreline lights L-850A, 50 ft, first/last light 50-87.5 ft from the pavement end, centred
         n = round((L_ft - 150) / 50.0)
@@ -436,14 +512,20 @@ def build():
             # ---- threshold / end lights
             if disp_ft == 0:
                 pts = [xz(F.at(-5 * FT, s * lat * FT)) + [0.36] for s in (1, -1) for lat in (80, 90, 100, 110)]
+                fl = classify(pts, RUNWAY_ID[E], False, 'threshold_end')
                 group('threshold_end', E, 'L-862E (or L-850D in pavement)', 'std+inf', {'green': dict(seen_by=E, emit_dir=u_back), 'red': dict(seen_by=O, emit_dir=u_fwd)}, pts,
+                      **(dict(inpav=fl, inpav_type='L-850D') if fl else {}),
                       note='2 groups of 4 on 10-ft centres, outermost in line with the edge lights (ac30j 2.3.2.2.1 item 6, Fig A-3); 2-10 ft before the threshold (5 ft used, inf); split green (outward) / red (toward runway)')
             else:
                 pts = [xz(F.at(-5 * FT, s * lat * FT)) + [0.36] for s in (1, -1) for lat in (80, 90, 100, 110)]
+                fl = classify(pts, RUNWAY_ID[E], False, 'runway_end')
                 group('runway_end', E, 'L-862E/L-850D red', 'std+inf', {'red': dict(seen_by=O, emit_dir=u_fwd)}, pts,
+                      **(dict(inpav=fl, inpav_type='L-850D') if fl else {}),
                       note='pavement end of a displaced-threshold runway: red toward the runway only (ac30j Fig A-5/A-9)')
                 pts = [xz(F.at(0, s * lat * FT, True)) + [0.36] for s in (1, -1) for lat in (110, 120, 130, 140)]
+                fl = classify(pts, RUNWAY_ID[E], False, 'threshold_wingbar')
                 group('threshold_wingbar', E, 'L-862E green unidirectional', 'std+inf', {'green': dict(seen_by=E, emit_dir=u_back)}, pts,
+                      **(dict(inpav=fl, inpav_type='L-850D') if fl else {}),
                       note='displaced threshold: innermost in line with the edge lights, the rest outward on 10-ft centres, aligned with the approach-side edge of the threshold marking (ac30j 2.3.2.2.2, Fig A-5 note 6)')
             # ---- TDZ
             if e['tdz']:
@@ -784,6 +866,12 @@ def main():
     spec['fixture_counts'] = {}
     for g in groups:
         spec['fixture_counts'][g['system']] = spec['fixture_counts'].get(g['system'], 0) + g['n']
+    ip = {}
+    for g in groups:
+        if g.get('inpav'):
+            ip[g['system']] = ip.get(g['system'], 0) + sum(g['inpav'])
+    spec['in_pavement'] = dict(counts=ip, h_m=IN_PAVEMENT_H, elevated_h_m=ELEVATED_H, prov='std (ac30j / ac46f types) + inf (pavement polygons, style)',
+                               rule='edge / threshold / end / wing-bar points on another runway, a taxiway, an apron or a runway end zone (blast pad, EMAS setback) are in-pavement (L-850C edge, L-850D threshold/end) at 1/2 in (AC 150/5345-46F 1.2.4 style boundary); per-point flags in the group field inpav (environment review truth2-8)')
     json.dump(spec, open(OUT_SPEC, 'w'), indent=1)
     fx = dict(schema='sfo3d.airfield_lighting_fixtures.v1', generated=spec['generated'], frame=spec['frame'], spec='tools/env/lighting_spec.json',
               colour_codes={k: v for k, v in COL.items()} | {'-': 'none/blanked'}, groups=groups)
@@ -800,6 +888,7 @@ def main():
         fh.write('export const LIGHTING_FIXTURES = ' + json.dumps(fx, separators=(',', ':')) + ';\n')
     print('wrote', OUT_SPEC, os.path.getsize(OUT_SPEC), 'bytes;', OUT_FIX, os.path.getsize(OUT_FIX), 'bytes;', OUT_JS, os.path.getsize(OUT_JS), 'bytes')
     print('fixture counts', spec['fixture_counts'], 'total', sum(spec['fixture_counts'].values()))
+    print('in-pavement points', spec['in_pavement']['counts'])
 
 
 if __name__ == '__main__':

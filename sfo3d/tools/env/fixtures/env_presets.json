@@ -346,8 +346,8 @@
      "mode": "MALSR",
      "step": 1,
      "pct": 4,
-     "SFL": false,
-     "SFL_pct": 0,
+     "SFL": true,
+     "SFL_pct": 2.3,
      "note": "TBL 3-4-7 (separate MALSR controls); TBL 3-4-9 if slaved to the HIRL - SFO wiring NV"
     },
     "PAPI (all 6)": {
@@ -561,8 +561,8 @@
      "mode": "MALSR",
      "step": 1,
      "pct": 4,
-     "SFL": false,
-     "SFL_pct": 0,
+     "SFL": true,
+     "SFL_pct": 2.3,
      "note": "TBL 3-4-7 (separate MALSR controls); TBL 3-4-9 if slaved to the HIRL - SFO wiring NV"
     },
     "PAPI (all 6)": {
@@ -667,8 +667,8 @@
      "mode": "MALSR",
      "step": 1,
      "pct": 4,
-     "SFL": false,
-     "SFL_pct": 0,
+     "SFL": true,
+     "SFL_pct": 2.3,
      "note": "TBL 3-4-7 (separate MALSR controls); TBL 3-4-9 if slaved to the HIRL - SFO wiring NV"
     },
     "PAPI (all 6)": {
@@ -894,8 +894,8 @@
      "mode": "MALSR",
      "step": 2,
      "pct": 20,
-     "SFL": false,
-     "SFL_pct": 0,
+     "SFL": true,
+     "SFL_pct": 10,
      "note": "TBL 3-4-7 (separate MALSR controls); TBL 3-4-9 if slaved to the HIRL - SFO wiring NV"
     },
     "PAPI (all 6)": {
@@ -1013,8 +1013,8 @@
      "mode": "MALSR",
      "step": 1,
      "pct": 4,
-     "SFL": false,
-     "SFL_pct": 0,
+     "SFL": true,
+     "SFL_pct": 2.3,
      "note": "TBL 3-4-7 (separate MALSR controls); TBL 3-4-9 if slaved to the HIRL - SFO wiring NV"
     },
     "PAPI (all 6)": {
@@ -1897,8 +1897,8 @@
      "mode": "MALSR",
      "step": 1,
      "pct": 4,
-     "SFL": false,
-     "SFL_pct": 0,
+     "SFL": true,
+     "SFL_pct": 2.3,
      "note": "TBL 3-4-7 (separate MALSR controls); TBL 3-4-9 if slaved to the HIRL - SFO wiring NV"
     },
     "REIL 1L": {

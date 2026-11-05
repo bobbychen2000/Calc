@@ -1,7 +1,8 @@
 // Sky, sun, image-based lighting, fog and clouds for the three.js renderer.
 // Ported from the current renderer (same physics, same constants):
 //   - single-scattering Rayleigh + Mie sky precompute: js/shaders/common.js SKY_PRECOMPUTE_FS (Re 6360 km, Ra 6420 km,
-//     bR (5.8, 13.5, 33.1)e-6, Hr 7994 m, Hm 1200 m, ozone bO x1.8, g 0.76, 32 view / 8 light steps)
+//     bR (5.8, 13.5, 33.1)e-6, Hr 7994 m, Hm 1200 m, g 0.76, 32 view / 8 light steps); ozone as its own 10-40 km tent
+//     layer since review round 2 (look2-11; was bO x1.8 on the Rayleigh profile)
 //   - sun colour from the transmittance and the ambient terms from a CPU evaluation of the same model
 //     (js/env/atmo/sky_model.js skyAmbientCPU / modelLight)
 //   - sky dome with sun disk and cirrus: js/shaders/env.js SKY_FS
@@ -33,7 +34,27 @@ const PI = Math.PI;
 
 // ---------------------------------------------------------------- atmosphere constants (SKY_PRECOMPUTE_FS)
 const Re = 6360e3, Ra = 6420e3, Hr = 7994.0, Hm = 1200.0;
-const bR = vec3(5.8e-6, 13.5e-6, 33.1e-6), bO = vec3(0.65e-6, 1.881e-6, 0.085e-6).mul(1.8);
+const bR = vec3(5.8e-6, 13.5e-6, 33.1e-6);
+// ozone (review look2-11): its own tent-shaped layer, density 1 at OZ_H, 0 at OZ_H ± OZ_W (10-40 km), absorption
+// (0.650, 1.881, 0.085)e-6 m⁻¹ (Bruneton 2017 "Precomputed Atmospheric Scattering: a New Implementation", constants of
+// its demo, 2nd); the column (15 km x bO) equals the former Rayleigh-profile ozone (x1.8 x Hr 7,994 m = 14.4 km), but
+// the absorption now happens where the twilight zenith light travels (20-30 km): Chappuis-band blue at civil dusk.
+// JS mirror: js/env/atmo/sky_model.js (same constants)
+const bO = vec3(0.65e-6, 1.881e-6, 0.085e-6), OZ_H = 25000.0, OZ_W = 15000.0;
+const ozone = (h) => max(float(1.0).sub(abs(h.sub(OZ_H)).div(OZ_W)), 0.0);
+// twilight haze (review look2-2): below the horizon the low air is in the Earth's shadow (shadow height over the observer
+// ≈ R δ² / 2: 2.2 km at δ = 1.5°), lit by the sky only: the clear-air in-scatter blends from the blurred sky near the
+// view azimuth (sunlit haze) to the ambient term between Sun +0.5° and −1.5° (geometric, refraction ~0.5°; I on M)
+export const TWI_EL0 = 0.5, TWI_EL1 = -1.5;
+// CIE standard overcast sky (CIE S 011/E:2003 type 1 = Moon & Spencer 1942): L(γ) ∝ (1 + 2 sin γ) / 3; normalised so
+// that its cosine-weighted mean over the hemisphere is 1: 3 (1 + 2 sin γ) / 7 (V law, the normalisation M) - the base
+// of a closed low deck has the sky-up radiance on average (it IS the sky that lights the ground; review look2-8: the
+// base was ~0.45 x that, uniform and brighter towards the horizon than overhead); radiance mottling ±DECK_MOTTLE (I)
+const DECK_MOTTLE = 0.12;
+// fog-top glow over the floodlit aprons (review look2-6): radiance emerging from the top of the lowest slab = E_flood
+// (at the ground under the entry point) x FOG_TOP_K x (1 − e^−τ_slab) / π (multiple scattering + ground bounce through the
+// layer, lumped; FOG_TOP_K 0.3 I / NV, reviewer's estimate "20 lx x ~0.3 / π")
+const FOG_TOP_K = 0.3;
 // background path length cap inside a slab the camera is in, for near-horizontal rays (m; beyond it the sky model's
 // own aerial perspective holds, I)
 const BG_MAX = 50000.0;
@@ -50,8 +71,10 @@ export const dirToEquirect = (d) => vec2(atan(d.x, d.z.negate()).div(2 * PI).add
 const equirectToDir = (u) => { const phi = u.x.sub(0.5).mul(2 * PI), th = u.y.mul(PI); return vec3(sin(th).mul(sin(phi)), cos(th), sin(th).mul(cos(phi)).negate()); };
 
 export class Sky {
-  constructor(engine, { cloudTex, noiseTex, baseRes = 1024, horizSamples = HORIZ_SAMPLES, maxSlabs = MAX_SLABS, maxLayers = MAX_CLOUD_LAYERS }) {
+  constructor(engine, { cloudTex, noiseTex, baseRes = 1024, horizSamples = HORIZ_SAMPLES, maxSlabs = MAX_SLABS, maxLayers = MAX_CLOUD_LAYERS, floodSamples = 6, floodSamplesBg = 8 }) {
     this.E = engine; this.cloudTex = cloudTex; this.noiseTex = noiseTex; this.horizN = horizSamples;
+    // flood in-scatter samples per fogged fragment / background pixel (review look2-10: tiered; phone 3 / 4)
+    this.floodN = floodSamples; this.floodNbg = floodSamplesBg;
     // shader loop counts (review look1-12: the environment's GPU cost was the same on every tier): the phone tier
     // compiles 4 slabs / 4 cloud layers (the lowest ones: setSlabs / setLayers keep them), the others 6
     this.nS = Math.min(MAX_SLABS, maxSlabs); this.nL = Math.min(MAX_CLOUD_LAYERS, maxLayers);
@@ -78,6 +101,7 @@ export class Sky {
       // (0 = off), floodI = the floods' intensity (renderer3: on x LAMP_M x pre, as js/three/flood.js FloodLight),
       // floodRect = the field's box (x0, z0, width, depth)
       floodFog: uniform(0), floodI: uniform(0), floodRect: uniform(new THREE.Vector4(0, 0, 1, 1)),
+      twi: uniform(0),        // 0 by day .. 1 with the low air in the Earth's shadow (TWI_EL0 .. TWI_EL1, look2-2)
     };
     const W = baseRes, H = baseRes / 2;
     const rtOpts = { type: THREE.HalfFloatType, depthBuffer: false, generateMipmaps: false, minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, wrapS: THREE.RepeatWrapping, wrapT: THREE.ClampToEdgeWrapping };
@@ -101,6 +125,29 @@ export class Sky {
     const q = xz.sub(B.zw.mul(U.time)).div(A.w).add(B.xy);
     const n = texture(this.cloudTex, q).r.add(texture(this.cloudTex, q.mul(7.3).add(vec2(0.43, 0.71))).r.sub(0.5).mul(CLOUD_DETAIL));
     return smoothstep(A.y.sub(CLOUD_RAMP), A.y.add(CLOUD_RAMP), n).mul(A.z);
+  }
+  // raw noise value of layer k (the input of the density threshold; mottles the base of a closed deck)
+  layerNoise(k, xz) {
+    const U = this.u; const A = U.layA[k], B = U.layB[k];
+    const q = xz.sub(B.zw.mul(U.time)).div(A.w).add(B.xy);
+    return texture(this.cloudTex, q).r.add(texture(this.cloudTex, q.mul(7.3).add(vec2(0.43, 0.71))).r.sub(0.5).mul(CLOUD_DETAIL));
+  }
+  // radiance of the BASE of low layer k (a plane layer) at xz, seen at elevation sin γ = sy (≥ 0) from below, and its
+  // density: the closed part follows the CIE overcast law at the sky-up mean (header), mottled; the broken part keeps the
+  // round-1 shading (sky + ground bounce + the sun through the gaps). Used by the plane material, the water's reflected
+  // sky and the IBL (one look for the deck everywhere; look2-3 / look2-8)
+  slabBase(k, xz, sy) {
+    const U = this.u; const C = U.layC[k];
+    const d = this.layerDensity(k, xz).toVar();
+    const n = this.layerNoise(k, xz);
+    const od = float(1.0).sub(d);
+    const gL = dot(U.ground, vec3(0.2126, 0.7152, 0.0722));
+    const broken = U.skyUp.mul(0.5).add(vec3(gL).mul(0.3)).add(U.sunColor.mul(C.x).mul(od.mul(od).mul(0.14).add(od.mul(0.035))).mul(0.8)).mul(mix(float(1.0), float(0.82), d));
+    const cie = max(sy, 0.0).mul(2.0).add(1.0).mul(3.0 / 7.0);
+    const mot = clamp(n.sub(0.5).mul(4.0), -1.0, 1.0).mul(DECK_MOTTLE).add(1.0);
+    const closed = U.skyUp.mul(cie).mul(mot);
+    const w = smoothstep(0.6, 1.0, d);
+    return { col: mix(broken, closed, w), d };
   }
   // transmittance of the directional light (Sun / Moon / flash) through every layer above wp (product of 1 - d)
   cloudShadow(wp) {
@@ -129,26 +176,26 @@ export class Sky {
       const bM = vec3(U.mie);
       const N = 32; const seg = tmax.div(N).toVar(); const t = float(0).toVar();
       const sumR = vec3(0).toVar(), sumM = vec3(0).toVar(), msR = vec3(0).toVar(), msM = vec3(0).toVar();
-      const odR = float(0).toVar(), odM = float(0).toVar();
+      const odR = float(0).toVar(), odM = float(0).toVar(), odO = float(0).toVar();
       const mu = dot(rdd, U.sunDir).toVar(); const g = 0.76;
       const pR = float(3.0 / (16.0 * PI)).mul(mu.mul(mu).add(1.0));
       const pM = float(3.0 / (8.0 * PI)).mul(float((1 - g * g)).mul(mu.mul(mu).add(1.0))).div(float(2.0 + g * g).mul(pow(float(1 + g * g).sub(mu.mul(2 * g)), 1.5)));
       Loop(N, () => {
         const p = ro.add(rdd.mul(t.add(seg.mul(0.5)))).toVar(); const h = length(p).sub(Re);
         const hr = exp(h.negate().div(Hr)).mul(seg), hm = exp(h.negate().div(Hm)).mul(seg);
-        odR.addAssign(hr); odM.addAssign(hm);
+        odR.addAssign(hr); odM.addAssign(hm); odO.addAssign(ozone(h).mul(seg));
         const tl = raySphere(p, U.sunDir, float(Ra)); const sl = tl.y.div(8.0).toVar();
-        const odlR = float(0).toVar(), odlM = float(0).toVar(); const ok = float(1).toVar();
+        const odlR = float(0).toVar(), odlM = float(0).toVar(), odlO = float(0).toVar(); const ok = float(1).toVar();
         Loop(8, ({ i }) => {
           const q = p.add(U.sunDir.mul(sl.mul(float(i).add(0.5)))); const hq = length(q).sub(Re).toVar();
           If(hq.lessThan(0.0), () => { ok.assign(0.0); Break(); });
-          odlR.addAssign(exp(hq.negate().div(Hr)).mul(sl)); odlM.addAssign(exp(hq.negate().div(Hm)).mul(sl));
+          odlR.addAssign(exp(hq.negate().div(Hr)).mul(sl)); odlM.addAssign(exp(hq.negate().div(Hm)).mul(sl)); odlO.addAssign(ozone(hq).mul(sl));
         });
         If(ok.greaterThan(0.5), () => {
-          const tau = bR.add(bO).mul(odR.add(odlR)).add(bM.mul(1.1).mul(odM.add(odlM)));
+          const tau = bR.mul(odR.add(odlR)).add(bO.mul(odO.add(odlO))).add(bM.mul(1.1).mul(odM.add(odlM)));
           const att = exp(tau.negate()); sumR.addAssign(att.mul(hr)); sumM.addAssign(att.mul(hm));
         });
-        const tv = exp(bR.add(bO).mul(odR).add(bM.mul(1.1).mul(odM)).negate()); msR.addAssign(tv.mul(hr)); msM.addAssign(tv.mul(hm));
+        const tv = exp(bR.mul(odR).add(bO.mul(odO)).add(bM.mul(1.1).mul(odM)).negate()); msR.addAssign(tv.mul(hr)); msM.addAssign(tv.mul(hm));
         t.addAssign(seg);
       });
       const col = sumR.mul(bR).mul(pR).add(sumM.mul(bM).mul(pM)).mul(U.sunI).toVar();
@@ -311,6 +358,13 @@ export class Sky {
           }
           out.assign(vec3(...FLOOD_COLOR).mul(U.floodI).mul(sum.mul(span.mul(len)).div(N)).mul(sig).div(4 * PI));
         });
+        // fog-top glow (look2-6): the camera above the lowest slab, the ray entering its top before it ends
+        If(sIn.greaterThan(0.0).and(sIn.lessThan(0.999)), () => {
+          const pe = a.add(dir.mul(len.mul(sIn)));
+          const Eg = this.floodField(vec3(pe.x, float(GROUND_Y + 2.0), pe.z));
+          const tauS = sig.mul(max(y1.sub(GROUND_Y), 0.0));
+          out.addAssign(vec3(...FLOOD_COLOR).mul(U.floodI).mul(Eg).mul(FOG_TOP_K).mul(float(1.0).sub(exp(tauS.negate()))).mul(exp(tauAbove.negate())).div(PI));
+        });
       });
       return out;
     })();
@@ -343,7 +397,7 @@ export class Sky {
   fogInscatter(rd) {
     const U = this.u;
     const hd = normalize(vec3(rd.x, max(rd.y, 0.0).mul(0.5).add(0.035), rd.z));
-    const clearIn = this.skyEnvBlur(hd);
+    const clearIn = mix(this.skyEnvBlur(hd), U.fogCol, U.twi);   // twilight: the low air in the Earth's shadow (look2-2)
     const mu = dot(rd, U.sunDir); const g = 0.75;
     const hg = float(1 - g * g).div(pow(float(1 + g * g).sub(mu.mul(2 * g)), 1.5)).div(4 * PI);
     return mix(clearIn, U.fogCol, U.fogDense).add(U.sunColor.mul(hg).mul(U.sunGlow).mul(0.08)).add(U.flashCol.mul(U.flash.w).mul(0.3));
@@ -359,7 +413,7 @@ export class Sky {
       // sun disc above the horizon only (below it the terrain / bay hides it; the ground of the sky dome is no surface)
       If(mu.greaterThan(sunR).and(rd.y.greaterThan(-0.002)), () => { const r = sqrt(max(0.0, float(1.0).sub(float(1.0).sub(mu).div(1.0 - sunR)))); col.addAssign(U.sunColor.mul(900.0).mul(r.mul(0.6).add(0.4)).mul(this.cloudShadowSky(cameraPosition, rd))); });
       const T = this.bgTransmittance(cameraPosition, rd);
-      return mix(this.fogInscatter(rd), col, T).add(this.floodScatter(cameraPosition, rd, float(3000.0), 8));
+      return mix(this.fogInscatter(rd), col, T).add(this.floodScatter(cameraPosition, rd, float(3000.0), this.floodNbg));
     })();
   }
   // transmittance of the sky-shader layers along rd (for the sun disc: a cloud in front of it hides it)
@@ -380,7 +434,7 @@ export class Sky {
   // layers, the night floor (EnvState natural + artificial luminance, a little stronger and warmer towards the horizon,
   // where the Bay Area's light pollution sits: inferred) and, below the horizon, the horizon colour fading to the
   // ground. Used for the background (ro = camera) and for the water's reflections (ro = the water point).
-  skyAlong(ro, rdIn) {
+  skyAlong(ro, rdIn, withSlabs = false) {
     const U = this.u;
     return Fn(() => {
       const rd = normalize(rdIn).toVar();
@@ -396,6 +450,20 @@ export class Sky {
       col.assign(max(col, U.skyFloor.mul(mix(vec3(1.0), vec3(5.0, 4.2, 3.2), hz))));
       col.addAssign(this.moonDisc(rd));
       col.assign(this.cloudLayers(ro, ru, col));
+      if (withSlabs) {
+        // the low (plane) layers seen from below along rd and the fog slabs on the way (review look2-3: the bay mirrored
+        // the clear sunlit sky under the OVC005 marine deck; the planes are drawn as geometry, so the background leaves
+        // them out, but a reflection must include them)
+        for (let k = this.nL - 1; k >= 0; k--) {
+          const A = U.layA[k], C = U.layC[k];
+          If(U.nLayers.greaterThan(k + 0.5).and(C.y.lessThan(0.5)).and(ru.y.greaterThan(0.002)).and(ro.y.lessThan(A.x)), () => {
+            const t = A.x.sub(ro.y).div(ru.y); const p = ro.xz.add(ru.xz.mul(t));
+            const B = this.slabBase(k, p, ru.y);
+            col.assign(mix(col, B.col, B.d.mul(float(1.0).sub(smoothstep(20000.0, 38000.0, t.mul(length(ru.xz)))))));
+          });
+        }
+        col.assign(mix(this.fogInscatter(ru), col, this.bgTransmittance(ro, ru)));
+      }
       If(rd.y.lessThan(0.0), () => { col.assign(mix(col, U.ground.mul(0.9), smoothstep(0.0, -0.35, rd.y))); });
       return col;
     })();
@@ -415,7 +483,9 @@ export class Sky {
           If(U.nLayers.greaterThan(k + 0.5).and(U.refPos.y.lessThan(A.x)), () => {
             const t = A.x.sub(U.refPos.y).div(max(rd.y, 0.01)).toVar(); const p = U.refPos.xz.add(rd.xz.mul(t));
             const dd = this.layerDensity(k, p); const d2 = this.layerDensity(k, p.add(U.sunDir.xz.div(max(U.sunDir.y, 0.2)).mul(180.0)));
-            const lit = U.sunColor.mul(C.x).mul(exp(d2.mul(-2.2)).mul(0.55).add(0.08)).mul(hg.mul(1.8).add(0.6)).mul(0.45).add(U.skyUp.mul(0.55)).add(U.skyHorizon.mul(0.15));
+            const litSky = U.sunColor.mul(C.x).mul(exp(d2.mul(-2.2)).mul(0.55).add(0.08)).mul(hg.mul(1.8).add(0.6)).mul(0.45).add(U.skyUp.mul(0.55)).add(U.skyHorizon.mul(0.15));
+            // plane layers (< 5,000 ft): the same base radiance as their planes (slabBase: CIE overcast, look2-8)
+            const lit = select(C.y.greaterThan(0.5), litSky, this.slabBase(k, p, rd.y).col);
             const a = smoothstep(0.0, 0.6, dd).mul(float(1.0).sub(smoothstep(18000.0, 60000.0, t)));
             col.assign(mix(col, mix(col, lit, exp(t.mul(-0.00004))), a));
           });
@@ -445,13 +515,13 @@ export class Sky {
       const col = vec3(0).toVar(); const vis = float(0).toVar();
       if (!top) {
         If(cameraPosition.y.lessThan(H), () => {
+          // (review look1-11: a marine-stratus base looked warm: the direct-sun term fades out where the deck is closed and
+          // the ground bounce is its luminance; review look2-8: the closed part follows the CIE overcast law at the sky-up
+          // mean, mottled - slabBase)
+          const B = this.slabBase(k, wp.xz, V.y.negate());
           const od = float(1.0).sub(d);
-          // (review look1-11: a marine-stratus base looked warm: the direct-sun term now fades out where the deck is
-          // closed (x od: the base of a thick deck sees only multiply scattered, neutral light) and the ground bounce is
-          // its luminance (the concrete's warm tint does not survive the diffuse bounce into the base, I))
-          const gL = dot(U.ground, vec3(0.2126, 0.7152, 0.0722));
-          col.assign(U.skyUp.mul(0.5).add(vec3(gL).mul(0.3)).add(U.sunColor.mul(C.x).mul(od.mul(od).mul(0.14).add(od.mul(0.035))).mul(hg.mul(6.0).add(0.5))));
-          col.mulAssign(mix(float(1.0), float(0.82), d)); vis.assign(1.0);
+          col.assign(B.col.add(U.sunColor.mul(C.x).mul(od.mul(od).mul(0.14).add(od.mul(0.035))).mul(hg.mul(6.0).add(0.5).sub(0.8)).mul(mix(float(1.0), float(0.82), d)).mul(float(1.0).sub(smoothstep(0.6, 1.0, d)))));
+          vis.assign(1.0);
         });
       } else {
         If(cameraPosition.y.greaterThan(H), () => {
@@ -490,7 +560,7 @@ export class Sky {
     // fog blend multiplies the colour by the factor 1 − T, so the colour carries L_f / (1 − T))
     const color = Fn(() => {
       const dv = positionWorld.sub(cameraPosition); const dist = length(dv); const rd = dv.div(max(dist, 1e-3));
-      return this.fogInscatter(rd).add(this.floodScatter(cameraPosition, rd, dist).div(max(factor, 1e-5)));
+      return this.fogInscatter(rd).add(this.floodScatter(cameraPosition, rd, dist, this.floodN).div(max(factor, 1e-5)));
     })();
     return TSL.fog(color, factor);
   }
@@ -512,6 +582,7 @@ export class Sky {
     U.sunDir.value.set(...env.sunDir); U.mie.value = env.mie; U.sunI.value = env.sunI * this.pre; U.camH.value = 30; this._preNext = this.pre;
     U.fog.value.set(...env.fog); U.cloud.value.set(...env.cloud); U.cloudWind.value.set(...env.cloudWind); U.refPos.value.set(...(env.refPos || [0, 60, 0]));
     U.skyClouds.value = env.slab ? 0 : 1;
+    { const a = Math.sin(TWI_EL0 * PI / 180), b = Math.sin(TWI_EL1 * PI / 180); const t = Math.min(1, Math.max(0, (env.sunDir[1] - a) / (b - a))); U.twi.value = t * t * (3 - 2 * t); }
   }
   // fog slabs [{y0, y1, sigma, isCloud}] (sorted), in-scatter colour for dense fog (raw sky units) and its weight
   setSlabs(slabs, fogCol, dense) {

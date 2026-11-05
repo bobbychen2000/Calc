@@ -15,6 +15,8 @@ VIEWS = {
     'baa': 'aerial from the ESE over Boarding Area A (BI-04 view 2); no reference photo of BA-A (a2 shows BA-G)',
     'bag': 'aerial from the NNE at Boarding Area G with the pod-3 end box (photo d2 direction, BI-04 view 1)',
     'plan': 'orthographic roof plan, north up (BI-01 view 2)',
+    'bar': 'review r2: the core north bar as an elevated connector over the roads, from the ESE (roadways.glb as context)',
+    'curb': 'review r2: the departures curb from the roadway side: kerb, bollards, posts on the sidewalk, wall-head brackets',
 }
 
 

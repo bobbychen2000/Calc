@@ -14,7 +14,8 @@
 //                                or < 1 SM -> 5 by day, 3 at night: "At night, use step 4 or 5 only when requested").
 //   3-4-8, TBL 3-4-7             MALSR / MALSF: 3-step (separate controls; SFO wiring NV, owner Q10 -> TBL 3-4-7, I).
 //   3-4-9                        28R ALSF-2 when visibility <= 3/4 SM or RVR <= 4,000 ft, else SSALR mode.
-//   3-4-7                        sequenced flashers only below 3 SM with instrument approaches to that runway.
+//   3-4-7                        sequenced flashers (ALSF-2, MALSF) only below 3 SM with instrument approaches to that
+//                                runway; the MALSR RAIL follows the RAIL row of TBL 3-4-7 (3-4-8: same steps as the MALS).
 //   3-4-2, TBL 3-4-1             REIL with the associated runway lights.
 //   3-4-4                        PAPI continuous (photo-electric day/night, AC 150/5345-28H 3.3.6; night 20 %, Q6 I).
 //   3-4-16, TBL 3-4-12           taxiway lights: night; by day below 1 SM.
@@ -84,7 +85,10 @@ export function controller(night, vis, rvr28r, ceil, rwy) {
       out['ALS ' + e] = { on: true, mode, step: st, pct: ALSF2_PCT[st], SFL: sfl, SFL_pct: sfl ? ALSF2_SFL[st] : 0 };
     } else {
       const st = night ? (vis < 1 ? 3 : vis < 3 ? 2 : 1) : (vis < 2 ? 3 : 2);   // TBL 3-4-7; day > 5 SM low ceiling: 2 (I)
-      out['ALS ' + e] = { on: true, mode: typ, step: st, pct: MALS_PCT[st], SFL: sfl, SFL_pct: sfl ? MALS_SFL[st] : 0, note: MALS_NOTE };
+      // MALSR: its RAIL runs on TBL 3-4-7 "Three Step MALS/Three Step RAIL/Three Step ODALS" (3-4-8, V; the table's RAIL
+      // row = the MALS steps), not on the 3-4-7 SFL rule (review truth2-2); MALSF flashers keep the 3-4-7 SFL rule (I)
+      const fl = typ === 'MALSR' ? true : sfl;
+      out['ALS ' + e] = { on: true, mode: typ, step: st, pct: MALS_PCT[st], SFL: fl, SFL_pct: fl ? MALS_SFL[st] : 0, note: MALS_NOTE };
     }
   }
   for (const e of REIL_ENDS) {                                        // 3-4-2, TBL 3-4-1; only ends in use (I)

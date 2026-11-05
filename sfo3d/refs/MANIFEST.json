@@ -1167,6 +1167,12 @@
    "bytes": 59846,
    "sha256": "bba1462c4fef34e1282b6addee42121c3c8ef28fca4bb328d1d8c15a66efaf2e"
   },
+  "env_ref/sfo_fog_dusk_777_2012_960.jpg": {
+   "class": "local",
+   "why": "image / document without an open licence in SOURCES.json",
+   "bytes": 113368,
+   "sha256": "6018a7b5d349f67bb1e3023de39928a08f8fcda32d80e53830e3cfca73ace4cb"
+  },
   "env_ref/sfo_night_2023_960.jpg": {
    "class": "local",
    "why": "image / document without an open licence in SOURCES.json",
@@ -1178,6 +1184,12 @@
    "why": "image / document without an open licence in SOURCES.json",
    "bytes": 140258,
    "sha256": "6a9d61c0797fa22da46cf4b5a1608f6b08c5101c1f9682f2df58957cb2541d09"
+  },
+  "env_ref/sfo_rain_day_t2_2011_960.jpg": {
+   "class": "local",
+   "why": "image / document without an open licence in SOURCES.json",
+   "bytes": 128708,
+   "sha256": "aab600bd57151e27b6777e1e82de0854c174b7245afd4a20dfaa442458ea79f0"
   },
   "fonts/Kanit-700i.ttf": {
    "class": "local",
@@ -7204,8 +7216,14 @@
   "rec/adsbfi_20261105_17.jsonl.gz": {
    "class": "local",
    "why": "adsb.fi terms: personal non-commercial use, not to be licensed on",
-   "bytes": 8247073,
-   "sha256": "42fcc4120a0b157997738dbf5bd667512fc6ef67be9ffc4aa1eb36c50ed3e470"
+   "bytes": 8247477,
+   "sha256": "4e8b4282389e5b327761c1679c2c5dc7708aaae9c31ad21c2c4441f2fea80e15"
+  },
+  "rec/adsbfi_20261105_18.jsonl.gz": {
+   "class": "local",
+   "why": "adsb.fi terms: personal non-commercial use, not to be licensed on",
+   "bytes": 193676,
+   "sha256": "30c9fa228c59a311e70e645bf325881f3ca8ed20d24042a49763f0ce46ce5aa0"
   },
   "rec/adsblol_20261104_17.jsonl.gz": {
    "class": "pack",
@@ -7354,8 +7372,14 @@
   "rec/adsblol_20261105_17.jsonl.gz": {
    "class": "pack",
    "why": "ODbL (adsb.lol); trimmed copy in rec_pack/",
-   "bytes": 2385877,
-   "sha256": "754418b2a2424e50f4aba1ca9c0998929a18ef8097b966999181e595c847dd6c"
+   "bytes": 2386826,
+   "sha256": "48e9a7418844263416e682104c2eb2a83d316c89158419aafd94d124cb7bfac3"
+  },
+  "rec/adsblol_20261105_18.jsonl.gz": {
+   "class": "pack",
+   "why": "ODbL (adsb.lol); trimmed copy in rec_pack/",
+   "bytes": 218034,
+   "sha256": "8c80461e112b366835c920f31fa86da5575926693ccb5aca0475464a6fbb9a99"
   },
   "rec/recorder.log": {
    "class": "local",
@@ -7366,14 +7390,14 @@
   "rec/recorder.out": {
    "class": "local",
    "why": "recorder state",
-   "bytes": 36766,
-   "sha256": "5622142d77b92b489959b4bd8f73ea75223d9c72bfd9f985cedb59c8f9092c13"
+   "bytes": 39459,
+   "sha256": "995f2f3f5ad4a60296c93b2c9b77928bbda591519b981776afa0dec88eae4e52"
   },
   "rec/recorder.pid": {
    "class": "local",
    "why": "recorder state",
-   "bytes": 3,
-   "sha256": "4a8596a7790b5ca9e067da401c018b3206befbcf95c38121854d1a0158e7678a"
+   "bytes": 5,
+   "sha256": "93bdc1dd6b6a611bdd82de7df0f90e1473e01aa8f13108da0decd6aad5863f25"
   },
   "replay/reports.pkl": {
    "class": "local",

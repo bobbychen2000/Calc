@@ -77,7 +77,7 @@ check('EnvState 18:52Z: SPECI 31 -> 90.5 min old (stale) -> forecast base VRB05K
 E = env('2026-09-24T04:01:06.943Z');
 check('EnvState light-mode Night (24 Sep 04:01Z): forecast FM232000 drives wind 290°T 15 kt, FEW200, stars visible, prov I', E.wx.forecast && E.wind.fromTrue === 290 && Math.abs(E.wind.speed - 15 * 1852 / 3600) < 1e-9 && E.clouds.length === 1 && E.clouds[0].baseFt === 20000 && E.nightSky.stars === 'visible' && /^I/.test(E.prov.wx), { wind: E.wind.fromTrue, clouds: E.clouds.map(c => c.cover + c.baseFt), prov: E.prov.wx });
 check('EnvState forecast: P6SM is a lower bound -> clear-air σ', E.atm.visLowerBound && E.atm.sigmaSurface <= 3.3e-5 + 1e-12, E.atm.sigmaSurface);
-check('EnvState forecast: runway configuration from the forecast wind (290° 15 kt -> 28 / West plan, 3-5-1)', E.runway.plan === 'west' && /3-5-1/.test(E.runway.source), E.runway.source);
+check('EnvState forecast: runway configuration from the forecast wind (290° 15 kt -> 28 / West plan, tailwind rule)', E.runway.plan === 'west' && /West Plan/.test(E.runway.source), E.runway.source);
 const hud = envHudLines(E).join('\n');
 check('?qa=env HUD shows the FORECAST line with the TAF issue and group', /FORECAST TAF 231727Z FM232000: 29015KT P6SM FEW200 \[I\]/.test(hud), hud.split('\n').find(l => l.startsWith('FORECAST')));
 E = env('2026-09-25T01:00Z');

@@ -778,6 +778,17 @@ engine's phase, not the label.
    `drOvershoot`). The first reports of a track below 8 kt carry no velocity until one gives a chord (v8); a track first
    heard moving at a contact stand without a heading takes the stand's heading and may be pushing (`firstAtStand`: SWR39
    A333, first heard pushing out of G5 with no heading, was driven nose-first into the G5 pier with the guessed 0°).
+   A body at rest off a stand (no stand matched yet) is no longer kept where it stopped when its fuselage stands in a jet
+   bridge at rest and the reported pose does not (`restBridgeMove`, the off-stand twin of the round-1 `fusInRestBridge`
+   rule at a stand): it creeps on or is re-placed. SWA375 B38M came to rest 2.4 m / 11° short of its pose at D3 before the
+   stand was matched (04:33Z) and stood 75 s in D3 L1's rest cab (bridge.hit.fus 753 frames). An arrival matched to its
+   stand only once it went silent (it stopped a few metres beside the lead-in) now logs its in-block (`silent: 'stale'`,
+   at its last report: UAL1372 at D8, 19:14:49Z). A body that is being removed but still waits for its bridge (fadeRemove:
+   it fades once the bridge is ≤ 30 % extended) fades at once when a live aircraft drives into it (ground.js
+   `dropWaitCut`): the occupant of G7 replaced ahead of UAL900 at 20:39:40Z was driven through for 35 s.
+   The ghost-ahead bridge retraction (item 4) is skipped when SFO puts the arrival at another stand (its own arrival
+   record) or lists the occupant at that stand around now (`planAt`): 26 of 57 such retractions were for arrivals that
+   went on to another stand (7 at E3, whose lead-in lies along the E-pier alley), the bridge docking again 90 s later.
 7. **Minors.** Early-undock 'silent' cancel only after XPDR_OFF_MS of silence, without blocking the next signal (v6); the
    tow pivot only while the push-back phase or TOW_MS after it (v9); a re-placement waits for its bridges only while the
    data is within CUT_HOLD_M (v9).

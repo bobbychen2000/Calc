@@ -1,6 +1,6 @@
 {
  "schema": "sfo3d.airfield_lighting.v1",
- "generated": "2026-11-05T03:02Z",
+ "generated": "2026-11-05T18:33Z",
  "generator": "tools/env/build_lighting_spec.py",
  "report": "docs/research/airfield_lighting.md",
  "frame": {
@@ -5022,5 +5022,16 @@
   "als_flasher": 23,
   "rwsl_thl": 192,
   "rwsl_rel": 165
+ },
+ "in_pavement": {
+  "counts": {
+   "runway_edge": 101,
+   "threshold_end": 23,
+   "runway_end": 20
+  },
+  "h_m": 0.0127,
+  "elevated_h_m": 0.36,
+  "prov": "std (ac30j / ac46f types) + inf (pavement polygons, style)",
+  "rule": "edge / threshold / end / wing-bar points on another runway, a taxiway, an apron or a runway end zone (blast pad, EMAS setback) are in-pavement (L-850C edge, L-850D threshold/end) at 1/2 in (AC 150/5345-46F 1.2.4 style boundary); per-point flags in the group field inpav (environment review truth2-8)"
  }
 }

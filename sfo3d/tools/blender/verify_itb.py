@@ -129,6 +129,12 @@ def footprint(m):
     return unary_union(polys) if polys else Polygon()
 
 
+def nclust(x, gap):
+    """number of clusters of the sorted values x separated by more than gap."""
+    x = np.sort(np.asarray(x, float))
+    return int(len(x) > 0) + int((np.diff(x) > gap).sum()) if len(x) else 0
+
+
 def tol(v):
     return max(0.5, 0.02 * abs(v))
 
@@ -181,7 +187,7 @@ def run(path):
     d = deck[:, 2] - np.array([G.roof_top(u) for u in deck[:, 0]])
     C.add('roof deck top vs roof_line(u) - crown_cap(u), max |dev| over %d vertices' % len(deck), float(np.abs(d).max()), 0.0, 0.5,
           'BI-02 profile [obs]; centre cap %.1f m [obs photo i4]' % G.CROWN_CAP)
-    for uu, lab in ((0.0, 'crown 40.1 - cap 1.5'), (27.0, 'notch 35.7'), (67.0, 'hump 40.08'), (100.0, '|u| 100: 36.4'), (G.HL, 'tip 34.4')):
+    for uu, lab in ((0.0, 'crown 40.1 - cap %.2f' % G.crown_cap(0.0)), (27.0, 'notch 35.7'), (67.0, 'hump 40.08'), (100.0, '|u| 100: 36.4'), (G.HL, 'tip 34.4')):
         sel = deck[np.abs(np.abs(deck[:, 0]) - uu) < 1.2]
         if len(sel):
             C.add('roof deck at |u| %.0f (%s)' % (uu, lab), float(np.median(sel[:, 2])), float(G.roof_top(uu)), None, 'BI-02 / itb_geom.roof_top')
@@ -314,6 +320,26 @@ def run(path):
     Cn = to_uvh(allP(S['L0_hall_canopy']))
     C.add('canopy top', float(Cn[:, 2].max()), I.CANOPY, None, 'BI-02: L3 + 5 [inf]')
     C.add('canopy depth', float(G.V_W - Cn[:, 1].min()), I.CANOPY_D, None, 'BI-03: ~5 m [inf]')
+    # review r2: departures curb = sidewalk to the measured kerb line, a 0.15-m kerb and no upstand; bollards; posts on the sidewalk
+    Cb = to_uvh(allP(S['L0_hall_curb']))
+    C.add('curb: kerb line v (outer edge of the sidewalk)', float(Cb[:, 1].min()), G.KERB_V, 0.05, 'NAIP 2024 warning strips / lane-1 cars [obs]')
+    C.add('curb: no upstand (max height - L3)', float(Cb[:, 2].max() - I.L3), 0.0, 0.01, 'review r2: photo i3 low kerb')
+    kf = to_uvh(allP(S['L0_hall_curb'], 'kerb'))
+    C.add('curb: kerb face height', float(kf[:, 2].max() - kf[:, 2].min()) if len(kf) else 0.0, G.KERB_H, 0.01, 'roadways deck at L3 - 0.15 [inf]')
+    if 'L0_hall_bollards' in S:
+        Pb_ = to_uvh(allP(S['L0_hall_bollards']))
+        tops = Pb_[np.abs(Pb_[:, 2] - (I.L3 + G.BOLLARD['h'])) < 0.01]
+        nb_ = nclust(tops[np.abs(tops[:, 1] - (G.KERB_V + G.BOLLARD['inset'])) < 0.3][:, 0], 1.0)
+        C.add('bollards along the kerb (count)', nb_, len(G.bollard_us()), 0, '10-ft pitch, gaps at the NAIP crosswalks [inf]')
+        C.add('bollards: none within 2.4 m of a crosswalk ramp (min distance)', float(min(abs(u_ - c_) for u_ in G.bollard_us() for c_ in G.CROSSWALK_U)),
+              2.5, ok=min(abs(u_ - c_) for u_ in G.bollard_us() for c_ in G.CROSSWALK_U) >= 2.4, src='NAIP crosswalks [obs]')
+    Ph2 = to_uvh(allP(S['L0_hall_hangers'], 'steel_white'))
+    C.add('canopy posts on the sidewalk (post face - kerb)', float(Ph2[:, 1].min() - G.KERB_V), 0.45 - 0.18, 0.05,
+          'centre 0.45 m behind the kerb, r 0.18 (review r2: the posts stood 0.2 m out on the roadway)')
+    if 'L0_hall_brackets' in S:
+        Pk = to_uvh(allP(S['L0_hall_brackets']))
+        nk = nclust(Pk[:, 0], 2.0)
+        C.add('wall-head brackets (count, mid-panel of the 20-ft grid)', nk, len(G.bracket_us()), 0, 'photo i4 [obs rhythm, low]')
     if 'L0_hall_lettering' in S:
         Lt = to_uvh(allP(S['L0_hall_lettering']))
         C.add('lettering width', float(Lt[:, 0].max() - Lt[:, 0].min()), 2 * I.LETTER_HW, None, 'BI-02 (+-33 m) [obs photos]')
@@ -371,6 +397,17 @@ def run(path):
             C.add('BA-G bridge-head bump-outs: count', len(bo), 10, 0, 'SFO Museum outline (15.7 x 8.7 m boxes)')
             C.add('BA-G bump-out tops (max |dev| from 6.5)', max(abs(h - G.BUMP_H_G) for h in hb) if hb else 99.0, 0.0, 0.05,
                   'photo a2: B1 top 57 / 148 px of the 17.0 m facade [obs, low]')
+            gw = [p for p in Bd['prims'] if p['mat'].split('@')[0] == 'glass_win']
+            C.add('BA-G 2-lite windows on the NNE face (lites)', sum(len(p['T']) for p in gw) // 2, 2 * len(G.BAG_WINDOWS), 0,
+                  'photo a2 (review r2) [obs, low]')
+    if 'L0_ba_roof_units' in S:
+        import json as _j
+        ro = _j.load(open(G.ROOFOBS))
+        nu = sum(d_['n'] for d_ in ro['decks'].values())
+        Pu = allP(S['L0_ba_roof_units'])
+        C.add('rooftop units (NAIP itb_roofobs.json) built', nu, nu, 0, 'NAIP 2024 [obs extents]')
+        fpu = footprint(S['L0_ba_roof_units'])
+        C.add('rooftop units inside the pier outlines', fpu.difference(unary_union([G.PIER_A, G.PIER_G]).buffer(0.05)).area, 0.0, 0.5, 'containment', 'm2')
     for nm in ('L1_hall_lettering', 'L1_hall_mullions'):
         C.add('LOD1 has %s (review r1: no LOD pop at 450 m)' % nm, int(nm in S), 1, 0, 'manifest switch 450 m')
     if 'L1_hall_lettering' in S:
@@ -384,6 +421,47 @@ def run(path):
     C.add('BA-G end box base = pod G3 top', float(Bx[:, 1].min() - GROUND_Y), float(G.POD['G3']['top_m']), None, 'BI-04 V4')
     Co = allP(S['L0_itb_core'])
     C.add('ITB core block top', float(Co[:, 1].max() - GROUND_Y), G.H_CORE, 0.01, 'placeholder [unk]')
+    # review r2: core parts that roads cross are elevated connectors; the block is cut back from the OSM road footprints
+    so = [p for p in S['L0_itb_core']['prims'] if p['mat'].split('@')[0] == 'soffit']
+    if so:
+        hs = np.vstack([p['P'] for p in so])[:, 1] - GROUND_Y
+        C.add('north bar connector underside', float(hs.min()), G.CONNECTOR_US, 0.01, 'L3 - 1.0 [inf] (review r2)')
+    # measured on the mesh: the core's plan = its upward-facing triangles (roofs); where a downward-facing soffit triangle covers a
+    # point the core is elevated (clearance = soffit height), elsewhere it stands on grade
+    roads_fp = unary_union([fp for r_, fp in G.road_footprints(0.0)])
+    ups_c, downs_c = [], []
+    for p in S['L0_itb_core']['prims']:
+        for t in p['T']:
+            q = p['P'][t]; nrm = np.cross(q[1] - q[0], q[2] - q[0]); nn = np.linalg.norm(nrm)
+            if nn < 1e-9: continue
+            pg = Polygon(q[:, [0, 2]])
+            if nrm[1] > 0.5 * nn: ups_c.append(pg)
+            elif nrm[1] < -0.5 * nn: downs_c.append((pg, float(q[:, 1].min() - GROUND_Y)))
+    plan_c = unary_union([g_.buffer(0.01) for g_ in ups_c])
+    elev_c = unary_union([g_.buffer(0.01) for g_, _ in downs_c]) if downs_c else Polygon()
+    grade_c = plan_c.difference(elev_c.buffer(0.05))
+    C.add('core on grade over OSM road footprints (mesh)', grade_c.intersection(roads_fp).area, 0.0, 0.5,
+          'data/sfo_landside.json roads [obs ODbL] (review r2)', 'm2')
+    rw = os.path.join(ROOT, 'data', 'buildings3d', 'roadways.glb')
+    if os.path.exists(rw):
+        jr, br_, _ = load_glb(rw); SR = scene_meshes(jr, br_)
+        clear, inside_blk = [], 0.0
+        for nm_, m_ in SR.items():
+            if m_['lod'] != 0: continue
+            for p in m_['prims']:
+                if not p['mat'].startswith('deck'): continue
+                for t in p['T']:
+                    q = p['P'][t]; c_ = q.mean(0)
+                    pt = Point(c_[0], c_[2])
+                    if not plan_c.contains(pt): continue
+                    hs_ = [h_ for g_, h_ in downs_c if g_.contains(pt)]
+                    if hs_: clear.append(min(hs_) - (q[:, 1].max() - GROUND_Y))
+                    else: inside_blk += Polygon(q[:, [0, 2]]).area
+        if clear:
+            C.add('roadway decks under the elevated bar: min clearance (roadways.glb)', float(min(clear)), G.ROAD_CLEAR, ok=min(clear) >= G.ROAD_CLEAR - 0.05,
+                  src='15 ft = 4.57 m minimum vertical clearance [pub]; deck tops from roadways.glb (integration)')
+        C.add('roadway deck area inside the core on grade (roadways.glb)', inside_blk, 0.0, 1.0,
+              'no clash (review r2: 85 m2 under the north bar + the deck end at (-1159, 385))', 'm2')
 
     # ---------------- plausibility
     sys.path.insert(0, os.path.join(ROOT, 'tools', 'stands'))
@@ -391,7 +469,8 @@ def run(path):
     airside = unary_union([Polygon(p[0], p[1:]).buffer(0) for p in list(I.D.AIR['terminalComplex']) +
                            [q for bb in I.D.AIR['boardingAreas'] for q in bb['polys']]])
     landside_ok = ('hall_roof', 'hall_trusses', 'hall_outriggers', 'hall_columns', 'hall_west_wall', 'hall_canopy', 'hall_hangers',
-                   'hall_curb', 'hall_podium', 'hall_mullions', 'hall_lettering', 'hall_end_walls', 'hall_end_mullions', 'hall_east_clerestory')
+                   'hall_curb', 'hall_podium', 'hall_mullions', 'hall_lettering', 'hall_end_walls', 'hall_end_mullions', 'hall_east_clerestory',
+                   'hall_bollards', 'hall_brackets')
     fps = {}
     # the landside parts (hall roof, canopy, curb ...) overhang the curb / roadway west of the outline by design
     land = unary_union([footprint(m) for n, m in S.items() if m['lod'] == 0 and n.split('_', 1)[1] in landside_ok])
@@ -450,6 +529,55 @@ def run(path):
               (max([p[1] for p in pen] + [0]), len(pen)), unit='m2')
     except Exception as e:  # noqa: BLE001
         C.add('stand / bridge clearance', str(e), 'error', ok=False)
+    # review r2 (cross-asset): the app's fixed walkways (gates.js solids, dumped by the integration step to
+    # out/buildings3d/integ/draw/scene2d.json) against the host roof where they dock: the first roof of the ITB pier mesh met
+    # 1-6 m inside the attach point along the walkway. A walkway whose top is above the host roof pierces it or floats open above it.
+    cross = []
+    sc2 = os.path.join(ROOT, 'out', 'buildings3d', 'integ', 'draw', 'scene2d.json')
+    if os.path.exists(sc2):
+        try:
+            SC = json.load(open(sc2))
+            ups = []
+            for nm_ in ('L0_ba_g_body', 'L0_ba_a_body'):
+                for p in S[nm_]['prims']:
+                    for t in p['T']:
+                        q = p['P'][t]
+                        nrm = np.cross(q[1] - q[0], q[2] - q[0])
+                        if nrm[1] > 0.5 * np.linalg.norm(nrm): ups.append((Polygon(q[:, [0, 2]]), float(q[:, 1].mean() - GROUND_Y)))
+            for b_ in SC['bridges']:
+                if b_['stand'][0] not in 'AG': continue
+                P_ = b_['poses'].get('current') or list(b_['poses'].values())[0]
+                wk = [pr for pr in P_['parts'] if pr['part'] == 'walkway']
+                if not wk: continue
+                att = np.asarray(b_['attach'], float)
+                w_ = min(wk, key=lambda pr: Polygon(pr['hull']).distance(Point(*att)))
+                top = float(w_['y'][1] - GROUND_Y)
+                u_ = np.asarray(b_['u'], float)
+                roof = None
+                pier = G.PIER_A if b_['stand'][0] == 'A' else G.PIER_G
+                from shapely.ops import nearest_points
+                q_ = np.asarray(nearest_points(pier, Point(*att))[0].coords[0])
+                dvec = q_ - att; dn = float(np.linalg.norm(dvec))
+                dirs = [dvec / dn] if dn > 0.05 else []
+                dirs.append(-u_ / np.linalg.norm(u_))
+                for dr in dirs:                          # first roof met going into the building: towards the nearest outline point,
+                    for dd in (1.0, 2.0, 3.0, 4.0, 6.0):  # else against the walkway direction (attach points sit 0-5 m off the outline)
+                        pin = Point(*(att + dr * (dn + dd if len(dirs) == 2 and dr is dirs[0] else dd)))
+                        roof = max([h_ for pg, h_ in ups if pg.contains(pin)], default=None)
+                        if roof is not None: break
+                    if roof is not None: break
+                cross.append(dict(stand=b_['stand'], gate=b_['gate'], door=b_['door'], walkway_top=round(top, 2),
+                                  host_roof=None if roof is None else round(roof, 2), ok=roof is not None and roof >= top))
+            nbad = sum(1 for c_ in cross if not c_['ok'])
+            gb = [c_ for c_ in cross if c_['stand'][0] == 'G']
+            C.add('CROSS-ASSET (bridges): app walkway top <= host roof at the attach point - %d of %d A / G walkways fail (BA-G %d of %d)' %
+                  (nbad, len(cross), sum(1 for c_ in gb if not c_['ok']), len(gb)), nbad, 0, ok=True,
+                  src='NOT counted as an asset failure: gates.js DEPARTURE_LEVEL 5.4 [inf] + WALK_H 3.0 puts the walkway top at 8.46 m; photo a2 '
+                      'shows the BA-G bump-out roofs at 6.5-7.1 m with the walkways joining below them - request to bridges (manifest '
+                      'itb.requests); scene2d.json of %s' % SC.get('meta', {}).get('generated', '03:56Z'))
+        except Exception as e:  # noqa: BLE001
+            C.add('cross-asset walkway check', str(e), 'error', ok=True)
+    plaus['walkway_vs_host_roof'] = cross
     tw = unary_union([Polygon(p[0], p[1:]).buffer(0) for t_ in I.D.AIR['taxiways'] for p in t_['polys']])
     C.add('SFO Museum taxiway polygons inside the 3-D footprint', tw.intersection(unary_union([fa, land])).area, 0.0, 0.5,
           'data/sfo_airport.json taxiways', 'm2')

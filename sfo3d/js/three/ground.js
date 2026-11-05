@@ -596,7 +596,9 @@ export function waterMaterial(world, bakes, sky) {
   mat.emissiveNode = Fn(() => {
     const wp = positionWorld; const N = wcore(); const V = normalize(cameraPosition.sub(wp));
     const F = pow(float(1.0).sub(max(dot(N, V), 0.001)), 5.0).mul(0.98).add(0.02);
-    const sh = mix(float(0.4), float(1.0), sky.cloudShadow(wp));
+    // direct sun through the cloud layers above this point (review look2-3: the former 0.4 floor kept 40 % of the clear
+    // beam under a closed OVC005 deck; the diffuse part is skyUp, which cloudAdjust already raised)
+    const sh = sky.cloudShadow(wp);
     const sunIn = U.sunColor.mul(max(U.sunDir.y, 0.0));
     const lightIn = U.skyUp.mul(0.9).add(sunIn.mul(0.35).mul(sh));
     const body = vec3(0.045, 0.075, 0.07).mul(lightIn).mul(float(1.0).sub(F));
@@ -608,9 +610,12 @@ export function waterMaterial(world, bakes, sky) {
   mat.envNode = Fn(() => {
     const wp = positionWorld; const V = normalize(wp.sub(cameraPosition));
     const Rr = reflect(V, wcore()).toVar(); Rr.y.assign(abs(Rr.y).max(0.003));
-    const sharp = sky.skyAlong(wp, Rr);
-    const cl = U.sunColor.mul(0.2).add(U.skyUp.mul(0.55)).add(U.skyHorizon.mul(0.15));
-    const blur = mix(sky.skyEnvBlur(Rr), cl, U.cloud.x.mul(0.8));
+    // the low decks (planes) are part of the reflected sky, with the fog slabs on the way (skyAlong withSlabs; review
+    // look2-3); the rough-water blur turns to the overcast mean with the cloud cover U.cloud.x = 1 − sunVisibleP, its sun
+    // term scaled by the open fraction (was the clear beam x 0.2 and at most 80 % overcast)
+    const sharp = sky.skyAlong(wp, Rr, true);
+    const cl = U.sunColor.mul(0.2).mul(float(1.0).sub(U.cloud.x)).add(U.skyUp.mul(0.55)).add(U.skyHorizon.mul(0.15));
+    const blur = mix(sky.skyEnvBlur(Rr), cl, U.cloud.x);
     return mix(sharp, blur, smoothstep(0.08, 0.45, wrough()));
   })();
   mat.userData.uWind = uWind; mat.userData.uAmp = uAmp;

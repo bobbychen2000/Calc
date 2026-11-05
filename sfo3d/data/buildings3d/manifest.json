@@ -2,9 +2,9 @@
  "_about": "SFO Live 3D building assets (glTF 2.0, built with Blender from the verified 2-D sheets); one key per asset group; frame ltp-nad83-2011 (x east, y up, z south, m from the ARP); see docs/research/buildings3d.md",
  "itb": {
   "asset": "data/buildings3d/itb.glb",
-  "bytes": 6000812,
-  "built": "2026-11-05T07:26:55+00:00",
-  "git": "3d6ee7c+dirty",
+  "bytes": 6477212,
+  "built": "2026-11-05T18:38:08+00:00",
+  "git": "83b8214+dirty",
   "generator": "tools/blender/build_itb.py (bpy 5.0.1, Cycles CPU AO bake); geometry tools/blender/itb_geom.py",
   "reference": "2-D sheets BI-01..04 (docs/drawings/buildings/README.md), drawn by tools/buildings/draw_itb.py, imported by itb_geom.py",
   "spec": "tools/buildings/spec_itb.json (+ itb_naip_measurements.json, itb_pods.json)",
@@ -36,24 +36,24 @@
     "lod": 0,
     "node": "LOD0",
     "switch_m": 0.0,
-    "tris": 64344,
-    "verts": 67837,
+    "tris": 69279,
+    "verts": 75118,
     "ao_atlas": "itb_ao_A (shared by LOD0 / LOD1 shell meshes)"
    },
    {
     "lod": 1,
     "node": "LOD1",
     "switch_m": 450.0,
-    "tris": 34976,
-    "verts": 39534,
+    "tris": 36927,
+    "verts": 43175,
     "ao_atlas": "itb_ao_A (shared by LOD0 / LOD1 shell meshes)"
    },
    {
     "lod": 2,
     "node": "LOD2",
     "switch_m": 1600.0,
-    "tris": 5256,
-    "verts": 7660,
+    "tris": 5336,
+    "verts": 7870,
     "ao_atlas": "itb_ao_B"
    }
   ],
@@ -64,7 +64,7 @@
   ],
   "lod2_glb": {
    "path": "data/buildings3d/itb_lod2.glb",
-   "bytes": 563896
+   "bytes": 579116
   },
   "textures": [
    {
@@ -84,8 +84,28 @@
      2048
     ],
     "mime": "image/png",
-    "bytes": 2053126,
+    "bytes": 2135395,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
+   },
+   {
+    "name": "itb_n_panel_a2",
+    "px": [
+     512,
+     512
+    ],
+    "mime": "image/png",
+    "bytes": 2120,
+    "kind": "normal map, tiling, TEXCOORD_0"
+   },
+   {
+    "name": "itb_c_panel",
+    "px": [
+     512,
+     512
+    ],
+    "mime": "image/png",
+    "bytes": 1649,
+    "kind": "base colour, tiling, TEXCOORD_0"
    },
    {
     "name": "itb_c_curtain_gate",
@@ -94,7 +114,7 @@
      512
     ],
     "mime": "image/png",
-    "bytes": 1683,
+    "bytes": 1680,
     "kind": "base colour (glass + mullion caps), tiling, TEXCOORD_0"
    },
    {
@@ -154,7 +174,7 @@
      256
     ],
     "mime": "image/png",
-    "bytes": 715,
+    "bytes": 718,
     "kind": "base colour, tiling, TEXCOORD_0"
    },
    {
@@ -164,7 +184,7 @@
      512
     ],
     "mime": "image/png",
-    "bytes": 155631,
+    "bytes": 155857,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    }
   ],
@@ -223,14 +243,14 @@
    },
    "soffit": {
     "rgb_srgb": [
-     84,
-     87,
-     91
+     50,
+     53,
+     57
     ],
-    "metallic": 0.3,
-    "roughness": 0.55,
+    "metallic": 0.2,
+    "roughness": 0.6,
     "ior": 1.5,
-    "src": "obs photo i3 (dark grey soffit panels); module inf",
+    "src": "obs photos i3 / i4 (dark grey soffit panels; review r2: i4 soffit / sky 0.35 against 0.69 rendered at 84 / 87 / 91 -> darker); module inf",
     "normal_tile": "itb_n_panel",
     "base_tile": null
    },
@@ -269,7 +289,85 @@
     "metallic": 0.3,
     "roughness": 0.5,
     "ior": 1.5,
-    "src": "obs photo i3 (dark outriggers, hangers)",
+    "src": "obs photo i3 (canopy hangers / edge)",
+    "normal_tile": null,
+    "base_tile": null
+   },
+   "steel_dark": {
+    "rgb_srgb": [
+     46,
+     49,
+     53
+    ],
+    "metallic": 0.3,
+    "roughness": 0.5,
+    "ior": 1.5,
+    "src": "obs photo i4 (dark wall-head brackets under the west truss, review r2)",
+    "normal_tile": null,
+    "base_tile": null
+   },
+   "kerb": {
+    "rgb_srgb": [
+     140,
+     140,
+     136
+    ],
+    "metallic": 0.0,
+    "roughness": 0.8,
+    "ior": 1.5,
+    "src": "inf (granite / concrete kerb face)",
+    "normal_tile": null,
+    "base_tile": null
+   },
+   "bollard": {
+    "rgb_srgb": [
+     160,
+     162,
+     160
+    ],
+    "metallic": 0.6,
+    "roughness": 0.35,
+    "ior": 1.5,
+    "src": "obs photo i3 (grey cylindrical bollards); finish inf",
+    "normal_tile": null,
+    "base_tile": null
+   },
+   "hvac": {
+    "rgb_srgb": [
+     176,
+     180,
+     182
+    ],
+    "metallic": 0.4,
+    "roughness": 0.5,
+    "ior": 1.5,
+    "src": "inf (packaged rooftop units; light metal, photo a2)",
+    "normal_tile": null,
+    "base_tile": null
+   },
+   "hvac_louvre": {
+    "rgb_srgb": [
+     92,
+     96,
+     100
+    ],
+    "metallic": 0.3,
+    "roughness": 0.6,
+    "ior": 1.5,
+    "src": "inf (louvre / fan band)",
+    "normal_tile": null,
+    "base_tile": null
+   },
+   "glass_win": {
+    "rgb_srgb": [
+     28,
+     60,
+     62
+    ],
+    "metallic": 0.0,
+    "roughness": 0.05,
+    "ior": 1.9,
+    "src": "obs photo a2 (dark-teal 2-lite windows on the BA-G NNE face, review r2)",
     "normal_tile": null,
     "base_tile": null
    },
@@ -301,27 +399,27 @@
    },
    "glass_frit": {
     "rgb_srgb": [
-     214,
-     218,
-     220
+     184,
+     192,
+     196
     ],
     "metallic": 0.0,
-    "roughness": 0.22,
+    "roughness": 0.12,
     "ior": 1.9,
-    "src": "pub \"three layers of ceramic frit\"; white banded look obs photos i1 / i4; pattern inf; own normal tile itb_n_frit (review r1: itb_n_curtain on the 3.6-m frit tile put caps every 0.9 m)",
+    "src": "pub \"three layers of ceramic frit\"; white banded look obs photos i1 / i4; pattern inf; own normal tile itb_n_frit (review r1: itb_n_curtain on the 3.6-m frit tile put caps every 0.9 m); review r2: albedo 214 -> 184 (white band) / 92 -> 62 (clear band), roughness 0.22 -> 0.12 (reads as glass in shade, i3)",
     "normal_tile": "itb_n_frit",
     "base_tile": "itb_c_frit"
    },
    "glass_hall": {
     "rgb_srgb": [
-     118,
-     130,
-     136
+     84,
+     94,
+     100
     ],
     "metallic": 0.0,
     "roughness": 0.06,
     "ior": 1.9,
-    "src": "obs photos i1 / i4 (clear central bay reads light: the lit hall seen through); value inf",
+    "src": "obs photos i1 / i4 (clear central bay: the lit hall seen through); review r2: i4 centre / side bay ~0.7 (photo) against 0.88 rendered at 118 / 130 / 136 -> darker; value inf",
     "normal_tile": "itb_n_curtain",
     "base_tile": null
    },
@@ -399,9 +497,9 @@
     "metallic": 0.5,
     "roughness": 0.4,
     "ior": 1.5,
-    "src": "pub BA-G \"metallic-finish composite aluminium panels\"; BA-A / core: same by photo a2 [inf]",
-    "normal_tile": "itb_n_panel",
-    "base_tile": null
+    "src": "pub BA-G \"metallic-finish composite aluminium panels\"; review r2: 3.66 x 1.524 m module with dark reveals (photo a2 joints) as base-colour + normal tiles; BA-A / core: same by analogy [inf]",
+    "normal_tile": "itb_n_panel_a2",
+    "base_tile": "itb_c_panel"
    },
    "alu_panel_pod": {
     "rgb_srgb": [
@@ -444,27 +542,27 @@
    },
    "glass_gate": {
     "rgb_srgb": [
-     38,
-     54,
-     56
+     22,
+     66,
+     68
     ],
     "metallic": 0.0,
     "roughness": 0.05,
     "ior": 1.9,
-    "src": "pub BA-G \"tinted energy-efficient glazed curtain wall\"; colour, mullion rhythm and extents obs photo a2 (BA-G NNE face, a2 median sRGB 39 / 56 / 59); BA-A: no photo (positions unk, heights inf)",
+    "src": "pub BA-G \"tinted energy-efficient glazed curtain wall\"; colour, mullion rhythm and extents obs photo a2 (BA-G NNE face); review r2: teal base 22 / 66 / 68 (a2 glass 52-66 / 69-85 / 68-86 incl. the sky reflection; the round-1 base 38 / 54 / 56 rendered neutral 60 / 63 / 64); BA-A: no photo (positions unk, heights inf)",
     "normal_tile": null,
     "base_tile": "itb_c_curtain_gate"
    },
    "lettering": {
     "rgb_srgb": [
-     38,
-     42,
-     46
+     16,
+     18,
+     20
     ],
-    "metallic": 0.3,
-    "roughness": 0.4,
+    "metallic": 0.0,
+    "roughness": 0.6,
     "ior": 1.5,
-    "src": "obs photos i1 / i3 / i4 (\"SAN FRANCISCO INTERNATIONAL\"); font inf",
+    "src": "obs photos i1 / i3 / i4 (\"SAN FRANCISCO INTERNATIONAL\"); review r2: near-black (i4 darkest letter pixels 53 against 102 rendered at 38 / 42 / 46, metallic 0.3); font inf",
     "normal_tile": null,
     "base_tile": null
    }
@@ -477,8 +575,8 @@
      0,
      1
     ],
-    "bake_s": 67.9,
-    "mean": 0.65,
+    "bake_s": 68.4,
+    "mean": 0.673,
     "p2": 0.0,
     "samples": 48,
     "distance_m": 10.0,
@@ -490,7 +588,7 @@
      2
     ],
     "bake_s": 2.7,
-    "mean": 0.672,
+    "mean": 0.696,
     "p2": 0.0,
     "samples": 48,
     "distance_m": 10.0,
@@ -682,6 +780,47 @@
       "v": 6.096,
       "tag": "inf",
       "source": "photo i3 (regular spacing)"
+     },
+     "section": {
+      "v": [
+       0.35,
+       0.9
+      ],
+      "tag": "inf",
+      "source": "white brackets readable from i4 (review r2)"
+     }
+    },
+    "lods": [
+     0,
+     1
+    ],
+    "kind": "detail"
+   },
+   {
+    "node": "L0_hall_brackets",
+    "feature": "wall-head brackets under the west truss",
+    "src": "obs",
+    "spec": [
+     "facade.west"
+    ],
+    "dims": {
+     "rhythm": {
+      "v": 6.096,
+      "tag": "obs",
+      "source": "photo i4: mid-panel of the 20-ft grid (low)"
+     },
+     "size": {
+      "v": [
+       1.7,
+       1.4
+      ],
+      "tag": "obs",
+      "source": "photo i4 ~12 x 10 px (low)"
+     },
+     "form": {
+      "v": "inverted V + tie",
+      "tag": "inf",
+      "source": "schematic"
      }
     },
     "lods": [
@@ -813,16 +952,31 @@
    },
    {
     "node": "L0_hall_curb",
-    "feature": "departures curb sidewalk (L3)",
+    "feature": "departures curb sidewalk (L3) with a 0.15-m kerb",
     "src": "inf",
     "spec": [
      "level3.floor"
     ],
     "dims": {
+     "kerb_v": {
+      "v": -30.1,
+      "tag": "obs",
+      "source": "NAIP 2024: crosswalk warning strips v -29.8, lane-1 cars (review r2)"
+     },
      "width": {
-      "v": 7.0,
+      "v": 4.33,
       "tag": "inf",
-      "source": "under the canopy + 2 m"
+      "source": "wall line [inf] to the kerb [obs]"
+     },
+     "kerb": {
+      "v": 0.15,
+      "tag": "inf",
+      "source": "roadways_net.KERB_M (deck at L3 - 0.15)"
+     },
+     "upstand": {
+      "v": "none (review r2)",
+      "tag": "obs",
+      "source": "photo i3: low kerb, cars at the curb"
      },
      "level": {
       "v": 11.5,
@@ -836,6 +990,38 @@
      2
     ],
     "kind": "shell"
+   },
+   {
+    "node": "L0_hall_bollards",
+    "feature": "kerb bollards + guards at the curb end returns",
+    "src": "inf",
+    "spec": [
+     "level3.floor"
+    ],
+    "dims": {
+     "bollard": {
+      "v": [
+       0.3,
+       0.9
+      ],
+      "tag": "obs",
+      "source": "photo i3 (form)"
+     },
+     "pitch": {
+      "v": 3.048,
+      "tag": "inf",
+      "source": "10 ft, gaps at the NAIP crosswalks"
+     },
+     "guard": {
+      "v": 1.07,
+      "tag": "inf",
+      "source": "IBC 42 in, end returns only (open edge)"
+     }
+    },
+    "lods": [
+     0
+    ],
+    "kind": "detail"
    },
    {
     "node": "L0_hall_podium",
@@ -1028,6 +1214,16 @@
       "v": 17.9,
       "tag": "unk",
       "source": "no source; = BA-A main roof [obs] as placeholder"
+     },
+     "road_cut": {
+      "v": "block cut back where OSM road footprints graze it (<= 5 m)",
+      "tag": "inf",
+      "source": "review r2"
+     },
+     "connector_underside": {
+      "v": 10.5,
+      "tag": "inf",
+      "source": "north bar over the roads: L3 - 1.0, >= 4.6 m [pub clearance] over the 5.9-m deck (review r2)"
      }
     },
     "lods": [
@@ -1036,6 +1232,31 @@
      2
     ],
     "kind": "shell"
+   },
+   {
+    "node": "L0_ba_roof_units",
+    "feature": "rooftop units on the BA-A / BA-G roofs and bump-outs",
+    "src": "obs",
+    "spec": [
+     "ba_g.facade"
+    ],
+    "dims": {
+     "extents": {
+      "v": "NAIP 2024 (tools/blender/itb_roofobs.json)",
+      "tag": "obs",
+      "source": "+-0.7 m"
+     },
+     "heights": {
+      "v": "1.2 / 1.8 / 2.4 m by plan size",
+      "tag": "inf",
+      "source": "not measurable at 0.5 m/px"
+     }
+    },
+    "lods": [
+     0,
+     1
+    ],
+    "kind": "detail"
    },
    {
     "node": "L0_ba_a_body",
@@ -1294,27 +1515,32 @@
   "inferred": [
    "roof deck + fascia 0.6 m thick (BI-02 top-chord line); cross camber flat (unknown)",
    "glazed truss-line strips 1.5 m wide (NAIP 2024 dark lines, rough)",
-   "lens skylights: pointed-lens planform (NAIP shows D shapes: vaulted lens or D plan, not settled), raised as vaults 1.9 m above the deck (review r1: photos i4 / i2 show the crown capped by dark lens glass, 1.5 m above the white fascia at the crown in i4 [obs, low]; the deck / fascia of the centre section runs crown_cap(u) = 1.5 (1 - ((u + 1.8) / 24.0)^2) m below the BI-02 silhouette roof_line(u), and the lens tops form that silhouette as seen from i4; vault form and rise inf)",
+   "lens skylights: pointed-lens planform (NAIP shows D shapes: vaulted lens or D plan, not settled), raised as vaults (review r1 / r2: photo i4 shows the crown capped by dark lens glass above the white fascia; r2 re-measure: 11-12 px = 1.6 m at the crown, >= 3 px over 83 % of the notch-to-notch span [obs, low]); the deck / fascia of the centre section runs crown_cap(u) = 1.6 (1 - (u / 27)^2)^0.7 m below the BI-02 silhouette roof_line(u) (between the notches), each lens vault rises crown_cap(u) + 0.4 m (the i4 line-of-sight drop) along its centre line, closed at the tips by (1 - x^8); vault form inf",
    "truss form: three-chord (2 top chords 2.4 m apart, 1 bottom chord), webs on a 20-ft node grid offset 10 ft; depth taper (BI-03); the west chord is level with the glass head (BI-02) except between the inner column line and the notch, where it follows the BI-03 taper (up to ~3.4 m above the BI-02 line; photos i3 / i4 show the sweep up to the notch: a deliberate deviation from BI-02 V1, both lines inf); centre section: a sagging bowstring chord from the deck at the notches to the clear bay head (photos i3 / i4; BI-03 draws the form as unknown); tube radii 0.50 / 0.32 / 0.20 m",
-   "eave outriggers under the soffit at every truss node (photo i3: regular spacing)",
-   "column positions +-190 / +-270 ft x 5 truss lines; west line 2.5 m in front of the glass; fan of 5 members (count obs, geometry inf); radius 0.75 m",
+   "eave outriggers under the soffit at every truss node (photo i3: regular spacing); review r2: white, 0.35 x 0.9 m (i3 / i4 show white brackets against the dark soffit)",
+   "truss webs (review r2): the two side planes carry opposite diagonals, an X per 20-ft panel seen from the west (photo i4), with the V posts at every node as the verticals; wall-head brackets: dark inverted V 1.7 x 1.4 m at mid-panel (u = k 20 ft) hanging off the glass-wall head (photo i4 rhythm / size [obs, low], form inf)",
+   "column positions +-190 / +-270 ft x 5 truss lines; west line 2.5 m in front of the glass; fan of 5 members (count obs, geometry inf: review r2 - the post continues to the roof (r 0.30), slender struts to the bottom-chord nodes +-6.1 m (r 0.18) and to the eave soffit +-2 m (r 0.16); round 1 had +-10-m arms that read as thick Y branches i4 does not show); radius 0.75 m",
    "west glass wall at the middle of its two canopy readings (v -25.8); level 3 at 11.5 m (9.6-14.8); canopy L3 + 5 m, 5 m deep; hanger form (inclined pair + post)",
    "upper glazing behind the exposed west truss (photo i3) and a head closure; end walls from level 3 to the roof underside; east clerestory 1 m inside the east eave",
-   "departures curb sidewalk 7 m wide at level 3 with a 1.1 m upstand",
+   "departures curb sidewalk at level 3 from the wall [inf] to the kerb line v -30.1 [obs NAIP 2024: crosswalk warning strips, lane-1 cars] = 4.33 m, a 0.15-m kerb (the roadway deck at L3 - 0.15, roadways_net.KERB_M) and NO upstand (review r2, photo i3); bollards 0.3 x 0.9 m (photo i3 form) 0.6 m behind the kerb on the 10-ft pitch with gaps at the five NAIP crosswalks [inf]; a 1.07-m guard only at the two curb end returns (open edge) [inf]; canopy posts 0.45 m behind the kerb (round 1 had them 0.2 m out on the roadway)",
    "pier parapet 1.0 m (roof deck below the measured roof edge)",
    "BA-G facade (review r1; photo a2 = the BA-G NNE face, camera solved): gate-room curtain walls 4.6-14.7 m filling the main-face segments between the bridge-head bump-outs that a roof pod overlaps by >= 35 m (6 rooms = the six double-gated gate rooms [pub]); obs on the NNE face (s 9.6..73.2 m and -133.1..-69.6 m imaged), inf on the SSW face and at G3 (outside a2); dark apron level 0-3.0 m and a light band 3.0-4.6 m [obs a2]; bridge-head bump-outs 6.5 m high [obs a2 B1, low; the others by eye / analogy]; curtain-wall rhythm (15.9-m bays, light mullion at mid-bay, ~1.7-m transoms, floor band) [obs a2, low]",
    "BA-A facade: NO reference photo (round 0 read a2 as BA-A; a2 shows BA-G): the round-0 glazed bays (24 m centred on the bridge attach points) are kept as placeholders [unk] with the BA-G band heights [inf, analogy]; bump-outs at the full outline height [unk]; the BA-G gate-room rule does not transfer (BA-A pods sit over its bump-outs)",
    "BA-G end box: window band top-2.6..top-1.2, three antennas (schematic, photo d2); function ramp-control cab (unconfirmed)",
+   "BA-G walls (review r2): composite panels 3.66 x 1.524 m (photo a2: vertical joints every 3.7 m, horizontal every 1.5 m) as a base-colour tile with dark reveals and +-3 % panel tone + normal tile; the same module on BA-A and the core [inf]; four imaged 2-lite windows on the NNE face (a2, s +-2 m, heights +-1.5 m) [obs, low]; gate-room glass teal (base 22 / 66 / 68) [obs a2 hue]",
+   "rooftop units: extents from NAIP 2024 (tools/blender/itb_roofobs.py: dark-object / shadow detection on the BA-A, BA-G and bump-out roofs, +-0.7 m) [obs]; heights 1.2 / 1.8 / 2.4 m by plan size, colour and louvre band [inf]",
+   "ITB core north bar (review r2): an elevated connector over the domestic departures viaduct and the at-grade roads - underside L3 - 1.0 = 10.5 m (4.6 m [pub 15-ft minimum clearance] over the highest deck under it, 5.88 m in roadways.glb), top the 17.9-m placeholder, 0.6-m round columns where clear of every OSM road footprint (+1.5 m) [inf]; the core block cut back where OSM road footprints graze its outline (<= 5 m; the outline is +-5 m)",
    "materials / colours: our reading of the reference photos (no texture from imagery); roof colours sampled from NAIP 2024"
   ],
   "unknown": [
    "ITB core block (east block, north / south bars incl. the AirTrain stations at ITB level 4): height 17.9 m is a PLACEHOLDER (no source; set equal to the BA-A main roof); facade a metal-panel / window-band placeholder",
    "levels 1-2 under the hall (podium): faces only, concrete / dark band placeholder",
    "end-wall outline and mullions, the central section bottom chord form, fascia depth, mullion module of the end walls",
-   "pier floor heights, BA-A gate-room bay positions (placeholders at the bridge heads), parapets, roof equipment (none modelled); the two isolated 2-lite windows per panel segment on the BA-G NNE face (photo a2) are not modelled",
+   "pier floor heights, BA-A gate-room bay positions (placeholders at the bridge heads), parapets; windows on the BA-G SSW face and on BA-A (not imaged); rooftop units below the NAIP limit (~1.5 m; photo a2 shows a row of small units behind the BA-G NNE parapet)",
    "no continuous concourse window band on BA-G: a2 shows none on the pier (the long green band in a2 belongs to the building beyond the south apron = Garage G / BART station, landside asset)",
    "the 2024-26 roof (new membrane, ~1,400 kW PV): not imaged; the asset shows the NAIP 2024 roof",
-   "departures roadway beyond the 7 m curb, the arrivals roadway, the AirTrain guideway through the ITB: not part of this asset"
+   "departures roadway beyond the kerb, the arrivals roadway, the AirTrain guideway through the ITB: not part of this asset (the roadways are the integration group's roadways.glb; see requests)",
+   "the function and floor of the ITB core north bar (elevated connector; height of its floor = the departures level [inf])"
   ],
   "conflicts": [
    {
@@ -1342,17 +1568,114 @@
     "note": "BI-02"
    },
    {
+    "item": "BA-G bridge-head bump-outs vs the app walkways (review r2)",
+    "model": "6.5 m [obs photo a2, low; r2 re-reading 6.5-7.1 m]",
+    "other": "gates.js walkway 5.2-8.46 m (DEPARTURE_LEVEL 5.4 [inf] + WALK_H 3.0)",
+    "note": "NOT raised to ~9 m: on a2 the 6.5-m outline (solved camera) lies on the observed bump-out roof with its rooftop unit while a 9-m outline falls on the gate-room glazing behind; an upper-storey 2-lite window sits above bump-out B2 at ~9.8-12.1 m; the walkway roofs meet the bump-outs ~1-1.4 m BELOW their roof edge. So the walkway head is the inferred value that is off: request to bridges (lower the BA-G walkway: top <= 6.0 m). verify_itb.py reports the cross-asset table (walkway top vs host roof per attach point)"
+   },
+   {
     "item": "roof eave at the tips",
     "model": "34.4 m (fit held non-increasing) [obs, low]",
     "other": "spec 34.9 (blend NAIP 34.4 / photo 35.5)",
     "note": "drawing_note_tips (review r2-27)"
    }
   ],
+  "deviations_from_sheets": [
+   {
+    "sheet": "BI-02 V1 / BI-03 V1",
+    "item": "centre-section deck / fascia",
+    "drawn": "on roof_line(u) (crown 40.1)",
+    "model": "roof_line(u) - crown_cap(u): 1.60 m below at the crown (deck 38.50), 0 at the notches (u +-27); profile 1.6 (1 - (u / 27)^2)^0.7",
+    "tag": "obs photo i4 (r1 / r2 re-measure), low"
+   },
+   {
+    "sheet": "BI-02 V1 / BI-01 V2",
+    "item": "lens skylights",
+    "drawn": "flat glazing in the deck plane (lens_poly planform)",
+    "model": "vaults rising crown_cap(u) + 0.4 m above the deck along each lens centre line (2.0 m at the crown); tops <= 0.4 m above roof_line",
+    "tag": "inf (form), obs i4 (dark cap)"
+   },
+   {
+    "sheet": "BI-02 V1",
+    "item": "west truss bottom chord",
+    "drawn": "level with the glass head (30.8) notch to tip",
+    "model": "max(BI-02 chord, BI-03 taper): up to ~3.4 m above BI-02 between the notch and the inner column line",
+    "tag": "inf (photos i3 / i4)"
+   },
+   {
+    "sheet": "BI-03 V1",
+    "item": "centre-section bottom chord",
+    "drawn": "form unknown [unk]",
+    "model": "sagging bowstring: deck at the notches to WH + 2 at u = 0",
+    "tag": "inf (photos i3 / i4)"
+   },
+   {
+    "sheet": "BI-02 V1",
+    "item": "column fans",
+    "drawn": "post + 2 members per side at +-5 / +-10 m",
+    "model": "post to the roof (r 0.30) + struts to the bottom-chord nodes at +-6.1 m (r 0.18) + eave struts at +-2 m (r 0.16)",
+    "tag": "inf (review r2, photos i3 / i4)"
+   },
+   {
+    "sheet": "BI-02 V1",
+    "item": "truss webs / wall-head brackets / outriggers",
+    "drawn": "schematic webs (~6 m), no brackets",
+    "model": "X per 20-ft panel (opposite side-plane diagonals) + V posts; 35 dark 1.7 x 1.4-m brackets at u = k 20 ft; white 0.35 x 0.9-m outriggers",
+    "tag": "obs rhythm photo i4 (low), form inf"
+   },
+   {
+    "sheet": "BI-02 V1 / V2",
+    "item": "departures curb",
+    "drawn": "curb band at L3 (width not dimensioned)",
+    "model": "sidewalk wall -> kerb v -30.1 (4.33 m), 0.15-m kerb, no upstand, bollards + end guards, canopy posts 0.45 m behind the kerb",
+    "tag": "obs NAIP (kerb line), inf (furniture)"
+   },
+   {
+    "sheet": "BI-04 V1 / V2",
+    "item": "BA-G bridge-head bump-outs",
+    "drawn": "outline at the pier roof height (17.0)",
+    "model": "6.5-m boxes (10) with roof units",
+    "tag": "obs photo a2, low"
+   },
+   {
+    "sheet": "BI-04 V2",
+    "item": "pier glazing",
+    "drawn": "~5.2-17.2 m gate-room bays (photo a2, then read as BA-A), positions unk",
+    "model": "BA-G: 6 gate-room curtain walls 4.6-14.7 m filling the main-face segments between the bump-outs under a pod (63.5 m wide); BA-A: 24-m placeholder bays 4.6-14.7 m at the bridge attach points",
+    "tag": "obs a2 (BA-G NNE), inf (SSW, BA-A)"
+   },
+   {
+    "sheet": "BI-04",
+    "item": "BA-G wall detail",
+    "drawn": "panels / curtain wall named, layout unk",
+    "model": "3.66 x 1.524-m panel module (tile), four 2-lite windows (NNE face), NAIP roof units",
+    "tag": "obs a2 / NAIP (low)"
+   },
+   {
+    "sheet": "BI-01 V1",
+    "item": "ITB core north bar",
+    "drawn": "outline only (no height)",
+    "model": "elevated connector 10.5-17.9 m with 7 columns; the core block cut back from OSM road footprints (-144 m2)",
+    "tag": "inf (review r2)"
+   }
+  ],
+  "requests": [
+   {
+    "to": "integration (roadways.glb, unit itb_departures)",
+    "what": "extend the ITB departures deck to the kerb line",
+    "why": "the deck starts at v -36.3 (roof frame) with a concrete parapet on its inner edge; NAIP 2024 puts the kerb at v -30.1 (lane-1 cars at v -31..-33, crosswalk ramps at the kerb): a 6.2-m gap with a drop to grade between the curb and the deck over |u| < 55 m. Kerb line in world coordinates: itb_geom.UVw(u, KERB_V) for u in [-107.4, 107.4] (e.g. [-1304.98, 271.65] .. [-1241.65, 476.91]); the curb sidewalk top is L3 = 11.5, the deck L3 - 0.15. Then re-run the roadway trim (b3d_integrate occupancy) against the new itb.glb (curb 4.33 m wide, north bar now elevated from 10.5 m)"
+   },
+   {
+    "to": "bridges (js/live/gates.js)",
+    "what": "lower the Boarding Area G fixed walkways (top <= 6.0 m at the attach point)",
+    "why": "DEPARTURE_LEVEL 5.4 [inf] + WALK_H 3.0 = 8.46-m walkway tops dock into 6.5-m bump-outs (photo a2: bump-out roofs 6.5-7.1 m with rooftop units, the walkway roofs ~1-1.4 m below the bump-out roof edge, the dark apron level to ~3.0 m, a light band to ~4.6 m): at G3, G4, G7, G8, G9-1 the walkway pierces the bump-out roof, elsewhere its upper 2 m stands open above it. verify_itb.py lists walkway top vs host roof per attach point (manifest itb.verification.plausibility.walkway_vs_host_roof)"
+   }
+  ],
   "plausibility_note": "airside geometry stays inside the SFO Museum terminal / boarding-area outlines that tools/stands/check_stands.py tests every stand and bridge against; rotundas set directly at the pier facade overlap that outline by 0.3-1.8 m in the stand data itself (pre-existing, outline accuracy +-5 m: data/sfo_buildings.json footprint_accuracy) - listed in verification.plausibility.rotunda_contacts",
   "verification": {
    "tool": "tools/blender/verify_itb.py",
    "report": "out/buildings3d/itb_verify.json (local)",
-   "n_checks": 110,
+   "n_checks": 125,
    "n_fail": 0,
    "failed": [],
    "tolerance": "0.5 m or 2 % of the drawn value (whichever is larger) unless stated",
@@ -1412,20 +1735,20 @@
      "src": "spec corners NW/NE/SE/SW [obs]"
     },
     {
-     "check": "roof deck top vs roof_line(u) - crown_cap(u), max |dev| over 4499 vertices",
+     "check": "roof deck top vs roof_line(u) - crown_cap(u), max |dev| over 4543 vertices",
      "model": 0.0,
      "drawing": 0.0,
      "dev": 0.0,
      "tol": 0.5,
      "ok": true,
-     "src": "BI-02 profile [obs]; centre cap 1.5 m [obs photo i4]"
+     "src": "BI-02 profile [obs]; centre cap 1.6 m [obs photo i4]"
     },
     {
-     "check": "roof deck at |u| 0 (crown 40.1 - cap 1.5)",
-     "model": 38.604,
-     "drawing": 38.608,
-     "dev": 0.005,
-     "tol": 0.7721680249739855,
+     "check": "roof deck at |u| 0 (crown 40.1 - cap 1.60)",
+     "model": 38.499,
+     "drawing": 38.5,
+     "dev": 0.001,
+     "tol": 0.7700093897537177,
      "ok": true,
      "src": "BI-02 / itb_geom.roof_top"
     },
@@ -1467,9 +1790,9 @@
     },
     {
      "check": "centre silhouette (lens vault tops) vs roof_line, |u| <= 20: max |dev|",
-     "model": 0.434,
+     "model": 0.47,
      "drawing": 0.0,
-     "dev": 0.434,
+     "dev": 0.47,
      "tol": 0.5,
      "ok": true,
      "src": "BI-02 roof_line = the west silhouette (crown 40.1 photo i4, +-2) [obs]"
@@ -1485,45 +1808,45 @@
     },
     {
      "check": "lens 0 vault rise above the deck (max)",
-     "model": 1.917,
-     "drawing": 1.9,
-     "dev": 0.017,
+     "model": 2.018,
+     "drawing": 2.0,
+     "dev": 0.018,
      "tol": 0.1,
      "ok": true,
      "src": "review r1: raised lens glass (photos i4 / i2 dark cap; NAIP vault shading) [inf]"
     },
     {
      "check": "lens 1 vault rise above the deck (max)",
-     "model": 1.913,
-     "drawing": 1.9,
-     "dev": 0.013,
+     "model": 2.012,
+     "drawing": 2.0,
+     "dev": 0.012,
      "tol": 0.1,
      "ok": true,
      "src": "review r1: raised lens glass (photos i4 / i2 dark cap; NAIP vault shading) [inf]"
     },
     {
      "check": "lens 2 vault rise above the deck (max)",
-     "model": 1.916,
-     "drawing": 1.9,
-     "dev": 0.016,
+     "model": 2.017,
+     "drawing": 2.0,
+     "dev": 0.017,
      "tol": 0.1,
      "ok": true,
      "src": "review r1: raised lens glass (photos i4 / i2 dark cap; NAIP vault shading) [inf]"
     },
     {
      "check": "lens 3 vault rise above the deck (max)",
-     "model": 1.916,
-     "drawing": 1.9,
-     "dev": 0.016,
+     "model": 2.017,
+     "drawing": 2.0,
+     "dev": 0.017,
      "tol": 0.1,
      "ok": true,
      "src": "review r1: raised lens glass (photos i4 / i2 dark cap; NAIP vault shading) [inf]"
     },
     {
      "check": "lens 4 vault rise above the deck (max)",
-     "model": 1.922,
-     "drawing": 1.9,
-     "dev": 0.022,
+     "model": 2.029,
+     "drawing": 2.0,
+     "dev": 0.029,
      "tol": 0.1,
      "ok": true,
      "src": "review r1: raised lens glass (photos i4 / i2 dark cap; NAIP vault shading) [inf]"
@@ -1943,6 +2266,69 @@
      "src": "BI-03: ~5 m [inf]"
     },
     {
+     "check": "curb: kerb line v (outer edge of the sidewalk)",
+     "model": -30.1,
+     "drawing": -30.1,
+     "dev": 0.0,
+     "tol": 0.05,
+     "ok": true,
+     "src": "NAIP 2024 warning strips / lane-1 cars [obs]"
+    },
+    {
+     "check": "curb: no upstand (max height - L3)",
+     "model": 0.0,
+     "drawing": 0.0,
+     "dev": 0.0,
+     "tol": 0.01,
+     "ok": true,
+     "src": "review r2: photo i3 low kerb"
+    },
+    {
+     "check": "curb: kerb face height",
+     "model": 0.15,
+     "drawing": 0.15,
+     "dev": 0.0,
+     "tol": 0.01,
+     "ok": true,
+     "src": "roadways deck at L3 - 0.15 [inf]"
+    },
+    {
+     "check": "bollards along the kerb (count)",
+     "model": 44.0,
+     "drawing": 44.0,
+     "dev": 0.0,
+     "tol": 0,
+     "ok": true,
+     "src": "10-ft pitch, gaps at the NAIP crosswalks [inf]"
+    },
+    {
+     "check": "bollards: none within 2.4 m of a crosswalk ramp (min distance)",
+     "model": 3.042,
+     "drawing": 2.5,
+     "dev": null,
+     "tol": null,
+     "ok": true,
+     "src": "NAIP crosswalks [obs]"
+    },
+    {
+     "check": "canopy posts on the sidewalk (post face - kerb)",
+     "model": 0.278,
+     "drawing": 0.27,
+     "dev": 0.008,
+     "tol": 0.05,
+     "ok": true,
+     "src": "centre 0.45 m behind the kerb, r 0.18 (review r2: the posts stood 0.2 m out on the roadway)"
+    },
+    {
+     "check": "wall-head brackets (count, mid-panel of the 20-ft grid)",
+     "model": 35.0,
+     "drawing": 35.0,
+     "dev": 0.0,
+     "tol": 0,
+     "ok": true,
+     "src": "photo i4 [obs rhythm, low]"
+    },
+    {
      "check": "lettering width",
      "model": 66.0,
      "drawing": 66.0,
@@ -2222,6 +2608,33 @@
      "src": "photo a2: B1 top 57 / 148 px of the 17.0 m facade [obs, low]"
     },
     {
+     "check": "BA-G 2-lite windows on the NNE face (lites)",
+     "model": 8.0,
+     "drawing": 8.0,
+     "dev": 0.0,
+     "tol": 0,
+     "ok": true,
+     "src": "photo a2 (review r2) [obs, low]"
+    },
+    {
+     "check": "rooftop units (NAIP itb_roofobs.json) built",
+     "model": 40.0,
+     "drawing": 40.0,
+     "dev": 0.0,
+     "tol": 0,
+     "ok": true,
+     "src": "NAIP 2024 [obs extents]"
+    },
+    {
+     "check": "rooftop units inside the pier outlines",
+     "model": 0.0,
+     "drawing": 0.0,
+     "dev": 0.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "containment"
+    },
+    {
      "check": "LOD1 has L1_hall_lettering (review r1: no LOD pop at 450 m)",
      "model": 1.0,
      "drawing": 1.0,
@@ -2285,6 +2698,42 @@
      "src": "placeholder [unk]"
     },
     {
+     "check": "north bar connector underside",
+     "model": 10.5,
+     "drawing": 10.5,
+     "dev": 0.0,
+     "tol": 0.01,
+     "ok": true,
+     "src": "L3 - 1.0 [inf] (review r2)"
+    },
+    {
+     "check": "core on grade over OSM road footprints (mesh)",
+     "model": 0.0,
+     "drawing": 0.0,
+     "dev": 0.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "data/sfo_landside.json roads [obs ODbL] (review r2)"
+    },
+    {
+     "check": "roadway decks under the elevated bar: min clearance (roadways.glb)",
+     "model": 5.465,
+     "drawing": 4.6,
+     "dev": null,
+     "tol": null,
+     "ok": true,
+     "src": "15 ft = 4.57 m minimum vertical clearance [pub]; deck tops from roadways.glb (integration)"
+    },
+    {
+     "check": "roadway deck area inside the core on grade (roadways.glb)",
+     "model": 0.0,
+     "drawing": 0.0,
+     "dev": 0.0,
+     "tol": 1.0,
+     "ok": true,
+     "src": "no clash (review r2: 85 m2 under the north bar + the deck end at (-1159, 385))"
+    },
+    {
      "check": "LOD0 airside footprint outside the SFO Museum outlines",
      "model": 0.0,
      "drawing": 0.0,
@@ -2328,6 +2777,15 @@
      "tol": null,
      "ok": true,
      "src": "NOTE, not introduced by the asset - pre-existing contact in the data (rotundas at the facade, outline +-5 m): max penetration 0.73 m (17 rotundas); the 3-D footprint = the SFO Museum outline the app and check_stands.py use"
+    },
+    {
+     "check": "CROSS-ASSET (bridges): app walkway top <= host roof at the attach point - 25 of 45 A / G walkways fail (BA-G 20 of 24)",
+     "model": 25.0,
+     "drawing": 0.0,
+     "dev": null,
+     "tol": null,
+     "ok": true,
+     "src": "NOT counted as an asset failure: gates.js DEPARTURE_LEVEL 5.4 [inf] + WALK_H 3.0 puts the walkway top at 8.46 m; photo a2 shows the BA-G bump-out roofs at 6.5-7.1 m with the walkways joining below them - request to bridges (manifest itb.requests); scene2d.json of 2026-11-05T03:56:14.689Z"
     },
     {
      "check": "SFO Museum taxiway polygons inside the 3-D footprint",
@@ -2419,6 +2877,368 @@
       "G10/G10L1",
       0.48
      ]
+    ],
+    "walkway_vs_host_roof": [
+     {
+      "stand": "A1",
+      "gate": "A1",
+      "door": 1,
+      "walkway_top": 8.46,
+      "host_roof": null,
+      "ok": false
+     },
+     {
+      "stand": "A1",
+      "gate": "A1",
+      "door": 2,
+      "walkway_top": 8.46,
+      "host_roof": 17.9,
+      "ok": true
+     },
+     {
+      "stand": "A2",
+      "gate": "A2",
+      "door": 1,
+      "walkway_top": 8.46,
+      "host_roof": 16.9,
+      "ok": true
+     },
+     {
+      "stand": "A2",
+      "gate": "A2",
+      "door": 2,
+      "walkway_top": 8.46,
+      "host_roof": 16.9,
+      "ok": true
+     },
+     {
+      "stand": "A4",
+      "gate": "A4",
+      "door": 1,
+      "walkway_top": 8.46,
+      "host_roof": 16.9,
+      "ok": true
+     },
+     {
+      "stand": "A5",
+      "gate": "A5",
+      "door": 1,
+      "walkway_top": 8.46,
+      "host_roof": 16.9,
+      "ok": true
+     },
+     {
+      "stand": "A5",
+      "gate": "A5",
+      "door": 2,
+      "walkway_top": 8.46,
+      "host_roof": 16.9,
+      "ok": true
+     },
+     {
+      "stand": "A6",
+      "gate": "A6",
+      "door": 1,
+      "walkway_top": 8.46,
+      "host_roof": null,
+      "ok": false
+     },
+     {
+      "stand": "A6",
+      "gate": "A6",
+      "door": 2,
+      "walkway_top": 8.46,
+      "host_roof": null,
+      "ok": false
+     },
+     {
+      "stand": "A8",
+      "gate": "A8",
+      "door": 1,
+      "walkway_top": 8.46,
+      "host_roof": 17.9,
+      "ok": true
+     },
+     {
+      "stand": "A8",
+      "gate": "A8",
+      "door": 2,
+      "walkway_top": 8.46,
+      "host_roof": null,
+      "ok": false
+     },
+     {
+      "stand": "A9",
+      "gate": "A9",
+      "door": 1,
+      "walkway_top": 8.46,
+      "host_roof": 16.9,
+      "ok": true
+     },
+     {
+      "stand": "A9",
+      "gate": "A9",
+      "door": 2,
+      "walkway_top": 8.46,
+      "host_roof": 16.9,
+      "ok": true
+     },
+     {
+      "stand": "A10",
+      "gate": "A10",
+      "door": 1,
+      "walkway_top": 8.46,
+      "host_roof": 16.9,
+      "ok": true
+     },
+     {
+      "stand": "A10",
+      "gate": "A10",
+      "door": 2,
+      "walkway_top": 8.46,
+      "host_roof": 16.9,
+      "ok": true
+     },
+     {
+      "stand": "A11",
+      "gate": "A11",
+      "door": 1,
+      "walkway_top": 8.46,
+      "host_roof": 16.9,
+      "ok": true
+     },
+     {
+      "stand": "A11",
+      "gate": "A11",
+      "door": 2,
+      "walkway_top": 8.46,
+      "host_roof": null,
+      "ok": false
+     },
+     {
+      "stand": "A12",
+      "gate": "A12",
+      "door": 1,
+      "walkway_top": 8.45,
+      "host_roof": 16.9,
+      "ok": true
+     },
+     {
+      "stand": "A13",
+      "gate": "A13",
+      "door": 1,
+      "walkway_top": 8.46,
+      "host_roof": 16.9,
+      "ok": true
+     },
+     {
+      "stand": "A13",
+      "gate": "A13",
+      "door": 2,
+      "walkway_top": 8.45,
+      "host_roof": 16.9,
+      "ok": true
+     },
+     {
+      "stand": "A15",
+      "gate": "A15",
+      "door": 1,
+      "walkway_top": 8.45,
+      "host_roof": 16.9,
+      "ok": true
+     },
+     {
+      "stand": "G1",
+      "gate": "G1",
+      "door": 1,
+      "walkway_top": 8.46,
+      "host_roof": 6.5,
+      "ok": false
+     },
+     {
+      "stand": "G1",
+      "gate": "G1",
+      "door": 2,
+      "walkway_top": 8.46,
+      "host_roof": 6.5,
+      "ok": false
+     },
+     {
+      "stand": "G2",
+      "gate": "G2",
+      "door": 1,
+      "walkway_top": 8.46,
+      "host_roof": 6.5,
+      "ok": false
+     },
+     {
+      "stand": "G2",
+      "gate": "G2",
+      "door": 2,
+      "walkway_top": 8.45,
+      "host_roof": 6.5,
+      "ok": false
+     },
+     {
+      "stand": "G3",
+      "gate": "G3",
+      "door": 1,
+      "walkway_top": 8.46,
+      "host_roof": 6.5,
+      "ok": false
+     },
+     {
+      "stand": "G3",
+      "gate": "G3",
+      "door": 2,
+      "walkway_top": 8.45,
+      "host_roof": 6.5,
+      "ok": false
+     },
+     {
+      "stand": "G4",
+      "gate": "G4",
+      "door": 1,
+      "walkway_top": 8.46,
+      "host_roof": 6.5,
+      "ok": false
+     },
+     {
+      "stand": "G4",
+      "gate": "G4",
+      "door": 2,
+      "walkway_top": 8.45,
+      "host_roof": 6.5,
+      "ok": false
+     },
+     {
+      "stand": "G5",
+      "gate": "G5",
+      "door": 1,
+      "walkway_top": 8.46,
+      "host_roof": 6.5,
+      "ok": false
+     },
+     {
+      "stand": "G5",
+      "gate": "G5",
+      "door": 2,
+      "walkway_top": 8.45,
+      "host_roof": 6.5,
+      "ok": false
+     },
+     {
+      "stand": "G6",
+      "gate": "G6",
+      "door": 1,
+      "walkway_top": 8.46,
+      "host_roof": 6.5,
+      "ok": false
+     },
+     {
+      "stand": "G6",
+      "gate": "G6",
+      "door": 2,
+      "walkway_top": 8.45,
+      "host_roof": 6.5,
+      "ok": false
+     },
+     {
+      "stand": "G7",
+      "gate": "G7",
+      "door": 1,
+      "walkway_top": 8.46,
+      "host_roof": 6.5,
+      "ok": false
+     },
+     {
+      "stand": "G7",
+      "gate": "G7",
+      "door": 2,
+      "walkway_top": 8.45,
+      "host_roof": 6.5,
+      "ok": false
+     },
+     {
+      "stand": "G8",
+      "gate": "G8",
+      "door": 1,
+      "walkway_top": 8.46,
+      "host_roof": 6.5,
+      "ok": false
+     },
+     {
+      "stand": "G8",
+      "gate": "G8",
+      "door": 2,
+      "walkway_top": 8.45,
+      "host_roof": 6.5,
+      "ok": false
+     },
+     {
+      "stand": "G9",
+      "gate": "G9",
+      "door": 1,
+      "walkway_top": 8.46,
+      "host_roof": 6.5,
+      "ok": false
+     },
+     {
+      "stand": "G9",
+      "gate": "G9",
+      "door": 2,
+      "walkway_top": 8.46,
+      "host_roof": 6.5,
+      "ok": false
+     },
+     {
+      "stand": "G10",
+      "gate": "G10",
+      "door": 1,
+      "walkway_top": 8.46,
+      "host_roof": 6.5,
+      "ok": false
+     },
+     {
+      "stand": "G10",
+      "gate": "G10",
+      "door": 2,
+      "walkway_top": 8.46,
+      "host_roof": 6.5,
+      "ok": false
+     },
+     {
+      "stand": "G12",
+      "gate": "G12",
+      "door": 1,
+      "walkway_top": 8.45,
+      "host_roof": 16.0,
+      "ok": true
+     },
+     {
+      "stand": "G12",
+      "gate": "G12",
+      "door": 2,
+      "walkway_top": 7.47,
+      "host_roof": 16.0,
+      "ok": true
+     },
+     {
+      "stand": "G13",
+      "gate": "G13",
+      "door": 1,
+      "walkway_top": 8.45,
+      "host_roof": 16.0,
+      "ok": true
+     },
+     {
+      "stand": "G13",
+      "gate": "G13",
+      "door": 2,
+      "walkway_top": 8.0,
+      "host_roof": 16.0,
+      "ok": true
+     }
     ]
    }
   },
@@ -2485,6 +3305,20 @@
     "what": "photo a2 view (camera solved, review r1): the BA-G NNE face; itb_cmp_a2g.png side by side (LOD1)",
     "samples": 32,
     "note": "local (out/ is gitignored); comparison sheets with photo pixels stay local"
+   },
+   {
+    "view": "curb",
+    "file": "out/buildings3d/itb_curb.png",
+    "what": "review r2: the departures curb from the roadway side: kerb, bollards, posts on the sidewalk, wall-head brackets",
+    "samples": 48,
+    "note": "local (out/ is gitignored); comparison sheets with photo pixels stay local"
+   },
+   {
+    "view": "bar",
+    "file": "out/buildings3d/itb_bar.png",
+    "what": "review r2: the core north bar as an elevated connector over the roads, from the ESE (roadways.glb as context)",
+    "samples": 48,
+    "note": "local (out/ is gitignored); comparison sheets with photo pixels stay local"
    }
   ],
   "render_check": {
@@ -2492,10 +3326,10 @@
    "n": 888,
    "wing_max_abs_dev_m": 0.208,
    "wing_mean_dev_m": -0.018,
-   "centre_max_abs_dev_m": 0.433,
+   "centre_max_abs_dev_m": 0.463,
    "note": "silhouette = topmost opaque pixel of the orthographic west render (LOD0, alpha pass) vs BI-02 roof_line(u); resolution 1 px = 0.28 m; in the centre the lens glass / arch form the top"
   },
-  "renders_updated": "2026-11-05T07:31:47+00:00",
+  "renders_updated": "2026-11-05T18:42:02+00:00",
   "qa": {
    "gltf_validator": {
     "tool": "Khronos glTF-Validator 2.0.0-dev.3.10 (node tools/blender/tower_validate.mjs <glb>)",

@@ -87,8 +87,14 @@ export function loadFixtures(FIX, SPEC, opts = {}) {
     const pc = provClassOf(g.prov, nv);
     const isALS = /^als_/.test(g.system);
     const faces = Object.entries(g.emit);
-    for (const pt of g.pts) {
+    const ftypeInpav = g.inpav_type ? photometryKey(g.inpav_type) : null;
+    for (let pi = 0; pi < g.pts.length; pi++) {
+      const pt = g.pts[pi];
       const [x, z, h] = pt;
+      // in-pavement points of an edge / threshold / end group (builder flag inpav, review truth2-8): L-850C / L-850D
+      // photometry, drawn at h = 1/2 in above the pavement (tools/env/build_lighting_spec.py IN_PAVEMENT_H)
+      const inpav = !!(g.inpav && g.inpav[pi]);
+      const ft = inpav && ftypeInpav ? ftypeInpav : ftype;
       const y = groundY + (isALS ? (plane[g.end] ?? 0) : 0) + (h || 0);
       faces.forEach(([face, em], fi) => {
         // colour of this face: 'face0'/'face1' -> per-point code (pts[3+fi]); 'split' (PAPI) -> W/R by angle (both
@@ -108,10 +114,10 @@ export function loadFixtures(FIX, SPEC, opts = {}) {
             const up = (em.aim_up_deg || 0) * Math.PI / 180;
             dir = [d2[0] * Math.cos(up), Math.sin(up), d2[1] * Math.cos(up)];
           }
-          const cd = cdFor(SPEC, ftype, cname);
+          const cd = cdFor(SPEC, ft, cname);
           const rec = {
-            p: [x, y, z], c: (colours[cname] && colours[cname].lin_srgb) || [1, 1, 1], colour: code, dir, k: dir ? lobeK(SPEC, ftype) : 0,
-            cd, i: null, s: 0.3, system: g.system, end: g.end, type: g.type, ftype, face, seenBy: em.seen_by,
+            p: [x, y, z], c: (colours[cname] && colours[cname].lin_srgb) || [1, 1, 1], colour: code, dir, k: dir ? lobeK(SPEC, ft) : 0,
+            cd, i: null, s: 0.3, system: g.system, end: g.end, type: inpav ? g.inpav_type : g.type, ftype: ft, inpav, face, seenBy: em.seen_by,
             prov: g.prov, provClass: pc, photometryNV: cd == null,
           };
           if (em.aim_up_deg) rec.aimUp = em.aim_up_deg;

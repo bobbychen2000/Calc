@@ -128,9 +128,12 @@ export class GroundPhysics {
   }
   // run after traffic.update(): sets tr.physOff (target offsets) for the next frame; checks data-pose stand parking
   resolve(traffic, dt) {
-    const fixed = [], free = [], moving = [], silent = []; let conflicts = 0;
+    const fixed = [], free = [], moving = [], silent = [], waiting = []; let conflicts = 0;
     for (const tr of traffic.tracks.values()) {
-      const D = tr.disp; if (!D.valid || !D.ground || tr.vehicle || tr.dropping) { tr.physOff = null; continue; }
+      // (a body being removed that still waits for its jet bridge -- traffic.js fadeRemove: it fades once the bridge is <= 30 %
+      // extended -- is no obstacle, but a live aircraft driving into it makes it fade now: round 3, the stale occupant of
+      // G7 replaced ahead of UAL900 at 20:39:40Z was driven through for 35 s while its bridge retracted, overlap.gnd)
+      const D = tr.disp; if (!D.valid || !D.ground || tr.vehicle || tr.dropping) { tr.physOff = null; if (tr.dropping && !tr.dropNow && !tr.fadeOut && !tr.removed && D.valid && D.ground && !tr.vehicle) { const W = this.body(tr); if (W) waiting.push(W); } continue; }
       // (silent: transponder off (stale), or stopped off a stand with no position for a while (traffic.js tr.quiet))
       const sil = tr.stale || tr.quiet;
       // (a body still driving in -- a silent docking, or the data already stopped at the stand while the drawn body is on its way,
@@ -211,6 +214,10 @@ export class GroundPhysics {
         if (S.tr.removed || S.tr.dropping) continue;
         const hit = overlaps(B, S, 0) || (!S.tr.gate && ahead && overlaps(ahead, S, 0.5));
         if (hit) { traffic.event && traffic.event(S.tr, traffic._lastRecv || 0, 'stale-replaced', { by: tr.hex, moving: true, quiet: S.tr.stale ? 0 : 1 }); if (traffic.fadeRemove) traffic.fadeRemove(S.tr, 'ghost'); else traffic.remove(S.tr); ghosts++; }
+      }
+      for (const S of waiting) {
+        if (S.tr.dropNow || S.tr.removed || S.tr === tr) continue;
+        if (overlaps(B, S, 0) || (ahead && overlaps(ahead, S, 0.5))) { S.tr.dropNow = true; ghosts++; if (traffic.counters) traffic.counters.dropWaitCut = (traffic.counters.dropWaitCut || 0) + 1; }
       }
       for (const o of placed) {
         if (o.tr && (o.tr.removed || o.tr.dropping)) continue;

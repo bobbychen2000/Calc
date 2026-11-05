@@ -8,9 +8,24 @@
 // sprites on moving aircraft took the velocity of the background (review round 1). Occlusion: the pass has no scene
 // depth, so each fragment compares the scene depth at its pixel (the main pass's depth texture) with the sprite's view
 // depth (a halo over a nearer surface is hidden, over a farther one it shows, as with a hardware depth test).
+// Occlusion, environment review round 2 (truth2-9, look2-1, look2-5):
+//  - the core + halo are drawn or not as a whole: ONE test per sprite at the light's own projected pixel (the centre UV,
+//    the same for every fragment of the quad), against a tolerance from the scene's depth slope there (the largest view-z
+//    step to the 4 neighbouring pixels: a grazing ground plane under a runway light spans tens of metres per pixel, a wall
+//    or fuselage seen face-on a few cm) + OCC_MOUNT_M (the lamp's offset from the surface it is mounted on, I) +
+//    OCC_PREC × depth (reversed float depth buffer precision, generous). It replaces the slack that grew with distance
+//    (2 m camera pull + 1 % of d + 0.5 m: 5.5 m at 300 m, 39.5 m at 3.7 km, through fuselages and bridges); the pull is gone;
+//  - the fog aureole is forward scatter along the whole eye-to-lamp path, so geometry nearer than the lamp does not cut it
+//    off: per pixel it keeps the part scattered in front of the surface there. Path geometry: a point at distance s on the
+//    ray at angle θ from the lamp (distance D) scatters at ψ = θ D / (D − s); with u = D / (D − s) the contribution is
+//    p(θ u) du / D (uniform in u), so with the aureole's Gaussian phase in θ the fraction in front of a surface at s_o is
+//    F = 1 − erfc(a u_o) / erfc(a), a = θ / θ_aur, u_o = D / (D − s_o) (s_o / D = scene view depth / lamp view depth;
+//    F = 1 behind the lamp). Small-angle, single-scatter model (I); erfc: Abramowitz & Stegun 7.1.26 (|ε| < 1.5e-7).
+//    Before: every aureole fragment over nearer geometry was discarded - one-row horizontal cuts at each ALS station's
+//    row (E7 night fog) and black aircraft silhouettes inside their own landing-light glow.
 // Vertex: optional directional lobe pow(max(dir.toCam, 0), k); on-screen radius between 2.2 px (intensity scaled down
 // to conserve energy) and 12 px (review round 1: a 1.4 m marker 17 m from the camera was a 110 px glare disk);
-// a 1.6x glow; pulled towards the camera by min(2 m, 5 % of the distance). By day (night factor 0) intensities x 0.5;
+// a 1.6x glow. By day (night factor 0) intensities x 0.5;
 // all intensities x lampK (lamp units -> the sky model's units once the lamps are on; js/three/tsl/common.js).
 // Markers (records with marker: true; until js/live/app.js sets the flag, records without a direction and with s >= 0.6,
 // which only the markers have) fade out between 150 m and 60 m from the camera.
@@ -31,7 +46,11 @@
 // against ~1e5 cd for real landing lights, inferred), and the day factor brings them into that range (~150,000 cd).
 import { THREE, TSL } from './lib.js';
 import { lampK } from './tsl/common.js';
-const { Fn, attribute, vec2, vec3, vec4, float, max, min, pow, length, normalize, dot, exp, uniform, cameraPosition, cameraViewMatrix, cameraNear, cameraFar, Discard, If, varying, select, mix, smoothstep, screenUV, perspectiveDepthToViewZ } = TSL;
+const { Fn, attribute, vec2, vec3, vec4, float, max, min, pow, length, normalize, dot, exp, abs, sqrt, clamp, uniform, cameraPosition, cameraViewMatrix, cameraProjectionMatrix, cameraNear, cameraFar, Discard, If, varying, select, mix, smoothstep, screenUV, perspectiveDepthToViewZ } = TSL;
+// occlusion tolerance (header): lamp offset from its mounting surface (I) and depth-precision term (I; reversed float depth)
+export const OCC_MOUNT_M = 0.5, OCC_PREC = 2e-4;
+// erfc(x), x >= 0 (Abramowitz & Stegun 7.1.26): t (a1 + t (a2 + ...)) exp(-x^2); the polynomial part only (exp separate)
+const erfcPoly = (x) => { const t = float(1.0).div(x.mul(0.3275911).add(1.0)); return t.mul(t.mul(t.mul(t.mul(t.mul(1.061405429).sub(1.453152027)).add(1.421413741)).sub(0.284496736)).add(0.254829592)); };
 
 export class Sprites {
   // opts: { depthNode (scene depth texture node), expo (exposure uniform), night (uniform 0..1) }
@@ -55,6 +74,8 @@ export class Sprites {
     const iP = attribute('iP', 'vec4'), iC = attribute('iC', 'vec4'), iD = attribute('iD', 'vec4'), iA = attribute('iA', 'vec4'), q = attribute('position', 'vec3');
     const vI = varying(float(0), 'vSprI'), vZ = varying(float(0), 'vSprZ'), vTol = varying(float(0), 'vSprTol');
     const vRat = varying(float(1), 'vSprRat'), vAL = varying(float(0), 'vSprAL'), vAr = varying(float(1), 'vSprAr');
+    const vUVc = varying(vec2(0.5, 0.5), 'vSprUVc');
+    this.texel = uniform(new THREE.Vector2(1 / 1280, 1 / 720));   // one pixel of the scene depth texture (end())
     m.positionNode = Fn(() => {
       const p = iP.xyz, size = iP.w; const toC = cameraPosition.sub(p); const d = length(toC); const tc = toC.div(max(d, 1e-3));
       // branchless (review round 3): with the If / ElseIf size clamp, every sprite between 2.2 and 12 px (neither branch:
@@ -76,23 +97,38 @@ export class Sprites {
       const sQ = select(aOn, max(s, iA.y.mul(d).mul(2.0)), s);
       vRat.assign(sQ.div(s)); vAr.assign(max(iA.y.mul(d).div(sQ), 1e-4));
       vAL.assign(select(aOn, iA.x.mul(kk).mul(0.408).mul(size.mul(size)).div(d.mul(d)).div(iA.y.mul(iA.y).mul(Math.PI)), float(0.0)));
-      const c = p.add(tc.mul(min(2.0, d.mul(0.05))));
-      vZ.assign(cameraViewMatrix.mul(vec4(c, 1.0)).z); vTol.assign(d.mul(0.01).add(0.5));
-      return c.add(this.camRight.mul(q.x).add(this.camUp.mul(q.y)).mul(sQ));
+      // the light's own view depth and projected pixel (centre UV, top-left origin as screenUV: engine.js TRAA reprojection)
+      const pv = cameraViewMatrix.mul(vec4(p, 1.0)); vZ.assign(pv.z); vTol.assign(pv.z.negate().mul(OCC_PREC).add(OCC_MOUNT_M));
+      const pc = cameraProjectionMatrix.mul(pv); const ndc = pc.xy.div(max(pc.w, 1e-6));
+      vUVc.assign(vec2(ndc.x.mul(0.5).add(0.5), ndc.y.mul(-0.5).add(0.5)));
+      return p.add(this.camRight.mul(q.x).add(this.camUp.mul(q.y)).mul(sQ));
     })();
     const vQ = varying(q.xy, 'vSprQ'), vC = varying(iC.xyz, 'vSprC');
     m.colorNode = Fn(() => {
       const r2 = dot(vQ, vQ); If(r2.greaterThan(1.0), () => { Discard(); });
+      let vis = float(1.0), aurF = float(1.0);
       if (opts.depthNode) {
-        const sd = opts.depthNode.sample(screenUV).r;
-        const sceneZ = perspectiveDepthToViewZ(sd, cameraNear, cameraFar);
-        if (opts.debugDepth) return vec4(sd.mul(100.0), sceneZ.negate().div(1000.0), vZ.negate().div(1000.0), 1.0);
-        If(sceneZ.greaterThan(vZ.add(vTol)).and(this.depthOn.greaterThan(0.5)), () => { Discard(); }); // a surface in front of the light
+        const zAt = (uv) => perspectiveDepthToViewZ(opts.depthNode.sample(uv).r, cameraNear, cameraFar);
+        const tx = this.texel;
+        const zC = zAt(vUVc);
+        if (opts.debugDepth) return vec4(zC.negate().div(1000.0), vZ.negate().div(1000.0), 0.0, 1.0);
+        // core: one test at the light's own pixel, tolerance = local depth slope + mount + precision (header)
+        const slope = max(max(abs(zAt(vUVc.add(vec2(0.0, tx.y))).sub(zC)), abs(zAt(vUVc.sub(vec2(0.0, tx.y))).sub(zC))),
+          max(abs(zAt(vUVc.add(vec2(tx.x, 0.0))).sub(zC)), abs(zAt(vUVc.sub(vec2(tx.x, 0.0))).sub(zC))));
+        const hidden = zC.greaterThan(vZ.add(vTol).add(slope)).and(this.depthOn.greaterThan(0.5));
+        vis = select(hidden, float(0.0), float(1.0));
+        // aureole: the part of the forward scatter in front of the surface at THIS pixel (header)
+        const zP = zAt(screenUV);
+        const ratio = clamp(zP.div(min(vZ, -1e-3)), 0.0, 1.0);                    // s_o / D (both view z negative)
+        const uo = float(1.0).div(max(float(1.0).sub(ratio), 1e-3));
+        const a = sqrt(r2).div(max(vAr, 1e-4)), a1 = a.mul(uo);
+        const rr = erfcPoly(a1).div(max(erfcPoly(a), 1e-12)).mul(exp(a.mul(a).sub(a1.mul(a1))));
+        aurF = select(ratio.greaterThan(0.999).or(this.depthOn.lessThan(0.5)), float(1.0), clamp(float(1.0).sub(rr), 0.0, 1.0));
       }
       const rc2 = r2.mul(vRat.mul(vRat)); const inCore = select(rc2.lessThan(1.0), float(1.0), float(0.0)); // core radius in its own units
       const halo = min(vI.mul(0.08), float(0.5).div(max(expo, 1e-3))).mul(exp(rc2.mul(-6.0)));
-      const aur = vAL.mul(exp(r2.div(vAr.mul(vAr)).negate()));
-      return vec4(vC.mul(vI.mul(exp(rc2.mul(-22.0))).add(halo).mul(inCore).add(aur)), 1.0);
+      const aur = vAL.mul(exp(r2.div(vAr.mul(vAr)).negate())).mul(aurF);
+      return vec4(vC.mul(vI.mul(exp(rc2.mul(-22.0))).add(halo).mul(inCore).mul(vis).add(aur)), 1.0);
     })();
     this.mesh = new THREE.Mesh(g, m); this.mesh.frustumCulled = false; this.mesh.renderOrder = 10; this.mesh.name = 'sprites';
     this.n = 0; this.fixedK = 1;
@@ -121,5 +157,6 @@ export class Sprites {
     for (const a of [this.aP, this.aC, this.aD, this.aA]) { a.clearUpdateRanges(); a.addUpdateRange(0, this.n * 4); a.needsUpdate = true; }
     const e = camera.matrixWorld.elements; this.camRight.value.set(e[0], e[1], e[2]).normalize(); this.camUp.value.set(e[4], e[5], e[6]).normalize();
     this.fovScale.value = 2 * Math.tan(camera.fov * Math.PI / 360) / Math.max(1, heightPx);
+    const h = Math.max(1, heightPx), w = Math.max(1, Math.round(h * (camera.aspect || 1))); this.texel.value.set(1 / w, 1 / h);
   }
 }

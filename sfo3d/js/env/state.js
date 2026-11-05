@@ -9,6 +9,7 @@ import { skyState, naturalIlluminanceAt, ev100ForIlluminance, SFO } from './ephe
 import { decodeMetar, decodeTaf, renderParams, extinctionFromVisibility, FT_M, KT_MS, SM_M } from './wx/metar.js';
 import { tafAt } from './wx/taf.js';
 import { controllerFromEnv, controllerHud } from './lighting/controller.js';
+import { dropsAbove, medianVolumeDiameter, fallSpeed, DRIZZLE_D, DRIZZLE_V } from './atmo/weather_fx.js';
 
 const DEG = Math.PI / 180;
 // ---------------------------------------------------------------------------------------------------- constants
@@ -77,27 +78,42 @@ export function selectReport(indexed, tEnv, live = false) {
   return indexed.find(r => r.obsMs != null && r.obsMs <= tEnv) || null;
 }
 
-/** Runway configuration (§3.5): observed ADS-B flow (stats.js runwayConfig) > METAR true wind with JO 7110.65 3-5-1
- *  ("most nearly aligned with the wind when 5 knots or more") > SFO West Plan below 5 kt ("95-98% of the time",
- *  flysfo.com). Plans other than West (arrive 28, depart 1) and Southeast (arrive 19, depart 10) are I. */
+/** Runway configuration (§3.5): observed ADS-B flow (stats.js runwayConfig) > a METAR-wind fallback restricted to the two
+ *  plans SFO publishes (flysfo.com "Runway Constraints", V, weather.md §4.5): the **West Plan** (arrive 28L/R, depart
+ *  1L/R; "95-98% of the time") unless the TAILWIND component on runway 28 is TAILWIND_SE_KT or more, then the
+ *  **Southeast Plan** (arrive 19L/R, depart 10L/R; "Less than 5% of the time, winds blow from the southeast").
+ *  Review finding truth2-1: the earlier JO 7110.65 3-5-1 "most nearly aligned with the wind" rule gave a non-West plan
+ *  for 21 of the 58 fixture reports (north / east plans SFO does not publish) and 'instrument' arrivals to 1L/1R, which
+ *  have no IAP; the 4 Nov 2026 recording (adsb.fi 19-20Z, METARs 03007KT / 04006KT) shows 75 of 79 arrivals on 28L/R
+ *  (envrev2/arrflow.py), i.e. SFO kept the West Plan in winds 3-5-1 maps to 01 - 3-5-1 itself yields to "A Runway Use
+ *  Program is in effect" (V). The 5-kt threshold (I) reproduces SFO's split: a 28-tailwind of ≥ 5 kt occurs in 5.5 %
+ *  of hours (weather.md §4.4, M, IEM 2000-2025) vs "less than 5%" Southeast (V). Gusts are not used (I).
+ *  Approach type: 'instrument' only for ends with a published IAP (spec §5.2 plate column, V: 28L/28R/19L ILS, 19R /
+ *  10L / 10R RNAV; 1L/1R "no IAP") when the METAR is below the charted visual minima "SFO 2500'/5" (V). The whole
+ *  fallback is tagged I and shown on the ?qa=env HUD. */
+export const TAILWIND_SE_KT = 5, CROSSWIND_SE_KT = 20;
+export const IAP_ENDS = new Set(['28L', '28R', '19L', '19R', '10L', '10R']);   // spec §5.2 (d-TPP 2609, V)
 export function runwayConfigFrom(d, observed, override) {
   if (override) return override;
   if (observed && observed.n > 0 && (observed.arr.length || observed.dep.length)) {
     const arr = {}; for (const e of observed.arr) arr[e] = 'observed'; return { arr, dep: observed.dep.slice(), source: 'ADS-B flow (last 20 min)', tag: 'M' };
   }
   const w = d && d.wind; const kt = w && w.speed_kt; const dir = w && w.dir_true_deg;
-  let plan = 'west';
-  if (kt != null && kt >= 5 && dir != null) {
-    const off = (h) => Math.abs(((dir - h) % 360 + 540) % 360 - 180);
-    const best = Object.entries(RWY_HDG).sort((a, b) => off(a[1]) - off(b[1]))[0][0];
-    plan = { '28': 'west', '19': 'southeast', '10': 'east', '1': 'north' }[best];
-  }
-  const P = { west: [['28L', '28R'], ['1L', '1R']], southeast: [['19L', '19R'], ['10L', '10R']], east: [['10L', '10R'], ['10L', '10R']], north: [['1L', '1R'], ['1L', '1R']] }[plan];
+  // tailwind on 28 = −(wind speed) × cos(wind-from − runway heading); positive = from behind (wind from 118° ± 90°)
+  const tail28 = (kt != null && dir != null) ? -kt * Math.cos((dir - RWY_HDG['28']) * DEG) : 0;
+  const cross28 = (kt != null && dir != null) ? Math.abs(kt * Math.sin((dir - RWY_HDG['28']) * DEG)) : 0;
+  const head19 = (kt != null && dir != null) ? kt * Math.cos((dir - RWY_HDG['19']) * DEG) : 0;
+  // strong southerly storms (e.g. 22036G63KT: 35 kt across 28, 36 kt down 19): crosswind on 28 ≥ CROSSWIND_SE_KT with a
+  // headwind on 19 -> Southeast as well (I; the 20-kt value follows FAA Order 8400.9's runway-use crosswind criterion as
+  // recalled - the order could not be fetched (HTTP 403): NV)
+  const plan = (tail28 >= TAILWIND_SE_KT || (cross28 >= CROSSWIND_SE_KT && head19 > 0)) ? 'southeast' : 'west';
+  const P = { west: [['28L', '28R'], ['1L', '1R']], southeast: [['19L', '19R'], ['10L', '10R']] }[plan];
   // instrument approaches when below the charted visual-approach minima "SFO 2500'/5" (Quiet Bridge / Tipp Toe, V)
   const vis = d && d.visibility ? d.visibility.sm : null, ceil = d ? d.ceiling_ft : null;
   const instr = (vis != null && vis < 5) || (ceil != null && ceil < 2500);
-  const arr = {}; for (const e of P[0]) arr[e] = instr ? 'instrument' : 'unknown';
-  return { arr, dep: P[1], plan, source: kt != null && kt >= 5 ? 'METAR wind, JO 7110.65 3-5-1' : 'calm/light wind: SFO West Plan', tag: plan === 'west' || plan === 'southeast' ? 'V+I' : 'I' };
+  const arr = {}; for (const e of P[0]) arr[e] = instr && IAP_ENDS.has(e) ? 'instrument' : 'unknown';
+  const why = plan === 'southeast' ? (tail28 >= TAILWIND_SE_KT ? `tailwind ${tail28.toFixed(1)} kt on 28 ≥ ${TAILWIND_SE_KT}` : `crosswind ${cross28.toFixed(0)} kt on 28 ≥ ${CROSSWIND_SE_KT}`) + ': SFO Southeast Plan' : (kt != null && kt >= 5 ? `tailwind ${tail28.toFixed(1)} kt on 28 < ${TAILWIND_SE_KT}: SFO West Plan` : 'calm/light wind: SFO West Plan');
+  return { arr, dep: P[1], plan, tail28, cross28, source: 'METAR fallback, ' + why, tag: 'I (SFO plans V; tailwind / crosswind rule I)' };
 }
 
 // ---------------------------------------------------------------------------------------------- vertical structure
@@ -115,7 +131,9 @@ export function runwayConfigFrom(d, observed, override) {
 //  - TWR VIS / SFC VIS (JO 7900.5E 8.3, 13.24; "the lower value ... prevailing ... the other value must be a remark"): the
 //    surface layer splits at TWR_SPLIT_M (below the tower cab eye, 59 m in the buildings track's tower model,
 //    data/buildings3d/manifest.json tower anchors cab_eye_h, I): surface visibility below, tower visibility above.
-export const MIN_CLOUD_FT = 100, TWR_SPLIT_M = 30;
+export const MIN_CLOUD_FT = 100, TWR_SPLIT_M = 30, CIRRUS_MIN_FT = 20000;
+// aerosol layer aloft (smoke / haze, truth2-4): vertical optical depth = own fraction × AEROSOL_TAU over AEROSOL_DEPTH_FT (I)
+export const AEROSOL_TAU = 1.0, AEROSOL_DEPTH_FT = 1000;
 // Horizontal structure of the surface layer (spec §4.4 / §7.3; review truth1-6). It modulates the LOWEST slab only, in the
 // same form in the scene fog (js/three/sky.js fogNode / bgTransmittance) and the lights' optical depth
 // (js/env/atmo/sky_model.js slabTau, horizTau):
@@ -161,8 +179,13 @@ function slabsFor(d, p, sigmaSurface, groundY, night) {
   let surf;
   if (fog && fog.kind === 'fog') {
     top = desc.has('MI') ? MIFG_TOP_FT : vv ? vv.height_ft : (top != null && top <= STRATUS_DEPTH_FT ? top : FOG_TOP_FT);
-    surf = { y0: groundY, y1: y(top), sigma: sigmaSurface, kind: desc.has('MI') ? 'MIFG' : (desc.has('BC') || desc.has('PR')) ? 'patchy fog' : 'fog',
-      patchy: desc.has('BC') || desc.has('PR'), tag: vv ? 'V meaning, I depth' : top === FOG_TOP_FT ? 'I (top 200 ft without VV)' : 'I (to the ceiling, decoder top_ft_min)' };
+    // MIFG (shallow fog, JO 7900.5E 13.13e: "apparent visibility in the fog layer less than 5/8 SM", via weather.md §2,
+    // V): the prevailing visibility is measured above it, so the 0-6 ft slab gets at least σ(5/8 SM) (lower bound, V
+    // meaning + I value; review truth2-5: it had the prevailing σ, i.e. clear air for '10SM MIFG')
+    const mi = desc.has('MI');
+    surf = { y0: groundY, y1: y(top), sigma: mi ? Math.max(sigmaSurface, extinctionFromVisibility(PATCH_VIS_SM * SM_M, night)) : sigmaSurface,
+      kind: mi ? 'MIFG' : (desc.has('BC') || desc.has('PR')) ? 'patchy fog' : 'fog',
+      patchy: desc.has('BC') || desc.has('PR'), tag: mi ? 'V (MIFG < 5/8 SM in the layer) + I (σ(5/8 SM) lower bound, depth 6 ft)' : vv ? 'V meaning, I depth' : top === FOG_TOP_FT ? 'I (top 200 ft without VV)' : 'I (to the ceiling, decoder top_ft_min)' };
   } else {
     surf = { y0: groundY, y1: top != null ? y(top) : y(3000), sigma: sigmaSurface, kind: fog ? 'mist' : 'sub-cloud', tag: 'I' };
   }
@@ -190,7 +213,27 @@ function slabsFor(d, p, sigmaSurface, groundY, night) {
   // sorted and non-overlapping (photometry.opticalDepth / the shader assume it): a slab starts where the one below ends
   S.sort((a, b) => a.y0 - b.y0);
   for (let i = 1; i < S.length; i++) { if (S[i].y0 < S[i - 1].y1) S[i].y0 = Math.min(S[i - 1].y1, S[i].y1); }
-  return S.filter((s, i) => i === 0 || s.y1 > s.y0);
+  let out = S.filter((s, i) => i === 0 || s.y1 > s.y0);
+  // smoke / haze aloft ('FU FEW004', decoder aerosol_layers, JO 7900.5E 13.35, V): an aerosol slab, not a cloud (review
+  // truth2-4): extra σ = own × AEROSOL_TAU / depth over AEROSOL_DEPTH_FT from the reported base, added to the slabs it
+  // overlaps (split at its bounds); where no slab exists, clear air + the extra σ. All values I.
+  for (const L of p.aerosol_layers || []) {
+    if (L.height_ft == null) continue;
+    const a = y(L.height_ft), b = a + AEROSOL_DEPTH_FT * FT_M, dS = (L.own_fraction || 0) * AEROSOL_TAU / (b - a);
+    if (!(dS > 0)) continue;
+    const res = []; let cur = a;
+    for (const sl of out) {
+      if (sl.y1 <= a || sl.y0 >= b) { res.push(sl); continue; }
+      if (sl.y0 < a) res.push({ ...sl, y1: a });
+      if (sl.y0 > cur) res.push({ y0: cur, y1: sl.y0, sigma: SIGMA_CLEAR + dS, kind: 'smoke aloft ' + L.aerosol, aerosol: L.aerosol, tag: 'V (13.35 obscuration aloft) + I (τ, depth)' });
+      res.push({ ...sl, y0: Math.max(sl.y0, a), y1: Math.min(sl.y1, b), sigma: sl.sigma + dS, kind: sl.kind + ' + ' + L.aerosol + ' aloft', aerosol: L.aerosol });
+      if (sl.y1 > b) res.push({ ...sl, y0: b, horiz: undefined });
+      cur = Math.max(cur, sl.y1);
+    }
+    if (cur < b) res.push({ y0: cur, y1: b, sigma: SIGMA_CLEAR + dS, kind: 'smoke aloft ' + L.aerosol, aerosol: L.aerosol, tag: 'V (13.35 obscuration aloft) + I (τ, depth)' });
+    out = res.sort((u, v) => u.y0 - v.y0).filter(sl => sl.y1 > sl.y0);
+  }
+  return out;
 }
 
 /** Build EnvState for data time tEnv. in: {mode, overridden, reports [{raw, obsTime?, receiptTime?} | raw],
@@ -274,7 +317,10 @@ export function buildEnvState(tEnv, inp = {}) {
   const windTo = (d.wind && d.wind.dir_true_deg != null) ? [-Math.sin(d.wind.dir_true_deg * DEG), Math.cos(d.wind.dir_true_deg * DEG)] : [0, 0];
   const spd = pr.wind.speed_m_s;
   const clouds = pr.cloud_layers.filter(L => L.cover !== 'VV' && L.height_ft != null).map(L => {
-    const kind = L.type === 'CB' || L.type === 'TCU' ? L.type : L.height_ft < 6500 ? 'stratiform' : L.height_ft <= 20000 ? 'mid' : 'cirriform';
+    // étage by base height (I): low < 6,500 ft (WMO 2 km), high ≥ CIRRUS_MIN_FT; the WMO high étage starts at 5 km
+    // (16,500 ft) in temperate latitudes with the middle étage reaching 7 km, so the overlap is resolved at 20,000 ft:
+    // KSFO observers' SCT200 / BKN200 are drawn as cirrus (review truth2-11: '<= 20000' classed them 'mid', opaque)
+    const kind = L.type === 'CB' || L.type === 'TCU' ? L.type : L.height_ft < 6500 ? 'stratiform' : L.height_ft < CIRRUS_MIN_FT ? 'mid' : 'cirriform';
     return { cover: L.cover, base: groundY + L.height_ft * FT_M, baseFt: L.height_ft, resFt: L.height_ft <= 5000 ? 50 : L.height_ft <= 10000 ? 250 : 500,
       thickness: L.thickness_m_guess, thicknessTag: L.thickness_m_guess != null ? 'I (marine layer depth)' : 'renderer default (I)', total: L.summation, own: L.own_fraction, kind,
       drift: [windTo[0] * spd, windTo[1] * spd], driftTag: 'METAR surface wind, not amplified (I; sounding winds not wired)' };
@@ -284,15 +330,35 @@ export function buildEnvState(tEnv, inp = {}) {
   if (pr.precip) {
     const P = pr.precip; let rate = P.rate_mm_h;
     if (P.kind === 'rain') { const [lo, hi] = { light: [0, 2.54], moderate: [2.8, 7.62], heavy: [7.62, 1e9] }[P.intensity || 'moderate']; rate = Math.round(clamp(rate, lo, hi) * 100) / 100; }
+    // drop parameters from the CLAMPED rate with the same functions the renderer uses (js/env/atmo/weather_fx.js
+    // rainParams), so EnvState, the HUD and the drawn rain are one value set (review truth2-3: they kept the unclamped
+    // Prrrr values; the drizzle fall speed was the decoder's 1 m/s while 1.5 m/s was drawn)
+    const isRain = P.kind === 'rain', isDz = P.kind === 'drizzle';
+    const Rr = Math.max(0.05, rate || 1);
+    const D0 = isRain ? medianVolumeDiameter(Rr) : isDz ? DRIZZLE_D : null;
     precip = { kind: P.kind, intensity: P.intensity, rateMmH: rate, rateRaw: P.rate_mm_h, rateBasis: P.rate_basis + (rate !== P.rate_mm_h ? '; clamped into the coded class (X9, I)' : ''),
-      dropsPerM3: P.drops_per_m3_gt_0p5mm, D0mm: P.median_volume_diameter_mm, vFall: P.fall_speed_m_s, showery: P.showery, thunder: P.thunder,
+      dropsPerM3: isRain ? Math.round(dropsAbove(Rr)) : null, D0mm: D0 != null ? Math.round(D0 * 100) / 100 : null,
+      vFall: isRain ? Math.round(fallSpeed(D0) * 100) / 100 : isDz ? DRIZZLE_V : null, dropTag: isRain ? 'Marshall–Palmer at the clamped rate (weather_fx)' : isDz ? 'drizzle 0.3 mm, 1.5 m/s (I, weather_fx)' : null,
+      showery: P.showery, thunder: P.thunder,
       hail: P.hail || null, hailTag: P.hail ? (P.kind === 'rain' ? 'with rain: drawn as the rain (hail stones not drawn, size / fall speed NV)' : 'not drawn (size / fall speed NV)') : null };
   }
   const lightning = { perMin: pr.lightning.flashes_per_min, atStation: pr.lightning.at_station, vicinity: pr.lightning.vicinity,
     where: pr.lightning.reports.map(r => ({ types: r.types, loc: r.loc })) };
   // ---- wetness initial state (§4.7, I; the state machine integrates in later steps)
   // (the §4.7 state machine that integrates rain rate / drying over time is step 4; until then the start rule only)
-  const surface = { wet: pr.surface.precip_now ? 1 : pr.surface.precip_ended_this_hour ? 0.5 : 0, puddle: 0, tag: 'I (start rule; constants NV)' };
+  // Reported amounts for the start state (review truth2-6): Prrrr = precipitation since the last routine METAR (JO 7900.5E
+  // 13.46, hundredths of an inch; P0000 = a trace, < 0.01 in), 6RRRR = the 3- or 6-hour amount (13.48; 3 h at 03/09/15/21Z,
+  // 6 h at 00/06/12/18Z reports, V). The window of Prrrr runs from the last routine report at hh:56 (as the decoder's rate).
+  const sf = pr.surface; let amount = null;
+  if (sf.precip_since_last_metar_in != null || sf.precip_3or6h_in != null) {
+    const min = d.time && d.time.minute != null ? (d.time.minute === 56 ? 60 : ((d.time.minute - 56) % 60 + 60) % 60 || 60) : 60;
+    const hr = d.time && d.time.hour != null ? d.time.hour : null;
+    const h6 = hr != null && d.time.minute >= 50 ? ((hr + 1) % 24) % 6 === 0 ? 6 : 3 : 6;
+    amount = { hourlyMm: sf.precip_since_last_metar_in != null ? sf.precip_since_last_metar_in * 25.4 : null, hourlyH: min / 60,
+      sixMm: sf.precip_3or6h_in != null ? sf.precip_3or6h_in * 25.4 : null, sixH: h6, tag: 'V (Prrrr 13.46 / 6RRRR 13.48)' };
+  }
+  const surface = { wet: sf.precip_now ? 1 : sf.precip_ended_this_hour ? 0.5 : 0, puddle: 0, amount, rateMmH: precip ? precip.rateMmH : null,
+    tag: 'I (start rule from the reported amounts; constants NV)' };
   // ---- wind (§4.8; METAR wind is TRUE, JO 7900.5E 13.10)
   const W = d.wind || {};
   const wind = { fromTrue: W.dir_true_deg ?? null, speed: pr.wind.speed_m_s, gust: pr.wind.gust_m_s, peak: pr.wind.peak_since_last_metar_kt != null ? pr.wind.peak_since_last_metar_kt * KT_MS : null,
@@ -318,7 +384,7 @@ export function buildEnvState(tEnv, inp = {}) {
     natural: { E_clear, D, E, sun: ill.sun / D, moon: ill.moon / D },
     photocell: { asosNightW: w, papiNight, papiPendingSince: papiPending, obstructionOn: Ev_fc < OBSTRUCTION_ON_FC, floodsOn: E < FLOODS_ON_LUX, northSkyFc: Ev_fc },
     wx: { raw: cur ? cur.raw : null, obsTime: cur ? cur.obsMs : null, ageMin, stale: ageMin != null ? ageMin > STALE_MIN : true, decoded: cur || fc ? d : null, params: cur || fc ? pr : null,
-      taf, forecast, key: wxKey, sw, reports: idx.length },
+      taf, forecast, key: wxKey, sw, reports: idx.length, none: !cur && !fc },
     atm, clouds, sunVisibleP: pr.sun_visible_probability, kcRatio: pr.global_irradiance_ratio,
     precip, lightning, surface, wind, nightSky, lightVis, exposure,
     lighting: null,                                  // set below: JO 7110.65 controller (js/env/lighting/controller.js)
@@ -326,7 +392,7 @@ export function buildEnvState(tEnv, inp = {}) {
     prov: {
       sun: 'V/T (ephemeris.mjs vs JPL Horizons ≤ 0.01°)', moon: 'V/T', phase: 'V (USNO)', towerNight: 'V (USNO −50′; JO 7110.65 "sunset to sunrise")',
       natural: 'V (USNO C171) + I (divisor D)', photocell: 'V (ASOS 0.5-3 fc; AC 150/5345-28H; AC 70/7460-1N) + I (thresholds, vertical = E/2)',
-      wx: fc ? 'I (forecast: prevailing TAF conditions, AIM 7-1-28; latest METAR stale or none)' : 'V (METAR, JO 7900.5E decoding)', atm: 'V (ASOS inversion, 2nd constants) + I (day/night blend, slabs, 10SM clear air)', clouds: 'V (heights, summation) + I (overlap, thickness, drift)',
+      wx: fc ? 'I (forecast: prevailing TAF conditions, AIM 7-1-28; latest METAR stale or none)' : cur ? 'V (METAR, JO 7900.5E decoding)' : 'I (no weather data: no report at or before t_env and no TAF in force; clear default drawn)', atm: 'V (ASOS inversion, 2nd constants) + I (day/night blend, slabs, 10SM clear air)', clouds: 'V (heights, summation) + I (overlap, thickness, drift)',
       sunVisibleP: 'I', kcRatio: '2nd (Kasten & Czeplak 1980)', precip: 'V (Table 9-4, Prrrr) + I (clamp, mid-class)', lightning: 'V (Table 13-7) + I (midpoints)',
       surface: 'I (constants NV)', wind: 'V (true wind) + I (sock shape)', nightSky: 'V (Falchi, Kyba) + I (3 mcd/m², ×10)', lightVis: 'M (Table B-1 fit)',
       exposure: 'M (EV targets) + I (clamp)', lighting: 'V (JO 7110.65BB 3-4 tables) + I (Q10 TBL 3-4-7, Q6 PAPI 20 %, flasher rule for non-visual arrivals)', runway: runway.tag || 'I',
@@ -346,7 +412,7 @@ export function envHudLines(st) {
   L.push(`Moon az ${f(st.moon.az, 1)}° el ${f(st.moon.el, 1)}° lit ${f(st.moon.lit * 100, 0)} % [V/T]`);
   L.push(`E clear ${f(st.natural.E_clear, 3)} lx ÷ D ${f(st.natural.D, 2)} = ${f(st.natural.E, 3)} lx [V+I] · EV100 ${f(st.exposure.ev100Target, 1)} → ${f(st.exposure.ev100, 1)} [M+I]`);
   L.push(`ASOS night w ${f(st.photocell.asosNightW, 2)} · PAPI ${st.photocell.papiNight ? 'night' : 'day'} · floods ${st.photocell.floodsOn ? 'on' : 'off'} · obstr ${st.photocell.obstructionOn ? 'on' : 'off'} [V+I]`);
-  L.push(`report ${st.wx.raw || '—'} · age ${f(st.wx.ageMin, 0)} min${st.wx.stale ? ' · STALE' : ''} [V]`);
+  L.push(st.wx.none ? `report — · NO WEATHER DATA (no report at or before t_env, no TAF in force): clear default drawn [I]` : `report ${st.wx.raw || '—'} · age ${f(st.wx.ageMin, 0)} min${st.wx.stale ? ' · STALE' : ''} [V]`);
   if (st.wx.forecast) L.push(`FORECAST TAF ${st.wx.forecast.issued} ${st.wx.forecast.applied.join('+')}: ${st.wx.forecast.text}${st.wx.forecast.groups.length ? ' (not rendered: ' + st.wx.forecast.groups.join(', ') + ')' : ''} [I]`);
   L.push(`σ surface ${st.atm.sigmaSurface.toExponential(2)} m⁻¹${st.atm.visLowerBound ? ` (${st.atm.visPrefix === 'P' ? 'P' : ''}${f(st.atm.visM / 1609.344, 0)}SM lower bound → clear air)` : ''} · ASOS ${st.atm.sigmaASOS != null ? st.atm.sigmaASOS.toExponential(2) : '—'} · E_T ${st.lightVis.ET.toExponential(2)} lx [M+I]`);
   { const sl = st.atm.slabs.map(s => `${s.kind} ${f(s.y0 - (st.atm.slabs[0] ? st.atm.slabs[0].y0 : 0), 0)}-${f(s.y1 - (st.atm.slabs[0] ? st.atm.slabs[0].y0 : 0), 0)} m σ ${s.sigma.toExponential(1)}`).join(' | ');
@@ -362,7 +428,7 @@ export function envHudLines(st) {
 }
 
 // Short form for the HUD (one line): the same defaults
-export const OPEN_QUESTION_SHORT = 'Q7 flood colour/bridge beacon unchanged NV, mast lamps 2,970 cd + side floor 25 % NV · Q2 FAA ALS stations · Q1 no beacon · Q3 RCL all runways · Q4 blue edges inf · Q10 TBL 3-4-7 · Q5/6 REIL style E NV, PAPI HG4 20 % · Q8 ?wx= only · Q9 ADS-B>METAR>West · Q12 no takram/stars · Q13 photographic · Q11 parked nav off · Q14 3 mcd/m² (×5 at the horizon) · Q15 no socks · Q16 NV';
+export const OPEN_QUESTION_SHORT = 'Q7 flood colour/bridge beacon unchanged NV, mast lamps 2,970 cd + side floor 25 % NV · Q2 FAA ALS stations · Q1 no beacon · Q3 RCL all runways · Q4 blue edges inf · Q10 TBL 3-4-7 · Q5/6 REIL style E NV, PAPI HG4 20 % · Q8 ?wx= only · Q9 ADS-B>West (SE if 28 tailwind ≥5 kt) · Q12 no takram/stars · Q13 photographic · Q11 parked nav off · Q14 3 mcd/m² (×5 at the horizon) · Q15 no socks · Q16 NV';
 // Open owner questions (spec §12): the default used for each until the owner answers (all I), shown in the ?qa=env HUD.
 export const OPEN_QUESTION_DEFAULTS = [
   'Q7 night photos: apron flood colour / bridge beacon / glazing glow unchanged (parameters, NV); mast lamps 2,970 cd on axis with a 25 % side / back floor (NV)',
@@ -373,7 +439,7 @@ export const OPEN_QUESTION_DEFAULTS = [
   'Q10 28L MALSR: separate controls, TBL 3-4-7',
   'Q5/Q6 REIL style NV; PAPI HG4 aiming, night 20 %',
   'Q8 archived-weather presets: ?wx= QA hook only, no user menu',
-  'Q9 runway config: ADS-B flow, else METAR wind (3-5-1), else West Plan; no D-ATIS',
+  'Q9 runway config: ADS-B flow, else SFO West Plan (Southeast Plan when the 28 tailwind is ≥ 5 kt, I); no D-ATIS',
   'Q12 takram atmosphere: not adopted (no GPU test here); no stars.bin, no starfield',
   'Q13 night look: photographic (auto-exposed)',
   'Q11 parked aircraft (display phase gate / parked, internal still; not moving): position / logo lights off (91.209(a)(2) "clearly illuminated")',

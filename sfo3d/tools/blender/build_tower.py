@@ -103,11 +103,14 @@ MATS = {
                           'alpha blend (0.6 inf)', blend=True),
     'cab_joint':     dict(rgb=(38, 40, 43), m=0.30, r=0.50, src='pub cab_glass_type (frameless butt-glazed); obs photo t2 (thin dark '
                           'joint lines; review round 2, finding 3: round 1 had light 6-cm joints); width 0.03 m and tone inf'),
-    # interior (review round 2, findings 2 / 3): neutral mid-dark placeholders instead of one near-black material
-    'cab_floor':     dict(rgb=(74, 74, 76), m=0.0, r=0.90, src='unknown (neutral placeholder floor)'),
-    'cab_console':   dict(rgb=(112, 112, 110), m=0.0, r=0.70, src='unknown (neutral placeholder console ring)'),
-    'cab_ceiling':   dict(rgb=(62, 62, 64), m=0.0, r=0.90, src='unknown (mid-dark placeholder ceiling)'),
-    'cab_shade':     dict(rgb=(52, 54, 58), m=0.0, r=0.85, src='obs photo t1 (dark band over the top ~0.35-0.4 of the glass, all '
+    # interior (review round 2, findings 2 / 3): neutral mid-dark placeholders instead of one near-black material.
+    # ambient_only (material extras -> js/three/buildings3d.js): sky light only in the app, no sun / shadow lookup (the
+    # alpha-blended glass casts no shadow, so the sun lit the whole floor through it and the floor sat in the PCF penumbra:
+    # a per-pixel checker on the low tier, finding 3); Cycles renders them physically
+    'cab_floor':     dict(rgb=(74, 74, 76), m=0.0, r=0.90, ambient_only=True, src='unknown (neutral placeholder floor)'),
+    'cab_console':   dict(rgb=(112, 112, 110), m=0.0, r=0.70, ambient_only=True, src='unknown (neutral placeholder console ring)'),
+    'cab_ceiling':   dict(rgb=(62, 62, 64), m=0.0, r=0.90, ambient_only=True, src='unknown (mid-dark placeholder ceiling)'),
+    'cab_shade':     dict(rgb=(52, 54, 58), m=0.0, r=0.85, ambient_only=True, src='obs photo t1 (dark band over the top ~0.35-0.4 of the glass, all '
                           'round); nature (sun shades / valance) and tone inf'),
     'roof_deck':     dict(rgb=(205, 205, 200), m=0.0, r=0.85, src='obs NAIP 2024 (white membrane, saturated: albedo inf)'),
     'coping':        dict(rgb=(176, 178, 180), m=0.15, r=0.45, src='inf'),

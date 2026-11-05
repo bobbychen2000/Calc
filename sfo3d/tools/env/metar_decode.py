@@ -46,6 +46,7 @@ INHG_HPA = 33.8639       # inch of mercury (0 degC) to hPa
 DESCRIPTORS = ('MI', 'PR', 'BC', 'DR', 'BL', 'SH', 'TS', 'FZ')
 PRECIP = ('DZ', 'RA', 'SN', 'SG', 'IC', 'PL', 'GR', 'GS', 'UP')
 OBSCUR = ('BR', 'FG', 'FU', 'VA', 'DU', 'SA', 'HZ', 'PY')
+AEROSOL_ALOFT = ('FU', 'HZ', 'DU', 'SA', 'VA')   # lithometeors / smoke / ash aloft: not water clouds (truth2-4)
 OTHER = ('PO', 'SQ', 'FC', 'SS', 'DS')
 PHEN = PRECIP + OBSCUR + OTHER
 WX_NAMES = {'DZ': 'drizzle', 'RA': 'rain', 'SN': 'snow', 'SG': 'snow grains', 'IC': 'ice crystals', 'PL': 'ice pellets',
@@ -652,6 +653,14 @@ def render_params(d, night=False, marine_layer_depth_ft=None, routine_minute=56)
         # INFERRED thickness: low stratus = marine layer depth; otherwise unknown (renderer default).
         L['base_m'] = None if h is None else h * FT_M
         L['thickness_m_guess'] = (depth_ft * FT_M) if (h is not None and h < 3000 and L['cover'] in ('BKN', 'OVC', 'SCT')) else None
+    # obscuration aloft by smoke / haze / dust / sand / volcanic ash ('FU FEW004', [7900] 13.35): that sky-condition layer
+    # is an aerosol, not a water cloud - it stays in the summation (the de-summed 'own' above it), but is moved to
+    # aerosol_layers (no cloud body, shadow or sun blocking; environment review finding truth2-4)
+    aer = {(o['cover'], o['height_ft']): o['wx'] for o in d['rmk'].get('obscuration_layers', []) if o['wx'] in AEROSOL_ALOFT}
+    for L in layers:
+        L['aerosol'] = aer.get((L['cover'], L['height_ft']))
+    p['aerosol_layers'] = [L for L in layers if L['aerosol']]
+    layers = [L for L in layers if not L['aerosol']]
     p['cloud_layers'] = layers
     p['ceiling_m'] = None if d.get('ceiling_ft') is None else d['ceiling_ft'] * FT_M
     clear_frac = 1.0

@@ -107,10 +107,29 @@ export const POROSITY = { asphalt: 0.5, concrete: 0.3 };
 export const WET_FILM_MM = 0.2, WET_PORE_MM = 0.5, PUDDLE_START_MM = 1.0, PUDDLE_FULL_MM = 3.0, DRAIN_MM_H = 2.0;
 export const TAU_FILM_S = 20 * 60, TAU_PORE_S = 60 * 60;
 export const diffuseFactor = (porosity, wet) => 1 + ((1 + (0.2 - 1) * porosity) - 1) * clamp(wet, 0, 1);
-/** Initial state from a report (spec §4.7: wet = 1 if precipitation now; 0.5 if it ended in the last hour; else 0). */
+/** Initial state from a report (spec §4.7: wet = 1 if precipitation now; 0.5 if it ended in the last hour; else 0),
+ *  scaled by the REPORTED amount (review truth2-6: 1.5 mm of standing water used to be seeded for any precipitation,
+ *  even drizzle with P0000): A = the larger of Prrrr (since the last routine report) and 6RRRR (3 / 6 h), in mm, with
+ *  their windows (EnvState.surface.amount, V); without either, rate × 1 h (I). A trace (P0000 / 60000: < 0.01 in =
+ *  0.254 mm, V) wets the surface film only: film = wet, pores ½ of TRACE_MM / WET_PORE_MM, no standing water (I).
+ *  Otherwise film = wet, pores = wet × min(1, A / WET_PORE_MM), standing water = max(0, A − drainage over the window)
+ *  (the state machine's own drainage, I; constants NV, Q16). */
+export const TRACE_MM = 0.254;
 export function wetStart(st) {
   const s = st && st.surface ? st.surface.wet : 0;
-  return { film: s, pore: s, water: s >= 1 ? PUDDLE_START_MM + 0.5 : 0, t: st ? st.tEnv : 0 };
+  const t = st ? st.tEnv : 0;
+  if (!(s > 0)) return { film: 0, pore: 0, water: 0, t, basis: 'dry' };
+  const am = st.surface.amount;
+  let A = null, H = 1, basis;
+  if (am && (am.hourlyMm != null || am.sixMm != null)) {
+    const c = [];
+    if (am.hourlyMm != null) c.push([am.hourlyMm, am.hourlyH || 1, 'Prrrr']);
+    if (am.sixMm != null) c.push([am.sixMm, am.sixH || 6, '6RRRR']);
+    c.sort((a, b) => Math.max(0, b[0] - DRAIN_MM_H * b[1]) - Math.max(0, a[0] - DRAIN_MM_H * a[1]) || b[0] - a[0]);
+    [A, H, basis] = c[0];
+  } else { A = st.surface.rateMmH != null ? st.surface.rateMmH : 1.5; H = 1; basis = 'rate × 1 h (I)'; }
+  if (A < TRACE_MM / 2 || (A === 0)) return { film: s, pore: s * 0.5 * TRACE_MM / WET_PORE_MM, water: 0, t, basis: basis + ' trace: film only' };
+  return { film: s, pore: s * Math.min(1, A / WET_PORE_MM), water: Math.max(0, A - DRAIN_MM_H * H), t, basis: `${basis} ${A.toFixed(2)} mm / ${H.toFixed(2)} h` };
 }
 /** Advance the state to EnvState st (data time); returns {film, pore, water, puddle, t}. A jump of the data clock
  *  (> 10 min or backwards) restarts from the start rule. */

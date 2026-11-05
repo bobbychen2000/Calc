@@ -192,6 +192,7 @@ def postprocess(glb, fam, TW, stats, ao_info, mats=None):
             if spec.get('led_color'): ex['led_color'] = [round(float(c), 4) for c in spec['led_color']]
             if spec.get('led_color_obs'): ex['led_color_obs'] = spec['led_color_obs']
             if spec.get('light'): ex['obstruction_light'] = True
+            if spec.get('ambient_only'): ex['ambient_only'] = True
         if 'occlusionTexture' in m:
             assert m['occlusionTexture'].get('texCoord', 0) == 1, (m['name'], m['occlusionTexture'])
     # tangents only where a normal map is used (the exporter writes them for every primitive), then drop what is unused
@@ -704,7 +705,7 @@ def manifest_entry(results, ver, renders, args, rev, secs):
         night_glow=_night_glow(rD['glb']),
         dimensions=dims, inferred=inferred, unknown=unknown, not_modelled=not_modelled, conflicts=[c for c in conflicts if c],
         node_extras='every node: extras {src, feature, spec (spec_tower.json keys), drawing, tags}; materials: extras.src '
-                    '(+ led / led_color / obstruction_light for the app)',
+                    '(+ led / led_color / obstruction_light / ambient_only for the app)',
         verification=dict(**{f'F{fam}': ver[fam]['summary'] for fam in ver},
                           max_abs_dev_m=max(abs(c['dev']) for fam in ver for c in ver[fam]['checks'] if c['unit'] == 'm'),
                           gltf_validator={f'F{fam}': ver[fam].get('gltf_validator') for fam in ver}, file='out/buildings3d/tower_verify.json',

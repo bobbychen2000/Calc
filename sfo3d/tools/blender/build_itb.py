@@ -61,18 +61,29 @@ MATS = {
     'roof_membrane_pier': dict(rgb=(200, 202, 198), m=0.0, r=0.85, nrm=('itb_n_membrane', 0.6), naip='pier',
                                src='obs NAIP 2024 pier roof colour [obs, low]'),
     'glass_roof':         dict(rgb=(70, 86, 96), m=0.0, r=0.05, ior=1.9, src='obs NAIP (glazed lines, lenses, tip bands); glass inf'),
-    'glass_roof_under':   dict(rgb=(150, 172, 178), m=0.0, r=0.10, ior=1.9, src='obs photo i3 (light glazed strip in the soffit)'),
-    'soffit':             dict(rgb=(84, 87, 91), m=0.30, r=0.55, nrm=('itb_n_panel', 0.5), src='obs photo i3 (dark grey soffit panels); module inf'),
+    'glass_roof_under':   dict(rgb=(96, 108, 114), m=0.0, r=0.10, ior=1.9, src='obs photo i3 (light glazed strip in the soffit); review r2: '
+                               '150 / 172 / 178 -> 96 / 108 / 114 - the glazed tip bands seen from the i4 distance read dark (photo soffit / sky 0.35)'),
+    'soffit':             dict(rgb=(44, 47, 51), m=0.0, r=0.90, nrm=('itb_n_panel', 0.5),
+                               src='obs photos i3 / i4 (dark grey soffit panels; review r2: i4 soffit / sky 0.35 against 0.69 rendered at '
+                                   '84 / 87 / 91 -> darker, rough 0.9: seen at ~2 deg from i4 a smoother panel mirrors the lit ground); module inf'),
     'fascia':             dict(rgb=(236, 237, 237), m=0.20, r=0.35, src='obs photos i1 / i4 (white roof edge)'),
     'steel_white':        dict(rgb=(232, 233, 230), m=0.0, r=0.40, src='obs photos i3 / i4 (white painted trusses / columns)'),
-    'steel_grey':         dict(rgb=(96, 100, 105), m=0.30, r=0.50, src='obs photo i3 (dark outriggers, hangers)'),
+    'steel_grey':         dict(rgb=(96, 100, 105), m=0.30, r=0.50, src='obs photo i3 (canopy hangers / edge)'),
+    'steel_dark':         dict(rgb=(46, 49, 53), m=0.30, r=0.50, src='obs photo i4 (dark wall-head brackets under the west truss, review r2)'),
+    'kerb':               dict(rgb=(140, 140, 136), m=0.0, r=0.80, src='inf (granite / concrete kerb face)'),
+    'bollard':            dict(rgb=(160, 162, 160), m=0.60, r=0.35, src='obs photo i3 (grey cylindrical bollards); finish inf'),
+    'hvac':               dict(rgb=(176, 180, 182), m=0.40, r=0.50, src='inf (packaged rooftop units; light metal, photo a2)'),
+    'hvac_louvre':        dict(rgb=(92, 96, 100), m=0.30, r=0.60, src='inf (louvre / fan band)'),
+    'glass_win':          dict(rgb=(20, 80, 84), m=0.0, r=0.05, ior=1.9, src='obs photo a2 (dark-teal 2-lite windows on the BA-G NNE face, review r2)'),
     'glass_clear':        dict(rgb=(26, 32, 36), m=0.0, r=0.04, ior=1.9, nrm=('itb_n_curtain', 0.5), src='obs photo i4 (dark clear strip above the canopy)'),
     'glass_entrance':     dict(rgb=(34, 40, 44), m=0.0, r=0.05, ior=1.9, nrm=('itb_n_curtain', 0.5), src='obs photos i3 / i4 (clear glazing under the canopy)'),
-    'glass_frit':         dict(rgb=(214, 218, 220), m=0.0, r=0.22, ior=1.9, tex='itb_c_frit', nrm=('itb_n_frit', 0.35),
+    'glass_frit':         dict(rgb=(184, 192, 196), m=0.0, r=0.12, ior=1.9, tex='itb_c_frit', nrm=('itb_n_frit', 0.35),
                                src='pub "three layers of ceramic frit"; white banded look obs photos i1 / i4; pattern inf; own '
-                                   'normal tile itb_n_frit (review r1: itb_n_curtain on the 3.6-m frit tile put caps every 0.9 m)'),
-    'glass_hall':         dict(rgb=(118, 130, 136), m=0.0, r=0.06, ior=1.9, nrm=('itb_n_curtain', 0.5),
-                               src='obs photos i1 / i4 (clear central bay reads light: the lit hall seen through); value inf'),
+                                   'normal tile itb_n_frit (review r1: itb_n_curtain on the 3.6-m frit tile put caps every 0.9 m); review r2: '
+                                   'albedo 214 -> 184 (white band) / 92 -> 62 (clear band), roughness 0.22 -> 0.12 (reads as glass in shade, i3)'),
+    'glass_hall':         dict(rgb=(60, 68, 74), m=0.0, r=0.06, ior=1.9, nrm=('itb_n_curtain', 0.5),
+                               src='obs photos i1 / i4 (clear central bay: the lit hall seen through); review r2: i4 centre / side bay '
+                                   '~0.7 (photo) against 0.88 rendered at 118 / 130 / 136 -> darker; value inf'),
     'mullion':            dict(rgb=(178, 182, 186), m=0.60, r=0.40, src='inf (aluminium mullion caps)'),
     'canopy_top':         dict(rgb=(150, 152, 150), m=0.0, r=0.75, src='inf'),
     'concrete':           dict(rgb=(166, 164, 158), m=0.0, r=0.85, src='inf (curb, podium)'),
@@ -80,15 +91,18 @@ MATS = {
                                src='inf / unk (window bands)'),
     'glass_tinted':       dict(rgb=(42, 56, 60), m=0.0, r=0.06, ior=1.9, nrm=('itb_n_curtain', 0.5), tex='itb_c_curtain_tinted',
                                src='inf (end walls, clerestory: tint unk)'),
-    'alu_panel':          dict(rgb=(190, 193, 196), m=0.50, r=0.40, nrm=('itb_n_panel', 0.7),
-                               src='pub BA-G "metallic-finish composite aluminium panels"; BA-A / core: same by photo a2 [inf]'),
+    'alu_panel':          dict(rgb=(190, 193, 196), m=0.50, r=0.40, tex='itb_c_panel', nrm=('itb_n_panel_a2', 0.7),
+                               src='pub BA-G "metallic-finish composite aluminium panels"; review r2: 3.66 x 1.524 m module with dark reveals '
+                                   '(photo a2 joints) as base-colour + normal tiles; BA-A / core: same by analogy [inf]'),
     'alu_panel_pod':      dict(rgb=(206, 208, 209), m=0.40, r=0.45, nrm=('itb_n_panel', 0.7), src='obs photo a2 (light grey pods); finish inf'),
     'coping':             dict(rgb=(200, 202, 204), m=0.50, r=0.40, src='inf'),
     'service_dark':       dict(rgb=(78, 81, 84), m=0.10, r=0.70, nrm=('itb_n_panel', 0.4), src='obs photo a2 (dark apron level); detail unk'),
-    'glass_gate':         dict(rgb=(38, 54, 56), m=0.0, r=0.05, ior=1.9, tex='itb_c_curtain_gate',
+    'glass_gate':         dict(rgb=(16, 92, 96), m=0.0, r=0.05, ior=1.9, tex='itb_c_curtain_gate',
                                src='pub BA-G "tinted energy-efficient glazed curtain wall"; colour, mullion rhythm and extents obs '
-                                   'photo a2 (BA-G NNE face, a2 median sRGB 39 / 56 / 59); BA-A: no photo (positions unk, heights inf)'),
-    'lettering':          dict(rgb=(38, 42, 46), m=0.30, r=0.40, src='obs photos i1 / i3 / i4 ("SAN FRANCISCO INTERNATIONAL"); font inf'),
+                                   'photo a2 (BA-G NNE face); review r2: teal base 16 / 92 / 96 (a2 glass 52-66 / 69-85 / 68-86 incl. the sky '
+                                   'reflection; the round-1 base 38 / 54 / 56 rendered neutral 60 / 63 / 64); BA-A: no photo (positions unk, heights inf)'),
+    'lettering':          dict(rgb=(16, 18, 20), m=0.0, r=0.60, src='obs photos i1 / i3 / i4 ("SAN FRANCISCO INTERNATIONAL"); review r2: near-black '
+                               '(i4 darkest letter pixels 53 against 102 rendered at 38 / 42 / 46, metallic 0.3); font inf'),
 }
 
 
@@ -243,6 +257,10 @@ def lettering(parent, lod):
     cu = bpy.data.curves.new('itb_lettering_curve', 'FONT')
     cu.body = 'SAN FRANCISCO INTERNATIONAL'
     cu.align_x = 'CENTER'; cu.size = 1.0
+    try:
+        cu.offset = 0.03       # review r2: bolder strokes (i4: near-black letters; the built-in font is light) [inf]
+    except Exception:  # noqa: BLE001
+        pass
     if lod == 0:
         cu.extrude = 0.04
     else:
@@ -514,7 +532,9 @@ def main():
             # review r1: the 0.4-m mullion fins (and the lettering) are below the atlas texel (~0.3-0.5 m on the west wall) and
             # baked ~1-m dark bands beside every mullion - vertical stripes on the frit, and on LOD1 (same atlas) even where it
             # has no mullion; they are left out of the occluders (columns, trusses, canopy, hangers stay)
-            hide += [o for l in (0, 1) for o in objs[l] if o.name.split('_', 1)[1] in ('hall_mullions', 'hall_end_mullions', 'hall_lettering')]
+            # (review r2: the thin wall-head brackets and the kerb bollards / guards likewise)
+            hide += [o for l in (0, 1) for o in objs[l] if o.name.split('_', 1)[1] in ('hall_mullions', 'hall_end_mullions', 'hall_lettering',
+                                                                                        'hall_brackets', 'hall_bollards')]
             dt = bake_ao(shells[a], hide, ao_imgs[a], args.ao_samples)
             mean, p2 = smooth_ao(ao_imgs[a])
             ao_info[a] = dict(res=AO_RES[a], lods=[0, 1] if a == 'A' else [2], bake_s=round(dt, 1), mean=round(mean, 3), p2=round(p2, 3),

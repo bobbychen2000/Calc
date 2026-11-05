@@ -188,6 +188,8 @@ def controller(night, vis, rvr28r, ceil, rwy):
             else:
                 st = 3 if vis < 2 else 2                     # day >5 SM with ceiling < 1000: step 2 [I]
             sfl = vis < 3 and rwy['arr'][e] == 'ILS'
+            if typ == 'MALSR':
+                sfl = True   # 3-4-8: MALSR RAIL on TBL 3-4-7 ("Three Step MALS/Three Step RAIL"), same steps as the MALS [V]; review truth2-2
             out['ALS ' + e] = {'on': True, 'mode': typ, 'step': st, 'pct': MALS_PCT[st], 'SFL': sfl, 'SFL_pct': MALS_SFL[st] if sfl else 0,
                                'note': 'TBL 3-4-7 (separate MALSR controls); TBL 3-4-9 if slaved to the HIRL - SFO wiring NV'}
     # REIL: 3-4-2 "When the associated runway lights are lighted"; TBL 3-4-1; only ends in use [I]

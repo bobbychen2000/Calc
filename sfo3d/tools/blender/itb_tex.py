@@ -20,6 +20,8 @@ One tile spans TILE metres of UV_detail (itb_geom lays UV_detail out in metres /
                                           read as vertical stripes): horizontal transom caps at the 1.8-m pane joints, shallow
                                           vertical butt joints every 1.8 m (photo i3: horizontal frit bands and transoms,
                                           thin verticals ~2 bands apart) [obs photo i3, values inf]
+  itb_c_panel /    512 x 512   7.32 x 6.096 BA-G composite panels 3.66 x 1.524 m (photo a2 joints, review r2): base colour
+  itb_n_panel_a2                          with dark reveals and per-panel tone + its normal map (alu_panel walls)
   itb_c_curtain_gate 512 x 512 15.9 x 10.1 m BA-G gate-room curtain wall (photo a2, review r1): one tile = a quarter of the
                                           63.6-m bay x the full 4.6-14.7 m glazing; heavy mullion at the tile edge, a light
                                           one at mid-width, transoms every ~1.7 m and a deeper floor band at mid-height
@@ -37,6 +39,8 @@ TILES = {   # name: (metres along U, metres along V)
     'itb_c_frit': (3.6, 3.6),
     'itb_n_frit': (3.6, 3.6),
     'itb_c_curtain_gate': (15.9, 10.1),
+    'itb_c_panel': (7.32, 6.096),
+    'itb_n_panel_a2': (7.32, 6.096),
 }
 
 
@@ -100,7 +104,9 @@ def frit(path, size=256):
     f = np.mod(v, 0.9) / 0.9
     band = np.where(f < 0.8, 1.0, 0.0) + 0 * u
     j = (_dist(u, 1.8) < 0.025).astype(float)
-    base_w, base_c = np.array([214, 218, 220.0]), np.array([92, 104, 110.0])
+    # review r2: the bays read as white siding in shade (i3: photo 116-146 vs render 191-197) - lower albedo, the glass
+    # reflectance (coated IOR 1.9, roughness 0.12) carries the sky instead [inf values, obs photos i3 / i4]
+    base_w, base_c = np.array([184, 192, 196.0]), np.array([62, 72, 78.0])
     col = base_c[None, None, :] + (base_w - base_c)[None, None, :] * band[..., None]
     col = col * (1 - 0.15 * j[..., None])     # pane joints faint (review r1: horizontal structure dominates, photos i3 / i4)
     Image.fromarray(np.clip(col, 0, 255).astype(np.uint8), 'RGB').save(path, optimize=True)
@@ -135,7 +141,9 @@ CURTAIN_GLASS = {   # base-colour curtain-wall tiles: glass colour (sRGB, = the 
     'itb_c_curtain_tinted': (42, 56, 60),
     'itb_c_curtain_dark': (28, 33, 38),
 }
-GATE_GLASS = (38, 54, 56)   # glass_gate (photo a2 median 39 / 56 / 59) - build_itb.MATS['glass_gate']
+GATE_GLASS = (16, 92, 96)   # glass_gate - build_itb.MATS['glass_gate'] (review r2: teal; a2 glass 52-66 / 69-85 / 68-86 with the sky
+                            # reflection on top, the round-1 base 38 / 54 / 56 rendered neutral 60 / 63 / 64)
+GATE_CAP = (110, 122, 124)  # mullion caps (r1: 150 / 156 / 160 greyed the bays at the a2 distance)
 
 
 def curtain_colour(path, glass_rgb, size=512, cap_rgb=(176, 180, 184)):
@@ -149,6 +157,33 @@ def curtain_colour(path, glass_rgb, size=512, cap_rgb=(176, 180, 184)):
     return path
 
 
+PANEL_RGB = (190, 193, 196)   # build_itb.MATS['alu_panel'] (white tiles multiply it: the tile carries the full colour)
+
+
+def panel_colour(path, size=512):
+    """BA-G composite-panel wall (review r2, photo a2): 12 x 5 ft panels (3.66 x 1.524 m; a2: vertical joints every 3.7 m,
+    horizontal every 1.5 m) on a 7.32 x 6.096 m tile (2 x 4 panels): 7-cm dark reveals (0.55x - the shadow line a2 shows as
+    1-px dark lines at ~9 px/m) and a +-3 % tone per panel (a2: faint panel-to-panel variation) [obs a2 module, values inf]."""
+    tu, tv = TILES['itb_c_panel']
+    u, v = _grid(size, size, tu, tv)
+    pu, pv = tu / 2, tv / 4
+    iu = np.floor(u / pu).astype(int) + 0 * v.astype(int); iv = np.floor(v / pv).astype(int) + 0 * u.astype(int)
+    rng = np.random.default_rng(11); tone = 1.0 + 0.03 * rng.uniform(-1, 1, (2, 4))
+    t = tone[np.clip(iu, 0, 1), np.clip(iv, 0, 3)]
+    j = ((_dist(u, pu) < 0.035) | (_dist(v, pv) < 0.035)).astype(float)
+    col = np.array(PANEL_RGB, float)[None, None, :] * (t * (1 - 0.45 * j))[..., None]
+    Image.fromarray(np.clip(col, 0, 255).astype(np.uint8), 'RGB').save(path, optimize=True)
+    return path
+
+
+def panel_a2_normal(path, size=512):
+    """normal map on the panel tile: 7-cm, 1.5-cm-deep reveals on the 3.66 x 1.524 m module."""
+    tu, tv = TILES['itb_n_panel_a2']
+    u, v = _grid(size, size, tu, tv)
+    h = np.minimum(_groove(_dist(u, tu / 2), 0.035, 0.015), _groove(_dist(v, tv / 4), 0.035, 0.015))
+    return _normal_png(h, tu / size, tv / size, path)
+
+
 def make_all(out_dir):
     os.makedirs(out_dir, exist_ok=True)
     extra = {k: curtain_colour(os.path.join(out_dir, k + '.png'), rgb) for k, rgb in CURTAIN_GLASS.items()}
@@ -158,7 +193,9 @@ def make_all(out_dir):
         'itb_n_curtain': curtain(os.path.join(out_dir, 'itb_n_curtain.png')),
         'itb_c_frit': frit(os.path.join(out_dir, 'itb_c_frit.png')),
         'itb_n_frit': frit_normal(os.path.join(out_dir, 'itb_n_frit.png')),
-        'itb_c_curtain_gate': curtain_gate(os.path.join(out_dir, 'itb_c_curtain_gate.png'), GATE_GLASS),
+        'itb_c_curtain_gate': curtain_gate(os.path.join(out_dir, 'itb_c_curtain_gate.png'), GATE_GLASS, cap_rgb=GATE_CAP),
+        'itb_c_panel': panel_colour(os.path.join(out_dir, 'itb_c_panel.png')),
+        'itb_n_panel_a2': panel_a2_normal(os.path.join(out_dir, 'itb_n_panel_a2.png')),
     }
 
 

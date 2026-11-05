@@ -3,12 +3,12 @@
 // js/renderer.js and, under live3.html, the three.js r186 js/three/renderer3.js) from it. Also the QA overlays:
 // ?qa=env (EnvState HUD with tags, the METAR in use, its age and the open-question defaults) and ?qa=prov (airfield
 // fixtures tinted by provenance: pub/obs green, std blue, inf orange, NV red, spec §11.4).
-// Inputs by mode: snapshot / artifact = SNAPSHOT_METAR (3 reports, selected by data clock); live / replay = the relay's
+// Inputs by mode: snapshot / artifact = SNAPSHOT_METAR (3 reports) + SNAPSHOT_METARS (24 h before, IEM) selected by data clock, TAF = SNAPSHOT_TAFS; live / replay = the relay's
 // /api/metar?format=json list (polled every 60 s) and /api/taf; ?wx=<preset> / ?metar=<raw> / ?t= / ?rwy= overrides.
 import { DataClock, parseEnvQuery } from './clock.js';
 import { buildEnvState, envHudLines, OPEN_QUESTION_SHORT } from './state.js';
-import { metarSummary, splitReports } from './wx/metar.js';
-import { presetById, presetRunway, SNAPSHOT_TAF } from './presets.js';
+import { metarSummary, splitReports, decodeMetar } from './wx/metar.js';
+import { presetById, presetRunway, SNAPSHOT_TAF, SNAPSHOT_METARS, snapshotTafAt } from './presets.js';
 
 export class AppEnv {
   /** opts: {mode: 'live'|'snapshot', relayInfo, snapshotNow, snapshotMetar (text), search (location.search), groundY} */
@@ -23,6 +23,18 @@ export class AppEnv {
     this.groundY = opts.groundY ?? 3;
     this.forced = !!(this.preset || this.q.metar);              // a fixed report: always the current one
     this.reports = this.q.metar ? [this.q.metar] : this.preset ? [this.preset.metar] : splitReports(opts.snapshotMetar);
+    // snapshot / artifact: also the archived reports of the 24 h before the snapshot (review truth2-7), deduplicated
+    if (opts.mode === 'snapshot' && !this.forced && SNAPSHOT_METARS) {
+      const key = (r) => String(r).replace(/^(METAR|SPECI)\s+/, '').trim(); const have = new Set(this.reports.map(key));
+      for (const r of SNAPSHOT_METARS) if (!have.has(key(r))) { this.reports.push(r); have.add(key(r)); }
+    }
+    this.snapshotMode = opts.mode === 'snapshot' && !this.forced; this.snapshotNow = opts.snapshotNow ?? null;
+    // snapshot reports are all from at or before the snapshot time: resolve their day-of-month against it (an earlier
+    // ?t= / light mode must not read 231722Z as 23 Aug), so before the earliest report there is none (review truth2-7)
+    if (this.snapshotMode && this.snapshotNow != null) this.reports = this.reports.map(r => {
+      const raw = typeof r === 'string' ? r : r.raw || r.rawOb; const d = raw ? decodeMetar(raw, new Date(this.snapshotNow)) : null;
+      return d && d.time && d.time.utc ? { raw, obsTime: Date.parse(d.time.utc) / 1000 } : r;
+    });
     this.rwyOverride = this.q.rwy || (this.preset ? presetRunway(this.preset) : null);
     // snapshot / artifact: the TAF in force at the snapshot time (spec §3.4); live / replay: the relay's /api/taf
     this.taf = opts.mode === 'snapshot' && !this.forced && SNAPSHOT_TAF ? SNAPSHOT_TAF.raw : null;
@@ -37,6 +49,8 @@ export class AppEnv {
   /** EnvState at wall time `wall` (observedFlow: js/live/stats.js runwayConfig of the traffic events). */
   update(wall = Date.now(), observedFlow = null) {
     const c = this.clock.now(wall);
+    // snapshot: the latest TAF issued at or before min(t_env, snapshot time) (never one issued after the snapshot: Q8)
+    if (this.snapshotMode) { const x = snapshotTafAt(Math.min(c.tEnv, this.snapshotNow ?? c.tEnv)); this.taf = x ? x.raw : null; }
     this.state = buildEnvState(c.tEnv, { mode: c.mode, overridden: c.overridden || !!this.preset, reports: this.reports, taf: this.taf,
       live: this.forced || (c.mode === 'live' && !c.overridden), observedFlow, rwyOverride: this.rwyOverride, groundY: this.groundY, prev: this.state });
     this.state.tTraffic = c.tTraffic; this.state.lightMode = c.lightMode;
@@ -49,7 +63,7 @@ export class AppEnv {
   clockNote() {
     const s = this.state; if (!s) return '';
     // beyond the latest METAR the weather is the TAF's prevailing forecast (spec §3.3: label the scene "forecast")
-    const fc = s.wx && s.wx.forecast ? ` (TAF ${s.wx.forecast.issued} forecast)` : '';
+    const fc = s.wx && s.wx.forecast ? ` (TAF ${s.wx.forecast.issued} forecast)` : s.wx && s.wx.none ? ' (no weather data: clear default)' : '';
     if (!s.overridden) return fc;
     const t = new Date(s.tEnv).toISOString().slice(0, 16).replace('T', ' ') + 'Z';
     return fc + ` · env ${t}${this.preset ? ' (' + this.preset.id + ')' : s.lightMode && s.lightMode !== 'real' ? ' (' + s.lightMode + ')' : ''} ≠ traffic`;

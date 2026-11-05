@@ -161,8 +161,10 @@ def view_i4(args):
 
 def view_i3(args):
     """close-up from the departures curb island looking SSE along the facade (photo i3, Elizabeth K. Joseph 2017,
-    CC BY 2.0; camera estimated): columns with their fans, the exposed truss, soffit outriggers, canopy and hangers."""
-    sun_sky(240.0, 40.0)
+    CC BY 2.0; camera estimated): columns with their fans, the exposed truss, soffit outriggers, canopy and hangers.
+    Review r2: lit as in the photo - the west facade in shade (no column shadows on the glass, soft shadows on the sidewalk:
+    sun behind the building, az 100 / el 35 [est.]); round 1 lit it with a WSW sun, so the frit could not be compared."""
+    sun_sky(100.0, 35.0)
     loc = W(-95.0, -46.0, G.L3 + 1.7); tgt = W(-10.0, -24.0, 26.0)
     camera('cam_i3', loc, tgt, lens=24.0, res=(960, 540))
     return render(os.path.join(OUT, 'itb_i3.png')),
@@ -239,6 +241,31 @@ def view_bag(args):
     sun_sky(200.0, 55.0)
     bag_cam()
     return render(os.path.join(OUT, 'itb_bag.png')),
+
+
+def view_bar(args):
+    """review r2: the ITB core north bar as an elevated connector over the domestic departures viaduct and the at-grade roads,
+    seen from the ESE at 25 m, with the integration group's roadways.glb (LOD0) imported as context when it exists."""
+    rw = os.path.join(ROOT, 'data', 'buildings3d', 'roadways.glb')
+    if os.path.exists(rw) and not bpy.data.objects.get('roadways_ctx'):
+        before = set(bpy.data.objects)
+        bpy.ops.import_scene.gltf(filepath=rw)
+        new_objs = [o for o in bpy.data.objects if o not in before]
+        for o in new_objs:
+            if o.name.startswith(('LOD1', 'LOD2')):
+                for c in o.children_recursive: c.hide_render = True
+        m = bpy.data.objects.new('roadways_ctx', None); bpy.context.scene.collection.objects.link(m)
+    sun_sky(220.0, 45.0)
+    camera('cam_bar', Wxz(-1022.0, 262.0, 26.0), Wxz(-1100.0, 190.0, 8.0), lens=30.0, res=(960, 600))
+    return render(os.path.join(OUT, 'itb_bar.png')),
+
+
+def view_curb(args):
+    """review r2: the departures curb from the roadway side at eye height on the deck (L3 - 0.15 + 1.6): kerb, bollards, canopy
+    posts on the sidewalk, wall-head brackets and the truss above (no photo match; i3 is the reference for the furniture)."""
+    sun_sky(240.0, 40.0)
+    camera('cam_curb', W(-40.0, G.KERB_V - 9.0, G.L3 + 1.45), W(-10.0, G.KERB_V + 2.0, G.L3 + 6.0), lens=24.0, res=(960, 540))
+    return render(os.path.join(OUT, 'itb_curb.png')),
 
 
 # ------------------------------------------------------------------------------------------------ comparisons
