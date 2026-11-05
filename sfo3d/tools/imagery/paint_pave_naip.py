@@ -113,10 +113,8 @@ def main(preview=False):
     St = json.load(open(os.path.join(ROOT, 'data', 'sfo_stands.json')))
     park = np.zeros((H, W), np.uint8)
     pts_ = [[q['x'], q['z']] for q in St.get('positions', []) + St.get('remote', []) if 'x' in q]
-    try:
-        pts_ += [[v['x'], v['z']] for v in json.load(open(os.path.join(ROOT, 'refs', 'cache', 'stands', 'adsb_parked.json')))['stays']]
-    except (OSError, KeyError, ValueError):
-        pass
+    stays = aircraft_stays()
+    pts_ += [[v['x'], v['z']] for v in stays]
     N_PARK = 0
     for q in pts_:
         if not q: continue
@@ -154,15 +152,18 @@ def main(preview=False):
         h_ = math.radians(q.get('hdg') or 0.0); f_ = np.array([math.sin(h_), -math.cos(h_)]); r_ = np.array([math.cos(h_), math.sin(h_)])
         c_ = np.array([q['x'], q['z']]) - f_ * 20.0          # the footprint lies behind the stop point
         fill(foot, [[list(c_ + f_ * a + r_ * b) for a, b in ((20, 19), (20, -19), (-20, -19), (-20, 19))]])
-    try:
-        for v in json.load(open(os.path.join(ROOT, 'refs', 'cache', 'stands', 'adsb_parked.json')))['stays']:
-            c_ = P([[v['x'], v['z']]])[0]
-            if 0 <= c_[0] < W and 0 <= c_[1] < H: cv2.circle(foot, (int(c_[0]), int(c_[1])), int(25 / RES), 1, -1)
-    except (OSError, KeyError, ValueError):
-        pass
+    for v in stays:
+        c_ = P([[v['x'], v['z']]])[0]
+        if 0 <= c_[0] < W and 0 <= c_[1] < H: cv2.circle(foot, (int(c_[0]), int(c_[1])), int(25 / RES), 1, -1)
     vegc = ndi.binary_opening(veg, iterations=2)          # isolated green / brown pixels (paint, vehicles) are not vegetation
-    addf = (foot > 0) & ~vegc & (bld == 0) & (pav == 0) & (V > 40)
-    print('parking footprints: +%.1f ha pavement (not vegetation, not building)' % ((addf & ~p).sum() * RES * RES / 1e4))
+    # round 2 (2026-11-05, review static-v2): bare soil / bright dry grass is not pavement either - the HSV vegetation test
+    # misses it (tan, V > 175). Reviewer's rule on the BGR raster: R - B > 38 and R > 110 (yellow paint has R ~ G and is
+    # thin: removed by the opening, like vehicles)
+    Bc, Rc = img[..., 0].astype(np.int16), img[..., 2].astype(np.int16)
+    soilc = ndi.binary_opening((Rc - Bc > 38) & (Rc > 110), iterations=2)
+    addf = (foot > 0) & ~vegc & ~soilc & (bld == 0) & (pav == 0) & (V > 40)
+    print('parking footprints: +%.1f ha pavement (not vegetation / soil, not building); ADS-B stays used %d of %d (aircraft only)' % (
+        (addf & ~p).sum() * RES * RES / 1e4, len(stays), N_STAYS[0]))
     p |= addf
     pave_polys, conc = [], []
     lab, n = ndi.label(p)
@@ -211,6 +212,25 @@ def main(preview=False):
         vis[p] = (vis[p] * 0.4 + np.array([40, 200, 255]) * 0.6).astype(np.uint8)
         vis[g] = (vis[g] * 0.3 + np.array([255, 0, 255]) * 0.7).astype(np.uint8)
         cv2.imwrite(os.path.join(ROOT, 'refs', 'cache', 'naip', 'paint_pave_preview.jpg'), cv2.resize(vis, None, fx=0.25, fy=0.25, interpolation=cv2.INTER_AREA))
+
+
+# ADS-B emitter pseudo-types of the readsb / tar1090 aircraft database for things that are not aircraft (ground / service
+# / emergency vehicles, towers / obstacles, balloons, UAVs)
+NOT_AIRCRAFT = {'SERV', 'GRND', 'EMER', 'TWR', 'BALL', 'UAV', 'SHIP', 'GYRO', 'ULAC', 'GLID', 'PARA'}
+N_STAYS = [0]
+
+
+def aircraft_stays():
+    """refs/cache/stands/adsb_parked.json stays that are AIRCRAFT: an ICAO aircraft type (not a vehicle pseudo-type) or a
+    match to an SFO flight / stand. Round 2 (2026-11-05, review static-v2): the airport-operations vehicles (OPS12 / 14 /
+    15 / 31 / 38 / 40 / 44, FM8, R41, R88 - no type, or SERV) and typeless unmatched stays had become 25 m pavement discs
+    on the infield soil."""
+    try:
+        st = json.load(open(os.path.join(ROOT, 'refs', 'cache', 'stands', 'adsb_parked.json')))['stays']
+    except (OSError, KeyError, ValueError):
+        return []
+    N_STAYS[0] = len(st)
+    return [v for v in st if (v.get('type') and v['type'] not in NOT_AIRCRAFT) or v.get('stand') or v.get('flight') or v.get('sfo_type')]
 
 
 def contours(mask, tol_px, min_area, world):

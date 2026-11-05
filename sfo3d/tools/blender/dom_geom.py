@@ -100,10 +100,14 @@ SWITCH_M = {0: 0.0, 1: 380.0, 2: 1300.0}   # LOD switch distances (camera to the
 
 # lean-free roof-edge offsets from the level-2 outline (face normals within +-20 deg of ESE / WNW) [obs per pier]:
 # + = roof edge outside (overhang), - = inside (the facade is put on the roof edge there)
-EDGE_OFF = {'B': (2.27, -1.66), 'D': (2.40, -1.36), 'E': (0.0, -2.0), 'F': (0.0, -1.15), 'C': (0.0, 0.0)}
+EDGE_OFF = {'B': (2.27, -1.66), 'D': (2.40, -1.36), 'E': (0.0, -2.0), 'F': (1.83, -1.15), 'C': (0.0, 0.0)}
 # BA-B: spec bab.roof_edges (+2.27 / outline -439.70 -> -438.04); BA-D: bad.roof_edges (+2.40 / -1.36); BA-E: fascia on the
 # outline (2020 edge -686.2 less k20 h = -688.6, outline -688.5), WNW ~2 m inside (research 5.3, width 43.0 vs drawn 42.9);
-# BA-F: ESE on the outline, WNW -0.96 / -1.31 (README round 2) -> mean
+# BA-F: ESE +1.83 = the DRAWN lean-free line (draw_data.dom_true_edges, BD-01; BD-02 view 1 draws the NE arm 27.0 m between
+# the lines = 27.06 measured): along the face the line lies 1.83 m outside the level-2 outline. The spec / README note "ESE on
+# the outline (+0.01 / -0.02)" was measured at the line's END points only, where the line meets the outline's corner jogs
+# (checked 2026-11-05: 1.83 m at 25 / 50 / 75 % of the line) -> the 3-D follows the drawn line (manifest conflict);
+# WNW -0.96 / -1.31 (README round 2) -> mean -1.15
 
 
 # ------------------------------------------------------------------------------------------------ footprints
@@ -271,8 +275,12 @@ TILE = {'roof_membrane': (12.0, 12.0), 'roof_membrane_b': (12.0, 12.0), 'roof_me
         'panel_platinum': (6.0, 6.0), 'service': (6.0, 6.0), 'fascia': (6.0, 6.0), 'coping': (3.0, 3.0), 'soffit': (6.0, 6.0),
         'concrete': (6.0, 6.0), 'penthouse_corr': (3.0, 3.0), 'pv': (4.0, 4.0), 'planting': (8.0, 8.0), 'door_dark': (3.2, 3.2),
         'mullion': (3.0, 3.0), 'glass_canopy': (6.0, 6.0), 'glass_sky': (6.0, 6.0), 'lettering': (3.0, 3.0)}
-for _g in ('glass_ec', 'glass_lowe', 'glass_tint', 'glass_frit_grey', 'glass_frit_green', 'glass_clear', 'glass_t3w'):
+for _g in ('glass_ec', 'glass_lowe', 'glass_tint', 'glass_frit_grey', 'glass_clear'):
     TILE[_g] = (6.0, 6.0)        # curtain grid 1.5 m verticals x 3.0 m transoms from the band bottom [inf]
+TILE['glass_frit_green'] = (12.0, 9.0)   # T1 landside tiers: one tile = canopy line -> wall head (9.0 m), transom 3.96 m up
+TILE['glass_t3w'] = (6.0, 5.8)           # T3W window wall: 2.0-m verticals, band 5.8 m (BD-03 view 3 schematic)
+TILE['penthouse_corr'] = (3.0, 2.8)      # corrugation 0.2 m, accent bands every 1.4 m (BD-03 schematic)
+# (tile sizes: tools/blender/dom_tex.py TILES)
 GLASS = {k for k in TILE if k.startswith('glass')}
 
 
@@ -408,6 +416,10 @@ class World:
     def finish(self):
         from shapely.strtree import STRtree
         self.occ = []     # (geom, z0, z1, solid)
+        # neighbouring assets: the ITB (data/buildings3d/itb.glb: piers 17.0-17.9 m, core 17.9 m placeholder) and the tower
+        # base building (tower.glb) - walls facing them are interior and not emitted (they would be hidden / z-fight)
+        for g, z1 in ((ITB.buffer(0.3, join_style=2), 17.0), (TOWER_EXCL.buffer(0.3, join_style=2), 14.07)):   # tower anchors.ibf_roof_h
+            self.occ.append((loc(g), 0.0, z1, None))
         for s in self.S:
             self.occ.append((s.poly, s.z0, s.h, s))
             ov = s.roof.difference(s.poly.buffer(0.01, join_style=2))
@@ -522,7 +534,7 @@ def fins(det, a, b, s0, z0, z1, mod, s, st):
         det.quad_wall(p0, q0, z0, z1, z0, z1, 'mullion', 0, (3.0, 3.0))
         det.quad_wall(q0, q1, z0, z1, z0, z1, 'mullion', 0, (3.0, 3.0))
         det.quad_wall(q1, p1, z0, z1, z0, z1, 'mullion', 0, (3.0, 3.0))
-        det.face([(q0[0], q0[1], z1), (q1[0], q1[1], z1), (p1[0], p1[1], z1), (p0[0], p0[1], z1)], 'mullion', [(0, 0), (1, 0), (1, 1), (0, 1)])
+        # (no top cap: 6 x 18 cm, seen only from above; the band head / slab closes it in most views) [budget]
 
 
 def emit_roof(mb, W, s, lod):
@@ -577,6 +589,7 @@ def emit_roof(mb, W, s, lod):
 
 
 # ------------------------------------------------------------------------------------------------ edge offsets
+EDGE_CLOSE = 8.0   # closing radius of the roof-edge strips (bridges gaps <= 16 m along a side) [inf]
 EDGE_LINES = {   # pier -> (drawn lean-free ESE line, WNW line) in world (x, z); offsets from the level-2 outline (EDGE_OFF)
     'B': D.dom_true_edges('bab.roof_edges', 'ba_b_south'), 'D': D.dom_true_edges('bad.roof_edges', 'ba_d_head'),
     'F': D.dom_true_edges('baf.roof_edges', 'ba_f_ne_arm')}
@@ -612,6 +625,11 @@ def face_offsets(L_, poly_l, others_l):
                         if perp > 6.0: continue
                     q = Polygon([tuple(a), tuple(b), tuple(b + n * off), tuple(a + n * off)])
                     (add if off > 0 else sub).append(q.buffer(0.0))
+    # the strips are per outline face: close the gaps between collinear strips (short jogs < 3 m and the roots of the
+    # bridge-head fingers cut off by core_and_fingers) so that the roof edge runs straight along the measured line, as drawn
+    # (BD-01 draws one continuous lean-free edge per side) [inf]
+    if add: add = [M.orient_all(_clean(unary_union(add).buffer(EDGE_CLOSE, join_style=2).buffer(-EDGE_CLOSE, join_style=2), 0.5))]
+    if sub: sub = [M.orient_all(_clean(unary_union(sub).buffer(EDGE_CLOSE, join_style=2).buffer(-EDGE_CLOSE, join_style=2), 0.5))]
     wall = poly_l.difference(unary_union(sub).buffer(0.001)) if sub else poly_l
     wall = largest(_clean(wall, 5.0))
     roof = unary_union([wall] + add) if add else wall
@@ -1110,18 +1128,23 @@ def door_geom(mb, det, lod, d):
     n = np.array([dd[1], -dd[0]])
     if d['gap'] > 0.12 or d['low']:
         back = 2.5 if d['low'] else 0.15
-        A = X - dd * back; Bp = El if d['gap'] > 0.12 else X + dd * 0.3
+        A = X - dd * back; Bp = El if d['gap'] > 0.12 else X          # ends on the facade plane: the walkway abuts it
         L = float(np.hypot(*(Bp - A)))
         c = (A + Bp) / 2
         z1 = VEST['z1'] if not d['low'] else max(VEST['z1'], d['h_host'] + 1.0)
         M.boxm(mb, tuple(c), tuple(dd), L, VEST['w'], (VEST['z0'], z1), 'panel_light', tl('panel_light'), top=True, bottom=True,
                top_mat='coping')
     if lod == 0:
-        # door frame on the facade (or on the vestibule end): a dark leaf panel in a light frame, 0.12 m proud
+        # door surround on the facade (or on the vestibule end) AROUND the walkway section (gates.js WALK_W 2.6 x WALK_H 3.0
+        # at DEPARTURE_LEVEL): two jambs and a head 0.12 m proud, clear of the walkway, and a dark leaf 0.02 m proud inside
+        # it (the closed door behind the docked bridge's end) [inf]
         P = np.array(d['E']) if d['gap'] > 0.12 else X
-        c = P - dd * 0.06
-        M.boxm(det, tuple(c + dd * 0.06), tuple(n), DOOR['w'] + 0.3, 0.12, (DOOR['z0'], DOOR['z1']), 'mullion', (3.0, 3.0), top=True)
-        M.boxm(det, tuple(c + dd * 0.13), tuple(n), DOOR['w'] - 0.3, 0.02, (DOOR['z0'] + 0.15, DOOR['z1'] - 0.15), 'door_dark', (3.0, 3.0), top=False)
+        wj = 0.25; off = WALK_W_APP / 2 + 0.05 + wj / 2
+        for sg in (-1, 1):
+            M.boxm(det, tuple(P + dd * 0.06 + n * sg * off), tuple(n), wj, 0.12, (DOOR['z0'], WALK_TOP + 0.4), 'mullion', (3.0, 3.0), top=True)
+        M.boxm(det, tuple(P + dd * 0.06), tuple(n), WALK_W_APP + 0.1 + 2 * wj, 0.12, (WALK_TOP + 0.08, WALK_TOP + 0.4), 'mullion', (3.0, 3.0), top=True,
+               bottom=True)
+        M.boxm(det, tuple(P + dd * 0.01), tuple(n), WALK_W_APP + 0.1, 0.02, (FLOOR2, WALK_TOP + 0.08), 'door_dark', (3.0, 3.0), top=False)
 
 
 # ------------------------------------------------------------------------------------------------ parts per building

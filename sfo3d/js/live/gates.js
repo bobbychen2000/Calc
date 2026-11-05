@@ -42,15 +42,18 @@
 //    rest. Departures (engine API, docs/requests/bridges_closeout.md "Round 2 API for realtime"): the real bridge is
 //    retracted before the push-back, so the engine starts it on its earliest departure signal with undockEarly(g, now)
 //    (the sheet's rates, the aircraft stays on the stand; redock(g, now) undoes a false signal); a departure seen only
-//    once the push has begun gets hurryUndock(g, s, now) (the sheet's maximum rates, 16-93 s - never squeezed). The
+//    once the push has begun gets hurryUndock(g, s, now) (the sheet's maximum rates, 16-91 s from docked - never squeezed). The
 //    engine reads pushClearEta(g, now) (seconds until every bridge is clear of the aircraft's straight push-back: the cab
-//    backed off the door, about 3-6 s at the maximum rates) and undockEta(g, now) (seconds until the tunnels are back at
+//    backed off the door: from docked at the maximum rates p50 1.0 s, p99 4.7 s, max 25 s - F13 A333 / A339, F15 B779 - over
+//    2,883 stand x type dockings) and undockEta(g, now) (seconds until the tunnels are back at
 //    rest, extension(g) 0); it does not have to hold the body for the full retraction.
 //  * Rest pose: the data's `stowW` (tunnel end = cab pivot at rest, clear of every accepted type's envelope + 1 m, of
 //    the other bridges at rest and docked, of the building; cab straight on the tunnel). After an undocking the cab
 //    settles from the door's height to the rest height (rest tunnel <= 1:12) at the sheet's lift rate.
 //  * Solid-body rules (review 2026-11-04): the drum is at least DRUM_MIN (1.5 m) - the corridor it carries is 2.4 m wide -
-//    with the rotunda moved off a neighbour's walkway / drum / the outline by the deficit (<= 2 m); the rotunda
+//    with the rotunda moved off a neighbour's walkway / drum / the outline (the drawn terminal AND the SFO Museum
+//    footprints the 3-D building assets are built from: 31 rotundas 0.08-1.37 m, review orch-1) by the deficit (<= 2 m),
+//    its rest pose moving with it; no moving part ever enters those outlines or a sky bridge (bldHit, exact); the rotunda
 //    corridor, tunnels, drive column and cab never pass through another bridge's fixed walkway, drum or pedestal, nor
 //    the tunnels / column / cab through the bridge's own fixed walkway (jointOk / pathHits: such dockings stay at rest);
 //    twin heads (a walkway through one rotunda to a second 3.4 m on: F15, G12) share one floor level.
@@ -67,7 +70,7 @@ import { rng, m4, v3 } from '../math.js';
 import { stToWorld, worldToST, GROUND_Y } from '../geo.js';
 import { TYPES, ICAO_TYPES } from '../aircraft/types.js';
 import '../aircraft/fit.js'; // fits the imported models to the published dimensions: T.dockX1/2, T.dockSill/2, T.dockHW
-import { inst, buildVehicleMeshes, BELT_SILL, beltShape } from '../world/gates.js';
+import { inst, buildVehicleMeshes, beltShape, beltFamily, beltSill, cateringFloor, cateringBoxes } from '../world/gates.js';
 import { makeAtlas } from './signs.js';
 import { familyOf } from './traffic.js';
 import { STANDS } from '../../data/sfo_stands.js';
@@ -90,36 +93,53 @@ for (const ba of (AIRPORT && AIRPORT.boardingAreas) || []) for (const P of ba.po
 const NCL = BLD.length; // + the elevated sky bridges (only for the rotunda drum, which reaches their height)
 for (const p of (BUILDINGS && BUILDINGS.parts) || []) if (p.kind === 'walkway') for (const r of p.rings) BLD.push(r);
 const BLD_BB = BLD.map(r => { let a = 1e9, b = 1e9, c = -1e9, d = -1e9; for (const p of r) { a = Math.min(a, p[0]); c = Math.max(c, p[0]); b = Math.min(b, p[1]); d = Math.max(d, p[1]); } return [a, b, c, d]; });
-function inRing(x, z, r) { let c = false; for (let i = 0, j = r.length - 1; i < r.length; j = i++) { const a = r[i], b = r[j]; if (((a[1] > z) !== (b[1] > z)) && (x < (b[0] - a[0]) * (z - a[1]) / (b[1] - a[1]) + a[0])) c = !c; } return c; }
+// edge index of every outline (exact tests, no sampling; the SFO Museum rings made the sampled tests ~35x slower - the
+// app's start-up and every docking plan): EC m grid cells -> [ring k, ax, az, bx, bz]; per ring, its edges in EZ m bands
+// of z (point-in-ring tests only cross the band's edges)
+const EC = 8, EZ = 4, ECELL = new Map(), EBAND = BLD.map(() => new Map());
+BLD.forEach((r, k) => { for (let i = 0, j = r.length - 1; i < r.length; j = i++) { const a = r[j], b = r[i]; const e = [k, a[0], a[1], b[0], b[1]];
+  for (let cx = Math.floor(Math.min(a[0], b[0]) / EC); cx <= Math.floor(Math.max(a[0], b[0]) / EC); cx++) for (let cz = Math.floor(Math.min(a[1], b[1]) / EC); cz <= Math.floor(Math.max(a[1], b[1]) / EC); cz++) { const key = cx * 65536 + cz; let L = ECELL.get(key); if (!L) ECELL.set(key, L = []); L.push(e); }
+  for (let bz = Math.floor(Math.min(a[1], b[1]) / EZ); bz <= Math.floor(Math.max(a[1], b[1]) / EZ); bz++) { let L = EBAND[k].get(bz); if (!L) EBAND[k].set(bz, L = []); L.push(e); } } });
+function inRingK(x, z, k) { const L = EBAND[k].get(Math.floor(z / EZ)); if (!L) return false; let c = false; for (const e of L) if (((e[2] > z) !== (e[4] > z)) && (x < (e[3] - e[1]) * (z - e[2]) / (e[4] - e[2]) + e[1])) c = !c; return c; }
 // inside a building: the clearance outlines (drawn + SFO Museum); all: + the sky bridges; drawn: only what
 // js/live/terminals.js draws (the fixed walkway's start / interior vertices)
-function inBuilding(x, z, all = false, drawn = false) { const n = drawn ? NBLD : all ? BLD.length : NCL; for (let i = 0; i < n; i++) { const bb = BLD_BB[i]; if (x < bb[0] || x > bb[2] || z < bb[1] || z > bb[3]) continue; if (inRing(x, z, BLD[i])) return true; } return false; }
-function nearestBuilding(x, z, drawn = false) { // nearest outline point incl. the sky bridges (drawn: terminals.js outline only): {d (0 inside), p}
-  let d = 1e9, P = null;
-  for (let i = 0; i < (drawn ? NBLD : BLD.length); i++) { const bb = BLD_BB[i]; if (x < bb[0] - d || x > bb[2] + d || z < bb[1] - d || z > bb[3] + d) continue; const r = BLD[i];
-    for (let k = 0, j = r.length - 1; k < r.length; j = k++) { const a = r[j], b = r[k]; const ex = b[0] - a[0], ez = b[1] - a[1]; const L2 = ex * ex + ez * ez || 1; const t = clampN(((x - a[0]) * ex + (z - a[1]) * ez) / L2, 0, 1); const q = [a[0] + ex * t, a[1] + ez * t]; const dd = Math.hypot(q[0] - x, q[1] - z); if (dd < d) { d = dd; P = q; } } }
+function inBuilding(x, z, all = false, drawn = false) { const n = drawn ? NBLD : all ? BLD.length : NCL; for (let i = 0; i < n; i++) { const bb = BLD_BB[i]; if (x < bb[0] || x > bb[2] || z < bb[1] || z > bb[3]) continue; if (inRingK(x, z, i)) return true; } return false; }
+// nearest outline point within 24 m incl. the sky bridges (drawn: terminals.js outline only): {d (0 inside; 1e9 and p
+// null when nothing is that near), p, inside} - every caller asks about clearances of a few metres
+function nearestBuilding(x, z, drawn = false) {
+  let d = 1e9, P = null; const n = drawn ? NBLD : BLD.length; const R = 3, c0 = Math.floor(x / EC), r0 = Math.floor(z / EC);
+  for (let cx = c0 - R; cx <= c0 + R; cx++) for (let cz = r0 - R; cz <= r0 + R; cz++) { const L = ECELL.get(cx * 65536 + cz); if (!L) continue;
+    for (const e of L) { if (e[0] >= n) continue; const ex = e[3] - e[1], ez = e[4] - e[2]; const L2 = ex * ex + ez * ez || 1; const t = clampN(((x - e[1]) * ex + (z - e[2]) * ez) / L2, 0, 1); const qx = e[1] + ex * t, qz = e[2] + ez * t; const dd = Math.hypot(qx - x, qz - z); if (dd < d) { d = dd; P = [qx, qz]; } } }
   const inside = inBuilding(x, z, !drawn, drawn);
   return { d: inside ? 0 : d, p: P, inside };
 }
 // a moving bridge part (solid {c, u, hl, hw, lo, hi}) inside a building: the clearance outlines (any height below their
-// roofs - every bridge part is) or a sky bridge it reaches up to (BUILDINGS walkway parts y0..h above the apron);
-// sampled every <= 1.5 m along and across, edges included
+// roofs - every bridge part is) or a sky bridge it reaches up to (BUILDINGS walkway parts y0..h above the apron). Exact:
+// the box (less 5 cm all round) meets a ring when an outline edge crosses it or its centre lies in the ring
 const SKY_Y = []; for (const p of (BUILDINGS && BUILDINGS.parts) || []) if (p.kind === 'walkway') for (const r of p.rings) SKY_Y.push([p.y0 ?? 6, p.h ?? 10.5]);
+function segInBox(e, bx, hl, hw) { // Liang-Barsky clip of edge e in the box frame
+  const ax = e[1] - bx.c[0], az = e[2] - bx.c[1], bxx = e[3] - bx.c[0], bz = e[4] - bx.c[1];
+  const x0 = ax * bx.u[0] + az * bx.u[1], y0 = -ax * bx.u[1] + az * bx.u[0], x1 = bxx * bx.u[0] + bz * bx.u[1], y1 = -bxx * bx.u[1] + bz * bx.u[0];
+  let t0 = 0, t1 = 1; const dx = x1 - x0, dy = y1 - y0;
+  for (const [p, q] of [[-dx, x0 + hl], [dx, hl - x0], [-dy, y0 + hw], [dy, hw - y0]]) { if (Math.abs(p) < 1e-12) { if (q < 0) return false; continue; } const r = q / p; if (p < 0) { if (r > t1) return false; if (r > t0) t0 = r; } else { if (r < t0) return false; if (r < t1) t1 = r; } }
+  return t0 <= t1;
+}
 function solidInBuilding(bx) {
-  const v = [-bx.u[1], bx.u[0]]; const ex = Math.abs(bx.u[0]) * bx.hl + Math.abs(v[0]) * bx.hw, ez = Math.abs(bx.u[1]) * bx.hl + Math.abs(v[1]) * bx.hw;
-  const ks = []; for (let k = 0; k < BLD.length; k++) { const bb = BLD_BB[k]; if (bx.c[0] + ex < bb[0] || bx.c[0] - ex > bb[2] || bx.c[1] + ez < bb[1] || bx.c[1] - ez > bb[3]) continue;
-    if (k >= NCL) { const [y0, y1] = SKY_Y[k - NCL]; if (bx.hi <= G + y0 || bx.lo >= G + y1) continue; } ks.push(k); }
-  if (!ks.length) return false;
-  const nx = Math.max(1, Math.ceil(bx.hl / 0.75)), ny = Math.max(1, Math.ceil(bx.hw / 0.75));
-  for (let i = -nx; i <= nx; i++) for (let j = -ny; j <= ny; j++) {
-    const x = bx.c[0] + bx.u[0] * bx.hl * i / nx + v[0] * bx.hw * j / ny, z = bx.c[1] + bx.u[1] * bx.hl * i / nx + v[1] * bx.hw * j / ny;
-    for (const k of ks) { const bb = BLD_BB[k]; if (x < bb[0] || x > bb[2] || z < bb[1] || z > bb[3]) continue; if (inRing(x, z, BLD[k])) return true; }
-  }
+  const v = [-bx.u[1], bx.u[0]]; const hl = Math.max(0.01, bx.hl - 0.05), hw = Math.max(0.01, bx.hw - 0.05);
+  const ex = Math.abs(bx.u[0]) * hl + Math.abs(v[0]) * hw, ez = Math.abs(bx.u[1]) * hl + Math.abs(v[1]) * hw;
+  const ok = (k) => { if (k < NCL) return true; const [y0, y1] = SKY_Y[k - NCL]; return bx.hi > G + y0 && bx.lo < G + y1; };
+  let any = false;
+  for (let k = 0; k < BLD.length; k++) { const bb = BLD_BB[k]; if (bx.c[0] + ex < bb[0] || bx.c[0] - ex > bb[2] || bx.c[1] + ez < bb[1] || bx.c[1] - ez > bb[3] || !ok(k)) continue;
+    any = true; if (inRingK(bx.c[0], bx.c[1], k)) return true; }
+  if (!any) return false;
+  for (let cx = Math.floor((bx.c[0] - ex) / EC); cx <= Math.floor((bx.c[0] + ex) / EC); cx++) for (let cz = Math.floor((bx.c[1] - ez) / EC); cz <= Math.floor((bx.c[1] + ez) / EC); cz++) {
+    const L = ECELL.get(cx * 65536 + cz); if (!L) continue;
+    for (const e of L) if (ok(e[0]) && segInBox(e, bx, hl, hw)) return true; }
   return false;
 }
 function distBuilding(x, z) { return nearestBuilding(x, z).d; }
 // top of the terminal wall the point (x, z) lies in (0: none) - js/live/terminals.js: complex 0-5 m, parts 5 m - h
-function wallTop(x, z) { let h = 0; for (let i = 0; i < NBLD; i++) { const bb = BLD_BB[i]; if (x < bb[0] || x > bb[2] || z < bb[1] || z > bb[3]) continue; if (inRing(x, z, BLD[i])) h = Math.max(h, BLD_H[i]); } return h; }
+function wallTop(x, z) { let h = 0; for (let i = 0; i < NBLD; i++) { const bb = BLD_BB[i]; if (x < bb[0] || x > bb[2] || z < bb[1] || z > bb[3]) continue; if (inRingK(x, z, i)) h = Math.max(h, BLD_H[i]); } return h; }
 
 const G = GROUND_Y;
 const stW = (p, h = 0) => stToWorld(p[0], p[1], h);
@@ -232,7 +252,7 @@ function doorOf(nose, f, T, which) {
   const d = v3.add(v3.sub(nose, v3.mul(f, x)), v3.mul(left, hw + 0.15)); d[1] = G + sill;
   return { door: d, left };
 }
-export { doorOf, acHit, boxHitsAc, boxHitsSwept, PBB };
+export { doorOf, acHit, boxHitsAc, boxHitsSwept, PBB, inBuilding, solidInBuilding };
 
 // ---------------------------------------------------------------- aircraft solid for the bridge-path test
 // (x metres behind the nose, y to the right, heights above the apron). The fuselage tapers over the nose (types.js Ln)
@@ -260,8 +280,11 @@ function acHit(T, x, y, lo, hi, mg, ell = false) {
   }
   if (T.rear && x > T.rear.x - mg && x < T.rear.x + T.rear.len + mg && ay < T.rear.z + T.rear.r + mg && lo < Hc + R + 1) return 'eng';
   if (T.hstab && x > T.hstab.x - mg && x < L + mg && ay < T.hstab.span / 2 + mg) {
-    const top = T.hstab.tTail ? (T.fit && T.fit.renderedH) || T.H || Hc + 8 : Hc + R + 1;
-    if (lo < top + mg && hi > Hc - R) return 'tail';
+    // beside the fuselage only the swept, tapered tailplane planform (LE at x + |y| tan(sweep), as the wing; before: the
+    // whole rectangle from the root LE station to the tail, which kept every catering truck off a narrow body's door 2)
+    const hs = T.hstab; const ple = hs.x + ay * Math.tan((hs.sweep || 30) * DEG), pch = hs.rootC - (hs.rootC - hs.tipC) * Math.min(1, ay / (hs.span / 2));
+    const top = hs.tTail ? (T.fit && T.fit.renderedH) || T.H || Hc + 8 : Hc + R + 1;
+    if ((ay <= R + mg || (x > ple - mg && x < ple + pch + mg)) && lo < top + mg && hi > Hc - R) return 'tail';
   }
   return null;
 }
@@ -354,7 +377,11 @@ export class LiveGateSystem {
         rot = [rot[0] + dx / l * (def + 0.02), G, rot[2] + dz / l * (def + 0.02)];
         const sh = Math.hypot(rot[0] - r0[0], rot[2] - r0[2]); if (sh > 2.0) { rot = [r0[0] + (rot[0] - r0[0]) * 2 / sh, G, r0[2] + (rot[2] - r0[2]) * 2 / sh]; break; }
       }
-      const sh = Math.hypot(rot[0] - r0[0], rot[2] - r0[2]); if (sh > 0.005) b.rotShift = +sh.toFixed(2); }
+      const sh = Math.hypot(rot[0] - r0[0], rot[2] - r0[2]); b.rotShiftV = null; if (sh > 0.005) { b.rotShift = +sh.toFixed(2); b.rotShiftV = [rot[0] - r0[0], rot[2] - r0[2]]; } }
+    // (the rest cab stays at the data's stow, which is clear of the neighbours' docked poses; where the shift shortens the
+    // rest tunnel below the model's retraction - B11, B15, B16, B20, G4, G7 L1, by 0.1-0.8 m - the pivot rests at the
+    // retraction on the same line. Moving the stow with the rotunda instead put B15 L1's cab in B16 L1's B744 path.)
+    const stowW = b.stowW;
     let walk = (b.walkW && b.walkW.length >= 2) ? b.walkW.map(cz) : [att, rot];
     if (b.rotShift) walk[walk.length - 1] = rot.slice();
     if (Math.hypot(walk[walk.length - 1][0] - rot[0], walk[walk.length - 1][2] - rot[2]) > 0.05) walk.push(rot.slice());
@@ -398,7 +425,7 @@ export class LiveGateSystem {
     let nT, opR, opE, mechE, spacer;
     if (spec) { [nT, , , opE, opR] = spec; spacer = spec[2] - spec[4]; mechE = spec[1] - spacer; }
     else { nT = 3; [opR, opE] = b.extRange || [10.276, 41.381]; spacer = 2.225; mechE = opE + 2.3; }
-    const stowL = b.stowW ? Math.hypot(b.stowW[0] - rot[0], b.stowW[1] - rot[2]) : null;
+    const stowL = stowW ? Math.hypot(stowW[0] - rot[0], stowW[1] - rot[2]) : null;
     if (!spec && b.upper) { // upper-deck bridge (no model in the data): the smallest AT3 covering the rest length and the U1L docking
       const eD = this.upperDockExt(g, b, rot);
       // (the smallest datasheet model whose range holds the data's rest length and the U1L docking, +-1 m; else the one
@@ -422,7 +449,7 @@ export class LiveGateSystem {
     b.rot = rot; b.att = walk[0];
     // rest pose (data stowW: the cab pivot at rest; cab straight on the tunnel)
     const f = stD(g.dir);
-    if (b.stowW) { b.a0 = yawOf(b.stowW[0] - rot[0], b.stowW[1] - rot[2]); b.e0 = clampN(stowL, opR, mechE); }
+    if (stowW) { b.a0 = yawOf(stowW[0] - rot[0], stowW[1] - rot[2]); b.e0 = clampN(stowL, opR, mechE); }
     else { const dp = doorOf(nose, f, TYPES[REF_TYPE[g.cls] || 'b38m'], b.door).door; b.a0 = yawOf(dp[0] - rot[0], dp[2] - rot[2]); b.e0 = opR; }
     b.stairSide = b.stairSide || 1;
     // legacy fields read by tools (jobs/extract2d.mjs, tools/live/invariants.mjs)
@@ -508,7 +535,7 @@ export class LiveGateSystem {
     const O = b._obs; if (!O || !O.length) return null;
     for (const bx of this.solidsQ(b, q, kk)) { if (bx.part === 'stair') continue; // (its side is chosen against these in finishPrep)
       const br = Math.hypot(bx.hl, bx.hw);
-      for (const o of O) { if (o.own && bx.part === 'neck') continue; // (the rotunda junction, below)
+      for (const o of O) { if (o.own && bx.part === 'neck') continue; // (the rotunda junction; a KNOWN CLIP on 6 bridges: b.ownClip, finishPrep)
         if (Math.abs(o.c[0] - bx.c[0]) > o.rr + br + 0.1 || Math.abs(o.c[1] - bx.c[1]) > o.rr + br + 0.1) continue;
         if (bx.hi > o.lo && o.hi > bx.lo && solidOverlap(bx, o, 0.05)) return bx.part + ' x ' + (o.own ? 'own ' : '') + o.part; } }
     return null;
@@ -572,6 +599,16 @@ export class LiveGateSystem {
       const Hr = this.pickHr(g, [o, b], o._tgH.concat(b._tgH), o.Hb - dh, o.Hb + dh);
       this.applyHeights(o, Hr, o._tg, o._tgH); this.applyHeights(b, Hr, b._tg, b._tgH);
     }
+    // KNOWN CLIP (review 2026-11-04 bridges-v3; data, not a junction we accept): where the data's rest / docked poses fold
+    // the tunnel back to 41-45 deg from the bridge's own mapped walkway (A12, F5, F14, F17, F19, F21 L1), the 2.4 m
+    // rotunda corridor overlaps the 2.6 m walkway outside the drum (fixedHit skips that pair: refusing it would leave
+    // observed types undocked). b.ownClip = {rest, docked (m2, exact plan overlap), poses (n of m)}, for the tools; the
+    // walkway / rotunda data is with the static track (docs/requests/static_closeout.md)
+    for (const { g, b } of all) { const W = this.solidsQ(b, { a: b.a0, e: b.e0, t: 0, h: b.h0 }, 0, true).filter(x => x.part === 'walkway').map(x => this.outsideDrum(b, x, b.rotR)).filter(Boolean); b.ownClip = null; if (!W.length) continue;
+      const area = (q) => { const nk = this.solidsQ(b, q, 0).find(x => x.part === 'neck'); if (!nk) return 0; let A = 0; for (const w of W) if (nk.hi > w.lo && w.hi > nk.lo) A += obbArea(nk, w); return A; };
+      const rest = area({ a: b.a0, e: b.e0, t: 0, h: b.h0 }); let worst = rest, n = rest > 0.05 ? 1 : 0; const tg = b._tg || [];
+      for (const t of tg) { const A = area({ a: t.a, e: t.e, t: 0, h: t.sill }); if (A > 0.05) n++; worst = Math.max(worst, A); }
+      b.ownClip = worst > 0.05 ? { rest: +rest.toFixed(2), docked: +worst.toFixed(2), poses: n + '/' + (tg.length + 1) } : null; }
     const restOf = new Map(all.map(({ b }) => [b, this.solidsQ(b, { a: b.a0, e: b.e0, t: 0, h: b.h0 }, 0, true)]));
     for (const { g, b } of all) {
       const others = all.filter(o => o.b !== b && Math.hypot(o.b.rot[0] - b.rot[0], o.b.rot[2] - b.rot[2]) < 70).map(o => restOf.get(o.b)).flat()
@@ -581,11 +618,14 @@ export class LiveGateSystem {
       const poses = [{ q: q0, ac: acs }].concat(tg.map(t => ({ q: { a: t.a, e: t.e, t: 0, h: t.sill }, ac: [{ T: TYPES[t.key], nose: [t.nose[0], t.nose[2]], f: [t.f[0], t.f[2]] }] })),
         this.sweepQ(g, b, false).filter((q, i) => i % 3 === 0).map(q => ({ q, ac: [] }))); // (every candidate docking path, sampled)
       const bad = {};
+      // (weighted by how long a pose lasts: the rest pose for hours (x10), a docked pose for the turnaround (x4), a path
+      // sample for seconds (x1) - G7 L1, its rotunda moved 0.8 m off Boarding Area G, took the side whose stair rests in
+      // G7 L2's drum over one whose stair crosses the Museum outline for 4 of 97 path samples)
       for (const sd of [1, -1]) { b.stairSide = sd; let n = 0;
-        for (const P of poses) { const S = this.stairBoxes(b, P.q);
-          if (S.some(bx => P.ac.some(A => boxHitsAc(bx, A.T, A.nose, A.f, 0.5)))) n += 2;
-          if (S.some(bx => { const rb = Math.hypot(bx.hl, bx.hw) + 0.3; return others.some(({ o, r }) => Math.abs(o.c[0] - bx.c[0]) < r + rb && Math.abs(o.c[1] - bx.c[1]) < r + rb && o.hi > bx.lo && o.lo < bx.hi && solidOverlap(bx, o, 0.3)); })) n += 1;
-          if (S.some(bx => { const v = [-bx.u[1], bx.u[0]]; return [[1, 1], [1, -1], [-1, 1], [-1, -1], [0, 0]].some(([i, j]) => inBuilding(bx.c[0] + bx.u[0] * bx.hl * i + v[0] * bx.hw * j, bx.c[1] + bx.u[1] * bx.hl * i + v[1] * bx.hw * j)); })) n += 2; }
+        poses.forEach((P, i) => { const S = this.stairBoxes(b, P.q); const w = i === 0 ? 10 : i <= tg.length ? 4 : 1;
+          if (S.some(bx => P.ac.some(A => boxHitsAc(bx, A.T, A.nose, A.f, 0.5)))) n += 2 * w;
+          if (S.some(bx => { const rb = Math.hypot(bx.hl, bx.hw) + 0.3; return others.some(({ o, r }) => Math.abs(o.c[0] - bx.c[0]) < r + rb && Math.abs(o.c[1] - bx.c[1]) < r + rb && o.hi > bx.lo && o.lo < bx.hi && solidOverlap(bx, o, 0.3)); })) n += w;
+          if (S.some(bx => { const v = [-bx.u[1], bx.u[0]]; return [[1, 1], [1, -1], [-1, 1], [-1, -1], [0, 0]].some(([i, j]) => inBuilding(bx.c[0] + bx.u[0] * bx.hl * i + v[0] * bx.hw * j, bx.c[1] + bx.u[1] * bx.hl * i + v[1] * bx.hw * j)); })) n += 2 * w; });
         bad[sd] = n; }
       b.stairSide = bad[-1] < bad[1] ? -1 : 1;
     }
@@ -970,7 +1010,9 @@ export class LiveGateSystem {
     // the terminal face on the stand centreline (the outline the terminal model is built from), else the walkway start
     // (no building on the centreline within 60 m - A13, G10, G13: posts only; review 2026-11-04 found their facade units
     // floating 7-11 m up with no wall within 22-30 m)
-    let tf = null; for (let t = 1; t <= 60; t += 0.5) { const p = v3.add(nose, v3.mul(f, t)); if (inBuilding(p[0], p[2])) { tf = t - 0.25; break; } }
+    // (the outline js/live/terminals.js draws - the facade a unit is mounted on; every unit and post must in addition lie
+    // outside the SFO Museum clearance outlines and the sky bridges: solidInBuilding below)
+    let tf = null; for (let t = 1; t <= 60; t += 0.5) { const p = v3.add(nose, v3.mul(f, t)); if (inBuilding(p[0], p[2], false, true)) { tf = t - 0.25; break; } }
     const tmax = tf == null ? 40 : tf - 2.5;
     // a facade unit only where the wall behind it (0.6-3 m) reaches above the unit (H0 + 4.2 m): the piers / halls,
     // not the 5 m ramp-level complex
@@ -989,8 +1031,8 @@ export class LiveGateSystem {
       const p = v3.add(nose, v3.mul(f, c.t)); const H0 = c.H0;
       const boxes = c.post ? [{ c: [p[0], p[2]], u: [f[0], f[2]], hl: 0.5, hw: 0.5, lo: G, hi: G + H0 + 4.6 }, { c: [p[0] - f[0] * 0.35, p[2] - f[2] * 0.35], u: [f[0], f[2]], hl: 0.35, hw: 1.3, lo: G + H0 - 0.4, hi: G + H0 + 4.6 }]
         : [{ c: [p[0] - f[0] * 0.35, p[2] - f[2] * 0.35], u: [f[0], f[2]], hl: 0.35, hw: 1.3, lo: G + H0 - 0.4, hi: G + H0 + 4.2 }];
-      let hit = false;
-      for (const a of boxes) { for (const s of sweep) if (s.hi > a.lo - 0.5 && s.lo < a.hi + 0.5 && solidOverlap(a, s, 0.5)) { hit = true; break; } if (hit) break; }
+      let hit = boxes.some(a => solidInBuilding(a));
+      if (!hit) for (const a of boxes) { for (const s of sweep) if (s.hi > a.lo - 0.5 && s.lo < a.hi + 0.5 && solidOverlap(a, s, 0.5)) { hit = true; break; } if (hit) break; }
       if (!hit) { pick = c; break; }
     } }
     if (!pick) { pick = tries[0]; this.vdgsBlocked = (this.vdgsBlocked || 0) + 1; (this.vdgsBlockedAt || (this.vdgsBlockedAt = [])).push(g.name); }
@@ -1073,7 +1115,7 @@ export class LiveGateSystem {
   // current extension of a stand's bridges (0 = every bridge at rest .. 1 = docked). It is 0 as soon as the tunnels are
   // back at rest (the cab's height settle after that, `settles`, needs no hold). Departing aircraft: see the header and
   // docs/requests/bridges_closeout.md "Round 2 API for realtime" - the engine holds the body only until pushClearEta(g)
-  // is 0, not until this is 0 (a retraction at the sheet's rates takes 16-93 s)
+  // is 0, not until this is 0 (a retraction at the sheet's maximum rates takes 16-91 s)
   extension(g) { const a = this.anims.get(g.id); if (a) return a.k; return g.acType && this.bridgesOf(g).some(b => this.docks(g, b)) ? 1 : 0; }
   // seconds the current undock (or a future one from the docked state) takes: the sheet's rates along the docking path
   undockTime(g) { let t = 0; for (const b of this.bridgesOf(g)) { const P = this.planFor(g, b); if (P.ok) t = Math.max(t, P.total); } return t; }
@@ -1117,7 +1159,7 @@ export class LiveGateSystem {
   //    equipment leaves with it. Returns the seconds until extension(g) is 0.
   //  * redock(g, now): undo a false signal - the running retraction reverses along its own path to the door.
   //  * hurryUndock(g, s, now): the push has begun with the bridge still out - the running retraction continues from
-  //    where it is at the sheet's maximum rates (16-93 s from docked, p50 26 s; never squeezed).
+  //    where it is at the sheet's maximum rates (16-91 s from docked, p50 27 s; never squeezed).
   //  * pushClearEta(g, now): seconds until every bridge is clear of the occupant's straight push-back (its body swept
   //    backward along its heading by its length + 15 m, 0.3 m clearance): the cab backed off the door and out of the
   //    way - the only hold the body needs. For a docked stand with no retraction running, the hold a hurryUndock() now
@@ -1168,7 +1210,7 @@ export class LiveGateSystem {
   // bridges are, along the same path, at the Oshkosh AeroTech sheet's maximum rates (27 m/min at the cab pivot, cab 145
   // deg/min, lift 1.09 m/min; no 3 s allowance per motion, the back-off from the door at the drive speed) - in `s`
   // seconds when that is slower, never faster. Returns the seconds the retraction takes (0: nothing to hurry). The
-  // engine holds the body only for pushClearEta(g) (about 2-10 s), not for this.
+  // engine holds the body only for pushClearEta(g) (from docked p50 1.0 s, p99 4.7 s, max 25 s), not for this.
   hurryUndock(g, s = 0, now = Date.now()) {
     const a = this.anims.get(g.id); if (!a || a.to !== 0 || !a.plans || !a.plans.size) return 0;
     const kc = this.animK(a, now); if (kc <= 1e-4) return 0;
@@ -1190,6 +1232,7 @@ export class LiveGateSystem {
     if (!T || !pose) return 0;
     const nose = stW(pose.nose, G), f = stD(pose.dir); const n2 = [nose[0], nose[2]], f2 = [f[0], f[2]];
     let a = this.anims.get(g.id);
+    if (a && a.to === 1 && a._pc && Math.abs(now - a._pc.t) < 500) return a._pc.v; // (a docking in progress: re-planned twice a second)
     if (!a || a.to !== 0) { // no retraction running: the one a hurryUndock() would start now
       const P0 = a ? a.plans : (g.acType ? this.undockPlans(g) : null); if (!P0 || !P0.size) return 0;
       const H = this.hurryPlans(P0, a ? this.animK(a, now) : 1); if (!H.plans.size) return 0;
@@ -1201,6 +1244,7 @@ export class LiveGateSystem {
       const t = a.t0 + a.dur * (a.from - kh) / Math.max(1e-9, a.from - a.to);             // when k falls to kh
       eta = Math.max(eta, (t - now) / 1000);
     }
+    const A0 = this.anims.get(g.id); if (A0 && A0.to === 1) A0._pc = { t: now, v: Math.max(0, eta) };
     return Math.max(0, eta);
   }
   // the animation parameter at and below which bridge b's plan P stays clear of the straight push-back of type T (nose
@@ -1320,25 +1364,28 @@ export class LiveGateSystem {
     };
     const tint = () => { const cs = [[0.95, 0.95, 0.95], [0.9, 0.75, 0.1], [0.15, 0.3, 0.6], [0.85, 0.3, 0.1], [0.4, 0.42, 0.45]]; return [...cs[Math.floor(R() * cs.length)], 1]; };
     const B = this.vehicleBuckets;
-    const HULL = { tug: [[-1.4, 1.4, -0.92, 0.92, 0, 2.1]], cart: [[-1.5, 1.5, -0.85, 0.85, 0, 1.6]], catering: [[-3.5, 4.55, -1.2, 1.2, 0, 6.2]], fuel: [[-3.8, 4.55, -1.3, 1.3, 0, 3.2]], gpu: [[-1.2, 1.2, -0.7, 0.7, 0, 1.5]], cone: [[-0.22, 0.22, -0.22, 0.22, 0, 0.75]] };
-    const put = (bucket, v, color) => { if (ok(v, HULL[bucket], null, bucket)) { B[bucket].push(inst(v.M, color || tint())); return true; } return false; };
+    const HULL = { tug: [[-1.4, 1.4, -0.92, 0.92, 0, 2.1]], cart: [[-1.5, 1.5, -0.85, 0.85, 0, 1.6]], fuel: [[-3.8, 4.55, -1.3, 1.3, 0, 3.2]], gpu: [[-1.2, 1.2, -0.7, 0.7, 0, 1.5]], cone: [[-0.22, 0.22, -0.22, 0.22, 0, 0.75]] };
+    const put = (bucket, v, color, hull = HULL[bucket]) => { if (ok(v, hull, null, bucket)) { B[bucket].push(inst(v.M, color || tint())); return true; } return false; };
+    // the mesh of a lift setting (js/world/gates.js vehicleSettings: one per conveyor top / catering box floor, built for
+    // the fitted types at start-up); a type re-seated later (fit.js seatType) takes the nearest one: [key, value]
+    const setting = (pre, val) => { let best = null, bd = 1e9; for (const k in B) if (k.startsWith(pre) && /^\d+$/.test(k.slice(pre.length))) { const x = +k.slice(pre.length) / 100, d = Math.abs(x - val); if (d < bd) { bd = d; best = [k, x]; } } return best; };
     const fuse = T.R + 0.4;
     // cargo doors are on the right (starboard) side: forward ahead of the wing, aft behind it (stations inferred)
     const fwdCargo = T.L * 0.22, aftCargo = T.L * 0.66;
     const cartCol = () => { const cs = [[0.34, 0.37, 0.4], [0.16, 0.24, 0.42], [0.2, 0.3, 0.24], [0.55, 0.56, 0.57]]; return [...cs[Math.floor(R() * cs.length)], 1]; };
     const tugCol = () => { const cs = [[0.9, 0.72, 0.1], [0.92, 0.92, 0.9], [0.12, 0.2, 0.42]]; return [...cs[Math.floor(R() * cs.length)], 1]; };
-    // belt loaders (narrow bodies with a sourced lower-deck sill: Boeing 737 and Airbus A320 families, js/world/gates.js
-    // BELT_SILL; the wide bodies' holds are container-loaded and not modelled): the conveyor's top end on the sill at the
-    // fuselage side (the cross-section's half width at that height + 0.1 m), the vehicle angled 18 deg off square with
-    // its low end away from the wing
-    const tk = this.typeKeyOf(T); const bk = /^b73\d$|^b3[789x]m$/.test(tk) ? 'beltLoader' : /^a3(18|19|20|21)$|^a(19|20|21)n$/.test(tk) ? 'beltLoaderA' : null;
-    if (bk) { const S = BELT_SILL[bk], sh = beltShape(S); const crown = (T.fit && T.fit.renderedCrown) || T.Hc + T.R; const a = crown - T.Hc;
-      // (the end against the side skin at the sill, or 0.3 m above the model's lowest skin where the published sill lies
-      // below it: 737 1.30-1.45 m vs the fitted model's 1.62 m)
-      const yEnd = T.R * Math.sqrt(Math.max(0, 1 - ((Math.max(S, T.Hc - a + 0.3) - T.Hc) / a) ** 2)) + 0.05;
-      const belt = { x0: sh.x0, y0: sh.y0, len: sh.len, th: sh.th, w: sh.w, h: sh.thick + 0.25, xe: sh.xe };
-      const boxes = [[-2.5, 2.4, -1.05, 1.05, 0, sh.chassisTop], [-2.55, -1.2, -1.08, -0.5, 0, sh.cabTop]];
-      for (const [X, pr, sgn] of [[fwdCargo, 0.85, -1], [aftCargo, 0.6, 1]]) { if (R() >= pr) continue;
+    // belt loaders (narrow bodies with sourced lower-deck sills: Boeing 737 and Airbus A320 families, js/world/gates.js
+    // BELT_PUB; the wide bodies' holds are container-loaded and not modelled): per cargo door, the conveyor raised to that
+    // door's sill (beltSill: the published one, at least 0.3 m above the rendered model's lowest skin) with its top end on
+    // the sill against the side skin (the elliptical cross-section's half width at that height + 0.05 m), the vehicle
+    // angled 18 deg off square with its low end away from the wing
+    const tk = this.typeKeyOf(T); const fam = beltFamily(tk);
+    if (fam) { const crown = (T.fit && T.fit.renderedCrown) || T.Hc + T.R; const a = crown - T.Hc;
+      for (const [X, pr, sgn, door] of [[fwdCargo, 0.85, -1, 'fwd'], [aftCargo, 0.6, 1, 'aft']]) { if (R() >= pr) continue;
+        const st = setting('belt', beltSill(T, fam, door)); if (!st) continue; const [bk, S] = st; const sh = beltShape(S);
+        const yEnd = T.R * Math.sqrt(Math.max(0, 1 - ((S - T.Hc) / a) ** 2)) + 0.05;
+        const belt = { x0: sh.x0, y0: sh.y0, len: sh.len, th: sh.th, w: sh.w, h: sh.thick + 0.25, xe: sh.xe };
+        const boxes = [[-2.5, 2.4, -1.05, 1.05, 0, sh.chassisTop], [-2.55, -1.2, -1.08, -0.5, 0, sh.cabTop]];
         for (const yaw of [72, 90, 60]) { const c = sgn * Math.cos(yaw * DEG), sn = -Math.sin(yaw * DEG); const d = v3.norm(v3.add(v3.mul(f, c), v3.mul(r, sn)));
           const e = v3.add(v3.sub(nose, v3.mul(f, X)), v3.mul(r, yEnd)); const p = v3.sub(e, v3.mul(d, sh.xe));
           const v = { M: m4.basis(d, [0, 1, 0], [p[0], G, p[2]]), p, d }; if (ok(v, boxes, belt, bk)) { B[bk].push(inst(v.M, tint())); break; } } } }
@@ -1347,7 +1394,8 @@ export class LiveGateSystem {
     if (R() < 0.75) { const tc = tugCol(), cc = [cartCol(), cartCol(), cartCol()]; const a0 = aftCargo + 2.5;
       for (const y of [fuse + 6.8, fuse + 10.5]) if (put('tug', at(a0, y, 0), tc)) { for (let i = 0; i < 3; i++) put('cart', at(a0 + 3.4 + i * 3.4, y, 0), cc[i]); break; } }
     // (catering truck square to the door, its front 0.7 m off the fuselage side: the mesh reaches 4.55 m ahead of its origin)
-    if (R() < 0.45 && T.doors[1] != null) put('catering', at(T.doors[1] + 1, fuse + 4.85, -Math.PI / 2), [0.95, 0.95, 0.95, 1]);
+    // (its box lifted to the door's floor: cateringFloor; the hull is the chassis, cab, column and the lifted box)
+    if (R() < 0.45 && T.doors[1] != null) { const F = cateringFloor(T); const st = F != null && setting('catering', F); if (st) put(st[0], at(T.doors[1] + 1, fuse + 4.85, -Math.PI / 2), [0.95, 0.95, 0.95, 1], cateringBoxes(st[1])); }
     if (R() < 0.35 && T.eng.length) put('fuel', at(T.xMain - 5, T.eng[T.eng.length - 1].z + 7.5, 0), [0.85, 0.85, 0.85, 1]);
     if (R() < 0.6) put('gpu', at(3.5, fuse + 3.4, 0.3));
     const span = T.wing ? T.wing.span / 2 : 18;
@@ -1356,6 +1404,17 @@ export class LiveGateSystem {
   typeKeyOf(T) { if (!this._tk) { this._tk = new Map(); for (const [k, t] of Object.entries(TYPES)) if (t) this._tk.set(t, k); } return this._tk.get(T) || ''; }
 }
 
+// exact plan intersection area of two oriented boxes ({c, u, hl, hw}): A clipped by B's four half-planes (Sutherland-Hodgman)
+function obbArea(A, B) {
+  const corners = (S) => { const v = [-S.u[1], S.u[0]]; return [[1, 1], [-1, 1], [-1, -1], [1, -1]].map(([i, j]) => [S.c[0] + S.u[0] * S.hl * i + v[0] * S.hw * j, S.c[1] + S.u[1] * S.hl * i + v[1] * S.hw * j]); };
+  let P = corners(A); const v = [-B.u[1], B.u[0]];
+  for (const [n, h] of [[B.u, B.hl], [[-B.u[0], -B.u[1]], B.hl], [v, B.hw], [[-v[0], -v[1]], B.hw]]) {
+    const dist = (p) => h - ((p[0] - B.c[0]) * n[0] + (p[1] - B.c[1]) * n[1]); const Q = [];
+    for (let i = 0; i < P.length; i++) { const p = P[i], q = P[(i + 1) % P.length]; const dp = dist(p), dq = dist(q);
+      if (dp >= 0) Q.push(p); if ((dp >= 0) !== (dq >= 0)) { const t = dp / (dp - dq); Q.push([p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t]); } }
+    P = Q; if (P.length < 3) return 0; }
+  let a = 0; for (let i = 0; i < P.length; i++) { const p = P[i], q = P[(i + 1) % P.length]; a += p[0] * q[1] - q[0] * p[1]; } return Math.abs(a) / 2;
+}
 // plan overlap of two solids, circles (`round`) handled exactly
 export function solidOverlap(a, b, cl = 0) {
   const cb = (c, r, B) => { const d = [c[0] - B.c[0], c[1] - B.c[1]]; const x = d[0] * B.u[0] + d[1] * B.u[1], y = -d[0] * B.u[1] + d[1] * B.u[0]; return Math.hypot(Math.max(0, Math.abs(x) - B.hl), Math.max(0, Math.abs(y) - B.hw)) < r + cl; };

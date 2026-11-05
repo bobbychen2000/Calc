@@ -57,12 +57,22 @@
 //      0.07 m mullion on a 1.8 m module covered ~18 % of the facade instead of 3.9 %, and the frame (albedo 0.28,
 //      metalness 0.8: F0 ~0.25) mirrored the warm ground at 2.5x the glass's reflectance. Now box-filtered (gridLineA).
 // The glass itself: a tinted low-e IGU (Boarding Area G: "a tinted energy-efficient glazed curtainwall", Tutor Perini
-// project page, pub, as confirmed in tools/buildings/spec_itb.json ba_g.facade; the 2025 aerial photo refs/cache/buildings/review_likeness/a2.jpg shows the pier glazing dark teal,
-// darker 60 % of the panes (31, 44, 46) display next to apron concrete (182, 173, 159), obs). Optics, inferred (no SFO
-// glazing specification found): outer lite n = 1.52 (R1 = 0.043), single-pass body tint tau = (0.62, 0.81, 0.80)
-// (blue-green float), low-e coating reflectance Rc = 0.08, clear inner lite x 0.90. R_out = R1 + (1 - R1)^2 tau^2 Rc =
-// GLASS_F0 (0.071, 0.091, 0.090), VLT = (1 - R1) tau (1 - Rc) 0.90 = GLASS_T (0.49, 0.64, 0.63) (typical tinted low-e
-// IGUs: VLT 0.4-0.7, R_out 0.07-0.11). F90 = 1 (the uncoated outer surface at grazing incidence).
+// project page, pub, as recorded in tools/buildings/spec_itb.json items[60]; the Sept 2025 aerial photo
+// refs/cache/buildings/review_likeness/a2.jpg (Commons, CC BY-SA 4.0, reference only) shows the BA-G glazing dark teal:
+// darker 60 % of the panes (32, 46, 47) display, G-R +14, B-R +15, next to apron concrete (154, 147, 136), B-R -18;
+// measured 5 Nov 2026, obs; overcast and seen through ~1-2 km of haze, so the hue is an upper bound). Optics, inferred
+// (no SFO glazing specification found): outer lite n = 1.52 (R1 = 0.043), single-pass body tint tau = (0.50, 0.80,
+// 0.80) (deep blue-green float: iron-oxide tints absorb red; blue = green as in the photo), low-e coating reflectance
+// Rc = 0.10, clear inner lite x 0.90. R_out = R1 + (1 - R1)^2 tau^2 Rc = GLASS_F0 (0.066, 0.102, 0.102),
+// VLT = (1 - R1) tau (1 - Rc) 0.90 = GLASS_T (0.39, 0.62, 0.62), photopic VLT 0.57 (typical tinted low-e IGUs: VLT
+// 0.4-0.7, R_out 0.07-0.11). F90 = 1: the neutral first-surface Fresnel takes over at grazing incidence while the
+// coloured coating term C = F0 - R1 stays (Schlick with this F0 and F90 = 1: F = R1 + C + (1 - R1 - C)(1 - cos)^5).
+// Round 2 first used tau (0.62, 0.81, 0.80), Rc 0.08 (F0 0.071, 0.091, 0.090); at the B20-like dev view the panes came
+// out neutral (G-R +2.3, B-R +1.5: AgX's toe, contrast 1.6, compresses hue 4 stops under grey); tau (0.50, 0.80, 0.75)
+// gave G-R +3.9, B-R +2.5 there and +11 / +8.6 in a low view (js/three/dev/glasstest.html), and in the app
+// (gate:B20,130,1,24) G-R +5.4, B-R +1.5, low view +10.2 / +7.4: green over blue, so tau_B was raised to tau_G. Final:
+// app B20 (25, 30, 27) display, G-R +5.2, B-R +2.3, lum 29 (live.html 28); dev low view +11.5 / +10.7
+// (docs/research/engine_impl.md §4.8).
 import { THREE, TSL } from './lib.js';
 import { hash12, lampK } from './tsl/common.js';
 import { Geo } from '../geom.js';
@@ -78,7 +88,7 @@ const gridLineA = (x, period, w) => {
   return clamp(I(y.add(fw.mul(0.5))).sub(I(y.sub(fw.mul(0.5)))).div(fw), 0.0, 1.0);
 };
 // tinted low-e IGU (see the header): reflectance at normal incidence per channel and visible transmittance
-const GLASS_F0 = [0.071, 0.091, 0.090], GLASS_T = [0.49, 0.64, 0.63], F0_IOR2 = 1 / 9; // ((2 - 1) / (2 + 1))^2
+const GLASS_F0 = [0.0659, 0.1016, 0.1016], GLASS_T = [0.388, 0.620, 0.620], F0_IOR2 = 1 / 9; // ((2 - 1) / (2 + 1))^2
 // pier walls: top (parapet) 15.2 m above the apron, glass up to 1.8 m below it (sfo_buildings.json, js/live/terminals.js)
 const WALL_TOP = 15.2, TOP_ABOVE_GLASS = 1.8;
 
@@ -213,7 +223,8 @@ export function objectMaterial(opts) {
       // the hall behind the pane as emission (see the header): rho x E_hall / pi x T x (1 - F), F per channel (Schlick, F0 = GLASS_F0, F90 = 1)
       // geometry normal, NOT normalWorld: core() also feeds mat.normalNode, and normalWorld depends on it (that cycle turned every object black)
       const cosV = abs(dot(normalize(cameraPosition.sub(wp)), normalWorldGeometry)); const f5 = float(1.0).sub(cosV).pow(5.0);
-      let F0 = vec3(...GLASS_F0), T = vec3(...GLASS_T), tint = vec3(...GLASS_F0.map(f => f / F0_IOR2));
+      const GO = opts.glassOptics || null; // dev override (js/three/dev/glasstest.html): { F0, T } uniforms
+      let F0 = GO ? GO.F0 : vec3(...GLASS_F0), T = GO ? GO.T : vec3(...GLASS_T), tint = GO ? GO.F0.mul(1 / F0_IOR2) : vec3(...GLASS_F0.map(f => f / F0_IOR2));
       if (AB) { F0 = mix(F0, vec3(F0_IOR2), AB.x); T = mix(T, vec3(0.48, 0.52, 0.54), AB.x); tint = mix(tint, vec3(0.9, 0.96, 1.0), AB.x); }
       const fr = F0.add(vec3(1.0).sub(F0).mul(f5));
       const hall = room.day.mul(T).mul(interiorE.mul(1.0 / Math.PI)).mul(vec3(1.0).sub(fr)).mul(float(1.0).sub(frame)).mul(isWall);

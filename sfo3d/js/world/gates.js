@@ -45,7 +45,7 @@ export class GateSystem {
       wheel: new Mesh(unitCyl([0.06, 0.06, 0.06, 1], [0.9, 0, 0, 0], 12).data()),
       beam: new Mesh(unitBox(gray, [0.5, 0.6, 0, 0]).data()),
     };
-    this.vehicleMeshes = buildVehicleMeshes();
+    this.vehicleMeshes = buildVehicleMeshes(LEGACY_SET);
     this.animated = {}; // gateId -> k
     this.buildStatic();
   }
@@ -164,13 +164,50 @@ export class GateSystem {
 }
 
 // ----- vehicle meshes -----
-// Belt loader conveyor settings (top of the conveyor at the lower-deck cargo-door sill, m above the apron):
-//  - 'beltLoader' 1.55 m: Boeing 737 NG / MAX forward cargo door sill 1.30-1.45 m, aft 1.63-1.80 m (737NG ACAP Rev C and
-//    737 MAX ACAP Rev K §2.3 Ground Clearances, refs/cache/acap)
-//  - 'beltLoaderA' 2.05 m: Airbus A320 family aft cargo door sill 1.89-1.98 m, bulk cargo door 2.11-2.22 m (Airbus AC A321
-//    Rev 35 §2-3 Ground Clearances, refs/cache/acap/AC_A321_jul2026.pdf)
-// Conveyor length 8.0 m, 0.9 m wide, rear end 0.75 m up (typical of the airport belt loaders; inferred, no datasheet).
-export const BELT_SILL = { beltLoader: 1.55, beltLoaderA: 2.05 };
+// Belt loaders: the conveyor's top end on the lower-deck cargo-door sill of the door it serves, per family and door
+// (published sill ranges, m above the apron between the documents' weight / CG cases):
+//  - Boeing 737 NG / MAX: forward cargo door 1.30-1.45, aft 1.63-1.80 (737NG ACAP Rev C §2.3.1 "C FWD CARGO DOOR" /
+//    "F AFT CARGO DOOR" for the -600 ... -900ER, refs/cache/acap/737NG_REV_C.txt lines 1327-1442; 737 MAX ACAP Rev K §2.3)
+//  - Airbus A320 family: forward cargo door C1 1.81-1.93, aft C2 1.91-2.08 (Airbus AC A321 §2-3 Ground Clearances,
+//    refs/cache/acap/AC_A321_jul2026.txt lines 3869-3874; the A319 / A320 take the A321's values - inferred, their AC is
+//    not cached)
+// The conveyor is set to the middle of the range, but never below 0.3 m above the RENDERED model's lowest skin: a real
+// loader is raised to the door it meets, and the fitted 737 models sit 0.2-0.3 m above the published sills (bridges_
+// closeout §5, aircraft track) - review 2026-11-04: at a fixed 1.55 m the 737 conveyor ended 0.37 m below the skin. To
+// 0.05 m (one mesh per setting). Conveyor length 8.0 m, 0.9 m wide, rear end 0.75 m up (inferred, no datasheet).
+export const BELT_PUB = { b737: { fwd: [1.30, 1.45], aft: [1.63, 1.80] }, a320: { fwd: [1.81, 1.93], aft: [1.91, 2.08] } };
+export const beltFamily = (k) => /^b73\d$|^b3[789x]m$/.test(k) ? 'b737' : /^a3(18|19|20|21)$|^a(19|20|21)n$/.test(k) ? 'a320' : null;
+// the rendered model's lowest skin (elliptical section: half heights crown - Hc above and below the centre)
+export function lowSkin(T) { const crown = (T.fit && T.fit.renderedCrown) || T.Hc + T.R; return T.Hc - (crown - T.Hc); }
+export function beltSill(T, fam, door) { const r = BELT_PUB[fam] && BELT_PUB[fam][door]; if (!r) return null; return Math.round(Math.max((r[0] + r[1]) / 2, lowSkin(T) + 0.3) * 20) / 20; }
+export const beltKey = (S) => 'belt' + Math.round(S * 100);
+// catering truck: its box is lifted to the floor of the door it serves (the second door, R2): the rendered door-2 sill
+// (T.dockSill2, else door 1's rendered sill raised by the model's nose-down pitch over the door spacing), to 0.2 m; at
+// least 2.8 m (over the 2.6 m cab). Before: one box at 3.6-6.2 m for every type - 1.4 m under a 777's door 2 and up into
+// the narrow bodies' tailplanes (review 2026-11-04: catering trucks fell from 20 to 11)
+export function cateringFloor(T) {
+  if (!T || !T.doors || T.doors[1] == null) return null;
+  const s1 = T.dockSill ?? T.sill; const p = T.fit && T.fit.pitch ? Math.sin(T.fit.pitch.a) : 0;
+  const s2 = T.dockSill2 ?? (s1 != null ? s1 + p * (T.doors[1] - T.doors[0]) : null); if (s2 == null) return null;
+  return Math.max(2.8, Math.round(s2 * 5) / 5);
+}
+export const cateringKey = (F) => 'catering' + Math.round(F * 100);
+// catering truck hull (local boxes [x0, x1, z0, z1, y0, y1], x towards the aircraft): chassis, cab, lifted box, column
+export const cateringBoxes = (F) => [[-3.5, 3.0, -1.1, 1.1, 0, 1.6], [3.0, 4.55, -1.1, 1.1, 0, 2.6], [-3.4, 2.8, -1.2, 1.2, F, F + 2.6], [-3.0, 2.4, -0.3, 0.3, 1.6, F]];
+// every conveyor / box setting the types at the contact stands need (the meshes are built once, before any placement;
+// memoised, so a checker that rebuilds the meshes later - jobs/extract2d.mjs - gets the same keys even after a model was
+// re-seated by fit.js seatType: placeVehicles snaps such a type to the nearest setting)
+let VSET = null;
+export function vehicleSettings() {
+  if (VSET) return VSET;
+  const belts = {}, caterings = {};
+  for (const [k, T] of Object.entries(TYPES)) { if (!T || !T.wing || !T.doors || k.startsWith('biz_')) continue;
+    const fam = beltFamily(k); if (fam) for (const d of ['fwd', 'aft']) { const S = beltSill(T, fam, d); belts[beltKey(S)] = S; }
+    const F = cateringFloor(T); if (F != null) caterings[cateringKey(F)] = F; }
+  return (VSET = { belts, caterings });
+}
+// (the old offline renderer's GateSystem, js/scene.js, keeps its two fixed meshes)
+const LEGACY_SET = { belts: { beltLoader: 1.55 }, caterings: { catering: 3.6 } };
 // local shape (x forward to the aircraft end, y up, z right): conveyor box from (x0, y0) tilted by th about z; its top
 // surface ends at (xe, S); chassis -2.5..2.4 m up to chassisTop; cab on the left (-z) side up to 2.05 m
 export function beltShape(S) {
@@ -178,9 +215,10 @@ export function beltShape(S) {
   let th = 0; for (let i = 0; i < 40; i++) th = Math.asin(Math.max(-0.5, Math.min(0.9, (S - y0 - thick * Math.cos(th)) / len)));
   return { x0, y0, len, thick, w, th, xe: x0 + len * Math.cos(th) - thick * Math.sin(th), S, chassisTop: 0.75, cabTop: 2.05 };
 }
-export function buildVehicleMeshes() { const M = vehicleGeos(); const out = {}; for (const k in M) out[k] = new Mesh(M[k].data()); return out; }
-// the vehicle geometries (Geo, local metres) - also read by the checkers
-export function vehicleGeos() {
+export function buildVehicleMeshes(set) { const M = vehicleGeos(set); const out = {}; for (const k in M) out[k] = new Mesh(M[k].data()); return out; }
+// the vehicle geometries (Geo, local metres) - also read by the checkers; set: vehicleSettings() (computed after
+// js/aircraft/fit.js has fitted the models: js/live/gates.js imports it first)
+export function vehicleGeos(set = vehicleSettings()) {
   const T = (c) => [...c, 1];
   const paint = [0.9, 0.9, 0.9, 1], dark = [0.1, 0.1, 0.11, 1], glass = [0.05, 0.06, 0.07, 1];
   const E_PAINT = [0.45, 0, 20, 0], E_DARK = [0.8, 0, 0, 0], E_GLASS = [0.1, 0, 0, 0], E_METAL = [0.4, 0.8, 0, 0];
@@ -189,15 +227,16 @@ export function vehicleGeos() {
   { const g = new Geo(); g.box([-1.4, 0.35, -0.8], [1.4, 1.2, 0.8], paint, E_PAINT); g.box([-1.3, 1.2, -0.75], [-0.1, 2.0, 0.75], glass, E_GLASS); g.box([-1.35, 2.0, -0.8], [-0.05, 2.1, 0.8], paint, E_PAINT); wheels(g, [-0.9, 0.9], 0.8, 0.35); M.tug = g; }
   { const g = new Geo(); g.box([-1.5, 0.4, -0.85], [1.5, 0.55, 0.85], [0.3, 0.3, 0.32, 1], E_METAL); const bag = [[0.2, 0.2, 0.25], [0.5, 0.1, 0.1], [0.1, 0.2, 0.4], [0.35, 0.3, 0.2]]; for (let i = 0; i < 6; i++) g.box([-1.4 + (i % 3) * 0.95, 0.55, -0.8 + Math.floor(i / 3) * 0.8], [-0.55 + (i % 3) * 0.95, 1.0 + (i % 2) * 0.2, -0.05 + Math.floor(i / 3) * 0.8], T(bag[i % 4]), [0.8, 0, 20, 0]); g.box([-1.5, 1.3, -0.85], [1.5, 1.4, 0.85], [0.8, 0.8, 0.8, 1], E_METAL); wheels(g, [-1.0, 1.0], 0.85, 0.22, 0.15); M.cart = g; }
   // belt loaders: one mesh per conveyor setting (BELT_SILL: the top of the conveyor at the cargo-door sill)
-  for (const [k, S] of Object.entries(BELT_SILL)) { const B = beltShape(S); const g = new Geo();
+  for (const [k, S] of Object.entries(set.belts)) { const B = beltShape(S); const g = new Geo();
     g.box([-2.5, 0.35, -1.05], [2.4, B.chassisTop, 1.05], paint, E_PAINT);                                  // chassis
     g.box([-2.5, B.chassisTop, -1.05], [-1.25, 1.95, -0.52], glass, E_GLASS); g.box([-2.55, 1.95, -1.08], [-1.2, 2.05, -0.5], paint, E_PAINT); // driver's cab (left side)
     const bm = m4.mul(m4.translate(B.x0, B.y0, 0), m4.rotZ(B.th)); g.box([0, 0, -B.w / 2], [B.len, B.thick, B.w / 2], dark, E_DARK, bm); // conveyor
     for (const sz of [-1, 1]) { g.box([0, B.thick, sz * B.w / 2 - 0.03], [B.len, B.thick + 0.25, sz * B.w / 2 + 0.03], [0.85, 0.7, 0.1, 1], E_PAINT, bm); } // side rails
     const xs = 1.6, ys = B.y0 + (xs - B.x0) * Math.tan(B.th); g.box([xs - 0.12, B.chassisTop, -0.3], [xs + 0.12, Math.max(B.chassisTop + 0.05, ys), 0.3], [0.3, 0.3, 0.32, 1], E_METAL); // lift strut
     wheels(g, [-1.6, 1.6], 1.0); M[k] = g; }
-  { const g = new Geo(); g.box([-3.5, 0.5, -1.1], [3.0, 1.6, 1.1], paint, E_PAINT); g.box([3.0, 0.5, -1.1], [4.5, 2.6, 1.1], paint, E_PAINT); g.box([3.9, 1.6, -1.05], [4.55, 2.4, 1.05], glass, E_GLASS);
-    g.box([-3.4, 3.6, -1.2], [2.8, 6.2, 1.2], [0.95, 0.95, 0.95, 1], [0.5, 0, 2, 0]); g.box([-3.0, 1.6, -0.3], [2.4, 3.6, 0.3], [0.3, 0.3, 0.32, 1], E_METAL); wheels(g, [-2.4, 3.6], 1.1, 0.45); M.catering = g; }
+  // catering trucks: one mesh per box floor (cateringFloor); box 2.6 m tall on a scissor column (CATER_BOXES: the hull)
+  for (const [k, F] of Object.entries(set.caterings)) { const g = new Geo(); g.box([-3.5, 0.5, -1.1], [3.0, 1.6, 1.1], paint, E_PAINT); g.box([3.0, 0.5, -1.1], [4.5, 2.6, 1.1], paint, E_PAINT); g.box([3.9, 1.6, -1.05], [4.55, 2.4, 1.05], glass, E_GLASS);
+    g.box([-3.4, F, -1.2], [2.8, F + 2.6, 1.2], [0.95, 0.95, 0.95, 1], [0.5, 0, 2, 0]); g.box([-3.0, 1.6, -0.3], [2.4, F, 0.3], [0.3, 0.3, 0.32, 1], E_METAL); wheels(g, [-2.4, 3.6], 1.1, 0.45); M[k] = g; }
   { const g = new Geo(); g.box([2.5, 0.5, -1.2], [4.5, 2.8, 1.2], paint, E_PAINT); g.box([3.9, 1.7, -1.15], [4.55, 2.6, 1.15], glass, E_GLASS); g.cylinder(1.2, 6.0, 16, [0.85, 0.85, 0.86, 1], [0.35, 0.6, 0, 0], m4.mul(m4.translate(-3.8, 2.0, 0), m4.rotZ(-Math.PI / 2))); wheels(g, [-3, -1.5, 3.5], 1.2, 0.5); M.fuel = g; }
   { const g = new Geo(); g.box([-1.2, 0.3, -0.7], [1.2, 1.5, 0.7], paint, E_PAINT); wheels(g, [-0.8, 0.8], 0.7, 0.28); M.gpu = g; }
   { const g = new Geo(); g.lathe([[0.22, 0], [0.05, 0.75]], 10, [0.95, 0.35, 0.05, 1], [0.6, 0, 0, 0], null, true); M.cone = g; }

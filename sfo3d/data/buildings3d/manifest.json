@@ -3009,5 +3009,3015 @@
    "ao_samples": 48,
    "date": "2026-11-04"
   }
+ },
+ "domestic": {
+  "asset": "data/buildings3d/domestic.glb",
+  "bytes": 11472556,
+  "built": "2026-11-05T01:22:19+00:00",
+  "git": "17979db+dirty",
+  "generator": "tools/blender/build_domestic.py (bpy 5.0.1, Cycles CPU AO bake); geometry tools/blender/dom_geom.py + dom_mesh.py; textures dom_tex.py",
+  "reference": "2-D sheets BD-01..03 (docs/drawings/buildings/README.md), drawn by tools/buildings/draw_domestic.py, imported by dom_geom.py",
+  "spec": "tools/buildings/spec_domestic.json (+ dom_bab_band.json, dom_baf_hub.json, dom_bab_roof.json; tools/blender/dom_pv.json)",
+  "buildings": {
+   "T1": {
+    "name": "Harvey Milk Terminal 1 Center",
+    "tag": "unk"
+   },
+   "BA_B": {
+    "name": "Boarding Area B",
+    "tag": "obs"
+   },
+   "BA_C": {
+    "name": "Boarding Area C",
+    "tag": "obs"
+   },
+   "T2": {
+    "name": "Terminal 2",
+    "tag": "unk"
+   },
+   "BA_D": {
+    "name": "Boarding Area D",
+    "tag": "obs"
+   },
+   "T3W": {
+    "name": "Terminal 3 West",
+    "tag": "pub"
+   },
+   "T3E": {
+    "name": "Terminal 3 East",
+    "tag": "inf"
+   },
+   "BA_E": {
+    "name": "Boarding Area E",
+    "tag": "obs"
+   },
+   "BA_F": {
+    "name": "Boarding Area F",
+    "tag": "obs"
+   }
+  },
+  "frame": {
+   "id": "ltp-nad83-2011",
+   "axes": "x east, y up, z south, metres from the ARP (js/geo.js)",
+   "root_node": "domestic",
+   "root_translation": [
+    -896.5,
+    3.0,
+    336.5
+   ],
+   "ground_y": 3.0,
+   "note": "every building node is recentred on its plan bbox centre (its translation)"
+  },
+  "lods": [
+   {
+    "lod": 0,
+    "node": "LOD0",
+    "switch_m": 0.0,
+    "tris": 67428,
+    "verts": 143631,
+    "draw_calls": 113,
+    "ao_atlas": "dom_ao_S / dom_ao_N (shared by the LOD0 / LOD1 shell meshes)"
+   },
+   {
+    "lod": 1,
+    "node": "LOD1",
+    "switch_m": 380.0,
+    "tris": 19698,
+    "verts": 46234,
+    "draw_calls": 91,
+    "ao_atlas": "dom_ao_S / dom_ao_N (shared by the LOD0 / LOD1 shell meshes)"
+   },
+   {
+    "lod": 2,
+    "node": "LOD2",
+    "switch_m": 1300.0,
+    "tris": 10114,
+    "verts": 23730,
+    "draw_calls": 16,
+    "ao_atlas": "dom_ao_L2"
+   }
+  ],
+  "lod_note": "LOD groups are siblings under the root: show one per building. LOD0 / LOD1 hold one node per building and kind (L<k>_<bld>_shell / _detail / _pv, extras.building): choose the LOD per building from the camera distance to its node (the complex spans ~1.3 km). LOD1 shares the LOD0 shell meshes and atlases; LOD2 is one joined node (L2_domestic, extras.parts keeps the per-part tags) with its own atlas. Phone / far tier: data/buildings3d/domestic_lod2.glb holds the LOD2 subtree alone (same root transform).",
+  "files": [
+   "data/buildings3d/domestic.glb",
+   "data/buildings3d/domestic_lod2.glb"
+  ],
+  "lod2_glb": {
+   "path": "data/buildings3d/domestic_lod2.glb",
+   "bytes": 1765272
+  },
+  "textures": [
+   {
+    "name": "dom_n_pv",
+    "px": [
+     512,
+     512
+    ],
+    "mime": "image/png",
+    "bytes": 1982,
+    "kind": "normal map, tiling, TEXCOORD_0"
+   },
+   {
+    "name": "dom_c_pv",
+    "px": [
+     512,
+     512
+    ],
+    "mime": "image/png",
+    "bytes": 2395,
+    "kind": "base colour, tiling, TEXCOORD_0"
+   },
+   {
+    "name": "dom_n_panel",
+    "px": [
+     512,
+     512
+    ],
+    "mime": "image/png",
+    "bytes": 1858,
+    "kind": "normal map, tiling, TEXCOORD_0"
+   },
+   {
+    "name": "dom_ao_S",
+    "px": [
+     2048,
+     2048
+    ],
+    "mime": "image/png",
+    "bytes": 2392785,
+    "kind": "AO (occlusionTexture, TEXCOORD_1)"
+   },
+   {
+    "name": "dom_n_curtain",
+    "px": [
+     512,
+     512
+    ],
+    "mime": "image/png",
+    "bytes": 2009,
+    "kind": "normal map, tiling, TEXCOORD_0"
+   },
+   {
+    "name": "dom_c_glass_ec",
+    "px": [
+     512,
+     512
+    ],
+    "mime": "image/png",
+    "bytes": 1549,
+    "kind": "base colour, tiling, TEXCOORD_0"
+   },
+   {
+    "name": "dom_n_membrane",
+    "px": [
+     512,
+     512
+    ],
+    "mime": "image/png",
+    "bytes": 24397,
+    "kind": "normal map, tiling, TEXCOORD_0"
+   },
+   {
+    "name": "dom_c_glass_lowe",
+    "px": [
+     512,
+     512
+    ],
+    "mime": "image/png",
+    "bytes": 1552,
+    "kind": "base colour, tiling, TEXCOORD_0"
+   },
+   {
+    "name": "dom_c_glass_tint",
+    "px": [
+     512,
+     512
+    ],
+    "mime": "image/png",
+    "bytes": 1547,
+    "kind": "base colour, tiling, TEXCOORD_0"
+   },
+   {
+    "name": "dom_ao_N",
+    "px": [
+     2048,
+     2048
+    ],
+    "mime": "image/png",
+    "bytes": 2331569,
+    "kind": "AO (occlusionTexture, TEXCOORD_1)"
+   },
+   {
+    "name": "dom_c_glass_clear",
+    "px": [
+     512,
+     512
+    ],
+    "mime": "image/png",
+    "bytes": 1547,
+    "kind": "base colour, tiling, TEXCOORD_0"
+   },
+   {
+    "name": "dom_c_frit_grey",
+    "px": [
+     512,
+     512
+    ],
+    "mime": "image/png",
+    "bytes": 2305,
+    "kind": "base colour, tiling, TEXCOORD_0"
+   },
+   {
+    "name": "dom_c_frit_green",
+    "px": [
+     512,
+     512
+    ],
+    "mime": "image/png",
+    "bytes": 2577,
+    "kind": "base colour, tiling, TEXCOORD_0"
+   },
+   {
+    "name": "dom_n_corr",
+    "px": [
+     512,
+     512
+    ],
+    "mime": "image/png",
+    "bytes": 8484,
+    "kind": "normal map, tiling, TEXCOORD_0"
+   },
+   {
+    "name": "dom_n_t3w",
+    "px": [
+     512,
+     512
+    ],
+    "mime": "image/png",
+    "bytes": 2652,
+    "kind": "normal map, tiling, TEXCOORD_0"
+   },
+   {
+    "name": "dom_c_t3w",
+    "px": [
+     512,
+     512
+    ],
+    "mime": "image/png",
+    "bytes": 1550,
+    "kind": "base colour, tiling, TEXCOORD_0"
+   },
+   {
+    "name": "dom_ao_L2",
+    "px": [
+     1024,
+     1024
+    ],
+    "mime": "image/png",
+    "bytes": 728469,
+    "kind": "AO (occlusionTexture, TEXCOORD_1)"
+   }
+  ],
+  "materials": {
+   "roof_membrane": {
+    "rgb_srgb": [
+     214,
+     216,
+     212
+    ],
+    "metallic": 0.0,
+    "roughness": 0.85,
+    "ior": 1.5,
+    "src": "NAIP 2024 roof colour per building (roof_<bld>) [obs, low]",
+    "normal_tile": "dom_n_membrane",
+    "base_tile": null
+   },
+   "panel_light": {
+    "rgb_srgb": [
+     206,
+     208,
+     209
+    ],
+    "metallic": 0.4,
+    "roughness": 0.45,
+    "ior": 1.5,
+    "src": "inf (light metal panels; photos a1 / d2)",
+    "normal_tile": "dom_n_panel",
+    "base_tile": null
+   },
+   "panel_dark": {
+    "rgb_srgb": [
+     92,
+     96,
+     100
+    ],
+    "metallic": 0.3,
+    "roughness": 0.55,
+    "ior": 1.5,
+    "src": "inf (dark spandrel / band; photo a1)",
+    "normal_tile": "dom_n_panel",
+    "base_tile": null
+   },
+   "panel_acm": {
+    "rgb_srgb": [
+     152,
+     154,
+     155
+    ],
+    "metallic": 0.55,
+    "roughness": 0.4,
+    "ior": 1.5,
+    "src": "pub T3W ACM \"Whetstone Gray Metallic\" (CDR p.23); value inf",
+    "normal_tile": "dom_n_panel",
+    "base_tile": null
+   },
+   "panel_acm_dark": {
+    "rgb_srgb": [
+     44,
+     46,
+     48
+    ],
+    "metallic": 0.45,
+    "roughness": 0.45,
+    "ior": 1.5,
+    "src": "pub T3W ACM \"Focus Black\" spandrel; value inf",
+    "normal_tile": "dom_n_panel",
+    "base_tile": null
+   },
+   "panel_platinum": {
+    "rgb_srgb": [
+     192,
+     194,
+     196
+    ],
+    "metallic": 0.55,
+    "roughness": 0.4,
+    "ior": 1.5,
+    "src": "pub t3e.facade (platinum metal panels); value inf",
+    "normal_tile": "dom_n_panel",
+    "base_tile": null
+   },
+   "service": {
+    "rgb_srgb": [
+     104,
+     106,
+     108
+    ],
+    "metallic": 0.1,
+    "roughness": 0.75,
+    "ior": 1.5,
+    "src": "inf (apron-level service walls, doors not modelled; photo a1 dark base)",
+    "normal_tile": "dom_n_panel",
+    "base_tile": null
+   },
+   "fascia": {
+    "rgb_srgb": [
+     228,
+     229,
+     229
+    ],
+    "metallic": 0.2,
+    "roughness": 0.4,
+    "ior": 1.5,
+    "src": "inf (light roof edge; photos a1 / d1)",
+    "normal_tile": "dom_n_panel",
+    "base_tile": null
+   },
+   "coping": {
+    "rgb_srgb": [
+     200,
+     202,
+     204
+    ],
+    "metallic": 0.5,
+    "roughness": 0.4,
+    "ior": 1.5,
+    "src": "inf",
+    "normal_tile": null,
+    "base_tile": null
+   },
+   "soffit": {
+    "rgb_srgb": [
+     176,
+     178,
+     178
+    ],
+    "metallic": 0.2,
+    "roughness": 0.55,
+    "ior": 1.5,
+    "src": "inf",
+    "normal_tile": "dom_n_panel",
+    "base_tile": null
+   },
+   "concrete": {
+    "rgb_srgb": [
+     168,
+     166,
+     160
+    ],
+    "metallic": 0.0,
+    "roughness": 0.85,
+    "ior": 1.5,
+    "src": "inf (curb sidewalk, well bridges)",
+    "normal_tile": null,
+    "base_tile": null
+   },
+   "penthouse_corr": {
+    "rgb_srgb": [
+     202,
+     204,
+     206
+    ],
+    "metallic": 0.5,
+    "roughness": 0.45,
+    "ior": 1.5,
+    "src": "pub T3E penthouse \"light grey perforated corrugated metal\"; value inf",
+    "normal_tile": "dom_n_corr",
+    "base_tile": null
+   },
+   "pv": {
+    "rgb_srgb": [
+     34,
+     42,
+     64
+    ],
+    "metallic": 0.2,
+    "roughness": 0.25,
+    "ior": 1.5,
+    "src": "obs NAIP 2024 rack extents (dom_pv.json); module look inf",
+    "normal_tile": "dom_n_pv",
+    "base_tile": "dom_c_pv"
+   },
+   "planting": {
+    "rgb_srgb": [
+     84,
+     104,
+     66
+    ],
+    "metallic": 0.0,
+    "roughness": 0.95,
+    "ior": 1.5,
+    "src": "obs NAIP (green roof wells, BA-B) [pub \"roof wells\"]; value inf",
+    "normal_tile": null,
+    "base_tile": null
+   },
+   "door_dark": {
+    "rgb_srgb": [
+     46,
+     50,
+     54
+    ],
+    "metallic": 0.3,
+    "roughness": 0.5,
+    "ior": 1.5,
+    "src": "inf (bridge door leaf)",
+    "normal_tile": null,
+    "base_tile": null
+   },
+   "mullion": {
+    "rgb_srgb": [
+     170,
+     175,
+     180
+    ],
+    "metallic": 0.6,
+    "roughness": 0.4,
+    "ior": 1.5,
+    "src": "inf (aluminium fins / frames)",
+    "normal_tile": null,
+    "base_tile": null
+   },
+   "lettering": {
+    "rgb_srgb": [
+     34,
+     38,
+     42
+    ],
+    "metallic": 0.2,
+    "roughness": 0.45,
+    "ior": 1.5,
+    "src": "obs photo d1 (\"Harvey Milk Terminal / Terminal 1\"); font inf",
+    "normal_tile": null,
+    "base_tile": null
+   },
+   "glass_canopy": {
+    "rgb_srgb": [
+     150,
+     166,
+     168
+    ],
+    "metallic": 0.0,
+    "roughness": 0.08,
+    "ior": 1.9,
+    "src": "pub t1c canopy (glass); value inf",
+    "normal_tile": null,
+    "base_tile": null
+   },
+   "glass_sky": {
+    "rgb_srgb": [
+     72,
+     88,
+     98
+    ],
+    "metallic": 0.0,
+    "roughness": 0.06,
+    "ior": 1.9,
+    "src": "obs NAIP skylights; glass inf",
+    "normal_tile": null,
+    "base_tile": null
+   },
+   "glass_ec": {
+    "rgb_srgb": [
+     44,
+     58,
+     70
+    ],
+    "metallic": 0.0,
+    "roughness": 0.05,
+    "ior": 1.9,
+    "src": "pub bab.glazing (electrochromic); tint inf",
+    "normal_tile": "dom_n_curtain",
+    "base_tile": "dom_c_glass_ec"
+   },
+   "glass_lowe": {
+    "rgb_srgb": [
+     66,
+     82,
+     92
+    ],
+    "metallic": 0.0,
+    "roughness": 0.05,
+    "ior": 1.9,
+    "src": "inf (clerestory / lantern glass)",
+    "normal_tile": "dom_n_curtain",
+    "base_tile": "dom_c_glass_lowe"
+   },
+   "glass_tint": {
+    "rgb_srgb": [
+     40,
+     54,
+     58
+    ],
+    "metallic": 0.0,
+    "roughness": 0.05,
+    "ior": 1.9,
+    "src": "unk (gate-room glass not described: generic tint)",
+    "normal_tile": "dom_n_curtain",
+    "base_tile": "dom_c_glass_tint"
+   },
+   "glass_clear": {
+    "rgb_srgb": [
+     30,
+     36,
+     40
+    ],
+    "metallic": 0.0,
+    "roughness": 0.04,
+    "ior": 1.9,
+    "src": "obs photos d1 / a1 (dark clear glass)",
+    "normal_tile": "dom_n_curtain",
+    "base_tile": "dom_c_glass_clear"
+   },
+   "glass_frit_grey": {
+    "rgb_srgb": [
+     110,
+     118,
+     122
+    ],
+    "metallic": 0.0,
+    "roughness": 0.12,
+    "ior": 1.9,
+    "src": "pub bae.facade \"clear glass with grey frit\"; pattern inf",
+    "normal_tile": "dom_n_curtain",
+    "base_tile": "dom_c_frit_grey"
+   },
+   "glass_frit_green": {
+    "rgb_srgb": [
+     150,
+     170,
+     160
+    ],
+    "metallic": 0.0,
+    "roughness": 0.12,
+    "ior": 1.9,
+    "src": "pub t1c.landside_facade (fritted glass); green obs photo d1; pattern inf",
+    "normal_tile": null,
+    "base_tile": "dom_c_frit_green"
+   },
+   "glass_t3w": {
+    "rgb_srgb": [
+     98,
+     114,
+     124
+    ],
+    "metallic": 0.0,
+    "roughness": 0.08,
+    "ior": 1.9,
+    "src": "pub t3w.materials (fritted IGU window wall); module unk",
+    "normal_tile": "dom_n_t3w",
+    "base_tile": "dom_c_t3w"
+   },
+   "roof_<building>": {
+    "rgb_srgb": {
+     "T1": [
+      215,
+      215,
+      215
+     ],
+     "BA_B": [
+      215,
+      215,
+      215
+     ],
+     "BA_C": [
+      209,
+      215,
+      211
+     ],
+     "T2": [
+      213,
+      215,
+      211
+     ],
+     "BA_D": [
+      213,
+      215,
+      210
+     ],
+     "T3W": [
+      203,
+      213,
+      215
+     ],
+     "T3E": [
+      215,
+      215,
+      215
+     ],
+     "BA_E": [
+      214,
+      215,
+      212
+     ],
+     "BA_F": [
+      215,
+      215,
+      215
+     ]
+    },
+    "src": "NAIP 2024 per building (capped)",
+    "note": "per-building copies of roof_membrane"
+   }
+  },
+  "material_note": "glass: coated (IOR 1.9 -> F0 0.096, KHR_materials_ior + KHR_materials_specular), opaque (no interiors); single-sided, every face wound outwards; no imagery is used as a texture (NAIP 2024 only for the roof colour numbers); no TANGENT attribute (tiling normal maps; the runtime derives the tangent frame)",
+  "ao": {
+   "S": {
+    "res": 2048,
+    "lods": [
+     0,
+     1
+    ],
+    "buildings": [
+     "T1",
+     "BA_B",
+     "BA_C",
+     "T2"
+    ],
+    "bake_s": 23.9,
+    "mean": 0.616,
+    "p2": 0.0,
+    "samples": 48,
+    "distance_m": 10.0,
+    "ground_plane": true
+   },
+   "N": {
+    "res": 2048,
+    "lods": [
+     0,
+     1
+    ],
+    "buildings": [
+     "BA_D",
+     "T3W",
+     "T3E",
+     "BA_E",
+     "BA_F"
+    ],
+    "bake_s": 24.4,
+    "mean": 0.672,
+    "p2": 0.0,
+    "samples": 48,
+    "distance_m": 10.0,
+    "ground_plane": true
+   },
+   "L2": {
+    "res": 1024,
+    "lods": [
+     2
+    ],
+    "buildings": [
+     "all"
+    ],
+    "bake_s": 3.4,
+    "mean": 0.647,
+    "p2": 0.0,
+    "samples": 48,
+    "distance_m": 10.0,
+    "ground_plane": true
+   }
+  },
+  "naip_colours": {
+   "T1": {
+    "rgb": [
+     215,
+     215,
+     215
+    ],
+    "n": 1860,
+    "lean_m_per_m": 0.394,
+    "method": "NAIP 2024 median of the upper 65 pct (luminance) at the imaged deck points, 2.5 m grid, 2 m inside, off holes / PV; capped at sRGB 215"
+   },
+   "BA_B": {
+    "rgb": [
+     215,
+     215,
+     215
+    ],
+    "n": 1186,
+    "lean_m_per_m": 0.387,
+    "method": "NAIP 2024 median of the upper 65 pct (luminance) at the imaged deck points, 2.5 m grid, 2 m inside, off holes / PV; capped at sRGB 215"
+   },
+   "BA_C": {
+    "rgb": [
+     209,
+     215,
+     211
+    ],
+    "n": 790,
+    "lean_m_per_m": 0.4,
+    "method": "NAIP 2024 median of the upper 65 pct (luminance) at the imaged deck points, 2.5 m grid, 2 m inside, off holes / PV; capped at sRGB 215"
+   },
+   "T2": {
+    "rgb": [
+     213,
+     215,
+     211
+    ],
+    "n": 2531,
+    "lean_m_per_m": 0.49,
+    "method": "NAIP 2024 median of the upper 65 pct (luminance) at the imaged deck points, 2.5 m grid, 2 m inside, off holes / PV; capped at sRGB 215"
+   },
+   "BA_D": {
+    "rgb": [
+     213,
+     215,
+     210
+    ],
+    "n": 2220,
+    "lean_m_per_m": 0.581,
+    "method": "NAIP 2024 median of the upper 65 pct (luminance) at the imaged deck points, 2.5 m grid, 2 m inside, off holes / PV; capped at sRGB 215"
+   },
+   "T3W": {
+    "rgb": [
+     203,
+     213,
+     215
+    ],
+    "n": 621,
+    "lean_m_per_m": 0.387,
+    "method": "NAIP 2024 median of the upper 65 pct (luminance) at the imaged deck points, 2.5 m grid, 2 m inside, off holes / PV; capped at sRGB 215"
+   },
+   "T3E": {
+    "rgb": [
+     215,
+     215,
+     215
+    ],
+    "n": 659,
+    "lean_m_per_m": 0.387,
+    "method": "NAIP 2024 median of the upper 65 pct (luminance) at the imaged deck points, 2.5 m grid, 2 m inside, off holes / PV; capped at sRGB 215"
+   },
+   "BA_E": {
+    "rgb": [
+     214,
+     215,
+     212
+    ],
+    "n": 631,
+    "lean_m_per_m": 0.443,
+    "method": "NAIP 2024 median of the upper 65 pct (luminance) at the imaged deck points, 2.5 m grid, 2 m inside, off holes / PV; capped at sRGB 215"
+   },
+   "BA_F": {
+    "rgb": [
+     215,
+     215,
+     215
+    ],
+    "n": 2677,
+    "lean_m_per_m": 0.332,
+    "method": "NAIP 2024 median of the upper 65 pct (luminance) at the imaged deck points, 2.5 m grid, 2 m inside, off holes / PV; capped at sRGB 215"
+   }
+  },
+  "dimensions": [
+   {
+    "key": "BA-B outer roof edge height",
+    "value": 13.14,
+    "tag": "obs",
+    "source": "spec bab.h_roof (two-epoch NAIP, south half; north half inf)",
+    "range": [
+     12.49,
+     13.81
+    ]
+   },
+   {
+    "key": "BA-B raised centre band height",
+    "value": 19.04,
+    "tag": "obs",
+    "source": "spec bab.h_roof_central (2020 step shadow + parallax; low)",
+    "range": [
+     18.1,
+     20.02
+    ]
+   },
+   {
+    "key": "BA-B band ESE edge (airport-grid s)",
+    "value": -391.04,
+    "tag": "obs",
+    "source": "dom_bab_band.json (2020 edge, sd 0.13 m)"
+   },
+   {
+    "key": "BA-B band WNW edge (airport-grid s)",
+    "value": -423.39,
+    "tag": "obs/inf",
+    "source": "dom_bab_band.json (2024 wall band t -1150..-960; carried south inf)"
+   },
+   {
+    "key": "BA-B band extent t",
+    "value": "-1236 .. -946",
+    "tag": "obs",
+    "source": "dom_bab_band.json (step shadow at every 2-m station)"
+   },
+   {
+    "key": "BA-B outer roof edges (s, south half)",
+    "value": "-383.73 / -438.04",
+    "tag": "obs",
+    "source": "spec bab.roof_edges: ESE +2.27 / WNW -1.66 m from the level-2 outline"
+   },
+   {
+    "key": "BA-B roof wells depth below the deck",
+    "value": 3.0,
+    "tag": "unk",
+    "source": "placeholder (not measured); positions obs dom_bab_roof.json"
+   },
+   {
+    "key": "BA-C roof height",
+    "value": 7.2,
+    "tag": "obs",
+    "source": "spec bac.h_roof (single face, assumed k24; low)",
+    "range": [
+     6.99,
+     7.53
+    ]
+   },
+   {
+    "key": "BA-D head roof height",
+    "value": 8.49,
+    "tag": "obs",
+    "source": "spec bad.h_roof (low)",
+    "range": [
+     8.07,
+     8.93
+    ]
+   },
+   {
+    "key": "BA-D roof edges from the outline (ESE / WNW)",
+    "value": "+2.40 / -1.36",
+    "tag": "obs",
+    "source": "spec bad.roof_edges"
+   },
+   {
+    "key": "BA-D drums: centres, radius 9.6",
+    "value": "BAD_DRUMS_IMG less the D relief",
+    "tag": "obs (position) / inf (relief)",
+    "source": "draw_domestic BAD_DRUMS_IMG (NAIP)"
+   },
+   {
+    "key": "BA-D drum top",
+    "value": 13.19,
+    "tag": "inf",
+    "source": "roof + ~4.7 m (crescent 2.75 m / lean 0.58; obs low)"
+   },
+   {
+    "key": "BA-E raised centre (tapered fascia) height",
+    "value": 12.85,
+    "tag": "obs",
+    "source": "spec bae.h_roof",
+    "range": [
+     12.21,
+     13.51
+    ]
+   },
+   {
+    "key": "BA-E lower side roofs",
+    "value": 9.85,
+    "tag": "inf",
+    "source": "fascia - BAE_STEP 3.0 (photo a1, low)"
+   },
+   {
+    "key": "BA-E flank / overhang",
+    "value": "4.4 / 1.5",
+    "tag": "inf",
+    "source": "draw_domestic BAE_FLANK / BAE_OVER (photo a1, low)"
+   },
+   {
+    "key": "BA-E width",
+    "value": 42.9,
+    "tag": "inf",
+    "source": "research 5.3 (outline less ~2 m WNW)"
+   },
+   {
+    "key": "BA-F NE arm roof height (hub, NW arm drawn at it)",
+    "value": 10.49,
+    "tag": "obs",
+    "source": "spec baf.h_roof_ne_arm (DOF 10.36 m); hub band 10.4-12.1 obs low",
+    "range": [
+     9.97,
+     11.03
+    ]
+   },
+   {
+    "key": "BA-F roof edges from the outline (ESE / WNW)",
+    "value": "+1.83 / -1.15",
+    "tag": "obs",
+    "source": "draw_data.dom_true_edges (BD-01 / BD-02: 27.0 m arm); see conflicts"
+   },
+   {
+    "key": "BA-F lantern",
+    "value": "octagon 19.4 / 13.4 m, centre ~3.3 m E of the hub centre",
+    "tag": "obs (size) / inf (centre)",
+    "source": "draw_domestic BAF_LANTERN_APO, baf_lantern_centre(), dom_baf_hub.json"
+   },
+   {
+    "key": "BA-F lantern rise",
+    "value": 4.6,
+    "tag": "unk (upper bound)",
+    "source": "NAIP 2020 cast shadow <= 5.2 m -> rise <= 4.6 m, drawn at the bound"
+   },
+   {
+    "key": "BA-F NW-arm monitor rise",
+    "value": 2.5,
+    "tag": "unk",
+    "source": "placeholder; width ~8 m obs NAIP"
+   },
+   {
+    "key": "T3 levels above L1 (L2 / L3 / R2 / T3W parapet / R3)",
+    "value": "4.88 / 10.36 / 14.48 / 16.76 / 21.34",
+    "tag": "pub (levels) / inf (subtraction)",
+    "source": "CDR 95 % CD p.28-29 (Oct 2023); T3 L1 at the apron [inf]"
+   },
+   {
+    "key": "T3W roof deck",
+    "value": 15.697,
+    "tag": "inf",
+    "source": "parapet - 3'-6\" (CDR field wall)"
+   },
+   {
+    "key": "T3W airside window stack",
+    "value": "10 ft glass + 2 ft band + 10 ft glass from L3",
+    "tag": "pub",
+    "source": "t3w.wall_field"
+   },
+   {
+    "key": "T3W landside bands (spandrel 1.7 / glazing 5.8 above L2)",
+    "value": "proportions",
+    "tag": "inf (low)",
+    "source": "CDR p.23 rendered section (no dimensions)"
+   },
+   {
+    "key": "T3E roof",
+    "value": 14.478,
+    "tag": "inf",
+    "source": "R2 \"top of roof at high point\" read as the T3E roof"
+   },
+   {
+    "key": "T3E penthouse top / extent",
+    "value": "21.34 / bearings (356.0, 13.4), set back (20.0, 24.0) m, 25.5 m deep",
+    "tag": "inf (top R3) / obs low (extent NAIP)",
+    "source": "BD-03 view 3"
+   },
+   {
+    "key": "departures curb above the apron (T1 / T2)",
+    "value": 4.877,
+    "tag": "unk",
+    "source": "placeholder: T3 L1 -> L2 rise by analogy"
+   },
+   {
+    "key": "T1 Center wall head / tier transom / canopy soffit (above the curb)",
+    "value": "13.0 / 0.44 / 4.0",
+    "tag": "inf (photo d1, low)",
+    "source": "BD-03 view 1"
+   },
+   {
+    "key": "T1 Center roof height",
+    "value": 17.877,
+    "tag": "unk",
+    "source": "curb [unk] + wall head 13.0 [inf]; spec t1c.h_roof: none"
+   },
+   {
+    "key": "T1 landside facade set-back from the trimmed curb line",
+    "value": 4.0,
+    "tag": "inf",
+    "source": "canopy depth; NAIP 2024 PV roof edge 3-6 m inside the trimmed edge"
+   },
+   {
+    "key": "T2 hall height",
+    "value": 16.877,
+    "tag": "unk",
+    "source": "curb [unk] + 12.0 (BD-03 view 2 placeholder)"
+   },
+   {
+    "key": "pier / hall footprints",
+    "value": "SFO Museum level-2 outlines (+ measured roof edges)",
+    "tag": "obs",
+    "source": "data/sfo_airport.json (CDLA-Permissive-1.0)"
+   },
+   {
+    "key": "concourse (departure) floor",
+    "value": 5.4,
+    "tag": "inf",
+    "source": "js/live/gates.js DEPARTURE_LEVEL (bridge floor)"
+   },
+   {
+    "key": "facade bands (service / spandrel / glazing / panel)",
+    "value": "STYLES in dom_geom.py",
+    "tag": "inf / unk",
+    "source": "materials pub where described (bab.glazing, bae.facade, t1c, t3w, t3e)"
+   },
+   {
+    "key": "mullion module / fins",
+    "value": "1.5 m / 0.06 x 0.18 m",
+    "tag": "inf",
+    "source": "no source"
+   },
+   {
+    "key": "roof slab / parapet",
+    "value": "0.8 / 0.6",
+    "tag": "inf",
+    "source": "measured heights are the roof EDGES (coping top)"
+   },
+   {
+    "key": "PV rack blocks",
+    "value": "dom_pv.json",
+    "tag": "obs (extent, NAIP 2024 +-1 m) / inf (height 0.35-0.75 m)",
+    "source": "tools/blender/dom_pv.py"
+   },
+   {
+    "key": "elevated sky-bridge / connector parts",
+    "value": "6.0 - 10.5",
+    "tag": "unk",
+    "source": "the app convention (tools/build_terminal_parts.py walkway y0 6.0 / h 10.5)"
+   },
+   {
+    "key": "bridge doors / vestibules / bulkheads",
+    "value": "at the walkway attach points (data/sfo_stands.json)",
+    "tag": "inf",
+    "source": "door 2.6 x 3.0 walkway section (gates.js)"
+   },
+   {
+    "key": "roof colours",
+    "value": "NAIP 2024 median per building, capped at sRGB 215",
+    "tag": "obs (low) / inf (cap)",
+    "source": "build_domestic.naip_colours"
+   }
+  ],
+  "components": [
+   {
+    "node": "L0_T1_shell",
+    "building": "T1",
+    "feature": "Harvey Milk Terminal 1 Center: walls, roofs, roof features",
+    "src": "unk",
+    "spec": [
+     "outline.level",
+     "t1c.h_roof",
+     "t1c.landside_facade",
+     "t1c.roof_pv",
+     "t1c.skylights_count"
+    ],
+    "dims": {
+     "T1_hall": {
+      "h": {
+       "v": 17.877,
+       "tag": "unk",
+       "source": "see spec keys"
+      },
+      "z0": {
+       "v": 0.0,
+       "tag": "obs",
+       "source": "apron / host deck"
+      }
+     },
+     "T1_walk21": {
+      "h": {
+       "v": 10.5,
+       "tag": "unk",
+       "source": "see spec keys"
+      },
+      "z0": {
+       "v": 6.0,
+       "tag": "inf",
+       "source": "apron / host deck"
+      }
+     }
+    },
+    "kind": "shell",
+    "lods": [
+     0,
+     1,
+     2
+    ]
+   },
+   {
+    "node": "L0_T1_detail",
+    "building": "T1",
+    "feature": "Harvey Milk Terminal 1 Center: mullion fins, bridge door frames, skylight frames, brackets",
+    "src": "inf",
+    "spec": [],
+    "dims": {},
+    "kind": "detail",
+    "lods": [
+     0
+    ]
+   },
+   {
+    "node": "L0_T1_pv",
+    "building": "T1",
+    "feature": "Harvey Milk Terminal 1 Center: PV rack blocks (NAIP 2024 extents [obs]; rack height inf)",
+    "src": "obs",
+    "spec": [
+     "bab.pv",
+     "bab.pv_layout",
+     "t1c.roof_pv"
+    ],
+    "dims": {},
+    "kind": "detail",
+    "lods": [
+     0,
+     1,
+     2
+    ]
+   },
+   {
+    "node": "L0_BA_B_shell",
+    "building": "BA_B",
+    "feature": "Boarding Area B: walls, roofs, roof features",
+    "src": "obs",
+    "spec": [
+     "bab.clerestory",
+     "bab.glazing",
+     "bab.h_roof",
+     "bab.h_roof_central",
+     "bab.roof_edges",
+     "outline.level"
+    ],
+    "dims": {
+     "BA_B_body": {
+      "h": {
+       "v": 13.14,
+       "tag": "obs",
+       "source": "see spec keys"
+      },
+      "z0": {
+       "v": 0.0,
+       "tag": "obs",
+       "source": "apron / host deck"
+      }
+     },
+     "BA_B_band": {
+      "h": {
+       "v": 19.04,
+       "tag": "obs",
+       "source": "see spec keys"
+      },
+      "z0": {
+       "v": 12.54,
+       "tag": "inf",
+       "source": "apron / host deck"
+      }
+     },
+     "BA_B_walk2": {
+      "h": {
+       "v": 10.5,
+       "tag": "unk",
+       "source": "see spec keys"
+      },
+      "z0": {
+       "v": 6.0,
+       "tag": "inf",
+       "source": "apron / host deck"
+      }
+     },
+     "BA_B_walk3": {
+      "h": {
+       "v": 10.5,
+       "tag": "unk",
+       "source": "see spec keys"
+      },
+      "z0": {
+       "v": 6.0,
+       "tag": "inf",
+       "source": "apron / host deck"
+      }
+     }
+    },
+    "kind": "shell",
+    "lods": [
+     0,
+     1,
+     2
+    ]
+   },
+   {
+    "node": "L0_BA_B_detail",
+    "building": "BA_B",
+    "feature": "Boarding Area B: mullion fins, bridge door frames, skylight frames, brackets",
+    "src": "inf",
+    "spec": [],
+    "dims": {},
+    "kind": "detail",
+    "lods": [
+     0
+    ]
+   },
+   {
+    "node": "L0_BA_B_pv",
+    "building": "BA_B",
+    "feature": "Boarding Area B: PV rack blocks (NAIP 2024 extents [obs]; rack height inf)",
+    "src": "obs",
+    "spec": [
+     "bab.pv",
+     "bab.pv_layout",
+     "t1c.roof_pv"
+    ],
+    "dims": {},
+    "kind": "detail",
+    "lods": [
+     0,
+     1,
+     2
+    ]
+   },
+   {
+    "node": "L0_BA_C_shell",
+    "building": "BA_C",
+    "feature": "Boarding Area C: walls, roofs, roof features",
+    "src": "obs",
+    "spec": [
+     "bac.h_roof",
+     "bac.roof",
+     "outline.level"
+    ],
+    "dims": {
+     "BA_C_body": {
+      "h": {
+       "v": 7.2,
+       "tag": "obs",
+       "source": "see spec keys"
+      },
+      "z0": {
+       "v": 0.0,
+       "tag": "obs",
+       "source": "apron / host deck"
+      }
+     }
+    },
+    "kind": "shell",
+    "lods": [
+     0,
+     1,
+     2
+    ]
+   },
+   {
+    "node": "L0_BA_C_detail",
+    "building": "BA_C",
+    "feature": "Boarding Area C: mullion fins, bridge door frames, skylight frames, brackets",
+    "src": "inf",
+    "spec": [],
+    "dims": {},
+    "kind": "detail",
+    "lods": [
+     0
+    ]
+   },
+   {
+    "node": "L0_T2_shell",
+    "building": "T2",
+    "feature": "Terminal 2: walls, roofs, roof features",
+    "src": "unk",
+    "spec": [
+     "outline.level",
+     "t2.daylight",
+     "t2.landside"
+    ],
+    "dims": {
+     "T2_hall": {
+      "h": {
+       "v": 16.877,
+       "tag": "unk",
+       "source": "see spec keys"
+      },
+      "z0": {
+       "v": 0.0,
+       "tag": "obs",
+       "source": "apron / host deck"
+      }
+     },
+     "T2_link22": {
+      "h": {
+       "v": 16.877,
+       "tag": "inf",
+       "source": "see spec keys"
+      },
+      "z0": {
+       "v": 0.0,
+       "tag": "obs",
+       "source": "apron / host deck"
+      }
+     }
+    },
+    "kind": "shell",
+    "lods": [
+     0,
+     1,
+     2
+    ]
+   },
+   {
+    "node": "L0_T2_detail",
+    "building": "T2",
+    "feature": "Terminal 2: mullion fins, bridge door frames, skylight frames, brackets",
+    "src": "inf",
+    "spec": [],
+    "dims": {},
+    "kind": "detail",
+    "lods": [
+     0
+    ]
+   },
+   {
+    "node": "L0_BA_D_shell",
+    "building": "BA_D",
+    "feature": "Boarding Area D: walls, roofs, roof features",
+    "src": "obs",
+    "spec": [
+     "bad.h_roof",
+     "bad.roof",
+     "bad.roof_edges",
+     "outline.level"
+    ],
+    "dims": {
+     "BA_D_body": {
+      "h": {
+       "v": 8.49,
+       "tag": "obs",
+       "source": "see spec keys"
+      },
+      "z0": {
+       "v": 0.0,
+       "tag": "obs",
+       "source": "apron / host deck"
+      }
+     },
+     "BA_D_drum0": {
+      "h": {
+       "v": 13.19,
+       "tag": "inf",
+       "source": "see spec keys"
+      },
+      "z0": {
+       "v": 7.89,
+       "tag": "inf",
+       "source": "apron / host deck"
+      }
+     },
+     "BA_D_drum1": {
+      "h": {
+       "v": 13.19,
+       "tag": "inf",
+       "source": "see spec keys"
+      },
+      "z0": {
+       "v": 7.89,
+       "tag": "inf",
+       "source": "apron / host deck"
+      }
+     },
+     "BA_D_walk8": {
+      "h": {
+       "v": 10.5,
+       "tag": "unk",
+       "source": "see spec keys"
+      },
+      "z0": {
+       "v": 6.0,
+       "tag": "inf",
+       "source": "apron / host deck"
+      }
+     }
+    },
+    "kind": "shell",
+    "lods": [
+     0,
+     1,
+     2
+    ]
+   },
+   {
+    "node": "L0_BA_D_detail",
+    "building": "BA_D",
+    "feature": "Boarding Area D: mullion fins, bridge door frames, skylight frames, brackets",
+    "src": "inf",
+    "spec": [],
+    "dims": {},
+    "kind": "detail",
+    "lods": [
+     0
+    ]
+   },
+   {
+    "node": "L0_T3W_shell",
+    "building": "T3W",
+    "feature": "Terminal 3 West: walls, roofs, roof features",
+    "src": "pub",
+    "spec": [
+     "t3.levels_datum",
+     "t3w.materials",
+     "t3w.wall_field"
+    ],
+    "dims": {
+     "T3W_hall": {
+      "h": {
+       "v": 16.764,
+       "tag": "pub",
+       "source": "see spec keys"
+      },
+      "z0": {
+       "v": 0.0,
+       "tag": "obs",
+       "source": "apron / host deck"
+      }
+     }
+    },
+    "kind": "shell",
+    "lods": [
+     0,
+     1,
+     2
+    ]
+   },
+   {
+    "node": "L0_T3W_detail",
+    "building": "T3W",
+    "feature": "Terminal 3 West: mullion fins, bridge door frames, skylight frames, brackets",
+    "src": "inf",
+    "spec": [],
+    "dims": {},
+    "kind": "detail",
+    "lods": [
+     0
+    ]
+   },
+   {
+    "node": "L0_T3W_pv",
+    "building": "T3W",
+    "feature": "Terminal 3 West: PV rack blocks (NAIP 2024 extents [obs]; rack height inf)",
+    "src": "obs",
+    "spec": [
+     "bab.pv",
+     "bab.pv_layout",
+     "t1c.roof_pv"
+    ],
+    "dims": {},
+    "kind": "detail",
+    "lods": [
+     0,
+     1,
+     2
+    ]
+   },
+   {
+    "node": "L0_T3E_shell",
+    "building": "T3E",
+    "feature": "Terminal 3 East: walls, roofs, roof features",
+    "src": "inf",
+    "spec": [
+     "t3.levels_datum",
+     "t3.penthouses",
+     "t3e.facade"
+    ],
+    "dims": {
+     "T3E_hall": {
+      "h": {
+       "v": 14.478,
+       "tag": "inf",
+       "source": "see spec keys"
+      },
+      "z0": {
+       "v": 0.0,
+       "tag": "obs",
+       "source": "apron / host deck"
+      }
+     },
+     "T3E_penthouse": {
+      "h": {
+       "v": 21.336,
+       "tag": "inf",
+       "source": "see spec keys"
+      },
+      "z0": {
+       "v": 13.878,
+       "tag": "inf",
+       "source": "apron / host deck"
+      }
+     }
+    },
+    "kind": "shell",
+    "lods": [
+     0,
+     1,
+     2
+    ]
+   },
+   {
+    "node": "L0_T3E_detail",
+    "building": "T3E",
+    "feature": "Terminal 3 East: mullion fins, bridge door frames, skylight frames, brackets",
+    "src": "inf",
+    "spec": [],
+    "dims": {},
+    "kind": "detail",
+    "lods": [
+     0
+    ]
+   },
+   {
+    "node": "L0_T3E_pv",
+    "building": "T3E",
+    "feature": "Terminal 3 East: PV rack blocks (NAIP 2024 extents [obs]; rack height inf)",
+    "src": "obs",
+    "spec": [
+     "bab.pv",
+     "bab.pv_layout",
+     "t1c.roof_pv"
+    ],
+    "dims": {},
+    "kind": "detail",
+    "lods": [
+     0,
+     1,
+     2
+    ]
+   },
+   {
+    "node": "L0_BA_E_shell",
+    "building": "BA_E",
+    "feature": "Boarding Area E: walls, roofs, roof features",
+    "src": "obs",
+    "spec": [
+     "bae.facade",
+     "bae.h_roof",
+     "bae.roof",
+     "outline.level"
+    ],
+    "dims": {
+     "BA_E_body": {
+      "h": {
+       "v": 9.85,
+       "tag": "inf",
+       "source": "see spec keys"
+      },
+      "z0": {
+       "v": 0.0,
+       "tag": "obs",
+       "source": "apron / host deck"
+      }
+     },
+     "BA_E_centre": {
+      "h": {
+       "v": 12.85,
+       "tag": "obs",
+       "source": "see spec keys"
+      },
+      "z0": {
+       "v": 9.25,
+       "tag": "inf",
+       "source": "apron / host deck"
+      }
+     }
+    },
+    "kind": "shell",
+    "lods": [
+     0,
+     1,
+     2
+    ]
+   },
+   {
+    "node": "L0_BA_E_detail",
+    "building": "BA_E",
+    "feature": "Boarding Area E: mullion fins, bridge door frames, skylight frames, brackets",
+    "src": "inf",
+    "spec": [],
+    "dims": {},
+    "kind": "detail",
+    "lods": [
+     0
+    ]
+   },
+   {
+    "node": "L0_BA_E_pv",
+    "building": "BA_E",
+    "feature": "Boarding Area E: PV rack blocks (NAIP 2024 extents [obs]; rack height inf)",
+    "src": "obs",
+    "spec": [
+     "bab.pv",
+     "bab.pv_layout",
+     "t1c.roof_pv"
+    ],
+    "dims": {},
+    "kind": "detail",
+    "lods": [
+     0,
+     1,
+     2
+    ]
+   },
+   {
+    "node": "L0_BA_F_shell",
+    "building": "BA_F",
+    "feature": "Boarding Area F: walls, roofs, roof features",
+    "src": "obs",
+    "spec": [
+     "baf.h_roof_ne_arm",
+     "baf.hub",
+     "baf.roof_edges",
+     "outline.level"
+    ],
+    "dims": {
+     "BA_F_body": {
+      "h": {
+       "v": 10.49,
+       "tag": "obs",
+       "source": "see spec keys"
+      },
+      "z0": {
+       "v": 0.0,
+       "tag": "obs",
+       "source": "apron / host deck"
+      }
+     },
+     "BA_F_lantern": {
+      "h": {
+       "v": 15.09,
+       "tag": "unk",
+       "source": "see spec keys"
+      },
+      "z0": {
+       "v": 9.89,
+       "tag": "inf",
+       "source": "apron / host deck"
+      }
+     },
+     "BA_F_monitor": {
+      "h": {
+       "v": 12.99,
+       "tag": "unk",
+       "source": "see spec keys"
+      },
+      "z0": {
+       "v": 9.89,
+       "tag": "inf",
+       "source": "apron / host deck"
+      }
+     },
+     "BA_F_walk14": {
+      "h": {
+       "v": 10.5,
+       "tag": "unk",
+       "source": "see spec keys"
+      },
+      "z0": {
+       "v": 6.0,
+       "tag": "inf",
+       "source": "apron / host deck"
+      }
+     },
+     "BA_F_walk15": {
+      "h": {
+       "v": 10.5,
+       "tag": "unk",
+       "source": "see spec keys"
+      },
+      "z0": {
+       "v": 6.0,
+       "tag": "inf",
+       "source": "apron / host deck"
+      }
+     }
+    },
+    "kind": "shell",
+    "lods": [
+     0,
+     1,
+     2
+    ]
+   },
+   {
+    "node": "L0_BA_F_detail",
+    "building": "BA_F",
+    "feature": "Boarding Area F: mullion fins, bridge door frames, skylight frames, brackets",
+    "src": "inf",
+    "spec": [],
+    "dims": {},
+    "kind": "detail",
+    "lods": [
+     0
+    ]
+   },
+   {
+    "node": "L0_T1_lettering",
+    "building": "T1",
+    "feature": "T1 Center landside sign \"Harvey Milk Terminal / Terminal 1\"",
+    "src": "obs",
+    "spec": [
+     "t1c.landside_facade"
+    ],
+    "kind": "detail",
+    "lods": [
+     0
+    ]
+   }
+  ],
+  "inferred": [
+   "roof slab 0.8 m below the measured roof edge, parapet / coping 0.6 m (the measured heights are the roof EDGES)",
+   "facade bands: apron-level service wall 0-4.6 m, dark spandrel, concourse glazing from 5.4-5.6 m (the bridge floor) to 7.2-11.6 m per pier, light panel above; glazing materials published where described (BA-B electrochromic, BA-E clear + grey frit, T1 fritted two-tier, T3W ACM + fritted IGU, T3E grey frit / platinum panels), band heights inferred",
+   "mullion fins every 1.5 m on the glazed bands (0.06 x 0.18 m), T1 landside irregular rhythm 1.2-2.4 m (schematic of the published \"Redwood trees\" pattern)",
+   "BA-B: north-half outer roof edges carried from the south half (offsets from the outline); roof wells 3 m deep (unk) with planting; well bridges 0.6 m slabs; skylight grids raised 0.3 m",
+   "BA-E stepped section (raised plate with a tapered edge 1.5 m over a clerestory, lower flanks 4.4 m, step 3.0 m) from photo a1",
+   "BA-F lantern eccentric (~3.3 m E) at its rise bound 4.6 m; NW-arm monitor 2.5 m rise; hub and NW arm at the NE-arm height",
+   "BA-D drums ~4.7 m above the head roof; linear skylights 0.6 m",
+   "T1 Center: curb canopy 4.0 m deep at curb + 4.0 m (glass top, aluminium edge, brackets), departures sidewalk deck at the curb; the landside facade 4.0 m behind the trimmed curb line; three 9 x 11 m skylights; the sign \"Harvey Milk Terminal / Terminal 1\" on the west run (photo d1; size / font inf)",
+   "T3: L1 at the apron; T3W deck = parapet - 3'-6\"; T3E roof at R2; penthouse at R3; T3W / T3E split along the AirTrain connector gap",
+   "airside links at grade between halls and piers: the lower adjoining height",
+   "bridge attachment: a door surround (jambs + head around the 2.6 x 3.0 m walkway section) and a dark leaf on the facade at every bridge; a vestibule box from the facade to the app walkway start where that lies outside the facade (max 2.6 m); a bulkhead above the roof where the roof edge is below the walkway head (BA-C, BA-D); the BA-D overhang notched at the doors",
+   "roof colours from NAIP 2024 (white membranes saturate; base colour capped at sRGB 215); facade colours our reading of the photos"
+  ],
+  "unknown": [
+   "T1 Center and T2 hall heights (nothing published or measured): T1 = curb placeholder + 13.0 m wall head (photo d1), T2 = curb + 12 m",
+   "the departures-curb height above the apron (T1 / T2): 4.88 m placeholder (T3 L1 -> L2 by analogy)",
+   "the T3 project datum (L1 drawn at the apron); the T3 East landside facade (drawn with the published T3E materials, positions inf)",
+   "the BA-B roof-well depth and skylight heights; the BA-F lantern and monitor rises; the BA-B north-half outer roof height",
+   "bay / mullion modules, gate-room glazing extents, the apron-level facades (service band only), parapet heights",
+   "the elevated sky-bridge / pod parts (app convention 6.0-10.5 m)",
+   "which T3W state to model (under construction 2024-2029; the May 2026 change adds an airside storey): the asset shows the 95 % CD parapet 66'-0\" massing without the new storey"
+  ],
+  "not_modelled": [
+   "courtyard links (pedestrian bridges over the curbside roadways to the garage / AirTrain stations) and the links that cross the AirTrain guideway: no known level (the app keeps its own parts there)",
+   "the AirTrain guideway / stations and the garages (landside asset), the tower (tower asset), the ITB (itb asset)",
+   "T3W penthouses (positions / heights not dimensioned), roof equipment other than the PV racks, the T3E penthouse and the drums",
+   "interiors (glass is opaque; no interior lighting)",
+   "door frames at the 6 bridges that attach into an elevated pod / sky-bridge part (B10, B11, B11S, B15, B16, F22): the bridge floor 5.4 m vs the pod underside 6.0 m (both inf / unk) is left to the bridges work",
+   "signage other than the T1 Center landside sign (gate numbers are drawn by the app on the bridges / stands)"
+  ],
+  "conflicts": [
+   {
+    "item": "BA-F ESE roof edge",
+    "model": "the drawn lean-free line (draw_data.dom_true_edges, BD-01; BD-02 draws the NE arm 27.0 m between the lines): 1.83 m outside the level-2 outline along the face",
+    "other": "spec baf.roof_edges note / README round 2: \"ESE on the outline (+0.01 / -0.02)\"",
+    "note": "that note was measured at the line END points, where the line meets the outline's corner jogs; at 25 / 50 / 75 % of the line it is 1.83 m outside (checked 2026-11-05). The 3-D follows the drawn line; the spec note should be corrected by the drawings group"
+   },
+   {
+    "item": "T1 Center landside face",
+    "model": "on the measured roof edge: the app's trimmed curb line (OSM carriageways) less 4.0 m",
+    "other": "BD-03 view 1 develops the face along the SFO Museum outline (94.1 + 43.6 + 93.8 m)",
+    "note": "NAIP 2024 shows the curb roadway and vehicles INSIDE the SFO Museum outline there, and the PV roof edge 3-6 m inside the trimmed edge (overlay checked 2026-11-05); heights follow BD-03"
+   },
+   {
+    "item": "T3W parapet",
+    "model": "16.76 m = 66'-0\" - T3 L1 11'-0\" (BD-02 / BD-03)",
+    "other": "spec t3.heights_above_L1 16.99 m (66'-0\" - T3W L1 10'-3\")",
+    "note": "datum choice; 0.23 m"
+   },
+   {
+    "item": "BA-D overhang vs bridges",
+    "model": "overhang +2.40 m notched at the doors (roof underside 7.69 m < walkway head 8.4 m)",
+    "other": "bad.h_roof 8.49 m [obs, low] with a bridge floor 5.4 m (gates.js)",
+    "note": "a real bridge cannot pass under a 7.7 m soffit: either the head roof is higher there or the edge is local; the notch keeps both values"
+   },
+   {
+    "item": "BA-C roof vs bridges",
+    "model": "bulkheads above the 7.2 m roof at the doors",
+    "other": "bac.h_roof 7.2 m [obs, low] below the walkway head 8.4 m",
+    "note": "as BA-D"
+   }
+  ],
+  "bridges": {
+   "doors": 75,
+   "vestibules": 56,
+   "bulkheads": 23,
+   "notched": 2,
+   "note": "every bridge of data/sfo_stands.json (B-F) gets a door surround where its walkway meets the 3-D facade; where the app's walkway (js/live/gates.js) starts outside the facade a vestibule closes the gap"
+  },
+  "integration": {
+   "replaces": "js/live/terminals.js extrusions of the domestic parts of data/sfo_buildings.json (T1 / T2 / T3 halls, Boarding Areas B-F, their walkways)",
+   "keep": "the courtyard links and guideway-crossing connectors (not modelled here), the app's ramp-level complex outline for the bridge clearance tests (gates.js uses the SFO Museum outlines, which this asset follows)",
+   "exclusions": "the tower base building (tower asset) and the ITB outline are cut out / not overlapped (0 m2)"
+  },
+  "verification": {
+   "tool": "tools/blender/verify_domestic.py",
+   "report": "out/buildings3d/domestic_verify.json (local)",
+   "n_checks": 59,
+   "n_fail": 0,
+   "failed": [],
+   "tolerance": "0.5 m or 2 % of the drawn value (whichever is larger) unless stated",
+   "checks": [
+    {
+     "group": "placement",
+     "check": "root translation x",
+     "model": -896.5,
+     "drawing": -896.5,
+     "dev": 0.0,
+     "tol": 0.001,
+     "ok": true,
+     "src": "dom_geom OX / GROUND_Y / OZ (js/geo.js GROUND_Y 3.0)"
+    },
+    {
+     "group": "placement",
+     "check": "root translation y",
+     "model": 3.0,
+     "drawing": 3.0,
+     "dev": 0.0,
+     "tol": 0.001,
+     "ok": true,
+     "src": "dom_geom OX / GROUND_Y / OZ (js/geo.js GROUND_Y 3.0)"
+    },
+    {
+     "group": "placement",
+     "check": "root translation z",
+     "model": 336.5,
+     "drawing": 336.5,
+     "dev": 0.0,
+     "tol": 0.001,
+     "ok": true,
+     "src": "dom_geom OX / GROUND_Y / OZ (js/geo.js GROUND_Y 3.0)"
+    },
+    {
+     "group": "heights",
+     "check": "BA_B_body: roof edge top (median of 232 probes, p10 13.14 / p90 13.14)",
+     "model": 13.14,
+     "drawing": 13.14,
+     "dev": 0.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "bab.h_roof [obs (S half; N inf)]"
+    },
+    {
+     "group": "heights",
+     "check": "BA_B_band: roof edge top (median of 162 probes, p10 19.04 / p90 19.04)",
+     "model": 19.04,
+     "drawing": 19.04,
+     "dev": 0.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "bab.h_roof_central [obs, low]"
+    },
+    {
+     "group": "heights",
+     "check": "BA_C_body: roof edge top (median of 96 probes, p10 7.20 / p90 7.20)",
+     "model": 7.2,
+     "drawing": 7.2,
+     "dev": 0.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "bac.h_roof [obs, low]"
+    },
+    {
+     "group": "heights",
+     "check": "BA_D_body: roof edge top (median of 178 probes, p10 8.49 / p90 8.49)",
+     "model": 8.49,
+     "drawing": 8.49,
+     "dev": 0.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "bad.h_roof [obs, low]"
+    },
+    {
+     "group": "heights",
+     "check": "BA_E_centre: roof edge top (median of 118 probes, p10 12.85 / p90 12.85)",
+     "model": 12.85,
+     "drawing": 12.85,
+     "dev": 0.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "bae.h_roof [obs]"
+    },
+    {
+     "group": "heights",
+     "check": "BA_E_body: roof edge top (median of 79 probes, p10 9.85 / p90 9.85)",
+     "model": 9.85,
+     "drawing": 9.85,
+     "dev": 0.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "BA-E lower side roofs = fascia - BAE_STEP [inf]"
+    },
+    {
+     "group": "heights",
+     "check": "BA_F_body: roof edge top (median of 302 probes, p10 10.49 / p90 10.49)",
+     "model": 10.49,
+     "drawing": 10.49,
+     "dev": 0.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "baf.h_roof_ne_arm [obs]"
+    },
+    {
+     "group": "heights",
+     "check": "BA_F_lantern: roof edge top (median of 17 probes, p10 15.09 / p90 15.09)",
+     "model": 15.09,
+     "drawing": 15.09,
+     "dev": 0.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "hub lantern: roof + rise bound 4.6 [unk (bound)]"
+    },
+    {
+     "group": "heights",
+     "check": "BA_F_monitor: roof edge top (median of 93 probes, p10 12.99 / p90 12.99)",
+     "model": 12.99,
+     "drawing": 12.99,
+     "dev": 0.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "NW-arm monitor: roof + 2.5 [unk]"
+    },
+    {
+     "group": "heights",
+     "check": "BA_D_drum0: roof edge top (median of 16 probes, p10 13.19 / p90 13.19)",
+     "model": 13.19,
+     "drawing": 13.19,
+     "dev": 0.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "BAD_DRUM_TOP [inf]"
+    },
+    {
+     "group": "heights",
+     "check": "BA_D_drum1: roof edge top (median of 16 probes, p10 13.19 / p90 13.19)",
+     "model": 13.19,
+     "drawing": 13.19,
+     "dev": 0.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "BAD_DRUM_TOP [inf]"
+    },
+    {
+     "group": "heights",
+     "check": "T1_hall: roof edge top (median of 245 probes, p10 17.88 / p90 17.88)",
+     "model": 17.877,
+     "drawing": 17.877,
+     "dev": 0.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "curb 4.88 + wall head 13.0 (BD-03 v1) [unk / inf]"
+    },
+    {
+     "group": "heights",
+     "check": "T2_hall: roof edge top (median of 204 probes, p10 16.88 / p90 16.88)",
+     "model": 16.877,
+     "drawing": 16.877,
+     "dev": 0.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "curb 4.88 + 12.0 (BD-03 v2) [unk]"
+    },
+    {
+     "group": "heights",
+     "check": "T3W_hall: roof edge top (median of 111 probes, p10 16.76 / p90 16.76)",
+     "model": 16.764,
+     "drawing": 16.764,
+     "dev": 0.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "T3W parapet 66'-0\" - L1 (BD-02 / BD-03 v3) [pub / inf]"
+    },
+    {
+     "group": "heights",
+     "check": "T3E_hall: roof edge top (median of 125 probes, p10 14.48 / p90 14.48)",
+     "model": 14.478,
+     "drawing": 14.478,
+     "dev": 0.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "R2 58'-6\" - L1 [inf]"
+    },
+    {
+     "group": "heights",
+     "check": "T3E_penthouse: roof edge top (median of 44 probes, p10 21.34 / p90 21.34)",
+     "model": 21.336,
+     "drawing": 21.336,
+     "dev": 0.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "R3 81'-0\" - L1 [inf]"
+    },
+    {
+     "group": "BA-B section",
+     "check": "BA-B band WNW edge s: max |dev| over 28 stations (every 10 m, t -1226..-956)",
+     "model": -423.34,
+     "drawing": -423.39,
+     "dev": 0.05,
+     "tol": 0.5,
+     "ok": true,
+     "src": "dom_bab_band.json / BAB_OUTER_S [obs N half / inf S]"
+    },
+    {
+     "group": "BA-B section",
+     "check": "BA-B band ESE edge s: max |dev| over 28 stations (every 10 m, t -1226..-956)",
+     "model": -391.14,
+     "drawing": -391.04,
+     "dev": 0.1,
+     "tol": 0.5,
+     "ok": true,
+     "src": "dom_bab_band.json / BAB_OUTER_S [obs]"
+    },
+    {
+     "group": "BA-B section",
+     "check": "BA-B outer WNW roof edge s (t < -1150): max |dev| over 8 stations (every 10 m, t -1226..-956)",
+     "model": -437.94,
+     "drawing": -438.04,
+     "dev": 0.1,
+     "tol": 0.5,
+     "ok": true,
+     "src": "dom_bab_band.json / BAB_OUTER_S [obs]"
+    },
+    {
+     "group": "BA-B section",
+     "check": "BA-B outer ESE roof edge s (t < -1150): max |dev| over 8 stations (every 10 m, t -1226..-956)",
+     "model": -383.84,
+     "drawing": -383.73,
+     "dev": 0.11,
+     "tol": 0.5,
+     "ok": true,
+     "src": "dom_bab_band.json / BAB_OUTER_S [obs]"
+    },
+    {
+     "group": "BA-B section",
+     "check": "BA-B width ese_strip (mean over the stations)",
+     "model": 7.35,
+     "drawing": 7.3,
+     "dev": 0.05,
+     "tol": 0.5,
+     "ok": true,
+     "src": "BD-02 view 1 widths [obs / inf]"
+    },
+    {
+     "group": "BA-B section",
+     "check": "BA-B width band (mean over the stations)",
+     "model": 32.2,
+     "drawing": 32.4,
+     "dev": 0.2,
+     "tol": 0.648,
+     "ok": true,
+     "src": "BD-02 view 1 widths [obs / inf]"
+    },
+    {
+     "group": "BA-B section",
+     "check": "BA-B width wnw_strip (mean over the stations)",
+     "model": 14.688,
+     "drawing": 14.7,
+     "dev": 0.012,
+     "tol": 0.5,
+     "ok": true,
+     "src": "BD-02 view 1 widths [obs / inf]"
+    },
+    {
+     "group": "BA-B section",
+     "check": "BA-B width total (mean over the stations)",
+     "model": 54.238,
+     "drawing": 54.3,
+     "dev": 0.062,
+     "tol": 1.086,
+     "ok": true,
+     "src": "BD-02 view 1 widths [obs / inf]"
+    },
+    {
+     "group": "roof edges",
+     "check": "BA_B_body: roof edge vs the measured lean-free ESE line (max |offset|, 19 stations)",
+     "model": -0.05,
+     "drawing": 0.0,
+     "dev": 0.05,
+     "tol": 0.5,
+     "ok": true,
+     "src": "spec bab.roof_edges / draw_data.dom_true_edges [obs]"
+    },
+    {
+     "group": "roof edges",
+     "check": "BA_B_body: roof edge vs the measured lean-free WNW line (max |offset|, 19 stations)",
+     "model": -0.0,
+     "drawing": 0.0,
+     "dev": 0.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "spec bab.roof_edges / draw_data.dom_true_edges [obs]"
+    },
+    {
+     "group": "roof edges",
+     "check": "BA_D_body: roof edge vs the measured lean-free ESE line (max |offset|, 13 stations)",
+     "model": -0.05,
+     "drawing": 0.0,
+     "dev": 0.05,
+     "tol": 0.5,
+     "ok": true,
+     "src": "spec bad.roof_edges / draw_data.dom_true_edges [obs]"
+    },
+    {
+     "group": "roof edges",
+     "check": "BA_D_body: roof edge vs the measured lean-free WNW line (max |offset|, 19 stations)",
+     "model": -0.0,
+     "drawing": 0.0,
+     "dev": 0.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "spec bad.roof_edges / draw_data.dom_true_edges [obs]"
+    },
+    {
+     "group": "roof edges",
+     "check": "BA_F_body: roof edge vs the measured lean-free ESE line (max |offset|, 19 stations)",
+     "model": -0.05,
+     "drawing": 0.0,
+     "dev": 0.05,
+     "tol": 0.5,
+     "ok": true,
+     "src": "spec baf.roof_edges / draw_data.dom_true_edges [obs]"
+    },
+    {
+     "group": "roof edges",
+     "check": "BA_F_body: roof edge vs the measured lean-free WNW line (max |offset|, 19 stations)",
+     "model": 0.15,
+     "drawing": 0.0,
+     "dev": 0.15,
+     "tol": 0.5,
+     "ok": true,
+     "src": "spec baf.roof_edges / draw_data.dom_true_edges [obs]"
+    },
+    {
+     "group": "roof edges",
+     "check": "BA-F NE arm roof width (median of 7 sections)",
+     "model": 27.15,
+     "drawing": 27.0,
+     "dev": 0.15,
+     "tol": 0.54,
+     "ok": true,
+     "src": "BD-02 view 1: 27.0 m between the lean-free edges [obs]"
+    },
+    {
+     "group": "BA-E",
+     "check": "BA-E raised plate top (median of 13 sections)",
+     "model": 12.85,
+     "drawing": 12.85,
+     "dev": 0.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "bae.h_roof 12.85 (tapered fascia) [obs]"
+    },
+    {
+     "group": "BA-E",
+     "check": "BA-E lower side roof top (median of 13 sections)",
+     "model": 9.85,
+     "drawing": 9.85,
+     "dev": 0.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "fascia - BAE_STEP 3.0 [inf, photo a1]"
+    },
+    {
+     "group": "BA-E",
+     "check": "BA-E total roof width (median of the sections)",
+     "model": 42.8,
+     "drawing": 42.9,
+     "dev": 0.1,
+     "tol": 0.858,
+     "ok": true,
+     "src": "BD-02 (research 5.3, 42.9 m) [inf]"
+    },
+    {
+     "group": "BA-E",
+     "check": "BA-E raised plate width (median of the sections)",
+     "model": 37.0,
+     "drawing": 37.1,
+     "dev": 0.1,
+     "tol": 0.7419999999999999,
+     "ok": true,
+     "src": "width - 2 x flank 4.4 + 2 x overhang 1.5 [inf]"
+    },
+    {
+     "group": "BA-F / BA-D",
+     "check": "BA-F lantern width across (mean of 4 axes, vertex directions)",
+     "model": 20.9,
+     "drawing": 20.998,
+     "dev": 0.098,
+     "tol": 0.5,
+     "ok": true,
+     "src": "octagon 19.4 m across the flats [obs NAIP] -> across the corners"
+    },
+    {
+     "group": "BA-F / BA-D",
+     "check": "BA-D drum 0 radius (8 rays from the drawn centre)",
+     "model": 9.575,
+     "drawing": 9.6,
+     "dev": 0.025,
+     "tol": 0.5,
+     "ok": true,
+     "src": "BAD_DRUMS_IMG D 19.2 [obs, low]"
+    },
+    {
+     "group": "BA-F / BA-D",
+     "check": "BA-D drum 1 radius (8 rays from the drawn centre)",
+     "model": 9.569,
+     "drawing": 9.6,
+     "dev": 0.031,
+     "tol": 0.5,
+     "ok": true,
+     "src": "BAD_DRUMS_IMG D 19.2 [obs, low]"
+    },
+    {
+     "group": "T3 / T1",
+     "check": "T3W airside window stack: L3 + 10 ft (glass head)",
+     "model": 13.41,
+     "drawing": 13.411,
+     "dev": 0.001,
+     "tol": 0.5,
+     "ok": true,
+     "src": "t3w.wall_field 10 + 2 + 10 ft above L3 [pub]"
+    },
+    {
+     "group": "T3 / T1",
+     "check": "T3W airside window stack: L3 + 12 ft (band top)",
+     "model": 14.02,
+     "drawing": 14.021,
+     "dev": 0.001,
+     "tol": 0.5,
+     "ok": true,
+     "src": "t3w.wall_field 10 + 2 + 10 ft above L3 [pub]"
+    },
+    {
+     "group": "T3 / T1",
+     "check": "T3W airside glazing bottom = L3 (34 ft above L1)",
+     "model": 10.36,
+     "drawing": 10.363,
+     "dev": 0.003,
+     "tol": 0.5,
+     "ok": true,
+     "src": "CDR L3 45'-0\" - L1 11'-0\" [pub / inf]"
+    },
+    {
+     "group": "T3 / T1",
+     "check": "T1 landside fritted tiers: bottom (canopy line)",
+     "model": 8.877,
+     "drawing": 8.877,
+     "dev": 0.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "curb 4.88 [unk] + canopy 4.0 [inf photo d1]"
+    },
+    {
+     "group": "T3 / T1",
+     "check": "T1 landside fritted tiers: top (slab underside below the 17.88 edge)",
+     "model": 17.077,
+     "drawing": 17.077,
+     "dev": 0.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "wall head 13.0 above the curb [inf photo d1] - 0.8 slab"
+    },
+    {
+     "group": "T3 / T1",
+     "check": "T1 curb canopy soffit height",
+     "model": 8.877,
+     "drawing": 8.877,
+     "dev": 0.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "curb 4.88 [unk] + 4.0 [inf photo d1]"
+    },
+    {
+     "group": "T3 / T1",
+     "check": "T1 curb canopy depth from the facade (median of 10 faces)",
+     "model": 4.0,
+     "drawing": 4.0,
+     "dev": 0.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "T1_CANOPY_D 4.0 (NAIP roof edge 3-6 m inside the trimmed curb) [inf]"
+    },
+    {
+     "group": "T3 / T1",
+     "check": "T1 landside face, east run length (INFO: BD-03 develops along the SFO Museum outline on the curb roadway)",
+     "model": 122.61,
+     "drawing": 94.1,
+     "dev": 28.51,
+     "tol": null,
+     "ok": true,
+     "src": "SFO Museum outline [obs]; the 3-D face = trimmed curb line - 4.0 m (NAIP 2024 roof edge) [inf]"
+    },
+    {
+     "group": "T3 / T1",
+     "check": "T1 landside face, west run length (INFO: BD-03 develops along the SFO Museum outline on the curb roadway)",
+     "model": 117.965,
+     "drawing": 93.8,
+     "dev": 24.165,
+     "tol": null,
+     "ok": true,
+     "src": "SFO Museum outline [obs]; the 3-D face = trimmed curb line - 4.0 m (NAIP 2024 roof edge) [inf]"
+    },
+    {
+     "group": "footprints",
+     "check": "apron-level walls (0.5-5 m) outside the SFO Museum outlines (bridge vestibules excluded)",
+     "model": 108.679,
+     "drawing": 0.0,
+     "dev": 108.679,
+     "tol": null,
+     "ok": true,
+     "src": "m2: the vestibules reach from the facade to the app walkway start (bridges)"
+    },
+    {
+     "group": "footprints",
+     "check": "LOD0 plan area outside the SFO Museum outlines (roof overhangs, canopy, vestibules)",
+     "model": 1063.229,
+     "drawing": 0.0,
+     "dev": 1063.229,
+     "tol": null,
+     "ok": true,
+     "src": "BA-B / BA-D ESE overhangs +2.3 / +2.4 m [obs], T1 canopy 4 m [inf], vestibules [inf]"
+    },
+    {
+     "group": "plausibility",
+     "check": "B-F stand envelopes: min plan distance to the 3-D footprint (F12; app planforms, all accepted types)",
+     "model": 2.934,
+     "drawing": 2.0,
+     "dev": 0.934,
+     "tol": null,
+     "ok": true,
+     "src": "check_stands.py criterion >= 2.0 m vs the SFO Museum outline; listed below if < 2 m"
+    },
+    {
+     "group": "plausibility",
+     "check": "bridge attachments: walkway first 1.5 m beyond the facade touching 3-D geometry (79 bridges; INFO)",
+     "model": 28.23,
+     "drawing": 0.0,
+     "dev": 28.23,
+     "tol": null,
+     "ok": true,
+     "src": "door frames / vestibule ends / walkways meeting the facade at an angle (stand data vs SFO Museum outline, as the ITB rotunda contacts)"
+    },
+    {
+     "group": "plausibility",
+     "check": "bridge walkways (app-drawn part, beyond facade + 1.5 m) overlapping 3-D geometry at 4.8-8.7 m (83 bridges)",
+     "model": 0.0,
+     "drawing": 0.0,
+     "dev": 0.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "gates.js fixed walkway WALK_W 2.6 x WALK_H 3.0 at DEPARTURE_LEVEL 5.4"
+    },
+    {
+     "group": "plausibility",
+     "check": "SFO Museum taxiway polygons inside the 3-D footprint",
+     "model": 0.0,
+     "drawing": 0.0,
+     "dev": 0.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "data/sfo_airport.json taxiways"
+    },
+    {
+     "group": "plausibility",
+     "check": "tower base-building exclusion inside the 3-D footprint",
+     "model": 0.0,
+     "drawing": 0.0,
+     "dev": 0.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "manifest.json#tower.integration.exclusion_footprint_world"
+    },
+    {
+     "group": "plausibility",
+     "check": "ITB outline (the ITB asset) inside the 3-D footprint",
+     "model": 0.0,
+     "drawing": 0.0,
+     "dev": 0.0,
+     "tol": 0.5,
+     "ok": true,
+     "src": "SFO Museum ITB + BA-A / BA-G"
+    },
+    {
+     "group": "plausibility",
+     "check": "AirTrain guideway (SFO Museum \"AirTrain Rail\") inside the 3-D footprint",
+     "model": 0.978,
+     "drawing": 0.0,
+     "dev": 0.978,
+     "tol": 1.0,
+     "ok": true,
+     "src": "cut out of the T1 hall / canopy (+1 m)"
+    }
+   ],
+   "plausibility": {
+    "stand_min_plan_m": 2.93,
+    "stand_min": "F12",
+    "stands_within_2m": [],
+    "bridge_walkway_hits": [],
+    "bridge_attach_contacts": [
+     [
+      "B2",
+      "B2",
+      1,
+      0.1
+     ],
+     [
+      "B3",
+      "B3",
+      1,
+      0.38
+     ],
+     [
+      "B4",
+      "B4",
+      1,
+      0.38
+     ],
+     [
+      "B5",
+      "B5",
+      1,
+      0.26
+     ],
+     [
+      "B6",
+      "B6",
+      1,
+      0.38
+     ],
+     [
+      "B7",
+      "B7",
+      1,
+      0.38
+     ],
+     [
+      "B8",
+      "B8",
+      1,
+      0.38
+     ],
+     [
+      "B9",
+      "B9",
+      1,
+      0.38
+     ],
+     [
+      "B10",
+      "B10",
+      1,
+      0.06
+     ],
+     [
+      "B11S",
+      "B11",
+      1,
+      0.28
+     ],
+     [
+      "B12",
+      "B12",
+      1,
+      0.38
+     ],
+     [
+      "B13",
+      "B13",
+      1,
+      0.38
+     ],
+     [
+      "B14",
+      "B14",
+      1,
+      0.38
+     ],
+     [
+      "B15",
+      "B15",
+      1,
+      0.13
+     ],
+     [
+      "B17",
+      "B17",
+      1,
+      0.38
+     ],
+     [
+      "B18",
+      "B18",
+      1,
+      0.38
+     ],
+     [
+      "B19",
+      "B19",
+      1,
+      0.38
+     ],
+     [
+      "B20",
+      "B20",
+      1,
+      0.38
+     ],
+     [
+      "B21",
+      "B21",
+      1,
+      0.38
+     ],
+     [
+      "B22",
+      "B22",
+      1,
+      0.38
+     ],
+     [
+      "B23",
+      "B23",
+      1,
+      0.38
+     ],
+     [
+      "B24",
+      "B24",
+      1,
+      0.38
+     ],
+     [
+      "B25",
+      "B25",
+      1,
+      0.38
+     ],
+     [
+      "B26",
+      "B26",
+      1,
+      0.38
+     ],
+     [
+      "B27",
+      "B27",
+      1,
+      0.38
+     ],
+     [
+      "C1",
+      "C1",
+      1,
+      0.38
+     ],
+     [
+      "C3",
+      "C3",
+      1,
+      0.38
+     ],
+     [
+      "C4",
+      "C4",
+      1,
+      0.25
+     ],
+     [
+      "C5",
+      "C5",
+      1,
+      0.38
+     ],
+     [
+      "C6",
+      "C6",
+      1,
+      0.38
+     ],
+     [
+      "C7",
+      "C7",
+      1,
+      0.38
+     ],
+     [
+      "C8",
+      "C8",
+      1,
+      0.26
+     ],
+     [
+      "C9",
+      "C9",
+      1,
+      0.48
+     ],
+     [
+      "C10",
+      "C10",
+      1,
+      0.38
+     ],
+     [
+      "C11",
+      "C11",
+      1,
+      0.38
+     ],
+     [
+      "D1",
+      "D1",
+      1,
+      0.38
+     ],
+     [
+      "D3",
+      "D3",
+      1,
+      0.41
+     ],
+     [
+      "D4",
+      "D4",
+      1,
+      0.38
+     ],
+     [
+      "D5",
+      "D5",
+      1,
+      0.38
+     ],
+     [
+      "D6",
+      "D6",
+      1,
+      0.38
+     ],
+     [
+      "D7",
+      "D7",
+      1,
+      0.38
+     ],
+     [
+      "D8",
+      "D8",
+      1,
+      0.38
+     ],
+     [
+      "D9",
+      "D9",
+      1,
+      0.38
+     ],
+     [
+      "D10",
+      "D10",
+      1,
+      0.38
+     ],
+     [
+      "D11",
+      "D11",
+      1,
+      0.18
+     ],
+     [
+      "D12",
+      "D12",
+      1,
+      0.38
+     ],
+     [
+      "D14",
+      "D14",
+      1,
+      0.63
+     ],
+     [
+      "D15",
+      "D15",
+      1,
+      0.38
+     ],
+     [
+      "D16",
+      "D16",
+      1,
+      0.38
+     ],
+     [
+      "E2",
+      "E2",
+      1,
+      0.33
+     ],
+     [
+      "E3",
+      "E3",
+      1,
+      0.38
+     ],
+     [
+      "E4",
+      "E4",
+      1,
+      0.38
+     ],
+     [
+      "E5",
+      "E5",
+      1,
+      0.38
+     ],
+     [
+      "E6",
+      "E6",
+      1,
+      0.38
+     ],
+     [
+      "E7",
+      "E7",
+      1,
+      0.38
+     ],
+     [
+      "E9",
+      "E9",
+      1,
+      0.38
+     ],
+     [
+      "E10",
+      "E10",
+      1,
+      0.38
+     ],
+     [
+      "E11",
+      "E11",
+      1,
+      0.25
+     ],
+     [
+      "E12",
+      "E12",
+      1,
+      0.38
+     ],
+     [
+      "E13",
+      "E13",
+      1,
+      0.4
+     ],
+     [
+      "F5",
+      "F5",
+      1,
+      0.45
+     ],
+     [
+      "F6",
+      "F6",
+      1,
+      0.38
+     ],
+     [
+      "F7",
+      "F7",
+      1,
+      0.38
+     ],
+     [
+      "F8",
+      "F8",
+      1,
+      0.38
+     ],
+     [
+      "F9",
+      "F9",
+      1,
+      0.38
+     ],
+     [
+      "F11",
+      "F11",
+      1,
+      0.38
+     ],
+     [
+      "F11",
+      "F11",
+      2,
+      0.38
+     ],
+     [
+      "F12",
+      "F12",
+      1,
+      0.39
+     ],
+     [
+      "F13",
+      "F13",
+      1,
+      0.38
+     ],
+     [
+      "F13",
+      "F13",
+      2,
+      0.38
+     ],
+     [
+      "F14",
+      "F14",
+      1,
+      0.39
+     ],
+     [
+      "F15",
+      "F15",
+      1,
+      0.38
+     ],
+     [
+      "F15",
+      "F15",
+      2,
+      0.38
+     ],
+     [
+      "F16",
+      "F16",
+      1,
+      0.38
+     ],
+     [
+      "F17",
+      "F17",
+      1,
+      0.32
+     ],
+     [
+      "F19",
+      "F19",
+      1,
+      0.18
+     ],
+     [
+      "F20",
+      "F20",
+      1,
+      0.32
+     ],
+     [
+      "F21",
+      "F21",
+      1,
+      0.25
+     ],
+     [
+      "F22",
+      "F22",
+      1,
+      0.25
+     ]
+    ],
+    "doors": {
+     "n": 75,
+     "vestibules": 56,
+     "max_gap_bridged_m": 6.65,
+     "bulkheads": 23
+    }
+   },
+   "heights": {
+    "BA_B_body": {
+     "median": 13.14,
+     "p10": 13.14,
+     "p90": 13.14,
+     "n": 232
+    },
+    "BA_B_band": {
+     "median": 19.04,
+     "p10": 19.04,
+     "p90": 19.04,
+     "n": 162
+    },
+    "BA_C_body": {
+     "median": 7.2,
+     "p10": 7.2,
+     "p90": 7.2,
+     "n": 96
+    },
+    "BA_D_body": {
+     "median": 8.49,
+     "p10": 8.49,
+     "p90": 8.49,
+     "n": 178
+    },
+    "BA_E_centre": {
+     "median": 12.85,
+     "p10": 12.85,
+     "p90": 12.85,
+     "n": 118
+    },
+    "BA_E_body": {
+     "median": 9.85,
+     "p10": 9.85,
+     "p90": 9.85,
+     "n": 79
+    },
+    "BA_F_body": {
+     "median": 10.49,
+     "p10": 10.49,
+     "p90": 10.49,
+     "n": 302
+    },
+    "BA_F_lantern": {
+     "median": 15.09,
+     "p10": 15.09,
+     "p90": 15.09,
+     "n": 17
+    },
+    "BA_F_monitor": {
+     "median": 12.99,
+     "p10": 12.99,
+     "p90": 12.99,
+     "n": 93
+    },
+    "BA_D_drum0": {
+     "median": 13.19,
+     "p10": 13.19,
+     "p90": 13.19,
+     "n": 16
+    },
+    "BA_D_drum1": {
+     "median": 13.19,
+     "p10": 13.19,
+     "p90": 13.19,
+     "n": 16
+    },
+    "T1_hall": {
+     "median": 17.877,
+     "p10": 17.877,
+     "p90": 17.877,
+     "n": 245
+    },
+    "T2_hall": {
+     "median": 16.877,
+     "p10": 16.877,
+     "p90": 16.877,
+     "n": 204
+    },
+    "T3W_hall": {
+     "median": 16.764,
+     "p10": 16.764,
+     "p90": 16.764,
+     "n": 111
+    },
+    "T3E_hall": {
+     "median": 14.478,
+     "p10": 14.478,
+     "p90": 14.478,
+     "n": 125
+    },
+    "T3E_penthouse": {
+     "median": 21.336,
+     "p10": 21.336,
+     "p90": 21.336,
+     "n": 44
+    }
+   }
+  }
  }
 }

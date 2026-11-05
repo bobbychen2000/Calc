@@ -1,6 +1,6 @@
 # three.js r186 renderer for SFO Live 3D: implementation notes (live3.html)
 
-Status: 4 Nov 2026 (UTC), after review round 3 (§4.7). Round 2 (26 Sep, §4.6) was committed as a WIP snapshot (06ecf63)
+Status: 5 Nov 2026 (UTC), after close-out round 2 (§4.8; review round 3 in §4.7). Round 2 (26 Sep, §4.6) was committed as a WIP snapshot (06ecf63)
 that never started: `live3.html` threw at start-up until the round-3 fixes. Decision record: `docs/research/engine.md`
 (verified). This note records how the port is built, what was checked in this sandbox, and what is still open. Labels:
 **Observed** (run or read here), **Inferred**.
@@ -285,7 +285,7 @@ sunlit apron (120,440)-(300,470) as the texture reference. (The reviewer's 15.4 
 | 4 | night: hard 100 m polygons by the spot masts | three r186 `ShadowNode.updateShadow` replaces a shadow-camera mask with only bit 0 by the main camera's (which has `MAST_LAYER`): the masts were in the spot shadow maps and the 16-sided head ring (r 1.25 m, 0.25 m under the spot) shadowed everything beyond ~79 deg from nadir | spot shadow cameras see layer 0 + an unused marker layer (`flood.js SPOT_SHADOW_LAYER`); spot share evaluated at the field's clamped receiver height (a bright arc at 140-151 m appeared once the polygon was gone: the field's 2 m layer is cut at 140 m, the spot at the true ground height at 151 m) | `run1/r3_night_gate_B20.png` vs `engine_rev/night/new_night_gate.png`: polygon gone; `v2/night_spot_diff.png` (spots on - off): only cast shadows and per-face N.L, no arc (the arc is in `run1/night_spot_diff.png`); shadow masks [9, 9] |
 | 4b | (found here) crash after a shadow switch | three r186 disposes a light's shadow node when `castShadow` goes false; render objects not drawn meanwhile reuse the old graph at the next switch-on (`shadowMap` null); `CSMShadowNode.dispose()` removes its cascade lights for good | spot shadow node given as `shadow.shadowNode` and never disposed (`flood.js`); `CSM3.dispose()` a no-op (`engine.js`) | run1: TypeError `reading 'depthTexture'` after spots off -> on; v2: 0 errors through spots off -> on, day -> night -> day -> night, sun shadows present after the second sunrise (`v2/r3_day2_ac8.png`) |
 | 5 | AO / shadow grain on the hero close-up | half-res GTAO with no spatial filter (its 5x5 rotation tile left as 2 px blobs), 12 of the 24 noise patterns reachable, CAS amplifying the residue | `AODenoiseNode` (5x5 plane-distance-weighted box at the AO resolution), all 24 (rotation, offset) pairs, CAS noise gate (range < 0.01 not sharpened) (`engine.js`) | grain wing root old 1.50 / before 2.63 / after 0.88 (8 frames), 0.87 (32), 0.86 (v2); shaded apron 0.50 / 2.07 / 0.78; sunlit texture 4.33 / 4.42 / 4.33 (detail kept); orbit at 3 deg/frame: no visible grain (`run1/r3_day_ac_orbit.png`) |
-| 6 | curtain wall reads matte khaki | the concourse behind the pane was the ALBEDO, lit by the full sun and sky (linear ~0.11, warm) | pane albedo 0, the hall as emission lit by its own illuminance (5 % daylight factor + 200 lx lamps by day; inferred), x T x (1 - F); facade own-shadow term for downward reflections (`objects.js`, `renderer3.js interiorE / shadeK`) | pane old (24,28,35) / before (59,58,54) / after (49,47,41): -17 % luminance, no matte panelling; still warm, see below |
+| 6 | curtain wall reads matte khaki | the concourse behind the pane was the ALBEDO, lit by the full sun and sky (linear ~0.11, warm) | pane albedo 0, the hall as emission lit by its own illuminance (5 % daylight factor + 200 lx lamps by day; inferred), x T x (1 - F); facade own-shadow term for downward reflections (`objects.js`, `renderer3.js interiorE / shadeK`) | pane old (24,28,35) / before (59,58,54) / after (49,47,41): -17 % luminance, still warm and matte (close-out verifier: B-R -7.6; this row's "no matte panelling" overstated it). **Open after round 3; fixed in §4.8** |
 | 7 | `engine_impl.md` stale | round 2 never documented or run | this file: status, §1, §3, §4.6, §4.7, §5, §6 | — |
 | 8 | aircraft nav lights missing (day AND night) | not the day dimming and not the occlusion test: every light sprite between 2.2 and 12 px on screen (neither branch of the `If` / `ElseIf` size clamp) was never rasterised in the WebGL 2 backend; only sub-2.2 px sprites (distant airfield lights) drew. Found with a light-pass readback: green nav light and a test sprite 12 m in front of the camera = 0 in the light pass, with the occlusion test on and off; `envtest.html?sprites=1`, row of lights at 20 m: 0 lit px, at 175 m: 101 | the size / intensity clamp, lobe and marker fade written branchless with the same math (`lights.js`); `SFO.R.sprites.depthOn` QA switch | envtest after: 386 lit px at 20 m (was 0), 440 at 175 m (was 101); in-app (low tier, `out/engine_r3/navdiag/`): light pass at the green nav light 23.6 by day (x exposure 0.36) and 0.216 at night (x 452), test sprite 23.2, identical with the occlusion test on and off (not occluded); green light at the wingtip in `navdiag_depth1.png` / `navdiag_night.png` |
 | 9 | quality parity | no ultra tier; 0.8 not a resolution step | `QUALITY3.ultra` (from the app's 4096 shadow map), steps 1 / 0.85 / 0.8 / 0.72 / ... (`engine.js`, `renderer3.js`) | code |
@@ -300,7 +300,7 @@ overview 532, gate 537, close-up 586, night gate 346 (spots on) / 261 (off); low
 gate 186. Texture memory 976-1152 MB high, 532-548 MB low; `retainedImageMB` 0.
 
 Not resolved / rejected, with the evidence:
-- **Pane colour** (finding 6): after the fix the pane is mostly the coated glass's Fresnel reflection. From this
+- **Pane colour** (finding 6; superseded by §4.8, where the A/B was run and the cause fixed): after the fix the pane is mostly the coated glass's Fresnel reflection. From this
   elevated view (camera ~53 m up, pitch 24 deg) a vertical pane keeps the ray's downward slope and reflects the apron
   ~18 m in front of it, not the sky: the reviewer's "sky reflections" are not what this view shows. The reflected apron
   is sunlit here (the pier's own shadow reaches ~13-17 m at the 45 deg sun of the snapshot, so the own-shadow term stays
@@ -317,11 +317,94 @@ Not resolved / rejected, with the evidence:
   (closeout §1).
 - WebGPU backend: still no adapter in this sandbox.
 
+### 4.8 Close-out round 2 (5 Nov 2026): curtain-wall glass, position lights by day, ultra tier
+
+Setup: as §4.7, load ~2 (container just restarted), heavy jobs through `flock out/.heavy.lock`. App jobs:
+`tools/build3/job_close2.mjs`, one page load each: `out/engine_r3/close2/` (`live3.html?tier=high&glassab=1`, ready
+89 s, 827 s total, 0 console / page errors) and `out/engine_r3/ultra/` (`?quality=ultra&glassab=1`, `ULTRA=1`). Dev page:
+`js/three/dev/glasstest.html` (a 30 m pier on concrete under the snapshot's sun, camera placed as gate:B20 relative to the
+B20 facade; loads in 5-15 s instead of 90-300 s) with `tools/build3/job_glass.mjs` (`GV=` variant lists;
+`out/engine_r3/glassdev/r1`, `r2` with `v1.json`, `v2.json`). Measures: `tools/build3/glass_meas.py` (display sRGB;
+"dark60" = mean of the darker 60 % by luminance). App pane box = the close-out verifier's (x 20-170, y 295-330 of
+gate:B20,130,1,24); low view gate:B20,70,1,6 box x 5-370, y 180-222.
+
+**Glass (engine-v1, engine-v2): A/B in the app, gate:B20,130,1,24** (`?glassab=1`: x 1 = the round-3 inputs)
+
+| Variant | dark60 | B-R | G-R | lum |
+|---|---|---|---|---|
+| live.html (verifier's crop) | (24.4, 28.8, 35.0) | +10.7 | +4.4 | ~28 |
+| round 3 ("old") | (47.2, 45.5, 40.3) | -6.9 | -1.6 | 45.5 |
+| old, IBL ground = paved mean (0.38, 0.37, 0.345): the requested A/B | (56.9, 56.6, 54.3) | -2.6 | -0.4 | 56.5 |
+| old, reflection term only | (34.6, 31.6, 25.1) | -9.4 | -2.9 | 31.8 |
+| new, tau_B 0.75 (high) | (23.8, 29.2, 25.3) | +1.5 | +5.4 | 27.7 |
+| new, tau_B 0.75, IBL ground = paved mean | (25.0, 30.3, 26.3) | +1.3 | +5.2 | 28.9 |
+| new, tau_B 0.75, reflection only | (19.9, 25.0, 20.6) | +0.7 | +5.1 | 23.6 |
+| **new, final tint (tau_B 0.80; ultra run; old there: (47.0, 45.5, 40.4), = high)** | **(25.1, 30.3, 27.4)** | **+2.3** | **+5.2** | **29.0** |
+| low view old / new (tau_B 0.75) | (43.0, 45.7, 45.2) / (24.0, 34.1, 31.4) | +2.2 / +7.4 | +2.7 / +10.2 | 45.1 / 31.8 |
+| photo a2.jpg, Boarding Area G (Sept 2025, overcast, ~1-2 km of haze; obs) | (31.7, 45.6, 47.1) | +15.4 | +13.9 | ~42 |
+
+Root cause (term by term; dev page, 130 m view, first tint: old (48.6, 47.0, 41.7) -> new (18.1, 20.3, 19.3) in `r1`;
+reflection only: old (33.5, 30.8, 24.4) in `out/engine_r3/glass`, new (11.4, 13.2, 11.7) without fog in `r1`; hall
+only: 0.0 at 745 lx (`r1`) and 2.5 at 4 klx (`glass`), i.e. under AgX's black point by day):
+1. **The reflected ground.** From this elevated view a vertical pane mirrors the apron in front of it (dN = 1.3-1.6 x the
+   pane's height above the apron), and the IBL's lower hemisphere was the sunlit WHOLE-airfield mean albedo (0.30,
+   0.27, 0.21: grass and sand). The reviewer's A/B confirms it: the paved IBL ground moves the round-3 pane from B-R -6.9
+   to -2.6. It is not the whole defect: the pane stayed a bright grey (lum 56.5 against live.html's ~28). Fix: the pane
+   mirrors a local apron (`objects.js` envAdd through `setupEnvironment`, so three's split-sum weights F0 and F90 both
+   see it): the airfield bake's CONCRETE mean (`renderer3 apronAlb` (0.321, 0.306, 0.269), weighted by the aux bake's
+   concrete mask) and, where the reflected point lies in the facade's own shadow, sky light only through the open sky
+   view factor. With it the pane no longer depends on the IBL ground (new vs new + paved: lum 27.7 / 28.9), so no other
+   object's ambient light changed.
+2. **The own-shadow term never worked** (engine-v2): `spec` was overwritten two statements after the shadeK factor. It is
+   now part of the local reflection (1.), with the pier height 15.2 m (sfo_buildings piers h 14.6 m + 0.6 m parapet). At
+   the snapshot's sun (41.6 deg, 149 deg behind the B20 facade) the pier's shadow reaches 14.7 m: the lowest ~2 m of the
+   8.4 m glazing band mirror shaded apron, the rest sunlit apron. §4.7's "~18 m, sunlit" holds for the upper panes only.
+3. **The hall's daylight**: the 5 % daylight factor was applied to sun + sky (3.5 klx); a daylight factor is defined for
+   the sky's diffuse light (CIE), now 786 lx with the 200 lx lamps (`renderer3 interiorE`). Invisible by day at 130 m,
+   it matters close up and at dusk.
+4. **The frame**: mullions anti-aliased by widening (`gridLine`) covered ~18 % of the facade at 130 m instead of 3.9 %,
+   with a metallic F0 ~0.25 mirroring the warm ground at 2.5x the glass's reflectance (the visible khaki grid). Now
+   box-filtered, area-preserving (`gridLineA`).
+5. **No body tint**: F0 was 0.111 x (0.9, 0.96, 1) and T neutral-blue. Now a blue-green tinted low-e IGU (inferred, no SFO
+   glazing specification found; `objects.js` header): tau = (0.50, 0.80, 0.80), Rc 0.10 -> F0 (0.066, 0.102, 0.102),
+   T (0.39, 0.62, 0.62), VLT 0.57 (typical 0.4-0.7). Calibrated on the hue of a2.jpg (teal, B ~ G > R): the first tint
+   tau (0.62, 0.81, 0.80) came out neutral in the dev view (G-R +2.3, B-R +1.5; AgX's toe at contrast 1.6 compresses hue
+   ~4 stops under grey), tau (0.50, 0.80, 0.75) green over blue in the app (+5.4 / +1.5), hence tau_B = tau_G. Final tint on the dev page
+   (`glassdev/r3`, `v3.json`): 130 m view (17.5, 21.9, 21.0), G-R +4.4, B-R +3.5 (old there (48.7, 47.4, 42.1), -1.4 /
+   -6.7); low view (24.5, 36.1, 35.2), +11.5 / +10.7.
+Result: the pane is dark tinted glass (lum 29 = live.html's 28; the photo's 42 is overcast with haze, where the shaded
+pane / concrete contrast is lower); teal-green rather than live.html's blue; the khaki grid is gone (`close2/app_cmp.png`:
+live.html, old / new, new reflection only; `close2/low_cmp.jpg`; the close-up `close2/ac8_full.jpg` shows the D-pier
+glazing as dark teal glass). Night glazing unchanged apart from the thinner mullions (pier box mean (182.9, 178.5, 172.7)
+before, (188.4, 183.9, 177.9) now). Still missing: reflections of other objects (bridges, aircraft, other buildings: the
+PMREM holds sky + ground only; SSR not tried on llvmpipe) and the mullion finish (a2 shows light aluminium mullions on
+BA-G; the B pier's is not documented here).
+
+**Position lights by day (engine-v3).** Owner's rule (nothing physically implausible): a position light has one intensity
+day and night (14 CFR 25.1391: forward red / green >= 40 cd, rear white >= 20 cd; eCFR read 5 Nov 2026 by the round-2
+fixer), while the day factor (0.5 x lampK = 1) made the records ~100x their night calibration (~2,600 cd). `lights.js
+put(s, fixed)` + `renderer3` `fixedK` keep the aircraft position-light records (`isPositionLight`: no direction, s <= 0.22,
+i <= 40; the first `fr.nAc` records are aircraft lights, `compat/scene.js`) at the night calibration by day; strobes,
+beacons, landing / taxi lights and airfield lights keep the day factor. Day close-up `ac:a12a82,38,-,6`, 13 x 13 px at
+the green light (577, 326): before (verifier, `ver/run/v_day_ac8.png`) max (255, 255, 255), 90 green-dominant px; now max
+(145, 162, 170), mean (97, 113, 125), 0 green-dominant px (high and ultra alike): a faint point, no halo
+(`close2/nav_zoom.png`). The records give 26 / 13 cd at the night calibration, 0.65x the rule's minimum (request in
+`docs/requests/engine_closeout.md` Round 2). Parity: live.html still draws a day halo (closeout §8).
+
+**Ultra tier (engine-v5), run once** (`out/engine_r3/ultra/`): tier 'ultra' from `?quality=ultra`, webgl2, ready 166 s,
+374 s total, 0 errors; sun and both spot shadow maps 4096²; texture memory 1,893 MB at ready, 2,234 MB after the views
+(high: 976-1,152 MB), 31 render targets; draw calls 616 (gate) / 745 (close-up) vs high 483 / 591; 6.17 M triangles;
+peak Chromium RSS 4.0 GB on llvmpipe (GPU memory = system RAM here). Headless DPR is 1, so `dprMax 3` was not exercised
+(960x540 canvas). Fit for stills on a desktop GPU with >= 4 GB; not for phones.
+
+**Documentation (engine-v4)**: `docs/requests/engine_closeout.md` §0 corrected (everything of round 3 is in 0e92158 +
+40a32e3), §4.7 row 6 marked open after round 3; this section is the high-tier and ultra evidence for the final lights.js.
+
 ## 5. Quality tiers (`engine.js QUALITY3`)
 
 | Tier | Chosen for | Shadows | AO | AA | Bloom | Bakes (m/texel) | Max image texture |
 |---|---|---|---|---|---|---|---|
-| ultra | stills / QA (`?quality=ultra` or `?tier=ultra`) | 3 x 4096², rig splits; floodlight spots 4096² | GTAO full res from a pre-pass + denoise | TRAA + CAS | yes (half res) | airfield 0.6, city 8192² | full |
+| ultra | stills / QA (`?quality=ultra` or `?tier=ultra`; run once 5 Nov 2026: textures 1.9-2.2 GB, §4.8) | 3 x 4096², rig splits; floodlight spots 4096² | GTAO full res from a pre-pass + denoise | TRAA + CAS | yes (half res) | airfield 0.6, city 8192² | full |
 | high | desktop, > 4 GB | 3 cascades x 2048², splits 1.4 / 5 / 16 x orbit distance (rig); 2 floodlight spots 2048² | GTAO from a pre-pass, half res + denoise | TRAA + CAS | yes (half res) | airfield 0.8, city 4096² | full |
 | medium | <= 4 GB | 3 x 2048², same splits; 2 spots 2048² | same | TRAA + CAS | yes (half res) | 1.0, 4096² | 2048 |
 | low | phones | 3 x 1024² (round 2: 2 cascades left rooftop units unshadowed): splits a = 0.8 r0, b = max(2.5 a, 0.8 r1), max(1.5 b, min(r2, max(700 m `shadowDist`, 1.6 r1))) of the rig's [r0, r1, r2]; 1 spot 1024² | the previous frame's GTAO (half res, from the MRT normal of the single pass, reprojected; no denoise pass) in the ambient term | TRAA + CAS | yes (quarter res) | 1.25, 2048² | 1024 |

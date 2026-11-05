@@ -3,6 +3,9 @@
 // ground albedo) and a screenshot each: <OUT>/glass_<name>.png + <OUT>/glass.json (light inputs per variant).
 //   SOFTGL=1 W=960 H=540 OUT=out/engine_r3/glass node livetest.mjs tools/build3/job_glass.mjs
 // GLASSQ= extra query for the page (e.g. conc=0.36,0.35,0.33 from the app's debugInfo apronAlb).
+// GV=<file.json>: instead of VARIANTS, a list [[name, setOpts], ...] passed to window.__glass.set() in order (ab, galb,
+// fog, cam [yaw, pitch, dist, tgt], F0, T; settings persist between entries), e.g. out/engine_r3/glassdev/v1.json;
+// measure with tools/build3/glass_meas.py dev <OUT>.
 import fs from 'fs'; import path from 'path';
 const FIELD = [0.3027, 0.2749, 0.2106], PAVED = [0.38, 0.37, 0.345]; // IBL ground: app's airfield mean / review finding's paved mean
 const VARIANTS = [
@@ -21,9 +24,10 @@ export default async ({ page, shot, base, OUT }) => {
   res.probe = await page.evaluate(() => window.__probe); res.loadS = (Date.now() - t0) / 1000; save();
   console.log('loaded', res.loadS, JSON.stringify(res.probe).slice(0, 600));
   if (!res.probe.ok) return;
-  for (const [name, ab, galb] of VARIANTS) {
+  const list = process.env.GV ? JSON.parse(fs.readFileSync(process.env.GV, 'utf8')) : VARIANTS.map(([name, ab, galb]) => [name, { ab, galb, n: 8 }]);
+  for (const [name, o] of list) {
     const tv = Date.now();
-    res.variants[name] = await page.evaluate(([ab, galb]) => window.__glass.set({ ab, galb, n: 8 }), [ab, galb]);
+    res.variants[name] = await page.evaluate((o) => window.__glass.set(o), o);
     res.variants[name].s = (Date.now() - tv) / 1000; await shot('glass_' + name); save();
     console.log(name, res.variants[name].s, 's');
   }

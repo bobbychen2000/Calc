@@ -31,8 +31,8 @@ export default async ({ page, shot, base, OUT }) => {
   const PAVED = [0.38, 0.37, 0.345];
   const glassSet = ULTRA ? [['old', [1, 1, 1, 1], true, null], ['new', [0, 1, 1, 1], false, null]] : [
     ['old', [1, 1, 1, 1], true, null], ['old_paved', [1, 1, 1, 1], true, PAVED], ['new_paved', [0, 1, 1, 1], false, PAVED],
-    ['new', [0, 1, 1, 1], false, null], ['new_refl', [0, 1, 0, 0], false, null], ['new_hall', [0, 0, 1, 0], false, null], ['new_frame', [0, 0, 0, 1], false, null],
-    ['old_refl', [1, 1, 0, 0], true, null], ['old_frame', [1, 0, 0, 1], true, null]];
+    ['new', [0, 1, 1, 1], false, null], ['new_refl', [0, 1, 0, 0], false, null], ['old_refl', [1, 1, 0, 0], true, null]];
+  // (hall-only / frame-only terms: js/three/dev/glasstest.html; by day the hall is below AgX's black point at this view)
   for (const [name, ab, old, ground] of glassSet) { if (!res.start.glassAB && name !== 'new') continue; await setAB(ab, old, ground); await snap('gate_B20_' + name); }
   await setAB([0, 1, 1, 1], false, null);
   if (!ULTRA) {

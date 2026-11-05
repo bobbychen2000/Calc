@@ -89,3 +89,43 @@ not re-checked here); through a lens of ~0.01 m² that is ~4,000 cd/m², below s
 live3's own nav lights were missing for a different reason (every 2.2-12 px sprite was dropped by a branch in its
 TSL vertex code, day and night; fixed, engine_impl.md §4.7 #8). They now draw as small coloured points with live3's
 capped halo (0.5 in exposed units).
+
+## Round 2 (close-out round 2, 5 Nov 2026): engine-v1 .. engine-v5
+
+What changed on this side is in `docs/research/engine_impl.md` §4.8 (evidence: `out/engine_r3/close2/`,
+`out/engine_r3/ultra/`, `out/engine_r3/glassdev/`). Nothing below blocks live3.html.
+
+### R2.1 Lead: commit and the phone artifact
+
+Round-2 files of this track: `js/three/objects.js`, `js/three/renderer3.js`, `js/three/lights.js`,
+`js/three/compat/scene.js`, `js/three/dev/glasstest.html`, `tools/build3/job_close2.mjs`, `tools/build3/job_glass.mjs`,
+`tools/build3/glass_meas.py`, `docs/research/engine_impl.md`, this file. After they are committed, rebuild and republish
+the phone test artifact (`sh tools/build3/phone_artifact.sh`, §0); the published one predates round 3.
+
+### R2.2 Owner of `js/aircraft/fleet.js` (aircraft track): position-light record intensities (minor)
+
+live3 now keeps aircraft position lights at their night calibration by day (one intensity day and night, as the lights
+have). At that calibration the `lightSprites` records give 26 cd (nav: i 40, s 0.22) and 13 cd (tail: i 25, s 0.2):
+E = i x 13.2 s^2 cd (`js/three/lights.js` header). 14 CFR 25.1391 asks at least 40 cd forward red / green (0-10 deg off
+dead ahead) and 20 cd rear white (eCFR, read by this track on 5 Nov 2026). Meeting the minimum needs nav i ~63 and tail
+i ~38; both renderers read these records, so live.html's night look would change too (x 1.5). Please decide and, if
+agreed, change the records; live3 needs no code change.
+
+### R2.3 Owner decision: the IBL ground (round-3 open question, still open)
+
+The curtain walls no longer depend on it: they mirror a local apron (the airfield bake's concrete mean
+(0.321, 0.306, 0.269) and the facade's own shadow; A/B in §4.8: new vs new + paved IBL ground, lum 27.7 / 28.9). Every
+other object's light from below still uses the whole-airfield mean (0.303, 0.275, 0.211: grass and sand). Moving it to
+the concrete mean would brighten and cool the shade under aircraft and near terminals by ~6-28 % per channel and needs
+a full re-verification pass, so it was not done.
+
+### R2.4 Buildings track / spec owners: mullion finish of the pier curtain walls (minor, unverified)
+
+`refs/cache/buildings/review_likeness/a2.jpg` (Boarding Area G, Sept 2025) shows light, silver-white mullions and
+transoms; `js/three/objects.js` draws the curtain-wall frame as dark grey metal (albedo 0.28, metalness 0.8, inherited
+from `js/shaders/objects.js`). If a source for the mullion finish of the piers (B-G) exists or turns up, please record it
+in the building spec; the material will follow. Not changed on a single photo of one pier.
+
+### R2.5 Bridges / GSE track: tank truck under the UAL B39M's starboard wingtip at D10 (§7, still present)
+
+Still in the round-2 renders of the snapshot (`out/engine_r3/close2/c2_day_ac8.png`, `out/engine_r3/ultra/u_day_ac8.png`).

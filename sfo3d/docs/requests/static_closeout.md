@@ -76,3 +76,77 @@ From: owner of the static data (`data/sfo_*`, `tools/stands/**`, `tools/build_*.
    and `adsb_parked.json` (own outputs; the patch stage needs the first). The 4 Nov flysfo snapshot stays local (listed
    in the MANIFEST) - patch_stands.py needs it to reproduce P1 / P2.
 3. Owner decisions recorded as open in `docs/ATTRIBUTION.md`: `data/snapshot.js` (adsb.fi), flysfo-derived stand fields.
+
+## 5. From bridges (round 2, 2026-11-05; js/live/gates.js owner) - exact data change for check.py's A10 ISSUE (orch-1)
+
+**Root cause** (stand data, not the docking path and not gates.js): A10 L1's `rotunda` [-1297.71, 722.28] (OSM node
+1096422734, "start of the tunnel"; `geom_src`: traced roofs as imaged, "likely ~1.3-2.1 m east of the true structure")
+lies 0.77 m from the SFO Museum "Boarding Area A" outline (the outline check_stands tests and the 3-D ITB asset is built
+from). check_stands' docked tunnel (2.9 m wide, from that centre) then grazes the outline 2.6-6.5 m out from the
+rotunda: 0.85 m2 for B39M / B38M / B738 / B739 / A321 / A21N, beyond the "graze next to the rotunda" tolerance
+(hausdorff > rot_r + 4 m); the door-facing cab is clear (0.00 m2). The same lean puts 30 more data rotundas closer to
+the Museum outlines than a 1.5 m drum + 0.2 m (41 drums overlapped them, A9 L1 by 4.9 m2). gates.js now moves these
+rotundas straight off the nearest outline by the deficit and keeps every moving part out of the outlines (0 of 3,286
+dockings / paths / rest poses inside); the data should say the same.
+
+**Requested change** (`data/sfo_stands.json` via patch_stands.py, `rotunda_src` "inferred: moved off the SFO Museum
+outline for a 1.5 m drum + 0.2 m (gates.js prepGeom); OSM roof lean"): set `rotunda` - and the walk's last vertex where it
+is the rotunda - to the positions below (x, z world m; shift in m):
+
+| Bridge | data rotunda | new rotunda | shift |
+|---|---|---|---|
+| A4 L1 | -1204.34, 544.11 | -1204.55, 544.01 | 0.23 |
+| A5 L1 | -1239.22, 610.17 | -1239.49, 610.02 | 0.31 |
+| A9 L1 | -1264.32, 659.37 | -1265.31, 658.85 | 1.11 |
+| **A10 L1** | **-1297.71, 722.28** | **-1298.55, 721.84** | **0.95** |
+| A13 L1 | -1283.25, 814.78 | -1283.58, 815.46 | 0.76 |
+| B6 L1 | -774.40, 602.57 | -774.64, 601.76 | 0.85 |
+| B8 L1 | -760.60, 634.14 | -760.58, 634.22 | 0.08 |
+| B10 L1 | -881.38, 671.14 | -881.86, 670.89 | 0.54 |
+| B11 L1 | -876.45, 696.08 | -876.78, 696.73 | 0.73 |
+| B11S's bridge (gate B11) | -877.96, 682.53 | -879.28, 682.90 | 1.37 |
+| B15 L1 | -922.83, 765.44 | -923.53, 766.38 | 1.17 |
+| B16 L1 | -916.06, 774.62 | -916.46, 775.33 | 0.82 |
+| B19 L1 | -961.34, 835.53 | -962.58, 834.95 | 1.37 |
+| B20 L1 | -958.16, 851.19 | -959.23, 851.40 | 1.09 |
+| B24 L1 | -963.16, 940.36 | -963.12, 941.22 | 0.86 |
+| B25 L1 | -980.24, 920.53 | -981.13, 921.40 | 1.25 |
+| B26 L1 | -991.66, 911.69 | -992.19, 912.55 | 1.01 |
+| B27 L1 | -1008.15, 903.83 | -1009.07, 904.46 | 1.11 |
+| D4 L1 | -526.16, 206.54 | -526.41, 206.99 | 0.51 |
+| D5 L1 | -495.79, 222.28 | -496.16, 222.98 | 0.80 |
+| D16 L1 | -615.82, 138.16 | -616.06, 137.40 | 0.80 |
+| E6 L1 | -836.14, 0.75 | -836.94, 0.33 | 0.90 |
+| E8 L1 | -805.71, -46.91 | -806.28, -47.21 | 0.65 |
+| E11 L1 | -745.83, -66.83 | -745.82, -67.75 | 0.92 |
+| G1 L1 | -1244.34, 157.85 | -1244.22, 157.63 | 0.25 |
+| G3 L1 | -1381.83, 154.66 | -1382.10, 155.18 | 0.59 |
+| G4 L1 | -1445.19, 121.09 | -1445.51, 121.70 | 0.69 |
+| G7 L1 | -1507.92, 87.90 | -1508.29, 88.61 | 0.80 |
+| G8 L1 | -1571.38, 54.55 | -1571.70, 55.15 | 0.68 |
+| G9 L1 | -1488.96, 34.93 | -1489.87, 34.46 | 1.02 |
+| G10 L1 | -1547.77, 0.38 | -1547.97, 0.45 | 0.21 |
+
+and, because the shift shortens their rest tunnel below the model's retraction, `stow` (and `stow_len`) of: B11 L1
+[-890.91, 710.05], B15 L1 [-936.21, 776.50], B16 L1 [-932.76, 785.89], B20 L1 [-977.35, 858.41], G4 L1 [-1440.15,
+130.46], G7 L1 [-1510.64, 98.61] (the same rest line, pivot at the retraction - what gates.js draws).
+
+**Checked:** check_stands.py on a copy of the data with exactly these changes: ISSUES 1 -> 0 (the A10 ISSUE and all 29
+A10 L1 notes gone), WARNINGS 18 -> 17 (B26 L1 / E75L extension warning gone), notes 73 -> 44, nothing new. Better than my
+minimal shift, if you have it: correct the OSM bridge geometry by the measured relief lean at bridge-roof height
+(tools/buildings/draw_data.py `dom_lean()`; the ITB spec's frame model, nadir [-2767.8, 443.6]) and re-run the stow
+search.
+
+**Also (bridges round 2, unchanged data questions with today's numbers):**
+1. bridges-v3, known clip: the data's rest / docked poses of A12, F5, F14, F17, F19, F21 L1 fold the tunnel back to
+   41-45 deg from the bridge's own walkway, so the 2.4 m rotunda corridor overlaps the 2.6 m walkway outside the drum:
+   A12 L1 0.32 m2 at rest / 0.47 m2 worst (37 of 37 poses), F5 L1 0.18 (1 of 25), F14 L1 0.40 (6/27), F17 L1 0.45 / 0.46
+   (6/27), F19 L1 0.45 / 0.52 (6/14), F21 L1 0.56 (5/26) (gates.js `b.ownClip`, exact). Please check their last walkway
+   segment / rotunda position against NAIP (the walkway probably enters the rotunda from another side).
+2. bridges-v2: the same 12 observed (bridge, type) pairs stay undocked (A1 L2 B78X; A2 L2 B78X, A35K; A6 / A11 upper
+   A388; F5 L1 B738 / B38M / E75L; F11 L2 B772; F15 L1 B39M; G7 L1 E75L; G8 L1 E75L) - bridges_closeout §1.1, 1.5, 1.6, 1.9.
+3. bridges-v4: docked slopes > 1:12 / > 1:8: 969 / 386 of 3,286 (observed 125 / 39 of 605); HrPinned on 108 bridges -
+   the departure level 5.4 m is inferred (§1.5).
+4. bridges-v5: stow vs the imaged parked pose (§1.7) - not re-measured (Overpass down for the reviewer).
+5. bridges-v9: 158 dockings beyond the operational extension (max +1.02 m, was 189 / +1.19 m); 19 need the inferred
+   optional 185 deg cab (F14, F17, F19, F21 L1; 38.8-48.2 deg ccw) - please pick models / source the cab split (§1.3, 1.4).
