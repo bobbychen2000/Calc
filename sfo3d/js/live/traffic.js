@@ -77,9 +77,10 @@ const XPDR_OFF_MS = 10 * 60000;
 // the tug of a push-back is assumed connected this long after the push stopped (towOn: the pivot about the main gear onto
 // the reported heading) [inferred design value]
 const TOW_MS = 90000;
-// a silent occupant's bridge retracted ahead of an arrival on its lead-in docks again this long after the arrival was last
-// seen there (retractAhead) [design value: an arrival on the lead-in reaches the stop within ~1 min at 1-2 m/s]
-const AHEAD_HOLD_MS = 90000;
+// a silent occupant's bridge retracts when an arrival heads into its stand within AHEAD_M of the stop and docks again
+// AHEAD_HOLD_MS after the arrival was last seen heading in (retractAhead) [design values: 200 m at 2-5 m/s taxi-in is 40-100 s,
+// the hurried retraction takes 16-91 s from docked, bridges_closeout.md Round 2]
+const AHEAD_HOLD_MS = 90000, AHEAD_M = 200;
 const REACQ_PARK_M = 15;         // a parked aircraft heard again within this distance of its parked pose has not moved
 const STORE_KEY = 'sfolive.parked.v4'; // v4: stand names back to gate numbers, new stands (static_geometry_round1.md #4)
 // audit s.6.4-6.6 (ft/min, kt/s, ft, ft/min). DECEL_TD: flare deceleration before touchdown was 0.4-0.8 kt/s at night
@@ -627,6 +628,12 @@ export class Traffic {
       // gives the direction instead once it exceeds 2.5 m (review round 2: SKW5456 at F9 15:58Z, ASA811 at B11S)
       if (chord == null && tr.m.phase === 'still') { const P = tr.stillPos || tr.parkRep; if (P) { const dd = Math.hypot(x - P[0], z - P[1]); if (dd > 2.5 && dd < 60) chord = vecHdg(x - P[0], z - P[1]); } }
       let nose = th ?? (L ? L.hd : null);
+      // (round 3: the FIRST report of a slow track without a heading -- a transponder coming on in mid-push -- takes the guessed
+      // ground heading (at a stand: the stand's), and at a nose-in contact stand its first motion against that nose is a push.
+      // Before, its heading was 0 (north): SWR39 B77W, first heard pushing from G5 on 5 Nov 03:20Z, was driven tail-first into
+      // the G5 pier -- building 566 frames, bridge.hit 715)
+      if (!L && th == null && moving && r.gs < 8 * KT) { nose = this.guessGroundHeading(tr, x, z); if (nose != null) { tr.headingGuessed = true;
+        const T = typeOf(tr); for (const g of this.gates) if (g.bridge && Math.abs(x - g.w.x) < 120 && Math.abs(z - g.w.z) < 120 && this.gateScore(g, { x, z, hd: null, hdReal: false, icao: tr.info.icao }, T, 1.3) != null) { nose = g.w.hdg; tr.pushOk = true; tr.pushNoseGuess = nose; this.counters.firstAtStand = (this.counters.firstAtStand || 0) + 1; break; } } }
       if (moving) {
         const wasPush = tr.pushback;
         if (th != null) {
@@ -656,7 +663,7 @@ export class Traffic {
           // nose-in contact stand the first motion is a push-back unless it is clearly along the nose (review round 1:
           // UAL888 at G5 was driven forward into the terminal on a first report without a chord).
           if (tr.pushOk && r.gs < 8 * KT) {
-            const ref = tr.lock ? tr.lock.hdg : (tr.parkHdg ?? tr.stillHdg ?? (tr.gate ? tr.gate.w.hdg : null));
+            const ref = tr.lock ? tr.lock.hdg : (tr.parkHdg ?? tr.stillHdg ?? (tr.gate ? tr.gate.w.hdg : tr.pushNoseGuess ?? null));
             if (ref != null) {
               const noseIn = !!(tr.gate && tr.gate.bridge); const dd = chord != null ? Math.abs(wrapPi(chord - ref)) : null;
               if (dd == null ? noseIn : dd > (noseIn ? 100 : 120) * DEG) { tr.pushback = true; tr.pushNose = ref; }
@@ -1103,15 +1110,18 @@ export class Traffic {
     // and (2) SFO's plan says the occupant has gone -- its actual block-out is past, or its stand windows at that stand have
     // all ended -- or SFO allocates the stand to this arrival now (its own arrival record) and lists no window of the occupant
     // there now (stalePlanGone). No callsign-based planStand(): a same-number flight is another aircraft
-    if (tr.landedAt && !tr.pushed && !tr.gate && tr.dock && tr.dock.g) { const g = tr.dock.g;
-      if ((g.bridge || g.sharesBridgesOf) && g.occupant && g.occupant !== tr.hex) { const o = this.tracks.get(g.occupant);
-        if (o && o.stale && !o.dropping && !o.removed && this.onLeadInClose(tr, g, r)) { const why = this.stalePlanGone(o, tr, g, t);
-          if (why) { this.event(o, t, 'stale-replaced', { by: tr.hex, ahead: g.name, why }); this.fadeRemove(o, 'replaced'); this.counters.ghostAhead = (this.counters.ghostAhead || 0) + 1; }
-          // (no evidence: the occupant stays drawn, but its jet bridge starts back now, at the sheet's maximum rates -- if the
-          // arrival really drives in, GroundPhysics removes the ghost with the bridge already clear instead of leaving it
-          // extended at an empty stand for 10-16 s (bridge.orphan); if the arrival stops short or turns away, the bridge docks
-          // again AHEAD_HOLD_MS after the arrival was last seen on the lead-in (gates.js redock))
-          else { this.counters.ghostAheadKept = (this.counters.ghostAheadKept || 0) + 1; this.retractAhead(o, t, tr); } } } }
+    if (tr.landedAt && !tr.pushed && !tr.gate) for (const g of new Set([tr.dock && tr.dock.g, this.arrStand(tr, t)])) {
+      if (!g || !(g.bridge || g.sharesBridgesOf) || !g.occupant || g.occupant === tr.hex) continue; const o = this.tracks.get(g.occupant);
+      if (!o || !o.stale || o.dropping || o.removed) continue;
+      const why = tr.dock && tr.dock.g === g && this.onLeadInClose(tr, g, r) ? this.stalePlanGone(o, tr, g, t) : null;
+      if (why) { this.event(o, t, 'stale-replaced', { by: tr.hex, ahead: g.name, why }); this.fadeRemove(o, 'replaced'); this.counters.ghostAhead = (this.counters.ghostAhead || 0) + 1; continue; }
+      // (no evidence: the occupant stays drawn, but its jet bridge starts back once the arrival heads into that stand within
+      // AHEAD_M -- the lead-in it is docking to, or SFO's stand for its own arrival record -- at the sheet's maximum rates: if
+      // the arrival really drives in, GroundPhysics removes the ghost with the bridge already clear instead of leaving it
+      // extended at an empty stand for 10-16 s (bridge.orphan, 23 -> 37 stands without the round-2 removals); if it stops
+      // short or turns away, the bridge docks again AHEAD_HOLD_MS after the arrival was last seen heading in (gates.js redock).
+      // A bridge moving at a parked aircraft is harmless; removing the aircraft was not)
+      const S = this.stopRef(tr, g); if (Math.hypot(r.x - S[0], r.z - S[1]) <= AHEAD_M && this.intoStand(tr, g, r.x, r.z, r.dir)) { this.counters.ghostAheadKept = (this.counters.ghostAheadKept || 0) + 1; this.retractAhead(o, t, tr); } }
   }
   // the bridge of a silent occupant o retracts ahead of arrival tr (see groundLogic); refreshed while tr stays on the lead-in
   retractAhead(o, t, tr) {
@@ -1120,6 +1130,13 @@ export class Traffic {
     o.bridgeOn = false; o.earlyUndock = { t, why: 'ahead', g: o.bridgeGate, hurried: true, by: tr.hex };
     this.counters.bridgeAhead = (this.counters.bridgeAhead || 0) + 1; this.event(o, t, 'bridge-ahead', { stand: o.gate ? o.gate.name : null, by: tr.hex });
     if (this.onGateChange) { this.onGateChange(o.bridgeGate, null, { early: true, why: 'ahead' }); this.onGateChange(o.bridgeGate, null, { fast: true, s: FAST_UNDOCK_S }); }
+  }
+  // SFO's stand for this aircraft's own ARRIVAL record, its window around now (+-10 min) -- not the callsign's planStand(),
+  // which can be a same-number departure's (round 3)
+  arrStand(tr, t) {
+    const pf = this.planFor(tr); if (!pf) return null;
+    for (const c of pf.cands || []) if (c.kind === 'arr' && !c.linked && c.stand && c.from != null && c.to != null && t >= c.from - 600e3 && t <= c.to + 600e3) return this.gateByName({ name: c.stand });
+    return null;
   }
   // a moving report r on stand g's lead-in, close to the stop mark (round 3, see groundLogic)
   onLeadInClose(tr, g, r) {

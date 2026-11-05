@@ -159,6 +159,11 @@ def trim(P, TR, log):
                 if g not in TR: continue
                 o = BI.occupancy(TR, g, ch.bounds, y0, y1, pad=0.5, tri_only=True)
                 if not o.is_empty: cut.append(o.intersection(ch)); bygrp.setdefault(g, []).append(o.intersection(ch))
+        # the landside buildings as solids too (garages, RCC, hotel, CAC: a ramp that runs into a garage ends at its
+        # facade; their surfaces alone miss a deck that passes between two of a garage's floors)
+        if 'landside' in TR and not TR['landside']['solid'].is_empty:
+            sol = TR['landside']['solid'].intersection(p['rib'].buffer(0.5))
+            if not sol.is_empty: cut.append(sol); bygrp.setdefault('landside', []).append(sol)
         if cut:
             C = unary_union(cut).buffer(0.10)
             before = p['geom'].area; p['geom'] = p['geom'].difference(C); p['asset_cut_m2'] = round(before - p['geom'].area, 2)
@@ -473,10 +478,11 @@ class GLB:
             if not self.js[k]: del self.js[k]
         j = json.dumps(self.js, separators=(',', ':')).encode()
         while len(j) % 4: j += b' '
-        with open(path, 'wb') as f:
+        with open(path + '.tmp', 'wb') as f:  # written aside and renamed: a page loading the file never reads half of it
             f.write(struct.pack('<III', 0x46546C67, 2, 12 + 8 + len(j) + 8 + len(self.bin)))
             f.write(struct.pack('<II', len(j), 0x4E4F534A)); f.write(j)
             f.write(struct.pack('<II', len(self.bin), 0x004E4942)); f.write(bytes(self.bin))
+        os.replace(path + '.tmp', path)
 
 
 def export(path, mb, units, lods, mats_def, root_c, extras, unit_extras):

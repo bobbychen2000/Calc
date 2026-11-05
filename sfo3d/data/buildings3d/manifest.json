@@ -14069,7 +14069,7 @@
    "complex_edge_runs": 11
   },
   "plausibility": {
-   "conflicts": 1,
+   "conflicts": 2,
    "notes": 10,
    "nearest_envelopes": [
     {
@@ -14104,6 +14104,19 @@
      "pose": "current",
      "overlap_m2": 0.39,
      "depth_m": 0.32
+    },
+    {
+     "check": "taxilane OFA (ADG 5)",
+     "group": "landside",
+     "unit": "bart_station",
+     "dist_m": 36.7,
+     "lane": 302,
+     "ref": null,
+     "adg": 5,
+     "span_m": 60.9,
+     "need_m": 42.1,
+     "margin_m": -5.4,
+     "museum_outline_m": 37.3
     }
    ],
    "walkway_drum_tests": 393,
@@ -14123,15 +14136,28 @@
      }
     ],
     [
-     "landside/airtrain_-4_0",
+     "landside/bart_station",
      {
-      "dist_m": 38.2,
+      "dist_m": 36.7,
       "lane": 302,
       "ref": null,
       "adg": 5,
       "span_m": 60.9,
       "need_m": 42.1,
-      "margin_m": -3.9,
+      "margin_m": -5.4,
+      "museum_outline_m": 37.3
+     }
+    ],
+    [
+     "landside/airtrain_-4_0",
+     {
+      "dist_m": 38.1,
+      "lane": 302,
+      "ref": null,
+      "adg": 5,
+      "span_m": 60.9,
+      "need_m": 42.1,
+      "margin_m": -4.0,
       "museum_outline_m": 37.3
      }
     ],
@@ -14160,19 +14186,6 @@
       "margin_m": 6.1,
       "museum_outline_m": 37.3
      }
-    ],
-    [
-     "domestic/BA_D",
-     {
-      "dist_m": 42.7,
-      "lane": 295,
-      "ref": "5B",
-      "adg": 4,
-      "span_m": 50.9,
-      "need_m": 34.3,
-      "margin_m": 8.4,
-      "museum_outline_m": 41.9
-     }
     ]
    ]
   },
@@ -14182,7 +14195,7 @@
    "bridges / realtime: gates.js prepGeom walkway start and drum limits from the 3-D facades (integration.json footprints / tiers), then the domestic vestibules can go (review r1 finding 8)",
    "stands: F10 CRJ2 1.40 m from the BA-F body tier (SFO Museum outline 1.43 m): a stand pose item, not the building"
   ],
-  "generated": "2026-11-05T12:36:37Z",
+  "generated": "2026-11-05T14:30:44Z",
   "tool": "tools/blender/b3d_integrate.py",
   "doc": "docs/research/buildings3d.md (integration section)"
  },
@@ -14190,7 +14203,7 @@
   "asset": "roadways (elevated landside roadways: departures decks, viaducts, approach ramps)",
   "owner": "integration (review round 1, finding 1)",
   "generator": "tools/blender/build_roadways.py + roadways_net.py",
-  "built": "2026-11-05T12:32:51Z",
+  "built": "2026-11-05T14:26:55Z",
   "files": {
    "full": "data/buildings3d/roadways.glb",
    "lod2": "data/buildings3d/roadways_lod2.glb"
@@ -14296,16 +14309,16 @@
     "itb": 6.0,
     "domestic": 84.6,
     "roadways": 0,
-    "landside": 126.7
+    "landside": 300.3
    },
    "columns": {
     "tried": 332,
     "placed": 296
    },
    "tris": {
-    "0": 46930,
-    "1": 14550,
-    "2": 6924
+    "0": 46698,
+    "1": 14420,
+    "2": 6856
    },
    "grade_max": {
     "id": 27425666,
@@ -14491,10 +14504,10 @@
    ],
    "low_crossings": [],
    "crossings": 33,
-   "asset_cut_m2": 316.9,
+   "asset_cut_m2": 480.7,
    "bytes": {
-    "full": 4374944,
-    "lod2": 442948
+    "full": 4345044,
+    "lod2": 438004
    }
   }
  }

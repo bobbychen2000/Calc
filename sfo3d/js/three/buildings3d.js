@@ -14,7 +14,7 @@
 // split into n pieces (<name>.part<i><ext>, the 15-MB per-file limit) is fetched in pieces and joined).
 // Modes (?b3d=full|near|lod2|0): high / ultra tiers 'full' (every group's full file); the low tier (phones) and the
 // medium tier (deviceMemory <= 4 GB; review finding 10) 'near' (integration review round 1, finding 5: phones used to show
-// only LOD2 at every distance, gate and tower views included): the lod2 files first (~4 MB, the whole airport at once),
+// only LOD2 at every distance, gate and tower views included): the lod2 files first (~6 MB, the whole airport at once),
 // then each group's full file when the camera comes
 // within that group's LOD2 switch distance (the tier's tighter range) of it, one file at a time; the full file replaces
 // the lod2 one, so near units show LOD0 / LOD1 as on the desktop. 'lod2' = the far files only (QA), '0' = the first-pass
