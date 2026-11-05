@@ -213,7 +213,8 @@ Files: `tower.glb` (F2) 3.38 MB, `tower_f1.glb` 3.45 MB, `tower_lod2.glb` (F2) 0
 flock out/.heavy.lock python3 tools/blender/build_landside.py     # ~2 min: geometry, textures, NAIP colours, 3 AO bakes, export, verify, manifest
 python3 tools/blender/verify_landside.py                            # numbers only (no bpy) -> out/buildings3d/landside_verify.json
 flock out/.heavy.lock python3 tools/blender/render_landside.py --views gar_a,hyatt,superbay,l4,l1,l5,overview
-flock out/.heavy.lock python3 tools/blender/render_landside.py --views a2 --itb          # with itb.glb as context
+flock out/.heavy.lock python3 tools/blender/render_landside.py --views i2,bart,a2 --itb   # with itb.glb as context
+flock out/.heavy.lock python3 tools/blender/render_landside.py --views cg_top             # + the NAIP crop beside it (local)
 flock out/.heavy.lock python3 tools/blender/render_landside.py --views gar_a,l1,l5 --backface   # red = inward faces
 python3 tools/blender/landside_manifest.py                          # merge the render list into manifest.json#landside
 ```
@@ -225,21 +226,21 @@ python3 tools/blender/landside_manifest.py                          # merge the 
 | `tools/blender/landside_cars.py` | Parked cars on the deck stall grids (count / axis from NAIP), two low-poly shapes |
 | `tools/blender/landside_mesh.py`, `landside_tex.py` | Mesh primitives (MB, facade / cap / tube, `face_dir`); procedural tiles (normal + base colour) |
 | `tools/blender/build_landside.py`, `landside_manifest.py` | bpy build, NAIP colour sampling, AO bakes, export, manifest entry |
-| `tools/blender/verify_landside.py`, `render_landside.py` | 140 checks on the exported glb; Cycles references with the sheet lines drawn over them; back-face QA |
-| `data/buildings3d/landside.glb` (14.9 MB), `landside_lod2.glb` (1.26 MB) | The asset; the LOD2 subtrees alone (far / phone tier) |
+| `tools/blender/verify_landside.py`, `render_landside.py` | 182 checks on the exported glb; Cycles references with the sheet lines drawn over them; back-face QA |
+| `data/buildings3d/landside.glb` (20.3 MB), `landside_lod2.glb` (2.10 MB) | The asset; the LOD2 subtrees alone (far / phone tier) |
 
 **Layout.** Root `landside` at world (0, 3.0, 0); one child per building / AirTrain tile at its own origin (`origin_world_xz`
 in the node extras), each with `LOD0_*` / `LOD1_*` / `LOD2_*` children: switch 0 / 450 / 1500 m **from that building node**
 (the group spans 2.4 x 2.8 km, so one root LOD would not work). LOD0 / LOD1 share the shell meshes and their AO atlas
 (A 2048 px: the six parking structures; B 2048 px: the other buildings and the AirTrain); LOD2 = one joined node per building
-with atlas C (1024 px). Parked cars: 1,699 instances, one node per deck x shape x colour with `EXT_mesh_gpu_instancing`
+with atlas C (1024 px). Parked cars: 1,732 instances, one node per deck x shape x colour with `EXT_mesh_gpu_instancing`
 (one material, paint / glass / skirt in COLOR_0), under LOD0 and LOD1.
 
 | LOD | triangles (non-instanced) | instanced car triangles | draw calls (all buildings) |
 |---|---|---|---|
-| 0 | 116.8k | 91.6k | 286 (12 car groups per deck) |
-| 1 | 63.0k | 64.5k | 258 |
-| 2 | 8.8k | none | 74 (`landside_lod2.glb`: 1.26 MB) |
+| 0 | 162.0k | 93.4k | 350 (12 car groups per deck) |
+| 1 | 81.5k | 65.7k | 310 |
+| 2 | 15.6k | none | 107 (`landside_lod2.glb`: 2.10 MB) |
 
 ### What is modelled, and from what (per-dimension tags in the node extras and `manifest.json#landside.buildings`)
 
@@ -266,12 +267,12 @@ the guideway vanishing point and the horizon; the DOF TANK top 8.6 m above an ey
 BL-02 tower D 6.5, which puts the l5 camera inside the RCC) instead of 12.35 m. Also: the Superbay spine-end facets fall
 to the cantilever-root level (BL-02 plan) rather than to the tip level (BL-03 V4 line, which would leave an 11-m step).
 
-### Verification (verify_landside.py on the exported glb: 140 checks, 0 failed; tolerance 0.5 m or 2 %)
-- Placement of all 23 nodes exact (0.01 m); root at GROUND_Y.
+### Verification (verify_landside.py on the exported glb: 182 checks, 0 failed; tolerance 0.5 m or 2 %)
+- Placement of all 24 nodes exact (0.01 m; round 1 adds `bart_station`); root at GROUND_Y.
 - Heights = the sheet values to < 0.01 m: CG 24.69 / deck 23.62 / poles 33.2, 30.8; Garages A / G ring 39.6 / 37.6, cores 43.6 /
   41.6, box 43.1; LTP 1 16.5, towers 27.7 / 26.2; LTP 2 18.29 / 19.36 / PV 21.79; RCC 16.46, 59-ft element 17.98; Hyatt 44.0,
   podium 10.67, penthouse 48.67; CAC 18.29 / 19.51; Superbay spine 41.15, root 39.65, tips 27.0 / 28.5, door head 24.0; MOC
-  40.2 / 35.7 / 35.4; RCC tower 18.3, D 6.50.
+  40.2 / 35.7 / 35.4; RCC tower 18.3, D 4.70 (round 1: SFO Museum polygon lobe; BL-02 E draws 6.5 [inf]), platform 8.01.
 - Plans: CG, LTP 1 / 2, RCC, CAC roof footprints = the outlines (0 m2 outside / missing; RCC: the canted louvres overhang the
   west wall by 1.1 m = 206 m2, by design); Hyatt 5.5 m2 outside (parapet buffering); drum fits R 16.21 / 15.17 (sheet 16.2 / 15.2),
   centres within 0.03 m; body ends 151.1 / 149.8 (150.8 / 149.8); rooftop box u 52.3-76.9 (exact); CG void 58.7 m (58.9);
@@ -280,13 +281,14 @@ to the cantilever-root level (BL-02 plan) rather than to the tip level (BL-03 V4
   99.9th-percentile grade between deck vertices 2-6 m apart 3.9 %.
 - Cars: per deck = NAIP density x deck area (CG: the visual 300); minimum centre spacing 2.39 m (2.6-m stalls), all on the deck.
 - Render silhouettes (orthographic, alpha pass) vs the sheet lines: Hyatt parapet max 0.04 m (0.135 m/px); Superbay spine
-  max 0.07 m (0.177 m/px); Garage A ring max 0.73 m (0.333 m/px): SUVs on the deck stand 0.7 m above the 1.07-m guard, the ring
-  itself is exact in the verification.
-- Back-face QA (red = an inward face): gar_a, superbay, overview 0 px; a2 6 px; l5 537 px (0.08 %), Hyatt 610 px (0.12 %: the
-  colonnade recess at the curved south end), l1 2,085 px (0.3 %: inside the Garage A portal openings) - small residuals, left
-  open.
-- **Plausibility**: nearest stand envelope (108 stands, app planforms) 28.9 m (A4, the guideway at the ITB); nearest bridge
-  walkway / rotunda 56.0 m; no SFO Museum taxiway polygon inside any footprint (nearest 204 m, RCC; Superbay / MOC 212 m).
+  max 0.07 m (0.177 m/px); Garage A ring: max 3.07 m / p95 2.98 m (0.333 m/px) since round 1 - the white stair towers rise 3.0 m
+  above the ring [obs i2] and stand in the silhouette; the ring itself is exact in the verification.
+- Back-face QA (red = an inward face): gar_a, superbay, overview, cg_top 0 px; a2 6 px; l1 56 px (was 2,085: the station block
+  was open to the east); Hyatt 610 px (0.12 %: the colonnade recess at the curved south end); bart 569 px (0.09 %: inside a Garage G
+  facade notch); l5 2,380 px (0.34 %: thin lines along the trough-wall tops / walkway edges of the round-1 track furniture) - small
+  residuals, left open.
+- **Plausibility**: nearest stand envelope (108 stands, app planforms) 26.3 m (G3; was 28.9 m at A4 before
+  round 1); nearest bridge walkway / rotunda 55.8 m (A4); no SFO Museum taxiway polygon inside any footprint (nearest 204 m, RCC; Superbay / MOC 212 m).
   Integration: the MOC has no SFO Museum outline, so the app's ground physics does not know it - add its footprint
   (`manifest.json#landside.buildings.united_moc`) to the obstacle list.
 - Khronos glTF-Validator 2.0.0-dev.3.10: 0 errors (both files); warnings only MESH_PRIMITIVE_GENERATED_TANGENT_SPACE (no
@@ -297,16 +299,30 @@ to the cantilever-root level (BL-02 plan) rather than to the tip level (BL-03 V4
 ### Renders (out/buildings3d/, local; comparison sheets with photo pixels stay local)
 `landside_gar_a.png` / `landside_cmp_gar_a.png` (BL-03 row 1 lines over the orthographic SSE face), `landside_hyatt.png` /
 `_cmp_hyatt` (BL-03 row 2, l4 fractions), `landside_superbay.png` / `_cmp_superbay` (BL-03 row 4 door face), `landside_l1`,
-`landside_l4`, `landside_l5`, `landside_a2` (camera-matched to the photos; `_cmp_*` side by side), `landside_overview.png`.
+`landside_l4`, `landside_l5`, `landside_a2` (camera-matched to the photos; `_cmp_*` side by side), `landside_overview.png`;
+round 1: `landside_i2` (+ itb.glb; camera solved from four bearings), `landside_bart` (BART station / Garage G vault from the NNE,
+a2 beside it), `landside_cg_top` / `_cmp_cg_top` (orthographic central-garage roof beside the NAIP 2024 crop, local only),
+`landside_overview_lod2.png` (LOD2 only), `_bf` back-face variants.
 Self-review: a2 reproduces the layout (Garage G with its station canopy along the NNW face, Garage A behind with the rooftop box
-and core, the Hyatt beyond, the guideway curves); l1 the station block with its slots and portals, the curved NE corner with
-screens; l5 the board-formed west wall, ribbon windows, canted louvres and the perforated tower; l4 the podium, colonnade,
-penthouse steps, masts and framed bay.
+and core, the Hyatt beyond, the guideway curves); l1 (round 1, camera 28 m east of the face) the low station block with two slots,
+the track portal, the open hall on columns to the south, the walkway between the tracks with handrails and the curved NE end with
+full-bay screens - block width within 0.2 % of the photo's, the camera ~4.6 deg off in yaw; l5 the board-formed west wall, ribbon
+windows, louvres, the perforated tower with its raked hood and the canopy only east of / behind the tower (as in the photo; the
+glazed platform cabins and the steel stair are not modelled); i2 both garages with drums, towers and screens either side of the
+ITB, the photo camera looks down from higher (the road is below it); cg_top the cars at their NAIP places in dark / coloured
+paint, the ring road, lobes, rims and boxes, the void floor; bart the glazed band under the AirTrain deck; l4 the podium,
+colonnade, penthouse steps, masts and framed bay (lens 176 mm, round 1).
 
 ### Open items (also in the manifest's `unknown` / `conflicts` / `deviations_from_sheets`)
-- Garage A / G roof decks (drawn at the drum ring). Photo l1 shows the Garage A station block rising only ~9 m above the
-  guideway, with the curved garage wall behind it higher: consistent with a lower block or a lower deck at the east end - not
-  changed (BL-03 is the reference; the deck is [unk]).
+- Garage A / G roof decks (drawn at the drum ring, [unk]); the Garage A station block is now its own lower block (12.0 m above the
+  deck, photo l1). The round-1 conflict on the curved NE end (a first l1 reading of ~32.7 m) is withdrawn: the camera-matched l1
+  render at 39.6 reaches the frame top as in the photo. In i2 the Garage A drum top and the distant ITB roof line up, which with a
+  train-window eye (~21.6 m) would put the ring lower than 39.6 - or the photo was taken from higher; not used.
+- Round 1 inferred items: drum towers 8 x 8 m (top ring + 3.0 m, i2), rooftop box heights (deck + 4.5 / 2.0), the void floor at
+  grade, car blob colour un-mixing (0.5 car share, blue cast removed), the BART band (a2 proportions, low), the RCC platform
+  8.0 m and canopy extent (l5, low).
+- Not modelled (round 1): the BART three-track approach west of x -1592 (shares the SFO Museum AirTrain corridor), the RCC
+  platform cabins / steel stairs (l5), 26 large airport buildings outside every asset (`manifest.json#landside.scene_not_modelled`).
 - Station enclosure / canopy heights, the stair / elevator towers of the terminal-area stations, the Hyatt bridge, the LTP links.
 - The RCC "66 ft", the DOF 10.4-m point inside the RCC outline (conflict), the MOC section extents and barrel-vault heights,
   the Superbay fold amplitude and door leaves, the CAC cladding: placeholders / inferred, as tagged.
@@ -321,7 +337,7 @@ the drawings group (end of this section).
 
 | # | Finding | Disposition | What the model does now (evidence) |
 |---|---|---|---|
-| 1 | Garage A station block was the full-height face with three stacked slots | fixed (block); conflict raised | A separate block over both tracks: top 12.0 m above the deck (l1: 11.1 m above the walkway, scaled from the 2.2-m platform-door cabin, +-15 %), two long slots at +7.4 m (none over the central pier), open hall under its soffit over the tracks and to the south on round columns, 30 m deep (l1 sightline: the sky above the block needs >= 27 m); its east face one precast wall from grade to the top with the two track portals, and the walkway deck between the tracks east of it (the SFO Museum Garage A outline tail lies exactly between the two track polygons [obs]; l1's camera stands on it). The curved NE garage end beside it stays at the 39.6-m ring [unk, BL-03], although l1 puts its parapet ~12.9 m above the deck (~32.7 m): CONFLICT for the drawings group |
+| 1 | Garage A station block was the full-height face with three stacked slots | fixed (block); deck conflict withdrawn | A separate block over both tracks: top 12.0 m above the deck (l1: 11.1 m above the walkway, scaled from the 2.2-m platform-door cabin, +-15 %), two long slots at +7.4 m (none over the central pier), open hall under its soffit over the tracks and to the south on round columns, 30 m deep (l1 sightline: the sky above the block needs >= 27 m); its east face one precast wall from grade to the top with the two track portals, and the walkway deck between the tracks east of it (the SFO Museum Garage A outline tail lies exactly between the two track polygons [obs]; l1's camera stands on it). The curved NE garage end beside it stays at the 39.6-m ring [unk, BL-03]. A first reading of l1 put its parapet ~12.9 m above the deck (~32.7 m) and raised a conflict; it is withdrawn: in the camera-matched comparison (28 m from the face, block width within 0.2 %) the rendered curved end at 39.6 reaches the frame top as in the photo, so the 12.0-m reading had taken the receding left edge of the curved wall for its top |
 | 2 | Drums / screens read as square punched panels; no stair towers | fixed | Drums: `drum_metal` (smooth light panels) with five long horizontal slots and an open top band, recessed 0.8 m (heights from i2, scaled from the drum width). Screens: full-bay perforated panels between thin mullions (4.05 m), covering the lower 62 % of each level with a dark strip above (l1). White precast stair / elevator towers (8 x 8 m [inf]) with a column of small square windows at both ends of each drum (NAIP bright boxes at the outline notches), top = ring + 3.0 m [obs i2, low]. Screen panels also on edges <= 4 m (the curved ends). The i2 comparison uses a solved camera (ITB roof, old tower cab, Garage A drum and NE corner bearings; held on the guideway east edge, residuals <= 1.3 deg) |
 | 3 | No SFO BART station; Garage G station roof flat | fixed (station); approach not modelled | New node `bart_station`: plan = OSM way 221663595 `train_station` (ODbL; its north edge within ~1.5 m of the NAIP 2024 shadow line), open ground storey on columns (OSM `min_height` 4, a2), white panels, green glazed band 3.9 m tall, 1.6 m below the top, following the level field (a2 proportions; first cut: 15.2 m to the top, a sliver where the AirTrain descends west), the top carrying the AirTrain deck (follows the level field). The Garage G AirTrain station roof is a white barrel vault over platform and tracks (NAIP white roof, a2). The three-track approach shares the corridor the SFO Museum AirTrain polygon covers (x -1920..-1592) and continues 2+ km west to the wye: not separable from NAIP, listed as not modelled |
 | 4 | Central-garage roof: uniform stall field, 300 random cars, waffle void | fixed | NAIP-traced beige rims (0.15 m raised; nature unk) and stall-free lobes (own NAIP colour), 11 rooftop stair / elevator / plant boxes (NAIP plan +-2 m and roof colour; heights inf), the stall-free helix ring road round the void (r 43.5 m [obs NAIP]), the void floor at grade with stall marks [obs NAIP: stalls and cars in the void], the void's level lines rise one pitch per turn (helix), 216 cars at their NAIP 2024 blob positions (blob colours un-mixed against the deck at a 0.5 car share and the common blue sky cast removed: the raw blob means had mapped dark cars to beige / silver) + 127 white / silver cars next to them (fleet share 37 %, not separable from the light deck) |
@@ -333,8 +349,8 @@ the drawings group (end of this section).
 | 10 | Superbay red light not lit | fixed | Own material `red_light` with `extras.obstruction_light` (glowKind -> beacon), in LOD0 / 1 / 2 |
 | 11 | LOD2 differs from LOD0, guideway into blank walls | fixed | Garage LOD2: parapet recess, core, rooftop box, towers, drum slot bands, station block, portals with dark backs; Hyatt penthouse; MOC barrels to the crown; AirTrain LOD2 trough walls; LOD2 checks in `verify_landside.py`. LOD2 has no parked cars by design (>= 1500 m: sub-pixel; `deck_far` carries the NAIP deck + car mean) |
 
-**Requests to the drawings group** (the 3-D now carries these as `obs` / `osm` / `inf` round-1 items): the Garage A / G deck vs
-the drum ring (l1), the Garage A station block on BL-03, the SFO BART station as a spec item and sheet, the RCC tower D 4.7 /
+**Requests to the drawings group** (the 3-D now carries these as `obs` / `osm` / `inf` round-1 items): the Garage A / G deck (still
+[unk]; the l1 conflict is withdrawn), the Garage A station block on BL-03, the SFO BART station as a spec item and sheet, the RCC tower D 4.7 /
 platform 8.0 (l5 solve), the drum towers, the central-garage roof rims / lobes / boxes.
 <!-- landside:end -->
 
@@ -714,13 +730,13 @@ and the deck / soffit profiles of the two anchored structures), drawn from the s
 
 Results (`out/buildings3d/roadways_build.json`, `roadways_build.log`): 147 elevated OSM ways, 109 kept (32 outside the app's
 landside / airside clip, 6 inside landside buildings); 6,447 level nodes, 224 anchored, 152 crossing nodes, 38 under the
-guideway, 64 clearance constraints, **0 unresolved, 0 crossings below 4.6 m**; 43 at-grade roads lifted into approach ramps;
+guideway, 65 clearance constraints, **0 unresolved, 0 crossings below 4.6 m**; 43 at-grade roads lifted into approach ramps;
 built inside the terminal-core box x -2150..-550, z -50..1050 (115 pieces in 9 units: `itb_departures`,
 `domestic_departures`, 7 `interchange_*`; 38 pieces / 5.8 km beyond it - the US 101 / I-380 ramps 1-2 km away - keep their
 ground footprint as before); 481 m2 trimmed against assets (ITB 6, domestic 85, landside 300 - the landside buildings count
-as solids: a ramp that runs into a garage ends at its facade); 296 of 332 column positions placed; LOD0 / 1 / 2 46.7k /
-14.4k / 6.9k triangles, `roadways.glb` 4.35 MB, `roadways_lod2.glb` 0.44 MB (built against the landside round-1 GLB of
-12:52Z). Steep: 12 decks
+as solids: a ramp that runs into a garage ends at its facade); 295 of 332 column positions placed; LOD0 / 1 / 2 46.7k /
+14.4k / 6.9k triangles, `roadways.glb` 4.34 MB, `roadways_lod2.glb` 0.44 MB (built against the landside round-1 GLB of
+16:18Z). Steep: 12 decks
 above 8 % (in the core box at most 12.1 %, the short motorway links west of the ITB that must clear the at-grade roads under
 them; the US 101 side 13.2 %) and 7 ramps - reported, not hidden. Below the domestic loop the soffit is 3.53 m over the
 arrivals roads: the domestic curb placeholder [unk], kept as the domestic asset has it (manifest `deviations`).
@@ -741,7 +757,24 @@ between two of its floors: fixed by the solid trimming above).
 | 6 | plausibility never tested walkway / drum vs host; LOD2 joined units skipped (major) | **fixed**: (b') walkway and drum against their own building at every LOD and pose, on the app's own bridge solids (`scene2d.json` of 03:56Z; the facade crossing allowed within 2.5 m of the attach point; CONFLICT > 0.3 m2 and > 0.10 m deep), (d) with the joined LOD2 meshes split per building (domestic's `building: 'all'` included). Result: 393 tests, **1 conflict** - drum E9: 0.39 m2 of BA_E surfaces 0.32 m inside the drum (current pose, LOD0) - and 1 note (F8 drum 0.40 m2 touching, depth 0.00); B10 walkways and the D6 / D7 drums in the LOD2 eave the reviewer found are clear after the domestic round-1 rebuild (domestic.glb 10:54Z); asset pairs with LOD2 included: no core overlap in any band (the domestic-ITB 8 m2 is gone with that rebuild) | `integration.json#plausibility.stats.walkway_drum_vs_host`, `asset_pairs`; requests: domestic (E9) |
 | 7 | taxilane threshold halved twice (minor) | **fixed**: distance per lane design group (AC 150/5300-13A Table 4-1 taxilane centreline to object: ADG III 24.7 / IV 34.3 / V 42.1 m), a lane's ADG = the largest wingspan among the stands whose envelope is within 45 m of it (inferred: no SFO taxilane design-group source here). Notes: BA-F 27.1 m to lane 9 (ADG V, needs 42.1 m), BA-G 38.6 m and the guideway 38.1 m to lane 302 (ADG V): in each case the SFO Museum geometry is as close (27.3 / 37.3 m) - existing condition, not the assets; the real lanes are likely restricted (not verified). **1 conflict**: the BART station of the landside round-1 rebuild is 36.7 m from lane 302, 0.6 m nearer than the SFO Museum structure (within that outline's +-5 m accuracy; reported to the landside group) | `integration.json#plausibility.stats.taxilane_clearance` |
 | 8 | app collision data from first-pass outlines (minor) | **partly fixed**: `integration.js` now carries `physics.rings` (26 asset footprints, hangars / guideway / roadways out) and `js/live/app.js` passes them to `ground.js buildingGrid` (additive third parameter): off-stand aircraft now avoid the measured roof edges. **Not done**: `gates.js prepGeom` from the asset facades (walkway start / drum limits) - that changes every bridge and the bridges group's verification while it closes out; requested, with the vestibule removal (domestic) after it. The F10 CRJ2 1.40 m from BA-F (SFO Museum outline 1.43 m) is a stand-pose item (stands) | requests in manifest.json#integration |
-| 9 | phone artifact ships full GLBs near the 15-MB limit (minor) | **changed premise / fixed limit**: phones now load the full files near the camera, so the artifact keeps them (B3D=all); any file >= 14 MB is split into 12-MB pieces (`<name>.part<i>.wasm`, `window.SFO_B3D_PARTS`) and joined by the loader. Needed at once: the landside round-1 rebuild (12:52Z) made `landside.glb` 19.6 MB, which the old per-file assert would have refused (2 pieces now). Full set 43.7 MB + lod2 5.9 MB (without tower_f1): with the rest of the artifact over the 64-MB single-publish limit, so it goes up in two publishes (as phone_artifact.sh already says) | `tools/build3/phone_artifact_page.py` |
+| 9 | phone artifact ships full GLBs near the 15-MB limit (minor) | **changed premise / fixed limit**: phones now load the full files near the camera, so the artifact keeps them (B3D=all); any file >= 14 MB is split into 12-MB pieces (`<name>.part<i>.wasm`, `window.SFO_B3D_PARTS`) and joined by the loader. Needed at once: the landside round-1 rebuilds (12:52Z, 14:52Z) made `landside.glb` 19.6 / 20.3 MB, which the old per-file assert would have refused (2 pieces now). Full set 43.7 MB + lod2 5.9 MB (without tower_f1): with the rest of the artifact over the 64-MB single-publish limit, so it goes up in two publishes (as phone_artifact.sh already says) | `tools/build3/phone_artifact_page.py` |
 | 10 | desktop budget: RGBA AO, draw calls, medium tier (minor) | **fixed**: AO repacked as R8 (200 -> 90 MB decoded, 66 MB at the 1024 cap); per-unit per-material merge (landside 286 -> 189 / 258 -> 161, tower 30 -> 23 / 23 -> 18 primitives; ITB / domestic already one mesh per material); medium tier in `near` mode | `integ/r3/*/cmp_info.json` |
+
+
+**Renders, review round 1** (`out/buildings3d/integ/r3/`, live3.html headless on llvmpipe, 960 x 540; the machine was shared
+by three other workflows, so program compiles took 2-18 min per group and two runs hit their time limit: the views below are
+the ones that completed; the comparison sheets with photo pixels stay local):
+
+| View | Tier / files | Draw calls / triangles / textures | What it shows |
+|---|---|---|---|
+| `high/cmp_new_itbwest.png` | high, all five groups | 2,848 / 6.19 M / 1,171 MB (r1: 2,512 / 5.82 M / 1,273 MB) | the viaducts and ramps between Garages A and G and the ITB L3 loop; the 64-m white slab at the ITB west wall is gone |
+| `high/cmp_new_i3like.png` | high | 1,679 / 3.98 M / 1,176 MB | from the ITB departures deck at the i3 camera: curb sidewalk and upstand, canopy hangers, the loop curving away |
+| `night/cmp_new_itbnight.png`, `cmp_new_pierAnight.png` | high, landside first-pass | 976 / 3.57 M; 450 / 2.33 M | the capped glow (numbers in the table above) |
+| `night/cmp_new_pierA.png` | high | 858 / 3.39 M | BA-A by day at A9 (reference for the night view) |
+| `low2/cmp_new_{pierB,towercam,tower}.png` vs `cmp_lod2_*` | low (phone), landside left out | near: 346-535 / 1.6-2.3 M / 573-590 MB, units at LOD0 / 1: 5 / 36 (B20), 8 / 33 (tower); lod2: 330-537 / 548-559 MB, every unit at LOD2 | near mode puts LOD0 / LOD1 on screen at the gate and tower views for +25-31 MB of textures; the domestic and tower LOD2 meshes are close to LOD0 at these distances after their round-1 rebuilds, the ITB and landside ones are not (b3d_lod2_check) |
+
+Textures fell by ~100 MB at the high tier (1,273 -> 1,171 MB with a fifth group added: the R8 AO atlases); draw calls rose
+with the roadways (+9 units, ~31 primitives at LOD0 x the shadow / pre-pass multiplier) where they are in view. Not
+re-rendered here: the garage / t4-like car view (finding 4 routed to the landside group).
 
 <!-- integration:end -->

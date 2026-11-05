@@ -81,6 +81,7 @@ const TOW_MS = 90000;
 // AHEAD_HOLD_MS after the arrival was last seen heading in (retractAhead) [design values: 200 m at 2-5 m/s taxi-in is 40-100 s,
 // the hurried retraction takes 16-91 s from docked, bridges_closeout.md Round 2]
 const AHEAD_HOLD_MS = 90000, AHEAD_M = 200;
+const LEAD_GHOST_M = 90;   // an arrival this close on an occupied stand's lead-in retracts the (silent) occupant's bridge (leadInOccupied)
 const REACQ_PARK_M = 15;         // a parked aircraft heard again within this distance of its parked pose has not moved
 const STORE_KEY = 'sfolive.parked.v4'; // v4: stand names back to gate numbers, new stands (static_geometry_round1.md #4)
 // audit s.6.4-6.6 (ft/min, kt/s, ft, ft/min). DECEL_TD: flare deceleration before touchdown was 0.4-0.8 kt/s at night
@@ -1105,15 +1106,18 @@ export class Traffic {
     // docking to, anywhere within 400 m, heading roughly toward it, the occupant silent >= 2 min) removed aircraft that were
     // really there -- 16 removals, 10 of them heard again at the same stand later, 506 aircraft-minutes (UAL34 at G6 111 min,
     // UAL1668 E2 126 min ...); silence proves nothing at a stand (87 % of departures had the transponder off > 10 min there).
-    // Now: (1) geometry -- the arrival's report is ON the lead-in of the stand it is docking to (tr.dock, from its own motion),
+    // Now: (1) geometry -- the arrival's report is ON that stand's lead-in (onLeadInClose, from its own report),
     // at most max(60 m, 1.5 L) short of the stop mark, laterally within 4 m + 8 %, moving within 20 deg of the stand heading;
     // and (2) SFO's plan says the occupant has gone -- its actual block-out is past, or its stand windows at that stand have
     // all ended -- or SFO allocates the stand to this arrival now (its own arrival record) and lists no window of the occupant
-    // there now (stalePlanGone). No callsign-based planStand(): a same-number flight is another aircraft
-    if (tr.landedAt && !tr.pushed && !tr.gate) for (const g of new Set([tr.dock && tr.dock.g, this.arrStand(tr, t)])) {
+    // there now (stalePlanGone). No callsign-based planStand(): a same-number flight is another aircraft.
+    // The stands looked at: the lead-in it is docking to, SFO's stand for its arrival record, and the OCCUPIED contact stand
+    // whose lead-in the report is on (leadInOccupied: docking() skips occupied stands, so an arrival driving into a ghost had
+    // neither of the first two there -- 38 of 49 ghosts removed by GroundPhysics on the 4-5 Nov replay had no early retraction)
+    if ((tr.landedAt || tr.dirSFO === 'arr') && !tr.pushed && !tr.gate) for (const g of new Set([tr.dock && tr.dock.g, this.arrStand(tr, t), this.leadInOccupied(tr, r)])) {
       if (!g || !(g.bridge || g.sharesBridgesOf) || !g.occupant || g.occupant === tr.hex) continue; const o = this.tracks.get(g.occupant);
       if (!o || !o.stale || o.dropping || o.removed) continue;
-      const why = tr.dock && tr.dock.g === g && this.onLeadInClose(tr, g, r) ? this.stalePlanGone(o, tr, g, t) : null;
+      const why = this.onLeadInClose(tr, g, r) ? this.stalePlanGone(o, tr, g, t) : null;
       if (why) { this.event(o, t, 'stale-replaced', { by: tr.hex, ahead: g.name, why }); this.fadeRemove(o, 'replaced'); this.counters.ghostAhead = (this.counters.ghostAhead || 0) + 1; continue; }
       // (no evidence: the occupant stays drawn, but its jet bridge starts back once the arrival heads into that stand within
       // AHEAD_M -- the lead-in it is docking to, or SFO's stand for its own arrival record -- at the sheet's maximum rates: if
@@ -1137,6 +1141,19 @@ export class Traffic {
     const pf = this.planFor(tr); if (!pf) return null;
     for (const c of pf.cands || []) if (c.kind === 'arr' && !c.linked && c.stand && c.from != null && c.to != null && t >= c.from - 600e3 && t <= c.to + 600e3) return this.gateByName({ name: c.stand });
     return null;
+  }
+  // the contact stand occupied by ANOTHER track that the slow moving report r is driving into: on its lead-in at most
+  // LEAD_GHOST_M short of the stop mark (antenna frame), laterally within 4 m + 6 %, moving within 20 deg of the stand heading,
+  // below 10 kt (round 3, groundLogic). (With the docking geometry of AHEAD_M / 8 m + 10 % / 35 deg an arrival taxiing up an
+  // E-pier alley at 23:56Z was 'heading into' F9, E12, E2, E3 and E6 in turn -- five bridges retracted for one arrival)
+  leadInOccupied(tr, r) {
+    if (r.dir == null || !(r.gs <= 10 * KT)) return null; let best = null, bd = 1e9;
+    for (const g of this.gates) {
+      if (!(g.bridge || g.sharesBridgesOf) || !g.occupant || g.occupant === tr.hex || Math.abs(r.x - g.w.x) > LEAD_GHOST_M + 60 || Math.abs(r.z - g.w.z) > LEAD_GHOST_M + 60) continue;
+      const S = this.stopRef(tr, g); const bx = r.x - S[0], bz = r.z - S[1]; const out = -(bx * g.w.dx + bz * g.w.dz), lat = Math.abs(-bx * g.w.dz + bz * g.w.dx);
+      if (out < -3 || out > LEAD_GHOST_M || lat > 4 + 0.06 * Math.max(0, out) || Math.abs(wrapPi(r.dir - g.w.hdg)) > 20 * DEG) continue;
+      const s = lat + 0.05 * out; if (s < bd) { bd = s; best = g; } }
+    return best;
   }
   // a moving report r on stand g's lead-in, close to the stop mark (round 3, see groundLogic)
   onLeadInClose(tr, g, r) {

@@ -764,6 +764,10 @@ engine's phase, not the label.
    occupant there). Without that evidence the occupant stays drawn and only its bridge starts back, at the sheet's maximum
    rates (`retractAhead`, event `bridge-ahead`); it docks again AHEAD_HOLD_MS (90 s) after the arrival was last seen on that
    lead-in — so a ghost that GroundPhysics removes when the arrival really drives in leaves no extended bridge behind.
+   The stands looked at are the lead-in the arrival is docking to, SFO's stand for its own arrival record, and — because
+   `docking()` skips occupied stands, so an arrival driving into a ghost had neither — the occupied stand whose lead-in the
+   arrival is on (`leadInOccupied`: ≤ 90 m short of the stop, lateral ≤ 4 m + 6 %, ≤ 20°, < 10 kt; with the docking geometry
+   of 200 m / 8 m + 10 % / 35° one arrival up an E-pier alley retracted five bridges in turn).
 5. **Stand rules** (v5). `excl_types` no longer block or remove (contradicted by the recording); they steer a silent
    docking's geometric candidates only and are logged (`excl-type-conflict`). `types_ok` accepts a smaller member of a
    listed type's stop-point family (`typesOkHas`: B38M under B39M). Refused SFO allocations are logged
@@ -771,7 +775,9 @@ engine's phase, not the label.
 6. **Other physical guards found on the replay.** A parked aircraft at a nose-in contact stand cannot move forward past its
    stop mark: such a 'motion' is a GNSS jump (`intoTerminal`). A ground body dead-reckoned through a gap (> 10 s) that the
    next report puts ≥ 25 m behind or beside it is re-placed with a fade instead of being driven back in a U-turn (SFO only,
-   `drOvershoot`). The first reports of a track below 8 kt carry no velocity until one gives a chord (v8).
+   `drOvershoot`). The first reports of a track below 8 kt carry no velocity until one gives a chord (v8); a track first
+   heard moving at a contact stand without a heading takes the stand's heading and may be pushing (`firstAtStand`: SWR39
+   A333, first heard pushing out of G5 with no heading, was driven nose-first into the G5 pier with the guessed 0°).
 7. **Minors.** Early-undock 'silent' cancel only after XPDR_OFF_MS of silence, without blocking the next signal (v6); the
    tow pivot only while the push-back phase or TOW_MS after it (v9); a re-placement waits for its bridges only while the
    data is within CUT_HOLD_M (v9).

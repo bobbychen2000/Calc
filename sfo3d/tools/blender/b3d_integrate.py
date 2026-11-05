@@ -736,7 +736,9 @@ def main(argv):
         requests=['domestic: BA_E drum E9 - 0.39 m2 of BA_E surfaces 0.32 m inside the rotunda drum (current pose, LOD0; app solids of 2026-11-05T03:56)',
                   'landside: parked cars - wheels / skirt at LOD0 and a third shape (review r1 finding 4; landside_cars.py is the landside group\'s)',
                   'bridges / realtime: gates.js prepGeom walkway start and drum limits from the 3-D facades (integration.json footprints / tiers), then the domestic vestibules can go (review r1 finding 8)',
-                  'stands: F10 CRJ2 1.40 m from the BA-F body tier (SFO Museum outline 1.43 m): a stand pose item, not the building'],
+                  'stands: F10 CRJ2 1.40 m from the BA-F body tier (SFO Museum outline 1.43 m): a stand pose item, not the building',
+                  'landside: BART station 36.7 m from taxilane centreline 302 (ADG V inferred: 42.1 m), 0.6 m nearer than the SFO Museum structure',
+                  'landside / ITB: LOD2 vs LOD0 (tools/blender/b3d_lod2_check.py): ITB BA-G top -5.0 m, Central Garage top -5.1 m, RCC roof median 4.6 m; domestic BA_C split / top +9 m to check'],
         generated=out['generated'], tool='tools/blender/b3d_integrate.py', doc='docs/research/buildings3d.md (integration section)'))
     log('wrote data/buildings3d/integration.json (%.0f kB), integration.js (%.0f kB) in %.0f s' % (os.path.getsize(os.path.join(D3, 'integration.json')) / 1e3, os.path.getsize(os.path.join(D3, 'integration.js')) / 1e3, time.time() - t0))
     return 1 if res['conflicts'] else 0

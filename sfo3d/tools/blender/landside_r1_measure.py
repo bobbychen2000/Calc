@@ -83,14 +83,14 @@ PHOTOS = dict(
     l1_station_block=dict(
         scale='platform-door cabin door ~2.2 m high (100 px at the block face, 45.5 px/m) [inf scale, +-15 %]',
         top_above_platform=11.1, soffit_above_platform=3.1, slot_centre_above_platform=6.5, slot_h=1.2,
-        ne_parapet_above_platform=12.0,
+        ne_parapet_above_platform=None,   # first reading 12.0 m above the walkway: withdrawn (see note)
         sightline_depth_m=27.0,
         note='photo l1 (Garage A station from the east): a separate low block over both tracks, its top 11.1 m above the AirTrain '
              'walkway, two long dark slots at +6.5 m (one over the south overhang, one over the north portal; none over the '
              'central pier), the south part on two round columns (open under the soffit at +3.1 m); sky above the block: any '
              'part of the garage higher than the block stands >= 27 m behind its east face (camera ~30 m east of the face, eye '
-             '+1.6 m). The curved NE garage wall next to it tops out ~12.0 m above the walkway [obs l1] - with the network level '
-             '19.75 m that is ~31.8 m, against the drum ring 39.6 [obs NAIP, low]: CONFLICT, raised with the drawings group'),
+             '+1.6 m). The curved NE garage wall next to it: a first reading of ~12.0 m above the walkway (~31.8 m) was '
+             'withdrawn after the camera-matched comparison (render_landside view_l1: camera 28 m east of the face, the block width matched to 0.2 %): the 12.0-m reading took the receding left edge of the curved wall for its top; with the ring at 39.6 the rendered curved end reaches the frame top as in the photo - no conflict, the ring stays [unk, BL-03]'),
     i2_drums=dict(
         scale='drum diameter 32.4 m across 185 px (5.7 px/m) [obs BL-02 B R 16.2]',
         slot_tops_below_ring=[12.3, 18.4, 23.9, 29.4, 34.6], slot_h=1.6, top_opening_below_ring=(5.7, 7.6),

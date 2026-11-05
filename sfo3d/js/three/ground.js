@@ -20,7 +20,7 @@ import { hash12, hash13, hash22, vnoise, fbm2, band } from './tsl/common.js';
 import { geometryOf, textureOf } from './convert.js';
 import { CITY_RECT, CITYFAR_RECT } from '../world/world.js';
 import { APT_RECT } from '../world/airfield.js';
-const { Fn, uniform, uniformArray, vec2, vec3, vec4, float, uv, texture, dot, exp, pow, sqrt, max, min, mix, smoothstep, step, clamp, normalize, length, abs, floor, fract, mod, select, If, fwidth, positionWorld, cameraPosition, normalWorld, cameraViewMatrix, sin, cos, atan, reflect } = TSL;
+const { Fn, uniform, uniformArray, vec2, vec3, vec4, float, uv, texture, dot, exp, pow, sqrt, max, min, mix, smoothstep, step, clamp, normalize, length, abs, floor, fract, mod, select, If, fwidth, dFdx, dFdy, positionWorld, cameraPosition, normalWorld, cameraViewMatrix, sin, cos, atan, reflect } = TSL;
 
 const toView = (nW) => normalize(cameraViewMatrix.mul(vec4(nW, 0.0)).xyz);
 
@@ -400,7 +400,7 @@ function runwayAt(st, fw, G, glyph) {
 // energy per cluster (radius >= 1 px, peak scaled down); the street-lamp glow far away is 0.6 x its average, so the
 // total far emission stays about the same. Sodium share lowered to 40 % (most Peninsula street lights are now LED
 // warm white: inferred, not verified per city).
-function cityNight(xz, fw, urb, albedo) {
+function cityNight(xz, fw, urb, albedo, fwMin = fw) {
   const S = 34.0; const g = xz.div(S); const c = floor(g); const f = fract(g).sub(0.5);
   const h = hash12(c.mul(1.37).add(11.0)); const off = vec2(hash12(c.add(3.1)), hash12(c.add(7.7))).sub(0.5).mul(0.7);
   const d = length(f.sub(off)).mul(S); const on = step(0.28, h);
@@ -429,7 +429,10 @@ function cityNight(xz, fw, urb, albedo) {
   const g3 = xz.div(S3); const c3 = floor(g3); const f3 = fract(g3).sub(0.5);
   const h3 = hash12(c3.mul(2.31).add(17.0)); const off3 = vec2(hash12(c3.add(4.7)), hash12(c3.add(9.3))).sub(0.5).mul(0.7);
   const d3 = length(f3.sub(off3)).mul(S3); const on3 = step(0.4, h3);
-  const r3 = max(float(3.0), fw.mul(1.0));
+  // (radius from the ACROSS-view pixel footprint fwMin: with the isotropic footprint the far clusters, seen at grazing
+  // angles, were drawn as horizontal streaks many pixels wide; TRAA resolves the sub-pixel depth extent; first render
+  // fix1_E3 / fix1_E7, 2026-11-05)
+  const r3 = max(float(3.0), fwMin.mul(1.2));
   const lum3 = exp(d3.mul(d3).negate().div(r3.mul(r3))).mul(float(E3 / Math.PI).div(r3.mul(r3))).mul(on3).mul(smoothstep(12.0, 40.0, fw));
   const lc3 = mix(vec3(1.0, 0.7, 0.42), vec3(1.0, 0.93, 0.82), step(0.75, h3));
   return albedo.mul(lc).mul(poolE.mul(1.0 / Math.PI)).mul(farU).add(lc.mul(lum).mul(farU)).add(lc2.mul(lum2)).add(lc3.mul(lum3)).mul(urb);
@@ -533,7 +536,8 @@ export function groundMaterial(world, bakes, sky, Q) {
     const inApt = step(0.0, auv.x).mul(step(auv.x, 1.0)).mul(step(0.0, auv.y)).mul(step(auv.y, 1.0));
     const aptA = texture(aptAlb, auv).a.mul(inApt);
     const urbN = reg.g.mul(float(1.0).sub(smoothstep(110.0, 180.0, h.add(nzA.r.mul(60.0))))).mul(float(1.0).sub(shore)).mul(float(1.0).sub(aptA));
-    return cityNight(wp.xz, fw, urbN, c.xyz).mul(night);
+    const fwMin = min(length(dFdx(wp.xz)), length(dFdy(wp.xz))).add(0.001);
+    return cityNight(wp.xz, fw, urbN, c.xyz, fwMin).mul(night);
   }).once();
   mat.colorNode = vec4(core().xyz, 1.0);
   mat.roughnessNode = core().w;

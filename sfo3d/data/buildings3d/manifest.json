@@ -7199,9 +7199,9 @@
  },
  "landside": {
   "asset": "data/buildings3d/landside.glb",
-  "bytes": 20324692,
-  "built": "2026-11-05T14:52:44+00:00",
-  "git": "3d817d7",
+  "bytes": 20339696,
+  "built": "2026-11-05T16:19:00+00:00",
+  "git": "07c893b",
   "generator": "tools/blender/build_landside.py (bpy 5.0.1, Cycles CPU AO bake); geometry landside_geom.py / landside_airtrain.py / landside_cars.py; textures landside_tex.py",
   "reference": "2-D sheets BL-01..03 (docs/drawings/buildings/README.md), drawn by tools/buildings/draw_landside.py, imported by landside_geom.py",
   "spec": "tools/buildings/spec_landside.json (+ landside_naip_measurements.json)",
@@ -7237,7 +7237,7 @@
     "switch_m": 1500.0,
     "tris": 15552,
     "instanced_car_tris": 0,
-    "verts": 37998,
+    "verts": 38002,
     "draw_calls": 107
    }
   },
@@ -7247,14 +7247,14 @@
   ],
   "lod2_glb": {
    "path": "data/buildings3d/landside_lod2.glb",
-   "bytes": 2101792
+   "bytes": 2101660
   },
   "textures": [
    {
     "name": "landside_ao_B",
     "px": 2048,
     "mime": "image/jpeg",
-    "bytes": 1161502,
+    "bytes": 1176727,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    },
    {
@@ -7275,7 +7275,7 @@
     "name": "landside_ao_C",
     "px": 1024,
     "mime": "image/jpeg",
-    "bytes": 290265,
+    "bytes": 289975,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    },
    {
@@ -7317,7 +7317,7 @@
     "name": "landside_ao_A",
     "px": 2048,
     "mime": "image/jpeg",
-    "bytes": 1342732,
+    "bytes": 1342649,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    },
    {
@@ -8286,7 +8286,7 @@
   "ao": {
    "A": {
     "res": 2048,
-    "bake_s": 67.2,
+    "bake_s": 57.5,
     "mean": 0.406,
     "p2": 0.007,
     "samples": 40,
@@ -8297,8 +8297,8 @@
    },
    "B": {
     "res": 2048,
-    "bake_s": 85.1,
-    "mean": 0.581,
+    "bake_s": 73.6,
+    "mean": 0.58,
     "p2": 0.0,
     "samples": 40,
     "distance_m": 8.0,
@@ -8308,8 +8308,8 @@
    },
    "C": {
     "res": 1024,
-    "bake_s": 34.3,
-    "mean": 0.625,
+    "bake_s": 40.5,
+    "mean": 0.624,
     "p2": 0.0,
     "samples": 40,
     "distance_m": 8.0,
@@ -11669,7 +11669,7 @@
      "kind": "canopy",
      "roof": 12.5,
      "L": 56.7,
-     "W": 10.9
+     "W": 5.5
     },
     {
      "key": "WFR_IN",
@@ -11881,12 +11881,9 @@
   "verification": {
    "tool": "tools/blender/verify_landside.py",
    "report": "out/buildings3d/landside_verify.json (local)",
-   "n_checks": 181,
-   "n_fail": 2,
-   "failed": [
-    "central_garage: roof footprint outside the drawn outline",
-    "CG: void diameter (equal-area circle)"
-   ],
+   "n_checks": 182,
+   "n_fail": 0,
+   "failed": [],
    "tolerance": "0.5 m or 2 % unless stated",
    "checks": [
     {
@@ -12377,10 +12374,10 @@
     },
     {
      "check": "central_garage: roof footprint outside the drawn outline",
-     "model": 2654.761,
+     "model": 0.0,
      "drawing": 0.0,
      "tol": 1287.835,
-     "ok": false,
+     "ok": true,
      "src": "BL-02 outline Central Parking Garage; ",
      "unit": "m2"
     },
@@ -12394,11 +12391,20 @@
      "unit": "m2"
     },
     {
+     "check": "CG: void floor at grade (r1, NAIP 2024: stalls and cars in the void)",
+     "model": 0.03,
+     "drawing": 0.03,
+     "tol": 0.02,
+     "ok": true,
+     "src": "NAIP obs [level low]",
+     "unit": "m"
+    },
+    {
      "check": "CG: void diameter (equal-area circle)",
-     "model": 0.0,
+     "model": 58.72,
      "drawing": 58.9,
      "tol": 1.178,
-     "ok": false,
+     "ok": true,
      "src": "BL-02 A void 58.9 m [obs]",
      "unit": "m"
     },
@@ -13521,9 +13527,9 @@
    ],
    "plans": {
     "central_garage": {
-     "model_area": 67111.0,
+     "model_area": 64403.0,
      "outline_area": 64391.8,
-     "outside": 2654.8,
+     "outside": 0.0,
      "missing": 0.0
     },
     "ltp_garage_1": {
@@ -13583,9 +13589,9 @@
     {
      "n": 1,
      "item": "Garage A station block",
-     "disposition": "fixed (block); conflict raised (garage deck)",
+     "disposition": "fixed (block); garage-deck conflict raised in the first pass, withdrawn (camera-matched l1)",
      "change": "separate low block over the tracks: top 12.0 m above the guideway deck (l1: 11.1 m above the walkway), two long slots at +7.4 m (none over the central pier), open hall under its soffit over both tracks and to the south on round columns; >= 27 m deep (l1 sightline; 30 m drawn), its east face one precast wall from grade to the top with the two track portals; the walkway deck between the tracks east of the block (SFO Museum Garage A outline tail between the track polygons [obs], photo l1: the camera stands on it); the curved NE garage end next to it stays at the drum ring [unk, BL-03]",
-     "open": "photo l1 puts the curved NE garage parapet ~12.9 m above the deck (~32.7 m), not the 39.6-m ring [obs, low]: the garage deck / ring conflict goes to the drawings group (BL-03 is the reference; not changed here)"
+     "open": "the first pass read the curved NE garage parapet ~12.9 m above the deck (~32.7 m) off photo l1 and raised a conflict with the 39.6-m ring; withdrawn after the camera-matched comparison (render_landside view_l1: camera 28 m east of the face, the block width matched to 0.2 %): the 12.0-m reading took the receding left edge of the curved wall for its top; with the ring at 39.6 the rendered curved end reaches the frame top as in the photo - no conflict, the ring stays [unk, BL-03]"
     },
     {
      "n": 2,
@@ -13610,7 +13616,7 @@
      "n": 5,
      "item": "l5 comparison",
      "disposition": "fixed (camera solved, comparison redone)",
-     "change": "camera solved from the tower width, the guideway vanishing point and the horizon: with the BL-02 tower D 6.5 the camera falls inside the RCC; the SFO Museum station polygon has the tower as a 4.7-m lobe 1.8 m west of the DOF point -> camera on the east walkway 19.4 m from the tower; platform 8.0 m (DOF top 8.6 m above the eye); louvres every 0.2 m; raked perforated hood (2.5 m rake, open top); twin tracks with running pads, guide rail and the walkway; the RCC canopy starts behind the tower (l5: open sky and the exit cabin beside it)"
+     "change": "camera solved from the tower width, the guideway vanishing point and the horizon: with the BL-02 tower D 6.5 the camera falls inside the RCC; the SFO Museum station polygon has the tower as a 4.7-m lobe 1.8 m west of the DOF point -> camera on the east walkway 19.4 m from the tower; platform 8.0 m (DOF top 8.6 m above the eye); louvres every 0.2 m; raked perforated hood (2.5 m rake, open top); twin tracks with running pads, guide rail and the walkway; the RCC canopy starts behind the tower and ends at its centre line on the west (l5: open sky and the exit cabin beside the tower; 5.5 m wide, was the 10.9-m polygon rectangle)"
     },
     {
      "n": 6,
@@ -13650,7 +13656,7 @@
    ],
    "observations": "tools/blender/landside_r1_obs.json (tools/blender/landside_r1_measure.py): NAIP 2024 plan positions / colours, OSM (ODbL) BART station way, numbers read off photos l1 / i2 / l5 / a2 (tags per item)",
    "requests_to_drawings": [
-    "Garage A / G roof deck vs drum ring (photo l1: NE parapet ~32.7 m)",
+    "Garage A / G roof deck (still [unk]; the l1 conflict of the first pass is withdrawn)",
     "Garage A station block (top, slots, depth) on BL-03",
     "SFO BART station (plan, levels) as a spec item + sheet",
     "RCC station tower D 4.7 at the polygon lobe and the RCC platform 8.0 m (l5 camera solve)",
@@ -14011,9 +14017,9 @@
      "silhouette_vs_sheet": {
       "n": 316,
       "px_m": 0.333,
-      "max_abs_dev_m": 0.733,
-      "p95_abs_dev_m": 0.733,
-      "mean_dev_m": 0.417
+      "max_abs_dev_m": 3.067,
+      "p95_abs_dev_m": 2.983,
+      "mean_dev_m": 0.564
      }
     },
     "hyatt": {
@@ -14082,15 +14088,15 @@
     "l1_bf": {
      "render": "out/buildings3d/landside_l1_bf.png",
      "backface_red_px": [
-      2085,
-      0.00302
+      56,
+      8e-05
      ]
     },
     "l5_bf": {
      "render": "out/buildings3d/landside_l5_bf.png",
      "backface_red_px": [
-      537,
-      0.00078
+      2380,
+      0.00344
      ]
     },
     "overview_bf": {
@@ -14106,6 +14112,35 @@
       6,
       1e-05
      ]
+    },
+    "i2": {
+     "render": "out/buildings3d/landside_i2.png",
+     "compare": "out/buildings3d/landside_cmp_i2.png"
+    },
+    "cg_top": {
+     "render": "out/buildings3d/landside_cg_top.png",
+     "compare": "out/buildings3d/landside_cmp_cg_top.png"
+    },
+    "bart": {
+     "render": "out/buildings3d/landside_bart.png",
+     "compare": "out/buildings3d/landside_cmp_bart.png"
+    },
+    "bart_bf": {
+     "render": "out/buildings3d/landside_bart_bf.png",
+     "backface_red_px": [
+      569,
+      0.00093
+     ]
+    },
+    "cg_top_bf": {
+     "render": "out/buildings3d/landside_cg_top_bf.png",
+     "backface_red_px": [
+      0,
+      0.0
+     ]
+    },
+    "overview_lod2": {
+     "render": "out/buildings3d/landside_overview_lod2.png"
     }
    }
   }
@@ -14264,9 +14299,11 @@
    "domestic: BA_E drum E9 - 0.39 m2 of BA_E surfaces 0.32 m inside the rotunda drum (current pose, LOD0; app solids of 2026-11-05T03:56)",
    "landside: parked cars - wheels / skirt at LOD0 and a third shape (review r1 finding 4; landside_cars.py is the landside group's)",
    "bridges / realtime: gates.js prepGeom walkway start and drum limits from the 3-D facades (integration.json footprints / tiers), then the domestic vestibules can go (review r1 finding 8)",
-   "stands: F10 CRJ2 1.40 m from the BA-F body tier (SFO Museum outline 1.43 m): a stand pose item, not the building"
+   "stands: F10 CRJ2 1.40 m from the BA-F body tier (SFO Museum outline 1.43 m): a stand pose item, not the building",
+   "landside: BART station 36.7 m from taxilane centreline 302 (ADG V inferred: 42.1 m), 0.6 m nearer than the SFO Museum structure",
+   "landside / ITB: LOD2 vs LOD0 (tools/blender/b3d_lod2_check.py): ITB BA-G top -5.0 m, Central Garage top -5.1 m, RCC roof median 4.6 m; domestic BA_C split / top +9 m to check"
   ],
-  "generated": "2026-11-05T15:09:24Z",
+  "generated": "2026-11-05T16:35:04Z",
   "tool": "tools/blender/b3d_integrate.py",
   "doc": "docs/research/buildings3d.md (integration section)"
  },
@@ -14274,16 +14311,16 @@
   "asset": "roadways (elevated landside roadways: departures decks, viaducts, approach ramps)",
   "owner": "integration (review round 1, finding 1)",
   "generator": "tools/blender/build_roadways.py + roadways_net.py",
-  "built": "2026-11-05T15:05:31Z",
+  "built": "2026-11-05T16:31:09Z",
   "files": {
    "full": "data/buildings3d/roadways.glb",
    "lod2": "data/buildings3d/roadways_lod2.glb"
   },
   "frame": "ltp-nad83-2011",
   "root_translation": [
-   -1481.2,
+   -1481.1,
    3.0,
-   441.1
+   441.2
   ],
   "lod_rule": "root children LOD0 / LOD1 / LOD2 (extras.switch_m {0: 0.0, 1: 400.0, 2: 1400.0}); units by extras.building",
   "levels": {
@@ -14363,7 +14400,7 @@
    },
    "levels": {
     "anchored": 224,
-    "constraints": 5110,
+    "constraints": 5111,
     "crossings": 152,
     "unresolved": 0
    },
@@ -14374,7 +14411,7 @@
     "length_m": 5780
    },
    "unresolved": [],
-   "overhead_nodes": 38,
+   "overhead_nodes": 39,
    "cut_by_group": {
     "tower": 0,
     "itb": 6.0,
@@ -14384,12 +14421,12 @@
    },
    "columns": {
     "tried": 332,
-    "placed": 296
+    "placed": 295
    },
    "tris": {
-    "0": 46700,
-    "1": 14420,
-    "2": 6856
+    "0": 46686,
+    "1": 14398,
+    "2": 6852
    },
    "grade_max": {
     "id": 27425666,
@@ -14577,8 +14614,8 @@
    "crossings": 33,
    "asset_cut_m2": 480.7,
    "bytes": {
-    "full": 4345124,
-    "lod2": 438004
+    "full": 4343048,
+    "lod2": 437708
    }
   }
  }

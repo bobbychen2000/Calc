@@ -67,6 +67,7 @@
 //          [--gates G.jsonl.gz] [--from ISO|epoch] [--until ISO|epoch] [--warm 600] [--root <code root>] [--out R.json]
 //          [--fast] (skip surface/pair/bridge checks) [--trace <hex>] (per-0.5 s display/target/park state to stderr)
 //          [--events E.json] (every engine event; gates_full.jsonl.gz -- the plan the app gets -- is read lazily)
+//          [--allkeys cls1,cls2] (every key of those classes in the report, not only the top 12 / 6)
 // --from/--until bound the CHECKED window; the replay starts --warm seconds earlier (tracks, stands, delay settle).
 // --root runs another copy of the code (e.g. a frozen snapshot) with the same data layout.
 import fs from 'fs'; import path from 'path'; import zlib from 'zlib'; import readline from 'readline'; import { fileURLToPath } from 'url';
@@ -78,6 +79,7 @@ const STREAM = opt('stream'); const GATES = opt('gates', STREAM && path.join(pat
 const pt = (s) => s == null ? null : /^\d+(\.\d+)?$/.test(s) ? +s : Date.parse(s) / 1000;
 const FROM = pt(opt('from')), UNTIL = pt(opt('until')), WARM = +opt('warm', 600), DT = 0.1, LAT = 0.08;
 const FAST = argv.includes('--fast'); // skip the surface / pair / bridge checks (kinematics, phases, runways, truth only)
+const ALLK = (opt('allkeys', '') || '').split(',').filter(Boolean); // classes whose every key (aircraft / stand-bridge) is listed in the report (`all`), e.g. --allkeys bridge.orphan,bridge.hit.fus
 const TRACE = opt('trace', null); // hex[,hex...]: print those aircraft's display/target/park state every 0.5 s to stderr
 const TRACES = new Set(TRACE ? TRACE.split(',') : []);
 const OUTF = opt('out', STREAM ? STREAM.replace(/stream\.jsonl\.gz$/, 'invariants.json') : 'invariants.json');
@@ -604,6 +606,7 @@ for (const [cls, v] of [...V.entries()].sort()) {
   const who = [...v.who.values()].sort((a, b) => b.max - a.max);
   const aircraft = new Set([...v.who.keys()]).size;
   report.classes[cls] = { frames: v.frames, episodes: v.eps, keys: aircraft, worst: who.slice(0, 12).map(w => ({ ...w.ex, frames: w.n })), longest: who.slice().sort((a, b) => b.n - a.n).slice(0, 6).map(w => ({ ...w.ex, frames: w.n })) };
+  if (ALLK.includes(cls)) report.classes[cls].all = who.slice().sort((a, b) => b.n - a.n).map(w => ({ ...w.ex, frames: w.n }));
 }
 report.offpaveCells = [...offCells.entries()].sort((a, b) => b[1].hex.size - a[1].hex.size || b[1].frames - a[1].frames).slice(0, 25).map(([k, v]) => { const [x, z] = k.split(',').map(Number); const ll = toLL(x, z); return { x, z, lat: +ll[0].toFixed(6), lon: +ll[1].toFixed(6), frames: v.frames, movingFrames: v.moving, aircraft: v.hex.size, who: [...v.hex].slice(0, 8) }; });
 report.meta.flap = { docks: FLAP.docks, undocks: FLAP.undocks, locks: FLAP.locks, unlocks: FLAP.unlocks, dockFlaps: FLAP.dockFlaps, lockFlaps: FLAP.lockFlaps,

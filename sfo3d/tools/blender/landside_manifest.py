@@ -26,14 +26,14 @@ GLOBAL_UNKNOWN = [
 
 
 REVIEW_R1 = [
-    dict(n=1, item='Garage A station block', disposition='fixed (block); conflict raised (garage deck)',
+    dict(n=1, item='Garage A station block', disposition='fixed (block); garage-deck conflict raised in the first pass, withdrawn (camera-matched l1)',
          change='separate low block over the tracks: top 12.0 m above the guideway deck (l1: 11.1 m above the walkway), two long slots at +7.4 m '
                 '(none over the central pier), open hall under its soffit over both tracks and to the south on round columns; >= 27 m deep '
                 '(l1 sightline; 30 m drawn), its east face one precast wall from grade to the top with the two track portals; the walkway deck '
                 'between the tracks east of the block (SFO Museum Garage A outline tail between the track polygons [obs], photo l1: the '
                 'camera stands on it); the curved NE garage end next to it stays at the drum ring [unk, BL-03]',
-         open='photo l1 puts the curved NE garage parapet ~12.9 m above the deck (~32.7 m), not the 39.6-m ring [obs, low]: the garage '
-              'deck / ring conflict goes to the drawings group (BL-03 is the reference; not changed here)'),
+         open='the first pass read the curved NE garage parapet ~12.9 m above the deck (~32.7 m) off photo l1 and raised a conflict with '
+              'the 39.6-m ring; withdrawn after the camera-matched comparison (render_landside view_l1: camera 28 m east of the face, the block width matched to 0.2 %): the 12.0-m reading took the receding left edge of the curved wall for its top; with the ring at 39.6 the rendered curved end reaches the frame top as in the photo - no conflict, the ring stays [unk, BL-03]'),
     dict(n=2, item='Garages A / G drums, screens, towers', disposition='fixed',
          change='drums in smooth light metal panels with five long horizontal slots and an open top band, recessed 0.8 m (i2 heights); '
                 'screens as full-bay perforated panels between thin mullions covering the lower 62 % of each level (l1); white precast '
@@ -155,7 +155,7 @@ def entry(build, ver, bldgs, tiles, mats):
         verification=vv,
         review_r1=dict(findings=REVIEW_R1, observations='tools/blender/landside_r1_obs.json (tools/blender/landside_r1_measure.py): NAIP 2024 '
                        'plan positions / colours, OSM (ODbL) BART station way, numbers read off photos l1 / i2 / l5 / a2 (tags per item)',
-                       requests_to_drawings=['Garage A / G roof deck vs drum ring (photo l1: NE parapet ~32.7 m)', 'Garage A station block '
+                       requests_to_drawings=['Garage A / G roof deck (still [unk]; the l1 conflict of the first pass is withdrawn)', 'Garage A station block '
                                              '(top, slots, depth) on BL-03', 'SFO BART station (plan, levels) as a spec item + sheet',
                                              'RCC station tower D 4.7 at the polygon lobe and the RCC platform 8.0 m (l5 camera solve)',
                                              'drum stair / elevator towers (positions / heights)', 'central-garage roof rims / lobes / boxes']),
