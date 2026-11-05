@@ -537,6 +537,11 @@ export class Traffic {
       }
       const r = this.report(tr, a, x, z, tf);
       if (!r) { tr.lastRecv = recvNow; continue; }
+      // (round 3: a ground body dead-reckoned through a coverage gap (> 10 s) that the next report puts >= 25 m behind or beside
+      // it is re-placed with a fade, not driven back in a U-turn: EVA018 B77W, 4 Nov 22:38:30-54Z, was dead-reckoned 40 m past
+      // its turn toward A1 and then swung 80 deg at 4 m/s into the B-pier and B2's bridge)
+      if (L && r.ground && L.ground && tf - L.t > 10000 && tr.ctl && tr.ctl.ground && tr.disp.valid && !tr.reacquire && !tr.vehicle) { const c = tr.ctl, dx = r.x - c.x, dz = r.z - c.z;
+        if (Math.hypot(dx, dz) > 25 && Math.abs(wrapPi(vecHdg(dx, dz) - c.psi)) > 90 * DEG) { tr.reacquire = true; this.counters.drOvershoot = (this.counters.drOvershoot || 0) + 1; } }
       if (tr.fadeOut || tr.dropping) { tr.fadeOut = false; tr.dropping = null; tr.dropNow = false; tr.reacquire = true; }   // heard again while fading out: re-placed where it is
       tr.reps.push(r); while (tr.reps.length > 60 || (tr.reps.length > 4 && r.t - tr.reps[0].t > 120000)) tr.reps.shift();
       tr.lastFixT = tf; tr.lastRecv = recvNow;
