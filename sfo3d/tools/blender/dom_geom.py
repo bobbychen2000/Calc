@@ -309,6 +309,82 @@ def _c3c():
 C3C_POLY, _t2rest, C3C_S_EAST = _c3c()
 HALLS['T2']['hall'] = _t2rest
 
+# Close-out round 3 (buildings-2): the T2 LANDSIDE FACE moved off the departures curb roadway. The SFO Museum level-2 outline
+# runs over the elevated departures roadway along T2 (NAIP 2024 / 2022 show traffic, a curb sidewalk and a teal glass curb
+# canopy between the outline face and the T2 roof edge, ~17 m inside it), as at T1 Center before round 1.
+#  * lean-free T2 roof edge [obs NAIP 2024]: the coping (first dark->bright rise after the shaded facade / canopy band, 0.1-m
+#    profiles every 1 m in z) minus draw_data.lean_frame(P, H['T2']) -> the straight line x = -811.961 + 0.3063 z over
+#    z 176-202 and 216-248 (59 rows, rms 0.06 m; the AirTrain-station connector crosses at z 204-215). It matches the integration
+#    review's -750.5 / -745 / -739 at z 200 / 220 / 240 (+-1 m). The height is the T2 placeholder (16.88 [unk]): +1 m of roof
+#    moves the line 0.54 m west. NAIP 2020 (a different camera, lean ~0.1 m/m) images the same edge at -752.5 / -751.5
+#    (z 180 / 190), i.e. within ~1.5 m.
+#  * the curb: the departures roadway is OSM way 256787747 ('Departures', layer 1, 3 lanes -> 10.8 m [inf lane width]) and
+#    682008752 (2 lanes) - the decks roadways.glb builds; the lean-free roof edge lies T2_SIDEWALK = 5.85 m (median; p10 5.76,
+#    p90 6.63 m) beyond the deck edge along the measured stretch [obs NAIP minus OSM]: the departures sidewalk. The teal
+#    canopy's lean-corrected outer edge (NAIP 2024 / 2022 colour mask, h ~9.2 m) lies ~5.4 m off the wall [obs, low].
+#  * the face = the measured line within z T2_EDGE_Z, elsewhere (the north corner towards C3C and the south end) the deck edge
+#    + T2_SIDEWALK, which reproduces the line within 0.2 m where both exist [inf]; the old outline strip outside the face is
+#    the deck (integration's roadways.glb), the sidewalk (below, this asset) and the lower roadways (not modelled).
+T2_EDGE_LINE = (-811.961, 0.3063)          # lean-free T2 roof edge x(z) [obs NAIP 2024, relief-corrected for H['T2']]
+T2_EDGE_Z = (168.0, 254.0)                 # z range where the line is used [obs: measured 176-248, extended 8 / 6 m]
+T2_SIDEWALK = 5.85                         # deck edge -> T2 wall [obs NAIP - OSM, median]
+T2_CANOPY_D = 5.4                          # curb canopy depth off the wall [obs NAIP teal mask, low]
+# OSM 'Departures' ways along T2 (refs/cache/osm/overpass_landside_at_20260926T030301Z.json, (c) OpenStreetMap contributors,
+# ODbL; world frame ltp-nad83-2011 via tools/geo_frame.py) and their carriageway half-widths (lanes x 3.6 m / 2 [inf]):
+T2_DEP_WAYS = {
+    256787747: (5.4, [(-761.7, 286.7), (-757.9, 279.1), (-752.7, 268.8), (-751.5, 266.2), (-748.9, 258.4), (-748.9, 249.0),
+                      (-750.3, 239.7), (-755.0, 224.0), (-762.2, 200.9), (-767.8, 182.8), (-773.5, 173.5), (-781.0, 166.9),
+                      (-785.6, 163.8), (-798.9, 156.6), (-817.1, 147.0), (-830.0, 140.4), (-832.8, 139.0), (-843.3, 133.1),
+                      (-872.2, 117.8), (-887.7, 109.7)]),
+    682008752: (3.6, [(-782.6, 329.1), (-761.7, 286.7)]),
+}
+
+
+def _t2_curb():
+    """the T2 hall cut back to the curb face; the departures sidewalk strip (deck edge - 0.3 m .. wall; overlapping the deck
+    by 0.3 m so the roadway is trimmed against it without a slot) and the T2 - AirTrain-station / garage connector over the
+    roadway: the T2 outline's courtyard connector (SFO Museum, the app's 'Terminal 2 walkway') extended along its own axis
+    to the new face, cut at the Central Parking Garage outline."""
+    old = HALLS['T2']['hall']
+    a, k = T2_EDGE_LINE; z0, z1 = T2_EDGE_Z
+    half = Polygon([(a + k * z0 - 300, z0), (a + k * z0, z0), (a + k * z1, z1), (a + k * z1 - 300, z1)])
+    deck = [(LineString(p), w) for w, p in T2_DEP_WAYS.values()]
+    cut = unary_union([half] + [l.buffer(w + T2_SIDEWALK, cap_style=2, join_style=1) for l, w in deck])
+    new = max(polys_of(_clean(old.difference(cut), 50.0)), key=lambda p: p.area)
+    new = max(polys_of(_clean(new.buffer(-1.5, join_style=2).buffer(1.5, join_style=2).intersection(new), 50.0)), key=lambda p: p.area)
+    dk = unary_union([l.buffer(w - 0.3, cap_style=2) for l, w in deck])
+    reach = unary_union([l.buffer(w + T2_SIDEWALK + 0.8, cap_style=2) for l, w in deck])
+    side = old.difference(new.buffer(0.01, join_style=2)).intersection(reach).difference(dk)
+    side = unary_union([p for p in polys_of(_clean(side, 5.0)) if p.distance(new) < 0.1] or [Polygon()])
+    conn = [c['poly'] for c in HALLS['T2']['conn'] if c['inner']]
+    link = Polygon()
+    if conn:
+        cn = max(conn, key=lambda p: p.area)
+        mr = np.array(cn.minimum_rotated_rectangle.exterior.coords)[:4]
+        e0, e1 = mr[1] - mr[0], mr[2] - mr[1]
+        if np.linalg.norm(e0) < np.linalg.norm(e1): mr = np.roll(mr, -1, axis=0); e0 = mr[1] - mr[0]
+        u = e0 / np.linalg.norm(e0)
+        if u[0] < 0: u = -u                                   # towards T2 (east)
+        cm = mr.mean(0)
+        band = Polygon([tuple(p + u * 40.0 * (1 if (p - cm) @ u > 0 else -1)) for p in mr])
+        ext = band.intersection(old).difference(new)
+        cg = unary_union([_poly(p) for p in D.sfom('Central Parking Garage', 'structures')])
+        g = unary_union([cn.buffer(0.05, join_style=2), ext.buffer(0.05, join_style=2)]).buffer(-0.05, join_style=2)
+        g = g.difference(cg.buffer(0.05, join_style=2)).difference(new.buffer(0.01, join_style=2))
+        link = max(polys_of(_clean(g, 5.0)), key=lambda p: p.area) if polys_of(_clean(g, 5.0)) else Polygon()
+    return new, side, link, old.area - new.area
+
+
+HALLS['T2']['hall'], T2_SIDEWALK_POLY, T2_LINK_POLY, T2_CUT_M2 = _t2_curb()
+# the T2 - garage connector's level [inf, unk]: the app draws it 6.0-10.5 m (sky-bridge convention), which leaves 1.3 m over the
+# departures deck (4.73 m) - vehicles could not pass. Floor at the Central Parking Garage Level 3 (2/5 of 81 ft = 9.88 m, the
+# landside BL-03 equal-fifths placeholder) so that the soffit (floor - 0.45) clears the departures deck by 4.7 m (Caltrans HDM
+# 309.2 15 ft = 4.6 m, as the roadways solve); a 4.5-m glazed tube as the app's. NOTE: NAIP 2024's shadow of the crossing
+# (dark band north of it, ~4.5 m at x -765, sun az 186.6 / elev 72.5) would put its TOP near 24 m, i.e. at the AirTrain T2
+# station level (SFO Museum 'Terminal Two AirTrain Station' 1763588561 reaches x -743.8, the T2 wall) - unresolved, listed.
+T2_LINK_FLOOR = 0.4 * 81 * FT               # 9.876 m [inf]
+T2_LINK_Z = (T2_LINK_FLOOR - 0.45, T2_LINK_FLOOR + 4.5)
+
 
 FINGER_MAX = (160.0, 26.0)   # a finger: area <= 160 m2 and longest side <= 26 m (BA-B ESE stubs ~12 x 2-5 m) [inf]
 
@@ -450,7 +526,14 @@ STYLES = {
     'walk': [(0.0, INNER_Y0 + 0.8, 'panel_light', 0), (INNER_Y0 + 0.8, INNER_TOP - 0.7, 'glass_tint', 1.5),
              (INNER_Y0 + 0.8 + 3.0, None, 'panel_light', 0)],
     'T1_land': [(0.0, CURB, 'service', 0), (CURB, T1_CANOPY_H, 'glass_lobby', 1.5), (T1_CANOPY_H, None, 'glass_frit_green', -1)],
-    'T2_land': [(0.0, CURB, 'service', 0), (CURB, None, 'panel_light', 0)],
+    # T2 landside (close-out r3, buildings-2: the face on the measured roof edge, behind the departures sidewalk): "a light metal-
+    # panel box ... and a glass entry wall" [pub t2.landside], "transparent (west-facing) facade" [pub t2.daylight]; BD-03 view 2
+    # draws the glass 0-7.0 m above the curb [unk] -> glass along the whole curb face, panel above [inf]
+    'T2_land': [(0.0, CURB, 'service', 0), (CURB, CURB + 7.0, 'glass_lobby', 1.5), (CURB + 7.0, None, 'panel_light', 0)],
+    # the T2 - garage connector over the departures roadway (close-out r3): a glazed tube as the app's sky bridges [inf]
+    # (no mullion fins: its end walls abut the Central Garage, close-out r3 neighbour check 0.64 m2 with fins)
+    'link': [(0.0, T2_LINK_Z[0] + 0.8, 'panel_light', 0), (T2_LINK_Z[0] + 0.8, T2_LINK_Z[1] - 0.7, 'glass_tint', 0),
+             (T2_LINK_Z[1] - 0.7, None, 'panel_light', 0)],
     'T3W_land': [(0.0, CURB, 'service', 0), (CURB, CURB + 1.7, 'panel_acm_dark', 0), (CURB + 1.7, CURB + 7.5, 'glass_t3w', 2.0),
                  (CURB + 7.5, None, 'panel_acm', 0)],
     'T3W_air': [(0.0, CURB, 'service', 0), (CURB, T3_LV['L3'], 'panel_acm', 0), (T3_LV['L3'], T3_LV['L3'] + 10 * FT, 'glass_ec', 1.5),
@@ -1119,11 +1202,28 @@ def build_world(lod):
 
     # ---------------- halls
     def styleT1(s, a, b): return 'T1_land' if is_landside(a, b) else 'hall'
-    def styleT2(s, a, b): return 'T2_land' if is_landside(a, b) else 'hall'
+    side2 = loc(T2_SIDEWALK_POLY) if not T2_SIDEWALK_POLY.is_empty else Polygon()
+
+    def on_curb(a, b, side=side2):
+        # the edge faces the departures sidewalk (close-out r3): its midpoint 1 m outward lies on the sidewalk strip
+        L = math.hypot(b[0] - a[0], b[1] - a[1])
+        if L < 0.5 or side.is_empty: return False
+        n = ((b[1] - a[1]) / L, -(b[0] - a[0]) / L)
+        return side.contains(Point((a[0] + b[0]) / 2 + n[0], (a[1] + b[1]) / 2 + n[1]))
+
+    def styleT2(s, a, b): return 'T2_land' if (on_curb(a, b) or is_landside(a, b)) else 'hall'
     def styleT3W(s, a, b): return 'T3W_land' if is_landside(a, b) else 'T3W_air'
     sT1 = W.add(Solid('T1_hall', 'T1', core['T1'], H['T1'], style=styleT1, tag='unk', feature='Harvey Milk Terminal 1 Center hall',
                       spec=['t1c.h_roof', 't1c.landside_facade', 't1c.roof_pv', 't1c.skylights_count']))
     sT2 = W.add(Solid('T2_hall', 'T2', core['T2'], H['T2'], style=styleT2, tag='unk', feature='Terminal 2 hall', spec=['t2.landside', 't2.daylight']))
+    # close-out r3 (buildings-2): the T2 - garage connector over the departures roadway (see T2_LINK_POLY / T2_LINK_Z)
+    if not T2_LINK_POLY.is_empty:
+        sTL = W.add(Solid('T2_garage_link', 'T2', S_(loc(T2_LINK_POLY)), T2_LINK_Z[1], z0=T2_LINK_Z[0], style='link', parapet=0.0, thk=0.7,
+                          underside=True, tag='inf', spec=['outline.level'],
+                          feature='T2 - Central Parking Garage connector over the departures roadway (SFO Museum T2 courtyard connector '
+                                  'extended to the moved T2 face [obs plan]; floor at the garage Level 3 placeholder 9.88 m, soffit 4.7 m '
+                                  'over the departures deck [inf]; level unk)'))
+        info['T2_link'] = sTL.poly
     # Courtyard 3 Connector office block (review r1; see C3C_H): node building 'C3C'
     sC3 = W.add(Solid('C3C_block', 'C3C', core['C3C'], C3C_H, style='C3C', tag='inf',
                       feature='Courtyard 3 Connector: six-storey office block above the T2-T3 connector (HOK [pub]); footprint T2 '
@@ -1171,6 +1271,10 @@ def build_world(lod):
     can = t1_canopy(sT1)
     info['T1_canopy'] = can
     feats.append(Feat('T1', lambda mb, det, lod_, can=can: canopy(mb, det, lod_, can)))
+    # close-out r3 (buildings-2): T2 curb canopy + departures sidewalk deck along the moved landside face
+    can2 = t2_canopy(sT2, side2, loc(T2_LINK_POLY) if not T2_LINK_POLY.is_empty else Polygon())
+    info['T2_canopy'] = can2
+    feats.append(Feat('T2', lambda mb, det, lod_, can=can2: canopy(mb, det, lod_, can)))
 
     # ---------------- review r2: facades notched around the app's rotunda drums (finding 8)
     info['drum_notches'] = drum_notches(W)
@@ -1258,7 +1362,8 @@ def canopy(mb, det, lod, can):
     M.cap(mb, sw, CURB - 0.6, 'soffit', tl('soffit'), down=True)
     if lod == 0:
         for a, n in can['brackets']:
-            P0 = (a[0], a[1], T1_CANOPY_H + 2.2); P1 = (a[0] + n[0] * (DD.T1_CANOPY * 0 + T1_CANOPY_D - 0.3), a[1] + n[1] * (T1_CANOPY_D - 0.3), T1_CANOPY_H + 0.35)
+            dd = can.get('depth', T1_CANOPY_D)
+            P0 = (a[0], a[1], T1_CANOPY_H + 2.2); P1 = (a[0] + n[0] * (dd - 0.3), a[1] + n[1] * (dd - 0.3), T1_CANOPY_H + 0.35)
             M.tube(det, [P0, P1], 0.06, 6, 'mullion', cap_ends=True)
 
 
@@ -1286,6 +1391,31 @@ def t1_canopy(sT1):
     gp = shapely.prepared.prep(g.buffer(0.05))
     br = [b for b in br if gp.contains(Point(b[0][0] + b[1][0] * T1_CANOPY_D / 2, b[0][1] + b[1][1] * T1_CANOPY_D / 2))]
     return dict(poly=g, walk=walk, brackets=br)
+
+
+def t2_canopy(sT2, side, link):
+    """close-out r3 (buildings-2): T2 curb canopy, T2_CANOPY_D out from the T2 wall pieces that face the departures sidewalk
+    (strip of the moved face), over the sidewalk only and stopped 0.5 m short of the garage connector (its soffit is 0.2 m
+    above the canopy top); the sidewalk deck at CURB under it (the whole strip from the wall to the deck edge)."""
+    if side.is_empty: return None
+    strips, br = [], []
+    for ring in M.rings_of(sT2.poly):
+        for i in range(len(ring)):
+            a, b = np.array(ring[i]), np.array(ring[(i + 1) % len(ring)])
+            L = float(np.hypot(*(b - a)))
+            if L < 0.5: continue
+            n = np.array([(b[1] - a[1]) / L, -(b[0] - a[0]) / L])
+            if not side.contains(Point(*((a + b) / 2 + n))): continue
+            strips.append(Polygon([tuple(a), tuple(b), tuple(b + n * T2_CANOPY_D), tuple(a + n * T2_CANOPY_D)]).buffer(0.02))
+            for t in np.arange(3.0, L - 1.0, 6.0):
+                br.append((tuple(a + (b - a) * t / L), tuple(n)))
+    if not strips: return None
+    g = unary_union(strips).intersection(side.buffer(0.05, join_style=2)).difference(sT2.poly.buffer(0.01))
+    if not link.is_empty: g = g.difference(link.buffer(0.5, join_style=2))
+    g = M.orient_all(_clean(g, 5.0))
+    gp = shapely.prepared.prep(g.buffer(0.05))
+    br = [b for b in br if gp.contains(Point(b[0][0] + b[1][0] * T2_CANOPY_D / 2, b[0][1] + b[1][1] * T2_CANOPY_D / 2))]
+    return dict(poly=g, walk=M.orient_all(_clean(side, 5.0)), brackets=br, depth=T2_CANOPY_D)
 
 
 def t3e_penthouse(t3e):

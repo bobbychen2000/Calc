@@ -237,14 +237,20 @@ def make_material(key, atlas, tex_imgs, ao_img, lod2=False):
         nt.links.new(uvn.outputs['UV'], t.inputs['Vector'])
         nt.links.new(t.outputs['Color'], nm.inputs['Color'])
         nt.links.new(nm.outputs['Normal'], b.inputs['Normal'])
+    # close-out r3 (buildings-5): no occlusion texture on GLASS. The baked AO (cosine-weighted, 10-m rays) is a diffuse
+    # visibility; three.js applies a material's aoMap to the indirect diffuse AND, through its specular occlusion, to the IBL
+    # reflection that makes a curtain wall read - the BA-B panes under the 2.3-m overhang (AO 0.59-0.65 at their vertices) came
+    # out ~0.6 x darker in the app, while Cycles ignores the glTF occlusion (the app / Cycles disagreement of review r2). The
+    # image node stays (the active bake target every material on a baked object needs); only the glTF Occlusion link is left out.
     if ao_img is not None:
         t = nt.nodes.new('ShaderNodeTexImage'); t.image = ao_img; t.name = 'AO_BAKE'
         uva = nt.nodes.new('ShaderNodeUVMap'); uva.uv_map = 'UV_ao'
         nt.links.new(uva.outputs['UV'], t.inputs['Vector'])
-        sep = nt.nodes.new('ShaderNodeSeparateColor')
-        g = nt.nodes.new('ShaderNodeGroup'); g.node_tree = gltf_output_group()
-        nt.links.new(t.outputs['Color'], sep.inputs['Color'])
-        nt.links.new(sep.outputs['Red'], g.inputs['Occlusion'])
+        if not key.startswith('glass'):
+            sep = nt.nodes.new('ShaderNodeSeparateColor')
+            g = nt.nodes.new('ShaderNodeGroup'); g.node_tree = gltf_output_group()
+            nt.links.new(t.outputs['Color'], sep.inputs['Color'])
+            nt.links.new(sep.outputs['Red'], g.inputs['Occlusion'])
         for n in nt.nodes: n.select = False
         t.select = True; nt.nodes.active = t
     m['src'] = spec['src']

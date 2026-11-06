@@ -138,6 +138,26 @@ REVIEW_R2 = [
 ]
 
 
+# close-out round 3 (2026-11-06; docs/requests/closeout3_findings.json groups.buildings)
+CLOSEOUT_R3 = [
+    dict(id='buildings-3', item='AirTrain piers in road decks / caps 3.25 m over interchange_2_2', disposition='fixed',
+         change='pier sites are tested against data/sfo_landside.json carriageways (OSM centrelines buffered by their widths, at grade and '
+                'elevated) and the roadways.glb LOD0 deck tops: a column (+0.5 m) on a road or a cap < 4.6 m over a deck rejects the site; a '
+                'rejected site no longer reserves its 30-m slot; where no single column fits, a straddle bent (two columns off the road '
+                'within 18 m of the centre line, cap beam >= 4.6 m over any deck) [inf]. Max distance from a guideway point (outside the '
+                'buildings that carry it) to the nearest pier stays 46.7 m (before 46.7; a road-only test without bents left 120 m)'),
+    dict(id='buildings-8', item='BART station 36.7 m from taxilane 302 (ADG 5 OFA 42.1 m [inf])', disposition='rejected with evidence (no geometry change)',
+         change='the modelled north face is the OSM way 221663595 edge (36.75 m from lane 302); the observed NAIP 2024 north wall line '
+                '(landside_r1_measure.BART_NORTH, +-2 m) is 35.8 m from it: the building itself stands inside the inferred OFA (existing '
+                'condition). The SFO Museum geometry has no BART outline; its 37.3 m is the nearest other structure. verify_landside now '
+                'checks the body against the NAIP line; the lane ADG (5, from the largest stand served) is the integration inference'),
+    dict(id='buildings-9', item='parked cars: boxes without wheels, two shapes', disposition='fixed',
+         change='LOD0: two 6-sided axle prisms per car (tyres show outside the 3-%-inset skirt and below the body); a third shape, the '
+                'pickup (5.50 x 1.95 x 1.85 m, open bed with a dark liner 0.45 m below the rails), shares 45 / 40 / 15 % [inf]; LOD1 / '
+                'LOD2 unchanged (no wheels)'),
+]
+
+
 def entry(build, ver, bldgs, tiles, mats):
     st = build['glb']
     comps = {}
@@ -225,6 +245,7 @@ def entry(build, ver, bldgs, tiles, mats):
                                              'model to resolve on the sheet', 'Garage A NE rotunda and penthouse (a2)', 'the walkways east of the '
                                              'Garage A station (l1) and the open gap; the tail polygon\'s structure [unk]', 'RCC tower rake (l5 fit) '
                                              'and platform 8.84 m', 'BART band / colonnade (a2)']),
+        closeout_r3=CLOSEOUT_R3,
         scene_not_modelled=dict(note='large airport buildings outside every asset (OpenStreetMap, ODbL 1.0, (c) OpenStreetMap contributors; '
                                      'refs/cache/osm): no spec / sheet yet - for a later spec round', buildings=G.R1.get('osm', {}).get('not_modelled', [])),
     )

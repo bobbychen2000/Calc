@@ -24,6 +24,10 @@ elevated (only their footprint is paved ground). The OSM extract is pinned (tool
 Round 3 (2026-11-05, review static r2 v1): roads wider than the narrow-band window (the asphalt perimeter road along the
 Bay, apron / cargo service roads) are measured as a wide paved run (measure_road), gaps of a road bridged (inferred), drawn
 paths clipped at SFO Museum runway / taxiway pavement, `material` = OSM surface (asphalt / concrete) or concrete (inferred).
+Close-out round 3 (2026-11-06): the wide-run test of every way NOT tagged surface=asphalt also needs a per-pixel channel
+spread < ROAD_SPX (smooth light infield soil had widened 3 m concrete paths to 5-8.5 m, finding static-5); an undrawn gap
+between two road pieces of a way is bridged when NAIP shows no soil / vegetation / water along the OSM line (<= 5 %;
+finding static-6, the 92 m stretch of 1182574242).
 Frame: tools/geo_frame.py (= js/geo.js) world x east / z south.
 Usage: python3 tools/build_landside.py
 """
@@ -68,7 +72,8 @@ def _naip():
 
 def _profile(p, t, half, step=0.25):
     """NAIP 2024 grey level / channel spread across the line through p (direction t): offsets -half..+half (step m), each
-    sample averaged over 3 m along the line -> (o, g, sat, tex = grey-level std over those 3 m) or None outside the raster"""
+    sample averaged over 3 m along the line -> (o, g, sat, tex = grey-level std over those 3 m, spx = median over those 3 m
+    of the PER-PIXEL channel spread) or None outside the raster"""
     from scipy.ndimage import map_coordinates
     N = _naip(); m = N['m']; res, x0, z0 = m['res'], m['x0'], m['z0']
     t = np.asarray(t, float) / np.linalg.norm(t); n = np.array([-t[1], t[0]])
@@ -80,7 +85,8 @@ def _profile(p, t, half, step=0.25):
     sub = np.asarray(N['im'][r0:int(np.ceil(r.max())) + 2, c0:int(np.ceil(c.max())) + 2], np.float32)
     chf = [map_coordinates(sub[..., k], [r - r0, c - c0], order=1, mode='nearest') for k in range(3)]
     ch = [v.mean(0) for v in chf]
-    return o, (ch[0] + ch[1] + ch[2]) / 3, np.max(ch, 0) - np.min(ch, 0), ((chf[0] + chf[1] + chf[2]) / 3).std(0)
+    spx = np.median(np.max(chf, 0) - np.min(chf, 0), 0)      # close-out round 3: per-pixel channel spread, median along
+    return o, (ch[0] + ch[1] + ch[2]) / 3, np.max(ch, 0) - np.min(ch, 0), ((chf[0] + chf[1] + chf[2]) / 3).std(0), spx
 
 
 ROAD_HALF = 14.0         # m: half window of the road profile (wider than the widest perimeter / service road + its offset)
@@ -95,18 +101,29 @@ ROAD_W_MIN = 3.0         # m: narrower runs are bands / strips (measure_band's d
 ROAD_WIDER = 1.5         # m: a road run this much wider than the narrow band replaces it (the band was an edge strip on it)
 
 
-def measure_road(p, t, seed=0.0, half=ROAD_HALF, step=0.25):
+ROAD_SPX = 22.0          # close-out round 3 (finding static-5): per-pixel channel spread (median over 3 m along) below which a
+                         # sample of a NON-asphalt way can be pavement. The 3 m-averaged spread (ROAD_SAT) lets smooth light
+                         # infield soil pass (its per-pixel colour is mottled, the average is not): measured on the round-2
+                         # verifier's pieces, the concrete path cores 8-17 and soil flanks 25-60 (1182574236/5, 1182574227/4,
+                         # 1182574229/3, 1182574227/40), while the OSM surface=asphalt perimeter road is dusty (flanks 20-29)
+                         # and keeps the ROAD_SAT test (same value as FLANK_SAT: asphalt / concrete 3-17)
+
+
+def measure_road(p, t, seed=0.0, half=ROAD_HALF, step=0.25, strict=False):
     """round 3 (review static r2 v1): a WIDE paved band across the line through p - the asphalt perimeter / service roads
     (6-12 m) that measure_band's +-6 m window cannot hold (it returned None, 'band wider than the window', or the 1.75 m
     light edge strip on the road). Samples with channel spread < ROAD_SAT and grey > ROAD_G (pavement, not dry grass / soil /
     water / dark rip-rap), gaps <= ROAD_GAP closed; the run through the sample nearest `seed` (within ROAD_NEAR); its edges
     refined to the half-maximum between the run's median grey and the 1.5 m beyond each edge (a blurred step's edge).
     -> (centre offset m (+ = right of t, measure_band's normal), width m, median channel spread) | 'wide' (the run reaches
-    the window: the road lies inside wider pavement / light ground) | None"""
+    the window: the road lies inside wider pavement / light ground) | None.
+    strict (close-out round 3, finding static-5; every way not tagged surface=asphalt): each sample must also have a
+    per-pixel channel spread < ROAD_SPX - the run stops where smooth light soil begins (was: 2-5 m too wide on soil)"""
     r = _profile(p, t, half, step)
     if r is None: return None
-    o, g, sat, tex = r
+    o, g, sat, tex, spx = r
     pv = (sat < ROAD_SAT) & (g > ROAD_G) & (tex < ROAD_TEX)
+    if strict: pv &= spx < ROAD_SPX                            # close-out round 3: not on a surface=asphalt way
     idx = np.where(pv)[0]
     if not len(idx): return None
     k = int(round(ROAD_GAP / step))
@@ -176,6 +193,33 @@ W_PIECE = 25.0           # m: shortest such piece
 SURFACES = {'asphalt': 'asphalt', 'concrete': 'concrete', 'concrete:plates': 'concrete', 'concrete:lanes': 'concrete'}
 
 
+ROAD_CLEAN_MAX = 0.05     # close-out round 3 (finding static-6): an undrawn gap between two drawn road pieces of a way (<=
+                          # ROAD_BRIDGE m) is bridged when at most this share of NAIP samples along the bridged line is soil /
+                          # vegetation / water - whatever share of its profiles reached the road window (OSM 1182574242 part 14:
+                          # 92 m of the continuous imaged asphalt road at (624, -944), 35 % 'wide')
+
+
+ROAD_BRIDGE_CLEAN = 400.0  # m: longest such clean gap (the 'inside wider pavement' gaps of 155476060 run 302-320 m)
+
+
+def clean_line(ls, a, b, o0, o1, step=2.0, half=1.5):
+    """share of NAIP 2024 samples (every `step` m along the OSM line between stations a and b, offset interpolated o0 -> o1,
+    and +-half m across) that are soil / dry grass (R - B > 38, R - G > 5, R > 110), vegetation (G - R > 6, G > B, lum <
+    150) or water / dark rip-rap (lum < 125) - the round-2 verifier's classes; None outside the raster"""
+    N = _naip(); m = N['m']; res, x0, z0 = m['res'], m['x0'], m['z0']; im = N['im']; L = ls.length; bad = n = 0
+    for v in np.arange(a, b + 1e-9, step):
+        q0 = ls.interpolate(max(0, v - 2)); q1 = ls.interpolate(min(L, v + 2)); q = ls.interpolate(v)
+        tt = np.array([q1.x - q0.x, q1.y - q0.y]); tt /= max(1e-9, np.linalg.norm(tt)); nn = np.array([-tt[1], tt[0]])
+        off = np.interp(v, [a, b], [o0, o1])
+        for d in np.arange(-half, half + 1e-9, 0.5):
+            x, z = q.x + (off + d) * nn[0], q.y + (off + d) * nn[1]
+            rr, cc = int((z - z0) / res), int((x - x0) / res)
+            if not (0 <= rr < im.shape[0] and 0 <= cc < im.shape[1]): return None
+            bb, gg, r_ = (float(u) for u in im[rr, cc]); lum = (r_ + gg + bb) / 3
+            n += 1; bad += ((r_ - bb > 38) and (r_ - gg > 5) and (r_ > 110)) or ((gg - r_ > 6) and (gg > bb) and (lum < 150)) or (lum < 125)
+    return bad / n if n else None
+
+
 def measure_path(e, ls, t):
     """airside service path -> list of stretches (dicts). NAIP 2024 profiles every PATH_STEP m: the narrow bright band
     (measure_band, +-6 m: the 2-3 m concrete infield paths) and the wide paved run (measure_road, +-14 m: the 6-12 m
@@ -194,6 +238,7 @@ def measure_path(e, ls, t):
     1.75 m edge strips. measure_road measures it (and every other road wider than measure_band's window)."""
     from shapely.ops import substring
     L = ls.length
+    surf = SURFACES.get(t.get('surface'))
     S = np.arange(PATH_STEP / 2, L, PATH_STEP) if L > PATH_STEP else np.array([L / 2])
     Q = np.zeros((len(S), 2)); N = np.zeros((len(S), 2)); O = np.full(len(S), np.nan); Wd = np.full(len(S), np.nan)
     LINE = np.zeros(len(S), bool); ROAD = np.zeros(len(S), bool); WIDE = np.zeros(len(S), bool)
@@ -205,7 +250,7 @@ def measure_path(e, ls, t):
         tt /= nt; N[i] = (-tt[1], tt[0])                       # measure_band's normal
         r = measure_band((q.x, q.y), tt, info=True)
         band = r if (r and not r[2] and r[1] >= PATH_W_MIN) else None
-        rr = measure_road((q.x, q.y), tt, seed=r[0] if r else 0.0)
+        rr = measure_road((q.x, q.y), tt, seed=r[0] if r else 0.0, strict=surf != 'asphalt')
         WIDE[i] = rr == 'wide'
         if isinstance(rr, tuple) and rr[1] >= ROAD_W_MIN and (band is None or rr[1] >= band[1] + ROAD_WIDER):
             O[i], Wd[i] = rr[0], rr[1]; ROAD[i] = True
@@ -240,7 +285,6 @@ def measure_path(e, ls, t):
         if merged and (S[r[0]] - S[merged[-1][1]]) < PATH_GAP: merged[-1][1] = r[1]
         else: merged.append(r)
     good = [r for r in merged if S[r[1]] - S[r[0]] + PATH_STEP >= PATH_MIN and ok[r[0]:r[1] + 1].sum() >= 3]
-    surf = SURFACES.get(t.get('surface'))
     base = {'osm_id': e['id'], 'kind': 'airside_path', 'surface_osm': t.get('surface'), 'access': t.get('access'),
             'naip_frac': round(frac, 2)}
     out, cur = [], 0.0
@@ -263,7 +307,11 @@ def measure_path(e, ls, t):
         undrawn(cur, sa); cur = sb
         ii = np.arange(a, b + 1); acc = idx[(idx >= a) & (idx <= b)]
         road = bool(ROAD[acc].mean() >= 0.5)
-        acc = acc[ROAD[acc] == road]                           # the stretch's majority kind only
+        # the stretch's majority kind only - on a surface=asphalt way (its narrow bands are light edge / lane strips ON the
+        # road). Close-out round 3 (finding static-5): on every other way the band and the (strict) road run measure the
+        # same imaged path, so all accepted stations count; majority-only had sized 1182574236 pieces 4 / 6 (49 / 30 m, on a
+        # 2.5-3.25 m band) from 4 junction profiles each (5.25 m, a third of the footprint on soil)
+        if surf == 'asphalt': acc = acc[ROAD[acc] == road]
         sm = np.array([np.median(O[acc[np.abs(S[acc] - S[k]) <= PATH_SMOOTH]]) if np.any(np.abs(S[acc] - S[k]) <= PATH_SMOOTH) else np.nan for k in acc])
         sS = S[ii]; off = np.interp(sS, S[acc], sm)            # piecewise offset, flat beyond the first / last profile
         P = Q[ii] + off[:, None] * N[ii]
@@ -304,8 +352,13 @@ def measure_path(e, ls, t):
         if o_['drawn']: continue
         a_, b_ = o_['_s']; prv = out[k - 1] if k > 0 else None; nxt = out[k + 1] if k + 1 < len(out) else None
         inner = isroad(prv) and isroad(nxt); end = (k == 0 and isroad(nxt)) or (k == len(out) - 1 and isroad(prv))
-        if not (inner or end) or not ((b_ - a_ <= ROAD_BRIDGE and o_['_f'] >= 0.5) or (inner and b_ - a_ <= ROAD_BRIDGE_ANY)): continue
+        if not (inner or end): continue
         o0 = prv['_o'][1] if isroad(prv) else nxt['_o'][0]; o1 = nxt['_o'][0] if isroad(nxt) else prv['_o'][1]
+        clean = None
+        if inner and b_ - a_ <= ROAD_BRIDGE_CLEAN and not ((o_['_f'] >= 0.5 and b_ - a_ <= ROAD_BRIDGE) or b_ - a_ <= ROAD_BRIDGE_ANY):
+            clean = clean_line(ls, a_, b_, o0, o1)     # close-out round 3 (finding static-6)
+            if clean is None or clean > ROAD_CLEAN_MAX: continue
+        elif not ((b_ - a_ <= ROAD_BRIDGE and o_['_f'] >= 0.5) or (inner and b_ - a_ <= ROAD_BRIDGE_ANY)): continue
         w = min(x['w'] for x in (prv, nxt) if isroad(x)) if inner else min(w_way, (prv if isroad(prv) else nxt)['w'])
         ss = np.linspace(a_, b_, max(2, int(np.ceil((b_ - a_) / PATH_STEP)) + 1)); P = []
         for v in ss:
@@ -315,8 +368,9 @@ def measure_path(e, ls, t):
         mat, msrc = material(True)
         out[k] = {**base, 'material': mat, 'material_src': msrc, 'part': k, 'w': round(w, 2), 'offset_m': round(float((o0 + o1) / 2), 2),
                   'offset_range': [round(float(min(o0, o1)), 2), round(float(max(o0, o1)), 2)], 'drawn': True, 'kind_naip': 'road', 'bridged': True,
-                  'w_src': 'inferred: the road continues (OSM way; NAIP %s); width = the narrower neighbouring piece%s, offset interpolated' % (
-                      o_['w_src'].replace('; not drawn', '').replace('NAIP: ', '').replace('NAIP ', ''), '' if inner else ' capped at the way median'),
+                  'w_src': ('inferred: the road continues (OSM way; NAIP %s); width = the narrower neighbouring piece%s, offset interpolated' % (
+                      o_['w_src'].replace('; not drawn', '').replace('NAIP: ', '').replace('NAIP ', ''), '' if inner else ' capped at the way median'))
+                           + ('; NAIP along the line: %.0f %% soil / vegetation / water (<= %.0f %%: bridged, close-out round 3)' % (100 * clean, 100 * ROAD_CLEAN_MAX) if clean is not None else ''),
                   'pts': [[round(x, 1), round(z, 1)] for x, z in LineString(P).simplify(0.3).coords], '_s': (a_, b_), '_o': (o0, o1)}
     for k, o_ in enumerate(out):
         o_['part'] = k; o_.pop('_s', None); o_.pop('_o', None); o_.pop('_f', None)

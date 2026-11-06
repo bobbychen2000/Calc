@@ -6,6 +6,10 @@
 {
 "file": "refs/cache/gate_truth/flysfo_api_flight-status_20261104T180142Z.json.gz",
 "sha256": "4d84853234bd150237bf3945d3b15f9ba34f43dbfd3b05b2cc416b941eabcf1b"
+},
+{
+"file": "refs/cache/gate_truth/flysfo_api_flight-status_20261105T024944Z.json.gz",
+"sha256": "0d01bd8c58cca0ccedfdac3b85a314a8b953343bd76330d57c606c41209de2db"
 }
 ],
 "fields": [
@@ -30,11 +34,13 @@
 "B772",
 "B77W",
 "B788",
+"B789",
 "B78X"
 ],
 "obs_types_aodb2": {
 "A35K": [
-"104"
+"104",
+"105"
 ],
 "B738": [
 "2421"
@@ -42,6 +48,9 @@
 "B772": [
 "605",
 "606"
+],
+"B789": [
+"49"
 ]
 }
 },
@@ -92,7 +101,9 @@
 ],
 "obs_types_aodb2": {
 "E75L": [
-"2187"
+"2187",
+"2415",
+"2485"
 ]
 }
 },
@@ -139,14 +150,45 @@
 },
 "B10": {
 "obs_types": [
+"A320",
 "A321",
 "B739",
 "E75L"
 ],
 "obs_types_aodb2": {
+"A320": [
+"718"
+],
 "E75L": [
 "3451",
 "3492"
+]
+}
+},
+"B11": {
+"obs_types": [
+"A320",
+"A321",
+"B738"
+],
+"obs_types_aodb2": {
+"B738": [
+"7"
+]
+}
+},
+"B11S": {
+"obs_types": [
+"A332",
+"A339",
+"B752",
+"B772",
+"B788",
+"B789"
+],
+"obs_types_aodb2": {
+"B752": [
+"8841"
 ]
 }
 },
@@ -197,7 +239,8 @@
 "obs_types_aodb2": {
 "B739": [
 "372",
-"42"
+"42",
+"619"
 ]
 }
 },
@@ -215,20 +258,6 @@
 ]
 }
 },
-"B16S": {
-"obs_types": [
-"A333",
-"A339",
-"B763",
-"B76W"
-],
-"obs_types_aodb2": {
-"A333": [
-"60",
-"61"
-]
-}
-},
 "B18": {
 "obs_types": [
 "A21N",
@@ -236,7 +265,9 @@
 ],
 "obs_types_aodb2": {
 "A21N": [
+"116",
 "315",
+"333",
 "816"
 ]
 }
@@ -309,7 +340,26 @@
 "obs_types_aodb2": {
 "E75L": [
 "6214",
-"6316"
+"6316",
+"6324",
+"6440"
+]
+}
+},
+"B27": {
+"obs_types": [
+"A21N",
+"A320",
+"A321",
+"B38M",
+"B738"
+],
+"obs_types_aodb2": {
+"A320": [
+"2234"
+],
+"B38M": [
+"2933"
 ]
 }
 },
@@ -321,18 +371,21 @@
 "A321",
 "B738",
 "B739",
-"B752"
+"B752",
+"B753"
 ],
 "obs_types_aodb2": {
 "A320": [
 "920"
 ],
 "A321": [
-"1091",
 "2078"
 ],
 "B738": [
 "902"
+],
+"B753": [
+"656"
 ]
 }
 },
@@ -349,7 +402,8 @@
 ],
 "obs_types_aodb2": {
 "A321": [
-"1091"
+"1091",
+"1331"
 ]
 }
 },
@@ -383,6 +437,7 @@
 "A21N": [
 "1559",
 "1655",
+"570",
 "823"
 ]
 }
@@ -397,15 +452,7 @@
 "B752": [
 "363"
 ]
-},
-"excl_types": {
-"C10": [
-"B752"
-]
-},
-"fixup": [
-"fix-up 2026-11-04: B752 here blocks C10 (5.9 m from its envelope < ICAO 7.5 m; SFO's 2 plan windows of B752 here overlap none of C10)"
-]
+}
 },
 "C9": {
 "cls": "D",
@@ -445,15 +492,7 @@
 "A320": [
 "738"
 ]
-},
-"excl_types": {
-"C8": [
-"@C8:B752"
-]
-},
-"fixup": [
-"fix-up 2026-11-04: blocked while C8 holds a B752 (excl_types)"
-]
+}
 },
 "C11": {
 "obs_types": [
@@ -488,8 +527,8 @@
 }
 },
 "D5": {
-"cls": "D",
-"cls_src": "sfo types (final plans); fix-up 2026-11-04: CL -> D (SFO plans B763 here on 4 Nov 2026: 365, 405); span_max / len_max = the largest planned type",
+"cls": "E",
+"cls_src": "sfo types (final plans); fix-up 2026-11-04: CL -> E (SFO plans B772 here on 4 Nov 2026: 2171, 649); span_max / len_max = the largest planned type",
 "obs_types": [
 "A21N",
 "A319",
@@ -500,33 +539,47 @@
 "B739",
 "B752",
 "B763",
+"B772",
 "BCS3"
 ],
-"span_max": 47.57,
-"len_max": 54.94,
+"len_max": 63.73,
 "obs_types_aodb2": {
 "B763": [
 "365",
 "405"
+],
+"B772": [
+"2171",
+"649"
 ]
 },
 "fixup": [
-"fix-up 2026-11-04: class CL -> D from SFO's 4 Nov plan (B763 365/405)"
+"fix-up 2026-11-04: class CL -> E from SFO's 4 Nov plan (B763 365/405, B772 2171/649)"
 ]
 },
 "D6": {
 "obs_types": [
+"A21N",
 "A319",
 "A320",
 "B38M",
 "B39M",
 "B737",
-"B738"
+"B738",
+"B739"
 ],
 "obs_types_aodb2": {
+"A21N": [
+"1914",
+"638"
+],
 "A319": [
 "1329",
 "611"
+],
+"B739": [
+"301",
+"371"
 ]
 }
 },
@@ -559,6 +612,7 @@
 ],
 "obs_types_aodb2": {
 "B738": [
+"1334",
 "1726",
 "1811",
 "2409"
@@ -578,6 +632,7 @@
 "obs_types_aodb2": {
 "A319": [
 "1482",
+"573",
 "790"
 ]
 }
@@ -611,39 +666,6 @@
 "A319": [
 "436",
 "451"
-]
-}
-},
-"E6": {
-"obs_types": [
-"A320",
-"B38M",
-"B39M",
-"B738",
-"B739",
-"E75L"
-],
-"obs_types_aodb2": {
-"B739": [
-"1811",
-"638"
-]
-}
-},
-"E13": {
-"obs_types": [
-"A319",
-"A320",
-"B38M",
-"B39M",
-"B738",
-"B739",
-"E75L"
-],
-"obs_types_aodb2": {
-"A319": [
-"1320",
-"264"
 ]
 }
 },
@@ -688,18 +710,6 @@
 ]
 }
 },
-"F9": {
-"obs_types": [
-"CRJ2",
-"E75L"
-],
-"obs_types_aodb2": {
-"CRJ2": [
-"4722",
-"5271"
-]
-}
-},
 "F11": {
 "obs_types": [
 "A21N",
@@ -722,6 +732,24 @@
 ]
 }
 },
+"F14": {
+"obs_types": [
+"A21N",
+"A320",
+"B38M",
+"B39M",
+"B738",
+"B739",
+"B752",
+"B753"
+],
+"obs_types_aodb2": {
+"A21N": [
+"1510",
+"573"
+]
+}
+},
 "F16": {
 "obs_types": [
 "A21N",
@@ -734,15 +762,14 @@
 ],
 "obs_types_aodb2": {
 "A21N": [
-"1510",
-"2091",
-"573"
+"2059",
+"2091"
 ]
 }
 },
 "F17": {
 "obs_types": [
-"A21N",
+"A319",
 "B38M",
 "B39M",
 "B738",
@@ -751,19 +778,21 @@
 "B753"
 ],
 "obs_types_aodb2": {
-"A21N": [
-"1914",
-"638"
+"A319": [
+"1320",
+"264"
 ]
 }
 },
 "F18": {
 "excl_types": {
 "F19": [
+"@F19:B752",
 "@F19:B772"
 ]
 },
 "fixup": [
+"fix-up 2026-11-04: blocked while F19 holds a B752 (excl_types)",
 "fix-up 2026-11-04: blocked while F19 holds a B772 (excl_types)"
 ]
 },
@@ -771,6 +800,7 @@
 "obs_types": [
 "A21N",
 "A320",
+"B38M",
 "B39M",
 "B738",
 "B739",
@@ -783,6 +813,7 @@
 "A21N",
 "A320",
 "A321",
+"B38M",
 "B39M",
 "B738",
 "B739",
@@ -795,29 +826,28 @@
 "E195"
 ],
 "obs_types_aodb2": {
+"B38M": [
+"1267",
+"1646"
+],
 "B752": [
 "1372",
-"2467",
-"794",
-"796"
+"2467"
 ],
 "B772": [
 "1205",
-"1947",
 "2358",
 "300"
 ]
 },
 "fixup": [
-"fix-up 2026-11-04: types_ok + B752, B772 (SFO 4 Nov plan; expand_ok adds nothing)",
-"fix-up 2026-11-04: B772 here blocks F18 (6.6 m from its envelope < ICAO 7.5 m; SFO's 5 plan windows of B772 here overlap none of F18)",
-"fix-up 2026-11-04: B772 here blocks F20 (4.7 m from its envelope < ICAO 7.5 m; SFO's 5 plan windows of B772 here overlap none of F20)"
+"fix-up 2026-11-04: types_ok + B38M, B752, B772 (SFO 4 Nov plan; expand_ok adds nothing)",
+"fix-up 2026-11-04: B752 here blocks F18 (5.4 m from its envelope < ICAO 7.5 m; SFO's 2 plan windows of B752 here overlap none of F18)",
+"fix-up 2026-11-04: B772 here blocks F18 (6.6 m from its envelope < ICAO 7.5 m; SFO's 4 plan windows of B772 here overlap none of F18)"
 ],
 "excl_types": {
 "F18": [
-"B772"
-],
-"F20": [
+"B752",
 "B772"
 ]
 }
@@ -834,42 +864,29 @@
 ],
 "obs_types_aodb2": {
 "A21N": [
-"1958",
 "2633"
 ]
 },
 "fixup": [
-"fix-up 2026-11-04: types_ok + A21N (SFO 4 Nov plan; expand_ok adds nothing)",
-"fix-up 2026-11-04: blocked while F19 holds a B772 (excl_types)"
-],
-"excl_types": {
-"F19": [
-"@F19:B772"
+"fix-up 2026-11-04: types_ok + A21N (SFO 4 Nov plan; expand_ok adds nothing)"
 ]
-}
 },
 "F21": {
 "obs_types": [
 "A319",
-"A320",
 "B38M",
 "B39M",
 "B738",
 "B752"
 ],
 "obs_types_aodb2": {
-"A320": [
-"453",
-"794"
-],
 "B38M": [
-"1267"
+"1334"
 ]
 }
 },
 "G2": {
 "obs_types": [
-"A320",
 "B38M",
 "B39M",
 "B772",
@@ -877,25 +894,8 @@
 "B789"
 ],
 "obs_types_aodb2": {
-"A320": [
-"718"
-],
 "B789": [
-"61",
-"949"
-]
-}
-},
-"G3": {
-"obs_types": [
-"B738",
-"B772",
-"B789"
-],
-"obs_types_aodb2": {
-"B738": [
-"1931",
-"581"
+"61"
 ]
 }
 },
@@ -915,8 +915,8 @@
 "G5": {
 "obs_types": [
 "A359",
-"B38M",
 "B739",
+"B753",
 "B772",
 "B77W",
 "B789"
@@ -926,9 +926,8 @@
 "454",
 "455"
 ],
-"B38M": [
-"1958",
-"2279"
+"B753": [
+"373"
 ]
 }
 },
@@ -936,7 +935,6 @@
 "obs_types": [
 "B38M",
 "B39M",
-"B738",
 "B772",
 "B77W",
 "B789",
@@ -946,10 +944,6 @@
 "B39M": [
 "1506",
 "469"
-],
-"B738": [
-"1243",
-"589"
 ]
 }
 },
@@ -957,6 +951,7 @@
 "obs_types": [
 "A319",
 "A320",
+"B738",
 "B772",
 "B77W",
 "B789",
@@ -965,6 +960,10 @@
 "obs_types_aodb2": {
 "A320": [
 "717"
+],
+"B738": [
+"1931",
+"581"
 ]
 }
 },
@@ -973,12 +972,17 @@
 "A359",
 "B38M",
 "B39M",
+"B738",
 "B772",
 "B77W",
 "B789",
 "E75L"
 ],
 "obs_types_aodb2": {
+"B738": [
+"1243",
+"589"
+],
 "E75L": [
 "5596",
 "6001"
@@ -1003,9 +1007,7 @@
 "459"
 ],
 "B39M": [
-"1244",
-"1948",
-"2409"
+"1244"
 ]
 }
 },
@@ -1019,6 +1021,7 @@
 ],
 "obs_types_aodb2": {
 "B772": [
+"853",
 "875",
 "893",
 "97"
@@ -1027,26 +1030,28 @@
 }
 },
 "log": [
-"P1 A2 new planned types A35K, B738, B772 (class EL kept)",
+"P1 A2 new planned types A35K, B738, B772, B789 (class EL kept)",
 "P1 A10 new planned types B789 (class EL kept)",
 "P1 A15 class C -> E (A332)",
 "P1 B2 new planned types E75L (class C kept)",
 "P1 B3 new planned types B738 (class C kept)",
 "P1 B4 new planned types A321 (class C kept)",
 "P1 B5 new planned types B39M (class C kept)",
-"P1 B10 new planned types E75L (class C kept)",
+"P1 B10 new planned types A320, E75L (class C kept)",
+"P1 B11 new planned types B738 (class C kept)",
+"P1 B11S new planned types B752 (class EL kept)",
 "P1 B12 new planned types B738 (class C kept)",
 "P1 B14 new planned types A21N (class C kept)",
 "P1 B15 new planned types B739 (class C kept)",
 "P1 B16 new planned types A319 (class C kept)",
-"P1 B16S new planned types A333 (class EL kept)",
 "P1 B18 new planned types A21N (class C kept)",
 "P1 B19 new planned types B738 (class C kept)",
 "P1 B21 new planned types A21N (class C kept)",
 "P1 B22 new planned types A321 (class C kept)",
 "P1 B24 new planned types E75L (class C kept)",
 "P1 B26 new planned types E75L (class C kept)",
-"P1 C3 new planned types A320, A321, B738 (class CL kept)",
+"P1 B27 new planned types A320, B38M (class C kept)",
+"P1 C3 new planned types A320, A321, B738, B753 (class CL kept)",
 "P1 C5 new planned types A321 (class CL kept)",
 "P1 C6 new planned types BCS3 (class C kept)",
 "P1 C7 new planned types A21N (class C kept)",
@@ -1055,43 +1060,41 @@
 "P1 C10 new planned types A320 (class C kept)",
 "P1 C11 new planned types B738 (class C kept)",
 "P1 C11 types_ok + B738, E195",
-"P1 D5 class CL -> D (B763)",
-"P1 D6 new planned types A319 (class C kept)",
+"P1 D5 class CL -> E (B763, B772)",
+"P1 D6 new planned types A21N, A319, B739 (class C kept)",
 "P1 D8 new planned types B39M (class C kept)",
 "P1 D9 new planned types B738 (class C kept)",
 "P1 D15 new planned types A319 (class C kept)",
 "P1 E4 new planned types A319 (class C kept)",
 "P1 E5 new planned types A319 (class C kept)",
-"P1 E6 new planned types B739 (class C kept)",
-"P1 E13 new planned types A319 (class C kept)",
 "P1 F6 new planned types CRJ2 (class B kept)",
 "P1 F7 new planned types CRJ2 (class B kept)",
 "P1 F8 new planned types CRJ2 (class B kept)",
-"P1 F9 new planned types CRJ2 (class B kept)",
 "P1 F11 new planned types B38M, B739 (class E kept)",
+"P1 F14 new planned types A21N (class CL kept)",
 "P1 F16 new planned types A21N (class CL kept)",
-"P1 F17 new planned types A21N (class CL kept)",
-"P1 F19 new planned types B752, B772 (class EL kept)",
-"P1 F19 types_ok + B752, B772",
+"P1 F17 new planned types A319 (class CL kept)",
+"P1 F19 new planned types B38M, B752, B772 (class EL kept)",
+"P1 F19 types_ok + B38M, B752, B772",
 "P1 F20 new planned types A21N (class CL kept)",
 "P1 F20 types_ok + ",
-"P1 F21 new planned types A320, B38M (class CL kept)",
-"P1 G2 new planned types A320, B789 (class EL kept)",
-"P1 G3 new planned types B738 (class E kept)",
+"P1 F21 new planned types B38M (class CL kept)",
+"P1 G2 new planned types B789 (class EL kept)",
 "P1 G4 new planned types B38M (class E kept)",
-"P1 G5 new planned types A359, B38M (class EL kept)",
-"P1 G6 new planned types B39M, B738 (class EL kept)",
-"P1 G7 new planned types A320 (class EL kept)",
-"P1 G8 new planned types E75L (class EL kept)",
+"P1 G5 new planned types A359, B753 (class EL kept)",
+"P1 G6 new planned types B39M (class EL kept)",
+"P1 G7 new planned types A320, B738 (class EL kept)",
+"P1 G8 new planned types B738, E75L (class EL kept)",
 "P1 G9 new planned types A359, B39M (class EL kept)",
 "P1 G13 new planned types B772 (class F kept)",
-"P2 C8 B752 -> blocks C10 (5.9 m, 2 windows, 0 overlaps)",
+"P2 C8 B752 vs C10 5.9 m < ICAO 7.5 but SFO plans them together 4 times: listed only",
 "P2 C9 B763 -> blocks C11 (5.5 m, 1 windows, 0 overlaps)",
-"P2 F19 B752 vs F18 5.4 m < ICAO 7.5 but SFO plans them together 4 times: listed only",
-"P2 F19 B772 -> blocks F18 (6.6 m, 5 windows, 0 overlaps)",
-"P2 F19 B772 -> blocks F20 (4.7 m, 5 windows, 0 overlaps)",
+"P2 F19 B752 -> blocks F18 (5.4 m, 2 windows, 0 overlaps)",
+"P2 F19 B772 -> blocks F18 (6.6 m, 4 windows, 0 overlaps)",
+"P2 F19 B772 vs F20: ADS-B shows a0a8de UAL2467 04 20:47-20:50Z at F20 inside the plan window(s) of B772 here",
+"P2 F19 B772 vs F20 4.7 m < ICAO 7.5 but SFO plans them together 1 times: listed only",
 "P2 G5 A359 vs G2 7.1 m < ICAO 7.5 but SFO plans them together 4 times: listed only",
-"P2 F19 types_ok_all_paths kept: 2 class types < 3 m from a tight neighbour without excl_types (e.g. [('B77L', 'F20', 1.9), ('A338', 'F20', 2.4)])",
+"P2 F19 types_ok_all_paths kept: 3 class types < 3 m from a tight neighbour without excl_types (e.g. [('B772', 'F20', 3.0), ('B77L', 'F20', 1.9), ('A338', 'F20', 2.4)])",
 "P2 F20 types_ok_all_paths kept: 7 class types < 3 m from a tight neighbour without excl_types (e.g. [('B736', 'F19', 2.9), ('B737', 'F19', 2.0), ('B37M', 'F19', 1.9)])"
 ]
 }

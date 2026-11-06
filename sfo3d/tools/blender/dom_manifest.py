@@ -60,11 +60,27 @@ def dimensions():
     add('T3E roof', H['T3E'], 'inf', 'R2 "top of roof at high point" read as the T3E roof')
     add('T3E penthouse top / extent', f"{H['T3E_pent']:.2f} / bearings {DD.T3E_PENT_BRG}, set back {DD.T3E_PENT_SETBACK} m, 25.5 m deep",
         'inf (top R3) / obs low (extent NAIP)', 'BD-03 view 3')
-    add('departures curb above the apron (T1 / T2)', G.CURB, 'unk', 'placeholder: T3 L1 -> L2 rise by analogy')
+    add('departures curb above the apron (T1 / T2)', G.CURB, 'inf',
+        'close-out r3 (buildings-14): = the published T3 L1 -> L2 rise, 16 ft (CDR 95 % CD p.28-29) [pub at T3]; the domestic departures '
+        'loop is ONE connected roadway (the 17 OSM ways named Departures, layer 1, that roadways.glb anchors form one component by shared nodes) '
+        'serving the T1 / T2 / T3 curbs -> the same level at T1 / T2 [inf]; not measured there (NAIP relief / shadow of the deck edge '
+        'inconclusive at 0.6-m GSD: ~0.5 m of band per metre of height). Soffit over the at-grade roads under the loop = 4.73 - deck depth '
+        '(roadways.glb 1.2 m [inf]) = 3.53 m: below the 4.6-m design clearance (see conflicts)')
     add('T1 Center wall head / tier transom / canopy soffit (above the curb)', f'{DD.T1_HEAD} / {DD.T1_SPLIT:.2f} / {DD.T1_CANOPY}', 'inf (photo d1, low)', 'BD-03 view 1')
     add('T1 Center roof height', H['T1'], 'unk', 'curb [unk] + wall head 13.0 [inf]; spec t1c.h_roof: none')
     add('T1 landside facade set-back from the trimmed curb line', G.T1_CANOPY_D, 'inf', 'canopy depth; NAIP 2024 PV roof edge 3-6 m inside the trimmed edge')
     add('T2 hall height', H['T2'], 'unk', 'curb [unk] + 12.0 (BD-03 view 2 placeholder)')
+    add('T2 landside face (close-out r3, buildings-2)', 'x = %.3f + %.4f z (z %.0f-%.0f); elsewhere the departures deck edge + %.2f m'
+        % (G.T2_EDGE_LINE[0], G.T2_EDGE_LINE[1], G.T2_EDGE_Z[0], G.T2_EDGE_Z[1], G.T2_SIDEWALK), 'obs (NAIP 2024 relief-corrected roof edge) / inf (corners)',
+        'lean-free coping line, 59 rows, rms 0.06 m (relief for the 16.88-m placeholder: +1 m of roof -> 0.54 m west); NAIP 2020 within 1.5 m; '
+        'the old SFO Museum face was 17-18 m west over the departures roadway; hall area -%.0f m2' % G.T2_CUT_M2)
+    add('T2 departures sidewalk (deck edge -> wall)', G.T2_SIDEWALK, 'obs', 'NAIP 2024 roof edge minus OSM deck edge (256787747, 3 x 3.6 m): '
+        'median 5.85, p10 5.76, p90 6.63 m; deck at the curb level, 0.6 m thick, overlapping the roadway deck by 0.3 m (%.0f m2)' % G.T2_SIDEWALK_POLY.area)
+    add('T2 curb canopy (depth / soffit)', '%.1f / %.2f' % (G.T2_CANOPY_D, G.T1_CANOPY_H), 'obs low / inf',
+        'depth: NAIP 2024 / 2022 teal glass band, outer edge lean-corrected at ~9.2 m; soffit as T1 (curb + 4.0, photo d1)')
+    add('T2 - garage connector over the departures roadway (soffit / top)', '%.2f / %.2f' % G.T2_LINK_Z, 'inf (level unk)',
+        'plan: the T2 outline courtyard connector (SFO Museum) extended along its axis to the moved face, cut at the Central Parking Garage '
+        'outline [obs]; floor at the garage Level 3 placeholder (2/5 of 81 ft) so that the soffit clears the departures deck by 4.7 m [inf]')
     add('pier / hall footprints', 'SFO Museum level-2 outlines (+ measured roof edges)', 'obs', 'data/sfo_airport.json (CDLA-Permissive-1.0)')
     add('concourse (departure) floor', G.FLOOR2, 'inf', 'js/live/gates.js DEPARTURE_LEVEL (bridge floor)')
     add('facade bands (service / spandrel / glazing / panel)', 'STYLES in dom_geom.py', 'inf / unk', 'materials pub where described (bab.glazing, bae.facade, t1c, t3w, t3e)')
@@ -148,7 +164,12 @@ INFERRED = [
 
 UNKNOWN = [
     'T1 Center and T2 hall heights (nothing published or measured): T1 = curb placeholder + 13.0 m wall head (photo d1), T2 = curb + 12 m',
-    'the departures-curb height above the apron (T1 / T2): 4.88 m placeholder (T3 L1 -> L2 by analogy)',
+    'the departures-curb height above the apron (T1 / T2): 4.88 m = the published T3 L1 -> L2 rise carried along the continuous departures '
+    'loop [inf] (close-out r3); not measured at T1 / T2',
+    'the T2 - garage connector level (close-out r3): modelled 9.43-14.38 m (clearance over the departures deck); NAIP 2024 shows a ~4.5-m '
+    'shadow band north of the crossing at x -765 (sun elevation 72.5 deg, azimuth 186.6 deg), which would put its top near 24 m, i.e. at the '
+    'AirTrain T2 station level (SFO Museum "Terminal Two AirTrain Station" 1763588561 reaches x -743.8, the T2 wall) - two structures stacked, '
+    'or a higher connector landing on a taller part of T2, cannot be told apart from NAIP; a photo of the T2 curb would settle it',
     'the T3 project datum (L1 drawn at the apron); the T3 East landside facade (drawn with the published T3E materials, positions inf)',
     'the BA-B roof-well depth and skylight heights; the BA-F lantern (bound <= 4.6 m, modelled 1.0 m) and monitor rises; the BA-B '
     'north-half outer roof height',
@@ -167,7 +188,8 @@ UNKNOWN = [
 
 NOT_MODELLED = [
     'courtyard links (pedestrian bridges over the curbside roadways to the garage / AirTrain stations) and the links that cross the '
-    'AirTrain guideway: no known level (the app keeps its own parts there)',
+    'AirTrain guideway: no known level (the app keeps its own parts there) - except the T2 - garage connector, modelled since close-out r3 '
+    'because the moved T2 face left the app part 19 m short of the building (level inf, see unknown)',
     'the AirTrain guideway / stations and the garages (landside asset), the tower (tower asset), the ITB (itb asset)',
     'T3W penthouses (positions / heights not dimensioned); rooftop equipment that NAIP 2024 does not resolve (see unknown)',
     'interiors (glass is opaque; no interior lighting)',
@@ -186,6 +208,29 @@ CONFLICTS = [
          other='BD-03 view 1 develops the face along the SFO Museum outline (94.1 + 43.6 + 93.8 m)',
          note='NAIP 2024 shows the curb roadway and vehicles INSIDE the SFO Museum outline there, and the PV roof edge 3-6 m inside the '
               'trimmed edge (overlay checked 2026-11-05); heights follow BD-03'),
+    dict(item='T2 landside face (close-out r3, buildings-2)', model='on the NAIP 2024 relief-corrected roof edge (x = -811.96 + 0.3063 z, '
+         'z 168-254) and 5.85 m off the departures deck edge elsewhere; the departures sidewalk and a 5.4-m glass curb canopy in front, the '
+         'T2 - garage connector extended to it', other='BD-03 view 2 / the SFO Museum level-2 outline: the T2 face 17-18 m further west, over '
+         'the departures roadway (roadways.glb cut its deck at the T2 body, 1,406 m2, as an interim)',
+         note='NAIP 2024 / 2022 show traffic, the sidewalk and the canopy inside the outline; NAIP 2020 images the roof edge within 1.5 m of '
+              'the 2024-derived line; the SFO Museum AirTrain T2 station polygon (1763588561) ends at x -743.8, on the new wall line'),
+    dict(item='app rotunda drums under the BA-F overhang (close-out r3, buildings-4)', status='resolved (3-D)',
+         model='F7 / F8 L1: the drum discs lie ~1.05 m inside the BA-F footprint ring but only under the ESE roof overhang: soffit 9.69 m, '
+               'drum top 8.55 m -> 1.14 m clear; facades >= 0.1 m outside the largest drum; F8 L1 tunnel 1 (all poses) >= 1.58 m below '
+               'the soffit; D3 L1 facade 0.19 m clear of its drum (verify_domestic_r2.drum_overhead, close-out r3 dump of the gates.js solids)',
+         other='integration.json footprint rings are plan-only (the -1.06 / -1.05 / -0.03 m overlaps of the round-3 consolidator)',
+         request='integration: carry the height band of the overhang (soffit 9.69 m above the apron) in the footprint tiers (integration-5) '
+                 'so plan tests do not read the overhang as a wall'),
+    dict(item='departures loop soffit over at-grade roads (close-out r3, buildings-14)', status='open',
+         model='curb 4.877 m = the published T3 L1 -> L2 16 ft carried along the continuous loop [inf]; roadways.glb deck top 4.73, depth '
+               '1.2 m [inf] -> soffit 3.53 m over the 10 at-grade crossings (OSM: 701476993, 701476994 South Link Road, 701476988, '
+               '701476989, 701209939, 701476987 Arrivals, 256787748 Arrivals, 1274607795, 1274606309, 1274827440)',
+         other='4.6 m design clearance (Caltrans HDM 309.2) enforced elsewhere by the roadway solve',
+         note='raising the curb to clear 4.6 m (deck top >= 5.8 m) would contradict the published T3 L2 at the T3 curb; with a published '
+              '16-ft rise between the stacked arrivals / departures levels the real clearance is 16 ft - curb step - deck depth (~3.8-4.0 m '
+              'for a 0.75-0.9 m slab): the stacked arrivals roadway is lower-clearance by design (a posted clearance sign photo would settle '
+              'it); request to integration: list these crossings as plausibility conflicts in b3d_integrate and review DECK_DEPTH at the '
+              'anchored loop'),
     dict(item='T3W parapet', model='16.76 m = 66\'-0" - T3 L1 11\'-0" (BD-02 / BD-03)', other='spec t3.heights_above_L1 16.99 m '
          '(66\'-0" - T3W L1 10\'-3")', note='datum choice; 0.23 m'),
     dict(item='BA-C / BA-D roofs vs the app concourse floor 5.4 m (OPEN PLAUSIBILITY CONFLICT, review r2 finding 5)', status='open',
@@ -234,6 +279,10 @@ DEVIATIONS_FROM_SHEETS = [   # review r2 finding 7: what the 3-D asset has that 
          'their walls facing it full height and a flashing over the gap at min(top, 13.03 m), 0.15-m joint (review r2)', why='review r2 findings 3 / 6'),
     dict(item='T1 Center landside face', sheets='BD-03 view 1 develops it along the SFO Museum outline', model='on the measured roof edge: '
          'the trimmed curb line less 4.0 m (see conflicts)', why='NAIP 2024'),
+    dict(item='T2 landside face, departures sidewalk, curb canopy, T2 - garage connector (close-out r3)', sheets='BD-01 / BD-03 view 2: '
+         'the T2 face on the SFO Museum outline (47.7-m face, box 12 m, glass 0-7 m above the curb, no canopy, no connector)',
+         model='face on the NAIP-measured roof edge (see conflicts), glass 0-7 m above the curb along the whole curb face, sidewalk 5.85 m, '
+               'canopy 5.4 m, connector 9.43-14.38 m', why='buildings-2 (NAIP 2024; the departures roadway open to the sky)'),
     dict(item='T1 sign', sheets='BD-03 view 1: signage zone, extent schematic', model='measured sizes / heights from photo d1 (review r2), '
          'Liberation Sans Bold', why='review r2 finding 4'),
 ]

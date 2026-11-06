@@ -117,6 +117,10 @@ export function standGates(stands) {
       // (entries '@F19:B772' on the neighbour name the type at the other stand). F19 B772 -> F20 / F18, C9 B763 -> C11, C8 B752
       // -> C10 (each < ICAO clearance; SFO plans them only with the neighbour free). bridgesUpper: see brMap above.
       exclTypes: s.excl_types || null, bridgesUpper,
+      // close-out round 3 (2026-11-06, patch_stands P8): typesOk now lists every smaller member of a listed type's stop-point
+      // family whose planform clears the neighbours by 3 m; typesOkUnsafe = {ICAO: why} family members that do NOT (F20:
+      // A319 / A19N / A20N / B736 / B737 / B37M 1.9-2.9 m from F19's envelope) - traffic.js typesOkHas should not admit them
+      typesOkUnsafe: s.types_ok_dominated_unsafe || null,
       nose, dir, outN: [-dir[0], -dir[1]], attach: bridges.length ? bridges[0].attach : nose, bridges, wide, len: cm.len, span: cm.span,
       bridge: bridges.length > 0, remote: false, hdg: s.hdg, world: { x: s.nose[0], z: s.nose[1], hdg: s.hdg }, empty: true, acType: null, dynamic: false,
     });
@@ -148,6 +152,16 @@ export function standGates(stands) {
       obsTypes: r.obs_types || [], empty: true, acType: null, dynamic: false });
   }
   return gates;
+}
+// close-out round 3 (2026-11-06, patch_stands P9; realtime_closeout R3.1.3 / R3.3): per-family ADS-B position reference,
+// metres the reported position lies BEHIND the nose at the stop, measured on all committed adsb.lol hours
+// (data antenna_ref.families: EJET 13.3 m n 18, B737 9.2 n 110, A320 1.2 n 137, A220 5.4, B757 17.1, B777 15.5 n 11; B787
+// 18.3 / A350 10.5 rest on 3 / 2 stays). {family: {m, n}}; families with fewer than minN stays are left out (callers keep
+// their own default, e.g. 0.2 L)
+export function antennaRef(stands, minN = 5) {
+  const out = {}; const F = (stands && stands.antenna_ref && stands.antenna_ref.families) || {};
+  for (const [f, r] of Object.entries(F)) if (r && Number.isFinite(r.along_m) && r.n >= minN) out[f] = { m: -r.along_m, n: r.n };
+  return out;
 }
 export function liveGates(data) {
   const gates = [];

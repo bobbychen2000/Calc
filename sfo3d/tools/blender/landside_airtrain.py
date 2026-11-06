@@ -25,6 +25,7 @@ import sys
 
 import numpy as np
 import shapely
+import shapely.prepared
 from shapely.geometry import LineString, MultiPolygon, Point, Polygon
 from shapely.ops import unary_union
 
@@ -50,6 +51,14 @@ PORTAL_H = 4.2        # clear height of the AirTrain portal into Garage A above 
 PIER_DX = 30.0        # pier spacing along the guideway [inf]; "single-column T-piers along the extension" [obs at_section]
 PIER_D = 1.8          # pier column diameter (single track) [inf]; twin decks (width > 8 m): 2.4 m [inf]
 CAP_D = 1.4           # pier cap depth below the deck [inf]
+# close-out r3 (buildings-3): pier sites stay off the roads. b3d_integrate (2026-11-06 03:59Z) found 3 columns standing in road decks
+# ((-1726.8, 427.2), (-1727.8, 530.2), (-1728.8, 456.2)) and caps 3.25 m over interchange_2_2 (8.6 m2 below 4.6 m): the pier sites
+# were picked on the guideway skeleton only [inf]. Now a site is accepted only if its column (+ PIER_ROAD_CLEAR) touches no
+# carriageway (data/sfo_landside.json roads, OSM centrelines buffered by their widths - at grade and elevated) and no road deck of
+# data/buildings3d/roadways.glb (LOD0 deck tops), and its cap underside is >= CAP_ROAD_CLEAR above every deck under the cap; a
+# rejected site no longer reserves its 30-m slot, so the next skeleton point is tried (spans may grow; reported in info).
+PIER_ROAD_CLEAR = 0.5  # column face to a carriageway / deck edge [the finding: +0.5 m]
+CAP_ROAD_CLEAR = 4.6   # cap underside over a road deck (Caltrans HDM 309.2, 15 ft; as tools/blender/roadways_net.CLEAR_MIN) [inf]
 ENCL_H = 4.5          # platform enclosure height above the platform (BL-03 central garage: drawn 4.5 m) [unk]
 TILE = 420.0          # guideway node tiles (m): one glTF node + LODs per tile [our choice]
 RES = 1.0             # level raster resolution (m)
@@ -401,18 +410,117 @@ def inter_walk(mb, rails, F, lev, walk_w, lod=0):
     return float(walk_w.area)
 
 
+def road_obstacles():
+    """(carriageway + road-deck plan union, LOD0 deck-top triangles in world metres (N, 3, 3), source note) for the pier test."""
+    import json, struct
+    roads = json.load(open(os.path.join(ROOT, 'data', 'sfo_landside.json')))['roads']
+    foot = [LineString(r['pts']).buffer(0.5 * float(r['w']), cap_style=2) for r in roads if len(r['pts']) >= 2 and r.get('w')]
+    tris = np.zeros((0, 3, 3))
+    path = os.path.join(ROOT, 'data', 'buildings3d', 'roadways.glb')
+    if os.path.exists(path):
+        data = open(path, 'rb').read(); clen = struct.unpack_from('<I', data, 12)[0]
+        j = json.loads(data[20:20 + clen]); off = 20 + clen; blen = struct.unpack_from('<I', data, off)[0]; b = data[off + 8: off + 8 + blen]
+        CT = {5121: np.uint8, 5123: np.uint16, 5125: np.uint32, 5126: np.float32}; NC = {'SCALAR': 1, 'VEC3': 3}
+
+        def acc(i):
+            a = j['accessors'][i]; bv = j['bufferViews'][a['bufferView']]; n = NC[a['type']]; dt = CT[a['componentType']]
+            st = bv.get('byteOffset', 0) + a.get('byteOffset', 0); stride = bv.get('byteStride', 0)
+            if stride and stride != n * np.dtype(dt).itemsize:
+                raw = np.frombuffer(b, np.uint8, count=stride * a['count'], offset=st).reshape(a['count'], stride)
+                return raw[:, :n * np.dtype(dt).itemsize].copy().view(dt).reshape(a['count'], n)
+            return np.frombuffer(b, dt, count=a['count'] * n, offset=st).reshape(a['count'], n)
+
+        def nmat(n):
+            M = np.eye(4)
+            if 'matrix' in n: return np.array(n['matrix']).reshape(4, 4).T
+            x, y, z, w = n.get('rotation', [0, 0, 0, 1])
+            R = np.array([[1 - 2 * (y * y + z * z), 2 * (x * y - z * w), 2 * (x * z + y * w)], [2 * (x * y + z * w), 1 - 2 * (x * x + z * z), 2 * (y * z - x * w)],
+                          [2 * (x * z - y * w), 2 * (y * z + x * w), 1 - 2 * (x * x + y * y)]])
+            M[:3, :3] = R @ np.diag(n.get('scale', [1, 1, 1])); M[:3, 3] = n.get('translation', [0, 0, 0]); return M
+        mats = [m.get('name', '') for m in j.get('materials', [])]
+        out = []
+
+        def walk(i, M, lod):
+            n = j['nodes'][i]; Mi = M @ nmat(n); nm = n.get('name', '')
+            if nm.startswith('LOD') and nm[3:4].isdigit(): lod = int(nm[3])
+            if 'mesh' in n and lod == 0:
+                for pr in j['meshes'][n['mesh']]['primitives']:
+                    if not mats[pr.get('material', 0)].startswith('deck'): continue
+                    P = acc(pr['attributes']['POSITION']).astype(np.float64); P = (Mi[:3, :3] @ P.T).T + Mi[:3, 3]
+                    T = P[acc(pr['indices']).ravel().astype(np.int64).reshape(-1, 3)]
+                    nn = np.cross(T[:, 1] - T[:, 0], T[:, 2] - T[:, 0]); up = nn[:, 1] / (np.linalg.norm(nn, axis=1) + 1e-12) > 0.9
+                    out.append(T[up])
+            for c in n.get('children', []): walk(c, Mi, lod)
+        for r in j['scenes'][j.get('scene', 0)]['nodes']: walk(r, np.eye(4), None)
+        if out:
+            tris = np.concatenate(out)
+            foot.append(unary_union([Polygon(t[:, [0, 2]]).buffer(0.01) for t in tris]))
+    return unary_union(foot), tris, 'data/sfo_landside.json roads + data/buildings3d/roadways.glb LOD0 deck tops (%d)' % len(tris)
+
+
+def pier_conflict(x, z, w, d, h, obs, cols=None):
+    """None if a pier at (x, z) (deck bottom h above grade, deck width w, guideway direction d) is clear of the roads, else the
+    reason: 'column' (a column + PIER_ROAD_CLEAR on a carriageway / deck) or 'cap' (cap underside < CAP_ROAD_CLEAR over a deck).
+    cols: column offsets across the guideway (None: one column on the centre line, the T-pier; else a straddle bent whose cap
+    beam spans the columns)."""
+    foot_p, tris, lo, hi = obs
+    D_ = PIER_D if w < 8.0 else 2.4
+    dl = np.array(d, float) / (np.linalg.norm(d) + 1e-12); n = np.array([-dl[1], dl[0]]); p = np.array([x, z], float)
+    for o in (cols or [0.0]):
+        if foot_p.intersects(Point(*(p + n * o)).buffer(D_ / 2 + PIER_ROAD_CLEAR, 16)): return 'column'
+    if len(tris):
+        a0, a1 = (-max(D_ + 0.6, w - 0.8) / 2, max(D_ + 0.6, w - 0.8) / 2) if not cols else (min(cols) - D_ / 2 - 0.3, max(cols) + D_ / 2 + 0.3)
+        cap = Polygon([tuple(p + n * a + dl * c * 1.0) for a, c in ((a0, -1), (a1, -1), (a1, 1), (a0, 1))])
+        x0, z0, x1, z1 = cap.bounds
+        m = (hi[:, 0] > x0) & (lo[:, 0] < x1) & (hi[:, 1] > z0) & (lo[:, 1] < z1)
+        zc = h - CAP_D
+        for t in tris[m]:
+            top = float(t[:, 1].max()) - 3.0                        # GROUND_Y 3.0
+            if zc - top < CAP_ROAD_CLEAR and Polygon(t[:, [0, 2]]).buffer(0).intersects(cap): return 'cap'
+    return None
+
+
+STRADDLE_MAX = 18.0   # straddle-bent column offset limit from the guideway centre line [inf: ~36-m cap beams over a carriageway]
+
+
+def straddle_cols(x, z, w, d, h, obs):
+    """a straddle bent where a T-pier column would stand on a road: the nearest clear column position on each side of the
+    guideway (0.5-m steps, between the deck edge and STRADDLE_MAX), whose cap beam clears every deck under it; None if none."""
+    D_ = PIER_D if w < 8.0 else 2.4
+    out = []
+    for side in (-1.0, 1.0):
+        hit = None
+        for o in np.arange(w / 2 + D_ / 2 + 0.3, STRADDLE_MAX + 1e-6, 0.5):
+            if pier_conflict(x, z, w, d, h, obs, cols=[side * o]) is None: hit = side * o; break
+        if hit is None: return None
+        out.append(float(hit))
+    return out if pier_conflict(x, z, w, d, h, obs, cols=out) is None else None
+
+
 def pier(mb, F, site, lev, sides=10, cap_box=True):
-    """single-column T-pier: column from grade to the cap, cap beam across the deck under its bottom."""
+    """single-column T-pier: column from grade to the cap, cap beam across the deck under its bottom; or (close-out r3) a
+    straddle bent: site['cols'] columns off the centre line and a cap beam spanning them under the deck."""
     x, z, w, d = site['x'], site['z'], site['w'], site['dir']
     h = float(lev.h(x, z)) - DECK_T
     if h < 3.0: return
     c = F.L(x, z)
     D_ = PIER_D if w < 8.0 else 2.4
     zc = h - CAP_D
+    dl = np.array([d[0], -d[1]])            # world dir -> local XY (z south -> Y north)
+    n = np.array([dl[1], -dl[0]])
+    cols = site.get('cols')
+    if cols:
+        # local n = world (-d1, d0)? world n = (-d[1], d[0]) -> local (wx, -wz) = (-d[1], -d[0])
+        nl = np.array([-d[1], -d[0]])
+        for o in cols:
+            q = (c[0] + nl[0] * o, c[1] + nl[1] * o)
+            tube(mb, [(q[0], q[1], 0.0), (q[0], q[1], zc + 0.05)], D_ / 2, sides, 'guideway', tile=3.0)
+        mid = np.array(c) + nl * 0.5 * (cols[0] + cols[1])
+        L = abs(cols[1] - cols[0]) + D_ + 0.6
+        boxm(mb, mid, nl, L, 2.0, (zc, h - 0.02), 'guideway', (4.0, 4.0), top=True, bottom=True)
+        return
     tube(mb, [(c[0], c[1], 0.0), (c[0], c[1], zc + 0.05)], D_ / 2, sides, 'guideway', tile=3.0)
     if cap_box:
-        dl = np.array([d[0], -d[1]])            # world dir -> local XY (z south -> Y north)
-        n = np.array([dl[1], -dl[0]])
         boxm(mb, c, n, max(D_ + 0.6, w - 0.8), 2.0, (zc, h - 0.02), 'guideway', (4.0, 4.0), top=False, bottom=True)
 
 
@@ -684,6 +792,10 @@ def build(clip_world, building_outlines, Bldg, Part, dim, station_exclude=None, 
     sites = []
     blocked = unary_union(building_outlines + [clip]).buffer(1.5)
     pts_all = np.c_[px, pz]
+    # close-out r3 (buildings-3): the road test (road_obstacles / pier_conflict); rejected sites do not reserve their slot
+    rfoot, rtris, rsrc = road_obstacles()
+    obs = (shapely.prepared.prep(rfoot), rtris, rtris[:, :, [0, 2]].min(1) if len(rtris) else None, rtris[:, :, [0, 2]].max(1) if len(rtris) else None)
+    rejected = dict(column=0, cap=0, straddle=0)
     for i in order:
         gx, gz = int(px[i] // PIER_DX), int(pz[i] // PIER_DX)
         ok = True
@@ -694,17 +806,31 @@ def build(clip_world, building_outlines, Bldg, Part, dim, station_exclude=None, 
                 if not ok: break
             if not ok: break
         if not ok: continue
-        taken.setdefault((gx, gz), []).append((px[i], pz[i]))
-        if blocked.contains(Point(px[i], pz[i])): continue
+        if blocked.contains(Point(px[i], pz[i])):
+            taken.setdefault((gx, gz), []).append((px[i], pz[i])); continue      # (as before r3: a building-held stretch keeps its slot)
         w = 2.0 * float(lev.dt[yy[i], xx[i]])
         near = pts_all[(np.abs(pts_all[:, 0] - px[i]) < 8) & (np.abs(pts_all[:, 1] - pz[i]) < 8)]
-        if len(near) < 3: continue
+        if len(near) < 3:
+            taken.setdefault((gx, gz), []).append((px[i], pz[i])); continue
         u, s_, vt = np.linalg.svd(near - near.mean(0)); d = vt[0]
+        h_ = float(lev.h(px[i], pz[i])) - DECK_T
+        if h_ >= 3.0:
+            why = pier_conflict(float(px[i]), float(pz[i]), w, (float(d[0]), float(d[1])), h_, obs)
+            if why == 'column':
+                cols = straddle_cols(float(px[i]), float(pz[i]), w, (float(d[0]), float(d[1])), h_, obs)
+                if cols:
+                    taken.setdefault((gx, gz), []).append((px[i], pz[i]))
+                    sites.append(dict(x=float(px[i]), z=float(pz[i]), w=w, dir=(float(d[0]), float(d[1])), cols=cols)); rejected['straddle'] += 1
+                    continue
+            if why: rejected[why] += 1; continue
+        taken.setdefault((gx, gz), []).append((px[i], pz[i]))
         sites.append(dict(x=float(px[i]), z=float(pz[i]), w=w, dir=(float(d[0]), float(d[1]))))
     # tiles
     x0, z0, x1, z1 = region.bounds
     tiles = []
     info = dict(max_grade=round(lev.max_grade(), 4), piers=0, stations=[], tiles=0, clip_area_m2=round(RAIL.intersection(clip).area, 1),
+                pier_road_test=dict(source=rsrc, rejected_candidates=rejected, column_clear_m=PIER_ROAD_CLEAR, cap_clear_m=CAP_ROAD_CLEAR,
+                                    sites=[[round(s_['x'], 2), round(s_['z'], 2)] + ([round(v, 2) for v in s_['cols']] if s_.get('cols') else []) for s_ in sites]),
                 anchors={k: dict(level=(round(v[1], 2) if v[1] is not None else None), tag=v[2], note=v[3]) for k, v in STATIONS.items()})
     st_keys = [k for k, v in STATIONS.items() if v[4]]
     st_done = set()

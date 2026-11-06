@@ -8,7 +8,9 @@ dominate, see landside_naip_measure.py) -> the car axis. 90-degree stalls on 18.
 except the Rental Car Center (nose-to-tail ready-return lanes [obs NAIP]). Which stalls are taken is random (seeded):
 NAIP gives counts and axes, not positions [inf] - except the central garage (round 1): its dark / coloured cars stand at their
 NAIP 2024 blob positions (landside_r1_obs.json cg_roof.cars [obs]; blob colours un-mixed against the deck, deck['unmix']), white / silver ones are added next to them by fleet share. Colours: US fleet shares, white 25 / black 22 / grey 19 / silver 12 /
-blue 10 / red 9 / other 3 % (industry surveys) [inf]; shapes 60 % sedan / 40 % SUV [inf].
+blue 10 / red 9 / other 3 % (industry surveys) [inf]; shapes 45 % sedan / 40 % SUV / 15 % pickup [inf] (close-out r3, buildings-9:
+a third shape, the pickup with its open bed; and at LOD0 four wheels under the dark skirt - review r1 finding 4: 'boxes without
+wheels, two shapes').
 """
 import math
 
@@ -21,7 +23,10 @@ from landside_mesh import MB
 
 COLOURS = [('white', (226, 228, 228), 0.25), ('black', (22, 23, 25), 0.22), ('grey', (96, 99, 103), 0.19),
            ('silver', (168, 172, 176), 0.12), ('blue', (34, 58, 104), 0.10), ('red', (132, 22, 24), 0.09), ('beige', (156, 140, 112), 0.03)]
-SHAPES = [('sedan', 4.75, 1.84, 1.45, 0.60), ('suv', 4.85, 1.95, 1.75, 0.40)]    # name, length, width, height, share [inf]
+SHAPES = [('sedan', 4.75, 1.84, 1.45, 0.45), ('suv', 4.85, 1.95, 1.75, 0.40), ('pickup', 5.50, 1.95, 1.85, 0.15)]   # name, length,
+#   width, height, share [inf]; widths <= 1.95 m (verify_landside: stall spacing 2.1 m); pickup = a mid / full-size crew cab average
+WHEEL = {'sedan': (0.33, 0.95), 'suv': (0.37, 0.98), 'pickup': (0.40, 1.05)}   # tyre radius, axle inset from the bumper [inf]
+WHEEL_W = 0.24                                                                  # tyre width [inf]
 
 
 def car_mesh(shape, lod=0):
@@ -41,7 +46,7 @@ def car_mesh(shape, lod=0):
         if lod == 0:
             mb.quad_wall((a[0] * 0.97, a[1] * 0.97), (b[0] * 0.97, b[1] * 0.97), 0.0, zb, 0.0, zb, 'car_dark', 0, (1, 1))
     # cabin (glass house): a frustum from the shoulder to the roof, roof shorter and narrower; bonnet / boot caps
-    fx0, fx1 = (-1.25, 1.05) if nm == 'sedan' else (-2.0, 1.25)          # cabin footprint along x at the shoulder
+    fx0, fx1 = {'sedan': (-1.25, 1.05), 'suv': (-2.0, 1.25), 'pickup': (-0.75, 1.20)}[nm]   # cabin footprint along x at the shoulder
     rx0, rx1 = (fx0 + 0.45, fx1 - 0.65) if nm == 'sedan' else (fx0 + 0.15, fx1 - 0.45)
     sw, rw = hw - 0.08, hw - 0.22
     lo = [(fx1, -sw), (fx1, sw), (fx0, sw), (fx0, -sw)]
@@ -54,7 +59,19 @@ def car_mesh(shape, lod=0):
     import shapely.geometry as sg
     from landside_mesh import cap
     deck = sg.Polygon(plan).difference(sg.Polygon(lo).buffer(0.0))
-    cap(mb, deck, zs, 'paint', 1.0)
+    if nm == 'pickup':
+        # the open bed behind the cab: a dark bed liner 0.45 m below the rails (rails = the shoulder line), bonnet in paint
+        bed = deck.intersection(sg.box(-hl - 1, -hw - 1, fx0 - 0.08, hw + 1)).buffer(-0.12, join_style=2)
+        cap(mb, deck.difference(bed), zs, 'paint', 1.0)
+        if not bed.is_empty:
+            cap(mb, bed, zs - 0.45, 'car_dark', 1.0)
+            br = list(bed.exterior.coords)[:-1]
+            if _area(br) < 0: br = br[::-1]
+            for i in range(len(br)):                        # bed walls, facing into the bed (inward of the ring)
+                a, b = br[i], br[(i + 1) % len(br)]
+                mb.quad_wall(b, a, zs - 0.45, zs, zs - 0.45, zs, 'paint', 0, (1, 1))
+    else:
+        cap(mb, deck, zs, 'paint', 1.0)
     # the car is convex in section: every face must point away from the body centre (single-sided materials)
     c = np.array([0.0, 0.0, 0.5 * H])
     for i, f in enumerate(mb.F):
@@ -62,9 +79,36 @@ def car_mesh(shape, lod=0):
         n = np.zeros(3)
         for a in range(len(P)):
             n += np.cross(P[a], P[(a + 1) % len(P)])
+        inner_bed = nm == 'pickup' and P[:, 2].min() >= zs - 0.46 and P[:, 2].max() <= zs + 1e-6 and P[:, 0].max() < fx0 + 1e-6
+        if inner_bed: continue                              # the bed walls / liner face into the bed (built that way)
         if float(n @ (P.mean(0) - c)) < 0:
             mb.F[i] = f[::-1]; mb.UV[i] = mb.UV[i][::-1]
+    if lod == 0:
+        # close-out r3 (buildings-9): the wheels - one 6-sided axle prism per axle spanning the track (ends 0.03 m inside the body
+        # side), so only the tyres show: their faces outside the skirt (inset 3 %) and below the body bottom; 40 triangles per car
+        # (1,737 instances: ~70k instanced triangles at LOD0, none at LOD1 / LOD2); built after the convex fix-up, wound outwards
+        r, inset = WHEEL[nm]
+        for ax in (hl - inset, -hl + inset):
+            _wheel(mb, ax, 0.0, r, 2.0 * (hw - 0.03), n=6)
     return mb
+
+
+def _wheel(mb, x0, y0, r, w, n=8):
+    """tyre: an n-sided prism around the y axis at (x0, y0, r): tread quads + two side caps, all facing outwards."""
+    ang = [2 * math.pi * (k + 0.5) / n for k in range(n)]
+    ring = [(x0 + r * math.cos(a), r + r * math.sin(a)) for a in ang]       # (x, z) around the axle
+    ya, yb = y0 - w / 2, y0 + w / 2
+    c = np.array([x0, y0, r])
+    def add(pts, uv):
+        P = np.array(pts); nn = np.zeros(3)
+        for a in range(len(P)): nn += np.cross(P[a], P[(a + 1) % len(P)])
+        if float(nn @ (P.mean(0) - c)) < 0: pts = pts[::-1]; uv = uv[::-1]
+        mb.face(pts, 'car_dark', uv)
+    for k in range(n):
+        (xa, za), (xb, zb) = ring[k], ring[(k + 1) % n]
+        add([(xa, ya, za), (xb, ya, zb), (xb, yb, zb), (xa, yb, za)], [(0, 0), (1, 0), (1, 1), (0, 1)])
+    for yy in (ya, yb):
+        add([(x, yy, z) for x, z in ring], [(0.5 + 0.5 * math.cos(a), 0.5 + 0.5 * math.sin(a)) for a in ang])
 
 
 def _area(r):

@@ -7,10 +7,13 @@ docs/research/buildings_landside.md section 14) and tools/buildings/landside_nai
 Footprints are the SFO Museum polygons (data/sfo_airport.json); the United MOC has none (imaged NAIP roof corners, relief
 NOT removed, are drawn instead).
 """
+import os
+import sys
+
 import numpy as np
 
 import draw_data as D
-from draw_lib import Sheet, FT, hdg_vec, unit
+from draw_lib import Sheet, FT, ROOT, hdg_vec, unit
 from draw_tower import draw_dev
 
 LV = D.LV
@@ -396,6 +399,41 @@ def garage_elev(V, x0, k, title):
     V.text((x0 + L / 2, -9), title, 'pub', fs=4.6, weight='bold', bg=False, color='#000000', style='normal')
 
 
+def _gar_r2(k):
+    """the 3-D (review r2) garage heights: photo a2 with its solved camera (tools/blender/landside_geom.GAR_R2; the absolute scale
+    rests on the Grand Hyatt top 44 m [inf]) - imported lazily (landside_geom imports this module)."""
+    try:
+        sys.path.insert(0, os.path.join(ROOT, 'tools', 'blender'))
+        import landside_geom as LG
+        return dict(LG.GAR_R2.get(k, {}))
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def garage_r3(V, x0, k):
+    """close-out r3 (buildings-10): draw the 3-D state of the garage over the round-1 sheet: the a2 parapet / deck / level pitch /
+    drum ring (solid, [obs a2]) and the NAIP lean-model alternative, with the reading adopted (the sheet is the reference again)."""
+    r2 = _gar_r2(k)
+    if not r2: return
+    g = GAR[k]; G = ggeom(k); Lb, uc, R = G['Lb'], G['uc'], G['R']
+    par, deck, ring, pitch = r2['parapet'], r2['deck'], r2['ring'], r2['pitch']
+    V.poly([(x0, 0), (x0 + Lb, 0), (x0 + Lb, par), (x0, par)], 'obs', fc='none', lw=1.1, z=3.6)
+    for i in range(1, 9):
+        V.line([(x0, i * pitch), (x0 + Lb, i * pitch)], 'obs' if k == 'garage_a' else 'inf', lw=0.25, z=3.55, color='#3c6e8f')
+    V.line([(x0 + uc - R, ring), (x0 + uc + R, ring)], 'obs', lw=1.0, z=3.6)
+    lean = float(D.lean_frame(np.asarray(LB[k]['footprint']['min_rect']['centre'], float), ring)[0]) / ring
+    band = 13.25 if k == 'garage_a' else 12.00
+    ncol = 9 if k == 'garage_a' else 4
+    V.leader((x0 + Lb * 0.30, par), -2, 30 if k == 'garage_a' else 26,
+             f'3-D STATE (review r2, close-out r3): parapet {par:.2f} m, roof deck (L9 = 8 x {pitch:.2f} m) {deck:.2f} m, drum ring {ring:.2f} m '
+             f'[obs photo a2, solved camera, {ncol} parapet columns;\nabsolute scale: Grand Hyatt top 44 m [inf, 40-48 -> -/+2.4 m]] - '
+             f'SUPERSEDES the {g["drum"]} m NAIP drum-ring reading (dotted body).\nLean-model conflict, resolved [inf]: the NAIP drum band lies {band:.2f} m E of the outline '
+             f'arc; the NAIP frame model (spec naip.k_model,\nITB poles) gives {lean:.3f} m/m here -> {band / lean:.1f} m if the band were pure relief; that needs a Hyatt '
+             f'of ~{44 * band / lean / ring:.0f} m (outside 40-48).\nAdopted: the a2 height, the band = relief {lean * ring:.1f} m + {band - lean * ring:.1f} m '
+             "between the SFO Museum outline arc and the ring's outer edge [inf]; the Hyatt height (owner item OD-6) decides",
+             'obs', fs=3.2, ha='left')
+
+
 def garage_west_end(V, xe, k):
     """Garage A west end (helix drum face), looking ENE: x = xe + (half - b), i.e. NNW on the left, SSE on the right."""
     g = GAR[k]; G = ggeom(k); hd = g['drum']; h7 = hd * 6 / 8; half, R, bc = G['half'], G['R'], G['bc']
@@ -595,10 +633,12 @@ def sheet_elev():
     cg_stations(V1, x)
     x = W + 40
     garage_elev(V1, x, 'garage_a', 'INTERNATIONAL GARAGE A (Bldg 95), SSE face, looking NNW')
+    garage_r3(V1, x, 'garage_a')
     garage_west_end(V1, x + L('garage_a') + 13, 'garage_a')
     V2 = S.view(0, 2 * rowh + 8, S.vw, rowh - 6, 1000, (300, 22), kind='elev', frame=False, title='2  GARAGE G, GRAND HYATT, CONSOLIDATED ADMINISTRATION CAMPUS')
     x = 0; W = L('garage_g')
     garage_elev(V2, x, 'garage_g', 'INTERNATIONAL GARAGE G (Bldg 495), SSE face, looking NNW')
+    garage_r3(V2, x, 'garage_g')
     x = W + 40; W = L('grand_hyatt')
     massing(V2, x, W, 'GRAND HYATT AT SFO (Bldg 55), east (airfield) face', [('band', 40, 48, '#f3d9bf')])
     hyatt_elev(V2, x, W)

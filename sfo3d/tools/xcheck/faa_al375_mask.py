@@ -21,6 +21,15 @@ Method:
      band, text, lines: unknown). Controls: the retired F1 polygons (white expected), the relocated W (grey expected);
   5. the white (no pavement) chart regions touching the old-J remainder corridor (+-CORRIDOR m), opened by 2 px (thin
      white gaps between text strokes are not regions), as world polygons.
+Close-out round 3 (2026-11-06, findings static-3 / static-4):
+  * the crop round the corridor is 120 m wide (was 40 m, which cut the island off at the north painted island); the
+    island is written whole (`white_polys`, `white_touches_crop` says whether it still reaches the crop edge);
+  * per retired SFO Museum 'Taxiway F1' polygon (`f1_parts`): the chart's grey (pavement, 180-230; closed by 3 px so
+    letter strokes inside a grey area stay grey, opened by 2 px, >= 30 m2) regions inside the part of it that no other
+    SFO Museum taxiway / runway polygon covers (`grey_polys`): the builder keeps them paved and retires the rest (white =
+    no pavement; black chart lines / text = unknown, not paved on their own); a polygon with less than F1_GREY_KEEP_M2
+    of them is retired whole (round-2 verifier: F1 #2 is 40 % grey - the taxiway F fillet at the runway, on no other
+    paved source).
 Usage: python3 tools/xcheck/faa_al375_mask.py
 """
 import hashlib, itertools, json, os, subprocess, sys
@@ -45,6 +54,8 @@ CORRIDOR = 12.0          # m: half width of the old-J remainder corridor (taxiwa
 OSM_BASE = os.path.join(ROOT, 'refs', 'cache', 'osm', 'overpass_ksfo_at_20260924T090742Z.json')
 OSM_UPD = os.path.join(ROOT, 'refs', 'cache', 'osm', 'overpass_ksfo_aeroway_at_20261104T180000Z.json')
 OLD_J, NEW_J, NEW_W = 155476380, 1562117374, 1562117372
+CROP_M = 120.0           # round 3: crop round the corridor for the island (40 m cut the island at the north painted island)
+F1_GREY_KEEP_M2 = 50.0   # round 3: an F1 polygon with less chart-grey area than this off other SFO Museum pavement is retired whole
 
 
 def ways(fn):
@@ -128,30 +139,68 @@ def main():
     for t in A['taxiways']:
         if t['name'] == 'Taxiway F1':
             for i, p in enumerate(t['polys']): controls['Taxiway F1 #%d (retired)' % i] = chart_class(Polygon(p[0], p[1:]).buffer(0))
-    # white chart regions touching the corridor -> world polygons
-    x0, z0, x1, z1 = corr.buffer(40).bounds
-    cs = np.array([to_px(c) for c in ((x0, z0), (x1, z0), (x1, z1), (x0, z1))])
-    c0, r0 = np.floor(cs.min(0)).astype(int); c1, r1 = np.ceil(cs.max(0)).astype(int)
-    white = (g[r0:r1, c0:c1] > 240).astype(np.uint8)
-    white = cv2.morphologyEx(white, cv2.MORPH_OPEN, np.ones((5, 5), np.uint8))
-    cnts, _ = cv2.findContours(white, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    polys = []
-    for c in cnts:
-        if len(c) < 3: continue
-        pts = [tuple((np.array([p[0][0] + c0, p[0][1] + r0, 1.0]) @ Minv.T)[:2]) for p in c]
-        pg = Polygon(pts).buffer(0)
-        if pg.is_empty or not pg.intersects(corr): continue
-        polys.append(pg)
-    wu = unary_union(polys) if polys else Polygon()
+    # white chart regions touching a world geometry -> world polygons (opened by 2 px: thin white gaps between text
+    # strokes are not regions); also whether a kept region reaches the crop edge (then it is cut off)
+    def white_regions(geom, crop_m, min_m2=0.0):
+        x0, z0, x1, z1 = geom.buffer(crop_m).bounds
+        cs = np.array([to_px(c) for c in ((x0, z0), (x1, z0), (x1, z1), (x0, z1))])
+        c0, r0 = np.floor(cs.min(0)).astype(int); c1, r1 = np.ceil(cs.max(0)).astype(int)
+        white = (g[r0:r1, c0:c1] > 240).astype(np.uint8)
+        white = cv2.morphologyEx(white, cv2.MORPH_OPEN, np.ones((5, 5), np.uint8))
+        cnts, _ = cv2.findContours(white, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        polys, touch = [], False
+        for c in cnts:
+            if len(c) < 3: continue
+            pts = [tuple((np.array([p[0][0] + c0, p[0][1] + r0, 1.0]) @ Minv.T)[:2]) for p in c]
+            pg = Polygon(pts).buffer(0)
+            if pg.is_empty or not pg.intersects(geom) or pg.area < min_m2: continue
+            xs, ys = c[:, 0, 0], c[:, 0, 1]
+            touch |= bool(xs.min() <= 0 or ys.min() <= 0 or xs.max() >= c1 - c0 - 1 or ys.max() >= r1 - r0 - 1)
+            polys.append(pg)
+        return (unary_union(polys) if polys else Polygon()), touch
+    wu, touch = white_regions(corr, CROP_M)
+    # round 3 (finding static-4): the white / grey parts of the three retired F1 polygons
+    other = unary_union([Polygon(p[0], p[1:]).buffer(0) for k in ('taxiways', 'runways') for t in A[k] for p in t['polys']
+                         if not (k == 'taxiways' and t['name'] == 'Taxiway F1')])
+    def grey_regions(geom, crop_m=20.0, min_m2=30.0):
+        """the chart's grey (pavement) regions inside geom: grey 180-230 closed by 3 px (letter strokes / thin black lines
+        inside a grey area stay pavement), opened by 2 px, components >= min_m2"""
+        x0, z0, x1, z1 = geom.buffer(crop_m).bounds
+        cs = np.array([to_px(c) for c in ((x0, z0), (x1, z0), (x1, z1), (x0, z1))])
+        c0, r0 = np.floor(cs.min(0)).astype(int); c1, r1 = np.ceil(cs.max(0)).astype(int)
+        sub = g[r0:r1, c0:c1]; gr = ((sub >= 180) & (sub <= 230)).astype(np.uint8)
+        gr = cv2.morphologyEx(gr, cv2.MORPH_CLOSE, np.ones((7, 7), np.uint8)) & (sub <= 240).astype(np.uint8)
+        gr = cv2.morphologyEx(gr, cv2.MORPH_OPEN, np.ones((5, 5), np.uint8))
+        cnts, _ = cv2.findContours(gr, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE); polys = []
+        for c in cnts:
+            if len(c) < 3: continue
+            pg = Polygon([tuple((np.array([q[0][0] + c0, q[0][1] + r0, 1.0]) @ Minv.T)[:2]) for q in c]).buffer(0).intersection(geom)
+            for q in getattr(pg, 'geoms', [pg]):
+                if q.geom_type == 'Polygon' and q.area >= min_m2: polys.append(q)
+        return unary_union(polys) if polys else Polygon()
+    f1 = {}
+    for t in A['taxiways']:
+        if t['name'] != 'Taxiway F1': continue
+        for i, p in enumerate(t['polys']):
+            pg = Polygon(p[0], p[1:]).buffer(0); off = pg.difference(other)
+            gk = grey_regions(off); wr, _ = white_regions(pg, 20.0, 20.0)
+            f1[str(i)] = {'area_m2': round(pg.area), 'chart_classes': controls['Taxiway F1 #%d (retired)' % i],
+                          'white_m2': round(wr.intersection(pg).area), 'grey_kept_m2': round(gk.area),
+                          'retire': 'whole' if gk.area < F1_GREY_KEEP_M2 else 'all but the chart-grey part',
+                          'grey_polys': [[[round(x, 2), round(z, 2)] for x, z in q.exterior.coords] for q in getattr(gk, 'geoms', [gk])
+                                         if q.geom_type == 'Polygon' and not q.is_empty]}
     out = {'source': 'FAA AL-375 (SFO) airport diagram, cycle 2611 (refs/cache/faa/00375ad_2611.pdf), page 1 at %d dpi' % DPI,
            'pdf_sha256': hashlib.sha256(open(PDF, 'rb').read()).hexdigest(), 'licence': 'US Government work, public domain',
            'tool': 'tools/xcheck/faa_al375_mask.py', 'registration': diag,
            'old_j_remainder': [[round(x, 2), round(z, 2)] for x, z in rest.coords], 'corridor_m': CORRIDOR,
            'chart_classes': controls,
-           'white_in_corridor_m2': round(wu.intersection(corr).area),
-           'white_polys': [[[round(x, 2), round(z, 2)] for x, z in p.exterior.coords] for p in getattr(wu, 'geoms', [wu]) if not p.is_empty]}
+           'white_in_corridor_m2': round(wu.intersection(corr).area), 'crop_m': CROP_M, 'white_touches_crop': touch,
+           'white_m2': round(wu.area),
+           'white_polys': [[[round(x, 2), round(z, 2)] for x, z in p.exterior.coords] for p in getattr(wu, 'geoms', [wu]) if not p.is_empty],
+           'f1_grey_keep_m2': F1_GREY_KEEP_M2, 'f1_parts': f1}
     json.dump(out, open(OUT, 'w'), indent=1)
-    print(json.dumps({k: v for k, v in out.items() if k not in ('white_polys', 'old_j_remainder')}, indent=1))
+    print(json.dumps({k: v for k, v in out.items() if k not in ('white_polys', 'old_j_remainder', 'f1_parts')}, indent=1))
+    print('F1:', {k: {kk: vv for kk, vv in v.items() if kk != 'grey_polys'} for k, v in f1.items()})
     print('white polygons %d, wrote %s' % (len(out['white_polys']), os.path.relpath(OUT, ROOT)))
 
 

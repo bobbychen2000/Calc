@@ -21,7 +21,8 @@ Outputs data/sfo_details.json (+ debug PNGs in out/details/):
   centerlineRetired / osmBase   OSM ways / NAIP traces retired by OSM_UPDATES, and the pinned OSM base + update extract
   pavementRetired  SFO Museum taxiway polygons that no longer exist (PAVEMENT_RETIRE, with evidence): skipped by the app
   pavementRetiredParts  round 3: PARTS of SFO Museum taxiway polygons that no longer exist ({layer, name, poly, ring, why};
-                 the old-J remainder, FAA AL-375 2611): the app masks the ring out of the pavement
+                 close-out round 3: the non-grey parts of the F1 polygons #0 / #2 on FAA AL-375 2611): the app masks the
+                 ring out of the pavement
 Static close-out (2026-11-04): the OSM base is pinned (database 2026-09-24T09:07:42Z, tools/xcheck/fetch_osm.py); later OSM
 edits enter only through OSM_UPDATES (relocated W + its inferred holds, the 10L/28R / 10R/28L crossing arcs); edges reject
 white paint and the runway edge zone; polyline hygiene (cusps, back-tracks, spikes, loops); `drawn` per stretch.
@@ -30,6 +31,9 @@ not pave it), the companion edits of changeset 189525528 (J re-mapped, J / two c
 split where NAIP shows no paint over >= 16 m, short hooks are removed, and the on-runway arcs need b* >= 12 paint.
 Round 3 (2026-11-05): edge pieces left by the cut that are mostly hold-bar zone or short without paint are dropped; the
 old-J remainder's pavement is retired where FAA AL-375 2611 shows an island (pavementRetiredParts).
+Close-out round 3 (2026-11-06): the old-J island is no longer retired (one paved island; its former taxi surface carries
+inferred green paint, tools/imagery/paint_pave_naip.py); F1 #0 / #2 keep their chart-grey parts (pavementRetiredParts =
+the rest); isolated short edge pieces (< 15 m, no other edge within 10 m, at most half of their samples painted) dropped.
 World frame (matches js/geo.js): x = east, z = south (m), origin = ARP; projection/datum from tools/geo_frame.py
 (exact GRS80 local tangent plane, NAD83(2011)). The ADS-B snapshot (WGS 84) is used only for the debug image (review round 3).
 Also writes data/sfo_details.js (the same JSON as an ES module).
@@ -67,9 +71,20 @@ def newmask(): return np.zeros((H, W), np.uint8)
 # 65-69 deg), and no pavement between F and that band where F1 lay. NAIP 2024 predates the rebuild. So the F1 polygons are
 # retired: no edge lines along them (here) and not paved (js/live/airport.js skips `pavementRetired`). The junction polygons
 # 'Taxiway B/A/F1' and 'Taxiway F/F1/L' are part of A / B and F / L and stay.
-PAVEMENT_RETIRE = {('Taxiway F1', i): 'old W / F1 crossing of 1L / 1R (%s): FAA AL-375 cycle 2611 shows no pavement there (one crossing, '
-                                       'at the relocated W); OSM changeset 189525528 deleted the old W; ADS-B 4 Nov 2026: no aircraft along it'
-                                       % part for i, part in enumerate(('between the runways', 'west of 1L', 'east of 1R'))}
+_FAA_J = json.load(open(os.path.join(ROOT, 'refs', 'cache', 'faa', 'al375_2611_oldJ.json')))
+from shapely.geometry import Polygon as _SPolyR, LineString as _SLSR
+from shapely.ops import unary_union as _suuR
+_F1_PART = ('between the runways', 'west of 1L', 'east of 1R')
+# close-out round 3 (2026-11-06, finding static-4): F1 #2 is 40 % chart-grey (the taxiway F fillet at the runway, on no
+# other paved source) and F1 #0 has a 182 m2 grey corner, so a polygon is retired WHOLE only where the chart shows less
+# than 50 m2 of pavement in it (F1 #1: 0 m2); otherwise only its non-grey part is retired (pavementRetiredParts) and the
+# chart-grey part stays paved (tools/xcheck/faa_al375_mask.py f1_parts: grey 180-230 closed 3 px / opened 2 px, >= 30 m2,
+# off other SFO Museum pavement). Controls (chart classes, all three): #0 grey 3.4 % / white 89.4 %, #1 0.1 / 91.4 %,
+# #2 40.0 / 43.9 %.
+PAVEMENT_RETIRE = {('Taxiway F1', int(i)): 'old W / F1 crossing of 1L / 1R (%s): FAA AL-375 cycle 2611 shows no pavement there (one crossing, '
+                                            'at the relocated W; chart grey %d m2 of %d m2); OSM changeset 189525528 deleted the old W; ADS-B '
+                                            '4 Nov 2026: no aircraft along it' % (_F1_PART[int(i)], f['grey_kept_m2'], f['area_m2'])
+                   for i, f in _FAA_J['f1_parts'].items() if f['retire'] == 'whole'}
 PAVEMENT_RETIRED = []
 for _t in D['taxiways']:
     for _i, _poly in enumerate(_t['polys']):
@@ -79,34 +94,34 @@ for _t in D['taxiways']:
                                      'why': PAVEMENT_RETIRE[(_t['name'], _i)]})
 assert len(PAVEMENT_RETIRED) == len(PAVEMENT_RETIRE), 'SFO Museum polygons to retire not found: %s' % PAVEMENT_RETIRED
 def is_retired(t, i): return (t['name'], i) in PAVEMENT_RETIRE
-# ---- round 3 (2026-11-05, review static r2 v3): the western ~150 m of the old J 155476380 (deleted by the same changeset
-# 189525528; only its eastern 97 m were re-mapped as 1562117374) ran through the SFO Museum junction polygons 'Taxiway A/F1'
-# and 'Taxiway A/B/F' between the two green-painted islands west of the old W. On FAA AL-375 cycle 2611, registered on the
-# four runway-centreline crossings (tools/xcheck/faa_al375_mask.py -> refs/cache/faa/al375_2611_oldJ.json; same chart as
-# the F1 retirement), its corridor is a white island (no taxi surface): middle 60 % of the trace 61 % white / 27 % grey
-# (controls: retired F1 #0 / #1 89 / 91 % white, relocated W 2 % white); one island that also takes in the two painted
-# islands. ADS-B over all recorded hours: 0 ground fixes within 6 m of its middle (review r2). So the part of those
-# polygons inside the corridor (+-12 m) AND the chart's white region is retired (pavementRetiredParts: the app does not
-# pave it; no edge line may lie mostly inside it). INFERRED: whether the new island there is grass or green no-taxi paint
-# (like the two islands it joins) is not imaged (NAIP 2024 predates the rebuild); drawn unpaved like F1.
-_FAA_J = json.load(open(os.path.join(ROOT, 'refs', 'cache', 'faa', 'al375_2611_oldJ.json')))
-from shapely.geometry import Polygon as _SPolyR, LineString as _SLSR
-from shapely.ops import unary_union as _suuR
-_J_CORR = _SLSR(_FAA_J['old_j_remainder']).buffer(_FAA_J['corridor_m'], cap_style=2)
-_J_WHITE = _suuR([_SPolyR(q) for q in _FAA_J['white_polys']])
+# ---- round 3 (2026-11-05) -> close-out round 3 (2026-11-06, finding static-3): the western ~150 m of the old J 155476380
+# (deleted by changeset 189525528; only its eastern 97 m were re-mapped as 1562117374) ran through the SFO Museum junction
+# polygons 'Taxiway A/F1' / 'Taxiway A/B/F' between the two green-painted islands west of the old W. On FAA AL-375 2611
+# (tools/xcheck/faa_al375_mask.py) it lies in ONE white island (5,575 m2) that also takes in both painted islands - and the
+# chart draws painted (paved) islands white too, so white does not mean grass there. Round 3 had retired a +-12 m band
+# through that island (paved wedges either side) and said "ADS-B: no ground traffic"; the round-2 verifier found 36 ground
+# fixes inside the band from 4 airport-operations vehicles (OPS44, OPS12, OPS30, R69; 5-27 kt, OPS44 stopped ~40 s) and 0
+# aircraft. So the island is one surface: it stays PAVED, and its former taxi surface (the SFO Museum taxiway pavement
+# inside the chart island: the old-J band and its fillets) carries green no-taxi paint like the islands it joins -
+# INFERRED (NAIP 2024 predates the rebuild); written by tools/imagery/paint_pave_naip.py (sfo_paint src). Nothing of
+# the old J is retired any more.
+# Retired PARTS (pavementRetiredParts): the part of an F1 polygon that the chart does not show as pavement (static-4).
 PAVEMENT_RETIRED_PARTS = []
 for _t in D['taxiways']:
     for _i, _poly in enumerate(_t['polys']):
-        if is_retired(_t, _i): continue
-        _pt = _SPolyR(_poly[0], _poly[1:]).buffer(0).intersection(_J_CORR).intersection(_J_WHITE)
-        for _g in [g_ for g_ in getattr(_pt, 'geoms', [_pt]) if g_.geom_type == 'Polygon' and g_.area >= 50]:
+        _f = _FAA_J['f1_parts'].get(str(_i)) if _t['name'] == 'Taxiway F1' else None
+        if not _f or _f['retire'] == 'whole': continue
+        _keep = _suuR([_SPolyR(q).buffer(0) for q in _f['grey_polys']])
+        _pt = _SPolyR(_poly[0], _poly[1:]).buffer(0).difference(_keep.buffer(0.05))
+        for _g in [g_ for g_ in getattr(_pt, 'geoms', [_pt]) if g_.geom_type == 'Polygon' and g_.area >= 20]:
             PAVEMENT_RETIRED_PARTS.append({'layer': 'taxiways', 'name': _t['name'], 'id': _t.get('id'), 'poly': _i, 'area_m2': round(_g.area),
                                            'ring': [[round(x, 2), round(z, 2)] for x, z in _g.simplify(0.3).exterior.coords],
-                                           'why': 'western remainder of the old J 155476380 (deleted in OSM changeset 189525528): FAA AL-375 cycle 2611 '
-                                                  'shows an island (no taxi surface) there (refs/cache/faa/al375_2611_oldJ.json); ADS-B: no ground traffic '
-                                                  'along it; island surface (grass or green paint) inferred: unpaved'})
+                                           'why': 'old W / F1 crossing of 1L / 1R (%s): FAA AL-375 cycle 2611 shows no pavement here; the polygon\'s '
+                                                  'chart-grey part (%d m2, %s) stays paved (refs/cache/faa/al375_2611_oldJ.json f1_parts); ADS-B '
+                                                  '4 Nov 2026: no aircraft along it' % (_F1_PART[_i], _f['grey_kept_m2'],
+                                                                                          'the taxiway F fillet at the runway' if _i == 2 else 'its corner at the junction')})
 RETIRED_PART_U = _suuR([_SPolyR(r_['ring']) for r_ in PAVEMENT_RETIRED_PARTS]) if PAVEMENT_RETIRED_PARTS else None
-print('pavement retired parts', [(r_['name'], r_['poly'], r_['area_m2']) for r_ in PAVEMENT_RETIRED_PARTS])
+print('pavement retired', [(r_['name'], r_['poly'], r_['area_m2']) for r_ in PAVEMENT_RETIRED], 'parts', [(r_['name'], r_['poly'], r_['area_m2']) for r_ in PAVEMENT_RETIRED_PARTS])
 
 # ---------------------------------------------------------------- base masks
 TW = newmask()
@@ -143,6 +158,7 @@ apron = np.isin(lab, list(keep)).astype(np.uint8) & (1 - TC)
 apron = ndi.binary_opening(apron, iterations=3).astype(np.uint8)
 TW_ACT = newmask()       # round 2: active taxiway pavement (without PAVEMENT_RETIRE) - edges border unpaved ground of THIS
 for t in D['taxiways']: fillpolys(TW_ACT, [p for i, p in enumerate(t['polys']) if not is_retired(t, i)], holes=False)
+for r_ in PAVEMENT_RETIRED_PARTS: cv2.fillPoly(TW_ACT, [np.round(px(r_['ring']) * 16).astype(np.int32)], 0, lineType=cv2.LINE_8, shift=4)   # c3: retired parts
 PAVED = ((apron | TW_ACT | RW | REM) > 0).astype(np.uint8)
 print('apron px', apron.sum())
 
@@ -1086,15 +1102,38 @@ for e in edges:
     N_HYG[0] += len(parts_) - 1
     for k_, pl in enumerate(parts_):
         edges_out.append(pl); edge_meta.append(dict(m_, **({'part': '%d/%d' % (k_ + 1, len(parts_))} if len(parts_) > 1 else {})))
+# close-out round 3 (2026-11-06, finding static-7: edges 243 (537,-274) 9.0 m with 1 of 4 samples painted, 18.9 m from any
+# other edge; 327 (-570,-350) 4.7 m, 1 of 2, 42.5 m): an ISOLATED short piece - under EDGE_ISO_LEN m, no other edge within
+# EDGE_ISO_GAP m - whose painted share (yellow ridge within 1.5 m, measured on the piece) is at most one half is not drawn
+EDGE_ISO_LEN, EDGE_ISO_GAP, EDGE_ISO_PAINT = 15.0, 10.0, 0.5
+N_ISO = [0, 0.0]
+_els = [_SLS0([tuple(q) for q in e]) for e in edges_out]
+from shapely.strtree import STRtree as _STR0
+_etree = _STR0(_els); _drop = set()
+for k_, ls_ in enumerate(_els):
+    if ls_.length >= EDGE_ISO_LEN: continue
+    near_ = [j for j in _etree.query(ls_.buffer(EDGE_ISO_GAP)) if j != k_ and j not in _drop and _els[j].distance(ls_) < EDGE_ISO_GAP]
+    if near_: continue
+    Pp = densify(edges_out[k_], 1.0); Sp = arclen(Pp)
+    ssp = np.arange(1.0, Sp[-1] - 0.5, 2.0) if Sp[-1] > 3 else np.array([Sp[-1] / 2])
+    op = measure(Pp, Sp, tangents(Pp), ssp, avg=3.0, thr=0.7, skip=HOLD_ZONE, white_reject=True)
+    nm_ = int(np.sum(~np.isinf(op))); np_ = int(np.sum(np.isfinite(op) & (np.abs(np.where(np.isfinite(op), op, 0)) <= 1.5)))
+    if nm_ and np_ / nm_ <= EDGE_ISO_PAINT:
+        _drop.add(k_); N_ISO[0] += 1; N_ISO[1] += ls_.length
+        print('edge piece dropped (isolated, %.1f m, %d of %d samples painted) at %s' % (ls_.length, np_, nm_, [round(v, 1) for v in ls_.centroid.coords[0]]))
+_em = [m for m in edge_meta if m]
+edges_out = [e for k_, e in enumerate(edges_out) if k_ not in _drop]
+_EM_KEPT = [m for k_, m in enumerate(_em) if k_ not in _drop]
 EDGE_STATS = {'runs_outline': len(edges), 'runs_kept': len(edges_out), 'dropped_no_paint': sum(1 for m in edge_meta if m is None),   # (incl. round 4: weak paint and > 1 m off)
               'km_kept': round(sum(_plen(e) for e in edges_out) / 1000, 2),
               'white_reject_bstar_min': BSTAR_MIN, 'runway_zone_m': round(RWY_HW + 3.0, 2), 'runs_split_by_hygiene': N_HYG[0],
               'm_cut_unpainted': round(N_CUT[0]), 'unpainted_split_samples': EDGE_GAP,
               'fragments_dropped': {'n': N_FRAG[0], 'm': round(N_FRAG[1]), 'rule': '> %d %% in a hold-bar zone, or < %.0f m without paint' % (100 * EDGE_FRAG_HZ, EDGE_FRAG_LEN)},
+              'isolated_dropped': {'n': N_ISO[0], 'm': round(N_ISO[1]), 'rule': '< %.0f m, no other edge within %.0f m, painted share <= %d %%' % (EDGE_ISO_LEN, EDGE_ISO_GAP, 100 * EDGE_ISO_PAINT)},
               'snapped_runs': sum(1 for m in edge_meta if m and m['src'] == 'naip'),
               'paint_offset_before': {'median': round(float(np.median(E_before)), 2), 'gt1.5': round(float((np.array(E_before) > 1.5).mean()), 3)} if E_before else None,
               'paint_offset_after': {'median': round(float(np.median(E_after)), 2), 'gt1.5': round(float((np.array(E_after) > 1.5).mean()), 3)} if E_after else None}
-edges = edges_out; edge_meta = [m for m in edge_meta if m]
+edges = edges_out; edge_meta = _EM_KEPT
 print('edges', EDGE_STATS)
 
 # ---------------------------------------------------------------- floodlight masts: OSM man_made=mast + tower:type=lighting

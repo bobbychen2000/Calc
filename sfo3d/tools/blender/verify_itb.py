@@ -460,6 +460,21 @@ def run(path):
         if clear:
             C.add('roadway decks under the elevated bar: min clearance (roadways.glb)', float(min(clear)), G.ROAD_CLEAR, ok=min(clear) >= G.ROAD_CLEAR - 0.05,
                   src='15 ft = 4.57 m minimum vertical clearance [pub]; deck tops from roadways.glb (integration)')
+        # close-out r3 (buildings-7): the curb canopy soffit over the departures plate where the canopy overhangs the kerb lane
+        can = Polygon([(p_[0], p_[2]) for p_ in (G.Buv(-G.HALL_HL, G.V_W - G.CANOPY_D, 0), G.Buv(G.HALL_HL, G.V_W - G.CANOPY_D, 0),
+                                                 G.Buv(G.HALL_HL, G.V_W, 0), G.Buv(-G.HALL_HL, G.V_W, 0))]).buffer(0)
+        top_under = []
+        for nm_, m_ in SR.items():
+            if m_['lod'] != 0: continue
+            for p in m_['prims']:
+                if not p['mat'].startswith('deck'): continue
+                for t in p['T']:
+                    q = p['P'][t]
+                    if can.intersects(Polygon(q[:, [0, 2]]).buffer(0)): top_under.append(float(q[:, 1].max()) - GROUND_Y)
+        if top_under:
+            cl = (G.CANOPY - G.CANOPY_THK) - max(top_under)
+            C.add('curb canopy soffit over the roadway plate: clearance (roadways.glb)', float(cl), G.ROAD_CLEAR, ok=cl >= G.ROAD_CLEAR,
+                  src='close-out r3 (buildings-7): 4.6 m as the roadway solve; soffit = CANOPY - CANOPY_THK')
         C.add('roadway deck area inside the core on grade (roadways.glb)', inside_blk, 0.0, 1.0,
               'no clash (review r2: 85 m2 under the north bar + the deck end at (-1159, 385))', 'm2')
 

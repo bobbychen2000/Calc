@@ -77,7 +77,10 @@ CROSSWALK_U = (-52.8, -15.8, -4.7, 2.5, 14.0, 49.5)   # crosswalk ramps (NAIP wa
 BOLLARD = dict(r=0.15, h=0.9, inset=0.6, pitch=3.048)  # photo i3: grey cylinders ~0.3 x 0.9 m [obs form]; 10-ft pitch, 0.6 m
                                                      # behind the kerb face [inf]
 GUARD_H = 1.07           # guard at the curb end returns (open edge): 42 in (IBC 1015.3) [inf]
-CANOPY_THK = 0.6         # [inf]
+CANOPY_THK = 0.45        # [inf] close-out r3 (buildings-7): was 0.6 - the soffit (top - 0.6 = 15.9 m) hung 4.52 m over the
+                         # roadways.glb departures plate (11.38 m) where the 5-m canopy overhangs the kerb lane by 0.67 m, below the
+                         # 4.6 m the roadways enforce (b3d_integrate 03:59Z: 87 m2); the observed / sheet top line (CANOPY) stays, the
+                         # slab is 0.45 m (a steel canopy deck; depth not observed) -> soffit 16.05 m, 4.67 m over the plate
 H_CORE = 17.9            # ITB core block (east block, north / south bars): NO SOURCE [unk]; placeholder = the adjoining
                          # Boarding Area A main roof 17.9 m [obs] (the ITB has 5 levels [pub]: it may be taller)
 PARAPET = 1.0            # pier / core parapet above the roof deck [inf]; the measured NAIP heights are the roof edges

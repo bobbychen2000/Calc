@@ -162,12 +162,63 @@ def drum_probe(S, lod):
     return out
 
 
+def drum_overhead(S, lod):
+    """close-out r3 (buildings-4): the integration footprint rings (plan) put the F7 / F8 L1 drums ~1.05 m inside BA_F - the
+    roof overhang over them. Per drum (largest the app can draw, G.DRUMS): the lowest domestic surface above the drum disc and its
+    clearance over the drum top (DRUM_BAND[1] - 0.15 = the app's G + Hr + 3.3); a roof above is allowed, a negative value is not."""
+    T = V1.world_tris(S, lod, skip=('_fins', '_lettering'))
+    lo = T[:, :, [0, 2]].min(1); hi = T[:, :, [0, 2]].max(1); ylo = T[:, :, 1].min(1)
+    top = GY + G.DRUM_BAND[1] - 0.15
+    rows = []
+    for d in G.DRUMS:
+        x, z = G.Wp(*d['c']); H = Point(x, z).buffer(d['r'], 48); x0, z0, x1, z1 = H.bounds
+        m = (hi[:, 0] > x0) & (lo[:, 0] < x1) & (hi[:, 1] > z0) & (lo[:, 1] < z1) & (ylo >= top - 0.02)
+        ys = []
+        for t in T[m]:
+            q = Polygon([(v[0], v[2]) for v in t]).buffer(0)
+            if q.area > 1e-4 and q.intersection(H).area > 0.01: ys.append(float(t[:, 1].min()))
+        if ys: rows.append(dict(stand=d['stand'], door=d['door'], r=round(d['r'], 2), overhead_m=round(min(ys) - GY, 2), clear_m=round(min(ys) - top, 2)))
+    rows.sort(key=lambda r: r['clear_m'])
+    return dict(drums_under_roof=len(rows), min_clear_m=rows[0]['clear_m'] if rows else None, rows=rows[:12],
+                ok=all(r['clear_m'] >= 0.0 for r in rows))
+
+
+def t2_curb_probe(S, lod):
+    """close-out r3 (buildings-2): the departures roadway along T2 vs the moved T2 face. Deck = the OSM Departures ways along
+    T2 (G.T2_DEP_WAYS, carriageway half-widths) at the curb level; any T2 / connector triangle inside that plan between the deck
+    and 4.6 m above it is a hit (the connector is allowed above 4.6 m); the lean-free roof edge line (G.T2_EDGE_LINE) vs the T2
+    roof-edge probes; the sidewalk and canopy levels; the connector soffit over the deck."""
+    from shapely.geometry import LineString
+    T = V1.world_tris(S, lod, skip=('_fins', '_lettering'))
+    deck_top = G.CURB - 0.15
+    deck = unary_union([LineString(p).buffer(w, cap_style=2) for w, p in G.T2_DEP_WAYS.values()])
+    x0, z0, x1, z1 = deck.bounds
+    lo = T[:, :, [0, 2]].min(1); hi = T[:, :, [0, 2]].max(1); ylo = T[:, :, 1].min(1); yhi = T[:, :, 1].max(1)
+    m = (hi[:, 0] > x0) & (lo[:, 0] < x1) & (hi[:, 1] > z0) & (lo[:, 1] < z1) & (yhi > GY + deck_top + 0.02) & (ylo < GY + deck_top + 4.6)
+    o = clip_plan(T[m], GY + deck_top + 0.02, GY + deck_top + 4.6).intersection(deck.buffer(-0.35)) if m.any() else Polygon()
+    # connector soffit over the deck: lowest triangle above deck + 4.6 inside the deck plan
+    mm = (hi[:, 0] > x0) & (lo[:, 0] < x1) & (hi[:, 1] > z0) & (lo[:, 1] < z1) & (ylo >= GY + deck_top + 4.6 - 0.02)
+    soff = [float(t[:, 1].min()) - GY for t in T[mm] if Polygon([(v[0], v[2]) for v in t]).buffer(0).intersection(deck).area > 0.05]
+    # roof edge vs the measured line: at z = 180..245 the westmost T2 roof-level (> 15 m) vertex x per 1-m z band
+    a, k = G.T2_EDGE_LINE
+    roof = T[(ylo > GY + 15.0)]
+    dev = []
+    for zz in np.arange(180.0, 246.0, 5.0):
+        sel = roof[(roof[:, :, 2].min(1) < zz + 0.5) & (roof[:, :, 2].max(1) > zz - 0.5) & (np.abs(roof[:, :, 0].mean(1) - (a + k * zz)) < 6)]
+        if len(sel): dev.append(round(float(sel[:, :, 0].min()) - (a + k * zz), 2))
+    return dict(deck_plan_m2=round(deck.area, 1), solid_inside_deck_band_m2=round(o.area, 3), connector_soffit_over_deck_m=round(min(soff) - deck_top, 2) if soff else None,
+                roof_edge_minus_line_m=dict(n=len(dev), median=float(np.median(dev)) if dev else None, max_abs=float(np.max(np.abs(dev))) if dev else None),
+                ok=bool(o.area < 0.3 and (not soff or min(soff) - deck_top >= 4.6) and dev and np.max(np.abs(dev)) < 0.6))
+
+
 def run(full, lod2):
     j, b, size = V.load_glb(full); S = V.scene_meshes(j, b)
     j2, b2, _ = V.load_glb(lod2); S2 = V.scene_meshes(j2, b2)
     out = dict(glb=os.path.relpath(full, G.ROOT))
     out['tower'] = {'lod0': tower_probe(S, 0), 'lod2': tower_probe(S2, 2)}
     out['drums'] = {'lod0': drum_probe(S, 0), 'lod2': drum_probe(S2, 2)}
+    out['drum_overhead'] = {'lod0': drum_overhead(S, 0), 'lod2': drum_overhead(S2, 2)}
+    out['t2_curb'] = {'lod0': t2_curb_probe(S, 0), 'lod2': t2_curb_probe(S2, 2)}
     # C3C
     c3 = {}
     for n, m in S.items():
@@ -230,7 +281,7 @@ def run(full, lod2):
                        bulkhead_top_m=round(max(tops), 2) if tops else None,
                        bulkhead_above_roof_edge_m=round(max(tops) - s.h, 2) if tops else None)
     out['plausibility_bac_bad'] = pl
-    out['n_fail'] = sum(1 for k in ('c3c', 'bae') if not out[k].get('ok')) + sum(1 for k in ('tower', 'drums') for l in ('lod0', 'lod2') if not out[k][l]['ok'])
+    out['n_fail'] = sum(1 for k in ('c3c', 'bae') if not out[k].get('ok')) + sum(1 for k in ('tower', 'drums', 'drum_overhead', 't2_curb') for l in ('lod0', 'lod2') if not out[k][l]['ok'])
     p = os.path.join(V.OUT, 'domestic_verify_r2.json')
     json.dump(out, open(p, 'w'), indent=1, default=float)
     return out, p
@@ -246,4 +297,8 @@ if __name__ == '__main__':
             if o[k][l].get('open_examples'): print('   open', o[k][l]['open_examples'][:4])
     for k in ('c3c', 'bae', 'sign', 'plausibility_bac_bad'):
         print(k, json.dumps(o.get(k)))
+    for l in ('lod0', 'lod2'):
+        print('drum_overhead', l, json.dumps(o['drum_overhead'][l]))
+    for l in ('lod0', 'lod2'):
+        print('t2_curb', l, json.dumps(o['t2_curb'][l]))
     print('n_fail', o['n_fail'], '->', p)

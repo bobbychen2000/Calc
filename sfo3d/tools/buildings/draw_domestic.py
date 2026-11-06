@@ -11,10 +11,12 @@ dom_baf_hub.json); r1-34 Terminal 3 landside elevation (BD-03 view 3).
 Heights are metres above the local apron (two-epoch NAIP method at the verified |s20| = 1.25; every value carries the
 spec's range, -5 % / +5 % for the sun-path uncertainty).
 """
+import json
+
 import numpy as np
 
 import draw_data as D
-from draw_lib import Sheet, FT, hdg_vec, unit, st2w
+from draw_lib import Sheet, FT, ROOT, hdg_vec, unit, st2w
 from draw_tower import draw_dev
 
 DV = D.DV
@@ -196,6 +198,7 @@ def sheet_plan(variant='vector', dev=None):
     for p, s, tg, (dx, dy) in dof:
         V.mark(p, tg, marker='^', ms=4.5)
         V.leader(p, dx, dy, 'FAA DOF ' + s, tg, fs=3.9)
+    r3_plan(V, bg)
     V.scalebar()
     rows = [('BA-B outer roof edges (south half)', fmt_h(DV['bab.h_roof']), 'obs', 'two-epoch NAIP 2020 / 2024, |s20| 1.25'),
             ('BA-B raised central roof', fmt_h(DV['bab.h_roof_central']), 'obs', 'parallax ratio + 2020 step shadow (low); '
@@ -224,6 +227,47 @@ def sheet_plan(variant='vector', dev=None):
                '(roof edges at the pier height x the pier\'s two-epoch lean; facade bases on the west faces at grade); green <= 1 m, amber '
                '<= 2.5 m, red > 2.5 m. Roof offsets on the ESE faces are mostly the roof overhang beyond the level-2 outline.')
     return S.finish('NAIP 2024' if bg else 'none (vector)', fmt=('jpg',) if bg else ('svg', 'png'))
+
+
+def _dom_geom():
+    """the 3-D geometry module (imports this one: imported lazily, at draw time)."""
+    import os, sys
+    sys.path.insert(0, os.path.join(ROOT, 'tools', 'blender'))
+    import dom_geom
+    return dom_geom
+
+
+def r3_plan(V, bg):
+    """close-out r3 (buildings-10): the 3-D state drawn on BD-01 from the 3-D parameters (tools/blender/dom_geom.py): the hall
+    faces actually modelled (T1 set back to its measured roof edge in review r1; T2 moved to its NAIP-measured roof edge in
+    close-out r3, with the departures sidewalk, the curb canopy and the T2 - garage connector), the Courtyard 3 Connector office
+    block and its penthouse, and the 3-D rooftop units - so the drawn geometry is again the reference for the 3-D."""
+    G = _dom_geom()
+    from shapely.geometry import Polygon as SP
+    for k in ('T1', 'T2'):
+        V.poly(np.asarray(G.HALLS[k]['hall'].exterior.coords), 'obs', fc='none', lw=1.3, z=6.4)
+    for g, tg, fc in ((G.T2_SIDEWALK_POLY, 'obs', '#ffffff'), (G.T2_LINK_POLY, 'inf', '#e6eef7')):
+        for q in G.polys_of(g):
+            V.poly(np.asarray(q.exterior.coords), tg, fc=fc if not bg else 'none', lw=0.6, z=6.3)
+    V.poly(np.asarray(G.C3C_POLY.exterior.coords), 'inf', fc='#e9e4f2' if not bg else 'none', lw=0.9, z=6.35)
+    pent = SP([G.c3c_uw(u, w) for u, w in ((G.C3C_PENT_U[0], G.C3C_PENT_W[0]), (G.C3C_PENT_U[1], G.C3C_PENT_W[0]),
+                                          (G.C3C_PENT_U[1], G.C3C_PENT_W[1]), (G.C3C_PENT_U[0], G.C3C_PENT_W[1]))])
+    V.poly(np.asarray(pent.exterior.coords), 'obs', fc='none', lw=0.6, z=6.4)
+    a, k_ = G.T2_EDGE_LINE
+    V.leader((a + k_ * 225.0, 225.0), 34, -16, 'T2 landside face (3-D, close-out r3): on the NAIP 2024 relief-corrected roof edge\n'
+             f'x = {a:.2f} + {k_:.4f} z (z {G.T2_EDGE_Z[0]:.0f}-{G.T2_EDGE_Z[1]:.0f}, 59 rows, rms 0.06 m) [obs], elsewhere the departures deck\n'
+             f'edge + {G.T2_SIDEWALK:.2f} m [inf]; the SFO Museum face 17-18 m W runs over the departures\nroadway; sidewalk (white) {G.T2_SIDEWALK:.2f} m [obs], '
+             f'glass curb canopy {G.T2_CANOPY_D:.1f} m [obs low];\nT2 - garage connector (blue) {G.T2_LINK_Z[0]:.2f}-{G.T2_LINK_Z[1]:.2f} m [inf, level unk]', 'obs', fs=3.8)
+    V.leader(np.asarray(G.C3C_POLY.centroid.coords[0]), -40, -18, f'Courtyard 3 Connector office block (3-D, review r1 / r2): '
+             f'{G.C3C_POLY.area:.0f} m2 [obs outline],\n{G.C3C_H:.1f} m [inf, 32-36], six office storeys from {G.C3C_OFFICE_Z0:.1f} m [pub HOK / inf]; '
+             f'penthouse\n(outlined) to {G.C3C_PENT_TOP:.1f} m [obs low, photo a1 + NAIP wall band]', 'inf', fs=3.8)
+    try:   # rooftop units of the 3-D (review r1; tools/blender/dom_roofobs.json, NAIP 2024 lean-free rings) [obs]
+        U = json.load(open(os.path.join(ROOT, 'tools', 'blender', 'dom_roofobs.json')))
+        for deck in U.get('units', {}).values():
+            for u_ in deck.get('units', []):
+                V.poly(np.asarray(u_['ring']), 'obs', fc='#555555' if not bg else 'none', lw=0.3, z=6.5)
+    except (OSError, ValueError, KeyError):
+        pass
 
 
 # ------------------------------------------------------------------------------------------------ elevations
@@ -494,22 +538,35 @@ def sheet_landside():
                      (T1_HEAD, f'+{T1_HEAD:.1f} wall head (12-14) above the curb', 'inf')):
         V.level(L + 2, h, s + f' [{tg}, photo d1, low]', tg, len_mm=4, fs=3.8, u_line=L)
     V.scalebar(y_mm=4)
-    # ---- T2
-    V2 = S.view(0, 8, 420, 150, 200, (T2_FACE / 2 + 22, 6), title='2  TERMINAL 2: landside entry face towards the central garage, looking E', kind='elev', frame=False)
-    V2.ax.fill_between([-8, T2_FACE + 8], [-1.2, -1.2], [0, 0], color='#dddddd', lw=0, zorder=1)
-    V2.line([(-8, 0), (T2_FACE + 8, 0)], 'unk', lw=0.8)
+    # ---- T2 (close-out r3, buildings-10): the face as modelled in 3-D - the NAIP-measured roof-edge line along the departures
+    # curb (z 176-250), not the 47.7-m SFO Museum outline edge (that edge lies over the departures roadway)
+    G = _dom_geom()
+    za, zb = 176.0, 250.0
+    LF = round((zb - za) * float(np.hypot(1.0, G.T2_EDGE_LINE[1])), 1)
+    u_ = lambda z: (z - za) * float(np.hypot(1.0, G.T2_EDGE_LINE[1]))
+    V2 = S.view(0, 8, 420, 150, 200, (LF / 2 + 4, 6), title='2  TERMINAL 2: landside face along the departures curb (3-D state, close-out r3), looking ESE', kind='elev', frame=False)
+    V2.ax.fill_between([-6, LF + 6], [-1.2, -1.2], [0, 0], color='#dddddd', lw=0, zorder=1)
+    V2.line([(-6, 0), (LF + 6, 0)], 'inf', lw=0.8)
     hb = 12.0
-    V2.poly([(0, 0), (T2_FACE, 0), (T2_FACE, hb), (0, hb)], 'unk', fc='#eeeeec', z=1.5)
-    for y in np.arange(1.5, hb, 1.5):
-        V2.line([(0, y), (T2_FACE, y)], 'unk', lw=0.15, z=1.6, color='#bbbbbb')
-    g0, g1 = T2_FACE * 0.2, T2_FACE * 0.8
-    V2.poly([(g0, 0), (g1, 0), (g1, 7.0), (g0, 7.0)], 'unk', fc='#d7e6f3', z=1.7)
-    V2.poly([(g0 + 3, 8.2), (g1 - 3, 8.2), (g1 - 3, 10.6), (g0 + 3, 10.6)], 'unk', fc='none', z=1.8, ls=(0, (1, 1)))
-    V2.text(((g0 + g1) / 2, 9.4), 'Terminal 2', 'unk', fs=5.0, bg=False, color='#555555', style='normal', weight='bold')
-    V2.dim((0, 0), (T2_FACE, 0), -5, f'{T2_FACE} m [obs SFOM outline face]', 'obs', fs=3.8)
-    V2.leader((T2_FACE, hb), 8, 6, 'light metal-panel box with the "Terminal 2" sign and a glass entry\nwall ("neutral exterior, warm interior") [pub CDR '
-              't2.landside]; the box\nheight (drawn 12 m), the glass-wall extent and the sign position are\nplaceholders: NOT published or measured [unk]',
-              'unk', fs=3.7)
+    V2.poly([(0, 0), (LF, 0), (LF, hb), (0, hb)], 'unk', fc='#eeeeec', z=1.5)
+    for y in np.arange(7.0 + 1.5, hb, 1.5):
+        V2.line([(0, y), (LF, y)], 'unk', lw=0.15, z=1.6, color='#bbbbbb')
+    V2.poly([(0, 0), (LF, 0), (LF, 7.0), (0, 7.0)], 'unk', fc='#d7e6f3', z=1.7)
+    cz = DD_T1_CANOPY = T1_CANOPY
+    V2.poly([(0, cz), (LF, cz), (LF, cz + 0.35), (0, cz + 0.35)], 'obs', fc='#c8d6cf', z=1.9)
+    l0, l1 = G.T2_LINK_Z[0] - G.CURB, G.T2_LINK_Z[1] - G.CURB
+    ua, ub = u_(204.0), u_(218.0)
+    V2.poly([(ua, l0), (ub, l0), (ub, l1), (ua, l1)], 'inf', fc='#e6eef7', z=2.0)
+    V2.text(((ua + ub) / 2, (l0 + l1) / 2), 'T2 - garage\nconnector', 'inf', fs=3.4, bg=False)
+    V2.text((LF * 0.75, 9.4), 'Terminal 2', 'unk', fs=5.0, bg=False, color='#555555', style='normal', weight='bold')
+    V2.dim((0, 0), (LF, 0), -5, f'{LF} m: the measured stretch z {za:.0f}-{zb:.0f} of the face (x = {G.T2_EDGE_LINE[0]:.2f} + {G.T2_EDGE_LINE[1]:.4f} z) [obs NAIP 2024]', 'obs', fs=3.6)
+    V2.leader((LF * 0.15, 7.0), 3, 9, 'glass entry wall along the whole curb face ("transparent (west-facing) facade" [pub t2.daylight]); '
+              'its height\n7.0 m above the curb [unk]; light metal-panel box above to 12.0 m [unk] (3-D: 16.88 m above the apron)', 'unk', fs=3.5)
+    V2.leader((LF * 0.55, cz + 0.35), 4, 12, f'glass curb canopy {G.T2_CANOPY_D:.1f} m deep [obs NAIP 2024 / 2022 teal band, low], soffit {cz:.1f} m above '
+              f'the curb\n(as T1, photo d1) [inf]; departures sidewalk {G.T2_SIDEWALK:.2f} m wide in front [obs NAIP - OSM]', 'obs', fs=3.5)
+    V2.leader(((ua + ub) / 2, l1), 10, 5, f'connector to the Central Parking Garage over the departures roadway (SFO Museum T2 outline\n'
+              f'courtyard piece, extended to this face): soffit {l0:.2f} / top {l1:.2f} m above the curb = {G.T2_LINK_Z[0]:.2f} / {G.T2_LINK_Z[1]:.2f} m above '
+              'the apron\n(clears the departures deck by 4.7 m) [inf]; NAIP 2024\'s shadow suggests a higher top (~24 m) [conflict, unk]', 'inf', fs=3.5)
     V2.scalebar(y_mm=4)
     sheet_landside_t3(S)
     S.note('Landside faces are developed along the SFO Museum level-2 outline edges that face the central garage (lengths [obs]); heights are '

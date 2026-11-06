@@ -296,6 +296,17 @@ def run(path):
         nb = LineString(R1['bart']['north'])
         ds = [osm.exterior.distance(nb.interpolate(t)) for t in np.arange(0.0, nb.length, 5.0)]
         C.add('BART station: OSM north face vs the NAIP 2024 north wall line (max distance along the line)', float(max(ds)), 0.0, 2.5, 'NAIP pick +-2 m (relief estimate) combined with OSM +-1 m')
+        # close-out r3 (buildings-8): the airside (north) face vs taxilane centreline 302 (data/sfo_details.json) - the modelled face is
+        # the OSM edge; the observed NAIP 2024 north wall line is the reference for 'existing condition' (the SFO Museum has no BART outline)
+        try:
+            DTL = json.load(open(os.path.join(ROOT, 'data', 'sfo_details.json')))['centerlines'][302]
+            ln302 = LineString(DTL)
+            d_asset = float(fpb.distance(ln302)); d_naip = float(nb.distance(ln302)); d_osm = float(osm.distance(ln302))
+            C.add('BART station: distance of the modelled body to taxilane centreline 302 >= the observed north wall line (NAIP 2024) - 0.5 m',
+                  d_asset, d_naip, ok=d_asset >= d_naip - 0.5, src='close-out r3: NAIP %.1f m, OSM %.1f m; the ADG-5 OFA (42.1 m, integration [inf]) is an '
+                  'existing condition of the observed building' % (d_naip, d_osm))
+        except (KeyError, IndexError, FileNotFoundError):
+            pass
     at0 = {nm: m for nm, m in S.items() if (m['bldg'] or '').startswith('airtrain') and m['lod'] == 0}
     vr = allP([m for nm, m in at0.items() if nm.endswith('_deck')], 'vault_roof')
     if len(vr):
@@ -492,6 +503,26 @@ def run(path):
             if sel.any():
                 C.add(f'AirTrain {kk}: track deck level at the station', float(np.median(H(Pd[sel]))), float(v[1]), 0.15, f'{v[2]}')
         piers = allP([m for nm, m in at.items() if nm.endswith('_piers')])
+        # close-out r3 (buildings-3): pier columns off the roads, caps >= 4.6 m over road decks (data/sfo_landside.json roads +
+        # roadways.glb LOD0 deck tops), measured on the exported pier meshes: column vertices below 2 m (the column feet)
+        rfoot, rtris, _ = AT.road_obstacles()
+        if len(piers):
+            foot_pts = piers[H(piers) < 2.0]
+            import shapely as _sh
+            onroad = int(_sh.contains_xy(rfoot, foot_pts[:, 0], foot_pts[:, 2]).sum()) if len(foot_pts) else 0
+            C.add('AirTrain pier columns: foot vertices on a carriageway / road deck (sfo_landside roads + roadways.glb)', onroad, 0, ok=onroad == 0,
+                  src='close-out r3: integration 03:59Z found 3 columns in road decks', unit='')
+            if len(rtris):
+                caps = piers[H(piers) >= 3.0]
+                lo_ = rtris[:, :, [0, 2]].min(1); hi_ = rtris[:, :, [0, 2]].max(1)
+                worst = 99.0
+                for q in caps[::3]:
+                    m_ = (lo_[:, 0] <= q[0]) & (hi_[:, 0] >= q[0]) & (lo_[:, 1] <= q[2]) & (hi_[:, 1] >= q[2])
+                    for t in rtris[m_]:
+                        if Polygon(t[:, [0, 2]]).buffer(0.01).contains(Point(q[0], q[2])):
+                            worst = min(worst, float(q[1] - t[:, 1].max()))
+                C.add('AirTrain pier caps / bents over road decks: min vertical clearance (pier vertices over a deck)', worst, 4.6, ok=worst >= 4.6 - 0.02,
+                      src='close-out r3: 4.6 m (Caltrans HDM 309.2) as the roadways solve; 99 = no pier over a deck')
         # grade along the deck: neighbouring deck-top vertices (within 6 m) differ by < 6 %
         if len(Pd) > 10:
             from scipy.spatial import cKDTree

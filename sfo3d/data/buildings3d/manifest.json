@@ -4184,9 +4184,9 @@
  },
  "domestic": {
   "asset": "data/buildings3d/domestic.glb",
-  "bytes": 11144212,
-  "built": "2026-11-05T22:30:33+00:00",
-  "git": "82ebc9d+dirty",
+  "bytes": 11500808,
+  "built": "2026-11-06T05:38:56+00:00",
+  "git": "50daff2+dirty",
   "generator": "tools/blender/build_domestic.py (bpy 5.0.1, Cycles CPU AO bake); geometry tools/blender/dom_geom.py + dom_mesh.py; textures dom_tex.py",
   "reference": "2-D sheets BD-01..03 (docs/drawings/buildings/README.md), drawn by tools/buildings/draw_domestic.py, imported by dom_geom.py",
   "spec": "tools/buildings/spec_domestic.json (+ dom_bab_band.json, dom_baf_hub.json, dom_bab_roof.json; tools/blender/dom_pv.json)",
@@ -4249,26 +4249,26 @@
     "lod": 0,
     "node": "LOD0",
     "switch_m": 0.0,
-    "tris": 78143,
-    "verts": 163077,
-    "draw_calls": 150,
+    "tris": 80494,
+    "verts": 168048,
+    "draw_calls": 156,
     "ao_atlas": "dom_ao_S / dom_ao_N (shared by the LOD0 / LOD1 shell meshes)"
    },
    {
     "lod": 1,
     "node": "LOD1",
     "switch_m": 380.0,
-    "tris": 23715,
-    "verts": 55887,
-    "draw_calls": 117,
+    "tris": 25000,
+    "verts": 58998,
+    "draw_calls": 122,
     "ao_atlas": "dom_ao_S / dom_ao_N (shared by the LOD0 / LOD1 shell meshes)"
    },
    {
     "lod": 2,
     "node": "LOD2",
     "switch_m": 1300.0,
-    "tris": 23535,
-    "verts": 55491,
+    "tris": 24840,
+    "verts": 58646,
     "draw_calls": 21,
     "ao_atlas": "dom_ao_L2"
    }
@@ -4280,7 +4280,7 @@
   ],
   "lod2_glb": {
    "path": "data/buildings3d/domestic_lod2.glb",
-   "bytes": 2868932
+   "bytes": 3005316
   },
   "textures": [
    {
@@ -4320,7 +4320,7 @@
      2048
     ],
     "mime": "image/png",
-    "bytes": 1371924,
+    "bytes": 1403037,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    },
    {
@@ -4390,7 +4390,7 @@
      2048
     ],
     "mime": "image/png",
-    "bytes": 1332296,
+    "bytes": 1332283,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    },
    {
@@ -4500,7 +4500,7 @@
      1024
     ],
     "mime": "image/png",
-    "bytes": 474667,
+    "bytes": 476344,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    }
   ],
@@ -4954,7 +4954,7 @@
      "T2": [
       213,
       215,
-      210
+      211
      ],
      "BA_D": [
       213,
@@ -5006,9 +5006,9 @@
      "T2",
      "C3C"
     ],
-    "bake_s": 53.9,
-    "mean": 0.666,
-    "p2": 0.004,
+    "bake_s": 34.6,
+    "mean": 0.649,
+    "p2": 0.002,
     "samples": 48,
     "distance_m": 10.0,
     "ground_plane": true
@@ -5026,7 +5026,7 @@
      "BA_E",
      "BA_F"
     ],
-    "bake_s": 48.4,
+    "bake_s": 31.4,
     "mean": 0.701,
     "p2": 0.005,
     "samples": 48,
@@ -5041,9 +5041,9 @@
     "buildings": [
      "all"
     ],
-    "bake_s": 5.0,
-    "mean": 0.705,
-    "p2": 0.061,
+    "bake_s": 3.3,
+    "mean": 0.697,
+    "p2": 0.058,
     "samples": 48,
     "distance_m": 10.0,
     "ground_plane": true
@@ -5084,9 +5084,9 @@
     "rgb": [
      213,
      215,
-     210
+     211
     ],
-    "n": 2226,
+    "n": 1964,
     "lean_m_per_m": 0.49,
     "method": "NAIP 2024 median of the upper 65 pct (luminance) at the imaged deck points, 2.5 m grid, 2 m inside, off holes / PV; capped at sRGB 215"
    },
@@ -5345,8 +5345,8 @@
    {
     "key": "departures curb above the apron (T1 / T2)",
     "value": 4.877,
-    "tag": "unk",
-    "source": "placeholder: T3 L1 -> L2 rise by analogy"
+    "tag": "inf",
+    "source": "close-out r3 (buildings-14): = the published T3 L1 -> L2 rise, 16 ft (CDR 95 % CD p.28-29) [pub at T3]; the domestic departures loop is ONE connected roadway (the 17 OSM ways named Departures, layer 1, that roadways.glb anchors form one component by shared nodes) serving the T1 / T2 / T3 curbs -> the same level at T1 / T2 [inf]; not measured there (NAIP relief / shadow of the deck edge inconclusive at 0.6-m GSD: ~0.5 m of band per metre of height). Soffit over the at-grade roads under the loop = 4.73 - deck depth (roadways.glb 1.2 m [inf]) = 3.53 m: below the 4.6-m design clearance (see conflicts)"
    },
    {
     "key": "T1 Center wall head / tier transom / canopy soffit (above the curb)",
@@ -5371,6 +5371,30 @@
     "value": 16.877,
     "tag": "unk",
     "source": "curb [unk] + 12.0 (BD-03 view 2 placeholder)"
+   },
+   {
+    "key": "T2 landside face (close-out r3, buildings-2)",
+    "value": "x = -811.961 + 0.3063 z (z 168-254); elsewhere the departures deck edge + 5.85 m",
+    "tag": "obs (NAIP 2024 relief-corrected roof edge) / inf (corners)",
+    "source": "lean-free coping line, 59 rows, rms 0.06 m (relief for the 16.88-m placeholder: +1 m of roof -> 0.54 m west); NAIP 2020 within 1.5 m; the old SFO Museum face was 17-18 m west over the departures roadway; hall area -2356 m2"
+   },
+   {
+    "key": "T2 departures sidewalk (deck edge -> wall)",
+    "value": 5.85,
+    "tag": "obs",
+    "source": "NAIP 2024 roof edge minus OSM deck edge (256787747, 3 x 3.6 m): median 5.85, p10 5.76, p90 6.63 m; deck at the curb level, 0.6 m thick, overlapping the roadway deck by 0.3 m (905 m2)"
+   },
+   {
+    "key": "T2 curb canopy (depth / soffit)",
+    "value": "5.4 / 8.88",
+    "tag": "obs low / inf",
+    "source": "depth: NAIP 2024 / 2022 teal glass band, outer edge lean-corrected at ~9.2 m; soffit as T1 (curb + 4.0, photo d1)"
+   },
+   {
+    "key": "T2 - garage connector over the departures roadway (soffit / top)",
+    "value": "9.43 / 14.38",
+    "tag": "inf (level unk)",
+    "source": "plan: the T2 outline courtyard connector (SFO Museum) extended along its axis to the moved face, cut at the Central Parking Garage outline [obs]; floor at the garage Level 3 placeholder (2/5 of 81 ft) so that the soffit clears the departures deck by 4.7 m [inf]"
    },
    {
     "key": "pier / hall footprints",
@@ -5541,7 +5565,7 @@
        "source": "apron / host deck"
       }
      },
-     "T1_walk24": {
+     "T1_walk25": {
       "h": {
        "v": 10.5,
        "tag": "unk",
@@ -5793,7 +5817,19 @@
        "source": "apron / host deck"
       }
      },
-     "T2_link25": {
+     "T2_garage_link": {
+      "h": {
+       "v": 14.376,
+       "tag": "inf",
+       "source": "see spec keys"
+      },
+      "z0": {
+       "v": 9.426,
+       "tag": "inf",
+       "source": "apron / host deck"
+      }
+     },
+     "T2_link26": {
       "h": {
        "v": 16.877,
        "tag": "inf",
@@ -5811,6 +5847,18 @@
      0,
      1,
      2
+    ]
+   },
+   {
+    "node": "L0_T2_detail",
+    "building": "T2",
+    "feature": "Terminal 2: bridge door frames, skylight frames, canopy brackets",
+    "src": "inf",
+    "spec": [],
+    "dims": {},
+    "kind": "detail",
+    "lods": [
+     0
     ]
    },
    {
@@ -6383,7 +6431,8 @@
   ],
   "unknown": [
    "T1 Center and T2 hall heights (nothing published or measured): T1 = curb placeholder + 13.0 m wall head (photo d1), T2 = curb + 12 m",
-   "the departures-curb height above the apron (T1 / T2): 4.88 m placeholder (T3 L1 -> L2 by analogy)",
+   "the departures-curb height above the apron (T1 / T2): 4.88 m = the published T3 L1 -> L2 rise carried along the continuous departures loop [inf] (close-out r3); not measured at T1 / T2",
+   "the T2 - garage connector level (close-out r3): modelled 9.43-14.38 m (clearance over the departures deck); NAIP 2024 shows a ~4.5-m shadow band north of the crossing at x -765 (sun elevation 72.5 deg, azimuth 186.6 deg), which would put its top near 24 m, i.e. at the AirTrain T2 station level (SFO Museum \"Terminal Two AirTrain Station\" 1763588561 reaches x -743.8, the T2 wall) - two structures stacked, or a higher connector landing on a taller part of T2, cannot be told apart from NAIP; a photo of the T2 curb would settle it",
    "the T3 project datum (L1 drawn at the apron); the T3 East landside facade (drawn with the published T3E materials, positions inf)",
    "the BA-B roof-well depth and skylight heights; the BA-F lantern (bound <= 4.6 m, modelled 1.0 m) and monitor rises; the BA-B north-half outer roof height",
    "the Courtyard 3 Connector height (modelled 33.0 m, range 32-36 m); its rooftop penthouse is modelled since review r2 from photo a1 and the NAIP 2024 wall band [obs, low] (top 38.0 m, +-1 m); the office storey height and pane widths",
@@ -6394,7 +6443,7 @@
    "which T3W state to model (under construction 2024-2029; the May 2026 change adds an airside storey): the asset shows the 95 % CD parapet 66'-0\" massing without the new storey"
   ],
   "not_modelled": [
-   "courtyard links (pedestrian bridges over the curbside roadways to the garage / AirTrain stations) and the links that cross the AirTrain guideway: no known level (the app keeps its own parts there)",
+   "courtyard links (pedestrian bridges over the curbside roadways to the garage / AirTrain stations) and the links that cross the AirTrain guideway: no known level (the app keeps its own parts there) - except the T2 - garage connector, modelled since close-out r3 because the moved T2 face left the app part 19 m short of the building (level inf, see unknown)",
    "the AirTrain guideway / stations and the garages (landside asset), the tower (tower asset), the ITB (itb asset)",
    "T3W penthouses (positions / heights not dimensioned); rooftop equipment that NAIP 2024 does not resolve (see unknown)",
    "interiors (glass is opaque; no interior lighting)",
@@ -6413,6 +6462,26 @@
     "model": "on the measured roof edge: the app's trimmed curb line (OSM carriageways) less 4.0 m",
     "other": "BD-03 view 1 develops the face along the SFO Museum outline (94.1 + 43.6 + 93.8 m)",
     "note": "NAIP 2024 shows the curb roadway and vehicles INSIDE the SFO Museum outline there, and the PV roof edge 3-6 m inside the trimmed edge (overlay checked 2026-11-05); heights follow BD-03"
+   },
+   {
+    "item": "T2 landside face (close-out r3, buildings-2)",
+    "model": "on the NAIP 2024 relief-corrected roof edge (x = -811.96 + 0.3063 z, z 168-254) and 5.85 m off the departures deck edge elsewhere; the departures sidewalk and a 5.4-m glass curb canopy in front, the T2 - garage connector extended to it",
+    "other": "BD-03 view 2 / the SFO Museum level-2 outline: the T2 face 17-18 m further west, over the departures roadway (roadways.glb cut its deck at the T2 body, 1,406 m2, as an interim)",
+    "note": "NAIP 2024 / 2022 show traffic, the sidewalk and the canopy inside the outline; NAIP 2020 images the roof edge within 1.5 m of the 2024-derived line; the SFO Museum AirTrain T2 station polygon (1763588561) ends at x -743.8, on the new wall line"
+   },
+   {
+    "item": "app rotunda drums under the BA-F overhang (close-out r3, buildings-4)",
+    "status": "resolved (3-D)",
+    "model": "F7 / F8 L1: the drum discs lie ~1.05 m inside the BA-F footprint ring but only under the ESE roof overhang: soffit 9.69 m, drum top 8.55 m -> 1.14 m clear; facades >= 0.1 m outside the largest drum; F8 L1 tunnel 1 (all poses) >= 1.58 m below the soffit; D3 L1 facade 0.19 m clear of its drum (verify_domestic_r2.drum_overhead, close-out r3 dump of the gates.js solids)",
+    "other": "integration.json footprint rings are plan-only (the -1.06 / -1.05 / -0.03 m overlaps of the round-3 consolidator)",
+    "request": "integration: carry the height band of the overhang (soffit 9.69 m above the apron) in the footprint tiers (integration-5) so plan tests do not read the overhang as a wall"
+   },
+   {
+    "item": "departures loop soffit over at-grade roads (close-out r3, buildings-14)",
+    "status": "open",
+    "model": "curb 4.877 m = the published T3 L1 -> L2 16 ft carried along the continuous loop [inf]; roadways.glb deck top 4.73, depth 1.2 m [inf] -> soffit 3.53 m over the 10 at-grade crossings (OSM: 701476993, 701476994 South Link Road, 701476988, 701476989, 701209939, 701476987 Arrivals, 256787748 Arrivals, 1274607795, 1274606309, 1274827440)",
+    "other": "4.6 m design clearance (Caltrans HDM 309.2) enforced elsewhere by the roadway solve",
+    "note": "raising the curb to clear 4.6 m (deck top >= 5.8 m) would contradict the published T3 L2 at the T3 curb; with a published 16-ft rise between the stacked arrivals / departures levels the real clearance is 16 ft - curb step - deck depth (~3.8-4.0 m for a 0.75-0.9 m slab): the stacked arrivals roadway is lower-clearance by design (a posted clearance sign photo would settle it); request to integration: list these crossings as plausibility conflicts in b3d_integrate and review DECK_DEPTH at the anchored loop"
    },
    {
     "item": "T3W parapet",
@@ -6503,6 +6572,12 @@
     "sheets": "BD-03 view 1 develops it along the SFO Museum outline",
     "model": "on the measured roof edge: the trimmed curb line less 4.0 m (see conflicts)",
     "why": "NAIP 2024"
+   },
+   {
+    "item": "T2 landside face, departures sidewalk, curb canopy, T2 - garage connector (close-out r3)",
+    "sheets": "BD-01 / BD-03 view 2: the T2 face on the SFO Museum outline (47.7-m face, box 12 m, glass 0-7 m above the curb, no canopy, no connector)",
+    "model": "face on the NAIP-measured roof edge (see conflicts), glass 0-7 m above the curb along the whole curb face, sidewalk 5.85 m, canopy 5.4 m, connector 9.43-14.38 m",
+    "why": "buildings-2 (NAIP 2024; the departures roadway open to the sky)"
    },
    {
     "item": "T1 sign",
@@ -6684,7 +6759,7 @@
     },
     {
      "group": "heights",
-     "check": "T2_hall: roof edge top (median of 170 probes, p10 16.88 / p90 16.88)",
+     "check": "T2_hall: roof edge top (median of 168 probes, p10 16.88 / p90 16.88)",
      "model": 16.877,
      "drawing": 16.877,
      "dev": 0.0,
@@ -7045,9 +7120,9 @@
     {
      "group": "footprints",
      "check": "apron-level walls (0.5-5 m) outside the SFO Museum outlines (bridge vestibules excluded)",
-     "model": 105.635,
+     "model": 106.254,
      "drawing": 0.0,
-     "dev": 105.635,
+     "dev": 106.254,
      "tol": null,
      "ok": true,
      "src": "m2: the vestibules reach from the facade to the app walkway start (bridges)"
@@ -7055,9 +7130,9 @@
     {
      "group": "footprints",
      "check": "LOD0 plan area outside the SFO Museum outlines (roof overhangs, canopy, vestibules)",
-     "model": 1031.187,
+     "model": 1032.072,
      "drawing": 0.0,
-     "dev": 1031.187,
+     "dev": 1032.072,
      "tol": null,
      "ok": true,
      "src": "BA-B / BA-D ESE overhangs +2.3 / +2.4 m [obs], T1 canopy 4 m [inf], vestibules [inf]"
@@ -7674,7 +7749,7 @@
      "median": 16.877,
      "p10": 16.877,
      "p90": 16.877,
-     "n": 170
+     "n": 168
     },
     "T3W_hall": {
      "median": 16.764,

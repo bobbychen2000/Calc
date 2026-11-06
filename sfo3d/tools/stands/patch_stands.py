@@ -40,8 +40,23 @@ Patches (static review 2026-11-04):
      drum or + 1.4 m to another fixed walkway moves straight off it by the deficit (<= 2.0 m); the rest pivot stays at
      `stow` unless that becomes shorter than the model's retraction (then at the retraction on the same line). 31
      rotundas (A10 L1: the check_stands ISSUE), = the bridges track's table (static_closeout.md s.5).
+     Close-out round 3 (2026-11-06, finding static-8): with gates.js's own-strip exemption (OwnStrip, a port of
+     js/live/gates.js ownStrip): an SFO Museum ring piece that traces the bridge's OWN fixed walkway (the Boarding Area B
+     tip strips, which the 3-D domestic asset leaves to the bridges) is not building for that bridge. The nine B-pier moves
+     of round 2 (B6, B11, B16, B19, B20, B24, B25, B26, B27 L1, ~1 m out along their own walkways) no longer happen: their
+     rotunda / walk end / stow / stow_len are the OSM values again (= the bridges track's revert table, static_closeout.md
+     "From bridges, round 2 second pass"); 22 rotundas move (B15 L1 / B11S keep theirs: their strips run 1.5 / 3.0 m < 5 m).
   P7 (round 2) rest pose vs the OSM parked cab (> 3 m apart): adopted when it passes the build's rest criteria, else
      `stow_osm` says why not (bridges_closeout.md s.1.7).
+  P8 (close-out round 3, 2026-11-06, static-10) types_ok family dominance (traffic.js typesOkHas): a listed type admits the
+     smaller members of its stop-point family - where their planform clears the neighbours by 3 m (else
+     `types_ok_dominated_unsafe`).
+  P9 (close-out round 3, static-11) `antenna_ref`: per-family ADS-B position reference re-measured on all committed adsb.lol
+     hours.
+  Close-out round 3 also: P1 / P2 read the 5 Nov 02:49Z flysfo snapshot too (SFO allocated D5 to a B772, F19 to B38M,
+     C8 B752 with C10 BCS3), and P2 counts an aircraft standing at the neighbour's stop (adsb.lol, all committed hours)
+     inside a plan window of the type as parked together (static-10: F19 B772 / F20 B752); P6 has gates.js's own-strip
+     exemption (static-8).
 BASE: when build_stands.py can run again (its inputs restored), it writes refs/cache/stands/sfo_stands_built.json - point
 BASE there and drop the patches it now does itself (P3 rotunda_max_r, P4, P5 are also in build_stands.py since 2026-11-04).
 
@@ -69,7 +84,9 @@ import geom as GM  # noqa: E402
 
 BASE = os.path.join(ROOT, 'refs', 'cache', 'stands', 'sfo_stands_built_20260926.json')
 OUT = os.path.join(ROOT, 'data', 'sfo_stands')
-FLYSFO_WINDOW2 = ['flysfo_api_flight-status_20261104T180142Z.json.gz']
+FLYSFO_WINDOW2 = ['flysfo_api_flight-status_20261104T180142Z.json.gz',
+                  'flysfo_api_flight-status_20261105T024944Z.json.gz']   # close-out round 3: + the 5 Nov 02:49Z snapshot (static-10)
+REC_PACK = os.path.join(ROOT, 'refs', 'cache', 'rec_pack')                # committed adsb.lol hours (ODbL), P2 co-occupancy
 ADSB_STAYS = os.path.join(ROOT, 'refs', 'cache', 'stands', 'adsb_parked.json')
 STAMP = 'fix-up 2026-11-04'
 STAMP2 = 'fix-up 2026-11-05'
@@ -181,6 +198,51 @@ def p1_aodb(D, log):
     return wins
 
 
+_STILL = []
+
+
+def adsb_still():
+    """stationary on-ground ADS-B reports (gs < 1 kt, NACp >= 8, position age <= 5 s) of the committed adsb.lol hours
+    (refs/cache/rec_pack, ODbL): [(t, x, z, hex, callsign)] - read once"""
+    if _STILL: return _STILL
+    import lzma, glob
+    for fn in sorted(glob.glob(os.path.join(REC_PACK, 'adsblol_*.jsonl.xz'))):
+        with lzma.open(fn, 'rt') as f:
+            for line in f:
+                try: r = json.loads(line)
+                except ValueError: continue
+                for a in (r.get('d') or {}).get('ac') or []:
+                    if a.get('alt_baro') != 'ground' or 'lat' not in a or (a.get('seen_pos') or 0) > 5: continue
+                    if (a.get('gs') or 0) >= 1.0 or (a.get('nac_p') or 0) < 8: continue
+                    x, z = _w84(a['lat'], a['lon'])
+                    _STILL.append((r['t'] - (a.get('seen_pos') or 0), x, z, a['hex'], (a.get('flight') or '').strip(), a.get('t'), a.get('true_heading', a.get('track'))))
+    _STILL.sort(key=lambda q: (q[0], q[3]))
+    return _STILL
+
+
+def _w84(la, lo):
+    sys.path.insert(0, os.path.join(ROOT, 'tools')); import geo_frame as GF_
+    return GF_.wgs84_to_world(la, lo)
+
+
+def adsb_cooccupied(o, windows, iso):
+    """aircraft standing at stand o's stop (|lateral| <= 3 m, -40 m < along < 8 m of its model nose: the antenna lies up to
+    ~20 m behind the nose) for >= 60 s with >= 5 reports inside any of the windows -> ['hex callsign HH:MM-HH:MMZ']"""
+    if not windows: return []
+    st = adsb_still(); ts = [q[0] for q in st]; import bisect
+    f = hdg_vec(o['hdg']); out = []
+    for w in windows:
+        a0, a1 = iso(w[0]), iso(w[1]); by = {}
+        for q in st[bisect.bisect_left(ts, a0):bisect.bisect_right(ts, a1)]:
+            al, la = local((q[1], q[2]), o['nose'], o['hdg'])
+            if abs(la) <= 3.0 and -40.0 < al < 8.0: by.setdefault(q[3], []).append(q)
+        for hx, qs in by.items():
+            if len(qs) >= 5 and qs[-1][0] - qs[0][0] >= 60:
+                out.append('%s %s %s-%sZ' % (hx, next((q[4] for q in qs if q[4]), ''), dt.datetime.utcfromtimestamp(qs[0][0]).strftime('%d %H:%M'),
+                                              dt.datetime.utcfromtimestamp(qs[-1][0]).strftime('%H:%M')))
+    return sorted(set(out))
+
+
 def p2_excl_types(D, wins, log):
     S = {s['name']: s for s in D['stands']}
     for s in D['stands']:
@@ -199,6 +261,13 @@ def p2_excl_types(D, wins, log):
                 theirs = [w for n in (o.get('aodb') or [o['name']]) for w in wins.get(n, [])]
                 def iso(x): return dt.datetime.fromisoformat(x).timestamp() if x else None
                 ov = sum(1 for a in mine for b in theirs if iso(a[0]) and iso(b[0]) and min(iso(a[1]), iso(b[1])) - max(iso(a[0]), iso(b[0])) > 600)
+                # close-out round 3 (finding static-10): SFO's PLAN may keep them apart while operations do not (delays):
+                # an aircraft standing at the neighbour's stop (ADS-B, adsb.lol rec_pack, all committed hours) during a
+                # plan window of this type here counts as parked together (F20: UAL2467 B752 at its stop 20:48-20:50Z
+                # 4 Nov inside UAL2358 B772's F19 window 20:13-21:55Z)
+                occ = [] if (d < PHYS or ov) else adsb_cooccupied(o, [w for w in mine if iso(w[0]) and iso(w[1])], iso)
+                ov += len(occ)
+                if occ: log.append('P2 %s %s vs %s: ADS-B shows %s at %s inside the plan window(s) of %s here' % (s['name'], tt, o['name'], '; '.join(occ[:3]), o['name'], tt))
                 if d < PHYS or ov == 0:
                     for x, y in ((s, o), (o, s)):
                         x.setdefault('excl_types', {}).setdefault(y['name'], [])
@@ -279,6 +348,115 @@ def p3_rotunda(D, log):
 
 # ------------------------------------------------------------------------------------------------ P6
 WALK_HW = 1.3                 # gates.js WALK_W / 2 (fixed walkway 2.6 m)
+# close-out round 3 (2026-11-06, finding static-8): js/live/gates.js ownStrip - a piece of an SFO Museum ring that traces
+# the bridge's OWN fixed walkway (the Boarding Area B tip strips) is not building for that bridge (the 3-D domestic asset
+# leaves those strips to the app's bridges). Same constants as gates.js.
+STRIP_LEAN = 2.1                              # m, OSM / Museum roof lean (data bridge_geom_note: 1.3-2.1 m)
+STRIP_W = 2 * WALK_HW + 2 * STRIP_LEAN        # walkway slab + the lean on both sides (6.8 m)
+STRIP_HW = STRIP_W / 2
+STRIP_MIN_L = 5.0                             # a walkway strip runs >= 5 m along the walkway (BA-B tip 6.3-50.8 m; pier-face bumps <= 3.3 m)
+STRIP_FAR = 20.0
+
+
+class OwnStrip:
+    """Python port of js/live/gates.js ownStrip(W) (round 2 of the bridges track): W = the bridge's mapped walkway polyline
+    ending at its data rotunda; mus = [(k, ring ndarray, matplotlib Path, bbox)] of the SFO Museum clearance rings.
+    in_strip(x, z, k): the point of Museum ring k is the bridge's own walkway strip; edges: {(k, j)} Museum ring edges
+    that are own-strip along their whole length (skipped by the nearest-outline search)"""
+    def __init__(self, W, mus):
+        self.seg = []
+        for i in range(1, len(W)):
+            A, B = np.array(W[i - 1], float), np.array(W[i], float); L = float(np.linalg.norm(B - A))
+            if L > 0.01: self.seg.append((A, (B - A) / L, L))
+        self.arc = list(np.cumsum([0.0] + [sg[2] for sg in self.seg])[:-1]); self.secs = {}; self.runs = {}; self.edges = set()
+        if not self.seg: self.mus = {}; return
+        Wa = np.array(W, float); a0, b0 = Wa.min(0) - STRIP_W; a1, b1 = Wa.max(0) + STRIP_W
+        self.mus = {k: (r, pth) for k, r, pth, bb in mus if bb[0] < a1 and bb[2] > a0 and bb[1] < b1 and bb[3] > b0}
+        for k in self.mus:
+            R_, r0, last = [], None, None
+            for i, (A, u, L) in enumerate(self.seg):
+                for t in np.arange(0.0, L + 1e-6, 0.25):
+                    own = any(iv[2] for iv in self.section(k, i, t)); sA = self.arc[i] + t
+                    if own:
+                        if r0 is None: r0 = sA
+                        last = sA
+                    elif r0 is not None: R_.append((r0, last)); r0 = None
+            if r0 is not None: R_.append((r0, last))
+            self.runs[k] = R_
+        for k, (r, _) in self.mus.items():
+            for j in range(len(r)):
+                e0, e1 = r[j - 1], r[j]
+                if self.near(*e0)[0] > STRIP_W or self.near(*e1)[0] > STRIP_W: continue
+                n = max(1, int(math.ceil(math.dist(e0, e1) / 0.25))); allo, anyo = True, False
+                for q in range(n + 1):
+                    v = self.test(e0[0] + (e1[0] - e0[0]) * q / n, e0[1] + (e1[1] - e0[1]) * q / n, k)
+                    if v is False: allo = False; break
+                    if v: anyo = True
+                if allo and anyo: self.edges.add((k, j))
+
+    def near_v(self, P):
+        best = np.full(len(P), 1e9)
+        for A, u, L in self.seg:
+            t = np.clip((P - A) @ u, 0, L); best = np.minimum(best, np.linalg.norm(A + np.outer(t, u) - P, axis=1))
+        return best
+
+    def near(self, x, z):
+        best = None
+        for i, (A, u, L) in enumerate(self.seg):
+            t = min(L, max(0.0, (x - A[0]) * u[0] + (z - A[1]) * u[1])); d = math.hypot(A[0] + u[0] * t - x, A[1] + u[1] * t - z)
+            if best is None or d < best[0]: best = (d, i, t)
+        return best
+
+    def section(self, k, i, t):
+        A, u, L = self.seg[i]; tq = min(L, max(0.0, round(t / 0.25) * 0.25)); key = (k, i, tq)
+        if key in self.secs: return self.secs[key]
+        r, pth = self.mus[k]; c = A + u * tq; n = np.array([-u[1], u[0]])
+        sv = np.round(np.arange(-STRIP_FAR - 0.1, STRIP_FAR + 0.15, 0.1), 1)
+        ins = pth.contains_points(c + np.outer(sv, n))
+        lo_idx = [j for j in range(len(sv)) if sv[j] <= -0.1][::-1]; hi_idx = [j for j in range(len(sv)) if sv[j] >= 0]
+        lo = []
+        for j in lo_idx:
+            lo.append(j)
+            if (not ins[j] and sv[j] < -STRIP_W - 0.5) or sv[j] < -STRIP_FAR: break
+        hi = []
+        for j in hi_idx:
+            hi.append(j)
+            if (not ins[j] and sv[j] > STRIP_W + 0.5) or sv[j] > STRIP_FAR: break
+        F = lo[::-1] + hi; X = []; a = None; far = False
+        dd = self.near_v(c + np.outer(sv[F], n))
+        for q in range(len(F) + 1):
+            inn = q < len(F) and ins[F[q]]; s_ = sv[F[q]] if q < len(F) else sv[F[-1]] + 0.1
+            if inn:
+                if a is None: a = s_; far = q == 0
+                if not far and dd[q] > STRIP_W: far = True
+            elif a is not None:
+                b = s_ - 0.1; X.append((a, b, (not far) and q < len(F) and b >= -STRIP_HW and a <= STRIP_HW)); a = None
+        self.secs[key] = X; return X
+
+    def _at(self, i, t, o):
+        t += o
+        while t < 0 and i > 0: i -= 1; t += self.seg[i][2]
+        while t > self.seg[i][2] and i < len(self.seg) - 1: t -= self.seg[i][2]; i += 1
+        return None if (t < -1e-6 or t > self.seg[i][2] + 1e-6) else (i, t)
+
+    def test(self, x, z, k):
+        if k not in self.mus: return False
+        c = self.near(x, z)
+        if c is None or c[0] > STRIP_W: return False
+        found = False
+        for o in [0.0] + [v for oo in np.arange(0.25, STRIP_LEAN + 1e-6, 0.25) for v in (-oo, oo)]:
+            q = self._at(c[1], c[2], o)
+            if not q: continue
+            i, t = q; A, u, L = self.seg[i]; tq = min(L, max(0.0, round(t / 0.25) * 0.25))
+            sP = (x - A[0] - u[0] * tq) * -u[1] + (z - A[1] - u[1] * tq) * u[0]
+            iv = next((v for v in self.section(k, i, t) if v[0] - 0.15 <= sP <= v[1] + 0.15), None)
+            if iv:
+                sA = self.arc[i] + tq
+                if iv[2] and any(r1 - r0 >= STRIP_MIN_L and r0 - 0.01 <= sA <= r1 + 0.01 for r0, r1 in self.runs.get(k, [])): return True
+                found = True
+        return False if found else None
+
+    def in_strip(self, x, z, k): return self.test(x, z, k) is True
 
 
 def p6_drums(D, log):
@@ -295,17 +473,41 @@ def p6_drums(D, log):
     rings = list(Bd['complex']) + [r for pp in Bd.get('parts', []) if pp.get('kind') != 'walkway' for r in pp['rings']]
     rings += [P[0] for P in A['terminalComplex']] + [P[0] for ba in A['boardingAreas'] for P in ba['polys']]
     rings += [r for pp in Bd.get('parts', []) if pp.get('kind') == 'walkway' for r in pp['rings']]       # sky bridges
-    polys = [Polygon(r) for r in rings if len(r) >= 3]
-    bnd = unary_union([LineString(list(r) + [r[0]]) for r in rings if len(r) >= 3])
-    from shapely.prepared import prep
-    inside_any = [prep(pg.buffer(0)) for pg in polys]
-    from shapely.ops import nearest_points
+    # ring index ranges as gates.js BLD: [0, NBLD) drawn outline, [NBLD, NCL) SFO Museum clearance rings, then sky bridges
+    NBLD = len(Bd['complex']) + sum(len(pp['rings']) for pp in Bd.get('parts', []) if pp.get('kind') != 'walkway')
+    NCL = NBLD + len(A['terminalComplex']) + sum(len(ba['polys']) for ba in A['boardingAreas'])
+    from matplotlib.path import Path as _MPath
+    RG = [np.array(r, float) for r in rings]
+    PATHS = [_MPath(r) for r in RG]; BB = [(r[:, 0].min(), r[:, 1].min(), r[:, 0].max(), r[:, 1].max()) for r in RG]
+    MUS = [(k, RG[k], PATHS[k], BB[k]) for k in range(NBLD, NCL) if len(RG[k]) >= 3]
+    EDG = np.array([(k, j, r[j - 1][0], r[j - 1][1], r[j][0], r[j][1]) for k, r in enumerate(RG) if len(r) >= 3 for j in range(len(r))])
     allb = [(st, b) for st in D['stands'] for b in (st.get('bridges') or []) + (st.get('bridges_upper') or []) if b.get('rotunda')]
+    STRIPS = {}
+    def own_strip(b):
+        if id(b) not in STRIPS:
+            W = [list(q) for q in b.get("walk") or []] if len(b.get("walk") or []) >= 2 else [list(b.get("attach") or b["rotunda"])]
+            if math.dist(W[-1], b['rotunda']) > 0.05: W.append(list(b['rotunda']))
+            STRIPS[id(b)] = OwnStrip(W, MUS)
+        return STRIPS[id(b)]
+    def nearest_building(b, x, z):
+        """gates.js nearestBuilding(x, z, false, b._strip): (d, point) of the nearest outline edge within ~24 m that is not
+        the bridge's own walkway strip, d 0 when the point is inside a ring (an own-strip point of a Museum ring is not)"""
+        own = own_strip(b)
+        for k in range(len(RG)):
+            bb = BB[k]
+            if len(RG[k]) >= 3 and bb[0] <= x <= bb[2] and bb[1] <= z <= bb[3] and PATHS[k].contains_point((x, z)) \
+                    and not (NBLD <= k < NCL and own.in_strip(x, z, k)): return 0.0, None
+        E = EDG[(np.minimum(EDG[:, 2], EDG[:, 4]) < x + 24) & (np.maximum(EDG[:, 2], EDG[:, 4]) > x - 24) &
+                (np.minimum(EDG[:, 3], EDG[:, 5]) < z + 24) & (np.maximum(EDG[:, 3], EDG[:, 5]) > z - 24)]
+        if own.edges: E = E[[(int(e[0]), int(e[1])) not in own.edges for e in E]]
+        if not len(E): return 1e9, None
+        ex, ez = E[:, 4] - E[:, 2], E[:, 5] - E[:, 3]; L2 = np.maximum(ex * ex + ez * ez, 1e-12)
+        t = np.clip(((x - E[:, 2]) * ex + (z - E[:, 3]) * ez) / L2, 0, 1); qx, qz = E[:, 2] + ex * t, E[:, 3] + ez * t
+        d = np.hypot(qx - x, qz - z); i = int(np.argmin(d)); return float(d[i]), (float(qx[i]), float(qz[i]))
     def limits(b, x, z):
-        out = []; P_ = Point(x, z)
-        if not any(pg.contains(P_) for pg in inside_any):
-            q = nearest_points(bnd, P_)[0]; d = P_.distance(q)
-            if d < 24.0: out.append((d, 0.2, (q.x, q.y), 'building'))
+        out = []
+        d, q = nearest_building(b, x, z)
+        if q is not None and d < 24.0: out.append((d, 0.2, q, 'building'))
         own = b.get('walk') or []
         near = lambda p, q: math.dist(p, q) < 0.3
         for _, ob in allb:
@@ -376,6 +578,97 @@ def p6_drums(D, log):
     left = [('%s L%s' % (st['name'], b.get('door')), round(max([DRUM_MIN + e - d for d, e, _, _ in limits(b, *b['rotunda'])] + [0]), 3)) for st, b in allb]
     left = [x for x in left if x[1] > 0.005]
     log.append('P6 %d rotundas moved; remaining deficits %s' % (len(moves), left or 'none'))
+
+
+# ------------------------------------------------------------------------------------------------ P8
+STAMP3 = 'fix-up 2026-11-06'
+
+
+ENVS = {}
+
+
+def p8_family_ok(D, log):
+    """close-out round 3 (2026-11-06, finding static-10): a stand's types_ok also admits every smaller member of a listed
+    type's stop-point family (same geom.FAMILY, span and length <= that type's), the rule js/live/traffic.js typesOkHas
+    applies since round 2 (B38M under B39M at F19: SFO planned UAL626 B38M there 18:49-20:08Z 4 Nov and it parked) - so
+    the checker's APP view (geom.accepted_types) and traffic.js stay one-to-one"""
+    for s in D['stands']:
+        ok = s.get('types_ok')
+        if not ok: continue
+        have = set(ok); add = set()
+        for t, r in GM.APP.items():
+            if t in have or not r.get('span'): continue
+            ft = GM.FAMILY.get(t); dt_ = dims(t)
+            if not ft or not dt_: continue
+            for q in have:
+                dq = dims(q)
+                if dq and GM.FAMILY.get(ALIAS_T.get(q, q)) == ft and dt_[0] <= dq[0] + 1e-6 and dt_[1] <= dq[1] + 1e-6: add.add(t); break
+        # a dominated type is NOT geometrically inside the listed one when its wing sits further forward (B77L under B77W:
+        # same span, 10 m shorter, its wing 1.9 m from F20's envelope at F19): such a type is added only when its planform
+        # at the stop clears every neighbour the stand is tight with (tight_with / types_ok_all_paths) and every stand
+        # within 120 m by PHYS (3 m); the rest are listed in `types_ok_dominated_unsafe` (traffic.js should not admit them)
+        bad = {}
+        for t in sorted(add):
+            pf = GM.planform(GM.nose_for(s, t), s['hdg'], t)
+            for o in D['stands']:
+                if o is s or o['name'] in (s.get('excl') or []) or math.dist(o['nose'], s['nose']) > 120: continue
+                if o['name'] not in ENVS: ENVS[o['name']] = GM.stand_env(o)
+                d_ = pf.distance(ENVS[o['name']])
+                if d_ < PHYS: bad[t] = (o['name'], round(d_, 1)); break
+        add -= set(bad)
+        if bad:
+            s['types_ok_dominated_unsafe'] = {t: '%.1f m from the envelope of %s (< %.0f m)' % (v[1], v[0], PHYS) for t, v in bad.items()}
+            log.append('P8 %s family-dominated but < %.0f m from a neighbour, NOT added: %s' % (s['name'], PHYS, ', '.join('%s (%s %.1f m)' % (t, v[0], v[1]) for t, v in sorted(bad.items()))))
+        if add:
+            s['types_ok'] = sorted(have | add)
+            note(s, 'types_ok + %s (smaller members of a listed type\'s stop-point family; traffic.js typesOkHas)' % ', '.join(sorted(add)), STAMP3)
+            log.append('P8 %s types_ok + %s' % (s['name'], ', '.join(sorted(add))))
+
+
+# ------------------------------------------------------------------------------------------------ P9
+def p9_antenna_ref(D, log):
+    """close-out round 3 (2026-11-06, finding static-11; realtime_closeout R3.1.3 / R3.3): the per-family ADS-B position
+    reference (metres the reported position lies behind the nose) re-measured on ALL committed adsb.lol hours
+    (refs/cache/rec_pack): stays = >= 180 s stationary (gs < 1 kt, NACp >= 8, within 8 m), median position; on a contact
+    stand's axis (|lateral| <= 1.5 m, heading within 10 deg, -40 m < along < 10 m of the model nose); value = along minus
+    the stand's stop for that family (type_stops, else the nose). Written to D['antenna_ref'] {family: {along_m (median,
+    - = behind the nose), n, stands, iqr}} next to the 26 Sep build's FAM_REF - js/live/traffic.js ANT = 0.2 L puts the
+    E-Jet antenna 6.3 m behind the nose, the recording 13 m: the antenna reference, not the type stops, carries the ~7 m"""
+    st = adsb_still(); by = defaultdict(list)
+    for q in st: by[q[3]].append(q)
+    stays = []
+    for hx, qs in by.items():
+        cur = []
+        def flush():
+            if len(cur) >= 3 and cur[-1][0] - cur[0][0] >= 180:
+                hd = [q[6] for q in cur if q[6] is not None]; ty = next((q[5] for q in cur if q[5]), None)
+                stays.append((float(np.median([q[1] for q in cur])), float(np.median([q[2] for q in cur])), float(np.median(hd)) if hd else None, ty, hx))
+        for q in qs:
+            if cur and (math.dist(q[1:3], cur[0][1:3]) >= 8 or q[0] - cur[-1][0] > 600): flush(); cur = []
+            cur.append(q)
+        flush()
+    fam = defaultdict(list)
+    for x, z, h, ty, hx in stays:
+        f_ = GM.FAMILY.get(ALIAS_T.get(ty, ty)) if ty else None
+        if not f_ or h is None: continue
+        best = None
+        for s in D['stands']:
+            a, c = local((x, z), s['nose'], s['hdg'])
+            if abs(c) <= 1.5 and -40.0 < a < 10.0 and abs(hdiff(h, s['hdg'])) <= 10 and (best is None or abs(c) < abs(best[2])): best = (s, a, c)
+        if not best: continue
+        ts = ((best[0].get('type_stops') or {}).get(f_) or {}).get('along') or 0.0
+        fam[f_].append((best[1] - ts, best[0]['name'], hx))
+    out = {}
+    for f_, rows in sorted(fam.items()):
+        v = np.array([r[0] for r in rows])
+        out[f_] = {'along_m': round(float(np.median(v)), 1), 'n': len(rows), 'stands': len({r[1] for r in rows}), 'aircraft': len({r[2] for r in rows}),
+                   'iqr': [round(float(np.percentile(v, 25)), 1), round(float(np.percentile(v, 75)), 1)], 'sep_build': FAM_REF.get(f_)}
+        log.append('P9 %s antenna %.1f m behind the nose (n %d stays, %d stands, IQR %s; 26 Sep build %s)' % (
+            f_, -out[f_]['along_m'], len(rows), out[f_]['stands'], out[f_]['iqr'], FAM_REF.get(f_)))
+    D['antenna_ref'] = {'what': 'per family: median ADS-B reported position along the stand axis relative to the nose at the stop (m, - = behind '
+                                'the nose), all committed adsb.lol hours (refs/cache/rec_pack, ODbL); obs (n < 5: weak). The position is the '
+                                'GNSS antenna unless the transponder applies the DO-260B nose offset (A32x)', 'hours': len(set(int(q[0] // 3600) for q in st)),
+                        'families': out}
 
 
 # ------------------------------------------------------------------------------------------------ P7
@@ -568,10 +861,12 @@ def main():
         R = p12_replay(D, log)
         p12_mode = 'replayed from %s (snapshot %s)' % (os.path.relpath(P12_REPLAY, ROOT), 'missing' if not have else 'ignored: --replay')
     print('P1 / P2:', p12_mode)
+    p8_family_ok(D, log)
     p3_rotunda(D, log)
     p6_drums(D, log)
     p7_stow_osm(D, log)
     p5_beyond(D, log)
+    p9_antenna_ref(D, log)
     p4_src(D, log)     # after P5: a new conflict_along makes an obs stand inf
     D['fixups'] = [{'stage': 'tools/stands/patch_stands.py', 'stamp': STAMP, 'base': os.path.relpath(BASE, ROOT),
                     'evidence': {'flysfo': FLYSFO_WINDOW2, 'flysfo_replay': os.path.relpath(P12_REPLAY, ROOT) + ' (P1 / P2 results, used when the snapshot is missing)',

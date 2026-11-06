@@ -505,7 +505,7 @@ def sheet_elev():
     S = Sheet('BI-02', 'International Terminal main hall: west (landside) elevation and north end elevation', 'A1',
               subtitle='Spec: tools/buildings/spec_itb.json (roof.profile, level3.floor, facade.*); photos i1 / i3 / i4 (reference)')
     V1 = S.view(0, 330, S.vw, 240, 400, (0, 23), title='1  WEST (LANDSIDE) ELEVATION, looking ENE (u: + towards Boarding Area A)', kind='elev', frame=False)
-    west_elev(V1); V1.scalebar(y_mm=6)
+    west_elev(V1); r3_hall(V1); V1.scalebar(y_mm=6)
     V2 = S.view(0, 6, 420, 280, 250, (0, 22), title='2  NORTH END ELEVATION, looking SSE', kind='elev', frame=False)
     north_elev(V2); V2.scalebar(y_mm=6)
     rows = [('Eave profile |u| 27-126 m', f'35.7 -> 40.08 -> {H_TIP:.1f} m', 'obs', 'NAIP: west eave vs the straight facade-base line, 0.955 k h; even-polynomial fit, rms 0.20 m; '
@@ -798,3 +798,49 @@ def sheet_piers():
            'inferred; model it as a closed box with a window band, heights per the band.')
     S.note('Not measured: floor heights, gate-room bay positions, parapets and roof equipment. Photos a2 / d2 are reference only.')
     return S.finish()
+
+# ------------------------------------------------------------------------------------------------ close-out r3 (buildings-10)
+def _itb_geom():
+    """the 3-D geometry module (imports this one: imported lazily, at draw time)."""
+    import os, sys
+    sys.path.insert(0, os.path.join(ROOT, 'tools', 'blender'))
+    import itb_geom
+    return itb_geom
+
+
+def r3_hall(V):
+    """the 3-D state of the centre section and the curb canopy drawn over BI-02 V1 / BI-03 V1 (u frame): the deck / fascia
+    roof_line(u) - crown_cap(u) under the lens vaults (their tops = deck + crown_cap + LOS_DROP), and the canopy slab
+    (CANOPY - CANOPY_THK .. CANOPY) - so the sheet is again the reference for tools/blender/itb_geom.py."""
+    G = _itb_geom()
+    us = np.linspace(-30.0, 30.0, 241)
+    deck = [(u, G.roof_top(u)) for u in us]
+    vault = [(u, G.roof_top(u) + G.crown_cap(u) + G.LOS_DROP) for u in us if G.crown_cap(u) > 0.01]
+    V.line(deck, 'obs', lw=1.0, z=6.2, color='#1f4e79')
+    if vault: V.line(vault, 'inf', lw=0.6, z=6.2, ls=(0, (2, 1)))
+    V.leader((0.0, G.roof_top(0.0)), 30, -10, f'3-D STATE (review r1 / r2): centre deck / fascia {G.roof_top(0.0):.2f} m at the crown = roof_line - crown cap '
+             f'{G.CROWN_CAP:.1f} m\n(1.6 (1 - |x|^3)^0.7 over the lens row) [obs photo i4, low]; lens vaults {G.LOS_DROP:.1f} m above the cap line form '
+             'the 40.1-m silhouette [inf]', 'obs', fs=3.6)
+    HH = G.HALL_HL
+    V.poly([(-HH, G.CANOPY - G.CANOPY_THK), (HH, G.CANOPY - G.CANOPY_THK), (HH, G.CANOPY), (-HH, G.CANOPY)], 'inf', fc='none', lw=0.5, z=6.1)
+    V.leader((HH * 0.6, G.CANOPY - G.CANOPY_THK), 20, -12, f'3-D: curb canopy slab {G.CANOPY_THK:.2f} m (close-out r3: soffit {G.CANOPY - G.CANOPY_THK:.2f} m, '
+             f'4.67 m over the departures plate); kerb line v {G.KERB_V} [obs NAIP],\nsidewalk {G.CURB_W:.2f} m, no upstand, 0.15-m kerb, 44 bollards '
+             '[obs photo i3] (review r2)', 'inf', fs=3.6)
+
+
+def r3_table(S, x, y, w, group, sheets):
+    """the manifest's deviations_from_sheets of this asset group drawn as a table on the sheet (close-out r3, buildings-10):
+    every 3-D change not yet drawn in a view is listed here with its size and tag."""
+    import json, os
+    try:
+        m = json.load(open(os.path.join(ROOT, 'data', 'buildings3d', 'manifest.json')))[group]
+    except (OSError, ValueError, KeyError):
+        return
+    rows = []
+    for d_ in m.get('deviations_from_sheets', []):
+        sh = str(d_.get('sheet', d_.get('sheets', '')))
+        if sheets and not any(t in sh for t in sheets): continue
+        rows.append((str(d_.get('item', ''))[:60], str(d_.get('model', ''))[:150], str(d_.get('tag', 'inf')).split()[0] if d_.get('tag') else 'inf',
+                     str(d_.get('why', d_.get('tag', '')))[:80]))
+    if rows:
+        S.table(x, y, w, '3-D state not drawn in the views above (manifest %s.deviations_from_sheets, close-out r3)' % group, rows, fs=3.3, col=(0.24, 0.52))
