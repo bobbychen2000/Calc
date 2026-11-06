@@ -1155,6 +1155,342 @@
    "bytes": 721044,
    "sha256": "7ce3ec04ee63f140dba365f4d9b55c099ef39217a7d1b732611dbe3973da64b3"
   },
+  "engine/node/node_modules/.bin/semver": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 4957,
+   "sha256": "bd6c871026985937dc945011fc54b74b47f5998154216d7b8d40d5ed782e4402"
+  },
+  "engine/node/node_modules/.package-lock.json": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 11667,
+   "sha256": "68ee73c6e36976db2b7e20eb3b6c413f827c12d960d3494294a682c366896abf"
+  },
+  "engine/node/node_modules/@gltf-transform/core/LICENSE.md": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1078,
+   "sha256": "2c4f111d00dbf22b10d31a14813c5f5de6a828640f7311f26b9dda89b3fce165"
+  },
+  "engine/node/node_modules/@gltf-transform/core/README.md": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1430,
+   "sha256": "1e36c2439ae91278aa7b3a95ea169ba867393636fd46a30f9e177d60f6ea24b9"
+  },
+  "engine/node/node_modules/@gltf-transform/core/dist/constants.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 3399,
+   "sha256": "fddeb64f45d827c31bd148f72411f261201482dc334e3dccba7b3f42f3981661"
+  },
+  "engine/node/node_modules/@gltf-transform/core/dist/document.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 6809,
+   "sha256": "9f0f3b4d8e8c72d0713e132054dd4b57a2e1c3a674f30632a24d93e6dd842027"
+  },
+  "engine/node/node_modules/@gltf-transform/core/dist/extension.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 5858,
+   "sha256": "4009d04c397e43812dcf6eef5133504b649de2c4fd9ea3d2fed3ad62ee78cb8d"
+  },
+  "engine/node/node_modules/@gltf-transform/core/dist/index.cjs": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 253236,
+   "sha256": "208e04f9d065e4614a6c1631e8e26fa738749df6a46497a7609810f278f4054e"
+  },
+  "engine/node/node_modules/@gltf-transform/core/dist/index.cjs.map": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 551810,
+   "sha256": "297d19feaad3f74ad4df43ea60bcc601a4bf9400a713f25fb079a2495e7bf07a"
+  },
+  "engine/node/node_modules/@gltf-transform/core/dist/index.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1066,
+   "sha256": "1496ebad8431a2bebaf61d2b02c16d3ddcce22f15603a3d346d54be260e845b3"
+  },
+  "engine/node/node_modules/@gltf-transform/core/dist/index.modern.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 229758,
+   "sha256": "5d25c38fe762cf85d35787544b5c1aa70013eb08ed41805c8e7bb35122ac7e4a"
+  },
+  "engine/node/node_modules/@gltf-transform/core/dist/index.modern.js.map": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 538365,
+   "sha256": "115027c2cf82c7bf13246f22c99ad32980471044d9fe4bb0672700532966426e"
+  },
+  "engine/node/node_modules/@gltf-transform/core/dist/io/deno-io.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1320,
+   "sha256": "7328ca1b3ecd214d6ccd9db7923c436fe9806bf41903dece6862bf8c0e1f7158"
+  },
+  "engine/node/node_modules/@gltf-transform/core/dist/io/index.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 358,
+   "sha256": "72b705be8a00194d9da81c9b6c6afc72f8bc8ea90e17f7dce4ff872c55f47d43"
+  },
+  "engine/node/node_modules/@gltf-transform/core/dist/io/node-io.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 2721,
+   "sha256": "2cac81a44962fd7198094a9ee1698a7ff530295af51716763e7cc54cc1513d38"
+  },
+  "engine/node/node_modules/@gltf-transform/core/dist/io/platform-io.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 4006,
+   "sha256": "1bbc01f31705d234abd11931530f4a7d337bffd5142fa9b299b4ac4267d12250"
+  },
+  "engine/node/node_modules/@gltf-transform/core/dist/io/reader-context.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1057,
+   "sha256": "2cf158ccab8db8585e1ae84eee98c10e38b7fd1312c9f063b920f1b96aa27e2c"
+  },
+  "engine/node/node_modules/@gltf-transform/core/dist/io/reader.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 249,
+   "sha256": "d3be3c3cf1d08aa0ee4ec6feb741cf16f7bd0a80b8a57fbb8132dff44b5ba66b"
+  },
+  "engine/node/node_modules/@gltf-transform/core/dist/io/web-io.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1259,
+   "sha256": "826fcc4db2e9e193336895f9d98c71a6a08273ef3473464be47e8d90791639b1"
+  },
+  "engine/node/node_modules/@gltf-transform/core/dist/io/writer-context.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 4605,
+   "sha256": "894014caa018ade4db504e719afda9ae790a469e44690b7ad4e40c9af8070b36"
+  },
+  "engine/node/node_modules/@gltf-transform/core/dist/io/writer.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 381,
+   "sha256": "cba451e262a917e02bae6cb82a96e0baaa5533d2d20d0874b4159ed73a0cb79c"
+  },
+  "engine/node/node_modules/@gltf-transform/core/dist/json-document.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1193,
+   "sha256": "42e44dc2c16ac54c4f69a4f2170880e535560a0553d9ea8270ebf186bae2fd80"
+  },
+  "engine/node/node_modules/@gltf-transform/core/dist/properties/accessor.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 11477,
+   "sha256": "6a0829014b9fd79ba7dcb556f1b84d01c9d8b048d522ea1b3a8b6313e6a5d44d"
+  },
+  "engine/node/node_modules/@gltf-transform/core/dist/properties/animation-channel.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 3307,
+   "sha256": "c0089f4034a18d9d5710c80d7d743635c96d82dccc590a21250f024507ced6b1"
+  },
+  "engine/node/node_modules/@gltf-transform/core/dist/properties/animation-sampler.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 3311,
+   "sha256": "64b837655e027ff4d27e4aba4e85fcc92950a7f6d0fa72ff6b9b573cb51222a7"
+  },
+  "engine/node/node_modules/@gltf-transform/core/dist/properties/animation.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 3083,
+   "sha256": "3eff60060c78f323da69fbe4808e4d8e41b751bd9cd280eebbef66652daf14da"
+  },
+  "engine/node/node_modules/@gltf-transform/core/dist/properties/buffer.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 3795,
+   "sha256": "e6085bd4851c0625a74c2da1b6e762e4e2849e82f78fa64ba42666218a852e0f"
+  },
+  "engine/node/node_modules/@gltf-transform/core/dist/properties/camera.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 4141,
+   "sha256": "d15b70532355bb74da03c213194a8d1878d822917f5f883919b231252a6d57bb"
+  },
+  "engine/node/node_modules/@gltf-transform/core/dist/properties/extensible-property.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1303,
+   "sha256": "045ccf1a64784fb4759441c2353c4f6cc38cafcb2635cee6263a176c8337c090"
+  },
+  "engine/node/node_modules/@gltf-transform/core/dist/properties/extension-property.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1304,
+   "sha256": "c23e4e8abe6fa8b8862fa8196ee709c2e0af9961813d6c0ee5931bd6aa0afc8a"
+  },
+  "engine/node/node_modules/@gltf-transform/core/dist/properties/index.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 618,
+   "sha256": "054c25a84e9643c96ba1de88c7680a07020602111aef394621930c1bc65e2d94"
+  },
+  "engine/node/node_modules/@gltf-transform/core/dist/properties/material.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 13410,
+   "sha256": "bdf20fd4211a076c6de9f27d8854e6e1c998c7fe2c5a1e0c368478a6a1325f1f"
+  },
+  "engine/node/node_modules/@gltf-transform/core/dist/properties/mesh.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 2664,
+   "sha256": "11de318829b422562f3a1f18c32183c1543e758520c5dd46b4cca4e1b38c2bde"
+  },
+  "engine/node/node_modules/@gltf-transform/core/dist/properties/node.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 6005,
+   "sha256": "7df8f38fb4a8bd8a07d5f5b31a352a72be9f1e96c7e95d210dd604e25c335b08"
+  },
+  "engine/node/node_modules/@gltf-transform/core/dist/properties/primitive-target.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 2082,
+   "sha256": "74446914c8fb966ab8c4655f53a14883ac8b292af096c98b039b6dbd99243cc8"
+  },
+  "engine/node/node_modules/@gltf-transform/core/dist/properties/primitive.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 5506,
+   "sha256": "6ab1a0389df77ee1743d2db6589b0c1d45431e06e4f8b98948a7089c59c5b4b5"
+  },
+  "engine/node/node_modules/@gltf-transform/core/dist/properties/property.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 5911,
+   "sha256": "c8b4c352c6cdd90eca3f72e5fc56225bcfbf63ebf1b08f65f44c80124aa272a4"
+  },
+  "engine/node/node_modules/@gltf-transform/core/dist/properties/root.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 4805,
+   "sha256": "2b879cf2ba0b8e71d61b557e734f2d43d4de210292bf7a2890b8fda331e9e999"
+  },
+  "engine/node/node_modules/@gltf-transform/core/dist/properties/scene.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 2270,
+   "sha256": "5ecc6c733ba4052acc49e4ae129339c745250be8dcb7c45356c95ac087676e60"
+  },
+  "engine/node/node_modules/@gltf-transform/core/dist/properties/skin.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 2200,
+   "sha256": "3942fd42fa22e401a20912cefde88bf09a8e6a97a3f1ef22a1b81e1a5136d215"
+  },
+  "engine/node/node_modules/@gltf-transform/core/dist/properties/texture-info.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 3638,
+   "sha256": "96f5cf3d9be30d517fd973102088322a924d57b284f8b7b10eaedc12872d9a94"
+  },
+  "engine/node/node_modules/@gltf-transform/core/dist/properties/texture.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 2697,
+   "sha256": "6b4d2f84be475b90e9e275db2b8147209aae3e8b7990ca13bb1c032118beb0b6"
+  },
+  "engine/node/node_modules/@gltf-transform/core/dist/types/gltf.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 21670,
+   "sha256": "6f458888b19379cd10b02e440be212f69fa4d78b46d5c0f472a8652fb65bd490"
+  },
+  "engine/node/node_modules/@gltf-transform/core/dist/utils/buffer-utils.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1616,
+   "sha256": "d339f7a9ae44b0c37a825913772f1c7bb8e7ce9a051322eb57db8f3ca8511c6f"
+  },
+  "engine/node/node_modules/@gltf-transform/core/dist/utils/color-utils.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1458,
+   "sha256": "87b68fd6e6987e3a4ef37f7e39a3660295d4c577b2ebc226cc600d63c52ae9ef"
+  },
+  "engine/node/node_modules/@gltf-transform/core/dist/utils/file-utils.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 494,
+   "sha256": "ea2a0095d699bb71c2c5f57e1d66c9ba3f1d9470852b8cc085531f093536ffe4"
+  },
+  "engine/node/node_modules/@gltf-transform/core/dist/utils/get-bounds.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 255,
+   "sha256": "a2b2b0698d5b2e59c07a544666d31f550c96aad64873cbea63a87eb9a803426d"
+  },
+  "engine/node/node_modules/@gltf-transform/core/dist/utils/http-utils.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1040,
+   "sha256": "b86cd7688f4dc901a93b213e46ceb8f92c26cd66c78740c11a51d7c12953dce3"
+  },
+  "engine/node/node_modules/@gltf-transform/core/dist/utils/image-utils.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1887,
+   "sha256": "67eb0a52fd27834a05689a9a9cd5000fae7038f91426a533b0f64e0f86273b90"
+  },
+  "engine/node/node_modules/@gltf-transform/core/dist/utils/index.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 366,
+   "sha256": "d1265faf906b328be97e882328a17707cd67f322b51a3afb3d255c90f98e7eb6"
+  },
+  "engine/node/node_modules/@gltf-transform/core/dist/utils/is-plain-object.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 56,
+   "sha256": "e989a0466063593b86c5fcb35b524c43eb3c24424eba9b8c70b15077ce11deb7"
+  },
+  "engine/node/node_modules/@gltf-transform/core/dist/utils/logger.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1281,
+   "sha256": "e74371364cd921973abe4c2062b8ad486a44553a2a800ae8c80b6dae6c7a6065"
+  },
+  "engine/node/node_modules/@gltf-transform/core/dist/utils/math-utils.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1772,
+   "sha256": "d97cbb05a3612b349fda2b476ea71b7fb597ddc10f653eeee4113a04aee279c6"
+  },
+  "engine/node/node_modules/@gltf-transform/core/dist/utils/property-utils.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1499,
+   "sha256": "ef4be5c333d37b79f980d59edab05d8c44a3023017b83a5dfcf58ecfbc9ed598"
+  },
+  "engine/node/node_modules/@gltf-transform/core/dist/utils/uuid.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 445,
+   "sha256": "3febc75ac255e28ae52d2a74669e17832204ef5343e555b469e3b13b4d53879a"
+  },
+  "engine/node/node_modules/@gltf-transform/core/package.json": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1295,
+   "sha256": "73c09a0f3a5639c10eb68c2fa108e62427921fb4f7a4591a170ad8e41f2ce192"
+  },
   "engine/node/node_modules/@gltf-transform/core/src/constants.ts": {
    "class": "local",
    "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
@@ -1436,6 +1772,498 @@
    "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
    "bytes": 958,
    "sha256": "42447bae68ee5d16e9b689ae90423ed4356a5fd35316196a1b709c0e6307263c"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/LICENSE.md": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1078,
+   "sha256": "2c4f111d00dbf22b10d31a14813c5f5de6a828640f7311f26b9dda89b3fce165"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/README.md": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1531,
+   "sha256": "9b0e7bd5862e2875147f0593b66e642c04ea0c78fcf39c00759984abddf59ace"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/constants.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1752,
+   "sha256": "d75749cbc6b9507117e21924bf67ae0b7d9929df400a4e0fef4b75d9ca8f0b8b"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/ext-mesh-gpu-instancing/index.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 79,
+   "sha256": "6dcbe6de9c2a6da83c0d61bc4714c21e355ad821cd3cb35c243d98ce4f9fcb23"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/ext-mesh-gpu-instancing/instanced-mesh.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1511,
+   "sha256": "bc8391a06a9035f000ba9e6ec4deedab8a70329500a91d0c352af37c488b12b7"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/ext-mesh-gpu-instancing/mesh-gpu-instancing.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 3379,
+   "sha256": "5fd1a37237d1505d55e2deb43bbac42f271220bcf00d207732ff033d050eceb7"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/ext-meshopt-compression/constants.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1326,
+   "sha256": "ccb76247638713a1a73f2973be0c1502fa42f1c95462c80fc743e546f8a3996b"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/ext-meshopt-compression/decoder.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 429,
+   "sha256": "9b29c213235695df3ab504fd70ec4ea65a9da8ee0898d3eb47721201d37eda2b"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/ext-meshopt-compression/encoder.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 966,
+   "sha256": "f99407df30259e36b2ca2f416f69556b1b6ef9483746f28c31cf78a82067e41f"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/ext-meshopt-compression/index.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 42,
+   "sha256": "23c85972a63983cb209ea9a65118c94e68ebe155e136fde3d43dc16eaf5622f5"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/ext-meshopt-compression/meshopt-compression.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 6071,
+   "sha256": "640b0ef3610924f18b12ef5c73077dde89f119db41a237c91df4a607ea7a2f4a"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/ext-texture-avif/index.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 35,
+   "sha256": "5aea153b631ec97621a18d095e46ad829f490a8a7d90cde1ace2cfb14d0dbfa9"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/ext-texture-avif/texture-avif.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 2366,
+   "sha256": "0dbaa64f1f9d102c8f861a54df60e3f9ecab64fdadb738967c7c2edd8214c117"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/ext-texture-webp/index.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 35,
+   "sha256": "65d168c3d78e41e5f600b7caa682caefb488613260224998275f87e2fe66a910"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/ext-texture-webp/texture-webp.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 2371,
+   "sha256": "c71dc9667041e7370dcc307691cbea5eaa3a80b03a6d5fd6a4d6cdd128b9f2c0"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/index.cjs": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 205150,
+   "sha256": "53476c41aba19e4b6ebb1fd812459fc054a0dabf0e6f5dd7f5387015cfd23991"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/index.cjs.map": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 407736,
+   "sha256": "3d088f8e4b2e6b1191f06277f3e1172f5f831875b842f6db22976137c5e8c8d3"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/index.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 4466,
+   "sha256": "0cfd9b7f54a7be498a2ddac6d8a95d495894260b035f3f346fa23b24bda0f6d8"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/index.modern.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 203324,
+   "sha256": "68d02dbbfe345914b99c2d6ed9fffb72a1cce18dbf05ffae65ae909ff2ea3bd3"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/index.modern.js.map": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 407992,
+   "sha256": "2bd1bf256c0bd13e965d060e9eee95bccfec16c69864bd0d5815a87f93e5a72d"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/khr-draco-mesh-compression/decoder.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 572,
+   "sha256": "2abb1cfba639d9a925a4a8c3909005d94470048d92c694765dee3073c2f5a923"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/khr-draco-mesh-compression/draco-mesh-compression.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 4859,
+   "sha256": "a4b2d6cb2fac9ee0da00e842c441c1470fa83b7b52777198f05bb9a26f1498f4"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/khr-draco-mesh-compression/encoder.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1061,
+   "sha256": "cf00f8f6e7287e19a53a590c0d4fb01d0d140ba395a34d9b10af19f9b3d29c67"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/khr-draco-mesh-compression/index.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 45,
+   "sha256": "8960768da17d3e928822147b22c9b5ab580fe7e555658572c85be0000b86ea42"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/khr-lights-punctual/index.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 66,
+   "sha256": "5ee685883addc1da5de03f6f3fea94f098e417b0b38b9ed6bdf738dc50c7c02c"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/khr-lights-punctual/light.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 3715,
+   "sha256": "7f7c058cf109ec891210c8dd034d708072ec15f2d58f61291f2918a30c2b6afc"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/khr-lights-punctual/lights-punctual.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1475,
+   "sha256": "b9815d56e2ba9c0d98d7ed01ba37dce1caa28c4c7fac1eb3b185c9481150d689"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/khr-materials-anisotropy/anisotropy.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 2249,
+   "sha256": "9d52ce225bcba8f541b6c7e50acf062c8ed3e7f8b9532789541d7805a5e98d9a"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/khr-materials-anisotropy/index.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 76,
+   "sha256": "0ca4d3017aab02834e3fa44acc07061bf5d8e3c5cee7fbb5101ed8d8b61c04bc"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/khr-materials-anisotropy/materials-anisotropy.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 2771,
+   "sha256": "466fd21b380e43977804f5626fce3e79876f8b95d7cd06dbdd69226d6f905135"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/khr-materials-clearcoat/clearcoat.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 4194,
+   "sha256": "270c66776382a885508743db896269aad405e40f12e2a9e981f016121d81f9fa"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/khr-materials-clearcoat/index.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 74,
+   "sha256": "79aba47b065a6374fc884f1194cb1cc90af71c438d36326ceccaceb697c01cee"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/khr-materials-clearcoat/materials-clearcoat.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1929,
+   "sha256": "2f8da5c4d0cf280367f9d8969b2918b850a1c0542e4363c6e0705b5ee0b3fe52"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/khr-materials-diffuse-transmission/diffuse-transmission.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 3658,
+   "sha256": "189b8652757464a45e62a2667b80b1f1393cc7003f1a642238ea760bee485a97"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/khr-materials-diffuse-transmission/index.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 96,
+   "sha256": "e274979b5035af7c4d52090e4013264e963a0a059e71303f42fc77fc3fedd64a"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/khr-materials-diffuse-transmission/materials-diffuse-transmission.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 2192,
+   "sha256": "354b76990066bbb79a1098edd00a9da238939c018b5e518a52964c9d4a11aaa7"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/khr-materials-dispersion/dispersion.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 889,
+   "sha256": "b45391ae8ffba9fcc778ea702bff267ace9d8fe98ea044f8dcc31a7835f931e8"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/khr-materials-dispersion/index.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 76,
+   "sha256": "df6621a8965ea764298be3fbfe82ccedd654be89d0899427206daac043c94ed9"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/khr-materials-dispersion/materials-dispersion.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1994,
+   "sha256": "9f6aaede8c0b1b77182fcee60cc4f4ad348f16bbb112c77dbaa9acd373f7ffbb"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/khr-materials-emissive-strength/emissive-strength.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1037,
+   "sha256": "f817fc1ace8498bf11e5386c950499c4ec72cfa6e4a17143c6bfa9befa9ff093"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/khr-materials-emissive-strength/index.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 90,
+   "sha256": "d0e2289c572a7e3b13768304a237a3816fcc754cdcf1a7d63312c2416dedbdf5"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/khr-materials-emissive-strength/materials-emissive-strength.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 3026,
+   "sha256": "7fd6ff425decbb75ad0aa086f3b1b6186ebd88b390e6948b9df91db9a1683121"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/khr-materials-ior/index.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 62,
+   "sha256": "a590548b1b33df2519e47852c81b59760024a6634851d3ddcaac5e1e8956892e"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/khr-materials-ior/ior.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 793,
+   "sha256": "90d017c4a772cbf700777d616b7b5e3a13fdfbfaab4176faec4707384d037edd"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/khr-materials-ior/materials-ior.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1668,
+   "sha256": "e263652468f27e28b16f7b353ac1eb7b55b98c7f20de36bf305763e262a79d24"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/khr-materials-iridescence/index.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 78,
+   "sha256": "a4c0595dec04498d93b090b8c206298439af1ba0b6c7d8a5d84aa8f990a0f97e"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/khr-materials-iridescence/iridescence.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 3689,
+   "sha256": "7ae8b148162c4dad887ef2bb0c8930c004edf99276e9276c5b6228ae81512745"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/khr-materials-iridescence/materials-iridescence.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 2508,
+   "sha256": "d1371bfacaab17c87dd85a338b17e426eb41f89fe0f23004faaead3a3c7bd730"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/khr-materials-pbr-specular-glossiness/index.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 102,
+   "sha256": "ca67837ff385e12106f285df7a0dbc39fbd11c4cc4d89ad1267f66497a0d3d1a"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/khr-materials-pbr-specular-glossiness/materials-pbr-specular-glossiness.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 2179,
+   "sha256": "46aefd4a40afcc882a45c70da49068204d3389bdac32aa6483fcd47f6de8b72d"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/khr-materials-pbr-specular-glossiness/pbr-specular-glossiness.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 3075,
+   "sha256": "e60694fba1802aaa36bc06200a1632157a2852921627ed5db4b8631910b87f09"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/khr-materials-sheen/index.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 66,
+   "sha256": "ccf51522b0cfb1184e062ba3dfb1acc90fbfb18ff94033f434470fdb688ec67b"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/khr-materials-sheen/materials-sheen.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1985,
+   "sha256": "ddb6ab5f9ddb71c79edd21403af056f9c9a2b5c4c908f6bcddcec67b47466451"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/khr-materials-sheen/sheen.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 2667,
+   "sha256": "9301b6f60ea208673a043e6b955001f0f3fc947dbcda25a7c26520af70f069c6"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/khr-materials-specular/index.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 72,
+   "sha256": "080cb965baf1ae3025b29caef83f745d825c73224062e6c9c55722e634153baa"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/khr-materials-specular/materials-specular.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1997,
+   "sha256": "75c0862a6febccf79a449469263157cd922bcfa11fc2ef61c00a0b84c34be615"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/khr-materials-specular/specular.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 3109,
+   "sha256": "f0374a6cee447b0faa352c353d73bca50ebc9a3c4d32dc60f1cbe9733bc3f78d"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/khr-materials-transmission/index.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 80,
+   "sha256": "c655f0e71c685c999eb4cf6d5e84b42edadeb1ec816e80f37e42f3871c6b30ba"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/khr-materials-transmission/materials-transmission.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 2355,
+   "sha256": "a4e139cdc613ed1085d88b09e5f2b3d3f53ec3a709c66ece4a65e8bb8b2c61fc"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/khr-materials-transmission/transmission.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1996,
+   "sha256": "b2e9541c98ae236e40bac371cad79e3d8333e9892ddc5a2be0000c2ee1035625"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/khr-materials-unlit/index.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 66,
+   "sha256": "7fdd9b02fab0c723a044a9c98923466104a87e7f4b59357be00e8fac55d1d6a9"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/khr-materials-unlit/materials-unlit.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 2338,
+   "sha256": "55b748d9455263ce0774e29345befcf12411af7a83bd177ede9386f631db526d"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/khr-materials-unlit/unlit.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 503,
+   "sha256": "ee8ec88cbecc1761bc62fda3c26ef4ea85dc17329d568a5d9d6901745056c137"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/khr-materials-variants/index.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 136,
+   "sha256": "df3324fe04f4cdd3354b65c16515be4fc71593c91d1a8c309cc1080f7f4a1b00"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/khr-materials-variants/mapping-list.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1003,
+   "sha256": "2b3c8fb5c61928f878fecf09f42a2f2796224a82bf8aaf613cab975925bffe0c"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/khr-materials-variants/mapping.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1242,
+   "sha256": "ba041899c5558d5071d145dffa0c139c6bc7de45237cd534fa44a17d92f37ac9"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/khr-materials-variants/materials-variants.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 3712,
+   "sha256": "a9a2d0a5ceaf2c88fe1c1f65adc5974b9847f077dc5cf3912840b36036724f21"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/khr-materials-variants/variant.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 437,
+   "sha256": "f15fa4ea1747dd5ab71e928a2519a4364647ebb1875b6bbc68dc48762fd5b955"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/khr-materials-volume/index.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 68,
+   "sha256": "b4aa4b1429e69299f289ad3cbeb2fa9e126131b844ecc0eb2b2543e32972a5d0"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/khr-materials-volume/materials-volume.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 3276,
+   "sha256": "80a330854f93ab15df36cae752f2f6b0f7f45ffa539f219b172087ed5ce4a265"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/khr-materials-volume/volume.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 3002,
+   "sha256": "301e109fd6f1822b637ddc089dd09f031b3ee3ac2e9e9b234d5a5f603889c964"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/khr-mesh-quantization/index.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 40,
+   "sha256": "26f37e7282b314a2d440a500489fc05af0c78069af1b1f797270212ebab84eb4"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/khr-mesh-quantization/mesh-quantization.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 2250,
+   "sha256": "ec30be1c761f2a48f4309fad9f963f5bf611c2d09b94a3d810cec431c3c63552"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/khr-texture-basisu/index.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 37,
+   "sha256": "82bd5d59f8ef282295fef9f02da2608d07c3f3e948def1a0ea85c37a3e01386a"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/khr-texture-basisu/texture-basisu.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 3208,
+   "sha256": "1c2e2625ac238e0e136b95ebb93f40addd2a5dad8f519eb6572dd5da1fc3564f"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/khr-texture-transform/index.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 72,
+   "sha256": "1c03951ca4366c9ca52450f2a8b4485658dfc5584594d57a81cb98d9e6a475fa"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/khr-texture-transform/texture-transform.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1773,
+   "sha256": "1021cf89f73c802fc676d66332566d85a90bd3b19876fe6dae24eb704a5ca0b2"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/khr-texture-transform/transform.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1003,
+   "sha256": "131e46120f6ea792f84384f6a8fc24cad28e325534b47197e63523a8ef9f96c2"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/khr-xmp-json-ld/index.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 55,
+   "sha256": "231251655393beb29c345aa9c741f3e09823c0b1409c844ad4e5f343dc2030d5"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/khr-xmp-json-ld/packet.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 3812,
+   "sha256": "c5f745a558250d995b0ac63b471a33cba13b99195fca149bfdcb7970cfa25fc1"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/dist/khr-xmp-json-ld/xmp.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 3919,
+   "sha256": "46aa28ee4df86506f257d2ec3ccb8f67f319c4c4dc0d99de8f8f8abbba7f3ffb"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/package.json": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1133,
+   "sha256": "f2db967208b6c26d88e43cf7ae01e62a70cbe8c2e645ea5f7079383f5c06ac0e"
   },
   "engine/node/node_modules/@gltf-transform/extensions/src/constants.ts": {
    "class": "local",
@@ -1887,6 +2715,336 @@
    "bytes": 7163,
    "sha256": "1130e2c57f2e821f965597f9c450bd88924eb2c77f02c8e697d63ba2c0c00978"
   },
+  "engine/node/node_modules/@gltf-transform/functions/LICENSE.md": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1078,
+   "sha256": "2c4f111d00dbf22b10d31a14813c5f5de6a828640f7311f26b9dda89b3fce165"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/README.md": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1524,
+   "sha256": "ba5a77ff033c4c1c8f05b1b852b6f746d8eb2bd37da364a42dbe48028fdb3575"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/dist/center.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 631,
+   "sha256": "aecf264d02e3093b1dc4f70bb4e35b763e0e117ab6aab839e3102de2e1b9757c"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/dist/clean-primitive.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 11,
+   "sha256": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/dist/clear-node-parent.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 806,
+   "sha256": "d6f6d00859d6064c87b78c7f497e970fe437ab36a390e1dd011d82bc9faefcb8"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/dist/clear-node-transform.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 918,
+   "sha256": "e2027cba5473139433cc328d7b15c7f590a2a4690edbbf146ddb409487a5a5a7"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/dist/compact-primitive.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1961,
+   "sha256": "21cc91de68da89650f776c613d2abb1a89e4dab0a511098e38565add03d5c772"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/dist/convert-primitive-mode.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1091,
+   "sha256": "6395aa7cfbe53eabd79163f6005e40da10dcc7b90f0f8cb00846a8eb74676f0d"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/dist/dedup.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 928,
+   "sha256": "cf58cd7165113ea47feaf5bead8e701d08d2895bb4666e3c9589d18f38080d03"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/dist/dequantize.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1800,
+   "sha256": "c7546537af8c78751440b7092e0afd811a1e567f3fa1305863e1b026c83d0f72"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/dist/document-utils.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 8615,
+   "sha256": "0d92a4f7bdc7fd38676f0f6326267cf7747d3b1688ee544643e7c2a75827193b"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/dist/draco.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 803,
+   "sha256": "96a72ef812b224701290210b1bc5fa091e123e68f0c94adb015d818bc408e954"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/dist/flatten.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1339,
+   "sha256": "614dfaa46bb175a43dd5dc02ddf694e03a73563461e74c62f4f222dd4d574ba7"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/dist/functions.cjs": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 265401,
+   "sha256": "674ccf1e122bc584955307feff232b3d9e4acf0a77d686d9ac1a775062a40622"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/dist/functions.cjs.map": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 675628,
+   "sha256": "dd1c6283c2637ad00980858af30aabd1b17f50ebad7124b20da5ed794ebc3dd0"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/dist/functions.modern.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 247506,
+   "sha256": "facba3be0679b00d58cc3c0eced83b52dcd493b18f99aa58752b2ffc191c9c9d"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/dist/functions.modern.js.map": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 663254,
+   "sha256": "0d4be8e0beb859bbd72dad5b5c1f1c665d49c55e5556e194c19346eab14f2bbc"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/dist/get-bounds.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 354,
+   "sha256": "50ad52b5bb1a97717900ab49ffabcc49cd51eb3d8bd876f3630c40b0c70349f1"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/dist/get-texture-color-space.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 863,
+   "sha256": "fcb95eec126d2ff31cf033fb0f587c95f52797f0a2e4b5a90f8ec8f73a8ce956"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/dist/get-vertex-count.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 3806,
+   "sha256": "faf77f06311ed391d2e4ae3b360d5d904b5e9f9a4cb0bf8c000c2e26de69122e"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/dist/hash-table.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 566,
+   "sha256": "fe8e270e6b286c44f99bcbdde8c54d38327c35ea54916f12555d16793a2a2f6a"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/dist/index.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1793,
+   "sha256": "1729bbd32a099fc8d6b3952cc09bc5f666fe8d1af942048cddf2a8e6fa3c0c9c"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/dist/inspect.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1678,
+   "sha256": "bc79f0902cd37a2304d1059dc2db1fb5d7581b806b9c0baf01ce2d010f58f41f"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/dist/instance.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 940,
+   "sha256": "c30f0b6182d28917a53d2c0124edb0866fd3ed2f0b6c187fcecc82101a6a1327"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/dist/join-primitives.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 886,
+   "sha256": "7c0f39c3c38e5d0bc05bd3d06ab6be1f6f849b974f89042c194beb459dfab21b"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/dist/join.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 2242,
+   "sha256": "9188d4f27247c63c4c065800f6306f2fb629df4f1dee82e9f2ee3bb4180fd0d8"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/dist/list-node-scenes.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 595,
+   "sha256": "993340450d4f576b6446d8a8705135934fd3a71ee58930c4ae8e0d02074c782c"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/dist/list-texture-channels.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1226,
+   "sha256": "cc8bc8ad385b880ccd312f70ac492d7b6a8d52aee093c61a423b917c152992f2"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/dist/list-texture-info.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1273,
+   "sha256": "c4a6033e5a0279925fb0acb5a7e05f052e053494a839f5d36136441dcf1c6424"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/dist/list-texture-slots.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 325,
+   "sha256": "b95c3446d8721f57ec5b53b2ae777b7b0d69b60677b0af210070a8a9758b2f3f"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/dist/meshopt.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1212,
+   "sha256": "bc64097a8cd5cdbeec54487543d6f4293d5cefee8b1c1006bc17f2b38717a387"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/dist/metal-rough.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 608,
+   "sha256": "d390c76a763ce6017054b439f9b4621b8684c5f318ba5b7fd39734f84c44fb72"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/dist/normals.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 537,
+   "sha256": "a0d7b04b109db08f579d787d3a895d4fb0d471926645309d549f09d014233d3d"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/dist/palette.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 2462,
+   "sha256": "b2e13f85b2bc2671af5d5243507eacf8f4b93cd4971ca87bbf8ad9e9d6252169"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/dist/partition.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 756,
+   "sha256": "0f99129c623d3094063d1f4c8527cc013d894859c087df74f206bce503643878"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/dist/prune.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1693,
+   "sha256": "a7c24722e0d030b7ede3942dc3112ed820711bb7a4becca642292e86594be2f1"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/dist/quantize.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 3810,
+   "sha256": "480a70f749fde9680a3f6a06a2bed309994bf508b5259468ea5d852b1e8971e4"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/dist/reorder.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1573,
+   "sha256": "a04c6dbf719dfe2424a449bb9fe2da6fa6943acfce517bc24a290c01e2ec07e6"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/dist/resample.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1882,
+   "sha256": "2d4388d25dcd8e2944d9b686a6b39f82c0347e9ea409e8d3e4203954148b1bba"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/dist/sequence.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 641,
+   "sha256": "beb08e7bf148933d0d2f48b08e35a0fa3fa0303db65a9a5e5e2fad426db7ff3e"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/dist/simplify.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 2720,
+   "sha256": "6f316c314b0dcf894509c20ad1ba7e9aaec7fe331c271e9e8158172b52e101c5"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/dist/sort-primitive-weights.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1099,
+   "sha256": "4abfa5d7eb8486914912a6e728760825bdfef54b6e574be2c51781a3ca03567f"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/dist/sparse.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1028,
+   "sha256": "145bcf707294383e09875c86e37d21400eb51b620ce813180646c4f6ba6ba1f9"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/dist/tangents.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1189,
+   "sha256": "959c123759a37cd76c18ae7e6f427164b6faa3aa3344139092d3fb5dcf3d0446"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/dist/texture-compress.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 5401,
+   "sha256": "1c5ecd0395b27ee1a7f18cd1ce96ef59999e2839ba73c5fafc93089bbcd92e1c"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/dist/transform-mesh.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 795,
+   "sha256": "d6f02c0b56666f465997711a124782e9b7b19b6e2b6f114637f5cf506732dfbe"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/dist/transform-primitive.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 832,
+   "sha256": "100dfd502691760db855a3c00def950b4525656f371b6608e9e5675ae0d56a5b"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/dist/uninstance.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 2081,
+   "sha256": "73b0e146be234c655ee293f88020b633ecda46bb6487af972d0afdf11ee984e0"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/dist/unlit.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 131,
+   "sha256": "fcc18990e8e107b80d5f1f8108e080ccdf6157959b2ddbabd94fe94feb2f814a"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/dist/unpartition.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 616,
+   "sha256": "5f487ae0614eb01f2229f3a707f0b5d4c17e52150245e520c5e134862c08f7d6"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/dist/unweld.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 521,
+   "sha256": "dda4017b3b14d1e48499b1a27df333b64ccbaca53a76fc13cb403ef82f300ce8"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/dist/utils.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 4066,
+   "sha256": "b926d2b009848c7b010667b4567f2473506e3bf9bb4f79a65fcb69f3bc5896d9"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/dist/vertex-color-space.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 831,
+   "sha256": "35da5c6e7b9b61f37cbd3c7b09b6a8eeaf7ce32df07dd00c1b53927fa15151d6"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/dist/weld.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 2328,
+   "sha256": "48557c369de0d36dfac2b35a1283ebf2be8999d60563c6cecc498f6ee13ed6b9"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/package.json": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1381,
+   "sha256": "9760aa4345035cdf9bcf1008ffa5b0b82f5ba3b33a1b26897747039d5d530b1d"
+  },
   "engine/node/node_modules/@gltf-transform/functions/src/center.ts": {
    "class": "local",
    "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
@@ -2181,6 +3339,540 @@
    "bytes": 7199,
    "sha256": "1d83cad61d8b60dcfd7f9a3b7c8ea9dcff7587cd2f2cf504c4c3ef190ef778bc"
   },
+  "engine/node/node_modules/@img/sharp-libvips-linux-x64/README.md": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 4331,
+   "sha256": "cabdbb8c9c67431d964dabd29630f07813cd58a0e090f280a88a58887757821d"
+  },
+  "engine/node/node_modules/@img/sharp-libvips-linux-x64/lib/glib-2.0/include/glibconfig.h": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 5986,
+   "sha256": "458b6eda76f99c3ba9651840b5aa39313d8c04d6696ba0ce7e6aa7a2c569d9a0"
+  },
+  "engine/node/node_modules/@img/sharp-libvips-linux-x64/lib/index.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 28,
+   "sha256": "516a08c06660cddb50d5f30ccac29a0514b05724956a11e8a7e6b799f2e1ab72"
+  },
+  "engine/node/node_modules/@img/sharp-libvips-linux-x64/lib/libvips-cpp.so.42": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 16227056,
+   "sha256": "a329a365b07a2275f309b3648034d43c4923f03d6e5981cc2929539b96f5f828"
+  },
+  "engine/node/node_modules/@img/sharp-libvips-linux-x64/package.json": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 888,
+   "sha256": "58c89066ae642f4d12df742f3fd111cefed6b372861af0de3b8be18f478b7061"
+  },
+  "engine/node/node_modules/@img/sharp-libvips-linux-x64/versions.json": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 590,
+   "sha256": "2c9ea5e852f8339c7ba4c6577cf6216a29d9c45f7c7ebe46bc0eb4f9750574f9"
+  },
+  "engine/node/node_modules/@img/sharp-linux-x64/LICENSE": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 10273,
+   "sha256": "73ba74dfaa520b49a401b5d21459a8523a146f3b7518a833eea5efa85130bf68"
+  },
+  "engine/node/node_modules/@img/sharp-linux-x64/README.md": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 697,
+   "sha256": "8f8f907a15368c3ab82e675dde406263c321e1d14533285f6827da72b2bb7f55"
+  },
+  "engine/node/node_modules/@img/sharp-linux-x64/lib/sharp-linux-x64.node": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 269472,
+   "sha256": "66705073d2e8b139587833a75bb9205ba7b2cecec243657aa0e6a9d51b9b6285"
+  },
+  "engine/node/node_modules/@img/sharp-linux-x64/package.json": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 942,
+   "sha256": "b82c290d3b8a9c8606b4d8e7af981404d6d8673b6a0f35f07c3e364d4abf5869"
+  },
+  "engine/node/node_modules/@types/ndarray/LICENSE": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1141,
+   "sha256": "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383"
+  },
+  "engine/node/node_modules/@types/ndarray/README.md": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 546,
+   "sha256": "c8a651405570b57ea38a6d11b7fd804ac18e483a5e9d314d40943ce9ab6bd52b"
+  },
+  "engine/node/node_modules/@types/ndarray/index.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 2556,
+   "sha256": "f0277ba023717adbfa626324289724c4a4883bc8fc74e6ed9305d1bbcc4f7ed7"
+  },
+  "engine/node/node_modules/@types/ndarray/package.json": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1094,
+   "sha256": "bb73e8c56a566d1b5af849ee6e4960e780ce92a803758832bf36bf00e31fabe4"
+  },
+  "engine/node/node_modules/color-convert/CHANGELOG.md": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1417,
+   "sha256": "ee2ea4fe91d043ec4214aa60aeaff595009acdfdbb9ed4030896191126d70849"
+  },
+  "engine/node/node_modules/color-convert/LICENSE": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1087,
+   "sha256": "693866fc419c6f61c8570438ec00659d156ec2b4d4a4d04091711f5f11a365d4"
+  },
+  "engine/node/node_modules/color-convert/README.md": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 2853,
+   "sha256": "8cb35dae3a64e6edf1a680fecb9a850ea866795715aa46e09e211a1ba662d1c2"
+  },
+  "engine/node/node_modules/color-convert/conversions.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 17040,
+   "sha256": "7225058075157fc78115b8be998a2effdfc1e5b3316b004a130ee5f19303574b"
+  },
+  "engine/node/node_modules/color-convert/index.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1708,
+   "sha256": "adb610f9a2fbba92548161871075262496b563dcd0e5e8f5c20f562160a74b34"
+  },
+  "engine/node/node_modules/color-convert/package.json": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 827,
+   "sha256": "9471d21744ca3137410448da6b3bd7b30ee91d42edce3b82ebcbf84faef74fb4"
+  },
+  "engine/node/node_modules/color-convert/route.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 2257,
+   "sha256": "5f1420af4a106eaa68ed7b4bb5e46f47e0f251169e38841ec8262447e4691b5d"
+  },
+  "engine/node/node_modules/color-name/LICENSE": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1085,
+   "sha256": "c064f7a3e353bc1bc977f3c897941c75ef763f44f41677e0a15370ca0853d6e2"
+  },
+  "engine/node/node_modules/color-name/README.md": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 384,
+   "sha256": "796aef7006b975d2a8a5bad00219c9884e67a51ef96d36b3a0df622e60924c1c"
+  },
+  "engine/node/node_modules/color-name/index.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 4617,
+   "sha256": "97dabd7ebb70c33c19ccfa6956377fc722d9769924903f42a3bede30d83a8592"
+  },
+  "engine/node/node_modules/color-name/package.json": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 607,
+   "sha256": "4a557ea373907e4643badb89ff21b3f4b969d20631086d78eab2e03d05c2efa4"
+  },
+  "engine/node/node_modules/color-string/LICENSE": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1082,
+   "sha256": "8984783ab2478bbee455f0eb6c375b5b62c57c86d4a55f6bf96dfd08e8d48a10"
+  },
+  "engine/node/node_modules/color-string/README.md": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 2585,
+   "sha256": "f6e83445d34c695120ec1db5bb6e837f11667fcd92e9586d9d4ac99d82895d50"
+  },
+  "engine/node/node_modules/color-string/index.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 5716,
+   "sha256": "58dd397b88604aaf8e0ebb8e3c1565615089fcdadb8c34930e0229fbe210eacd"
+  },
+  "engine/node/node_modules/color-string/package.json": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 732,
+   "sha256": "30fb162f7493291dd29ced85001979f2e99fd68fbcf59ad55300a657d8352bd0"
+  },
+  "engine/node/node_modules/color/LICENSE": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1059,
+   "sha256": "4c0844caafd3db9a4b643ea493558873710f4e9c8b257887ba066e5e80557848"
+  },
+  "engine/node/node_modules/color/README.md": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 3682,
+   "sha256": "16e24ad18b8de26d54844e7cf28d5ac525f5c57ffa330dca33a7ad606beb74bd"
+  },
+  "engine/node/node_modules/color/index.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 11169,
+   "sha256": "66136ee262eab430f14245a6af2cc5295299d850d834c2c270dc95d27fd904d9"
+  },
+  "engine/node/node_modules/color/package.json": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 896,
+   "sha256": "d53949e5e17ef2fb51ba0a6221c5e71c9feae36854d6c81e8a35863f7407fd02"
+  },
+  "engine/node/node_modules/cwise-compiler/.npmignore": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 105,
+   "sha256": "b3bea552a2c42651b9e03c9fa7af5c35340261b7154c3c8d5daa3a73056cd6a6"
+  },
+  "engine/node/node_modules/cwise-compiler/.travis.yml": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 94,
+   "sha256": "dde167e38566d5c5f626e8c06f19378dad4c6c503fceb95f02f48d88c7412091"
+  },
+  "engine/node/node_modules/cwise-compiler/LICENSE": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1082,
+   "sha256": "e67aed7df22dc8031e4fcf5338fe91cb33e3817e5c58a99a2a2802eea9069791"
+  },
+  "engine/node/node_modules/cwise-compiler/README.md": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 986,
+   "sha256": "5d07cee5b454846524ba75d11172bcc87fbb74826149d6da0d60eeabac41c6bb"
+  },
+  "engine/node/node_modules/cwise-compiler/compiler.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 3607,
+   "sha256": "54dc353ea84a211683a371ae1c82d903014719db6f0bf51dfb424cac996c8358"
+  },
+  "engine/node/node_modules/cwise-compiler/lib/compile.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 14838,
+   "sha256": "185adc1931b4a4658d52dac51da07017d101784e9fc95d731b5c3e5f49cfd021"
+  },
+  "engine/node/node_modules/cwise-compiler/lib/thunk.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 4214,
+   "sha256": "32d8ebba5c786be09f63c64672f325f0fc21b9504de3303814a2947a369e0d1c"
+  },
+  "engine/node/node_modules/cwise-compiler/package.json": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 809,
+   "sha256": "6eeb54f8764092b5c1e1fff7c1d533cd1fe4056b58280a5089d2100dc750e6e1"
+  },
+  "engine/node/node_modules/detect-libc/LICENSE": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 11357,
+   "sha256": "b40930bbcf80744c86c46a12bc9da056641d722716c378f5659b9e555ef833e1"
+  },
+  "engine/node/node_modules/detect-libc/README.md": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 3215,
+   "sha256": "51a97449c443889155bc872522e6de5a91a5fa73edeffa03d749e186bf0eebca"
+  },
+  "engine/node/node_modules/detect-libc/index.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 436,
+   "sha256": "9500090533aafe039c41d8d368a44959f04482bb75636d96bc843c06f3d6a348"
+  },
+  "engine/node/node_modules/detect-libc/lib/detect-libc.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 7503,
+   "sha256": "5de6a1c1abec8bba5ea1261cf819d83a73c92ebe72b879ae48c59ca12320a462"
+  },
+  "engine/node/node_modules/detect-libc/lib/elf.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 982,
+   "sha256": "0e8820f00ee11d179d94894d4f97a6e87c34ab59e5dd4d3a571dfabcecf043af"
+  },
+  "engine/node/node_modules/detect-libc/lib/filesystem.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1097,
+   "sha256": "5c98fb66b559d0b4fa82c7a3e39d9ab6840f022c4c73e6b1a73ac6d16ec13fd7"
+  },
+  "engine/node/node_modules/detect-libc/lib/process.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 569,
+   "sha256": "f37dd0ead9f70b50c6f5529c600e1cdf076e3c3bc8e6b4a0a9820a8d65244628"
+  },
+  "engine/node/node_modules/detect-libc/package.json": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1278,
+   "sha256": "ee88e5b954fdf3a8480b1d01ef767d68d8ca2c6da269f58c5cf1c5550e9aa2a7"
+  },
+  "engine/node/node_modules/gltf-validator/ISSUES.md": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 17519,
+   "sha256": "72981a105335964111253e7e5db4e956b8ab3a17fd74c2d02180bffc7f533c20"
+  },
+  "engine/node/node_modules/gltf-validator/LICENSE": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 11560,
+   "sha256": "3ddf9be5c28fe27dad143a5dc76eea25222ad1dd68934a047064e56ed2fa40c5"
+  },
+  "engine/node/node_modules/gltf-validator/NOTICES": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 22286,
+   "sha256": "933f161ca1e7b3ead5a6cf93ebb3bf6cb67f0e79b38e08d2046f8cdc41cb78a3"
+  },
+  "engine/node/node_modules/gltf-validator/README.md": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 6814,
+   "sha256": "f5f26dc624a62817b356cec631b33af7358d046a4b2c0499a5f55189d986afa5"
+  },
+  "engine/node/node_modules/gltf-validator/gltf_validator.dart.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 307792,
+   "sha256": "b73a7b2d455ac217567725138b46d826a13d7d1bb0c88c15f7c571bfb349298c"
+  },
+  "engine/node/node_modules/gltf-validator/index.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 2829,
+   "sha256": "78deff9ea85743e86461c2d14fae76e7fc3ca0432e652f62948066b55fa16f0d"
+  },
+  "engine/node/node_modules/gltf-validator/module.mjs": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 2822,
+   "sha256": "d2a88775a8b22f61be8e00644760f0f04b615fad0fc5175fefd40e0da4df2c8f"
+  },
+  "engine/node/node_modules/gltf-validator/package.json": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 618,
+   "sha256": "3578d16153fa237c72784588da2e8fcccc9cd3c1c58ef34c7912f0732d2f5fa6"
+  },
+  "engine/node/node_modules/gltf-validator/validation.schema.json": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 11107,
+   "sha256": "e33db4da1e907481a5fc056d2daab40be1a603620d8f4a1c81919120f3340365"
+  },
+  "engine/node/node_modules/iota-array/.npmignore": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 105,
+   "sha256": "b3bea552a2c42651b9e03c9fa7af5c35340261b7154c3c8d5daa3a73056cd6a6"
+  },
+  "engine/node/node_modules/iota-array/LICENSE": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1082,
+   "sha256": "e67aed7df22dc8031e4fcf5338fe91cb33e3817e5c58a99a2a2802eea9069791"
+  },
+  "engine/node/node_modules/iota-array/README.md": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 612,
+   "sha256": "af9f89ec6b2284ee637289d5c3279f2563be9185e348c001a6e055b964ba2920"
+  },
+  "engine/node/node_modules/iota-array/iota.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 150,
+   "sha256": "8aa1aeec498b8747060af6524b26bc3319b249153cc40c50b347617a6c227844"
+  },
+  "engine/node/node_modules/iota-array/package.json": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 662,
+   "sha256": "cbeeda7a6b5180e762177182032ddf80db17d135c696d9b8423c82d4ff16e803"
+  },
+  "engine/node/node_modules/is-arrayish/LICENSE": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1077,
+   "sha256": "92b07a2e5b0e051d37dde85042c736d6d551cfcbc0983f39d7ef903b3986bbc1"
+  },
+  "engine/node/node_modules/is-arrayish/README.md": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 704,
+   "sha256": "0915ef999ac468f9410e2214ccc1ab12e64eaac7a05595f71feb4a577bbdf196"
+  },
+  "engine/node/node_modules/is-arrayish/index.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 318,
+   "sha256": "9a0cb163890b6d87dd9d50ca48e0f11136248eb241c423340d6c0cb2da897cf5"
+  },
+  "engine/node/node_modules/is-arrayish/package.json": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1051,
+   "sha256": "65c3c2e30da5d14342a79f1c19323ad336ab2d66f126990973c514aac7193dc2"
+  },
+  "engine/node/node_modules/is-buffer/LICENSE": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1081,
+   "sha256": "c7cc929b57080f4b9d0c6cf57669f0463fc5b39906344dfc8d3bc43426b30eac"
+  },
+  "engine/node/node_modules/is-buffer/README.md": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1744,
+   "sha256": "33069316d7c498af3024becae7e9071054cdf88059c7033d2b1cdbdd9f8b82d8"
+  },
+  "engine/node/node_modules/is-buffer/index.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 698,
+   "sha256": "1586b3e7b873a07da02630b4d173d131c0798995d85fcc37199507ad3ef4e603"
+  },
+  "engine/node/node_modules/is-buffer/package.json": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1094,
+   "sha256": "c3f4ad9709465baf192e2ee4ae1a113addc1843e044eee520c71eb5fd3c9ec85"
+  },
+  "engine/node/node_modules/is-buffer/test/basic.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 958,
+   "sha256": "6d1b101b01d166a2d43ade6f45005e642c8a0be3635389aa315c2a41e07bbbe2"
+  },
+  "engine/node/node_modules/ktx-parse/LICENSE": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1078,
+   "sha256": "79847431f9ecef9cf399085cb863452e71a6dab99738f4f0c1ea06c6484b5692"
+  },
+  "engine/node/node_modules/ktx-parse/README.md": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 3889,
+   "sha256": "527eacaba675afbafd84a3b94b673583c839cd0f930306dbd15381ddd6b0f67b"
+  },
+  "engine/node/node_modules/ktx-parse/dist/buffer-reader.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 479,
+   "sha256": "88481478c37ca3406ab1efbde01252efa2aa2bec6b5cdd1c9a7b401b9cf8b05b"
+  },
+  "engine/node/node_modules/ktx-parse/dist/constants-internal.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 255,
+   "sha256": "dbf38b9aeadaeddb8a4f8ec279bfebd22193d8dfb0e4c35d74e7342d9e78a8ee"
+  },
+  "engine/node/node_modules/ktx-parse/dist/constants.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 22644,
+   "sha256": "0c07759dd052f8657173072966a45334c124ff71615448aacafdec02fcab09e3"
+  },
+  "engine/node/node_modules/ktx-parse/dist/container.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 3797,
+   "sha256": "92c46bfd2ae74ec21b11c50872e6fa6a5bc80ffcbc17b3dff89cf94da3f302bc"
+  },
+  "engine/node/node_modules/ktx-parse/dist/index.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 119,
+   "sha256": "412448d3eb14a6ad198918de9be05a9a8f2e4d26f91005f4403f073a382baa65"
+  },
+  "engine/node/node_modules/ktx-parse/dist/ktx-parse.cjs": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 50533,
+   "sha256": "c5d927923230a6bacfff335bf32601d78bb70a1c56fe28394ff08a9cad26932a"
+  },
+  "engine/node/node_modules/ktx-parse/dist/ktx-parse.cjs.map": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 97664,
+   "sha256": "dfc9363c9d06177da75c7ba34d2784473062b71429f22519fb343d6483b442cc"
+  },
+  "engine/node/node_modules/ktx-parse/dist/ktx-parse.esm.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 41172,
+   "sha256": "c1857247ef2dda3f21b2acdc4d0617ccb237c82308d8088ddec9aa5c369f0383"
+  },
+  "engine/node/node_modules/ktx-parse/dist/ktx-parse.esm.js.map": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 97420,
+   "sha256": "b297b33e396fff490f6096de2cf0057194ce779b521f01586587994e51bf67fc"
+  },
+  "engine/node/node_modules/ktx-parse/dist/ktx-parse.modern.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 41454,
+   "sha256": "74c0cd892bcacfbb9213f0af10bed4625fe4b8c00f2b3d8fe9389c0929560241"
+  },
+  "engine/node/node_modules/ktx-parse/dist/ktx-parse.modern.js.map": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 97288,
+   "sha256": "a7241c354c197b67202e8f97c7fb290e724ad2c312424c13129b4ec569f1f4cf"
+  },
+  "engine/node/node_modules/ktx-parse/dist/read.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 456,
+   "sha256": "b672be26d343299f3f7435244c58480f34f202c51b0f1ae5cab4737a414d5a7a"
+  },
+  "engine/node/node_modules/ktx-parse/dist/util.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1816,
+   "sha256": "263737ab9d0ac93ec82e6b05741b643bca91a898b5a7c4c2754e4c5cc26e747f"
+  },
+  "engine/node/node_modules/ktx-parse/dist/write.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 684,
+   "sha256": "af03a56f880274775d8335397a5353525acf04701b5124ace3b27aa1364a00b5"
+  },
+  "engine/node/node_modules/ktx-parse/package.json": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 2255,
+   "sha256": "3b0c66baf4ddcd7bc0126dc5425a14044bf91bf8151eab72a1565cbe0bbd5ee0"
+  },
   "engine/node/node_modules/ktx-parse/src/buffer-reader.ts": {
    "class": "local",
    "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
@@ -2229,6 +3921,186 @@
    "bytes": 9479,
    "sha256": "83f1ee1f76c3ec55f396155b5813c68fb1bb1750263e32a69ca3e143391b46d8"
   },
+  "engine/node/node_modules/meshoptimizer/LICENSE.md": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1079,
+   "sha256": "d1bc307ff896c7fc65e3ff4823cc478194f7a5bc6436f99534ebede4d9e2017a"
+  },
+  "engine/node/node_modules/meshoptimizer/README.md": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 22495,
+   "sha256": "fb6e8186210e13172e79cc426bc628cf2a9a28ab6ef2c362c7fd5bfa4f8fe38a"
+  },
+  "engine/node/node_modules/meshoptimizer/benchmark.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 3279,
+   "sha256": "36278a53c12c786a65b742e5f029a65643507b9f72c74f664039cb9fda179a18"
+  },
+  "engine/node/node_modules/meshoptimizer/index.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 331,
+   "sha256": "1fdb6b9650ee146c079ffdc2d3588cc4bdfa8e5b486e04e8bd81ac6f81cec3a4"
+  },
+  "engine/node/node_modules/meshoptimizer/index.module.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 175,
+   "sha256": "1f8808db763a93dd40822b75adacd0934fb3234fde4b6addfa89fddff6751850"
+  },
+  "engine/node/node_modules/meshoptimizer/index.module.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 187,
+   "sha256": "f6cf1ddda86d81d2612588d99e4d2ba50fd75c65b5540fac777400795e488b5a"
+  },
+  "engine/node/node_modules/meshoptimizer/meshopt_clusterizer.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 19950,
+   "sha256": "fe4db0e590f8fbfc5588db65e76924aad381ff833fd2618a5e9e5602afe2065a"
+  },
+  "engine/node/node_modules/meshoptimizer/meshopt_clusterizer.module.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1223,
+   "sha256": "1ff3e381be92fdb298c9f0feef086b87c9bdd4f121b5a80b1ce54dc3b3e5fcce"
+  },
+  "engine/node/node_modules/meshoptimizer/meshopt_clusterizer.module.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 19555,
+   "sha256": "7f5d74fec045eb19e7c3ec6897d514ee9deaebfe68e11befec1d3e22583ab326"
+  },
+  "engine/node/node_modules/meshoptimizer/meshopt_clusterizer.test.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 3989,
+   "sha256": "d4e74abf59ceea8bb658f970b2d0b232082f461d730eba3fa7a24324e5418b2b"
+  },
+  "engine/node/node_modules/meshoptimizer/meshopt_decoder.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 25234,
+   "sha256": "2cc4d9d42473e2243c3d2cf9e6b66ec778fd1fa0fa60ed81b2c9f57434133802"
+  },
+  "engine/node/node_modules/meshoptimizer/meshopt_decoder.module.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 870,
+   "sha256": "eee89e0f13f68b77c2bff15ce52af6c7a5d2933553b51137c41ee2413be19195"
+  },
+  "engine/node/node_modules/meshoptimizer/meshopt_decoder.module.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 24848,
+   "sha256": "784315b6959c85459eab77f51776158cc381d7e7d77b919ff7c4935f088a7c5c"
+  },
+  "engine/node/node_modules/meshoptimizer/meshopt_decoder.test.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 10915,
+   "sha256": "94f29021c67a6bf3e1e767a35e424812ebef63c3647304482ae6c3bd90ecfca0"
+  },
+  "engine/node/node_modules/meshoptimizer/meshopt_decoder_reference.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 9379,
+   "sha256": "66b9856b46d4e3bdaa822c7defb3e6ab0edb2ca372f8460f6ad5742294019616"
+  },
+  "engine/node/node_modules/meshoptimizer/meshopt_encoder.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 19605,
+   "sha256": "70a65d1ee1f12070ed1764997bc525c61371982b59b98051ca4c2d1beda6cdca"
+  },
+  "engine/node/node_modules/meshoptimizer/meshopt_encoder.module.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1203,
+   "sha256": "b04ae28a9977d5183d0194d5a6dd2e7d8355597abd5f347d75bbafa0bdd5dcee"
+  },
+  "engine/node/node_modules/meshoptimizer/meshopt_encoder.module.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 19219,
+   "sha256": "58f66d158625055308dc64cc966ff56bf302e568d6633c9a248fa74fda6f7525"
+  },
+  "engine/node/node_modules/meshoptimizer/meshopt_encoder.test.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 5970,
+   "sha256": "c99ab3cbe61f46fecc731264b736b3944f277355a3c5c5acff5d01c261a67486"
+  },
+  "engine/node/node_modules/meshoptimizer/meshopt_simplifier.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 33612,
+   "sha256": "5a10a6d6a2c2ab113cfa81be2d31aaf89e46842eedaa1245d266b16e2976dc6b"
+  },
+  "engine/node/node_modules/meshoptimizer/meshopt_simplifier.module.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1452,
+   "sha256": "75bc949852198465c5162d332654e0c4c8083e884160ae51587ed9dc68e2e21d"
+  },
+  "engine/node/node_modules/meshoptimizer/meshopt_simplifier.module.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 33208,
+   "sha256": "0c2e1d0309c52abf8bf07799334efa9838bb396455c8afc858a02636561919ad"
+  },
+  "engine/node/node_modules/meshoptimizer/meshopt_simplifier.test.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 5020,
+   "sha256": "4e3ff1ebdd4f6dd8221278014c03475181ae7c5c688a9f7b05eded88e6647859"
+  },
+  "engine/node/node_modules/meshoptimizer/package.json": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 748,
+   "sha256": "559c5fdb441f735c53c84ad7c3d0025420315f891190326853fd423aae138fe6"
+  },
+  "engine/node/node_modules/ndarray-lanczos/LICENSE": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1078,
+   "sha256": "ec5114155d92f326802c964dcf9eb5261e09192c62f14d195d2a8be49eb1d489"
+  },
+  "engine/node/node_modules/ndarray-lanczos/README.md": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1567,
+   "sha256": "6da4df122239be6f36629443c59cff42062196f772fa8148458f28f16bbd7591"
+  },
+  "engine/node/node_modules/ndarray-lanczos/dist/ndarray-lanczos.cjs": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 2146,
+   "sha256": "e4699c6436696278796af44b7218047ec895787ed2b7ba2c889d52c1b477fc3f"
+  },
+  "engine/node/node_modules/ndarray-lanczos/dist/ndarray-lanczos.cjs.map": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 12271,
+   "sha256": "121cfe26c2400015620a14406b8bbb52dc4220fc7bc42d39205065bfc2f71768"
+  },
+  "engine/node/node_modules/ndarray-lanczos/dist/ndarray-lanczos.modern.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 2039,
+   "sha256": "2ac9a435e10fe1e25d005d93279e0fa4ba4f57db562ae20e26bceca4fc6a8606"
+  },
+  "engine/node/node_modules/ndarray-lanczos/dist/ndarray-lanczos.modern.js.map": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 12370,
+   "sha256": "c478a30e0ec5d02c3557ec9b499fb999714c3616f5f43ee45759fd7d26b66bf3"
+  },
   "engine/node/node_modules/ndarray-lanczos/dist/src/convolve.d.ts": {
    "class": "local",
    "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
@@ -2241,6 +4113,18 @@
    "bytes": 350,
    "sha256": "38a3a617ebbb5b77c2f4859594e8a31ec95144036bdaae02a01e7a9a127bbb66"
   },
+  "engine/node/node_modules/ndarray-lanczos/dist/vendor/filters.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 597,
+   "sha256": "a380f8a6a08d37c5fd2f0217d0b718b17e2192dc8cf408c4a2d20eff4b361ca4"
+  },
+  "engine/node/node_modules/ndarray-lanczos/package.json": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1981,
+   "sha256": "ea2f346ecf89357e6eed3df32130ac37bcd099fbb768a8a54c59f2db4b7fd896"
+  },
   "engine/node/node_modules/ndarray-lanczos/src/convolve.ts": {
    "class": "local",
    "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
@@ -2252,6 +4136,156 @@
    "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
    "bytes": 2011,
    "sha256": "7f8b981dc6d33fa5dc281b53e58bf994050a91c05bac09c94109aa7131a5005d"
+  },
+  "engine/node/node_modules/ndarray-lanczos/vendor/LICENSE": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1088,
+   "sha256": "fbe1dfa21129681cace5466716b4be00e95792c581b7e37b3ff43f18fe817c16"
+  },
+  "engine/node/node_modules/ndarray-lanczos/vendor/README.md": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 212,
+   "sha256": "8e86f769d451d65badb98aba5dd4eeeac1d17bd97e416a3e2a5300238a3a0753"
+  },
+  "engine/node/node_modules/ndarray-lanczos/vendor/filters.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 3452,
+   "sha256": "cb3b33bbca394b8a815a0675fef69b720b4ef26cea4d1bdac90a048d8883e6e9"
+  },
+  "engine/node/node_modules/ndarray-ops/.npmignore": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 115,
+   "sha256": "d11685c150e6fd984ec37d752e73c41bd6ececc80142b71424a0c7ee67e15760"
+  },
+  "engine/node/node_modules/ndarray-ops/LICENSE": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1082,
+   "sha256": "e67aed7df22dc8031e4fcf5338fe91cb33e3817e5c58a99a2a2802eea9069791"
+  },
+  "engine/node/node_modules/ndarray-ops/README.md": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 5840,
+   "sha256": "5dc4bd9ee7295c4f07b19484a225d6e272953d1f3182060b39de6661f12f8cc6"
+  },
+  "engine/node/node_modules/ndarray-ops/ndarray-ops.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 13347,
+   "sha256": "433d596b7ade7d841002c48382cd7c2666231201130b61e8b1096ff634177d56"
+  },
+  "engine/node/node_modules/ndarray-ops/package.json": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 736,
+   "sha256": "d3a2a82ecf7061c723e5723172fdc6e528051da51ba9354e634a68e18bcabf55"
+  },
+  "engine/node/node_modules/ndarray-pixels/LICENSE": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1078,
+   "sha256": "ec5114155d92f326802c964dcf9eb5261e09192c62f14d195d2a8be49eb1d489"
+  },
+  "engine/node/node_modules/ndarray-pixels/README.md": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 4352,
+   "sha256": "daf68864c5b5ae26576e22dedada18cece86661e692f66e4fd24813f29f38733"
+  },
+  "engine/node/node_modules/ndarray-pixels/dist/browser-get-pixels.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 151,
+   "sha256": "f7cad2c41a632f24b321db81be038eab4b6500188ed01bc859ae017b42b995cd"
+  },
+  "engine/node/node_modules/ndarray-pixels/dist/browser-save-pixels.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 235,
+   "sha256": "b21120b7f9663f455506b80df87d9cd064457918b3133bd6c05e84bc709a0c1f"
+  },
+  "engine/node/node_modules/ndarray-pixels/dist/common.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 288,
+   "sha256": "6058e3a35d1def323caf19e65676e523196331da5cebf4f09add387dd8d63c43"
+  },
+  "engine/node/node_modules/ndarray-pixels/dist/index.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1422,
+   "sha256": "3adb0b9d5b664ae71863a9ca621a9c8f5f813ad2c843849bdc60a82b3282e34b"
+  },
+  "engine/node/node_modules/ndarray-pixels/dist/ndarray-pixels-browser.cjs": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 5813,
+   "sha256": "f38b87669358b2a0c72efb3d0eaf9b602f8634835c3fc8d156ea55f301f55940"
+  },
+  "engine/node/node_modules/ndarray-pixels/dist/ndarray-pixels-browser.cjs.map": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 13123,
+   "sha256": "9aee8d9beeeb11cb7ec91a20913f7698fa56016059bec65d502c6084e1bf4718"
+  },
+  "engine/node/node_modules/ndarray-pixels/dist/ndarray-pixels-browser.modern.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 4712,
+   "sha256": "6b114b576b215d59d7433c0db0de1d9fccfb9c9faa3eff3367789318ceced398"
+  },
+  "engine/node/node_modules/ndarray-pixels/dist/ndarray-pixels-browser.modern.js.map": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 12373,
+   "sha256": "f7fba2497000496813b5c9ea3af6952c3a01b6322e9e4cd9da8b2943d877a2ad"
+  },
+  "engine/node/node_modules/ndarray-pixels/dist/ndarray-pixels-node.cjs": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 5128,
+   "sha256": "65bba73e2090873c4fbc961e55a86b273079c91c2f7fe7cf52c0305fae3ef149"
+  },
+  "engine/node/node_modules/ndarray-pixels/dist/ndarray-pixels-node.cjs.map": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 11035,
+   "sha256": "6366fa7bf61be599cb0e50a55f79f4b0f6947f0bfe49620d2bd9f7e3de9de704"
+  },
+  "engine/node/node_modules/ndarray-pixels/dist/ndarray-pixels-node.modern.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 4406,
+   "sha256": "126836d9e525b18a663baa23173fbb6213c58fc3751bfb3f0b91bd6ac9e64e6b"
+  },
+  "engine/node/node_modules/ndarray-pixels/dist/ndarray-pixels-node.modern.js.map": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 11015,
+   "sha256": "2aed65342485365cb9f24b91339f8d943393ede045458dd62724114cb60b67c7"
+  },
+  "engine/node/node_modules/ndarray-pixels/dist/node-get-pixels.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 147,
+   "sha256": "88c04035ceb4739eb511825c399c95ab7c9bd40e6dea99acaee84d881f28a849"
+  },
+  "engine/node/node_modules/ndarray-pixels/dist/node-save-pixels.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 230,
+   "sha256": "602198337ee95e88034817cb1ea70fc693e49f8a2b56c12ad4cf2eb1da3190c3"
+  },
+  "engine/node/node_modules/ndarray-pixels/package.json": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 2485,
+   "sha256": "df2248cc225588aafb49888c6d69be35c44eb4318dbfd5a9877585379b0ccabe"
   },
   "engine/node/node_modules/ndarray-pixels/src/browser-get-pixels.ts": {
    "class": "local",
@@ -2288,6 +4322,138 @@
    "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
    "bytes": 1109,
    "sha256": "f945a7217005263c552cc6866eb84fe8b4a6019f257a70618c33529dec18ce8f"
+  },
+  "engine/node/node_modules/ndarray/.travis.yml": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 94,
+   "sha256": "dde167e38566d5c5f626e8c06f19378dad4c6c503fceb95f02f48d88c7412091"
+  },
+  "engine/node/node_modules/ndarray/CHANGELOG.md": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 455,
+   "sha256": "310a78ab18e5589fcd0008cbddd24b53395e85fcce97265282f473aff0846ff2"
+  },
+  "engine/node/node_modules/ndarray/LICENSE": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1087,
+   "sha256": "f149791eb5101f10b1fb88997310f2b054604106c4bf6050e0aee66a5bd35cc7"
+  },
+  "engine/node/node_modules/ndarray/README.md": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 9655,
+   "sha256": "3e27ed2693c2707de55bf6e8a8d4be18c956e7249f067a14437b9d7720093bbd"
+  },
+  "engine/node/node_modules/ndarray/ndarray.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 9925,
+   "sha256": "0fdd182c3f31875ed99430c03120c33fa1da80d17bcd53c4c997f482b6ad7d65"
+  },
+  "engine/node/node_modules/ndarray/package.json": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1314,
+   "sha256": "81506777733adf859c875b443cac4ce4e40d26934c3b3d445c59b6e5ea070bd8"
+  },
+  "engine/node/node_modules/property-graph/LICENSE": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1078,
+   "sha256": "ec5114155d92f326802c964dcf9eb5261e09192c62f14d195d2a8be49eb1d489"
+  },
+  "engine/node/node_modules/property-graph/README.md": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 5448,
+   "sha256": "af013334b1b8b559759a5147cb0be72e689c50e55872565104b8c01ff841b24b"
+  },
+  "engine/node/node_modules/property-graph/dist/constants.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1359,
+   "sha256": "00d0aec128f9561319cfb9be145308132dee4c5e8ebed05f29905015489f2ae6"
+  },
+  "engine/node/node_modules/property-graph/dist/event-dispatcher.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 817,
+   "sha256": "2cd32ecef0911fff2f471a2bd32b6814bb7efdb3442cc51513b706b51455e18e"
+  },
+  "engine/node/node_modules/property-graph/dist/graph-edge.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1477,
+   "sha256": "217f188fe0b16e8017463c684e38a1a049a160e2f23d1ad6df781862dcf1edc2"
+  },
+  "engine/node/node_modules/property-graph/dist/graph-node.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 7159,
+   "sha256": "5a704ad733db436270670261980e7176dd1075a7f812c96e47947557a2e542ce"
+  },
+  "engine/node/node_modules/property-graph/dist/graph.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1925,
+   "sha256": "12c664d980d6aa8b1c24485a52548c04d679543f3df19896f8c8882bb9a68897"
+  },
+  "engine/node/node_modules/property-graph/dist/index.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 192,
+   "sha256": "5420550ea533936e68f6931a41ac2ee59bcb60d70730fe6359ef5b5c27750b20"
+  },
+  "engine/node/node_modules/property-graph/dist/property-graph.cjs": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 18999,
+   "sha256": "cd062e0211dd7ee466f4d11bcbd26dab50d9d5ee0406b7409fd3b8f3cce8e606"
+  },
+  "engine/node/node_modules/property-graph/dist/property-graph.cjs.map": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 40167,
+   "sha256": "a1e5bbb10c127b3f4edf1bbbab29c310684d7b3565b7b0190549b30e037bc835"
+  },
+  "engine/node/node_modules/property-graph/dist/property-graph.esm.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 18832,
+   "sha256": "bfbb3f79cce2bc21b05b4dc8110856e4767db559b2751e4be54ad1d27e5775bd"
+  },
+  "engine/node/node_modules/property-graph/dist/property-graph.esm.js.map": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 40162,
+   "sha256": "c8950e60a079249e20a47163bb91ec091723883fc68f15ee7b3aa92e3f3bc9ab"
+  },
+  "engine/node/node_modules/property-graph/dist/property-graph.modern.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 19194,
+   "sha256": "af354031c84597c6a0afb5ab4e3e15cd2685a3746835a4e93f426f48ef4b9635"
+  },
+  "engine/node/node_modules/property-graph/dist/property-graph.modern.js.map": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 40122,
+   "sha256": "e093b10e772af48b6eb0270b476862e0186dbeaf2f830561f4c485f4409a028f"
+  },
+  "engine/node/node_modules/property-graph/dist/refs.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1571,
+   "sha256": "c45cdc3f836142de6197054df04b93c20805d7a0fddb5183dba4021a10007f0a"
+  },
+  "engine/node/node_modules/property-graph/package.json": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1912,
+   "sha256": "de8a629ecefa4ca84bde46a6fe4f1db3216e01f00d95199104beb83bd78c0cef"
   },
   "engine/node/node_modules/property-graph/src/constants.ts": {
    "class": "local",
@@ -2330,6 +4496,438 @@
    "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
    "bytes": 2704,
    "sha256": "f5d0adf76b24438daee18ebc210b57e46ac05457206cb4582ad15dee386198aa"
+  },
+  "engine/node/node_modules/semver/LICENSE": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 765,
+   "sha256": "4ec3d4c66cd87f5c8d8ad911b10f99bf27cb00cdfcff82621956e379186b016b"
+  },
+  "engine/node/node_modules/semver/README.md": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 25669,
+   "sha256": "f1a789dcec285150be24db2ea04dd3175031554fa9834ec92fab83fb5e025a57"
+  },
+  "engine/node/node_modules/semver/bin/semver.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 4957,
+   "sha256": "bd6c871026985937dc945011fc54b74b47f5998154216d7b8d40d5ed782e4402"
+  },
+  "engine/node/node_modules/semver/classes/comparator.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 3631,
+   "sha256": "054202956430d63d5ff4599fae09760ce465b489e4f0b5ef5ce7cc7ac21157ac"
+  },
+  "engine/node/node_modules/semver/classes/index.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 143,
+   "sha256": "3bb69280c2a788d0eb16f915bb9df4dbe812075182024c753dca2283bcea1b17"
+  },
+  "engine/node/node_modules/semver/classes/range.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 15678,
+   "sha256": "301811a48b055bb62a0c49240c64cc0b701cb926b67c425758df45920ff985dc"
+  },
+  "engine/node/node_modules/semver/classes/semver.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 9891,
+   "sha256": "813b2c185512d30c9b931c2fed8140889d9d7490ceeeedc370da30337dc8ca57"
+  },
+  "engine/node/node_modules/semver/functions/clean.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 205,
+   "sha256": "4eadb0892844cf3ae295121a86163a66c73f89acd1b7f0b114ec115b4539512f"
+  },
+  "engine/node/node_modules/semver/functions/cmp.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 961,
+   "sha256": "a63d74e87b73788e78e9ce0a4892b5333d6b809c0de88b31e4ed76cbf17f94b3"
+  },
+  "engine/node/node_modules/semver/functions/coerce.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 2004,
+   "sha256": "28a251c5ab210ddf9e97551b9f37a53329fcce91f0c3943dcbc02de1a1de915a"
+  },
+  "engine/node/node_modules/semver/functions/compare-build.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 281,
+   "sha256": "5ab651d5b40af289bd85c645a92b6d8cfe1a986dc413c797cfcc8d623d7c844c"
+  },
+  "engine/node/node_modules/semver/functions/compare-loose.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 132,
+   "sha256": "07b6a3a1db0a5210ceb784c1708bd4679f3a94fc73a9c9eb349349e7070a6f78"
+  },
+  "engine/node/node_modules/semver/functions/compare.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 170,
+   "sha256": "d404b5aa48aaddc8a654c5da8fb7d4443404b7948589b21ac4b045d1cee4e34c"
+  },
+  "engine/node/node_modules/semver/functions/diff.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1423,
+   "sha256": "7a11fd39b987cdf06c65e928cb1aca49bec583feb86fb5c8fe47a6fd61d7de31"
+  },
+  "engine/node/node_modules/semver/functions/eq.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 126,
+   "sha256": "b6e30a7168e52723216fc163d300e2bbabf92ec0251f9ac5438bb6ccf57c8936"
+  },
+  "engine/node/node_modules/semver/functions/gt.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 124,
+   "sha256": "135523704aa48cd98834dd170ee9f74f0e68043b379f32d021db11e6304c5c93"
+  },
+  "engine/node/node_modules/semver/functions/gte.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 127,
+   "sha256": "991c5bbe48ecb210a562646872f05862ad9fc0d42186d85aa60bdc6fa323eb9d"
+  },
+  "engine/node/node_modules/semver/functions/inc.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 478,
+   "sha256": "952069fc8690b7d3af0fe9d55f7c54fe2ac067b48c5e74f6a54f9ce19a334493"
+  },
+  "engine/node/node_modules/semver/functions/lt.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 124,
+   "sha256": "1c897a9bc849320e2e9dc0f6c09555c01ee3ddf30734515d717b88ad7740ea25"
+  },
+  "engine/node/node_modules/semver/functions/lte.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 127,
+   "sha256": "3a8d0b1d00423f60cc7cb810b36ab77b61330831ad237dbe73eb5cecfa412800"
+  },
+  "engine/node/node_modules/semver/functions/major.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 136,
+   "sha256": "5c678480d882f511200fed2c16ec3847dfedb08a1d70328dc2f031d35d825276"
+  },
+  "engine/node/node_modules/semver/functions/minor.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 136,
+   "sha256": "1b051794f1713adec2a236517196691687c35f82e0b596ff3316a78b3cc10ae6"
+  },
+  "engine/node/node_modules/semver/functions/neq.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 128,
+   "sha256": "a662883751918822c162183b46b9e20d09489132f82686c92ab78bee67f3a127"
+  },
+  "engine/node/node_modules/semver/functions/parse.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 331,
+   "sha256": "29a69e15b6d02fe381d573f861881a89590e9d0f0f0ca740c5f85eaf0234c4ad"
+  },
+  "engine/node/node_modules/semver/functions/patch.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 136,
+   "sha256": "f02d3c1b059fe3d96ce124886f7eef321d381a95638fd3c4a8d5ccd8e76ffadd"
+  },
+  "engine/node/node_modules/semver/functions/prerelease.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 234,
+   "sha256": "baedbf503d5610ad041bfb56071efa48feb331ca278295c399537d35d3ffb593"
+  },
+  "engine/node/node_modules/semver/functions/rcompare.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 132,
+   "sha256": "84fa5e88adf08d15c993cac8cdec6d1a65045b7e95a9c55184230a7f807f4dc0"
+  },
+  "engine/node/node_modules/semver/functions/rsort.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 163,
+   "sha256": "6ec659ce3b6c2b173c719286caab04409adba046c0917874ec3b5e36ddfbc7e3"
+  },
+  "engine/node/node_modules/semver/functions/satisfies.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 247,
+   "sha256": "8cf5e122b757251671ed6c9d9680904b71cd375845853f05312e608cf2cc2946"
+  },
+  "engine/node/node_modules/semver/functions/sort.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 161,
+   "sha256": "c2fe2d3ed0be8a4e9de8f02abdfd5d9c0d3bcc510d88e87af84185592882c4b8"
+  },
+  "engine/node/node_modules/semver/functions/truncate.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1021,
+   "sha256": "e145833a250311927c92f424f56498c52f1b7bb1271ce6afbf006db87773ff43"
+  },
+  "engine/node/node_modules/semver/functions/valid.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 176,
+   "sha256": "0de7ea736cb7807179d46dfac09c830a9338e02b6a07db12d7040cde2def6025"
+  },
+  "engine/node/node_modules/semver/index.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 2691,
+   "sha256": "4b3e57d3d40e29e0706002eba113d09f35aea593578376bbeec83b777b9912ab"
+  },
+  "engine/node/node_modules/semver/internal/constants.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1269,
+   "sha256": "8274b2f7ce15171895c43ef98c0da88aeeda1cf937bffe3c23893f159f3cddaa"
+  },
+  "engine/node/node_modules/semver/internal/debug.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 240,
+   "sha256": "8a9f420572260f3cf944463b5090d62a60f0730589dc23a7ec4ca25e2ee41bb3"
+  },
+  "engine/node/node_modules/semver/internal/identifiers.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 525,
+   "sha256": "b4916b09dc7869ae0eb05e71c855c942a3a7365f7e6e89185d59a9e45a2451d7"
+  },
+  "engine/node/node_modules/semver/internal/lrucache.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 802,
+   "sha256": "14d087c87da87b6f5c36fc4cdd7d2d14077874b14a68e20fce5b6138fa2ca34f"
+  },
+  "engine/node/node_modules/semver/internal/parse-options.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 338,
+   "sha256": "fdf51d0de8d5442c35a997ef58cd530d239ce206f961d14c5121354451b01d01"
+  },
+  "engine/node/node_modules/semver/internal/re.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 8139,
+   "sha256": "5833262888e2b5d843a69193f83c05e374818dbe55379b497819b5bf58e48cd8"
+  },
+  "engine/node/node_modules/semver/internal/trim-comparator-whitespace.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 17165,
+   "sha256": "828e567bc845d9d26a04f66fc442b48be3b2d8e27161733fae15325cd7ea428b"
+  },
+  "engine/node/node_modules/semver/package.json": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1661,
+   "sha256": "0a3f93689bb0be4e2fcdabc585da62ae24695f1abefc6974d68968c8918af381"
+  },
+  "engine/node/node_modules/semver/preload.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 83,
+   "sha256": "edb6808911bebcb324b2df57e5c9935149e56984ff083b74c6cfe215f5b710ba"
+  },
+  "engine/node/node_modules/semver/range.bnf": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 702,
+   "sha256": "15d0baf9b7b98e6d862c0cb9e822d2533d2bc23e136bb75314d802ca1fcb0392"
+  },
+  "engine/node/node_modules/semver/ranges/gtr.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 231,
+   "sha256": "8fadad28e36d28e93d498ac7ac20badba2a407312845eabc18e82e90a0732b19"
+  },
+  "engine/node/node_modules/semver/ranges/intersects.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 224,
+   "sha256": "fe87ac5d3020010ad3ec00636dadbf0c669ff07d0f57e0a8165a8264f79a676f"
+  },
+  "engine/node/node_modules/semver/ranges/ltr.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 227,
+   "sha256": "e5186fcc03018acf9be6d968755d4c49727aeb0d981d179eb568ae5fbe983038"
+  },
+  "engine/node/node_modules/semver/ranges/max-satisfying.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 593,
+   "sha256": "e1a2c0d6144cc772cd20bbc8ecb9e8a3a4074e9172a3d8e794838b591cdeb416"
+  },
+  "engine/node/node_modules/semver/ranges/min-satisfying.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 591,
+   "sha256": "2681abf54098aa670f12826b76a6ec77a2441186ae4243afde3be8ae4908f7ca"
+  },
+  "engine/node/node_modules/semver/ranges/min-version.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1514,
+   "sha256": "fefba0a88c2bf74d5cede504b5ae50a8dc3edfd69cf0174a491e2cf3e442614b"
+  },
+  "engine/node/node_modules/semver/ranges/outside.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 2204,
+   "sha256": "3a2b0b23593d2f49419c06af2af75450cab103b0c25d665d48fe5bca495a21ca"
+  },
+  "engine/node/node_modules/semver/ranges/simplify.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1355,
+   "sha256": "7b78581c13322bc68ece2088685386b2a9b51c15b94d0a2063bdf2546bd41934"
+  },
+  "engine/node/node_modules/semver/ranges/subset.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 7478,
+   "sha256": "ceb9eb6ed5bfc6c7ac7af7f47e5c3535444a4e66a0e2b58cdad4bd02a35d454d"
+  },
+  "engine/node/node_modules/semver/ranges/to-comparators.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 282,
+   "sha256": "6c5e966210cff270fa2850668aaf8460fac7759f8d99f282521ef7a78f4564e9"
+  },
+  "engine/node/node_modules/semver/ranges/valid.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 326,
+   "sha256": "5ef6f995af801868925940cf8df5735d565ebabb090b068695cae65218bcd3ac"
+  },
+  "engine/node/node_modules/sharp/LICENSE": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 10273,
+   "sha256": "73ba74dfaa520b49a401b5d21459a8523a146f3b7518a833eea5efa85130bf68"
+  },
+  "engine/node/node_modules/sharp/README.md": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 3185,
+   "sha256": "5e06fafa83005fa77993e2b46ea9e734ad8e433228c9760131aa6c0fccbb04be"
+  },
+  "engine/node/node_modules/sharp/install/check.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1271,
+   "sha256": "73b834d7bf9f04d9b5bfcced9719a81bf3290e7404da794bef9d974e2a1c370c"
+  },
+  "engine/node/node_modules/sharp/lib/channel.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 5296,
+   "sha256": "8c4248e35090af50dd3f0ca4de95859392b5c651483047caf81b5eb842685626"
+  },
+  "engine/node/node_modules/sharp/lib/colour.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 5114,
+   "sha256": "6c69df85a77c4289cce1b07e401fe2d3d0e8ab76d44b384dfed4836fefc31cdd"
+  },
+  "engine/node/node_modules/sharp/lib/composite.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 8853,
+   "sha256": "37d9e14df30888d3a53ff678dca94bbf25e4dc7a41edb8f068f3d1751e6d10af"
+  },
+  "engine/node/node_modules/sharp/lib/constructor.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 16509,
+   "sha256": "8da6b588714afb489517ca31def83e568cf68c673d90851f894247df8da811f5"
+  },
+  "engine/node/node_modules/sharp/lib/index.d.ts": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 82672,
+   "sha256": "e749bbd37dadf82c9833278780527c717226e1e2c9bc7b2576c8ec1c40ec5647"
+  },
+  "engine/node/node_modules/sharp/lib/index.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 395,
+   "sha256": "d05f36fbe66ab0fb834bc10280f2546b85d7eca8198467f1f39a8764f8c372b7"
+  },
+  "engine/node/node_modules/sharp/lib/input.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 25860,
+   "sha256": "d04a673d4ad76a2c5dca2acb5832d0b34901e5a3e4b242b9b09dfa15057d94aa"
+  },
+  "engine/node/node_modules/sharp/lib/is.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 3212,
+   "sha256": "9b9390a8975a1a8040f29d33aa27e5dddac1e0843a3094386bfa95cccdd16bd8"
+  },
+  "engine/node/node_modules/sharp/lib/libvips.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 5907,
+   "sha256": "5ce360404da0668319eac739568584ba531f625652aaa5665f47f52170826ccd"
+  },
+  "engine/node/node_modules/sharp/lib/operation.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 32026,
+   "sha256": "ccf67993cfccf569c0a9591d9ec418a6f90c47ba243bf1510fd7a0cf989f8bae"
+  },
+  "engine/node/node_modules/sharp/lib/output.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 58634,
+   "sha256": "52b3fdf8e34a33e429d02ca9d6eee663268ba2085b63f626345f9858c5e3d84d"
+  },
+  "engine/node/node_modules/sharp/lib/resize.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 20842,
+   "sha256": "9709bab1fda1e2712151c8e5093eae60d1bb65545421bea370594f09e8da090e"
+  },
+  "engine/node/node_modules/sharp/lib/sharp.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 3840,
+   "sha256": "429b8f6435f058f93142e1e8a7519f32f81583f2ab508c75db1dfafb87f2a3b3"
+  },
+  "engine/node/node_modules/sharp/lib/utility.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 9726,
+   "sha256": "dd78a6a64eca83922121ca3a7cf1b9ce5152b90893a7e975fa68a0d168796331"
+  },
+  "engine/node/node_modules/sharp/package.json": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 7607,
+   "sha256": "75e24f70d7732d18f503c731856febabd43c7083d3edd162a745f0c387c49d4f"
   },
   "engine/node/node_modules/sharp/src/binding.gyp": {
    "class": "local",
@@ -2414,6 +5012,66 @@
    "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
    "bytes": 677,
    "sha256": "ce104f66b0631339b836e12f48f7dbbc9c23ffea4f3d0199c85c01da9758a0af"
+  },
+  "engine/node/node_modules/simple-swizzle/LICENSE": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1077,
+   "sha256": "8f67ef1afdbd7b8ddc3e2da9968bb97af30795ae9c90a2cc4d867e5608216973"
+  },
+  "engine/node/node_modules/simple-swizzle/README.md": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1717,
+   "sha256": "5cd19e4bc799f4fb25dedae1af3b52c39ffeb3ae9576c4c699e98ab5019db41d"
+  },
+  "engine/node/node_modules/simple-swizzle/index.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 571,
+   "sha256": "0bdb7c43033fa0515741a869a336f5270c87b15be406d92f180854f76f655566"
+  },
+  "engine/node/node_modules/simple-swizzle/package.json": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 726,
+   "sha256": "87babf04f1bf696590824ef618468bada3631b38dacd032c82fdcf0cd72b6203"
+  },
+  "engine/node/node_modules/uniq/.npmignore": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 98,
+   "sha256": "eebe234fbc5df4728df52d60b7976579f01f4f05cfa36d3d8374d05a0af28bc5"
+  },
+  "engine/node/node_modules/uniq/LICENSE": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1082,
+   "sha256": "e67aed7df22dc8031e4fcf5338fe91cb33e3817e5c58a99a2a2802eea9069791"
+  },
+  "engine/node/node_modules/uniq/README.md": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 1221,
+   "sha256": "28b8c2e35e053a51bcfc08761256fc4a790e78782e56236e83e055faed1a0607"
+  },
+  "engine/node/node_modules/uniq/package.json": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 678,
+   "sha256": "a2376d95e1a60e1a07aa6b6351fc296b2304c23c8b04ca4235fdb163cef88204"
+  },
+  "engine/node/node_modules/uniq/test/test.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 330,
+   "sha256": "51fb2be4ca6b17c17ba373efcbad5a3e882de6efe1337dfbc685364f361dcc3a"
+  },
+  "engine/node/node_modules/uniq/uniq.js": {
+   "class": "local",
+   "why": "npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*",
+   "bytes": 910,
+   "sha256": "fffd2ae3b1127d948532909920fc23844614556d99fe40501d5fbddda6939baa"
   },
   "env/aim/aim_chap4_section_3.html": {
    "class": "local",
@@ -8518,8 +11176,8 @@
   "rec/adsbfi_20261106_00.jsonl.gz": {
    "class": "local",
    "why": "adsb.fi terms: personal non-commercial use, not to be licensed on",
-   "bytes": 17302621,
-   "sha256": "6f4d660e40d00ee5e528a80011ddd542748c3ed9b1fd6b98f8d23afaff790731"
+   "bytes": 17626640,
+   "sha256": "a671bfbd77076c35d69085ac2e50158e51ece0deb25cf5a64c8c9e6069178679"
   },
   "rec/adsblol_20261104_17.jsonl.gz": {
    "class": "pack",
@@ -8710,8 +11368,8 @@
   "rec/adsblol_20261106_00.jsonl.gz": {
    "class": "pack",
    "why": "ODbL (adsb.lol); trimmed copy in rec_pack/",
-   "bytes": 4763048,
-   "sha256": "c73df0280d9650d48518c8d65c2631e6e586e12df35f1f92c8f626bfcb6216cc"
+   "bytes": 4928290,
+   "sha256": "459fb778f83aead3a7a9c9e0cc0d59cab4f6f2f94413ac4e944af19ca119c058"
   },
   "rec/recorder.log": {
    "class": "local",

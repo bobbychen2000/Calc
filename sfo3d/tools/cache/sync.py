@@ -58,6 +58,7 @@ RULES = [
     ('*/pages/*', 'local?', 'fetched third-party page (copyright) unless SOURCES.json says open'),
     ('*.html', 'local?', 'fetched third-party page (copyright) unless SOURCES.json says open'),
     ('*.[Zz][Ii][Pp]', 'local', 'bulk archive, re-fetchable (extracts are committed)'),
+    ('*node_modules/*', 'local', 'npm packages: re-installable from the committed package.json / package-lock.json (npm ci --prefix <dir>); 2026-11-06: 434 files incl. a 16 MB LGPL libvips binary had slipped in via engine/*'),
     ('lighting/*', 'commit', 'FAA data (US government work)'),
     ('faa/*', 'commit', 'FAA data (US government work)'),
     ('bts/*', 'commit', 'US DOT BTS data (US government work)'),
