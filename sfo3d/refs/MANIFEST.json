@@ -1155,6 +1155,1266 @@
    "bytes": 721044,
    "sha256": "7ce3ec04ee63f140dba365f4d9b55c099ef39217a7d1b732611dbe3973da64b3"
   },
+  "engine/node/node_modules/@gltf-transform/core/src/constants.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 3839,
+   "sha256": "a7ab1a8bafe82d7bba1ff69b9257ee1eb091b3caaa2fa21c2e3ebe08fd5fe83c"
+  },
+  "engine/node/node_modules/@gltf-transform/core/src/document.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 8875,
+   "sha256": "42cf21359b784bd061099c0bb251bffb765ce154b39fe33f0fb2009fe7d7748c"
+  },
+  "engine/node/node_modules/@gltf-transform/core/src/extension.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 7463,
+   "sha256": "560dbcc9216b3a700c96ee6b5d19c9f5fae45163ecf3cadb140b564b29c38dec"
+  },
+  "engine/node/node_modules/@gltf-transform/core/src/index.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 1116,
+   "sha256": "1364681fe3c89396b6b8b87ae2807914d3691d97c1e850d702e1ff3c30d6e930"
+  },
+  "engine/node/node_modules/@gltf-transform/core/src/io/deno-io.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 1881,
+   "sha256": "83f0d388acf0ee9c41058abc2ce60812757669db4008f66e3c8120fee444f2e1"
+  },
+  "engine/node/node_modules/@gltf-transform/core/src/io/index.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 358,
+   "sha256": "72b705be8a00194d9da81c9b6c6afc72f8bc8ea90e17f7dce4ff872c55f47d43"
+  },
+  "engine/node/node_modules/@gltf-transform/core/src/io/node-io.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 6419,
+   "sha256": "c3af7728eb210c96fd4dc00ee6c72983ada9aea47695e9f75f86d4425cc471c5"
+  },
+  "engine/node/node_modules/@gltf-transform/core/src/io/platform-io.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 11290,
+   "sha256": "84621706bb2c260f54575adcd57348875236ed94eb511be024aabaffebc06408"
+  },
+  "engine/node/node_modules/@gltf-transform/core/src/io/reader-context.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 1998,
+   "sha256": "ebde8ac66b0ffcdc88642fdfba03d82faeccfda5b9ebecfb9bc88ac6584cceb9"
+  },
+  "engine/node/node_modules/@gltf-transform/core/src/io/reader.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 22778,
+   "sha256": "0a78c94e3a529c9381bc4b03d708f57fc0094702ea4badc0cb91454d9a266c46"
+  },
+  "engine/node/node_modules/@gltf-transform/core/src/io/web-io.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 1731,
+   "sha256": "8a534a9d6d09db043790364d2a063a6866c47787e2278598f035456b2a1bd824"
+  },
+  "engine/node/node_modules/@gltf-transform/core/src/io/writer-context.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 10079,
+   "sha256": "88870a21cc0fede5173b4bc764078fef87bdfcfab98ead4356c5e0a57517fbbd"
+  },
+  "engine/node/node_modules/@gltf-transform/core/src/io/writer.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 30676,
+   "sha256": "326580867b4ace55428d72534050cf1e7cae0600dceb681d0af80e2062cce696"
+  },
+  "engine/node/node_modules/@gltf-transform/core/src/json-document.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 1175,
+   "sha256": "e9f4e0bc2d4210ce130c9ced6cc68117f42300e43d74e4f51ff631ce4dd4b157"
+  },
+  "engine/node/node_modules/@gltf-transform/core/src/properties/accessor.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 18428,
+   "sha256": "1ea8e39d4838ff9c7b8a9b5b2a1925a387ad2a4be4dd9d5a0a76f94fc520f397"
+  },
+  "engine/node/node_modules/@gltf-transform/core/src/properties/animation-channel.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 4048,
+   "sha256": "00b16736b3d10c617457ec4ae6523e235e05a381eede59a1b1b1dd6e10fb0871"
+  },
+  "engine/node/node_modules/@gltf-transform/core/src/properties/animation-sampler.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 4140,
+   "sha256": "63c53e7b373b29571a296c773609f1c97edfffda9659fc3fcc58e441bf073ff6"
+  },
+  "engine/node/node_modules/@gltf-transform/core/src/properties/animation.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 3573,
+   "sha256": "2ee85000d98a1ea5113bfdf6c25d4d42e22d888eddfeb5dede84ace50d5dab4e"
+  },
+  "engine/node/node_modules/@gltf-transform/core/src/properties/buffer.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 3942,
+   "sha256": "af86f8852beeba67d569ad89cbcf2d9fbdca2292d2636f3b798c1526355ed10c"
+  },
+  "engine/node/node_modules/@gltf-transform/core/src/properties/camera.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 5088,
+   "sha256": "3a0043eecc54648bf87f9df924d3d1f10031097e7d812938bc3ab650c32ce5e9"
+  },
+  "engine/node/node_modules/@gltf-transform/core/src/properties/extensible-property.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 1729,
+   "sha256": "752be307b7a4ce5ba40aef97334c6a1dc2f2a580b08b1f92974ca5f441d1b099"
+  },
+  "engine/node/node_modules/@gltf-transform/core/src/properties/extension-property.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 1471,
+   "sha256": "12fa9b5d70062837abe9ff592d8a796736e94f2865d8a17fea8c6deb33c5808e"
+  },
+  "engine/node/node_modules/@gltf-transform/core/src/properties/index.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 618,
+   "sha256": "054c25a84e9643c96ba1de88c7680a07020602111aef394621930c1bc65e2d94"
+  },
+  "engine/node/node_modules/@gltf-transform/core/src/properties/material.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 16691,
+   "sha256": "32961cbd549d7c0f25721dfdf07f20845761288df6a6850519b61cba81b81420"
+  },
+  "engine/node/node_modules/@gltf-transform/core/src/properties/mesh.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 3039,
+   "sha256": "328410433f0d227b3451d4103b030a8411d1900923c4c77c5e85a28f43f9c3a1"
+  },
+  "engine/node/node_modules/@gltf-transform/core/src/properties/node.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 9110,
+   "sha256": "27a229b0f2809745ac861ba1d674207c44a0173e55d4e5efbbccaceeb3111445"
+  },
+  "engine/node/node_modules/@gltf-transform/core/src/properties/primitive-target.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 2495,
+   "sha256": "eefdda779fe45b4b31acbc74ce09290a974794f7fe7ffac834c03c1896dee103"
+  },
+  "engine/node/node_modules/@gltf-transform/core/src/properties/primitive.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 7201,
+   "sha256": "0c9f106017affcad09e519f16e47b763f3b33b8d248a4404ed210a96f04b7374"
+  },
+  "engine/node/node_modules/@gltf-transform/core/src/properties/property.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 10191,
+   "sha256": "2814afdcfc6c2d67d051539473b2703d664076e1798d4264623eb6a21ec96ead"
+  },
+  "engine/node/node_modules/@gltf-transform/core/src/properties/root.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 8296,
+   "sha256": "5e588c28fb3bc8055d072e810b59f14118e1f72dc60919b88beec1c6906d5070"
+  },
+  "engine/node/node_modules/@gltf-transform/core/src/properties/scene.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 3021,
+   "sha256": "7bcfd92b66cd78948f2a6d8906f5fe0d1e8ae035b2017ca002be51b97481faf4"
+  },
+  "engine/node/node_modules/@gltf-transform/core/src/properties/skin.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 2763,
+   "sha256": "9132e76e580ef4bec6fe3c9aa2553fefd16ffeb26c77580ea86190f166186b6d"
+  },
+  "engine/node/node_modules/@gltf-transform/core/src/properties/texture-info.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 4705,
+   "sha256": "e5389be833daad6a61b1c361db90bcc71f5ca648fd57819e575e0bfec6ac22f5"
+  },
+  "engine/node/node_modules/@gltf-transform/core/src/properties/texture.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 3450,
+   "sha256": "61ebf583491f88f4c78cc4395337deff0a46ec740cba07bb8fb38ae524e56a28"
+  },
+  "engine/node/node_modules/@gltf-transform/core/src/types/gltf.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 18264,
+   "sha256": "bf9c0608e11f84bc692fa51bf99792d8b6271e16fe990b17739a454aba3a086d"
+  },
+  "engine/node/node_modules/@gltf-transform/core/src/utils/buffer-utils.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 3294,
+   "sha256": "e1e1a46194f6e852658d039456c48ad3933e769f86817c0b3001827fbb9c2107"
+  },
+  "engine/node/node_modules/@gltf-transform/core/src/utils/color-utils.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 2406,
+   "sha256": "0161a5a66507515b8245f129583f383fd105934094851497b74a710ab0fd66da"
+  },
+  "engine/node/node_modules/@gltf-transform/core/src/utils/file-utils.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 1041,
+   "sha256": "d9d7f96dcce904e3d63d09f292f26fa344adfbdabf0d1640bddba42dfc4bc358"
+  },
+  "engine/node/node_modules/@gltf-transform/core/src/utils/get-bounds.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 2226,
+   "sha256": "cb364a77ee97b1826522d05e91cbbc3a4db97ba44c7bc8eb364c365c279f06cb"
+  },
+  "engine/node/node_modules/@gltf-transform/core/src/utils/http-utils.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 1867,
+   "sha256": "f76ee44c3af580fe3ed1ad330263fecc04ef964495d9b9baa844715ca429ff27"
+  },
+  "engine/node/node_modules/@gltf-transform/core/src/utils/image-utils.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 5600,
+   "sha256": "76ec6b08b3d9342e5604b7b48670321d2426ac2dacba0a3a15c901514ced7ba3"
+  },
+  "engine/node/node_modules/@gltf-transform/core/src/utils/index.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 366,
+   "sha256": "d1265faf906b328be97e882328a17707cd67f322b51a3afb3d255c90f98e7eb6"
+  },
+  "engine/node/node_modules/@gltf-transform/core/src/utils/is-plain-object.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 709,
+   "sha256": "4ba66013f989b944d855d383916096f09f98410992e3eb2bd37edcf5e32e741f"
+  },
+  "engine/node/node_modules/@gltf-transform/core/src/utils/logger.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 1534,
+   "sha256": "cc5452957ec8c31a75bf9c71f894218004c3b6993048c118f6d54f857f228e64"
+  },
+  "engine/node/node_modules/@gltf-transform/core/src/utils/math-utils.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 4863,
+   "sha256": "6851c7af984902a84de9fd73fe343f591042c2d9c1d926eaeaeafb48c385a158"
+  },
+  "engine/node/node_modules/@gltf-transform/core/src/utils/property-utils.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 3480,
+   "sha256": "d213b7c9bceb15ee5ce80dc08effb094ae37422ff02b300ae830426f6ae5b816"
+  },
+  "engine/node/node_modules/@gltf-transform/core/src/utils/uuid.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 958,
+   "sha256": "42447bae68ee5d16e9b689ae90423ed4356a5fd35316196a1b709c0e6307263c"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/constants.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 1560,
+   "sha256": "673d6df25b6dfabf19b835137796fc926724c85b9d62f6f6d35707d33f2bcfab"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/ext-mesh-gpu-instancing/index.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 79,
+   "sha256": "6dcbe6de9c2a6da83c0d61bc4714c21e355ad821cd3cb35c243d98ce4f9fcb23"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/ext-mesh-gpu-instancing/instanced-mesh.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 2046,
+   "sha256": "9f0e787971ec4db0a1b26952124d3982545d1cdb98d4e771a87c1866a8cb458a"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/ext-mesh-gpu-instancing/mesh-gpu-instancing.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 5320,
+   "sha256": "71a791652d4a3d80ac7de490452e49c042996e90c57200bd9842ddb444472796"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/ext-meshopt-compression/constants.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 1230,
+   "sha256": "06e684fe6b57d10b5fe7b770e202d34761aaffacfb28fc175a41cc50e3b4a491"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/ext-meshopt-compression/decoder.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 764,
+   "sha256": "bb080245ca63603bbf375732584ab3d3d83118cc32d6a8885c1e84c1d54b4696"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/ext-meshopt-compression/encoder.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 7522,
+   "sha256": "ed1f71af85b9a08343a79e336355a87f5297da1d8fea788cf00a067fd6a079cb"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/ext-meshopt-compression/index.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 42,
+   "sha256": "23c85972a63983cb209ea9a65118c94e68ebe155e136fde3d43dc16eaf5622f5"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/ext-meshopt-compression/meshopt-compression.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 17075,
+   "sha256": "1a6857515f30e8c08c52d6768e811c2e243006d77198f57422fb015923302f27"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/ext-texture-avif/index.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 35,
+   "sha256": "5aea153b631ec97621a18d095e46ad829f490a8a7d90cde1ace2cfb14d0dbfa9"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/ext-texture-avif/texture-avif.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 5296,
+   "sha256": "79f71f88d9db7394e2bb2f6eba56c064cd7c9d0c112199cbaa114c21f771cc07"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/ext-texture-webp/index.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 35,
+   "sha256": "65d168c3d78e41e5f600b7caa682caefb488613260224998275f87e2fe66a910"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/ext-texture-webp/texture-webp.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 5120,
+   "sha256": "4dc53cc0842185a4154583ab93ba0e60742aa183fadb1e97a6533a6f2a4911d5"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/index.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 3704,
+   "sha256": "15a43cd3a9003db476d536abec60d91c0caf65ea975058e038e9dbb168a0b2ca"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/khr-draco-mesh-compression/decoder.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 3510,
+   "sha256": "b4f054e90d1f56d127c8b8e2cf4f8f20a65fbab6a5655f1811257fc2ae773486"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/khr-draco-mesh-compression/draco-mesh-compression.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 17789,
+   "sha256": "d7942f0d0433ef52b72e7e39b891f05f5f9f827cac38cf5a831001f146998c75"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/khr-draco-mesh-compression/encoder.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 6266,
+   "sha256": "de9c5ae9c662abc691a4a3b7b19ef7271aea9eb57fe3ce5bd956f37b2f753a30"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/khr-draco-mesh-compression/index.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 45,
+   "sha256": "8960768da17d3e928822147b22c9b5ab580fe7e555658572c85be0000b86ea42"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/khr-lights-punctual/index.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 66,
+   "sha256": "5ee685883addc1da5de03f6f3fea94f098e417b0b38b9ed6bdf738dc50c7c02c"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/khr-lights-punctual/light.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 4501,
+   "sha256": "d37767c9b405cd57215a8e4a4a5a02e694bbe81bb9ee0cfb199f87c03d3f0cc7"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/khr-lights-punctual/lights-punctual.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 4465,
+   "sha256": "5a10ff395ea79d2b7cd4589e14d3c93e9c63da23fea52420dd7c356d65971945"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/khr-materials-anisotropy/anisotropy.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 3091,
+   "sha256": "ed65569e4f5ce10780bc3985b05f79b23e2d39436caf8d9b7265789cc6b45a00"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/khr-materials-anisotropy/index.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 76,
+   "sha256": "0ca4d3017aab02834e3fa44acc07061bf5d8e3c5cee7fbb5101ed8d8b61c04bc"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/khr-materials-anisotropy/materials-anisotropy.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 5303,
+   "sha256": "4df2a635fc081a0c767f127fbd8e68e4cce05a23c18c4c12d786510a59997317"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/khr-materials-clearcoat/clearcoat.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 5837,
+   "sha256": "0f826051ea3fa6fa07d5f073f44862c0fbc04c9faf477ae7f42ec2b7cf2cde0e"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/khr-materials-clearcoat/index.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 74,
+   "sha256": "79aba47b065a6374fc884f1194cb1cc90af71c438d36326ceccaceb697c01cee"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/khr-materials-clearcoat/materials-clearcoat.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 5979,
+   "sha256": "79e52adb7b78a07b5676752040b9a43306236ae5bdd9f462559fbb35ecbca993"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/khr-materials-diffuse-transmission/diffuse-transmission.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 5048,
+   "sha256": "297f8fb11f9f85c6c7fce8710ceaf6899ed6a5821f5150cdb851db3508b2b982"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/khr-materials-diffuse-transmission/index.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 96,
+   "sha256": "e274979b5035af7c4d52090e4013264e963a0a059e71303f42fc77fc3fedd64a"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/khr-materials-diffuse-transmission/materials-diffuse-transmission.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 5562,
+   "sha256": "bd726ef5d37117f16923a7c54511b038aabbe2445da4532a1b1fdf7f8adc5d45"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/khr-materials-dispersion/dispersion.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 1222,
+   "sha256": "ffcb30133c1e4be3f2b5914c3d5a1028e6a738654cd7ff683b872c9f5e4b0844"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/khr-materials-dispersion/index.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 76,
+   "sha256": "df6621a8965ea764298be3fbfe82ccedd654be89d0899427206daac043c94ed9"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/khr-materials-dispersion/materials-dispersion.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 3325,
+   "sha256": "341be4d6dcb9c459e1954ddc65ba4f1ca318ac7e907fa414469f3a35c802d93b"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/khr-materials-emissive-strength/emissive-strength.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 1408,
+   "sha256": "726594a3772856ce35e9e9775d96ba5219f26f8c16508bda8dcdf7abfdc82733"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/khr-materials-emissive-strength/index.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 90,
+   "sha256": "d0e2289c572a7e3b13768304a237a3816fcc754cdcf1a7d63312c2416dedbdf5"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/khr-materials-emissive-strength/materials-emissive-strength.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 4500,
+   "sha256": "e2c39380eb2f7e8acd82c74ad054a7da5f5098afece00dba35705ae833daa314"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/khr-materials-ior/index.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 62,
+   "sha256": "a590548b1b33df2519e47852c81b59760024a6634851d3ddcaac5e1e8956892e"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/khr-materials-ior/ior.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 1079,
+   "sha256": "da8c37c13039bc11a8dbabf285d2f7ed74fa6946fd848cd12b0a15a44654ff79"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/khr-materials-ior/materials-ior.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 2859,
+   "sha256": "9e5631d6d54568cd203a584fc2e251eb56eb7730eb97f07f916648eed40987f8"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/khr-materials-iridescence/index.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 78,
+   "sha256": "a4c0595dec04498d93b090b8c206298439af1ba0b6c7d8a5d84aa8f990a0f97e"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/khr-materials-iridescence/iridescence.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 5186,
+   "sha256": "6bb7c796a6662068d3bcc9bd1f04d98d3dfb7955ad40f9ef831e21f2ca4a83ea"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/khr-materials-iridescence/materials-iridescence.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 6540,
+   "sha256": "74395d49c2024173ffa8d16eca2e0d9a125061358a5726329d36615f67607903"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/khr-materials-pbr-specular-glossiness/index.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 102,
+   "sha256": "ca67837ff385e12106f285df7a0dbc39fbd11c4cc4d89ad1267f66497a0d3d1a"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/khr-materials-pbr-specular-glossiness/materials-pbr-specular-glossiness.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 5459,
+   "sha256": "66c70ad72e75b8e0eff754dd2f1318fbcebfef0d492e28ce6a329767f3f963ba"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/khr-materials-pbr-specular-glossiness/pbr-specular-glossiness.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 4470,
+   "sha256": "ab3fb88851b8baba0c9afee247f17f8e353a5b587e09f8f1c34db84a6123713d"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/khr-materials-sheen/index.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 66,
+   "sha256": "ccf51522b0cfb1184e062ba3dfb1acc90fbfb18ff94033f434470fdb688ec67b"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/khr-materials-sheen/materials-sheen.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 4884,
+   "sha256": "62a94d2a07c4ee23429a9299e07264188a957effca329bdac23206700b0e5e33"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/khr-materials-sheen/sheen.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 3868,
+   "sha256": "46a5524b37d9945a7021cad2c8bf92b08c8555b2c92fa6e61476c716274d5758"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/khr-materials-specular/index.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 72,
+   "sha256": "080cb965baf1ae3025b29caef83f745d825c73224062e6c9c55722e634153baa"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/khr-materials-specular/materials-specular.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 5124,
+   "sha256": "93278118b15e969f8ced9c735f15900824fe6825c7001858e63bff15c4addcff"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/khr-materials-specular/specular.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 4282,
+   "sha256": "de4e40b81d2344aa89bf96d39278edbb4fefe29b9b0d06eac2349443f26605bb"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/khr-materials-transmission/index.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 80,
+   "sha256": "c655f0e71c685c999eb4cf6d5e84b42edadeb1ec816e80f37e42f3871c6b30ba"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/khr-materials-transmission/materials-transmission.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 4584,
+   "sha256": "a85350ac5036b679e97f329e264b972d6970f3234b4fe750d1b2a10a8945a923"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/khr-materials-transmission/transmission.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 2729,
+   "sha256": "9d63ee8d62a02fcda76746dd86d380c7f75741bca8d6fae6a5b0a636bbef23ce"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/khr-materials-unlit/index.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 66,
+   "sha256": "7fdd9b02fab0c723a044a9c98923466104a87e7f4b59357be00e8fac55d1d6a9"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/khr-materials-unlit/materials-unlit.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 3230,
+   "sha256": "41f7b87da6558f7797cb06b7a6ad053e1b3bc705983de13950732cc15368796d"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/khr-materials-unlit/unlit.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 673,
+   "sha256": "41ffe4045ed1323eb2b8e9ce11331d2dd9675fb6b70fd577cf90d5adb5a1714e"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/khr-materials-variants/index.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 136,
+   "sha256": "df3324fe04f4cdd3354b65c16515be4fc71593c91d1a8c309cc1080f7f4a1b00"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/khr-materials-variants/mapping-list.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 1413,
+   "sha256": "20b78688daaed8b751ad2486c63a4d042d71d8ac12e33d5b6cff7bb40796ed14"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/khr-materials-variants/mapping.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 1742,
+   "sha256": "d92318f5c44dadd7896203a7764934ae69e7037a4e980ccd8fcea3050a02e772"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/khr-materials-variants/materials-variants.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 7137,
+   "sha256": "b23b678cc465f1668f32e9b6d549c3d733fe16663f1b022f2fc7659260b3451a"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/khr-materials-variants/variant.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 607,
+   "sha256": "f9ccc2283403eeb4f92f2be45fe0c656e1807c1fe53131a8cced4418c8aba4c3"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/khr-materials-volume/index.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 68,
+   "sha256": "b4aa4b1429e69299f289ad3cbeb2fa9e126131b844ecc0eb2b2543e32972a5d0"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/khr-materials-volume/materials-volume.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 5972,
+   "sha256": "cc896da30376f4b379c26309bb7d664fffc82f85659a9f937f2ffd3985f13145"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/khr-materials-volume/volume.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 3890,
+   "sha256": "44990ee4bbf0d778ec2649c1f0b4f89c5cdab67a2e490f2e8bd3e03ec42e1d95"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/khr-mesh-quantization/index.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 40,
+   "sha256": "26f37e7282b314a2d440a500489fc05af0c78069af1b1f797270212ebab84eb4"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/khr-mesh-quantization/mesh-quantization.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 2335,
+   "sha256": "1a5f83beb4dcb4d94f8dd152a1be849f25745c2779f2236f73012196fae33ab0"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/khr-texture-basisu/index.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 37,
+   "sha256": "82bd5d59f8ef282295fef9f02da2608d07c3f3e948def1a0ea85c37a3e01386a"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/khr-texture-basisu/texture-basisu.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 6141,
+   "sha256": "05be7653613f947aefdb1ae4677a8f80a53a1e66e257fc7dbb4acff3811e2a0d"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/khr-texture-transform/index.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 72,
+   "sha256": "1c03951ca4366c9ca52450f2a8b4485658dfc5584594d57a81cb98d9e6a475fa"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/khr-texture-transform/texture-transform.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 3516,
+   "sha256": "f982a336cc36fe390435556be58baf634cc0d7bcac894cfbea2ca55b561f3c03"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/khr-texture-transform/transform.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 1708,
+   "sha256": "43a0e8f6e698895054d38d46775081c1bf46b30d7fe7158fb6116dc1a33de38f"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/khr-xmp-json-ld/index.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 55,
+   "sha256": "231251655393beb29c345aa9c741f3e09823c0b1409c844ad4e5f343dc2030d5"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/khr-xmp-json-ld/packet.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 5216,
+   "sha256": "f9011876eac54ee55cb0f7bee9997c9c52524256c2c123f19fc405f0eae772d2"
+  },
+  "engine/node/node_modules/@gltf-transform/extensions/src/khr-xmp-json-ld/xmp.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 7163,
+   "sha256": "1130e2c57f2e821f965597f9c450bd88924eb2c77f02c8e697d63ba2c0c00978"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/src/center.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 2479,
+   "sha256": "1abf2f9ec8ed7fdbed1f0b024202fba6cdc84a61ffdbc19f9173e1661f8458c0"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/src/clean-primitive.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 1179,
+   "sha256": "949c21310a9bcc0b9fcbd2c402cfbe69d27e0577fd7cc08653c3570a48060163"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/src/clear-node-parent.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 1330,
+   "sha256": "15bdec65d08f9195a42ea2f85323caabcf6acb2d8f74fe4be14faaeb37952e56"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/src/clear-node-transform.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 1499,
+   "sha256": "f26ccf7b34f758638cb204add7ecdc08faf470626f1fa4da55e869cea239148d"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/src/compact-primitive.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 6195,
+   "sha256": "e7dfd09785eeb02d42ed079d1bb944ff4eaa09cd37c62a7910b4c5fbdaa0f833"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/src/convert-primitive-mode.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 4796,
+   "sha256": "e45de28928e51e85345567bb62912994823ea2c5cc561b3bd116b942f7e9b980"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/src/dedup.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 12861,
+   "sha256": "4a2d5f6fb9f63745b5f65c0ba1d932174d9f5a6a6f665305b2c90e5469f15439"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/src/dequantize.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 3393,
+   "sha256": "111f7caa91563354d3a25a4b56ddf996ca31dd0069848e5c06dedcc178605a98"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/src/document-utils.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 12383,
+   "sha256": "2da106b99fd1a964854c12c53fbd545ca87b222328bc294d78b5410ad264fcf1"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/src/draco.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 1988,
+   "sha256": "69332ad5e151e2d5b10887f749e564f1a573752f2c057595b500e141d73e9834"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/src/flatten.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 3476,
+   "sha256": "72dc1030f4ada8e5d84f0d0aa18605d4aa287fa9b60354b83a714fbe91b1bcab"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/src/get-bounds.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 401,
+   "sha256": "78e6ea497d278856b041dcb0656f59f6fd349b5a771c55362d04ece1ac94b9ca"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/src/get-texture-color-space.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 1142,
+   "sha256": "8e1b23151f494ef71d523521e7646eca2af1a92fe1f35eaeff286ce386ce1266"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/src/get-vertex-count.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 8867,
+   "sha256": "d86f05fc4ff738acc35f89e4de454b98a4b89d80a32876bc7e3c7c4f4b9c7113"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/src/hash-table.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 2908,
+   "sha256": "0608f76e9fe43ff6411fdc9ec861335f8f00ec8a6f54ef0f5c6ca3cf4063ec70"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/src/index.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 1804,
+   "sha256": "2c91ebb16e8b10888930922db262e79896848be516f7c63268d961b40f14cb44"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/src/inspect.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 8873,
+   "sha256": "8ce07a7b3a3f3b7bd0ad21bc02bcdec53a788098d34e903b070e0c75613b42ac"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/src/instance.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 6100,
+   "sha256": "033a31986261ebba7c9b41ed8778ef2a7cf567de2e02f446a0cb5c81b7c57e80"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/src/join-primitives.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 6156,
+   "sha256": "4e2e99eda1a74eefa0e0a9123e988f64fbde0408e9ad200f3130fc62a2fda750"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/src/join.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 8156,
+   "sha256": "9a7ae4fbe469036ebf7671bec8a8eae9b4cbe1663261179186fcefc6516af452"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/src/list-node-scenes.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 952,
+   "sha256": "2a60d43ce4caaf36acb96cf63f3ed2ac877fbf0810e16391d770775ac0de834d"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/src/list-texture-channels.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 2273,
+   "sha256": "b0d3cfc5b24c9872304b4cfa2e7687a7da74a9e98b71701a834ef44cab8d0576"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/src/list-texture-info.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 2503,
+   "sha256": "774ab4bc1a9d4eef4ac8825e0bbdc987bce49665099576b0c50fd2600bc48b39"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/src/list-texture-slots.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 606,
+   "sha256": "ea2b68f9d36674a510d96204043a2fff2e5eeb13c760faef2c35e53aa1db2217"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/src/meshopt.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 3142,
+   "sha256": "8ff449dc91efe7c33fbf1ab08c4c50e3daa910e462971bbadfe9d9f3824a21a4"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/src/metal-rough.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 4952,
+   "sha256": "4ed5b1a691a2bdc456752c32748bb15f3a1d87fc0f62d975f8da443444438272"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/src/normals.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 2590,
+   "sha256": "b7e3e0227227dbe8ba3db2da769d66b04c89e4e4dfe1103dd4415efa306b2848"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/src/palette.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 12101,
+   "sha256": "ac0f4b93c545054f1922ec7211caebcf6a2e65d63d662e533e66cc263e1ae5e1"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/src/partition.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 3887,
+   "sha256": "18a59b17b2094443f404eea404966675a3ae4c3da7a44507ac4b399f36207202"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/src/prune.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 18168,
+   "sha256": "67f4ca6de923205a8d5992ff81460e1a10818833e09ffbf6a14b4ee52e7bb752"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/src/quantize.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 21360,
+   "sha256": "92faa80510a6029d82647efb8bf3f9134488a3fb47773c85f26da5bc1fda25cc"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/src/reorder.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 5425,
+   "sha256": "8917865e49e099732d06891bcace1e27ae4a1096ed6df01b60f9070f484769ec"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/src/resample.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 6780,
+   "sha256": "1870213ab0ffeb4cac34c072125204c0168b1a3689e37c15a12a84581d79d056"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/src/sequence.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 2703,
+   "sha256": "488daa246b0a34203f4b118498607b55f595e52013a5d74b236ad8d545675e21"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/src/simplify.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 9429,
+   "sha256": "803e913ffb7265ab543c3aa0c5af5a87c65072741395c2c025544d2c080a981e"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/src/sort-primitive-weights.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 7352,
+   "sha256": "4c23a567d04bc4338dd8912effe31b0525a6b6c23fc9be4f63ec330eb9ac34e7"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/src/sparse.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 2215,
+   "sha256": "40df08ab0025599e90cd667514ee20cb1a5d959cdc62ed674a074e44ec4be740"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/src/tangents.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 5751,
+   "sha256": "56cade9c2faf7861bac8ee6134a39a09b408a51e12c659fb8baca8b5919fe0cf"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/src/texture-compress.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 13509,
+   "sha256": "3e2fcc77a63b2f4bec1f30982f88358481c0861c88a0e3e9ecb7518c2ace8c04"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/src/transform-mesh.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 2137,
+   "sha256": "0b4a92f4cc49cafc4cd6a09a9510a467e585eefd111d0292aafa1a9d751276cf"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/src/transform-primitive.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 6213,
+   "sha256": "a7eec73c3eb4cd79ef0ded1dd3758cd9d6076ce62000ec4dc7adedfc9a19975d"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/src/types/.gitkeep": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 0,
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/src/uninstance.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 5133,
+   "sha256": "ab84d774ef9de4a238e31c1b74d7b6a22c0d2e1b68e4b4cc331e8e0222fa5a82"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/src/unlit.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 500,
+   "sha256": "14bb028026937a4ce40d790b3eddb2e984cd3215f7d6869bd420795002753870"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/src/unpartition.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 1187,
+   "sha256": "b169959f57d67f4aa966b428014fa2fd2d7e93c25f464da46b61d05cf3456e1a"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/src/unweld.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 3310,
+   "sha256": "47ff1505a15b2fc4805809bb1526cfa7fceefcb2b735b588b0cb558b23e8021b"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/src/utils.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 10484,
+   "sha256": "c9dc48df39006892d8edc5319649a0a3259b1d2352c1dd952ba27a27605c97be"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/src/vertex-color-space.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 2352,
+   "sha256": "e2f213e92e5f4a56b592d285851e292fd27c55f3cbfac5b337180cdfbccb4d53"
+  },
+  "engine/node/node_modules/@gltf-transform/functions/src/weld.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 7199,
+   "sha256": "1d83cad61d8b60dcfd7f9a3b7c8ea9dcff7587cd2f2cf504c4c3ef190ef778bc"
+  },
+  "engine/node/node_modules/ktx-parse/src/buffer-reader.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 1903,
+   "sha256": "9d49d8953425978dd87cc251754a3c5af2cba389313f2368775c94e95be2c8bc"
+  },
+  "engine/node/node_modules/ktx-parse/src/constants-internal.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 752,
+   "sha256": "b06a832341ba3fbf16c99a64a9531a3379a091495c260a1ebf1f7ba96bb1af12"
+  },
+  "engine/node/node_modules/ktx-parse/src/constants.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 21335,
+   "sha256": "aa9fcf170db266c69fe3b755e414026a533a6573fabd880c3659ba30a6e3898d"
+  },
+  "engine/node/node_modules/ktx-parse/src/container.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 4742,
+   "sha256": "61457acb0fb46a51c611b8d03e5051e35208f98db55d5abcd1a0200c15a9e1b4"
+  },
+  "engine/node/node_modules/ktx-parse/src/index.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 119,
+   "sha256": "412448d3eb14a6ad198918de9be05a9a8f2e4d26f91005f4403f073a382baa65"
+  },
+  "engine/node/node_modules/ktx-parse/src/read.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 7574,
+   "sha256": "9f6a0ffe4f011df5be9a7c958054b7072c92912a5211a622b6db9eb9fa16e773"
+  },
+  "engine/node/node_modules/ktx-parse/src/util.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 7185,
+   "sha256": "e3fea50979dbd14765991ca31b4c091da55a0ecbd6aaee57a8440ef980863718"
+  },
+  "engine/node/node_modules/ktx-parse/src/write.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 9479,
+   "sha256": "83f1ee1f76c3ec55f396155b5813c68fb1bb1750263e32a69ca3e143391b46d8"
+  },
+  "engine/node/node_modules/ndarray-lanczos/dist/src/convolve.d.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 202,
+   "sha256": "54c449e5e0f696fe7bd59ac1a47a0e9324471042b1789143700537711ff0e1dc"
+  },
+  "engine/node/node_modules/ndarray-lanczos/dist/src/index.d.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 350,
+   "sha256": "38a3a617ebbb5b77c2f4859594e8a31ec95144036bdaae02a01e7a9a127bbb66"
+  },
+  "engine/node/node_modules/ndarray-lanczos/src/convolve.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 1954,
+   "sha256": "d4a04b2c4c5afaee63be26f69f4bad47b2687631e2c60c58344ddea56da8a261"
+  },
+  "engine/node/node_modules/ndarray-lanczos/src/index.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 2011,
+   "sha256": "7f8b981dc6d33fa5dc281b53e58bf994050a91c05bac09c94109aa7131a5005d"
+  },
+  "engine/node/node_modules/ndarray-pixels/src/browser-get-pixels.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 1137,
+   "sha256": "a2bd5d664d848cbdef802bea7cb8f4c9f1ecac5e55a327cc35b6778e987bd5ea"
+  },
+  "engine/node/node_modules/ndarray-pixels/src/browser-save-pixels.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 942,
+   "sha256": "83aa1b14af71e63036b14f32071f7fa949df1782db0551c6a45fd9b82952959b"
+  },
+  "engine/node/node_modules/ndarray-pixels/src/common.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 1708,
+   "sha256": "86f59824aa069dbd4fc7e2310e957c3d9b3485c124c8661b0aaa3b936b0cfb65"
+  },
+  "engine/node/node_modules/ndarray-pixels/src/index.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 1840,
+   "sha256": "d370bb5910b89e4136509c24f095bcd9e8625f653d2dda83519cf91f1430aa81"
+  },
+  "engine/node/node_modules/ndarray-pixels/src/node-get-pixels.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 603,
+   "sha256": "f4e839b00ad59142e9b856ea469ddc6289683c13b8f9264e218d916b08809266"
+  },
+  "engine/node/node_modules/ndarray-pixels/src/node-save-pixels.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 1109,
+   "sha256": "f945a7217005263c552cc6866eb84fe8b4a6019f257a70618c33529dec18ce8f"
+  },
+  "engine/node/node_modules/property-graph/src/constants.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 1348,
+   "sha256": "1da4301f9d7788b43e6692816cbba885851cf4f1335669f8ae612dfb545b017e"
+  },
+  "engine/node/node_modules/property-graph/src/event-dispatcher.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 1749,
+   "sha256": "d5003167d46f21ad6ebab65a7fe167e01316df15ec5112cf597688d4b54ef7bd"
+  },
+  "engine/node/node_modules/property-graph/src/graph-edge.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 1834,
+   "sha256": "e98da1669f7f07a1e94b510429225f54338e44ad026a8698d53d325ee96ce199"
+  },
+  "engine/node/node_modules/property-graph/src/graph-node.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 13336,
+   "sha256": "0941ba21900e75c219a82f3a3e41cc30fa29082a9cf7993b34403e740f02f10e"
+  },
+  "engine/node/node_modules/property-graph/src/graph.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 3256,
+   "sha256": "94574d29c6e1be56bdcb82f6b6cd5c7137ff7ce55d8a4176ce452652e2521f83"
+  },
+  "engine/node/node_modules/property-graph/src/index.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 223,
+   "sha256": "fab58e241bbf23b783d11bfac90a1f47cb3569f6d8185ee83700aa3b1c3b3ed2"
+  },
+  "engine/node/node_modules/property-graph/src/refs.ts": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 2704,
+   "sha256": "f5d0adf76b24438daee18ebc210b57e46ac05457206cb4582ad15dee386198aa"
+  },
+  "engine/node/node_modules/sharp/src/binding.gyp": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 9864,
+   "sha256": "7517f3c1d8489f962a81e45b8c808794fe8fd343bd5a41b68b7d724565eff778"
+  },
+  "engine/node/node_modules/sharp/src/common.cc": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 37709,
+   "sha256": "dbad7fdc498e1d0c958f833064d5097794a16a140f139c35f864f3255411bce2"
+  },
+  "engine/node/node_modules/sharp/src/common.h": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 10661,
+   "sha256": "d84bc001e0b56a58254615f74cf1c92115acde7bd80db5b500dd7fb706e1ddd1"
+  },
+  "engine/node/node_modules/sharp/src/metadata.cc": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 12214,
+   "sha256": "9b176aca5e6852d8f2a51eaf7f3118ff9d05f22bb246215150558e3b70e03ab9"
+  },
+  "engine/node/node_modules/sharp/src/metadata.h": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 1709,
+   "sha256": "9a2a4ab137ef76b57b0b5c76b8485c4e938494ce8958ab794d2ab7dd5e4b35f2"
+  },
+  "engine/node/node_modules/sharp/src/operations.cc": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 16014,
+   "sha256": "2aefbebf0f014def82aaaa1202a61a45e5c650bfd359a8ceec1a793c1e6469b3"
+  },
+  "engine/node/node_modules/sharp/src/operations.h": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 3417,
+   "sha256": "2cb0e551b510efa63980051dbec37a6f26c906d14e9db65bf618098543ecb34e"
+  },
+  "engine/node/node_modules/sharp/src/pipeline.cc": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 81585,
+   "sha256": "81c785555e407f9f8031e4cc7ac689f1d4cf95f24d7e0330902c6e8a7236ad3d"
+  },
+  "engine/node/node_modules/sharp/src/pipeline.h": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 9513,
+   "sha256": "d36d22f839bcd6131379d6717c4eaf8154cba35e4616bca8d19f5272c3f21127"
+  },
+  "engine/node/node_modules/sharp/src/sharp.cc": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 1465,
+   "sha256": "9526a2e5566ef22388697172aef710dbe7454a82bcc268d8b36cdbb27e86c7e6"
+  },
+  "engine/node/node_modules/sharp/src/stats.cc": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 6656,
+   "sha256": "5e891ba9ef5ee58cd034f7d630e0a4c56b178f75956a93c2514cedfa2136fc23"
+  },
+  "engine/node/node_modules/sharp/src/stats.h": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 1205,
+   "sha256": "94f5cdf15332b329266c35025f703959af9f3c6314b6927a38190b34a5fae9c5"
+  },
+  "engine/node/node_modules/sharp/src/utilities.cc": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 8918,
+   "sha256": "33e3e76f5c595e6bbe9b86b157be63d2fa9571e13fad9cbc8112672f71e0c7e2"
+  },
+  "engine/node/node_modules/sharp/src/utilities.h": {
+   "class": "local",
+   "why": "fetched third-party page / document (copyright) unless SOURCES.json says open",
+   "bytes": 677,
+   "sha256": "ce104f66b0631339b836e12f48f7dbbc9c23ffea4f3d0199c85c01da9758a0af"
+  },
   "env/aim/aim_chap4_section_3.html": {
    "class": "local",
    "why": "fetched third-party page (copyright) unless SOURCES.json says open",
@@ -7252,8 +8512,14 @@
   "rec/adsbfi_20261105_23.jsonl.gz": {
    "class": "local",
    "why": "adsb.fi terms: personal non-commercial use, not to be licensed on",
-   "bytes": 17171095,
-   "sha256": "aee364c9198a377978d987caf5525f67b1b9f823b64e82b031a571c7fa4f36f8"
+   "bytes": 21200209,
+   "sha256": "c0a2ec1a14d9c1b754f7320b176c0970ffdf2834c558b0c5ac0d64de9b2bbece"
+  },
+  "rec/adsbfi_20261106_00.jsonl.gz": {
+   "class": "local",
+   "why": "adsb.fi terms: personal non-commercial use, not to be licensed on",
+   "bytes": 17302621,
+   "sha256": "6f4d660e40d00ee5e528a80011ddd542748c3ed9b1fd6b98f8d23afaff790731"
   },
   "rec/adsblol_20261104_17.jsonl.gz": {
    "class": "pack",
@@ -7438,8 +8704,14 @@
   "rec/adsblol_20261105_23.jsonl.gz": {
    "class": "pack",
    "why": "ODbL (adsb.lol); trimmed copy in rec_pack/",
-   "bytes": 4779268,
-   "sha256": "2dfff318a1adef56f6b6b4e813838c23d46d59dfd809db8571e5d5a77321f8f7"
+   "bytes": 5879071,
+   "sha256": "4e7f028b24e7d53b587591697e119278813d77edf97020e41cea7b0defa7b741"
+  },
+  "rec/adsblol_20261106_00.jsonl.gz": {
+   "class": "pack",
+   "why": "ODbL (adsb.lol); trimmed copy in rec_pack/",
+   "bytes": 4763048,
+   "sha256": "c73df0280d9650d48518c8d65c2631e6e586e12df35f1f92c8f626bfcb6216cc"
   },
   "rec/recorder.log": {
    "class": "local",
@@ -7450,8 +8722,8 @@
   "rec/recorder.out": {
    "class": "local",
    "why": "recorder state",
-   "bytes": 49773,
-   "sha256": "d949e6e20fc44f394728519dcbbd35cabd9535e5367092376380362a0112b5f2"
+   "bytes": 51891,
+   "sha256": "ddcb0bc735fd97a19fb4e5c72ca8d46ca2a204185ab1e5bc8bc169b62511e35f"
   },
   "rec/recorder.pid": {
    "class": "local",

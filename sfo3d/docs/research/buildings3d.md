@@ -625,6 +625,9 @@ flock out/.heavy.lock env SOFTGL=1 W=960 H=540 OUT=out/buildings3d VIEWS="..." n
 | `tools/blender/b3d_views_job.mjs` | livetest job: the same views with `?b3d=0` (first-pass) and the assets -> `out/buildings3d/cmp_*.png`; in `near` mode each view waits until the full files near the camera are on screen (`Buildings3D.settled`) |
 | `tools/blender/build_roadways.py`, `roadways_net.py` | the elevated landside roadways asset (`roadways.glb`, `roadways_lod2.glb`, check sheet `out/buildings3d/roadways_plan.png`, `manifest.json#roadways`; review round 1) |
 | `tools/blender/b3d_lod2_check.py` | every building's LOD2 against its own LOD0 on the exported GLBs (plan, height, roof) -> `out/buildings3d/integ/lod2_check.json` |
+| `tools/blender/roadways_itb_plate.py` | the ITB departures deck measured on NAIP 2024 as one plate (review round 2), sheet BR-02 `out/buildings3d/roadways_itb_plate.png` |
+| `tools/blender/b3d_split.py` | landside.glb split per building into `data/buildings3d/lsu_<unit>.glb` + shared `lsu_img_*` images (review round 2; run by b3d_integrate) |
+| `tools/blender/b3d_glass_job.mjs` | livetest job: A/B variants of the loaded glass materials at one view (review round 2, finding 2) |
 | hooks | `js/three/renderer3.js` (+5 lines), `js/live/world.js` (+import, +2 items loops), `js/live/airport.js` / `js/live/terminals.js` (optional routing parameter; same geometry, same order), `tools/build3/three-entry.js` (+GLTFLoader), `tools/build3/phone_artifact*` (ships the GLBs), `tools/stands/check_stands.py` and `tools/drawing/common.py` / `audit.py` (use the 3-D footprints) |
 
 **Loading.** `Renderer3._buildStatic` starts `Buildings3D` once the static scene exists; the five groups load one after
@@ -637,7 +640,8 @@ whole airport at once), then a group's full file as soon as the camera comes wit
 (its GPU data released), so the units near the camera show LOD0 / LOD1 as on the desktop. `?b3d=0` shows the first-pass
 buildings only, `?b3d=lod2|full|near` forces a mode, `?b3dtower=f1` the tower's alternative height family F1 (`tower_f1.glb`; manifest `family_decided: false`;
 F2 `tower.glb` is the default since the tower review round 1, see the tower section), `?b3donly=tower,...` loads only the
-listed groups (QA).
+listed groups (QA). Review round 2: the landside group loads per building (`lsu_<unit>.glb`, triggers per unit) and
+near mode releases what it loaded when the camera is far again (details in "Review round 2", finding 4).
 
 **LOD.** As each group's manifest says: a "LOD set" is a node whose children are LOD0 / LOD1 / LOD2 (tower, ITB, domestic:
 the root; landside: every building node). LOD2 (one joined mesh with its own small atlas) is shown when the camera is beyond

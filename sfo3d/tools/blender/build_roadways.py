@@ -165,6 +165,9 @@ def enclosure_cuts(P, TR, F0, log):
     return out
 
 
+STACK_GAP = 0.6   # m: the lower of two stacked decks stops this far short of the upper deck's ribbon (review round 2)
+
+
 def trim(P, TR, log, BODY=None):
     """same-level overlaps go to the higher-priority piece; then every piece minus the assets' occupancy in its band and
     minus the parts that run inside a building (enclosure_cuts, review round 2)"""
@@ -180,8 +183,16 @@ def trim(P, TR, log, BODY=None):
             # same level where they overlap? (their levels at the overlap's points)
             pts = np.array([c for poly in (getattr(X, 'geoms', None) or [X]) if isinstance(poly, Polygon) for c in poly.exterior.coords])
             if not len(pts): continue
-            dh = np.abs(hp(p, pts) - hp(q, pts))
+            dhs = hp(p, pts) - hp(q, pts); dh = np.abs(dhs)
             if np.median(dh) < 1.0: g = g.difference(q['geom'].buffer(0.02))
+            elif np.median(dh) < RN.DECK_DEPTH + RN.CLEAR_MIN:
+                # review round 2: two decks overlapping in plan with less than deck + clearance between them (a diverge
+                # whose ribbons still overlap where one has begun to climb): the LOWER one gives the overlap up, so the
+                # upper deck's edge stands beside it instead of 1-5 m over it (the integration clearance check found
+                # 824 m2 of deck under another deck at < 4.6 m)
+                # (+ STACK_GAP: the upper deck's parapet and soffit edge overhang its ribbon; with 0.05 m, 1.0-1.3 m slivers stayed)
+                if np.median(dhs) < 0: g = g.difference(q['geom'].buffer(STACK_GAP))
+                else: q['geom'] = q['geom'].difference(g.intersection(q['geom']).buffer(STACK_GAP)); q.setdefault('stacked_cut_by', []).append(p['id'])
         p['geom'] = g; kept.append(i)
     # assets: occupancy (triangles) in the piece's band, chunk by chunk along it (a ramp spans 0-11 m). Review r2: the
     # other assets' LOD0 / LOD1 triangles only (their LOD2 shells are coarser - the ITB curb's by ~3 m at its ends - and
@@ -231,10 +242,24 @@ def trim(P, TR, log, BODY=None):
 CORE = box(-2150.0, -50.0, -550.0, 1050.0)
 
 
+def guideway_tris(path=os.path.join(D3, 'landside.glb')):
+    """the AirTrain guideway's LOD0 triangles from the landside asset, split into the deck structure and the T-pier
+    caps / columns (nodes '*_piers'): review round 2 - the landside rebuild of 23:26 places its inferred piers every ~30 m
+    along the guideway skeleton without regard to the roads under it, and a cap over interchange_2_2 pinned the deck into
+    a 70 % dip; the deck is bounded by the guideway deck's soffit, a pier over a road deck is reported (landside_piers)"""
+    deck, piers = [], []
+    if not os.path.exists(path): return np.zeros((0, 3, 3)), np.zeros((0, 3, 3))
+    for r in BI.mesh_nodes(path):
+        if BI.lod_of(r) != 0 or len(r['chain']) < 2 or not str(r['chain'][1].get('name', '')).startswith('airtrain'): continue
+        (piers if '_piers' in r['name'] else deck).append(r['tris'])
+    cat = lambda L: np.concatenate(L) if L else np.zeros((0, 3, 3))
+    return cat(deck), cat(piers)
+
+
 def overhead_of(TR, F=None):
-    """the AirTrain guideway (landside airtrain units, elevated) as overhead structures: plan polygons and the soffit level
-    (the lowest non-vertical guideway triangle over a point, >= 4 m above grade) for roadways_net.solve_levels"""
-    T = TR['landside']['T'] if 'landside' in TR else np.zeros((0, 3, 3))
+    """the AirTrain guideway deck (landside airtrain units, LOD0, piers excluded) as an overhead structure: plan polygon and
+    the soffit level (the lowest non-vertical deck triangle over a point, >= 4 m above grade) for roadways_net.solve_levels"""
+    T, _ = guideway_tris()
     if not len(T): return []
     xz = T[:, :, [0, 2]]
     ar = 0.5 * np.abs((xz[:, 1, 0] - xz[:, 0, 0]) * (xz[:, 2, 1] - xz[:, 0, 1]) - (xz[:, 2, 0] - xz[:, 0, 0]) * (xz[:, 1, 1] - xz[:, 0, 1]))
@@ -563,10 +588,12 @@ def curb_gap_check(P, TR, M, curb_h, log):
     return res
 
 
-def clearance_check(mb, TR, log, limit=RN.CLEAR_MIN):
+def clearance_check(mb, TR, log, limit=RN.CLEAR_MIN, piers=False):
     """review round 2 check (finding 5): the deck tops (LOD0 road surfaces) against the AirTrain guideway triangles above
-    them: per deck vertex and triangle centroid, the lowest guideway triangle over it; clearance = that - the deck top"""
-    T = TR['landside']['T'] if 'landside' in TR else np.zeros((0, 3, 3))
+    them: per ~1-m sample of the deck tops, the lowest guideway triangle over it; clearance = that - the deck top. The
+    guideway deck (the bound the solve enforces) and, with piers=True, the inferred T-pier caps (the landside group's
+    pier sites; reported, not designed around)"""
+    Td, Tp = guideway_tris(); T = Tp if piers else Td
     if not len(T): return dict(points=0)
     xz = T[:, :, [0, 2]]; lo, hi = xz.min(1), xz.max(1)
     pts = []
@@ -599,9 +626,11 @@ def clearance_check(mb, TR, log, limit=RN.CLEAR_MIN):
         if len(y): out.append((float(y.min() - q[1]), q[0], q[2], q[1] - GROUND_Y))
     if not out: return dict(points=0)
     out.sort(); cl = np.array([o[0] for o in out])
-    res = dict(points=len(out), min_m=round(out[0][0], 2), at=[round(out[0][1], 1), round(out[0][2], 1)], deck_m=round(out[0][3], 2), below_limit=int((cl < limit - 1e-3).sum()), limit_m=limit)
-    log('guideway clearance over the deck tops (LOD0 top triangles sampled at ~1 m under the guideway): %d points, min %.2f m at %s (deck %.2f m), %d below %.1f m'
-        % (res['points'], res['min_m'], res['at'], res['deck_m'], res['below_limit'], limit))
+    bad = [o for o in out if o[0] < limit - 1e-3]
+    res = dict(points=len(out), min_m=round(out[0][0], 2), at=[round(out[0][1], 1), round(out[0][2], 1)], deck_m=round(out[0][3], 2), below_limit=int((cl < limit - 1e-3).sum()), limit_m=limit,
+               where=sorted({(round(o[1] / 10) * 10, round(o[2] / 10) * 10) for o in bad})[:20])
+    log('guideway %s clearance over the deck tops (LOD0 top triangles sampled at ~1 m): %d points under it, min %.2f m at %s (deck %.2f m), %d below %.1f m'
+        % ('PIER CAP' if piers else 'deck', res['points'], res['min_m'], res['at'], res['deck_m'], res['below_limit'], limit))
     return res
 
 
@@ -907,7 +936,7 @@ def main(argv):
             else: build_piece(mb, p, P, l, p['mat'] if l < 2 else 'deck_plain')
         for c in cols: cylinder(mb, c['unit'], l, c['xz'], GROUND_Y - 0.05, GROUND_Y + c['soffit'] + 0.05, D_COL / 2, {0: 12, 1: 6, 2: 4}[l])
     gapchk = curb_gap_check(P, TR, M, LV['itb']['curb'], log)
-    clr = clearance_check(mb, TR, log)
+    clr = clearance_check(mb, TR, log); clr_p = clearance_check(mb, TR, log, piers=True)
     allxz = np.concatenate([p['pts'] for p in P]); rc = [round(float(v), 1) for v in allxz.mean(0)]
     ntri = {l: sum(int(sum(len(i) for i in b['I'])) for (u, ll, m), b in mb.d.items() if ll == l) for l in (0, 1, 2)}
     log('triangles per LOD: %s' % ntri)
@@ -931,7 +960,7 @@ def main(argv):
                                 gaps=M['gaps'], plate_nodes=sol.get('plate_nodes'), columns=len(pcols), outer_roadway_colour=dict(naip_srgb=lite_naip, base_srgb=lite),
                                 lower_outer_roadway=dict(osm_ways=sorted(lower), imaged_band_v=[round(x, 2) for x in M['outer']['v']], widened=M.get('lower', []),
                                                          note='OSM layer 1, passes under the anchored departures leg 20-30 m past the straight: kept as the lower deck (solved level)')),
-                 curb_gap=gapchk, guideway_clearance=clr, body_cut_m2=body_cut, deck_inside_body_m2=body_left)
+                 curb_gap=gapchk, guideway_clearance=clr, guideway_pier_caps_over_decks=clr_p, deck_cut_inside_buildings_m2=body_cut, deck_left_inside_buildings_m2=body_left)
     sheet(P, cols, os.path.join(OUTD, 'roadways_plan.png'), LV, dict(pieces=len(P), columns=cst, low=len(chk['low'])))
     log('check sheet out/buildings3d/roadways_plan.png')
     Cf, duf, dvf = np.array(M['frame']['centre']), np.array(M['frame']['du']), np.array(M['frame']['dv'])
@@ -964,7 +993,7 @@ def main(argv):
                  unknown=['the domestic departures-curb height (%.3f m is the domestic asset placeholder [unk])' % LV['domestic']['curb'],
                           'every viaduct level: no structural drawings or survey; OSM gives only the layer order',
                           'the ITB arrivals roadway level (OSM layer 1 west of the ITB is solved, not anchored)',
-                          'whether the outer light-concrete roadway along the ITB is on the departures deck (modelled) or a lower deck (OSM layer 1); NAIP 2020 / 2024 parallax of its edge is inconclusive (the 2020 lean at this spot is not calibrated)'],
+                          'whether the outer light-concrete roadway along the ITB is a lower deck (modelled: OSM ways 41015123 / 739695588, layer 1, widened to the imaged band) or on the departures deck (as the reviewer read it); NAIP 2020 / 2024 parallax of its edge is inconclusive (the 2020 lean at this spot is not calibrated)'],
                  deviations=['decks over at-grade roads with less than %.1f m clearance: the anchored domestic loop (soffit %.2f m) - the curb placeholder, kept as the domestic asset has it'
                              % (RN.CLEAR_MIN, sol['h_dom'] - RN.DECK_DEPTH),
                              'decks trimmed at the buildings\' bodies (review r2, finding 3): %s m2; Terminal 2: NAIP 2024 shows the departures roadway open to the sky with traffic between the '

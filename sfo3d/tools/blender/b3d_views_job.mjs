@@ -4,6 +4,7 @@
 // VIEWS: name=view pairs separated by ';' (name optional), view as in tools/build3/job_views.mjs:
 //   look:x,y,z,yaw,pitch,dist[,fov] | gate:<stand>,<dist>,<side>,<pitch> | tower[:dist,yaw,pitch] | view:<name> | towercam
 //   | light:<preset> (SFO.setLight, no shot; applies to the following views)
+//   | wait:<s> (no shot: keep rendering s seconds at the last camera, then log the b3d state - near-mode release test)
 // MODES: comma list of b3d modes (default 'old,new'; old = ?b3d=0, new = default files, lod2 = ?b3d=lod2, near = ?b3d=near)
 // near-mode views wait until the full files near the camera are on screen (Buildings3D.settled)
 // QS: extra query (default mode=snapshot&res=1); FRAMES: frames accumulated per view (TRAA; default 8).
@@ -26,6 +27,12 @@ export default async ({ page, shot, base, OUT }) => {
     console.log(mode, 'ready in', ((Date.now() - t0) / 1000).toFixed(1), 's', JSON.stringify(await page.evaluate(() => SFO.R.b3d ? SFO.R.b3d.info() : null)));
     for (const [name, v] of views) {
       const [kind, arg] = v.split(':');
+      if (kind === 'wait') {
+        await page.waitForTimeout(+arg * 1000);
+        const w = await page.evaluate(() => { const B = SFO.R.b3d; const r = SFO.R.debugInfo(); return { texMB: r.texMB, drawCalls: r.drawCalls, kind: B && B.info().kind, landsideUnits: B && B.info().landsideUnits,
+          ...(performance.memory ? { jsHeapMB: +(performance.memory.usedJSHeapSize / 1048576).toFixed(1) } : {}) }; });
+        (info[mode] = info[mode] || {})[name] = { view: v, ...w }; console.log(mode, name, JSON.stringify(info[mode][name])); continue;
+      }
       const ok = await page.evaluate(([k, a]) => {
         const q = SFO.qa; const args = a ? a.split(',') : [];
         if (k === 'gate') return q.gate(args[0], +(args[1] || 38), +(args[2] || 1), +(args[3] || 9));

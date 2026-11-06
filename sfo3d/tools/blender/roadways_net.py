@@ -141,7 +141,24 @@ NEAR_M = 260.0     # at-grade roads within this distance of an elevated way take
 # (half width = carriageway / 2 + 0.6 m shoulder + 0.4 m parapet), a margin for the deck triangulation (the deck top is
 # linear between the solve's nodes and across the triangles)
 UB_STEP, UB_NX, UB_MARGIN = 2.0, 5, 0.05
+# deck over deck (review round 2): the crossing constraint held the separation only at the two centrelines' crossing point;
+# where two ribbons of different layers overlap at a skew the soffit-to-deck distance away from that point was 3.9-4.4 m
+# (92 m2). Now the overlap of the two ribbons is sampled every X_STEP and each sample is a constraint pair (OVERLAP
+# below); a flat margin on the separation (tried: 0.7 m) only steepened the ramps (max 16.9 %) and did not reach them
+X_MARGIN = 0.0
+X_STEP = 4.0
+X_OVERLAP = False   # superseded by the per-crossing deficit (XS_* below). Tried (review round 2): 215 samples; with the stacked south legs of the ITB loop (OSM 41015123 under 38853121
+                    # for ~45 m, both anchored at one end) the constraints conflict and the solve produced a 286 % step and MORE
+                    # deck-over-deck area (230 m2 against 92 m2); off until the stacked legs are resolved (open item)
 def ub_half(w): return w / 2 + 0.6 + 0.4
+# deck over deck at skewed crossings (review round 2): instead of a flat margin or a constraint per overlap sample, each
+# centreline crossing keeps ONE constraint pair, and its separation is raised by the deficit measured over the overlap of
+# the two ribbons (deck + parapet, sampled every XS_STEP; heights interpolated along each way at the sample's projection)
+# after each solve, XS_ITER rounds at most, XS_CAP m at most per crossing: only the crossings that need it get steeper
+# Only crossings at XS_MIN_DEG or more, samples within the crossing's parallelogram (+2 m): two ways that run stacked
+# along each other (the ITB loop's lower outer roadway under its departures leg) are the trim's stacked cut, not this
+# (first run without the angle limit: a 3-m deficit there, a 64 % step on OSM 41015123)
+XS_STEP, XS_ITER, XS_CAP, XS_MIN_DEG = 2.0, 5, 1.5, 20.0
 
 
 def solve_levels(ways, grade, F, LV, log=print, overhead=None, plates=None):
@@ -199,11 +216,48 @@ def solve_levels(ways, grade, F, LV, log=print, overhead=None, plates=None):
                 so = [s for s in so if s is not None]
                 if not so: continue
                 UB.append((i, sq, min(so) - CLEAR_MIN - UB_MARGIN, [round(q.x, 1), round(q.y, 1)], min(so)))
+    # ribbon overlaps of elevated ways on DIFFERENT layers without a shared node (skewed crossings, a ramp running under a
+    # deck for a stretch): sampled every X_STEP inside the overlap of their ribbons (+ parapet); each sample becomes a
+    # constraint pair at the two centreline projections, as a crossing (review round 2)
+    nX = len(X)
+    for i, a in (enumerate(ways) if X_OVERLAP else []):
+        ra = LineString(a['pts']).buffer(ub_half(a['w']), cap_style='flat')
+        for j in range(i + 1, len(ways)):
+            b = ways[j]
+            if a['layer'] == b['layer'] or set(a['nodes']) & set(b['nodes']): continue
+            rb = LineString(b['pts']).buffer(ub_half(b['w']), cap_style='flat')
+            if not ra.intersects(rb): continue
+            O = ra.intersection(rb)
+            if O.area < 4.0: continue
+            x0, z0, x1, z1 = O.bounds
+            for x in np.arange(x0 + X_STEP / 2, x1, X_STEP):
+                for z in np.arange(z0 + X_STEP / 2, z1, X_STEP):
+                    if O.contains(Point(x, z)): X.append((i, j, Point(x, z)))
+    log('deck crossings: %d centreline crossings, %d overlap samples (different layers, every %.0f m)' % (nX, len(X) - nX, X_STEP))
     cons = []
     for k, (i, j, p) in enumerate(X):
         ka = _insert(allw[i], LineString(allw[i]['pts']).project(p), ('X', k))
         kb = _insert(allw[j], LineString(allw[j]['pts']).project(p), ('X', k, 'b'))
         cons.append((ka, kb, i, j, [round(p.x, 1), round(p.y, 1)]))
+    xsam = []   # per crossing: (s along way i, s along way j) of the overlap samples around the crossing point
+    for k, (i, j, p) in enumerate(X[:nX]):
+        la, lb = LineString(allw[i]['pts']), LineString(allw[j]['pts'])
+        O = la.buffer(ub_half(allw[i]['w']), cap_style='flat').intersection(lb.buffer(ub_half(allw[j]['w']), cap_style='flat'))
+        O = [g for g in (getattr(O, 'geoms', None) or [O]) if isinstance(g, Polygon) and g.distance(p) < 1.0]
+        S = []
+        def tng(l):
+            sp = l.project(p); q1, q2 = l.interpolate(max(0.0, sp - 1.0)), l.interpolate(min(l.length, sp + 1.0))
+            t = np.array([q2.x - q1.x, q2.y - q1.y]); return t / max(np.linalg.norm(t), 1e-9)
+        sn = abs(float(np.cross(tng(la), tng(lb))))                       # sin of the crossing angle
+        if sn < math.sin(math.radians(XS_MIN_DEG)): O = []
+        rmax = (ub_half(allw[i]['w']) + ub_half(allw[j]['w'])) / max(sn, 1e-3) + 2.0
+        if O:
+            O = O[0]; x0, z0, x1, z1 = O.bounds
+            for x in np.arange(x0 + XS_STEP / 2, x1, XS_STEP):
+                for z in np.arange(z0 + XS_STEP / 2, z1, XS_STEP):
+                    q = Point(x, z)
+                    if O.contains(q) and q.distance(p) <= rmax: S.append((la.project(q), lb.project(q)))
+        xsam.append(np.array(S).reshape(-1, 2))
     ubn = []
     for k, (i, sq, ub, at, so) in enumerate(UB): ubn.append((_insert(allw[i], sq, ('U', k)), ub, at, so, i))
     nid = {}; xy = []
@@ -250,7 +304,7 @@ def solve_levels(ways, grade, F, LV, log=print, overhead=None, plates=None):
     comp_lvl = {}
     for i, w in enumerate(ways):
         if w['anchor']: r = fnd(i); comp_lvl[r] = min(comp_lvl.get(r, 1e9), h_dom if w['anchor'] == 'domestic' else h_itb)
-    sep_of = lambda i: min(DECK_DEPTH + CLEAR_MIN, comp_lvl.get(fnd(i), 1e9)) if i < len(ways) else DECK_DEPTH + CLEAR_MIN
+    sep_of = lambda i: min(DECK_DEPTH + CLEAR_MIN + X_MARGIN, comp_lvl.get(fnd(i), 1e9)) if i < len(ways) else DECK_DEPTH + CLEAR_MIN + X_MARGIN
     rows, cols, vals = [], [], []; wsum = np.zeros(N); rhs0 = np.zeros(N)
     for w in allw:
         ix = [nid[n] for n in w['nodes']]
@@ -265,26 +319,46 @@ def solve_levels(ways, grade, F, LV, log=print, overhead=None, plates=None):
         h = np.zeros(N); h[fx] = hv
         if len(free): h[free] = spl.spsolve(A[free][:, free].tocsc(), rhs0[free] - (A[free][:, fx] @ hv if len(fx) else 0))
         return h
-    SEP = DECK_DEPTH + CLEAR_MIN; unresolved = []; ub_bad = {}
-    for it in range(10):
+    SEP = DECK_DEPTH + CLEAR_MIN + X_MARGIN; unresolved = []; ub_bad = {}; xm = {}
+    sk = []
+    for w in allw: sk.append((np.concatenate([[0.0], np.cumsum(np.hypot(*np.diff(w['pts'], axis=0).T))]), np.array([nid[n] for n in w['nodes']])))
+    def xdef(h, final=False):
+        # separation deficit per crossing over its overlap samples (deck top to deck top against the base separation);
+        # crossings already raised by XS_CAP are left as they are (but reported in the final count)
+        out = {}
+        for k, (ka, kb, i, j, at) in enumerate(cons):
+            S = xsam[k] if k < len(xsam) else None
+            if S is None or not len(S) or (xm.get(k, 0.0) >= XS_CAP and not final): continue
+            (si, ni), (sj, nj) = sk[i], sk[j]
+            hi = np.interp(S[:, 0], si, h[ni]); hj = np.interp(S[:, 1], sj, h[nj])
+            a, b = nid[ka], nid[kb]; upi = (allw[i]['layer'], h[a]) > (allw[j]['layer'], h[b])
+            d = (hi - hj) if upi else (hj - hi)
+            lo_g = allw[j if upi else i]['at_grade']
+            sep = sep_of(i if upi else j) if lo_g else SEP
+            dk = float(sep - d.min())
+            if dk > 0.02: out[k] = dk
+        return out
+    for rnd in range(XS_ITER + 1):
+      unresolved = []
+      for it in range(10):
         h = solve(); changed = False
-        for ka, kb, i, j, at in cons:
+        for k, (ka, kb, i, j, at) in enumerate(cons):
             a, b = nid[ka], nid[kb]; wa, wb = allw[i], allw[j]
             la, lb = wa['layer'], wb['layer']
             up, lo = (a, b) if (la, h[a]) > (lb, h[b]) else (b, a)
             lo_g = allw[i if lo == a else j]['at_grade']
-            sep = sep_of(i if up == a else j) if lo_g else SEP
+            sep = (sep_of(i if up == a else j) if lo_g else SEP) + xm.get(k, 0.0)
             if h[up] - h[lo] >= sep - 1e-3: continue
             if up in anch and lo in anch: unresolved.append(dict(at=at, up=round(h[up], 2), lo=round(h[lo], 2))); continue
-            if up in anch: fixed[lo] = max(0.0, h[up] - SEP); why[lo] = 'clearance under an anchored deck'
-            elif lo in anch: fixed[up] = h[lo] + SEP; why[up] = 'clearance over an anchored deck'
+            if up in anch: fixed[lo] = max(0.0, h[up] - sep); why[lo] = 'clearance under an anchored deck'
+            elif lo in anch: fixed[up] = h[lo] + sep; why[up] = 'clearance over an anchored deck'
             else:
                 lo_at_grade = (allw[i if lo == a else j])['at_grade']
                 if lo_at_grade: fixed[lo] = 0.0; fixed[up] = max(h[up], sep); why[lo] = 'at grade under a deck'; why[up] = 'clearance over an at-grade road'
                 else:
                     # the upper deck goes up (the lower one usually has its own clearance over the roads under it: splitting
                     # the difference pushed it below them, 32 % steps in the first run)
-                    fixed[up] = h[lo] + SEP; why[up] = 'clearance (deck over deck)'
+                    fixed[up] = h[lo] + sep; why[up] = 'clearance (deck over deck)'
             changed = True
         for a, ub, at, so, i in ubn:
             q = nid[a]
@@ -293,6 +367,12 @@ def solve_levels(ways, grade, F, LV, log=print, overhead=None, plates=None):
                 ub_bad[q] = dict(kind='under the guideway', at=at, deck=round(float(h[q]), 2), soffit=round(so, 2), anchored=q in anch); continue
             fixed[q] = max(0.0, ub); why[q] = 'clearance under the AirTrain guideway'; changed = True
         if not changed: break
+      dfc = xdef(h)
+      if rnd == XS_ITER or not dfc: break
+      for k, dk in dfc.items(): xm[k] = min(XS_CAP, xm.get(k, 0.0) + dk + 0.05)
+    dfc = xdef(h, final=True)
+    log('skewed crossings: %d of %d raised by the deficit over their ribbon overlap (max %.2f m, %d rounds); deficit left at %d (max %.2f m)'
+        % (len(xm), len(cons), max(xm.values(), default=0.0), rnd, len(dfc), max(dfc.values(), default=0.0)))
     # the guideway bounds the solve could not meet (anchored decks; a node held by another constraint), final values only
     ubq = {}
     for a, ub, *_ in ubn: ubq[nid[a]] = min(ub, ubq.get(nid[a], 1e9))

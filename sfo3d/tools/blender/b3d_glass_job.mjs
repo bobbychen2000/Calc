@@ -2,6 +2,8 @@
 // three.js low tier at the B20 gate view while Cycles shows mid-grey glass with light frames. One page load (low tier,
 // ?b3donly=domestic&b3d=near), the gate view, then A/B variants applied live to the loaded domestic materials, one shot each:
 //   base | finsOn (fin nodes forced visible) | noAO (glass aoMap off) | envX2 (glass envMapIntensity 2) | noNormal (normal map off)
+//   | finsOff (fin nodes hidden: what every tier shows beyond the fins' max_dist_m - do the glass tiles' pane / frame caps hold up?)
+//   VARIANTS=finsOff,base runs a subset
 // and the glass material's properties logged (what three built from the glTF).
 //   flock out/.heavy.lock env SOFTGL=1 W=960 H=540 OUT=out/buildings3d/integ/r4/glass node livetest.mjs tools/blender/b3d_glass_job.mjs
 import fs from 'fs'; import path from 'path';
@@ -30,12 +32,14 @@ export default async ({ page, shot, base, OUT }) => {
     ['noAO', 'ao'],
     ['envX2', 'env'],
     ['noNormal', 'nrm'],
-  ];
+    ['finsOff', 'nofins'],
+  ].filter(([n]) => !process.env.VARIANTS || process.env.VARIANTS.split(',').includes(n));
   for (const [name, v] of variants) {
     await page.evaluate((v) => {
       const B = SFO.R.b3d; window.__glassV = v;
       B.group.traverse(o => {
         if (v === 'fins' && /_fins/.test(o.name)) { o.visible = true; o.userData.__force = true; }
+        if (v === 'nofins' && /_fins/.test(o.name)) { o.visible = false; o.userData.__hide = true; }
         if (!o.isMesh) return;
         for (const m of [].concat(o.material)) {
           if (!/^glass_ec/.test(m.name)) continue;
@@ -43,7 +47,7 @@ export default async ({ page, shot, base, OUT }) => {
           const O = m.userData.__orig; m.aoMap = v === 'ao' ? null : O.ao; m.envMapIntensity = v === 'env' ? 2 * O.env : O.env; m.normalMap = v === 'nrm' ? null : O.nrm; m.needsUpdate = true;
         }
       });
-      if (v === 'fins') { B.__u = B.update.bind(B); B.update = (p) => { B.__u(p); B.group.traverse(o => { if (o.userData.__force) o.visible = true; }); }; }
+      if (v === 'fins' || v === 'nofins') { B.__u = B.__u || B.update.bind(B); B.update = (p) => { B.__u(p); B.group.traverse(o => { if (o.userData.__force && v === 'fins') o.visible = true; if (o.userData.__hide && v === 'nofins') o.visible = false; }); }; }
       else if (B.__u) { B.update = B.__u; delete B.__u; }
     }, v);
     const f0 = await page.evaluate(() => SFO.R.frames);

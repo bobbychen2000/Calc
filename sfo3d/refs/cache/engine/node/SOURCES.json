@@ -4,5 +4,29 @@
   "licence": "Apache-2.0 (Khronos Group)",
   "fetched": "2026-11-04",
   "used_by": "tools/blender/tower_validate.mjs"
+ },
+ "node_modules/@gltf-transform/core": {
+  "url": "https://www.npmjs.com/package/@gltf-transform/core (npm i --prefix refs/cache/engine/node @gltf-transform/core@4.1.1; dependencies in package-lock.json)",
+  "licence": "MIT (Don McCurdy)",
+  "fetched": "2026-11-06",
+  "used_by": "tools/engine/glb_compress.mjs; integration review r2 meshopt size test of the landside unit files (out/buildings3d/integ/meshopt_test.json)"
+ },
+ "node_modules/@gltf-transform/extensions": {
+  "url": "https://www.npmjs.com/package/@gltf-transform/extensions (npm i --prefix refs/cache/engine/node @gltf-transform/extensions@4.1.1; dependencies in package-lock.json)",
+  "licence": "MIT (Don McCurdy)",
+  "fetched": "2026-11-06",
+  "used_by": "tools/engine/glb_compress.mjs; integration review r2 meshopt size test of the landside unit files (out/buildings3d/integ/meshopt_test.json)"
+ },
+ "node_modules/@gltf-transform/functions": {
+  "url": "https://www.npmjs.com/package/@gltf-transform/functions (npm i --prefix refs/cache/engine/node @gltf-transform/functions@4.1.1; dependencies in package-lock.json)",
+  "licence": "MIT (Don McCurdy)",
+  "fetched": "2026-11-06",
+  "used_by": "tools/engine/glb_compress.mjs; integration review r2 meshopt size test of the landside unit files (out/buildings3d/integ/meshopt_test.json)"
+ },
+ "node_modules/meshoptimizer": {
+  "url": "https://www.npmjs.com/package/meshoptimizer (npm i --prefix refs/cache/engine/node meshoptimizer@0.22.0; dependencies in package-lock.json)",
+  "licence": "MIT (Arseny Kapoulkine)",
+  "fetched": "2026-11-06",
+  "used_by": "tools/engine/glb_compress.mjs; integration review r2 meshopt size test of the landside unit files (out/buildings3d/integ/meshopt_test.json)"
  }
 }

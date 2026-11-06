@@ -693,6 +693,40 @@ def deck_points(step=1.0):
     return np.concatenate(pts), np.array(units), np.concatenate(area)
 
 
+def lowest_above(T, P, min_dy=1.0, cell=8.0):
+    """per point of P (n, 3), the lowest point of the triangles T (m, 3, 3) straight above it and more than min_dy up
+    (np.inf where none): triangles binned on a cell-m plan grid by their bounding boxes, each point tested against its
+    cell's triangles (barycentric height of the triangles that cover it)"""
+    out = np.full(len(P), np.inf)
+    if not len(T) or not len(P): return out
+    n = np.cross(T[:, 1] - T[:, 0], T[:, 2] - T[:, 0]); T = T[np.abs(n[:, 1]) > 1e-9]       # vertical faces cover no point
+    T = T[T[:, :, 1].max(1) > P[:, 1].min() + min_dy]
+    if not len(T): return out
+    lo, hi = T[:, :, [0, 2]].min(1), T[:, :, [0, 2]].max(1)
+    c0 = np.floor(lo / cell).astype(int); c1 = np.floor(hi / cell).astype(int)
+    grid = {}
+    for k in range(len(T)):
+        for cx in range(c0[k, 0], c1[k, 0] + 1):
+            for cz in range(c0[k, 1], c1[k, 1] + 1): grid.setdefault((cx, cz), []).append(k)
+    pc = np.floor(P[:, [0, 2]] / cell).astype(int); byc = {}
+    for i, key in enumerate(map(tuple, pc)): byc.setdefault(key, []).append(i)
+    for key, ii in byc.items():
+        kk = grid.get(key)
+        if not kk: continue
+        t = T[kk]; q = P[ii]; a0, a1, a2 = t[:, 0], t[:, 1], t[:, 2]
+        v0 = (a2 - a0)[:, [0, 2]]; v1 = (a1 - a0)[:, [0, 2]]
+        d00 = (v0 * v0).sum(1); d01 = (v0 * v1).sum(1); d11 = (v1 * v1).sum(1); den = d00 * d11 - d01 * d01
+        v2 = q[:, None, [0, 2]] - a0[None, :, [0, 2]]                      # (points, triangles, 2)
+        d20 = (v2 * v0[None]).sum(2); d21 = (v2 * v1[None]).sum(2)
+        ok = np.abs(den) > 1e-12; dd = np.where(ok, den, 1.0)
+        uu = (d11 * d20 - d01 * d21) / dd; vv = (d00 * d21 - d01 * d20) / dd
+        ins = ok[None] & (uu >= 0) & (vv >= 0) & (uu + vv <= 1)
+        y = a0[None, :, 1] + uu * (a2 - a0)[None, :, 1] + vv * (a1 - a0)[None, :, 1]
+        y = np.where(ins & (y > q[:, 1:2] + min_dy), y, np.inf)
+        out[ii] = np.minimum(out[ii], y.min(1))
+    return out
+
+
 def deck_checks(F, TR, res, log):
     """review round 2 (findings 3 and 5): the road decks against the buildings as SOLIDS and against everything over them.
       inside   every road-surface point 2 m above the deck tested against each domestic / ITB / tower / landside building
@@ -724,39 +758,49 @@ def deck_checks(F, TR, res, log):
     st['deck_inside_buildings'] = ins
     for k, v in ins.items():
         res['conflicts' if v['area_m2'] > 1.0 else 'notes'].append(dict(check='road deck inside a building (solid test)', building=k, **v))
-    # clearance
+    # clearance (the landside guideway split into its deck and its inferred T-piers, LOD0 node names '*_piers')
+    gd, gp = [], []
+    lp = os.path.join(D3, 'landside.glb')
+    if os.path.exists(lp):
+        for r in mesh_nodes(lp):
+            if lod_of(r) != 0 or len(r['chain']) < 2 or not str(r['chain'][1].get('name', '')).startswith('airtrain'): continue
+            (gp if '_piers' in r['name'] else gd).append(r['tris'])
+    # the roadways over themselves at LOD0 only (the points are LOD0 deck tops; the simplified LOD2 deck lies off its LOD0
+    # on the curved ramps and read as a deck 1.0 m overhead: 117 m2 of deck-over-deck below 4.6 m with every LOD, 92.5 at LOD0)
+    R0 = [T for (g, u, l), T in TR['_lods'].items() if g == 'roadways' and l == 0]
+    srcs = [(g, (np.concatenate(R0) if g == 'roadways' and R0 else TR[g]['all']['T'])) for g in GROUPS if g in TR and g != 'landside']
+    Tl = [T for (g, u), T in TR['_units'].items() if g == 'landside' and not u.startswith('airtrain')]
+    if Tl: srcs.append(('landside', np.concatenate(Tl)))   # garages, hotel, stations ...: the guideway is split below
+    if gd: srcs.append(('guideway deck', np.concatenate(gd)))
+    if gp: srcs.append(('guideway piers', np.concatenate(gp)))
     rows = []
-    for g in GROUPS:
-        if g not in TR: continue
-        T = TR[g]['all']['T']
+    for g, T in srcs:
         if g == 'roadways':
             n = np.cross(T[:, 1] - T[:, 0], T[:, 2] - T[:, 0]); T = T[np.abs(n[:, 1]) > 1e-6]   # decks / soffits, not walls
-        xz = T[:, :, [0, 2]]; lo, hi = xz.min(1), xz.max(1)
-        cand = (P[:, 0] > lo[:, 0].min()) & (P[:, 0] < hi[:, 0].max()) & (P[:, 2] > lo[:, 1].min()) & (P[:, 2] < hi[:, 1].max())
-        for i in np.nonzero(cand)[0]:
-            q = P[i]
-            mm = (lo[:, 0] <= q[0]) & (hi[:, 0] >= q[0]) & (lo[:, 1] <= q[2]) & (hi[:, 1] >= q[2]) & (T[:, :, 1].max(1) > q[1] + 1.0)
-            if not mm.any(): continue
-            pl, _ = axis_hits(T[mm], q[None], 1)
-            if not pl[0]: continue
-            t = T[mm]; a0, a1, a2 = t[:, 0], t[:, 1], t[:, 2]
-            v0 = a2[:, [0, 2]] - a0[:, [0, 2]]; v1 = a1[:, [0, 2]] - a0[:, [0, 2]]; v2 = q[[0, 2]] - a0[:, [0, 2]]
-            d00 = (v0 * v0).sum(1); d01 = (v0 * v1).sum(1); d11 = (v1 * v1).sum(1); d20 = (v2 * v0).sum(1); d21 = (v2 * v1).sum(1)
-            den = d00 * d11 - d01 * d01; ok = np.abs(den) > 1e-12
-            uu = np.where(ok, (d11 * d20 - d01 * d21) / np.where(ok, den, 1), -1); vv = np.where(ok, (d00 * d21 - d01 * d20) / np.where(ok, den, 1), -1)
-            insd = ok & (uu >= 0) & (vv >= 0) & (uu + vv <= 1)
-            y = (a0[:, 1] + uu * (a2[:, 1] - a0[:, 1]) + vv * (a1[:, 1] - a0[:, 1]))[insd]; y = y[y > q[1] + 1.0]
-            if len(y): rows.append((float(y.min() - q[1]), g, U[i], float(A[i]), q))
+        h = lowest_above(T, P, 1.0)
+        for i in np.nonzero(np.isfinite(h))[0]: rows.append((float(h[i] - P[i, 1]), g, U[i], float(A[i]), P[i]))
     def summ(sel):
         if not sel: return None
         sel.sort(key=lambda r: r[0]); r0 = sel[0]
         return dict(points=len(sel), min_m=round(r0[0], 2), at=[round(float(r0[4][0]), 1), round(float(r0[4][2]), 1)], deck_m=round(float(r0[4][1]) - GROUND_Y, 2), unit=r0[2],
                     below_m2=round(sum(r[3] for r in sel if r[0] < ROAD_CLEAR), 1))
-    guide = [r for r in rows if r[1] == 'landside']   # the AirTrain guideway is the only elevated landside structure over the decks
-    st['deck_clearance'] = {g: summ([r for r in rows if r[1] == g]) for g in GROUPS if any(r[1] == g for r in rows)}
+    keys = sorted({r[1] for r in rows})
+    st['deck_clearance'] = {g: summ([r for r in rows if r[1] == g]) for g in keys}
     for g, v in st['deck_clearance'].items():
         if v and v['below_m2'] > 0:
-            res['conflicts' if g in ('landside', 'roadways') else 'notes'].append(dict(check='vertical clearance over a road deck (< %.1f m)' % ROAD_CLEAR, over=g, **v))
+            # the guideway (deck and piers), other road decks and the landside structures (all of it) are hard limits; a
+            # building part over a road (curb canopies, eaves) is its owner's call
+            res['conflicts' if g in ('landside', 'roadways', 'guideway deck', 'guideway piers') else 'notes'].append(dict(check='vertical clearance over a road deck (< %.1f m)' % ROAD_CLEAR, over=g, **v))
+    # the guideway's inferred pier columns standing in a road deck (the deck is trimmed round them: a hole)
+    if gp:
+        Tp = np.concatenate(gp); n = np.cross(Tp[:, 1] - Tp[:, 0], Tp[:, 2] - Tp[:, 0])
+        col = Tp[(np.abs(n[:, 1]) < 1e-3 * (np.linalg.norm(n, axis=1) + 1e-12)) & (Tp[:, :, 1].min(1) < GROUND_Y + 1.0)]
+        cols = plan_geom(col) if len(col) else Polygon()
+        D = unary_union([Polygon(t[:, [0, 2]]) for r in mesh_nodes(os.path.join(D3, 'roadways.glb')) if lod_of(r) == 0
+                         for t in r['tris'][np.array([m.startswith('deck') for m in r['mats']], bool)] if Polygon(t[:, [0, 2]]).area > 1e-4]) if os.path.exists(os.path.join(D3, 'roadways.glb')) else Polygon()
+        hit = [q for q in (getattr(cols, 'geoms', None) or [cols]) if isinstance(q, Polygon) and not q.is_empty and q.buffer(0.6).intersects(D)]
+        st['guideway_piers_in_road_decks'] = [[round(q.centroid.x, 1), round(q.centroid.y, 1)] for q in hit]
+        if hit: res['conflicts'].append(dict(check='guideway pier column in a road deck (landside pier sites [inf])', count=len(hit), at=st['guideway_piers_in_road_decks'][:10]))
     # the ITB curb
     st['itb_curb_gap'] = itb_curb_gap(P, TR, log)
     if st['itb_curb_gap'] and st['itb_curb_gap']['over_limit'] > 0:
@@ -776,7 +820,9 @@ def itb_curb_gap(P, TR, log):
     n = np.cross(T[:, 1] - T[:, 0], T[:, 2] - T[:, 0]); n /= np.linalg.norm(n, axis=1, keepdims=True) + 1e-12
     flat = (n[:, 1] > 0.95) & (np.ptp(T[:, :, 1], axis=1) < 0.02)
     up = T[flat]; c = up.mean(1)[:, [0, 2]] - C; uvc = np.c_[c @ du, c @ dv]
-    cs = up[(uvc[:, 1] < -27.0) & (uvc[:, 1] > -36.0)]                       # the west curb sidewalk tops
+    try: curb_h = float(man['roadways']['levels']['itb']['curb'])           # spec_itb level3.floor (the roadways' anchor)
+    except (KeyError, TypeError, ValueError): curb_h = 11.5
+    cs = up[(uvc[:, 1] < -27.0) & (uvc[:, 1] > -36.0) & (np.abs(up[:, :, 1].mean(1) - GROUND_Y - curb_h) < 0.1)]   # the west curb top (not the canopy, bollard caps)
     if not len(cs): return None
     hc = float(np.median(cs[:, :, 1])); cs = cs[np.abs(cs[:, :, 1] - hc).max(1) < 0.05]
     curb = unary_union([Polygon(t[:, [0, 2]]).buffer(0.005) for t in cs if Polygon(t[:, [0, 2]]).area > 1e-5])
@@ -854,6 +900,12 @@ def tiers(T, geo, y):
     return out
 
 
+def _rw_cut():
+    """deck area build_roadways.py cut where it ran inside a building (out/buildings3d/roadways_build.json)"""
+    try: return json.load(open(os.path.join(ROOT, 'out', 'buildings3d', 'roadways_build.json')))['stats'].get('deck_cut_inside_buildings_m2', {})
+    except (OSError, ValueError, KeyError): return 'see roadways_build.json'
+
+
 def requests_of(res):
     """requests to the other groups, from this run's results (review round 2: the list was hard-coded and kept items the
     groups had closed, and two LOD2 items that were checker artefacts)"""
@@ -868,8 +920,14 @@ def requests_of(res):
                'canopy edge), against the modelled wall at x -768 (z 200) / -756 (z 240): the T2 shell follows the SFO Museum outline over '
                'the curb roadway, as T1 Center did before the domestic round-1 move of its face (manifest.json#domestic.conflicts "T1 Center landside face"). '
                'Please move the T2 landside face to the measured roof edge (the canopy in front of it); roadways.glb is cut where its deck ran inside '
-               'the shell (enclosure test, %s m2 of deck) and the cut lifts by itself on the next build_roadways run'
-               % ({k: v['area_m2'] for k, v in ins.items()} or 'see build_roadways.json'))
+               'the shell (enclosure test; cut %s m2 of deck, left inside after the cut %s m2) and the cut lifts by itself on the next build_roadways run'
+               % (_rw_cut(), {k: v['area_m2'] for k, v in ins.items()} or 0))
+    pc = [c for c in res['conflicts'] if 'pier' in c.get('check', '') or c.get('over') == 'guideway piers']
+    if pc:
+        out.append('landside: AirTrain T-piers placed on the road decks / with caps over them (landside_airtrain.py: sites every ~30 m along the '
+                   'skeleton, random order, no road test [inf]): %s. Real piers stand clear of the carriageways; please keep pier sites off '
+                   'roadways.glb deck_* surfaces and data/sfo_landside.json carriageways (+0.5 m), caps >= 4.6 m above any deck under them'
+                   % '; '.join(json.dumps({k: v for k, v in c.items() if k in ('count', 'at', 'min_m', 'below_m2', 'unit')}) for c in pc))
     out.append('landside: parked cars - wheels / skirt at LOD0 and a third shape (review r1 finding 4; landside_cars.py is the landside group\'s)')
     out.append('bridges / realtime: gates.js prepGeom walkway start and drum limits from the 3-D facades (integration.json footprints / tiers), then the domestic vestibules can go (review r1 finding 8)')
     tl = [c for c in res['conflicts'] if c.get('check', '').startswith('taxilane')]
@@ -986,6 +1044,10 @@ def main(argv):
                           taxilane=list(res['stats'].get('taxilane_clearance', {}).items())[:5],
                           deck_inside_buildings=res['stats'].get('deck_inside_buildings'), deck_clearance=res['stats'].get('deck_clearance'), itb_curb_gap=res['stats'].get('itb_curb_gap')),
         requests=requests_of(res),
+        requests_withdrawn=['domestic: BA_C LOD2 top +9.08 m (review r1) - a checker artefact: the joined LOD2 mesh was split by plan distance and C3C '
+                            'triangles went to BA_C; split by LOD0-footprint containment (+1 m) since review r2: top 0.0 m (lod2_check.json)',
+                            'landside: rental car center LOD2 roof median 4.58 m (review r1) - a checker artefact: the roof cells sampled the open deck '
+                            'beyond the roof edge; one roof-cell definition for both LODs since review r2 (1-m cells inside the LOD0 footprint - 0.5 m): 0.00 m'],
         generated=out['generated'], tool='tools/blender/b3d_integrate.py', doc='docs/research/buildings3d.md (integration section)'))
     log('wrote data/buildings3d/integration.json (%.0f kB), integration.js (%.0f kB) in %.0f s' % (os.path.getsize(os.path.join(D3, 'integration.json')) / 1e3, os.path.getsize(os.path.join(D3, 'integration.js')) / 1e3, time.time() - t0))
     return 1 if res['conflicts'] else 0
