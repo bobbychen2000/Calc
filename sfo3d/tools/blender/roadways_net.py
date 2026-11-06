@@ -155,10 +155,15 @@ def ub_half(w): return w / 2 + 0.6 + 0.4
 # centreline crossing keeps ONE constraint pair, and its separation is raised by the deficit measured over the overlap of
 # the two ribbons (deck + parapet, sampled every XS_STEP; heights interpolated along each way at the sample's projection)
 # after each solve, XS_ITER rounds at most, XS_CAP m at most per crossing: only the crossings that need it get steeper
-# Only crossings at XS_MIN_DEG or more, samples within the crossing's parallelogram (+2 m): two ways that run stacked
-# along each other (the ITB loop's lower outer roadway under its departures leg) are the trim's stacked cut, not this
-# (first run without the angle limit: a 3-m deficit there, a 64 % step on OSM 41015123)
+# Samples within the crossing's parallelogram (+2 m). Two ways that meet at < XS_MIN_DEG run stacked along each other:
+# their deficit counts only when it is within XS_CAP before any raise (the lower outer roadway OSM 739695588 under the
+# layer-3 ramp 681667027 west of the ITB: 0.69 m over ~50 m, 89 m2 of deck at 3.9-4.6 m in the integration check r7);
+# a larger one, or one with an anchored way (the deficit grows as the free way moves against the fixed one), is the trim's
+# stacked cut (the ITB loop's lower outer roadway under its anchored departures leg: first run without the angle limit, a
+# 3-m deficit there and a 64 % step on OSM 41015123; with the XS_CAP rule alone a 33 % step)
 XS_STEP, XS_ITER, XS_CAP, XS_MIN_DEG = 2.0, 5, 1.5, 20.0
+XS_TARGET = 0.0   # m over deck + clearance. Tried 0.1 (r10 left 3.7 m2 at 4.55-4.59 m: the deck top is linear between the solve's nodes,
+                  # the samples XS_STEP apart): 72 crossings raised instead of 36, a 14.6 % grade, and 31.6 m2 at 2.59-4.6 m near (-1390, 308)
 
 
 def solve_levels(ways, grade, F, LV, log=print, overhead=None, plates=None):
@@ -240,6 +245,8 @@ def solve_levels(ways, grade, F, LV, log=print, overhead=None, plates=None):
         kb = _insert(allw[j], LineString(allw[j]['pts']).project(p), ('X', k, 'b'))
         cons.append((ka, kb, i, j, [round(p.x, 1), round(p.y, 1)]))
     xsam = []   # per crossing: (s along way i, s along way j) of the overlap samples around the crossing point
+    xstk = []   # per crossing: True when the two ways meet at < XS_MIN_DEG (stacked; see XS_MIN_DEG)
+    stk_pre = set()
     for k, (i, j, p) in enumerate(X[:nX]):
         la, lb = LineString(allw[i]['pts']), LineString(allw[j]['pts'])
         O = la.buffer(ub_half(allw[i]['w']), cap_style='flat').intersection(lb.buffer(ub_half(allw[j]['w']), cap_style='flat'))
@@ -249,7 +256,8 @@ def solve_levels(ways, grade, F, LV, log=print, overhead=None, plates=None):
             sp = l.project(p); q1, q2 = l.interpolate(max(0.0, sp - 1.0)), l.interpolate(min(l.length, sp + 1.0))
             t = np.array([q2.x - q1.x, q2.y - q1.y]); return t / max(np.linalg.norm(t), 1e-9)
         sn = abs(float(np.cross(tng(la), tng(lb))))                       # sin of the crossing angle
-        if sn < math.sin(math.radians(XS_MIN_DEG)): O = []
+        xstk.append(sn < math.sin(math.radians(XS_MIN_DEG)))
+        if xstk[-1] and any(allw[q].get('anchor') for q in (i, j)): stk_pre.add(k)   # stacked on an anchored way: the trim's
         rmax = (ub_half(allw[i]['w']) + ub_half(allw[j]['w'])) / max(sn, 1e-3) + 2.0
         if O:
             O = O[0]; x0, z0, x1, z1 = O.bounds
@@ -319,7 +327,7 @@ def solve_levels(ways, grade, F, LV, log=print, overhead=None, plates=None):
         h = np.zeros(N); h[fx] = hv
         if len(free): h[free] = spl.spsolve(A[free][:, free].tocsc(), rhs0[free] - (A[free][:, fx] @ hv if len(fx) else 0))
         return h
-    SEP = DECK_DEPTH + CLEAR_MIN + X_MARGIN; unresolved = []; ub_bad = {}; xm = {}
+    SEP = DECK_DEPTH + CLEAR_MIN + X_MARGIN; unresolved = []; ub_bad = {}; xm = {}; stk_off = set(stk_pre)
     sk = []
     for w in allw: sk.append((np.concatenate([[0.0], np.cumsum(np.hypot(*np.diff(w['pts'], axis=0).T))]), np.array([nid[n] for n in w['nodes']])))
     def xdef(h, final=False):
@@ -328,15 +336,18 @@ def solve_levels(ways, grade, F, LV, log=print, overhead=None, plates=None):
         out = {}
         for k, (ka, kb, i, j, at) in enumerate(cons):
             S = xsam[k] if k < len(xsam) else None
-            if S is None or not len(S) or (xm.get(k, 0.0) >= XS_CAP and not final): continue
+            if S is None or not len(S) or k in stk_off or (xm.get(k, 0.0) >= XS_CAP and not final): continue
             (si, ni), (sj, nj) = sk[i], sk[j]
             hi = np.interp(S[:, 0], si, h[ni]); hj = np.interp(S[:, 1], sj, h[nj])
             a, b = nid[ka], nid[kb]; upi = (allw[i]['layer'], h[a]) > (allw[j]['layer'], h[b])
             d = (hi - hj) if upi else (hj - hi)
             lo_g = allw[j if upi else i]['at_grade']
             sep = sep_of(i if upi else j) if lo_g else SEP
-            dk = float(sep - d.min())
-            if dk > 0.02: out[k] = dk
+            dk = float(sep + XS_TARGET - d.min())
+            # a stacked pair (< XS_MIN_DEG) whose deficit before any raise is beyond XS_CAP is the trim's stacked cut, not
+            # this (the ITB loop's lower outer roadway under its anchored departures leg: 3 m, a 64 % step when raised)
+            if xstk[k] and k not in xm and dk > XS_CAP and not final: stk_off.add(k); continue
+            if dk > XS_TARGET + 0.02 or (not final and dk > 0.02): out[k] = dk
         return out
     for rnd in range(XS_ITER + 1):
       unresolved = []
@@ -371,8 +382,10 @@ def solve_levels(ways, grade, F, LV, log=print, overhead=None, plates=None):
       if rnd == XS_ITER or not dfc: break
       for k, dk in dfc.items(): xm[k] = min(XS_CAP, xm.get(k, 0.0) + dk + 0.05)
     dfc = xdef(h, final=True)
-    log('skewed crossings: %d of %d raised by the deficit over their ribbon overlap (max %.2f m, %d rounds); deficit left at %d (max %.2f m)'
-        % (len(xm), len(cons), max(xm.values(), default=0.0), rnd, len(dfc), max(dfc.values(), default=0.0)))
+    log('skewed crossings: %d of %d raised by the deficit over their ribbon overlap (max %.2f m, %d rounds; %d of them stacked, < %.0f deg); deficit left at %d (max %.2f m); '
+        'stacked pairs left to the trim (on an anchored way, or deficit > %.1f m): %d %s'
+        % (len(xm), len(cons), max(xm.values(), default=0.0), rnd, sum(1 for k in xm if xstk[k]), XS_MIN_DEG, len(dfc), max(dfc.values(), default=0.0),
+           XS_CAP, len(stk_off), [(allw[cons[k][2]]['id'], allw[cons[k][3]]['id']) for k in sorted(stk_off)]))
     # the guideway bounds the solve could not meet (anchored decks; a node held by another constraint), final values only
     ubq = {}
     for a, ub, *_ in ubn: ubq[nid[a]] = min(ub, ubq.get(nid[a], 1e9))

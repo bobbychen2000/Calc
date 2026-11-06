@@ -18,7 +18,11 @@
 // then each group's full file when the camera comes
 // within that group's LOD2 switch distance (the tier's tighter range) of it, one file at a time; the full file replaces
 // the lod2 one, so near units show LOD0 / LOD1 as on the desktop. 'lod2' = the far files only (QA), '0' = the first-pass
-// buildings only (old-vs-new comparisons).
+// buildings only (old-vs-new comparisons). Review round 2 (finding 4): the landside group comes per building
+// (lsu_<unit>.glb, tools/blender/b3d_split.py; index integration.js units.landside): full mode loads every unit, near mode
+// each unit within its own trigger (low tier: its LOD1 switch, medium: LOD2; x range x 1.1 + 60 m); near mode releases
+// units (all due ones in one pass) and group full files (back to the lod2 file) once every trigger of theirs is beyond
+// RELEASE x + 100 m for RELEASE_S; the low tier compiles only the LOD on screen (_compile).
 //
 // LOD (each group's manifest lod rule; switch distances from the LOD nodes' extras.switch_m, scaled by the quality tier's
 // `lod` range relative to the high tier's 1800 m: low 0.56, medium 0.72): a "LOD set" is a node whose children are LOD0 /
@@ -236,11 +240,14 @@ export class Buildings3D {
     // release (review round 2, finding 4: a full file was never released): a unit / group whose triggers are all farther
     // than RELEASE x their distance + 100 m for RELEASE_S goes back to its LOD2 (the unit file dropped; a group's lod2 file
     // reloaded, which drops the full one)
+    // units: every one that is due goes in this pass (a drop only disposes GPU data; nothing is fetched)
+    let dropped = 0;
     for (const t of this.unitTrig || []) {
       if (!this.units[t.e.unit]) continue;
-      if (t.box.distanceToPoint(p) > t.d * RELEASE + 100) { const f = this.unitFar[t.e.unit] || (this.unitFar[t.e.unit] = now); if (now - f > RELEASE_S * 1000) { this._dropUnit(t.e.unit); return; } }
+      if (t.box.distanceToPoint(p) > t.d * RELEASE + 100) { const f = this.unitFar[t.e.unit] || (this.unitFar[t.e.unit] = now); if (now - f > RELEASE_S * 1000) { this._dropUnit(t.e.unit); dropped++; } }
       else delete this.unitFar[t.e.unit];
     }
+    if (dropped) return;
     for (const g of this.groups) {
       if (this.kind[g] !== 'full' || !this.near[g]) continue;
       if (this.near[g].every(t => t.box.distanceToPoint(p) > t.d * RELEASE + 100)) {

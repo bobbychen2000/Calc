@@ -650,8 +650,26 @@ def plausibility(F, TR, rep, log):
                 ov = oa.intersection(ob)
                 core = ov.buffer(-0.3).area if not ov.is_empty else 0.0
                 if core > best[2]: best = (ov.area, round(float(y), 1), core, [round(c, 1) for c in ov.buffer(-0.3).representative_point().coords[0]] if core > 0 else None)
-            pairs.append(dict(a='/'.join(a), b='/'.join(b), plan_overlap_m2=round(X.area, 1), band_overlap_m2=round(best[0], 1), band_y=best[1], core_m2=round(best[2], 1), at_xz=best[3]))
+            # review round 2 (finding 3): the band test compares SURFACES, so a part inside the other building's hollow shell
+            # (or one crossing its wall between two bands) cannot register; as for the road decks, the solid test too: 1-m
+            # cells of the plan overlap at every 1 m of the shared height, inside both buildings (enclosed(): a roof above and
+            # walls all round) -> m3 shared (the elevated units - guideway, roadways - are not enclosures; their decks are
+            # tested in deck_checks)
+            sol = None
+            if not (elevated(*a) or elevated(*b)):
+                TA, TB = TR['_lods'].get((a[0], a[1], 0)), TR['_lods'].get((b[0], b[1], 0))
+                if TA is not None and TB is not None and len(TA) and len(TB):
+                    xb0, zb0, xb1, zb1 = X.bounds
+                    Gc = np.array(np.meshgrid(np.arange(xb0 + 0.5, xb1, 1.0), np.arange(zb0 + 0.5, zb1, 1.0))).reshape(2, -1).T
+                    Gc = Gc[shapely.contains_xy(X, Gc[:, 0], Gc[:, 1])] if len(Gc) else Gc
+                    ys = np.arange(ya + 0.5, yb, 1.0); sol = 0
+                    if len(Gc) and len(ys):
+                        Q = np.array([[gx, yy, gz] for gx, gz in Gc for yy in ys])
+                        ina = enclosed(TA, Q)
+                        if ina.any(): sol = int(enclosed(TB, Q[ina]).sum())
+            pairs.append(dict(a='/'.join(a), b='/'.join(b), plan_overlap_m2=round(X.area, 1), band_overlap_m2=round(best[0], 1), band_y=best[1], core_m2=round(best[2], 1), at_xz=best[3], solid_m3=sol))
             if best[2] > 2.0: res['conflicts' if best[2] > 20.0 else 'notes'].append(dict(check='asset vs asset (same height band)', a='/'.join(a), b='/'.join(b), core_m2=round(best[2], 1), band_y=best[1], at_xz=best[3]))
+            if sol and sol > 2: res['conflicts' if sol > 20 else 'notes'].append(dict(check='asset vs asset (solid: inside both buildings)', a='/'.join(a), b='/'.join(b), solid_m3=sol, plan_overlap_m2=round(X.area, 1)))
     res['stats']['asset_pairs'] = pairs
     # e. what stays of the first-pass buildings (kept parts, walkway rests, kept ramp-level edges, kept structures)
     #    against the assets in their own height band
@@ -776,7 +794,10 @@ def deck_checks(F, TR, res, log):
     rows = []
     for g, T in srcs:
         if g == 'roadways':
-            n = np.cross(T[:, 1] - T[:, 0], T[:, 2] - T[:, 0]); T = T[np.abs(n[:, 1]) > 1e-6]   # decks / soffits, not walls
+            # the undersides only (soffits, facing down): what a vehicle meets. Review round 2: with every non-vertical face,
+            # the parapet TOPS of a diverging lane 0.26-0.5 m higher stood 1.03-1.36 m over the lower deck's edge at five gores
+            # (1.6 m2) and read as decks overhead; a parapet sits on its own deck and has no underside over the other
+            n = np.cross(T[:, 1] - T[:, 0], T[:, 2] - T[:, 0]); T = T[n[:, 1] / (np.linalg.norm(n, axis=1) + 1e-12) < -0.2]
         h = lowest_above(T, P, 1.0)
         for i in np.nonzero(np.isfinite(h))[0]: rows.append((float(h[i] - P[i, 1]), g, U[i], float(A[i]), P[i]))
     def summ(sel):

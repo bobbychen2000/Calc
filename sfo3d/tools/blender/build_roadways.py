@@ -462,7 +462,7 @@ def widen_lower(P, lower, M, log):
         band = Polygon(RP.xz_of(np.array([[s0, v_out], [s1, v_out], [s1, M['gutter_v'] + 0.3], [s0, M['gutter_v'] + 0.3]]), C, du, dv))
         before = p['rib'].area; p['rib'] = unary_union([p['rib'], band.intersection(p['line'].buffer(25.0))])
         M.setdefault('lower', []).append(dict(id=p['id'], h_m=round(h, 2), v_out_true=round(v_out, 2), added_m2=round(p['rib'].area - before, 1)))
-        log('lower outer roadway (way %s, %.2f m on the straight): widened to the imaged band v %.2f .. %.2f (+%.0f m2), under the plate edge'
+        log('lower outer roadway (way %s, %.2f m on the straight): widened to the imaged band v %.2f .. %.2f (+%.0f m2), toward the plate edge (the trim keeps STACK_GAP)'
             % (p['id'], h, v_out, M['gutter_v'] + 0.3, p['rib'].area - before))
 
 
@@ -985,9 +985,13 @@ def main(argv):
                  observed=['ITB departures deck plate: outline (kerb to the outer edge, the structural gap at the south end), island extents, the red kerb - NAIP 2024 relief-corrected (roadways_itb_plate.py, sheet BR-02)',
                            'network topology / centrelines: OSM (ODbL)', 'asphalt and light-concrete colours: NAIP 2024 medians'],
                  inferred=['deck depth 1.2 m, shoulders 0.6 m, parapets 0.40 x 0.85 m, fill below a 3.2 m deck top, round columns 1.4 m at ~30 m (positions where clear)',
-                           'ITB deck plate level: the ITB L3 deck top %.2f m (spec_itb level3.floor 11.5 [inf] - 0.15 kerb); the outer light-concrete roadway on the same deck '
-                           '(no imaged step face; OSM tags way 41015123 layer 1 - open item); island height 0.15 m; lane counts (OSM minimum / width / 3.6 m); plate columns under the islands and the outer edge' % h_itb,
-                           'levels other than the two curbs: screened solve with layer priors %s m and clearance %.1f m (roadways_net.py)' % (RN.LAYER_H, RN.CLEAR_MIN),
+                           'ITB deck plate level: the ITB L3 deck top %.2f m (spec_itb level3.floor 11.5 [inf] - 0.15 kerb); the outer light-concrete roadway is NOT on the plate: '
+                           'it is built as the lower deck (OSM ways 41015123 / 739695588, layer 1, solved %s m on the straight) widened to the imaged band toward the plate edge (it stops STACK_GAP short of it: under the plate it would have < 4.6 m) '
+                           '(open item, see unknown); island height 0.15 m; lane counts (OSM minimum / width / 3.6 m); plate columns under the islands and the outer edge'
+                           % (h_itb, ' / '.join('%.2f' % L['h_m'] for L in M.get('lower', []))),
+                           'levels other than the two curbs: screened solve with layer priors %s m and clearance %.1f m (roadways_net.py); at skewed and stacked crossings '
+                           'the separation is held over the ribbons\' overlap (the per-crossing deficit, XS_*), stacked pairs on an anchored way or beyond %.1f m by the trim\'s stacked cut'
+                           % (RN.LAYER_H, RN.CLEAR_MIN, RN.XS_CAP),
                            'approach ramps: at-grade OSM roads lifted by the solve (ELL_G %.0f m)' % RN.ELL_G, 'lane counts / widths where OSM has none (class defaults)',
                            'lane markings (pattern, colours)'],
                  unknown=['the domestic departures-curb height (%.3f m is the domestic asset placeholder [unk])' % LV['domestic']['curb'],

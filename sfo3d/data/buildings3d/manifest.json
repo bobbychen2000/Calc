@@ -16098,15 +16098,15 @@
     {
      "check": "vertical clearance over a road deck (< 4.6 m)",
      "over": "roadways",
-     "points": 4378,
-     "min_m": 1.0,
+     "points": 4523,
+     "min_m": 4.55,
      "at": [
-      -1695.8,
-      451.4
+      -1447.3,
+      365.0
      ],
-     "deck_m": 14.78,
-     "unit": "interchange_2_2",
-     "below_m2": 117.1
+     "deck_m": 11.16,
+     "unit": "itb_departures",
+     "below_m2": 3.7
     },
     {
      "check": "guideway pier column in a road deck (landside pier sites [inf])",
@@ -16221,7 +16221,7 @@
      "below_m2": 0
     },
     "guideway deck": {
-     "points": 3820,
+     "points": 3872,
      "min_m": 4.62,
      "at": [
       -1716.6,
@@ -16254,15 +16254,15 @@
      "below_m2": 87.0
     },
     "roadways": {
-     "points": 4378,
-     "min_m": 1.0,
+     "points": 4523,
+     "min_m": 4.55,
      "at": [
-      -1695.8,
-      451.4
+      -1447.3,
+      365.0
      ],
-     "deck_m": 14.78,
-     "unit": "interchange_2_2",
-     "below_m2": 117.1
+     "deck_m": 11.16,
+     "unit": "itb_departures",
+     "below_m2": 3.7
     }
    },
    "itb_curb_gap": {
@@ -16276,13 +16276,17 @@
    }
   },
   "requests": [
-   "domestic: Terminal 2 landside face (integration review r2, finding 3). NAIP 2024 shows the departures roadway open to the sky, with traffic, between the modelled T2 west wall and the glass curb canopy, and the T2 roof edge (NAIP relief-corrected for 16.3 m, frame model draw_data.lean_frame) 17-18 m east of that wall: x -750.5 at z 200, -745 at z 220, -739 at z 240 (+-1 m; the dark line just west of it is the canopy edge), against the modelled wall at x -768 (z 200) / -756 (z 240): the T2 shell follows the SFO Museum outline over the curb roadway, as T1 Center did before the domestic round-1 move of its face (manifest.json#domestic.conflicts \"T1 Center landside face\"). Please move the T2 landside face to the measured roof edge (the canopy in front of it); roadways.glb is cut where its deck ran inside the shell (enclosure test, {'domestic/T3E': 0.4} m2 of deck) and the cut lifts by itself on the next build_roadways run",
+   "domestic: Terminal 2 landside face (integration review r2, finding 3). NAIP 2024 shows the departures roadway open to the sky, with traffic, between the modelled T2 west wall and the glass curb canopy, and the T2 roof edge (NAIP relief-corrected for 16.3 m, frame model draw_data.lean_frame) 17-18 m east of that wall: x -750.5 at z 200, -745 at z 220, -739 at z 240 (+-1 m; the dark line just west of it is the canopy edge), against the modelled wall at x -768 (z 200) / -756 (z 240): the T2 shell follows the SFO Museum outline over the curb roadway, as T1 Center did before the domestic round-1 move of its face (manifest.json#domestic.conflicts \"T1 Center landside face\"). Please move the T2 landside face to the measured roof edge (the canopy in front of it); roadways.glb is cut where its deck ran inside the shell (enclosure test; cut {'domestic/T3E': 180.3, 'domestic/T3W': 173.5, 'domestic/T2': 1221.0, 'domestic/T1': 390.6} m2 of deck, left inside after the cut {'domestic/T3E': 0.4} m2) and the cut lifts by itself on the next build_roadways run",
    "landside: AirTrain T-piers placed on the road decks / with caps over them (landside_airtrain.py: sites every ~30 m along the skeleton, random order, no road test [inf]): {\"min_m\": 3.25, \"at\": [-1719.3, 428.2], \"unit\": \"interchange_2_2\", \"below_m2\": 8.6}; {\"count\": 3, \"at\": [[-1726.8, 427.2], [-1727.8, 530.2], [-1728.8, 456.2]]}. Real piers stand clear of the carriageways; please keep pier sites off roadways.glb deck_* surfaces and data/sfo_landside.json carriageways (+0.5 m), caps >= 4.6 m above any deck under them",
    "landside: parked cars - wheels / skirt at LOD0 and a third shape (review r1 finding 4; landside_cars.py is the landside group's)",
    "bridges / realtime: gates.js prepGeom walkway start and drum limits from the 3-D facades (integration.json footprints / tiers), then the domestic vestibules can go (review r1 finding 8)",
    "landside: bart_station 36.7 m from taxilane centreline 302 (ADG 5 inferred: 42.1 m); SFO Museum outline 37.3 m"
   ],
-  "generated": "2026-11-06T00:37:07Z",
+  "requests_withdrawn": [
+   "domestic: BA_C LOD2 top +9.08 m (review r1) - a checker artefact: the joined LOD2 mesh was split by plan distance and C3C triangles went to BA_C; split by LOD0-footprint containment (+1 m) since review r2: top 0.0 m (lod2_check.json)",
+   "landside: rental car center LOD2 roof median 4.58 m (review r1) - a checker artefact: the roof cells sampled the open deck beyond the roof edge; one roof-cell definition for both LODs since review r2 (1-m cells inside the LOD0 footprint - 0.5 m): 0.00 m"
+  ],
+  "generated": "2026-11-06T01:56:21Z",
   "tool": "tools/blender/b3d_integrate.py",
   "doc": "docs/research/buildings3d.md (integration section)"
  },
@@ -16290,7 +16294,7 @@
   "asset": "roadways (elevated landside roadways: departures decks, viaducts, approach ramps)",
   "owner": "integration (review round 1, finding 1)",
   "generator": "tools/blender/build_roadways.py + roadways_net.py",
-  "built": "2026-11-06T00:45:56Z",
+  "built": "2026-11-06T02:02:35Z",
   "files": {
    "full": "data/buildings3d/roadways.glb",
    "lod2": "data/buildings3d/roadways_lod2.glb"
@@ -16333,12 +16337,12 @@
    "asphalt": {
     "naip_median_srgb": [
      213,
-     211,
+     210,
      202
     ],
     "base_srgb": [
      166,
-     164,
+     163,
      157
     ],
     "naip_albedo": 0.5714285714285714,
@@ -16361,8 +16365,8 @@
   ],
   "inferred": [
    "deck depth 1.2 m, shoulders 0.6 m, parapets 0.40 x 0.85 m, fill below a 3.2 m deck top, round columns 1.4 m at ~30 m (positions where clear)",
-   "ITB deck plate level: the ITB L3 deck top 11.35 m (spec_itb level3.floor 11.5 [inf] - 0.15 kerb); the outer light-concrete roadway on the same deck (no imaged step face; OSM tags way 41015123 layer 1 - open item); island height 0.15 m; lane counts (OSM minimum / width / 3.6 m); plate columns under the islands and the outer edge",
-   "levels other than the two curbs: screened solve with layer priors {1: 6.5, 2: 12.5, 3: 18.5, 4: 24.5} m and clearance 4.6 m (roadways_net.py)",
+   "ITB deck plate level: the ITB L3 deck top 11.35 m (spec_itb level3.floor 11.5 [inf] - 0.15 kerb); the outer light-concrete roadway is NOT on the plate: it is built as the lower deck (OSM ways 41015123 / 739695588, layer 1, solved 6.87 / 7.20 m on the straight) widened to the imaged band toward the plate edge (it stops STACK_GAP short of it: under the plate it would have < 4.6 m) (open item, see unknown); island height 0.15 m; lane counts (OSM minimum / width / 3.6 m); plate columns under the islands and the outer edge",
+   "levels other than the two curbs: screened solve with layer priors {1: 6.5, 2: 12.5, 3: 18.5, 4: 24.5} m and clearance 4.6 m (roadways_net.py); at skewed and stacked crossings the separation is held over the ribbons' overlap (the per-crossing deficit, XS_*), stacked pairs on an anchored way or beyond 1.5 m by the trim's stacked cut",
    "approach ramps: at-grade OSM roads lifted by the solve (ELL_G 45 m)",
    "lane counts / widths where OSM has none (class defaults)",
    "lane markings (pattern, colours)"
@@ -16395,7 +16399,7 @@
    "pieces": 116,
    "outside_core": {
     "pieces": 38,
-    "length_m": 5790
+    "length_m": 5788
    },
    "unresolved": [],
    "overhead_nodes": 1965,
@@ -16407,41 +16411,32 @@
     "landside": 225.4
    },
    "columns": {
-    "tried": 332,
-    "placed": 283,
+    "tried": 334,
+    "placed": 284,
     "plate": 13
    },
    "tris": {
-    "0": 45977,
-    "1": 14064,
-    "2": 6623
+    "0": 45936,
+    "1": 14068,
+    "2": 6630
    },
    "grade_max": {
-    "id": 41015123,
+    "id": 681667027,
     "ramp": false,
-    "max_pct": 64.1,
+    "max_pct": 13.5,
     "at": [
-     -1319.3,
-     484.6
+     -1423.5,
+     341.6
     ]
    },
    "grades_over_8pct": [
     {
-     "id": 41015123,
+     "id": 681667027,
      "ramp": false,
-     "max_pct": 64.1,
+     "max_pct": 13.5,
      "at": [
-      -1319.3,
-      484.6
-     ]
-    },
-    {
-     "id": 220862132,
-     "ramp": false,
-     "max_pct": 13.6,
-     "at": [
-      -1423.1,
-      339.1
+      -1423.5,
+      341.6
      ]
     },
     {
@@ -16463,12 +16458,12 @@
      ]
     },
     {
-     "id": 681667027,
+     "id": 220862132,
      "ramp": false,
-     "max_pct": 12.8,
+     "max_pct": 12.0,
      "at": [
-      -1423.5,
-      341.6
+      -1423.1,
+      339.1
      ]
     },
     {
@@ -16499,15 +16494,6 @@
      ]
     },
     {
-     "id": 1205493778,
-     "ramp": false,
-     "max_pct": 11.0,
-     "at": [
-      -1371.6,
-      297.1
-     ]
-    },
-    {
      "id": 41015044,
      "ramp": false,
      "max_pct": 10.9,
@@ -16532,6 +16518,15 @@
      "at": [
       -2501.9,
       -1347.6
+     ]
+    },
+    {
+     "id": 1205493778,
+     "ramp": false,
+     "max_pct": 10.4,
+     "at": [
+      -1371.6,
+      297.1
      ]
     },
     {
@@ -16605,14 +16600,23 @@
       -2020.6,
       443.3
      ]
+    },
+    {
+     "id": 392512312,
+     "ramp": true,
+     "max_pct": 9.4,
+     "at": [
+      -2331.2,
+      -1416.8
+     ]
     }
    ],
    "low_crossings": [],
    "crossings": 33,
    "asset_cut_m2": 2542.8,
    "bytes": {
-    "full": 4267272,
-    "lod2": 426688
+    "full": 4265092,
+    "lod2": 427244
    },
    "itb_plate": {
     "area_m2": 8066.5,
