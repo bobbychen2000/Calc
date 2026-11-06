@@ -22,7 +22,7 @@ import os
 import numpy as np
 
 import draw_data as D
-from draw_lib import Sheet, FT
+from draw_lib import Sheet, FT, ROOT
 from draw_tower import draw_dev
 
 I = D.IV
@@ -526,6 +526,7 @@ def sheet_elev():
            'exposed above; columns in front of the glass, each branching into 4-6 members; canopy ~4.5-6 m above the curb, its hangers on the '
            '40-ft grid and at +-30 / +-90 ft; the hall ends ~19-21 m short of each tip.')
     S.note('Not published: mullion module, fascia depth, canopy depth, the end-wall outline, the lower building masses. They need SFO record drawings.')
+    r3_notes(S, ('BI-02',))
     S.note('Hall width CONFLICT: 210 ft = 64.0 m [pub SEAONC] does not fit under the measured 65.4-m roof east of the west wall (at most '
            f'{HW - WALL["band"][0]:.1f} m with the wall at its westmost reading). Resolutions: the wall nearer the eave; the hall running east under a '
            'lower roof (the measured east edge is a "fascia -> lower roof fall"); or a wider roof (SOM concept sketch "866\' x 260\'"). Drawn: '
@@ -570,6 +571,7 @@ def sheet_section():
         V1.text((u, ft * FT + 2.6), f'DOF {ft} ft = {ft * FT:.2f} [pub]', 'pub', fs=3.7)
     V1.level(-HL - 2, CROWN + 0.0001, f'+{CROWN} centre crown (photo, +-2) [obs]', 'obs', side='left', len_mm=6, fs=4.2, u_line=0)
     V1.level(-HL - 2, H_TIP, f'+{H_TIP:.1f} tip ({TIP_RNG[0]:.0f}-{TIP_RNG[1]}) [obs, low]', 'obs', side='left', len_mm=6, fs=4.2, u_line=-HL)
+    r3_hall(V1); r3_notes(S, ('BI-03',))
     V1.scalebar(y_mm=6)
     # cross section at u = +57.9 (looking NNW: right hand = ENE = +v)
     V2 = S.view(0, 6, 420, 280, 250, (-2, 22), title='2  CROSS SECTION at the inner column line u = +57.9 m, looking NNW', kind='elev', frame=False)
@@ -797,6 +799,7 @@ def sheet_piers():
            'ITB north end show nothing like it). It stands on NAIP 2024-05-20, so the 2018 photo d2 shows it in place. Its function is '
            'inferred; model it as a closed box with a window band, heights per the band.')
     S.note('Not measured: floor heights, gate-room bay positions, parapets and roof equipment. Photos a2 / d2 are reference only.')
+    r3_notes(S, ('BI-04', 'BI-01'))
     return S.finish()
 
 # ------------------------------------------------------------------------------------------------ close-out r3 (buildings-10)
@@ -828,19 +831,15 @@ def r3_hall(V):
              '[obs photo i3] (review r2)', 'inf', fs=3.6)
 
 
-def r3_table(S, x, y, w, group, sheets):
-    """the manifest's deviations_from_sheets of this asset group drawn as a table on the sheet (close-out r3, buildings-10):
-    every 3-D change not yet drawn in a view is listed here with its size and tag."""
+def r3_notes(S, sheets):
+    """the manifest's itb.deviations_from_sheets for these sheets as sheet notes (close-out r3, buildings-10): every 3-D change
+    not drawn in a view is stated on the sheet with its size and tag (the 3-D builder records them, tools/blender/itb_manifest.py)."""
     import json, os
     try:
-        m = json.load(open(os.path.join(ROOT, 'data', 'buildings3d', 'manifest.json')))[group]
+        dv = json.load(open(os.path.join(ROOT, 'data', 'buildings3d', 'manifest.json')))['itb'].get('deviations_from_sheets', [])
     except (OSError, ValueError, KeyError):
         return
-    rows = []
-    for d_ in m.get('deviations_from_sheets', []):
-        sh = str(d_.get('sheet', d_.get('sheets', '')))
-        if sheets and not any(t in sh for t in sheets): continue
-        rows.append((str(d_.get('item', ''))[:60], str(d_.get('model', ''))[:150], str(d_.get('tag', 'inf')).split()[0] if d_.get('tag') else 'inf',
-                     str(d_.get('why', d_.get('tag', '')))[:80]))
-    if rows:
-        S.table(x, y, w, '3-D state not drawn in the views above (manifest %s.deviations_from_sheets, close-out r3)' % group, rows, fs=3.3, col=(0.24, 0.52))
+    for d_ in dv:
+        if not any(t in str(d_.get('sheet', '')) for t in sheets): continue
+        S.note(f"3-D STATE (manifest itb.deviations_from_sheets, close-out r3) - {d_.get('item', '')}: {d_.get('model', '')} "
+               f"[{d_.get('tag', 'inf')}]; the views draw: {d_.get('drawn', '')}")
