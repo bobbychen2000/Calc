@@ -26,12 +26,14 @@ DATA checks
      Part 2 s.3.4.4: code A/B 3 m, C 4.5 m, D-F 7.5 m; reducible for D-F only at the nose / with VDGS azimuth guidance).
   4. bridges (data geometry: OSM fixed walkway, rotunda, cab; the builder's stow pose; Oshkosh AeroTech Jetway sell
      sheet 2025: extension 9.846-41.381 m rotunda centre -> cab pivot, pivot -> door 2.4 m (geom.PIVOT_TO_DOOR),
-     cab 92.5 deg standard / 150 deg optional, rotunda swing +-87.5 deg):
+     cab 125 deg standard (92.5 cw / 32.5 ccw) / 185 deg optional (+-92.5, inferred symmetric as js/live/gates.js),
+     rotunda swing +-87.5 deg):
      a. docking: L1 -> door 1, L2 -> the type's dock2 (types.js; None = does not dock), the aircraft at its per-family
         stop; the cab faces the door, so the cab pivot is 2.4 m out from the door along the fuselage normal and the
         tunnel runs rotunda -> pivot: extension outside 9.846-41.381 m -> ISSUE for observed types (obs_types) when
         more than 1.0 m outside (WARN within 1.0 m: stop-point / rotunda uncertainty), NOTE for the other accepted.
-     b. cab turn beyond 150 deg -> ISSUE (observed) / NOTE; beyond 92.5 deg -> WARN.
+     b. cab turn beyond +-92.5 deg (every cab option) -> ISSUE (observed) / NOTE; outside the standard 92.5 cw / 32.5 ccw
+        without the optional cab -> WARN (close-out round 3: was 150 deg, which gates.js never used).
      c. rotunda swing (review round 4; sell sheet 'Rotunda swing 175 deg (87.5 cw / 87.5 ccw of centerline)'): the
         rotunda's centreline is set at installation and not published, so the test is neutral-axis-free - the rest pose
         and the docked pose of every type the bridge docks must fit into ONE 175 deg arc (else ISSUE), and that arc must
@@ -191,7 +193,10 @@ def main(quiet=False, app=True):
                 # cab turn, signed (review round 3): 92.5 cw / 32.5 ccw standard, +-92.5 with the optional cab
                 ang = CW * GM.angle(u, rt)
                 opt = 'optional' in (b.get('cab_option') or '')
-                if abs(ang) > GM.CAB_ROT_OPT: bucket.append((s['name'], '%s: cab turn %.0f deg > %.0f' % (tag, ang, GM.CAB_ROT_OPT)))
+                # close-out round 3 (2026-11-06, finding static-9): ONE optional-cab model with js/live/gates.js - the
+                # optional 185 deg cab as +-92.5 (CAB_OPT_HALF; the sell sheet gives no split, inferred symmetric in both);
+                # a turn beyond it no cab reaches (was: beyond 150 deg, an asymmetric reading gates.js does not use)
+                if abs(ang) > GM.CAB_OPT_HALF: bucket.append((s['name'], '%s: cab turn %.0f deg beyond every cab option (+-%.1f)' % (tag, ang, GM.CAB_OPT_HALF)))
                 elif not (-GM.CAB_CCW <= ang <= GM.CAB_CW) and not (opt and abs(ang) <= GM.CAB_OPT_HALF):
                     (warns if t in obs else notes).append((s['name'], '%s: cab turn %+.0f deg outside the standard %.1f cw / %.1f ccw (cab_option %s)' % (tag, ang, GM.CAB_CW, GM.CAB_CCW, b.get('cab_option'))))
                 if b.get('rotunda'):

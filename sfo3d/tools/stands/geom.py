@@ -30,7 +30,8 @@ from shapely.geometry import LineString, Point, Polygon
 from shapely.ops import unary_union
 
 EXT_MIN, EXT_MAX = 9.846, 41.381           # m, rotunda centre -> cab pivot (see above)
-CAB_ROT_STD, CAB_ROT_OPT = 92.5, 150.0     # deg; beyond 150 no cab option reaches (185 deg total, asymmetric)
+CAB_ROT_STD, CAB_ROT_OPT = 92.5, 92.5      # deg; close-out round 3: no cab option reaches beyond +-92.5 (the optional 185 deg
+                                           # cab split as js/live/gates.js CAB_OPT_HALF; was 150, an asymmetric reading)
 CAB_CW, CAB_CCW = 92.5, 32.5               # review round 3: standard cab 125 deg = 92.5 cw / 32.5 ccw (signed test)
 CAB_OPT_HALF = 92.5                        # optional 185 deg cab: +-92.5 (its split is not given; inferred symmetric)
 ROT_SWING = 87.5                           # deg either side of the fixed walkway direction (175 deg total)
