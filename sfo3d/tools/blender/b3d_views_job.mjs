@@ -14,7 +14,8 @@ import fs from 'fs'; import path from 'path';
 export default async ({ page, shot, base, OUT }) => {
   const views = (process.env.VIEWS || 'tower').split(';').filter(Boolean).map(v => { const i = v.indexOf('='); return i > 0 ? [v.slice(0, i), v.slice(i + 1)] : [v.replace(/[^a-zA-Z0-9]+/g, '_'), v]; });
   const modes = (process.env.MODES || 'old,new').split(',').filter(Boolean);
-  const info = {};
+  // written after every view (a killed run keeps what it measured; review round 2: the phone run lost its stats to a reboot)
+  const info = {}; const save = () => fs.writeFileSync(path.join(OUT, 'cmp_info.json'), JSON.stringify(info, null, 1));
   for (const mode of modes) {
     const q = mode === 'old' ? 'b3d=0' : mode === 'new' ? '' : 'b3d=' + mode;
     const t0 = Date.now();
@@ -31,7 +32,7 @@ export default async ({ page, shot, base, OUT }) => {
         await page.waitForTimeout(+arg * 1000);
         const w = await page.evaluate(() => { const B = SFO.R.b3d; const r = SFO.R.debugInfo(); return { texMB: r.texMB, drawCalls: r.drawCalls, kind: B && B.info().kind, landsideUnits: B && B.info().landsideUnits,
           ...(performance.memory ? { jsHeapMB: +(performance.memory.usedJSHeapSize / 1048576).toFixed(1) } : {}) }; });
-        (info[mode] = info[mode] || {})[name] = { view: v, ...w }; console.log(mode, name, JSON.stringify(info[mode][name])); continue;
+        (info[mode] = info[mode] || {})[name] = { view: v, ...w }; console.log(mode, name, JSON.stringify(info[mode][name])); save(); continue;
       }
       const ok = await page.evaluate(([k, a]) => {
         const q = SFO.qa; const args = a ? a.split(',') : [];
@@ -60,9 +61,9 @@ export default async ({ page, shot, base, OUT }) => {
       });
       (info[mode] = info[mode] || {})[name] = { view: v, drawCalls: di.r.drawCalls, tris: di.r.tris, texMB: di.r.texMB, b3dLod: di.b3d && di.b3d.unitsAtLod,
         b3dTris: di.b3dTris, b3dGeoMB: di.b3dGeoMB, ...di.mem, kind: di.b3d && di.b3d.kind, landsideUnits: di.b3d && di.b3d.landsideUnits };
-      console.log(mode, name, JSON.stringify(info[mode][name]));
+      console.log(mode, name, JSON.stringify(info[mode][name])); save();
       await shot('cmp_' + mode + '_' + name);
     }
   }
-  fs.writeFileSync(path.join(OUT, 'cmp_info.json'), JSON.stringify(info, null, 1));
+  save();
 };
