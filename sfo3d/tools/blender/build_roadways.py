@@ -157,7 +157,7 @@ def enclosure_cuts(P, TR, F0, log):
                 XX, ZZ = np.meshgrid(xs, zs); q = np.c_[XX.ravel(), ZZ.ravel()]; q = q[shapely.contains_xy(X, q[:, 0], q[:, 1])]
                 if not len(q): continue
                 h = hp(p, q); P3 = np.c_[q[:, 0], GROUND_Y + h + ENC_DY, q[:, 1]]
-                e = BI.enclosed(T, P3)
+                e = BI.enclosed(T, P3, TW=BI.group_walls(TR, g, fp.bounds))   # walls of the whole group: a unit's shell is open where it joins the next
                 if e.any(): cells += [box(a - ENC_STEP / 2, b - ENC_STEP / 2, a + ENC_STEP / 2, b + ENC_STEP / 2) for a, b in q[e]]
             if cells:
                 out[(g, u)] = unary_union(cells).buffer(ENC_STEP, join_style='mitre').intersection(fp)

@@ -276,10 +276,14 @@ def footprints(log):
 WALL_MIN_M2 = 1.0   # enclosure test: wall triangles at least this large [our choice: the shells' wall quads are 10-500 m2]
 
 
-def axis_hits(T, P, ax):
+ENC_RMAX = 150.0   # m: wall rays of enclosed() (the domestic / ITB halls are <= ~200 m across; a point inside sees walls within this)
+
+
+def axis_hits(T, P, ax, rmax=None):
     """for each point of P (n, 3), the triangles of T (m, 3, 3) crossed by the line through the point along axis ax
     (0 = x, 1 = y, 2 = z): the number of crossings on the + side and on the - side of the point (axis-aligned rays:
-    a 2-D point-in-triangle test in the plane of the other two axes, then the crossing coordinate by barycentrics)"""
+    a 2-D point-in-triangle test in the plane of the other two axes, then the crossing coordinate by barycentrics);
+    rmax: only crossings within that distance count"""
     b, c = [k for k in (0, 1, 2) if k != ax]
     A2 = T[:, :, [b, c]]; lo, hi = A2.min(1), A2.max(1)
     plus = np.zeros(len(P), int); minus = np.zeros(len(P), int)
@@ -294,17 +298,23 @@ def axis_hits(T, P, ax):
         ins = ok & (uu >= 0) & (vv >= 0) & (uu + vv <= 1)
         if not ins.any(): continue
         x = (a0[:, ax] + uu * (a2[:, ax] - a0[:, ax]) + vv * (a1[:, ax] - a0[:, ax]))[ins]
+        if rmax is not None: x = x[np.abs(x - p[ax]) <= rmax]
         plus[i] = int((x > p[ax]).sum()); minus[i] = int((x < p[ax]).sum())
     return plus, minus
 
 
-def enclosed(T, P, max_gap_deg=45.0):
+def enclosed(T, P, max_gap_deg=45.0, TW=None, rmax=ENC_RMAX):
     """review round 2 (finding 3): points of P (world, n x 3) that lie INSIDE the building whose triangles are T: a roof
     (any triangle) above and walls all around (eight horizontal rays, no open sector wider than max_gap_deg). Hits, not
     parity: the exported shells are not closed (door gaps, shared walls, open undersides). A road beside a facade or under
-    a curb canopy sees the building over at most ~180 deg: outside; a deck running through the hall sees it all round."""
+    a curb canopy sees the building over at most ~180 deg: outside; a deck running through the hall sees it all round.
+    TW: the triangles the walls are taken from (default T). Callers pass the whole group's LOD0 near the unit: a unit's
+    shell is open where it joins the next unit of its group (T2 at the BA-D pier: 102 m2 of deck under the T2 roof, east of
+    its west wall, saw no wall to the east and passed as outside). rmax: walls count within this distance only (with the
+    group's walls, a point at the ITB plate's end saw its one open sector closed by BA-A, ~600 m across the courtyard)"""
     if not len(P) or not len(T): return np.zeros(len(P), bool)
     up, _ = axis_hits(T, P, 1)
+    if TW is not None and len(TW): T = TW
     # walls only for the side tests: near-vertical triangles of >= WALL_MIN_M2 (a curtain wall, a shell band); the slim
     # structure around a roof overhang (the ITB's cantilevered columns, column fans and canopy hangers over its curb)
     # is made of small tube facets and does not enclose anything
@@ -318,13 +328,25 @@ def enclosed(T, P, max_gap_deg=45.0):
         c, s_ = math.cos(th), math.sin(th)
         def rot(A):
             B = A.copy(); B[..., 0] = c * A[..., 0] + s_ * A[..., 2]; B[..., 2] = -s_ * A[..., 0] + c * A[..., 2]; return B
-        pl, mi = axis_hits(rot(W), rot(P), 0)
+        pl, mi = axis_hits(rot(W), rot(P), 0, rmax)
         hit[:, k] = pl > 0; hit[:, k + 4] = mi > 0
     order = [0, 1, 2, 3, 4, 5, 6, 7]   # directions th, th + 45 ... th + 315 (the - rays of k are at th_k + 180)
     gap = np.zeros(len(P), int); run = np.zeros(len(P), int)
     for j in order + order:          # longest run of directions without a hit, cyclic
         run = np.where(hit[:, j], 0, run + 1); gap = np.maximum(gap, run)
     return (up > 0) & (gap * 45.0 <= max_gap_deg)
+
+
+def group_walls(TR, g, bounds, pad=300.0):
+    """the LOD0 triangles of every unit of group g whose bounding box meets bounds (x0, z0, x1, z1) + pad: the wall source
+    of enclosed() (see there)"""
+    x0, z0, x1, z1 = bounds; out = []
+    for (gg, u, l), T in TR['_lods'].items():
+        if gg != g or l != 0 or u in ('*', 'all') or T is None or not len(T): continue
+        lo, hi = T[:, :, [0, 2]].min(1), T[:, :, [0, 2]].max(1)
+        m = (hi[:, 0] > x0 - pad) & (lo[:, 0] < x1 + pad) & (hi[:, 1] > z0 - pad) & (lo[:, 1] < z1 + pad)
+        if m.any(): out.append(T[m])
+    return np.concatenate(out) if out else None
 
 
 def elevated(g, u):
@@ -665,8 +687,8 @@ def plausibility(F, TR, rep, log):
                     ys = np.arange(ya + 0.5, yb, 1.0); sol = 0
                     if len(Gc) and len(ys):
                         Q = np.array([[gx, yy, gz] for gx, gz in Gc for yy in ys])
-                        ina = enclosed(TA, Q)
-                        if ina.any(): sol = int(enclosed(TB, Q[ina]).sum())
+                        ina = enclosed(TA, Q, TW=group_walls(TR, a[0], X.bounds))
+                        if ina.any(): sol = int(enclosed(TB, Q[ina], TW=group_walls(TR, b[0], X.bounds)).sum())
             pairs.append(dict(a='/'.join(a), b='/'.join(b), plan_overlap_m2=round(X.area, 1), band_overlap_m2=round(best[0], 1), band_y=best[1], core_m2=round(best[2], 1), at_xz=best[3], solid_m3=sol))
             if best[2] > 2.0: res['conflicts' if best[2] > 20.0 else 'notes'].append(dict(check='asset vs asset (same height band)', a='/'.join(a), b='/'.join(b), core_m2=round(best[2], 1), band_y=best[1], at_xz=best[3]))
             if sol and sol > 2: res['conflicts' if sol > 20 else 'notes'].append(dict(check='asset vs asset (solid: inside both buildings)', a='/'.join(a), b='/'.join(b), solid_m3=sol, plan_overlap_m2=round(X.area, 1)))
@@ -769,7 +791,7 @@ def deck_checks(F, TR, res, log):
             m = shapely.contains_xy(fp, P[:, 0], P[:, 2])
             if not m.any(): continue
             Q = P[m].copy(); Q[:, 1] += 2.0
-            e = enclosed(T, Q)
+            e = enclosed(T, Q, TW=None if g == 'landside' else group_walls(TR, g, fp.bounds))
             if e.any():
                 ii = np.nonzero(m)[0][e]
                 ins['%s/%s' % (g, u)] = dict(area_m2=round(float(A[ii].sum()), 1), units=sorted(set(U[ii].tolist())), at=[round(float(P[ii[0], 0]), 1), round(float(P[ii[0], 2]), 1)])
