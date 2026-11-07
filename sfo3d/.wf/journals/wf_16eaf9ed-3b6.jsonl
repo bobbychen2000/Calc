@@ -17,3 +17,5 @@
 {"type":"started","key":"v2:8db5ed1bf5ed770f92086247cbb37ba9d80e3aac287e19fbc855e701539e0805","agentId":"ae650d326ebd343d9","label":"fix1:integration","phase":"Fix"}
 {"type":"started","key":"v2:1570dd1b82f56d6aeb8fedd93e3c52ae92cfec624ad986222adda5c4503ea3c1","agentId":"ac124f06f348af3a5","label":"verify1:buildings","phase":"Verify"}
 {"type":"started","key":"v2:9c7eb353193b05a11cc936fc0a7bd19fbfcd9c98a1f3aa8e3417cf995eb43531","agentId":"a535e0c2d3e2ae8ca","label":"verify1:integration","phase":"Verify"}
+{"type":"started","key":"v2:0dc47524c0cc6fccc635128b1b4b0cf29d7eb4ec8216dda5a9b3dcfc6112caad","agentId":"a269d793480a89edf","label":"fix1:static","phase":"Fix"}
+{"type":"started","key":"v2:b4571285f689cc4f8bf95a4c0453d395745b83cb26eff23966081aa63a9f6614","agentId":"a95a2143c1382683d","label":"fix1:buildings","phase":"Fix"}
