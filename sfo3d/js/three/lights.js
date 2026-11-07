@@ -27,6 +27,10 @@
 // to conserve energy) and 12 px (review round 1: a 1.4 m marker 17 m from the camera was a 110 px glare disk);
 // a 1.6x glow. By day (night factor 0) intensities x 0.5;
 // all intensities x lampK (lamp units -> the sky model's units once the lamps are on; js/three/tsl/common.js).
+// Position lights by day (close-out round 3, env-6): js/env/aircraft_lights.js draws them over their LENS (s 0.08 m) by
+// day, energy kept, at the lens luminance (2 x sunlit white paint at the regulatory 2 x minima) instead of the night
+// footprint 0.22 m (9 % of white paint: invisible, engine-v3 residual); records with lens: true (iA.w) get no glare halo
+// by day (halo x the night factor).
 // Markers (records with marker: true; until js/live/app.js sets the flag, records without a direction and with s >= 0.6,
 // which only the markers have) fade out between 150 m and 60 m from the camera.
 // Fragment: core exp(-22 r^2) + halo 0.08 exp(-6 r^2); the halo is capped at 0.5 in exposed units, so a light never
@@ -74,7 +78,7 @@ export class Sprites {
     const iP = attribute('iP', 'vec4'), iC = attribute('iC', 'vec4'), iD = attribute('iD', 'vec4'), iA = attribute('iA', 'vec4'), q = attribute('position', 'vec3');
     const vI = varying(float(0), 'vSprI'), vZ = varying(float(0), 'vSprZ'), vTol = varying(float(0), 'vSprTol');
     const vRat = varying(float(1), 'vSprRat'), vAL = varying(float(0), 'vSprAL'), vAr = varying(float(1), 'vSprAr');
-    const vUVc = varying(vec2(0.5, 0.5), 'vSprUVc');
+    const vUVc = varying(vec2(0.5, 0.5), 'vSprUVc'), vLens = varying(iA.w, 'vSprLens');
     this.texel = uniform(new THREE.Vector2(1 / 1280, 1 / 720));   // one pixel of the scene depth texture (end())
     m.positionNode = Fn(() => {
       const p = iP.xyz, size = iP.w; const toC = cameraPosition.sub(p); const d = length(toC); const tc = toC.div(max(d, 1e-3));
@@ -128,7 +132,7 @@ export class Sprites {
         aurF = select(ratio.greaterThan(0.999).or(this.depthOn.lessThan(0.5)), float(1.0), clamp(float(1.0).sub(rr), 0.0, 1.0));
       }
       const rc2 = r2.mul(vRat.mul(vRat)); const inCore = select(rc2.lessThan(1.0), float(1.0), float(0.0)); // core radius in its own units
-      const halo = min(vI.mul(0.08), float(0.5).div(max(expo, 1e-3))).mul(exp(rc2.mul(-6.0)));
+      const halo = min(vI.mul(0.08), float(0.5).div(max(expo, 1e-3))).mul(exp(rc2.mul(-6.0))).mul(select(vLens.greaterThan(0.5), night, float(1.0)));
       const aur = vAL.mul(exp(r2.div(vAr.mul(vAr)).negate())).mul(aurF);
       return vec4(vC.mul(vI.mul(exp(rc2.mul(-22.0))).add(halo).mul(inCore).mul(vis).add(aur)), 1.0);
     })();
@@ -148,7 +152,7 @@ export class Sprites {
   put(s, fixed = false, kI = 1, aur = null, aurR = 0) {
     if (this.n >= this.max) return; const i = this.n++ * 4; const P = this.aP.array, C = this.aC.array, D = this.aD.array, A = this.aA.array;
     const au = aur != null ? aur : (s.aur || 0), ar = aur != null ? aurR : (s.aurR || 0);
-    A[i] = au > 0 && ar > 0 ? au * (fixed ? this.fixedK : 1) : 0; A[i + 1] = ar; A[i + 2] = s.floor || 0; A[i + 3] = 0;
+    A[i] = au > 0 && ar > 0 ? au * (fixed ? this.fixedK : 1) : 0; A[i + 1] = ar; A[i + 2] = s.floor || 0; A[i + 3] = s.lens ? 1 : 0;   // lens: a position light drawn at its lens size by day (js/env/aircraft_lights.js NAV_LENS_S): no glare halo by day
     P[i] = s.p[0]; P[i + 1] = s.p[1]; P[i + 2] = s.p[2]; P[i + 3] = s.s;
     C[i] = s.c[0]; C[i + 1] = s.c[1]; C[i + 2] = s.c[2]; C[i + 3] = (fixed ? s.i * this.fixedK : s.i) * kI;
     const d = s.dir; if (d) { D[i] = d[0]; D[i + 1] = d[1]; D[i + 2] = d[2]; D[i + 3] = s.k || 4; }

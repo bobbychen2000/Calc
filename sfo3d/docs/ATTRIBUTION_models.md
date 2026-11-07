@@ -119,12 +119,15 @@ stations, pitch, size, height) are in the repository. The drawings stay in the g
 
 Where the artist's window glass or openings did not match these drawings, they were removed from the converted models
 (the openings closed with skin triangles) and the measured row is painted instead; this is a modification of the GPL
-models of §1 and is covered by the same corresponding-source statement. Likewise (5 Nov 2026) the FlightGear 737-800's
-door 1L and the skin opening around it are re-fitted by `tools/convert_models.py` (`door_fit`, a spatial deformation of
-the converted mesh) so its sill matches the 737NG ACAP (D6-58325-7 Rev C §2.3.2 / §2.7.1), and the 757 model's blended
-winglet is canted out to the published winglet span (`js/aircraft/fit.js` WINGLET); the 737 MAX types are drawn on the
-FlightGear 737-800 with its nose leg stretched at run time (`js/aircraft/stretch.js` noseExt, `js/aircraft/fit.js` NOSE_LEG)
-so they stand nose-up as in the 737 MAX ACAP (D6-38A004 Rev K §2.3). The corresponding source is committed with the repo:
+models of §1 and is covered by the same corresponding-source statement. Likewise the 757 model's blended winglet is
+canted out to the published winglet span (`js/aircraft/fit.js` WINGLET); the 737 family is drawn on the FlightGear
+737-800 with its gear compressed at run time (main oleo `gearUp`, nose leg `noseExt`, `js/aircraft/stretch.js`;
+`js/aircraft/fit.js` STANCE_FIT) so it stands as in the 737NG / 737 MAX ACAPs (D6-58325-7 Rev C §2.3, D6-38A004 Rev K §2.3);
+the FAM A330's belly fairing is flattened at run time (`stretch.fairing`) to the A330 AC belly row. (5-7 Nov 2026: the
+737-800's door 1L had been re-fitted in the converter (`door_fit`); since close-out round 3 the door is the artist's
+again and the stance is fitted instead.) The FlightAirMap sources of the CRJ700 and A380 models are committed as a plain
+export of Ysurac/FlightAirMap-3dmodels @0906d9b in `refs/cache/src/fam3d` (with their COPYING / LICENSE files and blob
+hashes in its SOURCES.json). The corresponding source is committed with the repo:
 `refs/cache/src/fg/737-800` is a plain export of FGMEMBERS/737-800 @9126249 (LICENSE, README.md, the `Models/*.ac|*.png|*.xml`
 files the converter reads and the `Models/Liveries-800/N563AS` livery; each file's git blob hash is in
 `refs/cache/src/fg/SOURCES.json`, so the export can be checked against the upstream commit).

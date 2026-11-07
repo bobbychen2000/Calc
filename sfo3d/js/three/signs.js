@@ -8,7 +8,7 @@
 // Face styles follow js/live/signs.js makeAtlas: mand/paint red #b3120f, gate #10151c, others #0b0b0b; loc text and
 // border #f4c21b, VDGS text #ffb020 (monospace), others #f2f2f2; 70 px text on 96 px faces, 150 px on 190 px paint faces.
 import { THREE, TSL } from './lib.js';
-import { makeAtlas } from '../live/signs.js';
+import { makeAtlas, signFaces } from '../live/signs.js';
 import { facingNormalView } from './tsl/common.js';
 import { disposeRecord } from './convert.js';
 const { Fn, attribute, vec2, vec3, vec4, float, texture, max, min, mix, smoothstep, clamp, fwidth, abs, length, select, step, uniform } = TSL;
@@ -37,14 +37,10 @@ export function faceIndex(map) {
   const list = Object.entries(map).map(([key, r]) => { const i = key.indexOf(':'); return { key, kind: key.slice(0, i), text: key.slice(i + 1), r }; });
   return (u0, v0) => { let best = null, bd = 1e9; for (const f of list) { const d = Math.abs(f.r.u0 - u0) + Math.abs(f.r.v0 - v0); if (d < bd) { bd = d; best = f; } } return bd < 1e-4 ? best : null; };
 }
-// the face list of js/live/signs.js buildSigns (same kinds, texts and order -> identical atlas layout)
-// locName replicates js/live/signs.js locName (not exported, signs.js line ~146 as of 24 Sep 2026)
-function locName(t) { if (!t || /INTERSECTION/i.test(t)) return null; const s = t.split('/')[0].trim(); return s.length <= 3 ? s : null; }
+// the atlas map of js/live/signs.js buildSigns: its own face list (signFaces, exported in close-out round 3, env-15: the
+// replica of the list and of locName that lived here is gone) through the same makeAtlas -> identical layout
 export function worldSignAtlasMap(details) {
-  const faces = new Map(); const add = (kind, text) => { const key = kind + ':' + text; if (!faces.has(key)) faces.set(key, { key, kind, text }); };
-  for (const h of details.holds || []) { add('mand', h.text); add('paint', h.text); const loc = locName(h.twy); if (loc) add('loc', loc); }
-  for (let k = 1; k <= 12; k++) add('drs', String(k));
-  const A = makeAtlas([...faces.values()]); disposeRecord(A.tex); // only the map is needed: the canvas atlas is dropped (review round 2)
+  const A = makeAtlas(signFaces(details)); disposeRecord(A.tex); // only the map is needed: the canvas atlas is dropped (review round 2)
   return A.map;
 }
 

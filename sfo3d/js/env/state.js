@@ -87,33 +87,44 @@ export function selectReport(indexed, tEnv, live = false) {
  *  have no IAP; the 4 Nov 2026 recording (adsb.fi 19-20Z, METARs 03007KT / 04006KT) shows 75 of 79 arrivals on 28L/R
  *  (envrev2/arrflow.py), i.e. SFO kept the West Plan in winds 3-5-1 maps to 01 - 3-5-1 itself yields to "A Runway Use
  *  Program is in effect" (V). The 5-kt threshold (I) reproduces SFO's split: a 28-tailwind of ≥ 5 kt occurs in 5.5 %
- *  of hours (weather.md §4.4, M, IEM 2000-2025) vs "less than 5%" Southeast (V). Gusts are not used (I).
+ *  of hours (weather.md §4.4, M, IEM 2000-2025) vs "less than 5%" Southeast (V) and equals FAA Order 8400.9's dry-runway
+ *  tailwind limit (V, close-out round 3: crosswind with gusts, wet-runway limits, below).
  *  Approach type: 'instrument' only for ends with a published IAP (spec §5.2 plate column, V: 28L/28R/19L ILS, 19R /
  *  10L / 10R RNAV; 1L/1R "no IAP") when the METAR is below the charted visual minima "SFO 2500'/5" (V). The whole
  *  fallback is tagged I and shown on the ?qa=env HUD. */
-export const TAILWIND_SE_KT = 5, CROSSWIND_SE_KT = 20;
+// FAA Order 8400.9 "National Safety and Operational Criteria for Runway Use Programs" (1981, active; PDF cached
+// refs/cache/env_src/faa_order_8400-9.pdf, read 2026-11-07, close-out round 3 env-5: V) §4b: clear and dry runways - the
+// crosswind component INCLUDING GUSTS must not be greater than 20 kt (unless Flight Standards approves more), the
+// tailwind component not greater than 5 kt (7 kt where anemometers are installed near the touchdown zone / departure
+// end: SFO's NV, the 5-kt value also reproduces SFO's climatology, above); runways not clear or not dry - crosswind
+// incl. gusts <= 15 kt and no tailwind except winds reported calm (0-3 kt). A plan is acceptable when its arrival runway
+// meets them; the West Plan unless it fails and the Southeast Plan does not (both fail: the smaller excess). "Not dry" =
+// precipitation in the METAR's present weather (I: the runway condition itself is not reported in the METAR).
+export const TAILWIND_SE_KT = 5, CROSSWIND_SE_KT = 20, WET_CROSSWIND_KT = 15, WET_TAILWIND_KT = 3;
 export const IAP_ENDS = new Set(['28L', '28R', '19L', '19R', '10L', '10R']);   // spec §5.2 (d-TPP 2609, V)
 export function runwayConfigFrom(d, observed, override) {
   if (override) return override;
   if (observed && observed.n > 0 && (observed.arr.length || observed.dep.length)) {
     const arr = {}; for (const e of observed.arr) arr[e] = 'observed'; return { arr, dep: observed.dep.slice(), source: 'ADS-B flow (last 20 min)', tag: 'M' };
   }
-  const w = d && d.wind; const kt = w && w.speed_kt; const dir = w && w.dir_true_deg;
-  // tailwind on 28 = −(wind speed) × cos(wind-from − runway heading); positive = from behind (wind from 118° ± 90°)
-  const tail28 = (kt != null && dir != null) ? -kt * Math.cos((dir - RWY_HDG['28']) * DEG) : 0;
-  const cross28 = (kt != null && dir != null) ? Math.abs(kt * Math.sin((dir - RWY_HDG['28']) * DEG)) : 0;
-  const head19 = (kt != null && dir != null) ? kt * Math.cos((dir - RWY_HDG['19']) * DEG) : 0;
-  // strong southerly storms (e.g. 22036G63KT: 35 kt across 28, 36 kt down 19): crosswind on 28 ≥ CROSSWIND_SE_KT with a
-  // headwind on 19 -> Southeast as well (I; the 20-kt value follows FAA Order 8400.9's runway-use crosswind criterion as
-  // recalled - the order could not be fetched (HTTP 403): NV)
-  const plan = (tail28 >= TAILWIND_SE_KT || (cross28 >= CROSSWIND_SE_KT && head19 > 0)) ? 'southeast' : 'west';
+  const w = d && d.wind; const kt = w && w.speed_kt; const dir = w && w.dir_true_deg; const kX = Math.max(kt || 0, (w && w.gust_kt) || 0);
+  // tailwind = −(wind speed) × cos(wind-from − runway heading), positive = from behind; crosswind with the gust (8400.9)
+  const comp = (rw) => (kt != null && dir != null) ? { tail: -kt * Math.cos((dir - RWY_HDG[rw]) * DEG), cross: Math.abs(kX * Math.sin((dir - RWY_HDG[rw]) * DEG)) } : { tail: 0, cross: 0 };
+  const c28 = comp('28'), c19 = comp('19'); const tail28 = c28.tail, cross28 = c28.cross;
+  const wet = !!(d && (d.weather || []).some(x => (x.precip || []).length));
+  const lim = wet ? { tail: WET_TAILWIND_KT, cross: WET_CROSSWIND_KT } : { tail: TAILWIND_SE_KT, cross: CROSSWIND_SE_KT };
+  const excess = (c) => Math.max(0, c.tail - lim.tail) + Math.max(0, c.cross - lim.cross);
+  const okW = excess(c28) === 0, okS = excess(c19) === 0;
+  const plan = okW ? 'west' : okS ? 'southeast' : (excess(c19) < excess(c28) ? 'southeast' : 'west');
   const P = { west: [['28L', '28R'], ['1L', '1R']], southeast: [['19L', '19R'], ['10L', '10R']] }[plan];
   // instrument approaches when below the charted visual-approach minima "SFO 2500'/5" (Quiet Bridge / Tipp Toe, V)
   const vis = d && d.visibility ? d.visibility.sm : null, ceil = d ? d.ceiling_ft : null;
   const instr = (vis != null && vis < 5) || (ceil != null && ceil < 2500);
   const arr = {}; for (const e of P[0]) arr[e] = instr && IAP_ENDS.has(e) ? 'instrument' : 'unknown';
-  const why = plan === 'southeast' ? (tail28 >= TAILWIND_SE_KT ? `tailwind ${tail28.toFixed(1)} kt on 28 ≥ ${TAILWIND_SE_KT}` : `crosswind ${cross28.toFixed(0)} kt on 28 ≥ ${CROSSWIND_SE_KT}`) + ': SFO Southeast Plan' : (kt != null && kt >= 5 ? `tailwind ${tail28.toFixed(1)} kt on 28 < ${TAILWIND_SE_KT}: SFO West Plan` : 'calm/light wind: SFO West Plan');
-  return { arr, dep: P[1], plan, tail28, cross28, source: 'METAR fallback, ' + why, tag: 'I (SFO plans V; tailwind / crosswind rule I)' };
+  const cond = wet ? `wet (precip): limits tail ${lim.tail} / cross ${lim.cross} kt` : `dry: limits tail ${lim.tail} / cross ${lim.cross} kt`;
+  const why = (okW ? `28 tail ${tail28.toFixed(1)} / cross ${cross28.toFixed(0)} kt within 8400.9 (${cond}): SFO West Plan`
+    : `28 tail ${tail28.toFixed(1)} / cross ${cross28.toFixed(0)} kt beyond 8400.9 (${cond}), 19 tail ${c19.tail.toFixed(1)} / cross ${c19.cross.toFixed(0)}: SFO ${plan === 'southeast' ? 'Southeast' : 'West'} Plan`);
+  return { arr, dep: P[1], plan, tail28, cross28, wet, source: 'METAR fallback, ' + why, tag: 'I (SFO plans V; limits FAA Order 8400.9 §4b V; plan choice I)' };
 }
 
 // ---------------------------------------------------------------------------------------------- vertical structure

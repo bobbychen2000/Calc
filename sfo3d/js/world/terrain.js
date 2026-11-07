@@ -5,6 +5,34 @@ import { fbm, ridged, vnoise, smooth, clamp } from '../math.js';
 // mask of the shaders; as a coastline the old one was off by tens of metres (east edge 44 m out in the Bay at the 28
 // ends, the north basin as land), and the regional BAY_WATER_KM polygon is km-scale.
 import { SHORE } from '../../data/sfo_shore.js';
+// Peninsula reservoirs and the SFPUC watershed (close-out round 3, env-14; engine_closeout.md §2: the San Andreas valley
+// west of the airport had no water and city blocks, and the "crystal springs / san andreas valley lakes carve" comment
+// below carved nothing). js/env/reservoirs_data.js (tools/env/build_reservoirs.py: OSM ways 33449157 / 815759758 /
+// 23782143 and relation 3944756, ODbL; San Andreas Lake level from USGS 3DEP, Crystal Springs from the OSM ele tags):
+// the watershed (94 km², SFPUC, undeveloped) is excluded from the urban mask like NATURE_KM, and each lake is carved into
+// the procedural terrain: bed LAKE_DEPTH below its level inside the shore line, and around it the ground raised to at
+// least the level + a bank rising LAKE_BANK_SLOPE per metre over LAKE_BANK_M (the procedural valley floor lies 30-50 m
+// below the Crystal Springs levels and 0-80 m below San Andreas Lake: a water surface there would float; I). The water
+// surfaces themselves are items of their own (js/live/app.js, both renderers).
+import { RESERVOIRS } from '../env/reservoirs_data.js';
+export const LAKE_DEPTH = 3.0, LAKE_BANK_M = 400, LAKE_BANK_SLOPE = 0.12;
+const LAKES = (RESERVOIRS.lakes || []).map(L => { let x0 = 1e9, z0 = 1e9, x1 = -1e9, z1 = -1e9; for (const [x, z] of L.ring) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); } return { ...L, box: [x0 - LAKE_BANK_M, z0 - LAKE_BANK_M, x1 + LAKE_BANK_M, z1 + LAKE_BANK_M] }; });
+function lakeShape(x, z, h) {   // inside a lake: its bed; near one or more: the highest bank requirement (Upper / Lower Crystal Springs adjoin)
+  let out = h;
+  for (const L of LAKES) {
+    const b = L.box; if (x < b[0] || x > b[2] || z < b[1] || z > b[3]) continue;
+    const R = L.ring; let inside = false, d = 1e9;
+    for (let i = 0, j = R.length - 1; i < R.length; j = i++) {
+      const [xa, za] = R[j], [xb, zb] = R[i];
+      if ((za > z) !== (zb > z) && x < (xb - xa) * (z - za) / (zb - za) + xa) inside = !inside;
+      const dx = xb - xa, dz = zb - za, l2 = dx * dx + dz * dz || 1; const t = Math.max(0, Math.min(1, ((x - xa) * dx + (z - za) * dz) / l2));
+      d = Math.min(d, Math.hypot(x - xa - t * dx, z - za - t * dz));
+    }
+    if (inside) return L.level_y - LAKE_DEPTH * Math.min(1, d / 30);
+    if (d < LAKE_BANK_M) { const bank = L.level_y + 0.5 + d * LAKE_BANK_SLOPE; const k = smooth(LAKE_BANK_M * 0.5, LAKE_BANK_M, d); out = Math.max(out, Math.max(h, bank) * (1 - k) + h * k); }   // at least the bank near the shore, the terrain beyond
+  }
+  return out;
+}
 
 export const REGION = { x0: -60000, z0: -60000, size: 120000, res: 2048 };
 
@@ -84,6 +112,8 @@ export class Terrain {
     cx.fillStyle = '#000'; cx.fillRect(0, 0, R, R);
     cx.fillStyle = '#fff'; cx.fillRect(0, 0, R, R);
     cx.fillStyle = '#000'; NATURE_KM.forEach(p => { poly(p); cx.fill(); });
+    // the SFPUC Peninsula Watershed: no urban development (env-14; world x, z -> km e, n)
+    for (const r of (RESERVOIRS.watershed && RESERVOIRS.watershed.rings) || []) { poly(r.map(([x, z]) => [x / 1000, -z / 1000])); cx.fill(); }
     poly(aptPolyEN); cx.fill();
     // parks (circles)
     const parks = [[-8.2, 16.6, 0.9], [-5.6, 12.4, 0.6], [3.9, -2.9, 0.35], [-0.2, 11.7, 0.3]];
@@ -204,7 +234,9 @@ export class Terrain {
       const hillsH = this.hills(e, n) * smooth(0, 900, d);
       const bumps = (fbm(e * 0.002, n * 0.002, 4) - 0.5) * 14 * smooth(200, 1500, d);
       h = coastal + hillsH + bumps;
-      // crystal springs / san andreas valley lakes carve
+      // the Peninsula reservoirs (env-14: the old comment here promised a carve that the code never did)
+      h = lakeShape(x, z, h);
+      // airport flattening
       if (aptD > -400) {
         const k = smooth(-400, 20, aptD);
         const flat = GROUND_Y;

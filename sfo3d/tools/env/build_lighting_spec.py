@@ -325,7 +325,9 @@ def xz(p):
 # full-strength pavement: elevated lights stand there, ac30j 2.3.1.2.1 [std]).
 ELEVATED_H = 0.36          # m: L-862 / L-862E height used so far (<= 14 in, ac30j; inf)
 IN_PAVEMENT_H = 0.0127     # m: 1/2 in = the Style 1 / Style 2 boundary of AC 150/5345-46F 1.2.4 ("total height above
-                           # finished grade": Style 1 1/2-1 in, only L-850 C/D/E; Style 2 1/4-1/2 in); SFO's style NV -> I
+                           # finished grade": Style 1 1/2 < X <= 1 in, only L-850 C/D/E and L-852 E/F; Style 2 1/4 < X <= 1/2
+                           # in; Style 3 <= 1/4 in - V, read in refs/cache/lighting/AC-150-5345-46F-Fixtures.pdf on
+                           # 2026-11-07, close-out round 3 env-5); SFO's installed style NV -> the value I within 0-1 in
 
 
 def _in_ring(pt, ring):
@@ -337,14 +339,35 @@ def _in_ring(pt, ring):
     return ins
 
 
+def load_retired():
+    """Retired SFO Museum taxiway pavement (data/sfo_details.json, static track; close-out round 3, env-12):
+    pavementRetired = whole polygons ({layer 'taxiways', name, poly index}), pavementRetiredParts = rings cut out of the
+    taxiway polygons; js/live/airport.js leaves both unpaved (key name + '#' + polygon index, the same here)."""
+    try:
+        D = json.load(open(os.path.join(ROOT, 'data', 'sfo_details.json')))
+    except OSError:
+        return set(), []
+    whole = {(r['name'], int(r['poly'])) for r in D.get('pavementRetired', []) if r.get('layer') == 'taxiways'}
+    return whole, [r['ring'] for r in D.get('pavementRetiredParts', [])]
+
+
+RETIRED_STATS = {}
+
+
 def load_paved():
-    """[(name, outer ring, [holes])] of the non-runway pavement (taxiways, aprons, end zones), world [x, z]."""
+    """[(name, outer ring, [holes])] of the non-runway pavement (taxiways, aprons, end zones), world [x, z].
+    Retired taxiway polygons are left out; retired parts are holes of every taxiway polygon (load_retired)."""
     out = []
+    whole, parts = load_retired()
+    RETIRED_STATS.update(polys=len(whole), parts=len(parts), skipped=0)
     try:
         A = json.load(open(os.path.join(ROOT, 'data', 'sfo_airport.json')))
         for f_ in A.get('taxiways', []):
-            for poly in f_['polys']:
-                out.append(('taxiway ' + f_.get('name', ''), poly[0], poly[1:]))
+            for i, poly in enumerate(f_['polys']):
+                if (f_.get('name', ''), i) in whole:
+                    RETIRED_STATS['skipped'] += 1
+                    continue
+                out.append(('taxiway ' + f_.get('name', ''), poly[0], list(poly[1:]) + parts))
     except OSError:
         pass
     # data/sfo_pavement.json is NOT used: its NAIP grey-pixel classes include runway shoulders ("cargo/maintenance aprons,
@@ -889,6 +912,7 @@ def main():
     print('wrote', OUT_SPEC, os.path.getsize(OUT_SPEC), 'bytes;', OUT_FIX, os.path.getsize(OUT_FIX), 'bytes;', OUT_JS, os.path.getsize(OUT_JS), 'bytes')
     print('fixture counts', spec['fixture_counts'], 'total', sum(spec['fixture_counts'].values()))
     print('in-pavement points', spec['in_pavement']['counts'])
+    print('retired taxiway pavement (env-12)', RETIRED_STATS)
 
 
 if __name__ == '__main__':

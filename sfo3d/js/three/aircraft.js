@@ -29,6 +29,7 @@ import { brandIsCargo, LIVERY_BRANDS, liveryFrame } from '../aircraft/liveries.j
 import { tipDeviceData } from '../aircraft/model.js';
 import { geometryOf, geometryFromData, textureOf } from './convert.js';
 import { hash12, hash13, facingNormalView, lampK } from './tsl/common.js';
+import { groundBounce } from './tsl/ground_bounce.js';   // local ground albedo for the light from below (env-10)
 const { Fn, uniform, attribute, vec2, vec3, vec4, float, texture, dot, abs, max, min, mix, smoothstep, step, clamp, normalize, length, floor, fract, mod, select, If, Discard, fwidth, positionWorld, cameraPosition, normalWorld, pow, sign, sqrt, atan, Loop } = TSL;
 
 const V3 = () => new THREE.Vector3(), V4 = () => new THREE.Vector4();
@@ -119,7 +120,8 @@ function realMaterial(tex, liveryTex, atlas = false) {
   const A = Fn(() => { R = core(); return vec4(R.albedo, R.rough); }).once();
   const B = Fn(() => { A(); return vec4(R.emis, R.metal); }).once();
   const C = Fn(() => { A(); return vec4(R.cc, R.ccr, R.ao, 0); }).once();
-  m.colorNode = vec4(A().xyz, 1.0); m.roughnessNode = A().w; m.metalnessNode = B().w; m.emissiveNode = B().xyz.mul(lampK); // lamp units (tsl/common.js lampK)
+  const GBn = Fn(() => { A(); return groundBounce(R.albedo, R.metal, R.ao, normalize(normalWorld)); }).once();   // env-10 (tsl/ground_bounce.js)
+  m.colorNode = vec4(A().xyz, 1.0); m.roughnessNode = A().w; m.metalnessNode = B().w; m.emissiveNode = B().xyz.mul(lampK).add(GBn()); // lamp units (tsl/common.js lampK) + local ground bounce
   m.clearcoatNode = C().x; m.clearcoatRoughnessNode = C().y; m.aoNode = C().z;
   m.normalNode = facingNormalView(); m.clearcoatNormalNode = facingNormalView();
   return m;
@@ -230,6 +232,7 @@ function procMaterial(noiseTex, detailed) {
   const A = Fn(() => { R = core(); return vec4(R.albedo, R.rough); }).once();
   const B = Fn(() => { A(); return vec4(R.metal, R.cc, R.ccr, R.ao); }).once();
   m.colorNode = vec4(A().xyz, 1.0); m.roughnessNode = A().w; m.metalnessNode = B().x; m.clearcoatNode = B().y; m.clearcoatRoughnessNode = B().z; m.aoNode = B().w;
+  m.emissiveNode = Fn(() => { A(); return groundBounce(R.albedo, R.metal, R.ao, normalize(normalWorld)); }).once()();   // local ground bounce (env-10)
   m.normalNode = facingNormalView(); m.clearcoatNormalNode = facingNormalView();
   return m;
 }

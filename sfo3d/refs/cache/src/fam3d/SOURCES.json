@@ -1,0 +1,16 @@
+{
+ "*": {
+  "url": "https://github.com/Ysurac/FlightAirMap-3dmodels",
+  "commit": "0906d9ba1bdd906ce45807e45ed706c09912db19",
+  "licence": "GPL-2.0 or later (each model directory's COPYING / LICENSE file: a380/COPYING GPL-2.0, crj9/LICENSE 'GNU General Public License, version 2 or above')",
+  "fetched": "2026-11-07",
+  "how": "plain export (no .git) of single files at the pinned commit (git show <commit>:<path> from a blob-less clone kept outside the repo); blob_sha1 = git hash-object of the file = git rev-parse <commit>:<path>. Close-out round 3 (aircraft-6): restores the sources of refs/cache/models_orig/crj7.sfom and a388.sfom for tools/liveries/build.py",
+  "used_by": "tools/convert_models.py crj7 a388 (FAM_DIR=refs/cache/src/fam3d), tools/models/model_features.py (source door objects)",
+  "blob_sha1": {
+   "a380/glTF2/A380.glb": "3f9b1ebd824fece70b6513219a37ddc3611fa9fc",
+   "a380/COPYING": "60549be514af76c5db0c17ce6bbe01b2f81e2d9e",
+   "crj9/glTF2/CRJ7.glb": "da5ce05496ea5ee38d043c49a81c512478d28aa0",
+   "crj9/LICENSE": "9459763d56acacd2e224a9e00c7d5ff23a9fae8d"
+  }
+ }
+}

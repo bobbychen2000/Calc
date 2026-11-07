@@ -5,6 +5,7 @@
 import { gl, Mesh } from '../gl.js';
 import { GROUND_Y } from '../geo.js';
 import { AIRPORT } from '../../data/sfo_airport.js';
+import { DETAILS } from '../../data/sfo_details.js';
 
 // Movement surfaces = the SFO Museum taxiway and runway polygons (data/sfo_airport.js). Review round 3 (2-D audit of the
 // app: 25 signs stood 0.1-17 m inside taxiway / runway polygons, where wings and engines pass): every sign is placed
@@ -12,24 +13,30 @@ import { AIRPORT } from '../../data/sfo_airport.js';
 // the nearest clear distance (5-30 m), the distance-remaining signs at 55 m from the centreline or shifted along the
 // runway (<= 60 m) / to the other side; a sign with no clear spot is not drawn (logged). Sign positions are inferred
 // (FAA AC 150/5340-18 layout), not surveyed.
+// Retired pavement (close-out round 3, env-12; static_closeout R2.3 / R3.3.2): SFO Museum taxiway polygons that no longer
+// exist (DETAILS.pavementRetired, layer 'taxiways', name + polygon index: the old W / F1 crossing) are not movement
+// surfaces, and PARTS of taxiway polygons (DETAILS.pavementRetiredParts rings) are cut out of them - exactly as
+// js/live/airport.js leaves them unpaved (key t.name + '#' + polygon index there too).
+const RETIRED = new Set(((DETAILS && DETAILS.pavementRetired) || []).filter(r => r.layer === 'taxiways').map(r => r.name + '#' + r.poly));
+const box = (ring) => { let x0 = 1e9, z0 = 1e9, x1 = -1e9, z1 = -1e9; for (const p of ring) { x0 = Math.min(x0, p[0]); x1 = Math.max(x1, p[0]); z0 = Math.min(z0, p[1]); z1 = Math.max(z1, p[1]); } return { x0, z0, x1, z1 }; };
 const MOVE = [];
-for (const t of [...(AIRPORT.taxiways || []), ...(AIRPORT.runways || [])]) for (const poly of t.polys || []) {
-  let x0 = 1e9, z0 = 1e9, x1 = -1e9, z1 = -1e9;
-  for (const p of poly[0]) { x0 = Math.min(x0, p[0]); x1 = Math.max(x1, p[0]); z0 = Math.min(z0, p[1]); z1 = Math.max(z1, p[1]); }
-  MOVE.push({ rings: poly, x0, z0, x1, z1 });
-}
-function onMovement(x, z) {
-  for (const P of MOVE) {
-    if (x < P.x0 || x > P.x1 || z < P.z0 || z > P.z1) continue;
-    let inside = false;
-    for (const r of P.rings) for (let i = 0, j = r.length - 1; i < r.length; j = i++) {
-      const a = r[i], b = r[j];
-      if ((a[1] > z) !== (b[1] > z) && x < (b[0] - a[0]) * (z - a[1]) / (b[1] - a[1]) + a[0]) inside = !inside;
-    }
-    if (inside) return true;
+for (const t of AIRPORT.taxiways || []) (t.polys || []).forEach((poly, i) => { if (!RETIRED.has(t.name + '#' + i)) MOVE.push({ rings: poly, taxiway: true, ...box(poly[0]) }); });
+for (const t of AIRPORT.runways || []) for (const poly of t.polys || []) MOVE.push({ rings: poly, taxiway: false, ...box(poly[0]) });
+const RETIRED_PARTS = ((DETAILS && DETAILS.pavementRetiredParts) || []).map(r => ({ rings: [r.ring], ...box(r.ring) }));
+const inRings = (P, x, z) => {
+  if (x < P.x0 || x > P.x1 || z < P.z0 || z > P.z1) return false;
+  let inside = false;
+  for (const r of P.rings) for (let i = 0, j = r.length - 1; i < r.length; j = i++) {
+    const a = r[i], b = r[j];
+    if ((a[1] > z) !== (b[1] > z) && x < (b[0] - a[0]) * (z - a[1]) / (b[1] - a[1]) + a[0]) inside = !inside;
   }
+  return inside;
+};
+function onMovement(x, z) {
+  for (const P of MOVE) if (inRings(P, x, z) && !(P.taxiway && RETIRED_PARTS.some(Q => inRings(Q, x, z)))) return true;
   return false;
 }
+export const MOVEMENT_STATS = { taxiwayPolys: MOVE.filter(P => P.taxiway).length, retiredPolys: RETIRED.size, retiredParts: RETIRED_PARTS.length };
 // is a sign footprint clear of the movement surfaces? c = centre, v = unit vector along the panel, from..to = extent
 // along v (m), margin m all round
 function footprintClear(c, v, from, to, m = 1.0) {
@@ -139,12 +146,17 @@ function panel(g, c, f, faceH, r, backR, y0 = GROUND_Y + 0.45) {
   return w;
 }
 
-export function buildSigns(details, runways) {
+// the faces of the airfield sign atlas, in atlas order (close-out round 3, env-15: exported so js/three/signs.js builds
+// the same atlas layout from this one list instead of a replica)
+export function signFaces(details) {
   const faces = new Map(); const add = (kind, text) => { const key = kind + ':' + text; if (!faces.has(key)) faces.set(key, { key, kind, text }); return key; };
-  const holds = details.holds || [];
-  for (const h of holds) { add('mand', h.text); add('paint', h.text); const loc = locName(h.twy); if (loc) add('loc', loc); }
+  for (const h of details.holds || []) { add('mand', h.text); add('paint', h.text); const loc = locName(h.twy); if (loc) add('loc', loc); }
   for (let k = 1; k <= 12; k++) add('drs', String(k));
-  const A = makeAtlas([...faces.values()]);
+  return [...faces.values()];
+}
+export function buildSigns(details, runways) {
+  const holds = details.holds || [];
+  const A = makeAtlas(signFaces(details));
   const g = new G(), gp = new G();
   const faceH = 0.76; // 30 in legend panel (size 3 sign)
   for (const h of holds) {
@@ -198,7 +210,7 @@ export function buildSigns(details, runways) {
       panel(g, c, f, 1.0, A.map['drs:' + k], A.map['drs:' + remB], GROUND_Y + 0.5);
     }
   }
-  return { mesh: g.mesh(), painted: gp.mesh(), atlas: A.tex, count: holds.length };
+  return { mesh: g.mesh(), painted: gp.mesh(), atlas: A.tex, atlasMap: A.map, count: holds.length };   // atlasMap: the face rects (env-15)
 }
-function locName(t) { if (!t || /INTERSECTION/i.test(t)) return null; const s = t.split('/')[0].trim(); return s.length <= 3 ? s : null; }
+export function locName(t) { if (!t || /INTERSECTION/i.test(t)) return null; const s = t.split('/')[0].trim(); return s.length <= 3 ? s : null; }
 const sub = (a, b) => [a[0] - b[0], a[1] - b[1]]; const dot = (a, b) => a[0] * b[0] + a[1] * b[1];

@@ -1,0 +1,22 @@
+{
+ "faa_order_8400-9.pdf": {
+  "url": "https://www.faa.gov/documentLibrary/media/Order/8400-9.pdf",
+  "title": "FAA Order 8400.9, National Safety and Operational Criteria for Runway Use Programs (1981-11-09, active per FAA orders database)",
+  "licence": "public domain (US government work, FAA)",
+  "fetched": "2026-11-07",
+  "sha256": "dec12400db17edb269fe62e3d57c5185fee33e0522475a5d866f462ab24cf725",
+  "used_for": "js/env/state.js runwayConfigFrom: para 4b(1) dry: crosswind incl. gusts <= 20 kt, tailwind <= 5 kt (7 kt with touchdown-zone anemometers); 4b(2) not clear / not dry: crosswind incl. gusts <= 15 kt, no tailwind except calm 0-3 kt (close-out round 3, env-5)"
+ },
+ "_not_cached": {
+  "icao_annex14_vol1_5.3.24": {
+   "what": "ICAO Annex 14 Vol I (8th ed. 2018) 5.3.24 apron floodlighting: 'The arrangement and aiming of floodlights should be such that an aircraft stand receives light from two or more directions to minimize shadows'; stand horizontal illuminance 20 lx, average-to-minimum <= 4:1; vertical 20 lx at 2 m",
+   "status": "primary not obtainable: ICAO sells the Annexes (copyright ICAO); icao.int workshop PDFs quoting it returned HTTP 403 on 2026-11-07. Secondary: https://info.midstreamlighting.com/blog/icao-lights-understanding-the-rules-of-apron-floodlighting-an-faq-guide (vendor FAQ citing Annex 14 8th ed., read 2026-11-07) - tag 2nd",
+   "used_for": "js/three/flood.js SPOT_SHARE 0.5 (one mast <= ~half of a stand lit from two or more directions: I derived from the 2nd-source rule)"
+  },
+  "ac_150_5345_46F": {
+   "what": "AC 150/5345-46F 1.2.4 Style (in-pavement fixtures, total height above finished grade): Style 1 1/2 in < X <= 1 in (L-850 C, D, E and L-852 E, F only), Style 2 1/4 in < X <= 1/2 in, Style 3 X <= 1/4 in",
+   "status": "verified in the cached copy refs/cache/lighting/AC-150-5345-46F-Fixtures.pdf (2026-11-07); SFO's installed style NV",
+   "used_for": "tools/env/build_lighting_spec.py IN_PAVEMENT_H 1/2 in (the Style 1 / 2 boundary, within the published 0-1 in range)"
+  }
+ }
+}

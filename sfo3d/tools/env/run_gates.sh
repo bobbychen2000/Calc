@@ -23,4 +23,7 @@ run "A-SUN render, A-MOON, A-EXP, A-FOG, A-CLD, A-RAIN, A-WET, A-LTG, A-WIND (un
 # review round 2 regressions (runway fallback, RAIL, precip / wet start, smoke aloft, MIFG, snapshot weather, in-pavement
 # lights, aircraft colours, cirrus)
 run "review round 2 regressions" node --no-warnings tools/env/test_review2.mjs
+# close-out round 3 (env): FAA 8400.9 runway-use limits, day incident exposure bound, position-light lens, NAIP shoreline foam,
+# retired pavement in the lighting spec
+run "close-out round 3 regressions" node --no-warnings tools/env/test_c3.mjs
 exit $rc

@@ -355,6 +355,27 @@
   },
   {
    "brand": "ACA-X",
+   "model": "crj7",
+   "pxm": 56.9,
+   "variants": [],
+   "types": [
+    "crj7"
+   ],
+   "files": {
+    "hi": "ACA-X/crj7-hi.webp",
+    "mid": "ACA-X/crj7-mid.webp",
+    "lo": "ACA-X/crj7-lo.webp"
+   },
+   "file": "ACA-X/crj7-mid.webp",
+   "painted_as": "crj7",
+   "bytes": {
+    "hi": 52822,
+    "mid": 29506,
+    "lo": 15870
+   }
+  },
+  {
+   "brand": "ACA-X",
    "model": "crj9",
    "pxm": 56.2,
    "variants": [],
@@ -4291,7 +4312,8 @@
    },
    "status": "title placement approx",
    "types": [
-    "CRJ9"
+    "CRJ9",
+    "CRJ7"
    ],
    "cargo": false,
    "reg": {

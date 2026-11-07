@@ -1,0 +1,45 @@
+{
+ "way_33449157.xml": {
+  "url": "https://api.openstreetmap.org/api/0.6/way/33449157/full",
+  "what": "San Andreas Lake (natural=water, water=reservoir)",
+  "licence": "ODbL 1.0 - (c) OpenStreetMap contributors (https://www.openstreetmap.org/copyright)",
+  "fetched": "2026-11-07",
+  "sha256": "41a57fae7978d4075fcb8c0351233716676caa67fb9755f4449b90ffcd46a068",
+  "used_for": "tools/env/build_reservoirs.py -> js/env/reservoirs_data.js (env-14)"
+ },
+ "way_815759758.xml": {
+  "url": "https://api.openstreetmap.org/api/0.6/way/815759758/full",
+  "what": "Lower Crystal Springs Reservoir (ele=85)",
+  "licence": "ODbL 1.0 - (c) OpenStreetMap contributors (https://www.openstreetmap.org/copyright)",
+  "fetched": "2026-11-07",
+  "sha256": "379061e7dc75048b1d77d844ea13417d72aaf3042ecbabb366dda0359eaf6d9f",
+  "used_for": "tools/env/build_reservoirs.py -> js/env/reservoirs_data.js (env-14)"
+ },
+ "way_23782143.xml": {
+  "url": "https://api.openstreetmap.org/api/0.6/way/23782143/full",
+  "what": "Upper Crystal Springs Reservoir (ele=87)",
+  "licence": "ODbL 1.0 - (c) OpenStreetMap contributors (https://www.openstreetmap.org/copyright)",
+  "fetched": "2026-11-07",
+  "sha256": "d8e7c569bcb280f3078241f33763596e6a44c0ec29e3c689d028d9296374e21b",
+  "used_for": "tools/env/build_reservoirs.py -> js/env/reservoirs_data.js (env-14)"
+ },
+ "rel_3944756_full.xml": {
+  "url": "https://api.openstreetmap.org/api/0.6/relation/3944756/full",
+  "what": "San Francisco Peninsula Watershed (boundary=protected_area, operator SFPUC)",
+  "licence": "ODbL 1.0 - (c) OpenStreetMap contributors (https://www.openstreetmap.org/copyright)",
+  "fetched": "2026-11-07",
+  "sha256": "9852f703e53233e64bbbb952203ebfd9d670f6500fa14de6727c5ab46d6401b0",
+  "used_for": "tools/env/build_reservoirs.py -> js/env/reservoirs_data.js (env-14)"
+ },
+ "_usgs_epqs": {
+  "url": "https://epqs.nationalmap.gov/v1/json?x=-122.4262341&y=37.5967730&units=Meters&wkid=4326",
+  "value": "134.350006104 m (3DEP 1 m, acquisition 2023, rasterId 121713)",
+  "licence": "public domain (USGS)",
+  "fetched": "2026-11-07",
+  "note": "San Andreas Lake water surface; the Crystal Springs queries timed out (OSM ele tags used, 2nd)"
+ },
+ "_nominatim": {
+  "url": "https://nominatim.openstreetmap.org/search",
+  "note": "id lookup only (3 + 1 queries, 1/s, usage policy)"
+ }
+}

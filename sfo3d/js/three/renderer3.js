@@ -40,13 +40,16 @@ import { geometryOf, textureOf, retainedImageBytes } from './convert.js';
 import { glCanvas, setMaxTextureSize, imageHooks } from './compat/gl.js';
 import { disposeRecord } from './convert.js';
 import { floodField, E_STAND, mastE, mastAim, MAST_LAYER, FLOOD_COLOR } from './flood.js';
-import { garageCars } from './objects.js';
+import { garageCars, glassWallAttrs } from './objects.js';
+import { BUILDINGS } from '../../data/sfo_buildings.js';   // BA-G rings: the light mullion finish of its first-pass panes (env-7)
 import { GROUND_Y } from '../geo.js';
 import { lampK } from './tsl/common.js';
+import { GB as GBOUNCE, setGroundRef } from './tsl/ground_bounce.js';   // local ground bounce (env-10)
 import { Buildings3D } from './buildings3d.js'; // Blender building assets (data/buildings3d/*.glb)
 import { Rain } from './rain.js';
+import { makeSSR } from './ssr.js';   // wet-pavement object reflections (env-2)
 import { sunCalibration, cloudAdjust, nightSkyLuminance, moonDisc, renderSlabs, cloudLayers, histogram8, detailDistribution, fogTransmittance, fogBeamT, sstep as sstepE } from '../env/atmo/sky_model.js';
-import { meter, adapt, clampEV, exposureForEV, evForExposure, ev100FromLuminance, preExposure, METER_BIAS } from '../env/atmo/exposure.js';
+import { meter, adapt, clampEV, exposureForEV, evForExposure, ev100FromLuminance, preExposure, METER_BIAS, incidentBound } from '../env/atmo/exposure.js';
 import { rainParams, showerFactor, lightningFlashes, flashLevel, wetStep } from '../env/atmo/weather_fx.js';
 import { directionWorld } from '../env/ephemeris.js';
 import { aureole } from '../env/lighting/photometry.js';
@@ -128,6 +131,8 @@ export class Renderer3 {
     // (also interiorE from sun + sky: glassABOld), y / z / w = weights of reflection, interior, frame. QA only.
     if (qs.get('glassab') === '1') { this.glassAB = uniform(new THREE.Vector4(0, 1, 1, 1)); this.glassABOld = false; }
     this.exposureScale = +(qs.get('expo') || 1.0);
+    this.qsGB = qs.get('gbounce') === '0' ? false : true;   // ?gbounce=0: the IBL ground only (A/B of env-10; QA)
+    this.gb = GBOUNCE; this.ssrForce = null;   // QA A/B: R.gb.on.value = 0 / 1 (local ground bounce), R.ssrForce = 0 / 1 / null (SSR)
     // auto-exposure / pre-exposure state (environment step 3): ?ae=0 keyed exposure, ?ev=<EV100> fixed, ?pre=1 pinned
     this.aeMode = qs.get('ae') === '0' ? 'off' : 'auto'; this.fixedEV = qs.get('ev') != null ? +qs.get('ev') : null; this.pinPre = qs.get('pre') != null ? +qs.get('pre') : null;
     this.ae = { Lcd: null, t: 0, metered: null }; this.pre = 1; this._meterSnap = true; this.envState = null; this.sunK = null; this.wet = null; this.layers = [];
@@ -343,24 +348,28 @@ export class Renderer3 {
   // from the IBL ground so no other object's ambient changes (objects.js kG).
   _groundAlbedo() {
     const R = this.engine.renderer, B = this.bakes;
-    const read = (n, colorNode) => {
+    const read = (n, colorNode, premult = false) => {
       const rt = new THREE.RenderTarget(n, n, { depthBuffer: false, generateMipmaps: false });
       const m = new THREE.NodeMaterial(); m.blending = THREE.NoBlending; m.depthTest = m.depthWrite = false; m.colorNode = colorNode;
       const q = new THREE.QuadMesh(m); const prev = R.getRenderTarget(); R.setRenderTarget(rt); q.render(R); R.setRenderTarget(prev);
       return R.readRenderTargetPixelsAsync(rt, 0, 0, n, n).then((px) => { // weighted mean of rgb by alpha (the bake targets are linear: NoColorSpace, UnsignedByte)
         let r = 0, g = 0, b = 0, w = 0; const s = px.BYTES_PER_ELEMENT === 1 ? 1 / 255 : 1;
-        for (let i = 0; i < px.length; i += 4) { const a = px[i + 3] * s; r += px[i] * s * a; g += px[i + 1] * s * a; b += px[i + 2] * s * a; w += a; }
+        const k = premult ? 0 : 1; // premultiplied rgb (rgb x a in the target): sum rgb / sum a
+        for (let i = 0; i < px.length; i += 4) { const a = px[i + 3] * s, f = k ? a : 1; r += px[i] * s * f; g += px[i + 1] * s * f; b += px[i + 2] * s * f; w += a; }
         return w > 0 ? [r / w, g / w, b / w] : null;
       }).finally(() => { rt.dispose(); m.dispose(); });
     };
     const uvN = TSL.uv(); const lv = (w) => Math.max(0, Math.log2(w / 64));
-    const conc = TSL.texture(B.aux.texture, uvN).level(lv(B.aux.width)).b; // concrete mask (ground.js auxMaterial)
+    // concrete mean (close-out round 3, env-7): point samples of the FULL-resolution bakes (level 0) on a 1024² grid,
+    // premultiplied in the shader (rgb x mask, mask) and summed as sum(rgb x m) / sum(m): unbiased. Before: 64 x 64 cells
+    // (~73 x 50 m) of the mip-averaged colour weighted by the mip-averaged mask, exact only for uniform cells, so the
+    // mixed cells along every apron edge added grass and sand (apronAlb B/R 0.84 vs the bake's PCC 0.91)
+    const c0 = TSL.texture(B.aux.texture, uvN).level(0.0).b; // concrete mask (ground.js auxMaterial)
     this._albP = Promise.all([
       read(16, TSL.texture(B.apt.texture, uvN).level(8.0)),
-      // alpha = mask, rgb = albedo (premultiplied by the mask afterwards: the readback weights rgb by alpha)
-      read(64, TSL.vec4(TSL.texture(B.apt.texture, uvN).level(lv(B.aw)).rgb, conc)),
+      read(1024, TSL.vec4(TSL.texture(B.apt.texture, uvN).level(0.0).rgb.mul(c0), c0), true),
     ]).then(([all, cm]) => {
-      if (all) { this.groundAlb = all; this.envDirty = true; this.engine.flood.bounce.set(...all); tlog('IBL ground albedo ' + all.map(v => v.toFixed(3)).join(',')); }
+      if (all) { this.groundAlb = all; this.envDirty = true; this.engine.flood.bounce.set(...all); GBOUNCE.aIBL.value.set(...all); GBOUNCE.on.value = this.qsGB === false ? 0 : 1; tlog('IBL ground albedo ' + all.map(v => v.toFixed(3)).join(',')); }
       if (cm) { this.apronAlb = cm; tlog('concrete mean albedo ' + cm.map(v => v.toFixed(3)).join(',')); }
       this._kG();
     }).catch(e => console.warn('ground albedo readback', e));
@@ -370,7 +379,7 @@ export class Renderer3 {
   // from below and the floodlight bounce follow, the curtain walls keep reflecting the concrete (kG)
   setIBLGround(alb) {
     if (!this._groundAlbBake) this._groundAlbBake = this.groundAlb;
-    this.groundAlb = alb || this._groundAlbBake; this.engine.flood.bounce.set(...this.groundAlb); this._kG();
+    this.groundAlb = alb || this._groundAlbBake; this.engine.flood.bounce.set(...this.groundAlb); GBOUNCE.aIBL.value.set(...this.groundAlb); this._kG();
     this.light._albScaled = false; this.envDirty = true;
   }
   // scene objects, built once the world, the sky and the first bake exist
@@ -382,7 +391,16 @@ export class Renderer3 {
     // sun radiance x cloud shadow (the old shaders' getShadow() * cloudShadow(wp)); three multiplies the CSM term in
     this.sunRad = uniform(new THREE.Vector3(1, 1, 1));
     E.sun.colorNode = this.sunRad.mul(sky.cloudShadow(TSL.positionWorld));
-    this.gMat = groundMaterial(W, this.bakes, sky, Q); this.wMat = waterMaterial(W, this.bakes, sky);
+    // SSR of objects in wet pavement (js/three/ssr.js, close-out round 3, env-2): tiers with a depth pre-pass (high / ultra /
+    // medium) and TRAA (its history = the previous resolved frame); ?ssr=0 turns it off (A/B)
+    const hist = E.traaNode && E.traaNode._historyRenderTarget && E.traaNode._historyRenderTarget.texture;
+    this.ssrOn = uniform(0); this.ssrPrevVP = uniform(new THREE.Matrix4()); this._ssrOk = 0;
+    const ssr = Q.ao === 'prepass' && hist && E.depthNode && new URLSearchParams(location.search).get('ssr') !== '0' ? makeSSR({ depth: E.depthNode, history: hist, prevVP: this.ssrPrevVP, on: this.ssrOn, sky }) : null;
+    this.ssrBuilt = !!ssr;
+    this.gMat = groundMaterial(W, this.bakes, sky, Q, { ssr }); this.wMat = waterMaterial(W, this.bakes, sky);
+    // the light objects get from below: the local airfield bake instead of the IBL's whole-field mean (tsl/ground_bounce.js,
+    // close-out round 3, env-10); on once the IBL ground albedo is read back (_groundAlbedo)
+    setGroundRef({ tex: this.bakes.apt.texture, AR: W.groundU.uAptRect, Vw: W.groundU.uVw, Uw: W.groundU.uUw, res: this.bakes.res, G: sky.u.ground });
     const common = { noiseTex: this.noiseTex, night: this.nightE, time: this.time, interiorE: this.interiorE, sunDir: E.sunDirU, shadeK: this.shadeK, kG: this.kG, envGround: sky.u.ground, glassAB: this.glassAB }; // objects.js night emissions: nightE; envGround: curtain-wall local reflection
     this.objMat = objectMaterial(common); this.vehMat = objectMaterial({ ...common, instanced: true });
     this.carMat = objectMaterial({ ...common, instanced: true, carFade: true }); // garage-roof cars: distance fade to their mean colour
@@ -413,7 +431,11 @@ export class Renderer3 {
         if (p === 'water') { m.frustumCulled = false; m.renderOrder = -1; }
         G.add(m);
       } else if (p === 'obj') {
-        const m = new THREE.Mesh(geometryOf(it.mesh), this.objMat); m.castShadow = !!it.castShadow; m.receiveShadow = true;
+        const geo = geometryOf(it.mesh);
+        // curtain-wall panes: wall top / bottom and frame finish per vertex (objects.js glassWallAttrs; env-7 / env-8)
+        if (!this._lightFrameRings) this._lightFrameRings = (BUILDINGS.parts || []).filter(q => /^Boarding Area G( walkway)?$/.test(q.name)).flatMap(q => q.rings);
+        glassWallAttrs(geo, GROUND_Y, this._lightFrameRings);
+        const m = new THREE.Mesh(geo, this.objMat); m.castShadow = !!it.castShadow; m.receiveShadow = true;
         m.matrixAutoUpdate = false; if (it.model) { m.matrix.fromArray(it.model); } G.add(m);
         if (it.b3d || it.b3dRest) { m.userData.b3d = it.b3d; m.userData.b3dRest = it.b3dRest; if (it.b3dRest) m.visible = false; } // js/three/buildings3d.js swaps them
         // the floodlight masts (js/live/items.js buildMasts: its first vertex is the first mast's base) on their own layer:
@@ -551,7 +573,9 @@ export class Renderer3 {
     const expoKeyed = Math.max(expoDay, expoKey); this.eKey = eKey;
     let expoTotal = expoKeyed, evUsed = null;
     if (st && this.fixedEV != null) { evUsed = this.fixedEV; expoTotal = exposureForEV(evUsed); }
-    else if (st && this.aeMode === 'auto' && this.ae.Lcd != null) { evUsed = clampEV(ev100FromLuminance(this.ae.Lcd) - METER_BIAS, st.sun.elTrue); expoTotal = exposureForEV(evUsed); }
+    // (close-out round 3, env-4 / env-16: by day the reflected reading stays within ±1 EV of the incident reading of the
+    // natural illuminance, exposure.js incidentBound; the frame's metered value is kept in envInfo().metered)
+    else if (st && this.aeMode === 'auto' && this.ae.Lcd != null) { const evR = ev100FromLuminance(this.ae.Lcd) - METER_BIAS; this.evReflected = evR; evUsed = clampEV(incidentBound(evR, st.exposure && st.exposure.ev100Target, st.sun.elTrue), st.sun.elTrue); expoTotal = exposureForEV(evUsed); }
     expoTotal *= this.exposureScale; this.evUsed = evUsed; this.expoTotal = expoTotal; this.expoKeyed = expoKeyed;
     // ---- pre-exposure: every emitter x pre, the post exposure = total / pre
     const pre = this.pinPre != null ? this.pinPre : preExposure(this.pre, expoTotal);
@@ -569,6 +593,15 @@ export class Renderer3 {
     { const s0 = this.slabs && this.slabs[0] ? this.slabs[0].sigma : 0; this.sky.u.floodI.value = floodK * LAMP_M * pre; this.sky.u.floodFog.value = floodK > 0 && s0 > 1e-4 ? s0 : 0; }
     this._floodSpots(cam, floodK * LAMP_M * pre);
     const wu = this.world.waterU; if (this.wMat && wu) { const u = this.wMat.userData; if (wu.uWind) u.uWind.value.set(wu.uWind[0], wu.uWind[1]); if (wu.uWaveAmp != null) u.uAmp.value = wu.uWaveAmp; }
+    // SSR (env-2): the previous frame's un-jittered view-projection (TRAA cleared its view offset after that frame), and the
+    // history counted valid from the 3rd frame after a camera cut / resize; only while the pavement is wet
+    if (this.ssrBuilt) {
+      const C3 = E.camera; this.ssrPrevVP.value.multiplyMatrices(C3.projectionMatrix, C3.matrixWorldInverse);
+      const p = cam.pos, q = this._ssrCam, cut = !q || Math.hypot(p[0] - q[0], p[1] - q[1], p[2] - q[2]) > 30 || this._ssrW !== this.W || this._ssrH !== this.H;
+      this._ssrCam = p.slice(); this._ssrW = this.W; this._ssrH = this.H; this._ssrOk = cut ? 0 : this._ssrOk + 1;
+      const wetR = this.wet && st ? Math.max(this.wet.film, this.wet.puddle) : 0;
+      this.ssrOn.value = this.ssrForce != null ? this.ssrForce : wetR > 0.05 && this._ssrOk >= 2 ? 1 : 0;   // (QA A/B: R.ssrForce 0 / 1)
+    }
     E.setCamera(cam, this.W, this.H);
     this.pxScale.value = 2 * Math.tan(cam.fov / 2) / Math.max(1, this.H);
     // camera cut -> the meter snaps (no adaptation across a cut)
@@ -686,11 +719,11 @@ export class Renderer3 {
   envInfo() {
     const r = (v, n = 3) => v == null ? null : +Number(v).toPrecision(n);
     return { sunK: r(this.sunK), cal: this.cal ? { c171Lux: r(this.cal.c171Lux, 4), modelLux: r(this.cal.modelLux, 4) } : null,
-      ae: this.aeMode, metered: this.ae.metered, evUsed: r(this.evUsed, 4), evAdapted: this.ae.Lcd ? r(ev100FromLuminance(this.ae.Lcd), 4) : null, expoTotal: r(this.expoTotal, 4), expoKeyed: r(this.expoKeyed, 4), evKeyed: this.expoKeyed ? r(evForExposure(this.expoKeyed), 4) : null,
+      ae: this.aeMode, metered: this.ae.metered, evReflected: r(this.evReflected, 4), evTarget: this.envState && this.envState.exposure ? r(this.envState.exposure.ev100Target, 4) : null, evUsed: r(this.evUsed, 4), evAdapted: this.ae.Lcd ? r(ev100FromLuminance(this.ae.Lcd), 4) : null, expoTotal: r(this.expoTotal, 4), expoKeyed: r(this.expoKeyed, 4), evKeyed: this.expoKeyed ? r(evForExposure(this.expoKeyed), 4) : null,
       pre: this.pre, postExpo: r(this.engine.expo.value, 4), envIntensity: r(this.engine.scene.environmentIntensity, 4), light: this.lightName, sunRad: this.sunRad ? this.sunRad.value.toArray().map(v => r(v)) : null,
       layers: this.layers.map(l => ({ cover: l.cover, baseFt: l.baseFt, own: r(l.own), thr: r(l.thr), slab: l.slab })), planes: this.cloudPlanes ? this.cloudPlanes.filter(m => m.visible).length : 0,
       slabs: (this.slabs || []).map(s => [s.kind, r(s.y0, 4), r(s.y1, 4), r(s.sigma)]), moonL: this.sky ? r(this.sky.u.moonL.value) : null, rain: this.rainCount || 0, rainParams: this.rain && this.rain.params ? { kind: this.rain.params.kind, count: this.rain.params.count, streak: r(this.rain.params.streak), v: r(this.rain.params.vFall) } : null,
-      wet: this.wet ? { film: r(this.wet.film), pore: r(this.wet.pore), puddle: r(this.wet.puddle) } : null, flash: this.flash, aureoles: this.nAur || 0, reflections: this.nRefl || 0, floodK: this.floodK, meterErr: this._meterErr || null, cloudTexSum: this.cloudTexSum || null };
+      wet: this.wet ? { film: r(this.wet.film), pore: r(this.wet.pore), puddle: r(this.wet.puddle) } : null, ssr: this.ssrBuilt ? { on: this.ssrOn.value, okFrames: this._ssrOk } : null, flash: this.flash, aureoles: this.nAur || 0, reflections: this.nRefl || 0, floodK: this.floodK, meterErr: this._meterErr || null, cloudTexSum: this.cloudTexSum || null };
   }
   // floodlight spots: the masts that light the point the camera looks at most (horizontal irradiance there, the same
   // intensity distribution as the field), with hysteresis so the choice does not flip every frame

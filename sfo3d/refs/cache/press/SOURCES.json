@@ -1,0 +1,10 @@
+{
+ "boeing_737max_design_decisions_2012-04-11.html": {
+  "url": "https://boeing.mediaroom.com/2012-04-11-Boeing-Makes-737-MAX-Design-Decisions",
+  "fetched": "2026-11-07",
+  "licence": "Boeing press release, copyright Boeing (cached for reference only, not redistributable here)",
+  "sha256": "1731ec5b0f4ecd6510dd8c5a492de4fa610a43fa967a3decd851bdea0806ed1a",
+  "quote": "A new pylon and strut, along with an 8-inch nose gear extension, will maintain similar ground clearance to today's 737 while accommodating the larger engine fan ... The nose gear door design is altered to fit with this revision",
+  "used_by": "js/aircraft/fit.js STANCE_FIT / NOSE_LEG comment (737 MAX nose leg: published 8 in vs the ACAP-fitted stance), close-out round 3 aircraft-2"
+ }
+}

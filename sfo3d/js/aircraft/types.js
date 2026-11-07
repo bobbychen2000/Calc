@@ -29,7 +29,9 @@
 //         (D6-58326-3 Rev E §2.3.2 p.2-7; P identified as the inboard nacelle by magnitude: plausible, not certain);
 //         A220-300 G 0.5-0.6 (APP BD500-3AB48-32000-00 Figure 2 p.10; G = engine by magnitude). Used by js/aircraft/fit.js
 //         (compression below the centre line when the model's engines hang lower). bellyClr / tipClr / htClr: BF1 / W1 / HT
-//         of the same A330-300 table (checked by tools/models/check_dims.py; not used for the fit).
+//         of the same A330-300 table (checked by tools/models/check_dims.py). bellyClr is re-checked against AC A330 Rev 21
+//         (Apr 01/13, refs/cache/acap/AC_A330_rev21_apr2013.pdf, FIGURE-2-3-0-991-001-A01 p.68 row H: 1.86 / 1.85 m at MRW,
+//         2.04 m at 119 t) and since close-out round 3 used by js/aircraft/fit.js for the belly-fairing fit (stretch.fairing).
 // The runtime fit of the imported models to these numbers (scale, fuselage plugs, wing-tip span fit, seating on the door
 // sill or fuselage top, the rendered door the bridge docks to) is in js/aircraft/fit.js. Checked by tools/models/check_dims.py.
 export const TYPES = {

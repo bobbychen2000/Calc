@@ -58,14 +58,15 @@
 //    deficit (<= 2 m) - a guard only: the stand data carries the moves of review orch-1 (static patch_stands P6) and
 //    today no rotunda is moved; no moving part ever enters those outlines or a sky bridge (bldHit, exact); the rotunda
 //    corridor, tunnels, drive column and cab never pass through another bridge's fixed walkway, drum or pedestal, nor
-//    the tunnels / column / cab through the bridge's own fixed walkway (jointOk / pathHits: such dockings stay at rest);
+//    any moving part through the bridge's own fixed walkway (jointOk / pathHits: such dockings stay at rest; the corridor
+//    starts where it leaves that walkway, neckParts);
 //    twin heads (a walkway through one rotunda to a second 3.4 m on: F15, G12) share one floor level.
 //  * Fast retraction for a departing aircraft: hurryUndock(g, s, now) - the same path at the sheet's maximum rates.
 //  * Upper-deck bridges (`bridges_upper`, A6 / A11 / G13) dock the A380's U1L door: Airbus A380 Aircraft
 //    Characteristics (AC380, Dec 01/25, refs/cache/acap/airbus_AC_A380_20251201.pdf): U1L 20.94 m from the nose
 //    (FIGURE-2-7-0-991-002), sill 7.87-7.89 m at MRW (FIGURE-2-3-0-991-001).
-// Inferred (no source; stated where used): the terminal's departure level at the fixed walkways (5.4 m: the terminal model's
-// ramp level is 0-5 m, js/live/terminals.js), tunnel overlaps (1.0 m) and retracted stagger (0.3 m), drive-column
+// Inferred (no source; stated where used): the bridge level of BA-A / BA-B / BA-C (DEPARTURE_LEVELS: per pier, BA-G and
+// BA-D measured on photos, T3 published), tunnel overlaps (1.0 m) and retracted stagger (0.3 m), drive-column
 // position on the outer tunnel, final approach speed, section cross-sections (inside the AC's minimum interior sizes).
 import { Mesh } from '../gl.js';
 import { Geo } from '../geom.js';
@@ -74,7 +75,7 @@ import { stToWorld, worldToST, GROUND_Y } from '../geo.js';
 import { TYPES, ICAO_TYPES } from '../aircraft/types.js';
 import '../aircraft/fit.js'; // fits the imported models to the published dimensions: T.dockX1/2, T.dockSill/2, T.dockHW
 import { bellowsShape, bellowsGeo } from '../aircraft/dock.js'; // the bellows closure fitted to the drawn fuselage skin
-import { inst, buildVehicleMeshes, beltShape, beltFamily, beltSill, cateringFloor, cateringBoxes } from '../world/gates.js';
+import { inst, buildVehicleMeshes, beltShape, beltFamily, beltDoor, beltEndY, BELT_RAIL_GAP, cateringFloor, cateringBoxes } from '../world/gates.js';
 import { makeAtlas } from './signs.js';
 import { familyOf } from './traffic.js';
 import { STANDS } from '../../data/sfo_stands.js';
@@ -183,7 +184,36 @@ const DRIVE_V = 27 / 60;                                  // m/s, maximum horizo
 const APPROACH_V = 0.15;                                  // m/s final creep to the door (inferred, ~1/3 of the maximum)
 const STANDOFF = 1.5;                                     // m, pre-dock point on the door normal (inferred)
 const SLOPE_TARGET = 1 / 12, SLOPE_MAX = 1 / 4;           // AC 150/5220-21C Figure 6 (unassisted / assisted), §3.4.b(6)
-const DEPARTURE_LEVEL = 5.4;                              // m above the apron: terminal upper floor (ramp-level walls 0-5 m + slab, js/live/terminals.js; inferred)
+// floor of the fixed walkway where it leaves the building (the pier's bridge level), m above the apron, per boarding area
+// (g.pier = the stand letter) - close-out round 3 bridges-1: one inferred 5.4 m for every pier put the BA-G walkway tops
+// (8.4 m) through the 6.5-7.1 m bridge-head bump-outs and the BA-C / BA-D walkways above concourses whose measured roofs
+// (7.2 / 8.49 m) leave 0.4 / 1.7 m of headroom over a 5.4 m floor (data/buildings3d/manifest.json itb / domestic conflicts):
+//  G  2.7 [obs, low] photo a2 (Wikimedia Commons "Aerial view of San Francisco International Airport station, September
+//     2025", CC BY-SA 4.0; refs/cache/buildings/review_likeness/a2.jpg) with the ITB group's solved camera
+//     (out/buildings3d/itb_a2_camera.json): at the G2 / G5 / G6 bridge heads the walkway / drum roofs read 5.5-6.6 m and
+//     the tunnels leave the drums at 1.9-2.9 m (1 m ticks projected at the attach points, +0.3..0.7 m for the camera's
+//     ground offset at B1; scratchpad c3/bridges/photo/a2_G_walk2.png); the ITB group reads the walkway roofs 1-1.4 m
+//     under the 6.5-7.1 m bump-out roofs (top <= 6.0 m). 2.7 + WALK_H 3.0 = 5.7 m at the attach point.
+//  E, F  4.88 [pub] Terminal 3 L2 departures TOC 27'-0" vs L1 arrivals 11'-0" (16.0 ft) - T3W Civic Design Review, 95 %
+//     construction documents, Oct 2023 (refs/cache/buildings/domestic/src/verify/231004_CDRC_CD_FINAL.pdf, sheets
+//     5A-A5.01.01/.02; docs/research/buildings_domestic.md §5.1); L1 at the apron [inf: the datum is not stated]
+//  D  3.65 [obs, low] photo a1 (Wikimedia Commons "Aerial view of SFO from departing flight, September 2025"): at the BA-D
+//     near end the concourse glazing spans 0.44-0.79 of the 8.49 m roof-edge height and the walkways enter at it, with
+//     about one walkway height of facade above them: floor 3.5-3.8 m (domestic group, manifest domestic.conflicts)
+//  C  3.2 [inf] the BA-D layout on a1 (BA-C is too small there to measure): glazing foot 0.44 x the measured 7.2 m roof
+//     edge; 3.2 m clear under the 6.4 m roof slab
+//  A, B  5.4 [inf] no photo or published level yet (the terminal model's ramp level 0-5 m + slab, js/live/terminals.js)
+const DEPARTURE_LEVEL = 5.4;                              // m, the default (stands of an unlisted pier; inferred)
+export const DEPARTURE_LEVELS = {
+  A: { h: 5.4, tag: 'inf', src: 'terminal model ramp level 0-5 m + slab (no photo / published level)' },
+  B: { h: 5.4, tag: 'inf', src: 'terminal model ramp level 0-5 m + slab (no photo / published level)' },
+  C: { h: 3.2, tag: 'inf', src: 'photo a1 BA-D layout (glazing foot 0.44 of the roof edge) on the measured 7.2 m BA-C roof' },
+  D: { h: 3.65, tag: 'obs-low', src: 'photo a1 ratios at the BA-D near end: concourse floor 3.5-3.8 m' },
+  E: { h: 4.88, tag: 'pub', src: 'T3 L2 departures 16.0 ft above L1 (T3W CDR 95 % CD, Oct 2023); L1 at the apron inf' },
+  F: { h: 4.88, tag: 'pub', src: 'T3 L2 departures 16.0 ft above L1 (T3W CDR 95 % CD, Oct 2023); L1 at the apron inf' },
+  G: { h: 2.7, tag: 'obs-low', src: 'photo a2 + solved camera: walkway / drum roofs 5.5-6.6 m, tunnels leave the drums at 1.9-2.9 m' },
+};
+const departureLevel = (g) => DEPARTURE_LEVELS[g && (g.pier || g.letter || (g.name || '')[0])] || { h: DEPARTURE_LEVEL, tag: 'inf', src: 'default' };
 const OVERLAP = 1.0, STAGGER = 0.3;                       // m, minimum tunnel overlap at full extension / retracted stagger (inferred)
 // sign convention of the sheet's "cw" in the data (data/sfo_stands.json cab_convention, inferred by the stand builder)
 const CW = (STANDS.cab_convention && /^clockwise/.test(STANDS.cab_convention.cw_is || '')) ? 1 : -1;
@@ -343,15 +373,28 @@ export { doorOf, acHit, boxHitsAc, boxHitsSwept, PBB, inBuilding, solidInBuildin
 // ---------------------------------------------------------------- aircraft solid for the bridge-path test
 // (x metres behind the nose, y to the right, heights above the apron). The fuselage tapers over the nose (types.js Ln)
 // as the rendered airframe does; wing / tailplane / engines as the ground-physics planform with their heights.
-// ell: the fuselage as its elliptical cross-section (half width x crown - centre line) instead of the enclosing box -
-// for the ground vehicles that reach under its lower lobe (belt loaders at the cargo doors)
+// ell: for the ground vehicles that reach under its lower lobe - true: the fuselage as its elliptical cross-section (half
+// width x crown - centre line) instead of the enclosing box; 'skin': the fitted model's RENDERED skin (pitch, stance,
+// plugs: js/aircraft/fit.js keelAt / skinHW; the belt loaders' conveyors, close-out round 3 bridges-3 - the unpitched
+// ellipse put the 737 MAX's forward belly 0.25 m too low); 'both': the skin or the ellipse (the other vehicles, kept
+// conservative where the skin table reads a gear-well roof). Procedural airframes: the ellipse
+function fusSkinHit(T, x, y, lo, hi, mg) {
+  const ay = Math.abs(y); if (ay > T.R + 1 + mg) return false;
+  const k = T.fit.keelAt(x); if (k == null) return false;
+  const y0 = Math.max(lo, k - mg), y1 = Math.min(hi, (T.fit.renderedCrown || T.Hc + T.R) + mg); if (y0 > y1) return false;
+  const n = Math.max(1, Math.ceil((y1 - y0) / 0.1));
+  for (let i = 0; i <= n; i++) { const w = T.fit.skinHW(x, y0 + (y1 - y0) * i / n); if (w != null && ay < w + mg) return true; }
+  return false;
+}
 function acHit(T, x, y, lo, hi, mg, ell = false) {
   const R = T.R, L = T.L, Hc = T.Hc;
   if (x > -mg && x < L + mg) {
     const Ln = T.Ln || 4; const xx = clampN(x, 0, Ln); let hw = x < Ln ? R * Math.sqrt(Math.max(0, 1 - (1 - xx / Ln) ** 2)) : R;
     const crown = (T.fit && T.fit.renderedCrown) || Hc + R;
-    if (ell) { const a = Math.max(0.5, crown - Hc) + mg, W = hw + mg; if (Math.abs(y) < W) { const v = a * Math.sqrt(1 - (y / W) ** 2); if (lo < Hc + v && hi > Hc - v) return 'fus'; } }
-    else if (Math.abs(y) < hw + mg && lo < crown + mg && hi > Hc - R - mg) return 'fus';
+    const skin = ell && ell !== true && T.fit && T.fit.skinHW && T.fit.keelAt;
+    if (skin && fusSkinHit(T, x, y, lo, hi, mg)) return 'fus';
+    if (ell && (!skin || ell === 'both')) { const a = Math.max(0.5, crown - Hc) + mg, W = hw + mg; if (Math.abs(y) < W) { const v = a * Math.sqrt(1 - (y / W) ** 2); if (lo < Hc + v && hi > Hc - v) return 'fus'; } }
+    else if (!ell && Math.abs(y) < hw + mg && lo < crown + mg && hi > Hc - R - mg) return 'fus';
   }
   const w = T.wing, ay = Math.abs(y);
   if (w) {
@@ -591,12 +634,14 @@ export class LiveGateSystem {
     // level, not the type mix, decides the rotunda height on short walkways.) Upper-deck
     // bridges: a level walkway from an upper level above the main-deck fixed walkways (their roof + 0.6 m; inferred), the
     // tunnel takes the slope down to U1L.
-    b.Hb = b.upper ? DEPARTURE_LEVEL + WALK_H + 0.6 : DEPARTURE_LEVEL; const dh = b.upper ? 0 : b.walkLen / 12;
+    // (Hb: the pier's bridge level, DEPARTURE_LEVELS - b.HbTag / b.HbSrc for the tools)
+    const DL = departureLevel(g); b.HbTag = DL.tag; b.HbSrc = DL.src;
+    b.Hb = b.upper ? DL.h + WALK_H + 0.6 : DL.h; const dh = b.upper ? 0 : b.walkLen / 12;
     b._tgH = tg;
     const Hr = this.pickHr(g, [b], b._tgH, b.Hb - dh, b.Hb + dh);
     this.applyHeights(b, Hr, tg, b._tgH);
-    // (HrPinned: the rotunda floor sits on the edge of the walkway's 1:12 band from the INFERRED departure level - all
-    // 107 observed dockings steeper than 1:12 are on such bridges; tools may label their slopes "inferred heights")
+    // (HrPinned: the rotunda floor sits on the edge of the walkway's 1:12 band from the pier's bridge level - the level,
+    // not the type mix, decides the slope; tools label such slopes with b.HbTag: 'inf' for BA-A / BA-B / BA-C)
     b.HrPinned = tg.length > 0 && (Math.abs(b.Hr - (b.Hb - dh)) < 0.03 || Math.abs(b.Hr - (b.Hb + dh)) < 0.03);
     b._tg = tg; b.reach = b.e0;
   }
@@ -629,7 +674,7 @@ export class LiveGateSystem {
     const O = b._obs; if (!O || !O.length) return null;
     for (const bx of this.solidsQ(b, q, kk)) { if (bx.part === 'stair') continue; // (its side is chosen against these in finishPrep)
       const br = Math.hypot(bx.hl, bx.hw);
-      for (const o of O) { if (o.own && bx.part === 'neck') continue; // (the rotunda junction; a KNOWN CLIP on 6 bridges: b.ownClip, finishPrep)
+      for (const o of O) { // (the rotunda corridor starts clear of the own walkway: neckStart - no exemption since round 3)
         if (Math.abs(o.c[0] - bx.c[0]) > o.rr + br + 0.1 || Math.abs(o.c[1] - bx.c[1]) > o.rr + br + 0.1) continue;
         if (bx.hi > o.lo && o.hi > bx.lo && solidOverlap(bx, o, 0.05)) return bx.part + ' x ' + (o.own ? 'own ' : '') + o.part; } }
     return null;
@@ -663,10 +708,9 @@ export class LiveGateSystem {
     for (const { b } of all) {
       const reach = b.m.mechE + b.m.spacer + 4; const O = [];
       for (const { b: o } of all) { if (o === b) continue; for (const s of fixed.get(o)) if (Math.hypot(s.c[0] - b.rot[0], s.c[1] - b.rot[2]) - Math.hypot(s.hl, s.hw) < reach) O.push(s); }
-      // (own walkway: beyond 0.6 m from the drum, against the tunnels, drive column and cab - not against the rotunda
-      // corridor: where the walkway and the corridor meet the drum, the two boxes overlap whenever they are less than
-      // ~110 deg apart, and the data's docked / rest poses of A12, F5, F14, F17, F19, F21 L1 fold back to 41-45 deg from
-      // the mapped walkway - a junction our boxes cannot draw; listed in docs/requests/bridges_closeout.md)
+      // (own walkway: beyond 0.6 m from the drum, against every moving part - the rotunda corridor too: it starts where it
+      // leaves the walkway (neckParts; before round 3 it was exempt and drawn through the walkway of A12, F5, F14, F17,
+      // F19, F21 L1, whose data poses fold back to 41-45 deg from the mapped walkway)
       for (const s of fixed.get(b)) if (s.part === 'walkway') { const c = this.outsideDrum(b, s, b.rotR + 0.6); if (c) O.push({ ...c, own: true }); }
       b._obs = O.map(o => ({ ...o, rr: o.round || Math.hypot(o.hl, o.hw) }));
     }
@@ -697,13 +741,12 @@ export class LiveGateSystem {
       const Hr = this.pickHr(g, [o, b], o._tgH.concat(b._tgH), o.Hb - dh, o.Hb + dh);
       this.applyHeights(o, Hr, o._tg, o._tgH); this.applyHeights(b, Hr, b._tg, b._tgH);
     }
-    // KNOWN CLIP (review 2026-11-04 bridges-v3; data, not a junction we accept): where the data's rest / docked poses fold
-    // the tunnel back to 41-45 deg from the bridge's own mapped walkway (A12, F5, F14, F17, F19, F21 L1), the 2.4 m
-    // rotunda corridor overlaps the 2.6 m walkway outside the drum (fixedHit skips that pair: refusing it would leave
-    // observed types undocked). b.ownClip = {rest, docked (m2, exact plan overlap), poses (n of m)}, for the tools; the
-    // walkway / rotunda data is with the static track (docs/requests/static_closeout.md)
+    // own-walkway clip check (review 2026-11-04 bridges-v3): the rotunda corridor parts vs the bridge's own walkway outside
+    // the drum at rest and docked. Since round 3 (neckParts) it is 0 everywhere - before, A12, F5, F14, F17, F19, F21 L1
+    // (data poses folded back to 41-45 deg from the walkway) drew 0.18-0.56 m2 of corridor through it. b.ownClip = {rest,
+    // docked (m2, exact plan overlap), poses (n of m)} or null, for the tools
     for (const { g, b } of all) { const W = this.solidsQ(b, { a: b.a0, e: b.e0, t: 0, h: b.h0 }, 0, true).filter(x => x.part === 'walkway').map(x => this.outsideDrum(b, x, b.rotR)).filter(Boolean); b.ownClip = null; if (!W.length) continue;
-      const area = (q) => { const nk = this.solidsQ(b, q, 0).find(x => x.part === 'neck'); if (!nk) return 0; let A = 0; for (const w of W) if (nk.hi > w.lo && w.hi > nk.lo) A += obbArea(nk, w); return A; };
+      const area = (q) => { let A = 0; for (const nk of this.solidsQ(b, q, 0)) if (nk.part === 'neck') for (const w of W) if (nk.hi > w.lo && w.hi > nk.lo) A += obbArea(nk, w); return A; };
       const rest = area({ a: b.a0, e: b.e0, t: 0, h: b.h0 }); let worst = rest, n = rest > 0.05 ? 1 : 0; const tg = b._tg || [];
       for (const t of tg) { const A = area({ a: t.a, e: t.e, t: 0, h: t.sill }); if (A > 0.05) n++; worst = Math.max(worst, A); }
       b.ownClip = worst > 0.05 ? { rest: +rest.toFixed(2), docked: +worst.toFixed(2), poses: n + '/' + (tg.length + 1) } : null; }
@@ -881,21 +924,26 @@ export class LiveGateSystem {
     const oa = wrap(A.a - b.ac), ob = wrap(B.a - b.ac); // rotunda angle relative to its centreline (stays inside the swing)
     return { a: b.ac + oa + (ob - oa) * u, e: A.e + (B.e - A.e) * u, t: A.t + (B.t - A.t) * u, h: A.h + (B.h - A.h) * u };
   }
-  pathHits(b, pts, T, nose, f) {
+  // (toDoor: the path ends at the door - its last segment deploys the closure, so the cab / bellows may meet the skin there;
+  // false: a way back to rest, every part tested on every segment. count: go on and return {fixed, n} - n = sampled poses
+  // with a part in the aircraft, fixed = a fixed walkway / drum / building was met)
+  pathHits(b, pts, T, nose, f, toDoor = true, count = false) {
+    let n0 = 0, fx = false;
     for (let i = 1; i < pts.length; i++) {
-      const last = i === pts.length - 1; const n = last ? 4 : 16;
+      const last = i === pts.length - 1; const n = last ? 4 : 16; const door = toDoor && last;
       for (let k = 0; k <= n; k++) {
         const q = this.qLerp(b, pts[i - 1], pts[i], k / n);
-        if (this.fixedHit(b, q, last && k > 0 ? 1 : 0)) return 'fixed'; // through a fixed walkway / drum (own or another bridge's)
-        if (this.bldHit(b, q, last && k > 0 ? 1 : 0)) return 'building'; // through a terminal outline (drawn or SFO Museum)
-        for (const bx of this.solidsQ(b, q, last && k > 0 ? 1 : 0)) {
-          if (last && (bx.part === 'cab' || bx.part === 'bellows')) continue; // the closure meets the door by design
-          if (boxHitsAc(bx, T, nose, f, bx.part === 'cab' ? 0.3 : 0.5)) return 'aircraft';
+        if (this.fixedHit(b, q, door && k > 0 ? 1 : 0)) { if (!count) return 'fixed'; fx = true; } // through a fixed walkway / drum (own or another bridge's)
+        if (this.bldHit(b, q, door && k > 0 ? 1 : 0)) { if (!count) return 'building'; fx = true; } // through a terminal outline (drawn or SFO Museum)
+        for (const bx of this.solidsQ(b, q, door && k > 0 ? 1 : 0)) {
+          if (door && (bx.part === 'cab' || bx.part === 'bellows')) continue; // the closure meets the door by design
+          if (boxHitsAc(bx, T, nose, f, bx.part === 'cab' ? 0.3 : 0.5)) { if (!count) return 'aircraft'; n0++; break; }
         }
       }
     }
-    return false;
+    return count ? { fixed: fx, n: n0 } : false;
   }
+
   // joint state at animation parameter k (0 rest .. 1 docked) along a plan's path (time-proportional)
   qAt(b, P, k) {
     if (!P.ok || !P.total) return P.q0;
@@ -936,7 +984,7 @@ export class LiveGateSystem {
       out.push({ c: [rot[0], rot[2]], u: [1, 0], hl: b.rotR, hw: b.rotR, lo: G + b.Hr - 0.3, hi: G + b.Hr + 3.3, part: 'rotunda', round: b.rotR });
       out.push({ c: [rot[0], rot[2]], u: [1, 0], hl: 0.6, hw: 0.6, lo: G, hi: G + b.Hr - 0.3, part: 'pedestal', round: 0.6 });
     }
-    seg(b.rotR * 0.8, m.F, 2.4, 2.8, 'neck');
+    for (const N of this.neckParts(b, q.a)) { const sc = (N.s0 + N.s1) / 2, rr = [-u[2], u[0]]; out.push({ c: [rot[0] + u[0] * sc + rr[0] * N.off, rot[2] + u[2] * sc + rr[1] * N.off], u: [u[0], u[2]], hl: (N.s1 - N.s0) / 2, hw: N.hw, lo: Math.min(fl(N.s0), fl(N.s1)) - 0.15, hi: Math.max(fl(N.s0), fl(N.s1)) + 2.8, part: 'neck' }); }
     const secs = this.sections(b, q.e);
     secs.forEach(([s0, s1, w, h], i) => seg(s0, s1, w, h, 'tunnel' + (i + 1)));
     // drive column (legs + bogie + cross beam, +-1.55 m) on the outer tunnel, its control box on the right-hand leg, and
@@ -953,6 +1001,40 @@ export class LiveGateSystem {
     // landing + stair (aft of the cab bubble, beside the outer tunnel)
     for (const bx of this.stairBoxes(b, q)) out.push(bx);
     return out;
+  }
+  // where the rotunda corridor (2.4 m wide, to tunnel A's hinge at F) starts along the tunnel direction a: 0.8 of the
+  // drum radius (it enters the drum) - or, where it would cross the bridge's own fixed walkway outside the drum, where it
+  // leaves the walkway slab (+0.06 m), so that nothing is drawn through the walkway (close-out round 3 bridges-2: the
+  // data's rest / docked poses of A12, F5, F14, F17, F19, F21 L1 fold the tunnel back to 41-45 deg from the walkway and the
+  // corridor ran 0.2-0.65 m2 through it; the walkway and the drum close that junction instead). Exact (separating axes,
+  // bisection to 1 mm); tunnel A and the parts beyond are still tested against the walkway (fixedHit)
+  // (off / hw: a strip of the corridor, its centre `off` m to the right of the axis - neckParts)
+  neckStart(b, a, off = 0, hw = 1.2) {
+    const s0 = b.rotR * 0.8, Fm = b.m.F; const W = this.ownOut(b); if (!W.length || Fm - 0.3 <= s0) return s0;
+    const u = [Math.cos(a), Math.sin(a)], r = [-u[1], u[0]];
+    const hit = (s) => { const bx = { c: [b.rot[0] + u[0] * (s + Fm) / 2 + r[0] * off, b.rot[2] + u[1] * (s + Fm) / 2 + r[1] * off], u, hl: (Fm - s) / 2, hw }; return W.some(w => obbOverlap(bx, w, 0.06)); };
+    if (!hit(s0)) return s0;
+    let lo = s0, hi = Fm - 0.3; if (hit(hi)) return Fm; // (no start clears it: none of this strip is drawn)
+    while (hi - lo > 0.001) { const mid = (lo + hi) / 2; if (hit(mid)) lo = mid; else hi = mid; }
+    return hi;
+  }
+  // the rotunda corridor as drawn / tested: [{s0, s1, off, hw}] - the full width from neckStart to F, and where that start
+  // moved out, the half away from the walkway from where that half leaves the walkway (it closes the junction between
+  // drum, walkway and corridor; half width 0.6 m, `off` to the right of the axis). Never empty (a pose in which no part
+  // clears the walkway keeps the full corridor from 0.3 m before F: fixedHit then refuses it, except at a data rest pose)
+  neckParts(b, a) {
+    const s = this.neckStart(b, a), s0 = b.rotR * 0.8, Fm = b.m.F; const out = [];
+    if (s < Fm - 0.01) out.push({ s0: s, s1: Fm, off: 0, hw: 1.2 });
+    if (s > s0 + 0.05) for (const off of [-0.6, 0.6]) { const sh = this.neckStart(b, a, off, 0.6); if (sh < s - 0.05) out.push({ s0: sh, s1: Math.min(s, Fm), off, hw: 0.6 }); }
+    if (!out.length) out.push({ s0: Math.max(s0, Fm - 0.3), s1: Fm, off: 0, hw: 1.2 });
+    return out;
+  }
+  // the bridge's own fixed-walkway slabs outside its drum (plan boxes; cached with ownWalk)
+  ownOut(b) {
+    const W = this.ownWalk(b); if (b._ownOutOf === W) return b._ownOut; const out = [];
+    for (const S of W) { const d = [S.B[0] - S.A[0], S.B[2] - S.A[2]]; const L = Math.hypot(d[0], d[1]); if (L < 0.05) continue;
+      const c = this.outsideDrum(b, { c: [(S.A[0] + S.B[0]) / 2, (S.A[2] + S.B[2]) / 2], u: [d[0] / L, d[1] / L], hl: L / 2, hw: WALK_W / 2 }, b.rotR); if (c) out.push(c); }
+    b._ownOutOf = W; return (b._ownOut = out);
   }
   // floor height above the apron at distance s from the rotunda centre: level through the rotunda and its corridor
   // (to tunnel A's hinge at F), then a straight slope to the cab floor at the pivot
@@ -1040,8 +1122,9 @@ export class LiveGateSystem {
     // rotunda on its pedestal (drum radius limited by the neighbouring rotundas, data rotundaMaxR)
     cyl(geo, [rot[0], G, rot[2]], 0.6, b.Hr - 0.3, C.steel, C.steelE, 12);
     cyl(geo, [rot[0], G + b.Hr - 0.3, rot[2]], b.rotR, 3.6, C.panel, [0.45, 0.25, 0, 0], 24);
-    // rotunda corridor (turns with the tunnel) from the drum to tunnel A
-    slab(geo, at(b.rotR * 0.8, fl(b.rotR * 0.8) - 0.1), at(m.F + 0.2, fl(m.F + 0.2) - 0.1), 2.4, 2.9, C.neck, C.panelE);
+    // rotunda corridor (turns with the tunnel) from the drum - or from where it leaves the bridge's own fixed walkway
+    // (neckStart) - to tunnel A
+    for (const N of this.neckParts(b, q.a)) { const e1 = N.s1 + (N.hw > 1 ? 0.2 : 0.05); slab(geo, v3.add(at(N.s0, fl(N.s0) - 0.1), v3.mul(side, N.off)), v3.add(at(e1, fl(e1) - 0.1), v3.mul(side, N.off)), 2 * N.hw, 2.9, C.neck, C.panelE); }
     // telescoping tunnel sections (fixed lengths, nested: largest nearest the aircraft), floors on the rotunda -> cab line
     const secs = this.sections(b, q.e); let last = null;
     secs.forEach(([s0, s1, w, h], i) => { const dy = (h - secs[0][3]) / 2; last = tube(geo, at(s0, fl(s0) - dy), at(s1, fl(s1) - dy), w, h, C.panel, C.panelE); });
@@ -1298,15 +1381,35 @@ export class LiveGateSystem {
     const f = stD(dd), nose = stW(dn, G); const n2 = [nose[0], nose[2]], f2 = [f[0], f[2]];
     const near = (A, B) => Math.abs(wrap(A.a - B.a)) < 1e-4 && Math.abs(A.e - B.e) < 1e-3 && Math.abs(A.t - B.t) < 1e-4 && Math.abs(A.h - B.h) < 1e-3;
     const dedupe = (P) => P.filter((q, i) => i === 0 || !near(q, P[i - 1]));
-    const parts = [];
+    const parts = []; let inside = false;
+    // (close-out round 3 bridges-4: every leg is now tested against the NEW occupant - before, the way back to rest and
+    // the leg of a bridge that does not dock it were not, so a bridge already in the new body waited there for DOCK_DELAY
+    // and backed out through it, and an undocking during this one retraced the old way into it)
+    const restQ = (b) => ({ a: b.a0, e: b.e0, t: 0, h: b.hRest ?? b.h0 });
+    const cost = (b, pts, toDoor) => this.pathHits(b, pts, T, n2, f2, toDoor, true);
+    const pick = (C) => { // C: [{pts, toDoor}] in order of preference: the first clear one, else the fewest poses in the aircraft
+      let best = null; for (const c of C) { c.k = cost(c.b, c.pts, c.toDoor); if (!c.k.fixed && !c.k.n) return c; if (!c.k.fixed && (!best || c.k.n < best.k.n)) best = c; }
+      return best || C[0]; };
     for (const b of this.bridgesOf(g)) {
       const l = L.get(b); const Pn = this.docks(g, b) ? this.planFor(g, b) : null;
       if (!l.post) { if (Pn) parts.push({ b, pre: [l.q], post: Pn.path.slice(), Pn }); continue; }  // at rest: the normal docking
-      let post;
-      if (!Pn) post = l.pre.slice().reverse().concat([{ a: b.a0, e: b.e0, t: 0, h: b.hRest ?? b.h0 }]);
-      else if (same && !l.toRest && near(l.post[l.post.length - 1], Pn.q1)) post = l.post;
-      else { const direct = [l.q, { ...Pn.qs }, Pn.q1]; post = this.pathHits(b, direct, T, n2, f2) ? l.pre.slice().reverse().concat(Pn.path.slice(1)) : direct; }
-      parts.push({ b, pre: l.pre, post, Pn });
+      // the way back to rest: the way it came (reversed), or straight back - retract at its angle (cab straightened), swing
+      // at the operational retraction, extend to the rest pose (all within 1:4)
+      const r = restQ(b), q = l.q, hR = this.bandH(b, b.m.opR, q.h, SLOPE_MAX);
+      const backs = [{ b, pts: dedupe(l.pre.slice().reverse().concat([r])), toDoor: false, way: 'pre' },
+        { b, pts: dedupe([q, { a: q.a, e: b.m.opR, t: 0, h: hR }, { a: r.a, e: b.m.opR, t: 0, h: this.bandH(b, b.m.opR, r.h, SLOPE_MAX) }, r]), toDoor: false, way: 'retract' }];
+      // a part already in the new body: the bridge moves at once (no DOCK_DELAY hold), on the way out with the fewest poses in it
+      if (this.pathHits(b, [q, q], T, n2, f2, false)) inside = true;
+      let post, pre = l.pre;
+      if (Pn && same && !l.toRest && near(l.post[l.post.length - 1], Pn.q1)) post = l.post; // (the same occupant: back the way it came)
+      else {
+        const back = pick(backs); pre = back.pts.slice().reverse(); // (an undocking during this one retraces the chosen way back)
+        if (!Pn) post = back.pts;
+        else { const via = { b, pts: back.pts.concat(Pn.path.slice(1)), toDoor: true }; const ch = pick([{ b, pts: [q, { ...Pn.qs }, Pn.q1], toDoor: true }, via]); post = ch.pts;
+          if (ch === via) pre = back.pts.slice().reverse(); }
+        if (back.k && (back.k.n || back.k.fixed)) b._dockFromHit = { n: back.k.n, fixed: back.k.fixed, way: back.way, t: now }; // (checkers' diagnostics)
+      }
+      parts.push({ b, pre, post, Pn });
     }
     const time = (b, pts, door) => { const d = []; for (let i = 1; i < pts.length; i++) d.push(this.segTime(b, pts[i - 1], pts[i], door && i === pts.length - 1)); return d; };
     const sum = (d) => d.reduce((x, y) => x + y, 0);
@@ -1323,7 +1426,7 @@ export class LiveGateSystem {
       plans.set(p.b, { ok: true, T: (p.Pn && p.Pn.T) || T || null, q0: path[0], q1: path[path.length - 1], qs: p.Pn ? p.Pn.qs : null, path, dur, total: sum(dur),
         slope: p.Pn ? p.Pn.slope : 0, door: p.Pn ? p.Pn.door : null, toRest: !p.Pn, trans: true });
     }
-    this.anims.set(g.id, { from: k0, to: 1, t0: now + (same ? 0 : DOCK_DELAY) * 1000, dur: D * 1000, k: k0, plans });
+    this.anims.set(g.id, { from: k0, to: 1, t0: now + (same || inside ? 0 : DOCK_DELAY) * 1000, dur: D * 1000, k: k0, plans });
   }
   // undocking plans of the current occupant from the docked state (levelPlan of each docking bridge's plan; cached)
   undockPlans(g) {
@@ -1521,12 +1624,13 @@ export class LiveGateSystem {
       const rt = [-v.d[2], v.d[0]]; const W = (x, z) => [v.p[0] + v.d[0] * x + rt[0] * z, v.p[2] + v.d[2] * x + rt[1] * z];
       const smp = []; // [x, z (world), lo, hi (above the apron), margin, closure]
       for (const [x0, x1, z0, z1, y0, y1] of boxes) { const nx = Math.max(1, Math.ceil((x1 - x0) / 0.3)), nz = Math.max(1, Math.ceil((z1 - z0) / 0.3));
-        for (let i = 0; i <= nx; i++) for (let j = 0; j <= nz; j++) smp.push([...W(x0 + (x1 - x0) * i / nx, z0 + (z1 - z0) * j / nz), y0, y1, 0.3, false]); }
+        for (let i = 0; i <= nx; i++) for (let j = 0; j <= nz; j++) smp.push([...W(x0 + (x1 - x0) * i / nx, z0 + (z1 - z0) * j / nz), y0, y1, 0.3, false, false]); }
       if (belt) { const n = Math.ceil(belt.len / 0.3); for (let i = 0; i <= n; i++) { const s = belt.len * i / n; const x = belt.x0 + s * Math.cos(belt.th), y = belt.y0 + s * Math.sin(belt.th);
-        for (const z of [-belt.w / 2, 0, belt.w / 2]) smp.push([...W(x, z), y, y + belt.h, 0.1, x > belt.xe - 1.0]); } }
-      for (const [x, z, lo, hi, mg, closure] of smp) {
+        for (const z of [-belt.w / 2, 0, belt.w / 2]) smp.push([...W(x, z), y, y + (x > belt.xe - belt.railGap ? belt.thick : belt.h), 0.1, x > belt.xe - 1.0, true]); } } // (no rails on the end section)
+      for (const [x, z, lo, hi, mg, closure, isBelt] of smp) {
         const dx = x - n2[0], dz = z - n2[1]; const ax = -(dx * f2[0] + dz * f2[1]), ay = dx * r2[0] + dz * r2[1];
-        const h = acHit(T, ax, ay, lo, hi, closure ? 0 : mg, true); if (h && !(closure && h === 'fus')) return no('own ' + h);
+        // (the conveyor against the rendered, pitched skin; everything else also against the ellipse: acHit ell)
+        const h = acHit(T, ax, ay, lo, hi, closure ? 0 : mg, isBelt ? 'skin' : 'both'); if (h && !(closure && h === 'fus')) return no('own ' + h);
         for (const o of this.keepOut) if (o.gate !== g && hitsAircraft(o, [x, z], hi)) return no('other aircraft');
         if (inBuilding(x, z)) return no('building');
       }
@@ -1543,21 +1647,24 @@ export class LiveGateSystem {
     // the fitted types at start-up); a type re-seated later (fit.js seatType) takes the nearest one: [key, value]
     const setting = (pre, val) => { let best = null, bd = 1e9; for (const k in B) if (k.startsWith(pre) && /^\d+$/.test(k.slice(pre.length))) { const x = +k.slice(pre.length) / 100, d = Math.abs(x - val); if (d < bd) { bd = d; best = [k, x]; } } return best; };
     const fuse = T.R + 0.4;
-    // cargo doors are on the right (starboard) side: forward ahead of the wing, aft behind it (stations inferred)
+    // (aftCargo: where the baggage train starts, behind the wing on the right, starboard, side; the belt loaders take the
+    // cargo doors themselves from beltDoor)
     const fwdCargo = T.L * 0.22, aftCargo = T.L * 0.66;
     const cartCol = () => { const cs = [[0.34, 0.37, 0.4], [0.16, 0.24, 0.42], [0.2, 0.3, 0.24], [0.55, 0.56, 0.57]]; return [...cs[Math.floor(R() * cs.length)], 1]; };
     const tugCol = () => { const cs = [[0.9, 0.72, 0.1], [0.92, 0.92, 0.9], [0.12, 0.2, 0.42]]; return [...cs[Math.floor(R() * cs.length)], 1]; };
-    // belt loaders (narrow bodies with sourced lower-deck sills: Boeing 737 and Airbus A320 families, js/world/gates.js
-    // BELT_PUB; the wide bodies' holds are container-loaded and not modelled): per cargo door, the conveyor raised to that
-    // door's sill (beltSill: the published one, at least 0.3 m above the rendered model's lowest skin) with its top end on
-    // the sill against the side skin (the elliptical cross-section's half width at that height + 0.05 m), the vehicle
-    // angled 18 deg off square with its low end away from the wing
+    // belt loaders (narrow bodies with sourced lower-deck sills: Boeing 737 and Airbus A320 families; the wide bodies'
+    // holds are container-loaded and not modelled): per cargo door (js/world/gates.js beltDoor: the fitted model's own
+    // cargo door - station and rendered sill - or the published station / sill, never under the rendered keel), the
+    // conveyor's top end on that sill against the RENDERED starboard skin (beltEndY: skin half width at the sill + 0.03 m;
+    // close-out round 3 bridges-3 - the unpitched ellipse had put it 0.29-0.36 m below a 737 MAX's forward belly and up to
+    // 0.88 m off the 737 NG's aft door), the vehicle angled 18 deg off square with its low end away from the wing
     const tk = this.typeKeyOf(T); const fam = beltFamily(tk);
-    if (fam) { const crown = (T.fit && T.fit.renderedCrown) || T.Hc + T.R; const a = crown - T.Hc;
-      for (const [X, pr, sgn, door] of [[fwdCargo, 0.85, -1, 'fwd'], [aftCargo, 0.6, 1, 'aft']]) { if (R() >= pr) continue;
-        const st = setting('belt', beltSill(T, fam, door)); if (!st) continue; const [bk, S] = st; const sh = beltShape(S);
-        const yEnd = T.R * Math.sqrt(Math.max(0, 1 - ((S - T.Hc) / a) ** 2)) + 0.05;
-        const belt = { x0: sh.x0, y0: sh.y0, len: sh.len, th: sh.th, w: sh.w, h: sh.thick + 0.25, xe: sh.xe };
+    if (fam) {
+      for (const [pr, sgn, door] of [[0.85, -1, 'fwd'], [0.6, 1, 'aft']]) { if (R() >= pr) continue;
+        const D = beltDoor(T, fam, door); if (!D) continue; const X = D.X;
+        const st = setting('belt', D.S); if (!st) continue; const [bk, S] = st; const sh = beltShape(S);
+        const yEnd = beltEndY(T, X, S);
+        const belt = { x0: sh.x0, y0: sh.y0, len: sh.len, th: sh.th, w: sh.w, h: sh.thick + 0.25, thick: sh.thick, railGap: BELT_RAIL_GAP, xe: sh.xe };
         const boxes = [[-2.5, 2.4, -1.05, 1.05, 0, sh.chassisTop], [-2.55, -1.2, -1.08, -0.5, 0, sh.cabTop]];
         for (const yaw of [72, 90, 60]) { const c = sgn * Math.cos(yaw * DEG), sn = -Math.sin(yaw * DEG); const d = v3.norm(v3.add(v3.mul(f, c), v3.mul(r, sn)));
           const e = v3.add(v3.sub(nose, v3.mul(f, X)), v3.mul(r, yEnd)); const p = v3.sub(e, v3.mul(d, sh.xe));

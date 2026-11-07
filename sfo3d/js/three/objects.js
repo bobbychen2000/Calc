@@ -75,6 +75,7 @@
 // (docs/research/engine_impl.md §4.8).
 import { THREE, TSL } from './lib.js';
 import { hash12, lampK } from './tsl/common.js';
+import { groundBounce } from './tsl/ground_bounce.js';   // local ground albedo for the light from below (env-10)
 import { Geo } from '../geom.js';
 import { GROUND_Y, DIR_S, DIR_T } from '../geo.js';
 const { Fn, uniform, attribute, vec2, vec3, vec4, float, texture, dot, abs, max, min, mix, smoothstep, step, clamp, normalize, length, floor, fract, sin, atan, select, If, fwidth, positionWorld, cameraPosition, normalWorld, cameraViewMatrix, modelWorldMatrixInverse, exp, normalWorldGeometry, reflect, pmremTexture } = TSL;
@@ -91,6 +92,37 @@ const gridLineA = (x, period, w) => {
 const GLASS_F0 = [0.0659, 0.1016, 0.1016], GLASS_T = [0.388, 0.620, 0.620], F0_IOR2 = 1 / 9; // ((2 - 1) / (2 + 1))^2
 // pier walls: top (parapet) 15.2 m above the apron, glass up to 1.8 m below it (sfo_buildings.json, js/live/terminals.js)
 const WALL_TOP = 15.2, TOP_ABOVE_GLASS = 1.8;
+
+// Per-vertex wall data of the curtain-wall panes (matId 1) for the facade own-shadow in their reflection and the frame
+// finish (close-out round 3, env-7 / env-8). The pane's vertex colour is unused by the shader (its albedo is replaced),
+// so it carries: col.r = -1 - (wall top above the apron), col.g = wall bottom above the apron (0 = solid to the ground),
+// col.b = 2 for a light silver-white frame (inside lightRings). Top / bottom: the highest / lowest vertex of the same mesh
+// in the pane's 3 m x 3 m column (js/live/terminals.js stacks the fascia, glass and parapet layers of a wall at the same
+// x, z: roof + 0.6 m parapet for piers and halls, y1 for walkways); a bottom above GROUND_Y + 5.5 m is an elevated
+// walkway (glass from y0 + 0.8 over open ground, y0 >= 6 m), lower is a building on its 0-5 m apron-level base.
+// Returns the number of pane vertices encoded. Idempotent (geometry.userData.wallTB).
+export function glassWallAttrs(geo, groundY = GROUND_Y, lightRings = null) {
+  if (!geo || geo.userData.wallTB) return 0; geo.userData.wallTB = true;
+  const P = geo.getAttribute('position'), X = geo.getAttribute('extra'), C = geo.getAttribute('color'); if (!P || !X || !C) return 0;
+  const p = P.array, x = X.array, n = P.count, CELL = 3; let c = null;   // (a copy: the attribute may share the builder's array)
+  const key = (i) => Math.floor(p[i * 3] / CELL) * 100003 + Math.floor(p[i * 3 + 2] / CELL);
+  const top = new Map(), bot = new Map();
+  for (let i = 0; i < n; i++) { const k = key(i), y = p[i * 3 + 1]; const t = top.get(k); if (t === undefined || y > t) top.set(k, y); const b = bot.get(k); if (b === undefined || y < b) bot.set(k, y); }
+  const inside = (px, pz, R) => { let w = false; for (let a = 0, b = R.length - 1; a < R.length; b = a++) { const [xa, za] = R[a], [xb, zb] = R[b]; if ((za > pz) !== (zb > pz) && px < (xb - xa) * (pz - za) / (zb - za) + xa) w = !w; } return w; };
+  const near = (px, pz, R, r) => { for (let a = 0, b = R.length - 1; a < R.length; b = a++) { const [xa, za] = R[a], [xb, zb] = R[b]; const dx = xb - xa, dz = zb - za, L = dx * dx + dz * dz || 1; const t = Math.max(0, Math.min(1, ((px - xa) * dx + (pz - za) * dz) / L)); if (Math.hypot(px - xa - t * dx, pz - za - t * dz) < r) return true; } return false; };
+  let m = 0;
+  for (let i = 0; i < n; i++) {
+    if (Math.abs(x[i * 4 + 2] - 1) > 0.25) continue;
+    const k = key(i), y = p[i * 3 + 1]; const t = top.get(k), b = bot.get(k);
+    const hT = Math.max(t - groundY, y - groundY + 0.3), hB = b - groundY > 5.5 && t - b < 8 ? b - groundY : 0;   // (a walkway tube is <= ~5 m tall: a tall column without its lower vertices is not elevated)
+    let light = 0;
+    if (lightRings) { const px = p[i * 3], pz = p[i * 3 + 2]; for (const R of lightRings) if (inside(px, pz, R) || near(px, pz, R, 3)) { light = 1; break; } }
+    if (!c) c = Float32Array.from(C.array);
+    c[i * 4] = -1 - hT; c[i * 4 + 1] = hB; c[i * 4 + 2] = light ? 2 : 0; m++;
+  }
+  if (c) geo.setAttribute('color', new THREE.BufferAttribute(c, 4));
+  return m;
+}
 
 // Concourse hall behind a terminal curtain-wall pane (interior mapping in the object's local frame = world for the
 // terminals): floor at the concourse level (GROUND_Y + 5 m: the piers' apron level is 0-5 m, js/live/terminals.js; panes
@@ -213,13 +245,18 @@ export function objectMaterial(opts) {
       // AB (?glassab=1 only, renderer3 glassAB): x 1 = the round-3 inputs (gridLine frame, untinted F0 0.111 x (0.9,
       // 0.96, 1), T (0.48, 0.52, 0.54), no ground / shadow correction); y, z, w = weights of reflection, interior, frame
       const AB = opts.glassAB || null;
+      const enc = col.r.lessThan(-0.5);   // per-vertex wall data from renderer3 (glassWallAttrs below; env-7 / env-8)
       let mull = max(gridLineA(u, 1.8, 0.035), gridLineA(v, 3.9, 0.06)); let spandrel = step(fract(v.div(3.9)), 0.12);
       if (AB) { mull = mix(mull, max(gridLine(u, 1.8, 0.035), gridLine(v, 3.9, 0.06)).mul(float(1.0).sub(smoothstep(150.0, 600.0, dist).mul(0.7))), AB.x).mul(AB.w); spandrel = spandrel.mul(AB.w); }
       const frame = max(mull, spandrel.mul(0.5)).mul(isWall);
       const pane = vec2(floor(u.div(1.8)), floor(v.div(3.9)));
       const hP = hash12(pane.add(vec2(17.0, 3.0))), hQ = hash12(pane.add(vec2(5.0, 41.0))), hR = hash12(pane.add(vec2(29.0, 7.0)));
       const room = concourse(u, v, LP, LN, wt);
-      albedo.assign(mix(vec3(0.0), vec3(0.28, 0.29, 0.3), frame)); // the pane itself: no diffuse (review round 3); mullions / spandrels opaque
+      // the pane itself: no diffuse (review round 3); mullions / spandrels opaque: dark grey metal (inherited, inf), light
+      // silver-white where the buildings spec has a photo (tools/buildings/spec_itb.json ba_g.mullion_finish, obs / low:
+      // BA-G only; renderer3 flags those vertices col.b = 2; close-out round 3, env-7; albedo 0.62 I)
+      const frameCol = select(enc.and(col.b.greaterThan(1.5)), vec3(0.62, 0.63, 0.64), vec3(0.28, 0.29, 0.3));
+      albedo.assign(mix(vec3(0.0), frameCol, frame));
       // the hall behind the pane as emission (see the header): rho x E_hall / pi x T x (1 - F), F per channel (Schlick, F0 = GLASS_F0, F90 = 1)
       // geometry normal, NOT normalWorld: core() also feeds mat.normalNode, and normalWorld depends on it (that cycle turned every object black)
       const cosV = abs(dot(normalize(cameraPosition.sub(wp)), normalWorldGeometry)); const f5 = float(1.0).sub(cosV).pow(5.0);
@@ -236,9 +273,16 @@ export function objectMaterial(opts) {
       const nxz = normalize(vec2(normalWorldGeometry.x, normalWorldGeometry.z).add(1e-5));
       const Rw = reflect(normalize(wp.sub(cameraPosition)), normalWorldGeometry); const hG = max(wp.y.sub(GROUND_Y), 0.5);
       const dN = hG.mul(max(dot(vec2(Rw.x, Rw.z), nxz), 0.0)).div(max(Rw.y.negate(), 1e-3));
-      const hTop = max(hG.add(TOP_ABOVE_GLASS), WALL_TOP);
-      const shLen = hTop.mul(max(dot(vec2(sunDir.x, sunDir.z), nxz).negate(), 0.0)).div(max(sunDir.y, 0.02)).max(1e-3);
-      const own = float(1.0).sub(smoothstep(shLen.mul(0.8), shLen, dN));
+      // wall top / bottom above the apron per vertex (renderer3 -> glassWallAttrs: encoded in the pane's unused vertex
+      // colour, col.r = -1 - top, col.g = bottom; close-out round 3, env-8): elevated walkways (glass 6.8-9.8 m over open
+      // ground) shade a strip [bottom, top] x k in front, halls their own roof height; unencoded geometry keeps the pier rule
+      const hTop = select(enc, col.r.negate().sub(1.0), max(hG.add(TOP_ABOVE_GLASS), WALL_TOP));
+      const hBot = select(enc, col.g, float(0.0));
+      const kSh = max(dot(vec2(sunDir.x, sunDir.z), nxz).negate(), 0.0).div(max(sunDir.y, 0.02));
+      const shLen = hTop.mul(kSh).max(1e-3), shLen0 = hBot.mul(kSh);
+      // only while the Sun is up (env-8: at night sunDir.y was clamped to 0.02, shLen ~760 m and own = 1 on every facade
+      // facing away from the sun's azimuth, which halved the night ground reflection through svf)
+      const own = float(1.0).sub(smoothstep(shLen.mul(0.8), shLen, dN)).mul(smoothstep(shLen0.mul(0.8), shLen0.add(1e-3), dN)).mul(smoothstep(0.0, 0.02, sunDir.y));
       const svf = dN.div(length(vec2(dN, hTop))).mul(0.5).add(0.5);
       const gW = smoothstep(0.0, -0.35, Rw.y).mul(float(1.0).sub(frame)).mul(isWall); // the env's ground blend (sky.js envColor); panes only
       const kLoc = kG.mul(mix(vec3(1.0), shadeK.mul(svf), own)); // local apron radiance / the env's ground radiance G
@@ -330,7 +374,9 @@ export function objectMaterial(opts) {
     ao.mulAssign(select(matId.equal(7), float(1.0), mix(float(0.78), float(1.0), smoothstep(0.0, 4.0, wp.y.sub(3.0)))));
     // per-vertex emission (lamp heads etc.) in lamp units x lampK; the night terms above already carry nightE (opts.night)
     if (opts.carFade) { const k = smoothstep(CAR_FADE[0], CAR_FADE[1], dist); albedo.assign(mix(albedo, vec3(...CAR_MEAN), k)); rough.assign(mix(rough, 0.5, k)); metal.assign(mix(metal, 0.0, k)); }
-    const emissive = albedo.mul(emis).mul(lampK).add(extraEmis);
+    // + the local ground's light from below instead of the whole-airfield IBL ground (tsl/ground_bounce.js; close-out
+    // round 3, env-10); geometry normal (normalWorld depends on this core), flipped on back faces (DoubleSide)
+    const emissive = albedo.mul(emis).mul(lampK).add(extraEmis).add(groundBounce(albedo, metal, ao, normalWorldGeometry.mul(TSL.faceDirection)));
     return { albedo, rough, metal, ao, emissive, nPert, ior, spec, specI, envAdd };
   };
   // one evaluation shared by several material slots: A runs core() once per shader build (Fn.once) and keeps its

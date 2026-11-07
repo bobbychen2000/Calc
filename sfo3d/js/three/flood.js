@@ -203,8 +203,10 @@ export class FloodLightNode extends THREE.AnalyticLightNode {
 }
 
 // SPOT_SHARE (review look2-9): the shadow-casting spot carries this share of its mast's field, the rest stays in the
-// unshadowed residual. A stand is lit from several masts / directions to limit shadows (ICAO Annex 14 Vol I 5.3.24,
-// recalled, NV), but only the 1-2 strongest masts cast shadows here and the dominant one carried ~87 % of the local field,
+// unshadowed residual. A stand is lit from several masts / directions to limit shadows (ICAO Annex 14 Vol I 5.3.24: "the
+// arrangement and aiming of floodlights should be such that an aircraft stand receives light from two or more directions
+// to minimize shadows" - 2nd: quoted by a vendor FAQ, refs/cache/env_src/SOURCES.json; the Annex itself is sold by ICAO
+// and icao.int returned 403, close-out round 3 env-5), but only the 1-2 strongest masts cast shadows here and the dominant one carried ~87 % of the local field,
 // so an A330 wing left a near-black (0.13) shadow; with 0.5 a shadow keeps >= ~50 % of the lit level (I).
 export const SPOT_SHARE = 0.5;
 // one mast as a shadow-casting spot light (see 3. above). mast = vec4(x, z, aim x, aim z); intensity = lamps on x LAMP_M

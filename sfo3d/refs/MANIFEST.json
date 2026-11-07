@@ -99,6 +99,20 @@
    "sha256": "ef2ba69875652004e3d7d11c0585212ce1c99a5c61a5f3de0994325d7abf4ddd",
    "url": "pdftotext -layout of the PDFs above"
   },
+  "acap/AC_A330_rev21_apr2013.pdf": {
+   "class": "local",
+   "why": "manufacturer airport-planning documents (copyright)",
+   "bytes": 10127029,
+   "sha256": "2f296730e208262e041b98555f135381dda999e7b9cc531c629c7e37f86ed3e8",
+   "url": "https://skybrary.aero/sites/default/files/bookshelf/2371.pdf"
+  },
+  "acap/AC_A330_rev21_apr2013.txt": {
+   "class": "local",
+   "why": "manufacturer airport-planning documents (copyright)",
+   "bytes": 1443149,
+   "sha256": "cc63cc02276a7934c9016a91ceb3ebad6981398fa56995e71d21d13a49eed689",
+   "url": "pdftotext -layout of the PDFs above"
+  },
   "acap/wingletspans.pdf": {
    "class": "local",
    "why": "manufacturer airport-planning documents (copyright)",
@@ -10987,6 +11001,13 @@
    "sha256": "bf6f229b43226e827e0f5d9942062648b0cdf0c3380213e43b875fc09971b347",
    "url": "pdftotext -layout of the PDF above"
   },
+  "press/boeing_737max_design_decisions_2012-04-11.html": {
+   "class": "local",
+   "why": "fetched third-party page (copyright) unless SOURCES.json says open",
+   "bytes": 133611,
+   "sha256": "1731ec5b0f4ecd6510dd8c5a492de4fa610a43fa967a3decd851bdea0806ed1a",
+   "url": "https://boeing.mediaroom.com/2012-04-11-Boeing-Makes-737-MAX-Design-Decisions"
+  },
   "rec/adsbfi_20261104_17.jsonl.gz": {
    "class": "local",
    "why": "adsb.fi terms: personal non-commercial use, not to be licensed on",
@@ -11230,8 +11251,14 @@
   "rec/adsbfi_20261107_03.jsonl.gz": {
    "class": "local",
    "why": "adsb.fi terms: personal non-commercial use, not to be licensed on",
-   "bytes": 9940451,
-   "sha256": "179537443e314c7806838007020e677d495d44e67c9e906245616dab81b58eff"
+   "bytes": 12955240,
+   "sha256": "17413955c603d3fafd17f6b598ada555b136027855c042599d5ae975701a3ae8"
+  },
+  "rec/adsbfi_20261107_04.jsonl.gz": {
+   "class": "local",
+   "why": "adsb.fi terms: personal non-commercial use, not to be licensed on",
+   "bytes": 5793452,
+   "sha256": "20cd525896266518b51651ce9f6e94640645882aaede464035478bcc1031c423"
   },
   "rec/adsblol_20261104_17.jsonl.gz": {
    "class": "pack",
@@ -11476,8 +11503,14 @@
   "rec/adsblol_20261107_03.jsonl.gz": {
    "class": "pack",
    "why": "ODbL (adsb.lol); trimmed copy in rec_pack/",
-   "bytes": 2807595,
-   "sha256": "d447fb037f4bbd282708221ad7c6f9a3997b690ecfaeaf1140e9c2b9d15cde9a"
+   "bytes": 3638304,
+   "sha256": "802eafa81b688a1c86d3f3152655fef65a49b8c20f8b05664e32a39cc4c78b4d"
+  },
+  "rec/adsblol_20261107_04.jsonl.gz": {
+   "class": "pack",
+   "why": "ODbL (adsb.lol); trimmed copy in rec_pack/",
+   "bytes": 987121,
+   "sha256": "7c94b976b36410c2a865c79b260f8e074e857decd97c26b9741881210d296e9a"
   },
   "rec/recorder.log": {
    "class": "local",
@@ -11488,8 +11521,8 @@
   "rec/recorder.out": {
    "class": "local",
    "why": "recorder state",
-   "bytes": 67780,
-   "sha256": "f39e33ec6e94b65933f7cb550f23728e4922cdceaf46707c4afda062891a8b92"
+   "bytes": 69892,
+   "sha256": "b44129e30f7f30fd0992eaf92d975d63e6d580317afa89c325ac261575057675"
   },
   "rec/recorder.pid": {
    "class": "local",

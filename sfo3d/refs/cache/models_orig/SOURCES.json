@@ -2,7 +2,19 @@
  "b738.sfom": {
   "url": "generated: tools/convert_models.py b738 from refs/cache/src/fg/737-800 (FGMEMBERS/737-800 @9126249)",
   "licence": "GPL-2.0 (derived from the FlightGear 737-800 model)",
-  "made": "2026-11-05",
-  "note": "pre-atlas conversion (tools/liveries/atlas.py source); includes the door 1L re-fit (convert_models.py doorFit, review aircraft-v2)"
+  "made": "2026-11-07",
+  "note": "pre-atlas conversion (tools/liveries/atlas.py source); since close-out round 3 (7 Nov 2026) WITHOUT the door 1L re-fit (the stance is fitted instead: js/aircraft/fit.js STANCE_FIT)"
+ },
+ "crj7.sfom": {
+  "url": "generated: FAM_DIR=refs/cache/src/fam3d tools/convert_models.py crj7 from crj9/glTF2/CRJ7.glb (Ysurac/FlightAirMap-3dmodels @0906d9b)",
+  "licence": "GPL-2.0 (derived from the FlightAirMap model)",
+  "made": "2026-11-07",
+  "note": "pre-atlas conversion; re-atlased it reproduces the committed data/models/crj7.sfom (same vertex positions, livery-atlas UVs within 1.5e-5, same atlas charts) - close-out round 3 aircraft-6"
+ },
+ "a388.sfom": {
+  "url": "generated: FAM_DIR=refs/cache/src/fam3d tools/convert_models.py a388 from a380/glTF2/A380.glb (Ysurac/FlightAirMap-3dmodels @0906d9b)",
+  "licence": "GPL-2.0 (derived from the FlightAirMap model)",
+  "made": "2026-11-07",
+  "note": "pre-atlas conversion; re-atlased it reproduces the committed data/models/a388.sfom (same vertex positions, livery-atlas UVs within 1.5e-5, same atlas charts) - close-out round 3 aircraft-6"
  }
 }

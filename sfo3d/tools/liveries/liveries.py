@@ -550,7 +550,7 @@ def aircanada(c):
 
 
 @livery('ACA-X', name='Air Canada Express', version='2017 livery with AIR CANADA EXPRESS titles', since=2017, refs=AC_REFS + [photo_ref('ACA-X', 'AIR CANADA over the windows, rondelle + EXPRESS below them')],
-        colors=dict(red=(AC['red'], 'official'), black=(AC['black'], 'official')), types=['CRJ9'],
+        colors=dict(red=(AC['red'], 'official'), black=(AC['black'], 'official')), types=['CRJ9', 'CRJ7'],   # (CRJ7: Jazz C-FCJZ on the ground at SFO in our recording, 4-7 Nov 2026; close-out round 3 aircraft-6)
         runtime=dict(top='#F7F8F8', belly='#141414', tail='#141414', tail2='#F01428', eng='#141414', bellyLine=-0.55),
         status='title placement approx')
 def aircanada_express(c):

@@ -222,7 +222,12 @@ Priority (weather §4.5, **I** built on **V** facts):
    3-5-1's "most nearly aligned" rule gave north / east plans SFO does not publish (21 of 58 fixture reports) and
    instrument arrivals to 1L/1R (no IAP), while the 4 Nov ADS-B recording shows the West Plan in those winds; the
    fallback is now the West Plan unless the 28-tailwind is ≥ 5 kt (or the 28-crosswind ≥ 20 kt with a 19 headwind),
-   then the Southeast Plan (**I**; implementation and evidence: environment_impl.md R2.1).
+   then the Southeast Plan (**I**; implementation and evidence: environment_impl.md R2.1). **Revised 2026-11-07
+   (close-out round 3, env-5):** the limits are FAA Order 8400.9 §4b (**V**, PDF cached in `refs/cache/env_src/`): a plan
+   is acceptable when its arrival runway has, dry, a crosswind INCLUDING GUSTS ≤ 20 kt and a tailwind ≤ 5 kt (7 kt with
+   touchdown-zone anemometers, SFO's NV), and, not clear / not dry (precipitation in the METAR, **I**), a crosswind incl.
+   gusts ≤ 15 kt and no tailwind beyond calm (0-3 kt); West unless it fails and Southeast does not (both fail: the smaller
+   excess, **I**). 58 fixture reports: non-West 3 → 7 (environment_impl.md R3.2).
 4. Approach type per arrival end: instrument whenever the METAR is below the charted visual-approach minima "SFO
    2500'/5" (Quiet Bridge / Tipp Toe charts, d-TPP 2609, **V**); otherwise unknown (visual or ILS; the D-ATIS showed ILS
    at night in VFR, **M**). The controller only needs "instrument approaches are being made" for the flasher rule, and

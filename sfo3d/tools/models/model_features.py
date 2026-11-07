@@ -14,8 +14,9 @@ Per model:
   sec    fuselage section every `dx` metres from the nose: top / bottom of the skin on the centre plane and the half
          width at mid height (planar cut of the triangle mesh; body and fin zones only, i.e. no gear, engines, glass);
          over the forward 45 % also `hwf`, the half widths at the fractions `f` of the section height (bridge cab vs skin);
-         at every station `hwl`, the half widths at the heights `lo` (model units) above the section bottom (lower lobe:
-         belt loaders, js/aircraft/fit.js skinHalfWidth)
+         at every station `hwl`, the STARBOARD half widths (z > 0: the side of the 737 / A320 cargo doors; the source
+         models are not symmetric to a few cm: FG 737-800 lower lobe 2.5 cm narrower to starboard) at the heights `lo`
+         (model units) above the section bottom (lower lobe: belt loaders, js/aircraft/fit.js skinHalfWidth)
   doors  passenger-door objects of the SOURCE model (FlightAirMap .glb node names, e.g. A320 `DoorL1`, CRJ `LeftDoor`,
          E-Jet `door.l1`, A220 `doorFL`): station of the centre and of both edges, sill (lowest y) and top, side (L/R).
          Only some source models have door objects; for the others the doors exist only in the texture.
@@ -122,8 +123,8 @@ def sections(pos, zone, idx, L, dx, hwf=False, zmax=None):
             hf.append(row)
         if hwf:
             row = []
-            for h in HWL:                       # (fuselage only: zmax keeps a low wing / fairing edge out of the lower lobe)
-                zz = [abs(z) for z in crossings(segs, 0, b + h) if zmax is None or abs(z) <= zmax]
+            for h in HWL:                       # starboard (z > 0: the cargo doors' side); zmax keeps a low wing / fairing out
+                zz = [z for z in crossings(segs, 0, b + h) if z > 0 and (zmax is None or z <= zmax)]
                 row.append(round(float(max(zz)), 2) if zz and b + h < t else None)
             hl.append(row)
     out = dict(dx=dx, top=top, bot=bot, hw=hw)

@@ -859,3 +859,139 @@ lower bound; in-pavement style (½ in); aircraft white at 6,500 K; CIE overcast 
 spot share 0.5 and PCF radius; phone-tier caps (A-PERF unmeasured); look2-4 SSR / planar reflections; A-EXP marine
 layer +1.28 EV; a clear civil-twilight reference photo (look2-13); the aircraft-in-glow case (look2-5) and the far-deck
 horizon (look2-8) are not render-confirmed.
+
+## Close-out round 3 fixes (findings env-1 .. env-16), 2026-11-07, env fix agent
+
+Findings: `docs/requests/closeout3_findings.json` `groups.env`. Scripts, logs and before-copies: session scratchpad
+`c3/env/` (`before/`, `scripts/`, `NOTES.md`); renders and probe JSON: `out/env/c3/` (gitignored). Regression checks of
+every logic fix: `tools/env/test_c3.mjs` (23 checks, in `run_gates.sh`). Requests to other tracks:
+`docs/requests/env_closeout.md` (Round 3).
+
+### R3.1 Wet-pavement object reflections: screen-space reflections (env-2, major)
+
+New `js/three/ssr.js` (header: method and every constant), wired in `js/three/ground.js groundMaterial` (the ground's
+emission) and `js/three/renderer3.js` (history / previous view-projection / on-off). On the prepass tiers (high, ultra,
+medium) the reflected view ray of a wet ground fragment is marched in view space through the frame's pre-pass depth
+(24 geometric steps 0.4-160 m); a step behind a surface that is NOT the pavement itself (its reconstructed height above
+the fragment by more than 0.3 m + 2 pixel rows of height at its depth) is refined by 6 bisections and accepted when it
+lies behind a front face by less than 1.5 m + 2 % of the depth. The radiance is the previous frame's resolved image
+(TRAA history), reprojected; it replaces the sky the IBL already mirrors along that ray, weighted by the split-sum
+specular term (Karis 2014), gloss (roughness 0.08 → 1, 0.4 → 0), screen-edge and distance fades. Off until 2 frames
+after a camera cut; on when the wet film is > 0.05 (`R.ssrForce` 0 / 1 / null and `?ssr=0` for A/B). The phone tier
+(single MRT pass, no depth before shading) has none (spec §7.6 "SSR on the high tier").
+Three defects found and fixed on the dev page (`js/three/dev/skytest.html ?ssr=1`, numeric debug `?ssr=dbg&ssrdbg=k`
+read back from the meter): (1) the pre-pass drew the ground material, which then sampled the depth it was writing —
+WebGL "feedback loop" errors ×3 → the term is built only in passes without an MRT (`SceneOnlyNode`): 0 errors; (2) the
+thickness test at the coarse step (steps up to 30 % of t) rejected every hit beyond ~20 m → crossing + bisection first;
+(3) at grazing views one pixel row spans tens of metres of pavement, so a depth sampled one row off reported the
+pavement "above itself" → false hits in a band 90-460 m and in contour arcs, changing with the TRAA jitter (flicker)
+→ the pixel-footprint ground tolerance. dev7: hits only in the boxes' mirror images (`out/env/c3/dev7_dbg2.png`), the
+SSR on/off difference only in the reflection column (mean |Δ| 0.24 DN, max 24.7 DN, `dev7_on/off.png`). App render: R3.13.
+
+### R3.2 Runway-use limits from the primary source (env-5)
+
+FAA Order 8400.9 (PDF cached, `refs/cache/env_src/faa_order_8400-9.pdf`, public domain, SOURCES.json) §4b:
+dry runway crosswind INCLUDING GUSTS ≤ 20 kt, tailwind ≤ 5 kt (7 kt with touchdown-zone anemometers — SFO's
+installation NV, so 5 is used); not clear / not dry: crosswind incl. gusts ≤ 15 kt, tailwind calm (0-3 kt).
+`js/env/state.js runwayConfigFrom` (constants `TAILWIND_SE_KT`, `CROSSWIND_SE_KT`, `WET_CROSSWIND_KT`, `WET_TAILWIND_KT`)
+checks the West plan's arrival runway against these, then the Southeast plan's; both fail → the smaller excess (I); wet =
+precipitation in the METAR (I). Reviewer's `rwycfg.mjs` re-run (58 fixture reports): non-West 3 → 7 (the four new ones
+are gusty southerlies / wet light tailwinds: 170810Z 24010G21KT +RA, 260022Z 20015G22KT, 020448Z 24023G32KT GRRA,
+301456Z 14005KT -DZ); no 1L/1R instrument arrival. ICAO Annex 14 Vol I 5.3.24 (two or more directions per stand):
+primary not obtainable (ICAO sells the Annexes; icao.int HTTP 403), quoted from a 2nd source in `js/three/flood.js`
+(tag 2nd). AC 150/5345-46F §1.2.4 styles: verified in the cached copy; ½ in = the Style 1/2 boundary (SFO's style NV).
+The remaining inferred constants are listed in spec §12.1 with their tags.
+
+### R3.3 Day exposure: incident-light bound (env-4, env-16 metering)
+
+`js/env/atmo/exposure.js incidentBound`: by day (Sun > 0°, blended in over 0-6°) the reflected (frame) metering may
+deviate from the EnvState incident target (`ev100Target`, the illuminance-based EV of the spec §8) by at most ±1 EV
+(`INCIDENT_SPAN`) — the photographer's incident-meter rule, which is what spec §10 A-EXP measures. Night unchanged
+(reflected metering of the lit scene). renderer3 `envInfo` now reports `evReflected`, `evTarget`, `evUsed`. Cases:
+marine-layer tower (E5) reflected 13.25 vs target 11.97 → 12.97 (A-EXP +1.0, was +1.28); the tower-cab interior view
+(env-16: windows mean 234, clipped) 9.0 vs 15.0 → 14.0. Interior views and bright decks are thus metered on the
+exterior light, no per-pixel glass masks needed. AgX tone mapping is unchanged (the tower LED compensation stays valid;
+no re-measure needed).
+
+### R3.4 Position lights by day: lens footprint (env-6)
+
+`js/env/aircraft_lights.js lensGain`: by day the fixed position light is drawn at the lens size `NAV_LENS_S` 0.08 m
+(was the 0.22 m night footprint) with its energy conserved and the 2.2-px floor (energy-conserving upscale only when
+sub-pixel), and the airfield display gain (DAY_GAIN 30) only where the lens is below the floor — a small saturated
+dot, no glare halo (js/three/lights.js: the lens flag suppresses the halo by day). At the review camera (14.4 m, 50°,
+360 px): peak 2.02 × sunlit white paint (before: 8.0 × at gain 30 in the record, 0.08 × after the renderer's fixedK
+cap); night unchanged (0.22 m, gain 1). live.html draws the same record (js/shaders/sprites.js: size `s` 0.08 m, energy
+conserved to its 2.2-px floor): its fixed 8 % halo (1.6 × s) now lies inside the 2.2-px dot instead of a 0.35 m glow at gain 30.
+
+### R3.5 Glass and facades (env-7, env-8)
+
+env-7: `_groundAlbedo` concrete mean = premultiplied level-0 point samples of the airfield bake on a 1024² grid (was a
+64 × 64 cell mean whose mixed edge cells added grass and sand). BA-G light-silver mullions (a2 photo) for the BA-G
+rings only (`glassWallAttrs` light-frame flag); other piers keep the dark frame (I). env-8: the own-shadow term uses the
+facade's real wall top and bottom per vertex (`glassWallAttrs`: 3-m columns, elevated walkways bottom > 5.5 m and
+height < 8 m) and is gated by the Sun above the horizon (night own = 1 everywhere). 344 BA-G light-frame vertices; wall
+tops 10.5-26.5 m.
+
+### R3.6 Local ground bounce (env-10)
+
+`js/three/tsl/ground_bounce.js` (header has the model): per fragment, the diffuse light from below is corrected from
+the IBL's whole-airfield ground albedo to the local airfield-bake albedo around the point the surface faces (footprint
+2h + 8 m through the mip chain), view factor (1 − n.y)/2; objects.js and aircraft.js add it to their emission;
+`R.gb.on.value` 0/1 and `?gbounce=0` for A/B. Whole-airfield mean (0.303, 0.275, 0.211) vs apron concrete (0.321,
+0.306, 0.269): on the apron k_loc = 1.06 / 1.11 / 1.27. buildings3d.js (buildings track) can call the same function
+(request).
+
+### R3.7 OSM-asphalt airside paths (env-11)
+
+`js/three/ground.js pathToneTexture`: the 12.5 km of OSM surface=asphalt airside paths (incl. the perimeter road) bake
+with albedo 0.355 × naip_grey / 203 (the concrete paths' NAIP median grey 203 ↔ PCC albedo 0.355; M: DN taken as
+proportional to reflectance within one image; clamped 0.6-1.1 ×), instead of the 0.13 fresh-asphalt albedo. The old
+renderer's BAKE_APT_FS reads the same tone from the paint texture's G channel (`uPaint.g = albedo / 0.5`), which
+js/live/airport.js (static track) does not write yet: no-op until then (request).
+
+### R3.8 Retired pavement (env-12) and the sign atlas exports (env-15)
+
+`tools/env/build_lighting_spec.py load_retired`: retired SFO-Museum taxiway polygons (DETAILS.pavementRetired) are
+skipped and the retired parts subtracted before the in-pavement classification → in-pavement runway-edge points 101 →
+98 (`data/sfo_lighting.js` regenerated; A-FIX 50/50). `js/live/lights.js` skips them for the taxiway-edge lights (1003
+→ 997) and `js/live/signs.js MOVE` drops them from the movement surfaces (one hold sign moved off retired F1). env-15:
+`js/live/signs.js` exports `signFaces`, `locName`, `MOVEMENT_STATS`; `buildSigns` returns `atlasMap`; the replica in
+`js/three/signs.js` is gone (it imports `makeAtlas` + `signFaces`).
+
+### R3.9 Seawall foam from the NAIP shoreline (env-13)
+
+`js/env/shore_field.js`: the NAIP shoreline (data/sfo_shore.js) rasterised at 2 m and turned into an exact Euclidean
+distance field (Felzenszwalb), 0-40 m, Uint8. Both renderers' water shaders use it inside its coverage (live3:
+`ground.js` water; live.html: `WATER_FS uShoreDist/uShoreRect`, hook in app.js) and the old 16-vertex polygon outside.
+4 m off the shore: water side inside the 8 m foam band 0.409 → 1.0 of the samples.
+
+### R3.10 Peninsula reservoirs, watershed, and the old renderer's missing terrain chunks (env-14)
+
+`tools/env/build_reservoirs.py` → `js/env/reservoirs_data.js`: San Andreas Lake (OSM way 33449157; level 134.35 m
+NAVD88 from USGS 3DEP 1 m via EPQS, V), Lower / Upper Crystal Springs (ways 815759758 / 23782143; OSM ele 85 / 87 m,
+2nd), and the SFPUC San Francisco Peninsula Watershed (relation 3944756, 94 km²); ODbL, cached in
+`refs/cache/env_src/osm/` with SOURCES.json. `js/world/terrain.js`: the watershed is painted out of the urban mask (no
+city blocks), each lake carved (bed 3 m below the level inside the shore, banks raised to ≥ level + 0.5 m within 400 m,
+the max of adjacent lakes' banks); app.js adds each lake as a water item at its level (both renderers). Check:
+inside 30 m below level 87/90, 164/169, 106/112; 100 m outside above 87/90, 161/169, 103/112 (narrow arms excepted).
+The **blue patch** of live.html (out/engine_rev/cmp_overview_lake.png): `js/renderer.js` chose near / far pass items by
+the Euclidean distance of their bbox while the projections clip by VIEW DEPTH — an off-axis item nearer than the split
+in depth but farther in distance was drawn by neither pass in its near part. At the overview camera 17 terrain chunks
+were skipped (8 of them the land west of the airport, view depth 4,900-6,400 m, distance 6,500-8,400 m): holes showing
+the sea-level water plane. Fixed with view-depth ranges: 17 → 0 (`c3/env/scripts/chunk_cull.mjs`, real canvas
+rasterisation in Node). The same rule applied to every item (buildings at the screen edges).
+
+### R3.11 Fog veil on an aircraft in its landing-light glow (env-3)
+
+Render-checked (R3.13): night_fog, UAL323 (aa7ec2, B39M) on short final 28R at its recorded 125 ft, chase camera at the
+front-left quarter 45 m; body / adjacent glow ratio measured on the projected fuselage points.
+
+### R3.12 Documentation (env-9)
+
+`docs/research/engine_impl.md §4.8`: the day position light wording (invisible before, now a lens dot at 14.4 m), the
+tau_B 0.75 rows marked pre-final, `close2/panes.json` marked wrong-box (glass_meas.json has the values);
+`docs/requests/engine_closeout.md R2.1` marked done (commit ba7a2d1, phone artifact v3 in 50daff2).
+
+### R3.13 Confirmation renders (live3.html, r186 WebGL 2, llvmpipe 640 × 360, high tier, b3d LOD2; live.html)
+
+(filled below after the run)

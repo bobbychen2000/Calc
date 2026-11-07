@@ -27,6 +27,7 @@
 // landing light 770,000 cd in 15° × 16° (Honeywell LED example for 737NG/757/767/777, spec §6, V for those types; NV for
 // others); taxi light 50,000 cd (parameter, NV: not regulated).
 import { clamp, flashGain, lampUnits, visibilityFactor, aureole } from './lighting/photometry.js';
+import { DAY_GAIN } from './lighting/airfield.js';
 import { renderSlabs, slabTau } from './atmo/sky_model.js';   // one σ field with the scene fog (review truth1-3)
 export { lampUnits };
 
@@ -123,9 +124,10 @@ export function aircraftLightStates({ phase, ground, gs = 0, altAgl = 0, stale =
 
 // ------------------------------------------------------------------------------------------------ sprites
 // Sprite intensity units: js/env/lighting/photometry.js lampUnits (cd -> lamp units at the night calibration).
-let viewer = null;
-/** The camera position for the direction-dependent intensities (set once per frame by js/live/app.js). */
-export function setLightViewer(p) { viewer = p; }
+let viewer = null, pxAngle = 0;
+/** The camera position for the direction-dependent intensities (set once per frame by js/live/app.js); px = the angle
+ *  of one screen pixel at distance 1 (2 tan(fov / 2) / height px; 0 = unknown: no lens footprint, see NAV_LENS_S). */
+export function setLightViewer(p, px = 0) { viewer = p; pxAngle = px > 0 ? px : 0; }
 export const lightViewer = () => viewer;
 let frameT = { prev: null, t: null };
 // Viewing conditions (spec §4.10, as for the airfield lights): the renderer's slabs (renderSlabs + slabTau), E_T and the day display
@@ -136,7 +138,28 @@ export function setLightEnv(env, dayGain) {
   if (!env) { viewEnv = null; return; }
   const w = env.photocell ? env.photocell.asosNightW : 1;
   const slabs = env.atm ? renderSlabs(env) : null;
-  viewEnv = { slabs, ET: env.lightVis ? env.lightVis.ET : 6.99e-7, gain: Math.pow(dayGain ?? 1, 1 - w), fogAur: !!(slabs && slabs[0] && slabs[0].sigma > 1e-4) };   // aureoles only in mist / fog (airfield.js)
+  const g = Math.pow(dayGain ?? 1, 1 - w), G = Math.pow(DAY_GAIN, 1 - w);
+  viewEnv = { slabs, ET: env.lightVis ? env.lightVis.ET : 6.99e-7, gain: g, w, G, rf: G > 0 ? g / G : 1, fogAur: !!(slabs && slabs[0] && slabs[0].sigma > 1e-4) };   // aureoles only in mist / fog (airfield.js)
+}
+// Position-light lens by day (close-out round 3, env-6; engine verify finding engine-v3 residual). The sprite size s of a
+// record is the footprint the light is drawn over: 0.22 m for the position lights is their night look (lens + glare). By
+// day there is no visible glare: a lit lens is a small coloured dot of its own luminance (a 40-80 cd lens of ~20-30 cm²
+// is 13-40 kcd/m², 0.5-2 x sunlit white paint ~17 kcd/m²), while the same energy over the 0.22-m night footprint peaked
+// at ~9 % of white paint and vanished, and the display gain G (DAY_GAIN, airfield.js header: what a 2.2-px sprite needs to
+// reach the eye's daylight threshold on a display) made a near light a 30 x glare disk. Now the footprint blends with the
+// ASOS night weight w from the lens (NAV_LENS_S: the Gaussian core's area π (0.341 s)² = 23 cm², I) by day to the
+// record's s at night (energy kept: lampUnits divides by s²), and the display gain is the one that restores the LENS
+// LUMINANCE when the lens is smaller than the sprites' 2.2-px floor, (2.2 / lens px)², at most G and at least 1: a
+// resolved lens (near) is drawn at its physical luminance, a sub-pixel one (far) gets the airfield lights' gain G as
+// before, and at night (w = 1, G = 1) nothing changes. rf: the old renderer's lamp-unit scale (its dayGain / DAY_GAIN).
+export const NAV_LENS_S = 0.08, SPRITE_MIN_PX = 2.2;
+/** Drawn size and display gain of a position light of record size s0 at distance d (m), ASOS night weight w, day display
+ *  gain G; px = angle of one pixel at distance 1 (setLightViewer). Without px: the record as it was (s0, G). */
+export function lensGain(s0, d, w, G, px = pxAngle) {
+  if (!(px > 0) || !(d > 0)) return { s: s0, g: G, pxL: null };
+  const pxL = NAV_LENS_S / (d * px);
+  const W = clamp(w ?? 1, 0, 1);
+  return { s: NAV_LENS_S + (s0 - NAV_LENS_S) * W, pxL, g: Math.min(G, Math.max(1, (SPRITE_MIN_PX / pxL) ** 2)) };
 }
 /** Frame clock for the flash scheduler (seconds; set once per frame by js/live/app.js). */
 export function setLightFrame(t) { if (frameT.t !== t) { frameT.prev = frameT.t; frameT.t = t; } }
@@ -156,15 +179,17 @@ export function aircraftSprites(L, axes, on, seed, t, gearDown = 1) {
   const { fwd, right, up } = axes;
   const put = (p, c, cd, s, extra) => {
     if (!p || !(cd > 0)) return;
-    let k = 1, aur = 0, aurR = 0;
+    let k = 1, aur = 0, aurR = 0, sD = s, lens = false;
     if (viewEnv && viewer) {                     // Allard visibility through the EnvState slabs (spec §4.10)
       const d = Math.hypot(viewer[0] - p[0], viewer[1] - p[1], viewer[2] - p[2]) || 1;
       const T = viewEnv.slabs ? Math.exp(-slabTau(viewEnv.slabs, viewer, p)) : Math.exp(-3.3e-5 * d); const v = visibilityFactor(cd * T / (d * d), viewEnv.ET);
       // fog aureole (photometry.js aureole; review look1-1), also when the core is below threshold
       const A = viewEnv.fogAur ? aureole(T) : null; if (A && cd * A.f / (d * d) >= viewEnv.ET) { aur = lampUnits(cd * A.f * viewEnv.gain, s); aurR = A.theta; }
       if (!(v > 0) && !aur) return; k = T * v * viewEnv.gain;
+      // position lights: the lens footprint and lens-luminance gain by day (NAV_LENS_S header; env-6)
+      if (extra && extra.nav && pxAngle > 0) { const L = lensGain(s, d, viewEnv.w, viewEnv.G); sD = L.s; k = T * v * L.g * viewEnv.rf; lens = sD < s - 1e-3; }
     }
-    S.push({ p, c, i: lampUnits(cd * k, s), s, phys: true, aur, aurR, ...extra });
+    S.push({ p, c, i: lampUnits(cd * k, sD), s: sD, phys: true, aur, aurR, lens, ...extra });
   };
   if (on.nav) {
     for (const [p, c, name] of [[L.navL, AV_RED, 'red'], [L.navR, AV_GREEN, 'green'], [L.tail, AV_WHITE, 'white']]) {

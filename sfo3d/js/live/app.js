@@ -1,5 +1,7 @@
 // SFO Live 3D — application: boot, render loop, live feed / recorded snapshot, camera views, UI glue.
-import { initGL, gl, Mesh } from '../gl.js';
+import { initGL, gl, Mesh, texture } from '../gl.js';
+import { shoreField } from '../env/shore_field.js';   // old renderer: seawall foam from the NAIP shoreline (env-13)
+import { RESERVOIRS } from '../env/reservoirs_data.js';   // Peninsula reservoir water surfaces (env-14)
 import '../shaders/common.js';
 import '../shaders/ground.js';
 import { Renderer } from '../renderer.js';
@@ -104,6 +106,14 @@ export async function startApp(cfg) {
   // ---------------------------------------------------------------- world
   ui.progress(0.12, 'Building terrain and airport…'); await nextFrame();
   const world = buildLiveWorld(R, cfg.airport, () => { }, { terrainStep: Q.terrainStep, mapRes: Q.mapRes, details: cfg.details, buildings: cfg.buildings, stands: cfg.stands, paint: cfg.paint, pavement: cfg.pavement, runways: RUNWAY_SIGNS() });
+  // seawall foam from the NAIP 2024 shoreline in the old renderer (js/env/shore_field.js, js/shaders/env.js WATER_FS;
+  // close-out round 3, env-13; renderer3 builds its own texture in js/three/ground.js)
+  if (typeof R.frameScene !== 'function' && world.waterU) { try { const F = shoreField(); world.waterU.uShoreDist = texture(F.w, F.h, { data: F.data, internal: gl.R8, format: gl.RED, type: gl.UNSIGNED_BYTE }); world.waterU.uShoreRect = F.rect; } catch (e) { console.warn('shore field', e); } }
+  // the Peninsula reservoirs' water surfaces at their own levels (js/env/reservoirs_data.js, OSM + USGS; the terrain is carved
+  // to them in js/world/terrain.js; close-out round 3, env-14): water items of both renderers (the world's water plane is
+  // the Bay at sea level)
+  for (const L of RESERVOIRS.lakes || []) { const pos = new Float32Array(L.ring.length * 3); L.ring.forEach(([x, z], i) => { pos[i * 3] = x; pos[i * 3 + 1] = L.level_y; pos[i * 3 + 2] = z; }); let x0 = 1e9, z0 = 1e9, x1 = -1e9, z1 = -1e9; for (const [x, z] of L.ring) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); }
+    world.items.push({ mesh: new Mesh({ pos, idx: new Uint32Array(L.tris) }), prog: 'water', uniforms: world.waterU, bbox: [x0, L.level_y - 1, z0, x1, L.level_y + 1, z1], castShadow: false, water: true, lake: L.name }); }
   const scene = new Scene(R, world);
   const gateSys = new LiveGateSystem(world.gates, { atlasExtra: Object.keys(TYPE_MODELS) }); scene.gateSys = gateSys;
   ui.progress(0.45, 'Airfield lighting…'); await nextFrame();
@@ -484,7 +494,7 @@ export async function startApp(cfg) {
     try {
       traffic.update(now, dt); physics.resolve(traffic, dt); syncViews(now); rig.update(dt);
       if ((tEnv += wall) > 30) { tEnv = 0; applyEnv(now, false); }
-      const cam = rig.camera(); camPos = cam.pos; setLightViewer(camPos); setLightFrame(simT);   // aircraft light sectors / flashes
+      const cam = rig.camera(); camPos = cam.pos; setLightViewer(camPos, 2 * Math.tan((cam.fov || 0.8) / 2) / Math.max(1, R.H || canvas.height || 720)); setLightFrame(simT);   // aircraft light sectors / flashes (+ the pixel angle: position-light lens by day, env-6)
       const fr = scene.frame(simT, cam.pos);
       post.exposure = exposure;
       const C = R.render(fr, cam, simT, post); scene.commit(); R.present(canvas.width, canvas.height);

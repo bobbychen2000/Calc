@@ -16,6 +16,8 @@ import { plugShift } from './fit.js';
 //                        top line (keep 'top': the pylon attachment; 737 MAX LEAP-1B)
 //   wingLift {z0, t, xMin} / htLift {z0, t, xMax}  wing / tailplane sheared up by t per unit |z| outboard of z0
 //   squash {y0, k}       everything below y0 compressed vertically by k (engine ground clearance fit)
+//   fairing {y0, k, zMax}  after squash: body vertices (not engines, pylons, gear: zones 2, 3, 7) below the keel line y0
+//                        within |z| <= zMax compressed towards it by k (the wing-body fairing; js/aircraft/fit.js belly fit)
 //   gearUp               model units the model's own gear (zone 3) is moved up (oleo compression); dims.low (the main
 //                        tyres, where placement() seats the model) rises by the same amount
 //   noseExt {xMin, yTop, yBot, e}  nose-leg length change (737 family stance, js/aircraft/fit.js NOSE_LEG / STANCE_FIT): gear
@@ -76,6 +78,10 @@ export function applyStretch(pos, zone, nv, st, dims) {
     const { y0, k } = st.squash;
     for (let i = 0; i < nv; i++) { const y = pos[i * 3 + 1]; if (y < y0) pos[i * 3 + 1] = y0 + (y - y0) * k; }
     if (dims.low != null) dims.low = y0 + (dims.low - y0) * k;
+  }
+  if (st.fairing) {                   // belly-fairing depth fit (js/aircraft/fit.js; FAM A330: 0.35 model m below the keel)
+    const { y0, k, zMax } = st.fairing;
+    for (let i = 0; i < nv; i++) { const y = pos[i * 3 + 1]; if (y < y0 && Math.abs(pos[i * 3 + 2]) <= zMax && !(zone && ZONE_NOFIN.has(zone[i]))) pos[i * 3 + 1] = y0 + (y - y0) * k; }
   }
   if (st.noseExt && zone) {          // nose-leg length change (the nose tyre moves down by e; the main gear and dims.low stay)
     const { xMin, yTop, yBot, e } = st.noseExt;

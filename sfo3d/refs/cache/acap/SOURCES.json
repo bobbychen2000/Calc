@@ -44,5 +44,12 @@
   "licence": "Boeing copyright (not redistributable here)",
   "fetched": "2026-11-05",
   "note": "D6-58327 Rev H (Dec 2024); \u00a72.2.1 p.2-10: 757-200 span 124 ft 10 in (38.05 m), no winglets drawn (aircraft-v3)"
+ },
+ "AC_A330_rev21_apr2013.pdf": {
+  "url": "https://skybrary.aero/sites/default/files/bookshelf/2371.pdf",
+  "licence": "Airbus copyright (not redistributable here)",
+  "fetched": "2026-11-07",
+  "sha256": "2f296730e208262e041b98555f135381dda999e7b9cc531c629c7e37f86ed3e8",
+  "note": "Airbus A330 AC, Revision No. 21 (Apr 01/13), SKYbrary bookshelf copy; the Dec 01/25 revision check_dims cites could not be fetched (aircraft.airbus.com: Incapsula block, 2023 URL 404). FIGURE-2-3-0-991-001-A01 p.68: A330-300 belly row H 2.04 / 1.86 / 1.85 m (119 t / MRW CG 15 % / MRW CG 36.5 %) = BF1 1.85-1.86 (close-out round 3 aircraft-5)"
  }
 }

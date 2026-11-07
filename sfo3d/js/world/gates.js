@@ -164,27 +164,52 @@ export class GateSystem {
 }
 
 // ----- vehicle meshes -----
-// Belt loaders: the conveyor's top end on the lower-deck cargo-door sill of the door it serves, per family and door
-// (published sill ranges, m above the apron between the documents' weight / CG cases):
-//  - Boeing 737 NG / MAX: forward cargo door 1.30-1.45, aft 1.63-1.80 (737NG ACAP Rev C §2.3.1 "C FWD CARGO DOOR" /
-//    "F AFT CARGO DOOR" for the -600 ... -900ER, refs/cache/acap/737NG_REV_C.txt lines 1327-1442; 737 MAX ACAP Rev K §2.3)
+// Belt loaders (close-out round 3, bridges-3): the conveyor's top end on the lower-deck cargo-door sill of the door it
+// serves, at the RENDERED fuselage - the fitted model's own cargo-door object, stance and lower lobe (js/aircraft/fit.js
+// T.fit.cargo / keelAt / skinHW, the aircraft track's cargoDoor() API; read here from T.fit so that the old offline scene,
+// which does not load fit.js, is unchanged). Before, the sill came from BELT_PUB raised to 0.3 m above an UNPITCHED
+// ellipse (2 Hc - crown) at 0.22 L / 0.66 L: when the 737 MAX stood nose-up its forward conveyor ended 0.29-0.36 m below
+// the rendered skin, and the 737 NG ends missed it by up to 0.88 m (scratch belt_api.mjs). Per door:
+//  - X: the model's cargo-door object (FG 737-800 cargodoorF / R, rendered centre) or the published station (SPEC cargoX:
+//    A321 / A321neo); else 0.22 L / 0.66 L (A319 / A320 families; inferred, as before)
+//  - S (conveyor top at its end): the drawn door's rendered sill; without a door object the middle of the type's published
+//    sill range (SPEC cargo: 737 MAX ACAP D6-38A004 Rev K §2.3.2 rows D / L, A321 / A321neo C1 / C2) or of BELT_PUB below
+//    (A319 / A320 families), never less than 0.05 m above the rendered keel at X; to 0.01 m (one mesh per setting)
+//  - the end at the starboard skin's half width at (X, S) + 0.03 m (beltEndY)
+// Published sill ranges kept as the fallback (m above the apron between the documents' weight / CG cases):
+//  - Boeing 737 NG: forward cargo door 1.30-1.45, aft 1.63-1.80 (737NG ACAP Rev C §2.3.1 "C FWD CARGO DOOR" / "F AFT
+//    CARGO DOOR" for the -600 ... -900ER, refs/cache/acap/737NG_REV_C.txt lines 1327-1442)
 //  - Airbus A320 family: forward cargo door C1 1.81-1.93, aft C2 1.91-2.08 (Airbus AC A321 §2-3 Ground Clearances,
 //    refs/cache/acap/AC_A321_jul2026.txt lines 3869-3874; the A319 / A320 take the A321's values - inferred, their AC is
 //    not cached)
-// The conveyor is set to the middle of the range, but never so low that its top end would pass under the RENDERED
-// model's belly: its underside (top - BELT_THICK, the conveyor's own depth) stays at or above the lowest skin, so the end
-// meets the side of the lower lobe (derived from the drawn geometry; review round 2 v8: the "0.3 m" is that depth). A
-// real loader is raised to the door it meets; the fitted 737 / A320 models sit 0.2-0.6 m above the published sills
-// (bridges_closeout §5 / §R2.4, aircraft track), so today this floor, not BELT_PUB, sets every conveyor (737 family
-// 1.90-1.95 m, A320 family 2.05-2.10 m) - review 2026-11-04: at a fixed 1.55 m the 737 conveyor ended 0.37 m below the
-// skin. To 0.05 m (one mesh per setting). Conveyor length 8.0 m, 0.9 m wide, 0.3 m deep, rear end 0.75 m up (inferred,
-// no datasheet).
+// Conveyor length 8.0 m, 0.9 m wide, BELT_THICK 0.3 m deep, rear end 0.75 m up (inferred, no datasheet).
 const BELT_THICK = 0.3;
+// the side rails (0.25 m) stop BELT_RAIL_GAP short of the conveyor's top end: the end section meets the sill and reaches
+// into the open cargo door (the models draw the doors closed - full-length rails ran up to 0.62 m back and 0.29 m into the
+// rendered lower lobe; scratch c3/bridges/scripts/beltmesh.mjs); inferred, no datasheet
+export const BELT_RAIL_GAP = 0.7;
 export const BELT_PUB = { b737: { fwd: [1.30, 1.45], aft: [1.63, 1.80] }, a320: { fwd: [1.81, 1.93], aft: [1.91, 2.08] } };
 export const beltFamily = (k) => /^b73\d$|^b3[789x]m$/.test(k) ? 'b737' : /^a3(18|19|20|21)$|^a(19|20|21)n$/.test(k) ? 'a320' : null;
-// the rendered model's lowest skin (elliptical section: half heights crown - Hc above and below the centre)
+// the lowest skin of the unpitched elliptical section (procedural airframes without a fitted model only)
 export function lowSkin(T) { const crown = (T.fit && T.fit.renderedCrown) || T.Hc + T.R; return T.Hc - (crown - T.Hc); }
-export function beltSill(T, fam, door) { const r = BELT_PUB[fam] && BELT_PUB[fam][door]; if (!r) return null; return Math.round(Math.max((r[0] + r[1]) / 2, lowSkin(T) + BELT_THICK) * 20) / 20; }
+// where the conveyor meets cargo door `door` ('fwd' / 'aft') of type T of belt family fam: {X, S, pub, keel, drawn} or null
+export function beltDoor(T, fam, door) {
+  if (!T || !fam) return null; const c = T.fit && T.fit.cargo && T.fit.cargo[door];
+  const X = c && c.X != null ? c.X : T.L * (door === 'fwd' ? 0.22 : 0.66);
+  const pub = (c && c.pub) || (BELT_PUB[fam] && BELT_PUB[fam][door]) || null;
+  let S = c && c.sill != null ? c.sill : pub ? (pub[0] + pub[1]) / 2 : null; if (S == null) return null;
+  const keel = T.fit && T.fit.keelAt ? T.fit.keelAt(X) : null;
+  S = keel != null ? Math.max(S, keel + 0.05) : Math.max(S, lowSkin(T) + BELT_THICK);
+  return { X, S: Math.round(S * 100) / 100, pub, keel, drawn: !!(c && c.sill != null) };
+}
+// the conveyor end's distance from the centre line at station X for conveyor top S: the rendered starboard skin + 0.03 m
+// (T.fit.skinHW; procedural airframes: the elliptical section + 0.05 m)
+export function beltEndY(T, X, S) {
+  const v = T.fit && T.fit.skinHW ? T.fit.skinHW(X, S) : null; if (v != null) return v + 0.03;
+  const a = Math.max(0.5, ((T.fit && T.fit.renderedCrown) || T.Hc + T.R) - T.Hc); return T.R * Math.sqrt(Math.max(0, 1 - ((S - T.Hc) / a) ** 2)) + 0.05;
+}
+// (old API, kept for the checkers: the conveyor top of that door)
+export function beltSill(T, fam, door) { const D = beltDoor(T, fam, door); return D ? D.S : null; }
 export const beltKey = (S) => 'belt' + Math.round(S * 100);
 // catering truck: its box is lifted to the floor of the door it serves (the second door, R2): the rendered door-2 sill
 // (T.dockSill2, else door 1's rendered sill raised by the model's nose-down pitch over the door spacing), to 0.2 m; at
@@ -207,7 +232,7 @@ export function vehicleSettings() {
   if (VSET) return VSET;
   const belts = {}, caterings = {};
   for (const [k, T] of Object.entries(TYPES)) { if (!T || !T.wing || !T.doors || k.startsWith('biz_')) continue;
-    const fam = beltFamily(k); if (fam) for (const d of ['fwd', 'aft']) { const S = beltSill(T, fam, d); belts[beltKey(S)] = S; }
+    const fam = beltFamily(k); if (fam) for (const d of ['fwd', 'aft']) { const D = beltDoor(T, fam, d); if (D) belts[beltKey(D.S)] = D.S; }
     const F = cateringFloor(T); if (F != null) caterings[cateringKey(F)] = F; }
   return (VSET = { belts, caterings });
 }
@@ -236,7 +261,7 @@ export function vehicleGeos(set = vehicleSettings()) {
     g.box([-2.5, 0.35, -1.05], [2.4, B.chassisTop, 1.05], paint, E_PAINT);                                  // chassis
     g.box([-2.5, B.chassisTop, -1.05], [-1.25, 1.95, -0.52], glass, E_GLASS); g.box([-2.55, 1.95, -1.08], [-1.2, 2.05, -0.5], paint, E_PAINT); // driver's cab (left side)
     const bm = m4.mul(m4.translate(B.x0, B.y0, 0), m4.rotZ(B.th)); g.box([0, 0, -B.w / 2], [B.len, B.thick, B.w / 2], dark, E_DARK, bm); // conveyor
-    for (const sz of [-1, 1]) { g.box([0, B.thick, sz * B.w / 2 - 0.03], [B.len, B.thick + 0.25, sz * B.w / 2 + 0.03], [0.85, 0.7, 0.1, 1], E_PAINT, bm); } // side rails
+    for (const sz of [-1, 1]) { g.box([0, B.thick, sz * B.w / 2 - 0.03], [B.len - BELT_RAIL_GAP, B.thick + 0.25, sz * B.w / 2 + 0.03], [0.85, 0.7, 0.1, 1], E_PAINT, bm); } // side rails (not on the end section)
     const xs = 1.6, ys = B.y0 + (xs - B.x0) * Math.tan(B.th); g.box([xs - 0.12, B.chassisTop, -0.3], [xs + 0.12, Math.max(B.chassisTop + 0.05, ys), 0.3], [0.3, 0.3, 0.32, 1], E_METAL); // lift strut
     wheels(g, [-1.6, 1.6], 1.0); M[k] = g; }
   // catering trucks: one mesh per box floor (cateringFloor); box 2.6 m tall on a scissor column (CATER_BOXES: the hull)

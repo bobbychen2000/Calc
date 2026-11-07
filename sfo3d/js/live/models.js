@@ -176,6 +176,20 @@ async function sourceBytes(src) {
   if (typeof src === 'string') { const r = await fetch(src); if (!r.ok) throw new Error('model fetch ' + r.status); return await r.arrayBuffer(); }
   return src;
 }
+// vertex positions (model frame, after the fit's stretch) and zones of model `key`, without GPU objects: for QA tools that
+// measure what is drawn in the running app (tools/models/qa_stance.mjs: tyre contact on the mesh, close-out round 3,
+// aircraft-3). Returns { pos: Float32Array(nv * 3), zone: Uint8Array(nv), nv, dims } (dims after the stretch)
+export async function modelPositions(key, stretch = null) {
+  const src = MODEL_SOURCES[key]; if (!src) throw new Error('no model source for ' + key);
+  const buf = await sourceBytes(src); const b0 = new Uint8Array(buf, 0, 2);
+  const raw = (b0[0] === 0x1f && b0[1] === 0x8b) ? await gunzip(buf) : buf; const dv = new DataView(raw);
+  const hl = dv.getUint32(8, true); const head = JSON.parse(new TextDecoder().decode(new Uint8Array(raw, 12, hl)));
+  const B = 12 + hl, nv = head.nv, q = head.quant, o = head.offsets;
+  const pq = new Uint16Array(raw, B + o.pos, nv * 3), zone = new Uint8Array(raw, B + o.zone, nv).slice(), pos = new Float32Array(nv * 3);
+  for (let i = 0; i < nv * 3; i++) pos[i] = q.pmin[i % 3] + pq[i] * q.pscale[i % 3];
+  const dims = { ...head.dims }; if (stretch) applyStretch(pos, zone, nv, stretch, dims);
+  return { pos, zone, nv, dims };
+}
 export function getModel(key, stretch) {
   const ck = key + (stretch ? ':' + JSON.stringify(stretch) : '');
   if (!cache.has(ck)) {
@@ -214,7 +228,7 @@ export function getLiveryTexture(url) {
 // dark or white by the paint under them; flag pixels keep their colours. -> { tex, w, h, aspect (row width / height) }
 const regCache = new Map();
 const ROW = 96, CAP = 0.74;                       // row height px, cap height as a fraction of the row
-function drawFlag(ctx, kind, x, y, h, mirror) {
+export function drawFlag(ctx, kind, x, y, h, mirror) {
   const w = h * (kind === 'MX' ? 7 / 4 : 19 / 10);
   ctx.save(); ctx.translate(x + (mirror ? w : 0), y); ctx.scale(mirror ? -1 : 1, 1);
   if (kind === 'US') {                            // 4 USC 1: 13 stripes, canton 7 stripes high, 0.76 of the hoist... (simplified, stars as dots)
@@ -228,27 +242,47 @@ function drawFlag(ctx, kind, x, y, h, mirror) {
   ctx.strokeStyle = 'rgba(120,120,120,0.8)'; ctx.lineWidth = 1; ctx.strokeRect(0.5, 0.5, w - 1, h - 1);
   ctx.restore(); return w;
 }
+// the registration decal's layout (close-out round 3, aircraft-10: js/three/aircraft.js RegAtlas replicated it; engine_exports.md
+// §7 / engine_closeout.md §4): row height `row` px (default ROW), the font and the draw list of both rows (port on top: nose
+// on the left, the flag aft of the text unless flagFirst; starboard below: order reversed, flag mirrored). measure(font,
+// text) -> width px (a 2-D context's measureText); maxW: when the layout would be wider, everything is scaled down to fit
+// (RegAtlas slots). -> { font, px, w, h, aspect, ops: [{ op: 'flag', kind, x, y, h, mirror } | { op: 'text', text, x, y }] }
+// (coordinates relative to the layout's top-left corner; text y is the alphabetic baseline). drawRegistration draws it.
+export function registrationLayout(reg, flag = null, flagFirst = false, { row = ROW, maxW = Infinity, measure } = {}) {
+  const fontOf = (px) => `bold ${px}px Helvetica, Arial, "Liberation Sans", sans-serif`;
+  let px = Math.round(row * CAP / 0.72), font = fontOf(px);
+  let tw = Math.ceil(measure(font, reg)), fh = row * CAP, fw = flag ? fh * 1.9 : 0, gap = flag ? row * 0.35 : 0;
+  let W = Math.ceil(tw + fw + gap + 8);
+  if (W > maxW) { const k = maxW / W; px = Math.floor(px * k); fh *= k; fw *= k; gap *= k; font = fontOf(px); tw = Math.ceil(measure(font, reg)); W = Math.ceil(tw + fw + gap + 8); }
+  const flagW = flag ? fh * (flag === 'MX' ? 7 / 4 : 19 / 10) : 0; const ops = [];
+  const line = (y0, flagLeft, mirror) => {
+    let x = 4; const base = y0 + row * (0.5 + CAP / 2);
+    if (flag && flagLeft) { ops.push({ op: 'flag', kind: flag, x, y: base - fh, h: fh, mirror }); x += flagW + gap; }
+    ops.push({ op: 'text', text: reg, x, y: base }); x += tw + gap;
+    if (flag && !flagLeft) ops.push({ op: 'flag', kind: flag, x, y: base - fh, h: fh, mirror });
+  };
+  line(0, flagFirst, false); line(row, !flagFirst, true);
+  return { font, px, w: W, h: 2 * row, aspect: W / row, ops };
+}
+export function drawRegistration(ctx, L, x0 = 0, y0 = 0) {
+  ctx.font = L.font; ctx.textBaseline = 'alphabetic';
+  for (const o of L.ops) {
+    if (o.op === 'flag') drawFlag(ctx, o.kind, x0 + o.x, y0 + o.y, o.h, o.mirror);
+    else { ctx.fillStyle = '#000000'; ctx.fillText(o.text, x0 + o.x, y0 + o.y); }
+  }
+}
 export function registrationTexture(reg, flag = null, flagFirst = false) {
   const key = reg + '|' + (flag || '') + '|' + (flagFirst ? 1 : 0);
   if (regCache.has(key)) return regCache.get(key);
   let out = null;
   try {
     const mk = (w, h) => (typeof OffscreenCanvas !== 'undefined' ? new OffscreenCanvas(w, h) : Object.assign(document.createElement('canvas'), { width: w, height: h }));
-    const font = `bold ${Math.round(ROW * CAP / 0.72)}px Helvetica, Arial, "Liberation Sans", sans-serif`;
-    const m = mk(8, 8).getContext('2d'); m.font = font; const tw = Math.ceil(m.measureText(reg).width);
-    const fh = ROW * CAP, fw = flag ? fh * 1.9 : 0, gap = flag ? ROW * 0.35 : 0;
-    const W = Math.ceil(tw + fw + gap + 8), H = 2 * ROW;
-    const cv = mk(W, H), ctx = cv.getContext('2d');
-    ctx.clearRect(0, 0, W, H); ctx.font = font; ctx.textBaseline = 'alphabetic'; ctx.fillStyle = '#000000';
-    const row = (y0, flagLeft, mirror) => {
-      let x = 4; const base = y0 + ROW * (0.5 + CAP / 2);
-      if (flag && flagLeft) { x += drawFlag(ctx, flag, x, base - fh, fh, mirror) + gap; }
-      ctx.fillStyle = '#000000'; ctx.fillText(reg, x, base); x += tw + gap;
-      if (flag && !flagLeft) drawFlag(ctx, flag, x, base - fh, fh, mirror);
-    };
-    // port side: nose on the left, the image runs nose -> tail; starboard: nose on the right (the shader flips u)
-    row(0, flagFirst, false); row(ROW, !flagFirst, true);
-    out = { ...srgbTexture(cv), aspect: W / ROW };
+    const m = mk(8, 8).getContext('2d'); const measure = (font, text) => { m.font = font; return m.measureText(text).width; };
+    const L = registrationLayout(reg, flag, flagFirst, { measure });
+    const cv = mk(L.w, L.h), ctx = cv.getContext('2d');
+    ctx.clearRect(0, 0, L.w, L.h);
+    drawRegistration(ctx, L);           // port side: nose on the left, the image runs nose -> tail; starboard: nose on the right (the shader flips u)
+    out = { ...srgbTexture(cv), aspect: L.aspect };
   } catch (e) { out = null; }
   regCache.set(key, out);
   return out;

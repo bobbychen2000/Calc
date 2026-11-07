@@ -239,8 +239,13 @@ export class Renderer {
     // far range
     gl.clear(gl.DEPTH_BUFFER_BIT);
     const planesFar = this.frustumPlanes(C.vpFar);
-    const distMin = (bb) => { if (!bb) return 0; const p = C.pos; const dx = Math.max(bb[0] - p[0], 0, p[0] - bb[3]), dy = Math.max(bb[1] - p[1], 0, p[1] - bb[4]), dz = Math.max(bb[2] - p[2], 0, p[2] - bb[5]); return Math.hypot(dx, dy, dz); };
-    const distMax = (bb) => { if (!bb) return 1e9; const p = C.pos; const dx = Math.max(Math.abs(bb[0] - p[0]), Math.abs(bb[3] - p[0])), dy = Math.max(Math.abs(bb[1] - p[1]), Math.abs(bb[4] - p[1])), dz = Math.max(Math.abs(bb[2] - p[2]), Math.abs(bb[5] - p[2])); return Math.hypot(dx, dy, dz); };
+    // range of the bbox in VIEW DEPTH (along C.dir): the near / far projections clip by view depth, not by Euclidean
+    // distance. (Close-out round 3, env-14: with the Euclidean distance an off-axis item whose nearest point lies beyond
+    // split x 1.08 but at a view depth below it was skipped by the near pass - at the overview camera 17 terrain chunks,
+    // 8 of them the land west of the airport: holes showing the sea-level water plane, the "blue patch".)
+    const dRange = (bb) => { const p = C.pos, d = C.dir; let lo = 1e30, hi = -1e30; for (let k = 0; k < 8; k++) { const v = ((k & 1 ? bb[3] : bb[0]) - p[0]) * d[0] + ((k & 2 ? bb[4] : bb[1]) - p[1]) * d[1] + ((k & 4 ? bb[5] : bb[2]) - p[2]) * d[2]; lo = Math.min(lo, v); hi = Math.max(hi, v); } return [lo, hi]; };
+    const distMin = (bb) => bb ? dRange(bb)[0] : 0;
+    const distMax = (bb) => bb ? dRange(bb)[1] : 1e9;
     this.drawItems(scene.items, 'main', C.vpFar, C.pos, planesFar, it => !it.blend && !it.nearOnly && distMax(it.bbox) > C.split);
     // sky
     gl.depthMask(false);

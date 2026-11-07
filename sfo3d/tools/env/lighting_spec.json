@@ -1,6 +1,6 @@
 {
  "schema": "sfo3d.airfield_lighting.v1",
- "generated": "2026-11-05T18:33Z",
+ "generated": "2026-11-07T04:01Z",
  "generator": "tools/env/build_lighting_spec.py",
  "report": "docs/research/airfield_lighting.md",
  "frame": {
@@ -5025,7 +5025,7 @@
  },
  "in_pavement": {
   "counts": {
-   "runway_edge": 101,
+   "runway_edge": 98,
    "threshold_end": 23,
    "runway_end": 20
   },

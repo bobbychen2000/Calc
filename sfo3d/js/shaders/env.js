@@ -99,6 +99,7 @@ export const WATER_FS = `
 in vec3 vWP;
 uniform sampler2D uWaves; uniform vec2 uWind; uniform float uWaveAmp;
 uniform sampler2D uAptAux; uniform vec4 uAptRect; uniform vec2 uVw; uniform vec2 uUw;
+uniform sampler2D uShoreDist; uniform vec4 uShoreRect; // NAIP shoreline distance into the water / 40 m (js/env/shore_field.js; env-13); z = 0: not set
 vec2 waveSlope(vec2 uv){ return texture(uWaves, uv).rg; }
 void main(){
   vec3 wp = vWP; vec3 V = uCamPos - wp; float dist = length(V); V /= dist;
@@ -117,6 +118,8 @@ void main(){
   vec2 st = vec2(dot(wp.xz, uVw), dot(wp.xz, uUw));
   vec2 auv = (st - uAptRect.xy) / uAptRect.zw; auv.y = 1.0 - auv.y;
   float dA = (auv.x > 0.0 && auv.x < 1.0 && auv.y > 0.0 && auv.y < 1.0) ? texture(uAptAux, auv).r * 40.0 : 100.0;
+  // close-out round 3 (env-13): inside the NAIP shoreline field's coverage its exact distance replaces the 16-vertex polygon's
+  if (uShoreRect.z > 0.0) { vec2 suv = (wp.xz - uShoreRect.xy) / uShoreRect.zw; if (suv.x > 0.0 && suv.x < 1.0 && suv.y > 0.0 && suv.y < 1.0) dA = texture(uShoreDist, suv).r * 40.0; }
   float NoV = max(dot(N, V), 0.001);
   float F = 0.02 + 0.98 * pow(1.0 - NoV, 5.0);
   vec3 R = reflect(-V, N); R.y = abs(R.y);

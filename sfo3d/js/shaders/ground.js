@@ -260,6 +260,9 @@ void main(){
   conc *= 1.0 - 0.25 * clamp(joint, 0.0, 1.0);
   // stains
   conc *= 1.0 - 0.18 * smoothstep(0.6, 0.9, vnoise(st * 0.15)) * vnoise(st * 1.3);
+  // OSM-asphalt airside paths as imaged (close-out round 3, env-11; js/three/ground.js pathToneTexture has the model):
+  // when js/live/airport.js writes the path albedo / 0.5 into the paint map's G channel (requested, static track; 0 today)
+  if (uHasPaint > 0.5 && apt.g < 0.5) { float pt = texture(uPaint, vUV).g; if (pt > 0.004) asph = mix(asph, vec3(pt * 0.5) * (0.85 + 0.3 * n1) * (0.93 + 0.14 * n2), 1.0); }
   vec3 pav = mix(asph, conc, apt.g);
   pav *= 1.0 - apt.b * (0.5 + 0.3 * vnoise(st * 0.3));
   if (apt.a > 0.8) pav = mix(pav, vec3(0.17, 0.17, 0.18) * (0.9 + 0.2 * n1), 0.85);

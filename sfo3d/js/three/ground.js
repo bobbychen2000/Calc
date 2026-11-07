@@ -16,10 +16,40 @@
 // Geometry (terrain chunks, water grid) comes unchanged from js/live/world.js buildLiveWorld.
 import { THREE, TSL } from './lib.js';
 import { POROSITY, ROUGH_FILM, ROUGH_PUDDLE, PUDDLE_ALBEDO } from '../env/atmo/weather_fx.js';
+import { shoreField } from '../env/shore_field.js';   // NAIP shoreline distance for the seawall foam (env-13)
 import { hash12, hash13, hash22, vnoise, fbm2, band } from './tsl/common.js';
 import { geometryOf, textureOf } from './convert.js';
 import { CITY_RECT, CITYFAR_RECT } from '../world/world.js';
 import { APT_RECT } from '../world/airfield.js';
+import { LANDSIDE } from '../../data/sfo_landside.js';   // OSM airside paths with their NAIP tone (env-11)
+import { worldToST } from '../geo.js';
+
+// OSM surface=asphalt airside paths (close-out round 3, env-11; static_closeout R3.3.1): js/live/airport.js paves them
+// but only `material` 'concrete' goes into the concrete layer, so the bake drew them with the dark 0.13 asphalt while NAIP
+// 2024 images them as light as the concrete paths (tools/build_landside.py naip_grey per drawn entry: asphalt median 198,
+// p10 177, p90 219; concrete 203 / 184 / 224; runways 173-189). Their albedo = the bake's mean PCC albedo x naip_grey /
+// PATH_GREY_CONC (M: NAIP DN taken as proportional to reflectance between paths of the same imagery; I: the PCC albedo
+// as the reference), clamped to [0.6, 1.1] x PCC, on the asphalt texture (no slab joints). A path-tone layer at 2 m (r =
+// albedo / 0.5, a = coverage) drawn here from data/sfo_landside.js the way airport.js draws the paths (polyline, width w).
+const PATH_GREY_CONC = 203, PATH_CONC_ALB = 0.355, PATH_RES = 2.0;
+function pathToneTexture() {
+  const P = (LANDSIDE.airside_paths || []).filter(r => r.drawn && r.w && r.material === 'asphalt' && r.naip_grey != null);
+  if (!P.length || typeof document === 'undefined') return null;
+  const W = Math.round(APT_RECT.w / PATH_RES), H = Math.round(APT_RECT.h / PATH_RES);
+  const cv = document.createElement('canvas'); cv.width = W; cv.height = H; const cx = cv.getContext('2d');
+  cx.clearRect(0, 0, W, H); cx.lineCap = 'round'; cx.lineJoin = 'round';
+  const tx = (x, z) => { const [s, t] = worldToST(x, z); return [(s - APT_RECT.s0) / PATH_RES, (APT_RECT.t0 + APT_RECT.h - t) / PATH_RES]; };
+  let km = 0;
+  for (const r of P) {
+    const alb = PATH_CONC_ALB * Math.min(1.1, Math.max(0.6, r.naip_grey / PATH_GREY_CONC)); const v = Math.round(Math.min(1, alb / 0.5) * 255);
+    cx.strokeStyle = `rgba(${v},${v},${v},1)`; cx.lineWidth = r.w / PATH_RES; cx.beginPath();
+    r.pts.forEach((p, i) => { const q = tx(p[0], p[1]); if (i) cx.lineTo(q[0], q[1]); else cx.moveTo(q[0], q[1]); if (i) km += Math.hypot(p[0] - r.pts[i - 1][0], p[1] - r.pts[i - 1][1]) / 1000; });
+    cx.stroke();
+  }
+  const t = new THREE.CanvasTexture(cv); t.flipY = false; t.colorSpace = THREE.NoColorSpace; t.generateMipmaps = false; t.minFilter = t.magFilter = THREE.LinearFilter;
+  t.userData.stats = { paths: P.length, km: +km.toFixed(2) };
+  return t;
+}
 const { Fn, uniform, uniformArray, vec2, vec3, vec4, float, uv, texture, dot, exp, pow, sqrt, max, min, mix, smoothstep, step, clamp, normalize, length, abs, floor, fract, mod, select, If, fwidth, dFdx, dFdy, positionWorld, cameraPosition, normalWorld, cameraViewMatrix, sin, cos, atan, reflect } = TSL;
 
 const toView = (nW) => normalize(cameraViewMatrix.mul(vec4(nW, 0.0)).xyz);
@@ -149,11 +179,11 @@ export class GroundBakes {
     // the airfield source maps are released by js/live/world.js releaseAirportMap right after the (synchronous) bake
     // call, while this bake runs at the next frame: take the three.js textures (which keep the pixel arrays) now
     const T = world.textures;
-    this.src = { apt: textureOf(T.aptTex, { anisotropy: 1 }), paint: T.paintTex ? textureOf(T.paintTex) : null };
+    this.src = { apt: textureOf(T.aptTex, { anisotropy: 1 }), paint: T.paintTex ? textureOf(T.paintTex) : null, path: pathToneTexture() };
   }
   aptPoly() { const a = this.W.aptPoly; const P = []; for (let i = 0; i < a.length; i += 2) P.push([a[i], a[i + 1]]); return P; }
   aptMaterial() {
-    const aptTex = this.src.apt, paintTex = this.src.paint;
+    const aptTex = this.src.apt, paintTex = this.src.paint, pathTex = this.src.path;
     const A = [APT_RECT.s0, APT_RECT.t0, APT_RECT.w, APT_RECT.h]; const poly = this.aptPoly(); const fw = float(this.res);
     const m = bakeMat();
     m.colorNode = Fn(() => {
@@ -171,6 +201,7 @@ export class GroundBakes {
       const joint = float(1.0).sub(smoothstep(0.0, fw.mul(0.6), min(jf.x, jf.y))).mul(0.03).div(fw);
       conc.mulAssign(float(1.0).sub(clamp(joint, 0.0, 1.0).mul(0.25)));
       conc.mulAssign(float(1.0).sub(smoothstep(0.6, 0.9, vnoise(st.mul(0.15))).mul(vnoise(st.mul(1.3))).mul(0.18)));
+      if (pathTex) { const pt = texture(pathTex, vu); asph.assign(mix(asph, vec3(pt.r.mul(0.5)).mul(n1.mul(0.3).add(0.85)).mul(n2.mul(0.14).add(0.93)), pt.a.mul(float(1.0).sub(step(0.5, apt.g))))); }   // light aged asphalt as imaged (env-11)
       const pav = mix(asph, conc, apt.g).toVar();
       pav.mulAssign(float(1.0).sub(apt.b.mul(vnoise(st.mul(0.3)).mul(0.3).add(0.5))));
       If(apt.a.greaterThan(0.8), () => { pav.assign(mix(pav, vec3(0.17, 0.17, 0.18).mul(n1.mul(0.2).add(0.9)), 0.85)); })
@@ -276,7 +307,7 @@ export class GroundBakes {
     }
     renderer.autoClear = ac; renderer.setRenderTarget(prev);
     // airfield source maps: one-time (released once the airfield and aux bakes are complete)
-    if (this.src && this.aptDone && !Q.some(t => t.kind === 'apt' || t.kind === 'aux')) { for (const t of [this.src.apt, this.src.paint]) if (t) t.dispose(); this.src = null; }
+    if (this.src && this.aptDone && !Q.some(t => t.kind === 'apt' || t.kind === 'aux')) { for (const t of [this.src.apt, this.src.paint, this.src.path]) if (t) t.dispose(); this.src = null; }
     return Q.length === 0;
   }
 }
@@ -439,7 +470,7 @@ function cityNight(xz, fw, urb, albedo, fwMin = fw) {
 }
 
 // ---------------------------------------------------------------- ground material (GROUND_FS)
-export function groundMaterial(world, bakes, sky, Q) {
+export function groundMaterial(world, bakes, sky, Q, opts = {}) {   // opts.ssr: js/three/ssr.js makeSSR() (wet-pavement object reflections, env-2)
   const G = world.groundU; const T = world.textures;
   const regionTex = textureOf(T.regionTex, { anisotropy: 8 }); const noiseTex = textureOf(T.noise, { anisotropy: Q.aniso }); const glyphTex = textureOf(T.glyphs);
   const RR = G.uRegionRect, AR = G.uAptRect, Vw = G.uVw, Uw = G.uUw, CR = CITY_RECT, CFR = CITYFAR_RECT;
@@ -541,7 +572,8 @@ export function groundMaterial(world, bakes, sky, Q) {
   }).once();
   mat.colorNode = vec4(core().xyz, 1.0);
   mat.roughnessNode = core().w;
-  mat.emissiveNode = emis();
+  // + screen-space reflections of objects in the wet, glossy pavement (js/three/ssr.js; close-out round 3, env-2)
+  mat.emissiveNode = opts.ssr ? emis().add(opts.ssr(core().w)) : emis();
   return mat;
 }
 
@@ -571,13 +603,20 @@ export function waterMaterial(world, bakes, sky) {
     s.mulAssign(uAmp.mul(1.5).div(fw.mul(0.05).add(1.0)));
     return normalize(vec3(s.x.negate(), 1.0, s.y.negate()));
   }).once();
-  // foam at the seawall (aux.r = distance into the water / 40 m) and distance roughening
+  // foam at the seawall and distance roughening. Distance into the water: the NAIP 2024 shoreline field (js/env/
+  // shore_field.js, 2 m, exact Euclidean; close-out round 3, env-13) inside its coverage; elsewhere the aux bake's distance
+  // from the 16-vertex AIRPORT_LAND_ST polygon (aux.r x 40 m) as before
+  const SF = shoreField();
+  const shoreTex = new THREE.DataTexture(SF.data, SF.w, SF.h, THREE.RedFormat, THREE.UnsignedByteType); shoreTex.minFilter = shoreTex.magFilter = THREE.LinearFilter; shoreTex.generateMipmaps = false; shoreTex.flipY = false; shoreTex.needsUpdate = true;
+  const SR = SF.rect;
   const wfoam = Fn(() => {
     const wp = positionWorld; const p = wp.xz; const t = U.time;
     const st = vec2(dot(p, vec2(Vw[0], Vw[1])), dot(p, vec2(Uw[0], Uw[1])));
     const auv = vec2(st.x.sub(AR[0]).div(AR[2]), float(1.0).sub(st.y.sub(AR[1]).div(AR[3])));
     const inA = step(0.0, auv.x).mul(step(auv.x, 1.0)).mul(step(0.0, auv.y)).mul(step(auv.y, 1.0));
-    const dA = mix(float(100.0), texture(aux, auv).r.mul(40.0), inA);
+    const suv = p.sub(vec2(SR[0], SR[1])).div(vec2(SR[2], SR[3]));
+    const inS = step(0.0, suv.x).mul(step(suv.x, 1.0)).mul(step(0.0, suv.y)).mul(step(suv.y, 1.0));
+    const dA = mix(mix(float(100.0), texture(aux, auv).r.mul(40.0), inA), texture(shoreTex, clamp(suv, 0.0, 1.0)).r.mul(SF.maxM), inS);
     const fn = texture(noiseTex, st.mul(0.02).add(vec2(t.mul(0.004), 0.0))), fn2 = texture(noiseTex, st.mul(0.09).sub(vec2(0.0, t.mul(0.01))));
     return float(1.0).sub(smoothstep(0.0, fn.r.mul(4.0).add(3.0), dA)).mul(smoothstep(0.35, 0.75, fn2.g)).mul(step(dA, 8.0));
   }).once();

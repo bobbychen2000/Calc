@@ -27,6 +27,22 @@ export const DISPLAY_K = 0.36 * 1.2 * Math.pow(2, 15.0) / LUX_PER_UNIT;
 // 18 % grey target is 14.98 (run 3, docs/research/environment_impl.md §3.4). The bias is taken off the metered value
 // before the clamp, so the reference view keeps the reviewed exposure 0.36 and the night clamp is unchanged.
 export const METER_BIAS = 0.68;
+// Incident-light bound (close-out round 3, env-4 / env-16; I): by day the reflected-light reading may deviate from the
+// incident reading of the natural illuminance (EnvState exposure.ev100Target: 18 % grey under E, spec §10 / §11.3
+// A-EXP "within ±1 EV of the §10 target by day") by at most INCIDENT_SPAN EV. A reflected meter is fooled by the frame's
+// content: the marine-layer tower view (white roofs, albedo ~0.7, fill the frame) metered +1.96 EV over the target
+// (+1.28 after the bias) while its geometry was lit at exactly the target illuminance (π × 1,948 cd/m² / 0.7 ≈ 8,700 lx
+// = the §10 E), and an interior view (the tower cab, buildings fix2 doubt 0) metered the dark interior and clipped the
+// windows. A photographer's incident reading does not depend on the frame; within ±1 EV of it the meter still adapts
+// to the view. The bound is blended in with the Sun from INCIDENT_EL[0] to INCIDENT_EL[1] (deg, true elevation): at
+// twilight and night the artificial light and the clamp rule (§8), as before.
+export const INCIDENT_SPAN = 1.0, INCIDENT_EL = [0, 6];
+export function incidentBound(ev, evTarget, sunElTrue) {
+  if (!(evTarget > -50) || !isFinite(ev)) return ev;
+  const w = sstep(INCIDENT_EL[0], INCIDENT_EL[1], sunElTrue);
+  const b = Math.min(evTarget + INCIDENT_SPAN, Math.max(evTarget - INCIDENT_SPAN, ev));
+  return ev + (b - ev) * w;
+}
 
 export const ev100FromLuminance = (Lcd) => Math.log2(Math.max(Lcd, 1e-9) * 100 / K_METER);
 export const luminanceFromEV100 = (ev) => Math.pow(2, ev) * K_METER / 100;

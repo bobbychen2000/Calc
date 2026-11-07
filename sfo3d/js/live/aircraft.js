@@ -63,6 +63,27 @@ export class LiveAircraft extends Aircraft {
   }
   // true while the brand / neutral texture of a type whose own atlas is wrong for it is still loading
   liveryPending() { return !!(this._livTexKey && !this.livTex && !this._livFailed && this._ownAtlasWrong); }
+  // the loaded texture is a type's neutral skin (no brand): shaders keep the zone recolouring (uLivTex 0). Public alias of
+  // _livNeutral for js/three/aircraft.js (engine_exports.md §3, close-out round 3 aircraft-10)
+  get livNeutral() { return this._livNeutral; }
+  // the per-frame level-of-detail decision of items() (close-out round 3, aircraft-10: js/three/aircraft.js re-derived it):
+  // { d, draw: 'none' | 'body' | 'proc' | 'real', shadow, tip, gear } - 'none' beyond farDist (or hidden), 'real' the
+  // imported model within lodDist once its livery texture is in, 'proc' the full procedural airframe (no imported model
+  // for the type within lodDist, or the livery pending), 'body' the distant procedural body; tip: the procedural wing-tip
+  // device with the real model; gear: the procedural gear struts under a gear-less real model. Updates the livery texture
+  // request within lodDist, as items() always did.
+  lodState(camPos) {
+    const d = camPos ? Math.hypot(camPos[0] - this.pos[0], camPos[1] - this.pos[1], camPos[2] - this.pos[2]) : 0;
+    const shadow = d < this.shadowDist, M = this.model;
+    if (!this.visible || d > this.farDist) return { d, draw: 'none', shadow, tip: false, gear: false };
+    if (M && d <= this.lodDist) this.updateLiveryTexture();
+    let draw;
+    if (M && d <= this.lodDist && this.liveryPending()) draw = 'proc';
+    else if (!M || d > this.lodDist) draw = (!M && d < this.lodDist && !this.modelKey) ? 'proc' : 'body';
+    else draw = 'real';
+    const real = draw === 'real';
+    return { d, draw, shadow, tip: real && !!(this.T.fit && this.T.fit.tipAdd && M.tip), gear: real && this.gear > 0.001 && !!this.M.gear.length && !M.dims.hasGear };
+  }
   // model -> aircraft-local matrix: uniform scale, the model's nose at T.xMain ahead of the main gear, seated on its own gear
   // (lowest point on the ground) or at T.Hc; models on their own gear are pitched nose-down about the main-gear contact
   // (js/aircraft/fit.js T.fit.pitch: both gear units touch). The pitch is a rotation of the matrix, not of the vertices, so
@@ -143,18 +164,16 @@ export class LiveAircraft extends Aircraft {
   // items(camPos): real model near, procedural body at mid range, nothing far away (label/lights only)
   items(camPos) {
     if (!this.visible) return [];
-    const d = camPos ? Math.hypot(camPos[0] - this.pos[0], camPos[1] - this.pos[1], camPos[2] - this.pos[2]) : 0;
-    if (d > this.farDist) { this.nextPrev = {}; return []; }
+    const S = this.lodState(camPos);                   // (the decision js/three/aircraft.js reads too)
+    if (S.draw === 'none') { this.nextPrev = {}; return []; }
     const W = this.matrix();
     const bbR = this.T.L * 0.6;
     const bbox = [this.pos[0] - bbR, this.pos[1] - 5, this.pos[2] - bbR, this.pos[0] + bbR, this.pos[1] + this.T.L * 0.35, this.pos[2] + bbR];
-    const shadow = d < this.shadowDist;
+    const shadow = S.shadow;
     const M = this.model;
     this.nextPrev = {};
-    if (M && d <= this.lodDist) this.updateLiveryTexture();
-    if (M && d <= this.lodDist && this.liveryPending()) return super.items(); // full procedural airframe until the texture is in
-    if (!M || d > this.lodDist) {
-      if (!M && d < this.lodDist && !this.modelKey) return super.items(); // no imported model for this type: full procedural airframe
+    if (S.draw === 'proc') return super.items();      // full procedural airframe (no imported model / livery pending)
+    if (S.draw === 'body') {
       const prevModel = this.prev.body || W; this.nextPrev.body = W; // distant: body only (one draw)
       if (!this._bodyItem) this._bodyItem = { mesh: this.M.body, prog: 'aircraft', uniforms: null, noCull: true };
       return [Object.assign(this._bodyItem, { model: W, prevModel, uniforms: this.procUniforms(), bbox, castShadow: shadow })];
@@ -171,13 +190,13 @@ export class LiveAircraft extends Aircraft {
     for (const it of this._items) { it.model = model; it.prevModel = prevModel; it.bbox = bbox; it.castShadow = shadow; out.push(it); }
     // procedural wing-tip device (A320neo sharklets, 737 MAX split tips) at the model's own wing tip
     const tk = this.T.fit && this.T.fit.tipAdd;
-    if (tk && M.tip) {
+    if (S.tip) {
       if (!M._tipMesh || M._tipKind !== tk) { M._tipMesh = new Mesh(tipDeviceData(tk, M.tip, this.T.wing.tipH || 2.4, 1 / (this.T.L / M.dims.L))); M._tipKind = tk; }
       const prevT = this.prev.tip || model; this.nextPrev.tip = model;
       out.push({ mesh: M._tipMesh, prog: 'aircraft', model, prevModel: prevT, uniforms: this.procUniforms(), bbox, castShadow: shadow, noCull: true });
     }
     // procedural landing gear under the gear-less airframes
-    if (this.gear > 0.001 && this.M.gear.length && !M.dims.hasGear) {
+    if (S.gear) {
       const GU = this.procUniforms();
       this.M.gear.forEach((g, i) => {
         const key = 'g' + i;

@@ -22,6 +22,7 @@ import { presetById, presetRunway } from '../../env/presets.js';
 import * as SM from '../../env/atmo/sky_model.js';
 import * as EX from '../../env/atmo/exposure.js';
 import * as WX from '../../env/atmo/weather_fx.js';
+import { makeSSR } from '../ssr.js';   // ?ssr=1: wet-pavement SSR check (close-out round 3, env-2)
 const q = new URLSearchParams(location.search); const out = { ok: false };
 try {
   const c = document.createElement('canvas'); document.body.appendChild(c);
@@ -47,7 +48,13 @@ try {
   S.backgroundNode = sky.backgroundNode(); S.fogNode = sky.fogNode();
   sky.renderSky(E.renderer); sky.updateEnvironment(E.renderer, S);
   const sun = E.sun; const sunRad = TSL.uniform(new THREE.Vector3(...L.sunColor.map(v => v * pre))); sun.colorNode = sunRad.mul(sky.cloudShadow(TSL.positionWorld)); E.setSun(st.sun.dir, L.sunColor);
-  const g = new THREE.Mesh(new THREE.PlaneGeometry(20000, 20000).rotateX(-Math.PI / 2), new THREE.MeshStandardNodeMaterial({ color: 0x777777, roughness: 0.9 })); g.position.y = 3; g.receiveShadow = true; S.add(g);
+  const gm = new THREE.MeshStandardNodeMaterial({ color: q.get('ssr') === 'dbg' ? 0x000000 : 0x777777, roughness: q.get('ssr') === '1' ? 0.03 : q.get('ssr') === 'dbg' ? 1.0 : 0.9 });
+  // ?ssr=1 (env-2): the ground is a wet mirror (roughness 0.03, a puddle) with the SSR term of js/three/ssr.js; the frames
+  // are rendered with the SSR off, then on, and the meter readbacks compared (out.ssr)
+  const ssrOn = TSL.uniform(0), prevVP = TSL.uniform(new THREE.Matrix4());
+  const hist = E.traaNode && E.traaNode._historyRenderTarget && E.traaNode._historyRenderTarget.texture;
+  if ((q.get('ssr') === '1' || q.get('ssr') === 'dbg') && hist && E.depthNode) { const f = makeSSR({ depth: E.depthNode, history: hist, prevVP, on: ssrOn, sky, debug: q.get('ssr') === 'dbg' ? +(q.get('ssrdbg') || 2) : 0 }); gm.emissiveNode = f(TSL.float(0.03)); out.ssrBuilt = true; }   // ?ssr=dbg: the debug output (r hit, g t, b candidates)
+  const g = new THREE.Mesh(new THREE.PlaneGeometry(20000, 20000).rotateX(-Math.PI / 2), gm); g.position.y = 3; g.receiveShadow = true; S.add(g);
   for (let i = 0; i < 8; i++) { const b = new THREE.Mesh(new THREE.BoxGeometry(20, 30 + i * 30, 20), new THREE.MeshStandardNodeMaterial({ color: 0xbbbbbb })); b.position.set(-200 + i * 60, 3 + (30 + i * 30) / 2, -300 - i * 200); b.castShadow = b.receiveShadow = true; S.add(b); }
   const centre = TSL.uniform(new THREE.Vector2(0, 0)); let planes = 0;
   const N = 16, pos = [], idx = []; for (let j = 0; j <= N; j++) for (let i = 0; i <= N; i++) pos.push(i / N * 2 - 1, 0, j / N * 2 - 1);
@@ -65,6 +72,16 @@ try {
   const dir = [Math.sin(yaw) * Math.cos(pit), Math.sin(pit), -Math.cos(yaw) * Math.cos(pit)];
   E.expo.value = expo / pre; S.environmentIntensity = 1;
   const t0 = performance.now(); const nF = +(q.get('n') || 3);
+  const readMeter = async () => { const rt = E.meter.renderTarget; const px = await E.renderer.readRenderTargetPixelsAsync(rt, 0, 0, rt.width, rt.height); const n = rt.width * rt.height, half = px instanceof Uint16Array, stp = Math.round(px.length / n); const Lu = new Float32Array(n); for (let i = 0; i < n; i++) { const v = px[i * stp]; Lu[i] = (half ? THREE.DataUtils.fromHalfFloat(v) : v) / pre; } return { Lu, w: rt.width, h: rt.height }; };
+  const frame = () => { const C3 = E.camera; prevVP.value.multiplyMatrices(C3.projectionMatrix, C3.matrixWorldInverse); E.setCamera({ pos: cam.slice(0, 3), dir, fov: 50 * Math.PI / 180, near: 0.5, far: 180000 }, innerWidth, innerHeight); E.render(); };
+  if (out.ssrBuilt) {
+    for (let f = 0; f < 4; f++) frame(); const A = await readMeter();
+    ssrOn.value = q.get('ssroff') === '1' ? 0 : 1; for (let f = 0; f < 4; f++) frame(); const B = await readMeter();   // ?ssroff=1: the A/B twin (screenshots)
+    // lower half (ground) of the meter image: mean |dL| / mean L, and the darkest-change cell (a box's reflection)
+    const half = (lo) => { let sa = 0, sd = 0, worst = 0, at = null; for (let y = 0; y < A.h; y++) for (let x = 0; x < A.w; x++) { if ((y < A.h / 2) !== lo) continue; const i = y * A.w + x; sa += A.Lu[i]; sd += Math.abs(B.Lu[i] - A.Lu[i]); const r = (B.Lu[i] - A.Lu[i]) / Math.max(A.Lu[i], 1e-9); if (Math.abs(r) > Math.abs(worst)) { worst = r; at = [x, y]; } } return { meanAbsRel: +(sd / Math.max(sa, 1e-12)).toFixed(4), worstRel: +worst.toFixed(3), worstAt: at }; };
+    out.ssr = { rowsLow: half(true), rowsHigh: half(false), note: 'meter readback rows y < h/2 vs >= h/2 (one of them is the ground half of the frame)' };
+    if (q.get('ssr') === 'dbg') out.ssrDbg = { w: B.w, h: B.h, Lu: Array.from(B.Lu, v => +v.toPrecision(4)), LuOff: Array.from(A.Lu, v => +v.toPrecision(4)) };   // the raw meter (SSR on / off) for the debug modes
+  }
   for (let f = 0; f < nF; f++) {
     E.setCamera({ pos: cam.slice(0, 3), dir, fov: 50 * Math.PI / 180, near: 0.5, far: 180000 }, innerWidth, innerHeight);
     rain.update(RP, { pos: cam.slice(0, 3) }, f / 60, L.skyUp.map(v => v * 0.6 * pre), 1e6, 2 * Math.tan(25 * Math.PI / 180) / innerHeight, 1, null, 0.25);

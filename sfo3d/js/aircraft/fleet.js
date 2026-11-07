@@ -3,7 +3,13 @@ import { Mesh } from '../gl.js';
 import { m4, v3 } from '../math.js';
 import { buildAircraft, TYPES } from './model.js';
 import { cockpitPanes } from './cockpit.js';
-import { aircraftSprites, lightViewer } from '../env/aircraft_lights.js';
+import { aircraftSprites, lightViewer, lampUnits, NAV_H, NAV_REAR_CD, MINIMA_FACTOR, AV_RED, AV_GREEN, AV_WHITE } from '../env/aircraft_lights.js';
+// position lights of pages without a light viewer (the offline renderer, js/main.js): one source with the live app,
+// js/env/aircraft_lights.js (close-out round 3, aircraft-9: these records were i 40 / s 0.22 and i 25 / s 0.2, 26 / 13 cd at
+// the night calibration, below the 14 CFR 25.1391 minima of 40 cd forward / 20 cd rear, while the live app draws
+// MINIMA_FACTOR x the minima): the dead-ahead / rear intensity x MINIMA_FACTOR in lamp units, aviation colours (25.1397),
+// phys: true (js/three/renderer3.js keeps a physical record at the night calibration by day)
+const NAV_FWD_I = lampUnits(MINIMA_FACTOR * NAV_H[0][1], 0.22), NAV_REAR_I = lampUnits(MINIMA_FACTOR * NAV_REAR_CD, 0.2);
 const COCK_STYLE = { boeing: 0, airbus: 1, '787': 2, a350: 3 };
 
 export const LIVERIES = [
@@ -130,7 +136,7 @@ export class Aircraft {
       if (this._lseed == null) this._lseed = [...(this.id || 'x')].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 9973, 7) / 997;
       return aircraftSprites(L, { fwd: D([1, 0, 0]), right, up: D([0, 1, 0]), landDir: D([1, -0.12, 0]), taxiDir: D([1, -0.15, 0]) }, on, this._lseed, t, this.gear);
     }
-    if (on.nav) { S.push({ p: W(Lt.navL), c: [1, 0.06, 0.04], i: 40, s: 0.22 }); S.push({ p: W(Lt.navR), c: [0.1, 1, 0.3], i: 40, s: 0.22 }); S.push({ p: W(Lt.tail), c: [1, 1, 1], i: 25, s: 0.2 }); }
+    if (on.nav) { S.push({ p: W(Lt.navL), c: AV_RED, i: NAV_FWD_I, s: 0.22, phys: true, nav: 'red' }); S.push({ p: W(Lt.navR), c: AV_GREEN, i: NAV_FWD_I, s: 0.22, phys: true, nav: 'green' }); S.push({ p: W(Lt.tail), c: AV_WHITE, i: NAV_REAR_I, s: 0.2, phys: true, nav: 'white' }); }
     if (on.beacon) { const f = Math.max(0, Math.sin(t * Math.PI * 2 * 1.0 + this.id.length)); const k = Math.pow(f, 8); S.push({ p: W(Lt.beaconTop), c: [1, 0.05, 0.02], i: 250 * k + 3, s: 0.25 }); S.push({ p: W(Lt.beaconBot), c: [1, 0.05, 0.02], i: 250 * k + 3, s: 0.25 }); }
     if (on.strobe) { const ph = (t * 1.1 + (this.id.length * 0.37)) % 1; const k = ph < 0.05 ? 1 : (ph > 0.12 && ph < 0.16 ? 1 : 0); if (k) { S.push({ p: W(Lt.strobeL), c: [1, 1, 1], i: 1500, s: 0.3 }); S.push({ p: W(Lt.strobeR), c: [1, 1, 1], i: 1500, s: 0.3 }); } }
     if (on.landing) { const d = D([1, -0.12, 0]); S.push({ p: W(Lt.landL), c: [1, 0.95, 0.85], i: 900, s: 0.35, dir: d, k: 10 }); S.push({ p: W(Lt.landR), c: [1, 0.95, 0.85], i: 900, s: 0.35, dir: d, k: 10 }); }
