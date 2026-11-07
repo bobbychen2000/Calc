@@ -85,3 +85,48 @@ structure, not tunnels); the roadways' clearance over them is 4.6 m by construct
 | R3.6 ITB canopy over the plate | confirmed: ITB over road deck min 4.67 m, 0 m2 below 4.6 (no note any more) |
 | R3.9 landside rebuilt again | split re-run: 24 unit files 19.8 MB + 29 images 3.0 MB |
 | R3.10 BA-B glass | forwarded (R3.5 above) |
+
+## Round 3, fix round 2 (7 Nov 2026; the independent verifier's findings v1-v8 on round 3)
+
+Rebuilt on the buildings track's fix-2 assets (domestic 13:11Z, landside 13:15Z / units 13:48Z, ITB 13:16Z, tower 13:22Z):
+`roadways.glb` / `roadways_lod2.glb` (r22, 4.58 / 0.47 MB), `integration.json` / `integration.js` (229 kB), the landside unit split,
+`manifest.json#integration` / `#roadways`. Order as R3.5: roadways -> `verify_landside` 198 / 0 -> `b3d_integrate` 3 conflicts / 11
+notes -> `b3d_lod2_check` 47 units 0 flagged -> `tools/sat/check.py` ISSUES 0 / APP ISSUES 0 / WARNINGS 17. Dispositions:
+`docs/research/buildings3d.md` (integration, "Close-out round 3, fix round 2").
+
+### R3f2.1 Buildings track: R3.11 and R3.12 done
+
+- **R3.11** (re-run after the fix-2 rebuilds): done in that order; no footprint change seen (deck inside a building: none; ITB curb
+  void 0.134 m; ITB canopy over the plate 4.67 m; domestic over the deck 4.70 m).
+- **R3.12** (the T2 curb slot): the deck stops 0.02 m (was 0.10 m) short of the domestic group's occupancy (`ASSET_BUF_DOM`), and a
+  deck edge against any asset now gets its fascia (the edge face, no parapet), so the seam is no longer open to grade. Seam along the
+  T2 sidewalk edge (plan, every 0.25 m, 544 points): median 0.145 -> 0.065 m: 516 points at 0.02-0.10 m, 14 at 0.10-0.20 m (r19: all 0.10-0.20 m; the 14 points beyond
+  0.3 m are the sidewalk's end edges; what is left is the deck outline's 0.05-m simplification); ~122 m of edge face along it. `build_roadways` reports it (`roadways_build.json#stats.curb_gap_t2`).
+
+### R3f2.2 ITB group / owner: the L3 level now shows as a stacked-road conflict (R3.2 restated)
+
+The round-3 cut that removed 1-m cells from lower decks is gone (verifier v1). Stacked pairs are now held by the level solve
+(the lower way lowered under the upper deck) and, where it cannot, the lower deck is cut along the upper deck's edge - or the cut is
+refused and reported when it would split the lower road. One pair cannot be held: the ITB loop's lower (arrivals) roadway 41015123,
+held at 5.80 m [inf: 4.6 m over the at-grade building-passage roads + 1.2 m deck], passes under its departures legs 38853121 /
+38853045, which leave the L3 plate at 11.35 m (`spec_itb level3.floor` 11.5 [inf, +-1.5] - kerb). 5.55 m deck to deck < 5.8 m:
+`b3d_integrate` lists 88.6 m2 at 3.88-4.6 m (161 m2 by the verifier's own overhead script) (round 3 had cut the lower road away under the leg - a road that stopped under the ramp).
+Photo i1 reads the step ~6.7 m, i.e. L3 ~1 m higher than modelled. Please review `level3.floor` against i1; the roadways follow the
+ITB curb level on the next `build_roadways.py` run, and the conflict lifts by itself if L3 rises by >= 0.8 m.
+
+### R3f2.3 Bridges (R3.1): the footprint tiers are complete
+
+`B3D_INTEGRATION.footprints` tiers are now grown by the ring tolerance before simplification and keep pieces down to 0.02 m2
+(verifier v3: vestibules 0.5-1.3 m, the T1 / BA_C junction wall 3.9 m and the ITB outrigger tips 1.6 m lay outside every tier).
+`b3d_integrate` self-checks every LOD0 / LOD1 vertex against its unit's admissible tiers: 155,560 vertices, 0 outside. Same format.
+
+### R3f2.4 Static track: R3.6a re-sent
+
+The building-passage roads under the ITB frontage are still not in `data/sfo_landside.json` (unchanged since round 3).
+
+### R3f2.5 Owner
+
+- The ITB L3 level (R3f2.2) and the domestic arrivals clearance (R3.6, unchanged: 26 at-grade roads at 3.53 m).
+- The phone test card (rebuild the artifact with `tools/build3/phone_artifact.sh`) now reports "Geometry / textures" (the scene's
+  geometry ArrayBuffers and three.js' texture estimate, on every browser) next to "JS heap (V8 only)" and "WebAssembly"; "Copy
+  results" writes the whole card once.

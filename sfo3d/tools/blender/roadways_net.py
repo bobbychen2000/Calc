@@ -183,8 +183,14 @@ XS_TARGET = 0.0   # m over deck + clearance. Tried 0.1 (r10 left 3.7 m2 at 4.55-
 # reports the pair (stacked_cut_refused). Its crossings no longer take the per-crossing deficit raise (XS_*). The bound is spread along
 # the lower way as a cone of slope STK_GRADE (the verifier's 'grade-limited smoothing pass on the stacked pair's nodes') [inf]
 STK_STEP, STK_CAP, STK_MARGIN = 2.0, 2.0, 0.05
+STK_FLOOR_MARGIN = 0.10   # m over the at-grade roads under a lowered way: the integration check samples their edges 0.3 m inside, where the
+                          # deck is linear between nodes (fix 2: 41015123 lowered to 4.59 m over at-grade 93671776 with 0.05) [inf]
+STK_FLOOR_FLAT = 4.0      # m: ... held flat this far either side of a crossing sample before the cone (the road's half-width: r21 dipped a node
+                          # 2 m off the samples to 5.76 m, 4.59 m over 93671776's edge) [inf]
 STK_RUN = 80.0     # m: a lowered stretch this close to a held node runs to it without a crest [inf]
-STK_GRADE = 0.08   # the lowered profile's grade limit (8 %: the grade the build reports decks against, 'decks > 8 %') [inf]
+STK_GRADE = 0.06   # the lowered profile's grade limit [inf]. Fix 2: 8 % (the grade the build reports decks against) left the curved
+                   # ribbons' mesh at 8.0-9.7 % over ~150 m of 739695588 (the inner edge is shorter); 6 % holds the same 8 pairs with the same
+                   # deficits left (solve variants SP c3/integration/f2/solve_g*.log), 739695588 at <= 6.0 % node grade
 
 
 def solve_levels(ways, grade, F, LV, log=print, overhead=None, plates=None):
@@ -491,8 +497,8 @@ def solve_levels(ways, grade, F, LV, log=print, overhead=None, plates=None):
             # lifted the crossing nodes to 7.30 m between lowered neighbours (228 % steps)
             if lo in stk_floor:
                 fs = np.array([a_ for a_, j_, b_ in stk_floor[lo]])
-                fh = np.array([np.interp(b_, sk[j_][0], h[sk[j_][1]]) for a_, j_, b_ in stk_floor[lo]]) + sep_of(lo) + STK_MARGIN
-                B = np.maximum(B, (fh[None, :] - STK_GRADE * np.abs(si[:, None] - fs[None, :])).max(1))
+                fh = np.array([np.interp(b_, sk[j_][0], h[sk[j_][1]]) for a_, j_, b_ in stk_floor[lo]]) + sep_of(lo) + STK_FLOOR_MARGIN
+                B = np.maximum(B, (fh[None, :] - STK_GRADE * np.maximum(0.0, np.abs(si[:, None] - fs[None, :]) - STK_FLOOR_FLAT)).max(1))
             for n, bnd, hd in zip(ni, B, held):
                 if hd or h[n] <= bnd + 1e-3: continue
                 if bnd < max(0.0, h_free[n] - STK_CAP) - 1e-6: continue   # beyond the cap: the trim's stacked cut

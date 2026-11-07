@@ -16667,7 +16667,7 @@
    "complex_edge_runs": 13
   },
   "plausibility": {
-   "conflicts": 2,
+   "conflicts": 3,
    "notes": 11,
    "nearest_envelopes": [
     {
@@ -16691,6 +16691,19 @@
    ],
    "bridges_checked": 131,
    "conflict_list": [
+    {
+     "check": "vertical clearance over a road deck (< 4.6 m)",
+     "over": "roadways",
+     "points": 6983,
+     "min_m": 3.88,
+     "at": [
+      -1306.7,
+      482.4
+     ],
+     "deck_m": 6.27,
+     "unit": "itb_departures",
+     "below_m2": 88.6
+    },
     {
      "check": "vertical clearance over an at-grade road (< 4.6 m)",
      "over": "domestic_departures",
@@ -16740,7 +16753,7 @@
       -1590.7,
       416.8
      ],
-     "length_m": 2.0,
+     "length_m": 1.0,
      "ways": [
       397162138
      ],
@@ -16748,7 +16761,7 @@
     }
    ],
    "walkway_drum_tests": 417,
-   "bridge_solids": "out/buildings3d/integ/draw/scene2d.json (generated 2026-11-05T03:56:14.689Z, 4af5ad5+dirty)",
+   "bridge_solids": "out/draw/scene2d.json (generated 2026-11-07T10:35:11.482Z, e87c2d2)",
    "taxilane": [
     [
      "domestic/BA_F",
@@ -16863,15 +16876,15 @@
      "below_m2": 0
     },
     "roadways": {
-     "points": 4666,
-     "min_m": 4.61,
+     "points": 6983,
+     "min_m": 3.88,
      "at": [
-      -1864.0,
-      648.0
+      -1306.7,
+      482.4
      ],
-     "deck_m": 0.47,
-     "unit": "interchange_1_3",
-     "below_m2": 0
+     "deck_m": 6.27,
+     "unit": "itb_departures",
+     "below_m2": 88.6
     }
    },
    "itb_curb_gap": {
@@ -17303,14 +17316,15 @@
        -1590.7,
        416.8
       ],
-      "length_m": 2.0
+      "length_m": 1.0
      }
     ]
    }
   },
   "requests": [
    "bridges: the per-building footprints with height bands are now in data/buildings3d/integration.js (B3D_INTEGRATION.footprints.units[group][unit].tiers: body = grade to top, over = underside to top; close-out round 3, integration-5): gates.js can test drums / tunnels against them instead of the SFO Museum proxy and the own-strip rule (bridges-6, buildings R3.3: a drum under a roof overhang is clear when its top is below the over tier's underside)",
-   "owner / domestic: the anchored domestic departures loop (deck top 4.73 m at the curb placeholder [unk], soffit 3.53 m with the generic 1.2-m deck) is below 4.6 m over 26 at-grade roads (min 3.53 m; conflict \"vertical clearance over an at-grade road\"); kept as built: the curb level is the published T3 L1 -> L2 16 ft [pub at T3], so the real stacked arrivals level is below 4.6 m by design. A posted-clearance photo of the domestic arrivals level would settle it (buildings R3.2)"
+   "owner / domestic: the anchored domestic departures loop (deck top 4.73 m at the curb placeholder [unk], soffit 3.53 m with the generic 1.2-m deck) is below 4.6 m over 26 at-grade roads (min 3.53 m; conflict \"vertical clearance over an at-grade road\"); kept as built: the curb level is the published T3 L1 -> L2 16 ft [pub at T3], so the real stacked arrivals level is below 4.6 m by design. A posted-clearance photo of the domestic arrivals level would settle it (buildings R3.2)",
+   "owner / buildings (ITB group): roads under roads below 4.6 m: {\"min_m\": 3.88, \"at\": [-1306.7, 482.4], \"unit\": \"itb_departures\", \"below_m2\": 88.6}. At the ITB loop the lower (arrivals) roadway, held at LOWER_H 5.80 m (4.6 m over the at-grade building-passage roads + the 1.2-m deck [inf]), passes under its departures legs (OSM 38853121 / 38853045), which leave the L3 plate at 11.35 m (spec_itb level3.floor 11.5 [inf] - kerb): 5.55 m deck to deck < 5.8 m needed. Photo i1 reads the step ~6.7 m (L3 ~1 m higher); please review level3.floor against i1 (buildings R3.2) - the roadways follow the ITB curb on the next build_roadways.py run"
   ],
   "glow": {
    "kinds": {
@@ -17389,14 +17403,23 @@
   },
   "footprints_js": {
    "units": 14,
-   "bytes_js": 182450,
-   "note": "B3D_INTEGRATION.footprints (close-out round 3, integration-5)"
+   "bytes_js": 229350,
+   "note": "B3D_INTEGRATION.footprints (close-out round 3, integration-5)",
+   "tier_tol_m": 0.1,
+   "tier_min_m2": 0.02,
+   "self_check": {
+    "rule": "every LOD0 / LOD1 vertex above y0 + 0.5 within 0.3 m of an admissible tier of its own unit (fix 2, verifier v3)",
+    "vertices": 155560,
+    "outside": 0,
+    "max_m": 0.0,
+    "per_unit": {}
+   }
   },
   "requests_withdrawn": [
    "domestic: BA_C LOD2 top +9.08 m (review r1) - a checker artefact: the joined LOD2 mesh was split by plan distance and C3C triangles went to BA_C; split by LOD0-footprint containment (+1 m) since review r2: top 0.0 m (lod2_check.json)",
    "landside: rental car center LOD2 roof median 4.58 m (review r1) - a checker artefact: the roof cells sampled the open deck beyond the roof edge; one roof-cell definition for both LODs since review r2 (1-m cells inside the LOD0 footprint - 0.5 m): 0.00 m"
   ],
-  "generated": "2026-11-07T08:01:20Z",
+  "generated": "2026-11-07T15:35:01Z",
   "tool": "tools/blender/b3d_integrate.py",
   "doc": "docs/research/buildings3d.md (integration section)"
  },
@@ -17404,7 +17427,7 @@
   "asset": "roadways (elevated landside roadways: departures decks, viaducts, approach ramps)",
   "owner": "integration (review round 1, finding 1)",
   "generator": "tools/blender/build_roadways.py + roadways_net.py",
-  "built": "2026-11-07T14:39:14Z",
+  "built": "2026-11-07T15:30:38Z",
   "files": {
    "full": "data/buildings3d/roadways.glb",
    "lod2": "data/buildings3d/roadways_lod2.glb"
@@ -17477,7 +17500,7 @@
   "inferred": [
    "deck depth 1.2 m, shoulders 0.6 m, parapets 0.40 x 0.85 m, fill below a 3.2 m deck top, round columns 1.4 m at ~30 m (positions where clear)",
    "ITB deck plate level: the ITB L3 deck top 11.35 m (spec_itb level3.floor 11.5 [inf] - 0.15 kerb); the outer light-concrete roadway is the lower level (OSM ways 41015123 / 739695588) held level at 5.80 m on the straight (5.80 / 5.80 m built) = clearance 4.6 m + deck 1.2 m over the at-grade building-passage roads under it [inf: the lowest plausible; photo i1 reads ~1 m lower relative to the plate], widened to the imaged band; its sidewalk continues 3.0 m under the plate edge (5.95 m) and closes the former 0.4-0.6 m slit; the deck-edge planter 0.95 m high; island A height 0.15 m; lane counts (OSM minimum / width / 3.6 m); plate columns under the islands and the outer edge",
-   "levels other than the two curbs: screened solve with layer priors {1: 6.5, 2: 12.5, 3: 18.5, 4: 24.5} m and clearance 4.6 m (roadways_net.py); at skewed crossings the separation is held over the ribbons' overlap (the per-crossing deficit, XS_*); stacked pairs (a ramp over or along a lower roadway) by lowering the lower way under the upper deck over the whole overlap, within 8 % grade and above its clearance over at-grade roads (STK_*, close-out r3 fix 2); what is left goes to the trim's stacked cut along the upper deck's edge, refused (and reported) where it would split the lower deck or leave < lanes x 3.0 m",
+   "levels other than the two curbs: screened solve with layer priors {1: 6.5, 2: 12.5, 3: 18.5, 4: 24.5} m and clearance 4.6 m (roadways_net.py); at skewed crossings the separation is held over the ribbons' overlap (the per-crossing deficit, XS_*); stacked pairs (a ramp over or along a lower roadway) by lowering the lower way under the upper deck over the whole overlap, within 6 % grade and above its clearance over at-grade roads (STK_*, close-out r3 fix 2); what is left goes to the trim's stacked cut along the upper deck's edge, refused (and reported) where it would split the lower deck or leave < lanes x 3.0 m",
    "approach ramps: at-grade OSM roads lifted by the solve (ELL_G 45 m)",
    "lane counts / widths where OSM has none (class defaults)",
    "lane markings (pattern, colours)"
@@ -17504,7 +17527,7 @@
    },
    "levels": {
     "anchored": 302,
-    "constraints": 6936,
+    "constraints": 6945,
     "crossings": 152,
     "unresolved": 0
    },
@@ -17529,9 +17552,9 @@
     "plate": 13
    },
    "tris": {
-    "0": 46728,
-    "1": 14808,
-    "2": 6988
+    "0": 48780,
+    "1": 15100,
+    "2": 7158
    },
    "grade_max": {
     "id": 41015033,
@@ -17726,10 +17749,10 @@
    ],
    "low_crossings": [],
    "crossings": 33,
-   "asset_cut_m2": 1697.9,
+   "asset_cut_m2": 1671.0,
    "bytes": {
-    "full": 4404152,
-    "lod2": 454156
+    "full": 4580524,
+    "lod2": 466124
    },
    "itb_plate": {
     "area_m2": 8066.5,
@@ -17896,8 +17919,8 @@
       "deficit_free_m": 0.59,
       "lowered_nodes": 56,
       "lowered_max_m": 0.59,
-      "min_sep_m": 5.03,
-      "left_m": 0.77
+      "min_sep_m": 5.06,
+      "left_m": 0.74
      },
      {
       "lower": 41015123,
@@ -17916,8 +17939,8 @@
       "samples": 25,
       "held": true,
       "deficit_free_m": 0.52,
-      "lowered_nodes": 37,
-      "lowered_max_m": 0.45,
+      "lowered_nodes": 31,
+      "lowered_max_m": 0.36,
       "min_sep_m": 5.85,
       "left_m": 0.0
      },
@@ -17939,7 +17962,7 @@
       "held": true,
       "deficit_free_m": 0.89,
       "lowered_nodes": 26,
-      "lowered_max_m": 0.9,
+      "lowered_max_m": 0.91,
       "min_sep_m": 5.85,
       "left_m": 0.0
      },
@@ -17949,7 +17972,7 @@
       "samples": 13,
       "held": true,
       "deficit_free_m": 1.53,
-      "lowered_nodes": 19,
+      "lowered_nodes": 34,
       "lowered_max_m": 1.53,
       "min_sep_m": 5.85,
       "left_m": 0.0
@@ -18099,6 +18122,19 @@
     "at_u": -98.5,
     "over_0_3m": 0,
     "limit_m": 0.3
+   },
+   "curb_gap_t2": {
+    "points": 544,
+    "median_void_m": 0.065,
+    "max_void_m": 1.905,
+    "at": [
+     -788.6,
+     153.2
+    ],
+    "over_0_05m": 544,
+    "over_0_3m": 14,
+    "overlap_m2": 0.0,
+    "limit_m": 0.05
    },
    "guideway_clearance": {
     "points": 4400,

@@ -867,3 +867,35 @@ dispositions: `docs/requests/realtime_closeout.md`, "Round 3". Every change carr
     arrival that loses its data on the lead-in still removes a real ghost at contact (UAL649 A21N into D9 through UAL1722's
     B39M, 7 Nov 04:49Z: the variant that asked for the arrival's own report on the ghost left them overlapped for 40 s), and
     arrivals with data remove one at the same second as before (UAL876 at B11S, SKW5599 at E6, window checks).
+15. **One stray fix does not move a parked aircraft** (realtime-11, after the 7 Nov 14:41Z restart; traced on segment B).
+    AAL1430 A321 at B26: reports at B26 04:54:38Z and 05:02:18Z, then ONE fix 35 m off (05:04:24Z, 0.2 kt, delivered twice
+    18 ms apart by the two providers), then at B26 again from 05:28Z to its push at 05:56Z [obs, adsb.lol recording]. The
+    stale branch of `ingest()` released B26 on that fix and drew the A321 46 min off its stand with B26 L1's rest tunnel
+    through its engine (`bridge.hit.eng` 27,859 frames, `hit_at_rest` 13,758) and 3.6 m from AAL1175 at B27 (`clear.stand`
+    13,963). `reacqOutlier()`: an aircraft parked at a contact stand heard again after silence / a gap with one stationary
+    (< 3 kt) fix away from its parking keeps stand, pose and bridge until a NEW fix (>= `REACQ_CONFIRM_MS` 5 s later, within
+    `REACQ_CONFIRM_M` 15 m) confirms the move; a fix at the stand clears it, a moving one (>= 3 kt) is taken at once. A real
+    tow costs one more fix at the old stand. Window 04:50–05:06Z: `bridge.hit.eng` 1,325 → 0, `hit_at_rest` 491 → 0,
+    `clear.stand` (AAL1175 / AAL1430) 696 → 0 (counters `reacqOutHeld` / `reacqOutConfirmed`).
+16. **An arrival driving into its stand removes the ghost at first contact** (realtime-3 / -10). The fuselage rule of item 14
+    (`GHOST_FUS_PTS`) is for traffic passing a stand; an arrival whose approach already retracted the ghost's bridge
+    (`retractAhead`: on that stand's lead-in, close, heading in — `earlyUndock.why === 'ahead'`, `by` = this arrival) is
+    driving into the stand, and first contact removes the ghost there as before. Segment B with the fuselage rule alone:
+    the arrivals at E12 / G2 / D16 (7 Nov 03:46–04:00Z) were drawn 67 / 31 / 16 frames over the ghost; with this rule 2–3.
+17. **The realtime-6 evidence gate, restored.** The gate added for realtime-6 (bridge-ahead only on SFO's arrival record for
+    the stand, the arrival close on its lead-in, or SFO's evidence that the occupant left) was lost when the same line was
+    rewritten for realtime-10 (AHEAD_EV_M); without SFO's plan (7 Nov) bridge-ahead fired on geometry again (8 of 28
+    re-docked; B3 three times for ASA arrivals continuing to B6 along B3's lead-in). `aheadNoEvidence` counts the skips.
+18. **Left, with the trace** (not changed): SWA1083 B737, 7 Nov 04:09:32Z, last report at 9 kt west of the C pier, then
+    silent until its 05:14Z departure: dead-reckoned 113 m straight on for 24 s and stopped by the building veto with its
+    wing inside the C-pier footprint for 18 s before the lost-track fade (`building` 180 frames). The veto samples the wing
+    leading edge only (tip, half span, root); denser leading-edge samples did not catch it (window: 182 → 182 frames).
+    The fix is a dead reckoning that follows the taxi graph or brakes ahead of a building — next round.
+19. **A 'push' that never left the stand is undone** (realtime-11; the biggest `bridge.hit.wing` key of segment A). AAL2436
+    B738 at B24, 5 Nov 16:56–17:06Z, reported 10–30 m around its stand at 0.8–6.8 kt (GNSS wander; its real push was at
+    17:26:57Z [obs]); a push was confirmed at 17:04:54Z, the body was left 16.6 m from its reports with B24 L1's rest cab in its
+    wing, and the 10-min rule against a second in-block kept it off B24 (5,822 frames). An off-block now records the parking it
+    left and the furthest report since (`offBlock.P` / `maxD`); stationary for a minute back within `REACQ_PARK_M` of that
+    parking, every report since within `PUSH_UNDO_L` (0.6) × its length of it, the off-block is undone (`push-undone` event,
+    counter `pushUndone`) and the aircraft takes its stand again. A real push-back ends ≥ ~1 L out. Window 16:55–17:30Z:
+    5,822 → 785 frames (the 98 s until the undo).

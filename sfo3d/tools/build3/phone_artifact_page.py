@@ -7,28 +7,63 @@ os.makedirs(O, exist_ok=True)
 tmpl = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'phone_artifact_template.html')).read()
 bundle = open(f'{S}/out/build3/live3.bundle.js').read()
 assert '</script' not in bundle
-# close-out round 3 (integration-4): two more rows on the test card, so the owner's next phone test answers what the
+# close-out round 3 (integration-4): more rows on the test card, so the owner's next phone test answers what the
 # headless runs cannot: (1) whether the artifact page may compile WebAssembly (the meshopt / KTX2 decoders need it; the
 # artifact CSP is unverified - a CSP without 'wasm-unsafe-eval' / 'unsafe-eval' makes WebAssembly.compile throw), probed
-# with the 8-byte empty module; (2) the JS heap (performance.memory, Chromium only: used / total MB, refreshed every 2 s).
-# Both are appended to "Copy results". Nothing is sent anywhere.
+# with the 8-byte empty module; (2) memory. Nothing is sent anywhere.
+# Fix round 2 (verifier v5): performance.memory is the V8 heap only (Chromium only, bucketed; n/a on iOS Safari) and leaves
+# out the ArrayBuffer backing stores where the geometry lives, so the memory row adds what the page can count itself on
+# every browser - the bytes of the scene's geometry buffers (unique BufferAttribute arrays + indices under SFO.R.engine.scene)
+# and three.js' texture estimate (SFO.R.debugInfo().texMB) - plus performance.measureUserAgentSpecificMemory() where the
+# page is cross-origin isolated (its total includes ArrayBuffers). "Copy results" is built by this probe alone: one
+# capture-phase handler composes the whole text from the card's rows (the template's included), writes the clipboard once
+# and stops the template's own handler (round 3 had two writeText calls in one gesture, the second appending these rows).
 PROBE_ROWS = ('<div class="row"><span class="k">WebAssembly</span><span id="pt-wasm">–</span></div>'
-              '<div class="row"><span class="k">JS heap</span><span id="pt-heap">–</span></div>')
+              '<div class="row"><span class="k">JS heap (V8 only)</span><span id="pt-heap">–</span></div>'
+              '<div class="row"><span class="k">Geometry / textures</span><span id="pt-mem">–</span></div>')
 PROBE_JS = r"""<script>
 (function () {
-  var $ = function (id) { return document.getElementById(id); }, r = { wasm: 'probing', heap: null };
-  function show() { if ($('pt-wasm')) $('pt-wasm').textContent = r.wasm; if ($('pt-heap')) $('pt-heap').textContent = r.heap || 'n/a (no performance.memory)'; }
+  var $ = function (id) { return document.getElementById(id); }, r = { wasm: 'probing', heap: null, mem: null, ua: null };
+  function show() { if ($('pt-wasm')) $('pt-wasm').textContent = r.wasm; if ($('pt-heap')) $('pt-heap').textContent = r.heap || 'n/a (no performance.memory)';
+    if ($('pt-mem')) $('pt-mem').textContent = (r.mem || '–') + (r.ua ? ' · UA total ' + r.ua : ''); }
   try {
     if (typeof WebAssembly !== 'object') r.wasm = 'no WebAssembly object';
     else WebAssembly.compile(new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0])).then(function () { r.wasm = 'compiles (meshopt / KTX2 decoders possible)'; show(); },
       function (e) { r.wasm = 'blocked: ' + String(e && e.message || e).slice(0, 160); show(); });
   } catch (e) { r.wasm = 'blocked: ' + String(e && e.message || e).slice(0, 160); }
-  setInterval(function () { var m = performance.memory; if (m) r.heap = (m.usedJSHeapSize / 1048576).toFixed(0) + ' / ' + (m.totalJSHeapSize / 1048576).toFixed(0) + ' MB'; show(); }, 2000);
+  function geoMB() {   // unique geometry ArrayBuffer bytes in the three.js scene (attributes + indices; shared arrays once)
+    var S = window.SFO && SFO.R && SFO.R.engine && SFO.R.engine.scene; if (!S || !S.traverse) return null;
+    var seen = new Set(), b = 0;
+    S.traverse(function (o) { var g = o.geometry; if (!g || !g.attributes) return; var A = [];
+      for (var k in g.attributes) A.push(g.attributes[k]); if (g.index) A.push(g.index);
+      for (var i = 0; i < A.length; i++) { var a = A[i] && (A[i].array || (A[i].data && A[i].data.array)); if (a && a.buffer && !seen.has(a.buffer)) { seen.add(a.buffer); b += a.buffer.byteLength; } } });
+    return b / 1048576;
+  }
+  function poll() {
+    var m = performance.memory; if (m) r.heap = (m.usedJSHeapSize / 1048576).toFixed(0) + ' / ' + (m.totalJSHeapSize / 1048576).toFixed(0) + ' MB';
+    try { var g = geoMB(), t = window.SFO && SFO.R && SFO.R.debugInfo ? SFO.R.debugInfo().texMB : null;
+      if (g != null) r.mem = 'geometry ' + g.toFixed(0) + ' MB' + (t != null ? ' · textures ~' + Number(t).toFixed(0) + ' MB' : ''); } catch (e) { r.mem = 'n/a (' + String(e.message || e).slice(0, 60) + ')'; }
+    show();
+  }
+  setInterval(poll, 3000);
+  if (window.crossOriginIsolated && performance.measureUserAgentSpecificMemory) {
+    var ua = function () { performance.measureUserAgentSpecificMemory().then(function (x) { r.ua = (x.bytes / 1048576).toFixed(0) + ' MB'; show(); }, function () {}); };
+    setTimeout(ua, 20000); setInterval(ua, 60000);
+  }
+  function text() {
+    var L = ['SFO Live 3D phone test'], rows = document.querySelectorAll('#ptest .body .row');
+    for (var i = 0; i < rows.length; i++) { var s = rows[i].querySelectorAll('span'); if (s.length >= 2) L.push(s[0].textContent + ': ' + s[1].textContent); }
+    L.push('state: ' + ($('pt-state') ? $('pt-state').textContent : '?'), 'navigator.gpu: ' + (navigator.gpu ? 'yes' : 'no'), 'dpr: ' + (window.devicePixelRatio || 1), 'ua: ' + navigator.userAgent);
+    if (window.__sfoError) L.push('error: ' + String(window.__sfoError).slice(0, 300));
+    return L.join('\n');
+  }
   document.addEventListener('click', function (e) {
-    if (e.target.id !== 'pt-copy') return;
-    var out = $('pt-out'); if (!out) return; out.textContent += '\nwasm: ' + r.wasm + '\njs heap: ' + (r.heap || 'n/a');
-    if (navigator.clipboard) navigator.clipboard.writeText(out.textContent).catch(function () {});
-  });
+    if (!e.target || e.target.id !== 'pt-copy') return;
+    e.stopImmediatePropagation(); poll();
+    var t = text(), out = $('pt-out'), btn = e.target; if (out) { out.textContent = t; out.hidden = false; }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(function () { btn.textContent = 'Copied'; }, function () { btn.textContent = 'Select text below'; });
+    else btn.textContent = 'Select text below';
+  }, true);
   show();
 })();
 </script>

@@ -166,6 +166,8 @@ def enclosure_cuts(P, TR, F0, log):
 
 
 STACK_GAP = 0.6   # m: the lower of two stacked decks stops this far short of the upper deck's ribbon (review round 2)
+ASSET_BUF = 0.10      # m: a deck stops this far short of an asset's occupancy (trim)
+ASSET_BUF_DOM = 0.02  # m: ... of the domestic group's (the T2 curb sidewalk's kerb face; buildings R3.12) [inf]
 # close-out round 3 (integration-2): the outer light-concrete band along the ITB (OSM 41015123 / 739695588) is a LOWER level
 # than the departures plate [obs: photo i1 (Kulikovsky 2007, CC BY 3.0, refs/cache/buildings/review_likeness/i1.jpg), the
 # ITB frontage seen from the west: the departures deck ends in a planter of pink-flowering shrubs on its fascia, and in front
@@ -324,7 +326,7 @@ def trim(P, TR, log, BODY=None):
             for g in BI.GROUPS:
                 if g not in TR: continue
                 o = BI.occupancy(TRN, g, ch.bounds, y0, y1, pad=0.5, tri_only=True)
-                if not o.is_empty: cut.append(o.intersection(ch)); bygrp.setdefault(g, []).append(o.intersection(ch))
+                if not o.is_empty: oc = o.intersection(ch); cut.append(oc); bygrp.setdefault(g, []).append(oc)
         # the landside buildings as solids too (garages, RCC, hotel, CAC: a ramp that runs into a garage ends at its
         # facade; their surfaces alone miss a deck that passes between two of a garage's floors)
         if 'landside' in TR and not TR['landside']['solid'].is_empty:
@@ -334,7 +336,13 @@ def trim(P, TR, log, BODY=None):
             sol = bd.intersection(p['rib'].buffer(0.5))
             if not sol.is_empty and sol.area > 0.05: cut.append(sol); bygrp.setdefault(g + '/' + u + ' inside', []).append(sol)
         if cut:
-            C = unary_union(cut).buffer(0.10)
+            # the deck stops ASSET_BUF short of an asset's occupancy; against the domestic group's curb (the T2 sidewalk
+            # slab, whose kerb face the deck butts against at the curb level) only ASSET_BUF_DOM: with 0.10 m (+ the
+            # occupancy's triangle edges) a 0.10-0.20 m slot ran along the whole T2 curb (buildings R3.12, close-out r3 fix 2)
+            domc = {id(d) for d in bygrp.get('domestic', [])}
+            dom = unary_union(bygrp['domestic']) if bygrp.get('domestic') else Polygon()
+            rest = [c for c in cut if id(c) not in domc]
+            C = unary_union([unary_union(rest).buffer(ASSET_BUF) if rest else Polygon(), dom.buffer(ASSET_BUF_DOM) if not dom.is_empty else Polygon()])
             before = p['geom'].area; p['geom'] = p['geom'].difference(C); p['asset_cut_m2'] = round(before - p['geom'].area, 2)
             if p['asset_cut_m2'] > 0.05: nt += 1
             p['against'] = C
@@ -455,23 +463,25 @@ def edge_runs(A, B, same, against, step=0.5):
     parapet), against an asset, or outer. Close-out round 3 fix 2 (verifier v4): each segment used to take the class of its
     midpoint, so a segment spanning a corner where the ITB lower level's sidewalk meets its roadway was 'inner' over its
     whole length and left a ~1 m opening in the parapet 5.95 m above grade; now sampled every `step` m. Returns
-    (A, B, outer flags) of the runs."""
+    (A, B, outer flags, against flags) of the runs (fix 2, buildings R3.12: an edge against an asset gets its fascia - the
+    deck's edge face - but no parapet; it had neither, so the T2 curb seam was open down to grade)."""
     L = np.linalg.norm(B - A, axis=1); n = np.maximum(1, np.ceil(L / step).astype(int))
     seg = np.repeat(np.arange(len(A)), n); k = np.concatenate([np.arange(m) for m in n])
     t = (k + 0.5) / n[seg]; Mp = A[seg] + t[:, None] * (B - A)[seg]
     mp = shapely.points(Mp)
     inner = (shapely.distance(mp, same) < 0.08) if not same.is_empty else np.zeros(len(Mp), bool)
     ag = (shapely.distance(mp, against) < 0.12) if not against.is_empty else np.zeros(len(Mp), bool)
-    o = ~inner & ~ag
-    oa, ob, oo = [], [], []
+    cls = np.where(inner, 0, np.where(ag, 2, 1))   # 0 inner, 1 outer, 2 against an asset
+    oa, ob, oc = [], [], []
     i0 = 0
     for j in range(len(A)):
-        oj = o[i0:i0 + n[j]]; i0 += n[j]
-        cut = np.nonzero(np.diff(oj.astype(int)))[0] + 1   # sample indices where the class changes
+        cj = cls[i0:i0 + n[j]]; i0 += n[j]
+        cut = np.nonzero(np.diff(cj))[0] + 1   # sample indices where the class changes
         edges = np.concatenate([[0], cut, [n[j]]]) / n[j]
         for ta, tb in zip(edges[:-1], edges[1:]):
-            oa.append(A[j] + ta * (B[j] - A[j])); ob.append(A[j] + tb * (B[j] - A[j])); oo.append(bool(oj[min(int(round(ta * n[j])), n[j] - 1)]))
-    return np.array(oa), np.array(ob), np.array(oo)
+            oa.append(A[j] + ta * (B[j] - A[j])); ob.append(A[j] + tb * (B[j] - A[j])); oc.append(int(cj[min(int(round(ta * n[j])), n[j] - 1)]))
+    oc = np.array(oc)
+    return np.array(oa), np.array(ob), oc == 1, oc == 2
 
 
 def build_piece(mb, p, P_all, lod, mat_deck, top=True):
@@ -507,13 +517,13 @@ def build_piece(mb, p, P_all, lod, mat_deck, top=True):
         for ring in [poly.exterior] + list(poly.interiors):
             R = np.array(shapely.segmentize(ring, {0: 8.0, 1: 20.0, 2: 40.0}[lod]).coords)
             if len(R) < 3: continue
-            A, B, outer = edge_runs(R[:-1], R[1:], same, against)
-            if not outer.any(): continue
+            A, B, outer, agf = edge_runs(R[:-1], R[1:], same, against)
+            if not (outer.any() or agf.any()): continue
             ha, hb_ = hp(p, A), hp(p, B)
             ba, bb = bottom_of(ha), bottom_of(hb_)
             # quads facing outward: polygon exterior is ccw in shapely's (x, z) = clockwise seen from above with z south
             # (y up, x east, z south is left-handed in plan): pick the winding from the outward test below
-            for k in np.nonzero(outer)[0]:
+            for k in np.nonzero(outer | agf)[0]:
                 a, b = A[k], B[k]
                 q = np.array([[a[0], GROUND_Y + ba[k], a[1]], [b[0], GROUND_Y + bb[k], b[1]], [b[0], GROUND_Y + hb_[k], b[1]], [a[0], GROUND_Y + ha[k], a[1]]])
                 e = b - a; nrm = np.array([e[1], 0.0, -e[0]]); nrm /= max(np.linalg.norm(nrm), 1e-9)
@@ -523,6 +533,7 @@ def build_piece(mb, p, P_all, lod, mat_deck, top=True):
                 if f @ nrm < 0 or (abs(f @ nrm) < 1e-9 and np.cross(q[2] - q[0], q[3] - q[0]) @ nrm < 0): q = q[[1, 0, 3, 2]]
                 L = float(np.linalg.norm(e)); top = max(ha[k], hb_[k])
                 mb.tris(p['unit'], lod, 'concrete', q, np.repeat(nrm[None], 4, 0), np.array([[0, ba[k] / 4], [L / 4, bb[k] / 4], [L / 4, hb_[k] / 4], [0, ha[k] / 4]]), np.array([[0, 1, 2], [0, 2, 3]]))
+                if agf[k]: continue   # against an asset: the edge face only (no parapet against a kerb / facade)
                 if lod == 1 and top > 0.4:
                     # LOD1 parapet: the outer face only (the fascia carried up by PARAPET_H)
                     qq = np.array([[a[0], GROUND_Y + ha[k], a[1]], [b[0], GROUND_Y + hb_[k], b[1]], [b[0], GROUND_Y + hb_[k] + PARAPET_H, b[1]], [a[0], GROUND_Y + ha[k] + PARAPET_H, a[1]]])
@@ -743,6 +754,28 @@ def curb_gap_check(P, TR, M, curb_h, log):
     g = np.array([x[1] for x in gaps]); worst = max(gaps, key=lambda x: x[1])
     res = dict(stations=len(gaps), max_void_m=round(float(g.max()), 3), at_u=worst[0], over_0_3m=int((g > 0.3).sum()), limit_m=0.3)
     log('ITB curb to departures deck: %d stations, largest void %.3f m (u %.1f), %d over 0.3 m' % (res['stations'], res['max_void_m'], res['at_u'], res['over_0_3m']))
+    return res
+
+
+def t2_curb_gap_check(P, TR, curb_h, h_dom, log, step=0.25, near=2.0):
+    """close-out r3 fix 2 (buildings R3.12): the void between the domestic T2 curb sidewalk (the T2 unit's LOD0 up-facing
+    triangles at the curb level) and the domestic departures deck top (pieces within 0.3 m of the deck level), as the plan
+    distance from each point of the sidewalk's edge (every `step` m) to the deck; edge points within `near` m of the deck
+    count (the curb side - the ends and the building side are farther off); limit 0.05 m"""
+    T = TR['_lods'].get(('domestic', 'T2', 0))
+    if T is None or not len(T): return dict(points=0, note='no domestic T2 LOD0')
+    n = np.cross(T[:, 1] - T[:, 0], T[:, 2] - T[:, 0]); n /= np.linalg.norm(n, axis=1, keepdims=True) + 1e-12
+    S = T[(n[:, 1] > 0.95) & (np.abs(T[:, :, 1] - (GROUND_Y + curb_h)).max(1) < 0.06)]
+    side = unary_union([Polygon(t[:, [0, 2]]).buffer(0.005) for t in S if Polygon(t[:, [0, 2]]).area > 1e-4]).buffer(-0.005)
+    deck = unary_union([q['geom'] for q in P if q.get('unit') == 'domestic_departures' and not q['geom'].is_empty and abs(float(np.median(q['h'])) - h_dom) < 0.3])
+    if side.is_empty or deck.is_empty: return dict(points=0, note='no T2 sidewalk / deck')
+    pts = np.array([r.interpolate(s).coords[0] for g in (getattr(side, 'geoms', None) or [side]) for r in [g.exterior] for s in np.arange(0, r.length, step)])
+    d = shapely.distance(deck, shapely.points(pts)); m = d < near
+    if not m.any(): return dict(points=0, note='the deck is > %.1f m from the T2 sidewalk' % near)
+    res = dict(points=int(m.sum()), median_void_m=round(float(np.median(d[m])), 3), max_void_m=round(float(d[m].max()), 3), at=np.round(pts[m][np.argmax(d[m])], 1).tolist(),
+               over_0_05m=int((d[m] > 0.05).sum()), over_0_3m=int((d[m] > 0.3).sum()), overlap_m2=round(float(side.intersection(deck).area), 2), limit_m=0.05)
+    log('T2 curb to domestic departures deck (R3.12): %d sidewalk edge points within %.0f m of the deck, void median %.3f / max %.3f m (at %s), %d over 0.05 m, %d over 0.3 m; plan overlap %.2f m2'
+        % (res['points'], near, res['median_void_m'], res['max_void_m'], res['at'], res['over_0_05m'], res['over_0_3m'], res['overlap_m2']))
     return res
 
 
@@ -1103,6 +1136,7 @@ def main(argv):
             else: build_piece(mb, p, P, l, p['mat'] if (l < 2 or p['src'] == 'walk') else 'deck_plain')
         for c in cols: cylinder(mb, c['unit'], l, c['xz'], GROUND_Y - 0.05, GROUND_Y + c['soffit'] + 0.05, D_COL / 2, {0: 12, 1: 6, 2: 4}[l])
     gapchk = curb_gap_check(P, TR, M, LV['itb']['curb'], log)
+    gapchk_t2 = t2_curb_gap_check(P, TR, LV['domestic']['curb'], sol['h_dom'], log)
     clr = clearance_check(mb, TR, log); clr_p = clearance_check(mb, TR, log, piers=True)
     allxz = np.concatenate([p['pts'] for p in P]); rc = [round(float(v), 1) for v in allxz.mean(0)]
     ntri = {l: sum(int(sum(len(i) for i in b['I'])) for (u, ll, m), b in mb.d.items() if ll == l) for l in (0, 1, 2)}
@@ -1129,7 +1163,7 @@ def main(argv):
                                                          level_m=LOWER_H, walk=dict(under_plate_m=WALK_UNDER, level_m=round(LOWER_H + WALK_KERB, 2), area_m2=round(walk['geom'].area, 1) if walk else 0),
                                                          note='the lower level (photo i1, close-out round 3): held level at LOWER_H on the straight; OSM layer 1, passes under the anchored departures leg past the straight')),
                  stacked=dict(solve=sol.get('stacked', []), cuts=stk_recs),
-                 curb_gap=gapchk, guideway_clearance=clr, guideway_pier_caps_over_decks=clr_p, deck_cut_inside_buildings_m2=body_cut, deck_left_inside_buildings_m2=body_left)
+                 curb_gap=gapchk, curb_gap_t2=gapchk_t2, guideway_clearance=clr, guideway_pier_caps_over_decks=clr_p, deck_cut_inside_buildings_m2=body_cut, deck_left_inside_buildings_m2=body_left)
     sheet(P, cols, os.path.join(OUTD, 'roadways_plan.png'), LV, dict(pieces=len(P), columns=cst, low=len(chk['low'])))
     log('check sheet out/buildings3d/roadways_plan.png')
     Cf, duf, dvf = np.array(M['frame']['centre']), np.array(M['frame']['du']), np.array(M['frame']['dv'])

@@ -264,7 +264,11 @@ export class GroundPhysics {
         if (((!S.tr.stale && !S.tr.quiet) || keeps(S)) && overlaps(B, S, DR_HOLD_M)) { tr.drHold = { x: tr.disp.x, z: tr.disp.z, lt: tr.reps[tr.reps.length - 1].t }; if (traffic.counters) traffic.counters.drHold = (traffic.counters.drHold || 0) + 1; break; } } }
       for (const S of silent) {
         if (S.tr.removed || S.tr.dropping) continue;
-        const hit = S.tr.gate ? (overlaps(B, S, 0) && !keeps(S) && (!live || fusIn(B, S) >= GHOST_FUS_PTS)) : (overlaps(B, S, 0) || (ahead && overlaps(ahead, S, 0.5)));
+        // (...but the arrival whose approach already retracted that occupant's bridge -- traffic.js retractAhead: on that stand's
+        // lead-in, close, heading in -- is driving INTO the stand, not past it: first contact is enough there, as before. With the
+        // fuselage rule alone the arrivals at E12 / G2 / D16 on 7 Nov 03:46-04:00Z drew 13-67 frames over the ghost first)
+        const into = !!(S.tr.earlyUndock && S.tr.earlyUndock.why === 'ahead' && S.tr.earlyUndock.by === tr.hex);
+        const hit = S.tr.gate ? (overlaps(B, S, 0) && !keeps(S) && (!live || into || fusIn(B, S) >= GHOST_FUS_PTS)) : (overlaps(B, S, 0) || (ahead && overlaps(ahead, S, 0.5)));
         if (hit) { traffic.event && traffic.event(S.tr, traffic._lastRecv || 0, 'stale-replaced', { by: tr.hex, moving: true, quiet: S.tr.stale ? 0 : 1 }); if (traffic.fadeRemove) traffic.fadeRemove(S.tr, 'ghost'); else traffic.remove(S.tr); ghosts++; }
       }
       for (const S of waiting) {

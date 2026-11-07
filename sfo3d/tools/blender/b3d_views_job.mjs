@@ -14,13 +14,17 @@
 // --enable-precise-memory-info (527 MB at every near view in review round 2), so the job reads the exact V8 heap through
 // the DevTools protocol after a forced GC (HeapProfiler.collectGarbage, then Runtime.getHeapUsage: jsHeapUsedMB /
 // jsHeapTotalMB); HEAPGC=0 skips the GC.
+// Fix round 2 (verifier v5): the V8 heap leaves out the ArrayBuffer backing stores where the geometry lives (b3dGeoMB 25-39 MB
+// per view), so the same call's backingStorageSize (ArrayBuffers + external strings) is recorded as arrayBufferMB and
+// embedderHeapUsedSize (Blink's heap) as embedderHeapMB, where this Chromium reports them (experimental CDP fields).
 import fs from 'fs'; import path from 'path';
 export default async ({ page, shot, base, OUT }) => {
   let cdp = null; try { cdp = await page.context().newCDPSession(page); } catch (e) { console.log('no CDP session (JS heap not measured)', e.message); }
   const heap = async () => {
     if (!cdp) return {};
     try { if (process.env.HEAPGC !== '0') await cdp.send('HeapProfiler.collectGarbage');
-      const h = await cdp.send('Runtime.getHeapUsage'); return { jsHeapUsedMB: +(h.usedSize / 1048576).toFixed(1), jsHeapTotalMB: +(h.totalSize / 1048576).toFixed(1) };
+      const h = await cdp.send('Runtime.getHeapUsage'); const mb = v => v == null ? undefined : +(v / 1048576).toFixed(1);
+      return { jsHeapUsedMB: mb(h.usedSize), jsHeapTotalMB: mb(h.totalSize), arrayBufferMB: mb(h.backingStorageSize), embedderHeapMB: mb(h.embedderHeapUsedSize) };
     } catch (e) { return { jsHeapErr: String(e.message || e).slice(0, 80) }; }
   };
   const views = (process.env.VIEWS || 'tower').split(';').filter(Boolean).map(v => { const i = v.indexOf('='); return i > 0 ? [v.slice(0, i), v.slice(i + 1)] : [v.replace(/[^a-zA-Z0-9]+/g, '_'), v]; });

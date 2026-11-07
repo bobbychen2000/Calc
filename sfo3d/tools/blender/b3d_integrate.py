@@ -1081,6 +1081,15 @@ def requests_of(res):
                    'below 4.6 m over %d at-grade roads (min %.2f m; conflict "vertical clearance over an at-grade road"); kept as built: the curb level is the published '
                    'T3 L1 -> L2 16 ft [pub at T3], so the real stacked arrivals level is below 4.6 m by design. A posted-clearance photo of the domestic arrivals level '
                    'would settle it (buildings R3.2)' % (len({v['way'] for v in ag}), min(v['min_m'] for v in ag)))
+    rr = [c for c in res['conflicts'] if c.get('check', '').startswith('vertical clearance over a road deck') and c.get('over') == 'roadways']
+    if rr:
+        # close-out r3 fix 2 (verifier v1): the stacked cut is refused where it would split the lower deck, so the ITB loop's
+        # lower roadway passes whole under its anchored departures legs with the clearance the level pair leaves
+        out.append('owner / buildings (ITB group): roads under roads below %.1f m: %s. At the ITB loop the lower (arrivals) roadway, held at LOWER_H 5.80 m '
+                   '(4.6 m over the at-grade building-passage roads + the 1.2-m deck [inf]), passes under its departures legs (OSM 38853121 / 38853045), which leave '
+                   'the L3 plate at 11.35 m (spec_itb level3.floor 11.5 [inf] - kerb): 5.55 m deck to deck < 5.8 m needed. Photo i1 reads the step ~6.7 m (L3 ~1 m higher); '
+                   'please review level3.floor against i1 (buildings R3.2) - the roadways follow the ITB curb on the next build_roadways.py run'
+                   % (ROAD_CLEAR, '; '.join(json.dumps({k: v for k, v in c.items() if k in ('unit', 'min_m', 'at', 'below_m2', 'area_m2')}) for c in rr)))
     tl = [c for c in res['conflicts'] if c.get('check', '').startswith('taxilane')]
     for c in tl: out.append('%s: %s %.1f m from taxilane centreline %s (ADG %s inferred: %.1f m); SFO Museum outline %.1f m' % (c['group'], c['unit'], c['dist_m'], c['lane'], c['adg'], c['need_m'], c['museum_outline_m']))
     try:
