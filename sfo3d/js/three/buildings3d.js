@@ -44,7 +44,7 @@
 // panes where the glass has a base-colour tile (mullions / frit stay dark). Kinds by material name / extras (the assets'
 // own tags): hall (terminal glazing), office (hotel, CAC, station-block window bands, the tower's base building and shaft
 // slot panes: slot_glass; the tower's perforated slot screens stay dark, photo t5), station (AirTrain station glass), roofglass (skylights, glazed roof lines, the T1 glass canopy: lit from below,
-// weaker), cab (tower cab: dim, controllers keep it dark), led (tower ribbon, extras.led: the LED waterfall as objects.js
+// weaker), cab (tower cab: k 0 by default, photo t5 shows it dark; close-out r3), led (tower ribbon, extras.led: the LED waterfall as objects.js
 // id 16), beacon (red obstruction light, extras.obstruction_light: a lamp, not capped), soffit (garage slab undersides,
 // canopy and station ceilings). GLOW values are uniforms (Buildings3D.glow / setGlow) so the environment work can retune
 // them; inferred, not measured.
@@ -66,9 +66,13 @@ const RELEASE = 1.3, RELEASE_S = 8; // near mode: a unit / group file is release
 // exposure and bloom the gate-room panes clipped to white. The first-pass concourse (objects.js concourse()) spans
 // 0.36-1.76 over floor / walls / ceiling lamps; the assets have no interior, so the mean is lowered and the pattern below
 // stands for it. Inferred (no measured SFO night luminances).
-const GLOW_DEF = {
+// cab (close-out round 3, integration-6): off by default - the only dusk / night photo of the tower (t5, Wikimedia Commons
+// "San Francisco International Airport - April 2018 (0463)", CC BY-SA, refs/cache/buildings/review_likeness/t5.jpg) shows
+// the cab glass dark under a lit LED ribbon (controllers keep the cab dark at night); the old inferred teal 0.25 glowed.
+// Colour kept for setGlow('cab', {k}) (manifest.json#integration.glow: every value here is inferred and configurable).
+export const GLOW_DEF = {
   hall: [[1.0, 0.9, 0.76], 0.30], office: [[1.0, 0.82, 0.6], 0.34], station: [[0.95, 0.95, 1.0], 0.32], roofglass: [[1.0, 0.9, 0.76], 0.14],
-  cab: [[0.25, 0.4, 0.35], 0.25], led: [[1.0, 1.0, 1.0], 0.30], beacon: [[1.0, 0.06, 0.04], 40.0],
+  cab: [[0.25, 0.4, 0.35], 0.0], led: [[1.0, 1.0, 1.0], 0.30], beacon: [[1.0, 0.06, 0.04], 40.0],
   // slab undersides of the garages, canopy and station ceilings: the first-pass garages' night level (objects.js id 3:
   // vec3(0.9, 0.95, 1.0) x 0.35 over the open bays), lowered with the others (inferred)
   soffit: [[0.9, 0.95, 1.0], 0.22],

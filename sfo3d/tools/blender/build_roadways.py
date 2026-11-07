@@ -166,12 +166,29 @@ def enclosure_cuts(P, TR, F0, log):
 
 
 STACK_GAP = 0.6   # m: the lower of two stacked decks stops this far short of the upper deck's ribbon (review round 2)
+# close-out round 3 (integration-2): the outer light-concrete band along the ITB (OSM 41015123 / 739695588) is a LOWER level
+# than the departures plate [obs: photo i1 (Kulikovsky 2007, CC BY 3.0, refs/cache/buildings/review_likeness/i1.jpg), the
+# ITB frontage seen from the west: the departures deck ends in a planter of pink-flowering shrubs on its fascia, and in front
+# of it and below it runs a lower level with trees in planters on its outer edge, shelters and pedestrians, which continues
+# under the departures deck; NAIP 2024: the pink line (R - G peak) between the bus roadway and the band is that planter, not
+# a painted kerb]. Its level along the straight is LEVEL in i1 (the lower coping is horizontal within ~1 px over 0.9 km of
+# image width), so it is held at one level there (a plate), not solved: LOWER_H = the lowest level that clears the at-grade
+# roads beneath it (OSM 256787738 / 370279550 / 370279603 / 370279607, tunnel=building_passage, pass under it) by
+# CLEAR_MIN + DECK_DEPTH [inf]. i1 (scale 9.0 px/m at the deck edge from the planter's NAIP length 104 m = 935 px) gives a
+# coping-to-coping step of ~6.7 m (6.1-7.3), more than the 5.6 m modelled: with this lower level the L3 deck would be ~1 m
+# higher than spec_itb level3.floor 11.5 [inf, +-1.5] - left to the ITB group (manifest.json#roadways.unknown)
+LOWER_H = RN.DECK_DEPTH + RN.CLEAR_MIN
+WALK_UNDER = 3.0      # m: the lower level's sidewalk continues this far under the plate's edge (i1: pedestrians and shelters
+                      # under the deck; OSM footway 1164416297 layer 1 runs the plate's length) [inf width] - closes the slit
+WALK_KERB = 0.15      # sidewalk above the lower roadway [inf, as KERB_M]
+PLANTER_H = 0.95      # the deck-edge planter (island B) above the deck: its planting shows over the 0.85-m parapet, as in
+                      # i1 [inf height; obs extent: NAIP 2024 R - G band, i1]
 
 
 def trim(P, TR, log, BODY=None):
     """same-level overlaps go to the higher-priority piece; then every piece minus the assets' occupancy in its band and
     minus the parts that run inside a building (enclosure_cuts, review round 2)"""
-    order = sorted(range(len(P)), key=lambda i: (P[i]['anchor'] is None, P[i]['src'] == 'ramp', -P[i]['w'], P[i]['id']))
+    order = sorted(range(len(P)), key=lambda i: (P[i]['anchor'] is None, P[i]['src'] == 'ramp', -P[i]['w'], isinstance(P[i]['id'], str), P[i]['id'] if not isinstance(P[i]['id'], str) else 0, str(P[i]['id'])))
     kept = []
     for r, i in enumerate(order):
         p = P[i]; g = p['rib']
@@ -185,6 +202,7 @@ def trim(P, TR, log, BODY=None):
             if not len(pts): continue
             dhs = hp(p, pts) - hp(q, pts); dh = np.abs(dhs)
             if np.median(dh) < 1.0: g = g.difference(q['geom'].buffer(0.02))
+            elif 'walk' in (p['src'], q['src']): pass   # a sidewalk under a deck needs headroom, not road clearance (close-out r3)
             elif np.median(dh) < RN.DECK_DEPTH + RN.CLEAR_MIN:
                 # review round 2: two decks overlapping in plan with less than deck + clearance between them (a diverge
                 # whose ribbons still overlap where one has begun to climb): the LOWER one gives the overlap up, so the
@@ -466,6 +484,33 @@ def widen_lower(P, lower, M, log):
             % (p['id'], h, v_out, M['gutter_v'] + 0.3, p['rib'].area - before))
 
 
+def lower_strip(M):
+    """the lower outer roadway's band on the straight section (world polygon): u over the straight, v from beyond the imaged
+    outer edge to the plate's edge (island B's west edge) - the plate of LOWER_H in the level solve (close-out round 3)"""
+    C, du, dv = np.array(M['frame']['centre']), np.array(M['frame']['du']), np.array(M['frame']['dv'])
+    s0, s1 = M['straight']
+    return Polygon(RP.xz_of(np.array([[s0, M['v_cap'] - 5], [s1, M['v_cap'] - 5], [s1, M['gutter_v']], [s0, M['gutter_v']]]), C, du, dv))
+
+
+def lower_walk(M, P, lower, log):
+    """close-out round 3 (integration-2): the lower level's sidewalk along the plate's edge, from the lower roadway's inner
+    edge to WALK_UNDER under the plate (photo i1: the lower level continues under the departures deck; OSM footway 1164416297,
+    layer 1, along the plate) at the lower roadway's level + WALK_KERB, over the straight section where the lower roadway
+    is: it closes the 0.4-0.6 m slit the stacked-deck trim leaves between the plate and the lower roadway (seen from the
+    departures deck or from above, the lower level now continues under the plate's fascia and planter)"""
+    C, du, dv = np.array(M['frame']['centre']), np.array(M['frame']['du']), np.array(M['frame']['dv'])
+    s0, s1 = M['straight']; vg = M['gutter_v']
+    hs = [L['h_m'] for L in M.get('lower', [])]
+    if not hs: return None
+    h = float(np.median(hs)) + WALK_KERB
+    v0, v1 = vg - STACK_GAP - 0.4, vg + WALK_UNDER          # overlaps the lower roadway by 0.4 m (the same-level trim gives it to the roadway)
+    rib = Polygon(RP.xz_of(np.array([[s0, v0], [s1, v0], [s1, v1], [s0, v1]]), C, du, dv))
+    vm = 0.5 * (v0 + v1); pts = RP.xz_of(np.array([[s1, vm], [s0, vm]]), C, du, dv); ln = LineString(pts)
+    log('lower level sidewalk along the plate edge: u %.1f..%.1f, v %.2f..%.2f (%.1f m under the plate), level %.2f m [inf]' % (s0, s1, v0, v1, WALK_UNDER, h))
+    return dict(id='itb_lower_walk', src='walk', w=v1 - v0, lanes=0, oneway=True, anchor=None, layer=1, pts=pts, s=np.array([0.0, ln.length]), h=np.array([h, h]), nodes=[],
+                name='ITB lower level sidewalk under the departures deck edge', kind='walk', line=ln, half=(v1 - v0) / 2, rib=rib, hmin=h, hmax=h)
+
+
 def plate_piece(M, h):
     """the measured ITB departures deck as one road piece (src 'plate'): level h (the ITB L3 deck top), a centreline
     along the roof axis through the middle of the plate (levels and lateral coordinates are taken on it), anchored"""
@@ -509,7 +554,9 @@ def build_plate_top(mb, p, lod, mats):
         va, vb = sorted(b['v']); g = rest.intersection(W([(s0, va), (s1, va), (s1, vb), (s0, vb)]))
         if g.is_empty: continue
         if b['kind'] == 'island':
-            top(g, 'island', ISLAND_H, plainT)
+            # island B is the deck-edge planter (close-out round 3, photo i1): planting at PLANTER_H in concrete walls
+            planter = b['name'] == 'islandB'; ih = PLANTER_H if planter else ISLAND_H
+            top(g, 'planter' if planter else 'island', ih, plainT)
             if lod < 2:   # kerb faces on the long sides (the island's ends stop at the straight section's ends)
                 for poly in (getattr(g, 'geoms', None) or [g]):
                     if not isinstance(poly, Polygon): continue
@@ -519,12 +566,10 @@ def build_plate_top(mb, p, lod, mats):
                         if Lm < 0.2: continue
                         nrm = np.array([e[1], -e[0]]) / Lm
                         if poly.contains(Point(*(0.5 * (a + c) + 0.05 * nrm))): nrm = -nrm
-                        y0, y1 = GROUND_Y + p['hmin'], GROUND_Y + p['hmin'] + ISLAND_H
+                        y0, y1 = GROUND_Y + p['hmin'], GROUND_Y + p['hmin'] + ih
                         q = np.array([[a[0], y0, a[1]], [c[0], y0, c[1]], [c[0], y1, c[1]], [a[0], y1, a[1]]]); n3 = np.array([nrm[0], 0.0, nrm[1]])
                         if np.cross(q[1] - q[0], q[2] - q[0]) @ n3 < 0: q = q[[1, 0, 3, 2]]
-                        mb.tris(p['unit'], lod, 'island', q, np.repeat(n3[None], 4, 0), np.array([[0, 0], [Lm / 4, 0], [Lm / 4, 0.04], [0, 0.04]]), np.array([[0, 1, 2], [0, 2, 3]]))
-            if b['name'] == 'islandB' and lod == 0:   # the red-painted kerb along its roadway (+v) edge [obs NAIP]
-                top(g.intersection(W([(s0, vb - RED_KERB_W), (s1, vb - RED_KERB_W), (s1, vb), (s0, vb)])), 'kerb_red', ISLAND_H + 0.005, plainT)
+                        mb.tris(p['unit'], lod, 'concrete' if planter else 'island', q, np.repeat(n3[None], 4, 0), np.array([[0, 0], [Lm / 4, 0], [Lm / 4, ih / 4], [0, ih / 4]]), np.array([[0, 1, 2], [0, 2, 3]]))
             continue
         n = band_lanes(b); vc = 0.5 * (va + vb); span = n * RN.LANE_W
         mat = ('deck_light_%do' if b['kind'] == 'road_light' else 'deck_%do') % n if lod < 2 else ('deck_plain_light' if b['kind'] == 'road_light' else 'deck_plain')
@@ -880,7 +925,9 @@ def main(argv):
     kerb = RP.kerb_from_asset(TR['_lods'][('itb', 'hall', 0)], LV['itb']['curb'], *RP.frame())
     M, mimg = RP.measure(h_itb, kerb, log, CROSSWALK_U); M['h_deck'] = h_itb
     lower, M['plate_poly'] = plate_outline(M, ways, log)
-    sol = RN.solve_levels(ways, grade, F, LV, log, overhead=overhead_of(TR), plates=[dict(poly=M['plate_poly'], h=h_itb, why='ITB L3 deck plate (NAIP 2024)')])
+    # close-out round 3 (integration-2): the lower outer roadway held level at LOWER_H on the straight (photo i1; see LOWER_H)
+    sol = RN.solve_levels(ways, grade, F, LV, log, overhead=overhead_of(TR), plates=[dict(poly=M['plate_poly'], h=h_itb, why='ITB L3 deck plate (NAIP 2024)'),
+                                                                                    dict(poly=lower_strip(M), h=LOWER_H, why='ITB lower level (photo i1: level; clearance over the building-passage roads)')])
     for u in sol['unresolved']: log('  UNRESOLVED ' + json.dumps(u))
     chk = RN.checks(ways, sol['ramps'], log)
     P = pieces_of(ways, sol['ramps'])
@@ -889,6 +936,8 @@ def main(argv):
     log('outside the core box %s: %d pieces (%.0f m) not built (ground footprint only, as before)' % (CORE.bounds, len(out), sum(p['line'].length for p in out)))
     plate = plate_piece(M, h_itb); P.insert(0, plate)
     widen_lower(P, lower, M, log)
+    walk = lower_walk(M, P, lower, log)
+    if walk: P.append(walk)
     units = units_of(P)
     log('pieces %d (decks %d, ramp parts %d, plate 1), units %s' % (len(P), sum(1 for p in P if p['src'] == 'deck'), sum(1 for p in P if p['src'] == 'ramp'), units))
     BODY = enclosure_cuts(P, TR, F0, log)
@@ -907,16 +956,17 @@ def main(argv):
                 q['against'] = unary_union([q.get('against', Polygon()), LU])
     body_left = round(sum(v.area for v in left.values()), 2)
     log('decks cut where they ran inside a building: %s m2; deck area still enclosed after the cut: %.2f m2' % (body_cut, body_left))
-    cols, cst = columns([p for p in P if p['src'] != 'plate'], TR, log)
+    cols, cst = columns([p for p in P if p['src'] not in ('plate', 'walk')], TR, log)
     pcols = plate_columns(plate, P, TR, log); cols += pcols; cst['plate'] = len(pcols)
     BI.GROUPS[:] = groups0
-    asph_naip, asph, nsamp = naip_asphalt([p for p in P if p['src'] != 'plate'])
+    asph_naip, asph, nsamp = naip_asphalt([p for p in P if p['src'] not in ('plate', 'walk')])
     log('asphalt: NAIP 2024 median sRGB %s over %d samples -> base colour %s (x %.2f linear)' % (asph_naip, nsamp, asph, NAIP_ALBEDO))
     lite_naip, lite = naip_band(plate, M['outer'])
     log('outer light-concrete roadway: NAIP 2024 median sRGB %s -> base colour %s' % (lite_naip, lite))
     mats = {'concrete': dict(rgb=CONCRETE, rough=0.85, extras=dict(src='inf', note='cast-in-place concrete, light grey'))}
     for p in P:
         if p['src'] == 'plate': p['mat'] = None; continue
+        if p['src'] == 'walk': p['mat'] = 'sidewalk'; continue
         light = p['src'] == 'deck' and p['id'] in lower
         nm = ('deck_light_%d%s' if light else 'deck_%d%s') % (p['lanes'], 'o' if p['oneway'] else 't'); p['mat'] = nm
         if nm not in mats: mats[nm] = dict(rgb=(255, 255, 255), rough=0.9, png=lane_tile(p['lanes'], p['oneway'], lite if light else asph), extras=dict(src='obs colour (NAIP 2024) / inf markings' + (' (the outer light-concrete roadway along the ITB)' if light else ''), lanes=p['lanes'], oneway=p['oneway']))
@@ -927,13 +977,17 @@ def main(argv):
     mats['deck_plain'] = dict(rgb=asph, rough=0.9, extras=dict(src='obs colour (NAIP 2024)', note='no markings (LOD2; the plate beyond its straight section)'))
     mats['deck_plain_light'] = dict(rgb=lite, rough=0.88, extras=dict(src='obs colour (NAIP 2024, the outer light-concrete roadway)', note='LOD2'))
     mats['island'] = dict(rgb=CONCRETE, rough=0.85, extras=dict(src='obs extent (NAIP 2024) / inf height %.2f m' % ISLAND_H, note='raised islands of the ITB deck plate'))
-    mats['kerb_red'] = dict(rgb=KERB_RED, rough=0.7, extras=dict(src='obs (NAIP 2024 R - G peak) / inf colour', note='red-painted kerb (no stopping)'))
+    mats['sidewalk'] = dict(rgb=CONCRETE, rough=0.85, extras=dict(src='inf', note='the ITB lower level sidewalk under the departures deck edge (close-out r3; photo i1, OSM footway 1164416297)'))
+    pl_naip, pl_base = naip_band(plate, 'islandB')
+    mats['planter'] = dict(rgb=pl_base, rough=0.95, extras=dict(src='obs colour (NAIP 2024 median over island B) / obs extent (NAIP R - G band, photo i1) / inf height %.2f m' % PLANTER_H,
+                                                               note='the planter of pink-flowering shrubs along the departures deck edge (photo i1); was read as a red-painted kerb in review r2'))
+    log('deck-edge planter (island B): NAIP 2024 median sRGB %s -> base colour %s' % (pl_naip, pl_base))
     mats['paint_white'] = dict(rgb=(226, 226, 220), rough=0.6, extras=dict(src='inf', note='crosswalk bars at the ITB curb ramps'))
     mb = MB()
     for l in (0, 1, 2):
         for p in P:
             if p['src'] == 'plate': build_piece(mb, p, P, l, None, top=False); build_plate_top(mb, p, l, mats)
-            else: build_piece(mb, p, P, l, p['mat'] if l < 2 else 'deck_plain')
+            else: build_piece(mb, p, P, l, p['mat'] if (l < 2 or p['src'] == 'walk') else 'deck_plain')
         for c in cols: cylinder(mb, c['unit'], l, c['xz'], GROUND_Y - 0.05, GROUND_Y + c['soffit'] + 0.05, D_COL / 2, {0: 12, 1: 6, 2: 4}[l])
     gapchk = curb_gap_check(P, TR, M, LV['itb']['curb'], log)
     clr = clearance_check(mb, TR, log); clr_p = clearance_check(mb, TR, log, piers=True)
@@ -959,7 +1013,8 @@ def main(argv):
                                 v_cap=M['v_cap'], bands=[dict(name=b['name'], v=[round(x, 2) for x in b['v']], kind=b['kind'], lanes=band_lanes(b) if b['kind'] != 'island' else None) for b in M['bands']],
                                 gaps=M['gaps'], plate_nodes=sol.get('plate_nodes'), columns=len(pcols), outer_roadway_colour=dict(naip_srgb=lite_naip, base_srgb=lite),
                                 lower_outer_roadway=dict(osm_ways=sorted(lower), imaged_band_v=[round(x, 2) for x in M['outer']['v']], widened=M.get('lower', []),
-                                                         note='OSM layer 1, passes under the anchored departures leg 20-30 m past the straight: kept as the lower deck (solved level)')),
+                                                         level_m=LOWER_H, walk=dict(under_plate_m=WALK_UNDER, level_m=round(LOWER_H + WALK_KERB, 2), area_m2=round(walk['geom'].area, 1) if walk else 0),
+                                                         note='the lower level (photo i1, close-out round 3): held level at LOWER_H on the straight; OSM layer 1, passes under the anchored departures leg past the straight')),
                  curb_gap=gapchk, guideway_clearance=clr, guideway_pier_caps_over_decks=clr_p, deck_cut_inside_buildings_m2=body_cut, deck_left_inside_buildings_m2=body_left)
     sheet(P, cols, os.path.join(OUTD, 'roadways_plan.png'), LV, dict(pieces=len(P), columns=cst, low=len(chk['low'])))
     log('check sheet out/buildings3d/roadways_plan.png')
@@ -982,13 +1037,18 @@ def main(argv):
                              solve=dict(layer_prior_m=RN.LAYER_H, ell_m=RN.ELL, ell_grade_m=RN.ELL_G, clearance_m=RN.CLEAR_MIN, deck_depth_m=RN.DECK_DEPTH, tag='inf')),
                  materials=dict(asphalt=dict(naip_median_srgb=asph_naip, base_srgb=asph, naip_albedo=NAIP_ALBEDO, src='obs colour / inf scale'), concrete=dict(srgb=CONCRETE, src='inf'),
                                 markings='own painted tiles (MUTCD 3A.06 dash cycle 40 ft, 10-ft dashes) [inf]'),
-                 observed=['ITB departures deck plate: outline (kerb to the outer edge, the structural gap at the south end), island extents, the red kerb - NAIP 2024 relief-corrected (roadways_itb_plate.py, sheet BR-02)',
+                 observed=['ITB departures deck plate: outline (kerb to the outer edge, the structural gap at the south end), island extents, the deck-edge planter (the NAIP R - G band) - NAIP 2024 relief-corrected (roadways_itb_plate.py, sheet BR-02)',
+                           'ITB frontage levels (close-out round 3, integration-2): photo i1 (Kulikovsky 2007, CC BY 3.0, refs/cache/buildings/review_likeness/i1.jpg; reference only) shows the departures deck ending in a '
+                           'planter of pink-flowering shrubs on its fascia, and in front of / below it a LOWER level (trees in planters on its outer edge, shelters, pedestrians) that continues under the deck '
+                           'and is level along the facade: the outer light-concrete band is that lower level, not the departures deck; coping-to-coping step in i1 ~6.7 m (6.1-7.3; scale 9.0 px/m from the planter, '
+                           'NAIP length 104 m = 935 px)',
                            'network topology / centrelines: OSM (ODbL)', 'asphalt and light-concrete colours: NAIP 2024 medians'],
                  inferred=['deck depth 1.2 m, shoulders 0.6 m, parapets 0.40 x 0.85 m, fill below a 3.2 m deck top, round columns 1.4 m at ~30 m (positions where clear)',
-                           'ITB deck plate level: the ITB L3 deck top %.2f m (spec_itb level3.floor 11.5 [inf] - 0.15 kerb); the outer light-concrete roadway is NOT on the plate: '
-                           'it is built as the lower deck (OSM ways 41015123 / 739695588, layer 1, solved %s m on the straight) widened to the imaged band toward the plate edge (it stops STACK_GAP short of it: under the plate it would have < 4.6 m) '
-                           '(open item, see unknown); island height 0.15 m; lane counts (OSM minimum / width / 3.6 m); plate columns under the islands and the outer edge'
-                           % (h_itb, ' / '.join('%.2f' % L['h_m'] for L in M.get('lower', []))),
+                           'ITB deck plate level: the ITB L3 deck top %.2f m (spec_itb level3.floor 11.5 [inf] - 0.15 kerb); the outer light-concrete roadway is the lower level (OSM ways 41015123 / 739695588) '
+                           'held level at %.2f m on the straight (%s m built) = clearance %.1f m + deck %.1f m over the at-grade building-passage roads under it [inf: the lowest plausible; photo i1 reads ~1 m lower '
+                           'relative to the plate], widened to the imaged band; its sidewalk continues %.1f m under the plate edge (%.2f m) and closes the former 0.4-0.6 m slit; the deck-edge planter %.2f m high; '
+                           'island A height 0.15 m; lane counts (OSM minimum / width / 3.6 m); plate columns under the islands and the outer edge'
+                           % (h_itb, LOWER_H, ' / '.join('%.2f' % L['h_m'] for L in M.get('lower', [])), RN.CLEAR_MIN, RN.DECK_DEPTH, WALK_UNDER, LOWER_H + WALK_KERB, PLANTER_H),
                            'levels other than the two curbs: screened solve with layer priors %s m and clearance %.1f m (roadways_net.py); at skewed and stacked crossings '
                            'the separation is held over the ribbons\' overlap (the per-crossing deficit, XS_*), stacked pairs on an anchored way or beyond %.1f m by the trim\'s stacked cut'
                            % (RN.LAYER_H, RN.CLEAR_MIN, RN.XS_CAP),
@@ -997,7 +1057,9 @@ def main(argv):
                  unknown=['the domestic departures-curb height (%.3f m is the domestic asset placeholder [unk])' % LV['domestic']['curb'],
                           'every viaduct level: no structural drawings or survey; OSM gives only the layer order',
                           'the ITB arrivals roadway level (OSM layer 1 west of the ITB is solved, not anchored)',
-                          'whether the outer light-concrete roadway along the ITB is a lower deck (modelled: OSM ways 41015123 / 739695588, layer 1, widened to the imaged band) or on the departures deck (as the reviewer read it); NAIP 2020 / 2024 parallax of its edge is inconclusive (the 2020 lean at this spot is not calibrated)'],
+                          'the ITB lower level\'s exact height: modelled %.2f m (the at-grade clearance bound); photo i1 puts the step from the departures deck ~1 m larger than modelled, which would mean '
+                          'the L3 deck ~1 m above spec_itb level3.floor 11.5 [inf, +-1.5] (the ITB group\'s value) or depressed building-passage roads; how far the lower level runs under the deck (modelled %.1f m) '
+                          '- settled in close-out round 3 only that the band IS a lower level (photo i1), not the departures deck' % (LOWER_H, WALK_UNDER)],
                  deviations=['decks over at-grade roads with less than %.1f m clearance: the anchored domestic loop (soffit %.2f m) - the curb placeholder, kept as the domestic asset has it'
                              % (RN.CLEAR_MIN, sol['h_dom'] - RN.DECK_DEPTH),
                              'decks trimmed at the buildings\' bodies (review r2, finding 3): %s m2; Terminal 2: NAIP 2024 shows the departures roadway open to the sky with traffic between the '

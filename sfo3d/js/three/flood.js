@@ -36,7 +36,8 @@
 //     plane), then a cut-off to 0 at 80 deg (140 m): glare-controlled apron floods have a sharp upper beam edge; round 2
 //     narrowed it from 81.7 deg (170 m) so roofs beside the aprons stay out of the beam. Full intensity ahead of the head
 //     frame, half behind. Horizontal uniformity over stand-like texels ~3:1 (ICAO asks <= 4:1).
-//   - level: ICAO Annex 14 Vol I 5.3.24 (apron floodlighting): aircraft stands >= 20 lux average horizontal illuminance,
+//   - level: ICAO Annex 14 Vol I 5.3.24 (apron floodlighting; as transposed in EASA CS ADR-DSN.M.750(d)(2), cached, V):
+//     aircraft stands >= 20 lux average horizontal illuminance,
 //     uniformity (average:minimum) <= 4:1, 20 lux vertical at 2 m. A DESIGN value, not a measurement at SFO. The lamp
 //     intensity is solved so the mean horizontal irradiance over stand-like texels (25-100 m from the nearest mast, 2 m
 //     layer) equals E_STAND (scene units, 0.62 = 20 lux; renderer3 derives the night exposure from it).
@@ -205,8 +206,10 @@ export class FloodLightNode extends THREE.AnalyticLightNode {
 // SPOT_SHARE (review look2-9): the shadow-casting spot carries this share of its mast's field, the rest stays in the
 // unshadowed residual. A stand is lit from several masts / directions to limit shadows (ICAO Annex 14 Vol I 5.3.24: "the
 // arrangement and aiming of floodlights should be such that an aircraft stand receives light from two or more directions
-// to minimize shadows" - 2nd: quoted by a vendor FAQ, refs/cache/env_src/SOURCES.json; the Annex itself is sold by ICAO
-// and icao.int returned 403, close-out round 3 env-5), but only the 1-2 strongest masts cast shadows here and the dominant one carried ~87 % of the local field,
+// to minimize shadows"; the Annex itself is sold by ICAO. Primary regulatory text with the same rule (V): EASA CS-ADR-DSN
+// Issue 2 (2015) CS ADR-DSN.M.750(c), "... an aircraft stand receives light from two or more directions to minimise
+// shadows", and M.750(d)(2) the 20 lux / 4:1 / 20 lux vertical values above (cached refs/cache/env_src/easa/, SOURCES.json;
+// close-out round 3 env-5), but only the 1-2 strongest masts cast shadows here and the dominant one carried ~87 % of the local field,
 // so an A330 wing left a near-black (0.13) shadow; with 0.5 a shadow keeps >= ~50 % of the lit level (I).
 export const SPOT_SHARE = 0.5;
 // one mast as a shadow-casting spot light (see 3. above). mast = vec4(x, z, aim x, aim z); intensity = lamps on x LAMP_M

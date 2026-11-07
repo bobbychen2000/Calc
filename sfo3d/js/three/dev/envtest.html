@@ -61,11 +61,16 @@ try {
   for (let k = 0; k < 40 && !list[1].livTex; k++) { AR.sync(list, cam.pos); await new Promise(r => setTimeout(r, 100)); } out.liv = list.map(a => [a.type, a.liv && a.liv.brand, !!a.livTex, !!a._livNeutral]);
   for (let i = 0; i < +(q.get('n') || 10); i++) {
     AR.sync(list, cam.pos); E.setCamera(cam, innerWidth, innerHeight);
-    if (E._sp) { const sp = E._sp; sp.begin(); for (let k = 0; k < 8; k++) sp.put({ p: [-60 + k * 15, 3, -75], c: k % 2 ? [1, 0.1, 0.05] : [0.1, 1, 0.3], i: 40, s: 0.25 }); sp.put({ p: [-5, 2, -95], c: [0.5, 0.9, 0.6], i: 120, s: 1.4 }); sp.end(E.camera, innerHeight); }
+    if (E._sp) { const sp = E._sp; sp.begin(); for (let k = 0; k < 8; k++) sp.put({ p: [-60 + k * 15, 3, -75], c: k % 2 ? [1, 0.1, 0.05] : [0.1, 1, 0.3], i: 40, s: 0.25 }); sp.put({ p: [-5, 2, -95], c: [0.5, 0.9, 0.6], i: 120, s: 1.4 });
+      // ?aur=<i>: two landing-light records with fog aureoles (lights.js two-part aureole, close-out round 3 env-3) 40 m in
+      // front of the camera, pointing at it (aur = i, aurR 2 deg), and a record without aureole beside them
+      if (q.get('aur')) { const I = +q.get('aur'), cp = cam.pos, tg = [cp[0] * 0.55 + 10 * 0.45, cp[1] * 0.55 + 5 * 0.45, cp[2] * 0.55]; const dv = [cp[0] - tg[0], cp[1] - tg[1], cp[2] - tg[2]]; const dl = Math.hypot(...dv); const dir = dv.map(v => v / dl);
+        sp.put({ p: [tg[0] - 3, tg[1], tg[2]], c: [1, 0.95, 0.85], i: I, s: 0.35, dir, k: 10 }, false, 1, I, 2 * Math.PI / 180); sp.put({ p: [tg[0] + 3, tg[1], tg[2]], c: [1, 0.95, 0.85], i: I, s: 0.35, dir, k: 10 }, false, 1, I, 2 * Math.PI / 180); sp.put({ p: [tg[0] + 9, tg[1], tg[2]], c: [1, 0.2, 0.1], i: 40, s: 0.3 }); out.aurAt = tg.map(v => +v.toFixed(1)); }
+      sp.end(E.camera, innerHeight); }
     E.render(); await new Promise(r => setTimeout(r, 20));
   }
   out.info = { drawCalls: E.renderer.info.render.drawCalls, tris: E.renderer.info.render.triangles, backend: E.backend, reversed: E.reversed };
-  if (E._sp) { const rt = E.lightPass.renderTarget; const px = await E.renderer.readRenderTargetPixelsAsync(rt, 0, 0, rt.width, rt.height); let mx = 0, nz = 0; const smp = []; const h2f = TSL && THREE.DataUtils.fromHalfFloat; for (let i = 0; i < px.length; i += 4) { const v = px[i] + px[i + 1] + px[i + 2]; if (v > 0) { nz++; if (smp.length < 6 && nz % 5 === 1) smp.push([h2f(px[i]), h2f(px[i + 1]), h2f(px[i + 2])].map(x => +x.toFixed(4))); } if (v > mx) mx = v; } out.samples = smp; out.lightPass = { w: rt.width, h: rt.height, max: mx, nonzero: nz, type: px.constructor.name, n: E._sp.n, inst: E._sp.mesh.geometry.instanceCount }; }
+  if (E._sp) { const rt = E.lightPass.renderTarget; const px = await E.renderer.readRenderTargetPixelsAsync(rt, 0, 0, rt.width, rt.height); let mx = 0, nz = 0; const smp = []; const h2f = TSL && THREE.DataUtils.fromHalfFloat; for (let i = 0; i < px.length; i += 4) { const v = px[i] + px[i + 1] + px[i + 2]; if (((px[i] | px[i + 1] | px[i + 2]) & 0x7C00) === 0x7C00 || (px[i] & 0x7C00) === 0x7C00 || (px[i + 1] & 0x7C00) === 0x7C00 || (px[i + 2] & 0x7C00) === 0x7C00) out.nonFinite = (out.nonFinite || 0) + 1; if (v > 0) { nz++; if (smp.length < 6 && nz % 5 === 1) smp.push([h2f(px[i]), h2f(px[i + 1]), h2f(px[i + 2])].map(x => +x.toFixed(4))); } if (v > mx) mx = v; } out.samples = smp; out.lightPass = { w: rt.width, h: rt.height, max: mx, nonzero: nz, type: px.constructor.name, n: E._sp.n, inst: E._sp.mesh.geometry.instanceCount }; }
   out.ok = true;
 } catch (e) { out.err = String(e && e.stack || e); }
 window.__probe = out;

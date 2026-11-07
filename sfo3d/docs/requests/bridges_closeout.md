@@ -23,7 +23,11 @@ to another occupant (a replacement without a `null` in between) - goes on from w
 same occupant (type, designator, freighter flag, pose within 5 cm / 0.1 deg, angle wrapped) back along the way it came,
 at once; another pose / aircraft after the usual 12 s, straight to its new stand-off point and in to the door when that
 path is clear of the aircraft, else back to rest and along its normal docking path; a bridge that does not dock it goes
-back to rest. Every new plan starts at rest (so an undocking / hurry during it retracts along the same path) and runs at
+back to rest. (**Corrected in Round 3, bridges-4:** until then the way back to rest and the leg of a bridge that does
+not dock the new aircraft were NOT tested against it. Now every leg is - back the way it came, straight back, both also
+lifted 1.5 / 2.5 m; to the door direct, via rest or lifted - the first clear one is taken, else the one with the fewest
+poses in the body, and a bridge with a part already in the new body starts at once instead of after 12 s. A replacement
+without `null` can still leave no clear way out: 2 input-induced cases, R3.3.) Every new plan starts at rest (so an undocking / hurry during it retracts along the same path) and runs at
 the sheet's rates, never faster. Contract (scratch `jump.mjs` of the verifier, every stand x accepted type at its stop,
 2,875 dockings): early undock -> 40 % -> re-dock with the pose 10 cm off; normal undock -> 30 % -> same occupant; undock
 -> hurry -> same occupant; early -> hurry(5) -> hurry(600) -> redock: 0 pose jumps > 5 cm in all four (HEAD code on the
@@ -368,7 +372,7 @@ quad), `walktop.mjs` (walkway tops per pier), `legacy.mjs` (old-scene closures),
 | tools/sat/check.py | ISSUES 0, APP 0, WARNINGS 17 | identical |
 | old offline scene (js/world/gates.js GateSystem) closures | flat block 0.4 m past the cab stop (0.25 m into the skin at door 1) | fitted closure (js/aircraft/dock.js) for all 50 fitted types |
 | tools/drawing model fit (report.py check: dims after `_stretch` vs the page) | port without tipShear / tipCut / noseExt / engScale / squash / gearUp / fairing | **47 of 47 types within 2 cm** (scene of 5 Nov) |
-| bcheck2 (verifier's full check, 131 bridges) | 0 issues (round 2) | BCHECK2_AFTER |
+| bcheck2 (verifier's full check, 131 bridges; before = the committed gates.js on today's data, scratchpad `c3/bridges/bc_before/`; the round-2 verifier's run on the data of 6 Nov had 0 issues) | **32 issues**: 16 critical `dock-restbridge` + 15 critical `sibling-path` + 1 major `rest-bridge`, all the G7 L1 stair through the G7 L2 drum (with the data of 7 Nov); 3,304 made / 109 refused, 14 observed pairs refused; slopes > 1:12 / > 1:8 / > 1:4 1,031 / 406 / 0, observed 144 of 610, max 0.2457; hurry / undock paths > 1:8 509, > 1:4 0; 171 beyond the operational extension; telescope overlap >= 1.64 m; cab turn -84.2 / +48.2 deg | **0 issues** (after-run 1 had 8 major `rest-bridge` - the G13 upper walkway through the G13 L1 / L2 walkways - and `pathGt4` 2; both fixed, R3.0); 3,335 made / 78 refused, **10** observed pairs refused (list above); slopes 638 / 194 / 0, observed 88 of 614, max 0.2499; hurry / undock paths > 1:8 **262**, > 1:4 0 (max 0.24999999991); 171 beyond the operational extension (max +1.02 m, 1 > 1 m; all within the mechanical stroke; unchanged - the round-2 158 differs by the data); telescope overlap >= 1.64 m; cab turn -84.2 / +48.2 deg (20 need the optional 185-deg cab, inferred); VDGS 83 / 20 / 0; path-vs-docked 0; rotShift / swingWide / drumOverWing 0 (scratchpad `c3/bridges/bc_after2/`, 215 s) |
 
 ## R3.0 What changed (js/live/gates.js, js/world/gates.js, tools/drawing/*)
 
@@ -405,11 +409,25 @@ quad), `walktop.mjs` (walkway tops per pier), `legacy.mjs` (old-scene closures),
    floor 5.4) and `verify_domestic.py` should read the per-pier value; ITB: the BA-G walkways now top 5.71-5.87 m at G1-G10
    (bump-out roofs 6.5-7.1) and the G13 upper-deck walkway floor is 8.44 m (was 9.0; inferred) - please re-extract the scene and re-run `verify_itb.py` walkway_vs_host_roof, then close the
    manifest conflict "BA-G bridge-head bump-outs vs the app walkways".
+   **Interim mismatch until the domestic asset is rebuilt:** every bridge-attachment element of `dom_geom.py` derives from
+   the one `FLOOR2 = 5.4` - `DOOR` (frame 5.2-8.6 m), `VEST` (vestibule 4.9-8.7 m), `FINGER_Z`, `WALK_Y0_BRIDGE`, the
+   `WALK_TOP` overhang notches. The walkway section at the facade is now level - 0.25 .. level + 3.05 m: BA-C 2.95-6.25,
+   BA-D 3.40-6.70, BA-E / BA-F 4.63-7.93 m (BA-B unchanged). So at BA-C / BA-D / BA-E / BA-F the door frames and the
+   vestibules sit 0.3-2.3 m above the walkway ends, and where a vestibule bridges a gap to the walkway start the walkway's
+   lower part meets open air under the vestibule floor. Nothing intersects (no bridge part in an asset, below), but it is
+   visibly wrong: please take these from `DEPARTURE_LEVELS[pier]` (per pier, not one constant) in the rebuild.
 2. **integration-5 is needed for bridges-6**: `B3D_INTEGRATION.physics.rings` are plan-only; testing drums / walkway starts
    / moving parts against them would read the BA-F overhang (soffit 9.69 m over the F7 / F8 drums, which now top at about
    7-8 m) as a wall and move those drums 1.05 m. Please export the per-building footprints WITH height bands (wall vs roof
    overhang); gates.js then takes walkway starts, drum limits and `bldHit` from them and drops the own-strip heuristic, and
    I will list the vestibules that can go. (Used now only for the VDGS bracket, where the plan face is what matters.)
+   Evidence that the height bands are what is missing (scratchpad `c3/bridges/scripts/tiers3d.py`: every bridge solid of
+   the final tree at rest and in every docked pose - bcheck2 `bgeom.json`, 131 bridges - against
+   `integration.json` footprints, plan-only vs with the `tiers[].y` bands): plan-only 2 drums (F7 / F8 L1, 2.54 / 2.67 m2)
+   and F8 L1 tunnel 1 / corridor docked to CRJ2 / CRJ9 / E75L (0.46-0.52 m2) read as inside BA-F; with the bands **0 moving
+   parts in any asset in any tested pose**, and the F7 / F8 drums (tops 8.03 / 8.04 m) clear the 9.69-m overhang tier by
+   1.65 m (0.01 m2 against the 4.6-m tier = its 0.1-m ring rounding). The only other contacts are the 107 fixed-walkway
+   building-end segments (segment 1 of 95 bridges: the walkway joins the facade), none on any other walkway segment.
 
 ## R3.3 Realtime (traffic.js / app.js / tools/live/invariants.mjs)
 

@@ -898,8 +898,12 @@ checks the West plan's arrival runway against these, then the Southeast plan's; 
 precipitation in the METAR (I). Reviewer's `rwycfg.mjs` re-run (58 fixture reports): non-West 3 → 7 (the four new ones
 are gusty southerlies / wet light tailwinds: 170810Z 24010G21KT +RA, 260022Z 20015G22KT, 020448Z 24023G32KT GRRA,
 301456Z 14005KT -DZ); no 1L/1R instrument arrival. ICAO Annex 14 Vol I 5.3.24 (two or more directions per stand):
-primary not obtainable (ICAO sells the Annexes; icao.int HTTP 403), quoted from a 2nd source in `js/three/flood.js`
-(tag 2nd). AC 150/5345-46F §1.2.4 styles: verified in the cached copy; ½ in = the Style 1/2 boundary (SFO's style NV).
+primary not obtainable (ICAO sells the Annexes; icao.int HTTP 403). The same rule in a primary regulatory text (restart,
+07 Nov): EASA CS-ADR-DSN Issue 2 (ED Decision 2015/001/R; cached `refs/cache/env_src/easa/cs_adr_dsn_issue2.pdf`, SHA-256
+in SOURCES.json, kept local: no licence statement) CS ADR-DSN.M.750(c) "The arrangement and aiming of floodlights should
+be such that an aircraft stand receives light from two or more directions to minimise shadows" and (d)(2) stand 20 lux
+horizontal, average-to-minimum ≤ 4:1, 20 lux vertical at 2 m - the values `js/three/flood.js` was built on; both now cite
+it (V; SPOT_SHARE 0.5 stays I). AC 150/5345-46F §1.2.4 styles: verified in the cached copy; ½ in = the Style 1/2 boundary (SFO's style NV).
 The remaining inferred constants are listed in spec §12.1 with their tags.
 
 ### R3.3 Day exposure: incident-light bound (env-4, env-16 metering)
@@ -990,8 +994,28 @@ rasterisation in Node). The same rule applied to every item (buildings at the sc
 
 ### R3.11 Fog veil on an aircraft in its landing-light glow (env-3)
 
-Render-checked (R3.13): night_fog, UAL323 (aa7ec2, B39M) on short final 28R at its recorded 125 ft, chase camera at the
-front-left quarter 45 m; body / adjacent glow ratio measured on the projected fuselage points.
+Scenario: night_fog (σ 0.0176 m⁻¹, visibility ~170 m, fog 3-64 m), UAL323 (aa7ec2, B39M) re-created at its recorded short
+final 28R (125 ft, 146.7 kt), traffic clock slowed (×0.1) and, in the last run, frozen once airborne; projected fuselage /
+side / above points from the rig camera (`c3*_check.json proj`).
+- c3b (rear-left: the rig's fly-to had not converged after 8 llvmpipe frames; dt capped at 0.1 s): the aircraft is a black
+  shape in black fog; its landing beams point away, nothing to veil (no volumetric beam is drawn: not in the spec).
+- c3c, camera in the beams (8.6° off the nose, 24 m: the follow target lagged): each landing light a **hard-edged saturated
+  disc** of radius 2 aureole radii (3.7°), the gap between the two lamps over the fuselage 106-110 vs 254 in the discs
+  (ratio 0.42), the nose 10-25° off the lamps black (0-46). Inside the discs the fuselage is veiled (no cut-out: the
+  round-2 F works); the defects are the quad truncation (the Gaussian was still ~50 × white at its edge) and the missing
+  wide-angle scatter.
+- Fix (`js/three/lights.js`, header "Fog aureole profile"; spec §12.1): the aureole energy splits into the droplets'
+  diffraction peak (0.5, the Gaussian of photometry.js radius) and their refraction lobe (0.5, small-angle Henyey-Greenstein
+  g_geom 0.70, θt 20.5°; extinction paradox Q_ext ≈ 2, half diffraction: textbook V; 0.5 + 0.5 × 0.70 = the overall
+  g 0.85 of photometry.js), each veiled in front of nearer surfaces with its own path integral, the quad sized to where each
+  part falls below AUR_EPS (≈ 1/255 of display white) with a soft rim; phone tier: core only, ≤ 3 radii. CPU mirror in
+  `test_c3.mjs` (+5 checks: split = g, lobe = HG within 2.5 % to 1.5 θt, normalisation 0.998, veil share = numeric path
+  integral within 2e-4, quad edges = AUR_EPS). Dev page `js/three/dev/envtest.html ?sprites=1&night=1&aur=20000`: no
+  non-finite light-pass texels.
+- Restart incident: my renderer3 edit for the phone-tier flag commented out `E.fxScene.add(this.sprites.mesh)` (same line):
+  live3 drew no light sprites from ~06:40Z to 07:08Z; the c3d renders in that window (all-black E7a views, no position-light
+  dot) are void; found with an in-app light-pass readback (0 non-zero texels for 1,221 records), fixed, other tracks told
+  (env_closeout R3.7). Re-render c3e: see R3.13.
 
 ### R3.12 Documentation (env-9)
 

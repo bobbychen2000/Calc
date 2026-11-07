@@ -23,6 +23,15 @@
 //    F = 1 behind the lamp). Small-angle, single-scatter model (I); erfc: Abramowitz & Stegun 7.1.26 (|ε| < 1.5e-7).
 //    Before: every aureole fragment over nearer geometry was discarded - one-row horizontal cuts at each ALS station's
 //    row (E7 night fog) and black aircraft silhouettes inside their own landing-light glow.
+// Fog aureole profile (close-out round 3, env-3): the E7a render in the landing beams (c3c, out/env/c3) showed each landing
+// light as a hard-edged saturated white disc of 2 aureole radii (the quad ended where the Gaussian was still ~50x white)
+// with a dark gap between the two lamps over the fuselage (106 vs 254), and the nose 10-25 deg off the lamps black.
+// Now: the aureole energy splits into the droplets' diffraction peak (AUR_CORE_SHARE, the Gaussian of radius iA.y) and
+// their broad refraction lobe (the small-angle Henyey-Greenstein shape (1 + (θ/θt)²)^-1.5, θt = (1 − g_geom)/√g_geom
+// = 20.5 deg, normalised 2π θt²), each veiled in front of nearer surfaces with its own path integral (F above; for the
+// lobe F = (G(v u_o) − G(v)) / (1 − G(v)), G(v) = v/√(1 + v²), v = θ/θt), and the quad reaches as far as either part
+// stays above AUR_EPS once exposed (constants below; the outer 30 % of the quad fades out). Phone tier: no lobe, core quad
+// <= 3 radii (fill rate).
 // Vertex: optional directional lobe pow(max(dir.toCam, 0), k); on-screen radius between 2.2 px (intensity scaled down
 // to conserve energy) and 12 px (review round 1: a 1.4 m marker 17 m from the camera was a 110 px glare disk);
 // a 1.6x glow. By day (night factor 0) intensities x 0.5;
@@ -50,9 +59,19 @@
 // against ~1e5 cd for real landing lights, inferred), and the day factor brings them into that range (~150,000 cd).
 import { THREE, TSL } from './lib.js';
 import { lampK } from './tsl/common.js';
-const { Fn, attribute, vec2, vec3, vec4, float, max, min, pow, length, normalize, dot, exp, abs, sqrt, clamp, uniform, cameraPosition, cameraViewMatrix, cameraProjectionMatrix, cameraNear, cameraFar, Discard, If, varying, select, mix, smoothstep, screenUV, perspectiveDepthToViewZ } = TSL;
+const { Fn, attribute, vec2, vec3, vec4, float, max, min, pow, log2, length, normalize, dot, exp, abs, sqrt, clamp, uniform, cameraPosition, cameraViewMatrix, cameraProjectionMatrix, cameraNear, cameraFar, Discard, If, varying, select, mix, smoothstep, screenUV, perspectiveDepthToViewZ } = TSL;
 // occlusion tolerance (header): lamp offset from its mounting surface (I) and depth-precision term (I; reversed float depth)
 export const OCC_MOUNT_M = 0.5, OCC_PREC = 2e-4;
+// fog aureole profile (close-out round 3, env-3; header "Fog aureole profile"): the scattered energy splits into the
+// diffraction peak (AUR_CORE_SHARE, the Gaussian of photometry.js aureole radius) and the broad refraction lobe of the
+// droplets (the rest; drawn with the small-angle Henyey-Greenstein shape (1 + (θ/θt)²)^-1.5, θt = (1 − g)/√g).
+// Extinction paradox: a droplet much larger than the wavelength (10 µm at 550 nm, x ≈ 57) has Q_ext ≈ 2, half of it
+// diffraction within a few degrees (van de Hulst 1957 / Bohren & Huffman 1983, textbook V); g_geom 0.70 makes the
+// overall asymmetry 0.5 × 1 + 0.5 × 0.70 = 0.85 = photometry.js AUR_G (I). The quad extends until each part falls below
+// AUR_EPS in exposed units (≈ 1/255 of display white under AgX, I) - before, it ended at 2 core radii, where a bright
+// lamp's Gaussian was still saturated: hard-edged white discs with a dark gap between the two landing lights (c3c E7a).
+export const AUR_CORE_SHARE = 0.5, AUR_G_GEOM = 0.70, AUR_TAIL_RAD = (1 - AUR_G_GEOM) / Math.sqrt(AUR_G_GEOM), AUR_EPS = 3e-4;
+export const AUR_K_CORE_MAX = 5, AUR_K_TAIL_MAX = 4;   // lobe cap 4 θt = 82 deg: a capped rim lies outside a 50-deg view of the lamp (dev envtest ?aur=20000: a 2.5 θt rim showed)
 // erfc(x), x >= 0 (Abramowitz & Stegun 7.1.26): t (a1 + t (a2 + ...)) exp(-x^2); the polynomial part only (exp separate)
 const erfcPoly = (x) => { const t = float(1.0).div(x.mul(0.3275911).add(1.0)); return t.mul(t.mul(t.mul(t.mul(t.mul(1.061405429).sub(1.453152027)).add(1.421413741)).sub(0.284496736)).add(0.254829592)); };
 
@@ -71,13 +90,15 @@ export class Sprites {
     for (const a of [this.aP, this.aC, this.aD, this.aA]) a.setUsage(THREE.DynamicDrawUsage);
     g.setAttribute('iP', this.aP); g.setAttribute('iC', this.aC); g.setAttribute('iD', this.aD); g.setAttribute('iA', this.aA); g.instanceCount = 0;
     this.camRight = uniform(new THREE.Vector3(1, 0, 0)); this.camUp = uniform(new THREE.Vector3(0, 1, 0)); this.fovScale = uniform(0.001);
+    // broad aureole lobe on / off and the core quad cap (phone tier: off / 3 - fill rate, like the look2-10 caps)
+    this.aurTail = uniform(opts.aurTail === false ? 0 : 1); this.aurKCore = uniform(opts.aurTail === false ? 3 : AUR_K_CORE_MAX);
     this.depthOn = uniform(1); // QA: 0 turns the occlusion test off (SFO.R.sprites.depthOn.value = 0) to tell an occluded light from a missing one
     const expo = opts.expo || uniform(1.0), night = opts.night || uniform(1.0);
     const m = new THREE.MeshBasicNodeMaterial({ transparent: true, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide });
     m.fog = false;
     const iP = attribute('iP', 'vec4'), iC = attribute('iC', 'vec4'), iD = attribute('iD', 'vec4'), iA = attribute('iA', 'vec4'), q = attribute('position', 'vec3');
     const vI = varying(float(0), 'vSprI'), vZ = varying(float(0), 'vSprZ'), vTol = varying(float(0), 'vSprTol');
-    const vRat = varying(float(1), 'vSprRat'), vAL = varying(float(0), 'vSprAL'), vAr = varying(float(1), 'vSprAr');
+    const vRat = varying(float(1), 'vSprRat'), vAL = varying(float(0), 'vSprAL'), vAr = varying(float(1), 'vSprAr'), vAT = varying(float(0), 'vSprAT'), vAt = varying(float(1), 'vSprAt');
     const vUVc = varying(vec2(0.5, 0.5), 'vSprUVc'), vLens = varying(iA.w, 'vSprLens');
     this.texel = uniform(new THREE.Vector2(1 / 1280, 1 / 720));   // one pixel of the scene depth texture (end())
     m.positionNode = Fn(() => {
@@ -97,10 +118,17 @@ export class Sprites {
       vI.assign(I);
       // fog aureole: a Gaussian of angular radius iA.y carrying the energy iA.x x k x 0.408 size^2 / d^2 at the eye (the
       // core's energy formula, header); the quad grows to 2 aureole radii, the core keeps its size (vRat = quad / core)
+      // (close-out round 3, env-3): the energy splits into the diffraction core (Gaussian, iA.y) and the broad lobe (θt);
+      // the quad reaches as far as either part stays above AUR_EPS once exposed (header constants)
       const aOn = iA.x.greaterThan(0.0).and(iA.y.greaterThan(0.0));
-      const sQ = select(aOn, max(s, iA.y.mul(d).mul(2.0)), s);
-      vRat.assign(sQ.div(s)); vAr.assign(max(iA.y.mul(d).div(sQ), 1e-4));
-      vAL.assign(select(aOn, iA.x.mul(kk).mul(0.408).mul(size.mul(size)).div(d.mul(d)).div(iA.y.mul(iA.y).mul(Math.PI)), float(0.0)));
+      const Eaur = iA.x.mul(kk).mul(0.408).mul(size.mul(size)).div(d.mul(d));
+      const wT = this.aurTail.mul(1.0 - AUR_CORE_SHARE);
+      const Lc = Eaur.mul(float(1.0).sub(wT)).div(iA.y.mul(iA.y).mul(Math.PI)), Lt = Eaur.mul(wT).div(2 * Math.PI * AUR_TAIL_RAD * AUR_TAIL_RAD);
+      const kc = clamp(sqrt(log2(max(Lc.mul(expo).div(AUR_EPS), 1.0)).mul(Math.LN2)), 2.0, this.aurKCore);   // Gaussian = EPS there
+      const kt = clamp(sqrt(max(pow(max(Lt.mul(expo).div(AUR_EPS), 1.0), 2.0 / 3.0).sub(1.0), 0.0)), 0.0, AUR_K_TAIL_MAX);   // (1 + k²)^-1.5 = EPS
+      const sQ = select(aOn, max(s, max(iA.y.mul(kc), kt.mul(AUR_TAIL_RAD)).mul(d)), s);
+      vRat.assign(sQ.div(s)); vAr.assign(max(iA.y.mul(d).div(sQ), 1e-4)); vAt.assign(max(d.mul(AUR_TAIL_RAD).div(sQ), 1e-4));
+      vAL.assign(select(aOn, Lc, float(0.0))); vAT.assign(select(aOn, Lt, float(0.0)));
       // the light's own view depth and projected pixel (centre UV, top-left origin as screenUV: engine.js TRAA reprojection)
       const pv = cameraViewMatrix.mul(vec4(p, 1.0)); vZ.assign(pv.z); vTol.assign(pv.z.negate().mul(OCC_PREC).add(OCC_MOUNT_M));
       const pc = cameraProjectionMatrix.mul(pv); const ndc = pc.xy.div(max(pc.w, 1e-6));
@@ -110,7 +138,8 @@ export class Sprites {
     const vQ = varying(q.xy, 'vSprQ'), vC = varying(iC.xyz, 'vSprC');
     m.colorNode = Fn(() => {
       const r2 = dot(vQ, vQ); If(r2.greaterThan(1.0), () => { Discard(); });
-      let vis = float(1.0), aurF = float(1.0);
+      let vis = float(1.0), aurF = float(1.0), tailF = float(1.0);
+      const v1 = sqrt(r2).div(vAt);   // broad lobe: angle / θt
       if (opts.depthNode) {
         const zAt = (uv) => perspectiveDepthToViewZ(opts.depthNode.sample(uv).r, cameraNear, cameraFar);
         const tx = this.texel;
@@ -130,10 +159,16 @@ export class Sprites {
         const a = sqrt(r2).div(max(vAr, 1e-4)), a1 = a.mul(uo);
         const rr = erfcPoly(a1).div(max(erfcPoly(a), 1e-12)).mul(exp(a.mul(a).sub(a1.mul(a1))));
         aurF = select(ratio.greaterThan(0.999).or(this.depthOn.lessThan(0.5)), float(1.0), clamp(float(1.0).sub(rr), 0.0, 1.0));
+        // the broad lobe's share in front of the surface: ∫_1^{u_o} p(θu) du / ∫_1^∞ p(θu) du with p(x) = (1 + x²)^-1.5,
+        // ∫ p(v) dv = v / √(1 + v²) (header)
+        const gv = (v) => v.div(sqrt(v.mul(v).add(1.0)));
+        const g1 = gv(v1);
+        tailF = select(ratio.greaterThan(0.999).or(this.depthOn.lessThan(0.5)), float(1.0), clamp(gv(v1.mul(uo)).sub(g1).div(max(float(1.0).sub(g1), 1e-6)), 0.0, 1.0));
       }
       const rc2 = r2.mul(vRat.mul(vRat)); const inCore = select(rc2.lessThan(1.0), float(1.0), float(0.0)); // core radius in its own units
       const halo = min(vI.mul(0.08), float(0.5).div(max(expo, 1e-3))).mul(exp(rc2.mul(-6.0))).mul(select(vLens.greaterThan(0.5), night, float(1.0)));
-      const aur = vAL.mul(exp(r2.div(vAr.mul(vAr)).negate())).mul(aurF);
+      const edge = float(1.0).sub(smoothstep(0.7, 1.0, sqrt(r2)));   // the quad's rim (below AUR_EPS by construction; a soft rim if capped)
+      const aur = vAL.mul(exp(r2.div(vAr.mul(vAr)).negate())).mul(aurF).add(vAT.mul(pow(v1.mul(v1).add(1.0), -1.5)).mul(tailF)).mul(edge);
       return vec4(vC.mul(vI.mul(exp(rc2.mul(-22.0))).add(halo).mul(inCore).mul(vis).add(aur)), 1.0);
     })();
     this.mesh = new THREE.Mesh(g, m); this.mesh.frustumCulled = false; this.mesh.renderOrder = 10; this.mesh.name = 'sprites';

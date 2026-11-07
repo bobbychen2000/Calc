@@ -90,5 +90,27 @@ const check = (name, ok, info = '') => { n++; if (!ok) fails++; console.log(`${o
     check(`terrain carved for ${L.name} (level y ${L.level_y}): bed below the water 30 m inside, ground above it 100 m outside (>= 85 %; narrow arms excepted)`, inB / inN >= 0.85 && outA / outN >= 0.85, `inside ${inB}/${inN}, outside ${outA}/${outN}`);
   }
 }
+// ---------------------------------------------------------------- env-3: fog aureole profile (js/three/lights.js, CPU mirror)
+{
+  const L = await import('../../js/three/lights.js');
+  const g = 0.5 * 1 + (1 - L.AUR_CORE_SHARE) * L.AUR_G_GEOM;   // overall asymmetry of diffraction (g ~ 1) + refraction lobe
+  const { AUR_G } = await import('../../js/env/lighting/photometry.js');
+  check('aureole split: 0.5 x diffraction (g~1) + 0.5 x refraction lobe (g_geom) = photometry AUR_G', Math.abs(g - AUR_G) < 1e-9, `g ${g} vs ${AUR_G}`);
+  // the small-angle HG shape (1 + (ψ/θt)²)^-1.5 vs Henyey-Greenstein g_geom out to 1.5 θt (within 15 %)
+  const hg = (psi, gg) => (1 - gg * gg) / Math.pow(1 + gg * gg - 2 * gg * Math.cos(psi), 1.5), th = L.AUR_TAIL_RAD;
+  let worst = 0; for (const k of [0.25, 0.5, 1, 1.5]) { const r = (hg(k * th, L.AUR_G_GEOM) / hg(0, L.AUR_G_GEOM)) / Math.pow(1 + k * k, -1.5); worst = Math.max(worst, Math.abs(r - 1)); }
+  check('broad lobe shape = small-angle Henyey-Greenstein (|err| < 15 % to 1.5 θt)', worst < 0.15, `θt ${(th * 180 / Math.PI).toFixed(1)} deg, worst ${(100 * worst).toFixed(1)} %`);
+  // its plane integral: ∫ 2πθ (1 + θ²/θt²)^-1.5 dθ = 2π θt² (the shader's normalisation)
+  let I = 0; const dt = th / 2000; for (let t = dt / 2; t < 400 * th; t += dt * (1 + t / th)) { const w = dt * (1 + t / th); I += 2 * Math.PI * t * Math.pow(1 + (t / th) ** 2, -1.5) * w; }
+  check('broad lobe normalisation 2π θt²', Math.abs(I / (2 * Math.PI * th * th) - 1) < 0.01, `${(I / (2 * Math.PI * th * th)).toFixed(4)}`);
+  // veil share of the broad lobe in front of a surface: 0 at the eye, 1 at the lamp, monotonic; = numeric ∫_1^{u_o} p(θu) du / ∫_1^∞
+  const gv = (v) => v / Math.sqrt(1 + v * v), Ft = (v1, uo) => (gv(v1 * uo) - gv(v1)) / Math.max(1 - gv(v1), 1e-6);
+  const num = (v1, uo) => { const p = (u) => Math.pow(1 + (v1 * u) ** 2, -1.5); let a = 0, b = 0; for (let u = 1; u < 4000; u *= 1.0005) { const w = u * 0.0005; const f = p(u) * w; b += f; if (u < uo) a += f; } return a / b; };
+  let errF = 0, mono = true, prev = -1; for (const uo of [1.05, 1.5, 2.5, 6, 30]) { const f = Ft(0.3, uo); errF = Math.max(errF, Math.abs(f - num(0.3, uo))); if (f < prev) mono = false; prev = f; }
+  check('broad-lobe veil share F(u_o) analytic = numeric path integral, monotonic', errF < 0.01 && mono && Ft(0.3, 1) === 0, `max err ${errF.toFixed(4)}`);
+  // quad extent: where each part falls to AUR_EPS once exposed (Gaussian: k = √ln(L/ε) >= 2; lobe: (1 + k²)^-1.5 = ε / L)
+  const Lx = 1e4 * L.AUR_EPS, kc = Math.sqrt(Math.log(Lx / L.AUR_EPS)), kt = Math.sqrt(Math.pow(Lx / L.AUR_EPS, 2 / 3) - 1);
+  check('quad edge values = AUR_EPS (core, lobe) for a lamp 1e4 x above it', Math.abs(Lx * Math.exp(-kc * kc) / L.AUR_EPS - 1) < 1e-9 && Math.abs(Lx * Math.pow(1 + kt * kt, -1.5) / L.AUR_EPS - 1) < 1e-9, `kc ${kc.toFixed(2)} (cap ${L.AUR_K_CORE_MAX}), kt ${kt.toFixed(2)} (cap ${L.AUR_K_TAIL_MAX})`);
+}
 console.log(`close-out round 3 (env): ${n - fails}/${n} checks passed`);
 process.exit(fails ? 1 : 0);

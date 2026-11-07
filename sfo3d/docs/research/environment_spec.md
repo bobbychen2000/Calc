@@ -910,7 +910,7 @@ Each is tagged on the `?qa=env` HUD / in the code header where it is used; a pri
 |---|---|---|---|---|
 | Runway-use limits | dry: crosswind incl. gusts ≤ 20 kt, tailwind ≤ 5 kt; wet: ≤ 15 kt, calm | `js/env/state.js` | FAA Order 8400.9 §4b (cached PDF) | **V** (SFO anemometer case for 7 kt: NV; "wet" = precipitation in the METAR: I) |
 | Plan choice when both fail | smaller excess | `js/env/state.js` | none | I |
-| Apron flood spot share | 0.5 of a mast's field in its shadow-casting spot | `js/three/flood.js SPOT_SHARE` | ICAO Annex 14 Vol I 5.3.24 "two or more directions" (2nd source; primary sold by ICAO) | 2nd + I |
+| Apron flood spot share | 0.5 of a mast's field in its shadow-casting spot | `js/three/flood.js SPOT_SHARE` | "an aircraft stand receives light from two or more directions to minimise shadows": EASA CS ADR-DSN.M.750(c) (Issue 2, cached `refs/cache/env_src/easa/`), the EU transposition of ICAO Annex 14 Vol I 5.3.24 (sold by ICAO) | rule V; 0.5 I |
 | Flood spot PCF radius | 5 texels | `js/three/flood.js` | penumbra of a ~2.5 m luminaire cluster | I |
 | In-pavement fixture height | ½ in (0.0127 m) | `tools/env/build_lighting_spec.py IN_PAVEMENT_H` | AC 150/5345-46F §1.2.4 styles (cached, V); SFO's installed style | NV |
 | Aerosol layer aloft (FU / HZ) | τ = own fraction × 1.0 over 1,000 ft; no smoke tint | `js/env/state.js AEROSOL_TAU / AEROSOL_DEPTH_FT` | none | I |
@@ -921,6 +921,7 @@ Each is tagged on the `?qa=env` HUD / in the code header where it is used; a pri
 | Day position-light lens | 0.08 m drawn size, energy conserved | `js/env/aircraft_lights.js NAV_LENS_S` | lens diameter of LED position lights | I |
 | Air under a low deck | in-scatter 0.5 × (6/7 skyUp + ground) by the low-layer cover | `js/three/sky.js fogInscatter` | isotropic-phase equilibrium under a CIE overcast deck | I |
 | Day exposure band | ±1 EV of the incident target | `js/env/atmo/exposure.js INCIDENT_SPAN` | A-EXP (§11.3) | I |
+| Fog aureole profile | 0.5 diffraction core (Gaussian, photometry.js radius) + 0.5 refraction lobe (small-angle HG, g_geom 0.70, θt 20.5°); quad to AUR_EPS 3e-4 exposed (≈ 1/255 display) | `js/three/lights.js AUR_*` | extinction paradox Q_ext ≈ 2, half diffraction (van de Hulst 1957; Bohren & Huffman 1983, textbook); g_geom from the overall g 0.85 | split V; g 0.85, g_geom, EPS I |
 | Wet-pavement SSR | 24 steps to 160 m, thickness 1.5 m + 2 %, gloss 0.08-0.4 | `js/three/ssr.js` | §7.6 "SSR on the high tier" | I |
 | Local ground bounce | view factor (1 − n.y)/2, horizon blend 0.85, k 0.5-2 | `js/three/tsl/ground_bounce.js` | the bake's albedo | I |
 | Airside asphalt path tone | 0.355 × naip_grey / 203 | `js/three/ground.js pathToneTexture` | NAIP 2024 grey (M) ↔ PCC albedo | M + I |

@@ -50,7 +50,8 @@
 //    2,883 stand x type dockings) and undockEta(g, now) (seconds until the tunnels are back at
 //    rest, extension(g) 0); it does not have to hold the body for the full retraction. Any docking requested while the
 //    bridges are not at rest (the same aircraft back, another pose, another aircraft) goes on from where each bridge is
-//    (setOccupant -> dockFrom: no jump; review round 2 v5).
+//    (setOccupant -> dockFrom: no jump; review round 2 v5), every leg - back to rest too - tested against the NEW
+//    occupant (close-out round 3); send setOccupant(g, null) before a different occupant (the real bridge retracts first).
 //  * Rest pose: the data's `stowW` (tunnel end = cab pivot at rest, clear of every accepted type's envelope + 1 m, of
 //    the other bridges at rest and docked, of the building; cab straight on the tunnel). After an undocking the cab
 //    settles from the door's height to the rest height (rest tunnel <= 1:12) at the sheet's lift rate.
@@ -1400,8 +1401,10 @@ export class LiveGateSystem {
   }
   // a docking requested while bridges are not at rest (L: legsNow of every bridge before the occupant changed): every
   // bridge goes on from where it is - the same occupant back along the way it came (its post); another pose / aircraft
-  // straight to the new stand-off point and in to the door when that path is clear of the aircraft, else back to rest
-  // and along the normal docking path; a bridge that does not dock it back to rest. Each new plan starts at rest (pre,
+  // straight to the new stand-off point and in to the door, else back to rest and along the normal docking path, else
+  // lifted; a bridge that does not dock it back to rest (the way it came, or retract - swing - extend, each also lifted).
+  // EVERY one of these legs is tested against the NEW occupant (pathHits): the first clear one, else the fewest poses in
+  // the body; a bridge with a part already in it moves at once (no DOCK_DELAY). Each new plan starts at rest (pre,
   // the way the bridge came, so an undocking or a hurry during it retracts along the same path), every segment timed at
   // the sheet's rates (segTime) and never faster (the pre parts are stretched so that all bridges sit at one animation
   // parameter k0 now). Before (review round 2 v5): the new plan was started at the running animation's k - the cabs

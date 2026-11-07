@@ -1,0 +1,10 @@
+{
+ "cs_adr_dsn_issue2.pdf": {
+  "url": "https://www.easa.europa.eu/sites/default/files/dfu/CS-ADR-DSN%20%20Issue%202%20to%20EDD%202015-001-R%20v1%20(corrected).pdf",
+  "title": "EASA CS-ADR-DSN Issue 2 (Annex to ED Decision 2015/001/R, 29 Jan 2015): Certification Specifications and Guidance Material for Aerodromes Design",
+  "licence": "EASA official publication; no licence statement in the document - kept local (refs/MANIFEST.json hash), not redistributed",
+  "fetched": "2026-11-07",
+  "sha256": "046e21ad3159239437f0e4af2ad9a76a9bda3aadb520b379072db7c367e9144b",
+  "used_for": "js/three/flood.js SPOT_SHARE basis: CS ADR-DSN.M.750(c) 'The arrangement and aiming of floodlights should be such that an aircraft stand receives light from two or more directions to minimise shadows' and M.750(d)(2) stand horizontal 20 lx, average-to-minimum <= 4:1, vertical 20 lx at 2 m - the EU transposition of ICAO Annex 14 Vol I 5.3.24 (the ICAO text itself is sold by ICAO); close-out round 3 env-5. Issue 2 is superseded (Issue 7, ED Decision 2025/004/R); the M.750 wording is quoted from this issue only"
+ }
+}

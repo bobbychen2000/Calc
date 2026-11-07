@@ -5123,6 +5123,13 @@
    "bytes": 128708,
    "sha256": "aab600bd57151e27b6777e1e82de0854c174b7245afd4a20dfaa442458ea79f0"
   },
+  "env_src/easa/cs_adr_dsn_issue2.pdf": {
+   "class": "local",
+   "why": "image / document without an open licence in SOURCES.json",
+   "bytes": 6259892,
+   "sha256": "046e21ad3159239437f0e4af2ad9a76a9bda3aadb520b379072db7c367e9144b",
+   "url": "https://www.easa.europa.eu/sites/default/files/dfu/CS-ADR-DSN%20%20Issue%202%20to%20EDD%202015-001-R%20v1%20(corrected).pdf"
+  },
   "fonts/Kanit-700i.ttf": {
    "class": "local",
    "why": "unclassified binary",
@@ -11269,8 +11276,14 @@
   "rec/adsbfi_20261107_06.jsonl.gz": {
    "class": "local",
    "why": "adsb.fi terms: personal non-commercial use, not to be licensed on",
-   "bytes": 1051030,
-   "sha256": "68cd47b8e1b8bc11c716be063efe0c0ee308e5e067c70e65e804d504b3e5c97f"
+   "bytes": 3577536,
+   "sha256": "2b5e52cb6066ee77bd4b4efcf2ede0a7907a8e568ece6b2d2c277375b0d5cc1e"
+  },
+  "rec/adsbfi_20261107_07.jsonl.gz": {
+   "class": "local",
+   "why": "adsb.fi terms: personal non-commercial use, not to be licensed on",
+   "bytes": 2106206,
+   "sha256": "b49aa589a4d43bd43a4fde04db0d9c729df74fd83986ceaf35075636d79c48e5"
   },
   "rec/adsblol_20261104_17.jsonl.gz": {
    "class": "pack",
@@ -11533,8 +11546,14 @@
   "rec/adsblol_20261107_06.jsonl.gz": {
    "class": "pack",
    "why": "ODbL (adsb.lol); trimmed copy in rec_pack/",
-   "bytes": 277473,
-   "sha256": "26e081f449d3bd52d51594e6ada0658f0f73247f233104227af799c4768630c6"
+   "bytes": 972321,
+   "sha256": "7842b22fdfaefc17234f2978d4c628c5230ff4ced83570d540bb805fb5b4ef14"
+  },
+  "rec/adsblol_20261107_07.jsonl.gz": {
+   "class": "pack",
+   "why": "ODbL (adsb.lol); trimmed copy in rec_pack/",
+   "bytes": 314146,
+   "sha256": "383637dab518b277330c4d61594f7b9b05ae36134ac2e01b858098589ec606a3"
   },
   "rec/recorder.log": {
    "class": "local",
@@ -11545,8 +11564,8 @@
   "rec/recorder.out": {
    "class": "local",
    "why": "recorder state",
-   "bytes": 73010,
-   "sha256": "7f9c00b2e3e5dc49f8dbc1ef6d44ad182893ab1f67d869c305c84e298e004b2e"
+   "bytes": 74678,
+   "sha256": "b5e5beb53838a45096c4e2839442c83a78675f813a0b6b68b583a57016a11d8e"
   },
   "rec/recorder.pid": {
    "class": "local",

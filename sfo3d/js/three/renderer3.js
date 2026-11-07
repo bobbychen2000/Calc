@@ -405,7 +405,7 @@ export class Renderer3 {
     this.objMat = objectMaterial(common); this.vehMat = objectMaterial({ ...common, instanced: true });
     this.carMat = objectMaterial({ ...common, instanced: true, carFade: true }); // garage-roof cars: distance fade to their mean colour
     this.markMat = markingMaterial({ noiseTex: this.noiseTex, pxScale: this.pxScale, reversed: E.reversed });
-    this.sprites = new Sprites(24000, { depthNode: E.depthNode, expo: E.expo, night: this.night, slopeTaps: this.tier === 'low' ? 2 : 4 }); E.fxScene.add(this.sprites.mesh);
+    this.sprites = new Sprites(24000, { depthNode: E.depthNode, expo: E.expo, night: this.night, slopeTaps: this.tier === 'low' ? 2 : 4, aurTail: this.tier !== 'low' }); E.fxScene.add(this.sprites.mesh);   // aurTail: the phone tier draws no broad aureole lobe (fill rate; env-3)
     this.acr = new AircraftRenderer(S, { noiseTex: this.noiseTex, Q: this.Q, renderer: E.renderer });
     this.staticGroup = new THREE.Group(); this.staticGroup.name = 'world'; S.add(this.staticGroup);
     this.built = true; tlog('static scene built');

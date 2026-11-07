@@ -41,10 +41,14 @@ treats every `AIRPORT.taxiways` polygon as taxiway.
 - **Tower metering (env-16):** by day the exposure is now bounded to ±1 EV of the incident target
   (`js/env/atmo/exposure.js incidentBound`); a cab-interior view no longer meters on the windows (9.0 → 14.0 vs target
   15.0). The ambient-only interior materials are not needed for the exposure any more.
-- **PCF penumbra behind alpha glass (env-16): deferred, keep your workaround.** The noise is the per-pixel-rotated PCF of
-  the sun shadow on the low tier, which has no TRAA to average it (floor high-pass 50.5 → 0.65 with receiveShadow off,
-  your doubt 2); a fix is an engine shadow-filter change on the phone tier that needs a real-GPU A/B (owner item OD-7).
-  Until then the ambient-only interior (receiveShadow off) is the right workaround.
+- **PCF penumbra behind alpha glass (env-16): deferred, keep your workaround.** The noise is the 5-tap PCF of the sun
+  shadow, rotated per pixel and per frame (`js/three/engine.js pcfTemporal`) so that TRAA averages it - and TRAA is on in
+  every tier (`QUALITY3 ... traa: true`; corrected after the restart: an earlier line here said the low tier had none). What
+  TRAA does not average is that noise SEEN THROUGH the alpha-blended glass: the reprojection / neighbourhood clamp works on
+  the depth and velocity the glass writes in front of the floor (inferred, not isolated; floor high-pass 50.5 → 0.65 with
+  receiveShadow off, your doubt 2). Candidate fixes, each needing an A/B on a real GPU (owner item OD-7): the cab glass
+  with `depthWrite: false` (your material) or a wider, non-rotated PCF for receivers behind glass (engine). Until then the
+  ambient-only interior (receiveShadow off) is the right workaround.
 - **SSR (env-2):** nothing to do: the wet apron mirrors whatever the pre-pass depth and the resolved frame hold,
   buildings included.
 
@@ -67,3 +71,23 @@ too slow, gate `ssr` to high / ultra in renderer3 (`Q.ao === 'prepass' && hist &
 (new), `tools/env/run_gates.sh`, `refs/cache/env_src/**` (FAA Order 8400.9 PDF, OSM extracts, SOURCES.json),
 `docs/research/environment_spec.md`, `docs/research/environment_impl.md`, `docs/research/engine_impl.md` (§4.8 notes,
 env-9), `docs/requests/engine_closeout.md` (R2.1 done), this file.
+Added after the 06:12Z container restart (same round): `js/three/lights.js` (two-part fog aureole, env-3),
+`js/three/renderer3.js` (phone tier: no broad aureole lobe), `js/three/flood.js` (EASA citation, comment only),
+`tools/env/test_c3.mjs` (28 checks), `refs/cache/env_src/easa/` (EASA CS-ADR-DSN Issue 2 PDF: local-only licence, the
+SOURCES.json travels; `tools/cache/sync.py` lists the PDF in MANIFEST.json).
+
+### R3.6 Engine track / lead: fog aureole fill rate (env-3)
+
+`js/three/lights.js` now sizes each fog aureole's quad to where it falls below ~1/255 of display white (two parts: the
+diffraction core, ≤ 5 core radii, and a broad refraction lobe of 20.5°, ≤ 4 × that). A landing light seen in its beam
+in dense fog can cover most of the screen with one additive quad, by design (the in-beam glow). Desktop / ultra: please
+check the frame time of the E7a view (night_fog, an arrival on short final 28R, camera in the landing beams) on a real
+GPU (owner item OD-7); the phone tier draws no lobe (`aurTail: false`) and caps the core at 3 radii.
+
+### R3.7 All tracks: live3 renders taken ~06:40Z-07:08Z on 2026-11-07 have NO light sprites
+
+An env edit to `js/three/renderer3.js` (line 408, the Sprites constructor) put a `//` comment in front of
+`E.fxScene.add(this.sprites.mesh)` on the same line, so live3.html drew no light sprites at all (airfield lights, aircraft
+lights, mast lamps, fog aureoles) from ~06:40Z until the fix at 07:08:22Z (file time). Found by the env track's own light-pass readback
+(0 non-zero pixels with 1,221 records). Any live3 render or measurement your track took in that window that involves
+lights should be re-taken; renders loaded before ~06:40Z or after 07:08:22Z are unaffected. live.html was not affected.

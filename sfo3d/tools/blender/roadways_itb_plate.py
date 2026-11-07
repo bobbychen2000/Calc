@@ -27,7 +27,12 @@ OSM it runs under the anchored departures roadway's south leg (ways 38853121 / 3
 straight - on this deck it would have to drop >= 5.8 m (deck + clearance) in that distance, a 19-25 % grade - and the
 2.8-m band between island B's red kerb and its surface (dark 1-m line, bright line, dark line) reads as the step's barrier
 and fascia seen at the 2024 lean (0.38 m per m to the east); NAIP 2020 / 2024 parallax could not separate the two levels
-(the 2020 lean at this spot is not calibrated). The plate's measured outline (to the hedge line) is reported for it."""
+(the 2020 lean at this spot is not calibrated). The plate's measured outline (to the hedge line) is reported for it.
+Close-out round 3 (integration-2), settled by photo i1 (Kulikovsky 2007, CC BY 3.0, refs/cache/buildings/review_likeness/
+i1.jpg, the ITB frontage from the west; reference only): the "red kerb" of island B is a planter of pink-flowering shrubs
+along the departures deck's outer edge, on its fascia, and the light-concrete band in front of it is a LOWER level (trees
+in planters on its outer edge = the NAIP hedge line, shelters, pedestrians; level along the facade; it continues under the
+deck). build_roadways.py builds island B as that planter and the band as the lower level (LOWER_H, lower_walk)."""
 import json, math, os, sys
 import numpy as np
 import shapely

@@ -7,7 +7,37 @@ os.makedirs(O, exist_ok=True)
 tmpl = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'phone_artifact_template.html')).read()
 bundle = open(f'{S}/out/build3/live3.bundle.js').read()
 assert '</script' not in bundle
-open(f'{O}/sfo_phone_test.html', 'w').write(tmpl.replace('/*LIVE_CSS*/', open(f'{S}/live.css').read()).replace('/*APP_BUNDLE*/', bundle))
+# close-out round 3 (integration-4): two more rows on the test card, so the owner's next phone test answers what the
+# headless runs cannot: (1) whether the artifact page may compile WebAssembly (the meshopt / KTX2 decoders need it; the
+# artifact CSP is unverified - a CSP without 'wasm-unsafe-eval' / 'unsafe-eval' makes WebAssembly.compile throw), probed
+# with the 8-byte empty module; (2) the JS heap (performance.memory, Chromium only: used / total MB, refreshed every 2 s).
+# Both are appended to "Copy results". Nothing is sent anywhere.
+PROBE_ROWS = ('<div class="row"><span class="k">WebAssembly</span><span id="pt-wasm">–</span></div>'
+              '<div class="row"><span class="k">JS heap</span><span id="pt-heap">–</span></div>')
+PROBE_JS = r"""<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); }, r = { wasm: 'probing', heap: null };
+  function show() { if ($('pt-wasm')) $('pt-wasm').textContent = r.wasm; if ($('pt-heap')) $('pt-heap').textContent = r.heap || 'n/a (no performance.memory)'; }
+  try {
+    if (typeof WebAssembly !== 'object') r.wasm = 'no WebAssembly object';
+    else WebAssembly.compile(new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0])).then(function () { r.wasm = 'compiles (meshopt / KTX2 decoders possible)'; show(); },
+      function (e) { r.wasm = 'blocked: ' + String(e && e.message || e).slice(0, 160); show(); });
+  } catch (e) { r.wasm = 'blocked: ' + String(e && e.message || e).slice(0, 160); }
+  setInterval(function () { var m = performance.memory; if (m) r.heap = (m.usedJSHeapSize / 1048576).toFixed(0) + ' / ' + (m.totalJSHeapSize / 1048576).toFixed(0) + ' MB'; show(); }, 2000);
+  document.addEventListener('click', function (e) {
+    if (e.target.id !== 'pt-copy') return;
+    var out = $('pt-out'); if (!out) return; out.textContent += '\nwasm: ' + r.wasm + '\njs heap: ' + (r.heap || 'n/a');
+    if (navigator.clipboard) navigator.clipboard.writeText(out.textContent).catch(function () {});
+  });
+  show();
+})();
+</script>
+"""
+page = tmpl.replace('/*LIVE_CSS*/', open(f'{S}/live.css').read()).replace('/*APP_BUNDLE*/', bundle)
+k_row = '<div class="row"><span class="k">GPU</span><span id="pt-gpu">–</span></div>'; k_js = '<script type="module">'
+assert page.count(k_row) == 1 and page.count(k_js) >= 1
+page = page.replace(k_row, k_row + PROBE_ROWS, 1).replace(k_js, PROBE_JS + k_js, 1)
+open(f'{O}/sfo_phone_test.html', 'w').write(page)
 for f in glob.glob(f'{S}/out/build3/assets/*'):
     os.makedirs(f'{O}/assets', exist_ok=True); shutil.copy(f, f'{O}/assets/')
 for f in glob.glob(f'{S}/data/models/*.sfom'):

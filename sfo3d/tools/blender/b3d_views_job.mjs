@@ -10,8 +10,19 @@
 // QS: extra query (default mode=snapshot&res=1); FRAMES: frames accumulated per view (TRAA; default 8).
 // ROOT (livetest.mjs): serve a snapshot instead of the working tree (other workflows' half-done edits can break the page).
 // Output: <OUT>/cmp_<mode>_<name>.png, and <OUT>/cmp_info.json (renderer + b3d stats per view).
+// JS heap per view (close-out round 3, integration-4): Chromium's performance.memory is bucketed without
+// --enable-precise-memory-info (527 MB at every near view in review round 2), so the job reads the exact V8 heap through
+// the DevTools protocol after a forced GC (HeapProfiler.collectGarbage, then Runtime.getHeapUsage: jsHeapUsedMB /
+// jsHeapTotalMB); HEAPGC=0 skips the GC.
 import fs from 'fs'; import path from 'path';
 export default async ({ page, shot, base, OUT }) => {
+  let cdp = null; try { cdp = await page.context().newCDPSession(page); } catch (e) { console.log('no CDP session (JS heap not measured)', e.message); }
+  const heap = async () => {
+    if (!cdp) return {};
+    try { if (process.env.HEAPGC !== '0') await cdp.send('HeapProfiler.collectGarbage');
+      const h = await cdp.send('Runtime.getHeapUsage'); return { jsHeapUsedMB: +(h.usedSize / 1048576).toFixed(1), jsHeapTotalMB: +(h.totalSize / 1048576).toFixed(1) };
+    } catch (e) { return { jsHeapErr: String(e.message || e).slice(0, 80) }; }
+  };
   const views = (process.env.VIEWS || 'tower').split(';').filter(Boolean).map(v => { const i = v.indexOf('='); return i > 0 ? [v.slice(0, i), v.slice(i + 1)] : [v.replace(/[^a-zA-Z0-9]+/g, '_'), v]; });
   const modes = (process.env.MODES || 'old,new').split(',').filter(Boolean);
   // written after every view (a killed run keeps what it measured; review round 2: the phone run lost its stats to a reboot)
@@ -26,13 +37,14 @@ export default async ({ page, shot, base, OUT }) => {
     await page.waitForFunction(() => SFO.R.isComplete && SFO.R.isComplete() && SFO.R.frames > 2, null, { timeout: 0, polling: 500 });
     await page.waitForFunction(() => !SFO.R.b3d || SFO.R.b3d.done, null, { timeout: 0, polling: 1000 });
     console.log(mode, 'ready in', ((Date.now() - t0) / 1000).toFixed(1), 's', JSON.stringify(await page.evaluate(() => SFO.R.b3d ? SFO.R.b3d.info() : null)));
+    (info[mode] = info[mode] || {})._ready = { s: +((Date.now() - t0) / 1000).toFixed(1), ...(await heap()) }; console.log(mode, '_ready', JSON.stringify(info[mode]._ready)); save();
     for (const [name, v] of views) {
       const [kind, arg] = v.split(':');
       if (kind === 'wait') {
         await page.waitForTimeout(+arg * 1000);
         const w = await page.evaluate(() => { const B = SFO.R.b3d; const r = SFO.R.debugInfo(); return { texMB: r.texMB, drawCalls: r.drawCalls, kind: B && B.info().kind, landsideUnits: B && B.info().landsideUnits,
           ...(performance.memory ? { jsHeapMB: +(performance.memory.usedJSHeapSize / 1048576).toFixed(1) } : {}) }; });
-        (info[mode] = info[mode] || {})[name] = { view: v, ...w }; console.log(mode, name, JSON.stringify(info[mode][name])); save(); continue;
+        (info[mode] = info[mode] || {})[name] = { view: v, ...w, ...(await heap()) }; console.log(mode, name, JSON.stringify(info[mode][name])); save(); continue;
       }
       const ok = await page.evaluate(([k, a]) => {
         const q = SFO.qa; const args = a ? a.split(',') : [];
@@ -60,7 +72,7 @@ export default async ({ page, shot, base, OUT }) => {
         return { r: SFO.R.debugInfo(), b3d: B ? B.info() : null, b3dTris: Math.round(b3dTris), b3dGeoMB: +b3dGeoMB.toFixed(1), mem };
       });
       (info[mode] = info[mode] || {})[name] = { view: v, drawCalls: di.r.drawCalls, tris: di.r.tris, texMB: di.r.texMB, b3dLod: di.b3d && di.b3d.unitsAtLod,
-        b3dTris: di.b3dTris, b3dGeoMB: di.b3dGeoMB, ...di.mem, kind: di.b3d && di.b3d.kind, landsideUnits: di.b3d && di.b3d.landsideUnits };
+        b3dTris: di.b3dTris, b3dGeoMB: di.b3dGeoMB, ...di.mem, ...(await heap()), kind: di.b3d && di.b3d.kind, landsideUnits: di.b3d && di.b3d.landsideUnits };
       console.log(mode, name, JSON.stringify(info[mode][name])); save();
       await shot('cmp_' + mode + '_' + name);
     }
