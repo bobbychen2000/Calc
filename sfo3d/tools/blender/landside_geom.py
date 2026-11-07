@@ -1983,6 +1983,16 @@ def superbay():
         n = np.cross(np.array(q[1]) - np.array(q[0]), np.array(q[3]) - np.array(q[0]))
         if n[:2] @ (np.array(sl) * sg) < 0: q = q[::-1]
         sh.face(q, 'spine_wall', [(0, 0), (1, 0), (1, 0.5), (0, 0.5)])
+    # close-out r3 fix 2 (verifier v2, pre-existing at LOD0 / LOD1: 878 back-face hits on sb_roof): the spine stretch of the 1.2-m
+    # roof sandwich was open at both roof ends (no fascia between the root-level soffit edge and the hip facets, rays ran inside
+    # it to the backs of the roof faces) and had no underside: a spine soffit at the cantilever-root soffit level and two end
+    # fascias close it
+    qs = [(s0_, -T), (s1_, -T), (s1_, T), (s0_, T)]
+    sh.face_dir([(*W(a, t), root - 1.2) for a, t in qs], 'soffit', [(a / 6.0, t / 6.0) for a, t in qs], (0, 0, -1))
+    for t_end in (-T, T):
+        pa, pb = W(s0_, t_end), W(s1_, t_end)
+        sh.face_dir([(*pa, root - 1.2), (*pb, root - 1.2), (*pb, root), (*pa, root)], 'fascia', [(0, 0), (1, 0), (1, 0.1), (0, 0.1)],
+                    (*(np.array(tl) * np.sign(t_end)), 0.0))
     # hangar walls: outline clipped 1 m inside the roof tips and the roof ends; top follows the roof (minus 1.2 m)
     roof_rect = Polygon([W(a0 + 1.0, -T + 1.0), W(a1 - 1.0, -T + 1.0), W(a1 - 1.0, T - 1.0), W(a0 + 1.0, T - 1.0)])
     WP = orient_all(P.intersection(roof_rect).buffer(0))
@@ -2047,17 +2057,65 @@ def superbay():
     B.shells.append(Part('sb_walls', wl, 'shell', 'obs', 'hangar walls on the outline, door openings', ['sb_footprint', 'sb_bays']))
     B.details[0].append(Part('sb_doors', dl, 'detail', 'inf', 'door leaves (8 per bay), red light', ['sb_bays']))
     B.details[1].append(Part('sb_doors', dl, 'detail', 'inf', 'door leaves, red light', ['sb_bays']))
+    # LOD2 (close-out r3 fix 2, verifier v2: the round-1 LOD2 stopped its walls at the tip eave ht - 1.2 under a roof rising to the
+    # root and a spine roof floating at hs - open gables, a 1.2-m eave slit and a 1.5-m spine slit, see-through from every side):
+    # a closed coarse solid as LOD0 - plane cantilever roofs with a 1.2-m fascia and a soffit, the flat spine roof with its side and
+    # end walls from the soffit up, and the outline walls up to the soffit (top sampled along every edge, split at the spine lines)
     cm2 = MB('sb_L2')
-    walls(cm2, WP.simplify(0.8), 0.0, ht - 1.2, 'hangar_wall', (2, 2))
+    RT = 1.2                                                  # roof depth (fascia / soffit), as LOD0
+
+    def z2(a, t):
+        """LOD2 roof top: the cantilever planes (no folds) root -> tip, the flat spine at hs."""
+        if s0_ <= a <= s1_: return hs
+        f = (s0_ - a) / (s0_ - a0) if a < s0_ else (a - s1_) / (a1 - s1_)
+        return root + (ht - root) * min(1.0, max(0.0, f))
+
+    def soff2(a, t):
+        """LOD2 underside: the cantilever soffits, the spine underside at root - RT."""
+        return root - RT if s0_ <= a <= s1_ else z2(a, t) - RT
     for side in (-1, 1):
         aa = (s0_, a0) if side < 0 else (s1_, a1)
-        q = [(*W(aa[0], -T), root), (*W(aa[1], -T), ht), (*W(aa[1], T), ht), (*W(aa[0], T), root)]
-        n = np.cross(np.array(q[1]) - np.array(q[0]), np.array(q[2]) - np.array(q[0]))
-        if n[2] < 0: q = q[::-1]
-        cm2.face(q, 'hangar_roof', [(0, 0), (1, 0), (1, 1), (0, 1)])
+        q = [(aa[0], -T), (aa[1], -T), (aa[1], T), (aa[0], T)]
+        top = [(*W(a, t), root if a == aa[0] else ht) for a, t in q]
+        cm2.face_dir(top, 'hangar_roof', [(0, 0), (1, 0), (1, 1), (0, 1)], (0, 0, 1))
+        cm2.face_dir([(x, y, z - RT) for x, y, z in top], 'soffit', [(0, 0), (1, 0), (1, 1), (0, 1)], (0, 0, -1))
+        # fascia: tip edge and the two roof-end edges (outward)
+        out_tip = np.array([*(np.array(sl) * side), 0.0])
+        e = [(*W(aa[1], -T), ht), (*W(aa[1], T), ht)]
+        cm2.face_dir([(e[0][0], e[0][1], ht - RT), (e[1][0], e[1][1], ht - RT), e[1], e[0]], 'fascia', [(0, 0), (1, 0), (1, 0.1), (0, 0.1)], out_tip)
+        for t_end in (-T, T):
+            p1 = (*W(aa[0], t_end), root); p2 = (*W(aa[1], t_end), ht)
+            cm2.face_dir([(p1[0], p1[1], root - RT), (p2[0], p2[1], ht - RT), p2, p1], 'fascia', [(0, 0), (1, 0), (1, 0.1), (0, 0.1)],
+                         np.array([*(np.array(tl) * np.sign(t_end)), 0.0]))
     q = [(*W(s0_, -T), hs), (*W(s1_, -T), hs), (*W(s1_, T), hs), (*W(s0_, T), hs)]
-    if np.cross(np.array(q[1]) - np.array(q[0]), np.array(q[2]) - np.array(q[0]))[2] < 0: q = q[::-1]
-    cm2.face(q, 'spine_roof', [(0, 0), (1, 0), (1, 1), (0, 1)])
+    cm2.face_dir(q, 'spine_roof', [(0, 0), (1, 0), (1, 1), (0, 1)], (0, 0, 1))
+    cm2.face_dir([(x, y, root - RT) for x, y, _ in q], 'soffit', [(0, 0), (1, 0), (1, 1), (0, 1)], (0, 0, -1))
+    # spine side walls (root -> hs, the step above the cantilever roots) and spine end walls (spine underside -> hs)
+    for a_, sg in ((s0_, -1), (s1_, 1)):
+        pa, pb = W(a_, -T), W(a_, T)
+        cm2.face_dir([(*pa, root), (*pb, root), (*pb, hs), (*pa, hs)], 'spine_wall', [(0, 0), (1, 0), (1, 0.5), (0, 0.5)],
+                     np.array([*(np.array(sl) * sg), 0.0]))
+    for t_end in (-T, T):
+        pa, pb = W(s0_, t_end), W(s1_, t_end)
+        cm2.face_dir([(*pa, root - RT), (*pb, root - RT), (*pb, hs), (*pa, hs)], 'spine_wall', [(0, 0), (1, 0), (1, 0.5), (0, 0.5)],
+                     np.array([*(np.array(tl) * np.sign(t_end)), 0.0]))
+    # outline walls up to the underside, sampled every ~8 m and split where an edge crosses a spine line
+    for a, b, s0 in ring_edges(orient_all(WP.simplify(0.8))):
+        ua, ta_ = inv(*a); ub, tb_ = inv(*b)
+        L = math.hypot(b[0] - a[0], b[1] - a[1])
+        cuts = {0.0, 1.0} | {i / max(1, int(L / 8.0)) for i in range(1, max(1, int(L / 8.0)))}
+        for asp in (s0_, s1_):
+            if (ua - asp) * (ub - asp) < 0: cuts.add((asp - ua) / (ub - ua))
+        cuts = sorted(cuts)
+        for f0, f1 in zip(cuts[:-1], cuts[1:]):
+            if f1 - f0 < 1e-6: continue
+            p0 = np.array(a) + (np.array(b) - np.array(a)) * f0; p1 = np.array(a) + (np.array(b) - np.array(a)) * f1
+            um = ua + (ub - ua) * 0.5 * (f0 + f1)          # (the piece lies on one side of a spine line: its side decides)
+            def zz(f, um=um):
+                u_, t_ = ua + (ub - ua) * f, ta_ + (tb_ - ta_) * f
+                if s0_ <= um <= s1_: return root - RT
+                return z2(min(u_, s0_) if um < s0_ else max(u_, s1_), t_) - RT
+            cm2.quad_wall(tuple(p0), tuple(p1), 0.0, zz(f0), 0.0, zz(f1), 'hangar_wall', s0 + L * f0, (2, 2))
     boxm(cm2, rlp, (1, 0), 0.4, 0.4, (hs, hs + 0.5), 'red_light', (1, 1))     # the DOF red light in every LOD (review r1)
     B.coarse.append(Part('sb_L2', cm2, 'coarse', 'pub', 'Superbay (coarse)', ['sb_layout']))
     B.footprint_w = F.wpoly(Polygon([W(a0, -T), W(a1, -T), W(a1, T), W(a0, T)])); B.top = hs + 0.5

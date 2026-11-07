@@ -485,9 +485,48 @@ def run(path):
     for c in close:
         C.add(f'  stand {c["stand"]} within 2 m of the 3-D footprint', c['plan_m'], 2.0, None,
               'pre-existing (stand data vs SFO Museum outline) unless the near part is a 3-D addition', ok=c['plan_m'] > 0.0, group='plausibility')
-    # bridges: the app's DRAWN walkway (from its start E) and rotunda vs 3-D geometry in the walkway band
-    band_fp = footprint(S, 0, zband=(G.FLOOR2 - 0.6, G.WALK_TOP + 0.3))
+    # bridges: the app's fixed walkway solids (js/live/gates.js solidsQ rest, tools/blender/app_bridges.json: per-pier
+    # DEPARTURE_LEVELS and the 1:12 slope to the rotunda) vs the 3-D triangles inside EACH SOLID'S OWN height band (close-out r3
+    # fix 2: was one plan footprint of the 4.8-8.7 m band, i.e. the one 5.4-m level for every pier)
+    import app_bridges as AB
     from shapely.ops import substring
+    TW = np.concatenate([p['P'][p['T']] for n_, m_ in S.items() if m_['lod'] == 0 for p in m_['prims']])
+    TW = TW.copy(); TW[:, :, 1] -= GROUND_Y
+    tlo = TW[:, :, [0, 2]].min(1); thi = TW[:, :, [0, 2]].max(1); tylo = TW[:, :, 1].min(1); tyhi = TW[:, :, 1].max(1)
+
+    def band_area(g, y0, y1):
+        """plan area of the triangles' parts between y0 and y1 (above the apron) inside g (vertical faces as 5-cm strips)."""
+        if g.is_empty: return 0.0
+        x0, z0, x1, z1 = g.bounds
+        m = (thi[:, 0] > x0) & (tlo[:, 0] < x1) & (thi[:, 1] > z0) & (tlo[:, 1] < z1) & (tyhi > y0) & (tylo < y1)
+        out = []
+        for t in TW[m]:
+            poly = [tuple(v) for v in t]
+            for lim, keep in ((y0, lambda v: v[1] >= y0), (y1, lambda v: v[1] <= y1)):
+                res = []
+                for k in range(len(poly)):
+                    a, b_ = poly[k], poly[(k + 1) % len(poly)]
+                    if keep(a): res.append(a)
+                    if keep(a) != keep(b_):
+                        f = (lim - a[1]) / (b_[1] - a[1]); res.append(tuple(a[q] + f * (b_[q] - a[q]) for q in range(3)))
+                poly = res
+                if not poly: break
+            if len(poly) < 3: continue
+            xz = [(v[0], v[2]) for v in poly]; P_ = Polygon(xz)
+            if P_.is_valid and P_.area > 1e-4: out.append(P_)
+            else:
+                xs = np.array(xz); dm = np.linalg.norm(xs[:, None] - xs[None], axis=2); a, b_ = np.unravel_index(dm.argmax(), dm.shape)
+                if dm[a, b_] > 0.02: out.append(LineString([xz[a], xz[b_]]).buffer(0.025, cap_style=2))
+        return unary_union(out).intersection(g).area if out else 0.0
+
+    def solids_of(stand, door):
+        b_ = AB.bridge(stand, door, False)
+        if b_ is None: return []
+        return [(Polygon(P_), lo_ + 0.03, hi_ - 0.03) for P_, lo_, hi_ in AB.walkway_slices(b_, 1.0)]   # 1-m slices, local band
+    ab_stale = AB.stale()
+    C.add('app bridge dump (tools/blender/app_bridges.json) matches the current js/live/gates.js / stands inputs',
+          ', '.join(ab_stale) or 'current', 'current', None, 're-run node tools/blender/app_bridges.mjs when it lists a file',
+          ok=not ab_stale, group='plausibility')
     hits, nb, contacts = [], 0, []
     doors = {(d['stand'], d['gate'], d['door']): d for d in info['doors']}
     for s_ in st:
@@ -511,21 +550,23 @@ def run(path):
                 for sd in np.arange(0, ln.length, 0.1):
                     q = ln.interpolate(sd)
                     if not hp.contains(Point(G.Lp(q.x, q.y))): s0 = max(s0, sd); break
-            near = substring(ln, s0, min(ln.length, s0 + 1.5)).buffer(GM.WALK_W / 2, cap_style=2) if ln.length - s0 > 0.05 else Polygon()
-            an = near.intersection(band_fp).area if not near.is_empty else 0.0
+            SB = solids_of(s_['name'], br.get('door'))
+            near = substring(ln, s0, min(ln.length, s0 + 1.5)).buffer(GM.WALK_W / 2 + 0.05, cap_style=2) if ln.length - s0 > 0.05 else Polygon()
+            an = sum(band_area(g.intersection(near), y0, y1) for g, y0, y1 in SB) if not near.is_empty else 0.0
             if an > 0.05: contacts.append((s_['name'], br.get('gate'), br.get('door'), round(an, 2)))
             s0 += 1.5
             if ln.length - s0 < 0.5: continue
-            seg = substring(ln, s0, ln.length).buffer(GM.WALK_W / 2, cap_style=2)
-            a = seg.intersection(band_fp).area
+            seg = substring(ln, s0, ln.length).buffer(GM.WALK_W / 2 + 0.05, cap_style=2)
+            a = sum(band_area(g.intersection(seg), y0, y1) for g, y0, y1 in SB)
             if a > 0.05: hits.append((s_['name'], br.get('gate'), br.get('door'), round(a, 2)))
     plaus['bridge_walkway_hits'] = hits
     plaus['bridge_attach_contacts'] = contacts
     C.add(f'bridge attachments: walkway first 1.5 m beyond the facade touching 3-D geometry ({len(contacts)} bridges; INFO)',
           float(sum(c[3] for c in contacts)), 0.0, None, 'door frames / vestibule ends / walkways meeting the facade at an angle '
           '(stand data vs SFO Museum outline, as the ITB rotunda contacts)', unit='m2', ok=True, group='plausibility')
-    C.add(f'bridge walkways (app-drawn part, beyond facade + 1.5 m) overlapping 3-D geometry at 4.8-8.7 m ({nb} bridges)', float(sum(h[3] for h in hits)), 0.0, 0.5,
-          'gates.js fixed walkway WALK_W 2.6 x WALK_H 3.0 at DEPARTURE_LEVEL 5.4', unit='m2', group='plausibility')
+    C.add(f'bridge walkways (app solids beyond facade + 1.5 m) overlapping 3-D geometry in their own height band ({nb} bridges)', float(sum(h[3] for h in hits)), 0.0, 0.5,
+          'gates.js fixed-walkway solids (WALK_W 2.6, floor - 0.3 .. + WALK_H 3.0) at the pier DEPARTURE_LEVELS (B 5.4, C 3.2, D 3.65, '
+          'E / F 4.88), tools/blender/app_bridges.json', unit='m2', group='plausibility')
     tw = unary_union([Polygon(p[0], p[1:]).buffer(0) for t_ in D.AIR['taxiways'] for p in t_['polys']])
     C.add('SFO Museum taxiway polygons inside the 3-D footprint', tw.intersection(fp0).area, 0.0, 0.5, 'data/sfo_airport.json taxiways', 'm2', group='plausibility')
     C.add('tower base-building exclusion inside the 3-D footprint', G.TOWER_EXCL.intersection(fp0).area, 0.0, 0.5,

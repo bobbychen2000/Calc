@@ -314,11 +314,16 @@ def smooth_ao(img):
 
 
 def wire_ao(mats):
+    # close-out r3 fix 2 (verifier v8): ONE glass rule for all four assets (as domestic, buildings-5): no glTF occlusion on a
+    # GLASS material. The baked AO is a diffuse visibility; three.js applies a material's aoMap to the indirect diffuse AND,
+    # through its specular occlusion (computeSpecularOcclusion), to the IBL reflection that makes glass read, while Cycles
+    # ignores the glTF occlusion - so AO on glass made the app and Cycles disagree. The image node stays (the bake target).
     grp = gltf_output_group()
     for m in mats:
         nt = m.node_tree
         tex = nt.nodes.get('AO_BAKE')
         if tex is None or any(n.type == 'GROUP' and n.node_tree == grp for n in nt.nodes): continue
+        if 'glass' in m.name.split('.L')[0]: continue
         sep = nt.nodes.new('ShaderNodeSeparateColor')
         g = nt.nodes.new('ShaderNodeGroup'); g.node_tree = grp
         nt.links.new(tex.outputs['Color'], sep.inputs['Color'])

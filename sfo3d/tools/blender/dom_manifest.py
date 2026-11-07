@@ -82,14 +82,27 @@ def dimensions():
         'plan: the T2 outline courtyard connector (SFO Museum) extended along its axis to the moved face, cut at the Central Parking Garage '
         'outline [obs]; floor at the garage Level 3 placeholder (2/5 of 81 ft) so that the soffit clears the departures deck by 4.7 m [inf]')
     add('pier / hall footprints', 'SFO Museum level-2 outlines (+ measured roof edges)', 'obs', 'data/sfo_airport.json (CDLA-Permissive-1.0)')
-    add('concourse (departure) floor', G.FLOOR2, 'inf', 'js/live/gates.js DEPARTURE_LEVEL (bridge floor)')
+    add('concourse (departure) floor = the app bridge level per pier (close-out r3 fix 2)',
+        ' / '.join('%s %.2f' % (k, G.PIER_LEVEL[k]) for k in 'BCDEF'),
+        ' / '.join('%s %s' % (k, G.PIER_LEVEL_TAG[k]) for k in 'BCDEF'),
+        'js/live/gates.js DEPARTURE_LEVELS (tools/blender/app_bridges.json, node tools/blender/app_bridges.mjs): B 5.4 inferred, C 3.2 '
+        'inferred (the BA-D photo-a1 layout on the 7.2-m roof), D 3.65 photo a1 (low), E / F 4.88 T3 L2 [pub]; door frames, vestibules, '
+        'overhang / drum notches and bridge-entered elevated parts follow the walkway floor at each door')
+    add('BA-C / BA-D facade bands (close-out r3 fix 2)', 'sill band %.3f-%.3f, glazing %.3f-%.3f of the roof edge: BA-D %.2f-%.2f-%.2f m, '
+        'BA-C %.2f-%.2f-%.2f m' % (G.A1_D_RATIO[0], G.A1_D_RATIO[1], G.A1_D_RATIO[1], G.A1_D_RATIO[2],
+                                   G.A1_D_RATIO[0] * G.H['D'], G.A1_D_RATIO[1] * G.H['D'], G.A1_D_RATIO[2] * G.H['D'],
+                                   G.A1_D_RATIO[0] * G.H['C'], G.A1_D_RATIO[1] * G.H['C'], G.A1_D_RATIO[2] * G.H['C']),
+        'obs (low, BA-D) / inf (BA-C)', 'photo a1 at the BA-D near end (rows 763.5 / 773.5 / 790.5 / 795.5 / ~812 px, camera-independent '
+        'ratios); BA-C the same layout (too small on a1), as gates.js DEPARTURE_LEVELS.C')
     add('facade bands (service / spandrel / glazing / panel)', 'STYLES in dom_geom.py', 'inf / unk', 'materials pub where described (bab.glazing, bae.facade, t1c, t3w, t3e)')
     add('mullion module / fins', f'{G.MULL} m / {G.FIN[0]} x {G.FIN[1]} m', 'inf', 'no source')
     add('roof slab / parapet', f'{G.ROOF_THK} / {G.PARAPET}', 'inf', 'measured heights are the roof EDGES (coping top)')
     add('PV rack blocks', 'dom_pv.json', 'obs (extent, NAIP 2024 +-1 m) / inf (height 0.35-0.75 m)', 'tools/blender/dom_pv.py')
     add('elevated sky-bridge / connector parts', f'{G.INNER_Y0} - {G.INNER_TOP}', 'unk', 'the app convention (tools/build_terminal_parts.py walkway y0 6.0 / h 10.5)')
-    add('elevated BA-B parts entered by a bridge walkway (B10 / B11 / B11S / B15 / B16): underside', G.WALK_Y0_BRIDGE, 'inf',
-        'review r1: the vestibule floor (bridge floor 5.4 - 0.5) so that the app walkway (5.15-8.45 m) runs inside the part')
+    add('elevated parts entered by a bridge walkway (B10 / B11 / B11S / B15 / B16 at %.2f, F22 at the BA-F level): underside' % G.WALK_Y0_BRIDGE,
+        'walkway floor inside the part %+.1f m' % G.VEST_DZ[0], 'inf',
+        'review r1: the vestibule floor so that the app walkway (floor - 0.3 .. + 3.0) runs inside the part; per bridge from '
+        'app_bridges.json since close-out r3 fix 2')
     add('Courtyard 3 Connector office block: footprint', f'T2 outline NW end west of s {G.C3C_S_EAST:.1f} ({G.C3C_POLY.area:.0f} m2)', 'obs',
         'SFO Museum T2 outline; the cut through its two outline jogs; NAIP 2024 imaged east roof edge less the relief on the same line')
     add('Courtyard 3 Connector office block: height', G.C3C_H, 'inf', 'HOK: "Above the connector, a six-story office building" [pub] '
@@ -100,7 +113,10 @@ def dimensions():
         'tools/blender/dom_roofobs.py (review r1: discrete tables instead of one plate per block)')
     add('rooftop mechanical units', 'tools/blender/dom_roofobs.json units', 'obs (extent, NAIP 2024 +-0.7 m) / inf (height 1.5 / 2.2 / 3.0 m by size)',
         'tools/blender/dom_roofobs.py: compact dark objects with a shadow on their NNE side')
-    add('bridge doors / vestibules / bulkheads', 'at the walkway attach points (data/sfo_stands.json)', 'inf', 'door 2.6 x 3.0 walkway section (gates.js)')
+    add('bridge doors / vestibules / bulkheads', 'at the walkway attach points (data/sfo_stands.json); frame %+.1f .. %+.1f m, vestibule %+.1f .. '
+        '%+.1f m about the app walkway floor at the door' % (G.DOOR_DZ + G.VEST_DZ), 'inf',
+        'door 2.6 x 3.0 walkway section (gates.js); floors per door from app_bridges.json (close-out r3 fix 2: 0 bulkheads - the walkway '
+        'tops at BA-C 6.20 / BA-D 6.65 m stay under the 6.40 / 7.69 m slab undersides)')
     add('roof colours', 'NAIP 2024 median per building, capped at sRGB 215', 'obs (low) / inf (cap)', 'build_domestic.naip_colours')
     # review round 2
     add('C3C office curtain wall (review r2)', f'{G.C3C_STOREYS} storeys x {G.C3C_STOREY} m from {G.C3C_OFFICE_Z0:.1f} m; storey-height panes, '
@@ -224,19 +240,28 @@ CONFLICTS = [
          other='integration.json footprint rings are plan-only (the -1.06 / -1.05 / -0.03 m overlaps of the round-3 consolidator)',
          request='integration: carry the height band of the overhang (soffit 9.69 m above the apron) in the footprint tiers (integration-5) '
                  'so plan tests do not read the overhang as a wall'),
-    dict(item='departures loop soffit over at-grade roads (close-out r3, buildings-14)', status='open',
+    dict(item='departures loop soffit over at-grade roads (close-out r3, buildings-14)', status='open (listed by integration; owner question)',
          model='curb 4.877 m = the published T3 L1 -> L2 16 ft carried along the continuous loop [inf]; roadways.glb deck top 4.73, depth '
-               '1.2 m [inf] -> soffit 3.53 m over the 10 at-grade crossings (OSM: 701476993, 701476994 South Link Road, 701476988, '
-               '701476989, 701209939, 701476987 Arrivals, 256787748 Arrivals, 1274607795, 1274606309, 1274827440)',
+               '1.2 m [inf] -> soffit 3.53 m over at-grade roads. integration.json (7 Nov 08:01Z) plausibility.conflicts "vertical clearance '
+               'over an at-grade road (< 4.6 m)": 26 roads, 753 m, min 3.53 m at (-940.9, 429.6) - OSM 35157057, 38854912, 38855195, '
+               '256787748, 370279555, 370279574, 370279581, 370279585, 701209939, 701476986-701476994 (9), 701476996, 739683506, 1179696687, '
+               '1205479970, 1230759557, 1274606309, 1274607795, 1274827440 (the 10 crossings this track listed in close-out r3 are among them)',
          other='4.6 m design clearance (Caltrans HDM 309.2) enforced elsewhere by the roadway solve',
          note='raising the curb to clear 4.6 m (deck top >= 5.8 m) would contradict the published T3 L2 at the T3 curb; with a published '
               '16-ft rise between the stacked arrivals / departures levels the real clearance is 16 ft - curb step - deck depth (~3.8-4.0 m '
               'for a 0.75-0.9 m slab): the stacked arrivals roadway is lower-clearance by design (a posted clearance sign photo would settle '
-              'it); request to integration: list these crossings as plausibility conflicts in b3d_integrate and review DECK_DEPTH at the '
-              'anchored loop'),
+              'it); integration now lists them (R3.2 done, close-out r3 fix 2 updated this entry to its 26-road list); DECK_DEPTH at the '
+              'anchored loop and the posted clearance stay open (owner question)'),
     dict(item='T3W parapet', model='16.76 m = 66\'-0" - T3 L1 11\'-0" (BD-02 / BD-03)', other='spec t3.heights_above_L1 16.99 m '
          '(66\'-0" - T3W L1 10\'-3")', note='datum choice; 0.23 m'),
-    dict(item='BA-C / BA-D roofs vs the app concourse floor 5.4 m (OPEN PLAUSIBILITY CONFLICT, review r2 finding 5)', status='open',
+    dict(item='BA-C / BA-D roofs vs the app concourse floor 5.4 m (review r2 finding 5)',
+         status='resolved (close-out r3 fix 2: gates.js DEPARTURE_LEVELS C 3.2 / D 3.65, domestic rebuilt to them)',
+         resolution='js/live/gates.js DEPARTURE_LEVELS (bridges close-out r3): BA-C 3.2 m [inf: this BA-D layout on the 7.2-m roof], BA-D '
+                    '3.65 m [obs, low: photo a1, the evidence below]. The domestic asset takes every bridge-attachment height per door from '
+                    'the app walkway floor (tools/blender/app_bridges.json): the 23 bulkheads and the BA-D overhang notches are gone (walkway '
+                    'tops BA-C 6.20 / BA-D 6.65 m under the 6.40 / 7.69 m slab undersides), door frames / vestibules / drum notches follow '
+                    'the walkways, and the BA-C / BA-D facade bands follow the photo a1 ratios (glazing 0.443-0.794 of the roof edge); '
+                    'verify_domestic_r2 walk / plausibility_bac_bad',
          model='BA-C roof edge 7.20 m (deck 6.60, slab underside 6.40) and BA-D 8.49 m (deck 7.89, underside 7.69) kept as measured '
                '[obs, low]; 9 BA-C bulkheads (top 8.70 m, 1.50 m above the BA-C roof edge) and 14 BA-D bulkheads (top 9.49 m, 1.00 m above '
                'its roof edge) enclose the app walkways where they reach above the roof; the BA-D overhang notched at the doors',
@@ -254,7 +279,7 @@ CONFLICTS = [
          request='bridges / realtime owners: a per-pier departure level for BA-C and BA-D (about 3.5-4.0 m above the apron, to be '
                  'verified against photos with the walkway at the glazing band); domestic then drops the 23 bulkheads, moves the BA-C / '
                  'BA-D concourse glazing to the photo ratios (0.44-0.79 of the roof edge) and lowers its door surrounds',
-         note='until then both values are kept and the conflict stays open: the bulkheads are a stop-gap, not a modelled structure'),
+         note='(the model / other / numbers above describe the round-2 state that this conflict recorded)'),
     dict(item='photo d1 camera vs the AirTrain guideway level', model='d1 camera solved from the facade lines (render_domestic.D1_SOLVE): '
          '10.2 m above the T1 departures curb (15.06 m in the model frame with the 4.88-m curb placeholder)',
          other='landside asset: T1 AirTrain station deck CG_L5 19.75 m [unk placeholder]', note='a car-borne camera ~2.5 m above the deck '
@@ -273,10 +298,10 @@ DEVIATIONS_FROM_SHEETS = [   # review r2 finding 7: what the 3-D asset has that 
     dict(item='BA-E tip end wall', sheets='BD-02: "end wall: full-height recessed glass [obs photo a1]"', model='glazed from 2.0 m above a '
          'dark base (photo a1 profile, review r2) under the plate; the end bay 8 m [inf]', why='review r2 finding 2'),
     dict(item='BA-F hub lantern rise', sheets='BD-02: rise <= 4.6 m (the 2020 shadow bound)', model='1.0-m glazed upstand [unk]', why='review r1'),
-    dict(item='BA-B pod parts entered by a bridge walkway', sheets='app convention 6.0-10.5 m', model='underside 4.9 m (B10 / B11 / B11S / '
-         'B15 / B16)', why='review r1: the app walkways 5.15-8.45 m run inside them'),
-    dict(item='jet-bridge attachment', sheets='not drawn', model='door surrounds at 80 doors, 54 vestibules, 23 bulkheads above the BA-C / '
-         'BA-D roofs (open conflict, see conflicts), BA-D overhang notches, facade notches around 9 rotunda drums (review r2)',
+    dict(item='pod parts entered by a bridge walkway', sheets='app convention 6.0-10.5 m', model='underside at the entering walkway floor - 0.5 m '
+         '(B10 / B11 / B11S / B15 / B16 4.9 m; F22 at the BA-F level)', why='review r1: the app walkways run inside them'),
+    dict(item='jet-bridge attachment', sheets='not drawn', model='door surrounds, vestibules and facade notches around the rotunda drums at '
+         'the app bridge level of each pier (gates.js DEPARTURE_LEVELS, close-out r3 fix 2; counts in manifest bridges); no bulkheads',
          why='physical fit with the app bridges (js/live/gates.js)'),
     dict(item='tower base building junction', sheets='T2 drawn up to the IBF outline', model='T2 / BA-D / T1 cut 0.3 m off the IBF outline; '
          'their walls facing it full height and a flashing over the gap at min(top, 13.03 m), 0.15-m joint (review r2)', why='review r2 findings 3 / 6'),
@@ -351,6 +376,13 @@ def entry(build, ver, parts, mats, roof_rgb, info):
                         'recorded here instead of redrawing (review r2 finding 7)',
         bridges=dict(doors=len(doors), vestibules=sum(1 for d in doors if d['gap'] > 0.12), bulkheads=sum(1 for d in doors if d['low']),
                      notched=sum(1 for d in doors if d.get('notched')),
+                     levels={k: dict(h=G.PIER_LEVEL[k], tag=G.PIER_LEVEL_TAG[k],
+                                     doors=sum(1 for d in doors if d['stand'][0] == k),
+                                     walkway_floor_at_doors_m=[round(min([d['fl0'] for d in doors if d['stand'][0] == k] or [0]), 2),
+                                                               round(max([d['fl1'] for d in doors if d['stand'][0] == k] or [0]), 2)])
+                             for k in 'BCDEF'},
+                     levels_source='js/live/gates.js DEPARTURE_LEVELS via tools/blender/app_bridges.json (node tools/blender/app_bridges.mjs, '
+                                   'generated %s; stale inputs: %s)' % (G.AB.load()['generated'], ', '.join(G.APP_BRIDGES_STALE) or 'none'),
                      note='every bridge of data/sfo_stands.json (B-F) gets a door surround where its walkway meets the 3-D facade; where the '
                           'app\'s walkway (js/live/gates.js) starts outside the facade a vestibule closes the gap'),
         integration=dict(replaces='js/live/terminals.js extrusions of the domestic parts of data/sfo_buildings.json (T1 / T2 / T3 halls, '
@@ -387,10 +419,7 @@ def merge(update_fn, key='domestic'):
             json.dump(cur, f, indent=1)
         os.replace(tmp, path)
         fcntl.flock(lf, fcntl.LOCK_UN)
-    try:
-        os.remove(lock)
-    except OSError:
-        pass
+    # (the lock file is never deleted: a process waiting on the old inode would otherwise run beside one that created a new one)
     return path
 
 

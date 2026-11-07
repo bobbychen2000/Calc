@@ -19,6 +19,10 @@ THE REFERENCE IS THE 2-D DRAWING CODE (sheets BD-01..03, docs/drawings/buildings
                                     NAIP 2024 shows vehicles inside the SFO Museum outline there) and (b) the hall / walkway
                                     labels used to tell the hall from its connectors
   data/sfo_stands.json              bridge attach points (walk[0]) -> bridge doors, vestibules and overhang notches
+  tools/blender/app_bridges.json    the app's bridge levels per pier (js/live/gates.js DEPARTURE_LEVELS), rotunda floors
+                                    Hr and fixed-walkway floors (node tools/blender/app_bridges.mjs; close-out r3 fix 2):
+                                    door frames, vestibules, bulkheads, drum notches and the bridge-entered elevated parts
+                                    follow the walkway that docks into them
 
 Model frame: Blender local X = x - OX (east), Y = OZ - z (north), Z = height above the local apron (m); build_domestic.py
 puts the root node at world (OX, GROUND_Y, OZ). Footprint polygons are kept in world (x, z) and converted per vertex.
@@ -46,6 +50,8 @@ ROOT = os.path.abspath(os.path.join(HERE, '..', '..'))
 sys.path.insert(0, os.path.join(ROOT, 'tools', 'buildings'))
 import draw_data as D  # noqa: E402
 import draw_domestic as DD  # noqa: E402
+sys.path.insert(0, HERE)
+import app_bridges as AB  # noqa: E402
 from draw_lib import FT, hdg_vec, st2w, unit, w2st  # noqa: E402
 
 DV = D.DV
@@ -90,10 +96,17 @@ INNER_Y0, INNER_TOP = 6.0, 10.5
 ROOF_THK = 0.8          # roof slab + fascia depth below the parapet deck [inf]; the measured heights are the roof EDGES
 PARAPET = 0.6           # parapet / coping above the roof deck [inf] -> deck = h - PARAPET, edge top = h (measured)
 PARAPET_T = 0.35        # parapet thickness [inf]
-FLOOR2 = 5.4            # concourse (departure) floor: js/live/gates.js DEPARTURE_LEVEL (the bridge floor) [inf]
-WALK_TOP = FLOOR2 + 3.0 # app walkway top at the facade (gates.js WALK_H 3.0) - roof overhangs are notched below it
+# Bridge level (the floor of the app's fixed walkway where it leaves the building): PER PIER since close-out r3 -
+# js/live/gates.js DEPARTURE_LEVELS (tools/blender/app_bridges.json): B 5.4 [inf], C 3.2 [inf], D 3.65 [obs, low, photo a1],
+# E / F 4.88 [pub T3 L2]. Every bridge-attachment element (door frame, vestibule, bulkhead, overhang notch, drum notch, the
+# underside of a bridge-entered elevated part) is sized per door from the walkway floor at the facade (bridge_doors).
+# FLOOR2 / WALK_TOP: the BA-B value, kept only as the default for a door the dump does not list.
+PIER_LEVEL = {k: float(AB.level(k)['h']) for k in 'BCDEF'}
+PIER_LEVEL_TAG = {k: AB.level(k)['tag'] for k in 'BCDEF'}
+APP_BRIDGES_STALE = AB.stale()   # inputs changed since app_bridges.json was written: re-run node tools/blender/app_bridges.mjs
+FLOOR2 = PIER_LEVEL['B']  # BA-B concourse (departure) floor = gates.js DEPARTURE_LEVELS.B 5.4 [inf] (default for unlisted doors)
+WALK_TOP = FLOOR2 + 3.0 # app walkway top at that floor (gates.js WALK_H 3.0)
 CORE_OPEN = 3.0         # morphological opening radius: outline features < 6 m wide = bridge-head fingers [inf]
-FINGER_Z = (FLOOR2 - 0.6, WALK_TOP + 0.3)   # fingers / vestibules: an elevated box round the walkway end [inf]
 E_END_D = 8.0           # BA-E tip end bay depth behind the glazed end wall (photo a1: the tall glass spans ~1 structural bay) [inf]
 DOOR_W = 3.2            # bridge door opening on the facade at every attach point [inf]
 MULL = 1.5              # curtain-wall mullion module (no source) [inf]
@@ -419,16 +432,23 @@ T1_WALL_HEAD = CURB + DD.T1_HEAD                                 # 17.88 [inf ph
 WELL_D = 3.0            # BA-B roof wells: depth below the outer deck - NOT measured [unk placeholder]
 PV_Z = (0.35, 0.75)     # PV racks: underside / top above the deck (low-tilt ballasted racks) [inf]
 FIN = (0.06, 0.18)      # mullion fin width / projection (aluminium vertical fins [pub BA-E / T3E]; size inf)
-DOOR = dict(w=3.2, z0=FLOOR2 - 0.2, z1=FLOOR2 + 3.2)   # bridge door frame around the walkway (gates.js WALK_W 2.6 x WALK_H 3.0) [inf]
-VEST = dict(w=3.2, z0=FLOOR2 - 0.5, z1=WALK_TOP + 0.3)  # vestibule from the facade to the app's walkway start [inf]
+# bridge door frame around the walkway (gates.js WALK_W 2.6 x WALK_H 3.0) and the vestibule from the facade to the app's
+# walkway start [inf]: offsets from the walkway floor at the door (per door since close-out r3 fix 2: bridge_doors() 'fl0' /
+# 'fl1' = the app walkway floor at the facade / at the walkway start, gates.js DEPARTURE_LEVELS + its 1:12 slope); the dicts
+# below are the BA-B (5.4 m) values, kept as defaults / for the manifest
+DOOR_DZ = (-0.2, 3.2)        # frame foot / head above the walkway floor (walkway solid: floor - 0.3 .. floor + 3.0)
+VEST_DZ = (-0.5, 3.3)        # vestibule underside / top above the walkway floor (0.2 m outside the walkway solid)
+DOOR = dict(w=3.2, z0=FLOOR2 + DOOR_DZ[0], z1=FLOOR2 + DOOR_DZ[1])
+VEST = dict(w=3.2, z0=FLOOR2 + VEST_DZ[0], z1=FLOOR2 + VEST_DZ[1])
 WALK_W_APP = 2.6        # js/live/gates.js WALK_W
 MULL_T1 = (1.2, 2.4)    # T1 landside irregular mullions (draw_domestic.t1_mullions) [inf schematic of the pub pattern]
 LANTERN_RISE = 1.0      # BA-F hub lantern rise above the arm roof: minimal skylight upstand [unk] (review r1; was the bound)
 LANTERN_RISE_BOUND = float(BH['ring_2020_shadow']['rise_upper_bound'])   # <= 4.6 m (NAIP 2020 shadow, buildings_domestic.md r1-22)
-# elevated sky-bridge / pod parts that a jet bridge's fixed walkway enters (B10, B11, B11S, B15, B16, F22): the app's walkway
-# runs 5.15-8.45 m above the apron (gates.js DEPARTURE_LEVEL 5.4 - 0.25 floor .. + WALK_H 3.0 + 0.05), so the part's floor
-# comes down to the vestibule floor (review r1: the 6.0-m underside cut the walkways' lower 0.85 m) [inf]
-WALK_Y0_BRIDGE = FLOOR2 - 0.5
+# elevated sky-bridge / pod parts that a jet bridge's fixed walkway enters (B10, B11, B11S, B15, B16, F22): the part's floor
+# comes down to the vestibule floor of the walkway that enters it (review r1: the 6.0-m underside cut the walkways' lower
+# 0.85 m) - per bridge since close-out r3 fix 2 (walk_y0: lowest walkway floor inside the part + VEST_DZ[0]; BA-B 4.9, F22
+# at the BA-F level 4.88 -> 4.38) [inf]; WALK_Y0_BRIDGE = the BA-B value (manifest)
+WALK_Y0_BRIDGE = FLOOR2 + VEST_DZ[0]
 FIN_MAX_M = 160.0       # LOD0 mullion fins: own node per building, extras.max_dist_m (the loader hides them beyond; review r1:
                         # 6-cm fins every 1.5 m alias beyond ~150 m at phone / desktop resolutions) [our choice]
 
@@ -513,10 +533,19 @@ class Part:
 # halls' airside faces: not described [unk -> generic bands]; T1 landside [pub t1c.landside_facade, heights inf photo d1];
 # T2 landside [pub t2.landside, heights unk]; T3W landside / airside [pub CDR p.18 / p.23 materials and the 10 + 2 + 10 ft
 # window stack; band proportions inf]; T3E [pub t3e.facade materials; positions inf].
+# photo a1 (Wikimedia Commons "Aerial view of SFO from departing flight, September 2025"), BA-D near end, image rows (camera-
+# independent ratios over the roof-edge height, apron ~812 px, roof edge 763.5 px): light sill band 795.5-790.5 px, concourse
+# glazing 790.5-773.5 px, fascia 773.5-763.5 px -> sill 0.340-0.443, glazing 0.443-0.794 [obs, low]
+A1_D_RATIO = ((812.0 - 795.5) / 48.5, (812.0 - 790.5) / 48.5, (812.0 - 773.5) / 48.5)
 STYLES = {
     'B': [(0.0, 4.6, 'service', 0), (4.6, 5.6, 'panel_dark', 0), (5.6, 11.6, 'glass_ec', 1.5), (11.6, None, 'panel_light', 0)],
-    'C': [(0.0, 3.4, 'service', 0), (3.4, 4.0, 'panel_dark', 0), (4.0, 5.9, 'glass_tint', 1.5), (5.9, None, 'panel_light', 0)],
-    'D': [(0.0, 4.6, 'service', 0), (4.6, 5.4, 'panel_dark', 0), (5.4, 7.2, 'glass_tint', 1.5), (7.2, None, 'panel_light', 0)],
+    # BA-C / BA-D (close-out r3 fix 2): the photo a1 ratios of the BA-D near end (manifest domestic.conflicts, resolved): light
+    # sill band A1_D_RATIO[0]-[1], concourse glazing [1]-[2] of the roof-edge height, fascia above [obs, low]; BA-C the same layout
+    # on its 7.20 m edge [inf] (= how gates.js DEPARTURE_LEVELS.C 3.2 was derived; the walkways enter at the glazing band)
+    'C': [(0.0, A1_D_RATIO[0] * H['C'], 'service', 0), (A1_D_RATIO[0] * H['C'], A1_D_RATIO[1] * H['C'], 'panel_light', 0),
+          (A1_D_RATIO[1] * H['C'], A1_D_RATIO[2] * H['C'], 'glass_tint', 1.5), (A1_D_RATIO[2] * H['C'], None, 'panel_light', 0)],
+    'D': [(0.0, A1_D_RATIO[0] * H['D'], 'service', 0), (A1_D_RATIO[0] * H['D'], A1_D_RATIO[1] * H['D'], 'panel_light', 0),
+          (A1_D_RATIO[1] * H['D'], A1_D_RATIO[2] * H['D'], 'glass_tint', 1.5), (A1_D_RATIO[2] * H['D'], None, 'panel_light', 0)],
     'E': [(0.0, 4.6, 'service', 0), (4.6, 5.6, 'panel_dark', 0), (5.6, 8.4, 'glass_frit_grey', 1.5), (8.4, None, 'panel_light', 0)],
     'E_end': [(0.0, 4.6, 'service', 0), (4.6, 5.6, 'panel_dark', 0), (5.6, None, 'glass_clear', 1.5)],
     'F': [(0.0, 4.6, 'service', 0), (4.6, 5.6, 'panel_dark', 0), (5.6, 8.8, 'glass_tint', 1.5), (8.8, None, 'panel_light', 0)],
@@ -866,10 +895,30 @@ BRIDGE_LINES = unary_union([LineString(b['walk']) for s_ in json.load(open(os.pa
                             if s_['letter'] in 'BCDEF' for b in s_['bridges'] if len(b.get('walk') or []) >= 2])
 
 
+def _app_walks():
+    """[(walk line (world x, z), app bridge record)] of the B-F main-deck bridges (tools/blender/app_bridges.json)."""
+    out = []
+    for b in AB.bridges('BCDEF', upper=False):
+        if len(b['walk']) >= 2: out.append((LineString([(p[0], p[2]) for p in b['walk']]), b))
+    return out
+
+
+APP_WALKS = _app_walks()
+
+
 def walk_y0(w_local):
-    """underside of an elevated sky-bridge / pod part: the app convention 6.0 m, or the vestibule floor 4.9 m where a jet
-    bridge's walkway (data/sfo_stands.json walk polyline, +1.5 m: the walkway half width + 0.2) enters it (review r1)."""
-    return WALK_Y0_BRIDGE if wld(w_local).intersects(BRIDGE_LINES.buffer(1.5)) else INNER_Y0
+    """underside of an elevated sky-bridge / pod part: the app convention 6.0 m, or - where a jet bridge's walkway (data/
+    sfo_stands.json walk polyline, +1.5 m: the walkway half width + 0.2) enters it (review r1) - the vestibule floor of that
+    walkway: its lowest floor inside the part (gates.js DEPARTURE_LEVELS + 1:12 slope, app_bridges.json) + VEST_DZ[0]
+    (close-out r3 fix 2: per bridge, was the one 5.4-m level)."""
+    w = wld(w_local)
+    if not w.intersects(BRIDGE_LINES.buffer(1.5)): return INNER_Y0
+    fl = []
+    for ln, b in APP_WALKS:
+        seg = ln.intersection(w.buffer(1.5))
+        if seg.is_empty: continue
+        fl += [AB.floor_at(b, x, z) for x, z in shapely.get_coordinates(seg)]
+    return min(fl) + VEST_DZ[0] if fl else WALK_Y0_BRIDGE
 
 
 def split_walk(poly):
@@ -1293,7 +1342,7 @@ def build_world(lod):
     for d in doors:
         if d['notch'] is not None:
             for s in W.S:
-                if s.z0 < 0.1 and s.h - s.thk < VEST['z1'] + 0.3 and s.roof.distance(d['notch']) < 0.1:
+                if s.z0 < 0.1 and s.h - s.thk < d['vz1'] + 0.3 and s.roof.distance(d['notch']) < 0.1:
                     ov = s.roof.difference(s.poly.buffer(0.01, join_style=2))
                     cut = ov.intersection(d['notch'])
                     if cut.area > 0.05:
@@ -1477,7 +1526,11 @@ def c3c_pv(block, pent):
 
 DRUM_R_APP, DRUM_MIN_APP = 2.45, 1.5        # js/live/gates.js: drum radius clampN(min(2.45, rotundaMaxR - 0.25), DRUM_MIN 1.5, 2.45)
 DRUM_CLEAR = 0.10                           # facade clearance to the largest drum the app can draw [review r2: 0.1 m]
-DRUM_BAND = (FLOOR2 - 0.6, WALK_TOP + 0.3)  # the app's drum: floor - 0.3 .. + 3.3 (scene2d.json cyl 4.95-8.55 m) + margins
+# the app's drum: gates.js solidsQ rotunda Hr - 0.3 .. Hr + 3.3 (drawn cyl Hr - 0.45 .. Hr + 3.15); notch band with 0.3 m margin
+# below. Close-out r3 fix 2: PER DRUM from its rotunda floor Hr (app_bridges.json; Hr follows the pier's DEPARTURE_LEVELS and
+# the walkway's 1:12 band, B 5.1-5.6, C ~2.8-3.2, D ~3.4, E / F 3.5-4.9 m); DRUM_BAND = the old BA-B band (the default)
+DRUM_DZ = (-0.6, 3.3)
+DRUM_BAND = (FLOOR2 + DRUM_DZ[0], FLOOR2 + DRUM_DZ[1])
 
 
 def rotunda_drums():
@@ -1493,7 +1546,12 @@ def rotunda_drums():
             if not r: continue
             rm = b.get('rotunda_max_r')
             rr = max(DRUM_MIN_APP, min(DRUM_R_APP, (rm if rm is not None else 2.7) - 0.25))
-            out.append(dict(stand=s_['name'], door=b.get('door'), c=Lp(*r), r=rr, rc=rr + DRUM_CLEAR))
+            # the drum's height band (close-out r3 fix 2): the app's rotunda floor Hr of this bridge (app_bridges.json, matched
+            # by stand and rotunda centre: upper-deck bridges have no door number in the data)
+            cand = [a for a in AB.load()['bridges'] if a['stand'] == s_['name'] and math.dist(a['rot'], r) < 0.6]
+            Hr = min(cand, key=lambda a: math.dist(a['rot'], r))['Hr'] if cand else PIER_LEVEL.get(s_['letter'], FLOOR2)
+            out.append(dict(stand=s_['name'], door=b.get('door'), c=Lp(*r), r=rr, rc=rr + DRUM_CLEAR, Hr=Hr,
+                            band=(Hr + DRUM_DZ[0], Hr + DRUM_DZ[1]), app=bool(cand)))
     return out
 
 
@@ -1506,14 +1564,18 @@ def drum_notches(W):
     with a soffit). -> [dict(stand, door, solid, r_app_max, notched_m2, depth_m)]."""
     out = []
     for s in W.S:
-        if s.z0 > DRUM_BAND[1] or s.h < DRUM_BAND[0]: continue
-        hit = [d for d in DRUMS if s.poly.distance(Point(d['c'])) < d['rc'] - 0.005]
+        # (close-out r3 fix 2: each drum's own band, from its rotunda floor Hr)
+        hit = [d for d in DRUMS if not (s.z0 > d['band'][1] or s.h < d['band'][0]) and s.poly.distance(Point(d['c'])) < d['rc'] - 0.005]
         if not hit: continue
         cut = unary_union([circle(d['c'], d['rc'], 64) for d in hit]).buffer(0.001)
         orig = s.poly
-        low_roof = (s.h - s.thk) < DRUM_BAND[1] + 0.1        # roof underside below the drum top: the roof is notched too
+        # roof underside below a drum's top: the roof is notched too (around those drums only)
+        low = [d for d in hit if (s.h - s.thk) < d['band'][1] + 0.1]
+        low_roof = bool(low)
         if low_roof:
-            s.roof = M.orient_all(largest(_clean(s.roof.difference(cut), 5.0)))
+            cut_r = unary_union([circle(d['c'], d['rc'], 64) for d in low]).buffer(0.001)
+        if low_roof:
+            s.roof = M.orient_all(largest(_clean(s.roof.difference(cut_r), 5.0)))
         s.poly = M.orient_all(largest(_clean(orig.difference(cut), 5.0)))
         if low_roof and s.roof.area > s.poly.area - 0.01 and s.roof.difference(s.poly).area < 0.01: s.roof = s.poly
         for d in hit:
@@ -1521,7 +1583,7 @@ def drum_notches(W):
             depth = d['rc'] - pc.distance(orig.exterior) if not orig.contains(pc) else d['rc'] + pc.distance(orig.exterior)
             out.append(dict(stand=d['stand'], door=d['door'], solid=s.key, r_app_max=round(d['r'], 2),
                             notched_m2=round(orig.intersection(circle(d['c'], d['rc'], 64)).area, 2), depth_m=round(depth, 2),
-                            roof_notched=bool(low_roof)))
+                            roof_notched=d in low, Hr=round(d['Hr'], 3), drum_top=round(d['band'][1], 3)))
     return out
 
 
@@ -1553,7 +1615,7 @@ def bridge_doors(W):
     # hosts: the buildings standing on the apron, and the elevated parts whose floor comes down to the vestibule floor where a
     # bridge enters them (review r1: B10 / B11 / B11S / B15 / B16)
     isHost = lambda o: (o.z0 < 0.1 and o.h > 6.0 and o.style not in ('drum', 'lantern', 'monitor', 'penthouse')) or \
-        (o.style == 'walk' and o.z0 <= WALK_Y0_BRIDGE + 0.01)
+        (o.style == 'walk' and o.z0 < INNER_Y0 - 0.01)          # (a part lowered for the walkway that enters it, walk_y0)
     body = unary_union([s.poly for s in W.S if isHost(s)])
     bp = shapely.prepared.prep(body)
     app = shapely.prepared.prep(APP_BLD)
@@ -1595,14 +1657,27 @@ def bridge_doors(W):
                 X = El - d * t; pen = -t
             host = next((o for o in W.S if isHost(o) and o.poly.buffer(0.1).contains(Point(X))), None)
             if host is None: continue
-            low = host.h < VEST['z1'] + 0.4                     # roof below the walkway head: bulkhead above the roof
+            # close-out r3 fix 2: the app walkway floor at the facade X and at the walkway start E (gates.js DEPARTURE_LEVELS
+            # per pier + the walkway's slope to its rotunda, tools/blender/app_bridges.json); every height of the door parts
+            # is taken from these (it was the one 5.4-m level for all piers)
+            ab = AB.bridge(s['name'], br.get('door'), False)
+            if ab is not None:
+                f_x, f_e = AB.floor_at(ab, *Wp(*X)), AB.floor_at(ab, *Wp(*El))
+                lvl, lvl_tag = ab['Hb'], ab['HbTag']
+            else:
+                f_x = f_e = lvl = PIER_LEVEL.get(s['letter'], FLOOR2); lvl_tag = 'inf (no app_bridges record: pier level)'
+            fl0, fl1 = min(f_x, f_e), max(f_x, f_e)
+            vz0, vz1 = fl0 + VEST_DZ[0], fl1 + VEST_DZ[1]
+            low = host.h < vz1 + 0.4                            # roof below the walkway head: bulkhead above the roof
             gap = max(0.0, -pen)
             notch = LineString([tuple(X - d * 0.1), tuple(X + d * (gap + 6.0))]).buffer(VEST['w'] / 2 + 0.4, cap_style=2)
             # review r2: the app's rotunda drums within reach (any bridge's: twin heads) - door parts are clipped / culled there
             dc = [circle(dr['c'], dr['rc'], 64) for dr in DRUMS if math.dist(dr['c'], tuple(X)) < dr['rc'] + 8.0]
             out.append(dict(stand=s['name'], gate=br.get('gate'), door=br.get('door'), X=tuple(X), E=tuple(El), d=tuple(d), gap=round(gap, 3),
                             penetration=round(max(0.0, pen), 3), host=host.key, bld=host.bld, low=low, h_host=host.h, notch=notch,
-                            drum_cut=unary_union(dc) if dc else None))
+                            drum_cut=unary_union(dc) if dc else None,
+                            level=lvl, level_tag=lvl_tag, fl0=round(fl0, 3), fl1=round(fl1, 3), vz0=round(vz0, 3), vz1=round(vz1, 3),
+                            dz0=round(fl0 + DOOR_DZ[0], 3), wtop=round(fl1 + 3.0, 3)))
     return out
 
 
@@ -1645,18 +1720,18 @@ def door_geom(mb, det, lod, d):
         A = X - dd * back; Bp = El if d['gap'] > 0.12 else X          # ends on the facade plane: the walkway abuts it
         L = float(np.hypot(*(Bp - A)))
         c = (A + Bp) / 2
-        z1 = VEST['z1'] if not d['low'] else max(VEST['z1'], d['h_host'] + 1.0)
+        z1 = d['vz1'] if not d['low'] else max(d['vz1'], d['h_host'] + 1.0)
         vp = vest_poly(d) if dcut is not None else None
         if vp is None:
-            M.boxm(mb, tuple(c), tuple(dd), L, VEST['w'], (VEST['z0'], z1), 'panel_light', tl('panel_light'), top=True, bottom=True,
+            M.boxm(mb, tuple(c), tuple(dd), L, VEST['w'], (d['vz0'], z1), 'panel_light', tl('panel_light'), top=True, bottom=True,
                    top_mat='coping')
         elif not vp.is_empty and vp.area > 0.3:
             # (review r2: clipped around the app's rotunda drum, the drum closes the walkway end there)
-            M.prism(mb, vp, VEST['z0'], z1, 'panel_light', top_mat='coping', bottom_mat='panel_light', tile=tl('panel_light'))
+            M.prism(mb, vp, d['vz0'], z1, 'panel_light', top_mat='coping', bottom_mat='panel_light', tile=tl('panel_light'))
     if lod == 0:
         # door surround on the facade (or on the vestibule end) AROUND the walkway section (gates.js WALK_W 2.6 x WALK_H 3.0
-        # at DEPARTURE_LEVEL): two jambs and a head 0.12 m proud, clear of the walkway, and a dark leaf 0.02 m proud inside
-        # it (the closed door behind the docked bridge's end) [inf]
+        # at the pier's DEPARTURE_LEVELS floor, d['fl0'] / d['wtop']): two jambs and a head 0.12 m proud, clear of the
+        # walkway, and a dark leaf 0.02 m proud inside it (the closed door behind the docked bridge's end) [inf]
         P = np.array(d['E']) if d['gap'] > 0.12 else X
         wj = 0.25; off = WALK_W_APP / 2 + 0.05 + wj / 2
 
@@ -1668,12 +1743,12 @@ def door_geom(mb, det, lod, d):
         for sg in (-1, 1):
             cj = P + dd * 0.06 + n * sg * off
             if clear(cj, wj, 0.12):
-                M.boxm(det, tuple(cj), tuple(n), wj, 0.12, (DOOR['z0'], WALK_TOP + 0.4), 'mullion', (3.0, 3.0), top=True)
+                M.boxm(det, tuple(cj), tuple(n), wj, 0.12, (d['dz0'], d['wtop'] + 0.4), 'mullion', (3.0, 3.0), top=True)
         if clear(P + dd * 0.06, WALK_W_APP + 0.1 + 2 * wj, 0.12):
-            M.boxm(det, tuple(P + dd * 0.06), tuple(n), WALK_W_APP + 0.1 + 2 * wj, 0.12, (WALK_TOP + 0.08, WALK_TOP + 0.4), 'mullion', (3.0, 3.0), top=True,
+            M.boxm(det, tuple(P + dd * 0.06), tuple(n), WALK_W_APP + 0.1 + 2 * wj, 0.12, (d['wtop'] + 0.08, d['wtop'] + 0.4), 'mullion', (3.0, 3.0), top=True,
                    bottom=True)
         if clear(P + dd * 0.01, WALK_W_APP + 0.1, 0.02):
-            M.boxm(det, tuple(P + dd * 0.01), tuple(n), WALK_W_APP + 0.1, 0.02, (FLOOR2, WALK_TOP + 0.08), 'door_dark', (3.0, 3.0), top=False)
+            M.boxm(det, tuple(P + dd * 0.01), tuple(n), WALK_W_APP + 0.1, 0.02, (d['fl0'], d['wtop'] + 0.08), 'door_dark', (3.0, 3.0), top=False)
 
 
 # ------------------------------------------------------------------------------------------------ parts per building

@@ -7,12 +7,18 @@
           0.15 m outside the IBF outline (every 0.5 m along the stretches next to the domestic solids) must hit a domestic
           surface at or above the IBF roof of the lower family (else the gap looks down into the asset) - per LOD
   drums   (finding 8) the app's rotunda drums (scene2d.json cyl solids at all four poses AND the largest drum the app can draw
-          per bridge, dom_geom.DRUMS) vs every domestic triangle in their height band (the reviewer's / b3d_integrate's test:
-          plan area of the triangles clipped to the band, inside the hull; depth from the hull outline) - per LOD
+          per bridge, dom_geom.DRUMS, in its own band from the bridge's rotunda floor Hr) vs every domestic triangle in their
+          height band (the reviewer's / b3d_integrate's test: plan area of the triangles clipped to the band, inside the hull;
+          depth from the hull outline) - per LOD. scene2d.json: $SCENE2D, else the newer of out/draw/ (the drawing pipeline's
+          extraction) and out/buildings3d/integ/draw/; a scene whose js/live/gates.js hash differs from the working tree is
+          reported as stale (close-out r3 fix 2: the 5 Nov scene still had the one 5.4-m level)
+  walk    (close-out r3 fix 2) the app's fixed-walkway solids (tools/blender/app_bridges.json, gates.js DEPARTURE_LEVELS per
+          pier) vs every domestic triangle in their own height band, per bridge (the verifier's brsolids test)
   c3c     (finding 1) the office glass material / height band, the penthouse top and louvre
   bae     (finding 2) the end-wall glazing share of the end wall height; the BA-E plate PV top area
   sign    (finding 4) the lettering node extents
-  plaus   (finding 5) BA-C / BA-D deck heights, clear heights over the app's 5.4-m concourse floor, bulkhead tops above the roof
+  plaus   (finding 5) BA-C / BA-D deck heights, clear heights over the pier's bridge level (gates.js DEPARTURE_LEVELS C 3.2 /
+          D 3.65 since close-out r3), the walkway tops at the doors, bulkheads (none expected)
 """
 import json
 import math
@@ -30,7 +36,27 @@ import verify_domestic as V  # noqa: E402
 import verify_domestic_r1 as V1  # noqa: E402
 
 GY = V.GROUND_Y
-SCENE = os.path.join(G.ROOT, 'out', 'buildings3d', 'integ', 'draw', 'scene2d.json')
+import app_bridges as AB  # noqa: E402
+
+
+def pick_scene():
+    """(path, info) of the scene2d.json to use: $SCENE2D, else the newest of the drawing pipeline's out/draw/scene2d.json and
+    out/buildings3d/integ/draw/scene2d.json; info = generated time, git, and whether its js/live/gates.js hash matches the
+    working tree (meta.inputs: sha256 prefix)."""
+    import hashlib
+    cands = [os.environ.get('SCENE2D')] if os.environ.get('SCENE2D') else \
+        [os.path.join(G.ROOT, 'out', 'draw', 'scene2d.json'), os.path.join(G.ROOT, 'out', 'buildings3d', 'integ', 'draw', 'scene2d.json')]
+    cands = [c for c in cands if c and os.path.exists(c)]
+    if not cands: return None, dict(scene=None)
+    pth = max(cands, key=os.path.getmtime)
+    meta = json.load(open(pth)).get('meta', {})
+    h = (meta.get('inputs') or {}).get('js/live/gates.js')
+    cur = hashlib.sha256(open(os.path.join(G.ROOT, 'js', 'live', 'gates.js'), 'rb').read()).hexdigest()
+    return pth, dict(scene=os.path.relpath(pth, G.ROOT), generated=meta.get('generated'), git=meta.get('git'),
+                     gates_js_current=bool(h) and cur.startswith(h))
+
+
+SCENE, SCENE_INFO = pick_scene()
 
 
 def ray_down(T, x, z, ytop=60.0):
@@ -124,7 +150,7 @@ def drum_probe(S, lod):
     T = V1.world_tris(S, lod, skip=('_fins', '_lettering'))
     lo = T[:, :, [0, 2]].min(1); hi = T[:, :, [0, 2]].max(1); ylo = T[:, :, 1].min(1); yhi = T[:, :, 1].max(1)
     hulls = []
-    if os.path.exists(SCENE):
+    if SCENE and os.path.exists(SCENE):
         SC = json.load(open(SCENE))
         for b in SC['bridges']:
             if b['stand'][0] not in 'BCDEF': continue
@@ -137,7 +163,8 @@ def drum_probe(S, lod):
                         hulls.append(('scene2d', b['stand'], b['door'], pk, H, pr['y'][0], pr['y'][1]))
     for d in G.DRUMS:
         x, z = G.Wp(*d['c'])
-        hulls.append(('max_r', d['stand'], d['door'], 'any', Point(x, z).buffer(d['r'], 48), GY + G.DRUM_BAND[0] + 0.15, GY + G.DRUM_BAND[1] - 0.15))
+        # (close-out r3 fix 2: the drum's own band, gates.js Hr - 0.3 .. Hr + 3.3 from app_bridges.json; was DRUM_BAND at 5.4)
+        hulls.append(('max_r', d['stand'], d['door'], 'any', Point(x, z).buffer(d['r'], 48), GY + d['Hr'] - 0.3, GY + d['Hr'] + 3.3))
     res = []
     for src, st, door, pk, H, y0, y1 in hulls:
         x0, z0, x1, z1 = H.bounds
@@ -164,23 +191,75 @@ def drum_probe(S, lod):
 
 def drum_overhead(S, lod):
     """close-out r3 (buildings-4): the integration footprint rings (plan) put the F7 / F8 L1 drums ~1.05 m inside BA_F - the
-    roof overhang over them. Per drum (largest the app can draw, G.DRUMS): the lowest domestic surface above the drum disc and its
-    clearance over the drum top (DRUM_BAND[1] - 0.15 = the app's G + Hr + 3.3); a roof above is allowed, a negative value is not."""
+    roof overhang over them. Per drum (largest the app can draw, G.DRUMS): the lowest domestic surface over the drum disc and its
+    clearance over the drum top (the app's Hr + 3.3 of that bridge, app_bridges.json); a roof above is allowed, a negative value
+    is not. Close-out r3 fix 2 (verifier v9): every triangle that reaches above the drum top and covers the disc counts, with its
+    height evaluated over the disc (a sloped / vertical face dipping below the top gives a negative clearance; it used to be
+    left out when its lowest vertex was below the top)."""
+    from shapely.geometry import LineString
+    import shapely
     T = V1.world_tris(S, lod, skip=('_fins', '_lettering'))
-    lo = T[:, :, [0, 2]].min(1); hi = T[:, :, [0, 2]].max(1); ylo = T[:, :, 1].min(1)
-    top = GY + G.DRUM_BAND[1] - 0.15
+    lo = T[:, :, [0, 2]].min(1); hi = T[:, :, [0, 2]].max(1); ylo = T[:, :, 1].min(1); yhi = T[:, :, 1].max(1)
     rows = []
     for d in G.DRUMS:
+        top = GY + d['Hr'] + 3.3
         x, z = G.Wp(*d['c']); H = Point(x, z).buffer(d['r'], 48); x0, z0, x1, z1 = H.bounds
-        m = (hi[:, 0] > x0) & (lo[:, 0] < x1) & (hi[:, 1] > z0) & (lo[:, 1] < z1) & (ylo >= top - 0.02)
+        m = (hi[:, 0] > x0) & (lo[:, 0] < x1) & (hi[:, 1] > z0) & (lo[:, 1] < z1) & (yhi >= top - 0.02) & (ylo < top + 40.0)
         ys = []
         for t in T[m]:
-            q = Polygon([(v[0], v[2]) for v in t]).buffer(0)
-            if q.area > 1e-4 and q.intersection(H).area > 0.01: ys.append(float(t[:, 1].min()))
-        if ys: rows.append(dict(stand=d['stand'], door=d['door'], r=round(d['r'], 2), overhead_m=round(min(ys) - GY, 2), clear_m=round(min(ys) - top, 2)))
+            xz = [(v[0], v[2]) for v in t]
+            q = Polygon(xz)
+            if q.is_valid and q.area > 1e-4:
+                o = q.intersection(H)
+                if o.area <= 0.01: continue
+                # the triangle's plane height at the vertices of its part over the disc
+                A = np.c_[t[:, 0], t[:, 2], np.ones(3)]
+                try: cf = np.linalg.solve(A, t[:, 1])
+                except np.linalg.LinAlgError: ys.append(float(t[:, 1].min())); continue
+                P_ = shapely.get_coordinates(o)
+                ys.append(float((P_[:, 0] * cf[0] + P_[:, 1] * cf[1] + cf[2]).min()))
+            else:
+                ln = LineString(xz).buffer(0.025, cap_style=2)
+                if ln.intersects(H) and ln.intersection(H).area > 0.002: ys.append(float(t[:, 1].min()))   # a vertical face over the disc
+        if ys: rows.append(dict(stand=d['stand'], door=d['door'], r=round(d['r'], 2), Hr=round(d['Hr'], 3), drum_top_m=round(top - GY, 2),
+                                overhead_m=round(min(ys) - GY, 2), clear_m=round(min(ys) - top, 2)))
     rows.sort(key=lambda r: r['clear_m'])
     return dict(drums_under_roof=len(rows), min_clear_m=rows[0]['clear_m'] if rows else None, rows=rows[:12],
                 ok=all(r['clear_m'] >= 0.0 for r in rows))
+
+
+def walk_probe(S, lod):
+    """close-out r3 fix 2 (verifier v1): every fixed-walkway solid of the app at rest (gates.js solidsQ, app_bridges.json:
+    per-pier DEPARTURE_LEVELS) vs the domestic triangles clipped to the solid's own height band (+-0.03 m), per bridge: plan
+    area of the HORIZONTAL faces (slab / vestibule / bulkhead tops and undersides cutting through the walkway: a conflict) and of
+    the VERTICAL faces as 5-cm strips (the facade / door frame the walkway docks into: expected, listed). The walkway solids are
+    cut into 1-m slices, each with its local floor band (a segment's min-max band would reach below the floor of its high end)."""
+    from shapely.geometry import LineString
+    T = V1.world_tris(S, lod, skip=('_lettering',))
+    lo = T[:, :, [0, 2]].min(1); hi = T[:, :, [0, 2]].max(1); ylo = T[:, :, 1].min(1); yhi = T[:, :, 1].max(1)
+    rows = []
+    for b in AB.bridges('BCDEF', upper=False):
+        hz = vt = 0.0
+        for P_, lo_, hi_ in AB.walkway_slices(b, 1.0):      # (1-m slices: the band of the sloping walkway where it is)
+            g = Polygon(P_).buffer(-0.02)
+            y0, y1 = GY + lo_ + 0.03, GY + hi_ - 0.03
+            x0, z0, x1, z1 = g.bounds
+            m = (hi[:, 0] > x0) & (lo[:, 0] < x1) & (hi[:, 1] > z0) & (lo[:, 1] < z1) & (yhi > y0) & (ylo < y1)
+            for t in T[m]:
+                q = clip_plan(t[None], y0, y1)
+                if q.is_empty or not q.intersects(g): continue
+                a = q.intersection(g).area
+                nrm = np.cross(t[1] - t[0], t[2] - t[0]); nl = np.linalg.norm(nrm)
+                if nl > 1e-9 and abs(nrm[1]) / nl > 0.2: hz += a
+                else: vt += a
+        if hz > 0.01 or vt > 0.01:
+            rows.append(dict(bridge=b['stand'] + ' L%s' % b['door'], level=b['Hb'], horizontal_m2=round(hz, 3), vertical_m2=round(vt, 3)))
+    bad = [r for r in rows if r['horizontal_m2'] > 0.05]
+    by = {}
+    for r in rows: by[r['bridge'][0]] = round(by.get(r['bridge'][0], 0.0) + r['horizontal_m2'] + r['vertical_m2'], 2)
+    return dict(bridges=len(AB.bridges('BCDEF', upper=False)), contacts=len(rows), total_m2=round(sum(r['horizontal_m2'] + r['vertical_m2'] for r in rows), 2),
+                horizontal_m2=round(sum(r['horizontal_m2'] for r in rows), 3), by_pier_m2=by, conflicts=len(bad),
+                worst=sorted(rows, key=lambda r: -(r['horizontal_m2'] + r['vertical_m2']))[:8], conflict_rows=bad[:10], ok=not bad)
 
 
 def t2_curb_probe(S, lod):
@@ -231,6 +310,7 @@ def run(full, lod2):
     out['drums'] = {'lod0': drum_probe(S, 0), 'lod2': drum_probe(S2, 2)}
     out['drum_overhead'] = {'lod0': drum_overhead(S, 0), 'lod2': drum_overhead(S2, 2)}
     out['t2_curb'] = {'lod0': t2_curb_probe(S, 0), 'lod2': t2_curb_probe(S2, 2)}
+    out['walk'] = {'lod0': walk_probe(S, 0), 'lod2': walk_probe(S2, 2)}
     # C3C
     c3 = {}
     for n, m in S.items():
@@ -283,17 +363,26 @@ def run(full, lod2):
                            materials=sorted({p['mat'] for p in sg['prims']}))
     # plausibility numbers (BA-C / BA-D)
     pl = {}
-    for key, bld in (('BA_C_body', 'BA_C'), ('BA_D_body', 'BA_D')):
+    for key, bld, pier in (('BA_C_body', 'BA_C', 'C'), ('BA_D_body', 'BA_D', 'D')):
         s = next(o for o in W.S if o.key == key)
-        doors = [d for d in info['doors'] if d['host'] == key and d['low']]
-        tops = [max(G.VEST['z1'], d['h_host'] + 1.0) for d in doors]
-        pl[bld] = dict(roof_edge_m=s.h, deck_m=round(s.deck, 2), slab_underside_m=round(s.h - s.thk, 2), app_floor_m=G.FLOOR2,
-                       clear_to_deck_m=round(s.deck - G.FLOOR2, 2), clear_under_0p8m_roof_structure_m=round(s.deck - 0.8 - G.FLOOR2, 2),
-                       app_walkway_top_m=round(G.WALK_TOP + 0.05, 2), bulkheads=len(doors),
+        lvl = G.PIER_LEVEL[pier]                         # gates.js DEPARTURE_LEVELS (close-out r3 fix 2; was the one 5.4)
+        alld = [d for d in info['doors'] if d['host'] == key]
+        doors = [d for d in alld if d['low']]
+        tops = [max(d['vz1'], d['h_host'] + 1.0) for d in doors]
+        wtop = max([d['wtop'] for d in alld] or [lvl + 3.0])
+        pl[bld] = dict(roof_edge_m=s.h, deck_m=round(s.deck, 2), slab_underside_m=round(s.h - s.thk, 2), app_floor_m=lvl,
+                       app_floor_tag=G.PIER_LEVEL_TAG[pier], clear_to_deck_m=round(s.deck - lvl, 2),
+                       clear_under_0p8m_roof_structure_m=round(s.deck - 0.8 - lvl, 2),
+                       app_walkway_top_m=round(wtop, 2), walkway_top_below_slab_underside_m=round(s.h - s.thk - wtop, 2),
+                       doors=len(alld), bulkheads=len(doors),
                        bulkhead_top_m=round(max(tops), 2) if tops else None,
-                       bulkhead_above_roof_edge_m=round(max(tops) - s.h, 2) if tops else None)
+                       bulkhead_above_roof_edge_m=round(max(tops) - s.h, 2) if tops else None,
+                       ok=bool(len(doors) == 0 and s.h - s.thk - wtop >= 0.0))
     out['plausibility_bac_bad'] = pl
-    out['n_fail'] = sum(1 for k in ('c3c', 'bae') if not out[k].get('ok')) + sum(1 for k in ('tower', 'drums', 'drum_overhead', 't2_curb') for l in ('lod0', 'lod2') if not out[k][l]['ok'])
+    out['scene2d'] = SCENE_INFO
+    out['app_bridges'] = dict(generated=AB.load()['generated'], stale_inputs=AB.stale())
+    out['n_fail'] = sum(1 for k in ('c3c', 'bae') if not out[k].get('ok')) + sum(1 for k in ('tower', 'drums', 'drum_overhead', 't2_curb', 'walk') for l in ('lod0', 'lod2') if not out[k][l]['ok']) + \
+        sum(1 for v in pl.values() if not v['ok']) + (1 if AB.stale() else 0)
     p = os.path.join(V.OUT, 'domestic_verify_r2.json')
     json.dump(out, open(p, 'w'), indent=1, default=float)
     return out, p
@@ -308,9 +397,12 @@ if __name__ == '__main__':
             if o[k][l].get('worst'): print('   worst', o[k][l]['worst'][:4])
             if o[k][l].get('open_examples'): print('   open', o[k][l]['open_examples'][:4])
     for k in ('c3c', 'bae', 'sign', 'plausibility_bac_bad'):
-        print(k, json.dumps(o.get(k)))
+        print(k, json.dumps(o.get(k), default=float))
     for l in ('lod0', 'lod2'):
         print('drum_overhead', l, json.dumps(o['drum_overhead'][l]))
     for l in ('lod0', 'lod2'):
         print('t2_curb', l, json.dumps(o['t2_curb'][l]))
+    for l in ('lod0', 'lod2'):
+        print('walk', l, json.dumps({k: v for k, v in o['walk'][l].items() if k != 'worst'}), '\n   worst', o['walk'][l]['worst'][:5])
+    print('scene2d', json.dumps(o['scene2d']), 'app_bridges', json.dumps(o['app_bridges']))
     print('n_fail', o['n_fail'], '->', p)

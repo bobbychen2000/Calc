@@ -21,7 +21,7 @@ import struct
 import sys
 
 import numpy as np
-from shapely.geometry import LineString, Point, Polygon
+from shapely.geometry import LineString, MultiPoint, Point, Polygon
 from shapely.ops import unary_union
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -96,10 +96,22 @@ def scene(j, b):
                 prims.append(dict(P=P, T=idx.reshape(-1, 3), mat=mats[p['material']] if 'material' in p else ''))
             inst = None
             ext = n.get('extensions', {}).get('EXT_mesh_gpu_instancing')
+            inst_hull = None
             if ext:
                 tr = accessor(j, b, ext['attributes']['TRANSLATION']).astype(np.float64)
                 inst = (Mi[:3, :3] @ tr.T).T + Mi[:3, 3]
-            out[nm] = dict(lod=lod, bldg=bk, prims=prims, extras=n.get('extras', {}), inst=inst)
+                # close-out r3 fix 2 (verifier v3): every instance's world plan hull (mesh x instance TRS x node matrix), for the
+                # oriented car-overlap check (the centre spacing alone cannot see cars overlapping end to end / at an angle)
+                if 'ROTATION' in ext['attributes']:
+                    rq = accessor(j, b, ext['attributes']['ROTATION']).astype(np.float64)
+                    sc = accessor(j, b, ext['attributes']['SCALE']).astype(np.float64) if 'SCALE' in ext['attributes'] else np.ones((len(tr), 3))
+                    Pl = np.concatenate([accessor(j, b, p['attributes']['POSITION']).astype(np.float64) for p in j['meshes'][n['mesh']]['primitives']])
+                    inst_hull = []
+                    for t_, q_, s_ in zip(tr, rq, sc):
+                        R = quat_mat(q_)[:3, :3]
+                        W_ = (Mi[:3, :3] @ ((R @ (Pl * s_).T).T + t_).T).T + Mi[:3, 3]
+                        inst_hull.append((MultiPoint(W_[:, [0, 2]]).convex_hull, float(W_[:, 1].min()), float(W_[:, 1].max())))
+            out[nm] = dict(lod=lod, bldg=bk, prims=prims, extras=n.get('extras', {}), inst=inst, inst_hull=inst_hull)
         for c in n.get('children', []):
             walk(c, Mi, lod, bk)
     rn = j['nodes'][root]; Mr = node_mat(rn)
@@ -513,16 +525,40 @@ def run(path):
             C.add('AirTrain pier columns: foot vertices on a carriageway / road deck (sfo_landside roads + roadways.glb)', onroad, 0, ok=onroad == 0,
                   src='close-out r3: integration 03:59Z found 3 columns in road decks', unit='')
             if len(rtris):
-                caps = piers[H(piers) >= 3.0]
+                # close-out r3 fix 2 (verifier v9): measured on the pier FACES, not every third vertex - each pier triangle above
+                # 3 m (cap / bent beams, upper columns) against each road-deck triangle it overlaps in plan: the pier face's lowest
+                # point over the overlap minus the deck's highest point there (a straddle-bent beam crossing a deck between its end
+                # vertices is caught); vertical faces as 5-cm plan strips at their lowest edge
+                PT = np.concatenate([p['P'][p['T']] for nm2, m2 in at.items() if nm2.endswith('_piers') for p in m2['prims']])
+                PT = PT[(PT[:, :, 1] - GROUND_Y).min(1) >= 3.0]
                 lo_ = rtris[:, :, [0, 2]].min(1); hi_ = rtris[:, :, [0, 2]].max(1)
-                worst = 99.0
-                for q in caps[::3]:
-                    m_ = (lo_[:, 0] <= q[0]) & (hi_[:, 0] >= q[0]) & (lo_[:, 1] <= q[2]) & (hi_[:, 1] >= q[2])
-                    for t in rtris[m_]:
-                        if Polygon(t[:, [0, 2]]).buffer(0.01).contains(Point(q[0], q[2])):
-                            worst = min(worst, float(q[1] - t[:, 1].max()))
-                C.add('AirTrain pier caps / bents over road decks: min vertical clearance (pier vertices over a deck)', worst, 4.6, ok=worst >= 4.6 - 0.02,
-                      src='close-out r3: 4.6 m (Caltrans HDM 309.2) as the roadways solve; 99 = no pier over a deck')
+
+                def plane_z(t, pts):
+                    A_ = np.c_[t[:, 0], t[:, 2], np.ones(3)]
+                    try: cf = np.linalg.solve(A_, t[:, 1])
+                    except np.linalg.LinAlgError: return None
+                    return pts[:, 0] * cf[0] + pts[:, 1] * cf[1] + cf[2]
+                import shapely as _sh2
+                worst, n_over = 99.0, 0
+                for t in PT:
+                    g = Polygon(t[:, [0, 2]])
+                    vertical = not (g.is_valid and g.area > 1e-4)
+                    if vertical: g = LineString(t[:, [0, 2]][np.argsort(t[:, 1])[:2]]).buffer(0.025, cap_style=2)
+                    x0, z0, x1, z1 = g.bounds
+                    m_ = (hi_[:, 0] >= x0) & (lo_[:, 0] <= x1) & (hi_[:, 1] >= z0) & (lo_[:, 1] <= z1)
+                    for d in rtris[m_]:
+                        o = g.intersection(Polygon(d[:, [0, 2]]).buffer(0.01))
+                        if o.is_empty or o.area < 1e-5: continue
+                        n_over += 1
+                        P_ = _sh2.get_coordinates(o)
+                        zp = None if vertical else plane_z(t, P_)
+                        zd = plane_z(d, P_)
+                        lowp = float(t[:, 1].min()) if zp is None else float(zp.min())
+                        topd = float(d[:, 1].max()) if zd is None else float(zd.max())
+                        worst = min(worst, lowp - topd)
+                C.add('AirTrain pier caps / bents over road decks: min vertical clearance (pier faces over deck faces, %d overlaps)' % n_over, worst, 4.6,
+                      ok=worst >= 4.6 - 0.02, src='close-out r3: 4.6 m (Caltrans HDM 309.2) as the roadways solve; 99 = no pier face over a deck '
+                      '(fix 2: face-based, was every third vertex)')
         # grade along the deck: neighbouring deck-top vertices (within 6 m) differ by < 6 %
         if len(Pd) > 10:
             from scipy.spatial import cKDTree
@@ -547,6 +583,32 @@ def run(path):
     for nm, m in S.items():
         if m['inst'] is None or m['lod'] != 0: continue
         cars.setdefault(m['bldg'], []).append(m['inst'])
+    # oriented footprints of every LOD0 car instance (all buildings): overlapping pairs in the same height band
+    hulls = [h for nm, m in S.items() if m['inst'] is not None and m['lod'] == 0 and m.get('inst_hull') for h in m['inst_hull']]
+    if hulls:
+        from shapely.strtree import STRtree
+        tree = STRtree([h[0] for h in hulls]); pairs = []
+        for i, (g, y0, y1) in enumerate(hulls):
+            for k in tree.query(g):
+                k = int(k)
+                if k <= i: continue
+                g2, z0, z1 = hulls[k]
+                if min(y1, z1) - max(y0, z0) <= 0.05: continue
+                a = g.intersection(g2).area
+                if a > 0.001: pairs.append((round(a, 3), [round(c, 1) for c in g.centroid.coords[0]]))
+        pairs.sort(key=lambda p_: -p_[0])
+        C.add('cars (all %d LOD0 instances): overlapping pairs of their oriented plan hulls (same height band)' % len(hulls), len(pairs), 0,
+              ok=not pairs, unit='', src='close-out r3 fix 2 (verifier v3: 16 pairs, worst 2.44 m2); worst %s' % (pairs[:3],))
+        plaus_cars = dict(instances=len(hulls), overlapping_pairs=len(pairs), worst=pairs[:5])
+    else:
+        plaus_cars = dict(instances=0)
+    # LOD1 car meshes: the lowest point of every instance above its origin (the deck + 0.01): 0 since fix 2 (was 0.30, floating)
+    l1 = [(h[1] - float(t_[1])) for nm, m in S.items() if m['inst'] is not None and m['lod'] == 1 and m.get('inst_hull')
+          for h, t_ in zip(m['inst_hull'], m['inst'])]
+    if l1:
+        C.add('cars LOD1: body bottom above the instance origin (the deck), max over %d instances' % len(l1), float(max(l1)), 0.0, 0.02,
+              'close-out r3 fix 2 (verifier v3: 0.30 m, the LOD1 cars floated)')
+        plaus_cars['lod1_bottom_max_m'] = round(float(max(l1)), 3)
     for k, lst in cars.items():
         X = np.vstack(lst)
         from scipy.spatial import cKDTree
@@ -560,7 +622,7 @@ def run(path):
         rc = LB.get(k, {}).get('roof_cars')
         cars[k] = len(X)
     # ---------------- plausibility
-    plaus = {}
+    plaus = {'cars': plaus_cars}
     sys.path.insert(0, os.path.join(ROOT, 'tools', 'stands'))
     fps = {}
     for k in by:

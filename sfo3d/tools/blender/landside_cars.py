@@ -33,7 +33,9 @@ def car_mesh(shape, lod=0):
     """low-poly car centred on its footprint, +X forward, ground at z = 0. Materials: 'paint', 'car_glass', 'car_dark'."""
     nm, L, W, H, _ = shape
     mb = MB(nm)
-    zb, zs = 0.30, 0.55 * H + 0.15            # body bottom (dark skirt below), shoulder line
+    # body bottom (LOD0: the dark skirt + wheels below it), shoulder line. LOD1 has no skirt / wheels: its body starts at the deck
+    # (close-out r3 fix 2, verifier v3: the LOD1 cars floated 0.3 m above the deck at 450-1,500 m) [inf]
+    zb, zs = (0.30 if lod == 0 else 0.0), 0.55 * H + 0.15
     hl, hw = L / 2, W / 2
     # lower body: an 8-sided prism in plan (chamfered corners), from zb to zs
     ch = 0.35
@@ -195,9 +197,61 @@ def place_positions(deck, F, layout_fn, seed=0):
     return cars, info
 
 
-def place(deck, F, layout_fn, seed=0):
+def car_footprint(x, y, yaw, si, pad=0.0):
+    """plan footprint (local XY) of a car instance: its shape's length x width box (the LOD0 mesh's chamfered plan and wheels
+    lie inside it), rotated by yaw about the up axis (build_landside: rotation_euler z = yaw, +X forward), grown by pad."""
+    from shapely.geometry import Polygon
+    _, L, W, _, _ = SHAPES[si]
+    c, s = math.cos(yaw), math.sin(yaw); hl, hw = L / 2 + pad, W / 2 + pad
+    return Polygon([(x + c * u - s * v, y + s * u + c * v) for u, v in ((-hl, -hw), (hl, -hw), (hl, hw), (-hl, hw))])
+
+
+SHORTER = {2: (1, 0), 1: (0,), 0: ()}      # pickup -> SUV -> sedan; SUV -> sedan (shape indices of SHAPES, by length)
+
+
+def resolve_overlaps(cars, prior=(), gap=0.05, dz=1.5):
+    """close-out r3 fix 2 (verifier v3: 16 overlapping pairs, worst 2.44 m2; the placement only kept centres >= 2.35 m apart, so
+    cars could overlap end to end or at an angle, and a 5.5-m pickup did not fit a stall shorter than 5.5 m head to head): every
+    car's oriented footprint (car_footprint, + gap / 2 each side) is tested against the cars accepted before it (in order: the
+    NAIP-observed cars first, as placed) and against `prior` (other decks of the building) at the same level (+- dz); a car that
+    overlaps takes the next shorter shape that fits (pickup -> SUV -> sedan), else it is dropped [inf: which car gives way].
+    -> (cars, dict(dropped, reshaped))."""
+    from shapely.strtree import STRtree
+    acc_fp, acc_z = [], []
+    for c in prior:
+        acc_fp.append(car_footprint(c[0], c[1], c[3], c[4], gap / 2)); acc_z.append(c[2])
+    out, dropped, reshaped = [], 0, 0
+    for c in cars:
+        x, y, z, yaw, si, ci = c
+        tree = STRtree(acc_fp) if acc_fp else None
+        ok_si = None
+        for cand in (si,) + SHORTER[si]:
+            g = car_footprint(x, y, yaw, cand, gap / 2)
+            hit = False
+            if tree is not None:
+                for k in tree.query(g):
+                    if abs(acc_z[int(k)] - z) < dz and acc_fp[int(k)].intersects(g) and acc_fp[int(k)].intersection(g).area > 1e-6:
+                        hit = True; break
+            if not hit: ok_si = cand; break
+        if ok_si is None:
+            dropped += 1; continue
+        if ok_si != si: reshaped += 1
+        out.append((x, y, z, yaw, ok_si, ci))
+        acc_fp.append(car_footprint(x, y, yaw, ok_si, gap / 2)); acc_z.append(z)
+    return out, dict(dropped=dropped, reshaped=reshaped)
+
+
+def place(deck, F, layout_fn, seed=0, prior=()):
     """cars on one deck: deck = dict(poly (local), z, axis, origin (world), density | count | positions, lanes, exclude [local])
-    -> (cars [(x, y, z, yaw, shape, colour)], info)."""
+    -> (cars [(x, y, z, yaw, shape, colour)], info); oriented-footprint overlaps resolved against each other and `prior` (the
+    building's other decks) by resolve_overlaps (close-out r3 fix 2)."""
+    cars, info = _place(deck, F, layout_fn, seed)
+    cars, ov = resolve_overlaps(cars, prior)
+    info.update(cars=len(cars), overlap_dropped=ov['dropped'], overlap_reshaped=ov['reshaped'])
+    return cars, info
+
+
+def _place(deck, F, layout_fn, seed=0):
     if deck.get('positions'):
         return place_positions(deck, F, layout_fn, seed)
     P = deck['poly']

@@ -522,10 +522,7 @@ def merge_manifest(update_fn):
             json.dump(cur, f, indent=1)
         os.replace(tmp, path)
         fcntl.flock(lf, fcntl.LOCK_UN)
-    try:
-        os.remove(lock)
-    except OSError:
-        pass
+    # (the lock file is never deleted: a process waiting on the old inode would otherwise run beside one that created a new one)
     return path
 
 

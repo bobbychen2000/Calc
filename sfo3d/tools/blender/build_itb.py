@@ -209,14 +209,19 @@ def make_material(key, atlas, tex_imgs, ao_img):
         nt.links.new(uvn.outputs['UV'], t.inputs['Vector'])
         nt.links.new(t.outputs['Color'], nm.inputs['Color'])
         nt.links.new(nm.outputs['Normal'], b.inputs['Normal'])
+    # close-out r3 fix 2 (verifier v8): ONE glass rule for all four assets (as domestic, buildings-5): no glTF occlusion on a
+    # GLASS material. The baked AO is a diffuse visibility; three.js applies a material's aoMap to the indirect diffuse AND,
+    # through its specular occlusion (computeSpecularOcclusion), to the IBL reflection that makes glass read, while Cycles
+    # ignores the glTF occlusion - so AO on glass made the app and Cycles disagree. The image node stays (the bake target).
     if ao_img is not None:
         t = nt.nodes.new('ShaderNodeTexImage'); t.image = ao_img; t.name = 'AO_BAKE'
         uva = nt.nodes.new('ShaderNodeUVMap'); uva.uv_map = 'UV_ao'
         nt.links.new(uva.outputs['UV'], t.inputs['Vector'])
-        sep = nt.nodes.new('ShaderNodeSeparateColor')
-        g = nt.nodes.new('ShaderNodeGroup'); g.node_tree = gltf_output_group()
-        nt.links.new(t.outputs['Color'], sep.inputs['Color'])
-        nt.links.new(sep.outputs['Red'], g.inputs['Occlusion'])
+        if 'glass' not in key:
+            sep = nt.nodes.new('ShaderNodeSeparateColor')
+            g = nt.nodes.new('ShaderNodeGroup'); g.node_tree = gltf_output_group()
+            nt.links.new(t.outputs['Color'], sep.inputs['Color'])
+            nt.links.new(sep.outputs['Red'], g.inputs['Occlusion'])
         for n in nt.nodes: n.select = False
         t.select = True; nt.nodes.active = t
     m['src'] = spec['src']
@@ -418,10 +423,8 @@ def merge_manifest(update_fn):
             json.dump(cur, f, indent=1)
         os.replace(tmp, path)
         fcntl.flock(lf, fcntl.LOCK_UN)
-    try:
-        os.remove(lock)          # as build_tower.py does: no stray lock file in data/
-    except OSError:
-        pass
+    # (the lock file is never deleted, as build_tower.py: a process waiting on the old inode would otherwise run beside one that
+    # created a new one - close-out r3 fix 2)
     return path
 
 

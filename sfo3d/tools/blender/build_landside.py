@@ -296,14 +296,19 @@ def make_material(name, atlas, tex_imgs, ao_img):
         nt.links.new(uvn.outputs['UV'], t.inputs['Vector'])
         nt.links.new(t.outputs['Color'], nm.inputs['Color'])
         nt.links.new(nm.outputs['Normal'], b.inputs['Normal'])
+    # close-out r3 fix 2 (verifier v8): ONE glass rule for all four assets (as domestic, buildings-5): no glTF occlusion on a
+    # GLASS material. The baked AO is a diffuse visibility; three.js applies a material's aoMap to the indirect diffuse AND,
+    # through its specular occlusion (computeSpecularOcclusion), to the IBL reflection that makes glass read, while Cycles
+    # ignores the glTF occlusion - so AO on glass made the app and Cycles disagree. The image node stays (the bake target).
     if ao_img is not None:
         t = nt.nodes.new('ShaderNodeTexImage'); t.image = ao_img; t.name = 'AO_BAKE'
         uva = nt.nodes.new('ShaderNodeUVMap'); uva.uv_map = 'UV_ao'
         nt.links.new(uva.outputs['UV'], t.inputs['Vector'])
-        sep = nt.nodes.new('ShaderNodeSeparateColor')
-        g = nt.nodes.new('ShaderNodeGroup'); g.node_tree = gltf_output_group()
-        nt.links.new(t.outputs['Color'], sep.inputs['Color'])
-        nt.links.new(sep.outputs['Red'], g.inputs['Occlusion'])
+        if 'glass' not in key:
+            sep = nt.nodes.new('ShaderNodeSeparateColor')
+            g = nt.nodes.new('ShaderNodeGroup'); g.node_tree = gltf_output_group()
+            nt.links.new(t.outputs['Color'], sep.inputs['Color'])
+            nt.links.new(sep.outputs['Red'], g.inputs['Occlusion'])
         for n in nt.nodes: n.select = False
         t.select = True; nt.nodes.active = t
     m['src'] = spec['src']
@@ -518,10 +523,7 @@ def merge_manifest(update_fn):
             json.dump(cur, f, indent=1)
         os.replace(tmp, path)
         fcntl.flock(lf, fcntl.LOCK_UN)
-    try:
-        os.remove(lock)
-    except OSError:
-        pass
+    # (the lock file is never deleted: a process waiting on the old inode would otherwise run beside one that created a new one)
     return path
 
 
@@ -642,8 +644,10 @@ def main():
                         j2[k] = v
                     loc = recentre(j2.data); j2.location = loc
                     objs[2].append(j2); shells['C'].append(j2)
+        bcars = []                                          # (the building's cars so far: overlaps across its decks, fix 2)
         for di, d in enumerate(B.decks):
-            cars, inf = C.place(d, B.F, G.car_layout, seed=zlib.crc32(B.key.encode()) % 1000 + di)
+            cars, inf = C.place(d, B.F, G.car_layout, seed=zlib.crc32(B.key.encode()) % 1000 + di, prior=bcars)
+            bcars += cars
             car_info[B.key] = inf
             for lod in (0, 1):
                 e = next(x for l_, x in lod_empties if l_ == lod and x.parent == be)
