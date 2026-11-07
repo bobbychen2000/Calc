@@ -145,15 +145,24 @@ def wing(pos, zone, L, hw=2.0):
     tipY = float(pos[w & (az > 0.98 * semi), 1].mean())
     ht = (pos[:, 0] < -0.8 * L) & (zone != 1); htSemi = float(az[ht].max()) if ht.any() else None
     htY = float(pos[ht & (az > 0.97 * htSemi), 1].mean()) if htSemi else None
-    out = dict(tipY=round(tipY, 3), htY=round(htY, 3) if htY is not None else None, htSemi=round(htSemi, 3) if htSemi else None,
+    htSt = float(-pos[ht & (az > 0.97 * htSemi), 0].mean()) if htSemi else None     # (its station: the stance fit's stabiliser row)
+    out = dict(tipY=round(tipY, 3), htY=round(htY, 3) if htY is not None else None, htSt=round(htSt, 3) if htSt is not None else None, htSemi=round(htSemi, 3) if htSemi else None,
                semi=round(semi, 3), engOut=round(float(az[eng].max()), 3) if eng.sum() > 20 else None,
                engLow=round(engLow, 3) if engLow is not None else None)
+    # wing-tip device top and bottom (close-out round 3, fix round 2: the 737NG ACAP rows E 'wingtip' (winglet top) and K
+    # 'bottom of winglet'): the highest wing vertex within 1.0 of the semi-span (its station) and the lowest within 0.3
+    tw = w & (az > semi - 1.0)
+    if tw.any():
+        it = int(np.argmax(np.where(tw, pos[:, 1], -np.inf))); lw = w & (az > semi - 0.3)
+        out_tip = dict(top=round(float(pos[it, 1]), 3), topSt=round(float(-pos[it, 0]), 3), low=round(float(pos[lw, 1].min()), 3) if lw.any() else None)
+    else: out_tip = None
     # nacelle zone alone (close-out round 3, fix round 2, v2: the 737 MAX nacelle offset is fitted to the ACAP engine row):
     # top / bottom of the zone-2 vertices and the station of the lowest one
     nz = zone == 2
     if nz.sum() > 20:
         i = int(np.argmin(np.where(nz, pos[:, 1], np.inf)))
         out['nac'] = dict(top=round(float(pos[nz, 1].max()), 3), low=round(float(pos[i, 1]), 3), lowSt=round(float(-pos[i, 0]), 3))
+    if out_tip: out['tip'] = out_tip
     return out
 
 
@@ -295,6 +304,10 @@ def main():
             if c: f['contact'] = c
         used = np.unique(m['idx']); it = used[np.argmax(m['pos'][used, 1])]
         f['finTop'] = dict(st=round(float(-m['pos'][it, 0]), 3), y=round(float(m['pos'][it, 1]), 3))
+        # (close-out round 3, fix round 2: the station range of the fin tip - vertices within 3 cm of the top - whose aft end
+        # is the highest point once a gear model is pitched nose-down)
+        tt = m['pos'][:, 1] > m['pos'][it, 1] - 0.03
+        f['finTop'].update(st0=round(float(-m['pos'][tt, 0].max()), 3), st1=round(float(-m['pos'][tt, 0].min()), 3))
         so = source_objects(k, a.fam)            # (None when the model's source is absent: FAM checkout or FG export)
         if so: f.update(so)
         else:                                   # source models not present: keep the measured source objects

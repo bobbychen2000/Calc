@@ -13,15 +13,15 @@ import { plugShift } from './fit.js';
 //   wing {z0, z1, dz, xMin}  span fit: outboard of z0 the wing is stretched spanwise, linearly up to z1, and everything
 //                        outboard of z1 (the tip device) moves rigidly by dz (only vertices ahead of xMin: not the tailplane)
 //   tipCut {z0, y0, zTo, yTo}  vertices outboard of z0 and above y0 (the model's winglet) folded to (zTo, yTo)
+//   tipScale {z0, y0, k, xMin}  the model's own wing-tip device (outboard of z0, above y0, ahead of xMin; not engines /
+//                        gear / pylons) scaled vertically about y0 by k (737NG blended winglet height, js/aircraft/fit.js TIP_H)
 //   tipShear {z0, y0, yt, k, p, xMin}  winglet cant: vertices ahead of xMin, outboard of z0 and above y0 move out by
 //                        k (y - y0) ((y - y0) / (yt - y0))^(p - 1): k (yt - y0) at the tip height yt
-//   engScale {k, keep, dy, parts}  nacelles scaled radially by k about their axis, the lowest line kept (keep 'low', default)
-//                        or the top line (keep 'top': the pylon attachment; 737 MAX LEAP-1B), then moved up by dy (fitted to
-//                        the engine ground-clearance row, js/aircraft/fit.js ENG_SCALE). parts: also the nacelle parts the
-//                        converter left in the body zone (inlet lip, spinner, fan cowl and core cowl of the FG 737-800: zone 0
-//                        inside 1.03 x the cowl section, not above its top, from 0.6 ahead of the zone-2 cowl to its aft end;
-//                        the core nozzle behind it fades out over 1.5 within 0.6), so the lip and the cowl stay one surface
-//                        (close-out round 3, fix round 2: scaling the zone-2 cowl alone left the inlet lip 0.28 m inside it)
+//   engScale {k, keep, dy}  nacelles (zone 2) scaled radially by k about their axis, the lowest line kept (keep 'low',
+//                        default) or the top line (keep 'top': the pylon attachment; 737 MAX LEAP-1B), then moved up by dy
+//                        (fitted to the engine ground-clearance row, js/aircraft/fit.js ENG_SCALE; close-out round 3, fix
+//                        round 2). The FG 737-800's inlet lips, left fan cowl, inlet ducts, core cowls and tail pipes are in
+//                        zone 2 since that round (tools/convert_models.py zoneOverride), so the whole nacelle scales as one
 //   wingLift {z0, t, xMin} / htLift {z0, t, xMax}  wing / tailplane sheared up by t per unit |z| outboard of z0
 //   squash {y0, k}       everything below y0 compressed vertically by k (engine ground clearance fit)
 //   fairing {y0, k, zMax}  after squash: body vertices (not engines, pylons, gear: zones 2, 3, 7) below the keel line y0
@@ -33,33 +33,11 @@ import { plugShift } from './fit.js';
 //                        to [0, e]: the leg between yTop and yBot is scaled, the wheels below yBot move rigidly (e > 0:
 //                        extension, MAX; e < 0: compression, NG; monotonic while |e| < yTop - yBot). dims.low (the main
 //                        tyres: placement() seats the model on them) is kept
-//   fin {yF, xF, k}      fin height fit: vertices aft of xF and above the fuselage top yF (not engines, pylons, gear)
-//                        are scaled vertically about yF by k
+//   fin {yF, xF, k, zMax}  fin height fit: vertices aft of xF and above the fuselage top yF (not engines, pylons, gear)
+//                        within |z| <= zMax (the tailplane's semi-span: a T-tail rides with the fin; close-out round 3 fix
+//                        round 2: without it the 737NG's swept wing tips, aft of xF and above yF, were scaled too) are
+//                        scaled vertically about yF by k
 const ZONE_NOFIN = new Set([2, 3, 7]); // engine, gear, pylon (tools/convert_models.py ZONE)
-// nacelle membership of every vertex (0..1) and the nacelle axes: zone 2 (the converter's nacelle zone) is 1; with parts,
-// also the nacelle pieces the converter left in the body zone (FG 737-800: inlet lip, spinner, fan and core cowls) - zone 0
-// inside 1.03 x the cowl's elliptical section (and not above its top: wing, pylon fairing) from 0.6 ahead of the zone-2
-// cowls to their aft end - and, fading out over 1.5 behind it within 0.6 of the section, the core nozzle. Axes per side from the zone-2 vertices; the station range from both sides
-// (one side's cowl front is in zone 0 on the FG model)
-function nacelles(pos, zone, nv, parts) {
-  const w = new Float32Array(nv), sides = [];
-  let xf = -1e9, xa = 1e9;
-  for (let i = 0; i < nv; i++) if (zone[i] === 2) { const x = pos[i * 3]; if (x > xf) xf = x; if (x < xa) xa = x; }
-  for (const sg of [-1, 1]) {
-    let y0 = 1e9, y1 = -1e9, z0 = 1e9, z1 = -1e9, zs = 0, n = 0;
-    for (let i = 0; i < nv; i++) if (zone[i] === 2 && Math.sign(pos[i * 3 + 2]) === sg) { const y = pos[i * 3 + 1], z = pos[i * 3 + 2]; if (y < y0) y0 = y; if (y > y1) y1 = y; if (z < z0) z0 = z; if (z > z1) z1 = z; zs += z; n++; }
-    if (!n) continue; const S = { sg, y0, y1, yc: (y0 + y1) / 2, zc: zs / n, Ry: (y1 - y0) / 2, Rz: (z1 - z0) / 2 }; sides.push(S);
-    for (let i = 0; i < nv; i++) {
-      if (Math.sign(pos[i * 3 + 2]) !== sg) continue;
-      if (zone[i] === 2) { w[i] = 1; continue; }
-      if (!parts || zone[i] !== 0 || pos[i * 3 + 1] > y1 + 0.02) continue;   // (nothing above the cowl top: wing, pylon fairing)
-      const x = pos[i * 3], r = Math.hypot((pos[i * 3 + 1] - S.yc) / S.Ry, (pos[i * 3 + 2] - S.zc) / S.Rz);
-      if (x <= xf + 0.6 && x >= xa && r <= 1.03) w[i] = 1;
-      else if (x < xa && x > xa - 1.5 && r <= 0.6) w[i] = 1 - (xa - x) / 1.5;
-    }
-  }
-  return { w, sides };
-}
 // plug shift of an engine / pylon vertex: like plugShift, but inside a removed section (d < 0) the full shift, as for the
 // wing aft of it (the nacelle keeps its length)
 function rigidShift(x, c, d) { return d >= 0 ? (x < c ? -d : 0) : (x >= c ? 0 : -d); }
@@ -69,16 +47,17 @@ export function applyStretch(pos, zone, nv, st, dims) {
     const { z0, y0, zTo, yTo } = st.tipCut;
     for (let i = 0; i < nv; i++) { const z = pos[i * 3 + 2]; if (Math.abs(z) > z0 && pos[i * 3 + 1] > y0) { pos[i * 3 + 1] = yTo; pos[i * 3 + 2] = Math.sign(z) * Math.min(Math.abs(z), zTo); } }
   }
-  if (st.engScale && zone) {          // nacelles scaled radially about their own axis, lowest (or top) line kept, then raised by dy
+  if (st.tipScale) {                 // wing-tip device height (737NG blended winglet, js/aircraft/fit.js TIP_H): scaled vertically about y0
+    const { z0, y0, k, xMin } = st.tipScale;
+    for (let i = 0; i < nv; i++) { const y = pos[i * 3 + 1]; if (pos[i * 3] >= xMin && Math.abs(pos[i * 3 + 2]) > z0 && y > y0 && !(zone && ZONE_NOFIN.has(zone[i]))) pos[i * 3 + 1] = y0 + (y - y0) * k; }
+  }
+  if (st.engScale && zone) {          // nacelles (zone 2) scaled radially about their own axis, lowest (or top) line kept, then raised by dy
     const k = st.engScale.k, top = st.engScale.keep === 'top', dy = st.engScale.dy || 0;
-    const { w, sides } = nacelles(pos, zone, nv, !!st.engScale.parts);
-    for (const S of sides) {
-      const lift = (k - 1) * (S.yc - (top ? S.y1 : S.y0)) + dy;
-      for (let i = 0; i < nv; i++) {
-        if (!w[i] || Math.sign(pos[i * 3 + 2]) !== S.sg) continue;
-        const y = pos[i * 3 + 1], z = pos[i * 3 + 2];
-        pos[i * 3 + 1] = y + w[i] * (S.yc + (y - S.yc) * k + lift - y); pos[i * 3 + 2] = z + w[i] * (S.zc + (z - S.zc) * k - z);
-      }
+    for (const sg of [-1, 1]) {
+      let y0 = 1e9, y1 = -1e9, zs = 0, n = 0;
+      for (let i = 0; i < nv; i++) if (zone[i] === 2 && Math.sign(pos[i * 3 + 2]) === sg) { const y = pos[i * 3 + 1]; if (y < y0) y0 = y; if (y > y1) y1 = y; zs += pos[i * 3 + 2]; n++; }
+      if (!n) continue; const yc = (y0 + y1) / 2, zc = zs / n, lift = (k - 1) * (yc - (top ? y1 : y0)) + dy;
+      for (let i = 0; i < nv; i++) if (zone[i] === 2 && Math.sign(pos[i * 3 + 2]) === sg) { pos[i * 3 + 1] = yc + (pos[i * 3 + 1] - yc) * k + lift; pos[i * 3 + 2] = zc + (pos[i * 3 + 2] - zc) * k; }
     }
   }
   if (W) {
@@ -96,10 +75,10 @@ export function applyStretch(pos, zone, nv, st, dims) {
     dims.span += 2 * k * (yt - y0);
   }
   if (Fn) {
-    const { yF, xF, k } = Fn; let top = -1e9;
+    const { yF, xF, k } = Fn, zM = Fn.zMax ?? Infinity; let top = -1e9;
     for (let i = 0; i < nv; i++) {
       const y = pos[i * 3 + 1];
-      if (pos[i * 3] < xF && y > yF && !(zone && ZONE_NOFIN.has(zone[i]))) pos[i * 3 + 1] = yF + (y - yF) * k;
+      if (pos[i * 3] < xF && y > yF && Math.abs(pos[i * 3 + 2]) <= zM && !(zone && ZONE_NOFIN.has(zone[i]))) pos[i * 3 + 1] = yF + (y - yF) * k;
       if (pos[i * 3 + 1] > top) top = pos[i * 3 + 1];
     }
     dims.H = top;
@@ -134,10 +113,9 @@ export function applyStretch(pos, zone, nv, st, dims) {
   }
   if (st.cut1 != null) {
     const { cut1, cut2, d1, d2 } = st; const bl2 = st.bl2 || 0;
-    const nw = zone && (d1 < 0 || d2 < 0) ? nacelles(pos, zone, nv, true).w : null;   // (rigid: nacelles incl. their zone-0 parts, pylons)
     for (let i = 0; i < nv; i++) {
       const x = pos[i * 3];
-      if (nw && (nw[i] > 0 || zone[i] === 7)) { pos[i * 3] = x + rigidShift(x, cut1, d1) + rigidShift(x, cut2, d2); continue; }
+      if (zone && (zone[i] === 2 || zone[i] === 7)) { pos[i * 3] = x + rigidShift(x, cut1, d1) + rigidShift(x, cut2, d2); continue; }
       pos[i * 3] = x + plugShift(x, cut1, d1) + plugShift(x, cut2, d2, bl2);
     }
     dims.L += d1 + d2; dims.tailX -= d1 + d2;

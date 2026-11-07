@@ -92,7 +92,7 @@
   {
    "brand": "AAL",
    "model": "b738",
-   "pxm": 37.2,
+   "pxm": 36.6,
    "variants": [
     {
      "types": [
@@ -106,9 +106,9 @@
      "file": "AAL/b738@b38m-mid.webp",
      "painted_as": "b38m",
      "bytes": {
-      "hi": 74396,
-      "mid": 37360,
-      "lo": 20010
+      "hi": 77658,
+      "mid": 39564,
+      "lo": 20620
      }
     }
    ],
@@ -123,9 +123,9 @@
    "file": "AAL/b738-mid.webp",
    "painted_as": "b738",
    "bytes": {
-    "hi": 74794,
-    "mid": 38226,
-    "lo": 20440
+    "hi": 77600,
+    "mid": 39862,
+    "lo": 20790
    }
   },
   {
@@ -254,7 +254,7 @@
   {
    "brand": "ACA",
    "model": "b738",
-   "pxm": 37.2,
+   "pxm": 36.6,
    "variants": [],
    "types": [
     "b38m"
@@ -267,9 +267,9 @@
    "file": "ACA/b738@b38m-mid.webp",
    "painted_as": "b38m",
    "bytes": {
-    "hi": 68284,
-    "mid": 36070,
-    "lo": 20276
+    "hi": 68668,
+    "mid": 36430,
+    "lo": 20616
    }
   },
   {
@@ -482,7 +482,7 @@
   {
    "brand": "AMX",
    "model": "b738",
-   "pxm": 37.2,
+   "pxm": 36.6,
    "variants": [
     {
      "types": [
@@ -496,9 +496,9 @@
      "file": "AMX/b738@b38m-mid.webp",
      "painted_as": "b38m",
      "bytes": {
-      "hi": 83806,
-      "mid": 39372,
-      "lo": 20752
+      "hi": 84554,
+      "mid": 42304,
+      "lo": 22374
      }
     },
     {
@@ -513,9 +513,9 @@
      "file": "AMX/b738@b39m-mid.webp",
      "painted_as": "b39m",
      "bytes": {
-      "hi": 83748,
-      "mid": 40554,
-      "lo": 21402
+      "hi": 86072,
+      "mid": 43008,
+      "lo": 22784
      }
     }
    ],
@@ -530,9 +530,9 @@
    "file": "AMX/b738-mid.webp",
    "painted_as": "b738",
    "bytes": {
-    "hi": 84062,
-    "mid": 39720,
-    "lo": 21104
+    "hi": 84836,
+    "mid": 42080,
+    "lo": 22484
    }
   },
   {
@@ -682,7 +682,7 @@
   {
    "brand": "ASA",
    "model": "b738",
-   "pxm": 37.2,
+   "pxm": 36.6,
    "variants": [
     {
      "types": [
@@ -696,9 +696,9 @@
      "file": "ASA/b738@b38m-mid.webp",
      "painted_as": "b38m",
      "bytes": {
-      "hi": 99698,
-      "mid": 47464,
-      "lo": 24124
+      "hi": 102132,
+      "mid": 49014,
+      "lo": 24948
      }
     },
     {
@@ -714,9 +714,9 @@
      "file": "ASA/b738@b39m-mid.webp",
      "painted_as": "b39m",
      "bytes": {
-      "hi": 101104,
-      "mid": 48588,
-      "lo": 24442
+      "hi": 102990,
+      "mid": 49396,
+      "lo": 25284
      }
     },
     {
@@ -731,9 +731,9 @@
      "file": "ASA/b738@b737-mid.webp",
      "painted_as": "b737",
      "bytes": {
-      "hi": 99638,
-      "mid": 47138,
-      "lo": 24024
+      "hi": 100914,
+      "mid": 48258,
+      "lo": 24602
      }
     }
    ],
@@ -748,9 +748,9 @@
    "file": "ASA/b738-mid.webp",
    "painted_as": "b738",
    "bytes": {
-    "hi": 100278,
-    "mid": 48164,
-    "lo": 24474
+    "hi": 102352,
+    "mid": 49340,
+    "lo": 25104
    }
   },
   {
@@ -942,7 +942,7 @@
   {
    "brand": "CMP",
    "model": "b738",
-   "pxm": 37.2,
+   "pxm": 36.6,
    "variants": [],
    "types": [
     "b39m"
@@ -955,9 +955,9 @@
    "file": "CMP/b738@b39m-mid.webp",
    "painted_as": "b39m",
    "bytes": {
-    "hi": 79130,
-    "mid": 38922,
-    "lo": 20050
+    "hi": 81792,
+    "mid": 41172,
+    "lo": 20868
    }
   },
   {
@@ -1163,7 +1163,7 @@
   {
    "brand": "DAL",
    "model": "b738",
-   "pxm": 37.2,
+   "pxm": 36.6,
    "variants": [
     {
      "types": [
@@ -1178,9 +1178,9 @@
      "file": "DAL/b738@b39m-mid.webp",
      "painted_as": "b39m",
      "bytes": {
-      "hi": 89636,
-      "mid": 45150,
-      "lo": 24060
+      "hi": 92594,
+      "mid": 47208,
+      "lo": 24558
      }
     }
    ],
@@ -1195,9 +1195,9 @@
    "file": "DAL/b738-mid.webp",
    "painted_as": "b738",
    "bytes": {
-    "hi": 88834,
-    "mid": 44800,
-    "lo": 23800
+    "hi": 91642,
+    "mid": 46694,
+    "lo": 24284
    }
   },
   {
@@ -1731,7 +1731,7 @@
   {
    "brand": "FLE",
    "model": "b738",
-   "pxm": 37.2,
+   "pxm": 36.6,
    "variants": [],
    "types": [
     "b38m"
@@ -1744,9 +1744,9 @@
    "file": "FLE/b738@b38m-mid.webp",
    "painted_as": "b38m",
    "bytes": {
-    "hi": 59052,
-    "mid": 30780,
-    "lo": 17424
+    "hi": 60402,
+    "mid": 31912,
+    "lo": 17990
    }
   },
   {
@@ -2304,7 +2304,7 @@
   {
    "brand": "SCX",
    "model": "b738",
-   "pxm": 37.2,
+   "pxm": 36.6,
    "variants": [],
    "types": [
     "b738"
@@ -2317,9 +2317,9 @@
    "file": "SCX/b738-mid.webp",
    "painted_as": "b738",
    "bytes": {
-    "hi": 112512,
-    "mid": 53822,
-    "lo": 26792
+    "hi": 114890,
+    "mid": 55578,
+    "lo": 27702
    }
   },
   {
@@ -2367,7 +2367,7 @@
   {
    "brand": "SWA",
    "model": "b738",
-   "pxm": 37.2,
+   "pxm": 36.6,
    "variants": [
     {
      "types": [
@@ -2381,9 +2381,9 @@
      "file": "SWA/b738@b38m-mid.webp",
      "painted_as": "b38m",
      "bytes": {
-      "hi": 105958,
-      "mid": 50246,
-      "lo": 25012
+      "hi": 109212,
+      "mid": 52284,
+      "lo": 25866
      }
     },
     {
@@ -2398,9 +2398,9 @@
      "file": "SWA/b738@b737-mid.webp",
      "painted_as": "b737",
      "bytes": {
-      "hi": 104798,
-      "mid": 49852,
-      "lo": 24532
+      "hi": 108614,
+      "mid": 51870,
+      "lo": 25514
      }
     }
    ],
@@ -2415,9 +2415,9 @@
    "file": "SWA/b738-mid.webp",
    "painted_as": "b738",
    "bytes": {
-    "hi": 106282,
-    "mid": 50792,
-    "lo": 25124
+    "hi": 109182,
+    "mid": 52388,
+    "lo": 25956
    }
   },
   {
@@ -2612,7 +2612,7 @@
   {
    "brand": "UAL",
    "model": "b738",
-   "pxm": 37.2,
+   "pxm": 36.6,
    "variants": [
     {
      "types": [
@@ -2626,9 +2626,9 @@
      "file": "UAL/b738@b38m-mid.webp",
      "painted_as": "b38m",
      "bytes": {
-      "hi": 116722,
-      "mid": 55326,
-      "lo": 26650
+      "hi": 121292,
+      "mid": 58140,
+      "lo": 28356
      }
     },
     {
@@ -2644,9 +2644,9 @@
      "file": "UAL/b738@b39m-mid.webp",
      "painted_as": "b39m",
      "bytes": {
-      "hi": 118764,
-      "mid": 56526,
-      "lo": 27188
+      "hi": 124542,
+      "mid": 60008,
+      "lo": 29208
      }
     }
    ],
@@ -2661,9 +2661,9 @@
    "file": "UAL/b738-mid.webp",
    "painted_as": "b738",
    "bytes": {
-    "hi": 116776,
-    "mid": 55546,
-    "lo": 26814
+    "hi": 122430,
+    "mid": 58510,
+    "lo": 28530
    }
   },
   {
@@ -2887,7 +2887,7 @@
   {
    "brand": "UAL-G",
    "model": "b738",
-   "pxm": 37.2,
+   "pxm": 36.6,
    "variants": [
     {
      "types": [
@@ -2902,9 +2902,9 @@
      "file": "UAL-G/b738@b39m-mid.webp",
      "painted_as": "b39m",
      "bytes": {
-      "hi": 115732,
-      "mid": 52026,
-      "lo": 24938
+      "hi": 117554,
+      "mid": 53766,
+      "lo": 25254
      }
     }
    ],
@@ -2919,9 +2919,9 @@
    "file": "UAL-G/b738-mid.webp",
    "painted_as": "b738",
    "bytes": {
-    "hi": 113138,
-    "mid": 51252,
-    "lo": 24540
+    "hi": 115652,
+    "mid": 52634,
+    "lo": 24938
    }
   },
   {
@@ -3218,7 +3218,7 @@
   {
    "brand": "WJA",
    "model": "b738",
-   "pxm": 37.2,
+   "pxm": 36.6,
    "variants": [
     {
      "types": [
@@ -3232,9 +3232,9 @@
      "file": "WJA/b738@b38m-mid.webp",
      "painted_as": "b38m",
      "bytes": {
-      "hi": 76324,
-      "mid": 38696,
-      "lo": 20870
+      "hi": 79230,
+      "mid": 40738,
+      "lo": 21584
      }
     },
     {
@@ -3249,9 +3249,9 @@
      "file": "WJA/b738@b737-mid.webp",
      "painted_as": "b737",
      "bytes": {
-      "hi": 73922,
-      "mid": 37198,
-      "lo": 20116
+      "hi": 77554,
+      "mid": 39798,
+      "lo": 21100
      }
     }
    ],
@@ -3266,9 +3266,9 @@
    "file": "WJA/b738-mid.webp",
    "painted_as": "b738",
    "bytes": {
-    "hi": 76868,
-    "mid": 39128,
-    "lo": 21152
+    "hi": 79752,
+    "mid": 41436,
+    "lo": 21666
    }
   },
   {
@@ -3435,7 +3435,7 @@
   {
    "brand": "_N",
    "model": "b738",
-   "pxm": 37.2,
+   "pxm": 36.6,
    "variants": [
     {
      "types": [
@@ -3450,9 +3450,9 @@
      "file": "_N/b738@b39m-mid.webp",
      "painted_as": "b39m",
      "bytes": {
-      "hi": 39242,
-      "mid": 22004,
-      "lo": 13150
+      "hi": 40266,
+      "mid": 23194,
+      "lo": 13270
      }
     },
     {
@@ -3467,9 +3467,9 @@
      "file": "_N/b738@b737-mid.webp",
      "painted_as": "b737",
      "bytes": {
-      "hi": 37562,
-      "mid": 21014,
-      "lo": 12534
+      "hi": 38670,
+      "mid": 22084,
+      "lo": 12816
      }
     },
     {
@@ -3484,9 +3484,9 @@
      "file": "_N/b738@b736-mid.webp",
      "painted_as": "b736",
      "bytes": {
-      "hi": 36288,
-      "mid": 20280,
-      "lo": 12282
+      "hi": 37092,
+      "mid": 21434,
+      "lo": 12522
      }
     },
     {
@@ -3501,9 +3501,9 @@
      "file": "_N/b738@b37m-mid.webp",
      "painted_as": "b37m",
      "bytes": {
-      "hi": 37444,
-      "mid": 20984,
-      "lo": 12428
+      "hi": 38364,
+      "mid": 21712,
+      "lo": 13004
      }
     },
     {
@@ -3518,9 +3518,9 @@
      "file": "_N/b738@b3xm-mid.webp",
      "painted_as": "b3xm",
      "bytes": {
-      "hi": 39608,
-      "mid": 22316,
-      "lo": 13156
+      "hi": 40630,
+      "mid": 23296,
+      "lo": 13334
      }
     }
    ],
@@ -3535,9 +3535,9 @@
    "file": "_N/b738@b38m-mid.webp",
    "painted_as": "b38m",
    "bytes": {
-    "hi": 38378,
-    "mid": 21284,
-    "lo": 12606
+    "hi": 39598,
+    "mid": 22294,
+    "lo": 12940
    }
   },
   {

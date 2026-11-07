@@ -125,7 +125,12 @@ canted out to the published winglet span (`js/aircraft/fit.js` WINGLET); the 737
 `js/aircraft/fit.js` STANCE_FIT) so it stands as in the 737NG / 737 MAX ACAPs (D6-58325-7 Rev C §2.3, D6-38A004 Rev K §2.3);
 the FAM A330's belly fairing is flattened at run time (`stretch.fairing`) to the A330 AC belly row. (5-7 Nov 2026: the
 737-800's door 1L had been re-fitted in the converter (`door_fit`); since close-out round 3 the door is the artist's
-again and the stance is fitted instead.) The FlightAirMap sources of the CRJ700 and A380 models are committed as a plain
+again and the stance is fitted instead.) Since close-out round 3, fix round 2 (7 Nov 2026) the converter also re-fits the
+737-800's horizontal tailplane (stabiliser, elevator and tab objects of `HorzStab.ac`) to the 737 ACAP plan view
+(`tools/convert_models.py` `tail_fit`: span 47 ft 1 in instead of the artist's 11.9 m, planform and dihedral; the fuselage
+and every other object are unchanged) and moves the nacelle pieces whose names the converter missed (`engnose*`,
+`ductinner*`, `engcore*`, `tailpipe*`) into the engine zone; the 737 MAX nacelles are scaled and raised and the 737NG
+blended winglets are made taller at run time (`stretch.engScale`, `stretch.tipScale`). These are modifications of the GPL model and are covered by the same corresponding-source statement. The FlightAirMap sources of the CRJ700 and A380 models are committed as a plain
 export of Ysurac/FlightAirMap-3dmodels @0906d9b in `refs/cache/src/fam3d` (with their COPYING / LICENSE files and blob
 hashes in its SOURCES.json). The corresponding source is committed with the repo:
 `refs/cache/src/fg/737-800` is a plain export of FGMEMBERS/737-800 @9126249 (LICENSE, README.md, the `Models/*.ac|*.png|*.xml`

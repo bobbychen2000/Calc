@@ -55,7 +55,12 @@ export const TYPES = {
     wing: { span: 35.8, rootLE: 14.2, rootC: 7.4, kinkZ: 5.4, kinkC: 4.3, tipC: 1.25, sweep: 26, dihedral: 6, y: 0.55, tcRoot: 0.15, tcTip: 0.11, tip: 'blended', tipH: 2.5, flex: 0.25 },
     eng: [{ z: 4.9, len: 4.1, r: 0.99, y: 0.95, fwd: 2.9, flat: 0.86 }],
     gear: { main: [{ x: 20.3, z: 2.86, wheels: 2 }], nose: { x: 4.7, r: 0.34 }, r: 0.56, w: 0.35 },
-    hstab: { span: 14.35, rootC: 3.9, tipC: 1.3, sweep: 32, x: 33.1, y: 0.2, dihedral: 7 },
+    // (tailplane planform: the 737 ACAP plan view, D6-58325-7 §2.2.6 p.2-14 / D6-38A004 §2.2.2 p.2-10 measured at 300 dpi (inf):
+    // LE X = 34.0 + (|z| - 1.72) 0.7215 (35.8 deg), TE X = 38.0 + (|z| - 2.61) 0.322, span 47 ft 1 in (pub); root at 0.35 R as
+    // js/aircraft/model.js / js/live/gates.js loft it; the rendered model's tailplane is fitted to the same lines,
+    // tools/convert_models.py tailFit, close-out round 3 fix round 2; was rootC 3.9, tipC 1.3, sweep 32, x 33.1: its tip
+    // ended 1.0 m ahead of the drawn tip's trailing edge)
+    hstab: { span: 14.35, rootC: 4.14, tipC: 1.54, sweep: 35.8, x: 33.24, y: 0.2, dihedral: 7 },
     fin: { rootC: 6.4, tipC: 2.2, h: 6.9, sweep: 36, x: 29.9, dorsal: true },
     win: [{ x0: 5.3, x1: 35.3, sp: 0.508, w: 0.24, h: 0.33, y: 0.4 }], doors: [3.3, 16.4, 17.3, 36.4],
     cockpit: { style: 'boeing' } },
@@ -63,7 +68,12 @@ export const TYPES = {
     wing: { span: 35.9, rootLE: 14.2, rootC: 7.4, kinkZ: 5.4, kinkC: 4.3, tipC: 1.25, sweep: 26, dihedral: 6, y: 0.55, tcRoot: 0.15, tcTip: 0.11, tip: 'split', tipH: 2.1, flex: 0.3 },
     eng: [{ z: 4.9, len: 4.6, r: 1.04, y: 0.95, fwd: 3.2, flat: 0.92 }],
     gear: { main: [{ x: 20.3, z: 2.86, wheels: 2 }], nose: { x: 4.7, r: 0.34 }, r: 0.56, w: 0.35 },
-    hstab: { span: 14.35, rootC: 3.9, tipC: 1.3, sweep: 32, x: 33.1, y: 0.2, dihedral: 7 },
+    // (tailplane planform: the 737 ACAP plan view, D6-58325-7 §2.2.6 p.2-14 / D6-38A004 §2.2.2 p.2-10 measured at 300 dpi (inf):
+    // LE X = 34.0 + (|z| - 1.72) 0.7215 (35.8 deg), TE X = 38.0 + (|z| - 2.61) 0.322, span 47 ft 1 in (pub); root at 0.35 R as
+    // js/aircraft/model.js / js/live/gates.js loft it; the rendered model's tailplane is fitted to the same lines,
+    // tools/convert_models.py tailFit, close-out round 3 fix round 2; was rootC 3.9, tipC 1.3, sweep 32, x 33.1: its tip
+    // ended 1.0 m ahead of the drawn tip's trailing edge)
+    hstab: { span: 14.35, rootC: 4.14, tipC: 1.54, sweep: 35.8, x: 33.24, y: 0.2, dihedral: 7 },
     fin: { rootC: 6.4, tipC: 2.2, h: 6.9, sweep: 36, x: 29.9, dorsal: true },
     win: [{ x0: 5.3, x1: 35.3, sp: 0.508, w: 0.24, h: 0.33, y: 0.4 }], doors: [3.3, 16.4, 17.3, 36.4],
     cockpit: { style: 'boeing' } },
@@ -187,14 +197,16 @@ export const SPEC = {
   // -800 5.49-5.64, -900 5.51-5.66), MAX §2.3.1-2.3.4 row N 'horizontal stabilizer' [MINIMUM, MAXIMUM]; htSpan: horizontal
   // tail span 47 ft 1 in = 14.35 m in every general-dimension figure, NG §2.2.1-2.2.8, MAX §2.2.1-2.2.4 (close-out round 3,
   // fix round 2, v1: the FG model's tailplane spanned 11.92 m; tools/convert_models.py tailFit). js/aircraft/fit.js does not
-  // use htClr for the 737s (models on their own gear); tools/models/check_dims.py checks both)
+  // use htClr for the 737s (models on their own gear); tools/models/check_dims.py checks both; wlTop / wlBot: NG §2.3.3
+  // 'with winglets' row E 'wingtip' (the winglet top) and K 'bottom of winglet (approx)', [MIN (MTW), MAX (OEW)]: -700W 6.48-6.63 /
+  // 4.04-4.19, -800W / -900W 6.50-6.76 / 4.06-4.32; js/aircraft/fit.js TIP_H fits the winglet height to wlTop)
   b736: { doc: 'NG', engClr: [0.46, 0.61], htClr: [5.46, 5.61], htSpan: 14.35, sillAft: [2.95, 3.10], cargo: { fwd: [1.30, 1.45], aft: [1.63, 1.78] }, L: 31.24, span: 34.32, H: [12.45, 12.70], crown: [5.38, 5.54], sill: [2.59, 2.74], nose: 4.09, main: [15.32], track: 5.72, doors: [5.03, 23.65],
     src: '§2.2.1 p.2-9 (L, span without winglets, nose gear 13 ft 5 in, wheelbase 36 ft 10 in, track 18 ft 9 in), §2.3.1 p.2-17', inf: ['doors[1]: aft door = MAX aft-door-to-tail distance 7.59 m'] },
-  b737: { doc: 'NG', engClr: [0.46, 0.61], htClr: [5.46, 5.61], htSpan: 14.35, sillAft: [2.95, 3.10], cargo: { fwd: [1.30, 1.45], aft: [1.63, 1.78] }, L: 33.63, span: 35.79, H: [12.45, 12.67], ...NG_CL, nose: 4.09, main: [16.69], track: 5.72, doors: [5.03, 26.04],
+  b737: { doc: 'NG', wlTop: [6.48, 6.63], wlBot: [4.04, 4.19], engClr: [0.46, 0.61], htClr: [5.46, 5.61], htSpan: 14.35, sillAft: [2.95, 3.10], cargo: { fwd: [1.30, 1.45], aft: [1.63, 1.78] }, L: 33.63, span: 35.79, H: [12.45, 12.67], ...NG_CL, nose: 4.09, main: [16.69], track: 5.72, doors: [5.03, 26.04],
     src: '§2.2.4 p.2-12 (-700W; without winglets 34.32), §2.3.3 p.2-19', inf: ['doors[1] (as b736)'] },
-  b738: { doc: 'NG', engClr: [0.48, 0.64], htClr: [5.49, 5.64], htSpan: 14.35, sillAft: [2.97, 3.12], cargo: { fwd: [1.30, 1.45], aft: [1.65, 1.80] }, cargoX: { fwd: 8.53, aft: 27.97 }, L: 39.47, span: 35.79, H: [12.37, 12.62], ...NG_CL, nose: 4.09, main: [19.69], track: 5.72, doors: [5.03, 31.88],
+  b738: { doc: 'NG', wlTop: [6.50, 6.76], wlBot: [4.06, 4.32], engClr: [0.48, 0.64], htClr: [5.49, 5.64], htSpan: 14.35, sillAft: [2.97, 3.12], cargo: { fwd: [1.30, 1.45], aft: [1.65, 1.80] }, cargoX: { fwd: 8.53, aft: 27.97 }, L: 39.47, span: 35.79, H: [12.37, 12.62], ...NG_CL, nose: 4.09, main: [19.69], track: 5.72, doors: [5.03, 31.88],
     src: '§2.2.6 p.2-14 (-800W), §2.3.3 p.2-19', inf: ['doors[1] = 737-8 aft door (same fuselage, MAX §2.7.1)'] },
-  b739: { doc: 'NG', engClr: [0.48, 0.64], htClr: [5.51, 5.66], htSpan: 14.35, sillAft: [2.97, 3.12], cargo: { fwd: [1.30, 1.45], aft: [1.65, 1.80] }, cargoX: { fwd: 8.53, aft: 30.61 }, L: 42.11, span: 35.79, H: [12.37, 12.62], crown: [5.44, 5.59], sill: [2.59, 2.74], nose: 4.09, main: [21.26], track: 5.72, doors: [5.03, 34.52],
+  b739: { doc: 'NG', wlTop: [6.50, 6.76], wlBot: [4.06, 4.32], engClr: [0.48, 0.64], htClr: [5.51, 5.66], htSpan: 14.35, sillAft: [2.97, 3.12], cargo: { fwd: [1.30, 1.45], aft: [1.65, 1.80] }, cargoX: { fwd: 8.53, aft: 30.61 }, L: 42.11, span: 35.79, H: [12.37, 12.62], crown: [5.44, 5.59], sill: [2.59, 2.74], nose: 4.09, main: [21.26], track: 5.72, doors: [5.03, 34.52],
     src: '§2.2.8 p.2-16 (-900ERW), §2.3.3 p.2-19', inf: ['doors[1] = 737-9 aft door'] },
   b37m: { doc: 'MAX', engClr: [0.43, 0.56], htClr: [4.78, 5.38], htSpan: 14.35, cargo: { fwd: [1.42, 1.68], aft: [1.32, 1.65] }, bottom: [1.27, 1.55], cargoX: { fwd: 8.53, aft: 24.05 }, L: 35.56, span: 35.92, H: [11.84, 12.50], crown: [5.05, 5.51], sill: [2.77, 3.07], sillAft: [2.49, 2.92], nose: 4.09, main: [17.45], track: 5.72, doors: [5.03, 27.97],
     src: '§2.2.1 p.2-9 (nose gear 13 ft 5 in, wheelbase 43 ft 10 in), §2.3.1 p.2-13 (A, B, P), §2.7.1 p.2-26 (B, H)' },

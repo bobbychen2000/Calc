@@ -163,6 +163,12 @@ round 1 request (b)).
 
 ## Round 3 of the close-out (7 Nov 2026: findings aircraft-1 .. aircraft-10, docs/requests/closeout3_findings.json)
 
+> Erratum (fix round 2 below, verifier finding v6): several numbers in this section did not match the code. The 737-600 /
+> -700 / -900ER pitch was 1.49 / 1.29 / 0.91 deg (not 1.35 / 1.21 / 0.93), the 737-9 `T.Hc` 3.436 (not >= 3.465), the
+> 737-800 fuselage top 5.484 (not 5.51), and "every row within +-3 in" held only against the [MIN, MAX] range, not against
+> the OEW column the stance is fitted to (fin top -0.11 .. -0.18 m, MAX engine 0.39-0.42 m, NG fuselage top -0.08 .. -0.11 m).
+> The stance has changed again since; the current numbers are in "Round 3, fix round 2".
+
 Checks: `python3 tools/models/check_dims.py` before 27 flagged / 26 explained / 1 unexplained -> after **30 / 30 / 0** (gone:
 MAX fuselage top x4, NG engine x4, MAX aft door x3, A333 belly at 0.5 L; new and explained: the FG artist's cargo-door
 stations x14, see 1.); `node tools/models/dock_foot.mjs` re-run (737 family door-1 grids; all closure rows <= 0.04 m);
@@ -224,3 +230,70 @@ before). Scripts: scratchpad `c3/aircraft/scripts/` (stance_fit.py, belly.mjs, b
 1. CAL / EVA B77L cargo titles, CSG, JSX (owner, aircraft-7); CAL B77W bake (FG 777 source, 3.).
 2. 737-600 forward removed section reaches into the wing-body fairing (1.5 m); FG 737 cargo-door stations.
 3. Still open from earlier rounds: A321neo ACF layouts, E175 windows, 767-300ER winglets, 737-900ER row (inf).
+
+## Round 3, fix round 2 (7 Nov 2026: the round-1 verifier's findings v1 .. v6)
+
+Checks (before -> after, same tree otherwise): `python3 tools/models/check_dims.py` 30 flagged / 30 explained / 0 unexplained
+(and `--json` crashed) -> **35 / 35 / 0, `--json` works**; the new rows: tailplane span and stabiliser-tip height for the 8 737 types, winglet top / bottom (NG rows E / K) for the -700W / -800W / -900ER W
+(NG row H / MAX row N), and every height row of the 737 family against its OEW column (marked `(OEW)`). Docking census of
+the 737 family through the real `LiveGateSystem.planFor` (old aircraft files vs new, today's bridges code): docked b736 93 /
+b737 93 / b738 97 / b739 96 / b37m 93 / b38m 96 / b39m 96 / b3xm 94, **0 bridges changed status**, max docked slope 0.186 ->
+0.185. `node tools/models/dock_foot.mjs` re-run: 0 stale, closures <= 0.041 m, drawn mesh in skin <= 0.07 m.
+`python3 tools/sat/check.py`: ISSUES 0, APP ISSUES 0, 17 WARNINGS (unchanged). Software previews (tools/liveries/preview.py)
+of the 737-8 (AAL) and 737-600 looked at. Scripts and outputs: scratchpad `c3/aircraft/r2/` (scripts/, before/, after/).
+
+### 1. What changed for everybody who reads `TYPES` or draws the models
+
+| Field / API | Change |
+|---|---|
+| FG 737-800 tailplane (all 8 737 types; `data/models/b738.sfom`, `refs/cache/models_orig/b738.sfom`) | **v1.** The artist's tailplane spanned 11.92 m against 47 ft 1 in = **14.35 m** in every 737 ACAP general-dimension figure (D6-58325-7 Rev C §2.2.1-2.2.8 and D6-38A004 Rev K §2.2.1-2.2.4; read on the rendered pages of the -600, -700W, -800W, -900ERW, -7, -8, -9, -10). Its root also sat 1.1 m aft of the drawing's, with a 12 deg mid-plane dihedral. `tools/convert_models.py` `tail_fit` (b738 `tailFit`) now maps the stabiliser / elevator / tab objects onto the ACAP plan view measured at 300 dpi with the drawing's own scale: LE X = 34.0 + (\|z\| - 1.72) 0.7215, TE X = 38.0 + (\|z\| - 2.61) 0.322. This puts the tip trailing edge at 39.47 m, the overall length, as drawn (inf, +-0.2 m). The mid-plane dihedral is now 7.0 deg (fitted to the stabiliser rows; the p.2-14 front view draws ~6.4 deg). Thickness scales with chord. The root moves forward inside the tail cone: every root-rib vertex is 0.02-0.17 m inside the skin (before: 0.02-0.19 m outside). Results: rendered span 14.35 m; stabiliser tip at OEW NG 5.65 / 5.65 / 5.66 / 5.66 against H 5.61 / 5.61 / 5.64 / 5.66, MAX 5.35 / 5.33 / 5.28 / 5.33 against N 5.38 / 5.36 / 5.33 / 5.38 (before: NG 5.88-5.94, MAX 5.46-5.54). The model's dims, the fuselage and every other object are unchanged. The livery atlas was re-run (90 charts, `pxm` 37.2 -> 36.6) and all b738 bakes were re-done (`tools/liveries/build.py --models b738`; manifest: sizes and pxm only). |
+| `TYPES.b738.hstab` / `b38m.hstab` (and derived types) | The procedural / collision planform now matches the same plan view: rootC 4.14, tipC 1.54, sweep 35.8, x 33.24 (was 3.9 / 1.3 / 32 / 33.1, whose tip ended 1.0 m ahead of the drawn trailing edge). Ground physics, `acHit` and the far LOD read it. check.py and the census are unchanged. |
+| FG 737-800 nacelle zones | Found with v2: the inlet lips, the LEFT fan cowl (`engnose.001`), the inlet ducts, the core cowls and the tail pipes were in the body zone. Only the right fan cowl and the reversers were 'engine'. Effects: the 737 MAX nacelle scale left the inlet lip 0.28 m inside the scaled cowl, and the left and right fan cowls took different colours in the non-baked shader path. They are now zone 2 (`tools/convert_models.py` `zoneOverride`). The atlas 'eng' parts and the bakes follow. |
+| 737 family stance (`js/aircraft/fit.js STANCE_FIT`) | **v1 / v2.** The least squares also takes the stabiliser-tip row (NG H / MAX N at OEW, `SPEC.htClr`, model features `wing.htSt / htY`). **Current values:** 737-600 / -700 / -800 / -900ER nose-down 1.29 / 1.16 / 0.98 / 0.91 deg, main oleo 0.16 / 0.16 / 0.15 / 0.14 m, nose leg -0.09 / -0.09 / -0.10 / -0.11 m. 737-7 / -8 / -9 / -10 nose-up 0.12 / 0.14 / 0.22 / 0.12 deg, main oleo 0.12 / 0.12 / 0.15 / 0.13 m, nose leg +0.19 / +0.20 / +0.23 / +0.21 m. **`T.Hc`** 3.432 / 3.435 / 3.446 / 3.453 / 3.480 / 3.473 / 3.451 / 3.470. **`T.dockSill`** NG 2.719-2.723, MAX 3.033-3.041 (was 2.703-2.719 / 3.043-3.052). **`T.fit.renderedCrown`** NG 5.39-5.42, MAX 5.48-5.49. Every height row is within +-3 in of its OEW value except the NG fuselage top (row A, 5.48 / 5.48 / 5.48 / 5.49 against 5.54-5.59). That residual is explained in check_dims: the FG fuselage section is 3.96 m deep against 13 ft 2 in = 4.01 m, D6-38A004 §2.2.2 p.2-10. |
+| fin height (`stretch.fin`, 737 family) | **v2.** Models in a fitted stance now fit the fin top to the OEW vertical-tail value (NG J 'MAX (AT OEW)', MAX P 'MAXIMUM'), at the fin tip's highest pitched point (model features `finTop.st0 / st1`). Fin top 12.69 / 12.66 / 12.61 / 12.61 / 12.50 / 12.45 / 12.40 / 12.45 against 12.70 / 12.67 / 12.62 / 12.62 / 12.50 / 12.45 / 12.40 / 12.45 (before 12.47 for the -800). `fin.k` 0.93-0.96. |
+| `stretch.engScale` (737 MAX) | **v2.** New `dy`: after the radial scale about the top line, the nacelle is raised so its lowest point renders at row E's OEW value, 0.56 m. `dy` is +0.14 / +0.14 / +0.16 / +0.15 m, so the nacelle effectively grows about its axis. Lowest engine point 0.56 against 0.56, before 0.39-0.42. The whole nacelle scales (zone fix above). The nacelle tops sink 0.14 m into the pylon fairing (hidden); clearance to the wing is unchanged (side cuts, scratch nacplot4.png). |
+| fuselage plugs (`js/aircraft/stretch.js`, Python port) | **v5, partly.** Engines and pylons (zones 2, 7) inside a removed section move rigidly with the wing. The 737-600's 4.37 m forward removal reached 1.3 m into the nacelles, which rendered 2.35 m long instead of 3.57 m (now 5.28 m = the -800's, with the core and tail pipe). No other type's removed section reaches an engine. |
+| `fit.skinHW(X, y, w)`, `skinHalfWidth(T, X, y, w)`, `cargoDoor(T, door, w)` | **v3.** Optional width: the widest skin over X +- w/2. The lower-lobe table is now interpolated along the keel between two sections, not at the same absolute height, where neighbouring section bottoms differ. skinHW minus the mesh at keel + 0.05 m, A319 aft (22.33 m): -0.097 -> -0.069; A320 aft: -0.092 -> -0.045. 737 / A321 within -0.02 .. +0.025. Conveyor end (+ 0.03 m) against the mesh across the 0.9 m conveyor: with `w` = 0.9 every end is outside the skin (worst 0.008 m clear, A319 aft at the consumers' 0.66 L fallback). With the centre-line query (today's consumer) the worst end is still 0.06 m inside (737 aft corners), 0.12 m at the A319 aft. |
+| 737NG blended winglet (`stretch.tipScale`, `js/aircraft/fit.js` TIP_H; b737 / b738 / b739) | Found with the NG row E the verifier asked for: the FG winglet rose 1.7 model m above the tip skin, and its top rendered 5.93-5.97 m against row E 'wingtip' with winglets, 6.63 / 6.76 m at OEW (D6-58325-7 Rev C §2.3.3). Row K, the bottom of the winglet, is 4.19 / 4.32 m: the APB winglet is about 8 ft tall. The winglet (outboard of \|z\| 17.45, above y 0.75: the TIP_CUT region) is scaled vertically by k 1.39-1.44 so its top renders at row E's OEW value: 6.63 / 6.76 / 6.76. Span and cant stay the artist's, so the winglet is about 4 deg more upright. Row K renders 0.08-0.18 m low; it is approximate in the ACAP and explained in check_dims. The 737-600 has no winglet row (its SPEC is the plain wing) and is unchanged. |
+| `stretch.fin` | New `zMax` (the tailplane semi-span + 0.5): the fin height op no longer scales wing-tip vertices that lie aft of 0.6 L and above the fuselage top. Excluded: the 737NG winglet tops (1152 vertices, up to 0.03 m), the 757 winglet tips (320, 0.045 m), the A220-300 wing tips (464, 0.025 m), E170 / E175 (< 0.002 m). T-tails (CRJ) keep their tailplane in the op. No other check_dims row changed. |
+| `MODEL_FEATURES` | New `wing.nac {top, low, lowSt}`, `wing.htSt`, `wing.tip {top, topSt, low}`, `finTop.st0 / st1`. |
+| `SPEC` 737 family | New `htClr` (NG H / MAX N, both columns), `htSpan` 14.35 (pub), NG `wlTop` / `wlBot` (rows E / K with winglets). |
+| tools/models/check_dims.py | **v4:** `keelAt` is no longer in the report rows, so `--json` works. **v1:** tailplane span and stabiliser-tip rows. **v2:** OEW column for stance models. For gear models only the highest top (0.1-0.6 L) is compared with row A: the 0.1-0.5 L seating crown and the main-gear-station top measured the stance, not the fuselage. |
+
+### 2. Requests
+
+| File (owner) | Request |
+|---|---|
+| `js/world/gates.js` `beltEndY` / `beltDoor`; `js/live/gates.js` belt hull test (bridges) | **v3:** place the conveyor end with the conveyor's width: `T.fit.skinHW(X, S, 0.9)` (or `cargoDoor(T, door, 0.9).hw`) + 0.03 m. The centre-line query leaves the forward corner of the 737 aft conveyors 0.04-0.06 m inside the skin, and the A319 / A320 aft (0.66 L fallback) 0.12 / 0.03 m inside. With the width every end is outside (scratch `c3/aircraft/r2/after/belt_w.txt`, `belt_fb.txt`). The hull test can query the corners the same way. |
+| `tools/drawing/common.py` (bridges) | Port, or import `tools/liveries/common.apply_stretch`, which now has them all: `engScale.dy` (737 MAX nacelle raised after the scale), `tipScale` (737NG winglet height), `fin.zMax`, and the plug rule that keeps zones 2 / 7 rigid in removed sections (737-600). The 737 `TYPES.hstab` planform also changed (above). The tailplane itself changed in the model file, so there is nothing to port for it. |
+| `js/three/aircraft.js` (engine) | Nothing to do: it draws through `js/live/models.js` / `js/aircraft/stretch.js`. FYI: the b738 model, atlas and liveries were regenerated. |
+
+### 3. Rejected / deferred in this round
+
+- **v1, other types' tail spans:** the E190 / E195 (+14 %), A220 (+6-8 %) and CRJ200 (-26 %) differences are against
+  `TYPES.hstab`, which is unsourced procedural geometry (the CRJ200's 8.5 m looks copied from the CRJ700). Their APMs
+  (Embraer APM-1901, A220 APP / ACP, Bombardier CSP A-020) are not in `refs/cache` after the container loss. To conserve
+  rate limits nothing was re-fetched. The new check_dims row flags these types once `SPEC.htSpan` carries a sourced value.
+- **v5, 737-600 keel steps (open):** the forward removal (4.37 m, the ACAP wheelbase change) cannot fit between the
+  forward cargo door object (ends 10.65 m) and the wing-body fairing (13.6 m). It takes 1.45 m of the fairing's front:
+  keel step -0.063 m at 10.7 m. The 3.86 m aft removal leaves 0.08 m between the fairing (~22 m) and the aft cargo door
+  (26.14 m), so there is no room for a blend: hard keel step +0.052 m at 22.2 m. A blend into the wing root or the door
+  would squeeze them. Moving the cargo door objects (open since round 3) would free the forward removal. No B736 is in the
+  recorded hours.
+- **v1, MAX rows F / G / J / K:** not added. F / G are the overwing exits, which have no door objects on the FG model. J / K
+  are the split-tip winglet blades, which are procedural (js/aircraft/model.js, `TIP_ADD` split; `TYPES.wing.tipH` 2.1 m)
+  and not in the mesh check_dims measures.
+- **v2, alternative "refit the stance with all rows":** done for the stabiliser row. The fin and the MAX nacelle are fitted
+  after the stance instead, because their heights are artist geometry, not stance. The fuselage top is not a stance row:
+  the FG section is 0.05 m too shallow, so fitting row A would lift every door sill.
+
+### 4. Open (aircraft track)
+
+1. CAL / EVA B77L cargo titles, CSG, JSX (owner, aircraft-7); CAL B77W bake (FG 777 source).
+2. 737-600 keel steps (above); FG 737 cargo-door stations; FG 737 fuselage depth 3.96 m against 4.01 m.
+3. Fin-tip planform: the FG fin tip is ~2.0 m in chord with its trailing edge at 39.3-39.4 m; the ACAP side view draws
+   ~1.0-1.3 m ending at ~38.6 m (inf, measured on p.2-14). Height and span fit; not changed.
+4. 737 MAX nacelle: the inlet is 0.36 m further forward on the MAX (42 ft 8 in against 43 ft 10 in, plan views). The scaled
+   CFM56 nacelle keeps the NG station (inf).
+5. Still open from earlier rounds: A321neo ACF layouts, E175 windows, 767-300ER winglets, 737-900ER row (inf); E-Jet, A220
+   and CRJ200 tail spans (above).

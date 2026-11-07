@@ -90,7 +90,11 @@ export const PLUG_AT = {
 // one by both plugs (24.05 / 27.97 / 30.61 / 32.28 m: the aft plug is ahead of it). So: inserted plugs at 11.0 (aft of the
 // forward cargo door, ahead of the wing-body fairing at 13.6) / 26.0 m (ahead of the aft cargo door); removed sections from
 // 10.7 m (forward) and from 22.2 m (aft of the fairing, which ends at ~22 m; the blend stops 0.6 m ahead of the aft cargo
-// door at 26.1). The 737-600's 4.37 m forward removal still reaches 1.5 m into the fairing's front (rare at SFO; open)
+// door at 26.1). Open for the 737-600 (rare at SFO: none in the recorded hours; close-out round 3, fix round 2, v5): its 4.37 m
+// forward removal (the ACAP wheelbase change) cannot fit between the forward cargo door (ends 10.65) and the fairing (13.6),
+// so it takes 1.45 m of the fairing's front (keel step -0.06 m at 10.7 m), and its 3.86 m aft removal leaves no room for a
+// blend between the fairing and the aft cargo door (hard keel step +0.05 m at 22.2 m). Its nacelles, which the forward
+// removal reached by 1.3 m (they rendered 2.35 m long instead of 3.57 m), now move rigidly with the wing (js/aircraft/stretch.js)
 const PLUG_REM = { b738: { at: [10.7, 22.2], next: 26.1 } };
 // models whose door numbering changes between the types (the 777-300 adds door 3 over the wing): the forward plug is the
 // main-gear station change (777-300 vs -200: 37.11 - 31.77 = 5.34 m ahead of the wing), not a door's
@@ -108,6 +112,12 @@ const TIP_LAT = { sharklet: 0.55, split: 0.5 };
 // the 737-800 model's blended winglet (FG winglet.ac): vertices outboard of |z| 17.5 and above y 0.75 (model units; the
 // upper-skin profile of the tip rises from 0.72 at 17.45 to 2.47 at 17.85) are folded onto the tip
 const TIP_CUT = { b738: { z0: 17.5, y0: 0.75, zTo: 17.62, yTo: 0.6 } };
+// height of the model's own blended winglet on the types that keep it (737NG -700W / -800W / -900ER W): the FG winglet rises
+// 1.7 model m above the tip's upper skin, its top rendering 0.79 m below ACAP row E 'wingtip' with winglets (6.76 m at OEW,
+// D6-58325-7 Rev C §2.3.3; bottom of winglet K 4.32 m: 2.44 m apart, the APB winglet's 8 ft). The winglet (outboard of |z| z0,
+// above y0: the TIP_CUT region) is scaled vertically about y0 so its top renders at row E's OEW value in the fitted stance
+// (fitType; close-out round 3, fix round 2: found with the E row the verifier asked for). Its span and cant stay the artist's.
+const TIP_H = { b738: { z0: 17.45, y0: 0.75 } };
 // blended winglets the source model carries, in model units measured on data/models/<m>.sfom (FAM 757-200: the wing's
 // upper skin is flat at y ~0.2 out to |z| 18.5 and rises from 18.6 (0.29) through 18.8 (0.71) and 19.0 (2.35) to the tip
 // at |z| 19.18, y 2.88: a near-vertical winglet adding 0.64 m of span a side, review 5 Nov 2026 aircraft-v3). The APB
@@ -118,10 +128,13 @@ const TIP_CUT = { b738: { z0: 17.5, y0: 0.75, zTo: 17.62, yTo: 0.6 } };
 // published winglet span (SPEC span). The winglet keeps the artist's height (no published value here).
 const WINGLET = { b752: { zr: 18.6, y0: 0.25, yt: 2.88 } };
 // 737 MAX: LEAP-1B nacelles in place of the model's CFM56-7B ones, scaled radially by the fan-diameter ratio (69.4 in / 61 in,
-// CFM International LEAP-1B and CFM56-7B data) about the nacelle's TOP line (the pylon attachment: keep 'top'). Round 2 of
-// the 5 Nov 2026 review: scaled about the lowest line, the nacelle top rose 0.27 m over its pylon junction and its bottom
-// rendered 0.86 m in the nose-up MAX stance against row E 0.43-0.56 m (D6-38A004 Rev K §2.3.x; the NG's row D is 0.48-0.64 m,
-// D6-58325-7 §2.3.2: the bigger fan hangs lower although the MAX stands nose-up); about the top line it renders 0.58 m
+// CFM International LEAP-1B and CFM56-7B data) about the nacelle's TOP line (the pylon attachment: keep 'top'), then raised by
+// dy so the lowest nacelle point renders at the OEW value of row E 'engine' (0.56 m, D6-38A004 Rev K §2.3.1-2.3.4), the
+// column the stance is fitted to (fitType; close-out round 3, fix round 2, v2: without dy it rendered 0.39-0.42 m, below
+// even the MINIMUM 0.43 m; dy is +0.14-0.16 m, so the nacelle grows about its axis to within 0.01 m, as the LEAP-1B was hung
+// higher on the MAX). Round 2 of the 5 Nov 2026 review had scaled it about the lowest line (top 0.27 m over the pylon).
+// The whole nacelle scales: since fix round 2 the FG inlet lips, left fan cowl, ducts, core cowls and tail pipes are in the
+// engine zone (tools/convert_models.py zoneOverride; before, the inlet lip stayed 0.28 m inside the scaled cowl)
 const ENG_SCALE = { b37m: 1.14, b38m: 1.14, b39m: 1.14, b3xm: 1.14 };
 // nose leg of a model on its own gear whose stance fit (STANCE_FIT) lengthens or shortens it: model units, measured on the
 // FG nosegear.ac objects in data/models/b738.sfom (zone 3): outer strut (nouterstrut) y -2.574 .. -1.817, piston
@@ -140,17 +153,21 @@ const NOSE_LEG = { b738: { xMin: -6.0, yTop: -1.82, yBot: -2.70 } };
 // its engine 0.13-0.15 m above row D and, before the round-1 door re-cut, door 1 0.23 m above row B, while door 2 and the
 // crown fitted: the airframe stood too high ahead of the main gear. The fit (fitType): least squares over the published
 // OEW heights (the MAX (AT OEW) / MAXIMUM column) of the model's own door objects - door 1 (row B), the aft door (NG row G
-// sillAft, MAX row M), the forward / aft cargo doors (NG rows C / F, MAX rows D / L: SPEC cargo) - for two unknowns: the
-// main oleo compression dz (stretch.gearUp, >= 0) and the pitch a about the main contact; the nose leg is then compressed
-// or extended (noseExt) until its tyre touches. Result (rendered; tools/models/check_dims.py): 737-800 1.02 deg nose-down,
-// main oleo 0.14 m compressed, nose leg -0.12 m; 737-600 / -700 / -900ER 1.35 / 1.21 / 0.93 deg; 737-8 0.20 deg nose-up, main
-// 0.13 m, nose leg +0.22 m (737-7 / -9 / -10: 0.21 / 0.32 / 0.22 deg, +0.21 / +0.26 / +0.24 m). Every row then fits within the
-// ACAP's +-3 in, also the rows not fitted (fuselage top A, engine D / E, MAX fuselage bottom C). The MAX nose leg conflicts
-// with a second Boeing source (pub): "an 8-inch nose gear extension" (0.20 m; Boeing, "Boeing Makes 737 MAX Design
-// Decisions", 11 Apr 2012, refs/cache/press/SOURCES.json), while the fitted MAX nose tyre sits 0.32-0.38 m lower below the airframe than the NG twin's
-// (inf: from the ACAP sills). The strut length is not the static height: oleo servicing and nose load differ, and the
-// documents give no static strut extension. The ACAP rows win because the bridges and the ground equipment meet these
-// doors; the 0.12-0.18 m difference is recorded (docs/requests/aircraft_closeout.md, close-out round 3 aircraft-2)
+// sillAft, MAX row M), the forward / aft cargo doors (NG rows C / F, MAX rows D / L: SPEC cargo) - and, since fix round 2,
+// the stabiliser tip (NG row H, MAX row N: SPEC htClr; the tailplane re-fitted to the ACAP plan view, tools/convert_models.py
+// tailFit) for two unknowns: the main oleo compression dz (stretch.gearUp, >= 0) and the pitch a about the main contact; the
+// nose leg is then compressed or extended (noseExt) until its tyre touches. The rows the stance does not fit are fitted
+// after it at the same column: the fin top (row J / P, the fin fit below) and the 737 MAX nacelle (row E, ENG_SCALE dy).
+// Result (fit.seat; tools/models/check_dims.py against the OEW column, +-3 in, close-out round 3 fix round 2): 737-600 /
+// -700 / -800 / -900ER nose-down 1.29 / 1.16 / 0.98 / 0.91 deg, main oleo 0.16 / 0.16 / 0.15 / 0.14 m, nose leg -0.09 / -0.09
+// / -0.10 / -0.11 m; 737-7 / -8 / -9 / -10 nose-up 0.12 / 0.14 / 0.22 / 0.12 deg, main oleo 0.12 / 0.12 / 0.15 / 0.13 m, nose leg
+// +0.19 / +0.20 / +0.23 / +0.21 m. Every height row is within +-3 in of its OEW value except the NG fuselage top (row A, -0.08
+// .. -0.10 m: the FG fuselage section is 3.96 m deep against 4.01 m, D6-38A004 §2.2.2; explained in check_dims). The MAX
+// nose leg conflicts with a second Boeing source (pub): "an 8-inch nose gear extension" (0.20 m; Boeing, "Boeing Makes 737 MAX
+// Design Decisions", 11 Apr 2012, refs/cache/press/SOURCES.json), while the fitted MAX nose tyre sits ~0.3 m lower below the
+// airframe than the NG twin's (inf: from the ACAP sills). The strut length is not the static height: oleo servicing and nose
+// load differ, and the documents give no static strut extension. The ACAP rows win because the bridges and the ground
+// equipment meet these doors; the difference is recorded (docs/requests/aircraft_closeout.md, close-out round 3 aircraft-2)
 const STANCE_FIT = new Set(['b738']);
 
 // A380 upper-deck door U1L: Airbus AC A380 Dec 01/25 FIGURE-2-7-0-991-002 (U1 20.94 m from the nose) and
@@ -311,7 +328,7 @@ export function fitType(t, m) {
   // long, +4.3 % against the ACAP; now the plain wing ends at spanPlain and the winglet is canted out, WINGLET above)
   const cut = TIP_ADD[t] && TIP_CUT[m];
   if (cut) stretch.tipCut = cut;
-  if (ENG_SCALE[t] && TIP_CUT[m]) stretch.engScale = { k: ENG_SCALE[t], keep: 'top', parts: true };
+  if (ENG_SCALE[t] && TIP_CUT[m]) stretch.engScale = { k: ENG_SCALE[t], keep: 'top' };
   const WL = !cut && WINGLET[m] && S.spanPlain ? WINGLET[m] : null;  // (the span fit then ends at the winglet root)
   const semi = cut ? cut.zTo : WL ? WL.zr : F ? F.wing.semi : d.span / 2;
   const want = ((WL ? S.spanPlain : S.span) / 2 - (TIP_ADD[t] ? TIP_LAT[TIP_ADD[t]] : 0)) / s; let wing = null;
@@ -352,6 +369,9 @@ export function fitType(t, m) {
     if (dmA && S.sillAft) rows.push([dmA.x, dmA.ySill, S.sillAft[1], 'aft door']);
     if (cgF && S.cargo && S.cargo.fwd) rows.push([cgF.x, cgF.ySill, S.cargo.fwd[1], 'fwd cargo door']);
     if (cgA && S.cargo && S.cargo.aft) rows.push([cgA.x, cgA.ySill, S.cargo.aft[1], 'aft cargo door']);
+    // the stabiliser tip (NG row H, MAX row N; close-out round 3, fix round 2, v1/v2: with the tailplane re-fitted to the
+    // ACAP plan view, tools/convert_models.py tailFit, its tip is the row farthest from the main gear)
+    if (F.wing && F.wing.htSt != null && F.wing.htY != null && S.htClr) rows.push([F.wing.htSt, F.wing.htY, S.htClr[1], 'stabilizer tip']);
     if (rows.length >= 2) {
       const Hc0 = -d.low * s; let n = 0, sg = 0, sgg = 0, sb = 0, sgb = 0;
       for (const [st, y, ref] of rows) { const g = s * (xOf(st) - pitch.x0), b = Hc0 + s * y - ref; n++; sg += g; sgg += g * g; sb += b; sgb += g * b; }
@@ -388,6 +408,12 @@ export function fitType(t, m) {
     if (stance && stretch.gearUp) { Hc -= stretch.gearUp * s; seat = 'gear (main oleo compressed ' + (stretch.gearUp * s).toFixed(2) + ' m)'; }
     if (pitch) { pitch.y0 = +(C.main.y + (stretch.gearUp || 0)).toFixed(3); seat += (pitch.a >= 0 ? ', nose-down ' : ', nose-up ') + Math.abs(pitch.a * 180 / Math.PI).toFixed(2) + ' deg'
       + (stretch.noseExt ? ', nose leg ' + (stretch.noseExt.e >= 0 ? '+' : '') + (stretch.noseExt.e * s).toFixed(2) + ' m' : ''); }
+    // TIP_H winglet height in the fitted stance (SPEC wlTop: row E with winglets, OEW value)
+    const TW = TIP_H[m];
+    if (TW && !cut && stance && pitch && F.wing && F.wing.tip && S.wlTop && !stretch.wing) {
+      const k = ((S.wlTop[1] - Hc) / s - pose(F.wing.tip.topSt, TW.y0)[1]) / (Math.cos(pitch.a) * (F.wing.tip.top - TW.y0));
+      if (k > 0.8 && k < 1.6) stretch.tipScale = { z0: TW.z0, y0: TW.y0, k: +k.toFixed(4), xMin: +(-0.8 * d.L).toFixed(3) };
+    }
     // ENG_SCALE nacelle height in the fitted stance: after the radial scale about its top line, the nacelle is raised by dy
     // so that its lowest point renders at the engine row's OEW value (the column the stance is fitted to, STANCE_FIT)
     const N = F && F.wing && F.wing.nac;
@@ -488,26 +514,29 @@ export function fitType(t, m) {
   const dockHW3 = t === 'a388' ? hwDoor(stOf(rx, A388_U1.x, d.L), A388_U1.sill) : null;
   const top = crownOf(F, d.L);
   // pitch-induced rise of the fin tip (model units): the published height is the fin top in the real attitude
-  const finRise = pitch && F.finTop ? pose(F.finTop.st, d.H)[1] - d.H : 0;
+  // (the fin tip's highest point once pitched: of its forward and aft ends, model_features finTop st0 / st1)
+  const finRise = pitch && F.finTop ? Math.max(...[F.finTop.st, F.finTop.st0, F.finTop.st1].filter(v => v != null).map(st => pose(st, d.H)[1] - d.H)) : 0;
   // fin height fit: where the model's fin top misses the published overall height (the artist's fin is too short or too
   // tall relative to the fuselage, e.g. FAM A330/787, FG 737-800), the fin (everything above the fuselage top aft of
   // 60 % of the length, except engines, pylons and gear) is scaled vertically about the fuselage top so that its height
   // above the fuselage top is the published one: mid(H) - mid(crown) where the document gives the fuselage top, else
   // mid(H) - the rendered fuselage top.
   let fin = null;
+  // (the fin op stays inside the tailplane's semi-span + 0.5: a T-tail's tailplane rides with the fin, the wing tips do not)
+  const finZ = +(Math.max(F && F.wing && F.wing.htSemi ? F.wing.htSemi : 0, 2.0) + 0.5).toFixed(3);
   if (top != null && S.H && stance) {
     // models in a fitted stance (STANCE_FIT): the fin top on the OEW value of the vertical-tail row (NG J 'MAX (AT OEW)', MAX
     // P 'MAXIMUM'), the column the stance is fitted to (close-out round 3, fix round 2, v2: inside the [MIN, MAX] range the
     // fin was left as drawn and rendered 0.11-0.18 m below the OEW value)
     const k = ((S.H[1] - Hc) / s - finRise - top) / (d.H - top);
-    if (Math.abs(k - 1) > 1e-4 && k > 0.7 && k < 1.4) { fin = { yF: +top.toFixed(3), xF: +(-0.6 * d.L).toFixed(3), k: +k.toFixed(4) }; stretch.fin = fin; }
+    if (Math.abs(k - 1) > 1e-4 && k > 0.7 && k < 1.4) { fin = { yF: +top.toFixed(3), xF: +(-0.6 * d.L).toFixed(3), k: +k.toFixed(4), zMax: finZ }; stretch.fin = fin; }
   } else if (top != null && S.H) {
     const Hr = Hc + (d.H + finRise) * s, [h0, h1] = S.H, tol = 0.005 * (h0 + h1) / 2;
     if (Hr < h0 - tol || Hr > h1 + tol) {
       const want = (h0 + h1) / 2 - finRise * s - (S.crown ? (S.crown[0] + S.crown[1]) / 2 : Hc + top * s);
       const k = want / ((d.H - top) * s);
       // (a generic airframe takes a wider range: a scaled CRJ200 fin on a small business jet is up to ~2x too short)
-      if (k > (T.uniform ? 0.6 : 0.7) && k < (T.uniform ? 2.4 : 1.4)) { fin = { yF: +top.toFixed(3), xF: +(-0.6 * d.L).toFixed(3), k: +k.toFixed(4) }; stretch.fin = fin; }
+      if (k > (T.uniform ? 0.6 : 0.7) && k < (T.uniform ? 2.4 : 1.4)) { fin = { yF: +top.toFixed(3), xF: +(-0.6 * d.L).toFixed(3), k: +k.toFixed(4), zMax: finZ }; stretch.fin = fin; }
     }
   }
   const finTop = fin ? top + (d.H - top) * fin.k : d.H;
@@ -530,7 +559,8 @@ export function fitType(t, m) {
   // forward belly rose 0.25 m). Rendered metres, aircraft frame of js/live/aircraft.js placement() (X = station aft of the
   // nose, heights above the ground, pitch, plugs and the engine-clearance compression included):
   //   fit.keelAt(X)       lowest skin on the centre plane at station X (the section table's bottom, posed)
-  //   fit.skinHW(X, y)    half width of the fuselage skin at station X and height y: lower lobe (to 1 model m above the
+  //   fit.skinHW(X, y, w) half width of the fuselage skin at station X and height y (w > 0: the widest over X +- w/2, for a
+//                       conveyor end, close-out round 3 fix round 2): lower lobe (to 1 model m above the
   //                       keel) the starboard side, sec.hwl; above it the larger side, sec.hwf; else (or where a wing / fairing
   //                       is cut: wider than 1.1 Rz) the ellipse through the section's top and bottom with Rz; null where no
   //                       skin (below the keel / above the crown). Checked against planar cuts of the placed mesh: see

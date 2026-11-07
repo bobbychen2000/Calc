@@ -672,7 +672,13 @@ AC_MODELS = {
                   # the ACAP stabiliser-tip rows at the fitted stance (js/aircraft/fit.js STANCE_FIT), least squares over the
                   # 737-800 row H 'stabilizer' MAX (AT OEW) 5.64 m (D6-58325-7 §2.3.2) and the 737-8 row N 'horizontal
                   # stabilizer' MAXIMUM 5.36 m (D6-38A004 §2.3.2); the front view of p.2-14 draws ~6.4 deg (inf)
-                  tailFit=dict(nodes=r'^(lh|rh)(stab|elevator|elevatortab)$', z0=0.94, span=14.35, le=(34.0, 1.72, 0.7215), te=(38.0, 2.61, 0.322), dihedral=6.4),
+                  tailFit=dict(nodes=r'^(lh|rh)(stab|elevator|elevatortab)$', z0=0.94, span=14.35, le=(34.0, 1.72, 0.7215), te=(38.0, 2.61, 0.322), dihedral=7.0),
+                  # nacelle pieces whose names ENG_RE misses (close-out round 3, fix round 2, v2): the inlet lips (engnose,
+                  # engnose.003), the LEFT fan cowl (engnose.001; the right one, No2engfancase, was already 'engine'), the inlet
+                  # ducts, core cowls and tail pipes stayed in the body zone, so the 737 MAX's nacelle scale (js/aircraft/fit.js
+                  # ENG_SCALE) left the inlet lip 0.28 m inside the scaled cowl, the 737-600's fuselage plug crushed them, and the
+                  # left and right fan cowls took different livery colours (js/shaders/aircraft_real.js zone 2)
+                  zoneOverride=[(r'^(engnose|ductinner|engcore|tailpipe)', 'engine')],
                   )),
     # Boeing 777-300ER and 777-200ER (FlightGear 777 series, see FG777 above): full airframe incl. gear
     # (the default paint1 textures carry an old JAL (-300) / British Airways (-200) livery: its titles, tail art, blue belly

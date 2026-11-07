@@ -3,7 +3,7 @@
   "url": "generated: tools/convert_models.py b738 from refs/cache/src/fg/737-800 (FGMEMBERS/737-800 @9126249)",
   "licence": "GPL-2.0 (derived from the FlightGear 737-800 model)",
   "made": "2026-11-07",
-  "note": "pre-atlas conversion (tools/liveries/atlas.py source); since close-out round 3 (7 Nov 2026) WITHOUT the door 1L re-fit (the stance is fitted instead: js/aircraft/fit.js STANCE_FIT)"
+  "note": "pre-atlas conversion (tools/liveries/atlas.py source); since close-out round 3 (7 Nov 2026) WITHOUT the door 1L re-fit (the stance is fitted instead: js/aircraft/fit.js STANCE_FIT); since close-out round 3 fix round 2 (7 Nov 2026) WITH the tailplane re-fit to the 737 ACAP plan view (tools/convert_models.py tail_fit) and the nacelle pieces engnose*/ductinner*/engcore*/tailpipe* in the engine zone"
  },
  "crj7.sfom": {
   "url": "generated: FAM_DIR=refs/cache/src/fam3d tools/convert_models.py crj7 from crj9/glTF2/CRJ7.glb (Ysurac/FlightAirMap-3dmodels @0906d9b)",
