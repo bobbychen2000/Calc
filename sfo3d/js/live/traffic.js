@@ -1117,7 +1117,7 @@ export class Traffic {
     if ((tr.landedAt || tr.dirSFO === 'arr') && !tr.pushed && !tr.gate) for (const g of new Set([tr.dock && tr.dock.g, this.arrStand(tr, t), this.leadInOccupied(tr, r)])) {
       if (!g || !(g.bridge || g.sharesBridgesOf) || !g.occupant || g.occupant === tr.hex) continue; const o = this.tracks.get(g.occupant);
       if (!o || !o.stale || o.dropping || o.removed) continue;
-      const why = this.onLeadInClose(tr, g, r) ? this.stalePlanGone(o, tr, g, t) : null;
+      const close = this.onLeadInClose(tr, g, r), ev = this.stalePlanGone(o, tr, g, t), why = close ? ev : null;
       if (why) { this.event(o, t, 'stale-replaced', { by: tr.hex, ahead: g.name, why }); this.fadeRemove(o, 'replaced'); this.counters.ghostAhead = (this.counters.ghostAhead || 0) + 1; continue; }
       // (no evidence: the occupant stays drawn, but its jet bridge starts back once the arrival heads into that stand within
       // AHEAD_M -- the lead-in it is docking to, or SFO's stand for its own arrival record -- at the sheet's maximum rates: if
@@ -1130,8 +1130,15 @@ export class Traffic {
       // on to another stand, the bridge docking again 90 s later -- UAL1114 at E3 three times in 35 min, E3's lead-in lying
       // along the E-pier alley. Either signal alone also dropped retractions that were needed: SFO's stand for the arrival
       // was another one at G1, G13, B26, E11, F16, and SFO still listed the (gone) occupant at F16, G8, E8, G6; round 3)
+      // (close-out round 3, realtime-6 / -10: the retraction ahead needs POSITIVE evidence that this arrival takes that stand or
+      // that the occupant left -- SFO's arrival record of this aircraft for that stand (arrStand), the arrival already close on
+      // its lead-in (onLeadInClose), or SFO's evidence that the occupant has gone (stalePlanGone: block-out, windows ended, the
+      // stand allocated to this arrival). On geometry alone 20 of 49 bridge-ahead retractions were at occupants that stayed --
+      // the arrival went to another stand and the bridge docked again 90 s later, some twice (AAL148 B23, UAL2786 E3). Without
+      // evidence the occupant's bridge stays docked; if the arrival does drive in, the contact fade removes the ghost (ground.js)
+      // -- the owner's no-overlap rule stays the hard constraint)
       const aS = this.arrStand(tr, t), sameSt = (a, b) => a === b || a.sharesBridgesOf === b.name || b.sharesBridgesOf === a.name;
-      if (aS && !sameSt(aS, g) && this.planAt(o, g, t)) { this.counters.aheadSkipPlan = (this.counters.aheadSkipPlan || 0) + 1; continue; }
+      if (!((aS && sameSt(aS, g)) || close || ev)) { this.counters.aheadNoEvidence = (this.counters.aheadNoEvidence || 0) + 1; continue; }
       const S = this.stopRef(tr, g); if (Math.hypot(r.x - S[0], r.z - S[1]) <= AHEAD_M && this.intoStand(tr, g, r.x, r.z, r.dir)) { this.counters.ghostAheadKept = (this.counters.ghostAheadKept || 0) + 1; this.retractAhead(o, t, tr); } }
   }
   // SFO's plan lists track o at stand g with a window around t (+-10 min) (round 3)
@@ -1183,7 +1190,7 @@ export class Traffic {
     const ms = (v) => v == null ? null : v > 1e12 ? v : v * 1000; const bo = po && po.dep && po.dep.blk ? ms(po.dep.blk[2]) : null;
     if (bo != null && bo <= t && bo > t - 12 * 3600e3) return 'blockout';
     if (co.length && co.every(c => c.to < t - 60e3)) return 'window';
-    const pa = this.planFor(tr); if (pa && (pa.cands || []).some(c => c.kind === 'arr' && !c.linked && at(c) && t >= c.from - 600e3 && t <= c.to)) return 'alloc';
+    const pa = tr ? this.planFor(tr) : null; if (pa && (pa.cands || []).some(c => c.kind === 'arr' && !c.linked && at(c) && t >= c.from - 600e3 && t <= c.to)) return 'alloc';
     return null;
   }
   // SFO lists this callsign's own ARRIVAL and its block-in (actual, else estimated / scheduled -- flysfo `blk`; else its stand
@@ -1278,7 +1285,14 @@ export class Traffic {
       // (fuselages overlapping: < 0.25 (L1 + L2) apart. Not 0.45: adjacent contact stands are only ~35-45 m apart, and a
       // live aircraft stopping at B23 removed the silent one parked at B24 -- review round 2, AAL2506, 24 Sep 08:57Z. The
       // same stand is handled by occupy())
-      const To = typeOf(o); if (Math.hypot(P[0] - mx, P[1] - mz) < 0.25 * (L0 + (To ? To.L : 38))) { this.event(o, t, 'stale-replaced', { by: tr.hex }); this.fadeRemove(o, 'replaced'); }
+      const To = typeOf(o); if (Math.hypot(P[0] - mx, P[1] - mz) < 0.25 * (L0 + (To ? To.L : 38))) {
+        // (close-out round 3, realtime-2: one parked at a CONTACT stand is removed only on SFO's evidence that it left -- or by
+        // the aircraft that takes its stand (occupy). A live report wandering 20 m from its own stand is not that evidence:
+        // AAL491 at B19 removed AAL2651 from B20, 5 Nov 00:21:58Z, heard there again 14 min later. GroundPhysics keeps the live
+        // one clear of it meanwhile)
+        const og = o.gate && (o.gate.bridge || o.gate.sharesBridgesOf) && o.gate !== tr.gate ? o.gate : null; const why = og ? this.stalePlanGone(o, tr, og, t) : null;
+        if (og && !why) { this.counters.staleKeptAtStand = (this.counters.staleKeptAtStand || 0) + 1; continue; }
+        this.event(o, t, 'stale-replaced', { by: tr.hex, stationary: 1, why: why || null }); this.fadeRemove(o, 'replaced'); o.dropNow = true; }   // (heard here: it fades at once, realtime-3)
     }
     const dur = t - S[0].t;
     // no longer on its stand: a tow or a creep below the taxi threshold (1.5 kt) moves the median away from the stand while
@@ -1452,9 +1466,13 @@ export class Traffic {
     return out;
   }
   occupy(tr, g, t) {
-    if (g.occupant && g.occupant !== tr.hex) { const o = this.tracks.get(g.occupant); if (o) { if (o.stale) this.fadeRemove(o, 'replaced'); else this.releaseGate(o); } }
+    // (a silent occupant replaced here is logged -- 'stale-replaced' from occupy, close-out round 3 realtime-2: these removals
+    // were invisible to the event-based checks -- and, when this aircraft is heard parked at the stand (not a silent docking
+    // still driving in), it fades at once instead of waiting for its bridge: two aircraft are never drawn at one stand. Round 3,
+    // realtime-3: UAL1227 B789 stayed drawn on top of UAL29D at G13 for 30 s, 904 m2, its retracting cab through UAL29D)
+    if (g.occupant && g.occupant !== tr.hex) { const o = this.tracks.get(g.occupant); if (o) { if (o.stale) { if (!o.dropping) this.event(o, t ?? tr.lastFixT ?? 0, 'stale-replaced', { by: tr.hex, occupy: g.name, silent: t == null ? 1 : 0 }); this.fadeRemove(o, 'replaced'); if (t != null) o.dropNow = true; } else this.releaseGate(o); } }
     // a silent aircraft remembered on a mutually exclusive stand (B5 / B5S ...) has left: this one stands there now
-    for (const n of g.excl || []) { const q = this.gateBy.get(n); const o = q && q.occupant && q.occupant !== tr.hex ? this.tracks.get(q.occupant) : null; if (o && o.stale && !o.dropping) { this.event(o, t ?? tr.lastFixT, 'stale-replaced', { by: tr.hex, excl: g.name }); this.fadeRemove(o, 'replaced'); } }
+    for (const n of g.excl || []) { const q = this.gateBy.get(n); const o = q && q.occupant && q.occupant !== tr.hex ? this.tracks.get(q.occupant) : null; if (o && o.stale && !o.dropping) { this.event(o, t ?? tr.lastFixT, 'stale-replaced', { by: tr.hex, excl: g.name }); this.fadeRemove(o, 'replaced'); if (t != null) o.dropNow = true; } }
     // (a neighbour the data's excl_types says this type conflicts with is NOT removed -- round 3, review realtime-v5: the
     // exclType removals took UAL2358 off F19 for 52 min, UAL574 off F20 for 49 min, DAL363 off C8 for 26 min while each was
     // really there. The co-occupancy is logged for the static track instead)
@@ -1584,7 +1602,11 @@ export class Traffic {
   // elsewhere, it leaves the stand like any other aircraft (motion out of a stop).
   silentDock(tr, lf, tDisp) {
     const T = typeOf(tr), icao = tr.info.icao; const P = [lf.x, lf.z];
-    const free = (g) => { if (!g || this.blocked(g, tr, true)) return false; if (!g.occupant || g.occupant === tr.hex) return true; const o = this.tracks.get(g.occupant); return !o || !!o.stale || !!o.dropping; };
+    // (close-out round 3, realtime-2: a stand whose occupant is SILENT is free for this docking only on SFO's evidence that the
+    // occupant left -- stalePlanGone, the ghostAhead rule -- never on silence alone: 'heading' takeovers removed JAL2 B77W from A1
+    // (heard there again 29 min later) and QXE2147 from C1 after 208 s of silence (+30 min), 4-5 Nov replay)
+    const free = (g) => { if (!g || this.blocked(g, tr, true)) return false; if (!g.occupant || g.occupant === tr.hex) return true; const o = this.tracks.get(g.occupant);
+      if (!o || !!o.dropping) return true; if (!o.stale) return false; const why = this.stalePlanGone(o, tr, g, tDisp); if (!why) this.counters.silentDockOccupied = (this.counters.silentDockOccupied || 0) + 1; return !!why; };
     const pg = this.gateByName(this.planStand(tr)); let g = null, how = null;
     if (pg && Math.hypot(pg.w.x - P[0], pg.w.z - P[1]) < 300 && standFits(pg, T, icao, false) && free(pg)) { g = pg; how = 'sfo'; }
     else if (tr.dock && tr.dock.g && free(tr.dock.g)) { g = tr.dock.g; how = 'leadin'; }
@@ -1720,7 +1742,13 @@ export class Traffic {
   }
   // docking: a slow taxiing aircraft close to a free stand's lead-in line and heading along it follows that line
   docking(tr, r, t) {
-    if (r.gs > 8 * KT || tr.pushback) { if (r.gs > 10 * KT) tr.dock = null; return; }
+    // (close-out round 3, realtime-5: never for a push-back or a departure -- tr.pushed stays set until the next in-block.
+    // UAL917 B772 pushing out of G4, 5 Nov 06:48Z, was given G4's lead-in as its 'dock' on its first motion report (labelled
+    // taxi before the push was confirmed); the dock was kept through the 5-min push and target()'s lead-in pull dragged the push
+    // target 150 m back toward G4 -- the body went through the G pier, G7 L2's walkway and G4 L2's cab: building 803 frames,
+    // bridge.hit.tail 383, bridge.hit.fus 38 on the 4-5 Nov replay)
+    if (tr.pushback || r.push || tr.pushed) { tr.dock = null; return; }
+    if (r.gs > 8 * KT) { if (r.gs > 10 * KT) tr.dock = null; return; }
     const T = typeOf(tr); const L = T ? T.L : 38;
     const pn = this.planStand(tr); const pg = this.gateByName(pn);
     let best = null, bd = 1e9;
@@ -1820,7 +1848,21 @@ export class Traffic {
           // (silent at its stand after a creep / re-position: it is parked there, its bridge may dock)
           else { tr.stale = true; tr.staleSince = now; if (tr.gate && !tr.pushed) tr.leaving = false; this.saveParkedSoon(); }
         }
-      } else if (tr.stale && now - tr.lastRecv > PARK_KEEP_MS && !tr.dropping) { this.fadeRemove(tr, 'expired'); }
+      } else if (tr.stale && !tr.dropping && tr.gate && (tr.gate.bridge || tr.gate.sharesBridgesOf) && now - tr.lastRecv <= PARK_KEEP_MS && (!tr._boChkT || now - tr._boChkT > 60000) && (tr._boChkT = now) && this.stalePlanGone(tr, null, tr.gate, tDisp) === 'blockout') {
+        // (close-out round 3, realtime-10: a silent occupant whose departure SFO reports as blocked out (actual block-out past) has
+        // left: removed now -- its bridge retracts first, then it fades (fadeRemove) -- instead of when the next arrival drives into
+        // it, which left the bridge retracting from an empty stand for 10-26 s (bridge.orphan). Only the ACTUAL block-out: SFO's
+        // scheduled / estimated off-block and its stand windows are too early by up to p90 88 min, 4-5 Nov recording)
+        this.counters.blockoutGone = (this.counters.blockoutGone || 0) + 1; this.event(tr, tDisp, 'stale-blockout', { stand: tr.gate.name }); this.fadeRemove(tr, 'blockout');
+      } else if (tr.stale && now - tr.lastRecv > PARK_KEEP_MS && !tr.dropping) {
+        // (close-out round 3, realtime-2: never at a contact stand on silence alone -- long-haul turns sit silent at their stand for
+        // > 8 h: FJI870 A15 +89 min, AAR212 A5 +64, UAL889 G4 +45 were expired and heard there again, 4-5 Nov replay. There it
+        // goes only on SFO's evidence that it left (its departure's actual block-out is past, or every stand window SFO lists for it
+        // there has ended -- stalePlanGone), checked once a minute; without SFO's plan it stays until an aircraft takes the stand)
+        const sg = tr.gate && (tr.gate.bridge || tr.gate.sharesBridgesOf) ? tr.gate : null;
+        if (!sg) this.fadeRemove(tr, 'expired');
+        else if (!tr._expChkT || now - tr._expChkT > 60000) { tr._expChkT = now; const why = this.stalePlanGone(tr, null, sg, tDisp); if (why === 'blockout' || why === 'window') { this.event(tr, tDisp, 'stale-expired', { stand: sg.name, why }); this.fadeRemove(tr, 'expired'); } else this.counters.expireKeptAtStand = (this.counters.expireKeptAtStand || 0) + 1; }
+      }
       if (!tr.reps.length) continue;
       if (tr.silentPath && !tr.lock && tr.silentDockG && tr.gate === tr.silentDockG) this.silentHold(tr, tDisp, el);
       for (let i = 0; i < nSub; i++) this.step(tr, tDisp - (nSub - 1 - i) * h * 1000, h);
@@ -1848,8 +1890,15 @@ export class Traffic {
       // The lock keeps the estimate it was accepted against (ref) and is released only when the estimate has moved by more than
       // LOCK_M / LOCK_DEG since then -- and is not within them of the lock either)
       const R0 = tr.lock.ref, Pq = P ? [P[0] + off[0], P[1] + off[1]] : null, tolM = LOCK_M * f, tolH = LOCK_DEG * fh;
-      const farM = !Pq || (Math.hypot(Pq[0] - tr.lock.x, Pq[1] - tr.lock.z) > tolM && !(R0 && R0.P && Math.hypot(Pq[0] - R0.P[0], Pq[1] - R0.P[1]) <= tolM));
-      const farH = H != null && Math.abs(wrapPi(H - tr.lock.hdg)) > tolH && !(R0 && R0.H != null && Math.abs(wrapPi(H - R0.H)) <= tolH);
+      // (close-out round 3, realtime-1: ...and with an absolute bound -- the lock is never further from the CURRENT parked pose
+      // than LOCK_M / LOCK_DEG or the residual it was accepted with + 2 m / 3 deg, whichever is larger. With the reference rule alone a lock
+      // taken 3.3 m off at G5 was kept 7.86 m from the parked pose after a stand match moved the estimate the other way: SWR35G
+      // B77W drew its tail out into the taxilane for 2 h 37 min and was removed as a ghost when UAL810 passed, 5 Nov 03:11Z,
+      // while really parked there until its push at 03:20Z. Then the body creeps or is re-settled to the current pose)
+      const dM = Pq ? Math.hypot(Pq[0] - tr.lock.x, Pq[1] - tr.lock.z) : Infinity, dH = H != null ? Math.abs(wrapPi(H - tr.lock.hdg)) : 0;
+      const r0M = R0 && R0.P ? Math.hypot(R0.P[0] - tr.lock.x, R0.P[1] - tr.lock.z) : 0, r0H = R0 && R0.H != null ? Math.abs(wrapPi(R0.H - tr.lock.hdg)) : 0;
+      const farM = !Pq || (dM > tolM && !(R0 && R0.P && Math.hypot(Pq[0] - R0.P[0], Pq[1] - R0.P[1]) <= tolM)) || dM > Math.max(tolM, r0M + 2);
+      const farH = H != null && ((dH > tolH && !(R0 && R0.H != null && Math.abs(wrapPi(H - R0.H)) <= tolH)) || dH > Math.max(tolH, r0H + 3 * DEG));
       // (not once its departure is signalled -- earlyUndock: it is about to push from where it is drawn, and a re-placement now
       // is a visible jump right before the push; replay 4 Nov: UAL875 at B11S, data -> stand pose 12.7 m, 11 s before its push)
       if (!tr.earlyUndock && (farM || farH)) {
@@ -1903,6 +1952,11 @@ export class Traffic {
       // (round 3: a lock its jet bridge cannot reach while the parked pose it can -- the estimate moved by < LOCK_M after the
       // body came to rest: the body goes to the parked pose first, ctlGround / restDockOk)
       if (this.lockOutOfReach(tr, g)) { tr.lock = null; this.counters.unlockReach = (this.counters.unlockReach || 0) + 1; return; }
+      // (close-out round 3, realtime-3 / bridges R3.3: the stand's bridges are never handed to a different aircraft while still
+      // docked to another -- that one is undocked first (gates.js setOccupant(G, null), the real bridge retracts before the next
+      // aircraft arrives), so gates.js plans the new docking from the retraction (dockFrom) and not from the old door)
+      const phys = (q) => (q && q.sharesBridgesOf && !(q.bridges && q.bridges.length) && this.gateBy.get(q.sharesBridgesOf)) || q;
+      for (const q of this.tracks.values()) if (q !== tr && q.bridgeOn && q.bridgeGate && phys(q.bridgeGate) === phys(g)) { this.undock(q, true); this.counters.undockOther = (this.counters.undockOther || 0) + 1; }
       tr.bridgeOn = true; tr.bridgeGate = g; tr.dockPose = { x: tr.lock.x, z: tr.lock.z, hdg: tr.lock.hdg }; tr._dockT = tDisp;
       this.counters.docks = (this.counters.docks || 0) + 1; this.onGateChange && this.onGateChange(g, tr);
     }
@@ -2025,7 +2079,11 @@ export class Traffic {
     if (o.ground && tr.pushG && (o.push || p === 'pushback') && !o.stop) this.pushStraight(tr, o);
     else if (tr.pushG && p !== 'pushback' && p !== 'still' && !o.push) tr.pushG = null;
     // docking: pull the target onto the stand's lead-in line over the last 40 m
-    if (o.ground && tr.dock && !o.stop) {
+    // (close-out round 3, realtime-5: an arrival's pull only -- never a push-back or a departure -- and only inside the corridor
+    // docking() accepts (laterally <= 14 m + 15 % of the distance out): a target far beside the line is not on its way in, and
+    // pulling it onto the line moved UAL917's push-back target 150 m into the G pier)
+    if (o.ground && tr.dock && !o.stop && !o.push && p !== 'pushback' && !tr.pushed && (() => { const g = tr.dock.g, T = typeOf(tr), L = T ? T.L : 38;
+      const rx = o.x - (g.w.x - g.w.dx * antOf(T, L)), rz = o.z - (g.w.z - g.w.dz * antOf(T, L)); return Math.abs(-rx * g.w.dz + rz * g.w.dx) <= 14 + 0.15 * Math.max(0, -(rx * g.w.dx + rz * g.w.dz)); })()) {
       const g = tr.dock.g, T = typeOf(tr), L = T ? T.L : 38;
       const ex = g.w.x - g.w.dx * antOf(T, L), ez = g.w.z - g.w.dz * antOf(T, L); const rx = o.x - ex, rz = o.z - ez;
       // (over the last max(40 m, 1.2 fuselage lengths), with the stand heading once mostly on the line: the body aligns with

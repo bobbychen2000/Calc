@@ -30,8 +30,9 @@
 // their broad refraction lobe (the small-angle Henyey-Greenstein shape (1 + (θ/θt)²)^-1.5, θt = (1 − g_geom)/√g_geom
 // = 20.5 deg, normalised 2π θt²), each veiled in front of nearer surfaces with its own path integral (F above; for the
 // lobe F = (G(v u_o) − G(v)) / (1 − G(v)), G(v) = v/√(1 + v²), v = θ/θt), and the quad reaches as far as either part
-// stays above AUR_EPS once exposed (constants below; the outer 30 % of the quad fades out). Phone tier: no lobe, core quad
-// <= 3 radii (fill rate).
+// stays above AUR_EPS once exposed (constants below; the outer 30 % of the quad fades out); the lobe energy beyond its quad
+// (a fraction 1/√(1 + k²)) is put back into the core, so a dim lamp keeps its aureole energy (first c3e render: the ALS
+// glow at 0.6 NM fell to 1/3 with the sub-threshold lobes cut). Phone tier: no lobe, core quad <= 3 radii (fill rate).
 // Vertex: optional directional lobe pow(max(dir.toCam, 0), k); on-screen radius between 2.2 px (intensity scaled down
 // to conserve energy) and 12 px (review round 1: a 1.4 m marker 17 m from the camera was a 110 px glare disk);
 // a 1.6x glow. By day (night factor 0) intensities x 0.5;
@@ -123,9 +124,12 @@ export class Sprites {
       const aOn = iA.x.greaterThan(0.0).and(iA.y.greaterThan(0.0));
       const Eaur = iA.x.mul(kk).mul(0.408).mul(size.mul(size)).div(d.mul(d));
       const wT = this.aurTail.mul(1.0 - AUR_CORE_SHARE);
-      const Lc = Eaur.mul(float(1.0).sub(wT)).div(iA.y.mul(iA.y).mul(Math.PI)), Lt = Eaur.mul(wT).div(2 * Math.PI * AUR_TAIL_RAD * AUR_TAIL_RAD);
-      const kc = clamp(sqrt(log2(max(Lc.mul(expo).div(AUR_EPS), 1.0)).mul(Math.LN2)), 2.0, this.aurKCore);   // Gaussian = EPS there
+      const Lt = Eaur.mul(wT).div(2 * Math.PI * AUR_TAIL_RAD * AUR_TAIL_RAD);
       const kt = clamp(sqrt(max(pow(max(Lt.mul(expo).div(AUR_EPS), 1.0), 2.0 / 3.0).sub(1.0), 0.0)), 0.0, AUR_K_TAIL_MAX);   // (1 + k²)^-1.5 = EPS
+      // the lobe's energy beyond its quad (1/√(1 + kt²) of it: below the display threshold, or past the cap) stays in the
+      // core, so the aureole keeps its energy (a dim lamp's sub-threshold lobe does not just vanish; I)
+      const Lc = Eaur.mul(float(1.0).sub(wT).add(wT.div(sqrt(kt.mul(kt).add(1.0))))).div(iA.y.mul(iA.y).mul(Math.PI));
+      const kc = clamp(sqrt(log2(max(Lc.mul(expo).div(AUR_EPS), 1.0)).mul(Math.LN2)), 2.0, this.aurKCore);   // Gaussian = EPS there
       const sQ = select(aOn, max(s, max(iA.y.mul(kc), kt.mul(AUR_TAIL_RAD)).mul(d)), s);
       vRat.assign(sQ.div(s)); vAr.assign(max(iA.y.mul(d).div(sQ), 1e-4)); vAt.assign(max(d.mul(AUR_TAIL_RAD).div(sQ), 1e-4));
       vAL.assign(select(aOn, Lc, float(0.0))); vAT.assign(select(aOn, Lt, float(0.0)));

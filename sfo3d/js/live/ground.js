@@ -161,6 +161,12 @@ export class GroundPhysics {
         fixed.push(B); tr.physOff = null; if (sil) silent.push(B);
       } else { const B = this.body(tr); if (!B) continue; if (!driving && (D.gs || 0) < 0.3 && (tr.m.phase === 'still' || tr.stale)) { free.push(B); if (sil) silent.push(B); } else moving.push(B); }
     }
+    // (close-out round 3, realtime-3: a removed body still waiting for its bridge fades at once when it overlaps ANY aircraft drawn
+    // on the ground -- one heard parked at its stand (fixed) or stopped beside it (free), not only a moving one: UAL1227 B789 at
+    // G13, replaced when UAL29D was heard parked there, was drawn on top of it for 30 s while its bridge retracted, 904 m2;
+    // ANA108 under ANZ7 at G10, 482 m2 -- 506 of the 948 overlap.gnd frames of the 4-5 Nov replay)
+    for (const S of waiting) { if (S.tr.dropNow || S.tr.removed) continue;
+      for (const B of fixed.concat(free)) { if (B.tr === S.tr || B.tr.dropping) continue; if (overlaps(B, S, 0)) { S.tr.dropNow = true; if (traffic.counters) traffic.counters.dropWaitFixed = (traffic.counters.dropWaitFixed || 0) + 1; break; } } }
     // stationary aircraft off the surveyed stands: nearest valid pose (once per pose), within the report scatter (6 m),
     // widened to 15 m when nothing nearer is clear of buildings / neighbours (review round 1: DAL1053 and UAL1881 were
     // drawn inside a building when the 6 m search failed). A LOCKED body (at rest where it is drawn) keeps its pose while

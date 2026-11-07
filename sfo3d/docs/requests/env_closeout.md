@@ -73,7 +73,7 @@ too slow, gate `ssr` to high / ultra in renderer3 (`Q.ao === 'prepass' && hist &
 env-9), `docs/requests/engine_closeout.md` (R2.1 done), this file.
 Added after the 06:12Z container restart (same round): `js/three/lights.js` (two-part fog aureole, env-3),
 `js/three/renderer3.js` (phone tier: no broad aureole lobe), `js/three/flood.js` (EASA citation, comment only),
-`tools/env/test_c3.mjs` (28 checks), `refs/cache/env_src/easa/` (EASA CS-ADR-DSN Issue 2 PDF: local-only licence, the
+`tools/env/test_c3.mjs` (29 checks), `refs/cache/env_src/easa/` (EASA CS-ADR-DSN Issue 2 PDF: local-only licence, the
 SOURCES.json travels; `tools/cache/sync.py` lists the PDF in MANIFEST.json).
 
 ### R3.6 Engine track / lead: fog aureole fill rate (env-3)

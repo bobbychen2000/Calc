@@ -16284,15 +16284,15 @@
   },
   "replaces": {
    "parts": 28,
-   "walkway_rest_pieces": 7,
+   "walkway_rest_pieces": 6,
    "structures": 34,
    "atc": "tower",
    "rail": "landside",
-   "complex_edge_runs": 11
+   "complex_edge_runs": 13
   },
   "plausibility": {
-   "conflicts": 4,
-   "notes": 10,
+   "conflicts": 2,
+   "notes": 11,
    "nearest_envelopes": [
     {
      "stand": "F12",
@@ -16316,61 +16316,59 @@
    "bridges_checked": 131,
    "conflict_list": [
     {
-     "check": "taxilane OFA (ADG 5)",
-     "group": "landside",
-     "unit": "bart_station",
-     "dist_m": 36.7,
-     "lane": 302,
-     "ref": null,
-     "adg": 5,
-     "span_m": 60.9,
-     "need_m": 42.1,
-     "margin_m": -5.4,
-     "museum_outline_m": 37.3
-    },
-    {
-     "check": "vertical clearance over a road deck (< 4.6 m)",
-     "over": "guideway piers",
-     "points": 234,
-     "min_m": 3.25,
+     "check": "vertical clearance over an at-grade road (< 4.6 m)",
+     "over": "domestic_departures",
+     "roads": 26,
+     "min_m": 3.53,
      "at": [
-      -1719.3,
-      428.2
+      -940.9,
+      429.6
      ],
-     "deck_m": 12.93,
-     "unit": "interchange_2_2",
-     "below_m2": 8.6
-    },
-    {
-     "check": "vertical clearance over a road deck (< 4.6 m)",
-     "over": "roadways",
-     "points": 4523,
-     "min_m": 4.55,
-     "at": [
-      -1447.3,
-      365.0
+     "length_m": 753.0,
+     "ways": [
+      35157057,
+      38854912,
+      38855195,
+      256787748,
+      370279555,
+      370279574,
+      370279581,
+      370279585,
+      701209939,
+      701476986,
+      701476987,
+      701476988,
+      701476989,
+      701476990,
+      701476991,
+      701476992,
+      701476993,
+      701476994,
+      701476996,
+      739683506,
+      1179696687,
+      1205479970,
+      1230759557,
+      1274606309,
+      1274607795,
+      1274827440
      ],
-     "deck_m": 11.16,
-     "unit": "itb_departures",
-     "below_m2": 3.7
+     "note": "the anchored domestic departures loop: deck at the curb placeholder (4.73 m [unk]), soffit 3.53 m - by design of the curb level (buildings R3.2); posted clearance unknown (owner)"
     },
     {
-     "check": "guideway pier column in a road deck (landside pier sites [inf])",
-     "count": 3,
+     "check": "vertical clearance over an at-grade road (< 4.6 m)",
+     "over": "interchange_2_2",
+     "roads": 1,
+     "min_m": 4.6,
      "at": [
-      [
-       -1726.8,
-       427.2
-      ],
-      [
-       -1727.8,
-       530.2
-      ],
-      [
-       -1728.8,
-       456.2
-      ]
-     ]
+      -1590.7,
+      416.8
+     ],
+     "length_m": 2.0,
+     "ways": [
+      397162138
+     ],
+     "note": "solved deck over an at-grade road (the solve holds the clearance at the centreline crossings only)"
     }
    ],
    "walkway_drum_tests": 417,
@@ -16444,8 +16442,19 @@
    ],
    "deck_inside_buildings": {},
    "deck_clearance": {
+    "domestic": {
+     "points": 908,
+     "min_m": 4.7,
+     "at": [
+      -788.6,
+      226.0
+     ],
+     "deck_m": 4.73,
+     "unit": "domestic_departures",
+     "below_m2": 0
+    },
     "guideway deck": {
-     "points": 3872,
+     "points": 3514,
      "min_m": 4.62,
      "at": [
       -1716.6,
@@ -16456,37 +16465,37 @@
      "below_m2": 0
     },
     "guideway piers": {
-     "points": 234,
-     "min_m": 3.25,
+     "points": 38,
+     "min_m": 13.85,
      "at": [
-      -1719.3,
-      428.2
+      -1724.4,
+      496.9
      ],
-     "deck_m": 12.93,
-     "unit": "interchange_2_2",
-     "below_m2": 8.6
+     "deck_m": 2.45,
+     "unit": "interchange_1_3",
+     "below_m2": 0
     },
     "itb": {
      "points": 3122,
-     "min_m": 4.52,
+     "min_m": 4.67,
      "at": [
       -1278.4,
       359.9
      ],
      "deck_m": 11.38,
      "unit": "itb_departures",
-     "below_m2": 87.0
+     "below_m2": 0
     },
     "roadways": {
-     "points": 4523,
-     "min_m": 4.55,
+     "points": 4666,
+     "min_m": 4.61,
      "at": [
-      -1447.3,
-      365.0
+      -1864.0,
+      648.0
      ],
-     "deck_m": 11.16,
-     "unit": "itb_departures",
-     "below_m2": 3.7
+     "deck_m": 0.47,
+     "unit": "interchange_1_3",
+     "below_m2": 0
     }
    },
    "itb_curb_gap": {
@@ -16497,20 +16506,521 @@
     "at_u": -106.9,
     "over_limit": 0,
     "limit_m": 0.3
+   },
+   "at_grade_clearance": {
+    "checked": 62373,
+    "ways": 213,
+    "below": [
+     {
+      "way": 38855195,
+      "name": null,
+      "over": "domestic_departures",
+      "min_m": 3.53,
+      "at": [
+       -940.9,
+       429.6
+      ],
+      "length_m": 54.0
+     },
+     {
+      "way": 38855195,
+      "name": null,
+      "over": "domestic_departures",
+      "min_m": 3.53,
+      "at": [
+       -861.1,
+       406.7
+      ],
+      "length_m": 55.0
+     },
+     {
+      "way": 38855195,
+      "name": null,
+      "over": "domestic_departures",
+      "min_m": 3.53,
+      "at": [
+       -787.3,
+       291.3
+      ],
+      "length_m": 56.0
+     },
+     {
+      "way": 38855195,
+      "name": null,
+      "over": "domestic_departures",
+      "min_m": 3.53,
+      "at": [
+       -792.6,
+       211.7
+      ],
+      "length_m": 25.0
+     },
+     {
+      "way": 256787748,
+      "name": null,
+      "over": "domestic_departures",
+      "min_m": 3.53,
+      "at": [
+       -1039.2,
+       397.6
+      ],
+      "length_m": 17.0
+     },
+     {
+      "way": 256787748,
+      "name": null,
+      "over": "domestic_departures",
+      "min_m": 3.53,
+      "at": [
+       -1013.0,
+       411.9
+      ],
+      "length_m": 53.0
+     },
+     {
+      "way": 256787748,
+      "name": null,
+      "over": "domestic_departures",
+      "min_m": 3.53,
+      "at": [
+       -886.7,
+       430.2
+      ],
+      "length_m": 57.0
+     },
+     {
+      "way": 256787748,
+      "name": null,
+      "over": "domestic_departures",
+      "min_m": 3.53,
+      "at": [
+       -801.0,
+       340.6
+      ],
+      "length_m": 40.0
+     },
+     {
+      "way": 370279585,
+      "name": null,
+      "over": "domestic_departures",
+      "min_m": 3.53,
+      "at": [
+       -825.6,
+       164.4
+      ],
+      "length_m": 25.0
+     },
+     {
+      "way": 370279585,
+      "name": null,
+      "over": "domestic_departures",
+      "min_m": 3.53,
+      "at": [
+       -886.2,
+       132.8
+      ],
+      "length_m": 48.0
+     },
+     {
+      "way": 370279585,
+      "name": null,
+      "over": "domestic_departures",
+      "min_m": 3.53,
+      "at": [
+       -1019.8,
+       130.0
+      ],
+      "length_m": 4.0
+     },
+     {
+      "way": 701209939,
+      "name": null,
+      "over": "domestic_departures",
+      "min_m": 3.53,
+      "at": [
+       -1127.5,
+       256.8
+      ],
+      "length_m": 11.0
+     },
+     {
+      "way": 701476986,
+      "name": null,
+      "over": "domestic_departures",
+      "min_m": 3.53,
+      "at": [
+       -817.8,
+       171.5
+      ],
+      "length_m": 6.0
+     },
+     {
+      "way": 701476987,
+      "name": null,
+      "over": "domestic_departures",
+      "min_m": 3.53,
+      "at": [
+       -840.2,
+       139.4
+      ],
+      "length_m": 12.0
+     },
+     {
+      "way": 701476987,
+      "name": null,
+      "over": "domestic_departures",
+      "min_m": 3.53,
+      "at": [
+       -878.2,
+       118.3
+      ],
+      "length_m": 36.0
+     },
+     {
+      "way": 701476987,
+      "name": null,
+      "over": "domestic_departures",
+      "min_m": 3.53,
+      "at": [
+       -1065.3,
+       167.8
+      ],
+      "length_m": 16.0
+     },
+     {
+      "way": 701476987,
+      "name": null,
+      "over": "domestic_departures",
+      "min_m": 3.53,
+      "at": [
+       -1085.6,
+       204.6
+      ],
+      "length_m": 26.0
+     },
+     {
+      "way": 701476988,
+      "name": null,
+      "over": "domestic_departures",
+      "min_m": 3.53,
+      "at": [
+       -831.2,
+       163.8
+      ],
+      "length_m": 14.0
+     },
+     {
+      "way": 701476989,
+      "name": null,
+      "over": "domestic_departures",
+      "min_m": 3.53,
+      "at": [
+       -794.8,
+       185.4
+      ],
+      "length_m": 13.0
+     },
+     {
+      "way": 701476990,
+      "name": null,
+      "over": "domestic_departures",
+      "min_m": 3.53,
+      "at": [
+       -1057.0,
+       395.6
+      ],
+      "length_m": 2.0
+     },
+     {
+      "way": 701476992,
+      "name": null,
+      "over": "domestic_departures",
+      "min_m": 3.53,
+      "at": [
+       -1053.6,
+       397.0
+      ],
+      "length_m": 17.0
+     },
+     {
+      "way": 701476993,
+      "name": null,
+      "over": "domestic_departures",
+      "min_m": 3.53,
+      "at": [
+       -1110.6,
+       379.0
+      ],
+      "length_m": 8.0
+     },
+     {
+      "way": 701476994,
+      "name": null,
+      "over": "domestic_departures",
+      "min_m": 3.53,
+      "at": [
+       -1108.5,
+       389.5
+      ],
+      "length_m": 15.0
+     },
+     {
+      "way": 701476996,
+      "name": null,
+      "over": "domestic_departures",
+      "min_m": 3.53,
+      "at": [
+       -1110.4,
+       390.0
+      ],
+      "length_m": 2.0
+     },
+     {
+      "way": 1230759557,
+      "name": null,
+      "over": "domestic_departures",
+      "min_m": 3.53,
+      "at": [
+       -794.6,
+       165.5
+      ],
+      "length_m": 26.0
+     },
+     {
+      "way": 1274606309,
+      "name": null,
+      "over": "domestic_departures",
+      "min_m": 3.53,
+      "at": [
+       -973.1,
+       421.2
+      ],
+      "length_m": 8.0
+     },
+     {
+      "way": 1274607795,
+      "name": null,
+      "over": "domestic_departures",
+      "min_m": 3.53,
+      "at": [
+       -1041.7,
+       138.7
+      ],
+      "length_m": 6.0
+     },
+     {
+      "way": 1274827440,
+      "name": null,
+      "over": "domestic_departures",
+      "min_m": 3.53,
+      "at": [
+       -818.6,
+       370.2
+      ],
+      "length_m": 8.0
+     },
+     {
+      "way": 701476991,
+      "name": null,
+      "over": "domestic_departures",
+      "min_m": 3.7,
+      "at": [
+       -1023.4,
+       397.6
+      ],
+      "length_m": 37.0
+     },
+     {
+      "way": 370279581,
+      "name": null,
+      "over": "domestic_departures",
+      "min_m": 4.3,
+      "at": [
+       -1071.1,
+       372.0
+      ],
+      "length_m": 20.0
+     },
+     {
+      "way": 739683506,
+      "name": null,
+      "over": "domestic_departures",
+      "min_m": 4.3,
+      "at": [
+       -1070.9,
+       371.9
+      ],
+      "length_m": 13.0
+     },
+     {
+      "way": 1205479970,
+      "name": null,
+      "over": "domestic_departures",
+      "min_m": 4.42,
+      "at": [
+       -1109.3,
+       260.0
+      ],
+      "length_m": 10.0
+     },
+     {
+      "way": 370279555,
+      "name": null,
+      "over": "domestic_departures",
+      "min_m": 4.56,
+      "at": [
+       -1100.6,
+       340.8
+      ],
+      "length_m": 3.0
+     },
+     {
+      "way": 1179696687,
+      "name": null,
+      "over": "domestic_departures",
+      "min_m": 4.58,
+      "at": [
+       -1097.5,
+       335.6
+      ],
+      "length_m": 3.0
+     },
+     {
+      "way": 35157057,
+      "name": null,
+      "over": "domestic_departures",
+      "min_m": 4.59,
+      "at": [
+       -1108.4,
+       299.6
+      ],
+      "length_m": 3.0
+     },
+     {
+      "way": 38854912,
+      "name": null,
+      "over": "domestic_departures",
+      "min_m": 4.59,
+      "at": [
+       -1102.8,
+       333.9
+      ],
+      "length_m": 3.0
+     },
+     {
+      "way": 370279574,
+      "name": null,
+      "over": "domestic_departures",
+      "min_m": 4.59,
+      "at": [
+       -1108.3,
+       297.4
+      ],
+      "length_m": 1.0
+     },
+     {
+      "way": 397162138,
+      "name": null,
+      "over": "interchange_2_2",
+      "min_m": 4.6,
+      "at": [
+       -1590.7,
+       416.8
+      ],
+      "length_m": 2.0
+     }
+    ]
    }
   },
   "requests": [
-   "domestic: Terminal 2 landside face (integration review r2, finding 3). NAIP 2024 shows the departures roadway open to the sky, with traffic, between the modelled T2 west wall and the glass curb canopy, and the T2 roof edge (NAIP relief-corrected for 16.3 m, frame model draw_data.lean_frame) 17-18 m east of that wall: x -750.5 at z 200, -745 at z 220, -739 at z 240 (+-1 m; the dark line just west of it is the canopy edge), against the modelled wall at x -768 (z 200) / -756 (z 240): the T2 shell follows the SFO Museum outline over the curb roadway, as T1 Center did before the domestic round-1 move of its face (manifest.json#domestic.conflicts \"T1 Center landside face\"). Please move the T2 landside face to the measured roof edge (the canopy in front of it); roadways.glb is cut where its deck ran inside the shell (enclosure test; cut {'domestic/T3E': 312.6, 'domestic/T3W': 309.4, 'domestic/T2': 1406.5, 'domestic/T1': 390.6} m2 of deck, left inside after the cut 0 m2) and the cut lifts by itself on the next build_roadways run",
-   "landside: AirTrain T-piers placed on the road decks / with caps over them (landside_airtrain.py: sites every ~30 m along the skeleton, random order, no road test [inf]): {\"min_m\": 3.25, \"at\": [-1719.3, 428.2], \"unit\": \"interchange_2_2\", \"below_m2\": 8.6}; {\"count\": 3, \"at\": [[-1726.8, 427.2], [-1727.8, 530.2], [-1728.8, 456.2]]}. Real piers stand clear of the carriageways; please keep pier sites off roadways.glb deck_* surfaces and data/sfo_landside.json carriageways (+0.5 m), caps >= 4.6 m above any deck under them",
-   "landside: parked cars - wheels / skirt at LOD0 and a third shape (review r1 finding 4; landside_cars.py is the landside group's)",
-   "bridges / realtime: gates.js prepGeom walkway start and drum limits from the 3-D facades (integration.json footprints / tiers), then the domestic vestibules can go (review r1 finding 8)",
-   "landside: bart_station 36.7 m from taxilane centreline 302 (ADG 5 inferred: 42.1 m); SFO Museum outline 37.3 m"
+   "bridges: the per-building footprints with height bands are now in data/buildings3d/integration.js (B3D_INTEGRATION.footprints.units[group][unit].tiers: body = grade to top, over = underside to top; close-out round 3, integration-5): gates.js can test drums / tunnels against them instead of the SFO Museum proxy and the own-strip rule (bridges-6, buildings R3.3: a drum under a roof overhang is clear when its top is below the over tier's underside)",
+   "owner / domestic: the anchored domestic departures loop (deck top 4.73 m at the curb placeholder [unk], soffit 3.53 m with the generic 1.2-m deck) is below 4.6 m over 26 at-grade roads (min 3.53 m; conflict \"vertical clearance over an at-grade road\"); kept as built: the curb level is the published T3 L1 -> L2 16 ft [pub at T3], so the real stacked arrivals level is below 4.6 m by design. A posted-clearance photo of the domestic arrivals level would settle it (buildings R3.2)"
   ],
+  "glow": {
+   "kinds": {
+    "hall": {
+     "color_linear": [
+      1.0,
+      0.9,
+      0.76
+     ],
+     "k": 0.3
+    },
+    "office": {
+     "color_linear": [
+      1.0,
+      0.82,
+      0.6
+     ],
+     "k": 0.34
+    },
+    "station": {
+     "color_linear": [
+      0.95,
+      0.95,
+      1.0
+     ],
+     "k": 0.32
+    },
+    "roofglass": {
+     "color_linear": [
+      1.0,
+      0.9,
+      0.76
+     ],
+     "k": 0.14
+    },
+    "cab": {
+     "color_linear": [
+      0.25,
+      0.4,
+      0.35
+     ],
+     "k": 0.0
+    },
+    "led": {
+     "color_linear": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "k": 0.3
+    },
+    "beacon": {
+     "color_linear": [
+      1.0,
+      0.06,
+      0.04
+     ],
+     "k": 40.0
+    },
+    "soffit": {
+     "color_linear": [
+      0.9,
+      0.95,
+      1.0
+     ],
+     "k": 0.22
+    }
+   },
+   "cap": 0.42,
+   "tag": "inf",
+   "source": "js/three/buildings3d.js GLOW_DEF (no measured SFO night luminances)",
+   "configurable": "SFO.R.b3d.setGlow(kind, {color, k, cap}) at run time; the defaults are the values here",
+   "notes": {
+    "cab": "0 (off) since close-out round 3: the only dusk / night tower photo (t5, refs/cache/buildings/review_likeness/t5.jpg, CC BY-SA) shows the cab glass dark; was teal 0.25 [inf]"
+   }
+  },
+  "footprints_js": {
+   "units": 14,
+   "bytes_js": 182450,
+   "note": "B3D_INTEGRATION.footprints (close-out round 3, integration-5)"
+  },
   "requests_withdrawn": [
    "domestic: BA_C LOD2 top +9.08 m (review r1) - a checker artefact: the joined LOD2 mesh was split by plan distance and C3C triangles went to BA_C; split by LOD0-footprint containment (+1 m) since review r2: top 0.0 m (lod2_check.json)",
    "landside: rental car center LOD2 roof median 4.58 m (review r1) - a checker artefact: the roof cells sampled the open deck beyond the roof edge; one roof-cell definition for both LODs since review r2 (1-m cells inside the LOD0 footprint - 0.5 m): 0.00 m"
   ],
-  "generated": "2026-11-06T03:59:16Z",
+  "generated": "2026-11-07T08:01:20Z",
   "tool": "tools/blender/b3d_integrate.py",
   "doc": "docs/research/buildings3d.md (integration section)"
  },
@@ -16518,7 +17028,7 @@
   "asset": "roadways (elevated landside roadways: departures decks, viaducts, approach ramps)",
   "owner": "integration (review round 1, finding 1)",
   "generator": "tools/blender/build_roadways.py + roadways_net.py",
-  "built": "2026-11-07T07:15:51Z",
+  "built": "2026-11-07T07:41:18Z",
   "files": {
    "full": "data/buildings3d/roadways.glb",
    "lod2": "data/buildings3d/roadways_lod2.glb"
@@ -16641,9 +17151,9 @@
     "plate": 13
    },
    "tris": {
-    "0": 45684,
-    "1": 14032,
-    "2": 6627
+    "0": 46146,
+    "1": 14158,
+    "2": 6651
    },
    "grade_max": {
     "id": 681667027,
@@ -16840,8 +17350,8 @@
    "crossings": 33,
    "asset_cut_m2": 1697.9,
    "bytes": {
-    "full": 4254288,
-    "lod2": 429644
+    "full": 4292396,
+    "lod2": 430940
    },
    "itb_plate": {
     "area_m2": 8066.5,

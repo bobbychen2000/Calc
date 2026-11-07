@@ -691,7 +691,7 @@ flock out/.heavy.lock env SOFTGL=1 W=960 H=540 OUT=out/buildings3d VIEWS="..." n
 |---|---|
 | `js/three/buildings3d.js` | Loader: GLTFLoader, per-building LOD switching, node materials with the night hooks, shadows, the swap of the first-pass items, the tower camera |
 | `tools/blender/b3d_integrate.py` | Footprints measured on the exported GLBs (every LOD and file), the replacement table, the combined plausibility check, `manifest.json#integration` |
-| `data/buildings3d/integration.js` | What the app imports (js/live/world.js): replacement table + tower camera anchor (6 kB) |
+| `data/buildings3d/integration.js` | What the app imports (js/live/world.js, js/three/buildings3d.js, js/live/gates.js): replacement table, tower camera anchor, landside unit index, ground-physics rings and (close-out round 3) the per-building footprints with body / over height tiers of the tower, ITB and domestic units (182 kB) |
 | `data/buildings3d/integration.json` | Footprints per asset unit (LOD0 / LOD1) with height ranges and body / overhang tiers, the table with coverages, the plausibility results (every LOD), the physics set |
 | `tools/blender/b3d_views_job.mjs` | livetest job: the same views with `?b3d=0` (first-pass) and the assets -> `out/buildings3d/cmp_*.png`; in `near` mode each view waits until the full files near the camera are on screen (`Buildings3D.settled`) |
 | `tools/blender/build_roadways.py`, `roadways_net.py` | the elevated landside roadways asset (`roadways.glb`, `roadways_lod2.glb`, check sheet `out/buildings3d/roadways_plan.png`, `manifest.json#roadways`; review round 1) |
@@ -814,8 +814,14 @@ a rebuild without the change reproduced the old file byte for byte first. Phone-
 artifacts serve standard web types only, and the aircraft models already ship as `.wasm` (application/wasm) fetched as bytes,
 so the GLBs ship the same way (`data/buildings3d/*.wasm`, `window.SFO_B3D_EXT = '.wasm'`; `B3D=all|lod2|none`, default all
 without the tower's alternative family file `tower_f1.glb`; `B3D=all+alt` adds it). A test build from the working tree: 218 files, 59.0 MB (the GLBs 36.8 MB; limits: 15 MB per
-binary file - landside.glb is 14.87 MB -, 255 files and 64 MB per publish), the app bundle 4.58 MB with GLTFLoader and the
-loader in it. `integration.js` is bundled (6 kB); `integration.json` is not shipped.
+binary file - landside.glb was 14.87 MB then -, 255 files and 64 MB per publish), the app bundle 4.58 MB with GLTFLoader and the
+loader in it. `integration.js` is bundled (6 kB then; 182 kB since close-out round 3 with the footprints); `integration.json` is not shipped.
+**Sizes as of close-out round 3 (7 Nov 2026)**, counted on the working tree's files the artifact ships (B3D=all): 271 supporting
+files, 73.1 MB (+ the page: the inlined app bundle, ~4.7 MB) - models 23 files 13.5 MB, low-resolution liveries 185 files
+3.8 MB, building files 62 / 55.8 MB. `landside.glb` (21.13 MB) is NOT shipped: since review round 2 the landside goes as 24
+unit files (`lsu_*.glb`, 19.8 MB, 0.05-2.5 MB each) + 29 shared images (3.0 MB); the largest file is `domestic.glb` 11.58 MB,
+so no file needs the 12-MB split any more (it stays for any file >= 14 MB). Over both single-publish limits (255 files / 64 MB):
+the artifact goes up in two publishes to the same URL (a version holds up to 511 files / 256 MB).
 
 **GPU memory (found in the first headless run).** GLTFLoader clones a texture for every material that reads it on
 TEXCOORD_1 (`assignTexture`: `texCoord > 0 -> texture.clone()`), and the WebGPU / WebGL 2 backends upload every clone as
@@ -1012,5 +1018,46 @@ new ones (airtrain_-2_0 3.3 s, airtrain_-5_1 9.6 s, garage_g 60 s). These are ll
 | `t2/cmp_new_t2along.png`, `t2/t2_plan.png` | high, domestic + roadways only (`b3donly`; the others first-pass) | 1,168 / 4.39 M / 1,134 MB | finding 3 on r14: looking south along the T2 west wall from the departures deck to the north. The outer departures ramp runs on the right, and the deck that ran inside the shell is gone. No road shows inside the hall; the plan shows the deck tops stopping at the T2 wall line. `t2/cmp_new_t2above.png` (over the first-pass garage) does not show the gap between garage and T2 and is kept for the record only; `t2_r12/` holds the same views on r12 |
 | `low/cmp_new_pierB.png` (vs `r3/low2/cmp_new_pierB.png`) | low | 560 / 1.65 M / 568 MB | finding 2: BA-B at the B20 view with the pane / frame grid (r3: a black slab) |
 | `low/cmp_new_towercam.png`, `low/cmp_new_gateA1.png` | low | 1,583 / 3.66 M / 607 MB; 1,308 / 2.94 M / 631 MB | finding 4 probes with the landside units near the camera (table above) |
+
+### Close-out round 3 (7 Nov 2026): dispositions
+
+Findings `docs/requests/closeout3_findings.json#groups.integration` (integration-1..6); cross-track requests in
+`docs/requests/integration_closeout.md` (Round 3). Inputs: the buildings track's rebuilt assets (domestic 7 Nov 03:36Z with
+the T2 face moved, ITB 01:55Z, landside 02:11Z). Runs (scratch `c3/integration/`): `base_r15` = the round-2 code on these
+assets, `r16`-`r18` = this round's code; final state r18 (roadways built 07:3xZ, integration, LOD2 check, check.py after it).
+
+```bash
+python3 tools/blender/build_roadways.py      # ~2.3 min: + the ITB lower level (LOWER_H), its sidewalk, the deck-edge planter, the partial stacked cut
+python3 tools/blender/verify_landside.py     # the landside group's checks read roadways.glb (buildings R3.5 order)
+python3 tools/blender/b3d_integrate.py       # ~3.5 min: + at-grade clearance, BART observed wall, pier overlap / near, footprints in integration.js, glow table
+python3 tools/blender/b3d_lod2_check.py; python3 tools/sat/check.py
+```
+
+| # | Finding | Disposition | Evidence |
+|---|---|---|---|
+| integration-1 | round-2 fixes never reviewed (major) | **verified on the current assets, with the reviewers' own scripts** (copied from the review, run on r18): ITB curb cross-sections (`curb_gap.py`, deck tops 9.5-13.5 m AGL) u -80..80: deck v -64.3..-30.2 continuous, curb v -30.1..-25.8 (0.1 m kerb face; b3d_integrate curb void max 0.134 m, 0 over 0.3); T2 vertical sections z 200 / 240 (`vsec.py`): the departures deck (4.73 m) ends at x -757.3 / -745.2 on the new T2 sidewalk, nothing under the T2 roof, T2 wall at x -750.7 / -738.4; guideway clearance (`clear3.py`): 1,312 m2 of deck under the guideway, min 4.65 m, 0 m2 below 4.6 (review: 4.22 m, 150 m2). No deck inside any building (the T2 interim cut is gone by itself: cut T1 390.6, T3E 312.6, T3W 309.4 m2 at the parapets straddling those facades, none at T2). Low-tier phone run on r18: table below | `c3/integration/rv/` (vsec_t2_z200/240.png, clear3.log, curb_gap.log), `integration.json#plausibility` |
+| integration-2 | outer band of the ITB plate a lower deck with an open slit (major) | **settled from evidence: it is a lower level; the slit is closed**. Photo i1 (Kulikovsky 2007, CC BY 3.0, the ITB frontage from the west) shows the departures deck ending in a planter of pink-flowering shrubs on a ~0.9 m fascia, and in front of / below it a lower level - trees in planters on its outer edge (the NAIP hedge line), shelters, pedestrians - which continues under the deck and is level along the facade. The NAIP "red kerb" (R - G peak, v -62) is that planter: its NAIP length (u -53..51, 104 m) = 935 px in i1 gives 9.0 px/m at the deck edge, and the step from the deck-edge coping (y 286.5) to the lower level's outer coping (y 349.5) is ~6.7 m (6.1-7.3; 6.4-7.0 for camera heights 5-20 m). OSM agrees: the at-grade roads 256787738 / 370279550 / 370279603 / 370279607 pass under the band as `tunnel=building_passage`, and the layer-1 footway 1164416297 runs the plate's length (OSM layers here are not physical: the crosswalk footways on the deck carry layer 1 too, so the reviewer's "layer 1 is lower" is not evidence either way). Built: the lower roadway held LEVEL at `LOWER_H` 5.80 m on the straight (was solved 6.3-8.0, sloping) = 4.6 m clearance + 1.2 m deck over the building-passage roads [inf: the lowest plausible level; i1 reads ~1 m lower relative to the plate, which would put L3 ~1 m above spec_itb 11.5 - request to the ITB group]; its sidewalk (`sidewalk`, 5.95 m) from the lower roadway to 3.0 m under the plate edge [inf width] closes the 0.4-0.6 m slit; island B is now the deck-edge planter (0.95 m, NAIP colour, concrete walls) instead of a red-painted kerb. Plan coverage across the frontage (`slit_c3.py`, every up-facing roadways / ITB triangle 4-14 m AGL) u -45..40: kerb -> plate (11.3) -> planter (12.3) -> sidewalk (6.0) -> lower roadway (5.8) v -30.2..-74.6 with no gap; the only plan gap is the 0.13 m kerb face | `c3/integration/ev/` (i1_left/right.png, i1prof.png, naip_plate_h12.png, osm_h12.png), `rv/slit_c3.json`, BR-02 `out/buildings3d/roadways_itb_plate.png`, `manifest.json#roadways` observed / inferred / unknown |
+| integration-3 | deck over deck 3.7 m2 at 4.55-4.59 m (minor) | **fixed by a local trim**: `trim()` cut stacked overlaps only when the MEDIAN separation was short, so a stacked pair whose median cleared kept the short part (739695588 under 681667027: 1-5 cm short over 3.7 m2; with the lower level held at 5.80 m, 739695588 beside the layer-3 ramp 1205493778 north of the ITB: 23.6 m2 at 3.29 m in r16). New `partial_stacked_cut`: the lower deck gives up the 1-m cells of the overlap with less than deck + clearance (+ STACK_GAP + half a cell diagonal), only where that trims its edge (a cut that would split the deck or open a hole is refused and left to the check). Result: roadways over roadways min **4.61 m, 0 m2 below 4.6** (r14 4.55 m / 3.7 m2). Tried and dropped: a raise-only 8 % grade envelope in the level solve (moved the 681667027 kink to 220862132: 27.8 %, ramps 20 %; with a guard 15.6 %) and a 0.12-m separation margin for stacked pairs (15.6 %); `roadways_net.py` is unchanged. Side effect left open: max grade 14.1 % on 681667027 (r14 13.5 %), a kink at a node the deck-over-deck constraint fixes 0.9 m above its neighbour, moved by the lower level | `c3/integration/an/` (v_*.log, prof_*.log), `roadways_build.json` |
+| integration-4 | phone delivery unmeasured / uncompressed, doc sizes stale (minor) | **partly fixed**: per-view JS heap now measured (exact V8 heap through the DevTools protocol after a forced GC, `b3d_views_job.mjs`; `performance.memory` was bucketed); doc sizes corrected (Bundle and delivery above: 271 files / 73.1 MB, landside.glb not shipped, largest file 11.58 MB, two publishes); the WASM question is put to the owner's phone: the test card now reports "WebAssembly: compiles / blocked" and the JS heap (`phone_artifact_page.py`). **Not done**: meshopt / KTX2 (needs that answer, then WASM decoders under vendor/** - env), a run on a real phone (owner) | phone table below; `integration_closeout.md` R3.4 |
+| integration-5 | per-building footprints not in integration.js (minor) | **fixed**: `B3D_INTEGRATION.footprints.units[group][unit]` (tower, ITB, domestic: 14 units, +138 kB) with `body` / `over` height tiers; the landside units stay in integration.json (bridges never reach them). Bridges can now drop the Museum proxy / own-strip rule (bridges-6) | `integration.js` |
+| integration-6 | tower cab glass glows teal at night (minor) | **fixed**: `GLOW_DEF.cab` k 0.25 -> 0 (off) by default: the only dusk / night photo (t5) shows the cab dark under the lit LED ribbon. The whole glow table is listed as inferred and configurable (`SFO.R.b3d.setGlow`) in `manifest.json#integration.glow` | `js/three/buildings3d.js`, manifest |
+
+**Plausibility, before / after** (`b3d_integrate`, every LOD of every file):
+
+| Check | r14 (6 Nov, round-2 assets) | base r15 (7 Nov assets, round-2 code) | r18 (this round) |
+|---|---|---|---|
+| conflicts / notes | 4 / 10 | 3 / 9 | 2 / 11 |
+| road deck inside a building | 0 (after a 1,406.5 m2 cut at T2) | 0 (no T2 cut needed) | 0 |
+| roadways over roadways < 4.6 m | 3.7 m2, min 4.55 m | 3.7 m2, 4.55 m | **0 m2, min 4.61 m** |
+| guideway deck over a road deck | min 4.62 m | 4.62 m | 4.62 m |
+| guideway pier caps / columns in decks | 3.25 m (8.6 m2) / 3 | 13.85 m / 1 (0.48 m beside a deck) | 13.85 m / 0 (1 note: beside, 0.48 m) |
+| ITB curb void / canopy over the plate | 0.134 m / 4.52 m (87 m2) | 0.134 / 4.67 m | 0.134 / 4.67 m |
+| ITB plate -> outer band | 0.4-0.6 m open slit, lower deck 6.3-8.0 m sloping | slit, 6.87-7.20 m | closed; lower level 5.80 m level, sidewalk under the edge |
+| at-grade roads under a deck < 4.6 m (new) | - | - | domestic loop 26 roads 3.53 m (by design, owner); interchange_2_2 1 road 4.597 m over 2 m |
+| BART station vs taxilane 302 | conflict | conflict | note: observed NAIP wall 35.8 m from the lane (existing condition) |
+| max deck grade | 13.5 % | 13.5 % | 14.1 % (681667027, open) |
+| LOD2 check / check.py | 47 / 0; 0 / 0 / 17 | - | 47 / 0; 0 / 0 / 17 |
+
+<!-- c3-phone -->
 
 <!-- integration:end -->

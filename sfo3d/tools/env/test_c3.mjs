@@ -110,6 +110,18 @@ const check = (name, ok, info = '') => { n++; if (!ok) fails++; console.log(`${o
   check('broad-lobe veil share F(u_o) analytic = numeric path integral, monotonic', errF < 0.01 && mono && Ft(0.3, 1) === 0, `max err ${errF.toFixed(4)}`);
   // quad extent: where each part falls to AUR_EPS once exposed (Gaussian: k = √ln(L/ε) >= 2; lobe: (1 + k²)^-1.5 = ε / L)
   const Lx = 1e4 * L.AUR_EPS, kc = Math.sqrt(Math.log(Lx / L.AUR_EPS)), kt = Math.sqrt(Math.pow(Lx / L.AUR_EPS, 2 / 3) - 1);
+  // energy: drawn core (Gaussian inside kc radii) + drawn lobe (inside kt θt) = the aureole energy, for dim to bright lamps
+  // (the lobe beyond kt goes to the core; the core's Gaussian beyond kc >= 2 radii is below EPS by construction)
+  let worstE = 0; const thA = 2 * Math.PI / 180;
+  for (const peak of [0.3, 3, 30, 3e3, 3e6]) {   // nominal lobe peak / EPS
+    const E = 1, wT = 1 - L.AUR_CORE_SHARE, Lt = E * wT / (2 * Math.PI * th * th); const expo = peak * L.AUR_EPS / Lt;
+    const kt = Math.min(L.AUR_K_TAIL_MAX, Math.sqrt(Math.max(Math.pow(Math.max(Lt * expo / L.AUR_EPS, 1), 2 / 3) - 1, 0)));
+    const Lc = E * (1 - wT + wT / Math.sqrt(kt * kt + 1)) / (Math.PI * thA * thA);
+    const kc = Math.min(L.AUR_K_CORE_MAX, Math.max(2, Math.sqrt(Math.log(Math.max(Lc * expo / L.AUR_EPS, 1)))));
+    const drawn = Lc * Math.PI * thA * thA * (1 - Math.exp(-kc * kc)) + Lt * 2 * Math.PI * th * th * (1 - 1 / Math.sqrt(1 + kt * kt));
+    worstE = Math.max(worstE, Math.abs(drawn / E - 1));
+  }
+  check('aureole energy drawn = aureole energy (lobe beyond its quad folded into the core), dim to bright lamps', worstE < 0.02, `worst ${(100 * worstE).toFixed(2)} %`);
   check('quad edge values = AUR_EPS (core, lobe) for a lamp 1e4 x above it', Math.abs(Lx * Math.exp(-kc * kc) / L.AUR_EPS - 1) < 1e-9 && Math.abs(Lx * Math.pow(1 + kt * kt, -1.5) / L.AUR_EPS - 1) < 1e-9, `kc ${kc.toFixed(2)} (cap ${L.AUR_K_CORE_MAX}), kt ${kt.toFixed(2)} (cap ${L.AUR_K_TAIL_MAX})`);
 }
 console.log(`close-out round 3 (env): ${n - fails}/${n} checks passed`);

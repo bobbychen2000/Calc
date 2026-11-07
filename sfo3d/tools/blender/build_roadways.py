@@ -185,6 +185,27 @@ PLANTER_H = 0.95      # the deck-edge planter (island B) above the deck: its pla
                       # i1 [inf height; obs extent: NAIP 2024 R - G band, i1]
 
 
+def partial_stacked_cut(p, q, g, X, cell=1.0):
+    """trim()'s partial stacked cut (close-out round 3): returns (p's new geometry, 'p' | 'q' | None - whose deck was cut)"""
+    x0, z0, x1, z1 = X.bounds
+    G = np.array(np.meshgrid(np.arange(x0 + cell / 2, x1, cell), np.arange(z0 + cell / 2, z1, cell))).reshape(2, -1).T
+    if not len(G): return g, None
+    G = G[shapely.contains_xy(X, G[:, 0], G[:, 1])]
+    if not len(G): return g, None
+    d = hp(p, G) - hp(q, G); bad = np.abs(d) < RN.DECK_DEPTH + RN.CLEAR_MIN
+    if not bad.any(): return g, None
+    # cells of `cell` m sampled at their centres: + half a cell diagonal so no short sliver survives at the cut's edge
+    # (r17: 0.1 m2 at 3.25 m stayed with STACK_GAP alone)
+    R = unary_union([box(a - cell / 2, b - cell / 2, a + cell / 2, b + cell / 2) for a, b in G[bad]]).buffer(STACK_GAP + 0.71 * cell)
+    lower_is_p = np.median(d[bad]) < 0
+    geo = g if lower_is_p else q['geom']
+    new = geo.difference(R)
+    parts = lambda x: [y for y in (getattr(x, 'geoms', None) or [x]) if isinstance(y, Polygon) and y.area > 0.5]
+    if len(parts(new)) > len(parts(geo)) or sum(len(y.interiors) for y in parts(new)) > sum(len(y.interiors) for y in parts(geo)): return g, None
+    if lower_is_p: return new, 'p'
+    q['geom'] = new; return g, 'q'
+
+
 def trim(P, TR, log, BODY=None):
     """same-level overlaps go to the higher-priority piece; then every piece minus the assets' occupancy in its band and
     minus the parts that run inside a building (enclosure_cuts, review round 2)"""
@@ -211,6 +232,14 @@ def trim(P, TR, log, BODY=None):
                 # (+ STACK_GAP: the upper deck's parapet and soffit edge overhang its ribbon; with 0.05 m, 1.0-1.3 m slivers stayed)
                 if np.median(dhs) < 0: g = g.difference(q['geom'].buffer(STACK_GAP))
                 else: q['geom'] = q['geom'].difference(g.intersection(q['geom']).buffer(STACK_GAP)); q.setdefault('stacked_cut_by', []).append(p['id'])
+            elif dh.min() < RN.DECK_DEPTH + RN.CLEAR_MIN:
+                # close-out round 3 (integration-3): the median clears but part of the overlap does not (two ways running
+                # side by side whose ribbons overlap at the edge while one climbs: 739695588 beside the layer-3 ramp
+                # 1205493778 north of the ITB once its straight was held lower, 23.6 m2 at 3.29 m). The lower deck gives up
+                # the cells (1 m) of the overlap with less than deck + clearance (+ STACK_GAP), but only where that trims its
+                # EDGE: if the cut would split it or open a hole in it, it is kept and the clearance check reports it.
+                g, cut = partial_stacked_cut(p, q, g, X)
+                if cut: (q if cut == 'q' else p).setdefault('stacked_cut_by', []).append(str((p if cut == 'q' else q)['id']) + ' (partial)')
         p['geom'] = g; kept.append(i)
     # assets: occupancy (triangles) in the piece's band, chunk by chunk along it (a ramp spans 0-11 m). Review r2: the
     # other assets' LOD0 / LOD1 triangles only (their LOD2 shells are coarser - the ITB curb's by ~3 m at its ends - and

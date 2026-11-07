@@ -66,6 +66,7 @@ FILES = {'tower': ['tower.glb', 'tower_f1.glb', 'tower_lod2.glb'], 'itb': ['itb.
          'landside': ['landside.glb', 'landside_lod2.glb']}
 # groups that replace first-pass app buildings (the roadways replace nothing: the app drew no elevated roads)
 REPL_GROUPS = ['tower', 'itb', 'domestic', 'landside']
+FP_JS_GROUPS = ['tower', 'itb', 'domestic']   # per-building footprints with height bands in integration.js (close-out r3, integration-5)
 COVER_BUF, EDGE_BUF, COVER_MIN = 2.0, 3.0, 0.5
 # review round 1 (finding 3): a ramp-level wall edge not covered within EDGE_BUF but within EDGE_GAP of the group that
 # covers the edges next to it (a gap in a run, or the run's continuation in front of a set-back facade: the ITB west wall
@@ -853,13 +854,26 @@ def deck_checks(F, TR, res, log):
         cols = plan_geom(col) if len(col) else Polygon()
         D = unary_union([Polygon(t[:, [0, 2]]) for r in mesh_nodes(os.path.join(D3, 'roadways.glb')) if lod_of(r) == 0
                          for t in r['tris'][np.array([m.startswith('deck') for m in r['mats']], bool)] if Polygon(t[:, [0, 2]]).area > 1e-4]) if os.path.exists(os.path.join(D3, 'roadways.glb')) else Polygon()
-        hit = [q for q in (getattr(cols, 'geoms', None) or [cols]) if isinstance(q, Polygon) and not q.is_empty and q.buffer(0.6).intersects(D)]
+        # close-out round 3: a column IN a deck (overlap, + 0.05 m) is a conflict; one within 0.6 m of a deck edge is a note
+        # (it stands beside the deck, outside its parapet - r17: one straddle-bent column 0.48 m off a ramp edge was listed
+        # as "in a road deck" by the old 0.6-m buffer, while verify_landside's foot test found none on a deck)
+        pq = [q for q in (getattr(cols, 'geoms', None) or [cols]) if isinstance(q, Polygon) and not q.is_empty]
+        hit = [q for q in pq if q.buffer(0.05).intersects(D)]
+        near = [q for q in pq if q not in hit and q.buffer(0.6).intersects(D)]
         st['guideway_piers_in_road_decks'] = [[round(q.centroid.x, 1), round(q.centroid.y, 1)] for q in hit]
+        st['guideway_piers_beside_road_decks'] = [dict(at=[round(q.centroid.x, 1), round(q.centroid.y, 1)], gap_m=round(q.distance(D), 2)) for q in near]
         if hit: res['conflicts'].append(dict(check='guideway pier column in a road deck (landside pier sites [inf])', count=len(hit), at=st['guideway_piers_in_road_decks'][:10]))
+        if near: res['notes'].append(dict(check='guideway pier column beside a road deck (< 0.6 m from its edge, outside it)', count=len(near), at=st['guideway_piers_beside_road_decks'][:10]))
     # close-out round 3 (buildings R3.2): the road decks over the app's at-grade roads (deck soffit above grade)
     st['at_grade_clearance'] = at_grade_clearance(TR, log)
-    for v in st['at_grade_clearance'].get('below', []):
-        res['conflicts'].append(dict(check='vertical clearance over an at-grade road (< %.1f m)' % ROAD_CLEAR, **v))
+    byu = {}
+    for v in st['at_grade_clearance'].get('below', []): byu.setdefault(v['over'], []).append(v)
+    for u, L in sorted(byu.items(), key=lambda kv: min(v['min_m'] for v in kv[1])):
+        w0 = min(L, key=lambda v: v['min_m'])
+        res['conflicts'].append(dict(check='vertical clearance over an at-grade road (< %.1f m)' % ROAD_CLEAR, over=u, roads=len({v['way'] for v in L}), min_m=w0['min_m'], at=w0['at'],
+                                     length_m=round(sum(v['length_m'] for v in L), 1), ways=sorted({v['way'] for v in L})[:40],
+                                     note=('the anchored domestic departures loop: deck at the curb placeholder (4.73 m [unk]), soffit 3.53 m - by design of the curb level (buildings R3.2); posted clearance unknown (owner)'
+                                           if u == 'domestic_departures' else 'solved deck over an at-grade road (the solve holds the clearance at the centreline crossings only)')))
     # the ITB curb
     st['itb_curb_gap'] = itb_curb_gap(P, TR, log)
     if st['itb_curb_gap'] and st['itb_curb_gap']['over_limit'] > 0:
@@ -1036,12 +1050,12 @@ def requests_of(res):
     out.append('bridges: the per-building footprints with height bands are now in data/buildings3d/integration.js (B3D_INTEGRATION.footprints.units[group][unit].tiers: '
                'body = grade to top, over = underside to top; close-out round 3, integration-5): gates.js can test drums / tunnels against them instead of the SFO Museum proxy and '
                'the own-strip rule (bridges-6, buildings R3.3: a drum under a roof overhang is clear when its top is below the over tier\'s underside)')
-    ag = res['stats'].get('at_grade_clearance', {}).get('below', [])
+    ag = [v for v in res['stats'].get('at_grade_clearance', {}).get('below', []) if v['over'] == 'domestic_departures']
     if ag:
-        out.append('owner / domestic: the anchored domestic departures loop (deck top %s at the curb placeholder [unk]) leaves %s - %s m over %d at-grade road crossings '
-                   '(conflicts "vertical clearance over an at-grade road"); kept as built: the curb level is the published T3 L1 -> L2 16 ft [pub at T3], so the real '
-                   'stacked arrivals level is below 4.6 m by design. A posted-clearance photo of the domestic arrivals level would settle it (buildings R3.2)'
-                   % ('4.73 m', min(v['min_m'] for v in ag), max(v['min_m'] for v in ag), len({v['way'] for v in ag})))
+        out.append('owner / domestic: the anchored domestic departures loop (deck top 4.73 m at the curb placeholder [unk], soffit 3.53 m with the generic 1.2-m deck) is '
+                   'below 4.6 m over %d at-grade roads (min %.2f m; conflict "vertical clearance over an at-grade road"); kept as built: the curb level is the published '
+                   'T3 L1 -> L2 16 ft [pub at T3], so the real stacked arrivals level is below 4.6 m by design. A posted-clearance photo of the domestic arrivals level '
+                   'would settle it (buildings R3.2)' % (len({v['way'] for v in ag}), min(v['min_m'] for v in ag)))
     tl = [c for c in res['conflicts'] if c.get('check', '').startswith('taxilane')]
     for c in tl: out.append('%s: %s %.1f m from taxilane centreline %s (ADG %s inferred: %.1f m); SFO Museum outline %.1f m' % (c['group'], c['unit'], c['dist_m'], c['lane'], c['adg'], c['need_m'], c['museum_outline_m']))
     try:
@@ -1157,12 +1171,14 @@ def main(argv):
     # proxy): per unit the max-extent ring set and its tiers - `body` (what stands on the ground: grade to top) and `over`
     # (roof eaves, canopies, vestibules: from the lowest underside over that region to the top), so a rotunda drum under a
     # roof overhang is not read as inside the building. Heights are world y (GROUND_Y = 3.0 at grade); rings [x, z] in
-    # metres, simplified 0.1 m. Hangars are included (flag hangar), the elevated guideway and the roadways are not
-    # (bridges and aircraft never reach them; physics.rings stays the ground-physics set).
+    # metres, simplified 0.1 m. the landside units (garages, hotel, stations, hangars), the guideway and the roadways are not
+    # (bridges and aircraft never reach them; physics.rings stays the ground-physics set). Only the groups the bridges and
+    # stands meet go to the app (FP_JS_GROUPS: +134 kB of the bundled integration.js; the landside garages, +120 kB, stay
+    # in integration.json#footprints).
     fps_js = {}
-    for g in REPL_GROUPS:
+    for g in FP_JS_GROUPS:
         for u, e in fps.get(g, {}).items():
-            if u in ('*', 'all') or not e.get('tiers') or (g == 'landside' and u.startswith('airtrain')): continue
+            if u in ('*', 'all') or not e.get('tiers'): continue
             fps_js.setdefault(g, {})[u] = dict(y=e['y'], lods=e['lods'], tiers=[dict(part=t['part'], y=t['y'], rings=t['rings']) for t in e['tiers']], **({'hangar': True} if g == 'landside' and u in HANGARS else {}))
     js = dict(replace=rep, tower=out['tower'], units=units, physics=dict(rings=phys_js, note='3-D asset footprints for js/live/ground.js buildingGrid (hangars, guideway, roadways excluded)'),
               footprints=dict(units=fps_js, ground_y=GROUND_Y, note='per asset unit (LOD0 / LOD1 max extent): tiers body (grade to top) and over (underside to top), world y, rings [x, z] (b3d_integrate.py tiers)'))

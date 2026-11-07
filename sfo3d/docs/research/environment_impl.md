@@ -864,7 +864,7 @@ horizon (look2-8) are not render-confirmed.
 
 Findings: `docs/requests/closeout3_findings.json` `groups.env`. Scripts, logs and before-copies: session scratchpad
 `c3/env/` (`before/`, `scripts/`, `NOTES.md`); renders and probe JSON: `out/env/c3/` (gitignored). Regression checks of
-every logic fix: `tools/env/test_c3.mjs` (23 checks, in `run_gates.sh`). Requests to other tracks:
+every logic fix: `tools/env/test_c3.mjs` (29 checks after the restart, in `run_gates.sh`). Requests to other tracks:
 `docs/requests/env_closeout.md` (Round 3).
 
 ### R3.1 Wet-pavement object reflections: screen-space reflections (env-2, major)
@@ -931,7 +931,8 @@ should be; fog of distant terrain under the deck tends to the same colour.
 sub-pixel), and the airfield display gain (DAY_GAIN 30) only where the lens is below the floor — a small saturated
 dot, no glare halo (js/three/lights.js: the lens flag suppresses the halo by day). At the review camera (14.4 m, 50°,
 360 px): peak 2.02 × sunlit white paint (before: 8.0 × at gain 30 in the record, 0.08 × after the renderer's fixedK
-cap); night unchanged (0.22 m, gain 1). live.html draws the same record (js/shaders/sprites.js: size `s` 0.08 m, energy
+cap; a CPU estimate for an assumed intensity); night unchanged (0.22 m, gain 1). Rendered (R3.13, c3e): E75L red light at
+14.4 m, 8° off the nose: 67 cd → 0.85 × white paint radiance in R, a 3-px red-tinted dot without halo. live.html draws the same record (js/shaders/sprites.js: size `s` 0.08 m, energy
 conserved to its 2.2-px floor): its fixed 8 % halo (1.6 × s) now lies inside the 2.2-px dot instead of a 0.35 m glow at gain 30.
 
 ### R3.5 Glass and facades (env-7, env-8)
@@ -1015,7 +1016,8 @@ side / above points from the rig camera (`c3*_check.json proj`).
 - Restart incident: my renderer3 edit for the phone-tier flag commented out `E.fxScene.add(this.sprites.mesh)` (same line):
   live3 drew no light sprites from ~06:40Z to 07:08Z; the c3d renders in that window (all-black E7a views, no position-light
   dot) are void; found with an in-app light-pass readback (0 non-zero texels for 1,221 records), fixed, other tracks told
-  (env_closeout R3.7). Re-render c3e: see R3.13.
+  (env_closeout R3.7). Re-renders c3e / c3f: see R3.13 - body / adjacent glow 0.94-1.00 in the beams (finding: fix if < ~0.5);
+the aircraft seen from the side is unlit (no volumetric landing beams: not in the spec, open).
 
 ### R3.12 Documentation (env-9)
 
@@ -1038,3 +1040,54 @@ Jobs (one Chromium, `out/.heavy.lock`, scratchpad `c3/env/job_c3.mjs` 3,573 s, `
 | noon perimeter road 112508632 + seawall (1384, 1020) | env-11, env-13 | the road reads light grey (NAIP tone), the foam line follows the NAIP shoreline at the riprap edge (`c3_day_perimeter_seawall.png`) |
 | noon reservoir view (both renderers) | env-14 | the watershed shows hills, no city blocks; the **lakes were not drawn**: the lake triangles were down-facing (counter-clockwise in x-z, culled) → flipped in build_reservoirs.py; re-render below |
 | live.html overview | env-14 | the blue patch west of the airport is gone (`c3_old_overview.png` vs `out/engine_rev/old_overview.png`) |
+
+**After the 06:12Z container restart** (jobs `c3b` - `c3f`, scratchpad `c3/env/job_c3*.mjs`; one Chromium under the heavy
+lock; live3 b3d=0 unless noted; `c3c_check.json` ... `c3f_check.json`):
+
+| View | Finding | Result |
+|---|---|---|
+| E5 marine_layer tower re-render (c3b, b3d LOD2) | env-4, look2-8 | horizon band / deck overhead 1.29 → **0.97** (rows 100-108 155 vs rows 0-40 169: the air under the deck now darker than the deck, as under a CIE overcast); evUsed 12.97 = target 11.97 + 1.00 (reflected 13.07): A-EXP held by the incident bound |
+| noon reservoirs (live3 c3b; live.html c3c) | env-14 | lake pixels (rows 40-60 %, B−R > 12): live3 1 → 2,595, live.html 0 → 3,213 after the triangle flip; 0 page errors (live.html ready 64 s) |
+| noon gate B20, the app's own curtain walls (c3c, b3d=0) | env-7, env-8 | pane box (the verifier's x 20-170, y 295-330 at 960 px, scaled): dark60 (14.4, 21.8, 20.8), hue **172°** (c2 "new" 137°, photo a2 185°), B−G −1.0 (c2 −3.9, photo +1.5), B−R +6.4; luminance 20 (c2 28; the photo is overcast at 1-2 km of haze); apronAlb (0.354, 0.346, 0.320) B/R 0.905 |
+| E7a night_fog, in the landing beams (c3c, 24 m, BEFORE the profile fix) | env-3 | hard-edged discs of 2 aureole radii; fuselage between the lamps 106 vs 254 (0.42); nose 0-46 (`c3c_E7a_inbeam.png`) |
+| E7a in the beams, 45 m, 8.6° off the nose, traffic frozen (c3e) | env-3, look2-1/-5 | **body / adjacent glow 0.95-1.00** on the 6 fuselage points (expected ≥ ~0.5); nose 211, side air 247-255, above 206-218: the aircraft veiled in its own glow, no cut-out, no hard disc edge; metering adapts (evReflected 4.98) (`c3e_E7a_inbeam.png`) |
+| E7a front-left quarter, 34° off the nose (c3e) | env-3 | the landing beams point away: fuselage black except next to the strobe / position lamp (78 vs 217 in its glow, 0.36, the lamp beside the body, not in front of it); volumetric beams (the lit fog ahead of the aircraft seen from the side) are not modelled - not in the spec (open) |
+| E7 night_fog 28R 0.6 NM above the fog (c3e vs c3) | env-3 regression | first profile: the ALS glow peak 123 → 43 with the dim lamps' sub-threshold lobes cut (frame mean 2.39 → 0.79) → lobe energy beyond its quad folded back into the core (lights.js; test_c3 energy check, worst 0.8 %); re-render c3f below |
+| E7a in the beams + E7 above the fog after the lobe-energy fold (c3f) | env-3 | in the beams: body / glow 0.94-1.00, nose 212, frame mean 120 (`c3f_E7a_inbeam.png`); above the fog: ALS glow peak 70 (c3 123 with hard edge, c3e 43), max radial step 2.7 DN/px (c3 4.0): a soft glow with the centreline bars visible through it; frame mean 1.33 (c3 2.39: half of the energy now in the 20° lobe, mostly below one display level per lamp) (`c3f_E7_nightfog_above_06nm.png`); 0 page errors |
+| E7 fog top over the B apron from 170 m (c3e) | env-1 look2-6 | the fog top over the floodlit apron glows: mean 138, p90 202, neutral (142, 139, 134), the unlit fog top 0 - **confirmed** (FOG_TOP_K 0.3 stays I / NV) (`c3e_E7_fogtop_apron.png`) |
+| noon, E75L a11e8b taxiing (frozen), red position light 14.4 m, 8° off the nose (40 cd sector) (c3e) | env-6 | a 3-px red-tinted dot (peak (243, 202, 202) on the winglet edge (214, 211, 208)), **no halo**; record 7.72 lamp units × 1/fixedK = 797 → 67 cd over the 0.08-m lens: radiance 0.85 × sunlit white paint in R (lens 29 kcd/m² vs paint 34 kcd/m²); additive on a bright background it reads pink, on a dark one red. (c3d's view at 45° off the nose saw only the 5-cd sector and was void anyway: no sprites, R3.11) |
+
+### R3.14 Independent check of env fix round 2 (env-1)
+
+env fix round 2 (`c3src/co2cont_env-fix2.json`) has 25 dispositions: 22 fixed, 3 partly, 0 deferred (the round-3 README's
+"20 fixed / 4 partly / 1 deferred" miscounts the file). Each was re-checked on the current tree with the reviewers' own
+scripts (`c3/env/rerev2/*.mjs`, log `rerev2/rerun.log`), the gates (`run_gates.sh`, all pass: 39, 32, 50/50, 875, 43/43, 29/29,
+relay, 37/37, 74/74, 178/178, 23/23, 29/29) and the round-3 renders (R3.13). Verdict per item:
+
+| Item | Round-2 claim | Check this round | Verdict |
+|---|---|---|---|
+| truth2-1 runway fallback | West / Southeast plans, 28 tailwind ≥ 5 kt | `rwycfg.mjs` (58 reports): non-West 3 → 7 after this round's FAA 8400.9 limits (R3.2, crosswind incl. gusts, wet) | confirmed, superseded by R3.2 |
+| truth2-2 28L RAIL | MALSR RAIL with the MALS (TBL 3-4-7) | A-CTL 37/37, test_review2 (night step 1 2.3 %, day 4 SM 10 %, 19L MALSF off VFR) | confirmed |
+| truth2-3 rain fields | D0 / v / drops from the clamped rate | `ra0.mjs`: EnvState D0 0.77 / v 3.93 = rainParams for -RA; -DZ 0.30 / 1.50; +RA 1.37 / 5.24 | confirmed |
+| truth2-4 FU / HZ aloft | aerosol layers, out of the cloud product | `fu.mjs`: FEW700 + SCT20000, sunVisibleP 0.666 (was 0.562 with FU as cloud) | confirmed (smoke tint NV, spec §12.1) |
+| truth2-5 MIFG σ | max(prevailing, σ(5/8 SM)) | `mifg.mjs`: MIFG slab 0-1.8 m σ 6.13e-3 for 10SM and 7SM | confirmed (lower bound I) |
+| truth2-6 wet start | Prrrr / 6RRRR amount | `ra0.mjs`: basis "Prrrr 0.76 mm / 0.93 h", trace → film only | confirmed |
+| truth2-7 snapshot METARs | 30 IEM reports shipped | `snapdawn.mjs`: dawn uses 231256Z (not the 17:22Z SPECI), day / dusk STALE + TAF | confirmed |
+| truth2-8 in-pavement lights | 268 faces, h ½ in | A-FIX 50/50; regenerated this round without retired pavement: edge 101 → 98 (R3.8, test_c3) | confirmed, refined |
+| truth2-9 sprite occlusion | one test at the light's pixel, depth-slope tolerance | E4 consecutive frames: 14 px vanish / 16 appear, every one a moving airborne light or a strobe / beacon flash (R3.13) - the look2 metric "254 / 187 → 0" was the same motion | confirmed |
+| truth2-10 colours | inferred points in the 25.1397 boxes | test_review2 (white box, green point), A-NAV1 | confirmed |
+| truth2-11 cirrus | ≥ 20,000 ft cirriform | `fu.mjs` SCT20000 cirriform; `state.js CIRRUS_MIN_FT` | confirmed |
+| truth2-12 A-MOON | "pass" → "partly" | §3.5 table + R1.6 read "partly" | confirmed |
+| look2-1 aureole cut-outs | forward-scatter share in front of the surface | E7 above the fog: ALS glows not cut at station rows; E7a in the beams (R3.11, R3.13): body / glow 0.95-1.00, no cut-out; the quad truncation (hard discs) fixed this round | confirmed + extended |
+| look2-2 twilight haze | Earth-shadow blend | code (`sky.js` twi, TWI_EL0..1); round-2 render fix2_E3 (hills 0.33 of the sky); not re-rendered | confirmed (code + round-2 render) |
+| look2-3 water under the deck | skyAlong mode 2 | E5 c3b: the water / horizon rows 100-108 155 vs deck 169 (0.92) - no bright band | confirmed |
+| look2-4 wet apron reflections | partly (IBL only) | → env-2: SSR (R3.1), E9 render: mirror images of bridge / stairs / GSE / A321 | closed by env-2 |
+| look2-5 aircraft in its glow | partly | → env-3 (R3.11) | closed by env-3 |
+| look2-6 fog-top glow | FOG_TOP_K 0.3 | E7 at 0.6 NM: not in view; c3e view from 170 m over the B apron: fog top over the floods mean 138 / p90 202, unlit fog top 0 (R3.13) | confirmed (constant I / NV) |
+| look2-7 rain "over" | coverage × (L_drop − scene) | E9: streaks drawn over the bridge and darker than the sky (not snow-like) | confirmed |
+| look2-8 deck / far horizon | partly | → env-4: deckK air under the deck (R3.3), E5 c3b band 1.29 → 0.97 × deck | closed by env-4 |
+| look2-9 flood shadows | SPOT_SHARE 0.5 | E4: shadows under the wing / bridges soft, not black; rule now V (EASA M.750(c), R3.2) | confirmed |
+| look2-10 phone-tier caps | 3/4 flood samples, 2 taps, ≤ 64 aureoles ≤ 2.5° | `renderer3.js AUR_LOW_MAX_N / AUR_LOW_MAX_DEG`, `lights.js slopeTaps`; this round adds "no broad aureole lobe, core ≤ 3 radii" on the low tier | confirmed (A-PERF needs a GPU, OD-7) |
+| look2-11 ozone | own 10-40 km layer | `sky.js` OZ_H / OZ_W tent; A-SUN / A-CLD unit gates | confirmed |
+| look2-12 old-renderer cover | 0 with no reported layer | `app.js` cover rule (no default 0.12) | confirmed |
+| look2-13 photo tag | dusk-fog photo re-tagged | `refs/cache/env_ref/SOURCES.json` "not a clear-dusk colour reference" | confirmed (clear civil-twilight photo still an owner item) |

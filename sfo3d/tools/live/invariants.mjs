@@ -13,10 +13,12 @@
 //                         (3 m code A/B, 4.5 m code C, 7.5 m code D-F; the larger code of the pair)
 //   clear.taxi            a moving ground aircraft within 1 m of another (and not overlapping)
 //   overlap.lowair        an aircraft < 15 m AGL over a ground aircraft's planform with < 6 m vertical separation
-//   building              planform sample point (1 m grid) inside a building (js/live/ground.js buildingGrid)
+//   building              planform sample point (1 m grid) inside a building (js/live/ground.js buildingGrid with the 3-D
+//                         assets' footprints, data/buildings3d/integration.js physics, as app.js; close-out round 3 realtime-12)
 //   offpave.mask / .union gear point (nose, both mains) off the rendered pavement mask / off mask UNION OSM net
-//   bridge.hit.fus|wing|tail  aircraft part inside a jet bridge (walkway, rotunda, tunnel, drive column, cab) in 3-D
-//                         (height bands from the type table vs gates.js bridge floor heights)
+//   bridge.hit.fus|wing|eng|tail  aircraft part inside a jet bridge (walkway, rotunda, tunnel, drive column, cab) in 3-D:
+//                         the sample points of each bridge solid (gates.js solids, 0.7 m) inside gates.js acHit (the solid the
+//                         bridges plan against: tapered nose, wings, engines, swept tailplane; close-out round 3 realtime-12)
 //   bridge.hit_at_rest    subset of bridge.hit.*: the bridge is fully retracted (k < 0.05), i.e. at gates.js's rest pose
 //   bridge.misdock        a bridge docked (k > 0.5) whose door target is > 1.5 m from the displayed door of its occupant
 //   bridge.orphan         a bridge docked (k > 0.5) with no displayed aircraft within 10 m of its door target
@@ -104,10 +106,15 @@ const { parsePayload } = await imp('js/live/feed.js');
 const { TYPES } = await imp('js/aircraft/types.js');
 const GEO = await imp('js/geo.js'); const { GROUND_Y, worldToST } = GEO; const toLL = GEO.worldToWgs84 || GEO.worldToLL; const toW = GEO.wgs84ToWorld || GEO.llToWorld;
 const GATESJS = await imp('js/live/gates.js'); const { LiveGateSystem } = GATESJS; const doorOfG = GATESJS.doorOf || null;
+// (close-out round 3, realtime-12: the aircraft solid the bridges plan against -- gates.js acHit: tapered nose, wings,
+// engines, the swept tailplane as js/aircraft/model.js lofts it -- for the bridge hits; null on an older gates.js)
+const acHitG = GATESJS.acHit || null;
+// (realtime-12: the 3-D building assets' footprints, as app.js passes them to buildingGrid; null on an older tree)
+let B3DI = null; try { ({ B3D_INTEGRATION: B3DI } = await imp('data/buildings3d/integration.js')); } catch (e) { console.error('no data/buildings3d/integration.js: building grid without the 3-D asset footprints'); }
 
 const gates = standGates(STANDS);
 const apt = paintAirportMapReal(AIRPORT, gates, undefined, DETAILS, { paint: PAINT, pavement: PAVEMENT, endZones: endZoneRects() });
-const building = buildingGrid(AIRPORT);
+const building = buildingGrid(AIRPORT, 2, B3DI && B3DI.physics);   // (as app.js: + the 3-D assets' footprints, realtime-12)
 let simNow = 0, checkFrom = Infinity;
 // ---- jet bridges: gates.js code on an instance without the WebGL constructor
 const gsys = Object.create(LiveGateSystem.prototype); gsys.gates = gates; gsys.anims = new Map(); gsys.dirty = false;
@@ -173,13 +180,23 @@ function shapeOf(key) {
   const w = T.wing, span = w ? w.span / 2 : 16, le = w ? w.rootLE : T.L * 0.4, sw = Math.tan(((w && w.sweep) || 27) * DEG), rc = w ? w.rootC : 5, tc = w ? w.tipC : 1.5;
   const hs = T.hstab ? T.hstab.span / 2 : 5, hx = T.hstab ? T.hstab.x : T.L - 5, hrc = T.hstab ? (T.hstab.rootC || 3) : 3, htc = T.hstab ? (T.hstab.tipC || 1.2) : 1.2, hsw = Math.tan(((T.hstab && T.hstab.sweep) || 30) * DEG);
   const Hc = T.Hc || 3.5, R = T.R || 2, wy = w ? (w.y ?? 0.5) : 0.5, dih = Math.tan(((w && w.dihedral) || 5) * DEG), hy = T.hstab ? (T.hstab.y ?? 0.3) : 0.3, hdih = Math.tan(((T.hstab && T.hstab.dihedral) || 5) * DEG);
+  // (close-out round 3, realtime-12: the planform of gates.js acHit -- the fuselage tapers over the nose (types.js Ln) as the
+  // rendered airframe does, the tailplane root sits at z0 = 0.35 R from the centre line (T-tail 0.2 m) with its LE swept from
+  // there, and the engine nacelles are pieces of their own; before: a fuselage rectangle from the nose tip and a tailplane
+  // swept from the centre line)
+  const Ln = T.Ln || 4, nNose = 6, fusP = [];
+  for (let i = 0; i <= nNose; i++) { const x = Ln * i / nNose; fusP.push([x, -R * Math.sqrt(Math.max(0, 1 - (1 - x / Ln) ** 2))]); }
+  fusP.push([T.L, -R], [T.L, R]); for (let i = nNose; i >= 0; i--) { const x = Ln * i / nNose; fusP.push([x, R * Math.sqrt(Math.max(0, 1 - (1 - x / Ln) ** 2))]); }
+  const z0 = T.hstab && T.hstab.tTail ? 0.2 : 0.35 * R, hsx = hx + Math.max(0, hs - z0) * hsw;
   const pieces = [
-    { kind: 'fus', poly: [[0, -R], [T.L, -R], [T.L, R], [0, R]] },
+    { kind: 'fus', poly: fusP.filter((p, i, a) => i === 0 || Math.hypot(p[0] - a[i - 1][0], p[1] - a[i - 1][1]) > 1e-6) },
     { kind: 'wing', poly: [[le, 0], [le + rc, 0], [le + span * sw + tc, span], [le + span * sw, span]] },
     { kind: 'wing', poly: [[le, 0], [le + span * sw, -span], [le + span * sw + tc, -span], [le + rc, 0]] },
-    { kind: 'tail', poly: [[hx, 0], [hx + hs * hsw, hs], [hx + hs * hsw + htc, hs], [Math.min(T.L, hx + hrc), 0]] },
-    { kind: 'tail', poly: [[hx, 0], [Math.min(T.L, hx + hrc), 0], [hx + hs * hsw + htc, -hs], [hx + hs * hsw, -hs]] },
+    { kind: 'tail', poly: [[hx, z0], [hsx, hs], [hsx + htc, hs], [Math.min(T.L, hx + hrc), z0]] },
+    { kind: 'tail', poly: [[hx, -z0], [Math.min(T.L, hx + hrc), -z0], [hsx + htc, -hs], [hsx, -hs]] },
   ];
+  if (w) for (const e of T.eng || []) { const ex = w.rootLE + Math.abs(e.z) * sw - (e.fwd || 3), x1 = ex + e.len * 1.12;
+    for (const sg of [1, -1]) { const y0 = sg * e.z - e.r, y1 = sg * e.z + e.r; pieces.push({ kind: 'eng', poly: [[ex, y0], [x1, y0], [x1, y1], [ex, y1]] }); } }
   // sample points (1 m grid inside each piece + its outline) with height bands
   const pts = [];
   const inPoly = (P, x, y) => { let c = false; for (let i = 0, j = P.length - 1; i < P.length; j = i++) { const a = P[i], b = P[j]; if ((a[1] > y) !== (b[1] > y) && x < (b[0] - a[0]) * (y - a[1]) / (b[1] - a[1]) + a[0]) c = !c; } return c; };
@@ -189,6 +206,7 @@ function shapeOf(key) {
       const ay = Math.abs(y); let lo, hi;
       if (pc.kind === 'fus') { const e = Math.sqrt(Math.max(0, 1 - (ay / R) ** 2)) * R; lo = Hc - e; hi = Hc + e; }
       else if (pc.kind === 'wing') { const z = Hc - wy * R + ay * dih; lo = z - 0.35; hi = z + 0.35; }
+      else if (pc.kind === 'eng') { lo = 0.4; hi = Hc; }
       else { const z = Hc + hy * R + ay * hdih; lo = z - 0.3; hi = z + 0.3; }
       pts.push([x, y, lo, hi, pc.kind, pi]);
     };
@@ -547,8 +565,22 @@ while (simNow < tEnd && (nextEv || simNow < tStart + 1)) {
         if (!H || H.ck !== ck) {
           H = { ck, n: 0, hit: null }; const PA = worldPolys(A);
           for (const bx of BB.boxes) {
-            if (own && bx.part === 'cab') continue; // the docked cab touches its own aircraft (bellows) by design
+            if (own && (bx.part === 'cab' || bx.part === 'bellows')) continue; // the docked cab touches its own aircraft (bellows) by design
             const bp = boxPoly(bx);
+            if (PA.every(pa => sepAxis(pa, bp))) continue;
+            if (acHitG) {
+              // (close-out round 3, realtime-12: the box's sample points -- 0.7 m, as gates.js boxHitsAc -- inside gates.js acHit, the
+              // solid the bridges are planned against: tapered nose, wings, engines, swept tailplane; heights above the apron)
+              const v = [-bx.u[1], bx.u[0]]; const nx = bx.round ? Math.max(1, Math.ceil(bx.round / 0.7)) : Math.max(1, Math.ceil(bx.hl / 0.7)), ny = bx.round ? nx : Math.max(1, Math.ceil(bx.hw / 0.7));
+              const hl = bx.round || bx.hl, hw = bx.round || bx.hw;
+              for (let i = -nx; i <= nx; i++) for (let j = -ny; j <= ny; j++) {
+                const px = bx.c[0] + bx.u[0] * hl * i / nx + v[0] * hw * j / ny, pz = bx.c[1] + bx.u[1] * hl * i / nx + v[1] * hw * j / ny;
+                if (bx.round && Math.hypot(px - bx.c[0], pz - bx.c[1]) > bx.round + 1e-6) continue;
+                const dx = px - A.nose[0], dz = pz - A.nose[1]; const kind = acHitG(A.S.T, -(dx * A.f[0] + dz * A.f[1]), dx * A.r[0] + dz * A.r[1], bx.lo, bx.hi, 0);
+                if (!kind) continue; H.n++; if (!H.hit || (kind === 'fus' && H.hit.kind !== 'fus')) H.hit = { kind, part: bx.part };
+              }
+              continue;
+            }
             PA.forEach((pa, pi) => {
               if (sepAxis(pa, bp)) return;
               for (const q0 of A.S.pts) { if (q0[5] !== pi) continue; if (q0[3] < bx.lo || q0[2] > bx.hi) continue; const q = A.W(q0[0], q0[1]); if (!inBox(bx, q[0], q[1])) continue; H.n++; if (!H.hit || (q0[4] === 'fus' && H.hit.kind !== 'fus')) H.hit = { kind: q0[4], part: bx.part }; }
