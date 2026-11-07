@@ -1001,4 +1001,16 @@ tau_B 0.75 rows marked pre-final, `close2/panes.json` marked wrong-box (glass_me
 
 ### R3.13 Confirmation renders (live3.html, r186 WebGL 2, llvmpipe 640 × 360, high tier, b3d LOD2; live.html)
 
-(filled below after the run)
+Jobs (one Chromium, `out/.heavy.lock`, scratchpad `c3/env/job_c3.mjs` 3,573 s, `job_c3b.mjs`): `out/env/c3/c3_*.png`,
+`c3_check.json`, `c3b_check.json`, `c3_measure.json`; 0 page errors in both renderers (live.html ready 52 s).
+
+| View | Finding | Result |
+|---|---|---|
+| E9 rain_day gate B26, SSR off (`R.ssrForce 0`) / auto | env-2, look2-4/-7 | film 1, pore 1, puddle 0.43; SSR on after 2 frames (48 valid); 20,308 px change by > 4 DN (18,189 darker: mirror images of the bridge underside, the stairs / GSE and the mast; 2,119 brighter: the A321's white fuselage), sky (rows 0-90) mean |Δ| 0.5 DN — only the animated rain streaks — vs 1.9 DN on the apron (rows 180-360). Before (look2): object reflections 0. Rain streaks drawn over the bridge (look2-7). `c3_E9_rain_gate_B26_ssr0/1.png`, `c3_E9_ssr_diffmask.png` |
+| E7 night_fog 28R 0.6 NM, above the fog (camera y 78 m, fog top 64 m) | env-1 look2-6 | the ALS seen through 61 m of fog (τ 1.07) as one merged glow below the camera (the bars end-on) with two cores; the runway / city lights a strip at the horizon; the fog top dark elsewhere. The apron floods' fog-top glow (FOG_TOP_K) lies 3-4 km away inside that strip: **not confirmable from this view** (open) |
+| E4 night_clear gate B26 + next frame | env-1 look2-9, flicker | 14 px vanish / 16 appear between consecutive frames (look2: 11 / 2): every one is an airborne aircraft's light that moved 3-13 px in the ~5 s of llvmpipe wall time between frames, or a strobe / beacon flash — no occlusion flicker (`c3_E4_flicker_zoom.png`). Flood shadows under the wing and bridges are soft |
+| E5 marine_layer tower | env-4, env-16, look2-8 | evUsed 12.97 = target 11.97 + 1.0 (reflected 13.15; look2 13.62 = +1.65): A-EXP within ±1 EV. Deck mottled to the horizon; a horizon band 1.24 × the deck (look2 1.5 ×) → sky.js deckK (R3.3); re-render below |
+| noon gate B26, ground bounce on / off (`R.gb.on`) | env-10, env-7 | 29,671 px change by > 2 DN, +3.4 DN where they change, bluer (A321 lower fuselage +3.6 / +4.2 / +5.4 RGB); apronAlb (0.354, 0.346, 0.320): B/R 0.905 (was 0.84; bake PCC 0.91); kG (1.17, 1.25, 1.49) |
+| noon perimeter road 112508632 + seawall (1384, 1020) | env-11, env-13 | the road reads light grey (NAIP tone), the foam line follows the NAIP shoreline at the riprap edge (`c3_day_perimeter_seawall.png`) |
+| noon reservoir view (both renderers) | env-14 | the watershed shows hills, no city blocks; the **lakes were not drawn**: the lake triangles were down-facing (counter-clockwise in x-z, culled) → flipped in build_reservoirs.py; re-render below |
+| live.html overview | env-14 | the blue patch west of the airport is gone (`c3_old_overview.png` vs `out/engine_rev/old_overview.png`) |

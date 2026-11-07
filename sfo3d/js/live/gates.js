@@ -641,9 +641,20 @@ export class LiveGateSystem {
     // level, not the type mix, decides the rotunda height on short walkways.) Upper-deck
     // bridges: a level walkway from an upper level above the main-deck fixed walkways (their roof + 0.6 m; inferred), the
     // tunnel takes the slope down to U1L.
-    // (Hb: the pier's bridge level, DEPARTURE_LEVELS - b.HbTag / b.HbSrc for the tools)
-    const DL = departureLevel(g); b.HbTag = DL.tag; b.HbSrc = DL.src;
-    b.Hb = b.upper ? DL.h + WALK_H + 0.6 : DL.h; const dh = b.upper ? 0 : b.walkLen / 12;
+    // (Hb: the pier's bridge level, DEPARTURE_LEVELS - b.HbTag / b.HbSrc for the tools.) The upper level is taken over the
+    // highest main-deck roof of the gate that it crosses in plan (0.3 m) - walkway or drum, at rest (solidsQ) - + 0.6 m,
+    // i.e. 0.3 m clear under the walkway's 0.3 m floor (and never under level + WALK_H + 0.6): the main-deck walkways rise
+    // from a low pier level to their rotunda (BA-G 2.7 m: G13 L2 to 4.54 m, drum roof 7.84 m; with level + WALK_H + 0.6
+    // the G13 upper walkway ran through the G13 L1 / L2 walkways, verifier bcheck2 'rest-bridge' x 8, close-out round 3).
+    // g.bridges are prepared before g.bridgesUpper (bridgesOf).
+    const DL = departureLevel(g);
+    if (b.upper) { let top = DL.h + WALK_H; const W = [];
+      for (let j = 1; j < (b.walk || []).length; j++) { const P0 = b.walk[j - 1], P1 = b.walk[j]; const d = [P1[0] - P0[0], P1[2] - P0[2]]; const L = Math.hypot(d[0], d[1]); if (L > 0.05) W.push({ c: [(P0[0] + P1[0]) / 2, (P0[2] + P1[2]) / 2], u: [d[0] / L, d[1] / L], hl: L / 2, hw: WALK_W / 2 }); }
+      for (const o of g.bridges || []) { if (o.Hr == null || o.h0 == null) continue;
+        for (const s of this.solidsQ(o, { a: o.a0, e: o.e0, t: 0, h: o.h0 }, 0, true)) if ((s.part === 'walkway' || s.part === 'rotunda') && W.some(w => solidOverlap(w, s, 0.3))) top = Math.max(top, s.hi - G); }
+      b.Hb = +(top + 0.6).toFixed(3); b.HbTag = 'inf'; b.HbSrc = 'upper deck: main-deck walkway / drum roofs it crosses + 0.6 m (inferred; pier ' + DL.tag + ')'; }
+    else { b.Hb = DL.h; b.HbTag = DL.tag; b.HbSrc = DL.src; }
+    const dh = b.upper ? 0 : b.walkLen / 12;
     b._tgH = tg;
     const Hr = this.pickHr(g, [b], b._tgH, b.Hb - dh, b.Hb + dh);
     this.applyHeights(b, Hr, tg, b._tgH);
@@ -674,7 +685,8 @@ export class LiveGateSystem {
     b.h0 = this.bandH(b, b.e0, b.h0, SLOPE_TARGET); b.hRest = b.h0; b._own = null; b._restS = null; b._plans = new Map();
   }
   // height h clamped to the band where the tunnel at pivot distance e slopes at most `slope`
-  bandH(b, e, h, slope) { const lim = Math.max(0, e - b.m.F) * slope; return clampN(h, b.Hr - lim, b.Hr + lim); }
+  // (1e-9 m inside the band: on its edge, Hr + lim - Hr over (e - F) read 0.25000000000000006 > 1:4 in the verifier)
+  bandH(b, e, h, slope) { const lim = Math.max(0, Math.max(0, e - b.m.F) * slope - 1e-9); return clampN(h, b.Hr - lim, b.Hr + lim); }
   // the moving parts of bridge b in joint state q against its obstacles (the fixed walkways, drums and pedestals of the
   // bridges around it and its own fixed walkway outside its drum): the first contact 'part x part', or null
   fixedHit(b, q, kk = 0) {
@@ -748,6 +760,8 @@ export class LiveGateSystem {
       const Hr = this.pickHr(g, [o, b], o._tgH.concat(b._tgH), o.Hb - dh, o.Hb + dh);
       this.applyHeights(o, Hr, o._tg, o._tgH); this.applyHeights(b, Hr, b._tg, b._tgH);
     }
+    // (an upper-deck bridge's level follows its gate's main-deck rotunda floors, which the twin step may have moved)
+    for (const { g, b } of all) if (b.upper && (g.bridges || []).some(o => o.twinOf)) this.prepKin(g, b);
     // own-walkway clip check (review 2026-11-04 bridges-v3): the rotunda corridor parts vs the bridge's own walkway outside
     // the drum at rest and docked. Since round 3 (neckParts) it is 0 everywhere - before, A12, F5, F14, F17, F19, F21 L1
     // (data poses folded back to 41-45 deg from the walkway) drew 0.18-0.56 m2 of corridor through it. b.ownClip = {rest,
