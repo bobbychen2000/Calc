@@ -1262,6 +1262,14 @@ def garage_ag(k):
                     dd_ = (np.array(b_) - np.array(a_)) / Ls; nn_, _ = edge_normal(a_, b_)
                     pa2_, pb2_ = np.array(a_) + dd_ * h0 - nn_ * 6.0, np.array(a_) + dd_ * h1 - nn_ * 6.0
                     cm2.quad_wall(tuple(pa2_), tuple(pb2_), z0h, z1h, z0h, z1h, 'interior', 0.0, (4.0, 4.0))
+                    # close-out r3 fix 2 (back-face rays, LOD2 context: 433 hits on garage A): the 6-m portal recess had only its back
+                    # panel - rays entering the portal at an angle ran into the hollow body and met the backs of the far walls. Jambs,
+                    # head and sill close the recess (facing into it)
+                    fa_, fb_ = np.array(a_) + dd_ * h0, np.array(a_) + dd_ * h1
+                    for P0_, P1_, want in ((fa_, pa2_, dd_), (fb_, pb2_, -dd_)):
+                        cm2.face_dir([(*P0_, z0h), (*P1_, z0h), (*P1_, z1h), (*P0_, z1h)], 'interior', [(0, 0), (1, 0), (1, 1), (0, 1)], (*want, 0.0))
+                    for zq, want in ((z1h, -1.0), (z0h, 1.0)):
+                        cm2.face_dir([(*fa_, zq), (*fb_, zq), (*pb2_, zq), (*pa2_, zq)], 'interior', [(0, 0), (1, 0), (1, 1), (0, 1)], (0.0, 0.0, want))
                 s += Ls
     ring2, inner2 = ring_band(P2, PARAPET_T)
     cap(cm2, ring2, hd, 'coping', 3.0)
