@@ -101,6 +101,7 @@ Round-2 files of this track: `js/three/objects.js`, `js/three/renderer3.js`, `js
 `js/three/compat/scene.js`, `js/three/dev/glasstest.html`, `tools/build3/job_close2.mjs`, `tools/build3/job_glass.mjs`,
 `tools/build3/glass_meas.py`, `docs/research/engine_impl.md`, this file. After they are committed, rebuild and republish
 the phone test artifact (`sh tools/build3/phone_artifact.sh`, §0); the published one predates round 3.
+**Done** (checked 7 Nov 2026, env close-out round 3, env-9): committed in ba7a2d1; phone artifact rebuilt (v3) in 50daff2.
 
 ### R2.2 Owner of `js/aircraft/fleet.js` (aircraft track): position-light record intensities (minor)
 

@@ -336,12 +336,16 @@ gate:B20,130,1,24); low view gate:B20,70,1,6 box x 5-370, y 180-222.
 | round 3 ("old") | (47.2, 45.5, 40.3) | -6.9 | -1.6 | 45.5 |
 | old, IBL ground = paved mean (0.38, 0.37, 0.345): the requested A/B | (56.9, 56.6, 54.3) | -2.6 | -0.4 | 56.5 |
 | old, reflection term only | (34.6, 31.6, 25.1) | -9.4 | -2.9 | 31.8 |
-| new, tau_B 0.75 (high) | (23.8, 29.2, 25.3) | +1.5 | +5.4 | 27.7 |
-| new, tau_B 0.75, IBL ground = paved mean | (25.0, 30.3, 26.3) | +1.3 | +5.2 | 28.9 |
-| new, tau_B 0.75, reflection only | (19.9, 25.0, 20.6) | +0.7 | +5.1 | 23.6 |
+| new, tau_B 0.75 (high; pre-final tint) | (23.8, 29.2, 25.3) | +1.5 | +5.4 | 27.7 |
+| new, tau_B 0.75, IBL ground = paved mean (pre-final) | (25.0, 30.3, 26.3) | +1.3 | +5.2 | 28.9 |
+| new, tau_B 0.75, reflection only (pre-final) | (19.9, 25.0, 20.6) | +0.7 | +5.1 | 23.6 |
 | **new, final tint (tau_B 0.80; ultra run; old there: (47.0, 45.5, 40.4), = high)** | **(25.1, 30.3, 27.4)** | **+2.3** | **+5.2** | **29.0** |
-| low view old / new (tau_B 0.75) | (43.0, 45.7, 45.2) / (24.0, 34.1, 31.4) | +2.2 / +7.4 | +2.7 / +10.2 | 45.1 / 31.8 |
+| low view old / new (tau_B 0.75: pre-final tint, not re-run) | (43.0, 45.7, 45.2) / (24.0, 34.1, 31.4) | +2.2 / +7.4 | +2.7 / +10.2 | 45.1 / 31.8 |
 | photo a2.jpg, Boarding Area G (Sept 2025, overcast, ~1-2 km of haze; obs) | (31.7, 45.6, 47.1) | +15.4 | +13.9 | ~42 |
+
+Rows marked pre-final were measured with tau_B 0.75 (renders 00:48-00:59) before the final tint 0.80 (ultra run
+01:01-01:07); only the bold row is the final material. `close2/panes.json` gives identical old / new values from a wrong
+box: use `glass_meas.json` (the values above). (Notes added 7 Nov 2026, env close-out round 3, env-9.)
 
 Root cause (term by term; dev page, 130 m view, first tint: old (48.6, 47.0, 41.7) -> new (18.1, 20.3, 19.3) in `r1`;
 reflection only: old (33.5, 30.8, 24.4) in `out/engine_r3/glass`, new (11.4, 13.2, 11.7) without fog in `r1`; hall
@@ -387,8 +391,11 @@ put(s, fixed)` + `renderer3` `fixedK` keep the aircraft position-light records (
 i <= 40; the first `fr.nAc` records are aircraft lights, `compat/scene.js`) at the night calibration by day; strobes,
 beacons, landing / taxi lights and airfield lights keep the day factor. Day close-up `ac:a12a82,38,-,6`, 13 x 13 px at
 the green light (577, 326): before (verifier, `ver/run/v_day_ac8.png`) max (255, 255, 255), 90 green-dominant px; now max
-(145, 162, 170), mean (97, 113, 125), 0 green-dominant px (high and ultra alike): a faint point, no halo
-(`close2/nav_zoom.png`). The records give 26 / 13 cd at the night calibration, 0.65x the rule's minimum (request in
+(145, 162, 170), mean (97, 113, 125), 0 green-dominant px (high and ultra alike): no halo, but no visible light either
+(`close2/nav_zoom.png`; the light is 14.4 m from the camera, not 38 m; corrected 7 Nov 2026, env close-out round 3 env-9).
+**Superseded (env close-out round 3, env-6):** by day the position light is now drawn at its lens size (0.08 m) with
+its energy conserved to the 2.2-px floor (`js/env/aircraft_lights.js lensGain`): a small saturated dot, ~2 x sunlit
+white paint at 14.4 m (docs/research/environment_impl.md R3.4). The records give 26 / 13 cd at the night calibration, 0.65x the rule's minimum (request in
 `docs/requests/engine_closeout.md` Round 2). Parity: live.html still draws a day halo (closeout §8).
 
 **Ultra tier (engine-v5), run once** (`out/engine_r3/ultra/`): tier 'ultra' from `?quality=ultra`, webgl2, ready 166 s,
