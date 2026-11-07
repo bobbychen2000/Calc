@@ -484,23 +484,11 @@ _E175_DOOR = ('source model: the FAM E175 has no door object; its door is the E1
 _B738_GEAR = ('source model: the FlightGear 737-800 model\'s own main gear is 0.43 m aft of the ACAP station (nose gear +0.23 m); '
               'TYPES, ground physics and gear contact use the ACAP station, the rendered wheels are the artist\'s')
 EXPLAINED = {('E75L', 'door'): _E175_DOOR, ('E75L', 'dock'): _E175_DOOR, ('E75S', 'door'): _E175_DOOR, ('E75S', 'dock'): _E175_DOOR}
-_MAX_STANCE = ('737 MAX stance (js/aircraft/fit.js, round 2 of the 5 Nov 2026 review): nose-up on an extended nose leg, the pitch '
-               'fitted (least squares) to the MAXIMUM (OEW) column of rows B and M (forward / aft passenger door) of D6-38A004 Rev K '
-               '§2.3.x about the NG main gear; with one angle for two sills the 737-9 / -10 keep a residual of up to 0.05 m')
-_MAX_CROWN = ('737 MAX in its nose-up stance: this row takes the highest fuselage top over 0.1-0.5 L, which for a nose-up '
-              'airframe is the forward cabin top. D6-38A004 Rev K §2.3.x rows A, B and M cannot all hold at that station on one '
-              'rigid fuselage: on the model the top 1-3 m aft of door 1 is 2.6-2.7 m above the door-1 sill (inf, measured), so with '
-              'door 1 at 3.07 m (row B) the forward cabin top is ~5.7 m against row A 5.51 m; row A agrees with the top at the '
-              'main-gear station (next row, within +-3 in). The door sills are fitted (the bridge docks there); the crown row is '
-              'explained, not fitted')
-for _k in ('B37M', 'B38M', 'B39M', 'B3XM'): EXPLAINED[(_k, 'crown')] = _MAX_CROWN
-_NG_ENG = ('source model: the FG 737-800 nacelle (CFM56-7B) renders its lowest point 0.13-0.15 m above row D of D6-58325-7 '
-           'Rev C §2.3.1-2.3.3 (MAX (AT OEW) 0.61 / 0.64 m) while the OEW stance matches the crown, the door sills and the fin '
-           '(rows A, B, G, J): the artist hung the nacelle higher under the wing. Row added in round 2 of the 5 Nov 2026 review; '
-           'not re-fitted (moving the nacelle away from its pylon would open a gap; open, aircraft track)')
-for _k in ('B736', 'B737', 'B738', 'B739'): EXPLAINED[(_k, 'engclr')] = _NG_ENG
-for _k in ('B38M', 'B39M', 'B3XM'): EXPLAINED[(_k, 'aftsill')] = _MAX_STANCE
-# (737NG door-1 sill: re-fitted in tools/convert_models.py doorFit, review 5 Nov 2026; no longer flagged)
+# (close-out round 3 of 7 Nov 2026, aircraft-1 / aircraft-5: the 737 family stands in the stance fitted by js/aircraft/fit.js
+#  STANCE_FIT (main oleo compressed, pitch, nose leg) to the ACAP door and cargo-door rows, with the artist's door 1L as drawn
+#  (the round-1 doorFit re-cut is undone): the explanations of the old stance's residuals - MAX fuselage top +0.2 m (rows A,
+#  B, M 'cannot all hold'), NG engine +0.13-0.15 m ('the artist hung the nacelle higher'), MAX aft-door residual - are
+#  withdrawn: those rows now fit within +-3 in)
 for _k in ('B736', 'B737', 'B738', 'B739', 'B37M', 'B38M', 'B39M', 'B3XM'): EXPLAINED[(_k, 'mgear')] = _B738_GEAR
 _B738_CARGOX = ('source model: the FlightGear 737-800 artist drew both lower-deck cargo doors toward the wing, the forward one '
                 '1.6 m aft and the aft one 1.3 m forward of D6-38A004 Rev K §2.7.1 rows C / G (the NG document gives no stations: '
