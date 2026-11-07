@@ -8799,9 +8799,9 @@
  },
  "landside": {
   "asset": "data/buildings3d/landside.glb",
-  "bytes": 20969556,
-  "built": "2026-11-05T23:26:49+00:00",
-  "git": "f491265+dirty",
+  "bytes": 21233424,
+  "built": "2026-11-06T05:42:33+00:00",
+  "git": "d10b454",
   "generator": "tools/blender/build_landside.py (bpy 5.0.1, Cycles CPU AO bake); geometry landside_geom.py / landside_airtrain.py / landside_cars.py; textures landside_tex.py",
   "reference": "2-D sheets BL-01..03 (docs/drawings/buildings/README.md), drawn by tools/buildings/draw_landside.py, imported by landside_geom.py",
   "spec": "tools/buildings/spec_landside.json (+ landside_naip_measurements.json)",
@@ -8821,23 +8821,23 @@
   "lods": {
    "0": {
     "switch_m": 0.0,
-    "tris": 159741,
-    "instanced_car_tris": 93582,
-    "verts": 366671,
-    "draw_calls": 363
+    "tris": 160713,
+    "instanced_car_tris": 168718,
+    "verts": 381799,
+    "draw_calls": 398
    },
    "1": {
     "switch_m": 450.0,
-    "tris": 84979,
-    "instanced_car_tris": 65854,
-    "verts": 212231,
-    "draw_calls": 323
+    "tris": 85455,
+    "instanced_car_tris": 71894,
+    "verts": 217703,
+    "draw_calls": 358
    },
    "2": {
     "switch_m": 1500.0,
-    "tris": 21720,
+    "tris": 22060,
     "instanced_car_tris": 0,
-    "verts": 52008,
+    "verts": 52686,
     "draw_calls": 122
    }
   },
@@ -8847,14 +8847,14 @@
   ],
   "lod2_glb": {
    "path": "data/buildings3d/landside_lod2.glb",
-   "bytes": 2845672
+   "bytes": 2877184
   },
   "textures": [
    {
     "name": "landside_ao_B",
     "px": 2048,
     "mime": "image/jpeg",
-    "bytes": 1164154,
+    "bytes": 1165988,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    },
    {
@@ -8882,7 +8882,7 @@
     "name": "landside_ao_C",
     "px": 1024,
     "mime": "image/jpeg",
-    "bytes": 317074,
+    "bytes": 319363,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    },
    {
@@ -8917,7 +8917,7 @@
     "name": "landside_ao_A",
     "px": 2048,
     "mime": "image/jpeg",
-    "bytes": 1349798,
+    "bytes": 1350282,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    },
    {
@@ -9886,7 +9886,7 @@
   "ao": {
    "A": {
     "res": 2048,
-    "bake_s": 49.1,
+    "bake_s": 49.3,
     "mean": 0.412,
     "p2": 0.001,
     "samples": 40,
@@ -9897,8 +9897,8 @@
    },
    "B": {
     "res": 2048,
-    "bake_s": 58.4,
-    "mean": 0.586,
+    "bake_s": 58.1,
+    "mean": 0.587,
     "p2": 0.0,
     "samples": 40,
     "distance_m": 8.0,
@@ -9908,7 +9908,7 @@
    },
    "C": {
     "res": 1024,
-    "bake_s": 21.5,
+    "bake_s": 20.9,
     "mean": 0.644,
     "p2": 0.0,
     "samples": 40,
@@ -10463,14 +10463,14 @@
     ],
     "tris": {
      "0": {
-      "tris": 19041,
-      "instanced_tris": 18576,
-      "draws": 31
+      "tris": 19253,
+      "instanced_tris": 33252,
+      "draws": 37
      },
      "1": {
-      "tris": 14655,
-      "instanced_tris": 13072,
-      "draws": 30
+      "tris": 14755,
+      "instanced_tris": 14100,
+      "draws": 36
      },
      "2": {
       "tris": 2783,
@@ -11137,14 +11137,14 @@
     ],
     "tris": {
      "0": {
-      "tris": 20591,
-      "instanced_tris": 5076,
-      "draws": 50
+      "tris": 20719,
+      "instanced_tris": 9220,
+      "draws": 55
      },
      "1": {
-      "tris": 6009,
-      "instanced_tris": 3572,
-      "draws": 46
+      "tris": 6057,
+      "instanced_tris": 3956,
+      "draws": 51
      },
      "2": {
       "tris": 569,
@@ -11596,14 +11596,14 @@
     ],
     "tris": {
      "0": {
-      "tris": 22691,
-      "instanced_tris": 4050,
-      "draws": 29
+      "tris": 22937,
+      "instanced_tris": 7100,
+      "draws": 33
      },
      "1": {
-      "tris": 7263,
-      "instanced_tris": 2850,
-      "draws": 28
+      "tris": 7373,
+      "instanced_tris": 2956,
+      "draws": 32
      },
      "2": {
       "tris": 517,
@@ -11789,14 +11789,14 @@
     ],
     "tris": {
      "0": {
-      "tris": 8303,
-      "instanced_tris": 14904,
-      "draws": 23
+      "tris": 8421,
+      "instanced_tris": 26810,
+      "draws": 30
      },
      "1": {
-      "tris": 5015,
-      "instanced_tris": 10488,
-      "draws": 22
+      "tris": 5077,
+      "instanced_tris": 11410,
+      "draws": 29
      },
      "2": {
       "tris": 1011,
@@ -11961,13 +11961,13 @@
     "tris": {
      "0": {
       "tris": 5992,
-      "instanced_tris": 17172,
-      "draws": 23
+      "instanced_tris": 30972,
+      "draws": 29
      },
      "1": {
       "tris": 2444,
-      "instanced_tris": 12084,
-      "draws": 22
+      "instanced_tris": 13164,
+      "draws": 28
      },
      "2": {
       "tris": 830,
@@ -12189,13 +12189,13 @@
     "tris": {
      "0": {
       "tris": 2533,
-      "instanced_tris": 33804,
-      "draws": 28
+      "instanced_tris": 61364,
+      "draws": 35
      },
      "1": {
       "tris": 717,
-      "instanced_tris": 23788,
-      "draws": 25
+      "instanced_tris": 26308,
+      "draws": 32
      },
      "2": {
       "tris": 1379,
@@ -13084,34 +13084,34 @@
    "tiles": {
     "airtrain_-6_-5": {
      "0": {
-      "tris": 2037,
+      "tris": 2029,
       "instanced_tris": 0,
       "draws": 11
      },
      "1": {
-      "tris": 1324,
+      "tris": 1316,
       "instanced_tris": 0,
       "draws": 9
      },
      "2": {
-      "tris": 541,
+      "tris": 553,
       "instanced_tris": 0,
       "draws": 6
      }
     },
     "airtrain_-6_-4": {
      "0": {
-      "tris": 7101,
+      "tris": 7093,
       "instanced_tris": 0,
       "draws": 8
      },
      "1": {
-      "tris": 3085,
+      "tris": 3077,
       "instanced_tris": 0,
       "draws": 6
      },
      "2": {
-      "tris": 802,
+      "tris": 814,
       "instanced_tris": 0,
       "draws": 3
      }
@@ -13135,34 +13135,34 @@
     },
     "airtrain_-6_-2": {
      "0": {
-      "tris": 9553,
+      "tris": 9619,
       "instanced_tris": 0,
       "draws": 8
      },
      "1": {
-      "tris": 6073,
+      "tris": 6115,
       "instanced_tris": 0,
       "draws": 6
      },
      "2": {
-      "tris": 1885,
+      "tris": 1945,
       "instanced_tris": 0,
       "draws": 3
      }
     },
     "airtrain_-6_-1": {
      "0": {
-      "tris": 3123,
+      "tris": 3115,
       "instanced_tris": 0,
       "draws": 14
      },
      "1": {
-      "tris": 2281,
+      "tris": 2273,
       "instanced_tris": 0,
       "draws": 10
      },
      "2": {
-      "tris": 828,
+      "tris": 840,
       "instanced_tris": 0,
       "draws": 6
      }
@@ -13186,68 +13186,68 @@
     },
     "airtrain_-5_0": {
      "0": {
-      "tris": 9922,
+      "tris": 10098,
       "instanced_tris": 0,
       "draws": 8
      },
      "1": {
-      "tris": 4997,
+      "tris": 5109,
       "instanced_tris": 0,
       "draws": 6
      },
      "2": {
-      "tris": 1399,
+      "tris": 1559,
       "instanced_tris": 0,
       "draws": 3
      }
     },
     "airtrain_-5_1": {
      "0": {
-      "tris": 3540,
+      "tris": 3502,
       "instanced_tris": 0,
       "draws": 8
      },
      "1": {
-      "tris": 1918,
+      "tris": 1888,
       "instanced_tris": 0,
       "draws": 6
      },
      "2": {
-      "tris": 555,
+      "tris": 559,
       "instanced_tris": 0,
       "draws": 3
      }
     },
     "airtrain_-4_0": {
      "0": {
-      "tris": 5827,
+      "tris": 5849,
       "instanced_tris": 0,
       "draws": 13
      },
      "1": {
-      "tris": 4702,
+      "tris": 4716,
       "instanced_tris": 0,
       "draws": 11
      },
      "2": {
-      "tris": 1516,
+      "tris": 1536,
       "instanced_tris": 0,
       "draws": 7
      }
     },
     "airtrain_-4_1": {
      "0": {
-      "tris": 8760,
+      "tris": 8826,
       "instanced_tris": 0,
       "draws": 14
      },
      "1": {
-      "tris": 5777,
+      "tris": 5819,
       "instanced_tris": 0,
       "draws": 12
      },
      "2": {
-      "tris": 1968,
+      "tris": 2028,
       "instanced_tris": 0,
       "draws": 8
      }
@@ -13367,7 +13367,7 @@
     }
    },
    "max_grade": 0.042,
-   "piers": 91,
+   "piers": 86,
    "stations": [
     {
      "key": "LTP",
@@ -13660,7 +13660,7 @@
   "verification": {
    "tool": "tools/blender/verify_landside.py",
    "report": "out/buildings3d/landside_verify.json (local)",
-   "n_checks": 192,
+   "n_checks": 195,
    "n_fail": 0,
    "failed": [],
    "tolerance": "0.5 m or 2 % unless stated",
@@ -14503,6 +14503,15 @@
      "unit": "m"
     },
     {
+     "check": "BART station: distance of the modelled body to taxilane centreline 302 >= the observed north wall line (NAIP 2024) - 0.5 m",
+     "model": 36.733,
+     "drawing": 35.779,
+     "tol": null,
+     "ok": true,
+     "src": "close-out r3: NAIP 35.8 m, OSM 36.8 m; the ADG-5 OFA (42.1 m, integration [inf]) is an existing condition of the observed building",
+     "unit": "m"
+    },
+    {
      "check": "Garage G AirTrain station: white vault crown (eave + W/8 + roof)",
      "model": 27.907,
      "drawing": 27.251,
@@ -14585,7 +14594,7 @@
     },
     {
      "check": "CG: NAIP-detected cars reproduced (share with a model car within 3.2 m = the r2 stall-snap radius)",
-     "model": 0.866,
+     "model": 0.858,
      "drawing": 0.8,
      "tol": null,
      "ok": true,
@@ -15232,6 +15241,24 @@
      "unit": "m"
     },
     {
+     "check": "AirTrain pier columns: foot vertices on a carriageway / road deck (sfo_landside roads + roadways.glb)",
+     "model": 0,
+     "drawing": 0,
+     "tol": null,
+     "ok": true,
+     "src": "close-out r3: integration 03:59Z found 3 columns in road decks",
+     "unit": ""
+    },
+    {
+     "check": "AirTrain pier caps / bents over road decks: min vertical clearance (pier vertices over a deck)",
+     "model": 99.0,
+     "drawing": 4.6,
+     "tol": null,
+     "ok": true,
+     "src": "close-out r3: 4.6 m (Caltrans HDM 309.2) as the roadways solve; 99 = no pier over a deck",
+     "unit": "m"
+    },
+    {
      "check": "AirTrain: max deck grade between vertices 2-6 m apart",
      "model": 0.037,
      "drawing": 0.06,
@@ -15296,7 +15323,7 @@
     },
     {
      "check": "cars garage_g: min centre spacing (no overlap: car width <= 1.95 m + 0.15 m)",
-     "model": 2.455,
+     "model": 2.456,
      "drawing": 2.1,
      "tol": null,
      "ok": true,
@@ -15605,6 +15632,26 @@
     "BART band / colonnade (a2)"
    ]
   },
+  "closeout_r3": [
+   {
+    "id": "buildings-3",
+    "item": "AirTrain piers in road decks / caps 3.25 m over interchange_2_2",
+    "disposition": "fixed",
+    "change": "pier sites are tested against data/sfo_landside.json carriageways (OSM centrelines buffered by their widths, at grade and elevated) and the roadways.glb LOD0 deck tops: a column (+0.5 m) on a road or a cap < 4.6 m over a deck rejects the site; a rejected site no longer reserves its 30-m slot; where no single column fits, a straddle bent (two columns off the road within 18 m of the centre line, cap beam >= 4.6 m over any deck) [inf]. Max distance from a guideway point (outside the buildings that carry it) to the nearest pier stays 46.7 m (before 46.7; a road-only test without bents left 120 m)"
+   },
+   {
+    "id": "buildings-8",
+    "item": "BART station 36.7 m from taxilane 302 (ADG 5 OFA 42.1 m [inf])",
+    "disposition": "rejected with evidence (no geometry change)",
+    "change": "the modelled north face is the OSM way 221663595 edge (36.75 m from lane 302); the observed NAIP 2024 north wall line (landside_r1_measure.BART_NORTH, +-2 m) is 35.8 m from it: the building itself stands inside the inferred OFA (existing condition). The SFO Museum geometry has no BART outline; its 37.3 m is the nearest other structure. verify_landside now checks the body against the NAIP line; the lane ADG (5, from the largest stand served) is the integration inference"
+   },
+   {
+    "id": "buildings-9",
+    "item": "parked cars: boxes without wheels, two shapes",
+    "disposition": "fixed",
+    "change": "LOD0: two 6-sided axle prisms per car (tyres show outside the 3-%-inset skirt and below the body); a third shape, the pickup (5.50 x 1.95 x 1.85 m, open bed with a dark liner 0.45 m below the rails), shares 45 / 40 / 15 % [inf]; LOD1 / LOD2 unchanged (no wheels)"
+   }
+  ],
   "scene_not_modelled": {
    "note": "large airport buildings outside every asset (OpenStreetMap, ODbL 1.0, (c) OpenStreetMap contributors; refs/cache/osm): no spec / sheet yet - for a later spec round",
    "buildings": [

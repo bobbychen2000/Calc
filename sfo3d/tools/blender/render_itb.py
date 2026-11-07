@@ -92,6 +92,7 @@ def sun_sky(az_deg, el_deg, exposure=None):
     w = sc.world or bpy.data.worlds.new('w'); sc.world = w; w.use_nodes = True
     nt = w.node_tree; nt.nodes.clear()
     sky = nt.nodes.new('ShaderNodeTexSky'); sky.sky_type = 'MULTIPLE_SCATTERING'; sky.sun_disc = True
+    if SUN_OVERRIDE: az_deg, el_deg = SUN_OVERRIDE          # close-out r3: --sun az,el (the app's sun for a like-for-like A/B)
     sky.sun_elevation = math.radians(el_deg); sky.sun_rotation = math.radians(az_deg)
     sky.altitude = 10.0; sky.air_density = 1.0; sky.aerosol_density = 1.5; sky.ozone_density = 1.0
     bg = nt.nodes.new('ShaderNodeBackground'); bg.inputs['Strength'].default_value = 1.0
@@ -101,6 +102,7 @@ def sun_sky(az_deg, el_deg, exposure=None):
 
 
 EXPOSURE = -4.0
+SUN_OVERRIDE = None
 
 
 def camera(name, loc, target, lens=None, ortho=None, res=(960, 540)):
@@ -345,7 +347,11 @@ def main():
     ap.add_argument('--threads', type=int, default=3)
     ap.add_argument('--lod', type=int, default=0)
     ap.add_argument('--suffix', default='')
+    ap.add_argument('--sun', default='', help='az,el (deg) for every view (close-out r3 A/B against an app shot)')
     args = ap.parse_args()
+    if args.sun:
+        global SUN_OVERRIDE
+        SUN_OVERRIDE = tuple(float(v) for v in args.sun.split(','))
     os.makedirs(OUT, exist_ok=True)
     setup(args.glb, args.threads, args.samples, args.lod)
     if args.suffix:

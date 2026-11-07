@@ -53,6 +53,9 @@ Patches (static review 2026-11-04):
      `types_ok_dominated_unsafe`).
   P9 (close-out round 3, static-11) `antenna_ref`: per-family ADS-B position reference re-measured on all committed adsb.lol
      hours.
+  P11 (close-out round 3, static-12) fixed-walkway interior vertices out of the drawn outline (gates.js's A15 L1 nudge).
+  P10 (close-out round 3, static-9) rest poses within the ICAO clearance of an observed type are re-chosen where a pose
+     passes check_stands' rest tests and keeps the clearance (else `stow_icao` says why not).
   Close-out round 3 also: P1 / P2 read the 5 Nov 02:49Z flysfo snapshot too (SFO allocated D5 to a B772, F19 to B38M,
      C8 B752 with C10 BCS3), and P2 counts an aircraft standing at the neighbour's stop (adsb.lol, all committed hours)
      inside a plan window of the type as parked together (static-10: F19 B772 / F20 B752); P6 has gates.js's own-strip
@@ -671,6 +674,165 @@ def p9_antenna_ref(D, log):
                         'families': out}
 
 
+# ------------------------------------------------------------------------------------------------ P10
+def _obs(o): return set(ALIAS_T.get(t, t) for t in o.get('obs_types') or []) & set(GM.APP)
+
+
+def _arc(angs, back, margin=25.0):
+    """check_stands.swing_arc: (width of the smallest arc holding all directions, whether `back` +-margin is inside it)"""
+    A = sorted(a % 360 for a in angs)
+    gaps = [(A[(i + 1) % len(A)] - A[i]) % 360 for i in range(len(A))] if len(A) > 1 else [360.0]
+    i = max(range(len(gaps)), key=lambda k: gaps[k]); start = A[(i + 1) % len(A)]; width = 360.0 - gaps[i]
+    if back is None: return width, False
+    rel = (back - start) % 360
+    return width, (rel <= width + margin or rel >= 360 - margin)
+
+
+def p10_rest(D, log):
+    """close-out round 3 (2026-11-06, finding static-9): a rest pose (stow) that comes closer to the wings / engines /
+    tailplane of an OBSERVED type (at its stop, on any stand within 150 m) than the ICAO stand clearance (check_stands
+    WARN 'at rest ... evidence conflict': F14 / F17 / F19 / F21 L1 2.5-5.0 m from a B752, G8 L2 2.8 m from an E75L, G13 L3
+    6.9 m from a B772) is re-chosen where a pose exists that passes check_stands' rest tests AND keeps the ICAO clearance:
+    the cab pivot on a circle round the rotunda (every 1 deg within 120 deg of the present direction, lengths from the
+    model's retraction to +4 m), clear of every stand envelope within 150 m (<= 0.05 m2), of the SFO Museum terminal
+    (<= 0.3 m2), of its own fixed walkway (<= 0.5 m2), not crossed by another bridge docked to a type its stand accepts
+    (> 0.5 m2; as P7), and the rest + docked directions still in one 175 deg rotunda swing arc that does not hold the way
+    back along the walkway. The nearest such direction is taken (stow_src says so, inferred); else `stow_icao` records the
+    best clearance reachable and why the rest stays."""
+    A = json.load(open(os.path.join(ROOT, 'data', 'sfo_airport.json')))
+    bld = unary_union([Polygon(p[0], p[1:]).buffer(0) for p in list(A['terminalComplex']) + [q for b in A['boardingAreas'] for q in b['polys']]])
+    S = D['stands']; ENV = {}; FP = {}; sharers = {}
+    for o in S:
+        if o.get('shares_bridges_of'): sharers.setdefault(o['shares_bridges_of'], []).append(o)
+    allb = [(st, b) for st in S for b in (st.get('bridges') or []) + (st.get('bridges_upper') or [])]
+    def env(o):
+        if o['name'] not in ENV: ENV[o['name']] = GM.stand_env(o)
+        return ENV[o['name']]
+    def docked(so0, ob):
+        """[(type, cab pivot, footprint)] of bridge ob docked to every accepted type of its stand (+ sharers), as check_stands"""
+        if id(ob) in FP: return FP[id(ob)]
+        out = []
+        if ob.get('door') != 3:
+            pv_ = ob.get('rotunda') or ob['attach']; e0_, e1_ = ob.get('ext_range') or (GM.EXT_MIN, GM.EXT_MAX)
+            for so in [so0] + sharers.get(so0['name'], []):
+                rt = GM.rv(so['hdg'])
+                for t in GM.accepted_types(so):
+                    k = GM.dock_door(t, ob['door'])
+                    if k is None: continue
+                    dp = GM.door(GM.nose_for(so, t), so['hdg'], t, k)
+                    cabp = (dp[0] - rt[0] * GM.PIVOT_TO_DOOR, dp[1] - rt[1] * GM.PIVOT_TO_DOOR)
+                    if not (e0_ - 1.0 <= math.dist(pv_, cabp) <= e1_ + 1.0): continue
+                    out.append((t, so, cabp, GM.bridge_parts(ob, cabp)[2]))
+        FP[id(ob)] = out
+        return out
+    def rot_r(b): return max(0.01, b['rotunda_max_r']) if b.get('rotunda_max_r') is not None else GM.ROT_R
+    for st, b in allb:
+        if not b.get('stow') or not b.get('rotunda') or b.get('door') == 3: continue
+        pv = b['rotunda']
+        near = [o for o in S if math.dist(o['nose'], pv) < 150]
+        wingsl = [(GM.wings(GM.nose_for(o, t), o['hdg'], t), GM.icao_clear(GM.APP[t]['span']), t, o['name']) for o in near for t in sorted(_obs(o))]
+        def margin(rb): return min([(w.distance(rb) - need, w.distance(rb), t, on) for w, need, t, on in wingsl] or [(9e9, 9e9, None, None)])
+        def restgeom(c): return GM.bridge_parts(b, c)[2].difference(Point(pv).buffer(rot_r(b) + 0.3))
+        m0 = margin(restgeom(b['stow']))
+        if m0[0] >= 0: continue
+        tag = '%s L%s' % (st['name'], b.get('door'))
+        e0 = (b.get('ext_range') or (GM.EXT_MIN, GM.EXT_MAX))[0]
+        own = GM.bridge_parts(b, b.get('cab') or b['stow'])[0].difference(Point(pv).buffer(max(rot_r(b), GM.ROT_R) + 1.0))
+        W = b.get('walk') or []
+        wdir = None
+        if len(W) >= 2:
+            a_, b_ = W[-2], W[-1]; l_ = math.dist(a_, b_)
+            if l_ > 0.5: wdir = ((b_[0] - a_[0]) / l_, (b_[1] - a_[1]) / l_)
+        back = math.degrees(math.atan2(-wdir[1], -wdir[0])) if wdir else None
+        mine = [x for x in docked(st, b) if x[0] not in (b.get('dock_types_out') or [])]
+        ddirs = [math.degrees(math.atan2(c[1] - pv[1], c[0] - pv[0])) for _, _, c, _ in mine]
+        a0 = math.degrees(math.atan2(b['stow'][1] - pv[1], b['stow'][0] - pv[0]))
+        others = [(so, ob) for so, ob in allb if ob is not b and math.dist(ob.get('rotunda') or ob['attach'], pv) <= 90]
+        best = None; best_m = m0
+        for da in sorted(range(-120, 121), key=abs):
+            ang = a0 + da
+            for L in np.arange(e0, e0 + 4.01, 1.0):
+                c = (pv[0] + L * math.cos(math.radians(ang)), pv[1] + L * math.sin(math.radians(ang)))
+                rb = restgeom(c); m = margin(rb)
+                if m[0] > best_m[0]: best_m = m + (c, da)
+                if m[0] < 0: continue
+                if rb.intersection(bld).area > 0.3 or rb.intersection(own).area > 0.5: continue
+                if any(rb.intersection(env(o)).area > 0.05 for o in near): continue
+                w_, ins = _arc(ddirs + [ang], back)
+                if w_ > 2 * GM.ROT_SWING + 0.05 or ins: continue
+                crossed = False
+                for so, ob in others:
+                    for t, so_, cabp, g in docked(so, ob):
+                        if so_ is st and b['door'] <= 2 and GM.dock_door(t, b['door']) is not None and t not in (b.get('dock_types_out') or []): continue
+                        if g.intersection(rb).area > 0.5: crossed = True; break
+                    if crossed: break
+                if crossed: continue
+                best = (c, da, L, m); break
+            if best: break
+        if best:
+            c, da, L, m = best; old = list(b['stow'])
+            b['stow'] = [round(c[0], 2), round(c[1], 2)]; b['stow_len'] = round(L, 1)
+            b['stow_src'] = ('inferred: close-out round 3 (P10) - the rest pose turned %+d deg so that the parked tunnel / cab keep the ICAO '
+                             'clearance (%.1f m) to the observed %s at %s (was %.1f m); passes check_stands\' rest tests' % (da, m[1] - m[0] + m[0] if False else m[1], m[2], m[3], m0[1]))
+            note(b, 'stow %s -> %s (P10: %+d deg, %.1f m from the observed %s at %s, ICAO %.1f; was %.1f m)' % (old, b['stow'], da, m[1], m[2], m[3], m[1] - m[0], m0[1]), STAMP3)
+            log.append('P10 %s rest turned %+d deg: %.1f m from the observed %s at %s (ICAO %.1f; was %.1f m from %s)' % (tag, da, m[1], m[2], m[3], m[1] - m[0], m0[1], m0[2]))
+        else:
+            b['stow_icao'] = {'clearance_m': round(m0[1], 1), 'need_m': round(m0[1] - m0[0], 1), 'type': m0[2], 'at': m0[3],
+                              'best_reachable_m': round(best_m[1], 1) if len(best_m) > 4 else round(m0[1], 1),
+                              'why': 'no rest direction within +-120 deg / retraction..+4 m keeps the ICAO clearance and passes the rest tests (envelopes, '
+                                     'terminal, own walkway, docked bridges, rotunda swing): kept'}
+            log.append('P10 %s rest %.1f m from the observed %s at %s (ICAO %.1f): no compliant rest pose, kept' % (tag, m0[1], m0[2], m0[3], m0[1] - m0[0]))
+
+
+# ------------------------------------------------------------------------------------------------ P11
+def p11_walk_nudge(D, log):
+    """close-out round 3 (2026-11-06, finding static-12): js/live/gates.js prepGeom moves an interior vertex of a fixed
+    walkway straight out of the drawn terminal outline (data/sfo_buildings.json complex + non-walkway parts) when the 2.6 m
+    slab of an adjacent segment (not the first, which leaves the building) lies in it - by <= 0.5 m per step, <= 2.0 m in
+    all (the OSM roof lean), towards the nearest outline point of the deepest slab point (A15 L1: the OSM line runs along
+    the pier face, half the slab in Boarding Area A for 4 m; gates.js nudged it 1.6 m). The data now carries the same
+    vertex, so gates.js no longer has to (walk_src says so, inferred)."""
+    from shapely.prepared import prep
+    from shapely.ops import nearest_points
+    out_ = outline(); po = prep(out_); bnd = out_.boundary
+    for st in D['stands']:
+        for b in (st.get('bridges') or []) + (st.get('bridges_upper') or []):
+            W = [list(q) for q in b.get('walk') or []]
+            if len(W) < 3: continue
+            moved = 0.0
+            def deepest(i):
+                best = None
+                for j0, j1 in ((i - 1, i), (i, i + 1)):
+                    if j0 == 0: continue
+                    A_, B_ = W[j0], W[j1]; L = math.dist(A_, B_)
+                    if L < 0.05: continue
+                    u = ((B_[0] - A_[0]) / L, (B_[1] - A_[1]) / L); v = (-u[1], u[0])
+                    for t in np.arange(0.0, L + 1e-6, 0.25):
+                        for w in (-1, -0.5, 0, 0.5, 1):
+                            x, z = A_[0] + u[0] * t + v[0] * w * WALK_HW, A_[1] + u[1] * t + v[1] * w * WALK_HW
+                            if not po.contains(Point(x, z)): continue
+                            q = nearest_points(bnd, Point(x, z))[0]; d = math.hypot(q.x - x, q.y - z)
+                            if best is None or d > best[0]: best = (d, x, z, (q.x, q.y))
+                return best
+            for i in range(1, len(W) - 1):
+                v0 = list(W[i])
+                for _ in range(16):
+                    Dp = deepest(i)
+                    if not Dp: break
+                    l = math.hypot(Dp[3][0] - Dp[1], Dp[3][1] - Dp[2]) or 1.0; m = min(0.5, Dp[0] + 0.1)
+                    nv = [W[i][0] + (Dp[3][0] - Dp[1]) / l * m, W[i][1] + (Dp[3][1] - Dp[2]) / l * m]
+                    if math.dist(nv, v0) > 2.0: break
+                    W[i] = nv
+                mv = math.dist(W[i], v0)
+                if mv > 0.005:
+                    W[i] = [round(W[i][0], 2), round(W[i][1], 2)]; moved = max(moved, mv)
+                    note(b, 'walk vertex %d %s -> %s (%.2f m out of the drawn terminal outline: the 2.6 m slab lay in it; gates.js prepGeom rule)' % (i, v0, W[i], mv), STAMP3)
+            if moved:
+                b['walk'] = W
+                b['walk_src'] = 'inferred: OSM fixed-walkway way with interior vertices moved up to %.2f m out of the drawn terminal outline (patch_stands P11, = gates.js prepGeom; OSM roof lean)' % moved
+                log.append('P11 %s L%s walkway vertex moved %.2f m out of the drawn outline' % (st['name'], b.get('door'), moved))
+
+
 # ------------------------------------------------------------------------------------------------ P7
 def p7_stow_osm(D, log):
     """round 2 (2026-11-05; bridges_closeout.md s.1.7 / review bridges-v5: rest poses far from the imaged parked pose -
@@ -864,7 +1026,9 @@ def main():
     p8_family_ok(D, log)
     p3_rotunda(D, log)
     p6_drums(D, log)
+    p11_walk_nudge(D, log)
     p7_stow_osm(D, log)
+    p10_rest(D, log)
     p5_beyond(D, log)
     p9_antenna_ref(D, log)
     p4_src(D, log)     # after P5: a new conflict_along makes an obs stand inf

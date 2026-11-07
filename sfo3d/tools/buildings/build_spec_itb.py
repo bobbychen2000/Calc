@@ -81,6 +81,10 @@ S = {
     'photo_dimi': dict(title='Wikimedia Commons File:San_Francisco_International.jpg (DimiCalifornia, 2005-07)', licence='Public domain',
                        url='https://commons.wikimedia.org/wiki/File:San_Francisco_International.jpg', read='full', cache='refs/cache/buildings/itb/photos/1975704.jpg',
                        note='measured by tools/buildings/itb_photo_skyline.py -> itb_photo_skyline.json (qualitative + pair means)'),
+    'photo_a2': dict(title='Wikimedia Commons File:Aerial_view_of_San_Francisco_International_Airport_station,_September_2025.JPG (Pi.1415926535, 2025-09-09)',
+                     licence='CC BY-SA 4.0', url='https://commons.wikimedia.org/wiki/File:Aerial_view_of_San_Francisco_International_Airport_station%2C_September_2025.JPG',
+                     read='full', cache='refs/cache/buildings/review_likeness/a2.jpg (SOURCES.json beside it)',
+                     note='reference only (never a texture); close-out r3 buildings-12: Boarding Area G curtain-wall frame colour by eye'),
     'osm': dict(title='OpenStreetMap (Overpass extract 2026-09-24, refs/cache/osm/overpass_ksfo_latest.json)', licence='ODbL-1.0', url='https://www.openstreetmap.org/',
                 read='full', note='cross-reference only (contributor values without cited sources); never used as a source value'),
 }
@@ -250,6 +254,11 @@ item('ba_g.stories', 'boarding_area_g', 'Stories / levels', 'three-story: apron 
 item('ba_g.gaterooms', 'boarding_area_g', 'Gate rooms', 'six double-gated, two-level common-use gate rooms for twelve 747-400s', None, 'pub', ['tutor_bag'], 'high')
 item('ba_g.gates', 'boarding_area_g', 'Gates', 'G1-G14 (14)', None, 'pub', ['wiki_sfo'], 'medium')
 item('ba_g.facade', 'boarding_area_g', 'Exterior', 'metallic-finish composite aluminium panels and a tinted energy-efficient glazed curtain wall', None, 'pub', ['tutor_bag'], 'high')
+item('ba_g.mullion_finish', 'boarding_area_g', 'Curtain-wall mullion / transom finish', 'light silver-white (natural / clear-anodised or light-painted aluminium look)', None, 'obs',
+     ['photo_a2'], 'low', status='unverified',
+     method='by eye on one oblique aerial photograph (Sept 2025, daylight): the BA-G glazed bands show light, silver-white mullions and transoms against tinted glass',
+     note='no published finish specification found (tutor_bag gives "metallic-finish composite aluminium panels" for the wall panels only); one photo of one pier - '
+          'applies to BA-G only, piers B-F not verified (engine_closeout R2.4, close-out r3 buildings-12)')
 item('ba_g.footprint', 'boarding_area_g', 'Footprint', 'SFO Museum polygon (data/sfo_airport.json "Boarding Area G"): body width 38.3-38.4 m, 47 m at the middle pod', 'm', 'obs', ['sfom_data'], 'medium',
      note='NAIP imaged roof width ~33.5 m by eye (edges ambiguous, low); the SFO Museum G outline is offset ~3-6 m NNE of the relief-corrected NAIP roof (imagery.md s.6 lists +4 m) - unresolved')
 item('ba_g.height_roof', 'boarding_area_g', 'Main pier roof height above apron', 17.0, 'm', 'obs', ['naip'], 'low',

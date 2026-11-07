@@ -27,7 +27,9 @@ Close-out round 3 (2026-11-06, finding static-1; each tagged in the pavement `sr
 also covers 60 m round the 5 m cells where ADS-B shows an aircraft on the ground at least twice
 (refs/cache/stands/adsb_ground_cells.json, all committed adsb.lol hours) and the grey apron connected to them up to 150 m; (b) cluttered aprons: inside a 25 m window that NAIP shows >= 88 % grey, <= 3 % soil and
 vegetation and >= 50 % smooth, every pixel that is not soil / vegetation / a building (SFO Museum or OSM) is pavement;
-(c) within 25 m of a vehicle stay, smooth unsaturated pixels connected to the pavement (the ARFF apron). The green
+(c) within 25 m of a vehicle stay, smooth unsaturated pixels, or pixels in a >= 60 % grey / <= 5 % soil window, connected
+to the pavement (the ARFF apron); (d) within 10 m of a cell where >= 2 aircraft were on the ground, the window of (b)
+also counts bright (V >= 245) grey pixels - a fresh-concrete slab on a taxilane, never a roof under an aircraft. The green
 paint also gets the inferred old-J island of FAA AL-375 2611 (finding static-3; paint `src`).
 
     python3 tools/imagery/paint_pave_naip.py          # writes data/sfo_paint.* and data/sfo_pavement.*
@@ -140,11 +142,14 @@ def main(preview=False, dump=None):
     # hours, tools/imagery/adsb_ground_cells.py): UAL2480 B752 parked for hours on the light concrete maintenance apron at
     # (-1383, -1917), 30 m off every candidate source (offpave.mask 369,812 frames). NAIP still decides.
     agc = np.zeros((H, W), np.uint8); N_AGC = 0
+    agc2 = np.zeros((H, W), np.uint8)               # (d): cells where >= 2 distinct aircraft were on the ground
     try:
         for cx_, cz_, n_, a_ in json.load(open(os.path.join(ROOT, 'refs', 'cache', 'stands', 'adsb_ground_cells.json')))['cells']:
             if n_ < 2: continue
             c_ = P([[cx_, cz_]])[0]
-            if 0 <= c_[0] < W and 0 <= c_[1] < H: agc[int(c_[1]), int(c_[0])] = 1; N_AGC += 1
+            if 0 <= c_[0] < W and 0 <= c_[1] < H:
+                agc[int(c_[1]), int(c_[0])] = 1; N_AGC += 1
+                if a_ >= 2: agc2[int(c_[1]), int(c_[0])] = 1
     except (OSError, KeyError, ValueError):
         pass
     cand_old = (dpav < 60) | (oap > 0) | (dcl < 40) | (park > 0)
@@ -161,6 +166,7 @@ def main(preview=False, dump=None):
     Bc_, Gc_, Rc_ = img[..., 0].astype(np.int16), img[..., 1].astype(np.int16), img[..., 2].astype(np.int16)
     lum_ = (Bc_ + Gc_ + Rc_) // 3; spr_ = img.max(-1).astype(np.int16) - img.min(-1)
     ggrey = (spr_ < 22) & (lum_ > 70) & (V < 245)
+    ggreyb = (spr_ < 22) & (lum_ > 70)              # (d) below: the same without the V cap (bright concrete)
     gsoil = (Rc_ - Bc_ > 38) & (Rc_ - Gc_ > 5) & (Rc_ > 110)
     gveg = (Gc_ - Rc_ > 6) & (Gc_ - Bc_ > 0) & (lum_ < 150)
     del Bc_, Gc_, Rc_, spr_
@@ -168,7 +174,17 @@ def main(preview=False, dump=None):
     env = (wmean(ggrey) >= ENV_GREY) & (wmean(gsoil) <= ENV_SOIL) & (wmean(gveg) <= ENV_SOIL) & (wmean(lap < 3.5) >= ENV_SMOOTH)
     obld = osm_buildings(fill, H, W)
     envadd = env & ~gsoil & ~gveg & (lum_ > 40) & (obld == 0)
-    del lum_
+    # (d) bright concrete on a taxilane: V >= 245 is left out of the window above because unmapped bright roofs then
+    # classified as apron; but a fresh-concrete slab where aircraft taxi (realtime cell (-1050, 1025) south of Boarding Area
+    # B: NAIP 94 % grey / 3 % soil, 772 off-pavement frames of 9 aircraft, a 25 x 50 m slab at V 245-255 with the taxi
+    # lead-in line painted across it) is the same pavement. Within AC_R m of a 5 m cell where >= 2 distinct aircraft were on
+    # the ground (ADS-B; an aircraft's antenna is never over a roof), the window counts bright grey pixels as grey too.
+    envb = (wmean(ggreyb) >= ENV_GREY) & (wmean(gsoil) <= ENV_SOIL) & (wmean(gveg) <= ENV_SOIL) & (wmean(lap < 3.5) >= ENV_SMOOTH)
+    near2 = cv2.dilate(agc2, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * int(AC_R / RES) + 1, 2 * int(AC_R / RES) + 1))) > 0
+    envbadd = envb & near2 & ~gsoil & ~gveg & (lum_ > 40) & (obld == 0) & ~envadd
+    print('  bright-concrete envelope near aircraft cells (d): %.2f ha of window pixels' % ((envbadd & (pav == 0) & (bld == 0)).sum() * RES * RES / 1e4))
+    envadd |= envbadd
+    del lum_, envb, near2, envbadd, ggreyb
     # ... and a continuous apron that an aircraft stood on is pavement beyond AGC_R too: grey + smooth (the test above) or
     # cluttered-envelope pixels connected to such pixels inside the ADS-B candidate disc, up to AGC_GROW m from a ground
     # cell (the north cargo apron (-1035, -1863) and the maintenance apron (-1383, -1917) would otherwise end in an arc
@@ -234,7 +250,12 @@ def main(preview=False, dump=None):
     for v in vstays:
         c_ = P([[v['x'], v['z']]])[0]
         if 0 <= c_[0] < W and 0 <= c_[1] < H: cv2.circle(pad, (int(c_[0]), int(c_[1])), int(PAD_R / RES), 1, -1)
-    padc = (pad > 0) & (lap < PAD_LAP) & (S < PAD_SMAX) & ~vegc & ~soilc & (bld == 0) & (obld == 0) & (pav == 0) & ~p
+    # ... or (the striped / cluttered part of the same apron) inside a 25 m window that is >= PAD_GREY grey and <= PAD_SOIL
+    # soil / <= ENV_SOIL vegetation (the cell classes of (b)): the ARFF apron round R41 (-1565, -592) 62 % grey / 3 % soil
+    # and the OPS44 pad (-320, 1496) 82 % / 1 % qualify; the vehicle discs on the infield soil (FM8 63 %, OPS12 16 %,
+    # OPS31 23 %, OPS40 79 % soil) do not
+    padw = (wmean(ggrey) >= PAD_GREY) & (wmean(gsoil) <= PAD_SOIL) & (wmean(gveg) <= ENV_SOIL) & ~gsoil & ~gveg
+    padc = (pad > 0) & (((lap < PAD_LAP) & (S < PAD_SMAX)) | padw) & ~vegc & ~soilc & (bld == 0) & (obld == 0) & (pav == 0) & ~p
     padc = ndi.binary_opening(padc, iterations=2)
     lab_, n_ = ndi.label(padc | p | (pav > 0)); keep_ = np.unique(lab_[p | (pav > 0)]); keep_ = keep_[keep_ > 0]
     padadd = padc & np.isin(lab_, keep_)
@@ -255,8 +276,8 @@ def main(preview=False, dump=None):
         nr = float(new_rule[m].mean())
         for poly in polys:
             pave_polys.append(poly); conc.append(bool(vmed >= 150))
-            SRC_C.append('naip' if nr < 0.1 else 'naip; %.0f %% from the close-out round 3 rules (cluttered-apron envelope / ADS-B aircraft '
-                         'ground cells / vehicle-stay pad: inferred)' % (100 * nr))
+            SRC_C.append('naip' if nr < 0.1 else 'naip; %.0f %% from the close-out round 3 rules (cluttered-apron / bright-concrete envelope / '
+                         'ADS-B aircraft ground cells / vehicle-stay pad: inferred)' % (100 * nr))
         big.append((round(len(ys) * RES * RES), world((xs.mean(), ys.mean())), round(vmed)))
     big.sort(reverse=True)
     # static close-out (2026-11-04): taxiways built after NAIP 2024 (data/sfo_details.json centrelines with src
@@ -328,6 +349,8 @@ AGC_R, AGC_GROW = 60.0, 150.0   # m: candidate disc round an ADS-B aircraft grou
 ENV_WIN = 50              # px (25 m at 0.5 m): the cluttered-apron window (close-out round 3, finding static-1)
 ENV_GREY, ENV_SOIL, ENV_SMOOTH = 0.88, 0.03, 0.5
 PAD_R, PAD_LAP, PAD_SMAX = 25.0, 3.0, 45   # vehicle-stay pads: radius (m), texture and HSV saturation limits
+PAD_GREY, PAD_SOIL = 0.6, 0.05             # ... or a 25 m window this grey with at most this much soil
+AC_R = 10.0               # m: (d) bright-concrete envelope only this close to a cell with >= 2 aircraft (2 ADS-B cells' width)
 
 
 def osm_buildings(fill, H, W):

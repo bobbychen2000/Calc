@@ -15,8 +15,10 @@ Sources of flysfo-derived values (read from the code that writes them):
      split is in the lost stands_built.json), superseded_types / conflict_superseded, types_ok / types_ok_all_paths /
      tight_with / below_icao (neighbours SFO plans simultaneously), ADS-B evidence tied to SFO stand windows (resid.adsb,
      verified_by 'adsb', type_stops, conflict with adsb, stops_rejected).
-  B. refs/cache/stands/patch_p1p2_replay.json (P1 / P2 on the local 4 Nov snapshot): obs_types_aodb2 (types and SFO flight
-     numbers), the P1 changes of obs_types / cls / cls_src / span_max / len_max / types_ok, excl_types, their fixup notes.
+  B. refs/cache/stands/patch_p1p2_replay.json (P1 / P2 on the local 4 Nov 18:01Z snapshot and, since close-out round 3
+     (2026-11-06), the 5 Nov 02:49Z one): obs_types_aodb2 (types and SFO flight numbers), the P1 changes of obs_types /
+     cls / cls_src / span_max / len_max / types_ok, excl_types, their fixup notes. patch_stands.py P8 (round 3) widens
+     types_ok by family dominance - derived from these whitelists, so flysfo-derived too.
   C. refs/cache/stands/adsb_parked.json (tools/stands/adsb_parked.py): per stay the SFO match (stand, gate, flight,
      callsign, match, win, overlap_s, sfo_type). Since round 3 NO generator reads them: patch_stands.py P5 selects stays
      by geometry (on the stand's lead-in) and ADS-B type; paint_pave_naip.py identifies aircraft by ADS-B type / airline

@@ -14,7 +14,7 @@
  "al375_2611_oldJ.json": {
   "url": null,
   "licence": "own output (sfo3d) derived from FAA AL-375 cycle 2611 (US Government work, public domain) and OSM ways (ODbL 1.0: the old-J trace)",
-  "made_by": "tools/xcheck/faa_al375_mask.py (2026-11-05)",
-  "note": "chart registration on the runway-centreline crossings, chart classes (grey / white) under the old-J remainder and controls, the white (island) regions touching it; read by tools/build_airfield_details.py (pavementRetiredParts)"
+  "made_by": "tools/xcheck/faa_al375_mask.py (2026-11-05; close-out round 3 2026-11-06)",
+  "note": "chart registration on the runway-centreline crossings, chart classes (grey / white) under the old-J remainder and controls, the white chart island touching it (whole, 120 m crop since close-out round 3) and per retired F1 polygon its chart-grey parts (f1_parts); read by tools/build_airfield_details.py (pavementRetired / pavementRetiredParts) and tools/imagery/paint_pave_naip.py (inferred island paint)"
  }
 }

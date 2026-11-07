@@ -274,6 +274,30 @@ def qa_override(mode):
     if gnd is not None: gnd.hide_render = True
 
 
+def view_t2curb(args):
+    """close-out r3 (buildings-2): the moved T2 landside face from the NW over the departures roadway - the app's t2along
+    look view (target (-766, 9, 215), yaw 330, pitch 8, 75 m, 50 deg vertical fov): glass lobby 0-7 m over the curb,
+    5.4-m canopy over the 5.85-m sidewalk, the T2 - garage connector overhead. Use --roadways 1 for the deck context."""
+    sun_sky(205.0, 50.0)
+    camera('cam_t2curb', Wxz(-803.1, 150.7, 19.4), Wxz(-766.0, 215.0, 9.0), lens=21.7, res=(args.res, int(args.res * 0.5625)))
+    return render(os.path.join(OUT, 'domestic_t2curb%s.png' % args.suffix)),
+
+
+def view_appcam(args):
+    """close-out r3 (buildings-5): the app's own camera and sun for one view, read from a c3_app_views_job.mjs log
+    (--appcam <c3_info.json>:<view name>): eye / target in app world, vertical fov, sun az / el. A Cycles reference of the
+    SAME side and light as the app shot (the round-2 comparison used domestic_bclose, a sunlit view of the other side)."""
+    path, name = args.appcam.rsplit(':', 1)
+    c = json.load(open(path))[name]; r = c['rig']; sn = c['sun']
+    sun_sky(float(sn['az']), float(sn['el']))
+    W = args.res; H = int(args.res * 0.5625)
+    hf = 2.0 * math.atan(math.tan(math.radians(r['fov_deg']) / 2.0) * W / H)          # app fov is vertical; Blender sensor fit horizontal
+    lens = 18.0 / math.tan(hf / 2.0)
+    e, t = r['eye'], r['target']
+    camera('cam_app_' + name, Wxz(e[0], e[2], e[1] - GROUND_Y), Wxz(t[0], t[2], t[1] - GROUND_Y), lens=lens, res=(W, H))
+    return render(os.path.join(OUT, 'domestic_app_%s%s.png' % (name, args.suffix))),
+
+
 def view_plan(args):
     sun_sky(187.0, 72.4)          # NAIP 2024-05-20 local noon: sun az ~187, el 72.4 (as the ITB plan)
     c = Wxz(OX, OZ, 0)
@@ -347,10 +371,13 @@ def main():
     ap.add_argument('--suffix', default='')
     ap.add_argument('--qa', default='', choices=['', 'ao', 'backface'])
     ap.add_argument('--context', type=int, default=1, help='also import the tower and ITB assets (orientation in the photo views)')
+    ap.add_argument('--roadways', type=int, default=0, help='also import data/buildings3d/roadways.glb (close-out r3: the T2 curb view)')
+    ap.add_argument('--appcam', default='', help='<c3_info.json>:<name> for view appcam (close-out r3)')
     args = ap.parse_args()
     args.res = min(args.res, 960); args.samples = min(args.samples, 64)
     os.makedirs(OUT, exist_ok=True)
     ctx = [os.path.join(ROOT, 'data', 'buildings3d', f) for f in ('tower.glb', 'itb.glb')] if args.context and not args.qa else []
+    if args.roadways: ctx = ctx + [os.path.join(ROOT, 'data', 'buildings3d', 'roadways.glb')]
     setup(args.glb, args.threads, args.samples, args.lod, ctx)
     done = {}
     if args.qa:

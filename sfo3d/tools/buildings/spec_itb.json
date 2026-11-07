@@ -216,6 +216,14 @@
    "url": "https://www.openstreetmap.org/",
    "read": "full",
    "note": "cross-reference only (contributor values without cited sources); never used as a source value"
+  },
+  "photo_a2": {
+   "title": "Wikimedia Commons File:Aerial_view_of_San_Francisco_International_Airport_station,_September_2025.JPG (Pi.1415926535, 2025-09-09)",
+   "licence": "CC BY-SA 4.0",
+   "url": "https://commons.wikimedia.org/wiki/File:Aerial_view_of_San_Francisco_International_Airport_station%2C_September_2025.JPG",
+   "read": "full",
+   "cache": "refs/cache/buildings/review_likeness/a2.jpg (SOURCES.json beside it)",
+   "note": "reference only (never a texture); close-out r3 buildings-12: Boarding Area G curtain-wall frame colour by eye"
   }
  },
  "items": [
@@ -1794,6 +1802,21 @@
     "verdict": "CONFIRMED",
     "evidence": "Tutor Perini: \"metallic finished composite aluminum panels and a tinted energy-efficient glazed curtainwall\""
    }
+  },
+  {
+   "id": "ba_g.mullion_finish",
+   "group": "boarding_area_g",
+   "name": "Curtain-wall mullion / transom finish",
+   "value": "light silver-white (natural / clear-anodised or light-painted aluminium look)",
+   "unit": null,
+   "tag": "obs",
+   "sources": [
+    "photo_a2"
+   ],
+   "confidence": "low",
+   "status": "unverified",
+   "method": "by eye on one oblique aerial photograph (Sept 2025, daylight): the BA-G glazed bands show light, silver-white mullions and transoms against tinted glass",
+   "note": "no published finish specification found (tutor_bag gives \"metallic-finish composite aluminium panels\" for the wall panels only); one photo of one pier - applies to BA-G only, piers B-F not verified (engine_closeout R2.4, close-out r3 buildings-12)"
   },
   {
    "id": "ba_g.footprint",

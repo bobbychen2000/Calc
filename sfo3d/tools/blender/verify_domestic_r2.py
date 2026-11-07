@@ -192,6 +192,10 @@ def t2_curb_probe(S, lod):
     T = V1.world_tris(S, lod, skip=('_fins', '_lettering'))
     deck_top = G.CURB - 0.15
     deck = unary_union([LineString(p).buffer(w, cap_style=2) for w, p in G.T2_DEP_WAYS.values()])
+    # the T2 stretch only: way 256787747 runs on past the T3 East curb (its 1-3 m deck overlap is the integration's T3E cut,
+    # not this probe's subject) - clip to the z range of the T2 departures sidewalk
+    sb = G.T2_SIDEWALK_POLY.bounds
+    deck = deck.intersection(Polygon([(-2000.0, sb[1]), (0.0, sb[1]), (0.0, sb[3]), (-2000.0, sb[3])]))
     x0, z0, x1, z1 = deck.bounds
     lo = T[:, :, [0, 2]].min(1); hi = T[:, :, [0, 2]].max(1); ylo = T[:, :, 1].min(1); yhi = T[:, :, 1].max(1)
     m = (hi[:, 0] > x0) & (lo[:, 0] < x1) & (hi[:, 1] > z0) & (lo[:, 1] < z1) & (yhi > GY + deck_top + 0.02) & (ylo < GY + deck_top + 4.6)
@@ -199,13 +203,21 @@ def t2_curb_probe(S, lod):
     # connector soffit over the deck: lowest triangle above deck + 4.6 inside the deck plan
     mm = (hi[:, 0] > x0) & (lo[:, 0] < x1) & (hi[:, 1] > z0) & (lo[:, 1] < z1) & (ylo >= GY + deck_top + 4.6 - 0.02)
     soff = [float(t[:, 1].min()) - GY for t in T[mm] if Polygon([(v[0], v[2]) for v in t]).buffer(0).intersection(deck).area > 0.05]
-    # roof edge vs the measured line: at z = 180..245 the westmost T2 roof-level (> 15 m) vertex x per 1-m z band
+    # roof edge vs the measured line: at z = 180..245 the westmost point of the T2 roof-level (> 15 m) triangles cut by the
+    # plane z = zz, near the line (a section, not the triangles' vertices: the fascia triangles run 10-25 m along the slanted line)
     a, k = G.T2_EDGE_LINE
     roof = T[(ylo > GY + 15.0)]
     dev = []
     for zz in np.arange(180.0, 246.0, 5.0):
-        sel = roof[(roof[:, :, 2].min(1) < zz + 0.5) & (roof[:, :, 2].max(1) > zz - 0.5) & (np.abs(roof[:, :, 0].mean(1) - (a + k * zz)) < 6)]
-        if len(sel): dev.append(round(float(sel[:, :, 0].min()) - (a + k * zz), 2))
+        sel = roof[(roof[:, :, 2].min(1) < zz) & (roof[:, :, 2].max(1) > zz)]
+        xs = []
+        for t in sel:
+            for i, j in ((0, 1), (1, 2), (2, 0)):
+                za, zb = t[i, 2] - zz, t[j, 2] - zz
+                if (za < 0) != (zb < 0):
+                    xs.append(float(t[i, 0] + (t[j, 0] - t[i, 0]) * za / (za - zb)))
+        xs = [x for x in xs if abs(x - (a + k * zz)) < 6]
+        if xs: dev.append(round(min(xs) - (a + k * zz), 2))
     return dict(deck_plan_m2=round(deck.area, 1), solid_inside_deck_band_m2=round(o.area, 3), connector_soffit_over_deck_m=round(min(soff) - deck_top, 2) if soff else None,
                 roof_edge_minus_line_m=dict(n=len(dev), median=float(np.median(dev)) if dev else None, max_abs=float(np.max(np.abs(dev))) if dev else None),
                 ok=bool(o.area < 0.3 and (not soff or min(soff) - deck_top >= 4.6) and dev and np.max(np.abs(dev)) < 0.6))
