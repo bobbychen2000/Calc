@@ -903,3 +903,15 @@ dispositions: `docs/requests/realtime_closeout.md`, "Round 3". Every change carr
     parking, every report since within `PUSH_UNDO_L` (0.6) × its length of it, the off-block is undone (`push-undone` event,
     counter `pushUndone`) and the aircraft takes its stand again. A real push-back ends ≥ ~1 L out. Window 16:55–17:30Z:
     5,822 → 785 frames (the 98 s until the undo).
+20. **A silent aircraft on a mutually exclusive stand does not outlive newer reports** (realtime-2 follow-up; found on the
+    final all-hours run of segment A, `overlap.gnd` 14,366 → 38,225 frames, 33,556 of them one key). UAL2 B789 was last heard
+    12 m from B5S's nose at 16:56:14Z on 5 Nov, then silent [obs]; ASA331 B738 was heard parked 10.5 m from B4's nose at
+    22:19:50 / 22:20:13Z and next at 23:15:59Z before its push [obs]; SFO's MARS data makes B4 and B5S mutually exclusive. With
+    no SFO plan (after 5 Nov 02:49Z in the cache), `matchGate()`'s geometry step let the silent B5S occupant block B4, so
+    ASA331 got no stand, `occupy()`'s exclusive-stand replacement never ran, and the B789 was drawn through the B738 for 56 min
+    (before this round the B789 had been removed at 20:16Z by another arrival's premature B4 assignment). Now `blocked(g, tr,
+    T)` takes the time of the aircraft's own newest report that puts it on the stand (`stationary()`: heard still ≥ 20 s and
+    ≥ 2 reports; a silent body at rest: its last fix) and a silent occupant of an exclusive stand last heard BEFORE that time
+    does not block — the two cannot both be there and the newer reports win; SFO's allocation path already ignored silent
+    occupants. A first form that needed 20 s of heard reports fired only at 23:15:59Z (ASA331's transponder was off at B4).
+    Window 5 Nov 16:50–23:30Z: see `docs/requests/realtime_closeout.md`, Round 3.

@@ -1434,7 +1434,7 @@ export class Traffic {
     // start, tug disconnect -- is not a new in-block, and its bridge must not come out again; replay check 25 Sep: UAL1111
     // at E7 15:38:19-15:39:09Z logged off-block, in-block, off-block. A 'forward' off-block can be a missed creep or push
     // start (UAL755 F17 20:09Z), so it does not block the stand)
-    if (!tr.gate && (dur >= 20000 || tr.dock || !tr.seenMoving)) { const g = this.matchGate(tr, { x: mx, z: mz, hd: tr.stillHdg, hdReal: hs.length >= 3, icao: tr.info.icao });
+    if (!tr.gate && (dur >= 20000 || tr.dock || !tr.seenMoving)) { const g = this.matchGate(tr, { x: mx, z: mz, hd: tr.stillHdg, hdReal: hs.length >= 3, icao: tr.info.icao }, dur >= 20000 && S.length >= 2 ? t : 0);
       // (nor onto any contact stand within 10 min of its off-block, unless it has landed since: a departure pausing inside a
       // stand's limits after its push -- engine start, tug disconnect -- was in-blocked there when its push stand was unknown,
       // and its next forward motion logged a second off-block; review 4 Nov)
@@ -1533,7 +1533,10 @@ export class Traffic {
     }
     const d = Math.hypot(p.x - g.w.x, p.z - g.w.z); return d < 40 * relax ? d + 4 : null;
   }
-  matchGate(tr, p) {
+  // heard: the time of this aircraft's OWN newest report that puts it here (stationary(): heard still >= 20 s, >= 2 reports;
+  // a silent body at rest: its last fix) -- a silent aircraft last heard before that on a mutually exclusive stand does not
+  // block (step 2); 0: it does
+  matchGate(tr, p, heard = 0) {
     if (inPolys(this.taxiways, p.x, p.z) || runwayAt(p.x, p.z)) return null;
     const T = typeOf(tr);
     // 1. SFO's own allocation, if this aircraft is really close to that stand (the owner can check it on flysfo.com)
@@ -1558,7 +1561,12 @@ export class Traffic {
       if (!standFits(g, T, icao) || (bizGA && (g.bridge || g.sharesBridgesOf))) continue;
       const sc = this.gateScore(g, p, T); if (sc == null) continue;
       if (g.occupant && g.occupant !== tr.hex) { const o = this.tracks.get(g.occupant); if (o && !o.stale && o.gateScore != null && o.gateScore <= sc) continue; }
-      if (this.blocked(g, tr)) continue;
+      // (close-out round 3, realtime-2 follow-up: an aircraft whose own reports put it inside this stand's limits is not blocked
+      // by a SILENT one last heard EARLIER on a mutually exclusive stand (SFO MARS excl) -- the two cannot both be there, the
+      // newer reports are the evidence [obs], and occupy() replaces the silent one, as SFO's allocation above already does.
+      // Without SFO's plan the silent one blocked: UAL2 B789, last heard at B5S 5 Nov 16:56Z, was drawn through ASA331 B738,
+      // heard parked at B4 (excl B5S) at 22:20Z and silent there until its push at 23:16Z -- overlap.gnd 33,556 frames)
+      if (this.blocked(g, tr, heard || false)) continue;
       if (sc < bd) { bd = sc; best = g; }
     }
     if (best) { tr.gateScore = bd; tr.gateSrc = pn ? (this.gateByName(pn) === best ? 'sfo' : 'geo') : 'geo'; }
@@ -1570,8 +1578,9 @@ export class Traffic {
   // them: B772 UAL2358 / UAL300 at F19 20:16-21:55Z beside B752 UAL2467 / UAL574 / UAL1808 at F20, B752 DAL363 at C8 23:21-
   // 00:31Z beside BCS3 ACA566 at C10, 4-5 Nov. They only steer an arrival's silent docking without data (silentDock) and are
   // logged when an in-block meets one (occupy: 'excl-type-conflict'). SFO's MARS exclusions `excl` still block)
+  // (liveOnly may be a time instead: then only a silent one last heard before it does not block -- matchGate's 'heard')
   blocked(g, tr, liveOnly = false) {
-    for (const n of g.excl || []) { const o = this.gateBy.get(n); if (o && o.occupant && o.occupant !== tr.hex) { const q = liveOnly && this.tracks.get(o.occupant); if (!(q && q.stale)) return true; } } // mutually exclusive stands (SFO MARS)
+    for (const n of g.excl || []) { const o = this.gateBy.get(n); if (o && o.occupant && o.occupant !== tr.hex) { const q = liveOnly && this.tracks.get(o.occupant); if (!(q && q.stale && (liveOnly === true || (q.lastFixT || 0) < liveOnly))) return true; } } // mutually exclusive stands (SFO MARS)
     for (const o of this.gates) {
       if (o === g || !o.occupant || o.occupant === tr.hex || !o.oversize) continue;
       if (Math.hypot(o.w.x - g.w.x, o.w.z - g.w.z) < 0.5 * (o.maxSpan + g.maxSpan) + 8) return true;
@@ -1977,7 +1986,7 @@ export class Traffic {
           // that was 40+ m away there by a fade re-placement)
           if (!tr.gate && (lf.gs || 0) < 8 * KT && (!tr.pushed || tr.m.phase === 'still')) { const p = tr.stillPos ? { x: tr.stillPos[0], z: tr.stillPos[1], hd: tr.stillHdg, hdReal: false, icao: tr.info.icao } : { x: lf.x, z: lf.z, hd: lf.hd, hdReal: false, icao: tr.info.icao };
             if (!tr.pushed && !this.noSilentDock && !tr.silentDockG && tr.groundSFO && (tr.dirSFO === 'arr' || tr.landedAt || tr.dock)) this.silentDock(tr, lf, tDisp);
-            const g = !tr.gate && tr.m.phase === 'still' ? this.matchGate(tr, p) : null; if (g) { this.occupy(tr, g, null);
+            const g = !tr.gate && tr.m.phase === 'still' ? this.matchGate(tr, p, lf.t || 0) : null; if (g) { this.occupy(tr, g, null);
               // (round 3, review realtime-v3: an arrival matched to its stand only now -- it came to rest a few metres off the
               // stand's lead-in and went silent -- has arrived there: its in-block is logged, at its last report. UAL1372 A320
               // stopped 3.8 m short of D8's stop, 3.4 m beside its lead-in, at 19:14:50Z, was placed at D8 when it went stale
