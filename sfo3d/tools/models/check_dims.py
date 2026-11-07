@@ -425,9 +425,9 @@ def rendered(P, Z, head, fitd, T, full=None):
         if hasGear and pt and pt.get('a', 0) < 0:               # nose-up stance (737 MAX): also the top at the main-gear station
             cr, crm = crown_of(Qf, Zf, If, L, at=x_nose - pt['x0'])
         else: cr = crown_of(Qf, Zf, If, L)
-        # the fuselage's highest top ahead of the tail (0.1-0.65 L: the ACAP 'top of fuselage' row is the highest point; in a
-        # nose-down stance it lies aft of 0.5 L, where the fit.js crown row stops; close-out round 3)
-        if hasGear: crhi = crown_of(Qf, Zf, If, L, hi=0.65)
+        # the fuselage's highest top ahead of the dorsal fin (0.1-0.6 L: the ACAP 'top of fuselage' row is the highest point;
+        # in a nose-down stance it lies aft of 0.5 L, where the fit.js crown row stops; close-out round 3)
+        if hasGear: crhi = crown_of(Qf, Zf, If, L, hi=0.6)
         # keel (lowest skin on the centre plane) at the stations of the model's own cargo doors / the published ones
         Ssec = mf_sections(Qf, Zf, If, L)
     out = dict(L=L * s, span=float(Q[:, 2].max() - Q[:, 2].min()) * s, H=Hc + float(Q[:, 1].max()) * s, Hc=Hc,
@@ -502,6 +502,12 @@ for _k in ('B736', 'B737', 'B738', 'B739'): EXPLAINED[(_k, 'engclr')] = _NG_ENG
 for _k in ('B38M', 'B39M', 'B3XM'): EXPLAINED[(_k, 'aftsill')] = _MAX_STANCE
 # (737NG door-1 sill: re-fitted in tools/convert_models.py doorFit, review 5 Nov 2026; no longer flagged)
 for _k in ('B736', 'B737', 'B738', 'B739', 'B37M', 'B38M', 'B39M', 'B3XM'): EXPLAINED[(_k, 'mgear')] = _B738_GEAR
+_B738_CARGOX = ('source model: the FlightGear 737-800 artist drew both lower-deck cargo doors toward the wing, the forward one '
+                '1.6 m aft and the aft one 1.3 m forward of D6-38A004 Rev K §2.7.1 rows C / G (the NG document gives no stations: '
+                'the 737-800 / -900ER take their MAX twin\'s, inf). Their sills fit rows C / F (NG) and D / L (MAX) in the fitted '
+                'stance; the belt loaders meet the drawn doors (T.fit.cargo.X). Moving the door objects means re-cutting the '
+                'skin openings and re-baking every 737 livery (open, close-out round 3)')
+for _k in ('B736', 'B737', 'B738', 'B739', 'B37M', 'B38M', 'B39M', 'B3XM'): EXPLAINED[(_k, 'cargox')] = _B738_CARGOX
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -560,7 +566,7 @@ def main():
             if rd.get('crownMain') is not None:      # nose-up stance: the top at the main gear (see _MAX_CROWN)
                 add('fuselage top at the main-gear station (rendered)', rd['crownMain'], R.get('crown'), pos=True, key='crownmain', vert=True)
             if rd.get('crownMax') is not None:       # gear models: the highest fuselage top ahead of the tail (ACAP row A)
-                add('fuselage top, highest over 0.1-0.65 L (rendered)', rd['crownMax'], R.get('crown'), pos=True, key='crownmax', vert=True)
+                add('fuselage top, highest over 0.1-0.6 L (rendered)', rd['crownMax'], R.get('crown'), pos=True, key='crownmax', vert=True)
             # lower deck (close-out round 3, aircraft-1): the model's own cargo-door objects (rendered sill and station, T.fit.cargo)
             # and the keel at the cargo doors against the cargo-door / fuselage-bottom rows (SPEC cargo / bottom / bottomFA)
             cg = f.get('cargo') or {}

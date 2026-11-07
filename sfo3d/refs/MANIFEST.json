@@ -11230,8 +11230,8 @@
   "rec/adsbfi_20261107_03.jsonl.gz": {
    "class": "local",
    "why": "adsb.fi terms: personal non-commercial use, not to be licensed on",
-   "bytes": 9882357,
-   "sha256": "b586b083c687b8c43b2a12ea2251782e4ac5e1b45a3399280109c61830962e9a"
+   "bytes": 9940451,
+   "sha256": "179537443e314c7806838007020e677d495d44e67c9e906245616dab81b58eff"
   },
   "rec/adsblol_20261104_17.jsonl.gz": {
    "class": "pack",
