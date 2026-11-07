@@ -25,7 +25,7 @@ import shapely
 from shapely.geometry import Polygon, LineString, MultiPolygon, Point, box as sbox
 from shapely.ops import unary_union
 from shapely import affinity
-from common import scene, OUT, DOCS, buildings, poly_rings, hull_poly, w2st, st2w, G, polys_of, mask_to_polys, ROOT, provenance
+from common import scene, OUT, DOCS, buildings, poly_rings, hull_poly, w2st, st2w, G, polys_of, mask_to_polys, ROOT, provenance, THR_BAR
 import background
 
 PAPER = {'A3': (420, 297), 'A2': (594, 420), 'A1': (841, 594), 'A0': (1189, 841)}
@@ -104,9 +104,10 @@ class Layers:
                         y0 = sg * (ts['lat0'] + ts['pitch'] * k); y1 = sg * (ts['lat0'] + ts['pitch'] * k + ts['width'])
                         u0, u1 = disp + ts['x0'], disp + ts['x1']
                         stripes.append(R(u0, u1, y0, y1) if ei == 0 else R(L - u1, L - u0, -y1, -y0))
-                if disp > 1:
-                    b0, b1 = disp + pt['dispBar'][0], disp + pt['dispBar'][1]
-                    stripes.append(R(b0, b1, -30, 30) if ei == 0 else R(L - b1, L - b0, -30, 30))
+                # threshold bar at every end, landing side (common.THR_BAR = js/shaders/ground.js; the scene's
+                # paint.dispBar is stale: close-out round 3 bridges-7)
+                b0, b1 = disp + THR_BAR[0], disp + THR_BAR[1]
+                stripes.append(R(b0, b1, -29.27, 29.27) if ei == 0 else R(L - b1, L - b0, -29.27, 29.27))
                 a0, a1 = disp + pt['aiming']['x0'], disp + pt['aiming']['x1']
                 for sg in (-1, 1):
                     y0, y1 = sorted((sg * pt['aiming']['y0'], sg * pt['aiming']['y1']))

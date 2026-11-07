@@ -89,6 +89,7 @@ export class Sky {
       lightDir: uniform(new THREE.Vector3(0, 1, 0)),        // direction of the directional light (Sun, or the Moon at night): cloud shadows
       nSlabs: uniform(0), slab: Array.from({ length: MAX_SLABS }, V4), clearTop0: uniform(-1e6), // slab: (y0, y1, σ, isCloud)
       fogCol: uniform(new THREE.Color(0.5, 0.5, 0.5)), fogDense: uniform(0), sunGlow: uniform(1),
+      deckK: uniform(0),   // cover of the low (plane) layers: 1 - prod(1 - own) (close-out round 3, env-4: fogInscatter under a deck)
       nLayers: uniform(0), layA: Array.from({ length: MAX_CLOUD_LAYERS }, V4), layB: Array.from({ length: MAX_CLOUD_LAYERS }, V4), layC: Array.from({ length: MAX_CLOUD_LAYERS }, V4),
       // layA: (base y, thr, opacity, period m); layB: (off u, off v, drift x, drift z m/s); layC: (sun transmittance above, sky-shader layer 1/0, thickness m, 0)
       moonDir: V3(), moonRight: V3(), moonUp: V3(), moonSun: V3(), moonRad: uniform(0.0045), moonL: uniform(0),
@@ -397,7 +398,13 @@ export class Sky {
   fogInscatter(rd) {
     const U = this.u;
     const hd = normalize(vec3(rd.x, max(rd.y, 0.0).mul(0.5).add(0.035), rd.z));
-    const clearIn = mix(this.skyEnvBlur(hd), U.fogCol, U.twi);   // twilight: the low air in the Earth's shadow (look2-2)
+    // under a low deck (plane layers, cover deckK) the air below it is lit by the deck and the ground, not by the clear sky:
+    // its in-scatter tends to the mean radiance around it, 0.5 x (deck mean over the upper hemisphere + ground); the deck
+    // follows the CIE overcast law of slabBase (skyUp x 3/7 x (1 + 2 sin el): solid-angle mean 6/7 skyUp). Without it the
+    // horizon under the OVC005 marine layer showed the clear-sky blur as a band 1.24-1.5 x brighter than the deck overhead
+    // (close-out round 3, env-4 / look2-8; isotropic-phase equilibrium, I)
+    const deckAir = U.skyUp.mul(6.0 / 7.0).add(U.ground).mul(0.5);
+    const clearIn = mix(mix(this.skyEnvBlur(hd), deckAir, U.deckK), U.fogCol, U.twi);   // twilight: the low air in the Earth's shadow (look2-2)
     const mu = dot(rd, U.sunDir); const g = 0.75;
     const hg = float(1 - g * g).div(pow(float(1 + g * g).sub(mu.mul(2 * g)), 1.5)).div(4 * PI);
     return mix(clearIn, U.fogCol, U.fogDense).add(U.sunColor.mul(hg).mul(U.sunGlow).mul(0.08)).add(U.flashCol.mul(U.flash.w).mul(0.3));
@@ -617,6 +624,7 @@ export class Sky {
       } else { U.layA[k].value.set(1e7, 2, 0, 1000); U.layB[k].value.set(0, 0, 0, 0); U.layC[k].value.set(1, 0, 0, 0); }
     }
     U.nLayers.value = n;
+    let clear = 1; for (let k = 0; k < n; k++) if (layers[k].slab) clear *= 1 - (layers[k].own || 0); U.deckK.value = 1 - clear;
   }
   setMoon(D) {
     const U = this.u;

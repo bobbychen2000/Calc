@@ -44,10 +44,10 @@ import cv2
 from shapely.geometry import Point, Polygon
 from shapely.prepared import prep
 from shapely.ops import unary_union
-from common import scene, OUT, poly_rings, w2st, st2w, G, hull_poly, buildings, provenance, FT
+from common import scene, OUT, poly_rings, w2st, st2w, G, hull_poly, buildings, provenance, FT, THR_BAR
 import background
 
-RULES_VERSION = '2026-09-25a: stripe-start rule, building edge de-duplication, rotunda boundary = not found, approach-light stations / crossbar ends / catwalk'
+RULES_VERSION = '2026-11-07a: stripe-start rule, building edge de-duplication, rotunda boundary = not found, approach-light stations / crossbar ends / catwalk, threshold bar at every end on the landing side (common.THR_BAR)'
 STEP = 0.1; R = 10.0; TAN = (-0.6, -0.3, 0.0, 0.3, 0.6)
 D = np.arange(-R, R + 1e-9, STEP)
 
@@ -272,13 +272,14 @@ def build_features(S):
             p = np.array([thr + inw * tp['x0'] + lat * y for y in ycs]); n = np.tile(inw, (len(ycs), 1)); t = np.tile(lat, (len(ycs), 1))
             F.append(dict(range=15.0, pol=-1, maxgsd=0.8, select='stripe-start', id=f'rwy-thr:{e["name"]}', cls='runway-threshold', name=f'RWY {e["name"]} threshold stripes (start {tp["x0"]} m past threshold)', mode='step', width=0, pts=p, nrm=-n, tan=t, group=True, line=[(thr + lat * 30).tolist(), (thr - lat * 30).tolist()]))
             # 10 ft threshold bar (every end): imaged bar centre along the axis from the threshold line (+ = landing
-            # side); the model draws it only at displaced thresholds, on the approach side (js/shaders/ground.js
-            # endMarkings(): band(xt, -3.05, 0.0) when disp > 1). Lateral read positions avoid the arrowheads (7.6 /
-            # 22.9 m), the centreline arrows and the edge stripe.
-            bd = r['paint']['dispBar']; model = (bd[0] + bd[1]) / 2 if e['disp'] > 1 else None
-            ys3 = np.array([-27, -18.5, -16, -13.5, -11, 11, 13.5, 16, 18.5, 27.0]); p = np.array([thr + inw * (model or 0.0) + lat * y for y in ys3])
+            # side); the model draws it at every end on the landing side (js/shaders/ground.js endMarkings(): band(xt, 0.0,
+            # 3.05) - common.THR_BAR; close-out round 3 bridges-7: this read the scene's stale paint.dispBar [-3.05, 0],
+            # approach side, displaced ends only). Lateral read positions avoid the arrowheads (7.6 / 22.9 m), the
+            # centreline arrows and the edge stripe.
+            model = (THR_BAR[0] + THR_BAR[1]) / 2
+            ys3 = np.array([-27, -18.5, -16, -13.5, -11, 11, 13.5, 16, 18.5, 27.0]); p = np.array([thr + inw * model + lat * y for y in ys3])
             F.append(dict(range=12.0, select='strongest', maxgsd=1.3, id=f'rwy-bar:{e["name"]}', cls='runway-threshold-bar', model_off=model,
-                          name=f'RWY {e["name"]} threshold bar (' + (f'model: approach side, centre {model:+.2f} m; displaced {e["disp"]:.1f} m' if model is not None else 'model: none drawn') + ')',
+                          name=f'RWY {e["name"]} threshold bar (model: landing side, centre {model:+.2f} m' + (f'; displaced {e["disp"]:.1f} m' if e['disp'] > 1 else '') + ')',
                           mode='line-white', width=3.05, pts=p, nrm=np.tile(inw, (len(ys3), 1)), tan=np.tile(lat, (len(ys3), 1)), group=True, line=[(thr + lat * 30).tolist(), (thr - lat * 30).tolist()]))
             # pavement end (the runway end line), read across the runway; at EMAS ends the pavement continues into the
             # 35 ft setback, so the visible edge is the EMAS bed entry (measured with the bed below)

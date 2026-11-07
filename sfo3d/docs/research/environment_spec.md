@@ -902,6 +902,30 @@ the weather set.
 Not answerable by the owner, tracked as **NV**: ALS steady-lamp and flasher photometry (FAA-E-2408/2998/2689 not public),
 apron-flood photometry, SFO tower facility directives, NWS ASOS algorithm constants (primary spec not located).
 
+### 12.1 Constants of the fix rounds that remain inferred (close-out round 3, env-5)
+
+Each is tagged on the `?qa=env` HUD / in the code header where it is used; a primary source or owner data replaces it.
+
+| Constant | Value | Where | Basis | Tag |
+|---|---|---|---|---|
+| Runway-use limits | dry: crosswind incl. gusts ≤ 20 kt, tailwind ≤ 5 kt; wet: ≤ 15 kt, calm | `js/env/state.js` | FAA Order 8400.9 §4b (cached PDF) | **V** (SFO anemometer case for 7 kt: NV; "wet" = precipitation in the METAR: I) |
+| Plan choice when both fail | smaller excess | `js/env/state.js` | none | I |
+| Apron flood spot share | 0.5 of a mast's field in its shadow-casting spot | `js/three/flood.js SPOT_SHARE` | ICAO Annex 14 Vol I 5.3.24 "two or more directions" (2nd source; primary sold by ICAO) | 2nd + I |
+| Flood spot PCF radius | 5 texels | `js/three/flood.js` | penumbra of a ~2.5 m luminaire cluster | I |
+| In-pavement fixture height | ½ in (0.0127 m) | `tools/env/build_lighting_spec.py IN_PAVEMENT_H` | AC 150/5345-46F §1.2.4 styles (cached, V); SFO's installed style | NV |
+| Aerosol layer aloft (FU / HZ) | τ = own fraction × 1.0 over 1,000 ft; no smoke tint | `js/env/state.js AEROSOL_TAU / AEROSOL_DEPTH_FT` | none | I |
+| MIFG slab | σ ≥ σ(5/8 SM) over 0-6 ft | `js/env/state.js MIFG_TOP_FT` | JO 7900.5E 13.13e meaning (V); value as a lower bound | V + I |
+| Overcast deck mottle | ±12 % radiance | `js/three/sky.js DECK_MOTTLE` | CIE overcast + photo look | I |
+| Fog-top glow | 0.3 × E_ground (1 − e^−τ) / π | `js/three/sky.js FOG_TOP_K` | reviewer's estimate | I / NV |
+| Aircraft strobe / tail white | near 6,500 K inside the 25.1397 white box | `js/env/aircraft_lights.js` | 14 CFR 25.1397 box (V), source CCT | I |
+| Day position-light lens | 0.08 m drawn size, energy conserved | `js/env/aircraft_lights.js NAV_LENS_S` | lens diameter of LED position lights | I |
+| Air under a low deck | in-scatter 0.5 × (6/7 skyUp + ground) by the low-layer cover | `js/three/sky.js fogInscatter` | isotropic-phase equilibrium under a CIE overcast deck | I |
+| Day exposure band | ±1 EV of the incident target | `js/env/atmo/exposure.js INCIDENT_SPAN` | A-EXP (§11.3) | I |
+| Wet-pavement SSR | 24 steps to 160 m, thickness 1.5 m + 2 %, gloss 0.08-0.4 | `js/three/ssr.js` | §7.6 "SSR on the high tier" | I |
+| Local ground bounce | view factor (1 − n.y)/2, horizon blend 0.85, k 0.5-2 | `js/three/tsl/ground_bounce.js` | the bake's albedo | I |
+| Airside asphalt path tone | 0.355 × naip_grey / 203 | `js/three/ground.js pathToneTexture` | NAIP 2024 grey (M) ↔ PCC albedo | M + I |
+| Reservoir levels | San Andreas 134.35 m (3DEP 2023), Crystal Springs 85 / 87 m (OSM ele) | `js/env/reservoirs_data.js` | USGS 3DEP (V for that day), OSM (2nd); levels vary with storage | V / 2nd |
+
 ---------------------------------------------------------------------------------------------------------------------
 
 ## 13. Implementation order

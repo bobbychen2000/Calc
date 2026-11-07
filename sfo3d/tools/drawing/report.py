@@ -163,7 +163,7 @@ def run():
         R = {f['id']: f for f in D[prim]['features']}
         w(f'## Runway markings and ends measured on `{prim}`')
         w('')
-        w('Along-axis numbers in metres from the threshold line (+ = landing side). `stripe start`: offset of the imaged start of the threshold-stripe block from the model\'s 6.1 m (stripe-start rule, module doc of measure.py). `threshold bar`: imaged centre of the 10 ft bar vs the model (`js/shaders/ground.js` endMarkings() draws a bar only at displaced thresholds, centred 1.525 m on the approach side).')
+        w('Along-axis numbers in metres from the threshold line (+ = landing side). `stripe start`: offset of the imaged start of the threshold-stripe block from the model\'s 6.1 m (stripe-start rule, module doc of measure.py). `threshold bar`: imaged centre of the 10 ft bar vs the model (`js/shaders/ground.js` endMarkings() draws it at every end on the landing side, [0, 3.05] m from the threshold line: centre +1.525 m; AC 150/5340-1M Chg 1 2.9.1.2-2.9.1.5).')
         w('')
         w('| end | stripe start offset (n) | imaged bar centre | model bar centre | bar verdict | pavement end offset | EMAS bed median |'); w('|---|---|---|---|---|---|---|')
         for rw in S['runways']:

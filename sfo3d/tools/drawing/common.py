@@ -294,30 +294,81 @@ class AcGeom:
 ZONE_NOFIN = {2, 3, 7}  # engine, gear, pylon (tools/convert_models.py ZONE; js/live/models.js ZONE_NOFIN)
 
 
+_LC = None
+
+
+def _liveries_common():
+    """tools/liveries/common.py, loaded by path under its own module name (it shares the name `common` with this file; its
+    sys.path insert is undone)"""
+    global _LC
+    if _LC is None:
+        import importlib.util
+        spec = importlib.util.spec_from_file_location('liveries_common', os.path.join(ROOT, 'tools', 'liveries', 'common.py'))
+        m = importlib.util.module_from_spec(spec); saved = list(sys.path)
+        try: spec.loader.exec_module(m)
+        finally: sys.path[:] = saved
+        _LC = m
+    return _LC
+
+
 def _stretch(pos, st, zone=None, dims=None):
-    """js/live/models.js applyStretch(), same order: wing span fit, fin height fit, fuselage plugs (fit.js plugShift,
-    including negative plugs with the aft blend bl2); dims updated"""
+    """js/aircraft/stretch.js applyStretch() through tools/liveries/common.apply_stretch (every op the app applies: tipCut,
+    engScale with keep 'top', wing, tipShear, fin, wingLift, htLift, squash, fairing, noseExt, gearUp, the plugs) - close-out
+    round 3 bridges-7: the port that lived here had only wing / fin / plugs, so a 757 was drawn with the artist's tip and a
+    737 MAX with the CFM56 nacelle and a floating nose tyre (the JS and the livery port agree to 0.0 m on 7 types: review
+    round 2, scratchpad acv3/port_js.mjs). The stance pitch is NOT applied here: it is in the placement() matrix the scene
+    carries (model_geom). dims as stretch.js keeps them (span: wing dz and tipShear; H after the fin fit; L: plugs)."""
     if not st: return pos
-    pos = pos.copy(); dims = dims if dims is not None else {}
-    W = st.get('wing'); Fn = st.get('fin')
-    if W:
-        z0, z1, dz, xMin = W['z0'], W['z1'], W['dz'], W['xMin']; sc = dz / (z1 - z0)
-        x = pos[:, 0]; z = pos[:, 2]; az = np.abs(z)
-        m = (x >= xMin) & (az > z0)
-        pos[m, 2] = z[m] + np.sign(z[m]) * np.where(az[m] >= z1, dz, (az[m] - z0) * sc)
-        if 'span' in dims: dims['span'] += 2 * dz
-    if Fn:
-        yF, xF, k = Fn['yF'], Fn['xF'], Fn['k']
-        x = pos[:, 0]; y = pos[:, 1]
-        m = (x < xF) & (y > yF)
-        if zone is not None: m &= ~np.isin(zone, list(ZONE_NOFIN))
-        pos[m, 1] = yF + (y[m] - yF) * k
-        dims['H'] = float(pos[:, 1].max())
-    if st.get('cut1') is not None:
-        x = pos[:, 0].copy()
-        pos[:, 0] = x + plug_shift(x, st['cut1'], st['d1']) + plug_shift(x, st['cut2'], st['d2'], st.get('bl2') or 0.0)
-        if 'L' in dims: dims['L'] += st['d1'] + st['d2']
-    return pos
+    Z = np.asarray(zone) if zone is not None else np.zeros(len(pos), np.uint8)
+    out = _liveries_common().apply_stretch(pos, Z, st)
+    if dims is not None:
+        if st.get('wing') and 'span' in dims: dims['span'] += 2 * st['wing']['dz']
+        if st.get('tipShear') and 'span' in dims: q = st['tipShear']; dims['span'] += 2 * q['k'] * (q['yt'] - q['y0'])
+        if st.get('fin'): dims['H'] = float(out[:, 1].max())
+        if st.get('cut1') is not None and 'L' in dims: dims['L'] += st['d1'] + st['d2']
+    return out
+
+
+@functools.lru_cache(None)
+def type_family():
+    """TYPES key -> family as js/live/gates.js / traffic.js take it (ICAO_OF[key] = the first designator of the key in
+    js/aircraft/types.js ICAO_TYPES, then traffic.js familyOf: TYPE_ALIAS + FAMILY), parsed from the app's own sources"""
+    root = app_root(); tr = open(os.path.join(root, 'js', 'live', 'traffic.js')).read(); ty = open(os.path.join(root, 'js', 'aircraft', 'types.js')).read()
+    fam = {}
+    m = re.search(r"for \(const \[f, ts\] of Object\.entries\(\{(.*?)\}\)\) for", tr, re.S)
+    for f, ts in re.findall(r"(\w+): '([^']*)'", m.group(1) if m else ''):
+        for t in ts.split(): fam[t] = f
+    m = re.search(r"const TYPE_ALIAS = \{(.*?)\};", tr, re.S); alias = dict(re.findall(r"(\w+): '(\w+)'", m.group(1))) if m else {}
+    m = re.search(r"export const ICAO_TYPES = \{(.*?)\};", ty, re.S); out = {}
+    for icao, key in re.findall(r"(\w+): '(\w+)'", m.group(1) if m else ''):
+        if key not in out: out[key] = fam.get(alias.get(icao, icao))
+    return out
+
+
+@functools.lru_cache(None)
+def type_stops():
+    """stand name -> {family: along} (data/sfo_stands.json type_stops: where the stand's aircraft of that family stop, m along
+    the stand direction from the stand nose; js/live/gates.js standAircraft takes min(0, along))"""
+    S = json.load(open(os.path.join(app_root(), 'data', 'sfo_stands.json')))
+    return {s['name']: {f: v['along'] for f, v in (s.get('type_stops') or {}).items() if isinstance(v, dict) and isinstance(v.get('along'), (int, float))} for s in S['stands']}
+
+
+def stop_nose(st, key):
+    """nose (world xz) of type `key` at stand `st` (scene stand) at its family's stop (type_stops), as gates.js places it"""
+    along = min(0.0, (type_stops().get(st['name']) or {}).get(type_family().get(key), 0.0))
+    return [st['nose'][0] + st['dir'][0] * along, st['nose'][1] + st['dir'][1] * along]
+
+
+# runway threshold bar (js/shaders/ground.js endMarkings: band(xt, 0.0, 3.05) at every end, AC 150/5340-1M Chg 1
+# 2.9.1.2-2.9.1.5: 10 ft on the landing side of the (displaced) threshold) - m from the threshold line, + = landing side.
+# (scene2d.json paint.dispBar from jobs/extract2d.mjs still carries the old [-3.05, 0] at displaced ends only: not used)
+THR_BAR = (0.0, 3.05)
+
+
+def thr_bar_check():
+    """True when the shader still draws the bar at THR_BAR (the constant above is a copy of GLSL)"""
+    try: return 'band(xt, 0.0, 3.05' in open(os.path.join(app_root(), 'js', 'shaders', 'ground.js')).read()
+    except OSError: return None
 
 
 def plug_shift(x, c, d, bl=0.0):

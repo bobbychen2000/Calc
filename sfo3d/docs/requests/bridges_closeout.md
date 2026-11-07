@@ -261,7 +261,7 @@ drums, brackets; a render is left to the visual QA loop).
 | drums vs the drawn outline / the 3-D asset footprints | 0 / 7 (F7 L1 1.06 m, F8 L1 1.05, E9 0.55, E3 0.23, D10 0.17, D14 0.02 m + 1; pre-existing, R2b.3) | 0 / the same 7; 13 B-pier drums grow - B6, B11, B16, B19, B20, B24, B25, B26, B27 L1 from 1.52 to 2.20 m, 0.48 m into their own walkway's strip end (the walkway enters the drum), B13 / B14 / B17 / B18 / B22 L1 by 0.01-0.15 m |
 | moving solids in a 3-D asset footprint (assetpose, 11,805 poses) | F8 L1 tunnel1 docked 0.58 m2, path 0.51 m2 (pre-existing, R2b.3) | the same; drawn outline 0; Museum rings 0 (even the own strips) |
 | bldpose (gates.js's own outline test, no exemption) | 0 / 0 / 0 (3,278 dockings) | 0 / 0 / 0 |
-| VDGS posts / facade units / blocked | 92 / 11 / 0; 4 of the 11 units inside an asset footprint | 83 / 20 / 0 (373de34: 82 / 21); 0 units in an asset footprint, gap to the asset face 0.20-1.14 m bridged by a 0.35-1.07 m bracket into the drawn wall; F5 stays a post (its facade spot lies in the Museum / asset bump around F5 L1's walkway start) |
+| VDGS posts / facade units / blocked | 92 / 11 / 0; 4 of the 11 units inside an asset footprint | 83 / 20 / 0 (373de34: 82 / 21); 0 units in an asset footprint, gap to the asset face 0.20-1.14 m bridged by a 0.35-1.07 m bracket into the drawn wall (**corrected in Round 3:** not at B2 / C8 - their brackets ended 0.74 / 0.09 m short of the asset face; now they reach it); F5 stays a post (its facade spot lies in the Museum / asset bump around F5 L1's walkway start) |
 | re-dock pose jumps > 5 cm (jump.mjs, 2,875 dockings): A 10 cm off / B same after undock / C after hurry / D double hurry | 2,874 (8.26 m) / 2,086 (2.56 m) / 2,875 (9.63 m) / 0 but 2,875 with 0.25 s steps up to 10.5 m | 0 / 0 / 0 / 0; max step 0.11 m per 0.25 s |
 | occupant changes without a rest in between (new `swap.mjs`, 103 stands, first / last dockable type): E docked A -> B directly / F A undocking 50 % -> B / G A docking -> undock -> A | E 102 jumps (max 27.3 m), F 102 (15.4 m), G 0 | 0 / 0 / 0, max step 0.11 m per 0.25 s, all end docked at the new door |
 | departure API (api.mjs) | 0 jumps; pushClearEta p50 0.96 / p99 4.67 / max 25.19 s | identical |
@@ -330,3 +330,105 @@ drums, brackets; a render is left to the visual QA loop).
 
 - Please export `b.HrPinned` (and `b.ownClip`, `b.rotR`) per bridge in the scene; tools/drawing/audit.py then labels the
   inferred-height slopes from it directly (today it recomputes it from floorY / fixedLen).
+
+---------------------------------------------------------------------------------------------------------------------
+
+# Round 3 (close-out round 3, fix round 1: findings bridges-1 .. bridges-11 of docs/requests/closeout3_findings.json; 7 Nov 2026)
+
+Before = the committed `js/live/gates.js`, `js/world/gates.js` and `tools/drawing/*` on today's data (frozen copy, scratchpad
+`c3/bridges/root_before`); after = the working tree. Scripts: the round-2 verifier's (`vb3/*`, `verify/bcheck2.mjs`, run
+with `ROOT=`), the aircraft track's `census.mjs` / `belt_api.mjs`, and new ones in scratchpad `c3/bridges/scripts/`:
+`beltend.mjs` (conveyor end vs the placed mesh), `beltmesh.mjs` (every belt-loader mesh sample vs the rendered fuselage
+mesh), `fuelmesh.mjs` (fuel-truck hull vs the rendered aircraft mesh, every zone), `signs.mjs` (readability of every sign
+quad), `walktop.mjs` (walkway tops per pier), `legacy.mjs` (old-scene closures), `e12b.mjs` (dockFrom cases). No renders
+(no Chromium: the heavy lock was busy with the env track; the visual QA loop is on hold).
+
+| Check | Before | After |
+|---|---|---|
+| dockings made / refused (3,413 bridge x type candidates, slopes.mjs) | 3,304 / 109 | **3,335 / 78** |
+| observed (bridge, type) pairs refused | 14 (+ G7 L1 B738, G8 L1 B738 since the 737 stance change) | **10**: A1 L2 B78X; A2 L2 B78X / A35K; A6 / A11 upper A388; F5 L1 B738 / B38M / E75L; F11 L2 B772; F15 L1 B39M |
+| docked slopes > 1:12 / > 1:8 / > 1:4 (all) | 1,031 / 406 / 0 | **638 / 194 / 0** |
+| observed types > 1:12 | 144 of 610 | **88 of 614** |
+| steepest docked slope; HrPinned | 0.2457 (1:4.07); 109 | 0.2499 (1:4.0, G8 L1 A35K / MD11 now refused at 1:4.0 / 1:3.9 - not observed there); 98 |
+| 737 / A320 / regional census (planFor, every stand x type) | B738 95 docked, max 0.219, 39 > 1:12; MAX 96, 0.238, 31; A320 96, 0.203, 23; E75L 97; CRJ9 90 | **B738 97, 0.185, 17** (G7 / G8 b0 dock the 737 at the unchanged ACAP sill); **MAX 96, 0.160, 11; A320 96, 0.134, 5; E75L 99; CRJ9 95** |
+| fixed-walkway top at the attach point (walktop.mjs) | every pier 8.40 m (BA-G 7.41-8.40) | **BA-G G1-G10 5.71-5.87 m** (bump-out roofs 6.5-7.1; G12 / G13 long tip walkways 6.16-7.29); **BA-C 6.20-6.26, BA-D 6.65** (roofs 7.20 / 8.49); BA-E / BA-F 7.88; BA-A / BA-B 8.40 |
+| rotunda corridor through its own walkway (ownclip / ownneck) | 6 bridges (A12, F5, F14, F17, F19, F21 L1), 0.18-0.65 m2 | **0 / 0** |
+| conveyor end vs the rendered skin (beltend.mjs, 14 types x 2 doors; belt_api.mjs before) | lateral -0.16 .. +0.88 m (737 NG fwd inside, aft off; MAX fwd 0.28-0.42 off) | **-0.038 .. +0.034 m**; skin directly above the end -0.006 .. +0.002 m |
+| belt-loader mesh inside the rendered fuselage (beltmesh.mjs, 79 + 138 loaders) | - (with the new door positions and full-length rails: rails 0.62 m back, 0.29 m deep) | **rails 0; the conveyor's end face <= 0.054 m, only in its last 0.1 m** (it meets the sill: the cargo door is open in reality, drawn closed) |
+| GSE (gse.mjs; conveyors tested against the rendered skin, `GSE_SKIN=1`) A / B | 0 / 0 | **0 / 0**, belts 79 / 138, catering 26 / 28, fuel 37 / 36 (with the old unpitched-ellipse test: 61 belt "conflicts" - the very ellipse bridges-3 is about) |
+| dockFrom, samples in the NEW body (dockcol.mjs, 206 pairs): E / F / H / Hh / J | 7,718 / 566 / 13,848 / 11,369 / 1,033 | **2,158 / 155 / 6,097 / 5,144 / 473** |
+| ... of which a bridge that started clear entered it later (cases) | E 4, F 1, H 4, Hh 4, J 1 | **E 2, F 0, H 2, Hh 2, J 0** (A8 L2 B779 -> E170, E12 L1 A321 -> CRJ2: replacement while docked, no null - below) |
+| jump / swap / api (re-dock continuity, departure API) | 0 / 0 / 0; pushClearEta p50 0.96, p99 4.67, max 25.19 s | identical |
+| hurry_peak (3,335 plans) | pivot / column <= 0.45 m/s, 16-91 s | identical (15.4-91.3 s) |
+| tunnel gate-number signs that read mirrored (signs.mjs) | **524 of 524** (both sides) | **0 of 524** (VDGS / stand signs 0 of 206 before and after) |
+| VDGS posts / facade / blocked; arms short of the 3-D asset face | 83 / 20 / 0; 2 (B2 0.74 m, C8 0.09 m) | 83 / 20 / 0; **0** (B2 bracket 0.60 -> 1.37 m, C8 0.35 -> 0.61 m); 0 units / posts hit an aircraft |
+| fuel trucks vs the rendered aircraft mesh (fuelmesh.mjs) | - | A 37 / B 36 trucks: 0 inside, min clearance 1.44 / 1.67 m; **D10 B39M 1.76 m** |
+| drums vs asset footprints (drums2); moving parts in an asset footprint (assetpose) | 3 (F7 L1 -1.06, F8 L1 -1.05, D3 L1 -0.03 m); F8 L1 tunnel 1 0.58 / 0.51 m2 | the same (plan-only footprints of the BA-F overhang: buildings resolved them in 3-D, see bridges-6) |
+| bldpose / restsweep / stair | 0 / 0 / 1 (G7 L1 stair in G7 L2's drum) | 0 / 0 / **0** |
+| tools/sat/check.py | ISSUES 0, APP 0, WARNINGS 17 | identical |
+| old offline scene (js/world/gates.js GateSystem) closures | flat block 0.4 m past the cab stop (0.25 m into the skin at door 1) | fitted closure (js/aircraft/dock.js) for all 50 fitted types |
+| tools/drawing model fit (report.py check: dims after `_stretch` vs the page) | port without tipShear / tipCut / noseExt / engScale / squash / gearUp / fairing | **47 of 47 types within 2 cm** (scene of 5 Nov) |
+| bcheck2 (verifier's full check, 131 bridges) | 0 issues (round 2) | BCHECK2_AFTER |
+
+## R3.0 What changed (js/live/gates.js, js/world/gates.js, tools/drawing/*)
+
+| Finding | Change |
+|---|---|
+| bridges-1 (heights) | `DEPARTURE_LEVELS` (exported): the floor of the fixed walkway where it leaves the building, **per boarding area** instead of one inferred 5.4 m: **G 2.7 [obs, low]** - photo a2 (Commons "Aerial view of San Francisco International Airport station, September 2025", CC BY-SA 4.0) with the ITB group's solved camera: at the G2 / G5 / G6 bridge heads the walkway / drum roofs read 5.5-6.6 m and the tunnels leave the drums at 1.9-2.9 m (1 m ticks projected at the attach points, +0.3-0.7 m for the camera's ground offset at B1; scratchpad `c3/bridges/photo/a2_G_walk2.png`), consistent with the ITB group's "walkway roofs 1-1.4 m under the 6.5-7.1 m bump-out roofs"; **E / F 4.88 [pub]** - Terminal 3 L2 departures 27'-0" vs L1 11'-0" = 16.0 ft (T3W Civic Design Review, 95 % CD, Oct 2023, sheets 5A-A5.01.01/.02, cached; docs/research/buildings_domestic.md §5.1), L1 at the apron [inf]; **D 3.65 [obs, low]** - photo a1 ratios at the BA-D near end (domestic group: concourse glazing 0.44-0.79 of the 8.49 m roof edge, walkways at that band); **C 3.2 [inf]** - the BA-D layout on a1 applied to the measured 7.2 m roof (BA-C is too small on a1); **A / B 5.4 [inf]** - no photo or published level. `b.Hb`, `b.HbTag`, `b.HbSrc` per bridge; the upper-deck walkway level follows (level + WALK_H + 0.6, inf). The 737 sill is not raised (ACAP OEW rows). |
+| bridges-2 (own-walkway clip) | `neckStart` / `neckParts`: the rotunda corridor starts where it leaves the bridge's own fixed walkway (separating axes, 0.06 m), the half away from the walkway from where that half leaves it (it closes the drum / walkway / corridor junction); the `fixedHit` exemption of the corridor is gone (it is tested like every moving part). F5 L1's rest turn 3 deg (unchanged). |
+| bridges-3 (belt loaders) | js/world/gates.js `beltDoor` / `beltEndY` read the aircraft track's stance-aware API from `T.fit` (cargo-door object or published station, the drawn door's rendered sill or the type's own published range - MAX ACAP rows D / L - never under the rendered keel; end at the rendered starboard skin + 0.03 m); `BELT_PUB` remains only for the A319 / A320 families (no cargo entry: 0.22 / 0.66 L, inf). Mesh settings to 0.01 m. Side rails stop 0.7 m short of the conveyor's end (`BELT_RAIL_GAP`, inferred). `acHit(..., 'skin')`: the conveyor is tested against the rendered, pitched skin (`T.fit.keelAt` / `skinHW`), every other vehicle against the skin or the ellipse (`'both'`). |
+| bridges-4 (dockFrom) | every leg is tested against the NEW occupant (`pathHits(..., toDoor, count)`): back to rest the way it came, straight back (retract - swing - extend) and both lifted by 1.5 / 2.5 m first; to the door direct, via rest, or lifted; the first clear one, else the fewest poses in the body. The way back that was chosen becomes the plan's first part (an undocking during it retraces it). A bridge with a part already in the new body moves at once (no 12 s DOCK_DELAY). `b._dockFromHit` for checkers. |
+| bridges-5 (VDGS bracket) | the bracket reaches max(drawn wall + 0.1, 3-D asset face + 0.15 m) - the asset face from `B3D_INTEGRATION.physics.rings` (data/buildings3d/integration.js, rounded to 0.1 m: hence +0.15). F5 stays a post (inferred; header says every VDGS position is inferred). |
+| bridges-7 (tools/drawing) | `common._stretch` = `tools/liveries/common.apply_stretch` (loaded by path; no second pitch - it is in the scene's placement matrix); `type_family()` / `type_stops()` / `stop_nose()` from the app's own sources; audit.py: ENVELOPE / OVERSIZE place each type at its family's stop, a bridge whose pose does not dock (`docks` false, else k < 1) is at rest - its cab is no longer exempt against its own aircraft, slope records "above 1:12: exceeds unassisted access" (WARNING; AC 150/5220-21C §2.2.d(3)(b), Figure 6) and "beyond 1:4" (CLEARANCE; §3.4.b(6)) with the pier level and its tag (parsed from gates.js DEPARTURE_LEVELS); measure / report / sheets: the threshold bar at every end on the landing side, [0, 3.05] m (`common.THR_BAR`, checked against js/shaders/ground.js; the scene's stale `dispBar` is not used); `measure.RULES_VERSION` 2026-11-07a. |
+| bridges-8 (mirrored sign) | the tunnel gate-number signs ran their text towards the viewer's left on BOTH sides (`along = -sg * hdir`); now `+sg * hdir`. The three.js renderer rebuilds the same quads from their uvs (js/three/signs.js addQuad), so it follows. |
+| bridges-9 (old scene) | js/world/gates.js `GateSystem`: one bridge per gate at door 1 (there is no second-bridge door in that scene); its closure is js/aircraft/dock.js `bellowsShape` / `bellowsGeo` (fitted to the drawn skin, deployed over the last 15 % of the docking; static and per-gate cached meshes), the cab docked 1.95 m off the cab stop so the flat front lies on the skin at the door station; flat only for a type without a measured footprint. |
+| bridges-10 (D10 fuel truck) | no change: verified clear (table) - in plan the truck's rear is 1.1 m ahead of the B39M's wing leading edge and its outer side 4.3 m inboard of the split tip (span 35.92 m); the render's perspective puts the winglet above it. |
+| bridges-11 (upper-deck bridges) | `attachUpper()` takes `g.bridgesUpper` from `standGates()` (js/live/airport.js) and no longer reads STANDS itself. |
+| header / comments | the inferred list, the own-walkway rule, the GSE description, the VDGS note. |
+
+## R3.1 Static (data/sfo_stands.*; static_closeout.md)
+
+1. **F5 L1 (`short_unit`)** still refuses every narrow body: at the published T3 level (4.88 m) and its 5.7 m walkway the
+   rotunda floor is at 4.41 m, and the 4.4 m tunnel run to a 737 / E175 door is 1:2.5-3.2. The real bridge docks them
+   (observed B38M / B738 / E75L): either its walkway is a steeper ramp / stair than 1:12, or it leaves the building lower
+   than L2 - a photo of F5 (or the T3W CD sections at F5) decides; until then it stays at rest for them (inferred).
+2. Unchanged from round 2 (numbers above): A1 / A2 L2 (B78X, A35K reach), A6 / A11 upper (A388), F11 L2 B772, F15 L1 B39M
+   (twin drums), over-extension / optional-cab inferences, rest poses vs OSM.
+
+## R3.2 Buildings workflow (3-D assets) / integration
+
+1. **Bridge levels per pier** (js/live/gates.js `DEPARTURE_LEVELS`, exported): BA-C 3.2 [inf], BA-D 3.65 [obs, low],
+   BA-E / BA-F 4.88 [pub], BA-G 2.7 [obs, low], BA-A / BA-B 5.4 [inf]. Domestic: the 23 BA-C / BA-D bulkheads can go
+   (walkway tops now 6.20-6.26 / 6.65 m under the 7.20 / 8.49 m roof edges), the BA-C / BA-D concourse glazing / door
+   surrounds can follow the photo ratios, `tools/blender/dom_geom.py` (concourse floor 5.4), `b3d_integrate.py` (walkway
+   floor 5.4) and `verify_domestic.py` should read the per-pier value; ITB: the BA-G walkways now top 5.71-5.87 m at G1-G10
+   (bump-out roofs 6.5-7.1) - please re-extract the scene and re-run `verify_itb.py` walkway_vs_host_roof, then close the
+   manifest conflict "BA-G bridge-head bump-outs vs the app walkways".
+2. **integration-5 is needed for bridges-6**: `B3D_INTEGRATION.physics.rings` are plan-only; testing drums / walkway starts
+   / moving parts against them would read the BA-F overhang (soffit 9.69 m over the F7 / F8 drums, which now top at about
+   7-8 m) as a wall and move those drums 1.05 m. Please export the per-building footprints WITH height bands (wall vs roof
+   overhang); gates.js then takes walkway starts, drum limits and `bldHit` from them and drops the own-strip heuristic, and
+   I will list the vestibules that can go. (Used now only for the VDGS bracket, where the plan face is what matters.)
+
+## R3.3 Realtime (traffic.js / app.js / tools/live/invariants.mjs)
+
+1. `dockFrom` now checks every leg against the new occupant and starts at once when a bridge is already in the new body.
+   Two input-induced cases remain (dockcol E / H: a different aircraft set while the bridge is docked, no `null` in
+   between): A8 L2 B779 -> E170 (the drive column must pass under the E170's wing on every way back) and E12 L1 A321 ->
+   CRJ2 (the CRJ2 is set where the docked bridge's stair already stands). The realistic case - a new aircraft during the
+   previous retraction (F / J) - is now 0. Please send `setOccupant(G, null)` before a different occupant (the real bridge
+   retracts before the next aircraft arrives) and re-run the all-hours replay A/B with this gates.js (heights changed:
+   slopes / dock counts above; pushClearEta unchanged).
+
+## R3.4 Tools (jobs/extract2d.mjs)
+
+- `paint.dispBar` is stale: the shader draws the bar at every end, `band(xt, 0.0, 3.05` (the meta.paintCheck string
+  `band(xt, -3.05, 0.0` fails); tools/drawing no longer reads it (common.THR_BAR). Please export per bridge `Hb`,
+  `HbTag`, `HrPinned`, `ownClip`, `rotR`, and per stand the data's `type_stops`, and re-extract (gates.js changed).
+
+## R3.5 Aircraft
+
+- The belt loaders now use the stance-aware API (`T.fit.cargo` / `keelAt` / `skinHW`) as requested in your Round 3 §2;
+  tools/drawing uses `tools/liveries/common.apply_stretch` with no second pitch. Note for `skinHW`: it under-reads the
+  A319 / A320 lower lobe by up to 0.04 m at 0.66 L (beltend.mjs: a319 aft end 0.038 m inside the mesh's side; inferred
+  station, no cargo-door object) - harmless here, listed in case the table is used elsewhere.

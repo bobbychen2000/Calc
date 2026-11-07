@@ -45,10 +45,19 @@ from shapely.geometry import Polygon, Point, MultiPolygon, box as sbox
 from shapely.strtree import STRtree
 from shapely.ops import unary_union
 from common import (scene, OUT, buildings, poly_rings, hull_poly, circle, AcGeom, ac_instance_geom, plan_world, model_geom, body_geom,
-                    stand_W, gear_points_world, m4, G, polys_of, w2st, NetPaved, provenance, phys_gear_points, app_root)
+                    stand_W, gear_points_world, m4, G, polys_of, w2st, NetPaved, provenance, phys_gear_points, app_root, stop_nose)
 from measure import PaveMask
-# terminal departure level at the fixed walkways (js/live/gates.js DEPARTURE_LEVEL: INFERRED, not sourced)
+import re
+# the pier's bridge level at the fixed walkways (js/live/gates.js DEPARTURE_LEVELS: per boarding area, tagged obs-low / pub /
+# inf - close-out round 3 bridges-1; before, one INFERRED 5.4 m), parsed from the app's gates.js; letter -> (h, tag)
 DEPARTURE_LEVEL_INF = 5.4
+
+
+def departure_levels():
+    try: src = open(os.path.join(app_root(), 'js', 'live', 'gates.js')).read()
+    except OSError: return {}
+    m = re.search(r"export const DEPARTURE_LEVELS = \{(.*?)\n\};", src, re.S)
+    return {k: (float(h), t) for k, h, t in re.findall(r"(\w): \{ h: ([\d.]+), tag: '([\w-]+)'", m.group(1))} if m else {}
 
 SCEN_SAME_STAND_SKIP = {'DOCK-REF', 'DOCK-MAX', 'ENVELOPE'}   # one aircraft per stand by construction there; never in LIVE
 ICAO = {'A': 3.0, 'B': 3.0, 'C': 4.5, 'CL': 4.5, 'D': 7.5, 'E': 7.5, 'EL': 7.5, 'F': 7.5}  # Annex 14 3.13.6
@@ -134,8 +143,10 @@ def type_geom(k, rendered=True):
     return body_geom(k)
 
 
-def stand_ac(st, k, rendered=True):
-    T = scene()['types'][k]; W = stand_W(st['nose'], st['dir'], T)
+def stand_ac(st, k, rendered=True, stop=False):
+    """type k at stand st: at the stand nose, or (stop) at its family's stop (data type_stops, as js/live/gates.js
+    standAircraft / traffic.js park it - close-out round 3 bridges-7: ENVELOPE placed every type at the stand nose)"""
+    T = scene()['types'][k]; W = stand_W(stop_nose(st, k) if stop else st['nose'], st['dir'], T)
     return Ac(type_geom(k, rendered), W, f'{st["name"]}:{k}' + ('' if rendered else '(TYPES)'), stand=st['name'], type_key=k)
 
 
@@ -185,7 +196,10 @@ def bridge_objects(pose):
         for pi, p in enumerate(P['parts']):
             if len(p['hull']) < 3: continue
             el = f'{b["stand"]} bridge {b["gate"]} (L{b["door"]})'
-            out.append(Obj('bridge', f'{b["stand"]}/{b["gate"]}/L{b["door"]}:{p["part"]}:{pi}', hull_poly(p['hull']), p['y'][0], p['y'][1], stand=b['stand'], part=p['part'], bridge=bi, label=f'{el} {p["part"]}', extra=dict(elabel=el, door=b['door']), pp=p.get('pp')))
+            # (docked: the pose docks the aircraft - gates.js docks(); a bridge that does not dock it stays at rest and its
+            # cab must clear the aircraft like any other part: close-out round 3 bridges-7)
+            docked = bool(P.get('docks', P.get('k', 0) >= 1))
+            out.append(Obj('bridge', f'{b["stand"]}/{b["gate"]}/L{b["door"]}:{p["part"]}:{pi}', hull_poly(p['hull']), p['y'][0], p['y'][1], stand=b['stand'], part=p['part'], bridge=bi, label=f'{el} {p["part"]}', extra=dict(elabel=el, door=b['door'], docked=docked), pp=p.get('pp')))
     return out
 
 
@@ -350,7 +364,7 @@ def run():
     def bridge_vs_ac(scen, BR, ACS):
         own_cab = []
         def skip(a, b):
-            if a.stand == b.stand and a.part in CAB_GROUP:
+            if a.stand == b.stand and a.part in CAB_GROUP and a.extra.get('docked', True):
                 own_cab.append((a, b)); return True
             # a bridge docked at stand X and an aircraft at a stand X excludes: never together
             return scen in DOCKED and excl(a.stand, b.stand)
@@ -521,7 +535,7 @@ def run():
         for k in ks:
             for rendered in (True, False):
                 if not rendered and not (S['typeRender'].get(k) or {}).get('modelKey'): continue
-                A = stand_ac(st, k, rendered); acs.append(A)
+                A = stand_ac(st, k, rendered, stop=True); acs.append(A)
                 if rendered: pav.append((ac_obj(A, oid=f'{st["name"]}:{k}'), S['types'][k], A.W))
         envAc[st['name']] = acs; env[st['name']] = unary_union([a.plan for a in acs])
     envObjs = []
@@ -550,7 +564,7 @@ def run():
     for st in S['stands']:
         if not st['bridge']: continue
         for k in st['classTypes']['oversize']:
-            A = stand_ac(st, k, True); o = ac_obj(A, oid=f'{st["name"]}:{k}')
+            A = stand_ac(st, k, True, stop=True); o = ac_obj(A, oid=f'{st["name"]}:{k}')
             T = S['types'][k]
             for o2 in envObjs:
                 if o2.stand == st['name']: continue
@@ -575,9 +589,10 @@ def run():
     print(f'  OVERSIZE ({time.time() - t0:.0f} s)')
 
     # ---------------------------------------------------------------- bridge kinematics (rest vs docked geometry)
+    DL = departure_levels()
     for bi, b in enumerate(S['bridges']):
         R, Dk = b['poses']['rest'], b['poses'].get('dockMax')
-        if not Dk or not Dk['docks']: continue
+        if not Dk or not Dk.get('docks', Dk.get('k', 0) >= 1): continue   # (docks false: the bridge stays at rest)
         def seclen(P, name):
             p = next((q for q in P['parts'] if q['part'] == name), None)
             if not p: return None
@@ -591,18 +606,23 @@ def run():
         if ch > 0.1:
             au.add('KINEMATICS', 'tunnel-stretch', 'WARNING', ref, dict(cat='code', id='gates.js bridgeGeo', label='gates.js bridgeGeo() tunnel sections'), loc=b['rc'],
                    note=f'tunnel sections {"/".join(f"{x:.1f}" for x in l0)} m parked -> {"/".join(f"{x:.1f}" for x in l1)} m docked to {Dk["type"]}: sections scale with the extension instead of telescoping')
-        # slope of the docked tunnel floor (rotunda floor -> door sill). The rotunda floor comes from gates.js pickHr on the
-        # fixed walkway's 1:12 band from the terminal departure level, which is INFERRED (gates.js DEPARTURE_LEVEL 5.4 m,
-        # not sourced: bridges_closeout §1.5 / static track); where the floor sits on that band's edge (gates.js
-        # b.HrPinned) the slope is the inferred level's, and the record says so (review round 2 bridges-v4)
+        # slope of the docked tunnel floor (rotunda floor -> door sill). FAA AC 150/5220-21C §2.2.d(3)(b) / Figure 6: 1:12 is
+        # the maximum for unassisted access (steeper: WARNING "exceeds unassisted access"), 1:4 for assisted access and
+        # §3.4.b(6) the limit beyond which a PBB needs a ramp - gates.js never docks steeper (CLEARANCE if the scene does).
+        # The rotunda floor comes from gates.js pickHr on the fixed walkway's 1:12 band from the pier's bridge level
+        # (DEPARTURE_LEVELS: obs-low / pub / inf per pier); where it sits on that band's edge (b.HrPinned) the slope is the
+        # level's, and the record names the level's tag (review round 2 bridges-v4, close-out round 3 bridges-1 / -7)
         cab = np.array(Dk['pose']['cab']); rc = np.array(Dk['pose']['rc']); fl = Dk['pose']['floorY']
         run = math.hypot(cab[0] - rc[0], cab[2] - rc[1]); drop = fl - cab[1]
         if run > 1 and abs(drop) / run > 1 / 12:
             hr, band = fl - g, b.get('fixedLen', 0) / 12
-            pinned = b.get('HrPinned', min(abs(hr - (DEPARTURE_LEVEL_INF - band)), abs(hr - (DEPARTURE_LEVEL_INF + band))) < 0.03)
-            au.add('KINEMATICS', 'tunnel-slope', 'WARNING', ref, dict(cat='rule', id='1:12', label='PBB slope limit 1:12 (ADA / ABA 410.1)'), loc=b['rc'],
+            lv = DL.get((b['stand'] or ' ')[0]) or (DEPARTURE_LEVEL_INF, 'inf'); hb, tag = b.get('Hb', lv[0]), b.get('HbTag', lv[1])
+            pinned = b.get('HrPinned', min(abs(hr - (hb - band)), abs(hr - (hb + band))) < 0.03)
+            steep = abs(drop) / run > 0.25 + 1e-9
+            au.add('KINEMATICS', 'tunnel-slope', 'CLEARANCE' if steep else 'WARNING', ref,
+                   dict(cat='rule', id='1:4' if steep else '1:12', label='PBB slope beyond 1:4 (AC 150/5220-21C §3.4.b(6): needs a ramp)' if steep else 'PBB slope above 1:12: exceeds unassisted access (AC 150/5220-21C §2.2.d(3)(b), Figure 6; limit 1:4)'), loc=b['rc'],
                    note=f'docked to {Dk["type"]}: floor {fl - g:.1f} m at the rotunda -> {cab[1] - g:.1f} m at the cab over {run:.1f} m = 1:{run / max(abs(drop), 1e-3):.1f}'
-                        + (f' [inferred heights: the rotunda floor is on the 1:12 band of the INFERRED {DEPARTURE_LEVEL_INF} m departure level]' if pinned else ''))
+                        + (f' [the rotunda floor is on the 1:12 band of the pier\'s {hb:.2f} m bridge level ({tag})]' if pinned else ''))
     raw = au.items
     per_scen = collections.Counter(f'{x["scenario"]}|{x["severity"]}' for x in raw)
     au.meta = dict(seconds=time.time() - t0, tested={f'{k[0]}|{k[1]}': v for k, v in au.stats.items()}, per_scenario=dict(per_scen),

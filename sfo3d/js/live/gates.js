@@ -8,9 +8,11 @@
 //  - stand equipment: gate identification sign and visual docking guidance display (VDGS), placed on the stand
 //    centreline where no bridge part reaches it in any pose (rest, docking path, docked); on the terminal face only
 //    where a pier / hall wall stands behind it, else on its own post
-//  - ground service vehicles placed around the actually parked aircraft (belt loaders on the sourced cargo-door sills
-//    of the 737 / A320 families), their mesh hulls sampled against the aircraft (elliptical fuselage, wings, engines,
-//    tail), the neighbouring aircraft, the bridges' real solids, the terminal and each other
+//  - ground service vehicles placed around the actually parked aircraft (belt loaders on the cargo-door sills of the
+//    737 / A320 families: the fitted model's own door / the published sill, at the rendered skin), their mesh hulls
+//    sampled against the aircraft (the rendered, pitched fuselage skin - js/aircraft/fit.js keelAt / skinHW - and the
+//    elliptical section, wings, engines, tail), the neighbouring aircraft, the bridges' real solids, the terminal and each
+//    other
 //
 // Bridge kinematics (sources):
 //  * Oshkosh AeroTech, "Jetway Glass & Steel Truss Passenger Boarding Bridges" sell sheet (2025), cached
@@ -81,6 +83,7 @@ import { familyOf } from './traffic.js';
 import { STANDS } from '../../data/sfo_stands.js';
 import { BUILDINGS } from '../../data/sfo_buildings.js';
 import { AIRPORT } from '../../data/sfo_airport.js';
+import { B3D_INTEGRATION } from '../../data/buildings3d/integration.js'; // 3-D asset footprints (VDGS brackets)
 
 // terminal outlines the bridges must stay out of: ramp-level complex and the piers / halls (js/live/terminals.js builds
 // them from these rings; the elevated sky-bridge walkways are left out - fixed walkways run under / beside them)
@@ -150,6 +153,11 @@ function solidInBuilding(bx, own = null) {
     for (const e of L) if (ok(e[0]) && !(own && own.edges.has(e)) && segInBox(e, bx, hl, hw)) return true; }
   return false;
 }
+// the 3-D building assets' footprints (data/buildings3d/integration.js B3D_INTEGRATION.physics: plan rings [[outer, hole...]]
+// of the LOD0 assets, 0.1 m; no height bands yet - integration-5): only for the VDGS wall bracket (vdgsSpot)
+const ASSET = ((B3D_INTEGRATION && B3D_INTEGRATION.physics && B3D_INTEGRATION.physics.rings) || []).map(P => { let a = 1e9, b = 1e9, c = -1e9, d = -1e9; for (const p of P[0]) { a = Math.min(a, p[0]); c = Math.max(c, p[0]); b = Math.min(b, p[1]); d = Math.max(d, p[1]); } return { P, bb: [a, b, c, d] }; });
+const inRingXZ = (x, z, r) => { let c = false; for (let i = 0, j = r.length - 1; i < r.length; j = i++) { const a = r[i], b = r[j]; if (((a[1] > z) !== (b[1] > z)) && (x < (b[0] - a[0]) * (z - a[1]) / (b[1] - a[1]) + a[0])) c = !c; } return c; };
+function inAsset(x, z) { for (const A of ASSET) { if (x < A.bb[0] || x > A.bb[2] || z < A.bb[1] || z > A.bb[3]) continue; let c = false; for (const r of A.P) if (inRingXZ(x, z, r)) c = !c; if (c) return true; } return false; }
 // top of the terminal wall the point (x, z) lies in (0: none) - js/live/terminals.js: complex 0-5 m, parts 5 m - h
 function wallTop(x, z) { let h = 0; for (let i = 0; i < NBLD; i++) { const bb = BLD_BB[i]; if (x < bb[0] || x > bb[2] || z < bb[1] || z > bb[3]) continue; if (inRingK(x, z, i)) h = Math.max(h, BLD_H[i]); } return h; }
 
@@ -473,15 +481,14 @@ export class LiveGateSystem {
     this.finishPrep();
     this.sprites = []; this.aircraftFootprints = null;
   }
-  // upper-deck (A380 U1L) bridges from the stand data (data/sfo_stands.json bridges_upper, door 3); standGates() does not
-  // pass them, so they are read here and kept apart from g.bridges (the engine, the tools and the L1/L2 logic use those)
+  // upper-deck (A380 U1L) bridges: standGates() (js/live/airport.js) passes them as g.bridgesUpper (data/sfo_stands.json
+  // bridges_upper; same fields as g.bridges, door 3, upper: true) - one source for gates.js, the engine and the tools
+  // (close-out round 3 bridges-11: this used to re-read STANDS itself). Kept apart from g.bridges (the engine, the tools and
+  // the L1 / L2 logic use those); a gate without the stand flag `bridge` gets none
   attachUpper() {
-    const byName = new Map((STANDS.stands || []).map(s => [s.name, s]));
     for (const g of this.gates) {
-      const s = byName.get(g.name); if (!s || !g.bridge || !(s.bridges_upper && s.bridges_upper.length)) continue;
-      g.bridgesUpper = s.bridges_upper.map(b => ({ gate: b.gate, attach: worldToST(b.attach[0], b.attach[1]), attachW: b.attach, door: 3, upper: true,
-        rotundaW: b.rotunda || null, cabW: b.cab || null, walkW: b.walk || null, cabPose: b.cab_pose || null, stowW: b.stow || null,
-        rotundaMaxR: b.rotunda_max_r ?? null, extRange: b.ext_range || null, model: b.model || null, dockTypesOut: b.dock_types_out || [], stowLen: b.stow_len ?? null }));
+      if (!g.bridge || !(g.bridgesUpper && g.bridgesUpper.length)) { if (g.bridgesUpper && !g.bridge) g.bridgesUpper = null; continue; }
+      for (const b of g.bridgesUpper) { b.door = 3; b.upper = true; }
     }
   }
   bridgesOf(g) { return g.bridgesUpper ? (g.bridges || []).concat(g.bridgesUpper) : (g.bridges || []); }
@@ -925,10 +932,11 @@ export class LiveGateSystem {
     return { a: b.ac + oa + (ob - oa) * u, e: A.e + (B.e - A.e) * u, t: A.t + (B.t - A.t) * u, h: A.h + (B.h - A.h) * u };
   }
   // (toDoor: the path ends at the door - its last segment deploys the closure, so the cab / bellows may meet the skin there;
-  // false: a way back to rest, every part tested on every segment. count: go on and return {fixed, n} - n = sampled poses
-  // with a part in the aircraft, fixed = a fixed walkway / drum / building was met)
+  // false: a way back to rest, every part tested on every segment. count: go on and return {fixed, n, n0} - n = sampled
+  // poses with a part within the clearance of the aircraft, n0 = in it (no clearance), fixed = a fixed walkway / drum /
+  // building was met)
   pathHits(b, pts, T, nose, f, toDoor = true, count = false) {
-    let n0 = 0, fx = false;
+    let n0 = 0, nIn = 0, fx = false;
     for (let i = 1; i < pts.length; i++) {
       const last = i === pts.length - 1; const n = last ? 4 : 16; const door = toDoor && last;
       for (let k = 0; k <= n; k++) {
@@ -937,11 +945,11 @@ export class LiveGateSystem {
         if (this.bldHit(b, q, door && k > 0 ? 1 : 0)) { if (!count) return 'building'; fx = true; } // through a terminal outline (drawn or SFO Museum)
         for (const bx of this.solidsQ(b, q, door && k > 0 ? 1 : 0)) {
           if (door && (bx.part === 'cab' || bx.part === 'bellows')) continue; // the closure meets the door by design
-          if (boxHitsAc(bx, T, nose, f, bx.part === 'cab' ? 0.3 : 0.5)) { if (!count) return 'aircraft'; n0++; break; }
+          if (boxHitsAc(bx, T, nose, f, bx.part === 'cab' ? 0.3 : 0.5)) { if (!count) return 'aircraft'; n0++; if (this.solidsQ(b, q, door && k > 0 ? 1 : 0).some(c => !(door && (c.part === 'cab' || c.part === 'bellows')) && boxHitsAc(c, T, nose, f, 0))) nIn++; break; }
         }
       }
     }
-    return count ? { fixed: fx, n: n0 } : false;
+    return count ? { fixed: fx, n: n0, n0: nIn } : false;
   }
 
   // joint state at animation parameter k (0 rest .. 1 docked) along a plan's path (time-proportional)
@@ -1179,7 +1187,9 @@ export class LiveGateSystem {
         const Lh = 0.85, Lw = Lh * r.aspect; const os = secs[secs.length - 1]; const ms = (os[0] + os[1]) / 2 - 0.5; const hw = os[2] / 2 + 0.04;
         for (const sg of [-1, 1]) {
           const n = v3.mul(side, sg); const c = v3.add(v3.add(at(ms, fl(ms)), v3.mul(n, hw)), [0, os[3] - 0.75, 0]);
-          const along = v3.mul(hdir, -sg); // text runs left-to-right for a viewer facing -n
+          // text runs left-to-right for a viewer on the n side looking at the sign (viewer's right = cross(-n, up) = sg *
+          // hdir; close-out round 3 bridges-8: -sg * hdir read mirrored on BOTH sides - review B13 / D10; scratch signs.mjs)
+          const along = v3.mul(hdir, sg);
           const u0 = v3.add(c, v3.mul(along, -Lw / 2)), u1 = v3.add(c, v3.mul(along, Lw / 2));
           signQuad(sgn, [v3.add(u0, [0, -Lh / 2, 0]), v3.add(u1, [0, -Lh / 2, 0]), v3.add(u1, [0, Lh / 2, 0]), v3.add(u0, [0, Lh / 2, 0])], n, r, true);
         }
@@ -1188,7 +1198,9 @@ export class LiveGateSystem {
     return P;
   }
   // ------------------------------------------------------------ stand sign + VDGS
-  // on the stand centreline ahead of the nose: on the terminal face when the stop point is close to it, else on its own
+  // (every VDGS position is inferred - no survey of SFO's units; F5's is a post: its facade spot lies in the Museum / asset
+// bump around F5 L1's walkway start, no source for its real mounting)
+// on the stand centreline ahead of the nose: on the terminal face when the stop point is close to it, else on its own
   // post; the first spot (facade first, then posts 12, 11, 13, 10, ... m ahead of the nose) that no bridge part of this
   // or a neighbouring stand reaches in any pose (rest, docking paths, docked for every type it docks) with 0.5 m clearance
   vdgsSpot(g) {
@@ -1202,7 +1214,7 @@ export class LiveGateSystem {
     // bracket reaching back 0.1 m into the drawn wall (inside the 3-D asset's wall when that is drawn). Review round 2
     // v7: mounted in front of the drawn wall only, the units at A10, E3, E7, F5, F12, F14, G2, G3, G7, G9 lay inside the
     // Museum ring (0.2-0.8 m in front of the drawn wall) and became posts 2.4-3 m nearer the aircraft
-    const P = (t) => v3.add(nose, v3.mul(f, t));
+    const P = (t) => v3.add(nose, v3.mul(f, t)); const W0 = [-f[2], f[0]];
     const first = (test, t0, t1) => { let t = null; for (let x = t0; x <= t1 + 1e-9; x += 0.5) if (test(x)) { t = x; break; } if (t == null || t === t0) return t;
       let lo = t - 0.5, hi = t; for (let k = 0; k < 12; k++) { const m = (lo + hi) / 2; if (test(m)) hi = m; else lo = m; } return hi; };
     const td = first(t => { const p = P(t); return inBuilding(p[0], p[2], false, true); }, 1, 60);
@@ -1210,13 +1222,17 @@ export class LiveGateSystem {
     if (td != null) { const t0 = Math.max(1, td - STRIP_LEAN); const inC = (t) => { const p = P(t); return inBuilding(p[0], p[2]); }; const tm = first(inC, t0, td);
       // (only a face continuous with the drawn wall: no gap between them - not a walkway strip crossing the centreline)
       if (tm != null && tm > t0 && tm < td) { let ok = true; for (let t = tm + 0.05; t < td; t += 0.1) if (!inC(t)) { ok = false; break; } if (ok) tf = tm; } }
+    // (the 3-D asset's wall behind a facade unit: where it lies behind the drawn wall - B2 0.94 / 1.34 m, C8 0.44 / 0.40 m
+    // behind the unit's back - the bracket reaches it too, close-out round 3 bridges-5; ASSET: B3D_INTEGRATION physics
+    // footprints, the arms at +-0.475 m: the first point inside a footprint up to 3 m behind the unit, else none)
+    const assetFace = (t) => { let a = -1e9; for (const w of [-0.475, 0.475]) for (let x = t; x <= t + 3; x += 0.02) { const p = P(x); if (inAsset(p[0] + W0[0] * w, p[2] + W0[1] * w)) { a = Math.max(a, x); break; } } return a; };
     const tmax = td == null ? 40 : 1 + Math.ceil((td - 1) / 0.5 - 1e-9) * 0.5 - 2.75; // (posts ~2.5 m off the drawn wall: as before, on its 0.5 m search grid)
     // a facade unit only where the drawn wall behind it (0.6-3 m) reaches above the unit (H0 + 4.2 m): the piers / halls,
     // not the 5 m ramp-level complex
     // (0.25 m off the outer face on the centreline, else up to 1 m where the face is oblique or stepped under the unit's
     // 2.6 m width; the bracket reaches back to the drawn wall)
     const tries = []; const fac = (H0) => { if (tf == null || ![0.6, 1.5, 3.0].every(d => { const p = P(td + d); return wallTop(p[0], p[2]) >= H0 + 4.2; })) return;
-      for (const off of [0.25, 0.5, 0.75, 1.0]) { const t = Math.max(1, tf - off); tries.push({ t, post: false, H0, bracket: Math.max(0, td + 0.1 - t) }); } };
+      for (const off of [0.25, 0.5, 0.75, 1.0]) { const t = Math.max(1, tf - off); tries.push({ t, post: false, H0, bracket: Math.max(0, td + 0.1 - t, assetFace(t) + 0.15 - t) }); } }; // (+0.15: the shipped rings are rounded to 0.1 m)
     if (tf != null && tf <= 14) fac(7.2);
     for (const d of [0, -1, 1, -2, 2, -3, 3, -4, 4, -5, -6, -7, -8]) { const t = 12 + d; if (t >= 3.5 && t <= tmax) tries.push({ t, post: true, H0: 5.2 }); }
     for (let t = 17; t <= Math.min(40, tmax); t++) tries.push({ t, post: true, H0: 5.2 });
@@ -1387,27 +1403,34 @@ export class LiveGateSystem {
     // and backed out through it, and an undocking during this one retraced the old way into it)
     const restQ = (b) => ({ a: b.a0, e: b.e0, t: 0, h: b.hRest ?? b.h0 });
     const cost = (b, pts, toDoor) => this.pathHits(b, pts, T, n2, f2, toDoor, true);
-    const pick = (C) => { // C: [{pts, toDoor}] in order of preference: the first clear one, else the fewest poses in the aircraft
-      let best = null; for (const c of C) { c.k = cost(c.b, c.pts, c.toDoor); if (!c.k.fixed && !c.k.n) return c; if (!c.k.fixed && (!best || c.k.n < best.k.n)) best = c; }
+    const pick = (C) => { // C: [{pts, toDoor}] in order of preference: the first clear one, else the fewest poses in the
+      // aircraft (then within its clearance)
+      let best = null; for (const c of C) { c.k = cost(c.b, c.pts, c.toDoor); if (!c.k.fixed && !c.k.n) return c;
+        if (!c.k.fixed && (!best || c.k.n0 < best.k.n0 || (c.k.n0 === best.k.n0 && c.k.n < best.k.n))) best = c; }
       return best || C[0]; };
+    const inNow = (b, q) => this.solidsQ(b, q, 0).some(bx => boxHitsAc(bx, T, n2, f2, 0));
     for (const b of this.bridgesOf(g)) {
       const l = L.get(b); const Pn = this.docks(g, b) ? this.planFor(g, b) : null;
       if (!l.post) { if (Pn) parts.push({ b, pre: [l.q], post: Pn.path.slice(), Pn }); continue; }  // at rest: the normal docking
       // the way back to rest: the way it came (reversed), or straight back - retract at its angle (cab straightened), swing
       // at the operational retraction, extend to the rest pose (all within 1:4)
-      const r = restQ(b), q = l.q, hR = this.bandH(b, b.m.opR, q.h, SLOPE_MAX);
-      const backs = [{ b, pts: dedupe(l.pre.slice().reverse().concat([r])), toDoor: false, way: 'pre' },
-        { b, pts: dedupe([q, { a: q.a, e: b.m.opR, t: 0, h: hR }, { a: r.a, e: b.m.opR, t: 0, h: this.bandH(b, b.m.opR, r.h, SLOPE_MAX) }, r]), toDoor: false, way: 'retract' }];
+      // (and both of these lifted first by 1.5 / 2.5 m where the 1:4 band allows: over a wing that came to lie under it)
+      const r = restQ(b), q = l.q, bh = (e, h) => this.bandH(b, e, h, SLOPE_MAX), oR = b.m.opR;
+      const retract = (dh) => { const h1 = bh(q.e, q.h + dh), h2 = bh(oR, h1); return dedupe([q, { ...q, h: h1 }, { a: q.a, e: oR, t: 0, h: h2 }, { a: r.a, e: oR, t: 0, h: bh(oR, h2) }, { ...r, h: bh(r.e, h2) }, r]); };
+      const backs = [{ b, pts: dedupe(l.pre.slice().reverse().concat([r])), toDoor: false, way: 'pre' }, { b, pts: retract(0), toDoor: false, way: 'retract' },
+        { b, pts: retract(1.5), toDoor: false, way: 'retract+1.5' }, { b, pts: retract(2.5), toDoor: false, way: 'retract+2.5' }];
       // a part already in the new body: the bridge moves at once (no DOCK_DELAY hold), on the way out with the fewest poses in it
-      if (this.pathHits(b, [q, q], T, n2, f2, false)) inside = true;
+      if (inNow(b, q)) inside = true;
       let post, pre = l.pre;
       if (Pn && same && !l.toRest && near(l.post[l.post.length - 1], Pn.q1)) post = l.post; // (the same occupant: back the way it came)
       else {
         const back = pick(backs); pre = back.pts.slice().reverse(); // (an undocking during this one retraces the chosen way back)
         if (!Pn) post = back.pts;
-        else { const via = { b, pts: back.pts.concat(Pn.path.slice(1)), toDoor: true }; const ch = pick([{ b, pts: [q, { ...Pn.qs }, Pn.q1], toDoor: true }, via]); post = ch.pts;
+        else { const via = { b, pts: back.pts.concat(Pn.path.slice(1)), toDoor: true }; const qs = Pn.qs;
+          const up = (dh) => { const h1 = bh(q.e, q.h + dh); return dedupe([q, { ...q, h: h1 }, { ...qs, h: bh(qs.e, h1) }, { ...qs }, Pn.q1]); };
+          const ch = pick([{ b, pts: [q, { ...qs }, Pn.q1], toDoor: true }, via, { b, pts: up(1.5), toDoor: true }, { b, pts: up(2.5), toDoor: true }]); post = ch.pts;
           if (ch === via) pre = back.pts.slice().reverse(); }
-        if (back.k && (back.k.n || back.k.fixed)) b._dockFromHit = { n: back.k.n, fixed: back.k.fixed, way: back.way, t: now }; // (checkers' diagnostics)
+        b._dockFromHit = back.k && (back.k.n0 || back.k.fixed) ? { n0: back.k.n0, fixed: back.k.fixed, way: back.way, t: now } : null; // (checkers' diagnostics)
       }
       parts.push({ b, pre, post, Pn });
     }

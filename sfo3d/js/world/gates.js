@@ -4,6 +4,7 @@ import { Geo } from '../geom.js';
 import { m4, v3, rng, lerp, smoother } from '../math.js';
 import { stToWorld, GROUND_Y } from '../geo.js';
 import { TYPES } from '../aircraft/model.js';
+import { bellowsShape, bellowsGeo, BELLOWS } from '../aircraft/dock.js'; // the closure fitted to the drawn fuselage skin
 
 const G = GROUND_Y;
 const stW = (p, h = 0) => stToWorld(p[0], p[1], h);
@@ -62,17 +63,21 @@ export class GateSystem {
     const sill = G + (T.dockSill ?? T.Hc - 0.3 * T.R); // published door-1 sill (js/aircraft/fit.js; docs/requests/aircraft_docking_fields.md)
     const door = v3.add(v3.sub(nose, v3.mul(f, T.dockX1 ?? doorX)), v3.mul(left, (T.dockHW ?? T.R) + 0.15)); // door CENTRE station
     door[1] = sill;
-    // docked cab center (cab depth 3.4 m, away from fuselage along left)
-    const cabDock = v3.add(door, v3.mul(left, 1.9));
+    // docked cab center (cab depth 3.4 m, away from fuselage along left): its front 0.6 m off the cab stop, the bellows'
+    // depth (js/aircraft/dock.js BELLOWS rest + ext), so the closure's flat front lies on the skin at the door station
+    const cabDock = v3.add(door, v3.mul(left, 1.95));
     // retracted: cab pulled back toward pier, swung along pier face
     const along = v3.norm(v3.add(v3.mul(outW, 0.6), v3.mul(left, 0.8)));
     const cabPark = v3.add([rc[0], G + 4.2, rc[2]], v3.mul(along, 14));
     const kk = smoother(k);
     const cab = v3.lerp(cabPark, cabDock, kk);
     const cabFacing = v3.norm(v3.lerp(along, v3.mul(left, -1), kk)); // direction cab faces (toward aircraft when docked)
-    return { rc, floorY, cab, cabFacing, left, door };
+    return { rc, floorY, cab, cabFacing, left, door, T };
   }
-  bridgeInstances(g, k, out) {
+  // fit: a Geo collecting the fitted closure (js/aircraft/dock.js bellowsGeo, as js/live/gates.js draws it) - close-out
+  // round 3 bridges-9: the old flat block reached 0.4 m past the cab stop (0.25 m into the skin at the door) and stood off
+  // or cut into the tapering skin elsewhere; this scene has one bridge per gate, at door 1 (no second-bridge door)
+  bridgeInstances(g, k, out, fit = null) {
     const P = this.bridgePose(g, k); const M = this.meshes;
     const rc = P.rc; const rot = [rc[0], P.floorY - 0.2, rc[2]];
     // rotunda + column
@@ -95,9 +100,12 @@ export class GateSystem {
     const cabA = v3.sub(P.cab, v3.mul(P.cabFacing, 1.7)), cabB = v3.add(P.cab, v3.mul(P.cabFacing, 1.5));
     const cA = [cabA[0], P.cab[1] + 1.55, cabA[2]], cB = [cabB[0], P.cab[1] + 1.55, cabB[2]];
     out.cab.push(inst(segBox(cA, cB, 3.3, 3.4).M, [3.2, 0, 0, 0]));
-    // bellows/canopy at aircraft side
-    const bA = cB, bB = v3.add(cB, v3.mul(P.cabFacing, 0.5 + 0.3 * k));
-    out.bellows.push(inst(segBox(bA, bB, 3.0, 3.1).M));
+    // bellows closure at the aircraft side, deployed over the last 15 % of the docking: fitted to the drawn skin where the
+    // type has a measured door-1 footprint (data/models/dock_foot.js), else flat with its front at the cab stop
+    const kk = Math.max(0, Math.min(1, (k - 0.85) / 0.15)), bell = BELLOWS.rest + BELLOWS.ext * kk;
+    const shp = fit && kk > 0 ? bellowsShape(P.T, 1, kk) : null;
+    if (shp) bellowsGeo(fit, m4.basis(P.cabFacing, [0, 1, 0], [cabB[0], P.cab[1], cabB[2]]), 0, bell, shp, [0.08, 0.08, 0.09, 1], [0.9, 0, 0, 0]);
+    else { const bA = [cabB[0], P.cab[1] + 1.525, cabB[2]], bB = v3.add(bA, v3.mul(P.cabFacing, bell)); out.bellows.push(inst(segBox(bA, bB, 2.95, 3.1).M)); }
     // drive unit: legs + wheels under the outer tunnel near cab
     const du = v3.add(s0, v3.mul(dir, Lt * 0.84)); const yb = du[1] - 1.5;
     const side = v3.norm(v3.cross(dir, [0, 1, 0]));
@@ -116,13 +124,14 @@ export class GateSystem {
     for (const g of this.gates) {
       if (g.dynamic) continue;
       const docked = !g.empty;
-      this.bridgeInstances(g, docked ? 1 : 0.0, this.staticBuckets);
+      this.bridgeInstances(g, docked ? 1 : 0.0, this.staticBuckets, this._fitStatic || (this._fitStatic = new Geo()));
       if (docked) this.placeServiceVehicles(g, R, this.vehicleBuckets);
     }
     // staging: rows of baggage carts/containers near each pier root
     for (const g of this.gates) { if (R() > 0.3) continue; const f = stD(g.dir); const r = v3.norm(v3.cross(f, [0, 1, 0])); const base = stW(g.attach, G);
       const p0 = v3.add(base, v3.add(v3.mul(f, -9), v3.mul(r, (R() < 0.5 ? -1 : 1) * (g.wide ? 22 : 15))));
       for (let i = 0; i < 4; i++) { const p = v3.add(p0, v3.mul(r, i * 3.3)); this.vehicleBuckets.cart.push(inst(m4.basis(r, [0, 1, 0], [p[0], G, p[2]]), [0.3 + R() * 0.4, 0.3, 0.35, 1])); } }
+    this.fitStaticMesh = this._fitStatic && this._fitStatic.nv ? new Mesh(this._fitStatic.data()) : null; this._fitStatic = null;
     this.bbox = [-2000, 0, -2000, 2000, 60, 2000];
     const all = this.gates.map(g => stW(g.nose, 0)); if (all.length) { this.bbox = [1e9, 0, 1e9, -1e9, 30, -1e9]; all.forEach(p => { this.bbox[0] = Math.min(this.bbox[0], p[0] - 120); this.bbox[2] = Math.min(this.bbox[2], p[2] - 120); this.bbox[3] = Math.max(this.bbox[3], p[0] + 120); this.bbox[5] = Math.max(this.bbox[5], p[2] + 120); }); }
   }
@@ -130,7 +139,14 @@ export class GateSystem {
   items(dyn = [], extraVehicles = {}) {
     const out = [];
     const buckets = {}; for (const k in this.staticBuckets) buckets[k] = this.staticBuckets[k].slice();
-    for (const d of dyn) this.bridgeInstances(d.gate, d.k, buckets);
+    // (fitted closures of the animated bridges: one mesh per gate and 0.05 step of k, cached - the offline renderer
+    // animates one bridge per shot)
+    const fits = []; this._fitDyn = this._fitDyn || new Map();
+    for (const d of dyn) { const kq = Math.round(Math.max(0, Math.min(1, d.k)) * 20) / 20, key = (d.gate.id ?? d.gate.name) + ':' + kq;
+      let fm = this._fitDyn.get(key); const geo = fm === undefined ? new Geo() : null; this.bridgeInstances(d.gate, d.k, buckets, geo);
+      if (geo) { fm = geo.nv ? new Mesh(geo.data()) : null; this._fitDyn.set(key, fm); } if (fm) fits.push(fm); }
+    const I4 = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
+    for (const m of [this.fitStaticMesh, ...fits]) if (m) out.push({ mesh: m, prog: 'obj', model: I4, bbox: this.bbox, castShadow: true, uniforms: { uEmissiveBoost: 1 } });
     for (const k in buckets) { const m = this.meshes[k]; m.setInstances(new Float32Array(buckets[k].flat()), buckets[k].length); out.push({ mesh: m, prog: 'objI', bbox: this.bbox, castShadow: true, uniforms: { uEmissiveBoost: 1 } }); }
     for (const k in this.vehicleBuckets) { const list = this.vehicleBuckets[k].concat(extraVehicles[k] || []); const m = this.vehicleMeshes[k]; m.setInstances(new Float32Array(list.flat()), list.length); out.push({ mesh: m, prog: 'objI', bbox: this.bbox, castShadow: true, uniforms: { uEmissiveBoost: 1 }, shadowMaxCascade: 2 }); }
     return out;

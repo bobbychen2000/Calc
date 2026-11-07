@@ -912,6 +912,13 @@ marine-layer tower (E5) reflected 13.25 vs target 11.97 → 12.97 (A-EXP +1.0, w
 (env-16: windows mean 234, clipped) 9.0 vs 15.0 → 14.0. Interior views and bright decks are thus metered on the
 exterior light, no per-pixel glass masks needed. AgX tone mapping is unchanged (the tower LED compensation stays valid;
 no re-measure needed).
+**Far-deck horizon (env-4 / look2-8).** The E5 render (R3.13) still showed a band at the horizon 1.24 x brighter than
+the deck overhead (look2: 1.5 x): the background's fog in-scatter took the CLEAR-sky blur as the light of the air under
+the deck. `js/three/sky.js fogInscatter` now mixes, by the low-layer cover `deckK` (1 − Π(1 − own) of the plane layers,
+set in `setLayers`), toward the deck-lit air: 0.5 × (6/7 skyUp + ground) — the isotropic-phase equilibrium radiance
+under a CIE-overcast deck (solid-angle mean 6/7 of skyUp, as `slabBase` shades the deck) and the ground (I). Under a
+uniform deck the horizon is then darker than the deck overhead (CIE: 3/7 vs 9/7 skyUp at the horizon / zenith), as it
+should be; fog of distant terrain under the deck tends to the same colour.
 
 ### R3.4 Position lights by day: lens footprint (env-6)
 

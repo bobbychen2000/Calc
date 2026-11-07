@@ -17,7 +17,7 @@ Francisco Peninsula Watershed. Sources (cached in refs/cache/env_src/osm/, SOURC
 World y = elevation (m NAVD88) - 4.0 + GROUND_Y 3 (the airfield level GROUND_Y = SFO field elevation 13.1 ft = 4.0 m,
 js/live/app.js alsPlane). Levels vary with storage (NV: the 3DEP value is one day of 2023).
 Output: js/env/reservoirs_data.js (generated, do not edit): {lakes: [{name, osm, level_y, src, ring [[x, z]...],
-tris [i...]}], watershed: {name, osm, rings [[[x, z]...]...]}} in world metres (x east, z south; tools/geo_frame.py).
+tris [i...] (up-facing: clockwise in x-z)}], watershed: {name, osm, rings [[[x, z]...]...]}} in world metres (x east, z south; tools/geo_frame.py).
 """
 import json, os, sys, xml.etree.ElementTree as ET
 HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.abspath(os.path.join(HERE, '..', '..'))
@@ -110,6 +110,10 @@ def main():
         ring = simplify(world(nodes, ways[str(wid)]))
         if area(ring) < 0: ring.reverse()
         tris = earcut(ring)
+        # earcut works counter-clockwise in (x, z); with z pointing south that is a DOWN-facing triangle (y-component of
+        # (b - a) x (c - a) < 0), culled from above. The world's water / ground meshes face up (clockwise in (x, z)):
+        # flip each triangle (close-out round 3: the first live3 reservoir render showed no lakes)
+        tris = [v for k in range(0, len(tris), 3) for v in (tris[k], tris[k + 2], tris[k + 1])]
         out['lakes'].append({'name': name, 'osm': f'way {wid}', 'elev_m': elev, 'level_y': round(elev - FIELD_ELEV_M + GROUND_Y, 2), 'src': src,
                              'area_km2': round(abs(area(ring)) / 1e6, 3), 'ring': [list(p) for p in ring], 'tris': tris})
         print(name, len(ring), 'vertices', len(tris) // 3, 'triangles', round(abs(area(ring)) / 1e6, 2), 'km2, level y', out['lakes'][-1]['level_y'])

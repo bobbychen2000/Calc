@@ -4,14 +4,16 @@
 // For a ground fragment (the paved airfield is flat: normal +y) the reflected view ray is marched in VIEW space through
 // the current frame's pre-pass depth (js/three/engine.js 'prepass' tiers: high / ultra / medium; the phone tier draws in
 // one MRT pass and has no depth before the ground is shaded: no SSR there): N steps at geometric distances t_i =
-// T0 q^i up to T_MAX. A step where the ray is behind the visible surface AND that surface is not the ground itself
-// (its reconstructed world height > the reflecting fragment's + GROUND_EPS + PIX_K pixel rows of height at its depth: a ray reflected upwards off the flat
-// pavement cannot meet the pavement again; at grazing views one pixel row spans tens of metres of ground, so a depth
-// test alone reports false "hits" on the ground right at the start) is a candidate: 6 bisection steps between the last
-// step in front and it, accepted when the refined point lies behind the surface by less than a thickness (THICK_M +
-// THICK_K x depth: a front face, not a ray passing behind a silhouette) and that surface is still above the ground;
-// otherwise the march goes on. (Close-out round 3 dev check: the thickness tested at the coarse step - up to 30 % of t -
-// rejected the 100-150 m reflections; testing it only after bisection stopped every march on the first ground pixel.) The radiance at the hit is the PREVIOUS frame's resolved HDR image (TRAA history,
+// T0 q^i up to T_MAX. A step where the ray is behind the visible surface AND that surface is not the ground itself is a
+// candidate (its reconstructed world height must exceed the reflecting fragment's by GROUND_EPS + PIX_K pixel rows of
+// height at its depth: a ray reflected upwards off the flat pavement cannot meet the pavement again, but at grazing
+// views one pixel row spans tens of metres of ground, so a depth sampled one row off puts the pavement "above itself");
+// 6 bisection steps between the last step in front and the candidate; accepted when the refined point lies behind the
+// surface by less than a thickness (THICK_M + THICK_K x depth: a front face, not a ray passing behind a silhouette) and
+// that surface still passes the ground test; otherwise the march goes on. (Close-out round 3 dev checks, skytest.html
+// ?ssr=1 / ?ssr=dbg: the thickness tested at the coarse step - up to 30 % of t - rejected the 100-150 m reflections;
+// without the pixel-row tolerance false hits filled a 90-460 m band and contour arcs that moved with the TRAA jitter.)
+// The radiance at the hit is the PREVIOUS frame's resolved HDR image (TRAA history,
 // js/three/engine.js traaNode: un-jittered, pre-exposed, without the light sprites, which renderer3 mirrors itself),
 // reprojected with the previous frame's view-projection (renderer3 ssrPrevVP) - the usual "previous-frame SSR" (one frame
 // of latency; exact for a still camera). The term is added to the ground's emission as
