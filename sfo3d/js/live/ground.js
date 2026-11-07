@@ -14,6 +14,12 @@ import { TYPES } from '../aircraft/types.js';
 import { antOf } from './traffic.js';
 
 const hv = (h) => [Math.sin(h), -Math.cos(h)];
+// a moving body whose drawn pose is that far (s) past its newest report (dead reckoning, traffic.js disp.extrap) is no evidence
+// that a silent aircraft it overlaps has gone (close-out round 3, realtime-2; the reports come every 1-5 s while taxiing [obs],
+// 4-5 Nov recording)
+const GHOST_EX_S = 5;
+// ...and at a stand the overlap must be a fuselage one: >= this many fuselage samples (fusIn; 3 per <= 3-m station) -- two stations
+const GHOST_FUS_PTS = 6;
 
 // building occupancy grid (2 m) from the airport's building footprints; extra (optional): more footprints as polygons
 // [[ring, hole...], ...] - the Blender building assets' measured footprints (data/buildings3d/integration.js physics,
@@ -107,6 +113,12 @@ export function overlaps(A, B, m = 0) {
   if (Math.hypot(A.nose[0] - B.nose[0], A.nose[1] - B.nose[1]) > (A.T.L + B.T.L) * 0.5 + 45) return false;
   const Sa = A.S || (A.S = samples(A.T, A.nose, A.h)), Sb = B.S || (B.S = samples(B.T, B.nose, B.h));
   return Sa.outline.some(p => inside(B, p, m)) || Sb.outline.some(p => inside(A, p, m));
+}
+// fuselage samples (both sides + centre line every <= 3 m) of each body inside the other's planform: the depth of an overlap
+// (a wingtip over a tail = 0-3, one body driven into the other = many; close-out round 3, realtime-2)
+export function fusIn(A, B) {
+  const Sa = A.S || (A.S = samples(A.T, A.nose, A.h)), Sb = B.S || (B.S = samples(B.T, B.nose, B.h)); let n = 0;
+  for (const p of Sa.fus) if (inside(B, p, 0)) n++; for (const p of Sb.fus) if (inside(A, p, 0)) n++; return n;
 }
 
 export class GroundPhysics {
@@ -233,9 +245,20 @@ export class GroundPhysics {
       // (the evidence: the live aircraft's NEWEST report -- ~ where its drawn body will be a few seconds later -- already lies
       // on the silent one's planform. Not an extrapolation: in a queue the aircraft behind decelerates and stops short)
       const L = tr.last; const ahead = L && L.ground && (tr.disp.gs || 0) > 0.5 && L.hd != null ? (() => { const A = bodyOf(B.T, L.px ?? L.x, L.pz ?? L.z, L.hd); return A; })() : null;
+      // (close-out round 3, realtime-2: the drawn body is that evidence only while it follows the data -- not silent itself, and
+      // not dead-reckoning more than GHOST_EX_S past its newest report. KLM373 B772, silent for 17 s on its way in, was
+      // extrapolated into the tail of JAL2's B77W parked at A1 (silent 2 h 19 min, docked) and JAL2 was faded as a ghost, 4 Nov
+      // 20:23:05Z -- KLM373's next report turned it to A2, and JAL2 was heard at A1 again 29 min later)
+      // At a stand the newest REPORT must lie on it as well (the body there just re-acquired its data after 17 s of dead reckoning:
+      // the report that ended the extrapolation put KLM373 25 m west, turning into A2)
+      const live = !tr.stale && (tr.disp.extrap || 0) <= GHOST_EX_S;
+      const rep = live && L && L.ground ? bodyOf(B.T, L.px ?? L.x, L.pz ?? L.z, L.hd ?? tr.disp.hdg) : null;
       for (const S of silent) {
         if (S.tr.removed || S.tr.dropping) continue;
-        const hit = overlaps(B, S, 0) || (!S.tr.gate && ahead && overlaps(ahead, S, 0.5));
+        // (and the drawn bodies overlap with a fuselage, >= GHOST_FUS_PTS fuselage samples inside the other -- not a wingtip over a
+        // tail: DAL1412's A333 taxiing past C7, 5 Nov 20:45:40Z, clipped DAL2074's parked B739 tail with its left wingtip and
+        // DAL2074 was removed, heard at C7 again 44 min later; the moving body is pushed clear instead, below)
+        const hit = S.tr.gate ? !!(rep && overlaps(B, S, 0) && fusIn(B, S) >= GHOST_FUS_PTS && overlaps(rep, S, 0)) : ((live && overlaps(B, S, 0)) || (ahead && overlaps(ahead, S, 0.5)));
         if (hit) { traffic.event && traffic.event(S.tr, traffic._lastRecv || 0, 'stale-replaced', { by: tr.hex, moving: true, quiet: S.tr.stale ? 0 : 1 }); if (traffic.fadeRemove) traffic.fadeRemove(S.tr, 'ghost'); else traffic.remove(S.tr); ghosts++; }
       }
       for (const S of waiting) {

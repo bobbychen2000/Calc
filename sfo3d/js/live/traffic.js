@@ -1241,8 +1241,19 @@ export class Traffic {
     const po = o.cs && o.cs.callsign ? this.planFor(o) : null; const co = (po && po.cands || []).filter(at);
     if (co.some(c => t >= c.from - 600e3 && t <= c.to + 600e3)) return null;   // (SFO has it at this stand around now)
     const ms = (v) => v == null ? null : v > 1e12 ? v : v * 1000; const bo = po && po.dep && po.dep.blk ? ms(po.dep.blk[2]) : null;
-    if (bo != null && bo <= t && bo > t - 12 * 3600e3) return 'blockout';
-    if (co.length && co.every(c => c.to < t - 60e3)) return 'window';
+    // (close-out round 3, realtime-2: the block-out counts only for a departure SFO lists at THIS stand -- a linked departure
+    // moved to another gate is not this aircraft leaving: AA2651's arrival at B20 was linked to AA1930, which blocked out from
+    // B25 at 02:02Z on 5 Nov while the A321 stayed at B20 past 03:00Z -- an aircraft swap; it was removed at 02:25Z and heard
+    // there again. And a stand window only once SFO had seen it end: a window whose end lies after the time SFO's plan was
+    // fetched (plan.fetched_at) is a forecast -- with the plan 12-13 h old (the cache's last flysfo snapshot, 5 Nov 02:49Z)
+    // UAL2123 E12, UAL1800 F17, UAL1609 E9 were expired on such forecasts and heard parked there again 28-56 min later)
+    // (...and neither when the aircraft's own transponder was heard after that time -- it reported parked there after SFO's
+    // block-out / window end: AA2651's A321 reported at B20 at 0 kt from 00:16 to 02:27Z, after its window ended at 00:00Z)
+    const U = (v) => String(v || '').toUpperCase(); const dp = po && po.dep, heard = o.lastFixT || 0;
+    const depHere = !!dp && ((dp.stands || []).some(x => x && g.names.includes(U(x[0]))) || (!(dp.stands || []).some(x => x && x[0]) && g.names.includes(U(dp.gate))));
+    if (bo != null && depHere && bo <= t && bo > t - 12 * 3600e3 && heard <= bo + 60e3) return 'blockout';
+    const fet = this.plan && this.plan.fetched_at != null ? ms(this.plan.fetched_at) : null;
+    if (co.length && co.every(c => c.to < t - 60e3 && (fet == null || c.to <= fet) && heard <= c.to + 60e3)) return 'window';
     const pa = tr ? this.planFor(tr) : null; if (pa && (pa.cands || []).some(c => c.kind === 'arr' && !c.linked && at(c) && t >= c.from - 600e3 && t <= c.to)) return 'alloc';
     return null;
   }

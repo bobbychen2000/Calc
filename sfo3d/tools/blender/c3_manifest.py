@@ -26,9 +26,14 @@ def main():
         for key in ('domestic', 'itb', 'tower', 'landside'):
             if key not in rec: continue
 
-            def upd(old, items=rec[key], field=field):
+            def upd(old, items=rec[key], field=field, key=key):
                 old = old or {}
-                old[field] = items
+                if key == 'landside' and isinstance(old.get(field), list):
+                    # the landside build writes its own fix-2 records (landside_manifest.CLOSEOUT_R3_FIX2): add / replace by id
+                    ids = {r.get('id') for r in items}
+                    old[field] = [r for r in old[field] if r.get('id') not in ids] + items
+                else:
+                    old[field] = items
                 return old
             dom_manifest.merge(upd, key=key)
             print('manifest.json#%s.%s: %d records' % (key, field, len(rec[key])))

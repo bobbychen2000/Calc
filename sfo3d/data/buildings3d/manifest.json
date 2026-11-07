@@ -2,9 +2,9 @@
  "_about": "SFO Live 3D building assets (glTF 2.0, built with Blender from the verified 2-D sheets); one key per asset group; frame ltp-nad83-2011 (x east, y up, z south, m from the ARP); see docs/research/buildings3d.md",
  "itb": {
   "asset": "data/buildings3d/itb.glb",
-  "bytes": 6464140,
-  "built": "2026-11-07T01:55:44+00:00",
-  "git": "c68caee+dirty",
+  "bytes": 6462872,
+  "built": "2026-11-07T13:16:23+00:00",
+  "git": "5e1609d+dirty",
   "generator": "tools/blender/build_itb.py (bpy 5.0.1, Cycles CPU AO bake); geometry tools/blender/itb_geom.py",
   "reference": "2-D sheets BI-01..04 (docs/drawings/buildings/README.md), drawn by tools/buildings/draw_itb.py, imported by itb_geom.py",
   "spec": "tools/buildings/spec_itb.json (+ itb_naip_measurements.json, itb_pods.json)",
@@ -64,7 +64,7 @@
   ],
   "lod2_glb": {
    "path": "data/buildings3d/itb_lod2.glb",
-   "bytes": 577084
+   "bytes": 576524
   },
   "textures": [
    {
@@ -575,7 +575,7 @@
      0,
      1
     ],
-    "bake_s": 47.4,
+    "bake_s": 59.8,
     "mean": 0.671,
     "p2": 0.0,
     "samples": 48,
@@ -587,7 +587,7 @@
     "lods": [
      2
     ],
-    "bake_s": 2.0,
+    "bake_s": 3.8,
     "mean": 0.691,
     "p2": 0.0,
     "samples": 48,
@@ -1570,7 +1570,9 @@
    {
     "item": "BA-G bridge-head bump-outs vs the app walkways (review r2)",
     "model": "6.5 m [obs photo a2, low; r2 re-reading 6.5-7.1 m]",
-    "other": "gates.js walkway 5.2-8.46 m (DEPARTURE_LEVEL 5.4 [inf] + WALK_H 3.0)",
+    "status": "resolved (close-out r3: bridges lowered BA-G to DEPARTURE_LEVELS.G 2.7 [obs a2, low]; fix 2 re-check)",
+    "resolution": "js/live/gates.js DEPARTURE_LEVELS.G 2.7 m: the 20 BA-G walkways that dock into a bump-out top at 5.71-5.87 m at the attach points, under the 6.5-m bump-out roofs; the 4 at G12 / G13 (no bump-out) top at 6.16-7.29 m under the 16.0-m pier roof (verify_itb.py walkway_vs_host_roof from tools/blender/app_bridges.json, generated from the current gates.js: 0 of 24 BA-G and 0 of 21 BA-A walkways above their host roof, 7 Nov 2026)",
+    "other": "(round-2 state) gates.js walkway 5.2-8.46 m (DEPARTURE_LEVEL 5.4 [inf] + WALK_H 3.0)",
     "note": "NOT raised to ~9 m: on a2 the 6.5-m outline (solved camera) lies on the observed bump-out roof with its rooftop unit while a 9-m outline falls on the gate-room glazing behind; an upper-storey 2-lite window sits above bump-out B2 at ~9.8-12.1 m; the walkway roofs meet the bump-outs ~1-1.4 m BELOW their roof edge. So the walkway head is the inferred value that is off: request to bridges (lower the BA-G walkway: top <= 6.0 m). verify_itb.py reports the cross-asset table (walkway top vs host roof per attach point)"
    },
    {
@@ -1668,6 +1670,7 @@
    {
     "to": "bridges (js/live/gates.js)",
     "what": "lower the Boarding Area G fixed walkways (top <= 6.0 m at the attach point)",
+    "status": "done (close-out r3: DEPARTURE_LEVELS.G 2.7, walkway tops 5.71-5.87 m at the bump-outs, 6.16-7.29 m at G12 / G13 under the 16.0-m roof; checked fix 2)",
     "why": "DEPARTURE_LEVEL 5.4 [inf] + WALK_H 3.0 = 8.46-m walkway tops dock into 6.5-m bump-outs (photo a2: bump-out roofs 6.5-7.1 m with rooftop units, the walkway roofs ~1-1.4 m below the bump-out roof edge, the dark apron level to ~3.0 m, a light band to ~4.6 m): at G3, G4, G7, G8, G9-1 the walkway pierces the bump-out roof, elsewhere its upper 2 m stands open above it. verify_itb.py lists walkway top vs host roof per attach point (manifest itb.verification.plausibility.walkway_vs_host_roof)"
    }
   ],
@@ -1675,7 +1678,7 @@
   "verification": {
    "tool": "tools/blender/verify_itb.py",
    "report": "out/buildings3d/itb_verify.json (local)",
-   "n_checks": 125,
+   "n_checks": 126,
    "n_fail": 0,
    "failed": [],
    "tolerance": "0.5 m or 2 % of the drawn value (whichever is larger) unless stated",
@@ -2725,6 +2728,15 @@
      "src": "15 ft = 4.57 m minimum vertical clearance [pub]; deck tops from roadways.glb (integration)"
     },
     {
+     "check": "curb canopy over the roadway plate: clearance on the meshes (canopy faces over deck faces, 560 overlaps; parameter 4.70)",
+     "model": 4.7,
+     "drawing": 4.6,
+     "dev": null,
+     "tol": null,
+     "ok": true,
+     "src": "close-out r3 (buildings-7): 4.6 m as the roadway solve; fix 2 (v9): measured on the exported canopy / deck faces"
+    },
+    {
      "check": "roadway deck area inside the core on grade (roadways.glb)",
      "model": 0.0,
      "drawing": 0.0,
@@ -2779,13 +2791,13 @@
      "src": "NOTE, not introduced by the asset - pre-existing contact in the data (rotundas at the facade, outline +-5 m): max penetration 0.73 m (17 rotundas); the 3-D footprint = the SFO Museum outline the app and check_stands.py use"
     },
     {
-     "check": "CROSS-ASSET (bridges): app walkway top <= host roof at the attach point - 20 of 45 A / G walkways fail (BA-G 20 of 24)",
-     "model": 20.0,
+     "check": "CROSS-ASSET (bridges): app walkway top <= host roof at the attach point - 0 of 45 A / G walkways fail (BA-G 0 of 24)",
+     "model": 0.0,
      "drawing": 0.0,
      "dev": null,
      "tol": null,
      "ok": true,
-     "src": "NOT counted as an asset failure: gates.js DEPARTURE_LEVEL 5.4 [inf] + WALK_H 3.0 puts the walkway top at 8.46 m; photo a2 shows the BA-G bump-out roofs at 6.5-7.1 m with the walkways joining below them - request to bridges (manifest itb.requests); scene2d.json of 2026-11-05T03:56:14.689Z"
+     "src": "gates.js DEPARTURE_LEVELS G 2.7 [obs, low] / A 5.4 [inf] + WALK_H 3.0 (tools/blender/app_bridges.json, generated 2026-11-07T11:00:24.605Z, stale inputs: none); BA-G bump-out roofs 6.5-7.1 m [obs a2]; BA-A failures are not counted (no photo of its bump-outs, A level inferred)"
     },
     {
      "check": "SFO Museum taxiway polygons inside the 3-D footprint",
@@ -2883,7 +2895,9 @@
       "stand": "A1",
       "gate": "A1",
       "door": 1,
-      "walkway_top": 8.46,
+      "level": 5.4,
+      "level_tag": "inf",
+      "walkway_top": 8.4,
       "host_roof": 16.9,
       "ok": true
      },
@@ -2891,7 +2905,9 @@
       "stand": "A1",
       "gate": "A1",
       "door": 2,
-      "walkway_top": 8.46,
+      "level": 5.4,
+      "level_tag": "inf",
+      "walkway_top": 8.4,
       "host_roof": 16.9,
       "ok": true
      },
@@ -2899,7 +2915,9 @@
       "stand": "A2",
       "gate": "A2",
       "door": 1,
-      "walkway_top": 8.46,
+      "level": 5.4,
+      "level_tag": "inf",
+      "walkway_top": 8.4,
       "host_roof": 16.9,
       "ok": true
      },
@@ -2907,7 +2925,9 @@
       "stand": "A2",
       "gate": "A2",
       "door": 2,
-      "walkway_top": 8.46,
+      "level": 5.4,
+      "level_tag": "inf",
+      "walkway_top": 8.4,
       "host_roof": 16.9,
       "ok": true
      },
@@ -2915,7 +2935,9 @@
       "stand": "A4",
       "gate": "A4",
       "door": 1,
-      "walkway_top": 8.46,
+      "level": 5.4,
+      "level_tag": "inf",
+      "walkway_top": 8.4,
       "host_roof": 16.9,
       "ok": true
      },
@@ -2923,7 +2945,9 @@
       "stand": "A5",
       "gate": "A5",
       "door": 1,
-      "walkway_top": 8.46,
+      "level": 5.4,
+      "level_tag": "inf",
+      "walkway_top": 8.4,
       "host_roof": 16.9,
       "ok": true
      },
@@ -2931,7 +2955,9 @@
       "stand": "A5",
       "gate": "A5",
       "door": 2,
-      "walkway_top": 8.46,
+      "level": 5.4,
+      "level_tag": "inf",
+      "walkway_top": 8.4,
       "host_roof": 16.9,
       "ok": true
      },
@@ -2939,7 +2965,9 @@
       "stand": "A6",
       "gate": "A6",
       "door": 1,
-      "walkway_top": 8.46,
+      "level": 5.4,
+      "level_tag": "inf",
+      "walkway_top": 8.4,
       "host_roof": 16.9,
       "ok": true
      },
@@ -2947,7 +2975,9 @@
       "stand": "A6",
       "gate": "A6",
       "door": 2,
-      "walkway_top": 8.46,
+      "level": 5.4,
+      "level_tag": "inf",
+      "walkway_top": 8.4,
       "host_roof": 16.9,
       "ok": true
      },
@@ -2955,7 +2985,9 @@
       "stand": "A8",
       "gate": "A8",
       "door": 1,
-      "walkway_top": 8.46,
+      "level": 5.4,
+      "level_tag": "inf",
+      "walkway_top": 8.4,
       "host_roof": 16.9,
       "ok": true
      },
@@ -2963,7 +2995,9 @@
       "stand": "A8",
       "gate": "A8",
       "door": 2,
-      "walkway_top": 8.46,
+      "level": 5.4,
+      "level_tag": "inf",
+      "walkway_top": 8.4,
       "host_roof": 16.9,
       "ok": true
      },
@@ -2971,7 +3005,9 @@
       "stand": "A9",
       "gate": "A9",
       "door": 1,
-      "walkway_top": 8.46,
+      "level": 5.4,
+      "level_tag": "inf",
+      "walkway_top": 8.4,
       "host_roof": 16.9,
       "ok": true
      },
@@ -2979,7 +3015,9 @@
       "stand": "A9",
       "gate": "A9",
       "door": 2,
-      "walkway_top": 8.46,
+      "level": 5.4,
+      "level_tag": "inf",
+      "walkway_top": 8.4,
       "host_roof": 16.9,
       "ok": true
      },
@@ -2987,7 +3025,9 @@
       "stand": "A10",
       "gate": "A10",
       "door": 1,
-      "walkway_top": 8.46,
+      "level": 5.4,
+      "level_tag": "inf",
+      "walkway_top": 8.4,
       "host_roof": 16.9,
       "ok": true
      },
@@ -2995,7 +3035,9 @@
       "stand": "A10",
       "gate": "A10",
       "door": 2,
-      "walkway_top": 8.46,
+      "level": 5.4,
+      "level_tag": "inf",
+      "walkway_top": 8.4,
       "host_roof": 16.9,
       "ok": true
      },
@@ -3003,7 +3045,9 @@
       "stand": "A11",
       "gate": "A11",
       "door": 1,
-      "walkway_top": 8.46,
+      "level": 5.4,
+      "level_tag": "inf",
+      "walkway_top": 8.4,
       "host_roof": 16.9,
       "ok": true
      },
@@ -3011,7 +3055,9 @@
       "stand": "A11",
       "gate": "A11",
       "door": 2,
-      "walkway_top": 8.46,
+      "level": 5.4,
+      "level_tag": "inf",
+      "walkway_top": 8.4,
       "host_roof": 16.9,
       "ok": true
      },
@@ -3019,7 +3065,9 @@
       "stand": "A12",
       "gate": "A12",
       "door": 1,
-      "walkway_top": 8.45,
+      "level": 5.4,
+      "level_tag": "inf",
+      "walkway_top": 8.4,
       "host_roof": 16.9,
       "ok": true
      },
@@ -3027,7 +3075,9 @@
       "stand": "A13",
       "gate": "A13",
       "door": 1,
-      "walkway_top": 8.46,
+      "level": 5.4,
+      "level_tag": "inf",
+      "walkway_top": 8.4,
       "host_roof": 16.9,
       "ok": true
      },
@@ -3035,7 +3085,9 @@
       "stand": "A13",
       "gate": "A13",
       "door": 2,
-      "walkway_top": 8.45,
+      "level": 5.4,
+      "level_tag": "inf",
+      "walkway_top": 8.4,
       "host_roof": 16.9,
       "ok": true
      },
@@ -3043,7 +3095,9 @@
       "stand": "A15",
       "gate": "A15",
       "door": 1,
-      "walkway_top": 8.45,
+      "level": 5.4,
+      "level_tag": "inf",
+      "walkway_top": 8.4,
       "host_roof": 16.9,
       "ok": true
      },
@@ -3051,167 +3105,209 @@
       "stand": "G1",
       "gate": "G1",
       "door": 1,
-      "walkway_top": 8.46,
+      "level": 2.7,
+      "level_tag": "obs-low",
+      "walkway_top": 5.71,
       "host_roof": 6.5,
-      "ok": false
+      "ok": true
      },
      {
       "stand": "G1",
       "gate": "G1",
       "door": 2,
-      "walkway_top": 8.46,
+      "level": 2.7,
+      "level_tag": "obs-low",
+      "walkway_top": 5.79,
       "host_roof": 6.5,
-      "ok": false
+      "ok": true
      },
      {
       "stand": "G2",
       "gate": "G2",
       "door": 1,
-      "walkway_top": 8.46,
+      "level": 2.7,
+      "level_tag": "obs-low",
+      "walkway_top": 5.71,
       "host_roof": 6.5,
-      "ok": false
+      "ok": true
      },
      {
       "stand": "G2",
       "gate": "G2",
       "door": 2,
-      "walkway_top": 8.45,
+      "level": 2.7,
+      "level_tag": "obs-low",
+      "walkway_top": 5.87,
       "host_roof": 6.5,
-      "ok": false
+      "ok": true
      },
      {
       "stand": "G3",
       "gate": "G3",
       "door": 1,
-      "walkway_top": 8.46,
+      "level": 2.7,
+      "level_tag": "obs-low",
+      "walkway_top": 5.77,
       "host_roof": 6.5,
-      "ok": false
+      "ok": true
      },
      {
       "stand": "G3",
       "gate": "G3",
       "door": 2,
-      "walkway_top": 8.45,
+      "level": 2.7,
+      "level_tag": "obs-low",
+      "walkway_top": 5.87,
       "host_roof": 6.5,
-      "ok": false
+      "ok": true
      },
      {
       "stand": "G4",
       "gate": "G4",
       "door": 1,
-      "walkway_top": 8.46,
+      "level": 2.7,
+      "level_tag": "obs-low",
+      "walkway_top": 5.77,
       "host_roof": 6.5,
-      "ok": false
+      "ok": true
      },
      {
       "stand": "G4",
       "gate": "G4",
       "door": 2,
-      "walkway_top": 8.45,
+      "level": 2.7,
+      "level_tag": "obs-low",
+      "walkway_top": 5.87,
       "host_roof": 6.5,
-      "ok": false
+      "ok": true
      },
      {
       "stand": "G5",
       "gate": "G5",
       "door": 1,
-      "walkway_top": 8.46,
+      "level": 2.7,
+      "level_tag": "obs-low",
+      "walkway_top": 5.71,
       "host_roof": 6.5,
-      "ok": false
+      "ok": true
      },
      {
       "stand": "G5",
       "gate": "G5",
       "door": 2,
-      "walkway_top": 8.45,
+      "level": 2.7,
+      "level_tag": "obs-low",
+      "walkway_top": 5.84,
       "host_roof": 6.5,
-      "ok": false
+      "ok": true
      },
      {
       "stand": "G6",
       "gate": "G6",
       "door": 1,
-      "walkway_top": 8.46,
+      "level": 2.7,
+      "level_tag": "obs-low",
+      "walkway_top": 5.71,
       "host_roof": 6.5,
-      "ok": false
+      "ok": true
      },
      {
       "stand": "G6",
       "gate": "G6",
       "door": 2,
-      "walkway_top": 8.45,
+      "level": 2.7,
+      "level_tag": "obs-low",
+      "walkway_top": 5.84,
       "host_roof": 6.5,
-      "ok": false
+      "ok": true
      },
      {
       "stand": "G7",
       "gate": "G7",
       "door": 1,
-      "walkway_top": 8.46,
+      "level": 2.7,
+      "level_tag": "obs-low",
+      "walkway_top": 5.77,
       "host_roof": 6.5,
-      "ok": false
+      "ok": true
      },
      {
       "stand": "G7",
       "gate": "G7",
       "door": 2,
-      "walkway_top": 8.45,
+      "level": 2.7,
+      "level_tag": "obs-low",
+      "walkway_top": 5.85,
       "host_roof": 6.5,
-      "ok": false
+      "ok": true
      },
      {
       "stand": "G8",
       "gate": "G8",
       "door": 1,
-      "walkway_top": 8.46,
+      "level": 2.7,
+      "level_tag": "obs-low",
+      "walkway_top": 5.77,
       "host_roof": 6.5,
-      "ok": false
+      "ok": true
      },
      {
       "stand": "G8",
       "gate": "G8",
       "door": 2,
-      "walkway_top": 8.45,
+      "level": 2.7,
+      "level_tag": "obs-low",
+      "walkway_top": 5.85,
       "host_roof": 6.5,
-      "ok": false
+      "ok": true
      },
      {
       "stand": "G9",
       "gate": "G9",
       "door": 1,
-      "walkway_top": 8.46,
+      "level": 2.7,
+      "level_tag": "obs-low",
+      "walkway_top": 5.82,
       "host_roof": 6.5,
-      "ok": false
+      "ok": true
      },
      {
       "stand": "G9",
       "gate": "G9",
       "door": 2,
-      "walkway_top": 8.46,
+      "level": 2.7,
+      "level_tag": "obs-low",
+      "walkway_top": 5.78,
       "host_roof": 6.5,
-      "ok": false
+      "ok": true
      },
      {
       "stand": "G10",
       "gate": "G10",
       "door": 1,
-      "walkway_top": 8.46,
+      "level": 2.7,
+      "level_tag": "obs-low",
+      "walkway_top": 5.71,
       "host_roof": 6.5,
-      "ok": false
+      "ok": true
      },
      {
       "stand": "G10",
       "gate": "G10",
       "door": 2,
-      "walkway_top": 8.46,
+      "level": 2.7,
+      "level_tag": "obs-low",
+      "walkway_top": 5.8,
       "host_roof": 6.5,
-      "ok": false
+      "ok": true
      },
      {
       "stand": "G12",
       "gate": "G12",
       "door": 1,
-      "walkway_top": 8.45,
+      "level": 2.7,
+      "level_tag": "obs-low",
+      "walkway_top": 6.3,
       "host_roof": 16.0,
       "ok": true
      },
@@ -3219,7 +3315,9 @@
       "stand": "G12",
       "gate": "G12",
       "door": 2,
-      "walkway_top": 7.47,
+      "level": 2.7,
+      "level_tag": "obs-low",
+      "walkway_top": 6.37,
       "host_roof": 16.0,
       "ok": true
      },
@@ -3227,7 +3325,9 @@
       "stand": "G13",
       "gate": "G13",
       "door": 1,
-      "walkway_top": 8.45,
+      "level": 2.7,
+      "level_tag": "obs-low",
+      "walkway_top": 6.16,
       "host_roof": 16.0,
       "ok": true
      },
@@ -3235,7 +3335,9 @@
       "stand": "G13",
       "gate": "G13",
       "door": 2,
-      "walkway_top": 8.0,
+      "level": 2.7,
+      "level_tag": "obs-low",
+      "walkway_top": 7.29,
       "host_roof": 16.0,
       "ok": true
      }
@@ -4238,9 +4340,9 @@
  },
  "domestic": {
   "asset": "data/buildings3d/domestic.glb",
-  "bytes": 11578484,
-  "built": "2026-11-07T03:36:04+00:00",
-  "git": "11b7403+dirty",
+  "bytes": 11368276,
+  "built": "2026-11-07T13:10:26+00:00",
+  "git": "5e1609d",
   "generator": "tools/blender/build_domestic.py (bpy 5.0.1, Cycles CPU AO bake); geometry tools/blender/dom_geom.py + dom_mesh.py; textures dom_tex.py",
   "reference": "2-D sheets BD-01..03 (docs/drawings/buildings/README.md), drawn by tools/buildings/draw_domestic.py, imported by dom_geom.py",
   "spec": "tools/buildings/spec_domestic.json (+ dom_bab_band.json, dom_baf_hub.json, dom_bab_roof.json; tools/blender/dom_pv.json)",
@@ -4303,26 +4405,26 @@
     "lod": 0,
     "node": "LOD0",
     "switch_m": 0.0,
-    "tris": 80720,
-    "verts": 168500,
-    "draw_calls": 156,
+    "tris": 79913,
+    "verts": 166451,
+    "draw_calls": 154,
     "ao_atlas": "dom_ao_S / dom_ao_N (shared by the LOD0 / LOD1 shell meshes)"
    },
    {
     "lod": 1,
     "node": "LOD1",
     "switch_m": 380.0,
-    "tris": 25292,
-    "verts": 59582,
-    "draw_calls": 122,
+    "tris": 24485,
+    "verts": 57533,
+    "draw_calls": 120,
     "ao_atlas": "dom_ao_S / dom_ao_N (shared by the LOD0 / LOD1 shell meshes)"
    },
    {
     "lod": 2,
     "node": "LOD2",
     "switch_m": 1300.0,
-    "tris": 25132,
-    "verts": 59230,
+    "tris": 24325,
+    "verts": 57181,
     "draw_calls": 21,
     "ao_atlas": "dom_ao_L2"
    }
@@ -4334,7 +4436,7 @@
   ],
   "lod2_glb": {
    "path": "data/buildings3d/domestic_lod2.glb",
-   "bytes": 3031936
+   "bytes": 2947484
   },
   "textures": [
    {
@@ -4374,7 +4476,7 @@
      2048
     ],
     "mime": "image/png",
-    "bytes": 1397688,
+    "bytes": 1385217,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    },
    {
@@ -4444,7 +4546,7 @@
      2048
     ],
     "mime": "image/png",
-    "bytes": 1363949,
+    "bytes": 1335952,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    },
    {
@@ -4554,7 +4656,7 @@
      1024
     ],
     "mime": "image/png",
-    "bytes": 477852,
+    "bytes": 480202,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    }
   ],
@@ -5060,8 +5162,8 @@
      "T2",
      "C3C"
     ],
-    "bake_s": 28.5,
-    "mean": 0.648,
+    "bake_s": 35.4,
+    "mean": 0.647,
     "p2": 0.002,
     "samples": 48,
     "distance_m": 10.0,
@@ -5080,9 +5182,9 @@
      "BA_E",
      "BA_F"
     ],
-    "bake_s": 26.9,
-    "mean": 0.7,
-    "p2": 0.006,
+    "bake_s": 32.9,
+    "mean": 0.702,
+    "p2": 0.007,
     "samples": 48,
     "distance_m": 10.0,
     "ground_plane": true
@@ -5095,9 +5197,9 @@
     "buildings": [
      "all"
     ],
-    "bake_s": 2.6,
-    "mean": 0.694,
-    "p2": 0.061,
+    "bake_s": 3.4,
+    "mean": 0.695,
+    "p2": 0.063,
     "samples": 48,
     "distance_m": 10.0,
     "ground_plane": true
@@ -5130,7 +5232,7 @@
      215,
      211
     ],
-    "n": 777,
+    "n": 783,
     "lean_m_per_m": 0.4,
     "method": "NAIP 2024 median of the upper 65 pct (luminance) at the imaged deck points, 2.5 m grid, 2 m inside, off holes / PV; capped at sRGB 215"
    },
@@ -5150,7 +5252,7 @@
      215,
      210
     ],
-    "n": 2192,
+    "n": 2218,
     "lean_m_per_m": 0.581,
     "method": "NAIP 2024 median of the upper 65 pct (luminance) at the imaged deck points, 2.5 m grid, 2 m inside, off holes / PV; capped at sRGB 215"
    },
@@ -5457,10 +5559,16 @@
     "source": "data/sfo_airport.json (CDLA-Permissive-1.0)"
    },
    {
-    "key": "concourse (departure) floor",
-    "value": 5.4,
-    "tag": "inf",
-    "source": "js/live/gates.js DEPARTURE_LEVEL (bridge floor)"
+    "key": "concourse (departure) floor = the app bridge level per pier (close-out r3 fix 2)",
+    "value": "B 5.40 / C 3.20 / D 3.65 / E 4.88 / F 4.88",
+    "tag": "B inf / C inf / D obs-low / E pub / F pub",
+    "source": "js/live/gates.js DEPARTURE_LEVELS (tools/blender/app_bridges.json, node tools/blender/app_bridges.mjs): B 5.4 inferred, C 3.2 inferred (the BA-D photo-a1 layout on the 7.2-m roof), D 3.65 photo a1 (low), E / F 4.88 T3 L2 [pub]; door frames, vestibules, overhang / drum notches and bridge-entered elevated parts follow the walkway floor at each door"
+   },
+   {
+    "key": "BA-C / BA-D facade bands (close-out r3 fix 2)",
+    "value": "sill band 0.340-0.443, glazing 0.443-0.794 of the roof edge: BA-D 2.89-3.76-6.74 m, BA-C 2.45-3.19-5.72 m",
+    "tag": "obs (low, BA-D) / inf (BA-C)",
+    "source": "photo a1 at the BA-D near end (rows 763.5 / 773.5 / 790.5 / 795.5 / ~812 px, camera-independent ratios); BA-C the same layout (too small on a1), as gates.js DEPARTURE_LEVELS.C"
    },
    {
     "key": "facade bands (service / spandrel / glazing / panel)",
@@ -5493,10 +5601,10 @@
     "source": "the app convention (tools/build_terminal_parts.py walkway y0 6.0 / h 10.5)"
    },
    {
-    "key": "elevated BA-B parts entered by a bridge walkway (B10 / B11 / B11S / B15 / B16): underside",
-    "value": 4.9,
+    "key": "elevated parts entered by a bridge walkway (B10 / B11 / B11S / B15 / B16 at 4.90, F22 at the BA-F level): underside",
+    "value": "walkway floor inside the part -0.5 m",
     "tag": "inf",
-    "source": "review r1: the vestibule floor (bridge floor 5.4 - 0.5) so that the app walkway (5.15-8.45 m) runs inside the part"
+    "source": "review r1: the vestibule floor so that the app walkway (floor - 0.3 .. + 3.0) runs inside the part; per bridge from app_bridges.json since close-out r3 fix 2"
    },
    {
     "key": "Courtyard 3 Connector office block: footprint",
@@ -5534,9 +5642,9 @@
    },
    {
     "key": "bridge doors / vestibules / bulkheads",
-    "value": "at the walkway attach points (data/sfo_stands.json)",
+    "value": "at the walkway attach points (data/sfo_stands.json); frame -0.2 .. +3.2 m, vestibule -0.5 .. +3.3 m about the app walkway floor at the door",
     "tag": "inf",
-    "source": "door 2.6 x 3.0 walkway section (gates.js)"
+    "source": "door 2.6 x 3.0 walkway section (gates.js); floors per door from app_bridges.json (close-out r3 fix 2: 0 bulkheads - the walkway tops at BA-C 6.20 / BA-D 6.65 m stay under the 6.40 / 7.69 m slab undersides)"
    },
    {
     "key": "roof colours",
@@ -5726,7 +5834,7 @@
        "source": "see spec keys"
       },
       "z0": {
-       "v": 4.9,
+       "v": 4.634,
        "tag": "inf",
        "source": "apron / host deck"
       }
@@ -5738,7 +5846,7 @@
        "source": "see spec keys"
       },
       "z0": {
-       "v": 4.9,
+       "v": 4.73,
        "tag": "inf",
        "source": "apron / host deck"
       }
@@ -6530,14 +6638,15 @@
     "status": "resolved (3-D)",
     "model": "F7 / F8 L1: the drum discs lie ~1.05 m inside the BA-F footprint ring but only under the ESE roof overhang: soffit 9.69 m, drum top 8.55 m -> 1.14 m clear; facades >= 0.1 m outside the largest drum; F8 L1 tunnel 1 (all poses) >= 1.58 m below the soffit; D3 L1 facade 0.19 m clear of its drum (verify_domestic_r2.drum_overhead, close-out r3 dump of the gates.js solids)",
     "other": "integration.json footprint rings are plan-only (the -1.06 / -1.05 / -0.03 m overlaps of the round-3 consolidator)",
-    "request": "integration: carry the height band of the overhang (soffit 9.69 m above the apron) in the footprint tiers (integration-5) so plan tests do not read the overhang as a wall"
+    "request": "integration: carry the height band of the overhang (soffit 9.69 m above the apron) in the footprint tiers (integration-5) so plan tests do not read the overhang as a wall",
+    "update_fix2": "close-out r3 fix 2: at the per-pier levels (gates.js DEPARTURE_LEVELS F 4.88) the F7 / F8 L1 rotunda floors are 4.73 / 4.74 m (tools/blender/app_bridges.json), drum tops 8.03 / 8.04 m: 1.66 / 1.65 m under the 9.69-m soffit (verify_domestic_r2.drum_overhead, now per drum from its Hr and counting every face over the disc)"
    },
    {
     "item": "departures loop soffit over at-grade roads (close-out r3, buildings-14)",
-    "status": "open",
-    "model": "curb 4.877 m = the published T3 L1 -> L2 16 ft carried along the continuous loop [inf]; roadways.glb deck top 4.73, depth 1.2 m [inf] -> soffit 3.53 m over the 10 at-grade crossings (OSM: 701476993, 701476994 South Link Road, 701476988, 701476989, 701209939, 701476987 Arrivals, 256787748 Arrivals, 1274607795, 1274606309, 1274827440)",
+    "status": "open (listed by integration; owner question)",
+    "model": "curb 4.877 m = the published T3 L1 -> L2 16 ft carried along the continuous loop [inf]; roadways.glb deck top 4.73, depth 1.2 m [inf] -> soffit 3.53 m over at-grade roads. integration.json (7 Nov 08:01Z) plausibility.conflicts \"vertical clearance over an at-grade road (< 4.6 m)\": 26 roads, 753 m, min 3.53 m at (-940.9, 429.6) - OSM 35157057, 38854912, 38855195, 256787748, 370279555, 370279574, 370279581, 370279585, 701209939, 701476986-701476994 (9), 701476996, 739683506, 1179696687, 1205479970, 1230759557, 1274606309, 1274607795, 1274827440 (the 10 crossings this track listed in close-out r3 are among them)",
     "other": "4.6 m design clearance (Caltrans HDM 309.2) enforced elsewhere by the roadway solve",
-    "note": "raising the curb to clear 4.6 m (deck top >= 5.8 m) would contradict the published T3 L2 at the T3 curb; with a published 16-ft rise between the stacked arrivals / departures levels the real clearance is 16 ft - curb step - deck depth (~3.8-4.0 m for a 0.75-0.9 m slab): the stacked arrivals roadway is lower-clearance by design (a posted clearance sign photo would settle it); request to integration: list these crossings as plausibility conflicts in b3d_integrate and review DECK_DEPTH at the anchored loop"
+    "note": "raising the curb to clear 4.6 m (deck top >= 5.8 m) would contradict the published T3 L2 at the T3 curb; with a published 16-ft rise between the stacked arrivals / departures levels the real clearance is 16 ft - curb step - deck depth (~3.8-4.0 m for a 0.75-0.9 m slab): the stacked arrivals roadway is lower-clearance by design (a posted clearance sign photo would settle it); integration now lists them (R3.2 done, close-out r3 fix 2 updated this entry to its 26-road list); DECK_DEPTH at the anchored loop and the posted clearance stay open (owner question)"
    },
    {
     "item": "T3W parapet",
@@ -6546,8 +6655,9 @@
     "note": "datum choice; 0.23 m"
    },
    {
-    "item": "BA-C / BA-D roofs vs the app concourse floor 5.4 m (OPEN PLAUSIBILITY CONFLICT, review r2 finding 5)",
-    "status": "open",
+    "item": "BA-C / BA-D roofs vs the app concourse floor 5.4 m (review r2 finding 5)",
+    "status": "resolved (close-out r3 fix 2: gates.js DEPARTURE_LEVELS C 3.2 / D 3.65, domestic rebuilt to them)",
+    "resolution": "js/live/gates.js DEPARTURE_LEVELS (bridges close-out r3): BA-C 3.2 m [inf: this BA-D layout on the 7.2-m roof], BA-D 3.65 m [obs, low: photo a1, the evidence below]. The domestic asset takes every bridge-attachment height per door from the app walkway floor (tools/blender/app_bridges.json): the 23 bulkheads and the BA-D overhang notches are gone (walkway tops BA-C 6.20 / BA-D 6.65 m under the 6.40 / 7.69 m slab undersides), door frames / vestibules / drum notches follow the walkways, and the BA-C / BA-D facade bands follow the photo a1 ratios (glazing 0.443-0.794 of the roof edge); verify_domestic_r2 walk / plausibility_bac_bad",
     "model": "BA-C roof edge 7.20 m (deck 6.60, slab underside 6.40) and BA-D 8.49 m (deck 7.89, underside 7.69) kept as measured [obs, low]; 9 BA-C bulkheads (top 8.70 m, 1.50 m above the BA-C roof edge) and 14 BA-D bulkheads (top 9.49 m, 1.00 m above its roof edge) enclose the app walkways where they reach above the roof; the BA-D overhang notched at the doors",
     "other": "js/live/gates.js DEPARTURE_LEVEL 5.4 m [inf] for every pier: walkways 5.15-8.45 m",
     "numbers": {
@@ -6565,7 +6675,7 @@
     },
     "evidence": "photo a1 (ratios, camera-independent): at the BA-D near end the facade reads roof edge (763.5 px) / fascia to 773.5 / glazing 773.5-790.5 / light sill band to 795.5 / shadowed apron level to ~812: the concourse glazing spans 0.44-0.79 of the roof-edge height, and the walkways enter at that band with about one walkway height (~3 m) of facade above them (D14 / D15 and the D head). At the measured 8.49 m that puts the BA-D concourse floor near 3.5-3.8 m and the walkway top near 6.7 m; with the app floor kept at 5.4 m the roof edge would have to be 10.7-11.7 m, outside the measured 8.07-8.93 m. BA-C (photo a1 at ~800 m, 2.4 px/m) shows the same layout, too small to measure. The aircraft-scaled vertical scale of photo a1 at D11-D16 gives the near-end roof edge 9.1 +- 1 m [low]: consistent with the NAIP value",
     "request": "bridges / realtime owners: a per-pier departure level for BA-C and BA-D (about 3.5-4.0 m above the apron, to be verified against photos with the walkway at the glazing band); domestic then drops the 23 bulkheads, moves the BA-C / BA-D concourse glazing to the photo ratios (0.44-0.79 of the roof edge) and lowers its door surrounds",
-    "note": "until then both values are kept and the conflict stays open: the bulkheads are a stop-gap, not a modelled structure"
+    "note": "(the model / other / numbers above describe the round-2 state that this conflict recorded)"
    },
    {
     "item": "photo d1 camera vs the AirTrain guideway level",
@@ -6606,15 +6716,15 @@
     "why": "review r1"
    },
    {
-    "item": "BA-B pod parts entered by a bridge walkway",
+    "item": "pod parts entered by a bridge walkway",
     "sheets": "app convention 6.0-10.5 m",
-    "model": "underside 4.9 m (B10 / B11 / B11S / B15 / B16)",
-    "why": "review r1: the app walkways 5.15-8.45 m run inside them"
+    "model": "underside at the entering walkway floor - 0.5 m (B10 / B11 / B11S / B15 / B16 4.9 m; F22 at the BA-F level)",
+    "why": "review r1: the app walkways run inside them"
    },
    {
     "item": "jet-bridge attachment",
     "sheets": "not drawn",
-    "model": "door surrounds at 80 doors, 54 vestibules, 23 bulkheads above the BA-C / BA-D roofs (open conflict, see conflicts), BA-D overhang notches, facade notches around 9 rotunda drums (review r2)",
+    "model": "door surrounds, vestibules and facade notches around the rotunda drums at the app bridge level of each pier (gates.js DEPARTURE_LEVELS, close-out r3 fix 2; counts in manifest bridges); no bulkheads",
     "why": "physical fit with the app bridges (js/live/gates.js)"
    },
    {
@@ -6646,8 +6756,56 @@
   "bridges": {
    "doors": 80,
    "vestibules": 54,
-   "bulkheads": 23,
-   "notched": 2,
+   "bulkheads": 0,
+   "notched": 0,
+   "levels": {
+    "B": {
+     "h": 5.4,
+     "tag": "inf",
+     "doors": 26,
+     "walkway_floor_at_doors_m": [
+      5.3,
+      5.4
+     ]
+    },
+    "C": {
+     "h": 3.2,
+     "tag": "inf",
+     "doors": 10,
+     "walkway_floor_at_doors_m": [
+      3.18,
+      3.2
+     ]
+    },
+    "D": {
+     "h": 3.65,
+     "tag": "obs-low",
+     "doors": 14,
+     "walkway_floor_at_doors_m": [
+      3.59,
+      3.65
+     ]
+    },
+    "E": {
+     "h": 4.88,
+     "tag": "pub",
+     "doors": 11,
+     "walkway_floor_at_doors_m": [
+      4.87,
+      4.88
+     ]
+    },
+    "F": {
+     "h": 4.88,
+     "tag": "pub",
+     "doors": 19,
+     "walkway_floor_at_doors_m": [
+      4.82,
+      4.88
+     ]
+    }
+   },
+   "levels_source": "js/live/gates.js DEPARTURE_LEVELS via tools/blender/app_bridges.json (node tools/blender/app_bridges.mjs, generated 2026-11-07T11:00:24.605Z; stale inputs: none)",
    "note": "every bridge of data/sfo_stands.json (B-F) gets a door surround where its walkway meets the 3-D facade; where the app's walkway (js/live/gates.js) starts outside the facade a vestibule closes the gap"
   },
   "integration": {
@@ -6658,7 +6816,7 @@
   "verification": {
    "tool": "tools/blender/verify_domestic.py",
    "report": "out/buildings3d/domestic_verify.json (local)",
-   "n_checks": 60,
+   "n_checks": 61,
    "n_fail": 0,
    "failed": [],
    "tolerance": "0.5 m or 2 % of the drawn value (whichever is larger) unless stated",
@@ -6965,7 +7123,7 @@
     },
     {
      "group": "roof edges",
-     "check": "BA_D_body: roof edge vs the measured lean-free ESE line (max |offset|, 13 stations)",
+     "check": "BA_D_body: roof edge vs the measured lean-free ESE line (max |offset|, 19 stations)",
      "model": -0.05,
      "drawing": 0.0,
      "dev": 0.05,
@@ -7176,9 +7334,9 @@
     {
      "group": "footprints",
      "check": "apron-level walls (0.5-5 m) outside the SFO Museum outlines (bridge vestibules excluded)",
-     "model": 106.254,
+     "model": 112.604,
      "drawing": 0.0,
-     "dev": 106.254,
+     "dev": 112.604,
      "tol": null,
      "ok": true,
      "src": "m2: the vestibules reach from the facade to the app walkway start (bridges)"
@@ -7186,9 +7344,9 @@
     {
      "group": "footprints",
      "check": "LOD0 plan area outside the SFO Museum outlines (roof overhangs, canopy, vestibules)",
-     "model": 1032.056,
+     "model": 1044.33,
      "drawing": 0.0,
-     "dev": 1032.056,
+     "dev": 1044.33,
      "tol": null,
      "ok": true,
      "src": "BA-B / BA-D ESE overhangs +2.3 / +2.4 m [obs], T1 canopy 4 m [inf], vestibules [inf]"
@@ -7205,23 +7363,33 @@
     },
     {
      "group": "plausibility",
-     "check": "bridge attachments: walkway first 1.5 m beyond the facade touching 3-D geometry (75 bridges; INFO)",
-     "model": 25.71,
+     "check": "app bridge dump (tools/blender/app_bridges.json) matches the current js/live/gates.js / stands inputs",
+     "model": "current",
+     "drawing": "current",
+     "dev": null,
+     "tol": null,
+     "ok": true,
+     "src": "re-run node tools/blender/app_bridges.mjs when it lists a file"
+    },
+    {
+     "group": "plausibility",
+     "check": "bridge attachments: walkway first 1.5 m beyond the facade touching 3-D geometry (65 bridges; INFO)",
+     "model": 7.55,
      "drawing": 0.0,
-     "dev": 25.71,
+     "dev": 7.55,
      "tol": null,
      "ok": true,
      "src": "door frames / vestibule ends / walkways meeting the facade at an angle (stand data vs SFO Museum outline, as the ITB rotunda contacts)"
     },
     {
      "group": "plausibility",
-     "check": "bridge walkways (app-drawn part, beyond facade + 1.5 m) overlapping 3-D geometry at 4.8-8.7 m (83 bridges)",
+     "check": "bridge walkways (app solids beyond facade + 1.5 m) overlapping 3-D geometry in their own height band (83 bridges)",
      "model": 0.0,
      "drawing": 0.0,
      "dev": 0.0,
      "tol": 0.5,
      "ok": true,
-     "src": "gates.js fixed walkway WALK_W 2.6 x WALK_H 3.0 at DEPARTURE_LEVEL 5.4"
+     "src": "gates.js fixed-walkway solids (WALK_W 2.6, floor - 0.3 .. + WALK_H 3.0) at the pier DEPARTURE_LEVELS (B 5.4, C 3.2, D 3.65, E / F 4.88), tools/blender/app_bridges.json"
     },
     {
      "group": "plausibility",
@@ -7274,253 +7442,235 @@
       "B2",
       "B2",
       1,
-      0.1
+      0.08
      ],
      [
       "B3",
       "B3",
       1,
-      0.38
+      0.12
      ],
      [
       "B4",
       "B4",
       1,
-      0.38
+      0.12
      ],
      [
       "B5",
       "B5",
       1,
-      0.27
+      0.07
      ],
      [
       "B6",
       "B6",
       1,
-      0.38
+      0.11
      ],
      [
       "B7",
       "B7",
       1,
-      0.38
+      0.12
      ],
      [
       "B8",
       "B8",
       1,
-      0.38
+      0.12
      ],
      [
       "B9",
       "B9",
       1,
-      0.38
+      0.12
      ],
      [
       "B10",
       "B10",
       1,
-      0.28
+      0.09
      ],
      [
       "B11",
       "B11",
       1,
-      0.38
+      0.14
      ],
      [
       "B11S",
       "B11",
       1,
-      0.63
+      0.2
      ],
      [
       "B12",
       "B12",
       1,
-      0.38
+      0.11
      ],
      [
       "B13",
       "B13",
       1,
-      0.38
+      0.12
      ],
      [
       "B14",
       "B14",
       1,
-      0.38
+      0.11
      ],
      [
       "B15",
       "B15",
       1,
-      0.29
-     ],
-     [
-      "B16",
-      "B16",
-      1,
-      0.25
+      0.06
      ],
      [
       "B17",
       "B17",
       1,
-      0.38
+      0.11
      ],
      [
       "B18",
       "B18",
       1,
-      0.38
+      0.11
      ],
      [
       "B19",
       "B19",
       1,
-      0.38
+      0.12
      ],
      [
       "B20",
       "B20",
       1,
-      0.38
+      0.12
      ],
      [
       "B21",
       "B21",
       1,
-      0.38
+      0.11
      ],
      [
       "B22",
       "B22",
       1,
-      0.38
+      0.11
      ],
      [
       "B23",
       "B23",
       1,
-      0.38
+      0.12
      ],
      [
       "B24",
       "B24",
       1,
-      0.38
+      0.12
      ],
      [
       "B25",
       "B25",
       1,
-      0.38
+      0.12
      ],
      [
       "B26",
       "B26",
       1,
-      0.38
+      0.12
      ],
      [
       "B27",
       "B27",
       1,
-      0.38
+      0.11
      ],
      [
       "C1",
       "C1",
       1,
-      0.38
+      0.12
      ],
      [
       "C3",
       "C3",
       1,
-      0.38
-     ],
-     [
-      "C4",
-      "C4",
-      1,
-      0.25
+      0.12
      ],
      [
       "C5",
       "C5",
       1,
-      0.38
+      0.12
      ],
      [
       "C6",
       "C6",
       1,
-      0.38
+      0.12
      ],
      [
       "C7",
       "C7",
       1,
-      0.38
-     ],
-     [
-      "C8",
-      "C8",
-      1,
-      0.26
+      0.12
      ],
      [
       "C9",
       "C9",
       1,
-      0.48
+      0.17
      ],
      [
       "C10",
       "C10",
       1,
-      0.38
+      0.12
      ],
      [
       "C11",
       "C11",
       1,
-      0.38
+      0.12
      ],
      [
       "D1",
       "D1",
       1,
-      0.38
+      0.12
      ],
      [
       "D3",
       "D3",
       1,
-      0.24
+      0.18
      ],
      [
       "D4",
       "D4",
       1,
-      0.23
+      0.08
      ],
      [
       "D5",
       "D5",
       1,
-      0.21
+      0.07
      ],
      [
       "D6",
       "D6",
       1,
-      0.38
+      0.12
      ],
      [
       "D7",
@@ -7532,29 +7682,23 @@
       "D8",
       "D8",
       1,
-      0.38
+      0.12
      ],
      [
       "D9",
       "D9",
       1,
-      0.38
+      0.12
      ],
      [
       "D11",
       "D11",
       1,
-      0.18
+      0.05
      ],
      [
       "D12",
       "D12",
-      1,
-      0.38
-     ],
-     [
-      "D14",
-      "D14",
       1,
       0.11
      ],
@@ -7562,43 +7706,43 @@
       "D15",
       "D15",
       1,
-      0.21
+      0.07
      ],
      [
       "D16",
       "D16",
       1,
-      0.38
+      0.12
      ],
      [
       "E2",
       "E2",
       1,
-      0.33
+      0.1
      ],
      [
       "E4",
       "E4",
       1,
-      0.38
+      0.11
      ],
      [
       "E5",
       "E5",
       1,
-      0.38
+      0.12
      ],
      [
       "E7",
       "E7",
       1,
-      0.38
+      0.12
      ],
      [
       "E10",
       "E10",
       1,
-      0.38
+      0.12
      ],
      [
       "E11",
@@ -7610,122 +7754,86 @@
       "E12",
       "E12",
       1,
-      0.38
+      0.12
      ],
      [
       "E13",
       "E13",
       1,
-      0.38
+      0.12
      ],
      [
       "F5",
       "F5",
       1,
-      0.45
+      0.2
      ],
      [
       "F6",
       "F6",
       1,
-      0.38
+      0.12
      ],
      [
       "F9",
       "F9",
       1,
-      0.38
+      0.12
      ],
      [
       "F11",
       "F11",
       1,
-      0.38
-     ],
-     [
-      "F11",
-      "F11",
-      2,
-      0.38
+      0.12
      ],
      [
       "F12",
       "F12",
       1,
-      0.39
+      0.15
      ],
      [
       "F13",
       "F13",
       1,
-      0.38
-     ],
-     [
-      "F13",
-      "F13",
-      2,
-      0.38
+      0.12
      ],
      [
       "F14",
       "F14",
       1,
-      0.39
+      0.14
      ],
      [
       "F15",
       "F15",
       1,
-      0.38
-     ],
-     [
-      "F15",
-      "F15",
-      2,
-      0.38
+      0.12
      ],
      [
       "F16",
       "F16",
       1,
-      0.38
+      0.14
      ],
      [
       "F17",
       "F17",
       1,
-      0.32
-     ],
-     [
-      "F19",
-      "F19",
-      1,
-      0.18
+      0.08
      ],
      [
       "F20",
       "F20",
       1,
-      0.32
-     ],
-     [
-      "F21",
-      "F21",
-      1,
-      0.25
-     ],
-     [
-      "F22",
-      "F22",
-      1,
-      0.25
+      0.08
      ]
     ],
     "doors": {
      "n": 80,
      "vestibules": 54,
      "max_gap_bridged_m": 2.6,
-     "bulkheads": 23
+     "bulkheads": 0
     }
    },
    "heights": {
@@ -8905,9 +9013,9 @@
  },
  "landside": {
   "asset": "data/buildings3d/landside.glb",
-  "bytes": 21128220,
-  "built": "2026-11-07T02:11:19+00:00",
-  "git": "c68caee+dirty",
+  "bytes": 21162604,
+  "built": "2026-11-07T13:14:11+00:00",
+  "git": "5e1609d+dirty",
   "generator": "tools/blender/build_landside.py (bpy 5.0.1, Cycles CPU AO bake); geometry landside_geom.py / landside_airtrain.py / landside_cars.py; textures landside_tex.py",
   "reference": "2-D sheets BL-01..03 (docs/drawings/buildings/README.md), drawn by tools/buildings/draw_landside.py, imported by landside_geom.py",
   "spec": "tools/buildings/spec_landside.json (+ landside_naip_measurements.json)",
@@ -8927,24 +9035,24 @@
   "lods": {
    "0": {
     "switch_m": 0.0,
-    "tris": 159459,
-    "instanced_car_tris": 168718,
-    "verts": 379301,
+    "tris": 159599,
+    "instanced_car_tris": 167304,
+    "verts": 379585,
     "draw_calls": 398
    },
    "1": {
     "switch_m": 450.0,
-    "tris": 85433,
-    "instanced_car_tris": 71894,
-    "verts": 217669,
+    "tris": 85573,
+    "instanced_car_tris": 71208,
+    "verts": 217953,
     "draw_calls": 358
    },
    "2": {
     "switch_m": 1500.0,
-    "tris": 22060,
+    "tris": 22284,
     "instanced_car_tris": 0,
-    "verts": 52686,
-    "draw_calls": 122
+    "verts": 53136,
+    "draw_calls": 125
    }
   },
   "files": [
@@ -8953,14 +9061,14 @@
   ],
   "lod2_glb": {
    "path": "data/buildings3d/landside_lod2.glb",
-   "bytes": 2877184
+   "bytes": 2898556
   },
   "textures": [
    {
     "name": "landside_ao_B",
     "px": 2048,
     "mime": "image/jpeg",
-    "bytes": 1165495,
+    "bytes": 1165468,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    },
    {
@@ -8988,7 +9096,7 @@
     "name": "landside_ao_C",
     "px": 1024,
     "mime": "image/jpeg",
-    "bytes": 319363,
+    "bytes": 318289,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    },
    {
@@ -9023,7 +9131,7 @@
     "name": "landside_ao_A",
     "px": 2048,
     "mime": "image/jpeg",
-    "bytes": 1339301,
+    "bytes": 1337393,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    },
    {
@@ -9992,9 +10100,9 @@
   "ao": {
    "A": {
     "res": 2048,
-    "bake_s": 42.2,
-    "mean": 0.412,
-    "p2": 0.006,
+    "bake_s": 59.7,
+    "mean": 0.411,
+    "p2": 0.007,
     "samples": 40,
     "distance_m": 8.0,
     "objects": 18,
@@ -10003,8 +10111,8 @@
    },
    "B": {
     "res": 2048,
-    "bake_s": 48.6,
-    "mean": 0.588,
+    "bake_s": 58.5,
+    "mean": 0.586,
     "p2": 0.0,
     "samples": 40,
     "distance_m": 8.0,
@@ -10014,7 +10122,7 @@
    },
    "C": {
     "res": 1024,
-    "bake_s": 18.5,
+    "bake_s": 22.4,
     "mean": 0.644,
     "p2": 0.0,
     "samples": 40,
@@ -10569,17 +10677,17 @@
     ],
     "tris": {
      "0": {
-      "tris": 19253,
-      "instanced_tris": 33252,
+      "tris": 19379,
+      "instanced_tris": 32006,
       "draws": 37
      },
      "1": {
-      "tris": 14755,
-      "instanced_tris": 14100,
+      "tris": 14881,
+      "instanced_tris": 13582,
       "draws": 36
      },
      "2": {
-      "tris": 2783,
+      "tris": 2757,
       "instanced_tris": 0,
       "draws": 8
      }
@@ -10587,7 +10695,7 @@
     "cars": {
      "deck_area_m2": 55329.3,
      "slots": 2196,
-     "cars": 344,
+     "cars": 331,
      "observed": 217,
      "observed_dropped": 37,
      "added_light": 127,
@@ -10597,7 +10705,9 @@
      "axis_deg": 117.8,
      "lanes": false,
      "count_src": "cg_roof_cars: 254 dark / coloured cars at their NAIP 2024 positions [obs] + white / silver cars (not separable from the light deck) by the fleet share 37 % next to the detected clusters [inf]; spec visual 300 +-100",
-     "axis_src": "r2: each observed car snapped to the nearest free stall of the deck layout within 3 m (axis 117.8 deg [obs NAIP rows]; 125 of 217; the rest keep their NAIP position with the yaw on the stall axis) - the per-blob NAIP headings are noise at 0.5 m/px (deviation from the stall axis: median 18, p90 42 deg = uniform random); NAIP position and colour kept [obs]"
+     "axis_src": "r2: each observed car snapped to the nearest free stall of the deck layout within 3 m (axis 117.8 deg [obs NAIP rows]; 125 of 217; the rest keep their NAIP position with the yaw on the stall axis) - the per-blob NAIP headings are noise at 0.5 m/px (deviation from the stall axis: median 18, p90 42 deg = uniform random); NAIP position and colour kept [obs]",
+     "overlap_dropped": 13,
+     "overlap_reshaped": 1
     }
    },
    "garage_a": {
@@ -11243,17 +11353,17 @@
     ],
     "tris": {
      "0": {
-      "tris": 19465,
+      "tris": 19469,
       "instanced_tris": 9220,
       "draws": 55
      },
      "1": {
-      "tris": 6035,
+      "tris": 6039,
       "instanced_tris": 3956,
       "draws": 51
      },
      "2": {
-      "tris": 569,
+      "tris": 627,
       "instanced_tris": 0,
       "draws": 9
      }
@@ -11267,7 +11377,9 @@
      "axis_deg": 66.0,
      "lanes": false,
      "count_src": "garage_a_roof_cars: 91 detected (+-30 %), 12.7 per 1,000 m2 [obs, low]",
-     "axis_src": "car long axis 66 deg [obs NAIP, coherence 0.08]"
+     "axis_src": "car long axis 66 deg [obs NAIP, coherence 0.08]",
+     "overlap_dropped": 0,
+     "overlap_reshaped": 0
     }
    },
    "garage_g": {
@@ -11712,7 +11824,7 @@
       "draws": 32
      },
      "2": {
-      "tris": 517,
+      "tris": 539,
       "instanced_tris": 0,
       "draws": 8
      }
@@ -11726,7 +11838,9 @@
      "axis_deg": 66.0,
      "lanes": false,
      "count_src": "garage_g_roof_cars: 77 detected (+-30 %), 15.0 per 1,000 m2 [obs, low]",
-     "axis_src": "car long axis 66 deg [obs NAIP, coherence 0.13]"
+     "axis_src": "car long axis 66 deg [obs NAIP, coherence 0.13]",
+     "overlap_dropped": 0,
+     "overlap_reshaped": 0
     }
    },
    "ltp_garage_1": {
@@ -11896,12 +12010,12 @@
     "tris": {
      "0": {
       "tris": 8421,
-      "instanced_tris": 26810,
+      "instanced_tris": 26738,
       "draws": 30
      },
      "1": {
       "tris": 5077,
-      "instanced_tris": 11410,
+      "instanced_tris": 11338,
       "draws": 29
      },
      "2": {
@@ -11919,7 +12033,9 @@
      "axis_deg": 73.0,
      "lanes": false,
      "count_src": "ltp1_roof_cars: 240 detected, 19.4 per 1,000 m2 [obs, low]",
-     "axis_src": "car long axis 73 deg [obs NAIP; \"cars at about 70 deg\"]"
+     "axis_src": "car long axis 73 deg [obs NAIP; \"cars at about 70 deg\"]",
+     "overlap_dropped": 0,
+     "overlap_reshaped": 3
     }
    },
    "ltp_garage_2": {
@@ -12067,12 +12183,12 @@
     "tris": {
      "0": {
       "tris": 5992,
-      "instanced_tris": 30972,
+      "instanced_tris": 30948,
       "draws": 29
      },
      "1": {
       "tris": 2444,
-      "instanced_tris": 13164,
+      "instanced_tris": 13140,
       "draws": 28
      },
      "2": {
@@ -12090,7 +12206,9 @@
      "axis_deg": 71.0,
      "lanes": false,
      "count_src": "ltp2_roof_cars: 289 detected, 17.1 per 1,000 m2 [obs, low; PV hides cars]",
-     "axis_src": "car long axis 71 deg [obs NAIP]"
+     "axis_src": "car long axis 71 deg [obs NAIP]",
+     "overlap_dropped": 0,
+     "overlap_reshaped": 1
     }
    },
    "rental_car_center": {
@@ -12295,12 +12413,12 @@
     "tris": {
      "0": {
       "tris": 2533,
-      "instanced_tris": 61364,
+      "instanced_tris": 61292,
       "draws": 35
      },
      "1": {
       "tris": 717,
-      "instanced_tris": 26308,
+      "instanced_tris": 26236,
       "draws": 32
      },
      "2": {
@@ -12318,7 +12436,9 @@
      "axis_deg": 126.0,
      "lanes": true,
      "count_src": "rcc_roof_cars: 588 detected, 20.7 per 1,000 m2 (densest roof) [obs, low]",
-     "axis_src": "nose-to-tail lanes at 126 deg [obs NAIP; \"115-125 deg\"]"
+     "axis_src": "nose-to-tail lanes at 126 deg [obs NAIP; \"115-125 deg\"]",
+     "overlap_dropped": 0,
+     "overlap_reshaped": 3
     }
    },
    "grand_hyatt": {
@@ -12833,19 +12953,19 @@
     ],
     "tris": {
      "0": {
-      "tris": 1378,
+      "tris": 1388,
       "instanced_tris": 0,
       "draws": 11
      },
      "1": {
-      "tris": 1378,
+      "tris": 1388,
       "instanced_tris": 0,
       "draws": 11
      },
      "2": {
-      "tris": 24,
+      "tris": 194,
       "instanced_tris": 0,
-      "draws": 4
+      "draws": 7
      }
     },
     "cars": null
@@ -13669,12 +13789,12 @@
    ]
   },
   "cars": {
-   "total": 1737,
+   "total": 1724,
    "per_deck": {
     "central_garage": {
      "deck_area_m2": 55329.3,
      "slots": 2196,
-     "cars": 344,
+     "cars": 331,
      "observed": 217,
      "observed_dropped": 37,
      "added_light": 127,
@@ -13684,7 +13804,9 @@
      "axis_deg": 117.8,
      "lanes": false,
      "count_src": "cg_roof_cars: 254 dark / coloured cars at their NAIP 2024 positions [obs] + white / silver cars (not separable from the light deck) by the fleet share 37 % next to the detected clusters [inf]; spec visual 300 +-100",
-     "axis_src": "r2: each observed car snapped to the nearest free stall of the deck layout within 3 m (axis 117.8 deg [obs NAIP rows]; 125 of 217; the rest keep their NAIP position with the yaw on the stall axis) - the per-blob NAIP headings are noise at 0.5 m/px (deviation from the stall axis: median 18, p90 42 deg = uniform random); NAIP position and colour kept [obs]"
+     "axis_src": "r2: each observed car snapped to the nearest free stall of the deck layout within 3 m (axis 117.8 deg [obs NAIP rows]; 125 of 217; the rest keep their NAIP position with the yaw on the stall axis) - the per-blob NAIP headings are noise at 0.5 m/px (deviation from the stall axis: median 18, p90 42 deg = uniform random); NAIP position and colour kept [obs]",
+     "overlap_dropped": 13,
+     "overlap_reshaped": 1
     },
     "garage_a": {
      "deck_area_m2": 7533.4,
@@ -13695,7 +13817,9 @@
      "axis_deg": 66.0,
      "lanes": false,
      "count_src": "garage_a_roof_cars: 91 detected (+-30 %), 12.7 per 1,000 m2 [obs, low]",
-     "axis_src": "car long axis 66 deg [obs NAIP, coherence 0.08]"
+     "axis_src": "car long axis 66 deg [obs NAIP, coherence 0.08]",
+     "overlap_dropped": 0,
+     "overlap_reshaped": 0
     },
     "garage_g": {
      "deck_area_m2": 5132.3,
@@ -13706,7 +13830,9 @@
      "axis_deg": 66.0,
      "lanes": false,
      "count_src": "garage_g_roof_cars: 77 detected (+-30 %), 15.0 per 1,000 m2 [obs, low]",
-     "axis_src": "car long axis 66 deg [obs NAIP, coherence 0.13]"
+     "axis_src": "car long axis 66 deg [obs NAIP, coherence 0.13]",
+     "overlap_dropped": 0,
+     "overlap_reshaped": 0
     },
     "ltp_garage_1": {
      "deck_area_m2": 14208.7,
@@ -13717,7 +13843,9 @@
      "axis_deg": 73.0,
      "lanes": false,
      "count_src": "ltp1_roof_cars: 240 detected, 19.4 per 1,000 m2 [obs, low]",
-     "axis_src": "car long axis 73 deg [obs NAIP; \"cars at about 70 deg\"]"
+     "axis_src": "car long axis 73 deg [obs NAIP; \"cars at about 70 deg\"]",
+     "overlap_dropped": 0,
+     "overlap_reshaped": 3
     },
     "ltp_garage_2": {
      "deck_area_m2": 18610.7,
@@ -13728,7 +13856,9 @@
      "axis_deg": 71.0,
      "lanes": false,
      "count_src": "ltp2_roof_cars: 289 detected, 17.1 per 1,000 m2 [obs, low; PV hides cars]",
-     "axis_src": "car long axis 71 deg [obs NAIP]"
+     "axis_src": "car long axis 71 deg [obs NAIP]",
+     "overlap_dropped": 0,
+     "overlap_reshaped": 1
     },
     "rental_car_center": {
      "deck_area_m2": 30222.4,
@@ -13739,7 +13869,9 @@
      "axis_deg": 126.0,
      "lanes": true,
      "count_src": "rcc_roof_cars: 588 detected, 20.7 per 1,000 m2 (densest roof) [obs, low]",
-     "axis_src": "nose-to-tail lanes at 126 deg [obs NAIP; \"115-125 deg\"]"
+     "axis_src": "nose-to-tail lanes at 126 deg [obs NAIP; \"115-125 deg\"]",
+     "overlap_dropped": 0,
+     "overlap_reshaped": 3
     }
    }
   },
@@ -13766,7 +13898,7 @@
   "verification": {
    "tool": "tools/blender/verify_landside.py",
    "report": "out/buildings3d/landside_verify.json (local)",
-   "n_checks": 195,
+   "n_checks": 198,
    "n_fail": 0,
    "failed": [],
    "tolerance": "0.5 m or 2 % unless stated",
@@ -14700,7 +14832,7 @@
     },
     {
      "check": "CG: NAIP-detected cars reproduced (share with a model car within 3.2 m = the r2 stall-snap radius)",
-     "model": 0.858,
+     "model": 0.839,
      "drawing": 0.8,
      "tol": null,
      "ok": true,
@@ -15356,12 +15488,12 @@
      "unit": ""
     },
     {
-     "check": "AirTrain pier caps / bents over road decks: min vertical clearance (pier vertices over a deck)",
-     "model": 99.0,
+     "check": "AirTrain pier caps / bents over road decks: min vertical clearance (pier faces over deck faces, 35 overlaps)",
+     "model": 12.404,
      "drawing": 4.6,
      "tol": null,
      "ok": true,
-     "src": "close-out r3: 4.6 m (Caltrans HDM 309.2) as the roadways solve; 99 = no pier over a deck",
+     "src": "close-out r3: 4.6 m (Caltrans HDM 309.2) as the roadways solve; 99 = no pier face over a deck (fix 2: face-based, was every third vertex)",
      "unit": "m"
     },
     {
@@ -15389,6 +15521,24 @@
      "tol": 0.2,
      "ok": true,
      "src": "r1: SFO Museum RCC station polygon lobe [obs] + photo l5 camera solve",
+     "unit": "m"
+    },
+    {
+     "check": "cars (all 1716 LOD0 instances): overlapping pairs of their oriented plan hulls (same height band)",
+     "model": 0,
+     "drawing": 0,
+     "tol": null,
+     "ok": true,
+     "src": "close-out r3 fix 2 (verifier v3: 16 pairs, worst 2.44 m2); worst []",
+     "unit": ""
+    },
+    {
+     "check": "cars LOD1: body bottom above the instance origin (the deck), max over 1716 instances",
+     "model": 0.0,
+     "drawing": 0.0,
+     "tol": 0.02,
+     "ok": true,
+     "src": "close-out r3 fix 2 (verifier v3: 0.30 m, the LOD1 cars floated)",
      "unit": "m"
     },
     {
@@ -15525,6 +15675,15 @@
      "ok": true,
      "src": "data/sfo_airport.json taxiways",
      "unit": "m2"
+    },
+    {
+     "check": "LOD2 see-through: back-face first hits per node (worst ('L2_airtrain_-6_-4', 36); residuals {})",
+     "model": 36,
+     "drawing": 60,
+     "tol": null,
+     "ok": true,
+     "src": "bf_rays.py with LOD2 context; > 60 hits = an open shell (Superbay LOD2 r1-r3: 15,084); failing: none",
+     "unit": "hits"
     }
    ],
    "plans": {
@@ -15566,6 +15725,12 @@
     }
    },
    "plausibility": {
+    "cars": {
+     "instances": 1716,
+     "overlapping_pairs": 0,
+     "worst": [],
+     "lod1_bottom_max_m": 0.0
+    },
     "stand_min_m": 26.3,
     "stand_worst": "G3",
     "bridge_min_m": 55.85,
@@ -15583,6 +15748,26 @@
      "rental_car_center": 203.8,
      "superbay": 212.1,
      "united_moc": 211.9
+    },
+    "lod2_backface": {
+     "total": 138,
+     "per_node": {
+      "L2_airtrain_-6_-4": 36,
+      "L2_united_moc": 36,
+      "L2_bart_station": 25,
+      "L2_garage_a": 14,
+      "L2_airtrain_-3_0": 7,
+      "L2_airtrain_-4_0": 7,
+      "L2_airtrain_-6_-2": 5,
+      "L2_airtrain_-4_1": 3,
+      "L2_garage_g": 3,
+      "L2_superbay": 2
+     },
+     "context": [
+      "itb_lod2.glb",
+      "domestic_lod2.glb",
+      "roadways_lod2.glb"
+     ]
     }
    }
   },
@@ -15774,6 +15959,94 @@
     "item": "landside single-photo / placeholder values",
     "disposition": "partly: no new primary source",
     "change": "AirTrain levels (d1 camera implies a lower T1 station deck - information only), l1 block top 31.75 vs a2 29.1 (a2 adopted, conflict listed), Garage G from 4 columns, rotunda centre ~2 m residual, far-track walkway by symmetry: unchanged, tagged"
+   }
+  ],
+  "closeout_r3_fix2": [
+   {
+    "id": "v2",
+    "item": "Superbay LOD2 an open shell (walls to 25.8 m under a 27.0-39.6 m roof, spine roof floating at 41.1 m; 15,084 back-face hits since round 1)",
+    "disposition": "fixed",
+    "change": "landside_geom.superbay LOD2 is a closed coarse solid: plane cantilever roofs with a 1.2-m fascia and soffit, the flat spine roof with its side walls (root -> spine top) and end walls, outline walls up to the soffit (top sampled along every edge, split at the spine lines). LOD0 / LOD1 (pre-existing 878 hits): the spine stretch of the roof sandwich got its soffit and two end fascias, the spine walls their triangular ends under the hips. verify_landside gained a LOD2 see-through gate (tools/blender/bf_rays.py = the verifier's numeric back-face rays, LOD2 context itb / domestic / roadways); garage LOD2 portal recesses got jambs / head / sill"
+   },
+   {
+    "id": "v3",
+    "item": "parked cars overlapping (16 pairs, worst 2.44 m2) / LOD1 cars 0.3 m above the deck",
+    "disposition": "fixed",
+    "change": "landside_cars.resolve_overlaps: every car's oriented footprint (its shape's length x width, + 0.025 m) against the cars placed before it on the deck and on the building's other decks (+-1.5 m): a car that overlaps takes the next shorter shape (pickup -> SUV -> sedan), else it is dropped [inf: which car gives way]; LOD1 car bodies start at the deck (no skirt there). verify_landside tests the oriented plan hulls of every LOD0 instance (pairs) and the LOD1 body bottom"
+   },
+   {
+    "id": "v4",
+    "item": "Garage A station block: open south side shows the back of the single-sided east wall (+72 back-face hits)",
+    "disposition": "fixed",
+    "change": "an inner lining of the east (portal) face over the hall / track band, 0.05 m inside, with the same track openings, facing into the hall (dark interior)"
+   },
+   {
+    "id": "v5",
+    "item": "landside drawing requests not on BL-01..03 and the AirTrain wye",
+    "disposition": "partly (recorded as deviations, not drawn)",
+    "change": "each request is recorded below with the sheet state, the 3-D value and its tag; the BL sheets were not redrawn in this round",
+    "sheet_requests": [
+     {
+      "request": "Garage A / G heights (a2): parapet 29.10 / 27.52, deck 26.7 / 25.3, drum ring 31.0 (A)",
+      "sheets": "BL-03: a2 overlay drawn (draw_landside.garage_r3, close-out r3); the body label still says dotted at the drum ring 39.6 m",
+      "model": "a2 values [obs low]",
+      "status": "drawn (label residual)"
+     },
+     {
+      "request": "Garage A station block (top, slots, depth)",
+      "sheets": "not drawn",
+      "model": "manifest landside.buildings.garage_a.anchors.station_block: top = the parapet (r2), slots, depth 27 m [obs l1 low / depth inf]",
+      "status": "deviation_from_sheets"
+     },
+     {
+      "request": "SFO BART station (plan, levels) as a spec item + sheet",
+      "sheets": "not drawn (no spec item)",
+      "model": "buildings.bart_station.dims: plan OSM 221663595 [obs], top / colonnade / glazed band [obs a2 low]",
+      "status": "deviation_from_sheets"
+     },
+     {
+      "request": "RCC station tower D 4.7 and platform 8.0 -> rake (l5 fit) and platform 8.84 m",
+      "sheets": "BL-02 E draws D 6.5 [inf]",
+      "model": "airtrain.rcc_tower / stations RCC [obs l5 low]",
+      "status": "deviation_from_sheets"
+     },
+     {
+      "request": "drum stair / elevator towers (positions / heights)",
+      "sheets": "not drawn",
+      "model": "buildings.garage_a/garage_g.anchors.towers / tower_top [obs a2 / i2 low]",
+      "status": "deviation_from_sheets"
+     },
+     {
+      "request": "central-garage roof rims / lobes / boxes",
+      "sheets": "not drawn",
+      "model": "buildings.central_garage (r1 / r2 lobes, level5, poles) [obs NAIP]",
+      "status": "deviation_from_sheets"
+     },
+     {
+      "request": "Garage A NE rotunda and penthouse (a2)",
+      "sheets": "not drawn",
+      "model": "buildings.garage_a.anchors.rotunda / penthouse [obs a2 low]",
+      "status": "deviation_from_sheets"
+     },
+     {
+      "request": "walkways east of the Garage A station (l1) and the open gap",
+      "sheets": "not drawn",
+      "model": "airtrain decks: narrow walkways (review r2) [obs l1 low]",
+      "status": "deviation_from_sheets"
+     },
+     {
+      "request": "BART band / colonnade (a2)",
+      "sheets": "not drawn",
+      "model": "buildings.bart_station.dims.colonnade / glazed_band [obs a2 low]",
+      "status": "deviation_from_sheets"
+     },
+     {
+      "request": "three-track AirTrain approach / wye west of x -1592 (review r1 finding 2)",
+      "sheets": "not drawn or separated",
+      "model": "airtrain tiles from data/sfo_landside.json guideway centrelines [obs OSM]",
+      "status": "deviation_from_sheets"
+     }
+    ]
    }
   ],
   "scene_not_modelled": {
