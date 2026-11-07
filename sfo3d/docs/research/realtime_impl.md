@@ -814,7 +814,9 @@ dispositions: `docs/requests/realtime_closeout.md`, "Round 3". Every change carr
    motion report through a 5-min push and the pull dragged its target 150 m into the G pier (the whole `building` class,
    G7 L2's walkway, G4 L2's cab, and the 'ghost' removal of UAL852 at G7).
 3. **Locks with an absolute bound** (realtime-1): never further from the current parked pose than max(LOCK_M, accepted
-   residual + 2 m) / max(LOCK_DEG, residual + 3°).
+   residual + 2 m) / max(LOCK_DEG, residual + 3°), the accepted residual counted up to `LOCK_R0_MAX` (12 m, the largest rest
+   residual the controller accepts) — uncapped, a lock taken 60.7 m from its reference (EIN961 at B5S after a silent
+   docking) was kept 99 min.
 4. **No removal on silence alone** (realtime-2): a silent docking takes a stand from a silent occupant only on SFO's evidence
    (`stalePlanGone`); `stationary()` removes a silent aircraft parked at a contact stand only with that evidence; `occupy()`
    logs `stale-replaced`; the 8-h expiry no longer applies at a contact stand (only SFO's block-out / ended windows:
@@ -875,7 +877,9 @@ dispositions: `docs/requests/realtime_closeout.md`, "Round 3". Every change carr
     13,963). `reacqOutlier()`: an aircraft parked at a contact stand heard again after silence / a gap with one stationary
     (< 3 kt) fix away from its parking keeps stand, pose and bridge until a NEW fix (>= `REACQ_CONFIRM_MS` 5 s later, within
     `REACQ_CONFIRM_M` 15 m) confirms the move; a fix at the stand clears it, a moving one (>= 3 kt) is taken at once. A real
-    tow costs one more fix at the old stand. Window 04:50–05:06Z: `bridge.hit.eng` 1,325 → 0, `hit_at_rest` 491 → 0,
+    tow costs one more fix at the old stand. Only for an aircraft parked there on its OWN data (in-blocked, not a silent
+    docking) and never for a fix inside the stand's own limits: in its first form the rule held EIN961's first fix AT the B5S
+    stop after a silent docking whose data pose lay 60 m back (4 Nov 22:54Z), and the body backed up 60 m. Window 04:50–05:06Z: `bridge.hit.eng` 1,325 → 0, `hit_at_rest` 491 → 0,
     `clear.stand` (AAL1175 / AAL1430) 696 → 0 (counters `reacqOutHeld` / `reacqOutConfirmed`).
 16. **An arrival driving into its stand removes the ghost at first contact** (realtime-3 / -10). The fuselage rule of item 14
     (`GHOST_FUS_PTS`) is for traffic passing a stand; an arrival whose approach already retracted the ghost's bridge

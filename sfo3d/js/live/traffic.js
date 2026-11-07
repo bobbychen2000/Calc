@@ -52,6 +52,7 @@ const QUIET_MS = 15000, STALE_AIR_MS = 60000, STALE_GROUND_MS = 75000, PARK_KEEP
 // (the parked-pose median moves in >= 4 m steps by design -- 4 m hysteresis, stationary() -- so the lock tolerates 6 m / 10
 // deg at a stand pose, x1.4 for an own-pose or free parking whose median carries the full report scatter)
 const LOCK_M = 6, LOCK_DEG = 10 * DEG;
+const LOCK_R0_MAX = 12;   // the largest rest residual the controller accepts (ctlGround: up to 12 m short of the data's pose along the lead-in) -- the cap on realtime-1's 'residual + 2 m' lock bound (close-out round 3)
 const CUT_S = 0.4;               // fade out / fade in (s) of a re-placement (data gap, re-acquisition): never a visible jump
 // an arrival's jet bridge starts docking this long after the drawn aircraft came to rest (+ gates.js DOCK_DELAY 12 s):
 // engines are shut down and the beacon is off before a bridge approaches [inferred design value; see syncBridge]
@@ -612,8 +613,12 @@ export class Traffic {
   // with B26 L1's rest tunnel through its engine and 3.7 m from AAL1175 at B27. A real tow costs one more fix at the old stand.
   // The confirming fix is a NEW one, >= REACQ_CONFIRM_MS after the held one: the stray fix came twice, 18 ms apart (both
   // providers of the relay merge), and the copy had confirmed it. true = hold this report (the caller skips it)
+  // (only for an aircraft parked at the stand on its OWN data -- in-blocked, not a silent docking whose pose is invented -- and
+  // never for a fix inside the stand's own limits (1.3x): EIN961 A333, silently docked into B5S with its last data pose 60 m
+  // back on the lead-in, 4 Nov 22:54Z; its next fix AT the B5S stop was held and the body backed up 60 m)
   reacqOutlier(tr, a, x, z) {
-    const g = tr.gate; if (!g || !(g.bridge || g.sharesBridgesOf) || tr.m.phase !== 'still' || !a.ground || (a.gs ?? 0) >= 3) { tr.reacqOut = null; return false; }
+    const g = tr.gate; if (!g || !(g.bridge || g.sharesBridgesOf) || tr.m.phase !== 'still' || !a.ground || (a.gs ?? 0) >= 3 || tr.inBlockAt == null || tr.silentDockG || tr.silentCont || tr.forceStand) { tr.reacqOut = null; return false; }
+    if (this.gateScore(g, { x, z, hd: a.trueHeading != null ? a.trueHeading * DEG : null, hdReal: a.trueHeading != null, icao: tr.info.icao }, typeOf(tr), 1.3) != null) { tr.reacqOut = null; return false; }
     const O = tr.reacqOut, t = a.t != null ? a.t : 0, near = O && Math.hypot(x - O.x, z - O.z) <= REACQ_CONFIRM_M;
     if (near && t - O.t >= REACQ_CONFIRM_MS) { tr.reacqOut = null; this.counters.reacqOutConfirmed = (this.counters.reacqOutConfirmed || 0) + 1; return false; }
     if (near) return true;   // (the same fix again, or one within the confirmation time: still held)
@@ -2040,7 +2045,9 @@ export class Traffic {
       // B77W drew its tail out into the taxilane for 2 h 37 min and was removed as a ghost when UAL810 passed, 5 Nov 03:11Z,
       // while really parked there until its push at 03:20Z. Then the body creeps or is re-settled to the current pose)
       const dM = Pq ? Math.hypot(Pq[0] - tr.lock.x, Pq[1] - tr.lock.z) : Infinity, dH = H != null ? Math.abs(wrapPi(H - tr.lock.hdg)) : 0;
-      const r0M = R0 && R0.P ? Math.hypot(R0.P[0] - tr.lock.x, R0.P[1] - tr.lock.z) : 0, r0H = R0 && R0.H != null ? Math.abs(wrapPi(R0.H - tr.lock.hdg)) : 0;
+      // (the accepted residual counts up to LOCK_R0_MAX only: a lock taken 60.7 m from its reference -- EIN961 A333 at B5S, 4 Nov
+      // 22:54Z, a silent docking whose reference was a data pose 60 m back -- was kept 99 min with a bound of 62.7 m)
+      const r0M = R0 && R0.P ? Math.min(LOCK_R0_MAX, Math.hypot(R0.P[0] - tr.lock.x, R0.P[1] - tr.lock.z)) : 0, r0H = R0 && R0.H != null ? Math.abs(wrapPi(R0.H - tr.lock.hdg)) : 0;
       const farM = !Pq || (dM > tolM && !(R0 && R0.P && Math.hypot(Pq[0] - R0.P[0], Pq[1] - R0.P[1]) <= tolM)) || dM > Math.max(tolM, r0M + 2);
       const farH = H != null && ((dH > tolH && !(R0 && R0.H != null && Math.abs(wrapPi(H - R0.H)) <= tolH)) || dH > Math.max(tolH, r0H + 3 * DEG));
       // (not once its departure is signalled -- earlyUndock: it is about to push from where it is drawn, and a re-placement now
