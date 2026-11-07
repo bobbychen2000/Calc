@@ -23,6 +23,7 @@ import { renderSlabs, fogTransmittance } from '../env/atmo/sky_model.js';   // o
 import { LiveAircraft, TYPE_MODELS } from './aircraft.js';
 import { footprint } from './gates.js';
 import { MODEL_SOURCES } from './models.js';
+import { isFreighter } from './lookup.js';   // (freighters: no L2 bridge, realtime-14)
 import { buildLiveWorld, releaseAirportMap } from './world.js';
 import { LiveGateSystem } from './gates.js';
 import { buildLiveLights, buildPierGeometry, alsPlacement, buildMountGeometry } from './lights.js';
@@ -103,6 +104,9 @@ export async function startApp(cfg) {
   };
   let S = size(); canvas.width = S.cw; canvas.height = S.ch;
   const R = new Renderer(S.rw, S.rh, { msaa: Q.msaa, shadowRes: Q.shadow });
+  // (close-out round 3, realtime-15 / engine_exports.md s.5.2: the renderer reports init failures and device loss here; ui.fail
+  // shows them before and after load)
+  R.onFatal = (html) => ui.fail(html);
   // ---------------------------------------------------------------- world
   ui.progress(0.12, 'Building terrain and airport…'); await nextFrame();
   const world = buildLiveWorld(R, cfg.airport, () => { }, { terrainStep: Q.terrainStep, mapRes: Q.mapRes, details: cfg.details, buildings: cfg.buildings, stands: cfg.stands, paint: cfg.paint, pavement: cfg.pavement, runways: RUNWAY_SIGNS() });
@@ -278,7 +282,10 @@ export async function startApp(cfg) {
   function applyGate(g, tr, opt) {
     const G = bridgeGate(g); const now = Date.now();
     if (!tr && opt && opt.early && gateSys.undockEarly) { gateSys.undockEarly(G, now); return; }
-    gateSys.setOccupant(G, tr && tr.model && TYPES[tr.model.t] ? tr.model.t : null, booted(), now, tr ? poseST(tr) : null, tr ? tr.info.icao : null);
+    // (close-out round 3, realtime-14: a freighter -- the drawn model's own freighter() test, lookup.js isFreighter -- gets no
+    // second-door bridge: it has no L2 passenger door; gates.js setOccupant opts.freighter)
+    const v = tr && views.get(tr.hex); const fr = !!(tr && (v && v !== 'marker' && v.freighter ? v.freighter() : isFreighter({ airline: tr.cs && tr.cs.airline ? tr.cs.airline.icao : null, icaoType: tr.info.icao, desc: tr.info.dbDesc })));
+    gateSys.setOccupant(G, tr && tr.model && TYPES[tr.model.t] ? tr.model.t : null, booted(), now, tr ? poseST(tr) : null, tr ? tr.info.icao : null, { freighter: fr });
     if (!tr && opt && opt.fast && gateSys.hurryUndock) gateSys.hurryUndock(G, opt.s || 5, now);
   }
   // extension (0 retracted .. 1 docked) of a stand's bridges, for the engine's hold-until-clear (gates.js extension(): 1
@@ -340,9 +347,11 @@ export async function startApp(cfg) {
   }
   function modelNote(tr) {
     const m = tr.model; if (!m) return tr.info.icao ? 'No 3D model for this type — shown as a marker.' : 'Aircraft type not reported — shown as a marker.';
-    if (m.generic) return '3D model: generic business-jet airframe scaled to this type (not type-accurate).';
+    // (close-out round 3, realtime-14 / aircraft_closeout.md s.2: the generic airframe's own label -- E135 / E145 are regional
+    // jets -- and a three-engine type (Falcon 7X / 8X / 900 / 50) is said to be drawn with two engines)
+    if (m.generic) return `3D model: generic ${m.generic} airframe scaled to this type (not type-accurate)` + (m.engines === 3 ? '; a three-engine type drawn with two engines.' : '.');
     if (!m.m) return '3D model: simplified procedural airframe (no detailed model available for this type).';
-    const base = { b738: '737-800', a319: 'A319', a320: 'A320', a321: 'A321', b788: '787-8', e170: 'E170', e75l: 'E175', e190: 'E190', bcs1: 'A220-100', bcs3: 'A220-300', crj2: 'CRJ200', crj7: 'CRJ700', crj9: 'CRJ900', b752: '757-200', b763: '767-300', b744: '747-400', b748: '747-8', a333: 'A330-300', a359: 'A350-900', a388: 'A380', md11: 'MD-11' }[m.m];
+    const base = { b738: '737-800', a319: 'A319', a320: 'A320', a321: 'A321', b788: '787-8', e170: 'E170', e75l: 'E175', e190: 'E190', bcs1: 'A220-100', bcs3: 'A220-300', crj2: 'CRJ200', crj7: 'CRJ700', crj9: 'CRJ900', b752: '757-200', b763: '767-300', b744: '747-400', b748: '747-8', a333: 'A330-300', a359: 'A350-900', a388: 'A380', md11: 'MD-11', b772: '777-200', b77w: '777-300ER' }[m.m];   // (b772 / b77w: realtime-14)
     const own = TYPES[m.t] ? TYPES[m.t].name : '';
     return `3D model: FlightGear/FlightAirMap ${base}` + (own && !own.endsWith(base) ? ` (adapted to ${own.replace(/^(Boeing|Airbus|Embraer|Bombardier|McDonnell Douglas) /, '')})` : '') + '. Livery colours simplified.';
   }
@@ -371,7 +380,7 @@ export async function startApp(cfg) {
     const out = [];
     for (const [hex, v] of views) { if (v !== 'marker') continue; const tr = traffic.tracks.get(hex); if (!tr || !tr.disp.valid || tr.disp.alpha < 0.5) continue; const D = tr.disp;
       const cat = category(tr); const c = { arr: [0.3, 0.8, 1], dep: [1, 0.7, 0.3], ground: [0.5, 0.9, 0.6], other: [0.85, 0.85, 0.9], vehicle: [1, 0.72, 0.1] }[cat] || [0.85, 0.85, 0.9];
-      out.push(cat === 'vehicle' ? { p: [D.x, D.y + 1.6, D.z], c, i: 60, s: 0.7 } : { p: [D.x, D.y + 2, D.z], c, i: 120, s: 1.4 }); }
+      out.push(cat === 'vehicle' ? { p: [D.x, D.y + 1.6, D.z], c, i: 60, s: 0.7, marker: true } : { p: [D.x, D.y + 2, D.z], c, i: 120, s: 1.4, marker: true }); }   // (marker: true -- engine_exports.md s.5.1, close-out round 3 realtime-15)
     return out;
   }
   // ---------------------------------------------------------------- camera

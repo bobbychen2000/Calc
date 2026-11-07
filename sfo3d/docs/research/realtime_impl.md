@@ -796,3 +796,59 @@ engine's phase, not the label.
 7. **Minors.** Early-undock 'silent' cancel only after XPDR_OFF_MS of silence, without blocking the next signal (v6); the
    tow pivot only while the push-back phase or TOW_MS after it (v9); a re-placement waits for its bridges only while the
    data is within CUT_HOLD_M (v9).
+
+# Step 9 — close-out round 3, fix round 1 (7 Nov 2026): findings realtime-1 .. realtime-17
+
+Findings: `docs/requests/closeout3_findings.json` (group `realtime`). Numbers (all recorded hours, before → after) and the
+dispositions: `docs/requests/realtime_closeout.md`, "Round 3". Every change carries a "close-out round 3, realtime-N" comment.
+
+1. **Harness** (realtime-12). `tools/live/invariants.mjs` builds the building grid as the app does (`buildingGrid(AIRPORT, 2,
+   B3D_INTEGRATION.physics)`: the 3-D assets' footprints), tests bridge solids against gates.js `acHit` (the solid the bridges
+   plan against: tapered nose, wings, engines, swept tailplane; new class `bridge.hit.eng`) and draws the aircraft planform
+   with the tapered nose, the tailplane root at 0.35 R and engine pieces. The replay streams cover every recorded hour
+   (segment A 4 Nov 17:43Z – 6 Nov 06:32Z, 36.8 h; segment B 7 Nov 01:33 – 07:00Z, 5.4 h; the gap is the machine's
+   reboot). SFO's plan exists in the cache only up to the 5 Nov 02:49Z snapshot: later hours replay without it, as the app
+   does when flysfo is unavailable.
+2. **Push-backs never 'dock'** (realtime-5). `docking()` gives no lead-in to a push-back or a departure, and `target()`'s
+   lead-in pull applies only to an arrival inside the lead-in corridor. Before, UAL917 B772 kept G4's lead-in from its first
+   motion report through a 5-min push and the pull dragged its target 150 m into the G pier (the whole `building` class,
+   G7 L2's walkway, G4 L2's cab, and the 'ghost' removal of UAL852 at G7).
+3. **Locks with an absolute bound** (realtime-1): never further from the current parked pose than max(LOCK_M, accepted
+   residual + 2 m) / max(LOCK_DEG, residual + 3°).
+4. **No removal on silence alone** (realtime-2): a silent docking takes a stand from a silent occupant only on SFO's evidence
+   (`stalePlanGone`); `stationary()` removes a silent aircraft parked at a contact stand only with that evidence; `occupy()`
+   logs `stale-replaced`; the 8-h expiry no longer applies at a contact stand (only SFO's block-out / ended windows:
+   `stale-expired`); SFO's actual block-out removes a silent occupant at once (`stale-blockout`, realtime-10).
+5. **Two aircraft are never drawn at one stand** (realtime-3): a replaced occupant heard replaced by an aircraft parked at the
+   stand fades at once (`dropNow`); ground.js fades a waiting ghost that overlaps any parked body (`dropWaitFixed`); a stand's
+   bridges are undocked from a previous aircraft before they dock a different one (`undockOther`).
+6. **Parked where the bridge reaches** (realtime-4): any pose the stand's L1 bridge cannot dock — short by any distance, or the
+   aircraft's own heading / offset — is replaced by the type's stop pose when that pose docks (`parkAtStopReach`).
+7. **Evidence for the early retraction** (realtime-6 / -10): bridge-ahead needs SFO's arrival record for the stand, the
+   arrival close on the lead-in, or SFO's evidence that the occupant left; with SFO's evidence it starts 400 m out.
+8. **Departure signal** (realtime-7): EARLY_MAX_MS 60 min; 'no push' only once the transponder stopped reporting at the stand
+   (> 2 min) and SFO lists no off-block ahead; a cancel no longer blocks the next signal.
+9. **Silent docks** (realtime-8): the invented drive is capped at max(60 m, 1.5 L) (150 m into SFO's own arrival stand); a
+   newer stationary report away from the stand undoes it (no lock, no in-block). `drOvershoot` (realtime-9) only for a body
+   that is dead-reckoning, not pushing, not parked or locked.
+10. **Bodies near rest bridges** (realtime-11): the first motion candidate out of a stop must be reachable from rest
+    (0.5 · 2 m/s² · dt² + 15 m), so two multipath fixes 28 m out no longer move a docked aircraft (UAL59 at G1); at a contact
+    stand the position alone decides a 'stand-left' (a garbage parked heading had released N14541 from D7); GroundPhysics
+    samples the fuselage centre line too.
+11. **Retired pavement** (realtime-13): `tools/live/build_taxigraph.py` applies the static track's OSM decision list
+    (`data/sfo_details.json` osmBase.updates: relocated W, J, the lead-on arcs added; the old W / J / connectors dropped) and
+    carries the retired SFO Museum pavement; `TaxiNet.paved` and the taxiway polygons leave it out.
+12. **API hooks** (realtime-14 / -15 / -16): vehicle callsigns, livery with reg / hex / type, b772 / b77w, the freighter flag
+    for the bridges, the three-engine note, `marker: true`, `R.onFatal` with a `ui.fail` that works after load,
+    `jobs/extract2d.mjs` (threshold bar, `solids()`, upper-deck bridges, per-bridge fields, retired pavement),
+    `tools/live/gatecheck.py` (business-jet spans from fit.js `BIZ`). Realtime-17 (snapshot licence) is the owner's:
+    `tools/live/build_snapshot.py` writes an adsb.lol-only candidate to `out/live/` and leaves `data/snapshot.js` alone.
+13. **Static requests R4.1** (`docs/requests/static_closeout.md`): `typesOkHas` refuses the stand's `typesOkUnsafe` members
+    (F20: A319 / A19N / A20N / B736 / B737 / B37M) before the family-dominance rule (R4.1.2); the family ADS-B references
+    (`antenna_ref.families`, n ≥ 5, airport.js `antennaRef` rule) estimate the NOSE of a parked aircraft from its reports
+    (`antPark`: updatePark's along-line stop and own pose; E-Jets 13.6 m instead of 0.2 L = 6.3 m) (R4.1.1) — the drawn
+    body keeps `antOf` (0.2 L / A32x 0.06 L) elsewhere, because the references are measured at the stop only and, applied to
+    moving traffic in a 1-h window, the B757 17.1 m put a holding B752 onto an A359 parked at G5, which was removed as a
+    ghost; GroundPhysics places a stationary aircraft with all gear on the rendered mask first (within the 6 m report
+    scatter; a new lock pose with a gear point off the mask is re-placed once or twice when a pose within 3 m has all gear on
+    it), then on the mask ∪ OSM-net union (R4.1.5: N199TH GLF5 on the fence line).

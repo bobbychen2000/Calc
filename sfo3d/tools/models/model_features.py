@@ -145,9 +145,16 @@ def wing(pos, zone, L, hw=2.0):
     tipY = float(pos[w & (az > 0.98 * semi), 1].mean())
     ht = (pos[:, 0] < -0.8 * L) & (zone != 1); htSemi = float(az[ht].max()) if ht.any() else None
     htY = float(pos[ht & (az > 0.97 * htSemi), 1].mean()) if htSemi else None
-    return dict(tipY=round(tipY, 3), htY=round(htY, 3) if htY is not None else None, htSemi=round(htSemi, 3) if htSemi else None,
-                semi=round(semi, 3), engOut=round(float(az[eng].max()), 3) if eng.sum() > 20 else None,
-                engLow=round(engLow, 3) if engLow is not None else None)
+    out = dict(tipY=round(tipY, 3), htY=round(htY, 3) if htY is not None else None, htSemi=round(htSemi, 3) if htSemi else None,
+               semi=round(semi, 3), engOut=round(float(az[eng].max()), 3) if eng.sum() > 20 else None,
+               engLow=round(engLow, 3) if engLow is not None else None)
+    # nacelle zone alone (close-out round 3, fix round 2, v2: the 737 MAX nacelle offset is fitted to the ACAP engine row):
+    # top / bottom of the zone-2 vertices and the station of the lowest one
+    nz = zone == 2
+    if nz.sum() > 20:
+        i = int(np.argmin(np.where(nz, pos[:, 1], np.inf)))
+        out['nac'] = dict(top=round(float(pos[nz, 1].max()), 3), low=round(float(pos[i, 1]), 3), lowSt=round(float(-pos[i, 0]), 3))
+    return out
 
 
 def underside(pos, zone, idx, L, cell=0.5):

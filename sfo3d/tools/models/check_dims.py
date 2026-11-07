@@ -542,7 +542,9 @@ def main():
         src_inf = 'inf' in (R.get('src') or '')
         if mk and mk in models:
             head, P, Z = models[mk]; f = T['fit']
-            rd = rendered(P, Z, head, f, T, full=fulls[mk]); r['render'] = rd; r['fit'] = f
+            rd = rendered(P, Z, head, f, T, full=fulls[mk]); r['fit'] = f
+            # (the report keeps the measured numbers only: keelAt is a function, close-out round 3 fix round 2 v4: --json crashed)
+            r['render'] = {k: v for k, v in rd.items() if not callable(v)}
             add('length (rendered)', rd['L'], R['L'])
             # + the procedural tip device (js/aircraft/fit.js TIP_ADD / TIP_LAT: sharklet 0.55 m, 737 MAX split tip 0.5 m a side)
             add('wingspan (rendered, after span fit' + (', + ' + f['tipAdd'] if f.get('tipAdd') else '') + ')', rd['span'] + (2 * {'sharklet': 0.55, 'split': 0.5}[f['tipAdd']] if f.get('tipAdd') else 0), R['span'], key='span')
@@ -647,7 +649,7 @@ def main():
                   + (' (ref inf)' if c.get('inf') else '') + (' (self)' if c.get('self') else '') + (f"   <- {c['why']}" if c.get('why') else ''))
     unexpl = [x for x in flags if not x[1].get('why')]
     print(f'\n{len(flags)} flagged items, {len(flags) - len(unexpl)} explained (~~), {len(unexpl)} unexplained (!!)')
-    if a.json: json.dump(dict(rows=rows), open(a.json, 'w'), indent=1, default=float)
+    if a.json: json.dump(dict(rows=rows), open(a.json, 'w'), indent=1, default=lambda o: None if callable(o) else float(o))
     if a.md:
         with open(a.md, 'w') as fo:
             fo.write('| ICAO | TYPES / model | check | app | ref | Δ | % | note |\n|---|---|---|---|---|---|---|---|\n')

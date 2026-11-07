@@ -183,21 +183,26 @@ export const SPEC = {
   // table rows C / G (the NG document gives none: the 737-800 / -900ER take their MAX twin's, inf). js/aircraft/fit.js fits
   // the stance of the whole family to the MAXIMUM column of sill, sillAft and cargo, read as the OEW condition like the NG
   // document's 'MAX (AT OEW)' column (inf for the MAX, whose document labels it only 'MAXIMUM'); close-out round 3)
-  b736: { doc: 'NG', engClr: [0.46, 0.61], sillAft: [2.95, 3.10], cargo: { fwd: [1.30, 1.45], aft: [1.63, 1.78] }, L: 31.24, span: 34.32, H: [12.45, 12.70], crown: [5.38, 5.54], sill: [2.59, 2.74], nose: 4.09, main: [15.32], track: 5.72, doors: [5.03, 23.65],
+  // (htClr: stabiliser-tip height, NG §2.3.1-2.3.3 row H 'stabilizer' [MIN (AT MTW), MAX (AT OEW)] (-600 / -700 5.46-5.61,
+  // -800 5.49-5.64, -900 5.51-5.66), MAX §2.3.1-2.3.4 row N 'horizontal stabilizer' [MINIMUM, MAXIMUM]; htSpan: horizontal
+  // tail span 47 ft 1 in = 14.35 m in every general-dimension figure, NG §2.2.1-2.2.8, MAX §2.2.1-2.2.4 (close-out round 3,
+  // fix round 2, v1: the FG model's tailplane spanned 11.92 m; tools/convert_models.py tailFit). js/aircraft/fit.js does not
+  // use htClr for the 737s (models on their own gear); tools/models/check_dims.py checks both)
+  b736: { doc: 'NG', engClr: [0.46, 0.61], htClr: [5.46, 5.61], htSpan: 14.35, sillAft: [2.95, 3.10], cargo: { fwd: [1.30, 1.45], aft: [1.63, 1.78] }, L: 31.24, span: 34.32, H: [12.45, 12.70], crown: [5.38, 5.54], sill: [2.59, 2.74], nose: 4.09, main: [15.32], track: 5.72, doors: [5.03, 23.65],
     src: '§2.2.1 p.2-9 (L, span without winglets, nose gear 13 ft 5 in, wheelbase 36 ft 10 in, track 18 ft 9 in), §2.3.1 p.2-17', inf: ['doors[1]: aft door = MAX aft-door-to-tail distance 7.59 m'] },
-  b737: { doc: 'NG', engClr: [0.46, 0.61], sillAft: [2.95, 3.10], cargo: { fwd: [1.30, 1.45], aft: [1.63, 1.78] }, L: 33.63, span: 35.79, H: [12.45, 12.67], ...NG_CL, nose: 4.09, main: [16.69], track: 5.72, doors: [5.03, 26.04],
+  b737: { doc: 'NG', engClr: [0.46, 0.61], htClr: [5.46, 5.61], htSpan: 14.35, sillAft: [2.95, 3.10], cargo: { fwd: [1.30, 1.45], aft: [1.63, 1.78] }, L: 33.63, span: 35.79, H: [12.45, 12.67], ...NG_CL, nose: 4.09, main: [16.69], track: 5.72, doors: [5.03, 26.04],
     src: '§2.2.4 p.2-12 (-700W; without winglets 34.32), §2.3.3 p.2-19', inf: ['doors[1] (as b736)'] },
-  b738: { doc: 'NG', engClr: [0.48, 0.64], sillAft: [2.97, 3.12], cargo: { fwd: [1.30, 1.45], aft: [1.65, 1.80] }, cargoX: { fwd: 8.53, aft: 27.97 }, L: 39.47, span: 35.79, H: [12.37, 12.62], ...NG_CL, nose: 4.09, main: [19.69], track: 5.72, doors: [5.03, 31.88],
+  b738: { doc: 'NG', engClr: [0.48, 0.64], htClr: [5.49, 5.64], htSpan: 14.35, sillAft: [2.97, 3.12], cargo: { fwd: [1.30, 1.45], aft: [1.65, 1.80] }, cargoX: { fwd: 8.53, aft: 27.97 }, L: 39.47, span: 35.79, H: [12.37, 12.62], ...NG_CL, nose: 4.09, main: [19.69], track: 5.72, doors: [5.03, 31.88],
     src: '§2.2.6 p.2-14 (-800W), §2.3.3 p.2-19', inf: ['doors[1] = 737-8 aft door (same fuselage, MAX §2.7.1)'] },
-  b739: { doc: 'NG', engClr: [0.48, 0.64], sillAft: [2.97, 3.12], cargo: { fwd: [1.30, 1.45], aft: [1.65, 1.80] }, cargoX: { fwd: 8.53, aft: 30.61 }, L: 42.11, span: 35.79, H: [12.37, 12.62], crown: [5.44, 5.59], sill: [2.59, 2.74], nose: 4.09, main: [21.26], track: 5.72, doors: [5.03, 34.52],
+  b739: { doc: 'NG', engClr: [0.48, 0.64], htClr: [5.51, 5.66], htSpan: 14.35, sillAft: [2.97, 3.12], cargo: { fwd: [1.30, 1.45], aft: [1.65, 1.80] }, cargoX: { fwd: 8.53, aft: 30.61 }, L: 42.11, span: 35.79, H: [12.37, 12.62], crown: [5.44, 5.59], sill: [2.59, 2.74], nose: 4.09, main: [21.26], track: 5.72, doors: [5.03, 34.52],
     src: '§2.2.8 p.2-16 (-900ERW), §2.3.3 p.2-19', inf: ['doors[1] = 737-9 aft door'] },
-  b37m: { doc: 'MAX', engClr: [0.43, 0.56], cargo: { fwd: [1.42, 1.68], aft: [1.32, 1.65] }, bottom: [1.27, 1.55], cargoX: { fwd: 8.53, aft: 24.05 }, L: 35.56, span: 35.92, H: [11.84, 12.50], crown: [5.05, 5.51], sill: [2.77, 3.07], sillAft: [2.49, 2.92], nose: 4.09, main: [17.45], track: 5.72, doors: [5.03, 27.97],
+  b37m: { doc: 'MAX', engClr: [0.43, 0.56], htClr: [4.78, 5.38], htSpan: 14.35, cargo: { fwd: [1.42, 1.68], aft: [1.32, 1.65] }, bottom: [1.27, 1.55], cargoX: { fwd: 8.53, aft: 24.05 }, L: 35.56, span: 35.92, H: [11.84, 12.50], crown: [5.05, 5.51], sill: [2.77, 3.07], sillAft: [2.49, 2.92], nose: 4.09, main: [17.45], track: 5.72, doors: [5.03, 27.97],
     src: '§2.2.1 p.2-9 (nose gear 13 ft 5 in, wheelbase 43 ft 10 in), §2.3.1 p.2-13 (A, B, P), §2.7.1 p.2-26 (B, H)' },
-  b38m: { doc: 'MAX', engClr: [0.43, 0.56], cargo: { fwd: [1.42, 1.68], aft: [1.32, 1.65] }, bottom: [1.27, 1.55], cargoX: { fwd: 8.53, aft: 27.97 }, L: 39.47, span: 35.92, H: [11.86, 12.45], crown: [5.08, 5.51], sill: [2.77, 3.07], sillAft: [2.49, 2.90], nose: 4.09, main: [19.69], track: 5.72, doors: [5.03, 31.88],
+  b38m: { doc: 'MAX', engClr: [0.43, 0.56], htClr: [4.78, 5.36], htSpan: 14.35, cargo: { fwd: [1.42, 1.68], aft: [1.32, 1.65] }, bottom: [1.27, 1.55], cargoX: { fwd: 8.53, aft: 27.97 }, L: 39.47, span: 35.92, H: [11.86, 12.45], crown: [5.08, 5.51], sill: [2.77, 3.07], sillAft: [2.49, 2.90], nose: 4.09, main: [19.69], track: 5.72, doors: [5.03, 31.88],
     src: '§2.2.2 p.2-10, §2.3.2 p.2-14, §2.7.1 p.2-26' },
-  b39m: { doc: 'MAX', engClr: [0.43, 0.56], cargo: { fwd: [1.45, 1.68], aft: [1.32, 1.63] }, bottom: [1.27, 1.55], cargoX: { fwd: 8.53, aft: 30.61 }, L: 42.11, span: 35.92, H: [11.89, 12.40], crown: [5.08, 5.51], sill: [2.79, 3.07], sillAft: [2.51, 2.82], nose: 4.09, main: [21.26], track: 5.72, doors: [5.03, 34.52],
+  b39m: { doc: 'MAX', engClr: [0.43, 0.56], htClr: [4.80, 5.33], htSpan: 14.35, cargo: { fwd: [1.45, 1.68], aft: [1.32, 1.63] }, bottom: [1.27, 1.55], cargoX: { fwd: 8.53, aft: 30.61 }, L: 42.11, span: 35.92, H: [11.89, 12.40], crown: [5.08, 5.51], sill: [2.79, 3.07], sillAft: [2.51, 2.82], nose: 4.09, main: [21.26], track: 5.72, doors: [5.03, 34.52],
     src: '§2.2.3 p.2-11, §2.3.3 p.2-15, §2.7.1 p.2-26' },
-  b3xm: { doc: 'MAX', engClr: [0.43, 0.56], cargo: { fwd: [1.42, 1.68], aft: [1.35, 1.65] }, bottom: [1.27, 1.55], cargoX: { fwd: 8.53, aft: 32.28 }, L: 43.79, span: 35.92, H: [11.91, 12.45], crown: [5.08, 5.54], sill: [2.77, 3.07], sillAft: [2.54, 2.87], nose: 4.09, main: [22.43], track: 5.72, doors: [5.03, 36.20],
+  b3xm: { doc: 'MAX', engClr: [0.43, 0.56], htClr: [4.83, 5.38], htSpan: 14.35, cargo: { fwd: [1.42, 1.68], aft: [1.35, 1.65] }, bottom: [1.27, 1.55], cargoX: { fwd: 8.53, aft: 32.28 }, L: 43.79, span: 35.92, H: [11.91, 12.45], crown: [5.08, 5.54], sill: [2.77, 3.07], sillAft: [2.54, 2.87], nose: 4.09, main: [22.43], track: 5.72, doors: [5.03, 36.20],
     src: '§2.2.4 p.2-12 (preliminary), §2.3.4 p.2-16, §2.7.1 p.2-26' },
   // ---- Boeing 757 (§2.3: A fuselage top, C door 1 sill; letters identified on the figure)
   // span: with the APB blended winglets the model carries, 134 ft 9 in = 41.07 m (Boeing Airport Technology 'Wingspan

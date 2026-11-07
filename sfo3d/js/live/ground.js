@@ -81,8 +81,10 @@ export function samples(T, nose, h) {
     P(hx, hs), P(hx, -hs), P(T.L * 0.25, 0), P(T.L * 0.5, 0), P(T.L * 0.75, 0), P(le, T.R), P(le, -T.R)];
   // the fuselage itself: both sides (0.9 R) every <= 3 m from 1 m behind the nose to the tail cone, for the building and
   // bridge tests (13 outline points left 10-20 m of a 777's sides unsampled: review 4 Nov, UAL1180 drawn in the terminal)
+  // (close-out round 3, realtime-11: and the centre line -- a 2.8-m bridge tunnel at rest can cross a narrow-body fuselage between
+  // its two side rows (A21N at D8 L1's tunnel, 4 Nov 21:36Z, 21 acHit samples, not seen by the side rows))
   const fus = []; const n = Math.max(4, Math.ceil(T.L / 3)), R = (T.R || 2) * 0.9;
-  for (let i = 0; i <= n; i++) { const a = 1 + (T.L - 2) * i / n; fus.push(P(a, R), P(a, -R)); }
+  for (let i = 0; i <= n; i++) { const a = 1 + (T.L - 2) * i / n; fus.push(P(a, R), P(a, -R), P(a, 0)); }
   return { gear, outline, fus, f, r };
 }
 // is point q inside the planform of aircraft A (nose, heading, type) with margin m
@@ -108,14 +110,27 @@ export function overlaps(A, B, m = 0) {
 }
 
 export class GroundPhysics {
-  constructor({ paved, building, net = null, bridges = null }) { this.paved = pavedUnion(paved, net); this.building = building; this.bridges = bridges; this.frame = 0; this.stats = {}; }
+  // (close-out round 3, static_closeout.md R4.1.5: this.mask = the rendered pavement mask alone; stationary aircraft are placed
+  // with all gear on it where a pose within the report scatter allows, before the mask OR OSM-net union is accepted)
+  constructor({ paved, building, net = null, bridges = null }) { this.mask = paved || null; this.paved = pavedUnion(paved, net); this.building = building; this.bridges = bridges; this.frame = 0; this.stats = {}; }
   body(tr, pose) {
     const T = tr.model && TYPES[tr.model.t]; if (!T) return null;
     const D = pose || tr.disp; const B = bodyOf(T, D.x, D.z, D.hdg); B.tr = tr; return B;
   }
-  valid(B, others, gear = true) {
+  // nearest offset (rings of 1 m to 6 m, then 1.5 m) of the body's pose within rMax that is valid with the pavement test pv
+  seek(base, placed, pv, rMax) {
+    for (let rad = 1; rad <= rMax; rad += rad < 6 ? 1 : 1.5) {
+      const n = Math.max(8, Math.round(rad * 3));
+      for (let i = 0; i < n; i++) {
+        const a = (i / n) * Math.PI * 2; const o = [Math.cos(a) * rad, Math.sin(a) * rad];
+        if (this.valid({ ...base, nose: [base.nose[0] + o[0], base.nose[1] + o[1]] }, placed, true, pv)) return o;
+      }
+    }
+    return null;
+  }
+  valid(B, others, gear = true, pv = this.paved) {
     const S = samples(B.T, B.nose, B.h);
-    if (gear && this.paved) for (const g of S.gear) if (!this.paved(g[0], g[1])) return false;
+    if (gear && pv) for (const g of S.gear) if (!pv(g[0], g[1])) return false;
     for (const p of S.outline) if (this.building && this.building(p[0], p[1])) return false;
     for (const p of S.fus) if ((this.building && this.building(p[0], p[1])) || (this.bridges && this.bridges(p[0], p[1]))) return false;
     if (this.bridges) for (const k of [0, 8, 9, 10]) { const p = S.outline[k]; if (this.bridges(p[0], p[1])) return false; }   // (nose, tail cone, centreline)
@@ -180,7 +195,13 @@ export class GroundPhysics {
         const L = tr.lock; const base = bodyOf(B.T, L.x, L.z, L.hdg); const key = 'L' + Math.round(L.x * 4) + ',' + Math.round(L.z * 4) + ',' + Math.round(L.hdg * 100);
         // (buildings and neighbours only: a gear point a few decimetres outside the traced pavement is not worth moving a
         // parked aircraft for; the pavement test applies when it is placed)
-        if (!tr.physL || tr.physL.key !== key || this.frame % 30 === 0) tr.physL = { key, ok: this.valid(base, placed, false) };
+        // (close-out round 3, static R4.1.5: a NEW lock pose with a gear point off the rendered mask -- N199TH GLF5, 0.15 m over
+        // the apron edge on the fence line for 335,068 frames -- is unlocked once (at most twice per aircraft) when a pose
+        // within 3 m has all gear on the mask; the placement below then moves it there)
+        const newKey = !tr.physL || tr.physL.key !== key;
+        if (newKey || this.frame % 30 === 0) tr.physL = { key, ok: this.valid(base, placed, false) };
+        if (tr.physL.ok && newKey && this.mask && this.mask !== this.paved && (tr.maskUnlocks || 0) < 2 && !this.valid(base, placed, true, this.mask)
+          && this.seek(base, placed, this.mask, 3)) { tr.physL.ok = false; tr.maskUnlocks = (tr.maskUnlocks || 0) + 1; traffic.counters.physMaskUnlocks = (traffic.counters.physMaskUnlocks || 0) + 1; }
         if (tr.physL.ok) { placed.push(base); continue; }
         tr.lock = null; traffic.counters.physUnlocks = (traffic.counters.physUnlocks || 0) + 1; tr.phys = null;
       }
@@ -188,18 +209,14 @@ export class GroundPhysics {
       const key = Math.round(P0[0]) + ',' + Math.round(P0[1]) + ',' + Math.round((h || 0) * 20);
       const base = bodyOf(B.T, P0[0], P0[1], h);
       if (!tr.phys || tr.phys.key !== key || (this.frame % 30 === 0 && !tr.phys.ok)) {
-        let off = [0, 0], ok = this.valid(base, placed);
-        if (!ok) {
-          search: for (let rad = 1; rad <= 15; rad += rad < 6 ? 1 : 1.5) {
-            const n = Math.max(8, Math.round(rad * 3));
-            for (let i = 0; i < n; i++) {
-              const a = (i / n) * Math.PI * 2; const o = [Math.cos(a) * rad, Math.sin(a) * rad];
-              const C = { ...base, nose: [base.nose[0] + o[0], base.nose[1] + o[1]] };
-              if (this.valid(C, placed)) { off = o; ok = true; break search; }
-            }
-          }
-        }
-        tr.phys = { key, off, ok };
+        // (close-out round 3, static R4.1.5: all gear on the rendered mask first -- where it is, else within the 6 m scatter --
+        // then the mask OR OSM-net union where it is, else within 15 m)
+        const mk = !!(this.mask && this.mask !== this.paved);
+        let o = mk && this.valid(base, placed, true, this.mask) ? [0, 0] : null;
+        if (!o && mk) o = this.seek(base, placed, this.mask, 6);
+        if (!o && this.valid(base, placed)) o = [0, 0];
+        if (!o) o = this.seek(base, placed, this.paved, 15);
+        tr.phys = { key, off: o || [0, 0], ok: !!o };
       }
       tr.physOff = tr.phys.off[0] || tr.phys.off[1] ? tr.phys.off : null;
       if (tr.physOff) moved++; if (!tr.phys.ok) unresolved++;

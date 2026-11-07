@@ -9,7 +9,9 @@ import { PAINT } from '../../data/sfo_paint.js';
 import { PAVEMENT } from '../../data/sfo_pavement.js';
 import { aboutHtml, attribHtml } from './about.js';
 
-const MODEL_KEYS = ['a319', 'a320', 'a321', 'a333', 'a359', 'a388', 'b738', 'b744', 'b748', 'b752', 'b763', 'b788', 'bcs1', 'bcs3', 'crj2', 'crj7', 'crj9', 'e170', 'e190', 'e75l', 'md11'];
+// (b772 / b77w: the 777 family, docs/requests/aircraft_models_777.md -- close-out round 3, realtime-14; js/live/models.js resolves
+// them the same way for an older entry point)
+const MODEL_KEYS = ['a319', 'a320', 'a321', 'a333', 'a359', 'a388', 'b738', 'b744', 'b748', 'b752', 'b763', 'b772', 'b77w', 'b788', 'bcs1', 'bcs3', 'crj2', 'crj7', 'crj9', 'e170', 'e190', 'e75l', 'md11'];
 function b64ToBuf(s) { const bin = atob(s); const u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u.buffer; }
 async function detectRelay() {
   if (!/^https?:$/.test(location.protocol)) return null;

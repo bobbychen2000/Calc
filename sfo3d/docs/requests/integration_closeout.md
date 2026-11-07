@@ -55,6 +55,15 @@ Forwarded, not changed here: the app's BA-B glass / fascia ratio is 0.15-0.17 ag
 sun (buildings R3.10), with the app sky near the horizon darker than Cycles' (126, 146, 161 vs 166, 182, 194). That is the IBL /
 sky radiance (engine / env); the loader passes the asset's glass material through unchanged (kind `hall`, no override).
 
+### R3.6a Static track (landside roads): the at-grade roads under the ITB frontage are not drawn
+
+The OSM ways that pass under the ITB departures deck and its lower level at grade - 256787738 "Airport Access Road" (primary),
+370279603 / 370279607 (secondary), 370279550 (service), 256787743, 1079463010, 370279532 - are tagged
+`tunnel=building_passage`, and `tools/build_landside.py` drops every way with `tunnel != no`, so `data/sfo_landside.json` has
+none of them. Under the decks the app shows bare ground (`out/buildings3d/integ/c3/low/cmp_new_i1like.png`: tan ground between
+the ramps in front of the ITB). Please consider keeping `building_passage` ways as at-grade roads (they are open roads under a
+structure, not tunnels); the roadways' clearance over them is 4.6 m by construction of the lower level (LOWER_H).
+
 ### R3.6 Owner
 
 - Domestic arrivals level clearance (buildings R3.2): the anchored domestic departures loop (deck 4.73 m at the curb

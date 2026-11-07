@@ -234,6 +234,7 @@ def convert(key, prims, mats, images, textures, cfg):
     tailX = float(lo[0])
     crown -= cy; belly -= cy
     for f in cfg.get('doorFit', []): door_fit(prims, f)
+    if cfg.get('tailFit'): tail_fit(prims, cfg['tailFit'], cfg.get('length', -tailX) / -tailX)
     dims = dict(L=float(-tailX), span=float(hi[2] - lo[2]), H=float(hi[1]), low=float(lo[1]), noseX=0.0, tailX=tailX,
                 R=Rf, Rz=Rz, crown=crown, belly=belly, hasGear=bool(cfg.get('hasGear')))
     print(f'  {key}: L={dims["L"]:.2f} span={dims["span"]:.2f} finTop={dims["H"]:.2f} low={dims["low"]:.2f} R={Rf:.2f} Rz={Rz:.2f}')
@@ -475,6 +476,62 @@ def door_fit(prims, f):
     if fold: raise RuntimeError(f"door fit {f.get('name', '')}: {len(fold)} skin triangles fold over (first: {fold[:6]}); widen [x0, x1] / ramp")
 
 
+def tail_fit(prims, f, s_ref):
+    """Re-fit the horizontal tailplane the artist drew too small (close-out round 3, fix round 2, 7 Nov 2026, verifier
+    finding v1: the FG 737-800's tailplane spans 11.92 m against 47 ft 1 in = 14.35 m in every 737 ACAP general-dimension
+    figure). Works on the named objects only (`nodes`: the stabiliser, elevator and tab of both sides), in the normalised
+    model frame (after convert()'s orient / scale / shift); the fuselage, fin and every other object are untouched.
+      spanwise   |z| -> z0 + (|z| - z0) k outboard of the root z0 (the stabiliser's root rib on the tail-cone skin), k so
+                 the tip lands at span / 2 (published, metres / s_ref = model units); inboard of z0 (the elevator's root
+                 inside the tail cone) |z| is kept
+      chordwise  planform map: the model's own leading / trailing-edge lines (through its most forward root and tip
+                 vertices, its most aft inboard and tip vertices) onto the published plan view's (`le`, `te`: station
+                 X0 at |z| z_ref and dX/d|z|, metres): a point at chord fraction xi of the model's chord at |z| goes to
+                 chord fraction xi of the target chord at the new |z| (the artist's rib layout, sweep and tip shape follow)
+      vertical   the mid-plane (least-squares line of y over |z| of the objects) is re-pitched to `dihedral` deg about the
+                 root (the root height is the artist's), the airfoil thickness scales with the chord ratio
+    Normals are mapped with the inverse transpose of the map's Jacobian (finite differences). Self-check: no triangle
+    may turn by more than 90 deg (fold); the counts are printed. The root of the stabiliser moves forward inside the
+    tail cone (hidden), the surface emerges from the skin where the target leading edge crosses it."""
+    rx = re.compile(f['nodes']); sel = [p for p in prims if rx.search(p['node'].split('|')[0])]
+    if not sel: raise RuntimeError('tail fit: no objects match ' + f['nodes'])
+    A = np.concatenate([p['pos'] for p in sel]); X = -A[:, 0]; a = np.abs(A[:, 2])
+    z0 = f['z0']; zt = float(a.max())
+    r = (a > z0 - 0.15) & (a <= z0 + 0.01); t = a > zt - 0.15; i = a < 0.25
+    if not (r.any() and t.any() and i.any()): raise RuntimeError('tail fit: root / tip / inboard vertices not found')
+    pL0 = (X[r].min(), a[r][np.argmin(X[r])]); pL1 = (X[t].min(), a[t][np.argmin(X[t])])
+    pT0 = (X[i].max(), a[i][np.argmax(X[i])]); pT1 = (X[t].max(), a[t][np.argmax(X[t])])
+    def le_m(u): return pL0[0] + (u - pL0[1]) * (pL1[0] - pL0[0]) / (pL1[1] - pL0[1])
+    def te_m(u): return pT0[0] + (u - pT0[1]) * (pT1[0] - pT0[0]) / (pT1[1] - pT0[1])
+    zT = f['span'] / 2 / s_ref; k = (zT - z0) / (zt - z0)
+    (Xl, zl, ml), (Xt, zr, mt) = f['le'], f['te']
+    def le_a(u): return (Xl + (u * s_ref - zl) * ml) / s_ref
+    def te_a(u): return (Xt + (u * s_ref - zr) * mt) / s_ref
+    c1, c0 = np.polyfit(a, A[:, 1], 1); yr = c0 + c1 * z0; tg = np.tan(np.radians(f['dihedral']))
+    def fmap(P):
+        u = np.abs(P[:, 2]); sg = np.sign(P[:, 2]); u2 = np.where(u > z0, z0 + (u - z0) * k, u)
+        cm = te_m(u) - le_m(u); xi = (-P[:, 0] - le_m(u)) / cm; ca = te_a(u2) - le_a(u2)
+        y2 = yr + (u2 - z0) * tg + (P[:, 1] - (c0 + c1 * u)) * (ca / cm)
+        return np.stack([-(le_a(u2) + xi * ca), y2, sg * u2], 1)
+    def tri_n(P, I):
+        c = P[I]; nn = np.cross(c[:, 1] - c[:, 0], c[:, 2] - c[:, 0]); return nn / np.maximum(np.linalg.norm(nn, axis=1), 1e-12)[:, None]
+    n = nt = turn = 0; fold = []
+    for p in sel:
+        P = p['pos']; I = p['idx'].reshape(-1, 3)
+        ok = np.linalg.norm(np.cross(P[I][:, 1] - P[I][:, 0], P[I][:, 2] - P[I][:, 0]), axis=1) > 1e-10; N0 = tri_n(P, I)
+        if p['nrm'] is not None:                          # normals: n' ~ J^-T n
+            e = 1e-3; J = np.stack([(fmap(P + e * d) - fmap(P - e * d)) / (2 * e) for d in np.eye(3)], 2)   # J[v, i, j] = d out_i / d in_j
+            nn = np.linalg.solve(np.transpose(J, (0, 2, 1)), p['nrm'][..., None])[..., 0]
+            p['nrm'] = nn / np.maximum(np.linalg.norm(nn, axis=1), 1e-12)[:, None]
+        p['pos'] = fmap(P); n += len(P)
+        d = (N0 * tri_n(p['pos'], I)).sum(1); nt += int(ok.sum())
+        fold += [(p['node'], int(q)) for q in np.where(ok & (d < 0))[0]]; turn += int((ok & (d < np.cos(np.radians(45)))).sum())
+    print(f"  tail fit: {n} vertices of {len(sel)} objects; semi-span {zt:.3f} -> {zT:.3f} (k {k:.4f}); model LE {pL0[0]:.2f}@{pL0[1]:.2f} "
+          f"-> {pL1[0]:.2f}@{pL1[1]:.2f}, TE {pT0[0]:.2f}@{pT0[1]:.2f} -> {pT1[0]:.2f}@{pT1[1]:.2f}; mid-plane dihedral "
+          f"{np.degrees(np.arctan(c1)):.1f} -> {f['dihedral']:.1f} deg (root y {yr:.3f}); self-check: {nt} triangles, {turn} turned > 45 deg, {len(fold)} folded")
+    if fold: raise RuntimeError(f'tail fit: {len(fold)} triangles fold over (first: {fold[:6]})')
+
+
 def mean_texel(t):
     """UV of the texel whose colour is closest to the texture's mean colour (what a triangle with garbage UVs, spanning
     hundreds of texture repeats, shows through the smallest mip level)"""
@@ -602,6 +659,20 @@ AC_MODELS = {
                   # 2.59-2.74) as drawn. door_fit() and its fold self-check are kept for other models; this entry was:
                   # doorFit=[dict(name='doorLF', side=-1, x0=-5.775, x1=-4.535, ramp=0.3, zMin=1.0, ySill=-0.472, yTop=1.167,
                   #               dSill=0.227, dTop=0.0, below=0.5, above=0.0, skinSkip=r'^(windows|windowslh|windowsrh|ngww|lhww|rhww)$')]
+                  # horizontal tailplane (close-out round 3, fix round 2, verifier finding v1): the FG artist's tailplane spans
+                  # 11.90 model m (11.92 m rendered) with a 2.6-3.5 m root chord, 12 deg of dihedral and its root leading edge
+                  # 1.1 m aft of the drawing's; every 737 ACAP general-dimension figure dimensions 47 ft 1 in (14.35 m): 737NG
+                  # D6-58325-7 Rev C §2.2.1-2.2.8 (737-600, -700W, -800W, -900ERW checked) and 737 MAX D6-38A004 Rev K
+                  # §2.2.1-2.2.4 (pub). Plan view of D6-58325-7 §2.2.6 p.2-14 (and D6-38A004 §2.2.2 p.2-10), measured at 300 dpi
+                  # with the drawing's own scale (nose to tailplane tip TE = the overall length 129 ft 6 in = 39.47 m; the
+                  # measured span 14.51 m against the dimensioned 14.35 m): leading edge X = 34.0 + (|z| - 1.72) 0.7215 (35.8
+                  # deg; it meets the tail cone at ~33.7 m, |z| 1.25), trailing edge X = 38.0 + (|z| - 2.61) 0.322 (it meets the
+                  # tail cone at ~37.2 m and reaches the tip at 39.47 m, the overall length: consistent), each the outer line of
+                  # the drawn outline, +-0.2 m (inf: scaled off the drawing, 'accurate within +-6 inches'). Dihedral: fitted to
+                  # the ACAP stabiliser-tip rows at the fitted stance (js/aircraft/fit.js STANCE_FIT), least squares over the
+                  # 737-800 row H 'stabilizer' MAX (AT OEW) 5.64 m (D6-58325-7 §2.3.2) and the 737-8 row N 'horizontal
+                  # stabilizer' MAXIMUM 5.36 m (D6-38A004 §2.3.2); the front view of p.2-14 draws ~6.4 deg (inf)
+                  tailFit=dict(nodes=r'^(lh|rh)(stab|elevator|elevatortab)$', z0=0.94, span=14.35, le=(34.0, 1.72, 0.7215), te=(38.0, 2.61, 0.322), dihedral=6.4),
                   )),
     # Boeing 777-300ER and 777-200ER (FlightGear 777 series, see FG777 above): full airframe incl. gear
     # (the default paint1 textures carry an old JAL (-300) / British Airways (-200) livery: its titles, tail art, blue belly

@@ -112,15 +112,19 @@ def in_polys(P, x, z):
 _TYPES_JS = r"""
 import { TYPES } from '%s/js/aircraft/types.js';
 // (TYPE_MODELS / BIZ_LEN live in js/aircraft/fit.js since the aircraft workflow's split; imported, not parsed out of the source)
-const { TYPE_MODELS: TM, BIZ_LEN: BZ } = await import('%s/js/aircraft/fit.js');
+const F = await import('%s/js/aircraft/fit.js'); const TM = F.TYPE_MODELS, BZ = F.BIZ_LEN;
 const out = {};
 for (const [k, v] of Object.entries(TM)) { const T = TYPES[v.t]; if (T) out[k] = { t: v.t, L: T.L, span: T.wing ? T.wing.span : null }; }
+// (close-out round 3, realtime-14 / aircraft_closeout.md s.2: business-jet length AND span from fit.js BIZ -- [length, span, tail
+// height, engines], FAA Aircraft Characteristics Database -- as typeForIcao sizes the generic airframe; before: span = CRJ200 span
+// x the length ratio. The CRJ200 scaling remains only for an older fit.js without BIZ)
 const C = TYPES.crj2;
-for (const [k, L] of Object.entries(BZ || {})) if (!out[k]) out[k] = { t: 'biz_' + k, L, span: C.wing.span * L / C.L };
+if (F.BIZ) { for (const [k, v] of Object.entries(F.BIZ)) if (!out[k]) out[k] = { t: 'biz_' + k, L: v[0], span: v[1], src: 'FAA ACD (fit.js BIZ)' }; }
+else for (const [k, L] of Object.entries(BZ || {})) if (!out[k]) out[k] = { t: 'biz_' + k, L, span: C.wing.span * L / C.L };
 console.log(JSON.stringify(out));
 """
 def load_types():
-    """ICAO type -> {L, span} exactly as the app sizes it (TYPE_MODELS -> TYPES, business jets scaled from crj2)."""
+    """ICAO type -> {L, span} exactly as the app sizes it (TYPE_MODELS -> TYPES; business jets: fit.js BIZ length / span)."""
     p = os.path.join(CACHE, 'app_types.json')
     srcs = [os.path.join(ROOT, 'js', 'aircraft', 'types.js'), os.path.join(ROOT, 'js', 'aircraft', 'fit.js')]
     if os.path.exists(p) and os.path.getmtime(p) > max(os.path.getmtime(s) for s in srcs): return json.load(open(p))

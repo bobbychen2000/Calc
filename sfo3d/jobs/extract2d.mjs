@@ -10,6 +10,10 @@
 // Nothing is re-typed by hand except where noted in meta.replicated.
 //
 // World frame: x east, z south, y up (m), origin ARP; ground at GROUND_Y. Airport grid s/t via js/geo.js.
+// Close-out round 3 (realtime-16, docs/requests/bridges_tools.md #1 #2 #4): the displaced-threshold bar is [0, 3.05] m on the
+// landing side at every end (js/shaders/ground.js `band(xt, 0.0, 3.05`; meta.paintCheck checks that string); bridges come from
+// gateSys.bridgesOf(g) (the upper-deck bridges too) with per-pose gateSys.solids() and per-bridge rotR / Hr / Hb / HbTag /
+// HrPinned / ownClip; stands carry typeStops; retired taxiway pavement (DETAILS.pavementRetired) is left out of pave.taxiways.
 import fs from 'fs'; import path from 'path'; import crypto from 'crypto'; import { execSync } from 'child_process';
 
 export default async ({ page, base }) => {
@@ -189,11 +193,11 @@ export default async ({ page, base }) => {
         corners: [P(r.a0, -hw), P(r.a1, -hw), P(r.a1, hw), P(r.a0, hw)], centre: [P(r.a0, 0), P(r.a1, 0)], dir: rnd(dirW, 6),
         ends: [{ name: r.name[0], end: P(r.a0, 0), thr: P(r.a0 + r.disp0, 0), disp: r.disp0, inward: rnd(dirW, 6) }, { name: r.name[1], end: P(r.a1, 0), thr: P(r.a1 - r.disp1, 0), disp: r.disp1, inward: rnd([-dirW[0], -dirW[1]], 6) }],
         shoulderPaved: { hw: hw + 7.5, u0: r.a0 - 60, u1: r.axis === 0 ? r.a1 : r.a1 + 60, poly: r.axis === 0 ? [P(r.a0 - 60, -hw - 7.5), P(r.a1, -hw - 7.5), P(r.a1, hw + 7.5), P(r.a0 - 60, hw + 7.5)] : [P(r.a0 - 60, -hw - 7.5), P(r.a1 + 60, -hw - 7.5), P(r.a1 + 60, hw + 7.5), P(r.a0 - 60, hw + 7.5)] },
-        paint: { edgeStripe: [29.27, 30.18], thrStripes: { x0: 6.1, x1: 51.8, lat0: 1.75, pitch: 3.5, width: 1.75, n: 8 }, dispBar: [-3.05, 0], centreline: { start: 120, dash: 36.58, period: 60.96, hw: 0.45 }, aiming: { x0: 310.9, x1: 356.6, y0: 11.0, y1: 20.1 }, src: 'js/shaders/ground.js endMarkings()/runwayAt() constants (replicated)' } };
+        paint: { edgeStripe: [29.27, 30.18], thrStripes: { x0: 6.1, x1: 51.8, lat0: 1.75, pitch: 3.5, width: 1.75, n: 8 }, dispBar: [0, 3.05], centreline: { start: 120, dash: 36.58, period: 60.96, hw: 0.45 }, aiming: { x0: 310.9, x1: 356.6, y0: 11.0, y1: 20.1 }, src: 'js/shaders/ground.js endMarkings()/runwayAt() constants (replicated)' } };
     });
     replicated.push('runway paint geometry (edge stripes, threshold stripes, displaced-threshold bar, centreline dashes) copied from js/shaders/ground.js (GLSL, not callable); meta.paintCheck = the GLSL still contains each copied constant');
     { const glsl = await (await fetch(abs('js/shaders/ground.js'))).text();
-      meta.paintCheck = Object.fromEntries(['band(abs(dv), 29.27, 30.18', 'band(xt, 6.1, 51.8', 'band(f, 0.0, 1.75', '(ay - 1.75) / 3.5', 'band(xt, -3.05, 0.0', 'band(xt, 310.9, 356.6, fw) * band(ay, 11.0, 20.1', 'band(fract(xc / 60.96) * 60.96, 0.0, 36.58', '120.0 + info.x'].map(k => [k, glsl.includes(k)])); }
+      meta.paintCheck = Object.fromEntries(['band(abs(dv), 29.27, 30.18', 'band(xt, 6.1, 51.8', 'band(f, 0.0, 1.75', '(ay - 1.75) / 3.5', 'band(xt, 0.0, 3.05', 'band(xt, 310.9, 356.6, fw) * band(ay, 11.0, 20.1', 'band(fract(xc / 60.96) * 60.96, 0.0, 36.58', '120.0 + info.x'].map(k => [k, glsl.includes(k)])); }
     const faa = geo.RUNWAYS.map(r => ({ ends: r.ends, a: [r.a[0], -r.a[1]], b: [r.b[0], -r.b[1]], width: r.width, length: r.length, dispA: r.dispA, dispB: r.dispB }));
     const endZones = airportM.endZoneRects().map(z => ({ ...z, rectW: stRing(z.rect), kind: z.type === 2 ? 'EMAS' : 'blastpad', end: airfield.RWY[z.rw].name[z.end] }));
     // EMAS beds: one hull per bed (the bed faces are emitted as quads; group vertices by nearest end zone)
@@ -213,7 +217,13 @@ export default async ({ page, base }) => {
       cv.width = cv.height = 1;
     }
     say('pavement rasters'); pave.apron = D.DETAILS.apron; pave.patches = D.DETAILS.patches; pave.extra = D.PAVEMENT.polys; pave.extraConc = D.PAVEMENT.conc; pave.paint = D.PAINT.polys;
-    pave.taxiways = D.AIRPORT.taxiways; pave.runwayPolys = D.AIRPORT.runways; pave.terminalComplex = D.AIRPORT.terminalComplex;
+    // (close-out round 3, realtime-16: the retired SFO Museum taxiway polygons -- DETAILS.pavementRetired, 'name#index' as
+    // js/live/airport.js -- are left out, and the retired PARTS (pavementRetiredParts rings) are exported for subtraction; the
+    // app's mask does both)
+    { const RET = new Set(((D.DETAILS && D.DETAILS.pavementRetired) || []).filter(r => r.layer === 'taxiways').map(r => r.name + '#' + r.poly));
+      pave.taxiways = D.AIRPORT.taxiways.map(t => ({ ...t, polys: t.polys.filter((poly, i) => !RET.has(t.name + '#' + i)) })).filter(t => t.polys.length);
+      pave.taxiwaysRetired = [...RET]; pave.retiredParts = ((D.DETAILS && D.DETAILS.pavementRetiredParts) || []).map(r => ({ name: r.name, poly: r.poly, ring: r.ring })); }
+    pave.runwayPolys = D.AIRPORT.runways; pave.terminalComplex = D.AIRPORT.terminalComplex;
     pave.landside = airfield.landside().map(l => ({ kind: l.kind, w: l.w, pts: stRing(l.pts) }));
     pave.standEnvelopes = gatesW.filter(g => g.bridge).map(g => ({ stand: g.name, poly: stRing(airportM.standEnvelopeST(g, 6, 6, 14)) }));
     pave.remoteDiscs = gatesW.filter(g => g.remote).map(g => ({ stand: g.name, c: [g.world.x, g.world.z], r: 40 }));
@@ -342,23 +352,29 @@ export default async ({ page, base }) => {
       const n = geo.stToWorld(g.nose[0], g.nose[1], 0), fW = gatesI.stD(g.dir);
       const S = { name: g.name, alias: g.alias || [], letter: g.letter, cls: g.cls, src: g.src || null, remote: !!g.remote, bridge: !!g.bridge, nose: [+n[0].toFixed(3), +n[2].toFixed(3)], noseST: rnd(g.nose), dirST: rnd(g.dir, 6), dir: rnd([fW[0], fW[2]], 6), hdg: g.hdg ?? null,
         maxSpan: g.maxSpan, maxLen: g.maxLen, wide: g.wide, excl: g.excl || [], altOf: g.altOf || null, acType: g.acType, dockType: g.dockType || null, dock: g.dock ? { nose: stWorld(g.dock.nose), dirST: rnd(g.dock.dir, 6) } : null, occupant: g.occupant || null, oversize: !!g.oversize,
-        envelope: g.bridge ? stRing(airportM.standEnvelopeST(g, 0, 0, 0)) : null, classTypes: classTypes[g.cls] || null, bridges: [] };
+        envelope: g.bridge ? stRing(airportM.standEnvelopeST(g, 0, 0, 0)) : null, classTypes: classTypes[g.cls] || null, typeStops: g.typeStops || null, bridges: [] };   // (typeStops: the data's per-family stop points, realtime-16)
       if (g.bridge) {
         // stand sign + VDGS (gates.js standGeo): recorded boxes
         const rg = new RecGeo(); const sg = { pos: [], nrm: [], uv: [], ext: [], idx: [] }; gateSys.standGeo(g, rg, sg);
         const post = rg.prims.length > 3, names = post ? ['vdgs-post', 'vdgs-post-base', 'vdgs-display', 'vdgs-display-base', 'stand-sign-back'] : ['vdgs-display', 'vdgs-display-base'];
         S.vdgs = rg.prims.filter(p => p.v.length).map((p, i) => primOut(p, names[i] || 'vdgs')); S.vdgsPost = post;
         const anim = gateSys.anims.get(g.id); const kNow = anim ? anim.k : null;
-        for (const b of g.bridges) {
-          const B = { stand: g.name, gate: b.gate, door: b.door, attachData: rnd(b.attachW), attach: W2(b.attachW), u: rnd([b.u[0], b.u[2]], 6), fixedLen: +b.fixedLen.toFixed(3), rc: W2(b.rc), parkDir: rnd([b.parkDir[0], b.parkDir[2]], 6), reach: +b.reach.toFixed(3), poses: {} };
+        // (close-out round 3, realtime-16: every bridge of the stand -- gateSys.bridgesOf(g) includes the three upper-deck A380
+        // bridges (A6 / A11 / G13) -- with the per-bridge fields the drawing tools need: rotunda radius, pier level and its tag,
+        // the 1:12-pinned rotunda floor, the own-walkway clip; and per pose the bridge's own collision solids (gateSys.solids:
+        // the parts as gates.js names them) next to the emission-order labels kept for the older tools)
+        for (const b of (gateSys.bridgesOf ? gateSys.bridgesOf(g) : g.bridges)) {
+          const B = { stand: g.name, gate: b.gate, door: b.door, upper: !!b.upper, attachData: rnd(b.attachW), attach: W2(b.attachW), u: rnd([b.u[0], b.u[2]], 6), fixedLen: +b.fixedLen.toFixed(3), rc: W2(b.rc), parkDir: rnd([b.parkDir[0], b.parkDir[2]], 6), reach: +b.reach.toFixed(3),
+            rotR: b.rotR ?? null, Hr: b.Hr ?? null, Hb: b.Hb ?? null, HbTag: b.HbTag ?? null, HbSrc: b.HbSrc ?? null, HrPinned: b.HrPinned ?? null, ownClip: b.ownClip ?? null, poses: {} };
+          const solidsOut = (gp, k) => { if (!gateSys.solids) return null; try { return gateSys.solids(gp, b, k).map(x => ({ part: x.part, c: rnd(x.c, 3), u: rnd(x.u, 6), hl: +x.hl.toFixed(3), hw: +x.hw.toFixed(3), lo: +x.lo.toFixed(3), hi: +x.hi.toFixed(3), ...(x.round ? { round: +x.round.toFixed(3) } : {}) })); } catch (e) { return { error: String(e.message || e) }; } };
           const docksNow = g.acType && gateSys.docks(g, b);
           const kCur = anim ? (gateSys.docks(g, b) ? kNow : 0) : (docksNow ? 1 : 0);
-          const cur = bridgeParts(g, b, kCur); B.poses.current = { k: kCur, occupiedBy: g.acType, pose: poseOut(cur.P), parts: cur.parts };
+          const cur = bridgeParts(g, b, kCur); B.poses.current = { k: kCur, occupiedBy: g.acType, pose: poseOut(cur.P), parts: cur.parts, solids: solidsOut(g, kCur) };
           const gp0 = { ...g, dock: null, acType: null, _lastType: null };
-          const rest = bridgeParts(gp0, b, 0); B.poses.rest = { k: 0, pose: poseOut(rest.P), parts: rest.parts };
+          const rest = bridgeParts(gp0, b, 0); B.poses.rest = { k: 0, pose: poseOut(rest.P), parts: rest.parts, solids: solidsOut(gp0, 0) };
           for (const [key, tk] of [['dockRef', refType[g.cls]], ['dockMax', classTypes[g.cls] && classTypes[g.cls].maxType]]) {
             if (!tk) continue; const gp = { ...g, dock: null, acType: tk, _lastType: tk }; const d = gateSys.docks(gp, b);
-            const r = bridgeParts(gp, b, d ? 1 : 0); B.poses[key] = { k: d ? 1 : 0, type: tk, docks: d, pose: poseOut(r.P), parts: r.parts };
+            const r = bridgeParts(gp, b, d ? 1 : 0); B.poses[key] = { k: d ? 1 : 0, type: tk, docks: d, pose: poseOut(r.P), parts: r.parts, solids: solidsOut(gp, d ? 1 : 0) };
           }
           bridges.push(B); S.bridges.push(bridges.length - 1);
         }

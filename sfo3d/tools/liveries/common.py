@@ -131,6 +131,28 @@ class Envelope:
 ZONE_NOFIN = (2, 3, 7)
 
 
+def _nacelles(P, Z, parts):
+    """js/aircraft/stretch.js nacelles(): per-vertex nacelle weight (zone 2 = 1; with parts the zone-0 nacelle pieces inside
+    1.03 x the cowl section and not above its top, from 0.6 ahead of the cowl to its aft end, the core nozzle fading out
+    over 1.5 behind it within 0.6) and the per-side axes"""
+    Z = np.asarray(Z); w = np.zeros(len(P)); sides = []; e = Z == 2
+    if not e.any(): return w, sides
+    xf, xa = P[e, 0].max(), P[e, 0].min()
+    for sg in (-1, 1):
+        m = e & (np.sign(P[:, 2]) == sg)
+        if not m.any(): continue
+        y0, y1 = P[m, 1].min(), P[m, 1].max(); S = dict(sg=sg, y0=y0, y1=y1, yc=(y0 + y1) / 2, zc=P[m, 2].mean(),
+                                                         Ry=(y1 - y0) / 2, Rz=(P[m, 2].max() - P[m, 2].min()) / 2); sides.append(S)
+        w[m] = 1.0
+        if parts:
+            side = (Z == 0) & (np.sign(P[:, 2]) == sg) & (P[:, 1] <= y1 + 0.02); x = P[:, 0]
+            r = np.hypot((P[:, 1] - S['yc']) / S['Ry'], (P[:, 2] - S['zc']) / S['Rz'])
+            full = side & (x <= xf + 0.6) & (x >= xa) & (r <= 1.03)
+            fade = side & ~full & (x < xa) & (x > xa - 1.5) & (r <= 0.6)
+            w[full] = 1.0; w[fade] = 1.0 - (xa - x[fade]) / 1.5
+    return w, sides
+
+
 def apply_stretch(P, Z, st):
     """Python port of js/live/models.js applyStretch (wing span fit, fin height fit, fuselage plugs), model units. A negative
     plug (shorter type) collapses the removed section onto the plug station instead of sliding the aft body over the
@@ -141,13 +163,14 @@ def apply_stretch(P, Z, st):
     if st.get('tipCut'):                                      # the model's own winglet folded away (js/live/models.js)
         c = st['tipCut']; m = (np.abs(P[:, 2]) > c['z0']) & (P[:, 1] > c['y0'])
         P[m, 1] = c['yTo']; P[m, 2] = np.sign(P[m, 2]) * np.minimum(np.abs(P[m, 2]), c['zTo'])
-    if st.get('engScale'):                                    # nacelles scaled radially (737 MAX)
-        k = st['engScale']['k']; top = st['engScale'].get('keep') == 'top'      # (keep 'top': the pylon line stays)
-        for sg in (-1, 1):
-            m = (np.asarray(Z) == 2) & (np.sign(P[:, 2]) == sg)
+    if st.get('engScale'):                                    # nacelles scaled radially (737 MAX), then raised by dy
+        k = st['engScale']['k']; top = st['engScale'].get('keep') == 'top'; dy = st['engScale'].get('dy') or 0.0   # (keep 'top': the pylon line stays)
+        w, sides = _nacelles(P, Z, bool(st['engScale'].get('parts')))
+        for S in sides:
+            m = (w > 0) & (np.sign(P[:, 2]) == S['sg'])
             if not m.any(): continue
-            y0, y1 = P[m, 1].min(), P[m, 1].max(); yc = (y0 + y1) / 2; zc = P[m, 2].mean()
-            P[m, 1] = yc + (P[m, 1] - yc) * k + (k - 1) * (yc - (y1 if top else y0)); P[m, 2] = zc + (P[m, 2] - zc) * k
+            lift = (k - 1) * (S['yc'] - (S['y1'] if top else S['y0'])) + dy; y, z = P[m, 1], P[m, 2]
+            P[m, 1] = y + w[m] * (S['yc'] + (y - S['yc']) * k + lift - y); P[m, 2] = z + w[m] * (S['zc'] + (z - S['zc']) * k - z)
     if W:
         az = np.abs(P[:, 2]); m = (P[:, 0] >= W['xMin']) & (az > W['z0'])
         add = np.where(az >= W['z1'], W['dz'], (az - W['z0']) * W['dz'] / (W['z1'] - W['z0']))
@@ -176,12 +199,19 @@ def apply_stretch(P, Z, st):
         P[np.asarray(Z) == 3, 1] += st['gearUp']
     if st.get('cut1') is not None:
         x = P[:, 0].copy(); dx = np.zeros(len(x))
+        # engines / pylons (with the nacelle pieces in the body zone) inside a removed section move rigidly with the wing
+        # (js/aircraft/stretch.js rigidShift; close-out round 3 fix round 2: the 737-600's forward removal crushed the nacelles)
+        rig = None
+        if Z is not None and (st['d1'] < 0 or st['d2'] < 0):
+            rig = (_nacelles(P, Z, True)[0] > 0) | (np.asarray(Z) == 7)
         for c, d, bl in ((st['cut1'], st['d1'], 0.0), (st['cut2'], st['d2'], st.get('bl2') or 0.0)):
             if d >= 0: dx[x < c] -= d                         # plug: everything aft of the station moves aft
             else:                                             # negative plug: [c + d - bl, c) compressed onto [c - bl, c)
                 D = -d
                 dx[x <= c - D - bl] += D
-                q = (x > c - D - bl) & (x < c); t = (c - x[q]) / (D + bl)
+                q = (x > c - D - bl) & (x < c)
+                if rig is not None: dx[q & rig] += D; q = q & ~rig
+                t = (c - x[q]) / (D + bl)
                 dx[q] += (c - t * bl) - x[q]
         P[:, 0] = x + dx
     return P

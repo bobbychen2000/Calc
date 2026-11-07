@@ -102,7 +102,12 @@ export class UI {
   setSheet(s) { this.sheet = s; this.el.panel.className = s; }
   progress(frac, msg) { const L = this.el.loading; if (!L) return; L.querySelector('.bar i').style.width = Math.round(frac * 100) + '%'; if (msg) L.querySelector('.msg').textContent = msg; }
   ready() { const L = this.el.loading; L.classList.add('done'); setTimeout(() => L.remove(), 700); this.el.loading = null; }
-  fail(msg) { const L = this.el.loading; if (L) { L.querySelector('.msg').innerHTML = msg; L.classList.add('err'); } }
+  // a fatal message: in the loading overlay while it is up; after load (close-out round 3, realtime-15 -- engine_exports.md
+  // s.5.2: the renderer's R.onFatal and the app's webglcontextlost handler call this after ready() removed the overlay, when it
+  // showed nothing) in an alert overlay of its own over the scene (#fatal, live.css)
+  fail(msg) { const L = this.el.loading; if (L) { L.querySelector('.msg').innerHTML = msg; L.classList.add('err'); return; }
+    let F = this.el.fatal; if (!F) { F = this.el.fatal = document.createElement('div'); F.id = 'fatal'; F.setAttribute('role', 'alert'); (this.root || document.body).appendChild(F); }
+    F.innerHTML = '<div class="lbox"><div class="msg">' + msg + '</div></div>'; F.hidden = false; }
   setAbout(html) { this.el.about.innerHTML = html; }
   setAttrib(html) { this.el.attrib.innerHTML = html; }
 
@@ -253,6 +258,9 @@ const BRAND = { UAL: 'United Express', AAL: 'American Eagle', DAL: 'Delta Connec
 const OWNER_MKT = [[/UNITED AIRLINES/i, 'UAL'], [/AMERICAN AIRLINES/i, 'AAL'], [/DELTA AIR ?LINES/i, 'DAL'], [/ALASKA AIRLINES/i, 'ASA']];
 function headline(tr, sfo) {
   const I = tr.info, al = tr.cs && tr.cs.airline;
+  // (close-out round 3, realtime-14 / aircraft_closeout.md s.2: an airfield operations vehicle -- lookup.js parseCallsign with
+  // the target's category / type -- shows its label, not an airline its callsign letters happen to spell)
+  if (tr.cs && tr.cs.vehicle) return esc(tr.cs.label || 'Airfield vehicle');
   if (al && REGIONAL.has(al.icao)) {
     // the marketing carrier: the relay's regional alias (SFO's flight record), else the registered owner when it is one
     const to = sfo && sfo.alias && sfo.alias.to ? String(sfo.alias.to).slice(0, 3) : null;

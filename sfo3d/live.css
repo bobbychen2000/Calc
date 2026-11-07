@@ -139,6 +139,10 @@ a { color: var(--arr); }
 .bar i { display: block; height: 100%; width: 0; background: var(--accent); transition: width 0.4s; }
 .msg { color: var(--dim); font-size: 14px; }
 #loading.err .msg { color: var(--text); font-size: 15px; line-height: 1.4; }
+/* a fatal error after load (ui.js fail: renderer R.onFatal, context loss) -- close-out round 3, realtime-15 */
+#fatal { position: absolute; inset: 0; z-index: 30; display: grid; place-items: center; padding: 16px; background: rgba(7, 9, 12, 0.86); }
+#fatal .msg { color: var(--text); font-size: 15px; line-height: 1.4; }
+#fatal a { color: var(--accent); }
 
 /* ---------- phones: bottom sheet */
 @media (max-width: 760px) {

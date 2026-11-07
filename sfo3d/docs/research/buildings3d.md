@@ -1058,6 +1058,28 @@ python3 tools/blender/b3d_lod2_check.py; python3 tools/sat/check.py
 | max deck grade | 13.5 % | 13.5 % | 14.1 % (681667027, open) |
 | LOD2 check / check.py | 47 / 0; 0 / 0 / 17 | - | 47 / 0; 0 / 0 / 17 |
 
-<!-- c3-phone -->
+**Phone run, close-out round 3** (`out/buildings3d/integ/c3/low/`, live3.html `tier=low` near mode, headless Chromium on llvmpipe
+960 x 540, all five groups incl. the landside units, r18 roadways, the 7 Nov assets; served from a frozen copy of the working
+tree; one page, views in this order, 41 min under the heavy lock). JS heap = the exact V8 heap after a forced GC (DevTools
+`Runtime.getHeapUsage`; `performance.memory` read 561 / 631 MB in its buckets). Round-2 values in brackets.
+
+| View | Draw calls | Frame triangles | b3d triangles (LOD0 / 1 / 2 units) | b3d geometry | Textures | JS heap used / total | Landside units |
+|---|---|---|---|---|---|---|---|
+| page ready (lod2 files, 420 s) | - | - | - | - | - | 99.0 / 106.7 MB | 0 |
+| `pierB` gate B20, 110 m | 576 (560) | 1.62 M | 137 k (6 / 40 / 0) | 25.2 MB | 573 MB (568) | 98.5 / 101.9 MB | 2 |
+| `towercam` | 1,617 (1,583) | 3.72 M | 235 k (12 / 37 / 0) | 31.0 MB | 621 MB (607) | 122.5 / 127.9 MB | 5 |
+| `gateA1` gate A1, 60 m | 1,341 (1,308) | 2.90 M | 262 k (28 / 24 / 0) | 34.4 MB | 634 MB (631) | 140.6 / 145.7 MB | 8 |
+| `itbwest` 520 m west | 2,279 (2,176) | 4.14 M | 238 k (14 / 40 / 2) | 39.2 MB | 637 MB (639) | 174.6 / 179.8 MB | 12 |
+| `i1like` photo-i1 direction, 300 m | 1,500 | 3.19 M | 208 k (15 / 37 / 1) | 33.4 MB | 642 MB | 165.2 / 172.1 MB | 9 |
+| `plateedge` the plate edge from the WSW, 45 m, 35 deg | 1,260 | 2.44 M | 298 k (35 / 20 / 0) | 38.6 MB | 638 MB | 175.7 / 181.8 MB | 11 |
+| `far` east of the airport | 240 (233) | 0.89 M | 62 k (4 sets at LOD2) | 23.2 MB | 605 MB (606) | 145.3 / 149.8 MB | 0 (12 released) |
+| `release` 150 s later | 240 (224) | - | - | - | **536 MB** (537) | 125.3 / 130.2 MB | 0; the four group files back to lod2 |
+
+The round-2 near mode holds on the current assets: units load near the camera and all go again, the group files fall back to
+their lod2 files, textures return to 536 MB; the JS heap stays at 99-176 MB through the near views and drops to 125 MB after the
+release. The cost of the round's assets is +2-10 % draw calls and +1-21 k building triangles against round 2. `plateedge`
+(`cmp_new_plateedge.png`): kerb, inner and bus roadways, planter, the step face down to the lower level, the lower roadway and
+its fascia - no ground showing between the plate and the lower level. Not measured: a real phone (owner; the test card now
+reports WebAssembly and the JS heap), GPU memory beyond `texturesSize`.
 
 <!-- integration:end -->

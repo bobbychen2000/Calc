@@ -257,22 +257,30 @@ function botAt(F, st) {
 // STARBOARD skin half width (model units) of the lower lobe at model station st and model height y: the table F.sec.hwl
 // (starboard half widths at the heights F.sec.lo above each section's bottom, tools/models/model_features.py), linear in
 // height (0 at the keel) and in station between the nearest complete sections; null above the table (hwAt covers the upper
-// fuselage; it is the larger side, port on the FG 737-800 / FAM A320 by 1-3 cm)
+// fuselage; it is the larger side, port on the FG 737-800 / FAM A320 by 1-3 cm). Between two sections the height is taken
+// above the keel interpolated between them (close-out round 3, fix round 2, v3: evaluated at the same absolute height, a
+// section whose bottom lies above y counted 0, so where the keel rises aft - A319 / A320 aft cargo door - the half width
+// 5 cm above the keel came out 0.09-0.10 m narrower than the mesh)
 function hwLow(F, st, y) {
   const S = F && F.sec; if (!S || !S.hwl) return null; const lo = S.lo;
-  const at = (j) => {
-    if (j < 0 || j >= S.bot.length) return null; const b = S.bot[j], r = S.hwl[j]; if (b == null || !r) return null;
-    const dy = y - b; if (dy < 0) return 0; if (dy > lo[lo.length - 1]) return null;
+  const at = (j, dy) => {                                  // section j at dy above its own bottom
+    const r = S.hwl[j]; if (dy < 0) return 0; if (dy > lo[lo.length - 1]) return null;
     if (dy <= lo[0]) return r[0] != null ? r[0] * dy / lo[0] : null;
     let k = 0; while (k < lo.length - 2 && dy > lo[k + 1]) k++;
     if (r[k] == null || r[k + 1] == null) return null;
     return r[k] + (r[k + 1] - r[k]) * (dy - lo[k]) / (lo[k + 1] - lo[k]);
   };
+  const ok = (j) => j >= 0 && j < S.bot.length && S.bot[j] != null && !!S.hwl[j];
   const j0 = Math.floor(st / S.dx), w = Math.round(2 / S.dx); let a = null, b = null;
-  for (let j = j0; j >= j0 - w; j--) { const v = at(j); if (v != null) { a = { j, v }; break; } }
-  for (let j = j0 + 1; j <= j0 + 1 + w; j++) { const v = at(j); if (v != null) { b = { j, v }; break; } }
-  if (a && b) return a.v + (b.v - a.v) * (st / S.dx - a.j) / (b.j - a.j);
-  return a ? a.v : b ? b.v : null;
+  for (let j = j0; j >= j0 - w; j--) if (ok(j)) { a = j; break; }
+  for (let j = j0 + 1; j <= j0 + 1 + w; j++) if (ok(j)) { b = j; break; }
+  if (a != null && b != null) {
+    const u = (st / S.dx - a) / (b - a), dy = y - (S.bot[a] + u * (S.bot[b] - S.bot[a]));
+    const va = at(a, dy), vb = at(b, dy);
+    if (va != null && vb != null) return va + u * (vb - va);
+    return va ?? vb;
+  }
+  const j = a ?? b; return j != null ? at(j, y - S.bot[j]) : null;
 }
 function doorMesh(m) {
   const own = MODEL_FEATURES[m] && (MODEL_FEATURES[m].doors || []).find(d => d.side === 'L');
@@ -303,7 +311,7 @@ export function fitType(t, m) {
   // long, +4.3 % against the ACAP; now the plain wing ends at spanPlain and the winglet is canted out, WINGLET above)
   const cut = TIP_ADD[t] && TIP_CUT[m];
   if (cut) stretch.tipCut = cut;
-  if (ENG_SCALE[t] && TIP_CUT[m]) stretch.engScale = { k: ENG_SCALE[t], keep: 'top' };
+  if (ENG_SCALE[t] && TIP_CUT[m]) stretch.engScale = { k: ENG_SCALE[t], keep: 'top', parts: true };
   const WL = !cut && WINGLET[m] && S.spanPlain ? WINGLET[m] : null;  // (the span fit then ends at the winglet root)
   const semi = cut ? cut.zTo : WL ? WL.zr : F ? F.wing.semi : d.span / 2;
   const want = ((WL ? S.spanPlain : S.span) / 2 - (TIP_ADD[t] ? TIP_LAT[TIP_ADD[t]] : 0)) / s; let wing = null;
@@ -380,6 +388,13 @@ export function fitType(t, m) {
     if (stance && stretch.gearUp) { Hc -= stretch.gearUp * s; seat = 'gear (main oleo compressed ' + (stretch.gearUp * s).toFixed(2) + ' m)'; }
     if (pitch) { pitch.y0 = +(C.main.y + (stretch.gearUp || 0)).toFixed(3); seat += (pitch.a >= 0 ? ', nose-down ' : ', nose-up ') + Math.abs(pitch.a * 180 / Math.PI).toFixed(2) + ' deg'
       + (stretch.noseExt ? ', nose leg ' + (stretch.noseExt.e >= 0 ? '+' : '') + (stretch.noseExt.e * s).toFixed(2) + ' m' : ''); }
+    // ENG_SCALE nacelle height in the fitted stance: after the radial scale about its top line, the nacelle is raised by dy
+    // so that its lowest point renders at the engine row's OEW value (the column the stance is fitted to, STANCE_FIT)
+    const N = F && F.wing && F.wing.nac;
+    if (stretch.engScale && stance && pitch && N && S.engClr) {
+      const yLow = N.top - stretch.engScale.k * (N.top - N.low), now = Hc + pose(N.lowSt, yLow)[1] * s;
+      stretch.engScale.dy = +((S.engClr[1] - now) / s / Math.cos(pitch.a)).toFixed(4);
+    }
   }
   else if (dm && T.sill != null) { Hc = T.sill - dm.ySill * s; seat = 'sill'; }
   else if (T.crown != null && crownOf(F, d.L) != null) { Hc = T.crown - crownOf(F, d.L) * s; seat = 'crown'; }
@@ -480,7 +495,13 @@ export function fitType(t, m) {
   // above the fuselage top is the published one: mid(H) - mid(crown) where the document gives the fuselage top, else
   // mid(H) - the rendered fuselage top.
   let fin = null;
-  if (top != null && S.H) {
+  if (top != null && S.H && stance) {
+    // models in a fitted stance (STANCE_FIT): the fin top on the OEW value of the vertical-tail row (NG J 'MAX (AT OEW)', MAX
+    // P 'MAXIMUM'), the column the stance is fitted to (close-out round 3, fix round 2, v2: inside the [MIN, MAX] range the
+    // fin was left as drawn and rendered 0.11-0.18 m below the OEW value)
+    const k = ((S.H[1] - Hc) / s - finRise - top) / (d.H - top);
+    if (Math.abs(k - 1) > 1e-4 && k > 0.7 && k < 1.4) { fin = { yF: +top.toFixed(3), xF: +(-0.6 * d.L).toFixed(3), k: +k.toFixed(4) }; stretch.fin = fin; }
+  } else if (top != null && S.H) {
     const Hr = Hc + (d.H + finRise) * s, [h0, h1] = S.H, tol = 0.005 * (h0 + h1) / 2;
     if (Hr < h0 - tol || Hr > h1 + tol) {
       const want = (h0 + h1) / 2 - finRise * s - (S.crown ? (S.crown[0] + S.crown[1]) / 2 : Hc + top * s);
@@ -519,7 +540,7 @@ export function fitType(t, m) {
   //                       (the published sill range, SPEC cargo), side ('R': the 737 / A320 cargo doors are on the right)
   const yU = (st, y) => { let v = yModel(st, y); if (fairing && v < fairing.y0) v = fairing.y0 + (v - fairing.y0) / fairing.k; if (squash && v < squash.y0) v = squash.y0 + (v - squash.y0) / squash.k; return v; };
   fit.keelAt = (X) => { const st = stOf(rx, X, d.L), b = botAt(F, st); return b == null ? null : +(Hc + pose(st, yR(b))[1] * s).toFixed(3); };
-  fit.skinHW = (X, y) => {
+  const skinAt = (X, y) => {
     const st = stOf(rx, X, d.L), v = yU(st, y); let h = hwLow(F, st, v);
     if (h == null) { h = hwAt(F, st, v); if (h != null && h > 1.1 * d.Rz) h = null; }
     if (h == null) {                                       // ellipse through the section's top and bottom, half width Rz
@@ -528,6 +549,13 @@ export function fitType(t, m) {
       h = d.Rz * Math.sqrt(1 - q * q);
     }
     return +(h * s).toFixed(3);
+  };
+  // w > 0: the widest skin over [X - w/2, X + w/2] (ends and middle; close-out round 3, fix round 2, v3: a 0.9 m conveyor
+  // end placed by its centre line went 0.04-0.15 m into the skin at its forward corner where the keel rises aft)
+  fit.skinHW = (X, y, w = 0) => {
+    if (!(w > 0)) return skinAt(X, y);
+    let h = null; for (const dx of [-w / 2, 0, w / 2]) { const v = skinAt(X + dx, y); if (v != null && (h == null || v > h)) h = v; }
+    return h;
   };
   const cargo = {};
   for (const [k, c] of [['fwd', cgF], ['aft', cgA]]) {
@@ -564,20 +592,21 @@ for (const t in TYPE_MODEL) { if (TYPE_MODEL[t]) fitType(t, TYPE_MODEL[t]); if (
 // lower fuselage of any TYPES entry (the fitted model's rendered skin, T.fit.keelAt / skinHW; procedural airframes: the
 // ellipse of T.R / T.Hc), rendered metres: keel height at station X, skin half width at station X and height y
 export function keelAt(T, X) { const v = T && T.fit && T.fit.keelAt ? T.fit.keelAt(X) : null; return v != null ? v : T.Hc - T.R; }
-export function skinHalfWidth(T, X, y) {
-  const v = T && T.fit && T.fit.skinHW ? T.fit.skinHW(X, y) : null; if (v != null) return v;
+export function skinHalfWidth(T, X, y, w = 0) {
+  const v = T && T.fit && T.fit.skinHW ? T.fit.skinHW(X, y, w) : null; if (v != null) return v;
   const q = (y - T.Hc) / T.R; return Math.abs(q) < 1 ? +(T.R * Math.sqrt(1 - q * q)).toFixed(3) : null;
 }
 // where a belt loader meets a lower-deck cargo door ('fwd' / 'aft') of a TYPES entry (close-out round 3, aircraft-1; for
 // js/world/gates.js beltSill and js/live/gates.js placeVehicles): X station (m aft of the nose), S the conveyor-top height
 // (the drawn door's rendered sill; without a door object the middle of the published sill range, at least 0.05 m above the
 // keel), hw the starboard skin half width at S (the conveyor's end), keel; null when neither a door object nor a published
-// sill exists (other types: the consumer's own default). Checked on the placed mesh: conveyor end within 0.02 m of the
-// skin for the 737 and A320 families (scratch belt_api.mjs, docs/requests/aircraft_closeout.md close-out round 3)
-export function cargoDoor(T, door) {
+// sill exists (other types: the consumer's own default). w: the conveyor's width (m): hw is then the widest skin under
+// its end (close-out round 3, fix round 2, v3: on the centre line only, the end of a 0.9 m conveyor reached up to 0.15 m
+// into the skin at a corner). Checked on the placed mesh: docs/requests/aircraft_closeout.md close-out round 3
+export function cargoDoor(T, door, w = 0) {
   const c = T && T.fit && T.fit.cargo && T.fit.cargo[door]; if (!c || c.X == null) return null;
   const S = c.sill != null ? c.sill : c.pub ? Math.max((c.pub[0] + c.pub[1]) / 2, (c.keel ?? -9) + 0.05) : null; if (S == null) return null;
-  return { X: c.X, S: +S.toFixed(3), hw: skinHalfWidth(T, c.X, S), keel: c.keel, pub: c.pub, drawn: c.sill != null };
+  return { X: c.X, S: +S.toFixed(3), hw: skinHalfWidth(T, c.X, S, w), keel: c.keel, pub: c.pub, drawn: c.sill != null, w };
 }
 // kept for callers of the old API: the fuselage/wing stretch of type t rendered with model m (null = none)
 export function stretchFor(t, m) { const T = TYPES[t]; return T && T.fit && T.fit.model === m ? T.fit.stretch : null; }
