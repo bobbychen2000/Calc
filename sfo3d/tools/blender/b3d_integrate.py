@@ -976,14 +976,39 @@ def itb_curb_gap(P, TR, log):
 
 
 # ------------------------------------------------------------------------------------------------ outputs
-def rings_of(geo, tol=0.25):
+def rings_of(geo, tol=0.25, min_area=1.0):
     geo = geo.simplify(tol)
     polys = [geo] if isinstance(geo, Polygon) else list(getattr(geo, 'geoms', []))
     out = []
     for p in polys:
-        if not isinstance(p, Polygon) or p.area < 1.0: continue
+        if not isinstance(p, Polygon) or p.area < min_area: continue
         out.append([[[round(x, 2), round(z, 2)] for x, z in p.exterior.coords[:-1]]] + [[[round(x, 2), round(z, 2)] for x, z in h.coords[:-1]] for h in p.interiors if Polygon(h).area > 1.0])
     return out
+
+
+TIER_TOL = 0.1    # m: tier ring simplification; each region is grown by it first, so the simplified ring stays outside every vertex
+TIER_MIN = 0.02   # m2: the smallest tier piece kept. Close-out round 3 fix 2 (verifier v3): with rings under 1 m2 and over-bins under 0.25 m2
+                  # dropped, a free-standing T1 / BA_C junction wall (a 0.8 m2 strip from grade to 8.9 m) lay 3.9 m outside every tier,
+                  # vestibule / door-surround panels 0.5-1.3 m and the ITB hall outrigger tips 1.6 m; 0.1-2.5 % of each unit's vertices
+
+
+def tier_rings(reg):
+    return rings_of(reg.buffer(TIER_TOL, join_style='mitre', mitre_limit=2.0), TIER_TOL, min_area=TIER_MIN)
+
+
+def tier_coverage(T, tl, y0, tol=0.3):
+    """self-check (fix 2, verifier v3): every LOD0 / LOD1 vertex of a unit above the ground plate (y0 + 0.5) must lie within
+    `tol` of a tier that admits it (body: any height; over: its lower y <= the vertex y + 0.15). Returns (vertices, outside,
+    max distance m, worst vertex)"""
+    V = np.unique(np.round(T.reshape(-1, 3), 2), axis=0); V = V[V[:, 1] > y0 + 0.5]
+    if not len(V): return 0, 0, 0.0, None
+    P_ = shapely.points(V[:, 0], V[:, 2]); d = np.full(len(V), 1e9)
+    for t in tl:
+        P = unary_union([Polygon(r[0], r[1:]).buffer(0) for r in t['rings']])
+        adm = np.ones(len(V), bool) if t['part'] == 'body' else (V[:, 1] >= t['y'][0] - 0.15)
+        d = np.where(adm, np.minimum(d, shapely.distance(P, P_)), d)
+    b = d > tol
+    return int(len(V)), int(b.sum()), round(float(d[b].max()), 2) if b.any() else 0.0, (np.round(V[b][np.argmax(d[b])], 1).tolist() if b.any() else None)
 
 
 def tiers(T, geo, y):
@@ -1001,7 +1026,7 @@ def tiers(T, geo, y):
     body = body.intersection(geo) if not body.is_empty else body
     over = geo.difference(body.buffer(0.05)) if not body.is_empty else geo
     out = []
-    if not body.is_empty and body.area > 1.0: out.append(dict(part='body', y=[round(y[0], 2), round(y[1], 2)], rings=rings_of(body, 0.1)))
+    if not body.is_empty and body.area > TIER_MIN: out.append(dict(part='body', y=[round(y[0], 2), round(y[1], 2)], rings=tier_rings(body)))
     # the overhang as height bands of its undersides: every triangle over the overhang is binned by its lowest point
     # (1-m bins, lowest first); a bin claims the part of the overhang its triangles cover that no lower bin claimed, as a
     # prism from the bin's lowest point to the top (an eave over a rotunda is not the vestibule beside it)
@@ -1013,10 +1038,10 @@ def tiers(T, geo, y):
         sel = Tm[(yl >= b0) & (yl < b0 + 1)]
         reg = plan_geom(sel).intersection(over)
         if not claimed.is_empty: reg = reg.difference(claimed)
-        reg = unary_union([q for q in (getattr(reg, 'geoms', None) or [reg]) if isinstance(q, Polygon) and q.area > 0.25])
+        reg = unary_union([q for q in (getattr(reg, 'geoms', None) or [reg]) if isinstance(q, Polygon) and q.area > TIER_MIN])
         if reg.is_empty: continue
         claimed = unary_union([claimed, reg])
-        rr = rings_of(reg, 0.1)
+        rr = tier_rings(reg)
         if rr: out.append(dict(part='over', y=[round(float(sel[:, :, 1].min()), 2), round(y[1], 2)], rings=rr))
     return out
 
@@ -1118,7 +1143,7 @@ def main(argv):
     T = man['tower']; an = T.get('anchors', {})
     tw = T.get('integration', {}).get('tower_camera', {})
     # footprints per unit (max extent over the LODs) with height ranges, and the physics set
-    fps = {}; phys = []
+    fps = {}; phys = []; tcov = {}
     for g in GROUPS:
         fps[g] = {}
         for u, L in F[g].items():
@@ -1129,7 +1154,9 @@ def main(argv):
             lods = sorted(Ln)
             fps[g][u] = dict(y=[round(y[0], 2), round(y[1], 2)], lods=lods, area_m2=round(geo.area, 1), rings=rings_of(geo, 0.1))
             TT = TR['_units'].get((g, u))
-            if TT is not None and u not in ('*', 'all'): fps[g][u]['tiers'] = tiers(TT, geo, y)
+            if TT is not None and u not in ('*', 'all'):
+                fps[g][u]['tiers'] = tiers(TT, geo, y)
+                if g in FP_JS_GROUPS: tcov[(g, u)] = tier_coverage(TT, fps[g][u]['tiers'], y[0])
             if u == '*': continue  # joined LOD2 nodes: their extent is inside the per-unit footprints (checked above)
             if g == 'landside' and u in HANGARS: continue
             if g == 'landside' and u.startswith('airtrain'): continue  # elevated guideway: aircraft never reach it (landside)
@@ -1165,6 +1192,9 @@ def main(argv):
     except Exception as ex:  # the loader falls back to landside.glb when the index is missing
         log('landside split failed (%s): the app loads landside.glb whole' % ex)
     out['units'] = units
+    log('footprint tiers self-check (LOD0 / LOD1 vertices above the ground plate within 0.3 m of an admissible tier of their unit): %d vertices, %d outside (max %.2f m)%s'
+        % (sum(v[0] for v in tcov.values()), sum(v[1] for v in tcov.values()), max((v[2] for v in tcov.values()), default=0.0),
+           ''.join(' %s/%s %d (%.2f m at %s)' % (k[0], k[1], v[1], v[2], v[3]) for k, v in tcov.items() if v[1])))
     json.dump(out, open(os.path.join(D3, 'integration.json'), 'w'), indent=None, separators=(',', ':'))
     # close-out round 3 (integration-5, bridges R2b.3 / buildings R3.3): the per-building LOD0 / LOD1 footprints with their
     # height bands for the app (js/live/gates.js tests the bridges against the real asset outlines instead of the SFO Museum
@@ -1205,7 +1235,10 @@ def main(argv):
                           deck_inside_buildings=res['stats'].get('deck_inside_buildings'), deck_clearance=res['stats'].get('deck_clearance'), itb_curb_gap=res['stats'].get('itb_curb_gap'),
                           at_grade_clearance=res['stats'].get('at_grade_clearance')),
         requests=requests_of(res), glow=glow_def(),
-        footprints_js=dict(units=sum(len(v) for v in fps_js.values()), bytes_js=os.path.getsize(os.path.join(D3, 'integration.js')), note='B3D_INTEGRATION.footprints (close-out round 3, integration-5)'),
+        footprints_js=dict(units=sum(len(v) for v in fps_js.values()), bytes_js=os.path.getsize(os.path.join(D3, 'integration.js')), note='B3D_INTEGRATION.footprints (close-out round 3, integration-5)',
+                           tier_tol_m=TIER_TOL, tier_min_m2=TIER_MIN, self_check=dict(rule='every LOD0 / LOD1 vertex above y0 + 0.5 within 0.3 m of an admissible tier of its own unit (fix 2, verifier v3)',
+                           vertices=sum(v[0] for v in tcov.values()), outside=sum(v[1] for v in tcov.values()), max_m=max((v[2] for v in tcov.values()), default=0.0),
+                           per_unit={'%s/%s' % k: dict(vertices=v[0], outside=v[1], max_m=v[2], worst=v[3]) for k, v in tcov.items() if v[1]})),
         requests_withdrawn=['domestic: BA_C LOD2 top +9.08 m (review r1) - a checker artefact: the joined LOD2 mesh was split by plan distance and C3C '
                             'triangles went to BA_C; split by LOD0-footprint containment (+1 m) since review r2: top 0.0 m (lod2_check.json)',
                             'landside: rental car center LOD2 roof median 4.58 m (review r1) - a checker artefact: the roof cells sampled the open deck '

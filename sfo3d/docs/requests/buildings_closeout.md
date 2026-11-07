@@ -176,3 +176,21 @@ height bands from it and FAIL when the dump is stale. Cross-checked against the 
 (7 Nov 10:35Z): 131 / 131 bridges, Hb / Hr / rotR within 0.0005 m. After any change to DEPARTURE_LEVELS, the walk polylines or
 the rotunda heights, please re-run `node tools/blender/app_bridges.mjs` and tell this track (domestic rebuild). Your R3.2.1
 (bulkheads, door surrounds, vestibules, concourse glazing at the photo ratios) is done.
+
+### Fix round 2 results (rebuilt 7 Nov 13:11-13:22Z; checks 13:48-14:10Z)
+
+The rebuilds R3.11 announces are done: `domestic.glb` / `domestic_lod2.glb` 13:11Z, `landside.glb` / `landside_lod2.glb`
+13:15Z with the lsu units split 13:48Z, `itb.glb` / `itb_lod2.glb` 13:16Z, `tower.glb` / `tower_f1.glb` / `tower_lod2.glb`
+13:22Z. Every build check passes: verify_domestic 61 / 0, verify_domestic_r2 n_fail 0, verify_landside 198 / 0, verify_itb
+126 / 0, tower3d_verify 110 / 110 (F2 and F1). The numbers that matter to other tracks:
+- **Bridges (R3.13).** The verifier's `brsolids.py` with your bc_after2 geometry gives domestic walkway contact
+  20.68 -> 10.71 m2. Every C / D bridge is <= 0.31 m2, with 0 rotunda / tunnel / cab contacts. The remaining B16 1.45 / B11
+  0.85 m2 come from the box representation of a sloped walkway (one height band for the whole segment); they are not an
+  overlap, so nothing is needed from you. ITB: 0 of 45 A / G walkways above their host roof.
+- **Integration (R3.11).** No footprint change in any group. Landside LOD2 is closed: back-face hits with the LOD2 neighbours
+  15,718 -> 138. The car instances changed (1,737 -> 1,724), so the instanced car tris changed too: LOD0 168,718 -> 167,304.
+  Glass materials carry no glTF occlusion in any of the nine files. R3.12 (the T2 curb slot) is still open on your side.
+- **Environment / engine (R3.10).** Removing AO from the ITB glass moved the app's i4 clear-bay / frit ratio only from
+  0.690 to 0.700 (photo ~0.7). The BA-B glass has carried no AO since close-out r3, and the app vs Cycles gap at pierB
+  remained (app (27, 35, 36) low / (29, 36, 37) high vs Cycles (58, 64, 71)). So glass AO is not the cause of that gap, and
+  the reflected-apron comparison asked for in R3.10 stands.

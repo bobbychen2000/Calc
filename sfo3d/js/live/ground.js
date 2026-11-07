@@ -14,12 +14,14 @@ import { TYPES } from '../aircraft/types.js';
 import { antOf } from './traffic.js';
 
 const hv = (h) => [Math.sin(h), -Math.cos(h)];
-// a moving body whose drawn pose is that far (s) past its newest report (dead reckoning, traffic.js disp.extrap) is no evidence
-// that a silent aircraft it overlaps has gone (close-out round 3, realtime-2; the reports come every 1-5 s while taxiing [obs],
-// 4-5 Nov recording)
+// a moving body drawn more than this (s) past its newest report is dead-reckoning (traffic.js disp.extrap; the reports come every
+// 1-5 s while taxiing [obs], 4-5 Nov recording): it stops short of a parked aircraft that must stay (DR_HOLD_M, close-out round 3,
+// realtime-2)
 const GHOST_EX_S = 5;
 // ...and at a stand the overlap must be a fuselage one: >= this many fuselage samples (fusIn; 3 per <= 3-m station) -- two stations
 const GHOST_FUS_PTS = 6;
+// an extrapolated (dead-reckoning) body stops this far (m, planform margin) short of a parked aircraft until its next report
+const DR_HOLD_M = 3;
 
 // building occupancy grid (2 m) from the airport's building footprints; extra (optional): more footprints as polygons
 // [[ring, hole...], ...] - the Blender building assets' measured footprints (data/buildings3d/integration.js physics,
@@ -245,20 +247,24 @@ export class GroundPhysics {
       // (the evidence: the live aircraft's NEWEST report -- ~ where its drawn body will be a few seconds later -- already lies
       // on the silent one's planform. Not an extrapolation: in a queue the aircraft behind decelerates and stops short)
       const L = tr.last; const ahead = L && L.ground && (tr.disp.gs || 0) > 0.5 && L.hd != null ? (() => { const A = bodyOf(B.T, L.px ?? L.x, L.pz ?? L.z, L.hd); return A; })() : null;
-      // (close-out round 3, realtime-2: the drawn body is that evidence only while it follows the data -- not silent itself, and
-      // not dead-reckoning more than GHOST_EX_S past its newest report. KLM373 B772, silent for 17 s on its way in, was
-      // extrapolated into the tail of JAL2's B77W parked at A1 (silent 2 h 19 min, docked) and JAL2 was faded as a ghost, 4 Nov
-      // 20:23:05Z -- KLM373's next report turned it to A2, and JAL2 was heard at A1 again 29 min later)
-      // At a stand the newest REPORT must lie on it as well (the body there just re-acquired its data after 17 s of dead reckoning:
-      // the report that ended the extrapolation put KLM373 25 m west, turning into A2)
+      // (close-out round 3, realtime-2) At a stand a silent occupant is removed by an aircraft that follows its data only for a
+      // FUSELAGE overlap -- >= GHOST_FUS_PTS fuselage samples inside the other (fusIn) -- not a wingtip over a tail, which is
+      // within the position / planform error: DAL1412's A333 taxiing past C7, 5 Nov 20:45:40Z,
+      // clipped DAL2074's parked B739 tail with its left wingtip and DAL2074 was removed, heard at C7 again 44 min later; the
+      // moving body is pushed clear instead (below) -- and never while SFO's plan lists it at that stand now (traffic.planHere):
+      // KLM373 B772, without data for 17 s, was dead-reckoned into the tail of JAL2's B77W parked at A1 (SFO: A1V until 20:50Z)
+      // and JAL2 was removed at 20:23:05Z, heard at A1 again 29 min later. A body that is dead-reckoning (> GHOST_EX_S past its
+      // newest report) stops DR_HOLD_M short of a parked aircraft that must stay -- a live one, or one SFO lists there -- until
+      // its next report (tr.drHold, traffic.js target()). An arrival that loses its data on the lead-in -- the usual case near the
+      // piers -- still removes a ghost at first contact, as before: UAL649 A21N into D9 through UAL1722's B39M (silent 45 min),
+      // UAL2179 into B11, 7 Nov (asking a fuselage overlap of it left them overlapped for 9-40 s).
       const live = !tr.stale && (tr.disp.extrap || 0) <= GHOST_EX_S;
-      const rep = live && L && L.ground ? bodyOf(B.T, L.px ?? L.x, L.pz ?? L.z, L.hd ?? tr.disp.hdg) : null;
+      const keeps = (S) => !!(S.tr.gate && traffic.planHere && traffic.planHere(S.tr, traffic._lastRecv || 0));
+      if (!live && !tr.drHold && !tr.silentDockG && tr.reps && tr.reps.length) { for (const S of fixed.concat(free)) { if (S.tr === tr || S.tr.dropping || S.tr.removed) continue;
+        if (((!S.tr.stale && !S.tr.quiet) || keeps(S)) && overlaps(B, S, DR_HOLD_M)) { tr.drHold = { x: tr.disp.x, z: tr.disp.z, lt: tr.reps[tr.reps.length - 1].t }; if (traffic.counters) traffic.counters.drHold = (traffic.counters.drHold || 0) + 1; break; } } }
       for (const S of silent) {
         if (S.tr.removed || S.tr.dropping) continue;
-        // (and the drawn bodies overlap with a fuselage, >= GHOST_FUS_PTS fuselage samples inside the other -- not a wingtip over a
-        // tail: DAL1412's A333 taxiing past C7, 5 Nov 20:45:40Z, clipped DAL2074's parked B739 tail with its left wingtip and
-        // DAL2074 was removed, heard at C7 again 44 min later; the moving body is pushed clear instead, below)
-        const hit = S.tr.gate ? !!(rep && overlaps(B, S, 0) && fusIn(B, S) >= GHOST_FUS_PTS && overlaps(rep, S, 0)) : ((live && overlaps(B, S, 0)) || (ahead && overlaps(ahead, S, 0.5)));
+        const hit = S.tr.gate ? (overlaps(B, S, 0) && !keeps(S) && (!live || fusIn(B, S) >= GHOST_FUS_PTS)) : (overlaps(B, S, 0) || (ahead && overlaps(ahead, S, 0.5)));
         if (hit) { traffic.event && traffic.event(S.tr, traffic._lastRecv || 0, 'stale-replaced', { by: tr.hex, moving: true, quiet: S.tr.stale ? 0 : 1 }); if (traffic.fadeRemove) traffic.fadeRemove(S.tr, 'ghost'); else traffic.remove(S.tr); ghosts++; }
       }
       for (const S of waiting) {

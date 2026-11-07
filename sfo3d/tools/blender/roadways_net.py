@@ -151,6 +151,12 @@ X_OVERLAP = False   # superseded by the per-crossing deficit (XS_* below). Tried
                     # for ~45 m, both anchored at one end) the constraints conflict and the solve produced a 286 % step and MORE
                     # deck-over-deck area (230 m2 against 92 m2); off until the stacked legs are resolved (open item)
 def ub_half(w): return w / 2 + 0.6 + 0.4
+
+
+def shapely_coords(ln, step):
+    """points along a LineString every `step` m, both ends included"""
+    L = ln.length
+    return [ln.interpolate(s).coords[0] for s in np.linspace(0.0, L, max(2, int(math.ceil(L / step)) + 1))]
 # deck over deck at skewed crossings (review round 2): instead of a flat margin or a constraint per overlap sample, each
 # centreline crossing keeps ONE constraint pair, and its separation is raised by the deficit measured over the overlap of
 # the two ribbons (deck + parapet, sampled every XS_STEP; heights interpolated along each way at the sample's projection)
@@ -164,6 +170,21 @@ def ub_half(w): return w / 2 + 0.6 + 0.4
 XS_STEP, XS_ITER, XS_CAP, XS_MIN_DEG = 2.0, 5, 1.5, 20.0
 XS_TARGET = 0.0   # m over deck + clearance. Tried 0.1 (r10 left 3.7 m2 at 4.55-4.59 m: the deck top is linear between the solve's nodes,
                   # the samples XS_STEP apart): 72 crossings raised instead of 36, a 14.6 % grade, and 31.6 m2 at 2.59-4.6 m near (-1390, 308)
+# stacked pairs (close-out round 3, fix round 2; verifier v1 / v2): two elevated ways of different OSM layers without a shared
+# node whose ribbons (+ parapet) overlap in plan - a ramp running over the edge of a lower roadway (OSM 1205493778 over 739695588
+# north of the ITB: 81 m2, 4.3-5.8 m deck to deck, no centreline crossing, so no constraint at all) or along it (681667027 over
+# 739695588: 527 m2; the crossing deficit above raised ONE crossing node by up to 1.2 m for samples up to 90 m away - the 14.1 %
+# hump at (-1423.8, 344.0)). Each pair's overlap is sampled every STK_STEP and every sample is a constraint (deck top to deck top
+# >= DECK_DEPTH + CLEAR_MIN + STK_MARGIN) held by LOWERING the lower way's node there (the upper deck keeps its profile: raising it
+# toward its anchored end steepened it to 15.6-27.8 % in the round-3 variants); a pair is constrained when the lower way is
+# not anchored (the upper may be: the ITB loop's lower roadway under its anchored departures legs), the two are not a same-level merge (median separation >= 1 m) and the deficit before any change is <= STK_CAP; the
+# lowering stays within STK_CAP of the free solve and never moves a node held by an anchor or a deck plate. What is left (an
+# anchored way, a larger deficit, a held node) goes to build_roadways' stacked cut, which cuts along the upper deck's edge or
+# reports the pair (stacked_cut_refused). Its crossings no longer take the per-crossing deficit raise (XS_*). The bound is spread along
+# the lower way as a cone of slope STK_GRADE (the verifier's 'grade-limited smoothing pass on the stacked pair's nodes') [inf]
+STK_STEP, STK_CAP, STK_MARGIN = 2.0, 2.0, 0.05
+STK_RUN = 80.0     # m: a lowered stretch this close to a held node runs to it without a crest [inf]
+STK_GRADE = 0.08   # the lowered profile's grade limit (8 %: the grade the build reports decks against, 'decks > 8 %') [inf]
 
 
 def solve_levels(ways, grade, F, LV, log=print, overhead=None, plates=None):
@@ -268,6 +289,41 @@ def solve_levels(ways, grade, F, LV, log=print, overhead=None, plates=None):
         xsam.append(np.array(S).reshape(-1, 2))
     ubn = []
     for k, (i, sq, ub, at, so) in enumerate(UB): ubn.append((_insert(allw[i], sq, ('U', k)), ub, at, so, i))
+    # stacked pairs (STK_*): stations every STK_STEP along the lower-layer way where its ribbon overlaps the upper one's; each
+    # station gets a node on the lower way and the arc-length interval of the upper way over that cross-section of the overlap
+    # (the lowest upper deck over it is the bound: one target per lower node, so the lowered profile follows the upper deck
+    # smoothly - a 2-D grid of samples gave adjacent nodes different targets, 79 % steps). Pairs with a skewed crossing
+    # (>= XS_MIN_DEG) keep the per-crossing deficit (XS_*), which works for a local overlap
+    skew = set()
+    for k, (i, j, p) in enumerate(X[:nX]):
+        if not xstk[k]: skew.add(frozenset((i, j)))
+    stk, stk_pairs = [], []
+    rib = [LineString(w['pts']).buffer(ub_half(w['w']), cap_style='flat') for w in ways]
+    for i, a in enumerate(ways):
+        for j in range(i + 1, len(ways)):
+            b = ways[j]
+            if a['layer'] == b['layer'] or frozenset((i, j)) in skew or not rib[i].intersects(rib[j]): continue
+            if (a if a['layer'] < b['layer'] else b)['anchor']: continue   # the lower way is moved: never an anchored one
+            if {n for n in a['nodes'] if not isinstance(n, tuple)} & {n for n in b['nodes'] if not isinstance(n, tuple)}: continue
+            O = rib[i].intersection(rib[j])
+            if O.area < 1.0: continue
+            lo, up = (i, j) if a['layer'] < b['layer'] else (j, i)
+            Llo, Lup = LineString(ways[lo]['pts']), LineString(ways[up]['pts'])
+            # the lower way's stations whose cross-section meets the overlap
+            sa = [Llo.project(Point(c)) for g in (getattr(O, 'geoms', None) or [O]) if isinstance(g, Polygon) for c in g.exterior.coords]
+            if not sa: continue
+            half = ub_half(ways[lo]['w']) + 0.5; S = []
+            for s in np.arange(max(0.0, min(sa)), min(Llo.length, max(sa)) + 1e-6, STK_STEP):
+                q = Llo.interpolate(s); q2 = Llo.interpolate(min(Llo.length, s + 0.5)); q1 = Llo.interpolate(max(0.0, s - 0.5))
+                t = np.array([q2.x - q1.x, q2.y - q1.y]); t /= max(np.linalg.norm(t), 1e-9); nrm = np.array([-t[1], t[0]])
+                cs = LineString([(q.x - nrm[0] * half, q.y - nrm[1] * half), (q.x + nrm[0] * half, q.y + nrm[1] * half)]).intersection(O)
+                pts = [c for g in (getattr(cs, 'geoms', None) or [cs]) if not g.is_empty and g.geom_type == 'LineString' for c in shapely_coords(g, 1.0)]
+                if not pts: continue
+                su = [Lup.project(Point(c)) for c in pts]
+                S.append((s, min(su), max(su), [round(q.x, 1), round(q.y, 1)]))
+            if not S: continue
+            pk = len(stk_pairs); stk_pairs.append((lo, up))
+            for sl, s1, s2, at in S: stk.append((_insert(ways[lo], sl, ('S', pk, round(sl, 2))), sl, lo, up, s1, s2, at, pk))
     nid = {}; xy = []
     for w in allw:
         for n, p in zip(w['nodes'], w['pts']):
@@ -330,6 +386,10 @@ def solve_levels(ways, grade, F, LV, log=print, overhead=None, plates=None):
     SEP = DECK_DEPTH + CLEAR_MIN + X_MARGIN; unresolved = []; ub_bad = {}; xm = {}; stk_off = set(stk_pre)
     sk = []
     for w in allw: sk.append((np.concatenate([[0.0], np.cumsum(np.hypot(*np.diff(w['pts'], axis=0).T))]), np.array([nid[n] for n in w['nodes']])))
+    def up_min(h, i, s1, s2):
+        # the lowest deck top of way i over its arc-length interval [s1, s2] (piecewise linear: the ends and the nodes inside)
+        si, ni = sk[i]; inner = h[ni[(si > s1) & (si < s2)]]
+        return float(min(np.interp(s1, si, h[ni]), np.interp(s2, si, h[ni]), inner.min() if len(inner) else 1e9))
     def xdef(h, final=False):
         # separation deficit per crossing over its overlap samples (deck top to deck top against the base separation);
         # crossings already raised by XS_CAP are left as they are (but reported in the final count)
@@ -349,9 +409,28 @@ def solve_levels(ways, grade, F, LV, log=print, overhead=None, plates=None):
             if xstk[k] and k not in xm and dk > XS_CAP and not final: stk_off.add(k); continue
             if dk > XS_TARGET + 0.02 or (not final and dk > 0.02): out[k] = dk
         return out
+    SEPK = DECK_DEPTH + CLEAR_MIN + STK_MARGIN; stk_on = None; stk_low = {}
+    # the floor of each elevated way over the at-grade roads it crosses (the crossing point and its overlap samples), for STK
+    stk_floor = {}   # way index -> [(s on the way, at-grade way index, s on it)]
+    for k, (i, j, p) in enumerate(X[:nX]):
+        if i >= len(ways) or not allw[j].get('at_grade'): continue
+        S_ = [(LineString(allw[i]['pts']).project(p), LineString(allw[j]['pts']).project(p))] + ([tuple(r) for r in xsam[k]] if k < len(xsam) and len(xsam[k]) else [])
+        stk_floor.setdefault(i, []).extend((a_, j, b_) for a_, b_ in S_)
+    def stk_decide(h):
+        # which stacked pairs the solve holds (STK_*), decided on the first converged solve (crossing and guideway
+        # constraints in place, no crossing deficit raised yet); their crossings drop the per-crossing deficit raise
+        on = {}
+        for pk, (lo, up) in enumerate(stk_pairs):
+            d = np.array([up_min(h, u2, s1, s2) - h[nid[ka]] for ka, sl, l2, u2, s1, s2, at, q in stk if q == pk])
+            dk = SEPK - float(d.min())
+            if np.median(np.abs(d)) >= 1.0 and 0.0 < dk <= STK_CAP: on[pk] = dk
+        on_pairs = {frozenset(stk_pairs[pk]) for pk in on}
+        for k in range(nX):
+            if frozenset((cons[k][2], cons[k][3])) in on_pairs: stk_off.add(k)
+        return on
     for rnd in range(XS_ITER + 1):
       unresolved = []
-      for it in range(10):
+      for it in range(20):
         h = solve(); changed = False
         for k, (ka, kb, i, j, at) in enumerate(cons):
             a, b = nid[ka], nid[kb]; wa, wb = allw[i], allw[j]
@@ -377,7 +456,52 @@ def solve_levels(ways, grade, F, LV, log=print, overhead=None, plates=None):
             if q in anch or (q in fixed and fixed[q] <= max(0.0, ub) + 1e-6):
                 ub_bad[q] = dict(kind='under the guideway', at=at, deck=round(float(h[q]), 2), soffit=round(so, 2), anchored=q in anch); continue
             fixed[q] = max(0.0, ub); why[q] = 'clearance under the AirTrain guideway'; changed = True
-        if not changed: break
+        for pk in (stk_on or {}):
+            # the bound under the upper deck at the pair's stations, spread along the lower way as a cone of slope STK_GRADE
+            # (so the lowered stretch and its run-out stay within that grade: the lowering is spread, not a local dip)
+            lo, up = stk_pairs[pk]; St = [(nid[ka], sl, up_min(h, u2, s1, s2) - SEPK) for ka, sl, l2, u2, s1, s2, at, q in stk if q == pk]
+            ss = np.array([x[1] for x in St]); bb = np.array([x[2] for x in St])
+            si, ni = sk[lo]
+            o = np.argsort(ss); ss, bb = ss[o], bb[o]
+            B = (bb[None, :] + STK_GRADE * np.abs(si[:, None] - ss[None, :])).min(1)
+            inr = (si >= ss[0]) & (si <= ss[-1])   # between stations: the bounds' linear interpolation (no cone V at each station)
+            B[inr] = np.minimum(B[inr], np.interp(si[inr], ss, bb))
+            # no crest between the lowered stretch and a held node (anchor / plate) within STK_RUN: the free solve's layer
+            # prior would lift the run between them (739695588: 5.80 at the lower level's end, 6.63 crest, 5.83 under the ramp)
+            ha = np.array([n in anch for n in ni])
+            for side, edge, bnd in ((-1, ss[0], bb[0]), (1, ss[-1], bb[-1])):
+                sa_ = si[ha & ((si < edge) if side < 0 else (si > edge))]
+                if not len(sa_): continue
+                s_a = sa_.max() if side < 0 else sa_.min()
+                if abs(edge - s_a) > STK_RUN: continue
+                k_a = int(np.argmin(np.abs(si - s_a))); run = (si > min(s_a, edge)) & (si < max(s_a, edge))
+                B[run] = np.minimum(B[run], max(bnd, h[ni[k_a]]))
+            # and never more than STK_GRADE x the distance below a held node of the same way (an anchor, a deck plate, another
+            # constraint): a lowered node beside the ITB lower level's held 5.80 m made a 264 % step; what cannot be met
+            # within that is left to the trim's stacked cut
+            held = np.array([n in anch or (n in fixed and n not in stk_low) for n in ni])
+            if lo in stk_floor:   # nodes over an at-grade road's overlap are the crossing's (XS_*): held as they are
+                fs0 = np.array([a_ for a_, j_, b_ in stk_floor[lo]])
+                held |= (np.abs(si[:, None] - fs0[None, :]) < 2.0).any(1) & np.array([n not in stk_low for n in ni])
+            if held.any():
+                Lw = (h[ni[held]][None, :] - STK_GRADE * np.abs(si[:, None] - si[held][None, :])).max(1)
+                B = np.maximum(B, Lw)
+            # nor below its clearance over the at-grade roads it crosses (their overlap samples, the same cone): lowering the ITB
+            # loop's lower roadway to 5.50 m under the departures legs put it 0.3 m below that, and the crossing deficit then
+            # lifted the crossing nodes to 7.30 m between lowered neighbours (228 % steps)
+            if lo in stk_floor:
+                fs = np.array([a_ for a_, j_, b_ in stk_floor[lo]])
+                fh = np.array([np.interp(b_, sk[j_][0], h[sk[j_][1]]) for a_, j_, b_ in stk_floor[lo]]) + sep_of(lo) + STK_MARGIN
+                B = np.maximum(B, (fh[None, :] - STK_GRADE * np.abs(si[:, None] - fs[None, :])).max(1))
+            for n, bnd, hd in zip(ni, B, held):
+                if hd or h[n] <= bnd + 1e-3: continue
+                if bnd < max(0.0, h_free[n] - STK_CAP) - 1e-6: continue   # beyond the cap: the trim's stacked cut
+                fixed[n] = bnd; why[n] = 'clearance under a stacked deck (lowered, fix 2)'; stk_low[n] = (pk, h_free[n] - bnd); changed = True
+        if not changed:
+            if stk_on is None:
+                h_free = h.copy(); stk_on = stk_decide(h)
+                if stk_on: continue
+            break
       dfc = xdef(h)
       if rnd == XS_ITER or not dfc: break
       for k, dk in dfc.items(): xm[k] = min(XS_CAP, xm.get(k, 0.0) + dk + 0.05)
@@ -386,6 +510,17 @@ def solve_levels(ways, grade, F, LV, log=print, overhead=None, plates=None):
         'stacked pairs left to the trim (on an anchored way, or deficit > %.1f m): %d %s'
         % (len(xm), len(cons), max(xm.values(), default=0.0), rnd, sum(1 for k in xm if xstk[k]), XS_MIN_DEG, len(dfc), max(dfc.values(), default=0.0),
            XS_CAP, len(stk_off), [(allw[cons[k][2]]['id'], allw[cons[k][3]]['id']) for k in sorted(stk_off)]))
+    stk_on = stk_on if stk_on is not None else {}
+    stk_rep = []
+    for pk, (lo, up) in enumerate(stk_pairs):
+        d = np.array([up_min(h, u2, s1, s2) - h[nid[ka]] for ka, sl, l2, u2, s1, s2, at, q in stk if q == pk])
+        if pk in stk_on or (np.median(np.abs(d)) >= 1.0 and d.min() < SEPK - 1e-3):
+            low = [v for q, v in stk_low.values() if q == pk]
+            stk_rep.append(dict(lower=ways[lo]['id'], upper=ways[up]['id'], samples=int(len(d)), held=pk in stk_on, deficit_free_m=round(stk_on.get(pk, float('nan')), 2) if pk in stk_on else None,
+                                lowered_nodes=len(low), lowered_max_m=round(max(low, default=0.0), 2), min_sep_m=round(float(d.min()), 2), left_m=round(max(0.0, SEP - float(d.min())), 2)))
+    log('stacked pairs (fix 2, STK_*): %d sampled (%d samples), %d held by lowering the lower way (%d nodes, max %.2f m); left to the trim: %s'
+        % (len(stk_pairs), len(stk), len(stk_on), len(stk_low), max((v for q, v in stk_low.values()), default=0.0),
+           [(r['lower'], r['upper'], r['left_m']) for r in stk_rep if r['left_m'] > 0.0] or 'none'))
     # the guideway bounds the solve could not meet (anchored decks; a node held by another constraint), final values only
     ubq = {}
     for a, ub, *_ in ubn: ubq[nid[a]] = min(ub, ubq.get(nid[a], 1e9))
@@ -402,7 +537,8 @@ def solve_levels(ways, grade, F, LV, log=print, overhead=None, plates=None):
     log('levels: %d nodes (%d crossing nodes, %d guideway bound samples), %d anchored (%.2f m domestic curb, %.2f m ITB L3, %d on deck plates), %d held at grade, %d clearance '
         'constraints, %d solved; unresolved %d; approach ramps (the at-grade way leaving a bridge end, lifted > 0.3 m) %d'
         % (N, len(X), len(UB), len(anch), h_dom, h_itb, nplate, grade_fixed, len(fixed) - len(anch) - grade_fixed, N - len(fixed), len(unresolved), len(ramps)))
-    return dict(h_dom=h_dom, h_itb=h_itb, N=N, anchored=len(anch), plate_nodes=nplate, constraints=len(fixed) - len(anch), crossings=len(X), overhead=len(UB), unresolved=unresolved, ramps=ramps)
+    return dict(h_dom=h_dom, h_itb=h_itb, N=N, anchored=len(anch), plate_nodes=nplate, constraints=len(fixed) - len(anch), crossings=len(X), overhead=len(UB), unresolved=unresolved, ramps=ramps,
+                stacked=stk_rep)
 
 
 def h_at(w, s):

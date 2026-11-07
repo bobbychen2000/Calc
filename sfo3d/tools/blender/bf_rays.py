@@ -83,8 +83,12 @@ def slice_plane(T, axis, c):
     return np.stack([P0, P1], 1), idx
 
 
-def first_hits(seg2, segid, d, sp):
-    """2-D orthographic rays along d (unit), spacing sp, from -inf: per ray the first segment (index into seg2)."""
+def first_hits(seg2, segid, d, sp, pri=None):
+    """2-D orthographic rays along d (unit), spacing sp, from -inf: per ray the first segment (index into seg2).
+    pri (optional, per segment, lower wins): breaks exact ties (same ray, same distance to 1e-6 m) - close-out r3 fix 2: a ray
+    of the 0.5-m grid that passes exactly through a convex corner vertex meets the front face that closes the corner and the
+    back face of the adjacent wall at the same point; without pri the sort could report the back face (a zero-measure 'hit',
+    seen on a closed rooftop-unit box whose corner fell on x = -552.50)."""
     dp = np.array([-d[1], d[0]])
     u = seg2 @ d; v = seg2 @ dp                      # (k, 2)
     vlo, vhi = v.min(1), v.max(1)
@@ -97,7 +101,10 @@ def first_hits(seg2, segid, d, sp):
     dv = v[rep, 1] - v[rep, 0]
     t = np.where(np.abs(dv) > 1e-12, (vv - v[rep, 0]) / np.where(np.abs(dv) > 1e-12, dv, 1.0), 0.5)
     uu = u[rep, 0] + t * (u[rep, 1] - u[rep, 0])
-    o = np.lexsort((uu, kk))
+    if pri is None:
+        o = np.lexsort((uu, kk))
+    else:
+        o = np.lexsort((np.asarray(pri)[rep], np.round(uu, 6), kk))
     kk, uu, rep = kk[o], uu[o], rep[o]
     first = np.r_[True, kk[1:] != kk[:-1]]
     return rep[first], uu[first], kk[first]
@@ -128,7 +135,7 @@ def run(path, lod=0, sp=0.5, H=45.0, naz=16):
         for a in range(naz):
             th = 2 * math.pi * a / naz
             d = np.array([math.cos(th), math.sin(th)])
-            r = first_hits(seg2, None, d, sp)
+            r = first_hits(seg2, None, d, sp, pri=((n[idx][:, [0, 2]] @ d) > 0.05).astype(np.int8))   # (ties: front face first)
             if r is None: continue
             si, uu, kk = r
             ti = idx[si]
@@ -143,7 +150,7 @@ def run(path, lod=0, sp=0.5, H=45.0, naz=16):
         seg, idx = slice_plane(T, 0, c + 0.013)
         if not len(idx): continue
         seg2 = np.stack([-seg[:, :, 1], seg[:, :, 2]], 2)   # u = -y (down), v = z
-        r = first_hits(seg2, None, np.array([1.0, 0.0]), sp)
+        r = first_hits(seg2, None, np.array([1.0, 0.0]), sp, pri=(n[idx][:, 1] < -0.05).astype(np.int8))
         if r is None: continue
         si, uu, kk = r
         ti = idx[si]

@@ -1236,6 +1236,12 @@ export class Traffic {
   // SFO's evidence that the silent occupant o of stand g has left (round 3): 'blockout' (its departure's actual block-out is
   // past), 'window' (every stand window SFO lists for it at g has ended), 'alloc' (SFO allocates g to the arrival tr now --
   // its own arrival record -- and lists no window of o at g now); null = no evidence (o stays)
+  // SFO's plan lists aircraft o at its stand around t (a stand window of its callsign at o.gate covers t +- 10 min): it is kept
+  // there (js/live/ground.js: no ghost removal, extrapolated traffic stops short of it; close-out round 3, realtime-2)
+  planHere(o, t) {
+    const g = o.gate; if (!g || !o.cs || !o.cs.callsign) return false; const po = this.planFor(o);
+    return !!(po && (po.cands || []).some(c => !!c.stand && g.names.includes(c.stand) && c.from != null && c.to != null && t >= c.from - 600e3 && t <= c.to + 600e3));
+  }
   stalePlanGone(o, tr, g, t) {
     const at = (c) => !!c.stand && g.names.includes(c.stand) && c.from != null && c.to != null;
     const po = o.cs && o.cs.callsign ? this.planFor(o) : null; const co = (po && po.cands || []).filter(at);
@@ -2112,6 +2118,12 @@ export class Traffic {
   // target state at display time (reports + phase knowledge), then the kinematic body follows it
   target(tr, t, o) {
     sampleReps(tr.reps, t, o);
+    // (close-out round 3, realtime-2: dead reckoning on the ground stops short of a parked aircraft -- js/live/ground.js sets
+    // tr.drHold when the extrapolated body (> 5 s past its newest report) is about to touch one; the next report releases it.
+    // An extrapolation is no evidence that the parked one has gone: UAL649 A21N, without data for 35 s near D9 on 7 Nov 04:49Z,
+    // was extrapolated into UAL1722's B39M parked there)
+    if (tr.drHold) { const H = tr.drHold, L = tr.reps.length ? tr.reps[tr.reps.length - 1] : null;
+      if (!L || L.t > H.lt || !o.ground || !(o.ex > 0)) tr.drHold = null; else { o.x = H.x; o.z = H.z; o.vx = o.vz = 0; o.gs = 0; } }
     const M = tr.m;
     const ph = tr.phaseAt(t); const p = ph ? ph[1] : M.phase;
     o.ground = tr.vehicle ? true : tr.groundAt(t, o.ground);

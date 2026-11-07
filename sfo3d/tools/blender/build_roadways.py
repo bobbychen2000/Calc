@@ -179,36 +179,76 @@ STACK_GAP = 0.6   # m: the lower of two stacked decks stops this far short of th
 # higher than spec_itb level3.floor 11.5 [inf, +-1.5] - left to the ITB group (manifest.json#roadways.unknown)
 LOWER_H = RN.DECK_DEPTH + RN.CLEAR_MIN
 WALK_UNDER = 3.0      # m: the lower level's sidewalk continues this far under the plate's edge (i1: pedestrians and shelters
-                      # under the deck; OSM footway 1164416297 layer 1 runs the plate's length) [inf width] - closes the slit
+                      # under the deck) [inf width] - closes the slit. Fix 2 (verifier v4): OSM footway 1164416297 (layer 1, bridge)
+                      # runs at v ~ -48 over u -86..86, i.e. under island A, ~16 m inside the plate edge (v -64.3), not along the edge:
+                      # it argues for a lower level that runs much further under the deck than modelled (manifest#roadways.unknown)
 WALK_KERB = 0.15      # sidewalk above the lower roadway [inf, as KERB_M]
 PLANTER_H = 0.95      # the deck-edge planter (island B) above the deck: its planting shows over the 0.85-m parapet, as in
                       # i1 [inf height; obs extent: NAIP 2024 R - G band, i1]
 
 
-def partial_stacked_cut(p, q, g, X, cell=1.0):
-    """trim()'s partial stacked cut (close-out round 3): returns (p's new geometry, 'p' | 'q' | None - whose deck was cut)"""
-    x0, z0, x1, z1 = X.bounds
-    G = np.array(np.meshgrid(np.arange(x0 + cell / 2, x1, cell), np.arange(z0 + cell / 2, z1, cell))).reshape(2, -1).T
-    if not len(G): return g, None
-    G = G[shapely.contains_xy(X, G[:, 0], G[:, 1])]
-    if not len(G): return g, None
-    d = hp(p, G) - hp(q, G); bad = np.abs(d) < RN.DECK_DEPTH + RN.CLEAR_MIN
-    if not bad.any(): return g, None
-    # cells of `cell` m sampled at their centres: + half a cell diagonal so no short sliver survives at the cut's edge
-    # (r17: 0.1 m2 at 3.25 m stayed with STACK_GAP alone)
-    R = unary_union([box(a - cell / 2, b - cell / 2, a + cell / 2, b + cell / 2) for a, b in G[bad]]).buffer(STACK_GAP + 0.71 * cell)
-    lower_is_p = np.median(d[bad]) < 0
-    geo = g if lower_is_p else q['geom']
+MIN_LANE_W = 3.0      # m: a stacked cut may not leave less than lanes x MIN_LANE_W of carriageway (+ a SHOULDER each side for the
+                      # parapets), nor split the lower deck (close-out r3 fix 2, verifier v1: "refuse a cut that leaves less than lanes x
+                      # 3.0 m of carriageway, and report it as a conflict instead") [inf]
+KEEP_CLEAR = 3.5      # m: such a cut is refused (the lower deck kept whole under the upper one, a low-clearance conflict reported)
+                      # only while the clearance kept is at least this; below it the two decks would clash, so the cut stands and the
+                      # narrowed deck is reported instead [inf: posted low clearances of ~3.5 m (11.5 ft) carry general traffic]
+
+
+def polys_of(g):
+    return [y for y in (getattr(g, 'geoms', None) or [g]) if isinstance(y, Polygon) and y.area > 0.5]
+
+
+def deck_widths(p, geom, s0, s1, step=1.0):
+    """the built width across piece p's centreline at stations s0..s1: the part of the cross-section through `geom` that
+    contains, or is nearest to, the centreline point"""
+    L = p['line'].length; out = []
+    for s in np.arange(max(0.0, s0), min(L, s1) + 1e-6, step):
+        q = p['line'].interpolate(s); q2 = p['line'].interpolate(min(L, s + 0.5)); q1 = p['line'].interpolate(max(0.0, s - 0.5))
+        t = np.array([q2.x - q1.x, q2.y - q1.y]); t /= max(np.linalg.norm(t), 1e-9); n = np.array([-t[1], t[0]]) * (p['half'] + 3.0)
+        cs = LineString([(q.x - n[0], q.y - n[1]), (q.x + n[0], q.y + n[1])]).intersection(geom)
+        segs = [y for y in (getattr(cs, 'geoms', None) or [cs]) if not y.is_empty and y.geom_type == 'LineString']
+        out.append((float(s), min(segs, key=lambda y: y.distance(q)).length if segs else 0.0))
+    return out
+
+
+def stacked_cut(lo, up, geo, up_geo, X, bad, sep_min, rule):
+    """the stacked cut (review round 2; close-out round 3 fix 2, verifier v1 - the round-3 partial cut removed 1-m cells + a
+    round buffer: a scalloped deck edge with a wavy parapet, the carriageway of OSM 739695588 down to 3.5 m). The lower deck
+    `lo` (geometry `geo`; the upper's `up_geo`) gives up the components of the ribbons' overlap X that hold a sample with less
+    than deck + clearance (`bad`; rule 'median': the whole overlap, as in review round 2), grown by STACK_GAP: its new edge
+    runs along the upper deck's edge at STACK_GAP, a smooth line, and the parapet is built on it. If that splits the lower
+    deck or leaves less than lanes x MIN_LANE_W of carriageway (+ shoulders) where it was wider, the cut is refused while the
+    clearance kept (sep_min - DECK_DEPTH) is >= KEEP_CLEAR (a low-clearance conflict, reported), else made and the narrowed
+    deck reported. Returns (new geometry, or None when refused / nothing to cut; record or None)."""
+    if rule == 'median': U = X
+    else:
+        comps = [c for c in polys_of(X) if shapely.contains_xy(c.buffer(0.3), bad[:, 0], bad[:, 1]).any()]
+        if not comps: return None, None
+        U = unary_union(comps)
+    R = unary_union([U, up_geo.intersection(U.buffer(STACK_GAP + 0.5))]).buffer(STACK_GAP, join_style='mitre', mitre_limit=2.0).simplify(0.05)
     new = geo.difference(R)
-    parts = lambda x: [y for y in (getattr(x, 'geoms', None) or [x]) if isinstance(y, Polygon) and y.area > 0.5]
-    if len(parts(new)) > len(parts(geo)) or sum(len(y.interiors) for y in parts(new)) > sum(len(y.interiors) for y in parts(geo)): return g, None
-    if lower_is_p: return new, 'p'
-    q['geom'] = new; return g, 'q'
+    sR = shapely.line_locate_point(lo['line'], shapely.points(shapely.get_coordinates(R)))
+    W0 = dict(deck_widths(lo, geo, sR.min() - 1.0, sR.max() + 1.0)); W1 = deck_widths(lo, new, sR.min() - 1.0, sR.max() + 1.0)
+    need = lo['lanes'] * MIN_LANE_W + 2 * SHOULDER
+    narrow = [(s, w) for s, w in W1 if w < need - 1e-3 and w < W0.get(s, 0.0) - 0.05]
+    split = len(polys_of(new)) > len(polys_of(geo)) or sum(len(y.interiors) for y in polys_of(new)) > sum(len(y.interiors) for y in polys_of(geo))
+    keep = round(sep_min - RN.DECK_DEPTH, 2)
+    rec = dict(lower=lo['id'], upper=up['id'], rule=rule, cut_m2=round(geo.area - new.area, 1), min_width_m=round(min((w for s, w in W1), default=0.0), 2), need_m=round(need, 2),
+               clearance_if_kept_m=keep, at=[round(c, 1) for c in U.representative_point().coords[0]])
+    if split or narrow:
+        why = 'split' if split else 'carriageway %.2f m < %d x %.1f m (+ shoulders) over %d m' % (min(w for s, w in narrow), lo['lanes'], MIN_LANE_W, len(narrow))
+        if keep >= KEEP_CLEAR:
+            rec['refused'] = why; return None, rec
+        rec['narrowed'] = why + ' (kept: the decks would clash, %.2f m)' % keep
+    return new, rec
 
 
-def trim(P, TR, log, BODY=None):
-    """same-level overlaps go to the higher-priority piece; then every piece minus the assets' occupancy in its band and
-    minus the parts that run inside a building (enclosure_cuts, review round 2)"""
+def stack_trim(P, log):
+    """trim()'s first part: same-level overlaps go to the higher-priority piece; stacked overlaps with less than deck +
+    clearance are cut from the lower deck (stacked_cut) or refused and reported. Sets p['geom'] for every piece; returns
+    the stacked cut records"""
+    SEP = RN.DECK_DEPTH + RN.CLEAR_MIN; recs = []
     order = sorted(range(len(P)), key=lambda i: (P[i]['anchor'] is None, P[i]['src'] == 'ramp', -P[i]['w'], isinstance(P[i]['id'], str), P[i]['id'] if not isinstance(P[i]['id'], str) else 0, str(P[i]['id'])))
     kept = []
     for r, i in enumerate(order):
@@ -222,25 +262,48 @@ def trim(P, TR, log, BODY=None):
             pts = np.array([c for poly in (getattr(X, 'geoms', None) or [X]) if isinstance(poly, Polygon) for c in poly.exterior.coords])
             if not len(pts): continue
             dhs = hp(p, pts) - hp(q, pts); dh = np.abs(dhs)
-            if np.median(dh) < 1.0: g = g.difference(q['geom'].buffer(0.02))
-            elif 'walk' in (p['src'], q['src']): pass   # a sidewalk under a deck needs headroom, not road clearance (close-out r3)
-            elif np.median(dh) < RN.DECK_DEPTH + RN.CLEAR_MIN:
-                # review round 2: two decks overlapping in plan with less than deck + clearance between them (a diverge
-                # whose ribbons still overlap where one has begun to climb): the LOWER one gives the overlap up, so the
-                # upper deck's edge stands beside it instead of 1-5 m over it (the integration clearance check found
-                # 824 m2 of deck under another deck at < 4.6 m)
-                # (+ STACK_GAP: the upper deck's parapet and soffit edge overhang its ribbon; with 0.05 m, 1.0-1.3 m slivers stayed)
-                if np.median(dhs) < 0: g = g.difference(q['geom'].buffer(STACK_GAP))
-                else: q['geom'] = q['geom'].difference(g.intersection(q['geom']).buffer(STACK_GAP)); q.setdefault('stacked_cut_by', []).append(p['id'])
-            elif dh.min() < RN.DECK_DEPTH + RN.CLEAR_MIN:
-                # close-out round 3 (integration-3): the median clears but part of the overlap does not (two ways running
-                # side by side whose ribbons overlap at the edge while one climbs: 739695588 beside the layer-3 ramp
-                # 1205493778 north of the ITB once its straight was held lower, 23.6 m2 at 3.29 m). The lower deck gives up
-                # the cells (1 m) of the overlap with less than deck + clearance (+ STACK_GAP), but only where that trims its
-                # EDGE: if the cut would split it or open a hole in it, it is kept and the clearance check reports it.
-                g, cut = partial_stacked_cut(p, q, g, X)
-                if cut: (q if cut == 'q' else p).setdefault('stacked_cut_by', []).append(str((p if cut == 'q' else q)['id']) + ' (partial)')
+            if np.median(dh) < 1.0: g = g.difference(q['geom'].buffer(0.02)); continue
+            if 'walk' in (p['src'], q['src']): continue   # a sidewalk under a deck needs headroom, not road clearance (close-out r3)
+            # two decks overlapping in plan with less than deck + clearance between them. Review round 2: over most of the
+            # overlap (rule 'median': a diverge whose ribbons still overlap where one has begun to climb; the ITB loop's
+            # lower outer roadway under its anchored departures leg) - the lower deck gives the overlap up, so the upper
+            # deck's edge stands beside it instead of 1-5 m over it (+ STACK_GAP: the upper deck's parapet and soffit edge
+            # overhang its ribbon; with 0.05 m, 1.0-1.3 m slivers stayed). Close-out round 3: over part of it (rule
+            # 'partial': two ways side by side whose ribbons overlap at the edge while one climbs) - since fix 2 the level
+            # solve holds the separation of such pairs where it can (roadways_net STK_*: 739695588 under 1205493778 /
+            # 681667027), so what arrives here has an anchored way, a ramp, or a deficit beyond STK_CAP. The overlap is
+            # sampled on a 1-m grid (its vertices alone missed the partial overlaps)
+            x0, z0, x1, z1 = X.bounds
+            G = np.array(np.meshgrid(np.arange(x0 + 0.5, x1, 1.0), np.arange(z0 + 0.5, z1, 1.0))).reshape(2, -1).T
+            G = np.concatenate([G[shapely.contains_xy(X, G[:, 0], G[:, 1])] if len(G) else G.reshape(0, 2), pts])
+            d = hp(p, G) - hp(q, G); bad = np.abs(d) < SEP
+            if not bad.any(): continue
+            rule = 'median' if np.median(dh) < SEP else 'partial'
+            lower_is_p = (np.median(dhs) if rule == 'median' else np.median(d[bad])) < 0
+            lo, up = (p, q) if lower_is_p else (q, p)
+            new, rec = stacked_cut(lo, up, g if lower_is_p else q['geom'], q['geom'] if lower_is_p else g, X, G[bad], float(np.abs(d).min()), rule)
+            if rec is None: continue
+            recs.append(rec)
+            if new is None:
+                lo.setdefault('stacked_cut_refused', []).append(rec); continue
+            if lower_is_p: g = new
+            else: q['geom'] = new
+            lo.setdefault('stacked_cut_by', []).append(str(up['id']) + ('' if rule == 'median' else ' (partial)'))
         p['geom'] = g; kept.append(i)
+    ref = [r for r in recs if r.get('refused')]; nar = [r for r in recs if r.get('narrowed')]
+    log('stacked cuts (the lower deck gives up the overlap, its edge %.1f m from the upper deck\'s): %d (%.0f m2; median rule %d, partial %d); '
+        'refused, kept whole under the upper deck (low-clearance conflicts): %d %s; made although they narrow the deck (clash below %.1f m): %d %s'
+        % (STACK_GAP, len(recs) - len(ref), sum(r['cut_m2'] for r in recs if not r.get('refused')), sum(1 for r in recs if r['rule'] == 'median' and not r.get('refused')),
+           sum(1 for r in recs if r['rule'] == 'partial' and not r.get('refused')), len(ref), [(r['lower'], r['upper'], r['refused'], r['clearance_if_kept_m']) for r in ref],
+           KEEP_CLEAR, len(nar), [(r['lower'], r['upper'], r['narrowed']) for r in nar]))
+    return recs
+
+
+def trim(P, TR, log, BODY=None):
+    """same-level overlaps go to the higher-priority piece, stacked ones are cut along the upper deck's edge (stack_trim);
+    then every piece minus the assets' occupancy in its band and minus the parts that run inside a building
+    (enclosure_cuts, review round 2)"""
+    recs = stack_trim(P, log)
     # assets: occupancy (triangles) in the piece's band, chunk by chunk along it (a ramp spans 0-11 m). Review r2: the
     # other assets' LOD0 / LOD1 triangles only (their LOD2 shells are coarser - the ITB curb's by ~3 m at its ends - and
     # are drawn only beyond 1.2-1.6 km, where this asset shows its own LOD2): a LOD2 box no longer notches the near deck
@@ -282,6 +345,7 @@ def trim(P, TR, log, BODY=None):
     for p in P:
         for g, a in p['cut_by'].items(): tot[g] = tot.get(g, 0) + a
     log('trimmed: %d pieces lost area to an asset (%.0f m2 in all; by group %s)' % (nt, sum(p['asset_cut_m2'] for p in P), {g: round(a) for g, a in tot.items()}))
+    return recs
 
 
 # the terminal-core landside the roadways are built in (the ITB / domestic curbs, the garages and the interchange west of
@@ -386,6 +450,30 @@ def bottom_of(h):
     return np.where(h >= FILL_H, h - RN.DECK_DEPTH, 0.0)
 
 
+def edge_runs(A, B, same, against, step=0.5):
+    """a deck ring's segments (A -> B) split where their class changes: against a same-level neighbour (inner: no fascia /
+    parapet), against an asset, or outer. Close-out round 3 fix 2 (verifier v4): each segment used to take the class of its
+    midpoint, so a segment spanning a corner where the ITB lower level's sidewalk meets its roadway was 'inner' over its
+    whole length and left a ~1 m opening in the parapet 5.95 m above grade; now sampled every `step` m. Returns
+    (A, B, outer flags) of the runs."""
+    L = np.linalg.norm(B - A, axis=1); n = np.maximum(1, np.ceil(L / step).astype(int))
+    seg = np.repeat(np.arange(len(A)), n); k = np.concatenate([np.arange(m) for m in n])
+    t = (k + 0.5) / n[seg]; Mp = A[seg] + t[:, None] * (B - A)[seg]
+    mp = shapely.points(Mp)
+    inner = (shapely.distance(mp, same) < 0.08) if not same.is_empty else np.zeros(len(Mp), bool)
+    ag = (shapely.distance(mp, against) < 0.12) if not against.is_empty else np.zeros(len(Mp), bool)
+    o = ~inner & ~ag
+    oa, ob, oo = [], [], []
+    i0 = 0
+    for j in range(len(A)):
+        oj = o[i0:i0 + n[j]]; i0 += n[j]
+        cut = np.nonzero(np.diff(oj.astype(int)))[0] + 1   # sample indices where the class changes
+        edges = np.concatenate([[0], cut, [n[j]]]) / n[j]
+        for ta, tb in zip(edges[:-1], edges[1:]):
+            oa.append(A[j] + ta * (B[j] - A[j])); ob.append(A[j] + tb * (B[j] - A[j])); oo.append(bool(oj[min(int(round(ta * n[j])), n[j] - 1)]))
+    return np.array(oa), np.array(ob), np.array(oo)
+
+
 def build_piece(mb, p, P_all, lod, mat_deck, top=True):
     geom = p['geom'].simplify({0: 0.05, 1: 0.35, 2: 1.0}[lod])
     if geom.is_empty: return
@@ -419,11 +507,7 @@ def build_piece(mb, p, P_all, lod, mat_deck, top=True):
         for ring in [poly.exterior] + list(poly.interiors):
             R = np.array(shapely.segmentize(ring, {0: 8.0, 1: 20.0, 2: 40.0}[lod]).coords)
             if len(R) < 3: continue
-            A, B = R[:-1], R[1:]; M = 0.5 * (A + B)
-            mp = shapely.points(M)
-            inner = (shapely.distance(mp, same) < 0.08) if not same.is_empty else np.zeros(len(M), bool)
-            ag = (shapely.distance(mp, against) < 0.12) if not against.is_empty else np.zeros(len(M), bool)
-            outer = ~inner & ~ag
+            A, B, outer = edge_runs(R[:-1], R[1:], same, against)
             if not outer.any(): continue
             ha, hb_ = hp(p, A), hp(p, B)
             ba, bb = bottom_of(ha), bottom_of(hb_)
@@ -524,7 +608,7 @@ def lower_strip(M):
 def lower_walk(M, P, lower, log):
     """close-out round 3 (integration-2): the lower level's sidewalk along the plate's edge, from the lower roadway's inner
     edge to WALK_UNDER under the plate (photo i1: the lower level continues under the departures deck; OSM footway 1164416297,
-    layer 1, along the plate) at the lower roadway's level + WALK_KERB, over the straight section where the lower roadway
+    layer 1, runs ~16 m inside the plate edge at v ~ -48 - the depth is open, see WALK_UNDER) at the lower roadway's level + WALK_KERB, over the straight section where the lower roadway
     is: it closes the 0.4-0.6 m slit the stacked-deck trim leaves between the plate and the lower roadway (seen from the
     departures deck or from above, the lower level now continues under the plate's fascia and planter)"""
     C, du, dv = np.array(M['frame']['centre']), np.array(M['frame']['du']), np.array(M['frame']['dv'])
@@ -970,7 +1054,7 @@ def main(argv):
     units = units_of(P)
     log('pieces %d (decks %d, ramp parts %d, plate 1), units %s' % (len(P), sum(1 for p in P if p['src'] == 'deck'), sum(1 for p in P if p['src'] == 'ramp'), units))
     BODY = enclosure_cuts(P, TR, F0, log)
-    trim(P, TR, log, BODY)
+    stk_recs = trim(P, TR, log, BODY)
     body_cut = {}
     for p in P:
         for k, a in p['cut_by'].items():
@@ -1006,7 +1090,7 @@ def main(argv):
     mats['deck_plain'] = dict(rgb=asph, rough=0.9, extras=dict(src='obs colour (NAIP 2024)', note='no markings (LOD2; the plate beyond its straight section)'))
     mats['deck_plain_light'] = dict(rgb=lite, rough=0.88, extras=dict(src='obs colour (NAIP 2024, the outer light-concrete roadway)', note='LOD2'))
     mats['island'] = dict(rgb=CONCRETE, rough=0.85, extras=dict(src='obs extent (NAIP 2024) / inf height %.2f m' % ISLAND_H, note='raised islands of the ITB deck plate'))
-    mats['sidewalk'] = dict(rgb=CONCRETE, rough=0.85, extras=dict(src='inf', note='the ITB lower level sidewalk under the departures deck edge (close-out r3; photo i1, OSM footway 1164416297)'))
+    mats['sidewalk'] = dict(rgb=CONCRETE, rough=0.85, extras=dict(src='inf', note='the ITB lower level sidewalk under the departures deck edge (close-out r3; photo i1; depth inferred - OSM footway 1164416297, layer 1, runs ~16 m further in at v ~ -48)'))
     pl_naip, pl_base = naip_band(plate, 'islandB')
     mats['planter'] = dict(rgb=pl_base, rough=0.95, extras=dict(src='obs colour (NAIP 2024 median over island B) / obs extent (NAIP R - G band, photo i1) / inf height %.2f m' % PLANTER_H,
                                                                note='the planter of pink-flowering shrubs along the departures deck edge (photo i1); was read as a red-painted kerb in review r2'))
@@ -1044,6 +1128,7 @@ def main(argv):
                                 lower_outer_roadway=dict(osm_ways=sorted(lower), imaged_band_v=[round(x, 2) for x in M['outer']['v']], widened=M.get('lower', []),
                                                          level_m=LOWER_H, walk=dict(under_plate_m=WALK_UNDER, level_m=round(LOWER_H + WALK_KERB, 2), area_m2=round(walk['geom'].area, 1) if walk else 0),
                                                          note='the lower level (photo i1, close-out round 3): held level at LOWER_H on the straight; OSM layer 1, passes under the anchored departures leg past the straight')),
+                 stacked=dict(solve=sol.get('stacked', []), cuts=stk_recs),
                  curb_gap=gapchk, guideway_clearance=clr, guideway_pier_caps_over_decks=clr_p, deck_cut_inside_buildings_m2=body_cut, deck_left_inside_buildings_m2=body_left)
     sheet(P, cols, os.path.join(OUTD, 'roadways_plan.png'), LV, dict(pieces=len(P), columns=cst, low=len(chk['low'])))
     log('check sheet out/buildings3d/roadways_plan.png')
@@ -1078,23 +1163,31 @@ def main(argv):
                            'relative to the plate], widened to the imaged band; its sidewalk continues %.1f m under the plate edge (%.2f m) and closes the former 0.4-0.6 m slit; the deck-edge planter %.2f m high; '
                            'island A height 0.15 m; lane counts (OSM minimum / width / 3.6 m); plate columns under the islands and the outer edge'
                            % (h_itb, LOWER_H, ' / '.join('%.2f' % L['h_m'] for L in M.get('lower', [])), RN.CLEAR_MIN, RN.DECK_DEPTH, WALK_UNDER, LOWER_H + WALK_KERB, PLANTER_H),
-                           'levels other than the two curbs: screened solve with layer priors %s m and clearance %.1f m (roadways_net.py); at skewed and stacked crossings '
-                           'the separation is held over the ribbons\' overlap (the per-crossing deficit, XS_*), stacked pairs on an anchored way or beyond %.1f m by the trim\'s stacked cut'
-                           % (RN.LAYER_H, RN.CLEAR_MIN, RN.XS_CAP),
+                           'levels other than the two curbs: screened solve with layer priors %s m and clearance %.1f m (roadways_net.py); at skewed crossings the separation is held '
+                           'over the ribbons\' overlap (the per-crossing deficit, XS_*); stacked pairs (a ramp over or along a lower roadway) by lowering the lower way under the upper deck '
+                           'over the whole overlap, within %.0f %% grade and above its clearance over at-grade roads (STK_*, close-out r3 fix 2); what is left goes to the trim\'s stacked cut along '
+                           'the upper deck\'s edge, refused (and reported) where it would split the lower deck or leave < lanes x %.1f m'
+                           % (RN.LAYER_H, RN.CLEAR_MIN, RN.STK_GRADE * 100, MIN_LANE_W),
                            'approach ramps: at-grade OSM roads lifted by the solve (ELL_G %.0f m)' % RN.ELL_G, 'lane counts / widths where OSM has none (class defaults)',
                            'lane markings (pattern, colours)'],
                  unknown=['the domestic departures-curb height (%.3f m is the domestic asset placeholder [unk])' % LV['domestic']['curb'],
                           'every viaduct level: no structural drawings or survey; OSM gives only the layer order',
-                          'the ITB arrivals roadway level (OSM layer 1 west of the ITB is solved, not anchored)',
-                          'the ITB lower level\'s exact height: modelled %.2f m (the at-grade clearance bound); photo i1 puts the step from the departures deck ~1 m larger than modelled, which would mean '
-                          'the L3 deck ~1 m above spec_itb level3.floor 11.5 [inf, +-1.5] (the ITB group\'s value) or depressed building-passage roads; how far the lower level runs under the deck (modelled %.1f m) '
-                          '- settled in close-out round 3 only that the band IS a lower level (photo i1), not the departures deck' % (LOWER_H, WALK_UNDER)],
+                          'the ITB lower level (arrivals) roadway: held level at %.2f m on the straight [inf: the lowest that clears the at-grade building-passage roads under it by %.1f m + the %.1f-m deck], '
+                          'solved (and lowered under the stacked ramps, roadways_net STK_*) beyond it; photo i1 puts the step from the departures deck ~1 m larger than modelled (~6.7 m vs %.2f m), which would '
+                          'mean the L3 deck ~1 m above spec_itb level3.floor 11.5 [inf, +-1.5] (the ITB group\'s value) or depressed building-passage roads - with the modelled pair the ITB loop\'s lower roadway '
+                          'passes under its anchored departures legs (OSM 38853121 / 38853045) with less than %.1f m (stacked_cut_refused in the build record); settled in close-out round 3 only that the '
+                          'band IS a lower level (photo i1), not the departures deck' % (LOWER_H, RN.CLEAR_MIN, RN.DECK_DEPTH, h_itb - LOWER_H, RN.CLEAR_MIN),
+                          'how far the ITB lower level runs under the departures deck: modelled %.1f m (the sidewalk under its edge); OSM footway 1164416297 (layer 1) runs ~16 m inside the plate edge '
+                          '(v ~ -48, under island A), so it likely runs much further in (no photo of the space under the deck)' % WALK_UNDER],
                  deviations=['decks over at-grade roads with less than %.1f m clearance: the anchored domestic loop (soffit %.2f m) - the curb placeholder, kept as the domestic asset has it'
                              % (RN.CLEAR_MIN, sol['h_dom'] - RN.DECK_DEPTH),
-                             'decks trimmed at the buildings\' bodies (review r2, finding 3): %s m2; Terminal 2: NAIP 2024 shows the departures roadway open to the sky with traffic between the '
-                             'modelled T2 west wall and the glass curb canopy (T2 roof edge 14-20 m east of that wall), i.e. the T2 shell follows the SFO Museum outline over the curb roadway as T1 Center did '
-                             'before the domestic group moved its face (manifest.json#domestic.conflicts); the roadway is therefore cut at the T2 body until the domestic group moves the T2 landside face - '
-                             'the cut lifts by itself on the next build (request in manifest.json#integration.requests)' % body_cut],
+                             ('decks trimmed at the buildings\' bodies (review r2, finding 3): %s m2' % body_cut) + ('; Terminal 2: the roadway is cut at the T2 body until the domestic group moves the T2 '
+                             'landside face (NAIP 2024: the departures roadway is open to the sky between the modelled T2 west wall and the curb canopy)' if any('T2' in k for k in body_cut) else
+                             ' (T1 / T3 only: their curb-side shells; the T2 cut lifted after the domestic group moved the T2 landside face, close-out round 3)')]
+                            + ['stacked pairs kept whole under an upper deck with less than %.1f m (a cut would split the lower deck or leave < lanes x %.1f m; fix 2, verifier v1): %s'
+                               % (RN.CLEAR_MIN, MIN_LANE_W, '; '.join('%s under %s, %.2f m' % (r['lower'], r['upper'], r['clearance_if_kept_m']) for r in stk_recs if r.get('refused')) or 'none'),
+                               'stacked cuts made although they narrow the lower deck (the decks would clash, < %.1f m): %s' % (KEEP_CLEAR, '; '.join('%s under %s: %s' % (r['lower'], r['upper'], r['narrowed'])
+                               for r in stk_recs if r.get('narrowed')) or 'none')],
                  verification=stats)
     BI.merge_manifest(entry, key='roadways')
     open(os.path.join(OUTD, 'roadways_build.log'), 'w').write('\n'.join(lines) + '\n')

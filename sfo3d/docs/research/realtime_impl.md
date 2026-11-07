@@ -852,3 +852,18 @@ dispositions: `docs/requests/realtime_closeout.md`, "Round 3". Every change carr
     ghost; GroundPhysics places a stationary aircraft with all gear on the rendered mask first (within the 6 m report
     scatter; a new lock pose with a gear point off the mask is re-placed once or twice when a pose within 3 m has all gear on
     it), then on the mask ∪ OSM-net union (R4.1.5: N199TH GLF5 on the fence line).
+14. **SFO's evidence, checked against the data** (realtime-2, after the 7 Nov 12:41Z container restart; found by tracing every
+    aircraft that was removed at a stand and heard parked there again, on the partial after-run of segment A). `stalePlanGone`:
+    a departure's actual block-out counts only for a departure SFO lists at THAT stand (AA2651's A321 at B20 was removed at
+    the block-out of its linked AA1930, which left from B25 — an aircraft swap); a stand window counts only once SFO had seen
+    it end (window end ≤ the plan's `fetched_at`: with the cache's last flysfo snapshot 12–13 h old, forecast window ends
+    expired UAL2123 E12, UAL1800 F17, UAL1609 E9); and neither counts when the aircraft's own transponder was heard after that
+    time. `GroundPhysics` removes a silent aircraft parked at a stand only for a fuselage overlap (≥ 6 fuselage samples inside
+    the other, `fusIn`, `GHOST_FUS_PTS` — a wingtip over a tail is pushed clear instead: DAL1412's A333 wingtip had removed
+    DAL2074's B739 at C7, heard there again 44 min later) and never while SFO's plan lists it at that stand now
+    (`traffic.planHere`: KLM373, dead-reckoned 17 s into the tail of JAL2's B77W at A1 — SFO: A1V until 20:50Z — had removed
+    JAL2, heard at A1 again 29 min later). A body dead-reckoning more than 5 s (`GHOST_EX_S`) stops 3 m short (`DR_HOLD_M`,
+    `tr.drHold`, released by its next report) of a parked aircraft that must stay — a live one or one SFO lists there. An
+    arrival that loses its data on the lead-in still removes a real ghost at contact (UAL649 A21N into D9 through UAL1722's
+    B39M, 7 Nov 04:49Z: the variant that asked for the arrival's own report on the ghost left them overlapped for 40 s), and
+    arrivals with data remove one at the same second as before (UAL876 at B11S, SKW5599 at E6, window checks).

@@ -198,6 +198,19 @@ tris LOD0 69,287 / LOD1 36,927 / LOD2 5,336 (unchanged).
 | buildings-12 (ITB) | core 17.9 m placeholder, L3 11.5 m, BA-A pod 23.6 vs DOF 25.91; BA-G mullion finish (engine R2.4) | **partly** | `spec_itb.json` `ba_g.mullion_finish`: light silver-white mullions / transoms [obs photo a2, Commons CC BY-SA 4.0, low, unverified] - BA-G only; the asset's `mullion` is light aluminium (178 / 182 / 186, metallic 0.6) already. No new source for the core height, L3 or the BA-A pod top (values stay tagged). |
 | buildings-1 (ITB) | round-2 fixes never independently checked; app render after the final material missing | **done** | i4 Cycles comparison (`itb_cmp_i4.png`): lattice with the X per panel, dark soffit with white outriggers, near-black letters, dark crown over the notch-to-notch span - all as fixed in r2; the app render above closes the "app after the final material" doubt. |
 
+### Close-out round 3, fix round 2 (7 Nov 2026; `manifest.json#itb.closeout_r3_fix2`)
+
+Rebuilt 13:16Z (`out/buildings3d/c3f2/itb_build.log`): verify_itb **126 checks, 0 failed**. Geometry unchanged (tris 69,287 /
+36,927 / 5,336); 6.46 MB.
+
+| id | Finding | Disposition | Evidence (before -> after) |
+|---|---|---|---|
+| v8 | ITB glass carried the baked AO as glTF occlusion while domestic glass did not | **fixed** | ONE rule for all four assets: no glTF occlusion on a glass material (`build_itb.make_material`; the AO image stays only as the bake target). three.js applies `aoMap` to the indirect diffuse and, through its specular occlusion, to the IBL reflection that makes glass read; Cycles ignores the glTF occlusion. Glass materials with occlusion 18 -> **0** (itb_lod2 0 of 8). App i4, sunlit, high tier, same camera and sun as close-out r3 (`out/buildings3d/c3f2/appB1/c3_i4sun.png`): clear centre bay / frit side bay 0.690 -> **0.700** (mirror 0.688 -> 0.700); photo i4 ~0.7. |
+| v6 | BA-G bump-out conflict still open; walkway table from the 5 Nov scene2d (tops 8.45 m) | **fixed** | `verify_itb` takes the walkways from `tools/blender/app_bridges.json` (gates.js run in Node; stale inputs = FAIL). Against DEPARTURE_LEVELS.G 2.7 [obs a2, low], 0 of 45 A / G walkways top above their host roof. The 20 BA-G walkways that dock into a bump-out top at 5.71-5.87 m, under the 6.5-m bump-out roofs (min margin 0.63 m). The 4 at G12 / G13 have no bump-out and top at 6.16-7.29 m under the 16.0-m pier roof. Conflict resolved; the record text now separates the two cases. |
+| v9 | canopy clearance from the parameter | **fixed** | Measured on the exported canopy faces over the roadways.glb LOD0 deck faces (560 overlaps): **4.70 m** (>= 4.6); the parameter value is reported beside it. |
+| v10 | buildings-6 recorded as fixed | **partly** | App 0.70 = photo i4 ~0.7 under the photo's light; Cycles 0.86 (photo sun) / 0.84 (app sun) unchanged - a renderer difference. glass_hall is not tuned toward Cycles, so that the app (the deliverable) stays at the photo. |
+| v5 | BI-03 / BI-04 draw the old roof_line and flat lens glazing | **partly** (recorded) | The 3-D state is drawn on BI-02 / BI-03 view 1 (`draw_itb.r3_hall`). BI-03 / BI-04 keep roof_line(u) (crown 40.1) and the flat `lens_poly` glazing, and state every `itb.deviations_from_sheets` item in their 3-D STATE notes. |
+
 <!-- tower:begin (written by tools/blender/build_tower.py) -->
 ## Control tower (ATCT 2016) and base building: `data/buildings3d/tower.glb`
 
@@ -263,6 +276,13 @@ files re-verified 2026-11-07, `tools/blender/tower3d_verify.py` 110 / 110 (F2) a
 (`out/buildings3d/c3/tower_verify_f{1,2}_c3.log`). buildings-1 (round-2 fixes): `tower_compare_t2.jpg` shows the slots as mid-grey
 louvre recesses and the cab glass as one uniform dark tint, as fixed; the t3 (overcast) cab glass stays lighter than the photo
 (render 15-16 vs photo 3-33; t2, the primary evidence, matches) - a light-condition deviation, recorded, not reopened.
+
+**Close-out round 3, fix round 2 (7 Nov 2026; `manifest.json#tower.closeout_r3_fix2`).** v8: one glass AO rule for all four
+assets - `build_tower.wire_ao` no longer links the baked AO as glTF occlusion on a glass material. Glass materials with
+occlusion 3 -> **0** (ibf_glass_dark, ribbon_glass, slot_glass) in tower.glb, tower_f1.glb and tower_lod2.glb. Rebuilt 13:22Z
+with `--no-manifest`, so this section and the close-out records are kept; `manifest.json#tower.bytes` / `verification` were
+patched. tower3d_verify **110 / 110** (F2 and F1), glTF-Validator 0 errors, geometry unchanged (F2 tris 34,789 / 10,783 /
+2,461); F2 3.46 -> 3.44 MB.
 <!-- tower:end -->
 
 <!-- landside:begin (tools/blender/build_landside.py; numbers from out/buildings3d/landside_verify.json) -->
@@ -467,7 +487,32 @@ cars, ~97 tris each within 450 m; LOD1 65,854 -> 71,894; LOD2 has no wheels). Re
 | a2 | 6 | 1,704 | 1,621 | screens (fixed as above, ~115 px); the rest is the BART station's east end against the ITB outline, left open by design (internal edge, `inside_other`): with itb.glb loaded every one of these rays ends on the ITB core (a front face) - the landside-only render shows it, the app does not |
 | overview | 0 | 3 | 3 | sub-pixel slivers at the guideway ends |
 
+### Close-out round 3, fix round 2 (7 Nov 2026): what changed, and why (`manifest.json#landside.closeout_r3_fix2`)
 
+Rebuilt 13:15Z (`out/buildings3d/c3f2/landside_build.log`), split into the lsu units (`b3d_split.py`, 13:48Z).
+verify_landside **198 checks, 0 failed**; the same script on the 11:14Z file gave 198 / 3: the three new gates failed there.
+landside.glb 21.13 -> 21.16 MB; LOD0 159,459 -> 159,599 tris, LOD1 85,433 -> 85,573, LOD2 22,060 -> 22,284 (125 draw calls).
+
+The back-face counts below come from `tools/blender/bf_rays.py`, the verifier's numeric ray test (16 azimuths x 1-m slices
+plus vertical rays at 0.5 m) adopted into the repo, with each LOD's neighbours loaded. "Tie-break" is the same test with one
+change made in this round: where a ray meets two faces at the same point to 1e-6 m (a ray of the grid passing exactly
+through a convex corner vertex), the front face wins. Before this change, those zero-measure hits were counted as back
+faces.
+
+| LOD (context) | before | after | after, tie-break | main changes |
+|---|---|---|---|---|
+| LOD0 (itb, domestic, roadways, tower) | 2,582 | **837** | 787 | sb_roof 878 -> 0, cg_plinth 830 -> 62, garage_a_station_block 81 -> 12 |
+| LOD1 (itb, domestic, roadways) | 2,460 | **663** | - | sb_roof 878 -> 0, cg_plinth 883 -> 63 |
+| LOD2 (itb_lod2, domestic_lod2, roadways_lod2) | 15,718 | **138** | 61 | L2_superbay 15,084 -> 2, L2_garage_a 433 -> 14, L2_garage_g 82 -> 3 |
+
+| id | Finding | Disposition | What the model does now (evidence) |
+|---|---|---|---|
+| v2 (major) | Superbay LOD2 an open shell since round 1. The walls stopped at 25.8 m under a 27.0-39.6 m roof, and the 41.1-m spine roof floated. | fixed | `landside_geom` builds the Superbay LOD2 as a closed coarse solid: the two cantilever roof planes with a 1.2-m fascia and soffit, the flat spine roof with its side and end walls, and outline walls up to the soffit (top sampled along every edge, split at the spine lines). LOD0 / LOD1 (878 pre-existing hits): the spine stretch of the roof sandwich got its soffit and end fascias, and the spine walls their triangular ends under the hips. Garage LOD2 got portal-recess jambs / head / sill and drum-ring inner faces above the parapet; the CG slot got sliver linings. `verify_landside` gained a LOD2 see-through gate (bf_rays with the LOD2 neighbours; > 60 hits per node fails; worst now L2_bart_station 25). |
+| v3 | parked cars overlapping (16 pairs, worst 2.44 m2); LOD1 cars 0.30 m above the deck | fixed | `landside_cars.resolve_overlaps`: every car's oriented footprint (its shape's length x width, + 0.025 m) is tested against the cars already placed on the deck and on the building's other decks (+-1.5 m). A car that overlaps takes the next shorter shape (pickup -> SUV -> sedan), else it is dropped [inf: which car gives way; the NAIP-observed cars are placed first]. The LOD1 body starts at the deck. verify_landside, on the oriented plan hulls of every LOD0 instance: **16 pairs -> 0** (1,729 -> 1,716 instances; manifest 1,737 -> 1,724 cars); LOD1 bottom **0.30 -> 0.00 m**; NAIP-detected central-garage cars reproduced 0.858 -> 0.839. |
+| v4 | Garage A station block: the open south side showed the back of the single-sided east wall (+72 hits) | fixed (3-ray residual) | An inner lining of the east (portal) face over the hall / track band, 0.05 m inside, with the same track openings, faces into the hall (dark interior). garage_a_station_block **81 -> 12**: 9 of these are the same cells as in the round-2 file (unchanged). The other 3 are rays at az 315 deg that pass through the 0.05-m joint where the lining ends at the wall vertex (-1392.21, 537.34), 21.5-24.5 m up - a hairline, recorded. |
+| v5 | landside drawing requests and the AirTrain wye not on BL-01..03 | partly (recorded, not drawn) | BL-03 states each not-drawn item as a NOT DRAWN note, with its 3-D source and tag (`draw_landside.fix2_notes`, 9 notes), and labels the old drum-ring line SUPERSEDED. The items: station block, BART station plan / levels, RCC rake / platform 8.84, drum towers, CG rims / lobes, NE rotunda / penthouse, walkways east of the station, BART band / colonnade, the AirTrain wye west of x -1592. The records are in `closeout_r3_fix2.v5.sheet_requests`. buildings-10 stays **partly**. |
+| v8 | landside glass carried the baked AO as glTF occlusion (7 of 8) | fixed | One glass AO rule for all four assets: `build_landside` links no glTF occlusion on a glass material. station_glass@B/C, glass_bart@B/C, glass_hyatt@B/C and glass_band@B: 7 -> **0** (landside_lod2 0 of 3). |
+| v9 | pier-cap test on every third vertex | fixed | verify_landside measures pier caps / bents on the pier FACES over the roadways.glb deck faces (35 overlaps): min **12.40 m**; column feet on carriageways / decks 0. The independent ray test is now a verify gate (above). |
 
 <!-- landside:end -->
 
@@ -651,6 +696,27 @@ Rebuilt `--final` 05:39Z: `verify_domestic.py` **60 checks, 0 failed**; LOD0 78,
 | buildings-10 (BD-01 / BD-03) | sheets behind the 3-D state | **fixed on the domestic sheets**; finding overall **partly** (fix 2, verifier v5: landside requests / wye not drawn, BI-03 / BI-04 roof notes) | BD-01 plan: `draw_domestic.r3_plan` overlays the moved T2 face, sidewalk, canopy, connector and the NAIP rooftop units (`dom_roofobs.json`). BD-03 view 2 is redrawn from the 3-D state: the 77.4-m curb stretch, glass 0-7 m, canopy, connector, leaders to the sources. The spec note on the BA-F ESE roof edge (`spec_domestic.json` baf.roof_edges, "on the level-2 outline") is corrected: sampled at 10 / 25 / 50 / 75 / 90 % of its 52.4-m length the drawn line is 1.83 m outside the outline (it touches the outline only at its end points, on the corner jogs) - the overhang the sheets and the 3-D carry; manifest conflict "BA-F ESE roof edge" resolved. |
 | buildings-1 (domestic) | round-2 fixes never independently checked | **done; one defect found and fixed** | Back-face QA (`render_domestic.py --qa backface`, red = the back of a single-sided face) on the 6 Nov file: t2curb **209 px** - a 5-m hole in the moved T2 face beside the connector: the face edge z 199.2-220.7 was opened 9.43-14.38 m over its whole length for the 16.9-m connector end, because `World.splits` only split an edge where a neighbour's outline CROSSES it, and the connector's end runs along the face 0-9 cm off it (never crossing), so the one mid-edge sample clipped the whole edge. Root-cause fix in `dom_geom.World.splits`: neighbour vertices within 0.15 m of an edge split it too. Exposed wall area over the whole asset -27.6 m2 (T2 +72.6, BA_C +68.4, T3E +53.9 m2: holes of the same kind closed; BA_F -162.2, T1 -40.8, T3W -31.8 m2: internal walls against abutting solids now clipped). After (03:36Z file): t2curb **0**, a1 127 -> 106, c3c 258 -> 197, eclose 204 -> 164, d1 0, ibf 0 px; verify_domestic 60 / 0, verify_domestic_r2 n_fail 0 (t2_curb, drum_overhead unchanged). Round-2 items re-checked: `domestic_cmp_a1.png` shows the dark C3C storey glass and the BA-E end glazing / PV as fixed (the a1 camera is estimated, so only qualitatively); the drum notches hold in the probes; the T1 sign (d1) was not re-rendered. |
 | buildings-12 (domestic) | T1 / T2 hall heights and curb placeholders | **partly** | No new primary source. The FAA DOF (DOF.CSV 2026-09-18, 1,332 rows around the airport, re-searched this round) has no entry on T1 or T2 (nearest: apron poles and the 2016 tower, 245 ft). One BLDG entry, 06-039216, lies inside the T3 footprint, 80 m WNW of the C3C outline: 130 ft AGL / 136 ft AMSL, accuracy 4D (+-250 ft horizontal, +-50 ft vertical), status unverified, study 2012-AWP-7455-OE. It is too coarse and too far to identify as the C3C (the model's C3C penthouse top 38.0 m would sit inside its +-15 m), so it is recorded, not used. The values stay tagged (`dimensions`, `unknown`). |
+
+### Close-out round 3, fix round 2 (7 Nov 2026): dispositions (`manifest.json#domestic.closeout_r3_fix2`)
+
+Rebuilt `--final` 13:11Z (`out/buildings3d/c3f2/domestic_build.log`): `verify_domestic.py` **61 checks, 0 failed** (the new
+row: the app bridge dump matches the current gates.js / stands). LOD0 80,720 -> 79,913 tris, 156 -> 154 draw calls, 11.58 ->
+11.37 MB. `verify_domestic_r2.py` n_fail 0. The heights now come from `tools/blender/app_bridges.json`: `node
+tools/blender/app_bridges.mjs` runs `js/live/gates.js` in Node and records the SHA-256 of its inputs. The scripts fail when
+the dump is stale. Cross-checked against the browser extraction `out/draw/scene2d.json` of 10:35Z: 131 / 131 bridges.
+
+| id | Finding | Disposition | Evidence (before -> after) |
+|---|---|---|---|
+| v1 (major) | bridge attachments sized for one 5.4-m floor; gates.js now has per-pier levels (C 3.2, D 3.65, E / F 4.88) | **fixed** | Every bridge-attachment height is taken per door from the app walkway floor at the facade / walkway start (DEPARTURE_LEVELS + the 1:12 slope): door frames floor -0.2 .. +3.2, vestibules -0.5 .. +3.3, overhang notches, drum notches per drum from its rotunda floor `Hr`, and the undersides of pods a walkway enters (lowest floor in the part - 0.5). BA-C / BA-D facade bands at the photo a1 ratios: glazing 0.443-0.794 of the roof edge [obs low BA-D; inf BA-C]. Bulkheads 23 -> **0**; BA-D overhang notches 2 -> 0; 80 doors / 54 vestibules. Walkway floors at the doors: B 5.30-5.40, C 3.18-3.20, D 3.59-3.65, E 4.87-4.88, F 4.82-4.88 m. `verify_domestic_r2` walk (app walkway solids in their own height band, same probe on the old and new files): LOD0 conflicts **8 -> 0** (C4 C8 D3 D4 D5 D14 D15 D16), horizontal overlap **8.72 -> 0.00 m2**, walkway-end contact 41.26 -> 31.45 m2 (vertical only: the walkway ends against the door leaf). LOD2: 8 -> 0, 8.72 -> 0.00. The verifier's `brsolids.py` with the same bridge geometry (bridges bc_after2, rest + docked poses): **20.68 -> 10.71 m2**, every C / D bridge <= 0.31 m2 (was D15 1.99, D14 1.95, D3 1.66, C4 1.49, D5 1.21); 0 rotunda / tunnel / cab contacts. Residuals B16 1.45 / B11 0.85 m2 are unchanged since round 2. They are an artifact of the box test: brsolids gives the whole sloped walkway one height band (4.60-8.40 / 3.94-8.40), and the pod soffit (4.73 / 4.63 m) falls inside it. At the pod itself the walkway floor is >= soffit + 0.5 by construction (`walk_y0`), so its slab underside is 0.2 m above the soffit. BA-C walkway top 6.20 m sits under the 6.40-m slab underside, BA-D 6.65 under 7.69. Cycles a1 (`out/buildings3d/domestic_a1_c3f2.png`): no boxes above the BA-C / BA-D roof lines. Manifest conflict "BA-C / BA-D roofs vs the app concourse floor" resolved. |
+| v6 | stale cross-asset records | **fixed** | scene2d.json replaced by the 7 Nov extraction (the 5 Nov copy is in `out/buildings3d/integ/draw/stale_20261105/`); the probes read `app_bridges.json` (gates_js_current true). The buildings-14 conflict now quotes `integration.json`: 26 roads, 753 m, min 3.53 m at (-940.9, 429.6), with the 26 OSM ways. It stays open: the posted clearance is an owner question. |
+| v9 | drum_overhead ignored faces dipping below the drum top | **fixed** | Every face that covers the drum disc and reaches above its top counts, with its height evaluated over the disc. Drums use their own `Hr` band. Result: 13 drums under a roof, min clearance **0.92 m** (D7: drum top 6.77 under the 7.69-m overhang underside), 0 contacts with the 415 drum hulls, at LOD0 and LOD2. |
+| v8 | one glass AO rule | **fixed** (all groups) | Domestic glass has had no glTF occlusion since close-out r3 (20 materials, LOD2 5). The same rule is now in the ITB, landside and tower builds: 0 glass materials with occlusion in all nine files. |
+
+Back-face rays (bf_rays, LOD0 with itb / tower / landside loaded): 87 -> 89 by the verifier's method. The +2 are three rays
+on the grid line x = -552.50 through the west corner of a BA-D rooftop unit. That unit is a closed box (four walls + top). It
+is no longer clipped by the dropped overhang notch, so its corner moved from x -552.14 onto the grid line. With the
+front-face tie-break, the count is **74 before and 74 after**, and BA-D has 0 (its 13 earlier hits were all such corner
+ties). The residuals are the pre-existing BA-E 29, T1 22 and BA-B 21. LOD2 with context: 90 -> 92 by the same method.
 
 ### Open items (also in the manifest's `unknown` / `conflicts`)
 - T1 Center and T2 hall heights and the departures-curb height (placeholders); the T3 datum; the BA-B well depth; the BA-F lantern

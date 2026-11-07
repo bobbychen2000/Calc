@@ -141,7 +141,7 @@ REVIEW_R2 = [
 # close-out round 3 (2026-11-06; docs/requests/closeout3_findings.json groups.buildings)
 # close-out round 3, fix round 2 (verifier round 1 findings v2-v5 for the landside group, 7 Nov 2026)
 CLOSEOUT_R3_FIX2 = [
-    dict(id='v2', item='Superbay LOD2 an open shell (walls to 25.8 m under a 27.0-39.6 m roof, spine roof floating at 41.1 m; 15,084 '
+    dict(id='v2', evidence="bf_rays (the verifier's method) on LOD2 with itb_lod2 / domestic_lod2 / roadways_lod2, 7 Nov 13:15Z rebuild vs the 11:14Z file: L2_superbay 15,084 -> 2, L2_garage_a 433 -> 14, L2_garage_g 82 -> 3, LOD2 total 15,718 -> 138 (61 with the front-face tie-break); LOD0 with itb / domestic / roadways / tower: sb_roof 878 -> 0, cg_plinth 830 -> 62 (sliver linings), total 2,582 -> 837 (tie-break 2,532 -> 787); LOD1 2,460 -> 663. verify_landside 198 / 3 -> 198 / 0; LOD2 tris 22,060 -> 22,284", item='Superbay LOD2 an open shell (walls to 25.8 m under a 27.0-39.6 m roof, spine roof floating at 41.1 m; 15,084 '
          'back-face hits since round 1)', disposition='fixed',
          change='landside_geom.superbay LOD2 is a closed coarse solid: plane cantilever roofs with a 1.2-m fascia and soffit, the flat '
                 'spine roof with its side walls (root -> spine top) and end walls, outline walls up to the soffit (top sampled along every '
@@ -149,17 +149,18 @@ CLOSEOUT_R3_FIX2 = [
                 'and two end fascias, the spine walls their triangular ends under the hips. verify_landside gained a LOD2 see-through gate '
                 '(tools/blender/bf_rays.py = the verifier\'s numeric back-face rays, LOD2 context itb / domestic / roadways); garage LOD2 '
                 'portal recesses got jambs / head / sill'),
-    dict(id='v3', item='parked cars overlapping (16 pairs, worst 2.44 m2) / LOD1 cars 0.3 m above the deck', disposition='fixed',
+    dict(id='v3', evidence='verify_landside on the oriented plan hulls of every LOD0 instance: 16 overlapping pairs -> 0 (1,729 -> 1,716 LOD0 instances; manifest cars 1,737 -> 1,724); LOD1 body bottom 0.30 -> 0.00 m above the deck; NAIP-detected central-garage cars reproduced 0.858 -> 0.839', item='parked cars overlapping (16 pairs, worst 2.44 m2) / LOD1 cars 0.3 m above the deck', disposition='fixed',
          change='landside_cars.resolve_overlaps: every car\'s oriented footprint (its shape\'s length x width, + 0.025 m) against the cars '
                 'placed before it on the deck and on the building\'s other decks (+-1.5 m): a car that overlaps takes the next shorter shape '
                 '(pickup -> SUV -> sedan), else it is dropped [inf: which car gives way]; LOD1 car bodies start at the deck (no skirt there). '
                 'verify_landside tests the oriented plan hulls of every LOD0 instance (pairs) and the LOD1 body bottom'),
-    dict(id='v4', item='Garage A station block: open south side shows the back of the single-sided east wall (+72 back-face hits)',
+    dict(id='v4', evidence='bf_rays LOD0 with itb / domestic / roadways / tower: garage_a_station_block 81 -> 12 = the 9 cells of the round-2 file (unchanged) + 3 rays at az 315 deg through the 0.05-m joint where the lining ends at the wall vertex (-1392.21, 537.34), 21.5-24.5 m (hairline, recorded)', item='Garage A station block: open south side shows the back of the single-sided east wall (+72 back-face hits)',
          disposition='fixed', change='an inner lining of the east (portal) face over the hall / track band, 0.05 m inside, with the same '
                                      'track openings, facing into the hall (dark interior)'),
     dict(id='v5', item='landside drawing requests not on BL-01..03 and the AirTrain wye', disposition='partly (recorded as deviations, not drawn)',
-         change='each request is recorded below with the sheet state, the 3-D value and its tag; the BL sheets were not redrawn in this '
-                'round', sheet_requests=[
+         change='each request is recorded below with the sheet state, the 3-D value and its tag; BL-03 (close-out r3 fix 2) states '
+                'each not-drawn item as a NOT DRAWN note with its 3-D source and tag (draw_landside.fix2_notes, 9 notes) and labels '
+                'the old drum-ring line SUPERSEDED; the items themselves are not drawn', sheet_requests=[
              dict(request='Garage A / G heights (a2): parapet 29.10 / 27.52, deck 26.7 / 25.3, drum ring 31.0 (A)', sheets='BL-03: a2 overlay '
                   'drawn (draw_landside.garage_r3, close-out r3); the body label still says dotted at the drum ring 39.6 m', model='a2 values '
                   '[obs low]', status='drawn (label residual)'),
