@@ -239,7 +239,10 @@ CONFLICTS = [
                'the soffit; D3 L1 facade 0.19 m clear of its drum (verify_domestic_r2.drum_overhead, close-out r3 dump of the gates.js solids)',
          other='integration.json footprint rings are plan-only (the -1.06 / -1.05 / -0.03 m overlaps of the round-3 consolidator)',
          request='integration: carry the height band of the overhang (soffit 9.69 m above the apron) in the footprint tiers (integration-5) '
-                 'so plan tests do not read the overhang as a wall'),
+                 'so plan tests do not read the overhang as a wall',
+         update_fix2='close-out r3 fix 2: at the per-pier levels (gates.js DEPARTURE_LEVELS F 4.88) the F7 / F8 L1 rotunda floors are '
+                     '4.73 / 4.74 m (tools/blender/app_bridges.json), drum tops 8.03 / 8.04 m: 1.66 / 1.65 m under the 9.69-m soffit '
+                     '(verify_domestic_r2.drum_overhead, now per drum from its Hr and counting every face over the disc)'),
     dict(item='departures loop soffit over at-grade roads (close-out r3, buildings-14)', status='open (listed by integration; owner question)',
          model='curb 4.877 m = the published T3 L1 -> L2 16 ft carried along the continuous loop [inf]; roadways.glb deck top 4.73, depth '
                '1.2 m [inf] -> soffit 3.53 m over at-grade roads. integration.json (7 Nov 08:01Z) plausibility.conflicts "vertical clearance '
@@ -395,7 +398,8 @@ def entry(build, ver, parts, mats, roof_rgb, info):
 
 
 def keep_renders(old, new):
-    for k in ('renders', 'render_check', 'renders_updated', 'renders_args', 'renders_note', 'qa', 'validator', 'neighbours', 'review_r1', 'review_r2'):
+    for k in ('renders', 'render_check', 'renders_updated', 'renders_args', 'renders_note', 'qa', 'validator', 'neighbours', 'review_r1', 'review_r2',
+              'closeout_r3', 'closeout_r3_fix2'):       # (close-out r3 fix 2: the close-out records survive a rebuild)
         if old and old.get(k):
             new[k] = old[k]
     return new

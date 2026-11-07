@@ -670,6 +670,16 @@ def central_garage():
             return dict(kind='solid', solid='concrete', z0=zt, z1=h5 + AT.WALL_H)
         garage_facade(pl, Q, level_bands(slabs, top, deck=deck), st_s, TILES)
         cap(pl, Q, h5 + AT.WALL_H, 'coping', 3.0)
+        # close-out r3 fix 2 (back-face rays, pre-existing: 827 hits on cg_plinth in the 15-18 m band, east side): the sliver's
+        # inner (guideway-side) wall is single-sided and its outer edge is an open parking level, so rays through the open level met
+        # its back. A lining 0.05 m inside it, facing into the sliver (dark interior), over the same band
+        for a_, b_, s0 in ring_edges(Q):
+            mid = Point(*F.W(0.5 * (a_[0] + b_[0]), 0.5 * (a_[1] + b_[1])))
+            if outline_b.distance(mid) < 0.6: continue
+            n_, L_ = edge_normal(a_, b_)
+            if L_ < 0.05: continue
+            pl.quad_wall(tuple(np.array(b_) - n_ * 0.05), tuple(np.array(a_) - n_ * 0.05), zt, h5 + AT.WALL_H, zt, h5 + AT.WALL_H,
+                         'interior', 0.0, (4.0, 4.0))
     B.shells.append(Part('cg_plinth', pl, 'shell', 'inf', 'garage structure under / beside the AirTrain ring (to the guideway deck)',
                          ['cg_airtrain_level']))
     # DOF roof light poles
@@ -1164,6 +1174,13 @@ def garage_ag(k):
             if main_b.distance(mid_w) < 0.3 and not on_outline(seg):
                 # the hall's back / north walls (the main body behind): dark interior seen through the openings
                 bsh.quad_wall(b_, a_, zh0, zh1, zh0, zh1, 'interior', 0.0, (4.0, 4.0))
+            elif face_portals(seg):
+                # close-out r3 fix 2 (verifier v4): the east (portal) face is a single-sided precast wall; with the Garage A body's
+                # screened bands gone from this stretch (close-out r3), rays entering the hall from the open south side met its back
+                # (+72 back-face hits at 21.5-24.5 m): an inner lining 0.05 m inside it over the hall / track band, with the same
+                # track openings, facing into the hall (dark interior)
+                hl_ = [(L_ - h1, L_ - h0, z0h, z1h) for (h0, h1, z0h, z1h) in bstyle(a_, b_).get('holes', [])]
+                holed_wall(bsh, tuple(np.array(b_) - n_ * 0.05), tuple(np.array(a_) - n_ * 0.05), zg, zh1, hl_, 'interior', 0.0, (4.0, 4.0))
             elif not face_portals(seg) and L_ > 8.0:
                 # south face: the hall open to the south under the block, on round columns just outside the face (the south track
                 # runs 0.2 m inside it) [obs l1: two round columns under the south overhang; D 1.0 / spacing ~7.5 m inf]
@@ -1243,9 +1260,16 @@ def garage_ag(k):
                 Ls = math.hypot(b_[0] - a_[0], b_[1] - a_[1])
                 if Ls < 1e-3: continue
                 seg = LineString([a_, b_]); mid_w = Point(*F.W(*seg.interpolate(0.5, normalized=True).coords[0]))
-                if (tw_b is not None and tw_b.distance(mid_w) < 0.6 and not on_outline(seg)):
+                # (close-out r3 fix 2, LOD2 back-face rays: the 0.8-m simplification merges a tower notch with the neighbouring face,
+                # e.g. the Garage A east portal face; testing only the midpoint dropped the whole 7-m edge and left the east end
+                # open from grade to the parapet) - an edge is the tower's only where it runs along the tower over its length
+                # (the LOD2 ring is simplified by 0.8 m: an outline edge can lie up to ~0.8 m off the body outline - with the LOD0
+                # tolerance of 0.3 m the Garage A east portal face read as an inner block edge and got a zero-height wall)
+                on_out2 = body_w.exterior.distance(mid_w) < 1.1
+                if (tw_b is not None and not on_out2 and
+                        all(tw_b.distance(Point(*F.W(*seg.interpolate(f_, normalized=True).coords[0]))) < 0.6 for f_ in (0.1, 0.5, 0.9))):
                     s += Ls; continue
-                z0w = blk_top if (blk_b is not None and blk_b.distance(mid_w) < 0.6 and not on_outline(seg)) else 0.0
+                z0w = blk_top if (blk_b is not None and blk_b.distance(mid_w) < 0.6 and not on_out2) else 0.0
                 holes = []
                 for pa_, pb_, kind in portal2:
                     if seg.distance(pa_) < 1.0 and seg.distance(pb_) < 1.0:
@@ -1253,6 +1277,11 @@ def garage_ag(k):
                         holes.append((sa_ + 0.6, sb_ - 0.6, zt - AT.DECK_T - 0.3, zt + AT.PORTAL_H))
                 mat = 'drum_metal' if on_circle(a_, b_, F, circ, tol=2.0) else 'precast'
                 holed_wall(cm2, a_, b_, z0w, hr if mat == 'drum_metal' else hd, holes, mat, s, (6.0, 6.0))
+                if mat == 'drum_metal' and hr > hd + 0.05:
+                    # close-out r3 fix 2 (LOD2 back-face rays: ~100 hits at 29.5-30.5 m on each drum): the drum ring stands above the
+                    # parapet (hr > hd) as a single-sided wall - seen over the roof from the far side its back showed. Its inner face
+                    nn_, _ = edge_normal(a_, b_)
+                    cm2.quad_wall(tuple(np.array(b_) - nn_ * 0.05), tuple(np.array(a_) - nn_ * 0.05), hd, hr, hd, hr, 'drum_metal', 0.0, (6.0, 6.0))
                 if mat == 'drum_metal':
                     nn_, _ = edge_normal(a_, b_)
                     for z0_, z1_ in slots_z + [top_open]:
@@ -1991,6 +2020,11 @@ def superbay():
         n = np.cross(np.array(q[1]) - np.array(q[0]), np.array(q[3]) - np.array(q[0]))
         if n[:2] @ (np.array(sl) * sg) < 0: q = q[::-1]
         sh.face(q, 'spine_wall', [(0, 0), (1, 0), (1, 0.5), (0, 0.5)])
+        # close-out r3 fix 2: the triangular ends under the hip planes (the hips fall from hs at tn / ts_ to the root at the roof
+        # ends; without these the spine was open there and rays met the backs of the spine walls / hip facets: 118 back-face hits)
+        for t_r, t_e in ((tn, T), (ts_, -T)):
+            tri = [(*W(a_, t_r), root), (*W(a_, t_e), root), (*W(a_, t_r), hs)]
+            sh.face_dir(tri, 'spine_wall', [(0, 0), (1, 0), (0, 0.5)], (*(np.array(sl) * sg), 0.0))
     # close-out r3 fix 2 (verifier v2, pre-existing at LOD0 / LOD1: 878 back-face hits on sb_roof): the spine stretch of the 1.2-m
     # roof sandwich was open at both roof ends (no fascia between the root-level soffit edge and the hip facets, rays ran inside
     # it to the backs of the roof faces) and had no underside: a spine soffit at the cantilever-root soffit level and two end

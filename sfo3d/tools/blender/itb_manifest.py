@@ -19,7 +19,11 @@ CONFLICTS = [
          note='consistent only at the upper ends; the drawings draw the NAIP value'),
     dict(item='"building height 144 ft"', model='not used', other='SOM / Enclos, datum unknown [pub]', note='BI-02'),
     dict(item='BA-G bridge-head bump-outs vs the app walkways (review r2)', model='6.5 m [obs photo a2, low; r2 re-reading 6.5-7.1 m]',
-         other='gates.js walkway 5.2-8.46 m (DEPARTURE_LEVEL 5.4 [inf] + WALK_H 3.0)',
+         status='resolved (close-out r3: bridges lowered BA-G to DEPARTURE_LEVELS.G 2.7 [obs a2, low]; fix 2 re-check)',
+         resolution='js/live/gates.js DEPARTURE_LEVELS.G 2.7 m: the BA-G walkways top at 5.71-5.87 m at the attach points, under the 6.5-m '
+                    'bump-out roofs (verify_itb.py walkway_vs_host_roof from tools/blender/app_bridges.json, generated from the current '
+                    'gates.js: 0 of 24 BA-G and 0 of 21 BA-A walkways above their host roof, 7 Nov 2026)',
+         other='(round-2 state) gates.js walkway 5.2-8.46 m (DEPARTURE_LEVEL 5.4 [inf] + WALK_H 3.0)',
          note='NOT raised to ~9 m: on a2 the 6.5-m outline (solved camera) lies on the observed bump-out roof with its rooftop unit '
               'while a 9-m outline falls on the gate-room glazing behind; an upper-storey 2-lite window sits above bump-out B2 at '
               '~9.8-12.1 m; the walkway roofs meet the bump-outs ~1-1.4 m BELOW their roof edge. So the walkway head is the inferred '
@@ -138,6 +142,7 @@ REQUESTS = [
          'L3 = 11.5, the deck L3 - 0.15. Then re-run the roadway trim (b3d_integrate occupancy) against the new itb.glb (curb 4.33 m '
          'wide, north bar now elevated from 10.5 m)' % (str([round(c, 2) for c in G.UVw(-107.4, G.KERB_V)]), str([round(c, 2) for c in G.UVw(107.4, G.KERB_V)]))),
     dict(to='bridges (js/live/gates.js)', what='lower the Boarding Area G fixed walkways (top <= 6.0 m at the attach point)',
+         status='done (close-out r3: DEPARTURE_LEVELS.G 2.7, walkway tops 5.71-5.87 m; checked fix 2)',
          why='DEPARTURE_LEVEL 5.4 [inf] + WALK_H 3.0 = 8.46-m walkway tops dock into 6.5-m bump-outs (photo a2: bump-out roofs 6.5-7.1 m '
              'with rooftop units, the walkway roofs ~1-1.4 m below the bump-out roof edge, the dark apron level to ~3.0 m, a light band to '
              '~4.6 m): at G3, G4, G7, G8, G9-1 the walkway pierces the bump-out roof, elsewhere its upper 2 m stands open above it. '
@@ -208,7 +213,7 @@ def entry(build, ver, parts, mats):
 
 
 def keep_renders(old, new):
-    for k in ('renders', 'render_check', 'renders_updated', 'qa'):
+    for k in ('renders', 'render_check', 'renders_updated', 'qa', 'closeout_r3', 'closeout_r3_fix2'):   # (fix 2: close-out records survive)
         if old and old.get(k):
             new[k] = old[k]
     return new

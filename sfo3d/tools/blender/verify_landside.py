@@ -162,6 +162,10 @@ class Checks:
                               tol=t if not isinstance(t, float) else round(t, 3), ok=bool(ok), src=src, unit=unit))
 
 
+LOD2_BF_MAX = 60          # back-face hits per LOD2 node at 0.5-m ray spacing (~15 m2 of visible back faces) [our gate]
+LOD2_BF_RESIDUAL = {}     # node -> recorded count of a known, documented residual (filled from the fix-2 measurement)
+
+
 def run(path):
     j, b, size = load_glb(path)
     S, BN, Mr = scene(j, b)
@@ -656,6 +660,23 @@ def run(path):
     C.add('SFO Museum taxiway polygons inside the landside footprint', float(sum(per.values())), 0.0, 1.0, 'data/sfo_airport.json taxiways', 'm2')
     plaus['taxiway_overlap_m2'] = {k: v for k, v in per.items() if v > 0}
     plaus['taxiway_min_m'] = {k: round(tw.distance(f), 1) for k, f in fps.items() if not k.startswith('airtrain')}
+    # ---------------- LOD2 see-through (close-out r3 fix 2, verifier v2: the Superbay LOD2 was an open shell for two rounds and no
+    # check saw it - verify only compared LOD2 tops with LOD0). tools/blender/bf_rays.py (the verifier's numeric back-face rays:
+    # 16 azimuths x 1-m slices + vertical rays, 0.5 m) on the LOD2 subtree with the LOD2 neighbours that hide internal edges in
+    # the app (itb_lod2 / domestic_lod2 / roadways_lod2). Gate: no node above LOD2_BF_MAX hits, except the residuals recorded
+    # below at their measured count (pre-existing, listed in the manifest; a regression above it fails)
+    try:
+        import bf_rays as BF
+        ctx = [os.path.join(ROOT, 'data', 'buildings3d', f) for f in ('itb_lod2.glb', 'domestic_lod2.glb', 'roadways_lod2.glb')]
+        r2 = BF.run('+'.join([path] + [c_ for c_ in ctx if os.path.exists(c_)]), lod=2, sp=0.5, H=45.0)
+        per = {k: v['n'] for k, v in r2['nodes'].items()}
+        bad = {k: v for k, v in per.items() if v > LOD2_BF_RESIDUAL.get(k, LOD2_BF_MAX)}
+        C.add('LOD2 see-through: back-face first hits per node (worst %s; residuals %s)' % (max(per.items(), key=lambda kv: kv[1]) if per else '-',
+              {k: per.get(k, 0) for k in LOD2_BF_RESIDUAL}), max(per.values()) if per else 0, LOD2_BF_MAX, ok=not bad, unit='hits',
+              src='bf_rays.py with LOD2 context; > %d hits = an open shell (Superbay LOD2 r1-r3: 15,084); failing: %s' % (LOD2_BF_MAX, bad or 'none'))
+        plaus['lod2_backface'] = dict(total=r2['total'], per_node=per, context=[os.path.basename(c_) for c_ in ctx if os.path.exists(c_)])
+    except Exception as e:  # noqa: BLE001
+        C.add('LOD2 see-through (back-face rays)', str(e), 'error', ok=False)
     rows = C.rows
     res = dict(file=os.path.relpath(path, ROOT), bytes=size, n_checks=len(rows), n_fail=sum(1 for r in rows if not r['ok']), plans=plans, cars=cars,
                plausibility=plaus, checks=rows)

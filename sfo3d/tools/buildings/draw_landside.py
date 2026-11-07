@@ -389,7 +389,7 @@ def garage_elev(V, x0, k, title):
     pk = scan[0]
     sc = (f'{pk["h_if_true_footprint_m"]} m = NAIP 2-D roof shift {pk["dx_m"]} m [obs, low]' if pk['score'] > 1.2 * scan[1]['score'] else
           f'{pk["h_if_true_footprint_m"]} m = NAIP 2-D roof shift {pk["dx_m"]} m - NOT a clear maximum [obs, very low]')
-    V.leader((ux, hi), 3, 7, f'roof deck NOT measured [unk]; dotted at the drum ring {hd} m; candidates:\n{hd} ({g["drum_rng"][0]}-{hi}) drum ring band [obs, low]; '
+    V.leader((ux, hi), 3, 7, f'round-1 reading (SUPERSEDED by the a2 overlay, solid): dotted at the drum ring {hd} m; candidates:\n{hd} ({g["drum_rng"][0]}-{hi}) drum ring band [obs, low]; '
              f'{sc};\n25-30 m AirTrain-photo reading [DISPUTED]; {lo:.1f}-{8 * GAR_PITCH[1]:.1f} m = 8 rises x 3.05-3.5 m\n'
              '(typical parking pitch, NOT published) [inf]. 9 levels [pub]; clearance 8 ft 2 in [pub]', 'unk', fs=3.4)
     V.text((x0 + Lb * 0.62, 12.0), 'light precast panels in a square grid; perforated metal screens\nwith horizontal slots over the parking levels [obs spec garage_ag_facade];\n'
@@ -734,4 +734,21 @@ def sheet_elev():
            '"TANK" is identified with the station stair / elevator tower only by inference [inf].')
     S.note('Photos (reference only, refs/cache/buildings/review_likeness): l4 Grand Hyatt east face (Gregory Varnum 2019), l5 RCC '
            'station (Pi.1415926535 2021), a2 aerial (Pi.1415926535 2025), l3 hangar (BrokenSphere 2009), all CC BY-SA.')
+    fix2_notes(S)
     return S.finish()
+
+
+def fix2_notes(S):
+    """close-out r3 fix 2 (verifier v5): the 3-D landside items the BL sheets do not draw (review r1 / r2 requests_to_drawings
+    and the AirTrain wye), stated on the sheet with their 3-D source and tag (tools/blender/landside_manifest.CLOSEOUT_R3_FIX2 v5);
+    they are deviations_from_sheets until drawn."""
+    import sys as _s
+    _s.path.insert(0, os.path.join(ROOT, 'tools', 'blender'))
+    try:
+        import landside_manifest as LM
+    except Exception:  # noqa: BLE001  (bpy-free module; a missing dependency only drops the notes)
+        return
+    rec = next((r for r in LM.CLOSEOUT_R3_FIX2 if r.get('id') == 'v5'), None)
+    for q in (rec or {}).get('sheet_requests', []):
+        if q.get('status') != 'deviation_from_sheets': continue
+        S.note(f"NOT DRAWN (3-D state, close-out r3 fix 2) - {q['request']}: {q['model']}; sheets: {q['sheets']}")

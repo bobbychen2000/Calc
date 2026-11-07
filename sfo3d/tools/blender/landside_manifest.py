@@ -139,6 +139,51 @@ REVIEW_R2 = [
 
 
 # close-out round 3 (2026-11-06; docs/requests/closeout3_findings.json groups.buildings)
+# close-out round 3, fix round 2 (verifier round 1 findings v2-v5 for the landside group, 7 Nov 2026)
+CLOSEOUT_R3_FIX2 = [
+    dict(id='v2', item='Superbay LOD2 an open shell (walls to 25.8 m under a 27.0-39.6 m roof, spine roof floating at 41.1 m; 15,084 '
+         'back-face hits since round 1)', disposition='fixed',
+         change='landside_geom.superbay LOD2 is a closed coarse solid: plane cantilever roofs with a 1.2-m fascia and soffit, the flat '
+                'spine roof with its side walls (root -> spine top) and end walls, outline walls up to the soffit (top sampled along every '
+                'edge, split at the spine lines). LOD0 / LOD1 (pre-existing 878 hits): the spine stretch of the roof sandwich got its soffit '
+                'and two end fascias, the spine walls their triangular ends under the hips. verify_landside gained a LOD2 see-through gate '
+                '(tools/blender/bf_rays.py = the verifier\'s numeric back-face rays, LOD2 context itb / domestic / roadways); garage LOD2 '
+                'portal recesses got jambs / head / sill'),
+    dict(id='v3', item='parked cars overlapping (16 pairs, worst 2.44 m2) / LOD1 cars 0.3 m above the deck', disposition='fixed',
+         change='landside_cars.resolve_overlaps: every car\'s oriented footprint (its shape\'s length x width, + 0.025 m) against the cars '
+                'placed before it on the deck and on the building\'s other decks (+-1.5 m): a car that overlaps takes the next shorter shape '
+                '(pickup -> SUV -> sedan), else it is dropped [inf: which car gives way]; LOD1 car bodies start at the deck (no skirt there). '
+                'verify_landside tests the oriented plan hulls of every LOD0 instance (pairs) and the LOD1 body bottom'),
+    dict(id='v4', item='Garage A station block: open south side shows the back of the single-sided east wall (+72 back-face hits)',
+         disposition='fixed', change='an inner lining of the east (portal) face over the hall / track band, 0.05 m inside, with the same '
+                                     'track openings, facing into the hall (dark interior)'),
+    dict(id='v5', item='landside drawing requests not on BL-01..03 and the AirTrain wye', disposition='partly (recorded as deviations, not drawn)',
+         change='each request is recorded below with the sheet state, the 3-D value and its tag; the BL sheets were not redrawn in this '
+                'round', sheet_requests=[
+             dict(request='Garage A / G heights (a2): parapet 29.10 / 27.52, deck 26.7 / 25.3, drum ring 31.0 (A)', sheets='BL-03: a2 overlay '
+                  'drawn (draw_landside.garage_r3, close-out r3); the body label still says dotted at the drum ring 39.6 m', model='a2 values '
+                  '[obs low]', status='drawn (label residual)'),
+             dict(request='Garage A station block (top, slots, depth)', sheets='not drawn', model='manifest landside.buildings.garage_a.anchors.'
+                  'station_block: top = the parapet (r2), slots, depth 27 m [obs l1 low / depth inf]', status='deviation_from_sheets'),
+             dict(request='SFO BART station (plan, levels) as a spec item + sheet', sheets='not drawn (no spec item)', model='buildings.'
+                  'bart_station.dims: plan OSM 221663595 [obs], top / colonnade / glazed band [obs a2 low]', status='deviation_from_sheets'),
+             dict(request='RCC station tower D 4.7 and platform 8.0 -> rake (l5 fit) and platform 8.84 m', sheets='BL-02 E draws D 6.5 [inf]',
+                  model='airtrain.rcc_tower / stations RCC [obs l5 low]', status='deviation_from_sheets'),
+             dict(request='drum stair / elevator towers (positions / heights)', sheets='not drawn', model='buildings.garage_a/garage_g.'
+                  'anchors.towers / tower_top [obs a2 / i2 low]', status='deviation_from_sheets'),
+             dict(request='central-garage roof rims / lobes / boxes', sheets='not drawn', model='buildings.central_garage (r1 / r2 lobes, '
+                  'level5, poles) [obs NAIP]', status='deviation_from_sheets'),
+             dict(request='Garage A NE rotunda and penthouse (a2)', sheets='not drawn', model='buildings.garage_a.anchors.rotunda / penthouse '
+                  '[obs a2 low]', status='deviation_from_sheets'),
+             dict(request='walkways east of the Garage A station (l1) and the open gap', sheets='not drawn', model='airtrain decks: narrow '
+                  'walkways (review r2) [obs l1 low]', status='deviation_from_sheets'),
+             dict(request='BART band / colonnade (a2)', sheets='not drawn', model='buildings.bart_station.dims.colonnade / glazed_band [obs a2 '
+                  'low]', status='deviation_from_sheets'),
+             dict(request='three-track AirTrain approach / wye west of x -1592 (review r1 finding 2)', sheets='not drawn or separated',
+                  model='airtrain tiles from data/sfo_landside.json guideway centrelines [obs OSM]', status='deviation_from_sheets'),
+         ]),
+]
+
 CLOSEOUT_R3 = [
     dict(id='buildings-3', item='AirTrain piers in road decks / caps 3.25 m over interchange_2_2', disposition='fixed',
          change='pier sites are tested against data/sfo_landside.json carriageways (OSM centrelines buffered by their widths, at grade and '
@@ -262,13 +307,14 @@ def entry(build, ver, bldgs, tiles, mats):
                                              'Garage A station (l1) and the open gap; the tail polygon\'s structure [unk]', 'RCC tower rake (l5 fit) '
                                              'and platform 8.84 m', 'BART band / colonnade (a2)']),
         closeout_r3=CLOSEOUT_R3,
+        closeout_r3_fix2=CLOSEOUT_R3_FIX2,
         scene_not_modelled=dict(note='large airport buildings outside every asset (OpenStreetMap, ODbL 1.0, (c) OpenStreetMap contributors; '
                                      'refs/cache/osm): no spec / sheet yet - for a later spec round', buildings=G.R1.get('osm', {}).get('not_modelled', [])),
     )
 
 
 def keep_renders(old, new):
-    for k in ('renders', 'render_check', 'renders_updated', 'qa'):
+    for k in ('renders', 'render_check', 'renders_updated', 'qa', 'closeout_r3_fix2'):   # (fix 2 records survive a rebuild)
         if old and old.get(k):
             new[k] = old[k]
     return new

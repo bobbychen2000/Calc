@@ -124,3 +124,55 @@ photo to aim a material-only lift at).
 - T2-garage connector level: modelled 9.43-14.38 m from the roadway clearance [inf]; the NAIP shadow suggests a top near
   24 m. A photo of the T2 curb would settle it.
 - Posted vertical clearance on the domestic arrivals level (R3.2).
+
+## Round 3 - fix round 2 (7 Nov 2026; verifier round-1 findings v1-v10 for buildings)
+
+Rebuilt in this round (one heavy-lock hold, `out/buildings3d/c3f2/chainH.sh`): `domestic.glb` / `domestic_lod2.glb` (v1),
+`landside.glb` / `landside_lod2.glb` + `lsu_*` (v2-v4, `b3d_split.py` re-run), `itb.glb` / `itb_lod2.glb` and `tower.glb` /
+`tower_f1.glb` / `tower_lod2.glb` (one glass AO rule, v8). Numbers: `docs/research/buildings3d.md` ("Close-out round 3, fix round 2"
+in each group) and `manifest.json#<group>.closeout_r3_fix2`.
+
+### R3.11 Integration: re-run after the fix-2 rebuilds (all four buildings assets changed)
+
+`integration.json` pins the asset sha1s; all four groups were rebuilt. Order as R3.5: `roadways` (unchanged unless R3.12) ->
+`python3 tools/blender/verify_landside.py` -> `b3d_integrate.py` / `b3d_lod2_check.py`. What changed in plan / height:
+- domestic: no footprint change. Bridge-attachment parts follow the per-pier walkway levels (below); the 23 BA-C / BA-D
+  bulkheads above the roofs and the BA-D overhang notches at the doors are gone; the BA-C / BA-D facade bands moved to the photo
+  a1 ratios. Drum notches are now taken per drum from its rotunda floor `Hr` (the BA-D roofs are no longer notched round the
+  D4 / D5 / D14 / D15 / D16 drums: drum tops 6.70-6.75 m under the 7.69-m slab underside).
+- landside: Superbay LOD2 closed (walls up to a soffit, fascia, spine walls); Superbay LOD0 / LOD1 spine soffit + end fascias +
+  hip-end walls; garage LOD2 drum-ring inner faces and portal recess sides; Garage A station-block east-face lining; central-garage
+  sliver linings; car instances de-overlapped (oriented footprints; some dropped or shortened) and the LOD1 cars on the deck.
+- itb / tower: glass materials no longer carry the glTF occlusion texture (geometry unchanged).
+
+### R3.12 Integration: T2 departures curb - close the 0.13-0.26 m slot at the deck edge (verifier v7)
+
+The verifier's sections every 7.5 m along z 165-255 find the `roadways.glb` `L0_domestic_departures` deck east edge 0.13-0.26 m
+short of the domestic T2 sidewalk's west (kerb) edge, and the deck end has no edge face, so a slot runs along the whole T2 curb
+(section z 210: deck 3.53-4.73 m ends at x -754.16; sidewalk 4.27-4.88 m with its kerb face at -754.02). The sidewalk stands on the
+NAIP-derived curb line (`tools/blender/dom_geom.py` `T2_SIDEWALK_POLY`, the deck-side edge 5.85 m off the T2 face line [obs NAIP
+2024 roof edge + inf offset]) and is not moved by this track. Please extend the deck to the sidewalk edge (or add a kerb return /
+edge face) and add T2 to the `curb_gap` check (it covers only the ITB plate today).
+
+### R3.10 (rewritten) Environment / engine: BA-B glass vs Cycles - the reflected apron, not the sky (verifier v8)
+
+The round-3 R3.10 compared the sky pixels of the app and Cycles frames. That does not test what the panes reflect: the logged
+pierB camera (`out/buildings3d/c3/appB2/c3_info.json`: eye (-1018.5, 28.3, 768.7), target y 5.435, pitch 12 deg down, fov 50)
+looks at vertical BA-B panes, so the mirror direction is ~12 deg BELOW the horizon - the apron / the IBL lower hemisphere. Please
+compare the app's environment lower hemisphere / ground reflection (or SSR, where the tier has it) with Cycles' reflected sunlit
+apron at this camera and sun (az 133.9 / el 41.6): Cycles BA-B wall median (58, 64, 71) vs app (27, 35, 36) low / (29, 36, 37)
+high. Glass AO is no longer a factor in any building asset: ONE rule for all four assets since fix 2 - no glTF occlusion texture on
+a glass material (`build_domestic.py`, `build_itb.py`, `build_landside.py`, `build_tower.py`; the bake image stays in the
+material only as the bake target). three.js applies `aoMap` to the indirect diffuse and, via its specular occlusion, to the IBL
+reflection, while Cycles ignores the glTF occlusion - so AO on glass made the two renderers disagree by construction.
+
+### R3.13 Bridges: the domestic asset now reads `js/live/gates.js` through a dump (verifier v1)
+
+`tools/blender/app_bridges.mjs` (Node, no browser, ~1 min) runs gates.js and writes `tools/blender/app_bridges.json`: per bridge
+the pier level `Hb` (DEPARTURE_LEVELS), the rotunda floor `Hr`, the fixed-walkway polyline with its floor heights and the rest
+solids, plus the SHA-256 of its inputs. `dom_geom.py` sizes every door frame, vestibule, overhang notch, drum notch and
+bridge-entered pod from it; `verify_domestic.py`, `verify_domestic_r2.py` and `verify_itb.py` test the walkways in their own
+height bands from it and FAIL when the dump is stale. Cross-checked against the browser extraction `out/draw/scene2d.json`
+(7 Nov 10:35Z): 131 / 131 bridges, Hb / Hr / rotR within 0.0005 m. After any change to DEPARTURE_LEVELS, the walk polylines or
+the rotunda heights, please re-run `node tools/blender/app_bridges.mjs` and tell this track (domestic rebuild). Your R3.2.1
+(bulkheads, door surrounds, vestibules, concourse glazing at the photo ratios) is done.
