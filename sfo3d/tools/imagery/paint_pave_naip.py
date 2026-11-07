@@ -29,7 +29,9 @@ also covers 60 m round the 5 m cells where ADS-B shows an aircraft on the ground
 vegetation and >= 50 % smooth, every pixel that is not soil / vegetation / a building (SFO Museum or OSM) is pavement;
 (c) within 25 m of a vehicle stay, smooth unsaturated pixels, or pixels in a >= 60 % grey / <= 5 % soil window, connected
 to the pavement (the ARFF apron); (d) within 10 m of a cell where >= 2 aircraft were on the ground, the window of (b)
-also counts bright (V >= 245) grey pixels - a fresh-concrete slab on a taxilane, never a roof under an aircraft. The green
+also counts bright (V >= 245) grey pixels - a fresh-concrete slab on a taxilane, never a roof under an aircraft; (e) a pixel
+in ANY qualifying window of (b) (not only the one centred on it: light shoulders / island borders beside soil) counts when it
+is near-neutral, not soil / vegetation / building and locally smooth (2026-11-07). The green
 paint also gets the inferred old-J island of FAA AL-375 2611 (finding static-3; paint `src`).
 
     python3 tools/imagery/paint_pave_naip.py          # writes data/sfo_paint.* and data/sfo_pavement.*
@@ -169,11 +171,28 @@ def main(preview=False, dump=None):
     ggreyb = (spr_ < 22) & (lum_ > 70)              # (d) below: the same without the V cap (bright concrete)
     gsoil = (Rc_ - Bc_ > 38) & (Rc_ - Gc_ > 5) & (Rc_ > 110)
     gveg = (Gc_ - Rc_ > 6) & (Gc_ - Bc_ > 0) & (lum_ < 150)
+    ext_px = (spr_ < ENV_EXT_SPR) & (V < 245) & (Rc_ - Bc_ <= ENV_EXT_RB) & (lum_ > 70)   # (e) pixel test, below
     del Bc_, Gc_, Rc_, spr_
     def wmean(m): return cv2.blur(m.astype(np.uint8) * 255, (ENV_WIN, ENV_WIN)).astype(np.float32) / 255.0
     env = (wmean(ggrey) >= ENV_GREY) & (wmean(gsoil) <= ENV_SOIL) & (wmean(gveg) <= ENV_SOIL) & (wmean(lap < 3.5) >= ENV_SMOOTH)
     obld = osm_buildings(fill, H, W)
-    envadd = env & ~gsoil & ~gveg & (lum_ > 40) & (obld == 0)
+    ezm = np.zeros((H, W), np.uint8); fill(ezm, end_zone_rings())     # runway end zones: no round-3 additions
+    envadd = env & ~gsoil & ~gveg & (lum_ > 40) & (obld == 0) & (ezm == 0)
+    # (e) close-out round 3, 2026-11-07 (static-1 residual): the window above is CENTRED on the pixel, so a light paved
+    # shoulder / island border next to soil fails it although a 25 m cell containing it passes the reviewers' test (the
+    # replay's 25 m cell (-550, -375): NAIP 92 % grey / 1 % soil, 76 % paved, 69 aircraft fixes of 11 aircraft; its island
+    # border is light concrete with yellow stripes, which also fail the 3 m texture test). A pixel inside ANY qualifying
+    # 25 m window (the window centres dilated by the window) is pavement too when it is itself near-neutral (channel spread
+    # < ENV_EXT_SPR and V < 245, R - B <= ENV_EXT_RB, lum > 70: not light soil, water or shadow), not soil / vegetation /
+    # a building, and its own 5 m window is >= 50 % smooth (not the rip-rap of the seawalls). Inferred. The runway end zones
+    # (blast pads / EMAS beds, js/live/airport.js END_ZONES: the app draws them itself) take no round-3 addition (the
+    # first version of (e) paved the light EMAS beds beyond 1L / 1R).
+    envany = cv2.dilate(env.astype(np.uint8), np.ones((ENV_WIN + 1, ENV_WIN + 1), np.uint8)) > 0
+    sm_loc = cv2.blur((lap < 3.5).astype(np.uint8) * 255, (ENV_EXT_SMW, ENV_EXT_SMW)) >= 128
+    envext = envany & ~env & ext_px & sm_loc & ~gsoil & ~gveg & (obld == 0) & (ezm == 0)
+    print('  any-window envelope (e): %.2f ha of window pixels' % ((envext & ~envadd & (pav == 0) & (bld == 0)).sum() * RES * RES / 1e4))
+    envadd |= envext
+    del envany, sm_loc, envext, ext_px
     # (d) bright concrete on a taxilane: V >= 245 is left out of the window above because unmapped bright roofs then
     # classified as apron; but a fresh-concrete slab where aircraft taxi (realtime cell (-1050, 1025) south of Boarding Area
     # B: NAIP 94 % grey / 3 % soil, 772 off-pavement frames of 9 aircraft, a 25 x 50 m slab at V 245-255 with the taxi
@@ -181,7 +200,7 @@ def main(preview=False, dump=None):
     # the ground (ADS-B; an aircraft's antenna is never over a roof), the window counts bright grey pixels as grey too.
     envb = (wmean(ggreyb) >= ENV_GREY) & (wmean(gsoil) <= ENV_SOIL) & (wmean(gveg) <= ENV_SOIL) & (wmean(lap < 3.5) >= ENV_SMOOTH)
     near2 = cv2.dilate(agc2, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * int(AC_R / RES) + 1, 2 * int(AC_R / RES) + 1))) > 0
-    envbadd = envb & near2 & ~gsoil & ~gveg & (lum_ > 40) & (obld == 0) & ~envadd
+    envbadd = envb & near2 & ~gsoil & ~gveg & (lum_ > 40) & (obld == 0) & (ezm == 0) & ~envadd
     print('  bright-concrete envelope near aircraft cells (d): %.2f ha of window pixels' % ((envbadd & (pav == 0) & (bld == 0)).sum() * RES * RES / 1e4))
     envadd |= envbadd
     del lum_, envb, near2, envbadd, ggreyb
@@ -276,7 +295,7 @@ def main(preview=False, dump=None):
         nr = float(new_rule[m].mean())
         for poly in polys:
             pave_polys.append(poly); conc.append(bool(vmed >= 150))
-            SRC_C.append('naip' if nr < 0.1 else 'naip; %.0f %% from the close-out round 3 rules (cluttered-apron / bright-concrete envelope / '
+            SRC_C.append('naip' if nr < 0.1 else 'naip; %.0f %% from the close-out round 3 rules (cluttered-apron / any-window / bright-concrete envelope / '
                          'ADS-B aircraft ground cells / vehicle-stay pad: inferred)' % (100 * nr))
         big.append((round(len(ys) * RES * RES), world((xs.mean(), ys.mean())), round(vmed)))
     big.sort(reverse=True)
@@ -351,6 +370,25 @@ ENV_GREY, ENV_SOIL, ENV_SMOOTH = 0.88, 0.03, 0.5
 PAD_R, PAD_LAP, PAD_SMAX = 25.0, 3.0, 45   # vehicle-stay pads: radius (m), texture and HSV saturation limits
 PAD_GREY, PAD_SOIL = 0.6, 0.05             # ... or a 25 m window this grey with at most this much soil
 AC_R = 10.0               # m: (d) bright-concrete envelope only this close to a cell with >= 2 aircraft (2 ADS-B cells' width)
+ENV_EXT_SPR, ENV_EXT_RB, ENV_EXT_SMW = 30, 25, 10   # (e) any-window envelope: channel spread, R - B, local smooth window (px = 5 m)
+
+
+def end_zone_rings():
+    """the app's runway end zones (js/live/airport.js END_ZONES / EMAS_SETBACK / EMAS_W, parsed from the file so the two
+    cannot drift; RWY_W 60.96 m = js/world/airfield.js) as world rectangles beyond each runway end (FAA NASR ends,
+    tools/geo_frame.py RWY_ENDS = js/geo.js; rw index = js/geo.js RUNWAYS order). Blast pad: runway width x len; EMAS:
+    (EMAS_W + 4) x (setback + len + 3), the app's own margins."""
+    src = open(os.path.join(ROOT, 'js', 'live', 'airport.js')).read()
+    body = re.search(r'export const END_ZONES = \[(.*?)\];', src, re.S).group(1)
+    setback = float(re.search(r'EMAS_SETBACK = ([0-9.]+)', src).group(1)); emas_w = float(re.search(r'EMAS_W = ([0-9.]+)', src).group(1))
+    rings = []
+    for z in re.finditer(r'\{([^}]*)\}', body):
+        kv = dict((k.strip(), float(v)) for k, v in re.findall(r'(\w+):\s*([-0-9.]+)', z.group(1)))
+        a_, b_ = GF.RWY_PAIRS[int(kv['rw'])]; e_, o_ = (a_, b_) if int(kv['end']) == 0 else (b_, a_)
+        pe, po = np.array(GF.end_world(e_)), np.array(GF.end_world(o_)); d = (pe - po) / np.linalg.norm(pe - po); n = np.array([-d[1], d[0]])
+        L, hw = (kv['len'], 60.96 / 2) if int(kv['type']) == 1 else (setback + kv['len'] + 3, emas_w / 2 + 2)
+        rings.append([list(pe + n * hw), list(pe + d * L + n * hw), list(pe + d * L - n * hw), list(pe - n * hw)])
+    return rings
 
 
 def osm_buildings(fill, H, W):

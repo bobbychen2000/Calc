@@ -323,7 +323,9 @@ item('baf.dof', 'boarding_area_f', 'FAA DOF building points on BA-F', dict(obst_
      note='06-035331 (-1027.2, -211.2) roof of the NE arm; 06-035332 (-1022.1, -243.8) 16 ft at the arm tip (lower end structure or bridge rotunda)')
 te = HR['ba_f_ne_arm'].get('true_edges', {})
 item('baf.roof_edges', 'boarding_area_f', 'Lean-free roof edges of the NE arm (world lines)', te, 'm', 'obs', ['naip'], 'medium',
-     note='ESE edge 1.8 m outside the level-2 outline, WNW edge 1.3 m inside')
+     note='ESE edge 1.83 m outside the level-2 outline along its length (it touches the outline only at its end points, on the '
+          'corner jogs), WNW edge 0.96-1.31 m inside (close-out r3 2026-11-07, shapely at 10-90 % of the lines; the 2026-11-04 '
+          '"on the outline" note was read at the end points only)')
 
 # ============================================================================================ misc
 item('garage_antenna', 'context', 'DOF 06-039216 "BLDG 130 ft" near T2/T3 is not a terminal', '130 ft AGL antenna on the Short-Term (central) Parking Garage, FAA study 2012-AWP-7455-OE',

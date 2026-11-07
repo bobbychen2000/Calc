@@ -2,9 +2,9 @@
  "_about": "SFO Live 3D building assets (glTF 2.0, built with Blender from the verified 2-D sheets); one key per asset group; frame ltp-nad83-2011 (x east, y up, z south, m from the ARP); see docs/research/buildings3d.md",
  "itb": {
   "asset": "data/buildings3d/itb.glb",
-  "bytes": 6466848,
-  "built": "2026-11-05T21:39:18+00:00",
-  "git": "17bbd9b+dirty",
+  "bytes": 6464140,
+  "built": "2026-11-07T01:55:44+00:00",
+  "git": "c68caee+dirty",
   "generator": "tools/blender/build_itb.py (bpy 5.0.1, Cycles CPU AO bake); geometry tools/blender/itb_geom.py",
   "reference": "2-D sheets BI-01..04 (docs/drawings/buildings/README.md), drawn by tools/buildings/draw_itb.py, imported by itb_geom.py",
   "spec": "tools/buildings/spec_itb.json (+ itb_naip_measurements.json, itb_pods.json)",
@@ -37,7 +37,7 @@
     "node": "LOD0",
     "switch_m": 0.0,
     "tris": 69287,
-    "verts": 75125,
+    "verts": 75123,
     "ao_atlas": "itb_ao_A (shared by LOD0 / LOD1 shell meshes)"
    },
    {
@@ -45,7 +45,7 @@
     "node": "LOD1",
     "switch_m": 450.0,
     "tris": 36927,
-    "verts": 43105,
+    "verts": 43103,
     "ao_atlas": "itb_ao_A (shared by LOD0 / LOD1 shell meshes)"
    },
    {
@@ -53,7 +53,7 @@
     "node": "LOD2",
     "switch_m": 1600.0,
     "tris": 5336,
-    "verts": 7870,
+    "verts": 7866,
     "ao_atlas": "itb_ao_B"
    }
   ],
@@ -64,7 +64,7 @@
   ],
   "lod2_glb": {
    "path": "data/buildings3d/itb_lod2.glb",
-   "bytes": 578712
+   "bytes": 577084
   },
   "textures": [
    {
@@ -84,7 +84,7 @@
      2048
     ],
     "mime": "image/png",
-    "bytes": 2126743,
+    "bytes": 2125744,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    },
    {
@@ -184,7 +184,7 @@
      512
     ],
     "mime": "image/png",
-    "bytes": 155006,
+    "bytes": 153538,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    }
   ],
@@ -575,8 +575,8 @@
      0,
      1
     ],
-    "bake_s": 255.2,
-    "mean": 0.672,
+    "bake_s": 47.4,
+    "mean": 0.671,
     "p2": 0.0,
     "samples": 48,
     "distance_m": 10.0,
@@ -587,8 +587,8 @@
     "lods": [
      2
     ],
-    "bake_s": 11.9,
-    "mean": 0.694,
+    "bake_s": 2.0,
+    "mean": 0.691,
     "p2": 0.0,
     "samples": 48,
     "distance_m": 10.0,
@@ -2717,7 +2717,7 @@
     },
     {
      "check": "roadway decks under the elevated bar: min clearance (roadways.glb)",
-     "model": 5.465,
+     "model": 5.452,
      "drawing": 4.6,
      "dev": null,
      "tol": null,
@@ -2771,7 +2771,7 @@
     },
     {
      "check": "bridge walkways (beyond 1.5 m) + rotundas overlapping the 3-D footprint (48 bridges)",
-     "model": 12.87,
+     "model": 12.244,
      "drawing": 0.0,
      "dev": null,
      "tol": null,
@@ -3326,6 +3326,13 @@
     "what": "review r2: the i4 camera with a 2x lens (~4.4 px/m, the full-size photo resolution); itb_cmp_i4z.png pairs the photo centre",
     "samples": 48,
     "note": "local (out/ is gitignored); comparison sheets with photo pixels stay local"
+   },
+   {
+    "view": "i4_c3",
+    "file": "out/buildings3d/itb_i4_c3.png",
+    "what": "landside perspective approximating photo i4 (DimiCalifornia 2005, PD); itb_cmp_i4.png side by side",
+    "samples": 48,
+    "note": "local (out/ is gitignored); comparison sheets with photo pixels stay local"
    }
   ],
   "render_check": {
@@ -3336,7 +3343,7 @@
    "centre_max_abs_dev_m": 0.463,
    "note": "silhouette = topmost opaque pixel of the orthographic west render (LOD0, alpha pass) vs BI-02 roof_line(u); resolution 1 px = 0.28 m; in the centre the lens glass / arch form the top"
   },
-  "renders_updated": "2026-11-05T21:58:15+00:00",
+  "renders_updated": "2026-11-07T02:12:03+00:00",
   "qa": {
    "gltf_validator": {
     "tool": "Khronos glTF-Validator 2.0.0-dev.3.10 (node tools/blender/tower_validate.mjs <glb>)",
@@ -6455,7 +6462,9 @@
     "item": "BA-F ESE roof edge",
     "model": "the drawn lean-free line (draw_data.dom_true_edges, BD-01; BD-02 draws the NE arm 27.0 m between the lines): 1.83 m outside the level-2 outline along the face",
     "other": "spec baf.roof_edges note / README round 2: \"ESE on the outline (+0.01 / -0.02)\"",
-    "note": "that note was measured at the line END points, where the line meets the outline's corner jogs; at 25 / 50 / 75 % of the line it is 1.83 m outside (checked 2026-11-05). The 3-D follows the drawn line; the spec note should be corrected by the drawings group"
+    "note": "that note was measured at the line END points, where the line meets the outline's corner jogs; at 25 / 50 / 75 % of the line it is 1.83 m outside (checked 2026-11-05). The 3-D follows the drawn line; the spec note should be corrected by the drawings group",
+    "status": "resolved (spec note corrected, close-out r3)",
+    "resolution": "tools/buildings/spec_domestic.json baf.roof_edges note corrected 2026-11-07 (and build_spec_domestic.py): the ESE line is 1.83 m outside the level-2 outline at 10-90 % of its length, on it only at its end points"
    },
    {
     "item": "T1 Center landside face",
@@ -8799,9 +8808,9 @@
  },
  "landside": {
   "asset": "data/buildings3d/landside.glb",
-  "bytes": 21233424,
-  "built": "2026-11-06T05:42:33+00:00",
-  "git": "d10b454",
+  "bytes": 21128220,
+  "built": "2026-11-07T02:11:19+00:00",
+  "git": "c68caee+dirty",
   "generator": "tools/blender/build_landside.py (bpy 5.0.1, Cycles CPU AO bake); geometry landside_geom.py / landside_airtrain.py / landside_cars.py; textures landside_tex.py",
   "reference": "2-D sheets BL-01..03 (docs/drawings/buildings/README.md), drawn by tools/buildings/draw_landside.py, imported by landside_geom.py",
   "spec": "tools/buildings/spec_landside.json (+ landside_naip_measurements.json)",
@@ -8821,16 +8830,16 @@
   "lods": {
    "0": {
     "switch_m": 0.0,
-    "tris": 160713,
+    "tris": 159459,
     "instanced_car_tris": 168718,
-    "verts": 381799,
+    "verts": 379301,
     "draw_calls": 398
    },
    "1": {
     "switch_m": 450.0,
-    "tris": 85455,
+    "tris": 85433,
     "instanced_car_tris": 71894,
-    "verts": 217703,
+    "verts": 217669,
     "draw_calls": 358
    },
    "2": {
@@ -8854,7 +8863,7 @@
     "name": "landside_ao_B",
     "px": 2048,
     "mime": "image/jpeg",
-    "bytes": 1165988,
+    "bytes": 1165495,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    },
    {
@@ -8917,7 +8926,7 @@
     "name": "landside_ao_A",
     "px": 2048,
     "mime": "image/jpeg",
-    "bytes": 1350282,
+    "bytes": 1339301,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    },
    {
@@ -9330,7 +9339,7 @@
     "metallic": 0.15,
     "roughness": 0.55,
     "ior": 1.5,
-    "src": "obs photo l1 (perforated metal panels, horizontal slots); reads mid-grey at a distance (photo a2)",
+    "src": "obs photo l1 (perforated metal panels, horizontal slots); reads mid-grey at a distance (photo a2); close-out r3: doubleSided - a thin panel seen from inside the open levels (curved ends, a2 back-face QA) has a valid back",
     "normal_tile": "ls_n_screen",
     "base_tile": "ls_c_screen",
     "naip": null
@@ -9886,9 +9895,9 @@
   "ao": {
    "A": {
     "res": 2048,
-    "bake_s": 49.3,
+    "bake_s": 42.2,
     "mean": 0.412,
-    "p2": 0.001,
+    "p2": 0.006,
     "samples": 40,
     "distance_m": 8.0,
     "objects": 18,
@@ -9897,8 +9906,8 @@
    },
    "B": {
     "res": 2048,
-    "bake_s": 58.1,
-    "mean": 0.587,
+    "bake_s": 48.6,
+    "mean": 0.588,
     "p2": 0.0,
     "samples": 40,
     "distance_m": 8.0,
@@ -9908,7 +9917,7 @@
    },
    "C": {
     "res": 1024,
-    "bake_s": 20.9,
+    "bake_s": 18.5,
     "mean": 0.644,
     "p2": 0.0,
     "samples": 40,
@@ -11137,12 +11146,12 @@
     ],
     "tris": {
      "0": {
-      "tris": 20719,
+      "tris": 19465,
       "instanced_tris": 9220,
       "draws": 55
      },
      "1": {
-      "tris": 6057,
+      "tris": 6035,
       "instanced_tris": 3956,
       "draws": 51
      },

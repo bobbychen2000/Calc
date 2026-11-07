@@ -2150,12 +2150,18 @@
    ],
    "confidence": "medium",
    "status": "verified",
-   "note": "ESE lean-free roof edge on the level-2 outline (0.0 m), WNW edge 1.0-1.3 m inside it (shapely, 2026-11-04)",
+   "note": "ESE lean-free roof edge 1.83 m OUTSIDE the SFO Museum level-2 outline along its whole length (at 10-90 % of the line; it meets the outline only at its two end points, on the outline's corner jogs); WNW edge 0.96-1.31 m inside it (shapely, close-out r3 2026-11-07)",
    "corrected": {
     "field": "note",
-    "previous": "ESE edge 1.8 m outside the level-2 outline, WNW edge 1.3 m inside",
-    "date": "2026-11-04",
-    "reason": "shapely against the SFO Museum BA-F outline (data/sfo_airport.json) with draw_data.dom_true_edges: the ESE line lies ON the level-2 outline (+0.01 / -0.02 m at its ends), the WNW line 0.96-1.31 m inside it; 1.83 m is n_offset_from_line, the shift from the IMAGED face, not the offset from the outline (drawing review round 2)"
+    "previous": "ESE lean-free roof edge on the level-2 outline (0.0 m), WNW edge 1.0-1.3 m inside it (shapely, 2026-11-04)",
+    "date": "2026-11-07",
+    "reason": "close-out r3 (buildings-10; manifest domestic.conflicts \"BA-F ESE roof edge\"): the 2026-11-04 correction measured the ESE line at its END points only (+0.01 / -0.02 m), where it touches the outline's corner jogs; sampled at 10 / 25 / 50 / 75 / 90 % of its 52.4-m length the line is 1.83 m outside the outline (draw_data.dom_true_edges vs data/sfo_airport.json Boarding Area F) - the roof overhang that BD-01 / BD-02 draw and the 3-D follows",
+    "earlier": {
+     "field": "note",
+     "previous": "ESE edge 1.8 m outside the level-2 outline, WNW edge 1.3 m inside",
+     "date": "2026-11-04",
+     "reason": "shapely against the SFO Museum BA-F outline (data/sfo_airport.json) with draw_data.dom_true_edges: the ESE line lies ON the level-2 outline (+0.01 / -0.02 m at its ends), the WNW line 0.96-1.31 m inside it; 1.83 m is n_offset_from_line, the shift from the IMAGED face, not the offset from the outline (drawing review round 2)"
+    }
    }
   },
   {

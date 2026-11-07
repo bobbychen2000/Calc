@@ -78,7 +78,9 @@ MATS = {
     'concrete':       dict(rgb=(188, 185, 177), m=0.0, r=0.85, nrm=('ls_n_concrete', 0.4), src='inf (cast concrete spandrels)'),
     'concrete_lt':    dict(rgb=(204, 202, 194), m=0.0, r=0.82, nrm=('ls_n_concrete', 0.4), src='obs photo l2 (LTP 2 exposed frame) / l4 (Hyatt sign pier)'),
     'concrete_board': dict(rgb=(180, 176, 166), m=0.0, r=0.88, nrm=('ls_n_board', 0.8), src='obs photo l5 (board-formed concrete)'),
-    'screen':         dict(rgb=(236, 238, 238), m=0.15, r=0.55, tex='ls_c_screen', nrm=('ls_n_screen', 0.6), src='obs photo l1 (perforated metal panels, horizontal slots); reads mid-grey at a distance (photo a2)'),
+    'screen':         dict(rgb=(236, 238, 238), m=0.15, r=0.55, tex='ls_c_screen', nrm=('ls_n_screen', 0.6), double=True,
+                           src='obs photo l1 (perforated metal panels, horizontal slots); reads mid-grey at a distance (photo a2); close-out r3: '
+                               'doubleSided - a thin panel seen from inside the open levels (curved ends, a2 back-face QA) has a valid back'),
     'slot':           dict(rgb=(30, 32, 34), m=0.0, r=0.30, src='obs photo l1 (dark window slots of the station block)'),
     'screen_edge':    dict(rgb=(200, 202, 202), m=0.60, r=0.45, src='inf'),
     'interior':       dict(rgb=(40, 41, 43), m=0.0, r=0.95, double=True, src='inf (shaded parking interior behind the openings)'),

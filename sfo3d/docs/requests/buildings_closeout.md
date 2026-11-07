@@ -8,8 +8,9 @@ units, their `manifest.json` entries, `docs/drawings/buildings/**`. What changed
 
 ## Round 3 (close-out round 3, 6 Nov 2026; findings `docs/requests/closeout3_findings.json#groups.buildings`)
 
-Rebuilt in this round: `domestic.glb` / `domestic_lod2.glb` (05:39Z), `landside.glb` / `landside_lod2.glb` + `lsu_*` (05:43Z,
-`b3d_split.py` re-run), `itb.glb` / `itb_lod2.glb` (see R3.6). `integration.json` (03:59Z) and `roadways.glb` predate all three.
+Rebuilt in this round: `domestic.glb` / `domestic_lod2.glb` (6 Nov 05:39Z), `landside.glb` / `landside_lod2.glb` + `lsu_*` (6 Nov
+05:43Z, again 7 Nov 02:11Z after the back-face QA - R3.9; `b3d_split.py` re-run each time), `itb.glb` / `itb_lod2.glb` (7 Nov
+01:55Z, R3.6). `integration.json` (03:59Z on 6 Nov) and `roadways.glb` predate all three.
 
 ### R3.1 Integration: rebuild `roadways.glb`, then re-run `b3d_integrate.py` / `b3d_lod2_check.py` (buildings-2, major)
 
@@ -25,7 +26,7 @@ face. In all, 2,355.9 m2 of shell was removed from over the roadway.
   the deck now meets the new sidewalk edge with no gap (the curb-gap check).
 - Replacement table: the first-pass app part 23 "Terminal 2 walkway" (kept as a landside rest piece between x -797 and
   -766) now lies under the domestic `T2_garage_link`. The height-aware coverage should hand it to `domestic` on the re-run.
-- New sha / sizes: domestic 11.50 MB, landside 21.23 MB (manifest entries updated by the builds).
+- New sizes: domestic 11.50 MB, landside 21.13 MB (7 Nov 02:11Z), itb 6.46 MB (manifest entries updated by the builds).
 
 ### R3.2 Integration: list low decks over at-grade roads as plausibility conflicts (buildings-14)
 
@@ -70,9 +71,10 @@ roadways -> verify_landside -> (landside rebuild if needed) -> b3d_integrate.
 
 ### R3.6 Integration: ITB curb canopy over the departures plate (buildings-7)
 
-The ITB curb canopy slab is now 0.45 m (was 0.6) under an unchanged top: soffit 16.05 m. `verify_itb` checks it against the
-`roadways.glb` plate at >= 4.6 m (4.52 -> 4.67 m at (-1278.4, 359.9), deck 11.38 m). Please confirm it in
-`plausibility.notes` on the re-run.
+The ITB curb canopy slab is now 0.45 m (was 0.6) under an unchanged top: soffit 16.05 m. `itb.glb` rebuilt 7 Nov 01:55Z.
+`verify_itb` checks it against the `roadways.glb` LOD0 deck triangles under the canopy plan: **4.70 m** (126 checks, 0 failed;
+the point sample at (-1278.4, 359.9), deck 11.38 m, gives 4.52 -> 4.67 m). Please confirm it in `plausibility.notes` on the
+re-run; `integration.json` pins the old itb.glb sha1.
 
 ### R3.7 Engine (env-7, engine_closeout R2.4): BA-G mullion finish recorded
 

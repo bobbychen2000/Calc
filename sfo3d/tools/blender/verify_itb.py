@@ -461,8 +461,10 @@ def run(path):
             C.add('roadway decks under the elevated bar: min clearance (roadways.glb)', float(min(clear)), G.ROAD_CLEAR, ok=min(clear) >= G.ROAD_CLEAR - 0.05,
                   src='15 ft = 4.57 m minimum vertical clearance [pub]; deck tops from roadways.glb (integration)')
         # close-out r3 (buildings-7): the curb canopy soffit over the departures plate where the canopy overhangs the kerb lane
-        can = Polygon([(p_[0], p_[2]) for p_ in (G.Buv(-G.HALL_HL, G.V_W - G.CANOPY_D, 0), G.Buv(G.HALL_HL, G.V_W - G.CANOPY_D, 0),
-                                                 G.Buv(G.HALL_HL, G.V_W, 0), G.Buv(-G.HALL_HL, G.V_W, 0))]).buffer(0)
+        # world (x, z) of the canopy plan (G.UVw; G.Buv is the Blender-local frame - the first version of this check used it and
+        # its polygon came out degenerate, so the check silently did not run)
+        can = Polygon([G.UVw(-G.HALL_HL, G.V_W - G.CANOPY_D), G.UVw(G.HALL_HL, G.V_W - G.CANOPY_D),
+                       G.UVw(G.HALL_HL, G.V_W), G.UVw(-G.HALL_HL, G.V_W)]).buffer(0)
         top_under = []
         for nm_, m_ in SR.items():
             if m_['lod'] != 0: continue

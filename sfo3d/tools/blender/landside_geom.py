@@ -179,6 +179,27 @@ def largest(g):
     return max(ps, key=lambda p: p.area) if ps else Polygon()
 
 
+def _split_ring_at(poly, pts, tol=0.05):
+    """the polygon with the points of pts that lie on its exterior (within tol, not at a vertex) inserted as ring vertices
+    (close-out r3): per-edge facade styles can then tell a stretch of an outline edge apart (e.g. the station block's)."""
+    ring = [np.array(p, float) for p in list(poly.exterior.coords)[:-1]]
+    P_ = [np.array(p, float)[:2] for p in pts]
+    out = []
+    for i in range(len(ring)):
+        a, b = ring[i], ring[(i + 1) % len(ring)]
+        out.append(tuple(a))
+        d = b - a; L2 = float(d @ d)
+        if L2 < 1e-12: continue
+        cand = []
+        for p in P_:
+            t = float((p - a) @ d) / L2
+            q = a + t * d
+            if 1e-3 < t < 1.0 - 1e-3 and float(np.hypot(*(q - p))) < tol and float(np.hypot(*(q - a))) > 0.05 and float(np.hypot(*(q - b))) > 0.05:
+                cand.append((t, tuple(q)))
+        out += [q for _, q in sorted(set(cand))]
+    return Polygon(out, [list(h.coords) for h in poly.interiors])
+
+
 def edge_normal(a, b):
     """outward normal (right of a -> b) in local XY."""
     d = np.array(b, float) - np.array(a, float); L = float(np.hypot(*d))
@@ -931,6 +952,11 @@ def garage_ag(k):
     # r2: the parking body keeps the station block in its plan (one roof deck over both, NAIP stalls over the block); the block
     # draws only its own facades and hall
     roof_w = orient_all(largest(body_w.difference(unary_union(towers_w).buffer(0.01)) if towers_w else body_w).simplify(0.05, preserve_topology=True))
+    if not blk_w.is_empty:
+        # close-out r3 (buildings-1, back-face QA l1): split the body ring at the block's corners. Without them the 131.7-m south
+        # outline edge ran past the block in one piece, style() gave it the body's screened bands over the block stretch too, and
+        # from the walkway the hall showed the backs of those bands through the block's track opening (l1: 56 -> 1,076 red px)
+        roof_w = orient_all(_split_ring_at(roof_w, list(blk_w.exterior.coords)))
     P = F.poly(roof_w)
     Pfull = F.poly(body_w)
     slabs = [pitch * i for i in range(1, 8)]          # L2..L8 slab lines (L9 = the roof deck) [obs a2 pitch]
@@ -1023,6 +1049,14 @@ def garage_ag(k):
         rt = MB(f'{k}_rotunda')
         cyl(rt, rc_, ROT_A['D'] / 2, deck, ROT_A['top'] - 0.9, 48, 'precast', TILES['precast'], top=None, smooth=True)
         cyl(rt, rc_, ROT_A['D'] / 2 + 0.12, ROT_A['top'] - 0.9, ROT_A['top'], 48, 'precast_band', TILES['precast_band'], top='roof_membrane', smooth=True)
+        # close-out r3 (buildings-1, back-face QA l1): the band's underside - the 0.12-m annulus between the drum and the proud
+        # band was open, and from the walkway below the inner band face and the roof membrane showed their backs through it
+        zb_, r0_, r1_ = ROT_A['top'] - 0.9, ROT_A['D'] / 2, ROT_A['D'] / 2 + 0.12
+        for i_ in range(48):
+            t0_, t1_ = 2 * math.pi * i_ / 48, 2 * math.pi * (i_ + 1) / 48
+            o0 = (rc_[0] + r1_ * math.cos(t0_), rc_[1] + r1_ * math.sin(t0_), zb_); o1 = (rc_[0] + r1_ * math.cos(t1_), rc_[1] + r1_ * math.sin(t1_), zb_)
+            n0 = (rc_[0] + r0_ * math.cos(t0_), rc_[1] + r0_ * math.sin(t0_), zb_); n1 = (rc_[0] + r0_ * math.cos(t1_), rc_[1] + r0_ * math.sin(t1_), zb_)
+            rt.face_dir([o0, n0, n1, o1], 'precast_band', [(0, 0), (0, 0.1), (0.1, 0.1), (0.1, 0)], (0, 0, -1))     # faces down
         B.shells.append(Part(f'{k}_rotunda', rt, 'shell', 'obs', 'NE rotunda on the curved east end (photo a2: light cylinder ~16 m across rising ~10 m over the '
                              'deck; NAIP 2024 disc, lean-corrected) [obs a2 / NAIP, low; use unk]', ['garage_ag_facade'],
                              dict(D=dim(ROT_A['D'], 'obs', 'a2 width 94 px at 5.8 px/m; NAIP rim'), top=dim(ROT_A['top'], 'obs', 'a2 solved camera [low]'),

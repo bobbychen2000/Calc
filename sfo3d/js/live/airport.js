@@ -155,8 +155,8 @@ export function standGates(stands) {
 }
 // close-out round 3 (2026-11-06, patch_stands P9; realtime_closeout R3.1.3 / R3.3): per-family ADS-B position reference,
 // metres the reported position lies BEHIND the nose at the stop, measured on all committed adsb.lol hours
-// (data antenna_ref.families: EJET 13.3 m n 18, B737 9.2 n 110, A320 1.2 n 137, A220 5.4, B757 17.1, B777 15.5 n 11; B787
-// 18.3 / A350 10.5 rest on 3 / 2 stays). {family: {m, n}}; families with fewer than minN stays are left out (callers keep
+// (data antenna_ref.families, 36 h: EJET 13.6 m n 19, B737 9.2 n 114, A320 1.2 n 140, A220 5.4 n 14, B757 17.1 n 7, CRJ 8.3
+// n 5, B777 15.0 n 12; B787 18.3 / A350 10.5 / B767 13.6 rest on 3 / 2 / 1 stays). {family: {m, n}}; families with fewer than minN stays are left out (callers keep
 // their own default, e.g. 0.2 L)
 export function antennaRef(stands, minN = 5) {
   const out = {}; const F = (stands && stands.antenna_ref && stands.antenna_ref.families) || {};
