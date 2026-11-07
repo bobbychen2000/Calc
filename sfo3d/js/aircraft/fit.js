@@ -21,9 +21,9 @@
 //             (777) up, review 4 Nov 2026; the ACAPs show both types nose-down at rest, e.g. 737-800 entry door 1 sill
 //             2.59-2.74 m vs door 2 2.97-3.12 m, D6-58325-7 Rev C §2.3.2 p.2-18: ~0.8 deg); gear-less models are placed so the door the bridge meets is where the documents put it: on the door-1 sill
 //             when the source model has a door object (A320 family, A220-100, CRJ700/900, E-Jets), else on the published
-//             fuselage top at door 1, else on the published overall height. The 737-800 model has its own gear. The 737 MAX
-//             family stands nose-up on an extended nose leg, its pitch fitted to the published door-1 and aft-door sills
-//             (round 2 of the 5 Nov 2026 review; NOSE_LEG and the stance fit in fitType).
+//             fuselage top at door 1, else on the published overall height. The 737 family on the FG 737-800 (its gear
+//             drawn with the oleos fully extended) stands in a stance fitted to the ACAP's door and cargo-door rows: main oleo
+//             compressed, pitch, nose leg compressed (NG) or extended (MAX) (STANCE_FIT, close-out round 3 of 7 Nov 2026).
 //   docking   the jet bridge docks at the rendered door: the model's own door object where it has one (rendered station,
 //             including scale and plugs), else the published door centre; floor at the published sill; the cab stops at the
 //             rendered fuselage side at the door's station: the widest skin over the door opening (sill to sill + 1.9 m),
@@ -71,7 +71,7 @@ for (const icao in ICAO_TYPES) TYPE_MODELS[icao] = { t: ICAO_TYPES[icao], m: TYP
 // these stations (tools/liveries/atlas.py plug bands), so only a 2 cm band stretches; on models that keep their artist
 // glass windows the stations lie in a pier between two windows (a window is never stretched).
 export const PLUG_AT = {
-  b738: [10.0, 26.0],   // between door 1 (5.03) and the wing root (~14.2) / between the wing TE (~21.6) and the aft door (31.88)
+  b738: [11.0, 26.0],   // between the forward cargo door (model 9.65-10.65) and the wing-body fairing (13.6) / between the wing TE (~21.6) and the aft cargo door (26.14); removed sections: PLUG_REM
   b752: [15.24, 30.96], // aft of door 2 (13.99, unchanged on the 757-300) and ahead of the wing / behind the wing, ahead of door 4 (38.23); both in a window pier of the kept artist glass (tools/liveries/windows.py)
   b763: [10.8, 37.0],   // between door 1 (5.70) and the (optional) door 2 (15.96; the 767-400ER door 2 moves with the plug) / ahead of the aft door (42.55)
   b788: [10.8, 38.0],   // between door 1 (6.30) and door 2 (15.32) / between door 3 (32.39) and door 4 (43.56)
@@ -81,6 +81,17 @@ export const PLUG_AT = {
   b772: [20.0, 34.5],   // between door 2 (17.07) and the wing root LE (22.3 on the model) / between the wing TE (32.4) and door 3 (36.33)
   b77w: [25.0, 42.0],   // between door 2 (17.07) and the wing root LE (27.5 on the model) / between the wing TE (37.6) and door 4 (46.46)
 };
+// stations of REMOVED sections (a shorter type: negative plug, the section [at, at + |d|] collapses) where they differ from
+// PLUG_AT, and the station of the next feature the aft blend must stop short of (0.6 m ahead). FG 737-800 (close-out round 3
+// of 7 Nov 2026): its cargo-door objects lie at 9.65-10.65 (forward) and 26.14-27.14 m (aft); with the plugs at 10.0 / 26.0
+// the 737-900ER / -9 / -10 drew the forward cargo door stretched over the plug (2.6-3.8 m long) and the 737-600 / -700 / -7 lost
+// up to half of both cargo doors in the removed sections. The ACAP door tables put both cargo doors' changes on the same side:
+// D6-38A004 Rev K §2.7.1 keeps the forward cargo door at 8.53 m on every MAX (the forward plug is aft of it) and moves the aft
+// one by both plugs (24.05 / 27.97 / 30.61 / 32.28 m: the aft plug is ahead of it). So: inserted plugs at 11.0 (aft of the
+// forward cargo door, ahead of the wing-body fairing at 13.6) / 26.0 m (ahead of the aft cargo door); removed sections from
+// 10.7 m (forward) and from 22.2 m (aft of the fairing, which ends at ~22 m; the blend stops 0.6 m ahead of the aft cargo
+// door at 26.1). The 737-600's 4.37 m forward removal still reaches 1.5 m into the fairing's front (rare at SFO; open)
+const PLUG_REM = { b738: { at: [10.7, 22.2], next: 26.1 } };
 // models whose door numbering changes between the types (the 777-300 adds door 3 over the wing): the forward plug is the
 // main-gear station change (777-300 vs -200: 37.11 - 31.77 = 5.34 m ahead of the wing), not a door's
 const PLUG_BY_GEAR = new Set(['b772', 'b77w']);
@@ -112,13 +123,29 @@ const WINGLET = { b752: { zr: 18.6, y0: 0.25, yt: 2.88 } };
 // rendered 0.86 m in the nose-up MAX stance against row E 0.43-0.56 m (D6-38A004 Rev K §2.3.x; the NG's row D is 0.48-0.64 m,
 // D6-58325-7 §2.3.2: the bigger fan hangs lower although the MAX stands nose-up); about the top line it renders 0.58 m
 const ENG_SCALE = { b37m: 1.14, b38m: 1.14, b39m: 1.14, b3xm: 1.14 };
-// nose leg of a model on its own gear that a type's stance may extend (737 MAX on the FG 737-800, stance fit in fitType):
-// model units, measured on the FG nosegear.ac objects in data/models/b738.sfom (zone 3): outer strut (nouterstrut) y -2.574
-// .. -1.817, piston (nlowerstrut) -3.148 .. -2.495, torque links -3.105 .. -2.355, tyres -3.426 .. -2.705, all at x -4.70 ..
-// -3.95; the main gear is at x -20. noseExt (js/aircraft/stretch.js) stretches the gear zone ahead of xMin between yTop
-// (the outer strut's bottom) and yBot (just above the tyres), so the piston and links lengthen and the wheels move down
-// rigidly by e; the strut, steering collar, well and doors stay
-const NOSE_LEG = { b738: { xMin: -6.0, yTop: -2.58, yBot: -2.70 } };
+// nose leg of a model on its own gear whose stance fit (STANCE_FIT) lengthens or shortens it: model units, measured on the
+// FG nosegear.ac objects in data/models/b738.sfom (zone 3): outer strut (nouterstrut) y -2.574 .. -1.817, piston
+// (nlowerstrut) -3.148 .. -2.495, torque links -3.105 .. -2.355, tyres -3.426 .. -2.705, all at x -4.70 .. -3.95; the main
+// gear is at x -20. noseExt (js/aircraft/stretch.js) scales the gear zone ahead of xMin between yTop and yBot linearly and
+// moves the wheels below yBot rigidly by e (down: extension; e < 0: compression). Close-out round 3 (aircraft-2): the band
+// was the 0.12 m gap between the strut bottom and the tyre tops, so the MAX's +0.35 m stretched the torque links +87 %;
+// now it is the whole visible leg from the well (yTop -1.82, the outer strut's top) to the tyre tops (yBot -2.70): every
+// part of the leg changes length by e / 0.88 (MAX +0.13 m: +15 %, NG -0.11 m: -13 %), the well and doors above stay
+const NOSE_LEG = { b738: { xMin: -6.0, yTop: -1.82, yBot: -2.70 } };
+// stance fit of models on their own gear whose source draws the oleos fully extended and that carry door objects (FG
+// 737-800: its animations translate the wheels and lower struts up by gear compression-norm x 0.3048 m, the nose gear by a
+// further 0.15 m offset, Models/LWing.xml / RWing.xml / NoseGear.xml, refs/cache/src/fg/737-800): close-out round 3 of 7 Nov
+// 2026 (aircraft-1). Standing on its uncompressed gear the 737-800 rendered its forward cargo door 0.25 m above ACAP row C,
+// its engine 0.13-0.15 m above row D and, before the round-1 door re-cut, door 1 0.23 m above row B, while door 2 and the
+// crown fitted: the airframe stood too high ahead of the main gear. The fit (fitType): least squares over the published
+// OEW heights (the MAX (AT OEW) / MAXIMUM column) of the model's own door objects - door 1 (row B), the aft door (NG row G
+// sillAft, MAX row M), the forward / aft cargo doors (NG rows C / F, MAX rows D / L: SPEC cargo) - for two unknowns: the
+// main oleo compression dz (stretch.gearUp, >= 0) and the pitch a about the main contact; the nose leg is then compressed
+// or extended (noseExt) until its tyre touches. Result (rendered): 737-800 1.0 deg nose-down, main oleo -0.13 m, nose leg
+// -0.11 m; 737-8 0.2 deg nose-up, main -0.10 m, nose leg +0.13 m (the MAX's taller nose gear: Boeing's "8-inch nose gear
+// extension", 11 Apr 2012, is 0.20 m; the ACAP rows give the MAX's nose 0.38 m higher than the NG's at the nose gear: the
+// documents disagree by 0.18 m, the ACAP rows win because the bridges and the ground equipment meet these doors)
+const STANCE_FIT = new Set(['b738']);
 
 // A380 upper-deck door U1L: Airbus AC A380 Dec 01/25 FIGURE-2-7-0-991-002 (U1 20.94 m from the nose) and
 // FIGURE-2-3-0-991-001 (U1 sill 7.87-7.89 m at MRW, fwd / aft CG; docs/requests/bridges_aircraft.md)
@@ -134,12 +161,14 @@ function plugsFor(t, base) {
   }
   if (d1 === null) d1 = T.main[0] - B.main[0];
   const d2 = +(dL - d1).toFixed(3);
-  // a shorter aft fuselage: the removed section behind the wing reaches into the start of the tail taper on these
-  // models (737-800 model: keel 0.2 m higher at 28.8 m than at 26.0 m), so instead of a hard cut the section plus a blend
-  // of up to 3 m is compressed onto the blend length (no step in the skin); the blend ends 0.6 m ahead of the next door
+  // removed sections start at PLUG_REM where the model has one
+  const R = PLUG_REM[base]; const b1 = d1 < 0 && R ? R.at[0] : a1, b2 = d2 < 0 && R ? R.at[1] : a2;
+  // a shorter aft fuselage: the removed section behind the wing can reach into the start of the tail taper (737-800 model:
+  // keel 0.2 m higher at 28.8 m than at 26.0 m), so instead of a hard cut the section plus a blend of up to 3 m is
+  // compressed onto the blend length (no step in the skin); the blend ends 0.6 m ahead of the next door (PLUG_REM next)
   let bl2 = 0;
-  if (d2 < 0) { const nd = B.doors.find(x => x > a2); bl2 = Math.max(0, Math.min(3.0, (nd != null ? nd - 0.6 : a2 + 10) - (a2 - d2))); }
-  return { at1: a1, at2: a2, d1: +d1.toFixed(3), d2, bl2: +bl2.toFixed(3), by };
+  if (d2 < 0) { const nd = R && R.next != null ? R.next : B.doors.find(x => x > b2); bl2 = Math.max(0, Math.min(3.0, (nd != null ? nd - 0.6 : b2 + 10) - (b2 - d2))); }
+  return { at1: b1, at2: b2, d1: +d1.toFixed(3), d2, bl2: +bl2.toFixed(3), by };
 }
 // fuselage section of model features F near station xm (model units): the most complete planar cut within +-2 m
 // (a cut through a door opening, whose door is a separate object, misses skin triangles)
@@ -206,6 +235,36 @@ function underAt(F, st, z) {
   }
   return best;
 }
+// fuselage bottom on the centre plane (model units) at model station st (positive aft): linear between the two nearest
+// complete sections (each within 2 m)
+function botAt(F, st) {
+  const S = F && F.sec; if (!S) return null;
+  const ok = (j) => j >= 0 && j < S.bot.length && S.bot[j] != null && S.top[j] != null && S.hw[j] != null && S.hw[j] >= 0.3 * (S.top[j] - S.bot[j]) / 2;
+  const j0 = Math.floor(st / S.dx), w = Math.round(2 / S.dx); let a = null, b = null;
+  for (let j = j0; j >= j0 - w; j--) if (ok(j)) { a = j; break; }
+  for (let j = j0 + 1; j <= j0 + 1 + w; j++) if (ok(j)) { b = j; break; }
+  if (a != null && b != null) return S.bot[a] + (S.bot[b] - S.bot[a]) * (st / S.dx - a) / (b - a);
+  return a != null ? S.bot[a] : b != null ? S.bot[b] : null;
+}
+// skin half width (model units) of the lower lobe at model station st and model height y: the table F.sec.hwl (half widths
+// at the heights F.sec.lo above each section's bottom, tools/models/model_features.py), linear in height (0 at the keel) and
+// in station between the nearest complete sections; null above the table (hwAt covers the upper fuselage)
+function hwLow(F, st, y) {
+  const S = F && F.sec; if (!S || !S.hwl) return null; const lo = S.lo;
+  const at = (j) => {
+    if (j < 0 || j >= S.bot.length) return null; const b = S.bot[j], r = S.hwl[j]; if (b == null || !r) return null;
+    const dy = y - b; if (dy < 0) return 0; if (dy > lo[lo.length - 1]) return null;
+    if (dy <= lo[0]) return r[0] != null ? r[0] * dy / lo[0] : null;
+    let k = 0; while (k < lo.length - 2 && dy > lo[k + 1]) k++;
+    if (r[k] == null || r[k + 1] == null) return null;
+    return r[k] + (r[k + 1] - r[k]) * (dy - lo[k]) / (lo[k + 1] - lo[k]);
+  };
+  const j0 = Math.floor(st / S.dx), w = Math.round(2 / S.dx); let a = null, b = null;
+  for (let j = j0; j >= j0 - w; j--) { const v = at(j); if (v != null) { a = { j, v }; break; } }
+  for (let j = j0 + 1; j <= j0 + 1 + w; j++) { const v = at(j); if (v != null) { b = { j, v }; break; } }
+  if (a && b) return a.v + (b.v - a.v) * (st / S.dx - a.j) / (b.j - a.j);
+  return a ? a.v : b ? b.v : null;
+}
 function doorMesh(m) {
   const own = MODEL_FEATURES[m] && (MODEL_FEATURES[m].doors || []).find(d => d.side === 'L');
   if (own) return { ...own, from: m };
@@ -264,25 +323,30 @@ export function fitType(t, m) {
     const xn = xOf(C.nose.st), xm = xOf(C.main.st), dy = C.nose.y - C.main.y;
     if (dy > 0.005 && xn > xm) pitch = { a: +Math.atan2(dy, xn - xm).toFixed(6), x0: +xm.toFixed(3), y0: C.main.y };
   }
-  // 737 MAX stance (review 5 Nov 2026, round 2): the MAX stands nose-UP at rest (D6-38A004 Rev K §2.3.1-2.3.4: forward door
-  // B 2.77-3.07 m above aft passenger door M 2.49-2.90 m on the 737-8; the NG's door 1 is 0.38 m BELOW its door 2, D6-58325-7
-  // §2.3.2), on a taller nose gear; drawn on the NG model's gear it stood nose-down and its aft door rendered 0.26-0.33 m above
-  // the range. Types whose SPEC gives the aft door sill (sillAft) and whose model stands on its own gear with door objects
-  // fore and aft get the pitch angle that fits the rendered door-1 and aft-door sills to the published MAXIMUM column (the
-  // OEW condition, as the NG stance above: the NG document labels that column 'MAX (AT OEW)', the MAX document only
-  // 'MAXIMUM': inf), least squares, about the main-gear contact (the main gear is the NG's: unchanged), and the nose gear is
-  // extended (stretch noseExt: its oleo stretched between the strut bottom and the wheels, NOSE_LEG) until its tyre
-  // touches in that stance. 737-8: 0.66 deg nose-up, nose leg +0.35 m (the ACAPs' OEW MAX-vs-NG height changes, +0.33 m at
-  // door 1 (5.03 m) and -0.22 m at the aft door (31.88 m), put the axis of that rotation at 21.1 m, 1.4 m aft of the ACAP
-  // main gear: consistent with a pitch about the main gear).
-  const dmF = doorMesh(m), dmA = S.sillAft && F && (F.doors || []).find(q => q.side === 'L' && q.x > 0.5 * d.L);
-  if (pitch && dmF && dmA && S.sill && NOSE_LEG[m]) {
-    const ys = (a, q) => -d.low * s + (pitch.y0 + (q.ySill - pitch.y0) * Math.cos(a) - (xOf(q.x) - pitch.x0) * Math.sin(a)) * s;
-    const err = (a) => (ys(a, dmF) - S.sill[1]) ** 2 + (ys(a, dmA) - S.sillAft[1]) ** 2;
-    let lo = -0.06, hi = 0.03;
-    for (let it = 0; it < 100; it++) { const u = lo + (hi - lo) / 3, v = hi - (hi - lo) / 3; if (err(u) < err(v)) hi = v; else lo = u; }
-    const a = +((lo + hi) / 2).toFixed(6), e = (C.nose.y - pitch.y0) - (xOf(C.nose.st) - pitch.x0) * Math.tan(a);
-    if (a < pitch.a && e > 0.005) { pitch.a = a; stretch.noseExt = { ...NOSE_LEG[m], e: +e.toFixed(4) }; }
+  // stance fit (STANCE_FIT above): rows [model station, model height, published OEW height] of the model's own door objects
+  // (doors / cargo doors from tools/models/model_features.py) against the type's SPEC rows; the rendered height of a row is
+  // Hc0 - dz + s (y0 + (y - y0) cos a - (x - x0) sin a), linear in (dz, sin a) with cos a = 1 (< 0.001 m at 1 deg)
+  const dmF = doorMesh(m), dmA = F && (F.doors || []).find(q => q.side === 'L' && q.x > 0.5 * d.L);
+  const cgF = F && (F.cargo || []).find(q => q.x < 0.5 * d.L), cgA = F && (F.cargo || []).find(q => q.x >= 0.5 * d.L);
+  let stance = null;
+  if (pitch && STANCE_FIT.has(m) && NOSE_LEG[m]) {
+    const rows = [];
+    if (dmF && S.sill) rows.push([dmF.x, dmF.ySill, S.sill[1], 'door 1']);
+    if (dmA && S.sillAft) rows.push([dmA.x, dmA.ySill, S.sillAft[1], 'aft door']);
+    if (cgF && S.cargo && S.cargo.fwd) rows.push([cgF.x, cgF.ySill, S.cargo.fwd[1], 'fwd cargo door']);
+    if (cgA && S.cargo && S.cargo.aft) rows.push([cgA.x, cgA.ySill, S.cargo.aft[1], 'aft cargo door']);
+    if (rows.length >= 2) {
+      const Hc0 = -d.low * s; let n = 0, sg = 0, sgg = 0, sb = 0, sgb = 0;
+      for (const [st, y, ref] of rows) { const g = s * (xOf(st) - pitch.x0), b = Hc0 + s * y - ref; n++; sg += g; sgg += g * g; sb += b; sgb += g * b; }
+      let dz = (sb * sgg - sg * sgb) / (n * sgg - sg * sg), sa = (n * sgb - sg * sb) / (n * sgg - sg * sg);
+      if (!(dz >= 0)) { dz = 0; sa = sgb / sgg; }                // (an oleo drawn fully extended cannot extend further)
+      const a = Math.asin(Math.max(-0.1, Math.min(0.1, sa)));
+      const e = (C.nose.y - C.main.y) * Math.cos(a) - (xOf(C.nose.st) - pitch.x0) * Math.sin(a);   // nose tyre above the ground
+      pitch.a = +a.toFixed(6);
+      if (dz > 0.001) stretch.gearUp = +(dz / s).toFixed(4);
+      if (Math.abs(e) > 0.002) stretch.noseExt = { ...NOSE_LEG[m], e: +e.toFixed(4) };
+      stance = { dz: +dz.toFixed(3), rows: rows.map(r => r[3]) };
+    }
   }
   // model point (station st, height y) -> [x, y] of the stretched, pitched model (model units)
   const pose = (st, y) => {
@@ -304,8 +368,9 @@ export function fitType(t, m) {
       const ex = Hc + top0 * s - (S.crown[0] + S.crown[1]) / 2;
       if (ex > 0.15) { stretch.gearUp = +(ex / s).toFixed(3); Hc -= ex; seat = 'gear (oleos compressed ' + ex.toFixed(2) + ' m)'; }
     }
+    if (stance && stretch.gearUp) { Hc -= stretch.gearUp * s; seat = 'gear (main oleo compressed ' + (stretch.gearUp * s).toFixed(2) + ' m)'; }
     if (pitch) { pitch.y0 = +(C.main.y + (stretch.gearUp || 0)).toFixed(3); seat += (pitch.a >= 0 ? ', nose-down ' : ', nose-up ') + Math.abs(pitch.a * 180 / Math.PI).toFixed(2) + ' deg'
-      + (stretch.noseExt ? ', nose leg +' + (stretch.noseExt.e * s).toFixed(2) + ' m' : ''); }
+      + (stretch.noseExt ? ', nose leg ' + (stretch.noseExt.e >= 0 ? '+' : '') + (stretch.noseExt.e * s).toFixed(2) + ' m' : ''); }
   }
   else if (dm && T.sill != null) { Hc = T.sill - dm.ySill * s; seat = 'sill'; }
   else if (T.crown != null && crownOf(F, d.L) != null) { Hc = T.crown - crownOf(F, d.L) * s; seat = 'crown'; }
@@ -407,6 +472,32 @@ export function fitType(t, m) {
     fit.gearTop = u != null ? +(Hc + yR(u) * s).toFixed(3) : null;
   }
   T.fit = fit; T.Hc = Hc; T.dockX1 = dockX1; T.dockSill = dockSill; T.dockHW = dockHW;
+  // stance-aware lower fuselage for the ground equipment (close-out round 3 of 7 Nov 2026, aircraft-1: the belt loaders used
+  // an unpitched ellipse through T.Hc and the crown, 2 Hc - crown, which fell 0.15 m when the 737 MAX stood nose-up while its
+  // forward belly rose 0.25 m). Rendered metres, aircraft frame of js/live/aircraft.js placement() (X = station aft of the
+  // nose, heights above the ground, pitch, plugs and the engine-clearance compression included):
+  //   fit.keelAt(X)       lowest skin on the centre plane at station X (the section table's bottom, posed)
+  //   fit.skinHW(X, y)    half width of the fuselage skin at station X and height y (lower lobe: sec.hwl; above: sec.hwf;
+  //                       else the ellipse of the nearest section); null where no skin (below the keel / above the crown)
+  //   fit.cargo           {fwd, aft}: X (the model's own cargo-door object, rendered centre; else the published station
+  //                       SPEC cargoX), sill (the drawn door's rendered sill; null without a door object), keel (at X), pub
+  //                       (the published sill range, SPEC cargo), side ('R': the 737 / A320 cargo doors are on the right)
+  const yU = (st, y) => { let v = yModel(st, y); if (squash && v < squash.y0) v = squash.y0 + (v - squash.y0) / squash.k; return v; };
+  fit.keelAt = (X) => { const st = stOf(rx, X, d.L), b = botAt(F, st); return b == null ? null : +(Hc + pose(st, yR(b))[1] * s).toFixed(3); };
+  fit.skinHW = (X, y) => {
+    const st = stOf(rx, X, d.L), v = yU(st, y); let h = hwLow(F, st, v);
+    if (h == null) h = hwAt(F, st, v);
+    return h == null ? null : +(h * s).toFixed(3);
+  };
+  const cargo = {};
+  for (const [k, c] of [['fwd', cgF], ['aft', cgA]]) {
+    const X = c ? +(-pose(c.x, (c.ySill + c.yTop) / 2)[0] * s).toFixed(3) : (S.cargoX && S.cargoX[k] != null ? S.cargoX[k] : null);
+    const pub = S.cargo && S.cargo[k] ? S.cargo[k] : null; if (X == null && !pub) continue;
+    cargo[k] = { X, sill: c ? +(Hc + pose(c.x, yR(c.ySill))[1] * s).toFixed(3) : null, keel: X != null ? fit.keelAt(X) : null, pub,
+      side: c ? c.side : 'R', src: c ? 'model door object ' + c.name : 'published station (SPEC cargoX)' };
+  }
+  if (Object.keys(cargo).length) fit.cargo = cargo;
+  if (stance) fit.stance = stance;
   fit.dockHWmid = hwMid(x1m, dockSill);                   // skin half width at door 1 mid height (check_dims: bellows gap)
   // skin half width (m) at the door's station from the sill up, every 0.25 m to sill + 3 m (the bellows' height), per
   // docking door (1, 2, 3 = A380 U1L): for a bellows front that follows the skin (js/live/gates.js draws a flat one)
@@ -430,6 +521,13 @@ function dockDefaults(T) {
 }
 for (const t in TYPE_MODEL) { if (TYPE_MODEL[t]) fitType(t, TYPE_MODEL[t]); if (TYPES[t]) dockDefaults(TYPES[t]); }
 
+// lower fuselage of any TYPES entry (the fitted model's rendered skin, T.fit.keelAt / skinHW; procedural airframes: the
+// ellipse of T.R / T.Hc), rendered metres: keel height at station X, skin half width at station X and height y
+export function keelAt(T, X) { const v = T && T.fit && T.fit.keelAt ? T.fit.keelAt(X) : null; return v != null ? v : T.Hc - T.R; }
+export function skinHalfWidth(T, X, y) {
+  const v = T && T.fit && T.fit.skinHW ? T.fit.skinHW(X, y) : null; if (v != null) return v;
+  const q = (y - T.Hc) / T.R; return Math.abs(q) < 1 ? +(T.R * Math.sqrt(1 - q * q)).toFixed(3) : null;
+}
 // kept for callers of the old API: the fuselage/wing stretch of type t rendered with model m (null = none)
 export function stretchFor(t, m) { const T = TYPES[t]; return T && T.fit && T.fit.model === m ? T.fit.stretch : null; }
 export function seatType(t, m) { const T = TYPES[t]; if (T && !T.uniform && (!T.fit || T.fit.model !== m) && m && SPEC[t]) { fitType(t, m); dockDefaults(T); } }

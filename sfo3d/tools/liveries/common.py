@@ -166,7 +166,7 @@ def apply_stretch(P, Z, st):
         P[m, 1] += q['t'] * (az[m] - q['z0'])
     if st.get('squash'):                                      # vertical compression below the centre line (engine clearance)
         q = st['squash']; m = P[:, 1] < q['y0']; P[m, 1] = q['y0'] + (P[m, 1] - q['y0']) * q['k']
-    if st.get('noseExt'):                                     # nose-leg extension (737 MAX stance, js/aircraft/stretch.js)
+    if st.get('noseExt'):                                     # nose-leg length change (737 family stance; e < 0: compression; js/aircraft/stretch.js)
         q = st['noseExt']; m = (np.asarray(Z) == 3) & (P[:, 0] > q['xMin']) & (P[:, 1] < q['yTop'])
         P[m, 1] -= q['e'] * np.minimum(1.0, (q['yTop'] - P[m, 1]) / (q['yTop'] - q['yBot']))
     if st.get('gearUp'):                                      # oleo compression of the model's own gear (zone 3)

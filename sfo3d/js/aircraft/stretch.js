@@ -16,10 +16,12 @@ import { plugShift } from './fit.js';
 //                        top line (keep 'top': the pylon attachment; 737 MAX LEAP-1B)
 //   wingLift {z0, t, xMin} / htLift {z0, t, xMax}  wing / tailplane sheared up by t per unit |z| outboard of z0
 //   squash {y0, k}       everything below y0 compressed vertically by k (engine ground clearance fit)
-//   gearUp               model units the model's own gear (zone 3) is moved up (oleo compression)
-//   noseExt {xMin, yTop, yBot, e}  nose-leg extension (737 MAX stance, js/aircraft/fit.js NOSE_LEG): gear vertices (zone 3)
-//                        ahead of xMin and below yTop move down by e (y - yTop) / (yBot - yTop), clamped to [0, e]: the
-//                        oleo between yTop and yBot is stretched, the wheels below yBot move rigidly. dims.low (the main
+//   gearUp               model units the model's own gear (zone 3) is moved up (oleo compression); dims.low (the main
+//                        tyres, where placement() seats the model) rises by the same amount
+//   noseExt {xMin, yTop, yBot, e}  nose-leg length change (737 family stance, js/aircraft/fit.js NOSE_LEG / STANCE_FIT): gear
+//                        vertices (zone 3) ahead of xMin and below yTop move down by e (y - yTop) / (yBot - yTop), clamped
+//                        to [0, e]: the leg between yTop and yBot is scaled, the wheels below yBot move rigidly (e > 0:
+//                        extension, MAX; e < 0: compression, NG; monotonic while |e| < yTop - yBot). dims.low (the main
 //                        tyres: placement() seats the model on them) is kept
 //   fin {yF, xF, k}      fin height fit: vertices aft of xF and above the fuselage top yF (not engines, pylons, gear)
 //                        are scaled vertically about yF by k
@@ -75,14 +77,16 @@ export function applyStretch(pos, zone, nv, st, dims) {
     for (let i = 0; i < nv; i++) { const y = pos[i * 3 + 1]; if (y < y0) pos[i * 3 + 1] = y0 + (y - y0) * k; }
     if (dims.low != null) dims.low = y0 + (dims.low - y0) * k;
   }
-  if (st.noseExt && zone) {          // nose-leg extension (the nose tyre comes down by e; the main gear and dims.low stay)
+  if (st.noseExt && zone) {          // nose-leg length change (the nose tyre moves down by e; the main gear and dims.low stay)
     const { xMin, yTop, yBot, e } = st.noseExt;
     for (let i = 0; i < nv; i++) { const y = pos[i * 3 + 1]; if (zone[i] !== 3 || pos[i * 3] <= xMin || y >= yTop) continue; pos[i * 3 + 1] = y - e * Math.min(1, (yTop - y) / (yTop - yBot)); }
   }
   if (st.gearUp) {                    // oleo compression of a model's own gear (js/aircraft/fit.js): the gear moves up
+    // (dims.low follows the main tyres: before close-out round 3 it was re-measured as the lowest vertex, which with a nose
+    // leg extended below the main tyres in the unpitched frame - 737 MAX - would have seated the model on its nose tyre)
     let low = 1e9;
     for (let i = 0; i < nv; i++) { if (zone && zone[i] === 3) pos[i * 3 + 1] += st.gearUp; if (pos[i * 3 + 1] < low) low = pos[i * 3 + 1]; }
-    dims.low = low;
+    dims.low = dims.low != null ? dims.low + st.gearUp : low;
   }
   if (st.cut1 != null) {
     const { cut1, cut2, d1, d2 } = st; const bl2 = st.bl2 || 0;

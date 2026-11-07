@@ -592,18 +592,17 @@ MODELS = {
 AC_MODELS = {
     'b738': ([f'{FG738}/737-800.ac', f'{FG738}/LWing.ac', f'{FG738}/RWing.ac', f'{FG738}/HorzStab.ac', f'{FG738}/VertStab.ac', f'{FG738}/winglet.ac', f'{FG738}/nosegear.ac'],
              dict(name='Boeing 737-800', length=39.47, hasGear=True, skip=r'^a-light|^Circle\\.006$', gearRe=r'^(mg|ng[rtw]|mglh|mgrh|collar|.*steercyl|nlink|nlower|nouter|noseaxle|.*dragstrut|sidestrut|mgouter)', source='FGMEMBERS/737-800 (FlightGear)',
-                  # door 1L (review 5 Nov 2026, aircraft-v2): the artist's door object doorLF (stations 4.74-5.74, sill y -0.472,
-                  # top 1.167, 1.64 m tall) renders its sill at 2.97 m in the fitted stance, which is the OEW stance (crown 5.56 m,
-                  # fin 12.60 m, door 2 sill 3.15 m against the ACAP's OEW 5.56 / 12.62 / 3.12 m, D6-58325-7 Rev C §2.3.2). The
-                  # ACAP's OEW door-1 sill is 2.74 m (9 ft 0 in) and the door 34 x 72 in (0.86 x 1.83 m, §2.7.1 p.2-33): the sill
-                  # comes down by (2.967 - 2.74) / s = 0.227 model m (s 1.00125), the top stays (rendered 4.61 m against 4.57: 1.87 m
-                  # tall), i.e. the lower door and its opening are stretched down over the skin below it. Station range: the door
-                  # object spans -5.745 .. -4.735; [x0, x1] takes in the skin columns that close the opening (x -4.54 and -5.77, the
-                  # apices of the fan below the sill; round 2: without them the fan folded over the door's bottom panel), ramp 0.3:
-                  # the fade-out beyond them (no vertex lies within 1.2 m of either column, so it only makes the map continuous);
-                  # zMin 1.0: only the side skin and the door move (the nose-gear well's aft wall at x -4.54, |z| < 0.75, stays)
-                  doorFit=[dict(name='doorLF', side=-1, x0=-5.775, x1=-4.535, ramp=0.3, zMin=1.0, ySill=-0.472, yTop=1.167, dSill=0.227, dTop=0.0, below=0.5, above=0.0,
-                                skinSkip=r'^(windows|windowslh|windowsrh|ngww|lhww|rhww)$')])),
+                  # door 1L: NO re-fit since close-out round 3 (7 Nov 2026, aircraft-1). The round-1 doorFit (aircraft-v2) moved the
+                  # artist's door 1L and its opening 0.227 model m down the skin because it rendered 2.97 m against the ACAP OEW
+                  # sill 2.74 m; the cause was the stance, not the door: the FG gear is drawn with its oleos fully extended (the
+                  # FG animations translate the wheels and lower struts up by gear compression-norm x 0.3048 m, the nose
+                  # gear + 0.15 m: Models/LWing.xml, RWing.xml, NoseGear.xml), so the fuselage stood 0.13-0.25 m high ahead of
+                  # the main gear (fwd cargo door 1.69 m against row C 1.30-1.45, engine 0.77 against row D 0.48-0.64). js/aircraft/fit.js
+                  # now compresses the oleos and fits the pitch to the ACAP rows, and the artist's door renders 2.73 m (row B
+                  # 2.59-2.74) as drawn. door_fit() and its fold self-check are kept for other models; this entry was:
+                  # doorFit=[dict(name='doorLF', side=-1, x0=-5.775, x1=-4.535, ramp=0.3, zMin=1.0, ySill=-0.472, yTop=1.167,
+                  #               dSill=0.227, dTop=0.0, below=0.5, above=0.0, skinSkip=r'^(windows|windowslh|windowsrh|ngww|lhww|rhww)$')]
+                  )),
     # Boeing 777-300ER and 777-200ER (FlightGear 777 series, see FG777 above): full airframe incl. gear
     # (the default paint1 textures carry an old JAL (-300) / British Airways (-200) livery: its titles, tail art, blue belly
     # and nacelles are erased before neutralising, boxes as fractions of the texture measured on the 2048 px images)

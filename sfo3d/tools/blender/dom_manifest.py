@@ -203,7 +203,10 @@ CONFLICTS = [
          'between the lines): 1.83 m outside the level-2 outline along the face', other='spec baf.roof_edges note / README round 2: '
          '"ESE on the outline (+0.01 / -0.02)"', note='that note was measured at the line END points, where the line meets the '
          'outline\'s corner jogs; at 25 / 50 / 75 % of the line it is 1.83 m outside (checked 2026-11-05). The 3-D follows the drawn '
-         'line; the spec note should be corrected by the drawings group'),
+         'line; the spec note should be corrected by the drawings group',
+         status='resolved (spec note corrected, close-out r3)',
+         resolution='tools/buildings/spec_domestic.json baf.roof_edges note corrected 2026-11-07 (and build_spec_domestic.py): the ESE '
+                    'line is 1.83 m outside the level-2 outline at 10-90 % of its length, on it only at its end points'),
     dict(item='T1 Center landside face', model='on the measured roof edge: the app\'s trimmed curb line (OSM carriageways) less 4.0 m',
          other='BD-03 view 1 develops the face along the SFO Museum outline (94.1 + 43.6 + 93.8 m)',
          note='NAIP 2024 shows the curb roadway and vehicles INSIDE the SFO Museum outline there, and the PV roof edge 3-6 m inside the '

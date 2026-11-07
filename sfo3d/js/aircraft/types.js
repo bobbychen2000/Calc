@@ -175,23 +175,27 @@ const A32F = { crown: [5.86, 5.97], sill: [3.38, 3.48] };             // AC A320
 export const SPEC = {
   // ---- Boeing 737 (NG: §2.2 general dims, §2.3 ground clearances, §2.7.1 door 1 "16 ft 6 in (5.03 m)"; MAX: §2.2, §2.3, §2.7.1 p.2-26 table)
   // (engClr: NG §2.3.1-2.3.3 row D 'engine' [MIN (AT MTW), MAX (AT OEW)]; MAX §2.3.1-2.3.4 row E)
-  // (MAX sillAft: §2.3.1-2.3.4 row M 'aft passenger door, left & right' [MINIMUM, MAXIMUM]; js/aircraft/fit.js fits the MAX stance to
-  // the MAXIMUM column of sill (row B) and sillAft, read as the OEW condition like the NG document's 'MAX (AT OEW)' column, inf)
-  b736: { doc: 'NG', engClr: [0.46, 0.61], L: 31.24, span: 34.32, H: [12.45, 12.70], crown: [5.38, 5.54], sill: [2.59, 2.74], nose: 4.09, main: [15.32], track: 5.72, doors: [5.03, 23.65],
+  // (MAX sillAft: §2.3.1-2.3.4 row M 'aft passenger door, left & right' [MINIMUM, MAXIMUM]; NG sillAft: §2.3.1-2.3.2 row G
+  // 'entry door no 2' [MIN (AT MTW), MAX (AT OEW)]; cargo: lower-deck cargo-door sills {fwd, aft}, NG rows C / F, MAX rows D / L;
+  // bottom: MAX row C 'fuselage - bottom' (drawn at the forward cargo door); cargoX: cargo-door stations, MAX §2.7.1 p.2-26
+  // table rows C / G (the NG document gives none: the 737-800 / -900ER take their MAX twin's, inf). js/aircraft/fit.js fits
+  // the stance of the whole family to the MAXIMUM column of sill, sillAft and cargo, read as the OEW condition like the NG
+  // document's 'MAX (AT OEW)' column (inf for the MAX, whose document labels it only 'MAXIMUM'); close-out round 3)
+  b736: { doc: 'NG', engClr: [0.46, 0.61], sillAft: [2.95, 3.10], cargo: { fwd: [1.30, 1.45], aft: [1.63, 1.78] }, L: 31.24, span: 34.32, H: [12.45, 12.70], crown: [5.38, 5.54], sill: [2.59, 2.74], nose: 4.09, main: [15.32], track: 5.72, doors: [5.03, 23.65],
     src: '§2.2.1 p.2-9 (L, span without winglets, nose gear 13 ft 5 in, wheelbase 36 ft 10 in, track 18 ft 9 in), §2.3.1 p.2-17', inf: ['doors[1]: aft door = MAX aft-door-to-tail distance 7.59 m'] },
-  b737: { doc: 'NG', engClr: [0.46, 0.61], L: 33.63, span: 35.79, H: [12.45, 12.67], ...NG_CL, nose: 4.09, main: [16.69], track: 5.72, doors: [5.03, 26.04],
+  b737: { doc: 'NG', engClr: [0.46, 0.61], sillAft: [2.95, 3.10], cargo: { fwd: [1.30, 1.45], aft: [1.63, 1.78] }, L: 33.63, span: 35.79, H: [12.45, 12.67], ...NG_CL, nose: 4.09, main: [16.69], track: 5.72, doors: [5.03, 26.04],
     src: '§2.2.4 p.2-12 (-700W; without winglets 34.32), §2.3.3 p.2-19', inf: ['doors[1] (as b736)'] },
-  b738: { doc: 'NG', engClr: [0.48, 0.64], L: 39.47, span: 35.79, H: [12.37, 12.62], ...NG_CL, nose: 4.09, main: [19.69], track: 5.72, doors: [5.03, 31.88],
+  b738: { doc: 'NG', engClr: [0.48, 0.64], sillAft: [2.97, 3.12], cargo: { fwd: [1.30, 1.45], aft: [1.65, 1.80] }, cargoX: { fwd: 8.53, aft: 27.97 }, L: 39.47, span: 35.79, H: [12.37, 12.62], ...NG_CL, nose: 4.09, main: [19.69], track: 5.72, doors: [5.03, 31.88],
     src: '§2.2.6 p.2-14 (-800W), §2.3.3 p.2-19', inf: ['doors[1] = 737-8 aft door (same fuselage, MAX §2.7.1)'] },
-  b739: { doc: 'NG', engClr: [0.48, 0.64], L: 42.11, span: 35.79, H: [12.37, 12.62], crown: [5.44, 5.59], sill: [2.59, 2.74], nose: 4.09, main: [21.26], track: 5.72, doors: [5.03, 34.52],
+  b739: { doc: 'NG', engClr: [0.48, 0.64], sillAft: [2.97, 3.12], cargo: { fwd: [1.30, 1.45], aft: [1.65, 1.80] }, cargoX: { fwd: 8.53, aft: 30.61 }, L: 42.11, span: 35.79, H: [12.37, 12.62], crown: [5.44, 5.59], sill: [2.59, 2.74], nose: 4.09, main: [21.26], track: 5.72, doors: [5.03, 34.52],
     src: '§2.2.8 p.2-16 (-900ERW), §2.3.3 p.2-19', inf: ['doors[1] = 737-9 aft door'] },
-  b37m: { doc: 'MAX', engClr: [0.43, 0.56], L: 35.56, span: 35.92, H: [11.84, 12.50], crown: [5.05, 5.51], sill: [2.77, 3.07], sillAft: [2.49, 2.92], nose: 4.09, main: [17.45], track: 5.72, doors: [5.03, 27.97],
+  b37m: { doc: 'MAX', engClr: [0.43, 0.56], cargo: { fwd: [1.42, 1.68], aft: [1.32, 1.65] }, bottom: [1.27, 1.55], cargoX: { fwd: 8.53, aft: 24.05 }, L: 35.56, span: 35.92, H: [11.84, 12.50], crown: [5.05, 5.51], sill: [2.77, 3.07], sillAft: [2.49, 2.92], nose: 4.09, main: [17.45], track: 5.72, doors: [5.03, 27.97],
     src: '§2.2.1 p.2-9 (nose gear 13 ft 5 in, wheelbase 43 ft 10 in), §2.3.1 p.2-13 (A, B, P), §2.7.1 p.2-26 (B, H)' },
-  b38m: { doc: 'MAX', engClr: [0.43, 0.56], L: 39.47, span: 35.92, H: [11.86, 12.45], crown: [5.08, 5.51], sill: [2.77, 3.07], sillAft: [2.49, 2.90], nose: 4.09, main: [19.69], track: 5.72, doors: [5.03, 31.88],
+  b38m: { doc: 'MAX', engClr: [0.43, 0.56], cargo: { fwd: [1.42, 1.68], aft: [1.32, 1.65] }, bottom: [1.27, 1.55], cargoX: { fwd: 8.53, aft: 27.97 }, L: 39.47, span: 35.92, H: [11.86, 12.45], crown: [5.08, 5.51], sill: [2.77, 3.07], sillAft: [2.49, 2.90], nose: 4.09, main: [19.69], track: 5.72, doors: [5.03, 31.88],
     src: '§2.2.2 p.2-10, §2.3.2 p.2-14, §2.7.1 p.2-26' },
-  b39m: { doc: 'MAX', engClr: [0.43, 0.56], L: 42.11, span: 35.92, H: [11.89, 12.40], crown: [5.08, 5.51], sill: [2.79, 3.07], sillAft: [2.51, 2.82], nose: 4.09, main: [21.26], track: 5.72, doors: [5.03, 34.52],
+  b39m: { doc: 'MAX', engClr: [0.43, 0.56], cargo: { fwd: [1.45, 1.68], aft: [1.32, 1.63] }, bottom: [1.27, 1.55], cargoX: { fwd: 8.53, aft: 30.61 }, L: 42.11, span: 35.92, H: [11.89, 12.40], crown: [5.08, 5.51], sill: [2.79, 3.07], sillAft: [2.51, 2.82], nose: 4.09, main: [21.26], track: 5.72, doors: [5.03, 34.52],
     src: '§2.2.3 p.2-11, §2.3.3 p.2-15, §2.7.1 p.2-26' },
-  b3xm: { doc: 'MAX', engClr: [0.43, 0.56], L: 43.79, span: 35.92, H: [11.91, 12.45], crown: [5.08, 5.54], sill: [2.77, 3.07], sillAft: [2.54, 2.87], nose: 4.09, main: [22.43], track: 5.72, doors: [5.03, 36.20],
+  b3xm: { doc: 'MAX', engClr: [0.43, 0.56], cargo: { fwd: [1.42, 1.68], aft: [1.35, 1.65] }, bottom: [1.27, 1.55], cargoX: { fwd: 8.53, aft: 32.28 }, L: 43.79, span: 35.92, H: [11.91, 12.45], crown: [5.08, 5.54], sill: [2.77, 3.07], sillAft: [2.54, 2.87], nose: 4.09, main: [22.43], track: 5.72, doors: [5.03, 36.20],
     src: '§2.2.4 p.2-12 (preliminary), §2.3.4 p.2-16, §2.7.1 p.2-26' },
   // ---- Boeing 757 (§2.3: A fuselage top, C door 1 sill; letters identified on the figure)
   // span: with the APB blended winglets the model carries, 134 ft 9 in = 41.07 m (Boeing Airport Technology 'Wingspan
@@ -236,6 +240,10 @@ export const SPEC = {
     nose: 7.74, main: [37.40, 40.47], track: 10.99, trackB: 3.83, doors: [9.5, 22.9, 34.7, 46.3, 60.8], dock2: 2,
     src: '§2.2.2 p.2-5 (wheelbase 97 ft 4 in to the wing gear, body gear +10 ft 1 in, body-gear track 12 ft 7 in), §2.3.2 p.2-7, §2.7.1 p.2-14' },
   // ---- Airbus A320 family (AC 2-2-0 general dims, 2-7-0 door location; ground clearances 2-3-0)
+  // (A321 / A321neo cargo: C1 / C2 forward / aft cargo-door sill, bottomFA: F1 / F2 'bottom forward / aft' of the fuselage at the
+  // cargo doors [min, max] over the table's weight / CG cases: A321 FIGURE-2-3-0-991-005-A01, A321neo FIGURE-2-3-0-991-049-A01
+  // (XLR, as its D1); cargoX: FIGURE-2-7-0-991-036-A01 'A 8.16 m (FROM NOSE)' forward and the aft cargo-door figure 'A
+  // 29.62 m (FROM NOSE)', refs/cache/acap/AC_A321_jul2026.txt lines 6080-6195. A319 / A320: their ACs are not cached)
   a319: { doc: 'AC319', L: 33.84, span: 34.10, H: [11.89, 12.05], ...A32F, nose: 5.07, main: [16.11], track: 7.59, doors: [5.04, 25.81],
     src: 'FIG-2-2-0-991-002 (wing-tip fence), FIG-2-7-0-991-002 sh.2 (over-wing exits 12.83/13.68)', inf: ['crown/sill = A320neo values (same fuselage section and gear)', 'H from FIG-2-3-0-991-028 text order'] },
   a19n: { doc: 'AC319', L: 33.84, span: 35.80, H: [11.89, 12.05], ...A32F, nose: 5.07, main: [16.11], track: 7.59, doors: [5.04, 25.81],
@@ -244,9 +252,9 @@ export const SPEC = {
     src: 'FIG-2-2-0-991-004 (wing-tip fence; sharklet 35.80), FIG-2-7-0-991-003 sh.2 (over-wing exits 14.43/15.28)', inf: ['H = A320neo range'] },
   a20n: { doc: 'AC320', L: 37.57, span: 35.80, H: [11.83, 12.08], ...A32F, nose: 5.07, main: [17.71], track: 7.59, doors: [5.04, 29.53],
     src: 'FIG-2-2-0-991-009 p.6-7, FIG-2-3-0-991-032 p.6 (VT, D1, fuselage top), FIG-2-7-0-991-003' },
-  a321: { doc: 'AC321', L: 44.51, span: 34.10, H: [11.85, 12.10], crown: [5.86, 5.97], sill: [3.39, 3.48], nose: 5.07, main: [21.97], track: 7.59, doors: [5.02, 13.84, 24.79, 36.58],
+  a321: { doc: 'AC321', cargo: { fwd: [1.81, 1.93], aft: [1.91, 2.08] }, bottomFA: [[1.73, 1.84], [1.82, 1.99]], cargoX: { fwd: 8.16, aft: 29.62 }, L: 44.51, span: 34.10, H: [11.85, 12.10], crown: [5.86, 5.97], sill: [3.39, 3.48], nose: 5.07, main: [21.97], track: 7.59, doors: [5.02, 13.84, 24.79, 36.58],
     src: 'FIG-2-2-0-991-005, FIG-2-3-0-991-005 (D1 3.39-3.48), FIG-2-7-0-991-004 sh.2', inf: ['crown = A320neo values', 'H from the 2-3-0 table text order'] },
-  a21n: { doc: 'AC321', L: 44.51, span: 35.80, H: [11.82, 12.10], crown: [5.86, 5.97], sill: [3.38, 3.49], nose: 5.07, main: [21.97], track: 7.59, doors: [5.02, 13.84, 24.79, 36.58],
+  a21n: { doc: 'AC321', cargo: { fwd: [1.80, 1.90], aft: [1.89, 1.99] }, bottomFA: [[1.71, 1.81], [1.79, 1.90]], cargoX: { fwd: 8.16, aft: 29.62 }, L: 44.51, span: 35.80, H: [11.82, 12.10], crown: [5.86, 5.97], sill: [3.38, 3.49], nose: 5.07, main: [21.97], track: 7.59, doors: [5.02, 13.84, 24.79, 36.58],
     src: 'FIG-2-2-0-991-010 p.6-7, FIG-2-3-0-991-049 (A321neo-XLR: D1 3.38-3.49), FIG-2-7-0-991-004 (4-door cabin; ACF/XLR: 1L 5.04, over-wing 18.70/19.54, 3L 26.82, 4L 36.47)',
     inf: ['crown = A320neo values'], unv: ['door layout per airframe (4-door vs ACF)'] },
   // ---- Airbus A330 (2-3-0 tables: D1/D2 door sills, F3 fuselage top forward; VT vertical tail)

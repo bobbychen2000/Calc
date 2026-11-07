@@ -98,6 +98,9 @@ REF = {
                  doors={1: 5.03}, sill1=(2.59, 2.74), sillAft=(2.97, 3.12), src='§2.2.6 p.2-14, §2.3.3 p.2-19, §2.7.1 p.2-33, §2.3.2 p.2-18 (G entry door 2)'),
     'B739': dict(crown=(5.41, 5.59), doc=B737NG, name='737-900ER (winglets)', L=42.11, span=35.79, H=(12.37, 12.62), nose=4.09, main=4.09 + 17.17, track=5.72,
                  doors={1: 5.03}, sill1=(2.59, 2.74), sillAft=(2.97, 3.12), src='§2.2.8 p.2-16, §2.3.3 p.2-19, §2.7.1 p.2-33, §2.3.2 p.2-18 (G entry door 2)'),
+    'B37M': dict(crown=(5.05, 5.51), doc=B737MAX, name='737-7', L=35.56, span=35.92, H=(11.84, 12.50), nose=4.09, main=4.09 + 13.36, track=5.72,
+                 doors={1: 5.03, 2: 27.97}, sill1=(2.77, 3.07), sillAft=(2.49, 2.92),
+                 src='§2.2.1 p.2-9 (nose gear 13 ft 5 in, wheelbase 43 ft 10 in), §2.3.1 p.2-13 (A, B, M aft passenger door, P), §2.7.1 p.2-26 table (B, H); close-out round 3 (aircraft-3): the 737-7 had no REF, so its aft door was not checked'),
     'B38M': dict(crown=(5.08, 5.51), doc=B737MAX, name='737-8', L=39.47, span=35.92, H=(11.86, 12.45), nose=4.09, main=4.09 + 15.60, track=5.72,
                  doors={1: 5.03, 2: 31.88}, sill1=(2.77, 3.07), sillAft=(2.49, 2.90),
                  src='§2.2.2 p.2-10 (plan length 129 ft 6 in), §2.3.2 p.2-14 (P, B, M aft passenger door), §2.7.1 p.2-26 table (B, H)'),
@@ -302,7 +305,7 @@ for (const k in TYPES) { const T = TYPES[k]; if (k !== T.key) continue; const f 
     nose: T.gear.nose.x, xMain: T.xMain, doors: T.doors, dock2: T.dock2, dockX1: T.dockX1, dockX2: T.dockX2, dockSill: T.dockSill,
     dockSill2: T.dockSill2, dockHW: T.dockHW, dockX3: T.dockX3 ?? null, dockSill3: T.dockSill3 ?? null, dockHW3: T.dockHW3 ?? null, spec: SPEC[k] || null,
     fit: f && { model: f.model, base: f.base, s: f.s, plugs: f.plugs, stretch: f.stretch, seat: f.seat, door: f.door, renderedSpan: f.renderedSpan, renderedH: f.renderedH,
-      engClear: f.engClear, gearTop: f.gearTop, tipAdd: f.tipAdd, pitch: f.pitch, renderedCrown: f.renderedCrown, winglet: f.winglet || null } };
+      engClear: f.engClear, gearTop: f.gearTop, tipAdd: f.tipAdd, pitch: f.pitch, renderedCrown: f.renderedCrown, winglet: f.winglet || null, cargo: f.cargo || null, stance: f.stance || null } };
 }
 console.log(JSON.stringify(o));
 """
@@ -348,7 +351,7 @@ def pose_of(fitd):
     return f
 
 
-def crown_of(Q, Z, I, L, dx=1.0, win=5.0, at=None):
+def crown_of(Q, Z, I, L, dx=1.0, win=5.0, at=None, hi=0.5):
     """fuselage top over 0.1-0.5 L as js/aircraft/fit.js crownOf defines it, measured on the rendered mesh: the top of the
     centre-plane section (planar cuts of the body / fin triangles, tools/models/model_features.py sections) every dx,
     median-filtered over 5 m (an antenna or dorsal fairing is not the fuselage top), then the maximum. at = a station
@@ -361,12 +364,18 @@ def crown_of(Q, Z, I, L, dx=1.0, win=5.0, at=None):
     def med(j):
         v = sorted(S['top'][i] for i in range(max(0, j - w), min(len(ok), j + w + 1)) if ok[i])
         return v[len(v) >> 1] if v else None
-    for j in range(int(np.ceil(0.1 * L / dx)), int(0.5 * L / dx) + 1):
+    for j in range(int(np.ceil(0.1 * L / dx)), int(hi * L / dx) + 1):
         if j >= len(ok) or not ok[j]: continue
         m = med(j)
         if best is None or m > best: best = m
     if at is None: return best
     j = int(round(at / dx)); return best, (med(j) if 0 <= j < len(ok) else None)
+
+
+def mf_sections(Q, Z, I, L, dx=1.0):
+    sys.path.insert(0, os.path.join(ROOT, 'tools', 'models'))
+    import model_features as mf
+    return mf.sections(Q, Z, I, L, dx)
 
 
 WL_RISE = 0.10   # model m above the outer-wing upper-skin line: the winglet root (the profile's noise there is +-0.06)
@@ -416,9 +425,20 @@ def rendered(P, Z, head, fitd, T, full=None):
         if hasGear and pt and pt.get('a', 0) < 0:               # nose-up stance (737 MAX): also the top at the main-gear station
             cr, crm = crown_of(Qf, Zf, If, L, at=x_nose - pt['x0'])
         else: cr = crown_of(Qf, Zf, If, L)
+        # the fuselage's highest top ahead of the tail (0.1-0.65 L: the ACAP 'top of fuselage' row is the highest point; in a
+        # nose-down stance it lies aft of 0.5 L, where the fit.js crown row stops; close-out round 3)
+        if hasGear: crhi = crown_of(Qf, Zf, If, L, hi=0.65)
+        # keel (lowest skin on the centre plane) at the stations of the model's own cargo doors / the published ones
+        Ssec = mf_sections(Qf, Zf, If, L)
     out = dict(L=L * s, span=float(Q[:, 2].max() - Q[:, 2].min()) * s, H=Hc + float(Q[:, 1].max()) * s, Hc=Hc,
                crown=Hc + cr * s if cr is not None else None)
     if full is not None and hasGear and pt and pt.get('a', 0) < 0 and crm is not None: out['crownMain'] = Hc + crm * s
+    if full is not None and hasGear and crhi is not None: out['crownMax'] = Hc + crhi * s
+    if full is not None:
+        def keel(X):                                           # X: rendered station (m aft of the nose)
+            j = X / s; j0 = int(np.floor(j)); v = [Ssec['bot'][k] for k in (j0, j0 + 1) if 0 <= k < len(Ssec['bot']) and Ssec['bot'][k] is not None]
+            return Hc + float(np.mean(v)) * s if v else None
+        out['keelAt'] = keel
     # clearances: lowest engine point (nacelle zone, else the lowest skin outboard of 1.4 fuselage half widths ahead of
     # 0.75 L), belly at 0.5 L (lowest body point within 1 m), wing tip and tailplane tip (mean height of the outermost 2 %)
     R0 = float(np.percentile(np.abs(Q[(Z == 0) & (np.abs(Q[:, 1]) < 0.5) & (Q[:, 0] < -0.3 * L) & (Q[:, 0] > -0.5 * L), 2]), 20)) if ((Z == 0) & (np.abs(Q[:, 1]) < 0.5)).any() else 2.0
@@ -511,7 +531,7 @@ def main():
         refsrc = 'REF' if ref else 'SPEC'
         R = ref or dict(name=T['name'] + ' (no independent REF: checked against SPEC in types.js)', L=S.get('L'), span=S.get('span'), H=S.get('H'),
                         crown=S.get('crown'), nose=S.get('nose'), main=(S.get('main') or [None])[0], track=S.get('track'),
-                        doors={i + 1: x for i, x in enumerate(S.get('doors') or [])}, sill1=S.get('sill'))
+                        doors={i + 1: x for i, x in enumerate(S.get('doors') or [])}, sill1=S.get('sill'), sillAft=S.get('sillAft'))
         r = dict(icao=icao, t=t, m=mk, ref=R['name'], refsrc=refsrc, cmp=[])
         def add(what, got, want, pos=False, key=None, inf=False, vert=False, tolm=None):
             # vert: a height above the ground, flagged beyond VTOL (the ACAPs' nominal +-3 in for loading, oleo and tyre
@@ -539,6 +559,23 @@ def main():
             add('fuselage top above ground (rendered)', rd['crown'], R.get('crown'), pos=True, key='crown', vert=True)
             if rd.get('crownMain') is not None:      # nose-up stance: the top at the main gear (see _MAX_CROWN)
                 add('fuselage top at the main-gear station (rendered)', rd['crownMain'], R.get('crown'), pos=True, key='crownmain', vert=True)
+            if rd.get('crownMax') is not None:       # gear models: the highest fuselage top ahead of the tail (ACAP row A)
+                add('fuselage top, highest over 0.1-0.65 L (rendered)', rd['crownMax'], R.get('crown'), pos=True, key='crownmax', vert=True)
+            # lower deck (close-out round 3, aircraft-1): the model's own cargo-door objects (rendered sill and station, T.fit.cargo)
+            # and the keel at the cargo doors against the cargo-door / fuselage-bottom rows (SPEC cargo / bottom / bottomFA)
+            cg = f.get('cargo') or {}
+            for kd, nm in (('fwd', 'forward'), ('aft', 'aft')):
+                c = cg.get(kd)
+                if not c: continue
+                if c.get('sill') is not None:
+                    add(f"model's own {nm} cargo door sill (rendered)", c['sill'], c.get('pub'), pos=True, key='cargosill', vert=True)
+                    if (S.get('cargoX') or {}).get(kd) is not None:
+                        add(f"model's own {nm} cargo door station (rendered centre)", c['X'], S['cargoX'][kd], pos=True, key='cargox', inf=True)
+                bot = S.get('bottom') if kd == 'fwd' else None
+                if S.get('bottomFA'): bot = S['bottomFA'][0 if kd == 'fwd' else 1]
+                if bot and c.get('X') is not None and rd.get('keelAt'):
+                    add(f"fuselage bottom at the {nm} cargo door (rendered keel at {c['X']:.2f} m)", rd['keelAt'](c['X']), bot, pos=True, key='bottom', vert=True)
+                    add(f"T.fit.keelAt at the {nm} cargo door = rendered keel", c.get('keel'), rd['keelAt'](c['X']), pos=True, key='keelfit', vert=True)
             add('lowest engine point above ground (rendered)', rd['engClear'], S.get('engClr'), pos=True, key='engclr', vert=True)
             add('belly at 0.5 L above ground (rendered)', rd['belly'], S.get('bellyClr'), pos=True, key='belly', vert=True)
             add('wing tip height (rendered)', rd['tipY'], S.get('tipClr'), pos=True, key='tipy', vert=True)

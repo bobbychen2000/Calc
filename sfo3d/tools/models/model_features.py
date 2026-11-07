@@ -13,11 +13,15 @@ aft of the nose (x_station = -x).
 Per model:
   sec    fuselage section every `dx` metres from the nose: top / bottom of the skin on the centre plane and the half
          width at mid height (planar cut of the triangle mesh; body and fin zones only, i.e. no gear, engines, glass);
-         over the forward 45 % also `hwf`, the half widths at the fractions `f` of the section height (bridge cab vs skin)
+         over the forward 45 % also `hwf`, the half widths at the fractions `f` of the section height (bridge cab vs skin);
+         at every station `hwl`, the half widths at the heights `lo` (model units) above the section bottom (lower lobe:
+         belt loaders, js/aircraft/fit.js skinHalfWidth)
   doors  passenger-door objects of the SOURCE model (FlightAirMap .glb node names, e.g. A320 `DoorL1`, CRJ `LeftDoor`,
          E-Jet `door.l1`, A220 `doorFL`): station of the centre and of both edges, sill (lowest y) and top, side (L/R).
          Only some source models have door objects; for the others the doors exist only in the texture.
   gearDoors  landing-gear door objects of the source model (station of the centre), for cross-checking gear positions
+  cargo  lower-deck cargo-door objects of the source model (FG 737-800 cargodoorF / cargodoorR): station of the centre and
+         edges, sill (lowest y), top, side; js/aircraft/fit.js fits the stance to the ACAP cargo-door rows with them
   wing   semi-span (outermost wing vertex), outer edge of the engines/pylons (|z|), for the wing-tip span fit
   under  lowest skin height over a (station, |z|) grid: where the procedural struts of gear-less models meet the skin
   nose   id of another model whose nose section (x < 8 m) is vertex-identical (median distance < 2 cm), so a door
@@ -41,6 +45,9 @@ MD = os.path.join(ROOT, 'data', 'models')
 sys.path.insert(0, os.path.join(ROOT, 'tools'))
 
 DOOR_PAX = re.compile(r'^(Door[LR]\d|door\.[lr]\d$|door[FR][LR]$|LeftDoor$|RightDoor$|door[LR][FR]$)', re.I)   # (last: FlightGear 737-800 doorLF / doorLR; the 777's LFdoor objects are nose-gear doors)
+# lower-deck cargo doors (FlightGear 737-800 cargodoorF / cargodoorR, right side): js/aircraft/fit.js fits the 737 stance to the
+# ACAP cargo-door rows and publishes the drawn doors to the belt loaders (T.fit.cargo; close-out round 3, aircraft-1)
+DOOR_CARGO = re.compile(r'^cargodoor[FR]$', re.I)
 DOOR_GEAR_NOSE = re.compile(r'GearN|nlg|NoseGearDoor|nosegrdoor|lhnosedoor|rhnosedoor|lhfnosedoor|rhfnosedoor|^nosedoor|geardoor\.f|lgdoor\.(left|right)\.front|NLG_', re.I)
 DOOR_GEAR_MAIN = re.compile(r'GearLDoor|GearRDoor|LeftGearDoor|RightGearDoor|wlg_|lhgearibdoor|rhgearibdoor|lhibdoor|rhibdoor|lhfdoor|rhfdoor|gear[LR]door|lgeardoor|rgeardoor|'
                             r'geardoor\.b|(left|right)\.main\.door|^door\dB', re.I)
@@ -86,11 +93,15 @@ def crossings(segs, axis, v):
 # Review 4 Nov 2026: the ellipse through the best section within +-2 m of the door put widebody cabs 0.20-0.29 m off the skin.
 HWF = (0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9)
 HWF_TO = 0.45
+# heights (model units above the section's bottom) of the lower-lobe half-width table `hwl`, every station: where belt
+# loaders and other ground equipment meet the lower fuselage (js/aircraft/fit.js skinHalfWidth / T.fit.cargo; close-out
+# round 3, aircraft-1: the consumers had only an unpitched ellipse through T.Hc and the crown)
+HWL = (0.05, 0.1, 0.2, 0.3, 0.45, 0.6, 0.8, 1.0)
 
 
-def sections(pos, zone, idx, L, dx, hwf=False):
+def sections(pos, zone, idx, L, dx, hwf=False, zmax=None):
     tri = idx[np.isin(zone[idx], (0, 1)).all(1)]
-    top, bot, hw, hf = [], [], [], []
+    top, bot, hw, hf, hl = [], [], [], [], []
     n = int(L / dx) + 1
     for i in range(n):
         xs = -min(max(i * dx, 0.02), L - 0.02)
@@ -99,6 +110,7 @@ def sections(pos, zone, idx, L, dx, hwf=False):
         if not ys:
             top.append(None); bot.append(None); hw.append(None)
             if hwf and i * dx <= HWF_TO * L: hf.append(None)
+            if hwf: hl.append(None)
             continue
         t, b = max(ys), min(ys)
         zs = crossings(segs, 0, (t + b) / 2)
@@ -108,8 +120,14 @@ def sections(pos, zone, idx, L, dx, hwf=False):
             for f in HWF:
                 zz = crossings(segs, 0, b + f * (t - b)); row.append(round(float(max(abs(z) for z in zz)), 2) if zz else None)
             hf.append(row)
+        if hwf:
+            row = []
+            for h in HWL:                       # (fuselage only: zmax keeps a low wing / fairing edge out of the lower lobe)
+                zz = [abs(z) for z in crossings(segs, 0, b + h) if zmax is None or abs(z) <= zmax]
+                row.append(round(float(max(zz)), 2) if zz and b + h < t else None)
+            hl.append(row)
     out = dict(dx=dx, top=top, bot=bot, hw=hw)
-    if hwf: out.update(f=list(HWF), hwf=hf)
+    if hwf: out.update(f=list(HWF), hwf=hf, lo=list(HWL), hwl=hl)
     return out
 
 
@@ -208,19 +226,21 @@ def source_objects(key, fam):
     objs = {}
     for p in prims:
         name = p['node'].split('|')[0]
-        kind = 'pax' if DOOR_PAX.search(name) else 'nose' if DOOR_GEAR_NOSE.search(name) else 'main' if DOOR_GEAR_MAIN.search(name) else None
+        kind = 'pax' if DOOR_PAX.search(name) else 'cargo' if DOOR_CARGO.search(name) else 'nose' if DOOR_GEAR_NOSE.search(name) else 'main' if DOOR_GEAR_MAIN.search(name) else None
         if kind: objs.setdefault((kind, name), []).append(p['pos'])
-    doors, gear = [], []
+    doors, gear, cargo = [], [], []
     for (kind, name), qs in objs.items():
         q = np.concatenate(qs)
         x0, x1 = float(-q[:, 0].max()), float(-q[:, 0].min())
         r = dict(name=name, x=round((x0 + x1) / 2, 3), x0=round(x0, 3), x1=round(x1, 3))
-        if kind == 'pax':
+        if kind in ('pax', 'cargo'):
             r.update(side='L' if q[:, 2].mean() < 0 else 'R', ySill=round(float(q[:, 1].min()), 3), yTop=round(float(q[:, 1].max()), 3))
-            doors.append(r)
+            (doors if kind == 'pax' else cargo).append(r)
         else:
             r['kind'] = kind; gear.append(r)
-    return dict(doors=sorted(doors, key=lambda d: (d['side'], d['x'])), gearDoors=sorted(gear, key=lambda d: d['x']))
+    out = dict(doors=sorted(doors, key=lambda d: (d['side'], d['x'])), gearDoors=sorted(gear, key=lambda d: d['x']))
+    if cargo: out['cargo'] = sorted(cargo, key=lambda d: d['x'])
+    return out
 
 
 def same_nose(models, xmax=8.0, tol=0.02):
@@ -259,7 +279,7 @@ def main():
     feats = {}
     for k, m in models.items():
         L = m['head']['dims']['L']
-        sec = sections(m['pos'], m['zone'], m['idx'], L, a.dx, hwf=True)
+        sec = sections(m['pos'], m['zone'], m['idx'], L, a.dx, hwf=True, zmax=1.1 * float(m['head']['dims'].get('Rz') or m['head']['dims']['R']))
         hwm = float(np.median([h for h in sec['hw'][int(0.3 * L / a.dx):int(0.5 * L / a.dx)] if h is not None] or [2.0]))
         f = dict(sec=sec, wing=wing(m['pos'], m['zone'], L, hwm), under=underside(m['pos'], m['zone'], m['idx'], L))
         if m['head']['dims'].get('hasGear'):
@@ -267,10 +287,10 @@ def main():
             if c: f['contact'] = c
         used = np.unique(m['idx']); it = used[np.argmax(m['pos'][used, 1])]
         f['finTop'] = dict(st=round(float(-m['pos'][it, 0]), 3), y=round(float(m['pos'][it, 1]), 3))
-        so = source_objects(k, a.fam) if os.path.isdir(a.fam) else None
+        so = source_objects(k, a.fam)            # (None when the model's source is absent: FAM checkout or FG export)
         if so: f.update(so)
         else:                                   # source models not present: keep the measured source objects
-            for kk in ('doors', 'gearDoors'):
+            for kk in ('doors', 'gearDoors', 'cargo'):
                 if kk in old.get(k, {}): f[kk] = old[k][kk]
         if k in noses: f['sameNose'] = sorted(noses[k])
         feats[k] = f

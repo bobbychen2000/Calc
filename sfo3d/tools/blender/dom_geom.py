@@ -631,7 +631,7 @@ class World:
         """parameters (0..1) along a->b where it crosses a neighbouring occupancy boundary."""
         ln = LineString([a, b]); L = ln.length
         ts = {0.0, 1.0}
-        for i in self.tree.query(ln.buffer(0.05)):
+        for i in self.tree.query(ln.buffer(0.2)):
             g, z0, z1, s = self.occ[i]
             if s is me: continue
             x = ln.intersection(g.boundary)
@@ -639,6 +639,15 @@ class World:
                 if q.is_empty: continue
                 for c in (q.coords if q.geom_type != 'Point' else [q.coords[0]]):
                     ts.add(min(1.0, max(0.0, ln.project(Point(c)) / L)))
+            # close-out r3 (back-face QA t2curb): a neighbour whose edge runs ALONG this one a few cm off never crosses it,
+            # so its corners split nothing and the midpoint sample clipped the whole edge (the T2 face 199.2-220.7 opened
+            # 9.43-14.38 m for the 16.9-m-wide connector end: a 5-m hole into the hall). Its vertices within 0.15 m split too.
+            for rg in [g.exterior] + list(g.interiors) if g.geom_type == 'Polygon' else [r for p_ in getattr(g, 'geoms', []) for r in [p_.exterior] + list(p_.interiors)]:
+                for c in rg.coords:
+                    pc = Point(c)
+                    if ln.distance(pc) < 0.15:
+                        t_ = ln.project(pc) / L
+                        if 1e-4 < t_ < 1.0 - 1e-4: ts.add(t_)
         return sorted(ts)
 
 

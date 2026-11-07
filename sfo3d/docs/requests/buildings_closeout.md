@@ -8,7 +8,7 @@ units, their `manifest.json` entries, `docs/drawings/buildings/**`. What changed
 
 ## Round 3 (close-out round 3, 6 Nov 2026; findings `docs/requests/closeout3_findings.json#groups.buildings`)
 
-Rebuilt in this round: `domestic.glb` / `domestic_lod2.glb` (6 Nov 05:39Z), `landside.glb` / `landside_lod2.glb` + `lsu_*` (6 Nov
+Rebuilt in this round: `domestic.glb` / `domestic_lod2.glb` (6 Nov 05:39Z, again 7 Nov 03:36Z after the back-face QA), `landside.glb` / `landside_lod2.glb` + `lsu_*` (6 Nov
 05:43Z, again 7 Nov 02:11Z after the back-face QA - R3.9; `b3d_split.py` re-run each time), `itb.glb` / `itb_lod2.glb` (7 Nov
 01:55Z, R3.6). `integration.json` (03:59Z on 6 Nov) and `roadways.glb` predate all three.
 
@@ -26,7 +26,9 @@ face. In all, 2,355.9 m2 of shell was removed from over the roadway.
   the deck now meets the new sidewalk edge with no gap (the curb-gap check).
 - Replacement table: the first-pass app part 23 "Terminal 2 walkway" (kept as a landside rest piece between x -797 and
   -766) now lies under the domestic `T2_garage_link`. The height-aware coverage should hand it to `domestic` on the re-run.
-- New sizes: domestic 11.50 MB, landside 21.13 MB (7 Nov 02:11Z), itb 6.46 MB (manifest entries updated by the builds).
+- New sizes: domestic 11.58 MB (7 Nov 03:36Z), landside 21.13 MB (7 Nov 02:11Z), itb 6.46 MB (manifest entries updated by the builds).
+- The 7 Nov domestic rebuild also closes a 5-m hole in the T2 face beside the connector (back-face QA; `dom_geom.World.splits`) - the
+  connector stretch of the face is now the only opening, as `t2_curb` assumes.
 
 ### R3.2 Integration: list low decks over at-grade roads as plausibility conflicts (buildings-14)
 
@@ -84,10 +86,38 @@ status unverified. The source is one openly licensed photo, `photo_a2` (Wikimedi
 photo (not verified). The app material may follow for BA-G. The ITB asset's `mullion` material is already light aluminium
 (178 / 182 / 186, metallic 0.6).
 
+### R3.9 Integration: landside rebuilt again after the back-face QA (buildings-1)
+
+`landside.glb` / `landside_lod2.glb` and the `lsu_*` units were rebuilt 7 Nov 02:11Z (`b3d_split.py` re-run; verify_landside
+195 / 0). The back-face QA of the 6 Nov file found back faces the round-2 changes had introduced (details:
+`docs/research/buildings3d.md`, landside "Close-out round 3"): the Garage A body's screened bands ran across the station block's
+south stretch (one 131.7-m outline edge), the NE rotunda band had an open 0.12-m underside, and the single-sided perforated
+screens showed their backs through the open levels of the curved ends. Plan footprint unchanged; LOD0 160,713 -> 159,459 tris,
+21.13 MB. The roadway trim reads landside triangles: rebuild order as R3.5. The a2 view also shows the BART station's east end
+open against the ITB outline: by design (internal edge), and covered by `itb.glb` in the app (ray test with itb / roadways / domestic
+loaded: every a2 ray through the BART end's red pixels ends on an `itb.glb` front face, the ITB core) - no action needed unless the ITB core outline changes.
+
+### R3.10 Environment / engine (and integration): BA-B glass vs Cycles at the same camera and sun (buildings-5)
+
+The domestic glass no longer carries the baked AO as glTF occlusion (three.js applied it to the IBL reflection through its
+specular occlusion; low tier pierB wall median (20, 24, 25) -> (27, 35, 36)). Measured like-for-like this round: the app camera and
+sun were logged (`tools/blender/c3_app_views_job.mjs`, `out/buildings3d/c3/appB2/c3_info.json`: view `gate:B20,110,1,12`, eye
+(-1018.5, 28.3, 768.7), fov 50, sun az 133.9 / el 41.6, snapshot time) and the same camera / sun rendered in Cycles
+(`out/buildings3d/domestic_app_pierB_c3.png`, `render_domestic.py --views appcam --appcam <c3_info.json>:pierB`). BA-B wall median:
+Cycles (58, 64, 71), app low (27, 35, 36), app high (29, 36, 37) - so it is not the low tier's missing SSR. Normalised to the white
+fascia in the same frames, glass / fascia is 0.15-0.17 in the app against 0.33 in Cycles, while the sky in the same frames is (126,
+146, 161) in the app against (166, 182, 194) in Cycles; the panes are sky-reflection dominated (IOR 1.9 coated glass). Please
+compare the app's IBL / sky radiance near the horizon with Cycles' sky at this sun (the same pair of images), and the glass
+material's environment response (`js/three/buildings3d.js` kind `hall`). The asset's glass values stay (no openly licensed BA-B
+photo to aim a material-only lift at).
+
 ### R3.8 Owner (open questions; defaults kept and tagged)
 
 - Grand Hyatt at SFO height: default 44 m [inf] (40-48; 12 storeys [pub]); the a2-scaled garage heights move -/+2.4 m with
   it. The FAA OE/AAA determination for the hotel would be the primary source.
+  Searched again 7 Nov (web): SFO / Hyatt / contractor pages give 12 storeys and 351 rooms, no height; the 355-ft figures online
+  belong to the Grand Hyatt at Union Square. The Courtyard 3 Connector: "six-story" office building [pub HOK / Hensel Phelps],
+  no height; its 2019 SF Arts Commission civic-design deck (sfgov.org/arts) did not download (HTTP 504).
 - Courtyard 3 Connector height: default 33.0 m [inf] (32-36; penthouse 38.0 obs low).
 - Control-tower height family: F2 (rim 64.0, observation-anchored) stays the default; F1 (rim 67.36 = 221 ft) is the
   published-height hypothesis.

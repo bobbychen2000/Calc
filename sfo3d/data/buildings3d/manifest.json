@@ -3333,6 +3333,13 @@
     "what": "landside perspective approximating photo i4 (DimiCalifornia 2005, PD); itb_cmp_i4.png side by side",
     "samples": 48,
     "note": "local (out/ is gitignored); comparison sheets with photo pixels stay local"
+   },
+   {
+    "view": "i4_c3sun",
+    "file": "out/buildings3d/itb_i4_c3sun.png",
+    "what": "landside perspective approximating photo i4 (DimiCalifornia 2005, PD); itb_cmp_i4.png side by side",
+    "samples": 48,
+    "note": "local (out/ is gitignored); comparison sheets with photo pixels stay local"
    }
   ],
   "render_check": {
@@ -3343,7 +3350,7 @@
    "centre_max_abs_dev_m": 0.463,
    "note": "silhouette = topmost opaque pixel of the orthographic west render (LOD0, alpha pass) vs BI-02 roof_line(u); resolution 1 px = 0.28 m; in the centre the lens glass / arch form the top"
   },
-  "renders_updated": "2026-11-07T02:12:03+00:00",
+  "renders_updated": "2026-11-07T03:13:54+00:00",
   "qa": {
    "gltf_validator": {
     "tool": "Khronos glTF-Validator 2.0.0-dev.3.10 (node tools/blender/tower_validate.mjs <glb>)",
@@ -3367,7 +3374,33 @@
    },
    "ao_view": "out/buildings3d/itb_ao_{i4,i3,baa}.png (local)",
    "date": "2026-11-04"
-  }
+  },
+  "closeout_r3": [
+   {
+    "id": "buildings-7",
+    "item": "ITB curb canopy 4.52 m over the departures plate",
+    "disposition": "fixed",
+    "change": "CANOPY_THK 0.6 -> 0.45 m [inf] under the unchanged observed / drawn top 16.5 m: soffit 15.9 -> 16.05 m; itb.glb rebuilt 2026-11-07 01:55Z; verify_itb canopy-soffit check over the roadways.glb LOD0 deck triangles under the canopy plan 4.70 m (>= 4.6; the integration point sample 4.52 -> 4.67); the check's first version used the Blender-local frame (Buv) and silently never ran - fixed to UVw, verify_itb 126 / 0"
+   },
+   {
+    "id": "buildings-6",
+    "item": "ITB clear centre bay (glass_hall) ratio, app never measured after the final material",
+    "disposition": "fixed (app matches the photo under the photo's light); Cycles residual recorded",
+    "change": "app render after the final material, high tier, i4like look, west facade sunlit as in photo i4 (?t=2026-09-23T23:15:00Z, sun az 241.2 / el 31.5; out/buildings3d/c3/appB1/c3_i4sun.png): centre / side bay 0.69 (mirror 0.688) vs photo ~0.7; the snapshot-time render (facade in shade) 0.418 is a different light. Cycles i4 at the estimated photo sun 0.86 (unchanged; Cycles is the offline reference, the app the deliverable). glass_hall kept (IOR 1.5, base 100 / 110 / 116); Cycles at the app sun (241.2 / 31.5) 0.84 - a renderer difference at the same light (path-traced reflections on the opaque proxy)"
+   },
+   {
+    "id": "buildings-10",
+    "item": "BI-02 / BI-03 / BI-04 behind the 3-D state",
+    "disposition": "fixed on the sheets",
+    "change": "draw_itb.r3_hall draws the 3-D deck / fascia (roof_line - crown_cap), the lens vaults and the canopy slab on BI-02 V1 / BI-03 V1; r3_notes states every manifest itb.deviations_from_sheets item on BI-02 / BI-03 / BI-04 (BI-01 items on BI-04)"
+   },
+   {
+    "id": "buildings-12",
+    "item": "ITB core 17.9 m placeholder, L3 11.5 m, BA-A pod 23.6 vs DOF 25.91, BA-G mullion finish",
+    "disposition": "partly",
+    "change": "spec_itb.json ba_g.mullion_finish recorded (light silver-white, obs photo a2, low, unverified; engine_closeout R2.4); the core height, L3 and the BA-A pod conflict stay tagged (no new source)"
+   }
+  ]
  },
  "tower": {
   "name": "SFO air traffic control tower (2016) and base building (IBF)",
@@ -4187,13 +4220,27 @@
    "seconds": 512.9,
    "ao_samples": 48,
    "date": "2026-11-05"
-  }
+  },
+  "closeout_r3": [
+   {
+    "id": "buildings-13",
+    "item": "tower height family F1 / F2 undecided",
+    "disposition": "deferred: needs the owner",
+    "change": "F2 (rim 64.0, observation-anchored) stays the default, F1 (rim 67.36 = 221 ft, CTBUH class) the hypothesis; both re-verified 2026-11-07: tower3d_verify 110 / 110 (F2) and 110 / 110 (F1)"
+   },
+   {
+    "id": "buildings-1",
+    "item": "round-2 tower fixes (slots, cab glass, joints / console / floor, LED colour)",
+    "disposition": "confirmed",
+    "change": "tower_compare_t2: slots mid-grey louvre recesses, cab glass uniform dark; t3 (overcast) cab glass lighter than the photo stays a light-condition deviation (t2, the primary evidence, matches)"
+   }
+  ]
  },
  "domestic": {
   "asset": "data/buildings3d/domestic.glb",
-  "bytes": 11500808,
-  "built": "2026-11-06T05:38:56+00:00",
-  "git": "50daff2+dirty",
+  "bytes": 11578484,
+  "built": "2026-11-07T03:36:04+00:00",
+  "git": "11b7403+dirty",
   "generator": "tools/blender/build_domestic.py (bpy 5.0.1, Cycles CPU AO bake); geometry tools/blender/dom_geom.py + dom_mesh.py; textures dom_tex.py",
   "reference": "2-D sheets BD-01..03 (docs/drawings/buildings/README.md), drawn by tools/buildings/draw_domestic.py, imported by dom_geom.py",
   "spec": "tools/buildings/spec_domestic.json (+ dom_bab_band.json, dom_baf_hub.json, dom_bab_roof.json; tools/blender/dom_pv.json)",
@@ -4256,8 +4303,8 @@
     "lod": 0,
     "node": "LOD0",
     "switch_m": 0.0,
-    "tris": 80494,
-    "verts": 168048,
+    "tris": 80720,
+    "verts": 168500,
     "draw_calls": 156,
     "ao_atlas": "dom_ao_S / dom_ao_N (shared by the LOD0 / LOD1 shell meshes)"
    },
@@ -4265,8 +4312,8 @@
     "lod": 1,
     "node": "LOD1",
     "switch_m": 380.0,
-    "tris": 25000,
-    "verts": 58998,
+    "tris": 25292,
+    "verts": 59582,
     "draw_calls": 122,
     "ao_atlas": "dom_ao_S / dom_ao_N (shared by the LOD0 / LOD1 shell meshes)"
    },
@@ -4274,8 +4321,8 @@
     "lod": 2,
     "node": "LOD2",
     "switch_m": 1300.0,
-    "tris": 24840,
-    "verts": 58646,
+    "tris": 25132,
+    "verts": 59230,
     "draw_calls": 21,
     "ao_atlas": "dom_ao_L2"
    }
@@ -4287,7 +4334,7 @@
   ],
   "lod2_glb": {
    "path": "data/buildings3d/domestic_lod2.glb",
-   "bytes": 3005316
+   "bytes": 3031936
   },
   "textures": [
    {
@@ -4327,7 +4374,7 @@
      2048
     ],
     "mime": "image/png",
-    "bytes": 1403037,
+    "bytes": 1397688,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    },
    {
@@ -4397,7 +4444,7 @@
      2048
     ],
     "mime": "image/png",
-    "bytes": 1332283,
+    "bytes": 1363949,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    },
    {
@@ -4507,7 +4554,7 @@
      1024
     ],
     "mime": "image/png",
-    "bytes": 476344,
+    "bytes": 477852,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    }
   ],
@@ -5013,8 +5060,8 @@
      "T2",
      "C3C"
     ],
-    "bake_s": 34.6,
-    "mean": 0.649,
+    "bake_s": 28.5,
+    "mean": 0.648,
     "p2": 0.002,
     "samples": 48,
     "distance_m": 10.0,
@@ -5033,9 +5080,9 @@
      "BA_E",
      "BA_F"
     ],
-    "bake_s": 31.4,
-    "mean": 0.701,
-    "p2": 0.005,
+    "bake_s": 26.9,
+    "mean": 0.7,
+    "p2": 0.006,
     "samples": 48,
     "distance_m": 10.0,
     "ground_plane": true
@@ -5048,9 +5095,9 @@
     "buildings": [
      "all"
     ],
-    "bake_s": 3.3,
-    "mean": 0.697,
-    "p2": 0.058,
+    "bake_s": 2.6,
+    "mean": 0.694,
+    "p2": 0.061,
     "samples": 48,
     "distance_m": 10.0,
     "ground_plane": true
@@ -7139,9 +7186,9 @@
     {
      "group": "footprints",
      "check": "LOD0 plan area outside the SFO Museum outlines (roof overhangs, canopy, vestibules)",
-     "model": 1032.072,
+     "model": 1032.056,
      "drawing": 0.0,
-     "dev": 1032.072,
+     "dev": 1032.056,
      "tol": null,
      "ok": true,
      "src": "BA-B / BA-D ESE overhangs +2.3 / +2.4 m [obs], T1 canopy 4 m [inf], vestibules [inf]"
@@ -7199,9 +7246,9 @@
     {
      "group": "plausibility",
      "check": "ITB outline (the ITB asset) inside the 3-D footprint",
-     "model": 0.021,
+     "model": 0.013,
      "drawing": 0.0,
-     "dev": 0.021,
+     "dev": 0.013,
      "tol": 0.5,
      "ok": true,
      "src": "SFO Museum ITB + BA-A / BA-G"
@@ -8804,7 +8851,57 @@
    },
    "pv_r2": "tools/blender/dom_pv_r2.py -> dom_pv_r2.json; QA overlay out/buildings3d/dom_pv_r2_E_centre.png (local)",
    "d1_camera": "render_domestic.D1_SOLVE: horizon y 525 +- 10 px from the VP of 3 facade lines; camera 5.83 m above the canopy line (15.06 m model frame), 2.8 m below the roof edge; f 2657 px from the AirTrain-guideway distance [inf]"
-  }
+  },
+  "closeout_r3": [
+   {
+    "id": "buildings-2",
+    "item": "T2 shell over the departures curb roadway (major)",
+    "disposition": "fixed",
+    "change": "T2 landside face on the NAIP 2024 relief-corrected roof edge x = -811.96 + 0.3063 z (z 168-254) [obs], elsewhere 5.85 m off the departures deck edge [inf]; departures sidewalk, glass curb canopy 5.4 m, T2 - garage connector (soffit 9.43 / top 14.38 [inf]) in front; 2,355.9 m2 of shell removed. verify_domestic_r2.t2_curb (T2 stretch of the OSM Departures ways): solid between the deck and deck + 4.6 m 1.414 -> 0.000 m2; connector soffit over the deck 4.70 m; roof edge minus the measured line median 0.01, max 0.11 m (14 sections). verify_domestic 60 / 0. roadways.glb must be rebuilt to lift the interim deck cut (request R3.1)"
+   },
+   {
+    "id": "buildings-4",
+    "item": "F7 / F8 / D3 rotunda drums inside the asset footprints (major)",
+    "disposition": "fixed (3-D clearance shown and recorded); plan test routed",
+    "change": "verify_domestic_r2.drum_overhead: 6 drums under a roof, F7 / F8 L1 1.14 m below the 9.69-m BA-F soffit (drum top 8.55), facades >= 0.1 m outside the largest drum, F8 L1 tunnel 1 >= 1.58 m below the soffit in every pose, D3 L1 facade 0.19 m clear; request R3.3 (height bands in the integration footprint tiers)"
+   },
+   {
+    "id": "buildings-5",
+    "item": "BA-B glass darker in the three.js low tier than Cycles (minor)",
+    "disposition": "partly: the domestic-side cause fixed; the remaining gap measured like-for-like and routed (R3.10)",
+    "change": "glTF occlusion link removed from the glass materials (three.js applied the baked AO to the IBL reflection through its specular occlusion): pierB low-tier wall median (20, 24, 25) -> (27, 35, 36). Same camera + sun in Cycles (render_domestic --views appcam from the logged app rig, domestic_app_pierB_c3.png): (58, 64, 71); app high tier (29, 36, 37) - not a low-tier / SSR issue. glass / fascia 0.15-0.17 (app) vs 0.33 (Cycles); app sky (126, 146, 161) vs Cycles sky (166, 182, 194) in the same frames: the app IBL / sky radiance is the remaining cause (environment / engine request R3.10); glass values kept (no openly licensed BA-B photo)"
+   },
+   {
+    "id": "buildings-10",
+    "item": "BD-01 / BD-03 behind the 3-D state; BA-F ESE spec note (minor)",
+    "disposition": "fixed on the sheets",
+    "change": "BD-01 r3_plan overlay (T2 face, sidewalk, canopy, connector, C3C + penthouse, NAIP rooftop units); BD-03 view 2 redrawn from the 3-D; spec baf.roof_edges note corrected (ESE edge 1.83 m outside the level-2 outline at 10-90 % of its length; on it only at the end points); manifest conflict \"BA-F ESE roof edge\" resolved"
+   },
+   {
+    "id": "buildings-1",
+    "item": "domestic round-2 fixes never independently checked",
+    "disposition": "done; one defect found and fixed",
+    "change": "back-face QA t2curb 209 px: a 5-m hole in the moved T2 face beside the connector (World.splits missed the connector end running 0-9 cm off the face, so the whole edge was opened 9.43-14.38 m); dom_geom.World.splits now splits at neighbour vertices within 0.15 m; rebuilt 2026-11-07 03:36Z: t2curb 0, a1 127 -> 106, c3c 258 -> 197, eclose 204 -> 164, d1 / ibf 0 px; verify_domestic 60 / 0, verify_domestic_r2 n_fail 0; exposed wall -27.6 m2 net (holes closed at T2 / BA_C / T3E, internal walls clipped at BA_F / T1 / T3W)"
+   },
+   {
+    "id": "buildings-11",
+    "item": "C3C 33.0 m [inf] (32-36)",
+    "disposition": "deferred: needs the owner",
+    "change": "default kept and tagged inf; searched 2026-11-07: HOK / Hensel Phelps / Frank M. Booth give \"six-story\" and 123,000 sq ft, no height; the SF Arts Commission C3C civic design review deck (sfgov.org/arts, 2019-06-17) returned HTTP 504; FAA DOF has no C3C entry"
+   },
+   {
+    "id": "buildings-12",
+    "item": "T1 / T2 hall heights, curb placeholder, T1 roof profile, BA-B photo",
+    "disposition": "partly (no new primary source; values stay tagged)",
+    "change": "FAA DOF (2026-09-18) has no T1 / T2 entry; DOF 06-039216 (130 ft, 4D accuracy) recorded, not used; no openly licensed BA-B photo"
+   },
+   {
+    "id": "buildings-14",
+    "item": "departures loop soffit 3.53 m over at-grade roads",
+    "disposition": "partly: provenance recorded, value kept, routed",
+    "change": "curb 4.877 m tagged inf (published T3 L1 -> L2 16 ft carried along one connected loop); raising the deck >= 5.8 m would contradict the published T3 L2; conflict \"departures loop soffit over at-grade roads\" (open; 10 OSM crossings); requests R3.2 (list it in b3d_integrate, review DECK_DEPTH 1.2 m) + owner question (posted clearance)"
+   }
+  ]
  },
  "landside": {
   "asset": "data/buildings3d/landside.glb",
@@ -15659,6 +15756,24 @@
     "item": "parked cars: boxes without wheels, two shapes",
     "disposition": "fixed",
     "change": "LOD0: two 6-sided axle prisms per car (tyres show outside the 3-%-inset skirt and below the body); a third shape, the pickup (5.50 x 1.95 x 1.85 m, open bed with a dark liner 0.45 m below the rails), shares 45 / 40 / 15 % [inf]; LOD1 / LOD2 unchanged (no wheels)"
+   },
+   {
+    "id": "buildings-1",
+    "item": "landside back-face QA not re-run after round 2 (+ the round-2 fixes never independently checked)",
+    "disposition": "done; three back-face sources fixed",
+    "change": "render_landside --backface (8 views) on the 6 Nov file, red pixels cast back into the glb: (1) the Garage A body ring had one 131.7-m south outline edge running past the station block, so style() drew the screened bands over the block stretch and the hall showed their backs (l1 56 -> 1,076 px) -> ring split at the block corners (landside_geom._split_ring_at); (2) the NE rotunda band (+0.12 m proud) had an open underside -> annulus; (3) single-sided perforated screens showed their inner faces through the open strips of the curved ends -> screen doubleSided. After (7 Nov 02:11Z): gar_a 0, hyatt 162, l1 26, l5 2,213, bart 7, cg_top 0, a2 1,621 (the BART east end against the ITB outline: internal by design, every ray ends on the ITB core with itb.glb loaded), overview 3; hyatt / l5 are the r1 residuals (colonnade recess; trough-wall-top slivers), left open. LOD2 void floor (r2 doubt): Cycles cg_top LOD0 vs LOD2 +1 grey level, no change"
+   },
+   {
+    "id": "buildings-11",
+    "item": "Grand Hyatt 44 m [inf] (40-48); the a2-scaled garage heights hang on it",
+    "disposition": "deferred: needs the owner",
+    "change": "default kept [inf]; searched 2026-11-07: no published height, no FAA DOF entry (DOF.CSV 2026-09-18), contractor / SFO pages give 12 storeys only; the FAA OE/AAA determination is the likely primary source (owner question)"
+   },
+   {
+    "id": "buildings-12",
+    "item": "landside single-photo / placeholder values",
+    "disposition": "partly: no new primary source",
+    "change": "AirTrain levels (d1 camera implies a lower T1 station deck - information only), l1 block top 31.75 vs a2 29.1 (a2 adopted, conflict listed), Garage G from 4 columns, rotunda centre ~2 m residual, far-track walkway by symmetry: unchanged, tagged"
    }
   ],
   "scene_not_modelled": {

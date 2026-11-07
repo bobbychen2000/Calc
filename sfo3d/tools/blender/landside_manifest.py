@@ -155,6 +155,22 @@ CLOSEOUT_R3 = [
          change='LOD0: two 6-sided axle prisms per car (tyres show outside the 3-%-inset skirt and below the body); a third shape, the '
                 'pickup (5.50 x 1.95 x 1.85 m, open bed with a dark liner 0.45 m below the rails), shares 45 / 40 / 15 % [inf]; LOD1 / '
                 'LOD2 unchanged (no wheels)'),
+    dict(id='buildings-1', item='landside back-face QA not re-run after round 2 (+ the round-2 fixes never independently checked)',
+         disposition='done; three back-face sources fixed',
+         change='render_landside --backface (8 views) on the 6 Nov file, red pixels cast back into the glb: (1) the Garage A body ring had one '
+                '131.7-m south outline edge running past the station block, so style() drew the screened bands over the block stretch and the '
+                'hall showed their backs (l1 56 -> 1,076 px) -> ring split at the block corners (landside_geom._split_ring_at); (2) the NE rotunda '
+                'band (+0.12 m proud) had an open underside -> annulus; (3) single-sided perforated screens showed their inner faces through the '
+                'open strips of the curved ends -> screen doubleSided. After (7 Nov 02:11Z): gar_a 0, hyatt 162, l1 26, l5 2,213, bart 7, cg_top 0, '
+                'a2 1,621 (the BART east end against the ITB outline: internal by design, every ray ends on the ITB core with itb.glb loaded), '
+                'overview 3; hyatt / l5 are the r1 residuals (colonnade recess; trough-wall-top slivers), left open. LOD2 void floor (r2 doubt): '
+                'Cycles cg_top LOD0 vs LOD2 +1 grey level, no change'),
+    dict(id='buildings-11', item='Grand Hyatt 44 m [inf] (40-48); the a2-scaled garage heights hang on it', disposition='deferred: needs the owner',
+         change='default kept [inf]; searched 2026-11-07: no published height, no FAA DOF entry (DOF.CSV 2026-09-18), contractor / SFO pages give '
+                '12 storeys only; the FAA OE/AAA determination is the likely primary source (owner question)'),
+    dict(id='buildings-12', item='landside single-photo / placeholder values', disposition='partly: no new primary source',
+         change='AirTrain levels (d1 camera implies a lower T1 station deck - information only), l1 block top 31.75 vs a2 29.1 (a2 adopted, '
+                'conflict listed), Garage G from 4 columns, rotunda centre ~2 m residual, far-track walkway by symmetry: unchanged, tagged'),
 ]
 
 
