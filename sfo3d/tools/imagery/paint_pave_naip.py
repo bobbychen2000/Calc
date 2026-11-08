@@ -33,6 +33,11 @@ also counts bright (V >= 245) grey pixels - a fresh-concrete slab on a taxilane,
 in ANY qualifying window of (b) (not only the one centred on it: light shoulders / island borders beside soil) counts when it
 is near-neutral, not soil / vegetation / building and locally smooth (2026-11-07). The green
 paint also gets the inferred old-J island of FAA AL-375 2611 (finding static-3; paint `src`).
+Fix round 2 (2026-11-08, verifier findings v2 / v3 / v5 / v9): the OSM-building / END_ZONES exclusion now holds after the
+hole fill, the gaussian step, the footprints and the pads too (OSM buildings and end zones keep exactly the pavement of the
+pre-round-3 rules); (f) holes enclosed by the paved union that held ADS-B aircraft (or a vehicle stay), NAIP <= 5 % soil +
+vegetation and >= 60 % grey, < 12000 m2, are pavement; (g) the interior of the old-J chart island is paved (inferred); the
+pavement file's note / provenance / .js header name its ODbL inputs (OSM, adsb.lol).
 
     python3 tools/imagery/paint_pave_naip.py          # writes data/sfo_paint.* and data/sfo_pavement.*
     python3 tools/imagery/paint_pave_naip.py --preview   # + refs/cache/naip/paint_pave_preview.jpg (NAIP pixels; stays local)
@@ -215,26 +220,37 @@ def main(preview=False, dump=None):
     cand_agc = np.isin(lab_, seed_); del lab_
     cand = cand | cand_agc
     print('  + %.1f ha of grey apron connected to them (<= %.0f m)' % ((cand_agc & ~cand_old & (dagc >= AGC_R)).sum() * RES * RES / 1e4, AGC_GROW))
-    p = (grey | g | envadd) & (pav == 0) & (bld == 0) & cand
-    p = ndi.binary_opening(p, iterations=3)
-    lab, n = ndi.label(p); sz = ndi.sum(p, lab, range(1, n + 1))
-    p = np.isin(lab, 1 + np.nonzero(sz * RES * RES >= 300)[0])
-    holes = ndi.binary_fill_holes(p) & ~p
-    lh, nh = ndi.label(holes); hs = ndi.sum(holes, lh, range(1, nh + 1))
-    p |= np.isin(lh, 1 + np.nonzero(hs * RES * RES < 3000)[0])
+    # the hole fill, the parking-point hole fill and the gaussian step (shape()) run twice: on the pre-round-3 pixels
+    # (p_old: what the rules up to round 2 give) and on the full set. Fix round 2 (2026-11-08, verifier finding v2): the
+    # OSM building footprints (not building=roof) and the app's runway end zones are never filled as holes and never grown
+    # into by the smoothing, and at the end every pixel there that p_old does not have is removed - so the round-3 / fix-2
+    # rules add NOTHING there (round 1 applied the exclusion before those steps only: OSM way 1473685129, 1,314 m2 with a
+    # solar roof at (-1398, -2040), was paved whole by the hole fill, and 907 m2 entered the end zones)
     pcore = np.zeros((H, W), np.uint8)              # the parking points themselves (12 m discs) for the larger hole limit
     for q in pts_:
         if not q: continue
         c_ = P([q])[0]
         if 0 <= c_[0] < W and 0 <= c_[1] < H: cv2.circle(pcore, (int(c_[0]), int(c_[1])), int(12 / RES), 1, -1)
-    hp = ndi.sum(pcore > 0, lh, range(1, nh + 1))
-    p |= np.isin(lh, 1 + np.nonzero((hs * RES * RES < 12000) & (hp > 0))[0])
-    p = ndi.gaussian_filter(p.astype(np.float32), 1.0 / RES) > 0.5
-    p &= (pav == 0) | (dpav > 0)
-    lab, n = ndi.label(p); sz = ndi.sum(p, lab, range(1, n + 1))
-    keep = 1 + np.nonzero(sz * RES * RES >= 300)[0]
-    p = np.isin(lab, keep)
-    p |= (holdm > 0) & (pav == 0) & (bld == 0)          # the measured hold bars are on pavement by definition
+    excl = (obld > 0) | (ezm > 0)
+    def shape(p, xf):
+        p = ndi.binary_opening(p, iterations=3)
+        lab, n = ndi.label(p); sz = ndi.sum(p, lab, range(1, n + 1))
+        p = np.isin(lab, 1 + np.nonzero(sz * RES * RES >= 300)[0])
+        holes = ndi.binary_fill_holes(p) & ~p
+        lh, nh = ndi.label(holes); hs = ndi.sum(holes, lh, range(1, nh + 1))
+        hp = ndi.sum(pcore > 0, lh, range(1, nh + 1))
+        fillh = np.isin(lh, 1 + np.nonzero((hs * RES * RES < 3000) | ((hs * RES * RES < 12000) & (hp > 0)))[0])
+        del lh, holes
+        p |= fillh & ~xf if xf is not None else fillh
+        pg = ndi.gaussian_filter(p.astype(np.float32), 1.0 / RES) > 0.5
+        p = pg & (p | ~xf) if xf is not None else pg
+        p &= (pav == 0) | (dpav > 0)
+        lab, n = ndi.label(p); sz = ndi.sum(p, lab, range(1, n + 1))
+        p = np.isin(lab, 1 + np.nonzero(sz * RES * RES >= 300)[0])
+        p |= (holdm > 0) & (pav == 0) & (bld == 0)          # the measured hold bars are on pavement by definition
+        return p
+    p_old = shape((grey | g) & (pav == 0) & (bld == 0) & cand_old, None)
+    p = shape((grey | g | envadd) & (pav == 0) & (bld == 0) & cand, excl)
     # static close-out (2026-11-04): an aircraft parking position's footprint (OSM position: 38 x 40 m box along its heading;
     # ADS-B parked stay: 25 m disc) is pavement wherever NAIP shows no vegetation / bare soil there and no mapped building:
     # the cluttered aprons (parked aircraft, GSE, ULDs, cars) fail the grey + smooth test (review: 40 of 179 positions > 50 %
@@ -258,7 +274,7 @@ def main(preview=False, dump=None):
     addf = (foot > 0) & ~vegc & ~soilc & (bld == 0) & (pav == 0) & (V > 40)
     print('parking footprints: +%.1f ha pavement (not vegetation / soil, not building); ADS-B stays used %d of %d (aircraft; + %d vehicle stays as candidate seeds only)' % (
         (addf & ~p).sum() * RES * RES / 1e4, len(stays), N_STAYS[0], len(vstays)))
-    p |= addf
+    p |= addf; p_old |= addf
     # close-out round 3 (finding static-1) (c): the ARFF apron (-1569, -600) round the Rescue 41 stay - fire trucks and
     # parking stripes on a tan, smooth surface (HSV S 25-35, texture 0.9) fail grey (S < 32) + smooth, and it is not a hole
     # in the pavement (it borders the station and the service road), so hole filling cannot reach it. Within PAD_R m of a
@@ -280,7 +296,43 @@ def main(preview=False, dump=None):
     padadd = padc & np.isin(lab_, keep_)
     print('vehicle-stay pads: +%.2f ha (%d stays)' % (padadd.sum() * RES * RES / 1e4, len(vstays)))
     p |= padadd
-    new_rule = (envadd | padadd | (cand & ~cand_old)) & p     # round 3 additions (for src)
+    # (f) fix round 2 (2026-11-08, verifier finding v3): holes ENCLOSED by the paved union (this pavement, SFO Museum
+    # pavement / the inferred apron, buildings, OSM buildings, the end zones) where aircraft were on the ground (an ADS-B
+    # aircraft ground cell with >= 2 fixes inside, rule (a)'s cells) or a vehicle stayed (the ARFF apron), NAIP <= 5 % soil
+    # + vegetation, <= 20 % water-blue and >= 60 % grey (the reviewer classes), < 12000 m2 (the parking-point hole limit)
+    # are pavement: the north cargo taxilane (-405, -967) - 4,285 m2, 35 fixes, NAIP 92 % grey but only 3 % 'smooth' (the
+    # painted centreline and tyre marks fail the texture test) - and the smaller holes the verifier listed. Inferred.
+    U_ = p | (pav > 0) | (bld > 0) | excl
+    hol = ndi.binary_fill_holes(U_) & ~U_; del U_
+    lh, nh = ndi.label(hol); idx_ = np.arange(1, nh + 1)
+    ha_ = ndi.sum(hol, lh, idx_); hpx_ = np.maximum(ha_, 1)
+    vs_ = np.zeros((H, W), np.uint8)
+    for v in vstays:
+        c_ = P([[v['x'], v['z']]])[0]
+        if 0 <= c_[0] < W and 0 <= c_[1] < H: vs_[int(c_[1]), int(c_[0])] = 1
+    Bw, Gw, Rw = img[..., 0].astype(np.int16), img[..., 1].astype(np.int16), img[..., 2].astype(np.int16)
+    wat_ = (Bw > Rw + 10) & ((Bw + Gw + Rw) // 3 < 120); del Bw, Gw, Rw
+    sv_ = ndi.sum(gsoil | gveg, lh, idx_) / hpx_; gr_ = ndi.sum(ggrey, lh, idx_) / hpx_; wa_ = ndi.sum(wat_, lh, idx_) / hpx_
+    ev_ = ndi.sum(agc > 0, lh, idx_) + ndi.sum(vs_ > 0, lh, idx_)
+    ok_ = (ha_ * RES * RES < 12000) & (ev_ > 0) & (sv_ <= 0.05) & (wa_ <= 0.2) & (gr_ >= 0.6)
+    holeadd = np.isin(lh, idx_[ok_]) & (pav == 0) & (bld == 0) & ~excl
+    print('(f) enclosed holes with aircraft / vehicle evidence: %d of %d holes with evidence filled, +%.2f ha' % (
+        int(ok_.sum()), int((ev_ > 0).sum()), (holeadd & ~p).sum() * RES * RES / 1e4))
+    p |= holeadd; del lh, hol, wat_, vs_
+    # (g) fix round 2 (verifier finding v5): the old-J island of FAA AL-375 cycle 2611 is ONE paved island (finding static-3:
+    # the chart island, refs/cache/faa/al375_2611_oldJ.json white_polys); the part of it that is neither SFO Museum taxiway
+    # pavement, the inferred green paint (below) nor already pavement - the pale interiors inside the painted rings, NAIP
+    # 2024 (flown before the rebuild) median RGB 199/207/183, unpainted - is paved too (concrete, inferred)
+    FJ_ = json.load(open(os.path.join(ROOT, 'refs', 'cache', 'faa', 'al375_2611_oldJ.json')))
+    islm = np.zeros((H, W), np.uint8); fill(islm, FJ_['white_polys'])
+    isladd = (islm > 0) & (pav == 0) & (bld == 0) & ~excl & ~p
+    print('(g) old-J chart island interior: +%.0f m2 (inferred)' % (isladd.sum() * RES * RES))
+    p |= isladd
+    # the exclusion of fix round 2: OSM buildings / end zones keep exactly what the pre-round-3 rules gave them
+    p = (p & ~excl) | (p_old & excl)
+    new_rule = p & ~p_old & ~holeadd & ~isladd     # round 3 additions (for src)
+    f2_rule = p & (holeadd | isladd) & ~p_old       # fix-round-2 additions (for src)
+    del p_old
     pave_polys, conc = [], []; SRC_C = []
     lab, n = ndi.label(p)
     big = []
@@ -292,11 +344,15 @@ def main(preview=False, dump=None):
         sub = m[ys.min():ys.max() + 1, xs.min():xs.max() + 1]
         polys = contours(sub, 0.5 / RES, 4 if onhold else 300, lambda q, ox=xs.min(), oy=ys.min(): world((q[0] + ox, q[1] + oy)))
         vmed = float(np.median(V[m]))
-        nr = float(new_rule[m].mean())
+        nr = float(new_rule[m].mean()); n2 = float(f2_rule[m].mean())
         for poly in polys:
             pave_polys.append(poly); conc.append(bool(vmed >= 150))
-            SRC_C.append('naip' if nr < 0.1 else 'naip; %.0f %% from the close-out round 3 rules (cluttered-apron / any-window / bright-concrete envelope / '
-                         'ADS-B aircraft ground cells / vehicle-stay pad: inferred)' % (100 * nr))
+            s_ = 'naip'
+            if nr >= 0.1: s_ += ('; %.0f %% from the close-out round 3 rules (cluttered-apron / any-window / bright-concrete envelope / '
+                                 'ADS-B aircraft ground cells / vehicle-stay pad: inferred)' % (100 * nr))
+            if n2 >= 0.01: s_ += ('; %.0f %% from the fix-round-2 rules (holes enclosed by pavement with ADS-B aircraft / vehicle evidence, '
+                                  'the old-J chart island interior: inferred)' % (100 * n2))
+            SRC_C.append(s_)
         big.append((round(len(ys) * RES * RES), world((xs.mean(), ys.mean())), round(vmed)))
     big.sort(reverse=True)
     # static close-out (2026-11-04): taxiways built after NAIP 2024 (data/sfo_details.json centrelines with src
@@ -310,7 +366,13 @@ def main(preview=False, dump=None):
             pave_polys.append([[[round(x, 2), round(z, 2)] for x, z in list(g_.exterior.coords)[:-1]]]); conc.append(False)
             srcs.append('osm_update %s (%s, width %s)' % (m_.get('osm_id'), m_.get('ref'), m_['width_m']))
     prov = ('tools/imagery/paint_pave_naip.py: colour classification of USDA NAIP 2024 (public domain, flown 2024-05-20, '
-            '0.5 m world raster), 24 Sep 2026; static close-out 2026-11-04 (parking-position candidates / footprints, the relocated W)')
+            '0.5 m world raster), 24 Sep 2026; static close-out 2026-11-04 (parking-position candidates / footprints, the relocated W); '
+            'close-out round 3 2026-11-06 / 07, rules (a)-(e): candidate area round the adsb.lol aircraft ground cells '
+            '(refs/cache/stands/adsb_ground_cells.json, ODbL), cluttered-apron / any-window / bright-concrete envelopes, vehicle-stay '
+            'pads (adsb.lol stays, ODbL); fix round 2 2026-11-08: (f) holes enclosed by pavement with ADS-B aircraft / vehicle '
+            'evidence, (g) the interior of the old-J island of FAA AL-375 cycle 2611 (public domain); OSM building footprints '
+            '(not building=roof; OSM, ODbL) and the runway end zones of js/live/airport.js END_ZONES keep exactly the pre-round-3 '
+            'pavement after every step (no round-3 / fix-2 addition there). Per-polygon `src` gives the inferred share')
     # close-out round 3 (2026-11-06, finding static-3): the western remainder of the old taxiway J (deleted in OSM changeset
     # 189525528) lies in ONE island on FAA AL-375 cycle 2611 (tools/xcheck/faa_al375_mask.py white_polys, 5,575 m2) that also
     # takes in the two green-painted islands either side of it; the chart draws painted (paved) islands white too, and
@@ -338,18 +400,34 @@ def main(preview=False, dump=None):
     print('old-J island paint (inferred): %d polygons, %.0f m2' % (N_ISL[0], N_ISL[1]))
     paint = {'frame': GF.FRAME_ID, 'note': 'Green no-taxi island paint (FAA AC 150/5340-1M para 1.5.2) classified on USDA NAIP 2024 '
              '(hue 140-180, S > 55, V > 150; within 30 m of SFO Museum taxiway/runway pavement); src per polygon: naip, or inferred '
-             '(the old-J island of FAA AL-375 cycle 2611, built after NAIP 2024).', 'provenance': prov,
+             '(the old-J island of FAA AL-375 cycle 2611, built after NAIP 2024).',
+             'provenance': ('tools/imagery/paint_pave_naip.py: colour classification of USDA NAIP 2024 (public domain, flown 2024-05-20, '
+                            '0.5 m world raster), 24 Sep 2026; close-out round 3 2026-11-06: + the inferred old-J island polygon (FAA AL-375 '
+                            'cycle 2611, public domain, on SFO Museum taxiway pavement)'),
              'polys': paint_polys, 'src': paint_src}
     pave = {'frame': GF.FRAME_ID, 'note': 'Paved areas not in the SFO Museum geometry (cargo/maintenance aprons, service roads, '
             'shoulders) classified on USDA NAIP 2024 (grey pixels within 60 m of mapped pavement, of OSM aprons / taxi centrelines '
             '(40 m) or of aircraft parking positions / ADS-B parked stays (60 m; static close-out 2026-11-04), outside mapped buildings); '
-            'conc = concrete (median V >= 150). Unmapped grey roofs can be included (inferred).', 'provenance': prov,
+            'close-out round 3 (inferred, share in src): (a) also within 60 m of adsb.lol aircraft ground cells and the grey apron '
+            'connected to them (150 m); (b) cluttered aprons inside >= 88 % grey / <= 3 % soil 25 m windows; (c) vehicle-stay pads; '
+            '(d) bright concrete next to cells with >= 2 aircraft; (e) near-neutral pixels inside any qualifying window; fix round 2: '
+            '(f) holes enclosed by pavement that held ADS-B aircraft (or a vehicle stay), NAIP <= 5 % soil / vegetation, >= 60 % grey, '
+            '< 12000 m2; (g) the old-J island interior of FAA AL-375 2611. OSM building footprints (not building=roof) and the app\'s '
+            'runway end zones (END_ZONES) take none of these additions. The relocated W: OSM centreline buffered by its inferred width '
+            '(src osm_update). conc = concrete (median V >= 150). Unmapped grey roofs can be included (inferred). Contains information '
+            'from OpenStreetMap (c) OpenStreetMap contributors and from adsb.lol, made available under the ODbL 1.0 (docs/ATTRIBUTION.md).',
+            'provenance': prov, 'licence': 'ODbL 1.0 (OSM and adsb.lol inputs); NAIP / FAA inputs public domain - docs/ATTRIBUTION.md',
             'polys': pave_polys, 'conc': conc, 'src': srcs}
+    HDR = {'paint': '// generated by tools/imagery/paint_pave_naip.py from USDA NAIP 2024 (public domain); one inferred polygon from FAA '
+                    'AL-375 2611 (public domain) on SFO Museum taxiway pavement (CDLA-Permissive-1.0, https://cdla.dev/permissive-1-0/; '
+                    'changed by sfo3d: clipped to the chart island) - docs/ATTRIBUTION.md',
+           'pavement': '// generated by tools/imagery/paint_pave_naip.py from USDA NAIP 2024 (public domain), with candidate areas / '
+                       'exclusions from OpenStreetMap (c) OpenStreetMap contributors and from adsb.lol (both ODbL 1.0: contains information '
+                       'from OpenStreetMap and adsb.lol, made available under the ODbL) and FAA AL-375 2611 (public domain) - docs/ATTRIBUTION.md'}
     for name, var, res in (('paint', 'PAINT', paint), ('pavement', 'PAVEMENT', pave)):
         blob = json.dumps(res, separators=(',', ':'))
         open(os.path.join(ROOT, 'data', f'sfo_{name}.json'), 'w').write(blob)
-        open(os.path.join(ROOT, 'data', f'sfo_{name}.js'), 'w').write(
-            f'// generated by tools/imagery/paint_pave_naip.py from USDA NAIP 2024 (public domain)\nexport const {var} = ' + blob + ';\n')
+        open(os.path.join(ROOT, 'data', f'sfo_{name}.js'), 'w').write(HDR[name] + '\nexport const ' + var + ' = ' + blob + ';\n')
     print('paint: %d polygons, %.1f ha' % (len(paint_polys), g.sum() * RES * RES / 1e4))
     print('pavement: %d polygons, %.1f ha, concrete %d' % (len(pave_polys), p.sum() * RES * RES / 1e4, sum(conc)))
     print('largest pavement components (m2, centre, median V):', big[:12])

@@ -28,6 +28,10 @@ Close-out round 3 (2026-11-06): the wide-run test of every way NOT tagged surfac
 spread < ROAD_SPX (smooth light infield soil had widened 3 m concrete paths to 5-8.5 m, finding static-5); an undrawn gap
 between two road pieces of a way is bridged when NAIP shows no soil / vegetation / water along the OSM line (<= 5 %;
 finding static-6, the 92 m stretch of 1182574242).
+Fix round 2 (2026-11-08, verifier finding v4): a light band on a non-asphalt way whose core is soil-coloured (per-pixel
+channel spread >= ROAD_SPX: light segments broken by soil / grass) is not drawn; the asphalt wide-run test also needs a per-pixel spread < ROAD_SAT
+(the soil verge beside the perimeter road is 37-65); every drawn piece with > 15 % of its footprint on soil-coloured pixels
+(per-pixel spread > 34, the verifier's measure) is narrowed until it is not, or not drawn.
 Frame: tools/geo_frame.py (= js/geo.js) world x east / z south.
 Usage: python3 tools/build_landside.py
 """
@@ -124,6 +128,7 @@ def measure_road(p, t, seed=0.0, half=ROAD_HALF, step=0.25, strict=False):
     o, g, sat, tex, spx = r
     pv = (sat < ROAD_SAT) & (g > ROAD_G) & (tex < ROAD_TEX)
     if strict: pv &= spx < ROAD_SPX                            # close-out round 3: not on a surface=asphalt way
+    else: pv &= spx < ROAD_SAT                                 # fix round 2 (verifier v4): asphalt too, per pixel (soil verge 37-65)
     idx = np.where(pv)[0]
     if not len(idx): return None
     k = int(round(ROAD_GAP / step))
@@ -171,6 +176,63 @@ def measure_band(p, t, half=6.0, step=0.25, info=False):
     fl = int(round(0.5 / step)), int(round(2.5 / step))
     paved = any(len(f) and np.mean(f < FLANK_SAT) >= 0.6 for f in (sat[max(0, i0 - fl[1]):max(0, i0 - fl[0])], sat[i1 + fl[0]:i1 + fl[1]]))
     return float((o[i0] + o[i1]) / 2), float(o[i1] - o[i0] + step), bool(paved)
+
+
+def band_core_spx(p, t, off, half=0.5):
+    """fix round 2 (verifier finding v4): median PER-PIXEL channel spread over the band's central +-half m (3 m along) - a
+    light band on a NON-asphalt way whose core is warm / soil-coloured (spread >= ROAD_SPX: 1157838876 parts 1 / 3 / 8,
+    core medians 28-33, b* 12-14 while the concrete paths are 8-17: light segments broken by soil / grass on NAIP) is not a
+    continuous paved surface"""
+    r = _profile(p, t, abs(off) + half + 0.5, 0.25)
+    if r is None: return None
+    o, g, sat, tex, spx = r
+    k = np.abs(o - off) <= half
+    return float(np.median(spx[k])) if k.any() else None
+
+
+FOOT_SAT = 34.0          # fix round 2 (verifier v4): per-pixel channel spread above which a footprint pixel is soil / dry grass
+FOOT_MAX = 0.15          # ... a drawn piece may have at most this share of such pixels in its footprint (else narrowed / dropped)
+
+
+def footprint_soil(pts, w):
+    """share of the NAIP 2024 pixels inside the drawn footprint (centreline buffered by w / 2, flat caps) with a per-pixel
+    channel spread > FOOT_SAT (the round-3 verifier's pathfoot measure)"""
+    from matplotlib.path import Path
+    N = _naip(); m = N['m']; res, x0, z0 = m['res'], m['x0'], m['z0']
+    pg = LineString(pts).buffer(w / 2, cap_style=2)
+    bx0, bz0, bx1, bz1 = pg.bounds
+    c0, c1 = int((bx0 - x0) / res), int((bx1 - x0) / res) + 1; r0, r1 = int((bz0 - z0) / res), int((bz1 - z0) / res) + 1
+    sub = np.asarray(N['im'][r0:r1, c0:c1], np.float32); cc, rr = np.meshgrid(np.arange(c0, c1), np.arange(r0, r1))
+    q = np.c_[x0 + (cc.ravel() + 0.5) * res, z0 + (rr.ravel() + 0.5) * res]
+    ins = np.zeros(len(q), bool)
+    for g in getattr(pg, 'geoms', [pg]): ins |= Path(np.array(g.exterior.coords)).contains_points(q)
+    ins = ins.reshape(cc.shape)
+    if not ins.any(): return 0.0
+    return float(((sub.max(-1) - sub.min(-1)) > FOOT_SAT)[ins].mean())
+
+
+def footprint_fix(paths):
+    """fix round 2 (verifier finding v4): a drawn piece with more than FOOT_MAX of its footprint on soil-coloured pixels is
+    narrowed (0.25 m steps, centre kept, not below PATH_W_MIN) until it is not - its extra width lay on the soil beside the
+    imaged band (1182574227/28: a 6.62 m box from 4 junction profiles) - or, if even PATH_W_MIN fails, not drawn (the band
+    itself is soil-coloured)"""
+    n_n = n_d = 0
+    for r in paths:
+        if not r['drawn'] or not r.get('w'): continue
+        f0 = footprint_soil(r['pts'], r['w'])
+        if f0 <= FOOT_MAX: continue
+        w = r['w']
+        while w - 0.25 >= PATH_W_MIN - 1e-9 and footprint_soil(r['pts'], w) > FOOT_MAX: w -= 0.25
+        f1 = footprint_soil(r['pts'], w)
+        if f1 <= FOOT_MAX:
+            r['w_src'] += ('; narrowed %.2f -> %.2f m: %.0f %% of the drawn footprint was soil-coloured (per-pixel channel spread > %.0f), '
+                           'now %.0f %% (fix round 2)' % (r['w'], w, 100 * f0, FOOT_SAT, 100 * f1)); r['w'] = round(w, 2); n_n += 1
+        else:
+            r.update(drawn=False, w=None, w_src=r['w_src'] + ('; not drawn: %.0f %% of its footprint is soil-coloured (per-pixel channel spread > '
+                                                                '%.0f) even at %.2f m (fix round 2)' % (100 * f1, FOOT_SAT, PATH_W_MIN)))
+            for k in ('offset_range', 'naip_frac_part', 'kind_naip', 'bridged', 'material_src'): r.pop(k, None)
+            n_d += 1
+    print('footprint soil test (fix round 2): %d pieces narrowed, %d no longer drawn' % (n_n, n_d))
 
 
 PATH_STEP = 2.5          # m between NAIP profiles along an airside path
@@ -241,7 +303,7 @@ def measure_path(e, ls, t):
     surf = SURFACES.get(t.get('surface'))
     S = np.arange(PATH_STEP / 2, L, PATH_STEP) if L > PATH_STEP else np.array([L / 2])
     Q = np.zeros((len(S), 2)); N = np.zeros((len(S), 2)); O = np.full(len(S), np.nan); Wd = np.full(len(S), np.nan)
-    LINE = np.zeros(len(S), bool); ROAD = np.zeros(len(S), bool); WIDE = np.zeros(len(S), bool)
+    LINE = np.zeros(len(S), bool); ROAD = np.zeros(len(S), bool); WIDE = np.zeros(len(S), bool); SOIL = np.zeros(len(S), bool)
     for i, s_ in enumerate(S):
         q0 = ls.interpolate(max(0, s_ - 2)); q1 = ls.interpolate(min(L, s_ + 2)); q = ls.interpolate(s_)
         tt = np.array([q1.x - q0.x, q1.y - q0.y]); Q[i] = (q.x, q.y)
@@ -250,12 +312,15 @@ def measure_path(e, ls, t):
         tt /= nt; N[i] = (-tt[1], tt[0])                       # measure_band's normal
         r = measure_band((q.x, q.y), tt, info=True)
         band = r if (r and not r[2] and r[1] >= PATH_W_MIN) else None
+        if band and surf != 'asphalt':                          # fix round 2 (verifier v4): a soil-coloured band is a dirt track
+            cs = band_core_spx((q.x, q.y), tt, band[0])
+            if cs is not None and cs >= ROAD_SPX: band = None; SOIL[i] = True
         rr = measure_road((q.x, q.y), tt, seed=r[0] if r else 0.0, strict=surf != 'asphalt')
         WIDE[i] = rr == 'wide'
         if isinstance(rr, tuple) and rr[1] >= ROAD_W_MIN and (band is None or rr[1] >= band[1] + ROAD_WIDER):
             O[i], Wd[i] = rr[0], rr[1]; ROAD[i] = True
         elif band: O[i], Wd[i] = band[0], band[1]
-        elif r: LINE[i] = True                                 # a light line inside wider pavement / a paint line: not a path band
+        elif r and not SOIL[i]: LINE[i] = True                 # a light line inside wider pavement / a paint line: not a path band
     ok = ~np.isnan(O)
     for _ in range(2):                                         # drop profiles that caught another bright feature
         idx = np.where(ok)[0]
@@ -293,9 +358,12 @@ def measure_path(e, ls, t):
         g = substring(ls, a, b)
         if g.geom_type != 'LineString' or g.length < 1.0: return
         k = (S >= a) & (S <= b); fl = float(LINE[k].mean()) if k.any() else 0.0; fw = float(WIDE[k].mean()) if k.any() else 0.0
+        fs = float(SOIL[k].mean()) if k.any() else 0.0
         out.append({**base, 'material': surf or 'concrete', 'part': len(out), 'w': None, 'offset_m': 0.0, 'drawn': False,
                     'w_src': ('NAIP: a light line inside wider pavement (%.0f %% of the profiles) - a wider road / apron edge, not a path '
                               'band; not drawn' % (100 * fl)) if fl >= 0.3 else
+                             ('NAIP: the light band is soil-coloured / broken by soil and grass (per-pixel channel spread >= %.0f at its '
+                              'core, %.0f %% of the profiles) - not a continuous paved surface; not drawn (fix round 2)' % (ROAD_SPX, 100 * fs)) if fs >= 0.3 else
                              ('NAIP: the paved run reaches +-%.0f m (%.0f %% of the profiles) - inside wider pavement / light ground; '
                               'not drawn' % (ROAD_HALF, 100 * fw)) if fw >= 0.3 else 'NAIP shows no band here: not drawn',
                     **({'paved_line_frac': round(fl, 2)} if fl > 0 else {}), **({'wide_frac': round(fw, 2)} if fw > 0 else {}),
@@ -501,6 +569,7 @@ def main():
     clip = unary_union([Polygon(poly[0], poly[1:]).buffer(0) for r_ in A['runways'] for poly in r_['polys']] +
                        [Polygon(poly[0], poly[1:]).buffer(0) for t_ in A['taxiways'] for i_, poly in enumerate(t_['polys']) if (t_['name'], i_) not in retired])
     paths = clip_paved(paths, clip)
+    footprint_fix(paths)
     # round 3: NAIP 2024 grey level (0-255, median along the drawn centreline, every 2 m) per drawn path - the imaged tone
     # for the renderer (the OSM-asphalt perimeter road images as light as the concrete paths: medians ~198 vs ~206)
     N_ = _naip(); m_ = N_['m']

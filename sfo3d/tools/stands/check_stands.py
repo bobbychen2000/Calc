@@ -47,7 +47,8 @@ DATA checks
      e. rest (stow) pose vs the envelope of every stand within 150 m (own, alternative and exclusive included) -> ISSUE;
         no stow pose -> ISSUE; rest pose over its own fixed walkway (outside the drum + 1 m) -> ISSUE (review round 4);
         rest pose closer than the ICAO clearance to the wings / engines / tailplane of an OBSERVED type -> WARN (listed
-        evidence conflict); fixed walkway + rotunda inside an aircraft: ISSUE for observed types, NOTE otherwise.
+        evidence conflict) - and (close-out round 3 fix round 2) of any ACCEPTED type that stays parked while the bridge
+        rests (neighbour stands; own-stand types the bridge does not dock) -> WARN; fixed walkway + rotunda inside an aircraft: ISSUE for observed types, NOTE otherwise.
      g. fixed walkway + rotunda vs the wings / engines / tailplane of every type the stand accepts on SFO's path (class
         limits), at its stop (review round 4): code A-C closer than the ICAO clearance (3.0 / 4.5 m; no relief for C)
         -> ISSUE; D-F closer than 3.0 m -> ISSUE, closer than 7.5 m -> WARN (ICAO 3.4.4(b): reducible over the part of
@@ -262,12 +263,25 @@ def main(quiet=False, app=True):
             rb = rest[id(b)].difference(Point(pv).buffer(rot_r(b) + 0.3))
             ow = GM.bridge_parts(b, b['cab'])[0].difference(Point(pv).buffer(max(rot_r(b), GM.ROT_R) + 1.0)).intersection(rb).area
             if ow > 0.5: issues.append((s['name'], 'bridge %s L%d at rest lies on its own fixed walkway (%.1f m2)' % (b['gate'], b['door'], ow)))
-            wo = [(GM.wings(GM.nose_for(o, t), o['hdg'], t).distance(rb), GM.icao_clear(GM.APP[t]['span']), t, o['name'])
-                  for o in S if math.dist(o['nose'], pv) < 150 for t in obs_set(o) & set(GM.APP)]
+            # close-out round 3 fix round 2 (verifier finding v7): besides the OBSERVED types, every type a stand within
+            # 150 m ACCEPTS that stays parked while this bridge rests (neighbours; the own stand's types this bridge does not
+            # dock, e.g. an L2 bridge beside a narrow-body) - G3 L2's warning had ended only because SFO's newer plan named no
+            # B738 there although G3 still accepts it (patch_stands P10 re-chooses such rest poses where one passes)
+            own_ = {s['name']} | {o['name'] for o in sharers.get(s['name'], [])}
+            wo = []
+            for o in S:
+                if math.dist(o['nose'], pv) >= 150: continue
+                ob_ = obs_set(o) & set(GM.APP)
+                for t in ob_ | set(GM.accepted_types(o)):
+                    if t not in ob_ and o['name'] in own_ and GM.dock_door(t, b['door']) is not None and t not in (b.get('dock_types_out') or []): continue
+                    if t not in ob_ and b['door'] == 3: continue      # upper-deck units: observed types only, as before
+                    wo.append((GM.wings(GM.nose_for(o, t), o['hdg'], t).distance(rb), GM.icao_clear(GM.APP[t]['span']), t, o['name'], t in ob_))
             wo = [x for x in wo if x[0] < x[1]]
             if wo:
                 x = min(wo, key=lambda x: x[0] - x[1])
-                warns.append((s['name'], 'bridge %s L%d at rest %.1f m from the wing / engine / tailplane of %s (observed) at %s (ICAO %.1f m; evidence conflict)' % (b['gate'], b['door'], x[0], x[2], x[3], x[1])))
+                warns.append((s['name'], 'bridge %s L%d at rest %.1f m from the wing / engine / tailplane of %s (%s) at %s (ICAO %.1f m; %s)' % (
+                    b['gate'], b['door'], x[0], x[2], 'observed' if x[4] else 'accepted, parked while the bridge rests', x[3], x[1],
+                    'evidence conflict' if x[4] else 'gates.js could rest it elsewhere per occupant')))
             for o in S:
                 if math.dist(o['nose'], pv) > 150: continue
                 a_ = rb.intersection(ENV[o['name']]).area

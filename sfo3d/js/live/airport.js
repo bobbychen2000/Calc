@@ -118,8 +118,10 @@ export function standGates(stands) {
       // -> C10 (each < ICAO clearance; SFO plans them only with the neighbour free). bridgesUpper: see brMap above.
       exclTypes: s.excl_types || null, bridgesUpper,
       // close-out round 3 (2026-11-06, patch_stands P8): typesOk now lists every smaller member of a listed type's stop-point
-      // family whose planform clears the neighbours by 3 m; typesOkUnsafe = {ICAO: why} family members that do NOT (F20:
-      // A319 / A19N / A20N / B736 / B737 / B37M 1.9-2.9 m from F19's envelope) - traffic.js typesOkHas should not admit them
+      // family whose planform clears the neighbours by the ICAO stand clearance of its code (or by the listed type's own,
+      // smaller clearance; never < 3 m - fix round 2, 2026-11-08; round 1 used 3 m alone); typesOkUnsafe = {ICAO: why} family
+      // members that do NOT (F20: A319 / A19N / A20N / B736 / B737 / B37M 1.9-2.9 m from F19's envelope; F19: B77L 6.1 m from
+      // F18's, ICAO 7.5; C11: B737 4.4 m from C9's, ICAO 4.5) - traffic.js typesOkHas should not admit them
       typesOkUnsafe: s.types_ok_dominated_unsafe || null,
       nose, dir, outN: [-dir[0], -dir[1]], attach: bridges.length ? bridges[0].attach : nose, bridges, wide, len: cm.len, span: cm.span,
       bridge: bridges.length > 0, remote: false, hdg: s.hdg, world: { x: s.nose[0], z: s.nose[1], hdg: s.hdg }, empty: true, acType: null, dynamic: false,
@@ -154,7 +156,9 @@ export function standGates(stands) {
   return gates;
 }
 // close-out round 3 (2026-11-06, patch_stands P9; realtime_closeout R3.1.3 / R3.3): per-family ADS-B position reference,
-// metres the reported position lies BEHIND the nose at the stop, measured on all committed adsb.lol hours
+// metres the reported position lies BEHIND the nose at the stop, measured on the 36 adsb.lol hours pinned in patch_stands.py
+// REC_HOURS (4 Nov 17Z - 6 Nov 04Z; data antenna_ref.hours lists them - fix round 2: the stage had read every rec_pack file,
+// so each rerun changed the values; with all 65 hours of 8 Nov 03Z it would be EJET 13.0 n 37, B787 16.6 n 8 ...)
 // (data antenna_ref.families, 36 h: EJET 13.6 m n 19, B737 9.2 n 114, A320 1.2 n 140, A220 5.4 n 14, B757 17.1 n 7, CRJ 8.3
 // n 5, B777 15.0 n 12; B787 18.3 / A350 10.5 / B767 13.6 rest on 3 / 2 / 1 stays). {family: {m, n}}; families with fewer than minN stays are left out (callers keep
 // their own default, e.g. 0.2 L)

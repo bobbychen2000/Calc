@@ -49,15 +49,17 @@ Patches (static review 2026-11-04):
   P7 (round 2) rest pose vs the OSM parked cab (> 3 m apart): adopted when it passes the build's rest criteria, else
      `stow_osm` says why not (bridges_closeout.md s.1.7).
   P8 (close-out round 3, 2026-11-06, static-10) types_ok family dominance (traffic.js typesOkHas): a listed type admits the
-     smaller members of its stop-point family - where their planform clears the neighbours by 3 m (else
-     `types_ok_dominated_unsafe`).
-  P9 (close-out round 3, static-11) `antenna_ref`: per-family ADS-B position reference re-measured on all committed adsb.lol
-     hours.
+     smaller members of its stop-point family - where their planform clears the neighbours by the ICAO stand clearance of
+     their code, or by the listed type's own clearance where that is less, never by less than 3 m (fix round 2, verifier
+     finding v6; round 1: 3 m only) - else `types_ok_dominated_unsafe`.
+  P9 (close-out round 3, static-11) `antenna_ref`: per-family ADS-B position reference re-measured on the committed adsb.lol
+     hours REC_HOURS (pinned, close-out round 3 fix round 2 / verifier finding v1: rec_pack/ keeps growing while the
+     recorder runs, so reading every file there made each rerun differ).
   P11 (close-out round 3, static-12) fixed-walkway interior vertices out of the drawn outline (gates.js's A15 L1 nudge).
   P10 (close-out round 3, static-9) rest poses within the ICAO clearance of an observed type are re-chosen where a pose
      passes check_stands' rest tests and keeps the clearance (else `stow_icao` says why not).
   Close-out round 3 also: P1 / P2 read the 5 Nov 02:49Z flysfo snapshot too (SFO allocated D5 to a B772, F19 to B38M,
-     C8 B752 with C10 BCS3), and P2 counts an aircraft standing at the neighbour's stop (adsb.lol, all committed hours)
+     C8 B752 with C10 BCS3), and P2 counts an aircraft standing at the neighbour's stop (adsb.lol, the pinned REC_HOURS)
      inside a plan window of the type as parked together (static-10: F19 B772 / F20 B752); P6 has gates.js's own-strip
      exemption (static-8).
 BASE: when build_stands.py can run again (its inputs restored), it writes refs/cache/stands/sfo_stands_built.json - point
@@ -89,7 +91,13 @@ BASE = os.path.join(ROOT, 'refs', 'cache', 'stands', 'sfo_stands_built_20260926.
 OUT = os.path.join(ROOT, 'data', 'sfo_stands')
 FLYSFO_WINDOW2 = ['flysfo_api_flight-status_20261104T180142Z.json.gz',
                   'flysfo_api_flight-status_20261105T024944Z.json.gz']   # close-out round 3: + the 5 Nov 02:49Z snapshot (static-10)
-REC_PACK = os.path.join(ROOT, 'refs', 'cache', 'rec_pack')                # committed adsb.lol hours (ODbL), P2 co-occupancy
+REC_PACK = os.path.join(ROOT, 'refs', 'cache', 'rec_pack')                # committed adsb.lol hours (ODbL), P2 co-occupancy / P9
+# the adsb.lol hours P2's co-occupancy and P9's antenna reference read, PINNED (close-out round 3 fix round 2, verifier
+# finding v1): the 36 complete hours in rec_pack/ when P2 / P9 were first run (2026-11-06 ~05:40Z: 4 Nov 17Z - 6 Nov 04Z).
+# rec_pack/ grows by one file per hour while the recorder runs; a new hour changes nothing until it is added here (as
+# tools/imagery/adsb_ground_cells.py HOURS). A missing hour is an error, not a silent skip.
+REC_HOURS = (['20261104_%02d' % h for h in range(17, 24)] + ['20261105_%02d' % h for h in range(24)]
+             + ['20261106_%02d' % h for h in range(5)])
 ADSB_STAYS = os.path.join(ROOT, 'refs', 'cache', 'stands', 'adsb_parked.json')
 STAMP = 'fix-up 2026-11-04'
 STAMP2 = 'fix-up 2026-11-05'
@@ -205,11 +213,13 @@ _STILL = []
 
 
 def adsb_still():
-    """stationary on-ground ADS-B reports (gs < 1 kt, NACp >= 8, position age <= 5 s) of the committed adsb.lol hours
-    (refs/cache/rec_pack, ODbL): [(t, x, z, hex, callsign)] - read once"""
+    """stationary on-ground ADS-B reports (gs < 1 kt, NACp >= 8, position age <= 5 s) of the pinned adsb.lol hours REC_HOURS
+    (refs/cache/rec_pack, ODbL): [(t, x, z, hex, callsign, type, heading)] - read once"""
     if _STILL: return _STILL
-    import lzma, glob
-    for fn in sorted(glob.glob(os.path.join(REC_PACK, 'adsblol_*.jsonl.xz'))):
+    import lzma
+    miss = [h for h in REC_HOURS if not os.path.exists(os.path.join(REC_PACK, 'adsblol_%s.jsonl.xz' % h))]
+    if miss: sys.exit('patch_stands: pinned adsb.lol hour(s) missing from %s: %s (tools/cache/restore.sh)' % (os.path.relpath(REC_PACK, ROOT), ', '.join(miss)))
+    for fn in [os.path.join(REC_PACK, 'adsblol_%s.jsonl.xz' % h) for h in REC_HOURS]:
         with lzma.open(fn, 'rt') as f:
             for line in f:
                 try: r = json.loads(line)
@@ -265,7 +275,7 @@ def p2_excl_types(D, wins, log):
                 def iso(x): return dt.datetime.fromisoformat(x).timestamp() if x else None
                 ov = sum(1 for a in mine for b in theirs if iso(a[0]) and iso(b[0]) and min(iso(a[1]), iso(b[1])) - max(iso(a[0]), iso(b[0])) > 600)
                 # close-out round 3 (finding static-10): SFO's PLAN may keep them apart while operations do not (delays):
-                # an aircraft standing at the neighbour's stop (ADS-B, adsb.lol rec_pack, all committed hours) during a
+                # an aircraft standing at the neighbour's stop (ADS-B, adsb.lol rec_pack, the pinned REC_HOURS) during a
                 # plan window of this type here counts as parked together (F20: UAL2467 B752 at its stop 20:48-20:50Z
                 # 4 Nov inside UAL2358 B772's F19 window 20:13-21:55Z)
                 occ = [] if (d < PHYS or ov) else adsb_cooccupied(o, [w for w in mine if iso(w[0]) and iso(w[1])], iso)
@@ -587,52 +597,84 @@ def p6_drums(D, log):
 STAMP3 = 'fix-up 2026-11-06'
 
 
-ENVS = {}
+
 
 
 def p8_family_ok(D, log):
     """close-out round 3 (2026-11-06, finding static-10): a stand's types_ok also admits every smaller member of a listed
     type's stop-point family (same geom.FAMILY, span and length <= that type's), the rule js/live/traffic.js typesOkHas
     applies since round 2 (B38M under B39M at F19: SFO planned UAL626 B38M there 18:49-20:08Z 4 Nov and it parked) - so
-    the checker's APP view (geom.accepted_types) and traffic.js stay one-to-one"""
+    the checker's APP view (geom.accepted_types) and traffic.js stay one-to-one.
+    A dominated type is NOT geometrically inside the listed one when its wing sits further forward (B77L under B77W: same
+    span, 10 m shorter). Fix round 2 (verifier finding v6): such a type is added only where its planform at the stop
+    clears the envelope of every stand within 120 m (not `excl`, and not a neighbour it blocks by excl_types) by the
+    ICAO stand clearance of its own code (geom.icao_clear: 3.0 / 4.5 / 7.5 m) - or, where a listed type of the same
+    family that dominates it already sits closer to that neighbour, by that listed type's clearance (SFO's own
+    practice: the added type is never tighter than the type SFO plans / was seen there) - and never by less than 3 m
+    (PHYS). Round 1 used PHYS alone, which admitted B77L at F19 3.02 m from F20's A320 and B737 at C11 4.44 m from
+    C9's B762 (below code C's 4.5 m). The test is made against the neighbours' FINAL envelopes (their own additions
+    included) and repeated until nothing more is removed, so the result does not depend on the stand order. The rest
+    are listed in `types_ok_dominated_unsafe` {type: why} (traffic.js typesOkHas does not admit them)."""
+    S = {s['name']: s for s in D['stands']}
+    cand = {}
     for s in D['stands']:
         ok = s.get('types_ok')
         if not ok: continue
-        have = set(ok); add = set()
+        have = set(ok); add = {}
         for t, r in GM.APP.items():
             if t in have or not r.get('span'): continue
             ft = GM.FAMILY.get(t); dt_ = dims(t)
             if not ft or not dt_: continue
-            for q in have:
-                dq = dims(q)
-                if dq and GM.FAMILY.get(ALIAS_T.get(q, q)) == ft and dt_[0] <= dq[0] + 1e-6 and dt_[1] <= dq[1] + 1e-6: add.add(t); break
-        # a dominated type is NOT geometrically inside the listed one when its wing sits further forward (B77L under B77W:
-        # same span, 10 m shorter, its wing 1.9 m from F20's envelope at F19): such a type is added only when its planform
-        # at the stop clears every neighbour the stand is tight with (tight_with / types_ok_all_paths) and every stand
-        # within 120 m by PHYS (3 m); the rest are listed in `types_ok_dominated_unsafe` (traffic.js should not admit them)
-        bad = {}
-        for t in sorted(add):
-            pf = GM.planform(GM.nose_for(s, t), s['hdg'], t)
-            for o in D['stands']:
-                if o is s or o['name'] in (s.get('excl') or []) or math.dist(o['nose'], s['nose']) > 120: continue
-                if o['name'] not in ENVS: ENVS[o['name']] = GM.stand_env(o)
-                d_ = pf.distance(ENVS[o['name']])
-                if d_ < PHYS: bad[t] = (o['name'], round(d_, 1)); break
-        add -= set(bad)
-        if bad:
-            s['types_ok_dominated_unsafe'] = {t: '%.1f m from the envelope of %s (< %.0f m)' % (v[1], v[0], PHYS) for t, v in bad.items()}
-            log.append('P8 %s family-dominated but < %.0f m from a neighbour, NOT added: %s' % (s['name'], PHYS, ', '.join('%s (%s %.1f m)' % (t, v[0], v[1]) for t, v in sorted(bad.items()))))
-        if add:
-            s['types_ok'] = sorted(have | add)
-            note(s, 'types_ok + %s (smaller members of a listed type\'s stop-point family; traffic.js typesOkHas)' % ', '.join(sorted(add)), STAMP3)
-            log.append('P8 %s types_ok + %s' % (s['name'], ', '.join(sorted(add))))
+            doms = sorted(q for q in have if dims(q) and GM.FAMILY.get(ALIAS_T.get(q, q)) == ft
+                          and dt_[0] <= dims(q)[0] + 1e-6 and dt_[1] <= dims(q)[1] + 1e-6)
+            if doms: add[t] = doms
+        if add: cand[s['name']] = add
+    keep = {n: set(a) for n, a in cand.items()}
+    cache = {}
+    def env(o):
+        ts = tuple(sorted(set(o['types_ok']) | keep.get(o['name'], set()))) if o.get('types_ok') else None
+        k = (o['name'], ts)
+        if k not in cache: cache[k] = GM.stand_env(dict(o, types_ok=list(ts)) if ts else o)
+        return cache[k]
+    bad = {}
+    while True:
+        drop = []
+        for n in sorted(keep):
+            s = S[n]
+            for t in sorted(keep[n]):
+                pf = GM.planform(GM.nose_for(s, t), s['hdg'], t); need_icao = GM.icao_clear(dims(t)[0])
+                for o in D['stands']:
+                    if o is s or o['name'] in (s.get('excl') or []) or math.dist(o['nose'], s['nose']) > 120: continue
+                    if t in ((s.get('excl_types') or {}).get(o['name']) or []): continue
+                    eo = env(o); d_ = pf.distance(eo)
+                    if d_ >= need_icao: continue
+                    dq = max(GM.planform(GM.nose_for(s, q), s['hdg'], q).distance(eo) for q in cand[n][t])
+                    need = max(PHYS, min(need_icao, dq))
+                    if d_ < need - 1e-6:
+                        drop.append((n, t)); bad.setdefault(n, {})[t] = (o['name'], d_, need, need_icao, dq); break
+        if not drop: break
+        for n, t in drop: keep[n].discard(t)
+    for s in D['stands']:
+        n = s['name']
+        if n not in cand: continue
+        b_ = {t: v for t, v in (bad.get(n) or {}).items() if t not in keep[n]}
+        if b_:
+            s['types_ok_dominated_unsafe'] = {t: '%.1f m from the envelope of %s (< %.1f m: ICAO %.1f m%s)' % (
+                v[1], v[0], v[2], v[3], '' if v[2] >= v[3] else ', capped at the %.1f m of the listed type' % v[4]) for t, v in sorted(b_.items())}
+            log.append('P8 %s family-dominated but too close to a neighbour, NOT added: %s' % (n, ', '.join(
+                '%s (%s %.1f m < %.1f)' % (t, v[0], v[1], v[2]) for t, v in sorted(b_.items()))))
+        if keep[n]:
+            s['types_ok'] = sorted(set(s['types_ok']) | keep[n])
+            note(s, 'types_ok + %s (smaller members of a listed type\'s stop-point family that keep the ICAO stand clearance, or the '
+                    'clearance of the listed type; traffic.js typesOkHas)' % ', '.join(sorted(keep[n])), STAMP3)
+            log.append('P8 %s types_ok + %s' % (n, ', '.join(sorted(keep[n]))))
 
 
 # ------------------------------------------------------------------------------------------------ P9
 def p9_antenna_ref(D, log):
     """close-out round 3 (2026-11-06, finding static-11; realtime_closeout R3.1.3 / R3.3): the per-family ADS-B position
-    reference (metres the reported position lies behind the nose) re-measured on ALL committed adsb.lol hours
-    (refs/cache/rec_pack): stays = >= 180 s stationary (gs < 1 kt, NACp >= 8, within 8 m), median position; on a contact
+    reference (metres the reported position lies behind the nose) re-measured on the pinned adsb.lol hours REC_HOURS
+    (refs/cache/rec_pack; fix round 2: was every file there, which grows hourly - verifier finding v1): stays = >= 180 s stationary (gs < 1 kt, NACp >= 8, within 8 m), median position; on a contact
     stand's axis (|lateral| <= 1.5 m, heading within 10 deg, -40 m < along < 10 m of the model nose); value = along minus
     the stand's stop for that family (type_stops, else the nose). Written to D['antenna_ref'] {family: {along_m (median,
     - = behind the nose), n, stands, iqr}} next to the 26 Sep build's FAM_REF - js/live/traffic.js ANT = 0.2 L puts the
@@ -669,8 +711,9 @@ def p9_antenna_ref(D, log):
         log.append('P9 %s antenna %.1f m behind the nose (n %d stays, %d stands, IQR %s; 26 Sep build %s)' % (
             f_, -out[f_]['along_m'], len(rows), out[f_]['stands'], out[f_]['iqr'], FAM_REF.get(f_)))
     D['antenna_ref'] = {'what': 'per family: median ADS-B reported position along the stand axis relative to the nose at the stop (m, - = behind '
-                                'the nose), all committed adsb.lol hours (refs/cache/rec_pack, ODbL); obs (n < 5: weak). The position is the '
-                                'GNSS antenna unless the transponder applies the DO-260B nose offset (A32x)', 'hours': len(set(int(q[0] // 3600) for q in st)),
+                                'the nose), the adsb.lol hours listed in `hours` (refs/cache/rec_pack/adsblol_<hour>.jsonl.xz, ODbL; pinned in '
+                                'patch_stands.py REC_HOURS); obs (n < 5: weak). The position is the '
+                                'GNSS antenna unless the transponder applies the DO-260B nose offset (A32x)', 'hours': list(REC_HOURS),
                         'families': out}
 
 
@@ -688,9 +731,20 @@ def _arc(angs, back, margin=25.0):
     return width, (rel <= width + margin or rel >= 360 - margin)
 
 
+_WING = {}
+
+
+def _wing(o, t):
+    k = (o['name'], t)
+    if k not in _WING: _WING[k] = GM.wings(GM.nose_for(o, t), o['hdg'], t)
+    return _WING[k]
+
+
 def p10_rest(D, log):
     """close-out round 3 (2026-11-06, finding static-9): a rest pose (stow) that comes closer to the wings / engines /
-    tailplane of an OBSERVED type (at its stop, on any stand within 150 m) than the ICAO stand clearance (check_stands
+    tailplane of an OBSERVED type (at its stop, on any stand within 150 m) - fix round 2 (verifier v7): or of any type a
+    stand within 150 m ACCEPTS that stays parked while the bridge rests (neighbours; own-stand types it does not dock) -
+    than the ICAO stand clearance (check_stands
     WARN 'at rest ... evidence conflict': F14 / F17 / F19 / F21 L1 2.5-5.0 m from a B752, G8 L2 2.8 m from an E75L, G13 L3
     6.9 m from a B772) is re-chosen where a pose exists that passes check_stands' rest tests AND keeps the ICAO clearance:
     the cab pivot on a circle round the rotunda (every 1 deg within 120 deg of the present direction, lengths from the
@@ -726,12 +780,34 @@ def p10_rest(D, log):
         FP[id(ob)] = out
         return out
     def rot_r(b): return max(0.01, b['rotunda_max_r']) if b.get('rotunda_max_r') is not None else GM.ROT_R
+    def orest(ob): return GM.bridge_parts(ob, ob['stow'])[2] if ob.get('stow') else Point(0, 0).buffer(0)
+    FX = {}
+    def ofixed(ob):
+        if id(ob) not in FX:
+            wl_, rot_, _ = GM.bridge_parts(ob, ob.get('cab') or ob.get('stow') or ob['attach'])
+            FX[id(ob)] = unary_union([wl_] + ([Point(ob['rotunda']).buffer(rot_r(ob))] if ob.get('rotunda') else []))
+        return FX[id(ob)]
     for st, b in allb:
         if not b.get('stow') or not b.get('rotunda') or b.get('door') == 3: continue
         pv = b['rotunda']
         near = [o for o in S if math.dist(o['nose'], pv) < 150]
-        wingsl = [(GM.wings(GM.nose_for(o, t), o['hdg'], t), GM.icao_clear(GM.APP[t]['span']), t, o['name']) for o in near for t in sorted(_obs(o))]
-        def margin(rb): return min([(w.distance(rb) - need, w.distance(rb), t, on) for w, need, t, on in wingsl] or [(9e9, 9e9, None, None)])
+        # fix round 2 (verifier finding v7): besides the OBSERVED types (round 1), every type a stand within 150 m ACCEPTS
+        # that stays parked while this bridge rests - a neighbour's types, and the own stand's types this bridge does not
+        # dock (an L2 bridge beside a narrow-body) - must keep the ICAO clearance from the rest pose (G3 L2: B738 accepted,
+        # 1.8 m; its WARN had ended only because SFO's newer plan put no B738 there)
+        own_ = {st['name']} | {o['name'] for o in sharers.get(st['name'], [])}
+        def parked_while_resting(o, t):
+            return not (o['name'] in own_ and GM.dock_door(t, b['door']) is not None and t not in (b.get('dock_types_out') or []))
+        wingsl = [(_wing(o, t), GM.icao_clear(GM.APP[t]['span']), t, o['name'], t in _obs(o))
+                  for o in near for t in sorted(set(GM.accepted_types(o)) | _obs(o))
+                  if t in GM.APP and GM.APP[t].get('span') and (t in _obs(o) or parked_while_resting(o, t))]
+        U_ = {}
+        for w, need, t, on, ob in wingsl: U_.setdefault(need, []).append(w)
+        U_ = {k: unary_union(v) for k, v in U_.items()}
+        def margin(rb):
+            m_ = min([(u.distance(rb) - need, need) for need, u in U_.items()] or [(9e9, 0)])
+            if m_[0] >= 0: return (m_[0], m_[0] + m_[1], None, None)
+            return min([(w.distance(rb) - need, w.distance(rb), t + ('' if ob else ' (accepted, not observed)'), on) for w, need, t, on, ob in wingsl])
         def restgeom(c): return GM.bridge_parts(b, c)[2].difference(Point(pv).buffer(rot_r(b) + 0.3))
         m0 = margin(restgeom(b['stow']))
         if m0[0] >= 0: continue
@@ -758,6 +834,10 @@ def p10_rest(D, log):
                 if m[0] < 0: continue
                 if rb.intersection(bld).area > 0.3 or rb.intersection(own).area > 0.5: continue
                 if any(rb.intersection(env(o)).area > 0.05 for o in near): continue
+                # fix round 2: clear of the other bridges' rest poses (> 0.5 m2) and fixed walkways / rotundas (check_stands)
+                rfull = GM.bridge_parts(b, c)[2]
+                if any(rfull.intersection(orest(ob)).area > 0.5 or (ob['attach'] != b['attach'] and rb.intersection(ofixed(ob)).area > 0.5)
+                       for so, ob in others): continue
                 w_, ins = _arc(ddirs + [ang], back)
                 if w_ > 2 * GM.ROT_SWING + 0.05 or ins: continue
                 crossed = False
@@ -770,18 +850,23 @@ def p10_rest(D, log):
                 best = (c, da, L, m); break
             if best: break
         if best:
-            c, da, L, m = best; old = list(b['stow'])
+            c, da, L, m = best; old = list(b['stow']); rb = restgeom(c)
+            m = min([(w.distance(rb) - need, w.distance(rb), t + ('' if ob else ' (accepted, not observed)'), on) for w, need, t, on, ob in wingsl])
             b['stow'] = [round(c[0], 2), round(c[1], 2)]; b['stow_len'] = round(L, 1)
             b['stow_src'] = ('inferred: close-out round 3 (P10) - the rest pose turned %+d deg so that the parked tunnel / cab keep the ICAO '
-                             'clearance (%.1f m) to the observed %s at %s (was %.1f m); passes check_stands\' rest tests' % (da, m[1] - m[0] + m[0] if False else m[1], m[2], m[3], m0[1]))
-            note(b, 'stow %s -> %s (P10: %+d deg, %.1f m from the observed %s at %s, ICAO %.1f; was %.1f m)' % (old, b['stow'], da, m[1], m[2], m[3], m[1] - m[0], m0[1]), STAMP3)
-            log.append('P10 %s rest turned %+d deg: %.1f m from the observed %s at %s (ICAO %.1f; was %.1f m from %s)' % (tag, da, m[1], m[2], m[3], m[1] - m[0], m0[1], m0[2]))
+                             'clearance to every type parked near it (nearest: %.1f m from the %s at %s; was %.1f m from the %s at %s); passes '
+                             'check_stands\' rest tests' % (da, m[1], m[2], m[3], m0[1], m0[2], m0[3]))
+            note(b, 'stow %s -> %s (P10: %+d deg, %.1f m from the %s at %s, ICAO %.1f; was %.1f m from the %s at %s)' % (
+                old, b['stow'], da, m[1], m[2], m[3], m[1] - m[0], m0[1], m0[2], m0[3]), STAMP3)
+            log.append('P10 %s rest turned %+d deg: %.1f m from the %s at %s (ICAO %.1f; was %.1f m from the %s at %s)' % (
+                tag, da, m[1], m[2], m[3], m[1] - m[0], m0[1], m0[2], m0[3]))
         else:
             b['stow_icao'] = {'clearance_m': round(m0[1], 1), 'need_m': round(m0[1] - m0[0], 1), 'type': m0[2], 'at': m0[3],
                               'best_reachable_m': round(best_m[1], 1) if len(best_m) > 4 else round(m0[1], 1),
                               'why': 'no rest direction within +-120 deg / retraction..+4 m keeps the ICAO clearance and passes the rest tests (envelopes, '
                                      'terminal, own walkway, docked bridges, rotunda swing): kept'}
-            log.append('P10 %s rest %.1f m from the observed %s at %s (ICAO %.1f): no compliant rest pose, kept' % (tag, m0[1], m0[2], m0[3], m0[1] - m0[0]))
+            log.append('P10 %s rest %.1f m from the %s at %s (ICAO %.1f): no compliant rest pose (best reachable %.1f m), kept' % (
+                tag, m0[1], m0[2], m0[3], m0[1] - m0[0], b['stow_icao']['best_reachable_m']))
 
 
 # ------------------------------------------------------------------------------------------------ P11
