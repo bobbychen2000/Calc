@@ -751,7 +751,8 @@ def p10_rest(D, log):
     model's retraction to +4 m), clear of every stand envelope within 150 m (<= 0.05 m2), of the SFO Museum terminal
     (<= 0.3 m2), of its own fixed walkway (<= 0.5 m2), not crossed by another bridge docked to a type its stand accepts
     (> 0.5 m2; as P7), and the rest + docked directions still in one 175 deg rotunda swing arc that does not hold the way
-    back along the walkway. The nearest such direction is taken (stow_src says so, inferred); else `stow_icao` records the
+    back along the walkway, and (fix round 2) no further aft along the own stand's axis than the present rest (the
+    pushback tail swing). The nearest such direction is taken (stow_src says so, inferred); else `stow_icao` records the
     best clearance reachable and why the rest stays."""
     A = json.load(open(os.path.join(ROOT, 'data', 'sfo_airport.json')))
     bld = unary_union([Polygon(p[0], p[1:]).buffer(0) for p in list(A['terminalComplex']) + [q for b in A['boardingAreas'] for q in b['polys']]])
@@ -824,12 +825,20 @@ def p10_rest(D, log):
         ddirs = [math.degrees(math.atan2(c[1] - pv[1], c[0] - pv[0])) for _, _, c, _ in mine]
         a0 = math.degrees(math.atan2(b['stow'][1] - pv[1], b['stow'][0] - pv[0]))
         others = [(so, ob) for so, ob in allb if ob is not b and math.dist(ob.get('rotunda') or ob['attach'], pv) <= 90]
+        # fix round 2 (all-hours replay): never further AFT than the present rest along the own stand's axis - behind the stop
+        # lies the taxi-in / pushback sweep, whose tail swing (not a static envelope) reached G4 L2 turned +43 deg (UAL917
+        # B772 pushing back 5 Nov 06:54Z: 378 hit points on the cab vs 47 before)
+        def aft(g):
+            cs = [c for gg in getattr(g, 'geoms', [g]) for c in gg.exterior.coords]
+            return min(local(c, st['nose'], st['hdg'])[0] for c in cs) if cs else 0.0
+        aft0 = aft(restgeom(b['stow']))
         best = None; best_m = m0
         for da in sorted(range(-120, 121), key=abs):
             ang = a0 + da
             for L in np.arange(e0, e0 + 4.01, 1.0):
                 c = (pv[0] + L * math.cos(math.radians(ang)), pv[1] + L * math.sin(math.radians(ang)))
                 rb = restgeom(c); m = margin(rb)
+                if aft(rb) < aft0 - 0.5: continue
                 if m[0] > best_m[0]: best_m = m + (c, da)
                 if m[0] < 0: continue
                 if rb.intersection(bld).area > 0.3 or rb.intersection(own).area > 0.5: continue
