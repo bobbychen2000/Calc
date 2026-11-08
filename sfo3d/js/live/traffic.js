@@ -563,7 +563,13 @@ export class Traffic {
         const same = P && a.ground && (a.gs ?? 0) < 3 && tr.m.phase === 'still' && this.stillHere(tr, P, x, z, a);
         if (same) { tr.reacqOut = null; tr.staleRecord = false; this.counters.reacqParked = (this.counters.reacqParked || 0) + 1; if (gap > XPDR_OFF_MS) tr.xpdrOnAt = recvNow; }   // (transponder on again at its parking: departureSignal)
         else if (this.reacqOutlier(tr, a, x, z)) { tr.stale = true; continue; }   // (one stationary fix off its contact stand: held, realtime-11)
-        else if (tr.staleRecord || gap > 60000) { tr.staleRecord = false; tr.reps = []; tr.reacquire = true; if (tr.gate) this.releaseGate(tr); tr.stillPos = null; tr.still = []; tr.dock = null; tr.lock = null; tr.pushOk = false; tr.leaving = false; }
+        else if (tr.staleRecord || gap > 60000) { tr.staleRecord = false; tr.reps = []; tr.reacquire = true; if (tr.gate) this.releaseGate(tr); tr.stillPos = null; tr.still = []; tr.dock = null; tr.lock = null; tr.pushOk = false; tr.leaving = false;
+          // (close-out round 3, realtime-2 follow-up: heard again on the ground, stationary, somewhere else after its transponder was
+          // off (> XPDR_OFF_MS) -- towed while silent -- it is matched to the stand it now stands on at once, like an aircraft heard
+          // for the first time there, not after 20 s at its raw report pose: UAL2615 B738, parked at D15 from 5 Nov 05:31Z and kept
+          // there (no 8-h expiry at a contact stand), was heard at E7 at 14:05:56Z as UAL2042 and drawn 16 s with its fuselage in
+          // the E-pier footprint (building 164 frames); before, the expiry had made it a new track, in-blocked at E7 at once)
+          if (a.ground && (a.gs ?? 0) < 3 && gap > XPDR_OFF_MS) tr.seenMoving = false; }
       }
       this.setInfo(tr, a);
       if (!tr.vehicle && (a.veh || (a.category && /^C[1-7]$/.test(a.category)) || ['SERV', 'GRND', 'TWR'].includes(a.icao) || a.srcType === 'adsb_icao_nt')) { tr.vehicle = true; this.counters.vehicles++; if (tr.info.flight) tr.cs = parseCallsign(tr.info.flight, { vehicle: true }); }   // (re-parsed as a vehicle, realtime-14)

@@ -915,3 +915,10 @@ dispositions: `docs/requests/realtime_closeout.md`, "Round 3". Every change carr
     does not block — the two cannot both be there and the newer reports win; SFO's allocation path already ignored silent
     occupants. A first form that needed 20 s of heard reports fired only at 23:15:59Z (ASA331's transponder was off at B4).
     Window 5 Nov 16:50–23:30Z: see `docs/requests/realtime_closeout.md`, Round 3.
+21. **An aircraft towed while silent takes its new stand at once** (realtime-2 follow-up; `building`, segment A). UAL2615 B738
+    parked at D15 on 5 Nov 05:31Z and went silent; since realtime-2 it is kept there (no 8-h expiry at a contact stand). Its
+    transponder came on at E7 at 14:05:56Z (UAL2042, a tow while silent [obs]). As a re-acquired track that had been seen moving
+    (its taxi-in) it waited 20 s of stationary reports before its stand was matched, and was drawn at its raw report pose with
+    the fuselage in the E-pier footprint for 16 s (164 frames). Before, the 8-h expiry had made it a new track, in-blocked at E7
+    at once. Now a track heard again on the ground and stationary somewhere else after its transponder was off (> XPDR_OFF_MS)
+    is treated like an aircraft heard for the first time there (`seenMoving` reset).
