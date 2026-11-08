@@ -1025,16 +1025,17 @@ def tier_rings(reg):
 def tier_coverage(T, tl, y0, tol=0.3):
     """self-check (fix 2, verifier v3): every LOD0 / LOD1 vertex of a unit above the ground plate (y0 + 0.5) must lie within
     `tol` of a tier that admits it (body: any height; over: its lower y <= the vertex y + 0.15). Returns (vertices, outside,
-    max distance m, worst vertex)"""
+    max distance beyond tol m, worst vertex, the true max distance m - close-out r4, the round-3 verifier: 'max 0.00' was the
+    maximum beyond the tolerance, not the largest distance, 0.124 m at T1)"""
     V = np.unique(np.round(T.reshape(-1, 3), 2), axis=0); V = V[V[:, 1] > y0 + 0.5]
-    if not len(V): return 0, 0, 0.0, None
+    if not len(V): return 0, 0, 0.0, None, 0.0
     P_ = shapely.points(V[:, 0], V[:, 2]); d = np.full(len(V), 1e9)
     for t in tl:
         P = unary_union([Polygon(r[0], r[1:]).buffer(0) for r in t['rings']])
         adm = np.ones(len(V), bool) if t['part'] == 'body' else (V[:, 1] >= t['y'][0] - 0.15)
         d = np.where(adm, np.minimum(d, shapely.distance(P, P_)), d)
     b = d > tol
-    return int(len(V)), int(b.sum()), round(float(d[b].max()), 2) if b.any() else 0.0, (np.round(V[b][np.argmax(d[b])], 1).tolist() if b.any() else None)
+    return int(len(V)), int(b.sum()), round(float(d[b].max()), 2) if b.any() else 0.0, (np.round(V[b][np.argmax(d[b])], 1).tolist() if b.any() else None), round(float(d.max()), 3)
 
 
 def tiers(T, geo, y):
@@ -1232,8 +1233,8 @@ def main(argv):
     except Exception as ex:  # the loader falls back to landside.glb when the index is missing
         log('landside split failed (%s): the app loads landside.glb whole' % ex)
     out['units'] = units
-    log('footprint tiers self-check (LOD0 / LOD1 vertices above the ground plate within 0.3 m of an admissible tier of their unit): %d vertices, %d outside (max %.2f m)%s'
-        % (sum(v[0] for v in tcov.values()), sum(v[1] for v in tcov.values()), max((v[2] for v in tcov.values()), default=0.0),
+    log('footprint tiers self-check (LOD0 / LOD1 vertices above the ground plate within 0.3 m of an admissible tier of their unit): %d vertices, %d outside (max beyond 0.3 m: %.2f m; largest distance %.3f m)%s'
+        % (sum(v[0] for v in tcov.values()), sum(v[1] for v in tcov.values()), max((v[2] for v in tcov.values()), default=0.0), max((v[4] for v in tcov.values()), default=0.0),
            ''.join(' %s/%s %d (%.2f m at %s)' % (k[0], k[1], v[1], v[2], v[3]) for k, v in tcov.items() if v[1])))
     json.dump(out, open(os.path.join(D3, 'integration.json'), 'w'), indent=None, separators=(',', ':'))
     # close-out round 3 (integration-5, bridges R2b.3 / buildings R3.3): the per-building LOD0 / LOD1 footprints with their
@@ -1277,8 +1278,9 @@ def main(argv):
         requests=requests_of(res), glow=glow_def(),
         footprints_js=dict(units=sum(len(v) for v in fps_js.values()), bytes_js=os.path.getsize(os.path.join(D3, 'integration.js')), note='B3D_INTEGRATION.footprints (close-out round 3, integration-5)',
                            tier_tol_m=TIER_TOL, tier_min_m2=TIER_MIN, self_check=dict(rule='every LOD0 / LOD1 vertex above y0 + 0.5 within 0.3 m of an admissible tier of its own unit (fix 2, verifier v3)',
-                           vertices=sum(v[0] for v in tcov.values()), outside=sum(v[1] for v in tcov.values()), max_m=max((v[2] for v in tcov.values()), default=0.0),
-                           per_unit={'%s/%s' % k: dict(vertices=v[0], outside=v[1], max_m=v[2], worst=v[3]) for k, v in tcov.items() if v[1]})),
+                           vertices=sum(v[0] for v in tcov.values()), outside=sum(v[1] for v in tcov.values()), max_beyond_tol_m=max((v[2] for v in tcov.values()), default=0.0),
+                           max_m=max((v[4] for v in tcov.values()), default=0.0), tol_m=0.3, max_by_unit={'%s/%s' % k: v[4] for k, v in tcov.items()},
+                           per_unit={'%s/%s' % k: dict(vertices=v[0], outside=v[1], max_beyond_tol_m=v[2], worst=v[3]) for k, v in tcov.items() if v[1]})),
         requests_withdrawn=['domestic: BA_C LOD2 top +9.08 m (review r1) - a checker artefact: the joined LOD2 mesh was split by plan distance and C3C '
                             'triangles went to BA_C; split by LOD0-footprint containment (+1 m) since review r2: top 0.0 m (lod2_check.json)',
                             'landside: rental car center LOD2 roof median 4.58 m (review r1) - a checker artefact: the roof cells sampled the open deck '

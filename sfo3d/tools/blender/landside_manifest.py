@@ -315,7 +315,7 @@ def entry(build, ver, bldgs, tiles, mats):
 
 
 def keep_renders(old, new):
-    for k in ('renders', 'render_check', 'renders_updated', 'qa', 'closeout_r3_fix2'):   # (fix 2 records survive a rebuild)
+    for k in ('renders', 'render_check', 'renders_updated', 'qa', 'closeout_r3_fix2', 'closeout_r4'):   # (fix 2 / r4 records survive a rebuild)
         if old and old.get(k):
             new[k] = old[k]
     return new

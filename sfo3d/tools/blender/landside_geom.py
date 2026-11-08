@@ -49,8 +49,10 @@ SWITCH_M = {0: 0.0, 1: 450.0, 2: 1500.0}     # LOD switch distance (camera to th
 # (inf = derived from the stated evidence; unk = placeholder, no source). Listed in the manifest.
 PARAPET_H = 3.5 * FT       # 1.07 m: parking-deck parapet / guard height above the deck (42 in, typical) [inf]
 PARAPET_T = 0.30           # parapet thickness [inf]
+PORTAL_CLEAR = 0.10       # AirTrain portal holes: clearance to the guideway deck at the face (close-out round 4) [inf]
 RECESS = 3.0               # depth of the dark interior behind the open parking levels (seen through the openings) [inf]
 SPANDREL_DN, SPANDREL_UP = 0.30, 0.95   # spandrel / slab edge band around each level line [inf]
+SPANDREL_T = 0.20                       # spandrel thickness: inner face + caps (close-out round 4; precast ~8 in) [inf]
 PIER_W = 0.6               # facade pier width [inf]
 PIER_DX = {'cg': 9.0, 'gar': 8.1, 'gar_end': 9.0, 'ltp1': 9.0, 'ltp2': 9.1, 'rcc': 9.0}   # pier spacing [inf] (LTP2 9.1:
 #                            the exposed frame of photo l2 / spec ltp2_facade, bay size inf; Garages A / G: half the 16.2 m
@@ -326,6 +328,16 @@ def garage_facade(mb, P, bands, style, tiles, recess=RECESS, gdetail=None, gdeta
         for z0, z1, kind in eb:
             if kind == 'solid':
                 mb.quad_wall(a, b, z0, z1, z0, z1, st['solid'], s0, tiles[st['solid']], grp=grp_, smooth=sm)
+                if z1 < eb[-1][1] - 1e-6 and any(k_ == 'open' for _, _, k_ in eb) and L > 0.3:
+                    # close-out round 4 (verifier r3: Central Garage 2,164 back-face hits - the single-sided spandrels showed their
+                    # culled backs to a camera looking through the open storeys, e.g. from the AirTrain level in the ring cut): the
+                    # spandrel / slab-edge band as a SPANDREL_T-thick solid - inner face (facing in) + top / bottom caps; not the
+                    # top band (the parapet: deck_and_parapet draws its inner face and coping) [inf]
+                    Ai, Bi = A - n * SPANDREL_T, B - n * SPANDREL_T
+                    mb.quad_wall(tuple(Bi), tuple(Ai), z0, z1, z0, z1, st['solid'], 0.0, tiles[st['solid']])
+                    uvq = [(0, 0), (1, 0), (1, 0.05), (0, 0.05)]
+                    mb.face_dir([(*A, z1), (*B, z1), (*Bi, z1), (*Ai, z1)], st['solid'], uvq, (0, 0, 1))
+                    mb.face_dir([(*A, z0), (*B, z0), (*Bi, z0), (*Ai, z0)], st['solid'], uvq, (0, 0, -1))
         q = Polygon([A, B, B - n * recess, A - n * recess])
         if q.is_valid and q.area > 1e-3:
             ob = tuple((z0, z1) for z0, z1, k in eb if k == 'open')
@@ -1013,7 +1025,11 @@ def garage_ag(k):
         sm = arcs_u is not None and arcs_u.distance(mid_w) < 0.05     # on a smoothed curve (r2): shared normals, continuous panels
         fp = face_portals(seg)
         if fp:
-            return dict(kind='solid', solid='precast', holes=[(s0_ + 0.6, s1_ - 0.6, zt - AT.DECK_T - 0.3, zt + AT.PORTAL_H) for s0_, s1_, _ in fp])
+            # close-out round 4: the portal interval is the AirTrain deck (SFO Museum "AirTrain Rail" = the deck outline) + 0.2;
+            # the hole keeps PORTAL_CLEAR to the deck (it was inset 0.6 into that interval: the deck's side walls / coping ran
+            # 0.3-0.4 m into the jambs of the station block's east face - verifier r3 v2)
+            return dict(kind='solid', solid='precast', holes=[(s0_ + 0.2 - PORTAL_CLEAR, s1_ - 0.2 + PORTAL_CLEAR, zt - AT.DECK_T - 0.3, zt + AT.PORTAL_H)
+                                                              for s0_, s1_, _ in fp])
         if on_circle(pa, pb, F, circ):
             # drum: smooth metal panels; slots + top opening recessed 0.8 m, closed by jambs where the run meets a tower [obs i2]
             Ls = seg.length
@@ -1148,9 +1164,12 @@ def garage_ag(k):
                     pier = (ints[0][1] - 0.6, ints[0][1] + 6.0)
                 holes = []
                 for j, (s0_, s1_) in enumerate(ints[:2]):
-                    h0 = 0.6 if (j == 0) else s0_ + 0.6
-                    h1 = (s1_ - 0.6) if j == 0 else Ls - 0.6
-                    holes.append((h0, h1, zg, zh1))
+                    # close-out round 4 (verifier r3 v2: the opening was 4.23 m for a 4.93-m deck, its side walls / coping 0.31-0.40 m
+                    # into the jambs at 18.1-20.6 m): the inner jamb PORTAL_CLEAR off the deck (portal interval = deck + 0.2), the
+                    # outer end of each opening at the face end (0.6 m) or the deck + PORTAL_CLEAR, whichever is further out
+                    h0 = min(0.6, s0_ + 0.2 - PORTAL_CLEAR) if (j == 0) else s0_ + 0.2 - PORTAL_CLEAR
+                    h1 = (s1_ - 0.2 + PORTAL_CLEAR) if j == 0 else max(Ls - 0.6, min(Ls - 0.05, s1_ - 0.2 + PORTAL_CLEAR))
+                    holes.append((max(0.05, h0), min(Ls - 0.05, h1), zg, zh1))
                 runs = [(0.6, pier[0], zt + STATION_BLOCK_SLOT, 1.2), (pier[1], Ls - 0.6, zt + STATION_BLOCK_SLOT, 1.2)]
                 # one precast wall from grade to the block top (review r1 render: with the garage bands the face stopped at
                 # the guideway level and the block was open to the east)

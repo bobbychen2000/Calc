@@ -97,7 +97,7 @@ MATS = {
     'cac_wall':       dict(rgb=(255, 255, 255), m=0.0, r=0.60, tex='ls_c_cac', src='inf (panels + window bands; reduced window-to-wall ratio [pub])'),
     'louvre':         dict(rgb=(255, 255, 255), m=0.45, r=0.50, tex='ls_c_louvre', nrm=('ls_n_louvre', 0.6), double=True, src='obs photo l5 (green-grey canted louvre screen)'),
     'louvre_blade':   dict(rgb=(128, 146, 140), m=0.45, r=0.45, double=True, src='obs photo l5 (green-grey blades)'),
-    'ribbon':         dict(rgb=(255, 255, 255), m=0.0, r=0.12, ior=1.9, tex='ls_c_ribbon', src='obs photo l5 (ribbon windows)'),
+    'ribbon':         dict(rgb=(255, 255, 255), m=0.0, r=0.12, ior=1.9, glazing=True, tex='ls_c_ribbon', src='obs photo l5 (ribbon windows)'),
     'hangar_wall':    dict(rgb=(216, 212, 198), m=0.25, r=0.60, nrm=('ls_n_corrugated', 0.5), src='obs photo l3 (light hangar walls); cladding inf'),
     'hangar_door':    dict(rgb=(255, 255, 255), m=0.35, r=0.50, tex='ls_c_door', nrm=('ls_n_door', 0.6), src='obs photo l3 (grey door leaves); leaves inf'),
     'hangar_roof':    dict(rgb=(176, 172, 160), m=0.25, r=0.60, nrm=('ls_n_roof', 0.5), naip='superbay', src='obs NAIP 2024 roof colour'),
@@ -304,7 +304,7 @@ def make_material(name, atlas, tex_imgs, ao_img):
         t = nt.nodes.new('ShaderNodeTexImage'); t.image = ao_img; t.name = 'AO_BAKE'
         uva = nt.nodes.new('ShaderNodeUVMap'); uva.uv_map = 'UV_ao'
         nt.links.new(uva.outputs['UV'], t.inputs['Vector'])
-        if 'glass' not in key:
+        if not spec.get('glazing', 'glass' in key):     # close-out r4: the glazing flag (ribbon windows), else the name
             sep = nt.nodes.new('ShaderNodeSeparateColor')
             g = nt.nodes.new('ShaderNodeGroup'); g.node_tree = gltf_output_group()
             nt.links.new(t.outputs['Color'], sep.inputs['Color'])
@@ -645,8 +645,10 @@ def main():
                     loc = recentre(j2.data); j2.location = loc
                     objs[2].append(j2); shells['C'].append(j2)
         bcars = []                                          # (the building's cars so far: overlaps across its decks, fix 2)
+        # close-out round 4: cars clear of the building's static LOD0 geometry in their height band (coping, deck rims, roof boxes)
+        cstatic = C.StaticIndex(C.static_tris([p.mb for p in B.shells] + [p.mb for p in B.details[0]])) if B.decks else None
         for di, d in enumerate(B.decks):
-            cars, inf = C.place(d, B.F, G.car_layout, seed=zlib.crc32(B.key.encode()) % 1000 + di, prior=bcars)
+            cars, inf = C.place(d, B.F, G.car_layout, seed=zlib.crc32(B.key.encode()) % 1000 + di, prior=bcars, static=cstatic)
             bcars += cars
             car_info[B.key] = inf
             for lod in (0, 1):

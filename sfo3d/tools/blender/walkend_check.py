@@ -108,7 +108,7 @@ def run(T_by_lod, letters, exempt=None):
     walkway does not start at a building (listed, not counted). -> dict per LOD: n, fails [...], worst, rows."""
     exempt = exempt or {}
     res = {}
-    for lod, T in sorted(T_by_lod.items()):
+    for lod, T in sorted(T_by_lod.items(), key=lambda kv: str(kv[0])):
         rows, fails, ex = [], [], []
         for b in bridges_at(letters):
             g = bridge_gaps(T, b)

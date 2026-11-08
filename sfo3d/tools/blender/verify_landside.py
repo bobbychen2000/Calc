@@ -604,6 +604,26 @@ def run(path):
         C.add('cars (all %d LOD0 instances): overlapping pairs of their oriented plan hulls (same height band)' % len(hulls), len(pairs), 0,
               ok=not pairs, unit='', src='close-out r3 fix 2 (verifier v3: 16 pairs, worst 2.44 m2); worst %s' % (pairs[:3],))
         plaus_cars = dict(instances=len(hulls), overlapping_pairs=len(pairs), worst=pairs[:5])
+        # close-out round 4 (verifier r3: 13 Central Garage roof cars 0.1-0.35 m into the coping / deck rim / a roof box): every LOD0
+        # car (instances + the single-instance car meshes) against the static LOD0 triangles of this file in the car's band
+        # (bottom + 0.10 .. top - 0.05), the verifier's cars_static test
+        import landside_cars as LC
+        from shapely.geometry import MultiPoint
+        stat = [p_['P'][p_['T']] for nm, m in S.items() if m['lod'] == 0 and m['inst'] is None and '_cars' not in nm for p_ in m['prims']]
+        SI = LC.StaticIndex(np.concatenate(stat)[:, :, [0, 2, 1]]) if stat else None
+        singles = []
+        for nm, m in S.items():
+            if m['lod'] == 0 and m['inst'] is None and '_cars' in nm:
+                Pq = np.concatenate([p_['P'] for p_ in m['prims']])
+                singles.append((MultiPoint([tuple(q) for q in Pq[:, [0, 2]]]).convex_hull, float(Pq[:, 1].min()), float(Pq[:, 1].max())))
+        cs = []
+        for g, y0, y1 in hulls + singles:
+            a = SI.hits(g, y0 + 0.10, y1 - 0.05, min_area=1.0) if SI is not None else 0.0
+            if a > 0.01: cs.append((round(a, 3), [round(c, 1) for c in g.centroid.coords[0]], round(y0, 2)))
+        cs.sort(key=lambda p_: -p_[0])
+        C.add('cars (all %d LOD0 cars incl. %d single meshes) touching static LOD0 geometry in their height band' % (len(hulls) + len(singles), len(singles)),
+              len(cs), 0, ok=not cs, unit='', src='close-out round 4 (verifier r3: 13 CG roof cars, 3.77 m2); worst %s' % (cs[:3],))
+        plaus_cars.update(cars_vs_static=len(cs), cars_vs_static_m2=round(sum(c_[0] for c_ in cs), 2), cars_vs_static_worst=cs[:5])
     else:
         plaus_cars = dict(instances=0)
     # LOD1 car meshes: the lowest point of every instance above its origin (the deck + 0.01): 0 since fix 2 (was 0.30, floating)

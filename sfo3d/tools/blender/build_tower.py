@@ -127,7 +127,7 @@ MATS = {
     'ibf_panel':     dict(rgb=(140, 144, 148), m=0.15, r=0.50, nrm=('tile_panel_ibf', 1.2),
                           src='obs photos t2/t4 (grey metal panels); module / finish inf'),
     'ibf_glass_dark': dict(rgb=(35, 42, 50), m=0.0, r=0.06, src='obs photo t2 (continuous dark glazing band)'),
-    'ibf_curtain':   dict(rgb=(55, 78, 72), m=0.0, r=0.06, src='obs photo t4 (green-tinted curtain-wall bay)'),
+    'ibf_curtain':   dict(rgb=(55, 78, 72), m=0.0, r=0.06, glazing=True, src='obs photo t4 (green-tinted curtain-wall bay)'),
     'garden':        dict(rgb=(128, 122, 92), m=0.0, r=0.95, src='obs NAIP 2024 hue of the planted roof garden; value inf'),
     'equipment':     dict(rgb=(200, 202, 200), m=0.30, r=0.50, nrm=('tile_louvre', 0.6), src='obs photo t4 (white louvred unit)'),
     'rail':          dict(rgb=(150, 152, 155), m=0.80, r=0.45, src='obs photos t2/t3 (railings); finish inf'),
@@ -318,12 +318,15 @@ def wire_ao(mats):
     # GLASS material. The baked AO is a diffuse visibility; three.js applies a material's aoMap to the indirect diffuse AND,
     # through its specular occlusion (computeSpecularOcclusion), to the IBL reflection that makes glass read, while Cycles
     # ignores the glTF occlusion - so AO on glass made the app and Cycles disagree. The image node stays (the bake target).
+    # Close-out round 4 (verifier: the rule keyed on the NAME missed ibf_curtain, the base building's curtain-wall bays): a
+    # material is glazing when its MATS entry says glazing=True, else when 'glass' is in its key.
     grp = gltf_output_group()
     for m in mats:
         nt = m.node_tree
         tex = nt.nodes.get('AO_BAKE')
         if tex is None or any(n.type == 'GROUP' and n.node_tree == grp for n in nt.nodes): continue
-        if 'glass' in m.name.split('.L')[0]: continue
+        k = m.name.split('.L')[0]
+        if MATS.get(k, {}).get('glazing', 'glass' in k): continue    # close-out r4: keyed on the glazing flag
         sep = nt.nodes.new('ShaderNodeSeparateColor')
         g = nt.nodes.new('ShaderNodeGroup'); g.node_tree = grp
         nt.links.new(tex.outputs['Color'], sep.inputs['Color'])

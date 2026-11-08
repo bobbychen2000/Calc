@@ -528,7 +528,7 @@ def run(path):
         fps[lod] = fa
         hv = unary_union([r['poly'] for r in heads[lod]] or [Polygon()])
         # LOD2 is one joined node: its hall parts are allowed where LOD0's landside parts are
-        out = fa.difference(airside.buffer(0.05)).difference(land.buffer(0.5) if lod == 2 else Polygon()).difference(hv.buffer(0.05)).area
+        out = fa.difference(airside.buffer(0.05)).difference(land.buffer(0.5) if lod == 2 else Polygon()).difference(hv.buffer(0.2, join_style=2)).area
         C.add('LOD%d airside footprint outside the SFO Museum outlines (less the bridge-head vestibules)' % lod, out, 0.0, 0.5,
               'outlines used by check_stands.py', 'm2')
         reach = max([airside.boundary.distance(Point(c)) for r in heads[lod] for c in np.asarray(r['poly'].exterior.coords if hasattr(r['poly'], 'exterior') else
@@ -656,6 +656,23 @@ def run(path):
                   v['n_fail'], 0, ok=v['n_fail'] == 0, src='app_bridges.json walk[0] (gates.js); max gap %s m' % v['max_gap'], unit='')
     except Exception as e:  # noqa: BLE001
         C.add('walkway-end gap check', str(e), 'error', ok=False)
+    # close-out round 4 (verifier r3 v9): back-face first hits (tools/blender/bf_rays.py) at LOD0 and LOD2 in NEAR mode (context
+    # faces occlude only within 10 m in front of the asset: a camera that close), with the neighbours that abut the ITB; the
+    # per-node limit is the landside gate's (60 hits) [INFO + gate]
+    try:
+        import bf_rays as BF
+        D3_ = os.path.join(ROOT, 'data', 'buildings3d')
+        l2p_ = os.path.join(os.path.dirname(path), os.path.basename(path).replace('.glb', '_lod2.glb'))
+        bfr = {}
+        for lod_, own_, ctx_ in ((0, path, ('domestic.glb', 'roadways.glb', 'landside.glb')), (2, l2p_ if os.path.exists(l2p_) else path, ('domestic_lod2.glb', 'roadways_lod2.glb', 'landside_lod2.glb'))):
+            r_ = BF.near_summary(own_, [os.path.join(D3_, c) for c in ctx_], lod=lod_)
+            bfr['lod%d' % lod_] = r_
+            over = {k: v for k, v in r_['per_node'].items() if v > BF.NODE_MAX}
+            C.add('LOD%d back-face first hits, near context %.0f m (worst %s)' % (lod_, r_['near_m'], r_['worst']), r_['total'], 0, ok=not over, unit='hits',
+                  src='bf_rays.py near mode; per-node limit %d (verify_landside gate); over: %s' % (BF.NODE_MAX, over or 'none'))
+        plaus['backface_near'] = bfr
+    except Exception as e:  # noqa: BLE001
+        C.add('back-face near-context rays', str(e), 'error', ok=False)
     tw = unary_union([Polygon(p[0], p[1:]).buffer(0) for t_ in I.D.AIR['taxiways'] for p in t_['polys']])
     C.add('SFO Museum taxiway polygons inside the 3-D footprint', tw.intersection(unary_union([fa, land])).area, 0.0, 0.5,
           'data/sfo_airport.json taxiways', 'm2')

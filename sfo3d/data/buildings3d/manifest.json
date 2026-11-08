@@ -2,9 +2,9 @@
  "_about": "SFO Live 3D building assets (glTF 2.0, built with Blender from the verified 2-D sheets); one key per asset group; frame ltp-nad83-2011 (x east, y up, z south, m from the ARP); see docs/research/buildings3d.md",
  "itb": {
   "asset": "data/buildings3d/itb.glb",
-  "bytes": 6462872,
-  "built": "2026-11-07T13:16:23+00:00",
-  "git": "5e1609d+dirty",
+  "bytes": 6934336,
+  "built": "2026-11-08T17:18:17+00:00",
+  "git": "03f5bde+dirty",
   "generator": "tools/blender/build_itb.py (bpy 5.0.1, Cycles CPU AO bake); geometry tools/blender/itb_geom.py",
   "reference": "2-D sheets BI-01..04 (docs/drawings/buildings/README.md), drawn by tools/buildings/draw_itb.py, imported by itb_geom.py",
   "spec": "tools/buildings/spec_itb.json (+ itb_naip_measurements.json, itb_pods.json)",
@@ -36,24 +36,24 @@
     "lod": 0,
     "node": "LOD0",
     "switch_m": 0.0,
-    "tris": 69287,
-    "verts": 75123,
+    "tris": 71939,
+    "verts": 81255,
     "ao_atlas": "itb_ao_A (shared by LOD0 / LOD1 shell meshes)"
    },
    {
     "lod": 1,
     "node": "LOD1",
     "switch_m": 450.0,
-    "tris": 36927,
-    "verts": 43103,
+    "tris": 38683,
+    "verts": 47443,
     "ao_atlas": "itb_ao_A (shared by LOD0 / LOD1 shell meshes)"
    },
    {
     "lod": 2,
     "node": "LOD2",
     "switch_m": 1600.0,
-    "tris": 5336,
-    "verts": 7866,
+    "tris": 7092,
+    "verts": 12206,
     "ao_atlas": "itb_ao_B"
    }
   ],
@@ -64,7 +64,7 @@
   ],
   "lod2_glb": {
    "path": "data/buildings3d/itb_lod2.glb",
-   "bytes": 576524
+   "bytes": 772664
   },
   "textures": [
    {
@@ -84,7 +84,7 @@
      2048
     ],
     "mime": "image/png",
-    "bytes": 2125744,
+    "bytes": 2148275,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    },
    {
@@ -184,7 +184,7 @@
      512
     ],
     "mime": "image/png",
-    "bytes": 153538,
+    "bytes": 164665,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    }
   ],
@@ -575,8 +575,8 @@
      0,
      1
     ],
-    "bake_s": 59.8,
-    "mean": 0.671,
+    "bake_s": 62.5,
+    "mean": 0.669,
     "p2": 0.0,
     "samples": 48,
     "distance_m": 10.0,
@@ -587,8 +587,8 @@
     "lods": [
      2
     ],
-    "bake_s": 3.8,
-    "mean": 0.691,
+    "bake_s": 2.5,
+    "mean": 0.689,
     "p2": 0.0,
     "samples": 48,
     "distance_m": 10.0,
@@ -1437,6 +1437,96 @@
     "kind": "shell"
    },
    {
+    "node": "L0_ba_bridge_heads",
+    "feature": "jet-bridge vestibules: facade -> app walkway end face (A / G)",
+    "src": "inf",
+    "spec": [
+     "ba_a.footprint",
+     "ba_g.footprint"
+    ],
+    "dims": {
+     "count": {
+      "v": 25,
+      "tag": "inf",
+      "source": "A / G walkway ends outside this LOD's facade (app_bridges.json walk[0])"
+     },
+     "width": {
+      "v": 3.2,
+      "tag": "inf",
+      "source": "gates.js WALK_W 2.6 + 0.3 each side (as dom_geom)"
+     },
+     "band": {
+      "v": [
+       -0.5,
+       3.3
+      ],
+      "tag": "inf",
+      "source": "around the app walkway floor (walkway solid -0.3 .. +3.0)"
+     },
+     "reach": {
+      "v": [
+       -0.96,
+       0.92
+      ],
+      "tag": "obs",
+      "source": "facade -> walkway end (data attach points vs the SFO Museum outline); + 0.15 into the facade"
+     },
+     "stands": {
+      "v": [
+       "A1 L1",
+       "A1 L2",
+       "A11 L1",
+       "A11 L2",
+       "A11 L3U",
+       "A15 L1",
+       "A2 L1",
+       "A2 L2",
+       "A6 L1",
+       "A6 L2",
+       "A6 L3U",
+       "A8 L1",
+       "A8 L2",
+       "G1 L1",
+       "G1 L2",
+       "G10 L1",
+       "G10 L2",
+       "G2 L1",
+       "G2 L2",
+       "G4 L1",
+       "G5 L1",
+       "G5 L2",
+       "G6 L1",
+       "G6 L2",
+       "G8 L1",
+       "G9 L1",
+       "G9 L2"
+      ],
+      "tag": "inf",
+      "source": ""
+     }
+    },
+    "lods": [
+     0,
+     1,
+     2
+    ],
+    "kind": "shell"
+   },
+   {
+    "node": "L0_ba_bridge_doors",
+    "feature": "door surrounds on the vestibule ends (jambs, head, closed leaf)",
+    "src": "inf",
+    "spec": [
+     "ba_a.footprint",
+     "ba_g.footprint"
+    ],
+    "dims": {},
+    "lods": [
+     0
+    ],
+    "kind": "detail"
+   },
+   {
     "node": "L0_ba_g_box",
     "feature": "BA-G pod-3 end box (probable ramp-control cab)",
     "src": "obs",
@@ -1678,7 +1768,7 @@
   "verification": {
    "tool": "tools/blender/verify_itb.py",
    "report": "out/buildings3d/itb_verify.json (local)",
-   "n_checks": 126,
+   "n_checks": 135,
    "n_fail": 0,
    "failed": [],
    "tolerance": "0.5 m or 2 % of the drawn value (whichever is larger) unless stated",
@@ -2746,7 +2836,7 @@
      "src": "no clash (review r2: 85 m2 under the north bar + the deck end at (-1159, 385))"
     },
     {
-     "check": "LOD0 airside footprint outside the SFO Museum outlines",
+     "check": "LOD0 airside footprint outside the SFO Museum outlines (less the bridge-head vestibules)",
      "model": 0.0,
      "drawing": 0.0,
      "dev": 0.0,
@@ -2755,7 +2845,16 @@
      "src": "outlines used by check_stands.py"
     },
     {
-     "check": "LOD1 airside footprint outside the SFO Museum outlines",
+     "check": "LOD0 bridge-head vestibules: reach beyond the SFO Museum outline (25 boxes, 35.6 m2 outside)",
+     "model": 0.969,
+     "drawing": 1.2,
+     "dev": null,
+     "tol": null,
+     "ok": true,
+     "src": "walkway ends (app_bridges.json walk[0]) lie <= 0.96 m off the outline + 0.15 m; > 1.2 m would be a box standing free on the apron"
+    },
+    {
+     "check": "LOD1 airside footprint outside the SFO Museum outlines (less the bridge-head vestibules)",
      "model": 0.0,
      "drawing": 0.0,
      "dev": 0.0,
@@ -2764,13 +2863,31 @@
      "src": "outlines used by check_stands.py"
     },
     {
-     "check": "LOD2 airside footprint outside the SFO Museum outlines",
+     "check": "LOD1 bridge-head vestibules: reach beyond the SFO Museum outline (25 boxes, 35.6 m2 outside)",
+     "model": 0.969,
+     "drawing": 1.2,
+     "dev": null,
+     "tol": null,
+     "ok": true,
+     "src": "walkway ends (app_bridges.json walk[0]) lie <= 0.96 m off the outline + 0.15 m; > 1.2 m would be a box standing free on the apron"
+    },
+    {
+     "check": "LOD2 airside footprint outside the SFO Museum outlines (less the bridge-head vestibules)",
      "model": 0.0,
      "drawing": 0.0,
      "dev": 0.0,
      "tol": 0.5,
      "ok": true,
      "src": "outlines used by check_stands.py"
+    },
+    {
+     "check": "LOD2 bridge-head vestibules: reach beyond the SFO Museum outline (25 boxes, 35.6 m2 outside)",
+     "model": 0.969,
+     "drawing": 1.2,
+     "dev": null,
+     "tol": null,
+     "ok": true,
+     "src": "walkway ends (app_bridges.json walk[0]) lie <= 0.96 m off the outline + 0.15 m; > 1.2 m would be a box standing free on the apron"
     },
     {
      "check": "A / G stand envelopes: min distance to the 3-D footprint (G7)",
@@ -2783,12 +2900,12 @@
     },
     {
      "check": "bridge walkways (beyond 1.5 m) + rotundas overlapping the 3-D footprint (48 bridges)",
-     "model": 12.244,
+     "model": 19.511,
      "drawing": 0.0,
      "dev": null,
      "tol": null,
      "ok": true,
-     "src": "NOTE, not introduced by the asset - pre-existing contact in the data (rotundas at the facade, outline +-5 m): max penetration 0.73 m (17 rotundas); the 3-D footprint = the SFO Museum outline the app and check_stands.py use"
+     "src": "NOTE, not introduced by the asset - pre-existing contact in the data (rotundas at the facade, outline +-5 m): max penetration 0.90 m (17 rotundas); the 3-D footprint = the SFO Museum outline the app and check_stands.py use"
     },
     {
      "check": "CROSS-ASSET (bridges): app walkway top <= host roof at the attach point - 0 of 45 A / G walkways fail (BA-G 0 of 24)",
@@ -2797,7 +2914,61 @@
      "dev": null,
      "tol": null,
      "ok": true,
-     "src": "gates.js DEPARTURE_LEVELS G 2.7 [obs, low] / A 5.4 [inf] + WALK_H 3.0 (tools/blender/app_bridges.json, generated 2026-11-07T11:00:24.605Z, stale inputs: none); BA-G bump-out roofs 6.5-7.1 m [obs a2]; BA-A failures are not counted (no photo of its bump-outs, A level inferred)"
+     "src": "gates.js DEPARTURE_LEVELS G 2.7 [obs, low] / A 5.4 [inf] + WALK_H 3.0 (tools/blender/app_bridges.json, generated 2026-11-08T17:13:22.689Z, stale inputs: none); BA-G bump-out roofs 6.5-7.1 m [obs a2]; BA-A failures are not counted (no photo of its bump-outs, A level inferred)"
+    },
+    {
+     "check": "walkway ends closed by the asset (gap <= 0.10 m over the full width at floor + 0.3 / 1.5 / 2.7) - LOD0: 0 of 46 open",
+     "model": 0.0,
+     "drawing": 0.0,
+     "dev": null,
+     "tol": null,
+     "ok": true,
+     "src": "app_bridges.json walk[0] (gates.js); max gap 0.058 m"
+    },
+    {
+     "check": "walkway ends closed by the asset (gap <= 0.10 m over the full width at floor + 0.3 / 1.5 / 2.7) - LOD1: 0 of 46 open",
+     "model": 0.0,
+     "drawing": 0.0,
+     "dev": null,
+     "tol": null,
+     "ok": true,
+     "src": "app_bridges.json walk[0] (gates.js); max gap 0.058 m"
+    },
+    {
+     "check": "walkway ends closed by the asset (gap <= 0.10 m over the full width at floor + 0.3 / 1.5 / 2.7) - LOD2: 0 of 46 open",
+     "model": 0.0,
+     "drawing": 0.0,
+     "dev": null,
+     "tol": null,
+     "ok": true,
+     "src": "app_bridges.json walk[0] (gates.js); max gap 0.058 m"
+    },
+    {
+     "check": "walkway ends closed by the asset (gap <= 0.10 m over the full width at floor + 0.3 / 1.5 / 2.7) - itb_lod2.glb: 0 of 46 open",
+     "model": 0.0,
+     "drawing": 0.0,
+     "dev": null,
+     "tol": null,
+     "ok": true,
+     "src": "app_bridges.json walk[0] (gates.js); max gap 0.058 m"
+    },
+    {
+     "check": "LOD0 back-face first hits, near context 10 m (worst ('L0_hall_hangers', 55))",
+     "model": 55.0,
+     "drawing": 0.0,
+     "dev": null,
+     "tol": null,
+     "ok": true,
+     "src": "bf_rays.py near mode; per-node limit 60 (verify_landside gate); over: none"
+    },
+    {
+     "check": "LOD2 back-face first hits, near context 10 m (worst None)",
+     "model": 0.0,
+     "drawing": 0.0,
+     "dev": null,
+     "tol": null,
+     "ok": true,
+     "src": "bf_rays.py near mode; per-node limit 60 (verify_landside gate); over: none"
     },
     {
      "check": "SFO Museum taxiway polygons inside the 3-D footprint",
@@ -2819,11 +2990,43 @@
     }
    ],
    "plausibility": {
+    "bridge_heads": {
+     "lod0": {
+      "n": 25,
+      "kinds": {
+       "vestibule": 23,
+       "nub": 2
+      },
+      "area_outside_outlines_m2": 35.63,
+      "max_reach_m": 0.97,
+      "clipped_m2": 3.34
+     },
+     "lod1": {
+      "n": 25,
+      "kinds": {
+       "vestibule": 23,
+       "nub": 2
+      },
+      "area_outside_outlines_m2": 35.63,
+      "max_reach_m": 0.97,
+      "clipped_m2": 3.34
+     },
+     "lod2": {
+      "n": 25,
+      "kinds": {
+       "vestibule": 22,
+       "nub": 3
+      },
+      "area_outside_outlines_m2": 35.61,
+      "max_reach_m": 0.97,
+      "clipped_m2": 3.34
+     }
+    },
     "stand_min_m": 5.35,
     "rotunda_contacts": [
      [
       "A2/A2L1",
-      0.38
+      0.57
      ],
      [
       "A4/A4L1",
@@ -2843,7 +3046,7 @@
      ],
      [
       "A11/A11L1",
-      0.7
+      0.85
      ],
      [
       "A13/A13L1",
@@ -2851,11 +3054,11 @@
      ],
      [
       "G1/G1L1",
-      0.72
+      0.88
      ],
      [
       "G2/G2L1",
-      0.6
+      0.75
      ],
      [
       "G3/G3L1",
@@ -2867,11 +3070,11 @@
      ],
      [
       "G5/G5L1",
-      0.38
+      0.53
      ],
      [
       "G6/G6L1",
-      0.55
+      0.7
      ],
      [
       "G7/G7L1",
@@ -2887,7 +3090,7 @@
      ],
      [
       "G10/G10L1",
-      0.48
+      0.9
      ]
     ],
     "walkway_vs_host_roof": [
@@ -3341,7 +3544,1758 @@
       "host_roof": 16.0,
       "ok": true
      }
-    ]
+    ],
+    "walkway_end_gaps": {
+     "0": {
+      "n": 46,
+      "n_fail": 0,
+      "n_exempt": 0,
+      "max_gap": 0.058,
+      "fails": [],
+      "exempt": [],
+      "rows": [
+       {
+        "stand": "A1",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.02,
+        "min_gap": -0.02,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A1",
+        "door": 2,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.02,
+        "min_gap": -0.02,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A2",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.056,
+        "min_gap": 0.039,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A2",
+        "door": 2,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.02,
+        "min_gap": -0.02,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A4",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.656,
+        "min_gap": -0.885,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A5",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.702,
+        "min_gap": -0.966,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A5",
+        "door": 2,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.761,
+        "min_gap": -0.948,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A6",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.02,
+        "min_gap": -0.02,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A6",
+        "door": 2,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.02,
+        "min_gap": -0.02,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A6",
+        "door": 3,
+        "upper": true,
+        "Hb": 9,
+        "max_gap": -0.02,
+        "min_gap": -0.02,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A8",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.02,
+        "min_gap": -0.02,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A8",
+        "door": 2,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.02,
+        "min_gap": -0.02,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A9",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.781,
+        "min_gap": -0.961,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A9",
+        "door": 2,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.839,
+        "min_gap": -0.898,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A10",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.876,
+        "min_gap": -0.936,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A10",
+        "door": 2,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.886,
+        "min_gap": -0.945,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A11",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.052,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A11",
+        "door": 2,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.02,
+        "min_gap": -0.02,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A11",
+        "door": 3,
+        "upper": true,
+        "Hb": 9,
+        "max_gap": -0.02,
+        "min_gap": -0.156,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A12",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.661,
+        "min_gap": -1.174,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A13",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.26,
+        "min_gap": -0.383,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A13",
+        "door": 2,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.443,
+        "min_gap": -0.504,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A15",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.02,
+        "min_gap": -0.112,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G1",
+        "door": 1,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": 0.052,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G1",
+        "door": 2,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": -0.02,
+        "min_gap": -0.02,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G2",
+        "door": 1,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": 0.058,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G2",
+        "door": 2,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": -0.02,
+        "min_gap": -0.02,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G3",
+        "door": 1,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": -0.271,
+        "min_gap": -0.513,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G3",
+        "door": 2,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": -0.314,
+        "min_gap": -0.37,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G4",
+        "door": 1,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": -0.02,
+        "min_gap": -0.429,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G4",
+        "door": 2,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": -0.306,
+        "min_gap": -0.439,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G5",
+        "door": 1,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": 0.056,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G5",
+        "door": 2,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": -0.02,
+        "min_gap": -0.02,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G6",
+        "door": 1,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": 0.057,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G6",
+        "door": 2,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": -0.02,
+        "min_gap": -0.02,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G7",
+        "door": 1,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": -0.261,
+        "min_gap": -0.452,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G7",
+        "door": 2,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": -0.261,
+        "min_gap": -0.5,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G8",
+        "door": 1,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": -0.314,
+        "min_gap": -0.426,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G8",
+        "door": 2,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": -0.281,
+        "min_gap": -0.43,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G9",
+        "door": 1,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": -0.934,
+        "min_gap": -0.972,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G9",
+        "door": 2,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": -0.02,
+        "min_gap": -0.02,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G10",
+        "door": 1,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": 0.052,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G10",
+        "door": 2,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": -0.02,
+        "min_gap": -0.02,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G12",
+        "door": 1,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": -0.802,
+        "min_gap": -0.873,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G13",
+        "door": 1,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": -0.8,
+        "min_gap": -0.806,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G13",
+        "door": 3,
+        "upper": true,
+        "Hb": 8.44,
+        "max_gap": -0.8,
+        "min_gap": -0.806,
+        "probes_without_face": 0
+       }
+      ]
+     },
+     "1": {
+      "n": 46,
+      "n_fail": 0,
+      "n_exempt": 0,
+      "max_gap": 0.058,
+      "fails": [],
+      "exempt": [],
+      "rows": [
+       {
+        "stand": "A1",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A1",
+        "door": 2,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A2",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.056,
+        "min_gap": 0.039,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A2",
+        "door": 2,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A4",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.656,
+        "min_gap": -0.885,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A5",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.702,
+        "min_gap": -0.966,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A5",
+        "door": 2,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.761,
+        "min_gap": -0.948,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A6",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A6",
+        "door": 2,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A6",
+        "door": 3,
+        "upper": true,
+        "Hb": 9,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A8",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A8",
+        "door": 2,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A9",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.781,
+        "min_gap": -0.961,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A9",
+        "door": 2,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.839,
+        "min_gap": -0.898,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A10",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.876,
+        "min_gap": -0.936,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A10",
+        "door": 2,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.886,
+        "min_gap": -0.945,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A11",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.052,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A11",
+        "door": 2,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A11",
+        "door": 3,
+        "upper": true,
+        "Hb": 9,
+        "max_gap": 0.0,
+        "min_gap": -0.156,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A12",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.661,
+        "min_gap": -1.174,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A13",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.26,
+        "min_gap": -0.383,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A13",
+        "door": 2,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.443,
+        "min_gap": -0.504,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A15",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.0,
+        "min_gap": -0.112,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G1",
+        "door": 1,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": 0.052,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G1",
+        "door": 2,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G2",
+        "door": 1,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": 0.058,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G2",
+        "door": 2,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G3",
+        "door": 1,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": -0.271,
+        "min_gap": -0.513,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G3",
+        "door": 2,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": -0.314,
+        "min_gap": -0.37,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G4",
+        "door": 1,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": 0.0,
+        "min_gap": -0.429,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G4",
+        "door": 2,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": -0.306,
+        "min_gap": -0.439,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G5",
+        "door": 1,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": 0.056,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G5",
+        "door": 2,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G6",
+        "door": 1,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": 0.057,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G6",
+        "door": 2,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G7",
+        "door": 1,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": -0.261,
+        "min_gap": -0.452,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G7",
+        "door": 2,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": -0.261,
+        "min_gap": -0.5,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G8",
+        "door": 1,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": -0.314,
+        "min_gap": -0.426,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G8",
+        "door": 2,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": -0.281,
+        "min_gap": -0.43,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G9",
+        "door": 1,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": -0.934,
+        "min_gap": -0.972,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G9",
+        "door": 2,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G10",
+        "door": 1,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": 0.052,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G10",
+        "door": 2,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G12",
+        "door": 1,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": -0.802,
+        "min_gap": -0.873,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G13",
+        "door": 1,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": -0.8,
+        "min_gap": -0.806,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G13",
+        "door": 3,
+        "upper": true,
+        "Hb": 8.44,
+        "max_gap": -0.8,
+        "min_gap": -0.806,
+        "probes_without_face": 0
+       }
+      ]
+     },
+     "2": {
+      "n": 46,
+      "n_fail": 0,
+      "n_exempt": 0,
+      "max_gap": 0.058,
+      "fails": [],
+      "exempt": [],
+      "rows": [
+       {
+        "stand": "A1",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A1",
+        "door": 2,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A2",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.056,
+        "min_gap": 0.039,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A2",
+        "door": 2,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A4",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.656,
+        "min_gap": -0.885,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A5",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.702,
+        "min_gap": -0.966,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A5",
+        "door": 2,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.761,
+        "min_gap": -0.948,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A6",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A6",
+        "door": 2,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A6",
+        "door": 3,
+        "upper": true,
+        "Hb": 9,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A8",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A8",
+        "door": 2,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A9",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.781,
+        "min_gap": -0.961,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A9",
+        "door": 2,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.839,
+        "min_gap": -0.898,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A10",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.876,
+        "min_gap": -0.936,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A10",
+        "door": 2,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.886,
+        "min_gap": -0.945,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A11",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.052,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A11",
+        "door": 2,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A11",
+        "door": 3,
+        "upper": true,
+        "Hb": 9,
+        "max_gap": 0.0,
+        "min_gap": -0.155,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A12",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.661,
+        "min_gap": -1.174,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A13",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.26,
+        "min_gap": -0.383,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A13",
+        "door": 2,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.443,
+        "min_gap": -0.504,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A15",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G1",
+        "door": 1,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": 0.052,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G1",
+        "door": 2,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G2",
+        "door": 1,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": 0.058,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G2",
+        "door": 2,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G3",
+        "door": 1,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": -0.25,
+        "min_gap": -0.493,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G3",
+        "door": 2,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": -0.294,
+        "min_gap": -0.35,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G4",
+        "door": 1,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": -0.216,
+        "min_gap": -0.409,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G4",
+        "door": 2,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": -0.286,
+        "min_gap": -0.419,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G5",
+        "door": 1,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": 0.056,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G5",
+        "door": 2,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G6",
+        "door": 1,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": 0.057,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G6",
+        "door": 2,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G7",
+        "door": 1,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": -0.241,
+        "min_gap": -0.432,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G7",
+        "door": 2,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": -0.241,
+        "min_gap": -0.48,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G8",
+        "door": 1,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": -0.294,
+        "min_gap": -0.406,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G8",
+        "door": 2,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": -0.261,
+        "min_gap": -0.41,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G9",
+        "door": 1,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": -0.914,
+        "min_gap": -0.952,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G9",
+        "door": 2,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G10",
+        "door": 1,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": 0.052,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G10",
+        "door": 2,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G12",
+        "door": 1,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": -0.802,
+        "min_gap": -0.873,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G13",
+        "door": 1,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": -0.8,
+        "min_gap": -0.806,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G13",
+        "door": 3,
+        "upper": true,
+        "Hb": 8.44,
+        "max_gap": -0.8,
+        "min_gap": -0.806,
+        "probes_without_face": 0
+       }
+      ]
+     },
+     "lod2_glb": {
+      "n": 46,
+      "n_fail": 0,
+      "n_exempt": 0,
+      "max_gap": 0.058,
+      "fails": [],
+      "exempt": [],
+      "rows": [
+       {
+        "stand": "A1",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A1",
+        "door": 2,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A2",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.056,
+        "min_gap": 0.039,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A2",
+        "door": 2,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A4",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.656,
+        "min_gap": -0.885,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A5",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.702,
+        "min_gap": -0.966,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A5",
+        "door": 2,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.761,
+        "min_gap": -0.948,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A6",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A6",
+        "door": 2,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A6",
+        "door": 3,
+        "upper": true,
+        "Hb": 9,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A8",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A8",
+        "door": 2,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A9",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.781,
+        "min_gap": -0.961,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A9",
+        "door": 2,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.839,
+        "min_gap": -0.898,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A10",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.876,
+        "min_gap": -0.936,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A10",
+        "door": 2,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.886,
+        "min_gap": -0.945,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A11",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.052,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A11",
+        "door": 2,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A11",
+        "door": 3,
+        "upper": true,
+        "Hb": 9,
+        "max_gap": 0.0,
+        "min_gap": -0.155,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A12",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.661,
+        "min_gap": -1.174,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A13",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.26,
+        "min_gap": -0.383,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A13",
+        "door": 2,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.443,
+        "min_gap": -0.504,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "A15",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G1",
+        "door": 1,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": 0.052,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G1",
+        "door": 2,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G2",
+        "door": 1,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": 0.058,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G2",
+        "door": 2,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G3",
+        "door": 1,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": -0.25,
+        "min_gap": -0.493,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G3",
+        "door": 2,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": -0.294,
+        "min_gap": -0.35,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G4",
+        "door": 1,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": -0.216,
+        "min_gap": -0.409,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G4",
+        "door": 2,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": -0.286,
+        "min_gap": -0.419,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G5",
+        "door": 1,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": 0.056,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G5",
+        "door": 2,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G6",
+        "door": 1,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": 0.057,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G6",
+        "door": 2,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G7",
+        "door": 1,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": -0.241,
+        "min_gap": -0.432,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G7",
+        "door": 2,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": -0.241,
+        "min_gap": -0.48,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G8",
+        "door": 1,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": -0.294,
+        "min_gap": -0.406,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G8",
+        "door": 2,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": -0.261,
+        "min_gap": -0.41,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G9",
+        "door": 1,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": -0.914,
+        "min_gap": -0.952,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G9",
+        "door": 2,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G10",
+        "door": 1,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": 0.052,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G10",
+        "door": 2,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G12",
+        "door": 1,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": -0.802,
+        "min_gap": -0.873,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G13",
+        "door": 1,
+        "upper": false,
+        "Hb": 2.7,
+        "max_gap": -0.8,
+        "min_gap": -0.806,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "G13",
+        "door": 3,
+        "upper": true,
+        "Hb": 8.44,
+        "max_gap": -0.8,
+        "min_gap": -0.806,
+        "probes_without_face": 0
+       }
+      ]
+     }
+    },
+    "walkway_end_gaps_summary": {
+     "0": {
+      "n": 46,
+      "n_fail": 0,
+      "max_gap": 0.058
+     },
+     "1": {
+      "n": 46,
+      "n_fail": 0,
+      "max_gap": 0.058
+     },
+     "2": {
+      "n": 46,
+      "n_fail": 0,
+      "max_gap": 0.058
+     },
+     "lod2_glb": {
+      "n": 46,
+      "n_fail": 0,
+      "max_gap": 0.058
+     }
+    },
+    "backface_near": {
+     "lod0": {
+      "total": 55,
+      "per_node": {
+       "L0_hall_hangers": 55
+      },
+      "worst": [
+       "L0_hall_hangers",
+       55
+      ],
+      "near_m": 10.0,
+      "lod": 0,
+      "context": [
+       "domestic.glb",
+       "roadways.glb",
+       "landside.glb"
+      ]
+     },
+     "lod2": {
+      "total": 0,
+      "per_node": {},
+      "worst": null,
+      "near_m": 10.0,
+      "lod": 2,
+      "context": [
+       "domestic_lod2.glb",
+       "roadways_lod2.glb",
+       "landside_lod2.glb"
+      ]
+     }
+    }
    }
   },
   "renders": [
@@ -3539,6 +5493,24 @@
     "disposition": "partly (recorded, not redrawn)",
     "change": "the 3-D state (centre deck / fascia 38.50 m at the crown, lens vaults, 0.45-m canopy slab) is drawn on BI-02 / BI-03 view 1 (draw_itb.r3_hall); BI-03 / BI-04 keep roof_line(u) (crown 40.1) and the flat lens_poly glazing with every itb.deviations_from_sheets item stated in their 3-D STATE notes (draw_itb.r3_notes)"
    }
+  ],
+  "closeout_r4": [
+   {
+    "id": "r4-walkend",
+    "severity": "major",
+    "item": "24 of 48 A / G app walkway ends 0.2-0.96 m in front of the 3-D facade (daylight slot); ends past the BA-G bump-out corners",
+    "disposition": "fixed",
+    "change": "itb_geom.bridge_heads / bridge_head_parts (tools/blender/bridge_head.py): 25 closing boxes per LOD (23 vestibules facade -> walkway end face, 2 nubs at bump-out corners; stacked A6 / A11 upper heads share one), parts ba_bridge_heads (shell, LOD0-2) + ba_bridge_doors (LOD0 door surrounds); clipped clear (0.05 m) of every other bridge's fixed walkway / drum; itb.glb rebuilt 8 Nov 17:18Z",
+    "evidence": "walkend_check (gap <= 0.10 m over the full 2.6-m width at floor +0.3/1.5/2.7, 7 offsets): 27 of 46 open -> 0 at LOD0 / LOD1 / LOD2 and itb_lod2.glb (max gap 10.08 -> 0.0 m); boxes vs every bridge solid in rest + docked poses (bc_after2): own walkway ends only; vestibule reach beyond the outline <= 0.97 m; A / G stand envelopes 5.35 m min; verify_itb 126/0 -> 135/0; tris L0 69,287 -> 71,939, 6.46 -> 6.93 MB"
+   },
+   {
+    "id": "r4-checks",
+    "severity": "minor",
+    "item": "no walkway-end gap check; back-face rays not run on the ITB",
+    "disposition": "fixed",
+    "change": "verify_itb: walkway-end gate (tools/blender/walkend_check.py, every LOD + itb_lod2.glb), vestibule reach check, near-context bf_rays LOD0 / LOD2 (bf_rays near mode 10 m, per-node limit 60)",
+    "evidence": "near-context back-face hits: LOD0 55 (L0_hall_hangers, identical on the r3 fix-2 file), LOD2 0"
+   }
   ]
  },
  "tower": {
@@ -3558,9 +5530,9 @@
   },
   "family_note": "Two self-consistent height families (docs/research/buildings_tower.md 12.3). Default (3-D review round 1, 2026-11-05): F2 (D 14.5, rim 64.0) lies within the observations (cab-roof D 14.3 +-1.0 measured, 14.75 +-0.5 EXIF; rim 63.3-64.1 m for D 14.3, 65 +-2 m for D 14.75); F1 (D 15.2, rim 67.36 = 221 ft) needs D >= 15.1 and rests on the CTBUH classification of 221 ft (a database class, not a survey): kept as the published-height hypothesis (tower_f1.glb, ?b3dtower=f1). Settle with a surveyed ground photo, the NAIP shadow with the flight time, or an SFO / FAA elevation drawing.",
   "bytes": {
-   "F1": 3547860,
-   "F2": 3444540,
-   "lod2_only": 329092
+   "F1": 3546584,
+   "F2": 3443260,
+   "lod2_only": 328672
   },
   "placement": {
    "frame": "ltp-nad83-2011 (js/geo.js): x east, y up, z south, m from the ARP; ground GROUND_Y = 3.0",
@@ -4099,10 +6071,10 @@
      "validator": "2.0.0-dev.3.10",
      "errors": 0,
      "warnings": 0,
-     "infos": 33,
+     "infos": 23,
      "hints": 0,
      "codes": {
-      "info:UNUSED_OBJECT": 33
+      "info:UNUSED_OBJECT": 23
      },
      "first": [],
      "drawCalls": 83,
@@ -4113,10 +6085,10 @@
      "validator": "2.0.0-dev.3.10",
      "errors": 0,
      "warnings": 0,
-     "infos": 33,
+     "infos": 23,
      "hints": 0,
      "codes": {
-      "info:UNUSED_OBJECT": 33
+      "info:UNUSED_OBJECT": 23
      },
      "first": [],
      "drawCalls": 83,
@@ -4383,13 +6355,23 @@
     "disposition": "fixed",
     "change": "build_tower.wire_ao skips glass materials; rebuilt 7 Nov 13:22Z with --no-manifest (keeps the hand-written closeout records; manifest bytes / verification patched): glass with occlusion 3 -> 0 in tower.glb / tower_f1.glb / tower_lod2.glb; tower3d_verify 110 / 110 (F2 and F1), glTF-Validator 0 errors; geometry unchanged (F2 tris 34,789 / 10,783 / 2,461)"
    }
+  ],
+  "closeout_r4": [
+   {
+    "id": "r4-glazing-ao",
+    "severity": "minor",
+    "item": "ibf_curtain (base-building curtain-wall bays) carried baked AO: the glass rule keyed on the name",
+    "disposition": "fixed",
+    "change": "MATS glazing flag (ibf_curtain glazing=True); wire_ao skips MATS[k].glazing or 'glass' in k; rebuilt 8 Nov 17:31Z with --no-manifest (bytes / verification patched by c4_manifest.py)",
+    "evidence": "glazing materials with occlusion in tower.glb / tower_f1.glb / tower_lod2.glb: 3 -> 0; tower3d_verify 110/110 F1 and F2; glTF-Validator 0 errors; tris unchanged"
+   }
   ]
  },
  "domestic": {
   "asset": "data/buildings3d/domestic.glb",
-  "bytes": 11368276,
-  "built": "2026-11-07T13:10:26+00:00",
-  "git": "5e1609d",
+  "bytes": 11174120,
+  "built": "2026-11-08T17:21:09+00:00",
+  "git": "03f5bde+dirty",
   "generator": "tools/blender/build_domestic.py (bpy 5.0.1, Cycles CPU AO bake); geometry tools/blender/dom_geom.py + dom_mesh.py; textures dom_tex.py",
   "reference": "2-D sheets BD-01..03 (docs/drawings/buildings/README.md), drawn by tools/buildings/draw_domestic.py, imported by dom_geom.py",
   "spec": "tools/buildings/spec_domestic.json (+ dom_bab_band.json, dom_baf_hub.json, dom_bab_roof.json; tools/blender/dom_pv.json)",
@@ -4452,8 +6434,8 @@
     "lod": 0,
     "node": "LOD0",
     "switch_m": 0.0,
-    "tris": 79913,
-    "verts": 166451,
+    "tris": 79070,
+    "verts": 164750,
     "draw_calls": 154,
     "ao_atlas": "dom_ao_S / dom_ao_N (shared by the LOD0 / LOD1 shell meshes)"
    },
@@ -4461,8 +6443,8 @@
     "lod": 1,
     "node": "LOD1",
     "switch_m": 380.0,
-    "tris": 24485,
-    "verts": 57533,
+    "tris": 23334,
+    "verts": 55216,
     "draw_calls": 120,
     "ao_atlas": "dom_ao_S / dom_ao_N (shared by the LOD0 / LOD1 shell meshes)"
    },
@@ -4470,8 +6452,8 @@
     "lod": 2,
     "node": "LOD2",
     "switch_m": 1300.0,
-    "tris": 24325,
-    "verts": 57181,
+    "tris": 23174,
+    "verts": 54864,
     "draw_calls": 21,
     "ao_atlas": "dom_ao_L2"
    }
@@ -4483,7 +6465,7 @@
   ],
   "lod2_glb": {
    "path": "data/buildings3d/domestic_lod2.glb",
-   "bytes": 2947484
+   "bytes": 2848024
   },
   "textures": [
    {
@@ -4523,7 +6505,7 @@
      2048
     ],
     "mime": "image/png",
-    "bytes": 1385217,
+    "bytes": 1379486,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    },
    {
@@ -4593,7 +6575,7 @@
      2048
     ],
     "mime": "image/png",
-    "bytes": 1335952,
+    "bytes": 1335368,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    },
    {
@@ -4703,7 +6685,7 @@
      1024
     ],
     "mime": "image/png",
-    "bytes": 480202,
+    "bytes": 480336,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    }
   ],
@@ -5209,8 +7191,8 @@
      "T2",
      "C3C"
     ],
-    "bake_s": 35.4,
-    "mean": 0.647,
+    "bake_s": 60.0,
+    "mean": 0.644,
     "p2": 0.002,
     "samples": 48,
     "distance_m": 10.0,
@@ -5229,7 +7211,7 @@
      "BA_E",
      "BA_F"
     ],
-    "bake_s": 32.9,
+    "bake_s": 55.5,
     "mean": 0.702,
     "p2": 0.007,
     "samples": 48,
@@ -5244,9 +7226,9 @@
     "buildings": [
      "all"
     ],
-    "bake_s": 3.4,
-    "mean": 0.695,
-    "p2": 0.063,
+    "bake_s": 9.4,
+    "mean": 0.694,
+    "p2": 0.053,
     "samples": 48,
     "distance_m": 10.0,
     "ground_plane": true
@@ -6801,17 +8783,18 @@
   ],
   "deviations_note": "the 2-D set BD-01..03 is owned by the drawings group (tools/buildings/draw_domestic.py); these 3-D-only items are recorded here instead of redrawing (review r2 finding 7)",
   "bridges": {
-   "doors": 80,
-   "vestibules": 54,
+   "doors": 79,
+   "vestibules": 55,
+   "nubs": 3,
    "bulkheads": 0,
    "notched": 0,
    "levels": {
     "B": {
      "h": 5.4,
      "tag": "inf",
-     "doors": 26,
+     "doors": 27,
      "walkway_floor_at_doors_m": [
-      5.3,
+      5.26,
       5.4
      ]
     },
@@ -6829,31 +8812,65 @@
      "tag": "obs-low",
      "doors": 14,
      "walkway_floor_at_doors_m": [
-      3.59,
+      3.54,
       3.65
      ]
     },
     "E": {
      "h": 4.88,
      "tag": "pub",
-     "doors": 11,
+     "doors": 12,
      "walkway_floor_at_doors_m": [
-      4.87,
+      4.83,
       4.88
      ]
     },
     "F": {
      "h": 4.88,
      "tag": "pub",
-     "doors": 19,
+     "doors": 16,
      "walkway_floor_at_doors_m": [
       4.82,
       4.88
      ]
     }
    },
-   "levels_source": "js/live/gates.js DEPARTURE_LEVELS via tools/blender/app_bridges.json (node tools/blender/app_bridges.mjs, generated 2026-11-07T11:00:24.605Z; stale inputs: none)",
-   "note": "every bridge of data/sfo_stands.json (B-F) gets a door surround where its walkway meets the 3-D facade; where the app's walkway (js/live/gates.js) starts outside the facade a vestibule closes the gap"
+   "levels_source": "js/live/gates.js DEPARTURE_LEVELS via tools/blender/app_bridges.json (node tools/blender/app_bridges.mjs, generated 2026-11-08T17:13:22.689Z; stale inputs: none)",
+   "note": "every bridge of data/sfo_stands.json (B-F) gets a door surround where its walkway meets the 3-D facade; where the app's walkway (js/live/gates.js) starts outside the facade a vestibule closes the gap over the walkway's whole width (close-out round 4: tools/blender/bridge_head.py; a nub where the end lies inside the facade but its edge passes a corner); the walkway-end gap check (tools/blender/walkend_check.py, verify_domestic.py) holds every end <= 0.1 m",
+   "walkway_end_gaps": {
+    "0": {
+     "n": 80,
+     "n_fail": 0,
+     "max_gap": 0.055,
+     "exempt": [
+      "F22 L2"
+     ]
+    },
+    "1": {
+     "n": 80,
+     "n_fail": 0,
+     "max_gap": 0.055,
+     "exempt": [
+      "F22 L2"
+     ]
+    },
+    "2": {
+     "n": 80,
+     "n_fail": 0,
+     "max_gap": 0.055,
+     "exempt": [
+      "F22 L2"
+     ]
+    },
+    "lod2_glb": {
+     "n": 80,
+     "n_fail": 0,
+     "max_gap": 0.055,
+     "exempt": [
+      "F22 L2"
+     ]
+    }
+   }
   },
   "integration": {
    "replaces": "js/live/terminals.js extrusions of the domestic parts of data/sfo_buildings.json (T1 / T2 / T3 halls, Boarding Areas B-F, their walkways)",
@@ -6863,7 +8880,7 @@
   "verification": {
    "tool": "tools/blender/verify_domestic.py",
    "report": "out/buildings3d/domestic_verify.json (local)",
-   "n_checks": 61,
+   "n_checks": 67,
    "n_fail": 0,
    "failed": [],
    "tolerance": "0.5 m or 2 % of the drawn value (whichever is larger) unless stated",
@@ -7381,9 +9398,9 @@
     {
      "group": "footprints",
      "check": "apron-level walls (0.5-5 m) outside the SFO Museum outlines (bridge vestibules excluded)",
-     "model": 112.604,
+     "model": 117.931,
      "drawing": 0.0,
-     "dev": 112.604,
+     "dev": 117.931,
      "tol": null,
      "ok": true,
      "src": "m2: the vestibules reach from the facade to the app walkway start (bridges)"
@@ -7391,9 +9408,9 @@
     {
      "group": "footprints",
      "check": "LOD0 plan area outside the SFO Museum outlines (roof overhangs, canopy, vestibules)",
-     "model": 1044.33,
+     "model": 1050.675,
      "drawing": 0.0,
-     "dev": 1044.33,
+     "dev": 1050.675,
      "tol": null,
      "ok": true,
      "src": "BA-B / BA-D ESE overhangs +2.3 / +2.4 m [obs], T1 canopy 4 m [inf], vestibules [inf]"
@@ -7420,10 +9437,10 @@
     },
     {
      "group": "plausibility",
-     "check": "bridge attachments: walkway first 1.5 m beyond the facade touching 3-D geometry (65 bridges; INFO)",
-     "model": 7.55,
+     "check": "bridge attachments: walkway first 1.5 m beyond the facade touching 3-D geometry (66 bridges; INFO)",
+     "model": 8.06,
      "drawing": 0.0,
-     "dev": 7.55,
+     "dev": 8.06,
      "tol": null,
      "ok": true,
      "src": "door frames / vestibule ends / walkways meeting the facade at an angle (stand data vs SFO Museum outline, as the ITB rotunda contacts)"
@@ -7477,6 +9494,66 @@
      "tol": 1.0,
      "ok": true,
      "src": "cut out of the T1 hall / canopy (+1 m)"
+    },
+    {
+     "group": "plausibility",
+     "check": "walkway ends closed by the asset (gap <= 0.10 m over the full width at floor + 0.3 / 1.5 / 2.7) - LOD0: 0 of 80 open",
+     "model": 0.0,
+     "drawing": 0.0,
+     "dev": 0.0,
+     "tol": null,
+     "ok": true,
+     "src": "app_bridges.json walk[0] (gates.js); max gap 0.055 m; exempt: F22 L2"
+    },
+    {
+     "group": "plausibility",
+     "check": "walkway ends closed by the asset (gap <= 0.10 m over the full width at floor + 0.3 / 1.5 / 2.7) - LOD1: 0 of 80 open",
+     "model": 0.0,
+     "drawing": 0.0,
+     "dev": 0.0,
+     "tol": null,
+     "ok": true,
+     "src": "app_bridges.json walk[0] (gates.js); max gap 0.055 m; exempt: F22 L2"
+    },
+    {
+     "group": "plausibility",
+     "check": "walkway ends closed by the asset (gap <= 0.10 m over the full width at floor + 0.3 / 1.5 / 2.7) - LOD2: 0 of 80 open",
+     "model": 0.0,
+     "drawing": 0.0,
+     "dev": 0.0,
+     "tol": null,
+     "ok": true,
+     "src": "app_bridges.json walk[0] (gates.js); max gap 0.055 m; exempt: F22 L2"
+    },
+    {
+     "group": "plausibility",
+     "check": "walkway ends closed by the asset (gap <= 0.10 m over the full width at floor + 0.3 / 1.5 / 2.7) - domestic_lod2.glb: 0 of 80 open",
+     "model": 0.0,
+     "drawing": 0.0,
+     "dev": 0.0,
+     "tol": null,
+     "ok": true,
+     "src": "app_bridges.json walk[0] (gates.js); max gap 0.055 m; exempt: F22 L2"
+    },
+    {
+     "group": "plausibility",
+     "check": "LOD0 back-face first hits, near context 10 m (worst ('L0_T3W_shell', 574); residuals {'L0_T3W_shell': 574, 'L0_T1_shell': 453, 'L0_T3E_shell': 74})",
+     "model": 1155.0,
+     "drawing": 0.0,
+     "dev": 1155.0,
+     "tol": null,
+     "ok": true,
+     "src": "bf_rays.py near mode; per node <= 60 or <= 1.05 x the recorded round-4 residual; over: none"
+    },
+    {
+     "group": "plausibility",
+     "check": "LOD2 back-face first hits, near context 10 m (worst ('L2_domestic', 1162); residuals {'L2_domestic': 1162})",
+     "model": 1162.0,
+     "drawing": 0.0,
+     "dev": 1162.0,
+     "tol": null,
+     "ok": true,
+     "src": "bf_rays.py near mode; per node <= 60 or <= 1.05 x the recorded round-4 residual; over: none"
     }
    ],
    "plausibility": {
@@ -7489,7 +9566,7 @@
       "B2",
       "B2",
       1,
-      0.08
+      0.14
      ],
      [
       "B3",
@@ -7537,19 +9614,19 @@
       "B10",
       "B10",
       1,
-      0.09
+      0.13
      ],
      [
       "B11",
       "B11",
       1,
-      0.14
+      0.13
      ],
      [
       "B11S",
       "B11",
       1,
-      0.2
+      0.07
      ],
      [
       "B12",
@@ -7705,13 +9782,13 @@
       "D4",
       "D4",
       1,
-      0.08
+      0.15
      ],
      [
       "D5",
       "D5",
       1,
-      0.07
+      0.13
      ],
      [
       "D6",
@@ -7741,7 +9818,7 @@
       "D11",
       "D11",
       1,
-      0.05
+      0.16
      ],
      [
       "D12",
@@ -7750,70 +9827,76 @@
       0.11
      ],
      [
-      "D15",
-      "D15",
-      1,
-      0.07
-     ],
-     [
-      "D16",
-      "D16",
-      1,
-      0.12
-     ],
-     [
-      "E2",
-      "E2",
-      1,
-      0.1
-     ],
-     [
-      "E4",
-      "E4",
-      1,
-      0.11
-     ],
-     [
-      "E5",
-      "E5",
-      1,
-      0.12
-     ],
-     [
-      "E7",
-      "E7",
-      1,
-      0.12
-     ],
-     [
-      "E10",
-      "E10",
-      1,
-      0.12
-     ],
-     [
-      "E11",
-      "E11",
-      1,
-      0.1
-     ],
-     [
-      "E12",
-      "E12",
-      1,
-      0.12
-     ],
-     [
-      "E13",
-      "E13",
-      1,
-      0.12
-     ],
-     [
-      "F5",
-      "F5",
+      "D14",
+      "D14",
       1,
       0.2
+     ],
+     [
+      "D15",
+      "D15",
+      1,
+      0.16
+     ],
+     [
+      "D16",
+      "D16",
+      1,
+      0.14
+     ],
+     [
+      "E2",
+      "E2",
+      1,
+      0.07
+     ],
+     [
+      "E4",
+      "E4",
+      1,
+      0.11
+     ],
+     [
+      "E5",
+      "E5",
+      1,
+      0.12
+     ],
+     [
+      "E7",
+      "E7",
+      1,
+      0.12
+     ],
+     [
+      "E8",
+      "E8",
+      1,
+      0.12
+     ],
+     [
+      "E10",
+      "E10",
+      1,
+      0.12
+     ],
+     [
+      "E12",
+      "E12",
+      1,
+      0.12
+     ],
+     [
+      "E13",
+      "E13",
+      1,
+      0.12
+     ],
+     [
+      "F5",
+      "F5",
+      1,
+      0.21
      ],
      [
       "F6",
@@ -7877,10 +9960,3057 @@
      ]
     ],
     "doors": {
-     "n": 80,
-     "vestibules": 54,
-     "max_gap_bridged_m": 2.6,
+     "n": 79,
+     "vestibules": 55,
+     "max_gap_bridged_m": 2.59,
+     "nubs": 3,
      "bulkheads": 0
+    },
+    "walkway_end_gaps": {
+     "0": {
+      "n": 80,
+      "n_fail": 0,
+      "n_exempt": 1,
+      "max_gap": 0.055,
+      "fails": [],
+      "exempt": [
+       {
+        "stand": "F22",
+        "door": 2,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": null,
+        "min_gap": null,
+        "probes_without_face": 21,
+        "exempt": "walkway starts 17.6 m from BA-F, 1.5 m from F22 L1's drum (bridge data: L2 fed from L1's rotunda), not at a building"
+       }
+      ],
+      "rows": [
+       {
+        "stand": "B2",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.0,
+        "min_gap": -0.723,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B3",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.02,
+        "min_gap": -0.02,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B4",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.02,
+        "min_gap": -0.02,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B5",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.27,
+        "min_gap": -0.537,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B6",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.02,
+        "min_gap": -0.02,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B7",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.02,
+        "min_gap": -0.02,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B8",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.02,
+        "min_gap": -0.02,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B9",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.02,
+        "min_gap": -0.02,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B10",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -1.72,
+        "min_gap": -1.724,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B11",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.32,
+        "min_gap": -0.321,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B11S",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.02,
+        "min_gap": -0.756,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B12",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.02,
+        "min_gap": -0.02,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B13",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.02,
+        "min_gap": -0.02,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B14",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.02,
+        "min_gap": -0.02,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B15",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.57,
+        "min_gap": -0.761,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B16",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.57,
+        "min_gap": -0.57,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B17",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.02,
+        "min_gap": -0.02,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B18",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.02,
+        "min_gap": -0.02,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B19",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.02,
+        "min_gap": -0.02,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B20",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.02,
+        "min_gap": -0.02,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B21",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.02,
+        "min_gap": -0.02,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B22",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.02,
+        "min_gap": -0.02,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B23",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.02,
+        "min_gap": -0.02,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B24",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.02,
+        "min_gap": -0.02,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B25",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.02,
+        "min_gap": -0.02,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B26",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.02,
+        "min_gap": -0.02,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B27",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.02,
+        "min_gap": -0.02,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "C1",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.2,
+        "max_gap": -0.02,
+        "min_gap": -0.02,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "C3",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.2,
+        "max_gap": -0.02,
+        "min_gap": -0.02,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "C4",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.2,
+        "max_gap": -0.02,
+        "min_gap": -0.562,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "C5",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.2,
+        "max_gap": -0.02,
+        "min_gap": -0.02,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "C6",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.2,
+        "max_gap": -0.02,
+        "min_gap": -0.02,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "C7",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.2,
+        "max_gap": -0.02,
+        "min_gap": -0.02,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "C8",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.2,
+        "max_gap": -0.27,
+        "min_gap": -0.278,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "C9",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.2,
+        "max_gap": -0.02,
+        "min_gap": -0.372,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "C10",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.2,
+        "max_gap": -0.02,
+        "min_gap": -0.02,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "C11",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.2,
+        "max_gap": -0.02,
+        "min_gap": -0.02,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "D1",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.65,
+        "max_gap": -0.02,
+        "min_gap": -0.02,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "D3",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.65,
+        "max_gap": -0.62,
+        "min_gap": -0.816,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "D4",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.65,
+        "max_gap": -0.72,
+        "min_gap": -0.732,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "D5",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.65,
+        "max_gap": -1.02,
+        "min_gap": -1.075,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "D6",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.65,
+        "max_gap": -0.02,
+        "min_gap": -0.02,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "D7",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.65,
+        "max_gap": -0.02,
+        "min_gap": -0.02,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "D8",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.65,
+        "max_gap": -0.02,
+        "min_gap": -0.02,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "D9",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.65,
+        "max_gap": -0.02,
+        "min_gap": -0.02,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "D10",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.65,
+        "max_gap": 0.048,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "D11",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.65,
+        "max_gap": -0.02,
+        "min_gap": -0.146,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "D12",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.65,
+        "max_gap": -0.02,
+        "min_gap": -0.02,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "D14",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.65,
+        "max_gap": -0.92,
+        "min_gap": -1.455,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "D15",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.65,
+        "max_gap": -1.32,
+        "min_gap": -1.547,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "D16",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.65,
+        "max_gap": -0.72,
+        "min_gap": -0.847,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "E2",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.02,
+        "min_gap": -0.317,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "E3",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": 0.05,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "E4",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.02,
+        "min_gap": -0.02,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "E5",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.02,
+        "min_gap": -0.02,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "E6",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.57,
+        "min_gap": -0.721,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "E7",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.02,
+        "min_gap": -0.02,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "E8",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.02,
+        "min_gap": -0.02,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "E9",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": 0.055,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "E10",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.02,
+        "min_gap": -0.02,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "E11",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.67,
+        "min_gap": -0.7,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "E12",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.02,
+        "min_gap": -0.02,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "E13",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.02,
+        "min_gap": -0.02,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F5",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.414,
+        "min_gap": -0.948,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F6",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.02,
+        "min_gap": -0.02,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F7",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": 0.051,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F8",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": 0.053,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F9",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.02,
+        "min_gap": -0.02,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F11",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.02,
+        "min_gap": -0.02,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F12",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.42,
+        "min_gap": -0.42,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F13",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.02,
+        "min_gap": -0.02,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F14",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.42,
+        "min_gap": -0.42,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F15",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.02,
+        "min_gap": -0.02,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F16",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.42,
+        "min_gap": -0.541,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F17",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.32,
+        "min_gap": -0.425,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F19",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.77,
+        "min_gap": -0.77,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F20",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.87,
+        "min_gap": -0.87,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F21",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.37,
+        "min_gap": -0.498,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F22",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.07,
+        "min_gap": -0.07,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F22",
+        "door": 2,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": null,
+        "min_gap": null,
+        "probes_without_face": 21,
+        "exempt": "walkway starts 17.6 m from BA-F, 1.5 m from F22 L1's drum (bridge data: L2 fed from L1's rotunda), not at a building"
+       }
+      ]
+     },
+     "1": {
+      "n": 80,
+      "n_fail": 0,
+      "n_exempt": 1,
+      "max_gap": 0.055,
+      "fails": [],
+      "exempt": [
+       {
+        "stand": "F22",
+        "door": 2,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": null,
+        "min_gap": null,
+        "probes_without_face": 21,
+        "exempt": "walkway starts 17.6 m from BA-F, 1.5 m from F22 L1's drum (bridge data: L2 fed from L1's rotunda), not at a building"
+       }
+      ],
+      "rows": [
+       {
+        "stand": "B2",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.0,
+        "min_gap": -0.723,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B3",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B4",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B5",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.085,
+        "min_gap": -0.407,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B6",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B7",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B8",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B9",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B10",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -1.651,
+        "min_gap": -1.724,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B11",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.227,
+        "min_gap": -0.321,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B11S",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.0,
+        "min_gap": -0.756,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B12",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B13",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B14",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B15",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.251,
+        "min_gap": -0.761,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B16",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.479,
+        "min_gap": -0.505,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B17",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B18",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B19",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B20",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B21",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B22",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B23",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B24",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B25",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B26",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B27",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "C1",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.2,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "C3",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.2,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "C4",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.2,
+        "max_gap": 0.0,
+        "min_gap": -0.562,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "C5",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.2,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "C6",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.2,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "C7",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.2,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "C8",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.2,
+        "max_gap": -0.13,
+        "min_gap": -0.278,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "C9",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.2,
+        "max_gap": -0.0,
+        "min_gap": -0.372,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "C10",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.2,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "C11",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.2,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "D1",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.65,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "D3",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.65,
+        "max_gap": -0.303,
+        "min_gap": -0.816,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "D4",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.65,
+        "max_gap": -0.662,
+        "min_gap": -0.732,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "D5",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.65,
+        "max_gap": -0.936,
+        "min_gap": -1.031,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "D6",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.65,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "D7",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.65,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "D8",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.65,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "D9",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.65,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "D10",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.65,
+        "max_gap": 0.048,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "D11",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.65,
+        "max_gap": 0.0,
+        "min_gap": -0.146,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "D12",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.65,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "D14",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.65,
+        "max_gap": -0.601,
+        "min_gap": -1.455,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "D15",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.65,
+        "max_gap": -1.215,
+        "min_gap": -1.366,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "D16",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.65,
+        "max_gap": -0.666,
+        "min_gap": -0.669,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "E2",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.0,
+        "min_gap": -0.317,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "E3",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": 0.05,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "E4",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "E5",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "E6",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.459,
+        "min_gap": -0.579,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "E7",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "E8",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "E9",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": 0.055,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "E10",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "E11",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.587,
+        "min_gap": -0.7,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "E12",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "E13",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F5",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.414,
+        "min_gap": -0.948,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F6",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F7",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": 0.051,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F8",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": 0.053,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F9",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F11",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F12",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.379,
+        "min_gap": -0.406,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F13",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F14",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.369,
+        "min_gap": -0.393,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F15",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F16",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.344,
+        "min_gap": -0.369,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F17",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.245,
+        "min_gap": -0.278,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F19",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.731,
+        "min_gap": -0.734,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F20",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.8,
+        "min_gap": -0.824,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F21",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.314,
+        "min_gap": -0.318,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F22",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.004,
+        "min_gap": -0.005,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F22",
+        "door": 2,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": null,
+        "min_gap": null,
+        "probes_without_face": 21,
+        "exempt": "walkway starts 17.6 m from BA-F, 1.5 m from F22 L1's drum (bridge data: L2 fed from L1's rotunda), not at a building"
+       }
+      ]
+     },
+     "2": {
+      "n": 80,
+      "n_fail": 0,
+      "n_exempt": 1,
+      "max_gap": 0.055,
+      "fails": [],
+      "exempt": [
+       {
+        "stand": "F22",
+        "door": 2,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": null,
+        "min_gap": null,
+        "probes_without_face": 21,
+        "exempt": "walkway starts 17.6 m from BA-F, 1.5 m from F22 L1's drum (bridge data: L2 fed from L1's rotunda), not at a building"
+       }
+      ],
+      "rows": [
+       {
+        "stand": "B2",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.0,
+        "min_gap": -0.723,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B3",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B4",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B5",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.085,
+        "min_gap": -0.407,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B6",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B7",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B8",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B9",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B10",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -1.651,
+        "min_gap": -1.724,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B11",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.227,
+        "min_gap": -0.321,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B11S",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.0,
+        "min_gap": -0.756,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B12",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B13",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B14",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B15",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.251,
+        "min_gap": -0.761,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B16",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.479,
+        "min_gap": -0.505,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B17",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B18",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B19",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B20",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B21",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B22",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B23",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B24",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B25",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B26",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B27",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "C1",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.2,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "C3",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.2,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "C4",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.2,
+        "max_gap": 0.0,
+        "min_gap": -0.562,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "C5",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.2,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "C6",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.2,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "C7",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.2,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "C8",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.2,
+        "max_gap": -0.13,
+        "min_gap": -0.278,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "C9",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.2,
+        "max_gap": -0.0,
+        "min_gap": -0.372,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "C10",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.2,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "C11",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.2,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "D1",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.65,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "D3",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.65,
+        "max_gap": -0.303,
+        "min_gap": -0.816,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "D4",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.65,
+        "max_gap": -0.662,
+        "min_gap": -0.732,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "D5",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.65,
+        "max_gap": -0.936,
+        "min_gap": -1.031,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "D6",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.65,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "D7",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.65,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "D8",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.65,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "D9",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.65,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "D10",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.65,
+        "max_gap": 0.048,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "D11",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.65,
+        "max_gap": 0.0,
+        "min_gap": -0.146,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "D12",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.65,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "D14",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.65,
+        "max_gap": -0.601,
+        "min_gap": -1.455,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "D15",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.65,
+        "max_gap": -1.215,
+        "min_gap": -1.366,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "D16",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.65,
+        "max_gap": -0.666,
+        "min_gap": -0.669,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "E2",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.0,
+        "min_gap": -0.317,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "E3",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": 0.05,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "E4",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "E5",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "E6",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.459,
+        "min_gap": -0.579,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "E7",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "E8",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "E9",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": 0.055,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "E10",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "E11",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.587,
+        "min_gap": -0.7,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "E12",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "E13",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F5",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.414,
+        "min_gap": -0.948,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F6",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F7",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": 0.051,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F8",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": 0.053,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F9",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F11",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F12",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.379,
+        "min_gap": -0.406,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F13",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F14",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.369,
+        "min_gap": -0.393,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F15",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F16",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.344,
+        "min_gap": -0.369,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F17",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.245,
+        "min_gap": -0.278,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F19",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.731,
+        "min_gap": -0.734,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F20",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.8,
+        "min_gap": -0.824,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F21",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.314,
+        "min_gap": -0.318,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F22",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.004,
+        "min_gap": -0.005,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F22",
+        "door": 2,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": null,
+        "min_gap": null,
+        "probes_without_face": 21,
+        "exempt": "walkway starts 17.6 m from BA-F, 1.5 m from F22 L1's drum (bridge data: L2 fed from L1's rotunda), not at a building"
+       }
+      ]
+     },
+     "lod2_glb": {
+      "n": 80,
+      "n_fail": 0,
+      "n_exempt": 1,
+      "max_gap": 0.055,
+      "fails": [],
+      "exempt": [
+       {
+        "stand": "F22",
+        "door": 2,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": null,
+        "min_gap": null,
+        "probes_without_face": 21,
+        "exempt": "walkway starts 17.6 m from BA-F, 1.5 m from F22 L1's drum (bridge data: L2 fed from L1's rotunda), not at a building"
+       }
+      ],
+      "rows": [
+       {
+        "stand": "B2",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.0,
+        "min_gap": -0.723,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B3",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B4",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B5",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.085,
+        "min_gap": -0.407,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B6",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B7",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B8",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B9",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B10",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -1.651,
+        "min_gap": -1.724,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B11",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.227,
+        "min_gap": -0.321,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B11S",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.0,
+        "min_gap": -0.756,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B12",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B13",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B14",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B15",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.251,
+        "min_gap": -0.761,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B16",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.479,
+        "min_gap": -0.505,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B17",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B18",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B19",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B20",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B21",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B22",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B23",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B24",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B25",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B26",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "B27",
+        "door": 1,
+        "upper": false,
+        "Hb": 5.4,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "C1",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.2,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "C3",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.2,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "C4",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.2,
+        "max_gap": 0.0,
+        "min_gap": -0.562,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "C5",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.2,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "C6",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.2,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "C7",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.2,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "C8",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.2,
+        "max_gap": -0.13,
+        "min_gap": -0.278,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "C9",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.2,
+        "max_gap": -0.0,
+        "min_gap": -0.372,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "C10",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.2,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "C11",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.2,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "D1",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.65,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "D3",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.65,
+        "max_gap": -0.303,
+        "min_gap": -0.816,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "D4",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.65,
+        "max_gap": -0.662,
+        "min_gap": -0.732,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "D5",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.65,
+        "max_gap": -0.936,
+        "min_gap": -1.031,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "D6",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.65,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "D7",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.65,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "D8",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.65,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "D9",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.65,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "D10",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.65,
+        "max_gap": 0.048,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "D11",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.65,
+        "max_gap": 0.0,
+        "min_gap": -0.146,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "D12",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.65,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "D14",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.65,
+        "max_gap": -0.601,
+        "min_gap": -1.455,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "D15",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.65,
+        "max_gap": -1.215,
+        "min_gap": -1.366,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "D16",
+        "door": 1,
+        "upper": false,
+        "Hb": 3.65,
+        "max_gap": -0.666,
+        "min_gap": -0.669,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "E2",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.0,
+        "min_gap": -0.317,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "E3",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": 0.05,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "E4",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "E5",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "E6",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.459,
+        "min_gap": -0.579,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "E7",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "E8",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "E9",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": 0.055,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "E10",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "E11",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.587,
+        "min_gap": -0.7,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "E12",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "E13",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F5",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.414,
+        "min_gap": -0.948,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F6",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F7",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": 0.051,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F8",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": 0.053,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F9",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F11",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.0,
+        "min_gap": -0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F12",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.379,
+        "min_gap": -0.406,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F13",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F14",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.369,
+        "min_gap": -0.393,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F15",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": 0.0,
+        "min_gap": 0.0,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F16",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.344,
+        "min_gap": -0.369,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F17",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.245,
+        "min_gap": -0.278,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F19",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.731,
+        "min_gap": -0.734,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F20",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.8,
+        "min_gap": -0.824,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F21",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.314,
+        "min_gap": -0.318,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F22",
+        "door": 1,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": -0.004,
+        "min_gap": -0.005,
+        "probes_without_face": 0
+       },
+       {
+        "stand": "F22",
+        "door": 2,
+        "upper": false,
+        "Hb": 4.88,
+        "max_gap": null,
+        "min_gap": null,
+        "probes_without_face": 21,
+        "exempt": "walkway starts 17.6 m from BA-F, 1.5 m from F22 L1's drum (bridge data: L2 fed from L1's rotunda), not at a building"
+       }
+      ]
+     }
+    },
+    "walkway_end_gaps_summary": {
+     "0": {
+      "n": 80,
+      "n_fail": 0,
+      "max_gap": 0.055,
+      "exempt": [
+       "F22 L2"
+      ]
+     },
+     "1": {
+      "n": 80,
+      "n_fail": 0,
+      "max_gap": 0.055,
+      "exempt": [
+       "F22 L2"
+      ]
+     },
+     "2": {
+      "n": 80,
+      "n_fail": 0,
+      "max_gap": 0.055,
+      "exempt": [
+       "F22 L2"
+      ]
+     },
+     "lod2_glb": {
+      "n": 80,
+      "n_fail": 0,
+      "max_gap": 0.055,
+      "exempt": [
+       "F22 L2"
+      ]
+     }
+    },
+    "backface_near": {
+     "lod0": {
+      "total": 1155,
+      "per_node": {
+       "L0_T3W_shell": 574,
+       "L0_T1_shell": 453,
+       "L0_T3E_shell": 74,
+       "L0_BA_E_shell": 24,
+       "L0_BA_B_shell": 16,
+       "L0_BA_F_shell": 13,
+       "L0_BA_C_shell": 1
+      },
+      "worst": [
+       "L0_T3W_shell",
+       574
+      ],
+      "near_m": 10.0,
+      "lod": 0,
+      "context": [
+       "itb.glb",
+       "tower.glb",
+       "roadways.glb"
+      ]
+     },
+     "lod2": {
+      "total": 1162,
+      "per_node": {
+       "L2_domestic": 1162
+      },
+      "worst": [
+       "L2_domestic",
+       1162
+      ],
+      "near_m": 10.0,
+      "lod": 2,
+      "context": [
+       "itb_lod2.glb",
+       "tower_lod2.glb",
+       "roadways_lod2.glb"
+      ]
+     }
     }
    },
    "heights": {
@@ -9095,13 +14225,30 @@
     "disposition": "partly",
     "change": "domestic sheets BD-01 / BD-03 drawn in close-out r3; the finding stays partly for the landside items and BI-03 / BI-04 (see itb / landside closeout_r3_fix2)"
    }
+  ],
+  "closeout_r4": [
+   {
+    "id": "r4-walkend",
+    "severity": "major",
+    "item": "E8 / E9 / F8 / B2 walkway ends open (0.2-1.37 m); E3 / F7 at the 0.1-m limit",
+    "disposition": "fixed",
+    "change": "dom_geom.bridge_doors: walkway start / direction from app_bridges.json (round 3 took the direction to the stands attach point BEHIND the trimmed start for E8 / B2 and dropped the door); closing box over the whole walkway width (bridge_head.head_box: oblique facades, corners -> nub); drum notch / vestibule clip at the app's DRAWN rotunda radius (app_bridges rotR) + 0.1 / 0.05 (was the 2.2-2.45 m upper bound: 0.4-0.6 m slot at E3 / E9 / F7 / F8); twin walkways drawn from the sibling (walkFrom > 0) no longer get duplicate doors; other bridges' fixed solids clipped; domestic.glb rebuilt 8 Nov 17:21Z",
+    "evidence": "walkend_check: LOD0 6 / LOD1 10 / LOD2 10 of 80 open -> 0 at every LOD and domestic_lod2.glb (F22 L2 exempt: starts 17.6 m from any building, bridge data); verify_domestic 61/0 -> 67/0; verify_domestic_r2 n_fail 0 (drums 0 contacts of 415 hulls, drum_overhead min 0.92 m, walk conflicts 0); boxes vs every bridge solid (rest + docked): own walkway only (nubs D14 / F5); tris L0 79,913 -> 79,070, 11.37 -> 11.17 MB"
+   },
+   {
+    "id": "r4-backface",
+    "severity": "minor",
+    "item": "near-context back faces (new check)",
+    "disposition": "partly",
+    "evidence": "verify_domestic bf_rays near 10 m: LOD0 1,155 (T3W 574, T1 453, T3E 74), LOD2 1,162 - identical on the r3 fix-2 file (pre-existing see-through hidden by far context, not near the ITB); recorded as residuals (regression above 1.05 x fails); to trace next round"
+   }
   ]
  },
  "landside": {
   "asset": "data/buildings3d/landside.glb",
-  "bytes": 21162604,
-  "built": "2026-11-07T13:14:11+00:00",
-  "git": "5e1609d+dirty",
+  "bytes": 21966188,
+  "built": "2026-11-08T17:35:29+00:00",
+  "git": "03f5bde+dirty",
   "generator": "tools/blender/build_landside.py (bpy 5.0.1, Cycles CPU AO bake); geometry landside_geom.py / landside_airtrain.py / landside_cars.py; textures landside_tex.py",
   "reference": "2-D sheets BL-01..03 (docs/drawings/buildings/README.md), drawn by tools/buildings/draw_landside.py, imported by landside_geom.py",
   "spec": "tools/buildings/spec_landside.json (+ landside_naip_measurements.json)",
@@ -9121,23 +14268,23 @@
   "lods": {
    "0": {
     "switch_m": 0.0,
-    "tris": 159599,
-    "instanced_car_tris": 167304,
-    "verts": 379585,
+    "tris": 168815,
+    "instanced_car_tris": 166010,
+    "verts": 398019,
     "draw_calls": 398
    },
    "1": {
     "switch_m": 450.0,
-    "tris": 85573,
-    "instanced_car_tris": 71208,
-    "verts": 217953,
+    "tris": 94789,
+    "instanced_car_tris": 70642,
+    "verts": 236387,
     "draw_calls": 358
    },
    "2": {
     "switch_m": 1500.0,
-    "tris": 22284,
+    "tris": 22258,
     "instanced_car_tris": 0,
-    "verts": 53136,
+    "verts": 53084,
     "draw_calls": 125
    }
   },
@@ -9147,14 +14294,14 @@
   ],
   "lod2_glb": {
    "path": "data/buildings3d/landside_lod2.glb",
-   "bytes": 2898556
+   "bytes": 2892136
   },
   "textures": [
    {
     "name": "landside_ao_B",
     "px": 2048,
     "mime": "image/jpeg",
-    "bytes": 1165468,
+    "bytes": 1165521,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    },
    {
@@ -9182,7 +14329,7 @@
     "name": "landside_ao_C",
     "px": 1024,
     "mime": "image/jpeg",
-    "bytes": 318289,
+    "bytes": 318265,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    },
    {
@@ -9217,7 +14364,7 @@
     "name": "landside_ao_A",
     "px": 2048,
     "mime": "image/jpeg",
-    "bytes": 1337393,
+    "bytes": 1356666,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    },
    {
@@ -10186,9 +15333,9 @@
   "ao": {
    "A": {
     "res": 2048,
-    "bake_s": 59.7,
-    "mean": 0.411,
-    "p2": 0.007,
+    "bake_s": 76.2,
+    "mean": 0.405,
+    "p2": 0.0,
     "samples": 40,
     "distance_m": 8.0,
     "objects": 18,
@@ -10197,7 +15344,7 @@
    },
    "B": {
     "res": 2048,
-    "bake_s": 58.5,
+    "bake_s": 67.4,
     "mean": 0.586,
     "p2": 0.0,
     "samples": 40,
@@ -10208,7 +15355,7 @@
    },
    "C": {
     "res": 1024,
-    "bake_s": 22.4,
+    "bake_s": 23.2,
     "mean": 0.644,
     "p2": 0.0,
     "samples": 40,
@@ -10763,17 +15910,17 @@
     ],
     "tris": {
      "0": {
-      "tris": 19379,
-      "instanced_tris": 32006,
+      "tris": 22001,
+      "instanced_tris": 30712,
       "draws": 37
      },
      "1": {
-      "tris": 14881,
-      "instanced_tris": 13582,
+      "tris": 17503,
+      "instanced_tris": 13016,
       "draws": 36
      },
      "2": {
-      "tris": 2757,
+      "tris": 2731,
       "instanced_tris": 0,
       "draws": 8
      }
@@ -10781,7 +15928,7 @@
     "cars": {
      "deck_area_m2": 55329.3,
      "slots": 2196,
-     "cars": 331,
+     "cars": 318,
      "observed": 217,
      "observed_dropped": 37,
      "added_light": 127,
@@ -10792,8 +15939,10 @@
      "lanes": false,
      "count_src": "cg_roof_cars: 254 dark / coloured cars at their NAIP 2024 positions [obs] + white / silver cars (not separable from the light deck) by the fleet share 37 % next to the detected clusters [inf]; spec visual 300 +-100",
      "axis_src": "r2: each observed car snapped to the nearest free stall of the deck layout within 3 m (axis 117.8 deg [obs NAIP rows]; 125 of 217; the rest keep their NAIP position with the yaw on the stall axis) - the per-blob NAIP headings are noise at 0.5 m/px (deviation from the stall axis: median 18, p90 42 deg = uniform random); NAIP position and colour kept [obs]",
-     "overlap_dropped": 13,
-     "overlap_reshaped": 1
+     "overlap_dropped": 26,
+     "overlap_reshaped": 2,
+     "static_dropped": 13,
+     "static_reshaped": 1
     }
    },
    "garage_a": {
@@ -11439,12 +16588,12 @@
     ],
     "tris": {
      "0": {
-      "tris": 19469,
+      "tris": 20813,
       "instanced_tris": 9220,
       "draws": 55
      },
      "1": {
-      "tris": 6039,
+      "tris": 7383,
       "instanced_tris": 3956,
       "draws": 51
      },
@@ -11465,7 +16614,9 @@
      "count_src": "garage_a_roof_cars: 91 detected (+-30 %), 12.7 per 1,000 m2 [obs, low]",
      "axis_src": "car long axis 66 deg [obs NAIP, coherence 0.08]",
      "overlap_dropped": 0,
-     "overlap_reshaped": 0
+     "overlap_reshaped": 0,
+     "static_dropped": 0,
+     "static_reshaped": 0
     }
    },
    "garage_g": {
@@ -11900,12 +17051,12 @@
     ],
     "tris": {
      "0": {
-      "tris": 22937,
+      "tris": 25163,
       "instanced_tris": 7100,
       "draws": 33
      },
      "1": {
-      "tris": 7373,
+      "tris": 9599,
       "instanced_tris": 2956,
       "draws": 32
      },
@@ -11926,7 +17077,9 @@
      "count_src": "garage_g_roof_cars: 77 detected (+-30 %), 15.0 per 1,000 m2 [obs, low]",
      "axis_src": "car long axis 66 deg [obs NAIP, coherence 0.13]",
      "overlap_dropped": 0,
-     "overlap_reshaped": 0
+     "overlap_reshaped": 0,
+     "static_dropped": 0,
+     "static_reshaped": 0
     }
    },
    "ltp_garage_1": {
@@ -12095,12 +17248,12 @@
     ],
     "tris": {
      "0": {
-      "tris": 8421,
+      "tris": 10599,
       "instanced_tris": 26738,
       "draws": 30
      },
      "1": {
-      "tris": 5077,
+      "tris": 7255,
       "instanced_tris": 11338,
       "draws": 29
      },
@@ -12121,7 +17274,9 @@
      "count_src": "ltp1_roof_cars: 240 detected, 19.4 per 1,000 m2 [obs, low]",
      "axis_src": "car long axis 73 deg [obs NAIP; \"cars at about 70 deg\"]",
      "overlap_dropped": 0,
-     "overlap_reshaped": 3
+     "overlap_reshaped": 3,
+     "static_dropped": 0,
+     "static_reshaped": 0
     }
    },
    "ltp_garage_2": {
@@ -12268,12 +17423,12 @@
     ],
     "tris": {
      "0": {
-      "tris": 5992,
+      "tris": 6568,
       "instanced_tris": 30948,
       "draws": 29
      },
      "1": {
-      "tris": 2444,
+      "tris": 3020,
       "instanced_tris": 13140,
       "draws": 28
      },
@@ -12294,7 +17449,9 @@
      "count_src": "ltp2_roof_cars: 289 detected, 17.1 per 1,000 m2 [obs, low; PV hides cars]",
      "axis_src": "car long axis 71 deg [obs NAIP]",
      "overlap_dropped": 0,
-     "overlap_reshaped": 1
+     "overlap_reshaped": 1,
+     "static_dropped": 0,
+     "static_reshaped": 0
     }
    },
    "rental_car_center": {
@@ -12498,12 +17655,12 @@
     ],
     "tris": {
      "0": {
-      "tris": 2533,
+      "tris": 2803,
       "instanced_tris": 61292,
       "draws": 35
      },
      "1": {
-      "tris": 717,
+      "tris": 987,
       "instanced_tris": 26236,
       "draws": 32
      },
@@ -12524,7 +17681,9 @@
      "count_src": "rcc_roof_cars: 588 detected, 20.7 per 1,000 m2 (densest roof) [obs, low]",
      "axis_src": "nose-to-tail lanes at 126 deg [obs NAIP; \"115-125 deg\"]",
      "overlap_dropped": 0,
-     "overlap_reshaped": 3
+     "overlap_reshaped": 3,
+     "static_dropped": 0,
+     "static_reshaped": 0
     }
    },
    "grand_hyatt": {
@@ -13875,12 +19034,12 @@
    ]
   },
   "cars": {
-   "total": 1724,
+   "total": 1711,
    "per_deck": {
     "central_garage": {
      "deck_area_m2": 55329.3,
      "slots": 2196,
-     "cars": 331,
+     "cars": 318,
      "observed": 217,
      "observed_dropped": 37,
      "added_light": 127,
@@ -13891,8 +19050,10 @@
      "lanes": false,
      "count_src": "cg_roof_cars: 254 dark / coloured cars at their NAIP 2024 positions [obs] + white / silver cars (not separable from the light deck) by the fleet share 37 % next to the detected clusters [inf]; spec visual 300 +-100",
      "axis_src": "r2: each observed car snapped to the nearest free stall of the deck layout within 3 m (axis 117.8 deg [obs NAIP rows]; 125 of 217; the rest keep their NAIP position with the yaw on the stall axis) - the per-blob NAIP headings are noise at 0.5 m/px (deviation from the stall axis: median 18, p90 42 deg = uniform random); NAIP position and colour kept [obs]",
-     "overlap_dropped": 13,
-     "overlap_reshaped": 1
+     "overlap_dropped": 26,
+     "overlap_reshaped": 2,
+     "static_dropped": 13,
+     "static_reshaped": 1
     },
     "garage_a": {
      "deck_area_m2": 7533.4,
@@ -13905,7 +19066,9 @@
      "count_src": "garage_a_roof_cars: 91 detected (+-30 %), 12.7 per 1,000 m2 [obs, low]",
      "axis_src": "car long axis 66 deg [obs NAIP, coherence 0.08]",
      "overlap_dropped": 0,
-     "overlap_reshaped": 0
+     "overlap_reshaped": 0,
+     "static_dropped": 0,
+     "static_reshaped": 0
     },
     "garage_g": {
      "deck_area_m2": 5132.3,
@@ -13918,7 +19081,9 @@
      "count_src": "garage_g_roof_cars: 77 detected (+-30 %), 15.0 per 1,000 m2 [obs, low]",
      "axis_src": "car long axis 66 deg [obs NAIP, coherence 0.13]",
      "overlap_dropped": 0,
-     "overlap_reshaped": 0
+     "overlap_reshaped": 0,
+     "static_dropped": 0,
+     "static_reshaped": 0
     },
     "ltp_garage_1": {
      "deck_area_m2": 14208.7,
@@ -13931,7 +19096,9 @@
      "count_src": "ltp1_roof_cars: 240 detected, 19.4 per 1,000 m2 [obs, low]",
      "axis_src": "car long axis 73 deg [obs NAIP; \"cars at about 70 deg\"]",
      "overlap_dropped": 0,
-     "overlap_reshaped": 3
+     "overlap_reshaped": 3,
+     "static_dropped": 0,
+     "static_reshaped": 0
     },
     "ltp_garage_2": {
      "deck_area_m2": 18610.7,
@@ -13944,7 +19111,9 @@
      "count_src": "ltp2_roof_cars: 289 detected, 17.1 per 1,000 m2 [obs, low; PV hides cars]",
      "axis_src": "car long axis 71 deg [obs NAIP]",
      "overlap_dropped": 0,
-     "overlap_reshaped": 1
+     "overlap_reshaped": 1,
+     "static_dropped": 0,
+     "static_reshaped": 0
     },
     "rental_car_center": {
      "deck_area_m2": 30222.4,
@@ -13957,7 +19126,9 @@
      "count_src": "rcc_roof_cars: 588 detected, 20.7 per 1,000 m2 (densest roof) [obs, low]",
      "axis_src": "nose-to-tail lanes at 126 deg [obs NAIP; \"115-125 deg\"]",
      "overlap_dropped": 0,
-     "overlap_reshaped": 3
+     "overlap_reshaped": 3,
+     "static_dropped": 0,
+     "static_reshaped": 0
     }
    }
   },
@@ -13984,7 +19155,7 @@
   "verification": {
    "tool": "tools/blender/verify_landside.py",
    "report": "out/buildings3d/landside_verify.json (local)",
-   "n_checks": 198,
+   "n_checks": 199,
    "n_fail": 0,
    "failed": [],
    "tolerance": "0.5 m or 2 % unless stated",
@@ -14549,7 +19720,7 @@
     },
     {
      "check": "garage_a: core diameter",
-     "model": 12.629,
+     "model": 12.551,
      "drawing": 13.0,
      "tol": 0.5,
      "ok": true,
@@ -14558,7 +19729,7 @@
     },
     {
      "check": "garage_a: core centre on the drum centre",
-     "model": 0.12,
+     "model": 0.081,
      "drawing": 0.0,
      "tol": 0.5,
      "ok": true,
@@ -14711,7 +19882,7 @@
     },
     {
      "check": "garage_g: body clear of the guideway polygon (0.3 m)",
-     "model": 0.0,
+     "model": 0.014,
      "drawing": 0.0,
      "tol": 1.0,
      "ok": true,
@@ -14918,7 +20089,7 @@
     },
     {
      "check": "CG: NAIP-detected cars reproduced (share with a model car within 3.2 m = the r2 stall-snap radius)",
-     "model": 0.839,
+     "model": 0.799,
      "drawing": 0.8,
      "tol": null,
      "ok": true,
@@ -15575,7 +20746,7 @@
     },
     {
      "check": "AirTrain pier caps / bents over road decks: min vertical clearance (pier faces over deck faces, 35 overlaps)",
-     "model": 12.404,
+     "model": 12.422,
      "drawing": 4.6,
      "tol": null,
      "ok": true,
@@ -15610,7 +20781,7 @@
      "unit": "m"
     },
     {
-     "check": "cars (all 1716 LOD0 instances): overlapping pairs of their oriented plan hulls (same height band)",
+     "check": "cars (all 1703 LOD0 instances): overlapping pairs of their oriented plan hulls (same height band)",
      "model": 0,
      "drawing": 0,
      "tol": null,
@@ -15619,7 +20790,16 @@
      "unit": ""
     },
     {
-     "check": "cars LOD1: body bottom above the instance origin (the deck), max over 1716 instances",
+     "check": "cars (all 1711 LOD0 cars incl. 8 single meshes) touching static LOD0 geometry in their height band",
+     "model": 0,
+     "drawing": 0,
+     "tol": null,
+     "ok": true,
+     "src": "close-out round 4 (verifier r3: 13 CG roof cars, 3.77 m2); worst []",
+     "unit": ""
+    },
+    {
+     "check": "cars LOD1: body bottom above the instance origin (the deck), max over 1703 instances",
      "model": 0.0,
      "drawing": 0.0,
      "tol": 0.02,
@@ -15763,8 +20943,8 @@
      "unit": "m2"
     },
     {
-     "check": "LOD2 see-through: back-face first hits per node (worst ('L2_airtrain_-6_-4', 36); residuals {})",
-     "model": 36,
+     "check": "LOD2 see-through: back-face first hits per node (worst ('L2_bart_station', 25); residuals {})",
+     "model": 25,
      "drawing": 60,
      "tol": null,
      "ok": true,
@@ -15774,13 +20954,13 @@
    ],
    "plans": {
     "central_garage": {
-     "model_area": 64403.0,
+     "model_area": 64403.2,
      "outline_area": 64391.8,
      "outside": 0.0,
      "missing": 0.0
     },
     "ltp_garage_1": {
-     "model_area": 14436.3,
+     "model_area": 14436.7,
      "outline_area": 14428.9,
      "outside": 0.0,
      "missing": 0.0
@@ -15812,9 +20992,12 @@
    },
    "plausibility": {
     "cars": {
-     "instances": 1716,
+     "instances": 1703,
      "overlapping_pairs": 0,
      "worst": [],
+     "cars_vs_static": 0,
+     "cars_vs_static_m2": 0,
+     "cars_vs_static_worst": [],
      "lod1_bottom_max_m": 0.0
     },
     "stand_min_m": 26.3,
@@ -15836,15 +21019,12 @@
      "united_moc": 211.9
     },
     "lod2_backface": {
-     "total": 138,
+     "total": 61,
      "per_node": {
-      "L2_airtrain_-6_-4": 36,
-      "L2_united_moc": 36,
       "L2_bart_station": 25,
       "L2_garage_a": 14,
       "L2_airtrain_-3_0": 7,
       "L2_airtrain_-4_0": 7,
-      "L2_airtrain_-6_-2": 5,
       "L2_airtrain_-4_1": 3,
       "L2_garage_g": 3,
       "L2_superbay": 2
@@ -16635,7 +21815,41 @@
      "compare": "out/buildings3d/landside_cmp_cg_top_lod2.png"
     }
    }
-  }
+  },
+  "closeout_r4": [
+   {
+    "id": "r4-cars-static",
+    "severity": "minor",
+    "item": "13 Central Garage roof cars into the coping / deck rim / a roof box (3.77 m2)",
+    "disposition": "fixed",
+    "change": "landside_cars.StaticIndex + resolve_overlaps(static=): a car meeting the building's LOD0 static triangles in its band gives way (shorter shape, else dropped); verify_landside car-vs-static check",
+    "evidence": "cars touching static LOD0 geometry 13 -> 0; cars 1,724 -> 1,711 (13 dropped, 1 reshaped; CG 331 -> 318); NAIP-detected CG cars reproduced 0.839 -> 0.799 (>= 0.75)"
+   },
+   {
+    "id": "r4-portal",
+    "severity": "minor",
+    "item": "Garage A station block east-face track opening 4.23 m for a 4.93-m deck (side walls 0.31-0.40 m into the jambs)",
+    "disposition": "fixed",
+    "change": "landside_geom: portal holes PORTAL_CLEAR 0.10 m off the AirTrain deck (were inset 0.6 m into the deck + 0.2 interval), the lining likewise",
+    "evidence": "face plane y 18.3-20.4 m: wall to s 7.94 / from 12.17 vs deck 7.53-12.48 -> wall to 7.44 / from 12.57 (0.09-0.10 m clear, overlap 0)"
+   },
+   {
+    "id": "r4-spandrels",
+    "severity": "minor",
+    "item": "Central Garage single-sided spandrels see-through from the open storeys (2,164 back-face hits, roadways-only context)",
+    "disposition": "fixed",
+    "change": "landside_geom.garage_facade: every spandrel / slab-edge band below the parapet is a SPANDREL_T 0.2-m solid (inner face + caps)",
+    "evidence": "lsu_central_garage + roadways: L0_cg_body 2,164 -> 20; landside LOD0 with full context 787 -> 770 (cg_body 37 -> 3, station block 12 -> 9); LOD2 gate worst 25 (bart_station); LOD0 tris 159,599 -> 168,815, 21.13 -> 21.97 MB"
+   },
+   {
+    "id": "r4-glazing-ao",
+    "severity": "minor",
+    "item": "ribbon@A (RCC ribbon windows) carried baked AO",
+    "disposition": "fixed",
+    "change": "MATS ribbon glazing=True; one rule in all four builders: no glTF occlusion when MATS[key].glazing (else 'glass' in the key)",
+    "evidence": "glazing materials with occlusion across all 33 asset files: 5 -> 0"
+   }
+  ]
  },
  "integration": {
   "loader": "js/three/buildings3d.js (GLTFLoader from vendor/three/three.module.js, tools/build3/three-entry.js); hooks: js/three/renderer3.js, js/live/world.js, js/live/airport.js, js/live/terminals.js",

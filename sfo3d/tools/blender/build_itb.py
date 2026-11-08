@@ -217,7 +217,7 @@ def make_material(key, atlas, tex_imgs, ao_img):
         t = nt.nodes.new('ShaderNodeTexImage'); t.image = ao_img; t.name = 'AO_BAKE'
         uva = nt.nodes.new('ShaderNodeUVMap'); uva.uv_map = 'UV_ao'
         nt.links.new(uva.outputs['UV'], t.inputs['Vector'])
-        if 'glass' not in key:
+        if not spec.get('glazing', 'glass' in key):     # close-out r4: one rule (glazing flag, else the name)
             sep = nt.nodes.new('ShaderNodeSeparateColor')
             g = nt.nodes.new('ShaderNodeGroup'); g.node_tree = gltf_output_group()
             nt.links.new(t.outputs['Color'], sep.inputs['Color'])

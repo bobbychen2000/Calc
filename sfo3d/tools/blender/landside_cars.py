@@ -207,24 +207,84 @@ def car_footprint(x, y, yaw, si, pad=0.0):
 
 
 SHORTER = {2: (1, 0), 1: (0,), 0: ()}      # pickup -> SUV -> sedan; SUV -> sedan (shape indices of SHAPES, by length)
+STATIC_LO, STATIC_HI = 0.10, 0.05          # car-vs-static band: car bottom + 0.10 .. car top - 0.05 (the verifier's cars_static band)
 
 
-def resolve_overlaps(cars, prior=(), gap=0.05, dz=1.5):
+def static_tris(mbs):
+    """close-out round 4 (verifier r3: 13 Central Garage roof cars 0.1-0.35 m into the parapet coping, the deck rim and a roof
+    box - no check tested cars against static geometry): the triangles (n, 3, 3), building-local (X, Y, Z up) of the building's
+    LOD0 meshes, for resolve_overlaps(static=...)."""
+    T = []
+    for mb in mbs:
+        V = mb.V
+        for f in mb.F:
+            for k in range(1, len(f) - 1):
+                T.append((V[f[0]], V[f[k]], V[f[k + 1]]))
+    return np.asarray(T, float) if T else np.zeros((0, 3, 3))
+
+
+class StaticIndex:
+    """plan index of static triangles for the car test: tri_plan(i, z0, z1) = the triangle's part inside the height slab, in
+    plan (a vertical face -> its trace grown 0.02 m)."""
+
+    def __init__(self, T):
+        from shapely.strtree import STRtree
+        from shapely.geometry import box
+        self.T = T
+        self.zlo, self.zhi = (T[:, :, 2].min(1), T[:, :, 2].max(1)) if len(T) else (np.zeros(0), np.zeros(0))
+        lo, hi = (T[:, :, :2].min(1), T[:, :, :2].max(1)) if len(T) else (np.zeros((0, 2)), np.zeros((0, 2)))
+        self.tree = STRtree([box(a[0], a[1], b[0], b[1]) for a, b in zip(lo, hi)]) if len(T) else None
+
+    def tri_plan(self, i, z0, z1):
+        from shapely.geometry import MultiPoint, LineString
+        P = [tuple(p) for p in self.T[i]]
+        for zc, keep_above in ((z0, True), (z1, False)):              # Sutherland-Hodgman against the two planes
+            out = []
+            for a, b in zip(P, P[1:] + P[:1]):
+                ina = (a[2] >= zc) if keep_above else (a[2] <= zc)
+                inb = (b[2] >= zc) if keep_above else (b[2] <= zc)
+                if ina: out.append(a)
+                if ina != inb and abs(b[2] - a[2]) > 1e-12:
+                    t = (zc - a[2]) / (b[2] - a[2]); out.append((a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, zc))
+            P = out
+            if len(P) < 2: return None
+        xy = [(p[0], p[1]) for p in P]
+        g = MultiPoint(xy).convex_hull
+        if g.geom_type == 'Polygon' and g.area > 1e-5: return g
+        xs = np.array(xy); d = np.linalg.norm(xs[:, None] - xs[None], axis=2); a, b = np.unravel_index(d.argmax(), d.shape)
+        return LineString([xy[a], xy[b]]).buffer(0.02, cap_style=2) if d[a, b] > 0.01 else None
+
+    def hits(self, g, z0, z1, min_area=1e-4):
+        if self.tree is None: return 0.0
+        tot = 0.0
+        for i in self.tree.query(g):
+            i = int(i)
+            if self.zhi[i] < z0 or self.zlo[i] > z1: continue
+            q = self.tri_plan(i, z0, z1)
+            if q is not None and q.intersects(g):
+                tot += q.intersection(g).area
+                if tot > min_area: return tot
+        return tot
+
+
+def resolve_overlaps(cars, prior=(), gap=0.05, dz=1.5, static=None):
     """close-out r3 fix 2 (verifier v3: 16 overlapping pairs, worst 2.44 m2; the placement only kept centres >= 2.35 m apart, so
     cars could overlap end to end or at an angle, and a 5.5-m pickup did not fit a stall shorter than 5.5 m head to head): every
     car's oriented footprint (car_footprint, + gap / 2 each side) is tested against the cars accepted before it (in order: the
     NAIP-observed cars first, as placed) and against `prior` (other decks of the building) at the same level (+- dz); a car that
     overlaps takes the next shorter shape that fits (pickup -> SUV -> sedan), else it is dropped [inf: which car gives way].
-    -> (cars, dict(dropped, reshaped))."""
+    Close-out round 4: with static (a StaticIndex of the building's LOD0 triangles) a car whose footprint meets static geometry
+    in its own height band (bottom + STATIC_LO .. top - STATIC_HI: parapets / coping, deck rims, roof boxes, columns, walls) gives
+    way the same way. -> (cars, dict(dropped, reshaped, static_dropped, static_reshaped))."""
     from shapely.strtree import STRtree
     acc_fp, acc_z = [], []
     for c in prior:
         acc_fp.append(car_footprint(c[0], c[1], c[3], c[4], gap / 2)); acc_z.append(c[2])
-    out, dropped, reshaped = [], 0, 0
+    out, dropped, reshaped, s_drop, s_resh = [], 0, 0, 0, 0
     for c in cars:
         x, y, z, yaw, si, ci = c
         tree = STRtree(acc_fp) if acc_fp else None
-        ok_si = None
+        ok_si = None; st_hit = False
         for cand in (si,) + SHORTER[si]:
             g = car_footprint(x, y, yaw, cand, gap / 2)
             hit = False
@@ -232,22 +292,26 @@ def resolve_overlaps(cars, prior=(), gap=0.05, dz=1.5):
                 for k in tree.query(g):
                     if abs(acc_z[int(k)] - z) < dz and acc_fp[int(k)].intersects(g) and acc_fp[int(k)].intersection(g).area > 1e-6:
                         hit = True; break
+            if not hit and static is not None and static.hits(car_footprint(x, y, yaw, cand, 0.0), z + STATIC_LO, z + SHAPES[cand][3] - STATIC_HI) > 1e-4:
+                hit = True; st_hit = True
             if not hit: ok_si = cand; break
         if ok_si is None:
-            dropped += 1; continue
-        if ok_si != si: reshaped += 1
+            dropped += 1; s_drop += int(st_hit); continue
+        if ok_si != si: reshaped += 1; s_resh += int(st_hit)
         out.append((x, y, z, yaw, ok_si, ci))
         acc_fp.append(car_footprint(x, y, yaw, ok_si, gap / 2)); acc_z.append(z)
-    return out, dict(dropped=dropped, reshaped=reshaped)
+    return out, dict(dropped=dropped, reshaped=reshaped, static_dropped=s_drop, static_reshaped=s_resh)
 
 
-def place(deck, F, layout_fn, seed=0, prior=()):
+def place(deck, F, layout_fn, seed=0, prior=(), static=None):
     """cars on one deck: deck = dict(poly (local), z, axis, origin (world), density | count | positions, lanes, exclude [local])
     -> (cars [(x, y, z, yaw, shape, colour)], info); oriented-footprint overlaps resolved against each other and `prior` (the
-    building's other decks) by resolve_overlaps (close-out r3 fix 2)."""
+    building's other decks) by resolve_overlaps (close-out r3 fix 2), and against the building's static LOD0 geometry
+    (static: StaticIndex; close-out round 4)."""
     cars, info = _place(deck, F, layout_fn, seed)
-    cars, ov = resolve_overlaps(cars, prior)
-    info.update(cars=len(cars), overlap_dropped=ov['dropped'], overlap_reshaped=ov['reshaped'])
+    cars, ov = resolve_overlaps(cars, prior, static=static)
+    info.update(cars=len(cars), overlap_dropped=ov['dropped'], overlap_reshaped=ov['reshaped'], static_dropped=ov['static_dropped'],
+                static_reshaped=ov['static_reshaped'])
     return cars, info
 
 

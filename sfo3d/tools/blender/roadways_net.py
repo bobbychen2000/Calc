@@ -522,11 +522,15 @@ def solve_levels(ways, grade, F, LV, log=print, overhead=None, plates=None):
         d = np.array([up_min(h, u2, s1, s2) - h[nid[ka]] for ka, sl, l2, u2, s1, s2, at, q in stk if q == pk])
         if pk in stk_on or (np.median(np.abs(d)) >= 1.0 and d.min() < SEPK - 1e-3):
             low = [v for q, v in stk_low.values() if q == pk]
-            stk_rep.append(dict(lower=ways[lo]['id'], upper=ways[up]['id'], samples=int(len(d)), held=pk in stk_on, deficit_free_m=round(stk_on.get(pk, float('nan')), 2) if pk in stk_on else None,
-                                lowered_nodes=len(low), lowered_max_m=round(max(low, default=0.0), 2), min_sep_m=round(float(d.min()), 2), left_m=round(max(0.0, SEP - float(d.min())), 2)))
-    log('stacked pairs (fix 2, STK_*): %d sampled (%d samples), %d held by lowering the lower way (%d nodes, max %.2f m); left to the trim: %s'
-        % (len(stk_pairs), len(stk), len(stk_on), len(stk_low), max((v for q, v in stk_low.values()), default=0.0),
-           [(r['lower'], r['upper'], r['left_m']) for r in stk_rep if r['left_m'] > 0.0] or 'none'))
+            left = round(max(0.0, SEP - float(d.min())), 2)
+            # close-out r4 (the round-3 verifier): 'held' only when the separation is met everywhere; a pair the solve took
+            # on but could not fully meet (an anchored upper, a floor, the cap) is 'partial' (in_solve true, left_m > 0)
+            stk_rep.append(dict(lower=ways[lo]['id'], upper=ways[up]['id'], samples=int(len(d)), held=(True if left <= 0.0 else 'partial') if pk in stk_on else False,
+                                in_solve=pk in stk_on, deficit_free_m=round(stk_on.get(pk, float('nan')), 2) if pk in stk_on else None,
+                                lowered_nodes=len(low), lowered_max_m=round(max(low, default=0.0), 2), min_sep_m=round(float(d.min()), 2), left_m=left))
+    log('stacked pairs (fix 2, STK_*): %d sampled (%d samples), %d taken into the solve (lowering the lower way: %d nodes, max %.2f m), %d held in full, %d partly; left to the trim: %s'
+        % (len(stk_pairs), len(stk), len(stk_on), len(stk_low), max((v for q, v in stk_low.values()), default=0.0), sum(1 for r in stk_rep if r['held'] is True),
+           sum(1 for r in stk_rep if r['held'] == 'partial'), [(r['lower'], r['upper'], r['left_m']) for r in stk_rep if r['left_m'] > 0.0] or 'none'))
     # the guideway bounds the solve could not meet (anchored decks; a node held by another constraint), final values only
     ubq = {}
     for a, ub, *_ in ubn: ubq[nid[a]] = min(ub, ubq.get(nid[a], 1e9))

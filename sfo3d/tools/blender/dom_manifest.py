@@ -403,7 +403,7 @@ def entry(build, ver, parts, mats, roof_rgb, info):
 
 def keep_renders(old, new):
     for k in ('renders', 'render_check', 'renders_updated', 'renders_args', 'renders_note', 'qa', 'validator', 'neighbours', 'review_r1', 'review_r2',
-              'closeout_r3', 'closeout_r3_fix2'):       # (close-out r3 fix 2: the close-out records survive a rebuild)
+              'closeout_r3', 'closeout_r3_fix2', 'closeout_r4'):       # (close-out r3 fix 2 / r4: the close-out records survive a rebuild)
         if old and old.get(k):
             new[k] = old[k]
     return new

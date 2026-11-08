@@ -8,7 +8,9 @@ Orthographic first-hit rays (as the red back-face renders, but over the whole as
               wrong winding)
   vertical:   slices x = const every SP m, rays straight down every SP m in z; first hit back face -> hit (a roof hole)
 Context assets: join paths with '+' (their faces occlude, only the first file's faces count as hits).
-    python3 tools/blender/bf_rays.py <glb>[+<context glb>...] <out.json> [lod=0] [sp=0.5]
+    python3 tools/blender/bf_rays.py <glb>[+<context glb>...] <out.json> [lod=0] [sp=0.5] [near=m]
+near (close-out round 4): context faces occlude only within `near` m in front of the ray's first own face (a camera that
+close to the asset; the round-3 verifier found far context masking the Central Garage's open storeys).
 Writes per node: hits, materials, and the hit points clustered on a 2-m grid."""
 import json
 import math
@@ -83,7 +85,7 @@ def slice_plane(T, axis, c):
     return np.stack([P0, P1], 1), idx
 
 
-def first_hits(seg2, segid, d, sp, pri=None):
+def first_hits(seg2, segid, d, sp, pri=None, own=None, near=None):
     """2-D orthographic rays along d (unit), spacing sp, from -inf: per ray the first segment (index into seg2).
     pri (optional, per segment, lower wins): breaks exact ties (same ray, same distance to 1e-6 m) - close-out r3 fix 2: a ray
     of the 0.5-m grid that passes exactly through a convex corner vertex meets the front face that closes the corner and the
@@ -101,6 +103,17 @@ def first_hits(seg2, segid, d, sp, pri=None):
     dv = v[rep, 1] - v[rep, 0]
     t = np.where(np.abs(dv) > 1e-12, (vv - v[rep, 0]) / np.where(np.abs(dv) > 1e-12, dv, 1.0), 0.5)
     uu = u[rep, 0] + t * (u[rep, 1] - u[rep, 0])
+    if near is not None and own is not None:
+        # close-out round 4 (verifier r3: context from infinity let a building 190-250 m away hide the Central Garage's open
+        # storeys): per ray, context faces more than `near` m in front of the ray's first OWN face are ignored - a camera standing
+        # `near` m from the asset sees what they hid
+        ow = np.asarray(own)[rep]
+        big = np.full(int(kk.max() - kk.min() + 1) if len(kk) else 0, np.inf)
+        if ow.any():
+            np.minimum.at(big, kk[ow] - kk.min(), uu[ow])
+        keep = ow | (uu >= big[kk - kk.min()] - near)
+        kk, uu, rep = kk[keep], uu[keep], rep[keep]
+        if not len(kk): return None
     if pri is None:
         o = np.lexsort((uu, kk))
     else:
@@ -122,7 +135,9 @@ def load_multi(path, lod):
     return T, node, mat, names, dbl, mname, blend, own
 
 
-def run(path, lod=0, sp=0.5, H=45.0, naz=16):
+def run(path, lod=0, sp=0.5, H=45.0, naz=16, near=None):
+    """near (m, optional; close-out round 4): context faces count as occluders only within `near` m in front of the ray's first
+    own face (see first_hits) - the near-context mode the verify scripts gate on; None = context from infinity (round 3)."""
     T, node, mat, names, dbl, mname, blend, own = load_multi(path, lod)
     n, okn = tri_normals(T)
     single = np.array([not dbl[m] if m >= 0 else True for m in mat])
@@ -135,7 +150,7 @@ def run(path, lod=0, sp=0.5, H=45.0, naz=16):
         for a in range(naz):
             th = 2 * math.pi * a / naz
             d = np.array([math.cos(th), math.sin(th)])
-            r = first_hits(seg2, None, d, sp, pri=((n[idx][:, [0, 2]] @ d) > 0.05).astype(np.int8))   # (ties: front face first)
+            r = first_hits(seg2, None, d, sp, pri=((n[idx][:, [0, 2]] @ d) > 0.05).astype(np.int8), own=own[idx], near=near)   # (ties: front face first)
             if r is None: continue
             si, uu, kk = r
             ti = idx[si]
@@ -150,7 +165,7 @@ def run(path, lod=0, sp=0.5, H=45.0, naz=16):
         seg, idx = slice_plane(T, 0, c + 0.013)
         if not len(idx): continue
         seg2 = np.stack([-seg[:, :, 1], seg[:, :, 2]], 2)   # u = -y (down), v = z
-        r = first_hits(seg2, None, np.array([1.0, 0.0]), sp, pri=(n[idx][:, 1] < -0.05).astype(np.int8))
+        r = first_hits(seg2, None, np.array([1.0, 0.0]), sp, pri=(n[idx][:, 1] < -0.05).astype(np.int8), own=own[idx], near=near)
         if r is None: continue
         si, uu, kk = r
         ti = idx[si]
@@ -167,15 +182,30 @@ def run(path, lod=0, sp=0.5, H=45.0, naz=16):
         e['mats'][mn] = e['mats'].get(mn, 0) + 1
         ck = '%d,%d,%d' % (round(x / 2) * 2, round((y - GY) / 2) * 2, round(z / 2) * 2)
         e['cells'][ck] = e['cells'].get(ck, 0) + 1
-    return dict(glb=path, lod=lod, sp=sp, total=len(hits), nodes=dict(sorted(per.items(), key=lambda kv: -kv[1]['n'])),
+    return dict(glb=path, lod=lod, sp=sp, near=near, total=len(hits), nodes=dict(sorted(per.items(), key=lambda kv: -kv[1]['n'])),
                 n_tris=int(len(T)), single_sided_tris=int(single.sum()))
+
+
+NEAR_M = 10.0          # close-out round 4: the near-context distance the verify scripts use (a camera 10 m from the asset)
+NODE_MAX = 60          # per-node limit of the landside LOD2 gate (verify_landside LOD2_BF_MAX)
+
+
+def near_summary(own, context=(), lod=0, near=NEAR_M, sp=0.5):
+    """close-out round 4 (verifier r3 v9: the back-face test ran only on landside LOD2 with context from infinity): back-face
+    first hits of `own` (a glb path) with the existing `context` glbs in near mode -> dict(total, per_node {node: n}, worst)."""
+    paths = [own] + [c for c in context if os.path.exists(c)]
+    r = run('+'.join(paths), lod=lod, sp=sp, near=near)
+    per = {k: v['n'] for k, v in r['nodes'].items()}
+    worst = max(per.items(), key=lambda kv: kv[1]) if per else None
+    return dict(total=r['total'], per_node=per, worst=worst, near_m=near, lod=lod, context=[os.path.basename(c) for c in paths[1:]])
 
 
 if __name__ == '__main__':
     path, out = sys.argv[1], sys.argv[2]
     lod = int(sys.argv[3]) if len(sys.argv) > 3 else 0
     sp = float(sys.argv[4]) if len(sys.argv) > 4 else 0.5
-    r = run(path, lod, sp)
+    near = float(sys.argv[5]) if len(sys.argv) > 5 else None
+    r = run(path, lod, sp, near=near)
     json.dump(r, open(out, 'w'), indent=1)
     print(path, 'tris', r['n_tris'], 'single', r['single_sided_tris'], 'back-face hits', r['total'])
     for k, v in list(r['nodes'].items())[:25]:
