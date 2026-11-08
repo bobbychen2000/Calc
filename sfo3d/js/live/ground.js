@@ -206,6 +206,37 @@ export class GroundPhysics {
     const LB = L(B.nose[0], B.nose[1], T.L + (T.wing ? T.wing.span / 2 : 10) + 5, this._own ? (G) => this._own(tr, G) : null);
     return !!(LB && LB(T, B.nose, B.f));
   }
+  // the off-stand placement of a stationary body B (tr) among the poses already placed: the nearest valid offset of its parked pose
+  // (tr.phys = {key, off, ok}), recomputed when the parked pose changes, or -- recheck -- when it found nothing or a jet bridge
+  // has since docked into the pose it was given (fix round 2, v4: liveHit); recheck 2 = always
+  place(B, tr, placed, recheck) {
+    const P0 = tr.parkPos || tr.stillPos || [tr.disp.x, tr.disp.z]; const h = tr.parkPos ? tr.parkHdg : (tr.stillHdg ?? tr.disp.hdg);
+    const key = Math.round(P0[0]) + ',' + Math.round(P0[1]) + ',' + Math.round((h || 0) * 20);
+    const base = bodyOf(B.T, P0[0], P0[1], h); base.tr = tr;
+    if (recheck === 2 || !tr.phys || tr.phys.key !== key || (recheck && (!tr.phys.ok || (this._live && this.liveHit({ ...base, nose: [base.nose[0] + tr.phys.off[0], base.nose[1] + tr.phys.off[1]] }))))) {
+      // (close-out round 3, static R4.1.5: all gear on the rendered mask first -- where it is, else within the 6 m scatter --
+      // then the mask OR OSM-net union where it is, else within 15 m)
+      const mk = !!(this.mask && this.mask !== this.paved);
+      let o = mk && this.valid(base, placed, true, this.mask) ? [0, 0] : null;
+      if (!o && mk) o = this.seek(base, placed, this.mask, 6);
+      if (!o && this.valid(base, placed)) o = [0, 0];
+      if (!o) o = this.seek(base, placed, this.paved, 15);
+      tr.phys = { key, off: o || [0, 0], ok: !!o };
+    }
+    tr.phys.base = base; return tr.phys;
+  }
+  // what makes the pose B invalid among the placed poses (for the conflict log): the first aircraft it overlaps (1 m margin, as
+  // valid()), else 'building' / 'bridge' / 'live bridge'
+  logConflict(traffic, tr, B, placed) {
+    const S = samples(B.T, B.nose, B.h); let w = null;
+    for (const o of placed) { if (Math.hypot(o.nose[0] - B.nose[0], o.nose[1] - B.nose[1]) > (o.T.L + B.T.L) * 0.5 + 45) continue;
+      const So = samples(o.T, o.nose, o.h); if (S.outline.some(p => inside(o, p, 1.0)) || So.outline.some(p => inside(B, p, 1.0))) { w = o; break; } }
+    const why = w ? 'aircraft' : S.outline.concat(S.fus).some(p => this.building && this.building(p[0], p[1])) ? 'building' : S.fus.some(p => this.bridges && this.bridges(p[0], p[1])) ? 'bridge' : this.liveHit(B) ? 'live bridge' : 'other';
+    const ot = w && w.tr; const rec = { why, with: ot ? ot.hex : null, flight: ot && ot.info ? ot.info.flight || null : null, type: ot && ot.info ? ot.info.icao || null : null,
+      d: w ? +Math.hypot(w.nose[0] - B.nose[0], w.nose[1] - B.nose[1]).toFixed(1) : null, at: [+B.nose[0].toFixed(1), +B.nose[1].toFixed(1)] };
+    traffic.counters.physLockConflicts = (traffic.counters.physLockConflicts || 0) + 1;
+    if (traffic.event) traffic.event(tr, traffic._lastRecv || 0, 'phys-conflict', rec);
+  }
   // run after traffic.update(): sets tr.physOff (target offsets) for the next frame; checks data-pose stand parking
   resolve(traffic, dt) {
     this._live = traffic.liveBridgeAt || null; this._own = traffic.ownBridge ? (tr, G) => traffic.ownBridge(tr, G) : null;
@@ -271,25 +302,20 @@ export class GroundPhysics {
         if (tr.physL.ok && newKey && this.mask && this.mask !== this.paved && (tr.maskUnlocks || 0) < 2 && !this.valid(base, placed, true, this.mask)
           && this.seek(base, placed, this.mask, 3)) { tr.physL.ok = false; tr.maskUnlocks = (tr.maskUnlocks || 0) + 1; traffic.counters.physMaskUnlocks = (traffic.counters.physMaskUnlocks || 0) + 1; }
         if (tr.physL.ok) { placed.push(base); continue; }
-        tr.lock = null; traffic.counters.physUnlocks = (traffic.counters.physUnlocks || 0) + 1; tr.phys = null;
+        // (close-out round 5, the round-3 verifier's minor: released only when the placement below has a valid pose to move it to.
+        // With none -- LXJ569 CL35 parked off-stand 0.46 m from N453FD, 8 Nov 00:41-08:29Z -- the unlock found nothing, the body
+        // came to rest where it was and traffic.js locked it again on the next frame: 278,875 lock / unlock pairs in 8 h
+        // [obs, replay]. Now the lock is kept and the pair is logged once as a conflict (event 'phys-conflict': the neighbour,
+        // or the building / bridge / pavement test that fails), instead of toggling every frame)
+        // (the search runs when the lock test does: on a new lock pose and every 30 frames)
+        if (tr.physL.alt === undefined) tr.physL.alt = this.place(B, tr, placed, 2).ok;
+        if (!tr.physL.alt) { if (tr._physConfKey !== key) { tr._physConfKey = key; this.logConflict(traffic, tr, base, placed); } traffic.counters.physLockKept = (traffic.counters.physLockKept || 0) + 1; placed.push(base); continue; }
+        tr.lock = null; traffic.counters.physUnlocks = (traffic.counters.physUnlocks || 0) + 1;
       }
-      const P0 = tr.parkPos || tr.stillPos || [tr.disp.x, tr.disp.z]; const h = tr.parkPos ? tr.parkHdg : (tr.stillHdg ?? tr.disp.hdg);
-      const key = Math.round(P0[0]) + ',' + Math.round(P0[1]) + ',' + Math.round((h || 0) * 20);
-      const base = bodyOf(B.T, P0[0], P0[1], h); base.tr = tr;
-      // (fix round 2, v4: and again when a jet bridge has since docked into the pose it was given -- liveHit)
-      if (!tr.phys || tr.phys.key !== key || (this.frame % 30 === 0 && (!tr.phys.ok || (this._live && this.liveHit({ ...base, nose: [base.nose[0] + tr.phys.off[0], base.nose[1] + tr.phys.off[1]] }))))) {
-        // (close-out round 3, static R4.1.5: all gear on the rendered mask first -- where it is, else within the 6 m scatter --
-        // then the mask OR OSM-net union where it is, else within 15 m)
-        const mk = !!(this.mask && this.mask !== this.paved);
-        let o = mk && this.valid(base, placed, true, this.mask) ? [0, 0] : null;
-        if (!o && mk) o = this.seek(base, placed, this.mask, 6);
-        if (!o && this.valid(base, placed)) o = [0, 0];
-        if (!o) o = this.seek(base, placed, this.paved, 15);
-        tr.phys = { key, off: o || [0, 0], ok: !!o };
-      }
-      tr.physOff = tr.phys.off[0] || tr.phys.off[1] ? tr.phys.off : null;
-      if (tr.physOff) moved++; if (!tr.phys.ok) unresolved++;
-      placed.push({ ...base, nose: [base.nose[0] + tr.phys.off[0], base.nose[1] + tr.phys.off[1]] });
+      const ph = this.place(B, tr, placed, this.frame % 30 === 0);
+      tr.physOff = ph.off[0] || ph.off[1] ? ph.off : null;
+      if (tr.physOff) moved++; if (!ph.ok) unresolved++;
+      const base = ph.base; placed.push({ ...base, nose: [base.nose[0] + ph.off[0], base.nose[1] + ph.off[1]] });
     }
     // moving aircraft: a fading target offset away from any displayed overlap. A silent aircraft that a live one drives
     // into is not there any more (the live one's positions are real): it fades out BEFORE the contact -- the live one's

@@ -74,6 +74,14 @@
 //          [--allkeys cls1,cls2] (every key of those classes in the report, not only the top 12 / 6)
 // --from/--until bound the CHECKED window; the replay starts --warm seconds earlier (tracks, stands, delay settle).
 // --root runs another copy of the code (e.g. a frozen snapshot) with the same data layout.
+// --plan-cadence live|replay (default live; env PLAN_CADENCE): the SFO plan's fetched_at as the app sees it (close-out round 5,
+//   realtime, after the round-3 verifier's v2/v11 finding). 'live' = what the running relay serves: sfo_live_server.py Gates
+//   re-fetches flysfo whenever the app's 60-s /api/gates poll finds the last attempt >= MIN_INTERVAL 600 s old (a 304 also sets
+//   fetched_at), so the payload's fetched_at is max(the recorded snapshot's fetch time, the last 10-min tick before the poll).
+//   The plan CONTENT stays the recorded snapshot union (the relay recorded only a few snapshots), i.e. a pessimistic proxy: it
+//   assumes SFO's plan did not change since that snapshot. 'replay' = the recorded snapshot's own fetched_at (the pre-round-5
+//   harness: hours old, so every rule gated on plan freshness -- planKnows, the 'window' end seen by SFO -- runs in a state the
+//   live app never has). Recorded in the report's meta.planCadence.
 import fs from 'fs'; import path from 'path'; import zlib from 'zlib'; import readline from 'readline'; import { fileURLToPath } from 'url';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -84,6 +92,8 @@ const pt = (s) => s == null ? null : /^\d+(\.\d+)?$/.test(s) ? +s : Date.parse(s
 const FROM = pt(opt('from')), UNTIL = pt(opt('until')), WARM = +opt('warm', 600), DT = 0.1, LAT = 0.08;
 const FAST = argv.includes('--fast'); // skip the surface / pair / bridge checks (kinematics, phases, runways, truth only)
 const ALLK = (opt('allkeys', '') || '').split(',').filter(Boolean); // classes whose every key (aircraft / stand-bridge) is listed in the report (`all`), e.g. --allkeys bridge.orphan,bridge.hit.fus
+const PLAN_CADENCE = opt('plan-cadence', process.env.PLAN_CADENCE || 'live'); if (!['live', 'replay'].includes(PLAN_CADENCE)) { console.error('--plan-cadence live|replay'); process.exit(1); }
+const PLAN_TICK_S = 600;   // sfo_live_server.py Gates.MIN_INTERVAL
 const TRACE = opt('trace', null); // hex[,hex...]: print those aircraft's display/target/park state every 0.5 s to stderr
 const TRACES = new Set(TRACE ? TRACE.split(',') : []);
 const OUTF = opt('out', STREAM ? STREAM.replace(/stream\.jsonl\.gz$/, 'invariants.json') : 'invariants.json');
@@ -383,6 +393,10 @@ async function* readLines(f) { const rl = readline.createInterface({ input: fs.c
 // SFO plans (relay /api/gates payloads, one per minute): read lazily -- a full-day gates_full file is ~1 MB of JSON per
 // minute, too much to hold in memory at once
 const planIt = GATES && fs.existsSync(GATES) ? readLines(GATES)[Symbol.asyncIterator]() : null;
+// (--plan-cadence live, close-out round 5: fetched_at as the live relay would serve it at the app's poll time T -- see the usage)
+const planAsServed = (P) => { const g = P && P.gates; if (PLAN_CADENCE !== 'live' || !g || g.fetched_at == null) return g;
+  const f0 = +g.fetched_at, ms = f0 > 1e12, T = ms ? P.T * 1000 : P.T, tick = ms ? PLAN_TICK_S * 1000 : PLAN_TICK_S;
+  const fet = Math.max(f0, Math.floor(T / tick) * tick); if (fet !== f0) { g.fetched_at = fet; if (g.age_s != null) g.age_s = Math.round((ms ? (P.T * 1000 - fet) / 1000 : P.T - fet)); g.fetched_at_recorded = f0; } return g; };
 let nextPlan = null; const pullPlan = async () => { if (!planIt) { nextPlan = null; return; } const r = await planIt.next(); nextPlan = r.done ? null : JSON.parse(r.value); };
 await pullPlan();
 const evIt = readLines(STREAM)[Symbol.asyncIterator]();
@@ -395,12 +409,12 @@ simNow = (nextEv.T + LAT) * 1000; const tStart = simNow;
 checkFrom = FROM != null ? FROM * 1000 : simNow + WARM * 1000;
 const tEnd = UNTIL != null ? UNTIL * 1000 : Infinity;
 let frames = 0, checkedFrames = 0, p = 0, evSeen = 0;
-console.error(`replay from ${new Date(simNow).toISOString()} checking from ${new Date(checkFrom).toISOString()} code root ${ROOT}`);
+console.error(`replay from ${new Date(simNow).toISOString()} checking from ${new Date(checkFrom).toISOString()} code root ${ROOT} plan cadence ${PLAN_CADENCE}`);
 const wall0 = Date.now();
 
 
 while (simNow < tEnd && (nextEv || simNow < tStart + 1)) {
-  while (nextPlan && (nextPlan.T + LAT) * 1000 <= simNow) { traffic.setPlan(nextPlan.gates); p++; await pullPlan(); }
+  while (nextPlan && (nextPlan.T + LAT) * 1000 <= simNow) { traffic.setPlan(planAsServed(nextPlan)); p++; await pullPlan(); }
   while (nextEv && (nextEv.T + LAT) * 1000 <= simNow) {
     const P = parsePayload(nextEv.p, nextEv.T * 1000);
     if (simNow >= checkFrom - 1800e3) for (const a of P.aircraft) rawTruth(a, a.t);
@@ -649,7 +663,7 @@ const standEvents = {}; for (const e of EV) if (['in-block', 'off-block', 'stand
 const cuts = {}; for (const q of traffic.lockLog || []) { if (!String(q[2]).startsWith('cut') || !inWin(q[0])) continue; const tr = traffic.tracks.get(q[1]); const d = tr ? Math.hypot(tr.disp.x, tr.disp.z) : null; const k = q[2] + ' ' + (q[5] === 'a' ? 'air' : q[5] === 'g' ? 'gnd' : '') + ' ' + (d == null ? '?' : d < 3000 ? '<3km' : d < 15000 ? '<15km' : '>15km'); cuts[k] = (cuts[k] || 0) + 1; }
 const cutList = (traffic.lockLog || []).filter(q => String(q[2]).startsWith('cut') && inWin(q[0])).slice(0, 400).map(q => [iso(q[0]), ...q.slice(1)]);
 const hintFalse = (traffic.lockLog || []).filter(q => q[2] === 'hint-false' && inWin(q[0])).map(q => [iso(q[0]), ...q.slice(1)]);
-const report = { engineEvents, standEvents, cuts, cutList, hintFalse, meta: { stream: STREAM, root: ROOT, from: new Date(checkFrom).toISOString(), until: new Date(simNow).toISOString(), warm: WARM, frames, checkedFrames, dt: DT, wallS: Math.round((Date.now() - wall0) / 1000), counters: traffic.counters, delay: Math.round(traffic.delay) }, truth: truthCmp, classes: {} };
+const report = { engineEvents, standEvents, cuts, cutList, hintFalse, meta: { stream: STREAM, root: ROOT, from: new Date(checkFrom).toISOString(), until: new Date(simNow).toISOString(), warm: WARM, frames, checkedFrames, dt: DT, wallS: Math.round((Date.now() - wall0) / 1000), planCadence: PLAN_CADENCE, counters: traffic.counters, delay: Math.round(traffic.delay) }, truth: truthCmp, classes: {} };
 for (const [cls, v] of [...V.entries()].sort()) {
   const who = [...v.who.values()].sort((a, b) => b.max - a.max);
   const aircraft = new Set([...v.who.keys()]).size;

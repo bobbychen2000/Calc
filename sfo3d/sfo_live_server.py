@@ -1082,11 +1082,12 @@ def _t_of(v):
 
 
 class Gates:
-    """flysfo.com flight status (SFO's own gate and stand plan), fetched at most every 10 min while a client asks.
+    """flysfo.com flight status (SFO's own gate and stand plan), fetched at most every 10 min while a client asks (and, only
+    with the opt-in --record-sfo-gates, every 10 min while recording).
 
     Terms: none published (gate_truth §7); robots.txt does not exclude the path. So: gzip, an identifying
     User-Agent, conditional GET when the server offers a validator, >= 10 min between fetches (shared with
-    tools/live/gatecheck.py through the newest cached file's mtime), only on demand, --no-sfo-gates to disable,
+    tools/live/gatecheck.py through the newest cached file's mtime), only on demand (or with the opt-in --record-sfo-gates while recording), --no-sfo-gates to disable,
     visible attribution. The raw JSON never leaves this machine (cached in refs/cache/gate_truth, gitignored).
     """
     URL = 'https://www.flysfo.com/flysfo/api/flight-status'
@@ -1874,6 +1875,10 @@ def main():
     ap.add_argument('--routes', default='auto', choices=['auto', 'api', 'mirror', 'off'],
                     help='auto: adsb.lol routeset API, falling back to the VRS mirror (default)')
     ap.add_argument('--record', help='also append every provider response to this directory (record.py format)')
+    ap.add_argument('--record-sfo-gates', action='store_true',
+                    help='OPT-IN, off by default: with --record, also fetch SFO\'s plan (flysfo) every 10 min while recording, '
+                         'not only while a client asks -- for replay verification of the plan-gated rules. flysfo publishes no '
+                         'terms; ask SFO before relying on it (docs/research/gate_truth.md s.7). The owner decides')
     ap.add_argument('--replay', help='directory of recordings (tools/live/record.py) to replay instead of polling')
     ap.add_argument('--speed', type=float, default=1.0, help='replay speed factor')
     ap.add_argument('--skip', type=float, default=0.0, help='seconds of the recording to skip')
@@ -1909,6 +1914,20 @@ def main():
         writer = RecordWriter(a.record)
         hub.ext.append(writer.write)
         app['record_dir'] = a.record
+        if a.record_sfo_gates and not a.no_sfo_gates and not a.replay:
+            # (close-out round 5, realtime: the relay fetched only 3 flysfo snapshots in 4 days of recording because no client
+            # asked, so the replay cannot show how the plan-gated rules behave with the live 10-min plan. Same path, same limits
+            # as a client's /api/gates: Gates.want() -- >= MIN_INTERVAL between fetches (shared with gatecheck.py), conditional
+            # GET, gzip, identifying User-Agent -- just driven by this timer; the snapshots land in refs/cache/gate_truth)
+            def _gates_timer():
+                while True:
+                    try:
+                        gates.want()
+                    except Exception as e:      # never stop the recording for it
+                        gates.error = f'record timer: {e}'[:200]
+                    time.sleep(Gates.MIN_INTERVAL + 5)
+            threading.Thread(target=_gates_timer, daemon=True).start()
+            app['record_sfo_gates'] = True
         open(os.path.join(a.record, 'relay_record.pid'), 'w').write(str(os.getpid()))   # record.py checks it
     if a.replay:
         t_from = parse_time(a.t_from)
@@ -1941,7 +1960,8 @@ def main():
     host = 'localhost' if a.host in ('127.0.0.1', '0.0.0.0') else a.host
     print(f'SFO Live 3D relay {VERSION}: http://{host}:{a.port}/live.html  ({"replay of " + a.replay if a.replay else "live"})')
     print('ADS-B: adsb.lol (ODbL 1.0) + adsb.fi (personal non-commercial) · gates: '
-          + ('flysfo.com (<= 1 fetch / 10 min while asked)' if not a.no_sfo_gates else 'off') + f' · routes: {a.routes}', flush=True)
+          + (('flysfo.com (<= 1 fetch / 10 min while asked' + (', and while recording: --record-sfo-gates' if app.get('record_sfo_gates') else '') + ')')
+             if not a.no_sfo_gates else 'off') + f' · routes: {a.routes}', flush=True)
     try:
         srv.serve_forever()
     except KeyboardInterrupt:

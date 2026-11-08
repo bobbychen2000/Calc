@@ -104,9 +104,15 @@ const TOW_MS = 90000;
 // AHEAD_HOLD_MS after the arrival was last seen heading in (retractAhead) [design values: 200 m at 2-5 m/s taxi-in is 40-100 s,
 // the hurried retraction takes 16-91 s from docked, bridges_closeout.md Round 2]
 const AHEAD_HOLD_MS = 90000, AHEAD_M = 200;
-// ...and with SFO's evidence (the arrival's own record for that stand, or the occupant gone, stalePlanGone) from this far out:
-// the hurried retraction (16-91 s) is over before a 3-5 m/s taxi-in covers it (close-out round 3, realtime-10) [design value]
+// ...and with SFO's evidence that the OCCUPANT has left -- its own departure from that stand has an ACTUAL block-out
+// (stalePlanGone 'blockout') -- from this far out: the hurried retraction (16-91 s) is over before a 3-5 m/s taxi-in covers it
+// (close-out round 3, realtime-10) [design value]. (Close-out round 5: SFO's plan for the ARRIVAL -- its own arrival record for
+// that stand, 'alloc' -- no longer starts it from here; see groundLogic)
 const AHEAD_EV_M = 400;
+// standRealloc: another arrival's ACTUAL block-in at a silent occupant's stand counts only this long after the occupant was last
+// heard -- its own arrival record, when its callsign does not map to it (planFor), carries an actual block-in within minutes of
+// its own in-block / last report (close-out round 5) [design value]
+const REALLOC_MARGIN_MS = 10 * 60000;
 const LEAD_GHOST_M = 90;   // an arrival this close on an occupied stand's lead-in retracts the (silent) occupant's bridge (leadInOccupied)
 const REACQ_PARK_M = 15;         // a parked aircraft heard again within this distance of its parked pose has not moved
 const PUSH_UNDO_L = 0.6;          // a 'push' whose reports never left the parking by more than this x the length is undone (stationary(); a real push-back ends >= ~1 L out -- close-out round 3, realtime-11)
@@ -1267,13 +1273,25 @@ export class Traffic {
       // SFO's F17 arrival, which went to F21 -- SFO still listed UAL2855 at F17 [obs, replay]; 29 of 100 bridge-ahead retractions
       // re-docked 'arrival gone' on segment A)
       const aEv = !!(aS && sameSt(aS, g) && !this.planAt(o, g, t) && this.planKnows(o));
-      const strong = !!(ev || aEv);
+      // (close-out round 5, the round-3 verifier's v2: the fix-round-2 gate above rested on plan freshness -- planKnows, a plan
+      // fetched after the occupant was last heard. The replay's plan snapshots were hours old, so it held almost never there
+      // (0 of 843 calls, 4 Nov 19:15-21:12Z); live the relay re-fetches flysfo every 10 min and it holds 1-11 min after the occupant
+      // falls silent: with the harness's live plan cadence (tools/live/invariants.mjs --plan-cadence live) the false 400-m
+      // retractions came back -- UAL34 G6 twice ('alloc', 6 and 25 min after its 19:18Z in-block, re-docked 'arrival gone'),
+      // UAL2855 F17 twice, AAL3049 B27; segment D (8 Nov) ASA1838 B13, ASA41 B6, UAL2862 E7, UAL1726 D6, UAL2400 F14, DAL545 C6,
+      // UAL1852 F16, all 'alloc' from 386-400 m, re-docked 145-348 s later at occupants that stayed [obs, replay]. A gate change
+      // makes SFO's plan for the ARRIVAL wrong whatever its age. So the far retraction (AHEAD_EV_M) now needs positive evidence
+      // about the OCCUPANT itself -- its own departure from that stand has an actual block-out ('blockout'); SFO's plan for the
+      // arrival (its arrival record for that stand, aEv / 'alloc') and the occupant's ended windows ('window') count only once
+      // the arrival is on that stand's lead-in, close (onLeadInClose: <= max(60 m, 1.5 L) short of the stop, on the line, heading
+      // in) -- where the geometry alone retracts the bridge anyway, and where the removal above needs them)
+      const far = ev === 'blockout';
       // (agent 3, after the 7 Nov 14:41Z restart: the realtime-6 evidence gate had been lost when this line was rewritten for
       // realtime-10 -- without SFO's plan (7 Nov) bridge-ahead fired on geometry alone again: 8 of 28 re-docked, B3 three times
       // for ASA arrivals going on to B6 along B3's lead-in, 01:58-05:31Z)
-      if (!strong && !close) { this.counters.aheadNoEvidence = (this.counters.aheadNoEvidence || 0) + 1; continue; }
+      if (!far && !close) { if (ev || aEv) this.counters.aheadPlanNotClose = (this.counters.aheadPlanNotClose || 0) + 1; else this.counters.aheadNoEvidence = (this.counters.aheadNoEvidence || 0) + 1; continue; }
       const S = this.stopRef(tr, g), dS = Math.hypot(r.x - S[0], r.z - S[1]);
-      if (strong ? dS <= AHEAD_EV_M : (dS <= AHEAD_M && this.intoStand(tr, g, r.x, r.z, r.dir))) { this.counters.ghostAheadKept = (this.counters.ghostAheadKept || 0) + 1; this.retractAhead(o, t, tr); } }
+      if (far ? dS <= AHEAD_EV_M : (dS <= AHEAD_M && this.intoStand(tr, g, r.x, r.z, r.dir))) { this.counters.ghostAheadKept = (this.counters.ghostAheadKept || 0) + 1; this.retractAhead(o, t, tr); } }
   }
   // SFO's plan lists track o at stand g with a window around t (+-10 min) (round 3)
   planAt(o, g, t) {
@@ -1349,16 +1367,24 @@ export class Traffic {
     const pa = tr ? this.planFor(tr) : null; if (pa && this.planKnows(o) && (pa.cands || []).some(c => c.kind === 'arr' && !c.linked && at(c) && t >= c.from - 600e3 && t <= c.to)) return 'alloc';
     return null;
   }
-  // SFO's plan allocates stand g to ANOTHER flight with a window that began after the silent occupant o was last heard and covers
-  // t, and the plan was fetched after that (planKnows): 'realloc' -- evidence that o has left (fix round 2, verifier v11; used only
-  // for a silent occupant past PARK_KEEP_MS)
+  // SFO reports ANOTHER aircraft's ARRIVAL actually in-blocked at stand g after the silent occupant o was last heard: 'realloc' --
+  // two aircraft cannot both be at the stand, so o has left (used only for a silent occupant past PARK_KEEP_MS). The arrival's
+  // ACTUAL block-in (flysfo blk[2]; a fact SFO records only once it happened) lies within that flight's stand window at g
+  // (+-10 min), more than REALLOC_MARGIN_MS after o was last heard (its newest position, or its in-block if later), and before t.
+  // (Close-out round 5, the round-3 verifier's v11: the fix-round-2 rule counted ANY other flight's window at g that began after o
+  // was heard, from a plan fetched after that (planKnows). Live, with the relay's 10-min plan, it removed aircraft still at their
+  // stand -- AAL1175 B25 heard there again 98 min later, AAL3246 B24 +7, UAL2038 E10 +13 (pushed as UAL2168), ASA1438 B13 +62
+  // (pushed as ASA345), UAL927 G6 +279, UAL1385 E8 +114, segment A [obs, replay]: that other flight is often the parked aircraft's
+  // own next departure under another, unlinked flight number, or a planned window SFO never acted on. So: never a departure
+  // window, never a planned window -- only an arrival that SFO reports actually in-blocked there; otherwise PARK_KEEP_STAND_MS)
   standRealloc(o, g, t) {
-    const P = this.plan; if (!P || !P.flights || !this.planKnows(o)) return null; const heard = Math.max(o.lastFixT || 0, o.inBlockAt || 0);
+    const P = this.plan; if (!P || !P.flights) return null; const heard = Math.max(o.lastFixT || 0, o.inBlockAt || 0);
     const ms = (v) => v == null ? null : v > 1e12 ? v : v * 1000; const own = o.cs && o.cs.callsign ? this.planFor(o) : null;
     const mine = new Set([own && own.arr, own && own.dep].filter(Boolean));
-    for (const f of Object.values(P.flights)) { if (!f || mine.has(f)) continue;
+    for (const f of Object.values(P.flights)) { if (!f || mine.has(f) || f.kind !== 'A') continue;
+      const bi = ms(f.blk && f.blk[2]); if (bi == null || bi <= heard + REALLOC_MARGIN_MS || bi > t) continue;
       for (const x of f.stands || []) { if (!x || !x[0] || !g.names.includes(String(x[0]).toUpperCase())) continue; const A = ms(x[1]), B = ms(x[2]);
-        if (A != null && B != null && A > heard + 60e3 && A <= t && t <= B) return 'realloc'; } }
+        if (A != null && A - 600e3 <= bi && (B == null || bi <= B + 600e3)) { o._reallocBy = f.cs || f.fn || f.id || null; return 'realloc'; } } }
     return null;
   }
   // SFO's plan was fetched more than a minute after aircraft o was last heard (its newest position, or its in-block if later):
@@ -1614,7 +1640,20 @@ export class Traffic {
       if (dh > (35 + (cf ? Math.abs(cf.dhdg_med || 0) : 0)) * relax) return null;
       return Math.abs(lat) + 0.35 * Math.abs(along) + 0.15 * dh;
     }
-    const d = Math.hypot(p.x - g.w.x, p.z - g.w.z); return d < 40 * relax ? d + 4 : null;
+    const d = Math.hypot(p.x - g.w.x, p.z - g.w.z); if (!(d < 40 * relax)) return null;
+    // (close-out round 5, the round-3 verifier's minor: a REMOTE stand with a heading in the stand record (2-2A: OSM stop node;
+    // 41-22: ADS-B; both verified by ADS-B) also needs the reference point within min(18 m, 0.35 x class span + 4 m) -- the
+    // contact-stand lateral limit -- of the stand's axis. The 40-m disc alone put SWA2974 B737 at 2-2A, 8 Nov 03:41Z: stopped at
+    // 0 kt 34 m from the stop node but 33 m BESIDE the stand axis [obs, raw reports], drawn 'gate' 37 m from the stand for 3.5 h
+    // (phase.gate_far_from_stand 127,615 frames) and removed when ac4b95 took 2-2A at 07:33Z, though it was heard there again at
+    // 08:02Z. The occupants that did park there lie within 1 m of the axis (ac4b95, ad4afb on 8 Nov). Not the along-axis offset or
+    // the heading: aircraft at 41-22 stop 10-30 m past its recorded point on the axis [obs, raw reports, 4-8 Nov] -- the record's
+    // stop is not measured well enough for a tighter test. Off the stand it is parked where its data puts it)
+    if (g.remote && g.hdg != null && g.w) {
+      const lat = Math.abs(-(p.x - g.w.x) * g.w.dz + (p.z - g.w.z) * g.w.dx);
+      if (lat > Math.min(18, 0.35 * (g.maxSpan || 36) + 4) * relax) return null;
+    }
+    return d + 4;
   }
   // heard: the time of this aircraft's OWN newest report that puts it here (stationary(): heard still >= 20 s, >= 2 reports;
   // a silent body at rest: its last fix) -- a silent aircraft last heard before that on a mutually exclusive stand does not
@@ -1787,6 +1826,7 @@ export class Traffic {
   earlyUndock(tr, t, why) {
     if (!tr.bridgeOn || !tr.bridgeGate || tr.earlyUndock || tr.leaving) return;
     tr.bridgeOn = false; tr.earlyUndock = { t, why, g: tr.bridgeGate, hurried: false };
+    if ((why === 'squawk' || why === 'callsign') && tr.noPush) tr.noPush.used = true;   // (one re-signal per cancel, close-out round 5)
     this.counters.earlyUndocks = (this.counters.earlyUndocks || 0) + 1; this.counters['early_' + why] = (this.counters['early_' + why] || 0) + 1;
     this.event(tr, t, 'early-undock', { stand: tr.gate ? tr.gate.name : null, why });
     this.onGateChange && this.onGateChange(tr.bridgeGate, null, { early: true, why });
@@ -1803,9 +1843,20 @@ export class Traffic {
   departureSignal(tr, t) {
     // (close-out round 3, realtime-7: a cancelled signal no longer blocks the next one for 30 min -- a new transponder-on is a
     // new signal; xpdrOnAt is used up by the cancel)
-    const on = tr.xpdrOnAt; if (on == null || t - on > EARLY_MAX_MS) return null;
     if (tr.pushed || tr.pushback) return null;
-    return 'xpdr';
+    const on = tr.xpdrOnAt; if (on != null && t - on <= EARLY_MAX_MS) return 'xpdr';
+    // (close-out round 5, the round-3 verifier's minor on v1: after a 'no push' cancel at EARLY_MAX_MS the bridge docked again, and
+    // a departure that came later pushed from it -- the hurried retraction then held the body: AAL402 B16 push lag 42 m / 199 frames
+    // -> 60 m / 423 frames; 9 such cancels on segment A were followed by an off-block from the same stand 34-344 min later [obs,
+    // replay]. The aircraft's own transponder then gives one more signal, at the normal rate: its squawk or its callsign changes
+    // after the cancel, at the same stand, in this turn -- for the aircraft that kept transmitting at the stand the squawk changed
+    // 5-38 min before the push (departureSignal measurements above). SFO's off-block estimate is not used for it: it is what the
+    // cancel had just found absent, and a re-signal minutes after a cancel is a visible dock/undock flap)
+    const C = tr.noPush; if (!C || C.used || tr.stale || C.g !== tr.gate || (tr.lastInBlock && tr.lastInBlock.t > C.t)) return null;
+    const sq = tr.info ? tr.info.squawk : null, cs = tr.cs ? tr.cs.callsign : null;
+    if (sq != null && C.sq != null && String(sq) !== String(C.sq)) return 'squawk';
+    if (cs && C.cs && cs !== C.cs) return 'callsign';
+    return null;
   }
   // SFO lists this aircraft's departure off-block (actual, else estimated / scheduled -- flysfo `blk`) still ahead of t, and no
   // actual block-out yet (close-out round 3, realtime-7)
@@ -1827,6 +1878,8 @@ export class Traffic {
   cancelEarly(tr, t, why) {
     const E = tr.earlyUndock; if (!E) return; tr.earlyUndock = null;
     if (E.why !== 'ahead') tr.xpdrOnAt = null;   // (the signal is used up; the next transponder-on is a new one -- realtime-7)
+    // (close-out round 5: what the transponder said at a 'no push' cancel -- departureSignal re-signals once on a change)
+    if (why === 'no push') tr.noPush = { t, g: tr.gate || null, sq: tr.info ? tr.info.squawk ?? null : null, cs: tr.cs ? tr.cs.callsign || null : null, used: false };
     this.counters.earlyCancelled = (this.counters.earlyCancelled || 0) + 1; this.event(tr, t, 'early-cancel', { stand: tr.gate ? tr.gate.name : null, why, signal: E.why });
     // (syncBridge docks it again from its lock -- onGateChange(g, tr) with the same type and pose = gates.js redock)
   }
@@ -2119,9 +2172,9 @@ export class Traffic {
         // scheduled / estimated off-block and its stand windows are too early by up to p90 88 min, 4-5 Nov recording)
         // (fix round 2, verifier v5: in practice this never fires -- 0 'stale-blockout' events on segments A (36.7 h, 9 h of them
         // with SFO's plan), B and C [obs, replay]: SFO publishes the actual block-out once the aircraft has pushed, and by then it is
-        // usually heard again. Kept as harmless; the evidence that does come before an arrival's contact is SFO's allocation of the
-        // stand to that arrival from a plan newer than the occupant's last report ('alloc', planKnows), and for a ghost > 8 h old
-        // the reallocation to any later flight (standRealloc) or the 24-h cap)
+        // usually heard again. Kept as harmless; the evidence that does come before an arrival's contact is the arrival close on
+        // that stand's lead-in (close-out round 5: SFO's allocation of the stand to that arrival, 'alloc', counts only there), and
+        // for a ghost > 8 h old another arrival's ACTUAL in-block at its stand (standRealloc) or the 24-h cap)
         this.counters.blockoutGone = (this.counters.blockoutGone || 0) + 1; this.event(tr, tDisp, 'stale-blockout', { stand: tr.gate.name }); this.fadeRemove(tr, 'blockout');
       } else if (tr.stale && now - tr.lastRecv > PARK_KEEP_MS && !tr.dropping) {
         // (close-out round 3, realtime-2: never at a contact stand on silence alone -- long-haul turns sit silent at their stand for
@@ -2130,8 +2183,9 @@ export class Traffic {
         // there has ended -- stalePlanGone), checked once a minute; without SFO's plan it stays until an aircraft takes the stand)
         // (fix round 2, verifier v11: ...and not forever. With no expiry at all a ghost stayed drawn 1.8-4.6 h past the old 8-h limit
         // after its aircraft had left -- 10.6 aircraft-hours on segment A (C8 a17b16, F22 a05a25, B2 a8758b, heard next ELSEWHERE)
-        // [obs, replay]. It also goes when SFO allocates its stand to another flight whose window began after it was last heard and
-        // covers now (standRealloc: the plan fetched after that), and after PARK_KEEP_STAND_MS whatever SFO says)
+        // [obs, replay]. It also goes when SFO reports another aircraft's arrival actually in-blocked at its stand after it was last
+        // heard (standRealloc; close-out round 5: not any later window -- that removed aircraft still there), and after
+        // PARK_KEEP_STAND_MS whatever SFO says)
         const sg = tr.gate && (tr.gate.bridge || tr.gate.sharesBridgesOf) ? tr.gate : null;
         if (!sg) this.fadeRemove(tr, 'expired');
         else if (now - tr.lastRecv > PARK_KEEP_STAND_MS) { this.event(tr, tDisp, 'stale-expired', { stand: sg.name, why: 'cap' }); this.fadeRemove(tr, 'expired'); }

@@ -58,6 +58,10 @@ Patches (static review 2026-11-04):
   P11 (close-out round 3, static-12) fixed-walkway interior vertices out of the drawn outline (gates.js's A15 L1 nudge).
   P10 (close-out round 3, static-9) rest poses within the ICAO clearance of an observed type are re-chosen where a pose
      passes check_stands' rest tests and keeps the clearance (else `stow_icao` says why not).
+  P13 (close-out round 5, 2026-11-08) `stop_open` at F19 / F20: families whose observed final stops (pinned adsb.lol hours)
+     lie > 3 m off the drawn stop - evidence only, src inf, nothing moved (F19 B777: one airframe ~12 m short).
+  Close-out round 5 also: P8 tests every neighbour TYPE with the larger code's ICAO clearance (capped by the listed
+     dominating type's distance to that type); P10_ACCEPTED decided on same-harness all-hours replays (see its comment).
   Close-out round 3 also: P1 / P2 read the 5 Nov 02:49Z flysfo snapshot too (SFO allocated D5 to a B772, F19 to B38M,
      C8 B752 with C10 BCS3), and P2 counts an aircraft standing at the neighbour's stop (adsb.lol, the pinned REC_HOURS)
      inside a plan window of the type as parked together (static-10: F19 B772 / F20 B752); P6 has gates.js's own-strip
@@ -614,7 +618,13 @@ def p8_family_ok(D, log):
     (PHYS). Round 1 used PHYS alone, which admitted B77L at F19 3.02 m from F20's A320 and B737 at C11 4.44 m from
     C9's B762 (below code C's 4.5 m). The test is made against the neighbours' FINAL envelopes (their own additions
     included) and repeated until nothing more is removed, so the result does not depend on the stand order. The rest
-    are listed in `types_ok_dominated_unsafe` {type: why} (traffic.js typesOkHas does not admit them)."""
+    are listed in `types_ok_dominated_unsafe` {type: why} (traffic.js typesOkHas does not admit them).
+    Close-out round 5 (2026-11-08, verifier finding of round 3 fix 2: the own-code rule let C11 B736 sit 5.11 m from C9's
+    B762 although the pair needs code D's 7.5 m and C11's listed B738 keeps 5.77 m): the test is made PER NEIGHBOUR TYPE -
+    the added type t at its stop against every type u the neighbour accepts (final lists, at u's stop; pairs either
+    excl_types entry rules out are skipped) - with need = max(ICAO(t), ICAO(u)) (the larger code of the pair, as
+    check_stands' pair rule), capped by the distance of the dominating listed type(s) of t (max over them) to that same u
+    (SFO's practice: never tighter than the listed type there), never below 3 m."""
     S = {s['name']: s for s in D['stands']}
     cand = {}
     for s in D['stands']:
@@ -630,28 +640,37 @@ def p8_family_ok(D, log):
             if doms: add[t] = doms
         if add: cand[s['name']] = add
     keep = {n: set(a) for n, a in cand.items()}
-    cache = {}
-    def env(o):
-        ts = tuple(sorted(set(o['types_ok']) | keep.get(o['name'], set()))) if o.get('types_ok') else None
-        k = (o['name'], ts)
-        if k not in cache: cache[k] = GM.stand_env(dict(o, types_ok=list(ts)) if ts else o)
-        return cache[k]
+    PF = {}
+    def pf(o, t):
+        k = (o['name'], t)
+        if k not in PF: PF[k] = GM.planform(GM.nose_for(o, t), o['hdg'], t)
+        return PF[k]
+    def types_of(o):
+        """the types neighbour o accepts with its own final P8 additions (geom.accepted_types on the final types_ok)"""
+        ts = sorted(set(o['types_ok']) | keep.get(o['name'], set())) if o.get('types_ok') else None
+        return [u for u in GM.accepted_types(dict(o, types_ok=ts) if ts else o) if dims(u)]
     bad = {}
     while True:
         drop = []
         for n in sorted(keep):
             s = S[n]
             for t in sorted(keep[n]):
-                pf = GM.planform(GM.nose_for(s, t), s['hdg'], t); need_icao = GM.icao_clear(dims(t)[0])
+                pt = pf(s, t); it = GM.icao_clear(dims(t)[0]); hit = None
                 for o in D['stands']:
                     if o is s or o['name'] in (s.get('excl') or []) or math.dist(o['nose'], s['nose']) > 120: continue
                     if t in ((s.get('excl_types') or {}).get(o['name']) or []): continue
-                    eo = env(o); d_ = pf.distance(eo)
-                    if d_ >= need_icao: continue
-                    dq = max(GM.planform(GM.nose_for(s, q), s['hdg'], q).distance(eo) for q in cand[n][t])
-                    need = max(PHYS, min(need_icao, dq))
-                    if d_ < need - 1e-6:
-                        drop.append((n, t)); bad.setdefault(n, {})[t] = (o['name'], d_, need, need_icao, dq); break
+                    ox = (o.get('excl_types') or {}).get(n) or []
+                    if '@%s:%s' % (n, t) in ox: continue
+                    for u in types_of(o):
+                        if u in ox: continue
+                        pu = pf(o, u); d_ = pt.distance(pu)
+                        need_icao = max(it, GM.icao_clear(dims(u)[0]))      # the larger code of the pair
+                        if d_ >= need_icao: continue
+                        dq = max(pf(s, q).distance(pu) for q in cand[n][t])   # the dominating listed type(s) vs the same u
+                        need = max(PHYS, min(need_icao, dq))
+                        if d_ < need - 1e-6: hit = (o['name'], d_, need, need_icao, dq, u); break
+                    if hit: break
+                if hit: drop.append((n, t)); bad.setdefault(n, {})[t] = hit
         if not drop: break
         for n, t in drop: keep[n].discard(t)
     for s in D['stands']:
@@ -659,14 +678,14 @@ def p8_family_ok(D, log):
         if n not in cand: continue
         b_ = {t: v for t, v in (bad.get(n) or {}).items() if t not in keep[n]}
         if b_:
-            s['types_ok_dominated_unsafe'] = {t: '%.1f m from the envelope of %s (< %.1f m: ICAO %.1f m%s)' % (
-                v[1], v[0], v[2], v[3], '' if v[2] >= v[3] else ', capped at the %.1f m of the listed type' % v[4]) for t, v in sorted(b_.items())}
+            s['types_ok_dominated_unsafe'] = {t: '%.1f m from the %s at %s (< %.1f m: ICAO %.1f m for the pair%s)' % (
+                v[1], v[5], v[0], v[2], v[3], '' if v[2] >= v[3] else ', capped at the %.1f m of the listed type' % v[4]) for t, v in sorted(b_.items())}
             log.append('P8 %s family-dominated but too close to a neighbour, NOT added: %s' % (n, ', '.join(
-                '%s (%s %.1f m < %.1f)' % (t, v[0], v[1], v[2]) for t, v in sorted(b_.items()))))
+                '%s (%s at %s %.1f m < %.1f)' % (t, v[5], v[0], v[1], v[2]) for t, v in sorted(b_.items()))))
         if keep[n]:
             s['types_ok'] = sorted(set(s['types_ok']) | keep[n])
-            note(s, 'types_ok + %s (smaller members of a listed type\'s stop-point family that keep the ICAO stand clearance, or the '
-                    'clearance of the listed type; traffic.js typesOkHas)' % ', '.join(sorted(keep[n])), STAMP3)
+            note(s, 'types_ok + %s (smaller members of a listed type\'s stop-point family that keep the ICAO stand clearance of the larger '
+                    'code against every neighbour type, or the clearance of the listed type to it; traffic.js typesOkHas)' % ', '.join(sorted(keep[n])), STAMP3)
             log.append('P8 %s types_ok + %s' % (n, ', '.join(sorted(keep[n]))))
 
 
@@ -715,6 +734,61 @@ def p9_antenna_ref(D, log):
                                 'patch_stands.py REC_HOURS); obs (n < 5: weak). The position is the '
                                 'GNSS antenna unless the transponder applies the DO-260B nose offset (A32x)', 'hours': list(REC_HOURS),
                         'families': out}
+
+
+# ------------------------------------------------------------------------------------------------ P13
+STAMP5 = 'fix-up 2026-11-08 (close-out round 5)'
+STOP_OPEN_STANDS = ('F19', 'F20')   # the pair the close-out-3 verifier flagged (F19 wide-body stop vs F20)
+STOP_OPEN_MIN = 3.0                 # m: |offset of the observed final stop from the drawn stop| recorded
+
+
+def p13_stop_open(D, log):
+    """close-out round 5 (2026-11-08, verifier finding of close-out 3 fix 2: F19's B772 / B77W are drawn 4.3-4.7 m from F20's
+    types, but the one wide-body arrival recorded there stopped ~12 m further from the terminal): EVIDENCE ONLY, nothing moves.
+    For the stands in STOP_OPEN_STANDS, every arrival in the pinned hours (REC_HOURS, adsb_still) whose LAST still group there
+    lies on the stand axis (|lateral| <= 1.5 m, heading within 10 deg, -45 m < along < +10 m of the model nose) gives the nose
+    offset from the drawn stop = antenna along - the family's antenna reference (P9 antenna_ref, n >= 5 only) - the type stop
+    (type_stops[family].along, else 0). Families whose median offset exceeds STOP_OPEN_MIN are written to `stop_open`
+    {family: {offset_m, n, aircraft, src: 'inf', why}}: an open item - too few airframes (and the antenna offset of one
+    airframe is of the same order) to move the stop; the static pair checks still use the drawn stops, so for these
+    families the drawn pair clearance is TIGHTER than observed (F19 B777 n = 1)."""
+    AR = {f: v['along_m'] for f, v in (D.get('antenna_ref') or {}).get('families', {}).items() if v.get('n', 0) >= 5}
+    st = adsb_still(); by = defaultdict(list)
+    for q in st: by[q[3]].append(q)
+    S = {s['name']: s for s in D['stands']}
+    rows = defaultdict(lambda: defaultdict(list))
+    for hx, qs in by.items():
+        groups, cur = [], []
+        for q in qs:
+            if cur and (math.dist(q[1:3], cur[0][1:3]) >= 8 or q[0] - cur[-1][0] > 600): groups.append(cur); cur = []
+            cur.append(q)
+        if cur: groups.append(cur)
+        for gi, g in enumerate(groups):
+            if len(g) < 3: continue
+            ty = next((q[5] for q in g if q[5]), None); f_ = GM.FAMILY.get(ALIAS_T.get(ty, ty)) if ty else None
+            hd = [q[6] for q in g if q[6] is not None]
+            if not f_ or not hd or f_ not in AR: continue
+            x, z, h = float(np.median([q[1] for q in g])), float(np.median([q[2] for q in g])), float(np.median(hd))
+            if any(G[0][0] - g[-1][0] < 1800 and math.dist(G[0][1:3], (x, z)) < 60 for G in groups[gi + 1:]): continue   # moved on: not the stop
+            for n in STOP_OPEN_STANDS:
+                s = S[n]; a, c = local((x, z), s['nose'], s['hdg'])
+                if abs(c) <= 1.5 and -45.0 < a < 10.0 and abs(hdiff(h, s['hdg'])) <= 10:
+                    ts = (((s.get('type_stops') or {}).get(f_) or {}).get('along')) or 0.0
+                    rows[n][f_].append((a - AR[f_] - ts, '%s %s %s' % ((g[0][4] or hx), ty, dt.datetime.fromtimestamp(g[0][0], dt.timezone.utc).strftime('%d %b %H:%MZ'))))
+    for n in STOP_OPEN_STANDS:
+        rec = {}
+        for f_, r in sorted(rows[n].items()):
+            off = float(np.median([v for v, _ in r]))
+            if abs(off) <= STOP_OPEN_MIN: continue
+            rec[f_] = {'offset_m': round(off, 1), 'n': len(r), 'aircraft': [w for _, w in sorted(r, key=lambda q: q[1])], 'src': 'inf',
+                       'why': ('ADS-B (adsb.lol, pinned REC_HOURS): the %s final stop%s lie%s %.1f m %s the drawn stop (antenna reference %.1f m, '
+                               'P9); open item, not applied: %s' % (f_, 's' if len(r) > 1 else '', '' if len(r) > 1 else 's', abs(off),
+                                                                    'short of' if off < 0 else 'beyond', -AR[f_],
+                                                                    'n = %d airframe%s, per-airframe antenna offsets of the same order' % (len(r), 's' if len(r) > 1 else '')))}
+            log.append('P13 %s %s final stop %+.1f m from the drawn stop (n %d: %s) - stop_open (inf), not applied' % (n, f_, off, len(r), '; '.join(w for _, w in r)))
+        if rec:
+            S[n]['stop_open'] = rec
+            note(S[n], 'stop_open: %s (ADS-B final stops off the drawn stop; evidence only, inferred)' % ', '.join('%s %+.1f m n %d' % (f_, v['offset_m'], v['n']) for f_, v in rec.items()), STAMP5)
 
 
 # ------------------------------------------------------------------------------------------------ P10
@@ -1139,6 +1213,7 @@ def main():
     p10_rest(D, log)
     p5_beyond(D, log)
     p9_antenna_ref(D, log)
+    p13_stop_open(D, log)
     p4_src(D, log)     # after P5: a new conflict_along makes an obs stand inf
     D['fixups'] = [{'stage': 'tools/stands/patch_stands.py', 'stamp': STAMP, 'base': os.path.relpath(BASE, ROOT),
                     'evidence': {'flysfo': FLYSFO_WINDOW2, 'flysfo_replay': os.path.relpath(P12_REPLAY, ROOT) + ' (P1 / P2 results, used when the snapshot is missing)',
