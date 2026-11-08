@@ -176,12 +176,21 @@ async function sourceBytes(src) {
   if (typeof src === 'string') { const r = await fetch(src); if (!r.ok) throw new Error('model fetch ' + r.status); return await r.arrayBuffer(); }
   return src;
 }
+// the model file of `key`, fetched once and shared by every stretched variant decoded from it (737-700/-800/-900/MAX on
+// b738, CRJ-700/-900 on crj2, ...): before, each variant fetched the same file again (the phone replay of 8 Nov 20:38Z
+// fetched b738 5x and crj2 7x). decodeModel and modelPositions only read the buffer, as with an ArrayBuffer source.
+// A failed fetch is dropped from the cache so a later variant retries.
+const srcCache = new Map();   // key -> Promise<ArrayBuffer>
+function keyBytes(key) {
+  const src = MODEL_SOURCES[key]; if (!src) return Promise.reject(new Error('no model source for ' + key));
+  if (!srcCache.has(key)) { const p = sourceBytes(src); srcCache.set(key, p); p.catch(() => { if (srcCache.get(key) === p) srcCache.delete(key); }); }
+  return srcCache.get(key);
+}
 // vertex positions (model frame, after the fit's stretch) and zones of model `key`, without GPU objects: for QA tools that
 // measure what is drawn in the running app (tools/models/qa_stance.mjs: tyre contact on the mesh, close-out round 3,
 // aircraft-3). Returns { pos: Float32Array(nv * 3), zone: Uint8Array(nv), nv, dims } (dims after the stretch)
 export async function modelPositions(key, stretch = null) {
-  const src = MODEL_SOURCES[key]; if (!src) throw new Error('no model source for ' + key);
-  const buf = await sourceBytes(src); const b0 = new Uint8Array(buf, 0, 2);
+  const buf = await keyBytes(key); const b0 = new Uint8Array(buf, 0, 2);
   const raw = (b0[0] === 0x1f && b0[1] === 0x8b) ? await gunzip(buf) : buf; const dv = new DataView(raw);
   const hl = dv.getUint32(8, true); const head = JSON.parse(new TextDecoder().decode(new Uint8Array(raw, 12, hl)));
   const B = 12 + hl, nv = head.nv, q = head.quant, o = head.offsets;
@@ -194,9 +203,7 @@ export function getModel(key, stretch) {
   const ck = key + (stretch ? ':' + JSON.stringify(stretch) : '');
   if (!cache.has(ck)) {
     const p = (async () => {
-      const src = MODEL_SOURCES[key];
-      if (!src) throw new Error('no model source for ' + key);
-      const m = await decodeModel(await sourceBytes(src), stretch);
+      const m = await decodeModel(await keyBytes(key), stretch);
       p._value = m; return m;
     })();
     cache.set(ck, p);
