@@ -447,7 +447,16 @@ removed P8 types), refusals identical (78), rotShifted 0, walkNudge [].
    terminal than F19's drawn stops (antenna references 9.2 / 15.0 m); `antPark()` places parked aircraft from their own
    reports, so this affects the static checks only.
 5. Pavement changed slightly vs fix 1 (+0.65 / -0.28 ha; the north cargo taxilane hole at (-405,-967) is paved; OSM
-   buildings / end zones are back at their pre-round-3 pavement). All-hours replay on the frozen r3v code: see R5.4.
+   buildings / end zones are back at their pre-round-3 pavement). All-hours replay (your harness, stream SP/r3/all, frozen
+   r3v code; before = the fix-1 run on the committed fix-1 data, after = this round's final data, scratch f2/replay4):
+   offpave.mask 412,453 -> 402,809 frames (328 aircraft), offpave.union 5,678 -> 5,609 (153 -> 151), clear.taxi 209 -> 186
+   (36 -> 35), overlap.gnd 948 -> 902 (35 -> 30), bridge.hit.fus 1,717 -> 1,626 (7 -> 6), hit_at_rest 873 -> 852 (7 -> 6);
+   bridge.orphan / refused / lag unchanged. Worse, with no static input changed near them (rest poses identical to fix 1,
+   no pavement change within 80 m, G4 / G7 / B19 / B20 data untouched) - please look: (a) UAL917 B772's pushback along the
+   G pier (5 Nov 06:53-06:54Z, same positions and frame counts) now scores 317 hit points on G4 L2's rest cab (was 47),
+   113 on G7 L2's walkway (17) and a new 25-frame engine contact with G4 L1's stair (sev 8); (b) clear.stand +1 key: AAL491
+   A321 at B19 vs a6c4d7 (AAL2651 A321, stale-parked at B20 after 'stale-replaced') 4.16 m < 4.5 m, 15,370 frames.
+   Identical event logs (3,616 events) in both runs.
 
 ## R5.2 Bridges (js/live/gates.js)
 

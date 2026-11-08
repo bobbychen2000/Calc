@@ -52,6 +52,8 @@
 //                         landings flagged airborne down to ~50 kt can be missed by the landing detector.
 //   rwy.lineup_hdg        (round 2) lined up (stationary, on the assigned runway) with the body > 15 deg off the runway heading
 //                         (round 3: the engine's phase at display time, whatever the label; .label = the displayed label only)
+//   bridge.signalled_long (close-out round 3 fix round 2) at rest at a contact stand with its bridges < 50 % extended on a departure
+//                         signal (traffic.js earlyUndock) for > 76 min -- the engine's bound is 75 min
 //   bridge.parked_undocked (round 3) at rest at a contact stand > 180 s, its bridges < 50 % extended, not signalled / leaving
 //                         (bridge.refused: gates.js docks none of the stand's bridges to that type -- data, not engine);
 //   bridge.dock_flap      (round 3) a dock within 30 s of the previous undock at the same stand (one count per event;
@@ -106,6 +108,7 @@ const { parsePayload } = await imp('js/live/feed.js');
 const { TYPES } = await imp('js/aircraft/types.js');
 const GEO = await imp('js/geo.js'); const { GROUND_Y, worldToST } = GEO; const toLL = GEO.worldToWgs84 || GEO.worldToLL; const toW = GEO.wgs84ToWorld || GEO.llToWorld;
 const GATESJS = await imp('js/live/gates.js'); const { LiveGateSystem } = GATESJS; const doorOfG = GATESJS.doorOf || null;
+let isFreighterL = null; try { ({ isFreighter: isFreighterL } = await imp('js/live/lookup.js')); } catch (e) { console.error('no js/live/lookup.js isFreighter: freighters get door-2 bridges'); }
 // (close-out round 3, realtime-12: the aircraft solid the bridges plan against -- gates.js acHit: tapered nose, wings,
 // engines, the swept tailplane as js/aircraft/model.js lofts it -- for the bridge hits; null on an older gates.js)
 const acHitG = GATESJS.acHit || null;
@@ -136,7 +139,11 @@ const undocking = new Map(); // physical gate name -> the occupant whose bridge 
 // push is seen with the bridge still out -- gates.js hurryUndock(), the sheet's maximum rates; bridges_closeout.md Round 2)
 function applyGate(g, tr, opt) { const G = bridgeGate(g); const ty = tr && tr.model && TYPES[tr.model.t] ? tr.model.t : null; const prev = occ.get(G.name); if (!ty && prev) undocking.set(G.name, prev); else if (ty) undocking.delete(G.name); occ.set(G.name, ty ? tr : null);
   if (!tr && opt && opt.early && gsys.undockEarly) { gsys.undockEarly(G, simNow); return; }
-  gsys.setOccupant(G, ty, booted, simNow, tr ? poseST(tr) : null, tr ? tr.info.icao : null);
+  // (close-out round 3 fix round 2, verifier v9: the occupant's freighter flag, as app.js passes it since realtime-14 -- gates.js docks
+  // no door-2 bridge to a freighter. app.js asks the drawn model first (its freighter(), which also knows a cargo livery); without
+  // models the harness has lookup.js isFreighter() on the operator, type and registry description alone)
+  const fr = !!(tr && isFreighterL && isFreighterL({ airline: tr.cs && tr.cs.airline ? tr.cs.airline.icao : null, icaoType: tr.info.icao, desc: tr.info.dbDesc }));
+  gsys.setOccupant(G, ty, booted, simNow, tr ? poseST(tr) : null, tr ? tr.info.icao : null, { freighter: fr });
   if (!tr && opt && opt.fast && gsys.hurryUndock) gsys.hurryUndock(G, opt.s || 5, simNow); }
 function bridgeK(g, b) { const a = gsys.anims.get(g.id); if (a) return gsys.docks(g, b) ? a.k : 0; return g.acType && gsys.docks(g, b) ? 1 : 0; }
 // (gates.js step(): the app's own animation step -- it also records the height a retracted bridge rests at)
@@ -338,6 +345,7 @@ const finalRwy = new Map(); // hex -> {rwy, t}
 // contact stand for > 180 s (DOCK_WAIT 20 s + gates.js DOCK_DELAY 12 s + the docking itself) with its bridges < 50 %
 // extended, not signalled / leaving / pushing; bridge.refused = the same where gates.js docks none of the stand's bridges
 // to that type at that pose (data / geometry, not the engine)
+const SIG_LONG_S = 76 * 60;   // bridge.signalled_long threshold (> the engine's 75-min bound, traffic.js EARLY_MAX_MS + OFFBLK_NEAR_MS)
 const BS = new Map(); const FLAP = { docks: 0, undocks: 0, locks: 0, unlocks: 0, dockFlaps: 0, lockFlaps: 0, per: new Map() };
 function bridgeState(tr, D, T) {
   let s = BS.get(tr.hex); if (!s) BS.set(tr.hex, s = { b: !!tr.bridgeOn, l: !!tr.lock, tU: -1e15, tUl: -1e15, gU: null, park: null });
@@ -352,6 +360,12 @@ function bridgeState(tr, D, T) {
   if (!b && s.b) { s.tU = simNow; s.gU = g; } if (!l && s.l) s.tUl = simNow;
   s.b = b; s.l = l;
   const G0 = tr.gate; const contact = !!(G0 && (G0.bridge || G0.sharesBridgesOf));
+  // (close-out round 3 fix round 2, verifier v1: bridge.signalled_long -- parked at a contact stand with its bridges < 50 % extended
+  // because of a departure signal (traffic.js earlyUndock, which parked_undocked leaves out) for more than SIG_LONG_S: the engine
+  // bounds that retraction at EARLY_MAX_MS + OFFBLK_NEAR_MS = 75 min; value = seconds since the signalled retraction began)
+  const sig = contact && !!T && D.ground && D.gs < 0.05 && !!tr.earlyUndock && !tr.leaving && !tr.pushback && !tr.dropping && !tr.fadeOut && !(D.alpha != null && D.alpha < 1);
+  if (!sig) s.sig = null; else { if (!s.sig || s.sig.g !== G0.name) s.sig = { g: G0.name, t: simNow };
+    if (simNow - s.sig.t > SIG_LONG_S * 1000 && checking() && traffic.bridgeK(G0) < 0.5) viol('bridge.signalled_long', tr, (simNow - s.sig.t) / 1000, { stand: G0.name, why: tr.earlyUndock.why || null, min: Math.round((simNow - s.sig.t) / 60000) }); }
   const parked = contact && !!T && D.ground && D.gs < 0.05 && !tr.leaving && !tr.earlyUndock && !tr.pushback && !tr.dropping && !tr.fadeOut && !(D.alpha != null && D.alpha < 1);
   if (!parked) { s.park = null; return; }
   if (!s.park || s.park.g !== G0.name) s.park = { g: G0.name, t: simNow };
