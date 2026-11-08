@@ -732,6 +732,13 @@ def _arc(angs, back, margin=25.0):
 
 
 _WING = {}
+# fix round 2 (verifier v7): re-choose rest poses for ACCEPTED-not-observed types too? Tried and switched OFF after three
+# all-hours replays (frozen r3v code, this round's data): every variant (+-120 deg; no aft move; +-30 deg) changed the real
+# pushback of UAL917 B772 along the G pier (5 Nov 06:53-06:54Z) - its hits on G4 L2's rest cab grew from 47 to 291-378
+# points and on G7 L2's walkway from 17 to 134-452 - because the engine's tow / ground-physics reacts to the G5-G7 rests.
+# A data rest pose chosen for a hypothetical occupant is not worth a change to real traffic: the accepted-type test stays in
+# check_stands (reported, 24 bridges) and gates.js is asked to choose the rest per occupant (static_closeout.md R5.2).
+P10_ACCEPTED = False
 
 
 def _wing(o, t):
@@ -802,7 +809,7 @@ def p10_rest(D, log):
             return not (o['name'] in own_ and GM.dock_door(t, b['door']) is not None and t not in (b.get('dock_types_out') or []))
         wingsl = [(_wing(o, t), GM.icao_clear(GM.APP[t]['span']), t, o['name'], t in _obs(o))
                   for o in near for t in sorted(set(GM.accepted_types(o)) | _obs(o))
-                  if t in GM.APP and GM.APP[t].get('span') and (t in _obs(o) or parked_while_resting(o, t))]
+                  if t in GM.APP and GM.APP[t].get('span') and (t in _obs(o) or (P10_ACCEPTED and parked_while_resting(o, t)))]
         U_ = {}
         for w, need, t, on, ob in wingsl: U_.setdefault(need, []).append(w)
         U_ = {k: unary_union(v) for k, v in U_.items()}
