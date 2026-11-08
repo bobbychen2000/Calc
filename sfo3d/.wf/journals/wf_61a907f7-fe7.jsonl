@@ -1,0 +1,3 @@
+{"type":"launched"}
+{"type":"started","key":"v2:c80aff47bb5f56bdd8af6d9254f629ab33af70228549a58df78d271f5c29c590","agentId":"a8653fde66ac11f0b","label":"r5fix1:realtime","phase":"Fix"}
+{"type":"started","key":"v2:3ebe21820a5693556175a9f59ddb936b5d33baf1ab294408fda860b87f19307a","agentId":"a9c0c4997e40e075f","label":"r5fix1:static","phase":"Fix"}
