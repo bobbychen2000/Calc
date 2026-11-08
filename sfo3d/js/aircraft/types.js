@@ -340,9 +340,9 @@ export function derive(baseKey, key, name, extra = {}, fwdPlug = null) {
 }
 derive('b738', 'b736', 'Boeing 737-600'); derive('b738', 'b737', 'Boeing 737-700'); derive('b738', 'b739', 'Boeing 737-900ER');
 // the 737-600 flies the plain wing (the ACAP's baseline -600; winglets are an aftermarket option on some airframes, D6-58325-7
-// Rev C p.1-5): span 112 ft 7 in = 34.32 m (§2.2.1, SPEC.b736), no tip device; the model's blended winglet is folded away
-// (js/aircraft/fit.js TIP_PLAIN; close-out round 4, verifier finding 8)
-TYPES.b736.wing = { ...TYPES.b736.wing, span: 34.32, tip: 'plain', tipH: 0 };
+// Rev C p.1-5): span 112 ft 7 in = 34.32 m (§2.2.1, SPEC.b736, set below), no tip device; the model's blended winglet is
+// folded away (js/aircraft/fit.js TIP_PLAIN; close-out round 4, verifier finding 8; the far LOD drew a blended winglet)
+TYPES.b736.wing = { ...TYPES.b736.wing, tip: 'plain', tipH: 0 };
 derive('b38m', 'b37m', 'Boeing 737 MAX 7'); derive('b38m', 'b39m', 'Boeing 737 MAX 9'); derive('b38m', 'b3xm', 'Boeing 737 MAX 10');
 derive('a20n', 'a319', 'Airbus A319', { eng: [{ z: 5.75, len: 4.4, r: 1.0, y: 1.25, fwd: 2.6 }] }); derive('a20n', 'a19n', 'Airbus A319neo');
 derive('a20n', 'a320', 'Airbus A320', { eng: [{ z: 5.75, len: 4.4, r: 1.0, y: 1.25, fwd: 2.6 }] });
