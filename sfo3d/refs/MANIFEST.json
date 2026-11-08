@@ -5190,6 +5190,12 @@
    "bytes": 212726,
    "sha256": "0d01bd8c58cca0ccedfdac3b85a314a8b953343bd76330d57c606c41209de2db"
   },
+  "gate_truth/flysfo_api_flight-status_20261108T042442Z.json.gz": {
+   "class": "local",
+   "why": "flysfo.com responses: no published terms",
+   "bytes": 198287,
+   "sha256": "be3b09fa38dfff56ec52f148ed7bcfc30c7211855ce5c5dd0812753224d78611"
+  },
   "lighting/DAILY_DOF_CSV.ZIP": {
    "class": "local",
    "why": "bulk archive, re-fetchable (extracts are committed)",
@@ -11402,8 +11408,14 @@
   "rec/adsbfi_20261108_03.jsonl.gz": {
    "class": "local",
    "why": "adsb.fi terms: personal non-commercial use, not to be licensed on",
-   "bytes": 3523538,
-   "sha256": "15a9da70cc1419c76d925be3539e736b1ec8c77110c59b238b0e9597193f40fd"
+   "bytes": 4158573,
+   "sha256": "964134106b9566798c091264ca749f90df4211441cc0cd70d9f780c5b7972edd"
+  },
+  "rec/adsbfi_20261108_04.jsonl.gz": {
+   "class": "local",
+   "why": "adsb.fi terms: personal non-commercial use, not to be licensed on",
+   "bytes": 1246536,
+   "sha256": "4f328fc80a6d6977b8be78a94a87322f00dae45d756373dd737de8bf923c7a07"
   },
   "rec/adsblol_20261104_17.jsonl.gz": {
    "class": "pack",
@@ -11792,8 +11804,14 @@
   "rec/adsblol_20261108_03.jsonl.gz": {
    "class": "pack",
    "why": "ODbL (adsb.lol); trimmed copy in rec_pack/",
-   "bytes": 865649,
-   "sha256": "f75a76d47b80d60c0dfc8e0859b8bc9a793b4825a4fd7474de6a5e606e1abae8"
+   "bytes": 1066174,
+   "sha256": "73acf8f545c3604969ef2f494ebd9ea22bb98320089f5318e915c1532f4e4708"
+  },
+  "rec/adsblol_20261108_04.jsonl.gz": {
+   "class": "pack",
+   "why": "ODbL (adsb.lol); trimmed copy in rec_pack/",
+   "bytes": 450923,
+   "sha256": "f8c91cf3557e9b6485a69d4884aa83d32835708ace404853fba22ad93d68fc58"
   },
   "rec/recorder.log": {
    "class": "local",
@@ -11804,14 +11822,27 @@
   "rec/recorder.out": {
    "class": "local",
    "why": "recorder state",
-   "bytes": 116246,
-   "sha256": "c8962f16f984d06c3e6760fa6ab6768a3b27fbf09a793aec2a16c1cb2aa37e20"
+   "bytes": 117676,
+   "sha256": "b887d2ec39903efe4f88969e6f9d571c058f40b7d6996bf4f6248f0621cd35ad"
   },
   "rec/recorder.pid": {
    "class": "local",
    "why": "recorder state",
    "bytes": 3,
-   "sha256": "4a8596a7790b5ca9e067da401c018b3206befbcf95c38121854d1a0158e7678a"
+   "sha256": "4a8596a7790b5ca9e067da401c018b3206befbcf95c38121854d1a0158e7678a",
+   "missing_locally": true
+  },
+  "rec/relay.out": {
+   "class": "local",
+   "why": "recorder state",
+   "bytes": 394,
+   "sha256": "ca86b73a5586d5e53a5de3eec14faed0414fcdd92ffabec99750aa71419ae7e4"
+  },
+  "rec/relay_record.pid": {
+   "class": "local",
+   "why": "recorder state",
+   "bytes": 5,
+   "sha256": "0d89b2b31f97c14550cbb4dce99493abcd983962abddc28ee00e42b5b19556d7"
   },
   "replay/reports.pkl": {
    "class": "local",

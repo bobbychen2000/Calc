@@ -11,6 +11,7 @@ Serves the app from this directory and relays live data, so the browser never ta
   python3 sfo_live_server.py --record refs/cache/rec   also write every provider response in record.py's format
 
 Endpoints
+  /                  302 redirect to live3.html (the live app), query string kept
   /api/ping          {"sfolive": 1, "v", "stream", "features", "attribution"}   (js/live/entry.js detects the relay)
   /api/adsb          latest merged aircraft list, readsb "jv2" shape {"ac": [...], "now": ms, "seq", ...}
   /api/stream        Server-Sent Events. Default: one "adsb" event (full list, same JSON as /api/adsb) per merged update.
@@ -1704,6 +1705,15 @@ def make_handler(app):
             u = urllib.parse.urlparse(self.path)
             q = urllib.parse.parse_qs(u.query)
             try:
+                if u.path == '/':
+                    # the root opens the live app (three.js renderer, live3.html), keeping any query string: a phone that
+                    # reaches the relay through a preview link lands on the app, not on the legacy dev page index.html
+                    # (render.mjs serves index.html with its own static server and is not affected)
+                    self.send_response(302)
+                    self.send_header('Location', 'live3.html' + (('?' + u.query) if u.query else ''))
+                    self.send_header('Content-Length', '0')
+                    self.end_headers()
+                    return
                 if u.path == '/api/ping':
                     # dataNow (ms): the data clock -- the recording's time in replay, wall time live (environment_spec.md
                     # 3.2: the app places the Sun from it); also in every ADS-B payload (Hub._merge)
