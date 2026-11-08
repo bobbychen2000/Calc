@@ -27,7 +27,7 @@
 // fixed), pre-exposure (every emitter x pre, the post exposure / pre; ?pre=1 pins it for the invariance check), rain /
 // drizzle particles (js/three/rain.js), lightning and wet pavement (ground.js).
 import { THREE, TSL } from './lib.js';
-import { Engine, QUALITY3 } from './engine.js';
+import { Engine, QUALITY3, LITE3 } from './engine.js';
 import { Sky } from './sky.js';
 import { GroundBakes, groundMaterial, waterMaterial } from './ground.js';
 import { objectMaterial } from './objects.js';
@@ -114,6 +114,9 @@ export class Renderer3 {
   constructor(W, H, opts = {}) {
     const qs = new URLSearchParams(location.search);
     this.W = W; this.H = H; this.tier = tierOf(opts); this.Q = QUALITY3[this.tier];
+    // lite phone build (window.SFO_LITE, engine.js LITE3): the low tier with the lite overrides; without TRAA nothing averages
+    // a per-frame rotation of the shadow PCF taps, so it is turned off (as js/three/perf.js does for aa: 'fxaa')
+    if (window.SFO_LITE && this.tier === 'low') { this.Q = { ...this.Q, ...LITE3 }; this.lite = true; if (!this.Q.traa) Engine.temporalShadows = false; }
     setMaxTextureSize(this.Q.maxTex); // image textures decoded after this point are capped (phones: 1024)
     this.canvas = glCanvas; this.dbgNoCast = qs.get('nocast') === '1'; this.fixedRes = qs.get('res') === '1';
     this.engine = new Engine(document.getElementById('app') || document.body, this.Q, { canvas: this.canvas });

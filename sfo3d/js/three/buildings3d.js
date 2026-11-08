@@ -100,7 +100,7 @@ export class Buildings3D {
     const qs = new URLSearchParams(location.search);
     this.R = R; this.E = R.engine;
     const q = qs.get('b3d');
-    this.mode = q === '0' || q === 'off' ? 'off' : q === 'lod2' || q === 'full' || q === 'near' ? q : (R.tier === 'low' || R.tier === 'medium' ? 'near' : 'full');
+    this.mode = q === '0' || q === 'off' ? 'off' : q === 'lod2' || q === 'full' || q === 'near' ? q : window.SFO_LITE ? 'lod2' : (R.tier === 'low' || R.tier === 'medium' ? 'near' : 'full');   // lite phone build: the far (LOD2) files only (the build ships no others)
     this.towerFamily = qs.get('b3dtower') === 'f1' ? 'f1' : 'f2'; // tower.glb = F2 (default), tower_f1.glb = F1 (manifest.json#tower)
     this.base = window.SFO_B3D_BASE || 'data/buildings3d/'; this.ext = window.SFO_B3D_EXT || '.glb'; this.parts = window.SFO_B3D_PARTS || {};
     this.lodScale = (R.Q && R.Q.lod ? R.Q.lod : LOD_REF) / LOD_REF;

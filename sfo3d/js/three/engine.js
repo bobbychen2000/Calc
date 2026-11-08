@@ -37,6 +37,13 @@ export const QUALITY3 = {
   low: { name: 'low', dprMax: 2, maxPx: 1.1e6, shadow: 1024, cascades: 3, shadowRadius: 3, ao: 'mrt', aoScale: 0.5, traa: true, bloom: true, bloomScale: 0.25, terrainStep: 30, mapRes: 1.6, aptRes: 1.25, cityRes: 2048, skyRes: 512, lod: 1000, shadowDist: 700, aniso: 4, maxTex: 1024, floodSpots: 1, spotMap: 1024, livMB: 64,
     splits: (r, Q) => { const a = r[0] * 0.8, b = Math.max(a * 2.5, r[1] * 0.8); return [a, b, Math.max(b * 1.5, Math.min(r[r.length - 1], Math.max(Q.shadowDist, r[1] * 1.6)))]; } },
 };
+// LITE (owner request 8 Nov 2026: "a lite version I can use on my iPhone; the current one is laggy"): overrides applied on
+// top of QUALITY3.low when the page sets window.SFO_LITE (tools/build3/phone_artifact.sh with LITE=1; renderer3.js). The
+// tier name stays 'low', so every phone-tier branch (sky samples, sprites, flood field) still applies. Removed per frame:
+// the GTAO pass (Q.ao 'none': one scene pass), TRAA + CAS (FXAA instead; no velocity target, no history), bloom, one of
+// the three shadow cascades (2 x 1024^2, the far split at shadowDist); DPR <= 1.5 and <= 0.7 MP rendered (the owner's
+// iPhone measured 17 fps on the low tier at DPR 3, 26 Sep: docs/research/mobile_perf.md). Smaller bakes: city 1024^2, sky 256.
+export const LITE3 = { dprMax: 1.5, maxPx: 0.7e6, cascades: 2, splits: undefined, shadow: 1024, shadowDist: 450, ao: 'none', traa: false, aa: 'fxaa', bloom: false, cityRes: 1024, skyRes: 256, lod: 700 };
 
 // GTAO radius (world metres): 4 m, so the sky occlusion under a wing, a fuselage or a jet bridge (4-6 m above the apron)
 // is caught (review round 1: shade under aircraft was only 1/6 of sunlit concrete, about 1/30 in a reference photo;

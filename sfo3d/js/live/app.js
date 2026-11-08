@@ -57,6 +57,9 @@ const QUALITY = {
 };
 const store = { get(k, d) { try { const v = localStorage.getItem('sfolive.' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem('sfolive.' + k, JSON.stringify(v)); } catch (e) { } } };
 function pickQuality(pref) {
+  // lite phone build (window.SFO_LITE, tools/build3/phone_artifact.sh LITE=1): the low tier (msaa 2 keeps renderer3's 'low'
+  // recognition) with the canvas caps of js/three/engine.js LITE3, a shorter aircraft LOD / shadow range and smaller bakes
+  if (typeof window !== 'undefined' && window.SFO_LITE) return { ...QUALITY.low, lite: true, dprMax: 1.5, maxPx: 0.7e6, lod: 700, shadowDist: 450, cityRes: 1024, terrainStep: 40 };
   const ua = navigator.userAgent || '';
   const mobile = /iPhone|iPad|iPod|Android/i.test(ua) || (matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 900);
   const mem = navigator.deviceMemory || 8;

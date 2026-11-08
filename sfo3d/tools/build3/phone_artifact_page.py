@@ -83,6 +83,14 @@ if REPLAY:
     shim = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'replay_shim.js')).read()
     assert '</script' not in shim
     page = page.replace(k_js, "<script>window.SFO_REPLAY = {url: 'data/replay.wasm'};\n" + shim + '</script>\n' + k_js, 1)
+# Owner request 8 Nov 2026 ("a lite version I can use on my iPhone"; published as its own artifact, the full one stays):
+# LITE=1 sets window.SFO_LITE before the app runs (js/live/app.js pickQuality, js/three/engine.js LITE3 via renderer3.js,
+# js/three/buildings3d.js lod2 mode) and makes the building default B3D=lod2 (the far-LOD files only, ~7 MB instead of ~56 MB).
+LITE = os.environ.get('LITE') == '1'
+if LITE:
+    assert page.count('<title>SFO Live 3D</title>') == 1
+    page = page.replace('<title>SFO Live 3D</title>', '<title>SFO Live 3D Lite</title>', 1)
+    page = page.replace(k_js, '<script>window.SFO_LITE = true;</script>\n' + k_js, 1)
 open(f'{O}/sfo_phone_test.html', 'w').write(page)
 for f in glob.glob(f'{S}/out/build3/assets/*'):
     os.makedirs(f'{O}/assets', exist_ok=True); shutil.copy(f, f'{O}/assets/')
@@ -97,7 +105,7 @@ for f in glob.glob(f'{S}/data/liveries/*/*-lo.webp'):
 # file - a larger file is split into PART_MB pieces <name>.part<i>.wasm (window.SFO_B3D_PARTS = {name: n}, joined by the
 # loader) -, 64 MB per publish (publish in two calls if the total says so).
 PART_MB = 12
-b3d = os.environ.get('B3D', 'all'); nb = 0; parts = {}
+b3d = os.environ.get('B3D', 'lod2' if LITE else 'all'); nb = 0; parts = {}
 # integration review round 2 (finding 4): the landside asset ships per building (lsu_<unit>.glb, tools/blender/b3d_split.py,
 # loaded per unit by buildings3d.js in every mode) with its shared images as plain files (lsu_img_*.png / .jpg, referenced
 # by URI): landside.glb itself is then not shipped
