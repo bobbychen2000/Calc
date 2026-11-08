@@ -73,7 +73,7 @@
   function banner() {
     var b = document.createElement('div'); b.id = 'replay-banner';
     var ago = Math.max(0, Math.round((pack.packed - pack.until) / 60));
-    b.textContent = (window.SFO_LITE ? 'Lite · ' : '') + 'Replay of real SFO traffic recorded ' + hhmm(pack.from) + '\u2013' + hhmm(pack.until) + ' PT by the cloud relay' +
+    b.textContent = (window.SFO_LITE ? 'Lite \u00b7 ' : '') + 'Replay of real SFO traffic recorded ' + hhmm(pack.from) + '\u2013' + hhmm(pack.until) + ' PT by the cloud relay' +
       (ago ? ' (packed ' + ago + ' min after)' : '') + ' \u00b7 loops';
     b.setAttribute('style', 'position:fixed;left:50%;transform:translateX(-50%);top:calc(env(safe-area-inset-top,0px) + 106px);' +
       'z-index:50;max-width:92vw;padding:3px 10px;border-radius:999px;background:rgba(10,14,20,.78);color:#e8edf3;' +
