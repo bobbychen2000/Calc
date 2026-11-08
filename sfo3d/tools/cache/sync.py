@@ -53,6 +53,11 @@ RULES = [
     ('boeing/*', 'local', 'manufacturer documents (copyright)'),
     ('livref/*', 'local', 'livery reference photos (copyright)'),
     ('pbb/*', 'local', 'manufacturer datasheets (copyright)'),
+    # 2026-11-08 (close-out round 4, aircraft re-bake): the full FlightAirMap / FlightGear model source trees, ~60 MB at once.
+    # GPL, but bulk and re-fetchable from the pinned commits recorded in their SOURCES.json; the derived pre-atlas models
+    # (models_orig/*.sfom, ~12 MB) are committed instead, so a re-atlas does not need these after a container loss.
+    ('src/fam3d/*', 'local', 'FlightAirMap 3D models (GPL), bulk: re-fetchable from Ysurac/FlightAirMap-3dmodels at the commit in SOURCES.json'),
+    ('src/fg/*', 'local', 'FlightGear aircraft models (GPL), bulk: re-fetchable from the FGMEMBERS repositories at the commits in SOURCES.json'),
     ('*/src/*', 'local?', 'fetched third-party page / document (copyright) unless SOURCES.json says open'),
     ('*/photos/*', 'local?', 'third-party photo (copyright) unless SOURCES.json says open'),
     ('*/pages/*', 'local?', 'fetched third-party page (copyright) unless SOURCES.json says open'),

@@ -5136,6 +5136,12 @@
    "bytes": 121052,
    "sha256": "eb916bee1eec1f92b27ea9965a451bf2d8356f89d1fd2dc20244b2f51137fb54"
   },
+  "fonts/Kalam-700.ttf": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 460024,
+   "sha256": "7463b42e3630f003f355b3f37e1cf8e2c0b0855374d483aef580ff45fdac3ba4"
+  },
   "fonts/Kanit-700i.ttf": {
    "class": "local",
    "why": "unclassified binary",
@@ -5160,17 +5166,53 @@
    "bytes": 180584,
    "sha256": "c535bb158e8cfc3c27654f73aa68a87732899e7d9b10d8496b68605a56d947a7"
   },
+  "fonts/Montserrat-600i.ttf": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 182280,
+   "sha256": "9f7e3c163e7bc1bfaa9ffa8d797cea10a6ede7f6745d4aab12480e7f1818cc15"
+  },
   "fonts/Montserrat-700.ttf": {
    "class": "local",
    "why": "unclassified binary",
    "bytes": 181028,
    "sha256": "247f052d2f5b84a5bbe7831c3b08a71ca391ff54f1dfb9be88a3d3da569e3a38"
   },
+  "fonts/Montserrat-700i.ttf": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 182608,
+   "sha256": "24ffadc3cd172e73f8205c11b3136baf8daec40b97855eb710c8c5074747eb1b"
+  },
   "fonts/Montserrat-800.ttf": {
    "class": "local",
    "why": "unclassified binary",
    "bytes": 183604,
    "sha256": "f0123e28dc0c4cac86559d1ffe587dded6ec57a4819956f56fcf6ad31d696eed"
+  },
+  "fonts/Montserrat-800i.ttf": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 184032,
+   "sha256": "26950a300be25c16196278f7df632147f7c4fce63681d325f63c9c30daaf566b"
+  },
+  "fonts/NotoKufiArabic-600.ttf": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 178760,
+   "sha256": "14c29af737bc90bafdaa6c043868f5fc6c186f0b5e3482e93cf87ea6094eb0a1"
+  },
+  "fonts/NotoSansSC-700.ttf": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 10530408,
+   "sha256": "0066a522a1ac007c1d72bc4fccb114f80ff7294641c78cead9715bd14d43b9ea"
+  },
+  "fonts/Nunito-800.ttf": {
+   "class": "local",
+   "why": "unclassified binary",
+   "bytes": 125416,
+   "sha256": "c5776505c7b3df3c3ca763477b795d6bbc6517760bede0462ab77d1fb44954a6"
   },
   "fonts/Nunito-900.ttf": {
    "class": "local",
@@ -11510,8 +11552,14 @@
   "rec/adsbfi_20261108_19.jsonl.gz": {
    "class": "local",
    "why": "adsb.fi terms: personal non-commercial use, not to be licensed on",
-   "bytes": 17785202,
-   "sha256": "a4543b83e5ed91a0eecd3a2d8ee94c7daa393fa197bf36d63ed684d9974d277e"
+   "bytes": 22784166,
+   "sha256": "3c681f38d3be0c8c1dc52153fda97942df2a64d61ac659d895aabb6651332258"
+  },
+  "rec/adsbfi_20261108_20.jsonl.gz": {
+   "class": "local",
+   "why": "adsb.fi terms: personal non-commercial use, not to be licensed on",
+   "bytes": 18892530,
+   "sha256": "5c36631534b74733399dc5403ee2d1ef864fa9d91a25add883dde633444c2424"
   },
   "rec/adsblol_20261104_17.jsonl.gz": {
    "class": "pack",
@@ -11996,8 +12044,14 @@
   "rec/adsblol_20261108_19.jsonl.gz": {
    "class": "pack",
    "why": "ODbL (adsb.lol); trimmed copy in rec_pack/",
-   "bytes": 5057262,
-   "sha256": "be73513198f0df6f47fc0e8a22b413c9f2abc2c4f5b8fa2643eea890e9520734"
+   "bytes": 6385390,
+   "sha256": "958d5dd273c48f8549c62f0c7dcdf7fea18e5121e2adbf5e68f0157b46068b12"
+  },
+  "rec/adsblol_20261108_20.jsonl.gz": {
+   "class": "pack",
+   "why": "ODbL (adsb.lol); trimmed copy in rec_pack/",
+   "bytes": 5287622,
+   "sha256": "d972269d0698ee0a5af1504ec6f5bfbdd6dc03e12ba560ac6e1bdee15c26313d"
   },
   "rec/recorder.log": {
    "class": "local",
@@ -12047,6 +12101,538 @@
    "why": "unclassified binary",
    "bytes": 4500164,
    "sha256": "b41b7eb70ac93a88f735417bb6e85f3d68309a063872e6e13826ab2f128c6c2d"
+  },
+  "src/fam3d/a320/COPYING": {
+   "class": "local",
+   "why": "FlightAirMap 3D models (GPL), bulk: re-fetchable from Ysurac/FlightAirMap-3dmodels at the commit in SOURCES.json",
+   "bytes": 18007,
+   "sha256": "dcc100d4161cc0b7177545ab6e47216f84857cda3843847c792a25289852dcaa",
+   "url": "https://github.com/Ysurac/FlightAirMap-3dmodels"
+  },
+  "src/fam3d/a320/glTF2/A319.glb": {
+   "class": "local",
+   "why": "FlightAirMap 3D models (GPL), bulk: re-fetchable from Ysurac/FlightAirMap-3dmodels at the commit in SOURCES.json",
+   "bytes": 2182192,
+   "sha256": "5a0c505ece53bd8e676091b1abcedc6c779e1e86636a4b5c367b76bcb3c9e29d",
+   "url": "https://github.com/Ysurac/FlightAirMap-3dmodels"
+  },
+  "src/fam3d/a320/glTF2/A320.glb": {
+   "class": "local",
+   "why": "FlightAirMap 3D models (GPL), bulk: re-fetchable from Ysurac/FlightAirMap-3dmodels at the commit in SOURCES.json",
+   "bytes": 3892704,
+   "sha256": "e0972773364e17e7a94fe6823e82e7c2aef7d90c3b12e608e0e38dd057fdcbc7",
+   "url": "https://github.com/Ysurac/FlightAirMap-3dmodels"
+  },
+  "src/fam3d/a320/glTF2/A321.glb": {
+   "class": "local",
+   "why": "FlightAirMap 3D models (GPL), bulk: re-fetchable from Ysurac/FlightAirMap-3dmodels at the commit in SOURCES.json",
+   "bytes": 2764948,
+   "sha256": "c6e223e01386e5f184e6dea6e83b2956964ee24ae32832f8600dbca5d7e6d7af",
+   "url": "https://github.com/Ysurac/FlightAirMap-3dmodels"
+  },
+  "src/fam3d/a333/COPYING": {
+   "class": "local",
+   "why": "FlightAirMap 3D models (GPL), bulk: re-fetchable from Ysurac/FlightAirMap-3dmodels at the commit in SOURCES.json",
+   "bytes": 18007,
+   "sha256": "dcc100d4161cc0b7177545ab6e47216f84857cda3843847c792a25289852dcaa",
+   "url": "https://github.com/Ysurac/FlightAirMap-3dmodels"
+  },
+  "src/fam3d/a333/glTF2/A333.glb": {
+   "class": "local",
+   "why": "FlightAirMap 3D models (GPL), bulk: re-fetchable from Ysurac/FlightAirMap-3dmodels at the commit in SOURCES.json",
+   "bytes": 3142252,
+   "sha256": "2b5a0083fc1bee1b9932ec1b1fb034d5288efbef31aa604c901c66490b84e7f8",
+   "url": "https://github.com/Ysurac/FlightAirMap-3dmodels"
+  },
+  "src/fam3d/a350/COPYING": {
+   "class": "local",
+   "why": "FlightAirMap 3D models (GPL), bulk: re-fetchable from Ysurac/FlightAirMap-3dmodels at the commit in SOURCES.json",
+   "bytes": 18007,
+   "sha256": "dcc100d4161cc0b7177545ab6e47216f84857cda3843847c792a25289852dcaa",
+   "url": "https://github.com/Ysurac/FlightAirMap-3dmodels"
+  },
+  "src/fam3d/a350/glTF2/A350.glb": {
+   "class": "local",
+   "why": "FlightAirMap 3D models (GPL), bulk: re-fetchable from Ysurac/FlightAirMap-3dmodels at the commit in SOURCES.json",
+   "bytes": 3933672,
+   "sha256": "a8795b4524868324cb9b88ec4b2377a5cf397e9a3f244f3f74e7047bacf7721d",
+   "url": "https://github.com/Ysurac/FlightAirMap-3dmodels"
+  },
+  "src/fam3d/a380/COPYING": {
+   "class": "local",
+   "why": "FlightAirMap 3D models (GPL), bulk: re-fetchable from Ysurac/FlightAirMap-3dmodels at the commit in SOURCES.json",
+   "bytes": 18007,
+   "sha256": "dcc100d4161cc0b7177545ab6e47216f84857cda3843847c792a25289852dcaa",
+   "url": "https://github.com/Ysurac/FlightAirMap-3dmodels"
+  },
+  "src/fam3d/a380/glTF2/A380.glb": {
+   "class": "local",
+   "why": "FlightAirMap 3D models (GPL), bulk: re-fetchable from Ysurac/FlightAirMap-3dmodels at the commit in SOURCES.json",
+   "bytes": 4922956,
+   "sha256": "1f24148937eb6e317f1f7da62b5efe7de26705f3d52ecf3fdb92695517715ca5",
+   "url": "https://github.com/Ysurac/FlightAirMap-3dmodels"
+  },
+  "src/fam3d/b744/COPYING": {
+   "class": "local",
+   "why": "FlightAirMap 3D models (GPL), bulk: re-fetchable from Ysurac/FlightAirMap-3dmodels at the commit in SOURCES.json",
+   "bytes": 18332,
+   "sha256": "da0eca0fb517ac939d167924c9d4b3f8750a6b7191932ef2cb145acfa624ac7e",
+   "url": "https://github.com/Ysurac/FlightAirMap-3dmodels"
+  },
+  "src/fam3d/b744/glTF2/B747.glb": {
+   "class": "local",
+   "why": "FlightAirMap 3D models (GPL), bulk: re-fetchable from Ysurac/FlightAirMap-3dmodels at the commit in SOURCES.json",
+   "bytes": 3611044,
+   "sha256": "f5b252b5420c0762491620f1314a4cf5215fa9fb7f51a82328fcf43acdc53036",
+   "url": "https://github.com/Ysurac/FlightAirMap-3dmodels"
+  },
+  "src/fam3d/b748/LICENSE": {
+   "class": "local",
+   "why": "FlightAirMap 3D models (GPL), bulk: re-fetchable from Ysurac/FlightAirMap-3dmodels at the commit in SOURCES.json",
+   "bytes": 18026,
+   "sha256": "39db8f9acf036595a2566ea3fe560bc7bd65d8749f088e0f4a4ef2f8a6cb4b34",
+   "url": "https://github.com/Ysurac/FlightAirMap-3dmodels"
+  },
+  "src/fam3d/b748/glTF2/B748.glb": {
+   "class": "local",
+   "why": "FlightAirMap 3D models (GPL), bulk: re-fetchable from Ysurac/FlightAirMap-3dmodels at the commit in SOURCES.json",
+   "bytes": 2520048,
+   "sha256": "f4aed2e6f6ca3c7fc24c109e8acda8816ec4a4b88af0a0f04104917a0e46f782",
+   "url": "https://github.com/Ysurac/FlightAirMap-3dmodels"
+  },
+  "src/fam3d/b752/LICENSE": {
+   "class": "local",
+   "why": "FlightAirMap 3D models (GPL), bulk: re-fetchable from Ysurac/FlightAirMap-3dmodels at the commit in SOURCES.json",
+   "bytes": 19187,
+   "sha256": "f9c5933bb189067c5484cc0315b32a20b6d67d9eb34f1ff9a9c3a8db448ae43e",
+   "url": "https://github.com/Ysurac/FlightAirMap-3dmodels"
+  },
+  "src/fam3d/b752/glTF2/B752.glb": {
+   "class": "local",
+   "why": "FlightAirMap 3D models (GPL), bulk: re-fetchable from Ysurac/FlightAirMap-3dmodels at the commit in SOURCES.json",
+   "bytes": 2994212,
+   "sha256": "8f3ca67e2f956f5b799d83cb781462a9325f69a168d01387a26879966657622f",
+   "url": "https://github.com/Ysurac/FlightAirMap-3dmodels"
+  },
+  "src/fam3d/b767/COPYING": {
+   "class": "local",
+   "why": "FlightAirMap 3D models (GPL), bulk: re-fetchable from Ysurac/FlightAirMap-3dmodels at the commit in SOURCES.json",
+   "bytes": 18007,
+   "sha256": "dcc100d4161cc0b7177545ab6e47216f84857cda3843847c792a25289852dcaa",
+   "url": "https://github.com/Ysurac/FlightAirMap-3dmodels"
+  },
+  "src/fam3d/b767/glTF2/B763.glb": {
+   "class": "local",
+   "why": "FlightAirMap 3D models (GPL), bulk: re-fetchable from Ysurac/FlightAirMap-3dmodels at the commit in SOURCES.json",
+   "bytes": 6095700,
+   "sha256": "8b49b131c7689da72be04fc5c34b47b978ea32001100d2e849b7fdded873b97d",
+   "url": "https://github.com/Ysurac/FlightAirMap-3dmodels"
+  },
+  "src/fam3d/b788/COPYING": {
+   "class": "local",
+   "why": "FlightAirMap 3D models (GPL), bulk: re-fetchable from Ysurac/FlightAirMap-3dmodels at the commit in SOURCES.json",
+   "bytes": 18007,
+   "sha256": "dcc100d4161cc0b7177545ab6e47216f84857cda3843847c792a25289852dcaa",
+   "url": "https://github.com/Ysurac/FlightAirMap-3dmodels"
+  },
+  "src/fam3d/b788/glTF2/B788.glb": {
+   "class": "local",
+   "why": "FlightAirMap 3D models (GPL), bulk: re-fetchable from Ysurac/FlightAirMap-3dmodels at the commit in SOURCES.json",
+   "bytes": 2767780,
+   "sha256": "3aadb364c26ab61523bff4637020805b199eefa10e9fafe0e7834649ca54cd1e",
+   "url": "https://github.com/Ysurac/FlightAirMap-3dmodels"
+  },
+  "src/fam3d/bcs1/glTF2/BCS1.glb": {
+   "class": "local",
+   "why": "FlightAirMap 3D models (GPL), bulk: re-fetchable from Ysurac/FlightAirMap-3dmodels at the commit in SOURCES.json",
+   "bytes": 3124820,
+   "sha256": "a8ebe75a13fbcb3ca7d077113b523ebd81edb8b92c3ef309f4732eed6074da17",
+   "url": "https://github.com/Ysurac/FlightAirMap-3dmodels"
+  },
+  "src/fam3d/bcs1/glTF2/BCS3.glb": {
+   "class": "local",
+   "why": "FlightAirMap 3D models (GPL), bulk: re-fetchable from Ysurac/FlightAirMap-3dmodels at the commit in SOURCES.json",
+   "bytes": 2277732,
+   "sha256": "5d4fe3b6a030b342f202118ccb4bffc48a8cec2c2871f9bccb94bb1f1c1b39a3",
+   "url": "https://github.com/Ysurac/FlightAirMap-3dmodels"
+  },
+  "src/fam3d/crj2/COPYING.txt": {
+   "class": "local",
+   "why": "FlightAirMap 3D models (GPL), bulk: re-fetchable from Ysurac/FlightAirMap-3dmodels at the commit in SOURCES.json",
+   "bytes": 18332,
+   "sha256": "da0eca0fb517ac939d167924c9d4b3f8750a6b7191932ef2cb145acfa624ac7e",
+   "url": "https://github.com/Ysurac/FlightAirMap-3dmodels"
+  },
+  "src/fam3d/crj2/glTF2/CRJ2.glb": {
+   "class": "local",
+   "why": "FlightAirMap 3D models (GPL), bulk: re-fetchable from Ysurac/FlightAirMap-3dmodels at the commit in SOURCES.json",
+   "bytes": 813268,
+   "sha256": "baff3d797d47b1fccb43dbe13817eff861761d4f0c700222848f9ca7459e68a6",
+   "url": "https://github.com/Ysurac/FlightAirMap-3dmodels"
+  },
+  "src/fam3d/crj9/LICENSE": {
+   "class": "local",
+   "why": "FlightAirMap 3D models (GPL), bulk: re-fetchable from Ysurac/FlightAirMap-3dmodels at the commit in SOURCES.json",
+   "bytes": 314,
+   "sha256": "9f2ea023bb32f950ae91990487ea9f3d63263851bd77bac5fd01a82419421d90",
+   "url": "https://github.com/Ysurac/FlightAirMap-3dmodels"
+  },
+  "src/fam3d/crj9/glTF2/CRJ7.glb": {
+   "class": "local",
+   "why": "FlightAirMap 3D models (GPL), bulk: re-fetchable from Ysurac/FlightAirMap-3dmodels at the commit in SOURCES.json",
+   "bytes": 2011416,
+   "sha256": "883f5d1c30dbfc72cd23f6cf9f3d0bd8746d6dafa33870b636c0795d1fce0e08",
+   "url": "https://github.com/Ysurac/FlightAirMap-3dmodels"
+  },
+  "src/fam3d/crj9/glTF2/CRJ9.glb": {
+   "class": "local",
+   "why": "FlightAirMap 3D models (GPL), bulk: re-fetchable from Ysurac/FlightAirMap-3dmodels at the commit in SOURCES.json",
+   "bytes": 2016512,
+   "sha256": "efcf8af5cc9325937e96eb1f4d0dcf72bd29cb6fb51470d583517f26878f30fc",
+   "url": "https://github.com/Ysurac/FlightAirMap-3dmodels"
+  },
+  "src/fam3d/e190/License.txt": {
+   "class": "local",
+   "why": "FlightAirMap 3D models (GPL), bulk: re-fetchable from Ysurac/FlightAirMap-3dmodels at the commit in SOURCES.json",
+   "bytes": 18332,
+   "sha256": "da0eca0fb517ac939d167924c9d4b3f8750a6b7191932ef2cb145acfa624ac7e",
+   "url": "https://github.com/Ysurac/FlightAirMap-3dmodels"
+  },
+  "src/fam3d/e190/glTF2/E170.glb": {
+   "class": "local",
+   "why": "FlightAirMap 3D models (GPL), bulk: re-fetchable from Ysurac/FlightAirMap-3dmodels at the commit in SOURCES.json",
+   "bytes": 3023912,
+   "sha256": "b6ecf327e60ac705bfbb60ea0fa5da604c9332a072e5ada8b9e0f5e4482a364a",
+   "url": "https://github.com/Ysurac/FlightAirMap-3dmodels"
+  },
+  "src/fam3d/e190/glTF2/E190.glb": {
+   "class": "local",
+   "why": "FlightAirMap 3D models (GPL), bulk: re-fetchable from Ysurac/FlightAirMap-3dmodels at the commit in SOURCES.json",
+   "bytes": 3493372,
+   "sha256": "1f44507cf61b869170545c89f8f9e536566ccebea289ca75e1419f148713407f",
+   "url": "https://github.com/Ysurac/FlightAirMap-3dmodels"
+  },
+  "src/fam3d/e190/glTF2/E75L.glb": {
+   "class": "local",
+   "why": "FlightAirMap 3D models (GPL), bulk: re-fetchable from Ysurac/FlightAirMap-3dmodels at the commit in SOURCES.json",
+   "bytes": 3190700,
+   "sha256": "9de6fc12cb92590cad3ea4b4836cbcf0fccb46c6d936f901e3b48edb6f955c46",
+   "url": "https://github.com/Ysurac/FlightAirMap-3dmodels"
+  },
+  "src/fam3d/md11/LICENSE": {
+   "class": "local",
+   "why": "FlightAirMap 3D models (GPL), bulk: re-fetchable from Ysurac/FlightAirMap-3dmodels at the commit in SOURCES.json",
+   "bytes": 19187,
+   "sha256": "f9c5933bb189067c5484cc0315b32a20b6d67d9eb34f1ff9a9c3a8db448ae43e",
+   "url": "https://github.com/Ysurac/FlightAirMap-3dmodels"
+  },
+  "src/fam3d/md11/glTF2/MD11.glb": {
+   "class": "local",
+   "why": "FlightAirMap 3D models (GPL), bulk: re-fetchable from Ysurac/FlightAirMap-3dmodels at the commit in SOURCES.json",
+   "bytes": 3482612,
+   "sha256": "102d97048bdf7661caa95b54433302633a18da3343a6d2b5919ea412e7547686",
+   "url": "https://github.com/Ysurac/FlightAirMap-3dmodels"
+  },
+  "src/fg/737-800/LICENSE": {
+   "class": "local",
+   "why": "FlightGear aircraft models (GPL), bulk: re-fetchable from the FGMEMBERS repositories at the commits in SOURCES.json",
+   "bytes": 18047,
+   "sha256": "c03cea027b4b40e4402fabd08557736727ec3d5bc54ad64ab6472de432198cad",
+   "url": "https://github.com/FGMEMBERS/737-800"
+  },
+  "src/fg/737-800/Models/737-800.ac": {
+   "class": "local",
+   "why": "FlightGear aircraft models (GPL), bulk: re-fetchable from the FGMEMBERS repositories at the commits in SOURCES.json",
+   "bytes": 700543,
+   "sha256": "41c4d99099a607866504ca0af33d926e32ecbd5b2b9346b039e5ba9c8f338c81",
+   "url": "https://github.com/FGMEMBERS/737-800"
+  },
+  "src/fg/737-800/Models/737-800.png": {
+   "class": "local",
+   "why": "FlightGear aircraft models (GPL), bulk: re-fetchable from the FGMEMBERS repositories at the commits in SOURCES.json",
+   "bytes": 221672,
+   "sha256": "0e8e285ad0b98c499d15aff82e1f6537f30312af2ea7612960cd845e537d239a",
+   "url": "https://github.com/FGMEMBERS/737-800"
+  },
+  "src/fg/737-800/Models/737-model-common.xml": {
+   "class": "local",
+   "why": "FlightGear aircraft models (GPL), bulk: re-fetchable from the FGMEMBERS repositories at the commits in SOURCES.json",
+   "bytes": 5638,
+   "sha256": "e68b661b5b464b0d4ba6a9e4d52f078096fb4d707e6bbeb54f8e21349429054f",
+   "url": "https://github.com/FGMEMBERS/737-800"
+  },
+  "src/fg/737-800/Models/737-panel.png": {
+   "class": "local",
+   "why": "FlightGear aircraft models (GPL), bulk: re-fetchable from the FGMEMBERS repositories at the commits in SOURCES.json",
+   "bytes": 460751,
+   "sha256": "297b0cd4574b80aa03986cc4521bfb0cb3ff88901dd010cbcd21acb0dd67ef2f",
+   "url": "https://github.com/FGMEMBERS/737-800"
+  },
+  "src/fg/737-800/Models/738.xml": {
+   "class": "local",
+   "why": "FlightGear aircraft models (GPL), bulk: re-fetchable from the FGMEMBERS repositories at the commits in SOURCES.json",
+   "bytes": 2041,
+   "sha256": "ab90fe80b24e297ea3e6dee7f2d321c67346e9bef044a3ddf549aeb3135dc61b",
+   "url": "https://github.com/FGMEMBERS/737-800"
+  },
+  "src/fg/737-800/Models/HorzStab.ac": {
+   "class": "local",
+   "why": "FlightGear aircraft models (GPL), bulk: re-fetchable from the FGMEMBERS repositories at the commits in SOURCES.json",
+   "bytes": 15715,
+   "sha256": "c9102107c5f43e189101ac568ee2d05e1d852d52f7fe190a5e2b1dcd547c9bbc",
+   "url": "https://github.com/FGMEMBERS/737-800"
+  },
+  "src/fg/737-800/Models/HorzStab.xml": {
+   "class": "local",
+   "why": "FlightGear aircraft models (GPL), bulk: re-fetchable from the FGMEMBERS repositories at the commits in SOURCES.json",
+   "bytes": 2563,
+   "sha256": "761dc582a863008b8304f2e129b21acb268644f6e8091b1339cc53d31cd1c46e",
+   "url": "https://github.com/FGMEMBERS/737-800"
+  },
+  "src/fg/737-800/Models/LWing.ac": {
+   "class": "local",
+   "why": "FlightGear aircraft models (GPL), bulk: re-fetchable from the FGMEMBERS repositories at the commits in SOURCES.json",
+   "bytes": 386296,
+   "sha256": "452e8c5d43f38780fec10b6f520287ff0ed5a1e452b143c14404c1466fd3de35",
+   "url": "https://github.com/FGMEMBERS/737-800"
+  },
+  "src/fg/737-800/Models/LWing.xml": {
+   "class": "local",
+   "why": "FlightGear aircraft models (GPL), bulk: re-fetchable from the FGMEMBERS repositories at the commits in SOURCES.json",
+   "bytes": 14508,
+   "sha256": "5d619d8fe50ec60468914ba6be85d2fe4a57ae0d8eadfd338d5011c956d7fff2",
+   "url": "https://github.com/FGMEMBERS/737-800"
+  },
+  "src/fg/737-800/Models/Liveries-800/N563AS.png": {
+   "class": "local",
+   "why": "FlightGear aircraft models (GPL), bulk: re-fetchable from the FGMEMBERS repositories at the commits in SOURCES.json",
+   "bytes": 1210789,
+   "sha256": "c6386f07466bd01113baabf5f4c14533f04bed13dafce1f201354aaec62ab508",
+   "url": "https://github.com/FGMEMBERS/737-800"
+  },
+  "src/fg/737-800/Models/Liveries-800/N563AS.xml": {
+   "class": "local",
+   "why": "FlightGear aircraft models (GPL), bulk: re-fetchable from the FGMEMBERS repositories at the commits in SOURCES.json",
+   "bytes": 291,
+   "sha256": "9cadaf7545c8ab919bbb1d95a794b4223a155d80f8e2d19b85a88bab77891fe9",
+   "url": "https://github.com/FGMEMBERS/737-800"
+  },
+  "src/fg/737-800/Models/NoseGear.xml": {
+   "class": "local",
+   "why": "FlightGear aircraft models (GPL), bulk: re-fetchable from the FGMEMBERS repositories at the commits in SOURCES.json",
+   "bytes": 4163,
+   "sha256": "bff932b584230e641b76e05ea8bc3a76a07cb8c0fb93a70a8d834e8b67ee387c",
+   "url": "https://github.com/FGMEMBERS/737-800"
+  },
+  "src/fg/737-800/Models/OH-PANEL.png": {
+   "class": "local",
+   "why": "FlightGear aircraft models (GPL), bulk: re-fetchable from the FGMEMBERS repositories at the commits in SOURCES.json",
+   "bytes": 687153,
+   "sha256": "de02a3593076bebbc2e75799f17c50a2a1dfe02214e3da7ac52d06566dc809ec",
+   "url": "https://github.com/FGMEMBERS/737-800"
+  },
+  "src/fg/737-800/Models/RWing.ac": {
+   "class": "local",
+   "why": "FlightGear aircraft models (GPL), bulk: re-fetchable from the FGMEMBERS repositories at the commits in SOURCES.json",
+   "bytes": 394135,
+   "sha256": "17a43824710b0d4f46ad361124b9aa01cbae728ad96f826966af300a14292435",
+   "url": "https://github.com/FGMEMBERS/737-800"
+  },
+  "src/fg/737-800/Models/RWing.xml": {
+   "class": "local",
+   "why": "FlightGear aircraft models (GPL), bulk: re-fetchable from the FGMEMBERS repositories at the commits in SOURCES.json",
+   "bytes": 14532,
+   "sha256": "3fce9e1cc2711e441ad21953efc31326747914ad1dd0a033b857efb965584228",
+   "url": "https://github.com/FGMEMBERS/737-800"
+  },
+  "src/fg/737-800/Models/VertStab.ac": {
+   "class": "local",
+   "why": "FlightGear aircraft models (GPL), bulk: re-fetchable from the FGMEMBERS repositories at the commits in SOURCES.json",
+   "bytes": 24816,
+   "sha256": "ff51151c4df9c48a3482c5b2fa47c3ca6905a7bc34ecfd9e600dccbcbbaa758b",
+   "url": "https://github.com/FGMEMBERS/737-800"
+  },
+  "src/fg/737-800/Models/VertStab.xml": {
+   "class": "local",
+   "why": "FlightGear aircraft models (GPL), bulk: re-fetchable from the FGMEMBERS repositories at the commits in SOURCES.json",
+   "bytes": 484,
+   "sha256": "5198d361a7ff24b6176d3357c7b0728d6fb268b86e8a45fc2fd78b1b18f96733",
+   "url": "https://github.com/FGMEMBERS/737-800"
+  },
+  "src/fg/737-800/Models/cent-panel.png": {
+   "class": "local",
+   "why": "FlightGear aircraft models (GPL), bulk: re-fetchable from the FGMEMBERS repositories at the commits in SOURCES.json",
+   "bytes": 293894,
+   "sha256": "eb5fcf6f12e973a55cda007fb99141dad7ae08e3334208c25355dea4ce06c288",
+   "url": "https://github.com/FGMEMBERS/737-800"
+  },
+  "src/fg/737-800/Models/cockpit.ac": {
+   "class": "local",
+   "why": "FlightGear aircraft models (GPL), bulk: re-fetchable from the FGMEMBERS repositories at the commits in SOURCES.json",
+   "bytes": 575146,
+   "sha256": "014d41df04373bd0c5d6097cd95d29afc4c9e054df8c63eb61aab380618655cd",
+   "url": "https://github.com/FGMEMBERS/737-800"
+  },
+  "src/fg/737-800/Models/cockpit.xml": {
+   "class": "local",
+   "why": "FlightGear aircraft models (GPL), bulk: re-fetchable from the FGMEMBERS repositories at the commits in SOURCES.json",
+   "bytes": 43994,
+   "sha256": "cfc1c0900dcd2defe640edbea5f3d88a17ba680ef1c6101182726d804fe5d6d2",
+   "url": "https://github.com/FGMEMBERS/737-800"
+  },
+  "src/fg/737-800/Models/digits2.png": {
+   "class": "local",
+   "why": "FlightGear aircraft models (GPL), bulk: re-fetchable from the FGMEMBERS repositories at the commits in SOURCES.json",
+   "bytes": 5921,
+   "sha256": "23bcbc1f3ae8eed492a7b234dfefd180678c32b7a70d1d3bd6e52ca3ca0b3532",
+   "url": "https://github.com/FGMEMBERS/737-800"
+  },
+  "src/fg/737-800/Models/du-panel.png": {
+   "class": "local",
+   "why": "FlightGear aircraft models (GPL), bulk: re-fetchable from the FGMEMBERS repositories at the commits in SOURCES.json",
+   "bytes": 56446,
+   "sha256": "4760b9d7e47a9a916192f33dac3cc556a56109e2f6250edb8d86ccf34fbf7413",
+   "url": "https://github.com/FGMEMBERS/737-800"
+  },
+  "src/fg/737-800/Models/flightdesk.ac": {
+   "class": "local",
+   "why": "FlightGear aircraft models (GPL), bulk: re-fetchable from the FGMEMBERS repositories at the commits in SOURCES.json",
+   "bytes": 388138,
+   "sha256": "76c2da3b6c1ae5a5dfb4b05a41e0b587f22d0846bcde1e8057ca93e6d6093121",
+   "url": "https://github.com/FGMEMBERS/737-800"
+  },
+  "src/fg/737-800/Models/flightdesk.xml": {
+   "class": "local",
+   "why": "FlightGear aircraft models (GPL), bulk: re-fetchable from the FGMEMBERS repositories at the commits in SOURCES.json",
+   "bytes": 5620,
+   "sha256": "03e9b54b398fc240ccb03c021a49983a773af34ae4c501909460bbda63297887",
+   "url": "https://github.com/FGMEMBERS/737-800"
+  },
+  "src/fg/737-800/Models/landinglight.ac": {
+   "class": "local",
+   "why": "FlightGear aircraft models (GPL), bulk: re-fetchable from the FGMEMBERS repositories at the commits in SOURCES.json",
+   "bytes": 30409,
+   "sha256": "62115caa340ff7ecf9174aa23952f864b93171d309218b64aff786b9703e2ce9",
+   "url": "https://github.com/FGMEMBERS/737-800"
+  },
+  "src/fg/737-800/Models/landinglight.png": {
+   "class": "local",
+   "why": "FlightGear aircraft models (GPL), bulk: re-fetchable from the FGMEMBERS repositories at the commits in SOURCES.json",
+   "bytes": 852219,
+   "sha256": "952dc1e17e8511d6bdd0c8ed23a2b1bb38b382046810ef79ce89c2f675656d8d",
+   "url": "https://github.com/FGMEMBERS/737-800"
+  },
+  "src/fg/737-800/Models/lights.png": {
+   "class": "local",
+   "why": "FlightGear aircraft models (GPL), bulk: re-fetchable from the FGMEMBERS repositories at the commits in SOURCES.json",
+   "bytes": 214409,
+   "sha256": "044cec9a4df3faac10fcd64e1874fb74305f1032c65dfdf93d610ed68e1be3d7",
+   "url": "https://github.com/FGMEMBERS/737-800"
+  },
+  "src/fg/737-800/Models/nosegear.ac": {
+   "class": "local",
+   "why": "FlightGear aircraft models (GPL), bulk: re-fetchable from the FGMEMBERS repositories at the commits in SOURCES.json",
+   "bytes": 171454,
+   "sha256": "f33bbeb01770070b1309dd49c79a9cf53e092aa5c32aa2b4297e6710449faca4",
+   "url": "https://github.com/FGMEMBERS/737-800"
+  },
+  "src/fg/737-800/Models/oh-panel.ac": {
+   "class": "local",
+   "why": "FlightGear aircraft models (GPL), bulk: re-fetchable from the FGMEMBERS repositories at the commits in SOURCES.json",
+   "bytes": 394290,
+   "sha256": "0e5094e9c42abdd48a5afc16c4c0701ebd452869172c9be236c5c0da9908fb05",
+   "url": "https://github.com/FGMEMBERS/737-800"
+  },
+  "src/fg/737-800/Models/pedals.ac": {
+   "class": "local",
+   "why": "FlightGear aircraft models (GPL), bulk: re-fetchable from the FGMEMBERS repositories at the commits in SOURCES.json",
+   "bytes": 39277,
+   "sha256": "0e5f21e0069aef0ab8f2abcdba938251c92feda228ed43490d174659dca17855",
+   "url": "https://github.com/FGMEMBERS/737-800"
+  },
+  "src/fg/737-800/Models/pedals.xml": {
+   "class": "local",
+   "why": "FlightGear aircraft models (GPL), bulk: re-fetchable from the FGMEMBERS repositories at the commits in SOURCES.json",
+   "bytes": 663,
+   "sha256": "c8c22ff98bf138a91dd6217ab8d6a18ecf929969a1f08239a07a0f0fd706a72a",
+   "url": "https://github.com/FGMEMBERS/737-800"
+  },
+  "src/fg/737-800/Models/pedestal.ac": {
+   "class": "local",
+   "why": "FlightGear aircraft models (GPL), bulk: re-fetchable from the FGMEMBERS repositories at the commits in SOURCES.json",
+   "bytes": 1104265,
+   "sha256": "ae9ab9344f71573370e409535922ceb22bf9d3ea13858dfdbc314d249c7ed0ce",
+   "url": "https://github.com/FGMEMBERS/737-800"
+  },
+  "src/fg/737-800/Models/pedestal.xml": {
+   "class": "local",
+   "why": "FlightGear aircraft models (GPL), bulk: re-fetchable from the FGMEMBERS repositories at the commits in SOURCES.json",
+   "bytes": 1287,
+   "sha256": "1ddbc42fc94e6ea09a721d659863ab516dae7c75fc7f45bf7ccf8b94737402ad",
+   "url": "https://github.com/FGMEMBERS/737-800"
+  },
+  "src/fg/737-800/Models/winglet.ac": {
+   "class": "local",
+   "why": "FlightGear aircraft models (GPL), bulk: re-fetchable from the FGMEMBERS repositories at the commits in SOURCES.json",
+   "bytes": 626016,
+   "sha256": "0804f42dbd096068b138bcbb348bca52296a29036f38e67710b1f9b2096e0e12",
+   "url": "https://github.com/FGMEMBERS/737-800"
+  },
+  "src/fg/737-800/Models/winglet.xml": {
+   "class": "local",
+   "why": "FlightGear aircraft models (GPL), bulk: re-fetchable from the FGMEMBERS repositories at the commits in SOURCES.json",
+   "bytes": 87,
+   "sha256": "17abe7503bdef6f3c712bec583b70103e0668e649b9043333ec287189f9ca14b",
+   "url": "https://github.com/FGMEMBERS/737-800"
+  },
+  "src/fg/737-800/README.md": {
+   "class": "local",
+   "why": "FlightGear aircraft models (GPL), bulk: re-fetchable from the FGMEMBERS repositories at the commits in SOURCES.json",
+   "bytes": 40,
+   "sha256": "02707c8f8b2e08f33aac696f1a37d496c4c2bdf060e8d004afda8904b1e5d46d",
+   "url": "https://github.com/FGMEMBERS/737-800"
+  },
+  "src/fg/777_export/Models/777-200ER.ac": {
+   "class": "local",
+   "why": "FlightGear aircraft models (GPL), bulk: re-fetchable from the FGMEMBERS repositories at the commits in SOURCES.json",
+   "bytes": 1552714,
+   "sha256": "d9bfc30194ff21fefc3d673b2afea2ac1d9ce45041538d592b5679a5e597b3bb",
+   "url": "https://github.com/FGMEMBERS/777"
+  },
+  "src/fg/777_export/Models/777-300ER.ac": {
+   "class": "local",
+   "why": "FlightGear aircraft models (GPL), bulk: re-fetchable from the FGMEMBERS repositories at the commits in SOURCES.json",
+   "bytes": 1619560,
+   "sha256": "634c2181c07e99e14df6be8b782d7618327c7e55036951f14b00e2158ba7ed0e",
+   "url": "https://github.com/FGMEMBERS/777"
+  },
+  "src/fg/777_export/Models/Liveries-200/paint1.png": {
+   "class": "local",
+   "why": "FlightGear aircraft models (GPL), bulk: re-fetchable from the FGMEMBERS repositories at the commits in SOURCES.json",
+   "bytes": 369888,
+   "sha256": "77ae5dec4a34f0c52aa6c4a4204ac943086cd7fbf0b29f8e2dbc77bc3a136ca9",
+   "url": "https://github.com/FGMEMBERS/777"
+  },
+  "src/fg/777_export/Models/Liveries-300/paint1.png": {
+   "class": "local",
+   "why": "FlightGear aircraft models (GPL), bulk: re-fetchable from the FGMEMBERS repositories at the commits in SOURCES.json",
+   "bytes": 346842,
+   "sha256": "39d60f59508b652d0abc4dca5621f44d4d06e30414b12584ccffc6b71d7693cb",
+   "url": "https://github.com/FGMEMBERS/777"
+  },
+  "src/fg/777_export/Models/light_spot.png": {
+   "class": "local",
+   "why": "FlightGear aircraft models (GPL), bulk: re-fetchable from the FGMEMBERS repositories at the commits in SOURCES.json",
+   "bytes": 1822,
+   "sha256": "a9dbd37a69b2a423c5114ec2aebf3b746d699847490a1f4ac0ff4c791175d866",
+   "url": "https://github.com/FGMEMBERS/777"
+  },
+  "src/fg/777_export/Models/transparent.png": {
+   "class": "local",
+   "why": "FlightGear aircraft models (GPL), bulk: re-fetchable from the FGMEMBERS repositories at the commits in SOURCES.json",
+   "bytes": 173117,
+   "sha256": "c9cf05bfeafc3a5a0d904616b7c372c21496bdcb77c17c18d6733f7447418906",
+   "url": "https://github.com/FGMEMBERS/777"
   },
   "weather/aim/aim_chap7_section_1.html": {
    "class": "local",
