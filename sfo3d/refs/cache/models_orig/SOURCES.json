@@ -16,5 +16,125 @@
   "licence": "GPL-2.0 (derived from the FlightAirMap model)",
   "made": "2026-11-07",
   "note": "pre-atlas conversion; re-atlased it reproduces the committed data/models/a388.sfom (same vertex positions, livery-atlas UVs within 1.5e-5, same atlas charts) - close-out round 3 aircraft-6"
+ },
+ "a319.sfom": {
+  "url": "generated: FAM_DIR=refs/cache/src/fam3d tools/convert_models.py a319 from a320/glTF2/A319.glb (Ysurac/FlightAirMap-3dmodels @0906d9b)",
+  "licence": "GPL-2.0 (derived from the FlightAirMap model)",
+  "made": "2026-11-08",
+  "note": "pre-atlas conversion (tools/liveries/atlas.py source), close-out round 4 fix 2 (8 Nov 2026): reproduces the source of the shipped data/models/a319.sfom (scratch c4/aircraft/fix2 geomcmp.py / zonecmp.py: every shipped triangle is a conversion triangle on the same quantisation grid, or a plug-band split / window-opening fan of one; zones and kept-texture UVs equal mod 1); head.dims = the shipped dims (they differed by < 1e-13); the fresh conversion is 0.041635 m higher (its fuselage centre line found 4 cm higher by convert()); the source is moved down to the frame of the September 2026 conversion that data/models/a319.sfom, manifest MODEL_DIMS and features.json use (header only: quant.pmin y and dims; fix2 scripts/frame_a319.py)"
+ },
+ "a320.sfom": {
+  "url": "generated: FAM_DIR=refs/cache/src/fam3d tools/convert_models.py a320 from a320/glTF2/A320.glb (Ysurac/FlightAirMap-3dmodels @0906d9b)",
+  "licence": "GPL-2.0 (derived from the FlightAirMap model)",
+  "made": "2026-11-08",
+  "note": "pre-atlas conversion (tools/liveries/atlas.py source), close-out round 4 fix 2 (8 Nov 2026): reproduces the source of the shipped data/models/a320.sfom (scratch c4/aircraft/fix2 geomcmp.py / zonecmp.py: every shipped triangle is a conversion triangle on the same quantisation grid, or a plug-band split / window-opening fan of one; zones and kept-texture UVs equal mod 1); head.dims = the shipped dims (they differed by < 1e-13)"
+ },
+ "a321.sfom": {
+  "url": "generated: FAM_DIR=refs/cache/src/fam3d tools/convert_models.py a321 from a320/glTF2/A321.glb (Ysurac/FlightAirMap-3dmodels @0906d9b)",
+  "licence": "GPL-2.0 (derived from the FlightAirMap model)",
+  "made": "2026-11-08",
+  "note": "pre-atlas conversion (tools/liveries/atlas.py source), close-out round 4 fix 2 (8 Nov 2026): reproduces the source of the shipped data/models/a321.sfom (scratch c4/aircraft/fix2 geomcmp.py / zonecmp.py: every shipped triangle is a conversion triangle on the same quantisation grid, or a plug-band split / window-opening fan of one; zones and kept-texture UVs equal mod 1); head.dims = the shipped dims (they differed by < 1e-13)"
+ },
+ "a333.sfom": {
+  "url": "generated: FAM_DIR=refs/cache/src/fam3d tools/convert_models.py a333 from a333/glTF2/A333.glb (Ysurac/FlightAirMap-3dmodels @0906d9b)",
+  "licence": "GPL-2.0 (derived from the FlightAirMap model)",
+  "made": "2026-11-08",
+  "note": "pre-atlas conversion (tools/liveries/atlas.py source), close-out round 4 fix 2 (8 Nov 2026): reproduces the source of the shipped data/models/a333.sfom (scratch c4/aircraft/fix2 geomcmp.py / zonecmp.py: every shipped triangle is a conversion triangle on the same quantisation grid, or a plug-band split / window-opening fan of one; zones and kept-texture UVs equal mod 1); head.dims = the shipped dims (they differed by < 1e-13)"
+ },
+ "a359.sfom": {
+  "url": "generated: FAM_DIR=refs/cache/src/fam3d tools/convert_models.py a359 from a350/glTF2/A350.glb (Ysurac/FlightAirMap-3dmodels @0906d9b)",
+  "licence": "GPL-2.0 (derived from the FlightAirMap model)",
+  "made": "2026-11-08",
+  "note": "pre-atlas conversion (tools/liveries/atlas.py source), close-out round 4 fix 2 (8 Nov 2026): reproduces the source of the shipped data/models/a359.sfom (scratch c4/aircraft/fix2 geomcmp.py / zonecmp.py: every shipped triangle is a conversion triangle on the same quantisation grid, or a plug-band split / window-opening fan of one; zones and kept-texture UVs equal mod 1); head.dims = the shipped dims (they differed by < 1e-13)"
+ },
+ "b744.sfom": {
+  "url": "generated: FAM_DIR=refs/cache/src/fam3d tools/convert_models.py b744 from b744/glTF2/B747.glb (Ysurac/FlightAirMap-3dmodels @0906d9b)",
+  "licence": "GPL-2.0 (derived from the FlightAirMap model)",
+  "made": "2026-11-08",
+  "note": "pre-atlas conversion (tools/liveries/atlas.py source), close-out round 4 fix 2 (8 Nov 2026): reproduces the source of the shipped data/models/b744.sfom (scratch c4/aircraft/fix2 geomcmp.py / zonecmp.py: every shipped triangle is a conversion triangle on the same quantisation grid, or a plug-band split / window-opening fan of one; zones and kept-texture UVs equal mod 1); head.dims = the shipped dims (they differed by < 1e-13)"
+ },
+ "b748.sfom": {
+  "url": "generated: FAM_DIR=refs/cache/src/fam3d tools/convert_models.py b748 from b748/glTF2/B748.glb (Ysurac/FlightAirMap-3dmodels @0906d9b)",
+  "licence": "GPL-2.0 (derived from the FlightAirMap model)",
+  "made": "2026-11-08",
+  "note": "pre-atlas conversion (tools/liveries/atlas.py source), close-out round 4 fix 2 (8 Nov 2026): reproduces the source of the shipped data/models/b748.sfom (scratch c4/aircraft/fix2 geomcmp.py / zonecmp.py: every shipped triangle is a conversion triangle on the same quantisation grid, or a plug-band split / window-opening fan of one; zones and kept-texture UVs equal mod 1); head.dims = the shipped dims (they differed by < 1e-13)"
+ },
+ "b752.sfom": {
+  "url": "generated: FAM_DIR=refs/cache/src/fam3d tools/convert_models.py b752 from b752/glTF2/B752.glb (Ysurac/FlightAirMap-3dmodels @0906d9b)",
+  "licence": "GPL-2.0 (derived from the FlightAirMap model)",
+  "made": "2026-11-08",
+  "note": "pre-atlas conversion (tools/liveries/atlas.py source), close-out round 4 fix 2 (8 Nov 2026): reproduces the source of the shipped data/models/b752.sfom (scratch c4/aircraft/fix2 geomcmp.py / zonecmp.py: every shipped triangle is a conversion triangle on the same quantisation grid, or a plug-band split / window-opening fan of one; zones and kept-texture UVs equal mod 1); head.dims = the shipped dims (they differed by < 1e-13)"
+ },
+ "b763.sfom": {
+  "url": "generated: FAM_DIR=refs/cache/src/fam3d tools/convert_models.py b763 from b767/glTF2/B763.glb (Ysurac/FlightAirMap-3dmodels @0906d9b)",
+  "licence": "GPL-2.0 (derived from the FlightAirMap model)",
+  "made": "2026-11-08",
+  "note": "pre-atlas conversion (tools/liveries/atlas.py source), close-out round 4 fix 2 (8 Nov 2026): reproduces the source of the shipped data/models/b763.sfom (scratch c4/aircraft/fix2 geomcmp.py / zonecmp.py: every shipped triangle is a conversion triangle on the same quantisation grid, or a plug-band split / window-opening fan of one; zones and kept-texture UVs equal mod 1); head.dims = the shipped dims (they differed by < 1e-13)"
+ },
+ "b788.sfom": {
+  "url": "generated: FAM_DIR=refs/cache/src/fam3d tools/convert_models.py b788 from b788/glTF2/B788.glb (Ysurac/FlightAirMap-3dmodels @0906d9b)",
+  "licence": "GPL-2.0 (derived from the FlightAirMap model)",
+  "made": "2026-11-08",
+  "note": "pre-atlas conversion (tools/liveries/atlas.py source), close-out round 4 fix 2 (8 Nov 2026): reproduces the source of the shipped data/models/b788.sfom (scratch c4/aircraft/fix2 geomcmp.py / zonecmp.py: every shipped triangle is a conversion triangle on the same quantisation grid, or a plug-band split / window-opening fan of one; zones and kept-texture UVs equal mod 1); head.dims = the shipped dims (they differed by < 1e-13)"
+ },
+ "bcs1.sfom": {
+  "url": "generated: FAM_DIR=refs/cache/src/fam3d tools/convert_models.py bcs1 from bcs1/glTF2/BCS1.glb (Ysurac/FlightAirMap-3dmodels @0906d9b)",
+  "licence": "GPL-2.0 (derived from the FlightAirMap A220 model, whose FlightGear origin FGMEMBERS/CSeries @8a8223f3 carries COPYING GPL-2.0: docs/research/liveries.md \u00a74.1, docs/ATTRIBUTION_models.md \u00a71)",
+  "made": "2026-11-08",
+  "note": "pre-atlas conversion (tools/liveries/atlas.py source), close-out round 4 fix 2 (8 Nov 2026): reproduces the source of the shipped data/models/bcs1.sfom (scratch c4/aircraft/fix2 geomcmp.py / zonecmp.py: every shipped triangle is a conversion triangle on the same quantisation grid, or a plug-band split / window-opening fan of one; zones and kept-texture UVs equal mod 1); head.dims = the shipped dims (they differed by < 1e-13)"
+ },
+ "bcs3.sfom": {
+  "url": "generated: FAM_DIR=refs/cache/src/fam3d tools/convert_models.py bcs3 from bcs1/glTF2/BCS3.glb (Ysurac/FlightAirMap-3dmodels @0906d9b)",
+  "licence": "GPL-2.0 (derived from the FlightAirMap A220 model, whose FlightGear origin FGMEMBERS/CSeries @8a8223f3 carries COPYING GPL-2.0: docs/research/liveries.md \u00a74.1, docs/ATTRIBUTION_models.md \u00a71)",
+  "made": "2026-11-08",
+  "note": "pre-atlas conversion (tools/liveries/atlas.py source), close-out round 4 fix 2 (8 Nov 2026): reproduces the source of the shipped data/models/bcs3.sfom (scratch c4/aircraft/fix2 geomcmp.py / zonecmp.py: every shipped triangle is a conversion triangle on the same quantisation grid, or a plug-band split / window-opening fan of one; zones and kept-texture UVs equal mod 1); head.dims = the shipped dims (they differed by < 1e-13)"
+ },
+ "crj2.sfom": {
+  "url": "generated: FAM_DIR=refs/cache/src/fam3d tools/convert_models.py crj2 from crj2/glTF2/CRJ2.glb (Ysurac/FlightAirMap-3dmodels @0906d9b)",
+  "licence": "GPL-2.0 (derived from the FlightAirMap model)",
+  "made": "2026-11-08",
+  "note": "pre-atlas conversion (tools/liveries/atlas.py source), close-out round 4 fix 2 (8 Nov 2026): reproduces the source of the shipped data/models/crj2.sfom (scratch c4/aircraft/fix2 geomcmp.py / zonecmp.py: every shipped triangle is a conversion triangle on the same quantisation grid, or a plug-band split / window-opening fan of one; zones and kept-texture UVs equal mod 1); head.dims = the shipped dims (they differed by < 1e-13)"
+ },
+ "crj9.sfom": {
+  "url": "generated: FAM_DIR=refs/cache/src/fam3d tools/convert_models.py crj9 from crj9/glTF2/CRJ9.glb (Ysurac/FlightAirMap-3dmodels @0906d9b)",
+  "licence": "GPL-2.0 (derived from the FlightAirMap model)",
+  "made": "2026-11-08",
+  "note": "pre-atlas conversion (tools/liveries/atlas.py source), close-out round 4 fix 2 (8 Nov 2026): reproduces the source of the shipped data/models/crj9.sfom (scratch c4/aircraft/fix2 geomcmp.py / zonecmp.py: every shipped triangle is a conversion triangle on the same quantisation grid, or a plug-band split / window-opening fan of one; zones and kept-texture UVs equal mod 1); head.dims = the shipped dims (they differed by < 1e-13)"
+ },
+ "e170.sfom": {
+  "url": "generated: FAM_DIR=refs/cache/src/fam3d tools/convert_models.py e170 from e190/glTF2/E170.glb (Ysurac/FlightAirMap-3dmodels @0906d9b)",
+  "licence": "GPL-2.0 (derived from the FlightAirMap model)",
+  "made": "2026-11-08",
+  "note": "pre-atlas conversion (tools/liveries/atlas.py source), close-out round 4 fix 2 (8 Nov 2026): reproduces the source of the shipped data/models/e170.sfom (scratch c4/aircraft/fix2 geomcmp.py / zonecmp.py: every shipped triangle is a conversion triangle on the same quantisation grid, or a plug-band split / window-opening fan of one; zones and kept-texture UVs equal mod 1); head.dims = the shipped dims (they differed by < 1e-13)"
+ },
+ "e75l.sfom": {
+  "url": "generated: FAM_DIR=refs/cache/src/fam3d tools/convert_models.py e75l from e190/glTF2/E75L.glb (Ysurac/FlightAirMap-3dmodels @0906d9b)",
+  "licence": "GPL-2.0 (derived from the FlightAirMap model)",
+  "made": "2026-11-08",
+  "note": "pre-atlas conversion (tools/liveries/atlas.py source), close-out round 4 fix 2 (8 Nov 2026): reproduces the source of the shipped data/models/e75l.sfom (scratch c4/aircraft/fix2 geomcmp.py / zonecmp.py: every shipped triangle is a conversion triangle on the same quantisation grid, or a plug-band split / window-opening fan of one; zones and kept-texture UVs equal mod 1); head.dims = the shipped dims (they differed by < 1e-13)"
+ },
+ "e190.sfom": {
+  "url": "generated: FAM_DIR=refs/cache/src/fam3d tools/convert_models.py e190 from e190/glTF2/E190.glb (Ysurac/FlightAirMap-3dmodels @0906d9b)",
+  "licence": "GPL-2.0 (derived from the FlightAirMap model)",
+  "made": "2026-11-08",
+  "note": "pre-atlas conversion (tools/liveries/atlas.py source), close-out round 4 fix 2 (8 Nov 2026): reproduces the source of the shipped data/models/e190.sfom (scratch c4/aircraft/fix2 geomcmp.py / zonecmp.py: every shipped triangle is a conversion triangle on the same quantisation grid, or a plug-band split / window-opening fan of one; zones and kept-texture UVs equal mod 1); head.dims = the shipped dims (they differed by < 1e-13)"
+ },
+ "md11.sfom": {
+  "url": "generated: FAM_DIR=refs/cache/src/fam3d tools/convert_models.py md11 from md11/glTF2/MD11.glb (Ysurac/FlightAirMap-3dmodels @0906d9b)",
+  "licence": "GPL-2.0 (derived from the FlightAirMap model)",
+  "made": "2026-11-08",
+  "note": "pre-atlas conversion (tools/liveries/atlas.py source), close-out round 4 fix 2 (8 Nov 2026): reproduces the source of the shipped data/models/md11.sfom (scratch c4/aircraft/fix2 geomcmp.py / zonecmp.py: every shipped triangle is a conversion triangle on the same quantisation grid, or a plug-band split / window-opening fan of one; zones and kept-texture UVs equal mod 1); head.dims = the shipped dims (they differed by < 1e-13)"
+ },
+ "b77w.sfom": {
+  "url": "generated: tools/convert_models.py b77w from refs/cache/src/fg/777_export/Models/777-300ER.ac (FGMEMBERS/777 @371a354)",
+  "licence": "GPL-2.0 (derived from the FlightGear 777 model)",
+  "made": "2026-11-08",
+  "note": "pre-atlas conversion (tools/liveries/atlas.py source), close-out round 4 fix 2 (8 Nov 2026): reproduces the source of the shipped data/models/b77w.sfom (scratch c4/aircraft/fix2 geomcmp.py / zonecmp.py: every shipped triangle is a conversion triangle on the same quantisation grid, or a plug-band split / window-opening fan of one; zones and kept-texture UVs equal mod 1); head.dims = the shipped dims (they differed by < 1e-13)"
+ },
+ "b772.sfom": {
+  "url": "generated: tools/convert_models.py b772 from refs/cache/src/fg/777_export/Models/777-200ER.ac (FGMEMBERS/777 @371a354)",
+  "licence": "GPL-2.0 (derived from the FlightGear 777 model)",
+  "made": "2026-11-08",
+  "note": "pre-atlas conversion (tools/liveries/atlas.py source), close-out round 4 fix 2 (8 Nov 2026): reproduces the source of the shipped data/models/b772.sfom (scratch c4/aircraft/fix2 geomcmp.py / zonecmp.py: every shipped triangle is a conversion triangle on the same quantisation grid, or a plug-band split / window-opening fan of one; zones and kept-texture UVs equal mod 1); head.dims = the shipped dims (they differed by < 1e-13)"
  }
 }

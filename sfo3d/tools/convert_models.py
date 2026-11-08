@@ -492,7 +492,16 @@ def tail_fit(prims, f, s_ref):
                  root (the root height is the artist's), the airfoil thickness scales with the chord ratio
     Normals are mapped with the inverse transpose of the map's Jacobian (finite differences). Self-check: no triangle
     may turn by more than 90 deg (fold); the counts are printed. The root of the stabiliser moves forward inside the
-    tail cone (hidden), the surface emerges from the skin where the target leading edge crosses it."""
+    tail cone (hidden), the surface emerges from the skin where the target leading edge crosses it.
+    Root clamp (`cone`: regex of the body objects; close-out round 4, fix round 2, verifier finding 5): after the map, a
+    vertex of the inboard part (|z| < z0) that stands outside the tail-cone skin by up to `proud` (0.05 model m) is moved
+    in to `inset` (0.01) inside it, the skin's half width measured on the same side at the vertex's station and height
+    (planar cuts of the body objects). On the FG 737-800 the right stabiliser's root trailing-edge corner (X 36.14, |z|
+    0.396) and the elevator's hinge-line corner (X 36.05, 0.425) stood 0.013-0.019 m outside the right side of the cone
+    (the source cone is 0.03 m narrower there than on the left), so the straight inboard edge between the root leading
+    edge and that corner left a 3-14 mm slit along the skin over X 35.0-36.4. Vertices further out (the tab cut-out
+    corners and the tab's inboard end, 0.17-0.25 m off the skin with the elevator between them and the cone: the
+    artist's arrangement) are not moved."""
     rx = re.compile(f['nodes']); sel = [p for p in prims if rx.search(p['node'].split('|')[0])]
     if not sel: raise RuntimeError('tail fit: no objects match ' + f['nodes'])
     A = np.concatenate([p['pos'] for p in sel]); X = -A[:, 0]; a = np.abs(A[:, 2])
@@ -515,6 +524,25 @@ def tail_fit(prims, f, s_ref):
         return np.stack([-(le_a(u2) + xi * ca), y2, sg * u2], 1)
     def tri_n(P, I):
         c = P[I]; nn = np.cross(c[:, 1] - c[:, 0], c[:, 2] - c[:, 0]); return nn / np.maximum(np.linalg.norm(nn, axis=1), 1e-12)[:, None]
+    # tail-cone skin half width on one side at station x and height y (planar cut of the body objects; root clamp below)
+    rc = re.compile(f['cone']) if f.get('cone') else None
+    selid = {id(p) for p in sel}
+    body = [p for p in prims if rc and id(p) not in selid and rc.search(p['node'].split('|')[0])]
+    BT = np.concatenate([p['pos'][p['idx'].reshape(-1, 3)] for p in body]) if body else np.zeros((0, 3, 3))
+    def cone_hw(x, y, sg):
+        T = BT[(BT[:, :, 0].min(1) <= x) & (BT[:, :, 0].max(1) >= x)]; best = np.nan
+        X = T[:, :, 0] - x; segs = []                     # cut segments (y, z): the two edge crossings of each triangle
+        for a, b in ((0, 1), (1, 2), (2, 0)):
+            mm = (X[:, a] < 0) != (X[:, b] < 0); u = np.where(mm, X[:, a] / np.where(mm, X[:, a] - X[:, b], 1), 0)
+            segs.append((mm, T[:, a, 1:] + u[:, None] * (T[:, b, 1:] - T[:, a, 1:])))
+        M = np.stack([q[0] for q in segs], 1); Pt = np.stack([q[1] for q in segs], 1)
+        for k in np.where(M.sum(1) == 2)[0]:
+            (y0, z0_), (y1, z1_) = Pt[k][M[k]]
+            if (y0 - y) * (y1 - y) <= 0 and y0 != y1:
+                z = z0_ + (y - y0) / (y1 - y0) * (z1_ - z0_)
+                if z * sg > 0 and abs(z) < 3.0 and not (abs(z) <= best): best = abs(z)
+        return best
+    proud, inset = f.get('proud', 0.05), f.get('inset', 0.01); clamp = []
     n = nt = turn = 0; fold = []
     for p in sel:
         P = p['pos']; I = p['idx'].reshape(-1, 3)
@@ -524,11 +552,18 @@ def tail_fit(prims, f, s_ref):
             nn = np.linalg.solve(np.transpose(J, (0, 2, 1)), p['nrm'][..., None])[..., 0]
             p['nrm'] = nn / np.maximum(np.linalg.norm(nn, axis=1), 1e-12)[:, None]
         p['pos'] = fmap(P); n += len(P)
+        if len(BT):                                       # root clamp: inboard vertices just outside the tail-cone skin
+            Q = p['pos']
+            for v in np.where(np.abs(Q[:, 2]) < z0)[0]:
+                sg = 1.0 if Q[v, 2] > 0 else -1.0; hw = cone_hw(Q[v, 0], Q[v, 1], sg)
+                if np.isfinite(hw) and hw - inset < abs(Q[v, 2]) <= hw + proud:
+                    clamp.append((p['node'], round(float(-Q[v, 0]), 3), round(float(abs(Q[v, 2]) - hw), 4), 'R' if sg > 0 else 'L')); Q[v, 2] = sg * (hw - inset)
         d = (N0 * tri_n(p['pos'], I)).sum(1); nt += int(ok.sum())
         fold += [(p['node'], int(q)) for q in np.where(ok & (d < 0))[0]]; turn += int((ok & (d < np.cos(np.radians(45)))).sum())
     print(f"  tail fit: {n} vertices of {len(sel)} objects; semi-span {zt:.3f} -> {zT:.3f} (k {k:.4f}); model LE {pL0[0]:.2f}@{pL0[1]:.2f} "
           f"-> {pL1[0]:.2f}@{pL1[1]:.2f}, TE {pT0[0]:.2f}@{pT0[1]:.2f} -> {pT1[0]:.2f}@{pT1[1]:.2f}; mid-plane dihedral "
           f"{np.degrees(np.arctan(c1)):.1f} -> {f['dihedral']:.1f} deg (root y {yr:.3f}); self-check: {nt} triangles, {turn} turned > 45 deg, {len(fold)} folded")
+    if rc: print(f"  tail fit root clamp: {len(clamp)} vertices moved inside the tail cone ({', '.join(f'{c[0]} X {c[1]} {c[3]} +{c[2]:.3f}' for c in clamp)})")
     if fold: raise RuntimeError(f'tail fit: {len(fold)} triangles fold over (first: {fold[:6]})')
 
 
@@ -672,7 +707,8 @@ AC_MODELS = {
                   # the ACAP stabiliser-tip rows at the fitted stance (js/aircraft/fit.js STANCE_FIT), least squares over the
                   # 737-800 row H 'stabilizer' MAX (AT OEW) 5.64 m (D6-58325-7 §2.3.2) and the 737-8 row N 'horizontal
                   # stabilizer' MAXIMUM 5.36 m (D6-38A004 §2.3.2); the front view of p.2-14 draws ~6.4 deg (inf)
-                  tailFit=dict(nodes=r'^(lh|rh)(stab|elevator|elevatortab)$', z0=0.94, span=14.35, le=(34.0, 1.72, 0.7215), te=(38.0, 2.61, 0.322), dihedral=7.0),
+                  tailFit=dict(nodes=r'^(lh|rh)(stab|elevator|elevatortab)$', z0=0.94, span=14.35, le=(34.0, 1.72, 0.7215), te=(38.0, 2.61, 0.322), dihedral=7.0,
+                              cone=r'^fuselage(\.\d+)?$'),   # root clamp against the tail cone (close-out round 4, fix round 2)
                   # nacelle pieces whose names ENG_RE misses (close-out round 3, fix round 2, v2): the inlet lips (engnose,
                   # engnose.003), the LEFT fan cowl (engnose.001; the right one, No2engfancase, was already 'engine'), the inlet
                   # ducts, core cowls and tail pipes stayed in the body zone, so the 737 MAX's nacelle scale (js/aircraft/fit.js

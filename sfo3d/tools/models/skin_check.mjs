@@ -8,8 +8,19 @@
 // (docs/requests/aircraft_closeout.md, close-out round 4, 46 types, 11,519 rows at keel + <= 0.3 m: > 0.15 m off 854,
 // > 0.5 m 428 (round-3 hwLow: 1045 / 688); 737 family 77 / 24; A320 family 88 / 74 (round 3: 136 / 126); every height
 // > 0.5 m 1587 (2237)). The cut ignores crossings wider than 1.3 R (the wing).
-// Usage: node tools/models/skin_check.mjs [types,comma,separated]   (default: every type with a fitted model)
+// Per-row baseline (close-out round 4, fix round 2, verifier finding 2: net counts hid 545 rows that got worse by > 0.15 m
+// while others improved): --baseline compares every row (type, X, keel + h) with a stored run and lists the rows whose
+// error grew by > 0.15 m (and > 0.5 m) and those that improved; --save stores this run. The stored baseline,
+// tools/models/skin_check_baseline.json.gz, is the run after close-out round 4 fix round 2 (hwLow: absolute fallback
+// limited to the local keel's table range, table-edge rows, gear-bay keel-beam sections skipped): keel + <= 0.3 m off by
+// > 0.15 / 0.5 m 673 / 263, every height > 0.15 m 2614; per row against the round-3 rule 59 rows worse by > 0.15 m (20 by
+// > 0.5 m: gear wells, nose-gear bays, the A220-300 tail-cone end), 1691 better (docs/requests/aircraft_closeout.md).
+// Exit code 0 either way (a report).
+// Usage: node tools/models/skin_check.mjs [types,comma,separated] [--baseline [file]] [--save [file]]
+//        (default: every type with a fitted model; file default tools/models/skin_check_baseline.json.gz)
 import path from 'path';
+import fs from 'fs';
+import zlib from 'zlib';
 import { fileURLToPath } from 'url';
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const DF = await import(path.join(ROOT, 'tools/models/dock_foot.mjs'));
@@ -27,7 +38,12 @@ function cut(G, xs) { const { W: P, D } = G; const segs = [];
     if (pts.length === 2) segs.push(pts); }
   return segs; }
 const cross = (segs, val) => { const r = []; for (const [p, q] of segs) if ((p[0] - val) * (q[0] - val) <= 0 && p[0] !== q[0]) { const u = (val - p[0]) / (q[0] - p[0]); r.push(p[1] + u * (q[1] - p[1])); } return r; };
-const types = process.argv[2] ? process.argv[2].split(',') : Object.keys(TYPES).filter(t => TYPES[t].key === t && fit.TYPE_MODEL[t] && TYPES[t].fit && TYPES[t].fit.skinHW);
+const BASE = path.join(ROOT, 'tools/models/skin_check_baseline.json.gz');
+const argv = process.argv.slice(2), opt = {}; const pos = [];
+for (let i = 0; i < argv.length; i++) { const a = argv[i];
+  if (a === '--baseline' || a === '--save') { const f = argv[i + 1] && !argv[i + 1].startsWith('--') && /\.json(\.gz)?$/.test(argv[i + 1]) ? argv[++i] : BASE; opt[a.slice(2)] = f; }
+  else pos.push(a); }
+const types = pos[0] ? pos[0].split(',') : Object.keys(TYPES).filter(t => TYPES[t].key === t && fit.TYPE_MODEL[t] && TYPES[t].fit && TYPES[t].fit.skinHW);
 const rows = {};
 for (const t of types) {
   const T = TYPES[t], m = fit.TYPE_MODEL[t]; if (!m || !T.fit || !T.fit.skinHW) continue;
@@ -47,3 +63,26 @@ summary('all types, keel + <= 0.3', all, 0.3); summary('all types, every height'
 summary('737 family, keel + <= 0.3', FAM['737'].filter(t => rows[t]), 0.3); summary('A320 family, keel + <= 0.3', FAM.A320.filter(t => rows[t]), 0.3);
 for (const t of all) { const w = rows[t].filter(r => r.e != null).sort((a, b) => Math.abs(b.e) - Math.abs(a.e))[0];
   if (w) console.log(`  ${t.padEnd(5)} worst X ${w.X} keel + ${w.h}: api ${w.api} mesh ${w.mesh.toFixed(3)} (${w.e > 0 ? '+' : ''}${w.e.toFixed(3)})`); }
+// ---- per-row baseline
+const readRows = (f) => JSON.parse((f.endsWith('.gz') ? zlib.gunzipSync(fs.readFileSync(f)) : fs.readFileSync(f)).toString());
+if (opt.baseline) {
+  if (!fs.existsSync(opt.baseline)) console.log(`baseline ${path.relative(ROOT, opt.baseline)} not found`);
+  else {
+    const B = readRows(opt.baseline).rows; let n = 0, w15 = 0, w50 = 0, b15 = 0, gone = 0; const W = [];
+    const err = (api, mesh) => api == null ? Infinity : Math.abs(api - mesh);
+    for (const t of all) { const m = new Map((B[t] || []).map(r => [r[0] + ':' + r[1], r]));
+      for (const r of rows[t]) { const o = m.get(r.X + ':' + r.h); if (!o) continue; n++;
+        const e0 = err(o[3], o[2]), e1 = err(r.api, r.mesh), d = e1 === e0 ? 0 : e1 - e0;
+        if (d > 0.15) { w15++; if (d > 0.5) w50++; W.push({ t, X: r.X, h: r.h, mesh: r.mesh, was: o[3], now: r.api, d }); } else if (d < -0.15) b15++; }
+      for (const o of B[t] || []) if (!rows[t].some(r => r.X === o[0] && r.h === o[1])) gone++; }
+    console.log(`per-row vs ${path.relative(ROOT, opt.baseline)}: ${n} rows compared, worse by > 0.15 m ${w15} (> 0.5 m ${w50}), better by > 0.15 m ${b15}; rows no longer measured ${gone}`);
+    W.sort((a, b) => b.d - a.d);
+    for (const w of W.slice(0, 20)) console.log(`  WORSE ${w.t.padEnd(5)} X ${w.X} keel + ${w.h}: api ${w.was} -> ${w.now} (mesh ${w.mesh.toFixed(3)})`);
+  }
+}
+if (opt.save) {
+  const out = { made: new Date().toISOString(), note: 'tools/models/skin_check.mjs rows: [X, h, mesh, api] per type', rows: {} };
+  for (const t of all) out.rows[t] = rows[t].map(r => [r.X, r.h, +r.mesh.toFixed(4), r.api]);
+  fs.writeFileSync(opt.save, opt.save.endsWith('.gz') ? zlib.gzipSync(JSON.stringify(out), { level: 9 }) : JSON.stringify(out));
+  console.log(`saved ${path.relative(ROOT, opt.save)} (${Object.keys(out.rows).length} types)`);
+}

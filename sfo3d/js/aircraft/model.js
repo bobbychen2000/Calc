@@ -306,13 +306,16 @@ export function buildAircraft(typeName, lod = 1) {
   }
   // lights (local positions)
   const tipY = wingY(semi) + (W.tipH || 0) * (W.tip === 'raked' ? 0.05 : 0.08);
-  const tipZ = semi + (W.tip === 'raked' ? W.tipH * 0.9 : 0.4);
+  // a plain tip (no device: 737-600, 777-200 / -200ER; tip 'plain' / none) ends at semi, where the lights sit on the tip
+  // fairing (close-out round 4, fix round 2, verifier finding 4: the device offset put them 0.60 m outboard of the tip)
+  const plainTip = !W.tip || W.tip === 'plain' || W.tip === 'none';
+  const tipZ = semi + (W.tip === 'raked' ? W.tipH * 0.9 : plainTip ? 0 : 0.4), out = plainTip ? 0.05 : 0.2;
   // raked tip: its leading edge sweeps aft of the straight wing LE line (tip loft above at t = 1: x = LE(semi) - 1.05 tipH),
   // so the navigation light sits at the loft's tip, not on the extended LE line (1.5 m ahead of the tip, review round 1)
   const navX = W.tip === 'raked' ? leX(semi) - W.tipH * 1.05 - 0.1 : leX(tipZ) - 0.3;
   const lights = {
-    navL: [navX, tipY, -tipZ - 0.2], navR: [navX, tipY, tipZ + 0.2],
-    strobeL: [leX(semi) - chordAt(semi) * 0.8, tipY, -tipZ - 0.1], strobeR: [leX(semi) - chordAt(semi) * 0.8, tipY, tipZ + 0.1],
+    navL: [navX, tipY, -tipZ - out], navR: [navX, tipY, tipZ + out],
+    strobeL: [leX(semi) - chordAt(semi) * 0.8, tipY, -tipZ - out / 2], strobeR: [leX(semi) - chordAt(semi) * 0.8, tipY, tipZ + out / 2],
     tail: [X(L) + 0.2, Hc + 0.6 * R, 0], beaconTop: [X(L * 0.45), Hc + fuselageSection(T, L * 0.45).yt + 0.1, 0], beaconBot: [X(L * 0.5), Hc - R * 1.1, 0],
     landL: [leX(R * 1.5) - 0.5, wingY(R * 1.5) - 0.2, -R * 1.5], landR: [leX(R * 1.5) - 0.5, wingY(R * 1.5) - 0.2, R * 1.5],
     taxi: [X(T.gear.nose.x), T.gear.nose.r + 1.4, 0],

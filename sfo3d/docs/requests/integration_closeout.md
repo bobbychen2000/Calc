@@ -108,9 +108,9 @@ notes -> `b3d_lod2_check` 47 units 0 flagged -> `tools/sat/check.py` ISSUES 0 / 
 The round-3 cut that removed 1-m cells from lower decks is gone (verifier v1). Stacked pairs are now held by the level solve
 (the lower way lowered under the upper deck) and, where it cannot, the lower deck is cut along the upper deck's edge - or the cut is
 refused and reported when it would split the lower road. One pair cannot be held: the ITB loop's lower (arrivals) roadway 41015123,
-held at 5.80 m [inf: 4.6 m over the at-grade building-passage roads + 1.2 m deck], passes under its departures legs 38853121 /
-38853045, which leave the L3 plate at 11.35 m (`spec_itb level3.floor` 11.5 [inf, +-1.5] - kerb). 5.55 m deck to deck < 5.8 m:
-`b3d_integrate` lists 88.6 m2 at 3.88-4.6 m (161 m2 by the verifier's own overhead script) (round 3 had cut the lower road away under the leg - a road that stopped under the ramp).
+held at 5.80 m [inf: 4.6 m over the at-grade building-passage roads + 1.2 m deck] [corrected in close-out r4: at the conflict it is at 6.27 m, not 5.80 m - floored by the at-grade roads 256787736 / 93671776 beside it, a three-level stack, R4.2], passes under its departures legs 38853121 /
+38853045, which leave the L3 plate at 11.35 m (`spec_itb level3.floor` 11.5 [inf, +-1.5] - kerb). 5.55 m deck to deck < 5.8 m [corrected in close-out r4: 11.35 - 6.27 = 5.08 m over the conflict]:
+`b3d_integrate` lists 88.6 m2 at 3.88-4.6 m (161 m2 by the verifier's own overhead script) [corrected in close-out r4: 160.3 m2 below 4.6 m - `b3d_integrate` sampled only half of each triangle's cells, R4.2] (round 3 had cut the lower road away under the leg - a road that stopped under the ramp).
 Photo i1 reads the step ~6.7 m, i.e. L3 ~1 m higher than modelled. Please review `level3.floor` against i1; the roadways follow the
 ITB curb level on the next `build_roadways.py` run, and the conflict lifts by itself if L3 rises by >= 0.8 m.
 
@@ -184,7 +184,7 @@ interchange_2_2 is one of these. Changes (`tools/blender/build_roadways.py`):
 | interchange_2_2 step between the two decks (`rv/ic22_step.py`, x -1645..-1619, z 422-432): x-stations (0.1 m) with a deck-to-deck jump of 0.3-0.8 m between cells 0.1 m apart | 202 (20.2 m; 0.32-0.69 m) | 0 (largest deck-to-deck jump 0.23 m) |
 | open deck edges, the verifier's `guard.py` (same asset pickle): open / drop 0.5-1.5 m / drop > 4 m | 1,257 / 315.6 / 137.4 m | 929 / 100.0 / 109.8 m (the > 4 m rest: the ITB plate's h 12.30 edges, as in r22) |
 | glTF validator errors roadways.glb / roadways_lod2.glb | 0 / 29 (non-unit normals) | 0 / 0 |
-| deck area (117 pieces) / columns / max grade, ways > 8 % / LOD0 triangles | 92,349.7 m2 / 300 / 13.4 %, 20 / 48,780 | 92,808.2 m2 (+458.5 = the fills; no piece smaller than in r22) / 300 / 13.4 %, 20 / 50,912 |
+| deck area (117 pieces) / columns / max grade, ways > 8 % / LOD0 triangles | 92,349.7 m2 / 300 / 13.4 %, 20 / 48,780 | 92,808.2 m2 (+458.5 = the fills; no piece smaller than in r22) / 300 / 13.4 %, 20 [corrected in fix round 2: the way profiles' maximum (`stats.grade_max`), not the mesh - the round-4 mesh had 14.8 %, 971 m2 above 10 %, ITB 115 m2; R4f2.1] / 50,912 |
 
 What is left of the in-carriageway count is gore noses - the last 0.5-1.4 m of the two barriers where they converge to the V tip and the
 filled slit (< 1 m) continues the deck between them (`SP/c4/integration/plots/m8_831.png`: (-831.4, 396.5), 1.1 m;
@@ -240,3 +240,100 @@ One low-tier near-mode page (`tier=low`, headless Chromium on llvmpipe 960 x 540
 - The ITB L3 level (R3.2 / R3f2.2): the conflict is 3.88 m on the mesh over 160.3 m2 (the area now counted in full); +0.8 m on
   `level3.floor` lifts it.
 - The domestic arrivals clearance (R3.6) and the phone test card (R3f2.5).
+
+## Round 4, fix round 2 (8 Nov 2026; the round-4 verifier's findings, `SP/c4/integration_ver1`)
+
+Rebuilt `roadways.glb` / `roadways_lod2.glb` (5,266,908 / 476,072 B; sha1 950d31fa / e3728c1d; round 4 4,685,984 / 450,412 B),
+`integration.json` / `integration.js`, `manifest.json#roadways` / `#integration` (20:28-20:42Z, `SP/c4/integration/jobs/final.sh final3`;
+building assets unchanged since round 4). Chain: build -> `verify_landside` 199 checks / 0 failed -> `b3d_integrate` 7 conflicts /
+14 notes (= round 4; tier self-check 156,818 vertices, 0 outside, largest 0.124 m) -> `b3d_lod2_check` 47 units / 0 flagged ->
+`tools/sat/check.py` ISSUES 0 / APP 0 / WARNINGS 41 (= round 4, the stands data). gltf-validator 0 / 0 errors on both files;
+three.js GLTFLoader on the LOD2 file: 21 meshes, 7,338 triangles, all finite. Every number below is on the installed files
+(byte-identical to dev build e3), measured with the verifier's own scripts (`SP/c4/integration_ver1/rv/`: grades, pfloat,
+incarr, slits, rrclear, guard, dh) plus `SP/c4/integration/rv/stubs.py`, `ic22_step.py` and `f2/steps.py`. Work log, dev builds
+e0-e3 and the offline blend lab: `SP/c4/integration/NOTES.md`, `f2/`.
+
+### R4f2.1 Grade waves from the blend (major, regression of R4.1): fixed at the root
+
+Confirmed as diagnosed: 90 of the 140 pairs that R4.1 blended were two ways continuing each other end to end; beyond the
+neighbour's end `hp()` clamps to the node level, so every deck within 8 m of every joint was pulled towards the node level.
+Two more defects of the same blend turned up while fixing it (dev builds e0 / e1, `f2/an_site.py`): (a) its fade on the step,
+(1.0 - r) / 0.4 x r, has a slope down to -2.5, so a deck beside one at another grade rose or dipped by up to 1.25 x the grade
+difference where the step grew through 0.6-1.0 m (the 10.0 % ITB triangle at (-1393.0, 482.7): 681667031 beside 38854581);
+(b) a neighbour clamped beyond its own end pulled a deck towards a ramp's start level (14.4 % at (-1546.5, 471.5) in e0).
+`build_roadways.py` now:
+
+- blends only connected ways that touch SIDE BY SIDE: `continuation()` (centreline ends within JOINT_TOL, outward directions
+  opposed) excludes end-to-end pairs, unless they also touch farther than their half width + 3 m from the joint (none): 50 pairs,
+  90 continuations not blended;
+- evaluates the neighbour extrapolated with its end slope beyond its ends (`hp_ext`, up to 8 m), not clamped;
+- takes the step out in full up to 0.6 m and then falls off at the rate the step grows (phi(r) = 1.2 - r, none from 1.2 m), so the
+  correction can never add more grade than half the two decks' grade difference;
+- does not blend decks without a shared node (tried in e1 for R4f2.3: the mesh maximum rose to 13.7 % and no step left the
+  0.05-0.30 m class; offline lab `f2/blendlab.py` on the same pieces: no blend 13.37 % / 784.3 m2 > 10 %, round-4 fade 821 m2 and
+  ITB 26 m2, the chosen rule 13.37 % / 784.3 m2 / ITB 0);
+- reports the as-built grades: `roadways_build.json#stats.mesh_grades` (LOD0 deck-top triangles, deck_* materials, area-weighted,
+  max / area above 6-13.5 % / per unit / folds; identical to the verifier's `grades.py` on the e0 and e3 files) and
+  `manifest.json#roadways.closeout_r4.fix_round_2`. `stats.grade_max` stays the way profiles' maximum.
+
+| Measure (LOD0 mesh) | r22 | Round 4 | Fix round 2 |
+|---|---|---|---|
+| max grade | 13.4 % | 14.8 % | 13.4 % (13.37, (-1549.5, 468.8), the r22 site: 41015033's profile) |
+| area > 10 / > 12 / > 13.5 % | 772 / 36 / 0 m2 | 971 / 171 / 19 m2 | 784 / 36.5 / 0 m2 (the 12 m2 over r22 are round-4 fills; the same pieces without any blend: 784.3) |
+| ITB / interchange_1_2 area > 10 % | 0 / 0 m2 | 115 / 71 m2 | 0 / 0 m2 (ITB max 9.7 %, as r22) |
+| folds > 1 / > 2 / > 4 deg | 107 / 56 / 5 | 299 / 102 / 8 | 226 / 84 / 10 (the same pieces without a blend: 150 / 76 / 9 - the flat joint wedges; the side-by-side blend adds ~75 folds of 1-2 deg) |
+| deck tops moved vs r22, area with abs(dh) > 0.1 m (`dh.py`) | - | 3,895 m2 (max +-0.30) | 3,983 m2 (max +-0.29; now only along the 50 side-by-side pairs - the R4.4 interchange_2_2 step and junctions) |
+| interchange_2_2 deck-to-deck jumps 0.3-0.8 m (`ic22_step.py`) | 20.2 m | 0 | 0 (largest 0.25 m) |
+
+### R4f2.2 Barrier feet off the deck (minor): fixed
+
+Each deck ring is now segmentized at the deck triangulation's own spacing (6 / 16 / 30 m per LOD: `tri_polys` segmentizes the
+same polygon, so they share the boundary vertices) and the fascia / parapet heights are linear between `hb()` at those vertices,
+exactly as the deck's boundary edges (`edge_runs` returns each run's ring segment and its end fractions). Self-check
+`stats.edges_lod0.parapet_foot` (every parapet's base vs the deck's own top triangles every 0.5 m): 46,920 samples, 0 m beyond
+0.02 m (largest 0.002 m). `pfloat.py`: floating > 0.02 / > 0.05 m 50 / 18 m (r22) -> 230 / 37 m (round 4) -> 2 / 0 m; buried
+> 0.02 m 27.1 -> 82.3 -> 1.6 m2. `guard.py`: open edge 1,257 -> 929 -> 882 m, drop 0.5-1.5 m 315.6 -> 100.0 -> 100.0 m, drop > 4 m
+137.4 -> 109.8 -> 95.2 m (the 2-m tool artefact at (-1544.1, 481.7) is gone; the rest are the ITB plate's h 12.30 edges, as r22).
+Cost: LOD0 50,912 -> 57,753 triangles, the full file 4.69 -> 5.27 MB (more edge quads, the abutments and soffits of R4f2.6).
+
+### R4f2.3 Low step faces inside carriageways (minor): partly - reported by height; both suggested remedies tried and rejected
+
+`stats.edges_lod0.step_face_by_height_m` (build, LOD0, by the step at the run ends): 0.02-0.05 m 105.3, 0.05-0.10 m 65.8, 0.10-0.20 m
+99.7, 0.20-0.30 m 88.0 m, plus 95.5 m that is the ITB lower sidewalk's 0.15-m kerb over its roadway (by design, now its own class);
+`stats.edges_lod0.step_face_top` lists the sites. Round 4 had 498.5 m in one figure (kerb included). On the mesh (`f2/steps.py`:
+vertical concrete 0.02-0.31 m tall above grade, kerb included): 0.02-0.10 / 0.10-0.20 / 0.20-0.31 m: round 4 92.6 / 152.8 / 65.2 m,
+now 103.3 / 163.7 / 58.7 m - not resolved. Tried:
+- the verifier's first option, blending decks that share no node as well (e1, full below 0.30 m): it moves the step to the deck's
+  other neighbours at junctions where three or more pieces meet (the 0.05-0.30 m contact stayed 172 m in the lab) and raised the
+  mesh maximum to 13.7 %;
+- the second, two levels with a median barrier from a 0.05-m step (e2, STEP_LIP): the in-carriageway parapet self-check went
+  52 -> 427 m (80 clusters, 18.7 m at (-1472.9, 471.5)): at junction pieces with 0.07-0.23 m between them every side became a
+  barrier, a lattice across the junction (`f2/an_edges.py`).
+What is left (`f2/an_contacts.py`, contact with a 0.05-0.30 m step): 72 m between connected decks where their profiles part through
+0.6-0.75 m (the blend's fall-off), 86 m between decks that share no node at junctions and parallel carriageways (41015033 /
+41015044), 14 m at continuations. A clean fix needs one warped surface per junction (a joint level solve over the touching
+pieces) rather than per-way ribbons - deferred, recorded here.
+
+### R4f2.4 Records (minor): fixed
+
+Inline "[corrected in close-out r4: ...]" notes added to R3f2.2 (lower roadway at 6.27 m, not 5.80 m, floored by the at-grade roads
+256787736 / 93671776, a three-level stack; deck to deck 5.08 m; 160.3 m2 below 4.6 m) and to the `docs/research/buildings3d.md`
+fix-2 v1 row; the R4.1 table's grade row now says it is the profiles' maximum, with the round-4 mesh figures.
+
+### R4f2.5 Conflicts left with their owners (minor): unchanged
+
+`b3d_integrate` 7 conflicts / 14 notes as round 4: roads over roads 3.88 m at (-1307.8, 483.4), deck 6.27 m, 160.3 m2 (ITB L3 level:
+ITB group / owner, +0.8 m on `level3.floor`; not guessed); the domestic departures loop 3.53 m over 26 at-grade roads, 758 m (owner:
+posted clearance); interchange_2_2 4.60 m over 1.0 m (numerical); the four narrowed stacked cuts, including 370279626 cut to 0.00 m
+under 35157100 over 51 m. Holding diverge branches at the main deck's level over their overlap (`roadways_net` solve) is deferred:
+it changes grades and clearances network-wide, and the mesh-grade self-check above is now in place for when it is done.
+`rrclear.py` on the mesh: min 3.88 m, 444.9 m2 below 4.6 m (with the 4.20-m ITB lower sidewalk under the plate) - unchanged.
+
+### R4f2.6 Columns under decks just above the fill level (minor): fixed
+
+The soffit is now built on every triangle with a vertex at or above FILL_H (round 4: all three), at the deck depth below the top
+(not below grade), and where such a triangle meets an all-fill one an abutment face from grade to the soffit closes the fill (142.5 m
+at LOD0); columns run 0.15 m (COL_TOP) up into the 1.2-m deck box. Self-check `stats.columns_vs_soffit`: 300 of 300 columns reach a
+soffit triangle at the centre and 0.3 m round it (largest soffit offset 0.063 m; round 4: 298 of 300 by the verifier's test,
+35157016 at (-1796.4, 753.6) and 186398851 at (-1592.6, 500.0) without one). `b3d_integrate` finds no new clearance conflict from
+the added soffits.

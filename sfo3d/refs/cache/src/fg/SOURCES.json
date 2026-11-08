@@ -45,5 +45,21 @@
    "Models/Liveries-800/N563AS.png": "26cddace69cb485f1dc756f3ae56da3c311b6214",
    "Models/Liveries-800/N563AS.xml": "184868f866c1781dbf5aca2f5c7a67d808429a1b"
   }
+ },
+ "777_export/*": {
+  "url": "https://github.com/FGMEMBERS/777",
+  "commit": "371a354e5805c3c54afac926fea16bb19ea71fda",
+  "licence": "GPL-2.0 (the FGAddon original's LICENSE, svn trunk/Aircraft/777/LICENSE r19240, https://sourceforge.net/p/flightgear/fgaddon/HEAD/tree/trunk/Aircraft/777/LICENSE; the FGMEMBERS mirror has no root LICENSE file)",
+  "fetched": "2026-11-08",
+  "how": "plain export (no .git) of single files at the pinned commit (git show <commit>:<path> from a blob-less clone kept outside the repo): the two .ac files tools/convert_models.py AC_MODELS b77w / b772 read and the textures they reference; blob_sha1 = git hash-object of the file = git rev-parse <commit>:<path>. Close-out round 4 fix 2 (verifier finding 1)",
+  "used_by": "tools/convert_models.py b77w b772 (FG777_DIR default), tools/liveries/atlas.py source_images",
+  "blob_sha1": {
+   "Models/777-200ER.ac": "f190903d11f883792f7b6009cc93deafafe940b6",
+   "Models/777-300ER.ac": "4a789b02e598f96f0b662df3dc07dc4162d91b95",
+   "Models/Liveries-200/paint1.png": "741c3ecb329437d344a10f8e56ee38e6376a0c99",
+   "Models/Liveries-300/paint1.png": "1954b20613e2be74da5a76cf44a9d4d1bfde01a4",
+   "Models/light_spot.png": "32000d8f2b460e4aa93a845df9b29b262dfae731",
+   "Models/transparent.png": "1d037f06e6f1c2505bb7cf23b25caaa57d37e685"
+  }
  }
 }

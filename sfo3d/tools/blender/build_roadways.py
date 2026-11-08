@@ -96,8 +96,48 @@ def hp(p, xz):
     return np.interp(s, p['s'], p['h'])
 
 
-BLEND = 8.0               # m: the width over which two connected decks meet halfway (close-out r4) [inf]
-BLEND_DH = (0.6, 1.0)     # m: their step where they touch: blended in full below the first, not at all above the second [inf]
+BLEND = 8.0               # m: the width over which two touching decks meet halfway (close-out r4) [inf]
+BLEND_DH = 0.6            # m: their step where they touch is taken out in full up to this; beyond it the correction falls off at
+                          # the rate the step grows (fix round 2: phi(r) = 2 x BLEND_DH - r, none from 2 x BLEND_DH = 1.2 m) [inf]
+
+
+def hp_ext(p, xz, ext=BLEND, run=4.0):
+    """hp, but beyond either end of the centreline extrapolated with the profile's end slope (over its last `run` m; up
+    to `ext` m out) instead of clamped at the end level: the level a neighbour's deck would have there if it went on
+    (fix round 2: the blend compared decks with a clamped neighbour beyond its end - a ramp starting beside a deck's end
+    pulled that deck towards the ramp's start level, a grade spike of 14.4 % at (-1546.5, 471.5) in dev build e0)"""
+    xz = np.asarray(xz, float); pts = shapely.points(xz); Ln = p['line'].length
+    s = shapely.line_locate_point(p['line'], pts); h = np.interp(s, p['s'], p['h'])
+    if Ln < 1.0: return h
+    r = min(run, Ln)
+    for (E, t), at_end in zip(_ends(p), (False, True)):
+        m = (s >= Ln - 1e-6) if at_end else (s <= 1e-6)
+        if not m.any(): continue
+        d = np.clip((xz[m] - E) @ t, 0.0, ext)
+        g = (np.interp(Ln, p['s'], p['h']) - np.interp(Ln - r, p['s'], p['h'])) / r if at_end else (np.interp(0.0, p['s'], p['h']) - np.interp(r, p['s'], p['h'])) / r
+        h[m] = h[m] + g * d
+    return h
+
+
+def _ends(p):
+    """the two centreline ends of piece p: (end point, outward unit direction)"""
+    e = p.get('_ends')
+    if e is None:
+        c = np.array(p['line'].coords); e = []
+        for a, b in ((c[1], c[0]), (c[-2], c[-1])):
+            t = b - a; e.append((b, t / max(np.linalg.norm(t), 1e-9)))
+        p['_ends'] = e
+    return e
+
+
+def continuation(p, q):
+    """the joint where p and q continue each other end to end (centreline ends within JOINT_TOL, outward directions opposed:
+    a bend < 60 deg, as joint_wedges), or None"""
+    if p['src'] not in ('deck', 'ramp') or q['src'] not in ('deck', 'ramp'): return None
+    for Np, tp in _ends(p):
+        for Nq, tq in _ends(q):
+            if np.linalg.norm(Np - Nq) <= JOINT_TOL and float(np.dot(tp, tq)) <= -0.5: return Np
+    return None
 
 
 def blend_neighbours(P, log):
@@ -105,32 +145,57 @@ def blend_neighbours(P, log):
     junctions in general): each piece's level is its own centreline's profile projected sideways (hp), so two ways that
     meet at a shared OSM node and run side by side (merges, diverges, junction pieces) disagree along their common edge by
     their grades x the distance from the node (r22: ~2,000 m of shared edge with 0.02-1 m between the two tops, ~880 m of
-    it over 0.3 m). Connected pieces (a shared OSM node) whose ribbons touch now meet halfway: hb() moves each towards the
-    other over BLEND metres, so their tops agree on the common edge (the verifier's 'equalise the two profiles where the
-    ribbons touch'); steps over BLEND_DH[1] stay (two levels: an edge of each, with parapets)"""
-    n = 0
+    it over 0.3 m). Such pairs now meet halfway: hb() moves each towards the other over BLEND metres, so their tops agree
+    on the common edge (the verifier's 'equalise the two profiles where the ribbons touch').
+    Fix round 2 (verifier ver1, major: the round-4 blend made a grade wave at every joint, mesh max 13.4 -> 14.8 %, ITB
+    area > 10 % 0 -> 115 m2):
+    - NOT two ways that continue each other end to end (continuation(); 90 of the 140 pairs of round 4). They meet at the
+      shared node's level already (both caps are square to their centrelines there), and beyond the neighbour's end hp()
+      clamps to the node level, so the blend pulled every deck within 8 m of every joint towards the node level by up to
+      (1 - d/8) x grade x d / 2. A continuation pair is kept only if it also touches farther than its half width + 3 m
+      from the joint (none);
+    - the neighbour's level beyond its own ends is extrapolated with its end slope (hp_ext), not clamped;
+    - the correction falls off beyond BLEND_DH at the rate the step grows (phi, slope -1), not by a linear weight on the
+      step (round 4: (1.0 - r) / 0.4 x r, whose slope reaches -2.5: a deck beside one at a different grade dipped or rose
+      by up to 1.25 x the grade difference where the step grew through 0.6-1.0 m - 13.7 % at (-1577.4, 492.2) and 10.0 %
+      on the ITB loop in dev build e1);
+    - decks that share no OSM node are not blended (tried in dev build e1 for the 0.02-0.30 m step faces: it moved no
+      step out of 0.05-0.30 m and raised the mesh maximum to 13.7 %).
+    Offline on the e1 pieces (f2/blendlab.py): mesh max 13.37 %, area > 10 % 784 m2 = no blend at all, ITB > 10 % 0 m2;
+    contact edge with a 0.05-0.30 m step 648 m without a blend -> 172 m"""
+    n = nc = 0; kept_c = []
     for p in P:
         p['blend_nbrs'] = []
+    for i, p in enumerate(P):
         if p['geom'].is_empty: continue
-        for q in P:
-            if q is p or q['geom'].is_empty or q['geom'].distance(p['geom']) > 0.2: continue
-            if connected(p, q): p['blend_nbrs'].append(q)
-        n += len(p['blend_nbrs'])
-    log('connected neighbours blended where they touch (close-out r4; BLEND %.0f m, steps < %.1f m in full, none above %.1f m): %d pairs' % (BLEND, BLEND_DH[0], BLEND_DH[1], n // 2))
+        for q in P[i + 1:]:
+            if q['geom'].is_empty or q['geom'].distance(p['geom']) > 0.2 or not connected(p, q): continue
+            J = continuation(p, q)
+            if J is not None:
+                C = p['geom'].buffer(0.25).intersection(q['geom'].buffer(0.25))
+                if C.is_empty or C.hausdorff_distance(Point(*J)) <= max(p['half'], q['half']) + 3.0:
+                    nc += 1; continue
+                kept_c.append((p['id'], q['id']))
+            p['blend_nbrs'].append(q); q['blend_nbrs'].append(p); n += 1
+    log('connected decks blended side by side (close-out r4 fix round 2; BLEND %.0f m, steps taken out in full up to %.1f m, none from %.1f m): %d pairs; '
+        'end-to-end continuations not blended: %d; kept (also side by side): %s' % (BLEND, BLEND_DH, 2 * BLEND_DH, n, nc, kept_c or 'none'))
+    return dict(pairs=n, continuations_not_blended=nc, continuations_kept=kept_c, rule='connected (shared OSM node), touching, not end to end; '
+                'each moves w x phi(step) / 2, w = 1 - d / %.0f m, phi(r) = r up to %.1f m, 2 x %.1f - r beyond, 0 from %.1f m; neighbour extrapolated beyond its ends' % (BLEND, BLEND_DH, BLEND_DH, 2 * BLEND_DH))
 
 
 def hb(p, xz):
-    """deck-top level of piece p at plan points xz as built: hp, met halfway by each connected neighbour within BLEND m
-    (weight 1 on the common edge falling to 0 at BLEND, times 1 below a BLEND_DH[0] step falling to 0 at BLEND_DH[1])"""
+    """deck-top level of piece p at plan points xz as built: hp, met halfway by each blended neighbour q within BLEND m:
+    + w x phi(raw) / 2 with raw = hp_ext(q) - hp(p), w = 1 - distance to q's deck / BLEND, phi(r) = r for |r| <= BLEND_DH,
+    sign(r) (2 BLEND_DH - |r|) up to 2 BLEND_DH, 0 beyond"""
     xz = np.asarray(xz, float); h = hp(p, xz)
     if not p.get('blend_nbrs') or not len(xz): return h
     pts = shapely.points(xz); dh = np.zeros(len(xz))
     for q in p['blend_nbrs']:
         w = np.clip(1.0 - shapely.distance(q['geom'], pts) / BLEND, 0.0, 1.0)
         if not (w > 0).any(): continue
-        raw = hp(q, xz) - h
-        wd = np.clip((BLEND_DH[1] - np.abs(raw)) / (BLEND_DH[1] - BLEND_DH[0]), 0.0, 1.0)
-        dh += w * wd * raw / 2
+        raw = hp_ext(q, xz) - h; r = np.abs(raw)
+        phi = np.where(r <= BLEND_DH, r, np.clip(2 * BLEND_DH - r, 0.0, None)) * np.sign(raw)
+        dh += w * phi / 2
     return h + dh
 
 
@@ -430,6 +495,8 @@ def joint_wedges(P, occ, log):
 
 
 VOID_MAX = 5.0        # m2: an enclosed void between decks at one level up to this size is paved (a junction's leftover) [inf]
+SLIT_DH = 1.0         # m: a slit / void between connected decks is filled where their raw levels differ by less than this (the
+                      # round-4 blend's upper limit; unchanged in fix round 2) [inf]
 SLIT_R = 0.5          # m: slits narrower than 2 x SLIT_R between connected decks at one level are paved (gore noses start
                       # where the two decks are 1 m apart: room for the two 0.4-m barriers) [inf]
 
@@ -448,7 +515,7 @@ def slit_fill(P, occ, log):
     small angle - the gore of a diverge or merge, the inside of a bend - are deck while narrower than 2 x SLIT_R: the
     morphological close (mitre) of the two decks, less both, kept within SLIT_R of each; less any other piece in the stacking
     band, the stacked cuts and the assets' occupancy (as joint_wedges); and only where the two levels (raw, before the
-    blend) differ by less than BLEND_DH[1] (2-m slices along the owner's centreline): where the blend leaves more than
+    blend) differ by less than SLIT_DH (2-m slices along the owner's centreline): where the blend leaves more than
     STEP_TOL between them, the filled slit's far side is an edge of both (a median barrier with no gap), else a step face. r22 built a parapet on each side of
     such a slit from where it was 0.08 m wide: two barriers in one carriageway, 0.1-0.6 m apart (the verifier's 0.6 m rule
     counts them). Joins the piece of higher priority."""
@@ -460,12 +527,12 @@ def slit_fill(P, occ, log):
             q = P[j]
             if j <= i or q['src'] not in ('deck', 'ramp', 'plate') or q['geom'].is_empty: continue
             if q['geom'].distance(p['geom']) > 2 * SLIT_R: continue
-            # connected decks are blended to one level (hb) where their raw levels differ by < BLEND_DH[1]; two decks that
+            # connected decks are blended to one level (hb) where their raw levels differ by < SLIT_DH; two decks that
             # share no node (the gore nose of two ways that part without a common node, a way meeting the ITB plate) only
             # where they are already within STEP_TOL
-            lim = BLEND_DH[1] if connected(p, q) else STEP_TOL
+            lim = SLIT_DH if connected(p, q) else STEP_TOL
             # the slit: the points between the two decks where the gap across (distance to one + to the other) is < 2 x SLIT_R
-            # and the two raw levels agree within BLEND_DH[1], on a 0.1-m grid (a morphological close eroded back from the
+            # and the two raw levels agree within SLIT_DH, on a 0.1-m grid (a morphological close eroded back from the
             # gore's open mouth and left slivers along one side: dev build d6)
             U = unary_union([p['geom'], q['geom']]); D2 = 2 * SLIT_R
             cand = p['geom'].buffer(D2).intersection(q['geom'].buffer(D2)).difference(U)
@@ -522,7 +589,7 @@ def slit_fill(P, occ, log):
             X = shapely.get_coordinates(Hh)
             if len(adj) < 2: continue
             hs = np.array([hp(q, X) for q in adj])
-            if float((hs.max(0) - hs.min(0)).max()) >= BLEND_DH[1]: continue
+            if float((hs.max(0) - hs.min(0)).max()) >= SLIT_DH: continue
             h0 = float(np.median(hs)); G = Hh
             o = occ(G, GROUND_Y + h0 - (RN.DECK_DEPTH if h0 >= FILL_H else h0) - 0.1, GROUND_Y + h0 + PARAPET_H + 0.2)
             if not o.is_empty: G = G.difference(o)
@@ -739,6 +806,32 @@ def tri_polys(geom, seg=3.0):
     return np.concatenate(out_v), np.concatenate(out_t)
 
 
+def tri_lookup(T2, H3, X, cs=5.0, ref=None):
+    """heights at plan points X (m, 2) on plan triangles T2 (n, 3, 2) with vertex heights H3 (n, 3): linear in each
+    triangle; nan where no triangle covers the point; where several do (stacked decks), the first, or the one nearest
+    in height to ref (m,) (close-out r4 fix round 2 self-checks)"""
+    out = np.full(len(X), np.nan)
+    if not len(T2) or not len(X): return out
+    G = {}; mn = T2.min(1); mx = T2.max(1)
+    for i in range(len(T2)):
+        for gx in range(int(mn[i, 0] // cs), int(mx[i, 0] // cs) + 1):
+            for gz in range(int(mn[i, 1] // cs), int(mx[i, 1] // cs) + 1): G.setdefault((gx, gz), []).append(i)
+    byc = {}
+    for i, c in enumerate(map(tuple, np.floor(X / cs).astype(np.int64))): byc.setdefault(c, []).append(i)
+    for c, idx in byc.items():
+        tl = G.get(c)
+        if not tl: continue
+        q = T2[tl]; a0 = q[:, 0]; v0 = q[:, 1] - a0; v1 = q[:, 2] - a0
+        d_ = v0[:, 0] * v1[:, 1] - v0[:, 1] * v1[:, 0]; ok = np.abs(d_) > 1e-12; dd = np.where(ok, d_, 1)
+        idx = np.array(idx); px = X[idx, None, 0] - a0[None, :, 0]; pz = X[idx, None, 1] - a0[None, :, 1]
+        uu = (px * v1[None, :, 1] - pz * v1[None, :, 0]) / dd; vv = (v0[None, :, 0] * pz - v0[None, :, 1] * px) / dd
+        m = ok[None] & (uu >= -1e-6) & (vv >= -1e-6) & (uu + vv <= 1 + 1e-6)
+        Hh = H3[None, tl, 0] + uu * (H3[None, tl, 1] - H3[None, tl, 0]) + vv * (H3[None, tl, 2] - H3[None, tl, 0])
+        hit = m.any(1); j = np.argmax(m, 1) if ref is None else np.argmin(np.where(m, np.abs(Hh - ref[idx, None]), np.inf), 1)
+        out[idx[hit]] = Hh[hit, j[hit]]
+    return out
+
+
 def vnormals(P, I):
     n = np.zeros_like(P)
     f = np.cross(P[I[:, 1]] - P[I[:, 0]], P[I[:, 2]] - P[I[:, 0]])
@@ -783,7 +876,8 @@ def edge_runs(A, B, nbrs, h_self, against, gap=0.08, step=0.5):
     Close-out round 3 fix 2 (verifier v4): sampled every `step` m (a segment's midpoint class left a ~1 m parapet opening at
     the ITB lower level's sidewalk corner). Fix 2, buildings R3.12: an edge against an asset gets its fascia - the deck's edge
     face - but no parapet. Close-out round 4: the neighbour test is local (the step at each sample, any neighbour that
-    qualifies), not a per-pair median. Returns (A, B, outer flags, against flags, neighbour index per run or -1)."""
+    qualifies), not a per-pair median. Returns (A, B, outer flags, against flags, neighbour index per run or -1, the ring
+    segment of each run and the run's ends on it as fractions ta, tb)."""
     L = np.linalg.norm(B - A, axis=1); n = np.maximum(1, np.ceil(L / step).astype(int))
     seg = np.repeat(np.arange(len(A)), n); k = np.concatenate([np.arange(m) for m in n])
     t = (k + 0.5) / n[seg]; Mp = A[seg] + t[:, None] * (B - A)[seg]
@@ -797,7 +891,7 @@ def edge_runs(A, B, nbrs, h_self, against, gap=0.08, step=0.5):
     inner = nbi >= 0
     ag = (shapely.distance(mp, against) < 0.12) if not against.is_empty else np.zeros(len(Mp), bool)
     cls = np.where(inner, 0, np.where(ag, 2, 1))   # 0 inner, 1 outer, 2 against an asset
-    oa, ob, oc, on = [], [], [], []
+    oa, ob, oc, on, oj, ot = [], [], [], [], [], []
     i0 = 0
     for j in range(len(A)):
         cj = cls[i0:i0 + n[j]]; nj = nbi[i0:i0 + n[j]]; i0 += n[j]
@@ -805,9 +899,9 @@ def edge_runs(A, B, nbrs, h_self, against, gap=0.08, step=0.5):
         edges = np.concatenate([[0], cut, [n[j]]]) / n[j]
         for ta, tb in zip(edges[:-1], edges[1:]):
             i = min(int(round(ta * n[j])), n[j] - 1)
-            oa.append(A[j] + ta * (B[j] - A[j])); ob.append(A[j] + tb * (B[j] - A[j])); oc.append(int(cj[i])); on.append(int(nj[i]))
-    oc = np.array(oc)
-    return np.array(oa), np.array(ob), oc == 1, oc == 2, np.array(on)
+            oa.append(A[j] + ta * (B[j] - A[j])); ob.append(A[j] + tb * (B[j] - A[j])); oc.append(int(cj[i])); on.append(int(nj[i])); oj.append(j); ot.append((ta, tb))
+    oc = np.array(oc); ot = np.array(ot).reshape(-1, 2)
+    return np.array(oa), np.array(ob), oc == 1, oc == 2, np.array(on), np.array(oj, int), ot[:, 0], ot[:, 1]
 
 
 def chain_len(flag, L):
@@ -827,7 +921,8 @@ def chain_len(flag, L):
 def build_piece(mb, p, P_all, lod, mat_deck, top=True):
     geom = p['geom'].simplify({0: 0.05, 1: 0.35, 2: 1.0}[lod])
     if geom.is_empty: return
-    V, I = tri_polys(geom, {0: 6.0, 1: 16.0, 2: 30.0}[lod])
+    SEG = {0: 6.0, 1: 16.0, 2: 30.0}[lod]
+    V, I = tri_polys(geom, SEG)
     if not len(I): return
     h = hb(p, V)
     if top:   # the plate's top is built by build_plate_top (bands, islands, crosswalks)
@@ -835,13 +930,33 @@ def build_piece(mb, p, P_all, lod, mat_deck, top=True):
         Pt = np.c_[V[:, 0], GROUND_Y + h, V[:, 1]]
         T = np.c_[0.5 + lat / max(p['lanes'] * RN.LANE_W, 1.0), s / DASH_CYCLE]
         mb.tris(p['unit'], lod, mat_deck, Pt, vnormals(Pt, I), T, I)
-    # soffit (where the deck is on columns)
-    hbot = bottom_of(h); up = hbot > 0.01
+    # soffit (where the deck is on columns). Close-out r4 fix round 2 (verifier ver1, minor 6): on every triangle with a
+    # vertex at or above FILL_H (r22 / r4: only where all three were, so the triangles crossing the FILL_H contour had no
+    # underside - the deck box was open from below there, over two columns at 3.24 / 3.36 m), at the deck depth below the
+    # top (not less than grade); where such a triangle meets one that is all fill, an abutment face from grade up to the
+    # soffit closes the fill
+    up = h >= FILL_H
     if up.any():
-        Ib = I[up[I].all(1)]
+        sof = up[I].any(1); Ib = I[sof]
         if len(Ib):
-            Pb = np.c_[V[:, 0], GROUND_Y + hbot, V[:, 1]]; Ib2 = Ib[:, [0, 2, 1]]
+            hs = np.maximum(h - RN.DECK_DEPTH, 0.0)
+            Pb = np.c_[V[:, 0], GROUND_Y + hs, V[:, 1]]; Ib2 = Ib[:, [0, 2, 1]]
             mb.tris(p['unit'], lod, 'concrete', Pb, vnormals(Pb, Ib2), np.c_[V[:, 0] / 4, V[:, 1] / 4], Ib2)
+            fill = I[~sof]
+            if len(fill):
+                ef = {tuple(sorted(e)) for t in fill for e in ((t[0], t[1]), (t[1], t[2]), (t[2], t[0]))}
+                for t in Ib:
+                    for e, o in (((t[0], t[1]), t[2]), ((t[1], t[2]), t[0]), ((t[2], t[0]), t[1])):
+                        if tuple(sorted(e)) not in ef: continue
+                        a, b = V[e[0]], V[e[1]]; L = float(np.linalg.norm(b - a))
+                        if L < 1e-6: continue
+                        n2 = np.array([b[1] - a[1], -(b[0] - a[0])]) / L
+                        if n2 @ (V[o] - a) < 0: n2 = -n2   # facing the span (the soffit triangle's side)
+                        q4 = np.array([[a[0], GROUND_Y, a[1]], [b[0], GROUND_Y, b[1]], [b[0], GROUND_Y + hs[e[1]], b[1]], [a[0], GROUND_Y + hs[e[0]], a[1]]])
+                        nrm = np.array([n2[0], 0.0, n2[1]]); fq = np.cross(q4[1] - q4[0], q4[2] - q4[0])
+                        if fq @ nrm < 0: q4 = q4[[1, 0, 3, 2]]
+                        mb.tris(p['unit'], lod, 'concrete', q4, np.repeat(nrm[None], 4, 0), np.array([[0, 0], [L / 4, 0], [L / 4, hs[e[1]] / 4], [0, hs[e[0]] / 4]]), np.array([[0, 1, 2], [0, 2, 3]]))
+                        if lod == 0: es = p.setdefault('edge_stats', {}); es['abutment_m'] = es.get('abutment_m', 0.0) + L
     # edges: fascia (top -> soffit or grade) and parapets on the outer ones; close-out r4: the neighbours within reach (any
     # level: edge_runs decides per sample whether the deck continues into one of them)
     nbrs = [q for q in P_all if q is not p and not q['geom'].is_empty and q['geom'].distance(geom) < max(INNER_GAP[lod], ACROSS) + 0.2]
@@ -856,10 +971,15 @@ def build_piece(mb, p, P_all, lod, mat_deck, top=True):
         # the piece's other parts continue it as a neighbour would (close-out r4: a multi-part deck's parts that touch)
         own = [dict(p, geom=unary_union(parts[:pi] + parts[pi + 1:]))] if len(parts) > 1 else []
         for ring in [poly.exterior] + list(poly.interiors):
-            R = np.array(shapely.segmentize(ring, {0: 8.0, 1: 20.0, 2: 40.0}[lod]).coords)
+            # close-out r4 fix round 2 (verifier ver1, minor 2): the ring at the deck triangulation's own spacing (tri_polys
+            # segmentizes the same polygon at SEG: the same boundary vertices), and the edge heights linear between hb() at
+            # those vertices, as the deck's boundary edges are - r4 segmentized the rings at 8 m and evaluated hb() at the
+            # run ends, so with the blend's non-linear levels the barrier feet left the deck (230 m floating > 0.02 m)
+            R = np.array(shapely.segmentize(ring, SEG).coords)
             if len(R) < 3: continue
-            A, B, outer, agf, nbr = edge_runs(R[:-1], R[1:], nbrs + own, lambda X: hb(p, X), against, gap=INNER_GAP[lod])
-            ha, hb_ = hb(p, A), hb(p, B)
+            hR = hb(p, R)
+            A, B, outer, agf, nbr, sj, ta_, tb_ = edge_runs(R[:-1], R[1:], nbrs + own, lambda X: hb(p, X), against, gap=INNER_GAP[lod])
+            ha = hR[sj] + ta_ * (hR[sj + 1] - hR[sj]); hb_ = hR[sj] + tb_ * (hR[sj + 1] - hR[sj])
             ba, bb = bottom_of(ha), bottom_of(hb_)
             Ls = np.linalg.norm(B - A, axis=1)
             # outward normals (plan): polygon exterior is ccw in shapely's (x, z) = clockwise seen from above with z south
@@ -874,6 +994,21 @@ def build_piece(mb, p, P_all, lod, mat_deck, top=True):
                 hk = hb(p, pr)
                 if all(any(q['geom'].contains(Point(*x)) and abs(float(hb(q, x[None])[0]) - hx) < SHORT_DH for q in nbrs + own) for x, hx in zip(pr, hk)):
                     outer[k] = False; agf[k] = True; st['slit_runs_dropped_m'] = st.get('slit_runs_dropped_m', 0.0) + float(Ls[k]) if lod == 0 else st.get('slit_runs_dropped_m', 0.0)
+            if lod == 0 and top:
+                # fix round 2 self-check (verifier ver1, minor 2): every parapet's foot against the deck's own top
+                # triangles, every 0.5 m, 0.02 m inside the edge (base - deck: > 0 floats, < 0 buried)
+                pk = np.nonzero(outer & ~agf & (np.maximum(ha, hb_) > 0.4))[0]
+                if len(pk):
+                    ns = np.maximum(2, np.ceil(Ls[pk] / 0.5).astype(int) + 1)
+                    kk = np.repeat(pk, ns); tt = np.concatenate([np.linspace(0, 1, m) for m in ns])
+                    X = A[kk] + tt[:, None] * (B[kk] - A[kk]) - 0.02 * N2[kk]
+                    g = (ha[kk] + tt * (hb_[kk] - ha[kk])) - tri_lookup(V[I], h[I], X)
+                    wl = np.repeat(Ls[pk] / ns, ns); ok = ~np.isnan(g)
+                    fs = st.setdefault('foot', dict(samples=0, no_deck=0, float_gt002_m=0.0, buried_gt002_m=0.0, max_float_m=0.0, max_buried_m=0.0))
+                    fs['samples'] += int(len(g)); fs['no_deck'] += int((~ok).sum())
+                    if ok.any():
+                        fs['float_gt002_m'] += float(wl[ok][g[ok] > 0.02].sum()); fs['buried_gt002_m'] += float(wl[ok][g[ok] < -0.02].sum())
+                        fs['max_float_m'] = max(fs['max_float_m'], float(g[ok].max())); fs['max_buried_m'] = max(fs['max_buried_m'], float(-g[ok].min()))
             for k in range(len(A)):
                 a, b = A[k], B[k]; L = float(Ls[k]); nrm = np.array([N2[k, 0], 0.0, N2[k, 1]])
                 if not (outer[k] or agf[k]):
@@ -882,6 +1017,11 @@ def build_piece(mb, p, P_all, lod, mat_deck, top=True):
                     qa, qb = hb((nbrs + own)[nbr[k]], np.array([a, b]))
                     da, db = ha[k] - qa, hb_[k] - qb
                     if max(da, db) > 0.02:
+                        if lod == 0:   # fix round 2: the step faces by height (the verifier's ledges inside a carriageway; the ITB lower sidewalk's kerb apart)
+                            hk = max(da, db); bn = '0.02-0.05' if hk <= 0.05 else '0.05-0.10' if hk < 0.1 else '0.10-0.20' if hk < 0.2 else '0.20-0.30' if hk <= STEP_TOL + 0.01 else '>0.30'
+                            if 'walk' in (p['src'], (nbrs + own)[nbr[k]]['src']): bn = 'walk_kerb'
+                            sb = st.setdefault('step_face_bins_m', {}); sb[bn] = sb.get(bn, 0.0) + L
+                            st.setdefault('step_face_sites', []).append((round(float(hk), 3), round(L, 2), [round(float(c), 1) for c in 0.5 * (a + b)], (nbrs + own)[nbr[k]]['id'], bool(connected(p, (nbrs + own)[nbr[k]]))))
                         da, db = max(da, 0.0), max(db, 0.0)
                         quad(np.array([[a[0], GROUND_Y + ha[k] - da, a[1]], [b[0], GROUND_Y + hb_[k] - db, b[1]], [b[0], GROUND_Y + hb_[k], b[1]], [a[0], GROUND_Y + ha[k], a[1]]]),
                              nrm, L, ha[k] - da, hb_[k] - db, ha[k], hb_[k])
@@ -1195,6 +1335,94 @@ def parapet_check(mb, log, cs=5.0):
                rule='parapet-top samples (0.2 m) with the same deck level (+-0.3 m) 0.6 m away in >= 7 of 8 directions (the round-3 verifier\'s stubs4)')
     log('in-carriageway parapet (self-check, close-out r4): %d of %d parapet-top samples (~%.1f m), %d clusters >= 0.6 m; largest %s'
         % (res['samples'], res['of'], res['approx_m'], res['clusters'], res['top'][:5]))
+    return res
+
+
+def _mesh_tris(mb, lod, keep):
+    """per (unit, material) the triangles (n, 3, 3) of one LOD whose material passes keep(mat)"""
+    out = {}
+    for (u, l, mat), b in mb.d.items():
+        if l != lod or not b['P'] or not keep(mat): continue
+        off = 0; Ts = []
+        for P_, I_ in zip(b['P'], b['I']):
+            if len(I_): Ts.append(P_[I_ - off])
+            off += len(P_)
+        if Ts: out[(u, mat)] = np.concatenate(Ts)
+    return out
+
+
+def grade_check(mb, log):
+    """close-out r4 fix round 2 self-check (verifier ver1, major: the round-4 blend's grade waves were measured on the way
+    profiles, not on the mesh): the AS-BUILT grade of every LOD0 deck-top triangle (deck_* materials, facing up, > 0.001
+    m2; |gradient| = hypot(n.x, n.z) / n.y), area-weighted - max, area above 6 / 8 / 10 / 12 / 13.5 %, per unit - and the
+    folds between welded neighbouring deck triangles (> 1 / 2 / 4 deg). stats.grade_max stays the profiles' maximum"""
+    rows = []; folds = []
+    for (u, mat), T in _mesh_tris(mb, 0, lambda m: m.startswith('deck')).items():
+        n = np.cross(T[:, 1] - T[:, 0], T[:, 2] - T[:, 0]); a = np.linalg.norm(n, axis=1) / 2; n = n / (2 * a[:, None] + 1e-12)
+        k = (n[:, 1] > 0.7) & (a > 1e-3); T = T[k]; n = n[k]; a = a[k]
+        g = np.hypot(n[:, 0], n[:, 2]) / n[:, 1] * 100
+        rows += [(u, float(g[i]), float(a[i]), T[i].mean(0)) for i in range(len(T))]
+        K = np.round(T / 0.01).astype(np.int64); E = {}
+        for i in range(len(T)):
+            for e0, e1 in ((0, 1), (1, 2), (2, 0)):
+                E.setdefault(tuple(sorted((tuple(K[i, e0]), tuple(K[i, e1])))), []).append(i)
+        for key, li in E.items():
+            if len(li) != 2: continue
+            ang = float(np.degrees(np.arccos(np.clip(n[li[0]] @ n[li[1]], -1, 1))))
+            if ang > 1.0: folds.append((ang, u, float(np.linalg.norm(np.subtract(key[0], key[1]))) * 0.01, (np.add(key[0], key[1]) * 0.005)))
+    if not rows: return dict(triangles=0)
+    G = np.array([r[1] for r in rows]); A = np.array([r[2] for r in rows])
+    th = (6, 8, 10, 12, 13.5)
+    by = {}
+    for u, g, a, c in rows:
+        d = by.setdefault(u, dict(area_m2=0.0, max_pct=0.0, **{'over_%g_pct_m2' % t: 0.0 for t in th[1:4]}))
+        d['area_m2'] += a; d['max_pct'] = max(d['max_pct'], g)
+        for t in th[1:4]:
+            if g > t: d['over_%g_pct_m2' % t] += a
+    by = {u: {k: round(v, 1) for k, v in d.items()} for u, d in sorted(by.items())}
+    top = []
+    for u, g, a, c in sorted(rows, key=lambda r: -r[1]):
+        if any(math.hypot(c[0] - t['at'][0], c[2] - t['at'][1]) < 15 for t in top): continue
+        top.append(dict(pct=round(g, 1), unit=u, at=[round(float(c[0]), 1), round(float(c[2]), 1)], deck_m=round(float(c[1]) - GROUND_Y, 2)))
+        if len(top) >= 10: break
+    fa = np.array([f[0] for f in folds] or [0.0]); fl = np.array([f[2] for f in folds] or [0.0])
+    res = dict(rule='LOD0 deck-top triangles (deck_* materials, n.y > 0.7, > 0.001 m2): |gradient| %, area-weighted; folds = angle between welded neighbours',
+               triangles=len(rows), area_m2=round(float(A.sum()), 1), max_pct=round(float(G.max()), 2), top=top,
+               over_pct_m2={'%g' % t: round(float(A[G > t].sum()), 1) for t in th}, by_unit=by,
+               folds={'>%d_deg' % t: dict(n=int((fa > t).sum()), edge_m=round(float(fl[fa > t].sum()), 1)) for t in (1, 2, 4)},
+               fold_top=[dict(deg=round(f[0], 1), unit=f[1], at=[round(float(f[3][0]), 1), round(float(f[3][2]), 1)], edge_m=round(f[2], 1)) for f in sorted(folds, key=lambda f: -f[0])[:8]])
+    log('mesh grades (self-check, close-out r4 fix round 2; LOD0 deck tops): max %.2f %% at %s, area > 8 / 10 / 12 / 13.5 %%: %s m2; folds > 1 / 2 / 4 deg: %s; '
+        'units > 10 %%: %s' % (res['max_pct'], top[0], ' / '.join(str(res['over_pct_m2'][k]) for k in ('8', '10', '12', '13.5')),
+                              ' / '.join('%d (%.0f m)' % (v['n'], v['edge_m']) for v in res['folds'].values()),
+                              {u: d['over_10_pct_m2'] for u, d in by.items() if d['over_10_pct_m2'] > 0}))
+    return res
+
+
+COL_TOP = 0.15   # m: a column runs this far up into the deck box above its soffit (fix round 2: 0.05 left 0.01-0.06 m of the
+                 # blend's curvature between the column top and the soffit's linear triangles) [inf]
+
+
+def column_soffit_check(mb, cols, log, tol=COL_TOP):
+    """close-out r4 fix round 2 self-check (verifier ver1, minor 6): every LOD0 column's top reaches a down-facing concrete
+    triangle (the soffit) of its unit - at the centre and 0.3 m round it the soffit lies between the column top - 1.05 m
+    (the top stays inside the 1.2-m deck box) and the column top (no gap)"""
+    S = {}
+    for (u, mat), T in _mesh_tris(mb, 0, lambda m: m == 'concrete').items():
+        n = np.cross(T[:, 1] - T[:, 0], T[:, 2] - T[:, 0]); a = np.linalg.norm(n, axis=1) / 2
+        S[u] = T[(n[:, 1] / (2 * a + 1e-12) < -0.9) & (a > 1e-4)]
+    bad = []
+    for c in cols:
+        T = S.get(c['unit'], np.zeros((0, 3, 3)))
+        X = np.asarray(c['xz'], float)[None] + 0.3 * np.array([[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]])
+        y = tri_lookup(T[:, :, [0, 2]], T[:, :, 1], X, ref=np.full(len(X), GROUND_Y + c['soffit'])) if len(T) else np.full(len(X), np.nan)
+        d = y - (GROUND_Y + c['soffit'])   # mesh soffit above (+) / below (-) the column's own soffit level
+        if not ((np.nan_to_num(d, nan=9.0) <= tol) & (np.nan_to_num(d, nan=-9.0) >= tol - 1.05)).all():
+            bad.append(dict(way=c['way'], xz=[round(float(v), 1) for v in c['xz']], soffit_m=round(c['soffit'], 2), off_m=[None if np.isnan(v) else round(float(v), 3) for v in d]))
+        c['_soffit_off'] = float(np.nanmax(np.abs(d))) if not np.isnan(d).all() else None
+    offs = [c.pop('_soffit_off') for c in cols]; offs = [o for o in offs if o is not None]
+    res = dict(columns=len(cols), meeting_soffit=len(cols) - len(bad), column_top_above_soffit_m=tol, max_soffit_offset_m=round(max(offs or [0]), 3), bad=bad[:20])
+    log('columns vs soffit (self-check, close-out r4 fix round 2): %d of %d reach a soffit triangle (top %.2f m into the deck box) at the centre and 0.3 m round it, '
+        'largest soffit offset %.3f m; bad %s' % (res['meeting_soffit'], len(cols), tol, res['max_soffit_offset_m'], bad[:5] or 'none'))
     return res
 
 
@@ -1521,7 +1749,7 @@ def main(argv):
                 q['against'] = unary_union([q.get('against', Polygon()), LU])
     body_left = round(sum(v.area for v in left.values()), 2)
     log('decks cut where they ran inside a building: %s m2; deck area still enclosed after the cut: %.2f m2' % (body_cut, body_left))
-    blend_neighbours(P, log)
+    blend = blend_neighbours(P, log)
     cols, cst = columns([p for p in P if p['src'] not in ('plate', 'walk')], TR, log)
     pcols = plate_columns(plate, P, TR, log); cols += pcols; cst['plate'] = len(pcols)
     BI.GROUPS[:] = groups0
@@ -1554,18 +1782,30 @@ def main(argv):
         for p in P:
             if p['src'] == 'plate': build_piece(mb, p, P, l, None, top=False); build_plate_top(mb, p, l, mats)
             else: build_piece(mb, p, P, l, p['mat'] if (l < 2 or p['src'] == 'walk') else 'deck_plain')
-        for c in cols: cylinder(mb, c['unit'], l, c['xz'], GROUND_Y - 0.05, GROUND_Y + c['soffit'] + 0.05, D_COL / 2, {0: 12, 1: 6, 2: 4}[l])
+        for c in cols: cylinder(mb, c['unit'], l, c['xz'], GROUND_Y - 0.05, GROUND_Y + c['soffit'] + COL_TOP, D_COL / 2, {0: 12, 1: 6, 2: 4}[l])
     gapchk = curb_gap_check(P, TR, M, LV['itb']['curb'], log)
     gapchk_t2 = t2_curb_gap_check(P, TR, LV['domestic']['curb'], sol['h_dom'], log)
     clr = clearance_check(mb, TR, log); clr_p = clearance_check(mb, TR, log, piers=True)
     pchk = parapet_check(mb, log)
+    gchk = grade_check(mb, log)
+    cchk = column_soffit_check(mb, cols, log)
     # close-out r4 self-check (dev build d9 lost two whole decks in a failed merge): pieces without deck although their
     # ribbon is large - every one is listed with the reason the trim gave it (asset / enclosure / stacked cuts)
     empty = [dict(id=p['id'], src=p['src'], rib_m2=round(p['rib'].area, 1), cut_by=p.get('cut_by'), stacked_cut_by=p.get('stacked_cut_by')) for p in P
              if p['src'] in ('deck', 'ramp') and p['geom'].area < 1.0 and p['rib'].area > 20.0]
     log('pieces with no deck left (ribbon > 20 m2): %s' % (empty or 'none'))
-    edge = {k: round(sum(p.get('edge_stats', {}).get(k, 0.0) for p in P), 1) for k in ('parapet_m', 'step_face_m', 'slit_runs_dropped_m')}
-    log('LOD0 edges: parapet %.0f m, step faces %.0f m (inner joints with a step of 0.02-%.2f m), slit sides given the edge face only %.1f m' % (edge['parapet_m'], edge['step_face_m'], STEP_TOL, edge['slit_runs_dropped_m']))
+    edge = {k: round(sum(p.get('edge_stats', {}).get(k, 0.0) for p in P), 1) for k in ('parapet_m', 'step_face_m', 'slit_runs_dropped_m', 'abutment_m')}
+    edge['step_face_by_height_m'] = {b: round(sum(p.get('edge_stats', {}).get('step_face_bins_m', {}).get(b, 0.0) for p in P), 1) for b in ('0.02-0.05', '0.05-0.10', '0.10-0.20', '0.20-0.30', 'walk_kerb')}
+    sites = sorted([x for p in P if p['src'] != 'walk' for x in p.get('edge_stats', {}).get('step_face_sites', []) if x[3] != 'itb_lower_walk'], key=lambda x: -x[0] * x[1])
+    edge['step_face_top'] = [dict(h_m=x[0], len_m=x[1], at=x[2], neighbour=x[3], connected=x[4]) for x in sites[:15]]
+    ft = [p['edge_stats']['foot'] for p in P if 'foot' in p.get('edge_stats', {})]
+    edge['parapet_foot'] = dict(rule='parapet base vs the deck\'s own top triangles, every 0.5 m, 0.02 m inside the edge (close-out r4 fix round 2)',
+                                samples=sum(f['samples'] for f in ft), no_deck=sum(f['no_deck'] for f in ft),
+                                float_gt002_m=round(sum(f['float_gt002_m'] for f in ft), 1), buried_gt002_m=round(sum(f['buried_gt002_m'] for f in ft), 1),
+                                max_float_m=round(max([f['max_float_m'] for f in ft] or [0]), 3), max_buried_m=round(max([f['max_buried_m'] for f in ft] or [0]), 3))
+    log('LOD0 edges: parapet %.0f m, step faces %.0f m (inner joints with a step of 0.02-%.2f m; by height %s), slit sides given the edge face only %.1f m, abutment faces %.1f m; '
+        'parapet feet: %s' % (edge['parapet_m'], edge['step_face_m'], STEP_TOL, edge['step_face_by_height_m'], edge['slit_runs_dropped_m'], edge['abutment_m'],
+                              {k: v for k, v in edge['parapet_foot'].items() if k != 'rule'}))
     allxz = np.concatenate([p['pts'] for p in P]); rc = [round(float(v), 1) for v in allxz.mean(0)]
     ntri = {l: sum(int(sum(len(i) for i in b['I'])) for (u, ll, m), b in mb.d.items() if ll == l) for l in (0, 1, 2)}
     log('triangles per LOD: %s' % ntri)
@@ -1592,6 +1832,7 @@ def main(argv):
                                                          note='the lower level (photo i1, close-out round 3): held level at LOWER_H on the straight; OSM layer 1, passes under the anchored departures leg past the straight')),
                  stacked=dict(solve=sol.get('stacked', []), cuts=stk_recs),
                  joint_wedges=jw, in_carriageway_parapet=pchk, pieces_without_deck=empty, edges_lod0=dict(edge, step_tol_m=STEP_TOL, inner_gap_m=INNER_GAP),
+                 blend=blend, mesh_grades=gchk, columns_vs_soffit=cchk,
                  curb_gap=gapchk, curb_gap_t2=gapchk_t2, guideway_clearance=clr, guideway_pier_caps_over_decks=clr_p, deck_cut_inside_buildings_m2=body_cut, deck_left_inside_buildings_m2=body_left)
     sheet(P, cols, os.path.join(OUTD, 'roadways_plan.png'), LV, dict(pieces=len(P), columns=cst, low=len(chk['low'])))
     log('check sheet out/buildings3d/roadways_plan.png')
@@ -1635,8 +1876,10 @@ def main(argv):
                            'lane markings (pattern, colours)',
                            'close-out round 4: the deck between two ways that continue each other at a shared node (the wedge between their flat caps), the slit or gore '
                            'between two decks narrower than %.1f m at one level, small voids enclosed by decks (< %.0f m2), a %.0f:1 width taper where a wider way continues into a '
-                           'narrower one, and connected decks meeting halfway over %.0f m where their tops differ by < %.1f m (the per-way profiles disagree at junctions) - geometry '
-                           'between OSM centrelines, no survey' % (2 * SLIT_R, VOID_MAX, TAPER_K, BLEND, BLEND_DH[1])],
+                           'narrower one, and connected decks that touch side by side (not end to end) meeting halfway over %.0f m (their step taken out in full up to %.1f m, '
+                           'none from %.1f m) - the per-way profiles disagree at junctions - geometry between OSM centrelines, no survey; fix round 2: '
+                           'soffits on every triangle with a vertex above the %.1f-m fill level, with an abutment face where the fill begins [inf]'
+                           % (2 * SLIT_R, VOID_MAX, TAPER_K, BLEND, BLEND_DH, 2 * BLEND_DH, FILL_H)],
                  unknown=['the domestic departures-curb height (%.3f m is the domestic asset placeholder [unk])' % LV['domestic']['curb'],
                           'every viaduct level: no structural drawings or survey; OSM gives only the layer order',
                           'the ITB lower level (arrivals) roadway: held level at %.2f m on the straight [inf: the lowest that clears the at-grade building-passage roads under it by %.1f m + the %.1f-m deck], '
@@ -1659,7 +1902,11 @@ def main(argv):
                                        'barrier); joint wedges, slit / gore fill, junction voids, width tapers and the connected-deck blend close the slits whose sides r22 '
                                        'built as parapets across the lanes (the round-3 verifier\'s major)' % (list(INNER_GAP.values()), STEP_TOL),
                                   in_carriageway_parapet_m=pchk.get('approx_m'), in_carriageway_clusters=pchk.get('clusters'), joint_wedges=dict((k, jw[k]) for k in ('joints', 'filled', 'area_m2', 'tapers', 'taper_m2')),
-                                  slits=dict((k, jw['slits'][k]) for k in ('pairs', 'area_m2', 'voids', 'voids_m2')), edges_lod0=edge, pieces_without_deck=[e['id'] for e in empty]),
+                                  slits=dict((k, jw['slits'][k]) for k in ('pairs', 'area_m2', 'voids', 'voids_m2')), edges_lod0={k: v for k, v in edge.items() if k != 'step_face_top'},
+                                  pieces_without_deck=[e['id'] for e in empty],
+                                  fix_round_2=dict(blend=blend, mesh_grade_max_pct=gchk.get('max_pct'), mesh_grade_over_pct_m2=gchk.get('over_pct_m2'),
+                                                   mesh_grade_over_10_pct_by_unit={u: d['over_10_pct_m2'] for u, d in gchk.get('by_unit', {}).items()},
+                                                   columns_meeting_soffit='%d of %d' % (cchk['meeting_soffit'], cchk['columns']))),
                  verification=stats)
     BI.merge_manifest(entry, key='roadways')
     open(os.path.join(OUTD, 'roadways_build.log'), 'w').write('\n'.join(lines) + '\n')

@@ -24,6 +24,9 @@ from raster import raster, dilate_fill, sample_bilinear
 from common import srgb_to_lin, lin_to_srgb, hex_rgb
 
 
+WING_SKIN_LIN = 0.9      # linear albedo of an untextured whiteish wing panel in js/shaders/aircraft_real.js (no brand livery)
+
+
 def lin(c):
     if isinstance(c, str): c = hex_rgb(c)
     return srgb_to_lin(np.asarray(c, float))
@@ -41,6 +44,9 @@ class Canvas:
         app = common.app()
         f = app['types'][type_key]['fit'] if type_key else None
         self.fit = f
+        # plain wing tip (js/aircraft/fit.js TIP_FOLD, 737-600 on the FG 737-800): the model's winglet is folded onto the
+        # tip, so the 'tip' part is plain wing skin and takes no brand winglet paint (finish())
+        self.plain_tip = bool(f and (f.get('stretch') or {}).get('tipFold'))
         T = app['types'][type_key] if type_key else app['types'][app['base'][h['key']]]
         sc = f['s'] if f else 1.0
         self.doors = [d / sc for d in T['doors']]
@@ -461,6 +467,11 @@ class Canvas:
     def finish(self, white_detail=True):
         """apply skin detail, kept dark areas and windows; returns RGBA uint8 image (S x S)"""
         col = self.col * self.detail[:, None]
+        if self.plain_tip:
+            # close-out round 4, fix round 2 (verifier finding 4): the brand's tips() colour (winglet art) on the outer wing of
+            # a plain-tip type drew a dark-blue band and hook on the WJA 737-600; the wing next to it is the FG model's untextured
+            # skin, which js/shaders/aircraft_real.js renders at linear 0.9 (whiteish zone-0 skin outside the fuselage)
+            q = self.part == 'tip'; col[q] = WING_SKIN_LIN * self.detail[q, None]
         orig = srgb_to_lin(self.neutral)
         col = col * (1 - self.keep[:, None]) + orig * self.keep[:, None]
         glass = lin('#14181D')

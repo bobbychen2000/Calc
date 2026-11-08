@@ -14,10 +14,10 @@
    "belly": -2.0704999566078186,
    "hasGear": false
   },
-  "nv": 32101,
+  "nv": 32111,
   "ni": 49989,
   "file": "a320.sfom",
-  "size": 382024,
+  "size": 381597,
   "atlas": true
  },
  "b788": {
@@ -35,10 +35,10 @@
    "belly": -3.2829599380493164,
    "hasGear": false
   },
-  "nv": 17850,
+  "nv": 17620,
   "ni": 44118,
   "file": "b788.sfom",
-  "size": 415391,
+  "size": 413137,
   "atlas": true
  },
  "e75l": {
@@ -56,10 +56,10 @@
    "belly": -1.9340219087311616,
    "hasGear": false
   },
-  "nv": 17297,
+  "nv": 16969,
   "ni": 59871,
   "file": "e75l.sfom",
-  "size": 477588,
+  "size": 473897,
   "atlas": true
  },
  "bcs3": {
@@ -77,10 +77,10 @@
    "belly": -2.1534975377620658,
    "hasGear": false
   },
-  "nv": 34239,
+  "nv": 34018,
   "ni": 95940,
   "file": "bcs3.sfom",
-  "size": 1180070,
+  "size": 1175273,
   "atlas": true
  },
  "b738": {
@@ -101,7 +101,7 @@
   "nv": 76726,
   "ni": 81906,
   "file": "b738.sfom",
-  "size": 504900,
+  "size": 504970,
   "atlas": true
  },
  "a321": {
@@ -122,7 +122,7 @@
   "nv": 35572,
   "ni": 56772,
   "file": "a321.sfom",
-  "size": 355147,
+  "size": 351589,
   "atlas": true
  },
  "a319": {
@@ -140,10 +140,10 @@
    "belly": -2.070500075817108,
    "hasGear": false
   },
-  "nv": 32986,
+  "nv": 32974,
   "ni": 52410,
   "file": "a319.sfom",
-  "size": 337150,
+  "size": 335942,
   "atlas": true
  },
  "a333": {
@@ -161,10 +161,10 @@
    "belly": -3.0894784904959427,
    "hasGear": false
   },
-  "nv": 19848,
+  "nv": 19801,
   "ni": 53952,
   "file": "a333.sfom",
-  "size": 606383,
+  "size": 604608,
   "atlas": true
  },
  "a359": {
@@ -182,10 +182,10 @@
    "belly": -3.4270660281181335,
    "hasGear": false
   },
-  "nv": 51524,
+  "nv": 50737,
   "ni": 133239,
   "file": "a359.sfom",
-  "size": 1440614,
+  "size": 1428831,
   "atlas": true
  },
  "a388": {
@@ -203,10 +203,10 @@
    "belly": -4.634495184310694,
    "hasGear": false
   },
-  "nv": 41351,
+  "nv": 41158,
   "ni": 109326,
   "file": "a388.sfom",
-  "size": 566476,
+  "size": 562953,
   "atlas": true
  },
  "b744": {
@@ -224,10 +224,10 @@
    "belly": -4.199375152587891,
    "hasGear": false
   },
-  "nv": 18237,
+  "nv": 18127,
   "ni": 47295,
   "file": "b744.sfom",
-  "size": 516752,
+  "size": 516293,
   "atlas": true
  },
  "b748": {
@@ -245,10 +245,10 @@
    "belly": -4.161313533782959,
    "hasGear": false
   },
-  "nv": 26203,
+  "nv": 26145,
   "ni": 78552,
   "file": "b748.sfom",
-  "size": 401231,
+  "size": 400778,
   "atlas": true
  },
  "b752": {
@@ -266,10 +266,10 @@
    "belly": -1.9806000590324402,
    "hasGear": false
   },
-  "nv": 36689,
+  "nv": 36587,
   "ni": 107736,
   "file": "b752.sfom",
-  "size": 790845,
+  "size": 790030,
   "atlas": true
  },
  "b763": {
@@ -287,10 +287,10 @@
    "belly": -2.8635300174355507,
    "hasGear": false
   },
-  "nv": 15639,
+  "nv": 15406,
   "ni": 44958,
   "file": "b763.sfom",
-  "size": 493687,
+  "size": 491571,
   "atlas": true
  },
  "bcs1": {
@@ -308,10 +308,10 @@
    "belly": -2.1611798298460365,
    "hasGear": false
   },
-  "nv": 26548,
+  "nv": 26245,
   "ni": 76287,
   "file": "bcs1.sfom",
-  "size": 811223,
+  "size": 807014,
   "atlas": true
  },
  "crj2": {
@@ -392,10 +392,10 @@
    "belly": -1.9299420740455389,
    "hasGear": false
   },
-  "nv": 17694,
+  "nv": 17477,
   "ni": 58704,
   "file": "e170.sfom",
-  "size": 586855,
+  "size": 582967,
   "atlas": true
  },
  "e190": {
@@ -413,10 +413,10 @@
    "belly": -1.8524357625842096,
    "hasGear": false
   },
-  "nv": 19346,
+  "nv": 19193,
   "ni": 64500,
   "file": "e190.sfom",
-  "size": 766431,
+  "size": 761794,
   "atlas": true
  },
  "md11": {
@@ -434,10 +434,10 @@
    "belly": -3.0460950136184692,
    "hasGear": false
   },
-  "nv": 52483,
+  "nv": 51365,
   "ni": 153738,
   "file": "md11.sfom",
-  "size": 657983,
+  "size": 643337,
   "atlas": true
  },
  "b77w": {
@@ -458,7 +458,7 @@
   "nv": 68668,
   "ni": 71193,
   "file": "b77w.sfom",
-  "size": 835102,
+  "size": 833340,
   "atlas": true
  },
  "b772": {
@@ -479,7 +479,7 @@
   "nv": 69591,
   "ni": 72651,
   "file": "b772.sfom",
-  "size": 651479,
+  "size": 650278,
   "atlas": true
  }
 }

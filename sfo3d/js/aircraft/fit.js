@@ -119,6 +119,17 @@ const TIP_CUT = { b738: { z0: 17.5, y0: 0.75, zTo: 17.62, yTo: 0.6 } };
 // artist's height, its wing shortened 0.71 m a side so the winglet tips met the plain-wing span. Which -600 airframes carry
 // the aftermarket winglet is per registration and not sourced here (open).
 const TIP_PLAIN = new Set(['b736']);
+// how the plain tip is drawn (close-out round 4, fix round 2, verifier finding 4: TIP_CUT folds the winglet to a fixed
+// height, y 0.6 at |z| <= 17.62, and leaves the winglet-root fillet's upturn (|z| 17.5-17.62, up to y 0.75-0.95) standing:
+// on the 737-600 a 0.15-0.2 m upturned hook painted with the winglet art, with the navigation-light anchor on top of it).
+// Every vertex outboard of z0 is folded onto the wing's own tip section: |z| to zTo, the station clamped to the tip chord
+// and the height clamped between the section's lower and upper skin lines lo / up at that station (piecewise linear
+// through the knots x). Measured on the FG 737-800 conversion (refs/cache/models_orig/b738.sfom, model units): the
+// outboard skin loop at |z| 17.38-17.46, leading edge x -23.622 (y 0.552), trailing edge x -24.636 (y 0.518); the
+// fillet's upturn starts outboard of |z| 17.46. The folded winglet lies on the tip's edge (zero-area triangles inside the
+// section), no part of it above the upper skin.
+const TIP_FOLD = { b738: { z0: 17.45, zTo: 17.45, x: [-24.636, -24.414, -24.059, -23.86, -23.712, -23.655, -23.622],
+  lo: [0.518, 0.516, 0.521, 0.52, 0.526, 0.537, 0.552], up: [0.518, 0.577, 0.597, 0.6, 0.588, 0.567, 0.552] } };
 // height of the model's own blended winglet on the types that keep it (737NG -700W / -800W / -900ER W): the FG winglet rises
 // 1.7 model m above the tip's upper skin, its top rendering 0.79 m below ACAP row E 'wingtip' with winglets (6.76 m at OEW,
 // D6-58325-7 Rev C §2.3.3; bottom of winglet K 4.32 m: 2.44 m apart, the APB winglet's 8 ft). The winglet (outboard of |z| z0,
@@ -292,16 +303,30 @@ function botAt(F, st) {
 //     section (A330 4.38 against 2.21 m, 787 4.09 against 2.47 m). Scored against planar cuts of the placed mesh, 32 types,
 //     every 0.5 m, keel + 0.05 .. 1.4 m (scratch c4/aircraft/hwstats.py): rows off by > 0.15 m at keel + <= 0.3 m
 //     964 (before round 3) / 729 (round 3) / 634 (this rule); 737 family 122 / 95 / 95; A320 family 96 / 76 / 52.
+//     Close-out round 4, fix round 2 (verifier finding 2): the absolute-height fallback searched sections up to 2 m away
+//     and took the first whose own lower-lobe table still reached y; at a tapering nose or tail that is a far, narrow
+//     section (737 nose X 2.5-4 m, keel + 1.4 m: 0.62 against the mesh's 1.19-1.51 m, where round 3 left it to hwAt).
+//     It now applies only where y is within the table above the LOCAL keel (botAt, + 0.25 model m: rows at the table's
+//     top edge) and only to sections whose bottom is within 0.5 model m of that keel (the keel-relative branch's guard);
+//     above that hwLow returns null and the upper table (hwAt) answers. A height up to 0.1 model m above a section's
+//     table reads its top row (keel + 1.0 m rows sat 0.007 above it on the 777 and fell through to hwAt: 0.71 against
+//     1.98 m), and sections that are not skin (gear-bay keel beam, `ok` below) are skipped. tools/models/skin_check.mjs
+//     --baseline, per row against round 3 (same mesh rows): worse by > 0.15 m 545 -> 59 (> 0.5 m: 152 -> 20), 1691
+//     better; against round 4 (fix 1): 281 worse, 1226 better; keel + <= 0.3 m off by > 0.15 / 0.5 m 854 / 428 -> 673 /
+//     263, every height > 0.15 m 3421 -> 2614 (scratch c4/aircraft/fix2: hwvar.mjs variants A .. K, this is K1).
 function hwLow(F, st, y) {
   const S = F && F.sec; if (!S || !S.hwl) return null; const lo = S.lo;
   const at = (j, dy) => {                                  // section j at dy above its own bottom
-    const r = S.hwl[j]; if (dy < 0) return 0; if (dy > lo[lo.length - 1]) return null;
+    const r = S.hwl[j]; if (dy < 0) return 0; if (dy > lo[lo.length - 1] + 0.1) return null; dy = Math.min(dy, lo[lo.length - 1]);
     if (dy <= lo[0]) return r[0] != null ? r[0] * dy / lo[0] : null;
     let k = 0; while (k < lo.length - 2 && dy > lo[k + 1]) k++;
     if (r[k] == null || r[k + 1] == null) return null;
     return r[k] + (r[k + 1] - r[k]) * (dy - lo[k]) / (lo[k + 1] - lo[k]);
   };
-  const ok = (j) => j >= 0 && j < S.bot.length && S.bot[j] != null && !!S.hwl[j];
+  // (a section whose lower lobe is nowhere wider than 0.2 x its half height is not skin: the cut found the keel beam of a
+  // main-gear bay, 777 X 35-39 m: 0.28 m against the mesh's 3.0 m)
+  const ok = (j) => j >= 0 && j < S.bot.length && S.bot[j] != null && !!S.hwl[j] &&
+    !(S.top[j] != null && Math.max(...S.hwl[j].map(v => v ?? 0)) < 0.2 * (S.top[j] - S.bot[j]) / 2);
   const j0 = Math.floor(st / S.dx), w = Math.round(2 / S.dx); let a = null, b = null;
   for (let j = j0; j >= j0 - w; j--) if (ok(j)) { a = j; break; }
   for (let j = j0 + 1; j <= j0 + 1 + w; j++) if (ok(j)) { b = j; break; }
@@ -310,7 +335,8 @@ function hwLow(F, st, y) {
     const va = at(a, dy), vb = at(b, dy);
     if (va != null && vb != null) return va + u * (vb - va);
   }
-  const abs = (j) => ok(j) && y >= S.bot[j] ? at(j, y - S.bot[j]) : null;
+  const kb = botAt(F, st); if (kb == null || y - kb > lo[lo.length - 1] + 0.25) return null;
+  const abs = (j) => ok(j) && y >= S.bot[j] && Math.abs(S.bot[j] - kb) < 0.5 ? at(j, y - S.bot[j]) : null;
   let A = null, B = null;
   for (let j = j0; j >= j0 - w; j--) { const v = abs(j); if (v != null) { A = { j, v }; break; } }
   for (let j = j0 + 1; j <= j0 + 1 + w; j++) { const v = abs(j); if (v != null) { B = { j, v }; break; } }
@@ -344,8 +370,9 @@ export function fitType(t, m) {
   // wing span fit (757: SPEC span is the blended-winglet span, 41.07 m, Boeing / APB, spanPlain the ACAP's 38.05 m; review
   // 5 Nov 2026: stretching the plain wing 0.95 m a side to reach the winglet span drew the wing to the winglet root 39.7 m
   // long, +4.3 % against the ACAP; now the plain wing ends at spanPlain and the winglet is canted out, WINGLET above)
-  const cut = (TIP_ADD[t] || TIP_PLAIN.has(t)) && TIP_CUT[m];
-  if (cut) stretch.tipCut = cut;
+  const fold = TIP_PLAIN.has(t) && TIP_FOLD[m];
+  const cut = fold || (TIP_ADD[t] && TIP_CUT[m]);
+  if (fold) stretch.tipFold = fold; else if (cut) stretch.tipCut = cut;
   if (ENG_SCALE[t] && TIP_CUT[m]) stretch.engScale = { k: ENG_SCALE[t], keep: 'top' };
   const WL = !cut && WINGLET[m] && S.spanPlain ? WINGLET[m] : null;  // (the span fit then ends at the winglet root)
   const semi = cut ? cut.zTo : WL ? WL.zr : F ? F.wing.semi : d.span / 2;

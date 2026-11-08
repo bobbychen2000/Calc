@@ -69,6 +69,11 @@ The source models' UV layouts are unusable for painting (overlapping, mirrored, 
   (`tools/liveries/common.py Envelope`, also the painter's frame) leaves the tailplane halves out of the half width and
   measures the tail-cone top on the body itself where the cone is narrower than the fin-side band (close-out round 4:
   after the 737's tailplane re-fit the 737 tail cone's upper skin had fallen outside the envelope and was painted as fin).
+  Close-out round 4, fix round 2: the sources of every model were restored (`refs/cache/models_orig/`, each conversion
+  checked triangle by triangle against the shipped model) and the 19 models whose parts change under the current code
+  were re-atlased and re-baked (the CRJ200 / CRJ900 do not change; the CRJ700 was re-atlased in close-out round 3); on a
+  plain-tip type (737-600: the winglet folded onto the tip, `js/aircraft/fit.js` TIP_FOLD) the 'tip' part is wing skin and
+  takes no brand winglet paint (`paint.py` Canvas.plain_tip).
 - **Charts**: box projection by dominant normal (fuselage sides up to 55°), occlusion layer peeling, long charts
   split, shelf-packed at one texel density per model (`kpm`, px per m at 2048 px), 6 px padding.
 - **Detail layer**: the source texture's panel lines, door outlines and window frames (black top-hat, lines at least
@@ -86,27 +91,31 @@ The source models' UV layouts are unusable for painting (overlapping, mirrored, 
 
 | Model | px/m at 2048 | Fuselage cm/px (2048 / 1024) | Charts | Engines found | Cabin windows | Plug bands (m, model; longest plug) |
 |---|---|---|---|---|---|---|
-| a319 (Airbus A319) | 35.4 | 2.8 / 5.7 | 100 | 2 | paint: 32 painted, 66 glass / 66 openings removed | - |
-| a320 (Airbus A320) | 35.3 | 2.8 / 5.7 | 99 | 2 | paint: 40 painted, 80 glass / 80 openings removed | - |
-| a321 (Airbus A321) | 32.6 | 3.1 / 6.1 | 97 | 2 | paint: 48 painted, 96 glass / 96 openings removed | - |
-| a333 (Airbus A330-300) | 20.0 | 5.0 / 10.0 | 108 | 2 | paint: 69 painted | - |
-| a359 (Airbus A350-900) | 19.2 | 5.2 / 10.4 | 110 | 2 | paint: 60 painted, 112 glass / 112 openings removed | 12.84 (4.45), 45.35 (2.56) |
-| a388 (Airbus A380-800) | 15.3 | 6.5 / 13.1 | 102 | 4 | paint: 109 painted | - |
-| b738 (Boeing 737-800) | 35.6 | 2.8 / 5.6 | 84 | 2 | paint: 45 painted, 0 glass / 83 openings removed | 9.99 (2.74), 25.97 (1.58) |
+| a319 (Airbus A319) | 35.5 | 2.8 / 5.6 | 100 | 2 | paint: 32 painted, 66 glass / 66 openings removed | - |
+| a320 (Airbus A320) | 35.9 | 2.8 / 5.6 | 100 | 2 | paint: 40 painted, 80 glass / 80 openings removed | - |
+| a321 (Airbus A321) | 32.7 | 3.1 / 6.1 | 97 | 2 | paint: 48 painted, 96 glass / 96 openings removed | - |
+| a333 (Airbus A330-300) | 20.1 | 5.0 / 9.9 | 108 | 2 | paint: 69 painted | - |
+| a359 (Airbus A350-900) | 20.5 | 4.9 / 9.8 | 107 | 2 | paint: 60 painted, 112 glass / 112 openings removed | 12.84 (4.45), 45.35 (2.56) |
+| a388 (Airbus A380-800) | 16.1 | 6.2 / 12.4 | 104 | 4 | paint: 109 painted | - |
+| b738 (Boeing 737-800) | 36.1 | 2.8 / 5.5 | 87 | 2 | paint: 45 painted, 0 glass / 83 openings removed | 10.99 (2.74), 25.97 (1.58) |
 | b744 (Boeing 747-400) | 20.1 | 5.0 / 10.0 | 104 | 4 | paint: 106 painted | - |
-| b748 (Boeing 747-8) | 14.0 | 7.2 / 14.3 | 89 | 4 | keep: 0 painted | - |
-| b752 (Boeing 757-200) | 31.7 | 3.2 / 6.3 | 93 | 2 | keep: 2 painted | 14.93 (3.98), 30.32 (2.99) |
-| b763 (Boeing 767-300) | 25.9 | 3.9 / 7.7 | 73 | 2 | paint: 53 painted, 92 glass / 92 openings removed | 10.85 (3.47), 37.18 (2.99) |
-| b788 (Boeing 787-8) | 22.7 | 4.4 / 8.8 | 122 | 2 | paint: 45 painted, 82 glass / 0 openings removed | 10.79 (6.09), 37.98 (5.49) |
-| bcs1 (Airbus A220-100) | 39.0 | 2.6 / 5.1 | 83 | 2 | keep: 0 painted | - |
-| bcs3 (Airbus A220-300) | 39.1 | 2.6 / 5.1 | 60 | 2 | keep: 0 painted | - |
+| b748 (Boeing 747-8) | 13.9 | 7.2 / 14.3 | 89 | 4 | keep: 0 painted | - |
+| b752 (Boeing 757-200) | 30.7 | 3.3 / 6.5 | 93 | 2 | keep: 2 painted | 14.93 (3.98), 30.32 (2.99) |
+| b763 (Boeing 767-300) | 27.6 | 3.6 / 7.3 | 74 | 2 | paint: 53 painted, 92 glass / 92 openings removed | 10.85 (3.47), 37.18 (2.99) |
+| b772 (Boeing 777-200ER) | 20.3 | 4.9 / 9.9 | 97 | 2 | paint: 61 painted | 20.22 (5.40), 34.88 (4.84) |
+| b77w (Boeing 777-300ER) | 22.1 | 4.5 / 9.0 | 89 | 2 | paint: 74 painted | 25.17 (1.12), 42.29 (1.77) |
+| b788 (Boeing 787-8) | 24.5 | 4.1 / 8.1 | 122 | 2 | paint: 45 painted, 82 glass / 0 openings removed | 10.79 (6.09), 37.98 (5.49) |
+| bcs1 (Airbus A220-100) | 38.6 | 2.6 / 5.2 | 83 | 2 | keep: 0 painted | - |
+| bcs3 (Airbus A220-300) | 39.5 | 2.5 / 5.1 | 58 | 2 | keep: 0 painted | - |
 | crj2 (Bombardier CRJ200) | 54.1 | 1.8 / 3.7 | 71 | 2 | paint: 12 painted | - |
 | crj7 (Bombardier CRJ700) | 56.9 | 1.8 / 3.5 | 66 | 2 | keep: 0 painted | - |
 | crj9 (Bombardier CRJ900) | 56.2 | 1.8 / 3.6 | 66 | 2 | keep: 0 painted | - |
-| e170 (Embraer E170) | 43.7 | 2.3 / 4.6 | 99 | 2 | keep: 0 painted | - |
-| e190 (Embraer E190) | 38.0 | 2.6 / 5.3 | 106 | 2 | keep: 0 painted | 9.11 (0.80), 23.27 (1.58) |
-| e75l (Embraer E175) | 41.4 | 2.4 / 4.8 | 74 | 2 | keep: 0 painted | - |
-| md11 (McDonnell Douglas MD-11) | 17.2 | 5.8 / 11.6 | 97 | 2 | keep: 0 painted | - |
+| e170 (Embraer E170) | 46.3 | 2.2 / 4.3 | 99 | 2 | keep: 0 painted | - |
+| e190 (Embraer E190) | 41.8 | 2.4 / 4.8 | 106 | 2 | keep: 0 painted | 9.11 (0.80), 23.27 (1.58) |
+| e75l (Embraer E175) | 45.1 | 2.2 / 4.4 | 72 | 2 | keep: 0 painted | - |
+| md11 (McDonnell Douglas MD-11) | 17.4 | 5.7 / 11.5 | 93 | 2 | keep: 0 painted | - |
+
+(Table regenerated by `tools/liveries/doc_tables.py --atlas` after the re-atlas of close-out round 4, fix round 2.)
 
 Outer shape, `MODEL_DIMS` and `MODEL_FEATURES` are unchanged (vertices are duplicated along chart seams and plug
 bands; the removed window glass and the closed openings change the triangle lists). The unatlased conversions are kept in

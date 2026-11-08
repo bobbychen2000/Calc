@@ -201,6 +201,11 @@ def apply_stretch(P, Z, st):
     if st.get('tipCut'):                                      # the model's own winglet folded away (js/live/models.js)
         c = st['tipCut']; m = (np.abs(P[:, 2]) > c['z0']) & (P[:, 1] > c['y0'])
         P[m, 1] = c['yTo']; P[m, 2] = np.sign(P[m, 2]) * np.minimum(np.abs(P[m, 2]), c['zTo'])
+    if st.get('tipFold'):                                     # plain tip: winglet folded onto the wing's own tip section (js/aircraft/stretch.js)
+        c = st['tipFold']; m = np.abs(P[:, 2]) > c['z0']
+        x = np.clip(P[m, 0], c['x'][0], c['x'][-1]); P[m, 0] = x
+        P[m, 1] = np.minimum(np.maximum(P[m, 1], np.interp(x, c['x'], c['lo'])), np.interp(x, c['x'], c['up']))
+        P[m, 2] = np.sign(P[m, 2]) * c['zTo']
     if st.get('tipScale'):                                    # wing-tip device height (737NG blended winglet, js/aircraft/fit.js TIP_H)
         q = st['tipScale']; m = (P[:, 0] >= q['xMin']) & (np.abs(P[:, 2]) > q['z0']) & (P[:, 1] > q['y0']) & ~np.isin(np.asarray(Z), ZONE_NOFIN)
         P[m, 1] = q['y0'] + (P[m, 1] - q['y0']) * q['k']

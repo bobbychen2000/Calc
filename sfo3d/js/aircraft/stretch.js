@@ -13,6 +13,9 @@ import { plugShift } from './fit.js';
 //   wing {z0, z1, dz, xMin}  span fit: outboard of z0 the wing is stretched spanwise, linearly up to z1, and everything
 //                        outboard of z1 (the tip device) moves rigidly by dz (only vertices ahead of xMin: not the tailplane)
 //   tipCut {z0, y0, zTo, yTo}  vertices outboard of z0 and above y0 (the model's winglet) folded to (zTo, yTo)
+//   tipFold {z0, zTo, x, lo, up}  plain tip (js/aircraft/fit.js TIP_FOLD): every vertex outboard of z0 folded onto the wing's
+//                        own tip section: |z| -> zTo, x clamped to the knots' range, y clamped between lo(x) and up(x)
+//                        (piecewise linear through the knots x): the winglet collapses onto the tip edge, nothing above it
 //   tipScale {z0, y0, k, xMin}  the model's own wing-tip device (outboard of z0, above y0, ahead of xMin; not engines /
 //                        gear / pylons) scaled vertically about y0 by k (737NG blended winglet height, js/aircraft/fit.js TIP_H)
 //   tipShear {z0, y0, yt, k, p, xMin}  winglet cant: vertices ahead of xMin, outboard of z0 and above y0 move out by
@@ -46,6 +49,13 @@ export function applyStretch(pos, zone, nv, st, dims) {
   if (st.tipCut) {                    // fold the model's own tip device onto the wing tip (a procedural one replaces it)
     const { z0, y0, zTo, yTo } = st.tipCut;
     for (let i = 0; i < nv; i++) { const z = pos[i * 3 + 2]; if (Math.abs(z) > z0 && pos[i * 3 + 1] > y0) { pos[i * 3 + 1] = yTo; pos[i * 3 + 2] = Math.sign(z) * Math.min(Math.abs(z), zTo); } }
+  }
+  if (st.tipFold) {                  // plain tip: the model's winglet folded onto the wing's own tip section (no device)
+    const { z0, zTo, x: kx, lo, up } = st.tipFold, n = kx.length;
+    const at = (tab, x) => { if (x <= kx[0]) return tab[0]; if (x >= kx[n - 1]) return tab[n - 1]; let k = 0; while (k < n - 2 && x > kx[k + 1]) k++; return tab[k] + (tab[k + 1] - tab[k]) * (x - kx[k]) / (kx[k + 1] - kx[k]); };
+    for (let i = 0; i < nv; i++) { const z = pos[i * 3 + 2]; if (Math.abs(z) <= z0) continue;
+      const x = Math.min(Math.max(pos[i * 3], kx[0]), kx[n - 1]); pos[i * 3] = x;
+      pos[i * 3 + 1] = Math.min(Math.max(pos[i * 3 + 1], at(lo, x)), at(up, x)); pos[i * 3 + 2] = Math.sign(z) * zTo; }
   }
   if (st.tipScale) {                 // wing-tip device height (737NG blended winglet, js/aircraft/fit.js TIP_H): scaled vertically about y0
     const { z0, y0, k, xMin } = st.tipScale;

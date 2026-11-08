@@ -625,3 +625,123 @@ Please commit:
   tools/live/gatecheck.py;
 - `docs/research/realtime_impl.md` Step 9.
 
+
+# Round 3, fix round 2 (close-out round 3, 8 Nov 2026): verifier findings v1 … v11
+
+The round-1 independent verifier re-ran every class on the current repo and an out-of-sample segment and found three
+regressions or half-fixes in the realtime track (v1 the early retraction left out for hours, v2 bridge-ahead still firing on
+stale SFO allocations, v3 a retracting cab through a newcomer) plus residuals. This section answers each one. What changed is
+in `docs/research/realtime_impl.md`, "Step 10" (items 1–15); every change carries a "fix round 2" comment naming the finding.
+
+**Evidence.** The same harness and data as the verifier's runs (`tools/live/invariants.mjs` through the round-3 hook
+`hook_c3.mjs`, 10 Hz, every drawn frame):
+- *before* = the repo's code at the start of this round (traffic.js `80c8334c`, ground.js `9c33d2ff`, invariants.mjs
+  `cf6b186a`) on the verifier's frozen tree `root_ver`: segment A = `fx2/baseA` (run this round), segment B = the verifier's
+  `verB`, segment C = the verifier's `verC`. The fixer's `afterA8` is not used as the A before: it ran on an older tree. A
+  window bisect (5 Nov 00:12–00:22Z after 2.5 h of warm-up) puts the difference that matters on `js/aircraft/types.js` alone:
+  the aircraft track's corrected 737 tailplane (fix round 2) lengthens one existing overlap, UAL1243 B738 driving into G8
+  through the silent UAL2313 B38M, from 191 frames (root_after8's types.js on `root_ver`) to 978 (`root_ver`'s own); nothing
+  else in that window changes. Not a fault of that change; the realtime cause is fixed here (item 13, row 'G8' below).
+- *after* = the same tree with this round's traffic.js / ground.js / invariants.mjs (`fx2/root_f3`, md5 in its `md5.txt`;
+  app.js gets the same `liveBridgeAt` hook the harness sets).
+- Both use the stands / pavement / paint of the verifier's frozen copy `root_ver` (03:46Z, 8 Nov). The static track has since
+  changed `data/sfo_stands.js`, `sfo_pavement.js`, `sfo_paint.js` and `js/live/airport.js` in the repo; those are not in
+  this comparison.
+- Segment A: 4 Nov 17:48Z – 6 Nov 06:31Z (1,322,125 frames; SFO's plan snapshots 4 Nov 18:01Z and 5 Nov 02:49Z). Segment
+  B: 7 Nov 01:38 – 07:00Z (no plan). Segment C (out of sample): 7 Nov 15:00 – 21:00Z (no plan).
+- The harness change of this round (v9: `{freighter}` to `setOccupant`; v4: `traffic.liveBridgeAt` as app.js) is in *after*
+  only.
+
+## Per finding (before → after; A / B / C as above)
+
+| id | finding | disposition | evidence (before → after) |
+|---|---|---|---|
+| v1 | early retraction never re-docked while the transponder reports (regression of realtime-7) | fixed | longest signalled retraction A 404.0 → 60.0 min (> 60 min: 12 → none longer than 60.0 min, 12 ended by the 60-min bound; > 75 min: 7 → 0), B 87.5 → 60.0, C 47.8 → 47.8; DAL2635 C10 404.0 min (off-block) → 60.0 min (early-cancel/no push); 'no push' cancels followed by a push within 30 min A 2/7 → 2/14 (the bound cancels more often now; a departure that comes later pushes from a docked stand, below); new class `bridge.signalled_long` (> 76 min) A 0/0, B 0/0, C 0/0 |
+| v2 | bridge-ahead on stale SFO allocations | fixed | verifier's window (4 Nov 19:15–21:12Z, hook_ahead.mjs): 7 retractions → 1 (the one left, ANZ8 G7 for UAL900, is the geometric 'close' case at an occupant that had left); segment A bridge-ahead 100 → 74, re-docked 'arrival gone' 29 → 3 |
+| v3 | ghost's bridge retracting through the newcomer | fixed | window 5 Nov 04:12–04:22Z after 4.6 h of warm-up from 4 Nov 23:37Z (so UAL1227's 23:58Z in-block at G13 is replayed): `bridge.hit.fus` (UAL29D, G13 cab) 262 → 0, `bridge.orphan` 62 → 0 (`hideForBridge` 1, no cap); segment A `bridge.hit.fus` 762/10 → 487/8 (what is left is `bridge.hit_at_rest`, 487/8: rest cabs at stand poses, not a retraction) |
+| v4 | parked GNSS wander driven forward into a docked tunnel | fixed | at a contact stand, wander that is not backward is held until it leaves the parking by 0.6 L (`fwdWanderHeld` A 66, B 23, C 27); and the geometric guard the verifier asked for: no moving body enters another stand's docked or moving bridge (current `gates.js solids`, `bridgeVeto` A 0, B 0, C 15) and no off-stand parking pose is accepted in one (`GroundPhysics.liveHit`). `bridge.hit.wing` C 1,067/2 → 29/1, A 0/0 → 0/0, B 0/0 → 0/0; window 7 Nov 18:54–19:01Z: UAL875 1,136 → 0 frames |
+| v5 | stale-blockout never fires; orphans | partly | blockout branch documented as dead in practice (0 events A, B, C); evidence before contact = 'alloc' from a plan newer than the occupant (v2) and, after 8 h, `standRealloc` (v11); `bridge.orphan` A 15,752/76 → 16,460/67, B 2,960/19 → 2,930/18, C 1,102/12 → 1,102/12 — the contact-removal trade-off stays (item 13 trades overlaps for a few orphan seconds, below) |
+| v6 | lock up to 14 m from the parked pose | fixed | a lock taken at the type's stop moves the parked pose there (`lockAtStop` A 28, B 7, C 9): lock-park > 6 m A 444 → 17 sample-min, > 8 m 311 → 16, max 60.69 → 14.67 m; C > 6 m 340 → 0 (max 7.51 → 5.67); B 10 → 10 min, max 8.69 → 8.69 m (a3c3e6 at F17, not a lock at the stop); EVA008 G13 11.57 → 1.29 m (window) |
+| v7 | arrival bodies reversing after a silent docking at B5S | fixed | root cause: B5S has no bridge record of its own, so a silent docking's parked pose was the last report 60 m back and the drive ran its last segment back to it; A `gnd.reverse` 274/10 → 84/8 (EIN961 91 → 0, UAL892 99 → 0); windows: EIN961 92 → 0, UAL892 99 → 0 |
+| v8 | building residuals | partly | the veto samples the fuselage sides every ≤ 3 m and the engine inlets; a body dead-reckoned > 5 s past its newest report brakes for a footprint within its stopping distance (`drBrake` A 396, B 195, C 416). `building` A 113/1 → 113/1, B 519/2 → 337/1, C 208/1 → 0/0 (SWA496 208 → 0 in its window) |
+| v9 | harness passes no {freighter} | fixed | invariants.mjs `applyGate` passes lookup.js `isFreighter` as app.js does |
+| v10 | renderer3.fatal() never calls onFatal | deferred | engine-owned file; request C3F2.1. app side unchanged and in place |
+| v11 | ghosts kept forever at contact stands | fixed (as the finding's fix: 24-h cap or SFO reallocation) | `PARK_KEEP_STAND_MS` 24 h, and after 8 h `standRealloc` (SFO puts a later flight's window on the stand, from a plan fetched after the ghost was last heard). The replay cannot show it: ghost-hours past the old 8-h limit with the aircraft heard next elsewhere A 9.6 (+1.0 never heard again) → 9.6 (+1.0 never heard again) aircraft-h (verifier's falsekeep.py, same cases), because no silence that began parked at a contact stand in the recording reaches 24 h (longest 23.8 h, raw reports; `fx2/silentmax.py`) and both plan snapshots of A are older than every one of these silences (live the plan is ≤ 10 min old). Removed-then-heard-back A 1/76 → 1/76 (n / aircraft-min), B 0/0 → 0/0, C 1/66 → 1/66 |
+| G8 | (bisect asked by the lead) +788 `overlap.gnd` frames between the fixer's and the verifier's A runs | fixed (realtime side) | window bisect: `js/aircraft/types.js` alone (191 ↔ 978 frames). The realtime cause: an arrival driving into a stand did not remove the silent occupant while SFO's 6-h-old plan still listed it there (`keeps`); now the arrival whose approach retracted that occupant's bridge removes it at first contact (item 13). Window: `overlap.gnd` 1,367/2 → 3/1, `bridge.orphan` 178/2 → 295/4; segment A `overlap.gnd` 6,211/95 → 2,800/100 |
+
+## Classes (frames / keys, before → after)
+
+| class | A before | A after | B before | B after | C before | C after |
+|---|---|---|---|---|---|---|
+| `overlap.gnd` | 6,211/95 | 2,800/100 | 98/22 | 98/22 | 51/7 | 51/7 |
+| `clear.stand` | 1,165,392/44 | 1,164,853/43 | 34,302/4 | 34,302/4 | 221,733/9 | 221,812/9 |
+| `clear.taxi` | 705/101 | 732/108 | 152/25 | 152/25 | 59/10 | 46/9 |
+| `building` | 113/1 | 113/1 | 519/2 | 337/1 | 208/1 | 0/0 |
+| `bridge.hit.fus` | 762/10 | 487/8 | 138/3 | 138/3 | 54/3 | 36/2 |
+| `bridge.hit.wing` | 0/0 | 0/0 | 0/0 | 0/0 | 1,067/2 | 29/1 |
+| `bridge.hit.eng` | 0/0 | 0/0 | 0/0 | 0/0 | 0/0 | 0/0 |
+| `bridge.hit.tail` | 0/0 | 0/0 | 0/0 | 0/0 | 0/0 | 0/0 |
+| `bridge.hit_at_rest` | 501/8 | 487/8 | 138/3 | 138/3 | 44/2 | 26/1 |
+| `bridge.orphan` | 15,752/76 | 16,460/67 | 2,960/19 | 2,930/18 | 1,102/12 | 1,102/12 |
+| `bridge.refused` | 903,402/13 | 903,402/13 | 189,381/2 | 189,381/2 | 90,324/2 | 90,324/2 |
+| `bridge.parked_undocked` | 1/1 | 0/0 | 0/0 | 0/0 | 0/0 | 0/0 |
+| `bridge.signalled_long` | 0/0 | 0/0 | 0/0 | 0/0 | 0/0 | 0/0 |
+| `bridge.dock_flap` | 2/2 | 2/2 | 0/0 | 0/0 | 2/2 | 2/2 |
+| `bridge.misdock` | 0/0 | 0/0 | 26,405/1 | 26,405/1 | 0/0 | 0/0 |
+| `cut.gnd_sfo` | 577/328 | 577/329 | 88/68 | 88/68 | 120/79 | 116/78 |
+| `lag.gnd_30m` | 83,675/323 | 84,337/323 | 8,451/55 | 8,451/55 | 12,239/70 | 12,307/70 |
+| `offpave.mask` | 517,661/578 | 517,662/578 | 35,442/146 | 35,442/146 | 33,165/155 | 33,165/155 |
+| `gnd.reverse` | 274/10 | 84/8 | 2/1 | 3/1 | 21/4 | 21/4 |
+| `gnd.spin` | 541/112 | 541/112 | 43/13 | 43/13 | 109/27 | 108/27 |
+| `phase.gate_far_from_stand` | 279/12 | 203/11 | 3/1 | 3/1 | 7/2 | 7/2 |
+| `phase.flicker` | 836/254 | 835/254 | 142/54 | 141/54 | 200/76 | 192/75 |
+| `pop.remove` | 0/0 | 0/0 | 0/0 | 0/0 | 0/0 | 0/0 |
+| `teleport` | 0/0 | 0/0 | 0/0 | 0/0 | 0/0 | 0/0 |
+
+## Trade-offs and residuals
+
+- **v1**: a departure whose transponder came on > 60 min before its push (4 % of the measured signals were > 30 min) now pushes
+  from a docked stand: the hurried retraction (gates.js `hurryUndock`, sheet maximum rates) and the hold until `pushClearEta` = 0
+  apply, p50 1 s from docked.
+- **v2**: with the replay's hours-old plan snapshots, 'alloc' and SFO's arrival stand rarely count now; live, the relay fetches
+  flysfo every ≤ 10 min and they count once the occupant has been silent ~1–11 min.
+- **v3**: the newcomer appears up to 90 s late (here: once G13's bridge was back at rest). A parked aircraft being shown late is
+  the cheaper error than a cab through its fuselage; nothing about its position is delayed.
+- **v4**: a body stopped at a bridge waits there while its data runs on; the lag rules re-place it (40 m fade). `lag.gnd_30m`
+  A 83,675/323 → 84,337/323, B 8,451/55 → 8,451/55, C 12,239/70 → 12,307/70.
+- **item 13**: removing the silent occupant at first contact leaves its bridge retracting at an empty stand for a few seconds
+  (`bridge.orphan` above) instead of two aircraft drawn in one place.
+- **v4 residual**: C keeps 29 frames of UAL1881's OWN E8 bridge (k 0.48) in its wing, 18:56:54Z, at a re-in-block (the drawn body
+  re-parked while its bridge was moving) — the verifier's new verC key; not a body entering another stand's bridge. A and B had
+  no `bridge.hit.wing` before and have none after (`bridgeVeto` 0 there; C 15).
+- **v6 residual**: B keeps a3c3e6 at F17, lock 8.69 m from the parked pose for 10 min (unchanged; not a lock at the stop, so
+  `lockAtStop` does not apply); A keeps 17 sample-min over 6 m (4 aircraft), max 14.67 m.
+- **v8 residuals**: two taxiing wings that follow their data with a wing over a footprint edge between the veto's samples —
+  A UAL1757 B789, 3 wing samples at (−1421, 239), 113 frames; B AMX664 B39M, 1 wing sample at (−1328, 535), 337 frames (both
+  unchanged). The dead-reckoned cases are gone (SWA496 C, SWA1083 B).
+- **v5**: the SFO block-out path stays dead in practice; orphaned bridges after a contact removal remain the trade-off.
+- **item 13 side effects (A)**: `overlap.gnd` keys 95 → 100 — five new 3–8-frame contacts between an arrival and a silent
+  occupant that is now removed at that first contact (the fade); `clear.taxi` +27 frames / +7 keys from the same contacts;
+  `gnd.acc.taxi` +23 frames and `gnd.jerk` +8 (bodies braking for a footprint: `drBrake` 396, building veto 444 → 108).
+
+## Requests (Round 3, fix round 2)
+
+### C3F2.1 Engine track (`js/three/renderer3.js`) — verifier v10 (realtime-15, engine side)
+
+`renderer3.fatal()` writes its message into `#loading` and its own `#r3fatal` overlay but never calls `this.onFatal`. app.js
+assigns `R.onFatal = (html) => ui.fail(html)` (the app's own fatal panel, which works after load since realtime-15), so today
+the hook is dead code: `grep -rn onFatal js` finds only app.js. Please call `this.onFatal?.(html)` from `fatal()` (before or
+instead of the own overlay — the app's panel carries the reload / snapshot-mode links). app.js needs no change.
+
+### (no request) Aircraft track — the G8 overlap
+
+For the record: the +788 `overlap.gnd` frames between the fixer's and the verifier's A runs come from `js/aircraft/types.js`
+(the 737 tailplane of the aircraft track's fix round 2, which matches the ACAP plan view). A larger, correct tailplane made an
+existing realtime overlap last longer; the realtime cause is fixed (item 13). Nothing to change on the aircraft side.
+
+### C3F2.3 Lead
+
+Please commit js/live/traffic.js, js/live/ground.js, js/live/app.js, tools/live/invariants.mjs and docs/research/
+realtime_impl.md Step 10 (fix round 2 changes). The earlier draft request C3F2.2 (a bridge query from the bridges track) is
+withdrawn: gates.js already exports what was needed (`solids`, `extension`, `boxHitsAc`).
+
