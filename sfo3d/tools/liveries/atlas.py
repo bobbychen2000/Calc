@@ -322,6 +322,24 @@ def engine_clusters(C):
     return cl, out
 
 
+def nacelle_shells(P, idx, C, cand, yc, zc, min_cover=0.5):
+    """bool per candidate triangle: part of a welded (2 mm) connected component of the candidates whose triangle centroids
+    cover at least `min_cover` of the 18 x 20 deg sectors around the nacelle axis (yc, zc): a cowl ring / half shell, not
+    a fairing, pylon or wing panel on one side of the nacelle"""
+    from scipy.sparse import coo_matrix
+    from scipy.sparse.csgraph import connected_components
+    T = idx[cand]; vs, inv = np.unique(np.round(P[T.ravel()] / 0.002).astype(np.int64), axis=0, return_inverse=True)
+    Tq = inv.reshape(-1, 3); nv = len(vs)
+    g = coo_matrix((np.ones(3 * len(Tq)), (Tq.ravel(), np.roll(Tq, 1, 1).ravel())), shape=(nv, nv))
+    _, lab = connected_components(g, directed=False); tl = lab[Tq[:, 0]]
+    sec = np.floor((np.arctan2(C[cand, 2] - zc, C[cand, 1] - yc) + np.pi) / (np.pi / 9)).astype(int) % 18
+    ok = np.zeros(len(cand), bool)
+    for c in np.unique(tl):
+        k = tl == c
+        if len(np.unique(sec[k])) >= min_cover * 18: ok[k] = True
+    return ok
+
+
 # ---------------------------------------------------------------- classification
 def classify(m, env, feat, seeds=None):
     h = m['head']; mats = h['mats']; texs = h['textures']
@@ -406,10 +424,20 @@ def classify(m, env, feat, seeds=None):
             z2 = np.concatenate([z2, best['tris']]); ecl = np.concatenate([ecl, np.full(len(best['tris']), len(eng) - 1)])
     for j, e in enumerate(eng):
         sel = z2[ecl == j]
-        # inlet cowls modelled in the body zone (e.g. FG 737-800): body-zone triangles ahead of the engine-zone part,
-        # inside the nacelle cylinder
+        # nacelle skins modelled in the body zone (inlet cowls of the FG 737-800 before its converter zoneOverride, the
+        # FAM A380's cowls): body-zone triangles inside the nacelle cylinder, from 3 r aft of the engine-zone part to 3.2 r
+        # ahead of it, kept only where they belong to a surface around the nacelle axis: a welded connected component of
+        # the candidates that covers >= 180 deg around the axis (a cowl ring or half shell). Close-out round 4: once the
+        # 737's tail pipes were zone 2 (round 3) the window reached the wing's flap-track fairings beside and behind the
+        # nacelle (408 zone-0 triangles, 12.2 m2, baked in the engine colour), which also stole the outermost-skin test
+        # below from the cowl; a fairing or the wing underside covers one sector above the nacelle (<= 120 deg)
         rr = np.hypot(C[z0p, 1] - e['yc'], C[z0p, 2] - e['zc'])
         cand = z0p[(rr < 1.4 * e["r"]) & (C[z0p, 1] - e['yc'] < 1.05 * e['r']) & (C[z0p, 0] > e["x0"] - 3.0 * e['r']) & (C[z0p, 0] < e['x1'] + 3.2 * e['r'])]
+        # the station grid of the outermost-skin test below stays anchored at the aft end of the whole window's
+        # candidates (as before round 4), so the shell filter changes no other triangle's bin
+        raw = np.setdiff1d(cand, sel)
+        xb = round(float(min(e['x0'], P[idx[raw]][:, :, 0].min())), 3) if len(raw) else e['x0']
+        cand = cand[nacelle_shells(P, idx, C, cand, e['yc'], e['zc'])] if len(cand) else cand
         cand = np.setdiff1d(cand, sel)
         if len(cand):
             sel = np.concatenate([sel, cand]); e['x1'] = round(float(max(e['x1'], P[idx[cand]][:, :, 0].max())), 3)
@@ -418,7 +446,7 @@ def classify(m, env, feat, seeds=None):
         # outer skin = the outermost surface at its station and angle around the nacelle axis (the source normals are
         # not reliable: single-sided cowls, mirrored engines); fan faces and exhaust faces (|nx| > 0.8) excluded
         ang = np.arctan2(rad[:, 1], rad[:, 0])
-        bx = np.floor((C[sel, 0] - e['x0']) / 0.25).astype(int); ba = np.floor((ang + np.pi) / (np.pi / 9)).astype(int)
+        bx = np.floor((C[sel, 0] - xb) / 0.25).astype(int); ba = np.floor((ang + np.pi) / (np.pi / 9)).astype(int)
         key = bx * 100 + ba
         rmax = np.zeros(len(sel))
         for k_ in np.unique(key):

@@ -239,6 +239,10 @@ leaf 0.064 m2, the rest walkway solid's 0.12 m past `walk[0]`, nubs F5 1.13 / D1
 puts the facade back at the walkway crossing). Budget: itb L0 69,287 -> 71,939 tris, 6.46 -> 6.93 MB; domestic L0 79,913 -> 79,070
 tris, 11.37 -> 11.17 MB. Checks: verify_itb 126 / 0 -> 135 / 0, verify_domestic 61 / 0 -> 67 / 0, verify_domestic_r2 n_fail 0.
 
+App check (low tier, llvmpipe, `tools/blender/c3_app_views_job.mjs`, itb + roadways only): views of G6 L1 (short walkway into the
+bump-out vestibule) and A1 L1 / L2 (vestibules with door surrounds at the BA-A facade) show the walkways entering the boxes with no
+daylight between bridge and terminal (scratchpad `c4/buildings/app/c3_g6.png`, `c3_a1.png`; local, not committed).
+
 New checks: `verify_itb.py` / `verify_domestic.py` run walkend_check at every LOD of both files (FAIL on any open end; domestic
 F22 L2 exempt, R4.5), verify_itb checks the vestibules' reach beyond the outline (<= 1.2 m), and both run `bf_rays` in a new NEAR
 mode (R4.3).

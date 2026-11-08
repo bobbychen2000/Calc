@@ -1219,4 +1219,36 @@ per-file limit, no split needed); `roadways.glb` 4.29 -> 4.58 MB (the against-as
 | footprint tiers: vertices outside | not checked (verifier: up to 3.9 m) | 0 of 155,560 |
 | LOD2 check / check.py / verify_landside | 47 / 0; 0 / 0 / 17; 195 / 0 | 47 / 0; 0 / 0 / 17; 198 / 0 (the landside group added 3 checks) |
 
+### Close-out round 4 (8 Nov 2026): the parapet fingers, and residuals (`manifest.json#roadways.closeout_r4`)
+
+Inputs: the round-3 fix-2 verifier's findings (major: parapet "fingers", 0.4 x 0.85 m, 1-2.7 m long, built across the driving
+lane along wedge-shaped slits by fix 2's per-sample edge rule; minors: the refused stacked pair's record, narrowed stacked cuts,
+the interchange_2_2 step, the v7 residuals, the low tier, two record slips). Full record: `docs/requests/integration_closeout.md`
+"Round 4 (residuals)". Rebuilt on the buildings track's round-4 assets (ITB 17:18Z, domestic 17:21Z, tower 17:31Z, landside 17:35Z).
+
+**Root cause and fix.** Every ribbon ends in a flat cap square to its centreline, so where two OSM ways continue each other at a
+shared node with a bend the caps leave a wedge open to grade (100 of 105 such joints); fix 2 called those cap edges outer and
+built parapets on them, across the lanes. `build_roadways.py` now (1) fills the joint wedges and, where a wider way continues into
+a narrower one, an 8:1 taper (max 15 m; [inf] of the order of the MUTCD lane-reduction taper, recalled, not re-checked); (2) fills
+slits and gores narrower than 1.0 m between decks at one level and small junction voids (< 5 m2); (3) blends connected decks
+towards each other over 8 m where their per-way profiles differ by < 1.0 m, so they meet on their common edge; (4) decides inner /
+outer per 0.5-m sample by the local step (STEP_TOL 0.30 m; a larger step gets fascia + parapet on both decks, a smaller one the
+higher deck's step face); (5) merges every fill into its owner with a validated round close that refuses to lose area (the first
+final build of the round lost two whole decks to a GEOS mitre buffer, caught by a piece-area comparison; `stats.pieces_without_deck`
+now lists any such piece). Self-check `roadways_build.json#stats.in_carriageway_parapet` is the verifier's stubs4 rule.
+
+| Measure | r22 | Round 4 |
+|---|---|---|
+| in-carriageway parapet (stubs4; independent / self-check) | 236.7 m, largest 7.0 m | 52.3 / 52.1 m, largest 1.4 m (gore-nose tips, junction corners) |
+| the verifier's 7 new finger sites (samples within 4 m) | 10-27 each | 0 each |
+| interchange_2_2: deck-to-deck jumps 0.3-0.8 m | 20.2 m of stations (0.32-0.69 m) | none (largest 0.23 m) |
+| open deck edge / drop 0.5-1.5 m (`guard.py`) | 1,257 / 315.6 m | 929 / 100.0 m |
+| roads over roads < 4.6 m (`b3d_integrate`) | 88.6 m2 (under-counted), min 3.88 m | 160.3 m2 (both cell kinds sampled), min 3.88 m (ITB L3: owner) |
+| glTF validator errors roadways / roadways_lod2 | 0 / 29 | 0 / 0 |
+| conflicts / notes; LOD2; check.py; verify_landside | 3 / 11; 47 / 0; 0 / 0 / 17; 198 / 0 | 7 / 14 (+ narrowed / refused stacked cuts, now reported); 47 / 0; 0 / 0 / 41 (stands data); 199 / 0 |
+
+Sizes: `roadways.glb` 4.58 -> 4.69 MB, `roadways_lod2.glb` 0.47 -> 0.45 MB, `integration.js` 229 -> 236 kB. Corrections to the
+fix-2 rows above: the stacked solve held 163 lowered nodes (not 167); the tier self-check's "max 0.00 m" is the largest distance
+*beyond* the 0.3-m tolerance - the largest distance is 0.124 m (`manifest.json#integration.footprints_js.self_check.max_m`).
+
 <!-- integration:end -->

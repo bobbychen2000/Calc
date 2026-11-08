@@ -51,12 +51,35 @@ class Envelope:
       - top: aft of the fin leading edge (first aft station where the top rises > 0.12 m above the cabin top), the tail
         cone top is a straight line from the fin root to the tail tip (last station before the bottom line jumps up to
         the fin, + 10 % of the cabin height), which is how the tail cones of these aircraft are drawn in side view.
+        Where the cut shows the body beside the fin, the top is measured there instead (below); where the cone is
+        narrower than that band (737 APU tail cone) and the fin is its own zone, the top of the body under the fin is
+        taken (close-out round 4: the straight line ends 0.66 m below the FG 737-800's upswept tail cone, whose upper
+        skin then fell outside the envelope and was painted as fin).
+      - the tailplane halves (welded zone-0 components entirely aft of 0.75 L, reaching |z| > 0.06 L, flat: lateral
+        extent > 2 x vertical) are not body: they are left out of the half width and of the side measurement of the
+        tail-cone top (close-out round 4: after the FG 737-800 tailplane re-fit, the elevator roots beside the tail cone
+        raised the measured top to 2.15 m at 37 m, and the stabiliser roots outside the old cone had widened it to 0.75 m).
     """
     def __init__(self, P, idx, zone, L, dx=0.5):
         sys.path.insert(0, os.path.join(ROOT, 'tools', 'models'))
         from model_features import plane_segments
         tri = idx[np.isin(zone[idx], (0, 1, 4)).all(1)]
+        tp = tailplane_tris(P, tri, zone, L)
+        triB = tri[~tp]                                                    # body + fin, no tailplane halves
+        tri0 = triB[np.isin(zone[triB], (0, 4)).all(1)]                    # body only (fin zone left out)
+        tri1 = idx[(zone[idx] == 1).all(1)]                                # fin zone
+        self.nTailplane = int(tp.sum())
         s = np.arange(0, L + dx, dx); n = len(s)
+        _cc = {}
+        def cut(which, i):
+            # planar cut of one triangle set at station i, (y, z) points; cached (only the aft stations need these)
+            k = (which, i)
+            if k not in _cc:
+                T_ = dict(B=triB, b0=tri0, f=tri1)[which]
+                seg = plane_segments(P, T_, -min(max(s[i], 0.02), L - 0.02)) if len(T_) else []
+                _cc[k] = seg.reshape(-1, 2) if len(seg) else np.zeros((0, 2))
+            return _cc[k]
+        def cutB(i): return cuts[i] if not len(triB) or len(triB) == len(tri) else cut('B', i)
         cuts = []
         top = np.full(n, np.nan); bot = np.full(n, np.nan)
         for i, st in enumerate(s):
@@ -91,10 +114,20 @@ class Envelope:
         # (extrapolated to the centre plane with the local section curvature); the straight line is only a fallback
         if ifin is not None:
             for i in range(ifin, iend + 1):
-                pts = cuts[i]
+                pts = cutB(i)
                 if not len(pts): continue
                 q = pts[(np.abs(pts[:, 1]) > 0.35) & (np.abs(pts[:, 1]) < 0.8) & (pts[:, 0] > bot[i])]
-                if len(q) < 2: continue
+                if len(q) < 2:
+                    # cone narrower than the band: the top of the body under a fin of its own zone, on the centre band,
+                    # not above the fin's lowest point nor the cabin top at the fin root (a merged fin's zone-0 root
+                    # rises to the converter's fin split, above the cabin top: left to the straight line)
+                    if tp.any():
+                        pf = cut('f', i); pb = cut('b0', i)
+                        c = pb[(np.abs(pb[:, 1]) < 0.35) & (pb[:, 0] > bot[i])] if len(pb) else pb
+                        if len(pf) and len(c):
+                            est = float(c[:, 0].max())
+                            if est > topr[i] and est < top[i] - 0.05 and est <= t0 + 0.02 and est <= pf[:, 0].min() + 0.05: topr[i] = est
+                    continue
                 R = max((topr[i] - bot[i]) / 2, 0.3)
                 est = float(np.max(q[:, 0] + q[:, 1] ** 2 / (2 * R)))
                 if est < top[i] - 0.05 and est > topr[i]: topr[i] = est
@@ -109,7 +142,7 @@ class Envelope:
         asp = min(asp, 1.2)
         hw = np.full(n, np.nan)
         for i in range(n):
-            pts = cuts[i]
+            pts = cuts[i] if (ifin is None or i < ifin) else cutB(i)        # tailplane halves are not body width
             if not len(pts) or s[i] > s[iend] + dx: continue
             hh = max((topr[i] - botr[i]) / 2, 0.05)
             sel = (pts[:, 0] > botr[i] - 0.1) & (pts[:, 0] < topr[i] + 0.1) & (np.abs(pts[:, 1]) < 1.25 * asp * hh + 0.15)
@@ -126,6 +159,33 @@ class Envelope:
     def at(self, st):
         st = np.asarray(st, float)
         return np.interp(st, self.s, self.top), np.interp(st, self.s, self.bot), np.interp(st, self.s, self.hw)
+
+
+def tailplane_tris(P, tri, zone, L):
+    """bool per triangle of `tri`: part of a horizontal-tailplane half (stabiliser, elevator, tab objects), i.e. a welded
+    (2 mm) connected component of zone-0 triangles that lies entirely aft of 0.75 L, reaches |z| > 0.06 L (the fuselage
+    half width is ~0.05 L on every model), is flat (lateral extent > 2 x vertical extent) and not above the cabin top +
+    0.5 m (T-tail pieces stay: the fin logic handles them). Merged meshes whose tailplane is part of the fuselage
+    component are not matched (their component reaches forward of 0.75 L)."""
+    from scipy.sparse import coo_matrix
+    from scipy.sparse.csgraph import connected_components
+    out = np.zeros(len(tri), bool)
+    X = -P[:, 0]
+    sel = np.where((zone[tri] == 0).all(1) & (X[tri].min(1) > 0.6 * L))[0]
+    if not len(sel): return out
+    mid = (zone == 0) & (X > 0.45 * L) & (X < 0.7 * L) & (np.abs(P[:, 2]) < 0.3)
+    cabTop = float(P[mid, 1].max()) if mid.any() else np.inf
+    T = tri[sel]
+    q = np.round(P[np.unique(T)] / 0.002).astype(np.int64)
+    vs = np.unique(T); _, inv = np.unique(q, axis=0, return_inverse=True); inv = inv.reshape(-1)
+    loc = np.full(len(P), -1, np.int64); loc[vs] = inv; Tq = loc[T]; nv = int(inv.max()) + 1
+    g = coo_matrix((np.ones(3 * len(Tq)), (Tq.ravel(), np.roll(Tq, 1, 1).ravel())), shape=(nv, nv))
+    _, lab = connected_components(g, directed=False); tl = lab[Tq[:, 0]]
+    for c in np.unique(tl):
+        k = tl == c; V = P[T[k]].reshape(-1, 3); az = np.abs(V[:, 2])
+        if (-V[:, 0]).min() > 0.75 * L and az.max() > 0.06 * L and (az.max() - az.min()) > 2 * np.ptp(V[:, 1]) and V[:, 1].max() < cabTop + 0.5:
+            out[sel[k]] = True
+    return out
 
 
 ZONE_NOFIN = (2, 3, 7)

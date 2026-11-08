@@ -196,8 +196,10 @@ export const SPEC = {
   // (htClr: stabiliser-tip height, NG §2.3.1-2.3.3 row H 'stabilizer' [MIN (AT MTW), MAX (AT OEW)] (-600 / -700 5.46-5.61,
   // -800 5.49-5.64, -900 5.51-5.66), MAX §2.3.1-2.3.4 row N 'horizontal stabilizer' [MINIMUM, MAXIMUM]; htSpan: horizontal
   // tail span 47 ft 1 in = 14.35 m in every general-dimension figure, NG §2.2.1-2.2.8, MAX §2.2.1-2.2.4 (close-out round 3,
-  // fix round 2, v1: the FG model's tailplane spanned 11.92 m; tools/convert_models.py tailFit). js/aircraft/fit.js does not
-  // use htClr for the 737s (models on their own gear); tools/models/check_dims.py checks both; wlTop / wlBot: NG §2.3.3
+  // fix round 2, v1: the FG model's tailplane spanned 11.92 m; tools/convert_models.py tailFit). js/aircraft/fit.js STANCE_FIT
+  // takes htClr[1] (the OEW column) as one row of the 737 stance least squares, the 'stabilizer tip' row, with the door rows;
+  // that row is not independent of the tailplane dihedral, which was itself fitted to it (tools/convert_models.py tailFit,
+  // inf; close-out round 4, verifier finding 7 / 6); tools/models/check_dims.py checks both columns; wlTop / wlBot: NG §2.3.3
   // 'with winglets' row E 'wingtip' (the winglet top) and K 'bottom of winglet (approx)', [MIN (MTW), MAX (OEW)]: -700W 6.48-6.63 /
   // 4.04-4.19, -800W / -900W 6.50-6.76 / 4.06-4.32; js/aircraft/fit.js TIP_H fits the winglet height to wlTop)
   b736: { doc: 'NG', engClr: [0.46, 0.61], htClr: [5.46, 5.61], htSpan: 14.35, sillAft: [2.95, 3.10], cargo: { fwd: [1.30, 1.45], aft: [1.63, 1.78] }, L: 31.24, span: 34.32, H: [12.45, 12.70], crown: [5.38, 5.54], sill: [2.59, 2.74], nose: 4.09, main: [15.32], track: 5.72, doors: [5.03, 23.65],
@@ -337,6 +339,10 @@ export function derive(baseKey, key, name, extra = {}, fwdPlug = null) {
   return (TYPES[key] = Object.assign(T, extra));
 }
 derive('b738', 'b736', 'Boeing 737-600'); derive('b738', 'b737', 'Boeing 737-700'); derive('b738', 'b739', 'Boeing 737-900ER');
+// the 737-600 flies the plain wing (the ACAP's baseline -600; winglets are an aftermarket option on some airframes, D6-58325-7
+// Rev C p.1-5): span 112 ft 7 in = 34.32 m (§2.2.1, SPEC.b736), no tip device; the model's blended winglet is folded away
+// (js/aircraft/fit.js TIP_PLAIN; close-out round 4, verifier finding 8)
+TYPES.b736.wing = { ...TYPES.b736.wing, span: 34.32, tip: 'plain', tipH: 0 };
 derive('b38m', 'b37m', 'Boeing 737 MAX 7'); derive('b38m', 'b39m', 'Boeing 737 MAX 9'); derive('b38m', 'b3xm', 'Boeing 737 MAX 10');
 derive('a20n', 'a319', 'Airbus A319', { eng: [{ z: 5.75, len: 4.4, r: 1.0, y: 1.25, fwd: 2.6 }] }); derive('a20n', 'a19n', 'Airbus A319neo');
 derive('a20n', 'a320', 'Airbus A320', { eng: [{ z: 5.75, len: 4.4, r: 1.0, y: 1.25, fwd: 2.6 }] });

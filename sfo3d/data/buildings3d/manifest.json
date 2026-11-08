@@ -21881,8 +21881,8 @@
    "complex_edge_runs": 13
   },
   "plausibility": {
-   "conflicts": 3,
-   "notes": 11,
+   "conflicts": 7,
+   "notes": 14,
    "nearest_envelopes": [
     {
      "stand": "F12",
@@ -21908,15 +21908,15 @@
     {
      "check": "vertical clearance over a road deck (< 4.6 m)",
      "over": "roadways",
-     "points": 6983,
+     "points": 12434,
      "min_m": 3.88,
      "at": [
-      -1306.7,
-      482.4
+      -1307.8,
+      483.4
      ],
      "deck_m": 6.27,
      "unit": "itb_departures",
-     "below_m2": 88.6
+     "below_m2": 160.3
     },
     {
      "check": "vertical clearance over an at-grade road (< 4.6 m)",
@@ -21927,7 +21927,7 @@
       -940.9,
       429.6
      ],
-     "length_m": 753.0,
+     "length_m": 758.0,
      "ways": [
       35157057,
       38854912,
@@ -21967,14 +21967,70 @@
       -1590.7,
       416.8
      ],
-     "length_m": 1.0,
+     "length_m": 2.0,
      "ways": [
       397162138
      ],
      "note": "solved deck over an at-grade road (the solve holds the clearance at the centreline crossings only)"
+    },
+    {
+     "check": "stacked roadway cut narrows the lower carriageway below lanes x 3.0 m (the decks would clash if kept whole)",
+     "lower": 38853121,
+     "upper": 38854581,
+     "min_width_m": 2.24,
+     "need_m": 7.2,
+     "clearance_if_kept_m": 0.43,
+     "at": [
+      -1366.0,
+      495.3
+     ],
+     "why": "carriageway 2.24 m < 2 x 3.0 m (+ shoulders) over 2 m (kept: the decks would clash, 0.43 m)",
+     "note": "a diverge / merge whose branch the level solve takes off the main deck's level while their ribbons still overlap (median step >= 1 m): the branch is cut back to where it leaves the main deck"
+    },
+    {
+     "check": "stacked roadway cut narrows the lower carriageway below lanes x 3.0 m (the decks would clash if kept whole)",
+     "lower": 1185654144,
+     "upper": 38854581,
+     "min_width_m": 0.0,
+     "need_m": 7.2,
+     "clearance_if_kept_m": 0.38,
+     "at": [
+      -1366.8,
+      495.1
+     ],
+     "why": "carriageway 0.00 m < 2 x 3.0 m (+ shoulders) over 5 m (kept: the decks would clash, 0.38 m)",
+     "note": "a diverge / merge whose branch the level solve takes off the main deck's level while their ribbons still overlap (median step >= 1 m): the branch is cut back to where it leaves the main deck"
+    },
+    {
+     "check": "stacked roadway cut narrows the lower carriageway below lanes x 3.0 m (the decks would clash if kept whole)",
+     "lower": 370279626,
+     "upper": 35157100,
+     "min_width_m": 0.0,
+     "need_m": 4.2,
+     "clearance_if_kept_m": -1.2,
+     "at": [
+      -1511.4,
+      432.0
+     ],
+     "why": "carriageway 0.00 m < 1 x 3.0 m (+ shoulders) over 51 m (kept: the decks would clash, -1.20 m)",
+     "note": "a diverge / merge whose branch the level solve takes off the main deck's level while their ribbons still overlap (median step >= 1 m): the branch is cut back to where it leaves the main deck"
+    },
+    {
+     "check": "stacked roadway cut narrows the lower carriageway below lanes x 3.0 m (the decks would clash if kept whole)",
+     "lower": 370279626,
+     "upper": 41015036,
+     "min_width_m": 2.11,
+     "need_m": 4.2,
+     "clearance_if_kept_m": 0.34,
+     "at": [
+      -1523.1,
+      459.2
+     ],
+     "why": "carriageway 2.11 m < 1 x 3.0 m (+ shoulders) over 13 m (kept: the decks would clash, 0.34 m)",
+     "note": "a diverge / merge whose branch the level solve takes off the main deck's level while their ribbons still overlap (median step >= 1 m): the branch is cut back to where it leaves the main deck"
     }
    ],
-   "walkway_drum_tests": 417,
+   "walkway_drum_tests": 486,
    "bridge_solids": "out/draw/scene2d.json (generated 2026-11-07T10:35:11.482Z, e87c2d2)",
    "taxilane": [
     [
@@ -22046,18 +22102,18 @@
    "deck_inside_buildings": {},
    "deck_clearance": {
     "domestic": {
-     "points": 908,
+     "points": 1831,
      "min_m": 4.7,
      "at": [
-      -788.6,
-      226.0
+      -780.9,
+      224.5
      ],
      "deck_m": 4.73,
      "unit": "domestic_departures",
      "below_m2": 0
     },
     "guideway deck": {
-     "points": 3514,
+     "points": 6420,
      "min_m": 4.62,
      "at": [
       -1716.6,
@@ -22068,18 +22124,18 @@
      "below_m2": 0
     },
     "guideway piers": {
-     "points": 38,
-     "min_m": 13.85,
+     "points": 68,
+     "min_m": 13.88,
      "at": [
       -1724.4,
       496.9
      ],
-     "deck_m": 2.45,
+     "deck_m": 2.41,
      "unit": "interchange_1_3",
      "below_m2": 0
     },
     "itb": {
-     "points": 3122,
+     "points": 5649,
      "min_m": 4.67,
      "at": [
       -1278.4,
@@ -22090,23 +22146,23 @@
      "below_m2": 0
     },
     "roadways": {
-     "points": 6983,
+     "points": 12434,
      "min_m": 3.88,
      "at": [
-      -1306.7,
-      482.4
+      -1307.8,
+      483.4
      ],
      "deck_m": 6.27,
      "unit": "itb_departures",
-     "below_m2": 88.6
+     "below_m2": 160.3
     }
    },
    "itb_curb_gap": {
     "stations": 428,
     "kerb_v": -30.1,
     "curb_top_m": 11.5,
-    "max_void_m": 0.134,
-    "at_u": -106.9,
+    "max_void_m": 0.14,
+    "at_u": 106.6,
     "over_limit": 0,
     "limit_m": 0.3
    },
@@ -22142,8 +22198,8 @@
       "over": "domestic_departures",
       "min_m": 3.53,
       "at": [
-       -787.3,
-       291.3
+       -777.9,
+       274.1
       ],
       "length_m": 56.0
      },
@@ -22164,8 +22220,8 @@
       "over": "domestic_departures",
       "min_m": 3.53,
       "at": [
-       -1039.2,
-       397.6
+       -1054.6,
+       396.8
       ],
       "length_m": 17.0
      },
@@ -22175,10 +22231,10 @@
       "over": "domestic_departures",
       "min_m": 3.53,
       "at": [
-       -1013.0,
-       411.9
+       -1012.1,
+       412.3
       ],
-      "length_m": 53.0
+      "length_m": 58.0
      },
      {
       "way": 256787748,
@@ -22197,8 +22253,8 @@
       "over": "domestic_departures",
       "min_m": 3.53,
       "at": [
-       -801.0,
-       340.6
+       -795.2,
+       343.7
       ],
       "length_m": 40.0
      },
@@ -22208,8 +22264,8 @@
       "over": "domestic_departures",
       "min_m": 3.53,
       "at": [
-       -825.6,
-       164.4
+       -839.8,
+       157.0
       ],
       "length_m": 25.0
      },
@@ -22233,7 +22289,7 @@
        -1019.8,
        130.0
       ],
-      "length_m": 4.0
+      "length_m": 6.0
      },
      {
       "way": 701209939,
@@ -22263,17 +22319,6 @@
       "over": "domestic_departures",
       "min_m": 3.53,
       "at": [
-       -840.2,
-       139.4
-      ],
-      "length_m": 12.0
-     },
-     {
-      "way": 701476987,
-      "name": null,
-      "over": "domestic_departures",
-      "min_m": 3.53,
-      "at": [
        -878.2,
        118.3
       ],
@@ -22296,8 +22341,8 @@
       "over": "domestic_departures",
       "min_m": 3.53,
       "at": [
-       -1085.6,
-       204.6
+       -1114.4,
+       241.1
       ],
       "length_m": 26.0
      },
@@ -22307,8 +22352,8 @@
       "over": "domestic_departures",
       "min_m": 3.53,
       "at": [
-       -831.2,
-       163.8
+       -839.2,
+       150.0
       ],
       "length_m": 14.0
      },
@@ -22351,8 +22396,8 @@
       "over": "domestic_departures",
       "min_m": 3.53,
       "at": [
-       -1110.6,
-       379.0
+       -1113.8,
+       380.0
       ],
       "length_m": 8.0
      },
@@ -22423,10 +22468,21 @@
       "length_m": 8.0
      },
      {
+      "way": 701476987,
+      "name": null,
+      "over": "domestic_departures",
+      "min_m": 3.54,
+      "at": [
+       -840.2,
+       139.4
+      ],
+      "length_m": 12.0
+     },
+     {
       "way": 701476991,
       "name": null,
       "over": "domestic_departures",
-      "min_m": 3.7,
+      "min_m": 3.64,
       "at": [
        -1023.4,
        397.6
@@ -22483,30 +22539,8 @@
       "over": "domestic_departures",
       "min_m": 4.58,
       "at": [
-       -1097.5,
-       335.6
-      ],
-      "length_m": 3.0
-     },
-     {
-      "way": 35157057,
-      "name": null,
-      "over": "domestic_departures",
-      "min_m": 4.59,
-      "at": [
-       -1108.4,
-       299.6
-      ],
-      "length_m": 3.0
-     },
-     {
-      "way": 38854912,
-      "name": null,
-      "over": "domestic_departures",
-      "min_m": 4.59,
-      "at": [
-       -1102.8,
-       333.9
+       -1102.3,
+       337.0
       ],
       "length_m": 3.0
      },
@@ -22522,6 +22556,28 @@
       "length_m": 1.0
      },
      {
+      "way": 35157057,
+      "name": null,
+      "over": "domestic_departures",
+      "min_m": 4.6,
+      "at": [
+       -1112.2,
+       301.1
+      ],
+      "length_m": 3.0
+     },
+     {
+      "way": 38854912,
+      "name": null,
+      "over": "domestic_departures",
+      "min_m": 4.6,
+      "at": [
+       -1102.8,
+       333.9
+      ],
+      "length_m": 1.0
+     },
+     {
       "way": 397162138,
       "name": null,
       "over": "interchange_2_2",
@@ -22530,7 +22586,7 @@
        -1590.7,
        416.8
       ],
-      "length_m": 1.0
+      "length_m": 2.0
      }
     ]
    }
@@ -22538,7 +22594,7 @@
   "requests": [
    "bridges: the per-building footprints with height bands are now in data/buildings3d/integration.js (B3D_INTEGRATION.footprints.units[group][unit].tiers: body = grade to top, over = underside to top; close-out round 3, integration-5): gates.js can test drums / tunnels against them instead of the SFO Museum proxy and the own-strip rule (bridges-6, buildings R3.3: a drum under a roof overhang is clear when its top is below the over tier's underside)",
    "owner / domestic: the anchored domestic departures loop (deck top 4.73 m at the curb placeholder [unk], soffit 3.53 m with the generic 1.2-m deck) is below 4.6 m over 26 at-grade roads (min 3.53 m; conflict \"vertical clearance over an at-grade road\"); kept as built: the curb level is the published T3 L1 -> L2 16 ft [pub at T3], so the real stacked arrivals level is below 4.6 m by design. A posted-clearance photo of the domestic arrivals level would settle it (buildings R3.2)",
-   "owner / buildings (ITB group): roads under roads below 4.6 m: {\"min_m\": 3.88, \"at\": [-1306.7, 482.4], \"unit\": \"itb_departures\", \"below_m2\": 88.6}. At the ITB loop the lower (arrivals) roadway, held at LOWER_H 5.80 m (4.6 m over the at-grade building-passage roads + the 1.2-m deck [inf]), passes under its departures legs (OSM 38853121 / 38853045), which leave the L3 plate at 11.35 m (spec_itb level3.floor 11.5 [inf] - kerb): 5.55 m deck to deck < 5.8 m needed. Photo i1 reads the step ~6.7 m (L3 ~1 m higher); please review level3.floor against i1 (buildings R3.2) - the roadways follow the ITB curb on the next build_roadways.py run"
+   "owner / buildings (ITB group): roads under roads below 4.6 m: {\"min_m\": 3.88, \"at\": [-1307.8, 483.4], \"deck_m\": 6.27, \"unit\": \"itb_departures\", \"below_m2\": 160.3}. At the ITB loop this is a three-level stack: the at-grade roads (data/sfo_landside.json, e.g. OSM 256787736 / 93671776 beside the conflict point), the lower (arrivals) roadway 41015123 over them (held at LOWER_H 5.80 m on the straight; past it the level solve keeps it >= 4.6 m + the 1.2-m deck above the at-grade roads under it [inf]: deck 6.27 m at the conflict point), and its departures legs (OSM 38853121 / 38853045), which leave the L3 plate at 11.35 m (spec_itb level3.floor 11.5 [inf] - kerb) and need 5.8 m deck to deck above it. Photo i1 reads the L3-to-lower-level step ~6.7 m (L3 ~1 m higher than modelled); please review level3.floor against i1 (buildings R3.2) - the roadways follow the ITB curb on the next build_roadways.py run (L3 +0.8 m lifts the conflict)"
   ],
   "glow": {
    "kinds": {
@@ -22617,15 +22673,33 @@
   },
   "footprints_js": {
    "units": 14,
-   "bytes_js": 229350,
+   "bytes_js": 236218,
    "note": "B3D_INTEGRATION.footprints (close-out round 3, integration-5)",
    "tier_tol_m": 0.1,
    "tier_min_m2": 0.02,
    "self_check": {
     "rule": "every LOD0 / LOD1 vertex above y0 + 0.5 within 0.3 m of an admissible tier of its own unit (fix 2, verifier v3)",
-    "vertices": 155560,
+    "vertices": 156818,
     "outside": 0,
-    "max_m": 0.0,
+    "max_beyond_tol_m": 0.0,
+    "max_m": 0.124,
+    "tol_m": 0.3,
+    "max_by_unit": {
+     "tower/tower": 0.0,
+     "itb/BA-A": 0.0,
+     "itb/hall": 0.0,
+     "itb/BA-G": 0.0,
+     "domestic/BA_B": 0.114,
+     "domestic/BA_C": 0.094,
+     "domestic/BA_D": 0.116,
+     "domestic/BA_E": 0.115,
+     "domestic/BA_F": 0.118,
+     "domestic/C3C": 0.113,
+     "domestic/T1": 0.124,
+     "domestic/T2": 0.103,
+     "domestic/T3E": 0.099,
+     "domestic/T3W": 0.063
+    },
     "per_unit": {}
    }
   },
@@ -22633,7 +22707,7 @@
    "domestic: BA_C LOD2 top +9.08 m (review r1) - a checker artefact: the joined LOD2 mesh was split by plan distance and C3C triangles went to BA_C; split by LOD0-footprint containment (+1 m) since review r2: top 0.0 m (lod2_check.json)",
    "landside: rental car center LOD2 roof median 4.58 m (review r1) - a checker artefact: the roof cells sampled the open deck beyond the roof edge; one roof-cell definition for both LODs since review r2 (1-m cells inside the LOD0 footprint - 0.5 m): 0.00 m"
   ],
-  "generated": "2026-11-07T15:35:01Z",
+  "generated": "2026-11-08T18:20:42Z",
   "tool": "tools/blender/b3d_integrate.py",
   "doc": "docs/research/buildings3d.md (integration section)"
  },
@@ -22641,7 +22715,7 @@
   "asset": "roadways (elevated landside roadways: departures decks, viaducts, approach ramps)",
   "owner": "integration (review round 1, finding 1)",
   "generator": "tools/blender/build_roadways.py + roadways_net.py",
-  "built": "2026-11-07T15:30:38Z",
+  "built": "2026-11-08T18:15:11Z",
   "files": {
    "full": "data/buildings3d/roadways.glb",
    "lod2": "data/buildings3d/roadways_lod2.glb"
@@ -22717,7 +22791,8 @@
    "levels other than the two curbs: screened solve with layer priors {1: 6.5, 2: 12.5, 3: 18.5, 4: 24.5} m and clearance 4.6 m (roadways_net.py); at skewed crossings the separation is held over the ribbons' overlap (the per-crossing deficit, XS_*); stacked pairs (a ramp over or along a lower roadway) by lowering the lower way under the upper deck over the whole overlap, within 6 % grade and above its clearance over at-grade roads (STK_*, close-out r3 fix 2); what is left goes to the trim's stacked cut along the upper deck's edge, refused (and reported) where it would split the lower deck or leave < lanes x 3.0 m",
    "approach ramps: at-grade OSM roads lifted by the solve (ELL_G 45 m)",
    "lane counts / widths where OSM has none (class defaults)",
-   "lane markings (pattern, colours)"
+   "lane markings (pattern, colours)",
+   "close-out round 4: the deck between two ways that continue each other at a shared node (the wedge between their flat caps), the slit or gore between two decks narrower than 1.0 m at one level, small voids enclosed by decks (< 5 m2), a 8:1 width taper where a wider way continues into a narrower one, and connected decks meeting halfway over 8 m where their tops differ by < 1.0 m (the per-way profiles disagree at junctions) - geometry between OSM centrelines, no survey"
   ],
   "unknown": [
    "the domestic departures-curb height (4.877 m is the domestic asset placeholder [unk])",
@@ -22727,7 +22802,7 @@
   ],
   "deviations": [
    "decks over at-grade roads with less than 4.6 m clearance: the anchored domestic loop (soffit 3.53 m) - the curb placeholder, kept as the domestic asset has it",
-   "decks trimmed at the buildings' bodies (review r2, finding 3): {'domestic/T3E': 312.6, 'domestic/T3W': 309.4, 'domestic/T1': 390.6} m2 (T1 / T3 only: their curb-side shells; the T2 cut lifted after the domestic group moved the T2 landside face, close-out round 3)",
+   "decks trimmed at the buildings' bodies (review r2, finding 3): {'domestic/T3E': 312.5, 'domestic/T3W': 309.4, 'domestic/T1': 390.6} m2 (T1 / T3 only: their curb-side shells; the T2 cut lifted after the domestic group moved the T2 landside face, close-out round 3)",
    "stacked pairs kept whole under an upper deck with less than 4.6 m (a cut would split the lower deck or leave < lanes x 3.0 m; fix 2, verifier v1): 41015123 under 38853045, 3.90 m; 41015123 under 38853121, 3.81 m; 394222196 under 35157016, 4.58 m",
    "stacked cuts made although they narrow the lower deck (the decks would clash, < 3.5 m): 38853121 under 38854581: carriageway 2.24 m < 2 x 3.0 m (+ shoulders) over 2 m (kept: the decks would clash, 0.43 m); 1185654144 under 38854581: carriageway 0.00 m < 2 x 3.0 m (+ shoulders) over 5 m (kept: the decks would clash, 0.38 m); 370279626 under 35157100: carriageway 0.00 m < 1 x 3.0 m (+ shoulders) over 51 m (kept: the decks would clash, -1.20 m); 370279626 under 41015036: carriageway 2.11 m < 1 x 3.0 m (+ shoulders) over 13 m (kept: the decks would clash, 0.34 m)"
   ],
@@ -22766,9 +22841,9 @@
     "plate": 13
    },
    "tris": {
-    "0": 48780,
-    "1": 15100,
-    "2": 7158
+    "0": 50912,
+    "1": 15095,
+    "2": 6971
    },
    "grade_max": {
     "id": 41015033,
@@ -22963,13 +23038,13 @@
    ],
    "low_crossings": [],
    "crossings": 33,
-   "asset_cut_m2": 1671.0,
+   "asset_cut_m2": 1670.9,
    "bytes": {
-    "full": 4580524,
-    "lod2": 466124
+    "full": 4685984,
+    "lod2": 450412
    },
    "itb_plate": {
-    "area_m2": 8066.5,
+    "area_m2": 8069.3,
     "measured_m2": 9889.3,
     "straight_u": [
      -51.0,
@@ -23118,7 +23193,8 @@
       "lower": 41015123,
       "upper": 38853045,
       "samples": 13,
-      "held": true,
+      "held": "partial",
+      "in_solve": true,
       "deficit_free_m": 0.28,
       "lowered_nodes": 0,
       "lowered_max_m": 0.0,
@@ -23129,7 +23205,8 @@
       "lower": 41015123,
       "upper": 38853121,
       "samples": 39,
-      "held": true,
+      "held": "partial",
+      "in_solve": true,
       "deficit_free_m": 0.59,
       "lowered_nodes": 56,
       "lowered_max_m": 0.59,
@@ -23141,6 +23218,7 @@
       "upper": 220862131,
       "samples": 2,
       "held": true,
+      "in_solve": true,
       "deficit_free_m": 0.03,
       "lowered_nodes": 0,
       "lowered_max_m": 0.0,
@@ -23152,6 +23230,7 @@
       "upper": 681667031,
       "samples": 25,
       "held": true,
+      "in_solve": true,
       "deficit_free_m": 0.52,
       "lowered_nodes": 31,
       "lowered_max_m": 0.36,
@@ -23163,6 +23242,7 @@
       "upper": 1185654144,
       "samples": 15,
       "held": true,
+      "in_solve": true,
       "deficit_free_m": 0.47,
       "lowered_nodes": 0,
       "lowered_max_m": 0.0,
@@ -23174,6 +23254,7 @@
       "upper": 681667027,
       "samples": 38,
       "held": true,
+      "in_solve": true,
       "deficit_free_m": 0.89,
       "lowered_nodes": 26,
       "lowered_max_m": 0.91,
@@ -23185,6 +23266,7 @@
       "upper": 1205493778,
       "samples": 13,
       "held": true,
+      "in_solve": true,
       "deficit_free_m": 1.53,
       "lowered_nodes": 34,
       "lowered_max_m": 1.53,
@@ -23196,6 +23278,7 @@
       "upper": 1483716495,
       "samples": 9,
       "held": true,
+      "in_solve": true,
       "deficit_free_m": 1.64,
       "lowered_nodes": 16,
       "lowered_max_m": 1.64,
@@ -23330,6 +23413,686 @@
      }
     ]
    },
+   "joint_wedges": {
+    "joints": 105,
+    "filled": 86,
+    "area_m2": 40.4,
+    "largest": [
+     {
+      "owner": 1059482643,
+      "other": 512320224,
+      "at": [
+       -915.8,
+       450.3
+      ],
+      "area_m2": 4.59,
+      "bend_deg": 11.4,
+      "level_m": 4.73
+     },
+     {
+      "owner": 828034294,
+      "other": 1059467694,
+      "at": [
+       -1065.9,
+       407.3
+      ],
+      "area_m2": 2.84,
+      "bend_deg": 31.2,
+      "level_m": 4.89
+     },
+     {
+      "owner": 35157100,
+      "other": 392513452,
+      "at": [
+       -1493.0,
+       423.2
+      ],
+      "area_m2": 2.29,
+      "bend_deg": 4.0,
+      "level_m": 1.57
+     },
+     {
+      "owner": 38855245,
+      "other": 1059467693,
+      "at": [
+       -1117.9,
+       382.9
+      ],
+      "area_m2": 2.01,
+      "bend_deg": 8.4,
+      "level_m": 4.73
+     },
+     {
+      "owner": 38855344,
+      "other": 1201638117,
+      "at": [
+       -1001.5,
+       115.4
+      ],
+      "area_m2": 1.8,
+      "bend_deg": 11.2,
+      "level_m": 4.73
+     },
+     {
+      "owner": 512289873,
+      "other": 739695570,
+      "at": [
+       -1693.6,
+       532.0
+      ],
+      "area_m2": 1.45,
+      "bend_deg": 8.9,
+      "level_m": 15.44
+     },
+     {
+      "owner": 395622940,
+      "other": 905752944,
+      "at": [
+       -1497.5,
+       496.4
+      ],
+      "area_m2": 1.44,
+      "bend_deg": 14.5,
+      "level_m": 12.38
+     },
+     {
+      "owner": 38854510,
+      "other": 1483716493,
+      "at": [
+       -1417.3,
+       309.1
+      ],
+      "area_m2": 1.28,
+      "bend_deg": 19.3,
+      "level_m": 14.61
+     },
+     {
+      "owner": 512267983,
+      "other": 38855347,
+      "at": [
+       -1175.0,
+       295.9
+      ],
+      "area_m2": 1.28,
+      "bend_deg": 7.8,
+      "level_m": 4.55
+     },
+     {
+      "owner": 38855245,
+      "other": 1119596522,
+      "at": [
+       -1077.5,
+       394.3
+      ],
+      "area_m2": 1.25,
+      "bend_deg": 3.6,
+      "level_m": 4.73
+     }
+    ],
+    "tapers": 18,
+    "taper_m2": 284.8,
+    "taper_largest": [
+     {
+      "owner": 1483716494,
+      "other": 905752943,
+      "at": [
+       -1578.8,
+       536.1
+      ],
+      "area_m2": 27.9,
+      "taper_m": 15.0,
+      "level_m": 14.91
+     },
+     {
+      "owner": 1483716494,
+      "other": 905752943,
+      "at": [
+       -1578.8,
+       536.1
+      ],
+      "area_m2": 27.89,
+      "taper_m": 15.0,
+      "level_m": 14.91
+     },
+     {
+      "owner": 1059482642,
+      "other": 1059482643,
+      "at": [
+       -998.2,
+       433.7
+      ],
+      "area_m2": 27.6,
+      "taper_m": 15.0,
+      "level_m": 4.73
+     },
+     {
+      "owner": 1059482642,
+      "other": 1059482643,
+      "at": [
+       -998.2,
+       433.7
+      ],
+      "area_m2": 25.94,
+      "taper_m": 15.0,
+      "level_m": 4.73
+     },
+     {
+      "owner": 1135380280,
+      "other": 38855001,
+      "at": [
+       -1072.7,
+       154.0
+      ],
+      "area_m2": 15.2,
+      "taper_m": 14.4,
+      "level_m": 4.73
+     },
+     {
+      "owner": 1201638116,
+      "other": 1201638117,
+      "at": [
+       -1028.2,
+       131.2
+      ],
+      "area_m2": 14.43,
+      "taper_m": 14.4,
+      "level_m": 4.73
+     },
+     {
+      "owner": 682008752,
+      "other": 512320224,
+      "at": [
+       -782.6,
+       329.1
+      ],
+      "area_m2": 13.63,
+      "taper_m": 14.4,
+      "level_m": 4.73
+     },
+     {
+      "owner": 743690647,
+      "other": 38853582,
+      "at": [
+       -1480.6,
+       402.7
+      ],
+      "area_m2": 13.41,
+      "taper_m": 14.4,
+      "level_m": 1.68
+     },
+     {
+      "owner": 682008752,
+      "other": 256787747,
+      "at": [
+       -761.7,
+       286.7
+      ],
+      "area_m2": 13.41,
+      "taper_m": 14.4,
+      "level_m": 4.73
+     },
+     {
+      "owner": 682008752,
+      "other": 256787747,
+      "at": [
+       -761.7,
+       286.7
+      ],
+      "area_m2": 13.39,
+      "taper_m": 14.4,
+      "level_m": 4.73
+     }
+    ],
+    "slits": {
+     "pairs": 103,
+     "area_m2": 130.7,
+     "largest": [
+      {
+       "owner": 735035451,
+       "other": 735035452,
+       "area_m2": 15.28,
+       "at": [
+        -1649.9,
+        468.6
+       ],
+       "level_m": 1.59
+      },
+      {
+       "owner": 23856929,
+       "other": 27107273,
+       "area_m2": 12.5,
+       "at": [
+        -2038.3,
+        371.0
+       ],
+       "level_m": 0.37
+      },
+      {
+       "owner": 41014907,
+       "other": 26787785,
+       "area_m2": 12.31,
+       "at": [
+        -2017.1,
+        149.2
+       ],
+       "level_m": 6.38
+      },
+      {
+       "owner": 186398861,
+       "other": 256787752,
+       "area_m2": 8.31,
+       "at": [
+        -1832.5,
+        588.4
+       ],
+       "level_m": 11.74
+      },
+      {
+       "owner": 23856931,
+       "other": 256787745,
+       "area_m2": 6.86,
+       "at": [
+        -1608.7,
+        793.6
+       ],
+       "level_m": 6.75
+      },
+      {
+       "owner": 23856931,
+       "other": 41014713,
+       "area_m2": 5.61,
+       "at": [
+        -1590.1,
+        523.8
+       ],
+       "level_m": 5.9
+      },
+      {
+       "owner": 38852894,
+       "other": 38853582,
+       "area_m2": 5.55,
+       "at": [
+        -1485.1,
+        399.4
+       ],
+       "level_m": 1.87
+      },
+      {
+       "owner": 38852322,
+       "other": 256787735,
+       "area_m2": 4.99,
+       "at": [
+        -1646.3,
+        431.0
+       ],
+       "level_m": 5.61
+      },
+      {
+       "owner": 38853594,
+       "other": 35157029,
+       "area_m2": 4.91,
+       "at": [
+        -1467.2,
+        464.9
+       ],
+       "level_m": 2.03
+      },
+      {
+       "owner": 512289873,
+       "other": 38853115,
+       "area_m2": 3.95,
+       "at": [
+        -1664.0,
+        547.0
+       ],
+       "level_m": 15.06
+      }
+     ],
+     "voids": 12,
+     "voids_m2": 2.1,
+     "void_list": [
+      {
+       "owner": 26787785,
+       "area_m2": 0.07,
+       "at": [
+        -1812.1,
+        442.9
+       ],
+       "pieces": 2
+      },
+      {
+       "owner": 41014827,
+       "area_m2": 0.1,
+       "at": [
+        -1903.8,
+        506.8
+       ],
+       "pieces": 2
+      },
+      {
+       "owner": 186398861,
+       "area_m2": 0.06,
+       "at": [
+        -1900.4,
+        577.0
+       ],
+       "pieces": 2
+      },
+      {
+       "owner": 38853045,
+       "area_m2": 0.05,
+       "at": [
+        -1355.3,
+        296.8
+       ],
+       "pieces": 2
+      },
+      {
+       "owner": 681667031,
+       "area_m2": 0.08,
+       "at": [
+        -1398.9,
+        485.9
+       ],
+       "pieces": 2
+      },
+      {
+       "owner": 1185654144,
+       "area_m2": 0.06,
+       "at": [
+        -1344.0,
+        500.2
+       ],
+       "pieces": 2
+      },
+      {
+       "owner": 38853599,
+       "area_m2": 0.18,
+       "at": [
+        -1447.1,
+        463.4
+       ],
+       "pieces": 2
+      },
+      {
+       "owner": 38855344,
+       "area_m2": 1.05,
+       "at": [
+        -802.1,
+        324.9
+       ],
+       "pieces": 4
+      },
+      {
+       "owner": 38855344,
+       "area_m2": 0.06,
+       "at": [
+        -806.2,
+        333.3
+       ],
+       "pieces": 3
+      },
+      {
+       "owner": 256787747,
+       "area_m2": 0.08,
+       "at": [
+        -825.6,
+        149.4
+       ],
+       "pieces": 2
+      },
+      {
+       "owner": 682008752,
+       "area_m2": 0.14,
+       "at": [
+        -777.1,
+        308.3
+       ],
+       "pieces": 2
+      },
+      {
+       "owner": 1059482642,
+       "area_m2": 0.12,
+       "at": [
+        -1064.5,
+        405.2
+       ],
+       "pieces": 3
+      }
+     ]
+    }
+   },
+   "in_carriageway_parapet": {
+    "samples": 521,
+    "of": 277744,
+    "approx_m": 52.1,
+    "clusters": 34,
+    "top": [
+     {
+      "at": [
+       -1540.2,
+       467.4
+      ],
+      "deck_m": 3.89,
+      "approx_m": 1.4
+     },
+     {
+      "at": [
+       -1302.3,
+       481.8
+      ],
+      "deck_m": 11.35,
+      "approx_m": 1.3
+     },
+     {
+      "at": [
+       -1417.8,
+       323.0
+      ],
+      "deck_m": 14.74,
+      "approx_m": 1.2
+     },
+     {
+      "at": [
+       -2014.2,
+       162.1
+      ],
+      "deck_m": 6.4,
+      "approx_m": 1.1
+     },
+     {
+      "at": [
+       -831.4,
+       396.5
+      ],
+      "deck_m": 4.73,
+      "approx_m": 1.1
+     },
+     {
+      "at": [
+       -1482.3,
+       398.9
+      ],
+      "deck_m": 1.86,
+      "approx_m": 1.0
+     },
+     {
+      "at": [
+       -820.8,
+       152.1
+      ],
+      "deck_m": 4.73,
+      "approx_m": 1.0
+     },
+     {
+      "at": [
+       -2035.7,
+       381.6
+      ],
+      "deck_m": 1.33,
+      "approx_m": 0.9
+     },
+     {
+      "at": [
+       -1102.1,
+       225.2
+      ],
+      "deck_m": 4.98,
+      "approx_m": 0.9
+     },
+     {
+      "at": [
+       -1699.0,
+       575.6
+      ],
+      "deck_m": 12.82,
+      "approx_m": 0.8
+     },
+     {
+      "at": [
+       -1488.9,
+       399.7
+      ],
+      "deck_m": 2.23,
+      "approx_m": 0.8
+     },
+     {
+      "at": [
+       -1408.9,
+       312.1
+      ],
+      "deck_m": 14.31,
+      "approx_m": 0.8
+     },
+     {
+      "at": [
+       -1282.5,
+       482.5
+      ],
+      "deck_m": 11.35,
+      "approx_m": 0.8
+     },
+     {
+      "at": [
+       -1367.3,
+       492.9
+      ],
+      "deck_m": 11.35,
+      "approx_m": 0.7
+     },
+     {
+      "at": [
+       -1290.6,
+       454.6
+      ],
+      "deck_m": 11.35,
+      "approx_m": 0.7
+     },
+     {
+      "at": [
+       -1032.6,
+       398.5
+      ],
+      "deck_m": 4.85,
+      "approx_m": 0.7
+     },
+     {
+      "at": [
+       -858.0,
+       133.5
+      ],
+      "deck_m": 4.74,
+      "approx_m": 0.7
+     },
+     {
+      "at": [
+       -824.2,
+       158.5
+      ],
+      "deck_m": 4.73,
+      "approx_m": 0.7
+     },
+     {
+      "at": [
+       -1953.9,
+       543.4
+      ],
+      "deck_m": 10.68,
+      "approx_m": 0.6
+     },
+     {
+      "at": [
+       -1682.2,
+       571.6
+      ],
+      "deck_m": 12.98,
+      "approx_m": 0.6
+     },
+     {
+      "at": [
+       -1650.9,
+       432.9
+      ],
+      "deck_m": 5.4,
+      "approx_m": 0.6
+     },
+     {
+      "at": [
+       -1523.5,
+       514.3
+      ],
+      "deck_m": 14.09,
+      "approx_m": 0.6
+     },
+     {
+      "at": [
+       -1521.2,
+       522.3
+      ],
+      "deck_m": 14.09,
+      "approx_m": 0.6
+     },
+     {
+      "at": [
+       -1433.1,
+       486.3
+      ],
+      "deck_m": 14.05,
+      "approx_m": 0.6
+     },
+     {
+      "at": [
+       -1298.6,
+       480.0
+      ],
+      "deck_m": 11.35,
+      "approx_m": 0.6
+     }
+    ],
+    "rule": "parapet-top samples (0.2 m) with the same deck level (+-0.3 m) 0.6 m away in >= 7 of 8 directions (the round-3 verifier's stubs4)"
+   },
+   "pieces_without_deck": [
+    {
+     "id": 370279562,
+     "src": "ramp",
+     "rib_m2": 31.3,
+     "cut_by": {
+      "landside": 31.28
+     },
+     "stacked_cut_by": null
+    }
+   ],
+   "edges_lod0": {
+    "parapet_m": 21351.3,
+    "step_face_m": 498.5,
+    "slit_runs_dropped_m": 5.8,
+    "step_tol_m": 0.3,
+    "inner_gap_m": {
+     "0": 0.08,
+     "1": 0.4,
+     "2": 1.05
+    }
+   },
    "curb_gap": {
     "stations": 426,
     "max_void_m": 0.143,
@@ -23340,7 +24103,7 @@
    "curb_gap_t2": {
     "points": 544,
     "median_void_m": 0.065,
-    "max_void_m": 1.905,
+    "max_void_m": 1.906,
     "at": [
      -788.6,
      153.2
@@ -23351,7 +24114,7 @@
     "limit_m": 0.05
    },
    "guideway_clearance": {
-    "points": 4400,
+    "points": 4490,
     "min_m": 4.61,
     "at": [
      -1716.5,
@@ -23375,11 +24138,43 @@
     "where": []
    },
    "deck_cut_inside_buildings_m2": {
-    "domestic/T3E": 312.6,
+    "domestic/T3E": 312.5,
     "domestic/T3W": 309.4,
     "domestic/T1": 390.6
    },
    "deck_left_inside_buildings_m2": 0
+  },
+  "closeout_r4": {
+   "rule": "deck edges: inner where a neighbour within [0.08, 0.4, 1.05] m (LOD0/1/2) has its top within 0.30 m there (else fascia + parapet on both: a median barrier); joint wedges, slit / gore fill, junction voids, width tapers and the connected-deck blend close the slits whose sides r22 built as parapets across the lanes (the round-3 verifier's major)",
+   "in_carriageway_parapet_m": 52.1,
+   "in_carriageway_clusters": 34,
+   "joint_wedges": {
+    "joints": 105,
+    "filled": 86,
+    "area_m2": 40.4,
+    "tapers": 18,
+    "taper_m2": 284.8
+   },
+   "slits": {
+    "pairs": 103,
+    "area_m2": 130.7,
+    "voids": 12,
+    "voids_m2": 2.1
+   },
+   "edges_lod0": {
+    "parapet_m": 21351.3,
+    "step_face_m": 498.5,
+    "slit_runs_dropped_m": 5.8,
+    "step_tol_m": 0.3,
+    "inner_gap_m": {
+     "0": 0.08,
+     "1": 0.4,
+     "2": 1.05
+    }
+   },
+   "pieces_without_deck": [
+    370279562
+   ]
   }
  }
 }

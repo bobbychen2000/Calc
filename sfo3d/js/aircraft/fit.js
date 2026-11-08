@@ -112,6 +112,13 @@ const TIP_LAT = { sharklet: 0.55, split: 0.5 };
 // the 737-800 model's blended winglet (FG winglet.ac): vertices outboard of |z| 17.5 and above y 0.75 (model units; the
 // upper-skin profile of the tip rises from 0.72 at 17.45 to 2.47 at 17.85) are folded onto the tip
 const TIP_CUT = { b738: { z0: 17.5, y0: 0.75, zTo: 17.62, yTo: 0.6 } };
+// types drawn with the plain wing: the model's winglet is folded away (TIP_CUT) with no device in its place, and the span
+// fit takes the plain tip to SPEC.span. 737-600: the ACAP's baseline -600 has no winglets ('Winglets are installed on some
+// 737-600 airplanes as an after-market airline option', D6-58325-7 Rev C §1.2 p.1-5 text; SPEC b736 span 34.32 = §2.2.1
+// without winglets). Close-out round 4 (verifier finding 8): the 737-600 drew the FG 737-800's blended winglet at the
+// artist's height, its wing shortened 0.71 m a side so the winglet tips met the plain-wing span. Which -600 airframes carry
+// the aftermarket winglet is per registration and not sourced here (open).
+const TIP_PLAIN = new Set(['b736']);
 // height of the model's own blended winglet on the types that keep it (737NG -700W / -800W / -900ER W): the FG winglet rises
 // 1.7 model m above the tip's upper skin, its top rendering 0.79 m below ACAP row E 'wingtip' with winglets (6.76 m at OEW,
 // D6-58325-7 Rev C §2.3.3; bottom of winglet K 4.32 m: 2.44 m apart, the APB winglet's 8 ft). The winglet (outboard of |z| z0,
@@ -274,10 +281,17 @@ function botAt(F, st) {
 // STARBOARD skin half width (model units) of the lower lobe at model station st and model height y: the table F.sec.hwl
 // (starboard half widths at the heights F.sec.lo above each section's bottom, tools/models/model_features.py), linear in
 // height (0 at the keel) and in station between the nearest complete sections; null above the table (hwAt covers the upper
-// fuselage; it is the larger side, port on the FG 737-800 / FAM A320 by 1-3 cm). Between two sections the height is taken
-// above the keel interpolated between them (close-out round 3, fix round 2, v3: evaluated at the same absolute height, a
-// section whose bottom lies above y counted 0, so where the keel rises aft - A319 / A320 aft cargo door - the half width
-// 5 cm above the keel came out 0.09-0.10 m narrower than the mesh)
+// fuselage; it is the larger side, port on the FG 737-800 / FAM A320 by 1-3 cm).
+//   keel-relative: between the two nearest complete sections, when both reach dy and their bottoms differ by < 0.5 model m,
+//     the height is taken above the keel interpolated between them (close-out round 3, fix round 2, v3: at the same absolute
+//     height a section whose bottom lies above y counted 0, so where the keel rises aft - A319 / A320 aft cargo door - the
+//     half width 5 cm above the keel came out 0.09-0.10 m narrower than the mesh);
+//   otherwise at the same absolute height, from the nearest sections that have skin there (a section whose bottom lies
+//     above y is skipped, not counted 0). Close-out round 4 (verifier finding 3): the keel-relative rule alone returned
+//     null above the table (777 keel + 1 m: 0.71 against the mesh's 1.98 m) and blended a fairing section with a fuselage
+//     section (A330 4.38 against 2.21 m, 787 4.09 against 2.47 m). Scored against planar cuts of the placed mesh, 32 types,
+//     every 0.5 m, keel + 0.05 .. 1.4 m (scratch c4/aircraft/hwstats.py): rows off by > 0.15 m at keel + <= 0.3 m
+//     964 (before round 3) / 729 (round 3) / 634 (this rule); 737 family 122 / 95 / 95; A320 family 96 / 76 / 52.
 function hwLow(F, st, y) {
   const S = F && F.sec; if (!S || !S.hwl) return null; const lo = S.lo;
   const at = (j, dy) => {                                  // section j at dy above its own bottom
@@ -291,13 +305,17 @@ function hwLow(F, st, y) {
   const j0 = Math.floor(st / S.dx), w = Math.round(2 / S.dx); let a = null, b = null;
   for (let j = j0; j >= j0 - w; j--) if (ok(j)) { a = j; break; }
   for (let j = j0 + 1; j <= j0 + 1 + w; j++) if (ok(j)) { b = j; break; }
-  if (a != null && b != null) {
+  if (a != null && b != null && Math.abs(S.bot[b] - S.bot[a]) < 0.5) {
     const u = (st / S.dx - a) / (b - a), dy = y - (S.bot[a] + u * (S.bot[b] - S.bot[a]));
     const va = at(a, dy), vb = at(b, dy);
     if (va != null && vb != null) return va + u * (vb - va);
-    return va ?? vb;
   }
-  const j = a ?? b; return j != null ? at(j, y - S.bot[j]) : null;
+  const abs = (j) => ok(j) && y >= S.bot[j] ? at(j, y - S.bot[j]) : null;
+  let A = null, B = null;
+  for (let j = j0; j >= j0 - w; j--) { const v = abs(j); if (v != null) { A = { j, v }; break; } }
+  for (let j = j0 + 1; j <= j0 + 1 + w; j++) { const v = abs(j); if (v != null) { B = { j, v }; break; } }
+  if (A && B) return A.v + (B.v - A.v) * (st / S.dx - A.j) / (B.j - A.j);
+  return A ? A.v : B ? B.v : null;
 }
 function doorMesh(m) {
   const own = MODEL_FEATURES[m] && (MODEL_FEATURES[m].doors || []).find(d => d.side === 'L');
@@ -326,7 +344,7 @@ export function fitType(t, m) {
   // wing span fit (757: SPEC span is the blended-winglet span, 41.07 m, Boeing / APB, spanPlain the ACAP's 38.05 m; review
   // 5 Nov 2026: stretching the plain wing 0.95 m a side to reach the winglet span drew the wing to the winglet root 39.7 m
   // long, +4.3 % against the ACAP; now the plain wing ends at spanPlain and the winglet is canted out, WINGLET above)
-  const cut = TIP_ADD[t] && TIP_CUT[m];
+  const cut = (TIP_ADD[t] || TIP_PLAIN.has(t)) && TIP_CUT[m];
   if (cut) stretch.tipCut = cut;
   if (ENG_SCALE[t] && TIP_CUT[m]) stretch.engScale = { k: ENG_SCALE[t], keep: 'top' };
   const WL = !cut && WINGLET[m] && S.spanPlain ? WINGLET[m] : null;  // (the span fit then ends at the winglet root)
@@ -370,7 +388,12 @@ export function fitType(t, m) {
     if (cgF && S.cargo && S.cargo.fwd) rows.push([cgF.x, cgF.ySill, S.cargo.fwd[1], 'fwd cargo door']);
     if (cgA && S.cargo && S.cargo.aft) rows.push([cgA.x, cgA.ySill, S.cargo.aft[1], 'aft cargo door']);
     // the stabiliser tip (NG row H, MAX row N; close-out round 3, fix round 2, v1/v2: with the tailplane re-fitted to the
-    // ACAP plan view, tools/convert_models.py tailFit, its tip is the row farthest from the main gear)
+    // ACAP plan view, tools/convert_models.py tailFit, its tip is the row farthest from the main gear). Not an independent
+    // row (close-out round 4, verifier finding 6): the tailplane dihedral (7.0 deg, inf; the ACAP front view draws ~6.4) was
+    // fitted to these same rows at this stance. On the door rows alone the stance is 737-600 / -700 / -800 / -900ER 1.49 /
+    // 1.29 / 1.02 / 0.91 deg nose-down (now 1.29 / 1.16 / 0.98 / 0.91), MAX -0.20 / -0.20 / -0.31 / -0.21 (now -0.12 / -0.14 /
+    // -0.22 / -0.12), T.dockSill NG 2.703-2.719 (now 2.719-2.723), MAX 3.043-3.052 (now 3.033-3.041): every door row within
+    // +-3 in either way. Kept until the dihedral has a primary source (then: stance on the doors, dihedral alone to H / N)
     if (F.wing && F.wing.htSt != null && F.wing.htY != null && S.htClr) rows.push([F.wing.htSt, F.wing.htY, S.htClr[1], 'stabilizer tip']);
     if (rows.length >= 2) {
       const Hc0 = -d.low * s; let n = 0, sg = 0, sgg = 0, sb = 0, sgb = 0;

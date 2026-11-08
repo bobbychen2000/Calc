@@ -290,12 +290,28 @@ def prio_key(p):
     return (p['anchor'] is None, p['src'] == 'ramp', -p['w'], isinstance(p['id'], str), p['id'] if not isinstance(p['id'], str) else 0, str(p['id']))
 
 
+def _polys(g):
+    """the polygons of any geometry (collections and multi-parts flattened)"""
+    if g is None or g.is_empty: return []
+    if isinstance(g, Polygon): return [g]
+    return [x for y in getattr(g, 'geoms', []) for x in _polys(y)]
+
+
 def merge_into(p, g):
     """add region g to piece p's deck, closing hairline seams (< 4 cm) between them: a wedge / fill / taper computed as the
     difference of the decks can touch its owner along a numerically split edge and stay a separate polygon, whose side
-    against the owner then read as an outer edge (a parapet across the lane, close-out r4 dev build d1)"""
-    u = unary_union([p['geom'], g]).buffer(0.02, join_style='mitre', mitre_limit=3.0).buffer(-0.02, join_style='mitre', mitre_limit=3.0)
-    p['geom'] = unary_union([x for x in (getattr(u, 'geoms', None) or [u]) if isinstance(x, Polygon) and x.area > 0.05])
+    against the owner then read as an outer edge (a parapet across the lane, close-out r4 dev build d1). The close uses
+    round joins and is checked: GEOS's mitre negative buffer returned invalid or EMPTY results on near-degenerate unions
+    (dev build d9 lost two whole decks, 41015044 and 905752945), so a result that is invalid or smaller than the plain
+    union falls back to the (validated) union"""
+    u = unary_union([p['geom'], g])
+    c = u.buffer(0.02, join_style='round', quad_segs=2).buffer(-0.02, join_style='round', quad_segs=2)
+    if c.is_empty or not c.is_valid or c.area < u.area - max(0.05, 0.002 * u.area):
+        c = shapely.make_valid(u)
+    new = unary_union([x for x in _polys(c) if x.area > 0.05])
+    if new.area < p['geom'].area - 0.05:   # never lose deck (self-check)
+        raise RuntimeError('merge_into lost deck area on %s: %.2f -> %.2f m2' % (p['id'], p['geom'].area, new.area))
+    p['geom'] = new
 
 
 JOINT_TOL = 0.5       # m: two pieces' centreline ends this close (and level within 0.1 m) are an end-to-end joint (a shared OSM node)
@@ -413,6 +429,7 @@ def joint_wedges(P, occ, log):
                 tapers=nt, taper_m2=round(ta, 1), taper_largest=sorted([a for a in added if 'taper_m' in a], key=lambda a: -a['area_m2'])[:10])
 
 
+VOID_MAX = 5.0        # m2: an enclosed void between decks at one level up to this size is paved (a junction's leftover) [inf]
 SLIT_R = 0.5          # m: slits narrower than 2 x SLIT_R between connected decks at one level are paved (gore noses start
                       # where the two decks are 1 m apart: room for the two 0.4-m barriers) [inf]
 
@@ -438,11 +455,15 @@ def slit_fill(P, occ, log):
     SEP = RN.DECK_DEPTH + RN.CLEAR_MIN
     tree = shapely.STRtree([q['geom'] for q in P]); added = []
     for i, p in enumerate(P):
-        if p['src'] not in ('deck', 'ramp') or p['geom'].is_empty: continue
+        if p['src'] not in ('deck', 'ramp', 'plate') or p['geom'].is_empty: continue
         for j in tree.query(p['geom'].buffer(2 * SLIT_R)):
             q = P[j]
-            if j <= i or q['src'] not in ('deck', 'ramp') or q['geom'].is_empty or not connected(p, q): continue
+            if j <= i or q['src'] not in ('deck', 'ramp', 'plate') or q['geom'].is_empty: continue
             if q['geom'].distance(p['geom']) > 2 * SLIT_R: continue
+            # connected decks are blended to one level (hb) where their raw levels differ by < BLEND_DH[1]; two decks that
+            # share no node (the gore nose of two ways that part without a common node, a way meeting the ITB plate) only
+            # where they are already within STEP_TOL
+            lim = BLEND_DH[1] if connected(p, q) else STEP_TOL
             # the slit: the points between the two decks where the gap across (distance to one + to the other) is < 2 x SLIT_R
             # and the two raw levels agree within BLEND_DH[1], on a 0.1-m grid (a morphological close eroded back from the
             # gore's open mouth and left slivers along one side: dev build d6)
@@ -454,7 +475,7 @@ def slit_fill(P, occ, log):
             Q = Q[shapely.contains_xy(cand, Q[:, 0], Q[:, 1])]
             if not len(Q): continue
             qp = shapely.points(Q)
-            Q = Q[(shapely.distance(p['geom'], qp) + shapely.distance(q['geom'], qp) <= D2 + 0.02) & (np.abs(hp(p, Q) - hp(q, Q)) < BLEND_DH[1])]
+            Q = Q[(shapely.distance(p['geom'], qp) + shapely.distance(q['geom'], qp) <= D2 + 0.02) & (np.abs(hp(p, Q) - hp(q, Q)) < lim)]
             if not len(Q): continue
             # between the two: the nearest points on them lie on opposite sides (not the corner outside where two decks meet)
             qp = shapely.points(Q)
@@ -462,7 +483,10 @@ def slit_fill(P, occ, log):
             v1 = Q - na; v2 = Q - nb; cs = (v1 * v2).sum(1) / np.maximum(np.linalg.norm(v1, axis=1) * np.linalg.norm(v2, axis=1), 1e-9)
             Q = Q[cs < -0.85]
             if not len(Q): continue
-            G = unary_union(shapely.box(Q[:, 0] - 0.12, Q[:, 1] - 0.12, Q[:, 0] + 0.12, Q[:, 1] + 0.12)).difference(U).simplify(0.03)
+            # the raster's 0.1-m steps smoothed (they became stair-stepped parapet runs at a gore mouth: d7), then grown back
+            # 0.06 m onto the two decks so it still touches both
+            G = unary_union(shapely.box(Q[:, 0] - 0.12, Q[:, 1] - 0.12, Q[:, 0] + 0.12, Q[:, 1] + 0.12)).difference(U).simplify(0.1)
+            G = G.buffer(0.06, join_style='mitre', mitre_limit=3.0).difference(U) if not G.is_empty else G
             if G.is_empty or G.area < 2e-3: continue
             own = p if prio_key(p) <= prio_key(q) else q
             keep = [G] if not G.is_empty else []
@@ -485,7 +509,33 @@ def slit_fill(P, occ, log):
             added.append(dict(owner=own['id'], other=(q if own is p else p)['id'], area_m2=round(G.area, 2), at=[round(c, 1) for c in G.representative_point().coords[0]], level_m=round(h0, 2)))
     log('slit fill (close-out r4: slits < %.1f m between connected decks at one level paved): %d pairs, %.1f m2 (largest %s)'
         % (2 * SLIT_R, len(added), sum(a['area_m2'] for a in added), max(added, key=lambda a: a['area_m2']) if added else None))
-    return dict(pairs=len(added), area_m2=round(sum(a['area_m2'] for a in added), 1), largest=sorted(added, key=lambda a: -a['area_m2'])[:10])
+    # small voids enclosed by three or more decks at one level (a junction's leftover triangle, d8 at the T2 curb (-803, 326):
+    # a parapet round a 1-m2 hole) are deck too, given to the adjacent piece of highest priority
+    PU = [q for q in P if q['src'] in ('deck', 'ramp', 'plate') and not q['geom'].is_empty]
+    U = unary_union([q['geom'] for q in PU]); voids = []
+    for poly in (getattr(U, 'geoms', None) or [U]):
+        if not isinstance(poly, Polygon): continue
+        for ring in poly.interiors:
+            Hh = Polygon(ring)
+            if Hh.area > VOID_MAX or Hh.area < 0.05: continue   # hairline holes between decks read as inner edges anyway
+            adj = [q for q in PU if q['geom'].distance(Hh) < 0.05]
+            X = shapely.get_coordinates(Hh)
+            if len(adj) < 2: continue
+            hs = np.array([hp(q, X) for q in adj])
+            if float((hs.max(0) - hs.min(0)).max()) >= BLEND_DH[1]: continue
+            h0 = float(np.median(hs)); G = Hh
+            o = occ(G, GROUND_Y + h0 - (RN.DECK_DEPTH if h0 >= FILL_H else h0) - 0.1, GROUND_Y + h0 + PARAPET_H + 0.2)
+            if not o.is_empty: G = G.difference(o)
+            for r in PU:
+                if any(r is a for a in adj) or r['geom'].is_empty or not r['geom'].intersects(G.buffer(STACK_GAP)): continue
+                dh = float(np.abs(hp(r, X) - h0).min())
+                if dh < RN.DECK_DEPTH + RN.CLEAR_MIN: G = G.difference(r['geom'].buffer(0.02 if dh < 1.0 else STACK_GAP))
+            if G.is_empty or G.area < 2e-3: continue
+            own = min(adj, key=prio_key); merge_into(own, G)
+            voids.append(dict(owner=own['id'], area_m2=round(G.area, 2), at=[round(c, 1) for c in G.representative_point().coords[0]], pieces=len(adj)))
+    log('junction voids (< %.0f m2, enclosed by decks at one level) paved: %d, %.1f m2' % (VOID_MAX, len(voids), sum(v['area_m2'] for v in voids)))
+    return dict(pairs=len(added), area_m2=round(sum(a['area_m2'] for a in added), 1), largest=sorted(added, key=lambda a: -a['area_m2'])[:10],
+                voids=len(voids), voids_m2=round(sum(v['area_m2'] for v in voids), 1), void_list=voids[:20])
 
 
 def stack_trim(P, log):
@@ -693,7 +743,9 @@ def vnormals(P, I):
     n = np.zeros_like(P)
     f = np.cross(P[I[:, 1]] - P[I[:, 0]], P[I[:, 2]] - P[I[:, 0]])
     for k in range(3): np.add.at(n, I[:, k], f)
-    l = np.linalg.norm(n, axis=1, keepdims=True); return n / np.maximum(l, 1e-9)
+    l = np.linalg.norm(n, axis=1, keepdims=True); n = n / np.maximum(l, 1e-9)
+    n[l[:, 0] < 1e-9] = (0.0, 1.0, 0.0)   # vertices no triangle uses (a soffit's subset): a unit normal (glTF validator, r22 LOD2: 29 errors)
+    return n
 
 
 def lateral(p, V):
@@ -1507,6 +1559,11 @@ def main(argv):
     gapchk_t2 = t2_curb_gap_check(P, TR, LV['domestic']['curb'], sol['h_dom'], log)
     clr = clearance_check(mb, TR, log); clr_p = clearance_check(mb, TR, log, piers=True)
     pchk = parapet_check(mb, log)
+    # close-out r4 self-check (dev build d9 lost two whole decks in a failed merge): pieces without deck although their
+    # ribbon is large - every one is listed with the reason the trim gave it (asset / enclosure / stacked cuts)
+    empty = [dict(id=p['id'], src=p['src'], rib_m2=round(p['rib'].area, 1), cut_by=p.get('cut_by'), stacked_cut_by=p.get('stacked_cut_by')) for p in P
+             if p['src'] in ('deck', 'ramp') and p['geom'].area < 1.0 and p['rib'].area > 20.0]
+    log('pieces with no deck left (ribbon > 20 m2): %s' % (empty or 'none'))
     edge = {k: round(sum(p.get('edge_stats', {}).get(k, 0.0) for p in P), 1) for k in ('parapet_m', 'step_face_m', 'slit_runs_dropped_m')}
     log('LOD0 edges: parapet %.0f m, step faces %.0f m (inner joints with a step of 0.02-%.2f m), slit sides given the edge face only %.1f m' % (edge['parapet_m'], edge['step_face_m'], STEP_TOL, edge['slit_runs_dropped_m']))
     allxz = np.concatenate([p['pts'] for p in P]); rc = [round(float(v), 1) for v in allxz.mean(0)]
@@ -1534,7 +1591,7 @@ def main(argv):
                                                          level_m=LOWER_H, walk=dict(under_plate_m=WALK_UNDER, level_m=round(LOWER_H + WALK_KERB, 2), area_m2=round(walk['geom'].area, 1) if walk else 0),
                                                          note='the lower level (photo i1, close-out round 3): held level at LOWER_H on the straight; OSM layer 1, passes under the anchored departures leg past the straight')),
                  stacked=dict(solve=sol.get('stacked', []), cuts=stk_recs),
-                 joint_wedges=jw, in_carriageway_parapet=pchk, edges_lod0=dict(edge, step_tol_m=STEP_TOL, inner_gap_m=INNER_GAP),
+                 joint_wedges=jw, in_carriageway_parapet=pchk, pieces_without_deck=empty, edges_lod0=dict(edge, step_tol_m=STEP_TOL, inner_gap_m=INNER_GAP),
                  curb_gap=gapchk, curb_gap_t2=gapchk_t2, guideway_clearance=clr, guideway_pier_caps_over_decks=clr_p, deck_cut_inside_buildings_m2=body_cut, deck_left_inside_buildings_m2=body_left)
     sheet(P, cols, os.path.join(OUTD, 'roadways_plan.png'), LV, dict(pieces=len(P), columns=cst, low=len(chk['low'])))
     log('check sheet out/buildings3d/roadways_plan.png')
@@ -1575,7 +1632,11 @@ def main(argv):
                            'the upper deck\'s edge, refused (and reported) where it would split the lower deck or leave < lanes x %.1f m'
                            % (RN.LAYER_H, RN.CLEAR_MIN, RN.STK_GRADE * 100, MIN_LANE_W),
                            'approach ramps: at-grade OSM roads lifted by the solve (ELL_G %.0f m)' % RN.ELL_G, 'lane counts / widths where OSM has none (class defaults)',
-                           'lane markings (pattern, colours)'],
+                           'lane markings (pattern, colours)',
+                           'close-out round 4: the deck between two ways that continue each other at a shared node (the wedge between their flat caps), the slit or gore '
+                           'between two decks narrower than %.1f m at one level, small voids enclosed by decks (< %.0f m2), a %.0f:1 width taper where a wider way continues into a '
+                           'narrower one, and connected decks meeting halfway over %.0f m where their tops differ by < %.1f m (the per-way profiles disagree at junctions) - geometry '
+                           'between OSM centrelines, no survey' % (2 * SLIT_R, VOID_MAX, TAPER_K, BLEND, BLEND_DH[1])],
                  unknown=['the domestic departures-curb height (%.3f m is the domestic asset placeholder [unk])' % LV['domestic']['curb'],
                           'every viaduct level: no structural drawings or survey; OSM gives only the layer order',
                           'the ITB lower level (arrivals) roadway: held level at %.2f m on the straight [inf: the lowest that clears the at-grade building-passage roads under it by %.1f m + the %.1f-m deck], '
@@ -1594,6 +1655,11 @@ def main(argv):
                                % (RN.CLEAR_MIN, MIN_LANE_W, '; '.join('%s under %s, %.2f m' % (r['lower'], r['upper'], r['clearance_if_kept_m']) for r in stk_recs if r.get('refused')) or 'none'),
                                'stacked cuts made although they narrow the lower deck (the decks would clash, < %.1f m): %s' % (KEEP_CLEAR, '; '.join('%s under %s: %s' % (r['lower'], r['upper'], r['narrowed'])
                                for r in stk_recs if r.get('narrowed')) or 'none')],
+                 closeout_r4=dict(rule='deck edges: inner where a neighbour within %s m (LOD0/1/2) has its top within %.2f m there (else fascia + parapet on both: a median '
+                                       'barrier); joint wedges, slit / gore fill, junction voids, width tapers and the connected-deck blend close the slits whose sides r22 '
+                                       'built as parapets across the lanes (the round-3 verifier\'s major)' % (list(INNER_GAP.values()), STEP_TOL),
+                                  in_carriageway_parapet_m=pchk.get('approx_m'), in_carriageway_clusters=pchk.get('clusters'), joint_wedges=dict((k, jw[k]) for k in ('joints', 'filled', 'area_m2', 'tapers', 'taper_m2')),
+                                  slits=dict((k, jw['slits'][k]) for k in ('pairs', 'area_m2', 'voids', 'voids_m2')), edges_lod0=edge, pieces_without_deck=[e['id'] for e in empty]),
                  verification=stats)
     BI.merge_manifest(entry, key='roadways')
     open(os.path.join(OUTD, 'roadways_build.log'), 'w').write('\n'.join(lines) + '\n')
