@@ -367,3 +367,260 @@ Other changed: `gnd.acc.runway` 22,834 / 222 → 22,799 / 222; `lag.gnd_30m.othe
 ## R3.3 Aircraft / static: antenna references
 
 The B777 antenna question (§3) is still open; the E-Jet one is R3.1 item 3.
+
+---------------------------------------------------------------------------------------------------------------------
+
+# Round 3 (close-out round 3, fix round 1, 7 Nov 2026): findings realtime-1 … realtime-17
+
+What changed is in `docs/research/realtime_impl.md`, "Step 9" (items 1–21); every change carries a "close-out round 3,
+realtime-N" comment. Evidence:
+- **Harness** (realtime-12): `tools/live/invariants.mjs` at 10 Hz, with the app's building grid (`buildingGrid(AIRPORT, 2,
+  B3D_INTEGRATION.physics)`: the 3-D assets' footprints) and the bridges' own aircraft solid (gates.js `acHit`: tapered
+  nose, wings, engines, swept tailplane; new class `bridge.hit.eng`). The same harness and data run before and after, so
+  every class compares one to one.
+- **Streams** (realtime-12): every recorded hour, `tools/live/build_stream.py --gates-full`. Segment A: 4 Nov 17:43Z – 6 Nov
+  06:32Z, checked from 17:48:04Z, 1,322,125 frames. Segment B: 7 Nov 01:33 – 07:00Z, checked
+  from 01:38:30Z, 192,885 frames. The gap between them is the machine's restart. SFO's plan
+  (flysfo) exists in the cache only up to the 5 Nov 02:49Z snapshot. Later hours replay without it, as the app does when
+  flysfo is unavailable, and every rule that needs SFO's evidence (block-out, windows, arrival record) is silent there.
+- **Before** = a frozen copy of the tree at the start of this round: traffic.js `4ff3753c`, ground.js `0a5d8f0b`, app.js
+  `39c5bc16`, the old taxi graph (`a093a28e`).
+- **After** = the final code: traffic.js `80c8334c`, ground.js `9c33d2ff`, app.js `f3556b24`, the rebuilt
+  `data/sfo_taxigraph.js` (`20d25128`).
+- Both runs use gates.js `a93cce58`, invariants.mjs `cf6b186a` and the building footprints of
+  `data/buildings3d/integration.js` `c869b8f3` (the integration track has changed that file since; the harness keeps the copy
+  frozen with the roots). Roots and md5s: scratch `c3/realtime/root_before`, `root_after8` (`md5.txt`).
+- The container restarted at 12:41Z, 14:41Z and 18:41Z on 7 Nov and at 02:42Z on 8 Nov, and each restart killed the replays that were running. The all-hours
+  run on `root_after6` (18:46–21:21Z) found one new regression (item 20 below), and the run on `root_after7` (21:40Z – 00:11Z) one more
+  (item 21). The final after runs ran on `root_after8`: segment A 00:11–02:30Z on 8 Nov, segment B 02:45–03:07Z (re-run after the
+  02:42Z restart; its classes, events and counters equal the `root_after7` run of segment B).
+- Window traces (`--trace hex`) for every named case. Scratch `c3/realtime/w/*`: one directory per window, `out.txt` and
+  `trace.err`.
+- No browser renders: nothing visual changed except the error overlay and the vehicle label.
+
+## Dispositions
+
+| Finding | Status | Root cause → change | Numbers (all hours, before → after; A = 4–6 Nov, B = 7 Nov) |
+|---|---|---|---|
+| realtime-1 (major) lock without an absolute bound | fixed | syncBridge kept a lock while the parked pose stayed within 6 m of the lock's REFERENCE, so the body could sit residual + 6 m off. Now a lock is released when it is further from the CURRENT parked pose than max(LOCK_M, residual accepted at lock time + 2 m) or max(LOCK_DEG, residual + 3°); lock.ref still damps the flapping. The accepted residual counts up to `LOCK_R0_MAX` (12 m, the largest rest residual the controller accepts): uncapped, a lock taken 60.7 m from its reference after a silent docking (EIN961 A333 at B5S) was kept for 99 min. | parked samples with the lock > 6 m from the parked pose: A 1,032 min > 6 m (97 > 8 m), max 60.69 m → 444 min > 6 m (311 > 8 m), max 60.69 m; B 265 min > 6 m (19 > 8 m), max 11.58 m → 10 min > 6 m (10 > 8 m), max 8.69 m. SWR35G (G5) is no longer removed. The re-locks left at 7–12 m (EVA008 G13, ACA743 D11) are bodies at the type's stop mark with the parked ESTIMATE short of it: the round-2 acceptance rule (body ≤ 2 m past the stop) |
+| realtime-2 (major) removal on silence alone | fixed | Four paths removed aircraft that were still there: `silentDock` free(), `stationary()`, the ground ghost and the 8-h expiry. (a) A silent occupant now goes only on SFO's evidence (`stalePlanGone`). That evidence is a departure's actual block-out from THIS stand, every SFO window at the stand ended (ended means window end ≤ the plan's `fetched_at`), or the stand allocated to the arrival. None of it counts once the transponder was heard after that time. (b) `occupy()` logs `stale-replaced`. (c) No 8-h expiry at a contact stand. (d) ground.js at a stand removes a ghost only for a fuselage overlap (≥ 6 samples), never while SFO lists it there (`planHere`). A dead-reckoned body stops 3 m short of a parked aircraft that must stay (`drHold`). (e) Physical exclusivity still counts as evidence: a silent occupant of a mutually exclusive stand last heard before an aircraft whose own newer reports put it on the other stand no longer blocks it, and `occupy()` replaces it (Step 9 item 20). | parked aircraft removed and heard parked at that stand again: A 40 aircraft / 3,230 aircraft-min → 1 aircraft / 76 aircraft-min; B 1 aircraft / 18 aircraft-min → 0 aircraft / 0 aircraft-min |
+| realtime-3 (major) ghost drawn on a newly parked aircraft | fixed | A replaced occupant now fades at once when its replacement is heard parked at the stand (`dropNow`). ground.js tests waiting ghosts against fixed and free bodies (`dropWaitFixed`). syncBridge undocks a stand's bridges from the previous aircraft before it docks a different one (`undockOther`). An arrival whose approach already retracted the ghost's bridge removes it at first contact (Step 9 item 16). | `overlap.gnd` A 14,366 / 103 → 5,400 / 93; B 415 / 22 → 98 / 22. G13 UAL1227 / UAL29D and G10 ANA108 / ANZ7 are no longer in the keys |
+| realtime-4 (major) parked where the bridge cannot reach | fixed | updatePark: any pose the L1 bridge cannot dock (short by any distance, or its own heading / offset) is replaced by the type's stop pose when that pose docks (`parkAtStopReach`). The ≤ 15 m and stand-mode preconditions are gone. A lock refused after the dock is released. | `bridge.refused` A 2,313,837 / 41 → 903,402 / 13; B 609,822 / 10 → 189,381 / 2. Left (C3.2 item 1): stands where the STOP pose is refused too, which is the bridges' own geometry: F5 E75L (slope), F15 B39M ("L1 neck x walkway") |
+| realtime-5 (major) aircraft in the terminal | fixed | The 803-frame key was UAL917 B772 (aa6b7e) pushing from G4, not UAL1180. `docking()` had given it G4's lead-in on its first motion report and kept it through the push. `target()`'s lead-in pull (no lateral cap) then dragged the push target 150 m into the G pier. Now a push-back or departure gets no lead-in, and the pull applies only inside the lead-in corridor. | `building` A 1,080 / 4 → 113 / 1; B 519 / 2 → 519 / 2. UAL917 is gone; window 5 Nov 06:30–07:30Z: building 797 → 0, G4 cab / G7 walkway hits 1,294 + 401 → 0. Left (not a push): A, UAL1757 B789 taxiing (one wing sample, 113 frames, as before); B, SWA1083 dead reckoning (Step 9 item 18) and AMX664 (1 wing point while moving, C3.5) |
+| realtime-6 bridge-ahead at occupants that stay | fixed | The bridge retracts ahead only on positive evidence: SFO's arrival record for that stand, the arrival close on its lead-in (`onLeadInClose`), or SFO's evidence that the occupant left. Without it the bridge stays docked and the contact fade handles a real arrival. This round's realtime-10 rewrite had dropped the gate again; it is restored (Step 9 item 17). | A 106 bridge-ahead, 40 re-docked ('arrival gone') → 100 bridge-ahead, 29 re-docked ('arrival gone'); B 26 bridge-ahead, 8 re-docked ('arrival gone') → 20 bridge-ahead, 0 re-docked ('arrival gone') |
+| realtime-7 'no push' cancels | fixed | EARLY_MAX_MS is now 60 min (the measured tail: signal → push up to 56 min). 'No push' fires only when the transponder has not reported at the stand for XPDR_LIVE_MS (2 min) AND SFO lists no off-block ahead. `_earlyBlock` is removed. | A 48 'no push' cancels, 32 followed by the push within 30 min → 7 'no push' cancels, 2 followed by the push within 30 min; B 8 'no push' cancels, 4 followed by the push within 30 min → 3 'no push' cancels, 0 followed by the push within 30 min |
+| realtime-8 silent docks | fixed | The invented drive is capped at max(60 m, 1.5 L), or 150 m into SFO's own arrival stand. A newer stationary report away from the stand undoes the silent dock: no lock, no in-block (`silentDockContradicted`). | A 149 silent docks, drive p50 25.4 / p90 92.4 / max 202.2 m; in-block then 'stand-left' within 5 min 5 → 149 silent docks, drive p50 19.3 / p90 81.5 / max 141.9 m; in-block then 'stand-left' within 5 min 0; B 25 silent docks, drive p50 19.4 / p90 72 / max 100.6 m; in-block then 'stand-left' within 5 min 0 → 26 silent docks, drive p50 19.4 / p90 65.3 / max 77.9 m; in-block then 'stand-left' within 5 min 0 |
+| realtime-9 drOvershoot scope | fixed | drOvershoot now applies only to a body that is dead-reckoning (`disp.extrap > 0`): not in push-back, not still, not locked, no bridge on. | A 161 drOvershoot (41 in push-back, 31 at a stand / locked) → 69 drOvershoot (0 in push-back, 1 at a stand / locked); B 26 drOvershoot (4 in push-back, 4 at a stand / locked) → 11 drOvershoot (0 in push-back, 0 at a stand / locked) |
+| realtime-10 bridge.orphan at ghost removal | partly | With SFO's evidence the silent occupant goes before the contact. SFO's actual block-out removes it at once (`stale-blockout`), and the bridge-ahead starts 400 m out on SFO's arrival record or block-out (AHEAD_EV_M). Without SFO's plan (segment B and after 5 Nov 02:49Z in A) the only evidence is the arrival close on the lead-in, so the bridge retracts later and an empty stand still shows it retracting for some seconds. No overlap stays the hard rule. | `bridge.orphan` A 16,241 / 65 → 15,754 / 76; B 2,618 / 18 → 2,960 / 19 |
+| realtime-11 bodies touching rest bridges | partly | Every named key was traced. UAL917 (G4 cab, G7 walkway) is realtime-5. At UAL59 G1, two multipath fixes 28 m out were taken as motion; the first motion candidate must now be reachable from rest. At N14541 D7, a garbage parked heading released the stand; now the position alone decides 'stand-left' at a contact stand. DAL545 and KLM373 are gone with the lock bound and the push fixes. On the new all-hours harness: AAL1430 at B26 (one stray fix released the stand: `reacqOutlier`, Step 9 item 15) and AAL2436 at B24 (a false push from GNSS wander: push-undo, item 19). | `bridge.hit.fus` A 1,923 / 13 → 762 / 10; B 182 / 3 → 138 / 3; `hit.wing` A 5,986 / 3 → 0; B 73 / 2 → 0; `hit.eng` A 28 / 2 → 0; B 28,742 / 2 → 0; `hit.tail` A 382 / 1 → 0; B 0 → 0; `hit_at_rest` A 7,100 / 14 → 501 / 8; B 14,742 / 4 → 138 / 3. Left: see "Trade-offs left" |
+| realtime-12 harness | fixed | invariants.mjs now uses the app's building grid with the 3-D assets' footprints, and tests bridge solids against gates.js `acHit` (new `bridge.hit.eng`). The planform has a tapered nose, the tailplane at 0.35 R and engines. The streams cover every recorded hour (A + B). The misdock branch's crash (`doorOf` without nose / f) is fixed. | the harness for every number here |
+| realtime-13 retired pavement / relocated W | fixed | `build_taxigraph.py` applies the static track's OSM decision list (`osmBase.updates`): 19 ways added, including relocated W 1562117372 and J 1562117374; 5 retired ways dropped. It also exports the retired pavement rings. `TaxiNet.paved` and `prepPolys` leave the retired pavement out. | taxi graph 262 ways / 4,060 segments (`data/sfo_taxigraph.js` rebuilt) |
+| realtime-14 API hooks | fixed | parseCallsign(flight, {vehicle, category, icao}), re-parsed when tr.vehicle flips. The ui headline shows `tr.cs.label`. liveryForAirline(al, reg, hex, icao). modelNote: generic airframe label and the three-engine note. b772 / b77w are in MODEL_KEYS. setOccupant gets {freighter}. gatecheck.py takes bizjet length / span from fit.js BIZ. | node check (scratch `c3/realtime/scripts/hooks_check.mjs`): OPS12 / N312QX → vehicle, label "Airfield vehicle"; isFreighter FDX B763 true, UAL B763 false; gatecheck types table regenerated |
+| realtime-15 marker / onFatal | fixed | markerSprites records carry `marker: true`. `R.onFatal = (html) => ui.fail(html)`. ui.fail shows a #fatal overlay after load (live.css). | grep of js/live/app.js, ui.js, live.css |
+| realtime-16 extract2d stale | fixed | dispBar is [0, 3.05] and the shader's paintCheck string `band(xt, 0.0, 3.05` is used. Bridges come from gateSys.bridgesOf(g), the three upper-deck A380 bridges included, with per-pose `solids()`. Each bridge exports rotR / Hr / Hb / HrPinned / ownClip. Retired taxiway polygons are left out (`taxiwaysRetired`), and stands carry their typeStops. | SOFTGL=1 livetest run of jobs/extract2d.mjs, exit 0 in 250 s: out/draw/scene2d.json 9.4 MB, 110 stands, 131 bridges (3 upper), 524 poses all with solids, paintCheck all true |
+| realtime-17 snapshot licence (needs owner) | deferred | Documented default kept [inf]: data/snapshot.js unchanged (LICENCE CONFLICT row, docs/ATTRIBUTION.md). The new `tools/live/build_snapshot.py` writes an adsb.lol-only candidate (ODbL, provider on every record, METARs) to out/live/. | `--at 2026-11-04T19:30:00Z`: 115 aircraft, 3 METARs; owner question in C3.6 |
+
+## Classes (all hours, before → after; frames / keys)
+
+| Class | A before | A after | B before | B after |
+|---|---|---|---|---|
+| `bridge.dock_flap` | 10 / 2 | 2 / 2 | 0 | 0 |
+| `bridge.hit.eng` | 28 / 2 | 0 | 28,742 / 2 | 0 |
+| `bridge.hit.fus` | 1,923 / 13 | 762 / 10 | 182 / 3 | 138 / 3 |
+| `bridge.hit.tail` | 382 / 1 | 0 | 0 | 0 |
+| `bridge.hit.wing` | 5,986 / 3 | 0 | 73 / 2 | 0 |
+| `bridge.hit_at_rest` | 7,100 / 14 | 501 / 8 | 14,742 / 4 | 138 / 3 |
+| `bridge.misdock` | 0 | 0 | 32,408 / 1 | 26,405 / 1 |
+| `bridge.orphan` | 16,241 / 65 | 15,754 / 76 | 2,618 / 18 | 2,960 / 19 |
+| `bridge.parked_undocked` | 1 / 1 | 1 / 1 | 2 / 1 | 0 |
+| `bridge.refused` | 2,313,837 / 41 | 903,402 / 13 | 609,822 / 10 | 189,381 / 2 |
+| `building` | 1,080 / 4 | 113 / 1 | 519 / 2 | 519 / 2 |
+| `clear.stand` | 996,145 / 41 | 1,166,171 / 45 | 51,886 / 5 | 34,302 / 4 |
+| `clear.taxi` | 632 / 101 | 638 / 96 | 107 / 24 | 150 / 25 |
+| `cut.gnd_sfo` | 605 / 332 | 577 / 328 | 93 / 67 | 88 / 68 |
+| `gnd.acc.runway` | 54,366 / 439 | 54,367 / 439 | 9,202 / 90 | 9,202 / 90 |
+| `gnd.acc.taxi` | 1,017 / 235 | 1,055 / 241 | 145 / 36 | 153 / 38 |
+| `gnd.jerk` | 108 / 63 | 113 / 65 | 18 / 14 | 19 / 14 |
+| `gnd.reverse` | 78 / 9 | 274 / 10 | 2 / 1 | 2 / 1 |
+| `gnd.spin` | 566 / 110 | 541 / 112 | 48 / 15 | 43 / 13 |
+| `lag.gnd_30m` | 81,475 / 326 | 83,673 / 323 | 7,457 / 55 | 8,451 / 55 |
+| `lag.gnd_30m.other_airfield` | 765,698 / 453 | 765,687 / 453 | 42,527 / 57 | 42,527 / 57 |
+| `offpave.mask` | 906,931 / 577 | 517,661 / 578 | 104,072 / 146 | 35,442 / 146 |
+| `offpave.union` | 14,139 / 297 | 14,321 / 299 | 1,261 / 53 | 1,274 / 53 |
+| `overlap.gnd` | 14,366 / 103 | 5,400 / 93 | 415 / 22 | 98 / 22 |
+| `phase.flicker` | 827 / 253 | 836 / 254 | 138 / 52 | 142 / 54 |
+| `phase.gate_far_from_stand` | 1,518 / 14 | 279 / 12 | 3 / 1 | 3 / 1 |
+
+Per-finding metrics (scratch `c3/realtime/scripts/an_c3.py`, `tab_c3.py`):
+
+```
+## segment A: 2026-11-04T17:48:04.000Z .. 2026-11-06T06:31:36.530Z, frames 1,322,125 / 1,322,125
+- removed_heard_back: {"n": 40, "aircraft_min": 3230} -> {"n": 1, "aircraft_min": 76}
+- fade_why: {"ghost": 95, "replaced": 42, "expired": 59} -> {"ghost": 88, "replaced": 37, "expired": 25}
+- locks_at_stand: {"n": 1208, "gt6m": 7, "max": 60.69} -> {"n": 1157, "gt6m": 10, "max": 60.69}
+- parked_lock_vs_park: {"samples_min": 117978, "gt6m_min": 1032, "gt8m_min": 97, "max": 60.69} -> {"samples_min": 123353, "gt6m_min": 444, "gt8m_min": 311, "max": 60.69}
+- early_cancel: {"silent": 54, "no push": 48, "arrival gone": 40} -> {"silent": 67, "arrival gone": 29, "no push": 7}
+- no_push_followed_by_push_30min: {"n": 32, "of": 48} -> {"n": 2, "of": 7}
+- bridge_ahead: {"n": 106, "arrival_gone_redock": 40} -> {"n": 100, "arrival_gone_redock": 29}
+- early_lead_s: {"n": 492, "p50": 213, "p90": 1729, "gt10min": 132} -> {"n": 525, "p50": 204, "p90": 1752, "gt10min": 139}
+- silent_docks: {"n": 149, "here": 26, "p50": 25.4, "p90": 92.4, "max": 202.2} -> {"n": 149, "here": 27, "p50": 19.3, "p90": 81.5, "max": 141.9}
+- silent_inblock_then_left_5min: {"n": 5, "of": 140} -> {"n": 0, "of": 113}
+- drOvershoot: {"n": 161, "push": 41, "at_stand_or_locked": 31} -> {"n": 69, "push": 0, "at_stand_or_locked": 1}
+- flap: {"docks": 1030, "undocks": 964, "locks": 4736, "unlocks": 4614, "dockFlaps": 10, "lockFlaps": 254} -> {"docks": 966, "undocks": 898, "locks": 4695, "unlocks": 4583, "dockFlaps": 2, "lockFlaps": 248}
+- counters changed: aheadNoEvidence None -> 181, aheadSkipPlan 30 -> None, bridgeAhead 106 -> 100, bridgeHoldMoving 4078.399999997386 -> 3625.399999997798, bridgeHoldS 4078.699999997386 -> 3625.699999997798, bridgeHurried 306 -> 281, buildingVeto 1072 -> 444, callsignChanges 753 -> 796, creeps 295 -> 157, cutHeldForBridge 43 -> 40, cut_err 3992 -> 3988, cut_gap 6058 -> 6040, cut_repark 422 -> 414, docks 1042 -> 978, drHold None -> 10, drOvershoot 151 -> 66, dropWaitCut 12 -> 4, dropWaitFixed None -> 1, drop_expired 59 -> 25, drop_ghost 95 -> 88, drop_replaced 42 -> 37, earlyCancelled 142 -> 103, earlyHurried 54 -> 57, earlyNoDock 215 -> 188, earlyUndocks 498 -> 531, early_xpdr 498 -> 531, expireKeptAtStand None -> 3926, fadeOuts 11281 -> 11234, fastUndocks 265 -> 171, firstAtStand 8 -> 7, ghostAhead 19 -> 12, ghostAheadKept 767 -> 2343, inBlockDup 3 -> 5, inBlockStale 31 -> 37, intoTerminal 153 -> 158, locks 15596 -> 6207, motionHeld 8378 -> 8576, motionUnreachable None -> 21, movingLost 2444 -> 2443, parkAtStopReach 349 -> 360, parkFrozen 142641 -> 142795, physMaskUnlocks None -> 13, physUnlocks 10733 -> 1442, pushCand 172 -> 174, pushChordRejected 134 -> 133, pushEarly 684 -> 686, pushFirstSeen 459 -> 453, pushHintFalse 58 -> 40, pushHints 182 -> 140, pushStandInferred 94 -> 93, pushUndone None -> 1, reacqOutConfirmed None -> 29, reacqOutHeld None -> 38, reacqParked 1650 -> 1692, reacquire 430 -> 429, rejects 1908 -> 1905, restAccepted 189 -> 180, restAcceptedPast 776 -> 780, restNoBridge 36 -> 22, silentDockBehind 100 -> 91, silentDockConflict 12 -> 9, silentDockCont 62 -> 24, silentDockContradicted None -> 40, silentDockFar None -> 18, silentDockHere 26 -> 27, silentDockHolding 520 -> 401, silentDockOccupied None -> 37594, silentDockStraight 36 -> 41, silentDockUndone 55 -> 51, staleKeptAtStand None -> 410, standLeftSlow 11 -> 4, towPivotS 4396.799999998464 -> 4408.699999998507, turnMemo 306 -> 303, undocks 362 -> 269, unlocks 105 -> 119
+## segment B: 2026-11-07T01:38:30.000Z .. 2026-11-07T06:59:58.582Z, frames 192,885 / 192,885
+- removed_heard_back: {"n": 1, "aircraft_min": 18} -> {"n": 0, "aircraft_min": 0}
+- fade_why: {"ghost": 27, "replaced": 2} -> {"ghost": 22, "replaced": 1}
+- locks_at_stand: {"n": 256, "gt6m": 0, "max": 5.25} -> {"n": 251, "gt6m": 1, "max": 6.62}
+- parked_lock_vs_park: {"samples_min": 17809, "gt6m_min": 265, "gt8m_min": 19, "max": 11.58} -> {"samples_min": 17918, "gt6m_min": 10, "gt8m_min": 10, "max": 8.69}
+- early_cancel: {"arrival gone": 8, "no push": 8, "silent": 13} -> {"silent": 17, "no push": 3}
+- no_push_followed_by_push_30min: {"n": 4, "of": 8} -> {"n": 0, "of": 3}
+- bridge_ahead: {"n": 26, "arrival_gone_redock": 8} -> {"n": 20, "arrival_gone_redock": 0}
+- early_lead_s: {"n": 80, "p50": 234, "p90": 1678, "gt10min": 22} -> {"n": 83, "p50": 226, "p90": 1678, "gt10min": 23}
+- silent_docks: {"n": 25, "here": 5, "p50": 19.4, "p90": 72, "max": 100.6} -> {"n": 26, "here": 6, "p50": 19.4, "p90": 65.3, "max": 77.9}
+- silent_inblock_then_left_5min: {"n": 0, "of": 25} -> {"n": 0, "of": 19}
+- drOvershoot: {"n": 26, "push": 4, "at_stand_or_locked": 4} -> {"n": 11, "push": 0, "at_stand_or_locked": 0}
+- flap: {"docks": 210, "undocks": 152, "locks": 897, "unlocks": 835, "dockFlaps": 0, "lockFlaps": 44} -> {"docks": 198, "undocks": 139, "locks": 896, "unlocks": 836, "dockFlaps": 0, "lockFlaps": 44}
+- counters changed: aheadNoEvidence None -> 68, bridgeAhead 26 -> 20, bridgeHoldMoving 547.700000000056 -> 467.9000000000379, bridgeHoldS 547.700000000056 -> 467.9000000000379, bridgeHurried 41 -> 32, callsignChanges 109 -> 110, creeps 68 -> 41, cutHeldForBridge 5 -> 4, cut_gap 459 -> 452, cut_repark 70 -> 72, docks 219 -> 206, drHold None -> 2, drOvershoot 17 -> 11, drop_ghost 27 -> 22, drop_replaced 2 -> 1, earlyCancelled 29 -> 20, earlyHurried 11 -> 8, earlyNoDock 46 -> 47, earlyUndocks 88 -> 91, early_xpdr 88 -> 91, fadeOuts 1124 -> 1121, fastUndocks 32 -> 24, ghostAheadKept 148 -> 91, inBlockDup None -> 1, inBlockStale 4 -> 5, intoTerminal 11 -> 13, locks 952 -> 1011, motionHeld 1347 -> 1336, motionUnreachable None -> 3, parkFrozen 21728 -> 21735, physMaskUnlocks None -> 6, physUnlocks None -> 66, pushEarly 120 -> 119, pushHintFalse 11 -> 8, pushHints 25 -> 20, pushUndone None -> 1, reacqOutConfirmed None -> 1, reacqOutHeld None -> 4, reacqParked 328 -> 331, restAccepted 55 -> 41, restAcceptedPast 153 -> 162, restNoBridge 9 -> 10, silentDockCont 15 -> 8, silentDockContradicted None -> 8, silentDockHere 5 -> 6, silentDockOccupied None -> 7526, silentDockUndone 5 -> 4, silentDocks 25 -> 26, staleKeptAtStand None -> 1, standLeftSlow 1 -> None, towPivotS 781.5000000001091 -> 776.500000000108, turnMemo 59 -> 54, undocks 40 -> 30, unlocks 16 -> 14
+```
+
+## Found in this round and fixed (not in the findings)
+
+- **realtime-6's evidence gate was lost again within this round.** Rewriting the retraction line for realtime-10 (AHEAD_EV_M)
+  dropped the gate. Without SFO's plan (segment B), bridge-ahead fired on geometry alone, and 8 of 28 retractions re-docked:
+  B3 three times, for ASA arrivals continuing to B6 along B3's lead-in. The gate is restored, and `aheadNoEvidence` counts
+  the skips.
+- **One stray fix released a stand** (AAL1430 B26, Step 9 item 15): `reacqOutlier`, counters `reacqOutHeld` A 38 / B 4,
+  `reacqOutConfirmed` A 29 / B 1.
+- **A false push from GNSS wander kept an aircraft off its stand for 10 min** (AAL2436 B24, item 19): push-undo, counter
+  `pushUndone` A 1 / B 1.
+- **SFO's evidence, checked against the data** (item 14): `stalePlanGone` had taken a linked departure's block-out from
+  another stand (AA2651 B20 / AA1930 B25) and stand-window ends that SFO had not yet seen end. The cache's last flysfo
+  snapshot is 12–13 h old, and these expired UAL2123 E12, UAL1800 F17 and UAL1609 E9 while they were parked.
+- **The ghost rules at a stand** (items 14, 16): a fuselage overlap is required, never while SFO lists the aircraft there. A
+  dead-reckoned body holds 3 m short of an aircraft that must stay. An arrival driving in removes a ghost at first contact.
+- **A silent aircraft on a mutually exclusive stand blocked a newer one** (item 20; found on the all-hours run of `root_after6`,
+  where `overlap.gnd` in segment A rose to 38,225 frames, 33,556 of them one key). UAL2 B789 was last heard at B5S on 5 Nov
+  16:56Z; ASA331 B738 was heard parked at B4 (MARS-exclusive with B5S) at 22:20Z and silent there until its push [obs]. Without
+  SFO's plan the silent B789 blocked B4, so ASA331 never got the stand and the B789 was drawn through it for 56 min. A silent
+  occupant of an exclusive stand last heard before the other aircraft's own newest fix no longer blocks it. Window 5 Nov
+  16:50–23:30Z: `overlap.gnd` 34,565 → 1,745 frames (that key 33,553 → 733: the 73 s until ASA331's in-block),
+  `bridge.orphan` 3,133 → 3,238 (B5S's bridge retracting after the B789 fades), every other class unchanged.
+- **An aircraft towed while silent waited 20 s at its raw pose** (item 21; found on the run of `root_after7`). UAL2615 B738
+  was kept at D15 from 5 Nov 05:31Z (realtime-2). Its transponder came on at E7 at 14:05:56Z (UAL2042, towed while silent
+  [obs]), and as a track once seen moving it waited for 20 s of stationary reports before its stand was matched: drawn with the
+  fuselage in the E-pier footprint for 16 s. A track heard again stationary elsewhere after its transponder was off now counts
+  as heard there for the first time. Window 5 Nov 05:25–14:10Z: `building` 164 → 0 frames (in-block at E7 20 s earlier),
+  every other class unchanged within 2 frames. All hours (segment A, `root_after7` → `root_after8`): `building` 365 / 3 →
+  113 / 1 (UAL2042 E7 164 and SKW6001 F9 88 frames gone). The cost is a label lag: four tracks heard again elsewhere
+  (UAL2042, SKW6001, UAL2480, ASA619) keep their old stand's `gate` label for 2 frames (0.2 s) at the re-acquisition
+  (`phase.gate_far_from_stand` 271 / 8 → 279 / 12, the same 2-frame lag N535UW already showed), and SKW6001 has one
+  `bridge.dock_flap` frame at F9 (1 / 1 → 2 / 2). The bodies are drawn at their reports in those frames.
+- **The stray-fix rule's first form held a real fix** (EIN961 A333, B5S, 4 Nov 22:54Z; found on the partial after-run). After
+  a silent docking whose data pose lay 60 m back on the lead-in, `reacqOutlier` held EIN961's first fix AT the B5S stop, and
+  the body backed up 60 m. The rule now applies only to an aircraft parked on its OWN data, and never to a fix inside the
+  stand's own limits. With the `LOCK_R0_MAX` cap above, the 60.7 m lock lasts one sample.
+- **invariants.mjs**: the misdock branch crashed on 7 Nov 06:0xZ (`doorOf` without nose / f).
+
+## Trade-offs left, with the reason
+
+- **`bridge.orphan` without SFO's plan.** Bridge-ahead needs positive evidence (realtime-6). Without SFO's plan, that
+  evidence is only the arrival close on the lead-in (≤ 60 m / 1.5 L). The bridge of a ghost therefore retracts late, and
+  the stand shows it retracting after the contact fade for a few seconds. With SFO's evidence it starts 400 m out.
+- **`lag.gnd_30m`** (A 81,475 / 326 → 83,673 / 323; B 7,457 / 55 → 8,451 / 55). In segment B most of the change is one push-back: JBU134 A321 from B20
+  (7 Nov 06:29Z), first heard 43 m out at 3.2 kt. It is now drawn at push speed, 39 m behind its reports for 113 s, where
+  drOvershoot used to re-place it with a fade; realtime-9 keeps push-backs out of drOvershoot.
+- **`building`: SWA1083 B737** (7 Nov 04:09:32Z, last report at 9 kt west of the C pier, then silent until its departure).
+  It was dead-reckoned 113 m straight on for 24 s and stopped by the building veto with its wing in the C-pier footprint
+  for 18 s, before the lost-track fade. The veto samples the wing leading edge only; denser samples did not catch it
+  (window 182 → 182). The fix is a dead reckoning that follows the taxi graph or brakes ahead of a building, next round.
+- **A silent occupant at the newcomer's own stand fades only at its in-block.** Realtime-2 retired the removal of a silent
+  occupant on an arrival's mere motion (it removed aircraft that were still parked). Where the arrival stops on the stand and
+  goes quiet within 20 s (G6 UAL1272 / UAL927, E8 UAL1363 / UAL1385, 5 Nov 01:47Z and 04:54Z), the stand is matched only when
+  it goes stale (~75 s), and the two are drawn overlapped until then: G6 1,131 frames, E8 968, F16 389, and the 734 left of ASA331 / UAL2 at B4 / B5S (segment A after). Next round: an aircraft whose own fixes
+  stop inside a silent occupant's stand limits takes the stand at once.
+- **A false push minutes after an in-block** (UAL2282 E6, 7 Nov 02:31:24Z, 12 s after its in-block; GNSS wander). Push-undo
+  restores the stand after 74 s, but the wandering body touched E6 L1's rest tunnel for 80 frames meanwhile. Next round: a
+  push within minutes of the in-block should count only once it leaves the parking by more than 0.6 L.
+- **`bridge.misdock` UAL8217 B738 F16** (7 Nov 06:15Z, 26,405 frames, err 1.7 m against the 1.5 m threshold). The drawn
+  body is 1.5 m from its parked pose and the bridge is docked at the parked pose: inside the lock bound of realtime-1.
+- **`bridge.refused` / `clear.stand`**: the bridges' and stands' geometry, see C3.1 / C3.2.
+
+## Requests (Round 3)
+
+### C3.1 Static track (`data/sfo_stands.*`, `tools/stands/*`)
+
+1. **F5 E-Jets** (`bridge.refused`, SKW5631 / SKW5572 / SKW5929 / SKW5970). F5's L1 bridge refuses the E75L at its STOP
+   pose: slope 1:2.5 against the 1:4 limit (scratch `r3/scripts/refstop.mjs`). If that is the sheet's limit, F5's `types_ok`
+   should leave out the E-Jets. SFO parks them there, and the app then draws them without a bridge, which is what
+   `bridge.refused` counts.
+2. **F19 / F20 clearance** (`clear.stand` 33,793 frames in B). UAL2171 B772 at F19 and UAL2364 B752 at F20 (7 Nov 06:03Z)
+   are both at their stop poses and 5.0 m apart, where code E needs 7.5 m. SFO parked them together, the same pattern as
+   R3.1 item 1 of Round 2. Please re-check the F19 / F20 stops and lead-in headings against these observed pairs.
+3. **Neighbour pairs parked together, sub-metre short of the clearance** (`clear.stand`, segment A). These aircraft are each
+   heard at their own stand at arrival and departure [obs], and are drawn at their stand poses: F7 / F8 E75L + E75L, wingtip gap
+   4.38 m against 4.5 m (SKW5631 / SKW5440, 5 Nov 03:30Z, 409,524 frames); A5 / A9 A359 + B77W 6.94 m against 7.5 m (AAR212 /
+   CAL004, 146,779 frames); A9 / A10 A359 + A359 7.12 m (SIA34 / AAR212); F20 / F21 B752 + B752 7.10 m (UAL548 / UAL574, 4 Nov
+   21:07Z). The class grew (996,145 → 1,166,171 frames) only because such pairs are no longer expired after 8 h of silence
+   (realtime-2). Please check those stops, lead-in headings and lateral offsets: SFO parks these pairs together, so the drawn
+   poses should clear.
+4. **C5 / C7 with an A333 at C5.** DAL1412 A333 (a3c51a) reported parked 11 m from C5's nose (5 Nov 20:46–22:09Z, at
+   −646.5, 367.7 in the world frame) [obs]. C5 is class CL, so the engine leaves it unassigned and draws it where its reports
+   put it. The B739 / B738 at C7 (DAL940, DAL1060; 21:30Z, 21:54Z) [obs] has its nose 44.4 m from it, and the half spans add up
+   to 48.0 m. Before, the wings were drawn overlapped (`overlap.gnd` 9,136 + 757 frames, the largest key of segment A). Now
+   they are drawn clear, but only 0.35 m apart against 7.5 m (`clear.stand` 26,589 frames). Please check C5's class, whether
+   C5 / C7 have a wide-body combination, and their nose points / headings against this pair (window scratch
+   `c3/realtime/w/t_dal1412`).
+5. **Antenna references in motion.** `antenna_ref.families` is measured at the stop. Please check the large ones (B757
+   17.1 m n 7, EJET 13.6 m n 19) on moving traffic before they are used for every body. A 17.1 m B757 reference put a
+   holding B752 onto an A359 parked at G5 (4 Nov 20:41Z); traffic.js uses the references for parked noses only (`antPark`).
+6. **R4.1 of static_closeout answered**: R4.1.1 (`antPark`, parked only, as above), R4.1.2 (`typesOkHas` refuses
+   `typesOkUnsafe`), R4.1.3 (`excl-type-conflict` logged only), R4.1.5 (N199TH: mask-first placement, not in
+   `offpave.mask` any more), R3.2.1 / R4.4 (retired pavement subtracted in `TaxiNet.paved` and the taxiway polygons).
+
+### C3.2 Bridges track (`js/live/gates.js`)
+
+1. **The stand's L1 bridge refuses the type at its STOP pose**: F15 B39M "L1 neck x walkway (fixed bridge parts)", L2 "no
+   second-bridge door" (UAL1363, 7 Nov 01:47–04:27Z, 93,722 frames); F5 E75L slope 1:2.5 (C3.1 item 1). If the B39M is
+   SFO's type at F15, the plan should find a neck angle that clears the walkway.
+2. **R3.3 of bridges answered**: the engine undocks a stand's bridges from the previous aircraft before it docks a
+   DIFFERENT one (`undockOther`).
+3. **Marginal rest-pose contacts left** (window traces): DAL672 B763 at C9 against C9 L1's rest cab (2 sample points, 31
+   frames, the aircraft at its own reported pose), SWA375 B38M at D3 against D3 L1's rest cab (1 point, 12 frames).
+
+### C3.3 Aircraft track
+
+The API hooks of aircraft_closeout.md §2 are wired (realtime-14): `parseCallsign(flight, {vehicle, category, icao})`,
+`liveryForAirline(al, reg, hex, icao)`, the generic airframe label and the three-engine note, b772 / b77w in MODEL_KEYS,
+`setOccupant(…, {freighter})`.
+
+### C3.4 Engine / environment
+
+`markerSprites` records carry `marker: true`. `R.onFatal = (html) => ui.fail(html)`, and `ui.fail` shows an overlay after
+load (realtime-15).
+
+### C3.5 Integration track (`data/buildings3d/integration.js` physics footprints)
+
+`building` in segment B: AMX664 B39M taxiing at (−1328, 535) in the world frame (7 Nov 03:48:51Z, 337 frames), with ONE wing
+sample in a footprint while it follows its reports on the taxilane west of the A pier. Please check whether a 3-D asset's
+footprint reaches over that taxilane there (the harness uses the `c869b8f3` copy of integration.js).
+
+### C3.6 Owner (realtime-17, needs_owner)
+
+`data/snapshot.js` mixes adsb.fi and adsb.lol records without a per-record provider, and adsb.fi's terms forbid licensing
+its data. The file is unchanged: the documented default is to keep it, with the LICENCE CONFLICT row in
+docs/ATTRIBUTION.md [inf]. A candidate is ready: `python3 tools/live/build_snapshot.py --at <UTC>` writes an adsb.lol-only
+snapshot to `out/live/snapshot_adsblol.js`, with ODbL, the provider on every record, attribution and the KSFO METARs of
+that time. For example, `--at 2026-11-04T19:30:00Z` gives 115 aircraft within 60 km and 3 METARs. **Question:** keep the
+file, replace it with an adsb.lol-only candidate (which hour?), or remove it from the public repository?
+
+### C3.7 Lead
+
+Please commit:
+- `tools/live/build_snapshot.py` (new);
+- `tools/live/build_taxigraph.py` and the rebuilt `data/sfo_taxigraph.js` (262 ways; 19 come from the OSM update extract,
+  ODbL as before);
+- js/live/traffic.js, ground.js, app.js, ui.js, entry.js, live.css, jobs/extract2d.mjs, tools/live/invariants.mjs and
+  tools/live/gatecheck.py;
+- `docs/research/realtime_impl.md` Step 9.
+
