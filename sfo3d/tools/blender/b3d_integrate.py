@@ -1111,11 +1111,16 @@ def requests_of(res):
     if rr:
         # close-out r3 fix 2 (verifier v1): the stacked cut is refused where it would split the lower deck, so the ITB loop's
         # lower roadway passes whole under its anchored departures legs with the clearance the level pair leaves
-        out.append('owner / buildings (ITB group): roads under roads below %.1f m: %s. At the ITB loop the lower (arrivals) roadway, held at LOWER_H 5.80 m '
-                   '(4.6 m over the at-grade building-passage roads + the 1.2-m deck [inf]), passes under its departures legs (OSM 38853121 / 38853045), which leave '
-                   'the L3 plate at 11.35 m (spec_itb level3.floor 11.5 [inf] - kerb): 5.55 m deck to deck < 5.8 m needed. Photo i1 reads the step ~6.7 m (L3 ~1 m higher); '
-                   'please review level3.floor against i1 (buildings R3.2) - the roadways follow the ITB curb on the next build_roadways.py run'
-                   % (ROAD_CLEAR, '; '.join(json.dumps({k: v for k, v in c.items() if k in ('unit', 'min_m', 'at', 'below_m2', 'area_m2')}) for c in rr)))
+        # close-out r4 (the round-3 verifier): a three-level stack - at the conflict point the lower roadway is not at LOWER_H
+        # but floored by the at-grade roads under it (deck_m of the record)
+        out.append('owner / buildings (ITB group): roads under roads below %.1f m: %s. At the ITB loop this is a three-level stack: the at-grade roads '
+                   '(data/sfo_landside.json, e.g. OSM 256787736 / 93671776 beside the conflict point), the lower (arrivals) roadway 41015123 over them (held at LOWER_H '
+                   '5.80 m on the straight; past it the level solve keeps it >= 4.6 m + the 1.2-m deck above the at-grade roads under it [inf]: deck %s m at the '
+                   'conflict point), and its departures legs (OSM 38853121 / 38853045), which leave the L3 plate at 11.35 m (spec_itb level3.floor 11.5 [inf] - kerb) '
+                   'and need 5.8 m deck to deck above it. Photo i1 reads the L3-to-lower-level step ~6.7 m (L3 ~1 m higher than modelled); please review level3.floor '
+                   'against i1 (buildings R3.2) - the roadways follow the ITB curb on the next build_roadways.py run (L3 +0.8 m lifts the conflict)'
+                   % (ROAD_CLEAR, '; '.join(json.dumps({k: v for k, v in c.items() if k in ('unit', 'min_m', 'at', 'below_m2', 'area_m2', 'deck_m')}) for c in rr),
+                      '/'.join('%.2f' % c['deck_m'] for c in rr if 'deck_m' in c) or '?'))
     tl = [c for c in res['conflicts'] if c.get('check', '').startswith('taxilane')]
     for c in tl: out.append('%s: %s %.1f m from taxilane centreline %s (ADG %s inferred: %.1f m); SFO Museum outline %.1f m' % (c['group'], c['unit'], c['dist_m'], c['lane'], c['adg'], c['need_m'], c['museum_outline_m']))
     try:

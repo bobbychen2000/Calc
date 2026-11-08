@@ -518,13 +518,28 @@ def run(path):
     fps = {}
     # the landside parts (hall roof, canopy, curb ...) overhang the curb / roadway west of the outline by design
     land = unary_union([footprint(m) for n, m in S.items() if m['lod'] == 0 and n.split('_', 1)[1] in landside_ok])
+    # close-out round 4: the bridge-head vestibules / nubs (itb_geom.bridge_heads) stand between the outline and the app walkway
+    # ends by design - checked separately (their own footprint vs the outline, and the walkway-end gap check below)
+    heads = {lod: G.bridge_heads(lod) for lod in (0, 1, 2)}
+    plaus['bridge_heads'] = {}
     for lod in (0, 1, 2):
         parts = {n: m for n, m in S.items() if m['lod'] == lod}
         fa = unary_union([footprint(m) for n, m in parts.items() if n.split('_', 1)[1] not in landside_ok])
         fps[lod] = fa
+        hv = unary_union([r['poly'] for r in heads[lod]] or [Polygon()])
         # LOD2 is one joined node: its hall parts are allowed where LOD0's landside parts are
-        out = fa.difference(airside.buffer(0.05)).difference(land.buffer(0.5) if lod == 2 else Polygon()).area
-        C.add('LOD%d airside footprint outside the SFO Museum outlines' % lod, out, 0.0, 0.5, 'outlines used by check_stands.py', 'm2')
+        out = fa.difference(airside.buffer(0.05)).difference(land.buffer(0.5) if lod == 2 else Polygon()).difference(hv.buffer(0.05)).area
+        C.add('LOD%d airside footprint outside the SFO Museum outlines (less the bridge-head vestibules)' % lod, out, 0.0, 0.5,
+              'outlines used by check_stands.py', 'm2')
+        reach = max([airside.boundary.distance(Point(c)) for r in heads[lod] for c in np.asarray(r['poly'].exterior.coords if hasattr(r['poly'], 'exterior') else
+                     [q for g in r['poly'].geoms for q in g.exterior.coords]) if not airside.contains(Point(c))] or [0.0])
+        hv_out = hv.difference(airside).area
+        plaus['bridge_heads']['lod%d' % lod] = dict(n=len(heads[lod]), kinds={k: sum(1 for r in heads[lod] if r['kind'] == k) for k in ('vestibule', 'nub')},
+                                                    area_outside_outlines_m2=round(hv_out, 2), max_reach_m=round(reach, 2),
+                                                    clipped_m2=round(sum(r['clipped_m2'] for r in heads[lod]), 2))
+        C.add('LOD%d bridge-head vestibules: reach beyond the SFO Museum outline (%d boxes, %.1f m2 outside)' % (lod, len(heads[lod]), hv_out), reach, 1.2,
+              ok=reach <= 1.2, src='walkway ends (app_bridges.json walk[0]) lie <= 0.96 m off the outline + 0.15 m; > 1.2 m would be a box '
+              'standing free on the apron')
     fa = fps[0]
     try:
         import geom as GM
@@ -621,6 +636,26 @@ def run(path):
     except Exception as e:  # noqa: BLE001
         C.add('cross-asset walkway check', str(e), 'error', ok=False)
     plaus['walkway_vs_host_roof'] = cross
+    # close-out round 4: walkway-end gap check (tools/blender/walkend_check.py; the round-3 verifier found 24 of 48 A / G walkway
+    # ends 0.3-0.9 m in front of the facade): every app walkway that starts at the ITB is closed by the asset (facade /
+    # vestibule / nub, or its own drum) over its full width at floor + 0.3 / 1.5 / 2.7 m, at every LOD of this file and of the
+    # phone-tier itb_lod2.glb
+    try:
+        import walkend_check as WK
+        Tl = {l: WK.tris_from_scene(S, l) for l in (0, 1, 2)}
+        l2p = os.path.join(os.path.dirname(path), os.path.basename(path).replace('.glb', '_lod2.glb'))
+        if os.path.exists(l2p) and l2p != path:
+            j2_, b2_, _ = load_glb(l2p); Tl['lod2_glb'] = WK.tris_from_scene(scene_meshes(j2_, b2_), 2)
+        we = WK.run(Tl, 'AG')
+        plaus['walkway_end_gaps'] = {str(k): v for k, v in we.items()}
+        plaus['walkway_end_gaps_summary'] = {str(k): dict(n=v['n'], n_fail=v['n_fail'], max_gap=v['max_gap']) for k, v in we.items()}
+        for k, v in we.items():
+            C.add('walkway ends closed by the asset (gap <= %.2f m over the full width at floor + 0.3 / 1.5 / 2.7) - %s: %d of %d open%s' %
+                  (WK.GAP_MAX, 'LOD%d' % k if isinstance(k, int) else 'itb_lod2.glb', v['n_fail'], v['n'],
+                   (': ' + ', '.join('%s L%d' % (f['stand'], f['door']) for f in v['fails'][:8])) if v['fails'] else ''),
+                  v['n_fail'], 0, ok=v['n_fail'] == 0, src='app_bridges.json walk[0] (gates.js); max gap %s m' % v['max_gap'], unit='')
+    except Exception as e:  # noqa: BLE001
+        C.add('walkway-end gap check', str(e), 'error', ok=False)
     tw = unary_union([Polygon(p[0], p[1:]).buffer(0) for t_ in I.D.AIR['taxiways'] for p in t_['polys']])
     C.add('SFO Museum taxiway polygons inside the 3-D footprint', tw.intersection(unary_union([fa, land])).area, 0.0, 0.5,
           'data/sfo_airport.json taxiways', 'm2')
